@@ -1,0 +1,7 @@
+shared_sv *	T_SHAREDSV
+
+INPUT
+T_SHAREDSV
+	$var = SV_to_sharedsv(aTHX_ $arg)
+
+

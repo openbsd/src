@@ -1,5 +1,7 @@
 package Thread::Specific;
 
+our $VERSION = '1.00';
+
 =head1 NAME
 
 Thread::Specific - thread-specific keys

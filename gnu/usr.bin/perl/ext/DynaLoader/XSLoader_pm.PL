@@ -92,6 +92,14 @@ print OUT <<'EOT';
     $bootname =~ s/\W/_/g;
     @dl_require_symbols = ($bootname);
 
+    my $boot_symbol_ref;
+
+    if ($^O eq 'darwin') {
+        if ($boot_symbol_ref = dl_find_symbol(0, $bootname)) {
+            goto boot; #extension library has already been loaded, e.g. darwin
+        }
+    }
+
     # Many dynamic extension loading problems will appear to come from
     # this section of code: XYZ failed at line 123 of DynaLoader.pm.
     # Often these errors are actually occurring in the initialisation
@@ -111,14 +119,15 @@ print OUT <<'EOT';
 	Carp::carp("Undefined symbols present after loading $file: @unresolved\n");
     }
 
-    my $boot_symbol_ref = dl_find_symbol($libref, $bootname) or do {
+    $boot_symbol_ref = dl_find_symbol($libref, $bootname) or do {
 	require Carp;
 	Carp::croak("Can't find '$bootname' symbol in $file\n");
     };
 
-    my $xs = dl_install_xsub("${module}::bootstrap", $boot_symbol_ref, $file);
-
     push(@dl_modules, $module); # record loaded module
+
+  boot:
+    my $xs = dl_install_xsub("${module}::bootstrap", $boot_symbol_ref, $file);
 
     # See comment block above
     return &$xs(@_);

@@ -1,0 +1,59 @@
+If you read this file _as_is_, just ignore the funny characters you
+see.  It is written in the POD format (see pod/perlpod.pod) which is
+specifically designed to be readable as is.
+
+=head1 Name
+
+Perl for WinCE
+
+=head1 Description
+
+This file gives the instructions for building Perl5.6 and above for
+WinCE.  Please read and understand the terms under which this
+software is distributed.
+
+=head1 Build
+
+This section describes the steps to be performed to build PerlCE.
+
+=head2 Tools & SDK
+
+For compiling, you need Microsoft Embedded Visual Tools, my
+celib-sources, my console-sources and a perl for win32.
+
+Needed source files can be downloaded via:
+www.rainer-keuchel.de/wince/dirlist.html
+
+Some portions of the makefile need a shell for win32, rm, cp, mv,
+xmkdir (mkdir with a -p option).  It also uses my cecopy program for
+copying files to the ce device.
+
+=head2 Make
+
+Miniperl is not built. A pre-existent win32 perl is used.
+
+The paths for tools and additional libraries have to be changed in
+wince/makefile.ce.
+
+Different ce targets can be specified with the TARGET macro.
+
+Before you start, you need to build celib.dll and w32console.
+See instructions in these packages for building.
+
+In the wince directory, type "nmake -f makefile.ce". This should
+build perl.exe and perl.dll. For building extension dlls,
+type "nmake -f makefile.ce dlls"
+
+When building ext dlls, you get lots of macro redefinition
+errors. Just ignore them.
+
+For further information, look in the text files in the wince
+sub-directory.
+
+=head1 Acknowledgements
+
+The port for Win32 was used as a reference.
+
+=head1 Author
+
+Rainer Keuchel (keuchel@netwave.de)

@@ -1,0 +1,24 @@
+#!/usr/local/bin/perl -w
+
+use blib;
+use Net::POP3;
+use Getopt::Long;
+
+$opt_debug = 0;
+$opt_user = undef;
+
+GetOptions(qw(debug user=s));
+
+$pop = Net::POP3->new('backup3', Debug => $opt_debug ? 6 : 0);
+
+$user = $opt_user || $ENV{USER} || $ENV{LOGNAME};
+
+$count = $pop->login($user);
+
+if($count)
+ {
+  $m = $pop->get(1);
+  print @$m if $m;
+ }
+
+$pop->quit;

@@ -13,7 +13,7 @@
 package Pod::Find;
 
 use vars qw($VERSION);
-$VERSION = 0.21;   ## Current version of this package
+$VERSION = 0.22;   ## Current version of this package
 require  5.005;   ## requires this Perl version or later
 use Carp;
 
@@ -128,12 +128,29 @@ sub pod_find
 
     if($opts{-script}) {
         require Config;
-        push(@search, $Config::Config{scriptdir});
+        push(@search, $Config::Config{scriptdir})
+            if -d $Config::Config{scriptdir};
         $opts{-perl} = 1;
     }
 
     if($opts{-inc}) {
-        push(@search, grep($_ ne '.',@INC));
+        if ($^O eq 'MacOS') {
+            # tolerate '.', './some_dir' and '(../)+some_dir' on Mac OS
+            my @new_INC = @INC;
+            for (@new_INC) {
+                if ( $_ eq '.' ) {
+                    $_ = ':';
+                } elsif ( $_ =~ s|^((?:\.\./)+)|':' x (length($1)/3)|e ) {
+                    $_ = ':'. $_;
+                } else {
+                    $_ =~ s|^\./|:|;
+                }
+            }
+            push(@search, grep($_ ne File::Spec->curdir, @new_INC));
+        } else {
+            push(@search, grep($_ ne File::Spec->curdir, @INC));
+        }
+
         $opts{-perl} = 1;
     }
 
@@ -144,9 +161,18 @@ sub pod_find
         # * remove e.g. "i586-linux" (from 'archname')
         # * remove e.g. 5.00503
         # * remove pod/ if followed by *.pod (e.g. in pod/perlfunc.pod)
-        $SIMPLIFY_RX =
-          qq!^(?i:site(_perl)?/|\Q$Config::Config{archname}\E/|\\d+\\.\\d+([_.]?\\d+)?/|pod/(?=.*?\\.pod\\z))*!;
 
+        # Mac OS:
+        # * remove ":?site_perl:"
+        # * remove :?pod: if followed by *.pod (e.g. in :pod:perlfunc.pod)
+
+        if ($^O eq 'MacOS') {
+            $SIMPLIFY_RX =
+              qq!^(?i:\:?site_perl\:|\:?pod\:(?=.*?\\.pod\\z))*!;
+        } else {
+            $SIMPLIFY_RX =
+              qq!^(?i:site(_perl)?/|\Q$Config::Config{archname}\E/|\\d+\\.\\d+([_.]?\\d+)?/|pod/(?=.*?\\.pod\\z))*!;
+        }
     }
 
     my %dirs_visited;
@@ -163,6 +189,7 @@ sub pod_find
         # on VMS canonpath will vmsify:[the.path], but File::Find::find
         # wants /unixy/paths
         $try = File::Spec->canonpath($try) if ($^O ne 'VMS');
+        $try = VMS::Filespec::unixify($try) if ($^O eq 'VMS');
         my $name;
         if(-f $try) {
             if($name = _check_and_extract_name($try, $opts{-verbose})) {
@@ -170,7 +197,7 @@ sub pod_find
             }
             next;
         }
-        my $root_rx = qq!^\Q$try\E/!;
+        my $root_rx = $^O eq 'MacOS' ? qq!^\Q$try\E! : qq!^\Q$try\E/!;
         File::Find::find( sub {
             my $item = $File::Find::name;
             if(-d) {
@@ -231,10 +258,19 @@ sub _check_and_extract_name {
         $name =~ s!$SIMPLIFY_RX!!os if(defined $SIMPLIFY_RX);
     }
     else {
-        $name =~ s:^.*/::s;
+        if ($^O eq 'MacOS') {
+            $name =~ s/^.*://s;
+        } else {
+            $name =~ s:^.*/::s;
+        }
     }
     _simplify($name);
     $name =~ s!/+!::!g; #/
+    if ($^O eq 'MacOS') {
+        $name =~ s!:+!::!g; # : -> ::
+    } else {
+        $name =~ s!/+!::!g; # / -> ::
+    }
     $name;
 }
 
@@ -251,7 +287,11 @@ F<.bat>, F<.cmd> on Win32 and OS/2, or F<.com> on VMS, respectively.
 sub simplify_name {
     my ($str) = @_;
     # remove all path components
-    $str =~ s:^.*/::s;
+    if ($^O eq 'MacOS') {
+        $str =~ s/^.*://s;
+    } else {
+        $str =~ s:^.*/::s;
+    }
     _simplify($str);
     $str;
 }
@@ -294,7 +334,7 @@ List directories as they are searched
 
 =back
 
-Returns the full path of the first occurence to the file.
+Returns the full path of the first occurrence to the file.
 Package names (eg 'A::B') are automatically converted to directory
 names in the selected directory. (eg on unix 'A::B' is converted to
 'A/B'). Additionally, '.pm', '.pl' and '.pod' are appended to the
@@ -319,7 +359,7 @@ sub pod_where {
   my %options = (
          '-inc' => 0,
          '-verbose' => 0,
-         '-dirs' => [ '.' ],
+         '-dirs' => [ File::Spec->curdir ],
         );
 
   # Check for an options hash as first argument
@@ -347,7 +387,22 @@ sub pod_where {
     require Config;
 
     # Add @INC
-    push (@search_dirs, @INC) if $options{'-inc'};
+    if ($^O eq 'MacOS' && $options{'-inc'}) {
+        # tolerate '.', './some_dir' and '(../)+some_dir' on Mac OS
+        my @new_INC = @INC;
+        for (@new_INC) {
+            if ( $_ eq '.' ) {
+                $_ = ':';
+            } elsif ( $_ =~ s|^((?:\.\./)+)|':' x (length($1)/3)|e ) {
+                $_ = ':'. $_;
+            } else {
+                $_ =~ s|^\./|:|;
+            }
+        }
+        push (@search_dirs, @new_INC);
+    } elsif ($options{'-inc'}) {
+        push (@search_dirs, @INC);
+    }
 
     # Add location of pod documentation for perl man pages (eg perlfunc)
     # This is a pod directory in the private install tree
@@ -364,7 +419,7 @@ sub pod_where {
   # Loop over directories
   Dir: foreach my $dir ( @search_dirs ) {
 
-    # Don't bother if cant find the directory
+    # Don't bother if can't find the directory
     if (-d $dir) {
       warn "Looking in directory $dir\n" 
         if $options{'-verbose'};

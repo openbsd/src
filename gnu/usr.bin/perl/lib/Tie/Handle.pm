@@ -1,7 +1,7 @@
 package Tie::Handle;
 
-use 5.005_64;
-our $VERSION = '4.0';
+use 5.006_001;
+our $VERSION = '4.1';
 
 =head1 NAME
 
@@ -12,7 +12,7 @@ Tie::Handle, Tie::StdHandle  - base class definitions for tied handles
     package NewHandle;
     require Tie::Handle;
 
-    @ISA = (Tie::Handle);
+    @ISA = qw(Tie::Handle);
 
     sub READ { ... }		# Provide a needed method
     sub TIEHANDLE { ... }	# Overrides inherited method
@@ -33,7 +33,7 @@ For developers wishing to write their own tied-handle classes, the methods
 are summarized below. The L<perltie> section not only documents these, but
 has sample code as well:
 
-=over
+=over 4
 
 =item TIEHANDLE classname, LIST
 
@@ -201,7 +201,7 @@ use Carp;
 sub TIEHANDLE 
 {
  my $class = shift;
- my $fh    = do { \local *HANDLE};
+ my $fh    = \do { local *HANDLE};
  bless $fh,$class;
  $fh->OPEN(@_) if (@_);
  return $fh;

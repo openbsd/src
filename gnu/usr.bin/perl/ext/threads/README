@@ -1,0 +1,24 @@
+threads version 0.03
+====================
+
+This module needs perl 5.7.2 or later compiled with USEITHREADS, 
+it exposes interpreter threads to the perl level.
+
+INSTALLATION
+
+To install this module type the following:
+
+   perl Makefile.PL
+   make
+   make test
+   make install
+
+DEPENDENCIES
+
+This module requires these other modules and libraries:
+
+
+COPYRIGHT AND LICENCE
+
+Copyright (C) 2001 Artur Bergman artur at contiller.se
+Same licence as perl.

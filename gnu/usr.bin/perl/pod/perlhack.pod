@@ -14,14 +14,13 @@ messages a day, depending on the heatedness of the debate.  Most days
 there are two or three patches, extensions, features, or bugs being
 discussed at a time.
 
-A searchable archive of the list is at:
+A searchable archive of the list is at either:
 
     http://www.xray.mpe.mpg.de/mailing-lists/perl5-porters/
 
-The list is also archived under the usenet group name
-C<perl.porters-gw> at:
+or
 
-    http://www.deja.com/
+    http://archive.develooper.com/perl5-porters@perl.org/
 
 List subscribers (the porters themselves) come in several flavours.
 Some are quiet curious lurkers, who rarely pitch in and instead watch
@@ -38,12 +37,13 @@ in what does and does not change in the Perl language.  Various
 releases of Perl are shepherded by a ``pumpking'', a porter
 responsible for gathering patches, deciding on a patch-by-patch
 feature-by-feature basis what will and will not go into the release.
-For instance, Gurusamy Sarathy is the pumpking for the 5.6 release of
-Perl.
+For instance, Gurusamy Sarathy was the pumpking for the 5.6 release of
+Perl, and Jarkko Hietaniemi is the pumpking for the 5.8 release, and
+Hugo van der Sanden will be the pumpking for the 5.10 release.
 
 In addition, various people are pumpkings for different things.  For
 instance, Andy Dougherty and Jarkko Hietaniemi share the I<Configure>
-pumpkin, and Tom Christiansen is the documentation pumpking.
+pumpkin.
 
 Larry sees Perl development along the lines of the US government:
 there's the Legislature (the porters), the Executive branch (the
@@ -158,13 +158,22 @@ The worst patches make use of a system-specific features.  It's highly
 unlikely that nonportable additions to the Perl language will be
 accepted.
 
+=item Is the implementation tested?
+
+Patches which change behaviour (fixing bugs or introducing new features)
+must include regression tests to verify that everything works as expected.
+Without tests provided by the original author, how can anyone else changing
+perl in the future be sure that they haven't unwittingly broken the behaviour
+the patch implements? And without tests, how can the patch's author be
+confident that his/her hard work put into the patch won't be accidentally
+thrown away by someone in the future?
+
 =item Is there enough documentation?
 
 Patches without documentation are probably ill-thought out or
 incomplete.  Nothing can be added without documentation, so submitting
 a patch for the appropriate manpages as well as the source code is
-always a good idea.  If appropriate, patches should add to the test
-suite as well.
+always a good idea.
 
 =item Is there another way to do it?
 
@@ -197,8 +206,8 @@ interpreter.  ``A core module'' is one that ships with Perl.
 =head2 Keeping in sync
 
 The source code to the Perl interpreter, in its different versions, is
-kept in a repository managed by a revision control system (which is
-currently the Perforce program, see http://perforce.com/).  The
+kept in a repository managed by a revision control system ( which is
+currently the Perforce program, see http://perforce.com/ ).  The
 pumpkings and a few others have access to the repository to check in
 changes.  Periodically the pumpking for the development version of Perl
 will release a new version, so the rest of the porters can see what's
@@ -206,7 +215,19 @@ changed.  The current state of the main trunk of repository, and patches
 that describe the individual changes that have happened since the last
 public release are available at this location:
 
+    http://public.activestate.com/gsar/APC/
     ftp://ftp.linux.activestate.com/pub/staff/gsar/APC/
+
+If you're looking for a particular change, or a change that affected
+a particular set of files, you may find the B<Perl Repository Browser>
+useful:
+
+    http://public.activestate.com/cgi-bin/perlbrowse
+
+You may also want to subscribe to the perl5-changes mailing list to
+receive a copy of each patch that gets submitted to the maintenance
+and development "branches" of the perl repository.  See
+http://lists.perl.org/ for subscription information.
 
 If you are a member of the perl5-porters mailing list, it is a good
 thing to keep in touch with the most recent changes. If not only to
@@ -241,6 +262,17 @@ the latest applied patch level, creating files that are new (to your
 distribution) and setting date/time stamps of existing files to
 reflect the bleadperl status.
 
+Note that this will not delete any files that were in '.' before
+the rsync. Once you are sure that the rsync is running correctly,
+run it with the --delete and the --dry-run options like this:
+
+ # rsync -avz --delete --dry-run rsync://ftp.linux.activestate.com/perl-current/ .
+
+This will I<simulate> an rsync run that also deletes files not
+present in the bleadperl master copy. Observe the results from
+this run closely. If you are sure that the actual run would delete
+no files precious to you, you could remove the '--dry-run' option.
+
 You can than check what patch was the latest that was applied by
 looking in the file B<.patch>, which will show the number of the
 latest patch.
@@ -258,11 +290,11 @@ Set up a local rsync server which makes the rsynced source tree
 available to the LAN and sync the other machines against this
 directory.
 
-From http://rsync.samba.org/README.html:
+From http://rsync.samba.org/README.html :
 
    "Rsync uses rsh or ssh for communication. It does not need to be
     setuid and requires no special privileges for installation.  It
-    does not require a inetd entry or a deamon.  You must, however,
+    does not require an inetd entry or a daemon.  You must, however,
     have a working rsh or ssh system.  Using ssh is recommended for
     its security features."
 
@@ -328,7 +360,7 @@ patch directory.
 
 It's then up to you to apply these patches, using something like
 
- # last=`ls -rt1 *.gz | tail -1`
+ # last=`ls -t *.gz | sed q`
  # rsync -avz rsync://ftp.linux.activestate.com/perl-current-diffs/ .
  # find . -name '*.gz' -newer $last -exec gzcat {} \; >blead.patch
  # cd ../perl-current
@@ -343,27 +375,18 @@ from Andreas König to have better control over the patching process.
 
 =over 4
 
-=item It's easier
+=item It's easier to rsync the source tree
 
 Since you don't have to apply the patches yourself, you are sure all
 files in the source tree are in the right state.
 
-=item It's more recent
-
-According to Gurusamy Sarathy:
-
-   "... The rsync mirror is automatic and syncs with the repository
-    every five minutes.
-
-   "Updating the patch  area  still  requires  manual  intervention
-    (with all the goofiness that implies,  which you've noted)  and
-    is typically on a daily cycle.   Making this process  automatic
-    is on my tuit list, but don't ask me when."
-
 =item It's more reliable
 
-Well, since the patches are updated by hand, I don't have to say any
-more ... (see Sarathy's remark).
+While both the rsync-able source and patch areas are automatically
+updated every few minutes, keep in mind that applying patches may
+sometimes mean careful hand-holding, especially if your version of
+the C<patch> program does not understand how to deal with new files,
+files with 8-bit characters, or files without trailing newlines.
 
 =back
 
@@ -371,7 +394,7 @@ more ... (see Sarathy's remark).
 
 =over 4
 
-=item It's easier
+=item It's easier to rsync the patches
 
 If you have more than one machine that you want to keep in track with
 bleadperl, it's easier to rsync the patches only once and then apply
@@ -423,7 +446,7 @@ look how others apply the fix.
 =item Finding the source of misbehaviour
 
 When you keep in sync with bleadperl, the pumpking would love to
-I<see> that the community efforts realy work. So after each of his
+I<see> that the community efforts really work. So after each of his
 sync points, you are to 'make test' to check if everything is still
 in working order. If it is, you do 'make ok', which will send an OK
 report to perlbug@perl.org. (If you do not have access to a mailer
@@ -431,7 +454,7 @@ from the system you just finished successfully 'make test', you can
 do 'make okfile', which creates the file C<perl.ok>, which you can
 than take to your favourite mailer and mail yourself).
 
-But of course, as always, things will not allways lead to a success
+But of course, as always, things will not always lead to a success
 path, and one or more test do not pass the 'make test'. Before
 sending in a bug report (using 'make nok' or 'make nokfile'), check
 the mailing list if someone else has reported the bug already and if
@@ -450,44 +473,106 @@ If searching the patches is too bothersome, you might consider using
 perl's bugtron to find more information about discussions and
 ramblings on posted bugs.
 
-=back
-
 If you want to get the best of both worlds, rsync both the source
 tree for convenience, reliability and ease and rsync the patches
 for reference.
 
+=back
+
+
+=head2 Perlbug remote interface
+
+There are three (3) remote administrative interfaces for modifying bug
+status, category, etc.  In all cases an admin must be first registered
+with the Perlbug database by sending an email request to
+richard@perl.org or bugmongers@perl.org.
+
+The main requirement is the willingness to classify, (with the
+emphasis on closing where possible :), outstanding bugs.  Further
+explanation can be garnered from the web at http://bugs.perl.org/ , or
+by asking on the admin mailing list at: bugmongers@perl.org
+
+For more info on the web see
+
+	http://bugs.perl.org/perlbug.cgi?req=spec
+
+=over 4
+
+=item 1 http://bugs.perl.org
+
+Login via the web, (remove B<admin/> if only browsing), where interested
+Cc's, tests, patches and change-ids, etc. may be assigned.
+
+	http://bugs.perl.org/admin/index.html
+
+
+=item 2 bugdb@perl.org
+
+Where the subject line is used for commands:
+
+	To: bugdb@perl.org
+	Subject: -a close bugid1 bugid2 aix install
+
+	To: bugdb@perl.org
+	Subject: -h
+
+
+=item 3 commands_and_bugdids@bugs.perl.org
+
+Where the address itself is the source for the commands:
+
+	To: close_bugid1_bugid2_aix@bugs.perl.org
+
+	To: help@bugs.perl.org
+
+
+=item notes, patches, tests
+
+For patches and tests, the message body is assigned to the appropriate
+bugs and forwarded to p5p for their attention.
+
+	To: test_<bugid1>_aix_close@bugs.perl.org
+	Subject: this is a test for the (now closed) aix bug
+
+	Test is the body of the mail
+
+=back
+
 =head2 Submitting patches
 
-Always submit patches to I<perl5-porters@perl.org>.  This lets other
-porters review your patch, which catches a surprising number of errors
-in patches.  Either use the diff program (available in source code
-form from I<ftp://ftp.gnu.org/pub/gnu/>), or use Johan Vromans'
-I<makepatch> (available from I<CPAN/authors/id/JV/>).  Unified diffs
-are preferred, but context diffs are accepted.  Do not send RCS-style
-diffs or diffs without context lines.  More information is given in
-the I<Porting/patching.pod> file in the Perl source distribution.
-Please patch against the latest B<development> version (e.g., if
-you're fixing a bug in the 5.005 track, patch against the latest
-5.005_5x version).  Only patches that survive the heat of the
-development branch get applied to maintenance versions.
+Always submit patches to I<perl5-porters@perl.org>.  If you're
+patching a core module and there's an author listed, send the author a
+copy (see L<Patching a core module>).  This lets other porters review
+your patch, which catches a surprising number of errors in patches.
+Either use the diff program (available in source code form from
+ftp://ftp.gnu.org/pub/gnu/ , or use Johan Vromans' I<makepatch>
+(available from I<CPAN/authors/id/JV/>).  Unified diffs are preferred,
+but context diffs are accepted.  Do not send RCS-style diffs or diffs
+without context lines.  More information is given in the
+I<Porting/patching.pod> file in the Perl source distribution.  Please
+patch against the latest B<development> version (e.g., if you're
+fixing a bug in the 5.005 track, patch against the latest 5.005_5x
+version).  Only patches that survive the heat of the development
+branch get applied to maintenance versions.
 
-Your patch should update the documentation and test suite.
+Your patch should update the documentation and test suite.  See
+L<Writing a test>.
 
 To report a bug in Perl, use the program I<perlbug> which comes with
 Perl (if you can't get Perl to work, send mail to the address
 I<perlbug@perl.org> or I<perlbug@perl.com>).  Reporting bugs through
 I<perlbug> feeds into the automated bug-tracking system, access to
-which is provided through the web at I<http://bugs.perl.org/>.  It
+which is provided through the web at http://bugs.perl.org/ .  It
 often pays to check the archives of the perl5-porters mailing list to
 see whether the bug you're reporting has been reported before, and if
 so whether it was considered a bug.  See above for the location of
 the searchable archives.
 
-The CPAN testers (I<http://testers.cpan.org/>) are a group of
-volunteers who test CPAN modules on a variety of platforms.  Perl Labs
-(I<http://labs.perl.org/>) automatically tests Perl source releases on
-platforms and gives feedback to the CPAN testers mailing list.  Both
-efforts welcome volunteers.
+The CPAN testers ( http://testers.cpan.org/ ) are a group of
+volunteers who test CPAN modules on a variety of platforms.  Perl
+Smokers ( http://archives.develooper.com/daily-build@perl.org/ )
+automatically tests Perl source releases on platforms with various
+configurations.  Both efforts welcome volunteers.
 
 It's a good idea to read and lurk for a while before chipping in.
 That way you'll get to see the dynamic of the conversations, learn the
@@ -513,7 +598,7 @@ source, and we'll do that later on.
 You might also want to look at Gisle Aas's illustrated perlguts -
 there's no guarantee that this will be absolutely up-to-date with the
 latest documentation in the Perl core, but the fundamentals will be
-right. (http://gisle.aas.no/perl/illguts/)
+right. ( http://gisle.aas.no/perl/illguts/ )
 
 =item L<perlxstut> and L<perlxs>
 
@@ -536,12 +621,11 @@ wanting to go about Perl development.
 
 =item The perl5-porters FAQ
 
-This is posted to perl5-porters at the beginning on every month, and
-should be available from http://perlhacker.org/p5p-faq; alternatively,
-you can get the FAQ emailed to you by sending mail to
-C<perl5-porters-faq@perl.org>. It contains hints on reading
-perl5-porters, information on how perl5-porters works and how Perl
-development in general works.
+This should be available from http://simon-cozens.org/writings/p5p-faq ;
+alternatively, you can get the FAQ emailed to you by sending mail to
+C<perl5-porters-faq@perl.org>. It contains hints on reading perl5-porters,
+information on how perl5-porters works and how Perl development in general
+works.
 
 =back
 
@@ -558,6 +642,13 @@ correspond to files or directories in the source kit. Among the areas are:
 Modules shipped as part of the Perl core live in the F<lib/> and F<ext/>
 subdirectories: F<lib/> is for the pure-Perl modules, and F<ext/>
 contains the core XS modules.
+
+=item Tests
+
+There are tests for nearly all the modules, built-ins and major bits
+of functionality.  Test files all have a .t suffix.  Module tests live
+in the F<lib/> and F<ext/> directories next to the module being
+tested.  Others live in F<t/>.  See L<Writing a test>
 
 =item Documentation
 
@@ -854,7 +945,8 @@ operations in.
 
 The easiest way to examine the op tree is to stop Perl after it has
 finished parsing, and get it to dump out the tree. This is exactly what
-the compiler backends L<B::Terse|B::Terse> and L<B::Debug|B::Debug> do.
+the compiler backends L<B::Terse|B::Terse>, L<B::Concise|B::Concise>
+and L<B::Debug|B::Debug> do.
 
 Let's have a look at how Perl sees C<$a = $b + $c>:
 
@@ -1164,7 +1256,6 @@ important ones are explained in L<perlxs> as well. Pay special attention
 to L<perlguts/Background and PERL_IMPLICIT_CONTEXT> for information on
 the C<[pad]THX_?> macros.
 
-
 =head2 Poking at Perl
 
 To really poke around with Perl, you'll probably want to build Perl for
@@ -1360,7 +1451,7 @@ similar output to L<B::Debug|B::Debug>.
             }
         }
 
-< finish this later >
+# finish this later #
 
 =head2 Patching
 
@@ -1375,6 +1466,9 @@ How do we prepare to fix this up? First we locate the code in question -
 the C<pack> happens at runtime, so it's going to be in one of the F<pp>
 files. Sure enough, C<pp_pack> is in F<pp.c>. Since we're going to be
 altering this file, let's copy it to F<pp.c~>.
+
+[Well, it was in F<pp.c> when this tutorial was written. It has now been
+split off with C<pp_unpack> to its own file, F<pp_pack.c>]
 
 Now let's look over C<pp_pack>: we take a pattern into C<pat>, and then
 loop over the pattern, taking each format character in turn into
@@ -1447,32 +1541,48 @@ we must document that change. We must also provide some more regression
 tests to make sure our patch works and doesn't create a bug somewhere
 else along the line.
 
-The regression tests for each operator live in F<t/op/>, and so we make
-a copy of F<t/op/pack.t> to F<t/op/pack.t~>. Now we can add our tests
-to the end. First, we'll test that the C<U> does indeed create Unicode
-strings:
+The regression tests for each operator live in F<t/op/>, and so we
+make a copy of F<t/op/pack.t> to F<t/op/pack.t~>. Now we can add our
+tests to the end. First, we'll test that the C<U> does indeed create
+Unicode strings.  
+
+t/op/pack.t has a sensible ok() function, but if it didn't we could
+use the one from t/test.pl.
+
+ require './test.pl';
+ plan( tests => 159 );
+
+so instead of this:
 
  print 'not ' unless "1.20.300.4000" eq sprintf "%vd", pack("U*",1,20,300,4000);
  print "ok $test\n"; $test++;
 
+we can write the more sensible (see L<Test::More> for a full
+explanation of is() and other testing functions).
+
+ is( "1.20.300.4000", sprintf "%vd", pack("U*",1,20,300,4000), 
+                                       "U* produces unicode" );
+
 Now we'll test that we got that space-at-the-beginning business right:
 
- print 'not ' unless "1.20.300.4000" eq
-                     sprintf "%vd", pack("  U*",1,20,300,4000);
- print "ok $test\n"; $test++;
+ is( "1.20.300.4000", sprintf "%vd", pack("  U*",1,20,300,4000),
+                                       "  with spaces at the beginning" );
 
 And finally we'll test that we don't make Unicode strings if C<U> is B<not>
 the first active format:
 
- print 'not ' unless v1.20.300.4000 ne
-                     sprintf "%vd", pack("C0U*",1,20,300,4000);
- print "ok $test\n"; $test++;
+ isnt( v1.20.300.4000, sprintf "%vd", pack("C0U*",1,20,300,4000),
+                                       "U* not first isn't unicode" );
 
-Mustn't forget to change the number of tests which appears at the top, or
-else the automated tester will get confused:
+Mustn't forget to change the number of tests which appears at the top,
+or else the automated tester will get confused.  This will either look
+like this:
 
- -print "1..156\n";
- +print "1..159\n";
+ print "1..156\n";
+
+or this:
+
+ plan( tests => 156 );
 
 We now compile up Perl, and run it through the test suite. Our new
 tests pass, hooray!
@@ -1520,6 +1630,221 @@ We end up with a patch looking a little like this:
 
 And finally, we submit it, with our rationale, to perl5-porters. Job
 done!
+
+=head2 Patching a core module
+
+This works just like patching anything else, with an extra
+consideration.  Many core modules also live on CPAN.  If this is so,
+patch the CPAN version instead of the core and send the patch off to
+the module maintainer (with a copy to p5p).  This will help the module
+maintainer keep the CPAN version in sync with the core version without
+constantly scanning p5p.
+
+=head2 Adding a new function to the core
+
+If, as part of a patch to fix a bug, or just because you have an
+especially good idea, you decide to add a new function to the core,
+discuss your ideas on p5p well before you start work.  It may be that
+someone else has already attempted to do what you are considering and
+can give lots of good advice or even provide you with bits of code
+that they already started (but never finished).
+
+You have to follow all of the advice given above for patching.  It is
+extremely important to test any addition thoroughly and add new tests
+to explore all boundary conditions that your new function is expected
+to handle.  If your new function is used only by one module (e.g. toke),
+then it should probably be named S_your_function (for static); on the
+other hand, if you expect it to accessible from other functions in
+Perl, you should name it Perl_your_function.  See L<perlguts/Internal Functions>
+for more details.
+
+The location of any new code is also an important consideration.  Don't
+just create a new top level .c file and put your code there; you would
+have to make changes to Configure (so the Makefile is created properly),
+as well as possibly lots of include files.  This is strictly pumpking
+business.
+
+It is better to add your function to one of the existing top level
+source code files, but your choice is complicated by the nature of
+the Perl distribution.  Only the files that are marked as compiled
+static are located in the perl executable.  Everything else is located
+in the shared library (or DLL if you are running under WIN32).  So,
+for example, if a function was only used by functions located in
+toke.c, then your code can go in toke.c.  If, however, you want to call
+the function from universal.c, then you should put your code in another
+location, for example util.c.
+
+In addition to writing your c-code, you will need to create an
+appropriate entry in embed.pl describing your function, then run
+'make regen_headers' to create the entries in the numerous header
+files that perl needs to compile correctly.  See L<perlguts/Internal Functions>
+for information on the various options that you can set in embed.pl.
+You will forget to do this a few (or many) times and you will get
+warnings during the compilation phase.  Make sure that you mention
+this when you post your patch to P5P; the pumpking needs to know this.
+
+When you write your new code, please be conscious of existing code
+conventions used in the perl source files.  See L<perlstyle> for
+details.  Although most of the guidelines discussed seem to focus on
+Perl code, rather than c, they all apply (except when they don't ;).
+See also I<Porting/patching.pod> file in the Perl source distribution
+for lots of details about both formatting and submitting patches of
+your changes.
+
+Lastly, TEST TEST TEST TEST TEST any code before posting to p5p.
+Test on as many platforms as you can find.  Test as many perl
+Configure options as you can (e.g. MULTIPLICITY).  If you have
+profiling or memory tools, see L<EXTERNAL TOOLS FOR DEBUGGING PERL>
+below for how to use them to further test your code.  Remember that
+most of the people on P5P are doing this on their own time and
+don't have the time to debug your code.
+
+=head2 Writing a test
+
+Every module and built-in function has an associated test file (or
+should...).  If you add or change functionality, you have to write a
+test.  If you fix a bug, you have to write a test so that bug never
+comes back.  If you alter the docs, it would be nice to test what the
+new documentation says.
+
+In short, if you submit a patch you probably also have to patch the
+tests.
+
+For modules, the test file is right next to the module itself.
+F<lib/strict.t> tests F<lib/strict.pm>.  This is a recent innovation,
+so there are some snags (and it would be wonderful for you to brush
+them out), but it basically works that way.  Everything else lives in
+F<t/>.
+
+=over 3
+
+=item F<t/base/>
+
+Testing of the absolute basic functionality of Perl.  Things like
+C<if>, basic file reads and writes, simple regexes, etc.  These are
+run first in the test suite and if any of them fail, something is
+I<really> broken.
+
+=item F<t/cmd/>
+
+These test the basic control structures, C<if/else>, C<while>,
+subroutines, etc.
+
+=item F<t/comp/>
+
+Tests basic issues of how Perl parses and compiles itself.
+
+=item F<t/io/>
+
+Tests for built-in IO functions, including command line arguments.
+
+=item F<t/lib/>
+
+The old home for the module tests, you shouldn't put anything new in
+here.  There are still some bits and pieces hanging around in here
+that need to be moved.  Perhaps you could move them?  Thanks!
+
+=item F<t/op/>
+
+Tests for perl's built in functions that don't fit into any of the
+other directories.
+
+=item F<t/pod/>
+
+Tests for POD directives.  There are still some tests for the Pod
+modules hanging around in here that need to be moved out into F<lib/>.
+
+=item F<t/run/>
+
+Testing features of how perl actually runs, including exit codes and
+handling of PERL* environment variables.
+
+=back
+
+The core uses the same testing style as the rest of Perl, a simple
+"ok/not ok" run through Test::Harness, but there are a few special
+considerations.
+
+There are three ways to write a test in the core.  Test::More,
+t/test.pl and ad hoc C<print $test ? "ok 42\n" : "not ok 42\n">.  The
+decision of which to use depends on what part of the test suite you're
+working on.  This is a measure to prevent a high-level failure (such
+as Config.pm breaking) from causing basic functionality tests to fail.
+
+=over 4 
+
+=item t/base t/comp
+
+Since we don't know if require works, or even subroutines, use ad hoc
+tests for these two.  Step carefully to avoid using the feature being
+tested.
+
+=item t/cmd t/run t/io t/op
+
+Now that basic require() and subroutines are tested, you can use the
+t/test.pl library which emulates the important features of Test::More
+while using a minimum of core features.
+
+You can also conditionally use certain libraries like Config, but be
+sure to skip the test gracefully if it's not there.
+
+=item t/lib ext lib
+
+Now that the core of Perl is tested, Test::More can be used.  You can
+also use the full suite of core modules in the tests.
+
+=back
+
+When you say "make test" Perl uses the F<t/TEST> program to run the
+test suite.  All tests are run from the F<t/> directory, B<not> the
+directory which contains the test.  This causes some problems with the
+tests in F<lib/>, so here's some opportunity for some patching.
+
+You must be triply conscious of cross-platform concerns.  This usually
+boils down to using File::Spec and avoiding things like C<fork()> and
+C<system()> unless absolutely necessary.
+
+=head2 Special Make Test Targets
+
+There are various special make targets that can be used to test Perl
+slightly differently than the standard "test" target.  Not all them
+are expected to give a 100% success rate.  Many of them have several
+aliases.
+
+=over 4
+
+=item coretest
+
+Run F<perl> on all core tests (F<t/*> and F<lib/[a-z]*> pragma tests).
+
+=item test.deparse
+
+Run all the tests through the B::Deparse.  Not all tests will succeed.
+
+=item minitest
+
+Run F<miniperl> on F<t/base>, F<t/comp>, F<t/cmd>, F<t/run>, F<t/io>,
+F<t/op>, and F<t/uni> tests.
+
+=item test.third check.third utest.third ucheck.third
+
+(Only in Tru64)  Run all the tests using the memory leak + naughty
+memory access tool "Third Degree".  The log files will be named
+F<perl3.log.testname>.
+
+=item test.torture torturetest
+
+Run all the usual tests and some extra tests.  As of Perl 5.8.0 the
+only extra tests are Abigail's JAPHs, t/japh/abigail.t.
+
+You can also run the torture test with F<t/harness> by giving
+C<-torture> argument to F<t/harness>.
+
+=item utest ucheck test.utf8 check.utf8
+
+Run all the tests with -Mutf8.  Not all tests will succeed.
+
+=back
 
 =head1 EXTERNAL TOOLS FOR DEBUGGING PERL
 
@@ -1590,6 +1915,17 @@ which creates a binary named 'pureperl' that has been Purify'ed.
 This binary is used in place of the standard 'perl' binary
 when you want to debug Perl memory problems.
 
+To minimize the number of memory leak false alarms
+(see L</PERL_DESTRUCT_LEVEL>), set environment variable
+PERL_DESTRUCT_LEVEL to 2.
+
+    setenv PERL_DESTRUCT_LEVEL 2
+
+In Bourne-type shells:
+
+    PERL_DESTRUCT_LEVEL=2
+    export PERL_DESTRUCT_LEVEL
+
 As an example, to show any memory leaks produced during the
 standard Perl testset you would create and run the Purify'ed
 perl as:
@@ -1612,6 +1948,15 @@ options to output to the log file "perl.log":
 If you plan to use the "Viewer" windows, then you only need this option:
 
     setenv PURIFYOPTIONS "-chain-length=25"
+
+In Bourne-type shells:
+
+    PURIFYOPTIONS="..."
+    export PURIFYOPTIONS
+
+or if you have the "env" utility:
+
+    env PURIFYOPTIONS="..." ../pureperl ...
 
 =head2 Purify on NT
 
@@ -1662,6 +2007,297 @@ standard Perl testset you would create and run Purify as:
 
 which would instrument Perl in memory, run Perl on test.pl,
 then finally report any memory problems.
+
+B<NOTE>: as of Perl 5.8.0, the ext/Encode/t/Unicode.t takes
+extraordinarily long (hours?) to complete under Purify.  It has been
+theorized that it would eventually finish, but nobody has so far been
+patient enough :-) (This same extreme slowdown has been seen also with
+the Third Degree tool, so the said test must be doing something that
+is quite unfriendly for memory debuggers.)  It is suggested that you
+simply kill away that testing process.
+
+=head2 Compaq's/Digital's/HP's Third Degree
+
+Third Degree is a tool for memory leak detection and memory access checks.
+It is one of the many tools in the ATOM toolkit.  The toolkit is only
+available on Tru64 (formerly known as Digital UNIX formerly known as
+DEC OSF/1).
+
+When building Perl, you must first run Configure with -Doptimize=-g
+and -Uusemymalloc flags, after that you can use the make targets
+"perl.third" and "test.third".  (What is required is that Perl must be
+compiled using the C<-g> flag, you may need to re-Configure.)
+
+The short story is that with "atom" you can instrument the Perl
+executable to create a new executable called F<perl.third>.  When the
+instrumented executable is run, it creates a log of dubious memory
+traffic in file called F<perl.3log>.  See the manual pages of atom and
+third for more information.  The most extensive Third Degree
+documentation is available in the Compaq "Tru64 UNIX Programmer's
+Guide", chapter "Debugging Programs with Third Degree".
+
+The "test.third" leaves a lot of files named F<foo_bar.3log> in the t/
+subdirectory.  There is a problem with these files: Third Degree is so
+effective that it finds problems also in the system libraries.
+Therefore you should used the Porting/thirdclean script to cleanup
+the F<*.3log> files.
+
+There are also leaks that for given certain definition of a leak,
+aren't.  See L</PERL_DESTRUCT_LEVEL> for more information.
+
+=head2 PERL_DESTRUCT_LEVEL
+
+If you want to run any of the tests yourself manually using the
+pureperl or perl.third executables, please note that by default
+perl B<does not> explicitly cleanup all the memory it has allocated
+(such as global memory arenas) but instead lets the exit() of
+the whole program "take care" of such allocations, also known
+as "global destruction of objects".
+
+There is a way to tell perl to do complete cleanup: set the
+environment variable PERL_DESTRUCT_LEVEL to a non-zero value.
+The t/TEST wrapper does set this to 2, and this is what you
+need to do too, if you don't want to see the "global leaks":
+For example, for "third-degreed" Perl:
+
+	env PERL_DESTRUCT_LEVEL=2 ./perl.third -Ilib t/foo/bar.t
+
+(Note: the mod_perl apache module uses also this environment variable
+for its own purposes and extended its semantics. Refer to the mod_perl
+documentation for more information.)
+
+=head2 Profiling
+
+Depending on your platform there are various of profiling Perl.
+
+There are two commonly used techniques of profiling executables:
+I<statistical time-sampling> and I<basic-block counting>.
+
+The first method takes periodically samples of the CPU program
+counter, and since the program counter can be correlated with the code
+generated for functions, we get a statistical view of in which
+functions the program is spending its time.  The caveats are that very
+small/fast functions have lower probability of showing up in the
+profile, and that periodically interrupting the program (this is
+usually done rather frequently, in the scale of milliseconds) imposes
+an additional overhead that may skew the results.  The first problem
+can be alleviated by running the code for longer (in general this is a
+good idea for profiling), the second problem is usually kept in guard
+by the profiling tools themselves.
+
+The second method divides up the generated code into I<basic blocks>.
+Basic blocks are sections of code that are entered only in the
+beginning and exited only at the end.  For example, a conditional jump
+starts a basic block.  Basic block profiling usually works by
+I<instrumenting> the code by adding I<enter basic block #nnnn>
+book-keeping code to the generated code.  During the execution of the
+code the basic block counters are then updated appropriately.  The
+caveat is that the added extra code can skew the results: again, the
+profiling tools usually try to factor their own effects out of the
+results.
+
+=head2 Gprof Profiling
+
+gprof is a profiling tool available in many UNIX platforms,
+it uses F<statistical time-sampling>.
+
+You can build a profiled version of perl called "perl.gprof" by
+invoking the make target "perl.gprof"  (What is required is that Perl
+must be compiled using the C<-pg> flag, you may need to re-Configure).
+Running the profiled version of Perl will create an output file called
+F<gmon.out> is created which contains the profiling data collected
+during the execution.
+
+The gprof tool can then display the collected data in various ways.
+Usually gprof understands the following options:
+
+=over 4
+
+=item -a
+
+Suppress statically defined functions from the profile.
+
+=item -b
+
+Suppress the verbose descriptions in the profile.
+
+=item -e routine
+
+Exclude the given routine and its descendants from the profile.
+
+=item -f routine
+
+Display only the given routine and its descendants in the profile.
+
+=item -s
+
+Generate a summary file called F<gmon.sum> which then may be given
+to subsequent gprof runs to accumulate data over several runs.
+
+=item -z
+
+Display routines that have zero usage.
+
+=back
+
+For more detailed explanation of the available commands and output
+formats, see your own local documentation of gprof.
+
+=head2 GCC gcov Profiling
+
+Starting from GCC 3.0 I<basic block profiling> is officially available
+for the GNU CC.
+
+You can build a profiled version of perl called F<perl.gcov> by
+invoking the make target "perl.gcov" (what is required that Perl must
+be compiled using gcc with the flags C<-fprofile-arcs
+-ftest-coverage>, you may need to re-Configure).
+
+Running the profiled version of Perl will cause profile output to be
+generated.  For each source file an accompanying ".da" file will be
+created.
+
+To display the results you use the "gcov" utility (which should
+be installed if you have gcc 3.0 or newer installed).  F<gcov> is
+run on source code files, like this
+
+    gcov sv.c
+
+which will cause F<sv.c.gcov> to be created.  The F<.gcov> files
+contain the source code annotated with relative frequencies of
+execution indicated by "#" markers.
+
+Useful options of F<gcov> include C<-b> which will summarise the
+basic block, branch, and function call coverage, and C<-c> which
+instead of relative frequencies will use the actual counts.  For
+more information on the use of F<gcov> and basic block profiling
+with gcc, see the latest GNU CC manual, as of GCC 3.0 see
+
+    http://gcc.gnu.org/onlinedocs/gcc-3.0/gcc.html
+
+and its section titled "8. gcov: a Test Coverage Program"
+
+    http://gcc.gnu.org/onlinedocs/gcc-3.0/gcc_8.html#SEC132
+
+=head2 Pixie Profiling
+
+Pixie is a profiling tool available on IRIX and Tru64 (aka Digital
+UNIX aka DEC OSF/1) platforms.  Pixie does its profiling using
+I<basic-block counting>.
+
+You can build a profiled version of perl called F<perl.pixie> by
+invoking the make target "perl.pixie" (what is required is that Perl
+must be compiled using the C<-g> flag, you may need to re-Configure).
+
+In Tru64 a file called F<perl.Addrs> will also be silently created,
+this file contains the addresses of the basic blocks.  Running the
+profiled version of Perl will create a new file called "perl.Counts"
+which contains the counts for the basic block for that particular
+program execution.
+
+To display the results you use the F<prof> utility.  The exact
+incantation depends on your operating system, "prof perl.Counts" in
+IRIX, and "prof -pixie -all -L. perl" in Tru64.
+
+In IRIX the following prof options are available:
+
+=over 4
+
+=item -h
+
+Reports the most heavily used lines in descending order of use.
+Useful for finding the hotspot lines.
+
+=item -l
+
+Groups lines by procedure, with procedures sorted in descending order of use.
+Within a procedure, lines are listed in source order.
+Useful for finding the hotspots of procedures.
+
+=back
+
+In Tru64 the following options are available:
+
+=over 4
+
+=item -p[rocedures]
+
+Procedures sorted in descending order by the number of cycles executed
+in each procedure.  Useful for finding the hotspot procedures.
+(This is the default option.)
+
+=item -h[eavy]
+
+Lines sorted in descending order by the number of cycles executed in
+each line.  Useful for finding the hotspot lines.
+
+=item -i[nvocations]
+
+The called procedures are sorted in descending order by number of calls
+made to the procedures.  Useful for finding the most used procedures.
+
+=item -l[ines]
+
+Grouped by procedure, sorted by cycles executed per procedure.
+Useful for finding the hotspots of procedures.
+
+=item -testcoverage
+
+The compiler emitted code for these lines, but the code was unexecuted.
+
+=item -z[ero]
+
+Unexecuted procedures.
+
+=back
+
+For further information, see your system's manual pages for pixie and prof.
+
+=head2 Miscellaneous tricks
+
+=over 4
+
+=item *
+
+Those debugging perl with the DDD frontend over gdb may find the
+following useful:
+
+You can extend the data conversion shortcuts menu, so for example you
+can display an SV's IV value with one click, without doing any typing.
+To do that simply edit ~/.ddd/init file and add after:
+
+  ! Display shortcuts.
+  Ddd*gdbDisplayShortcuts: \
+  /t ()   // Convert to Bin\n\
+  /d ()   // Convert to Dec\n\
+  /x ()   // Convert to Hex\n\
+  /o ()   // Convert to Oct(\n\
+
+the following two lines:
+
+  ((XPV*) (())->sv_any )->xpv_pv  // 2pvx\n\
+  ((XPVIV*) (())->sv_any )->xiv_iv // 2ivx
+
+so now you can do ivx and pvx lookups or you can plug there the
+sv_peek "conversion":
+
+  Perl_sv_peek(my_perl, (SV*)()) // sv_peek
+
+(The my_perl is for threaded builds.)
+Just remember that every line, but the last one, should end with \n\
+
+Alternatively edit the init file interactively via:
+3rd mouse button -> New Display -> Edit Menu
+
+Note: you can define up to 20 conversion shortcuts in the gdb
+section.
+
+=item *
+
+If you see in a debugger a memory area mysteriously full of 0xabababab,
+you may be seeing the effect of the Poison() macro, see L<perlclib>.
+
+=back
 
 =head2 CONCLUSION
 

@@ -39,8 +39,8 @@ my %branch_exclude;
 
 while (@ARGV) {
     $_ = shift;
-    if (/^(\d+)\.\.(\d+)$/) {
-        push @changes, $1 .. $2;
+    if (/^(\d+)\.\.(\d+)?$/) {
+        push @changes, $1 .. ($2 || (split(' ', `p4 changes -m 1`))[1]);
     }
     elsif (/^\d+$/) {
         push @changes, $_;
@@ -105,7 +105,7 @@ else {
 		}
 	    }
 	}
-	next if not $change or $skip == $nbranch;
+	next if ((not $change) or $skip);
 	print "_" x 76, "\n";
 	printf <<EOT, $change, $who, $date, $time;
 [%6s] By: %-25s             on %9s %9s

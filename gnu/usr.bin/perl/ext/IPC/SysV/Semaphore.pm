@@ -12,7 +12,8 @@ use strict;
 use vars qw($VERSION);
 use Carp;
 
-$VERSION = "1.00";
+$VERSION = "1.00_00";
+$VERSION = eval $VERSION;
 
 {
     package IPC::Semaphore::stat;
@@ -88,7 +89,7 @@ sub op {
     @_ >= 4 || croak '$sem->op( OPLIST )';
     my $self = shift;
     croak 'Bad arg count' if @_ % 3;
-    my $data = pack("s*",@_);
+    my $data = pack("s!*",@_);
     semop($$self,$data);
 }
 
@@ -126,12 +127,12 @@ sub getall {
     my $data = "";
     semctl($$self,0,GETALL,$data)
 	or return ();
-    (unpack("s*",$data));
+    (unpack("s!*",$data));
 }
 
 sub setall {
     my $self = shift;
-    my $data = pack("s*",@_);
+    my $data = pack("s!*",@_);
     semctl($$self,0,SETALL,$data);
 }
 
@@ -172,6 +173,8 @@ IPC::Semaphore - SysV Semaphore IPC object class
 
 =head1 DESCRIPTION
 
+A class providing an object based interface to SysV IPC semaphores.
+
 =head1 METHODS
 
 =over 4
@@ -203,8 +206,8 @@ Returns the values of the semaphore set as an array.
 
 =item getncnt ( SEM )
 
-Returns the number of processed waiting for the semaphore C<SEM> to
-become greater than it's current value
+Returns the number of processes waiting for the semaphore C<SEM> to
+become greater than its current value
 
 =item getpid ( SEM )
 
@@ -217,7 +220,7 @@ Returns the current value of the semaphore C<SEM>.
 
 =item getzcnt ( SEM )
 
-Returns the number of processed waiting for the semaphore C<SEM> to
+Returns the number of processes waiting for the semaphore C<SEM> to
 become zero.
 
 =item id
@@ -249,7 +252,7 @@ with the semaphore set.
 
     uid
     gid
-    mode (oly the permission bits)
+    mode (only the permission bits)
 
 C<set> accepts either a stat object, as returned by the C<stat> method,
 or a list of I<name>-I<value> pairs.
@@ -267,7 +270,7 @@ Set the C<N>th value in the semaphore set to C<VALUE>
 
 Returns an object of type C<IPC::Semaphore::stat> which is a sub-class of
 C<Class::Struct>. It provides the following fields. For a description
-of these fields see you system documentation.
+of these fields see your system documentation.
 
     uid
     gid

@@ -5,6 +5,7 @@ BEGIN {
     @INC = '../lib';
 }
 
+$| = 1;
 umask 0;
 $xref = \ "";
 $runme = ($^O eq 'VMS' ? 'MCR ' : '') . $^X;

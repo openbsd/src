@@ -15,14 +15,14 @@ if ($^O eq 'MSWin32') {
 }
 
 WriteMakefile(
-    NAME	=> "B",
-    VERSION	=> "a5",
-    PL_FILES	=> { 'defsubs_h.PL' => 'defsubs.h' },
-    MAN3PODS	=> {},
-    clean	=> {
-	FILES		=> "perl$e *$o B.c defsubs.h *~"
+    NAME	    => "B",
+    VERSION_FROM    => "B.pm",
+    PL_FILES	    => { 'defsubs_h.PL' => 'defsubs.h' },
+    MAN3PODS	    => {},
+    clean	    => {
+	FILES	    => "perl$e *$o B.c defsubs.h *~"
     }
-);   
+);
 
 package MY;
 

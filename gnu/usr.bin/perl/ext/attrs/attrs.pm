@@ -1,7 +1,7 @@
 package attrs;
 use XSLoader ();
 
-$VERSION = "1.0";
+$VERSION = "1.01";
 
 =head1 NAME
 
@@ -31,7 +31,7 @@ C<attrs::get> on a subroutine reference or name returns its list
 of attribute names. Notice that C<attrs::get> is not exported.
 Valid attributes are as follows.
 
-=over
+=over 4
 
 =item method
 

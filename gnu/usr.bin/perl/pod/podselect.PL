@@ -72,7 +72,7 @@ Print the manual page and exit.
 =item B<-section>S< >I<section-spec>
 
 Specify a section to include in the output.
-See L<Pod::Parser/"SECTION SPECIFICATIONS">
+See L<Pod::Select/"SECTION SPECIFICATIONS">
 for the format to use for I<section-spec>.
 This option may be given multiple times on the command line.
 

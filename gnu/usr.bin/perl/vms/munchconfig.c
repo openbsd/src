@@ -30,7 +30,7 @@
 #endif
 
 /* The biggest line we can read in from a file */
-#define LINEBUFFERSIZE 400
+#define LINEBUFFERSIZE 1024
 #define NUMTILDESUBS 30
 #define NUMCONFIGSUBS 1000
 #define TOKENBUFFERSIZE 80
@@ -78,7 +78,7 @@ main(int argc, char *argv[])
   /* Any tag/value pairs on the command line? */
   if (argc > 3) {
     int i;
-    char WorkString[80]; 
+    char WorkString[LINEBUFFERSIZE]; 
     for (i=3; i < argc && argv[i]; i++) {
       
       /* Local copy */

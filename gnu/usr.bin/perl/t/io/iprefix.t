@@ -13,11 +13,23 @@ if ($^O eq 'MSWin32') {
   `.\\perl -le "print 'foo'" > .b`;
   `.\\perl -le "print 'foo'" > .c`;
 }
+elsif ($^O eq 'NetWare') {
+  $CAT = 'perl -e "print<>"';
+  `perl -le "print 'foo'" > .a`;
+  `perl -le "print 'foo'" > .b`;
+  `perl -le "print 'foo'" > .c`;
+}
 elsif ($^O eq 'VMS') {
   $CAT = 'MCR []perl. -e "print<>"';
   `MCR []perl. -le "print 'foo'" > ./.a`;
   `MCR []perl. -le "print 'foo'" > ./.b`;
   `MCR []perl. -le "print 'foo'" > ./.c`;
+}
+elsif ($^O eq 'MacOS') {
+  $CAT = "$^X -e \"print<>\"";
+  `$^X -le "print 'foo'" > .a`;
+  `$^X -le "print 'foo'" > .b`;
+  `$^X -le "print 'foo'" > .c`;
 }
 else {
   $CAT = 'cat';

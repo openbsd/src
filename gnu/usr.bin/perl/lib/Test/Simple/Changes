@@ -1,0 +1,193 @@
+Revision history for Perl extension Test::Simple
+
+0.45  Wed Jun 19 18:41:12 EDT 2002
+    - Andy Lester made the SKIP & TODO docs a bit clearer.
+    - Explicitly disallowing double plans. (RT #553)
+    - Kicking up the minimum version of Test::Harness to one that's
+      fairly bug free.
+    - Made clear a common problem with use_ok and BEGIN blocks.
+    - Arthur Bergman made Test::Builder thread-safe.
+
+0.44  Thu Apr 25 00:27:27 EDT 2002
+    - names containing newlines no longer produce confusing output
+      (from chromatic)
+    - chromatic provided a fix so can_ok() honors can() overrides.
+    - Nick Ing-Simmons suggested todo_skip() be a bit clearer about
+      the skipping part.
+    - Making plan() vomit if it gets something it doesn't understand.
+    - Tatsuhiko Miyagawa fixed use_ok() with pragmata on older perls.
+    - quieting diag(undef)
+
+0.43  Thu Apr 11 22:55:23 EDT 2002
+    - Adrian Howard added TB->maybe_regex()
+    - Adding Mark Fowler's suggestion to make diag() return
+      false.
+    - TB->current_test() still not working when no tests were run via
+      TB itself.  Fixed by Dave Rolsky.
+
+0.42  Wed Mar  6 15:00:24 EST 2002
+    - Setting Test::Builder->current_test() now works (see what happens
+      when you forget to test things?)
+    - The change in is()'s undef/'' handling in 0.34 was an API change, 
+      but I forgot to declare it as such.
+    - The apostrophilic jihad attacks!  Philip Newtons patch for
+      grammar mistakes in the doc's.
+
+0.41  Mon Dec 17 22:45:20 EST 2001
+    * chromatic added diag()
+    - Internal eval()'s sometimes interfering with $@ and $!.  Fixed.
+
+0.40  Fri Dec 14 15:41:39 EST 2001
+    * isa_ok() now accepts unblessed references gracefully
+    - Nick Clark found a bug with like() and a regex with % in it.
+    - exit.t was hanging on 5.005_03 VMS perl.  Test now skipped.
+    - can_ok() would pass if no methods were given.  Now fails.
+    - isnt() diagnostic output format changed
+    * Added some docs about embedding and extending Test::More
+    * Added Test::More->builder
+    * Added cmp_ok()
+    * Added todo_skip()
+    * Added unlike()
+    - Piers pointed out that sometimes people override isa().
+      isa_ok() now accounts for that.
+
+0.36  Thu Nov 29 14:07:39 EST 2001
+    - Matthias Urlichs found that intermixed prints to STDOUT and test 
+      output came out in the wrong order when piped.
+
+0.35  Tue Nov 27 19:57:03 EST 2001
+    - Little glitch in the test suite.  No actual bug.
+
+0.34  Tue Nov 27 15:43:56 EST 2001
+    * **API CHANGE** Empty string no longer matches undef in is() 
+      and isnt().
+    * Added isnt_eq and isnt_num to Test::Builder.
+
+0.33  Mon Oct 22 21:05:47 EDT 2001
+    * It's now officially safe to redirect STDOUT and STDERR without
+      affecting test output.
+    - License and POD cleanup by Autrijus Tang
+    - Synched up Test::Tutorial with the wiki version
+    - Minor VMS test nit.
+
+0.32  Tue Oct 16 16:52:02 EDT 2001
+    * Finally added a seperate plan() function
+    * Adding a name field to isa_ok()
+      (Requested by Dave Rolsky)
+    - Test::More was using Carp.pm, causing the occasional false positive.
+      (Reported by Tatsuhiko Miyagawa)
+
+0.31  Mon Oct  8 19:24:53 EDT 2001
+    * Added an import option to Test::More
+    * Added no_ending and no_header options to Test::Builder
+      (Thanks to Dave Rolsky for giving this a swift kick in the ass)
+    * Added is_deeply().  Display of scalar refs not quite 100%
+      (Thanks to Stas Bekman for Apache::TestUtil idea thievery)
+    - Fixed a minor warning with skip()
+      (Thanks to Wolfgang Weisselberg for finding this one)
+
+0.30  Thu Sep 27 22:10:04 EDT 2001
+    * Added Test::Builder
+      (Thanks muchly to chromatic for getting this off the ground!)
+    * Diagnostics are back to using STDERR *unless* it's from a todo
+      test.  Those go to STDOUT.
+    - Fixed it so nothing is printed if a test is run with a -c flag.
+      Handy when a test is being deparsed with B::Deparse.
+
+0.20  *UNRELEASED*
+
+0.19  Tue Sep 18 17:48:32 EDT 2001
+    * Test::Simple and Test::More no longer print their diagnostics
+      to STDERR.  It instead goes to STDOUT.
+    * TODO tests which fail now print full failure diagnostics.
+    - Minor bug in ok()'s test name diagnostics made it think a blank
+      name was a number.
+    - ok() less draconian about test names
+    - Added temporary special case for Parrot::Test
+    - Now requiring File::Spec for our tests.
+
+0.18  Wed Sep  5 20:35:24 EDT 2001
+    * ***API CHANGE*** can_ok() only counts as one test
+    - can_ok() has better diagnostics
+    - Minor POD fixes from mjd
+    - adjusting the internal layout to make it easier to put it into
+      the core
+
+0.17  Wed Aug 29 20:16:28 EDT 2001
+    * Added can_ok() and isa_ok() to Test::More
+
+0.16  Tue Aug 28 19:52:11 EDT 2001
+    * vmsperl foiled my sensisble exit codes.  Reverting to a much more
+      coarse scheme.
+
+0.15  Tue Aug 28 06:18:35 EDT 2001  *UNRELEASED*
+    * Now using sensible exit codes on VMS.
+
+0.14  Wed Aug 22 17:26:28 EDT 2001
+    * Added a first cut at Test::Tutorial
+
+0.13  Tue Aug 14 15:30:10 EDT 2001
+    * Added a reason to the skip_all interface
+    - Fixed a bug to allow 'use Test::More;' to work.
+      (Thanks to Tatsuhiko Miyagawa again)
+    - Now always testing backwards compatibility.
+
+0.12  Tue Aug 14 11:02:39 EDT 2001
+    * Fixed some compatibility bugs with older Perls
+      (Thanks to Tatsuhiko Miyagawa)
+
+0.11  Sat Aug 11 23:05:19 EDT 2001
+    * Will no longer warn about testing undef values
+    - Escaping # in test names
+    - Ensuring that ok() returns true or false and not undef
+    - Minor doc typo in the example
+
+0.10  Tue Jul 31 15:01:11 EDT 2001
+    * Test::More is now distributed in this tarball.
+    * skip and todo tests work!
+    * Extended use_ok() so it can import
+    - A little internal rejiggering
+    - Added a TODO file
+
+0.09  Wed Jun 27 02:55:54 EDT 2001
+    - VMS fixes
+
+0.08  Fri Jun 15 14:39:50 EDT 2001
+    - Guarding against $/ and -l
+    - Reformatted the way failed tests are reported to make them stand out
+      a bit better.
+
+0.07  Tue Jun 12 15:55:54 BST 2001
+    - 'use Test::Simple' by itself no longer causes death
+    - Yet more fixes for death in eval
+    - Limiting max failures reported via exit code to 254.
+
+0.06  Wed May  9 23:38:17 BST 2001
+    - Whoops, left a private method in the public docs.
+
+0.05  Wed May  9 20:40:35 BST 2001
+    - Forgot to include the exit tests.
+    - Trouble with exiting properly under 5.005_03 and 5.6.1 fixed
+    - Turned off buffering
+    * 5.004 new minimum version
+    - Now explicitly tested with 5.6.1, 5.6.0, 5.005_03 and 5.004
+
+0.04  Mon Apr  2 11:05:01 BST 2001
+    - Fixed "require Test::Simple" so it doesn't bitch and exit 255
+    - Now installable with the CPAN shell.
+
+0.03  Fri Mar 30 08:08:33 BST 2001
+    - ok() now prints on what line and file it failed.
+    - eval 'die' was considered abnormal.  Fixed.
+
+0.02  Fri Mar 30 05:12:14 BST 2001      *UNRELEASED*
+    - exit codes tested
+    * exit code on abnormal exit changed to 255 (thanks to Tim Bunce for
+      pointing out that Unix can't do negative exit codes)
+    - abnormal exits now better caught.
+    - No longer using Test.pm to test this, but still minimum of 5.005
+      due to needing $^S.
+
+0.01  Wed Mar 28 06:44:44 BST 2001
+    - First working version released to CPAN
+

@@ -20,7 +20,9 @@ for $realname (@exts)
 {
     $dosname=join ("__",map {lc substr ($_,0,8)} split /\//,$realname);
     $realname =~ s!/!__!g;
-    $perlmain =~ s/\bboot_$dosname/boot_$realname/gm;
+    $perlmain =~ s/\bboot_$dosname\b/boot_$realname/gm;
+    $dosname =~ s/__/::/;
+    $realname =~ s/__/::/;
     $perlmain =~ s/\b$dosname(::bootstrap)/$realname$1/gm;
 }
 

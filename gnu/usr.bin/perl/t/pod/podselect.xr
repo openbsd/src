@@ -12,10 +12,10 @@ OPTIONS AND ARGUMENTS
     -man    Print the manual page and exit.
 
     -section *section-spec*
-            Specify a section to include in the output. See the section on
-            "SECTION SPECIFICATIONS" in the Pod::Parser manpage for the
-            format to use for *section-spec*. This option may be given
-            multiple times on the command line.
+            Specify a section to include in the output. See "SECTION
+            SPECIFICATIONS" in Pod::Select for the format to use for
+            *section-spec*. This option may be given multiple times on the
+            command line.
 
     *file*  The pathname of a file from which to select sections of pod
             documentation (defaults to standard input).
@@ -27,11 +27,10 @@ DESCRIPTION
     are given than all pod sections encountered are output.
 
     podselect invokes the podselect() function exported by Pod::Select
-    Please see the podselect() entry in the Pod::Select manpage for more
-    details.
+    Please see "podselect()" in Pod::Select for more details.
 
 SEE ALSO
-    the Pod::Parser manpage and the Pod::Select manpage
+    Pod::Parser and Pod::Select
 
 AUTHOR
     Brad Appleton <bradapp@enteract.com>

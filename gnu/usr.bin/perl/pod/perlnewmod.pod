@@ -239,18 +239,21 @@ it connected to the rest of the CPAN, you'll need to tell the modules
 list about it. The best way to do this is to email them a line in the
 style of the modules list, like this:
 
-    Net::Acme bdpO  Interface to Acme Frobnicator servers         FOOBAR
-    ^         ^^^^  ^                                             ^
-    |         ||||  Module description                            Your ID
-    |         ||||
-    |         |||\- Interface: (O)OP, (r)eferences, (h)ybrid, (f)unctions
-    |         |||
-    |         ||\-- Language: (p)ure Perl, C(+)+, (h)ybrid, (C), (o)ther
-    |         ||
-    Module    |\--- Support: (d)eveloper, (m)ailing list, (u)senet, (n)one
-    Name      |
-              \---- Maturity: (i)dea, (c)onstructions, (a)lpha, (b)eta,
-                              (R)eleased, (M)ature, (S)tandard
+  Net::Acme bdpOP   Interface to Acme Frobnicator servers      FOOBAR
+  ^         ^^^^^   ^                                          ^
+  |         |||||   Module description                         Your ID
+  |         ||||| 
+  |         ||||\-Public Licence: (p)standard Perl, (g)GPL, (b)BSD,
+  |         ||||                  (l)LGPL, (a)rtistic, (o)ther
+  |         ||||
+  |         |||\- Interface: (O)OP, (r)eferences, (h)ybrid, (f)unctions
+  |         |||
+  |         ||\-- Language: (p)ure Perl, C(+)+, (h)ybrid, (C), (o)ther
+  |         ||
+  Module    |\--- Support: (d)eveloper, (m)ailing list, (u)senet, (n)one
+  Name      |
+            \---- Development: (i)dea, (c)onstructions, (a)lpha, (b)eta,
+                               (R)eleased, (M)ature, (S)tandard
 
 plus a description of the module and why you think it should be
 included. If you hear nothing back, that means your module will
@@ -279,4 +282,5 @@ Simon Cozens, C<simon@cpan.org>
 
 L<perlmod>, L<perlmodlib>, L<perlmodinstall>, L<h2xs>, L<strict>,
 L<Carp>, L<Exporter>, L<perlpod>, L<Test>, L<ExtUtils::MakeMaker>,
-http://www.cpan.org/
+http://www.cpan.org/ , Ken Williams' tutorial on building your own
+module at http://mathforum.org/~ken/perl_modules.html

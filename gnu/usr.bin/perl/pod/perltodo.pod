@@ -4,8 +4,7 @@ perltodo - Perl TO-DO List
 
 =head1 DESCRIPTION
 
-This is a list of wishes for Perl.  It is maintained by Nathan
-Torkington for the Perl porters.  Send updates to
+This is a list of wishes for Perl.  Send updates to
 I<perl5-porters@perl.org>.  If you want to work on any of these
 projects, be sure to check the perl5-porters archives for past ideas,
 flames, and propaganda.  This will save you time and also prevent you
@@ -14,845 +13,958 @@ of archives may be found at:
 
     http://www.xray.mpe.mpg.de/mailing-lists/perl5-porters/
 
+=head1 To do during 5.6.x
 
-=head1 Infrastructure
+=head2 Support for I/O disciplines
 
-=head2 Mailing list archives
+C<perlio> provides this, but the interface could be a lot more
+straightforward.
 
-Chaim suggests contacting egroup and asking them to archive the other
-perl.org mailing lists.  Probably not advocacy, but definitely
-perl6-porters, etc.
+=head2 Autoload bytes.pm
 
-=head2 Bug tracking system
+When the lexer sees, for instance, C<bytes::length>, it should
+automatically load the C<bytes> pragma.
 
-Richard Foley I<richard@perl.org> is writing one.  We looked at
-several, like gnats and the Debian system, but at the time we
-investigated them, none met our needs.  Since then, Jitterbug has
-matured, and may be worth reinvestigation.
+=head2 Make "\u{XXXX}" et al work
 
-The system we've developed is the recipient of perlbug mail, and any
-followups it generates from perl5-porters.  New bugs are entered
-into a mysql database, and sent on to
-perl5-porters with the subject line rewritten to include a "ticket
-number" (unique ID for the new bug).  If the incoming message already
-had a ticket number in the subject line, then the message is logged
-against that bug.  There is a separate email interface (not forwarding
-to p5p) that permits porters to claim, categorize, and close tickets.
+Danger, Will Robinson! Discussing the semantics of C<"\x{F00}">,
+C<"\xF00"> and C<"\U{F00}"> on P5P I<will> lead to a long and boring
+flamewar.
 
-There is also a web interface to the system at http://bugs.perl.org.
+=head2 Create a char *sv_pvprintify(sv, STRLEN *lenp, UV flags)
 
-The current delay in implementation is caused by perl.org lockups.
-One suspect is the mail handling system, possibly going into loops.
+For displaying PVs with control characters, embedded nulls, and Unicode.
+This would be useful for printing warnings, or data and regex dumping,
+not_a_number(), and so on.
 
-We still desperately need a bugmaster, someone who will look at
-every new "bug" and kill those that we already know about, those
-that are not bugs at all, etc.
+Requirements: should handle both byte and UTF8 strings.  isPRINT()
+characters printed as-is, character less than 256 as \xHH, Unicode
+characters as \x{HHH}.  Don't assume ASCII-like, either, get somebody
+on EBCDIC to test the output.
 
-=head2 Regression Tests
+Possible options, controlled by the flags:
+- whitespace (other than ' ' of isPRINT()) printed as-is
+- use isPRINT_LC() instead of isPRINT()
+- print control characters like this: "\cA"
+- print control characters like this: "^A"
+- non-PRINTables printed as '.' instead of \xHH
+- use \OOO instead of \xHH
+- use the C/Perl-metacharacters like \n, \t
+- have a maximum length for the produced string (read it from *lenp)
+- append a "..." to the produced string if the maximum length is exceeded
+- really fancy: print unicode characters as \N{...}
 
-The test suite for Perl serves two needs: ensuring features work, and
-ensuring old bugs have not been reintroduced.  Both need work.
+NOTE: pv_display(), pv_uni_display(), sv_uni_display() are already
+doing something like the above.
 
-Brent LaVelle (lavelle@metronet.com) has stepped forward to work on
-performance tests and improving the size of the test suite.
+=head2 Overloadable regex assertions
 
-=over 4
+This may or may not be possible with the current regular expression
+engine. The idea is that, for instance, C<\b> needs to be
+algorithmically computed if you're dealing with Thai text. Hence, the
+B<\b> assertion wants to be overloaded by a function.
 
-=item Coverage
-
-Do the tests that come with Perl exercise every line (or every block,
-or ...)  of the Perl interpreter, and if not then how can we make them
-do so?
-
-=item Regression
-
-No bug fixes should be made without a corresponding testsuite addition.
-This needs a dedicated enforcer, as the current pumpking is either too
-lazy or too stupid or both and lets enforcement wander all over the
-map.  :-)
-
-=item __DIE__
-
-Tests that fail need to be of a form that can be readily mailed
-to perlbug and diagnosed with minimal back-and-forth's to determine
-which test failed, due to what cause, etc.
-
-=item suidperl
-
-We need regression/sanity tests for suidperl
-
-=item The 25% slowdown from perl4 to perl5
-
-This value may or may not be accurate, but it certainly is
-eye-catching.  For some things perl5 is faster than perl4, but often
-the reliability and extensibility have come at a cost of speed.  The
-benchmark suite that Gisle released earlier has been hailed as both a
-fantastic solution and as a source of entirely meaningless figures.
-Do we need to test "real applications"?  Can you do so?  Anyone have
-machines to dedicate to the task?  Identify the things that have grown
-slower, and see if there's a way to make them faster.
-
-=back
-
-=head1 Configure
-
-Andy Dougherty maintain(ed|s) a list of "todo" items for the configure
-that comes with Perl.  See Porting/pumpkin.pod in the latest
-source release.
-
-=head2 Install HTML
-
-Have "make install" give you the option to install HTML as well.  This
-would be part of Configure.  Andy Wardley (certified Perl studmuffin)
-will look into the current problems of HTML installation--is
-'installhtml' preventing this from happening cleanly, or is pod2html
-the problem?  If the latter, Brad Appleton's pod work may fix the
-problem for free.
-
-=head1 Perl Language
-
-=head2 64-bit Perl
-
-Verify complete 64 bit support so that the value of sysseek, or C<-s>, or
-stat(), or tell can fit into a perl number without losing precision.
-Work with the perl-64bit mailing list on perl.org.
-
-=head2 Prototypes
+=head2 Unicode
 
 =over 4
 
-=item Named prototypes
+=item *
 
-Add proper named prototypes that actually work usefully.
+Allow for long form of the General Category Properties, e.g
+C<\p{IsOpenPunctuation}>, not just the abbreviated form, e.g.
+C<\p{IsPs}>.
 
-=item Indirect objects
+=item *
 
-Fix prototype bug that forgets indirect objects.
+Allow for the metaproperties: C<XID Start>, C<XID Continue>,
+C<NF*_NO>, C<NF*_MAYBE> (require the DerivedCoreProperties and
+DerviceNormalizationProperties files).
 
-=item Method calls
+There are also multiple value properties still unimplemented:
+C<Numeric Type>, C<East Asian Width>.
 
-Prototypes for method calls.
+=item *
 
-=item Context
+    Case Mappings? http://www.unicode.org/unicode/reports/tr21/
 
-Return context prototype declarations.
+Mostly implemented (all of 1:1, 1:N, N:1), only the "final sigma"
+and locale-specific rules of SpecCase are not implemented.
 
-=item Scoped subs
+=item *
 
-lexically-scoped subs, e.g. my sub
+UTF-8 identifier names should probably be canonicalized: NFC?
 
-=back
+=item *
 
-=head1 Perl Internals
+UTF-8 in package names and sub names?  The first is problematic
+because of the mapping to pathnames, ditto for the second one if
+one does autosplitting, for example.  Some of this works already
+in 5.8.0, but essentially it is unsupported.  Constructs to consider,
+at the very least:
 
-=head2 magic_setisa
+	use utf8;
+	package UnicodePackage;
+	sub new { bless {}, shift };
+	sub UnicodeMethod1 { ... $_[0]->UnicodeMethod2(...) ... }
+	sub UnicodeMethod2 { ... } # in here caller(0) should contain Unicode
+	...
+	package main;
+	my $x = UnicodePackage->new;
+	print ref $x, "\n";  # should be Unicode
+	$x->UnicodeMethod1(...);
+	my $y = UnicodeMethod3 UnicodePackage ...;
 
-C<magic_setisa> should be made to update %FIELDS [???]
-
-=head2 Garbage Collection
-
-There was talk of a mark-and-sweep garbage collector at TPC2, but the
-(to users) unpredictable nature of its behaviour put some off.
-Sarathy, I believe, did the work.  Here's what he has to say:
-
-Yeah, I hope to implement it someday too.  The points that were
-raised in TPC2 were all to do with calling DESTROY() methods, but
-I think we can accommodate that by extending bless() to stash
-extra information for objects so we track their lifetime accurately
-for those that want their DESTROY() to be predictable (this will be
-a speed hit, naturally, and will therefore be optional, naturally. :)
-
-[N.B. Don't even ask me about this now!  When I have the time to
-write a cogent summary, I'll post it.]
-
-=head2 Reliable signals
-
-Sarathy and Dan Sugalski are working on this.  Chip posted a patch
-earlier, but it was not accepted into 5.005.  The issue is tricky,
-because it has the potential to greatly slow down the core.
-
-There are at least three things to consider:
-
-=over 4
-
-=item Alternate runops() for signal despatch
-
-Sarathy and Dan are discussed this on perl5-porters.
-
-=item Figure out how to die() in delayed sighandler
-
-=item Add tests for Thread::Signal
-
-=item Automatic tests against CPAN
-
-Is there some way to automatically build all/most of CPAN with
-the new Perl and check that the modules there pass all the tests?
+In the above all I<UnicodeXxx> contain (identifier-worthy) characters
+beyond the code point 255, for example 256.  Wherever package/class or
+subroutine names can be returned needs to be checked for Unicodeness.
 
 =back
 
-=head2 Interpolated regex performance bugs
+See L<perlunicode/UNICODE REGULAR EXPRESSION SUPPORT LEVEL> for what's
+there and what's missing.  Almost all of Levels 2 and 3 is missing,
+and as of 5.8.0 not even all of Level 1 is there.
+They have some tricks Perl doesn't yet implement, such as character
+class subtraction.
 
-  while (<>) {
-    $found = 0;
-    foreach $pat (@patterns) {
-      $found++ if /$pat/o;
+	http://www.unicode.org/unicode/reports/tr18/
+
+=head2 Work out exit/die semantics for threads
+
+There are some suggestions to use for example something like this:
+default to "(thread exiting first will) wait for the other threads
+until up to 60 seconds".  Other possibilities:
+
+    use threads wait => 0;
+
+Do not wait.
+
+    use threads wait_for => 10;
+
+Wait up to 10 seconds.
+
+    use threads wait_for => -1;
+
+Wait for ever.
+
+http://archive.develooper.com/perl5-porters@perl.org/msg79618.html
+
+=head2 Better support for nonpreemptive threading systems like GNU pth
+
+To better support nonpreemptive threading systems, perhaps some of the
+blocking functions internally in Perl should do a yield() before a
+blocking call.  (Now certain threads tests ({basic,list,thread.t})
+simply do a yield() before they sleep() to give nonpreemptive thread
+implementations a chance).
+
+In some cases, like the GNU pth, which has replacement functions that
+are nonblocking (pth_select instead of select), maybe Perl should be
+using them instead when built for threading.
+
+=head2 Typed lexicals for compiler
+
+=head2 Compiler workarounds for Win32
+
+=head2 AUTOLOADing in the compiler
+
+=head2 Fixing comppadlist when compiling
+
+=head2 Cleaning up exported namespace
+
+=head2 Complete signal handling
+
+Add C<PERL_ASYNC_CHECK> to opcodes which loop; replace C<sigsetjmp> with
+C<sigjmp>; check C<wait> for signal safety.
+
+=head2 Out-of-source builds
+
+This was done for 5.6.0, but needs reworking for 5.7.x
+
+=head2 POSIX realtime support
+
+POSIX 1003.1 1996 Edition support--realtime stuff: POSIX semaphores,
+message queues, shared memory, realtime clocks, timers, signals (the
+metaconfig units mostly already exist for these)
+
+=head2 UNIX98 support
+
+Reader-writer locks, realtime/asynchronous IO
+
+=head2 IPv6 Support
+
+There are non-core modules, such as C<Socket6>, but these will need
+integrating when IPv6 actually starts to really happen.  See RFC 2292
+and RFC 2553.
+
+=head2 Long double conversion
+
+Floating point formatting is still causing some weird test failures.
+
+=head2 Locales
+
+Locales and Unicode interact with each other in unpleasant ways.
+One possible solution would be to adopt/support ICU:
+
+	http://oss.software.ibm.com/developerworks/opensource/icu/project/
+
+=head2 Arithmetic on non-Arabic numerals
+
+C<[1234567890]> aren't the only numerals any more.
+
+=head2 POSIX Unicode character classes
+
+(C<[=a=]> for equivalence classes, C<[.ch.]> for collation.)
+These are dependent on Unicode normalization and collation.
+
+=head2 Factoring out common suffices/prefices in regexps (trie optimization)
+
+Currently, the user has to optimize C<foo|far> and C<foo|goo> into
+C<f(?:oo|ar)> and C<[fg]oo> by hand; this could be done automatically.
+
+=head2 Security audit shipped utilities
+
+All the code we ship with Perl needs to be sensible about temporary file
+handling, locking, input validation, and so on.
+
+=head2 Sort out the uid-setting mess
+
+Currently there are several problems with the setting of uids ($<, $>
+for the real and effective uids).  Firstly, what exactly setuid() call
+gets invoked in which platform is simply a big mess that needs to be
+untangled.  Secondly, the effects are apparently not standard across
+platforms, (if you first set $< and then $>, or vice versa, being
+uid == euid == zero, or just euid == zero, or as a normal user, what are
+the results?).  The test suite not (usually) being run as root means
+that these things do not get much testing.  Thirdly, there's quite
+often a third uid called saved uid, and Perl has no knowledge of that
+feature in any way.  (If one has the saved uid of zero, one can get
+back any real and effective uids.)  As an example, to change also the
+saved uid, one needs to set the real and effective uids B<twice>-- in
+most systems, that is: in HP-UX that doesn't seem to work.
+
+=head2 Custom opcodes
+
+Have a way to introduce user-defined opcodes without the subroutine call
+overhead of an XSUB; the user should be able to create PP code. Simon
+Cozens has some ideas on this.
+
+=head2 DLL Versioning
+
+Windows needs a way to know what version of an XS or C<libperl> DLL it's
+loading.
+
+=head2 Introduce @( and @)
+
+C<$(> may return "foo bar baz". Unfortunately, since groups can
+theoretically have spaces in their names, this could be one, two or
+three groups.
+
+=head2 Floating point handling
+
+C<NaN> and C<inf> support is particularly troublesome.
+(fp_classify(), fp_class(), fp_class_d(), class(), isinf(),
+isfinite(), finite(), isnormal(), unordered(), <ieeefp.h>,
+<fp_class.h> (there are metaconfig units for all these) (I think),
+fp_setmask(), fp_getmask(), fp_setround(), fp_getround()
+(no metaconfig units yet for these).  Don't forget finitel(), fp_classl(),
+fp_class_l(), (yes, both do, unfortunately, exist), and unorderedl().)
+
+As of Perl 5.6.1, there is a Perl macro, Perl_isnan().
+
+=head2 IV/UV preservation
+
+Nicholas Clark has done a lot of work on this, but work is continuing.
+C<+>, C<-> and C<*> work, but guards need to be in place for C<%>, C</>,
+C<&>, C<oct>, C<hex> and C<pack>.
+
+=head2 Replace pod2html with something using Pod::Parser
+
+The CPAN module C<Marek::Pod::Html> may be a more suitable basis for a
+C<pod2html> converter; the current one duplicates the functionality
+abstracted in C<Pod::Parser>, which makes updating the POD language
+difficult.
+
+=head2 Automate module testing on CPAN
+
+When a new Perl is being beta tested, porters have to manually grab
+their favourite CPAN modules and test them - this should be done
+automatically.
+
+=head2 sendmsg and recvmsg
+
+We have all the other BSD socket functions but these. There are
+metaconfig units for these functions which can be added. To avoid these
+being new opcodes, a solution similar to the way C<sockatmark> was added
+would be preferable. (Autoload the C<IO::whatever> module.)
+
+=head2 Rewrite perlre documentation
+
+The new-style patterns need full documentation, and the whole document
+needs to be a lot clearer.
+
+=head2 Convert example code to IO::Handle filehandles
+
+=head2 Document Win32 choices
+
+=head2 Check new modules
+
+=head2 Make roffitall find pods and libs itself
+
+Simon Cozens has done some work on this but it needs a rethink.
+
+=head1 To do at some point
+
+These are ideas that have been regularly tossed around, that most
+people believe should be done maybe during 5.8.x
+
+=head2 Remove regular expression recursion
+
+Because the regular expression engine is recursive, badly designed
+expressions can lead to lots of recursion filling up the stack. Ilya
+claims that it is easy to convert the engine to being iterative, but
+this has still not yet been done. There may be a regular expression
+engine hit squad meeting at TPC5.
+
+=head2 Memory leaks after failed eval
+
+Perl will leak memory if you C<eval "hlagh hlagh hlagh hlagh">. This is
+partially because it attempts to build up an op tree for that code and
+doesn't properly free it. The same goes for non-syntactically-correct
+regular expressions. Hugo looked into this, but decided it needed a
+mark-and-sweep GC implementation. 
+
+Alan notes that: The basic idea was to extend the parser token stack
+(C<YYSTYPE>) to include a type field so we knew what sort of thing each
+element of the stack was.  The F<perly.c> code would then have to be
+postprocessed to record the type of each entry on the stack as it was
+created, and the parser patched so that it could unroll the stack
+properly on error.
+
+This is possible to do, but would be pretty messy to implement, as it
+would rely on even more sed hackery in F<perly.fixer>.
+
+=head2 bitfields in pack
+
+=head2 Cross compilation
+
+Make Perl buildable with a cross-compiler. This will play havoc with
+Configure, which needs to know how the target system will respond to
+its tests; maybe C<microperl> will be a good starting point here.
+(Indeed, Bart Schuller reports that he compiled up C<microperl> for
+the Agenda PDA and it works fine.)  A really big spanner in the works
+is the bootstrapping build process of Perl: if the filesystem the
+target systems sees is not the same what the build host sees, various
+input, output, and (Perl) library files need to be copied back and forth.
+
+As of 5.8.0 Configure mostly works for cross-compilation
+(used successfully for iPAQ Linux), miniperl gets built,
+but then building DynaLoader (and other extensions) fails
+since MakeMaker knows nothing of cross-compilation.
+(See INSTALL/Cross-compilation for the state of things.)
+
+=head2 Perl preprocessor / macros
+
+Source filters help with this, but do not get us all the way. For
+instance, it should be possible to implement the C<??> operator somehow;
+source filters don't (quite) cut it.
+
+=head2 Perl lexer in Perl
+
+Damian Conway is planning to work on this, but it hasn't happened yet.
+
+=head2 Using POSIX calls internally
+
+When faced with a BSD vs. SysV -style interface to some library or
+system function, perl's roots show in that it typically prefers the BSD
+interface (but falls back to the SysV one).  One example is getpgrp().
+Other examples include C<memcpy> vs. C<bcopy>.  There are others, mostly in
+F<pp_sys.c>.
+
+Mostly, this item is a suggestion for which way to start a journey into
+an C<#ifdef> forest.  It is not primarily a suggestion to eliminate any of
+the C<#ifdef> forests.
+
+POSIX calls are perhaps more likely to be portable to unexpected
+architectures. They are also perhaps more likely to be actively
+maintained by a current vendor.  They are also perhaps more likely to be
+available in thread-safe versions, if appropriate.
+
+=head2 -i rename file when changed
+
+It's only necessary to rename a file when inplace editing when the file
+has changed. Detecting a change is perhaps the difficult bit.
+
+=head2 All ARGV input should act like E<lt>E<gt>
+
+eg C<read(ARGV, ...)> doesn't currently read across multiple files.
+
+=head2 Support for rerunning debugger
+
+There should be a way of restarting the debugger on demand.
+
+=head2 Test Suite for the Debugger
+
+The debugger is a complex piece of software and fixing something
+here may inadvertently break something else over there.  To tame
+this chaotic behaviour, a test suite is necessary. 
+
+=head2 my sub foo { }
+
+The basic principle is sound, but there are problems with the semantics
+of self-referential and mutually referential lexical subs: how to
+declare the subs?
+
+=head2 One-pass global destruction
+
+Sweeping away all the allocated memory in one go is a laudable goal, but
+it's difficult and in most cases, it's easier to let the memory get
+freed by exiting.
+
+=head2 Rewrite regexp parser
+
+There has been talk recently of rewriting the regular expression parser
+to produce an optree instead of a chain of opcodes; it's unclear whether
+or not this would be a win. 
+
+=head2 Cache recently used regexps
+
+This is to speed up 
+
+    for my $re (@regexps) {
+        $matched++ if /$re/
     }
-    print if $found;
-  }
 
-The qr// syntax added in 5.005 has solved this problem, but
-it needs more thorough documentation.
+C<qr//> already gives us a way of saving compiled regexps, but it should
+be done automatically.
 
-=head2 Memory leaks from failed eval/regcomp
+=head2 Cross-compilation support
 
-The only known memory leaks in Perl are in failed code or regexp
-compilation.  Fix this.  Hugo Van Der Sanden will attempt this but
-won't have tuits until January 1999.
+Bart Schuller reports that using C<microperl> and a cross-compiler, he
+got Perl working on the Agenda PDA. However, one cannot build a full
+Perl because Configure needs to get the results for the target platform,
+for the host.
 
-=head2 Make XS easier to use
+=head2 Bit-shifting bitvectors
 
-There was interest in SWIG from porters, but nothing has happened
-lately.
+Given:
 
-=head2 Make embedded Perl easier to use
+    vec($v, 1000, 1) = 1;
 
-This is probably difficult for the same reasons that "XS For Dummies"
-will be difficult.
+One should be able to do
 
-=head2 Namespace cleanup
+    $v <<= 1;
 
-    CPP-space:    restrict CPP symbols exported from headers
-    header-space: move into CORE/perl/
-    API-space:    begin list of things that constitute public api
-    env-space:    Configure should use PERL_CONFIG instead of CONFIG etc.
+and have the 999'th bit set.
 
-=head2 MULTIPLICITY
+Currently if you try with shift bitvectors you shift the NV/UV, instead
+of the bits in the PV.  Not very logical.
 
-Complete work on safe recursive interpreters C<Perl-E<gt>new()>.
-Sarathy says that a reference implementation exists.
+=head2 debugger pragma
 
-=head2 MacPerl
+The debugger is implemented in Perl in F<perl5db.pl>; turning it into a
+pragma should be easy, but making it work lexically might be more
+difficult. Fiddling with C<$^P> would be necessary.
 
-Chris Nandor and Matthias Neeracher are working on better integrating
-MacPerl into the Perl distribution.
+=head2 use less pragma
 
-=head1 Documentation
+Identify areas where speed/memory tradeoffs can be made and have a hint
+to switch between them.
 
-There's a lot of documentation that comes with Perl.  The quantity of
-documentation makes it difficult for users to know which section of
-which manpage to read in order to solve their problem.  Tom
-Christiansen has done much of the documentation work in the past.
+=head2 switch structures
 
-=head2 A clear division into tutorial and reference
-
-Some manpages (e.g., perltoot and perlreftut) clearly set out to
-educate the reader about a subject.  Other manpages (e.g., perlsub)
-are references for which there is no tutorial, or are references with
-a slight tutorial bent.  If things are either tutorial or reference,
-then the reader knows which manpage to read to learn about a subject,
-and which manpage to read to learn all about an aspect of that
-subject.  Part of the solution to this is:
-
-=head2 Remove the artificial distinction between operators and functions
-
-History shows us that users, and often porters, aren't clear on the
-operator-function distinction.  The present split in reference
-material between perlfunc and perlop hinders user navigation.  Given
-that perlfunc is by far the larger of the two, move operator reference
-into perlfunc.
-
-=head2 More tutorials
-
-More documents of a tutorial nature could help.  Here are some
-candidates:
-
-=over 4
-
-=item Regular expressions
-
-Robin Berjon (r.berjon@ltconsulting.net) has volunteered.
-
-=item I/O
-
-Mark-Jason Dominus (mjd@plover.com) has an outline for perliotut.
-
-=item pack/unpack
-
-This is badly needed.  There has been some discussion on the
-subject on perl5-porters.
-
-=item Debugging
-
-Ronald Kimball (rjk@linguist.dartmouth.edu) has volunteered.
-
-=back
-
-=head2 Include a search tool
-
-perldoc should be able to 'grep' fulltext indices of installed POD
-files.  This would let people say:
-
-  perldoc -find printing numbers with commas
-
-and get back the perlfaq entry on 'commify'.
-
-This solution, however, requires documentation to contain the keywords
-the user is searching for.  Even when the users know what they're
-looking for, often they can't spell it.
-
-=head2 Include a locate tool
-
-perldoc should be able to help people find the manpages on a
-particular high-level subject:
-
-  perldoc -find web
-
-would tell them manpages, web pages, and books with material on web
-programming.  Similarly C<perldoc -find databases>, C<perldoc -find
-references> and so on.
-
-We need something in the vicinity of:
-
-  % perl -help random stuff
-  No documentation for perl function `random stuff' found
-  The following entry in perlfunc.pod matches /random/a:
-    =item rand EXPR
-
-    =item rand
-
-    Returns a random fractional number greater than or equal to C<0> and less
-    than the value of EXPR.  (EXPR should be positive.)  If EXPR is
-    omitted, the value C<1> is used.  Automatically calls C<srand()> unless
-    C<srand()> has already been called.  See also C<srand()>.
-
-    (Note: If your rand function consistently returns numbers that are too
-    large or too small, then your version of Perl was probably compiled
-    with the wrong number of RANDBITS.)
-  The following pod pages seem to have /stuff/a:
-    perlfunc.pod	(7 hits)
-    perlfaq7.pod	(6 hits)
-    perlmod.pod		(4 hits)
-    perlsyn.pod		(3 hits)
-    perlfaq8.pod	(2 hits)
-    perlipc.pod		(2 hits)
-    perl5004delta.pod	(1 hit)
-    perl5005delta.pod	(1 hit)
-    perlcall.pod	(1 hit)
-    perldelta.pod	(1 hit)
-    perlfaq3.pod	(1 hit)
-    perlfaq5.pod	(1 hit)
-    perlhist.pod	(1 hit)
-    perlref.pod		(1 hit)
-    perltoc.pod		(1 hit)
-    perltrap.pod	(1 hit)
-  Proceed to open perlfunc.pod? [y] n
-  Do you want to speak perl interactively? [y] n
-  Should I dial 911? [y] n
-  Do you need psychiatric help? [y] y
-  <PELIZA> Hi, what bothers you today?
-           A Python programmer in the next cubby is driving me nuts!
-  <PELIZA> Hmm, thats fixable.  Just [rest censored]
-
-=head2 Separate function manpages by default
-
-Perl should install 'manpages' for every function/operator into the
-3pl or 3p manual section.  By default.  The splitman program in the
-Perl source distribution does the work of turning big perlfunc into
-little 3p pages.
-
-=head2 Users can't find the manpages
-
-Make C<perldoc> tell users what they need to add to their .login or
-.cshrc to set their MANPATH correctly.
-
-=head2 Install ALL Documentation
-
-Make the standard documentation kit include the VMS, OS/2, Win32,
-Threads, etc information.  installperl and pod/Makefile should know
-enough to copy README.foo to perlfoo.pod before building everything,
-when appropriate.
-
-=head2 Outstanding issues to be documented
-
-Tom has a list of 5.005_5* features or changes that require
-documentation.
-
-Create one document that coherently explains the delta between the
-last camel release and the current release.  perldelta was supposed
-to be that, but no longer.  The things in perldelta never seemed to
-get placed in the right places in the real manpages, either.  This
-needs work.
-
-=head2 Adapt www.linuxhq.com for Perl
-
-This should help glorify documentation and get more people involved in
-perl development.
-
-=head2 Replace man with a perl program
-
-Can we reimplement man in Perl?  Tom has a start.  I believe some of
-the Linux systems distribute a manalike.  Alternatively, build on
-perldoc to remove the unfeatures like "is slow" and "has no apropos".
-
-=head2 Unicode tutorial
-
-We could use more work on helping people understand Perl's new
-Unicode support that Larry has created.
-
-=head1 Modules
-
-=head2 Update the POSIX extension to conform with the POSIX 1003.1 Edition 2
-
-The current state of the POSIX extension is as of Edition 1, 1991,
-whereas the Edition 2 came out in 1996.  ISO/IEC 9945:1-1996(E),
-ANSI/IEEE Std 1003.1, 1996 Edition. ISBN 1-55937-573-6.  The updates
-were legion: threads, IPC, and real time extensions.
-
-=head2 Module versions
-
-Automate the checking of versions in the standard distribution so
-it's easy for a pumpking to check whether CPAN has a newer version
-that we should be including?
-
-=head2 New modules
-
-Which modules should be added to the standard distribution?  This ties
-in with the SDK discussed on the perl-sdk list at perl.org.
-
-=head2 Profiler
-
-Make the profiler (Devel::DProf) part of the standard release, and
-document it well.
-
-=head2 Tie Modules
-
-=over 4
-
-=item VecArray
-
-Implement array using vec().  Nathan Torkington has working code to
-do this.
-
-=item SubstrArray
-
-Implement array using substr()
-
-=item VirtualArray
-
-Implement array using a file
-
-=item ShiftSplice
-
-Defines shift et al in terms of splice method
-
-=back
-
-=head2 Procedural options
-
-Support procedural interfaces for the common cases of Perl's
-gratuitously OOO modules.  Tom objects to "use IO::File" reading many
-thousands of lines of code.
-
-=head2 RPC
-
-Write a module for transparent, portable remote procedure calls.  (Not
-core).  This touches on the CORBA and ILU work.
-
-=head2 y2k localtime/gmtime
-
-Write a module, Y2k::Catch, which overloads localtime and gmtime's
-returned year value and catches "bad" attempts to use it.
-
-=head2 Export File::Find variables
-
-Make File::Find export C<$name> etc manually, at least if asked to.
-
-=head2 Ioctl
-
-Finish a proper Ioctl module.
-
-=head2 Debugger attach/detach
-
-Permit a user to debug an already-running program.
-
-=head2 Regular Expression debugger
-
-Create a visual profiler/debugger tool that stepped you through the
-execution of a regular expression point by point.  Ilya has a module
-to color-code and display regular expression parses and executions.
-There's something at http://tkworld.org/ that might be a good start,
-it's a Tk/Tcl RE wizard, that builds regexen of many flavours.
-
-=head2 Alternative RE Syntax
-
-Make an alternative regular expression syntax that is accessed through
-a module.  For instance,
-
-  use RE;
-  $re = start_of_line()
-      ->literal("1998/10/08")
-      ->optional( whitespace() )
-      ->literal("[")
-      ->remember( many( or( "-", digit() ) ) );
-
-  if (/$re/) {
-    print "time is $1\n";
-  }
-
-Newbies to regular expressions typically only use a subset of the full
-language.  Perhaps you wouldn't have to implement the full feature set.
-
-=head2 Bundled modules
-
-Nicholas Clark (nick@flirble.org) had a patch for storing modules in
-zipped format.  This needs exploring and concluding.
-
-=head2 Expect
-
-Adopt IO::Tty, make it as portable as Don Libes' "expect" (can we link
-against expect code?), and perfect a Perl version of expect.  IO::Tty
-and expect could then be distributed as part of the core distribution,
-replacing Comm.pl and other hacks.
-
-=head2 GUI::Native
-
-A simple-to-use interface to native graphical abilities would
-be welcomed.  Oh, Perl's access Tk is nice enough, and reasonably
-portable, but it's not particularly as fast as one would like.
-Simple access to the mouse's cut buffer or mouse-presses shouldn't
-required loading a few terabytes of Tk code.
-
-=head2 Update semibroken auxiliary tools; h2ph, a2p, etc.
-
-Kurt Starsinic is working on h2ph.  mjd has fixed bugs in a2p in the
-past.  a2p apparently doesn't work on nawk and gawk extensions.
-Graham Barr has an Include module that does h2ph work at runtime.
-
-=head2 pod2html
-
-A short-term fix: pod2html generates absolute HTML links.  Make it
-generate relative links.
-
-=head2 Podchecker
-
-Something like lint for Pod would be good.  Something that catches
-common errors as well as gross ones.  Brad Appleton is putting
-together something as part of his PodParser work.
-
-=head1 Tom's Wishes
-
-=head2 Webperl
-
-Design a webperl environment that's as tightly integrated and as
-easy-to-use as Perl's current command-line environment.
-
-=head2 Mobile agents
-
-More work on a safe and secure execution environment for mobile
-agents would be neat; the Safe.pm module is a start, but there's a
-still a lot to be done in that area.  Adopt Penguin?
-
-=head2 POSIX on non-POSIX
-
-Standard programming constructs for non-POSIX systems would help a
-lot of programmers stuck on primitive, legacy systems.  For example,
-Microsoft still hasn't made a usable POSIX interface on their clunky
-systems, which means that standard operations such as alarm() and
-fork(), both critical for sophisticated client-server programming,
-must both be kludged around.
-
-I'm unsure whether Tom means to emulate alarm( )and fork(), or merely
-to provide a document like perlport.pod to say which features are
-portable and which are not.
-
-=head2 Portable installations
-
-Figure out a portable semi-gelled installation, that is, one without
-full paths.  Larry has said that he's thinking about this.  Ilya
-pointed out that perllib_mangle() is good for this.
-
-=head1 Win32 Stuff
-
-=head2 Rename new headers to be consistent with the rest
-
-=head2 Sort out the spawnvp() mess
-
-=head2 Work out DLL versioning
-
-=head2 Style-check
-
-=head1 Would be nice to have
-
-=over 4
-
-=item C<pack "(stuff)*">
-
-=item Contiguous bitfields in pack/unpack
-
-=item lexperl
-
-=item Bundled perl preprocessor
-
-=item Use posix calls internally where possible
-
-=item format BOTTOM
-
-=item -i rename file only when successfully changed
-
-=item All ARGV input should act like <>
-
-=item report HANDLE [formats].
-
-=item support in perlmain to rerun debugger
-
-=item lvalue functions
-
-Tuomas Lukka, on behalf of the PDL project, greatly desires this and
-Ilya has a patch for it (probably against an older version of Perl).
-Tuomas points out that what PDL really wants is lvalue I<methods>,
-not just subs.
-
-=back
-
-=head1 Possible pragmas
-
-=head2 'less'
-
-(use less memory, CPU)
-
-=head1 Optimizations
-
-=head2 constant function cache
-
-=head2 foreach(reverse...)
+Although we have C<Switch.pm> in core, Larry points to the dormant
+C<nswitch> and C<cswitch> ops in F<pp.c>; using these opcodes would be
+much faster.
 
 =head2 Cache eval tree
-
-Unless lexical outer scope used (mark in &compiling?).
 
 =head2 rcatmaybe
 
 =head2 Shrink opcode tables
 
-Via multiple implementations selected in peep.
+=head2 Optimize away @_
 
-=head2 Cache hash value
+Look at the "reification" code in C<av.c>
 
-Not a win, according to Guido.
+=head2 Prototypes versus indirect objects
 
-=head2 Optimize away @_ where possible
+Currently, indirect object syntax bypasses prototype checks.
 
-=head2 Optimize sort by { $a <=> $b }
+=head2 Install HTML
 
-Greg Bacon added several more sort optimizations.  These have
-made it into 5.005_55, thanks to Hans Mulder.
+HTML versions of the documentation need to be installed by default; a
+call to C<installhtml> from C<installperl> may be all that's necessary.
 
-=head2 Rewrite regexp parser for better integrated optimization
+=head2 Prototype method calls
 
-The regexp parser was rewritten for 5.005.  Ilya's the regexp guru.
+=head2 Return context prototype declarations
 
-=head1 Vague possibilities
+=head2 magic_setisa
 
-=over 4
+=head2 Garbage collection
 
-=item ref function in list context
+There have been persistent mumblings about putting a mark-and-sweep
+garbage detector into Perl; Alan Burlison has some ideas about this.
 
-This seems impossible to do without substantially breaking code.
+=head2 IO tutorial
 
-=item make tr/// return histogram in list context?
+Mark-Jason Dominus has the beginnings of one of these.
 
-=item Loop control on do{} et al
+=head2 Rewrite perldoc
 
-=item Explicit switch statements
+There are a few suggestions for what to do with C<perldoc>: maybe a
+full-text search, an index function, locating pages on a particular
+high-level subject, and so on.
 
-Nobody has yet managed to come up with a switch syntax that would
-allow for mixed hash, constant, regexp checks.  Submit implementation
-with syntax, please.
+=head2 Install .3p manpages
 
-=item compile to real threaded code
+This is a bone of contention; we can create C<.3p> manpages for each
+built-in function, but should we install them by default? Tcl does this,
+and it clutters up C<apropos>.
 
-=item structured types
+=head2 Unicode tutorial
 
-=item Modifiable $1 et al
+Simon Cozens promises to do this before he gets old.
 
-The intent is for this to be a means of editing the matched portions of
-the target string.
+=head2 Update POSIX.pm for 1003.1-2
 
-=back
+=head2 Retargetable installation
 
-=head1 To Do Or Not To Do
+Allow C<@INC> to be changed after Perl is built.
 
-These are things that have been discussed in the past and roundly
-criticized for being of questionable value.
+=head2 POSIX emulation on non-POSIX systems
 
-=head2 Making my() work on "package" variables
+Make C<POSIX.pm> behave as POSIXly as possible everywhere, meaning we
+have to implement POSIX equivalents for some functions if necessary.
 
-Being able to say my($Foo::Bar), something that sounds ludicrous and
-the 5.6 pumpking has mocked.
+=head2 Rename Win32 headers
 
-=head2 "or" testing defined not truth
+=head2 Finish off lvalue functions
 
-We tell people that C<||> can be used to give a default value to a
-variable:
+They don't work in the debugger, and they don't work for list or hash
+slices.
 
-    $children = shift || 5;		# default is 5 children
+=head2 Update sprintf documentation
 
-which is almost (but not):
+Hugo van der Sanden plans to look at this.
 
-    $children = shift;
-    $children = 5 unless $children;
+=head2 Use fchown/fchmod internally
 
-but if the first argument was given and is "0", then it will be
-considered false by C<||> and C<5> used instead.  Really we want
-an C<||>-like operator that behaves like:
+This has been done in places, but needs a thorough code review.
+Also fchdir is available in some platforms.
 
-    $children = shift;
-    $children = 5 unless defined $children;
+=head2 Make v-strings overloaded objects
 
-Namely, a C<||> that tests defined-ness rather than truth.  One was
-discussed, and a patch submitted, but the objections were many.  While
-there were objections, many still feel the need.  At least it was
-decided that C<??> is the best name for the operator.
+Instead of having to guess whether a string is a v-string and thus
+needs to be displayed with %vd, make v-strings (readonly) objects
+(class "vstring"?) with a stringify overload.
 
-=head2 "dynamic" lexicals
+=head2 Allow restricted hash assignment
 
-  my $x;
-  sub foo {
-    local $x;
-  }
+Currently you're not allowed to assign to a restricted hash at all,
+even with the same keys.
 
-Localizing, as Tim Bunce points out, is a separate concept from
-whether the variable is global or lexical.  Chip Salzenberg had
-an implementation once, but Larry thought it had potential to
-confuse.
+    %restricted = (foo => 42);  # error
 
-=head2 "class"-based, rather than package-based "lexicals"
+This should be allowed if the new keyset is a subset of the old
+keyset.  May require more extra code than we'd like in pp_aassign.
 
-This is like what the Alias module provides, but the variables would
-be lexicals reserved by perl at compile-time, which really are indices
-pointing into the pseudo-hash object visible inside every method so
-declared.
+=head2 Should overload be inheritable?
 
-=head1 Threading
+Should overload be 'contagious' through @ISA so that derived classes
+would inherit their base classes' overload definitions?  What to do
+in case of overload conflicts?
 
-=head2 Modules
+=head2 Taint rethink
 
-Which of the standard modules are thread-safe?  Which CPAN modules?
-How easy is it to fix those non-safe modules?
+Should taint be stopped from affecting control flow, if ($tainted)?
+Should tainted symbolic method calls and subref calls be stopped?
+(Look at Ruby's $SAFE levels for inspiration?)
 
-=head2 Testing
+=head1 Vague ideas
 
-Threading is still experimental.  Every reproducible bug identifies
-something else for us to fix.  Find and submit more of these problems.
+Ideas which have been discussed, and which may or may not happen.
 
-=head2 $AUTOLOAD
+=head2 ref() in list context
 
-=head2 exit/die
+It's unclear what this should do or how to do it without breaking old
+code.
 
-Consistent semantics for exit/die in threads.
+=head2 Make tr/// return histogram of characters in list context
 
-=head2 External threads
+There is a patch for this, but it may require Unicodification.
 
-Better support for externally created threads.
+=head2 Compile to real threaded code
 
-=head2 Thread::Pool
+=head2 Structured types
 
-=head2 thread-safety
+=head2 Modifiable $1 et al.
 
-Spot-check globals like statcache and global GVs for thread-safety.
-"B<Part done>", says Sarathy.
+    ($x = "elephant") =~ /e(ph)/;
+    $1 = "g"; # $x = "elegant"
 
-=head2 Per-thread GVs
+What happens if there are multiple (nested?) brackets? What if the
+string changes between the match and the assignment?
 
-According to Sarathy, this would make @_ be the same in threaded
-and non-threaded, as well as helping solve problems like filehandles
-(the same filehandle currently cannot be used in two threads).
+=head2 Procedural interfaces for IO::*, etc.
 
-=head1 Compiler
+Some core modules have been accused of being overly-OO. Adding
+procedural interfaces could demystify them.
 
-=head2 Optimization
+=head2 RPC modules
 
-The compiler's back-end code-generators for creating bytecode or
-compilable C code could use optimization work.
+=head2 Attach/detach debugger from running program
 
-=head2 Byteperl
+With C<gdb>, you can attach the debugger to a running program if you
+pass the process ID. It would be good to do this with the Perl debugger
+on a running Perl program, although I'm not sure how it would be done.
 
-Figure out how and where byteperl will be built for the various
-platforms.
+=head2 GUI::Native
 
-=head2 Precompiled modules
+A non-core module that would use "native" GUI to create graphical
+applications.
 
-Save byte-compiled modules on disk.
+=head2 foreach(reverse ...)
 
-=head2 Executables
+Currently
 
-Auto-produce executable.
+    foreach (reverse @_) { ... }
 
-=head2 Typed lexicals
+puts C<@_> on the stack, reverses it putting the reversed version on the
+stack, then iterates forwards. Instead, it could be special-cased to put
+C<@_> on the stack then iterate backwards.
 
-Typed lexicals should affect B::CC::load_pad.
+=head2 Constant function cache
 
-=head2 Win32
+=head2 Approximate regular expression matching
 
-Workarounds to help Win32 dynamic loading.
+=head1 Ongoing
 
-=head2 END blocks
+These items B<always> need doing:
 
-END blocks need saving in compiled output, now that CHECK blocks
-are available.
+=head2 Update guts documentation
 
-=head2 _AUTOLOAD
+Simon Cozens tries to do this when possible, and contributions to the
+C<perlapi> documentation is welcome.
 
-_AUTOLOAD prodding.
+=head2 Add more tests
 
-=head2 comppadlist
+Michael Schwern will donate $500 to Yet Another Society when all core
+modules have tests.
 
-Fix comppadlist (names in comppad_name can have fake SvCUR
-from where newASSIGNOP steals the field).
+=head2 Update auxiliary tools
 
-=head2 Cached compilation
+The code we ship with Perl should look like good Perl 5.
 
-Can we install modules as bytecode?
+=head2 Create debugging macros
 
-=head1 Recently Finished Tasks
+Debugging macros (like printsv, dump) can make debugging perl inside a
+C debugger much easier.  A good set for gdb comes with mod_perl.
+Something similar should be distributed with perl.
 
-=head2 Figure a way out of $^(capital letter)
+The proper way to do this is to use and extend Devel::DebugInit.
+Devel::DebugInit also needs to be extended to support threads.
 
-Figure out a clean way to extend $^(capital letter) beyond
-the 26 alphabets.  (${^WORD} maybe?)
+See p5p archives for late May/early June 2001 for a recent discussion
+on this topic.
 
-Mark-Jason Dominus sent a patch which went into 5.005_56.
+=head2 truncate to the people
 
-=head2 Filenames
+One can emulate ftruncate() using F_FREESP and F_CHSIZ fcntls
+(see the UNIX FAQ for details).  This needs to go somewhere near
+pp_sys.c:pp_truncate().
 
-Keep filenames in the distribution and in the standard module set
-be 8.3 friendly where feasible.  Good luck changing the standard
-modules, though.
+One can emulate truncate() easily if one has ftruncate().
+This emulation should also go near pp_sys.pp_truncate().
 
-=head2 Foreign lines
+=head2 Unicode in Filenames
 
-Perl should be more generous in accepting foreign line terminations.
-Mostly B<done> in 5.005.
+chdir, chmod, chown, chroot, exec, glob, link, lstat, mkdir, open,
+opendir, qx, readdir, readlink, rename, rmdir, stat, symlink, sysopen,
+system, truncate, unlink, utime.  All these could potentially accept
+Unicode filenames either as input or output (and in the case of system
+and qx Unicode in general, as input or output to/from the shell).
+Whether a filesystem - an operating system pair understands Unicode in
+filenames varies.
 
-=head2 Namespace cleanup
+Known combinations that have some level of understanding include
+Microsoft NTFS, Apple HFS+ (In Mac OS 9 and X) and Apple UFS (in Mac
+OS X), NFS v4 is rumored to be Unicode, and of course Plan 9.  How to
+create Unicode filenames, what forms of Unicode are accepted and used
+(UCS-2, UTF-16, UTF-8), what (if any) is the normalization form used,
+and so on, varies.  Finding the right level of interfacing to Perl
+requires some thought.  Remember that an OS does not implicate a
+filesystem.
 
-    symbol-space: "pl_" prefix for all global vars
-                  "Perl_" prefix for all functions
+Note that in Windows the -C command line flag already does quite
+a bit of the above (but even there the support is not complete:
+for example the exec/spawn are not Unicode-aware) by turning on
+the so-called "wide API support". 
 
-    CPP-space:	  stop malloc()/free() pollution unless asked
+=head1 Recently done things
 
-=head2 ISA.pm
+These are things which have been on the todo lists in previous releases
+but have recently been completed.
 
-Rename and alter ISA.pm.  B<Done>.  It is now base.pm.
+=head2 Alternative RE syntax module
+
+The C<Regexp::English> module, available from the CPAN, provides this:
+
+    my $re = Regexp::English
+    -> start_of_line
+    -> literal('Flippers')
+    -> literal(':')
+    -> optional
+        -> whitespace_char
+    -> end
+    -> remember
+        -> multiple
+            -> digit;
+
+    /$re/;
+
+=head2 Safe signal handling
+
+A new signal model went into 5.7.1 without much fanfare. Operations and
+C<malloc>s are no longer interrupted by signals, which are handled
+between opcodes. This means that C<PERL_ASYNC_CHECK> now actually does
+something. However, there are still a few things that need to be done.
+
+=head2 Tie Modules
+
+Modules which implement arrays in terms of strings, substrings or files
+can be found on the CPAN.
 
 =head2 gettimeofday
 
-See Time::HiRes.
+C<Time::HiRes> has been integrated into the core.
 
-=head2 autocroak?
+=head2 setitimer and getimiter
 
-This is the Fatal.pm module, so any builtin that does
-not return success automatically die()s.  If you're feeling brave, tie
-this in with the unified exceptions scheme.
+Adding C<Time::HiRes> got us this too.
+
+=head2 Testing __DIE__ hook
+
+Tests have been added.
+
+=head2 CPP equivalent in Perl
+
+A C Yardley will probably have done this by the time you can read this.
+This allows for a generalization of the C constant detection used in
+building C<Errno.pm>.
+
+=head2 Explicit switch statements
+
+C<Switch.pm> has been integrated into the core to give you all manner of
+C<switch...case> semantics.
+
+=head2 autocroak
+
+This is C<Fatal.pm>.
+
+=head2 UTF/EBCDIC
+
+Nick Ing-Simmons has made UTF-EBCDIC (UTR13) work with Perl.
+
+    EBCDIC?        http://www.unicode.org/unicode/reports/tr16/
+
+=head2 UTF Regexes
+
+Although there are probably some small bugs to be rooted out, Jarkko
+Hietaniemi has made regular expressions polymorphic between bytes and
+characters.
+
+=head2 perlcc to produce executable
+
+C<perlcc> was recently rewritten, and can now produce standalone
+executables.
+
+=head2 END blocks saved in compiled output
+
+=head2 Secure temporary file module
+
+Tim Jenness' C<File::Temp> is now in core.
+
+=head2 Integrate Time::HiRes
+
+This module is now part of core.
+
+=head2 Turn Cwd into XS
+
+Benjamin Sugars has done this.
+
+=head2 Mmap for input
+
+Nick Ing-Simmons' C<perlio> supports an C<mmap> IO method.
+
+=head2 Byte to/from UTF8 and UTF8 to/from local conversion
+
+C<Encode> provides this.
+
+=head2 Add sockatmark support
+
+Added in 5.7.1
+
+=head2 Mailing list archives
+
+http://lists.perl.org/ , http://archive.develooper.com/
+
+=head2 Bug tracking
+
+Richard Foley has written the bug tracking system at http://bugs.perl.org/
+
+=head2 Integrate MacPerl
+
+Chris Nandor and Matthias Neeracher have integrated the MacPerl changes
+into 5.6.0.
+
+=head2 Web "nerve center" for Perl
+
+http://use.perl.org/ is what you're looking for.
+
+=head2 Regular expression tutorial
+
+C<perlretut>, provided by Mark Kvale.
+
+=head2 Debugging Tutorial
+
+C<perldebtut>, written by Richard Foley.
+
+=head2 Integrate new modules
+
+Jarkko has been integrating madly into 5.7.x
+
+=head2 Integrate profiler
+
+C<Devel::DProf> is now a core module.
+
+=head2 Y2K error detection
+
+There's a configure option to detect unsafe concatenation with "19", and
+a CPAN module. (C<D'oh::Year>)
+
+=head2 Regular expression debugger
+
+While not part of core, Mark-Jason Dominus has written C<Rx> and has
+also come up with a generalised strategy for regular expression
+debugging.
+
+=head2 POD checker
+
+That's, uh, F<podchecker>
+
+=head2 "Dynamic" lexicals
+
+=head2 Cache precompiled modules
+
+=head1 Deprecated Wishes
+
+These are items which used to be in the todo file, but have been
+deprecated for some reason.
+
+=head2 Loop control on do{}
+
+This would break old code; use C<do{{ }}> instead.
+
+=head2 Lexically scoped typeglobs
+
+Not needed now we have lexical IO handles.
+
+=head2 format BOTTOM
+
+=head2 report HANDLE
+
+Damian Conway's text formatting modules seem to be the Way To Go.
+
+=head2 Generalised want()/caller())
+
+Robin Houston's C<Want> module does this.
+
+=head2 Named prototypes
+
+This seems to be delayed until Perl 6.
+
+=head2 Built-in globbing
+
+The C<File::Glob> module has been used to replace the C<glob> function.
+
+=head2 Regression tests for suidperl
+
+C<suidperl> is deprecated in favour of common sense.
+
+=head2 Cached hash values
+
+We have shared hash keys, which perform the same job.
+
+=head2 Add compression modules
+
+The compression modules are a little heavy; meanwhile, Nick Clark is
+working on experimental pragmata to do transparent decompression on
+input.
+
+=head2 Reorganise documentation into tutorials/references
+
+Could not get consensus on P5P about this.
+
+=head2 Remove distinction between functions and operators
+
+Caution: highly flammable.
+
+=head2 Make XS easier to use
+
+Use C<Inline> instead, or SWIG.
+
+=head2 Make embedding easier to use
+
+Use C<Inline::CPR>.
+
+=head2 man for perl
+
+See the Perl Power Tools. ( http://language.perl.com/ppt/ )
+
+=head2 my $Package::variable
+
+Use C<our> instead.
+
+=head2 "or" tests defined, not truth
+
+Suggesting this on P5P B<will> cause a boring and interminable flamewar.
+
+=head2 "class"-based lexicals
+
+Use flyweight objects, secure hashes or, dare I say it, pseudo-hashes instead.
+(Or whatever will replace pseudohashes in 5.10.)
+
+=head2 byteperl
+
+C<ByteLoader> covers this.
+
+=head2 Lazy evaluation / tail recursion removal
+
+C<List::Util> gives first() (a short-circuiting grep); tail recursion
+removal is done manually, with C<goto &whoami;>. (However, MJD has
+found that C<goto &whoami> introduces a performance penalty, so maybe
+there should be a way to do this after all: C<sub foo {START: ... goto
+START;> is better.)
+
+=head2 Make "use utf8" the default
+
+Because of backward compatibility this is difficult: scripts could not
+contain B<any legacy eight-bit data> (like Latin-1) anymore, even in
+string literals or pod.  Also would introduce a measurable slowdown of
+at least few percentages since all regular expression operations would
+be done in full UTF-8.  But if you want to try this, add
+-DUSE_UTF8_SCRIPTS to your compilation flags.
+
+=head2 Unicode collation and normalization
+
+The Unicode::Collate and Unicode::Normalize modules
+by SADAHIRO Tomoyuki have been included since 5.8.0.
+
+    Collation?     http://www.unicode.org/unicode/reports/tr10/
+    Normalization? http://www.unicode.org/unicode/reports/tr15/
+
+=head2 pack/unpack tutorial
+
+Wolfgang Laun finished what Simon Cozens started.
 
 =cut

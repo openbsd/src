@@ -1,0 +1,132 @@
+# PropertyAliases-3.2.0.txt
+# Date: 2002-03-19,23:31:21 GMT [MD]
+#
+# This file contains aliases for properties used in the UCD.
+# These names can be used for XML formats of UCD data, for regular-expression
+# property tests, and other programmatic textual descriptions of Unicode data.
+# The names are not normative, except where they correspond to normative
+# properties in the UCD. For information on which properties are normative,
+# see UnicodeCharacterDatabase.html.
+#
+# The names may be translated in appropriate environments, and additional
+# aliases may be useful.
+#
+# FORMAT
+#
+# Each line has two fields, separated by semicolons.
+#
+# First Field: The first field is an abbreviated name for the property
+#
+# Second Field: The second field is a long name
+#
+# With loose matching of property names, the case distinctions, whitespace,
+# and '_' are ignored.
+#
+# NOTE: Currently there is at most one abbreviated name and one long name for
+# each property. However, in the future additional aliases
+# may be added. In such a case, the first line for the property
+# would have the preferred alias for output.
+#
+# NOTE: The property value names are NOT unique across properties, especially
+# with loose matches. For example,
+#
+# AL means Arabic Letter for the Bidi_Class property, and
+# AL means Alpha_Left for the Combining_Class property, and
+# AL means Alphabetic for the Line_Break property.
+#
+# In addition, some property names may be the same as some property value names.
+#
+# The combination of property value and property name is, however, unique.
+# For more information, see UTR #24: Regular Expression Guidelines
+# ================================================
+
+
+# ================================================
+# Non-enumerated Properties
+# ================================================
+age       ; Age
+blk       ; Block
+bmg       ; Bidi_Mirroring_Glyph
+cf        ; Case_Folding
+dm        ; Decomposition_Mapping
+FC_NFKC   ; FC_NFKC_Closure
+isc       ; ISO_Comment
+lc        ; Lowercase_Mapping
+na        ; Name
+na1       ; Unicode_1_Name
+nv        ; Numeric_Value
+scc       ; Special_Case_Condition
+sfc       ; Simple_Case_Folding
+slc       ; Simple_Lowercase_Mapping
+stc       ; Simple_Titlecase_Mapping
+suc       ; Simple_Uppercase_Mapping
+tc        ; Titlecase_Mapping
+uc        ; Uppercase_Mapping
+
+# ================================================
+# Enumerated Non-Binary Properties
+# ================================================
+bc        ; Bidi_Class
+ccc       ; Canonical_Combining_Class
+dt        ; Decomposition_Type
+ea        ; East_Asian_Width
+gc        ; General_Category
+jg        ; Joining_Group
+jt        ; Joining_Type
+lb        ; Line_Break
+NFC_QC    ; NFC_Quick_Check
+NFKC_QC   ; NFKC_Quick_Check
+nt        ; Numeric_Type
+sc        ; Script
+
+# ================================================
+# Binary Properties
+# ================================================
+AHex      ; ASCII_Hex_Digit
+Alpha     ; Alphabetic
+Bidi_C    ; Bidi_Control
+Bidi_M    ; Bidi_Mirrored
+CE        ; Composition_Exclusion
+Comp_Ex   ; Full_Composition_Exclusion
+Dash      ; Dash
+Dep       ; Deprecated
+DI        ; Default_Ignorable_Code_Point
+Dia       ; Diacritic
+Ext       ; Extender
+Gr_Base   ; Grapheme_Base
+Gr_Ext    ; Grapheme_Extend
+Gr_Link   ; Grapheme_Link
+Hex       ; Hex_Digit
+Hyphen    ; Hyphen
+IDC       ; ID_Continue
+Ideo      ; Ideographic
+IDS       ; ID_Start
+IDSB      ; IDS_Binary_Operator
+IDST      ; IDS_Trinary_Operator
+Join_C    ; Join_Control
+LOE       ; Logical_Order_Exception
+Lower     ; Lowercase
+Math      ; Math
+NBrk      ; Non_Break
+NChar     ; Noncharacter_Code_Point
+NFD_QC    ; NFD_Quick_Check
+NFKD_QC   ; NFKD_Quick_Check
+OAlpha    ; Other_Alphabetic
+ODI       ; Other_Default_Ignorable_Code_Point
+OGr_Ext   ; Other_Grapheme_Extend
+OLower    ; Other_Lowercase
+OMath     ; Other_Math
+OUpper    ; Other_Uppercase
+QMark     ; Quotation_Mark
+Radical   ; Radical
+SD        ; Soft_Dotted
+Term      ; Terminal_Punctuation
+UIdeo     ; Unified_Ideograph
+Upper     ; Uppercase
+WSpace    ; White_Space
+XIDC      ; XID_Continue
+XIDS      ; XID_Start
+XO_NFC    ; Expands_On_NFC
+XO_NFD    ; Expands_On_NFD
+XO_NFKC   ; Expands_On_NFKC
+XO_NFKD   ; Expands_On_NFKD

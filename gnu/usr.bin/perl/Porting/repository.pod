@@ -2,8 +2,16 @@
 
 repository - Using the Perl repository
 
-This document describes what a Perl Porter needs to do
-to start using the Perl repository.
+=head1 Synopsis
+
+First, we assume here that you have already decided that you will
+need B<write> access to the repository.  If all you need is B<read>
+access, there are much better ways to access the most current state of
+the perl repository, or explore individual files and patches therein.
+See L<perlhack> for details.
+
+This document describes what a Perl Porter needs to do to start using
+the Perl repository.
 
 =head1 Prerequisites
 
@@ -83,8 +91,7 @@ TCP "tunnel" rather than by using ssh to login to or invoke any
 ordinary commands on the repository. When you want to start a
 session using the repository, use the command
 
-    ssh -l perlrep -f -q -x -L 1666:127.0.0.1:1666 sickle.activestate.com 
-foo
+    ssh -l perlrep -f -q -x -L 1666:127.0.0.1:1666 sickle.activestate.com foo
 
 If you are not using the default filename of F<~/.ssh/identity>
 to hold your perl repository private key then you'll need to add
@@ -100,10 +107,10 @@ describe what all those ssh arguments are for.
 
 =over 4
 
-=item B<-l perl>
+=item B<-l perlrep>
 
-Use a remote username of perl. The account on the repository which
-provides the end-point of the ssh tunnel is named "perl".
+Use a remote username of perlrep. (The account on the repository which
+provides the end-point of the ssh tunnel is named "perlrep".)
 
 =item B<-f>
 
@@ -145,8 +152,8 @@ be used for the value of the P4PORT environment variable (q.v.).
 
 =item sickle.activestate.com
 
-This is the canonical IP name of the host on which the perl
-repository runs. Its IP number is 199.60.48.20.
+This is the canonical name of the host on which the perl repository
+resides. Its IP address is 199.60.48.20.
 
 =item foo
 
@@ -191,20 +198,28 @@ the section above on the B<-L 1666:127.0.0.1:1666> option to ssh.
 =item P4CLIENT
 
 The value of this is the name by which Perforce knows your
-host's workspace. You need to pick a name (for example, your
-hostname unless that clashes with someone else's client name)
+host's workspace. You need to pick a name (normally, your
+Perforce username, a dash, and your hostname)
 when you first start using the perl repository and then
-stick with it. If you connect from multiple hosts (with
-different workspaces) then maybe you could have multiple
-clients. There is a licence limit on the number of perforce
-clients which can be created. Although we have been told that
-Perforce will raise our licence limits within reason, it's
-probably best not to use additional clients unless needed.
+stick with it.
 
-Note that perforce only needs the client name so that it can
-find the directory under which your client files are stored.
+Perforce keeps track of the files you have on your machine.  It
+does this through your client. When you first sync a version of a
+file, the file comes from the server to your machine.  If you sync
+the same file again the server does nothing because it
+knows you already have the file.
+
+You should NOT use the same client on different machines.  If you do
+you probably won't get the files you expect, and may end up with
+nasty corruption.  Perforce allows you to have as many clients as
+you want. For example, sally-home, sally-openbsd, sally-laptop.
+
+Also, never change the client's root and view at the same time.
+See C<http://www.perforce.com/perforce/doc.002/manuals/p4guide/04_details.html#1048341>
+
 If you have multiple hosts sharing the same directory structure
-via NFS then only one client name is necessary.
+via NFS then you may be able to get away with only one client name,
+but be careful.
 
 The C<p4 clients> command lists all currently known clients.
 
@@ -213,10 +228,28 @@ The C<p4 clients> command lists all currently known clients.
 This is the username by which perforce knows you. Use your
 username if you have a well known or obvious one or else pick
 a new one which other perl5-porters will recognise. There is
-a licence limit on the number of these usernames. Perforce
-doesn't enforce security between usernames. If you set P4USER
-to be somebody else's username then perforce will believe you
-completely with regard to access control, logging and so on.
+a licence limit on the number of these usernames, so be sure not
+to use more than one.
+
+It is very important to set a password for your Perforce username,
+or else anyone can impersonate you.  Use the C<p4 passwd> command
+to do this.  Once a password is set for your account, you'll need
+to tell Perforce what it is. You can do this by setting the
+environment variable P4PASSWD, or you can use the C<-P> flag
+with the C<p4> command.
+
+There are a few techniques you can use to avoid having to either
+set an environment variable or type the password on every command.
+One is to create a shell alias, for example, in bash, add something like
+    alias p4='p4 -P secret'
+to your F<.bash_profile> file.  Another way is to create a small shell
+script, for example
+    #!/bin/bash
+    p4 -P secret $@
+And use this instead of running C<p4> directly.
+
+With either of these, be sure the file containing your password
+(the F<.bash_profile> or shell script file) is only readable by you.
 
 The C<p4 users> command lists all currently known users.
 
@@ -254,11 +287,12 @@ owner's permission.
 Here is the current structure of the repository:
 
     /----+-----perl                  - Mainline development (bleadperl)
-         +-----cfgperl               - Configure Pumpkin's Perl
+         +-----perlio                - PerlIO Pumpkin's Perl
          +-----vmsperl               - VMS Pumpkin's Perl
          +-----maint-5.004------perl - Maintainance branches
          +-----maint-5.005------perl
          +-----maint-5.6------perl
+         +-----maint-5.6------pureperl
 
 Perforce uses a branching model that simply tracks relationships
 between files.  It does not care about directories at all, so
@@ -275,8 +309,8 @@ files.
 The mainline (aka "trunk") code in the Perl repository is under
 "//depot/perl/...".  Most branches typically map its entire
 contents under a directory that goes by the same name as the branch
-name.  Thus the contents of the cfgperl branch are to be found
-in //depot/cfgperl.
+name.  Thus the contents of the perlio branch are to be found
+in //depot/perlio.
 
 Run `p4 client` to specify how the repository contents should map to
 your local disk.  Most users will typically have a client map that
@@ -288,23 +322,75 @@ that shows files and branches.  You can use this listing to determine
 if there are any changes in the mainline that you need to merge into
 your own branch.  A typical merging session looks like this:
 
-    % cd ~/p4view/cfgperl
-    % p4 integrate -b cfgperl    # to bring parent changes into cfgperl
-    % p4 resolve -a ./...        # auto merge the changes
+    % cd ~/p4view/perlio
+    % p4 integrate -b perlio     # to bring parent changes into perlio
+    % p4 resolve -am ./...        # auto merge the changes
     % p4 resolve ./...           # manual merge conflicting changes
     % p4 submit ./...            # check in
 
-If the owner of the mainline wants to bring the changes in cfgperl
+If the owner of the mainline wants to bring the changes in perlio
 back into the mainline, they do:
 
-    % p4 integrate -r -b cfgperl
+    % p4 integrate -r -b perlio
     ...
 
 Generating a patch for change#42 is done as follows:
 
-    % p4 describe -du 42 | p4desc | p4d2p > change-42.patch
+    % p4genpatch 42 > change-42.patch
 
-p4desc and p4d2p are to be found in //depot/perl/Porting/.
+F<p4genpatch> is to be found in //depot/perl/Porting/.
+
+The usual routine to apply a patch is
+
+    % p4 edit file.c file.h
+    % patch < patch.txt
+
+(any necessary, re-Configure, make regen_headers, make clean, etc, here)
+
+    % make all test
+
+(preferably make all test in several platforms and under several
+different Configurations)
+
+    % while unhappy
+    do
+      $EDITOR
+      make all test
+    done
+    % p4 submit
+
+Other useful Perforce commands
+
+    % p4 describe -du 12345 # show change 12345
+
+Note: the output of "p4 describe" is not in proper diff format, use
+the F<Porting/p4genpatch> to get a diff-compatible format.
+
+    % p4 diff -se ./...     # have I modified something but forgotten
+                            # to "p4 edit", easy faux pas with autogenerated
+                            # files like proto.h, or if one forgets to
+                            # look carefully which files a patch modifies
+    % p4 sync file.h        # if someone else has modified file.h
+    % p4 opened             # which files are opened (p4 edit) by me
+    % p4 opened -a          # which files are opened by anybody
+    % p4 diff -du file.c    # what changes have I done
+    % p4 revert file.h      # never mind my changes
+    % p4 sync -f argh.c     # forcibly synchronize your file
+                            # from the repository
+    % p4 diff -sr | p4 -x - revert
+                            # throw away (opened but) unchanged files
+                            # (in Perforce it's a little bit too easy
+                            # to checkin unchanged files)
+
+Integrate patch 12345 from the mainline to the maint-5.6 branch:
+(you have to in the directory that has both the mainline and
+the maint-5.6/perl as subdirectories)
+
+    % p4 integrate -d perl/...@12345,12345 maint-5.6/perl/...
+
+Integrate patches 12347-12350 from the perlio branch to the mainline:
+
+    % p4 integrate -d perlio/...@12347,12350 perl/...
 
 =head1 Contact Information
 
@@ -320,8 +406,10 @@ Malcolm Beattie, mbeattie@sable.ox.ac.uk, 24 June 1997.
 
 Gurusamy Sarathy, gsar@activestate.com, 8 May 1999.
 
-Slightly updated by Simon Cozens, simon@brecon.co.uk, 3 July 2000
+Slightly updated by Simon Cozens, simon@brecon.co.uk, 3 July 2000.
+
+More updates by Jarkko Hietaniemi, jhi@iki.fi, 28 June 2001.
+
+Perforce clarifications by Randall Gellens, rcg@users.sourceforge.net, 12 July 2001.
 
 =cut
-
-

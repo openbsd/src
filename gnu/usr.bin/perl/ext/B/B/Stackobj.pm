@@ -6,6 +6,9 @@
 #      License or the Artistic License, as specified in the README file.
 #
 package B::Stackobj;  
+
+our $VERSION = '1.00';
+
 use Exporter ();
 @ISA = qw(Exporter);
 @EXPORT_OK = qw(set_callback T_UNKNOWN T_DOUBLE T_INT VALID_UNSIGNED

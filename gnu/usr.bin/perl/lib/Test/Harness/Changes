@@ -1,0 +1,188 @@
+Revision history for Perl extension Test::Harness
+
+2.26  Wed Jun 19 16:58:02 EDT 2002
+    - Workaround for MacPerl's lack of a working putenv.  It will never 
+      see the PERL5LIB environment variable (perl@16942).
+
+2.25  Sun Jun 16 03:00:33 EDT 2002
+    - $Strap is now a global to allow Test::Harness::Straps
+      experimentation.
+    - Little spelling nit in a diagnostic.
+    - Chris Richmond noted that the runtests() docs were wrong.  It will
+      die, not return false, when any tests fail.  This is silly, but
+      historically necessary for 'make test'.  Docs corrected.
+    - MacPerl test fixes from Pudge. (mutation of bleadperl@16989)
+    - Undef warning introduced in 2.24 on skipped tests with no reasons 
+      fixed.
+    * Test::Harness now depends on File::Spec
+
+2.24  Wed May 29 19:02:18 EDT 2002
+    * Nikola Knezevic found a bug when tests are completely skipped
+      but no reason is given it was considered a failure.
+    * Made Test::Harness::Straps->analyze_file & Test::Harness a bit
+      more graceful when the test doesn't exist.
+
+2.23  Wed May 22 12:59:47 EDT 2002
+    - reason for all skip wasn't being displayed.  Broken in 2.20.
+    - Changed the wait status tests to conform with POSIX standards.
+    - Quieted some SYSTEM$ABORT noise leaking out from dying test tests
+      on VMS.
+
+2.22  Fri May 17 19:01:35 EDT 2002
+    - Fixed parsing of #!/usr/bin/perl-current to not see a -t.
+      (RT #574)
+    - Fixed exit codes on MPE/iX
+
+2.21  Mon May  6 00:43:22 EDT 2002
+    - removed a bunch of dead code left over after 2.20's gutting.
+    - The fix for the $^X "bug" added in 2.02 has been removed.  It
+      caused more trouble than the old bug (I'd never seen a problem
+      before anyway)
+    - 2.20 broke $verbose
+
+2.20  Sat May  4 22:31:20 EDT 2002
+    * An almost complete conversion of the Test::Harness test parsing
+      to use Test::Harness::Straps.
+
+2.04  Tue Apr 30 00:54:49 EDT 2002
+    * Changing the output format of skips
+    - Taking into account VMS's special exit codes in the tests.
+
+2.03  Thu Apr 25 01:01:34 EDT 2002
+    * $^X fix made safer.
+    - Noise from loading wait.ph to analyze core files supressed
+    - MJD found a situation where a test could run Test::Harness
+      out of memory.  Protecting against that specific case.
+    - Made the 1..M docs a bit clearer.
+    - Fixed TODO tests so Test::Harness does not display a NOK for
+      them.
+    - Test::Harness::Straps->analyze_file() docs were not clear as to
+      its effects
+
+2.02  Thu Mar 14 18:06:04 EST 2002
+    * Ken Williams fixed the long standing $^X bug.
+    * Added HARNESS_VERBOSE
+    * Fixed a bug where Test::Harness::Straps was considering a test that 
+      is ok but died as passing.
+    - Added the exit and wait codes of the test to the 
+      analyze_file() results.
+
+2.01  Thu Dec 27 18:54:36 EST 2001
+    * Added 'passing' to the results to tell you if the test passed
+    * Added Test::Harness::Straps example (examples/mini_harness.plx)
+    * Header-at-end tests were being interpreted as failing sometimes
+    - The 'skip_all' results from analyze* was not being set
+    - analyze_fh() and analyze_file() now work more efficiently, reading
+      line-by-line instead of slurping as before.
+
+2.00  Sun Dec 23 19:13:57 EST 2001
+    - Fixed a warning on VMS.
+    - Removed a little unnecessary code from analyze_file()
+    - Made sure filehandles are getting closed
+    - analyze() now considers "not \nok" to be a failure (VMSism)
+      but Test::Harness still doesn't.
+
+2.00_05 Mon Dec 17 22:08:02 EST 2001
+    * Wasn't filtering @INC properly when a test is run with -T, caused the 
+      command line to be too long on VMS.  VMS should be 100% now.
+    - Little bug in the skip 'various reasons' logic.
+    - Minor POD nit in 5.004_04
+    - Little speling mistak
+
+2.00_04 Sun Dec 16 00:33:32 EST 2001
+    * Major Test::Harness::Straps doc bug.
+
+2.00_03 Sat Dec 15 23:52:17 EST 2001
+    * First release candidate
+    * 'summary' is now 'details'
+    * Test #1 is now element 0 on the details array.  It works out better
+      that way.
+    * analyze_file() is more portable, but no longer taint clean
+    * analyze_file() properly preserves @INC and handles -T switches
+    - minor mistake in the test header line parsing
+
+1.26  Mon Nov 12 15:44:01 EST 2001
+    * An excuse to upload a new version to CPAN to get Test::Harness
+      back on the index.
+
+2.00_00  Sat Sep 29 00:12:03 EDT 2001
+    * Partial gutting of the internals
+    * Added Test::Harness::Straps
+
+1.25  Tue Aug  7 08:51:09 EDT 2001
+    * Fixed a bug with tests failing if they're all skipped
+      reported by Stas Bekman.
+    - Fixed a very minor warning in 5.004_04
+    - Fixed displaying filenames not from @ARGV
+    - Merging with bleadperl
+    -  minor fixes to the filename in the report
+    -  '[no reason given]' skip reason
+
+1.24  Tue Aug  7 08:51:09 EDT 2001
+    - Added internal information about number of todo tests
+
+1.23  Tue Jul 31 15:06:47 EDT 2001
+    - Merged in Ilya's "various reasons" patch
+    * Fixed "not ok 23 - some name # TODO" style tests
+
+1.22  Mon Jun 25 02:00:02 EDT 2001
+    * Fixed bug with failing tests using header at end.
+    - Documented how Test::Harness deals with garbage input
+    - Turned on test counter mismatch warning
+
+1.21  Wed May 23 19:22:53 BST 2001
+    * No longer considered unstable.  Merging back with the perl core.
+    - Fixed minor nit about the report summary
+    - Added docs on the meaning of the failure report
+    - Minor POD nits fixed mirroring perl change 9176
+    - TODO and SEE ALSO expanded
+
+1.20  Wed Mar 14 23:09:20 GMT 2001 by Michael G Schwern    *UNSTABLE*
+    * Fixed and tested with 5.004!
+    - Added EXAMPLE docs
+    - Added TODO docs
+    - Now uneffected by -l, $\ or $,
+
+1.19  Sat Mar 10 00:43:29 GMT 2001 by Michael G Schwern    *UNSTABLE*
+    - More internal reworking
+    * Removed use of experimental /(?>...)/ feature for backwards compat
+    * Removed use of open(my $fh, $file) for backwards compatibility
+    * Removed use of Tie::StdHandle in tests for backwards compat
+    * Added dire warning that this is unstable.
+    - Added some tests from the old CPAN release
+
+1.18  Mon Mar  5 17:35:11 GMT 2001 by Michael G Schwern
+    * Under new management!
+    * Test::Harness is now being concurrently shipped on CPAN as well
+      as in the core.
+    - Switched "our" for "use vars" and moved the minimum version back
+      to 5.004.  This may be optimistic.
+
+
+*** Missing version history to be extracted from Perl changes ***
+
+
+1.07  Fri Feb 23 1996 by Andreas Koenig
+    - Gisle sent me a documentation patch that showed me, that the
+      unless(/^#/) is unnessessary. Applied the patch and deleted the block
+      checking for "comment" lines. -- All lines are comment lines that do
+      not match /^1\.\.([0-9]+)/ or /^(not\s+)?ok\b/.
+    - Ilyaz request to print "ok (empty test case)" whenever we say 1..0
+      implemented.
+    - Harness now doesn't abort anymore if we received confused test output,
+      just warns instead.
+
+1.05  Wed Jan 31 1996 by Andreas Koenig
+    - More updates on docu and introduced the liberality that the script
+      output may omit the test numbers.
+
+1.03  Mon January 28 1996 by Andreas Koenig
+    - Added the statistics for subtests. Updated the documentation.
+
+1.02  by Andreas Koenig
+    - This version reports a list of the tests that failed accompanied by
+      some trivial statistics. The older (unnumbered) version stopped
+      processing after the first failed test.
+    - Additionally it reports the exit status if there is one.
+
+

@@ -1,0 +1,9 @@
+- make creating uconfig.sh automatic (by pumpkin)
+
+- make creating Makefile.micro automatic (by pumpkin)
+
+- do away with fork/exec/wait? (system, popen should be enough?)
+
+- some of the uconfig.sh really needs to be probed (using cc) in buildtime:
+  (uConfigure? :-) native datatype widths and endianness come to mind
+

@@ -18,7 +18,7 @@
 static int
 do_spawnvp (const char *path, const char * const *argv)
 {
-    dTHXo;
+    dTHX;
     Sigsave_t ihand,qhand;
     int childpid, result, status;
 
@@ -28,7 +28,7 @@ do_spawnvp (const char *path, const char * const *argv)
     if (childpid < 0) {
 	status = -1;
 	if(ckWARN(WARN_EXEC))
-	    Perl_warner(aTHX_ WARN_EXEC,"Can't spawn \"%s\": %s",
+	    Perl_warner(aTHX_ packWARN(WARN_EXEC),"Can't spawn \"%s\": %s",
 		    path,Strerror (errno));
     } else {
 	do {
@@ -45,7 +45,7 @@ do_spawnvp (const char *path, const char * const *argv)
 int
 do_aspawn (SV *really, void **mark, void **sp)
 {
-    dTHXo;
+    dTHX;
     int  rc;
     char **a,*tmps,**argv; 
     STRLEN n_a; 
@@ -78,7 +78,7 @@ do_aspawn (SV *really, void **mark, void **sp)
 int
 do_spawn (char *cmd)
 {
-    dTHXo;
+    dTHX;
     char **a,*s,*metachars = "$&*(){}[]'\";\\?>|<~`\n";
     const char *command[4];
 
@@ -147,6 +147,9 @@ XS(Cygwin_cwd)
     if((cwd = getcwd(NULL, -1))) {
 	ST(0) = sv_2mortal(newSVpv(cwd, 0));
 	safesysfree(cwd);
+#ifndef INCOMPLETE_TAINTS
+	SvTAINTED_on(ST(0));
+#endif
 	XSRETURN(1);
     }
     XSRETURN_UNDEF;

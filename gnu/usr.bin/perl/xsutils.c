@@ -1,3 +1,18 @@
+/*    xsutils.c
+ *
+ *    Copyright (c) 1999-2002, Larry Wall
+ *
+ *    You may distribute under the terms of either the GNU General Public
+ *    License or the Artistic License, as specified in the README file.
+ *
+ */
+
+/*
+ * "Perilous to us all are the devices of an art deeper than we possess
+ * ourselves." --Gandalf
+ */
+
+
 #include "EXTERN.h"
 #define PERL_IN_XSUTILS_C
 #include "perl.h"
@@ -7,12 +22,12 @@
  */
 
 /* package attributes; */
-void XS_attributes__warn_reserved(pTHXo_ CV *cv);
-void XS_attributes_reftype(pTHXo_ CV *cv);
-void XS_attributes__modify_attrs(pTHXo_ CV *cv);
-void XS_attributes__guess_stash(pTHXo_ CV *cv);
-void XS_attributes__fetch_attrs(pTHXo_ CV *cv);
-void XS_attributes_bootstrap(pTHXo_ CV *cv);
+void XS_attributes__warn_reserved(pTHX_ CV *cv);
+void XS_attributes_reftype(pTHX_ CV *cv);
+void XS_attributes__modify_attrs(pTHX_ CV *cv);
+void XS_attributes__guess_stash(pTHX_ CV *cv);
+void XS_attributes__fetch_attrs(pTHX_ CV *cv);
+void XS_attributes_bootstrap(pTHX_ CV *cv);
 
 
 /*
@@ -38,7 +53,7 @@ Perl_boot_core_xsutils(pTHX)
 #include "XSUB.h"
 
 static int
-modify_SV_attributes(pTHXo_ SV *sv, SV **retlist, SV **attrlist, int numattrs)
+modify_SV_attributes(pTHX_ SV *sv, SV **retlist, SV **attrlist, int numattrs)
 {
     SV *attr;
     char *name;
@@ -84,12 +99,44 @@ modify_SV_attributes(pTHXo_ SV *sv, SV **retlist, SV **attrlist, int numattrs)
 			continue;
 		    }
 		    break;
+		case 'u':
+		    if (strEQ(name, "unique")) {
+			if (negated)
+			    GvUNIQUE_off(CvGV((CV*)sv));
+			else
+			    GvUNIQUE_on(CvGV((CV*)sv));
+			continue;
+		    }
+		    break;
 		}
 		break;
 	    }
 	    break;
 	default:
-	    /* nothing, yet */
+	    switch ((int)len) {
+	    case 6:
+		switch (*name) {
+		case 's':
+		    if (strEQ(name, "shared")) {
+			if (negated)
+			    Perl_croak(aTHX_ "A variable may not be unshared");
+			SvSHARE(sv);
+                        continue;
+                    }
+		    break;
+		case 'u':
+		    if (strEQ(name, "unique")) {
+			if (SvTYPE(sv) == SVt_PVGV) {
+			    if (negated)
+				GvUNIQUE_off(sv);
+			    else
+				GvUNIQUE_on(sv);
+			}
+			/* Hope this came from toke.c if not a GV. */
+                        continue;
+                    }
+                }
+            }
 	    break;
 	}
 	/* anything recognized had a 'continue' above */
@@ -108,6 +155,9 @@ XS(XS_attributes_bootstrap)
 {
     dXSARGS;
     char *file = __FILE__;
+
+    if( items > 1 )
+        Perl_croak(aTHX_ "Usage: attributes::bootstrap $module");
 
     newXSproto("attributes::_warn_reserved", XS_attributes__warn_reserved, file, "");
     newXS("attributes::_modify_attrs",	XS_attributes__modify_attrs,	file);
@@ -134,7 +184,7 @@ usage:
 	goto usage;
     sv = SvRV(rv);
     if (items > 1)
-	XSRETURN(modify_SV_attributes(aTHXo_ sv, &ST(0), &ST(1), items-1));
+	XSRETURN(modify_SV_attributes(aTHX_ sv, &ST(0), &ST(1), items-1));
 
     XSRETURN(0);
 }
@@ -168,6 +218,12 @@ usage:
 #endif
 	if (cvflags & CVf_METHOD)
 	    XPUSHs(sv_2mortal(newSVpvn("method", 6)));
+        if (GvUNIQUE(CvGV((CV*)sv)))
+	    XPUSHs(sv_2mortal(newSVpvn("unique", 6)));
+	break;
+    case SVt_PVGV:
+	if (GvUNIQUE(sv))
+	    XPUSHs(sv_2mortal(newSVpvn("unique", 6)));
 	break;
     default:
 	break;
@@ -208,18 +264,17 @@ usage:
 	HV *stash = Nullhv;
 	switch (SvTYPE(sv)) {
 	case SVt_PVCV:
-	    if (CvGV(sv) && isGV(CvGV(sv)) && GvSTASH(CvGV(sv)) &&
-			    HvNAME(GvSTASH(CvGV(sv))))
+	    if (CvGV(sv) && isGV(CvGV(sv)) && GvSTASH(CvGV(sv)))
 		stash = GvSTASH(CvGV(sv));
-	    else if (/* !CvANON(sv) && */ CvSTASH(sv) && HvNAME(CvSTASH(sv)))
+	    else if (/* !CvANON(sv) && */ CvSTASH(sv))
 		stash = CvSTASH(sv);
 	    break;
 	case SVt_PVMG:
-	    if (!(SvFAKE(sv) && SvTIED_mg(sv, '*')))
+	    if (!(SvFAKE(sv) && SvTIED_mg(sv, PERL_MAGIC_glob)))
 		break;
 	    /*FALLTHROUGH*/
 	case SVt_PVGV:
-	    if (GvGP(sv) && GvESTASH((GV*)sv) && HvNAME(GvESTASH((GV*)sv)))
+	    if (GvGP(sv) && GvESTASH((GV*)sv))
 		stash = GvESTASH((GV*)sv);
 	    break;
 	default:

@@ -3,6 +3,7 @@
  * Version: 2.1, 1996/07/25
  * Version: 2.2, 1997/09/25 Mark Bixby (markb@cccd.edu)
  * Version: 2.3, 1998/11/19 Mark Bixby (markb@cccd.edu)
+ * Version: 2.4, 2002/03/24 Mark Bixby (mark@bixby.org)
  */
 
 #include "EXTERN.h"
@@ -12,7 +13,7 @@
 #ifdef __GNUC__
 extern void HPGETPROCPLABEL(    int    parms,
                                 char * procname,
-                                int  * plabel,
+                                void * plabel,
                                 int  * status,
                                 char * firstfile,
                                 int    casesensitive,
@@ -30,13 +31,10 @@ typedef struct {
   char  filename[PATH_MAX + 3];
   } t_mpe_dld, *p_mpe_dld;
 
-static AV *dl_resolve_using = Nullav;
-
 static void
 dl_private_init(pTHX)
 {
     (void)dl_generic_private_init(aTHX);
-    dl_resolve_using = get_av("DynaLoader::dl_resolve_using", GV_ADDMULTI);
 }
 
 MODULE = DynaLoader     PACKAGE = DynaLoader
@@ -51,7 +49,7 @@ dl_load_file(filename, flags=0)
     PREINIT:
     char                buf[PATH_MAX + 3];
     p_mpe_dld           obj = NULL;
-    int                 i;
+
     CODE:
     DLDEBUG(1,PerlIO_printf(Perl_debug_log, "dl_load_file(%s,%x):\n", filename,
 flags));
@@ -124,7 +122,8 @@ dl_install_xsub(perl_name, symref, filename="$Package")
 char *
 dl_error()
     CODE:
-    RETVAL = LastError ;
+    dMY_CXT;
+    RETVAL = dl_last_error ;
     OUTPUT:
     RETVAL
 

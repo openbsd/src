@@ -1,0 +1,104 @@
+  pp.c	TODO
+
+  substr outside of string
+    $a = "ab" ; $b = substr($a, 4,5) ;
+
+  Attempt to use reference as lvalue in substr 
+    $a = "ab" ; $b = \$a ;  substr($b, 1,1) = $b
+
+  Use of uninitialized value in ref-to-glob cast	[pp_rv2gv()]
+	*b = *{ undef()}
+
+  Use of uninitialized value in scalar dereference	[pp_rv2sv()]
+	my $a = undef ; my $b = $$a
+
+  Odd number of elements in hash list
+	my $a = { 1,2,3 } ;
+
+  Explicit blessing to '' (assuming package main)
+	bless \[], "";
+
+  Constant subroutine %s undefined
+	sub foo () { 1 }; undef &foo;
+
+  Constant subroutine (anonymous) undefined
+	$foo = sub () { 3 }; undef &$foo;
+
+__END__
+# pp.c
+use warnings 'substr' ;
+$a = "ab" ; 
+$b = substr($a, 4,5) ;
+no warnings 'substr' ;
+$a = "ab" ; 
+$b = substr($a, 4,5)  ;
+EXPECT
+substr outside of string at - line 4.
+########
+# pp.c
+use warnings 'substr' ;
+$a = "ab" ; 
+$b = \$a ;  
+substr($b, 1,1) = "ab" ;
+no warnings 'substr' ;
+substr($b, 1,1) = "ab" ;
+EXPECT
+Attempt to use reference as lvalue in substr at - line 5.
+########
+# pp.c
+use warnings 'uninitialized' ;
+*x = *{ undef() };
+no warnings 'uninitialized' ;
+*y = *{ undef() };
+EXPECT
+Use of uninitialized value in ref-to-glob cast at - line 3.
+########
+# pp.c
+use warnings 'uninitialized';
+$x = undef; $y = $$x;
+no warnings 'uninitialized' ;
+$u = undef; $v = $$u;
+EXPECT
+Use of uninitialized value in scalar dereference at - line 3.
+########
+# pp.c
+use warnings 'misc' ;
+my $a = { 1,2,3};
+no warnings 'misc' ;
+my $b = { 1,2,3};
+EXPECT
+Odd number of elements in anonymous hash at - line 3.
+########
+# pp.c
+use warnings 'misc' ;
+bless \[], "" ;
+no warnings 'misc' ;
+bless \[], "" ;
+EXPECT
+Explicit blessing to '' (assuming package main) at - line 3.
+########
+# pp.c
+use warnings 'misc';
+sub foo () { 1 }
+undef &foo;
+no warnings 'misc';
+sub bar () { 2 }
+undef &bar;
+EXPECT
+Constant subroutine foo undefined at - line 4.
+########
+# pp.c
+use warnings 'misc';
+$foo = sub () { 3 };
+undef &$foo;
+no warnings 'misc';
+$bar = sub () { 4 };
+undef &$bar;
+EXPECT
+Constant subroutine (anonymous) undefined at - line 4.
+########
+# pp.c
+use utf8 ;
+$_ = "\x80  \xff" ;
+reverse ;
+EXPECT

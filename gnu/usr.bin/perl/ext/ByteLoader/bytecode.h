@@ -72,9 +72,16 @@ typedef IV IV64;
 	}						\
     } STMT_END
 
+#if IVSIZE == 4
+#   define BGET_IV(arg) BGET_I32(arg)
+#else
+#   if IVSIZE == 8
+#       define BGET_IV(arg) BGET_IV64(arg)
+#   endif
+#endif
+
 #define BGET_op_tr_array(arg) do {			\
 	unsigned short *ary;				\
-	int i;						\
 	New(666, ary, 256, unsigned short);		\
 	BGET_FREAD(ary, sizeof(unsigned short), 256);	\
 	arg = (char *) ary;				\
@@ -133,8 +140,10 @@ typedef IV IV64;
 	hv_store((HV*)sv, bstate->bs_pv.xpv_pv, bstate->bs_pv.xpv_cur, arg, 0)
 #define BSET_pv_free(pv)	Safefree(pv.xpv_pv)
 #define BSET_pregcomp(o, arg) \
-	((PMOP*)o)->op_pmregexp = arg ? \
-		CALLREGCOMP(aTHX_ arg, arg + bstate->bs_pv.xpv_cur, ((PMOP*)o)) : 0
+	STMT_START { \
+		PM_SETRE(((PMOP*)o), (arg ? \
+        	         CALLREGCOMP(aTHX_ arg, arg + bstate->bs_pv.xpv_cur, ((PMOP*)o)) : 0)); \
+	} STMT_END
 #define BSET_newsv(sv, arg)				\
 	STMT_START {					\
 	    sv = (arg == SVt_PVAV ? (SV*)newAV() :	\
@@ -183,14 +192,12 @@ typedef IV IV64;
 	    ENTER;					\
 	    SAVECOPFILE(&PL_compiling);			\
 	    SAVECOPLINE(&PL_compiling);			\
-	    save_svref(&PL_rs);				\
-	    sv_setsv(PL_rs, PL_nrs);			\
 	    if (!PL_beginav)				\
 		PL_beginav = newAV();			\
 	    av_push(PL_beginav, cv);			\
 	    call_list(oldscope, PL_beginav);		\
 	    PL_curcop = &PL_compiling;			\
-	    PL_compiling.op_private = PL_hints;		\
+	    PL_compiling.op_private = (U8)(PL_hints & HINT_PRIVATE_MASK);\
 	    LEAVE;					\
 	} STMT_END
 #define BSET_push_init(ary,cv)								\
@@ -205,10 +212,10 @@ typedef IV IV64;
 	} STMT_END
 #define BSET_OBJ_STORE(obj, ix)			\
 	(I32)ix > bstate->bs_obj_list_fill ?	\
-	bset_obj_store(aTHXo_ bstate, obj, (I32)ix) : (bstate->bs_obj_list[ix] = obj)
+	bset_obj_store(aTHX_ bstate, obj, (I32)ix) : (bstate->bs_obj_list[ix] = obj)
 
 /* NOTE: the bytecode header only sanity-checks the bytecode. If a script cares about
- * what version of Perl it's being called under, it should do a 'require 5.6.0' or
+ * what version of Perl it's being called under, it should do a 'use 5.006_001' or
  * equivalent. However, since the header includes checks requiring an exact match in
  * ByteLoader versions (we can't guarantee forward compatibility), you don't 
  * need to specify one:

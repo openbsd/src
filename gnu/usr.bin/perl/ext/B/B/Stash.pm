@@ -2,6 +2,8 @@
 # vishalb@hotmail.com 
 package B::Stash;
 
+our $VERSION = '1.00';
+
 =pod
 
 =head1 NAME

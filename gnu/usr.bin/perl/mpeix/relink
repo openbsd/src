@@ -1,13 +1,49 @@
 #!/bin/sh
 
+# The MPE POSIX libc archive library contains rand(), but this function has
+# been omitted from the libc shared library on the mistaken assumption that
+# the rand() function in the kernel library /SYS/PUB/XL could be used instead.
+# However, rand() in /SYS/PUB/XL is a Fortran function with different semantics
+# from the C version that we expect.
+
+# So in order to get the correct rand() function and to make it available to
+# the dynamically loaded perl extensions, we will build our own mini rand()
+# shared library and add this to the perl NMPRG's XL list.
+
+RAND=/$HPACCOUNT/$HPGROUP/libcrand
+
+echo "Creating $RAND.sl...\n"
+
+TEMP=/tmp/perlmpe.$$
+
+rm -f $TEMP $RAND.a $RAND.sl
+
+/bin/cat - >$TEMP <<EOF
+buildrl $RAND.a
+copyrl from=/lib/libc.a;to=$RAND.a;module=rand
+revealrl rl=$RAND.a;all
+buildxl $RAND.sl;limit=1
+addxl from=$RAND.a;to=$RAND.sl;share
+listxl xl=$RAND.sl
+EOF
+
+callci "xeq LINKEDIT.PUB.SYS <$TEMP"
+
+rm -f $TEMP $RAND.a
+
 # MPE/iX as of 5.5 does not yet properly support linking against dynamic
 # libraries via gcc or ld.  For now, re-run gcc without the external library
 # list, and then run the native linker with the list of dynamic libraries.
+
+echo "Creating the perl executable NMPRG..."
 
 gcc -o perl perlmain.o \
   lib/auto/DynaLoader/DynaLoader.a \
   libperl.a \
   `cat ext.libs` \
-  -L/BIND/PUB/lib -lbind \
+  -L/BINDFW/CURRENT/lib -lbind \
   -L/SYSLOG/PUB -lsyslog
-callci 'linkedit "altprog ./perl;xl=/usr/lib/libcurses.sl,/lib/libsvipc.sl,/usr/lib/libsocket.sl,/usr/lib/libstr.sl,/lib/libm.sl,/lib/libc.sl"'
+
+echo "Modifying the perl executable NMPRG XL list...\n"
+
+callci "xeq LINKEDIT.PUB.SYS 'altprog ./perl;xl=/usr/lib/libcurses.sl,/lib/libsvipc.sl,/usr/lib/libsocket.sl,/usr/lib/libstr.sl,/lib/libm.sl,$RAND.sl,/lib/libc.sl'"

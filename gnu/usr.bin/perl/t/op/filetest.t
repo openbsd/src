@@ -37,6 +37,9 @@ print "# oldeuid = $oldeuid, euid = $>\n";
 
 if (!$Config{d_seteuid}) {
     print "ok 6 #skipped, no seteuid\n";
+} 
+elsif ($Config{config_args} =~/Dmksymlinks/) {
+    print "ok 6 #skipped, we cannot chmod symlinks\n";
 }
 elsif ($bad_chmod) {
     print "#[$@]\nok 6 #skipped\n";

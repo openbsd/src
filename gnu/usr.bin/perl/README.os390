@@ -1,65 +1,87 @@
-
-This document is written in pod format hence there are punctuation 
-characters in odd places.  Do not worry, you've apparently got 
-the ASCII->EBCDIC translation worked out correctly.  You can read 
-more about pod in pod/perlpod.pod or the short summary in the 
-INSTALL file.
+This document is written in pod format hence there are punctuation
+characters in odd places.  Do not worry, you've apparently got the
+ASCII->EBCDIC translation worked out correctly.  You can read more
+about pod in pod/perlpod.pod or the short summary in the INSTALL file.
 
 =head1 NAME
 
-README.os390 - building and installing Perl for OS/390.
+README.os390 - building and installing Perl for OS/390 and z/OS
 
 =head1 SYNOPSIS
 
 This document will help you Configure, build, test and install Perl
-on OS/390 Unix System Services.
+on OS/390 (aka z/OS) Unix System Services.
 
 =head1 DESCRIPTION
 
-This is a fully ported Perl for OS/390 Version 2 Release 3, 5, 6, 7, 
-8, and 9.  It may work on other versions or releases, but those are 
+This is a fully ported Perl for OS/390 Version 2 Release 3, 5, 6, 7,
+8, and 9.  It may work on other versions or releases, but those are
 the ones we've tested it on.
 
-You may need to carry out some system configuration tasks before 
-running the Configure script for Perl.  
+You may need to carry out some system configuration tasks before
+running the Configure script for Perl.
 
-=head2 Unpacking
+
+=head2 Tools
+
+The z/OS Unix Tools and Toys list may prove helpful and contains links
+to ports of much of the software helpful for building Perl.
+http://www-1.ibm.com/servers/eserver/zseries/zos/unix/bpxa1toy.html
+
+
+=head2 Unpacking Perl distribution on OS/390
+
+If using ftp remember to transfer the distribution in binary format.
 
 Gunzip/gzip for OS/390 is discussed at:
 
-   http://www.s390.ibm.com/products/oe/bpxqp1.html
+  http://www-1.ibm.com/servers/eserver/zseries/zos/unix/faq/bpxqp1.html
 
 to extract an ASCII tar archive on OS/390, try this:
 
    pax -o to=IBM-1047,from=ISO8859-1 -r < latest.tar
 
-=head2 Setup and utilities
+or
+
+   zcat latest.tar.Z | pax -o to=IBM-1047,from=ISO8859-1 -r
+
+If you get lots of errors of the form
+
+  tar: FSUM7171 ...: cannot set uid/gid: EDC5139I Operation not permitted.
+
+you didn't read the above and tried to use tar instead of pax, you'll
+first have to remove the (now corrupt) perl directory
+
+   rm -rf perl-...
+
+and then use pax.
+
+=head2 Setup and utilities for Perl on OS/390
 
 Be sure that your yacc installation is in place including any necessary
 parser template files. If you have not already done so then be sure to:
 
   cp /samples/yyparse.c /etc
 
-This may also be a good time to ensure that your /etc/protocol file 
+This may also be a good time to ensure that your /etc/protocol file
 and either your /etc/resolv.conf or /etc/hosts files are in place.
 The IBM document that described such USS system setup issues was
 SC28-1890-07 "OS/390 UNIX System Services Planning", in particular
 Chapter 6 on customizing the OE shell.
 
-GNU make for OS/390, which is recommended for the build of perl (as well as
-building CPAN modules and extensions), is available from:
+GNU make for OS/390, which is recommended for the build of perl (as
+well as building CPAN modules and extensions), is available from the
+L</Tools>.
 
-  http://www.mks.com/s390/gnu/index.htm
-
-Some people have reported encountering "Out of memory!" errors while 
-trying to build Perl using GNU make binaries.  If you encounter such 
-trouble then try to download the source code kit and build GNU make 
-from source to eliminate any such trouble.  You might also find GNU make 
-(as well as Perl and Apache) in the red-piece/book "Open Source Software 
+Some people have reported encountering "Out of memory!" errors while
+trying to build Perl using GNU make binaries.  If you encounter such
+trouble then try to download the source code kit and build GNU make
+from source to eliminate any such trouble.  You might also find GNU make
+(as well as Perl and Apache) in the red-piece/book "Open Source Software
 for OS/390 UNIX", SG24-5944-00 from IBM.
 
-If instead of the recommended GNU make you would like to use the system 
-supplied make program then be sure to install the default rules file 
+If instead of the recommended GNU make you would like to use the system
+supplied make program then be sure to install the default rules file
 properly via the shell command:
 
     cp /samples/startup.mk /etc
@@ -78,19 +100,19 @@ there is a spurious extra '/' character outside of a comment like so:
  #define SO_REUSEPORT    0x0200    /* allow local address & port
                                       reuse */                    /
 
-You could edit that header yourself to remove that last '/', or you might 
-note that Language Environment (LE) APAR PQ39997 describes the problem 
+You could edit that header yourself to remove that last '/', or you might
+note that Language Environment (LE) APAR PQ39997 describes the problem
 and PTF's UQ46272 and UQ46271 are the (R8 at least) fixes and apply them.
-If left unattended that syntax error will turn up as an inability for Perl 
+If left unattended that syntax error will turn up as an inability for Perl
 to build its "Socket" extension.
 
-For successful testing you may need to turn on the sticky bit for your 
+For successful testing you may need to turn on the sticky bit for your
 world readable /tmp directory if you have not already done so (see man chmod).
 
-=head2 Configure
+=head2 Configure Perl on OS/390
 
-Once you've unpacked the distribution, run "sh Configure" (see INSTALL 
-for a full discussion of the Configure options).  There is a "hints" file 
+Once you've unpacked the distribution, run "sh Configure" (see INSTALL
+for a full discussion of the Configure options).  There is a "hints" file
 for os390 that specifies the correct values for most things.  Some things
 to watch out for include:
 
@@ -110,11 +132,11 @@ is nothing to worry about at all.
 Some of the parser default template files in /samples are needed in /etc.
 In particular be sure that you at least copy /samples/yyparse.c to /etc
 before running Perl's Configure.  This step ensures successful extraction
-of EBCDIC versions of parser files such as perly.c, perly.h, and x2p/a2p.c.  
-This has to be done before running Configure the first time.  If you failed 
-to do so then the easiest way to re-Configure Perl is to delete your 
-misconfigured build root and re-extract the source from the tar ball.  
-Then you must ensure that /etc/yyparse.c is properly in place before 
+of EBCDIC versions of parser files such as perly.c, perly.h, and x2p/a2p.c.
+This has to be done before running Configure the first time.  If you failed
+to do so then the easiest way to re-Configure Perl is to delete your
+misconfigured build root and re-extract the source from the tar ball.
+Then you must ensure that /etc/yyparse.c is properly in place before
 attempting to re-run Configure.
 
 =item *
@@ -131,7 +153,7 @@ If in trying to use Perl you see an error message similar to:
  CEE3501S The module libperl.dll was not found.
          From entry point __dllstaticinit at compile unit offset +00000194 at
 
-then your LIBPATH does not have the location of libperl.x and either 
+then your LIBPATH does not have the location of libperl.x and either
 libperl.dll or libperl.so in it.  Add that directory to your LIBPATH and
 proceed.
 
@@ -151,12 +173,12 @@ gethostbyname() works, and make sure that the file
 /etc/proto has been renamed to /etc/protocol (NOT
 /etc/protocols, as used by other Unix systems).
 You may have to look for things like HOSTNAME and DOMAINORIGIN
-in the "//'SYS1.TCPPARMS(TCPDATA)'" PDS member in order to 
+in the "//'SYS1.TCPPARMS(TCPDATA)'" PDS member in order to
 properly set up your /etc networking files.
 
 =back
 
-=head2 Build, test, install
+=head2 Build, Test, Install Perl on OS/390
 
 Simply put:
 
@@ -172,19 +194,19 @@ this last step may or may not require UID=0 privileges depending
 on how you answered the questions that Configure asked and whether
 or not you have write access to the directories you specified.
 
-=head2 build anomalies
+=head2 Build Anomalies with Perl on OS/390
 
 "Out of memory!" messages during the build of Perl are most often fixed
 by re building the GNU make utility for OS/390 from a source code kit.
 
 Another memory limiting item to check is your MAXASSIZE parameter in your
 'SYS1.PARMLIB(BPXPRMxx)' data set (note too that as of V2R8 address space
-limits can be set on a per user ID basis in the USS segment of a RACF 
+limits can be set on a per user ID basis in the USS segment of a RACF
 profile).  People have reported successful builds of Perl with MAXASSIZE
 parameters as small as 503316480 (and it may be possible to build Perl
 with a MAXASSIZE smaller than that).
 
-Within USS your /etc/profile or $HOME/.profile may limit your ulimit 
+Within USS your /etc/profile or $HOME/.profile may limit your ulimit
 settings.  Check that the following command returns reasonable values:
 
     ulimit -a
@@ -196,7 +218,7 @@ If the c89 compiler complains of syntax errors during the build of the
 Socket extension then be sure to fix the syntax error in the system
 header /usr/include/sys/socket.h.
 
-=head2 testing anomalies
+=head2 Testing Anomalies with Perl on OS/390
 
 The `make test` step runs a Perl Verification Procedure, usually before
 installation.  You might encounter STDERR messages even during a successful
@@ -248,25 +270,54 @@ To correct that problem issue the command:
 
 from an account with write access to the directory entry for /tmp.
 
+=item *
+
+Out of Memory!
+
+Recent perl test suite is quite memory hunrgy. In addition to the comments
+above on memory limitations it is also worth checking for _CEE_RUNOPTS
+in your environment. Perl now has (in miniperlmain.c) a C #pragma
+to set CEE run options, but the environment variable wins.
+
+The C code asks for:
+
+ #pragma runopts(HEAP(2M,500K,ANYWHERE,KEEP,8K,4K) STACK(,,ANY,) ALL31(ON))
+
+The important parts of that are the second argument (the increment) to HEAP,
+and allowing the stack to be "Above the (16M) line". If the heap
+increment is too small then when perl (for example loading unicode/Name.pl) tries
+to create a "big" (400K+) string it cannot fit in a single segment
+and you get "Out of Memory!" - even if there is still plenty of memory
+available.
+
+A related issue is use with perl's malloc. Perl's malloc uses C<sbrk()>
+to get memory, and C<sbrk()> is limited to the first allocation so in this
+case something like:
+
+  HEAP(8M,500K,ANYWHERE,KEEP,8K,4K)
+
+is needed to get through the test suite.
+
+
 =back
 
-=head2 installation anomalies
+=head2 Installation Anomalies with Perl on OS/390
 
 The installman script will try to run on OS/390.  There will be fewer errors
-if you have a roff utility installed.  You can obtain GNU groff from the 
+if you have a roff utility installed.  You can obtain GNU groff from the
 Redbook SG24-5944-00 ftp site.
 
-=head2 Usage Hints
+=head2 Usage Hints for Perl on OS/390
 
 When using perl on OS/390 please keep in mind that the EBCDIC and ASCII
-character sets are different.  See perlebcdic.pod for more on such character 
-set issues.  Perl builtin functions that may behave differently under 
+character sets are different.  See perlebcdic.pod for more on such character
+set issues.  Perl builtin functions that may behave differently under
 EBCDIC are also mentioned in the perlport.pod document.
 
-Open Edition (UNIX System Services) from V2R8 onward does support 
-#!/path/to/perl script invocation.  There is a PTF available from 
+Open Edition (UNIX System Services) from V2R8 onward does support
+#!/path/to/perl script invocation.  There is a PTF available from
 IBM for V2R7 that will allow shell/kernel support for #!.  USS
-releases prior to V2R7 did not support the #! means of script invocation.  
+releases prior to V2R7 did not support the #! means of script invocation.
 If you are running V2R6 or earlier then see:
 
     head `whence perldoc`
@@ -275,15 +326,15 @@ for an example of how to use the "eval exec" trick to ask the shell to
 have Perl run your scripts on those older releases of Unix System Services.
 
 If you are having trouble with square brackets then consider switching your
-rlogin or telnet client.  Try to avoid older 3270 emulators and ISHELL for 
+rlogin or telnet client.  Try to avoid older 3270 emulators and ISHELL for
 working with Perl on USS.
 
-=head2 Floating point anomalies
+=head2 Floating Point Anomalies with Perl on OS/390
 
-There appears to be a bug in the floating point implementation on S/390 
-systems such that calling int() on the product of a number and a small 
-magnitude number is not the same as calling int() on the quotient of 
-that number and a large magnitude number.  For example, in the following 
+There appears to be a bug in the floating point implementation on S/390
+systems such that calling int() on the product of a number and a small
+magnitude number is not the same as calling int() on the quotient of
+that number and a large magnitude number.  For example, in the following
 Perl code:
 
     my $x = 100000.0;
@@ -291,7 +342,7 @@ Perl code:
     my $z = int($x / 1e+5) * 1e5;  # '100000'
     print "\$y is $y and \$z is $z\n"; # $y is 0 and $z is 100000
 
-Although one would expect the quantities $y and $z to be the same and equal 
+Although one would expect the quantities $y and $z to be the same and equal
 to 100000 they will differ and instead will be 0 and 100000 respectively.
 
 The problem can be further examined in a roughly equivalent C program:
@@ -312,7 +363,7 @@ The problem can be further examined in a roughly equivalent C program:
     /* y is 0.000000e+00 and z is 1.000000e+05 (with c89) */
     }
 
-=head2 Modules and Extensions
+=head2 Modules and Extensions for Perl on OS/390
 
 Pure pure (that is non xs) modules may be installed via the usual:
 
@@ -323,9 +374,9 @@ Pure pure (that is non xs) modules may be installed via the usual:
 
 If you built perl with dynamic loading capability then that would also
 be the way to build xs based extensions.  However, if you built perl with
-the default static linking you can still build xs based extensions for OS/390 
-but you will need to follow the instructions in ExtUtils::MakeMaker for 
-building statically linked perl binaries.  In the simplest configurations 
+the default static linking you can still build xs based extensions for OS/390
+but you will need to follow the instructions in ExtUtils::MakeMaker for
+building statically linked perl binaries.  In the simplest configurations
 building a static perl + xs extension boils down to:
 
     perl Makefile.PL
@@ -335,7 +386,7 @@ building a static perl + xs extension boils down to:
     make install
     make -f Makefile.aperl inst_perl MAP_TARGET=perl
 
-In most cases people have reported better results with GNU make rather 
+In most cases people have reported better results with GNU make rather
 than the system's /bin/make program, whether for plain modules or for
 xs based extensions.
 
@@ -359,26 +410,25 @@ Thanks to John Goodyear for dynamic loading help.
 
 L<INSTALL>, L<perlport>, L<perlebcdic>, L<ExtUtils::MakeMaker>.
 
-    http://www.mks.com/s390/gnu/index.htm
+    http://www-1.ibm.com/servers/eserver/zseries/zos/unix/bpxa1toy.html
 
     http://www.redbooks.ibm.com/abstracts/sg245944.html
 
-    http://www.s390.ibm.com/products/oe/bpxa1ty1.html#opensrc
-
-    http://www.s390.ibm.com/products/oe/portbk/bpxacenv.html
+    http://www-1.ibm.com/servers/eserver/zseries/zos/unix/bpxa1ty1.html#opensrc
 
     http://www.xray.mpe.mpg.de/mailing-lists/perl-mvs/
 
-=head2 Mailing list
+    http://publibz.boulder.ibm.com:80/cgi-bin/bookmgr_OS390/BOOKS/ceea3030/
 
-The Perl Institute (http://www.perl.org/) maintains a perl-mvs 
-mailing list of interest to all folks building and/or
-using perl on all EBCDIC platforms (not just OS/390).  
-To subscribe, send a message of:
+    http://publibz.boulder.ibm.com:80/cgi-bin/bookmgr_OS390/BOOKS/CBCUG030/
 
-    subscribe perl-mvs
+=head2 Mailing list for Perl on OS/390
 
-to majordomo@perl.org.   See also:
+If you are interested in the VM/ESA, z/OS (formerly known as OS/390)
+and POSIX-BC (BS2000) ports of Perl then see the perl-mvs mailing list.
+To subscribe, send an empty message to perl-mvs-subscribe@perl.org.
+
+See also:
 
     http://lists.perl.org/showlist.cgi?name=perl-mvs
 
@@ -393,6 +443,8 @@ This document was originally written by David Fiander for the 5.005
 release of Perl.
 
 This document was podified for the 5.005_03 release of Perl 11 March 1999.
+
+Updated 28 November 2001 for broken URLs.
 
 Updated 12 November 2000 for the 5.7.1 release of Perl.
 

@@ -1,0 +1,38 @@
+# To give due honour to those who have made the Encode module what it
+# is today, here are easily-from-changelogs-extractable people and their
+# (hopefully) current and preferred email addresses (as of early 2002,
+# if known).
+#
+# The use of this database for anything else than Encode and/or Perl 
+# development is strictly forbidden.  (Passive distribution with the Perl 
+# source code kit or CPAN is, of course, allowed.)
+#
+# This list is in alphabetical order.
+-- 
+Andreas J. Koenig		<andreas.koenig@anima.de> 
+Anton Tagunov			<tagunov@motor.ru>
+Autrijus Tang			<autrijus@autrijus.org>
+Benjamin Goldberg               <goldbb2@earthlink.net>
+Chris Nandor                    <pudge@pobox.com>
+Craig A. Berry			<craigberry@mac.com>
+Dan Kogai			<dankogai@dan.co.jp>
+Elizabeth Mattijsen             <liz@dijkmat.nl>
+Gerrit P. Haase			<gp@familiehaase.de>
+Graham Barr                     <gbarr@pobox.com>
+Gurusamy Sarathy		<gsar@activestate.com>
+H.Merijn Brand                  <h.m.brand@hccnet.nl>
+Jarkko Hietaniemi		<jhi@iki.fi>
+Jungshik Shin                   <jshin@mailaps.org>
+Laszlo Molnar			<ml1050@freemail.hu>
+Mark-Jason Dominus              <mjd@plover.com>
+Mattia Barbon			<mbarbon@dsi.unive.it>
+Michael G Schwern               <schwern@pobox.com>
+Nicholas Clark			<nick@ccl4.org>
+Nick Ing-Simmons		<nick@ing-simmons.net>
+Paul Marquess                   <paul_marquess@yahoo.co.uk>
+Philip Newton			<pne@cpan.org>
+Robin Barker                    <rmb1@cise.npl.co.uk>
+SADAHIRO Tomoyuki		<SADAHIRO@cpan.org>
+Spider Boardman			<spider@web.zk3.dec.com>
+Tatsuhiko Miyagawa		<miyagawa@edge.co.jp>
+Vadim Konovalov			<vkonovalov@peterstar.ru>

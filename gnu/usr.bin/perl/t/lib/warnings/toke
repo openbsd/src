@@ -1,0 +1,798 @@
+toke.c	AOK
+
+    we seem to have lost a few ambiguous warnings!!
+
+ 
+ 		$a = <<;
+ 		Use of comma-less variable list is deprecated 
+		(called 3 times via depcom)
+
+     \1 better written as $1 
+ 	use warnings 'syntax' ;
+ 	s/(abc)/\1/;
+ 
+     warn(warn_nosemi) 
+     Semicolon seems to be missing
+	$a = 1
+	&time ;
+
+
+     Reversed %c= operator 
+	my $a =+ 2 ;
+	$a =- 2 ;
+	$a =* 2 ;
+	$a =% 2 ;
+	$a =& 2 ;
+	$a =. 2 ;
+	$a =^ 2 ;
+	$a =| 2 ;
+	$a =< 2 ;
+	$a =/ 2 ;
+
+     Multidimensional syntax %.*s not supported 
+	my $a = $a[1,2] ;
+
+     You need to quote \"%s\"" 
+	sub fred {} ; $SIG{TERM} = fred;
+
+     Scalar value %.*s better written as $%.*s" 
+	@a[3] = 2;
+	@a{3} = 2;
+
+     Can't use \\%c to mean $%c in expression 
+	$_ = "ab" ; s/(ab)/\1/e;
+
+     Unquoted string "abc" may clash with future reserved word at - line 3.
+     warn(warn_reserved	
+	$a = abc;
+
+     Possible attempt to separate words with commas 
+	@a = qw(a, b, c) ;
+
+     Possible attempt to put comments in qw() list 
+	@a = qw(a b # c) ;
+
+     %s (...) interpreted as function 
+	print ("")
+	printf ("")
+	sort ("")
+
+     Ambiguous use of %c{%s%s} resolved to %c%s%s 
+	$a = ${time[2]}
+	$a = ${time{2}}
+
+
+     Ambiguous use of %c{%s} resolved to %c%s
+	$a = ${time}
+	sub fred {} $a = ${fred}
+
+     Misplaced _ in number 
+	$a = 1_2;
+	$a = 1_2345_6;
+
+    Bareword \"%s\" refers to nonexistent package
+	$a = FRED:: ;
+
+    Ambiguous call resolved as CORE::%s(), qualify as such or use &
+	sub time {} 
+	my $a = time()
+
+    Unrecognized escape \\%c passed through
+        $a = "\m" ;
+
+    %s number > %s non-portable
+        my $a =  0b011111111111111111111111111111110 ;
+        $a =  0b011111111111111111111111111111111 ;
+        $a =  0b111111111111111111111111111111111 ;
+        $a =  0x0fffffffe ;
+        $a =  0x0ffffffff ;
+        $a =  0x1ffffffff ;
+        $a =  0037777777776 ;
+        $a =  0037777777777 ;
+        $a =  0047777777777 ;
+
+    Integer overflow in binary number
+        my $a =  0b011111111111111111111111111111110 ;
+        $a =  0b011111111111111111111111111111111 ;
+        $a =  0b111111111111111111111111111111111 ;
+        $a =  0x0fffffffe ;
+        $a =  0x0ffffffff ;
+        $a =  0x1ffffffff ;
+        $a =  0037777777776 ;
+        $a =  0037777777777 ;
+        $a =  0047777777777 ;
+
+    dump() better written as CORE::dump()
+
+    Use of /c modifier is meaningless without /g     
+
+    Use of /c modifier is meaningless in s///
+
+    Mandatory Warnings
+    ------------------
+    Use of "%s" without parentheses is ambiguous	[check_uni]
+        rand + 4 
+
+    Ambiguous use of -%s resolved as -&%s() 		[yylex]
+        sub fred {} ; - fred ;
+
+    Precedence problem: open %.*s should be open(%.*s)	[yylex]
+    	open FOO || die;
+
+    Operator or semicolon missing before %c%s		[yylex]
+    Ambiguous use of %c resolved as operator %c
+        *foo *foo
+
+__END__
+# toke.c 
+use warnings 'deprecated' ;
+format STDOUT =
+@<<<  @|||  @>>>  @>>>
+$a    $b    "abc" 'def'
+.
+no warnings 'deprecated' ;
+format STDOUT =
+@<<<  @|||  @>>>  @>>>
+$a    $b    "abc" 'def'
+.
+EXPECT
+Use of comma-less variable list is deprecated at - line 5.
+Use of comma-less variable list is deprecated at - line 5.
+Use of comma-less variable list is deprecated at - line 5.
+########
+# toke.c
+use warnings 'deprecated' ;
+$a = <<;
+
+no warnings 'deprecated' ;
+$a = <<;
+
+EXPECT
+Use of bare << to mean <<"" is deprecated at - line 3.
+########
+# toke.c
+use warnings 'syntax' ;
+s/(abc)/\1/;
+no warnings 'syntax' ;
+s/(abc)/\1/;
+EXPECT
+\1 better written as $1 at - line 3.
+########
+# toke.c
+use warnings 'semicolon' ;
+$a = 1
+&time ;
+no warnings 'semicolon' ;
+$a = 1
+&time ;
+EXPECT
+Semicolon seems to be missing at - line 3.
+########
+# toke.c
+use warnings 'syntax' ;
+my $a =+ 2 ;
+$a =- 2 ;
+$a =* 2 ;
+$a =% 2 ;
+$a =& 2 ;
+$a =. 2 ;
+$a =^ 2 ;
+$a =| 2 ;
+$a =< 2 ;
+$a =/ 2 ;
+EXPECT
+Reversed += operator at - line 3.
+Reversed -= operator at - line 4.
+Reversed *= operator at - line 5.
+Reversed %= operator at - line 6.
+Reversed &= operator at - line 7.
+Reversed .= operator at - line 8.
+Reversed ^= operator at - line 9.
+Reversed |= operator at - line 10.
+Reversed <= operator at - line 11.
+syntax error at - line 8, near "=."
+syntax error at - line 9, near "=^"
+syntax error at - line 10, near "=|"
+Unterminated <> operator at - line 11.
+########
+# toke.c
+no warnings 'syntax' ;
+my $a =+ 2 ;
+$a =- 2 ;
+$a =* 2 ;
+$a =% 2 ;
+$a =& 2 ;
+$a =. 2 ;
+$a =^ 2 ;
+$a =| 2 ;
+$a =< 2 ;
+$a =/ 2 ;
+EXPECT
+syntax error at - line 8, near "=."
+syntax error at - line 9, near "=^"
+syntax error at - line 10, near "=|"
+Unterminated <> operator at - line 11.
+########
+# toke.c
+use warnings 'syntax' ;
+my $a = $a[1,2] ;
+no warnings 'syntax' ;
+my $a = $a[1,2] ;
+EXPECT
+Multidimensional syntax $a[1,2] not supported at - line 3.
+########
+# toke.c
+use warnings 'syntax' ;
+sub fred {} ; $SIG{TERM} = fred;
+no warnings 'syntax' ;
+$SIG{TERM} = fred;
+EXPECT
+You need to quote "fred" at - line 3.
+########
+# toke.c
+use warnings 'syntax' ;
+@a[3] = 2;
+@a{3} = 2;
+no warnings 'syntax' ;
+@a[3] = 2;
+@a{3} = 2;
+EXPECT
+Scalar value @a[3] better written as $a[3] at - line 3.
+Scalar value @a{3} better written as $a{3} at - line 4.
+########
+# toke.c
+use warnings 'syntax' ;
+$_ = "ab" ; 
+s/(ab)/\1/e;
+no warnings 'syntax' ;
+$_ = "ab" ; 
+s/(ab)/\1/e;
+EXPECT
+Can't use \1 to mean $1 in expression at - line 4.
+########
+# toke.c
+use warnings 'reserved' ;
+$a = abc;
+$a = { def
+
+=> 1 };
+no warnings 'reserved' ;
+$a = abc;
+EXPECT
+Unquoted string "abc" may clash with future reserved word at - line 3.
+########
+# toke.c
+use warnings 'qw' ;
+@a = qw(a, b, c) ;
+no warnings 'qw' ;
+@a = qw(a, b, c) ;
+EXPECT
+Possible attempt to separate words with commas at - line 3.
+########
+# toke.c
+use warnings 'qw' ;
+@a = qw(a b #) ;
+no warnings 'qw' ;
+@a = qw(a b #) ;
+EXPECT
+Possible attempt to put comments in qw() list at - line 3.
+########
+# toke.c
+use warnings 'syntax' ;
+print ("")
+EXPECT
+print (...) interpreted as function at - line 3.
+########
+# toke.c
+no warnings 'syntax' ;
+print ("")
+EXPECT
+
+########
+# toke.c
+use warnings 'syntax' ;
+printf ("")
+EXPECT
+printf (...) interpreted as function at - line 3.
+########
+# toke.c
+no warnings 'syntax' ;
+printf ("")
+EXPECT
+
+########
+# toke.c
+use warnings 'syntax' ;
+sort ("")
+EXPECT
+sort (...) interpreted as function at - line 3.
+########
+# toke.c
+no warnings 'syntax' ;
+sort ("")
+EXPECT
+
+########
+# toke.c
+use warnings 'ambiguous' ;
+$a = ${time[2]};
+no warnings 'ambiguous' ;
+$a = ${time[2]};
+EXPECT
+Ambiguous use of ${time[...]} resolved to $time[...] at - line 3.
+########
+# toke.c
+use warnings 'ambiguous' ;
+$a = ${time{2}};
+EXPECT
+Ambiguous use of ${time{...}} resolved to $time{...} at - line 3.
+########
+# toke.c
+no warnings 'ambiguous' ;
+$a = ${time{2}};
+EXPECT
+
+########
+# toke.c
+use warnings 'ambiguous' ;
+$a = ${time} ;
+no warnings 'ambiguous' ;
+$a = ${time} ;
+EXPECT
+Ambiguous use of ${time} resolved to $time at - line 3.
+########
+# toke.c
+use warnings 'ambiguous' ;
+sub fred {}
+$a = ${fred} ;
+no warnings 'ambiguous' ;
+$a = ${fred} ;
+EXPECT
+Ambiguous use of ${fred} resolved to $fred at - line 4.
+########
+# toke.c
+use warnings 'syntax' ;
+$a = _123; print "$a\n";		#( 3	string)
+$a = 1_23; print "$a\n";
+$a = 12_3; print "$a\n";
+$a = 123_; print "$a\n";		#  6
+$a = _+123; print "$a\n";		#  7	string)
+$a = +_123; print "$a\n";		#( 8	string)
+$a = +1_23; print "$a\n";
+$a = +12_3; print "$a\n";
+$a = +123_; print "$a\n";		# 11
+$a = _-123; print "$a\n";		#(12	string)
+$a = -_123; print "$a\n";		#(13	string)
+$a = -1_23; print "$a\n";
+$a = -12_3; print "$a\n";
+$a = -123_; print "$a\n";		# 16
+$a = 123._456; print "$a\n";		# 17
+$a = 123.4_56; print "$a\n";
+$a = 123.45_6; print "$a\n";
+$a = 123.456_; print "$a\n";		# 20
+$a = +123._456; print "$a\n";		# 21
+$a = +123.4_56; print "$a\n";	
+$a = +123.45_6; print "$a\n";	
+$a = +123.456_; print "$a\n";		# 24
+$a = -123._456; print "$a\n";		# 25
+$a = -123.4_56; print "$a\n";	
+$a = -123.45_6; print "$a\n";
+$a = -123.456_; print "$a\n";		# 28
+$a = 123.456E_12; printf("%.0f\n", $a);	# 29
+$a = 123.456E1_2; printf("%.0f\n", $a);
+$a = 123.456E12_; printf("%.0f\n", $a);	# 31
+$a = 123.456E_+12; printf("%.0f\n", $a);	# 32
+$a = 123.456E+_12; printf("%.0f\n", $a);	# 33
+$a = 123.456E+1_2; printf("%.0f\n", $a);
+$a = 123.456E+12_; printf("%.0f\n", $a);	# 35
+$a = 123.456E_-12; print "$a\n";	# 36
+$a = 123.456E-_12; print "$a\n";	# 37
+$a = 123.456E-1_2; print "$a\n";
+$a = 123.456E-12_; print "$a\n";	# 39
+$a = 1__23; print "$a\n";		# 40
+$a = 12.3__4; print "$a\n";		# 41
+$a = 12.34e1__2; printf("%.0f\n", $a);	# 42
+no warnings 'syntax' ;
+$a = _123; print "$a\n";
+$a = 1_23; print "$a\n";
+$a = 12_3; print "$a\n";
+$a = 123_; print "$a\n";
+$a = _+123; print "$a\n";
+$a = +_123; print "$a\n";
+$a = +1_23; print "$a\n";
+$a = +12_3; print "$a\n";
+$a = +123_; print "$a\n";
+$a = _-123; print "$a\n";
+$a = -_123; print "$a\n";
+$a = -1_23; print "$a\n";
+$a = -12_3; print "$a\n";
+$a = -123_; print "$a\n";
+$a = 123._456; print "$a\n";
+$a = 123.4_56; print "$a\n";
+$a = 123.45_6; print "$a\n";
+$a = 123.456_; print "$a\n";
+$a = +123._456; print "$a\n";
+$a = +123.4_56; print "$a\n";
+$a = +123.45_6; print "$a\n";
+$a = +123.456_; print "$a\n";
+$a = -123._456; print "$a\n";
+$a = -123.4_56; print "$a\n";
+$a = -123.45_6; print "$a\n";
+$a = -123.456_; print "$a\n";
+$a = 123.456E_12; printf("%.0f\n", $a);
+$a = 123.456E1_2; printf("%.0f\n", $a);
+$a = 123.456E12_; printf("%.0f\n", $a);
+$a = 123.456E_+12; printf("%.0f\n", $a);
+$a = 123.456E+_12; printf("%.0f\n", $a);
+$a = 123.456E+1_2; printf("%.0f\n", $a);
+$a = 123.456E+12_; printf("%.0f\n", $a);
+$a = 123.456E_-12; print "$a\n";
+$a = 123.456E-_12; print "$a\n";
+$a = 123.456E-1_2; print "$a\n";
+$a = 123.456E-12_; print "$a\n";
+$a = 1__23; print "$a\n";
+$a = 12.3__4; print "$a\n";
+$a = 12.34e1__2; printf("%.0f\n", $a);
+EXPECT
+OPTIONS regex
+Misplaced _ in number at - line 6.
+Misplaced _ in number at - line 11.
+Misplaced _ in number at - line 16.
+Misplaced _ in number at - line 17.
+Misplaced _ in number at - line 20.
+Misplaced _ in number at - line 21.
+Misplaced _ in number at - line 24.
+Misplaced _ in number at - line 25.
+Misplaced _ in number at - line 28.
+Misplaced _ in number at - line 29.
+Misplaced _ in number at - line 31.
+Misplaced _ in number at - line 32.
+Misplaced _ in number at - line 33.
+Misplaced _ in number at - line 35.
+Misplaced _ in number at - line 36.
+Misplaced _ in number at - line 37.
+Misplaced _ in number at - line 39.
+Misplaced _ in number at - line 40.
+Misplaced _ in number at - line 41.
+Misplaced _ in number at - line 42.
+_123
+123
+123
+123
+123
+_123
+123
+123
+123
+-123
+-_123
+-123
+-123
+-123
+123.456
+123.456
+123.456
+123.456
+123.456
+123.456
+123.456
+123.456
+-123.456
+-123.456
+-123.456
+-123.456
+123456000000000
+123456000000000
+123456000000000
+123456000000000
+123456000000000
+123456000000000
+123456000000000
+1.23456e-0?10
+1.23456e-0?10
+1.23456e-0?10
+1.23456e-0?10
+123
+12.34
+12340000000000
+_123
+123
+123
+123
+123
+_123
+123
+123
+123
+-123
+-_123
+-123
+-123
+-123
+123.456
+123.456
+123.456
+123.456
+123.456
+123.456
+123.456
+123.456
+-123.456
+-123.456
+-123.456
+-123.456
+123456000000000
+123456000000000
+123456000000000
+123456000000000
+123456000000000
+123456000000000
+123456000000000
+1.23456e-0?10
+1.23456e-0?10
+1.23456e-0?10
+1.23456e-0?10
+123
+12.34
+12340000000000
+########
+# toke.c
+use warnings 'bareword' ;
+#line 25 "bar"
+$a = FRED:: ;
+no warnings 'bareword' ;
+#line 25 "bar"
+$a = FRED:: ;
+EXPECT
+Bareword "FRED::" refers to nonexistent package at bar line 25.
+########
+# toke.c
+use warnings 'ambiguous' ;
+sub time {}
+my $a = time() ;
+no warnings 'ambiguous' ;
+my $b = time() ;
+EXPECT
+Ambiguous call resolved as CORE::time(), qualify as such or use & at - line 4.
+########
+# toke.c
+use warnings ;
+eval <<'EOE';
+#  line 30 "foo"
+warn "yelp";
+{
+  $_ = " \x{123} " ;
+}
+EOE
+EXPECT
+yelp at foo line 30.
+########
+# toke.c
+my $a = rand + 4 ;
+EXPECT
+Warning: Use of "rand" without parens is ambiguous at - line 2.
+########
+# toke.c
+$^W = 0 ;
+my $a = rand + 4 ;
+{
+    no warnings 'ambiguous' ;
+    $a = rand + 4 ;
+    use warnings 'ambiguous' ;
+    $a = rand + 4 ;
+}
+$a = rand + 4 ;
+EXPECT
+Warning: Use of "rand" without parens is ambiguous at - line 3.
+Warning: Use of "rand" without parens is ambiguous at - line 8.
+Warning: Use of "rand" without parens is ambiguous at - line 10.
+########
+# toke.c
+sub fred {};
+-fred ;
+EXPECT
+Ambiguous use of -fred resolved as -&fred() at - line 3.
+########
+# toke.c
+$^W = 0 ;
+sub fred {} ;
+-fred ;
+{
+    no warnings 'ambiguous' ;
+    -fred ;
+    use warnings 'ambiguous' ;
+    -fred ;
+}
+-fred ;
+EXPECT
+Ambiguous use of -fred resolved as -&fred() at - line 4.
+Ambiguous use of -fred resolved as -&fred() at - line 9.
+Ambiguous use of -fred resolved as -&fred() at - line 11.
+########
+# toke.c
+open FOO || time;
+EXPECT
+Precedence problem: open FOO should be open(FOO) at - line 2.
+########
+# toke.c
+$^W = 0 ;
+open FOO || time;
+{
+    no warnings 'precedence' ;
+    open FOO || time;
+    use warnings 'precedence' ;
+    open FOO || time;
+}
+open FOO || time;
+EXPECT
+Precedence problem: open FOO should be open(FOO) at - line 3.
+Precedence problem: open FOO should be open(FOO) at - line 8.
+Precedence problem: open FOO should be open(FOO) at - line 10.
+########
+# toke.c
+$^W = 0 ;
+*foo *foo ;
+{
+    no warnings 'ambiguous' ;
+    *foo *foo ;
+    use warnings 'ambiguous' ;
+    *foo *foo ;
+}
+*foo *foo ;
+EXPECT
+Operator or semicolon missing before *foo at - line 3.
+Ambiguous use of * resolved as operator * at - line 3.
+Operator or semicolon missing before *foo at - line 8.
+Ambiguous use of * resolved as operator * at - line 8.
+Operator or semicolon missing before *foo at - line 10.
+Ambiguous use of * resolved as operator * at - line 10.
+########
+# toke.c
+use warnings 'misc' ;
+my $a = "\m" ;
+no warnings 'misc' ;
+$a = "\m" ;
+EXPECT
+Unrecognized escape \m passed through at - line 3.
+########
+# toke.c
+use warnings 'portable' ;
+my $a =  0b011111111111111111111111111111110 ;
+   $a =  0b011111111111111111111111111111111 ;
+   $a =  0b111111111111111111111111111111111 ;
+   $a =  0x0fffffffe ;
+   $a =  0x0ffffffff ;
+   $a =  0x1ffffffff ;
+   $a =  0037777777776 ;
+   $a =  0037777777777 ;
+   $a =  0047777777777 ;
+no warnings 'portable' ;
+   $a =  0b011111111111111111111111111111110 ;
+   $a =  0b011111111111111111111111111111111 ;
+   $a =  0b111111111111111111111111111111111 ;
+   $a =  0x0fffffffe ;
+   $a =  0x0ffffffff ;
+   $a =  0x1ffffffff ;
+   $a =  0037777777776 ;
+   $a =  0037777777777 ;
+   $a =  0047777777777 ;
+EXPECT
+Binary number > 0b11111111111111111111111111111111 non-portable at - line 5.
+Hexadecimal number > 0xffffffff non-portable at - line 8.
+Octal number > 037777777777 non-portable at - line 11.
+########
+# toke.c
+use warnings 'overflow' ;
+my $a =  0b011111111111111111111111111111110 ;
+   $a =  0b011111111111111111111111111111111 ;
+   $a =  0b10000000000000000000000000000000000000000000000000000000000000000 ;
+   $a =  0x0fffffffe ;
+   $a =  0x0ffffffff ;
+   $a =  0x10000000000000000 ;
+   $a =  0037777777776 ;
+   $a =  0037777777777 ;
+   $a =  002000000000000000000000;
+no warnings 'overflow' ;
+   $a =  0b011111111111111111111111111111110 ;
+   $a =  0b011111111111111111111111111111111 ;
+   $a =  0b10000000000000000000000000000000000000000000000000000000000000000 ;
+   $a =  0x0fffffffe ;
+   $a =  0x0ffffffff ;
+   $a =  0x10000000000000000 ;
+   $a =  0037777777776 ;
+   $a =  0037777777777 ;
+   $a =  002000000000000000000000;
+EXPECT
+Integer overflow in binary number at - line 5.
+Integer overflow in hexadecimal number at - line 8.
+Integer overflow in octal number at - line 11.
+########
+# toke.c
+BEGIN { $^C = 1; }
+use warnings 'misc';
+dump;
+CORE::dump;
+EXPECT
+dump() better written as CORE::dump() at - line 4.
+- syntax OK
+########
+# toke.c
+use warnings 'misc';
+use subs qw/dump/;
+sub dump { print "no warning for overriden dump\n"; }
+dump;
+EXPECT
+no warning for overriden dump
+########
+# toke.c
+use warnings 'ambiguous';
+"@mjd_previously_unused_array";        
+no warnings 'ambiguous';
+"@mjd_previously_unused_array";        
+EXPECT
+Possible unintended interpolation of @mjd_previously_unused_array in string at - line 3.
+########
+# toke.c
+# The \q should warn, the \_ should NOT warn.
+use warnings 'misc';
+"foo" =~ /\q/;
+"bar" =~ /\_/;
+no warnings 'misc';
+"foo" =~ /\q/;
+"bar" =~ /\_/;
+EXPECT
+Unrecognized escape \q passed through at - line 4.
+########
+# toke.c
+# 20020328 mjd-perl-patch+@plover.com at behest of jfriedl@yahoo.com
+use warnings 'regexp';
+"foo" =~ /foo/c;
+"foo" =~ /foo/cg;
+no warnings 'regexp';
+"foo" =~ /foo/c;
+"foo" =~ /foo/cg;
+EXPECT
+Use of /c modifier is meaningless without /g at - line 4.
+########
+# toke.c
+# 20020328 mjd-perl-patch+@plover.com at behest of jfriedl@yahoo.com
+use warnings 'regexp';
+$_ = "ab" ; 
+s/ab/ab/c;
+s/ab/ab/cg;
+no warnings 'regexp';
+s/ab/ab/c;
+s/ab/ab/cg;
+EXPECT
+Use of /c modifier is meaningless in s/// at - line 5.
+Use of /c modifier is meaningless in s/// at - line 6.
+########
+-wa
+# toke.c
+# 20020414 mjd-perl-patch+@plover.com # -a flag should suppress these warnings
+print "@F\n";
+EXPECT
+
+########
+-w
+# toke.c
+# 20020414 mjd-perl-patch+@plover.com # -a flag should suppress these warnings
+print "@F\n";
+EXPECT
+Possible unintended interpolation of @F in string at - line 4.
+Name "main::F" used only once: possible typo at - line 4.
+########
+-wa
+# toke.c
+# 20020414 mjd-perl-patch+@plover.com
+EXPECT
+
+########
+# toke.c
+# 20020414 mjd-perl-patch+@plover.com
+# In 5.7.3, this emitted "Possible unintended interpolation" warnings
+use warnings 'ambiguous';
+$s = "(@-)(@+)";
+EXPECT
+
+

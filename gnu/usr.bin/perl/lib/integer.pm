@@ -1,5 +1,7 @@
 package integer;
 
+our $VERSION = '1.00';
+
 =head1 NAME
 
 integer - Perl pragma to use integer arithmetic instead of floating point

@@ -1,4 +1,4 @@
-    This is a test to see if I can do not only `$self' and `method()', but
+    This is a test to see if I can do not only $self and `method()', but
     also `$self->method()' and `$self->{FIELDNAME}' and `$Foo <=> $Bar'
     without resorting to escape sequences. If I want to refer to the
     right-shift operator I can do something like `$x >> 3' or even `$y >>
@@ -13,7 +13,7 @@
 
     Dont forget `$self->method()->{FIELDNAME} = {FOO=>BAR}'.
 
-    And make sure that `0' works too!
+    And make sure that 0 works too!
 
     Now, if I use << or >> as my delimiters, then I have to use whitespace.
     So things like `<$self-'method()>> and `<$self-'{FIELDNAME}>> wont end

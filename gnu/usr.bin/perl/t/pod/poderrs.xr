@@ -42,5 +42,5 @@
 *** ERROR: unresolved internal link 'end with begin' at line 108 in file t/pod/poderrs.t
 *** ERROR: unresolved internal link 'OoPs' at line 109 in file t/pod/poderrs.t
 *** ERROR: unresolved internal link 'abc def' at line 113 in file t/pod/poderrs.t
-*** WARNING: multiple occurence of link target 'Misc' at line - in file t/pod/poderrs.t
+*** WARNING: multiple occurrence of link target 'Misc' at line - in file t/pod/poderrs.t
 t/pod/poderrs.t has 33 pod syntax errors.

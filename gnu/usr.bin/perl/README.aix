@@ -19,47 +19,79 @@ an ANSI compliant C-compiler with AIX by default, but binary builds of
 gcc for AIX are widely available.
 
 At the moment of writing, AIX supports two different native C compilers,
-for which you have to pay: B<xlc> and B<VAC>. If you decide to use eiter
+for which you have to pay: B<xlC> and B<vac>. If you decide to use either
 of these two (which is quite a lot easier than using gcc), be sure to
 upgrade to the latest available patch level. Currently:
 
-    xlC.C     3.1.4.0
-    vac.C     4.4.0.3	(5.0 is already available)
+    xlC.C     3.1.4.10 or 3.6.6.0 or 5.0.2.6
+    vac.C     4.4.0.3  or 5.0.2.4
 
 Perl can be compiled with either IBM's ANSI C compiler or with gcc.
 The former is recommended, as not only can it compile Perl with no
 difficulty, but also can take advantage of features listed later that
 require the use of IBM compiler-specific command-line flags.
 
+The IBM's compiler patch levels 5.0.0.0 and 5.0.1.0 have compiler
+optimization bugs that affect compiling perl.c and regcomp.c,
+respectively.  If Perl's configuration detects those compiler patch
+levels, optimization is turned off for the said source code files.
+Upgrading to at least 5.0.2.0 is recommended.
+
 If you decide to use gcc, make sure your installation is recent and
 complete, and be sure to read the Perl README file for more gcc-specific
-details.
+details. Please report any hoops you had to jump through to the development
+team.
 
 =head2 OS level
 
 Before installing the patches to the IBM C-compiler you need to know the
 level of patching for the Operating System. IBM's command 'oslevel' will
-show the base, but is not always complete:
+show the base, but is not always complete (in this example oslevel shows
+4.3.NULL, whereas the system might run most of 4.3.THREE):
 
     # oslevel
     4.3.0.0
     # lslpp -l | grep 'bos.rte '
-    bos.rte      4.3.2.1  COMMITTED  Base Operating System Runtime
-    bos.rte      4.3.2.0  COMMITTED  Base Operating System Runtime
+    bos.rte           4.3.3.75  COMMITTED  Base Operating System Runtime
+    bos.rte            4.3.2.0  COMMITTED  Base Operating System Runtime
+    #
+
+The same might happen to AIX 5.1 or other OS levels. As a side note, perl
+cannot be built without bos.adt.syscalls and bos.adt.libm installed
+
+    # lslpp -l | egrep "syscalls|libm"
+    bos.adt.libm      5.1.0.25  COMMITTED  Base Application Development
+    bos.adt.syscalls  5.1.0.25  COMMITTED  System Calls Application
     #
 
 =head2 Building Dynamic Extensions on AIX
 
-AIX supports dynamically loadable libraries (shared libraries).
-Shared libraries end with the suffix .a, which is a bit misleading,
-because *all* libraries are shared ;-).
+AIX supports dynamically loadable objects as well as shared libraries.
+Shared libraries by convention end with the suffix .a, which is a bit
+misleading, as an archive can contain static as well as dynamic members.
+For perl dynamically loaded objects we use the .so suffix also used on
+many other platforms.
+
+Note that starting from Perl 5.7.2 (and consequently 5.8.0) and AIX 4.3
+or newer Perl uses the AIX native dynamic loading interface in the so
+called runtime linking mode instead of the emulated interface that was
+used in Perl releases 5.6.1 and earlier or, for AIX releases 4.2 and
+earlier.  This change does break backward compatibility with compiled
+modules from earlier perl releases.  The change was made to make Perl
+more compliant with other applications like Apache/mod_perl which are
+using the AIX native interface. This change also enables the use of C++
+code with static constructors and destructors in perl extensions, which
+was not possible using the emulated interface.
 
 =head2 The IBM ANSI C Compiler
 
 All defaults for Configure can be used.
 
 If you've chosen to use vac 4, be sure to run 4.4.0.3. Older versions
-will turn up nasty later on.
+will turn up nasty later on. For vac 5 be sure to run at least 5.0.1.0,
+but vac 5.0.2.3 or up is highly recommended. Note that since IBM has
+removed vac 5.0.2.1 and 5.0.2.2 from the software depot, these versions
+should be considered obsolete.
 
 Here's a brief lead of how to upgrade the compiler to the latest
 level.  Of course this is subject to changes.  You can only upgrade
@@ -117,21 +149,22 @@ On AIX 4.2 using xlC, we continue:
 
 On AIX 4.3 using vac, we continue:
 
- # lslpp -l | fgrep 'vac.C '
-   vac.C                      4.4.0.2  COMMITTED  C for AIX Compiler
-   vac.C                      4.4.0.0  COMMITTED  C for AIX Compiler
- # grep 'vac.C.4.4.0.*.bff' other.ll
- -rw-rw-r--   1 45776101 1        13466624 May 26 1999  vac.C.4.4.0.1.bff
- -rw-rw-r--   1 45776101 1        13473792 Aug 31 1999  vac.C.4.4.0.2.bff
- -rw-rw-r--   1 45776101 1        13480960 May 19 20:32 vac.C.4.4.0.3.bff
- # wget ftp://ftp.software.ibm.com/aix/fixes/v4/other/vac.C.4.4.0.3.bff
+ # lslpp -l | grep 'vac.C '
+  vac.C                      5.0.2.2  COMMITTED  C for AIX Compiler
+  vac.C                      5.0.2.0  COMMITTED  C for AIX Compiler
+ # grep 'vac.C.5.0.2.*.bff' other.ll
+ -rw-rw-r--   1 45776101 1        13592576 Apr 16 2001  vac.C.5.0.2.0.bff
+ -rw-rw-r--   1 45776101 1        14133248 Apr  9 2002  vac.C.5.0.2.3.bff
+ -rw-rw-r--   1 45776101 1        14173184 May 20 2002  vac.C.5.0.2.4.bff
+ # wget ftp://ftp.software.ibm.com/aix/fixes/v4/other/vac.C.5.0.2.4.bff
  #
 
-Then execute the following command, and fill in its choices
+Likewise on all other OS levels. Then execute the following command, and
+fill in its choices
 
  # smit install_update
   -> Install and Update from LATEST Available Software
-  * INPUT device / directory for software [ vac.C.4.4.0.3.bff    ]
+  * INPUT device / directory for software [ vac.C.5.0.2.4.bff    ]
   [ OK ]
   [ OK ]
 
@@ -139,36 +172,43 @@ Follow the messages ... and you're done.
 
 =head2 Using GNU's gcc for building perl
 
-... ?
+Using gcc-3.0 (tested with 3.0.4) now works out of the box, as do
+recent gcc-2.9 builds available directly from IBM as part of their Linux
+compatibility packages, available here:
+
+  http://www.ibm.com/servers/aix/products/aixos/linux/
 
 =head2 Using Large Files with Perl
 
-... ?
+Should yield no problems.
 
 =head2 Threaded Perl
 
-... ?
+Threads seem to work OK, though at the moment not all tests pass when
+threads are used in combination with 64bit configurations.
 
 =head2 64-bit Perl
 
-... ?
+If your AIX is installed with 64-bit support, you can expect 64bit
+configurations to work. In combination with threads some tests might
+still fail.
 
-=head2 GDBM and Threads
+=head2 AIX 4.2 and extensions using C++ with statics
 
-... ?
-
-=head2 NFS filesystems and utime(2)
-
-... ?
+In AIX 4.2 Perl extensions that use C++ functions that use statics
+may have problems in that the statics are not getting initialized.
+In newer AIX releases this has been solved by linking Perl with
+the libC_r library, but unfortunately in AIX 4.2 the said library
+has an obscure bug where the various functions related to time
+(such as time() and gettimeofday()) return broken values, and
+therefore in AIX 4.2 Perl is not linked against the libC_r.
 
 =head1 AUTHOR
 
 H.Merijn Brand <h.m.brand@hccnet.nl>
 
-Structure copied from README.hpux
-
 =head1 DATE
 
-Version 0.0.1: 16-10-2000
+Version 0.0.5: 22 May 2002
 
 =cut

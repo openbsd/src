@@ -5,6 +5,20 @@ BEGIN {
     @INC = '../lib';
 }
 
+{
+    my $wide = v256;
+    use bytes;
+    my $ordwide = ord($wide);
+    printf "# under use bytes ord(v256) = 0x%02x\n", $ordwide;
+    if ($ordwide == 140) {
+	print "1..0 # Skip: UTF-EBCDIC (not UTF-8) used here\n";
+	exit 0;
+    }
+    elsif ($ordwide != 196) {
+	printf "# v256 starts with 0x%02x\n", $ordwide;
+    }
+}
+
 no utf8;
 
 print "1..78\n";
@@ -13,7 +27,7 @@ my $test = 1;
 
 # This table is based on Markus Kuhn's UTF-8 Decode Stress Tester,
 # http://www.cl.cam.ac.uk/~mgk25/ucs/examples/UTF-8-test.txt,
-# version dated 2000-09-02. 
+# version dated 2000-09-02.
 
 # We use the \x notation instead of raw binary bytes for \x00-\x1f\x7f-\xff
 # because e.g. many patch programs have issues with binary data.
@@ -21,7 +35,7 @@ my $test = 1;
 my @MK = split(/\n/, <<__EOMK__);
 1	Correct UTF-8
 1.1.1 y "\xce\xba\xe1\xbd\xb9\xcf\x83\xce\xbc\xce\xb5"	-		11	ce:ba:e1:bd:b9:cf:83:ce:bc:ce:b5	5
-2	Boundary conditions 
+2	Boundary conditions
 2.1	First possible sequence of certain length
 2.1.1 y "\x00"			0		1	00	1
 2.1.2 y "\xc2\x80"			80		2	c2:80	1
@@ -122,24 +136,21 @@ __EOMK__
 
 # 104..181
 {
-    my $WARNCNT;
     my $id;
 
-    local $SIG{__WARN__} =
-	sub {
-	    print "# $id: @_";
-	    $WARNCNT++;
-	    $WARNMSG = "@_";
-	};
+    local $SIG{__WARN__} = sub {
+	print "# $id: @_";
+	$@ = "@_";
+    };
 
     sub moan {
 	print "$id: @_";
     }
-    
-    sub test_unpack_U {
-	$WARNCNT = 0;
-	$WARNMSG = "";
-	unpack('U*', $_[0]);
+
+    sub warn_unpack_U {
+	$@ = '';
+	my @null = unpack('U0U*', $_[0]);
+	return $@;
     }
 
     for (@MK) {
@@ -147,7 +158,7 @@ __EOMK__
 	    # print "# $_\n";
 	} elsif (/^(\d+\.\d+\.\d+[bu]?)\s+([yn])\s+"(.+)"\s+([0-9a-f]{1,8}|-)\s+(\d+)\s+([0-9a-f]{2}(?::[0-9a-f]{2})*)(?:\s+((?:\d+|-)(?:\s+(.+))?))?$/) {
 	    $id = $1;
-	    my ($okay, $bytes, $Unicode, $byteslen, $hex, $charslen, $error) =
+	    my ($okay, $bytes, $Unicode, $byteslen, $hex, $charslen, $experr) =
 		($2, $3, $4, $5, $6, $7, $8);
 	    my @hex = split(/:/, $hex);
 	    unless (@hex == $byteslen) {
@@ -161,20 +172,19 @@ __EOMK__
 		    moan "bytes length() ($bytesbyteslen) not equal to $byteslen\n";
 		}
 	    }
+	    my $warn = warn_unpack_U($bytes);
 	    if ($okay eq 'y') {
-		test_unpack_U($bytes);
-		if ($WARNCNT) {
-		    moan "unpack('U*') false negative\n";
+		if ($warn) {
+		    moan "unpack('U0U*') false negative\n";
 		    print "not ";
 		}
 	    } elsif ($okay eq 'n') {
-		test_unpack_U($bytes);
-		if ($WARNCNT == 0 || ($error ne '' && $WARNMSG !~ /$error/)) {
-		    moan "unpack('U*') false positive\n";
+		if (not $warn || ($experr ne '' && $warn !~ /$experr/)) {
+		    moan "unpack('U0U*') false positive\n";
 		    print "not ";
 		}
 	    }
-	    print "ok $test\n";
+	    print "ok $test # $id $okay\n";
 	    $test++;
  	} else {
 	    moan "unknown format\n";

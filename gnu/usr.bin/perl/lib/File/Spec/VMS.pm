@@ -4,7 +4,7 @@ use strict;
 use vars qw(@ISA $VERSION);
 require File::Spec::Unix;
 
-$VERSION = '1.1';
+$VERSION = '1.2';
 
 @ISA = qw(File::Spec::Unix);
 
@@ -26,7 +26,7 @@ See File::Spec::Unix for a documentation of the methods provided
 there. This package overrides the implementation of these methods, not
 the semantics.
 
-=over
+=over 4
 
 =item eliminate_macros
 
@@ -138,7 +138,7 @@ sub fixpath {
 
 =head2 Methods always loaded
 
-=over
+=over 4
 
 =item canonpath (override)
 
@@ -156,8 +156,9 @@ sub canonpath {
       else          { return vmsify($path);  }
     }
     else {
+      $path =~ s/([\[<])000000\./$1/g;                  # [000000.foo     ==> [foo
+      $path =~ s/([^-]+)\.(\]\[|><)?000000([\]\>])/$1$3/g;  # foo.000000] ==> foo]
       $path =~ s-\]\[--g;  $path =~ s/><//g;            # foo.][bar       ==> foo.bar
-      $path =~ s/([\[<])000000\./$1/;                   # [000000.foo     ==> foo
       1 while $path =~ s{([\[<-])\.-}{$1-};             # [.-.-           ==> [--
       $path =~ s/\.[^\[<\.]+\.-([\]\>])/$1/;            # bar.foo.-]      ==> bar]
       $path =~ s/([\[<])(-+)/$1 . "\cx" x length($2)/e; # encode leading '-'s
@@ -268,12 +269,23 @@ from the following list or '' if none are writable:
     sys$scratch:
     $ENV{TMPDIR}
 
+Since perl 5.8.0, if running under taint mode, and if $ENV{TMPDIR}
+is tainted, it is not used.
+
 =cut
 
 my $tmpdir;
 sub tmpdir {
     return $tmpdir if defined $tmpdir;
-    foreach ('sys$scratch:', $ENV{TMPDIR}) {
+    my @dirlist = ('sys$scratch:', $ENV{TMPDIR});
+    {
+	no strict 'refs';
+	if (${"\cTAINT"}) { # Check for taint mode on perl >= 5.8.0
+            require Scalar::Util;
+	    pop @dirlist if Scalar::Util::tainted($ENV{TMPDIR});
+	}
+    }
+    foreach (@dirlist) {
 	next unless defined && -d && -w _;
 	$tmpdir = $_;
 	last;
@@ -405,6 +417,7 @@ sub abs2rel {
     # Figure out the effective $base and clean it up.
     if ( !defined( $base ) || $base eq '' ) {
         $base = cwd() ;
+        $base = $self->canonpath( $base ) ;
     }
     elsif ( ! $self->file_name_is_absolute( $base ) ) {
         $base = $self->rel2abs( $base ) ;
@@ -427,7 +440,9 @@ sub abs2rel {
 
     # Now, remove all leading components that are the same
     my @pathchunks = $self->splitdir( $path_directories );
+    unshift(@pathchunks,'000000') unless $pathchunks[0] eq '000000';
     my @basechunks = $self->splitdir( $base_directories );
+    unshift(@basechunks,'000000') unless $basechunks[0] eq '000000';
 
     while ( @pathchunks && 
             @basechunks && 

@@ -1,0 +1,218 @@
+  regcomp.c	AOK
+
+  Quantifier unexpected on zero-length expression [S_study_chunk] 
+
+  (?p{}) is deprecated - use (??{})  [S_reg]
+    $a =~ /(?p{'x'})/ ;
+    
+
+  Useless (%s%c) - %suse /%c modifier [S_reg] 
+  Useless (%sc) - %suse /gc modifier [S_reg] 
+
+
+
+  Strange *+?{} on zero-length expression	[S_study_chunk]
+	/(?=a)?/
+
+  %.*s matches null string many times   	[S_regpiece]
+	$a = "ABC123" ; $a =~ /(?=a)*/'
+
+  /%.127s/: Unrecognized escape \\%c passed through	[S_regatom] 
+  	$x = '\m' ; /$x/
+
+  POSIX syntax [%c %c] belongs inside character classes	[S_checkposixcc] 
+
+
+  Character class [:%.*s:] unknown	[S_regpposixcc]
+
+  Character class syntax [%c %c] belongs inside character classes [S_checkposixcc] 
+  
+  /%.127s/: false [] range \"%*.*s\" in regexp [S_regclass]
+
+  /%.127s/: false [] range \"%*.*s\" in regexp [S_regclassutf8]
+
+  /%.127s/: Unrecognized escape \\%c in character class passed through"	[S_regclass] 
+
+  /%.127s/: Unrecognized escape \\%c in character class passed through"	[S_regclassutf8] 
+
+  False [] range \"%*.*s\" [S_regclass]
+
+__END__
+# regcomp.c [S_regpiece]
+use warnings 'regexp' ;
+my $a = "ABC123" ; 
+$a =~ /(?=a)*/ ;
+no warnings 'regexp' ;
+$a =~ /(?=a)*/ ;
+EXPECT
+(?=a)* matches null string many times in regex; marked by <-- HERE in m/(?=a)* <-- HERE / at - line 4.
+########
+# regcomp.c [S_regatom]
+$x = '\m' ;
+use warnings 'regexp' ;
+$a =~ /a$x/ ;
+no warnings 'regexp' ;
+$a =~ /a$x/ ;
+EXPECT
+Unrecognized escape \m passed through in regex; marked by <-- HERE in m/a\m <-- HERE / at - line 4.
+########
+# regcomp.c [S_regpposixcc S_checkposixcc]
+#
+use warnings 'regexp' ;
+$_ = "" ;
+/[:alpha:]/;
+/[:zog:]/;
+no warnings 'regexp' ;
+/[:alpha:]/;
+/[:zog:]/;
+EXPECT
+POSIX syntax [: :] belongs inside character classes in regex; marked by <-- HERE in m/[:alpha:] <-- HERE / at - line 5.
+POSIX syntax [: :] belongs inside character classes in regex; marked by <-- HERE in m/[:zog:] <-- HERE / at - line 6.
+########
+# regcomp.c [S_checkposixcc]
+#
+use warnings 'regexp' ;
+$_ = "" ;
+/[.zog.]/;
+no warnings 'regexp' ;
+/[.zog.]/;
+EXPECT
+POSIX syntax [. .] belongs inside character classes in regex; marked by <-- HERE in m/[.zog.] <-- HERE / at - line 5.
+POSIX syntax [. .] is reserved for future extensions in regex; marked by <-- HERE in m/[.zog.] <-- HERE /
+########
+# regcomp.c [S_regclass]
+$_ = "";
+use warnings 'regexp' ;
+/[a-b]/;
+/[a-\d]/;
+/[\d-b]/;
+/[\s-\d]/;
+/[\d-\s]/;
+/[a-[:digit:]]/;
+/[[:digit:]-b]/;
+/[[:alpha:]-[:digit:]]/;
+/[[:digit:]-[:alpha:]]/;
+no warnings 'regexp' ;
+/[a-b]/;
+/[a-\d]/;
+/[\d-b]/;
+/[\s-\d]/;
+/[\d-\s]/;
+/[a-[:digit:]]/;
+/[[:digit:]-b]/;
+/[[:alpha:]-[:digit:]]/;
+/[[:digit:]-[:alpha:]]/;
+EXPECT
+False [] range "a-\d" in regex; marked by <-- HERE in m/[a-\d <-- HERE ]/ at - line 5.
+False [] range "\d-" in regex; marked by <-- HERE in m/[\d- <-- HERE b]/ at - line 6.
+False [] range "\s-" in regex; marked by <-- HERE in m/[\s- <-- HERE \d]/ at - line 7.
+False [] range "\d-" in regex; marked by <-- HERE in m/[\d- <-- HERE \s]/ at - line 8.
+False [] range "a-[:digit:]" in regex; marked by <-- HERE in m/[a-[:digit:] <-- HERE ]/ at - line 9.
+False [] range "[:digit:]-" in regex; marked by <-- HERE in m/[[:digit:]- <-- HERE b]/ at - line 10.
+False [] range "[:alpha:]-" in regex; marked by <-- HERE in m/[[:alpha:]- <-- HERE [:digit:]]/ at - line 11.
+False [] range "[:digit:]-" in regex; marked by <-- HERE in m/[[:digit:]- <-- HERE [:alpha:]]/ at - line 12.
+########
+# regcomp.c [S_regclassutf8]
+BEGIN {
+    if (ord("\t") == 5) {
+        print "SKIPPED\n# ebcdic regular expression ranges differ.";
+        exit 0;
+    }
+}
+use utf8;
+$_ = "";
+use warnings 'regexp' ;
+/[a-b]/;
+/[a-\d]/;
+/[\d-b]/;
+/[\s-\d]/;
+/[\d-\s]/;
+/[a-[:digit:]]/;
+/[[:digit:]-b]/;
+/[[:alpha:]-[:digit:]]/;
+/[[:digit:]-[:alpha:]]/;
+no warnings 'regexp' ;
+/[a-b]/;
+/[a-\d]/;
+/[\d-b]/;
+/[\s-\d]/;
+/[\d-\s]/;
+/[a-[:digit:]]/;
+/[[:digit:]-b]/;
+/[[:alpha:]-[:digit:]]/;
+/[[:digit:]-[:alpha:]]/;
+EXPECT
+False [] range "a-\d" in regex; marked by <-- HERE in m/[a-\d <-- HERE ]/ at - line 12.
+False [] range "\d-" in regex; marked by <-- HERE in m/[\d- <-- HERE b]/ at - line 13.
+False [] range "\s-" in regex; marked by <-- HERE in m/[\s- <-- HERE \d]/ at - line 14.
+False [] range "\d-" in regex; marked by <-- HERE in m/[\d- <-- HERE \s]/ at - line 15.
+False [] range "a-[:digit:]" in regex; marked by <-- HERE in m/[a-[:digit:] <-- HERE ]/ at - line 16.
+False [] range "[:digit:]-" in regex; marked by <-- HERE in m/[[:digit:]- <-- HERE b]/ at - line 17.
+False [] range "[:alpha:]-" in regex; marked by <-- HERE in m/[[:alpha:]- <-- HERE [:digit:]]/ at - line 18.
+False [] range "[:digit:]-" in regex; marked by <-- HERE in m/[[:digit:]- <-- HERE [:alpha:]]/ at - line 19.
+########
+# regcomp.c [S_regclass S_regclassutf8]
+use warnings 'regexp' ;
+$a =~ /[a\zb]/ ;
+no warnings 'regexp' ;
+$a =~ /[a\zb]/ ;
+EXPECT
+Unrecognized escape \z in character class passed through in regex; marked by <-- HERE in m/[a\z <-- HERE b]/ at - line 3.
+
+########
+# regcomp.c [S_study_chunk]
+use warnings 'deprecated' ;
+$a = "xx" ;
+$a =~ /(?p{'x'})/ ;
+no warnings ;
+use warnings 'regexp' ;
+$a =~ /(?p{'x'})/ ;
+use warnings;
+no warnings 'deprecated' ;
+no warnings 'regexp' ;
+no warnings 'syntax' ;
+$a =~ /(?p{'x'})/ ;
+EXPECT
+(?p{}) is deprecated - use (??{}) in regex; marked by <-- HERE in m/(?p <-- HERE {'x'})/ at - line 4.
+(?p{}) is deprecated - use (??{}) in regex; marked by <-- HERE in m/(?p <-- HERE {'x'})/ at - line 7.
+########
+# regcomp.c [S_reg]
+use warnings 'regexp' ;
+$a = qr/(?c)/;
+$a = qr/(?-c)/;
+$a = qr/(?g)/;
+$a = qr/(?-g)/;
+$a = qr/(?o)/;
+$a = qr/(?-o)/;
+$a = qr/(?g-o)/;
+$a = qr/(?g-c)/;
+$a = qr/(?o-cg)/;  # (?c) means (?g) error won't be thrown
+$a = qr/(?ogc)/;
+no warnings 'regexp' ;
+$a = qr/(?c)/;
+$a = qr/(?-c)/;
+$a = qr/(?g)/;
+$a = qr/(?-g)/;
+$a = qr/(?o)/;
+$a = qr/(?-o)/;
+$a = qr/(?g-o)/;
+$a = qr/(?g-c)/;
+$a = qr/(?o-cg)/;  # (?c) means (?g) error won't be thrown
+$a = qr/(?ogc)/;
+#EXPECT
+EXPECT
+Useless (?c) - use /gc modifier in regex; marked by <-- HERE in m/(?c <-- HERE )/ at - line 3.
+Useless (?-c) - don't use /gc modifier in regex; marked by <-- HERE in m/(?-c <-- HERE )/ at - line 4.
+Useless (?g) - use /g modifier in regex; marked by <-- HERE in m/(?g <-- HERE )/ at - line 5.
+Useless (?-g) - don't use /g modifier in regex; marked by <-- HERE in m/(?-g <-- HERE )/ at - line 6.
+Useless (?o) - use /o modifier in regex; marked by <-- HERE in m/(?o <-- HERE )/ at - line 7.
+Useless (?-o) - don't use /o modifier in regex; marked by <-- HERE in m/(?-o <-- HERE )/ at - line 8.
+Useless (?g) - use /g modifier in regex; marked by <-- HERE in m/(?g <-- HERE -o)/ at - line 9.
+Useless (?-o) - don't use /o modifier in regex; marked by <-- HERE in m/(?g-o <-- HERE )/ at - line 9.
+Useless (?g) - use /g modifier in regex; marked by <-- HERE in m/(?g <-- HERE -c)/ at - line 10.
+Useless (?-c) - don't use /gc modifier in regex; marked by <-- HERE in m/(?g-c <-- HERE )/ at - line 10.
+Useless (?o) - use /o modifier in regex; marked by <-- HERE in m/(?o <-- HERE -cg)/ at - line 11.
+Useless (?-c) - don't use /gc modifier in regex; marked by <-- HERE in m/(?o-c <-- HERE g)/ at - line 11.
+Useless (?o) - use /o modifier in regex; marked by <-- HERE in m/(?o <-- HERE gc)/ at - line 12.
+Useless (?g) - use /g modifier in regex; marked by <-- HERE in m/(?og <-- HERE c)/ at - line 12.
+Useless (?c) - use /gc modifier in regex; marked by <-- HERE in m/(?ogc <-- HERE )/ at - line 12.

@@ -59,8 +59,52 @@ if (-d "pod") {
   die "$0: failed to chdir('pod'): $!\n" unless chdir("pod");
 }
 
-@pods = qw(
+@ARCHPODS = qw(
+    perlaix	
+    perlapollo
+    perlamiga          
+    perlbeos
+    perlbs2000
+    perlce
+    perlcygwin          
+    perldgux             
+    perldos             
+    perlepoc             
+    perlfreebsd             
+    perlhpux            
+    perlhurd            
+    perlirix            
+    perlmachten         
+    perlmacos
+    perlmint
+    perlmpeix
+    perlnetware             
+    perlos2             
+    perlos390           
+    perlqnx
+    perlplan9
+    perlsolaris
+    perltru64
+    perluts
+    perlvmesa
+    perlvms             
+    perlvos             
+    perlwin32           
+          );
+
+@CJKPODS = qw(
+    perlcn
+    perljp
+    perlko
+    perltw
+          );
+
+@pods = 
+  (
+    qw(
+
     perl
+    perlintro
     perlfaq
     perltoc
     perlbook
@@ -74,6 +118,7 @@ if (-d "pod") {
     perldsc
     perlrequick
     perlpod
+    perlpodspec
     perlstyle
     perltrap
 
@@ -86,6 +131,7 @@ if (-d "pod") {
     perlvar
     perllol
     perlopentut
+    perlpacktut
     perlretut
 
     perlre
@@ -95,7 +141,7 @@ if (-d "pod") {
 
     perlboot
     perltoot
-    perltootc
+    perltooc
     perlobj
     perlbot
     perltie
@@ -103,18 +149,22 @@ if (-d "pod") {
     perlipc
     perlfork
     perlnumber
+
     perlthrtut
+    perlothrtut
 
     perlport
     perllocale
+    perluniintro
     perlunicode
     perlebcdic
 
     perlsec
 
     perlmod
-    perlmodlib
     perlmodinstall
+    perlmodlib
+    perlmodstyle
     perlnewmod
 
     perlfaq1            
@@ -141,55 +191,32 @@ if (-d "pod") {
     perldbmfilter       
     perlapi             
     perlintern          
+    perliol            
     perlapio            
     perltodo            
     perlhack            
 
     perlhist           
     perldelta           
+    perl572delta         
+    perl571delta         
+    perl570delta         
+    perl561delta         
+    perl56delta         
     perl5005delta       
     perl5004delta       
 
-    perlaix
-    perlamiga          
-    perlbs2000
-    perlcygwin          
-    perldos             
-    perlepoc             
-    perlhpux            
-    perlmachten         
-    perlmacos
-    perlmpeix         
-    perlos2             
-    perlos390           
-    perlsolaris
-    perlvmesa             
-    perlvms             
-    perlvos             
-    perlwin32           
-	  );
+    ),
 
-@ARCHPODS = qw(
-    perlaix	
-    perlamiga          
-    perlbs2000
-    perlcygwin          
-    perldos             
-    perlepoc             
-    perlhpux            
-    perlmachten         
-    perlmacos
-    perlmpeix
-    perlos2             
-    perlos390           
-    perlsolaris
-    perlvmesa             
-    perlvms             
-    perlvos             
-    perlwin32           
-          );
+    @ARCHPODS,
+
+  );
+
 for (@ARCHPODS) { s/$/.pod/ }
 @ARCHPODS{@ARCHPODS} = ();
+
+for (@CJKPODS) { s/$/.pod/ }
+@CJKPODS{@CJKPODS} = ();
 
 for (@pods) { s/$/.pod/ }
 @pods{@pods} = ();
@@ -217,6 +244,11 @@ die "$0: could not find the pod listing of perl.pod\n"
   unless @PERLPODS;
 @PERLPODS{@PERLPODS} = ();
 
+# Delete the CJK because we cannot mix their encodings.
+delete @PERLPODS{@CJKPODS};
+delete @PODS{@CJKPODS};
+delete @pods{@CJKPODS};
+
 # Cross-check against ourselves
 # Cross-check against the MANIFEST
 # Cross-check against the perl.pod
@@ -225,7 +257,7 @@ foreach my $i (sort keys %PODS) {
   warn "$0: $i exists but is unknown by buildtoc\n"
 	unless exists $pods{$i};
   warn "$0: $i exists but is unknown by ../MANIFEST\n"
-	if !exists $MANIPODS{$i} && !exists $ARCHPODS{$i};
+	if !exists $MANIPODS{$i} && !exists $ARCHPODS{$i} && !exists $CJKPODS{$i};
   warn "$0: $i exists but is unknown by perl.pod\n"
 	unless exists $PERLPODS{$i};
 }
@@ -271,12 +303,14 @@ find \&getpods => qw(../lib ../ext);
 
 sub getpods {
     if (/\.p(od|m)$/) {
-	# Skip .pm files that have corresponding .pod files, and Functions.pm.
-	return if /(.*)\.pm$/ && -f "$1.pod";
 	my $file = $File::Find::name;
-	return if $file eq '../lib/Pod/Functions.pm'; # Used only by pod itself
-
-	die "tut $name" if $file =~ /TUT/;
+        return if $file eq '../lib/Pod/Functions.pm'; # Used only by pod itself
+        return if $file =~ m!lib/Attribute/Handlers/demo/!;
+        return if $file =~ m!lib/Net/FTP/.+\.pm!; # Hi, Graham! :-)
+        return if $file =~ m!lib/Math/BigInt/t/!;
+        return if $file =~ m!/Devel/PPPort/[Hh]arness|lib/Devel/Harness!i;
+        return if $file =~ m!XS/(?:APItest|Typemap)!;
+        die "tut $name" if $file =~ /TUT/;
 	unless (open (F, "< $_\0")) {
 	    warn "bogus <$file>: $!";
 	    system "ls", "-l", $file;

@@ -1,10 +1,23 @@
 package warnings::register ;
 
+our $VERSION = '1.00';
+
 =pod
 
 =head1 NAME
 
 warnings::register - warnings import function
+
+=head1 SYNOPSIS
+
+    use warnings::register ;
+
+=head1 DESCRIPTION
+
+Create a warnings category with the same name as the current package.
+
+See L<perlmodlib/Pragmatic Modules> and L<perllexwarn>.
+
 
 =cut
 

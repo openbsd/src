@@ -1,0 +1,25 @@
+Revision history for Perl suite Locale::Maketext
+                                        Time-stamp: "2001-06-21 23:18:31 MDT"
+
+2001-06-21  Sean M. Burke  sburke@cpan.org
+	* Release 1.03: basically cosmetic tweaks to the docs and the
+	test.pl.
+	
+2001-06-20  Sean M. Burke  sburke@cpan.org
+	* Release 1.02:  EBCDIC-compatability changes courtesy of Peter
+	Prymmer.  Added [*,...] as alias for [quant,...] and [#,...] as an
+	alias for [numf,...].  Added some more things to test.pl
+	
+2001-05-25  Sean M. Burke  sburke@cpan.org
+	* Release 1.01:  total rewrite.  Docs are massive now.
+	Including TPJ13 article now.
+	
+2000-05-14  Sean M. Burke  sburke@cpan.org
+
+	* Release 0.18:  only change, regrettably, is a better makefile,
+	and it my email address has changed.
+
+1999-03-15  Sean M. Burke  sburke@netadventure.net
+
+	* Release 0.17:  Public alpha release
+	Underdocumented.

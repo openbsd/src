@@ -478,7 +478,7 @@ sub pod2usage {
     unless ((ref $opts{"-input"}) || (-e $opts{"-input"})) {
         my ($dirname, $basename) = ('', $opts{"-input"});
         my $pathsep = ($^O =~ /^(?:dos|os2|MSWin32)$/) ? ";"
-                            : (($^O eq 'MacOS') ? ',' :  ":");
+                            : (($^O eq 'MacOS' || $^O eq 'VMS') ? ',' :  ":");
         my $pathspec = $opts{"-pathlist"} || $ENV{PATH} || $ENV{PERL5LIB};
 
         my @paths = (ref $pathspec) ? @$pathspec : split($pathsep, $pathspec);
@@ -557,3 +557,4 @@ sub preprocess_paragraph {
     return  $self->SUPER::preprocess_paragraph($_);
 }
 
+1; # keep require happy

@@ -1,0 +1,1178 @@
+Change 727 on 2002/05/28 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::SMTP
+	- Use Authen::SASL to do auth
+
+Change 724 on 2002/05/24 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::SMTP
+	- Minor change to address sanitize code, mainly to allow <>
+
+Change 723 on 2002/05/24 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::FTP
+	- Minor change to pattern to extract unique filename from server response
+
+Change 717 on 2002/04/02 by <gbarr@pobox.com> (Graham Barr)
+
+	Release 1.11
+
+Change 716 on 2002/04/02 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::FTP::dataconn
+	- Fix for select to avoid occasional hangups
+
+Change 715 on 2002/04/02 by <gbarr@pobox.com> (Graham Barr)
+
+	Tweak parsing of hello response
+
+Change 706 on 2002/02/28 by <gbarr@pobox.com> (Graham Barr)
+
+	Release 1.10
+
+Change 705 on 2002/02/28 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::FTP::I
+	- Don't call sysread multiple times after calling select() as it
+	may block.
+
+Change 704 on 2002/02/25 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::POP3
+	- Patches from Ville Skytta for various cleanup and use Digest::MD5
+
+Change 703 on 2002/02/25 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::Cmd, Net::NNTP, Net::POP3, Net::SMTP
+	- Add support for returning tied filehandles from some operations
+
+Change 702 on 2002/02/25 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::Config
+	- New config script for MacOS from Chris Nandor
+
+Change 701 on 2002/02/25 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::FTP
+	- Allow tied handles to be passed to get/put
+
+Change 700 on 2002/02/25 by <gbarr@pobox.com> (Graham Barr)
+
+	t/*
+	- Skip tests if no Socket module
+
+Change 699 on 2002/02/25 by <gbarr@pobox.com> (Graham Barr)
+
+	t/netrc.t
+	- Fix RE context
+
+Change 698 on 2002/02/25 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::Cmd
+	- Pod changes from Robin Barker
+
+Change 697 on 2002/02/22 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::FTP
+	- Don't do EBCDIC translation on a binary transfer
+
+Change 696 on 2002/02/22 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::FTP
+	- Fix docs for anonymous login
+
+Change 695 on 2002/02/22 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::SMTP
+	- Support binding to a local port/address
+
+Change 694 on 2002/02/22 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::Netrc
+	- Support exscaping in the netrc file
+
+Change 688 on 2001/12/10 by <gbarr@pobox.com> (Graham Barr)
+
+	Release 1.0901
+
+Change 687 on 2001/12/10 by <gbarr@pobox.com> (Graham Barr)
+
+	More test updates from the core
+
+Change 686 on 2001/11/27 by <gbarr@pobox.com> (Graham Barr)
+
+	Skip tests if we are on an EBCDIC machine, but Convert::EBCDIC is not installed
+	Make tests run with 5.004
+
+Change 685 on 2001/11/27 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::SMTP
+	- Don't attempt to resolve the hostname to send in the greating.
+	  If it is not provided, use localhost.localdomain
+	  (patch from Eduardo Perez Ureta)
+
+Change 684 on 2001/11/26 by <gbarr@pobox.com> (Graham Barr)
+
+	netrc.t
+	- fix RE for libnet_t.pl
+
+Change 683 on 2001/11/20 by <gbarr@pobox.com> (Graham Barr)
+
+	Various doc cleanups
+
+Change 675 on 2001/11/20 by <gbarr@pobox.com> (Graham Barr)
+
+	t/hostname.t
+	- Add test to check that hostname() does not modify $_
+
+Change 674 on 2001/11/20 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::Config
+	- Dont treat "test_hosts" as an array of host names
+
+Change 673 on 2001/11/20 by <gbarr@pobox.com> (Graham Barr)
+
+	Added test for Net::Netrc
+	patch from chromatic
+
+Change 672 on 2001/11/20 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::FTP
+	- Dont send QUIT on DESTROY. Causes problems when fork() is used.
+
+Change 671 on 2001/11/20 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::Domain
+	- Fix bug causing $_ to be modified
+
+Change 670 on 2001/11/20 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::FTP
+	- Send -anonymous@ as the password for the anonymous user, not
+	  the real username. Patch from Eduardo Perez Ureta
+
+Change 669 on 2001/11/20 by <gbarr@pobox.com> (Graham Barr)
+
+	Add VERSION numbers to Net::FTP::L and Net::FTP::E
+
+Change 668 on 2001/11/20 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::Config
+	- Read some default values using Mac::InternetConfig if we are on the Mac
+	  patch from Chris Nandor
+
+Change 667 on 2001/11/20 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::SMTP
+	- Add support for SASL AUTH (only PLAIN right now)
+	  patch from Meng Weng Wong <mengwong@dumbo.pobox.com>
+
+Change 666 on 2001/11/20 by <gbarr@pobox.com> (Graham Barr)
+
+	t/config.t
+	- Use a fake inet_aton so we know that it will fail when expected
+
+Change 665 on 2001/11/02 by <gbarr@pobox.com> (Graham Barr)
+
+	Release 1.09
+
+Change 664 on 2001/10/29 by <gbarr@pobox.com> (Graham Barr)
+
+	Added test for Net::Config from chromatic
+
+Change 663 on 2001/10/26 by <gbarr@pobox.com> (Graham Barr)
+
+	More fixes from the core for undefs
+
+Change 662 on 2001/10/26 by <gbarr@pobox.com> (Graham Barr)
+
+	Make tests compatable with the perl core distribution
+
+Change 661 on 2001/10/26 by <gbarr@pobox.com> (Graham Barr)
+
+	Add install-nomake to install libnet on machines that do not
+	have make available
+
+Change 660 on 2001/10/26 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::Cmd
+	- Ensure we don't insert an extra CR during LF=>CRLF when the CR already exists
+
+Change 659 on 2001/10/22 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::Domain
+	- Be more robust if no hostname or domainname
+	  (especially the latter)
+
+Change 658 on 2001/10/22 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::Config
+	- Protect eval's from user defining $SIG{__DIE__}
+
+Change 657 on 2001/10/22 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::Config
+	- Fix handling of single values passed, when a ref to an array is wanted
+
+Change 656 on 2001/10/22 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::Config
+	- Pod updates from chromatic
+
+Change 655 on 2001/10/22 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::SMTP
+	- Don't be sensetive to extra spaces on reply to HELO
+
+Change 654 on 2001/10/22 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::Netrc
+	- Update lookup() docs to describe what happens if no .netrc file is found
+
+Change 653 on 2001/10/22 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::FTP
+	- Fix hash() to match docs (patch from Doug Wilson)
+
+Change 652 on 2001/09/21 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::FTP
+	- Fix patterns in ->size and ->supported
+
+Change 651 on 2001/09/21 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::Config, Net::Netrc
+	- Handle $home on w2k
+
+Change 650 on 2001/09/21 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::Domain
+	- Fix some potential undef warnings
+
+Change 649 on 2001/09/21 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::FTP
+	- Add FirewallType as an option to ->new
+
+Change 648 on 2001/09/21 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::FTP
+	- use sysopen instead of open so we don't get caught by special chars in the filename
+
+Change 630 on 2001/08/31 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::FTP::I
+	- Avoid uninit warning
+
+Change 627 on 2001/08/20 by <gbarr@pobox.com> (Graham Barr)
+
+	Remove tests for modules removed from dist
+
+Change 626 on 2001/08/17 by <gbarr@pobox.com> (Graham Barr)
+
+	Increment VERSIONs
+
+Change 625 on 2001/08/17 by <gbarr@pobox.com> (Graham Barr)
+
+	Doc updates and add cc and bcc as aliases for recipient
+
+Change 624 on 2001/08/17 by <gbarr@pobox.com> (Graham Barr)
+
+	Don't set ENV variables
+
+Change 623 on 2001/08/17 by <gbarr@pobox.com> (Graham Barr)
+
+	Support mixed case in the EHLO response
+
+Change 622 on 2001/08/06 by <gbarr@pobox.com> (Graham Barr)
+
+	Documentation update
+
+Change 621 on 2001/08/06 by <gbarr@pobox.com> (Graham Barr)
+
+	Set the status if command returns due to the connection being closed
+
+Change 620 on 2001/08/06 by <gbarr@pobox.com> (Graham Barr)
+
+	Fix for _msg_spec when passed the same msg number twice, pass N instead of N-N
+
+Change 619 on 2001/05/29 by <gbarr@pobox.com> (Graham Barr)
+
+	Remove DummyInetd
+
+Change 618 on 2001/05/29 by <gbarr@pobox.com> (Graham Barr)
+
+	Move snpp into its own distribution
+
+Change 615 on 2001/05/29 by <gbarr@pobox.com> (Graham Barr)
+
+	Move PH to its own dist
+
+Change 614 on 2001/05/29 by <gbarr@pobox.com> (Graham Barr)
+
+	Move TFTP out of libnet
+
+Change 612 on 2001/03/29 by <gbarr@pobox.com> (Graham Barr)
+
+	Support some non standard servers that return more than
+	just a number in response to SIZE. But the size must be
+	the last thing on the response line [Jeffery W Long]
+
+Change 603 on 2000/10/06 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::Config
+	- Added documentation for ftp_firewall_type
+
+Change 574 on 2000/08/24 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::FTP
+	- Make listen socket listen on same interfacce as the command connection
+	  this fixes a problem when going via a SOCKS firewall
+
+Change 573 on 2000/08/24 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::Netrc
+	- Exclude cygwin from the stat check
+
+Change 572 on 2000/08/24 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::FTP
+	- Fix bug in return value from ->rmdir
+	- Added ->restart()
+	Net::FTP::dataconn
+	- Added ->bytes_read
+
+Change 518 on 2000/05/16 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::FTP::A, Net::FTP::I
+	- Restrict the number of bytes given to syswrite to be at
+	  most net_ftp_blksize. This fixes a bug on VMS where the OS will
+	  return an error if syswrite is given more than 65535 bytes.
+
+Change 504 on 2000/05/02 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::NNTP
+	* Doc fix for the description of the return value from ->list()
+
+Change 503 on 2000/05/02 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::POP3
+	* chnage new MD5 to MD5->new
+
+Change 472 on 2000/03/30 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::Cmd
+	- More typos in os390 code
+
+Change 471 on 2000/03/30 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::Cmd
+	- Fix bug in new os390 code
+
+Change 470 on 2000/03/30 by <gbarr@pobox.com> (Graham Barr)
+
+	Generate HTML
+
+Change 469 on 2000/03/30 by <gbarr@pobox.com> (Graham Barr)
+
+	Documentation updates
+
+Change 468 on 2000/03/30 by <gbarr@pobox.com> (Graham Barr)
+
+	Added Net::SNPP::HylaFAX.pm
+
+Change 458 on 2000/03/29 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::Cmd, Net::FTP
+	- Support for os390, modified from a patch from Dan Campbell
+
+Change 455 on 2000/03/29 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::Domain
+	- silence warnings on Win32 that domainname does not exist
+
+Change 454 on 2000/03/29 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::FTP
+	- More error checking in ->get()
+
+Change 453 on 2000/03/29 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::FTP
+	- update pattern to dig out unique filename from stou
+
+Change 452 on 2000/03/29 by <gbarr@pobox.com> (Graham Barr)
+
+	t/ftp.t
+	- silently pass if the stor to /pub fails
+
+Change 451 on 2000/03/29 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::FTP
+	- Add Timeout to listen socket
+
+Change 450 on 2000/03/29 by <gbarr@pobox.com> (Graham Barr)
+
+	Makefile.PL
+	- only add ppd conditional on perl version
+
+Change 449 on 2000/03/29 by <gbarr@pobox.com> (Graham Barr)
+
+	Fixed mput example in FAQ to use glob()
+
+Change 448 on 2000/03/29 by <gbarr@pobox.com> (Graham Barr)
+
+	Update README to reflect new way Configure works
+
+Change 447 on 2000/03/29 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::Config
+	- Check that $home is defined before we use it
+
+Change 446 on 2000/03/29 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::FTP
+	- add link to autoftp example
+
+Change 445 on 2000/03/29 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::FTP::A, Net::FTP::I
+	- Move the timeout check into the loop to prevent hanging
+	  on write.
+
+Change 444 on 2000/03/29 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::Cmd, Net::FTP::A, Net::FTP::I
+	- MacOS does not like the setting of $SIG{PIPE} so check $^O
+
+Change 432 on 2000/03/29 by <gbarr@pobox.com> (Graham Barr)
+
+	POD cleanup
+
+Change 431 on 2000/03/29 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::NNTP
+	- Allow a filehandle to be passed to article, head and body
+
+Change 430 on 2000/03/29 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::TFTP
+	- There is no quit method, so don't document one
+
+Change 402 on 2000/03/23 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::Config
+	- Fix typos in requires_firewall(), Thanks to Johan Vromans <jvromans@squirrel.nl>
+
+Change 401 on 2000/03/23 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::FTP
+	- fix rmdir for when ls() returns full paths
+
+Change 379 on 2000/03/13 by <gbarr@pobox.com> (Graham Barr)
+
+	Release 1.0702
+
+Change 378 on 2000/03/10 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::FTP::A
+	- Fix to stop possible forever loop
+
+Change 377 on 2000/03/10 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::FTP::A
+	- use " not '
+
+Change 376 on 2000/03/10 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::Config
+	- need to import inet_aton and inet_ntoa
+
+Change 375 on 2000/03/10 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::Config
+	- change arg to split to /\./ from "."
+
+Change 374 on 2000/03/07 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::FTP::A
+	- Fix return value of read()
+
+Change 373 on 2000/03/07 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::FTP::I
+	- Fix typo
+
+Change 372 on 2000/03/07 by <gbarr@pobox.com> (Graham Barr)
+
+	Release 1.07
+
+Change 371 on 2000/03/06 by <gbarr@pobox.com> (Graham Barr)
+
+	- Moved FAQ to Net/libnetFAQ.pod
+
+Change 370 on 2000/03/06 by <gbarr@pobox.com> (Graham Barr)
+
+	- Added mput and mget examples
+
+Change 369 on 2000/03/06 by <gbarr@pobox.com> (Graham Barr)
+
+	- Added support for the xwho command in qpage, but no docs yet.
+
+Change 368 on 2000/03/06 by <gbarr@pobox.com> (Graham Barr)
+
+	new Configure script
+
+Change 367 on 2000/03/06 by <gbarr@pobox.com> (Graham Barr)
+
+	Local-ize $SIG{__DIE__}
+
+Change 361 on 2000/02/17 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::FTP
+	- Fix arg count check in cwd()
+
+Change 351 on 2000/01/31 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::Cmd
+	- Fixed bug in getline returning an empty line
+	- Added optional filehandle argument to read_until_dot.
+	
+	Net::POP3
+	- get now takes an optional filehandle argument, if given the
+	  message is sent to the handle.
+
+Change 348 on 2000/01/17 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::Cmd
+	- fix getline not to drop blank lines
+
+Change 347 on 2000/01/12 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::Time
+	- Fix use of uninitialized warning caused by _socket
+
+Change 346 on 2000/01/11 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::FTP
+	- Change firewall code to use Net::Config->requires_firewall
+	
+	Net::Config
+	- renamed is_external to be requires_firewall
+
+Change 345 on 2000/01/06 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::FTP
+	- Added workaround for a Y2K bug that exists with the MDTM
+	  command on some servers.
+
+Change 341 on 1999/09/29 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::FTP, Net::FTP::A, Net::FTP::I, Net::FTP::datacon
+	- Added BlockSize option to control size of blocks read from server
+	  (defaults to 10K)
+
+Change 340 on 1999/09/28 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::FTP, Configure
+	- First attempt to add multiple firewall type support
+
+Change 339 on 1999/09/28 by <gbarr@pobox.com> (Graham Barr)
+
+	Added ppd info to Makefile.PL and libnet.ppd to MANIFEST
+
+Change 333 on 1999/09/18 by <gbarr@pobox.com> (Graham Barr)
+
+	Release 1.0607
+
+Change 332 on 1999/09/18 by <gbarr@pobox.com> (Graham Barr)
+
+	Configure
+	- Fix typo
+
+Change 331 on 1999/09/18 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::FTP
+	- get and put now accept *FD as well as \*FD for the local filehandle
+
+Change 330 on 1999/09/18 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::Domain
+	- Added support for VMS as suggest by lane@DUPHY4.Physics.Drexel.Edu
+
+Change 329 on 1999/09/18 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::Netrc
+	- Added support for spaces in passwords
+
+Change 328 on 1999/09/18 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::Cmd
+	- Map \n's in commands to " "
+
+Change 327 on 1999/09/18 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::Netrc
+	- Applied patch from Randy Merrell to fix / escaping
+
+Change 318 on 1999/08/06 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::Cmd
+	- Remove use of defined(@ISA)
+
+Change 316 on 1999/07/11 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::POP3
+	- Added ping method supplied by William Rolston <rolston@freerealtime.com>
+
+Change 309 on 1999/05/05 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::FTP
+	- Check that writes to local file succeed
+
+Change 308 on 1999/05/05 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::FTP
+	- Fix bug ->size when SIZE and STAT are not implemented
+
+Change 307 on 1999/05/05 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::POP3
+	- The return value for apop is now the same as login
+
+Change 306 on 1999/05/05 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::POP3
+	- login now returns "0E0" when there are no messages on te server.
+	  This is true in a boolean context, but zero in a numeric context
+
+Change 305 on 1999/05/05 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::FTP::A
+	- Fixed bug when sending a file in ascii mode that already contains
+	  \r\n character sequences
+	- Made improvements to speed of \r\n <-> \n translation
+
+Change 304 on 1999/05/05 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::FTP
+	- Added hash mark printing
+
+Change 264 on 1999/03/18 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::TFTP
+	- Fix typo in CLOSE()
+
+Change 262 on 1999/03/16 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::FTP
+	- new should only call authorize if there is user/passwd data
+	
+	Net::SMTP
+	- Allow ->to to ignore bad addresses
+
+Change 254 on 1999/02/24 by <gbarr@pobox.com> (Graham Barr)
+
+	Added some debug to t/ftp.t to help understand failure
+
+Change 253 on 1999/02/17 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::Cmd
+	- Added checks for a closed connection
+
+Change 252 on 1999/02/17 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::Domain
+	- set FQDN = IP if host does not have a name
+
+Change 248 on 1999/02/06 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::Domain
+	- check for defined(&main::SYS_gethostname) before calling syscall
+	  as user may have a UNIVERSAL::AUTOLOADER defined
+
+Change 245 on 1999/01/18 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::FTP
+	- Modify mkdir to call ->cwd(), not ->cd()
+
+Change 206 on 1998/10/21 by <gbarr@pobox.com> (Graham Barr)
+
+	Fix typo in Net::Cmd
+
+Change 204 on 1998/10/18 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::SMTP
+	- DESTROY now does nothing, so any half-sent message should be aborted
+
+Change 198 on 1998/10/16 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::Config added
+	
+	Configure, Makefile.PL
+	- Canges to handle new Net::Config module
+
+Change 197 on 1998/10/16 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::FTP
+	- Fixed return vlue of _ACCT
+	
+	Net::Cmd
+	- Fixed datasend to ensure all data is sent
+	- Fixed a || bug in getline
+	
+	Some FAQ updates
+
+Change 196 on 1998/10/16 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::TFTP
+	- Initial public release
+
+Change 195 on 1998/10/04 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::FTP
+	- Fixed bad use of ||= in cwd()
+	
+	Net::POP3
+	- Fixed pattern for -ERR (had +ERR)
+
+Change 191 on 1998/09/26 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::POP3
+	- Fix bug in UIDL
+
+Change 187 on 1998/09/02 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::TFTP
+	- Some cleanup of the code
+	- removed leading - from named args
+
+Change 185 on 1998/08/24 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::TFTP
+	- Initial version
+
+Change 184 on 1998/08/23 by <gbarr@pobox.com> (Graham Barr)
+
+	Remove mention of Net::SNMP from README
+
+Change 183 on 1998/08/07 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::Domain
+	- Fix problem with returning last name instead of first name for a
+	  win32 multi-homed machine
+
+Change 182 on 1998/08/07 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::FTP
+	- _list_cmd returned (undef) instead of ()
+	- Fix typo in docs
+	
+	Net::NNTP
+	- Fix typo in docs
+
+Change 181 on 1998/08/05 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::FTP
+	- Allow spaces in filenames (ick!)
+
+Change 179 on 1998/08/05 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::FTP
+	- added new rmdir from Dunkin Software
+	- fix to the code generating the listen port
+
+Change 171 on 1998/07/09 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::FTP
+	- login will now send ACCT if $acct is defined and the PASS
+	  command completed with 2xx or 3xx
+	- Added a check for the close of the dataconn in _store_cmd
+	- Debug trace will hide any parameter given to ACCT
+
+Change 167 on 1998/07/04 by <gbarr@pobox.com> (Graham Barr)
+
+	- Added Config.eg, an example Config.pm
+	- Removed set method from Net::Config
+	- Removed check for Data::Dumper from Makefile.PL
+
+Change 157 on 1998/06/20 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::FTP
+	- Another small tweak to ->supported()
+
+Change 156 on 1998/06/19 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::FTP
+	- Tweak to ->supported() to better detect reports from some
+	  servers (NcFTPd)
+
+Change 153 on 1998/06/17 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::FTP
+	- Fix "Use of uninitialized" warning, patch from
+	  Lars Thegler <lth@dannet.dk>
+
+Change 148 on 1998/06/07 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::SMTP
+	- Fix typo
+
+Change 147 on 1998/06/07 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::SMTP
+	- Added ->supports()
+	- Added ->etrn()
+	
+	Updated FAQ
+
+Change 141 on 1998/05/24 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::SMTP
+	- Added banner() method
+
+Change 132 on 1998/04/19 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::POP3
+	- Added ResvPort option to new()
+
+Change 131 on 1998/04/19 by <gbarr@pobox.com> (Graham Barr)
+
+	Makefile.PL
+	- Patch for running $^X Configure under VMS
+
+Change 130 on 1998/04/19 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::FTP, Net::POP3
+	- wrapped getpwuid in eval {} as some OSs (eg NT) do not support it
+
+Change 129 on 1998/04/19 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::FTP
+	- Enhanced ->size() to try different approaces if SIZE is
+	  not implemented
+
+Change 128 on 1998/04/16 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::Time
+	- Correct number of seconds in a year
+
+Change 126 on 1998/04/07 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::FTP, Net::FTP::A, Net::FTP::I, Net::Cmd
+	- changes for undef checking on sysread/syswrite
+
+Change 118 on 1998/02/24 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::FTP
+	- Added site method
+
+Change 117 on 1998/02/24 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::POP3
+	- Remove use of map in a void context
+
+Change 116 on 1998/02/21 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::FTP
+	- Changes to mkdir for recursive creates.
+
+Change 114 on 1998/02/21 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::Domain
+	- Change $SIG{__DIE__} to $SIG{'__DIE__'} to stop warning in 5.003
+
+Change 113 on 1998/02/18 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::FTP::A
+	- modified regexp in write for converting to CRLF, should now work with MacOS
+	
+	Net::FTP
+	- Added use of File::Basename
+	- Small tweak to abort()
+	
+	Net::Time
+	- Changed inet_time to handle MacOS
+	
+	Net::Netrc
+	- Fixes for MacOS
+	
+	Net::Domain
+	- Fixes for MacOS
+	
+	Net::SMTP
+	- Fix for new() to fail if HELO command fails
+
+Change 108 on 1998/02/15 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::FTP
+	- Added check for filenames with spaces, \r or \n
+
+Change 107 on 1998/02/07 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::FTP
+	- Ensure dataconn object is in reading mode for data transfers
+
+Change 101 on 1998/01/23 by <gbarr@pobox.com> (Graham Barr)
+
+	Renamed FAQ.pod as FAQ
+
+Change 100 on 1998/01/23 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::NNTP
+	- Added Reader option to new()
+
+Change 99 on 1998/01/23 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::POP3
+	- fix pass() to call popstat() if pattern does not match for
+	  message count
+
+Change 98 on 1998/01/23 by <gbarr@pobox.com> (Graham Barr)
+
+	Restore changes lost in disk-crash
+	
+	*** Patch 1.0605
+	
+	Sun Dec 21 1997 <gbarr@pobox.com> (Graham Barr)
+	
+	Net::FTP
+	- Fix for pasv_xfer, previous version hung if an error occured
+	  while setting up the link between the two servers.
+	
+	Sun Dec 14 1997 <gbarr@pobox.com> (Graham Barr)
+	
+	Net::Domain
+	- Fix for 'Use of uninitialized' when setting $SIG{__DIE__}
+	
+	Sat Dec 13 1997 <gbarr@pobox.com> (Graham Barr)
+	
+	Net::Domain, Net::Netrc
+	- patches from Nick Ing-Simmons for MSWin32
+	
+	*** Patch 1.0604
+	
+	Thu Dec 11 1997 <gbarr@pobox.com> (Graham Barr)
+	
+	Net::FTP
+	- Removed use of AutoLoader, it was causing problems on
+	  some platforms
+
+Change 92 on 1997/12/09 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::FTP
+	- Fix to pasv_xfer, the command stream on the source side was left
+	  out of sync.
+
+Change 91 on 1997/12/05 by <gbarr@pobox.com> (Graham Barr)
+
+	MANIFEST, FAQ.pod
+	- Added initial FAQ document
+
+Change 90 on 1997/12/05 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::FTP
+	- Set $@ if ->new() fails
+
+Change 82 on 1997/11/30 by <gbarr@pobox.com> (Graham Barr)
+
+	x
+
+Change 79 on 1997/11/30 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::Cmd
+	- Fix for read_until_dot entering an endless loop, now returns undef
+	
+	Net::POP3
+	- Fix ->list() and ->uidl() to handle undef being returned from
+	  ->read_until_dot()
+
+Change 78 on 1997/11/30 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::FTP
+	- Fix to login() and authorize() for OS/2 which does not
+	  support getpw*()
+
+Change 65 on 1997/11/28 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::Domain
+	- If user has defined $SIG{__DIE__} then failures inside eval
+	  still call it. local-ized $SIG{__DIE__} to stop this as Net::Domain
+	  used eval to hide such errors.
+
+Change 64 on 1997/11/28 by <gbarr@pobox.com> (Graham Barr)
+
+	t/nntp.t
+	- Now exits passing if commands fail due to not having
+	  authorization.
+
+Change 61 on 1997/11/26 by <gbarr@pobox.com> (Graham Barr)
+
+	none
+
+Change 60 on 1997/11/26 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::FTP::I
+	- Fix to prevent ABOR being sent when xfer is complete
+	- Change to write() to ensure whole packet is sent
+	
+	Net::FTP
+	- Moved $TELNET_ vars to top of file so that  autosplit does not place them
+	  in the wrong file and cause "Use of undefined ...."
+	- Clarification on the result from ->size() added to docs.
+	- pasv_xfer changed to use stor as stou is not a "MUST-have" command
+	- added pasv_xfer_unique
+	
+	Net::PH
+	- Documentation updates.
+	
+	t/nntp.t
+	- Modified to test for a list of groups
+
+Change 58 on 1997/11/18 by <gbarr@pobox.com> (Graham Barr)
+
+	t/nntp.t
+	- Modified to check for more groups before failure
+
+Change 56 on 1997/11/18 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::SMTP
+	- Corrected documentation for ->expand()
+
+Change 54 on 1997/11/18 by <gbarr@pobox.com> (Graham Barr)
+
+	Makefile.PL
+	- change to code for creating Net::Config
+	
+	Net::FTP::A
+	- Change to write() to ensure whole packet is sent
+	- Documentation correction to dir() and ls()
+	
+	Net::FTP::dataconn
+	- Stop abort be called when a write socket is being closed.
+	
+	Net::NNTP
+	- Changes to postok logic
+	
+	Net::PH
+	- fields() now also returns a reference to an ordered array of tag names
+	  if called in an array context.
+	
+	Net::Cmd
+	- Catch added for SIGPIPE while in ->command()
+
+Change 43 on 1997/11/05 by <gbarr@pobox.com> (Graham Barr)
+
+	rename files
+
+Change 39 on 1997/11/05 by <gbarr@pobox.com> (Graham Barr)
+
+	Configure
+	- Fix croak problem
+
+Change 38 on 1997/11/05 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::FTP, Net::NNTP, Net::PH, Net::POP3, Net::SMTP, Net::SNPP
+	- Fix error cause by calling close method when "unexpected EOF:
+	  has been encountered.
+	
+	t/require.t
+	- Remove Net::Telnet test
+
+Change 37 on 1997/11/01 by <gbarr@pobox.com> (Graham Barr)
+
+	Release 1.06
+
+Change 36 on 1997/11/01 by <gbarr@pobox.com> (Graham Barr)
+
+	none
+
+Change 35 on 1997/11/01 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::FTP
+	- Fixed undef warning in login() when $ruser does not exist in .netrc
+
+Change 34 on 1997/11/01 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::FTP
+	- Added new supported() method
+
+Change 33 on 1997/11/01 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::FTP
+	- DESTORY now sends quit command
+	- corrected OOB commands sent prior to an abort command
+	- close will call abort unless eof seen
+	- documentation updates
+	
+	Net::FTP::datacon
+	- abort() will read a byte if non have been read
+	
+	Net::FTP::A
+	- read was using arg#3 as an offset ?? change to use as timeout, this
+	  now matches Net::FTP::I::read and the docs
+	- speedup to read()
+
+Change 18 on 1997/10/04 by <gbarr@pobox.com> (Graham Barr)
+
+	Release 1.17
+
+Change 15 on 1997/09/27 by <gbarr@pobox.com> (Graham Barr)
+
+	Email address and documentation changes
+
+Change 14 on 1997/09/27 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::FTP
+	- Added account method so ACCT command can be sent independantly
+	  of ->login()
+	- Fixed a bug which caused an infinite loop if EOF happend on the
+	  command channel while executing code to work around MS FTP
+	    servers
+	
+	Net::Cmd
+	- Fixed undefined warning when an unexpected EOF is encountered
+	
+	Net::NNTP
+	- Added a call to ->reader() from within ->new(), just in case we are
+	  talking to an INN server, but we have transfer rights. This will
+	  ensure we are talking to nnrpd.
+	
+	Net::SNPP
+	- Fixed a bug in ->new() while locating default host
+
+Change 13 on 1997/09/27 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::FTP
+	- Modified code which determined whether to connect via a Firewall.
+	  if the Firewall wall option is passed then it will be used,
+	  reguardless of whether the real machine can be reached.
+	- The Firewall option to new is now used in preference over
+	  the FTP_FIREWALL environment variable.
+
+Change 12 on 1997/09/27 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::Cmd
+	- modified ->response() to return CMD_ERROR if ->getline() returns
+	  undef
+
+Change 6 on 1997/09/14 by <gbarr@pobox.com> (Graham Barr)
+
+	Small tweak to Makefile,PL to remove requirement for Data::Dumper
+
+Change 3 on 1997/09/13 by <gbarr@pobox.com> (Graham Barr)
+
+	Makefile.PL
+	- Local config file libnet.cfg installed as Net::Config
+
+Change 2 on 1997/09/13 by <gbarr@pobox.com> (Graham Barr)
+
+	Net::FTP
+	- Modified to use AutoLoader
+	- Fixed Net::FTP::[AI]::write to trap SIGPIPE errors
+	  and return an error, instead of aborting the script
+
+Change 1 on 1997/09/13 by <gbarr@pobox.com> (Graham Barr)
+
+	A new beginning
+

@@ -1,0 +1,99 @@
+Revision history for Perl extension Time::HiRes.
+
+1.20  Wed Feb 24 21:30 1999
+	- make our usleep and ualarm substitutes into hrt_usleep 
+	  and hrt_ualarm. This helps static links of Perl with other
+	  packages that also have usleep, etc. From
+	  Ilya Zakharevich <ilya@math.ohio-state.edu>
+	- add C API stuff. From Joshua Pritikin
+	  <joshua.pritikin@db.com>
+	- VMS Makefile.PL fun.  From pvhp@forte.com (Peter Prymmer)
+	- hopefully correct "-lc" fix for SCO.
+	- add PPD stuff
+
+1.19  Tue Sep 29 22:30 1998
+	- put VMS gettimeofday() in. Patch is from Sebastian Bazley
+	  <seb@stian.demon.co.uk>
+	- change GIMME_V to GIMME to help people with older versions of
+	  Perl.
+	- fix Win32 version of gettimeofday(). It didn't affect anything,
+	  but it confuses people reading the code when the return value
+	  is backwards (0 is success).
+	- fix Makefile.PL (more) so that detection of gettimeofday is
+	  more correct.
+
+1.18  Mon Jul 6 22:40 1998
+	- add usleep() for Win32.
+	- fix Makefile.PL to fix reported HP/UX feature where unresolved
+	  externals still cause an executable to be generated (though no
+	  x bit set). Thanks to David Kozinn for report and explanation.
+	  Problems with the fix are mine :)
+
+1.17  Wed Jul 1 20:10 1998
+	- fix setitimer calls so microseconds is not more than 1000000.
+	  Hp/UX 9 doesn't like that. Provided by Roland B Robert, PhD.
+        - make Win32. We only get gettimeofday (the select hack doesn't
+	  seem to work on my Win95 system).
+        - fix test 4 on 01test.t. add test to see if time() and 
+	  Time::HiRes::time() are close.
+
+1.16  Wed Nov 12 21:05 1997
+	- add missing EXTEND in new gettimeofday scalar code.
+
+1.15  Mon Nov 10 21:30 1997
+	- HiRes.pm: update pod. Provided by Gisle Aas.
+	- HiRes.xs: if gettimeofday() called in scalar context, do
+	  something more useful than before. Provided by Gisle Aas.
+	- README: tell of xsubpp '-nolinenumber' woes. thanks to
+	  Edward Henigin <ed@texas.net> for pointing out the problem.
+
+1.14  Wed Nov 5 9:40 1997
+	- Makefile.PL: look for setitimer
+	- HiRes.xs: if missing ualarm, but we have setitimer, make up
+	  our own setitimer. These were provided by Gisle Aas.
+
+1.13  Tue Nov 4 23:30 1997
+	- Makefile.PL: fix autodetect mechanism to do try linking in addition
+	  to just compiling; should fix Linux build problem. Fix was provided
+	  by Gisle Aas.
+
+1.12  Sun Oct 12 12:00:00 1997
+	- Makefile.PL: set XSOPT to '-nolinenumbers' to work around xsubpp bug;
+	  you may need to comment this back out if you have an older xsubpp.
+	- HiRes.xs: set PROTOTYPES: DISABLE
+
+1.11  Fri Sep 05 16:00:00 1997
+	- Makefile.PL:
+	  Had some line commented out that shouldn't have been (testing
+	  remnants)
+	- README:
+	  Previous version was corrupted.
+
+1.10  Thu May 22 20:20:00 1997
+	- HiRes.xs, HiRes.pm, t/*:
+	      -	only compile what we have OS support for (or can 
+		fake with select())
+	      - only test what we compiled 
+	      - gross improvement to the test suite
+	      - fix EXPORT_FAIL. 
+	  This work was all done by Roderick Schertler
+	  <roderick@argon.org>. If you run Linux or
+	  one of the other ualarm-less platoforms, and you like this 
+	  module, let Roderick know; without him, it still wouldn't 
+	  be working on those boxes...
+	- Makefile.PL: figure out what routines the OS has and
+	  only build what we need. These bits were written by Jarkko 
+	  Hietaniemi <jhi@iki.fi>. Again, gratitude is due...
+
+1.02  Mon Dec 30 08:00:00 1996
+	- HiRes.pm: update documentation to say what to do when missing
+	  ualarm() and friends.
+	- README: update to warn that ualarm() and friends need to exist
+
+1.01  Fri Oct 17 08:00:00 1996
+	- Makefile.PL: make XSPROTOARGS => '-noprototyopes'
+	- HiRes.pm: put blank line between __END__ and =head1 so that 
+	  pod2man works.
+
+1.00  Tue Sep 03 13:00:00 1996
+	- original version; created by h2xs 1.16

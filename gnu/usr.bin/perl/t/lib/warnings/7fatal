@@ -1,0 +1,426 @@
+Check FATAL functionality
+
+__END__
+
+# Check compile time warning
+use warnings FATAL => 'syntax' ;
+{
+    no warnings ;
+    $a =+ 1 ;
+}
+$a =+ 1 ;
+print STDERR "The End.\n" ;
+EXPECT
+Reversed += operator at - line 8.
+########
+
+# Check compile time warning
+use warnings FATAL => 'all' ;
+{
+    no warnings ;
+    my $a =+ 1 ;
+}
+my $a =+ 1 ;
+print STDERR "The End.\n" ;
+EXPECT
+Reversed += operator at - line 8.
+########
+
+# Check runtime scope of pragma
+use warnings FATAL => 'uninitialized' ;
+{
+    no warnings ;
+    my $b ; chop $b ;
+}
+my $b ; chop $b ;
+print STDERR "The End.\n" ;
+EXPECT
+Use of uninitialized value in scalar chop at - line 8.
+########
+
+# Check runtime scope of pragma
+use warnings FATAL => 'all' ;
+{
+    no warnings ;
+    my $b ; chop $b ;
+}
+my $b ; chop $b ;
+print STDERR "The End.\n" ;
+EXPECT
+Use of uninitialized value in scalar chop at - line 8.
+########
+
+# Check runtime scope of pragma
+no warnings ;
+{
+    use warnings FATAL => 'uninitialized' ;
+    $a = sub { my $b ; chop $b ; }
+}
+&$a ;
+print STDERR "The End.\n" ;
+EXPECT
+Use of uninitialized value in scalar chop at - line 6.
+########
+
+# Check runtime scope of pragma
+no warnings ;
+{
+    use warnings FATAL => 'all' ;
+    $a = sub { my $b ; chop $b ; }
+}
+&$a ;
+print STDERR "The End.\n" ;
+EXPECT
+Use of uninitialized value in scalar chop at - line 6.
+########
+
+--FILE-- abc
+$a =+ 1 ;
+1;
+--FILE-- 
+use warnings FATAL => 'syntax' ;
+require "./abc";
+EXPECT
+
+########
+
+--FILE-- abc
+use warnings FATAL => 'syntax' ;
+1;
+--FILE-- 
+require "./abc";
+$a =+ 1 ;
+EXPECT
+
+########
+
+--FILE-- abc
+use warnings 'syntax' ;
+$a =+ 1 ;
+1;
+--FILE-- 
+use warnings FATAL => 'uninitialized' ;
+require "./abc";
+my $a ; chop $a ;
+print STDERR "The End.\n" ;
+EXPECT
+Reversed += operator at ./abc line 2.
+Use of uninitialized value in scalar chop at - line 3.
+########
+
+--FILE-- abc.pm
+use warnings 'syntax' ;
+$a =+ 1 ;
+1;
+--FILE-- 
+use warnings FATAL => 'uninitialized' ;
+use abc;
+my $a ; chop $a ;
+print STDERR "The End.\n" ;
+EXPECT
+Reversed += operator at abc.pm line 2.
+Use of uninitialized value in scalar chop at - line 3.
+########
+
+# Check scope of pragma with eval
+no warnings ;
+eval {
+    use warnings FATAL => 'uninitialized' ;
+    my $b ; chop $b ;
+}; print STDERR "-- $@" ;
+my $b ; chop $b ;
+print STDERR "The End.\n" ;
+EXPECT
+-- Use of uninitialized value in scalar chop at - line 6.
+The End.
+########
+
+# Check scope of pragma with eval
+use warnings FATAL => 'uninitialized' ;
+eval {
+    my $b ; chop $b ;
+}; print STDERR "-- $@" ;
+my $b ; chop $b ;
+print STDERR "The End.\n" ;
+EXPECT
+-- Use of uninitialized value in scalar chop at - line 5.
+Use of uninitialized value in scalar chop at - line 7.
+########
+
+# Check scope of pragma with eval
+use warnings FATAL => 'uninitialized' ;
+eval {
+    no warnings ;
+    my $b ; chop $b ;
+}; print STDERR $@ ;
+my $b ; chop $b ;
+print STDERR "The End.\n" ;
+EXPECT
+Use of uninitialized value in scalar chop at - line 8.
+########
+
+# Check scope of pragma with eval
+no warnings ;
+eval {
+    use warnings FATAL => 'syntax' ;
+    $a =+ 1 ;
+}; print STDERR "-- $@" ;
+$a =+ 1 ;
+print STDERR "The End.\n" ;
+EXPECT
+Reversed += operator at - line 6.
+########
+
+# Check scope of pragma with eval
+use warnings FATAL => 'syntax' ;
+eval {
+    $a =+ 1 ;
+}; print STDERR "-- $@" ;
+$a =+ 1 ;
+print STDERR "The End.\n" ;
+EXPECT
+Reversed += operator at - line 5.
+########
+
+# Check scope of pragma with eval
+use warnings FATAL => 'syntax' ;
+eval {
+    no warnings ;
+    $a =+ 1 ;
+}; print STDERR $@ ;
+$a =+ 1 ;
+print STDERR "The End.\n" ;
+EXPECT
+Reversed += operator at - line 8.
+########
+
+# Check scope of pragma with eval
+no warnings ;
+eval {
+    use warnings FATAL => 'syntax' ;
+}; print STDERR $@ ;
+$a =+ 1 ;
+print STDERR "The End.\n" ;
+EXPECT
+The End.
+########
+
+# Check scope of pragma with eval
+no warnings ;
+eval q[ 
+    use warnings FATAL => 'uninitialized' ;
+    my $b ; chop $b ;
+]; print STDERR "-- $@";
+my $b ; chop $b ;
+print STDERR "The End.\n" ;
+EXPECT
+-- Use of uninitialized value in scalar chop at (eval 1) line 3.
+The End.
+########
+
+# Check scope of pragma with eval
+use warnings FATAL => 'uninitialized' ;
+eval '
+    my $b ; chop $b ;
+'; print STDERR "-- $@" ;
+my $b ; chop $b ;
+print STDERR "The End.\n" ;
+EXPECT
+-- Use of uninitialized value in scalar chop at (eval 1) line 2.
+Use of uninitialized value in scalar chop at - line 7.
+########
+
+# Check scope of pragma with eval
+use warnings FATAL => 'uninitialized' ;
+eval '
+    no warnings ;
+    my $b ; chop $b ;
+'; print STDERR $@ ;
+my $b ; chop $b ;
+print STDERR "The End.\n" ;
+EXPECT
+Use of uninitialized value in scalar chop at - line 8.
+########
+
+# Check scope of pragma with eval
+no warnings ;
+eval q[ 
+    use warnings FATAL => 'syntax' ;
+    $a =+ 1 ;
+]; print STDERR "-- $@";
+$a =+ 1 ;
+print STDERR "The End.\n" ;
+EXPECT
+-- Reversed += operator at (eval 1) line 3.
+The End.
+########
+
+# Check scope of pragma with eval
+use warnings FATAL => 'syntax' ;
+eval '
+    $a =+ 1 ;
+'; print STDERR "-- $@";
+print STDERR "The End.\n" ;
+EXPECT
+-- Reversed += operator at (eval 1) line 2.
+The End.
+########
+
+# Check scope of pragma with eval
+use warnings FATAL => 'syntax' ;
+eval '
+    no warnings ;
+    $a =+ 1 ;
+'; print STDERR "-- $@";
+$a =+ 1 ;
+print STDERR "The End.\n" ;
+EXPECT
+Reversed += operator at - line 8.
+########
+
+use warnings 'void' ;
+
+time ;
+
+{
+    use warnings FATAL => qw(void) ;
+    length "abc" ;
+}
+
+join "", 1,2,3 ;
+
+print "done\n" ;
+EXPECT
+Useless use of time in void context at - line 4.
+Useless use of length in void context at - line 8.
+########
+
+use warnings ;
+
+time ;
+
+{
+    use warnings FATAL => qw(void) ;
+    length "abc" ;
+}
+
+join "", 1,2,3 ;
+
+print "done\n" ;
+EXPECT
+Useless use of time in void context at - line 4.
+Useless use of length in void context at - line 8.
+########
+
+use warnings FATAL => 'all';
+{
+    no warnings;
+    my $b ; chop $b;
+    {
+        use warnings ;
+        my $b ; chop $b;
+    }
+}
+my $b ; chop $b;
+print STDERR "The End.\n" ;
+EXPECT
+Use of uninitialized value in scalar chop at - line 8.
+Use of uninitialized value in scalar chop at - line 11.
+########
+
+use warnings FATAL => 'all';
+{
+    no warnings FATAL => 'all';
+    my $b ; chop $b;
+    {
+        use warnings ;
+        my $b ; chop $b;
+    }
+}
+my $b ; chop $b;
+print STDERR "The End.\n" ;
+EXPECT
+Use of uninitialized value in scalar chop at - line 8.
+Use of uninitialized value in scalar chop at - line 11.
+########
+
+use warnings FATAL => 'all';
+{
+    no warnings 'syntax';
+    {
+        use warnings ;
+        my $b ; chop $b;
+    }
+}
+my $b ; chop $b;
+print STDERR "The End.\n" ;
+EXPECT
+Use of uninitialized value in scalar chop at - line 7.
+########
+
+use warnings FATAL => 'syntax', NONFATAL => 'void' ;
+
+length "abc";
+print STDERR "The End.\n" ;
+EXPECT
+Useless use of length in void context at - line 4.
+The End.
+########
+
+use warnings FATAL => 'all', NONFATAL => 'void' ;
+
+length "abc";
+print STDERR "The End.\n" ;
+EXPECT
+Useless use of length in void context at - line 4.
+The End.
+########
+
+use warnings FATAL => 'all', NONFATAL => 'void' ;
+
+my $a ; chomp $a;
+length "abc";
+print STDERR "The End.\n" ;
+EXPECT
+Useless use of length in void context at - line 5.
+Use of uninitialized value in scalar chomp at - line 4.
+########
+
+use warnings FATAL => 'void', NONFATAL => 'void' ;
+
+length "abc";
+print STDERR "The End.\n" ;
+EXPECT
+Useless use of length in void context at - line 4.
+The End.
+########
+
+use warnings NONFATAL => 'void', FATAL => 'void' ;
+
+length "abc";
+print STDERR "The End.\n" ;
+EXPECT
+Useless use of length in void context at - line 4.
+########
+
+use warnings FATAL => 'all', NONFATAL => 'io';
+no warnings 'once';
+
+open(F, "<true\ncd");
+close "fred" ;
+print STDERR "The End.\n" ;
+EXPECT
+Unsuccessful open on filename containing newline at - line 5.
+close() on unopened filehandle fred at - line 6.
+The End.
+########
+
+use warnings FATAL => 'all', NONFATAL => 'io', FATAL => 'unopened' ;
+no warnings 'once';
+
+open(F, "<true\ncd");
+close "fred" ;
+print STDERR "The End.\n" ;
+EXPECT
+Unsuccessful open on filename containing newline at - line 5.
+close() on unopened filehandle fred at - line 6.

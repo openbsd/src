@@ -3,6 +3,7 @@
 package Foo;
 
 BEGIN {
+    chdir 't' if -d 't';
     @INC = '../lib';
 }
 
@@ -14,6 +15,7 @@ use constant MyClass => 'Foo::Bar::Biz::Baz';
 
 {
     package Foo::Bar::Biz::Baz;
+    1;
 }
 
 for (qw(Foo Foo:: MyClass __PACKAGE__)) {

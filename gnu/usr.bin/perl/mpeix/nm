@@ -24,7 +24,7 @@ esac
 
 callci xeq linkedit.pub.sys \"$LIST\" >/tmp/nm.$$
 
-awk '\
+/bin/awk '\
     / data  univ / { printf "%-20s|%10s|%-6s|%-7s|%s\n",$1,$5,"extern","data","?"} \
     / entry univ / { printf "%-20s|%10s|%-6s|%-7s|%s\n",$1,$7,"extern","entry","?"}' /tmp/nm.$$
 

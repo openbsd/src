@@ -1,0 +1,116 @@
+CHANGES
+-------
+
+2.20  Jun 20 10:00 2002
+	- Perl 5.8.0 compatibility stuff.
+	  Spot by dcd@tc.fluke.com (David Dyck).
+	  And patch by jhi@iki.fi (Jarkko Hietaniemi).
+	- Move INSTALL doc into perldoc.
+	- Allow source_verify method to work
+	  for icmp protocol as well as udp.
+	  Spot by taner@taner.net (Taner Halicioglu)
+
+2.19  Jun 03 19:00 2002
+	- Add $p->source_verify method to skip source
+	  endpoint verification of udp protocol pings for
+	  those remote destinations with multiple interfaces
+	  that may have the "reverse telnet" bug.
+	  Spot by dcd@tc.fluke.com (David Dyck)
+	- Moved files to more standard locations.
+	- Less common martian used for ping test
+	  to reduce conflicts
+
+2.18  May 06 12:00 2002
+	- More RPM spec generalizations.
+
+2.17  May 03 18:00 2002
+	- RPM spec generalizations.
+	  michael.mclagan@linux.org (Michael McLagan)
+	- Win32 compatibility changes.
+	  (Didn't compile on Win32 since v2.11.)
+
+2.16  Apr 11 14:00 2002
+	- Documentation changes.
+	- Added INSTALL doc.
+	- Added README to rpm %doc.
+	- Added neat MakeMaker constants routine.
+	- Buttwag around Makefile.PL warnings:
+	  o "the following files are missing in your kit"
+	  o "is not a known MakeMaker parameter name"
+
+2.15  Apr 06 23:00 2002
+	- Added ABSTRACT info.
+	- Allow for smoother upgrade from
+	  from older Net::Ping versions.
+	- Change default protocol from udp to tcp
+	  so it will work on most default systems
+	  without any arguments to new().
+
+2.14  Apr 01 14:00 2002
+	- Added text ip lookup feature.
+	  e@arix.com (Erick Calder)
+
+2.13  Apr 01 14:00 2002
+	- Added ping time measuring feature.
+	  e@arix.com (Erick Calder)
+	- Optionally allow for high resolution
+	  precision for timeouts and measuring
+	  using the Time::HiRes module (Erick).
+
+2.12  Feb 17 19:00 2002
+	- More general error determination for
+	  better cross platform consistency and
+	  foreign language support.
+	  Spotted by arnaud@romeconcept.com
+	- Test changes for VMS (Craig Berry)
+
+2.11  Feb 02 12:00 2002
+	- Test changes in case echo port is not available.
+	- Fix 110_icmp_inst.t to use icmp protocol
+	  Spotted by craigberry@mac.com (Craig Berry)
+
+2.10  Dec 26 12:00 2001
+	- Added bind() function useful for clients with multiple
+	  network interfaces performing the ping check thanks to
+	  sethb@clarkhill.com (Seth Blumberg).
+	- Execution optimizations for several constants (Seth).
+	- More test changes in case Socket module is not available
+	  (Jarkko Hietaniemi).
+
+2.09  Dec 06 19:00 2001
+	- Documental and test changes only.
+	- No functional changes.
+
+2.08  Dec 04 13:00 2001
+	- Faster response for Win32 tcp_connect.
+	- Better explanations in test comments.
+
+2.07  Nov 28 13:00 2001
+	- Compatibility changes
+	- Works with UNIX and Win32 OS
+	- Works with Perl 5.005 5.6.x 5.7.x 5.8.x
+	- Applied several patches from distro
+	- External protocol added thanks to
+	  colinm@cpan.org (Colin McMillen)
+	- Stream protocol added thanks to
+	  bronson@trestle.com (Scott Bronson)
+
+2.06  Nov 19 12:00 2001
+	- Added Net-Ping.spec for RPM to easily
+	  utilize using "rpm -ta Net-Ping*tar.gz"
+	- Moved Copyright section to perldoc
+
+2.05  Nov 18 20:00 2001
+	- Added test suite
+
+2.04  Nov 16 16:00 2001
+	- Added CHANGES and README to tarball.
+	- No functional changes.
+
+2.03  Nov 15 12:00 2001
+	- Portability adjustments to ping_tcp()
+	  made by Rob Brown to work with most
+	  default systems.
+
+2.02  Sep 27 12:00 1996
+	- Magic version by Russell Mosemann from CPAN

@@ -1,0 +1,141 @@
+
+		ChangeLog for Locale-Codes Distribution
+
+2.06  2002-07-15 neilb
+
+	* The four modules which have data after __DATA__ weren't
+	  closing the DATA filehandle after reading from it,
+	  which they should. Bug and patch from Steve Hay.
+
+2.05  2002-07-08 neilb
+
+	* Added three letter codes for the countries that were missing
+	  them. Patch from TJ Mather.
+	* Documentation bug: one of the examples used => where the
+	  lvalue was a constant, which isn't allowed, unless you
+	  put the () with the constant to force the right interpretation.
+	  Pointed out by TJ Mather and MYT.
+	* Updated the URL for the appendix in the CIA world factbook.
+	  Patch from TJ Mather.
+
+2.04  2002-05-23 neilb
+
+	* updated according to changes in ISO 3166-1 described
+	  in ISO 3166-1 newsletters V-4 and V-5, dated 2002-05-20:
+		- Kazakstan is now "Kazakhstan"
+		- Macau is now "Macao"
+	  The old names are retained as aliases.
+
+	  The alpha-2 and alpha-3 codes for East Timor have changed:
+		tp -> tl
+		tmp -> tls
+	  the numeric code stays 626. If you want to support the old
+	  codes, you can use the semi-private function alias_code().
+
+2.03  2002-03-24 neilb
+
+	* Fixed a typo in the alias for the Vatican, reported (with patch)
+	  by Philip Newton.
+	* Added "Moldova" as an alias for "Moldova, Republic of"
+	* Updated Makefile.PL to include AUTHOR and ABSTRACT
+
+2.02  2002-03-09 neilb
+
+	* added semi-private routine rename_country() to Locale::Country,
+	  based on a patch from Iain Chalmers.
+	* added test rename.t for the above function.
+	* renamed _alias_code to be alias_code. Have retained the old
+	  name for backwards compatibility. Will remove it when the
+	  major version number next changes.
+
+2.01  2002-02-18 neilb
+
+	* Split the documentation for all modules into separate pod files.
+	* Made sure all =over were =over 4; some were other values.
+	* The code2code() methods had one more shift than was needed.
+
+2.00  2002-02-17 neilb
+
+	* Created Locale::Script which provides an interface to the
+	  ISO codes for identification of scripts (writing scripts,
+	  rather than perl style scripts). The codes are defined
+	  by ISO 15924, which is currently in final draft.
+	  Thanks to Jarkko for pointing out this new standard.
+	  All three code sets are supported, and a test-suite added.
+
+	* Added support for country name variants to Locale::Country,
+	  so that
+		country2code('USA')
+		country2code('United States')
+		country2code('United States of America')
+	  will all return 'us'.
+	  This had been in the LIMITATIONS section since the first version.
+	  Patch from TJ Mather <tjmather@tjmather.com> with additional
+	  variants from me. Added test-cases for these.
+
+	* Added VERSION to Locale::Constants. Thanks to Jarkko for
+	  pointing that it was missing.
+
+	* Should really have bumped major version with previous release,
+	  since there was a change to the API.
+
+1.06  2001-03-04 neilb
+
+	Added Locale::Constants, which defines three symbols
+	for identifying which codeset is being used:
+
+		LOCALE_CODE_ALPHA_2
+		LOCALE_CODE_ALPHA_3
+		LOCALE_CODE_NUMERIC
+
+	Updated Locale::Country to support all three code sets
+	defined by ISO 3166. This was requested by Keith Wall.
+	I haven't added multiple codeset support to the other
+	modules yet - I'll wait until someone asks for them.
+
+1.05  Feb 2001
+
+	Added Locale::Currency, contribution from Michael Hennecke.
+	Added testsuite for it (t/currency.t) and added testcases
+	to t/all.t for the all_* functions.
+
+1.04  Dec 2000
+
+	Fixed very minor typos from 1.03!
+
+1.03  Dec 2000
+
+	Updated Locale::Country:
+		- fixed spelling of a few countries
+		- added link to a relevant page from CIA world factbook
+
+	Updated Locale::Language:
+		- fixed typo in the documentation (ISO 939 should be 639)
+
+1.02  May 2000
+
+	Updated Locale::Country and Locale::Language to reflect changes
+	in the relevant ISO standards. These mainly reflect languages
+	which are new to the relevant standard, and changes in the
+	spelling of some country names.
+
+	Added official URLs for the standards to the SEE ALSO sections
+	of the doc for each module.
+
+	Thanks to Jarkko Hietaniemi for pointing me at the pages
+	with latest versions of ISO 3166 and 639.
+
+1.00  March 1998
+
+	Added Locale::Country::_alias_code() so that 'uk' can be added
+	as the code for "United Kingdom", if you want it.
+	This was prompted by Ed Jordan <ed@chronos.net>
+
+	Added a new testsuite for handling this case, and extended the
+	existing test-suite to include testing of the case where
+	'uk' hasn't been defined as a valid code.
+
+0.003 May 1997
+
+	First public release to CPAN
+

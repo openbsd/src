@@ -26,7 +26,7 @@ Detailed instructions on how to build and install perl extension
 modules, including XS-type modules, is included.  See 'BUILDING AND
 INSTALLING MODULES'.
 
-=head2 Prerequisites
+=head2 Prerequisites for Compiling Perl on DOS
 
 =over 4
 
@@ -51,18 +51,18 @@ the world. Like:
 You need the following files to build perl (or add new modules):
 
         v2/djdev203.zip
-        v2/bnu2951b.zip
-        v2gnu/gcc2952b.zip
+        v2gnu/bnu2112b.zip
+        v2gnu/gcc2953b.zip
         v2gnu/bsh204b.zip
         v2gnu/mak3791b.zip
-        v2gnu/fil316b.zip
-        v2gnu/sed302b.zip
+        v2gnu/fil40b.zip
+        v2gnu/sed3028b.zip
         v2gnu/txt20b.zip
         v2gnu/dif272b.zip
         v2gnu/grep24b.zip
-        v2gnu/shl112b.zip
-        v2gnu/gawk303b.zip
-        v2misc/csdpmi4b.zip
+        v2gnu/shl20jb.zip
+        v2gnu/gwk306b.zip
+        v2misc/csdpmi5b.zip
 
 or possibly any newer version.
 
@@ -97,13 +97,13 @@ sockets
 
 =back
 
-=head2 Building
+=head2 Building Perl on DOS
 
 =over 4
 
 =item *
 
-Unpack the source package F<perl5.6*.tar.gz> with djtarx. If you want
+Unpack the source package F<perl5.8*.tar.gz> with djtarx. If you want
 to use long file names under w95 and also to get Perl to pass all its
 tests, don't forget to use
 
@@ -202,7 +202,7 @@ Now you can compile Perl. Type:
 
 =back
 
-=head2 Testing
+=head2 Testing Perl on DOS
 
 Type:
 
@@ -213,7 +213,7 @@ a few failed subtests (less than 5 hopefully) depending on some external
 conditions (e.g. some subtests fail under linux/dosemu or plain dos
 with short filenames only).
 
-=head2 Installation
+=head2 Installation of Perl on DOS
 
 Type:
 
@@ -224,10 +224,9 @@ directory structure. Perl.exe and the utilities go into C<($DJDIR)/bin>,
 and the library goes under C<($DJDIR)/lib/perl5>. The pod documentation
 goes under C<($DJDIR)/lib/perl5/pod>.
 
-=head1 BUILDING AND INSTALLING MODULES
+=head1 BUILDING AND INSTALLING MODULES ON DOS
 
-
-=head2 Prerequisites
+=head2 Building Prerequisites for Perl on DOS
 
 For building and installing non-XS modules, all you need is a working
 perl under DJGPP.  Non-XS modules do not require re-linking the perl
@@ -245,7 +244,7 @@ an XS extension module.  In addition, you will have to have built your
 perl binary from the source distribution so that all of the components
 of the perl binary are available for the required link step.
 
-=head2 Unpacking CPAN Modules
+=head2 Unpacking CPAN Modules on DOS
 
 First, download the module package from CPAN (e.g., the "Comma Separated
 Value" text package, Text-CSV-0.01.tar.gz).  Then expand the contents of
@@ -272,7 +271,7 @@ to unpack and expand these files.  For example:
 This will create the new directory C<($DJDIR)/Text-CSV-0.01>, filling
 it with the source for this module.
 
-=head2 Building Non-XS Modules
+=head2 Building Non-XS Modules on DOS
 
 To build a non-XS module, you can use the standard module-building
 instructions distributed with perl modules.
@@ -286,7 +285,7 @@ This is sufficient because non-XS modules install only ".pm" files and
 (sometimes) pod and/or man documentation.  No re-linking of the perl
 binary is needed to build, install or use non-XS modules.
 
-=head2 Building XS Modules
+=head2 Building XS Modules on DOS
 
 To build an XS module, you must use the standard module-building
 instructions distributed with perl modules *PLUS* three extra
@@ -313,7 +312,7 @@ Note that the MAP_TARGET value *must* have the ".exe" extension or you
 will not create a "perl.exe" to replace the one in C<($DJDIR)/bin>.
 
 When you are done, the XS-module install process will have added information
-to yout "perllocal" information telling that the perl binary has been replaced,
+to your "perllocal" information telling that the perl binary has been replaced,
 and what module was installed.  you can view this information at any time
 by using the command:
 

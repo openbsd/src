@@ -1,0 +1,24 @@
+lib/ExtUtils/xsubpp
+pod/pod2html
+pod/pod2latex
+pod/pod2man
+pod/pod2text
+pod/pod2usage
+pod/podchecker
+pod/podselect
+utils/c2ph      # link = utils/pstruct
+utils/dprofpp
+utils/enc2xs
+utils/h2ph
+utils/h2xs
+utils/libnetcfg
+utils/perlbug
+utils/perlcc
+utils/perldoc
+utils/perlivp
+utils/piconv
+utils/pl2pm
+utils/splain
+x2p/a2p         # pod = x2p/a2p.pod
+x2p/find2perl
+x2p/s2p         # link = x2p/psed

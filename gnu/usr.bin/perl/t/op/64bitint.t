@@ -3,7 +3,7 @@
 BEGIN {
 	eval { my $q = pack "q", 0 };
 	if ($@) {
-		print "1..0\n# Skip: no 64-bit types\n";
+		print "1..0 # Skip: no 64-bit types\n";
 		exit(0);
 	}
 	chdir 't' if -d 't';
@@ -14,9 +14,25 @@ BEGIN {
 
 # so that using > 0xfffffff constants and
 # 32+ bit integers don't cause noise
+use warnings;
 no warnings qw(overflow portable);
 
-print "1..55\n";
+print "1..67\n";
+
+# as 6 * 6 = 36, the last digit of 6**n will always be six. Hence the last
+# digit of 16**n will always be six. Hence 16**n - 1 will always end in 5.
+# Assumption is that UVs will always be a multiple of 4 bits long.
+
+my $UV_max = ~0;
+die "UV_max eq '$UV_max', doesn't end in 5; your UV isn't 4n bits long :-(."
+  unless $UV_max =~ /5$/;
+my $UV_max_less3 = $UV_max - 3;
+my $maths_preserves_UVs = $UV_max_less3 =~ /^\d+2$/;   # 5 - 3 is 2.
+if ($maths_preserves_UVs) {
+  print "# This perl's maths preserves all bits of a UV.\n";
+} else {
+  print "# This perl's maths does not preserve all bits of a UV.\n";
+}
 
 my $q = 12345678901;
 my $r = 23456789012;
@@ -293,5 +309,109 @@ print "ok 54\n";
 $q = 18446744073709551615;
 print "# $q ne\n# 18446744073709551615\nnot " unless "$q" eq "18446744073709551615";
 print "ok 55\n";
+
+# Test that sv_2nv then sv_2iv is the same as sv_2iv direct
+# fails if whatever Atol is defined as can't actually cope with >32 bits.
+my $num = 4294967297;
+my $string = "4294967297";
+{
+  use integer;
+  $num += 0;
+  $string += 0;
+}
+if ($num eq $string) {
+  print "ok 56\n";
+} else {
+  print "not ok 56 # \"$num\" ne \"$string\"\n";
+}
+
+# Test that sv_2nv then sv_2uv is the same as sv_2uv direct
+$num = 4294967297;
+$string = "4294967297";
+$num &= 0;
+$string &= 0;
+if ($num eq $string) {
+  print "ok 57\n";
+} else {
+  print "not ok 57 # \"$num\" ne \"$string\"\n";
+}
+
+$q = "18446744073709551616e0";
+$q += 0;
+print "# \"18446744073709551616e0\" += 0 gives $q\nnot " if "$q" eq "18446744073709551615";
+print "ok 58\n";
+
+# 0xFFFFFFFFFFFFFFFF ==  1 * 3 * 5 * 17 * 257 * 641 * 65537 * 6700417'
+$q = 0xFFFFFFFFFFFFFFFF / 3;
+if ($q == 0x5555555555555555 and ($q != 0x5555555555555556
+                                  or !$maths_preserves_UVs)) {
+  print "ok 59\n";
+} else {
+  print "not ok 59 # 0xFFFFFFFFFFFFFFFF / 3 = $q\n";
+  print "# Should not be floating point\n" if $q =~ tr/e.//;
+}
+
+$q = 0xFFFFFFFFFFFFFFFF % 0x5555555555555555;
+if ($q == 0) {
+  print "ok 60\n";
+} else {
+  print "not ok 60 # 0xFFFFFFFFFFFFFFFF % 0x5555555555555555 => $q\n";
+}
+
+$q = 0xFFFFFFFFFFFFFFFF % 0xFFFFFFFFFFFFFFF0;
+if ($q == 0xF) {
+  print "ok 61\n";
+} else {
+  print "not ok 61 # 0xFFFFFFFFFFFFFFFF % 0xFFFFFFFFFFFFFFF0 => $q\n";
+}
+
+$q = 0x8000000000000000 % 9223372036854775807;
+if ($q == 1) {
+  print "ok 62\n";
+} else {
+  print "not ok 62 # 0x8000000000000000 % 9223372036854775807 => $q\n";
+}
+
+$q = 0x8000000000000000 % -9223372036854775807;
+if ($q == -9223372036854775806) {
+  print "ok 63\n";
+} else {
+  print "not ok 63 # 0x8000000000000000 % -9223372036854775807 => $q\n";
+}
+
+{
+  use integer;
+  $q = hex "0x123456789abcdef0";
+  if ($q == 0x123456789abcdef0 and $q != 0x123456789abcdef1) {
+    print "ok 64\n";
+  } else {
+    printf "not ok 64 # hex \"0x123456789abcdef0\" = $q (%X)\n", $q;
+    print "# Should not be floating point\n" if $q =~ tr/e.//;
+  }
+
+  $q = oct "0x123456789abcdef0";
+  if ($q == 0x123456789abcdef0 and $q != 0x123456789abcdef1) {
+    print "ok 65\n";
+  } else {
+    printf "not ok 65 # oct \"0x123456789abcdef0\" = $q (%X)\n", $q;
+    print "# Should not be floating point\n" if $q =~ tr/e.//;
+  }
+
+  $q = oct "765432176543217654321";
+  if ($q == 0765432176543217654321 and $q != 0765432176543217654322) {
+    print "ok 66\n";
+  } else {
+    printf "not ok 66 # oct \"765432176543217654321\" = $q (%o)\n", $q;
+    print "# Should not be floating point\n" if $q =~ tr/e.//;
+  }
+
+  $q = oct "0b0101010101010101010101010101010101010101010101010101010101010101";
+  if ($q == 0x5555555555555555 and $q != 0x5555555555555556) {
+    print "ok 67\n";
+  } else {
+    printf "not ok 67 # oct \"0b0101010101010101010101010101010101010101010101010101010101010101\" = $q (%b)\n", $q;
+    print "# Should not be floating point\n" if $q =~ tr/e.//;
+  }
+}
 
 # eof

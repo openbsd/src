@@ -1,0 +1,26 @@
+threads/shared version 0.02
+===========================
+
+This module needs perl 5.7.2 or later compiled with USEITHREADS, 
+It lets you share simple data structures between threads.
+
+INSTALLATION
+
+To install this module type the following:
+
+   perl Makefile.PL
+   make
+   make test
+   make install
+
+DEPENDENCIES
+
+This module requires these other modules and libraries:
+
+threads 0.03;
+
+COPYRIGHT AND LICENCE
+
+Copyright (C) 2001 Arthur Bergman artur at contiller.se
+Same licence as perl.
+

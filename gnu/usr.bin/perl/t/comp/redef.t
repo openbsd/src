@@ -11,7 +11,7 @@ sub ok ($$) {
     print $_[1] ? "ok " : "not ok ", $_[0], "\n";
 }
 
-print "1..18\n";
+print "1..20\n";
 
 my $NEWPROTO = 'Prototype mismatch:';
 
@@ -72,9 +72,15 @@ sub sub9 ($)  { 2 }
 ok 16, $warn =~ s/$NEWPROTO sub main::sub9 \(\$\Q@) vs ($)\E[^\n]+\n//s;
 ok 17, $warn =~ s/Subroutine sub9 redefined[^\n]+\n//s;
 
-ok 18, $_ eq '';
+BEGIN {
+    local $^W = 0;
+    eval qq(sub sub10 () {1} sub sub10 {1});
+}
+
+ok 18, $warn =~ s/$NEWPROTO \Qsub main::sub10 () vs none\E[^\n]+\n//s;
+ok 19, $warn =~ s/Constant subroutine sub10 redefined[^\n]+\n//s;
+
+ok 20, $warn eq '';
 
 # If we got any errors that we were not expecting, then print them
-print $_ if length $_;
-
-
+print $warn if length $warn;

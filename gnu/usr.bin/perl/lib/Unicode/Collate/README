@@ -1,0 +1,57 @@
+Unicode/Collate version 0.12
+===============================
+
+Unicode::Collate - Unicode Collation Algorithm
+
+  UCA - Unicode TR #10.
+  http://www.unicode.org/unicode/reports/tr10/
+
+  Fetch the following file and put it into the Unicode/Collate directory.
+  http://www.unicode.org/unicode/reports/tr10/allkeys.txt
+
+  You can install this module using a subset "keys.txt"
+  contained in this distribution without the "allkeys.txt";
+  but "keys.txt" is small and not very useful.
+
+SYNOPSIS
+
+  use Unicode::Collate;
+
+  #construct
+  $Collator = Unicode::Collate->new(%tailoring);
+
+  #sort
+  @sorted = $Collator->sort(@not_sorted);
+
+  #compare
+  $result = $Collator->cmp($a, $b); # returns 1, 0, or -1.
+  $result = $Collator->eq($a, $b);  # returns true/false
+    (similarly ->ne, ->lt, ->le, ->gt, ->ge)
+
+INSTALLATION
+
+Perl 5.006 or later
+
+To install this module type the following:
+
+   perl Makefile.PL
+   make
+   make test
+   make install
+
+DEPENDENCIES
+
+  It's better if you have Unicode::Normalize (v 0.10 or later)
+  although Unicode::Collate can be used without Unicode::Normalize.
+
+COPYRIGHT AND LICENCE
+
+SADAHIRO Tomoyuki <bqw10602@nifty.com>
+
+  http://homepage1.nifty.com/nomenclator/perl/
+
+  Copyright(C) 2001-2002, SADAHIRO Tomoyuki. Japan. All rights reserved.
+
+  This library is free software; you can redistribute it
+  and/or modify it under the same terms as Perl itself.
+

@@ -65,14 +65,14 @@ references.
 
 A reference is a scalar value that I<refers to> an entire array or an
 entire hash (or to just about anything else).  Names are one kind of
-reference that you're already familiar with.  Think of the President:
-a messy, inconvenient bag of blood and bones.  But to talk about him,
-or to represent him in a computer program, all you need is the easy,
-convenient scalar string "Bill Clinton".
+reference that you're already familiar with.  Think of the President
+of the United States: a messy, inconvenient bag of blood and bones.
+But to talk about him, or to represent him in a computer program, all
+you need is the easy, convenient scalar string "George Bush".
 
 References in Perl are like names for arrays and hashes.  They're
 Perl's private, internal names, so you can be sure they're
-unambiguous.  Unlike "Bill Clinton", a reference only refers to one
+unambiguous.  Unlike "George Bush", a reference only refers to one
 thing, and you always know what it refers to.  If you have a reference
 to an array, you can recover the entire array from it.  If you have a
 reference to a hash, you can recover the entire hash.  But the
@@ -389,7 +389,7 @@ to do with references.
 Author: Mark-Jason Dominus, Plover Systems (C<mjd-perl-ref+@plover.com>)
 
 This article originally appeared in I<The Perl Journal>
-(http://tpj.com) volume 3, #2.  Reprinted with permission.  
+( http://www.tpj.com/ ) volume 3, #2.  Reprinted with permission.  
 
 The original title was I<Understand References Today>.
 

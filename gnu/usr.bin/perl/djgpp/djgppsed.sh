@@ -17,7 +17,7 @@ SCOR='s=c\\\.c|=c\_c|=g'
 SHSED='s=\.\(hsed\)=_\1=g'
 SDEPTMP='s=\.\(deptmp\)=_\1=g'
 SCPP='s=\.\(cpp\.\)=_\1=g'
-SARGV='s=\.\(argv\)\.=_\1_=g'
+SARGV='s=Io_argv\(.\)\.=i\1_=g'
 SABC='s=\.\([abc][^a]\)=_\1=g'
 SDBMX='s=\.\(dbmx\)=_\1=g'
 SDBHASH='s=dbhash\.tmp=dbhash_tmp=g'
@@ -36,9 +36,7 @@ sed -e $SCC -e $SLIST -e $SFILEC -e $SCOR -e $SDEPTMP -e $SHSED makedepend.SH |t
 sed -e $SCPP t/comp/cpp.aux |tr -d '\r' >s; mv -f s t/comp/cpp.aux
 sed -e $SARGV -e $SDOTTMP t/io/argv.t >s; mv -f s t/io/argv.t
 sed -e $SABC t/io/inplace.t >s; mv -f s t/io/inplace.t
-sed -e $SDBMX t/lib/anydbm.t >s; mv -f s t/lib/anydbm.t
-sed -e $SDBMX -e $SDBHASH t/lib/gdbm.t >s; mv -f s t/lib/gdbm.t
-sed -e $SDBMX -e $SDBHASH t/lib/sdbm.t >s; mv -f s t/lib/sdbm.t
+sed -e $SDBMX -e $SDBHASH ext/GDBM_File/gdbm.t >s; mv -f s ext/GDBM_File/gdbm.t
 sed -e $SSTAT -e $STMP2 t/op/stat.t >s; mv -f s t/op/stat.t
 sed -e $SLIST x2p/Makefile.SH |tr -d '\r' >s; mv -f s x2p/Makefile.SH
 sed -e 's=^#define.\([A-Z]\+\)_EXP.*$=#define \1_EXP djgpp_pathexp("\1")=g' config_h.SH >s; mv -f s config_h.SH
@@ -46,5 +44,6 @@ sed -e 's=:^/:={^([a-z]:)?[\\\\/]}=g' lib/termcap.pl >s; mv -f s lib/termcap.pl
 sed -e $SPACKLIST installman >s; mv -f s installman
 sed -e $SPACKLIST lib/ExtUtils/Installed.pm >s; mv -f s lib/ExtUtils/Installed.pm
 sed -e $SPACKLIST lib/ExtUtils/Packlist.pm >s; mv -f s lib/ExtUtils/Packlist.pm
-sed -e $SPACKLIST lib/ExtUtils/inst >s; mv -f s lib/ExtUtils/inst
 sed -e $SABC t/io/iprefix.t >s; mv -f s t/io/iprefix.t
+sed -e 's=L_ctermid==g' ext/POSIX/Makefile.PL >s; mv -f s ext/POSIX/Makefile.PL
+sed -e $SPACKLIST lib/ExtUtils/t/Installed.t >s; mv -f s lib/ExtUtils/t/Installed.t

@@ -30,6 +30,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)glob.h	8.1 (Berkeley) 6/2/93
+ *	[lots of perl-specific changes since then--see bsd_glob.c]
  */
 
 #ifndef _BSD_GLOB_H_
@@ -73,6 +74,8 @@ typedef struct {
 #define	GLOB_TILDE	0x0800	/* Expand tilde names from the passwd file. */
 #define	GLOB_NOCASE	0x1000	/* Treat filenames without regard for case. */
 #define	GLOB_ALPHASORT	0x2000	/* Alphabetic, not ASCII sort, like csh. */
+#define	GLOB_LIMIT	0x4000	/* Limit pattern match output to ARG_MAX
+				   (usually from limits.h). */
 
 #define	GLOB_NOSPACE	(-1)	/* Malloc call failed. */
 #define	GLOB_ABEND	(-2)	/* Unignored error. */

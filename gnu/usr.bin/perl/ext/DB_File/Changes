@@ -334,3 +334,84 @@
    * Updated dbinfo to support Berkeley DB 3.2 file format changes.
 
 
+1.76 15th January 2001
+
+   * Added instructions for using LD_PRELOAD to get Berkeley DB 2.x to work
+     with DB_File on Linux. Thanks to Norbert Bollow for sending details of
+     this approach.
+
+
+1.77 26th April 2001
+
+   * AIX is reported to need -lpthreads, so Makefile.PL now checks for
+     AIX and adds it to the link options.
+
+   * Minor documentation updates.
+
+   * Merged Core patch 9176
+
+   * Added a patch from Edward Avis that adds support for splice with
+     recno databases.
+
+   * Modified Makefile.PL to only enable the warnings pragma if using perl
+     5.6.1 or better.    
+
+1.78 30th July 2001
+
+   * the test in Makefile.PL for AIX used -plthreads. Should have been
+     -lpthreads
+
+   * merged Core patches 
+        10372, 10335, 10372, 10534, 10549, 10643, 11051, 11194, 11432
+
+   * added documentation patch regarding duplicate keys from Andrew Johnson
+
+1.79 22nd October 2001
+
+   * Added a "local $SIG{__DIE__}" inside the eval that checks for
+     the presence of XSLoader s suggested by Andrew Hryckowin.
+
+   * merged core patch 12277.
+
+   * Changed NEXTKEY to not initialise the input key. It isn't used anyway.
+
+1.79 22nd October 2001
+
+   * Fixed test harness for cygwin
+
+
+1.800 23rd November 2001
+
+   * use pport.h for perl backward compatability code.
+
+   * use new  ExtUtils::Constant module to generate XS constants.
+
+   * upgrade Makefile.PL upgrade/downgrade code to toggle "our" with
+     "use vars"
+
+1.801 26th November 2001
+
+   * Fixed typo in Makefile.PL
+
+   * Added "clean" attribute to Makefile.PL
+ 
+1.802 6th January 2002
+
+   * The message about some test failing in db-recno.t had the wrong test
+     numbers. Fixed.
+
+   * merged core patch 13942.
+
+1.803 1st March 2002
+
+   * Fixed a problem with db-btree.t where it complained about an "our"
+     variable redeclaation.
+
+   * FETCH, STORE & DELETE don't map the flags parameter into the
+     equivalent Berkeley DB function anymore.
+
+1.804 2nd March 2002
+
+   * Perl core patch 14939 added a new warning to "splice". This broke the
+     db-recno test harness. Fixed.
+

@@ -1,0 +1,107 @@
+Revision history for Perl module I18N::LangTags.
+                                        Time-stamp: "2002-02-02 20:45:47 MST"
+
+2002-02-02  Sean M. Burke  sburke@cpan.org
+
+	* Release 0.27 -- minor mods to ::List:
+	Fixing its entries for sv-se and sv-fi.
+	Typo-fixes and rewordings in the incidental Pod text elsewhere.
+	
+2001-06-21  Sean M. Burke  sburke@cpan.org
+	
+	* Release 0.26 -- just making cosmetic changes
+	to test.pl, at Jarkko's request.
+	
+2001-06-20  Sean M. Burke  sburke@cpan.org
+
+	* Release 0.25 -- just tweaking panic_languages behavior
+	for Scandinavian languages.  Much better now.
+	Slight tweak to ::List's entries for Greek.
+	
+2001-06-20  Sean M. Burke  sburke@cpan.org
+	
+	* Release 0.24
+
+	* I18N::LangTags -- some elaborate hacks to make us
+	recognize legacy aliases like no-nyn == nn.
+	Added panic_languages().
+	Added :ALL export tag.
+	Minor docs fixes, and spiffing up test.pl.
+	
+	* I18N::LangTags::List -- minor corrections; added
+	a few aliases.
+	
+2001-05-29  Sean M. Burke  sburke@cpan.org
+
+	* Release 0.23
+
+	* I18N::LangTags::List -- minor corrections.  And is now
+	a module, not just documentation.
+
+2001-05-27  Sean M. Burke  sburke@cpan.org
+
+	* Release 0.22
+        
+	* Now bundling I18N::LangTags::List, a reference for lang tags,
+	replacing generate_language_table.plx and language_codes.txt
+	
+2001-05-25  Sean M. Burke  sburke@cpan.org
+
+	* Release 0.21
+
+	* extract_language_tags and locale2langauge_tag now
+	return untainted output.  Useful if you feed tainted
+	things, like $ENV{'LANG'}.
+	
+2001-03-13  Sean M. Burke  sburke@cpan.org
+
+	* Release 0.20
+
+	* Added support for RFC 3066 tags: allowing three-letter primary
+	tags ("nav"), and allowing digits in subtags ("x-borg-prot3252").
+
+	* Changed all references from RFC 1766 to RFC 3066.
+
+	* Now bundling fulltext of RFC 3066 in the dist.
+
+	* Now bundling generate_language_table.plx and language_codes.txt
+	
+	* Added some nice tests to test.pl
+
+	* Inverting order of listings in this ChangeLog file.
+
+2000-05-13  Sean M. Burke  sburke@cpan.org
+
+	* Release 0.13
+
+	* Just noting my new email address.
+
+1999-03-06  Sean M. Burke  sburke@netadventure.net
+
+	* Release 0.11
+
+	* Added functions
+          similarity_language_tag, is_dialect_of,
+	  locale2language_tag, alternate_language_tags, and
+	  encode_language_tag
+
+1998-12-14  Sean M. Burke  sburke@netadventure.net
+
+	* Release 0.09
+
+	* Added function super_languages()
+
+1998-10-31  Sean M. Burke  sburke@netadventure.net
+
+	* Release 0.08
+
+	* Just changes in the docs and bundle -- no change
+	in functionality.
+
+1998-04-02 Sean M. Burke  sburke@netadventure.net
+
+	* Release 0.07
+
+	* First public release.
+
+[END OF CHANGELOG]

@@ -11,7 +11,8 @@ use strict;
 use vars qw($VERSION);
 use Carp;
 
-$VERSION = "1.00";
+$VERSION = "1.00_00";
+$VERSION = eval $VERSION;
 
 {
     package IPC::Msg::stat;
@@ -125,6 +126,8 @@ IPC::Msg - SysV Msg IPC object class
     $msg->remove;
 
 =head1 DESCRIPTION
+
+A class providing an object based interface to SysV IPC message queues.
 
 =head1 METHODS
 

@@ -1,0 +1,10 @@
+#
+# $Id: null.ucm,v 1.1 2002/05/28 18:33:15 dankogai Exp $
+#
+<code_set_name>  "null"
+<mb_cur_min> 1
+<mb_cur_max> 1
+<subchar> \x3F
+#
+CHARMAP
+END CHARMAP

@@ -1,8 +1,10 @@
 & Macro to install the perl components into the right directories
-& Written 00-10-24 by Paul Green (Paul_Green@stratus.com)
+& Written 00-10-24 by Paul Green (Paul.Green@stratus.com)
+& Updated 02-02-15 by Paul Green
 &
 &begin_parameters
      cpu       option(-processor)name,allow(mc68020,i80860,pa7100,pa8000),=mc68020
+     name      option(-name)name,allow(perl,perl5),=perl5
 &end_parameters priv
 &echo command_lines
 &
@@ -23,47 +25,49 @@
 &if ^ (exists -directory &MDS&>ported>command_library)
 &then !create_dir &MDS&>ported>command_library
 &
-&if ^ (exists -directory &MDS&>ported>perl)
-&then !create_dir &MDS&>ported>perl
+&if ^ (exists -directory &MDS&>ported>lib)
+&then !create_dir &MDS&>ported>lib
 &
-&if ^ (exists -directory &MDS&>ported>perl>lib)
-&then !create_dir &MDS&>ported>perl>lib
+&if ^ (exists -directory &MDS&>ported>lib>perl5)
+&then !create_dir &MDS&>ported>lib>perl5
 &
-&if ^ (exists -directory &MDS&>ported>perl>lib>5.7)
-&then !create_dir &MDS&>ported>perl>lib>5.7
+&if ^ (exists -directory &MDS&>ported>lib>perl5>5.8.0)
+&then !create_dir &MDS&>ported>lib>perl5>5.8.0
 &
-&if ^ (exists -directory &MDS&>ported>perl>lib>5.7.68k)
-&then !create_dir &MDS&>ported>perl>lib>5.7.68k
+!copy_file <lib>*.pm &MDS&>ported>lib>perl5>5.8.0>*.pm -delete
+!copy_file <lib>*.pl &MDS&>ported>lib>perl5>5.8.0>*.pl -delete
+!copy_file <lib>*.pod &MDS&>ported>lib>perl5>5.8.0>*.pod -delete
 &
-&if ^ (exists -directory &MDS&>ported>perl>lib>5.7.860)
-&then !create_dir &MDS&>ported>perl>lib>5.7.860
+&if ^ (exists -directory &MDS&>ported>lib>perl5>5.8.0>68k)
+&then !create_dir &MDS&>ported>lib>perl5>5.8.0>68k
 &
-&if ^ (exists -directory &MDS&>ported>perl>lib>5.7.7100)
-&then !create_dir &MDS&>ported>perl>lib>5.7.7100
+&if ^ (exists -directory &MDS&>ported>lib>perl5>5.8.0>860)
+&then !create_dir &MDS&>ported>lib>perl5>5.8.0>860
 &
-&if ^ (exists -directory &MDS&>ported>perl>lib>5.7.8000)
-&then !create_dir &MDS&>ported>perl>lib>5.7.8000
+&if ^ (exists -directory &MDS&>ported>lib>perl5>5.8.0>7100)
+&then !create_dir &MDS&>ported>lib>perl5>5.8.0>7100
 &
-&if ^ (exists -directory &MDS&>ported>perl>lib>site)
-&then !create_dir &MDS&>ported>perl>lib>site
+&if ^ (exists -directory &MDS&>ported>lib>perl5>5.8.0>8000)
+&then !create_dir &MDS&>ported>lib>perl5>5.8.0>8000
 &
-&if ^ (exists -directory &MDS&>ported>perl>lib>site>5.7)
-&then !create_dir &MDS&>ported>perl>lib>site>5.7
+&if ^ (exists -directory &MDS&>ported>lib>perl5>site_perl)
+&then !create_dir &MDS&>ported>lib>perl5>site_perl
 &
-&if ^ (exists -directory &MDS&>ported>perl>lib>site>5.7.68k)
-&then !create_dir &MDS&>ported>perl>lib>site>5.7.68k
+&if ^ (exists -directory &MDS&>ported>lib>perl5>site_perl>5.8.0)
+&then !create_dir &MDS&>ported>lib>perl5>site_perl>5.8.0
 &
-&if ^ (exists -directory &MDS&>ported>perl>lib>site>5.7.860)
-&then !create_dir &MDS&>ported>perl>lib>site>5.7.860
+&if ^ (exists -directory &MDS&>ported>lib>perl5>site_perl>5.8.0>68k)
+&then !create_dir &MDS&>ported>lib>perl5>site_perl>5.8.0>68k
 &
-&if ^ (exists -directory &MDS&>ported>perl>lib>site>5.7.7100)
-&then !create_dir &MDS&>ported>perl>lib>site>5.7.7100
+&if ^ (exists -directory &MDS&>ported>lib>perl5>site_perl>5.8.0>860)
+&then !create_dir &MDS&>ported>lib>perl5>site_perl>5.8.0>860
 &
-&if ^ (exists -directory &MDS&>ported>perl>lib>site>5.7.8000)
-&then !create_dir &MDS&>ported>perl>lib>site>5.7.8000
+&if ^ (exists -directory &MDS&>ported>lib>perl5>site_perl>5.8.0>7100)
+&then !create_dir &MDS&>ported>lib>perl5>site_perl>5.8.0>7100
 &
-!copy_dir <lib &MDS&>ported>perl>lib>5.7 -delete
+&if ^ (exists -directory &MDS&>ported>lib>perl5>site_perl>5.8.0>8000)
+&then !create_dir &MDS&>ported>lib>perl5>site_perl>5.8.0>8000
 &
-!copy_file obj&obj&>perl.pm &MDS&>ported>command_library>perl.pm.new -delete
-!rename &MDS&>ported>command_library>perl.pm *.(date).(time) -delete
-!rename &MDS&>ported>command_library>perl.pm.new perl.pm -delete
+!copy_file obj&obj&>perl.pm &MDS&>ported>command_library>&name&.pm.new -delete
+!rename &MDS&>ported>command_library>&name&.pm *.(date).(time) -delete
+!rename &MDS&>ported>command_library>&name&.pm.new &name&.pm -delete

@@ -1,0 +1,78 @@
+Revision history for Perl extension Unicode::Normalize.
+
+0.17  Sun Apr 28 23:13:32 2002
+	- now normalize('NFC',$1) should work.
+	- Some croak()'s are added in mkheader.
+	- synchronization with bleadperl.
+	- Change 15596: by me
+	- Change 16136: by pudge
+
+0.16  Thu Mar 21 13:36:14 2002
+	- synchronization with bleadperl.
+	- Change 15318: by jhi
+	- Change 15319: by jhi
+
+0.15  Tue Mar 19 22:04:07 2002
+	- Quick check is implemented.
+	- decompose(), reorder(), and compose() are documented.
+	- The Non-XS version is also independent of Lingua::KO::Hangul::Util.
+
+0.14  Sat Feb 02 20:40:14 2002
+	- synchronization with bleadperl.
+	- Change 14128: by Arthur
+	- Change 14129: by jhi
+	- Change 14156: 
+	- Change 14199: by Nikola Knezevic
+	- Change 14308: by Benjamin Goldberg
+	- Change 14370: by jhi
+
+0.13  Sat Dec 01 11:42:43 2001
+	- modify Makefile.PL to enable rebuild.
+	  (This problem is pointed out by David Dyck.)
+	- Change 13388: by Jarkko Hietaniemi.
+
+0.12  Wed Nov 29 22:49:02 2001
+	- documentation in .pod is appended to .pm and the .pod is removed.
+	 (only POD in NON-XS refers to Lingua::KO::Hangul::Util.)
+
+0.11  Sat Nov 24 10:18:38 2001
+	- documentation of some functions for character data.
+	- Change 12909: by Jarkko Hietaniemi.
+	- Change 13228: by Peter Prymmer.
+
+0.10  Sat Nov 03 16:30:20 2001
+	- The XS version is now independent of Lingua::KO::Hangul::Util.
+	  (though the Non-XS version still requires that.)
+
+0.09  Fri Nov 02 22:39:30 2001
+	- remove pTHX_.
+
+0.08  Thu Nov 01 23:20:42 2001
+	- use Lingua::KO::Hangul::Util 0.06 and remove "hangul.h".
+
+0.07  Wed Oct 31 22:06:42 2001
+	- modify internal. decompose() - reorder() - compose().
+
+0.06  Sun Oct 28 14:28:46 2001
+	- an XS version.
+	(but the Non-XS version is also supported.)
+
+0.05  Wed Oct 10 22:02:15 2001 (not released)
+	- %Compos contains unnecessary singletons
+	  (though it did not cause any bug, only useless).
+	  They will not be stored.
+
+0.04  Wed Aug 15 19:02:41 2001
+	- fix: NFD("") and NFKD("") must return "", not but undef.
+
+0.03  Fri Aug 10 22:44:18 2001
+	- rename the module name to Unicode::Normalize.
+	- normalize takes two arguments.
+
+0.02  Thu Aug  9 22:56:36 2001
+	- add function normalize
+
+0.01  Mon Aug  6 21:45:11 2001
+	- original version; created by h2xs 1.21 with options
+		-A -X -n Text::Unicode::Normalize
+

@@ -1,13 +1,13 @@
 =head1 NAME
 
-perlfork - Perl's fork() emulation (EXPERIMENTAL, subject to change)
+perlfork - Perl's fork() emulation
 
 =head1 SYNOPSIS
 
-    WARNING:  As of the 5.6.1 release, the fork() emulation continues
-    to be an experimental feature.  Use in production applications is
-    not recommended.  See the "BUGS" and "CAVEATS AND LIMITATIONS"
-    sections below.
+    NOTE:  As of the 5.8.0 release, fork() emulation has considerably
+    matured.  However, there are still a few known bugs and differences
+    from real fork() that might affect you.  See the "BUGS" and
+    "CAVEATS AND LIMITATIONS" sections below.
 
 Perl provides a fork() keyword that corresponds to the Unix system call
 of the same name.  On most Unix-like platforms where the fork() system
@@ -279,22 +279,20 @@ are expected to be fixed for thread-safety.
 
 =item *
 
-Perl's regular expression engine currently does not play very nicely
-with the fork() emulation.  There are known race conditions arising
-from the regular expression engine modifying state carried in the opcode
-tree at run time (the fork() emulation relies on the opcode tree being
-immutable).  This typically happens when the regex contains paren groups
-or variables interpolated within it that force a run time recompilation
-of the regex.  Due to this major bug, the fork() emulation is not
-recommended for use in production applications at this time.
-
-=item *
-
 Having pseudo-process IDs be negative integers breaks down for the integer
 C<-1> because the wait() and waitpid() functions treat this number as
 being special.  The tacit assumption in the current implementation is that
 the system never allocates a thread ID of C<1> for user threads.  A better
 representation for pseudo-process IDs will be implemented in future.
+
+=item *
+
+In certain cases, the OS-level handles created by the pipe(), socket(),
+and accept() operators are apparently not duplicated accurately in
+pseudo-processes.  This only happens in some situations, but where it
+does happen, it may result in deadlocks between the read and write ends
+of pipe handles, or inability to send or receive data across socket
+handles.
 
 =item *
 

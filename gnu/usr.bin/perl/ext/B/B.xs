@@ -12,15 +12,6 @@
 #include "perl.h"
 #include "XSUB.h"
 
-#ifdef PERL_OBJECT
-#undef PL_op_name
-#undef PL_opargs 
-#undef PL_op_desc
-#define PL_op_name (get_op_names())
-#define PL_opargs (get_opargs())
-#define PL_op_desc (get_op_descs())
-#endif
-
 #ifdef PerlIO
 typedef PerlIO * InputStream;
 #else
@@ -79,9 +70,17 @@ static char *opclassnames[] = {
     "B::COP"	
 };
 
-static int walkoptree_debug = 0;	/* Flag for walkoptree debug hook */
+#define MY_CXT_KEY "B::_guts" XS_VERSION
 
-static SV *specialsv_list[6];
+typedef struct {
+    int		x_walkoptree_debug;	/* Flag for walkoptree debug hook */
+    SV *	x_specialsv_list[7];
+} my_cxt_t;
+
+START_MY_CXT
+
+#define walkoptree_debug	(MY_CXT.x_walkoptree_debug)
+#define specialsv_list		(MY_CXT.x_specialsv_list)
 
 static opclass
 cc_opclass(pTHX_ OP *o)
@@ -201,6 +200,7 @@ make_sv_object(pTHX_ SV *arg, SV *sv)
 {
     char *type = 0;
     IV iv;
+    dMY_CXT;
     
     for (iv = 0; iv < sizeof(specialsv_list)/sizeof(SV*); iv++) {
 	if (sv == specialsv_list[iv]) {
@@ -224,14 +224,43 @@ make_mg_object(pTHX_ SV *arg, MAGIC *mg)
 }
 
 static SV *
-cstring(pTHX_ SV *sv)
+cstring(pTHX_ SV *sv, bool perlstyle)
 {
     SV *sstr = newSVpvn("", 0);
     STRLEN len;
     char *s;
+    char escbuff[5]; /* to fit backslash, 3 octals + trailing \0 */
 
     if (!SvOK(sv))
 	sv_setpvn(sstr, "0", 1);
+    else if (perlstyle && SvUTF8(sv))
+    {
+	SV *tmpsv = sv_newmortal(); /* Temporary SV to feed sv_uni_display */
+	len = SvCUR(sv);
+	s = sv_uni_display(tmpsv, sv, 8*len, UNI_DISPLAY_QQ);
+	sv_setpv(sstr,"\"");
+	while (*s)
+	{
+	    if (*s == '"')
+		sv_catpv(sstr, "\\\"");
+	    else if (*s == '$')
+		sv_catpv(sstr, "\\$");
+	    else if (*s == '@')
+		sv_catpv(sstr, "\\@");
+	    else if (*s == '\\')
+	    {
+		if (strchr("nrftax\\",*(s+1)))
+		    sv_catpvn(sstr, s++, 2);
+		else
+		    sv_catpv(sstr, "\\\\");
+	    }
+	    else /* should always be printable */
+		sv_catpvn(sstr, s, 1);
+	    ++s;
+	}
+	sv_catpv(sstr, "\"");
+	return sstr;
+    }
     else
     {
 	/* XXX Optimise? */
@@ -244,7 +273,21 @@ cstring(pTHX_ SV *sv)
 		sv_catpv(sstr, "\\\"");
 	    else if (*s == '\\')
 		sv_catpv(sstr, "\\\\");
-	    else if (*s >= ' ' && *s < 127) /* XXX not portable */
+            /* trigraphs - bleagh */
+            else if (!perlstyle && *s == '?' && len>=3 && s[1] == '?')
+            {
+                sprintf(escbuff, "\\%03o", '?');
+                sv_catpv(sstr, escbuff);
+            }
+	    else if (perlstyle && *s == '$')
+		sv_catpv(sstr, "\\$");
+	    else if (perlstyle && *s == '@')
+		sv_catpv(sstr, "\\@");
+#ifdef EBCDIC
+	    else if (isPRINT(*s))
+#else
+	    else if (*s >= ' ' && *s < 127)
+#endif /* EBCDIC */
 		sv_catpvn(sstr, s, 1);
 	    else if (*s == '\n')
 		sv_catpv(sstr, "\\n");
@@ -258,12 +301,10 @@ cstring(pTHX_ SV *sv)
 		sv_catpv(sstr, "\\b");
 	    else if (*s == '\f')
 		sv_catpv(sstr, "\\f");
-	    else if (*s == '\v')
+	    else if (!perlstyle && *s == '\v')
 		sv_catpv(sstr, "\\v");
 	    else
 	    {
-		/* no trigraph support */
-		char escbuff[5]; /* to fit backslash, 3 octals + trailing \0 */
 		/* Don't want promotion of a signed -1 char in sprintf args */
 		unsigned char c = (unsigned char) *s;
 		sprintf(escbuff, "\\%03o", c);
@@ -287,7 +328,11 @@ cchar(pTHX_ SV *sv)
 	sv_catpv(sstr, "\\'");
     else if (*s == '\\')
 	sv_catpv(sstr, "\\\\");
-    else if (*s >= ' ' && *s < 127) /* XXX not portable */
+#ifdef EBCDIC
+    else if (isPRINT(*s))
+#else
+    else if (*s >= ' ' && *s < 127)
+#endif /* EBCDIC */
 	sv_catpvn(sstr, s, 1);
     else if (*s == '\n')
 	sv_catpv(sstr, "\\n");
@@ -320,8 +365,9 @@ void
 walkoptree(pTHX_ SV *opsv, char *method)
 {
     dSP;
-    OP *o;
-    
+    OP *o, *kid;
+    dMY_CXT;
+
     if (!SvROK(opsv))
 	croak("opsv is not a reference");
     opsv = sv_mortalcopy(opsv);
@@ -337,12 +383,17 @@ walkoptree(pTHX_ SV *opsv, char *method)
     PUTBACK;
     perl_call_method(method, G_DISCARD);
     if (o && (o->op_flags & OPf_KIDS)) {
-	OP *kid;
 	for (kid = ((UNOP*)o)->op_first; kid; kid = kid->op_sibling) {
 	    /* Use the same opsv. Rely on methods not to mess it up. */
 	    sv_setiv(newSVrv(opsv, cc_opclassname(aTHX_ kid)), PTR2IV(kid));
 	    walkoptree(aTHX_ opsv, method);
 	}
+    }
+    if (o && (cc_opclass(aTHX_ o) == OPc_PMOP)
+	    && (kid = cPMOPo->op_pmreplroot))
+    {
+	sv_setiv(newSVrv(opsv, opclassnames[OPc_PMOP]), PTR2IV(kid));
+	walkoptree(aTHX_ opsv, method);
     }
 }
 
@@ -382,12 +433,14 @@ BOOT:
 {
     HV *stash = gv_stashpvn("B", 1, TRUE);
     AV *export_ok = perl_get_av("B::EXPORT_OK",TRUE);
+    MY_CXT_INIT;
     specialsv_list[0] = Nullsv;
     specialsv_list[1] = &PL_sv_undef;
     specialsv_list[2] = &PL_sv_yes;
     specialsv_list[3] = &PL_sv_no;
     specialsv_list[4] = pWARN_ALL;
     specialsv_list[5] = pWARN_NONE;
+    specialsv_list[6] = pWARN_STD;
 #include "defsubs.h"
 }
 
@@ -402,6 +455,9 @@ BOOT:
 #define B_sv_undef()	&PL_sv_undef
 #define B_sv_yes()	&PL_sv_yes
 #define B_sv_no()	&PL_sv_no
+#ifdef USE_ITHREADS
+#define B_regex_padav()	PL_regex_padav
+#endif
 
 B::AV
 B_init_av()
@@ -411,6 +467,13 @@ B_begin_av()
 
 B::AV
 B_end_av()
+
+#ifdef USE_ITHREADS
+
+B::AV
+B_regex_padav()
+
+#endif
 
 B::CV
 B_main_cv()
@@ -449,6 +512,7 @@ walkoptree(opsv, method)
 int
 walkoptree_debug(...)
     CODE:
+	dMY_CXT;
 	RETVAL = walkoptree_debug;
 	if (items > 0 && SvTRUE(ST(1)))
 	    walkoptree_debug = 1;
@@ -528,13 +592,21 @@ minus_c()
 void
 save_BEGINs()
     CODE:
-	PL_minus_c |= 0x10;
+	PL_savebegin = TRUE;
 
 SV *
 cstring(sv)
 	SV *	sv
     CODE:
-	RETVAL = cstring(aTHX_ sv);
+	RETVAL = cstring(aTHX_ sv, 0);
+    OUTPUT:
+	RETVAL
+
+SV *
+perlstring(sv)
+	SV *	sv
+    CODE:
+	RETVAL = cstring(aTHX_ sv, 1);
     OUTPUT:
 	RETVAL
 
@@ -549,7 +621,7 @@ cchar(sv)
 void
 threadsv_names()
     PPCODE:
-#ifdef USE_THREADS
+#ifdef USE_5005THREADS
 	int i;
 	STRLEN len = strlen(PL_threadsv_names);
 
@@ -596,7 +668,7 @@ OP_ppaddr(o)
     CODE:
 	sv_setpvn(sv, "PL_ppaddr[OP_", 13);
 	sv_catpv(sv, PL_op_name[o->op_type]);
-	for (i=13; i<SvCUR(sv); ++i)
+	for (i=13; (STRLEN)i < SvCUR(sv); ++i)
 	    SvPVX(sv)[i] = toUPPER(SvPVX(sv)[i]);
 	sv_catpv(sv, "]");
 	ST(0) = sv;
@@ -667,9 +739,13 @@ LISTOP_children(o)
 #define PMOP_pmreplroot(o)	o->op_pmreplroot
 #define PMOP_pmreplstart(o)	o->op_pmreplstart
 #define PMOP_pmnext(o)		o->op_pmnext
-#define PMOP_pmregexp(o)	o->op_pmregexp
+#define PMOP_pmregexp(o)	PM_GETRE(o)
+#ifdef USE_ITHREADS
+#define PMOP_pmoffset(o)	o->op_pmoffset
+#endif
 #define PMOP_pmflags(o)		o->op_pmflags
 #define PMOP_pmpermflags(o)	o->op_pmpermflags
+#define PMOP_pmdynflags(o)      o->op_pmdynflags
 
 MODULE = B	PACKAGE = B::PMOP		PREFIX = PMOP_
 
@@ -682,9 +758,13 @@ PMOP_pmreplroot(o)
 	root = o->op_pmreplroot;
 	/* OP_PUSHRE stores an SV* instead of an OP* in op_pmreplroot */
 	if (o->op_type == OP_PUSHRE) {
+#ifdef USE_ITHREADS
+            sv_setiv(ST(0), INT2PTR(PADOFFSET,root) );
+#else
 	    sv_setiv(newSVrv(ST(0), root ?
 			     svclassnames[SvTYPE((SV*)root)] : "B::SV"),
 		     PTR2IV(root));
+#endif
 	}
 	else {
 	    sv_setiv(newSVrv(ST(0), cc_opclassname(aTHX_ root)), PTR2IV(root));
@@ -698,13 +778,25 @@ B::PMOP
 PMOP_pmnext(o)
 	B::PMOP		o
 
-U16
+#ifdef USE_ITHREADS
+
+IV
+PMOP_pmoffset(o)
+	B::PMOP		o
+
+#endif
+
+U32
 PMOP_pmflags(o)
 	B::PMOP		o
 
-U16
+U32
 PMOP_pmpermflags(o)
 	B::PMOP		o
+
+U8
+PMOP_pmdynflags(o)
+        B::PMOP         o
 
 void
 PMOP_precomp(o)
@@ -712,7 +804,7 @@ PMOP_precomp(o)
 	REGEXP *	rx = NO_INIT
     CODE:
 	ST(0) = sv_newmortal();
-	rx = o->op_pmregexp;
+	rx = PM_GETRE(o);
 	if (rx)
 	    sv_setpvn(ST(0), rx->precomp, rx->prelen);
 
@@ -756,11 +848,22 @@ PVOP_pv(o)
 	B::PVOP	o
     CODE:
 	/*
-	 * OP_TRANS uses op_pv to point to a table of 256 shorts
+	 * OP_TRANS uses op_pv to point to a table of 256 or >=258 shorts
 	 * whereas other PVOPs point to a null terminated string.
 	 */
-	ST(0) = sv_2mortal(newSVpv(o->op_pv, (o->op_type == OP_TRANS) ?
-				   256 * sizeof(short) : 0));
+	if (o->op_type == OP_TRANS &&
+		(o->op_private & OPpTRANS_COMPLEMENT) &&
+		!(o->op_private & OPpTRANS_DELETE))
+	{
+	    short* tbl = (short*)o->op_pv;
+	    short entries = 257 + tbl[256];
+	    ST(0) = sv_2mortal(newSVpv(o->op_pv, entries * sizeof(short)));
+	}
+	else if (o->op_type == OP_TRANS) {
+	    ST(0) = sv_2mortal(newSVpv(o->op_pv, 256 * sizeof(short)));
+	}
+	else
+	    ST(0) = sv_2mortal(newSVpv(o->op_pv, 0));
 
 #define LOOP_redoop(o)	o->op_redoop
 #define LOOP_nextop(o)	o->op_nextop
@@ -905,12 +1008,33 @@ char*
 SvPVX(sv)
 	B::PV	sv
 
+B::SV
+SvRV(sv)
+        B::PV   sv
+    CODE:
+        if( SvROK(sv) ) {
+            RETVAL = SvRV(sv);
+        }
+        else {
+            croak( "argument is not SvROK" );
+        }
+    OUTPUT:
+        RETVAL
+
 void
 SvPV(sv)
 	B::PV	sv
     CODE:
-	ST(0) = sv_newmortal();
-	sv_setpvn(ST(0), SvPVX(sv), SvCUR(sv));
+        ST(0) = sv_newmortal();
+        if( SvPOK(sv) ) { 
+            sv_setpvn(ST(0), SvPVX(sv), SvCUR(sv));
+            SvFLAGS(ST(0)) |= SvUTF8(sv);
+        }
+        else {
+            /* XXX for backward compatibility, but should fail */
+            /* croak( "argument is not SvPOK" ); */
+            sv_setpvn(ST(0), NULL, 0);
+        }
 
 STRLEN
 SvLEN(sv)
@@ -942,6 +1066,7 @@ SvSTASH(sv)
 #define MgFLAGS(mg) mg->mg_flags
 #define MgOBJ(mg) mg->mg_obj
 #define MgLENGTH(mg) mg->mg_len
+#define MgREGEX(mg) PTR2IV(mg->mg_obj)
 
 MODULE = B	PACKAGE = B::MAGIC	PREFIX = Mg	
 
@@ -964,6 +1089,43 @@ MgFLAGS(mg)
 B::SV
 MgOBJ(mg)
 	B::MAGIC	mg
+    CODE:
+        if( mg->mg_type != 'r' ) {
+            RETVAL = MgOBJ(mg);
+        }
+        else {
+            croak( "OBJ is not meaningful on r-magic" );
+        }
+    OUTPUT:
+        RETVAL
+
+IV
+MgREGEX(mg)
+	B::MAGIC	mg
+    CODE:
+        if( mg->mg_type == 'r' ) {
+            RETVAL = MgREGEX(mg);
+        }
+        else {
+            croak( "REGEX is only meaningful on r-magic" );
+        }
+    OUTPUT:
+        RETVAL
+
+SV*
+precomp(mg)
+        B::MAGIC        mg
+    CODE:
+        if (mg->mg_type == 'r') {
+            REGEXP* rx = (REGEXP*)mg->mg_obj;
+            if( rx )
+                RETVAL = newSVpvn( rx->precomp, rx->prelen );
+        }
+        else {
+            croak( "precomp is only meaningful on r-magic" );
+        }
+    OUTPUT:
+        RETVAL
 
 I32 
 MgLENGTH(mg)
@@ -1145,6 +1307,29 @@ short
 IoSUBPROCESS(io)
 	B::IO	io
 
+bool
+IsSTD(io,name)
+	B::IO	io
+	char*	name
+    PREINIT:
+	PerlIO* handle = 0;
+    CODE:
+	if( strEQ( name, "stdin" ) ) {
+	    handle = PerlIO_stdin();
+	}
+	else if( strEQ( name, "stdout" ) ) {
+	    handle = PerlIO_stdout();
+	}
+	else if( strEQ( name, "stderr" ) ) {
+	    handle = PerlIO_stderr();
+	}
+	else {
+	    croak( "Invalid value '%s'", name );
+	}
+	RETVAL = handle == IoIFP(io);
+    OUTPUT:
+	RETVAL
+
 MODULE = B	PACKAGE = B::IO
 
 char
@@ -1233,13 +1418,21 @@ void
 CvXSUBANY(cv)
 	B::CV	cv
     CODE:
-	ST(0) = sv_2mortal(newSViv(CvXSUBANY(cv).any_iv));
+	ST(0) = CvCONST(cv) ?
+                    make_sv_object(aTHX_ sv_newmortal(),CvXSUBANY(cv).any_ptr) :
+                    sv_2mortal(newSViv(CvXSUBANY(cv).any_iv));
 
 MODULE = B    PACKAGE = B::CV
 
 U16
 CvFLAGS(cv)
       B::CV   cv
+
+MODULE = B	PACKAGE = B::CV		PREFIX = cv_
+
+B::SV
+cv_const_sv(cv)
+	B::CV	cv
 
 
 MODULE = B	PACKAGE = B::HV		PREFIX = Hv

@@ -26,20 +26,20 @@ the source code below /usr/local (though that is where it will be
 installed by default).  You may need to worry about the networking
 configuration files discussed in the last bullet below.
 
-=head2 Unpacking
+=head2 Unpacking Perl Distribution on VM/ESA
 
 To extract an ASCII tar archive on VM/ESA, try this:
 
    pax -o to=IBM-1047,from=ISO8859-1 -r < latest.tar
 
-=head2 Setup and utilities
+=head2 Setup Perl and utilities on VM/ESA
 
 GNU make for VM/ESA, which may be required for the build of perl,
 is available from:
 
   http://pucc.princeton.edu/~neale/vmoe.html
 
-=head2 Configure
+=head2 Configure Perl on VM/ESA
 
 Once you've unpacked the distribution, run Configure (see INSTALL for
 full discussion of the Configure options), and then run make, then
@@ -56,13 +56,13 @@ for most things.  Some things to watch out for are:
 this port does support dynamic loading but it's not had much testing
 
 =item *
-	
+
 Don't turn on the compiler optimization flag "-O".  There's
 a bug in the compiler (APAR PQ18812) that generates some bad code
 the optimizer is on.
 
 =item *
-	
+
 As VM/ESA doesn't fully support the fork() API programs relying on
 this call will not work. I've replaced fork()/exec() with spawn()
 and the standalone exec() with spawn(). This has a side effect when
@@ -79,18 +79,18 @@ statements in the preprocessor output (.i) file.
 
 =back
 
-=head2 testing anomalies
+=head2 Testing Anomalies of Perl on VM/ESA
 
 The `make test` step runs a Perl Verification Procedure, usually before
-installation.  As the 5.6.1 kit was was being assembled
+installation.  As the 5.6.1 kit was being assembled
 the following "failures" were known to appear on some machines
 during `make test` (mostly due to ASCII vs. EBCDIC conflicts),
 your results may differ:
 
 [the list of failures being compiled]
 
-=head2 Usage Hints
-	
+=head2 Usage Hints for Perl on VM/ESA
+
 When using perl on VM/ESA please keep in mind that the EBCDIC and ASCII
 character sets are different.  Perl builtin functions that may behave
 differently under EBCDIC are mentioned in the perlport.pod document.
@@ -112,18 +112,13 @@ Neale Ferguson.
 
 L<INSTALL>, L<perlport>, L<perlebcdic>.
 
-=head2 Mailing list
+=head2 Mailing list for Perl on VM/ESA
 
-If you are interested in the VM and OS/390 ports of perl then see the
-perl-mvs mailing list: The Perl Institute (http://www.perl.org/)
-maintains a mailing list of interest to all folks building and/or
-using perl on EBCDIC platforms.  To subscribe, send a message of:
+If you are interested in the VM/ESA, z/OS (formerly known as OS/390)
+and POSIX-BC (BS2000) ports of Perl then see the perl-mvs mailing list.
+To subscribe, send an empty message to perl-mvs-subscribe@perl.org.
 
-    subscribe perl-mvs
-
-to majordomo@perl.org.
-
-   See also:
+See also:
 
     http://lists.perl.org/showlist.cgi?name=perl-mvs
 

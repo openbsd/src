@@ -5,36 +5,45 @@ specially designed to be readable as is.
 =head1 NAME
 
 README.mpeix - Perl/iX for HP e3000 MPE
-                                       
+
 =head1 SYNOPSIS
 
    http://www.bixby.org/mark/perlix.html
+   http://jazz.external.hp.com/src/hp_freeware/perl/
    Perl language for MPE
    Last updated June 2, 2000 @ 0400 UTC
-   
+
 =head1 NOTE
 
 This is a podified version of the above-mentioned web page,
 podified by Jarkko Hietaniemi 2001-Jan-01.
 
-=head1 What's New
+=head1 Binary distribution from HP
+
+The simplest way to obtain Perl for the MPE/iX is to go either of
+these URLs and follow the instructions within.
+
+http://jazz.external.hp.com/src/hp_freeware/perl/
+http://www.bixby.org/mark/perlix.html
+
+Use which ever one is more recent.
+
+
+=head1 What's New in Perl for MPE/iX
 
 June 1, 2000
-       
+
 =over 4
 
 =item *
 
 Rebuilt to be compatible with mod_perl.  If you plan on using
 mod_perl, you MUST download and install this version of Perl/iX!
-       
+
 =item *
 
-bincompat5005="undef": sorry, but you will have to recompile any
-binary 5.005 extensions that you may be using (if any; there is no
-5.005 code in what you download from bixby.org)
 uselargefiles="undef": not available in MPE for POSIX files yet.
-       
+
 =item *
 
 Now bundled with various add-on packages:
@@ -43,17 +52,17 @@ Now bundled with various add-on packages:
 
 =item *
 
-libnet (http://www.gbarr.demon.co.uk/libnet/FAQ.html)
+libnet (as seen on CPAN)
 
 =item *
 
 libwww-perl (LWP) which lets Perl programs behave like web browsers:
-       
+
     1. #!/PERL/PUB/perl
     2. use LWP::Simple;
     3. $doc = get('http://www.bixby.org/mark/perlix.html');  # reads the
        web page into variable $doc
-       
+
 (http://www.bixby.org/mark/perlix.html)
 
 =item *
@@ -62,9 +71,9 @@ mod_perl (just the perl portion; the actual DSO will be released
 soon with Apache/iX 1.3.12 from bixby.org).  This module allows you to
 write high performance persistent Perl CGI scripts and all sorts of
 cool things. (http://perl.apache.org/)
-   
+
 and much much more hiding under /PERL/PUB/.cpan/
-   
+
 =item *
 
 The CPAN module now works for automatic downloading and
@@ -73,7 +82,7 @@ installing of add-on packages:
     1. export FTP_PASSIVE=1
     2. perl -MCPAN -e shell
     3. Ignore any terminal I/O related complaints!
-       
+
 (http://theoryx5.uwinnipeg.ca/CPAN/data/perl/CPAN.html)
 
 =back
@@ -92,7 +101,7 @@ Updated to version 5.6.0.  Builds straight out of the box on MPE/iX.
 
 Perl's getpwnam() function which had regressed to being
 unimplemented on MPE is now implemented once again.
-       
+
 =back
 
 September 17, 1999
@@ -104,38 +113,38 @@ September 17, 1999
 Migrated from cccd.edu to bixby.org.
 
 =back
-   
-=head1 Welcome
+
+=head1 Welcome to Perl/iX
 
 This is the official home page for the HP e3000 MPE/iX
-(http://www.businessservers.hp.com/) port of the Perl scripting
-language (http://www.perl.com/) which gives you all of the power of C,
+( http://www.hp.com/go/e3000 ) port of the Perl scripting
+language ( http://www.perl.com/ ) which gives you all of the power of C,
 awk, sed, and sh in a single language. Check here for the latest news,
 implemented functionality, known bugs, to-do list, etc. Status reports
 about major milestones will also be posted to the HP3000-L mailing list
-(http://www.lsoft.com/scripts/wl.exe?SL1=HP3000-L&H=RAVEN.UTC.EDU) and
+( http://www.lsoft.com/scripts/wl.exe?SL1=HP3000-L&H=RAVEN.UTC.EDU ) and
 its associated gatewayed newsgroup comp.sys.hp.mpe.
-   
+
 I'm doing this port because I can't live without Perl on the Unix
 machines that I administer, and I want to have the same power
 available to me on MPE.
-   
+
 Please send your comments, questions, and bug reports directly to me,
-Mark Bixby (http://www.bixby.org/mark/), by e-mailing to
+Mark Bixby ( http://www.bixby.org/mark/ ), by e-mailing to
 mark@bixby.org. Or just post them to HP3000-L.
-   
+
 The platform I'm using to do this port is an HP 3000 957RX running
 MPE/iX 6.0 and using the GNU gcc C compiler
-(http://jazz.external.hp.com/src/gnu/gnuframe.html).
-   
+( http://jazz.external.hp.com/src/gnu/gnuframe.html ).
+
 The combined porting wisdom from all of my ports can be found in my
 MPE/iX Porting Guide (http://www.bixby.org/mark/porting.html).
-   
+
 IMPORTANT NOTICE: Yes, I do work for the HP CSY R&D lab, but ALL of
 the software you download from bixby.org is my personal freeware that
 is NOT supported by HP.
 
-=head1 System Requirements
+=head1 System Requirements for Perl/iX
 
 =over 4
 
@@ -163,9 +172,9 @@ to _getenv_libc.
 =item *
 
 If you will be compiling Perl/iX yourself, you will also need
-Syslog/iX (http://www.bixby.org/mark/syslogix.html) and the
+Syslog/iX ( http://www.bixby.org/mark/syslogix.html ) and the
 /BIND/PUB/include and /BIND/PUB/lib portions of BIND/iX
-(http://www.bixby.org/mark/bindix.html).
+( http://www.bixby.org/mark/bindix.html ).
 
 =back
 
@@ -192,12 +201,12 @@ Run the installation script
 =item 5.
 
 Convert your *.a system archive libraries to *.sl shared libraries
-       
+
 =back
 
 Download Perl using FTP.ARPA.SYS from your HP 3000 (the preferred
 method).....
-  
+
     :HELLO MANAGER.SYS
     :XEQ FTP.ARPA.SYS
     open ftp.bixby.org
@@ -210,7 +219,7 @@ method).....
 
 .....Or download using some other generic web or ftp client (the alternate
 method)
-  
+
 Download the following files (make sure that you use "binary mode" or
 whatever client feature that is 8-bit clean):
 
@@ -225,24 +234,24 @@ Perl from
 or
 
     ftp://ftp.bixby.org/pub/mpe/perl-5.6.0-mpe.tar.Z
-       
+
 =item *
 
 Upload those files to your HP 3000 in an 8-bit clean bytestream manner to:
 
     /tmp/perl.tar.Z
-       
+
 =item *
 
 Then extract the installation script (after both download methods)
-  
+
     :CHDIR /tmp
     :XEQ TAR.HPBIN.SYS 'xvfopz /tmp/perl.tar.Z INSTALL'
 
 =item *
 
 Edit the installation script
-  
+
 Examine the accounting structure creation commands and modify if
 necessary (adding additional capabilities, choosing a non-system
 volume set, etc).
@@ -252,7 +261,7 @@ volume set, etc).
 =item *
 
 Run the installation script.
-  
+
 The accounting structure will be created and then all files will be
 extracted from the archive.
 
@@ -261,7 +270,7 @@ extracted from the archive.
 =item *
 
 Convert your *.a system archive libraries to *.sl shared libraries
-  
+
 You only have to do this ONCE on your MPE/iX 5.5 machine in order to
 convert /lib/lib*.a and /usr/lib/lib*.a libraries to their *.sl
 equivalents.  This step should not be necessary on MPE/iX 6.0 or later
@@ -271,35 +280,35 @@ machines because the 6.0 or later update process does it for you.
 
 =back
 
-=head1 Distribution Contents Highlights
+=head1 Perl/iX Distribution Contents Highlights
 
 =over 4
 
 =item README
 
 The file you're reading now.
-          
+
 =item INSTALL
 
 Perl/iX Installation script.
-          
+
 =item LIBSHP3K
 
 Script to convert *.a system archive libraries to *.sl shared libraries.
-          
+
 =item PERL
 
 Perl NMPRG executable.  A version-numbered backup copy also
 exists.  You might wish to "ln -s /PERL/PUB/PERL /usr/local/bin/perl".
-          
+
 =item .cpan/
 
 Much add-on source code downloaded with the CPAN module.
-          
+
 =item lib/
 
 Perl libraries, both core and add-on.
-          
+
 =item man/
 
 Perl man page documentation.
@@ -307,13 +316,13 @@ Perl man page documentation.
 =item public_html/feedback.cgi
 
 Sample feedback CGI form written in Perl.
-          
+
 =item src/perl-5.6.0-mpe
 
 Source code.
 
 =back
-   
+
 =head1 How to Compile Perl/iX
 
 =over 4
@@ -352,7 +361,7 @@ make install
 
 Optionally create symbolic links that point to the Perl
 executable, i.e. ln -s /PERL/PUB/PERL /usr/local/bin/perl
-       
+
 =back
 
 The summary test results from "cd t; ./perl -I../lib harness":
@@ -374,11 +383,11 @@ The summary test results from "cd t; ./perl -I../lib harness":
 Create your Perl script files with "#!/PERL/PUB/perl" (or an
 equivalent symbolic link) as the first line.  Use the chmod command to
 make sure that your script has execute permission. Run your script!
-   
+
 Be sure to take a look at the CPAN module list
-(http://www.cpan.org/CPAN.html). A wide variety of free Perl software
+( http://www.cpan.org/CPAN.html ). A wide variety of free Perl software
 is available.  You can automatically download these packages by using
-the CPAN module (http://theoryx5.uwinnipeg.ca/CPAN/data/perl/CPAN.html).
+the CPAN module ( http://theoryx5.uwinnipeg.ca/CPAN/data/perl/CPAN.html ).
 
 =head1 MPE/iX Implementation Considerations
 
@@ -435,12 +444,12 @@ calls to setuid() within Perl/iX, so I have not attempted an automatic
 GETPRIVMODE() solution similar to bind().
 
 =back
-   
-=head1 Known Bugs Under Investigation
+
+=head1 Known Perl/iX Bugs Under Investigation
 
 None.
-   
-=head1 To-Do List
+
+=head1 Perl/iX To-Do List
 
 =over 4
 
@@ -460,20 +469,20 @@ Add support for Berkeley DB once I've finished porting Berkeley DB.
 
 Write an MPE XS extension library containing miscellaneous important
 MPE functions like GETPRIVMODE(), GETUSERMODE(), and sfcntl().
-   
+
 =back
 
-=head1 Change History
+=head1 Perl/iX Change History
 
 May 6, 1999
-       
+
 =over 4
 
 =item *
 
 Patch LBCJXT6A is required on MPE/iX 5.5 machines in order to prevent
 Perl/iX from dying with an unresolved external reference to _getenv_libc.
-       
+
 =back
 
 April 7, 1999
@@ -498,7 +507,7 @@ characters patch is now MPEKX40B.
 
 The LIBSHP3K *.a -> *.sl library conversion script is now included
 as /PERL/PUB/LIBSHP3K.
-       
+
 =back
 
 November 20, 1998
@@ -527,9 +536,9 @@ All bugfixes will be submitted back to the official Perl developers.
 
 The current incarnation of the POSIX filename extended characters
 patch is now MPEKXJ3A.
-       
+
 =back
-   
+
 August 14, 1998
 
 =over 4
@@ -538,9 +547,9 @@ August 14, 1998
 
 The previous POSIX filename extended characters patch MPEKX44C has
 been superseded by MPEKXB5A.
-       
+
 =back
-   
+
 August 7, 1998
 
 =over 4
@@ -549,19 +558,19 @@ August 7, 1998
 
 The previous POSIX filename extended characters patch MPEKX76A has
 been superseded by MPEKX44C.
-       
-=over 4
 
 =back
-   
+
 July 28, 1998
+
+=over 4
 
 =item *
 
 Updated to version 5.005_01.
-       
+
 =back
-   
+
 July 23, 1998
 
 =over 4
@@ -570,9 +579,9 @@ July 23, 1998
 
 Updated to version 5.005 (production release).  The public
 freeware sources are now 100% MPE-ready "straight out of the box".
-       
+
 =back
-   
+
 July 17, 1998
 
 =over 4
@@ -588,9 +597,9 @@ insure that the final release of 5.005 will be 100% MPE-ready and
 =item *
 
 My MPE binary release is now extracted using my standard INSTALL script.
-       
+
 =back
-   
+
 July 15, 1998
 
 =over 4
@@ -599,9 +608,9 @@ July 15, 1998
 
 Changed startperl to #!/PERL/PUB/perl so that Perl will recognize
 scripts more easily and efficiently.
-       
+
 =back
-   
+
 July 8, 1998
 
 =over 4
@@ -614,9 +623,9 @@ MPE-ready.  The next public freeware release of Perl should compile
 was strictly internal to me and never publicly released.  Note that
 [21]BIND/iX is now required (well, the include files and libbind.a) if
 you wish to compile Perl/iX.
-       
+
 =back
-   
+
 November 6, 1997
 
 =over 4
@@ -624,9 +633,9 @@ November 6, 1997
 =item *
 
 Updated to version 5.004_04.  No changes in MPE-specific functionality.
-       
+
 =back
-   
+
 October 16, 1997
 
 =over 4
@@ -635,9 +644,9 @@ October 16, 1997
 
 Added Demos section to the Perl/iX home page so you can see some
 sample Perl applications running on my 3000.
-       
+
 =back
-   
+
 October 3, 1997
 
 =over 4
@@ -646,9 +655,9 @@ October 3, 1997
 
 Added System Requirements section to the Perl/iX home page just so the
 prerequisites stand out more. Various other home page tweaks.
-       
+
 =back
-   
+
 October 2, 1997
 
 =over 4
@@ -656,9 +665,9 @@ October 2, 1997
 =item *
 
 Initial public release.
-       
+
 =back
-   
+
 September 1997
 
 =over 4
@@ -668,8 +677,8 @@ September 1997
 Porting begins.
 
 =back
-   
-=head1 Author
-   
+
+=head1 AUTHOR
+
 Mark Bixby, mark@bixby.org
 

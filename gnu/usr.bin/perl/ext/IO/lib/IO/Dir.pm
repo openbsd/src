@@ -6,7 +6,7 @@
 
 package IO::Dir;
 
-use 5.003_26;
+use 5.006;
 
 use strict;
 use Carp;
@@ -16,9 +16,11 @@ use IO::File;
 our(@ISA, $VERSION, @EXPORT_OK);
 use Tie::Hash;
 use File::stat;
+use File::Spec;
 
 @ISA = qw(Tie::Hash Exporter);
-$VERSION = "1.03";
+$VERSION = "1.03_00";
+$VERSION = eval $VERSION;
 @EXPORT_OK = qw(DIR_UNLINK);
 
 sub DIR_UNLINK () { 1 }
@@ -44,6 +46,9 @@ sub open {
     my ($dh, $dirname) = @_;
     return undef
 	unless opendir($dh, $dirname);
+    # a dir name should always have a ":" in it; assume dirname is
+    # in current directory
+    $dirname = ':' .  $dirname if ( ($^O eq 'MacOS') && ($dirname !~ /:/) );
     ${*$dh}{io_dir_path} = $dirname;
     1;
 }
@@ -103,18 +108,18 @@ sub NEXTKEY {
 
 sub EXISTS {
     my($dh,$key) = @_;
-    -e ${*$dh}{io_dir_path} . "/" . $key;
+    -e File::Spec->catfile(${*$dh}{io_dir_path}, $key);
 }
 
 sub FETCH {
     my($dh,$key) = @_;
-    &lstat(${*$dh}{io_dir_path} . "/" . $key);
+    &lstat(File::Spec->catfile(${*$dh}{io_dir_path}, $key));
 }
 
 sub STORE {
     my($dh,$key,$data) = @_;
     my($atime,$mtime) = ref($data) ? @$data : ($data,$data);
-    my $file = ${*$dh}{io_dir_path} . "/" . $key;
+    my $file = File::Spec->catfile(${*$dh}{io_dir_path}, $key);
     unless(-e $file) {
 	my $io = IO::File->new($file,O_CREAT | O_RDWR);
 	$io->close if $io;
@@ -125,7 +130,7 @@ sub STORE {
 sub DELETE {
     my($dh,$key) = @_;
     # Only unlink if unlink-ing is enabled
-    my $file = ${*$dh}{io_dir_path} . "/" . $key;
+    my $file = File::Spec->catfile(${*$dh}{io_dir_path}, $key);
 
     return 0
 	unless ${*$dh}{io_dir_unlink};
@@ -197,7 +202,7 @@ for details of these functions.
 
 =back
 
-C<IO::Dir> also provides a interface to reading directories via a tied
+C<IO::Dir> also provides an interface to reading directories via a tied
 HASH. The tied HASH extends the interface beyond just the directory
 reading routines by the use of C<lstat>, from the C<File::stat> package,
 C<unlink>, C<rmdir> and C<utime>.

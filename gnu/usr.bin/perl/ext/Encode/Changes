@@ -1,0 +1,1157 @@
+# Revision history for Perl extension Encode.
+#
+# $Id: Changes,v 1.75 2002/06/01 18:07:49 dankogai Exp dankogai $
+#
+
+$Revision: 1.75 $ $Date: 2002/06/01 18:07:49 $
+! lib/Encode/Alias.pm t/Alias.t lib/Encode/Supported.pod TW/TW.pm
+  glibc compliance cited by Autrijus.
+  http://www.li18nux.org/docs/html/CodesetAliasTable-V10.html
+! bin/enc2xs bin/piconv
+  Subject: Re: forewarning: usedevel and versiononly
+  Message-Id: <20020529081515.D570.H.M.BRAND@hccnet.nl>
+
+1.74 2002/05/28 18:33:15
++ ucm/null.ucm ucm/ctrl.ucm
+! Makefile.PL bin/enc2xs lib/Encode/Supported.pod
+  "null" and "ascii-ctrl" encodings added upon the request of Autrijus
+  Subject: Re: unicode -> &# notation
+  Message-ID: <20020518193704.GB40272@not.autrijus.org>
+
+1.73 2002/05/28 17:26:18
+! */Makefile.PL Makefile.PL bin/enc2xs Encode/Makefile_PL.e2x AUTHORS
+  Chris Nandor has fixed Encode so that it works w/ MacPerl --
+  at least w/ PPC (68k need static linking which does not work due to
+  64k limit).  pudge is added to AUTHORS (I'm surprised he was not
+  there in the list).  Encode/Makefile_PL.e2x was additionally fixed
+  by dankogai to reflect changes in other Makefile.PL
+  Message-Id: <p0510030ab9195ed230ff@[10.0.1.107]>
+! t/mime-header.t
+  Subject: Change 16746: -Mutf8 cleanup.
+  Message-Id: <200205222345.g4MNj7e10597@smtp3.ActiveState.com>
+
+1.72 2002/05/20 15:49:56
+! Makefile.PL
+  Subject: [PATCH] Encode should be in perl-core library path
+  Message-Id: <86r8k7h738.wl@mail.edge.co.jp>
+  Message-Id: <20020520161201.A11019@alpha.hut.fi>
+! lib/Encode/MIME/Header.pm
+  Subject: [PATCH] Encode::MIME::Header
+  Message-Id: <86sn4nh7a8.wl@mail.edge.co.jp>
+! Encode/Makefile_PL.e2x
+   Subject: [PATCH] Make Makefile_PL.e2x happy on MSWin32
+  Message-Id: <20020519201031.GA1603@not.autrijus.org>
+! CN/Makefile.PL Byte/Makefile.PL JP/Makefile.PL TW/Makefile.PL
+  Symbol/Makefile.PL KR/Makefile.PL EBCDIC/Makefile.PL Makefile.PL
+  AUTHORS
+  @16628 and @16652 from Vadim. Vadim was added to AUTHORS.
+  Subject: [PATCH] good day for WinCE port of perl.
+  Message-ID: <001301c1fc68$e808e560$a95cc3d9@vad>
+! Encode.xs
+! Unicode/Unicode.xs
+  Even more linting by Robin via @16532
+! Encode.xs
+  Even more typecast by Sarathy in @16460
+
+1.71 2002/05/07 16:22:42
+! Encode.xs
+  even more typecasts by Robin
+  Message-Id: <200205071513.QAA05846@tempest.npl.co.uk>
+! bin/enc2xs
+  A very strange bug that was causing a bugus ucm -> C table
+  generation that was revealed by a UCM file that Andreas was
+  working.  This is the king of wierdest bug I've encountered
+  in the course of Encode maintenance.
+  Message-Id: <6C04F0FA-61D4-11D6-B164-00039301D480@dan.co.jp>
+
+1.70 2002/05/06 10:26:48
+! encoding.pm
+  Made more 'module-safe' with conjunction w/ 'no encoding'.
+  Message-Id: <EAB48C16-60DA-11D6-9982-00039301D480@dan.co.jp>
+! lib/Encode/Encoding.pm
+  'require Encode' because ->Define uses Encode::define_encoding();
+  problem and solution addressed by Miyagawa-kun
+  Message-Id: <86znzdfvuh.wl@mail.edge.co.jp>
+! t/Unicode.t
+  Cuts the frill to make djgpp happier, as suggested by Laszlo
+  Message-Id: <20020506105819.H17012@libra.eth.ericsson.se>
+! bin/enc2xs
+  enc2xs no longer overwrites files w/ -M option, as suggested by Andreas
+  Message-Id: <m3bsbug48n.fsf@anima.de>
+
+1.69 2002/05/04 16:41:18 
+! lib/Encode/MIME/Header
+  Floating-point coerced for UNICOS (in integer arithmetics it folds 
+  line one character too early).  Verification by Mark is pending.
+  Message-Id: <C670F60D-5F4F-11D6-A5CA-00039301D480@dan.co.jp>
+! Unicode/Unicode.pm
+  more doc patch from Elizabeth
+  Message-Id: <4.2.0.58.20020503210946.02f4ed30@mickey.dijkmat.nl>
+! Encode/Makefile_PL.e2x
+  More platform-independent patch from Benjamin
+  Message-Id: <3CD31BE0.69F79B06@earthlink.net>
+! lib/Encode/Guess AUTHORS
+  split regex fix by Graham Barr.  Adds him to AUTHORS.
+  Message-Id: <20020504085419.E95940@valueclick.com>
+! Encode/Makefile_PL.e2x
+  enc2xs script discovery made smarter and more sensible, first cited
+  by Miyagawa-kun and further suggestions by Rafael and Andreas
+! Encode.pm lib/Encode/Guess.pm t/fallback.t t/guess.t t/mime-header.t
+  "The EBCDIC remapping of the low 256 bites again" #16372 by jhi
+
+1.68 2002/05/03 12:20:13
+! lib/Encode/Alias.pm lib/Encode/Supported.pod t/Alias.t AUTHORS
+  UCS-4 added to aliases of UTF-32 by Elizabeth Mattijsen.  Alias.t
+  and Supported.pod modified to reflect the change.  Elizabeth added
+  to Authors.  And H.M. is also added for forwarding her patch among
+  other contributions (I was rather surprised to find his name was not
+  there yet!) 
+   Message-Id: <20020503114901.D639.H.M.BRAND@hccnet.nl>
+
+1.67 2002/05/02 07:33:09
+! Encode.xs
+  Error message now consistent w/ perlqq (\N{U+} -> \x{})
+  done in perl@16308 but Philip linted me further.  Now the error
+  messages are macronized as ERR_ENCODE_NOMAP and ERR_DECODE_NOMAP
+! lib/Encode/Guess.pm
+  Sanity check for happier -w by Autrijus
+
+1.66 2002/05/01 05:41:06
+! Encode.xs t/fallback.t
+  WARN_ON_ERR no longer assumes RETURN_ON_ERR so you can issue a warning
+  while fallback is in effect.  This even came with a welcome side-effect
+  of cleaner code with less nests!  Thank you, NI-XS.  t/fallback.t is
+  also modified to test this.
+  And of course, the corresponding varialbles to UV[Xx]f are appropriately
+  cast.  This should've concluded NI-XS homework.
+! Encode.pm
+  encode(undef) does warn again!  Repented upon suggestion by NI-XS.
+  Document for unless vs. '' added
+  Message-Id: <20020430171547.3322.13@bactrian.elixent.com>
+
+1.65 2002/04/30 16:13:37
+! Encode.pm
+  encode(undef) no longer warns for C<Use of uninitialized value in 
+  subroutine entry>.  Suggested by Paul.
+  Message-Id: <AIEAJICLCBDNAAOLLOKLMEEEEJAA.Paul.Marquess@ntlworld.com>
+! lib/Encode/Supported.pod
+  Encode::MIME::Header and Encode::Guess mentioned
+  Updated for Encode::HanExtra 0.05 and Encode::JIS2K
+! lib/Encode/Guess.pm
+  POD fix by Miyagawa-kun
+  Message-Id: <86k7qqx8p7.wl@mail.edge.co.jp>
+
+1.64 2002/04/29 06:54:06
+! ucm/euc-jp.ucm
+  Now decodes euc-jisx0213 also.  CAVEAT: encode("euc-jp"...) and
+  encocde("euc-jisx0213") are still DIFFERENT.
+  Message-Id: <A5DFA5CA-5B3C-11D6-A54F-00039301D480@dan.co.jp>
+! Encode.xs
+  A few white spaces corrected by NI-XS via PerlIO integration to 
+  Mainline
+  Subject: Change 16247: Integrate perlio;
+! Encode.pm
+  Document fixes by Andreas
+  Message-Id: <m3k7qsf1we.fsf@anima.de>
+
+1.63 2002/04/27 18:59:50
+! lib/Encode/Encoding.pm
+! Encoding.pm Unicode/Unicode.pm lib/Encode/Guess.pm lib/Encode/CN/HZ.pm 
+! lib/Encode/JP/JIS7.pm lib/Encode/MIME/Header.pm lib/Encode/KR/2022_KR.pm 
+  Make use of the Encode::Encoding base class!
+  And other cleanups in Encode.xs upon NI-XS suggestions
+  Message-Id: <20020427160718.1290.15@bactrian.ni-s.u-net.com>
+
+1.62 2002/04/27 11:17:39
+! Encode.pm
+  encodings() now just check %ExtModule instead of eval{require}
+  all of them for ":all" to conserve more memory.
+! Encode.xs
+  more "%x" -> "%" UVxf stuff.
+! Encode.pm
+  s/=over2/=over 2/g # oops.
+
+1.61 2002/04/26 03:02:04
+! t/mime-header.t
+  Now does decent tests besides use_ok()
+! lib/Encode/Guess.pm t/guess.t
+  UI streamlined, document added
+! Unicode/Unicode.xs
+  various signed/unsigned mismatch nits (#16173)
+  http://public.activestate.com/cgi-bin/perlbrowse?patch=16173
+! Encode.pm
+  POD:  utf8-flag-related caveats added.  A few sections completely 
+  rewritten.
+! Encode.xs
+! AUTHORS
+  Thou shalt not assume %d works, either!
+  Robin Baker added to AUTHORS for this
+  Message-Id: <200204251132.MAA28237@tempest.npl.co.uk>
+! t/CJKT.t	   
+  "Change 16144 by gsar@onru on 2002/04/24 18:59:05"
+
+1.60 2002/04/24 20:06:52
+! Encode.xs
+  "Thou shalt not assume %x works." -- jhi
+  Message-Id: <20020424210618.E24347@alpha.hut.fi>
+! CN/Makefile.PL JP/Makefile.PL KR/Makefile.PL TW/Makefile.PL To make
+  low-memory build machines happy, now *.c is created for each *.ucm
+  (no table aggregation).  You can still override this by setting
+  $ENV{AGGREGATE_TABLES}.
+  Message-Id: <00B1B3E4-579F-11D6-A441-00039301D480@dan.co.jp>
++ lib/Encode/Guess.pm
++ lib/Encode/JP/JIS7.pm
+  Encoding-autodetect (mainly for Japanese encoding) added.  In a
+  course of development, JIS7.pm was improved.
++ lib/Encode/HTML/Header.pm
++ lib/Encode/Config.pm
+  MIME B/Q Header Encoding Added!
+! Encode.pm Encode.xs t/fallback.t
+  new fallbacks; XMLCREF and HTMLCREF upon Bart's request.
+  Message-Id: <20020424130709.GA14211@tanglefoot>
+
+1.59 $ 2002/04/22 23:54:22
+! Encode.pm Encode.xs
+  needs_lines() and perlio_ok() are added to Internal encodings such
+  as utf8 so XML::SAX is happy.  FB_* stub xsubs are now prototyped.
+
+1.58 2002/04/22 23:54:22
+! TW/TW.pm
+  s/MacChineseSimp/MacChineseTrad/ # ... oops.
+! bin/ucm2text
+! t/*.t
+- t/*.euc t/*.ref
++ t/*.enc t/*.utf
+  Now all CJKT encodings go thru round-trip test via t/CJKT.t.
+  t/(CN|TW).t by Autrijus are renamed at-(cn|tw).t
+  t/(JP|KR).t are aggregated to t/CJKT.t
+  test data are all remade via bin/ucm2text.
+  And ....  They are no longer skipped for -Uuseperlio !
+
+1.57 2002/04/22 20:27:30
+! t/JP.t t/KR.t t/perlio.t
+  unless (find PerlIO::Layer 'perlio') ... line is back again.
+  t/JP.t and t/KR.t were supposed to work but maybe '>:utf8' lines
+  need PerlIO.  Sigh....
+! Encode.xs Unicode/Unicode.pm lib/Encode/JP/JIS7.pm t/perlio.t
+  ->perlio_ok now does eval{ require PerlIO::encoding } there so
+  it correctly returns 1 when PerlIO::encoding is yet loaded.
+! Encode.xs
+  perl-current patch #16072 reflected
+
+1.56 2002/04/22 09:48:07 
+! Encode.pm encoding.pm t/perlio.t t/jperl.t
+  New PerlIO::encoding 0.04 compliance met
+
+1.55 2002/04/22 03:43:05   
+! Encode.pm Encode.xs Unicode/Unicode.pm
+  needs_lines() defined so Encode::Encoding is no longer needed
+  for perlio
+
+1.54 2002/04/22 02:50:01
+! Encode.pm! Encode.xs! Unicode/Unicode.pm t/perlio.t
+! lib/Encode/Encoding.pm lib/Encode/CN/HZ.pm
+  now perlio_ok is true by default if PerlIO::encoding->VERSION is
+  0.03 or larger.  POD in Encode::Encoding revised to reflect this.
+  Encode::XS and Encode::Unicode now has perlio_ok() method.
+! lib/Encode/Supported.pod
+  s/UP-UX/HP-UX/ by jhi
+! AUTHORS Byte/Byte.pm CN/CN.pm Encode.pm JP/JP.pm KR/KR.pm README
+! Symbol/Symbol.pm TW/TW.pm Unicode/Unicode.pm bin/enc2xs bin/piconv
+! bin/ucmlint encoding.pm lib/Encode/Alias.pm lib/Encode/CN/HZ.pm
+! lib/Encode/Config.pm lib/Encode/Encoder.pm lib/Encode/Encoding.pm
+! lib/Encode/KR/2022_KR.pm lib/Encode/PerlIO.pod
+! lib/Encode/Supported.pod
+  Huge document fixes by Philip.
+! AUTHORS
+! t/JP.t
+  s/compare\(/compare_text\(/o by Sarathy.  Adds him to AUTHORS
+  http://public.activestate.com/cgi-bin/perlbrowse?patch=16049
+! t/perlio.t
+  binmode() after "<:encoding" to make Win32 happy, by Mattia.
+  Mattia added to AUTHORS file
+  Message-Id: <3CC3150F.5798.22A05AE@localhost>
+
+1.52 2002/04/20 23:43:47
+! t/perlio.t
+  TODO: is now SKIP:, as NI-XS requested.  Also adds more
+  eraborate failure analysis added.
+! bin/enc2xs
+  A note on how to make sure of round-trip safety added to POD
+  section (so Autrijus is happier)
+! ucm/big5-hkscs.ucm ucm/big5-eten.ucm t/TW.pm
+  big5-(eten|hkscs) is round-trip safe again!
+  Message-Id: <A2C949CC-54AC-11D6-A5FB-00039301D480@dan.co.jp>
+! encoding.pm
+  Typo fixes by Andreas
+! Encode.pm Encode.xs Unicode/Unicode.xs Encode/Encoding.pm
+! lib/Encode/JP/JIS7.pm lib/Encode/KR/2022_KR.pm t/perlio.t
+  PerIO coodination patches from NI-XS.
+  Message-Id: <2769E572-54A1-11D6-B7E2-00039301D480@dan.co.jp>
+
+1.51 2002/04/20 09:58:23
+! t/TW.t
+  Updated test suite by Autrijis so "make test" is happy again
+  Message-Id: <20020420082104.GA25037@not.autrijus.org>
++ ucm/big5-eten.ucm
+! ucm/big5-hkscs.ucm lib/Encode/Alias.pm 
+- ucm/big5.ucm
+  TW/TW.pm TW/Makefile.PL
+  Updates by Autrijus.  'big5' is no longer a canonical but an
+  alias to 'big5-eten'. big5-hkscs is now in 2001 edition.
+  Message-Id: <20020419195346.GA19597@not.autrijus.org>
+! Encode.xs
+  Fix by NI-XS that fallback may cause SEGV w/ Perl/TK
+  Message-Id: <20020419184509.1924.1@bactrian.ni-s.u-net.com>
+! Encode.pm
+  PerlIO detection a little bit smarter; no longer uses eval qq{}
+  but eval {}.
+
+1.50 2002/04/19 06:13:02
+! ! Encode.pm Encode.xs Encode/encoding.h
++ t/fallback.pm
+  New Fallback API imlemented and documented.  See "perldoc Encode"
+  for details
+! lib/Encode/JP/JIS7.pm Encode.pm
++ lib/Encode/PerlIO.pod t/perlio.t
+  API compliance met.  However, it still does not work unless perlio
+  implements line buffer.  See BUGS section in perldoc Encode::PerlIO
+  As a sensible workaround, perlio_ok() added to Encode.
+! encoding.pm
+! lib/Encode/Supported.pod
+  Doc fixes from jhi
+  Message-Id: <20020418174647.J8466@alpha.hut.fi>
+! CN/CN.pm
+  Doc fixes from Autrijus
+  Message-Id: <20020418144131.GA10987@not.autrijus.org>
+! Encode.pm
+  perlqq mode documented
+! t/JP.t
++ t/jisx0201.euc t/jisx0201.ref
+! t/jisx0208.euc t/jisx0208.ref
+  t/JP.t tests more rigorously and with other encodings
+  t/jisx0201.* added to test JIS7 encodings.  jisx0208 is now PURELY
+  in jis0208 (used to contain jisx0201 part).
+! Encode/Makefile_PL.e2x
+  The resulting Makefile.PL that "enc2xs -M" creates now auto-discovers 
+  enc2xs and encode.h rather than hard-coded.  This allows the resulting
+  module fully CPANizable.
+! encoding.pm t/JP.t t/KR.t
+  PerlIO detection simplified (checks %INC instead of eval{})
+! Encode.xs Encode/encode.h
++ Unicode/Makefile.PL Unicode/Unicode.pm Unicode/Unicode.xs
+- lib/Encode/Unicode.pm
+  (en|de)code_xs relocated to where it belongs.  Source reindented
+  to my taste
+! bin/enc2xs
+  Additional (U8 *) cast added as suggested by jhi
+  Message-Id: <20020417165916.A28599@alpha.hut.fi>
+
+1.42 Date: 2002/04/17
+- lib/Encode/XS.pm
+  no-op module;  Thought of adding a pod there but enc2xs has
+  one so gone.
+! encoding.pm
+! t/JP.pm
+! t/KR.pm
+  correct mechanism to detect Perlio::encoding layar installed.
+! Encode.xs
+  PerlIO Layer detached.
+
+1.41 2002/04/16 23:35:00
+! encoding.pm
+  binmode(STDIN|STDOUT ...) done iff PerlIO is available
+! t/*.t
+  Cleaned up PerlIO skip conditions to prepare for the upcoming
+  Encode - PerlIO forking.
+! Encode.pm
+  exported functions are now prototyped.
+! lib/Encode/CN/HZ.pm
+! bin/enc2xs
+! Encode.xs
+  fallback implemented # was /* FIXME */
+  affected programs revised to fit (only HZ was using the try-catch
+  approach which needed to be fixed for API-compliance).
+! Encode/Config.pm
+! Encode/KR/2022_KR.pm
+! Encode/KR/KR.pm
+  can find =head1 NAME now, jhi
+  Message-Id: <20020416083059.V30639@alpha.hut.fi>
+! encoding.pm
+  s/\{h\}/{$h}/g ;)
+! Encode.xs
+  now complies with less warnings with the pickest compilers.
+  Suggested by Craig, fixed by Dan.
+  ! Encode/Makefile_PL.e2x
+! bin/enc2xs
+  A bug that fails to find *.e2x in certain conditions fixed
+
+1.40 2002/04/14 22:27:14
++ Encode/ConfigLocal_PM.e2x
+! lib/Encode/Config.pm
+! bin/enc2xs
+  "enc2xs -C" now generates/updates Encode::ConfigLocal. 
+  ConfigLocal_PM.e2x is a skelton thereof.
+! lib/Encode/Config.pm
+! CN/CN.pm
+  "use  Encode::CN::HZ;" was missing.
+! t/Unicode.t
+! t/unibench.t
+  More rigorous tests added to test XS, especially on memory allocation.
+! Encode.xs
+! lib/Encode/Unicode.pm
+  NI-S implemented an XS version -- merged
+  Message-Id: <20020414154857.2066.4@bactrian.ni-s.u-net.com>
+! encoding.pm
+! t/jperl.t
+  Source filter option added.  With this option on, you can write
+  perl 5.8-savvy scripts (such as UTF-8 identifiers) in legacy
+  encodings.  t/jperl.t enhanced to test this feature.
+! t/Unicode.t
+  ok() gotcha addressed by Benjamin fixed.  Though I didn't exactly
+  apply his suggestion, this degree of nitting is enough to add him
+  to AUTHORS list. 
+  Message-Id: <3CB93223.291E5E2E@earthlink.net>
+! JP/JP.pm
++ lib/Encode/JP/JIS7.pm
+- lib/Encode/JP/JIS.pm
+- lib/Encode/JP/2022_JP.pm
+- lib/Encode/JP/2022_JP1.pm
+  7bit-jis, iso-2022-jp and iso-2022-jp1 are all aggregated to
+  JIS7.pm for better maintainability and performance
+! encoding.pm
+  Added caveat for non-ascii identifiers.
+! encoding.pm
+  fixes by jhi, the original author of this pragramtic module.
+  Message-Id: <20020413231527.V1826@alpha.hut.fi>
+
+1.34 2002/04/12 20:23:05 (Unreleased)
+! Encode.pm
+! t/Unicode.t
+  EBCDIC fixes addressed by jhi.
+  Message-Id: <20020412161844.D9383@alpha.hut.fi>
+! lib/Encode/Encoder.pm
+  POD fix by Miyagawa-kun
+  Message-Id: <86bscqq4hu.wl@mail.edge.co.jp>
+
+1.33 2002/04/10 22:28:40
+! AUTHORS
+  Philip's mail address corrected.
+! AUTHORS
+! t/Encoder.t
+! lib/Encode/Encoder.pm
+  s/ = shift;/ = @_;/ # trivial but a common idiomatic typo :)
+  This adds Miyagawa-kun to AUTHORS. 
+  * encoding() no longer exported by default but on demand
+  * t/Encoder.t updated to test all these
+  Message-Id: <86hemjpdn4.wl@mail.edge.co.jp>
+! lib/Encode/Unicode.pm
+! lib/Encode/Supported.pm
+  Further doc fixes by Anton
+
+1.32 2002/04/09 20:06:15
++ bin/ucmlint
++ t/bogus.ucm
+- ucm/macDevanaga.ucm   Unicode Character Map
+- ucm/macGujarati.ucm   Unicode Character Map
+- ucm/macGurmukhi.ucm   Unicode Character Map
+  A utility to check integrity of .ucm files. t/bogus.ucm is a
+  ucm that is deliberately bogus. unused Indic mappings are removed
+  for the time being.
+! Encode.pm
+  resolve_alias() added as suggested by jhi.  Same as
+  find_encoding("alias")->name.  For convenience.  This one is
+  defined in Encode.pm instead of Alias.pm.
+  Message-Id: <20020409215846.H17022@alpha.hut.fi>
+! Encode.xs
+  Memory Allocate but detected during the devel of ucmlint -- fixed.
+  Message-Id: <C0DDCE16-4BE7-11D6-9204-00039301D480@dan.co.jp>
+! lib/Encode/Unicode.pm
+  valid_ucs2(0) is false but must be true.
+  3 patches from NI-S as follows.  This also has fixed the incident
+  Andy has reported. 
+! lib/Encode/Alias.pm
+  find_alias() recursion prevention
+! t/Aliases.t
+  Checks for the patch above
+! t/Encode/Unicode.pm
+  An extra "F" that causes valid_ucs2() return a bogus value fixed
+  Message-Id: <20020409133927.17803.1@bactrian.elixent.com>
+  Message-Id: <Pine.SOL.4.10.10204091338220.10390-100000@maxwell.phys.lafayette.edu>
+  2 Small Patches from jhi as follows:
+! Encode.pm
+  Encode->encodings() lists in case-insensitve order (as it was)
+! bin/piconv
+  -l option prints avaiable encodings to STDOUT instead of STDERR
+! lib/Encode/Aliases.pm
+  s/defintion/definition/
+  Message-Id: <200204082306.CAA21033@alpha.hut.fi>
+! AUTHORS
+! lib/Encode/Supported.pod
+! lib/Encode/Unicode.pm
+  POD revise by Philip Newton.  This adds Philip to AUTHORS list.
+  Thank you for the exact quote of Douglas Adams :)
+  Message-Id: <22s3bu4gpvhhsses64nj3afuu0lo927rv3@4ax.com>
+
+1.31 2002/04/08 18:08:07
+! lib/Encode/Encoder.pm
++ t/Encoder.t
+  Encode::Encoder, once just a placeholder of an idea, is now much more 
+  practical.  See t/Encode.t to find how practical it can be.
++ lib/Encode/Config.pm
+! Encode.pm
+  my false laziness at Encode.pm is fixed.  Now %ExtModules are set
+  in Encode::Config and they are all literally, not programatically
+  set.  My false laziness was resulting many encodings missing from
+  %ExtModules.
+! lib/Encode/Unicode.pm
+! t/Unicode.t
+  BOM for 32LE was bogus as noted by Anton.  t/Unicode.t is fixed
+  so that it does not rely Encode::Unicode for BOM values
+  Message-Id: <FFEC33E9-4AFB-11D6-B415-00039301D480@dan.co.jp>
+
+1.30 2002/04/08 02:34:51
++ lib/Encode/Encoder.pm
+  Object Oriented Encoder.  I reckon something like this is in need.
+! Encode.pm
+! t/Unicode.pm
+! lib/Encode/Supported.pod
+  * autoloading bug that prevented upper-case canonicals such as UTF-16
+    is fixed.  Now even UTF/UCS are autoloaded!
+  * encodings() is now more intuitive.
+  * t/Unicode.t fixed to explicitly use Unicode.pm -- BOM values are
+    stored therein.
+  * Obligatory fixes to the POD.
+! lib/Encode/Supported.pod
+  Patch from Anton applied.
+  Message-Id: <66641479.20020408033300@motor.ru>
+! Encode.pm
+! lib/Encode/Unicode.pm
+  Cosmetic changes: "bless $obj, $class" => "bless $obj => class"
+
+1.28 2002/04/07 18:58:42 
+! MANIFEST
++ t/Unicode.t
++ t/grow.t
+  Just a MANIFEST for those missing files.
+
+1.26 Date: 2002/04/07 15:22:04
+! JP/Makefile.PL
+! t/Aliases.PL
+  Schwarn's patches against Makefile.PL has zapped jis*.ucm.  Restored.
+  And t/Aliases.t fixed to make sure they all exist.
+
+1.25 2002/04/07 15:01:25 (Unreleased)
+! Encode.pm
+! lib/Encode/Unicode.pm
+  More POD fixes....
+! Encode.pm
+- lib/Encode/UTF_EBCDIC.pm
+- lib/Encode/Internal.pm
+- lib/Encode/utf8.pm
+  Integrated into Encode.pm as closures.  That way "one package, one file" 
+  rule is preserved yet less files to require.
+! encoding.pm
+  commented out binmode(STDERR ...
+! Makefile.PL
+! Byte/Makefile.PL
+! CN/Makefile.PL
+! EBCDIC/Makefile.PL
+! JP/Makefile.PL
+! KR/Makefile.PL
+! Symbol/Makefile.PL
+! TW/Makefile.PL
+! Encode/Makefile_PL.e2x
+  Schwarn's MM-compliance patch merged
+  Message-Id: <20020406082609.GA28758@blackrider>
+! Encode.pm
+! lib/Encode/Unicode.pm
++ lib/Encode/UTF_EBCDIC.pm
++ t/Unicode.t
+- lib/Encode/10646_1.pm
+- lib/Encode/ucs2_le.pm
+  (UCS-2|UTF-(16|32))(LE|BE)? implementation and cleanups.  Instead of
+  per-module based (en|de)code,  I saved a number of .pm by
+  reorganizing it as per-object base (Well, this is what Encode::XS
+  does under the hood).  See Encode::Unicode for details.
+  The original Unicode.pm is now correctly renamed to UTF_EBCDIC.pm.
+  This module is used only on EBCDIC environments.
+
+1.21 2002/04/05 14:46:34 (Not Released)
+! JP/JP.pm
+! Encode.pm
++ ucm/jis0201.ucm
++ ucm/jis0208.ucm
++ ucm/jis0212.ucm
+  Are back to make Perl/Tk happy  Smile, NI-S.
+! t/Alias.pm
+! lib/Encode/Alias.pm
+! lib/Encode/Supported.pm
+! lib/Encode/10646_1.pm
+! lib/Encode/ucs2_le.pm
+  UCS-16BE is now canonical for UCS-2/ISO-10646-1.
+  Leftover implicit aliases in ucs2_le.pm removed.  Tests and documents 
+  updated to reflect changes.
+  essage-Id: <20020405114024.1290.17@bactrian.ni-s.u-net.com>
+! lib/Encode/Alias.pm
+! lib/Encode/Supported.pm
+  Anton's revision commited.  Added Dan's own fixes as well.
+  Message-Id: <159103166906.20020405161134@motor.ru>
+! lib/Encode/Alias.pm
+    134c134
+  <                 qr/^UCS2-le$/i    => '"UCS-2"', );
+  ---
+  >                 qr/^UCS2-LE$/i    => '"UTF-16LE"');
+  Sigh.  Thank you, Anton.
+  Message-Id: <14567692196.20020405062020@motor.ru>
+  Message-Id: <69FEC0B4-483E-11D6-A045-00039301D480@dan.co.jp>
+
+1.20  2002/04/04 19:50:52
++ bin/unidump
+  the last minute addtion.  Just give it a try.  Docs remains to be done.  
+  Not installed by default.
+! lib/Encode/Supported.pod
+  Enhanced Greatly.
+! t/Alias.t
+! lib/Encode/Alias.pm
+! lib/Encode/utf8.pm
+! lib/Encode/10464_1.pm
+! lib/Encode/ucs2_le.pm
+  Canonical name for 'UCS-2le" is now "UTF-16LE".  UCS-2 left
+  unchanged but UTF-16BE is added as an alias.  Implicit aliases
+  move to Encode::Alias so init_alias() works more as expected.
+  Also, 'utf8' is now canonical with 'UTF-8' being an alias.  
+  Though pedantically wrong, This should make perl mongers happier.
+  t/Alias.t is enhanced to test all these.
+  Message-Id: <9C39BD58-47AF-11D6-9D82-00039301D480@dan.co.jp>
+! Byte/Makefile.PL
+  Now all .ucm are stacked in byte_t; They all share ascii part so 50%
+  of the codepoints are common.  CJKT left as is because the saving is
+  not significant.
+! Byte/Makefile.PL
+! CN/Makefile.PL
+! EBCDIC/Makefile.PL
+! Encode.xs
+! Encode/Makefile_PL.e2x
+! JP/Makefile.PL
+! KR/Makefile.PL
+! Makefile.PL
+! Symbol/Makefile.PL
+! TW/Makefile.PL
+! bin/enc2xs
+! AUTHORS
+  All occurance of _def.h replaced with .exh so djgpp works happily
+  ever after!  To credit this amazing discovery, Laszlo is now in
+  AUTHORS list
+  Message-Id: <20020403181424.GA8778@freemail.hu>
+  Message-Id: <B5BF0C6F-4732-11D6-B13D-00039301D480@dan.co.jp>
+! Makefile.PL
+! */Makefile.PL
+! Encode/Makefile_PL.skel
+  bin/enc2xs
+  No more @INC fiddling!  Uses $ENV{PERL_CORE} instead
+  Message-Id: <20020401222744.GX2000@blackrider>, et al.
+! t/encoding.t
+  Two more tests by added jhi
+  Message-Id: <200204020000.DAA25121@alpha.hut.fi>
++ t/grow.t
+! Encode.xs
+  The showstopper fixed -- Memory reallocation bug was causing
+  Encode::XS to fall into infinite  loop on certain conditions.
+  t/grow.t tests that.
+  Message-Id: <9572CAC4-463C-11D6-ABA5-00039301D480@dan.co.jp>, et al
++ bin/txt2ucm
+! */Makefile.PL
+! */*.ucm
+! */XX.pm
+! lib/Encode/Supported.pod
+  Vendor encodings rebuilt out of original map files at unicode.org.
+  Indic languages such as MacDevanagali remain unspported do to the
+  shortcoming of encengine capabilities (they need algorithmical
+  conversion and I have no knowledge on that!).  Pods fixed for added
+  encodings.
+  Oh, macJapan.ucm renamed to macJapanese.ucm.
+  macROMnn is macRomanian and macRUMnn is macRumanian.
+  txt2ucm is a crude script that is used to convert them.
+! bin/enc2xs
+  Unicode Compound Characters (used extensively on Mac) supported
+! bin/piconv
+  Typo fixes and improvements by jhi
+  Message-Id: <200204010201.FAA03564@alpha.hut.fi>, et al.
+
+1.11  $Date: 2002/06/01 18:07:49 $
++ t/encoding.t
++ t/jperl.t
+! MANIFEST
+  Missing files from the MANIFEST fixed.
+  Message-Id: <20020401010156.H10509@alpha.hut.fi>
+  Version incremented just to make CPAN happy.
+
+1.10  2002/03/31 21:32:42
+! Makefile.PL
+! README
+  INSTALL_UCM option added to Makefile.PL so you can install *.ucm
+  if you want.  This should make Autrijus happy.  Also, piconv
+  is added to default install.
++ Encode/*.e2x
+! bin/enc2xs
+  Here-documented files that enc2xs generates are now exported
+  to *.e2x.  Much cleaner and easier to debug.
+! encoding.pm
+  encoding enhances so you can make it act more like such 
+  (now prehistoric ) "localized" variations of perl like Jperl.
++ t/jperl.t
+  Further test for encoding.pm.  Written in euc-jp
++ encoding.pm
++ t/encoding.t
+  Taken over form jhi.
+  Message-Id: <20020330174618.B10154@alpha.hut.fi>
+- Encode/*.ucm
++ ucm/*.ucm
+! Makefile.PL
+! */Makefile.PL
+  *.ucm relocated to ucm/ so MakeMaker will not install'em by default.
+- ucm2table
++ bin/ucm2table
+  ***
+! AUTHORS
+! Byte/Byte.pm
+! Encode.pm
+! Encode/macIceland.ucm
+! lib/Encode/Alias.pm
+! lib/Encode/Supported.pod
+  MacIceland fixes and Pod Typo fixes.  This adds Andreas to AUTHORS.
+  Message-Id: <m3lmcavhjt.fsf@anima.de>
+
+1.01  2002/03/29 20:59:39
+! Makefile.PL
+! README
+  s/USE_SCRIPTS/MORE_SCRIPTS/
+! Makefile.PL
+  installs enc2xs by default for external Encode:: modules in CPAN, 
+  such as Encode::HanExtra
+! t/*.t
+  More sensible perl core detection via $ENV{PERL_CORE}
+  suggested by Spider
+  Message-Id: <200203291007.FAA07329@Orb.Nashua.NH.US>
+! bin/enc2xs
+  Perl core ditection via $^X =~ m/\bminiperl$/o
+  Message-Id: <A5C7B0CA-42F1-11D6-B5AD-00039301D480@dan.co.jp>
+
+1.00  Wed Mar 29 2002
+! *
+  The version of all files is updated to 1.00 via "ci -f -l1.00",
+  commemorating version 1.00.  All files, including *.ucm are now
+  under version control.
+- encode.h
++ Encode/encode.h
+  encode.h moved to Encode/ so it will be installed for the later
+  use by enc2xs
+! enc2xs
+  h2xs-like feature added via "h2xs -M Name *.(enc|ucm)"
+! Makefile.PL
+! */Makefile.PL
+- compile
++ bin/enc2xs
+  compile renamed to enc2xs.  
+  Affected Makefle.PL updated
+- lib/CN/2022_CN.pm
+  "Punt it. HanExtra can take care of that later." -- Autrijus
+  Message-Id: <20020328154338.GA7351@not.autrijus.org>
+! Encode/johab.ucm
+! Encode/euc-kr.ucm
+! Encode/ksc5601.ucm
+! lib/Encode/CJKConstants.pm
+! lib/Encode/KR/2022_KR.pm
+  Table patches for Euro Signs, 2022-KR fixups by Jungshik
+  Message-Id: <Pine.LNX.4.44.0203280616190.2259-200000@www.ykga.org>
+! README
+! Makefile.PL
++ bin/piconv
+  bin/ added for example scripts.  They are not installed by default.
+  to install them, "perl Makefile.PL USE_SCRIPTS".
+  piconv is iconv reinvented in perl.  in addition to all features
+  of iconv, it also adds perlish features.  See L<piconv/1> for more
+  details.
+! lib/Encode/Alias.pm
+  qr/^ replaced with qr/\b so it directly matches locale names
+  such as en_US.US-ASCII
+! AUTHORS
+! t/Aliases.t
+  Patch by MJD to fix the following problem applied.
+  Subject: [PATCH 5.7.3 Encode]
+    Aliases.t not properly skipped when Encode extension not built
+  Message-Id: <20020328091850.18677.qmail@plover.com>
+! lib/Encode/KR/2022_KR.pm
+! lib/Encode/CJKConstants.pm
+  Another patch from Jungshik to make iso-2022-kr actually work
+  Message-Id: <Pine.LNX.4.44.0203271745210.30462-200000@www.ykga.org>
+! Encode/Encode/euc-kr.ucm
++ Encode/Encode/johab.ucm
+! Encode/Encode/ksc5601.ucm
+! Encode/KR/KR.pm
+! Encode/KR/Makefile.PL
+! Encode/lib/Encode/Alias.pm
+! t/Alias.t
+  Johab support and complete revision of Korean Encoding by Jungshik
+  Message-Id: <Pine.LNX.4.44.0203271105060.30462-200000@www.ykga.org>
++ Encode.pm
+  Revised to make up with now-dropped Encode::Details.
+- lib/Encode/Details.pod
+  Dropped.  Besides being obsolete, the topics are now covered in
+  respective pods now. 
+! AUTHORS
+! t/Alias.t
+  KR/KR.pm
+  lib/Encode/Alias.pm
+  Korean aliases fixed thanks to Jungshik Shin
+   /ks[-_ ]?c[-_ ]?5601-1987$/i => cp936
+  Message-Id: <Pine.LNX.4.44.0203262102250.1237-100000@www.ykga.org>
+! *.pm
+  =head1 NAME added to all modules to make buildtoc happy
+  Message-Id: <20020327041151.A10618@alpha.hut.fi>
+- lib/Encode/CJKguide.pod
+  Too controversial and dropped from the dist.  Will be available
+  separately on the web.
+! Encode/*.ucm
+  RCS tags added so table debugging gets easier (should that be
+  needed!  I hope they all stay 1.00!)
++ lib/Encode/CJKguide.pod
+  A detailed guide to mainly, but not limited to, CJK multibyte
+  encodings.
+- Encode/roman8.ucm
++ Encode/hp-roman8.ucm
+! Byte/Makefile.PL
+! Encode/Supported.pod
+  All occurance of "roman8" replaced with "hp-roman8" to avoid 
+  confusion
+! Encode/Supported.pod
+! Encode/mac*.ucm
+! t/Alias.t
+  Mac Encodings now comply the Inside Macintosh
+! t/Alias.t
+  Test for '-raw' conventions added.
+! Encode/Alias.pm
+  aliased  gb2312 -> euc-cn, ksc5601 -> euc-kr
+! Encode/gb12345.ucm
+! Encode/gb2312.ucm
+! Encode/ksc5601.ucm
+  "-raw" appended to canonical names.
+  File mames stay unchanged thanks to UCM format.
+! lib/Encode/CN/HZ.pm
+  Patch from Autrijus to fix gb2312 -> gb2312-raw + code linting
+  Message-Id: <20020326035210.GA2091@not.autrijus.org>
+
+0.99  Tue Mar 26 2002
+- lib/Encode/JP/Const.pm
++ lib/Encode/CJKConstants.pm
++ lib/Encode/CN/2022_CN.pm
++ lib/Encode/KR/2022_KR.pm
++ t/KR.t
++ t/gb2312.euc
++ t/gb2312.ref
++ t/ksc5601.euc
++ t/ksc5601.ref
++ t/table.euc
++ t/table.ref
++ ucm2table
+  * Support for ISO-2022-KR and ISO-2022-CN added.
+  * t/KR.t added!
+  * more t/*.{euc,ref} added, which was autogenerated from ucm2table
+  * ucm2table autogenerates character table out of UCM files.
+- engine.c
++ encengine.c
+- lib/Encode/Supports.pod
++ lib/Encode/Supported.pod
+  Names reverted due to popular demand.
+  8.3 rule applies only when there is a conflict.
+  Message-Id: <20020325095924.GD44120@not.autrijus.org>
+! */Makefile.PL
+- Encode/*.enc
++ Encode/*.ucm
+- lib/Tcl*
+- lib/Encode/Format/Enc.pod
+- t/Tcl.t
+  * Character tables is now 100% ucm. 
+  * All files under Encode/ is now 8.3-compliant
+  * some of missing encodings added (i.e. gsm0338 and nextstep)
+  * Vendor mappings aggregated with appropriate national std in
+    Makefile.PL, resulting smaller *.so especially for CJK.
+    Following is result on Dan's FreeBSD box.
+                                                  Now        Then
+  ---------------------------------------------------------------
+  blib/arch/auto/Encode/Byte/Byte.so          157,279     171,042
+  blib/arch/auto/Encode/CN/CN.so            1,634,476   1,626,685
+  blib/arch/auto/Encode/EBCDIC/EBCDIC.so       18,476      18,476
+  blib/arch/auto/Encode/Encode.so              27,791      27,791
+  blib/arch/auto/Encode/JP/JP.so            1,408,056   1,832,811
+  blib/arch/auto/Encode/KR/KR.so            1,156,518   1,329,587
+  blib/arch/auto/Encode/Symbol/Symbol.so       23,940      20,990
+  blib/arch/auto/Encode/TW/TW.so*             948,761   1,316,437
+  ---------------------------------------------------------------
+  Total                                     5,375,297   6,343,819
+  Saving                                      968,522
+  * As a result of ucm-transition, Encode::Tcl dropped because
+  Encode::Tcl demands *.enc.
+  Encode::Tcl will be supplied in a separate tarball with *.enc.
+  Message-Id: <C024E294-3FC3-11D6-8347-00039301D480@dan.co.jp>
+!compile
+-encengine.c
++encode.c
+!Encode.pm
+-lib/Encode/Supported.pod
++lib/Encode/Supports.pod
+-lib/Encode/iso10646_1.pm
++lib/Encode/10646_1.pm
+-lib/Encode/EncFormat.pod
++lib/Encode/Format/Enc.pod
+  Files renamed 8.3 filename compliance.  Affected modules/scripts revised.
+- lib/Encode/JP/Constants.pm
++ lib/Encode/JP/Consts.pm
+! lib/Encode/JP/JIS.pm
+! lib/Encode/JP/H2Z.pm
+  Version nit problem and 8.3 rule fix.
+  > Package namespace         installed    latest  in CPAN file
+  > Encode::JP::Constants          0.92      1.02  J/JH/JHI/perl-5.7.3.tar.gz
+  was noted by jhi then Dan discovers "Constants.pm" does not comply 8.3
+  rule.  Contants.pm renamed to Consts.pm and affected modules are fixed
+  accordingly.  In addition, legacy "use vars qw()..." are replaced with
+  "our";
+  Message-Id: <20020325011248.D1561@alpha.hut.fi>
+  Message-Id: <41023D51-3FB5-11D6-8347-00039301D480@dan.co.jp>
+! JP/JP.pm
+- lib/Encode/JP/ISO_2022_JP.pm
+- lib/Encode/JP/ISO_2022_JP_1.pm
++ lib/Encode/JP/2022_JP.pm
++ lib/Encode/JP/2022_JP1.pm
+                01234567.012
+  8.3 naming conflict for vanilla fat addressed by jhi
+  Message-Id: <20020324201931.V22596@alpha.hut.fi>
+
+! Encode.xs
+  Typecast fix addressed by jhi
+  Message-Id: <20020324185540.T22596@alpha.hut.fi>
+
+0.98  Mon Mar 25 2002
+! lib/Encode/Supported.pod
+  Further pod fixes
++ lib/Encode/JP/ISO_2022_JP_1.pm
+! lib/Encode/JP/ISO_2022_JP.pm
+! lib/Encode/JP/JIS.pm
+! JP/JP.pm
+  Now Encode::JP is more strict on the difference between ISO-2022-JP
+  and ISO-2022-JP-1.  See JP/JP.pm for details.  I hope this move
+  makes Anton happier :)  FYI the previous version implements 
+  ISO-2022-JP as ISO-2022-JP-1 since it had X0212 support.
+! lib/Encode/Supported.pod
+  Further pod fixes
+! Encode.xs
+  Avoid core-dump in Encode with PERLIO=mmap by NI-S
+  Message-Id: <20020324104139.1326.7@bactrian.ni-s.u-net.com>
+! CN/CN.pm
+! JP/JP.pm
+! KR/KR.pm
+! TW/TW.pm
+! lib/Encode/Suppoted.pod
+  pod fixes to replace F<http://...> to L<http://...>, 
+  as suggested by Autrijius in:
+  Message-Id: <20020324083943.GA14901@not.autrijus.org>
+! lib/Encode/Suppoted.pod
+  fixes and enhancements by Anton
+  Message-Id: <10632060120.20020324103753@motor.ru>
+! lib/Encode/Alias.pm
+  > define_alias( qr/^GB[- ]?(\d+)$/i => '"gb$1"' );
+  added.  Suggested by Anton then deobfuscated by Autrijius
+  Message-Id: <20020324064455.GA3667@not.autrijus.org>
+! compile
+  Further fix by Nicholas Clark
+  Message-Id: <20020323145840.GD304@Bagpuss.unfortu.net>
+- lib/EncodeFormat.pod
++ lib/Encode/EncFormat.pod
+! MANIFEST
+  File renamed as suggested by Autrijius
+! Encode.pm
+! lib/Encode/Details.pod
+! lib/Encode/Supported.pod    Sun Mar 24 13:29:35 2002
+! Encode.pm   Sun Mar 24 13:43:47 2002
+  pod fixes by Autrijius.
+  Message-Id: <20020324062804.GA3595@not.autrijus.org>
+  Message-Id: <20020324075627.GB11986@not.autrijus.org>
+! t/Alias.t
+! lib/Encode/Alias.pm
+! Encode.pm
+  now more EBCDIC conscious;
+  %ExtModules on EBCDIC system excludes CJK so that you don't
+  have to worry about the matched alias resulting cloaking.
+  t/Alias.t also revised to reflect changes.  Verified by jhi
+  Message-Id: <20020324022929.D22596@alpha.hut.fi>
+
+0.97  Sun Mar 24 2002
+! CN/CN.pm
+! KR/KR.pm
+! TW/TW.pm
+  EBCDIC detection mechanism installed as in JP/JP.pm
+  Message-Id: <20020323211847.G19148@alpha.hut.fi>
+! Byte/Makefile.PL
+! CN/Makefile.PL
+! EBCDIC/Makefile.PL
+! JP/Makefile.PL
+! KR/Makefile.PL
+! Symbol/Makefile.PL
+! TW/Makefile.PL
+  Now all table files used by compile are postfixed '_t' to avoid
+  namespace collisions in case insensitive file systems once for all!
+  inspired by:
+  Message-ID: <58290227735.20020323195659@familiehaase.de>
+! t/Aliases.t
+  Since the Encode::JP is unsupported under EBCDIC we
+  cannot run this test (aliases as such should work fine) -- jhi
+  Message-Id: <20020323202119.D19148@alpha.hut.fi>
+! Byte/Makefile.PL
+  duplicate occurance of ascii.ucm and 8859-1.ucm
+  causes MacOS X dlyd to cloak
+! t/CN.t
+! t/Encode.t
+! t/JP.t
+! t/TW.t
+! t/Tcl.t
+  <     chdir 't' if -d 't';
+  ---
+  >     if (! -d 'blib' and -d 't'){ chdir 't' };
+  When you are "make test"-ing on Encode/ directory, you  must not 
+  change $ENV{PWD}.  t/JP.t has been fixed before but others somehow 
+  remain unchanced.  Also the situation detection was made simpler 
+  in t/JP.t, which was originally;
+  > chdir 't' if -d 't' and $ENV{PWD} !~ m,/Encode[^/]*$,o;
+! Encode.pm
+  "Use of uninitialized value in string eq at Encode.pm line 96."
+! Symbol/Makefile.PL
+! EBCDIC/Makefile.PL
+! AUTHOR
+  -- Problem on case insensitive file systems
+  "coexist of ebcdic.c <> EBCDIC.c on Cygwin not possible"
+  Message-ID: <88254111953.20020323095503@familiehaase.de>
+! compile
+! AUTHOR
+  "So I think it's a bug in gcc, not perl. But it still needs to be 
+   worked around."
+  Message-Id: <20020323145840.GD304@Bagpuss.unfortu.net>
+  Message-Id: <20020323170509.C96475@plum.flirble.org>
+
+0.96  Sat Mar 23 2002
+!     TW/TW.pm
+!     lib/Encode/Encoding.pm
+!     lib/Encode/Alias.pm
+!     lib/Encode/Supported.pod
+!     KR/KR.pm
+  Pod Fixes by Michael G Schwern <schwern@pobox.com> via jhi
+  Message-ID: <20020322073908.GB10539@blackrider>
+! Makefile.PL
+! Encode.pm
+  "...I think we should include ISO 8859-1 as well." -- NI-S
+  Message-Id: <20020322120230.1332.8@bactrian.elixent.com>
+! JP/JP.pm
+! CN/CN.pm
+! KR/KR.pm
+! TW/TW.pm
+! lib/Encode/Alias.pm
+  alias definitions  relocated to Encode::Alias so module autoloading
+  works for aliases also.
+! Encode.pm
+  encodings() now accepts args to check ExtModules.
++ Byte/Byte.pm
++ Byte/Makefile.PL
++ EBCDIC/EBCDIC.pm
++ EBCDIC/Makefile.PL
++ Symbol/Makefile.PL
++ Symbol/Symbol.pm
+! Encode.pm
+! Encode.xs
+  Latin and single byte encodings are reorganized so they are
+  demand-loaded like Encode::XX.  Now only ascii is compiled into
+  Encode itself. 
+! lib/Encode/Alias.pm
+  for my $k (keys %hash){ delete $hash{$k}; }
+   is depreciated; fixed.      
+
+0.95  Fri Mar 22 2002
+  In this update, pod rewrites and alias fixes are the main issues
++ lib/Encode/Supported.pod
+  Describes supported encodings
+! Makefile.PL
+  streamlined compiled-in encodings.
+! lib/Encode/Description.pod -> lib/Encode/Details.pod
+  Renamed.
++ Encode/ibm-125?.ucm
+  Added from icu distibution with any occurance of
+   "IBM-125?" to "cp125?".  Filenames remain unchanged to pay
+   some respect to icu staff, however.
++ lib/Encode/Alias.pm
+! Encode.pm
+  Alias difinitions in Encode.pm relocated.
+! AUTHORS
+! Encode.xs
+  packWARN patch from Paul Marquess via jhi
+  Message-Id: <20020321010101.O28978@alpha.hut.fi>
+  Paul added to AUTHORS as a result.
+! t/CJKalias.t -> t/Aliases.t
+  Renamed.  Checks even more aliases and alias overloading
+! Encode.pm
+! CN/CN.pm
+  duplicate alias for ujis => euc-jp removed (Encode::JP has one)
+  gbk => cp936 relocated to CN.pm
+! t/CJKalias.t
+  Test::More with plans (by jhi)
+
+0.94  Thu Mar 21 2002
++ lib/Encode/Description.pod
+! lib/Encode/Encoding.pm
+  Now the pod in Encode.pm is abridged as programming references.
+  lib/Encode/Description.pod contains the original, detailed description
+  and Encode::Encoding explains how to write your own module to
+  add new encodings.  So far, lib/Encode/Description.pod contains
+  the whole pod once in Encode.pm.  This is intentional.
+! Encode.pm
+  Pod revisions by Anton Tagunov
+  Message-Id: <517178431.20020320174824@motor.ru>
+! lib/Encode/Tcl.pm
+  all occrance of Encode::Tcl::Extended removed including pod
+! t/CJKalias.t
+  test now checks $encoding->name only; $encoding->{name} are
+  no longer check to find the canonical name.
+! lib/Encode/JP/JIS.pm
+! lib/Encode/JP/ISO_2022_JP.pm
+  ->name() added to be more compliant with API  
+! CN/CN.pm
+! JP/JP.pm
+! KR/KR.pm
+! TW/TW.pm
+! t/CJKalias.t
+  Patch by Autrijus to add aliases to TW and fixes to POD
+  Message-Id: <20020320090619.GA24774@not.autrijus.org>
+! AUTHORS
+  SADAHIRO Tomoyuki added as should.  My apologies.
+
+0.93  Wed Mar 20 2002
+* First release to be uploaded to CPAN.  For prehistoric changes,
+  please see Changes file of perl distibution as well as 
+  perl-unicode@perl.org archive, available at:
+  http://archive.develooper.com/perl-unicode@perl.org/
+
+  Changes Since 0.92 includes;
++ Changes
++ AUTHORS
+! Encode.pm
+! README
+  + Mention to perl-unicode@perl.org added
+! JP/JP.pm
+  + Encoding aliases added so you can feed locale names
+    and MIME Charset="" directly.
+  - Mention to JISX0212 removed because it's fixed
+! CN/CN.pm
+! KR/KR.pm
+  + Encoding aliases added.  Note TW is left untouched because
+    euc-tw is not implemented in TW but in Encode::HanExtra.
+    Autrijus, you may fix Encode::HanExtra.
++ t/CJKalias.t
+  + to test encode aliases added

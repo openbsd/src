@@ -4,156 +4,17 @@
 
 #include "bsd_glob.h"
 
-/* XXX: need some thread awareness */
-static int GLOB_ERROR = 0;
+#define MY_CXT_KEY "File::Glob::_guts" XS_VERSION
 
-static double
-constant(char *name, int arg)
-{
-    errno = 0;
-    if (strlen(name) <= 5)
-        goto not_there;
-    switch (*(name+5)) {
-    case 'A':
-	if (strEQ(name, "GLOB_ABEND"))
-#ifdef GLOB_ABEND
-	    return GLOB_ABEND;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "GLOB_ALPHASORT"))
-#ifdef GLOB_ALPHASORT
-	    return GLOB_ALPHASORT;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "GLOB_ALTDIRFUNC"))
-#ifdef GLOB_ALTDIRFUNC
-	    return GLOB_ALTDIRFUNC;
-#else
-	    goto not_there;
-#endif
-	break;
-    case 'B':
-	if (strEQ(name, "GLOB_BRACE"))
-#ifdef GLOB_BRACE
-	    return GLOB_BRACE;
-#else
-	    goto not_there;
-#endif
-	break;
-    case 'C':
-	break;
-    case 'D':
-	break;
-    case 'E':
-	if (strEQ(name, "GLOB_ERR"))
-#ifdef GLOB_ERR
-	    return GLOB_ERR;
-#else
-	    goto not_there;
-#endif
-        if (strEQ(name, "GLOB_ERROR"))
-            return GLOB_ERROR;
-        break;
-    case 'F':
-	break;
-    case 'G':
-        break;
-    case 'H':
-	break;
-    case 'I':
-	break;
-    case 'J':
-	break;
-    case 'K':
-	break;
-    case 'L':
-	break;
-    case 'M':
-	if (strEQ(name, "GLOB_MARK"))
-#ifdef GLOB_MARK
-	    return GLOB_MARK;
-#else
-	    goto not_there;
-#endif
-	break;
-    case 'N':
-	if (strEQ(name, "GLOB_NOCASE"))
-#ifdef GLOB_NOCASE
-	    return GLOB_NOCASE;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "GLOB_NOCHECK"))
-#ifdef GLOB_NOCHECK
-	    return GLOB_NOCHECK;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "GLOB_NOMAGIC"))
-#ifdef GLOB_NOMAGIC
-	    return GLOB_NOMAGIC;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "GLOB_NOSORT"))
-#ifdef GLOB_NOSORT
-	    return GLOB_NOSORT;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "GLOB_NOSPACE"))
-#ifdef GLOB_NOSPACE
-	    return GLOB_NOSPACE;
-#else
-	    goto not_there;
-#endif
-	break;
-    case 'O':
-	break;
-    case 'P':
-	break;
-    case 'Q':
-	if (strEQ(name, "GLOB_QUOTE"))
-#ifdef GLOB_QUOTE
-	    return GLOB_QUOTE;
-#else
-	    goto not_there;
-#endif
-	break;
-    case 'R':
-	break;
-    case 'S':
-	break;
-    case 'T':
-	if (strEQ(name, "GLOB_TILDE"))
-#ifdef GLOB_TILDE
-	    return GLOB_TILDE;
-#else
-	    goto not_there;
-#endif
-	break;
-    case 'U':
-	break;
-    case 'V':
-	break;
-    case 'W':
-	break;
-    case 'X':
-	break;
-    case 'Y':
-	break;
-    case 'Z':
-	break;
-    }
-    errno = EINVAL;
-    return 0;
+typedef struct {
+    int		x_GLOB_ERROR;
+} my_cxt_t;
 
-not_there:
-    errno = ENOENT;
-    return 0;
-}
+START_MY_CXT
+
+#define GLOB_ERROR	(MY_CXT.x_GLOB_ERROR)
+
+#include "const-c.inc"
 
 #ifdef WIN32
 #define errfunc		NULL
@@ -165,6 +26,11 @@ errfunc(const char *foo, int bar) {
 #endif
 
 MODULE = File::Glob		PACKAGE = File::Glob
+
+BOOT:
+{
+    MY_CXT_INIT;
+}
 
 void
 doglob(pattern,...)
@@ -178,6 +44,8 @@ PREINIT:
     SV *tmp;
 PPCODE:
     {
+	dMY_CXT;
+
 	/* allow for optional flags argument */
 	if (items > 1) {
 	    flags = (int) SvIV(ST(1));
@@ -201,8 +69,4 @@ PPCODE:
 	bsd_globfree(&pglob);
     }
 
-double
-constant(name,arg)
-    char *name
-    int   arg
-PROTOTYPE: $$
+INCLUDE: const-xs.inc

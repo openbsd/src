@@ -12,6 +12,8 @@
 
 #include "EXTERN.h"
 #include "perl.h"
+#include "XSUB.h"
+
 #include "poll.h"
 #ifdef I_SYS_TIME
 # include <sys/time.h>
@@ -58,7 +60,7 @@ again:
     FD_ZERO(&wfd);
     FD_ZERO(&efd);
 
-    for(i = 0 ; i < nfds ; i++) {
+    for(i = 0 ; i < (int)nfds ; i++) {
 	int events = fds[i].events;
 	int fd = fds[i].fd;
 
@@ -105,7 +107,7 @@ again:
 
     count = 0;
 
-    for(i = 0 ; i < nfds ; i++) {
+    for(i = 0 ; i < (int)nfds ; i++) {
 	int revents = (fds[i].events & POLL_EVENTS_MASK);
 	int fd = fds[i].fd;
 

@@ -1,0 +1,32 @@
+This distribution is a replacement for the builtin distribution.
+
+This package contains a selection of subroutines that people have
+expressed would be nice to have in the perl core, but the usage would not
+really be high enough to warrant the use of a keyword, and the size so
+small such that being individual extensions would be wasteful.
+
+After unpacking the distribution, to install this module type
+ 
+        perl Makefile.PL
+        make
+        make test
+        make install
+
+This distribution provides
+
+  min
+  max
+  minstr
+  maxstr
+  sum
+  reduce
+  reftype
+  blessed
+  weaken   (5.005_57 and later only)
+  isweak   (5.005_57 and later only)
+  dualvar
+  shuffle
+
+Copyright (c) 1997-2001 Graham Barr <gbarr@pobox.com>. All rights reserved.
+This library is free software; you can redistribute it and/or
+modify it under the same terms as Perl itself.

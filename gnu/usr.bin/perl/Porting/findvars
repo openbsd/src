@@ -212,7 +212,6 @@ nice_chunk
 nice_chunk_size
 ninterps
 nomemok
-nrs
 nthreads
 nthreads_cond
 numeric_local

@@ -1,3 +1,16 @@
+/*    thdrvar.h
+ *
+ *    Copyright (c) 1997-2002, Larry Wall
+ *
+ *    You may distribute under the terms of either the GNU General Public
+ *    License or the Artistic License, as specified in the README file.
+ *
+ */
+
+/*
+=head1 Global Variables
+*/
+
 /***********************************************/
 /* Global only to current thread               */
 /***********************************************/
@@ -5,16 +18,16 @@
 /* Don't forget to re-run embed.pl to propagate changes! */
 
 /* The 'T' prefix is only needed for vars that need appropriate #defines
- * generated when built with or without USE_THREADS.  It is also used
+ * generated when built with or without USE_5005THREADS.  It is also used
  * to generate the appropriate export list for win32.
  *
- * When building without USE_THREADS, these variables will be truly global.
- * When building without USE_THREADS but with MULTIPLICITY, these variables
+ * When building without USE_5005THREADS, these variables will be truly global.
+ * When building without USE_5005THREADS but with MULTIPLICITY, these variables
  * will be global per-interpreter. */
 
 /* Important ones in the first cache line (if alignment is done right) */
 
-#ifdef USE_THREADS
+#ifdef USE_5005THREADS
 PERLVAR(interp,		PerlInterpreter*)	/* thread owner */
 #endif
 
@@ -81,7 +94,7 @@ PERLVAR(Ttimesbuf,	struct tms)
 /* Fields used by magic variables such as $@, $/ and so on */
 PERLVAR(Ttainted,	bool)		/* using variables controlled by $< */
 PERLVAR(Tcurpm,		PMOP *)		/* what to do \ interps in REs from */
-PERLVAR(Tnrs,		SV *)
+PERLVAR(Tnrs,		SV *)		/* placeholder: unused since 5.8.0 (5.7.2 patch #12027 for bug ID 20010815.012) */
 
 /*
 =for apidoc mn|SV*|PL_rs
@@ -101,8 +114,7 @@ The output field separator - C<$,> in Perl space.
 
 PERLVAR(Trs,		SV *)		/* input record separator $/ */
 PERLVAR(Tlast_in_gv,	GV *)		/* GV used in last <FH> */
-PERLVAR(Tofs,		char *)		/* output field separator $, */
-PERLVAR(Tofslen,	STRLEN)
+PERLVAR(Tofs_sv,	SV *)		/* output field separator $, */
 PERLVAR(Tdefoutgv,	GV *)		/* default FH for output */
 PERLVARI(Tchopset,	char *,	" \n-")	/* $: */
 PERLVAR(Tformtarget,	SV *)
@@ -168,7 +180,7 @@ PERLVAR(Tregsawback,	I32)		/* Did we see \1, ...? */
 PERLVAR(Tregprecomp,	char *)		/* uncompiled string. */
 PERLVAR(Tregnpar,	I32)		/* () count. */
 PERLVAR(Tregsize,	I32)		/* Code size. */
-PERLVAR(Tregflags,	U16)		/* are we folding, multilining? */
+PERLVAR(Tregflags,	U32)		/* are we folding, multilining? */
 PERLVAR(Tregseen,	U32)		/* from regcomp.c */
 PERLVAR(Tseen_zerolen,	I32)		/* from regcomp.c */
 PERLVAR(Tseen_evals,	I32)		/* from regcomp.c */
@@ -183,8 +195,9 @@ PERLVAR(Tregeol,	char *)		/* End of input, for $ check. */
 PERLVAR(Tregstartp,	I32 *)		/* Pointer to startp array. */
 PERLVAR(Tregendp,	I32 *)		/* Ditto for endp. */
 PERLVAR(Treglastparen,	U32 *)		/* Similarly for lastparen. */
+PERLVAR(Treglastcloseparen, U32 *)	/* Similarly for lastcloseparen. */
 PERLVAR(Tregtill,	char *)		/* How far we are required to go. */
-PERLVAR(Tregprev,	char)		/* char before regbol, \n if none */
+PERLVAR(Tregcompat1,	char)		/* used to be regprev1 */
 PERLVAR(Treg_start_tmp,	char **)	/* from regexec.c */
 PERLVAR(Treg_start_tmpl,U32)		/* from regexec.c */
 PERLVAR(Tregdata,	struct reg_data *)
@@ -211,6 +224,8 @@ PERLVAR(Treg_leftiter,	I32)		/* wait until caching pos */
 PERLVARI(Treg_poscache, char *, Nullch)	/* cache of pos of WHILEM */
 PERLVAR(Treg_poscache_size, STRLEN)	/* size of pos cache of WHILEM */
 
+PERLVARI(Tpeepp,	peep_t, MEMBER_TO_FPTR(Perl_peep))
+					/* Pointer to peephole optimizer */
 PERLVARI(Tregcompp,	regcomp_t, MEMBER_TO_FPTR(Perl_pregcomp))
 					/* Pointer to REx compiler */
 PERLVARI(Tregexecp,	regexec_t, MEMBER_TO_FPTR(Perl_regexec_flags))
@@ -231,7 +246,7 @@ PERLVAR(Twatchok,	char *)
 /* Note that the variables below are all explicitly referenced in the code
  * as thr->whatever and therefore don't need the 'T' prefix. */
 
-#ifdef USE_THREADS
+#ifdef USE_5005THREADS
 
 PERLVAR(oursv,		SV *)
 PERLVAR(cvcache,	HV *)
@@ -253,5 +268,9 @@ PERLVAR(i,		struct thread_intern)
 #endif
 
 PERLVAR(trailing_nul,	char)		/* For the sake of thrsv and oursv */
+PERLVAR(thr_done,	bool)		/* True when the thread has finished */
 
-#endif /* USE_THREADS */
+#endif /* USE_5005THREADS */
+
+PERLVAR(Treg_match_utf8,	bool)		/* was what we matched against utf8 */
+

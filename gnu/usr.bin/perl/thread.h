@@ -1,7 +1,23 @@
-#if defined(USE_THREADS) || defined(USE_ITHREADS)
+/*    thread.h
+ *
+ *    Copyright (c) 1997-2002, Larry Wall
+ *
+ *    You may distribute under the terms of either the GNU General Public
+ *    License or the Artistic License, as specified in the README file.
+ *
+ */
+
+#if defined(USE_5005THREADS) || defined(USE_ITHREADS)
+
+#if defined(VMS)
+#include <builtins.h>
+#endif
 
 #ifdef WIN32
 #  include <win32thread.h>
+#else
+#ifdef NETWARE
+#  include <nw5thread.h>
 #else
 #  ifdef OLD_PTHREADS_API /* Here be dragons. */
 #    define DETACH(t) \
@@ -50,6 +66,7 @@
 #    define pthread_mutexattr_default NULL
 #    define pthread_condattr_default  NULL
 #  endif
+#endif	/* NETWARE */
 #endif
 
 #ifndef PTHREAD_CREATE
@@ -67,6 +84,10 @@
 #  else
 #    define PTHREAD_CREATE_JOINABLE 0 /* Panic?  No, guess. */
 #  endif
+#endif
+
+#ifdef DGUX
+#  define THREAD_CREATE_NEEDS_STACK (32*1024)
 #endif
 
 #ifdef I_MACH_CTHREADS
@@ -241,8 +262,22 @@
     } STMT_END
 #endif /* JOIN */
 
+/* Use an unchecked fetch of thread-specific data instead of a checked one.
+ * It would fail if the key were bogus, but if the key were bogus then
+ * Really Bad Things would be happening anyway. --dan */
+#if (defined(__ALPHA) && (__VMS_VER >= 70000000)) || \
+    (defined(__alpha) && defined(__osf__)) /* Available only on >= 4.0 */
+#  define HAS_PTHREAD_UNCHECKED_GETSPECIFIC_NP /* Configure test needed */
+#endif
+
+#ifdef HAS_PTHREAD_UNCHECKED_GETSPECIFIC_NP
+#  define PTHREAD_GETSPECIFIC(key) pthread_unchecked_getspecific_np(key)
+#else
+#  define PTHREAD_GETSPECIFIC(key) pthread_getspecific(key)
+#endif
+
 #ifndef PERL_GET_CONTEXT
-#  define PERL_GET_CONTEXT	pthread_getspecific(PL_thr_key)
+#  define PERL_GET_CONTEXT	PTHREAD_GETSPECIFIC(PL_thr_key)
 #endif
 
 #ifndef PERL_SET_CONTEXT
@@ -276,12 +311,22 @@
     } STMT_END
 #endif
 
+#ifndef PTHREAD_ATFORK
+#  ifdef HAS_PTHREAD_ATFORK
+#    define PTHREAD_ATFORK(prepare,parent,child)		\
+	pthread_atfork(prepare,parent,child)
+#  else
+#    define PTHREAD_ATFORK(prepare,parent,child)		\
+	NOOP
+#  endif
+#endif
+
 #ifndef THREAD_RET_TYPE
 #  define THREAD_RET_TYPE	void *
 #  define THREAD_RET_CAST(p)	((void *)(p))
 #endif /* THREAD_RET */
 
-#if defined(USE_THREADS)
+#if defined(USE_5005THREADS)
 
 /* Accessor for per-thread SVs */
 #  define THREADSV(i) (thr->threadsvp[i])
@@ -335,8 +380,8 @@ typedef struct condpair {
 #define MgCONDP(mg) (&((condpair_t *)(mg->mg_ptr))->cond)
 #define MgOWNER(mg) ((condpair_t *)(mg->mg_ptr))->owner
 
-#endif /* USE_THREADS */
-#endif /* USE_THREADS || USE_ITHREADS */
+#endif /* USE_5005THREADS */
+#endif /* USE_5005THREADS || USE_ITHREADS */
 
 #ifndef MUTEX_LOCK
 #  define MUTEX_LOCK(m)

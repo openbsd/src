@@ -1,4 +1,7 @@
 package B::Debug;
+
+our $VERSION = '1.00';
+
 use strict;
 use B qw(peekop class walkoptree walkoptree_exec
          main_start main_root cstring sv_undef);
@@ -90,7 +93,7 @@ sub B::SVOP::debug {
 sub B::PVOP::debug {
     my ($op) = @_;
     $op->B::OP::debug();
-    printf "\top_pv\t\t0x%x\n", $op->pv;
+    printf "\top_pv\t\t%s\n", cstring($op->pv);
 }
 
 sub B::PADOP::debug {
@@ -125,6 +128,15 @@ sub B::SV::debug {
 	REFCNT		%d
 	FLAGS		0x%x
 EOT
+}
+
+sub B::RV::debug {
+    my ($rv) = @_;
+    B::SV::debug($rv);
+    printf <<'EOT', ${$rv->RV};
+	RV		0x%x
+EOT
+    $rv->RV->debug;
 }
 
 sub B::PV::debug {

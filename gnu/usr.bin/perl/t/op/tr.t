@@ -3,26 +3,26 @@
 BEGIN {
     chdir 't' if -d 't';
     @INC = '../lib';
+    require './test.pl';
 }
 
-print "1..54\n";
+plan tests => 97;
+
+my $Is_EBCDIC = (ord('i') == 0x89 & ord('J') == 0xd1);
 
 $_ = "abcdefghijklmnopqrstuvwxyz";
 
 tr/a-z/A-Z/;
 
-print "not " unless $_ eq "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-print "ok 1\n";
+is($_, "ABCDEFGHIJKLMNOPQRSTUVWXYZ",    'uc');
 
 tr/A-Z/a-z/;
 
-print "not " unless $_ eq "abcdefghijklmnopqrstuvwxyz";
-print "ok 2\n";
+is($_, "abcdefghijklmnopqrstuvwxyz",    'lc');
 
 tr/b-y/B-Y/;
+is($_, "aBCDEFGHIJKLMNOPQRSTUVWXYz",    'partial uc');
 
-print "not " unless $_ eq "aBCDEFGHIJKLMNOPQRSTUVWXYz";
-print "ok 3\n";
 
 # In EBCDIC 'I' is \xc9 and 'J' is \0xd1, 'i' is \x89 and 'j' is \x91.
 # Yes, discontinuities.  Regardless, the \xca in the below should stay
@@ -33,153 +33,154 @@ print "ok 3\n";
 
     tr/I-J/i-j/;
 
-    print "not " unless $_ eq "i\xcaj";
-    print "ok 4\n";
+    is($_, "i\xcaj",    'EBCDIC discontinuity');
 }
 #
 
-# make sure that tr cancels IOK and NOK
+
 ($x = 12) =~ tr/1/3/;
 (my $y = 12) =~ tr/1/3/;
 ($f = 1.5) =~ tr/1/3/;
 (my $g = 1.5) =~ tr/1/3/;
-print "not " unless $x + $y + $f + $g == 71;
-print "ok 5\n";
+is($x + $y + $f + $g, 71,   'tr cancels IOK and NOK');
 
-# make sure tr is harmless if not updating  -  see [ID 20000511.005]
+
+# perlbug [ID 20000511.005]
 $_ = 'fred';
 /([a-z]{2})/;
 $1 =~ tr/A-Z//;
 s/^(\s*)f/$1F/;
-print "not " if $_ ne 'Fred';
-print "ok 6\n";
+is($_, 'Fred',  'harmless if explicitly not updating');
+
+
+# A variant of the above, added in 5.7.2
+$_ = 'fred';
+/([a-z]{2})/;
+eval '$1 =~ tr/A-Z/A-Z/;';
+s/^(\s*)f/$1F/;
+is($_, 'Fred',  'harmless if implicitly not updating');
+is($@, '',      '    no error');
+
 
 # check tr handles UTF8 correctly
 ($x = 256.65.258) =~ tr/a/b/;
-print "not " if $x ne 256.65.258 or length $x != 3;
-print "ok 7\n";
+is($x, 256.65.258,  'handles UTF8');
+is(length $x, 3);
+
 $x =~ tr/A/B/;
+is(length $x, 3);
 if (ord("\t") == 9) { # ASCII
-    print "not " if $x ne 256.66.258 or length $x != 3;
+    is($x, 256.66.258);
 }
 else {
-    print "not " if $x ne 256.65.258 or length $x != 3;
+    is($x, 256.65.258);
 }
-print "ok 8\n";
+
 # EBCDIC variants of the above tests
 ($x = 256.193.258) =~ tr/a/b/;
-print "not " if $x ne 256.193.258 or length $x != 3;
-print "ok 9\n";
+is(length $x, 3);
+is($x, 256.193.258);
+
 $x =~ tr/A/B/;
+is(length $x, 3);
 if (ord("\t") == 9) { # ASCII
-    print "not " if $x ne 256.193.258 or length $x != 3;
+    is($x, 256.193.258);
 }
 else {
-    print "not " if $x ne 256.194.258 or length $x != 3;
+    is($x, 256.194.258);
 }
-print "ok 10\n";
+
 
 {
-if (ord("\t") == 9) { # ASCII
-    use utf8;
-}
-# 11 - changing UTF8 characters in a UTF8 string, same length.
-$l = chr(300); $r = chr(400);
-$x = 200.300.400;
-$x =~ tr/\x{12c}/\x{190}/;
-printf "not (%vd) ", $x if $x ne 200.400.400 or length $x != 3;
-print "ok 11\n";
+    my $l = chr(300); my $r = chr(400);
+    $x = 200.300.400;
+    $x =~ tr/\x{12c}/\x{190}/;
+    is($x, 200.400.400,     
+                        'changing UTF8 chars in a UTF8 string, same length');
+    is(length $x, 3);
 
-# 12 - changing UTF8 characters in UTF8 string, more bytes.
-$x = 200.300.400;
-$x =~ tr/\x{12c}/\x{be8}/;
-printf "not (%vd) ", $x if $x ne 200.3048.400 or length $x != 3;
-print "ok 12\n";
+    $x = 200.300.400;
+    $x =~ tr/\x{12c}/\x{be8}/;
+    is($x, 200.3048.400,    '    more bytes');
+    is(length $x, 3);
 
-# 13 - introducing UTF8 characters to non-UTF8 string.
-$x = 100.125.60;
-$x =~ tr/\x{64}/\x{190}/;
-printf "not (%vd) ", $x if $x ne 400.125.60 or length $x != 3;
-print "ok 13\n";
+    $x = 100.125.60;
+    $x =~ tr/\x{64}/\x{190}/;
+    is($x, 400.125.60,      'Putting UT8 chars into a non-UTF8 string');
+    is(length $x, 3);
 
-# 14 - removing UTF8 characters from UTF8 string
-$x = 400.125.60;
-$x =~ tr/\x{190}/\x{64}/;
-printf "not (%vd) ", $x if $x ne 100.125.60 or length $x != 3;
-print "ok 14\n";
+    $x = 400.125.60;
+    $x =~ tr/\x{190}/\x{64}/;
+    is($x, 100.125.60,      'Removing UTF8 chars from UTF8 string');
+    is(length $x, 3);
 
-# 15 - counting UTF8 chars in UTF8 string
-$x = 400.125.60.400;
-$y = $x =~ tr/\x{190}/\x{190}/;
-print "not " if $y != 2;
-print "ok 15\n";
+    $x = 400.125.60.400;
+    $y = $x =~ tr/\x{190}/\x{190}/;
+    is($y, 2,               'Counting UTF8 chars in UTF8 string');
 
-# 16 - counting non-UTF8 chars in UTF8 string
-$x = 60.400.125.60.400;
-$y = $x =~ tr/\x{3c}/\x{3c}/;
-print "not " if $y != 2;
-print "ok 16\n";
+    $x = 60.400.125.60.400;
+    $y = $x =~ tr/\x{3c}/\x{3c}/;
+    is($y, 2,               '         non-UTF8 chars in UTF8 string');
 
-# 17 - counting UTF8 chars in non-UTF8 string
-$x = 200.125.60;
-$y = $x =~ tr/\x{190}/\x{190}/;
-print "not " if $y != 0;
-print "ok 17\n";
+    # 17 - counting UTF8 chars in non-UTF8 string
+    $x = 200.125.60;
+    $y = $x =~ tr/\x{190}/\x{190}/;
+    is($y, 0,               '         UTF8 chars in non-UTFs string');
 }
 
-# 18: test brokenness with tr/a-z-9//;
 $_ = "abcdefghijklmnopqrstuvwxyz";
-eval "tr/a-z-9/ /";
-print (($@ =~ /^Ambiguous range in transliteration operator/ || $^V lt v5.7.0) 
-       ? '' : 'not ', "ok 18\n");
+eval 'tr/a-z-9/ /';
+like($@, qr/^Ambiguous range in transliteration operator/,  'tr/a-z-9//');
 
 # 19-21: Make sure leading and trailing hyphens still work
 $_ = "car-rot9";
 tr/-a-m/./;
-print (($_ eq '..r.rot9') ? '' : 'not ', "ok 19\n");
+is($_, '..r.rot9',  'hyphens, leading');
 
 $_ = "car-rot9";
 tr/a-m-/./;
-print (($_ eq '..r.rot9') ? '' : 'not ', "ok 20\n");
+is($_, '..r.rot9',  '   trailing');
 
 $_ = "car-rot9";
 tr/-a-m-/./;
-print (($_ eq '..r.rot9') ? '' : 'not ', "ok 21\n");
+is($_, '..r.rot9',  '   both');
 
 $_ = "abcdefghijklmnop";
 tr/ae-hn/./;
-print (($_ eq '.bcd....ijklm.op') ? '' : 'not ', "ok 22\n");
+is($_, '.bcd....ijklm.op');
 
 $_ = "abcdefghijklmnop";
 tr/a-cf-kn-p/./;
-print (($_ eq '...de......lm...') ? '' : 'not ', "ok 23\n");
+is($_, '...de......lm...');
 
 $_ = "abcdefghijklmnop";
 tr/a-ceg-ikm-o/./;
-print (($_ eq '...d.f...j.l...p') ? '' : 'not ', "ok 24\n");
+is($_, '...d.f...j.l...p');
 
-# 25: Test reversed range check
+
 # 20000705 MJD
 eval "tr/m-d/ /";
-print (($@ =~ /^Invalid \[\] range "m-d" in transliteration operator/ || $^V lt v5.7.0) 
-       ? '' : 'not ', "ok 25\n");
+like($@, qr/^Invalid \[\] range "m-d" in transliteration operator/,
+              'reversed range check');
 
-# 26: test cannot update if read-only
 eval '$1 =~ tr/x/y/';
-print (($@ =~ /^Modification of a read-only value attempted/) ? '' : 'not ',
-       "ok 26\n");
+like($@, qr/^Modification of a read-only value attempted/,
+              'cannot update read-only var');
 
-# 27: test can count read-only
 'abcdef' =~ /(bcd)/;
-print (( eval '$1 =~ tr/abcd//' == 3) ? '' : 'not ', "ok 27\n");
+is(eval '$1 =~ tr/abcd//', 3,  'explicit read-only count');
+is($@, '',                      '    no error');
 
-# 28: test lhs OK if not updating
-print ((eval '"123" =~ tr/12//' == 2) ? '' : 'not ', "ok 28\n");
+'abcdef' =~ /(bcd)/;
+is(eval '$1 =~ tr/abcd/abcd/', 3,  'implicit read-only count');
+is($@, '',                      '    no error');
 
-# 29: test lhs bad if updating
-eval '"123" =~ tr/1/1/';
-print (($@ =~ m|^Can't modify constant item in transliteration \(tr///\)|)
-       ? '' : 'not ', "ok 29\n");
+is(eval '"123" =~ tr/12//', 2,     'LHS of non-updating tr');
+
+eval '"123" =~ tr/1/2/';
+like($@, qr|^Can't modify constant item in transliteration \(tr///\)|,
+         'LHS bad on updating tr');
+
 
 # v300 (0x12c) is UTF-8-encoded as 196 172 (0xc4 0xac)
 # v400 (0x190) is UTF-8-encoded as 198 144 (0xc6 0x90)
@@ -187,125 +188,194 @@ print (($@ =~ m|^Can't modify constant item in transliteration \(tr///\)|)
 # Transliterate a byte to a byte, all four ways.
 
 ($a = v300.196.172.300.196.172) =~ tr/\xc4/\xc5/;
-print "not " unless $a eq v300.197.172.300.197.172;
-print "ok 30\n";
+is($a, v300.197.172.300.197.172,    'byte2byte transliteration');
 
 ($a = v300.196.172.300.196.172) =~ tr/\xc4/\x{c5}/;
-print "not " unless $a eq v300.197.172.300.197.172;
-print "ok 31\n";
+is($a, v300.197.172.300.197.172);
 
 ($a = v300.196.172.300.196.172) =~ tr/\x{c4}/\xc5/;
-print "not " unless $a eq v300.197.172.300.197.172;
-print "ok 32\n";
+is($a, v300.197.172.300.197.172);
 
 ($a = v300.196.172.300.196.172) =~ tr/\x{c4}/\x{c5}/;
-print "not " unless $a eq v300.197.172.300.197.172;
-print "ok 33\n";
+is($a, v300.197.172.300.197.172);
 
-# Transliterate a byte to a wide character.
 
 ($a = v300.196.172.300.196.172) =~ tr/\xc4/\x{12d}/;
-print "not " unless $a eq v300.301.172.300.301.172;
-print "ok 34\n";
-
-# Transliterate a wide character to a byte.
+is($a, v300.301.172.300.301.172,    'byte2wide transliteration');
 
 ($a = v300.196.172.300.196.172) =~ tr/\x{12c}/\xc3/;
-print "not " unless $a eq v195.196.172.195.196.172;
-print "ok 35\n";
-
-# Transliterate a wide character to a wide character.
+is($a, v195.196.172.195.196.172,    '   wide2byte');
 
 ($a = v300.196.172.300.196.172) =~ tr/\x{12c}/\x{12d}/;
-print "not " unless $a eq v301.196.172.301.196.172;
-print "ok 36\n";
+is($a, v301.196.172.301.196.172,    '   wide2wide');
 
-# Transliterate both ways.
 
 ($a = v300.196.172.300.196.172) =~ tr/\xc4\x{12c}/\x{12d}\xc3/;
-print "not " unless $a eq v195.301.172.195.301.172;
-print "ok 37\n";
+is($a, v195.301.172.195.301.172,    'byte2wide & wide2byte');
 
-# Transliterate all (four) ways.
 
 ($a = v300.196.172.300.196.172.400.198.144) =~
 	tr/\xac\xc4\x{12c}\x{190}/\xad\x{12d}\xc5\x{191}/;
-print "not " unless $a eq v197.301.173.197.301.173.401.198.144;
-print "ok 38\n";
+is($a, v197.301.173.197.301.173.401.198.144,    'all together now!');
 
-# Transliterate and count.
 
-print "not "
-    unless (($a = v300.196.172.300.196.172) =~ tr/\xc4/\xc5/)       == 2;
-print "ok 39\n";
+is((($a = v300.196.172.300.196.172) =~ tr/\xc4/\xc5/), 2,
+                                     'transliterate and count');
 
-print "not "
-    unless (($a = v300.196.172.300.196.172) =~ tr/\x{12c}/\x{12d}/) == 2;
-print "ok 40\n";
+is((($a = v300.196.172.300.196.172) =~ tr/\x{12c}/\x{12d}/), 2);
 
-# Transliterate with complement.
 
 ($a = v300.196.172.300.196.172) =~ tr/\xc4/\x{12d}/c;
-print "not " unless $a eq v301.196.301.301.196.301;
-print "ok 41\n";
+is($a, v301.196.301.301.196.301,    'translit w/complement');
 
 ($a = v300.196.172.300.196.172) =~ tr/\x{12c}/\xc5/c;
-print "not " unless $a eq v300.197.197.300.197.197;
-print "ok 42\n";
+is($a, v300.197.197.300.197.197);
 
-# Transliterate with deletion.
 
 ($a = v300.196.172.300.196.172) =~ tr/\xc4//d;
-print "not " unless $a eq v300.172.300.172;
-print "ok 43\n";
+is($a, v300.172.300.172,            'translit w/deletion');
 
 ($a = v300.196.172.300.196.172) =~ tr/\x{12c}//d;
-print "not " unless $a eq v196.172.196.172;
-print "ok 44\n";
+is($a, v196.172.196.172);
 
-# Transliterate with squeeze.
 
 ($a = v196.196.172.300.300.196.172) =~ tr/\xc4/\xc5/s;
-print "not " unless $a eq v197.172.300.300.197.172;
-print "ok 45\n";
+is($a, v197.172.300.300.197.172,    'translit w/squeeze');
 
 ($a = v196.172.300.300.196.172.172) =~ tr/\x{12c}/\x{12d}/s;
-print "not " unless $a eq v196.172.301.196.172.172;
-print "ok 46\n";
+is($a, v196.172.301.196.172.172);
 
-# Tricky cases by Simon Cozens.
 
+# Tricky cases (When Simon Cozens Attacks)
 ($a = v196.172.200) =~ tr/\x{12c}/a/;
-print "not " unless sprintf("%vd", $a) eq '196.172.200';
-print "ok 47\n";
+is(sprintf("%vd", $a), '196.172.200');
 
 ($a = v196.172.200) =~ tr/\x{12c}/\x{12c}/;
-print "not " unless sprintf("%vd", $a) eq '196.172.200';
-print "ok 48\n";
+is(sprintf("%vd", $a), '196.172.200');
 
 ($a = v196.172.200) =~ tr/\x{12c}//d;
-print "not " unless sprintf("%vd", $a) eq '196.172.200';
-print "ok 49\n";
+is(sprintf("%vd", $a), '196.172.200');
 
-# UTF8 range
 
+# UTF8 range tests from Inaba Hiroto
+
+# Not working in EBCDIC as of 12674.
 ($a = v300.196.172.302.197.172) =~ tr/\x{12c}-\x{130}/\xc0-\xc4/;
-print "not " unless $a eq v192.196.172.194.197.172;
-print "ok 50\n";
+is($a, v192.196.172.194.197.172,    'UTF range');
 
 ($a = v300.196.172.302.197.172) =~ tr/\xc4-\xc8/\x{12c}-\x{130}/;
-print "not " unless $a eq v300.300.172.302.301.172;
-print "ok 51\n";
+is($a, v300.300.172.302.301.172);
 
-# misc
+
+# UTF8 range tests from Karsten Sperling (patch #9008 required)
+
+($a = "\x{0100}") =~ tr/\x00-\x{100}/X/;
+is($a, "X");
+
+($a = "\x{0100}") =~ tr/\x{0000}-\x{00ff}/X/c;
+is($a, "X");
+
+($a = "\x{0100}") =~ tr/\x{0000}-\x{00ff}\x{0101}/X/c;
+is($a, "X");
+ 
+($a = v256) =~ tr/\x{0000}-\x{00ff}\x{0101}/X/c;
+is($a, "X");
+
+
+# UTF8 range tests from Inaba Hiroto
+
+($a = "\x{200}") =~ tr/\x00-\x{100}/X/c;
+is($a, "X");
+
+($a = "\x{200}") =~ tr/\x00-\x{100}/X/cs;
+is($a, "X");
+
+
+# Tricky on EBCDIC: while [a-z] [A-Z] must not match the gap characters,
+# (i-j, r-s, I-J, R-S), [\x89-\x91] [\xc9-\xd1] has to match them,
+# from Karsten Sperling.
+
+# Not working in EBCDIC as of 12674.
+$c = ($a = "\x89\x8a\x8b\x8c\x8d\x8f\x90\x91") =~ tr/\x89-\x91/X/;
+is($c, 8);
+is($a, "XXXXXXXX");
+   
+# Not working in EBCDIC as of 12674.
+$c = ($a = "\xc9\xca\xcb\xcc\xcd\xcf\xd0\xd1") =~ tr/\xc9-\xd1/X/;
+is($c, 8);
+is($a, "XXXXXXXX");
+
+
+SKIP: {   
+    skip "not EBCDIC", 4 unless $Is_EBCDIC;
+
+    $c = ($a = "\x89\x8a\x8b\x8c\x8d\x8f\x90\x91") =~ tr/i-j/X/;
+    is($c, 2);
+    is($a, "X\x8a\x8b\x8c\x8d\x8f\x90X");
+   
+    $c = ($a = "\xc9\xca\xcb\xcc\xcd\xcf\xd0\xd1") =~ tr/I-J/X/;
+    is($c, 2);
+    is($a, "X\xca\xcb\xcc\xcd\xcf\xd0X");
+}
+
+($a = "\x{100}") =~ tr/\x00-\xff/X/c;
+is(ord($a), ord("X"));
+
+($a = "\x{100}") =~ tr/\x00-\xff/X/cs;
+is(ord($a), ord("X"));
+
+($a = "\x{100}\x{100}") =~ tr/\x{101}-\x{200}//c;
+is($a, "\x{100}\x{100}");
+
+($a = "\x{100}\x{100}") =~ tr/\x{101}-\x{200}//cs;
+is($a, "\x{100}");
+
+$a = "\xfe\xff"; $a =~ tr/\xfe\xff/\x{1ff}\x{1fe}/;
+is($a, "\x{1ff}\x{1fe}");
+
+
+# From David Dyck
 ($a = "R0_001") =~ tr/R_//d;
-print "not " if hex($a) != 1;
-print "ok 52\n";
+is(hex($a), 1);
 
+# From Inaba Hiroto
 @a = (1,2); map { y/1/./ for $_ } @a;
-print "not " if "@a" ne ". 2";
-print "ok 53\n";
+is("@a", ". 2");
 
 @a = (1,2); map { y/1/./ for $_.'' } @a;
-print "not " if "@a" ne "1 2";
-print "ok 54\n";
+is("@a", "1 2");
+
+
+# Additional test for Inaba Hiroto patch (robin@kitsite.com)
+($a = "\x{100}\x{102}\x{101}") =~ tr/\x00-\377/XYZ/c;
+is($a, "XZY");
+
+
+# Used to fail with "Modification of a read-only value attempted"
+%a = (N=>1);
+foreach (keys %a) {
+  eval 'tr/N/n/';
+  is($_, 'n',   'pp_trans needs to unshare shared hash keys');
+  is($@, '',    '   no error');
+}
+
+
+$x = eval '"1213" =~ tr/1/1/';
+is($x, 2,   'implicit count on constant');
+is($@, '',  '   no error');
+
+
+my @foo = ();
+eval '$foo[-1] =~ tr/N/N/';
+is( $@, '',         'implicit count outside array bounds, index negative' );
+is( scalar @foo, 0, "    doesn't extend the array");
+
+eval '$foo[1] =~ tr/N/N/';
+is( $@, '',         'implicit count outside array bounds, index positive' );
+is( scalar @foo, 0, "    doesn't extend the array");
+
+
+my %foo = ();
+eval '$foo{bar} =~ tr/N/N/';
+is( $@, '',         'implicit count outside hash bounds' );
+is( scalar keys %foo, 0,   "    doesn't extend the hash");

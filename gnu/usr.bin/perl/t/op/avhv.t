@@ -17,7 +17,7 @@ sub STORESIZE { $#{$_[0]} = $_[1]+1 }
 
 package main;
 
-print "1..28\n";
+print "1..29\n";
 
 $sch = {
     'abc' => 1,
@@ -176,3 +176,9 @@ print "ok 27\n";
 (@extra, %$avhv) = (foo => 42, pants => 53, bar => "HIKE!");
 print "not " unless ref $avhv->[0] eq 'HASH' and @extra == 6;
 print "ok 28\n";
+
+# Check hash slices (BUG ID 20010423.002)
+$avhv = [{foo=>1, bar=>2}];
+@$avhv{"foo", "bar"} = (42, 53);
+print "not " unless $avhv->{foo} == 42 && $avhv->{bar} == 53;
+print "ok 29\n";

@@ -1,0 +1,18 @@
+
+2.002 - 2nd December 2001
+
+    * More portability issues in Makefile.PL addresed.
+    * Merged the Harness sub-module into Devel::PPPort
+    * More documentation in PPPort.pm
+
+2.001
+
+    * Some portability issues in Makefile.PL addresed.
+
+2.000
+
+    * Initial port to the perl core.
+
+1.007
+
+    * Original version of the module by Kenneth Albanowski.

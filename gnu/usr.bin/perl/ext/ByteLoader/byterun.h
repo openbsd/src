@@ -25,7 +25,7 @@ struct byteloader_state {
 
 int bl_getc(struct byteloader_fdata *);
 int bl_read(struct byteloader_fdata *, char *, size_t, size_t);
-extern void byterun(pTHXo_ struct byteloader_state *);
+extern void byterun(pTHX_ struct byteloader_state *);
 
 enum {
     INSN_RET,			/* 0 */

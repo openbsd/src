@@ -1,0 +1,24 @@
+This is the README file for Test::Simple, basic utilities for 
+writing tests, by Michael G Schwern <schwern@pobox.com>.
+
+After installation, please consult the tutorial for how to
+start adding tests to your modules. 'perldoc Test::Tutorial'
+should work on most systems.
+
+* Installation
+
+Test::Simple uses the standard perl module install process:
+
+perl Makefile.PL
+make
+make test
+make install
+
+* Copyright
+
+Copyright 2001 by Michael G Schwern <schwern@pobox.com>.
+
+All rights reserved.  You can redistribute and/or modify
+this bundle under the same terms as Perl itself.
+
+See <http://www.perl.com/perl/misc/Artistic.html>.

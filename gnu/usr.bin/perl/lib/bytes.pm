@@ -1,5 +1,7 @@
 package bytes;
 
+our $VERSION = '1.00';
+
 $bytes::hint_bits = 0x00000008;
 
 sub import {
@@ -31,9 +33,6 @@ bytes - Perl pragma to force byte semantics rather than character semantics
 
 =head1 DESCRIPTION
 
-WARNING: The implementation of Unicode support in Perl is incomplete.
-See L<perlunicode> for the exact details.
-
 The C<use bytes> pragma disables character semantics for the rest of the
 lexical scope in which it appears.  C<no bytes> can be used to reverse
 the effect of C<use bytes> within the current lexical scope.
@@ -45,7 +44,7 @@ effect, the encoding is temporarily ignored, and each string is treated
 as a series of bytes. 
 
 As an example, when Perl sees C<$x = chr(400)>, it encodes the character
-in UTF8 and stores it in $x. Then it is marked as character data, so,
+in UTF-8 and stores it in $x. Then it is marked as character data, so,
 for instance, C<length $x> returns C<1>. However, in the scope of the
 C<bytes> pragma, $x is treated as a series of bytes - the bytes that make
 up the UTF8 encoding - and C<length $x> returns C<2>:

@@ -15,7 +15,7 @@ if ($^O eq 'mpeix') {
     exit 0;
 }
 
-my $perl = -e '../perl' ? '../perl' : -e './perl' ? './perl' : 'perl';
+$| = 1;
 
 use strict;
 
@@ -44,16 +44,29 @@ my $max = keys %tests;
 
 print "1..$max\n";
 
+# Dump any error messages from the dying processes off to a temp file.
+open(STDERR, ">die_exit.err") or die "Can't open temp error file:  $!";
+
 foreach my $test (1 .. $max) {
     my($bang, $query, $code) = @{$tests{$test}};
     $code ||= 'die;';
-    my $exit =
-	($^O eq 'MSWin32'
-	 ? system qq($perl -e "\$! = $bang; \$? = $query; $code" 2> nul)
-	 : system qq($perl -e '\$! = $bang; \$? = $query; $code' 2> /dev/null));
+    if ($^O eq 'MSWin32' || $^O eq 'NetWare' || $^O eq 'VMS') {
+        system(qq{$^X -e "\$! = $bang; \$? = $query; $code"});
+    }
+    else {
+        system(qq{$^X -e '\$! = $bang; \$? = $query; $code'});
+    }
+    my $exit = $?;
+
+    # VMS exit code 44 (SS$_ABORT) is returned if a program dies.  We only get
+    # the severity bits, which boils down to 4.  See L<perlvms/$?>.
+    $bang = 4 if $^O eq 'VMS';
 
     printf "# 0x%04x  0x%04x  0x%04x\n", $exit, $bang, $query;
     print "not " unless $exit == (($bang || ($query >> 8) || 255) << 8);
     print "ok $test\n";
 }
     
+close STDERR;
+END { 1 while unlink 'die_exit.err' }
+

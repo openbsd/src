@@ -1,0 +1,71 @@
+#!/usr/bin/perl -w
+my $file = pop(@ARGV);
+my %meta;
+$ENV{'P4PORT'} = 'bactrian:1667';
+$ENV{'P4CLIENT'} = 'camel-linux';
+open(FILE,$file) || die "Cannot open $file:$!";
+while (<FILE>)
+ {
+  if (/^(From|Subject|Date|Message-ID):(.*)$/i)
+   {
+    $meta{lc($1)} = $2;
+   }
+ }
+my @results = `patch @ARGV <$file 2>&1`;
+warn @results;
+my $code = $?;
+warn "$code from patch\n";
+foreach (@results)
+ {
+  if (/patching\s+file\s*(.*?)\s*$/)
+   {
+    push(@edit,$1);
+   }
+ }
+my @have = `p4 have @edit`;
+
+if ($code == 0)
+ {
+  System("p4 edit @edit");
+  open(PIPE,"|p4 change -i") || die "Cannot open pipe to p4:$!";
+  print PIPE "Change: new\n";
+  print PIPE "Description:\n";
+  foreach my $key (qw(Subject From Date Message-Id))
+   {
+    if (exists $meta{lc($key)})
+     {
+      print PIPE "\t$key: ",$meta{lc($key)},"\n";
+      print "$key: ",$meta{lc($key)},"\n";
+     }
+   }
+  print PIPE "Files:\n";
+  foreach (@have)
+   {
+    if (m,^(.*)#,)
+     {
+      print PIPE "\t$1\n"
+     }
+   }
+  close(PIPE);
+ }
+else
+ {
+  if (@edit)
+   {
+    System("p4 refresh @edit");
+   }
+ }
+
+sub System
+{
+ my $cmd = join(' ',@_);
+ warn "$cmd\n";
+ if (fork)
+  {
+   wait;
+  }
+ else
+  {
+   _exit(exec $cmd);
+  }
+}

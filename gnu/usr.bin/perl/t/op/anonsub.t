@@ -4,6 +4,8 @@ chdir 't' if -d 't';
 @INC = '../lib';
 $Is_VMS = $^O eq 'VMS';
 $Is_MSWin32 = $^O eq 'MSWin32';
+$Is_MacOS = $^O eq 'MacOS';
+$Is_NetWare = $^O eq 'NetWare';
 $ENV{PERL5LIB} = "../lib" unless $Is_VMS;
 
 $|=1;
@@ -24,12 +26,16 @@ for (@prgs){
     my($prog,$expected) = split(/\nEXPECT\n/, $_);
     open TEST, ">$tmpfile";
     print TEST "$prog\n";
-    close TEST;
+    close TEST or die "Could not close: $!";
     my $results = $Is_VMS ?
-                  `MCR $^X "-I[-.lib]" $switch $tmpfile 2>&1` :
-		      $Is_MSWin32 ?  
-			  `.\\perl -I../lib $switch $tmpfile 2>&1` :
-			      `./perl $switch $tmpfile 2>&1`;
+		`MCR $^X "-I[-.lib]" $switch $tmpfile 2>&1` :
+		  $Is_MSWin32 ?
+		    `.\\perl -I../lib $switch $tmpfile 2>&1` :
+		      $Is_MacOS ?  
+			`$^X -I::lib $switch $tmpfile` :
+			    $Is_NetWare ?
+				`perl -I../lib $switch $tmpfile 2>&1` :
+				    `./perl $switch $tmpfile 2>&1`;
     my $status = $?;
     $results =~ s/\n+$//;
     # allow expected output to be written as if $prog is on STDIN
@@ -89,5 +95,10 @@ sub X {
     Y(sub { print $n });
 }
 X();
+EXPECT
+ok 1
+########
+package;
+print sub { return "ok 1\n" } -> ();
 EXPECT
 ok 1

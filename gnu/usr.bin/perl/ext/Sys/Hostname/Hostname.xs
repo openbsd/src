@@ -69,7 +69,9 @@ ghname()
 #    endif
 #  endif
 #endif
+#ifndef HAS_GETHOSTNAME
     check_out:
+#endif
     if (retval == -1)
 	XSRETURN_UNDEF;
     else

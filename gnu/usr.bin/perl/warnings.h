@@ -22,37 +22,40 @@
 
 #define specialWARN(x)		((x) == pWARN_STD || (x) == pWARN_ALL ||	\
 				 (x) == pWARN_NONE)
+
+/* Warnings Categories added in Perl 5.008 */
+
 #define WARN_ALL		0
-#define WARN_CHMOD		1
-#define WARN_CLOSURE		2
+#define WARN_CLOSURE		1
+#define WARN_DEPRECATED		2
 #define WARN_EXITING		3
 #define WARN_GLOB		4
 #define WARN_IO			5
 #define WARN_CLOSED		6
 #define WARN_EXEC		7
-#define WARN_NEWLINE		8
-#define WARN_PIPE		9
-#define WARN_UNOPENED		10
-#define WARN_MISC		11
-#define WARN_NUMERIC		12
-#define WARN_ONCE		13
-#define WARN_OVERFLOW		14
-#define WARN_PACK		15
-#define WARN_PORTABLE		16
-#define WARN_RECURSION		17
-#define WARN_REDEFINE		18
-#define WARN_REGEXP		19
-#define WARN_SEVERE		20
-#define WARN_DEBUGGING		21
-#define WARN_INPLACE		22
-#define WARN_INTERNAL		23
-#define WARN_MALLOC		24
-#define WARN_SIGNAL		25
-#define WARN_SUBSTR		26
-#define WARN_SYNTAX		27
-#define WARN_AMBIGUOUS		28
-#define WARN_BAREWORD		29
-#define WARN_DEPRECATED		30
+#define WARN_LAYER		8
+#define WARN_NEWLINE		9
+#define WARN_PIPE		10
+#define WARN_UNOPENED		11
+#define WARN_MISC		12
+#define WARN_NUMERIC		13
+#define WARN_ONCE		14
+#define WARN_OVERFLOW		15
+#define WARN_PACK		16
+#define WARN_PORTABLE		17
+#define WARN_RECURSION		18
+#define WARN_REDEFINE		19
+#define WARN_REGEXP		20
+#define WARN_SEVERE		21
+#define WARN_DEBUGGING		22
+#define WARN_INPLACE		23
+#define WARN_INTERNAL		24
+#define WARN_MALLOC		25
+#define WARN_SIGNAL		26
+#define WARN_SUBSTR		27
+#define WARN_SYNTAX		28
+#define WARN_AMBIGUOUS		29
+#define WARN_BAREWORD		30
 #define WARN_DIGIT		31
 #define WARN_PARENTHESIS	32
 #define WARN_PRECEDENCE		33
@@ -62,7 +65,7 @@
 #define WARN_RESERVED		37
 #define WARN_SEMICOLON		38
 #define WARN_TAINT		39
-#define WARN_UMASK		40
+#define WARN_THREADS		40
 #define WARN_UNINITIALIZED	41
 #define WARN_UNPACK		42
 #define WARN_UNTIE		43
@@ -73,17 +76,13 @@
 #define WARNsize		12
 #define WARN_ALLstring		"\125\125\125\125\125\125\125\125\125\125\125\125"
 #define WARN_NONEstring		"\0\0\0\0\0\0\0\0\0\0\0\0"
+#define WARN_TAINTstring	"\0\0\0\0\0\0\0\0\0\100\0\0"
 
 #define isLEXWARN_on 	(PL_curcop->cop_warnings != pWARN_STD)
 #define isLEXWARN_off	(PL_curcop->cop_warnings == pWARN_STD)
 #define isWARN_ONCE	(PL_dowarn & (G_WARN_ON|G_WARN_ONCE))
 #define isWARN_on(c,x)	(IsSet(SvPVX(c), 2*(x)))
 #define isWARNf_on(c,x)	(IsSet(SvPVX(c), 2*(x)+1))
-
-#define ckDEAD(x)							\
-	   ( ! specialWARN(PL_curcop->cop_warnings) &&			\
-	    ( isWARNf_on(PL_curcop->cop_warnings, WARN_ALL) || 		\
-	      isWARNf_on(PL_curcop->cop_warnings, x)))
 
 #define ckWARN(x)							\
 	( (isLEXWARN_on && PL_curcop->cop_warnings != pWARN_NONE &&	\
@@ -98,6 +97,23 @@
 	        isWARN_on(PL_curcop->cop_warnings, y) ) ) 		\
 	    ||	(isLEXWARN_off && PL_dowarn & G_WARN_ON) )
 
+#define ckWARN3(x,y,z)							\
+	  ( (isLEXWARN_on && PL_curcop->cop_warnings != pWARN_NONE &&	\
+	      (PL_curcop->cop_warnings == pWARN_ALL ||			\
+	        isWARN_on(PL_curcop->cop_warnings, x)  ||		\
+	        isWARN_on(PL_curcop->cop_warnings, y)  ||		\
+	        isWARN_on(PL_curcop->cop_warnings, z) ) ) 		\
+	    ||	(isLEXWARN_off && PL_dowarn & G_WARN_ON) )
+
+#define ckWARN4(x,y,z,t)						\
+	  ( (isLEXWARN_on && PL_curcop->cop_warnings != pWARN_NONE &&	\
+	      (PL_curcop->cop_warnings == pWARN_ALL ||			\
+	        isWARN_on(PL_curcop->cop_warnings, x)  ||		\
+	        isWARN_on(PL_curcop->cop_warnings, y)  ||		\
+	        isWARN_on(PL_curcop->cop_warnings, z)  ||		\
+	        isWARN_on(PL_curcop->cop_warnings, t) ) ) 		\
+	    ||	(isLEXWARN_off && PL_dowarn & G_WARN_ON) )
+
 #define ckWARN_d(x)							\
 	  (isLEXWARN_off || PL_curcop->cop_warnings == pWARN_ALL ||	\
 	     (PL_curcop->cop_warnings != pWARN_NONE &&			\
@@ -108,6 +124,39 @@
 	     (PL_curcop->cop_warnings != pWARN_NONE &&			\
 	        (isWARN_on(PL_curcop->cop_warnings, x)  ||		\
 	         isWARN_on(PL_curcop->cop_warnings, y) ) ) )
+
+#define ckWARN3_d(x,y,z)						\
+	  (isLEXWARN_off || PL_curcop->cop_warnings == pWARN_ALL ||	\
+	     (PL_curcop->cop_warnings != pWARN_NONE &&			\
+	        (isWARN_on(PL_curcop->cop_warnings, x)  ||		\
+	         isWARN_on(PL_curcop->cop_warnings, y)  ||		\
+	         isWARN_on(PL_curcop->cop_warnings, z) ) ) )
+
+#define ckWARN4_d(x,y,z,t)						\
+	  (isLEXWARN_off || PL_curcop->cop_warnings == pWARN_ALL ||	\
+	     (PL_curcop->cop_warnings != pWARN_NONE &&			\
+	        (isWARN_on(PL_curcop->cop_warnings, x)  ||		\
+	         isWARN_on(PL_curcop->cop_warnings, y)  ||		\
+	         isWARN_on(PL_curcop->cop_warnings, z)  ||		\
+	         isWARN_on(PL_curcop->cop_warnings, t) ) ) )
+
+#define packWARN(a)		(a                                 )
+#define packWARN2(a,b)		((a) | (b)<<8                      )
+#define packWARN3(a,b,c)	((a) | (b)<<8 | (c) <<16           )
+#define packWARN4(a,b,c,d)	((a) | (b)<<8 | (c) <<16 | (d) <<24)
+
+#define unpackWARN1(x)		((x)        & 0xFF)
+#define unpackWARN2(x)		(((x) >>8)  & 0xFF)
+#define unpackWARN3(x)		(((x) >>16) & 0xFF)
+#define unpackWARN4(x)		(((x) >>24) & 0xFF)
+
+#define ckDEAD(x)							\
+	   ( ! specialWARN(PL_curcop->cop_warnings) &&			\
+	    ( isWARNf_on(PL_curcop->cop_warnings, WARN_ALL) || 		\
+	      isWARNf_on(PL_curcop->cop_warnings, unpackWARN1(x)) ||	\
+	      isWARNf_on(PL_curcop->cop_warnings, unpackWARN2(x)) ||	\
+	      isWARNf_on(PL_curcop->cop_warnings, unpackWARN3(x)) ||	\
+	      isWARNf_on(PL_curcop->cop_warnings, unpackWARN4(x))))
 
 /* end of file warnings.h */
 

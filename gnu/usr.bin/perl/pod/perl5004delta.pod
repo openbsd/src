@@ -1,6 +1,6 @@
 =head1 NAME
 
-perldelta - what's new for perl5.004
+perl5004delta - what's new for perl5.004
 
 =head1 DESCRIPTION
 
@@ -1582,7 +1582,7 @@ in F<README.os2>.
 
 If you find what you think is a bug, you might check the headers of
 recently posted articles in the comp.lang.perl.misc newsgroup.
-There may also be information at http://www.perl.com/perl/, the Perl
+There may also be information at http://www.perl.com/perl/ , the Perl
 Home Page.
 
 If you believe you have an unreported bug, please run the B<perlbug>

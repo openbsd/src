@@ -1,9 +1,31 @@
 package Thread::Signal;
 use Thread qw(async);
 
+our $VERSION = '1.00';
+
 =head1 NAME
 
-Thread::Signal - Start a thread which runs signal handlers reliably
+Thread::Signal - Start a thread which runs signal handlers reliably (for old code)
+
+=head1 CAVEAT
+
+For new code the use of the C<Thread::Signal> module is discouraged and
+the direct use of the C<threads> and associated modules is encouraged instead.
+
+However, there is no direct equivalent of the Thread::Signal module in the
+new implementation of threads.  On the bright side: signals are now delivered
+reliably to Perl programs that do not use threads.  The handling of signals
+with the new threading features is up to the underlying thread implementation
+that is being used and may therefor be less reliable.
+
+If you want to specify a thread-specific signal, you can alter the %SIG hash
+in the thread where you want to handle a signal differently from other threads.
+This at least seems to work under Linux.  But there are no guarantees and your
+mileage may vary.
+
+For the whole story about the development of threads in Perl, and why you
+should B<not> be using this module unless you know what you're doing, see the
+CAVEAT of the C<Thread> module.
 
 =head1 SYNOPSIS
 

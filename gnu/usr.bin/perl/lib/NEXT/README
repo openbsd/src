@@ -1,0 +1,80 @@
+==============================================================================
+                       Release of version 0.50 of NEXT
+==============================================================================
+
+
+NAME
+
+    NEXT - Pseudo class for method redispatch
+
+
+DESCRIPTION
+
+    NEXT.pm adds a pseudoclass named C<NEXT> to any program that
+    uses it. If a method C<m> calls C<$self->NEXT::m()>, the call to
+    C<m> is redispatched as if the calling method had not originally
+    been found.
+
+    In other words, a call to C<$self->NEXT::m()> resumes the
+    depth-first, left-to-right search of parent classes that
+    resulted in the original call to C<m>.
+
+    Note that this is not the same thing as C<$self->SUPER::m()>, which
+    begins a new dispatch that is restricted to searching the ancestors
+    of the current class. C<$self->NEXT::m()> can backtrack past
+    the current class -- to look for a suitable method in other
+    ancestors of C<$self> -- whereas C<$self->SUPER::m()> cannot.
+
+    A particularly interesting use of redispatch is in
+    C<AUTOLOAD>'ed methods. If such a method determines that it is
+    not able to handle a particular call, it may choose to
+    redispatch that call, in the hope that some other C<AUTOLOAD>
+    (above it, or to its left) might do better.
+
+    The module also allows you to specify that multiply inherited
+    methods should only be redispatched once, and what should
+    happen if no redispatch is possible.
+
+
+AUTHOR
+
+    Damian Conway (damian@conway.org)
+
+
+COPYRIGHT
+
+	 Copyright (c) 2000-2001, Damian Conway. All Rights Reserved.
+	 This module is free software. It may be used, redistributed
+	    and/or modified under the same terms as Perl itself.
+
+
+==============================================================================
+
+CHANGES IN VERSION 0.50
+
+
+	- Added a $VERSION (oops!)
+
+	- Fixed handling of diamond patterns (thanks Paul)
+
+	- Added NEXT::ACTUAL to require existence of next method (thanks Paul)
+
+	- Added NEXT::UNSEEN to avoid calling multiply inherited
+	  methods twice (thanks Paul)
+
+	- Re-fixed setting of $AUTOLOAD in NEXT'd AUTOLOADS to be
+	  consistent with more useful SUPER:: behaviour
+
+	- Corified tests
+
+
+==============================================================================
+
+AVAILABILITY
+
+NEXT has been uploaded to the CPAN
+and is also available from:
+
+	http://www.csse.monash.edu.au/~damian/CPAN/NEXT.tar.gz
+
+==============================================================================

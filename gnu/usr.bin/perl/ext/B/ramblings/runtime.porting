@@ -352,6 +352,6 @@ egrent
 getlogin
 syscall
 lock		6	1
-threadsv	6	2	unused if not USE_THREADS
+threadsv	6	2	unused if not USE_5005THREADS
 setstate	1	1	currently unused anywhere
 method_named	10	2

@@ -3,60 +3,78 @@
 BEGIN {
     chdir 't' if -d 't';
     @INC = '../lib';
-    eval {my @n = getgrgid 0};
-    if ($@ && $@ =~ /(The \w+ function is unimplemented)/) {
-	print "1..0 # Skip: $1\n";
-	exit 0;
-    }
-    eval { require Config; import Config; };
-    my $reason;
-    if ($Config{'i_grp'} ne 'define') {
+    require './test.pl';
+}
+
+eval {my @n = getgrgid 0};
+if ($@ =~ /(The \w+ function is unimplemented)/) {
+    skip_all "getgrgid unimplemented";
+}
+
+eval { require Config; import Config; };
+my $reason;
+if ($Config{'i_grp'} ne 'define') {
 	$reason = '$Config{i_grp} not defined';
-    }
-    elsif (not -f "/etc/group" ) { # Play safe.
+}
+elsif (not -f "/etc/group" ) { # Play safe.
 	$reason = 'no /etc/group file';
-    }
+}
 
-    if (not defined $where) {	# Try NIS.
-	foreach my $ypcat (qw(/usr/bin/ypcat /bin/ypcat /etc/ypcat)) {
-	    if (-x $ypcat &&
-		open(GR, "$ypcat group 2>/dev/null |") &&
-		defined(<GR>)) {
-		$where = "NIS group";
-		undef $reason;
-		last;
-	    }
-	}
-    }
+if (not defined $where) {	# Try NIS.
+    foreach my $ypcat (qw(/usr/bin/ypcat /bin/ypcat /etc/ypcat)) {
+        if (-x $ypcat &&
+            open(GR, "$ypcat group 2>/dev/null |") &&
+            defined(<GR>)) 
+        {
+            print "# `ypcat group` worked\n";
 
-    if (not defined $where) {	# Try NetInfo.
-	foreach my $nidump (qw(/usr/bin/nidump)) {
-	    if (-x $nidump &&
-		open(GR, "$nidump group . 2>/dev/null |") &&
-		defined(<GR>)) {
-		$where = "NetInfo group";
-		undef $reason;
-		last;
-	    }
-	}
-    }
+            # Check to make sure we're really using NIS.
+            if( open(NSSW, "/etc/nsswitch.conf" ) ) {
+                my($group) = grep /^\s*group:/, <NSSW>;
 
-    if (not defined $where) {	# Try local.
-	my $GR = "/etc/group";
-	if (-f $GR && open(GR, $GR) && defined(<GR>)) {
-	    undef $reason;
-	    $where = $GR;
-	}
-    }
-    if ($reason) {
-	print "1..0 # Skip: $reason\n";
-	exit 0;
+                # If there's no group line, assume it default to compat.
+                if( !$group || $group !~ /(nis|compat)/ ) {
+                    print "# Doesn't look like you're using NIS in ".
+                          "/etc/nsswitch.conf\n";
+                    last;
+                }
+            }
+            $where = "NIS group - $ypcat";
+            undef $reason;
+            last;
+        }
     }
 }
 
+if (not defined $where) {	# Try NetInfo.
+    foreach my $nidump (qw(/usr/bin/nidump)) {
+        if (-x $nidump &&
+            open(GR, "$nidump group . 2>/dev/null |") &&
+            defined(<GR>)) 
+        {
+            $where = "NetInfo group - $nidump";
+            undef $reason;
+            last;
+        }
+    }
+}
+
+if (not defined $where) {	# Try local.
+    my $GR = "/etc/group";
+    if (-f $GR && open(GR, $GR) && defined(<GR>)) {
+        undef $reason;
+        $where = "local $GR";
+    }
+}
+
+if ($reason) {
+    skip_all $reason;
+}
+
+
 # By now the GR filehandle should be open and full of juicy group entries.
 
-print "1..2\n";
+plan tests => 3;
 
 # Go through at most this many groups.
 # (note that the first entry has been read away by now)
@@ -67,7 +85,10 @@ my $tst = 1;
 my %perfect;
 my %seen;
 
-setgrent();
+print "# where $where\n";
+
+ok( setgrent(), 'setgrent' ) || print "# $!\n";
+
 while (<GR>) {
     chomp;
     # LIMIT -1 so that groups with no users don't fall off
@@ -115,7 +136,9 @@ while (<GR>) {
 
 endgrent();
 
-if (keys %perfect == 0) {
+print "# max = $max, n = $n, perfect = ", scalar keys %perfect, "\n";
+
+if (keys %perfect == 0 && $n) {
     $max++;
     print <<EOEX;
 #
@@ -131,14 +154,12 @@ if (keys %perfect == 0) {
 # matches at all, it suspects something is wrong.
 # 
 EOEX
-    print "not ";
-    $not = 1;
+
+    fail();
+    print "#\t (not necessarily serious: run t/op/grent.t by itself)\n";
 } else {
-    $not = 0;
+    pass();
 }
-print "ok ", $tst++;
-print "\t# (not necessarily serious: run t/op/grent.t by itself)" if $not;
-print "\n";
 
 # Test both the scalar and list contexts.
 
@@ -162,7 +183,6 @@ for (1..$max) {
 }
 endgrent();
 
-print "not " unless "@gr1" eq "@gr2";
-print "ok ", $tst++, "\n";
+is("@gr1", "@gr2");
 
 close(GR);

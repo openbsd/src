@@ -6,6 +6,9 @@
 #      License or the Artistic License, as specified in the README file.
 #
 package B::CC;
+
+our $VERSION = '1.00';
+
 use Config;
 use strict;
 use B qw(main_start main_root class comppadlist peekop svref_2object

@@ -9,7 +9,7 @@ internal form (a parse tree) which is then optimized before being
 run.  Since version 5.005, Perl has shipped with a module
 capable of inspecting the optimized parse tree (C<B>), and this has
 been used to write many useful utilities, including a module that lets
-you turn your Perl into C source code that can be compiled into an
+you turn your Perl into C source code that can be compiled into a
 native executable.
 
 The C<B> module provides access to the parse tree, and other modules
@@ -268,6 +268,8 @@ To produce a shared library from a Perl module (ending in C<.pm>):
 
 For more information, see L<perlcc> and L<B::CC>.
 
+=head1 Module List for the Compiler Suite
+
 =over 4
 
 =item B
@@ -334,6 +336,14 @@ C program that does not involve the interpreter.  As a consequence,
 programs translated into C by B::CC can execute faster than normal
 interpreted programs.  See L</"The Optimized C Back End"> for
 details about usage.
+
+=item B::Concise
+
+This module prints a concise (but complete) version of the Perl parse
+tree.  Its output is more customizable than the one of B::Terse or
+B::Debug (and it can emulate them). This module useful for people who
+are writing their own back end, or who are learning about the Perl
+internals.  It's not useful to the average programmer.
 
 =item B::Debug
 

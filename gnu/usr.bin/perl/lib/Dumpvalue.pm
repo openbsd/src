@@ -1,8 +1,10 @@
-use 5.005_64;			# for (defined ref) and $#$v and our
+use 5.006_001;			# for (defined ref) and $#$v and our
 package Dumpvalue;
 use strict;
+our $VERSION = '1.11';
 our(%address, $stab, @stab, %stab, %subs);
 
+# documentation nits, handle complex data structures better by chromatic
 # translate control chars to ^X - Randal Schwartz
 # Modifications to print types by Peter Gordon v1.0
 
@@ -427,7 +429,14 @@ EOP
 
 sub scalarUsage {
   my $self = shift;
-  my $size = length($_[0]);
+  my $size;
+  if (UNIVERSAL::isa($_[0], 'ARRAY')) {
+	$size = $self->arrayUsage($_[0]);
+  } elsif (UNIVERSAL::isa($_[0], 'HASH')) {
+	$size = $self->hashUsage($_[0]);
+  } elsif (!ref($_[0])) {
+	$size = length($_[0]);
+  }
   $self->{TotalStrings} += $size;
   $self->{Strings}++;
   $size;
@@ -483,6 +492,7 @@ Dumpvalue - provides screen dump of Perl data.
   $dumper->set(globPrint => 1);
   $dumper->dumpValue(\*::);
   $dumper->dumpvars('main');
+  my $dump = $dumper->stringify($some_value);
 
 =head1 DESCRIPTION
 
@@ -494,7 +504,7 @@ A new dumper is created by a call
 
 Recognized options:
 
-=over
+=over 4
 
 =item C<arrayDepth>, C<hashDepth>
 
@@ -510,28 +520,28 @@ may be printed on one line.
 
 Whether to print contents of globs.
 
-=item C<DumpDBFiles>
+=item C<dumpDBFiles>
 
 Dump arrays holding contents of debugged files.
 
-=item C<DumpPackages>
+=item C<dumpPackages>
 
 Dump symbol tables of packages.
 
-=item C<DumpReused>
+=item C<dumpReused>
 
 Dump contents of "reused" addresses.
 
-=item C<tick>, C<HighBit>, C<printUndef>
+=item C<tick>, C<quoteHighBit>, C<printUndef>
 
 Change style of string dump.  Default value of C<tick> is C<auto>, one
 can enable either double-quotish dump, or single-quotish by setting it
 to C<"> or C<'>.  By default, characters with high bit set are printed
-I<as is>.
+I<as is>.  If C<quoteHighBit> is set, they will be quoted.
 
-=item C<UsageOnly>
+=item C<usageOnly>
 
-I<very> rudimentally per-package memory usage dump.  If set,
+rudimentally per-package memory usage dump.  If set,
 C<dumpvars> calculates total size of strings in variables in the package.
 
 =item unctrl
@@ -562,16 +572,28 @@ method and set() method (which accept multiple arguments).
 
 =head2 Methods
 
-=over
+=over 4
 
 =item dumpValue
 
   $dumper->dumpValue($value);
   $dumper->dumpValue([$value1, $value2]);
 
+Prints a dump to the currently selected filehandle.
+
 =item dumpValues
 
   $dumper->dumpValues($value1, $value2);
+
+Same as C< $dumper->dumpValue([$value1, $value2]); >.
+
+=item stringify
+
+  my $dump = $dumper->stringify($value [,$noticks] );
+
+Returns the dump of a single scalar without printing. If the second
+argument is true, the return value does not contain enclosing ticks.
+Does not handle data structures.
 
 =item dumpvars
 

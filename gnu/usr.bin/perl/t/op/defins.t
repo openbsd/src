@@ -12,16 +12,17 @@ BEGIN {
 }
 
 $wanted_filename = $^O eq 'VMS' ? '0.' : '0';
+$saved_filename = $^O eq 'MacOS' ? ':0' : './0';
     
 print "not " if $warns;
 print "ok 1\n";
 
-open(FILE,">./0");
+open(FILE,">$saved_filename");
 print FILE "1\n";
 print FILE "0";
 close(FILE);
 
-open(FILE,"<./0");
+open(FILE,"<$saved_filename");
 my $seen = 0;
 my $dummy;
 while (my $name = <FILE>)
@@ -63,7 +64,7 @@ print "not " unless $seen;
 print "ok 5\n";
 close FILE;
 
-opendir(DIR,'.');
+opendir(DIR,($^O eq 'MacOS' ? ':' : '.'));
 $seen = 0;
 while (my $name = readdir(DIR))
  {
@@ -116,7 +117,7 @@ while ($where{$seen} = glob('*'))
 print "not " unless $seen;
 print "ok 11\n";
 
-unlink("./0");
+unlink($saved_filename);
 
 my %hash = (0 => 1, 1 => 2);
 

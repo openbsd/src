@@ -3,7 +3,7 @@
 BEGIN {
     chdir 't' if -d 't';
     @INC = '../lib';
-    eval {my @n = getpwuid 0};
+    eval {my @n = getpwuid 0; setpwent()};
     if ($@ && $@ =~ /(The \w+ function is unimplemented)/) {
 	print "1..0 # Skip: $1\n";
 	exit 0;
@@ -49,6 +49,18 @@ BEGIN {
 	}
     }
 
+    if (not defined $where) {      # Try NIS+
+     foreach my $niscat (qw(/bin/niscat)) {
+         if (-x $niscat &&
+           open(PW, "$niscat passwd.org_dir 2>/dev/null |") &&
+           defined(<PW>)) {
+           $where = "NIS+ $niscat passwd.org_dir";
+           undef $reason;
+           last;
+         }
+     }
+    }
+
     if ($reason) {	# Give up.
 	print "1..0 # Skip: $reason\n";
 	exit 0;
@@ -68,7 +80,10 @@ my $tst = 1;
 my %perfect;
 my %seen;
 
+print "# where $where\n";
+
 setpwent();
+
 while (<PW>) {
     chomp;
     # LIMIT -1 so that users with empty shells don't fall off
@@ -115,9 +130,12 @@ while (<PW>) {
     }
     $n++;
 }
+
 endpwent();
 
-if (keys %perfect == 0) {
+print "# max = $max, n = $n, perfect = ", scalar keys %perfect, "\n";
+
+if (keys %perfect == 0 && $n) {
     $max++;
     print <<EOEX;
 #

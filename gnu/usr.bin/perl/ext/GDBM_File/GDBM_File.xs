@@ -17,6 +17,7 @@ typedef struct {
 typedef GDBM_File_type * GDBM_File ;
 typedef datum datum_key ;
 typedef datum datum_value ;
+typedef datum datum_key_copy;
 
 #define ckFilter(arg,type,name)					\
 	if (db->type) {						\
@@ -58,7 +59,7 @@ not_here(char *s)
 static void
 output_datum(pTHX_ SV *arg, char *str, int size)
 {
-#if !defined(MYMALLOC) || (defined(MYMALLOC) && defined(PERL_POLLUTE_MALLOC) && !defined(LEAKTEST))
+#if (!defined(MYMALLOC) || (defined(MYMALLOC) && defined(PERL_POLLUTE_MALLOC))) && !defined(LEAKTEST)
 	sv_usepvn(arg, str, size);
 #else
 	sv_setpvn(arg, str, size);
@@ -76,139 +77,11 @@ output_datum(pTHX_ SV *arg, char *str, int size)
 #define gdbm_setopt(db,optflag,optval,optlen) not_here("gdbm_setopt")
 #endif
 
-static double
-constant(char *name, int arg)
-{
-    errno = 0;
-    switch (*name) {
-    case 'A':
-	break;
-    case 'B':
-	break;
-    case 'C':
-	break;
-    case 'D':
-	break;
-    case 'E':
-	break;
-    case 'F':
-	break;
-    case 'G':
-	if (strEQ(name, "GDBM_CACHESIZE"))
-#ifdef GDBM_CACHESIZE
-	    return GDBM_CACHESIZE;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "GDBM_FAST"))
-#ifdef GDBM_FAST
-	    return GDBM_FAST;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "GDBM_FASTMODE"))
-#ifdef GDBM_FASTMODE
-	    return GDBM_FASTMODE;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "GDBM_INSERT"))
-#ifdef GDBM_INSERT
-	    return GDBM_INSERT;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "GDBM_NEWDB"))
-#ifdef GDBM_NEWDB
-	    return GDBM_NEWDB;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "GDBM_NOLOCK"))
-#ifdef GDBM_NOLOCK
-	    return GDBM_NOLOCK;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "GDBM_READER"))
-#ifdef GDBM_READER
-	    return GDBM_READER;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "GDBM_REPLACE"))
-#ifdef GDBM_REPLACE
-	    return GDBM_REPLACE;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "GDBM_WRCREAT"))
-#ifdef GDBM_WRCREAT
-	    return GDBM_WRCREAT;
-#else
-	    goto not_there;
-#endif
-	if (strEQ(name, "GDBM_WRITER"))
-#ifdef GDBM_WRITER
-	    return GDBM_WRITER;
-#else
-	    goto not_there;
-#endif
-	break;
-    case 'H':
-	break;
-    case 'I':
-	break;
-    case 'J':
-	break;
-    case 'K':
-	break;
-    case 'L':
-	break;
-    case 'M':
-	break;
-    case 'N':
-	break;
-    case 'O':
-	break;
-    case 'P':
-	break;
-    case 'Q':
-	break;
-    case 'R':
-	break;
-    case 'S':
-	break;
-    case 'T':
-	break;
-    case 'U':
-	break;
-    case 'V':
-	break;
-    case 'W':
-	break;
-    case 'X':
-	break;
-    case 'Y':
-	break;
-    case 'Z':
-	break;
-    }
-    errno = EINVAL;
-    return 0;
-
-not_there:
-    errno = ENOENT;
-    return 0;
-}
+#include "const-c.inc"
 
 MODULE = GDBM_File	PACKAGE = GDBM_File	PREFIX = gdbm_
 
-double
-constant(name,arg)
-	char *		name
-	int		arg
-
+INCLUDE: const-xs.inc
 
 GDBM_File
 gdbm_TIEHASH(dbtype, name, read_write, mode, fatal_func = (FATALFUNC)croak)
@@ -250,7 +123,7 @@ gdbm_DESTROY(db)
 datum_value
 gdbm_FETCH(db, key)
 	GDBM_File	db
-	datum_key	key
+	datum_key_copy	key
 
 #define gdbm_STORE(db,key,value,flags)		gdbm_store(db->dbp,key,value,flags)
 int
@@ -282,7 +155,7 @@ gdbm_FIRSTKEY(db)
 datum_key
 gdbm_NEXTKEY(db, key)
 	GDBM_File	db
-	datum_key	key
+	datum_key	key 
 
 #define gdbm_reorganize(db)			gdbm_reorganize(db->dbp)
 int

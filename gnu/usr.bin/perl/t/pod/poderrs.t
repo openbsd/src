@@ -177,7 +177,7 @@ bla is evil
 
 blub is evil
 
-=head2 reoccurence
+=head2 reoccurrence
 
 =over 4
 

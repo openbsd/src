@@ -127,13 +127,13 @@ L<perlref/Pseudo-hashes: Using an array as a hash>
 
 =cut
 
-use 5.005_64;
+use 5.006_001;
 use strict;
 no strict 'refs';
 use warnings::register;
 our(%attr, $VERSION);
 
-$VERSION = "1.01";
+$VERSION = "1.02";
 
 # some constants
 sub _PUBLIC    () { 1 }

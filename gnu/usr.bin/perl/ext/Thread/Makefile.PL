@@ -1,7 +1,7 @@
 use ExtUtils::MakeMaker;
 WriteMakefile(
 	NAME => 'Thread',
-	VERSION_FROM => 'Thread.pm',
-    MAN3PODS => {}
-	);
+	VERSION_FROM => '../../lib/Thread.pm',
+	MAN3PODS => {},
+);
 

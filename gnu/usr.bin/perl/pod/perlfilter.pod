@@ -527,7 +527,7 @@ blocks get included.
 Once you can identify individual blocks, try allowing them to be
 nested. That isn't difficult either.
 
-Here is a interesting idea that doesn't involve the Debug filter.
+Here is an interesting idea that doesn't involve the Debug filter.
 Currently Perl subroutines have fairly limited support for formal
 parameter lists. You can specify the number of parameters and their
 type, but you still have to manually take them out of the C<@_> array
@@ -556,6 +556,11 @@ syntax you want your filter to have.
 The Source Filters distribution is available on CPAN, in 
 
     CPAN/modules/by-module/Filter
+
+Starting from Perl 5.8 Filter::Util::Call (the core part of the
+Source Filters distribution) is part of the standard Perl distribution.
+Also included is a friendlier interface called Filter::Simple, by
+Damian Conway.
 
 =head1 AUTHOR
 

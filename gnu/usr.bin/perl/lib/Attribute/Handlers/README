@@ -1,0 +1,83 @@
+==============================================================================
+                Release of version 0.77 of Attribute::Handlers
+==============================================================================
+
+
+NAME
+    Attribute::Handlers - Simpler definition of attribute handlers
+
+DESCRIPTION
+    This module, when inherited by a package, allows that package's class to
+    define attribute handler subroutines for specific attributes. Variables
+    and subroutines subsequently defined in that package, or in packages
+    derived from that package may be given attributes with the same names as
+    the attribute handler subroutines, which will then be called at the end
+    of the compilation phase (i.e. in a `CHECK' block).
+
+EXAMPLE
+
+	package UNIVERSAL;
+	use Attribute::Handlers;
+
+	my %name;
+	sub name { return $name{$_[2]}||*{$_[1]}{NAME} }
+
+	sub Name    :ATTR { $name{$_[2]} = $_[4] }
+
+	sub Purpose :ATTR { print STDERR "Purpose of ", &name, " is $_[4]\n" }
+
+	sub Unit    :ATTR { print STDERR &name, " measured in $_[4]\n" }
+
+
+	package main;
+
+	my $capacity : Name(capacity)
+		     : Purpose(to store max storage capacity for files)
+		     : Unit(Gb);
+
+	package Other;
+
+	sub foo : Purpose(to foo all data before barring it) { }
+
+
+AUTHOR
+    Damian Conway (damian@conway.org)
+
+COPYRIGHT
+             Copyright (c) 2001, Damian Conway. All Rights Reserved.
+           This module is free software. It may be used, redistributed
+               and/or modified under the same terms as Perl itself.
+
+
+==============================================================================
+
+0.77	Sat Jun  8 22:58:56 CEST 2002
+
+	- Since Attribute::Handlers now is core, I will refer to changes
+	with their patch number, please read  Porting/repository.pod from
+	your a perl tarball for more information.
+
+	- Brought up to date with perl 5.8RC1 version 
+	will be 5.8 if no more changes come in
+
+	- [#13686] This changes the behaviour of lexical attributes.
+	Prior to this lexical attributes were done at a compile time, 
+	and they would loose their attribute on the next run over them.
+	Now perl 5.8 calls the attribute handler runtime whenever it hits my.
+
+	- [#14448] Fixes cases with too high refcounts on lexical attributes
+
+	- [#15945] Do not warn about too late CHECK and INIT block if
+	A::H is pulled in using a require.
+
+
+==============================================================================
+
+AVAILABILITY
+
+Attribute::Handlers has been uploaded to the CPAN
+and is also available from:
+
+	http://www.csse.monash.edu.au/~damian/CPAN/Attribute-Handlers.tar.gz
+
+==============================================================================

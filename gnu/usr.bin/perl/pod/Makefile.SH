@@ -1,4 +1,4 @@
-case $CONFIG in
+case $PERL_CONFIG_SH in
 '')
 	if test -f config.sh; then TOP=.;
 	elif test -f ../config.sh; then TOP=..;
@@ -45,6 +45,10 @@ HTML = $HTML
 
 TEX  = $TEX  
 
+# The following is used to include the current directory in
+# the dynamic loader path you are building a shared libperl.
+LDLIBPTH = $ldlibpth
+
 !GROK!THIS!
 
 ## In the following dollars and backticks do not need the extra backslash.
@@ -80,7 +84,7 @@ html:	pod2html $(HTML)
 
 tex:	pod2latex $(TEX)
 
-toc:	buildtoc
+toc perltoc.pod:	buildtoc
 	$(PERLILIB) buildtoc
 
 .SUFFIXES: .pm .pod
@@ -130,19 +134,19 @@ check:	checkpods
 
 # Dependencies.
 pod2latex:	pod2latex.PL ../lib/Config.pm
-	$(PERL) -I../lib pod2latex.PL
+	$(LDLIBPTH) $(PERL) -I../lib pod2latex.PL
 
 pod2html:	pod2html.PL ../lib/Config.pm
-	$(PERL) -I ../lib pod2html.PL
+	$(LDLIBPTH) $(PERL) -I ../lib pod2html.PL
 
 pod2man:	pod2man.PL ../lib/Config.pm
-	$(PERL) -I ../lib pod2man.PL
+	$(LDLIBPTH) $(PERL) -I ../lib pod2man.PL
 
 pod2text:	pod2text.PL ../lib/Config.pm
-	$(PERL) -I ../lib pod2text.PL
+	$(LDLIBPTH) $(PERL) -I ../lib pod2text.PL
 
 checkpods:	checkpods.PL ../lib/Config.pm
-	$(PERL) -I ../lib checkpods.PL
+	$(LDLIBPTH) $(PERL) -I ../lib checkpods.PL
 
 pod2usage:	pod2usage.PL ../lib/Config.pm
 	$(PERL) -I ../lib pod2usage.PL
@@ -153,15 +157,15 @@ podchecker:	podchecker.PL ../lib/Config.pm
 podselect:	podselect.PL ../lib/Config.pm
 	$(PERL) -I ../lib podselect.PL
 
-perlmodlib.pod:	$(PERL) perlmodlib.PL ../mv-if-diff
+perlmodlib.pod:	$(PERL) perlmodlib.PL ../mv-if-diff ../MANIFEST
 	rm -f perlmodlib.tmp
 	$(PERL) -I ../lib perlmodlib.PL
 	sh ../mv-if-diff perlmodlib.tmp perlmodlib.pod
 
 compile: all
-	$(REALPERL) -I../lib ../utils/perlcc -o pod2latex.exe pod2latex -log ../compilelog
-	$(REALPERL) -I../lib ../utils/perlcc -o pod2man.exe pod2man -log ../compilelog
-	$(REALPERL) -I../lib ../utils/perlcc -o pod2text.exe pod2text -log ../compilelog
-	$(REALPERL) -I../lib ../utils/perlcc -o checkpods.exe checkpods -log ../compilelog
+	$(REALPERL) -I../lib ../utils/perlcc -I .. -L .. -o pod2latex.exe pod2latex -log ../compilelog
+	$(REALPERL) -I../lib ../utils/perlcc -I .. -L .. -o pod2man.exe pod2man -log ../compilelog
+	$(REALPERL) -I../lib ../utils/perlcc -I .. -L .. -o pod2text.exe pod2text -log ../compilelog
+	$(REALPERL) -I../lib ../utils/perlcc -I .. -L .. -o checkpods.exe checkpods -log ../compilelog
 
 !NO!SUBS!

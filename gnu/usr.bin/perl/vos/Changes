@@ -1,7 +1,30 @@
 This file documents the changes made to port Perl to the Stratus
 VOS operating system.
 
-For 5.6.1:
+For 5.8.0:
+     Updated "config.alpha.def", "config.ga.def", "build.cm", and
+     "install_perl.cm" to use directory naming conventions that
+     are closer to the perl standard directory names.
+
+     Added "compile_full_perl.cm", "configure_full_perl.sh" and
+     "make_full_perl.sh" for building full perl.
+
+     For the first time, full perl can now be built on VOS using
+     its native Configure script and makefiles.  See README.vos
+     for details.
+
+For 5.7.1:
+     Updated "build.cm" and "compile_perl.cm" to build perl using
+          either cc or gcc.
+     Brought "config.alpha.def" and "config.ga.def" up-to-date.
+     Updated "configure_perl.cm" to rebuild the header file even if
+          the date of the definitions file is equal to the date of
+          the header, because the perl distribution resets all dates
+          to the same value.
+     Update "Changes".
+     Update "perl.bind".
+
+For 5.7:
      Updated "build.cm" to build perl using either the alpha or GA
           version of POSIX.
      Updated "Changes".

@@ -12,6 +12,32 @@ This document describes various features of HP's Unix operating system
 (HP-UX) that will affect how Perl version 5 (hereafter just Perl) is
 compiled and/or runs.
 
+=head2 Using perl as shipped with HP-UX
+
+As of application release September 2001, HP-UX 11.00 is shipped with
+perl-5.6.1 in /opt/perl. The first occurrence is on CD 5012-7954 and
+can be installed using
+
+    swinstall -s /cdrom perl
+
+assuming you have mounted that CD on /cdrom. In this version the
+following modules are installed:
+
+    ActivePerl::DocTools-0.04   HTML::Parser-3.19   XML::DOM-1.25
+    Archive::Tar-0.072          HTML::Tagset-3.03   XML::Parser-2.27
+    Compress::Zlib-1.08         MIME::Base64-2.11   XML::Simple-1.05
+    Convert::ASN1-0.10          Net-1.07            XML::XPath-1.09
+    Digest::MD5-2.11            PPM-2.1.5           XML::XSLT-0.32
+    File::CounterFile-0.12      SOAP::Lite-0.46     libwww-perl-5.51
+    Font::AFM-1.18              Storable-1.011      libxml-perl-0.07
+    HTML-Tree-3.11              URI-1.11            perl-ldap-0.23
+
+The build is a portable hppa-1.1 multithread build that supports large
+files compiled with gcc-2.9-hppa-991112
+
+If you perform a new installation, then Perl will be installed
+automatically.
+
 =head2 Compiling Perl 5 on HP-UX
 
 When compiling Perl, you must use an ANSI C compiler.  The C compiler
@@ -42,10 +68,10 @@ update is 2.0.
 
 The original version of PA-RISC, HP no longer sells any system with this chip.
 
-The following systems contain PA-RISC 1.0 chips:
+The following systems contained PA-RISC 1.0 chips:
 
-    600, 635, 645, 808, 815, 822, 825, 832, 834, 835, 840, 842, 845, 850, 852,
-    855, 860, 865, 870, 890
+    600, 635, 645, 808, 815, 822, 825, 832, 834, 835, 840, 842, 845, 850,
+    852, 855, 860, 865, 870, 890
 
 =head2 PA-RISC 1.1
 
@@ -54,15 +80,16 @@ system.
 
 The following systems contain with PA-RISC 1.1 chips:
 
-    705, 710, 712, 715, 720, 722, 725, 728, 730, 735, 742, 743, 745, 747, 750,
-    755, 770, 777, 778, 779, 800, 801, 803, 806, 807, 809, 811, 813, 816, 817,
-    819, 821, 826, 827, 829, 831, 837, 839, 841, 847, 849, 851, 856, 857, 859,
-    867, 869, 877, 887, 891, 892, 897, A180, A180C, B115, B120, B132L, B132L+,
-    B160L, B180L, C100, C110, C115, C120, C160L, D200, D210, D220, D230, D250,
-    D260, D310, D320, D330, D350, D360, D410, DX0, DX5, DZO, E25, E35, E45,
-    E55, F10, F20, F30, G30, G40, G50, G60, G70, H20, H30, H40, H50, H60, H70,
-    I30, I40, I50, I60, I70, J200, J210, J210XC, K100, K200, K210, K220, K230,
-    K400, K410, K420, S700i, S715, S724, S760, T500, T520
+    705, 710, 712, 715, 720, 722, 725, 728, 730, 735, 742, 743, 744, 745,
+    747, 750, 755, 770, 777, 778, 779, 800, 801, 803, 806, 807, 809, 811,
+    813, 816, 817, 819, 821, 826, 827, 829, 831, 837, 839, 841, 847, 849,
+    851, 856, 857, 859, 867, 869, 877, 887, 891, 892, 897, A180, A180C,
+    B115, B120, B132L, B132L+, B160L, B180L, C100, C110, C115, C120,
+    C160L, D200, D210, D220, D230, D250, D260, D310, D320, D330, D350,
+    D360, D410, DX0, DX5, DXO, E25, E35, E45, E55, F10, F20, F30, G30,
+    G40, G50, G60, G70, H20, H30, H40, H50, H60, H70, I30, I40, I50, I60,
+    I70, J200, J210, J210XC, K100, K200, K210, K220, K230, K400, K410,
+    K420, S700i, S715, S744, S760, T500, T520
 
 =head2 PA-RISC 2.0
 
@@ -70,42 +97,74 @@ The most recent upgrade to the PA-RISC design, it added support for
 64-bit integer data.
 
 As of the date of this document's last update, the following systems
-contain PA-RISC 2.0 chips (this is very likely to be out of date):
+contain PA-RISC 2.0 chips:
 
-    700, 780, 781, 782, 783, 785, 802, 804, 810, 820, 861, 871, 879, 889, 893,
-    895, 896, 898, 899, B1000, C130, C140, C160, C180, C180+, C180-XP, C200+,
-    C400+, C3000, C360, CB260, D270, D280, D370, D380, D390, D650, J220, J2240,
-    J280, J282, J400, J410, J5000, J7000, K250, K260, K260-EG, K270, K360,
-    K370, K380, K450, K460, K460-EG, K460-XP, K470, K570, K580, L1000, L2000,
-    N4000, R380, R390, T540, T600, V2000, V2200, V2250, V2500
+    700, 780, 781, 782, 783, 785, 802, 804, 810, 820, 861, 871, 879, 889,
+    893, 895, 896, 898, 899, A400, A500, B1000, B2000, C130, C140, C160,
+    C180, C180+, C180-XP, C200+, C400+, C3000, C360, C3600, CB260, D270,
+    D280, D370, D380, D390, D650, J220, J2240, J280, J282, J400, J410,
+    J5000, J5500XM, J5600, J7000, J7600, K250, K260, K260-EG, K270, K360,
+    K370, K380, K450, K460, K460-EG, K460-XP, K470, K570, K580, L1000,
+    L2000, L3000, N4000, R380, R390, RP2400, RP2430, RP2450, RP2470,
+    RP5400, RP5430, RP5450, RP5470, RP7400, RP7410, RP8400, SD16000,
+    SD32000, SD64000, T540, T600, V2000, V2200, V2250, V2500, V2600
+
+=head2 Itanium
+
+HP also ships servers with the 128-bit Itanium processor(s). As of the
+date of this document's last update, the following systems contain
+Itanium chips (this is very likely to be out of date):
+
+    RX4610, RX9610
 
 A complete list of models at the time the OS was built is in the file
 /opt/langtools/lib/sched.models.  The first column corresponds to the
 output of the "uname -m" command (without the leading "9000/").  The
 second column is the PA-RISC version and the third column is the exact
-chip type used.
+chip type used. (Start browsing at the bottom to prevent confusion ;-)
 
 =head2 Portability Between PA-RISC Versions
 
 An executable compiled on a PA-RISC 2.0 platform will not execute on a
 PA-RISC 1.1 platform, even if they are running the same version of
 HP-UX.  If you are building Perl on a PA-RISC 2.0 platform and want that
-Perl to to also run on a PA-RISC 1.1, the compiler flags +DAportable and
+Perl to also run on a PA-RISC 1.1, the compiler flags +DAportable and
 +DS32 should be used.
 
 It is no longer possible to compile PA-RISC 1.0 executables on either
-the PA-RISC 1.1 or 2.0 platforms.
+the PA-RISC 1.1 or 2.0 platforms.  The command-line flags are accepted,
+but the resulting executable will not run when transferred to a PA-RISC
+1.0 system.
+
+=head2 Itanium Processor Family and HP-UX
+
+HP-UX also runs on the new Itanium processor.  This requires the use
+of a different version of HP-UX (currently 11.20), and with the exception
+of a few differences detailed below and in later sections, Perl should
+compile with no problems.
+
+Although PA-RISC binaries can run on Itanium systems, you should not
+attempt to use a PA-RISC version of Perl on an Itanium system.  This is
+because shared libraries created on an Itanium system cannot be loaded
+while running a PA-RISC executable.
 
 =head2 Building Dynamic Extensions on HP-UX
 
 HP-UX supports dynamically loadable libraries (shared libraries).
-Shared libraries end with the suffix .sl.
+Shared libraries end with the suffix .sl.  On Itanium systems,
+they end with the suffix .so.
 
 Shared libraries created on a platform using a particular PA-RISC
 version are not usable on platforms using an earlier PA-RISC version by
 default.  However, this backwards compatibility may be enabled using the
 same +DAportable compiler flag (with the same PA-RISC 1.0 caveat
 mentioned above).
+
+Shared libraries created on an Itanium platform cannot be loaded on
+a PA-RISC platform.  Shared libraries created on a PA-RISC platform
+can only be loaded on an Itanium platform if it is a PA-RISC executable
+that is attempting to load the PA-RISC library.  A PA-RISC shared
+library cannot be loaded into an Itanium executable nor vice-versa.
 
 To create a shared library, the following steps must be performed:
 
@@ -140,15 +199,78 @@ modules are then linked into the shared library.
 Note that it is okay to create a library which contains a dependent
 library that is already linked into perl.
 
-It is no longer possible to link PA-RISC 1.0 shared libraries.
+Some extensions, like DB_File and Compress::Zlib use/require prebuilt
+libraries for the perl extensions/modules to work. If these libraries
+are built using the default configuration, it might happen that you
+run into an error like "invalid loader fixup" during load phase.
+HP is aware of this problem.  Search the HP-UX cxx-dev forums for
+discussions about the subject.  The short answer is that B<everything>
+(all libraries, everything) must be compiled with C<+z> or C<+Z> to be
+PIC (position independent code).  In HP-UX 11.00 or newer the linker
+error message should tell the name of the offending object file.
+
+A more general approach is to intervene manually, as with an example for
+the DB_File module, which requires SleepyCat's libdb.sl:
+
+    # cd .../db-3.2.9/build_unix
+    # vi Makefile
+    ... add +Z to all cflags to create shared objects
+    CFLAGS=         -c $(CPPFLAGS) +Z -Ae +O2 +Onolimit \
+		    -I/usr/local/include -I/usr/include/X11R6
+    CXXFLAGS=       -c $(CPPFLAGS) +Z -Ae +O2 +Onolimit \
+		    -I/usr/local/include -I/usr/include/X11R6
+
+    # make clean
+    # make
+    # mkdir tmp
+    # cd tmp
+    # ar x ../libdb.a
+    # ld -b -o libdb-3.2.sl *.o
+    # mv libdb-3.2.sl /usr/local/lib
+    # rm *.o
+    # cd /usr/local/lib
+    # rm -f libdb.sl
+    # ln -s libdb-3.2.sl libdb.sl
+
+    # cd .../DB_File-1.76
+    # make distclean
+    # perl Makefile.PL
+    # make
+    # make test
+    # make install
+
+It is no longer possible to link PA-RISC 1.0 shared libraries (even
+though the command-line flags are still present).
+
+PA-RISC and Itanium object files are not interchangeable.  Although
+you may be able to use ar to create an archive library of PA-RISC
+object files on an Itanium system, you cannot link against it using
+an Itanium link editor.
 
 =head2 The HP ANSI C Compiler
 
 When using this compiler to build Perl, you should make sure that the
 flag -Aa is added to the cpprun and cppstdin variables in the config.sh
-file (though see the section on 64-bit perl below).
+file (though see the section on 64-bit perl below). If you are using a
+recent version of the Perl distribution, these flags are set automatically.
 
-=head2 Using Large Files with Perl
+=head2 The GNU C Compiler
+
+When you are going to use the GNU C compiler (gcc), and you don't have
+gcc yet, you can either build it yourself from the sources (available
+from e.g. http://www.gnu.ai.mit.edu/software/gcc/releases.html) or fetch
+a prebuilt binary from the HP porting center. There are two places where
+gcc prebuilds can be fetched the first and best (for HP-UX 11 only) is
+http://h21007.www2.hp.com/dspp/tech/tech_TechSoftwareDetailPage_IDX/1,1703,547,00.html
+the second is http://hpux.cs.utah.edu/hppd/hpux/Gnu/ where you can also
+find the GNU binutils package. (Browse through the list, because there
+are often multiple versions of the same package available).
+
+Building a 64bit capable gcc from source is possible only when you have
+the HP C-ANSI C compiler available, which you should use anyway when
+building perl.
+
+=head2 Using Large Files with Perl on HP-UX
 
 Beginning with HP-UX version 10.20, files larger than 2GB (2^31 bytes)
 may be created and manipulated.  Three separate methods of doing this
@@ -157,7 +279,8 @@ using the -Duselargefiles flag to Configure.  This causes Perl to be
 compiled using structures and functions in which these are 64 bits wide,
 rather than 32 bits wide.  (Note that this will only work with HP's ANSI
 C compiler.  If you want to compile Perl using gcc, you will have to get
-a version of the compiler that support 64-bit operations.)
+a version of the compiler that support 64-bit operations. See above for
+where to find it.)
 
 There are some drawbacks to this approach.  One is that any extension
 which calls any file-manipulating C function will need to be recompiled
@@ -183,7 +306,7 @@ Configure.  If you do not do this, but later answer the question about
 large files when Configure asks you, you may get a configuration that
 cannot be compiled, or that does not function as expected.
 
-=head2 Threaded Perl
+=head2 Threaded Perl on HP-UX
 
 It is possible to compile a version of threaded Perl on any version of
 HP-UX before 10.30, but it is strongly suggested that you be running on
@@ -192,19 +315,43 @@ HP-UX 11.00 at least.
 To compile Perl with threads, add -Dusethreads to the arguments of
 Configure.  Verify that the -D_POSIX_C_SOURCE=199506L compiler flag is
 automatically added to the list of flags.  Also make sure that -lpthread
-is listed before -lc in the list of libraries to link Perl with.
+is listed before -lc in the list of libraries to link Perl with. The
+hints provided for HP-UX during Configure will try very hard to get
+this right for you.
 
-As of the date of this document, Perl threads are not fully supported on
-HP-UX.
-
-HP-UX versions before 10.30 require a seperate installation of a POSIX
+HP-UX versions before 10.30 require a separate installation of a POSIX
 threads library package. Two examples are the HP DCE package, available
 on "HP-UX Hardware Extensions 3.0, Install and Core OS, Release 10.20,
 April 1999 (B3920-13941)" or the Freely available PTH package, available
 though worldwide HP-UX mirrors of precompiled packages
-(e.g. http://hpux.tn.tudelft.nl/hppd/hpux/alpha.html)
+(e.g. http://hpux.tn.tudelft.nl/hppd/hpux/)
 
-=head2 64-bit Perl
+If you are going to use the HP DCE package, the library used for threading
+is /usr/lib/libcma.sl, but there have been multiple updates of that
+library over time. Perl will build with the first version, but it
+will not pass the test suite. Older Oracle versions might be a compelling
+reason not to update that library, otherwise please find a newer version
+in one of the following patches: PHSS_19739, PHSS_20608, or PHSS_23672
+
+reformatted output:
+
+  d3:/usr/lib 106 > what libcma-*.1
+  libcma-00000.1:
+     HP DCE/9000 1.5               Module: libcma.sl (Export)
+                                   Date: Apr 29 1996 22:11:24
+  libcma-19739.1:
+     HP DCE/9000 1.5 PHSS_19739-40 Module: libcma.sl (Export)
+                                   Date: Sep  4 1999 01:59:07
+  libcma-20608.1:
+     HP DCE/9000 1.5 PHSS_20608    Module: libcma.1 (Export)
+                                   Date: Dec  8 1999 18:41:23
+  libcma-23672.1:
+     HP DCE/9000 1.5 PHSS_23672    Module: libcma.1 (Export)
+                                   Date: Apr  9 2001 10:01:06
+  d3:/usr/lib 107 >
+
+
+=head2 64-bit Perl on HP-UX
 
 Beginning with HP-UX 11.00, programs compiled under HP-UX can take
 advantage of the LP64 programming environment (LP64 means Longs and
@@ -235,20 +382,37 @@ expected.
 compiler.  If you want to compile Perl using gcc, you will have to get a
 version of the compiler that support 64-bit operations.)
 
-=head2 GDBM and Threads
+=head2 Oracle on HP-UX
+
+Using perl to connect to Oracle databases through DBI and DBD::Oracle
+has caused a lot of people many headaches. Read README.hpux in the
+DBD::Oracle for much more information. The reason to mention it here
+is that Oracle requires a perl built with libcl and libpthread, the
+latter even when perl is build without threads. Building perl using
+all defaults, but still enabling to build DBD::Oracle later on can be
+achieved using
+
+  Configure -A prepend:libswanted='cl pthread ' ...
+
+Do not forget the space before the trailing quote.
+
+Also note that this does not (yet) work with all configurations,
+it is known to fail with 64bit versions of GCC.
+
+=head2 GDBM and Threads on HP-UX
 
 If you attempt to compile Perl with threads on an 11.X system and also
 link in the GDBM library, then Perl will immediately core dump when it
 starts up.  The only workaround at this point is to relink the GDBM
 library under 11.X, then relink it into Perl.
 
-=head2 NFS filesystems and utime(2)
+=head2 NFS filesystems and utime(2) on HP-UX
 
 If you are compiling Perl on a remotely-mounted NFS filesystem, the test
 io/fs.t may fail on test #18.  This appears to be a bug in HP-UX and no
 fix is currently available.
 
-=head2 perl -P and //
+=head2 perl -P and // and HP-UX
 
 In HP-UX Perl is compiled with flags that will cause problems if the
 -P flag of Perl (preprocess Perl code with the C preprocessor before
@@ -267,14 +431,59 @@ like for example C<"!">:
 
     s!foo!!;
 
+=head2 HP-UX Kernel Parameters (maxdsiz) for Compiling Perl
+
+By default, HP-UX comes configured with a maximum data segment size of
+64MB.  This is too small to correctly compile Perl with the maximum
+optimization levels.  You can increase the size of the maxdsiz kernel
+parameter through the use of SAM.
+
+When using the GUI version of SAM, click on the Kernel Configuration
+icon, then the Configurable Parameters icon.  Scroll down and select
+the maxdsiz line.  From the Actions menu, select the Modify Configurable
+Parameter item.  Insert the new formula into the Formula/Value box.
+Then follow the instructions to rebuild your kernel and reboot your
+system.
+
+In general, a value of 256MB (or "256*1024*1024") is sufficient for
+Perl to compile at maximum optimization.
+
+=head1 nss_delete core dump from op/pwent or op/grent
+
+You may get a bus error core dump from the op/pwent or op/grent
+tests. If compiled with -g you will see a stack trace much like
+the following:
+
+  #0  0xc004216c in  () from /usr/lib/libc.2
+  #1  0xc00d7550 in __nss_src_state_destr () from /usr/lib/libc.2
+  #2  0xc00d7768 in __nss_src_state_destr () from /usr/lib/libc.2
+  #3  0xc00d78a8 in nss_delete () from /usr/lib/libc.2 
+  #4  0xc01126d8 in endpwent () from /usr/lib/libc.2 
+  #5  0xd1950 in Perl_pp_epwent () from ./perl
+  #6  0x94d3c in Perl_runops_standard () from ./perl
+  #7  0x23728 in S_run_body () from ./perl
+  #8  0x23428 in perl_run () from ./perl
+  #9  0x2005c in main () from ./perl
+
+The key here is the C<nss_delete> call.  One workaround for this
+bug seems to be to create add to the file F</etc/nsswitch.conf>
+(at least) the following lines
+
+  group: files 
+  passwd: files
+
+Whether you are using NIS does not matter.  Amazingly enough,
+the same bug affects also Solaris.
+
 =head1 AUTHOR
 
 Jeff Okamoto <okamoto@corp.hp.com>
+H.Merijn Brand <h.m.brand@hccnet.nl>
 
 With much assistance regarding shared libraries from Marc Sabatella.
 
 =head1 DATE
 
-Version 0.6.2: 2001-02-02
+Version 0.6.6: 2002-05-30
 
 =cut

@@ -1,6 +1,6 @@
 =head1 NAME
 
-perldelta - what's new for perl5.005
+perl5005delta - what's new for perl5.005
 
 =head1 DESCRIPTION
 
@@ -50,7 +50,7 @@ in a future version.
 
 Some new keywords have been introduced.  These are generally expected to
 have very little impact on compatibility.  See L<New C<INIT> keyword>,
-L<New C<lock> keyword>, and L<New C<qr//> operator>.
+L<New C<lock> keyword>, and L<New C<qrE<sol>E<sol>> operator>.
 
 Certain barewords are now reserved.  Use of these will provoke a warning
 if you have asked for them with the C<-w> switch.
@@ -145,7 +145,7 @@ Most of the Perl documentation was previously under the implicit GNU
 General Public License or the Artistic License (at the user's choice).
 Now much of the documentation unambiguously states the terms under which
 it may be distributed.  Those terms are in general much less restrictive
-than the GNU GPL.  See L<perl> and the individual perl man pages listed
+than the GNU GPL.  See L<perl> and the individual perl manpages listed
 therein.
 
 =head1 Core Changes
@@ -255,7 +255,7 @@ The following new syntax elements are supported:
 
 =item New operator for precompiled regular expressions
 
-See L<New C<qr//> operator>.
+See L<New C<qrE<sol>E<sol>> operator>.
 
 =item Other improvements
 
@@ -662,7 +662,7 @@ subtle incompatibilities.
 
 =item CPAN
 
-See <perlmodinstall> and L<CPAN>.
+See L<perlmodinstall> and L<CPAN>.
 
 =item Cwd
 
@@ -964,7 +964,7 @@ because many scripts assume to find Perl in /usr/bin/perl.
 
 If you find what you think is a bug, you might check the headers of
 recently posted articles in the comp.lang.perl.misc newsgroup.
-There may also be information at http://www.perl.com/perl/, the Perl
+There may also be information at http://www.perl.com/perl/ , the Perl
 Home Page.
 
 If you believe you have an unreported bug, please run the B<perlbug>

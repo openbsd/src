@@ -5,22 +5,28 @@ BEGIN {
     @INC = '../lib';
 }
 
-print "1..11\n";
+# This ok() function is specially written to avoid any concatenation.
+my $test = 1;
+sub ok {
+    my($ok, $name) = @_;
+
+    printf "%sok %d - %s\n", ($ok ? "" : "not "), $test, $name;
+
+    printf "# Failed test at line %d\n", (caller)[2] unless $ok;
+
+    $test++;
+    return $ok;
+}
+
+print "1..12\n";
 
 ($a, $b, $c) = qw(foo bar);
 
-print "not " unless "$a" eq "foo";
-print "ok 1\n";
-
-print "not " unless "$a$b" eq "foobar";
-print "ok 2\n";
-
-print "not " unless "$c$a$c" eq "foo";
-print "ok 3\n";
+ok("$a"     eq "foo",    "verifying assign");
+ok("$a$b"   eq "foobar", "basic concatenation");
+ok("$c$a$c" eq "foo",    "concatenate undef, fore and aft");
 
 # Okay, so that wasn't very challenging.  Let's go Unicode.
-
-my $test = 4;
 
 {
     # bug id 20000819.004 
@@ -28,29 +34,20 @@ my $test = 4;
     $_ = $dx = "\x{10f2}";
     s/($dx)/$dx$1/;
     {
-	use bytes;
-	print "not " unless $_ eq "$dx$dx";
-	print "ok $test\n";
-	$test++;
+        ok($_ eq  "$dx$dx","bug id 20000819.004, back");
     }
 
     $_ = $dx = "\x{10f2}";
     s/($dx)/$1$dx/;
     {
-	use bytes;
-	print "not " unless $_ eq "$dx$dx";
-	print "ok $test\n";
-	$test++;
+        ok($_ eq  "$dx$dx","bug id 20000819.004, front");
     }
 
     $dx = "\x{10f2}";
     $_  = "\x{10f2}\x{10f2}";
     s/($dx)($dx)/$1$2/;
     {
-	use bytes;
-	print "not " unless $_ eq "$dx$dx";
-	print "ok $test\n";
-	$test++;
+        ok($_ eq  "$dx$dx","bug id 20000819.004, front and back");
     }
 }
 
@@ -60,9 +57,9 @@ my $test = 4;
 
     my $a;
     $a .= "\x{1ff}";
-    print "not " unless $a eq "\x{1ff}";
-    print "ok $test\n";
-    $test++;
+    ok($a eq  "\x{1ff}", "bug id 20000901.092, undef left");
+    $a .= undef;
+    ok($a eq  "\x{1ff}", "bug id 20000901.092, undef right");
 }
 
 {
@@ -72,29 +69,21 @@ my $test = 4;
 
     # Without the fix this 5.7.0 would croak:
     # Modification of a read-only value attempted at ...
-    "$2\x{1234}";
-
-    print "ok $test\n";
-    $test++;
+    eval {"$2\x{1234}"};
+    ok(!$@, "bug id 20001020.006, left");
 
     # For symmetry with the above.
-    "\x{1234}$2";
-
-    print "ok $test\n";
-    $test++;
+    eval {"\x{1234}$2"};
+    ok(!$@, "bug id 20001020.006, right");
 
     *pi = \undef;
     # This bug existed earlier than the $2 bug, but is fixed with the same
     # patch. Without the fix this 5.7.0 would also croak:
     # Modification of a read-only value attempted at ...
-    "$pi\x{1234}";
-
-    print "ok $test\n";
-    $test++;
+    eval{"$pi\x{1234}"};
+    ok(!$@, "bug id 20001020.006, constant left");
 
     # For symmetry with the above.
-    "\x{1234}$pi";
-
-    print "ok $test\n";
-    $test++;
+    eval{"\x{1234}$pi"};
+    ok(!$@, "bug id 20001020.006, constant right");
 }

@@ -148,12 +148,47 @@ available drive letter.
 
 =item Win32::GetOSVersion()
 
-[CORE] Returns the array (STRING, MAJOR, MINOR, BUILD, ID), where
-the elements are, respectively: An arbitrary descriptive string, the
-major version number of the operating system, the minor version
-number, the build number, and a digit indicating the actual operating
-system. For ID, the values are 0 for Win32s, 1 for Windows 9X and 2
-for Windows NT. In scalar context it returns just the ID.
+[CORE] Returns the array (STRING, MAJOR, MINOR, BUILD, ID), where the
+elements are, respectively: An arbitrary descriptive string, the major
+version number of the operating system, the minor version number, the
+build number, and a digit indicating the actual operating system.
+For the ID, the values are 0 for Win32s, 1 for Windows 9X and 2 for
+Windows NT/2000/XP.  In scalar context it returns just the ID.
+
+Currently known values for ID MAJOR and MINOR are as follows:
+
+    OS                    ID    MAJOR   MINOR
+    Win32s                 0      -       -
+    Windows 95             1      4       0
+    Windows 98             1      4      10
+    Windows Me             1      4      90
+    Windows NT 3.51        2      3      51
+    Windows NT 4           2      4       0
+    Windows 2000           2      5       0
+    Windows XP             2      5       1
+    Windows .NET Server    2      5       1
+
+Unfortunately as of June 2002 there is no way to distinguish between
+.NET servers and XP servers without using additional modules.
+
+=item Win32::GetOSName()
+
+[EXT] In scalar context returns the name of the Win32 operating system
+being used.  In list context returns a two element list of the OS name
+and whatever edition information is known about the particular build
+(for Win9x boxes) and whatever service packs have been installed.
+The latter is roughly equivalent to the first item returned by
+GetOSVersion() in list context.
+
+Currently the possible values for the OS name are
+
+  Win32s Win95 Win98 WinMe Win2000 WinXP/.Net WinNT3.51 WinNT4
+
+This routine is just a simple interface into GetOSVersion().  More
+specific or demanding situations should use that instead.  Another
+option would be to use POSIX::uname(), however the latter appears to
+report only the OS family name and not the specific OS.  In scalar
+context it returns just the ID.
 
 =item Win32::GetShortPathName(PATHNAME)
 
@@ -252,6 +287,20 @@ The function returns the menu id of the selected push button:
 =item Win32::RegisterServer(LIBRARYNAME)
 
 [EXT] Loads the DLL LIBRARYNAME and calls the function DllRegisterServer.
+
+=item Win32::SetChildShowWindow(SHOWWINDOW)
+
+[CORE] Sets the I<ShowMode> of child processes started by system().
+By default system() will create a new console window for child
+processes if Perl itself is not running from a console. Calling
+SetChildShowWindow(0) will make these new console windows invisible.
+Calling SetChildShowWindow() without arguments reverts system() to the
+default behavior.  The return value of SetChildShowWindow() is the
+previous setting or C<undef>.
+
+[EXT] The following symbolic constants for SHOWWINDOW are available
+(but not exported) from the Win32 module: SW_HIDE, SW_SHOWNORMAL,
+SW_SHOWMINIMIZED, SW_SHOWMAXIMIZED and SW_SHOWNOACTIVATE.
 
 =item Win32::SetCwd(NEWDIRECTORY)
 

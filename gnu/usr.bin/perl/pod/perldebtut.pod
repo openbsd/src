@@ -18,7 +18,8 @@ This is for them.
 
 First of all, there's a few things you can do to make your life a lot more
 straightforward when it comes to debugging perl programs, without using the
-debugger at all.  To demonstrate, here's a simple script with a problem:
+debugger at all.  To demonstrate, here's a simple script, named "hello", with
+a problem:
 
 	#!/usr/bin/perl
 
@@ -35,9 +36,9 @@ is, it will print out a newline character, and you'll get what looks like a
 blank line.  It looks like there's 2 variables when (because of the typo)
 there's really 3:
 
-	$var1 = 'Hello World'
-	$varl = undef
-	$var2 = "\n"
+	$var1 = 'Hello World';
+	$varl = undef;
+	$var2 = "\n";
 
 To catch this kind of problem, we can force each variable to be declared
 before use by pulling in the strict module, by putting 'use strict;' after the
@@ -59,7 +60,7 @@ script looks like this:
 	use strict;
 
 	my $var1 = 'Hello World';
-	my $varl = '';
+	my $varl = undef;
 	my $var2 = "$varl\n";
 
 	print $var2; 
@@ -71,11 +72,11 @@ We then do (always a good idea) a syntax check before we try to run it again:
 	hello syntax OK 
 
 And now when we run it, we get "\n" still, but at least we know why.  Just
-getting this script to compile has exposed the '$varl' (with the letter 'l)
+getting this script to compile has exposed the '$varl' (with the letter 'l')
 variable, and simply changing $varl to $var1 solves the problem.
 
 
-=head1 Looking at data and -w and w
+=head1 Looking at data and -w and v
 
 Ok, but how about when you want to really see your data, what's in that
 dynamic variable, just before using it?
@@ -144,46 +145,48 @@ That's it, you're back on home turf again.
 =head1 help
 
 Fire the debugger up again on your script and we'll look at the help menu. 
-There's a couple of ways of calling help: a simple 'B<h>' will get you a long
-scrolled list of help, 'B<|h>' (pipe-h) will pipe the help through your pager
-('more' or 'less' probably), and finally, 'B<h h>' (h-space-h) will give you a
-helpful mini-screen snapshot:
+There's a couple of ways of calling help: a simple 'B<h>' will get the summary 
+help list, 'B<|h>' (pipe-h) will pipe the help through your pager (which is 
+(probably 'more' or 'less'), and finally, 'B<h h>' (h-space-h) will give you 
+the entire help screen.  Here is the summary page:
 
- DB<1> h h
+DB<1>h
+
  List/search source lines:               Control script execution:
- l [ln|sub]  List source code            T           Stack trace
- - or .      List previous/current line  s [expr]    Single step [in expr]
- w [line]    List around line            n [expr]    Next, steps over subs
- f filename  View source in file         <CR/Enter>  Repeat last n or s
- /pattern/ ?patt?   Search forw/backw    r           Return from subroutine
- v           Show versions of modules    c [ln|sub]  Continue until position
- Debugger controls:                        L           List
-break/watch/actions
- O [...]     Set debugger options        t [expr]    Toggle trace [trace expr]
- <[<]|{[{]|>[>] [cmd] Do pre/post-prompt b [ln|event|sub] [cnd] Set breakpoint
- ! [N|pat]   Redo a previous command     d [ln] or D Delete a/all breakpoints
- H [-num]    Display last num commands   a [ln] cmd  Do cmd before line
- = [a val]   Define/list an alias        W expr      Add a watch expression
- h [db_cmd]  Get help on command         A or W      Delete all actions/watch
- |[|]db_cmd  Send output to pager        ![!] syscmd Run cmd in a subprocess
- q or ^D     Quit                        R           Attempt a restart
- Data Examination:       expr     Execute perl code, also see: s,n,t expr
- x|m expr      Evals expr in list context, dumps the result or lists methods.
- p expr        Print expression (uses script's current package).
- S [[!]pat]    List subroutine names [not] matching pattern
- V [Pk [Vars]] List Variables in Package.  Vars can be ~pattern or !pattern.
- X [Vars]      Same as "V current_package [Vars]".
- For more help, type h cmd_letter, or run man perldebug for all docs.       
+  l [ln|sub]  List source code            T           Stack trace
+  - or .      List previous/current line  s [expr]    Single step [in expr]
+  v [line]    View around line            n [expr]    Next, steps over subs
+  f filename  View source in file         <CR/Enter>  Repeat last n or s
+  /pattern/ ?patt?   Search forw/backw    r           Return from subroutine
+  M           Show module versions        c [ln|sub]  Continue until position
+ Debugger controls:                       L           List break/watch/actions
+  o [...]     Set debugger options        t [expr]    Toggle trace [trace expr]
+  <[<]|{[{]|>[>] [cmd] Do pre/post-prompt b [ln|event|sub] [cnd] Set breakpoint
+  ! [N|pat]   Redo a previous command     B ln|*      Delete a/all breakpoints
+  H [-num]    Display last num commands   a [ln] cmd  Do cmd before line
+  = [a val]   Define/list an alias        A ln|*      Delete a/all actions
+  h [db_cmd]  Get help on command         w expr      Add a watch expression
+  h h         Complete help page          W expr|*    Delete a/all watch exprs
+  |[|]db_cmd  Send output to pager        ![!] syscmd Run cmd in a subprocess
+  q or ^D     Quit                        R           Attempt a restart
+ Data Examination:     expr     Execute perl code, also see: s,n,t expr
+  x|m expr       Evals expr in list context, dumps the result or lists methods.
+  p expr         Print expression (uses script's current package).
+  S [[!]pat]     List subroutine names [not] matching pattern
+  V [Pk [Vars]]  List Variables in Package.  Vars can be ~pattern or !pattern.
+  X [Vars]       Same as "V current_package [Vars]".
+  y [n [Vars]]   List lexicals in higher scope <n>.  Vars same as V.
+ For more help, type h cmd_letter, or run man perldebug for all docs. 
 
 More confusing options than you can shake a big stick at!  It's not as bad as
 it looks and it's very useful to know more about all of it, and fun too!
 
 There's a couple of useful ones to know about straight away.  You wouldn't
-think we're using any libraries at all at the moment, but 'B<v>' will show
-which modules are currently loaded, by the debugger as well your script. 
-'B<V>' and 'B<X>' show variables in the program by package scope and can be
-constrained by pattern.  'B<m>' shows methods and 'B<S>' shows all subroutines
-(by pattern):
+think we're using any libraries at all at the moment, but 'B<M>' will show
+which modules are currently loaded, and their version number, while 'B<m>' 
+will show the methods, and 'B<S>' shows all subroutines (by pattern) as 
+shown below.  'B<V>' and 'B<X>' show variables in the program by package 
+scope and can be constrained by pattern. 
 
 	DB<2>S str 
 	dumpvar::stringify
@@ -198,11 +201,10 @@ the 'name':
 	FileHandle(stderr) => fileno(2)    
 
 Remember we're in our tiny program with a problem, we should have a look at
-where we are, and what our data looks like. First of all let's have a window
-on our present position (the first line of code in this case), via the letter
-'B<w>':
+where we are, and what our data looks like. First of all let's view some code 
+at our present position (the first line of code in this case), via 'B<v>':
 
-	DB<4> w
+	DB<4> v
 	1       #!/usr/bin/perl
 	2:      use strict;
 	3
@@ -215,9 +217,9 @@ on our present position (the first line of code in this case), via the letter
 	10      );                                 
 
 At line number 4 is a helpful pointer, that tells you where you are now.  To
-see more code, type 'w' again:
+see more code, type 'v' again:
 
-	DB<4> w
+	DB<4> v
 	8               'welcome' => q(Hello World),
 	9               'zip' => q(welcome),
 	10      );
@@ -329,7 +331,7 @@ While we're here, take a closer look at the 'B<x>' command, it's really useful
 and will merrily dump out nested references, complete objects, partial objects
 - just about whatever you throw at it:
 
-Let's make a quick object and x-plode it, first we'll start the the debugger:
+Let's make a quick object and x-plode it, first we'll start the debugger:
 it wants some form of input from STDIN, so we give it something non-commital,
 a zero:
 
@@ -477,9 +479,9 @@ We'll simply continue down to our pre-set breakpoint with a 'B<c>':
   	DB<1> c
 	main::(temp:10):                if ($deg eq 'c') {   
 
-Followed by a window command to see where we are:
+Followed by a view command to see where we are:
 
-	DB<1> w
+	DB<1> v
 	7:              my ($deg, $num) = ($1, $2);
 	8:              my ($in, $out) = ($num, $num);
 	9:              $DB::single=2;
@@ -513,12 +515,12 @@ using the list 'L' command:
 Note that to delete a breakpoint you use 'd' or 'D'.
 
 Now we'll continue down into our subroutine, this time rather than by line
-number, we'll use the subroutine name, followed by the now familiar 'w':
+number, we'll use the subroutine name, followed by the now familiar 'v':
 
 	DB<3> c f2c
 	main::f2c(temp:30):             my $f = shift;  
 
-	DB<4> w
+	DB<4> v
 	24:     exit;
 	25
 	26      sub f2c {
@@ -586,7 +588,7 @@ Actions, watch variables, stack traces etc.: on the TODO list.
 
 	a 
 
-	W 
+	w 
 
 	t 
 
@@ -666,7 +668,7 @@ and there's a B<vi> interface too.
 
 You don't have to do this all on the command line, though, there are a few GUI
 options out there.  The nice thing about these is you can wave a mouse over a
-variable and a dump of it's data will appear in an appropriate window, or in a
+variable and a dump of its data will appear in an appropriate window, or in a
 popup balloon, no more tiresome typing of 'x $varname' :-)
 
 In particular have a hunt around for the following:

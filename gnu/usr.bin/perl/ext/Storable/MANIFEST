@@ -1,0 +1,31 @@
+README			    Read this first
+MANIFEST		    This shipping list
+Makefile.PL		    Generic Makefile template
+Storable.pm		    The perl side of Storable
+Storable.xs		    The C side of Storable
+ChangeLog		    Changes since baseline
+t/blessed.t		    See if Storable works
+t/canonical.t		    See if Storable works
+t/compat06.t		    See if Storable works
+t/croak.t		    See if Storable works
+t/dclone.t		    See if Storable works
+t/downgrade.t		    See if Storable works
+t/forgive.t		    See if Storable works
+t/freeze.t		    See if Storable works
+t/integer.t		    For "use integer" testing
+t/interwork56.t		    Test combatibility kludge for 64bit data under 5.6.x
+t/lock.t		    See if Storable works
+t/make_56_interwork.pl	    Make test data for interwork56.t
+t/make_downgrade.pl	    Make test data for downgrade.t
+t/malice.t		    See if Storable copes with corrupt files
+t/overload.t		    See if Storable works
+t/recurse.t		    See if Storable works
+t/restrict.t		    See if Storable works
+t/retrieve.t		    See if Storable works
+t/st-dump.pl		    helper routines for tests
+t/store.t		    See if Storable works
+t/tied.t		    See if Storable works
+t/tied_hook.t		    See if Storable works
+t/tied_items.t		    See if Storable works
+t/utf8.t		    See if Storable works
+t/utf8hash.t		    See if Storable works

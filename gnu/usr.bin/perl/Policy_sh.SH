@@ -1,4 +1,4 @@
-case $CONFIGDOTSH in
+case $PERL_CONFIG_SH in
 '') . ./config.sh ;;
 esac
 echo "Extracting Policy.sh (with variable substitutions)"

@@ -71,3 +71,6 @@ $define|true|[yY]*)
 	;;
 esac
 EOCBU
+
+useperlio='undef'
+uselargefiles='undef'

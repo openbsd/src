@@ -1,0 +1,21 @@
+#!/usr/local/bin/perl
+
+use blib;
+use Net::FTP;
+use Getopt::Long;
+
+$opt_debug = undef;
+$opt_firewall = undef;
+
+GetOptions(qw(debug firewall=s));
+
+@firewall = defined $opt_firewall ? (Firewall => $opt_firewall) : ();
+
+foreach $host (@ARGV)
+ {
+  $ftp = Net::FTP->new($host, @firewall, Debug => $opt_debug ? 1 : 0);
+  $ftp->login();
+  print $ftp->pwd,"\n";
+  $ftp->quit;
+ }
+

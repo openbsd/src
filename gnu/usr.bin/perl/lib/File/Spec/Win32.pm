@@ -5,7 +5,7 @@ use Cwd;
 use vars qw(@ISA $VERSION);
 require File::Spec::Unix;
 
-$VERSION = '1.2';
+$VERSION = '1.3';
 
 @ISA = qw(File::Spec::Unix);
 
@@ -23,7 +23,7 @@ See File::Spec::Unix for a documentation of the methods provided
 there. This package overrides the implementation of these methods, not
 the semantics.
 
-=over
+=over 4
 
 =item devnull
 
@@ -43,9 +43,15 @@ from the following list:
     $ENV{TMPDIR}
     $ENV{TEMP}
     $ENV{TMP}
+    SYS:/temp
     C:/temp
     /tmp
     /
+
+The SYS:/temp is preferred in Novell NetWare.
+
+Since Perl 5.8.0, if running under taint mode, and if the environment
+variables are tainted, they are not used.
 
 =cut
 
@@ -53,7 +59,15 @@ my $tmpdir;
 sub tmpdir {
     return $tmpdir if defined $tmpdir;
     my $self = shift;
-    foreach (@ENV{qw(TMPDIR TEMP TMP)}, qw(C:/temp /tmp /)) {
+    my @dirlist = (@ENV{qw(TMPDIR TEMP TMP)}, qw(C:/temp /tmp /));
+    {
+	no strict 'refs';
+	if (${"\cTAINT"}) { # Check for taint mode on perl >= 5.8.0
+	    require Scalar::Util;
+	    @dirlist = grep { ! Scalar::Util::tainted $_ } @dirlist;
+	}
+    }
+    foreach (@dirlist) {
 	next unless defined && -d;
 	$tmpdir = $_;
 	last;
@@ -106,11 +120,11 @@ sub canonpath {
     my ($self,$path) = @_;
     $path =~ s/^([a-z]:)/\u$1/s;
     $path =~ s|/|\\|g;
-    $path =~ s|([^\\])\\+|$1\\|g;                  # xx////xx  -> xx/xx
-    $path =~ s|(\\\.)+\\|\\|g;                     # xx/././xx -> xx/xx
-    $path =~ s|^(\.\\)+||s unless $path eq ".\\";  # ./xx      -> xx
+    $path =~ s|([^\\])\\+|$1\\|g;                  # xx\\\\xx  -> xx\xx
+    $path =~ s|(\\\.)+\\|\\|g;                     # xx\.\.\xx -> xx\xx
+    $path =~ s|^(\.\\)+||s unless $path eq ".\\";  # .\xx      -> xx
     $path =~ s|\\\Z(?!\n)||
-             unless $path =~ m#^([A-Z]:)?\\\Z(?!\n)#s;   # xx/       -> xx
+             unless $path =~ m#^([A-Z]:)?\\\Z(?!\n)#s;   # xx\       -> xx
     return $path;
 }
 
@@ -164,7 +178,7 @@ sub splitpath {
 
 =item splitdir
 
-The opposite of L</catdir()>.
+The opposite of L<catdir()|File::Spec/catdir()>.
 
     @dirs = File::Spec->splitdir( $directories );
 
@@ -255,18 +269,18 @@ sub abs2rel {
     }
 
     # Figure out the effective $base and clean it up.
-    if ( ! $self->file_name_is_absolute( $base ) ) {
-        $base = $self->rel2abs( $base ) ;
-    }
-    elsif ( !defined( $base ) || $base eq '' ) {
+    if ( !defined( $base ) || $base eq '' ) {
         $base = cwd() ;
+    }
+    elsif ( ! $self->file_name_is_absolute( $base ) ) {
+        $base = $self->rel2abs( $base ) ;
     }
     else {
         $base = $self->canonpath( $base ) ;
     }
 
     # Split up paths
-    my ( $path_volume, $path_directories, $path_file ) =
+    my ( undef, $path_directories, $path_file ) =
         $self->splitpath( $path, 1 ) ;
 
     my $base_directories = ($self->splitpath( $base, 1 ))[1] ;
@@ -304,11 +318,8 @@ sub abs2rel {
         $path_directories = "$base_directories$path_directories" ;
     }
 
-    # It makes no sense to add a relative path to a UNC volume
-    $path_volume = '' unless $path_volume =~ m{^[A-Z]:}is ;
-
     return $self->canonpath( 
-        $self->catpath($path_volume, $path_directories, $path_file ) 
+        $self->catpath( "", $path_directories, $path_file ) 
     ) ;
 }
 
@@ -345,6 +356,10 @@ sub rel2abs {
 }
 
 =back
+
+=head2 Note For File::Spec::Win32 Maintainers
+
+Novell NetWare inherits its File::Spec behaviour from File::Spec::Win32.
 
 =head1 SEE ALSO
 

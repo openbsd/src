@@ -8,7 +8,7 @@
 #
 
 #! /bin/sh
-case $CONFIG in
+case $PERL_CONFIG_SH in
 '')
 	if test -f config.sh; then TOP=.;
 	elif test -f ../config.sh; then TOP=..;
@@ -36,7 +36,7 @@ ld2: $& Makefile perlld ${src}/cygwin/ld2.in
 # install is included in Cygwin distributions, and we make a note of th
 # requirement in the README.cygwin file. However, let's give them
 # a warning.
-	@install -c -m 755 ld2 ${installbin}/ld2
+	@/usr/bin/install -c -m 755 ld2 ${installbin}/ld2
 	@if test ! -f  ${installbin}/ld2; then \
 		echo "*************************************************" ; \
 		echo "Make will probably fail in a few more steps." ; \
@@ -81,12 +81,6 @@ perlld: $& Makefile ${src}/cygwin/perlld.in
 # make sure that all library names are not malformed
 libperl=`echo $libperl|sed -e s,\\\..*,,`
 
-# it would be nice to allow dll to have any name,
-# but for now i insist on 'lib<whatever>.dll'
-if ( ! ( echo $libperl | grep '^lib' >/dev/null ) )
-then
-  libperl=lib$libperl
-fi
 linklibperl=-l`echo $libperl|sed -e s,^lib,,`
 
 $spitshell >>Makefile <<!GROK!THIS!
@@ -108,11 +102,11 @@ perlmain$(OBJ_EXT): perlmain.c
 
 # library used to make statically linked executables
 # miniperl is linked against it to avoid libperl.dll locking
-$(LIBPERL)s$(LIB_EXT): $& perl$(OBJ_EXT) $(cwobj)
+$(LIBPERL)$(LIB_EXT): $& perl$(OBJ_EXT) $(cwobj)
 	$(AR) rcu $@ perl$(OBJ_EXT) $(cwobj)
 
 # dll and import library
-$(LIBPERL)$(LIB_EXT): $& perl$(OBJ_EXT) $(cwobj) ld2
+$(LIBPERL).dll$(LIB_EXT): $& perl$(OBJ_EXT) $(cwobj) ld2
 	$(LDLIBPTH) ld2 $(SHRPLDFLAGS) -o $(LIBPERL)$(DLSUFFIX) \
 	perl$(OBJ_EXT) $(cwobj) $(libs)
 
@@ -124,9 +118,23 @@ $(LIBPERL)$(LIB_EXT): $& perl$(OBJ_EXT) $(cwobj) ld2
 # build problems but that's not obvious to the novice.
 # The Module used here must not depend on Config or any extensions.
 
-miniperl: $& miniperlmain$(OBJ_EXT) $(LIBPERL)s$(LIB_EXT) opmini$(OBJ_EXT)
-	$(LDLIBPTH) $(CC) $(CLDFLAGS) -o miniperl miniperlmain$(OBJ_EXT) opmini$(OBJ_EXT) $(LLIBPERL)s $(libs)
+miniperl.exe \
+miniperl: $& miniperlmain$(OBJ_EXT) $(LIBPERL)$(LIB_EXT) opmini$(OBJ_EXT)
+	$(LDLIBPTH) $(CC) $(CLDFLAGS) -o miniperl miniperlmain$(OBJ_EXT) opmini$(OBJ_EXT) $(LLIBPERL) $(libs)
 	$(LDLIBPTH) ./miniperl -w -Ilib -MExporter -e '<?>' || $(MAKE) minitest
+
+perl.exe \
+perl: $& perlmain$(OBJ_EXT) $(LIBPERL).dll$(LIB_EXT) $(DYNALOADER) $(static_ext) ext.libs
+	$(SHRPENV) $(LDLIBPTH) $(CC) $(CLDFLAGS) $(CCDLFLAGS) -o perl perlmain$(OBJ_EXT) $(DYNALOADER) $(static_ext) $(LLIBPERL) `cat ext.libs` $(libs)
+
+pureperl: $& perlmain$(OBJ_EXT) $(LIBPERL).dll$(LIB_EXT) $(DYNALOADER) $(static_ext) ext.libs
+	$(SHRPENV) $(LDLIBPTH) purify $(CC) $(CLDFLAGS) $(CCDLFLAGS) -o pureperl perlmain$(OBJ_EXT) $(DYNALOADER) $(static_ext) $(LLIBPERL) `cat ext.libs` $(libs)
+
+purecovperl: $& perlmain$(OBJ_EXT) $(LIBPERL).dll$(LIB_EXT) $(DYNALOADER) $(static_ext) ext.libs
+	$(SHRPENV) $(LDLIBPTH) purecov $(CC) $(CLDFLAGS) $(CCDLFLAGS) -o purecovperl perlmain$(OBJ_EXT) $(DYNALOADER) $(static_ext) $(LLIBPERL) `cat ext.libs` $(libs)
+
+quantperl: $& perlmain$(OBJ_EXT) $(LIBPERL).dll$(LIB_EXT) $(DYNALOADER) $(static_ext) ext.libs
+	$(SHRPENV) $(LDLIBPTH) quantify $(CC) $(CLDFLAGS) $(CCDLFLAGS) -o quantperl perlmain$(OBJ_EXT) $(DYNALOADER) $(static_ext) $(LLIBPERL) `cat ext.libs` $(libs)
 
 !NO!SUBS!
 	;;
@@ -146,9 +154,23 @@ $(LIBPERL)$(LIB_EXT): $& perl$(OBJ_EXT) $(cwobj)
 # build problems but that's not obvious to the novice.
 # The Module used here must not depend on Config or any extensions.
 
+miniperl.exe \
 miniperl: $& miniperlmain$(OBJ_EXT) $(LIBPERL)$(LIB_EXT) opmini$(OBJ_EXT)
 	$(LDLIBPTH) $(CC) $(CLDFLAGS) -o miniperl miniperlmain$(OBJ_EXT) opmini$(OBJ_EXT) $(LLIBPERL) $(libs)
 	$(LDLIBPTH) ./miniperl -w -Ilib -MExporter -e '<?>' || $(MAKE) minitest
+
+perl.exe \
+perl: $& perlmain$(OBJ_EXT) $(LIBPERL)$(LIB_EXT) $(DYNALOADER) $(static_ext) ext.libs
+	$(SHRPENV) $(LDLIBPTH) $(CC) $(CLDFLAGS) $(CCDLFLAGS) -o perl perlmain$(OBJ_EXT) $(DYNALOADER) $(static_ext) -Wl,-Bstatic $(LLIBPERL) -Wl,-Bdynamic `cat ext.libs` $(libs)
+
+pureperl: $& perlmain$(OBJ_EXT) $(LIBPERL)$(LIB_EXT) $(DYNALOADER) $(static_ext) ext.libs
+	$(SHRPENV) $(LDLIBPTH) purify $(CC) $(CLDFLAGS) $(CCDLFLAGS) -o pureperl perlmain$(OBJ_EXT) $(DYNALOADER) $(static_ext) $(LLIBPERL) `cat ext.libs` $(libs)
+
+purecovperl: $& perlmain$(OBJ_EXT) $(LIBPERL)$(LIB_EXT) $(DYNALOADER) $(static_ext) ext.libs
+	$(SHRPENV) $(LDLIBPTH) purecov $(CC) $(CLDFLAGS) $(CCDLFLAGS) -o purecovperl perlmain$(OBJ_EXT) $(DYNALOADER) $(static_ext) $(LLIBPERL) `cat ext.libs` $(libs)
+
+quantperl: $& perlmain$(OBJ_EXT) $(LIBPERL)$(LIB_EXT) $(DYNALOADER) $(static_ext) ext.libs
+	$(SHRPENV) $(LDLIBPTH) quantify $(CC) $(CLDFLAGS) $(CCDLFLAGS) -o quantperl perlmain$(OBJ_EXT) $(DYNALOADER) $(static_ext) $(LLIBPERL) `cat ext.libs` $(libs)
 
 !NO!SUBS!
 	;;
@@ -164,17 +186,6 @@ esac
 #
 $spitshell >>Makefile <<'!NO!SUBS!'
 
-perl: $& perlmain$(OBJ_EXT) $(LIBPERL)$(LIB_EXT) $(DYNALOADER) $(static_ext) ext.libs
-	$(SHRPENV) $(LDLIBPTH) $(CC) $(CLDFLAGS) $(CCDLFLAGS) -o perl perlmain$(OBJ_EXT) $(DYNALOADER) $(static_ext) -Wl,-Bstatic $(LLIBPERL) -Wl,-Bdynamic `cat ext.libs` $(libs)
-
-pureperl: $& perlmain$(OBJ_EXT) $(LIBPERL)$(LIB_EXT) $(DYNALOADER) $(static_ext) ext.libs
-	$(SHRPENV) $(LDLIBPTH) purify $(CC) $(CLDFLAGS) $(CCDLFLAGS) -o pureperl perlmain$(OBJ_EXT) $(DYNALOADER) $(static_ext) $(LLIBPERL) `cat ext.libs` $(libs)
-
-purecovperl: $& perlmain$(OBJ_EXT) $(LIBPERL)$(LIB_EXT) $(DYNALOADER) $(static_ext) ext.libs
-	$(SHRPENV) $(LDLIBPTH) purecov $(CC) $(CLDFLAGS) $(CCDLFLAGS) -o purecovperl perlmain$(OBJ_EXT) $(DYNALOADER) $(static_ext) $(LLIBPERL) `cat ext.libs` $(libs)
-
-quantperl: $& perlmain$(OBJ_EXT) $(LIBPERL)$(LIB_EXT) $(DYNALOADER) $(static_ext) ext.libs
-	$(SHRPENV) $(LDLIBPTH) quantify $(CC) $(CLDFLAGS) $(CCDLFLAGS) -o quantperl perlmain$(OBJ_EXT) $(DYNALOADER) $(static_ext) $(LLIBPERL) `cat ext.libs` $(libs)
 
 !NO!SUBS!
 

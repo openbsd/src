@@ -12,6 +12,7 @@
      module    option(-module)module_name,='(current_module)'
      tgt_mod   option(-target_module)module_name,='(current_module)'
      version   option(-version)name,allow(alpha,ga),=ga
+     compiler  option(-compiler)name,allow(cc,gcc)=cc
 &end_parameters
 &echo command_lines
 &
@@ -32,6 +33,26 @@
 &if &cpu& = pa8000
 &then &set_string obj .8000
 &
+&if &compiler& = gcc & &version& = alpha
+&then &do
+ &display_line GCC is not supported by the alpha version of POSIX support.
+ &return e$translation_failed
+&end
+&if &cpu& = mc68020 & &version& = ga
+&then &do
+ &display_line The mc68020 CPU is not supported by the GA version of POSIX support.
+ &return e$translation_failed
+&end
+&if &cpu& = i80860 & &version& = ga
+&then &do
+ &display_line The i80860 CPU is not supported by the GA version of POSIX support.
+ &return e$translation_failed
+&end
+&if &cpu& = pa8000 & &compiler& = gcc
+&then &do
+ &display_line The pa8000 CPU is not supported by the GNU GCC compiler.
+ &return e$translation_failed
+&end
 &if ^ (exists obj&obj& -directory)
 &then !create_dir obj&obj&
 &
@@ -42,5 +63,6 @@
 &
 !change_current_dir obj&obj&
 !start_process (string <build -processor &cpu& &recompile& &rebind& &+
-     -target_module &tgt_mod& -version &version&) -module &module&
+     -target_module &tgt_mod& -version &version& -compiler &compiler&) &+
+     -module &module&
 !change_current_dir <

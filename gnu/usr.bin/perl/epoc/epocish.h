@@ -105,16 +105,17 @@
 #define Fflush(fp)         fflush(fp)
 #define Mkdir(path,mode)   mkdir((path),(mode))
 
-/* these should be set in a hint file, not here */
+
+/* epocemx setenv bug workaround */
 #ifndef PERL_SYS_INIT
-#    define PERL_SYS_INIT(c,v)  Perl_epoc_init(c,v);   MALLOC_INIT
+#    define PERL_SYS_INIT(c,v)    putenv(".dummy=foo"); putenv(".dummy"); MALLOC_INIT
 #endif
 
 #ifndef PERL_SYS_TERM
 #define PERL_SYS_TERM()		MALLOC_TERM
 #endif
 
-#define BIT_BUCKET "NUL:"
+#define BIT_BUCKET "/dev/null"
 
 #define dXSUB_SYS
 
@@ -122,10 +123,14 @@
 #define  BOGUS_GETNAME_RETURN 8
 
 /* 
-   read() on a socket blocks until buf is filled completly, 
-   recv() returns each massage 
+   read() on a socket is unimplemented in current epocemx
+   use recv() instead
 */
+
 #define PERL_SOCK_SYSREAD_IS_RECV
+
+/* write ditto, use send */
+#define PERL_SOCK_SYSWRITE_IS_SEND
 
 /* No /dev/random available*/
 
@@ -136,10 +141,16 @@
    atof() in ER5 stdlib depends on locale. 
 */
 
-double epoc_atof( const char *ptr);
-#define atof(a) epoc_atof(a)
 #define strtoul(a,b,c) epoc_strtoul(a,b,c)
 
 #define init_os_extras Perl_init_os_extras
 
-#define NO_ENVIRON_ARRAY
+#define ARG_MAX 4096
+
+#define ECONNABORTED 0xdead
+
+/* For environ */
+#include <emx.h>
+#define PERL_USE_SAFE_PUTENV
+
+

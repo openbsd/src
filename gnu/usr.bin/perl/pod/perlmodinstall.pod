@@ -5,23 +5,32 @@ perlmodinstall - Installing CPAN Modules
 =head1 DESCRIPTION
 
 You can think of a module as the fundamental unit of reusable Perl
-code; See L<perlmod> for details.  Whenever anyone creates a chunk
-of Perl code that they think will be useful to the world, they
-register as a Perl developer at
-http://www.perl.com/CPAN/modules/04pause.html so that they can then
-upload their code to CPAN.  CPAN is the Comprehensive Perl Archive
-Network and can be accessed at http://www.perl.com/CPAN/, or searched
-via http://cpan.perl.com/ and
-http://theory.uwinnipeg.ca/mod_perl/cpan-search.pl .
+code; see L<perlmod> for details.  Whenever anyone creates a chunk of
+Perl code that they think will be useful to the world, they register
+as a Perl developer at http://www.cpan.org/modules/04pause.html
+so that they can then upload their code to the CPAN.  The CPAN is the
+Comprehensive Perl Archive Network and can be accessed at
+http://www.cpan.org/ , and searched at http://search.cpan.org/ .
 
 This documentation is for people who want to download CPAN modules
 and install them on their own computer.
 
 =head2 PREAMBLE
 
-You have a file ending in F<.tar.gz> (or, less often, F<.zip>).
-You know there's a tasty module inside.  You must now take four
-steps:
+First, are you sure that the module isn't already on your system?  Try
+C<perl -MFoo -e 1>.  (Replace "Foo" with the name of the module; for
+instance, C<perl -MCGI::Carp -e 1>.
+
+If you don't see an error message, you have the module.  (If you do
+see an error message, it's still possible you have the module, but
+that it's not in your path, which you can display with C<perl -e
+"print qq(@INC)">.)  For the remainder of this document, we'll assume
+that you really honestly truly lack an installed module, but have
+found it on the CPAN.
+
+So now you have a file ending in .tar.gz (or, less often, .zip).  You
+know there's a tasty module inside.  There are four steps you must now
+take:
 
 =over 5
 
@@ -36,35 +45,37 @@ steps:
 =back
 
 Here's how to perform each step for each operating system.  This is
-I<not> a substitute for reading the README and INSTALL files that
+<not> a substitute for reading the README and INSTALL files that
 might have come with your module!
 
 Also note that these instructions are tailored for installing the
-module into your system's repository of Perl modules.  But you can
+module into your system's repository of Perl modules -- but you can
 install modules into any directory you wish.  For instance, where I
-say C<perl Makefile.PL>, you can substitute C<perl
-Makefile.PL PREFIX=/my/perl_directory> to install the modules
-into C</my/perl_directory>.  Then you can use the modules
-from your Perl programs with C<use lib
-"/my/perl_directory/lib/site_perl"> or sometimes just C<use
-"/my/perl_directory">.
+say C<perl Makefile.PL>, you can substitute C<perl Makefile.PL
+PREFIX=/my/perl_directory> to install the modules into
+C</my/perl_directory>.  Then you can use the modules from your Perl
+programs with C<use lib "/my/perl_directory/lib/site_perl";> or
+sometimes just C<use "/my/perl_directory";>.  If you're on a system
+that requires superuser/root access to install modules into the
+directories you see when you type C<perl -e "print qq(@INC)">, you'll
+want to install them into a local directory (such as your home
+directory) and use this approach.
 
 =over 4
 
 =item *
 
-B<If you're on Unix,>
+B<If you're on a Unix or Linux system,>
 
 You can use Andreas Koenig's CPAN module
-(which comes standard with Perl, or can itself be downloaded
-from http://www.perl.com/CPAN/modules/by-module/CPAN)
+( http://www.cpan.org/modules/by-module/CPAN )
 to automate the following steps, from DECOMPRESS through INSTALL.
 
 A. DECOMPRESS
 
 Decompress the file with C<gzip -d yourmodule.tar.gz>
 
-You can get gzip from ftp://prep.ai.mit.edu/pub/gnu.
+You can get gzip from ftp://prep.ai.mit.edu/pub/gnu/
 
 Or, you can combine this step with the next to save disk space:
 
@@ -82,33 +93,43 @@ Go into the newly-created directory and type:
       make
       make test
 
+or
+
+      perl Makefile.PL PREFIX=/my/perl_directory
+
+to install it locally.  (Remember that if you do this, you'll have to
+put C<use lib "/my/perl_directory";> near the top of the program that
+is to use this module.
+
 D. INSTALL
 
 While still in that directory, type:
 
       make install
 
-Make sure you have appropriate permissions to install the module
+Make sure you have the appropriate permissions to install the module
 in your Perl 5 library directory.  Often, you'll need to be root.
 
-Perl maintains a record of all module installations.  To look at
-this list, simply type:
-
-      perldoc perllocal
-
 That's all you need to do on Unix systems with dynamic linking.
-Most Unix systems have dynamic linking--if yours doesn't, or if for
-another reason you have a statically-linked perl, I<and> the
+Most Unix systems have dynamic linking -- if yours doesn't, or if for
+another reason you have a statically-linked perl, B<and> the
 module requires compilation, you'll need to build a new Perl binary
 that includes the module.  Again, you'll probably need to be root.
 
 =item *
 
-B<If you're running Windows 95 or NT with the ActiveState port of Perl>
+B<If you're running ActivePerl (Win95/98/2K/NT/XP, Linux, Solaris)>
+
+First, type C<ppm> from a shell and see whether ActiveState's PPM
+repository has your module.  If so, you can install it with C<ppm> and
+you won't have to bother with any of the other steps here.  You might
+be able to use the CPAN instructions from the "Unix or Linux" section
+above as well; give it a try.  Otherwise, you'll have to follow the
+steps below.
 
    A. DECOMPRESS
 
-You can use the shareware B<Winzip> program ( http://www.winzip.com ) to
+You can use the shareware Winzip ( http://www.winzip.com ) to
 decompress and unpack modules.
 
    B. UNPACK
@@ -117,11 +138,12 @@ If you used WinZip, this was already done for you.
 
    C. BUILD
 
-Does the module require compilation (i.e. does it have files
-that end in .xs, .c, .h, .y, .cc, .cxx, or .C)?  If it does, you're on
-your own.  You can try compiling it yourself if you have a C compiler.
-If you're successful, consider uploading the resulting binary to
-CPAN for others to use.  If it doesn't, go to INSTALL.
+Does the module require compilation (i.e. does it have files that end
+in .xs, .c, .h, .y, .cc, .cxx, or .C)?  If it doesn't, go to INSTALL.
+If it does, life is now officially tough for you, because you have to
+compile the module yourself -- no easy feat on Windows.  You'll need
+the C<nmake> utility, available at
+ftp://ftp.microsoft.com/Softlib/MSLFILES/nmake15.exe
 
    D. INSTALL
 
@@ -132,65 +154,16 @@ of the directories you see when you type
 
 =item *
 
-B<If you're running Windows 95 or NT with the core Windows distribution of
-Perl,>
-
-   A. DECOMPRESS
-
-When you download the module, make sure it ends in either
-F<.tar.gz> or F<.zip>.  Windows browsers sometimes
-download C<.tar.gz> files as C<_tar.tar>, because
-early versions of Windows prohibited more than one dot in a filename.
-
-You can use the shareware B<WinZip> program ( http://www.winzip.com ) to
-decompress and unpack modules.
-
-Or, you can use InfoZip's C<unzip> utility (
-http://www.cdrom.com/pub/infozip/ ) to uncompress C<.zip> files; type
-C<unzip yourmodule.zip> in your shell.
-
-Or, if you have a working C<tar> and C<gzip>, you can
-type
-
-   gzip -cd yourmodule.tar.gz | tar xvf -
-
-in the shell to decompress C<yourmodule.tar.gz>.  This will
-UNPACK your module as well.
-
-   B. UNPACK
-
-The methods in DECOMPRESS will have done this for you.
-
-   C. BUILD
-
-Go into the newly-created directory and type:
-
-      perl Makefile.PL
-      dmake
-      dmake test
-
-Depending on your perl configuration, C<dmake> might not be
-available.  You might have to substitute whatever C<perl
--V:make> says. (Usually, that will be C<nmake> or
-C<make>.)
-
-   D. INSTALL
-
-While still in that directory, type:
-
-      dmake install
-
-=item *
-
 B<If you're using a Macintosh,>
+
 
 A. DECOMPRESS
 
-First thing you should do is make sure you have the latest B<cpan-mac>
-distribution ( http://www.cpan.org/authors/id/CNANDOR/ ), which has
-utilities for doing all of the steps.  Read the cpan-mac directions
-carefully and install it.  If you choose not to use cpan-mac
-for some reason, there are alternatives listed here.
+First, make sure you have the latest B<cpan-mac> distribution (
+http://www.cpan.org/authors/id/CNANDOR/ ), which has utilities for
+doing all of the steps.  Read the cpan-mac directions carefully and
+install it.  If you choose not to use cpan-mac for some reason, there
+are alternatives listed here.
 
 After installing cpan-mac, drop the module archive on the
 B<untarzipme> droplet, which will decompress and unpack for you.
@@ -219,9 +192,9 @@ must be compiled, and you cannot install it "out of the box."
 
 If a module does not work on MacPerl but should, or needs to be
 compiled, see if the module exists already as a port on the
-MacPerl Module Porters site (http://pudge.net/mmp/).
+MacPerl Module Porters site ( http://pudge.net/mmp/ ).
 For more information on doing XS with MacPerl yourself, see
-Arved Sandstrom's XS tutorial (http://macperl.com/depts/Tutorials/),
+Arved Sandstrom's XS tutorial ( http://macperl.com/depts/Tutorials/ ),
 and then consider uploading your binary to the CPAN and
 registering it on the MMP site.
 
@@ -290,7 +263,7 @@ in the Perl distribution.
 
 While still in that directory, type:
 
-     make install
+     make install	
 
 You will need the packages mentioned in F<README.dos> in the Perl distribution.
 
@@ -306,8 +279,8 @@ the instructions for Unix.
 
 B<If you're on VMS,>
 
-When downloading from CPAN, save your file with a F<.tgz>
-extension instead of F<.tar.gz>.  All other periods in the
+When downloading from CPAN, save your file with a C<.tgz>
+extension instead of C<.tar.gz>.  All other periods in the
 filename should be replaced with underscores.  For example,
 C<Your-Module-1.33.tar.gz> should be downloaded as
 C<Your-Module-1_33.tgz>.
@@ -322,12 +295,14 @@ or, for zipped modules, type
 
     unzip Your-Module.zip
 
-Executables for gzip, zip, and VMStar ( Alphas:
-http://www.openvms.digital.com/freeware/000TOOLS/ALPHA/ and Vaxen:
-http://www.openvms.digital.com/freeware/000TOOLS/VAX/ ).
+Executables for gzip, zip, and VMStar:
 
-gzip and tar
-are also available at ftp://ftp.digital.com/pub/VMS.
+    http://www.openvms.digital.com/freeware/
+    http://www.crinoid.com/utils/
+
+and their source code:
+
+    http://www.fsf.org/order/ftp.html
 
 Note that GNU's gzip/gunzip is not the same as Info-ZIP's zip/unzip
 package.  The former is a simple compression tool; the latter permits
@@ -345,9 +320,9 @@ Or, if you're fond of VMS command syntax:
 
 C. BUILD
 
-Make sure you have MMS (from Digital) or the freeware MMK ( available from
-MadGoat at  http://www.madgoat.com ).  Then type this to create the
-DESCRIP.MMS for the module:
+Make sure you have MMS (from Digital) or the freeware MMK ( available
+from MadGoat at http://www.madgoat.com ).  Then type this to create
+the DESCRIP.MMS for the module:
 
     perl Makefile.PL
 
@@ -375,10 +350,10 @@ ASCII to EBCDIC.
 
 A. DECOMPRESS
 
-      Decompress the file with C<gzip -d yourmodule.tar.gz>
+Decompress the file with C<gzip -d yourmodule.tar.gz>
 
-      You can get gzip from
-      http://www.s390.ibm.com/products/oe/bpxqp1.html.
+You can get gzip from
+http://www.s390.ibm.com/products/oe/bpxqp1.html
 
 B. UNPACK
 
@@ -388,10 +363,9 @@ Unpack the result with
 
 The BUILD and INSTALL steps are identical to those for Unix.  Some
 modules generate Makefiles that work better with GNU make, which is
-available from http://www.mks.com/s390/gnu/index.htm.
+available from http://www.mks.com/s390/gnu/
 
 =back
-
 
 =head1 PORTABILITY
 
@@ -455,19 +429,17 @@ orwant@tpj.com
 
 The Perl Journal, http://tpj.com
 
-with invaluable help from Brandon Allbery, Charles Bailey, Graham
-Barr, Dominic Dunlop, Jarkko Hietaniemi, Ben Holzman, Tom Horsley,
-Nick Ing-Simmons, Tuomas J. Lukka, Laszlo Molnar, Chris Nandor, Alan
-Olsen, Peter Prymmer, Gurusamy Sarathy, Christoph Spalinger, Dan
-Sugalski, Larry Virden, and Ilya Zakharevich.
+with invaluable help from Chris Nandor, and valuable help from Brandon
+Allbery, Charles Bailey, Graham Barr, Dominic Dunlop, Jarkko
+Hietaniemi, Ben Holzman, Tom Horsley, Nick Ing-Simmons, Tuomas
+J. Lukka, Laszlo Molnar, Alan Olsen, Peter Prymmer, Gurusamy Sarathy,
+Christoph Spalinger, Dan Sugalski, Larry Virden, and Ilya Zakharevich.
 
-First version July 22, 1998
-
-Last Modified August 22, 2000
+First version July 22, 1998; last revised November 21, 2001.
 
 =head1 COPYRIGHT
 
-Copyright (C) 1998, 2000 Jon Orwant.  All Rights Reserved.
+Copyright (C) 1998, 2002 Jon Orwant.  All Rights Reserved.
 
 Permission is granted to make and distribute verbatim copies of this
 documentation provided the copyright notice and this permission notice are
@@ -484,3 +456,4 @@ to this one.
 Permission is granted to copy and distribute translations of this
 documentation into another language, under the above conditions for
 modified versions.
+

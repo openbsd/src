@@ -1,15 +1,15 @@
 package File::Spec::Unix;
 
 use strict;
-use vars qw($VERSION);
+our($VERSION);
 
-$VERSION = '1.2';
+$VERSION = '1.4';
 
 use Cwd;
 
 =head1 NAME
 
-File::Spec::Unix - methods used by File::Spec
+File::Spec::Unix - File::Spec for Unix, base for other File::Spec modules
 
 =head1 SYNOPSIS
 
@@ -17,16 +17,18 @@ File::Spec::Unix - methods used by File::Spec
 
 =head1 DESCRIPTION
 
-Methods for manipulating file specifications.
+Methods for manipulating file specifications.  Other File::Spec
+modules, such as File::Spec::Mac, inherit from File::Spec::Unix and
+override specific methods.
 
 =head1 METHODS
 
 =over 2
 
-=item canonpath
+=item canonpath()
 
 No physical check on the filesystem, but a logical cleanup of a
-path. On UNIX eliminated successive slashes and successive "/.".
+path. On UNIX eliminates successive slashes and successive "/.".
 
     $cpath = File::Spec->canonpath( $path ) ;
 
@@ -34,15 +36,30 @@ path. On UNIX eliminated successive slashes and successive "/.".
 
 sub canonpath {
     my ($self,$path) = @_;
-    $path =~ s|/+|/|g unless($^O eq 'cygwin');     # xx////xx  -> xx/xx
-    $path =~ s|(/\.)+/|/|g;                        # xx/././xx -> xx/xx
+    
+    # Handle POSIX-style node names beginning with double slash (qnx, nto)
+    # Handle network path names beginning with double slash (cygwin)
+    # (POSIX says: "a pathname that begins with two successive slashes
+    # may be interpreted in an implementation-defined manner, although
+    # more than two leading slashes shall be treated as a single slash.")
+    my $node = '';
+    if ( $^O =~ m/^(?:qnx|nto|cygwin)$/ && $path =~ s:^(//[^/]+)(/|\z):/:s ) {
+      $node = $1;
+    }
+    # This used to be
+    # $path =~ s|/+|/|g unless($^O eq 'cygwin');
+    # but that made tests 29, 30, 35, 46, and 213 (as of #13272) to fail
+    # (Mainly because trailing "" directories didn't get stripped).
+    # Why would cygwin avoid collapsing multiple slashes into one? --jhi
+    $path =~ s|/+|/|g;                             # xx////xx  -> xx/xx
+    $path =~ s@(/\.)+(/|\Z(?!\n))@/@g;             # xx/././xx -> xx/xx
     $path =~ s|^(\./)+||s unless $path eq "./";    # ./xx      -> xx
     $path =~ s|^/(\.\./)+|/|s;                     # /../../xx -> xx
     $path =~ s|/\Z(?!\n)|| unless $path eq "/";          # xx/       -> xx
-    return $path;
+    return "$node$path";
 }
 
-=item catdir
+=item catdir()
 
 Concatenate two or more directory names to form a complete path ending
 with a directory. But remove the trailing slash from the resulting
@@ -116,12 +133,23 @@ from the following list or "" if none are writable:
     $ENV{TMPDIR}
     /tmp
 
+Since perl 5.8.0, if running under taint mode, and if $ENV{TMPDIR}
+is tainted, it is not used.
+
 =cut
 
 my $tmpdir;
 sub tmpdir {
     return $tmpdir if defined $tmpdir;
-    foreach ($ENV{TMPDIR}, "/tmp") {
+    my @dirlist = ($ENV{TMPDIR}, "/tmp");
+    {
+	no strict 'refs';
+	if (${"\cTAINT"}) { # Check for taint mode on perl >= 5.8.0
+            require Scalar::Util;
+	    shift @dirlist if Scalar::Util::tainted($ENV{TMPDIR});
+	}
+    }
+    foreach (@dirlist) {
 	next unless defined && -d && -w _;
 	$tmpdir = $_;
 	last;
@@ -167,9 +195,8 @@ sub case_tolerant {
 
 Takes as argument a path and returns true if it is an absolute path.
 
-This does not consult the local filesystem on Unix, Win32, or OS/2.  It
-does sometimes on MacOS (see L<File::Spec::MacOS/file_name_is_absolute>).
-It does consult the working environment for VMS (see
+This does not consult the local filesystem on Unix, Win32, OS/2 or Mac 
+OS (Classic).  It does consult the working environment for VMS (see
 L<File::Spec::VMS/file_name_is_absolute>).
 
 =cut
@@ -252,7 +279,7 @@ files from directories.
 
 Unlike just splitting the directories on the separator, empty
 directory names (C<''>) can be returned, because these are significant
-on some OSs (e.g. MacOS).
+on some OSs.
 
 On Unix,
 
@@ -286,11 +313,12 @@ sub splitdir {
 }
 
 
-=item catpath
+=item catpath()
 
 Takes volume, directory and file portions and returns an entire path. Under
 Unix, $volume is ignored, and directory and file are catenated.  A '/' is
-inserted if need be.  On other OSs, $volume is significant.
+inserted if needed (though if the directory portion doesn't start with
+'/' it is not added).  On other OSs, $volume is significant.
 
 =cut
 
@@ -319,9 +347,9 @@ from the base path to the destination path:
     $rel_path = File::Spec->abs2rel( $path ) ;
     $rel_path = File::Spec->abs2rel( $path, $base ) ;
 
-If $base is not present or '', then L<cwd()> is used. If $base is relative, 
+If $base is not present or '', then L<cwd()|Cwd> is used. If $base is relative, 
 then it is converted to absolute form using L</rel2abs()>. This means that it
-is taken to be relative to L<cwd()>.
+is taken to be relative to L<cwd()|Cwd>.
 
 On systems with the concept of a volume, this assumes that both paths 
 are on the $destination volume, and ignores the $base volume. 
@@ -331,11 +359,9 @@ $base filename as well. Otherwise all path components are assumed to be
 directories.
 
 If $path is relative, it is converted to absolute form using L</rel2abs()>.
-This means that it is taken to be relative to L<cwd()>.
+This means that it is taken to be relative to L<cwd()|Cwd>.
 
-No checks against the filesystem are made on most systems.  On MacOS,
-the filesystem may be consulted (see
-L<File::Spec::MacOS/file_name_is_absolute>).  On VMS, there is
+No checks against the filesystem are made.  On VMS, there is
 interaction with the working environment, as logicals and
 macros are expanded.
 
@@ -393,16 +419,16 @@ sub abs2rel {
     return $self->canonpath( $path ) ;
 }
 
-=item rel2abs
+=item rel2abs()
 
 Converts a relative path to an absolute path. 
 
     $abs_path = File::Spec->rel2abs( $path ) ;
     $abs_path = File::Spec->rel2abs( $path, $base ) ;
 
-If $base is not present or '', then L<cwd()> is used. If $base is relative, 
+If $base is not present or '', then L<cwd()|Cwd> is used. If $base is relative, 
 then it is converted to absolute form using L</rel2abs()>. This means that it
-is taken to be relative to L<cwd()>.
+is taken to be relative to L<cwd()|Cwd>.
 
 On systems with the concept of a volume, this assumes that both paths 
 are on the $base volume, and ignores the $path volume. 
@@ -413,9 +439,7 @@ directories.
 
 If $path is absolute, it is cleaned up and returned using L</canonpath()>.
 
-No checks against the filesystem are made on most systems.  On MacOS,
-the filesystem may be consulted (see
-L<File::Spec::MacOS/file_name_is_absolute>).  On VMS, there is
+No checks against the filesystem are made.  On VMS, there is
 interaction with the working environment, as logicals and
 macros are expanded.
 

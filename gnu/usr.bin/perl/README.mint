@@ -1,6 +1,19 @@
-##########################################################################
-# *** README.mint
-##########################################################################
+If you read this file _as_is_, just ignore the funny characters you see.
+It is written in the POD format (see pod/perlpod.pod) which is specially
+designed to be readable as is.
+
+=head1 NAME
+
+README.mint - Perl version 5 on Atari MiNT
+
+=head1 DESCRIPTION
+
+There is a binary version of perl available from the FreeMiNT project
+http://freemint.de/  You may wish to use this instead of trying to
+compile yourself.
+
+B<The following advice is from perl 5.004_02 and is probably rather
+out of date.>
 
 If you want to build perl yourself on MiNT (or maybe on an Atari without
 MiNT) you may want to accept some advice from somebody who already did it...
@@ -23,8 +36,7 @@ provided that the user has a Eunuchs-like environment (i.e. the
 standard envariables like $PATH, $HOME, ... are set, there is a
 POSIX compliant shell in /bin/sh, and...)
 
-Known problems
-==============
+=head1 Known problems with Perl on MiNT
 
 The problems you may encounter when building perl on your machine
 are most probably due to deficiencies in MiNT resp. the Atari
@@ -74,14 +86,14 @@ increase cc1's stacksize, if you run out of memory you should
 either decrease the stacksize or follow some more hints:
 
 Perl's building process is very handy on machines with a lot
-of virtual memory but may result in a desaster if you are short
+of virtual memory but may result in a disaster if you are short
 of memory.  If gcc fails to compile many source files you should
 reduce the optimization.  Grep for "optimize" in the file
 config.sh and change the flags.
 
 If only several huge files cause problems (actually it is not a
 matter of the file size resp. the amount of code but depends on
-the size of the individual funtions) it is useful to bypass
+the size of the individual functions) it is useful to bypass
 the make program and compile these files directly from the
 command line.  For example if you got something like the
 following from make:
@@ -98,7 +110,7 @@ Please note that you have to add the name of the source file
 (here toke.c) at the end.
 
 If none of this helps, you're helpless.  Wait for a binary
-release.  If you have succeded you may encounter another problem
+release.  If you have succeeded you may encounter another problem
 at the linking process.  If gcc complains that it can't find
 some libraries within the perl distribution you probably have
 an old linker.  If it complains for example about "file not
@@ -210,7 +222,8 @@ OK, this was my motto while working on Perl for MiNT, especially rule (1)...
 
 Have fun with Perl!
 
+=head1 AUTHOR
+
 Guido Flohr
---
-mailto:gufl0000@stud.uni-sb.de
-http://stud.uni-sb.de/~gufl0000
+
+	mailto:guido@FreeMiNT.de

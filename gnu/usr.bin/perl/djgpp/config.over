@@ -25,7 +25,7 @@ repair()
      -e 's/posix/POSIX/'\
      -e 's/sdbm_fil/SDBM_File/'\
      -e 's/socket/Socket/'\
-     -e 's/thread/Thread/'\
+     -e 's=[tT]hread[/a-zA-Z]*==g'\
      -e 's/byteload/ByteLoader/'\
      -e 's=devel/peek=Devel/Peek='\
      -e 's=devel/dprof=Devel/DProf='\
@@ -35,7 +35,22 @@ repair()
      -e 's=File/=='\
      -e 's=glob=='\
      -e 's=Glob=='\
-     -e 's/storable/Storable/'
+     -e 's/storable/Storable/'\
+     -e 's/encode/Encode/'\
+     -e 's=filter/util/call=Filter/Util/Call=' \
+     -e 's=digest/md5=Digest/MD5=' \
+     -e 's=perlio/scalar=PerlIO/scalar=' \
+     -e 's=mime/base64=MIME/Base64=' \
+     -e 's=time/hires=Time/HiRes=' \
+     -e 's=list/util=List/Util=' \
+     -e 's=cwd=Cwd=' \
+     -e 's=perlio/via=PerlIO/via=' \
+     -e 's=perlio/encoding=PerlIO/encoding=' \
+     -e 's=xs/apitest=XS/APItest=' \
+     -e 's=xs/typemap=XS/Typemap=' \
+     -e 's=unicode/normaliz=Unicode/Normalize=' \
+     -e 's=i18n/langinfo=I18N/Langinfo=' \
+     -e 's=devel/ppport=Devel/PPPort='
 }
 static_ext=$(repair "$static_ext")
 extensions=$(repair "$extensions")

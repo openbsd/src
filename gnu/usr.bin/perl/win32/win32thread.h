@@ -154,7 +154,7 @@ extern __declspec(thread) void *PL_current_context;
 #define PERL_SET_CONTEXT(t)		Perl_set_context(t)
 #endif
 
-#if defined(USE_THREADS)
+#if defined(USE_5005THREADS)
 struct perl_thread;
 int Perl_thread_create (struct perl_thread *thr, thread_func_t *fn);
 void Perl_set_thread_self (struct perl_thread *thr);
@@ -162,7 +162,7 @@ void Perl_init_thread_intern (struct perl_thread *t);
 
 #define SET_THREAD_SELF(thr) Perl_set_thread_self(thr)
 
-#endif /* USE_THREADS */
+#endif /* USE_5005THREADS */
 
 END_EXTERN_C
 
@@ -170,7 +170,7 @@ END_EXTERN_C
 #define ALLOC_THREAD_KEY \
     STMT_START {							\
 	if ((PL_thr_key = TlsAlloc()) == TLS_OUT_OF_INDEXES) {		\
-	    fprintf(stderr,"panic: TlsAlloc");				\
+	    PerlIO_printf(PerlIO_stderr(),"panic: TlsAlloc");				\
 	    exit(1);							\
 	}								\
     } STMT_END
@@ -179,6 +179,8 @@ END_EXTERN_C
     STMT_START {							\
 	TlsFree(PL_thr_key);						\
     } STMT_END
+
+#define PTHREAD_ATFORK(prepare,parent,child)	NOOP
 
 #if defined(USE_RTL_THREAD_API) && !defined(_MSC_VER)
 #define JOIN(t, avp)							\

@@ -207,9 +207,9 @@ The current hierarchy is:
 
   all -+
        |
-       +- chmod
-       |
        +- closure
+       |
+       +- deprecated
        |
        +- exiting
        |
@@ -220,6 +220,8 @@ The current hierarchy is:
        |                +- closed
        |                |
        |                +- exec
+       |                |
+       |                +- layer
        |                |
        |                +- newline
        |                |
@@ -265,8 +267,6 @@ The current hierarchy is:
        |                |
        |                +- bareword
        |                |
-       |                +- deprecated
-       |                |
        |                +- digit
        |                |
        |                +- parenthesis
@@ -285,7 +285,7 @@ The current hierarchy is:
        |
        +- taint
        |
-       +- umask
+       +- threads
        |
        +- uninitialized
        |
@@ -315,6 +315,11 @@ C<warnings> pragma in a given scope the cumulative effect is additive.
 
 To determine which category a specific warning has been assigned to see
 L<perldiag>.
+
+Note: In Perl 5.6.1, the lexical warnings category "deprecated" was a
+sub-category of the "syntax" category. It is now a top-level category
+in its own right.
+
 
 =head2 Fatal Warnings
 
@@ -346,6 +351,19 @@ The scope where C<length> is used has escalated the C<void> warnings
 category into a fatal error, so the program terminates immediately it
 encounters the warning.
 
+To explicitly turn off a "FATAL" warning you just disable the warning
+it is associated with.  So, for example, to disable the "void" warning
+in the example above, either of these will do the trick:
+
+    no warnings qw(void);
+    no warnings FATAL => qw(void);
+
+If you want to downgrade a warning that has been escalated into a fatal
+error back to a normal warning, you can use the "NONFATAL" keyword. For
+example, the code below will promote all warnings into fatal errors,
+except for those in the "syntax" category.
+
+    use warnings FATAL => 'all', NONFATAL => 'syntax';
 
 =head2 Reporting Warnings from a Module
 
@@ -362,8 +380,9 @@ Consider the module C<MyMod::Abc> below.
 
     sub open {
         my $path = shift ;
-        if (warnings::enabled() && $path !~ m#^/#) {
-            warnings::warn("changing relative path to /tmp/");
+        if ($path !~ m#^/#) {
+            warnings::warn("changing relative path to /tmp/")
+                if warnings::enabled();
             $path = "/tmp/$path" ; 
         }
     }

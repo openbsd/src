@@ -1,5 +1,7 @@
 package less;
 
+our $VERSION = '0.01';
+
 =head1 NAME
 
 less - perl pragma to request less of something from the compiler

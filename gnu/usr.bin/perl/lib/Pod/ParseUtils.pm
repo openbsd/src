@@ -274,7 +274,7 @@ sub initialize {
 This method can be used to (re)parse a (new) hyperlink, i.e. the contents
 of a C<LE<lt>...E<gt>> sequence. The result is stored in the current object.
 Warnings are stored in the B<warnings> property.
-E.g. sections like C<LE<lt>open(2)E<gt>> are deprected, as they do not point
+E.g. sections like C<LE<lt>open(2)E<gt>> are deprecated, as they do not point
 to Perl documents. C<LE<lt>DBI::foo(3p)E<gt>> is wrong as well, the manpage
 section can simply be dropped.
 

@@ -1,4 +1,7 @@
 package B::Bblock;
+
+our $VERSION = '1.00';
+
 use Exporter ();
 @ISA = "Exporter";
 @EXPORT_OK = qw(find_leaders);
@@ -165,13 +168,47 @@ B::Bblock - Walk basic blocks
 
 =head1 SYNOPSIS
 
-	perl -MO=Bblock[,OPTIONS] foo.pl
+  # External interface
+  perl -MO=Bblock[,OPTIONS] foo.pl
+
+  # Programmatic API
+  use B::Bblock qw(find_leaders);
+  my $leaders = find_leaders($root_op, $start_op);
 
 =head1 DESCRIPTION
 
 This module is used by the B::CC back end.  It walks "basic blocks".
 A basic block is a series of operations which is known to execute from
 start to finish, with no possiblity of branching or halting.
+
+It can be used either stand alone or from inside another program.
+
+=for _private
+Somebody who understands the stand-alone options document them, please.
+
+=head2 Functions
+
+=over 4
+
+=item B<find_leaders>
+
+  my $leaders = find_leaders($root_op, $start_op);
+
+Given the root of the op tree and an op from which to start
+processing, it will return a hash ref representing all the ops which
+start a block.
+
+=for _private
+The above description may be somewhat wrong.
+
+The values of %$leaders are the op objects themselves.  Keys are $$op
+addresses.
+
+=for _private
+Above cribbed from B::CC's comments.  What's a $$op address?
+
+=back
+
 
 =head1 AUTHOR
 

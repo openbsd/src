@@ -1,39 +1,55 @@
-Notes on building perl under BeOS:
+If you read this file _as_is_, just ignore the funny characters you see.
+It is written in the POD format (see pod/perlpod.pod) which is specially
+designed to be readable as is.
 
-GENERAL ISSUES
---------------
-how to compile perl:
+=head1 NAME
+
+README.beos - Perl version 5 on BeOS
+
+=head1 DESCRIPTION
+
+Notes for building Perl under BeOS.
+
+=head2 General Issues with Perl on BeOS
 
 To compile perl under BeOS R4 x86:
 
-`./Configure -d` and hit ^C when it asks you if you want to make changes
-to config.sh;
+	./Configure -d
 
+and hit ^C when it asks you if you want to make changes to config.sh;
 edit config.sh and do the following:
 change d_socket='define' to ='undef';
 remove SDBM, Errno, and Socket from dynamic_ext= and nonxs_ext=;
-
 add '#define bool short' to x2p/a2p.h;
 
-../Configure -S; make; make install
+	../Configure -S; make; make install
 
-cd ~/config/lib; ln -s 5.00502/BeOS-BePC/CORE/libperl.so .
+	cd ~/config/lib; ln -s 5.00502/BeOS-BePC/CORE/libperl.so .
+
 (substitute 5.00502 with the appropriate filename)
 
-OS RELEASE-SPECIFIC NOTES
--------------------------
-R4 x86 - dynamic loading finally works! Yay! This means you can compile
-your own modules into perl. However, Sockets and Errno still don't work.
+=head2 BeOS Release-specific Notes
+
+=over 4
+
+=item R4 x86
+
+Dynamic loading finally works! Yay! This means you can compile your
+own modules into perl. However, Sockets and Errno still don't work.
 (Hopefully, sockets will at least work by R5, if not sooner.)
 
-R4 PPC - I have not tested this. I rather severely doubt that dynamic
-loading will work. (My BeBox is in pieces right now, following a nasty
-disk crash.) You may have to disable dynamic loading to get the thing
-to compile at all. (use `./Configure` without -d, and say 'no' to
-'Build a shared libperl.so'.)
+=item R4 PPC
 
-CONTACT INFORMATION
--------------------
+I have not tested this. I rather severely doubt that dynamic loading
+will work. (My BeBox is in pieces right now, following a nasty disk
+crash.) You may have to disable dynamic loading to get the thing to
+compile at all. (use `./Configure` without -d, and say 'no' to 'Build
+a shared libperl.so'.)
+
+=back
+
+=head2 Contact Information
+
 If you have comments, problem reports, or even patches or bugfixes (gasp!)
 please email me.
 
@@ -41,3 +57,57 @@ please email me.
 Tom Spindler
 dogcow@isi.net
 
+=head2 Update 2002-05-30
+
+The following tests fail on 5.8.0 Perl in BeOS Personal 5.03:
+
+ t/op/lfs............................FAILED at test 17
+ t/op/magic..........................FAILED at test 24
+ ext/Fcntl/t/syslfs..................FAILED at test 17
+ ext/File/Glob/t/basic...............FAILED at test 3
+ ext/POSIX/t/sigaction...............FAILED at test 13
+ ext/POSIX/t/waitpid.................FAILED at test 1
+
+The reasons for the failures are as follows: 
+
+=over 4
+
+=item *
+
+The t/op/lfs and ext/Fcntl/t/syslfs failures indicate that the
+LFS (large file support, files larger than 2 gigabytes) doesn't
+work from Perl (BeFS itself is well capable of supporting large
+files).  What fails is that trying to position the file pointer
+past 2 gigabytes doesn't work right, the position gets truncated
+to its lower 32 bits.
+
+=item *
+
+The op/magic failures look like something funny going on with $0 and
+$^X that I can't now figure out: none of the generated pathnames are
+wrong as such, they just seem to accumulate "./" prefixes and infixes
+in ways that define logic.
+
+=item *
+
+The Glob/t/basic indicates a bug in the getpw*() functions:
+they do not always return the correct user db entries.
+
+=item *
+
+The sigaction #13 means that signal mask doesn't get properly restored
+if sigaction returns early.
+
+=item *
+
+The waitpid failure means that after there are no more child
+processes, waitpid is supposed to start returning -1 (and set
+errno to ECHILD).  In BeOS, it doesn't seem to.
+
+=back
+
+Disclaimer: I just installed BeOS Personal Edition 5.0 and the
+Developer Tools, that is the whole extent of my BeOS expertise,
+so please don't ask me for further help in BeOS Perl problems.
+
+jhi@iki.fi

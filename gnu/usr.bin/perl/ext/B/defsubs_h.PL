@@ -12,8 +12,8 @@ foreach my $const (qw(
 		      SVf_READONLY SVTYPEMASK
 		      GVf_IMPORTED_AV GVf_IMPORTED_HV
 		      GVf_IMPORTED_SV GVf_IMPORTED_CV
-		      CVf_METHOD CVf_LOCKED CVf_LVALUE
-                      SVf_IOK SVf_IVisUV SVf_NOK SVf_POK 
+		      CVf_METHOD CVf_LOCKED CVf_LVALUE CVf_CONST
+                      SVpad_OUR SVf_IOK SVf_IVisUV SVf_NOK SVf_POK 
 		      SVf_ROK SVp_IOK SVp_POK SVp_NOK
 		      ))
  {

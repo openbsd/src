@@ -31,7 +31,7 @@ system before running the C<make> command.
 For much more information on building perl -- for example, on how to
 change the default installation directory -- see F<INSTALL>.
 
-=head2 Failures during C<make test>
+=head2 Failures during C<make test> on MachTen
 
 =over 4
 
@@ -57,7 +57,7 @@ and limited in its effect on practical Perl programs.
 
 =back
 
-=head2 Building external modules
+=head2 Building external modules on MachTen
 
 To add an external module to perl, build in the normal way, which
 is documented in L<ExtUtils::MakeMaker>, or which can be driven

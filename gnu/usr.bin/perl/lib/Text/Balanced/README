@@ -1,0 +1,84 @@
+==============================================================================
+                  Release of version 1.89 of Text::Balanced
+==============================================================================
+
+
+NAME
+
+    Text::Balanced - Extract delimited text sequences from strings.
+
+
+SUMMARY (see Balanced.pod for full details)
+
+    Text::Balanced::extract_delimited
+    
+        `extract_delimited' extracts the initial substring of a string
+        which is delimited by a user-specified set of single-character
+        delimiters, whilst ignoring any backslash-escaped delimiter
+        characters.
+
+    Text::Balanced::extract_bracketed
+    
+        `extract_bracketed' extracts a balanced-bracket-delimited substring
+        (using any one (or more) of the user-specified delimiter brackets:
+        '(..)', '{..}', '[..]', or '<..>').
+    
+    Text::Balanced::extract_quotelike
+    
+        `extract_quotelike' attempts to recognize and extract any one of the
+        various Perl quote and quotelike operators (see "perlop(3)"). Embedded
+        backslashed delimiters, nested bracket delimiters (for the
+        quotelike operators), and trailing modifiers are all correctly handled.
+    
+    Text::Balanced::extract_codeblock
+    
+        `extract_codeblock' attempts to recognize and extract a
+        balanced bracket-delimited substring which may also contain
+        unbalanced brackets inside Perl quotes or quotelike
+        operations. That is, `extract_codeblock' is like a combination
+        of `extract_bracketed' and `extract_quotelike'.
+
+    Text::Balanced::extract_tagged
+    
+        `extract_tagged' attempts to recognize and extract a
+        substring between two arbitrary "tag" patterns (a start tag
+	and an end tag).
+
+    
+INSTALLATION
+
+    It's all pure Perl, so just put the .pm file in its appropriate
+    local Perl subdirectory.
+
+
+AUTHOR
+
+    Damian Conway (damian@cs.monash.edu.au)
+
+
+COPYRIGHT
+
+     Copyright (c) 1997-2001, Damian Conway. All Rights Reserved.
+     This module is free software. It may be used, redistributed
+	  and/or modified under the same terms as Perl itself.
+
+
+
+==============================================================================
+
+CHANGES IN VERSION 1.89
+
+
+	- Fixed extvar.t tests
+
+
+==============================================================================
+
+AVAILABILITY
+
+Text::Balanced has been uploaded to the CPAN
+and is also available from:
+
+	http://www.csse.monash.edu.au/~damian/CPAN/Text-Balanced.tar.gz
+
+==============================================================================

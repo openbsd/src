@@ -15,13 +15,6 @@
 #define NO_XSLOCKS
 #include "XSUB.h"
 
-#ifdef PERL_OBJECT
-#undef CALL_FPTR
-#define CALL_FPTR(fptr) (pPerl->*fptr)
-#undef PL_ppaddr
-#define PL_ppaddr (*get_ppaddr())
-#endif
-
 #include "byterun.h"
 #include "bytecode.h"
 
@@ -41,7 +34,7 @@ static const int optype_size[] = {
 };
 
 void *
-bset_obj_store(pTHXo_ struct byteloader_state *bstate, void *obj, I32 ix)
+bset_obj_store(pTHX_ struct byteloader_state *bstate, void *obj, I32 ix)
 {
     if (ix > bstate->bs_obj_list_fill) {
 	Renew(bstate->bs_obj_list, ix + 32, void*);
@@ -52,7 +45,7 @@ bset_obj_store(pTHXo_ struct byteloader_state *bstate, void *obj, I32 ix)
 }
 
 void
-byterun(pTHXo_ register struct byteloader_state *bstate)
+byterun(pTHX_ register struct byteloader_state *bstate)
 {
     register int insn;
     U32 ix;
@@ -170,7 +163,7 @@ byterun(pTHXo_ register struct byteloader_state *bstate)
 	    }
 	  case INSN_SV_UPGRADE:		/* 14 */
 	    {
-		char arg;
+		U8 arg;
 		BGET_U8(arg);
 		BSET_sv_upgrade(bstate->bs_sv, arg);
 		break;
@@ -280,36 +273,36 @@ byterun(pTHXo_ register struct byteloader_state *bstate)
 	    }
 	  case INSN_XFM_LINES:		/* 30 */
 	    {
-		I32 arg;
-		BGET_I32(arg);
+		IV arg;
+		BGET_IV(arg);
 		FmLINES(bstate->bs_sv) = arg;
 		break;
 	    }
 	  case INSN_XIO_LINES:		/* 31 */
 	    {
-		long arg;
-		BGET_I32(arg);
+		IV arg;
+		BGET_IV(arg);
 		IoLINES(bstate->bs_sv) = arg;
 		break;
 	    }
 	  case INSN_XIO_PAGE:		/* 32 */
 	    {
-		long arg;
-		BGET_I32(arg);
+		IV arg;
+		BGET_IV(arg);
 		IoPAGE(bstate->bs_sv) = arg;
 		break;
 	    }
 	  case INSN_XIO_PAGE_LEN:		/* 33 */
 	    {
-		long arg;
-		BGET_I32(arg);
+		IV arg;
+		BGET_IV(arg);
 		IoPAGE_LEN(bstate->bs_sv) = arg;
 		break;
 	    }
 	  case INSN_XIO_LINES_LEFT:		/* 34 */
 	    {
-		long arg;
-		BGET_I32(arg);
+		IV arg;
+		BGET_IV(arg);
 		IoLINES_LEFT(bstate->bs_sv) = arg;
 		break;
 	    }

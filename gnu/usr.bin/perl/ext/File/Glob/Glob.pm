@@ -1,15 +1,12 @@
 package File::Glob;
 
 use strict;
-use Carp;
 our($VERSION, @ISA, @EXPORT_OK, @EXPORT_FAIL, %EXPORT_TAGS,
     $AUTOLOAD, $DEFAULT_FLAGS);
 
-require Exporter;
 use XSLoader ();
-require AutoLoader;
 
-@ISA = qw(Exporter AutoLoader);
+@ISA = qw(Exporter);
 
 # NOTE: The glob() export is only here for compatibility with 5.6.0.
 # csh_glob() should not be used directly, unless you know what you're doing.
@@ -25,6 +22,7 @@ require AutoLoader;
     GLOB_CSH
     GLOB_ERR
     GLOB_ERROR
+    GLOB_LIMIT
     GLOB_MARK
     GLOB_NOCASE
     GLOB_NOCHECK
@@ -44,6 +42,7 @@ require AutoLoader;
         GLOB_CSH
         GLOB_ERR
         GLOB_ERROR
+        GLOB_LIMIT
         GLOB_MARK
         GLOB_NOCASE
         GLOB_NOCHECK
@@ -57,9 +56,10 @@ require AutoLoader;
     ) ],
 );
 
-$VERSION = '0.991';
+$VERSION = '1.01';
 
 sub import {
+    require Exporter;
     my $i = 1;
     while ($i < @_) {
 	if ($_[$i] =~ /^:(case|nocase|globally)$/) {
@@ -67,7 +67,7 @@ sub import {
 	    $DEFAULT_FLAGS &= ~GLOB_NOCASE() if $1 eq 'case';
 	    $DEFAULT_FLAGS |= GLOB_NOCASE() if $1 eq 'nocase';
 	    if ($1 eq 'globally') {
-		no warnings;
+		local $^W;
 		*CORE::GLOBAL::glob = \&File::Glob::csh_glob;
 	    }
 	    next;
@@ -84,15 +84,10 @@ sub AUTOLOAD {
 
     my $constname;
     ($constname = $AUTOLOAD) =~ s/.*:://;
-    my $val = constant($constname, @_ ? $_[0] : 0);
-    if ($! != 0) {
-	if ($! =~ /Invalid/) {
-	    $AutoLoader::AUTOLOAD = $AUTOLOAD;
-	    goto &AutoLoader::AUTOLOAD;
-	}
-	else {
-		croak "Your vendor has not defined File::Glob macro $constname";
-	}
+    my ($error, $val) = constant($constname);
+    if ($error) {
+	require Carp;
+	Carp::croak($error);
     }
     eval "sub $AUTOLOAD { $val }";
     goto &$AUTOLOAD;
@@ -103,7 +98,7 @@ XSLoader::load 'File::Glob', $VERSION;
 # Preloaded methods go here.
 
 sub GLOB_ERROR {
-    return constant('GLOB_ERROR', 0);
+    return (constant('GLOB_ERROR'))[1];
 }
 
 sub GLOB_CSH () {
@@ -242,6 +237,15 @@ The POSIX defined flags for bsd_glob() are:
 Force bsd_glob() to return an error when it encounters a directory it
 cannot open or read.  Ordinarily bsd_glob() continues to find matches.
 
+=item C<GLOB_LIMIT>
+
+Make bsd_glob() return an error (GLOB_NOSPACE) when the pattern expands
+to a size bigger than the system constant C<ARG_MAX> (usually found in
+limits.h).  If your system does not define this constant, bsd_glob() uses
+C<sysconf(_SC_ARG_MAX)> or C<_POSIX_ARG_MAX> where available (in that
+order).  You can inspect these values using the standard C<POSIX>
+extension.
+
 =item C<GLOB_MARK>
 
 Each pathname that is a directory that matches the pattern has a slash
@@ -306,7 +310,7 @@ implemented in the Perl version because they involve more complex
 interaction with the underlying C structures.
 
 The following flag has been added in the Perl implementation for
-compatibility with common flavors of csh:
+csh compatibility:
 
 =over 4
 
@@ -380,7 +384,7 @@ the standard Perl distribution.
 
 Mac OS (Classic) users should note a few differences. Since
 Mac OS is not Unix, when the glob code encounters a tilde glob (e.g.
-~user/foo) and the C<GLOB_TILDE> flag is used, it simply returns that
+~user) and the C<GLOB_TILDE> flag is used, it simply returns that
 pattern without doing any expansion.
 
 Glob on Mac OS is case-insensitive by default (if you don't use any
@@ -392,6 +396,29 @@ should be careful about specifying relative pathnames. While a full path
 always begins with a volume name, a relative pathname should always
 begin with a ':'.  If specifying a volume name only, a trailing ':' is
 required.
+
+The specification of pathnames in glob patterns adheres to the usual Mac
+OS conventions: The path separator is a colon ':', not a slash '/'. A
+full path always begins with a volume name. A relative pathname on Mac
+OS must always begin with a ':', except when specifying a file or
+directory name in the current working directory, where the leading colon
+is optional. If specifying a volume name only, a trailing ':' is
+required. Due to these rules, a glob like E<lt>*:E<gt> will find all
+mounted volumes, while a glob like E<lt>*E<gt> or E<lt>:*E<gt> will find
+all files and directories in the current directory.
+
+Note that updirs in the glob pattern are resolved before the matching begins,
+i.e. a pattern like "*HD:t?p::a*" will be matched as "*HD:a*". Note also,
+that a single trailing ':' in the pattern is ignored (unless it's a volume
+name pattern like "*HD:"), i.e. a glob like E<lt>:*:E<gt> will find both
+directories I<and> files (and not, as one might expect, only directories).
+You can, however, use the C<GLOB_MARK> flag to distinguish (without a file
+test) directory names from file names.
+
+If the C<GLOB_MARK> flag is set, all directory paths will have a ':' appended.
+Since a directory like 'lib:' is I<not> a valid I<relative> path on Mac OS,
+both a leading and a trailing colon will be added, when the directory name in
+question doesn't contain any colons (e.g. 'lib' becomes ':lib:').
 
 =back
 

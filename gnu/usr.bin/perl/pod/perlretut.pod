@@ -306,7 +306,7 @@ string is the earliest point at which the regexp can match.
     /[yY][eE][sS]/;      # match 'yes' in a case-insensitive way
                          # 'yes', 'Yes', 'YES', etc.
 
-This regexp displays a common task: perform a a case-insensitive
+This regexp displays a common task: perform a case-insensitive
 match.  Perl provides away of avoiding all those brackets by simply
 appending an C<'i'> to the end of the match.  Then C</[yY][eE][sS]/;>
 can be rewritten as C</yes/i;>.  The C<'i'> stands for
@@ -550,7 +550,7 @@ to give them a chance to match.
 
 The last example points out that character classes are like
 alternations of characters.  At a given character position, the first
-alternative that allows the regexp match to succeed wil be the one
+alternative that allows the regexp match to succeed will be the one
 that matches.
 
 =head2 Grouping things and hierarchical matching
@@ -561,7 +561,7 @@ regexp, but sometime we want alternatives for just part of a
 regexp.  For instance, suppose we want to search for housecats or
 housekeepers.  The regexp C<housecat|housekeeper> fits the bill, but is
 inefficient because we had to type C<house> twice.  It would be nice to
-have parts of the regexp be constant, like C<house>, and and some
+have parts of the regexp be constant, like C<house>, and some
 parts have alternatives, like C<cat|keeper>.
 
 The B<grouping> metacharacters C<()> solve this problem.  Grouping
@@ -587,7 +587,7 @@ are
 
 Alternations behave the same way in groups as out of them: at a given
 string position, the leftmost alternative that allows the regexp to
-match is taken.  So in the last example at tth first string position,
+match is taken.  So in the last example at the first string position,
 C<"20"> matches the second alternative, but there is nothing left over
 to match the next two digits C<\d\d>.  So perl moves on to the next
 alternative, which is the null alternative and that works, since
@@ -670,7 +670,7 @@ wins.  Second, we were able to get a match at the first character
 position of the string 'a'.  If there were no matches at the first
 position, perl would move to the second character position 'b' and
 attempt the match all over again.  Only when all possible paths at all
-possible character positions have been exhausted does perl give give
+possible character positions have been exhausted does perl give
 up and declare S<C<$string =~ /(abd|abc)(df|d|de)/;> > to be false.
 
 Even with all this work, regexp matching happens remarkably fast.  To
@@ -710,9 +710,12 @@ indicated below it:
     /(ab(cd|ef)((gi)|j))/;
      1  2      34
 
-so that if the regexp matched, e.g., C<$2> would contain 'cd' or 'ef'.
-For convenience, perl sets C<$+> to the highest numbered C<$1>, C<$2>,
-... that got assigned.
+so that if the regexp matched, e.g., C<$2> would contain 'cd' or 'ef'. For
+convenience, perl sets C<$+> to the string held by the highest numbered
+C<$1>, C<$2>, ... that got assigned (and, somewhat related, C<$^N> to the
+value of the C<$1>, C<$2>, ... most-recently assigned; i.e. the C<$1>,
+C<$2>, ... associated with the rightmost closing parenthesis used in the
+match).
 
 Closely associated with the matching variables C<$1>, C<$2>, ... are
 the B<backreferences> C<\1>, C<\2>, ... .  Backreferences are simply
@@ -1333,7 +1336,7 @@ the regexp in the I<last successful match> is used instead.  So we have
     "dogbert =~ //;  # this matches the 'd' regexp used before
 
 The final two modifiers C<//g> and C<//c> concern multiple matches.
-The modifier C<//g> stands for global matching and allows the the
+The modifier C<//g> stands for global matching and allows the
 matching operator to match within a string as many times as possible.
 In scalar context, successive invocations against a string will have
 `C<//g> jump from match to match, keeping track of position in the
@@ -1400,6 +1403,8 @@ off.  C<\G> allows us to easily do context-sensitive matching:
 
 The combination of C<//g> and C<\G> allows us to process the string a
 bit at a time and use arbitrary Perl logic to decide what to do next.
+Currently, the C<\G> anchor is only fully supported when used to anchor
+to the start of the pattern.
 
 C<\G> is also invaluable in processing fixed length records with
 regexps.  Suppose we have a snippet of coding region DNA, encoded as
@@ -1412,7 +1417,7 @@ naive regexp
     $dna = "ATCGTTGAATGCAAATGACATGAC";
     $dna =~ /TGA/;
 
-doesn't work; it may match an C<TGA>, but there is no guarantee that
+doesn't work; it may match a C<TGA>, but there is no guarantee that
 the match is aligned with codon boundaries, e.g., the substring
 S<C<GTT GAA> > gives a match.  A better solution is
 
@@ -1582,7 +1587,7 @@ OK, you know the basics of regexps and you want to know more.  If
 matching regular expressions is analogous to a walk in the woods, then
 the tools discussed in Part 1 are analogous to topo maps and a
 compass, basic tools we use all the time.  Most of the tools in part 2
-are are analogous to flare guns and satellite phones.  They aren't used
+are analogous to flare guns and satellite phones.  They aren't used
 too often on a hike, but when we are stuck, they can be invaluable.
 
 What follows are the more advanced, less used, or sometimes esoteric
@@ -1644,13 +1649,17 @@ sequence of bytes (the old way) or as a sequence of Unicode characters
 than C<chr(127)> may be represented using the C<\x{hex}> notation,
 with C<hex> a hexadecimal integer:
 
-    use utf8;    # We will be doing Unicode processing
     /\x{263a}/;  # match a Unicode smiley face :)
 
 Unicode characters in the range of 128-255 use two hexadecimal digits
 with braces: C<\x{ab}>.  Note that this is different than C<\xab>,
-which is just a hexadecimal byte with no Unicode
-significance.
+which is just a hexadecimal byte with no Unicode significance.
+
+B<NOTE>: in Perl 5.6.0 it used to be that one needed to say C<use
+utf8> to use any Unicode features.  This is no more the case: for
+almost all Unicode processing, the explicit C<utf8> pragma is not
+needed.  (The only case where it matters is if your Perl script is in
+Unicode and encoded in UTF-8, then an explicit C<use utf8> is needed.)
 
 Figuring out the hexadecimal sequence of a Unicode character you want
 or deciphering someone else's hexadecimal Unicode regexp is about as
@@ -1661,14 +1670,11 @@ specified in the Unicode standard.  For instance, if we wanted to
 represent or match the astrological sign for the planet Mercury, we
 could use
 
-    use utf8;              # We will be doing Unicode processing
     use charnames ":full"; # use named chars with Unicode full names
     $x = "abc\N{MERCURY}def";
     $x =~ /\N{MERCURY}/;   # matches
 
 One can also use short names or restrict names to a certain alphabet:
-
-    use utf8;              # We will be doing Unicode processing
 
     use charnames ':full';
     print "\N{GREEK SMALL LETTER SIGMA} is called sigma.\n";
@@ -1680,7 +1686,7 @@ One can also use short names or restrict names to a certain alphabet:
     print "\N{sigma} is Greek sigma\n";
 
 A list of full names is found in the file Names.txt in the
-lib/perl5/5.6.0/unicode directory.
+lib/perl5/5.X.X/unicore directory.
 
 The answer to requirement 2), as of 5.6.0, is that if a regexp
 contains Unicode characters, the string is searched as a sequence of
@@ -1690,7 +1696,6 @@ characters, but matching a single byte is required, we can use the C<\C>
 escape sequence.  C<\C> is a character class akin to C<.> except that
 it matches I<any> byte 0-255.  So
 
-    use utf8;              # We will be doing Unicode processing
     use charnames ":full"; # use named chars with Unicode full names
     $x = "a";
     $x =~ /\C/;  # matches 'a', eats one byte
@@ -1712,7 +1717,6 @@ the C<\P{name}> character class, which is the negation of the
 C<\p{name}> class.  For example, to match lower and uppercase
 characters,
 
-    use utf8;              # We will be doing Unicode processing
     use charnames ":full"; # use named chars with Unicode full names
     $x = "BOB";
     $x =~ /^\p{IsUpper}/;   # matches, uppercase char class
@@ -1736,7 +1740,7 @@ traditional Unicode classes:
     IsPrint          /^([LMNPS]|Co|Zs)/
     IsPunct          /^P/
     IsSpace          /^Z/ || ($code =~ /^(0009|000A|000B|000C|000D)$/
-    IsSpacePerl      /^Z/ || ($code =~ /^(0009|000A|000C|000D)$/
+    IsSpacePerl      /^Z/ || ($code =~ /^(0009|000A|000C|000D|0085|2028|2029)$/
     IsUpper          /^L[ut]/
     IsWord           /^[LMN]/ || $code eq "005F"
     IsXDigit         $code =~ /^00(3[0-9]|[46][1-6])$/
@@ -1745,7 +1749,13 @@ You can also use the official Unicode class names with the C<\p> and
 C<\P>, like C<\p{L}> for Unicode 'letters', or C<\p{Lu}> for uppercase
 letters, or C<\P{Nd}> for non-digits.  If a C<name> is just one
 letter, the braces can be dropped.  For instance, C<\pM> is the
-character class of Unicode 'marks'.
+character class of Unicode 'marks', for example accent marks.
+For the full list see L<perlunicode>.
+
+The Unicode has also been separated into various sets of charaters
+which you can test with C<\p{In...}> (in) and C<\P{In...}> (not in),
+for example C<\p{Latin}>, C<\p{Greek}>, or C<\P{Katakana}>.
+For the full list see L<perlunicode>.
 
 C<\X> is an abbreviation for a character class sequence that includes
 the Unicode 'combining character sequences'.  A 'combining character
@@ -1756,6 +1766,9 @@ character sequence with base character C<A> and combining character
 S<C<COMBINING RING> >, which translates in Danish to A with the circle
 atop it, as in the word Angstrom.  C<\X> is equivalent to C<\PM\pM*}>,
 i.e., a non-mark followed by one or more marks.
+
+For the full and latest information about Unicode see the latest
+Unicode standard, or the Unicode Consortium's website http://www.unicode.org/
 
 As if all those classes weren't enough, Perl also defines POSIX style
 character classes.  These have the form C<[:name:]>, with C<name> the
@@ -1771,12 +1784,12 @@ C<[:space:]> correspond to the familiar C<\d>, C<\w>, and C<\s>
 character classes.  To negate a POSIX class, put a C<^> in front of
 the name, so that, e.g., C<[:^digit:]> corresponds to C<\D> and under
 C<utf8>, C<\P{IsDigit}>.  The Unicode and POSIX character classes can
-be used just like C<\d>, both inside and outside of character classes:
+be used just like C<\d>, with the exception that POSIX character
+classes can only be used inside of a character class:
 
     /\s+[abc[:digit:]xyz]\s*/;  # match a,b,c,x,y,z, or a digit
-    /^=item\s[:digit:]/;        # match '=item',
+    /^=item\s[[:digit:]]/;      # match '=item',
                                 # followed by a space and a digit
-    use utf8;
     use charnames ":full";
     /\s+[abc\p{IsDigit}xyz]\s+/;  # match a,b,c,x,y,z, or a digit
     /^=item\s\p{IsDigit}/;        # match '=item',
@@ -2021,7 +2034,7 @@ Contrast that with an independent subexpression:
 The independent subexpression C<< (?>a*) >> doesn't care about the rest
 of the regexp, so it sees an C<a> and grabs it.  Then the rest of the
 regexp C<ab> cannot match.  Because C<< (?>a*) >> is independent, there
-is no backtracking and and the independent subexpression does not give
+is no backtracking and the independent subexpression does not give
 up its C<a>.  Thus the match of the regexp as a whole fails.  A similar
 behavior occurs with completely independent regexps:
 
@@ -2049,7 +2062,7 @@ the first alternative C<[^()]+> matching a substring with no
 parentheses and the second alternative C<\([^()]*\)>  matching a
 substring delimited by parentheses.  The problem with this regexp is
 that it is pathological: it has nested indeterminate quantifiers
- of the form C<(a+|b)+>.  We discussed in Part 1 how nested quantifiers
+of the form C<(a+|b)+>.  We discussed in Part 1 how nested quantifiers
 like this could take an exponentially long time to execute if there
 was no match possible.  To prevent the exponential blowup, we need to
 prevent useless backtracking at some point.  This can be done by
@@ -2113,7 +2126,7 @@ conditional are not needed.
 
 Normally, regexps are a part of Perl expressions.
 S<B<Code evaluation> > expressions turn that around by allowing
-arbitrary Perl code to be a part of of a regexp.  A code evaluation
+arbitrary Perl code to be a part of a regexp.  A code evaluation
 expression is denoted C<(?{code})>, with C<code> a string of Perl
 statements.
 

@@ -1,5 +1,7 @@
 package filetest;
 
+our $VERSION = '1.00';
+
 =head1 NAME
 
 filetest - Perl pragma to control the filetest permission operators

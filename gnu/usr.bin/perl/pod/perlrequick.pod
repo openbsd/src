@@ -219,11 +219,11 @@ boundary.
 
 =head2 Matching this or that
 
-We can match match different character strings with the B<alternation>
+We can match different character strings with the B<alternation>
 metacharacter C<'|'>.  To match C<dog> or C<cat>, we form the regex
 C<dog|cat>.  As before, perl will try to match the regex at the
 earliest possible point in the string.  At each character position,
-perl will first try to match the the first alternative, C<dog>.  If
+perl will first try to match the first alternative, C<dog>.  If
 C<dog> doesn't match, perl will then try the next alternative, C<cat>.
 If C<cat> doesn't match either, then the match fails and perl moves to
 the next position in the string.  Some examples:
@@ -238,7 +238,7 @@ C<cat> is able to match earlier in the string.
     "cats"          =~ /cats|cat|ca|c/; # matches "cats"
 
 At a given character position, the first alternative that allows the
-regex match to succeed wil be the one that matches. Here, all the
+regex match to succeed will be the one that matches. Here, all the
 alternatives match at the first string position, so th first matches.
 
 =head2 Grouping things and hierarchical matching

@@ -1,0 +1,14 @@
+
+ Perl/Pollution/Portability Version 1.0005
+
+ Copyright (C) 2001, Paul Marquess. 
+ Copyright (C) 1999, Kenneth Albanowski. 
+ This archive may be used and distributed under the same license as any
+ version of Perl.
+
+This module is used to create a 'C' header file that can be used by XS
+authors. It allows XS module authors to use the latest version of the
+Perl API, but still allow their module to be built with older versions
+of Perl.
+
+For more details see PPPort.pm.

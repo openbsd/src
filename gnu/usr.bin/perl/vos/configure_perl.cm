@@ -2,27 +2,27 @@
 & either the alpha or generally-available version of
 & VOS POSIX.1 support.
 & Written 00-10-24 by Paul Green (Paul_Green@stratus.com)
-& Modified 01-02-12 by Paul Green
 &
 &begin_parameters
      version   option(-version)name,allow(alpha,ga),=ga
-     debug     switch(-debug),secret
 &end_parameters
 &echo command_lines
-&if &debug& &then &echo macro_lines
 &
-&if (file_info config.&version&.def date_modified) > (file_info config.&version&.h date_modified)
+&if (file_info config.&version&.def date_modified) >= &+
+    (file_info config.&version&.h date_modified)
 &then &do
 !copy_file config.&version&.def config.def -delete
 &
-& NOTE: We must invoke Perl 5 not Perl 4. If necessary, edit the
-& macro to ensure that perl5 is invoked.
+& NOTE: We must invoke Perl 5 not Perl 4. The following
+& commands runs perl5 if it exists, otherwise runs perl,
+& in the hopes it is really perl5.
 &
-&mode no_abort
-!perl5 config.pl
-&if (command_status) = 1032
-&then !perl config.pl
-&mode abort
+!attach_default_output (process_dir)>_where_perl ; &+
+     where_command perl5 ; detach_default_output
+&if (index (contents (process_dir)>_where_perl) 'perl5:') ^= 0
+&then !perl5 config.pl
+&else !perl  config.pl
+&
 !rename config.h.new config.&version&.h -delete
 !delete_file config.def
 &end

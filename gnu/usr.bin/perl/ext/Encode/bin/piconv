@@ -1,0 +1,183 @@
+#!./perl
+# $Id: piconv,v 1.25 2002/06/01 18:07:49 dankogai Exp dankogai $
+#
+use 5.8.0;
+use strict;
+use Encode ;
+use Encode::Alias;
+my %Scheme =  map {$_ => 1} qw(from_to decode_encode perlio);
+
+use Getopt::Std;
+
+my %Opt; getopts("pcC:hDS:lf:t:s:", \%Opt);
+$Opt{h} and help();
+$Opt{l} and list_encodings();
+my $locale = $ENV{LC_CTYPE} || $ENV{LC_ALL} || $ENV{LANG};
+$Opt{f} || $Opt{t} || help();
+my $from = $Opt{f} || $locale or help("from_encoding unspecified");
+my $to   = $Opt{t} || $locale or help("to_encoding unspecified");
+$Opt{s} and Encode::from_to($Opt{s}, $from, $to) and print $Opt{s} and exit;
+my $scheme = exists $Scheme{$Opt{S}} ? $Opt{S} :  'from_to';
+$Opt{C} ||= $Opt{c};
+$Opt{p} and $Opt{C} = Encode::FB_PERLQQ;
+
+if ($Opt{D}){
+    my $cfrom = Encode->getEncoding($from)->name;
+    my $cto   = Encode->getEncoding($to)->name;
+    print <<"EOT";
+Scheme: $scheme
+From:   $from => $cfrom
+To:     $to => $cto
+EOT
+}
+
+# default
+if     ($scheme eq 'from_to'){ 
+    while(<>){
+	Encode::from_to($_, $from, $to, $Opt{C}); print;
+    };
+# step-by-step
+}elsif ($scheme eq 'decode_encode'){
+   while(<>){
+       my $decoded = decode($from, $_, $Opt{C});
+       my $encoded = encode($to, $decoded);
+       print $encoded;
+    };
+# NI-S favorite
+}elsif ($scheme eq 'perlio'){ 
+    binmode(STDIN,  ":encoding($from)");
+    binmode(STDOUT, ":encoding($to)");
+    while(<>){ print; }
+}else{ # won't reach
+    die "unknown scheme: $scheme";
+}
+
+sub list_encodings{
+    print join("\n", Encode->encodings(":all")), "\n";
+    exit;
+}
+
+sub help{
+    my $message = shift;
+    use File::Basename;
+    my $name = basename($0);
+    $message and print STDERR "$name error: $message\n";
+    print STDERR <<"EOT";
+$name [-f from_encoding] [-t to_encoding] [-s string] [files...]
+$name -l
+  -l lists all available encodings (the canonical names, many aliases exist)
+  -f from_encoding  When omitted, the current locale will be used.
+  -t to_encoding    When omitted, the current locale will be used.
+  -s string         "string" will be converted instead of STDIN.
+EOT
+  exit;
+}
+
+__END__
+
+=head1 NAME
+
+piconv -- iconv(1), reinvented in perl
+
+=head1 SYNOPSIS
+
+  piconv [-f from_encoding] [-t to_encoding] [-s string] [files...]
+  piconv -l
+
+=head1 DESCRIPTION
+
+B<piconv> is perl version of B<iconv>, a character encoding converter
+widely available for various Unixen today.  This script was primarily
+a technology demonstrator for Perl 5.8.0, but you can use piconv in the
+place of iconv for virtually any case.
+
+piconv converts the character encoding of either STDIN or files
+specified in the argument and prints out to STDOUT.
+
+Here is the  list of options.
+
+=over 4
+
+=item -f from_encoding
+
+Specifies the encoding you are converting from.  Unlike B<iconv>,
+this option can be omitted.  In such cases, the current locale is used.
+
+=item -t to_encoding
+
+Specifies the encoding you are converting to.  Unlike B<iconv>,
+this option can be omitted.  In such cases, the current locale is used.
+
+Therefore, when both -f and -t are omitted, B<piconv> just acts
+like B<cat>.
+
+=item -s I<string>
+
+uses I<string> instead of file for the source of text.  Same as B<iconv>.
+
+=item -l
+
+Lists all available encodings, one per line, in case-insensitive
+order.  Note that only the canonical names are listed; many aliases
+exist.  For example, the names are case-insensitive, and many standard
+and common aliases work, such as "latin1" for "ISO-8859-1", or "ibm850"
+instead of "cp850", or "winlatin1" for "cp1252".  See L<Encode::Supported>
+for a full discussion.
+
+=item -C I<N>
+
+Check the validity of the stream if I<N> = 1.  When I<N> = -1, something
+interesting happens when it encounters an invalid character.
+
+=item -c
+
+Same as C<-C 1>.
+
+=item -p
+
+Same as C<-C -1>.
+
+=item -h
+
+Show usage.
+
+=item -D
+
+Invokes debugging mode.  Primarily for Encode hackers.
+
+=item -S scheme
+
+Selects which scheme is to be used for conversion.  Available schemes
+are as follows:
+
+=over 4
+
+=item from_to
+
+Uses Encode::from_to for conversion.  This is the default.
+
+=item decode_encode
+
+Input strings are decode()d then encode()d.  A straight two-step
+implementation.
+
+=item perlio
+
+The new perlIO layer is used.  NI-S' favorite.
+
+=back
+
+Like the I<-D> option, this is also for Encode hackers.
+
+=back
+
+=head1 SEE ALSO
+
+L<iconv(1)>
+L<locale(3)>
+L<Encode>
+L<Encode::Supported>
+L<Encode::Alias>
+L<PerlIO>
+
+=cut

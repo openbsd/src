@@ -4,6 +4,10 @@
 
 /* Don't forget to re-run embed.pl to propagate changes! */
 
+/* New variables must be added to the very end for binary compatibility.
+ * XSUB.h provides wrapper functions via perlapi.h that make this
+ * irrelevant, but not all code may be expected to #include XSUB.h. */
+
 /* The 'I' prefix is only needed for vars that need appropriate #defines
  * generated when built with or without MULTIPLICITY.  It is also used
  * to generate the appropriate export list for win32.
@@ -34,6 +38,8 @@ PERLVAR(Iminus_F,	bool)
 PERLVAR(Idoswitches,	bool)
 
 /*
+=head1 Global Variables
+
 =for apidoc mn|bool|PL_dowarn
 
 The C variable which corresponds to Perl's $^W warning variable.
@@ -78,7 +84,7 @@ PERLVAR(Iargvout_stack,	AV *)
 
 /* shortcuts to regexp stuff */
 /* this one needs to be moved to thrdvar.h and accessed via
- * find_threadsv() when USE_THREADS */
+ * find_threadsv() when USE_5005THREADS */
 PERLVAR(Ireplgv,	GV *)
 
 /* shortcuts to misc objects */
@@ -97,7 +103,7 @@ C<PL_DBsingle>.
 
 =for apidoc mn|SV *|PL_DBsingle
 When Perl is run in debugging mode, with the B<-d> switch, this SV is a
-boolean which indicates whether subs are being single-stepped. 
+boolean which indicates whether subs are being single-stepped.
 Single-stepping is automatically turned on after every step.  This is the C
 variable which corresponds to Perl's $DB::single variable.  See
 C<PL_DBsub>.
@@ -169,8 +175,7 @@ PERLVARI(Ilaststype,	I32,	OP_STAT)
 PERLVAR(Imess_sv,	SV *)
 
 /* XXX shouldn't these be per-thread? --GSAR */
-PERLVAR(Iors,		char *)		/* output record separator $\ */
-PERLVAR(Iorslen,	STRLEN)
+PERLVAR(Iors_sv,	SV *)		/* output record separator $\ */
 PERLVAR(Iofmt,		char *)		/* output format for numbers $# */
 
 /* interpreter atexit processing */
@@ -181,10 +186,10 @@ PERLVARI(Iexitlistlen,	I32, 0)		/* length of same */
 /*
 =for apidoc Amn|HV*|PL_modglobal
 
-C<PL_modglobal> is a general purpose, interpreter global HV for use by 
+C<PL_modglobal> is a general purpose, interpreter global HV for use by
 extensions that need to keep information on a per-interpreter basis.
-In a pinch, it can also be used as a symbol table for extensions 
-to share data among each other.  It is a good idea to use keys 
+In a pinch, it can also be used as a symbol table for extensions
+to share data among each other.  It is a good idea to use keys
 prefixed by the package name of the extension that owns the data.
 
 =cut
@@ -221,11 +226,11 @@ PERLVAR(Ilinestart,	char *)		/* beg. of most recently read line */
 PERLVAR(Ipending_ident,	char)		/* pending identifier lookup */
 PERLVAR(Isublex_info,	SUBLEXINFO)	/* from toke.c */
 
-#ifdef USE_THREADS
+#ifdef USE_5005THREADS
 PERLVAR(Ithrsv,		SV *)		/* struct perl_thread for main thread */
 PERLVARI(Ithreadnum,	U32,	0)	/* incremented each thread creation */
 PERLVAR(Istrtab_mutex,	perl_mutex)	/* Mutex for string table access */
-#endif /* USE_THREADS */
+#endif /* USE_5005THREADS */
 
 PERLVAR(Iuid,		Uid_t)		/* current real user id */
 PERLVAR(Ieuid,		Uid_t)		/* current effective user id */
@@ -363,9 +368,9 @@ PERLVARI(Inumeric_standard,	bool,	TRUE)
 					/* Assume simple numerics */
 PERLVARI(Inumeric_local,	bool,	TRUE)
 					/* Assume local numerics */
-PERLVAR(Idummy1_bincompat,		char)
-					/* Used to be numeric_radix */
 
+PERLVAR(Inumeric_compat1,		char)
+					/* Used to be numeric_radix */
 #endif /* !USE_LOCALE_NUMERIC */
 
 /* utf8 character classes */
@@ -386,6 +391,7 @@ PERLVAR(Iutf8_mark,	SV *)
 PERLVAR(Iutf8_toupper,	SV *)
 PERLVAR(Iutf8_totitle,	SV *)
 PERLVAR(Iutf8_tolower,	SV *)
+PERLVAR(Iutf8_tofold,	SV *)
 PERLVAR(Ilast_swash_hv,	HV *)
 PERLVAR(Ilast_swash_klen,	U32)
 PERLVARA(Ilast_swash_key,10,	U8)
@@ -405,7 +411,7 @@ PERLVAR(Isrand_called,	bool)
 PERLVARA(Iuudmap,256,	char)
 PERLVAR(Ibitcount,	char *)
 
-#ifdef USE_THREADS
+#ifdef USE_5005THREADS
 PERLVAR(Isv_mutex,	perl_mutex)	/* Mutex for allocating SVs in sv.c */
 PERLVAR(Ieval_mutex,	perl_mutex)	/* Mutex for doeval */
 PERLVAR(Ieval_cond,	perl_cond)	/* Condition variable for doeval */
@@ -423,7 +429,7 @@ PERLVAR(Icurthr,	struct perl_thread *)
 
 PERLVAR(Icred_mutex,	perl_mutex)	/* altered credentials in effect */
 
-#endif /* USE_THREADS */
+#endif /* USE_5005THREADS */
 
 PERLVAR(Ipsig_ptr, SV**)
 PERLVAR(Ipsig_name, SV**)
@@ -445,7 +451,7 @@ PERLVAR(Iptr_table,	PTR_TBL_t*)
 #endif
 PERLVARI(Ibeginav_save, AV*, Nullav)	/* save BEGIN{}s when compiling */
 
-#ifdef USE_THREADS
+#ifdef USE_5005THREADS
 PERLVAR(Ifdpid_mutex,	perl_mutex)	/* mutex for fdpid array */
 PERLVAR(Isv_lock_mutex,	perl_mutex)	/* mutex for SvLOCK macro */
 #endif
@@ -465,11 +471,58 @@ PERLVAR(Ixpvlv_arenaroot,XPVLV*)	/* list of allocated xpvlv areas */
 PERLVAR(Ixpvbm_arenaroot,XPVBM*)	/* list of allocated xpvbm areas */
 PERLVAR(Ihe_arenaroot,	XPV*)		/* list of allocated he areas */
 
+     /* 5.6.0 stopped here */
+
+PERLVAR(Ipsig_pend, int *)		/* per-signal "count" of pending */
+PERLVARI(Isig_pending, int,0)           /* Number if highest signal pending */
+
 #ifdef USE_LOCALE_NUMERIC
 
 PERLVAR(Inumeric_radix_sv,	SV *)	/* The radix separator if not '.' */
+
 #endif
+
+#if defined(USE_ITHREADS)
+PERLVAR(Iregex_pad,     SV**)		/* All regex objects */
+PERLVAR(Iregex_padav,   AV*)		/* All regex objects */
+
+#ifdef USE_REENTRANT_API
+PERLVAR(Ireentrant_buffer, REENTR*)	/* here we store the _r buffers */
+#endif
+
+#endif
+
+PERLVAR(Isavebegin,     bool)	/* save BEGINs for compiler	*/
+
+PERLVAR(Icustom_op_names, HV*)  /* Names of user defined ops */
+PERLVAR(Icustom_op_descs, HV*)  /* Descriptions of user defined ops */
+
+#ifdef PERLIO_LAYERS
+PERLVARI(Iperlio, PerlIO *,NULL)
+PERLVARI(Iknown_layers, PerlIO_list_t *,NULL)
+PERLVARI(Idef_layerlist, PerlIO_list_t *,NULL)
+#endif
+
+PERLVARI(Iencoding,	SV*, Nullsv)		/* character encoding */
+
+PERLVAR(Idebug_pad,	struct perl_debug_pad)	/* always needed because of the re extension */
+
+PERLVAR(Itaint_warn, bool)      /* taint warns instead of dying */
+
+#ifdef PL_OP_SLAB_ALLOC
+PERLVAR(IOpPtr,I32 **)
+PERLVARI(IOpSpace,I32,0)
+PERLVAR(IOpSlab,I32 *)
+#endif
+
+PERLVAR(Iwantutf8, bool)	/* want utf8 as the default discipline */
+
+PERLVAR(Iutf8_idstart,	SV *)
+PERLVAR(Iutf8_idcont,	SV *)
+
+PERLVAR(Isort_RealCmp,  SVCOMPARE_t)
 
 /* New variables must be added to the very end for binary compatibility.
  * XSUB.h provides wrapper functions via perlapi.h that make this
  * irrelevant, but not all code may be expected to #include XSUB.h. */
+

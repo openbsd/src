@@ -151,7 +151,7 @@ to do more sophisticated tree-based parsing. See L<"TREE-BASED PARSING">.
 
 A I<parse-option> is simply a named option of B<Pod::Parser> with a
 value that corresponds to a certain specified behavior. These various
-behaviors of B<Pod::Parser> may be enabled/disabled by setting or
+behaviors of B<Pod::Parser> may be enabled/disabled by setting
 or unsetting one or more I<parse-options> using the B<parseopts()> method.
 The set of currently accepted parse-options is as follows:
 
@@ -647,7 +647,7 @@ their functionality.
 
 This method is useful if you need to perform your own interpolation 
 of interior sequences and can't rely upon B<interpolate> to expand
-them in simple bottom-up order order.
+them in simple bottom-up order.
 
 The parameter C<$text> is a string or block of text to be parsed
 for interior sequences; and the parameter C<$line_num> is the
@@ -1588,7 +1588,7 @@ markup languages like HTML and XML) then you may need to take the
 tree-based approach. Rather than doing everything in one pass and
 calling the B<interpolate()> method to expand sequences into text, it
 may be desirable to instead create a parse-tree using the B<parse_text()>
-method to return a tree-like structure which may contain an ordered list
+method to return a tree-like structure which may contain an ordered
 list of children (each of which may be a text-string, or a similar
 tree-like structure).
 

@@ -3,12 +3,12 @@
  version.c -- Perl 5 interface to Berkeley DB 
 
  written by Paul Marquess <Paul.Marquess@btinternet.com>
- last modified 16th January 2000
- version 1.73
+ last modified 2nd Jan 2002
+ version 1.802
 
  All comments/suggestions/problems are welcome
 
-     Copyright (c) 1995-2000 Paul Marquess. All rights reserved.
+     Copyright (c) 1995-2002 Paul Marquess. All rights reserved.
      This program is free software; you can redistribute it and/or
      modify it under the same terms as Perl itself.
 
@@ -22,6 +22,7 @@
 
 */
 
+#define PERL_NO_GET_CONTEXT
 #include "EXTERN.h"  
 #include "perl.h"
 #include "XSUB.h"

@@ -1,0 +1,57 @@
+  mg.c	AOK
+
+  No such signal: SIG%s
+    $SIG{FRED} = sub {}
+
+  SIG%s handler \"%s\" not defined.
+    $SIG{"INT"} = "ok3"; kill "INT",$$;
+
+  Mandatory Warnings TODO
+  ------------------
+  Can't break at that line	[magic_setdbline]
+
+__END__
+# mg.c
+use warnings 'signal' ;
+$SIG{FRED} = sub {};
+EXPECT
+No such signal: SIGFRED at - line 3.
+########
+# mg.c
+no warnings 'signal' ;
+$SIG{FRED} = sub {};
+EXPECT
+
+########
+# mg.c
+use warnings 'signal' ;
+if ($^O eq 'MSWin32' || $^O eq 'NetWare' || $^O eq 'VMS' || $^O eq 'MacOS') {
+    print "SKIPPED\n# $^O, can't kill() to raise()\n"; exit;
+}
+$|=1;
+$SIG{"INT"} = "fred"; kill "INT",$$;
+EXPECT
+SIGINT handler "fred" not defined.
+########
+# mg.c
+no warnings 'signal' ;
+if ($^O eq 'MSWin32' || $^O eq 'NetWare' || $^O eq 'VMS' || $^O eq 'MacOS') {
+    print "SKIPPED\n# $^O, can't kill() to raise()\n"; exit;
+}
+$|=1;
+$SIG{"INT"} = "fred"; kill "INT",$$;
+EXPECT
+
+########
+# mg.c
+use warnings 'uninitialized';
+'foo' =~ /(foo)/;
+length $3;
+EXPECT
+Use of uninitialized value in length at - line 4.
+########
+# mg.c
+use warnings 'uninitialized';
+length $3;
+EXPECT
+Use of uninitialized value in length at - line 3.

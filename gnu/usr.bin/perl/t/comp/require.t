@@ -8,15 +8,12 @@ BEGIN {
 
 # don't make this lexical
 $i = 1;
-# Tests 21 .. 23 work only with non broken UTF16-as-code implementations,
-# i.e. not EBCDIC Perls.
-my $Is_EBCDIC = ord('A') == 193 ? 1 : 0;
-if ($Is_EBCDIC) {
-   print "1..20\n";
-}
-else {
-   print "1..23\n";
-}
+
+my $Is_EBCDIC = (ord('A') == 193) ? 1 : 0;
+my $Is_UTF8   = (${^OPEN} || "") =~ /:utf8/;
+my $total_tests = 23;
+if ($Is_EBCDIC || $Is_UTF8) { $total_tests = 20; }
+print "1..$total_tests\n";
 
 sub do_require {
     %INC = ();
@@ -31,7 +28,7 @@ sub write_file {
     binmode REQ;
     use bytes;
     print REQ @_;
-    close REQ;
+    close REQ or die "Could not close $f: $!";
 }
 
 eval {require 5.005};
@@ -90,7 +87,6 @@ print "not " unless 5.5.1 gt v5.5;
 print "ok ",$i++,"\n";
 
 {
-    use utf8;
     print "not " unless v5.5.640 eq "\x{5}\x{5}\x{280}";
     print "ok ",$i++,"\n";
 
@@ -134,9 +130,10 @@ dofile();
 sub dofile { do "bleah.do"; };
 print $x;
 
-exit if $Is_EBCDIC;
+# UTF-encoded things - skipped on EBCDIC machines and on UTF-8 input
 
-# UTF-encoded things
+if ($Is_EBCDIC || $Is_UTF8) { exit; }
+
 my $utf8 = chr(0xFEFF);
 
 $i++; do_require(qq(${utf8}print "ok $i\n"; 1;\n));

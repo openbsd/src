@@ -4,15 +4,15 @@ perlnumber - semantics of numbers and numeric operations in Perl
 
 =head1 SYNOPSIS
 
-    $n = 1234;			# decimal integer
-    $n = 0b1110011;		# binary integer
-    $n = 01234;			# octal integer
-    $n = 0x1234;		# hexadecimal integer
-    $n = 12.34e-56;		# exponential notation
-    $n = "-12.34e56";		# number specified as a string
-    $n = "1234";		# number specified as a string
-    $n = v49.50.51.52;		# number specified as a string, which in
-				# turn is specified in terms of numbers :-)
+    $n = 1234;		    # decimal integer
+    $n = 0b1110011;	    # binary integer
+    $n = 01234;		    # octal integer
+    $n = 0x1234;	    # hexadecimal integer
+    $n = 12.34e-56;	    # exponential notation
+    $n = "-12.34e56";	    # number specified as a string
+    $n = "1234";	    # number specified as a string
+    $n = v49.50.51.52;	    # number specified as a string, which in
+			    # turn is specified in terms of numbers :-)
 
 =head1 DESCRIPTION
 
@@ -143,19 +143,43 @@ C<sprintf "%u", ~0>.
 
 =over 4
 
-=item Arithmetic operators except, C<no integer>
+=item Arithmetic operators
 
-force the argument into the floating point format.
+The binary operators C<+> C<-> C<*> C</> C<%> C<==> C<!=> C<E<gt>> C<E<lt>>
+C<E<gt>=> C<E<lt>=> and the unary operators C<-> C<abs> and C<--> will
+attempt to convert arguments to integers.  If both conversions are possible
+without loss of precision, and the operation can be performed without
+loss of precision then the integer result is used.  Otherwise arguments are
+converted to floating point format and the floating point result is used.
+The caching of conversions (as described above) means that the integer
+conversion does not throw away fractional parts on floating point numbers.
 
-=item Arithmetic operators except, C<use integer>
+=item ++
 
-=item Bitwise operators, C<no integer>
+C<++> behaves as the other operators above, except that if it is a string
+matching the format C</^[a-zA-Z]*[0-9]*\z/> the string increment described
+in L<perlop> is used.
 
-force the argument into the integer format if it is not a string.
+=item Arithmetic operators during C<use integer>
 
-=item Bitwise operators, C<use integer>
+In scopes where C<use integer;> is in force, nearly all the operators listed
+above will force their argument(s) into integer format, and return an integer
+result.  The exceptions, C<abs>, C<++> and C<-->, do not change their
+behavior with C<use integer;>
 
-force the argument into the integer format
+=item Other mathematical operators
+
+Operators such as C<**>, C<sin> and C<exp> force arguments to floating point
+format.
+
+=item Bitwise operators
+
+Arguments are forced into the integer format if not strings.
+
+=item Bitwise operators during C<use integer>
+
+forces arguments to integer format. Also shift operations internally use
+signed integers rather than the default unsigned.
 
 =item Operators which expect an integer
 
@@ -180,6 +204,8 @@ Ilya Zakharevich C<ilya@math.ohio-state.edu>
 
 Editorial adjustments by Gurusamy Sarathy <gsar@ActiveState.com>
 
+Updates for 5.8.0 by Nicholas Clark <nick@ccl4.org>
+
 =head1 SEE ALSO
 
-L<overload>
+L<overload>, L<perlop>

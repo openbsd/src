@@ -89,7 +89,7 @@ command and open a write-only filehandle leading into that command.
 This lets you write into that handle and have what you write show up on
 that command's standard input.  For example:
 
-    open(PRINTER, "| lpr -Plp1")    || die "cannot fork: $!";
+    open(PRINTER, "| lpr -Plp1")    || die "can't run lpr: $!";
     print PRINTER "stuff\n";
     close(PRINTER)                  || die "can't close lpr: $!";
 
@@ -98,18 +98,20 @@ read-only filehandle leading out of that command.  This lets whatever that
 command writes to its standard output show up on your handle for reading.
 For example:
 
-    open(NET, "netstat -i -n |")    || die "cannot fork: $!";
+    open(NET, "netstat -i -n |")    || die "can't fun netstat: $!";
     while (<NET>) { }               # do something with input
     close(NET)                      || die "can't close netstat: $!";
 
-What happens if you try to open a pipe to or from a non-existent command?
-In most systems, such an C<open> will not return an error. That's
-because in the traditional C<fork>/C<exec> model, running the other
-program happens only in the forked child process, which means that
-the failed C<exec> can't be reflected in the return value of C<open>.
-Only a failed C<fork> shows up there.  See 
-L<perlfaq8/"Why doesn't open() return an error when a pipe open fails?"> 
-to see how to cope with this.  There's also an explanation in L<perlipc>.
+What happens if you try to open a pipe to or from a non-existent
+command?  If possible, Perl will detect the failure and set C<$!> as
+usual.  But if the command contains special shell characters, such as
+C<E<gt>> or C<*>, called 'metacharacters', Perl does not execute the
+command directly.  Instead, Perl runs the shell, which then tries to
+run the command.  This means that it's the shell that gets the error
+indication.  In such a case, the C<open> call will only indicate
+failure if Perl can't even run the shell.  See L<perlfaq8/"How can I
+capture STDERR from an external command?"> to see how to cope with
+this.  There's also an explanation in L<perlipc>.
 
 If you would like to open a bidirectional pipe, the IPC::Open2
 library will handle this for you.  Check out 
@@ -738,7 +740,7 @@ sneaky data mutilation behind your back.
 
 Depending on the vicissitudes of your runtime system, even these calls
 may need C<binmode> or C<O_BINARY> first.  Systems known to be free of
-such difficulties include Unix, the Mac OS, Plan9, and Inferno.
+such difficulties include Unix, the Mac OS, Plan 9, and Inferno.
 
 =head2 File Locking
 
@@ -765,7 +767,7 @@ uses locking and another doesn't, all bets are off.
 
 By default, the C<flock> call will block until a lock is granted.
 A request for a shared lock will be granted as soon as there is no
-exclusive locker.  A request for a exclusive lock will be granted as
+exclusive locker.  A request for an exclusive lock will be granted as
 soon as there is no locker of any kind.  Locks are on file descriptors,
 not file names.  You can't lock a file until you open it, and you can't
 hold on to a lock once the file has been closed.
@@ -836,6 +838,42 @@ how to increment a number in a file safely:
     close(FH)
         or die "can't close numfile: $!";
 
+=head2 IO Layers
+
+In Perl 5.8.0 a new I/O framework called "PerlIO" was introduced.
+This is a new "plumbing" for all the I/O happening in Perl; for the
+most part everything will work just as it did, but PerlIO brought in
+also some new features, like the capability of think of I/O as "layers".
+One I/O layer may in addition to just moving the data also do
+transformations on the data.  Such transformations may include
+compression and decompression, encryption and decryption, and transforming
+between various character encodings.
+
+Full discussion about the features of PerlIO is out of scope for this
+tutorial, but here is how to recognize the layers being used:
+
+=over 4
+
+=item *
+
+The three-(or more)-argument form of C<open()> is being used and the
+second argument contains something else in addition to the usual
+C<< '<' >>, C<< '>' >>, C<< '>>' >>, C<< '|' >> and their variants,
+for example:
+
+    open(my $fh, "<:utf8", $fn);
+
+=item *
+
+The two-argument form of C<binmode<open()> is being used, for example
+
+    binmode($fh, ":encoding(utf16)");
+
+=back
+
+For more detailed discussion about PerlIO see L<perlio>;
+for more detailed discussion about Unicode and I/O see L<perluniintro>.
+
 =head1 SEE ALSO 
 
 The C<open> and C<sysopen> function in perlfunc(1);
@@ -846,12 +884,8 @@ the POSIX documentation.
 
 Copyright 1998 Tom Christiansen.  
 
-When included as part of the Standard Version of Perl, or as part of
-its complete documentation whether printed or otherwise, this work may
-be distributed only under the terms of Perl's Artistic License.  Any
-distribution of this file or derivatives thereof outside of that
-package require that special arrangements be made with copyright
-holder.
+This documentation is free; you can redistribute it and/or modify it
+under the same terms as Perl itself.
 
 Irrespective of its distribution, all code examples in these files are
 hereby placed into the public domain.  You are permitted and

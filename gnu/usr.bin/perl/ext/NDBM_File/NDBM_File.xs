@@ -53,7 +53,7 @@ ndbm_TIEHASH(dbtype, filename, flags, mode)
 	    DBM * 	dbp ;
 
 	    RETVAL = NULL ;
-	    if (dbp =  dbm_open(filename, flags, mode)) {
+	    if ((dbp =  dbm_open(filename, flags, mode))) {
 	        RETVAL = (NDBM_File)safemalloc(sizeof(NDBM_File_type)) ;
     	        Zero(RETVAL, 1, NDBM_File_type) ;
 		RETVAL->dbp = dbp ;
@@ -107,7 +107,7 @@ ndbm_FIRSTKEY(db)
 datum_key
 ndbm_NEXTKEY(db, key)
 	NDBM_File	db
-	datum_key	key
+	datum_key	key = NO_INIT
 
 #define ndbm_error(db)				dbm_error(db->dbp)
 int

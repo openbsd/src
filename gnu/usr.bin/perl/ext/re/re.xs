@@ -1,5 +1,4 @@
-/* We need access to debugger hooks */
-#ifndef DEBUGGING
+#if defined(PERL_EXT_RE_DEBUG) && !defined(DEBUGGING)
 #  define DEBUGGING
 #endif
 
@@ -7,6 +6,8 @@
 #include "EXTERN.h"
 #include "perl.h"
 #include "XSUB.h"
+
+START_EXTERN_C
 
 extern regexp*	my_regcomp (pTHX_ char* exp, char* xend, PMOP* pm);
 extern I32	my_regexec (pTHX_ regexp* prog, char* stringarg, char* strend,
@@ -18,37 +19,53 @@ extern char*	my_re_intuit_start (pTHX_ regexp *prog, SV *sv, char *strpos,
 				    struct re_scream_pos_data_s *data);
 extern SV*	my_re_intuit_string (pTHX_ regexp *prog);
 
-static int oldfl;
+END_EXTERN_C
 
-#define R_DB 512
+#define MY_CXT_KEY "re::_guts" XS_VERSION
+
+typedef struct {
+    int		x_oldflag;		/* debug flag */
+} my_cxt_t;
+
+START_MY_CXT
+
+#define oldflag		(MY_CXT.x_oldflag)
 
 static void
-deinstall(pTHX)
+uninstall(pTHX)
 {
+    dMY_CXT;
     PL_regexecp = Perl_regexec_flags;
     PL_regcompp = Perl_pregcomp;
     PL_regint_start = Perl_re_intuit_start;
     PL_regint_string = Perl_re_intuit_string;
     PL_regfree = Perl_pregfree;
 
-    if (!oldfl)
-	PL_debug &= ~R_DB;
+    if (!oldflag)
+	PL_debug &= ~DEBUG_r_FLAG;
 }
 
 static void
 install(pTHX)
 {
+    dMY_CXT;
     PL_colorset = 0;			/* Allow reinspection of ENV. */
     PL_regexecp = &my_regexec;
     PL_regcompp = &my_regcomp;
     PL_regint_start = &my_re_intuit_start;
     PL_regint_string = &my_re_intuit_string;
     PL_regfree = &my_regfree;
-    oldfl = PL_debug & R_DB;
-    PL_debug |= R_DB;
+    oldflag = PL_debug & DEBUG_r_FLAG;
+    PL_debug |= DEBUG_r_FLAG;
 }
 
 MODULE = re	PACKAGE = re
+
+BOOT:
+{
+   MY_CXT_INIT;
+}
+
 
 void
 install()
@@ -56,6 +73,6 @@ install()
     install(aTHX);
 
 void
-deinstall()
+uninstall()
   CODE:
-    deinstall(aTHX);
+    uninstall(aTHX);

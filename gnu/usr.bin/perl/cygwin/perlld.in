@@ -3,19 +3,14 @@
 #   to be built, special processing is done, else the standard ld is called.
 #
 
-# theese are pretty mandatory
+# these are pretty mandatory
 my $CC = '@CC@';
-my $DLLWRAP = '@DLLWRAP@';
-
-# following are optional.
-my $WRAPDRIVER = '@WRAPDRIVER@';
-my $AS = '@AS@';
-my $DLLTOOL = '@DLLTOOL@';
 my $EXPORT_ALL = @EXPORT_ALL@;
+
 # if some of extensions are undefined,
 # no corresponding output will be done.
 # most probably, you'd like to have an export library
-my $DEF_EXT = '@DEF_EXT@';
+# my $DEF_EXT = '@DEF_EXT@';
 # my $EXP_EXT = '@EXP_EXT@';
 my $LIB_EXT = '@LIB_EXT@';
 
@@ -51,27 +46,30 @@ if ($args !~ /\-o (\S+)/) {
     $path =~ s,[/\\](\.[/\\])*,/,g;
   }
   if ($dllname =~ /\./) { $libname =$`; } else { $libname =$dllname; };
+  my $v_e_r_s = '5_8_0';
+  if ( $dllname =~ /.*perl.*/) { 
+    $dllname ="cygperl$v_e_r_s.dll";
+  } else {
   $dllname ="$libname.dll";
+  }
   $libname ="lib$libname" unless ($libname =~ /^lib/);
   print DEBUGFILE "dll name: $dllname\nimport library: $libname\npath: $path\n" if $DEBUG;
 
-  $command ="$DLLWRAP --dllname $dllname";
-  $command .=" --driver-name $WRAPDRIVER" if $WRAPDRIVER;
-  $command .=" --dlltool $DLLTOOL" if $DLLTOOL;
-  $command .=" --export-all-symbols" if $EXPORT_ALL;
-  $command .=" --as $AS" if $AS;
-  $command .=" --verbose" if $verbose;
+  $command ="$CC -shared -o  $dllname";
+#  $command .=" --verbose" if $verbose;
 
-  $command .=" --output-def $libname$DEF_EXT" if $DEF_EXT;
-  $command .=" --output-exp $libname$EXP_EXT" if $EXP_EXT;
-  $command .=" --output-lib $libname$LIB_EXT" if $LIB_EXT;
+  $command .=" -Wl,--output-def=$libname$DEF_EXT" if $DEF_EXT;
+  $command .=" -Wl,--output-exp=$libname$EXP_EXT" if $EXP_EXT;
+  $command .=" -Wl,--out-implib=$libname.dll$LIB_EXT" if $LIB_EXT;
+  $command .=" -Wl,--export-all-symbols" if $EXPORT_ALL;
+  $command .=" -Wl,--enable-auto-import -Wl,--stack,8388608"; # always
 
   # other args are passed through
   shellexec("$command \\\n$args\n");
 
   if ($path) {
     $command ="mv $dllname";
-    $command .=" $libname$LIB_EXT" if $LIB_EXT;
+    $command .=" $libname.dll$LIB_EXT" if $LIB_EXT;
     shellexec("$command $path\n");
   };
 };

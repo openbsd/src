@@ -6,7 +6,8 @@ perlebcdic - Considerations for running Perl on EBCDIC platforms
 
 An exploration of some of the issues facing Perl programmers
 on EBCDIC based computers.  We do not cover localization, 
-internationalization, or multi byte character set issues (yet).
+internationalization, or multi byte character set issues other
+than some discussion of UTF-8 and UTF-EBCDIC.
 
 Portions that are still incomplete are marked with XXX.
 
@@ -44,7 +45,7 @@ A particular 8-bit extension to ASCII that includes grave and acute
 accented Latin characters.  Languages that can employ ISO 8859-1 
 include all the languages covered by ASCII as well as Afrikaans, 
 Albanian, Basque, Catalan, Danish, Faroese, Finnish, Norwegian, 
-Portugese, Spanish, and Swedish.  Dutch is covered albeit without 
+Portuguese, Spanish, and Swedish.  Dutch is covered albeit without 
 the ij ligature.  French is covered too but without the oe ligature. 
 German can use ISO 8859-1 but must do so without German-style
 quotation marks.  This set is based on Western European extensions 
@@ -54,7 +55,7 @@ also known as CCSID 819 (or sometimes 0819 or even 00819).
 
 =head2 EBCDIC
 
-The Extended Binary Coded Decimal Interchange Code  refers to a 
+The Extended Binary Coded Decimal Interchange Code refers to a 
 large collection of slightly different single and multi byte 
 coded character sets that are different from ASCII or ISO 8859-1 
 and typically run on host computers.  The EBCDIC encodings derive 
@@ -88,13 +89,84 @@ in 237 places, in other words they agree on only 19 code point values.
 
 Character code set ID 1047 is also a mapping of the ASCII plus 
 Latin-1 characters (i.e. ISO 8859-1) to an EBCDIC set.  1047 is 
-used under Unix System Services for OS/390, and OpenEdition for VM/ESA. 
-CCSID 1047 differs from CCSID 0037 in eight places.
+used under Unix System Services for OS/390 or z/OS, and OpenEdition 
+for VM/ESA.  CCSID 1047 differs from CCSID 0037 in eight places.
 
 =head2 POSIX-BC
 
 The EBCDIC code page in use on Siemens' BS2000 system is distinct from
 1047 and 0037.  It is identified below as the POSIX-BC set.
+
+=head2 Unicode code points versus EBCDIC code points
+
+In Unicode terminology a I<code point> is the number assigned to a
+character: for example, in EBCDIC the character "A" is usually assigned
+the number 193.  In Unicode the character "A" is assigned the number 65.
+This causes a problem with the semantics of the pack/unpack "U", which
+are supposed to pack Unicode code points to characters and back to numbers.
+The problem is: which code points to use for code points less than 256?
+(for 256 and over there's no problem: Unicode code points are used)
+In EBCDIC, for the low 256 the EBCDIC code points are used.  This
+means that the equivalences
+
+	pack("U", ord($character)) eq $character
+	unpack("U", $character) == ord $character
+
+will hold.  (If Unicode code points were applied consistently over
+all the possible code points, pack("U",ord("A")) would in EBCDIC
+equal I<A with acute> or chr(101), and unpack("U", "A") would equal
+65, or I<non-breaking space>, not 193, or ord "A".)
+
+=head2 Remaining Perl Unicode problems in EBCDIC
+
+=over 4
+
+=item *
+
+Many of the remaining seem to be related to case-insensitive matching:
+for example, C<< /[\x{131}]/ >> (LATIN SMALL LETTER DOTLESS I) does
+not match "I" case-insensitively, as it should under Unicode.
+(The match succeeds in ASCII-derived platforms.)
+
+=item *
+
+The extensions Unicode::Collate and Unicode::Normalized are not
+supported under EBCDIC, likewise for the encoding pragma.
+
+=back
+
+=head2 Unicode and UTF
+
+UTF is a Unicode Transformation Format.  UTF-8 is a Unicode conforming
+representation of the Unicode standard that looks very much like ASCII.
+UTF-EBCDIC is an attempt to represent Unicode characters in an EBCDIC
+transparent manner.
+
+=head2 Using Encode
+
+Starting from Perl 5.8 you can use the standard new module Encode
+to translate from EBCDIC to Latin-1 code points
+
+	use Encode 'from_to';
+
+	my %ebcdic = ( 176 => 'cp37', 95 => 'cp1047', 106 => 'posix-bc' );
+
+	# $a is in EBCDIC code points
+	from_to($a, $ebcdic{ord '^'}, 'latin1');
+	# $a is ISO 8859-1 code points
+
+and from Latin-1 code points to EBCDIC code points
+
+	use Encode 'from_to';
+
+	my %ebcdic = ( 176 => 'cp37', 95 => 'cp1047', 106 => 'posix-bc' );
+
+	# $a is ISO 8859-1 code points
+	from_to($a, 'latin1', $ebcdic{ord '^'});
+	# $a is in EBCDIC code points
+
+For doing I/O it is suggested that you use the autotranslating features
+of PerlIO, see L<perluniintro>.
 
 =head1 SINGLE OCTET TABLES
 
@@ -103,7 +175,7 @@ the subsets: C0 controls (0..31), ASCII graphics (32..7e), delete (7f),
 C1 controls (80..9f), and Latin-1 (a.k.a. ISO 8859-1) (a0..ff).  In the 
 table non-printing control character names as well as the Latin 1 
 extensions to ASCII have been labelled with character names roughly 
-corresponding to I<The Unicode Standard, Version 2.0> albeit with 
+corresponding to I<The Unicode Standard, Version 3.0> albeit with 
 substitutions such as s/LATIN// and s/VULGAR// in all cases, 
 s/CAPITAL LETTER// in some cases, and s/SMALL LETTER ([A-Z])/\l$1/ 
 in some other cases (the C<charnames> pragma names unfortunately do 
@@ -123,10 +195,10 @@ work with a pod2_other_format translation) through:
 =back
 
     perl -ne 'if(/(.{33})(\d+)\s+(\d+)\s+(\d+)\s+(\d+)/)' \
-     -e '{printf("%s%-9o%-9o%-9o%-9o\n",$1,$2,$3,$4,$5)}' perlebcdic.pod
+     -e '{printf("%s%-9o%-9o%-9o%o\n",$1,$2,$3,$4,$5)}' perlebcdic.pod
 
-If you would rather see this table listing hexadecimal values then
-run the table through:
+If you want to retain the UTF-x code points then in script form you
+might want to write:
 
 =over 4
 
@@ -134,272 +206,23 @@ run the table through:
 
 =back
 
-    perl -ne 'if(/(.{33})(\d+)\s+(\d+)\s+(\d+)\s+(\d+)/)' \
-     -e '{printf("%s%-9X%-9X%-9X%-9X\n",$1,$2,$3,$4,$5)}' perlebcdic.pod
+    open(FH,"<perlebcdic.pod") or die "Could not open perlebcdic.pod: $!";
+    while (<FH>) {
+        if (/(.{33})(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\.?(\d*)\s+(\d+)\.?(\d*)/)  {
+            if ($7 ne '' && $9 ne '') {
+                printf("%s%-9o%-9o%-9o%-9o%-3o.%-5o%-3o.%o\n",$1,$2,$3,$4,$5,$6,$7,$8,$9);
+            }
+            elsif ($7 ne '') {
+                printf("%s%-9o%-9o%-9o%-9o%-3o.%-5o%o\n",$1,$2,$3,$4,$5,$6,$7,$8);
+            }
+            else {
+                printf("%s%-9o%-9o%-9o%-9o%-9o%o\n",$1,$2,$3,$4,$5,$6,$8);
+            }
+        }
+    }
 
-
-                                 8859-1
-    chr                          0819     0037     1047     POSIX-BC
-    ----------------------------------------------------------------
-    <NULL>                       0        0        0        0 
-    <START OF HEADING>           1        1        1        1
-    <START OF TEXT>              2        2        2        2
-    <END OF TEXT>                3        3        3        3
-    <END OF TRANSMISSION>        4        55       55       55
-    <ENQUIRY>                    5        45       45       45
-    <ACKNOWLEDGE>                6        46       46       46
-    <BELL>                       7        47       47       47
-    <BACKSPACE>                  8        22       22       22
-    <HORIZONTAL TABULATION>      9        5        5        5
-    <LINE FEED>                  10       37       21       21  ***
-    <VERTICAL TABULATION>        11       11       11       11
-    <FORM FEED>                  12       12       12       12
-    <CARRIAGE RETURN>            13       13       13       13
-    <SHIFT OUT>                  14       14       14       14
-    <SHIFT IN>                   15       15       15       15
-    <DATA LINK ESCAPE>           16       16       16       16
-    <DEVICE CONTROL ONE>         17       17       17       17
-    <DEVICE CONTROL TWO>         18       18       18       18
-    <DEVICE CONTROL THREE>       19       19       19       19
-    <DEVICE CONTROL FOUR>        20       60       60       60
-    <NEGATIVE ACKNOWLEDGE>       21       61       61       61
-    <SYNCHRONOUS IDLE>           22       50       50       50
-    <END OF TRANSMISSION BLOCK>  23       38       38       38
-    <CANCEL>                     24       24       24       24
-    <END OF MEDIUM>              25       25       25       25
-    <SUBSTITUTE>                 26       63       63       63
-    <ESCAPE>                     27       39       39       39
-    <FILE SEPARATOR>             28       28       28       28
-    <GROUP SEPARATOR>            29       29       29       29
-    <RECORD SEPARATOR>           30       30       30       30
-    <UNIT SEPARATOR>             31       31       31       31
-    <SPACE>                      32       64       64       64
-    !                            33       90       90       90
-    "                            34       127      127      127
-    #                            35       123      123      123
-    $                            36       91       91       91
-    %                            37       108      108      108
-    &                            38       80       80       80
-    '                            39       125      125      125
-    (                            40       77       77       77
-    )                            41       93       93       93
-    *                            42       92       92       92
-    +                            43       78       78       78
-    ,                            44       107      107      107
-    -                            45       96       96       96
-    .                            46       75       75       75
-    /                            47       97       97       97
-    0                            48       240      240      240
-    1                            49       241      241      241
-    2                            50       242      242      242
-    3                            51       243      243      243
-    4                            52       244      244      244
-    5                            53       245      245      245
-    6                            54       246      246      246
-    7                            55       247      247      247
-    8                            56       248      248      248
-    9                            57       249      249      249
-    :                            58       122      122      122
-    ;                            59       94       94       94
-    <                            60       76       76       76
-    =                            61       126      126      126
-    >                            62       110      110      110
-    ?                            63       111      111      111
-    @                            64       124      124      124
-    A                            65       193      193      193
-    B                            66       194      194      194
-    C                            67       195      195      195
-    D                            68       196      196      196
-    E                            69       197      197      197
-    F                            70       198      198      198
-    G                            71       199      199      199
-    H                            72       200      200      200
-    I                            73       201      201      201
-    J                            74       209      209      209
-    K                            75       210      210      210
-    L                            76       211      211      211
-    M                            77       212      212      212
-    N                            78       213      213      213
-    O                            79       214      214      214
-    P                            80       215      215      215
-    Q                            81       216      216      216
-    R                            82       217      217      217
-    S                            83       226      226      226
-    T                            84       227      227      227
-    U                            85       228      228      228
-    V                            86       229      229      229
-    W                            87       230      230      230
-    X                            88       231      231      231
-    Y                            89       232      232      232
-    Z                            90       233      233      233
-    [                            91       186      173      187 *** ###
-    \                            92       224      224      188 ### 
-    ]                            93       187      189      189 ***
-    ^                            94       176      95       106 *** ###
-    _                            95       109      109      109
-    `                            96       121      121      74  ###
-    a                            97       129      129      129
-    b                            98       130      130      130
-    c                            99       131      131      131
-    d                            100      132      132      132
-    e                            101      133      133      133
-    f                            102      134      134      134
-    g                            103      135      135      135
-    h                            104      136      136      136
-    i                            105      137      137      137
-    j                            106      145      145      145
-    k                            107      146      146      146
-    l                            108      147      147      147
-    m                            109      148      148      148
-    n                            110      149      149      149
-    o                            111      150      150      150
-    p                            112      151      151      151
-    q                            113      152      152      152
-    r                            114      153      153      153
-    s                            115      162      162      162
-    t                            116      163      163      163
-    u                            117      164      164      164
-    v                            118      165      165      165
-    w                            119      166      166      166
-    x                            120      167      167      167
-    y                            121      168      168      168
-    z                            122      169      169      169
-    {                            123      192      192      251 ###
-    |                            124      79       79       79
-    }                            125      208      208      253 ###
-    ~                            126      161      161      255 ###
-    <DELETE>                     127      7        7        7
-    <C1 0>                       128      32       32       32
-    <C1 1>                       129      33       33       33
-    <C1 2>                       130      34       34       34
-    <C1 3>                       131      35       35       35
-    <C1 4>                       132      36       36       36
-    <C1 5>                       133      21       37       37  ***
-    <C1 6>                       134      6        6        6
-    <C1 7>                       135      23       23       23
-    <C1 8>                       136      40       40       40
-    <C1 9>                       137      41       41       41
-    <C1 10>                      138      42       42       42
-    <C1 11>                      139      43       43       43
-    <C1 12>                      140      44       44       44
-    <C1 13>                      141      9        9        9
-    <C1 14>                      142      10       10       10
-    <C1 15>                      143      27       27       27
-    <C1 16>                      144      48       48       48
-    <C1 17>                      145      49       49       49
-    <C1 18>                      146      26       26       26
-    <C1 19>                      147      51       51       51
-    <C1 20>                      148      52       52       52
-    <C1 21>                      149      53       53       53
-    <C1 22>                      150      54       54       54
-    <C1 23>                      151      8        8        8
-    <C1 24>                      152      56       56       56
-    <C1 25>                      153      57       57       57
-    <C1 26>                      154      58       58       58
-    <C1 27>                      155      59       59       59
-    <C1 28>                      156      4        4        4
-    <C1 29>                      157      20       20       20
-    <C1 30>                      158      62       62       62
-    <C1 31>                      159      255      255      95  ###
-    <NON-BREAKING SPACE>         160      65       65       65
-    <INVERTED EXCLAMATION MARK>  161      170      170      170
-    <CENT SIGN>                  162      74       74       176 ###
-    <POUND SIGN>                 163      177      177      177
-    <CURRENCY SIGN>              164      159      159      159
-    <YEN SIGN>                   165      178      178      178
-    <BROKEN BAR>                 166      106      106      208 ###
-    <SECTION SIGN>               167      181      181      181
-    <DIAERESIS>                  168      189      187      121 *** ###
-    <COPYRIGHT SIGN>             169      180      180      180
-    <FEMININE ORDINAL INDICATOR> 170      154      154      154
-    <LEFT POINTING GUILLEMET>    171      138      138      138
-    <NOT SIGN>                   172      95       176      186 *** ###       
-    <SOFT HYPHEN>                173      202      202      202
-    <REGISTERED TRADE MARK SIGN> 174      175      175      175
-    <MACRON>                     175      188      188      161 ###
-    <DEGREE SIGN>                176      144      144      144
-    <PLUS-OR-MINUS SIGN>         177      143      143      143
-    <SUPERSCRIPT TWO>            178      234      234      234
-    <SUPERSCRIPT THREE>          179      250      250      250
-    <ACUTE ACCENT>               180      190      190      190
-    <MICRO SIGN>                 181      160      160      160
-    <PARAGRAPH SIGN>             182      182      182      182
-    <MIDDLE DOT>                 183      179      179      179
-    <CEDILLA>                    184      157      157      157
-    <SUPERSCRIPT ONE>            185      218      218      218
-    <MASC. ORDINAL INDICATOR>    186      155      155      155
-    <RIGHT POINTING GUILLEMET>   187      139      139      139
-    <FRACTION ONE QUARTER>       188      183      183      183
-    <FRACTION ONE HALF>          189      184      184      184
-    <FRACTION THREE QUARTERS>    190      185      185      185
-    <INVERTED QUESTION MARK>     191      171      171      171
-    <A WITH GRAVE>               192      100      100      100
-    <A WITH ACUTE>               193      101      101      101
-    <A WITH CIRCUMFLEX>          194      98       98       98
-    <A WITH TILDE>               195      102      102      102
-    <A WITH DIAERESIS>           196      99       99       99
-    <A WITH RING ABOVE>          197      103      103      103
-    <CAPITAL LIGATURE AE>        198      158      158      158
-    <C WITH CEDILLA>             199      104      104      104
-    <E WITH GRAVE>               200      116      116      116
-    <E WITH ACUTE>               201      113      113      113
-    <E WITH CIRCUMFLEX>          202      114      114      114
-    <E WITH DIAERESIS>           203      115      115      115
-    <I WITH GRAVE>               204      120      120      120
-    <I WITH ACUTE>               205      117      117      117
-    <I WITH CIRCUMFLEX>          206      118      118      118
-    <I WITH DIAERESIS>           207      119      119      119
-    <CAPITAL LETTER ETH>         208      172      172      172
-    <N WITH TILDE>               209      105      105      105
-    <O WITH GRAVE>               210      237      237      237
-    <O WITH ACUTE>               211      238      238      238
-    <O WITH CIRCUMFLEX>          212      235      235      235
-    <O WITH TILDE>               213      239      239      239
-    <O WITH DIAERESIS>           214      236      236      236
-    <MULTIPLICATION SIGN>        215      191      191      191
-    <O WITH STROKE>              216      128      128      128
-    <U WITH GRAVE>               217      253      253      224 ###
-    <U WITH ACUTE>               218      254      254      254
-    <U WITH CIRCUMFLEX>          219      251      251      221 ###
-    <U WITH DIAERESIS>           220      252      252      252
-    <Y WITH ACUTE>               221      173      186      173 *** ###
-    <CAPITAL LETTER THORN>       222      174      174      174
-    <SMALL LETTER SHARP S>       223      89       89       89
-    <a WITH GRAVE>               224      68       68       68
-    <a WITH ACUTE>               225      69       69       69
-    <a WITH CIRCUMFLEX>          226      66       66       66
-    <a WITH TILDE>               227      70       70       70
-    <a WITH DIAERESIS>           228      67       67       67
-    <a WITH RING ABOVE>          229      71       71       71
-    <SMALL LIGATURE ae>          230      156      156      156
-    <c WITH CEDILLA>             231      72       72       72
-    <e WITH GRAVE>               232      84       84       84
-    <e WITH ACUTE>               233      81       81       81
-    <e WITH CIRCUMFLEX>          234      82       82       82
-    <e WITH DIAERESIS>           235      83       83       83
-    <i WITH GRAVE>               236      88       88       88
-    <i WITH ACUTE>               237      85       85       85
-    <i WITH CIRCUMFLEX>          238      86       86       86
-    <i WITH DIAERESIS>           239      87       87       87
-    <SMALL LETTER eth>           240      140      140      140
-    <n WITH TILDE>               241      73       73       73
-    <o WITH GRAVE>               242      205      205      205
-    <o WITH ACUTE>               243      206      206      206
-    <o WITH CIRCUMFLEX>          244      203      203      203
-    <o WITH TILDE>               245      207      207      207
-    <o WITH DIAERESIS>           246      204      204      204
-    <DIVISION SIGN>              247      225      225      225
-    <o WITH STROKE>              248      112      112      112
-    <u WITH GRAVE>               249      221      221      192 ###
-    <u WITH ACUTE>               250      222      222      222
-    <u WITH CIRCUMFLEX>          251      219      219      219
-    <u WITH DIAERESIS>           252      220      220      220
-    <y WITH ACUTE>               253      141      141      141
-    <SMALL LETTER thorn>         254      142      142      142
-    <y WITH DIAERESIS>           255      223      223      223
-
-If you would rather see the above table in CCSID 0037 order rather than
-ASCII + Latin-1 order then run the table through:
+If you would rather see this table listing hexadecimal values then
+run the table through:
 
 =over 4
 
@@ -407,14 +230,10 @@ ASCII + Latin-1 order then run the table through:
 
 =back
 
-    perl -ne 'if(/.{33}\d{1,3}\s{6,8}\d{1,3}\s{6,8}\d{1,3}\s{6,8}\d{1,3}/)'\
-     -e '{push(@l,$_)}' \
-     -e 'END{print map{$_->[0]}' \
-     -e '          sort{$a->[1] <=> $b->[1]}' \ 
-     -e '          map{[$_,substr($_,42,3)]}@l;}' perlebcdic.pod
+    perl -ne 'if(/(.{33})(\d+)\s+(\d+)\s+(\d+)\s+(\d+)/)' \
+     -e '{printf("%s%-9X%-9X%-9X%X\n",$1,$2,$3,$4,$5)}' perlebcdic.pod
 
-If you would rather see it in CCSID 1047 order then change the digit
-42 in the last line to 51, like this:
+Or, in order to retain the UTF-x code points in hexadecimal:
 
 =over 4
 
@@ -422,14 +241,285 @@ If you would rather see it in CCSID 1047 order then change the digit
 
 =back
 
-    perl -ne 'if(/.{33}\d{1,3}\s{6,8}\d{1,3}\s{6,8}\d{1,3}\s{6,8}\d{1,3}/)'\
-     -e '{push(@l,$_)}' \
-     -e 'END{print map{$_->[0]}' \
-     -e '          sort{$a->[1] <=> $b->[1]}' \ 
-     -e '          map{[$_,substr($_,51,3)]}@l;}' perlebcdic.pod
+    open(FH,"<perlebcdic.pod") or die "Could not open perlebcdic.pod: $!";
+    while (<FH>) {
+        if (/(.{33})(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\.?(\d*)\s+(\d+)\.?(\d*)/)  {
+            if ($7 ne '' && $9 ne '') {
+                printf("%s%-9X%-9X%-9X%-9X%-2X.%-6X%-2X.%X\n",$1,$2,$3,$4,$5,$6,$7,$8,$9);
+            }
+            elsif ($7 ne '') {
+                printf("%s%-9X%-9X%-9X%-9X%-2X.%-6X%X\n",$1,$2,$3,$4,$5,$6,$7,$8);
+            }
+            else {
+                printf("%s%-9X%-9X%-9X%-9X%-9X%X\n",$1,$2,$3,$4,$5,$6,$8);
+            }
+        }
+    }
 
-If you would rather see it in POSIX-BC order then change the digit
-51 in the last line to 60, like this:
+
+                                                                     incomp-  incomp-
+                                 8859-1                              lete     lete
+    chr                          0819     0037     1047     POSIX-BC UTF-8    UTF-EBCDIC
+    ------------------------------------------------------------------------------------
+    <NULL>                       0        0        0        0        0        0 
+    <START OF HEADING>           1        1        1        1        1        1
+    <START OF TEXT>              2        2        2        2        2        2
+    <END OF TEXT>                3        3        3        3        3        3
+    <END OF TRANSMISSION>        4        55       55       55       4        55 
+    <ENQUIRY>                    5        45       45       45       5        45 
+    <ACKNOWLEDGE>                6        46       46       46       6        46 
+    <BELL>                       7        47       47       47       7        47 
+    <BACKSPACE>                  8        22       22       22       8        22 
+    <HORIZONTAL TABULATION>      9        5        5        5        9        5 
+    <LINE FEED>                  10       37       21       21       10       21       ***
+    <VERTICAL TABULATION>        11       11       11       11       11       11
+    <FORM FEED>                  12       12       12       12       12       12
+    <CARRIAGE RETURN>            13       13       13       13       13       13
+    <SHIFT OUT>                  14       14       14       14       14       14
+    <SHIFT IN>                   15       15       15       15       15       15
+    <DATA LINK ESCAPE>           16       16       16       16       16       16
+    <DEVICE CONTROL ONE>         17       17       17       17       17       17
+    <DEVICE CONTROL TWO>         18       18       18       18       18       18
+    <DEVICE CONTROL THREE>       19       19       19       19       19       19
+    <DEVICE CONTROL FOUR>        20       60       60       60       20       60
+    <NEGATIVE ACKNOWLEDGE>       21       61       61       61       21       61
+    <SYNCHRONOUS IDLE>           22       50       50       50       22       50
+    <END OF TRANSMISSION BLOCK>  23       38       38       38       23       38
+    <CANCEL>                     24       24       24       24       24       24
+    <END OF MEDIUM>              25       25       25       25       25       25
+    <SUBSTITUTE>                 26       63       63       63       26       63
+    <ESCAPE>                     27       39       39       39       27       39
+    <FILE SEPARATOR>             28       28       28       28       28       28
+    <GROUP SEPARATOR>            29       29       29       29       29       29
+    <RECORD SEPARATOR>           30       30       30       30       30       30
+    <UNIT SEPARATOR>             31       31       31       31       31       31
+    <SPACE>                      32       64       64       64       32       64
+    !                            33       90       90       90       33       90
+    "                            34       127      127      127      34       127
+    #                            35       123      123      123      35       123
+    $                            36       91       91       91       36       91
+    %                            37       108      108      108      37       108
+    &                            38       80       80       80       38       80
+    '                            39       125      125      125      39       125
+    (                            40       77       77       77       40       77
+    )                            41       93       93       93       41       93
+    *                            42       92       92       92       42       92
+    +                            43       78       78       78       43       78
+    ,                            44       107      107      107      44       107
+    -                            45       96       96       96       45       96
+    .                            46       75       75       75       46       75
+    /                            47       97       97       97       47       97
+    0                            48       240      240      240      48       240
+    1                            49       241      241      241      49       241
+    2                            50       242      242      242      50       242
+    3                            51       243      243      243      51       243
+    4                            52       244      244      244      52       244
+    5                            53       245      245      245      53       245
+    6                            54       246      246      246      54       246
+    7                            55       247      247      247      55       247
+    8                            56       248      248      248      56       248
+    9                            57       249      249      249      57       249
+    :                            58       122      122      122      58       122
+    ;                            59       94       94       94       59       94
+    <                            60       76       76       76       60       76
+    =                            61       126      126      126      61       126
+    >                            62       110      110      110      62       110
+    ?                            63       111      111      111      63       111
+    @                            64       124      124      124      64       124
+    A                            65       193      193      193      65       193
+    B                            66       194      194      194      66       194
+    C                            67       195      195      195      67       195
+    D                            68       196      196      196      68       196
+    E                            69       197      197      197      69       197
+    F                            70       198      198      198      70       198
+    G                            71       199      199      199      71       199
+    H                            72       200      200      200      72       200
+    I                            73       201      201      201      73       201
+    J                            74       209      209      209      74       209
+    K                            75       210      210      210      75       210
+    L                            76       211      211      211      76       211
+    M                            77       212      212      212      77       212
+    N                            78       213      213      213      78       213
+    O                            79       214      214      214      79       214
+    P                            80       215      215      215      80       215
+    Q                            81       216      216      216      81       216
+    R                            82       217      217      217      82       217
+    S                            83       226      226      226      83       226
+    T                            84       227      227      227      84       227
+    U                            85       228      228      228      85       228
+    V                            86       229      229      229      86       229
+    W                            87       230      230      230      87       230
+    X                            88       231      231      231      88       231
+    Y                            89       232      232      232      89       232
+    Z                            90       233      233      233      90       233
+    [                            91       186      173      187      91       173      *** ###
+    \                            92       224      224      188      92       224      ### 
+    ]                            93       187      189      189      93       189      ***
+    ^                            94       176      95       106      94       95       *** ###
+    _                            95       109      109      109      95       109
+    `                            96       121      121      74       96       121      ###
+    a                            97       129      129      129      97       129
+    b                            98       130      130      130      98       130
+    c                            99       131      131      131      99       131
+    d                            100      132      132      132      100      132
+    e                            101      133      133      133      101      133
+    f                            102      134      134      134      102      134
+    g                            103      135      135      135      103      135
+    h                            104      136      136      136      104      136
+    i                            105      137      137      137      105      137
+    j                            106      145      145      145      106      145
+    k                            107      146      146      146      107      146
+    l                            108      147      147      147      108      147
+    m                            109      148      148      148      109      148
+    n                            110      149      149      149      110      149
+    o                            111      150      150      150      111      150
+    p                            112      151      151      151      112      151
+    q                            113      152      152      152      113      152
+    r                            114      153      153      153      114      153
+    s                            115      162      162      162      115      162
+    t                            116      163      163      163      116      163
+    u                            117      164      164      164      117      164
+    v                            118      165      165      165      118      165
+    w                            119      166      166      166      119      166
+    x                            120      167      167      167      120      167
+    y                            121      168      168      168      121      168
+    z                            122      169      169      169      122      169
+    {                            123      192      192      251      123      192      ###
+    |                            124      79       79       79       124      79
+    }                            125      208      208      253      125      208      ###
+    ~                            126      161      161      255      126      161      ###
+    <DELETE>                     127      7        7        7        127      7
+    <C1 0>                       128      32       32       32       194.128  32
+    <C1 1>                       129      33       33       33       194.129  33
+    <C1 2>                       130      34       34       34       194.130  34
+    <C1 3>                       131      35       35       35       194.131  35
+    <C1 4>                       132      36       36       36       194.132  36
+    <C1 5>                       133      21       37       37       194.133  37       ***
+    <C1 6>                       134      6        6        6        194.134  6
+    <C1 7>                       135      23       23       23       194.135  23
+    <C1 8>                       136      40       40       40       194.136  40
+    <C1 9>                       137      41       41       41       194.137  41
+    <C1 10>                      138      42       42       42       194.138  42
+    <C1 11>                      139      43       43       43       194.139  43
+    <C1 12>                      140      44       44       44       194.140  44
+    <C1 13>                      141      9        9        9        194.141  9
+    <C1 14>                      142      10       10       10       194.142  10
+    <C1 15>                      143      27       27       27       194.143  27
+    <C1 16>                      144      48       48       48       194.144  48
+    <C1 17>                      145      49       49       49       194.145  49
+    <C1 18>                      146      26       26       26       194.146  26
+    <C1 19>                      147      51       51       51       194.147  51
+    <C1 20>                      148      52       52       52       194.148  52
+    <C1 21>                      149      53       53       53       194.149  53
+    <C1 22>                      150      54       54       54       194.150  54
+    <C1 23>                      151      8        8        8        194.151  8
+    <C1 24>                      152      56       56       56       194.152  56
+    <C1 25>                      153      57       57       57       194.153  57
+    <C1 26>                      154      58       58       58       194.154  58
+    <C1 27>                      155      59       59       59       194.155  59
+    <C1 28>                      156      4        4        4        194.156  4
+    <C1 29>                      157      20       20       20       194.157  20
+    <C1 30>                      158      62       62       62       194.158  62
+    <C1 31>                      159      255      255      95       194.159  255      ###
+    <NON-BREAKING SPACE>         160      65       65       65       194.160  128.65
+    <INVERTED EXCLAMATION MARK>  161      170      170      170      194.161  128.66
+    <CENT SIGN>                  162      74       74       176      194.162  128.67   ###
+    <POUND SIGN>                 163      177      177      177      194.163  128.68
+    <CURRENCY SIGN>              164      159      159      159      194.164  128.69
+    <YEN SIGN>                   165      178      178      178      194.165  128.70
+    <BROKEN BAR>                 166      106      106      208      194.166  128.71   ###
+    <SECTION SIGN>               167      181      181      181      194.167  128.72
+    <DIAERESIS>                  168      189      187      121      194.168  128.73   *** ###
+    <COPYRIGHT SIGN>             169      180      180      180      194.169  128.74
+    <FEMININE ORDINAL INDICATOR> 170      154      154      154      194.170  128.81
+    <LEFT POINTING GUILLEMET>    171      138      138      138      194.171  128.82
+    <NOT SIGN>                   172      95       176      186      194.172  128.83   *** ###
+    <SOFT HYPHEN>                173      202      202      202      194.173  128.84
+    <REGISTERED TRADE MARK SIGN> 174      175      175      175      194.174  128.85
+    <MACRON>                     175      188      188      161      194.175  128.86   ###
+    <DEGREE SIGN>                176      144      144      144      194.176  128.87
+    <PLUS-OR-MINUS SIGN>         177      143      143      143      194.177  128.88
+    <SUPERSCRIPT TWO>            178      234      234      234      194.178  128.89
+    <SUPERSCRIPT THREE>          179      250      250      250      194.179  128.98
+    <ACUTE ACCENT>               180      190      190      190      194.180  128.99
+    <MICRO SIGN>                 181      160      160      160      194.181  128.100
+    <PARAGRAPH SIGN>             182      182      182      182      194.182  128.101
+    <MIDDLE DOT>                 183      179      179      179      194.183  128.102
+    <CEDILLA>                    184      157      157      157      194.184  128.103
+    <SUPERSCRIPT ONE>            185      218      218      218      194.185  128.104
+    <MASC. ORDINAL INDICATOR>    186      155      155      155      194.186  128.105
+    <RIGHT POINTING GUILLEMET>   187      139      139      139      194.187  128.106
+    <FRACTION ONE QUARTER>       188      183      183      183      194.188  128.112
+    <FRACTION ONE HALF>          189      184      184      184      194.189  128.113
+    <FRACTION THREE QUARTERS>    190      185      185      185      194.190  128.114
+    <INVERTED QUESTION MARK>     191      171      171      171      194.191  128.115
+    <A WITH GRAVE>               192      100      100      100      195.128  138.65
+    <A WITH ACUTE>               193      101      101      101      195.129  138.66
+    <A WITH CIRCUMFLEX>          194      98       98       98       195.130  138.67
+    <A WITH TILDE>               195      102      102      102      195.131  138.68
+    <A WITH DIAERESIS>           196      99       99       99       195.132  138.69
+    <A WITH RING ABOVE>          197      103      103      103      195.133  138.70
+    <CAPITAL LIGATURE AE>        198      158      158      158      195.134  138.71
+    <C WITH CEDILLA>             199      104      104      104      195.135  138.72
+    <E WITH GRAVE>               200      116      116      116      195.136  138.73
+    <E WITH ACUTE>               201      113      113      113      195.137  138.74
+    <E WITH CIRCUMFLEX>          202      114      114      114      195.138  138.81
+    <E WITH DIAERESIS>           203      115      115      115      195.139  138.82
+    <I WITH GRAVE>               204      120      120      120      195.140  138.83
+    <I WITH ACUTE>               205      117      117      117      195.141  138.84
+    <I WITH CIRCUMFLEX>          206      118      118      118      195.142  138.85
+    <I WITH DIAERESIS>           207      119      119      119      195.143  138.86
+    <CAPITAL LETTER ETH>         208      172      172      172      195.144  138.87
+    <N WITH TILDE>               209      105      105      105      195.145  138.88
+    <O WITH GRAVE>               210      237      237      237      195.146  138.89
+    <O WITH ACUTE>               211      238      238      238      195.147  138.98
+    <O WITH CIRCUMFLEX>          212      235      235      235      195.148  138.99
+    <O WITH TILDE>               213      239      239      239      195.149  138.100
+    <O WITH DIAERESIS>           214      236      236      236      195.150  138.101
+    <MULTIPLICATION SIGN>        215      191      191      191      195.151  138.102
+    <O WITH STROKE>              216      128      128      128      195.152  138.103
+    <U WITH GRAVE>               217      253      253      224      195.153  138.104  ###
+    <U WITH ACUTE>               218      254      254      254      195.154  138.105
+    <U WITH CIRCUMFLEX>          219      251      251      221      195.155  138.106  ###
+    <U WITH DIAERESIS>           220      252      252      252      195.156  138.112
+    <Y WITH ACUTE>               221      173      186      173      195.157  138.113  *** ###
+    <CAPITAL LETTER THORN>       222      174      174      174      195.158  138.114
+    <SMALL LETTER SHARP S>       223      89       89       89       195.159  138.115
+    <a WITH GRAVE>               224      68       68       68       195.160  139.65
+    <a WITH ACUTE>               225      69       69       69       195.161  139.66
+    <a WITH CIRCUMFLEX>          226      66       66       66       195.162  139.67
+    <a WITH TILDE>               227      70       70       70       195.163  139.68
+    <a WITH DIAERESIS>           228      67       67       67       195.164  139.69
+    <a WITH RING ABOVE>          229      71       71       71       195.165  139.70
+    <SMALL LIGATURE ae>          230      156      156      156      195.166  139.71
+    <c WITH CEDILLA>             231      72       72       72       195.167  139.72
+    <e WITH GRAVE>               232      84       84       84       195.168  139.73
+    <e WITH ACUTE>               233      81       81       81       195.169  139.74
+    <e WITH CIRCUMFLEX>          234      82       82       82       195.170  139.81
+    <e WITH DIAERESIS>           235      83       83       83       195.171  139.82
+    <i WITH GRAVE>               236      88       88       88       195.172  139.83
+    <i WITH ACUTE>               237      85       85       85       195.173  139.84
+    <i WITH CIRCUMFLEX>          238      86       86       86       195.174  139.85
+    <i WITH DIAERESIS>           239      87       87       87       195.175  139.86
+    <SMALL LETTER eth>           240      140      140      140      195.176  139.87
+    <n WITH TILDE>               241      73       73       73       195.177  139.88
+    <o WITH GRAVE>               242      205      205      205      195.178  139.89
+    <o WITH ACUTE>               243      206      206      206      195.179  139.98
+    <o WITH CIRCUMFLEX>          244      203      203      203      195.180  139.99
+    <o WITH TILDE>               245      207      207      207      195.181  139.100
+    <o WITH DIAERESIS>           246      204      204      204      195.182  139.101
+    <DIVISION SIGN>              247      225      225      225      195.183  139.102
+    <o WITH STROKE>              248      112      112      112      195.184  139.103
+    <u WITH GRAVE>               249      221      221      192      195.185  139.104  ###
+    <u WITH ACUTE>               250      222      222      222      195.186  139.105
+    <u WITH CIRCUMFLEX>          251      219      219      219      195.187  139.106
+    <u WITH DIAERESIS>           252      220      220      220      195.188  139.112
+    <y WITH ACUTE>               253      141      141      141      195.189  139.113
+    <SMALL LETTER thorn>         254      142      142      142      195.190  139.114
+    <y WITH DIAERESIS>           255      223      223      223      195.191  139.115
+
+If you would rather see the above table in CCSID 0037 order rather than
+ASCII + Latin-1 order then run the table through:
 
 =over 4
 
@@ -440,7 +530,37 @@ If you would rather see it in POSIX-BC order then change the digit
     perl -ne 'if(/.{33}\d{1,3}\s{6,8}\d{1,3}\s{6,8}\d{1,3}\s{6,8}\d{1,3}/)'\
      -e '{push(@l,$_)}' \
      -e 'END{print map{$_->[0]}' \
-     -e '          sort{$a->[1] <=> $b->[1]}' \ 
+     -e '          sort{$a->[1] <=> $b->[1]}' \
+     -e '          map{[$_,substr($_,42,3)]}@l;}' perlebcdic.pod
+
+If you would rather see it in CCSID 1047 order then change the digit
+42 in the last line to 51, like this:
+
+=over 4
+
+=item recipe 5
+
+=back
+
+    perl -ne 'if(/.{33}\d{1,3}\s{6,8}\d{1,3}\s{6,8}\d{1,3}\s{6,8}\d{1,3}/)'\
+     -e '{push(@l,$_)}' \
+     -e 'END{print map{$_->[0]}' \
+     -e '          sort{$a->[1] <=> $b->[1]}' \
+     -e '          map{[$_,substr($_,51,3)]}@l;}' perlebcdic.pod
+
+If you would rather see it in POSIX-BC order then change the digit
+51 in the last line to 60, like this:
+
+=over 4
+
+=item recipe 6
+
+=back
+
+    perl -ne 'if(/.{33}\d{1,3}\s{6,8}\d{1,3}\s{6,8}\d{1,3}\s{6,8}\d{1,3}/)'\
+     -e '{push(@l,$_)}' \
+     -e 'END{print map{$_->[0]}' \
+     -e '          sort{$a->[1] <=> $b->[1]}' \
      -e '          map{[$_,substr($_,60,3)]}@l;}' perlebcdic.pod
 
 
@@ -541,22 +661,22 @@ XPG operability often implies the presence of an I<iconv> utility
 available from the shell or from the C library.  Consult your system's
 documentation for information on iconv.
 
-On OS/390 see the iconv(1) man page.  One way to invoke the iconv 
+On OS/390 or z/OS see the iconv(1) manpage.  One way to invoke the iconv 
 shell utility from within perl would be to:
 
-    # OS/390 example
+    # OS/390 or z/OS example
     $ascii_data = `echo '$ebcdic_data'| iconv -f IBM-1047 -t ISO8859-1`
 
 or the inverse map:
 
-    # OS/390 example
+    # OS/390 or z/OS example
     $ebcdic_data = `echo '$ascii_data'| iconv -f ISO8859-1 -t IBM-1047`
 
 For other perl based conversion options see the Convert::* modules on CPAN.
 
 =head2 C RTL
 
-The OS/390 C run time library provides _atoe() and _etoa() functions.
+The OS/390 and z/OS C run time libraries provide _atoe() and _etoa() functions.
 
 =head1 OPERATOR DIFFERENCES
 
@@ -675,8 +795,8 @@ recommend something similar to:
     print "Content-type:\ttext/html\015\012\015\012"; 
     # this may be wrong on EBCDIC
 
-Under the IBM OS/390 USS Web Server for example you should instead
-write that as:
+Under the IBM OS/390 USS Web Server or WebSphere on z/OS for example 
+you should instead write that as:
 
     print "Content-type:\ttext/html\r\n\r\n"; # OK for DGW et alia
 
@@ -717,7 +837,11 @@ As of perl 5.005_03 the letter range regular expression such as
 [A-Z] and [a-z] have been especially coded to not pick up gap 
 characters.  For example, characters such as E<ocirc> C<o WITH CIRCUMFLEX> 
 that lie between I and J would not be matched by the 
-regular expression range C</[H-K]/>.  
+regular expression range C</[H-K]/>.  This works in
+the other direction, too, if either of the range end points is
+explicitly numeric: C<[\x89-\x91]> will match C<\x8e>, even
+though C<\x89> is C<i> and C<\x91 > is C<j>, and C<\x8e>
+is a gap character from the alphabetic viewpoint.
 
 If you do want to match the alphabet gap characters in a single octet 
 regular expression try matching the hex or octal code such 
@@ -909,7 +1033,7 @@ connection.
 This strategy can employ a network connection.  As such
 it would be computationally expensive.
 
-=head1 TRANFORMATION FORMATS
+=head1 TRANSFORMATION FORMATS
 
 There are a variety of ways of transforming data with an intra character set 
 mapping that serve a variety of purposes.  Sorting was discussed in the 
@@ -998,7 +1122,7 @@ following will print "Yes indeed\n" on either an ASCII or EBCDIC computer:
     $all_byte_chrs = '';
     for (0..255) { $all_byte_chrs .= chr($_); }
     $uuencode_byte_chrs = pack('u', $all_byte_chrs);
-    ($uu = <<'    ENDOFHEREDOC') =~ s/^\s*//gm;
+    ($uu = <<'ENDOFHEREDOC') =~ s/^\s*//gm;
     M``$"`P0%!@<("0H+#`T.#Q`1$A,4%187&!D:&QP='A\@(2(C)"4F)R@I*BLL
     M+2XO,#$R,S0U-C<X.3H[/#T^/T!!0D-$149'2$E*2TQ-3D]045)35%565UA9
     M6EM<75Y?8&%B8V1E9F=H:6IK;&UN;W!Q<G-T=79W>'EZ>WQ]?G^`@8*#A(6&
@@ -1073,7 +1197,7 @@ omitted for brevity):
     $string =~ s/=([0-9A-Fa-f][0-9A-Fa-f])/chr $a2e[hex $1]/ge;
     $string =~ s/=[\n\r]+$//;
 
-=head2 Caesarian cyphers
+=head2 Caesarian ciphers
 
 The practice of shifting an alphabet one or more characters for encipherment
 dates back thousands of years and was explicitly detailed by Gaius Julius
@@ -1100,6 +1224,9 @@ In one-liner form:
 
 =head1 Hashing order and checksums
 
+To the extent that it is possible to write code that depends on 
+hashing order there may be differences between hashes as stored
+on an ASCII based machine and hashes stored on an EBCDIC based machine.
 XXX
 
 =head1 I18N AND L10N
@@ -1110,7 +1237,11 @@ and discussed under the L<perlebcdic/OS ISSUES> section below.
 
 =head1 MULTI OCTET CHARACTER SETS
 
-Multi byte EBCDIC code pages; Unicode, UTF-8, UTF-EBCDIC, XXX.
+Perl may work with an internal UTF-EBCDIC encoding form for wide characters 
+on EBCDIC platforms in a manner analogous to the way that it works with 
+the UTF-8 internal encoding form on ASCII based platforms.
+
+Legacy multi byte EBCDIC code pages XXX.
 
 =head1 OS ISSUES
 
@@ -1129,7 +1260,7 @@ XXX.
 
 =back
 
-=head2 OS/390 
+=head2 OS/390, z/OS
 
 Perl runs under Unix Systems Services or USS.
 
@@ -1152,15 +1283,16 @@ or:
 
 See also the OS390::Stdio module on CPAN.
 
-=item OS/390 iconv
+=item OS/390, z/OS iconv
 
 B<iconv> is supported as both a shell utility and a C RTL routine.
 See also the iconv(1) and iconv(3) manual pages.
 
 =item locales
 
-On OS/390 see L<locale> for information on locales.  The L10N files
-are in F</usr/nls/locale>.  $Config{d_setlocale} is 'define' on OS/390.
+On OS/390 or z/OS see L<locale> for information on locales.  The L10N files
+are in F</usr/nls/locale>.  $Config{d_setlocale} is 'define' on OS/390
+or z/OS.
 
 =back
 
@@ -1179,18 +1311,16 @@ translation difficulties.  In particular one popular nroff implementation
 was known to strip accented characters to their unaccented counterparts 
 while attempting to view this document through the B<pod2man> program 
 (for example, you may see a plain C<y> rather than one with a diaeresis 
-as in E<yuml>).  Another nroff truncated the resultant man page at
-the first occurence of 8 bit characters.
+as in E<yuml>).  Another nroff truncated the resultant manpage at
+the first occurrence of 8 bit characters.
 
 Not all shells will allow multiple C<-e> string arguments to perl to
-be concatenated together properly as recipes 2, 3, and 4 might seem
-to imply.
-
-Perl does not yet work with any Unicode features on EBCDIC platforms.
+be concatenated together properly as recipes 0, 2, 4, 5, and 6 might 
+seem to imply.
 
 =head1 SEE ALSO
 
-L<perllocale>, L<perlfunc>.
+L<perllocale>, L<perlfunc>, L<perlunicode>, L<utf8>.
 
 =head1 REFERENCES
 
@@ -1204,10 +1334,7 @@ http://www.wps.com/texts/codes/
 B<ASCII: American Standard Code for Information Infiltration> Tom Jennings,
 September 1999.
 
-B<The Unicode Standard Version 2.0> The Unicode Consortium, 
-ISBN 0-201-48345-9, Addison Wesley Developers Press, July 1996. 
-
-B<The Unicode Standard Version 3.0> The Unicode Consortium, Lisa Moore ed., 
+B<The Unicode Standard, Version 3.0> The Unicode Consortium, Lisa Moore ed., 
 ISBN 0-201-61633-5, Addison Wesley Developers Press, February 2000. 
 
 B<CDRA: IBM - Character Data Representation Architecture - 
@@ -1220,6 +1347,13 @@ ISSN 1523-0309; Multilingual Computing Inc. Sandpoint ID, USA.
 B<Codes, Ciphers, and Other Cryptic and Clandestine Communication>
 Fred B. Wrixon, ISBN 1-57912-040-7, Black Dog & Leventhal Publishers,
 1998.
+
+http://www.bobbemer.com/P-BIT.HTM
+B<IBM - EBCDIC and the P-bit; The biggest Computer Goof Ever> Robert Bemer.
+
+=head1 HISTORY
+
+15 April 2001: added UTF-8 and UTF-EBCDIC to main table, pvhp.
 
 =head1 AUTHOR
 

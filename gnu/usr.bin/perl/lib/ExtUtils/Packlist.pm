@@ -1,9 +1,10 @@
 package ExtUtils::Packlist;
 
-use 5.005_64;
+use 5.00503;
 use strict;
 use Carp qw();
-our $VERSION = '0.03';
+use vars qw($VERSION);
+$VERSION = '0.04';
 
 # Used for generating filehandle globs.  IO::File might not be available!
 my $fhname = "FH1";
@@ -89,7 +90,12 @@ my ($line);
 while (defined($line = <$fh>))
    {
    chomp $line;
-   my ($key, @kvs) = split(' ', $line);
+   my ($key, @kvs) = $line;
+   if ($key =~ /^(.*?)( \w+=.*)$/)
+      {
+      $key = $1;
+      @kvs = split(' ', $2);
+      }
    $key =~ s!/\./!/!g;   # Some .packlists have spurious '/./' bits in the paths
    if (! @kvs)
       {
@@ -200,7 +206,7 @@ filename followed by the key=value pairs from the hash.  Reading back the
 
 =head1 FUNCTIONS
 
-=over
+=over 4
 
 =item new()
 

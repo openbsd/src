@@ -1,0 +1,94 @@
+Unicode/Normalize version 0.17
+===================================
+
+Unicode::Normalize - Unicode Normalization Forms
+
+SYNOPSIS
+
+  use Unicode::Normalize;
+
+  $NFD_string  = NFD($string);  # Normalization Form D
+  $NFC_string  = NFC($string);  # Normalization Form C
+  $NFKD_string = NFKD($string); # Normalization Form KD
+  $NFKC_string = NFKC($string); # Normalization Form KC
+
+
+  or
+
+
+  use Unicode::Normalize 'normalize';
+
+  $NFD_string  = normalize('D',  $string);  # Normalization Form D
+  $NFC_string  = normalize('C',  $string);  # Normalization Form C
+  $NFKD_string = normalize('KD', $string);  # Normalization Form KD
+  $NFKC_string = normalize('KC', $string);  # Normalization Form KC
+
+
+INSTALLATION
+
+Perl 5.6 or later
+
+To install this module type the following:
+
+   perl Makefile.PL
+   make
+   make test
+   make install
+
+If you have a C compiler and want to use the XS version,
+type the following:
+
+   perl Makefile.PL xs
+   make
+   make test
+   make install
+
+If you decide to install the NoXS version after trying to build the XS,
+type the following:
+
+   make clean
+   perl Makefile.PL noxs
+   make
+   make test
+   make install
+
+DEPENDENCIES
+
+This module requires these other modules and libraries:
+
+Carp
+Exporter
+File::Copy
+File::Spec
+
+unicore/CombiningClass.pl         (or unicode/CombiningClass.pl)
+unicore/Decomposition.pl          (or unicode/Decomposition.pl)
+unicore/CompositionExclusions.txt (or unicode/CompExcl.txt)
+
+CAVEAT
+
+(1) In the perl-current, unicore/CompExcl.txt
+  is renamed unicore/CompositionExclusions.txt.
+
+(2) When these unicore/*.* files are updated;
+
+  in the case of an XS version:
+    You must rebuild the module,
+    as the data will be compiled on building.
+
+  in the case of a NoXS version:
+    Rebuilding is not necessary,
+    as the data will be read on requirement.
+
+COPYRIGHT AND LICENCE
+
+  SADAHIRO Tomoyuki
+
+  SADAHIRO@cpan.org
+
+  http://homepage1.nifty.com/nomenclator/perl/
+
+  Copyright(C) 2001-2002, SADAHIRO Tomoyuki. Japan. All rights reserved.
+
+  This program is free software; you can redistribute it and/or
+  modify it under the same terms as Perl itself.

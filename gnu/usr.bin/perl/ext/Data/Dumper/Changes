@@ -180,7 +180,7 @@ MLDBM example added.
 Several folks pointed out that quoting of ticks and backslashes 
 in strings is missing. Added.
 
-Ian Phillips <ian@pipex.net> pointed out that numerics may lose 
+Ian Phillipps <ian@pipex.net> pointed out that numerics may lose 
 precision without quotes.  Fixed.
 
 

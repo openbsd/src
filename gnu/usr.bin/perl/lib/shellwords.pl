@@ -17,6 +17,7 @@ sub shellwords {
     while ($_ ne '') {
 	$field = '';
 	for (;;) {
+	    use re 'taint'; # leave strings tainted
 	    if (s/^"(([^"\\]|\\.)*)"//) {
 		($snippet = $1) =~ s#\\(.)#$1#g;
 	    }
