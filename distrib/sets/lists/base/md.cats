@@ -68,7 +68,7 @@
 ./usr/lib/libstdc++.so.32.0
 ./usr/lib/libtermcap.so.9.0
 ./usr/lib/libtermlib.so.9.0
-./usr/lib/libusbhid.so.1.0
+./usr/lib/libusbhid.so.2.0
 ./usr/lib/libutil.so.10.0
 ./usr/lib/libwrap.so.3.0
 ./usr/lib/libz.so.3.0
@@ -776,6 +776,8 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/eisa/eisadevs_data.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/eisa/eisareg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/eisa/eisavar.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/gpio
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/gpio/gpiovar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/hil
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/hil/hildevs.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/hil/hildevs_data.ph
@@ -2026,6 +2028,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/sys/filedesc.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/sys/filio.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/sys/gmon.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/sys/gpio.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/sys/hash.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/sys/hotplug.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/sys/ioccom.ph

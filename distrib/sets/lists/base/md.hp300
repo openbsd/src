@@ -59,7 +59,7 @@
 ./usr/lib/libstdc++.so.31.0
 ./usr/lib/libtermcap.so.9.0
 ./usr/lib/libtermlib.so.9.0
-./usr/lib/libusbhid.so.1.0
+./usr/lib/libusbhid.so.2.0
 ./usr/lib/libutil.so.10.0
 ./usr/lib/libwrap.so.3.0
 ./usr/lib/libz.so.3.0
@@ -669,6 +669,8 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/eisa/eisadevs_data.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/eisa/eisareg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/eisa/eisavar.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/gpio
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/gpio/gpiovar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/hil
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/hil/hildevs.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/hil/hildevs_data.ph
@@ -1980,6 +1982,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sys/filedesc.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sys/filio.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sys/gmon.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/sys/gpio.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sys/hash.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sys/hotplug.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sys/ioccom.ph

@@ -602,6 +602,8 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/eisa/eisadevs_data.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/eisa/eisareg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/eisa/eisavar.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/dev/gpio
+./usr/libdata/perl5/site_perl/m88k-openbsd/dev/gpio/gpiovar.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/hil
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/hil/hildevs.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/hil/hildevs_data.ph
@@ -1932,6 +1934,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/filedesc.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/filio.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/gmon.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/sys/gpio.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/hash.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/hotplug.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/ioccom.ph

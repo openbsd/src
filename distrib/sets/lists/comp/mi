@@ -124,6 +124,8 @@
 ./usr/include/dev/eisa/eisadevs_data.h
 ./usr/include/dev/eisa/eisareg.h
 ./usr/include/dev/eisa/eisavar.h
+./usr/include/dev/gpio
+./usr/include/dev/gpio/gpiovar.h
 ./usr/include/dev/hil
 ./usr/include/dev/hil/hildevs.h
 ./usr/include/dev/hil/hildevs_data.h
@@ -1315,6 +1317,7 @@
 ./usr/include/sys/filedesc.h
 ./usr/include/sys/filio.h
 ./usr/include/sys/gmon.h
+./usr/include/sys/gpio.h
 ./usr/include/sys/hash.h
 ./usr/include/sys/hotplug.h
 ./usr/include/sys/ioccom.h
@@ -3411,6 +3414,7 @@
 ./usr/share/man/cat3/hid_parse_usage_page.0
 ./usr/share/man/cat3/hid_report_size.0
 ./usr/share/man/cat3/hid_set_data.0
+./usr/share/man/cat3/hid_start.0
 ./usr/share/man/cat3/hid_start_parse.0
 ./usr/share/man/cat3/hid_usage_in_page.0
 ./usr/share/man/cat3/hid_usage_page.0

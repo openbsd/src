@@ -1135,6 +1135,7 @@
 ./usr/share/man/cat4/gdt.0
 ./usr/share/man/cat4/gem.0
 ./usr/share/man/cat4/gif.0
+./usr/share/man/cat4/gpio.0
 ./usr/share/man/cat4/gpr.0
 ./usr/share/man/cat4/gre.0
 ./usr/share/man/cat4/gscsio.0
@@ -1199,6 +1200,7 @@
 ./usr/share/man/cat4/i386/cpu.0
 ./usr/share/man/cat4/i386/elansc.0
 ./usr/share/man/cat4/i386/geodesc.0
+./usr/share/man/cat4/i386/gscpcib.0
 ./usr/share/man/cat4/i386/gus.0
 ./usr/share/man/cat4/i386/ichpcib.0
 ./usr/share/man/cat4/i386/ie.0
@@ -1922,6 +1924,7 @@
 ./usr/share/man/cat8/i386/boot.conf.0
 ./usr/share/man/cat8/i386/boot_i386.0
 ./usr/share/man/cat8/i386/fdisk.0
+./usr/share/man/cat8/i386/gpioctl.0
 ./usr/share/man/cat8/i386/hotplugd.0
 ./usr/share/man/cat8/i386/installboot.0
 ./usr/share/man/cat8/i386/kbd.0

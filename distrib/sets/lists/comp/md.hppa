@@ -213,12 +213,9 @@
 ./usr/lib/gcc-lib/hppa-unknown-openbsd3.5/3.3.2/include
 ./usr/lib/gcc-lib/hppa-unknown-openbsd3.5/3.3.2/include/unwind.h
 ./usr/lib/gcc-lib/hppa-unknown-openbsd3.5/3.3.2/libgcc.a
+./usr/lib/libasn1_pic.a
 ./usr/lib/libbfd.a
 ./usr/lib/libbfd.la
-./usr/lib/libopcodes.a
-./usr/lib/libopcodes.la
-./usr/lib/libsupc++.a
-./usr/lib/libasn1_pic.a
 ./usr/lib/libc_pic.a
 ./usr/lib/libcom_err_pic.a
 ./usr/lib/libcrypto_pic.a
@@ -241,6 +238,8 @@
 ./usr/lib/libncurses_pic.a
 ./usr/lib/libobjc_pic.a
 ./usr/lib/libocurses_pic.a
+./usr/lib/libopcodes.a
+./usr/lib/libopcodes.la
 ./usr/lib/libossaudio_pic.a
 ./usr/lib/libotermcap_pic.a
 ./usr/lib/libpanel_pic.a
@@ -251,6 +250,7 @@
 ./usr/lib/libsectok_pic.a
 ./usr/lib/libskey_pic.a
 ./usr/lib/libssl_pic.a
+./usr/lib/libsupc++.a
 ./usr/lib/libtermcap_pic.a
 ./usr/lib/libtermlib_pic.a
 ./usr/lib/libusbhid_pic.a
