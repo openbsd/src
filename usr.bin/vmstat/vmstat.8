@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vmstat.8,v 1.28 2003/07/25 21:25:29 tedu Exp $
+.\"	$OpenBSD: vmstat.8,v 1.29 2004/01/30 19:32:17 deraadt Exp $
 .\"	$NetBSD: vmstat.8,v 1.12 1996/05/10 23:19:30 thorpej Exp $
 .\"
 .\" Copyright (c) 1986, 1993
@@ -154,9 +154,9 @@ Disk transfers per second.
 Typically paging will be split across the available drives.
 The header of the field is the first character of the disk name and
 the unit number.
-If more than four disk drives are configured in the system,
+If more than two disk drives are configured in the system,
 .Nm
-displays only the first four drives.
+displays only the first two drives.
 To force
 .Nm
 to display specific drives, their names may be supplied on the command line.
