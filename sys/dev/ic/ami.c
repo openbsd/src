@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.30 2005/03/29 22:24:27 marco Exp $	*/
+/*	$OpenBSD: ami.c,v 1.31 2005/04/01 20:14:40 marco Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -45,7 +45,7 @@
  *	Theo de Raadt.
  */
 
-#define	AMI_DEBUG
+ /*#define	AMI_DEBUG */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1723,7 +1723,10 @@ ami_ioctl_passthru(sc, bp)
 	bus_dmamap_t idatamap;
 	bus_dma_segment_t idataseg[1];
 	paddr_t	pa;
+
+#ifdef AMI_DEBUG
 	u_int8_t i = 0;
+#endif /* AMI_DEBUG */
 
 	AMI_DPRINTF(AMI_D_IOCTL, ("in passthrough\n"));
 
