@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.40 2001/01/02 17:27:29 angelos Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.41 2001/01/02 17:51:11 mickey Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -833,7 +833,8 @@ domem()
 	register struct kmemstats *ks;
 	register int i, j;
 	int len, size, first;
-	long totuse = 0, totfree = 0, totreq = 0;
+	u_long totuse = 0, totfree = 0;
+	quad_t totreq = 0;
 	char *name;
 	struct kmemstats kmemstats[M_LAST];
 	struct kmembuckets buckets[MINBUCKET + 16];
@@ -926,7 +927,7 @@ domem()
 		totreq += ks->ks_calls;
 	}
 	(void)printf("\nMemory Totals:  In Use    Free    Requests\n");
-	(void)printf("              %7ldK %6ldK    %8ld\n",
+	(void)printf("              %7luK %6luK    %8qu\n",
 	     (totuse + 1023) / 1024, (totfree + 1023) / 1024, totreq);
 }
 
