@@ -1,7 +1,7 @@
-/*	$OpenBSD: if_wi_pci.c,v 1.15 2002/03/26 16:38:16 mickey Exp $	*/
+/*	$OpenBSD: if_wi_pci.c,v 1.16 2002/03/26 20:42:51 millert Exp $	*/
 
 /*
- * Copyright (c) 2001 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 2001, 2002 Todd C. Miller <Todd.Miller@courtesan.com>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -111,8 +111,15 @@
 #define WI_PCI_CBMA		0x10
 #define WI_PCI_PLX_LOMEM	0x10	/* PLX chip membase */
 #define WI_PCI_PLX_LOIO		0x14	/* PLX chip iobase */
+#define WI_PCI_TMD_IO		0x14	/* TMD chip iobase */
+#define WI_PCI_TMD_PRISM_IO	0x18	/* Prism chip iobase behind the TMD */
 #define WI_PCI_LOMEM		0x18	/* ISA membase */
 #define WI_PCI_LOIO		0x1C	/* ISA iobase */
+
+/* Values for pp_type */
+#define WI_PCI_PRISM		0x01	/* Intersil Mini-PCI */
+#define WI_PCI_PLX		0x02	/* PLX 905x dumb bridge */
+#define WI_PCI_TMD		0x03	/* TMD 7160 dumb bridge */
 
 const struct wi_pci_product *wi_pci_lookup(struct pci_attach_args *pa);
 int	wi_pci_match(struct device *, void *, void *);
@@ -127,16 +134,17 @@ struct cfattach wi_pci_ca = {
 static const struct wi_pci_product {
 	pci_vendor_id_t pp_vendor;
 	pci_product_id_t pp_product;
-	int pp_plx;
+	int pp_type;
 } wi_pci_products[] = {
-	{ PCI_VENDOR_GLOBALSUN, PCI_PRODUCT_GLOBALSUN_GL24110P, 1 },
-	{ PCI_VENDOR_GLOBALSUN, PCI_PRODUCT_GLOBALSUN_GL24110P02, 1 },
-	{ PCI_VENDOR_EUMITCOM, PCI_PRODUCT_EUMITCOM_WL11000P, 1 },
-	{ PCI_VENDOR_USR2, PCI_PRODUCT_USR2_USR11000P, 1 },
-	{ PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3CRWE777A, 1 },
-	{ PCI_VENDOR_NETGEAR, PCI_PRODUCT_NETGEAR_MA301, 1 },
-	{ PCI_VENDOR_COREGA, PCI_PRODUCT_COREGA_CGWLPCIA11, 1 },
-	{ PCI_VENDOR_INTERSIL, PCI_PRODUCT_INTERSIL_MINI_PCI_WLAN, 0 },
+	{ PCI_VENDOR_GLOBALSUN, PCI_PRODUCT_GLOBALSUN_GL24110P, WI_PCI_PLX },
+	{ PCI_VENDOR_GLOBALSUN, PCI_PRODUCT_GLOBALSUN_GL24110P02, WI_PCI_PLX },
+	{ PCI_VENDOR_EUMITCOM, PCI_PRODUCT_EUMITCOM_WL11000P, WI_PCI_PLX },
+	{ PCI_VENDOR_USR2, PCI_PRODUCT_USR2_USR11000P, WI_PCI_PLX },
+	{ PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3CRWE777A, WI_PCI_PLX },
+	{ PCI_VENDOR_NETGEAR, PCI_PRODUCT_NETGEAR_MA301, WI_PCI_PLX },
+	{ PCI_VENDOR_NDC, PCI_PRODUCT_NDC_NCP130, WI_PCI_PLX },
+	{ PCI_VENDOR_NDC, PCI_PRODUCT_NDC_NCP130A2, WI_PCI_TMD },
+	{ PCI_VENDOR_INTERSIL, PCI_PRODUCT_INTERSIL_MINI_PCI_WLAN, WI_PCI_PRISM },
 	{ 0, 0 }
 };
 
@@ -182,8 +190,9 @@ wi_pci_attach(parent, self, aux)
 	const char *intrstr;
 
 	pp = wi_pci_lookup(pa);
-	if (pp->pp_plx) {
-		/* Map memory and I/O registers. */
+	/* Map memory and I/O registers. */
+	switch (pp->pp_type) {
+	case WI_PCI_PLX:
 		if (pci_mapreg_map(pa, WI_PCI_LOMEM, PCI_MAPREG_TYPE_MEM, 0,
 		    &memt, &memh, NULL, NULL, 0) != 0) {
 			printf(": can't map mem space\n");
@@ -194,7 +203,8 @@ wi_pci_attach(parent, self, aux)
 			printf(": can't map I/O space\n");
 			return;
 		}
-	} else {
+		break;
+	case WI_PCI_PRISM:
 		if (pci_mapreg_map(pa, WI_PCI_CBMA, PCI_MAPREG_TYPE_MEM,
 		    0, &iot, &ioh, NULL, NULL, 0) != 0) {
 			printf(": can't map mem space\n");
@@ -204,6 +214,19 @@ wi_pci_attach(parent, self, aux)
 		memt = iot;
 		memh = ioh;
 		sc->sc_pci = 1;
+		break;
+	case WI_PCI_TMD:
+		if (pci_mapreg_map(pa, WI_PCI_TMD_IO, PCI_MAPREG_TYPE_IO,
+		    0, &memt, &memh, NULL, NULL, 0) != 0) {
+			printf(": can't map TMD I/O space\n");
+			return;
+		}
+		if (pci_mapreg_map(pa, WI_PCI_TMD_PRISM_IO, PCI_MAPREG_TYPE_IO,
+		    0, &iot, &ioh, NULL, NULL, 0) != 0) {
+			printf(": can't map Prism2 I/O space\n");
+			return;
+		}
+		break;
 	}
 
 	sc->wi_btag = iot;
@@ -235,7 +258,8 @@ wi_pci_attach(parent, self, aux)
 	}
 	printf(": %s", intrstr);
 
-	if (pp->pp_plx) {
+	switch (pp->pp_type) {
+	case WI_PCI_PLX:
 		/*
 		 * Setup the PLX chip for level interrupts and config index 1
 		 * XXX - should really reset the PLX chip too.
@@ -244,12 +268,23 @@ wi_pci_attach(parent, self, aux)
 		    WI_PLX_COR_OFFSET, WI_PLX_COR_VALUE);
 
 		wi_attach(sc, 1);
-	} else {
+		break;
+	case WI_PCI_PRISM:
 		bus_space_write_2(iot, ioh, WI_PCI_COR, WI_PCI_SOFT_RESET);
 		DELAY(100*1000); /* 100 m sec */
 		bus_space_write_2(iot, ioh, WI_PCI_COR, 0x0);
 		DELAY(100*1000); /* 100 m sec */
 
 		wi_attach(sc, 0);
+		break;
+	case WI_PCI_TMD:
+		bus_space_write_1(memt, memh, 0, WI_TMD_COR_VALUE);
+		/* XXX - correct delay? */
+		DELAY(100*1000); /* 100 m sec */
+		if (bus_space_read_1(memt, memh, 0) != WI_TMD_COR_VALUE)
+			printf(": unable to initialize TMD7160 ");
+
+		wi_attach(sc, 1);
+		break;
 	}
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wireg.h,v 1.11 2002/02/21 23:00:15 millert Exp $	*/
+/*	$OpenBSD: if_wireg.h,v 1.12 2002/03/26 20:42:51 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -271,6 +271,8 @@
 
 #define WI_PLX_COR_OFFSET	0x3E0
 #define WI_PLX_COR_VALUE	0x41
+
+#define WI_TMD_COR_VALUE	0x45
 
 /*
  * PCI Host Interface Registers (HFA3842 Specific)
