@@ -402,7 +402,7 @@ LYHelp.h : LYHelp.hin
 	@echo
 	@echo '**********************************************'
 
-cfg_defs.h : $(srcdir)/cfg_defs.sh config.cache lynx_cfg.h
+cfg_defs.h : $(srcdir)/cfg_defs.sh lynx_cfg.h
 	@rm -f $@
 	PATH=$(srcdir):$$PATH; export PATH; $(SHELL) -c '$(SHELL) $(srcdir)/cfg_defs.sh'
 
