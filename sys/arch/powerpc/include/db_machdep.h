@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.16 2002/06/08 16:02:14 miod Exp $	*/
+/*	$OpenBSD: db_machdep.h,v 1.17 2002/08/06 03:33:23 drahn Exp $	*/
 /*	$NetBSD: db_machdep.h,v 1.13 1996/04/29 20:50:08 leo Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #include <machine/trap.h>
 
 /*
- * We use Elf64 symbols in DDB.
+ * We use Elf32 symbols in DDB.
  */
 #define	DB_ELF_SYMBOLS
 #define	DB_ELFSIZE	32
