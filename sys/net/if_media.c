@@ -1,5 +1,5 @@
-/*	$OpenBSD: if_media.c,v 1.2 2000/01/08 05:28:38 jason Exp $	*/
-/*	$NetBSD: if_media.c,v 1.3 1998/08/30 07:39:39 enami Exp $	*/
+/*	$OpenBSD: if_media.c,v 1.3 2000/02/26 01:16:30 mickey Exp $	*/
+/*	$NetBSD: if_media.c,v 1.7 1999/11/03 23:06:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -303,7 +303,7 @@ ifmedia_ioctl(ifp, ifr, ifm, cmd)
 		(*ifm->ifm_status)(ifp, ifmr);
 
 		count = 0;
-		ep = ifm->ifm_list.lh_first;
+		ep = LIST_FIRST(&ifm->ifm_list);
 
 		if (ifmr->ifm_count != 0) {
 			kptr = (int *)malloc(ifmr->ifm_count * sizeof(int),
@@ -313,7 +313,7 @@ ifmedia_ioctl(ifp, ifr, ifm, cmd)
 			 * Get the media words from the interface's list.
 			 */
 			for (; ep != NULL && count < ifmr->ifm_count;
-			    ep = ep->ifm_list.le_next, count++)
+			    ep = LIST_NEXT(ep, ifm_list), count++)
 				kptr[count] = ep->ifm_media;
 
 			if (ep != NULL)
@@ -361,7 +361,6 @@ ifmedia_ioctl(ifp, ifr, ifm, cmd)
 
 /*
  * Find media entry matching a given ifm word.
- *
  */
 struct ifmedia_entry *
 ifmedia_match(ifm, target, mask)
@@ -374,8 +373,8 @@ ifmedia_match(ifm, target, mask)
 	match = NULL;
 	mask = ~mask;
 
-	for (next = ifm->ifm_list.lh_first; next != NULL;
-	    next = next->ifm_list.le_next) {
+	for (next = LIST_FIRST(&ifm->ifm_list); next != NULL;
+	    next = LIST_NEXT(next, ifm_list)) {
 		if ((next->ifm_media & mask) == (target & mask)) {
 #if defined(IFMEDIA_DEBUG) || defined(DIAGNOSTIC)
 			if (match) {
@@ -388,6 +387,28 @@ ifmedia_match(ifm, target, mask)
 	}
 
 	return match;
+}
+
+/*
+ * Delete all media for a given instance.
+ */
+void
+ifmedia_delete_instance(ifm, inst)
+	struct ifmedia *ifm;
+	int inst;
+{
+	struct ifmedia_entry *ife, *nife;
+
+	for (ife = LIST_FIRST(&ifm->ifm_list); ife != NULL;
+	     ife = nife) {
+		
+		nife = LIST_NEXT(ife, ifm_list);
+		if (inst == IFM_INST_ANY ||
+		    inst == IFM_INST(ife->ifm_media)) {
+			LIST_REMOVE(ife, ifm_list);
+			free(ife, M_DEVBUF);
+		}
+	}
 }
 
 #ifdef IFMEDIA_DEBUG

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_media.h,v 1.4 2000/02/18 14:42:06 jason Exp $	*/
+/*	$OpenBSD: if_media.h,v 1.5 2000/02/26 01:16:30 mickey Exp $	*/
 /*	$NetBSD: if_media.h,v 1.11 1998/08/12 23:23:29 thorpej Exp $	*/
 
 /*-
@@ -142,6 +142,9 @@ int	ifmedia_ioctl __P((struct ifnet *ifp, struct ifreq *ifr,
 struct	ifmedia_entry *ifmedia_match __P((struct ifmedia *ifm,
 	     int flags, int mask));
 
+/* Delete all media for a given media instance */
+void	ifmedia_delete_instance __P((struct ifmedia *, int));
+
 #endif /*_KERNEL */
 
 /*
@@ -199,6 +202,17 @@ struct	ifmedia_entry *ifmedia_match __P((struct ifmedia *ifm,
 #define IFM_FDDI_DA	0x00000100	/* Dual attach / single attach */
 
 /*
+ * IEEE 802.11 Wireless
+ */
+#define	IFM_IEEE80211	0x00000080
+#define	IFM_IEEE80211_FH1	3	/* Frequency Hopping 1Mbps */
+#define	IFM_IEEE80211_FH2	4	/* Frequency Hopping 2Mbps */
+#define	IFM_IEEE80211_DS2	5	/* Direct Sequence 2Mbps */
+#define	IFM_IEEE80211_DS5	6	/* Direct Sequence 5Mbps*/
+#define	IFM_IEEE80211_DS11	7	/* Direct Sequence 11Mbps*/
+#define	IFM_IEEE80211_ADHOC	0x100	/* Operate in Adhoc mode */
+
+/*
  * Shared media sub-types
  */
 #define	IFM_AUTO	0		/* Autoselect best media */
@@ -243,6 +257,7 @@ struct	ifmedia_entry *ifmedia_match __P((struct ifmedia *ifm,
 #define	IFM_OPTIONS(x)	((x) & (IFM_OMASK|IFM_GMASK))
 
 #define	IFM_INST_MAX	IFM_INST(IFM_IMASK)
+#define	IFM_INST_ANY	(-1)
 
 /*
  * Macro to create a media word.
@@ -274,6 +289,7 @@ struct ifmedia_description {
 	{ IFM_TOKEN,			"TokenRing" },			\
 	{ IFM_TOKEN,			"token" },			\
 	{ IFM_FDDI,			"FDDI" },			\
+	{ IFM_IEEE80211,		"IEEE802.11" },			\
 	{ 0, NULL },							\
 }
 
@@ -339,6 +355,12 @@ struct ifmedia_description {
 	{ IFM_FDDI|IFM_FDDI_UTP,	"UTP" },			\
 	{ IFM_FDDI|IFM_FDDI_UTP,	"CDDI" },			\
 									\
+	{ IFM_IEEE80211|IFM_IEEE80211_FH1,	"FH1" },		\
+	{ IFM_IEEE80211|IFM_IEEE80211_FH2,	"FH2" },		\
+	{ IFM_IEEE80211|IFM_IEEE80211_DS2,	"DS2" },		\
+	{ IFM_IEEE80211|IFM_IEEE80211_DS5,	"DS5" },		\
+	{ IFM_IEEE80211|IFM_IEEE80211_DS11,	"DS11" },		\
+									\
 	{ 0, NULL },							\
 }
 
@@ -363,6 +385,8 @@ struct ifmedia_description {
 									\
 	{ IFM_FDDI|IFM_FDDI_DA,		"dual-attach" },		\
 	{ IFM_FDDI|IFM_FDDI_DA,		"das" },			\
+									\
+	{ IFM_IEEE80211|IFM_IEEE80211_ADHOC,	"adhoc" },		\
 									\
 	{ 0, NULL },							\
 }
