@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.21 1998/05/28 20:52:36 mickey Exp $
+#	$OpenBSD: Makefile,v 1.22 1998/07/11 20:58:33 angelos Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -17,8 +17,8 @@ SRCS=	srt0.S
 .endif
 
 SRCS+=	boot.c cmd.c vars.c bootarg.c conf.c
-MAN=	boot.8
-MLINKS=	boot.8 boot.conf.8
+MAN=	boot-second-stage.8
+MLINKS=	boot-second-stage.8 boot.conf.8
 S	=${.CURDIR}/../../../..
 SADIR=	${.CURDIR}/..
 
