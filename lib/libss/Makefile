@@ -1,6 +1,7 @@
-#	$OpenBSD: Makefile,v 1.1 1996/11/15 09:25:23 downsj Exp $
+#	$OpenBSD: Makefile,v 1.2 1996/11/16 21:53:11 downsj Exp $
 
 LIB=	ss
+HDRS=	ss.h ss_err.h
 SRCS=	ss_err.c data.c error.c execute_cmd.c help.c invocation.c list_rqs.c \
 	listen.c pager.c parse.c prompt.c request_tbl.c requests.c \
 	std_rqs.c
@@ -18,15 +19,14 @@ std_rqs.c:		${.CURDIR}/std_rqs.ct
 	mk_cmds std_rqs.ct
 	-test -h std_rqs.ct && rm std_rqs.ct
 
-includes: ss_err.h
-	-cd ${.OBJDIR}; \
-	    if [ -f ss_err.h ]; then \
-		cmp -s ss_err.h ${DESTDIR}/usr/include/ss/ss_err.h || \
-		install -c -o ${BINOWN} -g ${BINGRP} -m 444 ss_err.h \
-		${DESTDIR}/usr/include/ss; \
-	    else \
-		true; \
-	    fi
+includes:
+	@cd ${.CURDIR}; for i in $(HDRS); do \
+	    j="cmp -s $$i ${DESTDIR}/usr/include/ss/$$i || \
+		install -c -o ${BINOWN} -g ${BINGRP} -m 444 $$i \
+		${DESTDIR}/usr/include/ss"; \
+	    echo $$j; \
+	    eval "$$j"; \
+	done
 
 beforedepend:
 	test -h ss || ln -s . ss

@@ -1,4 +1,4 @@
-/*	$Id: ss.h,v 1.1.1.1 1995/12/14 06:52:35 tholo Exp $	*/
+/*	$OpenBSD: ss.h,v 1.1 1996/11/16 21:53:12 downsj Exp $	*/
 
 /*-
  * Copyright 1987, 1988 by the Student Information Processing Board
