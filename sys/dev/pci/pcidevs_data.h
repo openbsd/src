@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.133 1999/05/03 17:23:59 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.134 1999/05/03 21:34:20 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -97,6 +97,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "3Com",
 	    "3c980 100Base-TX",
+	},
+	{
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3c985,
+	    0,
+	    "3Com",
+	    "3c985",
 	},
 	{
 	    PCI_VENDOR_3DFX, PCI_PRODUCT_3DFX_VOODOO,
@@ -439,6 +445,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Alliance Semiconductor",
 	    "AT24",
+	},
+	{
+	    PCI_VENDOR_ALTEON, PCI_PRODUCT_ALTEON_ACENIC,
+	    0,
+	    "Alteon",
+	    "Acenic",
 	},
 	{
 	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_BANDIT,
@@ -1875,6 +1887,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "Magicgraph NM2160",
 	},
 	{
+	    PCI_VENDOR_NETGEAR, PCI_PRODUCT_NETGEAR_GA620,
+	    0,
+	    "Netgear",
+	    "GA620",
+	},
+	{
 	    PCI_VENDOR_NETVIN, PCI_PRODUCT_NETVIN_NV5000,
 	    0,
 	    "NetVin",
@@ -2305,6 +2323,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "S3",
 	    "SonicVibes",
+	},
+	{
+	    PCI_VENDOR_SGI, PCI_PRODUCT_SGI_TIGON,
+	    0,
+	    "Silicon Graphics",
+	    "Tigon",
 	},
 	{
 	    PCI_VENDOR_SGSTHOMSON, PCI_PRODUCT_SGSTHOMSON_2000,
@@ -5883,6 +5907,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    NULL,
 	},
 	{
+	    PCI_VENDOR_ALTEON, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Alteon",
+	    NULL,
+	},
+	{
 	    PCI_VENDOR_PICTUREEL, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Picture Elements",
@@ -5892,6 +5922,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_STB2, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "NVidia/SGS-Thomson",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_NETGEAR, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Netgear",
 	    NULL,
 	},
 	{
