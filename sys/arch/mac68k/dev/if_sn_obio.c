@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sn_obio.c,v 1.8 1997/04/07 03:23:36 briggs Exp $	*/
+/*	$OpenBSD: if_sn_obio.c,v 1.9 1997/04/07 12:45:20 briggs Exp $	*/
 
 /*
  * Copyright (C) 1997 Allen Briggs
@@ -92,18 +92,9 @@ sn_obio_attach(parent, self, aux)
 	sc->snr_dcr2 = 0;
 
 	switch (current_mac_model->machineid) {
-	case MACH_MACQ700:	/* only tested on Q700 */
-	case MACH_MACQ900:
-	case MACH_MACQ950:
-		sc->snr_dcr |= DCR_SYNC | DCR_LBR | DCR_DW32;
-		sc->bitmode = 1;
-		break;
-  
-	case MACH_MACQ800:
-	case MACH_MACQ650:
-	case MACH_MACC650:
-	case MACH_MACC610:
-	case MACH_MACQ610:
+	case MACH_MACQ700: case MACH_MACQ900: case MACH_MACQ950:
+	case MACH_MACQ800: case MACH_MACQ650: case MACH_MACC650:
+	case MACH_MACC610: case MACH_MACQ610:
 		sc->snr_dcr |= DCR_EXBUS | DCR_DW32;
 		sc->bitmode = 1;
 		break;
