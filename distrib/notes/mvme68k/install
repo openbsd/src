@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.20 2003/06/21 01:06:00 miod Exp $
+dnl	$OpenBSD: install,v 1.21 2003/06/22 00:37:57 miod Exp $
 OpenBSDInstallPrelude
 
 There are several ways to install OpenBSD onto a disk. The easiest way
@@ -60,8 +60,8 @@ guide constitute a good start; on Solaris systems, share(1M) is a good
 starting point as well).
 
 Second, the MACHINE workstation should then be setup using the NIOT command
-at the BUG prompt. The ``Load Address'' value should be 0x3F0000, and the
-``Execution Address'' value should be 0x3F0000 as well.
+at the BUG prompt. The ``Load Address'' value should be 0x6F0000, and the
+``Execution Address'' value should be 0x6F0000 as well.
 
 Then, it should be possible to boot the machine from the server by entering
 the NBO command at the BUG prompt:
