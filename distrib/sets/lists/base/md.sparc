@@ -255,6 +255,7 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ic/i82596reg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ic/i82596var.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ic/i82802reg.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ic/i82810reg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ic/ibm561reg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ic/ibm561var.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ic/ics2101reg.ph
@@ -433,6 +434,8 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ofw/ofw_pci.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ofw/openfirm.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/agpreg.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/agpvar.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/amdpmreg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/autrireg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/autrivar.ph
@@ -1381,6 +1384,7 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/struct.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sys
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sys/acct.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/sys/agpio.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sys/ataio.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sys/audioio.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sys/buf.ph

@@ -197,6 +197,7 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/i82596reg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/i82596var.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/i82802reg.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/i82810reg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/ibm561reg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/ibm561var.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/ics2101reg.ph
@@ -375,6 +376,8 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/ofw/ofw_pci.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/ofw/openfirm.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/agpreg.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/agpvar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/amdpmreg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/autrireg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/autrivar.ph
@@ -1264,6 +1267,7 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/struct.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/acct.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/sys/agpio.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/ataio.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/audioio.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/buf.ph

@@ -135,9 +135,3 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/hash.ph
 ./usr/share/man/cat1/gdb.0
 ./usr/share/man/cat1/objdump.0
-./usr/share/man/cat2/i386/i386_get_ioperm.0
-./usr/share/man/cat2/i386/i386_get_ldt.0
-./usr/share/man/cat2/i386/i386_iopl.0
-./usr/share/man/cat2/i386/i386_set_ioperm.0
-./usr/share/man/cat2/i386/i386_set_ldt.0
-./usr/share/man/cat2/i386/i386_vm86.0

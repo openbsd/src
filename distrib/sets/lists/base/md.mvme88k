@@ -416,6 +416,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ic/gemvar.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ic/hmereg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ic/hmevar.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ic/i82810reg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ic/ibm561reg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ic/ibm561var.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ic/if_wivar.ph
@@ -453,6 +454,8 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/mii/urlphyreg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/mii/xmphyreg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ofw/ofw_pci.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/agpreg.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/agpvar.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/amdpmreg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/autrireg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/autrivar.ph
@@ -631,6 +634,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/ssl/ui.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/ssl/ui_compat.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/stdbool.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/sys/agpio.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/ataio.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/extattr.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/kgdb.ph

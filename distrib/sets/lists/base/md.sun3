@@ -594,6 +594,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/i82596reg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/i82596var.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/i82802reg.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/i82810reg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/ibm561reg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/ibm561var.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/ics2101reg.ph
@@ -772,6 +773,8 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ofw/ofw_pci.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ofw/openfirm.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/agpreg.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/agpvar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/amdpmreg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/autrireg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/autrivar.ph
@@ -1751,6 +1754,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sun3/z8530var.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sys
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sys/acct.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/sys/agpio.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sys/ataio.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sys/audioio.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sys/buf.ph
