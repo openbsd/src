@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.4 2001/09/12 05:28:42 pvalchev Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.5 2001/09/15 21:23:52 drahn Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -231,6 +231,7 @@ where = 3;
 	battable[0].batl = BATL(0x00000000, BAT_M);
 	battable[0].batu = BATU(0x00000000);
 
+#if 0
 	battable[0x8].batl = BATL(0x80000000, BAT_I);
 	battable[0x8].batu = BATU(0x80000000);
 	battable[0x9].batl = BATL(0x90000000, BAT_I);
@@ -238,6 +239,7 @@ where = 3;
 	battable[0xa].batl = BATL(0xa0000000, BAT_I);
 	battable[0xa].batu = BATU(0xa0000000);
 	segment8_a_mapped = 1;
+#endif
 
 	/*
 	 * Now setup fixed bat registers
@@ -1164,7 +1166,12 @@ bus_space_unmap(t, bsh, size)
 	off = bsh - sva;
 	len = size+off;
 
-	uvm_km_free_wakeup(phys_map, sva, len);
+	if (ppc_malloc_ok &&
+	  ((sva >= VM_MIN_KERNEL_ADDRESS) && (sva < VM_MAX_KERNEL_ADDRESS)) )
+	{
+		/* do not free memory which was stolen from the vm system */
+		uvm_km_free(phys_map, sva, len);
+	}
 #if 0
 	pmap_extract(pmap_kernel(), sva, &bpa);
 	if (extent_free(devio_ex, bpa, size, EX_NOWAIT |
