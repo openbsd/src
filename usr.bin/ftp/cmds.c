@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmds.c,v 1.25 1998/02/08 21:04:16 weingart Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.26 1998/02/10 02:13:10 weingart Exp $	*/
 /*	$NetBSD: cmds.c,v 1.27 1997/08/18 10:20:15 lukem Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-static char rcsid[] = "$OpenBSD: cmds.c,v 1.25 1998/02/08 21:04:16 weingart Exp $";
+static char rcsid[] = "$OpenBSD: cmds.c,v 1.26 1998/02/10 02:13:10 weingart Exp $";
 #endif
 #endif /* not lint */
 
@@ -1431,7 +1431,7 @@ site(argc, argv)
 		code = -1;
 		return;
 	}
-	quote1("SITE ", argc, argv);
+	quote1("SITE", argc, argv);
 }
 
 /*
@@ -1450,15 +1450,32 @@ quote1(initial, argc, argv)
 	(void)strncpy(buf, initial, sizeof(buf) - 1);
 	buf[sizeof(buf) - 1] = '\0';
 	if (argc > 1) {
-		len = strlen(buf);
-		len += strlen(strncpy(&buf[len], argv[1],
-		    sizeof(buf) - len - 1));
-		for (i = 2; i < argc && len < sizeof(buf); i++) {
-			buf[len++] = ' ';
-			len += strlen(strncpy(&buf[len], argv[i],
-			    sizeof(buf) - len - 1));
+		for (i = 1, len = strlen(buf); i < argc && len < sizeof(buf)-1; i++) {
+
+			/* Sanity check */
+			if (len >= sizeof(buf) - 1)
+				break;
+
+			/* Space for next arg */
+			if (len > 1)
+				buf[len++] = ' ';
+
+			/* Sanity check */
+			if (len >= sizeof(buf) - 1)
+				break;
+
+			/* Copy next argument, NULL terminate always */
+			strncpy(&buf[len], argv[i], sizeof(buf) - len - 1);
+			buf[sizeof(buf) - 1] = '\0';
+
+			/* Update string length */
+			len = strlen(buf);
 		}
 	}
+
+	/* Make double (tripple?) sure the sucker is NULL terminated */
+	buf[sizeof(buf) - 1] = '\0';
+
 	if (command(buf) == PRELIM) {
 		while (getreply(0) == PRELIM)
 			continue;
