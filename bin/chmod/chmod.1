@@ -1,4 +1,4 @@
-.\"	$OpenBSD: chmod.1,v 1.14 1999/09/23 02:37:00 aaron Exp $
+.\"	$OpenBSD: chmod.1,v 1.15 1999/09/23 09:56:53 aaron Exp $
 .\"	$NetBSD: chmod.1,v 1.8 1995/03/21 09:02:07 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993, 1994
@@ -104,7 +104,7 @@ the mode of a file.
 The
 .Nm
 utility exits 0 on success or >0 if an error occurred.
-.Ss Absolute mode
+.Ss Absolute modes
 Absolute modes are specified according to the following format:
 .Bd -filled -offset indent
 .Nm chmod
@@ -174,7 +174,7 @@ execute permission is needed on
 and, of course, the
 .Pa ls
 binary itself.
-.Ss Symbolic mode
+.Ss Symbolic modes
 Symbolic modes are specified according to the following format:
 .Pp
 .Bd -filled -offset indent
@@ -190,7 +190,8 @@ Symbolic modes are specified according to the following format:
 .Op Ar perm
 .Oc Ns Li , Op Ar ...
 .Sm on
-.Op Ar
+.Ar file
+.Op Ar ...
 .Ed
 .Pp
 The
@@ -359,6 +360,7 @@ Set the group bits equal to the user bits, but clear the group write bit.
 .Dl Ic  chmod g=u-w file
 .Sh SEE ALSO
 .Xr chgrp 1 ,
+.Xr find 1 ,
 .Xr install 1 ,
 .Xr chmod 2 ,
 .Xr stat 2 ,
