@@ -93,6 +93,7 @@ joyprobe(parent, match, aux)
 	void   *match, *aux;
 
 {
+	dev->id_iosize = 1;
 #ifdef WANT_JOYSTICK_CONNECTED
 	outb(dev->id_iobase, 0xff);
 	DELAY(10000);		/* 10 ms delay */
