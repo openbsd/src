@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.85 2004/11/11 20:14:53 otto Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.86 2004/12/20 20:59:19 otto Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-static const char rcsid[] = "$OpenBSD: syslogd.c,v 1.85 2004/11/11 20:14:53 otto Exp $";
+static const char rcsid[] = "$OpenBSD: syslogd.c,v 1.86 2004/12/20 20:59:19 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -252,7 +252,7 @@ volatile sig_atomic_t MarkSet;
 volatile sig_atomic_t WantDie;
 volatile sig_atomic_t DoInit;
 
-void	cfline(char *, struct filed *, char *);
+struct filed *cfline(char *, char *);
 void    cvthname(struct sockaddr_in *, char *, size_t);
 int	decode(const char *, const CODE *);
 void	dodie(int);
@@ -264,6 +264,7 @@ void	fprintlog(struct filed *, int, char *);
 void	init(void);
 void	logerror(const char *);
 void	logmsg(int, char *, char *, int);
+struct filed *find_dup(struct filed *);
 void	printline(char *, char *);
 void	printsys(char *);
 void	reapchild(int);
@@ -1146,10 +1147,8 @@ init(void)
 	/* open the configuration file */
 	if ((cf = priv_open_config()) == NULL) {
 		dprintf("cannot open %s\n", ConfFile);
-		*nextp = (struct filed *)calloc(1, sizeof(*f));
-		cfline("*.ERR\t/dev/console", *nextp, "*");
-		(*nextp)->f_next = (struct filed *)calloc(1, sizeof(*f));
-		cfline("*.PANIC\t*", (*nextp)->f_next, "*");
+		*nextp = cfline("*.ERR\t/dev/console", "*");
+		(*nextp)->f_next = cfline("*.PANIC\t*", "*");
 		Initialized = 1;
 		return;
 	}
@@ -1192,10 +1191,11 @@ init(void)
 				break;
 			}
 		*p = '\0';
-		f = (struct filed *)calloc(1, sizeof(*f));
-		*nextp = f;
-		nextp = &f->f_next;
-		cfline(cline, f, prog);
+		f = cfline(cline, prog);
+		if (f != NULL) {
+			*nextp = f;
+			nextp = &f->f_next;
+		}
 	}
 
 	/* close the configuration file */
@@ -1243,24 +1243,53 @@ init(void)
 	dprintf("syslogd: restarted\n");
 }
 
+#define progmatches(p1, p2) \
+	(p1 == p2 || (p1 != NULL && p2 != NULL && strcmp(p1, p2) == 0))
+
+/*
+ * Spot a line with a duplicate file, console or tty target.
+ */
+struct filed *
+find_dup(struct filed *f)
+{
+	struct filed *list;
+
+	for (list = Files; list; list = list->f_next) {
+		if (list->f_quick || f->f_quick)
+			continue;
+		switch (list->f_type) {
+		case F_FILE:
+		case F_TTY:
+		case F_CONSOLE:
+			if (strcmp(list->f_un.f_fname, f->f_un.f_fname) == 0 &&
+			    progmatches(list->f_program, f->f_program))
+				return (list);
+			break;
+		}
+	}
+	return (NULL);
+}
+
 /*
  * Crack a configuration file line
  */
-void
-cfline(char *line, struct filed *f, char *prog)
+struct filed *
+cfline(char *line, char *prog)
 {
 	int i, pri, addr_len;
 	size_t rb_len;
 	char *bp, *p, *q, *cp;
 	char buf[MAXLINE], ebuf[100];
-	struct filed *xf;
+	struct filed *xf, *f, *d;
 
 	dprintf("cfline(\"%s\", f, \"%s\")\n", line, prog);
 
 	errno = 0;	/* keep strerror() stuff out of logerror messages */
 
-	/* clear out file entry */
-	memset(f, 0, sizeof(*f));
+	if ((f = calloc(1, sizeof(*f))) == NULL) {
+		logerror("Couldn't allocate struct filed");
+		die(0);
+	}
 	for (i = 0; i <= LOG_NFACILITIES; i++)
 		f->f_pmask[i] = INTERNAL_NOPRI;
 
@@ -1308,7 +1337,8 @@ cfline(char *line, struct filed *f, char *prog)
 				(void)snprintf(ebuf, sizeof ebuf,
 				    "unknown priority name \"%s\"", buf);
 				logerror(ebuf);
-				return;
+				free(f);
+				return (NULL);
 			}
 		}
 
@@ -1327,7 +1357,8 @@ cfline(char *line, struct filed *f, char *prog)
 					    "unknown facility name \"%s\"",
 					    buf);
 					logerror(ebuf);
-					return;
+					free(f);
+					return (NULL);
 				}
 				f->f_pmask[i >> 3] = pri;
 			}
@@ -1370,6 +1401,14 @@ cfline(char *line, struct filed *f, char *prog)
 
 	case '/':
 		(void)strlcpy(f->f_un.f_fname, p, sizeof(f->f_un.f_fname));
+		d = find_dup(f);
+		if (d != NULL) {
+			for (i = 0; i <= LOG_NFACILITIES; i++)
+				if (f->f_pmask[i] != INTERNAL_NOPRI)
+					d->f_pmask[i] = f->f_pmask[i];
+			free(f);
+			return (NULL);
+		}
 		if (strcmp(p, ctty) == 0)
 			f->f_file = priv_open_tty(p);
 		else
@@ -1461,6 +1500,7 @@ cfline(char *line, struct filed *f, char *prog)
 		f->f_type = F_USERS;
 		break;
 	}
+	return (f);
 }
 
 
