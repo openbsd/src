@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.128 2003/05/30 09:07:46 grange Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.129 2003/06/06 11:28:41 grange Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -352,6 +352,10 @@ const struct pciide_product_desc pciide_intel_products[] =  {
 	},
 	{ PCI_PRODUCT_INTEL_82801DBM_IDE, /* Intel 82801DBM IDE (ICH4-M) */
 	  0,
+	  piix_chip_map
+	},
+	{ PCI_PRODUCT_INTEL_82801EB_IDE, /* Intel 82801EB/82801ER IDE */
+	  0,				 /* (ICH5/ICH5R)	      */
 	  piix_chip_map
 	},
 };
@@ -1641,6 +1645,7 @@ piix_chip_map(sc, pa)
 		case PCI_PRODUCT_INTEL_82801CA_IDE:
 		case PCI_PRODUCT_INTEL_82801DB_IDE:
 		case PCI_PRODUCT_INTEL_82801DBM_IDE:
+		case PCI_PRODUCT_INTEL_82801EB_IDE:
 			sc->sc_wdcdev.cap |= WDC_CAPABILITY_UDMA;
 			break;
 		}
@@ -1657,6 +1662,7 @@ piix_chip_map(sc, pa)
 	case PCI_PRODUCT_INTEL_82801CA_IDE:
 	case PCI_PRODUCT_INTEL_82801DB_IDE:
 	case PCI_PRODUCT_INTEL_82801DBM_IDE:
+	case PCI_PRODUCT_INTEL_82801EB_IDE:
 		sc->sc_wdcdev.UDMA_cap = 5;
 		break;
 	default:
@@ -1691,7 +1697,8 @@ piix_chip_map(sc, pa)
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801CAM_IDE ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801CA_IDE ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801DB_IDE ||
-		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801DBM_IDE) {
+		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801DBM_IDE ||
+		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801EB_IDE) {
 			WDCDEBUG_PRINT((", IDE_CONTROL 0x%x",
 			    pci_conf_read(sc->sc_pc, sc->sc_tag, PIIX_CONFIG)),
 			    DEBUG_PROBE);
@@ -1752,7 +1759,8 @@ next:
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801CAM_IDE ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801CA_IDE ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801DB_IDE ||
-		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801DBM_IDE) {
+		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801DBM_IDE ||
+		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801EB_IDE) {
 			WDCDEBUG_PRINT((", IDE_CONTROL 0x%x",
 			    pci_conf_read(sc->sc_pc, sc->sc_tag, PIIX_CONFIG)),
 			    DEBUG_PROBE);
@@ -1917,7 +1925,8 @@ piix3_4_setup_channel(chp)
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801CAM_IDE ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801CA_IDE ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801DB_IDE ||
-		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801DBM_IDE) {
+		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801DBM_IDE ||
+		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801EB_IDE) {
 			ideconf |= PIIX_CONFIG_PINGPONG;
 		}
 		if (sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801BAM_IDE ||
@@ -1925,7 +1934,8 @@ piix3_4_setup_channel(chp)
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801CAM_IDE||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801CA_IDE ||
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801DB_IDE ||
-		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801DBM_IDE) {
+		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801DBM_IDE ||
+		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801EB_IDE) {
 			/* setup Ultra/100 */
 			if (drvp->UDMA_mode > 2 &&
 			    (ideconf & PIIX_CONFIG_CR(channel, drive)) == 0)
