@@ -34,6 +34,6 @@ NOMAN=
 
 beforeinstall:
 	${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
-		${.CURDIR}/dhclient-script ${DESTDIR}/usr/bin/dhclient-script
+		${.CURDIR}/dhclient-script ${DESTDIR}/etc/dhclient-script
 
 .include <bsd.prog.mk>
