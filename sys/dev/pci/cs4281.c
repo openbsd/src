@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4281.c,v 1.1 2001/01/13 19:53:50 aaron Exp $ */
+/*	$OpenBSD: cs4281.c,v 1.2 2001/02/09 21:15:22 aaron Exp $ */
 /*	$Tera: cs4281.c,v 1.18 2000/12/27 14:24:45 tacha Exp $	*/
 
 /*
@@ -301,6 +301,7 @@ cs4281_attach(parent, self, aux)
 	char const *intrstr;
 	pci_intr_handle_t ih;
 	pcireg_t csr;
+	int pci_pwrmgmt_cap_reg, pci_pwrmgmt_csr_reg;
 
 	/* Map I/O register */
 	if (pci_mapreg_map(pa, CSCC_PCI_BA0,
@@ -317,6 +318,25 @@ cs4281_attach(parent, self, aux)
 	}
 
 	sc->sc_dmatag = pa->pa_dmat;
+
+	/*
+	 * Set Power State D0.
+	 * Without doing this, 0xffffffff is read from all registers after
+	 * using Windows and rebooting into OpenBSD.
+	 * On my IBM ThinkPad X20, it is set to D3 after using Windows2000.
+	 */
+	if (pci_get_capability(pa->pa_pc, pa->pa_tag, PCI_CAP_PWRMGMT,
+	    &pci_pwrmgmt_cap_reg, 0)) {
+		pcireg_t reg;
+
+		pci_pwrmgmt_csr_reg = pci_pwrmgmt_cap_reg + 4;
+		reg = pci_conf_read(pa->pa_pc, pa->pa_tag, pci_pwrmgmt_csr_reg);
+		if ((reg & PCI_PMCSR_STATE_MASK) != PCI_PMCSR_STATE_D0) {
+			pci_conf_write(pc, pa->pa_tag, pci_pwrmgmt_csr_reg,
+			    (reg & ~PCI_PMCSR_STATE_MASK) |
+			    PCI_PMCSR_STATE_D0);
+		}
+	}
 
 	/* Enable the device (set bus master flag) */
 	csr = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
@@ -862,6 +882,14 @@ cs4281_init(sc)
 	/* set "Configuration Write Protect" register to
 	 * 0x4281 to allow to write */
 	BA0WRITE4(sc, CS4281_CWPR, 0x4281);
+
+	/*
+	 * Unset "Full Power-Down bit of Extended PCI Power Management
+	 * Control" register to release the reset state.
+	 */
+	dat32 = BA0READ4(sc, CS4281_EPPMC);
+	if (dat32 & EPPMC_FPDN)
+		BA0WRITE4(sc, CS4281_EPPMC, dat32 & ~EPPMC_FPDN);
 
 	/* Start PLL out in known state */
 	BA0WRITE4(sc, CS4281_CLKCR1, 0);

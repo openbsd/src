@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4281reg.h,v 1.1 2001/01/13 19:53:50 aaron Exp $ */
+/*	$OpenBSD: cs4281reg.h,v 1.2 2001/02/09 21:15:23 aaron Exp $ */
 /*	$Tera: cs4281reg.h,v 1.9 2000/12/31 10:52:25 tacha Exp $	*/
 
 /*
@@ -161,6 +161,7 @@
 #define CS4281_PMCS    0x344 /* Power Management Control/Status */
 #define CS4281_CWPR    0x3E0 /* Configuration Write Protect Register */
 #define CS4281_EPPMC   0x3E4 /* Extended PCI Power Management Control */
+#define EPPMC_FPDN     (0x1 << 14)
 #define CS4281_GPIOR   0x3E8 /* GPIO Pin Interface Register */
 #define CS4281_SPMC    0x3EC /* Serial Port Power Management Control (& ASDIN2 enable) */
 #define  SPMC_RSTN     0x00000001
