@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.h,v 1.4 2004/07/14 19:03:00 jfb Exp $	*/
+/*	$OpenBSD: cvs.h,v 1.5 2004/07/14 19:08:48 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -358,6 +358,7 @@ CVSENTRIES*      cvs_ent_open   (const char *, int);
 struct cvs_ent*  cvs_ent_get    (CVSENTRIES *, const char *);
 struct cvs_ent*  cvs_ent_next   (CVSENTRIES *);
 int              cvs_ent_add    (CVSENTRIES *, struct cvs_ent *);
+int              cvs_ent_addln  (CVSENTRIES *, const char *);
 int              cvs_ent_remove (CVSENTRIES *, const char *);
 struct cvs_ent*  cvs_ent_parse  (const char *);
 void             cvs_ent_close  (CVSENTRIES *);
