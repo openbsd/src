@@ -1,4 +1,4 @@
-/*	$OpenBSD: w.c,v 1.6 1996/08/12 02:28:43 deraadt Exp $	*/
+/*	$OpenBSD: w.c,v 1.7 1996/08/22 02:12:33 downsj Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -241,7 +241,17 @@ main(argc, argv)
 			continue;
 		e = &kp->kp_eproc;
 		for (ep = ehead; ep != NULL; ep = ep->next) {
-			if (ep->tdev == e->e_tdev && e->e_pgid == e->e_tpgid) {
+			/* ftp is a special case. */
+			if (strncmp(ep->utmp.ut_line, "ftp", 3) == 0) {
+				pid_t fp = (pid_t)strtol(&ep->utmp.ut_line[3],
+							 NULL, 10);
+				if (p->p_pid == fp) {
+					ep->kp = kp;
+
+					break;
+				}
+			} else if (ep->tdev == e->e_tdev
+				   && e->e_pgid == e->e_tpgid) {
 				/*
 				 * Proc is in foreground of this terminal
 				 */
@@ -324,7 +334,7 @@ static void
 pr_args(kp)
 	struct kinfo_proc *kp;
 {
-	char **argv;
+	char **argv, *str;
 	int left;
 
 	if (kp == 0)
@@ -333,8 +343,19 @@ pr_args(kp)
 	argv = kvm_getargv(kd, kp, argwidth);
 	if (argv == 0)
 		goto nothing;
+
 	while (*argv) {
-		fmt_puts(*argv, &left);
+		/* ftp is a special case... */
+		if (strncmp(*argv, "ftpd:", 5) == 0) {
+			str = strrchr(*argv, ':');
+			if (str != (char *)NULL) {
+				if (strlen(str) > 2)
+					str += 2;
+				fmt_puts(str, &left);
+			} else
+				fmt_puts(*argv, &left);
+		} else
+			fmt_puts(*argv, &left);
 		argv++;
 		fmt_putc(' ', &left);
 	}
