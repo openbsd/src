@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ie_gsc.c,v 1.2 1999/08/14 04:08:06 mickey Exp $	*/
+/*	$OpenBSD: if_ie_gsc.c,v 1.3 1999/08/16 02:48:39 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -373,8 +373,7 @@ ie_gsc_attach(parent, self, aux)
 		      ie_gsc_media, IE_NMEDIA, ie_gsc_media[0]);
 
 	sc->sc_ih = gsc_intr_establish((struct gsc_softc *)parent, IPL_NET,
-				       ga->ga_irq, i82596_intr, sc,
-				       sc->sc_dev.dv_xname);
+				       ga->ga_irq, i82596_intr,sc,&sc->sc_dev);
 #ifdef PMAPDEBUG
 	pmapdebug = opmapdebug;
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpt_gsc.c,v 1.4 1999/08/14 04:39:12 mickey Exp $	*/
+/*	$OpenBSD: lpt_gsc.c,v 1.5 1999/08/16 02:48:39 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -174,6 +174,5 @@ lpt_gsc_attach(parent, self, aux)
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, lpt_control, LPC_NINIT);
 
 	sc->sc_ih = gsc_intr_establish((struct gsc_softc *)parent, IPL_TTY,
-				       ga->ga_irq, lptintr, sc,
-				       sc->sc_dev.dv_xname);
+				       ga->ga_irq, lptintr, sc, &sc->sc_dev);
 }

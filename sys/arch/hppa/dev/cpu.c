@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.4 1999/08/14 03:58:55 mickey Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.5 1999/08/16 02:48:39 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -163,7 +163,7 @@ cpuattach(parent, self, aux)
 	if (ca->ca_irq == 31) {
 		sc->sc_ih = cpu_intr_establish(IPL_CLOCK, ca->ca_irq,
 					       clock_intr, NULL /*trapframe*/,
-					       sc->sc_dev.dv_xname);
+					       &sc->sc_dev);
 	} else {
 		printf ("%s: bad irq number %d\n", sc->sc_dev.dv_xname,
 			ca->ca_irq);

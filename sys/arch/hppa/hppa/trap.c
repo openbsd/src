@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.7 1999/08/14 03:06:55 mickey Exp $	*/
+/*	$OpenBSD: trap.c,v 1.8 1999/08/16 02:48:39 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -486,29 +486,29 @@ syscall(frame, args)
 
 /* all the interrupts, minus cpu clock, which is the last */
 struct cpu_intr_vector {
-	const char *name;
+	struct evcnt evcnt;
 	int pri;
 	int (*handler) __P((void *));
 	void *arg;
 } cpu_intr_vectors[CPU_NINTS];
 
 void *
-cpu_intr_establish(pri, irq, handler, arg, name)
+cpu_intr_establish(pri, irq, handler, arg, dv)
 	int pri, irq;
 	int (*handler) __P((void *));
 	void *arg;
-	const char *name;
+	struct device *dv;
 {
-	register struct cpu_intr_vector *p;
+	register struct cpu_intr_vector *iv;
 
 	if (0 <= irq && irq < CPU_NINTS && cpu_intr_vectors[irq].handler)
 		return NULL;
 
-	p = &cpu_intr_vectors[irq];
-	p->name = name;
-	p->pri = pri;
-	p->handler = handler;
-	p->arg = arg;
+	iv = &cpu_intr_vectors[irq];
+	iv->pri = pri;
+	iv->handler = handler;
+	iv->arg = arg;
+	evcnt_attach(dv, dv->dv_xname, iv->evcnt);
 
 	return p;
 }
@@ -518,7 +518,7 @@ cpu_intr(frame)
 	struct trapframe *frame;
 {
 	u_int32_t eirr;
-	register struct cpu_intr_vector *p;
+	register struct cpu_intr_vector *iv;
 	register int bit;
 
 	do {
@@ -533,17 +533,19 @@ cpu_intr(frame)
 			if (bit != 31)
 				printf ("cpu_intr: 0x%08x\n", (1 << bit));
 #endif
-			p = &cpu_intr_vectors[bit];
-			if (p->handler) {
-				register int s = splx(p->pri);
+			iv = &cpu_intr_vectors[bit];
+			if (iv->handler) {
+				register int s = splx(iv->pri);
+
+				iv->evcnt.ev_count++;
 				/* no arg means pass the frame */
-				if (!(p->handler)(p->arg? p->arg:frame))
+				if (!(iv->handler)(iv->arg? iv->arg:frame))
 #ifdef INTRDEBUG1
 					panic ("%s: can't handle interrupt",
-					       p->name);
+					       iv->name);
 #else
 					printf ("%s: can't handle interrupt\n",
-						p->name);
+						iv->name);
 #endif
 				splx(s);
 			} else {

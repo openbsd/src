@@ -1,4 +1,4 @@
-/*	$OpenBSD: gscbus.c,v 1.6 1999/08/14 04:22:51 mickey Exp $	*/
+/*	$OpenBSD: gscbus.c,v 1.7 1999/08/16 02:48:39 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -143,7 +143,7 @@ gscattach(parent, self, aux)
 	printf ("\n");
 
 	sc->sc_ih = cpu_intr_establish(IPL_IO, ga->ga_irq,
-				       gsc_intr, sc, sc->sc_dev.dv_xname);
+				       gsc_intr, sc, &sc->sc_dev);
 	/* DMA guts */
 	sc->sc_dmatag._cookie = sc;
 	sc->sc_dmatag._dmamap_create = gsc_dmamap_create;
@@ -174,13 +174,13 @@ gscprint(aux, pnp)
 
 
 void *
-gsc_intr_establish(sc, pri, irq, handler, arg, name)
+gsc_intr_establish(sc, pri, irq, handler, arg, dv)
 	struct gsc_softc *sc;
 	int pri;
 	int irq;
 	int (*handler) __P((void *v));
 	void *arg;
-	const char *name;
+	struct device *dv;
 {
 	register struct gscbus_intr *iv;
 	register u_int32_t mask;
@@ -198,7 +198,7 @@ gsc_intr_establish(sc, pri, irq, handler, arg, name)
 	iv->pri = pri;
 	iv->handler = handler;
 	iv->arg = arg;
-	evcnt_attach(&sc->sc_dev, name, &iv->evcnt);
+	evcnt_attach(dv, dv->dv_xname, &iv->evcnt);
 	(sc->sc_ic->gsc_intr_establish)(sc->sc_ic->gsc_dv, mask);
 #ifdef GSCDEBUG
 	printf("gsc_intr_establish: mask=0x%08x irq=%d iv=%p\n", mask, irq, iv);
@@ -249,9 +249,14 @@ gsc_intr(v)
 #ifdef GSCDEBUG_INTR
 			printf("gsc_intr: calling %p for irq %d\n", v, i);
 #endif
+			iv->evcnt.ev_count++;
 			s = splx(iv->pri);
-			ret += (iv->handler)(iv->arg);
+			ret = (iv->handler)(iv->arg);
 			splx(s);
+			if (!ret)
+				printf ("%s: can't handle interrupt\n",
+					iv->evcnt.ev_name);
+			ret++;
 		} else
 			printf("%s: stray interrupt %d\n",
 			       sc->sc_dev.dv_xname, i);
