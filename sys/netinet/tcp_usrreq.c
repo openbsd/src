@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.60 2002/05/16 14:10:51 kjc Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.61 2002/05/26 15:27:07 fgsch Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -34,11 +34,11 @@
  * SUCH DAMAGE.
  *
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
- * 
+ *
  * NRL grants permission for redistribution and use in source and binary
  * forms, with or without modification, of the software and documentation
  * created at NRL provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright
@@ -53,7 +53,7 @@
  * 4. Neither the name of the NRL nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THE SOFTWARE PROVIDED BY NRL IS PROVIDED BY NRL AND CONTRIBUTORS ``AS
  * IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
  * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
@@ -65,7 +65,7 @@
  * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  * The views and conclusions contained in the software and documentation
  * are those of the authors and should not be interpreted as representing
  * official policies, either expressed or implied, of the US Naval
@@ -322,7 +322,7 @@ tcp_usrreq(so, req, m, nam, control)
 		soisconnecting(so);
 		tcpstat.tcps_connattempt++;
 		tp->t_state = TCPS_SYN_SENT;
-		TCP_TIMER_ARM(tp, TCPT_KEEP, tcptv_keep_init);	
+		TCP_TIMER_ARM(tp, TCPT_KEEP, tcptv_keep_init);
 #ifdef TCP_COMPAT_42
 		tp->iss = tcp_iss;
 		tcp_iss += TCP_ISSINCR/2;
@@ -643,11 +643,11 @@ tcp_ctloutput(op, so, level, optname, mp)
 }
 
 #ifndef TCP_SENDSPACE
-#define	TCP_SENDSPACE	1024*16;
+#define	TCP_SENDSPACE	1024*16
 #endif
 u_int	tcp_sendspace = TCP_SENDSPACE;
 #ifndef TCP_RECVSPACE
-#define	TCP_RECVSPACE	1024*16;
+#define	TCP_RECVSPACE	1024*16
 #endif
 u_int	tcp_recvspace = TCP_RECVSPACE;
 
@@ -828,8 +828,8 @@ tcp_ident(oldp, oldlenp, newp, newlen)
 		panic("tcp_ident: cannot happen");
 #endif
 	}
-	else 
-		inp = in_pcbhashlookup(&tcbtable,  fin->sin_addr, 
+	else
+		inp = in_pcbhashlookup(&tcbtable,  fin->sin_addr,
 		    fin->sin_port, lin->sin_addr, lin->sin_port);
 
 	if (inp == NULL) {
@@ -845,9 +845,9 @@ tcp_ident(oldp, oldlenp, newp, newlen)
 		}
 		else
 			inp = in_pcblookup(&tcbtable, &fin->sin_addr,
-			    fin->sin_port, &lin->sin_addr, lin->sin_port, 
+			    fin->sin_port, &lin->sin_addr, lin->sin_port,
 			    INPLOOKUP_WILDCARD);
-	}	
+	}
 
 	if (inp != NULL && (inp->inp_socket->so_state & SS_CONNECTOUT)) {
 		tir.ruid = inp->inp_socket->so_ruid;
