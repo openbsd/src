@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.16 2003/03/24 11:33:56 miod Exp $
+dnl	$OpenBSD: install,v 1.17 2004/01/20 17:31:54 miod Exp $
 OpenBSDInstallShortPrelude
 
 Before you begin, you should decide if OpenBSD is to be installed
@@ -129,7 +129,7 @@ OpenBSDInstallPart4({:-If you have DOS or Linux
 	and a size that keeps it inside of that portion of the disk.  This
 	is within the bounds of the 'c' partition.-:})
 
-OpenBSDInstallPart5(sd0)
+OpenBSDInstallPart5(wd0)
 
 OpenBSDInstallNet({:-CD-ROM, -:})
 
