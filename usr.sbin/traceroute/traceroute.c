@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.35 2001/03/15 17:52:54 deraadt Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.36 2001/06/01 01:57:00 pvalchev Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)traceroute.c	8.1 (Berkeley) 6/6/93";*/
 #else
-static char rcsid[] = "$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $";
+static char rcsid[] = "$OpenBSD: traceroute.c,v 1.36 2001/06/01 01:57:00 pvalchev Exp $";
 #endif
 #endif /* not lint */
 
