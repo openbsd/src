@@ -1,4 +1,4 @@
-/*	$OpenBSD: cp.c,v 1.22 2003/03/13 09:09:20 deraadt Exp $	*/
+/*	$OpenBSD: cp.c,v 1.23 2003/03/13 22:17:04 millert Exp $	*/
 /*	$NetBSD: cp.c,v 1.14 1995/09/07 06:14:51 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)cp.c	8.5 (Berkeley) 4/29/95";
 #else
-static char rcsid[] = "$OpenBSD: cp.c,v 1.22 2003/03/13 09:09:20 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: cp.c,v 1.23 2003/03/13 22:17:04 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -186,9 +186,8 @@ main(int argc, char *argv[])
 
 	/* Save the target base in "to". */
 	target = argv[--argc];
-	if (strlen(target) >= sizeof(to.p_path))
+	if (strlcpy(to.p_path, target, sizeof to.p_path) >= sizeof(to.p_path))
 		errx(1, "%s: name too long", target);
-	(void)strlcpy(to.p_path, target, sizeof to.p_path);
 	to.p_end = to.p_path + strlen(to.p_path);
 	if (to.p_path == to.p_end) {
 		*to.p_end++ = '.';
