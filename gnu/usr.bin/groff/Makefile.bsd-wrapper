@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.9 1997/07/29 00:48:54 kstailey Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.10 1997/09/05 07:18:35 kstailey Exp $
 
 #
 # groff config
@@ -50,16 +50,24 @@ all: config.status gnu_build
 
 .include <bsd.own.mk>
 
+.ifdef GLOBAL_AUTOCONF_CACHE
+CF=	--cache-file=${GLOBAL_AUTOCONF_CACHE}
+.else
+CF=
+.endif
+
 config: .FORCE
+.ifndef GLOBAL_AUTOCONF_CACHE
 	-rm -f config.cache
+.endif
 	INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \
 	/bin/sh ${.CURDIR}/configure --prefix=${PREFIX} \
-		--mandir=${DATASUBDIR}/man
+		--mandir=${DATASUBDIR}/man ${CF}
 
 config.status:
 	INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \
 	/bin/sh ${.CURDIR}/configure --prefix=${PREFIX} \
-		--mandir=${DATASUBDIR}/man
+		--mandir=${DATASUBDIR}/man ${CF}
 
 gnu_build:
 	${MAKE} ${GNUCFLAGS} ${GNUCXXFLAGS} LDFLAGS="-s ${LDSTATIC}" \
