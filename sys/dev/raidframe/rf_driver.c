@@ -1,4 +1,4 @@
-/*	$OpenBSD: rf_driver.c,v 1.3 1999/07/30 14:45:32 peter Exp $	*/
+/*	$OpenBSD: rf_driver.c,v 1.4 1999/08/03 13:56:37 peter Exp $	*/
 /*	$NetBSD: rf_driver.c,v 1.12 1999/07/19 01:36:07 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -964,8 +964,6 @@ rf_ConfigureDebug(cfgPtr)
 }
 /* performance monitoring stuff */
 
-#define TIMEVAL_TO_US(t) (((long) t.tv_sec) * 1000000L + (long) t.tv_usec)
-
 #if !defined(_KERNEL) && !defined(SIMULATE)
 
 /*
@@ -1014,7 +1012,7 @@ rf_StopThroughputStats(RF_Raid_t * raidPtr)
 	if (raidPtr->throughputstats.num_out_ios == 0) {
 		RF_GETTIME(raidPtr->throughputstats.stop);
 		RF_TIMEVAL_DIFF(&raidPtr->throughputstats.start, &raidPtr->throughputstats.stop, &diff);
-		raidPtr->throughputstats.sum_io_us += TIMEVAL_TO_US(diff);
+		raidPtr->throughputstats.sum_io_us += RF_TIMEVAL_TO_US(diff);
 	}
 	RF_UNLOCK_MUTEX(raidPtr->throughputstats.mutex);
 }
@@ -1063,7 +1061,7 @@ rf_PrintUserStats(RF_Raid_t * raidPtr)
 	struct timeval diff;
 
 	RF_TIMEVAL_DIFF(&raidPtr->userstats.start, &raidPtr->userstats.stop, &diff);
-	elapsed_us = TIMEVAL_TO_US(diff);
+	elapsed_us = RF_TIMEVAL_TO_US(diff);
 
 	/* 2000 sectors per megabyte, 10000000 microseconds per second */
 	if (elapsed_us)

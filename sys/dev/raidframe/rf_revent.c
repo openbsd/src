@@ -1,4 +1,4 @@
-/*	$OpenBSD: rf_revent.c,v 1.5 1999/08/02 15:42:48 peter Exp $	*/
+/*	$OpenBSD: rf_revent.c,v 1.6 1999/08/03 13:56:38 peter Exp $	*/
 /*	$NetBSD: rf_revent.c,v 1.4 1999/03/14 21:53:31 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -39,8 +39,6 @@
 #include "rf_freelist.h"
 #include "rf_desc.h"
 #include "rf_shutdown.h"
-
-#include <sys/kernel.h>
 
 static RF_FreeList_t *rf_revent_freelist;
 #define RF_MAX_FREE_REVENT 128
@@ -109,8 +107,6 @@ rf_GetNextReconEvent(reconDesc, row, continueFunc, continueArg)
 	void    (*continueFunc) (void *);
 	void   *continueArg;
 {
-	int	s;
-
 	RF_Raid_t *raidPtr = reconDesc->raidPtr;
 	RF_ReconCtrl_t *rctrl = raidPtr->reconControl[row];
 	RF_ReconEvent_t *event;
@@ -121,46 +117,47 @@ rf_GetNextReconEvent(reconDesc, row, continueFunc, continueArg)
 										 * must be equivalent
 										 * conditions */
 
-
 	rctrl->continueFunc = continueFunc;
 	rctrl->continueArg = continueArg;
 
-/* start with a simple premise. Allow 100 ms for recon, and then
- * sleep for the 2 ms to allow use of the CPU. This resulted in a CPU
- * utilisation of about 25% locally, and a very responsive system - PMG
- */
-#define	RECON_TIME	((100 * hz) / 1000)
 
+#define MAX_RECON_EXEC_USECS		(100 * 1000)	/* 100 ms */
+#define RECON_DELAY_MS			25
+#define RECON_TIMO    			((RECON_DELAY_MS * hz) / 1000)
+
+	/* we are not pre-emptible in the kernel, but we don't want to run
+	 * forever. If we run w/o blocking for more than MAX_RECON_EXEC_USECS
+	 * delay for RECON_DELAY_MS before continuing. this may murder us with
+	 * context switches, so we may need to increase both the
+	 * MAX...TICKS and the RECON_DELAY_MS. */
 	if (reconDesc->reconExecTimerRunning) {
-		int     status;
-		RF_int64 ticks;
+		int	status;
 
-		s = splclock();
-		ticks = (mono_time.tv_sec * 1000000 + mono_time.tv_usec) -
-			reconDesc->reconExecTimerRunning;
-		splx(s);
-
-		if (ticks >= (1000000 / RECON_TIME)) {
-			/* we've been running too long.  delay for RECON_TIME */
+		RF_ETIMER_STOP(reconDesc->recon_exec_timer);
+		RF_ETIMER_EVAL(reconDesc->recon_exec_timer);
+		reconDesc->reconExecuSecs += RF_ETIMER_VAL_US(reconDesc->recon_exec_timer);
+		if (reconDesc->reconExecuSecs > reconDesc->maxReconExecuSecs)
+			reconDesc->maxReconExecuSecs = reconDesc->reconExecuSecs;
+		if (reconDesc->reconExecuSecs >= MAX_RECON_EXEC_USECS) {
+			/* we've been running too long - sleep */
 #if RF_RECON_STATS > 0
 			reconDesc->numReconExecDelays++;
 #endif /* RF_RECON_STATS > 0 */
-			status = tsleep(&reconDesc->reconExecTicks, PRIBIO, "recon delay", RECON_TIME / 5);
+			status = tsleep(&reconDesc->reconExecuSecs, PRIBIO, "recon delay", RECON_TIMO);
 			RF_ASSERT(status == EWOULDBLOCK);
+			reconDesc->reconExecuSecs = 0;
 		}
 	}
-
 	while (!rctrl->eventQueue) {
 #if RF_RECON_STATS > 0
 		reconDesc->numReconEventWaits++;
 #endif				/* RF_RECON_STATS > 0 */
 		DO_WAIT(rctrl);
+		reconDesc->reconExecuSecs = 0;	/* we've just waited */
 	}
-	s = splclock();
-	/* set time to now */
-	reconDesc->reconExecTimerRunning = mono_time.tv_sec * 1000000 +
-					   mono_time.tv_usec;
-	splx(s);
+
+	RF_ETIMER_START(reconDesc->recon_exec_timer);
+	reconDesc->reconExecTimerRunning = 1;
 
 	event = rctrl->eventQueue;
 	rctrl->eventQueue = event->next;

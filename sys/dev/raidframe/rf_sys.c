@@ -1,4 +1,4 @@
-/*	$OpenBSD: rf_sys.c,v 1.2 1999/02/16 00:03:29 niklas Exp $	*/
+/*	$OpenBSD: rf_sys.c,v 1.3 1999/08/03 13:56:38 peter Exp $	*/
 /*	$NetBSD: rf_sys.c,v 1.3 1999/02/05 00:06:18 oster Exp $	*/
 /*
  * rf_sys.c
@@ -42,21 +42,10 @@
 
 extern struct rpb *rpb;
 
-/* timer stuff */
-long    rf_timer_max_val;
-long    rf_timer_ticks_per_second;
-unsigned long rf_timer_ticks_per_usec;
-
 
 int 
 rf_ConfigureEtimer(listp)
 	RF_ShutdownList_t **listp;
 {
-	/* XXX just picking some random values to keep things happy... without
-	 * these set, stuff will panic on division by zero errors!! */
-	rf_timer_ticks_per_second = 233100233;
-	rf_timer_max_val = RF_DEF_TIMER_MAX_VAL;
-	rf_timer_ticks_per_usec = rf_timer_ticks_per_second / 1000000;
-
 	return (0);
 }
