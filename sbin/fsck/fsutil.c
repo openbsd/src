@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsutil.c,v 1.10 2003/06/02 20:06:14 millert Exp $	*/
+/*	$OpenBSD: fsutil.c,v 1.11 2003/06/26 08:01:54 tedu Exp $	*/
 /*	$NetBSD: fsutil.c,v 1.2 1996/10/03 20:06:31 christos Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  */
 #ifndef lint
-static char rcsid[] = "$NetBSD: fsutil.c,v 1.2 1996/10/03 20:06:31 christos Exp $";
+static const char rcsid[] = "$OpenBSD: fsutil.c,v 1.11 2003/06/26 08:01:54 tedu Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>

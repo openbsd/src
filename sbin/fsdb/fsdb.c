@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsdb.c,v 1.13 2003/06/11 06:22:13 deraadt Exp $	*/
+/*	$OpenBSD: fsdb.c,v 1.14 2003/06/26 08:01:54 tedu Exp $	*/
 /*	$NetBSD: fsdb.c,v 1.7 1997/01/11 06:50:53 lukem Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: fsdb.c,v 1.4 1996/03/21 17:56:15 jtc Exp $";
+static const char rcsid[] = "$OpenBSD: fsdb.c,v 1.14 2003/06/26 08:01:54 tedu Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
