@@ -1,4 +1,4 @@
-/*	$OpenBSD: npx.c,v 1.29 2003/10/24 09:03:20 grange Exp $	*/
+/*	$OpenBSD: npx.c,v 1.30 2003/12/31 19:17:41 deraadt Exp $	*/
 /*	$NetBSD: npx.c,v 1.57 1996/05/12 23:12:24 mycroft Exp $	*/
 
 #if 0
@@ -203,6 +203,7 @@ npxprobe1(ia)
 			fldcw(&control);
 			npx_traps_while_probing = npx_intrs_while_probing = 0;
 			fp_divide_by_0();
+			delay(1);
 			if (npx_traps_while_probing != 0) {
 				/*
 				 * Good, exception 16 works.
