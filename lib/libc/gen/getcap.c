@@ -35,7 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: getcap.c,v 1.4 1997/02/01 04:35:33 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: getcap.c,v 1.5 1997/06/10 21:44:15 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -384,7 +384,7 @@ getent(cap, len, db_array, fd, name, depth, nfield)
 
 	if (!foundit) {
 		free(record);
-		return (-1);
+		return (-1 - (fd < 0));
 	}
 
 	/*
