@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_gre.c,v 1.19 2002/06/09 17:25:58 itojun Exp $ */
+/*      $OpenBSD: if_gre.c,v 1.20 2002/06/09 17:32:35 itojun Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -513,11 +513,17 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		}
 		break;
 	case GREGADDRS:
+		bzero(&si, sizeof(si));
+		si.sin_family = AF_INET;
+		si.sin_len = sizeof(struct sockaddr_in);
 		si.sin_addr.s_addr = sc->g_src.s_addr;
 		sa = sintosa(&si);
 		ifr->ifr_addr = *sa;
 		break;
 	case GREGADDRD:
+		bzero(&si, sizeof(si));
+		si.sin_family = AF_INET;
+		si.sin_len = sizeof(struct sockaddr_in);
 		si.sin_addr.s_addr = sc->g_dst.s_addr;
 		sa = sintosa(&si);
 		ifr->ifr_addr = *sa;
@@ -551,16 +557,13 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			error = EADDRNOTAVAIL;
 			break;
 		}
+		bzero(&si, sizeof(si));
 		si.sin_family = AF_INET;
 		si.sin_len = sizeof(struct sockaddr_in);
 		si.sin_addr.s_addr = sc->g_src.s_addr;
-		sa = sintosa(&si);
-		memcpy(&lifr->addr, sa, sa->sa_len);
-		si.sin_family = AF_INET;
-		si.sin_len = sizeof(struct sockaddr_in);
+		memcpy(&lifr->addr, &si, sizeof(si));
 		si.sin_addr.s_addr = sc->g_dst.s_addr;
-		sa = sintosa(&si);
-		memcpy(&lifr->dstaddr, sa, sa->sa_len);
+		memcpy(&lifr->dstaddr, &si, sizeof(si));
 		break;
 	default:
 		error = EINVAL;
