@@ -1,4 +1,4 @@
-/*	$OpenBSD: atrun.c,v 1.18 2002/05/11 21:51:07 millert Exp $	*/
+/*	$OpenBSD: atrun.c,v 1.19 2002/05/11 22:05:53 millert Exp $	*/
 
 /*
  *  atrun.c - run jobs queued by at; run with root privileges.
@@ -39,6 +39,7 @@
 #include <errno.h>
 #include <pwd.h>
 #include <grp.h>
+#include <limits.h>
 #include <signal.h>
 #include <stddef.h>
 #include <stdio.h>
@@ -71,7 +72,7 @@
 /* File scope variables */
 
 static char *namep;
-static char rcsid[] = "$OpenBSD: atrun.c,v 1.18 2002/05/11 21:51:07 millert Exp $";
+static char rcsid[] = "$OpenBSD: atrun.c,v 1.19 2002/05/11 22:05:53 millert Exp $";
 static int debug = 0;
 
 /* Local functions */
@@ -399,6 +400,7 @@ main(argc, argv)
 	unsigned long ctm;
 	int jobno;
 	char queue;
+	char *ep;
 	time_t now, run_time;
 	char batch_name[] = "Z2345678901234";
 	uid_t batch_uid;
@@ -420,8 +422,11 @@ main(argc, argv)
 	while ((c = getopt(argc, argv, "dl:")) != -1) {
 		switch (c) {
 		case 'l':
-			if (sscanf(optarg, "%lf", &load_avg) != 1)
-				perr("garbled option -l");
+			errno = EINVAL;
+			load_avg = strtod(optarg, &ep);
+			if (*ep != '\0' || (errno == ERANGE &&
+			    (load_avg == DBL_MAX || load_avg == DBL_MIN)))
+				perr2("bad load average: %s", optarg);
 			if (load_avg <= 0.)
 				load_avg = ATRUN_MAXLOAD;
 			break;
