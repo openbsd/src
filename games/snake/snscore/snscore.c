@@ -59,7 +59,7 @@ char *recfile = _PATH_RAWSCORES;
 #define MAXPLAYERS 256
 
 struct	player	{
-	uit_d	uids;
+	uid_t	uids;
 	short	scores;
 	char	*name;
 } players[MAXPLAYERS], temp;
