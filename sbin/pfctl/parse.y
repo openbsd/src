@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.235 2002/12/05 13:07:24 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.236 2002/12/05 15:28:00 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -3566,8 +3566,7 @@ ifa_lookup(char *ifa_name, enum pfctl_iflookup_mode mode)
 			memcpy(&n->addr.addr, &p->addr.addr,
 			    sizeof(struct pf_addr));
 		if (mode == PFCTL_IFLOOKUP_NET)
-			memcpy(&n->addr.mask, &p->addr.mask,
-			    sizeof(struct pf_addr));
+			set_ipmask(n, unmask(&p->addr.mask, n->af));
 		else {
 			if (n->af == AF_INET) {
 				if (p->ifa_flags & IFF_LOOPBACK &&
