@@ -1,4 +1,4 @@
-/*	$OpenBSD: spif.c,v 1.1 1999/02/01 00:30:42 jason Exp $	*/
+/*	$OpenBSD: spif.c,v 1.2 1999/02/01 13:45:22 jason Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -33,7 +33,7 @@
 
 /*
  * Driver for the SUNW,spif: 8 serial, 1 parallel sbus board
- * based heavily on Iain Hibbert's driver for the MAGMA driver
+ * based heavily on Iain Hibbert's driver for the MAGMA cards
  */
 
 #include <sys/param.h>
@@ -332,7 +332,7 @@ sttyopen(dev, flags, mode, p)
 
 		ttsetwater(tp);
 
-		csc->sc_regs->stc.srer = CD180_SRER_DSR | CD180_SRER_RXD;
+		csc->sc_regs->stc.srer = CD180_SRER_CD | CD180_SRER_RXD;
 
 		if (ISSET(sp->sp_openflags, TIOCFLAG_SOFTCAR) || sp->sp_carrier)
 			SET(tp->t_state, TS_CARR_ON);
@@ -384,6 +384,7 @@ sttyclose(dev, flags, mode, p)
 	s = spltty();
 
 	if (ISSET(tp->t_cflag, HUPCL) || !ISSET(tp->t_state, TS_ISOPEN)) {
+		stty_modem_control(sp, 0, DMSET);
 		csc->sc_regs->stc.car = port;
 		csc->sc_regs->stc.ccr = CD180_CCR_RESET | CD180_CCR_RESETCHAN;
 	}
@@ -491,11 +492,11 @@ stty_modem_control(sp, bits, how)
 	case DMSET:
 		if (ISSET(bits, TIOCM_DTR)) {
 			sp->sp_dtr = 1;
-			csc->sc_regs->dtrlatch[sp->sp_channel] = 1;
+			csc->sc_regs->dtrlatch[sp->sp_channel] = 0;
 		}
 		else {
 			sp->sp_dtr = 0;
-			csc->sc_regs->dtrlatch[sp->sp_channel] = 0;
+			csc->sc_regs->dtrlatch[sp->sp_channel] = 1;
 		}
 		if (ISSET(bits, TIOCM_RTS))
 			csc->sc_regs->stc.msvr &= ~CD180_MSVR_RTS;
@@ -505,7 +506,7 @@ stty_modem_control(sp, bits, how)
 	case DMBIS:
 		if (ISSET(bits, TIOCM_DTR)) {
 			sp->sp_dtr = 1;
-			csc->sc_regs->dtrlatch[sp->sp_channel] = 1;
+			csc->sc_regs->dtrlatch[sp->sp_channel] = 0;
 		}
 		if (ISSET(bits, TIOCM_RTS) && !ISSET(tp->t_cflag, CRTSCTS))
 			csc->sc_regs->stc.msvr &= ~CD180_MSVR_RTS;
@@ -513,7 +514,7 @@ stty_modem_control(sp, bits, how)
 	case DMBIC:
 		if (ISSET(bits, TIOCM_DTR)) {
 			sp->sp_dtr = 0;
-			csc->sc_regs->dtrlatch[sp->sp_channel] = 0;
+			csc->sc_regs->dtrlatch[sp->sp_channel] = 1;
 		}
 		if (ISSET(bits, TIOCM_RTS))
 			csc->sc_regs->stc.msvr |= CD180_MSVR_RTS;
@@ -614,6 +615,8 @@ stty_param(tp, t)
 
 	spif_write_ccr(&sc->sc_regs->stc, CD180_CCR_CHANCTL |
 	    CD180_CCR_CHAN_TXEN | CD180_CCR_CHAN_RXEN);
+
+	sp->sp_carrier = sc->sc_regs->stc.msvr & CD180_MSVR_CD;
 
 	splx(s);
 	return (0);
@@ -718,12 +721,12 @@ spifstcintr(vsc)
 	 * Receive data service request
 	 * (also Receive error service request)
 	 */
-	ar = sc->sc_regs->istc.rrar & 7;
+	ar = sc->sc_regs->istc.rrar & CD180_GSVR_IMASK;
 
 	switch (ar) {
 	case CD180_GSVR_RXGOOD:
 		r = 1;
-		channel = (sc->sc_regs->stc.gscr1 >> 2) & 7;
+		channel = (sc->sc_regs->stc.gscr1 >> 2) & CD180_GSCR_CMASK;
 		sp = &sc->sc_ttys->sc_port[channel];
 		ptr = sp->sp_rput;
 		for (i = sc->sc_regs->stc.rdcr; i > 0; i--) {
@@ -744,7 +747,7 @@ spifstcintr(vsc)
 		break;
 	case CD180_GSVR_RXEXCEPTION:
 		r = 1;
-		channel = (sc->sc_regs->stc.gscr1 >> 2) & 7;
+		channel = (sc->sc_regs->stc.gscr1 >> 2) & CD180_GSCR_CMASK;
 		sp = &sc->sc_ttys->sc_port[channel];
 		ptr = sp->sp_rput;
 		*ptr++ = sc->sc_regs->stc.rcsr;
@@ -767,12 +770,12 @@ spifstcintr(vsc)
 	/*
 	 * Transmit service request
 	 */
-	ar = sc->sc_regs->istc.trar & 7;
-	if (ar == 2) {
+	ar = sc->sc_regs->istc.trar & CD180_GSVR_IMASK;
+	if (ar == CD180_GSVR_TXDATA) {
 		int cnt = 0;
 
 		r = 1;
-		channel = (sc->sc_regs->stc.gscr1 >> 2) & 7;
+		channel = (sc->sc_regs->stc.gscr1 >> 2) & CD180_GSCR_CMASK;
 		sp = &sc->sc_ttys->sc_port[channel];
 
 		if (!ISSET(sp->sp_flags, STTYF_STOP)) {
@@ -815,13 +818,23 @@ spifstcintr(vsc)
 	}
 	sc->sc_regs->stc.eosrr = 0;
 
-#if 0
 	/*
 	 * Modem signal service request
 	 */
-	ar = sc->sc_regs->istc.mrar & 7;
+	ar = sc->sc_regs->istc.mrar & CD180_GSVR_IMASK;
+	if (ar == CD180_GSVR_STATCHG) {
+		r = 1;
+		channel = (sc->sc_regs->stc.gscr1 >> 2) & CD180_GSCR_CMASK;
+		sp = &sc->sc_ttys->sc_port[channel];
+		ar = sc->sc_regs->stc.mcr;
+		if (ar & CD180_MCR_CD) {
+			SET(sp->sp_flags, STTYF_CDCHG);
+			needsoft = 1;
+		}
+
+		sc->sc_regs->stc.mcr = 0;
+	}
 	sc->sc_regs->stc.eosrr = 0;
-#endif
 
 	if (needsoft) {
 #if defined(SUN4M)
@@ -841,7 +854,7 @@ spifsoftintr(vsc)
 	struct spif_softc *sc = (struct spif_softc *)vsc;
 	struct stty_softc *stc = sc->sc_ttys;
 	int r = 0, i, data, s, flags;
-	u_int8_t stat;
+	u_int8_t stat, msvr;
 	struct stty_port *sp;
 	struct tty *tp;
 
@@ -869,8 +882,8 @@ spifsoftintr(vsc)
 
 				if (stat & CD180_RCSR_OE)
 					log(LOG_WARNING,
-					    "%s%x: fifo overflow\n",
-					    stc->sc_dev, i);
+					    "%s-%x: fifo overflow\n",
+					    stc->sc_dev.dv_xname, i);
 				(*linesw[tp->t_line].l_rint)(data, tp);
 				r = 1;
 			}
@@ -882,14 +895,20 @@ spifsoftintr(vsc)
 			splx(s);
 
 			if (ISSET(flags, STTYF_CDCHG)) {
+				s = spltty();
+				sc->sc_regs->stc.car = i;
+				msvr = sc->sc_regs->stc.msvr;
+				splx(s);
+
+				sp->sp_carrier = msvr & CD180_MSVR_CD;
 				(*linesw[tp->t_line].l_modem)(tp,
 				    sp->sp_carrier);
 				r = 1;
 			}
 
 			if (ISSET(flags, STTYF_RING_OVERFLOW)) {
-				log(LOG_WARNING, "%s%x: ring overflow\n",
-					stc->sc_dev, i);
+				log(LOG_WARNING, "%s-%x: ring overflow\n",
+					stc->sc_dev.dv_xname, i);
 				r = 1;
 			}
 

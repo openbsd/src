@@ -1,4 +1,4 @@
-/*	$OpenBSD: spifreg.h,v 1.1 1999/02/01 00:30:42 jason Exp $	*/
+/*	$OpenBSD: spifreg.h,v 1.2 1999/02/01 13:45:22 jason Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -241,6 +241,8 @@ struct spifregs {
 #define	CD180_MSVR_DTR			0x02	/* DTR output state */
 #define	CD180_MSVR_RTS			0x01	/* RTS output state */
 
+#define	CD180_GSCR_CMASK		0x07	/* channel mask */
+
 #define	CD180_GSVR_IMASK		0x07	/* interrupt type mask */
 #define	CD180_GSVR_NOREQUEST		0x00	/* no request pending */
 #define	CD180_GSVR_STATCHG		0x01	/* modem signal change */
@@ -252,7 +254,8 @@ struct spifregs {
 #define	CD180_GSVR_RXEXCEPTION		0x07	/* rx exception request */
 
 #define	STTY_RX_FIFO_THRESHOLD	6
-#define	STTY_RX_DTR_THRESHOLD	9
+#define	STTY_RX_DTR_THRESHOLD	7
+#define	CD180_TX_FIFO_SIZE	8		/* 8 chars of fifo */
 
 #define	CD180_RCSR_TO			0x80	/* time out */
 #define	CD180_RCSR_SCD2			0x40	/* special char detect 2 */
@@ -263,7 +266,10 @@ struct spifregs {
 #define	CD180_RCSR_FE			0x02	/* framing exception */
 #define	CD180_RCSR_OE			0x01	/* overrun exception */
 
-#define	CD180_TX_FIFO_SIZE	8		/* 8 chars of fifo */
+#define	CD180_MCR_DSR			0x80	/* DSR changed */
+#define	CD180_MCR_CD			0x40	/* CD changed */
+#define	CD180_MCR_CTS			0x20	/* CTS changed */
+
 /*
  * These are the offsets of the MRAR,TRAR, and RRAR in *IACK space.
  * The high bit must be set as per specs for the MSMR, TSMR, and RSMR.
