@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.13 2000/01/17 06:02:49 mickey Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.14 2000/01/17 20:18:16 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2000 Michael Shalayeff
@@ -218,8 +218,18 @@ cpu_fork(p1, p2, stack, stacksize)
 		p2->p_vmspace->vm_map.pmap->pmap_space;
 	tf->tf_iisq_head = tf->tf_iisq_tail =
 		p2->p_vmspace->vm_map.pmap->pmap_space;
-	tf->tf_sr7 = HPPA_SID_KERNEL;
 	tf->tf_pidr1 = tf->tf_pidr2 = p2->p_vmspace->vm_map.pmap->pmap_pid;
+
+	/*
+	 * theoretically these could be inherited from the father,
+	 * but just in case.
+	 */
+#ifdef DIAGNOSTIC
+	tf->tf_sr7 = HPPA_SID_KERNEL;
+	tf->tf_eiem = ~0;
+	tf->tf_ipsw = PSW_C | PSW_Q | PSW_P | PSW_D | PSW_I /* | PSW_L */;
+	pcbp->pcb_fpregs[32] = 0;
+#endif
 
 	/*
 	 * If specified, give the child a different stack.

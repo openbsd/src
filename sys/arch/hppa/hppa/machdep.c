@@ -1,7 +1,7 @@
-/*	$OpenBSD: machdep.c,v 1.18 2000/01/11 20:27:56 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.19 2000/01/17 20:18:16 mickey Exp $	*/
 
 /*
- * Copyright (c) 1999 Michael Shalayeff
+ * Copyright (c) 1999-2000 Michael Shalayeff
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -167,7 +167,7 @@ struct pdc_coproc pdc_coproc PDC_ALIGNMENT;
 struct pdc_coherence pdc_coherence PDC_ALIGNMENT;
 
 #ifdef DEBUG
-int sigdebug;
+int sigdebug = 0xff;
 pid_t sigpid;
 #define SDB_FOLLOW	0x01
 #endif
@@ -181,6 +181,8 @@ hppa_init(start)
 	vaddr_t v, vstart, vend;
 	register int error;
 	int hptsize;	/* size of HPT table if supported */
+
+	boothowto |= RB_SINGLE;	/* XXX always go into single-user while debug */
 
 	pdc_init();	/* init PDC iface, so we can call em easy */
 
@@ -941,31 +943,21 @@ setregs(p, pack, stack, retval)
 	u_long stack;
 	register_t *retval;
 {
-	register struct trapframe *tf;
+	register struct trapframe *tf = p->p_md.md_regs;
+	/* register struct pcb *pcb = &p->p_addr->u_pcb; */
 #ifdef DEBUG
 	/*extern int pmapdebug;*/
 	/*pmapdebug = 13;*/
-	printf("setregs(%p, %p, %x, %p), ep=%x\n",
-	    p, pack, stack, retval, pack->ep_entry);
+	printf("setregs(%p, %p, %x, %p), ep=%x, cr30=%x\n",
+	    p, pack, stack, retval, pack->ep_entry, tf->tf_cr30);
 #endif
-	/* FPU: setup regs */
 
-	tf = p->p_md.md_regs;
 	/* tf->tf_r?? = PS_STRINGS */
-	tf->tf_ipsw = PSW_C | PSW_Q | PSW_P | PSW_D | PSW_I;
-	tf->tf_iioq_head = tf->tf_iioq_tail =
-	    pack->ep_entry | HPPA_PC_PRIV_USER;
-	tf->tf_iisq_head = tf->tf_iisq_tail = p->p_addr->u_pcb.pcb_space;
+	tf->tf_iioq_tail = 4 +
+	    (tf->tf_iioq_head = pack->ep_entry | HPPA_PC_PRIV_USER);
 	tf->tf_rp = 0;
 	tf->tf_arg0 = stack;
 	tf->tf_arg1 = tf->tf_arg2 = 0; /* XXX dynload stuff */
-	tf->tf_eiem = 0;
-	tf->tf_sr4 = p->p_addr->u_pcb.pcb_space;
-	tf->tf_sr5 = p->p_addr->u_pcb.pcb_space;
-	tf->tf_sr6 = p->p_addr->u_pcb.pcb_space;
-	tf->tf_sr7 = HPPA_SID_KERNEL;
-	tf->tf_pidr1 = p->p_vmspace->vm_map.pmap->pmap_pid;
-	tf->tf_pidr2 = p->p_vmspace->vm_map.pmap->pmap_pid;
 
 	/* setup terminal stack frame */
 	stack += HPPA_FRAME_SIZE;
