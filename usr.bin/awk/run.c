@@ -1,4 +1,4 @@
-/*	$OpenBSD: run.c,v 1.9 1997/01/25 03:24:52 kstailey Exp $	*/
+/*	$OpenBSD: run.c,v 1.10 1997/01/29 18:33:56 kstailey Exp $	*/
 /****************************************************************
 Copyright (C) AT&T and Lucent Technologies 1996
 All Rights Reserved
@@ -728,7 +728,7 @@ int format(char *buf, int bufsize, char *s, Node *a)
 	char fmt[RECSIZE];
 	char *p, *t, *os;
 	Cell *x;
-	int flag = 0, len = 0, n;
+	int flag = 0, n;
 
 	os = s;
 	p = buf;
@@ -736,12 +736,10 @@ int format(char *buf, int bufsize, char *s, Node *a)
 		if (p - buf >= bufsize)
 			return -1;
 		if (*s != '%') {
-		        len++;
 			*p++ = *s++;
 			continue;
 		}
 		if (*(s+1) == '%') {
-			len++;
 			*p++ = '%';
 			s += 2;
 			continue;
@@ -791,7 +789,6 @@ int format(char *buf, int bufsize, char *s, Node *a)
 		a = a->nnext;
 		switch (flag) {
 		case 0:	sprintf((char *)p, "%s", fmt);	/* unknown, so dump it too */
-			len += strlen(p);
 			p += strlen(p);
 			sprintf((char *)p, "%s", getsval(x));
 			break;
@@ -810,19 +807,18 @@ int format(char *buf, int bufsize, char *s, Node *a)
 			isnum(x) ?
 			  (getfval(x) ?
 			    sprintf((char *)p, (char *)fmt, (int) getfval(x))
-                                      : (*p++ = '\0', len++))
+                                      : (*p++ = '\0'))
 				 : sprintf((char *)p, (char *)fmt, getsval(x)[0]);
 			break;
 		}
 		tempfree(x);
-		len += strlen(p);
 		p += strlen(p);
 		s++;
 	}
 	*p = '\0';
 	for ( ; a; a = a->nnext)		/* evaluate any remaining args */
 		execute(a);
-	return (len);
+	return ((int)(p - buf));
 }
 
 Cell *awksprintf(Node **a, int n)		/* sprintf(a[0]) */
