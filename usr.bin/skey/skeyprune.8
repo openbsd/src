@@ -1,4 +1,4 @@
-.\" $OpenBSD: skeyprune.8,v 1.5 2000/03/23 21:10:18 aaron Exp $
+.\" $OpenBSD: skeyprune.8,v 1.6 2001/06/20 22:19:58 millert Exp $
 .\"
 .\"
 .Dd September 27, 1996
@@ -12,16 +12,17 @@
 .Op Ar days
 .Sh DESCRIPTION
 .Nm skeyprune
-searches through the file
-.Dq Pa /etc/skeykeys
-and prunes out users who have zeroed their entries via
-.Xr skeyinit 1
+searches through the S/Key database,
+.Dq Pa /etc/skeykeys ,
+and prunes out invalid entries (including users who have zeroed out their)
+entries via
+.Xr skeyinit 1 )
 as well as entries that have not been modified in
 .Ar days
 days.
 If
 .Ar days
-is not specified only commented out entries are pruned.
+is not specified, only invalid entries are pruned.
 .Sh FILES
 .Bl -tag -width /etc/skeykeys -compact
 .It Pa /etc/skeykeys
@@ -30,12 +31,3 @@ S/Key key information database
 .Sh SEE ALSO
 .Xr skey 1 ,
 .Xr skeyinit 1
-.Sh BUGS
-Since
-.Nm skeyprune
-rewrites
-.Dq Pa /etc/skeykeys ,
-there is a window where S/Key changes could get lost.
-It is therefore suggested that
-.Nm skeyprune
-be run at a time when users are unlikely to be active.
