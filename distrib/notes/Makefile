@@ -1,10 +1,9 @@
-#	$OpenBSD: Makefile,v 1.15 2001/09/24 19:34:22 miod Exp $
+#	$OpenBSD: Makefile,v 1.16 2002/10/07 19:31:01 miod Exp $
 
 NOPROG=
 NOMAN=
 
 M?=	$(MACHINE)
-M_A?=	$(MACHINE_ARCH)
 
 TARG=	INSTALL.$M
 SRC=	$(.CURDIR)/INSTALL
@@ -17,21 +16,12 @@ all:	$(TARG)
 
 allarchs:
 	@cd $(.CURDIR); \
-	    ${MAKE} M=alpha   M_A=alpha; \
-	    ${MAKE} M=amiga   M_A=m68k; \
-	    ${MAKE} M=hp300   M_A=m68k; \
-	    ${MAKE} M=i386    M_A=i386; \
-	    ${MAKE} M=mac68k  M_A=m68k; \
-	    ${MAKE} M=macppc  M_A=powerpc; \
-	    ${MAKE} M=mvme68k M_A=m68k; \
-	    ${MAKE} M=sparc   M_A=sparc; \
-	    ${MAKE} M=sparc64 M_A=sparc64; \
-	    ${MAKE} M=sun3    M_A=m68k; \
-	    ${MAKE} M=vax     M_A=vax;
+	for arch in alpha amiga hp300 i386 mac68k macppc mvme68k sparc \
+	    sparc64 sun3 vax ; do ${MAKE} M=$$arch; done;
 
 $(TARG): $(DEP)
 	m4 -DOSREV=$(OSREV) -DOSrev=$(OSrev) -DINCLUDE=$(.CURDIR)/$M \
-	-DMACHINE=$M -DMACHINE_ARCH=$(M_A) -Uunix $(SRC) > $@
+	-DMACHINE=$M -Uunix $(SRC) > $@
 
 clean cleandir:
 	-/bin/rm -f INSTALL.*
