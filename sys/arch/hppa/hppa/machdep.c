@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.135 2004/09/15 21:32:43 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.136 2004/09/18 05:06:17 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Michael Shalayeff
@@ -1274,7 +1274,7 @@ sendsig(catcher, sig, mask, code, type, val)
 	struct sigacts *psp = p->p_sigacts;
 	struct sigcontext ksc;
 	siginfo_t ksi;
-	register_t scp, sip;
+	register_t scp, sip, zero;
 	int sss;
 
 #ifdef DEBUG
