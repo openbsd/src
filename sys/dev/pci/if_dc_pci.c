@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dc_pci.c,v 1.38 2003/06/26 00:46:14 mickey Exp $	*/
+/*	$OpenBSD: if_dc_pci.c,v 1.39 2003/08/16 14:42:19 henning Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -337,6 +337,7 @@ void dc_pci_attach(parent, self, aux)
 			sc->dc_type = DC_TYPE_AN983;
 			sc->dc_flags |= DC_TX_USE_TX_INTR;
 			sc->dc_flags |= DC_TX_ADMTEK_WAR;
+			sc->dc_flags |= DC_64BIT_HASH;
 			sc->dc_pmode = DC_PMODE_MII;
 		}
 		dc_eeprom_width(sc);
