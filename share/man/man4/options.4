@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.30 1999/05/16 19:56:33 alex Exp $
+.\"	$OpenBSD: options.4,v 1.31 1999/05/25 02:04:02 provos Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt 
@@ -208,6 +208,9 @@ option, which may decrease system performance.
 Adds code to the kernel that does internal consistency checks.  This
 code will cause the kernel to panic if corruption of internal data
 structures is detected.
+.It Cd option GPROF
+Adds code to the kernel for kernel profiling with
+.Xr kgmon 8 . 
 .It Cd option KTRACE
 Adds hooks for the system call tracing facility, which allows users to
 watch the system call invocation behavior of processes.  See
