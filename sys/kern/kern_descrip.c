@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.49 2002/02/08 16:32:27 art Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.50 2002/02/08 18:29:08 art Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ int nfiles;			/* actual number of open files */
 static __inline void fd_used __P((struct filedesc *, int));
 static __inline void fd_unused __P((struct filedesc *, int));
 static __inline int find_next_zero __P((u_int *, int, u_int));
-int finishdup __P((struct proc *, int, int, register_t *));
+int finishdup(struct proc *, struct file *, int, int, register_t *);
 int find_last_set __P((struct filedesc *, int));
 
 struct pool file_pool;
@@ -217,14 +217,16 @@ sys_dup(p, v, retval)
 	struct sys_dup_args /* {
 		syscallarg(u_int) fd;
 	} */ *uap = v;
-	register struct filedesc *fdp = p->p_fd;
-	register int old = SCARG(uap, fd);
+	struct filedesc *fdp = p->p_fd;
+	int old = SCARG(uap, fd);
+	struct file *fp;
 	int new;
 	int error;
 
 restart:
-	if (fd_getfile(fdp, old) == NULL)
+	if ((fp = fd_getfile(fdp, old)) == NULL)
 		return (EBADF);
+	FREF(fp);
 	if ((error = fdalloc(p, 0, &new)) != 0) {
 		if (error == ENOSPC) {
 			fdexpand(p);
@@ -232,7 +234,7 @@ restart:
 		}
 		return (error);
 	}
-	return (finishdup(p, old, new, retval));
+	return (finishdup(p, fp, old, new, retval));
 }
 
 /*
@@ -249,12 +251,13 @@ sys_dup2(p, v, retval)
 		syscallarg(u_int) from;
 		syscallarg(u_int) to;
 	} */ *uap = v;
-	struct filedesc *fdp = p->p_fd;
 	int old = SCARG(uap, from), new = SCARG(uap, to);
+	struct filedesc *fdp = p->p_fd;
+	struct file *fp;
 	int i, error;
 
 restart:
-	if (fd_getfile(fdp, old) == NULL)
+	if ((fp = fd_getfile(fdp, old)) == NULL)
 		return (EBADF);
 	if ((u_int)new >= p->p_rlimit[RLIMIT_NOFILE].rlim_cur ||
 	    (u_int)new >= maxfiles)
@@ -263,8 +266,10 @@ restart:
 		*retval = new;
 		return (0);
 	}
+	FREF(fp);
 	if (new >= fdp->fd_nfiles) {
 		if ((error = fdalloc(p, new, &i)) != 0) {
+			FRELE(fp);
 			if (error == ENOSPC) {
 				fdexpand(p);
 				goto restart;
@@ -274,7 +279,7 @@ restart:
 		if (new != i)
 			panic("dup2: fdalloc");
 	}
-	return (finishdup(p, old, new, retval));
+	return (finishdup(p, fp, old, new, retval));
 }
 
 /*
@@ -312,6 +317,7 @@ restart:
 			error = EINVAL;
 			break;
 		}
+		FREF(fp);
 		if ((error = fdalloc(p, newmin, &i)) != 0) {
 			if (error == ENOSPC) {
 				fdexpand(p);
@@ -319,7 +325,7 @@ restart:
 			}
 			break;
 		}
-		return (finishdup(p, fd, i, retval));
+		return (finishdup(p, fp, fd, i, retval));
 
 	case F_GETFD:
 		*retval = fdp->fd_ofileflags[fd] & UF_EXCLOSE ? 1 : 0;
@@ -483,12 +489,9 @@ out:
  * Common code for dup, dup2, and fcntl(F_DUPFD).
  */
 int
-finishdup(p, old, new, retval)
-	struct proc *p;
-	int old, new;
-	register_t *retval;
+finishdup(struct proc *p, struct file *fp, int old, int new, register_t *retval)
 {
-	struct file *fp, *oldfp;
+	struct file *oldfp;
 	struct filedesc *fdp = p->p_fd;
 
 	/*
@@ -499,12 +502,12 @@ finishdup(p, old, new, retval)
 	if (oldfp != NULL)
 		FREF(oldfp);
 
-	fp = fdp->fd_ofiles[old];
 	if (fp->f_count == LONG_MAX-2)
 		return (EDEADLK);
 	fdp->fd_ofiles[new] = fp;
 	fdp->fd_ofileflags[new] = fdp->fd_ofileflags[old] & ~UF_EXCLOSE;
 	fp->f_count++;
+	FRELE(fp);
 	if (oldfp == NULL)
 		fd_used(fdp, new);
 	*retval = new;
