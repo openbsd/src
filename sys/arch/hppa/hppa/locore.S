@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.77 2002/08/03 20:19:41 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.78 2002/08/03 20:23:00 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -167,10 +167,11 @@ ENTRY($start,0)
 	ldo	NBPG-1(arg3), arg3
 	dep	r0, 31, PGSHIFT, arg3
 
-#define	STACK_ALLOC(n,s)		\
-	ldil	L%(n), t1		! \
-	stw	arg3, R%(n)(t1)		! \
-	ldil	L%(s), t2		! \
+	/* assuming size being page-aligned */
+#define	STACK_ALLOC(n,s)	\
+	ldil	L%(n), t1	! \
+	ldil	L%(s), t2	! \
+	stw	arg3, R%(n)(t1)	! \
 	add	arg3, t2, arg3
 
 	STACK_ALLOC(pdc_stack, PDC_STACKSIZE)
