@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.17 2001/06/26 22:56:01 dugsong Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.18 2001/06/27 02:45:58 provos Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -658,6 +658,11 @@ parse_rule(int n, char *l, struct pf_rule *r)
 		struct protoent *p;
 		w = next_word(&l);
 		p = getprotobyname(w);
+		if (p == NULL) {
+			int proto = atoi(w);
+			if (proto > 0)
+				p = getprotobynumber(proto);
+		}
 		if (p == NULL) {
 			error(n, "unknown protocol %s\n", w);
 			return (0);
