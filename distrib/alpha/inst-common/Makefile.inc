@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: Makefile.inc,v 1.6 2002/04/30 03:47:03 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.7 2004/11/05 21:22:37 miod Exp $
 #
 
 # TOP is assumed to be defined by Makefile including this one.
@@ -13,6 +13,7 @@ MOUNT_POINT?=	${TOP}/${BASE}/fs
 LISTS?=		${.CURDIR}/../common/list
 CRUNCHCONF?=	${CBIN}.conf
 MTREE=		${UTILS}/mtree.conf
+STRIP=		strip
 
 ${CRUNCHCONF}: ${LISTS}
 	awk -f ${UTILS}/makeconf.awk CBIN=${CBIN} ${LISTS} > ${CBIN}.conf
@@ -22,6 +23,7 @@ ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
 
 ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
 	make -f ${CBIN}.mk all
+	${STRIP} -R .eh_frame ${CBIN}
 
 do_files:
 	mtree -def ${MTREE} -p ${MOUNT_POINT}/ -u
