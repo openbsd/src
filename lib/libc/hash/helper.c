@@ -1,4 +1,4 @@
-/*	$OpenBSD: helper.c,v 1.6 2004/06/22 01:57:29 jfb Exp $	*/
+/*	$OpenBSD: helper.c,v 1.7 2004/09/16 15:12:09 millert Exp $	*/
 
 /*
  * ----------------------------------------------------------------------------
@@ -10,10 +10,11 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "$OpenBSD: helper.c,v 1.6 2004/06/22 01:57:29 jfb Exp $";
+static const char rcsid[] = "$OpenBSD: helper.c,v 1.7 2004/09/16 15:12:09 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
+#include <sys/stat.h>
 
 #include <errno.h>
 #include <fcntl.h>
@@ -48,6 +49,7 @@ HASHEnd(HASH_CTX *ctx, char *buf)
 char *
 HASHFileChunk(const char *filename, char *buf, off_t off, off_t len)
 {
+	struct stat sb;
 	u_char buffer[BUFSIZ];
 	HASH_CTX ctx;
 	int fd, save_errno;
@@ -57,6 +59,13 @@ HASHFileChunk(const char *filename, char *buf, off_t off, off_t len)
 
 	if ((fd = open(filename, O_RDONLY)) < 0)
 		return (NULL);
+	if (len == 0) {
+		if (fstat(fd, &sb) == -1) {
+			close(fd);
+			return (NULL);
+		}
+		len = sb.st_size;
+	}
 	if (off > 0 && lseek(fd, off, SEEK_SET) < 0)
 		return (NULL);
 
