@@ -443,6 +443,16 @@ struct vop_size_args {
 extern struct vnodeop_desc vop_size_desc;
 int VOP_SIZE __P((struct vnode *, off_t, off_t *));
 
+struct vop_mmap_args {
+	struct vnodeop_desc *a_desc;
+	struct vnode *a_vp;
+	int a_fflags;
+	struct ucred *a_cred;
+	struct proc *a_p;
+};
+extern struct vnodeop_desc vop_mmap_desc;
+int VOP_MMAP __P((struct vnode *, int, struct ucred *, struct proc *));
+
 /* Special cases: */
 #include <sys/buf.h>
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfs_vnops.c,v 1.16 2001/06/23 02:07:56 csapuntz Exp $	*/
+/*	$OpenBSD: mfs_vnops.c,v 1.17 2001/12/04 22:44:32 art Exp $	*/
 /*	$NetBSD: mfs_vnops.c,v 1.8 1996/03/17 02:16:32 christos Exp $	*/
 
 /*
@@ -93,7 +93,8 @@ struct vnodeopv_entry_desc mfs_vnodeop_entries[] = {
 	{ &vop_pathconf_desc, mfs_pathconf },		/* pathconf */
 	{ &vop_advlock_desc, mfs_advlock },		/* advlock */
 	{ &vop_bwrite_desc, mfs_bwrite },		/* bwrite */
-	{ (struct vnodeop_desc*)NULL, (int(*) __P((void *)))NULL }
+	{ &vop_mmap_desc, mfs_mmap },
+	{ NULL, NULL }
 };
 struct vnodeopv_desc mfs_vnodeop_opv_desc =
 	{ &mfs_vnodeop_p, mfs_vnodeop_entries };

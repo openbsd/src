@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfsnode.h,v 1.7 1998/08/06 19:35:11 csapuntz Exp $	*/
+/*	$OpenBSD: mfsnode.h,v 1.8 2001/12/04 22:44:32 art Exp $	*/
 /*	$NetBSD: mfsnode.h,v 1.3 1996/02/09 22:31:31 christos Exp $	*/
 
 /*
@@ -87,3 +87,4 @@ struct mfsnode {
 #define	mfs_truncate	mfs_badop
 #define	mfs_update	nullop
 #define	mfs_bwrite	vop_generic_bwrite
+#define mfs_mmap	mfs_badop

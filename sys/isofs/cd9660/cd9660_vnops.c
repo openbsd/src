@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_vnops.c,v 1.15 2001/11/27 05:27:11 art Exp $	*/
+/*	$OpenBSD: cd9660_vnops.c,v 1.16 2001/12/04 22:44:31 art Exp $	*/
 /*	$NetBSD: cd9660_vnops.c,v 1.42 1997/10/16 23:56:57 christos Exp $	*/
 
 /*-
@@ -1069,6 +1069,7 @@ struct vnodeopv_entry_desc cd9660_vnodeop_entries[] = {
 	{ &vop_bwrite_desc, vop_generic_bwrite },
 	{ &vop_getpages_desc, genfs_getpages },
 	{ &vop_size_desc, genfs_size },
+	{ &vop_mmap_desc, cd9660_mmap },
 	{ NULL, NULL }
 };
 struct vnodeopv_desc cd9660_vnodeop_opv_desc =
@@ -1115,7 +1116,8 @@ struct vnodeopv_entry_desc cd9660_specop_entries[] = {
 	{ &vop_pathconf_desc, spec_pathconf },	/* pathconf */
 	{ &vop_advlock_desc, spec_advlock },	/* advlock */
 	{ &vop_bwrite_desc, vop_generic_bwrite },
-	{ (struct vnodeop_desc*)NULL, (int(*) __P((void *)))NULL }
+	{ &vop_mmap_desc, spec_mmap },
+	{ NULL, NULL }
 };
 struct vnodeopv_desc cd9660_specop_opv_desc =
 	{ &cd9660_specop_p, cd9660_specop_entries };
@@ -1159,7 +1161,8 @@ struct vnodeopv_entry_desc cd9660_fifoop_entries[] = {
 	{ &vop_pathconf_desc, fifo_pathconf },	/* pathconf */
 	{ &vop_advlock_desc, fifo_advlock },	/* advlock */
 	{ &vop_bwrite_desc, vop_generic_bwrite },
-	{ (struct vnodeop_desc*)NULL, (int(*) __P((void *)))NULL }
+	{ &vop_mmap_desc, fifo_mmap },
+	{ NULL, NULL }
 };
 struct vnodeopv_desc cd9660_fifoop_opv_desc =
 	{ &cd9660_fifoop_p, cd9660_fifoop_entries };

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnode.h,v 1.42 2001/11/27 05:27:12 art Exp $	*/
+/*	$OpenBSD: vnode.h,v 1.43 2001/12/04 22:44:32 art Exp $	*/
 /*	$NetBSD: vnode.h,v 1.38 1996/02/29 20:59:05 cgd Exp $	*/
 
 /*
@@ -454,7 +454,7 @@ int	vop_generic_kqfilter __P((void *));
 int	genfs_getpages __P((void *));
 int	genfs_putpages __P((void *));
 int	genfs_size __P((void *));
-
+int	genfs_mmap __P((void *));
 
 int	vn_stat __P((struct vnode *vp, struct stat *sb, struct proc *p));
 int	vn_statfile __P((struct file *fp, struct stat *sb, struct proc *p));

@@ -1364,6 +1364,37 @@ int VOP_SIZE(vp, size, eobp)
 	return (VCALL(vp, VOFFSET(vop_size), &a));
 }
 
+int vop_mmap_vp_offsets[] = {
+	VOPARG_OFFSETOF(struct vop_mmap_args,a_vp),
+	VDESC_NO_OFFSET
+};
+struct vnodeop_desc vop_mmap_desc = {
+	0,
+	"vop_mmap",
+	0,
+	vop_mmap_vp_offsets,
+	VDESC_NO_OFFSET,
+	VOPARG_OFFSETOF(struct vop_mmap_args, a_cred),
+	VOPARG_OFFSETOF(struct vop_mmap_args, a_p),
+	VDESC_NO_OFFSET,
+	NULL,
+};
+
+int VOP_MMAP(vp, fflags, cred, p)
+	struct vnode *vp;
+	int fflags;
+	struct ucred *cred;
+	struct proc *p;
+{
+	struct vop_mmap_args a;
+	a.a_desc = VDESC(vop_mmap);
+	a.a_vp = vp;
+	a.a_fflags = fflags;
+	a.a_cred = cred;
+	a.a_p = p;
+	return (VCALL(vp, VOFFSET(vop_mmap), &a));
+}
+
 /* Special cases: */
 
 int vop_strategy_vp_offsets[] = {
@@ -1461,6 +1492,7 @@ struct vnodeop_desc *vfs_op_descs[] = {
 	&vop_getpages_desc,
 	&vop_putpages_desc,
 	&vop_size_desc,
+	&vop_mmap_desc,
 	NULL
 };
 

@@ -1,4 +1,4 @@
-/*       $OpenBSD: vfs_default.c,v 1.12 2001/11/30 05:45:33 csapuntz Exp $  */
+/*       $OpenBSD: vfs_default.c,v 1.13 2001/12/04 22:44:31 art Exp $  */
 
 /*
  *    Portions of this code are:
@@ -991,5 +991,12 @@ genfs_size(v)
 
 	bsize = 1 << ap->a_vp->v_mount->mnt_fs_bshift;
 	*ap->a_eobp = (ap->a_size + bsize - 1) & ~(bsize - 1);
+	return 0;
+}
+
+int
+genfs_mmap(v)
+	void *v;
+{
 	return 0;
 }

@@ -1,4 +1,4 @@
-#	$OpenBSD: vnode_if.src,v 1.15 2001/11/28 16:24:26 art Exp $
+#	$OpenBSD: vnode_if.src,v 1.16 2001/12/04 22:44:31 art Exp $
 #	$NetBSD: vnode_if.src,v 1.10 1996/05/11 18:26:27 mycroft Exp $
 #
 # Copyright (c) 1992, 1993
@@ -511,4 +511,14 @@ vop_size {
 	IN struct vnode *vp;
 	IN off_t size;
 	OUT off_t *eobp;
+};
+
+#
+#% mmap		vp = = =
+#
+vop_mmap {
+	IN struct vnode *vp;
+	IN int fflags;
+	IN struct ucred *cred;
+	IN struct proc *p;
 };

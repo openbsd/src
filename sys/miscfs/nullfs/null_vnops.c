@@ -1,4 +1,4 @@
-/*	$OpenBSD: null_vnops.c,v 1.13 1999/02/08 22:25:29 art Exp $	*/
+/*	$OpenBSD: null_vnops.c,v 1.14 2001/12/04 22:44:32 art Exp $	*/
 /*	$NetBSD: null_vnops.c,v 1.7 1996/05/10 22:51:01 jtk Exp $	*/
 
 /*
@@ -452,7 +452,6 @@ null_print(v)
 /*
  * XXX - vop_strategy must be hand coded because it has no
  * vnode in its arguments.
- * This goes away with a merged VM/buffer cache.
  */
 int
 null_strategy(v)
@@ -479,7 +478,6 @@ null_strategy(v)
 /*
  * XXX - like vop_strategy, vop_bwrite must be hand coded because it has no
  * vnode in its arguments.
- * This goes away with a merged VM/buffer cache.
  */
 int
 null_bwrite(v)
@@ -633,7 +631,7 @@ struct vnodeopv_entry_desc null_vnodeop_entries[] = {
 	{ &vop_strategy_desc,	null_strategy },
 	{ &vop_bwrite_desc,	null_bwrite },
 
-	{ (struct vnodeop_desc*)NULL,	(int(*) __P((void *)))NULL }
+	{ NULL,	NULL }
 };
 struct vnodeopv_desc null_vnodeop_opv_desc =
 	{ &null_vnodeop_p, null_vnodeop_entries };

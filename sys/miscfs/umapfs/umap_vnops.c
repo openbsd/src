@@ -1,4 +1,4 @@
-/*	$OpenBSD: umap_vnops.c,v 1.12 1999/01/11 05:12:27 millert Exp $	*/
+/*	$OpenBSD: umap_vnops.c,v 1.13 2001/12/04 22:44:32 art Exp $	*/
 /*	$NetBSD: umap_vnops.c,v 1.5.4.1 1996/05/25 22:13:35 jtc Exp $	*/
 
 /*
@@ -91,7 +91,7 @@ struct vnodeopv_entry_desc umap_vnodeop_entries[] = {
 	{ &vop_strategy_desc, umap_strategy },
 	{ &vop_bwrite_desc, umap_bwrite },
 
-	{ (struct vnodeop_desc*) NULL, (int(*) __P((void *))) NULL }
+	{ NULL, NULL }
 };
 struct vnodeopv_desc umap_vnodeop_opv_desc =
 	{ &umap_vnodeop_p, umap_vnodeop_entries };

@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vnops.c,v 1.31 2001/12/02 18:30:30 drahn Exp $	*/
+/*	$OpenBSD: msdosfs_vnops.c,v 1.32 2001/12/04 22:44:32 art Exp $	*/
 /*	$NetBSD: msdosfs_vnops.c,v 1.63 1997/10/17 11:24:19 ws Exp $	*/
 
 /*-
@@ -1879,6 +1879,7 @@ struct vnodeopv_entry_desc msdosfs_vnodeop_entries[] = {
 	{ &vop_getpages_desc, genfs_getpages },
 	{ &vop_putpages_desc, genfs_putpages },
 	{ &vop_size_desc, genfs_size },
+	{ &vop_mmap_desc, genfs_mmap },
 	{ NULL, NULL }
 };
 struct vnodeopv_desc msdosfs_vnodeop_opv_desc =

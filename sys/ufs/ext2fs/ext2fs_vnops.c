@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vnops.c,v 1.18 2001/11/27 05:27:12 art Exp $	*/
+/*	$OpenBSD: ext2fs_vnops.c,v 1.19 2001/12/04 22:44:32 art Exp $	*/
 /*	$NetBSD: ext2fs_vnops.c,v 1.30 2000/11/27 08:39:53 chs Exp $	*/
 
 /*
@@ -1471,6 +1471,7 @@ struct vnodeopv_entry_desc ext2fs_vnodeop_entries[] = {
 	{ &vop_getpages_desc, genfs_getpages },
 	{ &vop_putpages_desc, genfs_putpages },
 	{ &vop_size_desc, genfs_size },
+	{ &vop_mmap_desc, ufs_mmap },
 	{ NULL, NULL }
 };
 struct vnodeopv_desc ext2fs_vnodeop_opv_desc =
@@ -1514,7 +1515,8 @@ struct vnodeopv_entry_desc ext2fs_specop_entries[] = {
 	{ &vop_pathconf_desc, spec_pathconf },	/* pathconf */
 	{ &vop_advlock_desc, spec_advlock },	/* advlock */
 	{ &vop_bwrite_desc, vop_generic_bwrite },		/* bwrite */
-	{ (struct vnodeop_desc*)NULL, (int(*) __P((void *)))NULL }
+	{ &vop_mmap_desc, spec_mmap },
+	{ NULL, NULL }
 };
 struct vnodeopv_desc ext2fs_specop_opv_desc =
 	{ &ext2fs_specop_p, ext2fs_specop_entries };
@@ -1558,7 +1560,8 @@ struct vnodeopv_entry_desc ext2fs_fifoop_entries[] = {
 	{ &vop_pathconf_desc, fifo_pathconf },	/* pathconf */
 	{ &vop_advlock_desc, fifo_advlock },	/* advlock */
 	{ &vop_bwrite_desc, vop_generic_bwrite },		/* bwrite */
-	{ (struct vnodeop_desc*)NULL, (int(*) __P((void *)))NULL }
+	{ &vop_mmap_desc, fifo_mmap },
+	{ NULL, NULL }
 };
 struct vnodeopv_desc ext2fs_fifoop_opv_desc =
 	{ &ext2fs_fifoop_p, ext2fs_fifoop_entries };

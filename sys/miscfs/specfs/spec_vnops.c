@@ -1,4 +1,4 @@
-/*	$OpenBSD: spec_vnops.c,v 1.20 2001/06/23 02:14:26 csapuntz Exp $	*/
+/*	$OpenBSD: spec_vnops.c,v 1.21 2001/12/04 22:44:32 art Exp $	*/
 /*	$NetBSD: spec_vnops.c,v 1.29 1996/04/22 01:42:38 christos Exp $	*/
 
 /*
@@ -104,7 +104,8 @@ struct vnodeopv_entry_desc spec_vnodeop_entries[] = {
 	{ &vop_pathconf_desc, spec_pathconf },		/* pathconf */
 	{ &vop_advlock_desc, spec_advlock },		/* advlock */
 	{ &vop_bwrite_desc, spec_bwrite },		/* bwrite */
-	{ (struct vnodeop_desc*)NULL, (int(*) __P((void *)))NULL }
+	{ &vop_mmap_desc, spec_mmap },
+	{ NULL, NULL }
 };
 struct vnodeopv_desc spec_vnodeop_opv_desc =
 	{ &spec_vnodeop_p, spec_vnodeop_entries };

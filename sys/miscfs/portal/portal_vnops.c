@@ -1,4 +1,4 @@
-/*	$OpenBSD: portal_vnops.c,v 1.9 2001/06/23 02:14:25 csapuntz Exp $	*/
+/*	$OpenBSD: portal_vnops.c,v 1.10 2001/12/04 22:44:32 art Exp $	*/
 /*	$NetBSD: portal_vnops.c,v 1.17 1996/02/13 13:12:57 mycroft Exp $	*/
 
 /*
@@ -144,7 +144,7 @@ struct vnodeopv_entry_desc portal_vnodeop_entries[] = {
 	{ &vop_pathconf_desc, portal_pathconf },	/* pathconf */
 	{ &vop_advlock_desc, portal_advlock },		/* advlock */
 	{ &vop_bwrite_desc, portal_bwrite },		/* bwrite */
-	{ (struct vnodeop_desc*)NULL, (int(*) __P((void *)))NULL }
+	{ NULL, NULL }
 };
 struct vnodeopv_desc portal_vnodeop_opv_desc =
 	{ &portal_vnodeop_p, portal_vnodeop_entries };

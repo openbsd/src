@@ -1,4 +1,4 @@
-/*	$OpenBSD: dead_vnops.c,v 1.8 2001/06/23 02:14:23 csapuntz Exp $	*/
+/*	$OpenBSD: dead_vnops.c,v 1.9 2001/12/04 22:44:31 art Exp $	*/
 /*	$NetBSD: dead_vnops.c,v 1.16 1996/02/13 13:12:48 mycroft Exp $	*/
 
 /*
@@ -84,6 +84,7 @@ int	dead_print	__P((void *));
 #define dead_pathconf	dead_ebadf
 #define dead_advlock	dead_ebadf
 #define dead_bwrite	nullop
+#define dead_mmap	dead_badop
 
 int	chkvnlock __P((struct vnode *));
 
@@ -124,7 +125,8 @@ struct vnodeopv_entry_desc dead_vnodeop_entries[] = {
 	{ &vop_pathconf_desc, dead_pathconf },	/* pathconf */
 	{ &vop_advlock_desc, dead_advlock },	/* advlock */
 	{ &vop_bwrite_desc, dead_bwrite },	/* bwrite */
-	{ (struct vnodeop_desc*)NULL, (int(*) __P((void *)))NULL }
+	{ &vop_mmap_desc, dead_mmap },
+	{ NULL, NULL }
 };
 struct vnodeopv_desc dead_vnodeop_opv_desc =
 	{ &dead_vnodeop_p, dead_vnodeop_entries };

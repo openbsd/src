@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_extern.h,v 1.13 2001/11/27 05:27:12 art Exp $	*/
+/*	$OpenBSD: ufs_extern.h,v 1.14 2001/12/04 22:44:32 art Exp $	*/
 /*	$NetBSD: ufs_extern.h,v 1.5 1996/02/09 22:36:03 christos Exp $	*/
 
 /*-
@@ -78,7 +78,6 @@ int	 ufs_lock	__P((void *));
 int	 ufs_lookup	__P((void *));
 int	 ufs_mkdir	__P((void *));
 int	 ufs_mknod	__P((void *));
-int	 ufs_mmap	__P((void *));
 int	 ufs_open	__P((void *));
 int	 ufs_pathconf	__P((void *));
 int	 ufs_print	__P((void *));
@@ -99,6 +98,7 @@ int	 ufs_whiteout	__P((void *));
 int	 ufsspec_close	__P((void *));
 int	 ufsspec_read	__P((void *));
 int	 ufsspec_write	__P((void *));
+#define	 ufs_mmap genfs_mmap
 
 #ifdef FIFO
 int	ufsfifo_read	__P((void *));

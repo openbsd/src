@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vnops.c,v 1.40 2001/11/27 05:27:12 art Exp $	*/
+/*	$OpenBSD: ufs_vnops.c,v 1.41 2001/12/04 22:44:32 art Exp $	*/
 /*	$NetBSD: ufs_vnops.c,v 1.18 1996/05/11 18:28:04 mycroft Exp $	*/
 
 /*
@@ -601,28 +601,6 @@ ufs_select(v)
 	 * We should really check to see if I/O is possible.
 	 */
 	return (1);
-}
-
-/*
- * Mmap a file
- *
- * NB Currently unsupported.
- */
-/* ARGSUSED */
-int
-ufs_mmap(v)
-	void *v;
-{
-#if 0
-	struct vop_mmap_args /* {
-		struct vnode *a_vp;
-		int  a_fflags;
-		struct ucred *a_cred;
-		struct proc *a_p;
-	} */ *ap = v;
-#endif
-
-	return (EINVAL);
 }
 
 /*

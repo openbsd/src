@@ -1,4 +1,4 @@
-/*	$OpenBSD: fifo_vnops.c,v 1.10 2001/06/23 02:14:24 csapuntz Exp $	*/
+/*	$OpenBSD: fifo_vnops.c,v 1.11 2001/12/04 22:44:31 art Exp $	*/
 /*	$NetBSD: fifo_vnops.c,v 1.18 1996/03/16 23:52:42 christos Exp $	*/
 
 /*
@@ -103,7 +103,8 @@ struct vnodeopv_entry_desc fifo_vnodeop_entries[] = {
 	{ &vop_pathconf_desc, fifo_pathconf },		/* pathconf */
 	{ &vop_advlock_desc, fifo_advlock },		/* advlock */
 	{ &vop_bwrite_desc, fifo_bwrite },		/* bwrite */
-	{ (struct vnodeop_desc*)NULL, (int(*) __P((void *)))NULL }
+	{ &vop_mmap_desc, fifo_mmap },
+	{ NULL, NULL }
 };
 
 void	filt_fifordetach(struct knote *kn);
