@@ -1,4 +1,4 @@
-/*	$OpenBSD: elfXX_exec.c,v 1.4 2002/03/14 03:16:01 millert Exp $	*/
+/*	$OpenBSD: elfXX_exec.c,v 1.5 2003/06/10 02:42:58 brad Exp $	*/
 /*	$NetBSD: elfXX_exec.c,v 1.2 2001/08/15 20:08:15 eeh Exp $	*/
 
 /*
@@ -51,13 +51,7 @@
 #if 0
 int	CAT3(elf,ELFSIZE,_exec)(int, CAT3(Elf,ELFSIZE,_Ehdr) *, u_int64_t *, void **, void **);
 #endif
-#if defined(ELFSIZE) && (ELFSIZE == 32)
-#define ELF_ALIGN(x)	(((x)+3)&(~3))
-#elif defined(ELFSIZE) && (ELFSIZE == 64)
 #define ELF_ALIGN(x)	(((x)+7)&(~7))
-#else
-#error ELFSIZE must be either 32 or 64!
-#endif
 
 int
 CAT3(elf, ELFSIZE, _exec)(fd, elf, entryp, ssymp, esymp)
