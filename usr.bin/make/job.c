@@ -1,4 +1,4 @@
-/*	$OpenBSD: job.c,v 1.16 1999/12/16 17:27:18 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.17 1999/12/18 02:11:26 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: job.c,v 1.16 1999/12/16 17:27:18 espie Exp $";
+static char rcsid[] = "$OpenBSD: job.c,v 1.17 1999/12/18 02:11:26 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -2428,8 +2428,8 @@ Job_Init(maxproc, maxlocal)
     else
 	(void) close(tfd);
 
-    jobs =  	  Lst_Init(FALSE);
-    stoppedJobs = Lst_Init(FALSE);
+    jobs =  	  Lst_Init();
+    stoppedJobs = Lst_Init();
     maxJobs = 	  maxproc;
     maxLocal = 	  maxlocal;
     nJobs = 	  0;

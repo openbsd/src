@@ -1,4 +1,4 @@
-/*	$OpenBSD: make.c,v 1.8 1999/12/06 22:28:44 espie Exp $	*/
+/*	$OpenBSD: make.c,v 1.9 1999/12/18 02:11:27 espie Exp $	*/
 /*	$NetBSD: make.c,v 1.10 1996/11/06 17:59:15 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)make.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: make.c,v 1.8 1999/12/06 22:28:44 espie Exp $";
+static char rcsid[] = "$OpenBSD: make.c,v 1.9 1999/12/18 02:11:27 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -822,7 +822,7 @@ Make_Run (targs)
     register Lst    examine; 	/* List of targets to examine */
     int	    	    errors; 	/* Number of errors the Job module reports */
 
-    toBeMade = Lst_Init (FALSE);
+    toBeMade = Lst_Init();
 
     examine = Lst_Duplicate(targs, NOCOPY);
     numNodes = 0;

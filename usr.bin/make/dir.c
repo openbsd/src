@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.9 1999/10/05 22:06:23 espie Exp $	*/
+/*	$OpenBSD: dir.c,v 1.10 1999/12/18 02:11:26 espie Exp $	*/
 /*	$NetBSD: dir.c,v 1.14 1997/03/29 16:51:26 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
-static char rcsid[] = "$OpenBSD: dir.c,v 1.9 1999/10/05 22:06:23 espie Exp $";
+static char rcsid[] = "$OpenBSD: dir.c,v 1.10 1999/12/18 02:11:26 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -215,8 +215,8 @@ static int DirPrintDir __P((ClientData, ClientData));
 void
 Dir_Init ()
 {
-    dirSearchPath = Lst_Init (FALSE);
-    openDirectories = Lst_Init (FALSE);
+    dirSearchPath = Lst_Init();
+    openDirectories = Lst_Init();
     Hash_InitTable(&mtimes, 0);
 
     /*
@@ -633,7 +633,7 @@ Dir_Expand (word, path, expansions)
 			char *dp = &dirpath[strlen(dirpath) - 1];
 			if (*dp == '/')
 			    *dp = '\0';
-			path = Lst_Init(FALSE);
+			path = Lst_Init();
 			Dir_AddDir(path, dirpath);
 			DirExpandInt(cp+1, path, expansions);
 			Lst_Destroy(path, NOFREE);

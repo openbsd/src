@@ -1,4 +1,4 @@
-/*	$OpenBSD: for.c,v 1.13 1999/12/16 17:27:18 espie Exp $	*/
+/*	$OpenBSD: for.c,v 1.14 1999/12/18 02:11:26 espie Exp $	*/
 /*	$NetBSD: for.c,v 1.4 1996/11/06 17:59:05 christos Exp $	*/
 
 /*
@@ -82,7 +82,7 @@
 #if 0
 static char sccsid[] = "@(#)for.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: for.c,v 1.13 1999/12/16 17:27:18 espie Exp $";
+static char rcsid[] = "$OpenBSD: for.c,v 1.14 1999/12/18 02:11:26 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -202,7 +202,7 @@ For_Eval(line)
     if (DEBUG(FOR))
 	(void)fprintf(stderr, "For: Iterator %s List %s\n", arg->var, sub);
 
-    arg->lst = Lst_Init(FALSE);
+    arg->lst = Lst_Init();
     build_words_list(arg->lst, sub);
     free(sub);
     arg->lineno = Parse_Getlineno();

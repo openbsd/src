@@ -1,4 +1,4 @@
-/*	$OpenBSD: arch.c,v 1.18 1999/12/16 17:27:18 espie Exp $	*/
+/*	$OpenBSD: arch.c,v 1.19 1999/12/18 02:11:26 espie Exp $	*/
 /*	$NetBSD: arch.c,v 1.17 1996/11/06 17:58:59 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)arch.c	8.2 (Berkeley) 1/2/94";
 #else
-static char rcsid[] = "$OpenBSD: arch.c,v 1.18 1999/12/16 17:27:18 espie Exp $";
+static char rcsid[] = "$OpenBSD: arch.c,v 1.19 1999/12/18 02:11:26 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -359,7 +359,7 @@ Arch_ParseArchive (linePtr, nodeLst, ctxt)
 	     */
 	    free(buf);
 	} else if (Dir_HasWildcards(memName)) {
-	    Lst	  members = Lst_Init(FALSE);
+	    Lst	  members = Lst_Init();
 	    char  *member;
 
 	    Dir_Expand(memName, dirSearchPath, members);
@@ -1221,7 +1221,7 @@ Arch_LibOODate (gn)
 void
 Arch_Init ()
 {
-    archives = Lst_Init (FALSE);
+    archives = Lst_Init();
 }
 
 

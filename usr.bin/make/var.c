@@ -1,4 +1,4 @@
-/*	$OpenBSD: var.c,v 1.24 1999/12/16 17:27:18 espie Exp $	*/
+/*	$OpenBSD: var.c,v 1.25 1999/12/18 02:11:27 espie Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -70,7 +70,7 @@
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: var.c,v 1.24 1999/12/16 17:27:18 espie Exp $";
+static char rcsid[] = "$OpenBSD: var.c,v 1.25 1999/12/18 02:11:27 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -2321,7 +2321,7 @@ Var_Init ()
     VAR_GLOBAL = Targ_NewGN("Global");
     VAR_CMD = Targ_NewGN("Command");
     VAR_ENV = Targ_NewGN("Environment");
-    allVars = Lst_Init(FALSE);
+    allVars = Lst_Init();
 
 }
 

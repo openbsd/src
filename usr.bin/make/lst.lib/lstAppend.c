@@ -1,4 +1,4 @@
-/*	$OpenBSD: lstAppend.c,v 1.4 1998/12/05 00:06:31 espie Exp $	*/
+/*	$OpenBSD: lstAppend.c,v 1.5 1999/12/18 02:11:27 espie Exp $	*/
 /*	$NetBSD: lstAppend.c,v 1.5 1996/11/06 17:59:31 christos Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)lstAppend.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: lstAppend.c,v 1.4 1998/12/05 00:06:31 espie Exp $";
+static char rcsid[] = "$OpenBSD: lstAppend.c,v 1.5 1999/12/18 02:11:27 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -95,11 +95,7 @@ Lst_Append (l, ln, d)
     nLNode->useCount = nLNode->flags = 0;
 
     if (lNode == NilListNode) {
-	if (list->isCirc) {
-	    nLNode->nextPtr = nLNode->prevPtr = nLNode;
-	} else {
-	    nLNode->nextPtr = nLNode->prevPtr = NilListNode;
-	}
+	nLNode->nextPtr = nLNode->prevPtr = NilListNode;
 	list->firstPtr = list->lastPtr = nLNode;
     } else {
 	nLNode->prevPtr = lNode;

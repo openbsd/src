@@ -1,4 +1,4 @@
-/*	$OpenBSD: lstInsert.c,v 1.4 1998/12/05 00:06:32 espie Exp $	*/
+/*	$OpenBSD: lstInsert.c,v 1.5 1999/12/18 02:11:27 espie Exp $	*/
 /*	$NetBSD: lstInsert.c,v 1.5 1996/11/06 17:59:44 christos Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)lstInsert.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: lstInsert.c,v 1.4 1998/12/05 00:06:32 espie Exp $";
+static char rcsid[] = "$OpenBSD: lstInsert.c,v 1.5 1999/12/18 02:11:27 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -95,11 +95,7 @@ Lst_Insert (l, ln, d)
     nLNode->useCount = nLNode->flags = 0;
 
     if (ln == NILLNODE) {
-	if (list->isCirc) {
-	    nLNode->prevPtr = nLNode->nextPtr = nLNode;
-	} else {
-	    nLNode->prevPtr = nLNode->nextPtr = NilListNode;
-	}
+	nLNode->prevPtr = nLNode->nextPtr = NilListNode;
 	list->firstPtr = list->lastPtr = nLNode;
     } else {
 	nLNode->prevPtr = lNode->prevPtr;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lstInit.c,v 1.4 1998/12/05 00:06:32 espie Exp $	*/
+/*	$OpenBSD: lstInit.c,v 1.5 1999/12/18 02:11:27 espie Exp $	*/
 /*	$NetBSD: lstInit.c,v 1.5 1996/11/06 17:59:43 christos Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)lstInit.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: lstInit.c,v 1.4 1998/12/05 00:06:32 espie Exp $";
+static char rcsid[] = "$OpenBSD: lstInit.c,v 1.5 1999/12/18 02:11:27 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -66,8 +66,7 @@ static char rcsid[] = "$OpenBSD: lstInit.c,v 1.4 1998/12/05 00:06:32 espie Exp $
  *-----------------------------------------------------------------------
  */
 Lst
-Lst_Init(circ)
-    Boolean		circ;	/* TRUE if the list should be made circular */
+Lst_Init()
 {
     register List	nList;
 
@@ -76,7 +75,6 @@ Lst_Init(circ)
     nList->firstPtr = NilListNode;
     nList->lastPtr = NilListNode;
     nList->isOpen = FALSE;
-    nList->isCirc = circ;
     nList->atEnd = Unknown;
 
     return ((Lst)nList);

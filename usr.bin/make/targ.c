@@ -1,4 +1,4 @@
-/*	$OpenBSD: targ.c,v 1.10 1999/10/05 22:06:24 espie Exp $	*/
+/*	$OpenBSD: targ.c,v 1.11 1999/12/18 02:11:27 espie Exp $	*/
 /*	$NetBSD: targ.c,v 1.11 1997/02/20 16:51:50 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)targ.c	8.2 (Berkeley) 3/19/94";
 #else
-static char *rcsid = "$OpenBSD: targ.c,v 1.10 1999/10/05 22:06:24 espie Exp $";
+static char *rcsid = "$OpenBSD: targ.c,v 1.11 1999/12/18 02:11:27 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -124,7 +124,7 @@ static void TargFreeGN __P((ClientData));
 void
 Targ_Init ()
 {
-    allTargets = Lst_Init (FALSE);
+    allTargets = Lst_Init();
     Hash_InitTable (&targets, HTSIZE);
 }
 
@@ -184,19 +184,19 @@ Targ_NewGN (name)
     gn->childMade = 	FALSE;
     gn->order =		0;
     gn->mtime = gn->cmtime = 0;
-    gn->iParents =  	Lst_Init (FALSE);
-    gn->cohorts =   	Lst_Init (FALSE);
-    gn->parents =   	Lst_Init (FALSE);
-    gn->children =  	Lst_Init (FALSE);
-    gn->successors = 	Lst_Init (FALSE);
-    gn->preds =     	Lst_Init (FALSE);
-    gn->context =   	Lst_Init (FALSE);
-    gn->commands =  	Lst_Init (FALSE);
+    gn->iParents =  	Lst_Init();
+    gn->cohorts =   	Lst_Init();
+    gn->parents =   	Lst_Init();
+    gn->children =  	Lst_Init();
+    gn->successors = 	Lst_Init();
+    gn->preds =     	Lst_Init();
+    gn->context =   	Lst_Init();
+    gn->commands =  	Lst_Init();
     gn->suffix =	NULL;
 
 #ifdef CLEANUP
     if (allGNs == NULL)
-	allGNs = Lst_Init(FALSE);
+	allGNs = Lst_Init();
     Lst_AtEnd(allGNs, (ClientData) gn);
 #endif
 
@@ -309,7 +309,7 @@ Targ_FindList (names, flags)
     register GNode *gn;		/* node in tLn */
     char    	  *name;
 
-    nodes = Lst_Init (FALSE);
+    nodes = Lst_Init();
 
     if (Lst_Open (names) == FAILURE) {
 	return (nodes);

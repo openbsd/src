@@ -1,4 +1,4 @@
-/*	$OpenBSD: lstConcat.c,v 1.4 1998/12/05 00:06:31 espie Exp $	*/
+/*	$OpenBSD: lstConcat.c,v 1.5 1999/12/18 02:11:27 espie Exp $	*/
 /*	$NetBSD: lstConcat.c,v 1.6 1996/11/06 17:59:34 christos Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)lstConcat.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: lstConcat.c,v 1.4 1998/12/05 00:06:31 espie Exp $";
+static char rcsid[] = "$OpenBSD: lstConcat.c,v 1.5 1999/12/18 02:11:27 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -114,15 +114,6 @@ Lst_Concat (l1, l2, flags)
 	    }
 	    list1->lastPtr = list2->lastPtr;
 	}
-	if (list1->isCirc && list1->firstPtr != NilListNode) {
-	    /*
-	     * If the first list is supposed to be circular and it is (now)
-	     * non-empty, we must make sure it's circular by linking the
-	     * first element to the last and vice versa
-	     */
-	    list1->firstPtr->prevPtr = list1->lastPtr;
-	    list1->lastPtr->nextPtr = list1->firstPtr;
-	}
 	free ((Address)l2);
     } else if (list2->firstPtr != NilListNode) {
 	/*
@@ -160,22 +151,9 @@ Lst_Concat (l1, l2, flags)
 	 */
 	list1->lastPtr = last;
 
-	/*
-	 * The circularity of both list one and list two must be corrected
-	 * for -- list one because of the new nodes added to it; list two
-	 * because of the alteration of list2->lastPtr's nextPtr to ease the
-	 * above for loop.
-	 */
-	if (list1->isCirc) {
-	    list1->lastPtr->nextPtr = list1->firstPtr;
-	    list1->firstPtr->prevPtr = list1->lastPtr;
-	} else {
-	    last->nextPtr = NilListNode;
-	}
+	last->nextPtr = NilListNode;
 
-	if (list2->isCirc) {
-	    list2->lastPtr->nextPtr = list2->firstPtr;
-	}
+	list2->lastPtr->nextPtr = list2->firstPtr;
     }
 
     return (SUCCESS);

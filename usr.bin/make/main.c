@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.23 1999/12/16 17:27:18 espie Exp $	*/
+/*	$OpenBSD: main.c,v 1.24 1999/12/18 02:11:27 espie Exp $	*/
 /*	$NetBSD: main.c,v 1.34 1997/03/24 20:56:36 gwr Exp $	*/
 
 /*
@@ -49,7 +49,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.23 1999/12/16 17:27:18 espie Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.24 1999/12/18 02:11:27 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -587,10 +587,10 @@ main(argc, argv)
 
 	setenv("PWD", objdir, 1);
 
-	create = Lst_Init(FALSE);
-	makefiles = Lst_Init(FALSE);
+	create = Lst_Init();
+	makefiles = Lst_Init();
 	printVars = FALSE;
-	variables = Lst_Init(FALSE);
+	variables = Lst_Init();
 	beSilent = FALSE;		/* Print commands as executed */
 	ignoreErrors = FALSE;		/* Pay attention to non-zero returns */
 	noExecute = FALSE;		/* Execute all commands */
@@ -709,7 +709,7 @@ main(argc, argv)
 	if (!noBuiltins) {
 		LstNode ln;
 
-		sysMkPath = Lst_Init (FALSE);
+		sysMkPath = Lst_Init();
 		Dir_Expand (_PATH_DEFSYSMK, sysIncPath, sysMkPath);
 		if (Lst_IsEmpty(sysMkPath))
 			Fatal("make: no system rules (%s).", _PATH_DEFSYSMK);

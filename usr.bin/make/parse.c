@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.31 1999/12/16 17:27:18 espie Exp $	*/
+/*	$OpenBSD: parse.c,v 1.32 1999/12/18 02:11:27 espie Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: parse.c,v 1.31 1999/12/16 17:27:18 espie Exp $";
+static char rcsid[] = "$OpenBSD: parse.c,v 1.32 1999/12/18 02:11:27 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -808,8 +808,8 @@ ParseDoDependency (line)
     waiting = 0;
     paths = (Lst)NULL;
 
-    curTargs = Lst_Init(FALSE);
-    curSrcs = Lst_Init(FALSE);
+    curTargs = Lst_Init();
+    curSrcs = Lst_Init();
 
     do {
 	for (cp = line;
@@ -942,7 +942,7 @@ ParseDoDependency (line)
 		switch (specType) {
 		    case ExPath:
 			if (paths == NULL) {
-			    paths = Lst_Init(FALSE);
+			    paths = Lst_Init();
 			}
 			(void)Lst_AtEnd(paths, (ClientData)dirSearchPath);
 			break;
@@ -997,7 +997,7 @@ ParseDoDependency (line)
 		    return;
 		} else {
 		    if (paths == (Lst)NULL) {
-			paths = Lst_Init(FALSE);
+			paths = Lst_Init();
 		    }
 		    (void)Lst_AtEnd(paths, (ClientData)path);
 		}
@@ -1016,7 +1016,7 @@ ParseDoDependency (line)
 		 * use Dir_Destroy in the destruction of the path as the
 		 * Dir module could have added a directory to the path...
 		 */
-		Lst	    emptyPath = Lst_Init(FALSE);
+		Lst	    emptyPath = Lst_Init();
 
 		Dir_Expand(line, emptyPath, curTargs);
 
@@ -1266,7 +1266,7 @@ ParseDoDependency (line)
 	    if (*cp == '(') {
 		GNode	  *gn;
 
-		sources = Lst_Init (FALSE);
+		sources = Lst_Init();
 		if (Arch_ParseArchive (&line, sources, VAR_CMD) != SUCCESS) {
 		    Parse_Error (PARSE_FATAL,
 				 "Error in source archive spec \"%s\"", line);
@@ -2596,7 +2596,7 @@ Parse_File(name, stream)
 		    if (targets)
 			Lst_Destroy(targets, NOFREE);
 
-		    targets = Lst_Init (FALSE);
+		    targets = Lst_Init();
 		    inLine = TRUE;
 
 		    ParseDoDependency (line);
@@ -2641,11 +2641,11 @@ void
 Parse_Init ()
 {
     mainNode = NILGNODE;
-    parseIncPath = Lst_Init (FALSE);
-    sysIncPath = Lst_Init (FALSE);
-    includes = Lst_Init (FALSE);
+    parseIncPath = Lst_Init();
+    sysIncPath = Lst_Init();
+    includes = Lst_Init();
 #ifdef CLEANUP
-    targCmds = Lst_Init (FALSE);
+    targCmds = Lst_Init();
 #endif
 }
 
@@ -2682,7 +2682,7 @@ Parse_MainName()
 {
     Lst           listmain;	/* result list */
 
-    listmain = Lst_Init (FALSE);
+    listmain = Lst_Init();
 
     if (mainNode == NILGNODE) {
 	Punt ("no target to make.");
