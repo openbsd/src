@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.176 2004/06/20 18:35:12 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.177 2004/06/22 03:17:01 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -287,7 +287,7 @@ session_main(struct bgpd_config *config, struct peer *cpeers,
 		}
 
 		if (peer_cnt > peer_l_elms ||
-		    peer_cnt + PEER_L_RESERVE < peer_l_elms) {
+		    peer_cnt + 2 * PEER_L_RESERVE < peer_l_elms) {
 			if ((newp = realloc(peer_l, sizeof(struct peer *) *
 			    peer_cnt + PEER_L_RESERVE)) == NULL) {
 				/* panic for now  */
@@ -303,7 +303,7 @@ session_main(struct bgpd_config *config, struct peer *cpeers,
 		new_cnt =
 		    PFD_LISTENERS_START + listener_cnt + peer_cnt + ctl_cnt;
 		if (new_cnt > pfd_elms ||
-		    new_cnt + PFD_RESERVE < pfd_elms) {
+		    new_cnt + 2 * PFD_RESERVE < pfd_elms) {
 			if ((newp = realloc(pfd, sizeof(struct pollfd) *
 			    (new_cnt + PFD_RESERVE))) == NULL) {
 				/* panic for now  */
