@@ -1,4 +1,4 @@
-define(_rcsid,``$OpenBSD: bcopy.m4,v 1.1 1999/05/19 17:10:51 mickey Exp $'')dnl
+define(_rcsid,``$OpenBSD: bcopy.m4,v 1.2 1999/06/10 19:52:23 mickey Exp $'')dnl
 dnl
 dnl
 dnl  This is the source file for bcopy.S, spcopy.S
@@ -72,10 +72,10 @@ dnl
 dnl copy data in 4-words blocks
 dnl
 define(`hppa_blcopy',`
+	addi	-16, $6, $6
 L($1, `loop16'`$7')
 dnl	cache hint may not work on some hardware
 dnl	ldw	F 32($2, $3), r0
-dnl
 ifelse(F, `-', `dnl
 	addi	F`'4, $5, $5', `0', `0', `dnl')
 LDWSS($2, $3, 4)
@@ -90,14 +90,19 @@ ifelse($7, `a', `dnl
 dnl
 dnl copy in words
 dnl
-define(`STWL', `addib,< 12, $6, L($1, byte)
-	ifelse($7, `u', `copy	ret1, t1', $7, `a', `nop')
+define(`STWL', `addib,<,n 12, $6, L($1, cleanup)
+ifelse($7, `u', `	copy	ret1, t1', $7, `a', `dnl')
 L($1, word)
-	ldws,M	F 4($2, $3), t1
+	ldws,M	F`'4($2, $3), t1
 	addib,>= -4, $6, L($1, word)
-	stws,M	t1, F 4($4, $5)
+	stws,M	t1, F`'4($4, $5)
 
-	b,n	L($1, byte)
+L($1, cleanup)
+	addib,=,n 4, $6, L($1, done)
+	ldws	0($2, $3), t1
+	add	$5, $6, $5
+	bv	r0(rp)
+	stbys,E	t1, 0($4, $5)
 ')
 dnl
 dnl
@@ -136,12 +141,12 @@ ifelse($7,`-', `', `0',`0',
 
 	extru	$3, 31, 2, t3
 	extru	$5, 31, 2, t4
-	add	$6, t3, $6
+	add	$6, t4, $6
 	comb,<> t3, t4, L($1, unaligned)
 	dep	r0, 31, 2, $3
 	hppa_blcopy($1, $2, $3, $4, $5, $6, `a')
 
-	STWL($1, $2, $3, $4, $5, $6, `a')
+	STWL($1, $2, $3, $4, $5, $6, `a')dnl
 
 L($1, unaligned)
 	sub,>=	t4, t3, t2
@@ -151,15 +156,31 @@ L($1, unaligned)
 	hppa_blcopy($1, $2, $3, $4, $5, $6, `u')
 
 dnl	STWL($1, $2, $3, $4, $5, $6, `u')
+	addib,<,n 12, $6, L($1, cleanup_un)
 L($1, word_un)
-	ldwm	F`'4($2, $3), t2
-	vshd	ret1, t2, t3
-	addib,<	R`'4, $6, L($1, byte)
-	stbys,B,m t3, F`'4($4, $5)
-	ldwm	F`'4($2, $3), ret1
-	vshd	t2, ret1, t3
-	addib,> R`'4, $6, L($1, word_un)
-	stbys,B,m t3, F`'4($4, $5)
+	ldws,M	F`'4($2, $3), t1
+	vshd	ret1, t1, t2
+	addib,<	-4, $6, L($1, cleanup1_un)
+	stws,M	t2, F`'4($4, $5)
+	ldws,M	F`'4($2, $3), ret1
+	vshd	t1, ret1, t2
+	addib,>= -4, $6, L($1, word_un)
+	stws,M	t2, F`'4($4, $5)
+
+L($1, cleanup_un)
+	addib,<=,n 4, $6, L($1, done)
+	mfctl	sar, t4
+	add	$5, $6, $5
+	extru	t4, 28, 2, t4
+	sub,<=	$6, t4, r0
+	ldws,M	F`'4($2, $3), t1
+	vshd	ret1, t1, t2
+	bv	r0(rp)
+	stbys,E	t2, 0($4, $5)
+
+L($1, cleanup1_un)
+	b	L($1, cleanup_un)
+	copy	t1, ret1
 ')dnl ifelse
 
 L($1, byte)
