@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_i386.c,v 1.2 2004/02/23 01:19:52 tom Exp $	*/
+/*	$OpenBSD: exec_i386.c,v 1.3 2004/02/25 00:16:42 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Michael Shalayeff
@@ -37,7 +37,7 @@
 #include "libsa.h"
 #include <lib/libsa/loadfile.h>
 
-typedef void (*startfuncp)(int, int, int, int, int, int, int, int, int)
+typedef void (*startfuncp)(int, int, int, int, int, int, int, int)
 	__attribute__ ((noreturn));
 
 void
@@ -68,6 +68,6 @@ run_loadfile(u_long *marks, int howto)
 	    ((int *)entry)[0], ((int *)entry)[1], ((int *)entry)[2], ((int *)entry)[3]);
 	/* stack and the gung is ok at this point, so, no need for asm setup */
 	(*(startfuncp)entry)(howto, bootdev, BOOTARG_APIVER,
-		marks[MARK_END], extmem, cnvmem, ac, (int)av, cd.consdev);
+		marks[MARK_END], extmem, cnvmem, ac, (int)av);
 	/* not reached */
 }

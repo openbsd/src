@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.11 2004/02/24 20:26:24 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.12 2004/02/25 00:16:04 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -107,6 +107,7 @@
 #endif
 
 #include <dev/cons.h>
+#include <stand/boot/bootarg.h>
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_page.h>
@@ -122,6 +123,7 @@
 #include <machine/specialreg.h>
 #include <machine/fpu.h>
 #include <machine/mtrr.h>
+#include <machine/biosvar.h>
 #include <machine/mpbiosvar.h>
 #include <machine/reg.h>
 
@@ -203,6 +205,35 @@ void (*microtime_func)(struct timeval *) = i8254_microtime;
 void (*initclock_func)(void) = i8254_initclocks;
 
 struct mtrr_funcs *mtrr_funcs;
+
+/*
+ * Format of boot information passed to us by 32-bit /boot
+ */
+typedef struct _boot_args32 {
+	int	ba_type;
+	int	ba_size;
+	int	ba_nextX;	/* a ptr in 32-bit world, but not here */
+	char	ba_arg[1];
+} bootarg32_t;
+
+#define BOOTARGC_MAX	NBPG	/* one page */
+
+/* locore copies the arguments from /boot to here for us */
+char bootinfo[BOOTARGC_MAX];
+int bootinfo_size = BOOTARGC_MAX;
+
+void getbootinfo(char *, int);
+
+/* Data passed to us by /boot, filled in by getbootinfo() */
+#if NAPM > 0 || defined(DEBUG)
+bios_apminfo_t	*apm;
+#endif
+#if NPCI > 0
+bios_pciinfo_t	*bios_pciinfo;
+#endif
+bios_diskinfo_t	*bios_diskinfo;
+bios_memmap_t	*bios_memmap;
+u_int32_t	bios_cksumlen;
 
 /*
  * Size of memory segments, before any memory is stolen.
@@ -1219,6 +1250,23 @@ init_x86_64(first_avail)
 #if 0
 	uvmexp.ncolors = 2;
 #endif
+ 
+	/*
+	 * Boot arguments are in a single page specified by /boot.
+	 *
+	 * We require the "new" vector form, as well as memory ranges
+	 * to be given in bytes rather than KB.
+	 *
+	 * locore copies the data into bootinfo[] for us.
+	 */
+	if ((bootapiver & (BAPIV_VECTOR | BAPIV_BMEMMAP)) ==
+	    (BAPIV_VECTOR | BAPIV_BMEMMAP)) {
+		if (bootinfo_size >= sizeof(bootinfo))
+			panic("boot args too big");
+
+		getbootinfo(bootinfo, bootinfo_size);
+	} else
+		panic("invalid /boot");
 
 	avail_start = PAGE_SIZE; /* BIOS leaves data in low memory */
 				 /* and VM system doesn't work with phys 0 */
@@ -1762,6 +1810,91 @@ splassert_check(int wantipl, const char *func)
 	}
 }
 #endif
+
+void
+getbootinfo(char *bootinfo, int bootinfo_size)
+{
+	bootarg32_t *q;
+
+#undef BOOTINFO_DEBUG
+#ifdef BOOTINFO_DEBUG
+	printf("bootargv:");
+#endif
+
+	for (q = (bootarg32_t *)bootinfo;
+	    (q->ba_type != BOOTARG_END) &&
+	    ((((char *)q) - bootinfo) < bootinfo_size);
+	    q = (bootarg32_t *)(((char *)q) + q->ba_size)) {
+
+		switch (q->ba_type) {
+		case BOOTARG_MEMMAP:
+			bios_memmap = (bios_memmap_t *)q->ba_arg;
+#ifdef BOOTINFO_DEBUG
+			printf(" memmap %p", bios_memmap);
+#endif
+			break;
+		case BOOTARG_DISKINFO:
+			bios_diskinfo = (bios_diskinfo_t *)q->ba_arg;
+#ifdef BOOTINFO_DEBUG
+			printf(" diskinfo %p", bios_diskinfo);
+#endif
+			break;
+#if 0
+#if NAPM > 0 || defined(DEBUG)
+		case BOOTARG_APMINFO:
+#ifdef BOOTINFO_DEBUG
+			printf(" apminfo %p", q->ba_arg);
+#endif
+			apm = (bios_apminfo_t *)q->ba_arg;
+			break;
+#endif
+#endif
+		case BOOTARG_CKSUMLEN:
+			bios_cksumlen = *(u_int32_t *)q->ba_arg;
+#ifdef BOOTINFO_DEBUG
+			printf(" cksumlen %d", bios_cksumlen);
+#endif
+			break;
+#if 0
+#if NPCI > 0
+		case BOOTARG_PCIINFO:
+			bios_pciinfo = (bios_pciinfo_t *)q->ba_arg;
+#ifdef BOOTINFO_DEBUG
+			printf(" pciinfo %p", bios_pciinfo);
+#endif
+			break;
+#endif
+#endif
+		case BOOTARG_CONSDEV:
+			if (q->ba_size >= sizeof(bios_consdev_t))
+			{
+				bios_consdev_t *cdp =
+				    (bios_consdev_t*)q->ba_arg;
+#include "com.h"
+#if NCOM > 0
+				extern int comdefaultrate; /* ic/com.c */
+				comdefaultrate = cdp->conspeed;
+#endif
+#ifdef BOOTINFO_DEBUG
+				printf(" console 0x%x:%d",
+				    cdp->consdev, cdp->conspeed);
+#endif
+				cnset(cdp->consdev);
+			}
+			break;
+
+		default:
+#ifdef BOOTINFO_DEBUG
+			printf(" unsupported arg (%d) %p", q->ba_type,
+			    q->ba_arg);
+#endif
+			break;
+		}
+	}
+#ifdef BOOTINFO_DEBUG
+	printf("\n");
+#endif
+}
 
 int
 check_context(const struct reg *regs, struct trapframe *tf)

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.amd64,v 1.1 2004/01/28 01:39:39 mickey Exp $
+#	$OpenBSD: files.amd64,v 1.2 2004/02/25 00:16:41 deraadt Exp $
 
 maxpartitions 16
 maxusers 2 16 128
@@ -29,6 +29,9 @@ file	arch/amd64/amd64/bus_dma.c
 file	arch/amd64/amd64/consinit.c
 file	dev/cons.c
 file	dev/cninit.c
+
+file	arch/amd64/amd64/dkcsum.c
+file	lib/libz/adler32.c			!ppp_deflate & !ipsec & !crypto
 
 file	arch/amd64/amd64/db_disasm.c		ddb
 file	arch/amd64/amd64/db_interface.c		ddb

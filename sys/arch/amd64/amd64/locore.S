@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.8 2004/02/23 09:12:59 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.9 2004/02/25 00:16:04 deraadt Exp $	*/
 /*	$NetBSD: locore.S,v 1.2 2003/04/26 19:34:45 fvdl Exp $	*/
 
 /*
@@ -143,12 +143,12 @@
 #include <machine/asm.h>
 
 #if defined(MULTIPROCESSOR)
-        
+
 #define SET_CURPROC(proc,cpu)			\
 	movq	CPUVAR(SELF),cpu	;	\
 	movq	proc,CPUVAR(CURPROC)      ;	\
 	movq	cpu,P_CPU(proc)
-        
+
 #else
 
 #define SET_CURPROC(proc,tcpu)		movq	proc,CPUVAR(CURPROC)
@@ -158,7 +158,7 @@
 
 #define GET_CURPCB(reg)			movq	CPUVAR(CURPCB),reg      
 #define SET_CURPCB(reg)			movq	reg,CPUVAR(CURPCB)
-        
+
 
 /* XXX temporary kluge; these should not be here */
 /* Get definitions for IOM_BEGIN, IOM_END, and IOM_SIZE */
@@ -189,10 +189,10 @@ _C_LABEL(lapic_isr):
 	.globl	_C_LABEL(cpu_id),_C_LABEL(cpu_vendor), _C_LABEL(cpu_brand_id)
 	.globl	_C_LABEL(cpuid_level),_C_LABEL(cpu_feature)
 	.globl	_C_LABEL(esym),_C_LABEL(boothowto),_C_LABEL(bootdev)
-	.globl	_C_LABEL(bootinfo),_C_LABEL(atdevbase)
+	.globl	_C_LABEL(bootinfo), _C_LABEL(bootinfo_size), _C_LABEL(atdevbase)
 	.globl	_C_LABEL(proc0paddr),_C_LABEL(PTDpaddr)
 	.globl	_C_LABEL(biosbasemem),_C_LABEL(biosextmem)
-	.globl	_C_LABEL(bootapiver), _C_LABEL(bootargc), _C_LABEL(bootargv)
+	.globl	_C_LABEL(bootapiver)
 	.globl	_C_LABEL(gdtstore)
 _C_LABEL(cpu):		.long	0	# are we 386, 386sx, or 486,
 					#   or Pentium, or..
@@ -207,8 +207,6 @@ _C_LABEL(cpu_brand_id):	.long	0	# brand ID from 'cpuid' instruction
 _C_LABEL(esym):		.quad	0	# ptr to end of syms
 _C_LABEL(atdevbase):	.quad	0	# location of start of iomem in virtual
 _C_LABEL(bootapiver):	.long	0	# /boot API version
-_C_LABEL(bootargc):	.long	0	# /boot argc
-_C_LABEL(bootargv):	.quad	0	# /boot argv
 _C_LABEL(proc0paddr):	.quad	0
 _C_LABEL(PTDpaddr):	.quad	0	# paddr of PTD, for libkvm
 #ifndef REALBASEMEM
@@ -266,7 +264,6 @@ start:	movw	$0x1234,0x472			# warm boot
 	/*
 	 * Load parameters from stack
 	 * (howto, bootdev, bootapiver, esym, extmem, cnvmem, ac, av)
-	 *
 	 */
 	movl	4(%esp),%eax
 	movl	%eax, RELOC(boothowto)
@@ -288,13 +285,27 @@ start:	movw	$0x1234,0x472			# warm boot
 
 	movl	12(%esp), %eax
 	movl	%eax, RELOC(bootapiver)
-	movl	28(%esp), %eax
-	movl	%eax, RELOC(bootargc)
-	movl	32(%esp), %eax
-	movl	$RELOC(bootargv), %ebx
-	movl	%eax, (%ebx)
-	xorl	%eax, %eax
-	movl	%eax, 4(%ebx)
+
+	/*
+	 * Copy the boot arguments to bootinfo[] in machdep.c.
+	 *
+	 * We are passed the size of bootinfo[] in bootinfo_size, and
+	 * we report how much data /boot passed us back in the same variable.
+	 *
+	 * machdep.c can then take action if bootinfo_size >= bootinfo[]
+	 * (which would meant that we may have been passed too much data).
+	 */
+ 	movl	28(%esp), %eax
+	movl	%eax, %ecx
+	cmpl	RELOC(bootinfo_size), %ecx	/* Too much? */
+	jnc	bi_size_ok
+	movl	RELOC(bootinfo_size), %ecx	/* Only copy this much */
+bi_size_ok:
+	movl	%eax, RELOC(bootinfo_size)	/* Report full amount */
+ 
+	movl	$RELOC(bootinfo), %edi		/* Destination */
+	movl	32(%esp), %esi			/* Source */
+	rep movsb				/* Copy this many bytes */
 
 	/* First, reset the PSL. */
 	pushl	$PSL_MBO
