@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tutorial.ms,v 1.7 2004/07/19 11:42:42 espie Exp $
+.\"	$OpenBSD: tutorial.ms,v 1.8 2004/07/19 16:41:36 millert Exp $
 .\"	$NetBSD: tutorial.ms,v 1.3 1996/03/06 00:15:31 christos Exp $
 .\" Copyright (c) 1988, 1989 by Adam de Boor
 .\" Copyright (c) 1989 by Berkeley Softworks
@@ -3167,17 +3167,6 @@ so are
 and
 .CW "set -e" ,
 respectively.
-.LP
-I should note that this specification is for Bourne Shells that are
-not part of Berkeley
-.UX ,
-as shells from Berkeley don't do error control. You can get a similar
-effect, however, by changing the last three lines to be:
-.DS
-	hasErrCtl=no \e
-	check="echo \e"+ %s\e"\en" \e
-	ignore="sh -c '%s || exit 0\en"
-.DE
 .LP
 This will cause Make to execute the two commands
 .DS
