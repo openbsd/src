@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.18 2000/03/11 15:54:44 espie Exp $	*/
+/*	$OpenBSD: misc.c,v 1.19 2000/07/02 01:17:00 espie Exp $	*/
 /*	$NetBSD: misc.c,v 1.6 1995/09/28 05:37:41 tls Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: misc.c,v 1.18 2000/03/11 15:54:44 espie Exp $";
+static char rcsid[] = "$OpenBSD: misc.c,v 1.19 2000/07/02 01:17:00 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -64,7 +64,6 @@ static char *strspace;	/* string space for evaluation */
 static char *endest;	/* end of string space	       */
 static size_t strsize = STRSPMAX;
 static size_t bufsize = BUFSIZE;
-static int low_sp = 0;
 
 char *buf;			/* push-back buffer	       */
 char *bufbase;			/* the base for current ilevel */
@@ -171,32 +170,28 @@ initspaces()
 		bbase[i] = buf;
 }
 
-/* XXX when chrsave is called, the current argument is
- * always topmost on the stack.  We make use of this to
- * duplicate it transparently, and to reclaim the correct
- * space when the stack is unwound.
- */
 static void 
 enlarge_strspace()
 {
 	char *newstrspace;
+	int i;
 
-	low_sp = sp;
 	strsize *= 2;
 	newstrspace = malloc(strsize + 1);
 	if (!newstrspace)
 		errx(1, "string space overflow");
 	memcpy(newstrspace, strspace, strsize/2);
-		/* reclaim memory in the easy, common case. */
-	if (ep == strspace)
-		free(strspace);
-	mstack[sp].sstr = (mstack[sp].sstr-strspace) + newstrspace;
+	for (i = 0; i <= sp; i++) 
+		if (sstack[i])
+			mstack[i].sstr = (mstack[i].sstr - strspace) 
+			    + newstrspace;
 	ep = (ep-strspace) + newstrspace;
+	free(strspace);
 	strspace = newstrspace;
 	endest = strspace + strsize;
 }
 
-static void 
+static void
 enlarge_bufspace()
 {
 	char *newbuf;
@@ -224,22 +219,6 @@ chrsave(c)
 	if (ep >= endest) 
 		enlarge_strspace();
 	*ep++ = c;
-}
-
-/* 
- * so we reclaim what string space we can
- */
-char * 
-compute_prevep()
-{
-	if (fp+3 <= low_sp)
-		{
-		return strspace;
-		}
-	else
-		{
-		return mstack[fp+3].sstr;
-		}
 }
 
 /*

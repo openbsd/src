@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.18 2000/03/18 01:06:55 espie Exp $	*/
+/*	$OpenBSD: extern.h,v 1.19 2000/07/02 01:17:00 espie Exp $	*/
 /*	$NetBSD: extern.h,v 1.3 1996/01/13 23:25:24 pk Exp $	*/
 
 /*-
@@ -91,7 +91,8 @@ extern void	release_input __P((struct input_file *));
 
 
 extern ndptr hashtab[];		/* hash table for macros etc. */
-extern stae mstack[];		/* stack of m4 machine */
+extern stae *mstack;		/* stack of m4 machine */
+extern char *sstack;		/* shadow stack, for string space extension */
 extern FILE *active;		/* active output file pointer */
 extern struct input_file infile[];/* input file stack (0=stdin) */
 extern FILE *outfile[];		/* diversion array(0=bitbucket) */

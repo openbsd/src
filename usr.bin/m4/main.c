@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.33 2000/07/02 01:13:07 espie Exp $	*/
+/*	$OpenBSD: main.c,v 1.34 2000/07/02 01:17:00 espie Exp $	*/
 /*	$NetBSD: main.c,v 1.12 1997/02/08 23:54:49 cgd Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.33 2000/07/02 01:13:07 espie Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.34 2000/07/02 01:17:00 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -66,6 +66,7 @@ static char rcsid[] = "$OpenBSD: main.c,v 1.33 2000/07/02 01:13:07 espie Exp $";
 #include <ctype.h>
 #include <string.h>
 #include <stddef.h>
+#include <stdlib.h>
 #include <err.h>
 #include "mdef.h"
 #include "stdd.h"
@@ -73,7 +74,9 @@ static char rcsid[] = "$OpenBSD: main.c,v 1.33 2000/07/02 01:13:07 espie Exp $";
 #include "pathnames.h"
 
 ndptr hashtab[HASHSIZE];	/* hash table for macros etc.  */
-stae mstack[STACKMAX+1]; 	/* stack of m4 machine         */
+stae *mstack;		 	/* stack of m4 machine         */
+char *sstack;		 	/* shadow stack, for string space extension */
+static size_t STACKMAX;		/* current maximum size of stack */
 int sp; 			/* current m4  stack pointer   */
 int fp; 			/* m4 call frame pointer       */
 struct input_file infile[MAXINP];/* input file stack (0=stdin)  */
@@ -160,6 +163,8 @@ static void initkwds __P((void));
 static ndptr inspect __P((char, char *));
 static int do_look_ahead __P((int, const char *));
 
+static void enlarge_stack __P((void));
+
 int main __P((int, char *[]));
 
 int
@@ -177,6 +182,10 @@ main(argc,argv)
 
 	initkwds();
 	initspaces();
+	STACKMAX = INITSTACKMAX;
+
+	mstack = (stae *)xalloc(sizeof(stae) * STACKMAX);
+	sstack = (char *)xalloc(STACKMAX);
 
 	while ((c = getopt(argc, argv, "gtD:U:o:I:")) != -1)
 		switch(c) {
@@ -283,7 +292,7 @@ do_look_ahead(t, token)
 static void
 macro()
 {
-	char token[MAXTOK];
+	char token[MAXTOK+1];
 	int t, l;
 	ndptr p;
 	int  nlpar;
@@ -308,9 +317,9 @@ macro()
 		/*
 		 * now push the string arguments:
 		 */
-				pushs(p->defn);	      /* defn string */
-				pushs(p->name);	      /* macro name  */
-				pushs(ep);	      /* start next..*/
+				pushs1(p->defn);	/* defn string */
+				pushs1(p->name);	/* macro name  */
+				pushs(ep);	      	/* start next..*/
 
 				if (l != LPAREN)  {   /* add bracks  */
 					putback(RPAREN);
@@ -577,4 +586,17 @@ dump_stack(t, lev)
 		fprintf(stderr, "   %s at line %lu\n", 
 			t[i].name, t[i].line);
 	}
+}
+
+
+static void 
+enlarge_stack()
+{
+	STACKMAX *= 2;
+	fprintf(stderr, "%u\n", STACKMAX);
+	mstack = realloc(mstack, sizeof(stae) * STACKMAX);
+	sstack = realloc(sstack, STACKMAX);
+	if (mstack == NULL || sstack == NULL)
+		errx(1, "Evaluation stack overflow (%lu)", 
+		    (unsigned long)STACKMAX);
 }
