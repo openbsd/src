@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.143 2001/10/03 02:08:41 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.144 2001/12/05 10:00:46 deraadt Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -81,7 +81,7 @@ void tdb_hashstats(void);
 #endif
 
 int		ipsp_kern __P((int, char **, int));
-u_int8_t       	get_sa_require  __P((struct inpcb *));
+u_int8_t	get_sa_require  __P((struct inpcb *));
 void		tdb_rehash __P((void));
 void		tdb_timeout __P((void *v));
 void		tdb_firstuse __P((void *v));
@@ -108,7 +108,7 @@ struct ipsec_acquire_head ipsec_acquire_head =
  */
 
 struct xformsw xformsw[] = {
-	{ XF_IP4,	         0,               "IPv4 Simple Encapsulation",
+	{ XF_IP4,	     0,               "IPv4 Simple Encapsulation",
 	  ipe4_attach,       ipe4_init,       ipe4_zeroize,
 	  (int (*)(struct mbuf *, struct tdb *, int, int))ipe4_input,
 	  ipip_output, },
@@ -428,7 +428,7 @@ tdb_hashstats(void)
 	for (i = 0; i <= tdb_hashmask; i++) {
 		cnt = 0;
 		for (tdbp = tdbh[i]; cnt < 16 && tdbp != NULL;
-		     tdbp = tdbp->tdb_hnext)
+		    tdbp = tdbp->tdb_hnext)
 			cnt++;
 		buckets[cnt]++;
 	}
@@ -490,7 +490,7 @@ tdb_firstuse(void *v)
 	if (!(tdb->tdb_flags & TDBF_SOFT_FIRSTUSE))
 		return;
 
-        /* If the TDB hasn't been used, don't renew it. */
+	/* If the TDB hasn't been used, don't renew it. */
 	if (tdb->tdb_first_use != 0)
 		pfkeyv2_expire(tdb, SADB_EXT_LIFETIME_HARD);
 	tdb_delete(tdb);
@@ -665,7 +665,7 @@ tdb_delete(struct tdb *tdbp)
 		tdbh[hashval] = tdbp->tdb_hnext;
 	} else {
 		for (tdbpp = tdbh[hashval]; tdbpp != NULL;
-		     tdbpp = tdbpp->tdb_hnext) {
+		    tdbpp = tdbpp->tdb_hnext) {
 			if (tdbpp->tdb_hnext == tdbp) {
 				tdbpp->tdb_hnext = tdbp->tdb_hnext;
 				tdbpp = tdbp;
@@ -683,7 +683,7 @@ tdb_delete(struct tdb *tdbp)
 		tdbaddr[hashval] = tdbp->tdb_anext;
 	} else {
 		for (tdbpp = tdbaddr[hashval]; tdbpp != NULL;
-		     tdbpp = tdbpp->tdb_anext) {
+		    tdbpp = tdbpp->tdb_anext) {
 			if (tdbpp->tdb_anext == tdbp) {
 				tdbpp->tdb_anext = tdbp->tdb_anext;
 				tdbpp = tdbp;
@@ -700,7 +700,7 @@ tdb_delete(struct tdb *tdbp)
 	}
 	else {
 		for (tdbpp = tdbsrc[hashval]; tdbpp != NULL;
-		     tdbpp = tdbpp->tdb_snext) {
+		    tdbpp = tdbpp->tdb_snext) {
 			if (tdbpp->tdb_snext == tdbp) {
 				tdbpp->tdb_snext = tdbp->tdb_snext;
 				tdbpp = tdbp;
@@ -718,20 +718,20 @@ tdb_delete(struct tdb *tdbp)
 
 	/* Cleanup inp references. */
 	for (inp = TAILQ_FIRST(&tdbp->tdb_inp_in); inp;
-	     inp = TAILQ_FIRST(&tdbp->tdb_inp_in)) {
+	    inp = TAILQ_FIRST(&tdbp->tdb_inp_in)) {
 		TAILQ_REMOVE(&tdbp->tdb_inp_in, inp, inp_tdb_in_next);
 		inp->inp_tdb_in = NULL;
 	}
 
 	for (inp = TAILQ_FIRST(&tdbp->tdb_inp_out); inp;
-	     inp = TAILQ_FIRST(&tdbp->tdb_inp_out)) {
+	    inp = TAILQ_FIRST(&tdbp->tdb_inp_out)) {
 		TAILQ_REMOVE(&tdbp->tdb_inp_out, inp, inp_tdb_out_next);
 		inp->inp_tdb_out = NULL;
 	}
 
 	/* Cleanup SPD references. */
 	for (ipo = TAILQ_FIRST(&tdbp->tdb_policy_head); ipo;
-	     ipo = TAILQ_FIRST(&tdbp->tdb_policy_head))	{
+	    ipo = TAILQ_FIRST(&tdbp->tdb_policy_head))	{
 		TAILQ_REMOVE(&tdbp->tdb_policy_head, ipo, ipo_tdb_next);
 		ipo->ipo_tdb = NULL;
 		ipo->ipo_last_searched = 0; /* Force a re-search. */
@@ -848,17 +848,16 @@ int
 ipsp_print_tdb(struct tdb *tdb, char *buffer)
 {
 	int l, i, k;
-
-	struct ctlname ipspflags[] = { \
-				       { "unique", TDBF_UNIQUE }, \
-				       { "invalid", TDBF_INVALID }, \
-				       { "halfiv", TDBF_HALFIV }, \
-				       { "pfs", TDBF_PFS }, \
-				       { "tunneling", TDBF_TUNNELING }, \
-				       { "noreplay", TDBF_NOREPLAY }, \
-				       { "random padding", TDBF_RANDOMPADDING }, \
-				       { "skipcrypto", TDBF_SKIPCRYPTO }, \
-				       { "usedtunnel", TDBF_USEDTUNNEL }, \
+	struct ctlname ipspflags[] = {
+		{ "unique", TDBF_UNIQUE },
+		{ "invalid", TDBF_INVALID },
+		{ "halfiv", TDBF_HALFIV },
+		{ "pfs", TDBF_PFS },
+		{ "tunneling", TDBF_TUNNELING },
+		{ "noreplay", TDBF_NOREPLAY },
+		{ "random padding", TDBF_RANDOMPADDING },
+		{ "skipcrypto", TDBF_SKIPCRYPTO },
+		{ "usedtunnel", TDBF_USEDTUNNEL },
 	};
 
 	l = sprintf(buffer,  "SPI = %08x, Destination = %s, Sproto = %u\n",
@@ -1136,7 +1135,7 @@ inet_ntoa4(struct in_addr ina)
 
 	i = (i + 1) % 4;
 	sprintf(buf[i], "%d.%d.%d.%d", ucp[0] & 0xff, ucp[1] & 0xff,
-            ucp[2] & 0xff, ucp[3] & 0xff);
+	    ucp[2] & 0xff, ucp[3] & 0xff);
 	return (buf[i]);
 }
 
@@ -1292,7 +1291,7 @@ ipsp_parse_headers(struct mbuf *m, int off, u_int8_t proto)
 			 * non-option.
 			 */
 			for (l = ip6_nexthdr(m, off, proto, &nxtp); l != -1;
-			     l = ip6_nexthdr(m, off, proto, &nxtp)) {
+			    l = ip6_nexthdr(m, off, proto, &nxtp)) {
 				off += l;
 				proto = nxtp;
 
