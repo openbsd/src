@@ -1,4 +1,4 @@
-/*	$OpenBSD: rasops.h,v 1.3 2002/07/02 19:38:55 nate Exp $ */
+/*	$OpenBSD: rasops.h,v 1.4 2002/07/28 01:30:08 miod Exp $ */
 /* 	$NetBSD: rasops.h,v 1.13 2000/06/13 13:36:54 ad Exp $ */
 
 /*-
@@ -39,6 +39,10 @@
 
 #ifndef _RASOPS_H_
 #define _RASOPS_H_ 1
+
+#ifdef	SMALL_KERNEL
+#define	RASOPS_SMALL
+#endif
 
 struct wsdisplay_font;
 
