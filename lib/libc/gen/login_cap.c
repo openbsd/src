@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_cap.c,v 1.22 2004/08/09 21:15:09 millert Exp $	*/
+/*	$OpenBSD: login_cap.c,v 1.23 2004/08/10 15:53:31 millert Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -68,8 +68,8 @@
 
 
 static	char *_authtypes[] = { LOGIN_DEFSTYLE, 0 };
-static	char *expandstr(const char *, const struct passwd *);
-static	int login_setenv(char *, char *, const struct passwd *);
+static	char *expandstr(const char *, const struct passwd *, int);
+static	int login_setenv(char *, char *, const struct passwd *, int);
 static	int setuserenv(login_cap_t *lc, const struct passwd *pwd);
 static	int setuserpath(login_cap_t *, const struct passwd *pwd);
 static	u_quad_t multiply(u_quad_t, u_quad_t);
@@ -729,7 +729,7 @@ setuserpath(login_cap_t *lc, const struct passwd *pwd)
 	}
 	*np = '\0';
 setit:
-	error = login_setenv("PATH", path ? path : _PATH_DEFPATH, pwd);
+	error = login_setenv("PATH", path ? path : _PATH_DEFPATH, pwd, 1);
 	free(opath);
 	free(path);
 	return (error);
@@ -773,7 +773,7 @@ setuserenv(login_cap_t *lc, const struct passwd *pwd)
 			*value++ = '\0';
 		else
 			value = "";
-		if ((error = login_setenv(beg, value, pwd)) != 0) {
+		if ((error = login_setenv(beg, value, pwd, 0)) != 0) {
 			free(list);
 			return (error);
 		}
@@ -787,13 +787,13 @@ setuserenv(login_cap_t *lc, const struct passwd *pwd)
  * Set an environment variable, substituting for ~ and $
  */
 static int
-login_setenv(char *name, char *ovalue, const struct passwd *pwd)
+login_setenv(char *name, char *ovalue, const struct passwd *pwd, int ispath)
 {
 	char *value = NULL;
 	int error;
 
 	if (*ovalue != '\0')
-		value = expandstr(ovalue, pwd);
+		value = expandstr(ovalue, pwd, ispath);
 	error = setenv(name, value ? value : ovalue, 1);
 	free(value);
 	return (error);
@@ -1006,28 +1006,49 @@ secure_path(char *path)
 }
 
 /*
+ * Check whether or not a tilde in a string should be expanded.
+ * We only do expansion for things like "~", "~/...", ~me", "~me/...".
+ * Additionally, for paths the tilde must be a the beginning.
+ */
+#define tilde_valid(s, b, u, l, ip) \
+    ((!(ip) || (s) == (b) || (s)[-1] == ':') && \
+    ((s)[1] == '/' || (s)[1] == '\0' || \
+    (strncmp((s)+1, u, l) == 0 && ((s)[l+1] == '/' || (s)[l+1] == '\0'))))
+
+/*
  * Make a copy of a string, expanding '~' to the user's homedir, '$' to the
  * login name and other escape sequences as per cgetstr(3).
  */
 static char *
-expandstr(const char *ostr, const struct passwd *pwd)
+expandstr(const char *ostr, const struct passwd *pwd, int ispath)
 {
-	size_t n, olen, nlen;
+	size_t n, olen, nlen, ulen, dlen;
 	const char *ep, *eo, *op;
 	char *nstr, *np;
 	int ch;
+
+	if (pwd != NULL) {
+		ulen = strlen(pwd->pw_name);
+		dlen = strlen(pwd->pw_dir);
+	}
 
 	/* calculate the size of the new string */
 	olen = nlen = strlen(ostr);
 	for (op = ostr, ep = ostr + olen; op < ep; op++) {
 		switch (*op) {
 		case '~':
-			if (pwd != NULL)
-				nlen += strlen(pwd->pw_dir) - 1;
+			if (pwd == NULL ||
+			    !tilde_valid(op, ostr, pwd->pw_name, ulen, ispath))
+				break;
+			if (op[1] != '/' && op[1] != '\0') {
+				op += ulen;	/* ~username */
+				nlen = nlen - ulen - 1 + dlen;
+			} else
+				nlen += dlen - 1;
 			break;
 		case '$':
 			if (pwd != NULL)
-				nlen += strlen(pwd->pw_name) - 1;
+				nlen += ulen - 1;
 			break;
 		case '^':
 			/* control char */
@@ -1054,18 +1075,21 @@ expandstr(const char *ostr, const struct passwd *pwd)
 	for (op = ostr, ep = ostr + olen; op < ep; op++) {
 		switch ((ch = *op)) {
 		case '~':
-			if (pwd == NULL)
+			if (pwd == NULL ||
+			    !tilde_valid(op, ostr, pwd->pw_name, ulen, ispath))
 				break;
-			n = strlcpy(np, pwd->pw_dir, nlen);
-			nlen -= n;
-			np += n;
+			if (op[1] != '/' && op[1] != '\0')
+				op += ulen;	/* ~username */
+			strlcpy(np, pwd->pw_dir, nlen);
+			nlen -= dlen;
+			np += dlen;
 			continue;
 		case '$':
 			if (pwd == NULL)
 				break;
-			n = strlcpy(np, pwd->pw_name, nlen);
-			nlen -= n;
-			np += n;
+			strlcpy(np, pwd->pw_name, nlen);
+			nlen -= ulen;
+			np += ulen;
 			continue;
 		case '^':
 			if (op[1] != '\0')
