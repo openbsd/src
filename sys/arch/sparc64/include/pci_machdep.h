@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.h,v 1.9 2002/06/09 23:28:21 jason Exp $	*/
+/*	$OpenBSD: pci_machdep.h,v 1.10 2003/01/13 16:04:38 jason Exp $	*/
 /* $NetBSD: pci_machdep.h,v 1.7 2001/07/20 00:07:14 eeh Exp $ */
 
 /*
@@ -50,12 +50,6 @@ struct pci_attach_args;
 typedef struct sparc_pci_chipset *pci_chipset_tag_t;
 typedef u_int pci_intr_handle_t;
 
-struct sparc_pci_chipset {
-	void			*cookie;	/* psycho_pbm, but sssh! */
-	int			rootnode;	/* PCI controller */
-	int			curnode;	/* Current OFW node */
-};
-
 /* 
  * The stuuuuuuupid allegedly MI PCI code expects pcitag_t to be a
  * scalar type.  But we really need to store both the OFW node and
@@ -74,6 +68,14 @@ struct sparc_pci_chipset {
 #define	PCITAG_SETNODE(t,n)	((t)&0xffffffff)|(((n)<<32)
 typedef u_int64_t pcitag_t; 
 
+struct sparc_pci_chipset {
+	void			*cookie;	/* psycho_pbm, but sssh! */
+	pcireg_t		(*conf_read)(pci_chipset_tag_t, pcitag_t, int);
+	void			(*conf_write)(pci_chipset_tag_t, pcitag_t, int, pcireg_t);
+	int			rootnode;	/* PCI controller */
+	int			curnode;	/* Current OFW node */
+
+};
 
 void		pci_attach_hook(struct device *, struct device *,
 				     struct pcibus_attach_args *);
@@ -85,8 +87,6 @@ int		pci_dev_funcorder(pci_chipset_tag_t, int, int, char *);
 #endif
 int		pci_bus_maxdevs(pci_chipset_tag_t, int);
 pcitag_t	pci_make_tag(pci_chipset_tag_t, int, int, int);
-void		pci_conf_setfunc(pcireg_t (*rd)(pci_chipset_tag_t, pcitag_t, int),
-    void (*wr)(pci_chipset_tag_t, pcitag_t, int, pcireg_t));
 pcireg_t	pci_conf_read(pci_chipset_tag_t, pcitag_t, int);
 void		pci_conf_write(pci_chipset_tag_t, pcitag_t, int,
 				    pcireg_t);

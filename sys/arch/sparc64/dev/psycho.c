@@ -1,4 +1,4 @@
-/*	$OpenBSD: psycho.c,v 1.24 2002/12/02 17:08:51 jason Exp $	*/
+/*	$OpenBSD: psycho.c,v 1.25 2003/01/13 16:04:38 jason Exp $	*/
 /*	$NetBSD: psycho.c,v 1.39 2001/10/07 20:30:41 eeh Exp $	*/
 
 /*
@@ -389,8 +389,6 @@ psycho_attach(parent, self, aux)
 	printf("bus range %u to %u", psycho_br[0], psycho_br[1]);
 	printf("; PCI bus %d", psycho_br[0]);
 
-	pci_conf_setfunc(psycho_pci_conf_read, psycho_pci_conf_write);
-
 	pp->pp_pcictl = &sc->sc_regs->psy_pcictl[0];
 
 	/* allocate our tags */
@@ -405,6 +403,9 @@ psycho_attach(parent, self, aux)
 
 	/* setup the rest of the psycho pbm */
 	pba.pba_pc = pp->pp_pc;
+
+	pba.pba_pc->conf_read = psycho_pci_conf_read;
+	pba.pba_pc->conf_write = psycho_pci_conf_write;
 
 	printf("\n");
 

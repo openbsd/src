@@ -1,4 +1,4 @@
-/*	$OpenBSD: schizo.c,v 1.7 2002/08/01 18:26:35 jason Exp $	*/
+/*	$OpenBSD: schizo.c,v 1.8 2003/01/13 16:04:38 jason Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -171,8 +171,6 @@ schizo_init(sc, busa)
 	printf(": bus %c %d to %d\n", busa ? 'A' : 'B',
 	    busranges[0], busranges[1]);
 
-	pci_conf_setfunc(schizo_pci_conf_read, schizo_pci_conf_write);
-
 	schizo_init_iommu(sc, pbm);
 
 	match = bus_space_read_8(sc->sc_bust, sc->sc_ctrlh,
@@ -190,6 +188,9 @@ schizo_init(sc, busa)
 
 	pbm->sp_pc = schizo_alloc_chipset(pbm, sc->sc_node,
 	    &_sparc_pci_chipset);
+
+	pbm->sp_pc->conf_read = schizo_pci_conf_read;
+	pbm->sp_pc->conf_write = schizo_pci_conf_write;
 
 	pba.pba_busname = "pci";
 	pba.pba_bus = busranges[0];

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.9 2002/06/08 18:06:02 jason Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.10 2003/01/13 16:04:38 jason Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.22 2001/07/20 00:07:13 eeh Exp $	*/
 
 /*
@@ -336,18 +336,6 @@ pci_make_tag(pc, b, d, f)
 	return (tag);
 }
 
-pcireg_t (*sparc64_pci_conf_read)(pci_chipset_tag_t, pcitag_t, int);
-void (*sparc64_pci_conf_write)(pci_chipset_tag_t, pcitag_t, int, pcireg_t);
-
-void
-pci_conf_setfunc(rd, wr)
-	pcireg_t (*rd)(pci_chipset_tag_t, pcitag_t, int);
-	void (*wr)(pci_chipset_tag_t, pcitag_t, int, pcireg_t);
-{
-	sparc64_pci_conf_read = rd;
-	sparc64_pci_conf_write = wr;
-}
-
 /* assume we are mapped little-endian/side-effect */
 pcireg_t
 pci_conf_read(pc, tag, reg)
@@ -355,9 +343,7 @@ pci_conf_read(pc, tag, reg)
 	pcitag_t tag;
 	int reg;
 {
-	if (sparc64_pci_conf_read == NULL)
-		panic("no pci_conf_read");
-	return ((*sparc64_pci_conf_read)(pc, tag, reg));
+	return (pc->conf_read(pc, tag, reg));
 }
 
 void
@@ -367,9 +353,7 @@ pci_conf_write(pc, tag, reg, data)
 	int reg;
 	pcireg_t data;
 {
-	if (sparc64_pci_conf_write == NULL)
-		panic("no pci_conf_read");
-	return ((*sparc64_pci_conf_write)(pc, tag, reg, data));
+	return (pc->conf_write(pc, tag, reg, data));
 }
 
 
