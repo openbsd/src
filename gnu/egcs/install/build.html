@@ -2,14 +2,19 @@
 <head>
 <title>Installing GCC: Building</title>
 </head>
+
 <body>
 <h1 align="center">Installing GCC: Building</h1>
 
 <p>Now that GCC is configured, you are ready to build the compiler and
 runtime libraries.
 
-<p>We <b>highly</b> recommend that GCC be built using GNU make; other
-versions may work, then again they might not.  To be safe build with GNU make.
+<p>We <strong>highly</strong> recommend that GCC be built using GNU make;
+other versions may work, then again they might not.</p>
+
+<p>(For example, many broken versions of make will fail if you use the
+recommended setup where <i>objdir</i> is different from <i>srcdir</i>.)
+
 
 <h2>Building a native compiler</h2>
 
@@ -17,18 +22,20 @@ versions may work, then again they might not.  To be safe build with GNU make.
 will build the entire GCC system, which includes the following steps:
 
 <ul>
-  <li> Build host tools necessary to build the compiler such as texinfo, bison,
-  gperf.<p>
+  <li>Build host tools necessary to build the compiler such as texinfo, bison,
+  gperf.</li>
 
-  <li> Build target tools for use by the compiler such as gas, gld, and
-  binutils if they have been properly unpacked into the GCC source tree.<p>
+  <li> Build target tools for use by the compiler such as binutils (bfd,
+  binutils, gas, gprof, ld, and opcodes)<br>
+  if they have been individually linked or moved into the top level GCC source
+  tree before configuring.</li>
 
-  <li> Perform a 3-stage bootstrap of the compiler.<p>
+  <li>Perform a 3-stage bootstrap of the compiler.</li>
 
-  <li> Perform a comparison test of the stage2 and stage3 compilers.<p>
+  <li>Perform a comparison test of the stage2 and stage3 compilers.</li>
 
-  <li> Build runtime libraries using the stage3 compiler from the previous
-  step.
+  <li>Build runtime libraries using the stage3 compiler from the previous
+  step.</li>
 </ul>
 
 <p>If you are short on disk space you might consider `<code>make 
@@ -51,6 +58,7 @@ which the particular compiler has been built.  Please note,
 that re-defining LANGUAGES when calling `<code>make bootstrap</code>'
 <b>*does not*</b> work anymore!
 
+
 <h2>Building a cross compiler</h2>
 
 <p> We recommend reading the
@@ -69,16 +77,18 @@ cross compiler.
 your corss compiler, issue the command "make", which performs the
 following steps:
 <ul>
-  <li> Build host tools necessary to build the compiler such as texinfo, bison,
-  gperf.<p>
+  <li>Build host tools necessary to build the compiler such as texinfo, bison,
+  gperf.</li>
 
-  <li> Build target tools for use by the compiler such as gas, gld, and
-  binutils if they have been properly unpacked into the GCC source tree.<p>
+  <li>Build target tools for use by the compiler such as binutils (bfd,
+  binutils, gas, gprof, ld, and opcodes)<br>
+  if they have been individually linked or moved into the top level GCC source
+  tree before configuring.</li>
 
-  <li> Build the compiler (single stage only).<p>
+  <li>Build the compiler (single stage only).</li>
 
-  <li> Build runtime libraries using the compiler from the previous
-  step.
+  <li>Build runtime libraries using the compiler from the previous
+  step.</li>
 </ul>
 
 <p>Note that if an error occurs in any step the make process will exit.
@@ -93,7 +103,7 @@ the number of processors in your machine.
 
 <p>
 <hr>
-<i>Last modified on July 16, 1999.</i>
+<i>Last modified on August 27, 1999.</i>
 
 </body>
 </html>

@@ -5,7 +5,10 @@
    runtime libraries.
    
    We _highly_ recommend that GCC be built using GNU make; other versions
-   may work, then again they might not. To be safe build with GNU make.
+   may work, then again they might not.
+   
+   (For example, many broken versions of make will fail if you use the
+   recommended setup where _objdir_ is different from _srcdir_.)
    
 Building a native compiler
 
@@ -13,9 +16,10 @@ Building a native compiler
    the entire GCC system, which includes the following steps:
      * Build host tools necessary to build the compiler such as texinfo,
        bison, gperf.
-     * Build target tools for use by the compiler such as gas, gld, and
-       binutils if they have been properly unpacked into the GCC source
-       tree.
+     * Build target tools for use by the compiler such as binutils (bfd,
+       binutils, gas, gprof, ld, and opcodes)
+       if they have been individually linked or moved into the top level
+       GCC source tree before configuring.
      * Perform a 3-stage bootstrap of the compiler.
      * Perform a comparison test of the stage2 and stage3 compilers.
      * Build runtime libraries using the stage3 compiler from the
@@ -58,9 +62,10 @@ Building a cross compiler
    performs the following steps:
      * Build host tools necessary to build the compiler such as texinfo,
        bison, gperf.
-     * Build target tools for use by the compiler such as gas, gld, and
-       binutils if they have been properly unpacked into the GCC source
-       tree.
+     * Build target tools for use by the compiler such as binutils (bfd,
+       binutils, gas, gprof, ld, and opcodes)
+       if they have been individually linked or moved into the top level
+       GCC source tree before configuring.
      * Build the compiler (single stage only).
      * Build runtime libraries using the compiler from the previous step.
        
@@ -75,7 +80,7 @@ Building in parallel
    your machine.
      _________________________________________________________________
    
-   _Last modified on July 16, 1999._
+   _Last modified on August 27, 1999._
 
 References
 

@@ -3,24 +3,31 @@
                                       
    Please read this document carefully _before_ installing the GNU
    Compiler Collection on your machine.
-     * [1]alpha*-dec-osf*
-     * [2]hppa*-hp-hpux*
-     * [3]hppa*-hp-hpux9
-     * [4]hppa*-hp-hpux10
-     * [5]i?86-*-linux*
-     * [6]i?86-*-sco3.2v5*
-     * [7]i?86-*-udk
-     * [8]*-ibm-aix*
-     * [9]m68k-*-nextstep*
-     * [10]m68k-sun-sunos4.1.1
-     * [11]mips*-sgi-irix[45]
-     * [12]mips*-sgi-irix6
-     * [13]powerpc-*-linux-gnu*
-     * [14]sparc-sun-solaris2.7
-     * [15]sparc-sun-sunos*
-     * [16]sparc-unknown-linux-gnulibc1
-     * [17]sparc64-*-*
-     * [18]GCC with Windows or OS/2
+     * [1]alpha*-dec-linux*
+     * [2]alpha*-dec-osf*
+     * [3]GCC with DOS
+     * [4]hppa*-hp-hpux*
+     * [5]hppa*-hp-hpux9
+     * [6]hppa*-hp-hpux10
+     * [7]i?86-*-linux*
+     * [8]i?86-*-sco3.2v5*
+     * [9]i?86-*-udk
+     * [10]*-ibm-aix*
+     * [11]m68k-*-nextstep*
+     * [12]m68k-sun-sunos4.1.1
+     * [13]mips*-sgi-irix[45]
+     * [14]mips*-sgi-irix6
+     * [15]powerpc-*-linux-gnu*
+     * [16]*-*-solaris*
+     * [17]sparc-sun-solaris*
+     * [18]sparc-sun-solaris2.7
+     * [19]Sun V5.0 Compiler Bugs
+     * [20]sparc-sun-sunos*
+     * [21]sparc-unknown-linux-gnulibc1
+     * [22]sparc64-*-*
+     * [23]GCC with Windows or OS/2
+       
+     * [24]all ELF targets (SVR4, Solaris, etc.)
      _________________________________________________________________
    
   alpha*-dec-linux*
@@ -82,7 +89,7 @@
    
    The magic spell is to add -Wl,-all,-lgcc,-none to the definition of
    macro SHDEPS in libstdc++/config/dec-osf.ml _before_
-   alpha*-dec-osf*/libstdc++/Makefile is created (a [19]patch that does
+   alpha*-dec-osf*/libstdc++/Makefile is created (a [25]patch that does
    just that is available). If the Makefile already exists, run
    ./config.status within directory alpha*-dec-osf*/libstdc++ (and
    alpha*-dec-osf*/ieee/libstdc++, if it also exists). Remove any
@@ -97,38 +104,40 @@
    repeat this command in it, with the additional flag -mieee.
      _________________________________________________________________
    
+  GCC with DOS
+  
+  A binary distribution is available at [26]Simtel.Net and its mirrors.
+    ________________________________________________________________________
+  
   hppa*-hp-hpux*
   
-   We _highly_ recommend using gas/binutils-2.8 or newer on all hppa
-   platforms; you may encounter a variety of problems when using the HP
-   assembler.
-   
-   If you wish to use pa-risc 2.0 architecture support, you must use
-   either the HP assembler or a recent [20]snapshot of gas.
-   
-   More specific information to hppa*-hp-hpux* targets follows.
-     _________________________________________________________________
-   
+  We _highly_ recommend using gas/binutils-2.8 or newer on all hppa platforms;
+  you may encounter a variety of problems when using the HP assembler.
+  
+  If you wish to use pa-risc 2.0 architecture support, you must use either the
+  HP assembler or a recent [27]snapshot of gas.
+  
+  More specific information to hppa*-hp-hpux* targets follows.
+    ________________________________________________________________________
+  
   hppa*-hp-hpux9
   
-   The HP assembler has major problems on this platform. We've tried to
-   work around the worst of the problems. However, those workarounds may
-   be causing linker crashes in some circumstances; the workarounds also
-   probably prevent shared libraries from working. Use the GNU assembler
-   to avoid these problems.
-   
-   The configuration scripts for GCC will also trigger a bug in the hpux9
-   shell. To avoid this problem set CONFIG_SHELL to /bin/ksh and SHELL to
-   /bin/ksh in your environment.
-     _________________________________________________________________
-   
+  The HP assembler has major problems on this platform. We've tried to work
+  around the worst of the problems. However, those workarounds may be causing
+  linker crashes in some circumstances; the workarounds also probably prevent
+  shared libraries from working. Use the GNU assembler to avoid these problems.
+  
+  The configuration scripts for GCC will also trigger a bug in the hpux9 shell.
+  To avoid this problem set CONFIG_SHELL to /bin/ksh and SHELL to /bin/ksh in
+  your environment.
+    ________________________________________________________________________
+  
   hppa*-hp-hpux10
   
-   For hpux10.20, we _highly_ recommend you pick up the latest sed patch
-   PHCO_15468 from HP. HP has two sites which provide patches free of
-   charge:
-     * [21]US, Canada, Asia-Pacific, and Latin-America
-     * [22]Europe
+  For hpux10.20, we _highly_ recommend you pick up the latest sed patch
+  PHCO_15468 from HP. HP has two sites which provide patches free of charge:
+     * [28]US, Canada, Asia-Pacific, and Latin-America
+     * [29]Europe
        
    The HP assembler on these systems is much better than the hpux9
    assembler, but still has some problems. Most notably the assembler
@@ -145,7 +154,7 @@
    
    If you receive Signal 11 errors when building on GNU/Linux, then it is
    possible you have a hardware problem. Further information on this can
-   be found on [23]www.bitwizard.nl.
+   be found on [30]www.bitwizard.nl.
      _________________________________________________________________
    
   i?86-*-sco3.2v5*
@@ -196,8 +205,8 @@
    be seen as execution testsuite failures when using -fPIC on
    921215-1.c, 931002-1.c, nestfunc-1.c, and gcov-1.c. For 5.0.5, an
    updated linker that will cure this problem is available. You must
-   install both [24]ftp://ftp.sco.com/Supplements/rs505a/ and
-   [25]OSS499A.
+   install both [31]ftp://ftp.sco.com/Supplements/rs505a/ and
+   [32]OSS499A.
    
    The dynamic linker in OpenServer 5.0.5 (earlier versions may show the
    same problem) aborts on certain g77-compiled programs. It's
@@ -206,7 +215,7 @@
    triggered by other code, only G77-compiled code has been observed to
    cause this abort. If you are getting core dumps immediately upon
    execution of your g77 program - and especially if it's compiled with
-   -fPIC - try applying [26]`sco_osr5_g77.patch' to your libf2c and
+   -fPIC - try applying [33]`sco_osr5_g77.patch' to your libf2c and
    rebuilding GCC. Affected faults, when analyzed in a debugger, will
    show a stack backtrace with a fault occurring in rtld() and the
    program running as /usr/lib/ld.so.1. This problem has been reported to
@@ -252,12 +261,22 @@ get=i686-pc-udk --exec-prefix=udk-
    AIX Make frequently has problems with GCC makefiles. GNU Make 3.76 or
    newer is recommended to build on this platform.
    
+   Errors involving "alloca" when building GCC generally are due to an
+   incorrect definition of CC in the Makefile or mixing files compiled
+   with the native C compiler and GCC. During the stage1 phase of the
+   build, the native AIX compiler _must_ be invoked as "cc" (not "xlc").
+   Once configure has been informed of "xlc", one needs to use "make
+   distclean" to remove the configure cache files and ensure that $CC
+   environment variable does not provide a definition that will confuse
+   configure. If this error occurs during stage2 or later, then the
+   problem most likely is the version of Make (see above).
+   
    Some versions of the AIX binder (linker) can fail with a relocation
    overflow severe error when the -bbigtoc option is used to link
    GCC-produced object files into an executable that overflows the TOC. A
    fix for APAR IX75823 (OVERFLOW DURING LINK WHEN USING GCC AND
    -BBIGTOC) is available from IBM Customer Support and from its
-   [27]service.boulder.ibm.com website as PTF U455193.
+   [34]service.boulder.ibm.com website as PTF U455193.
    
    Binutils does not support AIX 4.3 (at least through release 2.9). GNU
    as and GNU ld will not work properly and one should not configure GCC
@@ -277,7 +296,7 @@ get=i686-pc-udk --exec-prefix=udk-
    The initial assembler shipped with AIX 4.3.0 generates incorrect
    object files. A fix for APAR IX74254 (64BIT DISASSEMBLED OUPUT FROM
    COMPILER FAILS TO ASSEMBLE/BIND) is available from IBM Customer
-   Support and from its [28]service.boulder.ibm.com website as PTF
+   Support and from its [35]service.boulder.ibm.com website as PTF
    U453956. This fix is incorporated in AIX 4.3.1 and above.
    
    The AIX 4.3.2.1 linker (bos.rte.bind_cmds Level 4.3.2.1) will dump
@@ -302,7 +321,7 @@ get=i686-pc-udk --exec-prefix=udk-
    
    As NeXT's assembler is a derived work from GNU as, a free replacement
    that does can be obtained at
-   [29]ftp://ftp.next.peak.org:/next-ftp/next/apps/devtools/as.3.3.NIHS.s
+   [36]ftp://ftp.next.peak.org:/next-ftp/next/apps/devtools/as.3.3.NIHS.s
    .tar.gz.
    
    If you try to build the integrated C++ & C++ runtime libraries on this
@@ -354,7 +373,7 @@ get=i686-pc-udk --exec-prefix=udk-
    make program; however, you may have success with "smake" on IRIX 5.2
    if you do not have GNU make available.
    
-   See [30]http://reality.sgi.com/ariel/freeware for more information
+   See [37]http://reality.sgi.com/ariel/freeware for more information
    about using GCC on IRIX platforms.
      _________________________________________________________________
    
@@ -389,25 +408,81 @@ get=i686-pc-udk --exec-prefix=udk-
    functions. I can only recall seeing two of them: inet_ntoa, and
    semctl.
    
-   See [31]http://reality.sgi.com/ariel/freeware for more information
+   See [38]http://reality.sgi.com/ariel/freeware for more information
    about using GCC on IRIX platforms.
      _________________________________________________________________
    
   powerpc-*-linux-gnu*
   
-   You will need [32]binutils-2.9.4.0.8 or newer for a working GCC. It is
+   You will need [39]binutils-2.9.4.0.8 or newer for a working GCC. It is
    strongly recommended to recompile binutils if you initially built it
    with gcc-2.7.2.x.
+     _________________________________________________________________
+   
+  *-*-solaris*
+  
+   Starting with Solaris, Sun does not ship a C compiler any more. To
+   bootstrap and install GCC you first have to install a pre-built
+   compiler, for example from [40]http://www.sunfreeware.com.
+   
+   Sun as 4.X is broken in that it cannot cope with long symbol names. A
+   typical error message might look similiar to the following:
+   
+     /usr/ccs/bin/as: "/var/tmp/ccMsw135.s", line 11041: error: can't
+     compute value of an expression involving an external symbol.
+     
+   See the [41]How to work around too long C++ symbol names? FAQ entry
+   for further information.
+   
+   Sun make in all known Solaris 1 (SunOS 4) and Solaris 2 releases has a
+   broken _VPATH_ mechanism, which means you must either:
+     * Use GNU make (recommended), _or:_
+     * Always build in the source directory, _or:_
+     * _(For GCC 2.95.1 only)_ apply the patches mentioned at
+       [42]http://www.gnu.org/software/gcc/egcstensions.html#sun-make.
+     _________________________________________________________________
+   
+  sparc-sun-solaris*
+  
+   binutils 2.9.1 has known bugs on this platform. We recommend to use
+   the vendor tools (Sun as, Sun ld) until these have been fixed.
      _________________________________________________________________
    
   sparc-sun-solaris2.7
   
    Sun patch 107058-01 (1999-01-13) for SPARC Solaris 7 triggers a bug in
    the dynamic linker. This problem (Sun bug 4210064) affects GCC 2.8 and
-   later, including all EGCS releases. To avoid this problem, do not
-   install Sun patch 107058-01 until after Sun releases a patch for bug
-   4210064. Sun has a fix for this bug but (as of 1999-06-24) has not yet
-   released it as a patch.
+   later, including all EGCS releases. Sun formerly recommended 107058-01
+   for all Solaris 7 users, but around 1999-09-01 it started to recommend
+   it only for people who use Sun's compilers.
+   
+   Here are some workarounds to this problem:
+     * Do not install Sun patch 107058-01 until after Sun releases a
+       complete patch for bug 4210064. This is the simplest course to
+       take, unless you must also use Sun's C compiler. Unfortunately
+       107058-01 is preinstalled on some new Solaris-based hosts, so you
+       may have to back it out.
+     * Copy the original, unpatched Solaris 7 /usr/ccs/bin/as into
+       /usr/local/lib/gcc-lib/sparc-sun-solaris2.7/2.95.1/as, adjusting
+       the latter name to fit your local conventions and software version
+       numbers.
+     * Install Sun patch 106950-03 (1999-05-25) or later. Nobody with
+       both 107058-01 and 106950-03 installed has reported the bug with
+       GCC and Sun's dynamic linker. This last course of action is
+       riskiest, for two reasons. First, you must install 106950 on all
+       hosts that run code generated by GCC; it doesn't suffice to
+       install it only on the hosts that run GCC itself. Second, Sun says
+       that 106950-03 is only a partial fix for bug 4210064, but Sun
+       doesn't know whether the partial fix is adequate for GCC. Revision
+       -08 or later should fix the bug, but (as of 1999-10-06) it is
+       still being tested.
+     _________________________________________________________________
+   
+  Sun V5.0 Compiler Bugs
+  
+   The Sun V5.0 compilers are known to mis-compile GCC, which in turn
+   causes GCC to fail its bootstrap comparison test. We expect to have a
+   workaround ready in time for GCC 2.95.2.
      _________________________________________________________________
    
   sparc-sun-sunos*
@@ -423,7 +498,7 @@ get=i686-pc-udk --exec-prefix=udk-
    
   sparc-unknown-linux-gnulibc1
   
-   It has been reported that you might need [33]binutils-2.8.1.0.23 for
+   It has been reported that you might need [43]binutils-2.8.1.0.23 for
    this platform, too.
      _________________________________________________________________
    
@@ -434,11 +509,6 @@ get=i686-pc-udk --exec-prefix=udk-
    program to start up a new shell invocation with an environment that
    causes configure to recognize (via uname -a) the system as sparc-*-*
    instead.
-   
-   _all ELF targets (SVR4, Solaris, etc.)_
-   C++ support is significantly better on ELF targets if you use the GNU
-   linker; duplicate copies of inlines, vtables and template
-   instantiations will be discarded automatically.
      _________________________________________________________________
    
   GCC with Windows or OS/2
@@ -446,52 +516,69 @@ get=i686-pc-udk --exec-prefix=udk-
    GCC does not currently support Windows, either natively or with the
    cygwin32 dll. However Mumit Khan has been working on supporting
    Windows with GCC. You should check out his site if you're interested
-   in Windows support. [34]GNU Win32 related projects
+   in Windows support. [44]GNU Win32 related projects
    
    GCC does not currently support OS/2. However, Andrew Zabolotny has
    been working on a generic os/2 port with pgcc. The current code code
-   can be found at [35]http://www.goof.com/pcg/os2/.
+   can be found at [45]http://www.goof.com/pcg/os2/.
      _________________________________________________________________
    
-   [36]Return to the GCC Installation page
+  all ELF targets (SVR4, Solaris, etc.)
+  
+   C++ support is significantly better on ELF targets if you use the GNU
+   linker; duplicate copies of inlines, vtables and template
+   instantiations will be discarded automatically.
+     _________________________________________________________________
    
-   _Last modified on August 15, 1999._
+   [46]Return to the GCC Installation page
+   
+   _Last modified on October 17, 1999._
 
 References
 
-   1. file://localhost/egcs/omelette/tmp/12663/gcc-2.95.1/install/specific.html#alpha*-dec-osf*
-   2. file://localhost/egcs/omelette/tmp/12663/gcc-2.95.1/install/specific.html#hppa*-hp-hpux*
-   3. file://localhost/egcs/omelette/tmp/12663/gcc-2.95.1/install/specific.html#hppa*-hp-hpux9
-   4. file://localhost/egcs/omelette/tmp/12663/gcc-2.95.1/install/specific.html#hppa*-hp-hpux10
-   5. file://localhost/egcs/omelette/tmp/12663/gcc-2.95.1/install/specific.html#ix86-*-linux*
-   6. file://localhost/egcs/omelette/tmp/12663/gcc-2.95.1/install/specific.html#ix86-*-sco3.2v5*
-   7. file://localhost/egcs/omelette/tmp/12663/gcc-2.95.1/install/specific.html#ix86-*-udk
-   8. file://localhost/egcs/omelette/tmp/12663/gcc-2.95.1/install/specific.html#*-ibm-aix*
-   9. file://localhost/egcs/omelette/tmp/12663/gcc-2.95.1/install/specific.html#m68k-*-nextstep*
-  10. file://localhost/egcs/omelette/tmp/12663/gcc-2.95.1/install/specific.html#m68k-sun-sunos4.1.1
-  11. file://localhost/egcs/omelette/tmp/12663/gcc-2.95.1/install/specific.html#mips*-sgi-irix[45]
-  12. file://localhost/egcs/omelette/tmp/12663/gcc-2.95.1/install/specific.html#mips*-sgi-irix6
-  13. file://localhost/egcs/omelette/tmp/12663/gcc-2.95.1/install/specific.html#powerpc-*-linux-gnu*
-  14. file://localhost/egcs/omelette/tmp/12663/gcc-2.95.1/install/specific.html#sparc-sun-solaris2.7
-  15. file://localhost/egcs/omelette/tmp/12663/gcc-2.95.1/install/specific.html#sparc-sun-sunos*
-  16. file://localhost/egcs/omelette/tmp/12663/gcc-2.95.1/install/specific.html#sparc-unknown-linux-gnulibc1
-  17. file://localhost/egcs/omelette/tmp/12663/gcc-2.95.1/install/specific.html#sparc64-*-*
-  18. file://localhost/egcs/omelette/tmp/12663/gcc-2.95.1/install/specific.html#win+os2
-  19. file://localhost/egcs/omelette/tmp/12663/gcc-2.95.1/install/dec-osf-shlibstdc++.patch
-  20. ftp://sourceware.cygnus.com/pub/binutils/snapshots
-  21. http://us-support.external.hp.com/
-  22. http://europe-support.external.hp.com/
-  23. http://www.bitwizard.nl/sig11/
-  24. ftp://ftp.sco.com/Supplements/rs505a/
-  25. ftp://ftp.sco.com/SLS/
-  26. file://localhost/egcs/omelette/tmp/12663/gcc-2.95.1/install/sco_osr5_g77.patch
-  27. http://service.boulder.ibm.com/
-  28. http://service.boulder.ibm.com/
-  29. ftp://ftp.next.peak.org/next-ftp/next/apps/devtools/as.3.3.NIHS.s.tar.gz
-  30. http://reality.sgi.com/ariel/freeware/
-  31. http://reality.sgi.com/ariel/freeware/
-  32. ftp://ftp.varesearch.com/pub/support/hjl/binutils
-  33. ftp://ftp.yggdrasil.com/private/hjl
-  34. http://www.xraylith.wisc.edu/~khan/software/gnu-win32/
-  35. http://www.goof.com/pcg/os2/
-  36. file://localhost/egcs/omelette/tmp/12663/gcc-2.95.1/install/index.html
+   1. http://gcc.gnu.org/install/specific.html#alpha*-dec-linux*
+   2. http://gcc.gnu.org/install/specific.html#alpha*-dec-osf*
+   3. http://gcc.gnu.org/install/specific.html#dos
+   4. http://gcc.gnu.org/install/specific.html#hppa*-hp-hpux*
+   5. http://gcc.gnu.org/install/specific.html#hppa*-hp-hpux9
+   6. http://gcc.gnu.org/install/specific.html#hppa*-hp-hpux10
+   7. http://gcc.gnu.org/install/specific.html#ix86-*-linux*
+   8. http://gcc.gnu.org/install/specific.html#ix86-*-sco3.2v5*
+   9. http://gcc.gnu.org/install/specific.html#ix86-*-udk
+  10. http://gcc.gnu.org/install/specific.html#*-ibm-aix*
+  11. http://gcc.gnu.org/install/specific.html#m68k-*-nextstep*
+  12. http://gcc.gnu.org/install/specific.html#m68k-sun-sunos4.1.1
+  13. http://gcc.gnu.org/install/specific.html#mips*-sgi-irix[45]
+  14. http://gcc.gnu.org/install/specific.html#mips*-sgi-irix6
+  15. http://gcc.gnu.org/install/specific.html#powerpc-*-linux-gnu*
+  16. http://gcc.gnu.org/install/specific.html#*-*-solaris*
+  17. http://gcc.gnu.org/install/specific.html#sparc-sun-solaris*
+  18. http://gcc.gnu.org/install/specific.html#sparc-sun-solaris2.7
+  19. http://gcc.gnu.org/install/specific.html#sunv5
+  20. http://gcc.gnu.org/install/specific.html#sparc-sun-sunos*
+  21. http://gcc.gnu.org/install/specific.html#sparc-unknown-linux-gnulibc1
+  22. http://gcc.gnu.org/install/specific.html#sparc64-*-*
+  23. http://gcc.gnu.org/install/specific.html#win+os2
+  24. http://gcc.gnu.org/install/specific.html#elf_targets
+  25. http://gcc.gnu.org/install/dec-osf-shlibstdc++.patch
+  26. ftp://ftp.simtel.net/pub/simtelnet/gnu/djgpp/
+  27. ftp://sourceware.cygnus.com/pub/binutils/snapshots
+  28. http://us-support.external.hp.com/
+  29. http://europe-support.external.hp.com/
+  30. http://www.bitwizard.nl/sig11/
+  31. ftp://ftp.sco.com/Supplements/rs505a/
+  32. ftp://ftp.sco.com/SLS/
+  33. http://gcc.gnu.org/install/sco_osr5_g77.patch
+  34. http://service.boulder.ibm.com/
+  35. http://service.boulder.ibm.com/
+  36. ftp://ftp.next.peak.org/next-ftp/next/apps/devtools/as.3.3.NIHS.s.tar.gz
+  37. http://reality.sgi.com/ariel/freeware/
+  38. http://reality.sgi.com/ariel/freeware/
+  39. ftp://ftp.varesearch.com/pub/support/hjl/binutils
+  40. http://www.sunfreeware.com/
+  41. http://gcc.gnu.org/faq.html#squangle
+  42. http://www.gnu.org/software/gcc/egcstensions.html#sun-make
+  43. ftp://ftp.yggdrasil.com/private/hjl
+  44. http://www.xraylith.wisc.edu/~khan/software/gnu-win32/
+  45. http://www.goof.com/pcg/os2/
+  46. http://gcc.gnu.org/install/index.html

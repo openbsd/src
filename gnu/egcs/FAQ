@@ -5,61 +5,63 @@
    [1]http://www.gnu.org/software/gcc/faq.html.
    
    This FAQ tries to answer specific questions concerning GCC. For
-   general information regarding C resp. C++, please check the
-   [2]comp.lang.c FAQ, [3]comp.lang.c++ FAQ, and the [4]comp.std.c++ FAQ.
+   general information regarding C, C++, resp. Fortran please check the
+   [2]comp.lang.c FAQ, [3]comp.lang.c++ FAQ, [4]comp.std.c++ FAQ, and the
+   [5]Fortran Information page.
      _________________________________________________________________
    
                                    Questions
                                        
-    1. [5]General information
-         1. [6]What is the relationship between GCC and EGCS
-         2. [7]What is the relationship between GCC and Cygnus
-         3. [8]What is an open development model?
-         4. [9]How to report bugs
-         5. [10]How do I get a bug fixed or a feature added?
-    2. [11]Installation
-         1. [12]Problems building the Fortran compiler
-         2. [13]How to install multiple versions of GCC
-         3. [14]Dynamic linker is unable to find GCC libraries
-         4. [15]libstdc++/libio tests fail badly with --enable-shared
-         5. [16]GCC can not find GNU as/GNU ld
-         6. [17]cpp: Usage:... Error
-    3. [18]Testsuite problems
-         1. [19]Why is there no testsuite in GCC 2.95
-         2. [20]Unable to run the testsuite
-         3. [21]How do I pass flags like -fnew-abi to the testsuite?
-         4. [22]How can I run the test suite with multiple options?
-    4. [23]Platform-specific issues
-         1. [24]Problems with exception handling on x86 platforms
-         2. [25]Problems with Invalid `asm' statements
-         3. [26]Building Linux kernels
-         4. [27]How do I compile X11 headers with g++
-         5. [28]Signal 11 on GNU/Linux
-         6. [29]How to build a cross compiler
+    1. [6]General information
+         1. [7]What is the relationship between GCC and EGCS
+         2. [8]What is the relationship between GCC and Cygnus
+         3. [9]What is an open development model?
+         4. [10]How to report bugs
+         5. [11]How do I get a bug fixed or a feature added?
+    2. [12]Installation
+         1. [13]Problems building the Fortran compiler
+         2. [14]How to install multiple versions of GCC
+         3. [15]Dynamic linker is unable to find GCC libraries
+         4. [16]libstdc++/libio tests fail badly with --enable-shared
+         5. [17]GCC can not find GNU as/GNU ld
+         6. [18]cpp: Usage:... Error
+    3. [19]Testsuite problems
+         1. [20]Why is there no testsuite in GCC 2.95
+         2. [21]Unable to run the testsuite
+         3. [22]How do I pass flags like -fnew-abi to the testsuite?
+         4. [23]How can I run the test suite with multiple options?
+    4. [24]Platform-specific issues
+         1. [25]Problems with exception handling on x86 platforms
+         2. [26]Problems with Invalid `asm' statements
+         3. [27]Building Linux kernels
+         4. [28]How do I compile X11 headers with g++
+         5. [29]How to build a cross compiler
     5. [30]Bugs and Non-Bugs
          1. [31]FD_ZERO macro
          2. [32]Octave 2.0.13 does not compile
-    6. [33]Miscellaneous
-         1. [34]Virtual memory exhausted
-         2. [35]Snapshots, how, when, why
-         3. [36]Friend Templates
-         4. [37]Where to find libg++
-         5. [38]Why do I need autoconf, bison, xgettext, automake, etc 
-         6. [39]Problems debugging GCC code
-         7. [40]Conflicts when using cvs update 
-         8. [41]Using GCC with GNAT/Ada
-         9. [42]Using GCC with GNU Pascal
-        10. [43]Using CVS to download snapshots 
-        11. [44]Why can't I build a shared library?
-        12. [45]Dealing with spam on the lists
-        13. [46]How to work around too long C++ symbol names?
+         3. [33]Why can't I initialize a static variable with stdin?
+         4. [34]Why can't I use #if here?
+    6. [35]Miscellaneous
+         1. [36]Virtual memory exhausted
+         2. [37]Snapshots, how, when, why
+         3. [38]Friend Templates
+         4. [39]Where to find libg++
+         5. [40]Why do I need autoconf, bison, xgettext, automake, etc 
+         6. [41]Problems debugging GCC code
+         7. [42]Conflicts when using cvs update 
+         8. [43]Using GCC with GNAT/Ada
+         9. [44]Using GCC with GNU Pascal
+        10. [45]Using CVS to download snapshots 
+        11. [46]Why can't I build a shared library?
+        12. [47]Dealing with spam on the lists
+        13. [48]How to work around too long C++ symbol names?
             (-fsquangle)
-        14. [47]When building from CVS sources, I see 'gperf: invalid
+        14. [49]When building from CVS sources, I see 'gperf: invalid
             option -- F', even with the most current version of gperf.
-        15. [48]When building C++, the linker says my constructors,
+        15. [50]When building C++, the linker says my constructors,
             destructors or virtual tables are undefined, but I defined
             them
-        16. [49]What is libstdc++-v3 and how can I use it with g++?
+        16. [51]What is libstdc++-v3 and how can I use it with g++?
      _________________________________________________________________
    
                               General information
@@ -83,7 +85,7 @@ What is the relationship between GCC and EGCS
    
    We are in the process of merging GCC and EGCS, which will take some
    time. The net result will be a single project which will carry forward
-   GCC development under the ultimate control of the [50]GCC Steering
+   GCC development under the ultimate control of the [52]GCC Steering
    Committee.
      _________________________________________________________________
    
@@ -95,7 +97,7 @@ What is the relationship between GCC and Cygnus
    While Cygnus does donate hardware, network connections, code and
    developer time to GCC development, Cygnus does not control GCC.
    
-   Overall control of GCC is in the hands of the [51]GCC Steering
+   Overall control of GCC is in the hands of the [53]GCC Steering
    Committee which includes people from a variety of different
    organizations and backgrounds. The purpose of the steering committee
    is to make decisions in the best interest of GCC and to help ensure
@@ -107,7 +109,7 @@ What is the relationship between GCC and Cygnus
    
 What is an open development model?
 
-   With GCC, we are going to try a bazaar style[52][1] approach to its
+   With GCC, we are going to try a bazaar style[54][1] approach to its
    development: We make snapshots publicly available to anyone who wants
    to try them; we're going to welcome anyone to join the development
    mailing list. All of the discussions on the development mailing list
@@ -145,25 +147,26 @@ What is an open development model?
      the past few months. The paper which started all of this introduced
      two terms: A _cathedral_ development model versus a _bazaar_
      development model. The paper is written by Eric S. Raymond, it is
-     called ``[53]The Cathedral and the Bazaar''. The paper is a useful
+     called ``[55]The Cathedral and the Bazaar''. The paper is a useful
      starting point for discussions.
      _________________________________________________________________
    
 How to report bugs
 
-   There are complete instructions in the [54]gcc info manual, section
+   There are complete instructions in the [56]gcc info manual, section
    Bugs. The manual can also be read using `_M-x info_' in Emacs, or if
    the GNU info program is installed on your system by `info --node
-   "(gcc)Bugs"'. Or see the file [55]BUGS included with the GCC source
+   "(gcc)Bugs"'. Or see the file [57]BUGS included with the GCC source
    code.
    
    Before you report a bug for the _C++ compiler_, please check the
-   [56]list of well-known bugs. If you want to report a bug with _egcs
-   1.0.x_, we recommend upgrading to the current release first.
+   [58]list of well-known bugs. If you want to report a bug with _egcs
+   1.0.x_ or _egcs 1.1.x_, we strongly recommend upgrading to the current
+   release first.
    
-   In short, if gcc says Internal compiler error (or any other error that
+   In short, if GCC says Internal compiler error (or any other error that
    you'd like us to be able to reproduce, for that matter), please mail a
-   bug report to [57]gcc-bugs@gcc.gnu.org or [58]bug-gcc@gnu.org
+   bug report to [59]gcc-bugs@gcc.gnu.org or [60]bug-gcc@gnu.org
    including:
      * The GCC version
      * The system type
@@ -237,7 +240,7 @@ How do I get a bug fixed or a feature added?
        commercial support organization since the people who read
        gcc-bugs, if they choose to help you, will be volunteering their
        time. This alternative will work best if you follow the directions
-       on [59]submitting bugreports.
+       on [61]submitting bugreports.
      * Fix it yourself. This alternative will probably bring results, if
        you work hard enough, but will probably take a lot of time, and,
        depending on the quality of your work and the perceived benefits
@@ -302,7 +305,7 @@ How to install multiple versions of gcc
    wish to be sure about which version you are invoking.
    
    If you use --prefix, GCC may have difficulty locating a GNU assembler
-   or linker on your system, [60]GCC can not find GNU as/GNU ld explains
+   or linker on your system, [62]GCC can not find GNU as/GNU ld explains
    how to deal with this.
      _________________________________________________________________
    
@@ -358,7 +361,7 @@ GCC can not find GNU as/GNU ld
    versions of those programs.
    
    To ensure that GCC finds the GNU assembler (the GNU loader), which are
-   required by [61]some configurations, you should configure these with
+   required by [63]some configurations, you should configure these with
    the same --prefix option as you used for GCC. Then build & install GNU
    as (GNU ld) and proceed with building GCC.
    
@@ -419,7 +422,7 @@ Unable to run the testsuite
    If you get a message about unable to find "standard.exp" when trying
    to run the GCC testsuites, then your dejagnu is too old to run the GCC
    tests. You will need to get a newer version of dejagnu; we've made a
-   [62]dejagnu snapshot available until a new version of dejagnu can be
+   [64]dejagnu snapshot available until a new version of dejagnu can be
    released.
      _________________________________________________________________
    
@@ -452,7 +455,7 @@ How can I run the test suite with multiple options?
    
                            Platform-specific issues
                                        
-   Please read the [63]host/target specific installation notes, too.
+   Please read the [65]host/target specific installation notes, too.
    
 Problems with exception handling on x86 platforms
 
@@ -463,7 +466,7 @@ Problems with exception handling on x86 platforms
    
    We recommend binutils-2.9.1 or newer. Some post-2.9.1 snapshots of
    binutils fix some subtle bugs, particularly on x86 and alpha. They are
-   available at [64]ftp://tsx-11.mit.edu/pub/linux/packages/GCC/. The
+   available at [66]ftp://tsx-11.mit.edu/pub/linux/packages/GCC/. The
    2.9.1.0.15 snapshot is known to work fine on those platforms; other
    than that, be aware that snapshots are in general untested and may not
    work (or even build). Use them at your own risk.
@@ -475,7 +478,7 @@ Problems with invalid `asm' statements
    not detect as invalid a clobber specifier that clobbered an operand.
    Instead, it could spuriously and silently generate incorrect code for
    certain non-obvious cases of source code. Even more unfortunately, the
-   manual (Using and Porting GCC, section Extended Asm, see the [65]bug
+   manual (Using and Porting GCC, section Extended Asm, see the [67]bug
    report entry) did not explicitly say that it was invalid to specify
    clobber registers that were destined to overlap operands; it could
    arguably be interpreted that it was correct to clobber an input
@@ -491,7 +494,7 @@ Problems with invalid `asm' statements
   foo.c:7: Invalid `asm' statement:
   foo.c:7: fixed or forbidden register 0 (ax) was spilled for class AREG.
 
-   Unfortunately, a lot of existing software, for example the [66]Linux
+   Unfortunately, a lot of existing software, for example the [68]Linux
    kernel version 2.0.35 for the Intel x86, has constructs where input
    operands are marked as clobbered.
    
@@ -558,8 +561,8 @@ Building Linux kernels
    kernels are to be built only with gcc 2.7.2. They use certain asm
    constructs which are incorrect, but (by accident) happen to work with
    gcc 2.7.2. If you insist on building 2.0.x kernels with egcs, you may
-   be interested in this [67]patch which fixes some of the asm problems.
-   You will also want to change asm constructs to [68]avoid clobbering
+   be interested in this [69]patch which fixes some of the asm problems.
+   You will also want to change asm constructs to [70]avoid clobbering
    their input operands.
    
    If you installed a recent binutils/gas snapshot on your GNU/Linux
@@ -600,7 +603,7 @@ How to build a cross compiler
    usually need additional software (cross assembler, cross linker,
    target libraries, target include files, etc).
    
-   We recommend reading the [69]crossgcc FAQ for information about
+   We recommend reading the [71]crossgcc FAQ for information about
    building cross compilers.
    
    If you have all the pieces available, then `make cross' should build a
@@ -626,16 +629,16 @@ How to build a cross compiler
    earlier versions of gcc or other compilers. The following problems
    with some releases of widely used packages have been identified:
    
-   There is a separate [70]list of well-known bugs describing known
+   There is a separate [72]list of well-known bugs describing known
    deficiencies. Naturally we'd like that list to be of zero length.
    
-   To report a bug, see [71]How to report bugs.
+   To report a bug, see [73]How to report bugs.
      _________________________________________________________________
    
 FD_ZERO macro
 
    The FD_ZERO macro in (e.g.) libc-5.4.46 is incorrect. It uses
-   [72]invalid asm clobbers. The following rewrite by Ulrich Drepper
+   [74]invalid asm clobbers. The following rewrite by Ulrich Drepper
    <drepper@cygnus.com> should fix this for glibc 2.0:
   # define __FD_ZERO(fdsetp) \
     do { \
@@ -655,11 +658,99 @@ Octave 2.0.13 does not compile
 
    Apparently Octave 2.0.13 uses some C++ features which have been
    obsoleted and thus fails to build with EGCS 1.1 and later. This
-   [73]patch to Octave should fix this.
+   [75]patch to Octave should fix this.
    
    Octave 2.0.13.96, a test release, has been compiled without patches by
    egcs 1.1.2. It is available at
-   [74]ftp://ftp.che.wisc.edu/pub/octave/test-releases/.
+   [76]ftp://ftp.che.wisc.edu/pub/octave/test-releases/.
+     _________________________________________________________________
+   
+Why can't I initialize a static variable with stdin?
+
+   This has nothing to do with gcc, but people ask us about it a lot.
+   Code like this:
+  #include <stdio.h>
+
+  FILE *yyin = stdin;
+
+   will not compile with GNU libc (Linux libc6), because stdin is not a
+   constant. This was done deliberately, in order for there to be no
+   limit on the number of open FILE objects. It is surprising for people
+   used to traditional Unix C libraries, but it is permitted by the C
+   standard.
+   
+   This construct commonly occurs in code generated by old versions of
+   lex or yacc. We suggest you try regenerating the parser with a current
+   version of flex or bison, respectively. In your own code, the
+   appropriate fix is to move the initialization to the beginning of
+   main.
+   
+   There is a common misconception that the GCC developers are
+   responsible for GNU libc. These are in fact two entirely separate
+   projects. The appropriate place to ask questions relating to GNU libc
+   is [77]libc-alpha@sourceware.cygnus.com.
+     _________________________________________________________________
+   
+Why can't I use #if here?
+
+   Let me guess... you wrote code that looks something like this:
+  memcpy(dest, src,
+#ifdef PLATFORM1
+         12
+#else
+         24
+#endif
+        );
+
+   and you got a whole pile of error messages:
+test.c:11: warning: preprocessing directive not recognized within macro arg
+test.c:11: warning: preprocessing directive not recognized within macro arg
+test.c:11: warning: preprocessing directive not recognized within macro arg
+test.c: In function `foo':
+test.c:6: undefined or invalid # directive
+test.c:8: undefined or invalid # directive
+test.c:9: parse error before `24'
+test.c:10: undefined or invalid # directive
+test.c:11: parse error before `#'
+
+   The problem, simply put, is that GCC's preprocessor does not allow you
+   to put #ifdef (or any other directive) inside the arguments of a
+   macro. Your C library's string.h happens to define memcpy as a macro -
+   this is perfectly legitimate. The code therefore will not compile.
+   
+   We have two good reasons for not allowing directives inside macro
+   arguments. First, it is not portable. It is "undefined behavior"
+   according to the C standard; that means different compilers will do
+   different things with it. Some will give you errors. Some will dump
+   core. Some will silently mangle your code - you could get the
+   equivalent of
+        memcpy(dest, src, 1224);
+
+   from the above example. A very few might do what you expected it to.
+   We therefore feel it is most useful for GCC to reject this construct
+   immediately so that it is found and fixed.
+   
+   Second, it is extraordinarily difficult to implement the preprocessor
+   such that it does what you would expect for every possible directive
+   found inside a macro argument. The best example is perhaps
+#define foo(arg) ... arg ...
+foo(blah
+#undef foo
+blah)
+
+   which is impossible to implement in portable C without leaking memory.
+   Allowing only a subset of directives would be confusing.
+   
+   It is always possible to rewrite code which uses conditionals inside
+   macros so that it doesn't. You could write the above example
+#ifdef PLATFORM1
+   memcpy(dest, src, 12);
+#else
+   memcpy(dest, src, 24);
+#endif
+
+   This is a bit more typing, but I personally think it's better style in
+   addition to being more portable.
      _________________________________________________________________
    
                                  Miscellaneous
@@ -685,7 +776,7 @@ Snapshots, how, when, why
    code or even fail to build.
    
    If you plan on downloading and using snapshots, we highly recommend
-   you subscribe to the GCC mailing lists. See [75]mailing lists on the
+   you subscribe to the GCC mailing lists. See [78]mailing lists on the
    main GCC page for instructions on how to subscribe.
    
    When using the diff files to update from older snapshots to newer
@@ -754,7 +845,7 @@ Where to find libg++
    need libstdc++/libio which are included in the GCC distribution.
    
    If you do need libg++ you can get a libg++ release that works with GCC
-   from [76]ftp://egcs.cygnus.com/pub/egcs/infrastructure/. Note that the
+   from [79]ftp://egcs.cygnus.com/pub/egcs/infrastructure/. Note that the
    2.8.2 snapshot pre-dates the 2.8.1.2 release.
      _________________________________________________________________
    
@@ -771,17 +862,19 @@ autoconf, bison, xgettext, automake, etc
    correct. This causes problems for generated files as "make" may think
    those generated files are out of date and try to regenerate them.
    
-   An easy way to work around this problem is to use the egcs_update
-   script in the contrib subdirectory of egcs, which handles this
+   An easy way to work around this problem is to use the gcc_update
+   script in the contrib subdirectory of GCC, which handles this
    transparently without requiring installation of any additional tools.
+   (Note: Up to and including GCC 2.95 this script was called egcs_update
+   .)
    
    When building from diffs or CVS or if you modified some sources, you
    may also need to obtain development versions of some GNU tools, as the
    production versions do not necessarily handle all features needed to
-   rebuild egcs.
+   rebuild GCC.
    
-   Autoconf is available from [77]http://sourceware.cygnus.com/autoconf/;
-   have a look at [78]ftp://egcs.cygnus.com/pub/egcs/infrastructure/ for
+   Autoconf is available from [80]http://sourceware.cygnus.com/autoconf/;
+   have a look at [81]ftp://egcs.cygnus.com/pub/egcs/infrastructure/ for
    the other packages.
      _________________________________________________________________
    
@@ -822,10 +915,10 @@ Using GCC with GNAT/Ada
    
 Using GCC with GNU Pascal
 
-   The [79]GNU Pascal front-end does work with EGCS 1.1 It does not work
+   The [82]GNU Pascal front-end does work with EGCS 1.1 It does not work
    with EGCS 1.0.x and the main branch of the CVS repository. A tarball
    can be found at
-   [80]ftp://agnes.dida.physik.uni-essen.de/gnu-pascal/beta/.
+   [83]ftp://agnes.dida.physik.uni-essen.de/gnu-pascal/beta/.
      _________________________________________________________________
    
 Using CVS to download snapshots
@@ -835,7 +928,7 @@ Using CVS to download snapshots
    
    We use CVS tags to identify each snapshot we make. Snapshot tags have
    the form "egcs_ss_YYYYMMDD". In addition, the latest official snapshot
-   always has the tag "egcs_latest_snapshot".
+   always has the tag "gcc_latest_snapshot".
      _________________________________________________________________
    
 Why can't I build a shared library?
@@ -886,10 +979,10 @@ the most current version of gperf.
    The current version of gperf (v2.7) does not support the -F flag which
    is used when building egcs from CVS sources. You will need to obtain a
    patch for gperf and rebuild the program; this patch is available at
-   [81]ftp://egcs.cygnus.com/pub/egcs/infrastructure/
+   [84]ftp://egcs.cygnus.com/pub/egcs/infrastructure/
    
    Patches for other tools, particularly autoconf, may also be necessary
-   if you're building from CVS sources. Please see the [82]FAQ entry
+   if you're building from CVS sources. Please see the [85]FAQ entry
    regarding these tools to determine if anything else is needed.
    
    These patched utilities should _only_ be required if you are building
@@ -924,7 +1017,7 @@ tables are undefined, but I defined them
    
 What is libstdc++-v3 and how can I use it with g++?
 
-   From the [83]libstdc++-FAQ: "The EGCS Standard C++ Library v3, or
+   From the [86]libstdc++-FAQ: "The EGCS Standard C++ Library v3, or
    libstdc++-2.90.x, is an ongoing project to implement the ISO 14882
    Standard C++ library as described in chapters 17 through 27 and annex
    D."
@@ -938,12 +1031,12 @@ What is libstdc++-v3 and how can I use it with g++?
    Please note that the libstdc++-v3 is not yet complete and should only
    be used by experienced programmers.
    
-   For more information please refer to the [84]libstdc++-v3 homepage
+   For more information please refer to the [87]libstdc++-v3 homepage
      _________________________________________________________________
    
-   [85]Return to the GCC home page
+   [88]Return to the GCC home page
    
-   _Last modified: August 15, 1999_
+   _Last modified: October 19, 1999_
 
 References
 
@@ -951,84 +1044,87 @@ References
    2. http://www.eskimo.com/~scs/C-faq/top.html
    3. http://www.cerfnet.com/~mpcline/On-Line-C++-FAQs/
    4. http://reality.sgi.com/austern_mti/std-c++/faq.html
-   5. file://localhost/egcs/omelette/tmp/12663/gcc-2.95.1/faq.html#general
-   6. file://localhost/egcs/omelette/tmp/12663/gcc-2.95.1/faq.html#gcc
-   7. file://localhost/egcs/omelette/tmp/12663/gcc-2.95.1/faq.html#cygnus
-   8. file://localhost/egcs/omelette/tmp/12663/gcc-2.95.1/faq.html#open-development
-   9. file://localhost/egcs/omelette/tmp/12663/gcc-2.95.1/faq.html#bugreport
-  10. file://localhost/egcs/omelette/tmp/12663/gcc-2.95.1/faq.html#support
-  11. file://localhost/egcs/omelette/tmp/12663/gcc-2.95.1/faq.html#installation
-  12. file://localhost/egcs/omelette/tmp/12663/gcc-2.95.1/faq.html#fortran
-  13. file://localhost/egcs/omelette/tmp/12663/gcc-2.95.1/faq.html#multiple
-  14. file://localhost/egcs/omelette/tmp/12663/gcc-2.95.1/faq.html#rpath
-  15. file://localhost/egcs/omelette/tmp/12663/gcc-2.95.1/faq.html#rpath
-  16. file://localhost/egcs/omelette/tmp/12663/gcc-2.95.1/faq.html#gas
-  17. file://localhost/egcs/omelette/tmp/12663/gcc-2.95.1/faq.html#environ
-  18. file://localhost/egcs/omelette/tmp/12663/gcc-2.95.1/faq.html#testsuite
-  19. file://localhost/egcs/omelette/tmp/12663/gcc-2.95.1/faq.html#testsuite
-  20. file://localhost/egcs/omelette/tmp/12663/gcc-2.95.1/faq.html#dejagnu
-  21. file://localhost/egcs/omelette/tmp/12663/gcc-2.95.1/faq.html#testoptions
-  22. file://localhost/egcs/omelette/tmp/12663/gcc-2.95.1/faq.html#multipletests
-  23. file://localhost/egcs/omelette/tmp/12663/gcc-2.95.1/faq.html#platform
-  24. file://localhost/egcs/omelette/tmp/12663/gcc-2.95.1/faq.html#x86eh
-  25. file://localhost/egcs/omelette/tmp/12663/gcc-2.95.1/faq.html#asmclobber
-  26. file://localhost/egcs/omelette/tmp/12663/gcc-2.95.1/faq.html#linuxkernel
-  27. file://localhost/egcs/omelette/tmp/12663/gcc-2.95.1/faq.html#X11R6
-  28. file://localhost/egcs/omelette/tmp/12663/gcc-2.95.1/faq.html#sig11
-  29. file://localhost/egcs/omelette/tmp/12663/gcc-2.95.1/faq.html#cross
-  30. file://localhost/egcs/omelette/tmp/12663/gcc-2.95.1/faq.html#bugs
-  31. file://localhost/egcs/omelette/tmp/12663/gcc-2.95.1/faq.html#fdzero
-  32. file://localhost/egcs/omelette/tmp/12663/gcc-2.95.1/faq.html#octave
-  33. file://localhost/egcs/omelette/tmp/12663/gcc-2.95.1/faq.html#misc
-  34. file://localhost/egcs/omelette/tmp/12663/gcc-2.95.1/faq.html#memexhausted
-  35. file://localhost/egcs/omelette/tmp/12663/gcc-2.95.1/faq.html#snapshot
-  36. file://localhost/egcs/omelette/tmp/12663/gcc-2.95.1/faq.html#friend
-  37. file://localhost/egcs/omelette/tmp/12663/gcc-2.95.1/faq.html#libg++
-  38. file://localhost/egcs/omelette/tmp/12663/gcc-2.95.1/faq.html#generated_files
-  39. file://localhost/egcs/omelette/tmp/12663/gcc-2.95.1/faq.html#gdb
-  40. file://localhost/egcs/omelette/tmp/12663/gcc-2.95.1/faq.html#conflicts
-  41. file://localhost/egcs/omelette/tmp/12663/gcc-2.95.1/faq.html#gnat
-  42. file://localhost/egcs/omelette/tmp/12663/gcc-2.95.1/faq.html#gpc
-  43. file://localhost/egcs/omelette/tmp/12663/gcc-2.95.1/faq.html#cvssnapshots
-  44. file://localhost/egcs/omelette/tmp/12663/gcc-2.95.1/faq.html#picflag-needed
-  45. file://localhost/egcs/omelette/tmp/12663/gcc-2.95.1/spam.html
-  46. file://localhost/egcs/omelette/tmp/12663/gcc-2.95.1/faq.html#squangle
-  47. file://localhost/egcs/omelette/tmp/12663/gcc-2.95.1/faq.html#gperf
-  48. file://localhost/egcs/omelette/tmp/12663/gcc-2.95.1/faq.html#vtables
-  49. file://localhost/egcs/omelette/tmp/12663/gcc-2.95.1/faq.html#libstdc++
-  50. file://localhost/egcs/omelette/tmp/12663/gcc-2.95.1/steering.html
-  51. file://localhost/egcs/omelette/tmp/12663/gcc-2.95.1/steering.html
-  52. file://localhost/egcs/omelette/tmp/12663/gcc-2.95.1/faq.html#cathedral-vs-bazaar
-  53. http://locke.ccil.org/~esr/writings/cathedral.html
-  54. file://localhost/egcs/omelette/tmp/12663/gcc-2.95.1/onlinedocs/
-  55. http://egcs.cygnus.com/cgi-bin/cvsweb.cgi/~checkout~/egcs/gcc/BUGS?content-type=text/plain&only_with_tag=HEAD
-  56. file://localhost/egcs/omelette/tmp/12663/gcc-2.95.1/bugs.html
-  57. mailto:gcc-bugs@gcc.gnu.org
-  58. mailto:bug-gcc@gnu.org
-  59. file://localhost/egcs/omelette/tmp/12663/gcc-2.95.1/faq.html#bugreport
-  60. file://localhost/egcs/omelette/tmp/12663/gcc-2.95.1/faq.html#gas
-  61. file://localhost/egcs/omelette/tmp/12663/gcc-2.95.1/install/specific.html
-  62. ftp://egcs.cygnus.com/pub/egcs/infrastructure/dejagnu-19981026.tar.gz
-  63. file://localhost/egcs/omelette/tmp/12663/gcc-2.95.1/install/specific.html
-  64. ftp://tsx-11.mit.edu/pub/linux/packages/GCC/
-  65. file://localhost/egcs/omelette/tmp/12663/gcc-2.95.1/faq.html#bugreport
-  66. file://localhost/egcs/omelette/tmp/12663/gcc-2.95.1/faq.html#linuxkernel
-  67. http://www.suse.de/~florian/kernel+egcs.html
-  68. file://localhost/egcs/omelette/tmp/12663/gcc-2.95.1/faq.html#asmclobber
-  69. http://www.objsw.com/CrossGCC/
-  70. file://localhost/egcs/omelette/tmp/12663/gcc-2.95.1/bugs.html
-  71. file://localhost/egcs/omelette/tmp/12663/gcc-2.95.1/faq.html#bugreport
-  72. file://localhost/egcs/omelette/tmp/12663/gcc-2.95.1/faq.html#asmclobber
-  73. http://www.che.wisc.edu/octave/mailing-lists/bug-octave/1998/270
-  74. ftp://ftp.che.wisc.edu/pub/octave/test-releases/
-  75. file://localhost/egcs/omelette/tmp/12663/gcc-2.95.1/index.html#mailinglists
-  76. ftp://egcs.cygnus.com/pub/egcs/infrastructure/
-  77. http://sourceware.cygnus.com/autoconf/
-  78. ftp://egcs.cygnus.com/pub/egcs/infrastructure/
-  79. http://home.pages.de/~GNU-Pascal/
-  80. ftp://agnes.dida.physik.uni-essen.de/gnu-pascal/beta/
-  81. ftp://egcs.cygnus.com/pub/egcs/infrastructure
-  82. file://localhost/egcs/omelette/tmp/12663/gcc-2.95.1/faq.html#generated_files
-  83. http://sourceware.cygnus.com/libstdc++/faq/
-  84. http://sourceware.cygnus.com/libstdc++/
-  85. file://localhost/egcs/omelette/tmp/12663/gcc-2.95.1/index.html
+   5. http://www.fortran.com/fortran/info.html
+   6. http://gcc.gnu.org/faq.html#general
+   7. http://gcc.gnu.org/faq.html#gcc
+   8. http://gcc.gnu.org/faq.html#cygnus
+   9. http://gcc.gnu.org/faq.html#open-development
+  10. http://gcc.gnu.org/faq.html#bugreport
+  11. http://gcc.gnu.org/faq.html#support
+  12. http://gcc.gnu.org/faq.html#installation
+  13. http://gcc.gnu.org/faq.html#fortran
+  14. http://gcc.gnu.org/faq.html#multiple
+  15. http://gcc.gnu.org/faq.html#rpath
+  16. http://gcc.gnu.org/faq.html#rpath
+  17. http://gcc.gnu.org/faq.html#gas
+  18. http://gcc.gnu.org/faq.html#environ
+  19. http://gcc.gnu.org/faq.html#testsuite
+  20. http://gcc.gnu.org/faq.html#testsuite
+  21. http://gcc.gnu.org/faq.html#dejagnu
+  22. http://gcc.gnu.org/faq.html#testoptions
+  23. http://gcc.gnu.org/faq.html#multipletests
+  24. http://gcc.gnu.org/faq.html#platform
+  25. http://gcc.gnu.org/faq.html#x86eh
+  26. http://gcc.gnu.org/faq.html#asmclobber
+  27. http://gcc.gnu.org/faq.html#linuxkernel
+  28. http://gcc.gnu.org/faq.html#X11R6
+  29. http://gcc.gnu.org/faq.html#cross
+  30. http://gcc.gnu.org/faq.html#bugs
+  31. http://gcc.gnu.org/faq.html#fdzero
+  32. http://gcc.gnu.org/faq.html#octave
+  33. http://gcc.gnu.org/faq.html#stdin
+  34. http://gcc.gnu.org/faq.html#macarg
+  35. http://gcc.gnu.org/faq.html#misc
+  36. http://gcc.gnu.org/faq.html#memexhausted
+  37. http://gcc.gnu.org/faq.html#snapshot
+  38. http://gcc.gnu.org/faq.html#friend
+  39. http://gcc.gnu.org/faq.html#libg++
+  40. http://gcc.gnu.org/faq.html#generated_files
+  41. http://gcc.gnu.org/faq.html#gdb
+  42. http://gcc.gnu.org/faq.html#conflicts
+  43. http://gcc.gnu.org/faq.html#gnat
+  44. http://gcc.gnu.org/faq.html#gpc
+  45. http://gcc.gnu.org/faq.html#cvssnapshots
+  46. http://gcc.gnu.org/faq.html#picflag-needed
+  47. http://gcc.gnu.org/spam.html
+  48. http://gcc.gnu.org/faq.html#squangle
+  49. http://gcc.gnu.org/faq.html#gperf
+  50. http://gcc.gnu.org/faq.html#vtables
+  51. http://gcc.gnu.org/faq.html#libstdc++
+  52. http://gcc.gnu.org/steering.html
+  53. http://gcc.gnu.org/steering.html
+  54. http://gcc.gnu.org/faq.html#cathedral-vs-bazaar
+  55. http://locke.ccil.org/~esr/writings/cathedral.html
+  56. http://gcc.gnu.org/onlinedocs/
+  57. http://egcs.cygnus.com/cgi-bin/cvsweb.cgi/~checkout~/egcs/gcc/BUGS?content-type=text/plain&only_with_tag=HEAD
+  58. http://gcc.gnu.org/bugs.html
+  59. mailto:gcc-bugs@gcc.gnu.org
+  60. mailto:bug-gcc@gnu.org
+  61. http://gcc.gnu.org/faq.html#bugreport
+  62. http://gcc.gnu.org/faq.html#gas
+  63. http://gcc.gnu.org/install/specific.html
+  64. ftp://egcs.cygnus.com/pub/egcs/infrastructure/dejagnu-19981026.tar.gz
+  65. http://gcc.gnu.org/install/specific.html
+  66. ftp://tsx-11.mit.edu/pub/linux/packages/GCC/
+  67. http://gcc.gnu.org/faq.html#bugreport
+  68. http://gcc.gnu.org/faq.html#linuxkernel
+  69. http://www.suse.de/~florian/kernel+egcs.html
+  70. http://gcc.gnu.org/faq.html#asmclobber
+  71. http://www.objsw.com/CrossGCC/
+  72. http://gcc.gnu.org/bugs.html
+  73. http://gcc.gnu.org/faq.html#bugreport
+  74. http://gcc.gnu.org/faq.html#asmclobber
+  75. http://www.che.wisc.edu/octave/mailing-lists/bug-octave/1998/270
+  76. ftp://ftp.che.wisc.edu/pub/octave/test-releases/
+  77. mailto:libc-alpha@sourceware.cygnus.com
+  78. http://gcc.gnu.org/index.html#mailinglists
+  79. ftp://egcs.cygnus.com/pub/egcs/infrastructure/
+  80. http://sourceware.cygnus.com/autoconf/
+  81. ftp://egcs.cygnus.com/pub/egcs/infrastructure/
+  82. http://home.pages.de/~GNU-Pascal/
+  83. ftp://agnes.dida.physik.uni-essen.de/gnu-pascal/beta/
+  84. ftp://egcs.cygnus.com/pub/egcs/infrastructure
+  85. http://gcc.gnu.org/faq.html#generated_files
+  86. http://sourceware.cygnus.com/libstdc++/faq/
+  87. http://sourceware.cygnus.com/libstdc++/
+  88. http://gcc.gnu.org/index.html
