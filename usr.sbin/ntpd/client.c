@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.56 2005/02/03 10:53:33 dtucker Exp $ */
+/*	$OpenBSD: client.c,v 1.57 2005/02/21 17:58:43 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -47,7 +47,7 @@ int
 client_peer_init(struct ntp_peer *p)
 {
 	if ((p->query = calloc(1, sizeof(struct ntp_query))) == NULL)
-		fatal("client_query calloc");
+		fatal("client_peer_init calloc");
 	p->query->fd = -1;
 	p->query->msg.status = MODE_CLIENT | (NTP_VERSION << 3);
 	p->state = STATE_NONE;
