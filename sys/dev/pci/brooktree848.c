@@ -1,4 +1,4 @@
-/* $OpenBSD: brooktree848.c,v 1.15 1999/12/05 23:33:20 deraadt Exp $ */
+/* $OpenBSD: brooktree848.c,v 1.16 2000/02/10 11:22:47 d Exp $ */
 /* $Roger: brooktree848.c,v 1.85 1999/06/12 14:54:54 roger Exp $ */
 
 /* BT848 Driver for Brooktree's Bt848, Bt848A, Bt849A, Bt878, Bt879 based cards.
@@ -17,6 +17,10 @@
       Enjoy,
       Amancio
 
+   The Bt848 was discontinued in July 1999. 
+   http://www.conexant.com/techinfo/data_sheets/multimedia/pci_products/848/l848_b.pdf
+   (Brooktree was purchased by Rockwell, and their entire semiconductor arm
+   renamed as Conexant.)
  */
 
 /*
