@@ -1,7 +1,7 @@
-/*	$OpenBSD: vars.c,v 1.4 1999/06/12 01:22:47 todd Exp $	*/
+/*	$OpenBSD: vars.c,v 1.5 2000/01/03 22:27:30 mickey Exp $	*/
 
 /*
- * Copyright (c) 1998 Michael Shalayeff
+ * Copyright (c) 1998-2000 Michael Shalayeff
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -18,13 +18,13 @@
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR 
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
  * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * OR SERVICES; LOSS OF MIND, USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
@@ -69,7 +69,7 @@ const struct cmd_table cmd_set[] = {
 static int
 Xdebug()
 {
-	if (cmd.argc !=2)
+	if (cmd.argc != 2)
 		printf( "o%s\n", debug? "n": "ff" );
 	else
 		debug = (cmd.argv[1][0] == '0' ||
@@ -82,11 +82,10 @@ Xdebug()
 static int
 Xtimeout()
 {
-	if (cmd.argc !=2)
+	if (cmd.argc != 2)
 		printf( "%d\n", cmd.timeout );
 	else
-		if( (cmd.argv[1][0] >= 48) && (cmd.argv[1][0] <= 57) )
-			cmd.timeout = cmd.argv[1][0] - 48;
+		cmd.timeout = (int)strtol( cmd.argv[1], (char **)NULL, 0 );
 	return 0;
 }
 
@@ -149,7 +148,7 @@ Xtty()
 			printf("switching console to %s\n", cmd.argv[1]);
 			if (cnset(dev))
 				printf("%s console not present\n",
-				       cmd.argv[1]);
+				    cmd.argv[1]);
 		}
 	}
 	return 0;
