@@ -56,6 +56,7 @@
 ./usr/include/mvmeppc/vuid_event.h
 ./usr/include/mvmeppc/wsconsio.h
 ./usr/include/powerpc
+./usr/include/powerpc/db_machdep.h
 ./usr/include/powerpc/internal_types.h
 ./usr/lib/crtbegin.o
 ./usr/lib/crtbeginS.o
