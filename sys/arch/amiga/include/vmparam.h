@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.4 1997/09/18 13:40:04 niklas Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.5 1998/03/26 13:08:01 niklas Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.16 1997/07/12 16:18:36 perry Exp $	*/
 
 /*
@@ -169,4 +169,16 @@
  * number of kernel PT pages (initial only, can grow dynamically)
  */
 #define VM_KERNEL_PT_PAGES	((vm_size_t)2)		/* XXX: SYSPTSIZE */
+
+/*
+ * XXX Override MI values for number of kernel maps and entries to statically
+ * allocate, as we seem to lose hanging in high IPL with the MI values.
+ */
+#ifndef MAX_KMAP
+#define MAX_KMAP	10
+#endif
+#ifdef MAX_KMAPENT
+#define MAX_KMAPENT	500
+#endif
+
 #endif /* !_MACHINE_VMPARAM_H_ */
