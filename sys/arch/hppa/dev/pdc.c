@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdc.c,v 1.17 2002/02/01 08:48:22 mickey Exp $	*/
+/*	$OpenBSD: pdc.c,v 1.18 2002/02/03 01:51:00 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -104,6 +104,8 @@ pdc_init()
 	cn_tab = &constab[0];
 
 	/* setup the console */
+#include "com.h"
+#if NCOM > 0
 	if (PAGE0->mem_cons.pz_class == PCL_DUPLEX) {
 		struct pz_device *pzd = &PAGE0->mem_cons;
 		extern int comdefaultrate;
@@ -123,7 +125,7 @@ pdc_init()
 		/* TODO detect the baud rate from layer[0] */
 		comdefaultrate = 9600;
 	}
-
+#endif
 }
 
 int
