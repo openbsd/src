@@ -94,7 +94,7 @@ static int get_char (cfile)
 {
 	int c = getc (cfile);
 	if (!ugflag) {
-		if (c == EOL) {
+		if (c == '\n') {
 			if (cur_line == line1) {	
 				cur_line = line2;
 				prev_line = line1;
@@ -223,7 +223,7 @@ static void skip_to_eol (cfile)
 		c = get_char (cfile);
 		if (c == EOF)
 			return;
-		if (c == EOL)
+		if (c == '\n')
 			return;
 	} while (1);
 }

@@ -662,7 +662,7 @@ void abandon_lease (lease, message)
 	char *message;
 {
 	struct lease lt;
-	TIME abtime;
+	time_t abtime;
 
 	abtime = lease -> subnet -> group -> default_lease_time;
 	lease -> flags |= ABANDONED_LEASE;

@@ -78,7 +78,7 @@ void skip_to_semi (cfile)
 		} else if (token == SEMI && !brace_count) {
 			token = next_token (&val, cfile);
 			return;
-		} else if (token == EOL) {
+		} else if (token == '\n') {
 			/* EOL only happens when parsing /etc/resolv.conf,
 			   and we treat it like a semicolon because the
 			   resolv.conf file is line-oriented. */
@@ -260,7 +260,7 @@ void parse_hardware_param (cfile, hardware)
 
 void parse_lease_time (cfile, timep)
 	FILE *cfile;
-	TIME *timep;
+	time_t *timep;
 {
 	char *val;
 	int token;
@@ -487,7 +487,7 @@ void convert_num (buf, str, base, size)
    year/month/day; next is hours:minutes:seconds on a 24-hour
    clock. */
 
-TIME parse_date (cfile)
+time_t parse_date (cfile)
 	FILE *cfile;
 {
 	struct tm tm;
@@ -503,7 +503,7 @@ TIME parse_date (cfile)
 		parse_warn ("numeric day of week expected.");
 		if (token != SEMI)
 			skip_to_semi (cfile);
-		return (TIME)0;
+		return (NULL);
 	}
 	tm.tm_wday = atoi (val);
 
@@ -513,7 +513,7 @@ TIME parse_date (cfile)
 		parse_warn ("numeric year expected.");
 		if (token != SEMI)
 			skip_to_semi (cfile);
-		return (TIME)0;
+		return (NULL);
 	}
 	tm.tm_year = atoi (val);
 	if (tm.tm_year > 1900)
@@ -525,7 +525,7 @@ TIME parse_date (cfile)
 		parse_warn ("expected slash separating year from month.");
 		if (token != SEMI)
 			skip_to_semi (cfile);
-		return (TIME)0;
+		return (NULL);
 	}
 
 	/* Month... */
@@ -534,7 +534,7 @@ TIME parse_date (cfile)
 		parse_warn ("numeric month expected.");
 		if (token != SEMI)
 			skip_to_semi (cfile);
-		return (TIME)0;
+		return (NULL);
 	}
 	tm.tm_mon = atoi (val) - 1;
 
@@ -544,7 +544,7 @@ TIME parse_date (cfile)
 		parse_warn ("expected slash separating month from day.");
 		if (token != SEMI)
 			skip_to_semi (cfile);
-		return (TIME)0;
+		return (NULL);
 	}
 
 	/* Month... */
@@ -553,7 +553,7 @@ TIME parse_date (cfile)
 		parse_warn ("numeric day of month expected.");
 		if (token != SEMI)
 			skip_to_semi (cfile);
-		return (TIME)0;
+		return (NULL);
 	}
 	tm.tm_mday = atoi (val);
 
@@ -563,7 +563,7 @@ TIME parse_date (cfile)
 		parse_warn ("numeric hour expected.");
 		if (token != SEMI)
 			skip_to_semi (cfile);
-		return (TIME)0;
+		return (NULL);
 	}
 	tm.tm_hour = atoi (val);
 
@@ -573,7 +573,7 @@ TIME parse_date (cfile)
 		parse_warn ("expected colon separating hour from minute.");
 		if (token != SEMI)
 			skip_to_semi (cfile);
-		return (TIME)0;
+		return (NULL);
 	}
 
 	/* Minute... */
@@ -582,7 +582,7 @@ TIME parse_date (cfile)
 		parse_warn ("numeric minute expected.");
 		if (token != SEMI)
 			skip_to_semi (cfile);
-		return (TIME)0;
+		return (NULL);
 	}
 	tm.tm_min = atoi (val);
 
@@ -592,7 +592,7 @@ TIME parse_date (cfile)
 		parse_warn ("expected colon separating hour from minute.");
 		if (token != SEMI)
 			skip_to_semi (cfile);
-		return (TIME)0;
+		return (NULL);
 	}
 
 	/* Minute... */
@@ -601,7 +601,7 @@ TIME parse_date (cfile)
 		parse_warn ("numeric minute expected.");
 		if (token != SEMI)
 			skip_to_semi (cfile);
-		return (TIME)0;
+		return (NULL);
 	}
 	tm.tm_sec = atoi (val);
 	tm.tm_isdst = 0;

@@ -46,7 +46,7 @@ FILE *db_file;
 
 static int counting = 0;
 static int count = 0;
-TIME write_time;
+time_t write_time;
 
 /* Write the specified lease to the current lease database file. */
 
@@ -199,7 +199,7 @@ void db_startup ()
 	/* Read in the existing lease file... */
 	read_leases ();
 
-	GET_TIME (&write_time);
+	time(&write_time);
 	new_lease_file ();
 }
 
@@ -207,7 +207,7 @@ void new_lease_file ()
 {
 	char newfname [MAXPATHLEN];
 	char backfname [MAXPATHLEN];
-	TIME t;
+	time_t t;
 	int db_fd;
 
 	/* If we already have an open database, close it. */
@@ -216,7 +216,7 @@ void new_lease_file ()
 	}
 
 	/* Make a temporary lease file... */
-	GET_TIME (&t);
+	time(&t);
 	snprintf (newfname, sizeof newfname,"%s.%d", path_dhcpd_db, (int)t);
 	db_fd = open (newfname, O_WRONLY | O_TRUNC | O_CREAT, 0664);
 	if (db_fd == -1) {

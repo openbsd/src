@@ -53,7 +53,7 @@ static char url [] = "For info, please visit http://www.isc.org/dhcp-contrib.htm
 
 static void usage PROTO ((char *));
 
-TIME cur_time;
+time_t cur_time;
 struct group root_group;
 
 struct iaddr server_identifier;
@@ -189,7 +189,7 @@ int main (argc, argv)
 	remote_port = htons (ntohs (local_port) + 1);
 
 	/* Get the current time... */
-	GET_TIME (&cur_time);
+	time(&cur_time);
 
 	/* Read the dhcpd.conf file... */
 	if (!readconf ())

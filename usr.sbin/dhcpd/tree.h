@@ -79,14 +79,14 @@ struct dns_host_entry {
 	unsigned char *data;
 	int data_len;
 	int buf_len;
-	TIME timeout;
+	time_t timeout;
 };
 
 struct tree_cache {
 	unsigned char *value;
 	int len;
 	int buf_size;
-	TIME timeout;
+	time_t timeout;
 	struct tree *tree;
 	int flags;
 #define	TC_AWAITING_RESOLUTION	1

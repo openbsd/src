@@ -618,14 +618,14 @@ void ack_lease (packet, lease, offer, when)
 	struct packet *packet;
 	struct lease *lease;
 	unsigned int offer;
-	TIME when;
+	time_t when;
 {
 	struct lease lt;
 	struct lease_state *state;
-	TIME lease_time;
-	TIME offered_lease_time;
-	TIME max_lease_time;
-	TIME default_lease_time;
+	time_t lease_time;
+	time_t offered_lease_time;
+	time_t max_lease_time;
+	time_t default_lease_time;
 	int ulafdr;
 
 	struct class *vendor_class, *user_class;

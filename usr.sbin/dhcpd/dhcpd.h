@@ -77,11 +77,7 @@ extern int h_errno;
 
 #define ifr_netmask ifr_addr
 
-/* Varargs stuff... */
 #include <stdarg.h>
-#define VA_DOTDOTDOT ...
-#define va_dcl
-#define VA_start(list, last) va_start (list, last)
 
 #ifndef _PATH_DHCPD_PID
 #define _PATH_DHCPD_PID	"/var/run/dhcpd.pid"
@@ -89,20 +85,9 @@ extern int h_errno;
 #ifndef _PATH_DHCPD_DB
 #define _PATH_DHCPD_DB "/var/db/dhcpd.leases"
 #endif
-#ifndef _PATH_DHCLIENT_PID
-#define _PATH_DHCLIENT_PID "/var/run/dhclient.pid"
-#endif
-#ifndef _PATH_DHCLIENT_DB
-#define _PATH_DHCLIENT_DB "/var/db/dhclient.leases"
-#endif
-
-#define EOL	'\n'
-#define VOIDPTR void *
 
 /* Time stuff... */
 #include <sys/time.h>
-#define TIME time_t
-#define GET_TIME(x)	time ((x))
 
 #define HAVE_SA_LEN
 #define HAVE_MKSTEMP
@@ -139,14 +124,14 @@ struct string_list {
 struct name_server {
 	struct name_server *next;
 	struct sockaddr_in addr;
-	TIME rcdate;
+	time_t rcdate;
 };
 
 /* A domain search list element. */
 struct domain_search_list {
 	struct domain_search_list *next;
 	char *domain;
-	TIME rcdate;
+	time_t rcdate;
 };
 
 /* A dhcp packet and the pointers to its option values. */
@@ -181,7 +166,7 @@ struct lease {
 	struct lease *waitq_next;
 
 	struct iaddr ip_addr;
-	TIME starts, ends, timestamp;
+	time_t starts, ends, timestamp;
 	unsigned char *uid;
 	int uid_len;
 	int uid_max;
@@ -211,7 +196,7 @@ struct lease_state {
 
 	struct interface_info *ip;
 
-	TIME offered_expiry;
+	time_t offered_expiry;
 
 	struct tree_cache *options [256];
 	u_int32_t expiry, renewal, rebind;
@@ -261,10 +246,10 @@ struct group {
 	struct subnet *subnet;
 	struct shared_network *shared_network;
 
-	TIME default_lease_time;
-	TIME max_lease_time;
-	TIME bootp_lease_cutoff;
-	TIME bootp_lease_length;
+	time_t default_lease_time;
+	time_t max_lease_time;
+	time_t bootp_lease_cutoff;
+	time_t bootp_lease_length;
 
 	char *filename;
 	char *server_name;	
@@ -326,7 +311,7 @@ struct class {
 /* DHCP client lease structure... */
 struct client_lease {
 	struct client_lease *next;		      /* Next lease in list. */
-	TIME expiry, renewal, rebind;			  /* Lease timeouts. */
+	time_t expiry, renewal, rebind;			  /* Lease timeouts. */
 	struct iaddr address;			    /* Address being leased. */
 	char *server_name;			     /* Name of boot server. */
 	char *filename;		     /* Name of file we're supposed to boot. */
@@ -364,22 +349,22 @@ struct client_config {
 	u_int8_t required_options [256]; /* Options server must supply. */
 	u_int8_t requested_options [256]; /* Options to request from server. */
 	int requested_option_count;	/* Number of requested options. */
-	TIME timeout;			/* Start to panic if we don't get a
+	time_t timeout;			/* Start to panic if we don't get a
 					   lease in this time period when
 					   SELECTING. */
-	TIME initial_interval;		/* All exponential backoff intervals
+	time_t initial_interval;	/* All exponential backoff intervals
 					   start here. */
-	TIME retry_interval;		/* If the protocol failed to produce
+	time_t retry_interval;		/* If the protocol failed to produce
 					   an address before the timeout,
 					   try the protocol again after this
 					   many seconds. */
-	TIME select_interval;		/* Wait this many seconds from the
+	time_t select_interval;		/* Wait this many seconds from the
 					   first DHCPDISCOVER before
 					   picking an offered lease. */
-	TIME reboot_timeout;		/* When in INIT-REBOOT, wait this
+	time_t reboot_timeout;		/* When in INIT-REBOOT, wait this
 					   long before giving up and going
 					   to INIT. */
-	TIME backoff_cutoff;		/* When doing exponential backoff,
+	time_t backoff_cutoff;		/* When doing exponential backoff,
 					   never back off to an interval
 					   longer than this amount. */
 	struct string_list *media;	/* Possible network media values. */
@@ -404,8 +389,8 @@ struct client_state {
 	struct iaddr destination;		    /* Where to send packet. */
 	u_int32_t xid;					  /* Transaction ID. */
 	u_int16_t secs;			    /* secs value from DHCPDISCOVER. */
-	TIME first_sending;			/* When was first copy sent? */
-	TIME interval;		      /* What's the current resend interval? */
+	time_t first_sending;			/* When was first copy sent? */
+	time_t interval;	      /* What's the current resend interval? */
 	struct string_list *medium;		   /* Last media type tried. */
 
 	struct dhcp_packet packet;		    /* Outgoing DHCP packet. */
@@ -460,7 +445,7 @@ struct hardware_link {
 
 struct timeout {
 	struct timeout *next;
-	TIME when;
+	time_t when;
 	void (*func) PROTO ((void *));
 	void *what;
 };
@@ -559,7 +544,7 @@ int debug (char *, ...) __attribute__ ((__format__ (__printf__, 1, 2)));
 int parse_warn (char *, ...) __attribute__ ((__format__ (__printf__, 1, 2)));
 
 /* dhcpd.c */
-extern TIME cur_time;
+extern time_t cur_time;
 extern struct group root_group;
 
 extern u_int16_t local_port;
@@ -599,7 +584,7 @@ int parse_lbrace PROTO ((FILE *));
 void parse_host_declaration PROTO ((FILE *, struct group *));
 char *parse_host_name PROTO ((FILE *));
 void parse_class_declaration PROTO ((FILE *, struct group *, int));
-void parse_lease_time PROTO ((FILE *, TIME *));
+void parse_lease_time PROTO ((FILE *, time_t *));
 void parse_shared_net_declaration PROTO ((FILE *, struct group *));
 void parse_subnet_declaration PROTO ((FILE *, struct shared_network *));
 void parse_group_declaration PROTO ((FILE *, struct group *));
@@ -608,10 +593,10 @@ char *parse_string PROTO ((FILE *));
 struct tree *parse_ip_addr_or_hostname PROTO ((FILE *, int));
 struct tree_cache *parse_fixed_addr_param PROTO ((FILE *));
 void parse_option_param PROTO ((FILE *, struct group *));
-TIME parse_timestamp PROTO ((FILE *));
+time_t parse_timestamp PROTO ((FILE *));
 struct lease *parse_lease_declaration PROTO ((FILE *));
 void parse_address_range PROTO ((FILE *, struct subnet *));
-TIME parse_date PROTO ((FILE *));
+time_t parse_date PROTO ((FILE *));
 unsigned char *parse_numeric_aggregate PROTO ((FILE *,
 					       unsigned char *, int *,
 					       int, int, int));
@@ -637,7 +622,7 @@ void dhcprelease PROTO ((struct packet *));
 void dhcpdecline PROTO ((struct packet *));
 void dhcpinform PROTO ((struct packet *));
 void nak_lease PROTO ((struct packet *, struct iaddr *cip));
-void ack_lease PROTO ((struct packet *, struct lease *, unsigned int, TIME));
+void ack_lease PROTO ((struct packet *, struct lease *, unsigned int, time_t));
 void dhcp_reply PROTO ((struct lease *));
 struct lease *find_lease PROTO ((struct packet *,
 				 struct shared_network *, int *));
@@ -681,8 +666,8 @@ void write_leases PROTO ((void));
 void dump_subnets PROTO ((void));
 
 /* alloc.c */
-VOIDPTR dmalloc PROTO ((int, char *));
-void dfree PROTO ((VOIDPTR, char *));
+void * dmalloc PROTO ((int, char *));
+void dfree PROTO ((void *, char *));
 struct packet *new_packet PROTO ((char *));
 struct dhcp_packet *new_dhcp_packet PROTO ((char *));
 struct tree *new_tree PROTO ((char *));
@@ -889,7 +874,7 @@ void reinitialize_interfaces PROTO ((void));
 void dispatch PROTO ((void));
 int locate_network PROTO ((struct packet *));
 void got_one PROTO ((struct protocol *));
-void add_timeout PROTO ((TIME, void (*) PROTO ((void *)), void *));
+void add_timeout PROTO ((time_t, void (*) PROTO ((void *)), void *));
 void cancel_timeout PROTO ((void (*) PROTO ((void *)), void *));
 void add_protocol PROTO ((char *, int,
 			  void (*) PROTO ((struct protocol *)), void *));
@@ -1096,7 +1081,7 @@ extern char path_resolv_conf [];
 struct name_server *name_servers;
 struct domain_search_list *domains;
 
-void read_resolv_conf PROTO ((TIME));
+void read_resolv_conf PROTO ((time_t));
 struct sockaddr_in *pick_name_server PROTO ((void));
 
 /* inet_addr.c */

@@ -42,9 +42,9 @@
 
 #include "dhcpd.h"
 
-static TIME tree_evaluate_recurse PROTO ((int *, unsigned char **, int *,
+static time_t tree_evaluate_recurse PROTO ((int *, unsigned char **, int *,
 					  struct tree *));
-static TIME do_host_lookup PROTO ((int *, unsigned char **, int *,
+static time_t do_host_lookup PROTO ((int *, unsigned char **, int *,
 					  struct dns_host_entry *));
 static void do_data_copy PROTO ((int *, unsigned char **, int *,
 				 unsigned char *, int));
@@ -232,14 +232,14 @@ int tree_evaluate (tree_cache)
 	return 1;
 }
 
-static TIME tree_evaluate_recurse (bufix, bufp, bufcount, tree)
+static time_t tree_evaluate_recurse (bufix, bufp, bufcount, tree)
 	int *bufix;
 	unsigned char **bufp;
 	int *bufcount;
 	struct tree *tree;
 {
 	int limit;
-	TIME t1, t2;
+	time_t t1, t2;
 
 	switch (tree -> op) {
 	      case TREE_CONCAT:
@@ -276,7 +276,7 @@ static TIME tree_evaluate_recurse (bufix, bufp, bufcount, tree)
 	}
 }
 
-static TIME do_host_lookup (bufix, bufp, bufcount, dns)
+static time_t do_host_lookup (bufix, bufp, bufcount, dns)
 	int *bufix;
 	unsigned char **bufp;
 	int *bufcount;

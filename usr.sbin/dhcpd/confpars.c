@@ -43,7 +43,7 @@
 #include "dhcpd.h"
 #include "dhctoken.h"
 
-static TIME parsed_time;
+static time_t parsed_time;
 
 /* conf-file :== parameters declarations EOF
    parameters :== <nil> | parameter | parameters parameter
@@ -1122,10 +1122,10 @@ void parse_option_param (cfile, group)
    but rather in the database file and the journal file.  (Okay, actually
    they're not even used there yet). */
 
-TIME parse_timestamp (cfile)
+time_t parse_timestamp (cfile)
 	FILE *cfile;
 {
-	TIME rv;
+	time_t rv;
 
 	rv = parse_date (cfile);
 	return rv;
@@ -1183,7 +1183,7 @@ struct lease *parse_lease_declaration (cfile)
 
 		/* Parse any of the times associated with the lease. */
 		if (token == STARTS || token == ENDS || token == TIMESTAMP) {
-			TIME t;
+			time_t t;
 			t = parse_date (cfile);
 			switch (token) {
 			      case STARTS:

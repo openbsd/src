@@ -382,7 +382,7 @@ void dispatch ()
 		/* Not likely to be transitory... */
 		if (count == -1) {
 			if (errno == EAGAIN || errno == EINTR) {
-				GET_TIME (&cur_time);
+				time(&cur_time);
 				continue;
 			}
 			else
@@ -390,7 +390,7 @@ void dispatch ()
 		}
 
 		/* Get the current time... */
-		GET_TIME (&cur_time);
+		time(&cur_time);
 
 		i = 0;
 		for (l = protocols; l; l = l -> next) {
@@ -541,7 +541,7 @@ int locate_network (packet)
 }
 
 void add_timeout (when, where, what)
-	TIME when;
+	time_t when;
 	void (*where) PROTO ((void *));
 	void *what;
 {
