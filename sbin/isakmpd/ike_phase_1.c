@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike_phase_1.c,v 1.32 2002/06/01 07:44:21 deraadt Exp $	*/
+/*	$OpenBSD: ike_phase_1.c,v 1.33 2002/06/06 02:15:27 ho Exp $	*/
 /*	$EOM: ike_phase_1.c,v 1.31 2000/12/11 23:47:56 niklas Exp $	*/
 
 /*
@@ -1022,7 +1022,8 @@ ike_phase_1_recv_ID (struct message *msg)
   *id = malloc (*id_len);
   if (!*id)
     {
-      log_error ("ike_phase_1_recv_ID: malloc (%lu) failed", *id_len);
+      log_error ("ike_phase_1_recv_ID: malloc (%lu) failed",
+		 (unsigned long)*id_len);
       return -1;
     }
   memcpy (*id, payload->p + ISAKMP_GEN_SZ, *id_len);
@@ -1249,7 +1250,7 @@ attribute_unacceptable (u_int16_t type, u_int8_t *value, u_int16_t len,
 	  if (!node)
 	    {
 	      log_error ("attribute_unacceptable: malloc (%lu) failed",
-			 sizeof *node);
+			 (unsigned long)sizeof *node);
 	      return 1;
 	    }
 	  node->type = type;
@@ -1354,7 +1355,7 @@ attribute_unacceptable (u_int16_t type, u_int8_t *value, u_int16_t len,
 	  if (!node)
 	    {
 	      log_error ("attribute_unacceptable: malloc (%lu) failed",
-			 sizeof *node);
+			 (unsigned long)sizeof *node);
 	      return 1;
 	    }
 	  node->type = type;

@@ -1,4 +1,4 @@
-/*      $OpenBSD: pf_key_v2.c,v 1.102 2002/06/01 07:44:22 deraadt Exp $  */
+/*      $OpenBSD: pf_key_v2.c,v 1.103 2002/06/06 02:15:27 ho Exp $  */
 /*	$EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	*/
 
 /*
@@ -302,7 +302,8 @@ pf_key_v2_read (u_int32_t seq)
 	  if (!fds)
 	    {
 	      log_error ("pf_key_v2_read: calloc (%lu, %lu) failed",
-			 (unsigned long)howmany (pf_key_v2_socket + 1, NFDBITS),
+			 (unsigned long)howmany (pf_key_v2_socket + 1, 
+						 NFDBITS),
 			 (unsigned long)sizeof (fd_mask));
 	      goto cleanup;
 	    }
@@ -333,8 +334,7 @@ pf_key_v2_read (u_int32_t seq)
       if (n != sizeof hdr)
 	{
 	  log_error ("pf_key_v2_read: recv (%d, ...) returned short packet "
-		     "(%lu bytes)",
-		     pf_key_v2_socket, n);
+		     "(%lu bytes)", pf_key_v2_socket, (unsigned long)n);
 	  goto cleanup;
 	}
 
@@ -357,8 +357,7 @@ pf_key_v2_read (u_int32_t seq)
       if ((size_t)n != hdr.sadb_msg_len * PF_KEY_V2_CHUNK)
 	{
 	  log_print ("pf_key_v2_read: read (%d, ...) returned short packet "
-		     "(%lu bytes)",
-		     pf_key_v2_socket, (unsigned long)n);
+		     "(%lu bytes)", pf_key_v2_socket, (unsigned long)n);
 	  goto cleanup;
 	}
 
@@ -435,7 +434,7 @@ pf_key_v2_write (struct pf_key_v2_msg *pmsg)
   if (!iov)
     {
       log_error ("pf_key_v2_write: malloc (%lu) failed",
-	cnt * (unsigned long)sizeof *iov);
+		 cnt * (unsigned long)sizeof *iov);
       return 0;
     }
 
@@ -479,8 +478,8 @@ pf_key_v2_write (struct pf_key_v2_msg *pmsg)
     }
   if ((size_t)n != len)
     {
-      log_error ("pf_key_v2_write: writev (%d, ...) returned prematurely (%lu)",
-		 pf_key_v2_socket, (unsigned long)n);
+      log_error ("pf_key_v2_write: writev (%d, ...) returned prematurely "
+		 "(%lu)", pf_key_v2_socket, (unsigned long)n);
       goto cleanup;
     }
   free (iov);
@@ -3795,7 +3794,8 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
 		  if (!authm)
 		    {
 		      log_error ("pf_key_v2_set_spi: malloc (%lu) failed",
-			 sauth->sadb_x_cred_len - (unsigned long)sizeof *sauth + 1);
+				 sauth->sadb_x_cred_len -
+				 (unsigned long)sizeof *sauth + 1);
 		      conf_end (af, 0);
 		      goto fail;
 		    }
@@ -3836,8 +3836,9 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
 		  if (!authm)
 		    {
 		      log_print ("pf_key_v2_set_spi: failed to convert "
-			 "private key to printable format (size %lu)",
-			 sauth->sadb_x_cred_len - (unsigned long)sizeof *sauth);
+				 "private key to printable format (size %lu)",
+				 sauth->sadb_x_cred_len -
+				 (unsigned long)sizeof *sauth);
 		      conf_end (af, 0);
 		      goto fail;
 		    }

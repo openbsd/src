@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.20 2002/06/01 07:44:21 deraadt Exp $	*/
+/*	$OpenBSD: cert.c,v 1.21 2002/06/06 02:15:27 ho Exp $	*/
 /*	$EOM: cert.c,v 1.18 2000/09/28 12:53:27 niklas Exp $	*/
 
 /*
@@ -133,7 +133,8 @@ certreq_decode (u_int16_t type, u_int8_t *data, u_int32_t datalen)
   ret = malloc (sizeof aca);
   if (!ret)
     {
-      log_error ("certreq_decode: malloc (%lu) failed", (unsigned long)sizeof aca);
+      log_error ("certreq_decode: malloc (%lu) failed",
+		 (unsigned long)sizeof aca);
       handler->free_aca (aca.data);
       return 0;
     }

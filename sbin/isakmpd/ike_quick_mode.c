@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike_quick_mode.c,v 1.60 2002/06/01 07:44:21 deraadt Exp $	*/
+/*	$OpenBSD: ike_quick_mode.c,v 1.61 2002/06/06 02:15:27 ho Exp $	*/
 /*	$EOM: ike_quick_mode.c,v 1.139 2001/01/26 10:43:17 niklas Exp $	*/
 
 /*
@@ -248,8 +248,8 @@ check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
       if (!principal[0])
         {
 	  log_error ("check_policy: calloc (%lu, %lu) failed",
-	     (unsigned long)strlen (isakmp_sa->keynote_key),
-	    (unsigned long)sizeof (char));
+		     (unsigned long)strlen (isakmp_sa->keynote_key),
+		     (unsigned long)sizeof (char));
 	  goto policydone;
 	}
 #endif
@@ -261,7 +261,7 @@ check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
       if (!principal)
         {
 	  log_error ("check_policy: calloc (2, %lu) failed",
-		(unsigned long)sizeof *principal);
+		     (unsigned long)sizeof *principal);
 	  goto policydone;
 	}
 
@@ -294,7 +294,7 @@ check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
       if (!principal[1])
 	{
 	  log_error ("check_policy: calloc (%d, %lu) failed", len,
-		(unsigned long)sizeof (char));
+		     (unsigned long)sizeof (char));
 	  goto policydone;
 	}
 
@@ -486,7 +486,8 @@ initiator_send_HASH_SA_NONCE (struct message *msg)
 		{
 		  log_error ("initiator_send_HASH_SA_NONCE: "
 			     "realloc (%p, %lu) failed",
-			     proposal, prop_cnt * (unsigned long)sizeof *proposal);
+			     proposal,
+			     prop_cnt * (unsigned long)sizeof *proposal);
 		  goto bail_out;
 		}
 	      proposal = new_proposal;
@@ -509,7 +510,8 @@ initiator_send_HASH_SA_NONCE (struct message *msg)
 		{
 		  log_error ("initiator_send_HASH_SA_NONCE: "
 			     "realloc (%p, %lu) failed",
-			     transform, prop_cnt * (unsigned long)sizeof *transform);
+			     transform,
+			     prop_cnt * (unsigned long)sizeof *transform);
 		  goto bail_out;
 		}
 	      transform = new_transform;
@@ -520,7 +522,8 @@ initiator_send_HASH_SA_NONCE (struct message *msg)
 		{
 		  log_error ("initiator_send_HASH_SA_NONCE: "
 			     "realloc (%p, %lu) failed",
-			     transform_cnt, prop_cnt * (unsigned long)sizeof *transform_cnt);
+			     transform_cnt,
+			     prop_cnt * (unsigned long)sizeof *transform_cnt);
 		  goto bail_out;
 		}
 	      transform_cnt = new_transform_cnt;
@@ -561,7 +564,8 @@ initiator_send_HASH_SA_NONCE (struct message *msg)
 	    {
 	      log_error ("initiator_send_HASH_SA_NONCE: "
 			 "calloc (%d, %lu) failed",
-			 transform_cnt[prop_no], (unsigned long)sizeof **transform);
+			 transform_cnt[prop_no],
+			 (unsigned long)sizeof **transform);
 	      goto bail_out;
 	    }
 
@@ -571,7 +575,8 @@ initiator_send_HASH_SA_NONCE (struct message *msg)
 	    {
 	      log_error ("initiator_send_HASH_SA_NONCE: "
 			 "calloc (%d, %lu) failed",
-			 transform_cnt[prop_no], (unsigned long)sizeof **transform_len);
+			 transform_cnt[prop_no],
+			 (unsigned long)sizeof **transform_len);
 	      goto bail_out;
 	    }
 
@@ -745,7 +750,7 @@ initiator_send_HASH_SA_NONCE (struct message *msg)
 		{
 		  log_error ("initiator_send_HASH_SA_NONCE: "
 			     "calloc (1, %lu) failed",
-			    (unsigned long)doi->proto_size);
+			     (unsigned long)doi->proto_size);
 		  goto bail_out;
 		}
 	    }
@@ -779,7 +784,7 @@ initiator_send_HASH_SA_NONCE (struct message *msg)
   if (!sa_buf)
     {
       log_error ("initiator_send_HASH_SA_NONCE: malloc (%lu) failed",
-	(unsigned long)sa_len);
+		 (unsigned long)sa_len);
       goto bail_out;
     }
   SET_ISAKMP_SA_DOI (sa_buf, IPSEC_DOI_IPSEC);
@@ -901,7 +906,7 @@ initiator_send_HASH_SA_NONCE (struct message *msg)
       if (!id)
 	{
 	  log_error ("initiator_send_HASH_SA_NONCE: malloc(%lu) failed",
-		(unsigned long)sz);
+		     (unsigned long)sz);
 	  return -1;
 	}
 
@@ -1344,8 +1349,9 @@ post_quick_mode (struct message *msg)
 	      if (!iproto->keymat[i])
 		{
 		  log_error ("post_quick_mode: malloc (%lu) failed",
-			     (((unsigned long)ie->keymat_len + prf->blocksize - 1)
-			      / prf->blocksize) * prf->blocksize);
+			     (((unsigned long)ie->keymat_len +
+			       prf->blocksize - 1) / prf->blocksize) *
+			     prf->blocksize);
 		  /* XXX What more to do?  */
 		  free (prf);
 		  continue;
@@ -1777,7 +1783,7 @@ responder_send_HASH_SA_NONCE (struct message *msg)
       if (!id)
 	{
 	  log_error ("responder_send_HASH_SA_NONCE: malloc (%lu) failed",
-		(unsigned long)sz);
+		     (unsigned long)sz);
 	  return -1;
 	}
       memcpy (id, ie->id_ci, sz);
@@ -1794,7 +1800,7 @@ responder_send_HASH_SA_NONCE (struct message *msg)
       if (!id)
 	{
 	  log_error ("responder_send_HASH_SA_NONCE: malloc (%lu) failed",
-		(unsigned long)sz);
+		     (unsigned long)sz);
 	  return -1;
 	}
       memcpy (id, ie->id_cr, sz);

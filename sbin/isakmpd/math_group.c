@@ -1,4 +1,4 @@
-/*	$OpenBSD: math_group.c,v 1.14 2002/06/01 07:44:21 deraadt Exp $	*/
+/*	$OpenBSD: math_group.c,v 1.15 2002/06/06 02:15:27 ho Exp $	*/
 /*	$EOM: math_group.c,v 1.25 2000/04/07 19:53:26 niklas Exp $	*/
 
 /*
@@ -289,7 +289,8 @@ modp_clone (struct group *new, struct group *clone)
   new_grp = malloc (sizeof *new_grp);
   if (!new_grp)
     {
-      log_print ("modp_clone: malloc (%lu) failed", (unsigned long)sizeof *new_grp);
+      log_print ("modp_clone: malloc (%lu) failed",
+		 (unsigned long)sizeof *new_grp);
       free (new);
       return 0;
     }
@@ -390,7 +391,8 @@ ec2n_clone (struct group *new, struct group *clone)
   new_grp = malloc (sizeof *new_grp);
   if (!new_grp)
     {
-      log_error ("ec2n_clone: malloc (%lu) failed", (unsigned long)sizeof *new_grp);
+      log_error ("ec2n_clone: malloc (%lu) failed",
+		 (unsigned long)sizeof *new_grp);
       free (new);
       return 0;
     }

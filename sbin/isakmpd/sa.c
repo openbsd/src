@@ -1,4 +1,4 @@
-/*	$OpenBSD: sa.c,v 1.57 2002/06/01 07:44:22 deraadt Exp $	*/
+/*	$OpenBSD: sa.c,v 1.58 2002/06/06 02:15:27 ho Exp $	*/
 /*	$EOM: sa.c,v 1.112 2000/12/12 00:22:52 niklas Exp $	*/
 
 /*
@@ -367,7 +367,8 @@ sa_create (struct exchange *exchange, struct transport *t)
   sa = calloc (1, sizeof *sa);
   if (!sa)
     {
-      log_error ("sa_create: calloc (1, %lu) failed", (unsigned long)sizeof *sa);
+      log_error ("sa_create: calloc (1, %lu) failed",
+		 (unsigned long)sizeof *sa);
       return -1;
     }
   sa->transport = t;
@@ -386,7 +387,7 @@ sa_create (struct exchange *exchange, struct transport *t)
       if (!sa->data)
 	{
 	  log_error ("sa_create: calloc (1, %lu) failed",
-		(unsigned long)sa->doi->sa_size);
+		     (unsigned long)sa->doi->sa_size);
 	  free (sa);
 	  return -1;
 	}
@@ -827,7 +828,7 @@ sa_add_transform (struct sa *sa, struct payload *xf, int initiator,
       proto = calloc (1, sizeof *proto);
       if (!proto)
 	log_error ("sa_add_transform: calloc (1, %lu) failed",
-		(unsigned long)sizeof *proto);
+		   (unsigned long)sizeof *proto);
     }
   else
     /* Find the protection suite that were chosen.  */
