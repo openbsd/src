@@ -713,6 +713,7 @@ accept_neighbor_request(src, dst)
 	struct sockaddr_in addr;
 	int addrlen = sizeof(addr);
 
+	memset(&addr, 0, sizeof addr);
 	addr.sin_family = AF_INET;
 #if (defined(BSD) && (BSD >= 199103))
 	addr.sin_len = sizeof addr;
@@ -800,6 +801,7 @@ accept_neighbor_request2(src, dst)
 	struct sockaddr_in addr;
 	int addrlen = sizeof(addr);
 
+	memset(&addr, 0, sizeof addr);
 	addr.sin_family = AF_INET;
 #if (defined(BSD) && (BSD >= 199103))
 	addr.sin_len = sizeof addr;

@@ -52,7 +52,7 @@
 
 #ifndef lint
 static char rcsid[] =
-    "@(#) $Id: mtrace.c,v 1.12 2002/02/19 19:39:40 millert Exp $";
+    "@(#) $Id: mtrace.c,v 1.13 2002/06/02 19:06:39 deraadt Exp $";
 #endif
 
 #include <netdb.h>
@@ -1311,6 +1311,7 @@ Usage: mtrace [-Mlnps] [-w wait] [-m max_hops] [-q nqueries] [-g gateway]\n\
     /*
      * Get default local address for multicasts to use in setting defaults.
      */
+    memset(&addr, 0, sizeof addr);
     addr.sin_family = AF_INET;
 #if (defined(BSD) && (BSD >= 199103))
     addr.sin_len = sizeof(addr);

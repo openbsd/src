@@ -90,6 +90,7 @@ snmp_init(dest_port)
        perror("socket");
        return 1;
    }
+   memset(&me, 0, sizeof me);
    me.sin_family = AF_INET;
    me.sin_addr.s_addr = INADDR_ANY;
    /* already in network byte order (I think) */

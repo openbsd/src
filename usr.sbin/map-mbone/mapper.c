@@ -903,6 +903,7 @@ int main(argc, argv)
 	struct sockaddr_in addr;
 	int addrlen = sizeof(addr);
 
+	memset(&addr, 0, sizeof addr);
 	addr.sin_family = AF_INET;
 #if (defined(BSD) && (BSD >= 199103))
 	addr.sin_len = sizeof addr;
