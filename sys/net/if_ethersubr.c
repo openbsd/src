@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.13 1996/06/02 16:31:01 niklas Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.14 1996/12/19 10:59:21 mickey Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -431,10 +431,6 @@ ether_input(ifp, eh, m)
 		return;
 #endif
 #ifdef IPX
-	case ETHERTYPE_8022:
-	case ETHERTYPE_8022TR:
-	case ETHERTYPE_8023:
-	case ETHERTYPE_SNAP:
 	case ETHERTYPE_II:
 		schednetisr(NETISR_IPX);
 		inq = &ipxintrq;
