@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.90 2003/01/21 16:26:40 millert Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.91 2003/01/23 19:27:19 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -124,7 +124,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.90 2003/01/21 16:26:40 millert Exp $";
+	"$OpenBSD: if_wi.c,v 1.91 2003/01/23 19:27:19 mickey Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -807,7 +807,7 @@ wi_inquire(xsc)
 	if (ifp->if_flags & IFF_OACTIVE)
 		return;
 
-	s = splnet();
+	s = splimp();
 	rv = wi_cmd(sc, WI_CMD_INQUIRE, WI_INFO_COUNTERS, 0, 0);
 	splx(s);
 	if (rv)
