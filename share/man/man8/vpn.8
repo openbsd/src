@@ -1,4 +1,4 @@
-.\" $OpenBSD: vpn.8,v 1.42 2000/09/27 04:45:47 angelos Exp $
+.\" $OpenBSD: vpn.8,v 1.43 2000/09/29 04:03:13 angelos Exp $
 .\" Copyright 1998 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
 .\"
@@ -57,7 +57,7 @@ or
 For manual keying, create the Security Associations (SA), one for 
 each endpoint.
 .It
-For manual keying, create the appropriate IPSec flows.
+For manual keying, create the appropriate IPsec flows.
 .It
 For automated keying, create a configuration file for the keying
 daemon.
@@ -151,7 +151,7 @@ Note that DES requires 8 bytes to form a 56-bit key and 3DES requires 24 bytes
 to form its 168-bit key. This is because the most significant bit of each byte
 is ignored by both algorithms.
 .Ss Creating Security Associations [manual keying]
-Before the IPSec flows can be defined, two Security Associations (SAs)
+Before the IPsec flows can be defined, two Security Associations (SAs)
 must be defined on each end of the VPN, e.g.:
 .Bd -literal
 ipsecadm new esp -spi SPI_AB -src A_EXTERNAL_IP
@@ -175,7 +175,7 @@ command line.  However, another user could view the keys by using the
 .Xr ps 1
 command at the appropriate time (or use a program for doing so).
 .Pp
-.Ss Creating IPSec Flows [manual keying]
+.Ss Creating IPsec Flows [manual keying]
 Both IPsec gateways need to configure
 .Xr ipsec 4
 routes with the
@@ -273,7 +273,8 @@ trust management system.
 .Ss Configuring Firewall Rules
 .Xr ipf 8
 needs to be configured such that all packets from the outside are blocked
-by default. Only successfully IPSec-processed packets (from the
+by default.
+Only successfully IPsec-processed packets (from the
 .Xr enc0 4
 interface), or key management packets (for
 .Xr photurisd 8 ,
@@ -293,6 +294,7 @@ on security gateway A might look like this:
 block in log on ne0 from any to any
 block out log on ne0 from any to any
 block in log on enc0 from any to any
+block out log on enc0 from any to any
 
 # Passing in encrypted traffic from security gateways
 pass in proto esp from gatewB/32 to gatewA/32
@@ -300,6 +302,7 @@ pass out proto esp from gatewA/32 to gatewB/32
 
 # Passing in traffic from the designated subnets.
 pass in on enc0 from netB/netBmask to netA/netAmask
+pass out on enc0 from natA/netAmask to netB/netBmask
 
 # Passing in Photuris traffic from the security gateways
 pass in on ne0 proto udp from gatewB/32 port = 468 to gatewA/32 port = 468
@@ -308,7 +311,13 @@ pass out on ne0 proto udp from gatewA/32 port = 468 to gatewB/32 port = 468
 .Pp
 If there are no other
 .Xr ipf 5
-rules, the "quick" clause can be added to the last three rules.
+rules, the "quick" clause can be added to the last four rules.
+NAT rules can also be used on the
+.Xr enc0 4
+interface.
+Note that it is strongly encouraged that instead of detailed IPF
+rules, the SPD (IPsec flow database) be utilized to specify security
+policy, if only to avoid filtering conflicts.
 .Sh EXAMPLES
 .Ss Manual keying
 To create a manual keyed VPN between two class C networks using
@@ -427,6 +436,7 @@ Configure the firewall rules on machine A:
 block in log on ne0 from any to any
 block out log on ne0 from any to any
 block in log on enc0 from any to any
+block out log on enc0 from any to any
 
 # Passing in encrypted traffic from security gateways
 pass in proto esp from 192.168.2.1/32 to 192.168.1.254/32
@@ -434,6 +444,7 @@ pass out proto esp from 192.168.1.254/32 to 192.168.2.1/32
 
 # Passing in traffic from the designated subnets.
 pass in quick on enc0 from 10.0.99.0/24 to 10.0.50.0/24
+pass out quick on enc0 from 10.0.50.0/24 to 10.0.99.0/24 
 .Ed
 .It
 Configure the firewall rules on machine B:
@@ -442,6 +453,7 @@ Configure the firewall rules on machine B:
 block in log on ne0 from any to any
 block out log on ne0 from any to any
 block in log on enc0 from any to any
+block out log on enc0 from any to any
 
 # Passing in encrypted traffic from security gateways
 pass in proto esp from 192.168.1.254/32 to 192.168.2.1/32
@@ -449,6 +461,7 @@ pass out proto esp from 192.168.2.1/32 to 192.168.1.254/32
 
 # Passing in traffic from the designated subnets.
 pass in quick on enc0 from 10.0.50.0/24 to 10.0.99.0/24
+pass out quick on enc0 from 10.0.99.0/24 to 10.0.50.0/24
 .Ed
 .El
 .Ss Automated keying
