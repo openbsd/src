@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.9 2002/05/31 22:49:29 deraadt Exp $	*/
+/*	$OpenBSD: misc.c,v 1.10 2003/04/08 00:18:13 deraadt Exp $	*/
 
 /* misc - miscellaneous flex routines */
 
@@ -28,7 +28,7 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-/* $Header: /home/cvs/src/usr.bin/lex/misc.c,v 1.9 2002/05/31 22:49:29 deraadt Exp $ */
+/* $Header: /home/cvs/src/usr.bin/lex/misc.c,v 1.10 2003/04/08 00:18:13 deraadt Exp $ */
 
 #include "flexdef.h"
 
@@ -72,7 +72,8 @@ char *new_text;
 			reallocate_character_array( action_array, action_size );
 		}
 
-	strcpy( &action_array[action_index], new_text );
+	strlcpy( &action_array[action_index], new_text,
+		action_size - action_index );
 
 	action_index += len;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: symtab.c,v 1.6 2002/02/16 21:28:00 millert Exp $	*/
+/*	$OpenBSD: symtab.c,v 1.7 2003/04/08 00:18:13 deraadt Exp $	*/
 /*	$NetBSD: symtab.c,v 1.4 1996/03/19 03:21:48 jtc Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)symtab.c	5.3 (Berkeley) 6/1/90";
 #else
-static char rcsid[] = "$OpenBSD: symtab.c,v 1.6 2002/02/16 21:28:00 millert Exp $";
+static char rcsid[] = "$OpenBSD: symtab.c,v 1.7 2003/04/08 00:18:13 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -88,7 +88,7 @@ char *name;
     if (bp == 0) no_space();
     bp->link = 0;
     bp->next = 0;
-    bp->name = MALLOC(strlen(name) + 1);
+    bp->name = strdup(name);
     if (bp->name == 0) no_space();
     bp->tag = 0;
     bp->value = UNDEFINED;
@@ -96,9 +96,6 @@ char *name;
     bp->prec = 0;
     bp-> class = UNKNOWN;
     bp->assoc = TOKEN;
-
-    if (bp->name == 0) no_space();
-    strcpy(bp->name, name);
 
     return (bp);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: reader.c,v 1.12 2003/03/13 09:09:37 deraadt Exp $	*/
+/*	$OpenBSD: reader.c,v 1.13 2003/04/08 00:18:13 deraadt Exp $	*/
 
 /*	$NetBSD: reader.c,v 1.5 1996/03/19 03:21:43 jtc Exp $	*/
 
@@ -911,7 +911,7 @@ get_tag()
 
     s = MALLOC(cinc);
     if  (s == 0) no_space();
-    strcpy(s, cache);
+    strlcpy(s, cache, cinc);
     tag_table[ntags] = s;
     ++ntags;
     return (s);
@@ -1663,8 +1663,8 @@ pack_names()
     name_pool = MALLOC(name_pool_size);
     if (name_pool == 0) no_space();
 
-    strcpy(name_pool, "$accept");
-    strcpy(name_pool+8, "$end");
+    strlcpy(name_pool, "$accept", name_pool_size);
+    strlcpy(name_pool+8, "$end", name_pool_size - 8);
     t = name_pool + 13;
     for (bp = first_symbol; bp; bp = bp->next)
     {
