@@ -1,3 +1,4 @@
+/*	$OpenBSD: sio_pic.c,v 1.17 2000/11/25 00:39:05 art Exp $	*/
 /* $NetBSD: sio_pic.c,v 1.28 2000/06/06 03:10:13 thorpej Exp $ */
 
 /*-
