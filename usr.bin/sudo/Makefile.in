@@ -34,7 +34,7 @@
 #
 # @configure_input@
 #
-# $Sudo: Makefile.in,v 1.185 1999/09/08 08:06:03 millert Exp $
+# $Sudo: Makefile.in,v 1.188 1999/11/25 00:43:44 millert Exp $
 #
 
 #### Start of system configuration section. ####
@@ -50,7 +50,7 @@ YACC = @YACC@
 NROFF = nroff
 
 # Which install program?
-INSTALL = $(srcdir)/install-sh -c
+INSTALL = $(SHELL) $(srcdir)/install-sh -c
 
 # Libraries
 LIBS = @LIBS@
@@ -144,9 +144,16 @@ DISTFILES = $(SRCS) $(HDRS) BUGS CHANGES FAQ HISTORY INSTALL INSTALL.configure \
 	    LICENSE Makefile.in PORTING README RUNSON TODO TROUBLESHOOTING \
 	    UPGRADE acsite.m4 aixcrypt.exp config.guess config.h.in config.sub \
 	    configure configure.in fnmatch.3 indent.pro install-sh \
-	    mkinstalldirs pathnames.h.in sample.pam sample.sudoers sudo.cat \
-	    sudo.man sudo.pod sudoers sudoers.cat sudoers.man sudoers.pod \
-	    visudo.cat visudo.man visudo.pod auth/API
+	    mkinstalldirs pathnames.h.in sample.pam sample.syslog.conf \
+	    sample.sudoers sudo.cat sudo.man sudo.pod sudoers sudoers.cat \
+	    sudoers.man sudoers.pod visudo.cat visudo.man visudo.pod auth/API
+
+BINFILES= BUGS CHANGES FAQ HISTORY LICENSE README TODO TROUBLESHOOTING \
+	  UPGRADE install-sh mkinstalldirs sample.syslog.conf sample.sudoers \
+	  sudo sudo.cat sudo.man sudo.pod sudoers sudoers.cat sudoers.man \
+	  sudoers.pod visudo visudo.cat visudo.man visudo.pod
+
+BINSPECIAL= INSTALL.binary Makefile.binary
 
 SUDODEP = $(srcdir)/sudo.h $(srcdir)/compat.h $(srcdir)/defaults.h \
 	  $(srcdir)/logging.h config.h pathnames.h
@@ -277,7 +284,7 @@ sudoers.cat: sudoers.man
 install: install-dirs install-binaries install-sudoers install-man
 
 install-dirs:
-	$(srcdir)/mkinstalldirs $(sudodir) $(visudodir) $(sudoersdir) $(mandir8) $(mandir5)
+	$(SHELL) $(srcdir)/mkinstalldirs $(sudodir) $(visudodir) $(sudoersdir) $(mandir8) $(mandir5)
 
 install-binaries: $(PROGS)
 	$(INSTALL) -o $(install_uid) -g $(install_gid) -m 4111 -s sudo $(sudodir)/sudo
@@ -330,3 +337,30 @@ dist: $(DISTFILES)
 	  tar Ocf sudo-$(VERSION).tar \
 	  `cat $$TF` && gzip --best sudo-$(VERSION).tar && rm -f $$TF)
 	ls -l ../sudo-$(VERSION).tar.gz
+
+bindist:
+	@mkdir tmp.`arch -l`
+	@mkdir tmp.`arch -l`/sudo-$(VERSION)
+	( cd tmp.`arch -l`/sudo-$(VERSION) ; \
+	  for i in $(BINFILES) ; do \
+	    if [ -f ../../$$i ]; then \
+	      cp ../../$$i . ; \
+	    elif [ -f $(srcdir)/$$i ]; then \
+	      cp $(srcdir)/$$i . ; \
+	    else \
+	      cp ../../$(srcdir)/$$i . ; \
+	    fi ; \
+	  done ; \
+	  for i in $(BINSPECIAL) ; do \
+	    if [ -f ../../$$i ]; then \
+	      cp ../../$$i `basename $$i .binary` ; \
+	    elif [ -f $(srcdir)/$$i ]; then \
+	      cp $(srcdir)/$$i `basename $$i .binary` ; \
+	    else \
+	      cp ../../$(srcdir)/$$i `basename $$i .binary` ; \
+	    fi ; \
+	  done ; \
+	  cd .. ; tar Ocf ../sudo-$(VERSION)-`arch -l`.tar sudo-$(VERSION) ; \
+	)  
+	gzip --best sudo-$(VERSION)-`arch -l`.tar
+	rm -rf tmp.`arch -l`
