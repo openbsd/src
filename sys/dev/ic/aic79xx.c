@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx.c,v 1.19 2004/12/11 00:12:25 krw Exp $	*/
+/*	$OpenBSD: aic79xx.c,v 1.20 2004/12/11 00:26:40 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -9207,7 +9207,7 @@ bus_reset:
 				 * untimed-out command is outstanding.
 				 */ 
 				if (ahd_other_scb_timeout(ahd, scb,
-							active_scb) != 0)
+							active_scb) == 0)
 					goto bus_reset;
 				continue;
 			} 
@@ -9246,7 +9246,7 @@ bus_reset:
 			 * some other command.  Reset the timer
 			 * and go on.
 			 */
-			if (ahd_other_scb_timeout(ahd, scb, NULL) != 0)
+			if (ahd_other_scb_timeout(ahd, scb, NULL) == 0)
 				goto bus_reset;
 		} else {
 			/*
