@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_delete,v 1.79 2004/11/15 11:39:05 espie Exp $
+# $OpenBSD: pkg_delete,v 1.80 2004/12/06 12:35:36 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -29,17 +29,25 @@ use OpenBSD::PackageInfo;
 
 our %forced = ();
 
+set_usage('pkg_delete [-cInqvx] [-B pkg-destdir] [-f keys] pkgname [...]');
 our ($opt_v, $opt_D, $opt_d, $opt_n, $opt_q, $opt_p, $opt_c, $opt_L, $opt_B, $opt_I, $opt_x);
 
 $opt_v = 0;
 
-getopts('vcxDdnf:qpS:L:B:I',
+eval { getopts('vchxDdnf:qpS:L:B:I',
 	{'v' => sub {++$opt_v;},
+	 'h' => sub { Usage(); },
 	 'f' => sub { 
 	 		for my $o (split/,/, shift) { 
 				$forced{$o} = 1;
 			}
-	    	}});
+	    	}}); };
+if ($@) {
+	chomp($@);
+	$@ =~ s/\s+at.*?$//;
+	Usage($@);
+}
+
 if ($opt_D) {
 	$opt_I = 1;
 }
@@ -53,10 +61,10 @@ $ENV{'PKG_DESTDIR'} = $opt_B;
 $opt_L = '/usr/local' unless defined $opt_L;
 
 if (defined $opt_p) {
-	Fatal "Option p is obsolete";
+	Usage "Option p is obsolete";
 }
 if (defined $opt_d) {
-	Fatal "Option d is obsolete";
+	Usage "Option d is obsolete";
 }
 
 my %done;
@@ -204,5 +212,6 @@ if ($state->{beverbose}) {
 }
 $state->delayed_output();
 if ($dielater) {
-	die $dielater;
+	print STDERR $dielater;
+	exit(1);
 }

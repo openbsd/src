@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Error.pm,v 1.7 2004/11/27 12:07:58 espie Exp $
+# $OpenBSD: Error.pm,v 1.8 2004/12/06 12:35:36 espie Exp $
 #
 # Copyright (c) 2004 Marc Espie <espie@openbsd.org>
 #
@@ -20,7 +20,7 @@ use warnings;
 
 package OpenBSD::Error;
 our @ISA=qw(Exporter);
-our @EXPORT=qw(System VSystem Copy Fatal Warn);
+our @EXPORT=qw(System VSystem Copy Fatal Warn Usage set_usage);
 
 sub System
 {
@@ -131,4 +131,26 @@ sub system
 		    $state->print("system(", join(", ", @_), ") was not run: $! $?\n");
 	}
 }
+
+my @usage_line;
+
+sub set_usage
+{
+	@usage_line = @_;
+}
+
+sub Usage
+{
+	my $code = 0;
+	if (@_) {
+		print STDERR "Error: ", @_, "\n";
+		$code = 1;
+	}
+	print STDERR "Usage: ", shift(@usage_line), "\n";
+	for my $l (@usage_line) {
+		print STDERR "       $l\n";
+	}
+	exit($code);
+}
+
 1;

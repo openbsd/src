@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.27 2004/12/02 18:32:37 espie Exp $
+# $OpenBSD: pkg_create,v 1.28 2004/12/06 12:35:36 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -272,8 +272,15 @@ our ($opt_p, $opt_f, $opt_c, $opt_d, $opt_v, $opt_i, $opt_k, $opt_r,
 my @contents;
 my $regen_package = 0;
 
+set_usage(
+'pkg_create [-hnv] [-A arches] [-B pkg-destdir] [-Dname=value]',
+'[-i iscript] [-k dscript] [-L localbase] [-M displayfile] [-P pkg-dep]',
+'[-p prefix] [-r rscript] [-S pkg-destdir] [-U undisplayfile]',
+'[-W wantedlib] -c desc -d desc -f packinglist pkgname',
+'pkg_create [-hnv] -f installed-packinglist');
+
 my $plist = new OpenBSD::PackingList;
-getopts('p:f:c:d:vi:k:r:M:U:S:hs:OA:L:B:D:P:W:n', 
+eval { getopts('hp:f:c:d:vi:k:r:M:U:S:hs:OA:L:B:D:P:W:n', 
 	{'D' => 
 		sub { 
 			local $_ = shift;
@@ -287,33 +294,39 @@ getopts('p:f:c:d:vi:k:r:M:U:S:hs:OA:L:B:D:P:W:n',
 	 	sub {
 			push(@contents, shift);
 		},
+	 'h' => sub {	Usage(); },
 	 'P' => sub {
 	 		OpenBSD::PackingElement::Dependency->add($plist, shift);
 		},
 	 'W' => sub {
 	 		OpenBSD::PackingElement::Wantlib->add($plist, shift);
 		}
-	});
+	}); };
+if ($@) {
+	chomp($@);
+	$@ =~ s/\s+at.*?$//;
+	Usage($@);
+}
 
 if (@ARGV == 0) {
 	$regen_package = 1;
 } elsif (@ARGV != 1) {
-	die "Exactly one single package name is required";
+	Usage "Exactly one single package name is required";
 }
 
 my $dir = OpenBSD::Temp::dir();
 my $dir2 = $dir;
 
 if (defined $opt_s) {
-	die "Option s is no longer supported";
+	Usage "Option s is no longer supported";
 }
 
 if (defined $opt_O) {
-	die "Option O is no longer supported";
+	Usage "Option O is no longer supported";
 }
 
 if (!@contents) {
-	die "Packing list required";
+	Usage "Packing list required";
 }
 
 if (defined $opt_c) {
@@ -325,7 +338,7 @@ if (defined $opt_c) {
 	copy_subst($opt_c, $dir.COMMENT);
     }
 } else {
-	die "Comment required" unless $regen_package;
+	Usage "Comment required" unless $regen_package;
 }
 
 if (defined $opt_d) {
@@ -337,7 +350,7 @@ if (defined $opt_d) {
 	copy_subst($opt_d, $dir.DESC);
     }
 } else {
-	die "Description required" unless $regen_package;
+	Usage "Description required" unless $regen_package;
 }
 
 print "Creating package $ARGV[0]\n" if $opt_v && !$regen_package;
@@ -374,7 +387,7 @@ for my $special (info_names()) {
 if (defined $opt_p) {
 	OpenBSD::PackingElement::Cwd->add($plist, $opt_p);
 } elsif (!$regen_package) {
-	die "Prefix required";
+	Usage "Prefix required";
 }
 
 if (!$regen_package && $ARGV[0] =~ m|([^/]+)$|) {
@@ -395,7 +408,7 @@ if ($regen_package) {
 	my $v = 0;
 	$plist->visit('anything', \$v);
 	if ($v != 0 || @contents != 1) {
-		die "Exactly one single package name is required";
+		Usage "Exactly one single package name is required";
 	}
 	$dir = dirname($contents[0]);
 }

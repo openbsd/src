@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.132 2004/12/02 00:04:38 espie Exp $
+# $OpenBSD: pkg_add,v 1.133 2004/12/06 12:35:36 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -599,15 +599,24 @@ sub install_package
 	return ();
 }
 
+set_usage('pkg_add [-acInqrvvx] [-A arch] [-B pkg-destdir] [-f keys] [-L localbase] [-P type] [-Q quick-destdir] pkgname [...]');
+
 our ($opt_a, $opt_v, $opt_n, $opt_I, $opt_L, $opt_B, $opt_A, $opt_P, $opt_Q, $opt_x, $opt_r, $opt_q, $opt_c);
 $opt_v = 0;
-getopts('aqcvnrxIL:f:B:A:P:Q:',
+eval { getopts('aqchvnrxIL:f:B:A:P:Q:',
 	{'v' => sub {++$opt_v;},
+	 'h' => sub { Usage(); },
 	 'f' => sub { 
 	 		for my $o (split/,/, shift) { 
 				$forced{$o} = 1;
 			}
-	    	}});
+	    	}}); };
+if ($@) {
+	chomp($@);
+	$@ =~ s/\s+at.*?$//;
+	Usage($@);
+}
+
 $opt_L = '/usr/local' unless defined $opt_L;
 
 my $state = new OpenBSD::Error;
@@ -620,10 +629,10 @@ $state->{arch} = $opt_A;
 $state->{forced} = \%forced;
 
 if (defined $opt_Q and defined $opt_B) {
-	Fatal "-Q and -B are incompatible options";
+	Usage "-Q and -B are incompatible options";
 }
 if (defined $opt_Q and defined $opt_r) {
-	Fatal "-r and -Q are incompatible options";
+	Usage "-r and -Q are incompatible options";
 }
 if ($opt_P) {
 	if ($opt_P eq 'cdrom') {
@@ -633,7 +642,7 @@ if ($opt_P) {
 		$state->{ftp_only} = 1;
 	}
 	else {
-	    Fatal "bad option: -P $opt_P";
+	    Usage "bad option: -P $opt_P";
 	}
 }
 if (defined $opt_Q) {
@@ -700,5 +709,6 @@ if ($state->{beverbose}) {
 }
 $state->delayed_output();
 if ($dielater) {
-	die $dielater;
+	print STDERR $dielater;
+	exit(1);
 }

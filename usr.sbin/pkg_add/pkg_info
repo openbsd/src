@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_info,v 1.21 2004/11/15 12:58:48 espie Exp $
+# $OpenBSD: pkg_info,v 1.22 2004/12/06 12:35:36 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -244,7 +244,9 @@ sub print_info
 	}
 }
 
-getopts('cDdfIikKLmpqRrsvhe:E:MU:l:aA',
+set_usage('pkg_info [-cDdfIiKkLMpqRrsUv] [-E fname] [-e pkgname] [-l str] pkgname...', 'pkg_info [-Aa flags]');
+
+eval { getopts('cDdfIikKLmpqRrsvhe:E:MU:l:aA',
 	{'e' =>
 		sub {
 			my $pat = shift;
@@ -267,7 +269,12 @@ getopts('cDdfIikKLmpqRrsvhe:E:MU:l:aA',
 			push(@sought_files, File::Spec->rel2abs(shift));
 
 		}
-	});
+	}); };
+if ($@) {
+	chomp($@);
+	$@ =~ s/\s+at.*?$//;
+	Usage($@);
+}
 
 if ($opt_D) {
 	$opt_M = 1;
@@ -292,15 +299,15 @@ if (!defined $opt_l) {
 }
 
 if ($opt_K && !$opt_L) {
-	Fatal "-K only makes sense with -L";
+	Usage "-K only makes sense with -L";
 }
 
 if (@ARGV == 0 && !$opt_a && !$opt_A) {
-	Fatal "Missing package name(s)" unless $terse && $opt_q;
+	Usage "Missing package name(s)" unless $terse && $opt_q;
 }
 
 if (@ARGV > 0 && ($opt_a || $opt_A)) {
-	Fatal "Can't specify package name(s) with -a";
+	Usage "Can't specify package name(s) with -a";
 }
 
 if (@ARGV == 0) {
