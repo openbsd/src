@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs.h,v 1.2 1996/02/27 08:03:34 niklas Exp $	*/
+/*	$OpenBSD: procfs.h,v 1.3 1996/06/21 12:49:54 mickey Exp $	*/
 /*	$NetBSD: procfs.h,v 1.17 1996/02/12 15:01:41 christos Exp $	*/
 
 /*
@@ -61,7 +61,7 @@ typedef enum {
  * control data for the proc file system.
  */
 struct pfsnode {
-	struct pfsnode	*pfs_next;	/* next on list */
+	TAILQ_ENTRY(pfsnode)	list;
 	struct vnode	*pfs_vnode;	/* vnode associated with this pfsnode */
 	pfstype		pfs_type;	/* type of procfs node */
 	pid_t		pfs_pid;	/* associated process */

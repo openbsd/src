@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_subr.c,v 1.2 1996/02/27 08:03:37 niklas Exp $	*/
+/*	$OpenBSD: procfs_subr.c,v 1.3 1996/06/21 12:49:56 mickey Exp $	*/
 /*	$NetBSD: procfs_subr.c,v 1.15 1996/02/12 15:01:42 christos Exp $	*/
 
 /*
@@ -49,8 +49,14 @@
 #include <sys/malloc.h>
 #include <miscfs/procfs/procfs.h>
 
-static struct pfsnode *pfshead;
+static TAILQ_HEAD(, pfsnode)	pfshead;
 static int pfsvplock;
+
+void
+procfs_init(void)
+{
+	TAILQ_INIT(&pfshead);
+}
 
 /*
  * allocate a pfsnode/vnode pair.  the vnode is
@@ -91,7 +97,7 @@ procfs_allocvp(mp, vpp, pid, pfs_type)
 	int error;
 
 loop:
-	for (pfs = pfshead; pfs != 0; pfs = pfs->pfs_next) {
+	for (pfs = pfshead.tqh_first; pfs != NULL; pfs = pfs->list.tqe_next) {
 		vp = PFSTOV(pfs);
 		if (pfs->pfs_pid == pid &&
 		    pfs->pfs_type == pfs_type &&
@@ -121,7 +127,6 @@ loop:
 	MALLOC(pfs, void *, sizeof(struct pfsnode), M_TEMP, M_WAITOK);
 	vp->v_data = pfs;
 
-	pfs->pfs_next = 0;
 	pfs->pfs_pid = (pid_t) pid;
 	pfs->pfs_type = pfs_type;
 	pfs->pfs_vnode = vp;
@@ -178,9 +183,7 @@ loop:
 	}
 
 	/* add to procfs vnode list */
-	for (pp = &pfshead; *pp; pp = &(*pp)->pfs_next)
-		continue;
-	*pp = pfs;
+	TAILQ_INSERT_TAIL(&pfshead, pfs, list);
 
 out:
 	pfsvplock &= ~PROCFS_LOCKED;
@@ -200,13 +203,7 @@ procfs_freevp(vp)
 	struct pfsnode **pfspp;
 	struct pfsnode *pfs = VTOPFS(vp);
 
-	for (pfspp = &pfshead; *pfspp != 0; pfspp = &(*pfspp)->pfs_next) {
-		if (*pfspp == pfs) {
-			*pfspp = pfs->pfs_next;
-			break;
-		}
-	}
-
+	TAILQ_REMOVE(&pfshead, pfs, list);
 	FREE(vp->v_data, M_TEMP);
 	vp->v_data = 0;
 	return (0);

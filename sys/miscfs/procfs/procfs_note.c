@@ -1,3 +1,4 @@
+/*	$OpenBSD: procfs_note.c,v 1.2 1996/06/21 12:49:55 mickey Exp $	*/
 /*	$NetBSD: procfs_note.c,v 1.8 1994/06/29 06:34:53 cgd Exp $	*/
 
 /*

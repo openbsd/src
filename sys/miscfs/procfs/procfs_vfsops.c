@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_vfsops.c,v 1.3 1996/06/20 15:12:57 mickey Exp $	*/
+/*	$OpenBSD: procfs_vfsops.c,v 1.4 1996/06/21 12:49:56 mickey Exp $	*/
 /*	$NetBSD: procfs_vfsops.c,v 1.25 1996/02/09 22:40:53 christos Exp $	*/
 
 /*
@@ -241,11 +241,6 @@ procfs_vptofh(vp, fhp)
 {
 
 	return (EINVAL);
-}
-
-void
-procfs_init()
-{
 }
 
 struct vfsops procfs_vfsops = {
