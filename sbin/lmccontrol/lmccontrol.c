@@ -1,4 +1,4 @@
-/* $OpenBSD: lmccontrol.c,v 1.4 2002/06/09 08:13:07 todd Exp $ */
+/* $OpenBSD: lmccontrol.c,v 1.5 2004/10/24 11:50:47 deraadt Exp $ */
 
 /*-
  * Copyright (c) 1997-1999 LAN Media Corporation (LMC)
@@ -72,29 +72,26 @@ usage(char *s)
 int
 main(int argc, char **argv)
 {
-	lmc_ctl_t	ctl;
-	int		fd;
+	lmc_ctl_t ctl, wanted;
+	int	fd, ch;
 	struct ifreq	ifr;
-	int		ch;
-	char	       *ifname = DEFAULT_INTERFACE;
-	lmc_ctl_t	wanted;
-	int		flag_c = 0; /* clock source external, internal */
-	int		flag_l = 0; /* line speed */
-	int		flag_s = 0; /* Scrambler on, off */
-	int		flag_o = 0; /* cable length < 100, > 100 */
-	int		flag_e = 0; /* crc 16, 32 */
-	int		flag_k = 0; /* HDLC keepalive */
-	int		just_print = 1;
-	int 		ifspecified = 0;
+	int	flag_c = 0; /* clock source external, internal */
+	int	flag_l = 0; /* line speed */
+	int	flag_s = 0; /* Scrambler on, off */
+	int	flag_o = 0; /* cable length < 100, > 100 */
+	int	flag_e = 0; /* crc 16, 32 */
+	int	flag_k = 0; /* HDLC keepalive */
+	int	just_print = 1, ifspecified = 0;
+	char	*ifname;
 
+	ifname = DEFAULT_INTERFACE;
 	if (argc > 1 && argv[1][0] != '-') {
 		ifname = argv[1];
-		memcpy(&argv[1], &argv[2], argc * sizeof(char *));
-		argc--;
 		ifspecified = 1;
+		optind = 2;
 	}
 
-	while ((ch = getopt(argc, argv, "i:l:cCsSoOeEkKpP")) != -1) {
+	while ((ch = getopt(argc, argv, "hi:l:cCsSoOeEkKpP")) != -1) {
 		switch (ch) {
 		case 'i':
 			if (!ifspecified)
@@ -196,7 +193,7 @@ main(int argc, char **argv)
 #endif
 			break;
 		case 'h':
-		case '?':
+		default:
 			usage(argv[0]);
 			return (0);
 		}

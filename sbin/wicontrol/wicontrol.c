@@ -1,4 +1,4 @@
-/*	$OpenBSD: wicontrol.c,v 1.54 2004/08/25 17:16:44 mickey Exp $	*/
+/*	$OpenBSD: wicontrol.c,v 1.55 2004/10/24 11:50:47 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -68,7 +68,7 @@
 static const char copyright[] = "@(#) Copyright (c) 1997, 1998, 1999\
 	Bill Paul. All rights reserved.";
 static const char rcsid[] =
-	"@(#) $OpenBSD: wicontrol.c,v 1.54 2004/08/25 17:16:44 mickey Exp $";
+	"@(#) $OpenBSD: wicontrol.c,v 1.55 2004/10/24 11:50:47 deraadt Exp $";
 #endif
 
 int  wi_getval(char *, struct wi_req *);
@@ -872,16 +872,15 @@ struct wi_func wi_opt[] = {
 int
 main(int argc, char *argv[])
 {
-	char	*iface = "wi0";
-	int	ch, p, dumpstats, dumpinfo = 1, ifspecified;
-	int	listaps, dumpstations;
+	int	ch, p, dumpstats = 0, dumpinfo = 1, ifspecified = 0;
+	int	listaps = 0, dumpstations = 0;
+	char	*iface;
 
-	dumpstats = ifspecified = listaps = dumpstations = 0;
+	iface = "wi0";
 	if (argc > 1 && argv[1][0] != '-') {
 		iface = argv[1];
-		memcpy(&argv[1], &argv[2], argc * sizeof(char *));
-		argc--;
 		ifspecified = 1;
+		optind = 2;
 	}
 
 	while ((ch = getopt(argc, argv,
@@ -897,20 +896,18 @@ main(int argc, char *argv[])
 				dumpinfo = ch = 0;
 			}
 		switch (ch) {
-		case 0:
-			break;
 		case 'i':
 			if (!ifspecified)
 				iface = optarg;
 			break;
-		case 'o':
-			dumpstats++;
+		case 'l':
+			dumpstations++;
 			break;
 		case 'L':
 			listaps++;
 			break;
-		case 'l':
-			dumpstations++;
+		case 'o':
+			dumpstats++;
 			break;
 		case 'v':
 			for (p = 0; wi_opt[p].key; p++)

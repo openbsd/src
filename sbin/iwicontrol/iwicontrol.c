@@ -1,4 +1,4 @@
-/*	$Id: iwicontrol.c,v 1.3 2004/10/20 21:26:43 deraadt Exp $	*/
+/*	$Id: iwicontrol.c,v 1.4 2004/10/24 11:50:47 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2004
@@ -77,22 +77,24 @@ static void get_statistics(char *);
 int
 main(int argc, char **argv)
 {
-	int ch;
 	char *iface = NULL, *mode = NULL, *path = NULL;
-	int noflag = 1, kflag = 0, rflag = 0;
+	int noflag = 1, kflag = 0, rflag = 0, ifspecified = 0;
+	int ch;
 
-	if (argc == 1)
-		iface = "iwi0";
-	else if (argc > 1 && argv[1][0] != '-') {
+	iface = "iwi0";
+	if (argc > 1 && argv[1][0] != '-') {
 		iface = argv[1];
-		memcpy(&argv[1], &argv[2], argc * sizeof(char *));
-		argc--;
+		ifspecified = 1;
+		optind = 2;
 	}
 
-	while ((ch = getopt(argc, argv, "d:i:km:r")) != -1) {
+	while ((ch = getopt(argc, argv, "hd:i:km:r")) != -1) {
 		noflag = 0;
-
 		switch (ch) {
+		case 'i':
+			if (!ifspecified)
+				iface = optarg;
+			break;
 		case 'd':
 			path = optarg;
 			break;
@@ -109,6 +111,7 @@ main(int argc, char **argv)
 			rflag = 1;
 			break;
 
+		case 'h':
 		default:
 			usage();
 		}

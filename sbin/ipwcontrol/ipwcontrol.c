@@ -1,4 +1,4 @@
-/*	$Id: ipwcontrol.c,v 1.3 2004/10/20 21:26:43 deraadt Exp $	*/
+/*	$Id: ipwcontrol.c,v 1.4 2004/10/24 11:50:47 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2004
@@ -28,7 +28,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: ipwcontrol.c,v 1.3 2004/10/20 21:26:43 deraadt Exp $";
+static char rcsid[] = "$Id: ipwcontrol.c,v 1.4 2004/10/24 11:50:47 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -69,19 +69,22 @@ static void get_statistics(char *);
 int
 main(int argc, char **argv)
 {
-	int ch;
+	int ch, ifspecified = 0;
 	char *iface;
 
-	if (argc == 1)
-		iface = "ipw0";
-	else if (argc > 1 && argv[1][0] != '-') {
+	iface = "ipw0";
+	if (argc > 1 && argv[1][0] != '-') {
 		iface = argv[1];
-		memcpy(&argv[1], &argv[2], argc * sizeof(char *));
-		argc--;
+		ifspecified = 1;
+		optind = 2;
 	}
 
-	while ((ch = getopt(argc, argv, "f:kr")) != -1) {
+	while ((ch = getopt(argc, argv, "hf:i:kr")) != -1) {
 		switch (ch) {
+		case 'i':
+			if (!ifspecified)
+				iface = optarg;
+			break;
 		case 'f':
 			load_firmware(iface, optarg);
 			return EX_OK;
@@ -94,6 +97,7 @@ main(int argc, char **argv)
 			get_radio_state(iface);
 			return EX_OK;
 
+		case 'h':
 		default:
 			usage();
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ancontrol.c,v 1.27 2004/08/19 18:26:52 jmc Exp $	*/
+/*	$OpenBSD: ancontrol.c,v 1.28 2004/10/24 11:50:47 deraadt Exp $	*/
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  *
@@ -129,9 +129,9 @@ int main(int, char **);
 #ifdef ANCACHE
 #define ACT_DUMPCACHE 31
 #define ACT_ZEROCACHE 32
-#define OPTIONS "a:b:c:d:e:f:j:k:l:m:n:o:p:r:s:t:v:w:ACIK:NQSTW:Z"
+#define OPTIONS "a:b:c:d:e:f:hi:j:k:l:m:n:o:p:r:s:t:v:w:ACIK:NQSTW:Z"
 #else
-#define OPTIONS "a:b:c:d:e:f:j:k:l:m:n:o:p:r:s:t:v:w:ACIK:NSTW:"
+#define OPTIONS "a:b:c:d:e:f:hi:j:k:l:m:n:o:p:r:s:t:v:w:ACIK:NSTW:"
 #endif /* ANCACHE */
 
 int s;			/* Global socket for ioctl's */
@@ -1250,31 +1250,25 @@ an_enable_tx_key(char *arg)
 int
 main(int argc, char *argv[])
 {
+	int modifier = 0, print_stat = 0, ifspecified = 0;
 	int ch;
-	int modifier = 0;
-	int print_stat = 0;
 
-	/* Grab device name, if one is given. Default to "an0" */
-	opterr = 0;
-	ch = getopt(argc, argv, "i:");
-	if (ch == 'i') {
-		strlcpy(ifr.ifr_name, optarg, sizeof(ifr.ifr_name));
-	} else {
-		if (argc > 1 && argv[1][0] != '-') {
-			strlcpy(ifr.ifr_name, argv[1], sizeof(ifr.ifr_name));
-			optind = 2;
-		} else {
-			strlcpy(ifr.ifr_name, "an0", sizeof(ifr.ifr_name));
-			optind = 1;
-		}
+	strlcpy(ifr.ifr_name, "an0", sizeof(ifr.ifr_name));
+	if (argc > 1 && argv[1][0] != '-') {
+		strlcpy(ifr.ifr_name, argv[1], sizeof(ifr.ifr_name));
+		ifspecified = 1;
+		optind = 2;
 	}
-	opterr = optreset = 1;
 
 	/* Grab a socket to do our ioctl's */
 	getsock();
 
 	while ((ch = getopt(argc, argv, OPTIONS)) != -1) {
-		switch(ch) {
+		switch (ch) {
+		case 'i':
+			if (!ifspecified)
+				strlcpy(ifr.ifr_name, optarg, sizeof(ifr.ifr_name));
+			break;
 		case 'A':
 			print_stat |= STAT_DUMPAP;
 			break;
