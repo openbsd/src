@@ -349,7 +349,7 @@ static void usage (appname)
 	note (url);
 	note ("%s", "");
 
-	warn ("Usage: %s [-i] [-d] [-i if0] [...-i ifN] [-p <port>]", appname);
+	warn ("Usage: %s [-q] [-d] [-i if0] [...-i ifN] [-p <port>]", appname);
 	error ("      [-pf pidfilename] [server1 [... serverN]]");
 }
 
