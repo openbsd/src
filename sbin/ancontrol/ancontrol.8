@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ancontrol.8,v 1.10 2001/04/16 06:37:39 tholo Exp $
+.\"	$OpenBSD: ancontrol.8,v 1.11 2001/04/30 15:03:01 ericj Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ee.columbia.edu> All rights reserved.
@@ -87,7 +87,7 @@ can also be used to view the current NIC status, configuration
 and to dump out the values of the card's statistics counters.
 .Pp
 The
-.Ar iface
+.Ar interface
 argument given to
 .Nm
 should be the logical interface name associated with the Aironet
@@ -107,6 +107,18 @@ The AP list can
 be modified with the
 .Fl a
 option.
+.It Fl C
+Display current NIC configuration.
+This shows the current operation mode,
+recieve mode, MAC address, power save settings, various timing settings,
+channel selection, diversity, transmit power, and transmit speed.
+.It Fl I
+Display NIC capability information.
+This shows the device type,
+frequency, speed, and power level capabilities and firmware revision levels.
+.It Fl K Ar "0|1|2"
+Set authorization type.
+Use 0 for none, 1 for "Open", 2 for "Shared Key".
 .It Fl N
 Display the SSID list.
 This is a list of service set IDs (i.e., network names)
@@ -131,48 +143,11 @@ station, or become a
 itself.
 The beacon period can be anything between 20 and 976 milliseconds.
 The default is 100.
-.It Fl I
-Display NIC capability information.
-This shows the device type,
-frequency, speed, and power level capablities and firmware revision levels.
 .It Fl T
 Display the NIC's internal statistics counters.
-.It Fl C
-Display current NIC configuration.
-This shows the current operation mode,
-receive mode, MAC address, power save settings, various timing settings,
-channel selection, diversity, transmit power, and transmit speed.
-.It Fl t Ar 0|1|2|3|4
-Select transmit speed.
-The available settings are as follows:
-.Bd -filled -offset indent
-.Bl -column "TX rate " "NIC speed "
-.Em "TX rate	NIC speed"
-0	Auto -- NIC selects optimal speed
-1	1Mbps fixed
-2	2Mbps fixed
-3	5.5Mbps fixed
-4	11Mbps fixed
-.El
-.Ed
-.Pp
-Note that the 5.5 and 11Mbps settings are only supported on the 4800
-series adapters: the 4500 series adapters have a maximum speed of 2Mbps.
-.It Fl s Ar 0|1|2|3
-Set power save mode.
-Valid selections are as follows:
-.Bd -filled -offset indent
-.Bl -column "Selection " "Power save mode "
-.Em "Selection	Power save mode"
-0	None - power save disabled
-1	Constantly awake mode (CAM)
-2	Power Save Polling (PSP)
-3	Fast Power Save Polling (PSP-CAM)
-.El
-.Ed
-.Pp
-Note that for IBSS (ad-hoc) mode, only PSP mode is supported, and only
-if the ATIM window is non-zero.
+.It Fl W Ar "0|1|2"
+Enable WEP.
+Use 0 for no WEP, 1 to enable full WEP, 2 for mixed cell.
 .It Fl v Ar "1|2|3|4" Fl a Ar AP
 Set preferred access point.
 The
@@ -194,6 +169,46 @@ Set the ad-hoc mode beacon period.
 The becon period is specified in
 milliseconds.
 The default is 100ms.
+.It Fl c Ar channel
+Set the radio frequency of a given interface.
+The
+.Ar frequency
+should be specified as a channel ID as shown in the table below.
+The
+list of available frequencies is dependent on radio regulations specified
+by regional authorities.
+Recognized regulatory authorities include
+the FCC (United States), ETSI (Europe), France, and Japan.
+Frequencies
+in the table are specified in Mhz.
+.Bd -filled -offset indent
+.Bl -column "Channel ID " "FCC " "ETSI " "France " "Japan "
+.Em "Channel ID	FCC	ETSI	France	Japan"
+1	2412	2412	-	-
+2	2417	2417	-	-
+3	2422	2422	-	-
+4	2427	2427	-	-
+5	2432	2432	-	-
+6	2437	2437	-	-
+7	2442	2442	-	-
+8	2447	2447	-	-
+9	2452	2452	-	-
+10	2457	2457	2457	-
+11	2462	2462	2462	-
+12	-	2467	2467	-
+13	-	2472	2472	-
+14	-	-	-	2484
+.El
+.Ed
+.Pp
+If an illegal channel is specified, the
+NIC will revert to its default channel.
+For NICs sold in the United States
+and Europe, the default channel is 3.
+For NICs sold in France, the default channel is 11.
+For NICs sold in Japan, the only available channel is 14.
+Note that two stations must be set to the same channel in order to
+communicate.
 .It Fl v Ar "0|1" Fl d Ar "0|1|2|3"
 Select the antenna diversity.
 Aironet devices can be configured with up
@@ -226,6 +241,29 @@ last key programmed.  The transmit key is stored in NVRAM.
 Currently set transmit key can be checked via
 .Fl C
 option.
+.It Fl f Ar fragmentation threshold
+Set the fragmentation threshold in bytes.
+This threshold controls the
+point at which outgoing packets will be split into multiple fragments.
+If a single fragment is not sent successfully, only that fragment will
+need to be retransmitted instead of the whole packet.
+The fragmentation
+threshold can be anything from 64 to 2312 bytes.
+The default is 2312.
+.It Fl h
+Prints a list of available options and sample usage.
+.It Fl j Ar netjoin timeout
+Set the ad-hoc network join timeout.
+When a station is first activated
+in ad-hoc mode, it will search out a 'master' station with the desired
+SSID and associate with it.
+If the station is unable to locate another
+station with the same SSID after a suitable timeout, it sets itself up
+as the 'master' so that other stations may associate with it.
+This
+timeout defaults to 10000 milliseconds (10 seconds) but may be changed
+with this option.
+The timeout should be specified in milliseconds.
 .It Fl v Ar "0|1|2|3|4|5|6|7" Fl k Ar key
 Set a WEP key.
 For 40 bits, prefix 10 hex digits with 0x.
@@ -240,24 +278,6 @@ by default.
 Currently set keys can be checked via
 .Fl C
 option, only the sizes of the keys are returned.
-.It Fl K Ar "0|1|2"
-Set authorization type.
-Use 0 for none, 1 for "Open", 2 for "Shared Key".
-.It Fl W Ar "0|1|2"
-Enable WEP.
-Use 0 for no WEP, 1 to enable full WEP, 2 for mixed cell.
-.It Fl j Ar netjoin timeout
-Set the ad-hoc network join timeout.
-When a station is first activated
-in ad-hoc mode, it will search out a 'master' station with the desired
-SSID and associate with it.
-If the station is unable to locate another
-station with the same SSID after a suitable timeout, it sets itself up
-as the 'master' so that other stations may associate with it.
-This
-timeout defaults to 10000 milliseconds (10 seconds) but may be changed
-with this option.
-The timeout should be specified in milliseconds.
 .It Fl l Ar station name
 Set the station name used internally by the NIC.
 The
@@ -305,55 +325,6 @@ flag.
 Typical values are 1, 5, 20, 50, and 100mW.
 Selecting 0 sets
 the factory default.
-.It Fl c Ar channel
-Set the radio frequency of a given interface.
-The
-.Ar frequency
-should be specified as a channel ID as shown in the table below.
-The
-list of available frequencies is dependent on radio regulations specified
-by regional authorities.
-Recognized regulatory authorities include
-the FCC (United States), ETSI (Europe), France, and Japan.
-Frequencies
-in the table are specified in Mhz.
-.Bd -filled -offset indent
-.Bl -column "Channel ID " "FCC " "ETSI " "France " "Japan "
-.Em "Channel ID	FCC	ETSI	France	Japan"
-1	2412	2412	-	-
-2	2417	2417	-	-
-3	2422	2422	-	-
-4	2427	2427	-	-
-5	2432	2432	-	-
-6	2437	2437	-	-
-7	2442	2442	-	-
-8	2447	2447	-	-
-9	2452	2452	-	-
-10	2457	2457	2457	-
-11	2462	2462	2462	-
-12	-	2467	2467	-
-13	-	2472	2472	-
-14	-	-	-	2484
-.El
-.Ed
-.Pp
-If an illegal channel is specified, the
-NIC will revert to its default channel.
-For NICs sold in the United States
-and Europe, the default channel is 3.
-For NICs sold in France, the default channel is 11.
-For NICs sold in Japan, the only available channel is 14.
-Note that two stations must be set to the same channel in order to
-communicate.
-.It Fl f Ar fragmentation threshold
-Set the fragmentation threshold in bytes.
-This threshold controls the
-point at which outgoing packets will be split into multiple fragments.
-If a single fragment is not sent successfully, only that fragment will
-need to be retransmitted instead of the whole packet.
-The fragmentation
-threshold can be anything from 64 to 2312 bytes.
-The default is 2312.
 .It Fl r Ar RTS threshold
 Set the RTS/CTS threshold for a given interface.
 This controls the
@@ -362,9 +333,54 @@ The
 .Ar RTS threshold
 can be any value between 0 and 2312.
 The default is 2312.
-.It Fl h
-Prints a list of available options and sample usage.
+.It Fl s Ar 0|1|2|3
+Set power save mode.
+Valid selections are as follows:
+.Bd -filled -offset indent
+.Bl -column "Selection " "Power save mode "
+.Em "Selection	Power save mode"
+0	None - power save disabled
+1	Constantly awake mode (CAM)
+2	Power Save Polling (PSP)
+3	Fast Power Save Polling (PSP-CAM)
 .El
+.Ed
+.Pp
+Note that for IBSS (ad-hoc) mode, only PSP mode is supported, and only
+if the ATIM window is non-zero.
+.It Fl t Ar 0|1|2|3|4
+Select transmit speed.
+The available settings are as follows:
+.Bd -filled -offset indent
+.Bl -column "TX rate " "NIC speed "
+.Em "TX rate	NIC speed"
+0	Auto -- NIC selects optimal speed
+1	1Mbps fixed
+2	2Mbps fixed
+3	5.5Mbps fixed
+4	11Mbps fixed
+.El
+.Ed
+.Pp
+Note that the 5.5 and 11Mbps settings are only supported on the 4800
+series adapters: the 4500 series adapters have a maximum speed of 2Mbps.
+.El
+.Sh SECURITY NOTES
+WEP ("wired equivalent privacy") is based on the RC4 algorithm,
+using a 24 bit initialization vector.
+.Pp
+RC4 is supposedly vulnerable to certain known plaintext attacks,
+especially with 40 bit keys.
+So the security of WEP in part depends on how much known plaintext
+is transmitted.
+.Pp
+Because of this, although counter-intuitive, using "shared key"
+authentication (which involves sending known plaintext) is less
+secure than using "open" authentication when WEP is enabled.
+.Pp
+Devices may alternate among all of the configured WEP keys when
+tranmitting packets.
+Therefore, all configured keys (up to four) must agree.
 .Sh SEE ALSO
 .Xr an 4 ,
 .Xr wi 4 ,
