@@ -1,5 +1,5 @@
-#	$OpenBSD: Makefile.sysdep,v 1.8 2000/04/07 22:10:40 niklas Exp $
-#	$EOM: Makefile.sysdep,v 1.13 2000/04/07 22:05:57 niklas Exp $
+#	$OpenBSD: Makefile.sysdep,v 1.9 2000/10/07 06:59:32 niklas Exp $
+#	$EOM: Makefile.sysdep,v 1.14 2000/09/12 16:31:22 ho Exp $
 
 #
 # Copyright (c) 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -44,7 +44,12 @@ CFLAGS+=	-DSYMBOL_PREFIX='"_"'
 .endif
 
 USE_LIBCRYPTO=	defined
+
+.ifdef FEATURES
+.if ${FEATURES:Mpolicy} == "policy"
 USE_KEYNOTE=	defined
+.endif
+.endif
 
 .ifndef USE_LIBCRYPTO
 DESLIB=		-ldes
