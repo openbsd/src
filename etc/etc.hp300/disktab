@@ -1,4 +1,4 @@
-#	$OpenBSD: disktab,v 1.2 1997/02/03 07:02:11 downsj Exp $
+#	$OpenBSD: disktab,v 1.3 1997/02/16 10:57:42 downsj Exp $
 #	$NetBSD: disktab,v 1.3 1995/09/30 21:57:48 thorpej Exp $
 #
 #	@(#)disktab	5.5 (Berkeley) 2/27/91
@@ -40,6 +40,11 @@
 #	C:       This gives a single, non-bootable, large user filesystem.
 #	         Good for second drives on a machine as either /usr/src
 #		 or a large /usr or user partition.
+
+rdroot|ramdiskroot|RAM-disk root FS image:\
+	:ty=simulated:se#512:nc#16:nt#2:ns#128:\
+	:ta=4.4BSD:oa#0:pa#4096:fa#512:ba#4096\
+	:ob#0:pb#0:oc#0:pc#4096:
 
 # pseudo-geometry taken from hd7945
 miniroot:\
