@@ -1,4 +1,4 @@
-/*	$OpenBSD: mv.c,v 1.2 1996/06/23 14:20:26 deraadt Exp $	*/
+/*	$OpenBSD: mv.c,v 1.3 1996/07/30 12:26:46 deraadt Exp $	*/
 /*	$NetBSD: mv.c,v 1.9 1995/03/21 09:06:52 cgd Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mv.c	8.2 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: mv.c,v 1.2 1996/06/23 14:20:26 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: mv.c,v 1.3 1996/07/30 12:26:46 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -237,17 +237,22 @@ fastcopy(from, to, sbp)
 	static u_int blen;
 	static char *bp;
 	register int nread, from_fd, to_fd;
+	int badchown = 0;
 
 	if ((from_fd = open(from, O_RDONLY, 0)) < 0) {
 		warn("%s", from);
 		return (1);
 	}
-	if ((to_fd =
-	    open(to, O_CREAT | O_TRUNC | O_WRONLY, sbp->st_mode)) < 0) {
+	if ((to_fd = open(to, O_CREAT | O_TRUNC | O_WRONLY, 0600)) < 0) {
 		warn("%s", to);
 		(void)close(from_fd);
 		return (1);
 	}
+
+	if (fchown(to_fd, sbp->st_uid, sbp->st_gid))
+		badchown = 1;
+	(void) fchmod(to_fd, sbp->st_mode & ~(S_ISUID|S_ISGID));
+
 	if (!blen && !(bp = malloc(blen = sbp->st_blksize))) {
 		warn(NULL);
 		return (1);
@@ -267,8 +272,14 @@ err:		if (unlink(to))
 	}
 	(void)close(from_fd);
 
-	if (fchown(to_fd, sbp->st_uid, sbp->st_gid))
-		warn("%s: set owner/group", to);
+	if (badchown) {
+		if ((sbp->st_mode & (S_ISUID|S_ISGID)))  {
+			warn("%s: set owner/group; not setting setuid/setgid",
+			    to);
+			sbp->st_mode &= ~(S_ISUID|S_ISGID);
+		} else
+			warn("%s: set owner/group", to);
+	}
 	if (fchmod(to_fd, sbp->st_mode))
 		warn("%s: set mode", to);
 
