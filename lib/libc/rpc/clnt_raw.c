@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: clnt_raw.c,v 1.10 2001/09/15 13:51:00 deraadt Exp $";
+static char *rcsid = "$OpenBSD: clnt_raw.c,v 1.11 2004/12/16 20:45:07 krw Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -88,8 +88,8 @@ clntraw_create(prog, vers)
 {
 	struct clntraw_private *clp = clntraw_private;
 	struct rpc_msg call_msg;
-	XDR *xdrs = &clp->xdr_stream;
-	CLIENT	*client = &clp->client_object;
+	XDR *xdrs;
+	CLIENT	*client;
 
 	if (clp == NULL) {
 		clp = (struct clntraw_private *)calloc(1, sizeof (*clp));
@@ -97,6 +97,8 @@ clntraw_create(prog, vers)
 			return (NULL);
 		clntraw_private = clp;
 	}
+	xdrs = &clp->xdr_stream;
+	client = &clp->client_object;
 	/*
 	 * pre-serialize the staic part of the call msg and stash it away
 	 */
@@ -136,13 +138,14 @@ clntraw_call(h, proc, xargs, argsp, xresults, resultsp, timeout)
 	struct timeval timeout;
 {
 	struct clntraw_private *clp = clntraw_private;
-	XDR *xdrs = &clp->xdr_stream;
+	XDR *xdrs;
 	struct rpc_msg msg;
 	enum clnt_stat status;
 	struct rpc_err error;
 
 	if (clp == NULL)
 		return (RPC_FAILED);
+	xdrs = &clp->xdr_stream;
 call_again:
 	/*
 	 * send request
@@ -219,13 +222,14 @@ clntraw_freeres(cl, xdr_res, res_ptr)
 	caddr_t res_ptr;
 {
 	struct clntraw_private *clp = clntraw_private;
-	XDR *xdrs = &clp->xdr_stream;
+	XDR *xdrs;
 	bool_t rval;
 
 	if (clp == NULL) {
 		rval = (bool_t) RPC_FAILED;
 		return (rval);
 	}
+	xdrs = &clp->xdr_stream;
 	xdrs->x_op = XDR_FREE;
 	return ((*xdr_res)(xdrs, res_ptr));
 }
