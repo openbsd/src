@@ -1,4 +1,4 @@
-/*	$OpenBSD: raidctl.c,v 1.13 2002/02/19 08:38:40 tdeval Exp $	*/
+/*	$OpenBSD: raidctl.c,v 1.14 2002/02/19 15:05:46 tdeval Exp $	*/
 /*      $NetBSD: raidctl.c,v 1.27 2001/07/10 01:30:52 lukem Exp $   */
 
 /*-
@@ -838,7 +838,7 @@ check_parity(fds, nfd, do_rewrite)
 	int nfd;
 	int do_rewrite;
 {
-	int i, is_clean, all_dirty;
+	int i, is_clean, all_dirty, was_dirty;
 	int percent_done;
 	char dev_name[PATH_MAX];
 
@@ -871,6 +871,7 @@ check_parity(fds, nfd, do_rewrite)
 	if (do_all)
 		strncpy(dev_name, "all raid", PATH_MAX);
 
+	was_dirty = all_dirty;
 	while (all_dirty) {
 		sleep(3); /* wait a bit... */
 		if (verbose) {
@@ -892,7 +893,7 @@ check_parity(fds, nfd, do_rewrite)
 			}
 		}
 	}
-	if (verbose)
+	if (verbose && was_dirty)
 		printf("%s: Parity Re-write complete\n", dev_name);
 }
 
