@@ -1,0 +1,121 @@
+.\"     $OpenBSD: securelevel.7,v 1.1 2000/01/08 01:55:33 hugh Exp $
+.\"
+.\" Copyright (c) 2000 Hugh Graham
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED
+.\" WARRANTIES, INCLUDING, BUT NOT LIMITED TO, IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+.\" INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+.\" (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+.\" SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+.\" STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+.\" IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd January 4, 2000
+.Dt SECURELEVEL 7
+.Os
+.Sh NAME
+.Nm securelevel
+.Nd securelevel and its effects
+.Sh SYNOPSIS
+The
+.Ox
+kernel provides four levels of system security:
+.Bl -tag -width flag
+.It -1 Em "Permanently insecure mode" .
+.Xr init 8
+will not attempt to raise the securelevel. May be set via
+.Xr sysctl 8
+while the system is insecure, or by building a kernel with
+.Dq option INSECURE
+in the config file.
+.It 0 Em "Insecure mode" .
+Used during bootstrapping and while the system is single user.
+System file flags may be cleared, and all devices may be read or
+written subject to their permissions.
+.It 1 Em "Secure mode" .
+Default mode when system is multiuser:
+.Bl -hyphen -compact
+.It
+securelevel may no longer be lowered except by init
+.It
+system immutable and append-only file flags may not be removed
+.It
+.Pa /dev/mem
+and
+.Pa /dev/kmem
+may not be written to
+.It
+kernel modules may not be loaded or unloaded
+.El
+.It 2 Em "Highly secure mode" .
+All effects of securelevel 1, plus:
+.Bl -hyphen -compact
+.It
+disk devices are always read-only whether mounted or not
+.It
+.Xr settimeofday 2
+may not set the time backwards
+.It
+.Xr ipf 8
+and
+.Xr ipnat 8
+rulesets may not be changed
+.El
+.El
+.Sh DESCRIPTION
+Securelevel provides controlled means of
+.Dq locking down
+a system to a degree suited to its environment. It is normally set at
+boot via the
+.Xr rc.securelevel 8
+script, or the superuser may raise securelevel at any time by modifying the
+.Va kern.securelevel
+.Xr sysctl 8
+variable. However, only
+.Xr init 8
+may lower it once the system has entered secure mode.
+.Pp
+.Em Highly secure mode
+may seem Draconian, but is intended as a last line of defence should the
+superuser account be compromised. Its effects preclude circumvention of
+file flags by direct modification of a raw disk device, or erasure of a
+filesystem by means of
+.Xr newfs 8 . 
+Further, it can limit the potential damage of a compromised
+.Dq firewall
+by prohibiting the modification of packet filter rules. Preventing
+the system clock from being set backwards aids in post-mortem analysis
+and helps ensure the intergrity of logs. Precision timekeeping is not
+affected because the clock may still be slowed.
+.Sh FILES
+.Bl -tag -compact
+.It Pa /etc/rc.securelevel
+.El
+.Sh SEE ALSO
+.Xr init 8 ,
+.Xr rc 8 ,
+.Xr sysctl 8 ,
+.Xr chflags 2 ,
+.Xr settimeofday 2 ,
+.Xr options 4
+.Sh BUGS
+The list of securelevel's effects may not be comprehensive.
+.Sh HISTORY
+The
+.Nm
+manual page first appeared in
+.Ox 2.6 .
+
