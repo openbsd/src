@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_hangman.c,v 1.3 1996/05/10 13:58:43 mickey Exp $	*/
+/*	$OpenBSD: db_hangman.c,v 1.4 1996/05/10 14:00:56 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996 Theo de Raadt, Michael Shalayeff
@@ -74,7 +74,7 @@ db_randomsym(lenp)
 
 		/* don't show symtab name if there are less than 3 of 'em */
 	if (db_nsymtabs < 3)
-		while(*p++ != ':');
+		while(*q++ != ':');
 
 		/* strlen(q) && ignoring underscores and colons */
 	for ((*lenp) = 0, p = q; *p; p++)
