@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_delete,v 1.14 2003/12/10 11:12:22 espie Exp $
+# $OpenBSD: pkg_delete,v 1.15 2003/12/10 11:43:52 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -320,6 +320,7 @@ my @realnames;
 my $bad;
 
 for my $pkgname (@ARGV) {
+	$pkgname =~ s/\.tgz$//;
 	unless (is_installed($pkgname)) {
 	    if (OpenBSD::PackageName::is_stem($pkgname)) {
 		my @l = OpenBSD::PackageName::findstem($pkgname, 
@@ -333,8 +334,12 @@ for my $pkgname (@ARGV) {
 		}
 	    }
 	}
-	next unless is_installed($pkgname);
-	push(@realnames, installed_name($pkgname));
+	if (is_installed($pkgname)) {
+	    push(@realnames, installed_name($pkgname));
+	} else {
+	    print "Can't resolve $pkgname to an installed package name\n";
+	    $bad = 1;
+	}
 }
 
 # Then check that dependencies are okay
@@ -356,7 +361,7 @@ while (my $pkgname = pop @todo) {
 			next if defined $extra_rm{$dep};
 			$extra_rm{$dep}=$pkgname;
 			push(@todo, $dep);
-			$bad=1;
+			$bad = 1;
 		}
 	}
 }
