@@ -1,4 +1,4 @@
-/*	$OpenBSD: map3270.c,v 1.2 1996/06/26 05:41:10 deraadt Exp $	*/
+/*	$OpenBSD: map3270.c,v 1.3 2000/07/06 08:51:05 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)map3270.c	4.2 (Berkeley) 4/26/91";*/
-static char rcsid[] = "$OpenBSD: map3270.c,v 1.2 1996/06/26 05:41:10 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: map3270.c,v 1.3 2000/07/06 08:51:05 deraadt Exp $";
 #endif /* not lint */
 
 /*	This program reads a description file, somewhat like /etc/termcap,
@@ -96,7 +96,7 @@ typedef struct {
     char	array[500];	/* character string */
 } stringWithLength;
 
-#define	panic(s)	{ fprintf(stderr, s); exit(1); }
+#define	panic(s)	{ fprintf(stderr, "%s", s); exit(1); }
 
 static state firstentry = { 0, STATE_NULL, 0, 0 };
 static state *headOfQueue = &firstentry;

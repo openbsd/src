@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mkmake.y	4.2 (Berkeley) 4/26/91";*/
-static char rcsid[] = "$Id: mkmake.y,v 1.1.1.1 1995/10/18 08:46:23 deraadt Exp $";
+static char rcsid[] = "$Id: mkmake.y,v 1.2 2000/07/06 08:51:06 deraadt Exp $";
 #endif /* not lint */
 
 typedef struct string {
@@ -1045,7 +1045,7 @@ same_t *same;
     same_t *same2;
 
     for (visit(same, same2); !visited(same2); visit_next(same2)) {
-	printf(same2->string->string);
+	printf("%s", same2->string->string);
     }
     visit_end();
 }
@@ -1068,7 +1068,7 @@ do_dump()
 	printf("%s =\t", same->string->string);
 	for (visit(same->value_list, same2); !visited(same2);
 						visit_next(same2)) {
-	    printf(same2->string->string);
+	    printf("%s", same2->string->string);
 	}
 	visit_end();
 	printf("\n");
@@ -1080,13 +1080,13 @@ do_dump()
 	printf("\n%s:\t", same->string->string);
 	for (visit(same->depend_list, same2); !visited(same2);
 						visit_next(same2)) {
-	    printf(same2->string->string);
+	    printf("%s", same2->string->string);
 	}
 	visit_end();
 	printf("\n\t");
 	for (visit(same->action_list, same2); !visited(same2);
 					    visit_next(same2)) {
-	    printf(same2->string->string);
+	    printf("%s", same2->string->string);
 	    if (same2->string->string[0] == '\n') {
 		printf("\t");
 	    }
