@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.23 1998/08/24 05:29:49 millert Exp $ */
+/*	$OpenBSD: conf.c,v 1.24 1998/08/29 11:14:08 niklas Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)conf.c	8.2 (Berkeley) 11/14/93
- *      $Id: conf.c,v 1.23 1998/08/24 05:29:49 millert Exp $
+ *      $Id: conf.c,v 1.24 1998/08/29 11:14:08 niklas Exp $
  */
 
 #include <sys/param.h>
@@ -209,7 +209,8 @@ struct cdevsw	cdevsw[] =
 	cdev_uk_init(NUK,uk),		/* 32: unknown SCSI */
 	cdev_random_init(1,random),	/* 33: random data source */
 	cdev_ss_init(NSS,ss),		/* 34: SCSI scanner */
-	cdev_kyms_init(NSS,ksyms),	/* 35: Kernel symbols device */
+	cdev_kyms_init(NKSYMS,ksyms),	/* 35: Kernel symbols device */
+	cdev_ch_init(NCH,ch),		/* 36: SCSI autochanger */
 };
 
 int	nchrdev = sizeof (cdevsw) / sizeof (cdevsw[0]);
