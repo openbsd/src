@@ -1,4 +1,4 @@
-/*	$OpenBSD: date.c,v 1.4 1997/04/16 20:58:09 deraadt Exp $	*/
+/*	$OpenBSD: date.c,v 1.5 1997/06/23 19:34:57 deraadt Exp $	*/
 /*	$NetBSD: date.c,v 1.11 1995/09/07 06:21:05 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)date.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: date.c,v 1.4 1997/04/16 20:58:09 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: date.c,v 1.5 1997/06/23 19:34:57 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -178,10 +178,19 @@ setthetime(p)
 		lt->tm_sec = 0;
 
 	switch (strlen(p)) {
+	case 12:				/* yyyy */
+		bigyear = ATOI2(p);
+		bigyear = bigyear * 100 - 1900;
+		/* FALLTHROUGH */
 	case 10:				/* yy */
-		lt->tm_year = ATOI2(p);
+		lt->tm_year = bigyear;
+		lt->tm_year += ATOI2(p);
 		if (lt->tm_year < 69)		/* hack for 2000 ;-} */
 			lt->tm_year += 100;
+		if (lt->tm_year > (2037-1900))  {
+			warnx("year too large (overflows 32 bit value)");
+			exit(1);
+		}
 		/* FALLTHROUGH */
 	case 8:					/* mm */
 		lt->tm_mon = ATOI2(p);
