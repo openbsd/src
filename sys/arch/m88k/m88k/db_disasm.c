@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.1 2004/06/19 18:28:37 miod Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.2 2004/09/30 21:48:56 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -30,7 +30,7 @@
  * m88k disassembler for use in ddb
  */
 
-#include <sys/param.h>		/* cputyp and friends */
+#include <sys/param.h>
 #include <sys/types.h>
 
 #include <machine/db_machdep.h>
@@ -206,13 +206,13 @@ ctrlregs(int inst, const char *opcode, long iadr)
 
 	if ( L6inst == 010 || L6inst == 011 )
 		db_printf("\t\tr%-3d,%s", rd,
-			  cputyp == CPU_88100 ? m88100_ctrlreg[creg] : m88110_ctrlreg[creg]);
+			  CPU_IS88100 ? m88100_ctrlreg[creg] : m88110_ctrlreg[creg]);
 	else if ( L6inst == 020 || L6inst == 021 )
 		db_printf("\t\tr%-3d,%s", rs1,
-			  cputyp == CPU_88100 ? m88100_ctrlreg[creg] : m88110_ctrlreg[creg]);
+			  CPU_IS88100 ? m88100_ctrlreg[creg] : m88110_ctrlreg[creg]);
 	else
 		db_printf("\t\tr%-3d,r%-3d,%s", rd, rs1,
-			  cputyp == CPU_88100 ? m88100_ctrlreg[creg] : m88110_ctrlreg[creg]);
+			  CPU_IS88100 ? m88100_ctrlreg[creg] : m88110_ctrlreg[creg]);
 }
 
 

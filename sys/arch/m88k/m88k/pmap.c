@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.4 2004/08/04 15:54:38 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.5 2004/09/30 21:48:56 miod Exp $	*/
 /*
  * Copyright (c) 2001-2004, Miodrag Vallat
  * Copyright (c) 1998-2001 Steve Murphree, Jr.
@@ -411,7 +411,7 @@ pmap_map(vaddr_t virt, paddr_t start, paddr_t end, vm_prot_t prot, u_int cmode)
 
 	template = m88k_protection(prot) | cmode | PG_V;
 #ifdef M88110
-	if (cputyp == CPU_88110 && m88k_protection(prot) != PG_RO)
+	if (CPU_IS88110 && m88k_protection(prot) != PG_RO)
 		template |= PG_M;
 #endif
 
@@ -2480,7 +2480,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 
 	template = m88k_protection(prot);
 #ifdef M88110
-	if (cputyp == CPU_88110 && m88k_protection(prot) != PG_RO)
+	if (CPU_IS88110 && m88k_protection(prot) != PG_RO)
 		template |= PG_M;
 #endif
 

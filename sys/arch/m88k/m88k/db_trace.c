@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.2 2004/07/28 12:33:55 miod Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.3 2004/09/30 21:48:56 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -299,7 +299,8 @@ frame_is_sane(db_regs_t *regs, int quiet)
 		return 0;
 	}
 
-	if (cputyp != CPU_88110) {
+#ifdef M88100
+	if (CPU_IS88100) {
 		/* sxip is reasonable */
 #if 0
 		if ((regs->sxip & 1) == 1)
@@ -312,6 +313,7 @@ frame_is_sane(db_regs_t *regs, int quiet)
 		if ((regs->sfip & 3) != 2)
 			return 0;
 	}
+#endif
 
 	/* epsr sanity */
 	if ((regs->epsr & PSR_MODE)) { /* kernel mode */
@@ -809,13 +811,17 @@ db_stack_trace_cmd2(db_regs_t *regs, int (*pr)(const char *, ...))
 
 	/* fetch address */
 	/* use sxip if valid, otherwise try snip or sfip */
-	if (cputyp == CPU_88110) {
+#ifdef M88110
+	if (CPU_IS88110) {
 		where = regs->exip & ~3;
-	} else {
-		where = ((regs->sxip & 2) ? regs->sxip :
-			 ((regs->snip & 2) ? regs->snip :
-			  regs->sfip) ) & ~3;
 	}
+#endif
+#ifdef M88100
+	if (CPU_IS88100) {
+		where = ((regs->sxip & 2) ? regs->sxip :
+			 ((regs->snip & 2) ? regs->snip : regs->sfip)) & ~3;
+	}
+#endif
 	stack = regs->r[31];
 	(*pr)("stack base = 0x%x\n", stack);
 	(*pr)("(0) "); /*depth of trace */
@@ -1128,13 +1134,15 @@ db_stack_trace_print(db_expr_t addr,
 			}
                         frame.r[31] = ptr;
 			frame.epsr = 0x800003f0U;
-			if (cputyp != CPU_88110) {
+#ifdef M88100
+			if (CPU_IS88100) {
 				frame.sxip = sxip | 2;
 				frame.snip = frame.sxip + 4;
 				frame.sfip = frame.snip + 4;
 			}
+#endif
 			(*pr)("[r31=%x, %sxip=%x]\n", frame.r[31],
-				  cputyp == CPU_88110 ? "e" : "s", frame.sxip);
+			    CPU_IS88110 ? "e" : "s", frame.sxip);
 			regs = &frame;
 		}
 	}

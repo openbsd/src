@@ -1,4 +1,4 @@
-/*	$OpenBSD: sig_machdep.c,v 1.1 2004/09/30 09:20:48 miod Exp $	*/
+/*	$OpenBSD: sig_machdep.c,v 1.2 2004/09/30 21:48:56 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -164,19 +164,18 @@ sendsig(sig_t catcher, int sig, int mask, unsigned long code, int type,
 	 * Signal trampoline code is at base of user stack.
 	 */
 	addr = p->p_sigcode;
-	if (cputyp != CPU_88110) {
 #ifdef M88100
-		/* mc88100 */
+	if (CPU_IS88100) {
 		tf->tf_snip = (addr & ~3) | NIP_V;
 		tf->tf_sfip = (tf->tf_snip + 4) | FIP_V;
+	}
 #endif
-	} else {
 #ifdef M88110
-		/* mc88110 */
+	if (CPU_IS88110) {
 		tf->tf_exip = (addr & ~3);
 		tf->tf_enip = (tf->tf_exip + 4);
-#endif
 	}
+#endif
 	tf->tf_r[31] = (unsigned)fp;
 #ifdef DEBUG
 	if ((sigdebug & SDB_FOLLOW) ||

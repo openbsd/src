@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.1 2004/04/26 12:34:05 miod Exp $ */
+/*	$OpenBSD: db_machdep.h,v 1.2 2004/09/30 21:48:56 miod Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -50,7 +50,7 @@
  * in them that need to masked to get the correct addresses
  */
 #define PC_REGS(regs) \
-	cputyp == CPU_88110 ? ((regs)->exip & ~3) : \
+	CPU_IS88110 ? ((regs)->exip & ~3) : \
 	  (((regs)->sxip & 2) ? (regs)->sxip & ~3 : \
 	    ((regs)->snip & 2 ? (regs)->snip & ~3 : (regs)->sfip & ~3))
 

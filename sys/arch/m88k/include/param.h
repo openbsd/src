@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.3 2004/08/09 20:53:04 miod Exp $ */
+/*	$OpenBSD: param.h,v 1.4 2004/09/30 21:48:56 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1988 University of Utah.
@@ -146,5 +146,18 @@ extern int cputyp;
  */
 #define CPU_88100	0x100
 #define CPU_88110	0x110
+
+#ifdef M88100
+#ifdef M88110
+#define	CPU_IS88100	(cputyp == CPU_88100)
+#define	CPU_IS88110	(cputyp != CPU_88100)
+#else
+#define	CPU_IS88100	1
+#define	CPU_IS88110	0
+#endif
+#else
+#define	CPU_IS88100	0
+#define	CPU_IS88110	1
+#endif
 
 #endif /* !_M88K_PARAM_H_ */

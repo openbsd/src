@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.10 2004/07/26 10:42:56 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.11 2004/09/30 21:48:56 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -154,9 +154,8 @@ panictrap(int type, struct trapframe *frame)
 	static int panicing = 0;
 
 	if (panicing++ == 0) {
-		switch (cputyp) {
 #ifdef M88100
-		case CPU_88100:
+		if (CPU_IS88100) {
 			if (type == 2) {
 				/* instruction exception */
 				printf("\nInstr access fault (%s) v = %x, "
@@ -174,15 +173,14 @@ panictrap(int type, struct trapframe *frame)
 			} else
 				printf("\nTrap type %d, v = %x, frame %p\n",
 				    type, frame->tf_sxip & XIP_ADDR, frame);
-			break;
+		}
 #endif
 #ifdef M88110
-		case CPU_88110:
+		if (CPU_IS88110) {
 			printf("\nTrap type %d, v = %x, frame %p\n",
 			    type, frame->tf_exip, frame);
-			break;
-#endif
 		}
+#endif
 #ifdef DDB
 		regdump(frame);
 #endif
@@ -1509,16 +1507,21 @@ child_return(arg)
 	tf->tf_r[2] = 0;
 	tf->tf_r[3] = 0;
 	tf->tf_epsr &= ~PSR_C;
-	if (cputyp != CPU_88110) {
+#ifdef M88100
+	if (CPU_IS88100) {
 		tf->tf_snip = tf->tf_sfip & XIP_ADDR;
 		tf->tf_sfip = tf->tf_snip + 4;
-	} else {
+	}
+#endif
+#ifdef M88110
+	if (CPU_IS88110) {
 		/* skip two instructions */
 		if (tf->tf_exip & 1)
 			tf->tf_exip = tf->tf_enip + 4;
 		else
 			tf->tf_exip += 4 + 4;
 	}
+#endif
 
 	userret(p, tf, p->p_sticks);
 #ifdef KTRACE

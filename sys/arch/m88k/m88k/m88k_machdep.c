@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88k_machdep.c,v 1.1 2004/09/30 14:55:54 miod Exp $	*/
+/*	$OpenBSD: m88k_machdep.c,v 1.2 2004/09/30 21:48:56 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -159,8 +159,8 @@ setregs(p, pack, stack, retval)
 
 	bzero((caddr_t)tf, sizeof *tf);
 
-	if (cputyp == CPU_88110) {
 #ifdef M88110
+	if (CPU_IS88110) {
 		/*
 		 * user mode, serialize mem, interrupts enabled,
 		 * graphics unit, fp enabled
@@ -170,16 +170,17 @@ setregs(p, pack, stack, retval)
 		 * XXX disable OoO for now...
 		 */
 		tf->tf_epsr |= PSR_SER;
+	}
 #endif
-	} else {
 #ifdef M88100
+	if (CPU_IS88100) {
 		/*
 		 * user mode, interrupts enabled,
 		 * no graphics unit, fp enabled
 		 */
 		tf->tf_epsr = PSR_SFD | PSR_SFD2;
-#endif
 	}
+#endif
 
 	/*
 	 * We want to start executing at pack->ep_entry. The way to
@@ -188,16 +189,17 @@ setregs(p, pack, stack, retval)
 	 * And set sfip to ep_entry with valid bit on so that it will be
 	 * fetched.  mc88110 - just set exip to pack->ep_entry.
 	 */
-	if (cputyp == CPU_88110) {
 #ifdef M88110
+	if (CPU_IS88110) {
 		tf->tf_exip = pack->ep_entry & ~3;
+	}
 #endif
-	} else {
 #ifdef M88100
+	if (CPU_IS88100) {
 		tf->tf_snip = pack->ep_entry & ~3;
 		tf->tf_sfip = (pack->ep_entry & ~3) | FIP_V;
-#endif
 	}
+#endif
 	tf->tf_r[2] = stack;
 	tf->tf_r[31] = stack;
 	retval[1] = 0;
@@ -299,14 +301,17 @@ regdump(struct trapframe *f)
 	printf("R24-29: 0x%08x  0x%08x  0x%08x  0x%08x  0x%08x  0x%08x\n",
 	       R(24),R(25),R(26),R(27),R(28),R(29));
 	printf("R30-31: 0x%08x  0x%08x\n",R(30),R(31));
-	if (cputyp == CPU_88110) {
+#ifdef M88110
+	if (CPU_IS88110) {
 		printf("exip %x enip %x\n", f->tf_exip, f->tf_enip);
-	} else {
+	}
+#endif
+#ifdef M88100
+	if (CPU_IS88100) {
 		printf("sxip %x snip %x sfip %x\n",
 		    f->tf_sxip, f->tf_snip, f->tf_sfip);
 	}
-#ifdef M88100
-	if (f->tf_vector == 0x3 && cputyp != CPU_88110) {
+	if (CPU_IS88100 && f->tf_vector == 0x3) {
 		/* print dmt stuff for data access fault */
 		printf("dmt0 %x dmd0 %x dma0 %x\n",
 		    f->tf_dmt0, f->tf_dmd0, f->tf_dma0);
@@ -317,7 +322,7 @@ regdump(struct trapframe *f)
 		printf("fault type %d\n", (f->tf_dpfsr >> 16) & 0x7);
 		dae_print((unsigned *)f);
 	}
-	if (longformat && cputyp != CPU_88110) {
+	if (CPU_IS88100 && longformat != 0) {
 		printf("fpsr %x fpcr %x epsr %x ssbr %x\n",
 		    f->tf_fpsr, f->tf_fpcr, f->tf_epsr, f->tf_ssbr);
 		printf("fpecr %x fphs1 %x fpls1 %x fphs2 %x fpls2 %x\n",
@@ -331,7 +336,7 @@ regdump(struct trapframe *f)
 	}
 #endif
 #ifdef M88110
-	if (longformat && cputyp == CPU_88110) {
+	if (CPU_IS88110 && longformat != 0) {
 		printf("fpsr %x fpcr %x fpecr %x epsr %x\n",
 		    f->tf_fpsr, f->tf_fpcr, f->tf_fpecr, f->tf_epsr);
 		printf("dsap %x duap %x dsr %x dlar %x dpar %x\n",

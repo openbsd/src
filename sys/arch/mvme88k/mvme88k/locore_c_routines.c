@@ -1,4 +1,4 @@
-/* $OpenBSD: locore_c_routines.c,v 1.42 2004/08/02 08:35:00 miod Exp $	*/
+/* $OpenBSD: locore_c_routines.c,v 1.43 2004/09/30 21:48:57 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -91,9 +91,8 @@ vector_init(m88k_exception_vector_area *vector, unsigned *vector_init_list)
 	bugvec[0] = vector[MVMEPROM_VECTOR].word_one;
 	bugvec[1] = vector[MVMEPROM_VECTOR].word_two;
 
-	switch (cputyp) {
 #ifdef M88110
-	case CPU_88110:
+	if (CPU_IS88110) {
 		for (; num <= SIGSYS_MAX; num++)
 			SET_VECTOR(num, m88110_sigsys);
 
@@ -104,10 +103,10 @@ vector_init(m88k_exception_vector_area *vector, unsigned *vector_init_list)
 		SET_VECTOR(MVMEPROM_VECTOR, m88110_bugtrap);
 		SET_VECTOR(504, m88110_stepbpt);
 		SET_VECTOR(511, m88110_userbpt);
-		break;
-#endif /* M88110 */
+	}
+#endif
 #ifdef M88100
-	case CPU_88100:
+	if (CPU_IS88100) {
 		for (; num <= SIGSYS_MAX; num++)
 			SET_VECTOR(num, sigsys);
 
@@ -118,9 +117,8 @@ vector_init(m88k_exception_vector_area *vector, unsigned *vector_init_list)
 		SET_VECTOR(MVMEPROM_VECTOR, bugtrap);
 		SET_VECTOR(504, stepbpt);
 		SET_VECTOR(511, userbpt);
-		break;
-#endif /* M88100 */
 	}
+#endif
 
 	/* GCC will by default produce explicit trap 503 for division by zero */
 	SET_VECTOR(503, vector_init_list[T_ZERODIV]);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.42 2004/01/23 17:26:02 miod Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.43 2004/09/30 21:48:56 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -241,7 +241,7 @@ m88k_db_print_frame(addr, have_addr, count, modif)
 	db_printf("R30-31: 0x%08x  0x%08x\n", R(30), R(31));
 
 	db_printf("%cxip: 0x%08x ",
-	    cputyp == CPU_88110 ? 'e' : 's', s->tf_sxip & ~3);
+	    CPU_IS88110 ? 'e' : 's', s->tf_sxip & ~3);
 	db_find_xtrn_sym_and_offset((db_addr_t)IPMASK(s->tf_sxip),
 	    &name, &offset);
 	if (name != NULL && (unsigned)offset <= db_maxoff)
@@ -250,7 +250,7 @@ m88k_db_print_frame(addr, have_addr, count, modif)
 
 	if (s->tf_snip != s->tf_sxip + 4) {
 		db_printf("%cnip: 0x%08x ",
-		    cputyp == CPU_88110 ? 'e' : 's', s->tf_snip);
+		    CPU_IS88110 ? 'e' : 's', s->tf_snip);
 		db_find_xtrn_sym_and_offset((db_addr_t)IPMASK(s->tf_snip),
 		    &name, &offset);
 		if (name != NULL && (unsigned)offset <= db_maxoff)
@@ -258,7 +258,8 @@ m88k_db_print_frame(addr, have_addr, count, modif)
 		db_printf("\n");
 	}
 
-	if (cputyp != CPU_88110) {
+#ifdef M88100
+	if (CPU_IS88100) {
 		if (s->tf_sfip != s->tf_snip + 4) {
 			db_printf("sfip: 0x%08x ", s->tf_sfip);
 			db_find_xtrn_sym_and_offset((db_addr_t)IPMASK(s->tf_sfip),
@@ -267,7 +268,10 @@ m88k_db_print_frame(addr, have_addr, count, modif)
 				db_printf("%s+0x%08x", name, (unsigned)offset);
 			db_printf("\n");
 		}
-	} else {
+	}
+#endif
+#ifdef M88110
+	if (CPU_IS88110) {
 		db_printf("fpsr: 0x%08x fpcr: 0x%08x fpecr: 0x%08x\n",
 			  s->tf_fpsr, s->tf_fpcr, s->tf_fpecr);
 		db_printf("dsap 0x%08x duap 0x%08x dsr 0x%08x dlar 0x%08x dpar 0x%08x\n",
@@ -275,6 +279,7 @@ m88k_db_print_frame(addr, have_addr, count, modif)
 		db_printf("isap 0x%08x iuap 0x%08x isr 0x%08x ilar 0x%08x ipar 0x%08x\n",
 			  s->tf_isap, s->tf_iuap, s->tf_isr, s->tf_ilar, s->tf_ipar);
 	}
+#endif
 
 	db_printf("epsr: 0x%08x                current process: %p\n",
 		  s->tf_epsr, curproc);
@@ -294,7 +299,7 @@ m88k_db_print_frame(addr, have_addr, count, modif)
 	}
 
 #ifdef M88100
-	if (cputyp != CPU_88110) {
+	if (CPU_IS88100) {
 		if (s->tf_vector == /*data*/3 || s->tf_dmt0 & DMT_VALID) {
 			db_printf("dmt,d,a0: 0x%08x  0x%08x  0x%08x ",
 			    s->tf_dmt0, s->tf_dmd0, s->tf_dma0);
@@ -341,7 +346,7 @@ m88k_db_print_frame(addr, have_addr, count, modif)
 		db_printf("fpecr: 0x%08x fpsr: 0x%08x fpcr: 0x%08x\n",
 			  s->tf_fpecr, s->tf_fpsr, s->tf_fpcr);
 #ifdef M88100
-		if (cputyp != CPU_88110) {
+		if (CPU_IS88100) {
 			db_printf("fcr1-4: 0x%08x  0x%08x  0x%08x  0x%08x\n",
 				  s->tf_fphs1, s->tf_fpls1, s->tf_fphs2, s->tf_fpls2);
 			db_printf("fcr5-8: 0x%08x  0x%08x  0x%08x  0x%08x\n",
@@ -472,9 +477,9 @@ ddb_break_trap(type, eframe)
 		 * at the breakpoint address.  mc88110's exip reg
 		 * already has the address of the exception instruction.
 		 */
-		if (cputyp != CPU_88110) {
-		eframe->sfip = eframe->snip;
-		eframe->snip = eframe->sxip;
+		if (CPU_IS88100) {
+			eframe->sfip = eframe->snip;
+			eframe->snip = eframe->sxip;
 		}
 	}
 
