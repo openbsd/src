@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafbvar.h,v 1.5 2002/03/26 16:51:43 drahn Exp $	*/
+/*	$OpenBSD: vgafbvar.h,v 1.6 2002/04/29 01:34:58 drahn Exp $	*/
 /*	$NetBSD: vgavar.h,v 1.2 1996/11/23 06:06:43 cgd Exp $	*/
 
 /*
@@ -54,10 +54,8 @@ struct vgafb_config {
 	int	(*vc_ioctl)(void *, u_long,
 		    caddr_t, int, struct proc *);
 	paddr_t	(*vc_mmap)(void *, off_t, int);
-	#if 0
-	struct raster   dc_raster;      /* raster description */
-	#endif
-	struct rcons    dc_rcons;       /* raster blitter control info */
+
+	struct rasops_info    dc_rinfo;       /* raster display data*/
 
 	bus_addr_t	iobase;
 	bus_size_t	iosize;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb_pci.c,v 1.6 2002/03/27 20:54:42 drahn Exp $	*/
+/*	$OpenBSD: vgafb_pci.c,v 1.7 2002/04/29 01:34:58 drahn Exp $	*/
 /*	$NetBSD: vga_pci.c,v 1.4 1996/12/05 01:39:38 cgd Exp $	*/
 
 /*
@@ -44,10 +44,11 @@
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 
-#include <dev/rcons/raster.h>
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/wscons/wscons_raster.h>
+#include <dev/rasops/rasops.h>
+#include <dev/wsfont/wsfont.h>
 
 #include <arch/macppc/pci/vgafbvar.h>
 #include <arch/macppc/pci/vgafb_pcivar.h>
@@ -425,10 +426,11 @@ vgafb_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
 	if (sc->nscreens > 0)
 		return (ENOMEM);
   
-	*cookiep = &sc->sc_vc->dc_rcons; /* one and only for now */
+	*cookiep = &sc->sc_vc->dc_rinfo; /* one and only for now */
 	*curxp = 0;
 	*curyp = 0;
-	rcons_alloc_attr(&sc->sc_vc->dc_rcons, 0, 0, 0, &defattr);
+	sc->sc_vc->dc_rinfo.ri_ops.alloc_attr(&sc->sc_vc->dc_rinfo,
+	    0, 0, 0, &defattr);
 	*attrp = defattr;
 	sc->nscreens++; 
 	return (0);

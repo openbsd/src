@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.9 2002/04/20 16:42:42 matthieu Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.10 2002/04/29 01:34:58 drahn Exp $	*/
 /*	$NetBSD: vga.c,v 1.3 1996/12/02 22:24:54 cgd Exp $	*/
 
 /*
@@ -44,7 +44,8 @@
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/wscons/wscons_raster.h>
-#include <dev/rcons/raster.h>
+#include <dev/rasops/rasops.h>
+#include <dev/wsfont/wsfont.h>
 
 #include <arch/macppc/pci/vgafbvar.h>
 
@@ -63,22 +64,13 @@ struct cfdriver vgafb_cd = {
 	NULL, "vgafb", DV_DULL,
 };
 
-void	vgafb_cursor(void *, int, int, int);
-void	vgafb_putchar(void *, int, int, u_int, long);
-void	vgafb_copycols(void *, int, int, int, int);
-void	vgafb_erasecols(void *, int, int, int);
-void	vgafb_copyrows(void *, int, int, int);
-void	vgafb_eraserows(void *, int, int);
-void	vgafb_alloc_attr(void *c, int fg, int bg, int flags, long *);
-
 void vgafb_setcolor(struct vgafb_config *vc, unsigned int index, 
 		    u_int8_t r, u_int8_t g, u_int8_t b);
 
 struct vgafb_devconfig {
-	struct rcons dc_ri;
+	struct rasops_info dc_rinfo;    /* raster display data */
+	int dc_blanked;			/* currently had video disabled */
 };
-struct raster vgafb_raster;
-
 
 struct vgafb_devconfig vgafb_console_dc;
 
@@ -87,7 +79,7 @@ struct wsscreen_descr vgafb_stdscreen = {
 	0, 0,   /* will be filled in -- XXX shouldn't, it's global */
 	0,
 	0, 0,
-	WSSCREEN_REVERSE
+	WSSCREEN_REVERSE|WSSCREEN_WSCOLORS
 };
 const struct wsscreen_descr *vgafb_scrlist[] = {
 	&vgafb_stdscreen,
@@ -99,24 +91,14 @@ struct wsscreen_list vgafb_screenlist = {
 };
 
 
-struct wsdisplay_emulops vgafb_emulops = {
-	rcons_cursor,
-	rcons_mapchar,
-	rcons_putchar,
-	rcons_copycols,
-	rcons_erasecols,
-	rcons_copyrows,
-	rcons_eraserows,
-	rcons_alloc_attr
-};
-
 struct wsdisplay_accessops vgafb_accessops = {
 	vgafb_ioctl,
 	vgafb_mmap,
 	vgafb_alloc_screen,
 	vgafb_free_screen,
 	vgafb_show_screen,
-	0 /* load_font */
+	0, /* load_font */
+	0 /* scrollback */
 };
 
 int	vgafb_getcmap(struct vgafb_config *vc, struct wsdisplay_cmap *cm);
@@ -473,7 +455,8 @@ vgafb_cnattach(iot, memt, pc, bus, device, function)
         long defattr;
 
 	struct vgafb_devconfig *dc = &vgafb_console_dc;
-        struct rcons *ri = &dc->dc_ri;
+        struct rasops_info *ri = &dc->dc_rinfo;
+#if 0
 	ri->rc_sp = &vgafb_raster;
 
 	ri->rc_sp->width = cons_width;
@@ -481,27 +464,25 @@ vgafb_cnattach(iot, memt, pc, bus, device, function)
 	ri->rc_sp->depth = cons_depth;
 	ri->rc_sp->linelongs = cons_linebytes /4; /* XXX */
 	ri->rc_sp->pixels = (void *)cons_display_mem_h;
+
 	ri->rc_crow = ri->rc_ccol = -1;
 	ri->rc_crowp = &ri->rc_crow;
 	ri->rc_ccolp = &ri->rc_ccol;
+#endif
+	ri->ri_flg = RI_CENTER;
+	ri->ri_depth = cons_depth;
+	ri->ri_bits = (void *)cons_display_mem_h;
+	ri->ri_width = cons_width;
+	ri->ri_height = cons_height;
+	ri->ri_stride = cons_linebytes;
+	ri->ri_hw = dc;
 
-	rcons_init(ri, 160, 160);
+	rasops_init(ri, 160, 160);
 
-	vgafb_stdscreen.nrows = ri->rc_maxrow;
-	vgafb_stdscreen.ncols = ri->rc_maxcol;
-	vgafb_stdscreen.textops = &vgafb_emulops;
-	rcons_alloc_attr(ri, 0, 0, 0, &defattr);
-
-	#if 0
-	{
-		int i;
-		for (i = 0; i < cons_width * cons_height; i++) {
-			bus_space_write_1(cons_membus,
-				cons_display_mem_h, i, 0x1);
-
-		}
-	}
-	#endif
+	vgafb_stdscreen.nrows = ri->ri_rows;
+	vgafb_stdscreen.ncols = ri->ri_cols;
+	vgafb_stdscreen.textops = &ri->ri_ops;
+	ri->ri_ops.alloc_attr(ri, 0, 0, 0, &defattr);
 
 	wsdisplay_cnattach(&vgafb_stdscreen, ri, 0, 0, defattr);
 }

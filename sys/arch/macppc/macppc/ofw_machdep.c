@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_machdep.c,v 1.8 2002/03/14 01:26:36 millert Exp $	*/
+/*	$OpenBSD: ofw_machdep.c,v 1.9 2002/04/29 01:34:58 drahn Exp $	*/
 /*	$NetBSD: ofw_machdep.c,v 1.1 1996/09/30 16:34:50 ws Exp $	*/
 
 /*
@@ -547,8 +547,8 @@ of_display_console()
 	printf(": consaddr %x, ", cons_addr);
 	printf(": ioaddr %x, size %x", addr[1].phys_lo, addr[1].size_lo);
 	printf(": memtag %x, iotag %x", memtag, iotag);
-	printf(": cons_width %d cons_linebytes %d cons_height %d\n",
-		cons_width, cons_linebytes, cons_height);
+	printf(": width %d linebytes %d height %d depth %d\n",
+		cons_width, cons_linebytes, cons_height, cons_depth);
 #endif
 
 	{
