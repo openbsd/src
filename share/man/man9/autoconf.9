@@ -1,4 +1,4 @@
-.\"     $OpenBSD: autoconf.9,v 1.5 2003/08/29 19:46:29 tedu Exp $
+.\"     $OpenBSD: autoconf.9,v 1.6 2004/02/14 17:54:02 jmc Exp $
 .\"     $NetBSD: autoconf.9,v 1.9 2002/02/13 08:18:35 ross Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,8 +42,8 @@
 .Nm autoconf
 .Nd autoconfiguration framework
 .Sh SYNOPSIS
-.Fd #include \*[Lt]sys/param.h\*[Gt]
-.Fd #include \*[Lt]sys/device.h\*[Gt]
+.Fd #include <sys/param.h>
+.Fd #include <sys/device.h>
 .Sh DESCRIPTION
 Autoconfiguration is the process of matching hardware devices with an
 appropriate device driver.
@@ -88,12 +88,11 @@ giving a unique address for each instance.
 .Pp
 The
 .Fn config_init
-function initializes autoconfiguration data structures.
+function initializes the autoconfiguration data structures.
 .Sh INDIRECT CONFIGURATION
 .nr nS 1
 .Ft "void *"
 .Fn config_search "cfmatch_t func" "struct device *parent" "void *aux"
-.Pp
 .Ft "void *"
 .Fn config_rootsearch "cfmatch_t func" "char *rootname" "void *aux"
 .nr nS 0
@@ -114,8 +113,8 @@ in a manner similar to
 except that there is no parent device.
 If
 .Fa func
-is NULL,
-.Pp
+is
+.Dv NULL ,
 .Fn config_search
 applies each child's match function instead.
 The argument
@@ -128,7 +127,9 @@ on through
 .Fa func
 to the child.
 .Fn config_search
-returns a pointer to the best-matched child or NULL otherwise.
+returns a pointer to the best-matched child or
+.Dv NULL
+otherwise.
 .Pp
 The role of
 .Fa func
@@ -158,10 +159,8 @@ In this case callers may choose to ignore the return value.
 .Ft "struct device *"
 .Fn config_found_sm "struct device *parent" "void *aux" "cfprint_t print" \
                     "cfmatch_t submatch"
-.Pp
 .Ft "struct device *"
 .Fn config_found "struct device *parent" "void *aux" "cfprint_t print"
-.Pp
 .Ft "struct device *"
 .Fn config_rootfound "char *rootname" "void *aux"
 .nr nS 0
@@ -175,7 +174,9 @@ is called by the parent and in turn calls the
 function to call the match function as determined by the configuration table.
 If
 .Fa submatch
-is NULL, the driver match functions are called directly.
+is
+.Dv NULL ,
+the driver match functions are called directly.
 The argument
 .Fa parent
 is the pointer to the parent's device structure.
@@ -197,8 +198,8 @@ function is called to complain.
 The print function is called with the
 .Fa aux
 argument and, if the matches failed, the full name (including unit
-number) of the parent device, otherwise NULL.
-.Pp
+number) of the parent device, otherwise
+.Dv NULL .
 .Bd -literal
 typedef int (*cfprint_t)(void *aux, const char *parentname);
 #define	QUIET	0		/* print nothing */
@@ -226,7 +227,9 @@ The
 .Fn config_found_sm
 function returns a pointer to the attached device's
 .Em softc
-structure if the device is attached, NULL otherwise.
+structure if the device is attached,
+.Dv NULL
+otherwise.
 Most callers can ignore this value, since the system will already have
 printed a diagnostic.
 .Pp
@@ -251,7 +254,6 @@ string.
 .Ft "struct device *"
 .Fn config_attach "struct device *parent" "void *cf" "void *aux" \
                   "cfprint_t print"
-.Pp
 .Ft "int"
 .Fn config_detach "struct device *dev" "int flags"
 .nr nS 0
@@ -274,9 +276,8 @@ The
 .Fn config_detach
 function is called by the parent to detach the child device.
 The second argument
-.Em flags
+.Fa flags
 contains detachment flags:
-.Pp
 .Bd -literal
 #define	DETACH_FORCE	0x01	/* Force detachment; hardware gone */
 #define	DETACH_QUIET	0x02	/* Don't print a notice */
@@ -294,7 +295,6 @@ which have a device open).
 .nr nS 1
 .Ft "int"
 .Fn config_activate "struct device *dev"
-.Pp
 .Ft "int"
 .Fn config_deactivate "struct device *dev"
 .nr nS 0
@@ -340,6 +340,7 @@ Data structures and function prototypes for the framework are located in
 .Pa sys/sys/device.h .
 .Sh SEE ALSO
 .Xr autoconf 4 ,
+.Xr files.conf 5 ,
 .Xr config 8
 .Sh HISTORY
 Autoconfiguration first appeared in
