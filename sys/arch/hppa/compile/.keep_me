@@ -1,0 +1,3 @@
+$OpenBSD: .keep_me,v 1.1 1998/06/23 20:23:31 mickey Exp $
+
+This file must remain so that 'cvs checkout' makes the compile directory.
