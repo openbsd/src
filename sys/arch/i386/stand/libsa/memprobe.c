@@ -1,4 +1,4 @@
-/*	$OpenBSD: memprobe.c,v 1.15 1997/10/17 15:03:28 weingart Exp $	*/
+/*	$OpenBSD: memprobe.c,v 1.16 1997/10/17 18:46:58 weingart Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -38,7 +38,7 @@
 
 static int addrprobe __P((u_int));
 u_int cnvmem, extmem;		/* XXX - remove */
-struct BIOS_MAP *memory_map;
+bios_memmap_t *memory_map;
 
 struct E820_desc_t {
 	u_int32_t addr_lo;
@@ -56,10 +56,10 @@ static struct E820_desc_t Desc;
  *
  * This is the "prefered" method.
  */
-struct BIOS_MAP *
+bios_memmap_t *
 bios_E820()
 {
-	static struct BIOS_MAP bm[E820_MAX_MAPENT];		/* This is easier */
+	static bios_memmap_t bm[E820_MAX_MAPENT];		/* This is easier */
 	int E820Present = 0;
 	int eax = 0, count = 0;
 	volatile int ebx = 0;
@@ -116,10 +116,10 @@ bios_E820()
  * Only used if int 15, AX=E820 does not work.
  * This should work for more than 64MB.
  */
-struct BIOS_MAP *
+bios_memmap_t *
 bios_E801()
 {
-	static struct BIOS_MAP bm[3];
+	static bios_memmap_t bm[3];
 	int eax, edx = 0;
 
 	/* Test for 0xE801 */
@@ -168,10 +168,10 @@ bios_E801()
  * Only used if int 15, AX=E801 does not work.
  * Machines with this are restricted to 64MB.
  */
-struct BIOS_MAP *
+bios_memmap_t *
 bios_8800()
 {
-	static struct BIOS_MAP bm[2];
+	static bios_memmap_t bm[2];
 	int eax, mem;
 
 	__asm __volatile(
@@ -202,10 +202,10 @@ bios_8800()
  *
  * Only used if int 15, AX=E820 does not work.
  */
-struct BIOS_MAP *
+bios_memmap_t *
 bios_int12()
 {
-	static struct BIOS_MAP bm[2];
+	static bios_memmap_t bm[2];
 	int mem;
 
 	printf("int 0x12\n");
@@ -291,10 +291,10 @@ addrprobe(kloc)
  * XXX - Does not detect aliases memory.
  * XXX - Could be destructive, as it does write.
  */
-struct BIOS_MAP *
+bios_memmap_t *
 badprobe()
 {
-	static struct BIOS_MAP bm[2];
+	static bios_memmap_t bm[2];
 	int ram;
 
 	printf("Physical, ");
@@ -319,7 +319,7 @@ badprobe()
 
 int
 count(map)
-	struct BIOS_MAP *map;
+	bios_memmap_t *map;
 {
 	int i;
 
@@ -329,18 +329,18 @@ count(map)
 }
 
 
-struct BIOS_MAP *
+bios_memmap_t *
 combine(a, b)
-	struct BIOS_MAP *a, *b;
+	bios_memmap_t *a, *b;
 {
-	struct BIOS_MAP *res;
+	bios_memmap_t *res;
 	int size, i;
 
 	/* Sanity checks */
 	if(!b) return(a);
 	if(!a) return(b);
 
-	size = (count(a) + count(b) + 1) * sizeof(struct BIOS_MAP);
+	size = (count(a) + count(b) + 1) * sizeof(bios_memmap_t);
 	res = alloc(size);
 
 	/* Again */
@@ -360,7 +360,7 @@ combine(a, b)
 void
 memprobe()
 {
-	struct BIOS_MAP *tm, *em, *bm;	/* total, extended, base */
+	bios_memmap_t *tm, *em, *bm;	/* total, extended, base */
 	int count, total = 0;
 
 	printf("Probing memory: ");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd_i386.c,v 1.10 1997/10/17 15:03:23 weingart Exp $	*/
+/*	$OpenBSD: cmd_i386.c,v 1.11 1997/10/17 18:46:55 weingart Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff, Tobias Weingartner
@@ -51,6 +51,8 @@ int bootbuf __P((int, int));
 /* From probedisk.c */
 extern bios_diskinfo_t bios_diskinfo[];
 
+/* From probemem.c */
+extern bios_memmap_t *memory_map;
 
 const struct cmd_table cmd_machine[] = {
 	{ "diskinfo", CMDT_CMD, Xdiskinfo },
@@ -144,7 +146,7 @@ bad:
 int
 Xmemory()
 {
-	struct BIOS_MAP *tm = memory_map;
+	bios_memmap_t *tm = memory_map;
 	int count, total = 0;
 
 	for(count = 0; tm[count].type != BIOS_MAP_END; count++){

@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosvar.h,v 1.17 1997/10/17 15:03:15 weingart Exp $	*/
+/*	$OpenBSD: biosvar.h,v 1.18 1997/10/17 18:47:00 weingart Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -124,11 +124,11 @@ struct EDD_CB {
 	u_int64_t edd_daddr; /* starting block */
 };
 
-struct BIOS_MAP {
+typedef struct _bios_memmap {
 	u_int32_t addr;		/* Beginning of block */
 	u_int32_t size;		/* Size of block */
 	int type;		/* Type of block */
-};
+} bios_memmap_t;
 
 /* Info about disk from the bios, plus the mapping from
  * BIOS numbers to BSD major (driver?) number.
@@ -147,6 +147,9 @@ typedef struct _bios_diskinfo {
 
 	/* BSD section */
 	signed int bsd_major;			/* Major number of driver (or -1) */
+
+	/* Checksum section */
+	u_int32_t checksum;				/* Checksum for drive */
 } bios_diskinfo_t;
 
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: libsa.h,v 1.18 1997/10/17 15:03:26 weingart Exp $	*/
+/*	$OpenBSD: libsa.h,v 1.19 1997/10/17 18:46:57 weingart Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -38,6 +38,7 @@ void gateA20 __P((int));
 void smpprobe __P((void));
 void memprobe __P((void));
 void diskprobe __P((void));
+void apmprobe __P((void));
 void devboot __P((dev_t, char *));
 void *alloca __P((size_t));
 void machdep __P((void));
@@ -45,7 +46,6 @@ void time_print __P((void));
 
 extern const char bdevs[][4];
 extern const int nbdevs;
-extern struct BIOS_MAP *memory_map;
 extern int bootdev; /* XXX pass through the global to exec_i386 */
 extern u_int cnvmem, extmem; /* XXX global pass memprobe()->machdep_start() */
 
