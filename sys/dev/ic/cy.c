@@ -1,4 +1,4 @@
-/*	$OpenBSD: cy.c,v 1.14 2001/08/19 19:58:56 smart Exp $	*/
+/*	$OpenBSD: cy.c,v 1.15 2001/08/20 04:41:39 smart Exp $	*/
 
 /*
  * cy.c
@@ -21,9 +21,6 @@
  * This version uses the bus_space/io_??() stuff
  *
  */
-
-#undef CY_DEBUG
-#undef CY_DEBUG1
 
 /* NCY is the number of Cyclom cards in the machine */
 #include "cy.h"
@@ -66,9 +63,9 @@
 #define	ISSET(t, f)	((t) & (f))
 
 
-void	cyattach __P((struct device *, struct device *, void *));
+void	cy_attach __P((struct device *, struct device *, void *));
 int	cy_probe_common __P((int, bus_space_tag_t, bus_space_handle_t, int));
-int	cyintr __P((void *));
+int	cy_intr __P((void *));
 int	cyparam __P((struct tty *, struct termios *));
 void	cystart __P((struct tty *));
 void	cy_poll __P((void *));
@@ -114,13 +111,13 @@ cy_probe_common(card, memt, memh, bustype)
 
 	for (cy_chip = 0, chip_offs = 0;
 	    cy_chip < CY_MAX_CD1400s;
-	    cy_chip++, chip_offs += (CY_CD1400_MEMSPACING<<bustype)) {
+	    cy_chip++, chip_offs += (CY_CD1400_MEMSPACING << bustype)) {
 		int i;
 
 		/* the last 4 cd1400s are 'interleaved'
 		   with the first 4 on 32-port boards */
 		if (cy_chip == 4)
-			chip_offs -= (CY32_ADDR_FIX<<bustype);
+			chip_offs -= (CY32_ADDR_FIX << bustype);
 
 #ifdef CY_DEBUG
 		printf("cy%d probe chip %d offset 0x%lx ... ",
@@ -130,7 +127,7 @@ cy_probe_common(card, memt, memh, bustype)
 		/* wait until the chip is ready for command */
 		DELAY(1000);
 		if (bus_space_read_1(memt, memh, chip_offs +
-		    ((CD1400_CCR<<1) << bustype)) != 0) {
+		    ((CD1400_CCR << 1) << bustype)) != 0) {
 #ifdef CY_DEBUG
 			printf("not ready for command\n");
 #endif
@@ -139,7 +136,7 @@ cy_probe_common(card, memt, memh, bustype)
 
 		/* clear the firmware version reg. */
 		bus_space_write_1(memt, memh, chip_offs +
-		    ((CD1400_GFRCR<<1) << bustype), 0);
+		    ((CD1400_GFRCR << 1) << bustype), 0);
 
 		/*
 		 * On Cyclom-16 references to non-existent chip 4
@@ -149,19 +146,19 @@ cy_probe_common(card, memt, memh, bustype)
 		 */
 		if (cy_chip == 4 &&
 		    bus_space_read_1(memt, memh, chip_offs +
-			((CD1400_GFRCR<<1) << bustype)) == 0)
+			((CD1400_GFRCR << 1) << bustype)) == 0)
 			break;
 
 		/* reset the chip */
 		bus_space_write_1(memt, memh, chip_offs +
-		    ((CD1400_CCR<<1) << bustype),
+		    ((CD1400_CCR << 1) << bustype),
 		    CD1400_CCR_CMDRESET | CD1400_CCR_FULLRESET);
 
 		/* wait for the chip to initialize itself */
 		for (i = 0; i < 200; i++) {
 			DELAY(50);
 			firmware_ver = bus_space_read_1(memt, memh, chip_offs +
-			    ((CD1400_GFRCR<<1) << bustype));
+			    ((CD1400_GFRCR << 1) << bustype));
 			if ((firmware_ver & 0xf0) == 0x40) /* found a CD1400 */
 				break;
 		}
@@ -193,16 +190,13 @@ cy_probe_common(card, memt, memh, bustype)
 	return (1);
 }
 
-/*
- * Attach (ISA/PCI)
- */
 void
-cyattach(parent, self, aux)
+cy_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct cy_softc *sc = (void *)self;
 	int card, port, cy_chip, num_chips, cdu, chip_offs, cy_clock;
+	struct cy_softc *sc = (void *)self;
 
 	card = sc->sc_dev.dv_unit;
 	num_chips = cy_nr_cd1400s[card];
@@ -269,7 +263,9 @@ cyattach(parent, self, aux)
 
 	} /* for(each CD1400 on a card... ) */
 
-	printf(" (%d ports)\n", port);
+#if CY_DEBUG
+	printf("cy: %d ports\n", port);
+#endif
 
 	/* ensure an edge for the next interrupt */
 	bus_space_write_1(sc->sc_memt, sc->sc_memh,
@@ -282,32 +278,17 @@ cyattach(parent, self, aux)
 		struct isa_attach_args *ia = aux;
 
 		sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq,
-		    IST_EDGE, IPL_TTY, cyintr, sc, sc->sc_dev.dv_xname);
+		    IST_EDGE, IPL_TTY, cy_intr, sc, sc->sc_dev.dv_xname);
+
+		if (sc->sc_ih == NULL)
+			panic("cy: couldn't establish interrupt");
 	}
 	break;
 #endif /* NCY_ISA > 0 */
-#if NCY_PCI > 0
 	case CY_BUSTYPE_PCI:
-	{
-		pci_intr_handle_t intrhandle;
-		struct pci_attach_args *pa = aux;
-
-		if (pci_intr_map(pa->pa_pc, pa->pa_intrtag, pa->pa_intrpin,
-		    pa->pa_intrline, &intrhandle) != 0)
-			panic("cy: couldn't map PCI interrupt");
-
-		sc->sc_ih = pci_intr_establish(pa->pa_pc, intrhandle,
-		    IPL_TTY, cyintr, sc, sc->sc_dev.dv_xname);
+		break;
 	}
-	break;
-#endif /* NCY_PCI > 0 */
-	}
-
-	if (sc->sc_ih == NULL)
-		panic("cy: couldn't establish interrupt");
 }
-
-#undef CY_DEBUG /*!!*/
 
 /*
  * open routine. returns zero if successfull, else error code
@@ -1167,7 +1148,7 @@ out:
  * hardware interrupt routine
  */
 int
-cyintr(arg)
+cy_intr(arg)
 	void *arg;
 {
 	struct cy_softc *sc = arg;
