@@ -1,4 +1,4 @@
-/*	$OpenBSD: tctrl.c,v 1.5 2003/05/16 18:40:32 miod Exp $	*/
+/*	$OpenBSD: tctrl.c,v 1.6 2004/05/10 09:05:52 miod Exp $	*/
 /*	$NetBSD: tctrl.c,v 1.2 1999/08/11 00:46:06 matt Exp $	*/
 
 /*-
@@ -79,6 +79,7 @@ struct tctrl_softc {
 	int sc_node;
 	unsigned int sc_junk;
 	unsigned int sc_ext_status;
+	unsigned int sc_video_accel;
 	unsigned int sc_pending;
 #define	TCTRL_SEND_BITPORT		0x0001
 #define	TCTRL_SEND_POWEROFF		0x0002
@@ -214,6 +215,8 @@ tctrl_attach(parent, self, aux)
 	/*
 	 * Get a few status values.
 	 */
+	sc->sc_video_accel =
+	    sc->sc_ext_status & TS102_EXT_STATUS_MAIN_POWER_AVAILABLE;
 	sc->sc_pending |= TCTRL_SEND_BITPORT_NOP;
 	do {
 		tctrl_intr(sc);
@@ -407,7 +410,24 @@ tctrl_process_response(struct tctrl_softc *sc)
 {
 	switch (sc->sc_op) {
 	case TS102_OP_RD_EXT_STATUS: {
+		unsigned int status = sc->sc_ext_status;
 		sc->sc_ext_status = sc->sc_rspbuf[0] * 256 + sc->sc_rspbuf[1];
+		status ^= sc->sc_ext_status;
+		if (status & TS102_EXT_STATUS_MAIN_POWER_AVAILABLE) {
+			printf("%s: main power %s\n", sc->sc_dev.dv_xname,
+			    (sc->sc_ext_status & TS102_EXT_STATUS_MAIN_POWER_AVAILABLE) ?
+			      "restored" : "removed");
+
+			/* XXX reset video */
+			sc->sc_video_accel = 0;
+		}
+#if 0
+		if (status & TS102_EXT_STATUS_LID_DOWN) {
+			printf("%s: lid %s\n", sc->sc_dev.dv_xname,
+			    (sc->sc_ext_status & TS102_EXT_STATUS_LID_DOWN) ?
+			      "closed" : "opened");
+		}
+#endif
 		break;
 	}
 	case TS102_OP_RD_EVENT_STATUS: {
@@ -415,24 +435,21 @@ tctrl_process_response(struct tctrl_softc *sc)
 		if (v & TS102_EVENT_STATUS_SHUTDOWN_REQUEST) {
 			printf("%s: SHUTDOWN REQUEST!\n", sc->sc_dev.dv_xname);
 		}
+#if 0
+/* Obviously status change */
 		if (v & TS102_EVENT_STATUS_VERY_LOW_POWER_WARNING) {
 			printf("%s: VERY LOW POWER WARNING!\n", sc->sc_dev.dv_xname);
 		}
+#endif
 		if (v & TS102_EVENT_STATUS_LOW_POWER_WARNING) {
 			printf("%s: LOW POWER WARNING!\n", sc->sc_dev.dv_xname);
 		}
 		if (v & TS102_EVENT_STATUS_DC_STATUS_CHANGE) {
 			sc->sc_pending |= TCTRL_SEND_RD_EXT_STATUS;
-			printf("%s: main power %s\n", sc->sc_dev.dv_xname,
-			       (sc->sc_ext_status & TS102_EXT_STATUS_MAIN_POWER_AVAILABLE) ? "removed" : "restored");
 		}
 		if (v & TS102_EVENT_STATUS_LID_STATUS_CHANGE) {
 			sc->sc_pending |= TCTRL_SEND_RD_EXT_STATUS;
 			sc->sc_pending |= TCTRL_SEND_BITPORT;
-#if 0
-			printf("%s: lid %s\n", sc->sc_dev.dv_xname,
-			       (sc->sc_ext_status & TS102_EXT_STATUS_LID_DOWN) ? "opened" : "closed");
-#endif
 		}
 		break;
 	}
@@ -519,7 +536,7 @@ tadpole_set_video(int enabled)
 
 	sc = (struct tctrl_softc *) tctrl_cd.cd_devs[0];
 	s = splhigh();
-	if ((sc->sc_tft_on && !enabled) || (!sc->sc_tft_on && enabled)) {
+	if (sc->sc_tft_on ^ enabled) {
 		sc->sc_tft_on = enabled;
 		if (sc->sc_ext_status & TS102_EXT_STATUS_LID_DOWN) {
 			splx(s);
@@ -531,10 +548,11 @@ tadpole_set_video(int enabled)
 	splx(s);
 }
 
-int
+unsigned int
 tadpole_get_video()
 {
 	struct tctrl_softc *sc;
+	unsigned int status;
 
 	if (tctrl_cd.cd_devs == NULL
 	    || tctrl_cd.cd_ndevs == 0
@@ -543,7 +561,14 @@ tadpole_get_video()
 	}
 
 	sc = (struct tctrl_softc *) tctrl_cd.cd_devs[0];
-	return sc->sc_tft_on;
+	status = 0;
+
+	if (sc->sc_tft_on)
+		status |= TV_ON;
+	if (sc->sc_video_accel)
+		status |= TV_ACCEL;
+
+	return status;
 }
 
 void
