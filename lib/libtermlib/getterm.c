@@ -1,4 +1,4 @@
-/*	$OpenBSD: getterm.c,v 1.6 1996/07/22 03:13:54 tholo Exp $	*/
+/*	$OpenBSD: getterm.c,v 1.7 1996/08/07 03:26:00 tholo Exp $	*/
 
 /*
  * Copyright (c) 1996 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: getterm.c,v 1.6 1996/07/22 03:13:54 tholo Exp $";
+static char rcsid[] = "$OpenBSD: getterm.c,v 1.7 1996/08/07 03:26:00 tholo Exp $";
 #endif
 
 #include <stdlib.h>
@@ -342,7 +342,10 @@ _ti_getterm(name)
     int ret = 1;
     char *s;
 
-    if (_ti_buf) {
+    s = getenv("TERMCAP");
+    if (s && *s == '/')
+	s = NULL;
+    if (_ti_buf || s) {
 	if (_ti_gettermcap(name) != 1) {
 	    del_curterm(cur_term);
 	    if ((cur_term = calloc(sizeof(TERMINAL), 1)) == NULL)
