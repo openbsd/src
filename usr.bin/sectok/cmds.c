@@ -1,4 +1,4 @@
-/* $Id: cmds.c,v 1.15 2001/08/02 17:09:18 rees Exp $ */
+/* $Id: cmds.c,v 1.16 2001/08/15 19:48:39 rees Exp $ */
 
 /*
  * Smartcard commander.
@@ -77,9 +77,8 @@ struct dispatchtable dispatch_table[] = {
     { "isearch", "", isearch },
     { "class", "[ class ]", class },
     { "read", "[ -x ] filesize", dread },
-#ifndef __palmos__
     { "write", "input-filename", dwrite },
-#endif
+    { "challenge", "[ size ]", challenge },
 
     /* Cyberflex commands */
     { "ls", "[ -l ]", ls },
@@ -100,6 +99,8 @@ struct dispatchtable dispatch_table[] = {
 #endif
     { NULL, NULL, NULL }
 };
+
+int curlen;
 
 int dispatch(int ac, char *av[])
 {
@@ -182,8 +183,15 @@ int reset(int ac, char *av[])
     aut0_vfyd = 0;
 
     n = sectok_reset(fd, rflags, atr, &sw);
-    if (vflag)
+    if (vflag) {
+#ifdef __palmos__
+	hidefield(printfield->id);
 	sectok_parse_atr(fd, STRV, atr, n, &param);
+	showfield(printfield->id);
+#else
+	sectok_parse_atr(fd, STRV, atr, n, &param);
+#endif
+    }
     if (!sectok_swOK(sw)) {
 	printf("sectok_reset: %s\n", sectok_get_sw(sw));
 	dclose(0, NULL);
@@ -258,14 +266,14 @@ int selfid(int ac, char *av[])
 {
     unsigned char fid[16], obuf[256];
     char *fname;
-    int i, n, sel, fidlen, olen = 0, sw;
+    int i, n, sel, fidlen, vflag = 0, sw;
 
     optind = optreset = 1;
 
     while ((i = getopt(ac, av, "v")) != -1) {
 	switch (i) {
 	case 'v':
-	    olen = 256;
+	    vflag = 1;
 	    break;
 	}
     }
@@ -299,18 +307,23 @@ int selfid(int ac, char *av[])
     if (fd < 0 && reset(0, NULL) < 0)
 	return -1;
 
-    n = sectok_apdu(fd, cla, 0xa4, sel, 0, fidlen, fid, olen, obuf, &sw);
+    n = sectok_apdu(fd, cla, 0xa4, sel, 0, fidlen, fid, 256, obuf, &sw);
     if (!sectok_swOK(sw)) {
 	printf("Select %02x%02x: %s\n", fid[0], fid[1], sectok_get_sw(sw));
 	return -1;
     }
 
-    if (olen && !n && sectok_r1(sw) == 0x61 && sectok_r2(sw)) {
+    if (vflag && !n && sectok_r1(sw) == 0x61 && sectok_r2(sw)) {
 	/* The card has out data but we must explicitly ask for it */
 	n = sectok_apdu(fd, cla, 0xc0, 0, 0, 0, NULL, sectok_r2(sw), obuf, &sw);
     }
 
-    if (olen)
+    if (n >= 4) {
+	/* Some cards put the file length here. No guarantees. */
+	curlen = (obuf[2] << 8) | obuf[3];
+    }
+
+    if (vflag)
 	sectok_dump_reply(obuf, n, sw);
 
     return 0;
@@ -358,12 +371,15 @@ int dread(int ac, char *av[])
 	}
     }
 
-    if (ac - optind != 1) {
-	printf("usage: read [ -x ] filesize\n");
+    if (ac - optind < 1)
+	fsize = curlen;
+    else
+	sscanf(av[optind++], "%d", &fsize);
+
+    if (!fsize) {
+	printf("please specify filesize\n");
 	return -1;
     }
-
-    sscanf(av[optind++], "%d", &fsize);
 
     if (fd < 0 && reset(0, NULL) < 0)
 	return -1;
@@ -375,20 +391,29 @@ int dread(int ac, char *av[])
 	    printf("ReadBinary: %s\n", sectok_get_sw(sw));
 	    break;
 	}
+#ifdef __palmos__
+	if (xflag) {
+	    hidefield(printfield->id);
+	    for (i = 0; i < n; i++) {
+		printf("%02x ", buf[i]);
+		if (col++ % 12 == 11)
+		    printf("\n");
+	    }
+	    showfield(printfield->id);
+	} else {
+	    buf[n] = '\0';
+	    printf("%s", buf);
+	}
+#else
 	if (xflag) {
 	    for (i = 0; i < n; i++) {
 		printf("%02x ", buf[i]);
 		if (col++ % 16 == 15)
 		    printf("\n");
 	    }
-	} else {
-#ifdef __palmos__
-	    buf[n] = '\0';
-	    printf("%s", buf);
-#else
+	} else
 	    fwrite(buf, 1, n, stdout);
 #endif
-	}
 	fsize -= n;
     }
 
@@ -432,4 +457,42 @@ int dwrite(int ac, char *av[])
 
     return (n ? 0 : -1);
 }
+#else
+int dwrite(int ac, char *av[])
+{
+    int n, sw;
+    char *s;
+
+    if (ac != 2) {
+	printf("usage: write text\n");
+	return -1;
+    }
+    s = av[1];
+    n = strlen(s);
+    sectok_apdu(fd, cla, 0xd6, 0, 0, n, s, 0, NULL, &sw);
+    if (!sectok_swOK(sw)) {
+	printf("UpdateBinary: %s\n", sectok_get_sw(sw));
+	return -1;
+    }
+    return 0;
+}
 #endif
+
+int challenge(int ac, char *av[])
+{
+    int n = 8, sw;
+    unsigned char buf[256];
+
+    if (ac > 1)
+	n = atoi(av[1]);
+
+    n = sectok_apdu(fd, cla, 0x84, 0, 0, 0, NULL, n, buf, &sw);
+
+    if (!sectok_swOK(sw)) {
+	printf("GetChallenge: %s\n", sectok_get_sw(sw));
+	return -1;
+    }
+
+    sectok_dump_reply(buf, n, sw);
+    return 0;
+}
