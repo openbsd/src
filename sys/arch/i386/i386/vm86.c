@@ -1,5 +1,5 @@
-/*	$OpenBSD: vm86.c,v 1.4 1996/04/21 22:16:42 deraadt Exp $	*/
-/*	$NetBSD: vm86.c,v 1.9 1996/04/12 05:57:43 mycroft Exp $	*/
+/*	$OpenBSD: vm86.c,v 1.5 1996/05/02 13:42:56 deraadt Exp $	*/
+/*	$NetBSD: vm86.c,v 1.13 1996/04/25 13:50:21 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -269,6 +269,7 @@ vm86_return(p, retval)
 #define	CLI	0xFA
 #define	STI	0xFB
 #define	INTxx	0xCD
+#define	INTO	0xCE
 #define	IRET	0xCF
 #define	OPSIZ	0x66
 #define	INT3	0xCC	/* Actually the process gets 32-bit IDT to handle it */
@@ -292,13 +293,16 @@ vm86_gpfault(p, type)
 	 * address space for checking.  remember that the frame's
 	 * segment selectors are real-mode style selectors.
 	 */
-	u_char tmpbyte;
 	u_long cs, ip, ss, sp;
+	u_char tmpbyte;
+	int trace;
 
 	cs = CS(tf) << 4;
 	ip = IP(tf);
 	ss = SS(tf) << 4;
 	sp = SP(tf);
+
+	trace = tf->tf_eflags & PSL_T;
 
 	/*
 	 * For most of these, we must set all the registers before calling
@@ -325,6 +329,11 @@ vm86_gpfault(p, type)
 		tmpbyte = getbyte(cs, ip);
 		IP(tf) = ip;
 		fast_intxx(p, tmpbyte);
+		break;
+
+	case INTO:
+		if (tf->tf_eflags & PSL_V)
+			fast_intxx(p, 4);
 		break;
 
 	case PUSHF:
@@ -368,6 +377,9 @@ vm86_gpfault(p, type)
 		IP(tf) -= 1;
 		goto bad;
 	}
+
+	if (trace && tf->tf_eflags & PSL_VM)
+		trapsignal(p, SIGTRAP, T_TRCTRAP);
 	return;
 
 bad:
