@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_kernfs.c,v 1.4 1997/01/15 23:41:21 millert Exp $	*/
+/*	$OpenBSD: mount_kernfs.c,v 1.5 1998/12/21 13:41:46 art Exp $	*/
 /*	$NetBSD: mount_kernfs.c,v 1.8 1996/04/13 05:35:39 cgd Exp $	*/
 
 /*
@@ -48,7 +48,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount_kernfs.c	8.2 (Berkeley) 3/27/94";
 #else
-static char rcsid[] = "$OpenBSD: mount_kernfs.c,v 1.4 1997/01/15 23:41:21 millert Exp $";
+static char rcsid[] = "$OpenBSD: mount_kernfs.c,v 1.5 1998/12/21 13:41:46 art Exp $";
 #endif
 #endif /* not lint */
 
@@ -93,8 +93,12 @@ main(argc, argv)
 	if (argc != 2)
 		usage();
 
-	if (mount(MOUNT_KERNFS, argv[1], mntflags, NULL))
-		err(1, NULL);
+	if (mount(MOUNT_KERNFS, argv[1], mntflags, NULL)) {
+		if (errno == EOPNOTSUPP)
+			errx(1, "Filesystem not supported by kernel");
+		else
+			err(1, NULL);
+	}
 	exit(0);
 }
 
