@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.71 2000/06/04 18:19:45 millert Exp $	*/
+/*	$OpenBSD: editor.c,v 1.72 2000/06/04 18:34:41 millert Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -28,7 +28,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.71 2000/06/04 18:19:45 millert Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.72 2000/06/04 18:34:41 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -253,12 +253,14 @@ editor(lp, f, dev, fstabfile)
 			break;
 
 		case 'D':
-			tmplabel = label;
-			label = lastlabel;
-			lastlabel = tmplabel;
-			if (ioctl(f, DIOCGPDINFO, &label) < 0)
-				err(4, "ioctl DIOCGDINFO");
-			editor_countfree(&label, &freesectors);
+			tmplabel = lastlabel;
+			lastlabel = label;
+			if (ioctl(f, DIOCGPDINFO, &label) == 0)
+				editor_countfree(&label, &freesectors);
+			else {
+				warn("unable to get default partition table");
+				lastlabel = tmplabel;
+			}
 			break;
 
 		case 'd':
@@ -436,9 +438,8 @@ editor(lp, f, dev, fstabfile)
 			break;
 
 		case 'z':
-			tmplabel = label;
-			label = lastlabel;
-			lastlabel = tmplabel;
+			tmplabel = lastlabel;
+			lastlabel = label;
 			zero_partitions(&label, &freesectors);
 			break;
 
