@@ -1,4 +1,4 @@
-/*	$OpenBSD: bdes.c,v 1.3 1997/01/15 23:42:13 millert Exp $	*/
+/*	$OpenBSD: bdes.c,v 1.4 1998/05/07 19:12:17 deraadt Exp $	*/
 /*	$NetBSD: bdes.c,v 1.2 1995/03/26 03:33:19 glass Exp $	*/
 
 /*-
@@ -51,7 +51,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)bdes.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: bdes.c,v 1.3 1997/01/15 23:42:13 millert Exp $";
+static char rcsid[] = "$OpenBSD: bdes.c,v 1.4 1998/05/07 19:12:17 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -130,7 +130,7 @@ static char rcsid[] = "$OpenBSD: bdes.c,v 1.3 1997/01/15 23:42:13 millert Exp $"
 #define	READ(buf, n)	fread(buf, sizeof(char), n, stdin)
 #define WRITE(buf,n)						\
 		if (fwrite(buf, sizeof(char), n, stdout) != n)	\
-			err(bn, NULL);
+			err(1, "block %d", bn);
 
 /*
  * some things to make references easier
@@ -209,16 +209,16 @@ main(ac, av)
 		case 'F':		/* use alternative CFB mode */
 			alg = ALG_CFBA;
 			if ((fbbits = setbits(optarg, 7)) > 56 || fbbits == 0)
-				err(-1, "-F: number must be 1-56 inclusive");
+				err(1, "-F: number must be 1-56 inclusive");
 			else if (fbbits == -1)
-				err(-1, "-F: number must be a multiple of 7");
+				err(1, "-F: number must be a multiple of 7");
 			break;
 		case 'f':		/* use CFB mode */
 			alg = ALG_CFB;
 			if ((fbbits = setbits(optarg, 8)) > 64 || fbbits == 0)
-				err(-1, "-f: number must be 1-64 inclusive");
+				err(1, "-f: number must be 1-64 inclusive");
 			else if (fbbits == -1)
-				err(-1, "-f: number must be a multiple of 8");
+				err(1, "-f: number must be a multiple of 8");
 			break;
 		case 'k':		/* encryption key */
 			kflag = 1;
@@ -227,14 +227,14 @@ main(ac, av)
 		case 'm':		/* number of bits for MACing */
 			mode = MODE_AUTHENTICATE;
 			if ((macbits = setbits(optarg, 1)) > 64)
-				err(-1, "-m: number must be 0-64 inclusive");
+				err(1, "-m: number must be 0-64 inclusive");
 			break;
 		case 'o':		/* use OFB mode */
 			alg = ALG_OFB;
 			if ((fbbits = setbits(optarg, 8)) > 64 || fbbits == 0)
-				err(-1, "-o: number must be 1-64 inclusive");
+				err(1, "-o: number must be 1-64 inclusive");
 			else if (fbbits == -1)
-				err(-1, "-o: number must be a multiple of 8");
+				err(1, "-o: number must be a multiple of 8");
 			break;
 		case 'p':		/* preserve parity bits */
 			pflag = 1;
@@ -294,7 +294,7 @@ main(ac, av)
 	case ALG_CFBA:
 		switch(mode) {
 		case MODE_AUTHENTICATE:	/* authenticate using CFBA mode */
-			err(-1, "can't authenticate with CFBA mode");
+			err(1, "can't authenticate with CFBA mode");
 			break;
 		case MODE_DECRYPT:	/* decrypt using CFBA mode */
 			cfbadec();
@@ -307,7 +307,7 @@ main(ac, av)
 	case ALG_ECB:
 		switch(mode) {
 		case MODE_AUTHENTICATE:	/* authenticate using ECB mode */
-			err(-1, "can't authenticate with ECB mode");
+			err(1, "can't authenticate with ECB mode");
 			break;
 		case MODE_DECRYPT:	/* decrypt using ECB mode */
 			ecbdec();
@@ -320,7 +320,7 @@ main(ac, av)
 	case ALG_OFB:
 		switch(mode) {
 		case MODE_AUTHENTICATE:	/* authenticate using OFB mode */
-			err(-1, "can't authenticate with OFB mode");
+			err(1, "can't authenticate with OFB mode");
 			break;
 		case MODE_DECRYPT:	/* decrypt using OFB mode */
 			ofbdec();
@@ -408,7 +408,7 @@ cvtkey(obuf, ibuf)
 			 */
 			for (i = 0; ibuf[i] && i < 16; i++)
 				if ((nbuf[i] = tobinhex(ibuf[i], 16)) == -1)
-					err(-1, "bad hex digit in key");
+					err(1, "bad hex digit in key");
 			while (i < 16)
 				nbuf[i++] = 0;
 			for (i = 0; i < 8; i++)
@@ -428,7 +428,7 @@ cvtkey(obuf, ibuf)
 			 */
 			for (i = 0; ibuf[i] && i < 16; i++)
 				if ((nbuf[i] = tobinhex(ibuf[i], 2)) == -1)
-					err(-1, "bad binary digit in key");
+					err(1, "bad binary digit in key");
 			while (i < 64)
 				nbuf[i++] = 0;
 			for (i = 0; i < 8; i++)
@@ -470,7 +470,7 @@ setbits(s, mult)
 		if (isdigit(*p))
 			n = n * 10 + *p - '0';
 		else {
-			err(-1, "bad decimal digit in MAC length");
+			err(1, "bad decimal digit in MAC length");
 		}
 	}
 	/*
@@ -567,14 +567,14 @@ ecbdec()
 		if ((c = getchar()) == EOF) {
 			n = CHAR(msgbuf, 7);
 			if (n < 0 || n > 7)
-				err(bn, "decryption failed (block corrupted)");
+				err(1, "decryption failed (block %d corrupted)", bn);
 		}
 		else
 			(void)ungetc(c, stdin);
 		WRITE(BUFFER(msgbuf), n);
 	}
 	if (n > 0)
-		err(bn, "decryption failed (incomplete block)");
+		err(1, "decryption failed (block %d incomplete)", bn);
 }
 
 /*
@@ -636,14 +636,14 @@ cbcdec()
 		if ((c = getchar()) == EOF) {
 			n = CHAR(msgbuf, 7);
 			if (n < 0 || n > 7)
-				err(bn, "decryption failed (block corrupted)");
+				err(1, "decryption failed (block %d corrupted)", bn);
 		}
 		else
 			(void)ungetc(c, stdin);
 		WRITE(BUFFER(msgbuf), n);
 	}
 	if (n > 0)
-		err(bn, "decryption failed (incomplete block)");
+		err(1, "decryption failed (block %d incomplete)", bn);
 }
 
 /*
@@ -766,14 +766,14 @@ cfbdec()
 		if ((c = getchar()) == EOF) {
 			n = obuf[nbytes-1];
 			if (n < 0 || n > nbytes-1)
-				err(bn, "decryption failed (block corrupted)");
+				err(1, "decryption failed (block %d corrupted)", bn);
 		}
 		else
 			(void)ungetc(c, stdin);
 		WRITE(obuf, n);
 	}
 	if (n > 0)
-		err(bn, "decryption failed (incomplete block)");
+		err(1, "decryption failed (block %d incomplete)", bn);
 }
 
 /*
@@ -856,14 +856,14 @@ cfbadec()
 		if ((c = getchar()) == EOF) {
 			if ((n = (obuf[nbytes-1] - '0')) < 0
 						|| n > nbytes-1)
-				err(bn, "decryption failed (block corrupted)");
+				err(1, "decryption failed (block %d corrupted)", bn);
 		}
 		else
 			(void)ungetc(c, stdin);
 		WRITE(obuf, n);
 	}
 	if (n > 0)
-		err(bn, "decryption failed (incomplete block)");
+		err(1, "decryption failed (block %d incomplete)", bn);
 }
 
 
@@ -947,7 +947,7 @@ ofbdec()
 		if ((c = getchar()) == EOF) {
 			n = obuf[nbytes-1];
 			if (n < 0 || n > nbytes-1)
-				err(bn, "decryption failed (block corrupted)");
+				err(1, "decryption failed (block %d corrupted)", bn);
 		}
 		else
 			(void)ungetc(c, stdin);
@@ -957,7 +957,7 @@ ofbdec()
 		WRITE(obuf, n);
 	}
 	if (n > 0)
-		err(bn, "decryption failed (incomplete block)");
+		err(1, "decryption failed (block %d incomplete)", bn);
 }
 
 /*
