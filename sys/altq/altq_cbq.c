@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_cbq.c,v 1.4 2002/03/14 03:15:50 millert Exp $	*/
+/*	$OpenBSD: altq_cbq.c,v 1.5 2002/10/05 02:57:58 kjc Exp $	*/
 /*	$KAME: altq_cbq.c,v 1.9 2000/12/14 08:12:45 thorpej Exp $	*/
 
 /*
@@ -666,7 +666,7 @@ cbq_ifdetach(ifacep)
 	else {
 		cbq_state_t *cp;
 
-		for (cp = cbq_list; cp != NULL; cp = cbqp->cbq_next)
+		for (cp = cbq_list; cp != NULL; cp = cp->cbq_next)
 			if (cp->cbq_next == cbqp) {
 				cp->cbq_next = cbqp->cbq_next;
 				break;
