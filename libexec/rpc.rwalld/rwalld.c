@@ -1,4 +1,4 @@
-/*	$OpenBSD: rwalld.c,v 1.6 2002/02/16 21:27:31 millert Exp $	*/
+/*	$OpenBSD: rwalld.c,v 1.7 2002/06/28 01:04:15 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -30,7 +30,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: rwalld.c,v 1.6 2002/02/16 21:27:31 millert Exp $";
+static char rcsid[] = "$OpenBSD: rwalld.c,v 1.7 2002/06/28 01:04:15 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -58,30 +58,26 @@ void wallprog_1();
 int from_inetd = 1;
 
 void
-cleanup()
+cleanup(int signo)
 {
 	(void) pmap_unset(WALLPROG, WALLVERS);		/* XXX signal race */
 	_exit(0);
 }
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
-	SVCXPRT *transp;
-	int sock = 0;
-	int proto = 0;
+	int sock = 0, proto = 0, fromlen;
 	struct sockaddr_in from;
-	int fromlen;
+	SVCXPRT *transp;
 
 	if (geteuid() == 0) {
 		struct passwd *pep = getpwnam("nobody");
+
 		if (pep) {
 			seteuid(pep->pw_uid);
 			setuid(pep->pw_uid);
-		}
-		else {
+		} else {
 			seteuid(getuid());
 			setuid(getuid());
 		}
@@ -115,7 +111,8 @@ main(argc, argv)
 		exit(1);
 	}
 	if (!svc_register(transp, WALLPROG, WALLVERS, wallprog_1, proto)) {
-		syslog(LOG_ERR, "unable to register (WALLPROG, WALLVERS, %s).", proto?"udp":"(inetd)");
+		syslog(LOG_ERR, "unable to register (WALLPROG, WALLVERS, %s).",
+		    proto ? "udp" : "(inetd)");
 		exit(1);
 	}
 
@@ -126,9 +123,7 @@ main(argc, argv)
 }
 
 void *
-wallproc_wall_1_svc(s, rqstp )
-	char **s;
-	struct svc_req *rqstp;
+wallproc_wall_1_svc(char **s, struct svc_req *rqstp)
 {
 	FILE *pfp;
 
@@ -142,16 +137,14 @@ wallproc_wall_1_svc(s, rqstp )
 }
 
 void
-wallprog_1(rqstp, transp)
-	struct svc_req *rqstp;
-	SVCXPRT *transp;
+wallprog_1(struct svc_req *rqstp, SVCXPRT *transp)
 {
+	char *(*local)(char **, struct svc_req *);
+	xdrproc_t xdr_argument, xdr_result;
 	union {
 		char *wallproc_wall_1_arg;
 	} argument;
 	char *result;
-	xdrproc_t xdr_argument, xdr_result;
-	char *(*local)(char **, struct svc_req *);
 
 	switch (rqstp->rq_proc) {
 	case NULLPROC:
@@ -162,7 +155,7 @@ wallprog_1(rqstp, transp)
 		xdr_argument = (xdrproc_t)xdr_wrapstring;
 		xdr_result = (xdrproc_t)xdr_void;
 		local = (char *(*)(char **, struct svc_req *))
-			wallproc_wall_1_svc;
+		    wallproc_wall_1_svc;
 		break;
 
 	default:
