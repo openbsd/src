@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.19 2000/07/08 19:43:39 rahnds Exp $	*/
+/*	$OpenBSD: trap.c,v 1.20 2000/09/06 22:48:13 rahnds Exp $	*/
 /*	$NetBSD: trap.c,v 1.3 1996/10/13 03:31:37 christos Exp $	*/
 
 /*
@@ -330,6 +330,11 @@ syscall_bad:
 			save_fpu(fpuproc);
 		fpuproc = p;
 		enable_fpu(p);
+		break;
+
+	case EXC_ALI|EXC_USER:
+		/* alignment exception, kill process */
+		trapsignal(p, SIGSEGV, VM_PROT_EXECUTE, SEGV_MAPERR, sv);
 		break;
 
 	default:
