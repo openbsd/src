@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.12 1998/09/17 05:56:08 rahnds Exp $
+#	$OpenBSD: Makefile.inc,v 1.13 1998/09/17 13:43:07 rahnds Exp $
 #	etc.powerpc/Makefile.inc -- powerpc-specific etc Makefile targets
 
 .ifdef DESTDIR
@@ -58,9 +58,9 @@ distrib:
 	gzip -9 ${DESTDIR}/snapshot/bsd.rd
 	mv ${DESTDIR}/snapshot/bsd.rd.gz ${DESTDIR}/snapshot/bsd.rd
 	gzip -9 ${DESTDIR}/snapshot/bsdofw.rd
-	mv ${DESTDIR}/snapshot/bsd.rdofw.gz ${DESTDIR}/snapshot/bsdofw.rd
+	mv ${DESTDIR}/snapshot/bsdofw.rd.gz ${DESTDIR}/snapshot/bsdofw.rd
 	gzip -9 ${DESTDIR}/snapshot/bsdmix.rd
-	mv ${DESTDIR}/snapshot/bsd.rdmix.gz ${DESTDIR}/snapshot/bsdmix.rd
+	mv ${DESTDIR}/snapshot/bsdmix.rd.gz ${DESTDIR}/snapshot/bsdmix.rd
 
 
 .endif	# DESTDIR check
