@@ -1722,6 +1722,7 @@
 ./usr/libdata/perl5/site_perl/hppa-openbsd/setjmp.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/sgtty.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/sha1.ph
+./usr/libdata/perl5/site_perl/hppa-openbsd/sha2.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/signal.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/skey.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/skipjack.ph

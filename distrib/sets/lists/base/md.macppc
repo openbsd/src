@@ -38,7 +38,7 @@
 ./usr/lib/lib45.so.2.0
 ./usr/lib/libacl.so.6.0
 ./usr/lib/libasn1.so.3.0
-./usr/lib/libc.so.29.1
+./usr/lib/libc.so.30.0
 ./usr/lib/libcrypto.so.9.0
 ./usr/lib/libcurses++.so.2.0
 ./usr/lib/libcurses.so.9.0
@@ -64,7 +64,7 @@
 ./usr/lib/libpanel.so.2.0
 ./usr/lib/libpcap.so.2.0
 ./usr/lib/libperl.so.8.0
-./usr/lib/libpthread.so.1.1
+./usr/lib/libpthread.so.2.0
 ./usr/lib/libreadline.so.1.0
 ./usr/lib/libsectok.so.5.0
 ./usr/lib/libskey.so.4.0
@@ -1846,6 +1846,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/setjmp.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sgtty.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sha1.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/sha2.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/signal.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/skey.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/skipjack.ph
