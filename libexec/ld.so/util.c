@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.10 2002/12/02 09:00:18 miod Exp $	*/
+/*	$OpenBSD: util.c,v 1.11 2002/12/02 16:31:53 naddy Exp $	*/
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -44,7 +44,7 @@
  */
 long __guard[8] = {0,0,0,0,0,0,0,0};
 void
-stack_smash_handler(char func[], int damaged)
+__stack_smash_handler(char func[], int damaged)
 {
 	_dl_exit(127);
 }
