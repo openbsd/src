@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.31 2004/09/15 19:21:25 henning Exp $ */
+/*	$OpenBSD: ntp.c,v 1.32 2004/09/18 07:33:14 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -125,33 +125,29 @@ ntp_main(int pipe_prnt[2], struct ntpd_conf *nconf)
 		peer_cnt++;
 
 	while (ntp_quit == 0) {
-		if (peer_cnt > idx2peer_elms ||
-		    peer_cnt + IDX2PEER_RESERVE < idx2peer_elms) {
+		if (peer_cnt > idx2peer_elms) {
 			if ((newp = realloc(idx2peer, sizeof(void *) *
-			    (peer_cnt + IDX2PEER_RESERVE))) == NULL) {
+			    peer_cnt)) == NULL) {
 				/* panic for now */
 				log_warn("could not resize idx2peer from %u -> "
-				    "%u entries", idx2peer_elms,
-				    peer_cnt + IDX2PEER_RESERVE);
+				    "%u entries", idx2peer_elms, peer_cnt);
 				fatalx("exiting");
 			}
 			idx2peer = newp;
-			idx2peer_elms = peer_cnt + IDX2PEER_RESERVE;
+			idx2peer_elms = peer_cnt;
 		}
 
 		new_cnt = PFD_MAX + peer_cnt + listener_cnt;
-		if (new_cnt > pfd_elms ||
-		    new_cnt + PFD_RESERVE < pfd_elms) {
+		if (new_cnt > pfd_elms) {
 			if ((newp = realloc(pfd, sizeof(struct pollfd) *
-			    (new_cnt + PFD_RESERVE))) == NULL) {
+			    new_cnt)) == NULL) {
 				/* panic for now */
 				log_warn("could not resize pfd from %u -> "
-				    "%u entries", pfd_elms,
-				    new_cnt + PFD_RESERVE);
+				    "%u entries", pfd_elms, new_cnt);
 				fatalx("exiting");
 			}
 			pfd = newp;
-			pfd_elms = new_cnt + PFD_RESERVE;
+			pfd_elms = new_cnt;
 		}
 
 		bzero(pfd, sizeof(struct pollfd) * pfd_elms);
