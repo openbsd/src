@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.15 1996/08/02 06:13:26 deraadt Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.16 1996/08/02 06:47:41 deraadt Exp $	*/
 /*	$NetBSD: inetd.c,v 1.11 1996/02/22 11:14:41 mycroft Exp $	*/
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$OpenBSD: inetd.c,v 1.15 1996/08/02 06:13:26 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: inetd.c,v 1.16 1996/08/02 06:47:41 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -236,16 +236,16 @@ struct biltin {
 	void	(*bi_fn) __P((int, struct servtab *));
 } biltins[] = {
 	/* Echo received data */
-	{ "echo",		SOCK_STREAM,	1, 0,	echo_stream },
-	{ "echo",		SOCK_DGRAM,	0, 0,	echo_dg },
+	{ "echo",	SOCK_STREAM,	1, 0,	echo_stream },
+	{ "echo",	SOCK_DGRAM,	0, 0,	echo_dg },
 
 	/* Internet /dev/null */
 	{ "discard",	SOCK_STREAM,	1, 0,	discard_stream },
 	{ "discard",	SOCK_DGRAM,	0, 0,	discard_dg },
 
 	/* Return 32 bit time since 1900 */
-	{ "time",		SOCK_STREAM,	0, 0,	machtime_stream },
-	{ "time",		SOCK_DGRAM,	0, 0,	machtime_dg },
+	{ "time",	SOCK_STREAM,	0, 0,	machtime_stream },
+	{ "time",	SOCK_DGRAM,	0, 0,	machtime_dg },
 
 	/* Return human-readable time */
 	{ "daytime",	SOCK_STREAM,	0, 0,	daytime_stream },
