@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.74 2002/07/25 04:45:31 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.75 2002/07/25 22:32:33 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2002 Michael Shalayeff
@@ -587,7 +587,7 @@ hppa_init(start)
 	}
 
 	/* they say PDC_COPROC might turn fault light on */
-	pdc_call((iodcio_t)pdc, PDC_CHASSIS, PDC_CHASSIS_DISP,
+	pdc_call((iodcio_t)pdc, 0, PDC_CHASSIS, PDC_CHASSIS_DISP,
 	    PDC_OSTAT(PDC_OSTAT_RUN) | 0xCEC0);
 
 #ifdef DDB
