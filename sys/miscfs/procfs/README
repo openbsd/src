@@ -1,4 +1,4 @@
-/*	$OpenBSD: README,v 1.4 2000/08/12 04:56:23 jasoni Exp $	*/
+/*	$OpenBSD: README,v 1.5 2000/08/15 06:11:45 jasoni Exp $	*/
 /*	$NetBSD: README,v 1.4 1994/06/29 06:34:43 cgd Exp $	*/
 
 saute procfs lyonnais
@@ -50,7 +50,7 @@ are:
 			synchronisation.
 
 	cmdline - r/o.	process command line parameters, separated
-			by NULLs
+			by NULs
 
 this then looks like:
 
