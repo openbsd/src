@@ -1,4 +1,4 @@
-/*	$OpenBSD: scon.c,v 1.13 1999/09/29 22:29:10 aaron Exp $	*/
+/*	$OpenBSD: scon.c,v 1.14 1999/09/29 23:23:58 aaron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch
@@ -376,9 +376,10 @@ char *argv[];
 
 	if (bflag == 1)
 	{
-		if(vflag)
+		if(vflag) {
 			printf("Setting number of scrollback buffer pages ");
 			printf("to %d.\n", scrollback_pages);
+		}
 
 		if(ioctl(fd, SETSCROLLSIZE, &scrollback_pages) < 0)
 		{
