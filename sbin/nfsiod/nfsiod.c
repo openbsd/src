@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsiod.c,v 1.6 1999/02/26 16:06:42 millert Exp $	*/
+/*	$OpenBSD: nfsiod.c,v 1.7 1999/02/26 16:17:46 millert Exp $	*/
 /*	$NetBSD: nfsiod.c,v 1.12 1996/02/20 16:06:55 fvdl Exp $	*/
 
 /*
@@ -94,17 +94,17 @@ main(argc, argv)
 {
 	int ch, num_servers;
 
-#define	MAXNFSDCNT      20
-#define	DEFNFSDCNT       1
-	num_servers = DEFNFSDCNT;
+#define	MAXNFSIODCNT	NFS_MAXASYNCDAEMON
+#define	DEFNFSIODCNT	1
+	num_servers = DEFNFSIODCNT;
 	while ((ch = getopt(argc, argv, "n:")) != -1)
 		switch (ch) {
 		case 'n':
 			num_servers = atoi(optarg);
-			if (num_servers < 1 || num_servers > MAXNFSDCNT) {
+			if (num_servers < 1 || num_servers > MAXNFSIODCNT) {
 				warnx("nfsiod count %d; reset to %d",
-				    num_servers, DEFNFSDCNT);
-				num_servers = DEFNFSDCNT;
+				    num_servers, DEFNFSIODCNT);
+				num_servers = DEFNFSIODCNT;
 			}
 			break;
 		case '?':
@@ -122,10 +122,10 @@ main(argc, argv)
 		usage();
 	if (argc == 1) {
 		num_servers = atoi(argv[0]);
-		if (num_servers < 1 || num_servers > MAXNFSDCNT) {
+		if (num_servers < 1 || num_servers > MAXNFSIODCNT) {
 			warnx("nfsiod count %d; reset to %d",
-			    num_servers, DEFNFSDCNT);
-			num_servers = DEFNFSDCNT;
+			    num_servers, DEFNFSIODCNT);
+			num_servers = DEFNFSIODCNT;
 		}
 	}
 
