@@ -1,4 +1,4 @@
-\" $OpenBSD: authpf.8,v 1.6 2002/04/02 17:29:47 mpech Exp $
+\" $OpenBSD: authpf.8,v 1.7 2002/04/05 03:06:52 beck Exp $
 .\"
 .\" Copyright (c) 2002 Bob Beck (beck@openbsd.org>.  All rights reserved.
 .\"
@@ -95,6 +95,17 @@ which is defined to the connecting ip address whenever
 .Nm
 is run.
 .Pp
+Filter and nat rules will be searched for first in
+.Pa $HOME/.authpf/
+and then in 
+.Pa /etc/authpf/ .
+Per-user rules from the   
+.Pa $HOME/.authpf/
+directory are intended to be used when non-default rules
+are needed on an individual user basis. It is important to ensure
+that a user can not write or change these configuration files in
+this case.
+.Pp
 Filter rules are loaded from the file
 .Pa $HOME/.authpf/authpf.rules .
 If this file does not exist the file
@@ -102,13 +113,14 @@ If this file does not exist the file
 is used.
 The
 .Pa authpf.rules
-file must exist in either the user's
-.Pa $HOME/.authpf/
-directory, or in
-.Pa /etc/authpf ,
-for
+file must exist in one of the above locations for
 .Nm
-to run.
+to run. Additionally, all directories on the path to the 
+.Pa authpf.rules 
+file as well as the file itself must be owned by root
+and be writable only to root or
+.Nm 
+will not run.
 .Pp
 Translation rules are loaded from the file
 .Pa $HOME/.authpf/authpf.nat .
@@ -117,7 +129,13 @@ If this file does not exist the file
 is used.
 The use of translation rules in an
 .Pa authpf.nat
-file is optional.
+file is optional, but if an
+.Pa authpf.nat
+file exists in either of the above locations, all directories on the path,
+as well as the file itself must be 
+owned by root and be writable only to root or
+.Nm
+will not run
 .Sh CONFIGURATION
 Options are controlled by the
 .Pa /etc/authpf/authpf.conf

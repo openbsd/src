@@ -45,6 +45,8 @@
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <libgen.h>
+#include <login_cap.h>
 #include <netdb.h>
 #include <signal.h>
 #include <stdio.h>
@@ -90,6 +92,7 @@ static int	changefilter(int, char *, char *);
 static void	authpf_kill_states(void);
 static void	terminator(int s);
 static __dead void	go_away(void);
+static int	secure_fullpath(char *);
 
 /*
  * authpf:
@@ -295,6 +298,10 @@ read_config(void)
 	f = fopen(configfile, "r");
 	if (f == NULL) 
 		exit(1); /* exit silently if we have no config file */
+
+	if (secure_fullpath(configfile) != 0)
+		/* config file exists, but is not secure */
+		exit(1);
 
 	openlog("authpf", LOG_PID | LOG_NDELAY, LOG_DAEMON);
 	
@@ -600,17 +607,22 @@ changefilter(int add, char *luser, char *ipsrc)
 			if (unlink(template) == -1)
 				syslog(LOG_ERR, "can't unlink %s", template);
 			goto error;
+		}			
+	}
+	if (from_fd == -1) {
+		snprintf(rulesfile, sizeof rulesfile, PATH_PFRULES);
+		if  ((from_fd = open(rulesfile, O_RDONLY, 0)) == -1) {
+			syslog(LOG_ERR, "can't open %s (%m)", rulesfile);
+			if (unlink(template) == -1)
+				syslog(LOG_ERR, "can't unlink %s", template);
+			goto error;
 		}
 	}
-	snprintf(rulesfile, sizeof rulesfile, PATH_PFRULES);
-	if (from_fd == -1 &&
-	    (from_fd = open(rulesfile, O_RDONLY, 0)) == -1) {
-		syslog(LOG_ERR, "can't open %s (%m)", rulesfile);
-		if (unlink(template) == -1)
-			syslog(LOG_ERR, "can't unlink %s", template);
-		goto error;
-	}
 
+	if (secure_fullpath(rulesfile) != 0)
+		/* rules file exists, but is not secure */
+		goto error;
+	
 	while ((rcount = read(from_fd, buf, sizeof(buf))) > 0) {
 		wcount = write(tmpfile, buf, rcount);
 		if (rcount != wcount || wcount == -1) {
@@ -660,7 +672,6 @@ changefilter(int add, char *luser, char *ipsrc)
 	}
 
 	/* now, for NAT, if we have some */
-
 	if ((cp = getenv("HOME")) == NULL) {
 		syslog(LOG_ERR, "No Home Directory!");
 		goto error;
@@ -679,18 +690,24 @@ changefilter(int add, char *luser, char *ipsrc)
 			goto error;
 		}
 	}
-	snprintf(natfile, sizeof natfile, PATH_NATRULES);
-	if (from_fd == -1 &&
-	    (from_fd = open(natfile, O_RDONLY, 0)) == -1) {
-		if (errno == ENOENT)
-			goto out; /* NAT is optional */
-		else {
-			syslog(LOG_ERR, "can't open %s (%m)", natfile);
-			if (unlink(template) == -1)
-				syslog(LOG_ERR, "can't unlink %s", template);
-			goto error;
+	if (from_fd == -1) {
+		snprintf(natfile, sizeof natfile, PATH_NATRULES);
+		if ((from_fd = open(natfile, O_RDONLY, 0)) == -1) {
+			if (errno == ENOENT)
+				goto out; /* NAT is optional */
+			else {
+				syslog(LOG_ERR, "can't open %s (%m)", natfile);
+				if (unlink(template) == -1)
+					syslog(LOG_ERR, "can't unlink %s",
+					    template);
+				goto error;
+			}
 		}
 	}
+	if (from_fd != -1 && secure_fullpath(natfile) != 0) 
+		/* nat file exists, but is not secure */
+		goto error;
+	
 	tmpfile = mkstemp(template2);
 	if (tmpfile == -1) {
 		syslog(LOG_ERR, "Can't open temp file %s (%m)",
@@ -835,6 +852,47 @@ go_away(void)
 		ret = 1;
 	}
 	exit(ret);
+}
+
+/*
+ * secure_fullpath:
+ * akin to secure_path, but for a directory - needed to ensure
+ * users can't get something they aren't supposed to by moveing
+ * files aside or linking other directories, such as the default
+ * one.
+ */
+static int
+secure_fullpath(char *path)
+{
+	struct stat sb;
+	char *cp;
+
+	if (secure_path(path) < 0)
+		return(-1);
+
+	cp = path;
+
+	do {
+		cp = dirname(cp);
+		memset(&sb, 0, sizeof(sb)); 
+		/*
+		 * if it's owned or writable by someone
+		 * other than root, it's bad. since these are directories,
+		 * not the end path, they are allowed to be symbolic links
+		 * and other such things (unlike the file itself). 
+		 */
+		if (lstat(cp, &sb) < 0) {
+			syslog(LOG_ERR, "cannot stat %s: %m", cp);
+			return (-1);
+		} else if (sb.st_uid != 0) {
+			syslog(LOG_ERR, "%s: not owned by root", cp);
+			return (-1);
+		} else if (sb.st_mode & (S_IWGRP | S_IWOTH)) {
+			syslog(LOG_ERR, "%s: writeable by non-root", cp);
+			return (-1);
+		}
+	} while (strlen(cp) > 1);
+        return (0);
 }
 
 /*
