@@ -1,4 +1,4 @@
-/*	$OpenBSD: isadmavar.h,v 1.14 2002/06/10 22:27:33 niklas Exp $	*/
+/*	$OpenBSD: isadmavar.h,v 1.15 2004/04/20 15:04:10 pvalchev Exp $	*/
 /*	$NetBSD: isadmavar.h,v 1.10 1997/08/04 22:13:33 augustss Exp $	*/
 
 /*-
@@ -37,6 +37,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifndef _DEV_ISA_ISADMAVAR_H
+#define _DEV_ISA_ISADMAVAR_H
 
 /* XXX for now... */
 #ifndef __ISADMA_COMPAT
@@ -93,3 +96,5 @@ int	   isa_drq_isfree(struct device *, int);
 void      *isa_malloc(struct device *, int, size_t, int, int);
 void	   isa_free(void *, int);
 paddr_t	   isa_mappage(void *, off_t, int);
+
+#endif /* _DEV_ISA_ISADMAVAR_H */
