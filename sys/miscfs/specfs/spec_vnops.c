@@ -1,4 +1,4 @@
-/*	$OpenBSD: spec_vnops.c,v 1.18 2001/03/01 20:54:35 provos Exp $	*/
+/*	$OpenBSD: spec_vnops.c,v 1.19 2001/03/15 16:44:15 csapuntz Exp $	*/
 /*	$NetBSD: spec_vnops.c,v 1.29 1996/04/22 01:42:38 christos Exp $	*/
 
 /*
@@ -554,8 +554,8 @@ spec_strategy(v)
 	struct buf *bp = ap->a_bp;
 	int maj = major(bp->b_dev);
 	
-	if (LIST_FIRST(&bp->b_dep) != NULL && bioops.io_start)
-		(*bioops.io_start)(bp);
+	if (LIST_FIRST(&bp->b_dep) != NULL)
+		buf_start(bp);
 
 	(*bdevsw[maj].d_strategy)(bp);
 	return (0);
