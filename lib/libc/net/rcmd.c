@@ -34,7 +34,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: rcmd.c,v 1.23 1997/06/04 03:18:40 dm Exp $";
+static char *rcsid = "$OpenBSD: rcmd.c,v 1.24 1997/06/29 06:02:48 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -180,7 +180,7 @@ rcmd(ahost, rport, locuser, remuser, cmd, fd2p)
 			goto bad;
 		}
 again:
-		bzero(readsp,fdssize);
+		bzero(readsp, fdssize);
 		FD_SET(s, readsp);
 		FD_SET(s2, readsp);
 		errno = 0;
