@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.6 2003/01/29 20:44:15 mickey Exp $
+#	$OpenBSD: RAMDISK,v 1.7 2003/01/31 22:56:01 mickey Exp $
 #
 # Diskless kernel config
 #
@@ -26,7 +26,7 @@ option		TIMEZONE=0	# time zone to adjust RTC time by
 option		DST=0		# daylight saving time used by RTC
 
 option		RAMDISK_HOOKS
-option		MINIROOTSIZE=4096
+option		MINIROOTSIZE=5120
 config	bsd	root on rd0a swap on rd0b # and sd0b
 
 mainbus0 at root		# root "bus"
@@ -101,9 +101,9 @@ scsibus* at osiop?
 #audio*	at aone?
 #harmony* at gsc? irq 13	# Audio Type 2 (CS4215/AD1849)
 #audio*	at harmony?
-#pckbc*	at gsc? irq 26
-#pckbd*	at pckbc?	# PS/2 keyboard
-#pms*	at pckbc?	# PS/2 mouse
+#gsckbc*	at gsc? irq 26
+#gsckbd*	at gsckbc?	# PS/2 keyboard
+#wskbd*	at gsckbd?
 #fdc*	at gsc?		# PC floppy controller (WD37C65C)
 #option	FD_DEBUG
 
