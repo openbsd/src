@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.10 2005/01/13 19:19:44 ian Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.11 2005/01/20 04:21:42 jaredy Exp $	*/
 /*
  * Copyright (c) 1997 Kenneth Stailey.  All rights reserved.
  *
@@ -37,13 +37,17 @@
 #include <unistd.h>
 #include <err.h>
 
+#define _PATH_AUDIO "/dev/audio"
+
 /* 
  * aucat: concatenate and play Sun 8-bit .au files
  */
 
 int	playfile(int, char *);
+void	usage(void) __attribute__((__noreturn__));
 
-/* function playfile: given a file which is positioned at the beginning
+/*
+ * function playfile: given a file which is positioned at the beginning
  * of what is assumed to be an .au data stream copy it out to the audio
  * device.  Return 0 on success, -1 on failure.
  */
@@ -51,18 +55,18 @@ int
 playfile(int fd, char *dev)
 {
 	static int afd = -1;
-	int rd;
+	ssize_t rd;
 	char buf[5120];
 
 	if (afd == -1 && (afd = open(dev, O_WRONLY)) < 0) {
 		warn("can't open %s", dev);
 		return(-1);
 	}
-	while ((rd = read(fd, buf, sizeof(buf))) > 0) {
-		write(afd, buf, rd);
-		if (rd < sizeof(buf))
-			break;
-	}
+	while ((rd = read(fd, buf, sizeof(buf))) > 0)
+		if (write(afd, buf, rd) != rd)
+			warn("write");
+	if (rd == -1)
+		warn("read");
 
 	return (0);
 }
@@ -71,41 +75,48 @@ int
 main(int argc, char *argv[])
 {
 	int fd, ch;
-	unsigned long data;
-	char magic[5];
+	u_int32_t data;
+	char magic[4];
 	char *dev;
 
 	dev = getenv("AUDIODEVICE");
-	if (dev == 0)
-		dev = "/dev/audio";
+	if (dev == NULL)
+		dev = _PATH_AUDIO;
 
 	while ((ch = getopt(argc, argv, "f:")) != -1) {
-		switch(ch) {
+		switch (ch) {
 		case 'f':
 			dev = optarg;
 			break;
+		default:
+			usage();
+			/* NOTREACHED */
 		}
 	}
 	argc -= optind;
 	argv += optind;
 
+	if (argc == 0)
+		usage();
 	while (argc) {
 		if ((fd = open(*argv, O_RDONLY)) < 0)
 			err(1, "cannot open %s", *argv);
 
-		read(fd, magic, 4);
-		magic[4] = '\0';
-		if (strcmp(magic, ".snd")) {
+		if (read(fd, magic, sizeof(magic)) != sizeof(magic) ||
+		    strncmp(magic, ".snd", 4)) {
 			/*
 			 * not an .au file, bad header.
 			 * Assume raw audio data since that's
 			 * what /dev/audio generates by default.
 			 */
-			lseek(fd, 0, SEEK_SET);
+			if (lseek(fd, 0, SEEK_SET) == -1)
+				warn("lseek");
 		} else {
-			read(fd, &data, sizeof(data));
-			data = ntohl(data);
-			lseek(fd, (off_t)data, SEEK_SET);
+			if (read(fd, &data, sizeof(data)) == sizeof(data)) {
+				data = ntohl(data);
+				if (lseek(fd, (off_t)data, SEEK_SET) == -1)
+					warn("lseek");
+			}
 		}
 		if (playfile(fd, dev) < 0)
 			exit(1);
@@ -114,4 +125,13 @@ main(int argc, char *argv[])
 		argv++;
 	}
 	exit(0);
+}
+
+void
+usage(void)
+{
+	extern char *__progname;
+
+	fprintf(stderr, "usage: %s [-f device] file ...\n", __progname);
+	exit(1);
 }
