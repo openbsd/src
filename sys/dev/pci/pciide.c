@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.117 2003/03/06 11:49:20 grange Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.118 2003/03/28 16:12:28 grange Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -713,10 +713,8 @@ pciide_attach(parent, self, aux)
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_tag = pa->pa_tag;
 
-#ifdef WDCDEBUG
-       if (wdcdebug_pciide_mask & DEBUG_PROBE)
-               printf(" sc_pc %p, sc_tag %p\n", sc->sc_pc, sc->sc_tag);
-#endif
+	WDCDEBUG_PRINT((" sc_pc=%p, sc_tag=%p, pa_class=0x%x\n", sc->sc_pc,
+	    sc->sc_tag, pa->pa_class), DEBUG_PROBE);
 
 	sc->sc_pp->chip_map(sc, pa);
 
