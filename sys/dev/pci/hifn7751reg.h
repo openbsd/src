@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751reg.h,v 1.36 2002/07/21 19:08:26 jason Exp $	*/
+/*	$OpenBSD: hifn7751reg.h,v 1.37 2002/07/23 17:53:46 jason Exp $	*/
 
 /*
  * Invertex AEON / Hifn 7751 driver
@@ -307,6 +307,9 @@ typedef struct hifn_desc {
 #define	HIFN_MIPSRST_MIPSDIS	0x00000004	/* disable MIPS */
 #define	HIFN_MIPSRST_MIPSRST	0x00000002	/* warm reset MIPS */
 #define	HIFN_MIPSRST_MIPSCOLD	0x00000001	/* cold reset MIPS */
+
+/* Revision ID */
+#define	HIFN_REVID_7811_PB3_2	0x00000002	/* 7811PB3/2 */
 
 /* Public key reset register (HIFN_1_PUB_RESET) */
 #define	HIFN_PUBRST_RESET	0x00000001	/* reset public/rng unit */
