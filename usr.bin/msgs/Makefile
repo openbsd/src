@@ -2,7 +2,7 @@
 #	@(#)Makefile	8.2 (Berkeley) 4/28/95
 
 PROG=	msgs
-DPADD=	${LIBTERM}
-LDADD=	-ltermlib
+DPADD=	${LIBTERMCAP}
+LDADD=	-ltermcap
 
 .include <bsd.prog.mk>
