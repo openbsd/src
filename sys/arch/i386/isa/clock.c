@@ -112,7 +112,6 @@ int	clockintr __P((void *));
 int	gettick __P((void));
 void	sysbeepstop __P((void *));
 void	sysbeep __P((int, int));
-void	rtcinit __P((void));
 int	rtcget __P((mc_todregs *));
 void	rtcput __P((mc_todregs *));
 static int yeartoday __P((int));
@@ -180,6 +179,21 @@ clockintr(arg)
 
 	hardclock(frame);
 	return -1;
+}
+
+int
+rtcintr(arg)
+	void *arg;
+{
+	struct clockframe *frame = arg;		/* not strictly neccecary */
+	u_int stat;
+
+	stat = mc146818_read(NULL, MC_REGC);
+	if (stat & MC_REGC_PF) {
+		statclock(frame);
+		return -1;
+	}
+	return 0;
 }
 
 int
@@ -331,17 +345,25 @@ void
 calibrate_cyclecounter()
 {
 	unsigned long long count, last_count;
+#ifdef NTP
+	extern long time_precision;
+#endif
 
 	__asm __volatile(".byte 0xf, 0x31" : "=A" (last_count));
 	delay(1000000);
 	__asm __volatile(".byte 0xf, 0x31" : "=A" (count));
 	pentium_mhz = ((count - last_count) + 500000) / 1000000;
+#ifdef NTP
+	time_precision = 1;	/* XXX */
+#endif
 }
 #endif
 
 void
 cpu_initclocks()
 {
+	stathz = 128;
+	profhz = 1024;
 
 	/*
 	 * XXX If you're doing strange things with multiple clocks, you might
@@ -349,28 +371,17 @@ cpu_initclocks()
 	 */
 	(void)isa_intr_establish(NULL, 0, IST_PULSE, IPL_CLOCK, clockintr,
 	    0, "clock");
-}
+	(void)isa_intr_establish(NULL, 8, IST_PULSE, IPL_CLOCK, rtcintr,
+	    0, "rtc");
 
-void
-rtcinit()
-{
-	static int first_rtcopen_ever = 1;
-
-	if (!first_rtcopen_ever)
-		return;
-	first_rtcopen_ever = 0;
-
-	mc146818_write(NULL, MC_REGA,			/* XXX softc */
-	    MC_BASE_32_KHz | MC_RATE_1024_Hz);
-	mc146818_write(NULL, MC_REGB, MC_REGB_24HR);	/* XXX softc */
+	mc146818_write(NULL, MC_REGA, MC_BASE_32_KHz | MC_RATE_128_Hz);
+	mc146818_write(NULL, MC_REGB, MC_REGB_24HR | MC_REGB_PIE);
 }
 
 int
 rtcget(regs)
 	mc_todregs *regs;
 {
-
-	rtcinit();
 	if ((mc146818_read(NULL, MC_REGD) & MC_REGD_VRT) == 0) /* XXX softc */
 		return (-1);
 	MC146818_GETTOD(NULL, regs);			/* XXX softc */
@@ -381,8 +392,6 @@ void
 rtcput(regs)
 	mc_todregs *regs;
 {
-
-	rtcinit();
 	MC146818_PUTTOD(NULL, regs);			/* XXX softc */
 }
 
@@ -552,4 +561,8 @@ void
 setstatclockrate(arg)
 	int arg;
 {
+	if (arg == stathz)
+		mc146818_write(NULL, MC_REGA, MC_BASE_32_KHz | MC_RATE_128_Hz);
+	else
+		mc146818_write(NULL, MC_REGA, MC_BASE_32_KHz | MC_RATE_1024_Hz);
 }
