@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_userconf.c,v 1.19 2000/01/08 23:23:37 d Exp $	*/
+/*	$OpenBSD: subr_userconf.c,v 1.20 2000/05/19 17:07:05 maja Exp $	*/
 
 /*
  * Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
@@ -589,7 +589,7 @@ userconf_enable(devno)
 			printf(" already");
 		} else {
 			/* XXX add cmd 'e' <devno> eoc */
-			userconf_hist_cmd('d');
+			userconf_hist_cmd('e');
 			userconf_hist_int(devno);
 			userconf_hist_eoc();
 		}
