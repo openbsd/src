@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.bsd-wrapper,v 1.41 2001/05/24 18:34:44 millert Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.42 2001/06/02 17:40:56 espie Exp $
 #
 # Build wrapper for Perl 5.6.1
 #
@@ -226,44 +226,44 @@ all:	perl.build ${MANALL} ${PSALL}
 beforedepend:	config.sh config.h
 
 perl.build:	perl.lib
-	(cd ${.OBJDIR}; ${MAKE})
+	cd ${.OBJDIR} && exec ${MAKE}
 
 config.sh:	config.over
-	(cd ${.OBJDIR}; /usr/bin/env PATH="/bin:/usr/bin:/sbin:/usr/sbin" \
-	 /bin/sh Configure -Dopenbsd_distribution=defined ${THREADED} -dsE)
+	cd ${.OBJDIR} && PATH="/bin:/usr/bin:/sbin:/usr/sbin" \
+	 exec /bin/sh Configure -Dopenbsd_distribution=defined ${THREADED} -dsE
 
 Policy.sh:
-	(cd ${.OBJDIR}; /bin/sh Policy_sh.SH)
+	cd ${.OBJDIR} && exec /bin/sh Policy_sh.SH
 
 Makefile:
-	(cd ${.OBJDIR}; /bin/sh Makefile.SH)
+	cd ${.OBJDIR} && exec /bin/sh Makefile.SH
 
 cflags:
-	(cd ${.OBJDIR}; /bin/sh cflags.SH)
+	cd ${.OBJDIR} && exec /bin/sh cflags.SH
 
 config.h:
-	(cd ${.OBJDIR}; /bin/sh config_h.SH)
+	cd ${.OBJDIR} && exec /bin/sh config_h.SH
 
 makeaperl:
-	(cd ${.OBJDIR}; /bin/sh makeaperl.SH)
+	cd ${.OBJDIR} && exec /bin/sh makeaperl.SH
 
 makedepend:
-	(cd ${.OBJDIR}; /bin/sh makedepend.SH)
+	cd ${.OBJDIR} && exec /bin/sh makedepend.SH
 
 makedir:
-	(cd ${.OBJDIR}; /bin/sh makedir.SH)
+	cd ${.OBJDIR} && exec /bin/sh makedir.SH
 
 myconfig:
-	(cd ${.OBJDIR}; /bin/sh myconfig.SH)
+	cd ${.OBJDIR} && exec /bin/sh myconfig.SH
 
 writemain:
-	(cd ${.OBJDIR}; /bin/sh writemain.SH)
+	cd ${.OBJDIR} && exec /bin/sh writemain.SH
 
 x2p/Makefile:
-	(cd ${.OBJDIR}/x2p; /bin/sh Makefile.SH)
+	cd ${.OBJDIR}/x2p && exec /bin/sh Makefile.SH
 
 x2p/cflags:
-	(cd ${.OBJDIR}/x2p; /bin/sh cflags.SH)
+	cd ${.OBJDIR}/x2p && exec /bin/sh cflags.SH
 
 # Never try to regenerate perly.c or perly.h
 perly.c perly.h: perly.y
