@@ -1,4 +1,4 @@
-/*	$OpenBSD: man.c,v 1.8 1998/04/25 00:25:37 millert Exp $	*/
+/*	$OpenBSD: man.c,v 1.9 1998/07/01 11:23:40 espie Exp $	*/
 /*	$NetBSD: man.c,v 1.7 1995/09/28 06:05:34 tls Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)man.c	8.17 (Berkeley) 1/31/95";
 #else
-static char rcsid[] = "$OpenBSD: man.c,v 1.8 1998/04/25 00:25:37 millert Exp $";
+static char rcsid[] = "$OpenBSD: man.c,v 1.9 1998/07/01 11:23:40 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -67,6 +67,7 @@ static char rcsid[] = "$OpenBSD: man.c,v 1.8 1998/04/25 00:25:37 millert Exp $";
 #include "pathnames.h"
 
 int f_all, f_where;
+static TAG *section;	/* could be passed to cleanup() instead */
 
 extern char *__progname;
 
@@ -87,7 +88,7 @@ main(argc, argv)
 {
 	extern char *optarg;
 	extern int optind;
-	TAG *defp, *defnewp, *section, *sectnewp, *subp;
+	TAG *defp, *defnewp, *sectnewp, *subp;
 	ENTRY *e_defp, *e_sectp, *e_subp, *ep;
 	glob_t pg;
 	size_t len;
@@ -741,7 +742,11 @@ cleanup()
 	    NULL : missp->list.tqh_first;
 	if (ep != NULL)
 		for (; ep != NULL; ep = ep->q.tqe_next) {
-			warnx("no entry for %s in the manual.", ep->s);
+			if (section)
+				warnx("no entry for %s in section %s of the manual.",
+					ep->s, section->s);
+			else
+				warnx("no entry for %s in the manual.", ep->s);
 			rval = 1;
 		}
 
