@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg.c,v 1.20 2004/01/09 13:47:07 henning Exp $ */
+/*	$OpenBSD: imsg.c,v 1.21 2004/01/22 03:18:03 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -46,7 +46,7 @@ imsg_read(struct imsgbuf *ibuf)
 	if ((n = read(ibuf->sock, ibuf->r.buf + ibuf->r.wpos,
 	    sizeof(ibuf->r.buf) - ibuf->r.wpos)) == -1) {
 		if (errno != EINTR && errno != EAGAIN) {
-			log_err("imsg_read: pipe read error");
+			log_warn("imsg_read: pipe read error");
 			return (-1);
 		}
 		return (0);
@@ -79,7 +79,7 @@ imsg_get(struct imsgbuf *ibuf, struct imsg *imsg)
 	datalen = imsg->hdr.len - IMSG_HEADER_SIZE;
 	ibuf->r.rptr = ibuf->r.buf + IMSG_HEADER_SIZE;
 	if ((imsg->data = malloc(datalen)) == NULL) {
-		log_err("imsg_get");
+		log_warn("imsg_get");
 		return (-1);
 	}
 	memcpy(imsg->data, ibuf->r.rptr, datalen);

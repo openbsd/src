@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.18 2004/01/20 12:50:25 henning Exp $ */
+/*	$OpenBSD: control.c,v 1.19 2004/01/22 03:18:03 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -45,7 +45,7 @@ control_init(void)
 	mode_t			 old_umask;
 
 	if ((fd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1) {
-		log_err("control_init: socket");
+		log_warn("control_init: socket");
 		return (-1);
 	}
 
@@ -56,17 +56,17 @@ control_init(void)
 
 	if (unlink(SOCKET_NAME) == -1)
 		if (errno != ENOENT) {
-			log_err("unlink %s", SOCKET_NAME);
+			log_warn("unlink %s", SOCKET_NAME);
 			return (-1);
 		}
 
 	if (bind(fd, (struct sockaddr *)&sun, sizeof(sun)) == -1) {
-		log_err("control_init: bind: %s", SOCKET_NAME);
+		log_warn("control_init: bind: %s", SOCKET_NAME);
 		return (-1);
 	}
 
 	if (chmod(SOCKET_NAME, S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP) == -1) {
-		log_err("control_init chmod");
+		log_warn("control_init chmod");
 		return (-1);
 	}
 
@@ -81,7 +81,7 @@ int
 control_listen(void)
 {
 	if (listen(control_state.fd, CONTROL_BACKLOG) == -1) {
-		log_err("control_listen: listen");
+		log_warn("control_listen: listen");
 		return (-1);
 	}
 
@@ -116,11 +116,11 @@ control_accept(int listenfd)
 		if (errno == EWOULDBLOCK || errno == EINTR)
 			return;
 		else
-			log_err("session_control_accept");
+			log_warn("session_control_accept");
 	}
 
 	if (getpeereid(connfd, &uid, &gid) == -1) {
-		log_err("session_control_accept");
+		log_warn("session_control_accept");
 		return;
 	}
 
@@ -130,7 +130,7 @@ control_accept(int listenfd)
 	}
 
 	if ((ctl_conn = malloc(sizeof(struct ctl_conn))) == NULL) {
-		log_err("session_control_accept");
+		log_warn("session_control_accept");
 		return;
 	}
 
@@ -169,7 +169,7 @@ control_close(int fd)
 	struct ctl_conn	*c;
 
 	if ((c = control_connbyfd(fd)) == NULL) {
-		log_err("control_close: fd %d: not found", fd);
+		log_warn("control_close: fd %d: not found", fd);
 		return;
 	}
 
@@ -189,7 +189,7 @@ control_dispatch_msg(struct pollfd *pfd, int i)
 	struct bgpd_addr	*addr;
 
 	if ((c = control_connbyfd(pfd->fd)) == NULL) {
-		log_err("control_dispatch_msg: fd %d: not found", pfd->fd);
+		log_warn("control_dispatch_msg: fd %d: not found", pfd->fd);
 		return (0);
 	}
 

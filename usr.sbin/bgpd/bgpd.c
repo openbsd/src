@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.69 2004/01/20 09:44:33 henning Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.70 2004/01/22 03:18:03 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -237,19 +237,19 @@ main(int argc, char *argv[])
 
 		if ((nfds = poll(pfd, i, INFTIM)) == -1)
 			if (errno != EINTR) {
-				log_err("poll error");
+				log_warn("poll error");
 				quit = 1;
 			}
 
 		if (nfds > 0 && (pfd[PFD_PIPE_SESSION].revents & POLLOUT))
 			if ((n = msgbuf_write(&ibuf_se.w)) < 0) {
-				log_err("pipe write error (to SE)");
+				log_warn("pipe write error (to SE)");
 				quit = 1;
 			}
 
 		if (nfds > 0 && (pfd[PFD_PIPE_ROUTE].revents & POLLOUT))
 			if ((n = msgbuf_write(&ibuf_rde.w)) < 0) {
-				log_err("pipe write error (to RDE)");
+				log_warn("pipe write error (to RDE)");
 				quit = 1;
 			}
 
@@ -276,7 +276,7 @@ main(int argc, char *argv[])
 		for (j = PFD_MRT_START; j < i && nfds > 0 ; j++) {
 			if (pfd[j].revents & POLLOUT) {
 				if ((n = mrt_write(mrt[j])) < 0) {
-					log_err("mrt write error");
+					log_warn("mrt write error");
 				}
 			}
 		}
@@ -486,7 +486,7 @@ send_nexthop_update(struct kroute_nexthop *msg)
 	if (msg->gateway.af == AF_INET)
 		if (asprintf(&gw, ": via %s",
 		    log_ntoa(msg->gateway.v4.s_addr)) == -1) {
-			log_err("send_nexthop_update");
+			log_warn("send_nexthop_update");
 			quit = 1;
 		}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.16 2004/01/19 23:15:08 henning Exp $ */
+/*	$OpenBSD: log.c,v 1.17 2004/01/22 03:18:04 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -197,7 +197,7 @@ log_peer_errx(const struct peer *peer, const char *emsg, ...)
 }
 
 void
-log_err(const char *emsg, ...)
+log_warn(const char *emsg, ...)
 {
 	char	*nfmt;
 	va_list	 ap;

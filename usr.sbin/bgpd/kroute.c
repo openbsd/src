@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.75 2004/01/22 03:07:51 henning Exp $ */
+/*	$OpenBSD: kroute.c,v 1.76 2004/01/22 03:18:04 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -128,14 +128,14 @@ kr_init(int fs)
 	kr_state.fib_sync = fs;
 
 	if ((kr_state.fd = socket(AF_ROUTE, SOCK_RAW, 0)) == -1) {
-		log_err("kr_init: socket");
+		log_warn("kr_init: socket");
 		return (-1);
 	}
 
 	/* not interested in my own messages */
 	if (setsockopt(kr_state.fd, SOL_SOCKET, SO_USELOOPBACK,
 	    &opt, sizeof(opt)) == -1)
-		log_err("kr_init: setsockopt");	/* not fatal */
+		log_warn("kr_init: setsockopt");	/* not fatal */
 
 	kr_state.pid = getpid();
 	kr_state.rtseq = 1;
@@ -175,7 +175,7 @@ kr_change(struct kroute *kroute)
 
 	if (action == RTM_ADD) {
 		if ((kr = calloc(1, sizeof(struct kroute_node))) == NULL) {
-			log_err("kr_change");
+			log_warn("kr_change");
 			return (-1);
 		}
 		kr->r.prefix = kroute->prefix;
@@ -280,7 +280,7 @@ kr_nexthop_add(struct bgpd_addr *addr)
 		send_nexthop_update(&nh);
 	} else {
 		if ((h = calloc(1, sizeof(struct knexthop_node))) == NULL) {
-			log_err("kr_nexthop_add");
+			log_warn("kr_nexthop_add");
 			return (-1);
 		}
 		memcpy(&h->nexthop, addr, sizeof(h->nexthop));
@@ -592,7 +592,7 @@ kif_kr_insert(struct kroute_node *kr)
 	}
 
 	if ((kkr = calloc(1, sizeof(struct kif_kr))) == NULL) {
-		log_err("kif_kr_insert");
+		log_warn("kif_kr_insert");
 		return (-1);
 	}
 
@@ -739,7 +739,7 @@ protect_lo(void)
 
 	/* special protection for 127/8 */
 	if ((kr = calloc(1, sizeof(struct kroute_node))) == NULL) {
-		log_err("protect_lo");
+		log_warn("protect_lo");
 		return (-1);
 	}
 	kr->r.prefix = inet_addr("127.0.0.1");
@@ -863,7 +863,7 @@ if_announce(void *msg)
 	switch (ifan->ifan_what) {
 	case IFAN_ARRIVAL:
 		if ((kif = calloc(1, sizeof(struct kif_node))) == NULL) {
-			log_err("if_announce");
+			log_warn("if_announce");
 			return;
 		}
 
@@ -966,15 +966,15 @@ fetchtable(void)
 	mib[5] = 0;
 
 	if (sysctl(mib, 6, NULL, &len, NULL, 0) == -1) {
-		log_err("sysctl");
+		log_warn("sysctl");
 		return (-1);
 	}
 	if ((buf = malloc(len)) == NULL) {
-		log_err("fetchtable");
+		log_warn("fetchtable");
 		return (-1);
 	}
 	if (sysctl(mib, 6, buf, &len, NULL, 0) == -1) {
-		log_err("sysctl");
+		log_warn("sysctl");
 		return (-1);
 	}
 
@@ -991,7 +991,7 @@ fetchtable(void)
 			continue;
 
 		if ((kr = calloc(1, sizeof(struct kroute_node))) == NULL) {
-			log_err("fetchtable");
+			log_warn("fetchtable");
 			return (-1);
 		}
 
@@ -1056,15 +1056,15 @@ fetchifs(int ifindex)
 	mib[5] = ifindex;
 
 	if (sysctl(mib, 6, NULL, &len, NULL, 0) == -1) {
-		log_err("sysctl");
+		log_warn("sysctl");
 		return (-1);
 	}
 	if ((buf = malloc(len)) == NULL) {
-		log_err("fetchif");
+		log_warn("fetchif");
 		return (-1);
 	}
 	if (sysctl(mib, 6, buf, &len, NULL, 0) == -1) {
-		log_err("sysctl");
+		log_warn("sysctl");
 		return (-1);
 	}
 
@@ -1078,7 +1078,7 @@ fetchifs(int ifindex)
 			continue;
 
 		if ((kif = calloc(1, sizeof(struct kif_node))) == NULL) {
-			log_err("fetchifs");
+			log_warn("fetchifs");
 			return (-1);
 		}
 
@@ -1120,7 +1120,7 @@ dispatch_rtmsg(void)
 	u_short			 ifindex;
 
 	if ((n = read(kr_state.fd, &buf, sizeof(buf))) == -1) {
-		log_err("dispatch_rtmsg: read error");
+		log_warn("dispatch_rtmsg: read error");
 		return (-1);
 	}
 
@@ -1212,7 +1212,7 @@ dispatch_rtmsg(void)
 			} else {
 				if ((kr = calloc(1,
 				    sizeof(struct kroute_node))) == NULL) {
-					log_err("dispatch_rtmsg");
+					log_warn("dispatch_rtmsg");
 					return (-1);
 				}
 				kr->r.prefix = prefix;

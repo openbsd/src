@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.74 2004/01/22 03:07:51 henning Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.75 2004/01/22 03:18:03 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -284,7 +284,7 @@ int		 msgbuf_unbounded(struct msgbuf *msgbuf);
 void		 log_init(int);
 void		 logit(int, const char *, ...);
 void		 vlog(int, const char *, va_list);
-void		 log_err(const char *, ...);
+void		 log_warn(const char *, ...);
 void		 fatal(const char *);
 void		 fatalx(const char *);
 void		 fatal_ensure(const char *, int, const char *);
