@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: util.c,v 1.14 2001/05/03 13:41:12 espie Exp $	*/
+/*	$OpenBSD: util.c,v 1.15 2001/05/03 14:06:20 espie Exp $	*/
 /*	$NetBSD: util.c,v 1.10 1996/12/31 17:56:04 christos Exp $	*/
 
 /*
@@ -7,7 +7,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: util.c,v 1.14 2001/05/03 13:41:12 espie Exp $";
+static char rcsid[] = "$OpenBSD: util.c,v 1.15 2001/05/03 14:06:20 espie Exp $";
 #endif
 
 #include <stdio.h>
@@ -353,7 +353,7 @@ signal(s, a))()
 
 #endif
 
-#ifndef BSD4_4
+#if !defined(BSD4_4) && !defined(linux)
 #ifdef __STDC__
 #include <stdarg.h>
 #else
