@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass.c,v 1.16 2002/05/07 18:29:18 nate Exp $ */
+/*	$OpenBSD: umass.c,v 1.17 2002/06/21 00:34:34 art Exp $ */
 /*	$NetBSD: umass.c,v 1.49 2001/01/21 18:56:38 augustss Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
@@ -722,6 +722,12 @@ umass_match_proto(sc, iface, dev)
 		sc->subclass = UISUBCLASS_SFF8020I;
 		sc->protocol = UIPROTO_MASS_CBI;
 		sc->quirks |= NO_TEST_UNIT_READY | NO_START_STOP;
+		return (UMATCH_VENDOR_PRODUCT);
+	}
+
+	if (vendor == USB_VENDOR_TRUMPION &&
+	    product == USB_PRODUCT_TRUMPION_XXX1100) {
+		sc->proto = PROTO_ATAPI | PROTO_CBI;
 		return (UMATCH_VENDOR_PRODUCT);
 	}
 
