@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd_i386.c,v 1.11 1997/10/17 18:46:55 weingart Exp $	*/
+/*	$OpenBSD: cmd_i386.c,v 1.12 1997/10/20 14:47:42 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff, Tobias Weingartner
@@ -150,8 +150,8 @@ Xmemory()
 	int count, total = 0;
 
 	for(count = 0; tm[count].type != BIOS_MAP_END; count++){
-		printf("Region %d: type %u at 0x%x for %uKB\n", count,
-			tm[count].type, tm[count].addr, tm[count].size/1024);
+		printf("Region %d: type %u at 0x%lx for %luKB\n", count,
+			tm[count].type, (long)tm[count].addr, (long)tm[count].size/1024);
 
 		if(tm[count].type == BIOS_MAP_FREE)
 			total += tm[count].size;

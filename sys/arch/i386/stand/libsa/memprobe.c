@@ -1,4 +1,4 @@
-/*	$OpenBSD: memprobe.c,v 1.16 1997/10/17 18:46:58 weingart Exp $	*/
+/*	$OpenBSD: memprobe.c,v 1.17 1997/10/20 14:47:42 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -385,7 +385,7 @@ memprobe()
 		if(tm[count].type == BIOS_MAP_FREE) {
 			total += tm[count].size;
 
-			printf(" %dKB", tm[count].size/1024);
+			printf(" %luKB", (long)tm[count].size/1024);
 		}
 	}
 	printf("\n");

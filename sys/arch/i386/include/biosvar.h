@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosvar.h,v 1.19 1997/10/18 00:33:14 weingart Exp $	*/
+/*	$OpenBSD: biosvar.h,v 1.20 1997/10/20 14:47:41 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -125,9 +125,9 @@ struct EDD_CB {
 };
 
 typedef struct _bios_memmap {
-	u_int32_t addr;		/* Beginning of block */
-	u_int32_t size;		/* Size of block */
-	int type;		/* Type of block */
+	u_int64_t addr;		/* Beginning of block */
+	u_int64_t size;		/* Size of block */
+	u_int32_t type;		/* Type of block */
 } bios_memmap_t;
 
 /* Info about disk from the bios, plus the mapping from
