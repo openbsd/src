@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsstat.c,v 1.2 1996/03/27 19:32:49 niklas Exp $	*/
+/*	$OpenBSD: nfsstat.c,v 1.3 1996/08/06 18:36:59 deraadt Exp $	*/
 /*	$NetBSD: nfsstat.c,v 1.7 1996/03/03 17:21:30 thorpej Exp $	*/
 
 /*
@@ -48,7 +48,7 @@ static char copyright[] =
 static char sccsid[] = "from: @(#)nfsstat.c	8.1 (Berkeley) 6/6/93";
 static char *rcsid = "$NetBSD: nfsstat.c,v 1.7 1996/03/03 17:21:30 thorpej Exp $";
 #else
-static char *rcsid = "$OpenBSD: nfsstat.c,v 1.2 1996/03/27 19:32:49 niklas Exp $";
+static char *rcsid = "$OpenBSD: nfsstat.c,v 1.3 1996/08/06 18:36:59 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -68,6 +68,7 @@ static char *rcsid = "$OpenBSD: nfsstat.c,v 1.2 1996/03/27 19:32:49 niklas Exp $
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
 #include <paths.h>
 #include <err.h>
 
@@ -89,7 +90,7 @@ main(argc, argv)
 	u_int interval;
 	int ch;
 	char *memf, *nlistf;
-	char errbuf[80];
+	char errbuf[_POSIX2_LINE_MAX];
 
 	interval = 0;
 	memf = nlistf = NULL;
