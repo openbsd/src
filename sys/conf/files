@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.174 2000/08/12 04:30:18 jasoni Exp $
+#	$OpenBSD: files,v 1.175 2000/09/06 01:51:16 rahnds Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -177,11 +177,6 @@ file	dev/ic/lpt.c		lpt & (lpt_isa | lpt_pica | lpt_algor | lpt_gsc | lpt_puc) ne
 # VGA
 device	vga: wsemuldisplaydev
 file	dev/ic/vga.c		vga & (vga_isa | vga_pci)
-
-# VGA framebuffer
-device	vgafb: wsdisplaydev
-file	dev/ic/vgafb.c		vgafb & (vgafb_isa | vgafb_pci)
-file	dev/ic/font_8x16.c	vgafb & (vgafb_isa | vgafb_pci)
 
 # STI (hp graphics)
 device	sti: wsemuldisplaydev
