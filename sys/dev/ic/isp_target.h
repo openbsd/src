@@ -1,4 +1,4 @@
-/* $OpenBSD: isp_target.h,v 1.3 2000/10/16 01:02:00 mjacob Exp $ */
+/* $OpenBSD: isp_target.h,v 1.4 2001/01/09 03:27:28 mjacob Exp $ */
 /*
  * Qlogic Target Mode Structure and Flag Definitions
  *
@@ -266,6 +266,9 @@ typedef struct {
 	u_int16_t	at_scsi_status;
 	u_int8_t	at_sense[QLTM_SENSELEN];
 } at2_entry_t;
+
+#define	ATIO2_WWPN_OFFSET	0x2A
+#define	ATIO2_OXID_OFFSET	0x3E
 
 #define	ATIO2_TC_ATTR_MASK	0x7
 #define	ATIO2_TC_ATTR_SIMPLEQ	0
