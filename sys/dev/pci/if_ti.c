@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ti.c,v 1.36 2002/05/01 16:15:49 mickey Exp $	*/
+/*	$OpenBSD: if_ti.c,v 1.37 2002/07/05 13:48:11 aaron Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -195,7 +195,7 @@ u_int32_t ti_eeprom_putbyte(sc, byte)
 	TI_SETBIT(sc, TI_MISC_LOCAL_CTL, TI_MLC_EE_TXEN);
 
 	/*
-	 * Feed in each bit and stobe the clock.
+	 * Feed in each bit and strobe the clock.
 	 */
 	for (i = 0x80; i; i >>= 1) {
 		if (byte & i) {

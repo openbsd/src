@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nge.c,v 1.18 2002/03/14 01:26:59 millert Exp $	*/
+/*	$OpenBSD: if_nge.c,v 1.19 2002/07/05 13:48:11 aaron Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -255,7 +255,7 @@ void nge_eeprom_putbyte(sc, addr)
 	d = addr | NGE_EECMD_READ;
 
 	/*
-	 * Feed in each bit and stobe the clock.
+	 * Feed in each bit and strobe the clock.
 	 */
 	for (i = 0x400; i; i >>= 1) {
 		if (d & i) {

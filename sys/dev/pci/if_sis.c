@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sis.c,v 1.25 2002/07/03 02:30:56 aaron Exp $ */
+/*	$OpenBSD: if_sis.c,v 1.26 2002/07/05 13:48:11 aaron Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -222,7 +222,7 @@ void sis_eeprom_putbyte(sc, addr)
 	d = addr | SIS_EECMD_READ;
 
 	/*
-	 * Feed in each bit and stobe the clock.
+	 * Feed in each bit and strobe the clock.
 	 */
 	for (i = 0x400; i; i >>= 1) {
 		if (d & i) {

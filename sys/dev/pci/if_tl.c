@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tl.c,v 1.26 2002/03/14 01:26:59 millert Exp $	*/
+/*	$OpenBSD: if_tl.c,v 1.27 2002/07/05 13:48:11 aaron Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -429,7 +429,7 @@ u_int8_t tl_eeprom_putbyte(sc, byte)
 	tl_dio_setbit(sc, TL_NETSIO, TL_SIO_ETXEN);
 
 	/*
-	 * Feed in each bit and stobe the clock.
+	 * Feed in each bit and strobe the clock.
 	 */
 	for (i = 0x80; i; i >>= 1) {
 		if (byte & i) {
