@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.70 2001/06/03 04:43:21 angelos Exp $
+.\"	$OpenBSD: sysctl.3,v 1.71 2001/07/05 08:51:25 jjbg Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -652,6 +652,7 @@ The currently defined protocols and names are:
 .It ip	ipsec-firstuse	integer	yes
 .It ip	ipsec-enc-alg	string	yes
 .It ip	ipsec-auth-alg	string	yes
+.It ip	ipsec-comp-alg	string	yes
 .It ip	ipsec-expire-acquire	integer	yes
 .It ip	mtudisc	integer	yes
 .It ip	mtudisctimeout	integer	yes
@@ -678,6 +679,7 @@ The currently defined protocols and names are:
 .It gre	allow	integer	yes
 .It esp	enable	integer	yes
 .It ah	enable	integer	yes
+.It ipcomp	enable	integer	yes
 .It mobileip	allow	integer	yes
 .It etherip	allow	integer	yes
 .El
