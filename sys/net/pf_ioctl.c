@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.133 2004/12/04 07:49:48 mcbride Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.134 2004/12/05 10:46:26 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1182,10 +1182,14 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			if (pf_tbladdr_setup(ruleset, &pa->addr))
 				error = EINVAL;
 
-		if (rule->overload_tblname[0] &&
-		    (rule->overload_tbl = pfr_attach_table(ruleset,
-		    rule->overload_tblname)) == NULL)
-			error = EINVAL;
+		if (rule->overload_tblname[0]) {
+			if ((rule->overload_tbl = pfr_attach_table(ruleset,
+			    rule->overload_tblname)) == NULL)
+				error = EINVAL;
+			else
+				rule->overload_tbl->pfrkt_flags |=
+				    PFR_TFLAG_ACTIVE;
+		}
 
 		pf_mv_pool(&pf_pabuf, &rule->rpool.list);
 		if (((((rule->action == PF_NAT) || (rule->action == PF_RDR) ||
@@ -1394,10 +1398,15 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			if (pf_anchor_setup(newrule, ruleset, pcr->anchor_call))
 				error = EINVAL;
 
-			if (newrule->overload_tblname[0] &&
-			    (newrule->overload_tbl = pfr_attach_table(ruleset,
-			    newrule->overload_tblname)) == NULL)
-				error = EINVAL;
+			if (newrule->overload_tblname[0]) {
+				if ((newrule->overload_tbl = pfr_attach_table(
+				    ruleset, newrule->overload_tblname)) ==
+				    NULL)
+					error = EINVAL;
+				else
+					newrule->overload_tbl->pfrkt_flags |=
+					    PFR_TFLAG_ACTIVE;
+			}
 
 			pf_mv_pool(&pf_pabuf, &newrule->rpool.list);
 			if (((((newrule->action == PF_NAT) ||
