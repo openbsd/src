@@ -1,4 +1,4 @@
-#       $OpenBSD: install.md,v 1.14 1997/10/25 04:51:14 deraadt Exp $
+#       $OpenBSD: install.md,v 1.15 1997/10/30 21:14:41 niklas Exp $
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
@@ -100,7 +100,7 @@ md_get_cddevs() {
 
 md_get_ifdevs() {
         # return available network devices
-	md_get_msgbuf | egrep "(^ed[0-9] |^[dl]e[0-9] |fxp[0-9])" | sed -e 's/^ *//' -e 's/ .*//'
+	md_get_msgbuf | egrep "(^e[dp][0-9] |^[dl]e[0-9] |fxp[0-9])" | sed -e 's/^ *//' -e 's/ .*//'
 }
 
 md_get_partition_range() {
@@ -184,7 +184,7 @@ md_welcome_banner() {
 {
 	if [ "$MODE" = "install" ]; then
 		echo ""
-		echo "Welcome to the OpenBSD/alpha ${VERSION} installation program."
+		echo "Welcome to the OpenBSD/alpha ${VERSION_MAJOR}.${VERSION_MINOR} installation program."
 		cat << \__welcome_banner_1
 
 This program is designed to help you put OpenBSD on your disk, in a
