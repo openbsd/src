@@ -1,4 +1,4 @@
-/*	$OpenBSD: midwayreg.h,v 1.7 1997/03/20 22:03:04 chuck Exp $	*/
+/*	$OpenBSD: midwayreg.h,v 1.8 1999/06/06 15:39:16 deraadt Exp $	*/
 
 /*
  * m i d w a y r e g . h
@@ -8,7 +8,7 @@
  *
  */
 
-#if defined(sparc) || defined(__FreeBSD__)
+#if defined(__sparc__) || defined(__FreeBSD__)
 /* XXX: gross.   netbsd/sparc doesn't have machine/bus.h yet. */
 typedef void * bus_space_tag_t;
 typedef u_int32_t pci_chipset_tag_t;
@@ -21,7 +21,7 @@ typedef caddr_t bus_addr_t;
 #define bus_space_write_4(t, h, o, v)                                   \
     ((void) t, ((void)(*(volatile u_int32_t *)((h) + (o)) = (v))))
 
-#if defined(sparc)
+#if defined(__sparc__)
 #define vtophys(x) ((u_int32_t)(x))	/* sun4c dvma */
 #endif
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: midway.c,v 1.24 1999/01/11 05:12:17 millert Exp $	*/
+/*	$OpenBSD: midway.c,v 1.25 1999/06/06 15:39:15 deraadt Exp $	*/
 /*	(sync'd to midway.c 1.68)	*/
 
 /*
@@ -144,7 +144,7 @@
 #endif
 
 
-#if !defined(sparc) && !defined(__FreeBSD__)
+#if !defined(__sparc__) && !defined(__FreeBSD__)
 #include <machine/bus.h>
 #endif
 

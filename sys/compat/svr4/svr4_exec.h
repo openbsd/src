@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_exec.h,v 1.3 1998/02/22 01:07:59 niklas Exp $	 */
+/*	$OpenBSD: svr4_exec.h,v 1.4 1999/06/06 15:38:50 deraadt Exp $	 */
 /*	$NetBSD: svr4_exec.h,v 1.7 1995/07/02 06:16:06 christos Exp $	 */
 
 /*
@@ -50,7 +50,7 @@
 #define SVR4_INTERP_ADDR	0x01000000
 #endif
 
-#ifdef sparc
+#ifdef __sparc__
 /*
  * Here programs load at 0x00010000, so I load the interpreter far after
  * the end of the data segment.
