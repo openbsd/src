@@ -1,8 +1,0 @@
-#	from: @(#)Makefile	5.6.1.2 (Berkeley) 5/8/91
-#	$Id: Makefile.main,v 1.1 1995/11/01 16:56:28 deraadt Exp $
-
-SUBDIR=	
-
-passwd group hosts networks rpc services protocols: _SUBDIRUSE
-
-.include <bsd.subdir.mk>
