@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.9 1997/05/03 07:56:44 tholo Exp $
+#	$OpenBSD: Makefile,v 1.10 1997/05/04 03:26:24 tholo Exp $
 
 # Revision is 2.1
 REV=           21
@@ -39,7 +39,7 @@ ${FS}:	bsd.gz
 .endif
 	mount ${VND_DEV} ${MOUNT_POINT}
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
-	    REV=${REV} TARGDIR=${MOUNT_POINT} sh ${TOP}/runlist.sh ${LISTFLOPPY}
+	    TARGDIR=${MOUNT_POINT} sh ${TOP}/runlist.sh ${LISTFLOPPY}
 	sync
 	cat /*bin/* > /dev/null
 	sync
