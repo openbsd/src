@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.525 2002/06/28 11:33:55 markus Exp 
+ *		OpenBSD: pcidevs,v 1.526 2002/07/06 14:26:58 gluk Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -4984,7 +4984,15 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_TRIONES, PCI_PRODUCT_TRIONES_HPT366,
-	    "HPT36x/370 IDE",
+	    "HPT36x/37x IDE",
+	},
+	{
+	    PCI_VENDOR_TRIONES, PCI_PRODUCT_TRIONES_HPT372A,
+	    "HPT372A IDE",
+	},
+	{
+	    PCI_VENDOR_TRIONES, PCI_PRODUCT_TRIONES_HPT374,
+	    "HPT374 IDE",
 	},
 	{
 	    PCI_VENDOR_TRITECH, PCI_PRODUCT_TRITECH_TR25202,

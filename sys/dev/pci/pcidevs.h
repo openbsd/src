@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.525 2002/06/28 11:33:55 markus Exp 
+ *		OpenBSD: pcidevs,v 1.526 2002/07/06 14:26:58 gluk Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -2174,7 +2174,9 @@
 
 /* Triones/HighPoint Technologies products */
 #define	PCI_PRODUCT_TRIONES_HPT343	0x0003		/* HPT343/345 IDE */
-#define	PCI_PRODUCT_TRIONES_HPT366	0x0004		/* HPT36x/370 IDE */
+#define	PCI_PRODUCT_TRIONES_HPT366	0x0004		/* HPT36x/37x IDE */
+#define	PCI_PRODUCT_TRIONES_HPT372A	0x0005		/* HPT372A IDE */
+#define	PCI_PRODUCT_TRIONES_HPT374	0x0008		/* HPT374 IDE */
 
 /* TriTech Microelectronics products*/
 #define	PCI_PRODUCT_TRITECH_TR25202	0xfc02		/* Pyramid3D TR25202 */
