@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_spd.c,v 1.31 2001/06/26 19:57:49 angelos Exp $ */
+/* $OpenBSD: ip_spd.c,v 1.32 2001/06/26 23:30:59 angelos Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -93,7 +93,9 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 		return NULL;
 	}
 
-	/* If an input packet is destined to a BYPASS socket, just accept it. */
+	/*
+	 * If an input packet is destined to a BYPASS socket, just accept it.
+	 */
 	if ((inp != NULL) && (direction == IPSP_DIRECTION_IN) &&
 	    (inp->inp_seclevel[SL_ESP_TRANS] == IPSEC_LEVEL_BYPASS) &&
 	    (inp->inp_seclevel[SL_ESP_NETWORK] == IPSEC_LEVEL_BYPASS) &&
@@ -128,11 +130,13 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 		ssrc.sin.sin_addr = ddst->sen_ip_src;
 		sdst.sin.sin_addr = ddst->sen_ip_dst;
 
-		/* If TCP/UDP, extract the port numbers to use in the lookup */
+		/*
+		 * If TCP/UDP, extract the port numbers to use in the lookup.
+		 */
 		switch (ddst->sen_proto) {
 		case IPPROTO_UDP:
 		case IPPROTO_TCP:
-			/* Make sure there's enough data in the packet */
+			/* Make sure there's enough data in the packet. */
 			if (m->m_pkthdr.len < hlen + 2 * sizeof(u_int16_t)) {
 				*error = EINVAL;
 				return NULL;
@@ -179,11 +183,13 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 		ssrc.sin6.sin6_addr = ddst->sen_ip6_src;
 		sdst.sin6.sin6_addr = ddst->sen_ip6_dst;
 
-		/* If TCP/UDP, extract the port numbers to use in the lookup */
+		/*
+		 * If TCP/UDP, extract the port numbers to use in the lookup.
+		 */
 		switch (ddst->sen_ip6_proto) {
 		case IPPROTO_UDP:
 		case IPPROTO_TCP:
-			/* Make sure there's enough data in the packet */
+			/* Make sure there's enough data in the packet. */
 			if (m->m_pkthdr.len < hlen + 2 * sizeof(u_int16_t)) {
 				*error = EINVAL;
 				return NULL;
@@ -226,7 +232,7 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 		    tdbp, inp, NULL);
 	}
 
-	/* Sanity check */
+	/* Sanity check. */
 	if ((re->re_rt->rt_gateway == NULL) ||
 	    (((struct sockaddr_encap *) re->re_rt->rt_gateway)->sen_type !=
 		SENT_IPSP)) {
@@ -256,7 +262,7 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 	case IPSP_IPSEC_ACQUIRE:
 	case IPSP_IPSEC_REQUIRE:
 	case IPSP_IPSEC_DONTACQ:
-		/* Nothing more needed here */
+		/* Nothing more needed here. */
 		break;
 
 	default:
@@ -320,7 +326,7 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 		    (inp->inp_seclevel[SL_ESP_NETWORK] ==
 			IPSEC_LEVEL_BYPASS) &&
 		    (inp->inp_seclevel[SL_AUTH] == IPSEC_LEVEL_BYPASS)) {
-			/* Direct match */
+			/* Direct match. */
 			if (!bcmp(&sdst, &ipo->ipo_dst, sdst.sa.sa_len) ||
 			    dignore) {
 				*error = 0;
@@ -354,7 +360,7 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 					goto nomatchout;
 			}
 
-			/* Match local credentials used */
+			/* Match local credentials used. */
 			if (ipo->ipo_local_cred) {
 				if (ipo->ipo_tdb->tdb_local_cred == NULL ||
 				    !ipsp_ref_match(ipo->ipo_local_cred, 
@@ -362,12 +368,12 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 					goto nomatchout;
 			}
 
-			/* Cached entry is good */
+			/* Cached entry is good. */
 			return ipsp_spd_inp(m, af, hlen, error, direction,
 			    tdbp, inp, ipo);
 
   nomatchout:
-			/* Cached TDB was not good */
+			/* Cached TDB was not good. */
 			TAILQ_REMOVE(&ipo->ipo_tdb->tdb_policy_head, ipo,
 			    ipo_tdb_next);
 			ipo->ipo_tdb = NULL;
@@ -625,11 +631,10 @@ ipsec_add_policy(struct sockaddr_encap *dst, struct sockaddr_encap *mask,
 
 	if (rtrequest(RTM_ADD, (struct sockaddr *) dst,
 	    (struct sockaddr *) &encapgw, (struct sockaddr *) mask,
-	    RTF_UP | RTF_GATEWAY | RTF_STATIC,
-	    (struct rtentry **) 0) != 0) {
-	    DPRINTF(("ipsec_add_policy: failed to add policy\n"));
-	    pool_put(&ipsec_policy_pool, ipon);
-	    return NULL;
+	    RTF_UP | RTF_GATEWAY | RTF_STATIC, (struct rtentry **) 0) != 0) {
+		DPRINTF(("ipsec_add_policy: failed to add policy\n"));
+		pool_put(&ipsec_policy_pool, ipon);
+		return NULL;
 	}
 
 	ipsec_in_use++;
@@ -647,7 +652,7 @@ ipsec_add_policy(struct sockaddr_encap *dst, struct sockaddr_encap *mask,
 #endif
 
 /*
- * Delete a pending ACQUIRE record.
+ * Delete a pending IPsec acquire record.
  */
 void
 ipsp_delete_acquire(void *v)
@@ -668,8 +673,6 @@ void
 ipsp_clear_acquire(struct tdb *tdb)
 {
 	struct ipsec_acquire *ipa;
-	struct ifqueue *ifq;
-	int s;
 
 	ipa = ipsec_get_acquire(tdb->tdb_seq);
 	if (ipa == NULL)
@@ -688,61 +691,25 @@ ipsp_clear_acquire(struct tdb *tdb)
 	{
 		struct ip *ip;
 
-		switch (ipa->ipa_info.sen_direction) {
-		case IPSP_DIRECTION_OUT:
-			ip = mtod(ipa->ipa_packet, struct ip *);
+		ip = mtod(ipa->ipa_packet, struct ip *);
 
-			if (ipa->ipa_packet->m_len < sizeof(struct ip))
-				break;
-
-			 /* Same as in ip_output() -- massage the header. */
-			ip->ip_len = htons((u_short) ip->ip_len);
-			ip->ip_off = htons((u_short) ip->ip_off);
-
-			ipsp_process_packet(ipa->ipa_packet, tdb, AF_INET, 0);
-			ipa->ipa_packet = NULL;
+		if (ipa->ipa_packet->m_len < sizeof(struct ip))
 			break;
 
-		case IPSP_DIRECTION_IN:
-			ifq = &ipintrq;
-			s = splimp();
-			if (IF_QFULL(ifq)) {
-				IF_DROP(ifq);
-				splx(s);
-				break;
-			}
-			IF_ENQUEUE(ifq, ipa->ipa_packet);
-			ipa->ipa_packet = NULL;
-			schednetisr(NETISR_IP);
-			splx(s);
-			break;
-		}
+		/* Same as in ip_output() -- massage the header. */
+		ip->ip_len = htons((u_short) ip->ip_len);
+		ip->ip_off = htons((u_short) ip->ip_off);
+
+		ipsp_process_packet(ipa->ipa_packet, tdb, AF_INET, 0);
+		ipa->ipa_packet = NULL;
+		break;
 	}
-	break;
 #endif /* INET */
 
 #ifdef INET6
 	case SENT_IP6:
-		switch (ipa->ipa_info.sen_ip6_direction) {
-		case IPSP_DIRECTION_OUT:
-			ipsp_process_packet(ipa->ipa_packet, tdb, AF_INET6, 0);
-			ipa->ipa_packet = NULL;
-			break;
-
-		case IPSP_DIRECTION_IN:
-			ifq = &ip6intrq;
-			s = splimp();
-			if (IF_QFULL(ifq)) {
-				IF_DROP(ifq);
-				splx(s);
-				break;
-			}
-			IF_ENQUEUE(ifq, ipa->ipa_packet);
-			ipa->ipa_packet = NULL;
-			schednetisr(NETISR_IPV6);
-			splx(s);
-			break;
-		}
+		ipsp_process_packet(ipa->ipa_packet, tdb, AF_INET6, 0);
+		ipa->ipa_packet = NULL;
 		break;
 #endif /* INET6 */
 	}
@@ -761,7 +728,7 @@ ipsp_pending_acquire(union sockaddr_union *gw)
 	struct ipsec_acquire *ipa;
 
 	for (ipa = TAILQ_FIRST(&ipsec_acquire_head); ipa;
-	     ipa = TAILQ_NEXT(ipa, ipa_next)) {
+	    ipa = TAILQ_NEXT(ipa, ipa_next)) {
 		if (!bcmp(gw, &ipa->ipa_addr, gw->sa.sa_len))
 			return ipa;
 	}
@@ -784,10 +751,15 @@ ipsp_acquire_sa(struct ipsec_policy *ipo, union sockaddr_union *gw,
 
 	/* Check whether request has been made already. */
 	if ((ipa = ipsp_pending_acquire(gw)) != NULL) {
-		if (ipa->ipa_packet && m) {
-			m_freem(ipa->ipa_packet);
-			ipa->ipa_packet = m_copym2(m, 0, M_COPYALL,
-			    M_DONTWAIT);
+		if ((ipo->ipo_addr.sen_type == SENT_IP4 &&
+		    ipo->ipo_addr.sen_direction == IPSP_DIRECTION_OUT) ||
+		    (ipo->ipo_addr.sen_type == SENT_IP6 &&
+		    ipo->ipo_addr.sen_ip6_direction == IPSP_DIRECTION_OUT)) {
+			if (ipa->ipa_packet != NULL && m != NULL) {
+				m_freem(ipa->ipa_packet);
+				ipa->ipa_packet = m_copym2(m, 0, M_COPYALL,
+				    M_DONTWAIT);
+			}
 		}
 
 		return 0;
@@ -928,7 +900,7 @@ ipsec_get_acquire(u_int32_t seq)
 	struct ipsec_acquire *ipa;
 
 	for (ipa = TAILQ_FIRST(&ipsec_acquire_head); ipa;
-	     ipa = TAILQ_NEXT(ipa, ipa_next))
+	    ipa = TAILQ_NEXT(ipa, ipa_next))
 		if (ipa->ipa_seq == seq)
 			return ipa;
 
