@@ -1,4 +1,4 @@
-# $OpenBSD: PackingElement.pm,v 1.16 2004/08/03 12:29:45 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.17 2004/08/05 23:36:40 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -52,15 +52,12 @@ sub Factory
 		    exit(1);
 		}
 	} else {
-		if ($_ =~ m|/$|) {
-			OpenBSD::PackingElement::Dir->add(@_, $`);
-		} else {
 			OpenBSD::PackingElement::File->add(@_, $_);
-		}
 	}
 }
 
-sub setKeyword {
+sub setKeyword 
+{
 	my ($class, $k) = @_;
 	$keyword{$k} = $class;
 }
@@ -75,11 +72,34 @@ sub category() { 'items' }
 sub new
 {
 	my ($class, $args) = @_;
-	bless { name => $args }, $class;
+	if ($args =~ m|/$| and defined $class->dirclass()) {
+		bless { name => $` }, $class->dirclass();
+	} else {
+	    bless { name => $args }, $class;
+	}
 }
+
+sub clone
+{
+	my $object = shift;
+	# shallow copy
+	my %h = %$object;
+	bless \%h, ref($object);
+}
+	
+
+sub dirclass() { undef }
 
 sub destate
 {
+}
+
+sub add_object
+{
+	my ($self, $plist) = @_;
+	$self->destate($plist->{state});
+	$plist->add2list($self);
+	return $self;
 }
 
 sub add
@@ -87,14 +107,10 @@ sub add
 	my ($class, $plist, @args) = @_;
 
 	my $self = $class->new(@args);
-	$self->destate($plist->{state});
-	$plist->add2list($self);
-	return $self;
+	return $self->add_object($plist);
 }
 
-sub keyword() { return; }
-
-sub needs_keyword() { 1; }
+sub needs_keyword() { 1 }
 	
 sub write
 {
@@ -111,9 +127,9 @@ sub fullstring
 {
 	my ($self, $fh) = @_;
 	if ($self->needs_keyword()) {
-		return "\@".$self->keyword()." ".$self->stringize()."\n";
+		return "\@".$self->keyword()." ".$self->stringize();
 	} else {
-		return $self->stringize()."\n";
+		return $self->stringize();
 	}
 }
 
@@ -124,12 +140,19 @@ sub stringize($)
 
 sub compute_fullname
 {
-	my ($self, $state) = @_;
+	my ($self, $state, $absolute_okay) = @_;
 
 	$self->{cwd} = $state->{cwd};
-	my $fullname = $self->{fullname} = 
-	    File::Spec->canonpath(File::Spec->catfile($state->{cwd}, $self->{name}));
-	$state->{lastfile} = $self;
+	my $fullname = $self->{name};
+	if ($fullname =~ m|^/|) {
+		unless ($absolute_okay) {
+			die "Absolute name forbidden: $fullname";
+		}
+	} else {
+		$fullname = File::Spec->catfile($state->{cwd}, $fullname);
+	}
+	$fullname = File::Spec->canonpath($fullname);
+	$self->{fullname} = $fullname;
 	return $fullname;
 }
 
@@ -178,18 +201,11 @@ sub fullname($)
 	return $_[0]->{fullname};
 }
 
-package OpenBSD::PackingElement::File;
+# Abstract class for all file-like elements
+
+package OpenBSD::PackingElement::FileBase;
 our @ISA=qw(OpenBSD::PackingElement);
 use File::Spec;
-use OpenBSD::PackageInfo qw(is_info_name);
-__PACKAGE__->setKeyword('file');
-
-sub needs_keyword
-{
-	my $self = shift;
-	return $self->stringize() =~ m/\^@/;
-}
-
 sub write
 {
 	my ($self, $fh) = @_;
@@ -214,6 +230,7 @@ sub destate
 {
 	my ($self, $state) = @_;
 	$self->compute_fullname($state);
+	$state->{lastfile} = $self;
 	$self->compute_modes($state);
 	if (defined $state->{nochecksum}) {
 		$self->{nochecksum} = 1;
@@ -223,22 +240,6 @@ sub destate
 		$self->{ignore} = 1;
 		undef $state->{ignore};
 	}
-}
-
-sub add
-{
-	my ($class, $plist, @args) = @_;
-
-	my $self = $class->new(@args);
-	$self->destate($plist->{state});
-	my $j = is_info_name($self->fullname());
-	if ($j) {
-		bless $self, "OpenBSD::PackingElement::$j";
-		$plist->addunique($self);
-	} else {
-		$plist->add2list($self);
-	}
-	return $self;
 }
 
 sub add_md5
@@ -272,29 +273,69 @@ sub IsFile() { 1 }
 
 sub NoDuplicateNames() { 1 }
 
+package OpenBSD::PackingElement::File;
+our @ISA=qw(OpenBSD::PackingElement::FileBase);
+use OpenBSD::PackageInfo qw(is_info_name);
+__PACKAGE__->setKeyword('file');
+sub keyword() { "file" }
+
+sub dirclass() { "OpenBSD::PackingElement::Dir" }
+
+sub needs_keyword
+{
+	my $self = shift;
+	return $self->stringize() =~ m/\^@/;
+}
+
+sub add_object
+{
+	my ($self, $plist) = @_;
+
+	$self->destate($plist->{state});
+	my $j = is_info_name($self->fullname());
+	if ($j) {
+		bless $self, "OpenBSD::PackingElement::$j";
+		$plist->addunique($self);
+	} else {
+		$plist->add2list($self);
+	}
+	return $self;
+}
+
 package OpenBSD::PackingElement::Sample;
 our @ISA=qw(OpenBSD::PackingElement);
+sub NoDuplicateNames() { 1 }
 __PACKAGE__->setKeyword('sample');
 sub keyword() { "sample" }
 sub destate
 {
 	my ($self, $state) = @_;
 	$self->{copyfrom} = $state->{lastfile};
+	$self->compute_fullname($state, 1);
+	$self->compute_modes($state);
+}
+
+sub dirclass() { "OpenBSD::PackingElement::Sampledir" }
+
+package OpenBSD::PackingElement::Sampledir;
+our @ISA=qw(OpenBSD::PackingElement::DirBase OpenBSD::PackingElement::Sample);
+sub destate
+{
+	my ($self, $state) = @_;
+	$self->compute_fullname($state, 1);
 	$self->compute_modes($state);
 }
 
 package OpenBSD::PackingElement::InfoFile;
-our @ISA=qw(OpenBSD::PackingElement::File);
+our @ISA=qw(OpenBSD::PackingElement::FileBase);
 __PACKAGE__->setKeyword('info');
 sub keyword() { "info" }
 
-sub needs_keyword { 1 }
 
 package OpenBSD::PackingElement::Manpage;
-our @ISA=qw(OpenBSD::PackingElement::File);
+our @ISA=qw(OpenBSD::PackingElement::FileBase);
 __PACKAGE__->setKeyword('man');
 sub keyword() { "man" }
-sub needs_keyword { 1 }
 
 sub destate
 {
@@ -314,9 +355,9 @@ package OpenBSD::PackingElement::Ignore;
 our @ISA=qw(OpenBSD::PackingElement);
 __PACKAGE__->setKeyword('ignore');
 
-sub add
+sub add_object
 {
-	my ($class, $plist, @args) = @_;
+	my ($plist, $self) = @_;
 	$plist->{state}->{ignore} = 1;
 	return undef;
 }
@@ -331,7 +372,9 @@ sub add
 {
 	my ($class, $plist, @args) = @_;
 
-	if ($args[0] =~ m/^MD5:\s*/) {
+	if ($args[0] =~ m/^\$OpenBSD(.*)\$\s*$/) {
+		OpenBSD::PackingElement::CVSTag->add($plist, @args);
+	} elsif ($args[0] =~ m/^MD5:\s*/) {
 		$plist->{state}->{lastfile}->add_md5($');
 		return undef;
 	} elsif ($args[0] =~ m/^subdir\=(.*?)\s+cdrom\=(.*?)\s+ftp\=(.*?)\s*$/) {
@@ -341,9 +384,7 @@ sub add
 		return undef;
 	} else {
 		my $self = $class->new(@args);
-		$self->destate($plist->{state});
-		$plist->add2list($self);
-		return $self;
+		return $self->add_object($plist);
 	}
 }
 
@@ -358,6 +399,10 @@ sub add
 	$plist->{state}->{lastfile}->add_md5($');
 	return undef;
 }
+
+package OpenBSD::PackingElement::CVSTag;
+our @ISA=qw(OpenBSD::PackingElement OpenBSD::PackingElement::Comment);
+sub category() { 'cvstags'}
 
 package OpenBSD::PackingElement::symlink;
 our @ISA=qw(OpenBSD::PackingElement);
@@ -405,7 +450,7 @@ sub add
 	my ($class, $plist, @args) = @_;
 	if ($args[0] eq 'no-default-conflict') {
 		shift;
-		return OpenBSD::PackingElement::NoDefaultConflict->add(@_);
+		return OpenBSD::PackingElement::NoDefaultConflict->add($plist);
 	} else {
 		die "Unknown option: $args[0]";
 	}
@@ -415,6 +460,17 @@ package OpenBSD::PackingElement::NoDefaultConflict;
 our @ISA=qw(OpenBSD::PackingElement::Unique);
 sub category() { 'no-default-conflict' }
 sub keyword() { 'option' }
+
+sub stringize() 
+{
+	return 'no-default-conflict';
+}
+
+sub new
+{
+	my ($class, @args) = @_;
+	bless {}, $class;
+}
 
 # The special elements that don't end in the right place
 package OpenBSD::PackingElement::ExtraInfo;
@@ -649,12 +705,8 @@ sub destate
 	$self->{expanded} = $self->expand($self->{name}, $state);
 }
 
-package OpenBSD::PackingElement::Dirs;
-
-sub NoDuplicateNames() { 1 }
-
 package OpenBSD::PackingElement::DirRm;
-our @ISA=qw(OpenBSD::PackingElement::Dirs OpenBSD::PackingElement);
+our @ISA=qw(OpenBSD::PackingElement);
 
 __PACKAGE__->setKeyword('dirrm');
 sub keyword() { "dirrm" }
@@ -665,10 +717,21 @@ sub destate
 	$self->compute_fullname($state);
 }
 
+sub NoDuplicateNames() { 1 }
+
+package OpenBSD::PackingElement::DirBase;
+sub stringize($)
+{
+	return $_[0]->{name}."/";
+}
+
+sub NoDuplicateNames() { 1 }
+
 package OpenBSD::PackingElement::Dir;
-our @ISA=qw(OpenBSD::PackingElement::Dirs OpenBSD::PackingElement);
+our @ISA=qw(OpenBSD::PackingElement::DirBase OpenBSD::PackingElement);
 
 __PACKAGE__->setKeyword('dir');
+sub keyword() { "dir" }
 
 sub destate
 {
@@ -681,11 +744,6 @@ sub needs_keyword
 {
 	my $self = shift;
 	return $self->stringize() =~ m/\^@/;
-}
-
-sub stringize($)
-{
-	return $_[0]->{name}."/";
 }
 
 package OpenBSD::PackingElement::Fontdir;
@@ -709,8 +767,13 @@ sub keyword() { 'extra' }
 sub destate
 {
 	my ($self, $state) = @_;
-	$self->compute_fullname($state);
+	$self->compute_fullname($state, 1);
 }
+
+sub dirclass() { "OpenBSD::PackingElement::Extradir" }
+
+package OpenBSD::PackingElement::Extradir;
+our @ISA=qw(OpenBSD::PackingElement::DirBase OpenBSD::PackingElement::Extra);
 
 package OpenBSD::PackingElement::SpecialFile;
 our @ISA=qw(OpenBSD::PackingElement::Unique);
@@ -725,7 +788,7 @@ sub needs_keyword { 0 }
 
 sub write
 {
-	&OpenBSD::PackingElement::File::write;
+	&OpenBSD::PackingElement::FileBase::write;
 }
 
 package OpenBSD::PackingElement::FCONTENTS;

@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.13 2004/07/20 18:58:41 espie Exp $
+# $OpenBSD: pkg_create,v 1.14 2004/08/05 23:36:39 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -38,7 +38,7 @@ use File::Copy;
 package OpenBSD::PackingElement;
 sub archive_cmd { () }
 
-package OpenBSD::PackingElement::File;
+package OpenBSD::PackingElement::FileBase;
 sub archive_cmd
 {
 	my ($self, $pfh, $use_cwd) = @_;
@@ -71,7 +71,7 @@ sub compute_checksum
 {
 }
 
-package OpenBSD::PackingElement::File;
+package OpenBSD::PackingElement::FileBase;
 use OpenBSD::md5;
 
 sub compute_checksum
@@ -306,6 +306,10 @@ for my $special (info_names()) {
     $f->{md5} = OpenBSD::md5::fromfile($dir.$special);
 }
 
+if (!defined $plist->{name}) {
+	print STDERR "Can't write unnamed packing list\n";
+	exit 1;
+}
 $plist->tofile($dir.CONTENTS) or die "Can't write packing list";
 
 print "Creating gzip'd tar ball in '$ARGV[0]'\n" if $opt_v;

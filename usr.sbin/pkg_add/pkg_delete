@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_delete,v 1.29 2004/08/03 12:29:45 espie Exp $
+# $OpenBSD: pkg_delete,v 1.30 2004/08/05 23:36:39 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -91,7 +91,7 @@ sub log_pkgname
 }
 
 
-package OpenBSD::PackingElement::Dirs;
+package OpenBSD::PackingElement::DirBase;
 sub record_dirrm
 {
 	my ($self, $pkgname, $db) = @_;
@@ -129,7 +129,7 @@ sub delete
 	system('/bin/sh', '-c', $cmd);
 }
 
-package OpenBSD::PackingElement::File;
+package OpenBSD::PackingElement::FileBase;
 use OpenBSD::md5;
 sub delete
 {
@@ -249,23 +249,21 @@ sub delete
 	return unless $state->{extra};
 	my $name = $self->fullname();
 	my $realname = $state->{destdir}.$name;
-	if ($self->{name} =~ m|/$|) {
-		if ($state->{verbose} or $state->{not}) {
-			print "deleting extra directory: $realname\n";
-		}
-		return if $state->{not};
-		return unless -e $realname;
-		rmdir($realname) or 
-		    print "problem deleting extra directory $realname\n";
-	} else {
-		if ($state->{verbose} or $state->{not}) {
-			print "deleting extra file: $realname\n";
-		}
-		return if $state->{not};
-		return unless -e $realname;
-		unlink($realname) or 
-		    print "problem deleting extra file $realname\n";
+	if ($state->{verbose} or $state->{not}) {
+		print "deleting extra file: $realname\n";
 	}
+	return if $state->{not};
+	return unless -e $realname;
+	unlink($realname) or 
+	    print "problem deleting extra file $realname\n";
+}
+
+package OpenBSD::PackingElement::ExtraDir;
+sub delete
+{
+	my ($self, $state) = @_;
+	return unless $state->{extra};
+	$self->SUPER::delete($state);
 }
 
 package OpenBSD::PackingElement::ExtraUnexec;

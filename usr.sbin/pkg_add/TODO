@@ -3,8 +3,8 @@
 + handle package dependencies to the level of the old implementation
 + handle chmod/chown to the level of the old implementation
 + handle PKGPATH
++ replace symlinks with @symlink commands at pkg_create time
++ basic validation of packing list at end of reading it...
 - add better error handling
 - let package delete log files it cannot delete
-- replace symlinks with @symlink commands at pkg_create time
 - smart package dependency handling
-- basic validation of packing list at end of reading it...

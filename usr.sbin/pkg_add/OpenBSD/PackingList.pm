@@ -1,4 +1,4 @@
-# $OpenBSD: PackingList.pm,v 1.16 2004/08/03 12:33:48 espie Exp $
+# $OpenBSD: PackingList.pm,v 1.17 2004/08/05 23:36:40 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -73,7 +73,7 @@ sub DirrmOnly
 	my ($fh, $cont) = @_;
 	local $_;
 	while (<$fh>) {
-		next unless m/^\@(?:cwd|dirrm|dir|fontdir|mandir|name)\b/ || m/^[^\@].*\/$/;
+		next unless m/^\@(?:cwd|dirrm|dir|fontdir|mandir|name)\b/ || m/^\@(?:sample|extra)\b.*\/$/ || m/^[^\@].*\/$/;
 		&$cont($_);
 	}
 }
@@ -121,16 +121,19 @@ MAINLOOP:
 
 sub write
 {
-	my ($self, $fh) = @_;
-	if (!defined $self->{name}) {
-		print STDERR "Can't write unnamed packing list\n";
-		exit 1;
+	my ($self, $fh, $w) = @_;
+
+	$w = sub {
+		my ($o, $fh) = @_;
+		$o->write($fh);
+	    } unless defined $w;
+
+	if (defined $self->{cvstags}) {
+		for my $item (@{$self->{cvstags}}) {
+			$item->write($fh);
+		}
 	}
-	$self->{name}->write($fh);
-	if (defined $self->{'no-default-conflict'}) {
-		$self->{'no-default-conflict'}->write($fh);
-	}
-	for my $unique_item (qw(extrainfo arch)) {
+	for my $unique_item (qw(name no-default-conflict extrainfo arch)) {
 		$self->{$unique_item}->write($fh) if defined $self->{$unique_item};
 	}
 	for my $listname (qw(pkgcfl pkgdep newdepend libdepend items)) {

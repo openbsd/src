@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.38 2004/08/03 12:29:44 espie Exp $
+# $OpenBSD: pkg_add,v 1.39 2004/08/05 23:36:39 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -72,7 +72,7 @@ sub set_modes
 	}
 }
 
-package OpenBSD::PackingElement::File;
+package OpenBSD::PackingElement::FileBase;
 use File::Basename;
 use File::Path;
 
@@ -129,6 +129,13 @@ sub install
 			print "The configuration file $filename has been installed from $origname\n";
 		}
 	}
+}
+
+package OpenBSD::PackingElement::Sampledir;
+
+sub install
+{
+	&OpenBSD::PackingElement::Dir::install;
 }
 
 package OpenBSD::PackingElement::InfoFile;
