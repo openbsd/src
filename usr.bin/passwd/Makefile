@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.24 2001/11/22 20:37:18 espie Exp $
+#	$OpenBSD: Makefile,v 1.25 2002/05/06 22:23:53 deraadt Exp $
 
 .include <bsd.own.mk>
 
@@ -24,7 +24,7 @@ LDADD+=	-lkrb5 -lcrypto -lasn1
 .endif
 
 .if (${KERBEROS:L} == "yes")
-.PATH:  ${.CURDIR}/../rlogin
+.PATH:  ${.CURDIR}/../rsh
 SRCS+= new_pwd.c krb_passwd.c des_rw.c
 CFLAGS+= -DKERBEROS
 DPADD+=	${LIBKRB} ${LIBDES}
