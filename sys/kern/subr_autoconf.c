@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_autoconf.c,v 1.16 1997/11/23 08:22:47 mickey Exp $	*/
+/*	$OpenBSD: subr_autoconf.c,v 1.17 1998/01/20 19:05:02 niklas Exp $	*/
 /*	$NetBSD: subr_autoconf.c,v 1.21 1996/04/04 06:06:18 cgd Exp $	*/
 
 /*
@@ -85,6 +85,11 @@ static struct cftable staticcftable = {
 	cfdata
 };
 
+#ifndef AUTOCONF_VERBOSE
+#define AUTOCONF_VERBOSE 0
+#endif /* AUTOCONF_VERBOSE */
+int autoconf_verbose = AUTOCONF_VERBOSE;	/* trace probe calls */
+
 static char *number __P((char *, int));
 static void mapply __P((struct matchinfo *, struct cfdata *));
 
@@ -123,6 +128,9 @@ mapply(m, cf)
 	else
 		match = cf;
 
+	if (autoconf_verbose)
+		printf(">>> probing for %s%d\n", cf->cf_driver->cd_name,
+		    cf->cf_unit);
 	if (m->fn != NULL)
 		pri = (*m->fn)(m->parent, match, m->aux);
 	else {
@@ -132,6 +140,9 @@ mapply(m, cf)
 		}
 		pri = (*cf->cf_attach->ca_match)(m->parent, match, m->aux);
 	}
+	if (autoconf_verbose)
+		printf(">>> probe for %s%d returned %d\n",
+		    cf->cf_driver->cd_name, cf->cf_unit, pri);
 
 	if (pri > m->pri) {
 		if (m->indirect && m->match)
@@ -189,6 +200,10 @@ config_search(fn, parent, aux)
 					mapply(&m, cf);
 		}
 	}
+	if (autoconf_verbose)
+		printf(">>> probe for %s%d won\n",
+		    ((struct cfdata *)match)->cf_driver->cd_name,
+		    ((struct cfdata *)match)->cf_unit);
 	return (m.match);
 }
 
@@ -287,7 +302,7 @@ config_found_sm(parent, aux, print, submatch)
 {
 	void *match;
 
-	if ((match = config_search(submatch, parent, aux)) != NULL)
+	if ((match = config_search(submatch, parent, aux)) != NULL) {
 		return (config_attach(parent, match, aux, print));
 	if (print)
 		printf(msgs[(*print)(aux, parent->dv_xname)]);
