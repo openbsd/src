@@ -229,6 +229,7 @@ tcfs_ggetpwnam (char *user, gid_t gid, tcfsgpwdb **dest)
 	DB *pdb;
 	DBT srchkey, r;
 	char *key, *buf;
+	int res;
 
 	if (!*dest)
 		if (!tcfsgpwdbr_new (dest))
@@ -243,10 +244,12 @@ tcfs_ggetpwnam (char *user, gid_t gid, tcfsgpwdb **dest)
 		return NULL;
 
 	sprintf (key, "%s\33%d\0", user, (int)gid);
-	srchkey.data=key;
-	srchkey.size=(int)strlen (key);
+	srchkey.data = key;
+	srchkey.size = (int)strlen (key);
 
-	if (pdb->get(pdb, &srchkey, &r, 0)) {
+	if ((res = pdb->get(pdb, &srchkey, &r, 0))) {
+		if (res == -1)
+			perror("dbget");
 		pdb->close (pdb);
 		return (NULL);
 	}
@@ -306,12 +309,14 @@ tcfs_gputpwnam (char *user, tcfsgpwdb *src, int flags)
 	char *tmp;
 
 	open_flag = O_RDWR|O_EXCL;
-	if (access (TCFSPWDB, F_OK) < 0)
+	if (access (TCFSGPWDB, F_OK) < 0)
 		open_flag |= O_CREAT;
 
-	pdb = dbopen (TCFSPWDB, open_flag, PERM_SECURE, DB_HASH, NULL);
-	if (!pdb)
+	pdb = dbopen (TCFSGPWDB, open_flag, PERM_SECURE, DB_HASH, NULL);
+	if (!pdb) {
+		perror("dbopen");
 		return 0;
+	}
 
 	key = (char *) calloc (strlen(src->user) + 4 + 1, sizeof(char));
 	sprintf (key, "%s\33%d\0", src->user, src->gid);

@@ -73,7 +73,7 @@ rmgroup_main (int argn, char *argv[])
 
 		printf ("Group id of the TCFS group to remove from the database: ");
 		fgets (buff,2048,stdin);
-		len = strlen(buff) - 2;
+		len = strlen(buff) - 1;
 		buff[len] = buff[len] == '\n' ? 0 : buff[len];
 		gid=(gid_t)atoi(buff);
 

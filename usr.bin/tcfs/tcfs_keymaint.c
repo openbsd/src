@@ -59,7 +59,7 @@ tcfs_decrypt_key (char *u, char *pwd, unsigned char *t, unsigned char *tk,
 {
 	int i = 0;
 	char pass[_PASSWORD_LEN], *cypher;
-	char tcfskey[KEYSIZE + 2];
+	char tcfskey[2*KEYSIZE];
 	des_key_schedule ks;
 	int keysize = (flag == GROUPKEY) ? KEYSIZE + KEYSIZE/8 : KEYSIZE;
 
@@ -68,8 +68,10 @@ tcfs_decrypt_key (char *u, char *pwd, unsigned char *t, unsigned char *tk,
 
 	strcpy (pass, pwd);
 
-	if (uudecode ((char *)t, tcfskey, sizeof(tcfskey)) == -1)
+	if (uudecode ((char *)t, tcfskey, sizeof(tcfskey)) == -1) {
+		fprintf(stderr, "tcfs_decrypt_key: uudecode failed\n");
 		return 0;
+	}
 
 	while (strlen (pass) < 8) {
 		char tmp[_PASSWORD_LEN];
@@ -99,6 +101,8 @@ tcfs_encrypt_key (char *u, char *pw, unsigned char *key, unsigned char *ek,
 	char pass[_PASSWORD_LEN];
 	des_key_schedule ks;
 	int keysize = (flag == GROUPKEY) ? KEYSIZE + KEYSIZE/8 : KEYSIZE;
+	int uulen = (flag == GROUPKEY) ? UUGKEYSIZE : UUKEYSIZE;
+	int res;
 
 	if (!ek)
 		return 0;
@@ -120,12 +124,17 @@ tcfs_encrypt_key (char *u, char *pw, unsigned char *key, unsigned char *ek,
 		i++;
 	}
 
-	uuencode (key, keysize, ek, UUKEYSIZE);
+	res = uuencode (key, keysize, ek, uulen + 1);
+	if (res != uulen) {
+		fprintf(stderr, "tcfs_encrypt_key: uuencode length wrong\n");
+		return (0);
+	}
 
 	return 1;
 }
 
-int tcfs_user_enable(char *filesystem, uid_t user, u_char *key)
+int
+tcfs_user_enable(char *filesystem, uid_t user, u_char *key)
 {
 	struct tcfs_args a;
 	a.user = user;
@@ -134,7 +143,8 @@ int tcfs_user_enable(char *filesystem, uid_t user, u_char *key)
 	return tcfs_callfunction(filesystem,&a);
 }
 
-int tcfs_user_disable(char *filesystem, uid_t user)
+int
+tcfs_user_disable(char *filesystem, uid_t user)
 {
 	struct tcfs_args a;
 	a.user = user;
@@ -142,7 +152,8 @@ int tcfs_user_disable(char *filesystem, uid_t user)
 	return tcfs_callfunction(filesystem, &a);
 }
 
-int tcfs_proc_enable(char *filesystem, uid_t user, pid_t pid, char *key)
+int
+tcfs_proc_enable(char *filesystem, uid_t user, pid_t pid, char *key)
 {
 	struct tcfs_args a;
 	a.user = user;
@@ -152,7 +163,8 @@ int tcfs_proc_enable(char *filesystem, uid_t user, pid_t pid, char *key)
 	return tcfs_callfunction(filesystem, &a);
 }
 
-int tcfs_proc_disable(char *filesystem, uid_t user, pid_t pid)
+int
+tcfs_proc_disable(char *filesystem, uid_t user, pid_t pid)
 {
 	struct tcfs_args a;
 	a.user = user;
@@ -161,8 +173,9 @@ int tcfs_proc_disable(char *filesystem, uid_t user, pid_t pid)
 	return tcfs_callfunction(filesystem, &a);
 }
 
-int tcfs_group_enable(char *filesystem, uid_t uid, gid_t gid, 
-		      int tre, char *key)
+int
+tcfs_group_enable(char *filesystem, uid_t uid, gid_t gid, 
+		  int tre, char *key)
 {
 	struct tcfs_args a;
 	a.cmd = TCFS_PUT_GIDKEY;

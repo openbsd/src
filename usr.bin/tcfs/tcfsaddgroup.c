@@ -222,7 +222,7 @@ addgroup_main (int argn, char *argv[])
 
 		printf ("Group id [or name] of the TCFS group to add to the database: ");
 		fgets (buff, 2048, stdin);
-		len = strlen(buff) - 2;
+		len = strlen(buff) - 1;
 		buff[len] = buff[len] == '\n' ? 0 : buff[len];
 		gid = atoi(buff);
 
@@ -233,7 +233,7 @@ addgroup_main (int argn, char *argv[])
 			if (!group_id)
 				tcfs_error (ER_CUSTOM, "Nonexistent group.");
 
-			gid=group_id->gr_gid;
+			gid = group_id->gr_gid;
 		}
 
 		if (gid <= 0)
@@ -252,7 +252,7 @@ addgroup_main (int argn, char *argv[])
 
 		printf ("Number of members for the TCFS group ID #%d: ", gid);
 		fgets (buff, 2048, stdin);
-		len = strlen(buff) - 2;
+		len = strlen(buff) - 1;
 		buff[len] = buff[len] == '\n' ? 0 : buff[len];
 		members = atoi(buff);
 
@@ -269,7 +269,7 @@ addgroup_main (int argn, char *argv[])
 
 		printf ("Threshold for the TCFS group ID #%d: ", gid);
 		fgets (buff, 2048, stdin);
-		len = strlen(buff) - 2;
+		len = strlen(buff) - 1;
 		buff[len] = buff[len] == '\n' ? 0 : buff[len];
 		threshold = atoi(buff);
 
@@ -339,26 +339,16 @@ addgroup_main (int argn, char *argv[])
 
 		strcpy (group_info[members-1]->user, user);
 
-		newkey = (unsigned char*)calloc(KEYSIZE*2, sizeof (char));
+		newkey = (unsigned char*)calloc(GKEYSIZE + 1, sizeof (char));
 		if (!newkey)
 			tcfs_error (ER_MEM, NULL);
 
-		cryptedkey = (unsigned char*)calloc(UUKEYSIZE, sizeof(char));
+		cryptedkey = (unsigned char*)calloc(UUGKEYSIZE, sizeof(char));
 		if (!cryptedkey)
 			tcfs_error (ER_MEM, NULL);
 
-		memcpy (newkey, gengrpkey (user), KEYSIZE + KEYSIZE/8);
-		newkey[KEYSIZE + KEYSIZE/8] = '\0';
-#ifdef DEBUG_TCFS
-		{
-			int i;
-
-			printf ("%s newkey: ", user);
-			for (i = 0;i <= KEYSIZE; i++)
-				printf ("%u:", newkey[i]);
-			printf ("\n");
-		}
-#endif
+		memcpy (newkey, gengrpkey (user), GKEYSIZE);
+		newkey[GKEYSIZE] = '\0';
 
 		/*
 		 * Encrypt the just generated key with the user password
@@ -366,39 +356,25 @@ addgroup_main (int argn, char *argv[])
 		if (!tcfs_encrypt_key (user, passwd, newkey, cryptedkey, GROUPKEY))
 			tcfs_error (ER_MEM, NULL);
 
-#ifdef DEBUG_TCFS
-		{
-			unsigned char *key;
-			int i;
-
-			key=(unsigned char *)calloc(UUKEYSIZE, sizeof(char));
-			if (!tcfs_decrypt_key (user, passwd, cryptedkey, key, GROUPKEY))
-				exit (0);
-
-			printf ("%s key: ", user);
-			for (i=0;i<=KEYSIZE;i++)
-				printf ("%u:", key[i]);
-			printf ("\n");
-
-			free (key);
-		}
-#endif
-
 		free (newkey);
 
-		strcpy (group_info[members-1]->gkey, cryptedkey);
+		strlcpy (group_info[members - 1]->gkey, cryptedkey,
+			 GKEYSIZE + 1);
 		free (cryptedkey);
 
 		members--;
 	}
 
-	members=temp_members;
+	members = temp_members;
 
 	while (members) {
 		if (be_verbose)
-			printf ("Creating a new entry for user %s in the TCFS database...\n", group_info[members-1]->user);
+			printf ("Creating a new entry for group %d and user %s in the TCFS database...\n", 
+				group_info[members-1]->gid,
+				group_info[members-1]->user);
 
-		if (!tcfs_gputpwnam (group_info[members-1]->user, group_info[members-1], U_NEW)) {
+		if (!tcfs_gputpwnam (group_info[members-1]->user,
+				     group_info[members-1], U_NEW)) {
 				/* TODO: Remove the group entries saved before */
 			tcfs_error (ER_CUSTOM, "Error: cannot add a user to the group.");
 		}
