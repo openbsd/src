@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.41 2002/06/11 05:15:17 miod Exp $	*/
+/*	$OpenBSD: conf.c,v 1.42 2002/06/19 02:52:23 mickey Exp $	*/
 /*	$NetBSD: conf.c,v 1.16 1996/10/18 21:26:57 cgd Exp $	*/
 
 /*-
@@ -189,7 +189,7 @@ struct cdevsw	cdevsw[] =
 	cdev_usb_init(NUSB,usb),	/* 45: USB controller */
 	cdev_usbdev_init(NUHID,uhid),	/* 46: USB generic HID */
 	cdev_ulpt_init(NULPT,ulpt),	/* 47: USB printer */
-	cdev_ugen_init(NUGEN,ugen),	/* 48: USB generic driver */
+	cdev_usbdev_init(NUGEN,ugen),	/* 48: USB generic driver */
 	cdev_tty_init(NUCOM, ucom),	/* 49: USB tty */
 	cdev_systrace_init(NSYSTRACE,systrace),	/* 50 system call tracing */
 #ifdef XFS

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.94 2002/06/18 23:16:50 fgsch Exp $	*/
+/*	$OpenBSD: conf.c,v 1.95 2002/06/19 02:52:23 mickey Exp $	*/
 /*	$NetBSD: conf.c,v 1.75 1996/05/03 19:40:20 christos Exp $	*/
 
 /*
@@ -309,7 +309,7 @@ struct cdevsw	cdevsw[] =
 	/* End of reserved slots for isdn4bsd. */
 	cdev_usb_init(NUSB,usb),	/* 61: USB controller */
 	cdev_usbdev_init(NUHID,uhid),	/* 62: USB generic HID */
-	cdev_ugen_init(NUGEN,ugen),	/* 63: USB generic driver */
+	cdev_usbdev_init(NUGEN,ugen),	/* 63: USB generic driver */
 	cdev_ulpt_init(NULPT,ulpt), 	/* 64: USB printers */
 	cdev_usbdev_init(NURIO,urio),	/* 65: USB Diamond Rio 500 */
 	cdev_tty_init(NUCOM,ucom),	/* 66: USB tty */
@@ -328,7 +328,7 @@ struct cdevsw	cdevsw[] =
 	cdev_altq_init(NALTQ,altq),	/* 74: ALTQ control interface */
 	cdev_iop_init(NIOP,iop),	/* 75: I2O IOP control interface */
 	cdev_radio_init(NRADIO, radio), /* 76: generic radio I/O */
-	cdev_ugen_init(NUSCANNER,uscanner),	/* 77: USB scanners */
+	cdev_usbdev_init(NUSCANNER,uscanner),	/* 77: USB scanners */
 	cdev_systrace_init(NSYSTRACE,systrace),	/* 78: system call tracing */
  	cdev_oci_init(NBIO,bio),	/* 79: ioctl tunnel */
 	cdev_ch_init(NGPR,gpr)		/* 80: GPR400 SmartCard reader */

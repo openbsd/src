@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.13 2002/06/11 03:43:46 miod Exp $ */
+/*	$OpenBSD: conf.c,v 1.14 2002/06/19 02:52:23 mickey Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -222,7 +222,7 @@ struct cdevsw cdevsw[] = {
 	/* End of reserved slots for isdn4bsd. */
 	cdev_usb_init(NUSB,usb),	/* 61: USB controller */
 	cdev_usbdev_init(NUHID,uhid),	/* 62: USB generic HID */
-	cdev_ugen_init(NUGEN,ugen),	/* 63: USB generic driver */
+	cdev_usbdev_init(NUGEN,ugen),	/* 63: USB generic driver */
 	cdev_ulpt_init(NULPT,ulpt),	/* 64: USB printers */
 	cdev_usbdev_init(NURIO,urio),	/* 65: USB Diamond Rio 500 */
 	cdev_tty_init(NUCOM,ucom),	/* 66: USB tty */
@@ -239,7 +239,7 @@ struct cdevsw cdevsw[] = {
 #endif
 	cdev_altq_init(NALTQ,altq),	/* 72: ALTQ control interface */
 	cdev_iop_init(NIOP,iop),	/* 73: I2O IOP control interface */
-	cdev_ugen_init(NUSCANNER,uscanner), /* 74: usb scanner */
+	cdev_usbdev_init(NUSCANNER,uscanner), /* 74: usb scanner */
 };
 int nchrdev = sizeof cdevsw / sizeof cdevsw[0];
 
