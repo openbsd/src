@@ -1,48 +1,39 @@
+/*	$OpenBSD: do_command.c,v 1.10 2001/02/18 19:48:33 millert Exp $	*/
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
+ */
+
+/*
+ * Copyright (c) 1997,2000 by Internet Software Consortium, Inc.
  *
- * Distribute freely, except: don't remove my name from the source or
- * documentation (don't take credit for my work), mark your changes (don't
- * get me blamed for your possible bugs), don't alter or remove this
- * notice.  May be sold if buildable source is provided to buyer.  No
- * warrantee of any kind, express or implied, is included with this
- * software; use at your own risk, responsibility for damages (if any) to
- * anyone resulting from the use of this software rests entirely with the
- * user.
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
  *
- * Send bug reports, bug fixes, enhancements, requests, flames, etc., and
- * I'll try to keep a version up to date.  I can be reached as follows:
- * Paul Vixie          <paul@vix.com>          uunet!decwrl!vixie!paul
+ * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM DISCLAIMS
+ * ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL INTERNET SOFTWARE
+ * CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
+ * DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
+ * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS
+ * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
+ * SOFTWARE.
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$Id: do_command.c,v 1.9 2000/08/21 21:08:56 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: do_command.c,v 1.10 2001/02/18 19:48:33 millert Exp $";
 #endif
-
 
 #include "cron.h"
-#include <sys/signal.h>
-#if defined(sequent)
-# include <sys/universe.h>
-#endif
-#if defined(SYSLOG)
-# include <syslog.h>
-#endif
-#if defined(LOGIN_CAP)
-# include <login_cap.h>
-#endif
 
-
-static void		child_process __P((entry *, user *)),
-			do_univ __P((user *));
+static void		child_process(entry *, user *);
+static int		safe_p(const char *, const char *);
 
 void
-do_command(e, u)
-	entry	*e;
-	user	*u;
-{
-	Debug(DPROC, ("[%d] do_command(%s, (%s,%d,%d))\n",
-		getpid(), e->cmd, u->name, e->uid, e->gid))
+do_command(entry *e, user *u) {
+	Debug(DPROC, ("[%ld] do_command(%s, (%s,%ld,%ld))\n",
+		      (long)getpid(), e->cmd, u->name,
+		      (long)e->uid, (long)e->gid))
 
 	/* fork to become asynchronous -- parent process is done immediately,
 	 * and continues to run the normal cron code, which means return to
@@ -53,70 +44,55 @@ do_command(e, u)
 	 */
 	switch (fork()) {
 	case -1:
-		log_it("CRON",getpid(),"error","can't fork");
+		log_it("CRON", getpid(), "error", "can't fork");
 		break;
 	case 0:
 		/* child process */
 		acquire_daemonlock(1);
 		child_process(e, u);
-		Debug(DPROC, ("[%d] child process done, exiting\n", getpid()))
+		Debug(DPROC, ("[%ld] child process done, exiting\n",
+			      (long)getpid()))
 		_exit(OK_EXIT);
 		break;
 	default:
 		/* parent process */
 		break;
 	}
-	Debug(DPROC, ("[%d] main process returning to work\n", getpid()))
+	Debug(DPROC, ("[%ld] main process returning to work\n",(long)getpid()))
 }
 
-
 static void
-child_process(e, u)
-	entry	*e;
-	user	*u;
-{
-	int		stdin_pipe[2], stdout_pipe[2];
-	char		*input_data;
-	char		*usernm, *mailto;
-	int		children = 0;
+child_process(entry *e, user *u) {
+	int stdin_pipe[2], stdout_pipe[2];
+	char *usernm;
+	char * volatile input_data, * volatile mailto;
+	volatile int children = 0;
 
-#ifdef __GNUC__
-	(void) &input_data;	/* Avoid vfork clobbering */
-	(void) &mailto;
-	(void) &children;
-#endif
+	Debug(DPROC, ("[%ld] child_process('%s')\n", (long)getpid(), e->cmd))
 
-	Debug(DPROC, ("[%d] child_process('%s')\n", getpid(), e->cmd))
-
+#ifdef CAPITALIZE_FOR_PS
 	/* mark ourselves as different to PS command watchers by upshifting
 	 * our program name.  This has no effect on some kernels.
 	 */
 	/*local*/{
-		register char	*pch;
+		char	*pch;
 
 		for (pch = ProgramName;  *pch;  pch++)
 			*pch = MkUpper(*pch);
 	}
+#endif /* CAPITALIZE_FOR_PS */
 
 	/* discover some useful and important environment settings
 	 */
 	usernm = env_get("LOGNAME", e->envp);
 	mailto = env_get("MAILTO", e->envp);
 
-#ifdef USE_SIGCHLD
 	/* our parent is watching for our death by catching SIGCHLD.  we
 	 * do not care to watch for our children's deaths this way -- we
-	 * use wait() explictly.  so we have to disable the signal (which
+	 * use wait() explictly.  so we have to reset the signal (which
 	 * was inherited from the parent).
 	 */
 	(void) signal(SIGCHLD, SIG_DFL);
-#else
-	/* on system-V systems, we are ignoring SIGCLD.  we have to stop
-	 * ignoring it now or the wait() in cron_pclose() won't work.
-	 * because of this, we have to wait() for our children here, as well.
-	 */
-	(void) signal(SIGCLD, SIG_DFL);
-#endif /*BSD*/
 
 	/* create some pipes to talk to our future child
 	 */
@@ -134,12 +110,13 @@ child_process(e, u)
 	 * If there are escaped %'s, remove the escape character.
 	 */
 	/*local*/{
-		register int escaped = FALSE;
-		register int ch;
-		register char *p;
+		int escaped = FALSE;
+		int ch;
+		char *p;
 
-		for (input_data = p = e->cmd; (ch = *input_data);
-		    input_data++, p++) {
+		for (input_data = p = e->cmd;
+		     (ch = *input_data) != '\0';
+		     input_data++, p++) {
 			if (p != input_data)
 				*p = ch;
 			if (escaped) {
@@ -164,19 +141,19 @@ child_process(e, u)
 	 */
 	switch (vfork()) {
 	case -1:
-		log_it("CRON",getpid(),"error","can't vfork");
+		log_it("CRON", getpid(), "error", "can't vfork");
 		exit(ERROR_EXIT);
 		/*NOTREACHED*/
 	case 0:
-		Debug(DPROC, ("[%d] grandchild process Vfork()'ed\n",
-			      getpid()))
+		Debug(DPROC, ("[%ld] grandchild process Vfork()'ed\n",
+			      (long)getpid()))
 
 		/* write a log message.  we've waited this long to do it
 		 * because it was not until now that we knew the PID that
 		 * the actual user command shell was going to get and the
 		 * PID is part of the log message.
 		 */
-		/*local*/{
+		if ((e->flags & DONT_LOG) == 0) {
 			char *x = mkprints((u_char *)e->cmd, strlen(e->cmd));
 
 			log_it(usernm, getpid(), "CMD", x);
@@ -214,16 +191,10 @@ child_process(e, u)
 		close(stdin_pipe[READ_PIPE]);
 		close(stdout_pipe[WRITE_PIPE]);
 
-		/* set our login universe.  Do this in the grandchild
-		 * so that the child can invoke /usr/lib/sendmail
-		 * without surprises.
-		 */
-		do_univ(u);
-
 		/* set our directory, uid and gid.  Set gid first, since once
 		 * we set uid, we've lost root privledges.
 		 */
-# ifdef LOGIN_CAP
+#ifdef LOGIN_CAP
 		{
 			struct passwd *pwd;
 			char *ep, *np;
@@ -238,32 +209,38 @@ child_process(e, u)
 				fprintf(stderr, "setusercontext failed for %d\n", e->uid);
 				_exit(ERROR_EXIT);
 			}
+#ifdef BSD_AUTH
+			if (auth_approval(0, 0, pwd->pw_name, "cron") <= 0) {
+				fprintf(stderr, "approval failed for %d\n", e->uid);
+				_exit(ERROR_EXIT);
+			}
+#endif /* BSD_AUTH */
 			/* If no PATH specified in crontab file but
-			 * we just added on via login.conf, add it to
+			 * we just added one via login.conf, add it to
 			 * the crontab environment.
 			 */
 			if (env_get("PATH", e->envp) == NULL &&
 			    (ep = getenv("PATH"))) {
 				np = malloc(strlen(ep) + 6);
 				if (np) {
-				    strcpy(np, "PATH=");
-				    strcat(np, ep);
-				    e->envp = env_set(e->envp, np);
+					strcpy(np, "PATH=");
+					strcat(np, ep);
+					e->envp = env_set(e->envp, np);
 				}
 			}
+			
 		}
-		
-# else
+#else
 		setgid(e->gid);
-#  if defined(BSD)
 		initgroups(env_get("LOGNAME", e->envp), e->gid);
-#  endif
 		setlogin(usernm);
 		setuid(e->uid);		/* we aren't root after this... */
-# endif
+
+#endif /* LOGIN_CAP */
 		chdir(env_get("HOME", e->envp));
 
-		/* exec the command.
+		/*
+		 * Exec the command.
 		 */
 		{
 			char	*shell = env_get("SHELL", e->envp);
@@ -294,7 +271,7 @@ child_process(e, u)
 	 * the user's command.
 	 */
 
-	Debug(DPROC, ("[%d] child continues, closing pipes\n", getpid()))
+	Debug(DPROC, ("[%ld] child continues, closing pipes\n",(long)getpid()))
 
 	/* close the ends of the pipe that will only be referenced in the
 	 * grandchild process...
@@ -314,12 +291,13 @@ child_process(e, u)
 	 */
 
 	if (*input_data && fork() == 0) {
-		register FILE	*out = fdopen(stdin_pipe[WRITE_PIPE], "w");
-		register int	need_newline = FALSE;
-		register int	escaped = FALSE;
-		register int	ch;
+		FILE *out = fdopen(stdin_pipe[WRITE_PIPE], "w");
+		int need_newline = FALSE;
+		int escaped = FALSE;
+		int ch;
 
-		Debug(DPROC, ("[%d] child2 sending data to grandchild\n", getpid()))
+		Debug(DPROC, ("[%ld] child2 sending data to grandchild\n",
+			      (long)getpid()))
 
 		/* close the pipe we don't use, since we inherited it and
 		 * are part of its reference count now.
@@ -355,7 +333,8 @@ child_process(e, u)
 		 */
 		fclose(out);
 
-		Debug(DPROC, ("[%d] child2 done sending to grandchild\n", getpid()))
+		Debug(DPROC, ("[%ld] child2 done sending to grandchild\n",
+			      (long)getpid()))
 		exit(0);
 	}
 
@@ -373,28 +352,26 @@ child_process(e, u)
 	 * when the grandchild exits, we'll get EOF.
 	 */
 
-	Debug(DPROC, ("[%d] child reading output from grandchild\n", getpid()))
+	Debug(DPROC, ("[%ld] child reading output from grandchild\n",
+		      (long)getpid()))
 
 	/*local*/{
-		register FILE	*in = fdopen(stdout_pipe[READ_PIPE], "r");
-		register int	ch = getc(in);
+		FILE	*in = fdopen(stdout_pipe[READ_PIPE], "r");
+		int	ch = getc(in);
 
 		if (ch != EOF) {
-			FILE		*mail;
-			register int	bytes = 1;
-			int		status = 0;
+			FILE	* volatile mail;
+			int	bytes = 1;
+			int	status = 0;
 
-#ifdef __GNUC__
-			(void) &mail;
-#endif
 			Debug(DPROC|DEXT,
-				("[%d] got data (%x:%c) from grandchild\n",
-					getpid(), ch, ch))
+			      ("[%ld] got data (%x:%c) from grandchild\n",
+			       (long)getpid(), ch, ch))
 
 			/* get name of recipient.  this is MAILTO if set to a
 			 * valid local username; USER otherwise.
 			 */
-			if (mailto) {
+			if (mailto && safe_p(usernm, mailto)) {
 				/* MAILTO was present in the environment
 				 */
 				if (!*mailto) {
@@ -414,15 +391,18 @@ child_process(e, u)
 			 */
 
 			if (mailto) {
-				register char	**env;
-				auto char	mailcmd[MAX_COMMAND];
-				auto char	hostname[MAXHOSTNAMELEN];
+				char	**env;
+				char	mailcmd[MAX_COMMAND];
+				char	hostname[MAXHOSTNAMELEN];
 
-				(void) gethostname(hostname, MAXHOSTNAMELEN);
-				(void) snprintf(mailcmd, sizeof(mailcmd),
-				    MAILARGS, MAILCMD);
+				gethostname(hostname, MAXHOSTNAMELEN);
+				if (snprintf(mailcmd, sizeof mailcmd,  MAILFMT,
+				    MAILARG) >= sizeof mailcmd) {
+					fprintf(stderr, "mailcmd too long\n");
+					(void) _exit(ERROR_EXIT);
+				}
 				if (!(mail = cron_popen(mailcmd, "w", e))) {
-					perror(MAILCMD);
+					perror(mailcmd);
 					(void) _exit(ERROR_EXIT);
 				}
 				fprintf(mail, "From: root (Cron Daemon)\n");
@@ -430,10 +410,10 @@ child_process(e, u)
 				fprintf(mail, "Subject: Cron <%s@%s> %s\n",
 					usernm, first_word(hostname, "."),
 					e->cmd);
-# if defined(MAIL_DATE)
+#ifdef MAIL_DATE
 				fprintf(mail, "Date: %s\n",
 					arpadate(&StartTime));
-# endif /* MAIL_DATE */
+#endif /*MAIL_DATE*/
 				for (env = e->envp;  *env;  env++)
 					fprintf(mail, "X-Cron-Env: <%s>\n",
 						*env);
@@ -441,7 +421,7 @@ child_process(e, u)
 
 				/* this was the first char from the pipe
 				 */
-				putc(ch, mail);
+				fputc(ch, mail);
 			}
 
 			/* we have to read the input pipe no matter whether
@@ -452,7 +432,7 @@ child_process(e, u)
 			while (EOF != (ch = getc(in))) {
 				bytes++;
 				if (mailto)
-					putc(ch, mail);
+					fputc(ch, mail);
 			}
 
 			/* only close pipe if we opened it -- i.e., we're
@@ -460,8 +440,8 @@ child_process(e, u)
 			 */
 
 			if (mailto) {
-				Debug(DPROC, ("[%d] closing pipe to mail\n",
-					getpid()))
+				Debug(DPROC, ("[%ld] closing pipe to mail\n",
+					      (long)getpid()))
 				/* Note: the pclose will probably see
 				 * the termination of the grandchild
 				 * in addition to the mail process, since
@@ -487,68 +467,47 @@ child_process(e, u)
 
 		} /*if data from grandchild*/
 
-		Debug(DPROC, ("[%d] got EOF from grandchild\n", getpid()))
+		Debug(DPROC, ("[%ld] got EOF from grandchild\n",
+			      (long)getpid()))
 
 		fclose(in);	/* also closes stdout_pipe[READ_PIPE] */
 	}
 
 	/* wait for children to die.
 	 */
-	for (;  children > 0;  children--)
-	{
-		WAIT_T		waiter;
-		PID_T		pid;
+	for (; children > 0; children--) {
+		WAIT_T waiter;
+		PID_T pid;
 
-		Debug(DPROC, ("[%d] waiting for grandchild #%d to finish\n",
-			getpid(), children))
+		Debug(DPROC, ("[%ld] waiting for grandchild #%d to finish\n",
+			      (long)getpid(), children))
 		pid = wait(&waiter);
 		if (pid < OK) {
-			Debug(DPROC, ("[%d] no more grandchildren--mail written?\n",
-				getpid()))
+			Debug(DPROC,
+			      ("[%ld] no more grandchildren--mail written?\n",
+			       (long)getpid()))
 			break;
 		}
-		Debug(DPROC, ("[%d] grandchild #%d finished, status=%04x",
-			getpid(), pid, WEXITSTATUS(waiter)))
+		Debug(DPROC, ("[%ld] grandchild #%ld finished, status=%04x",
+			      (long)getpid(), (long)pid, WEXITSTATUS(waiter)))
 		if (WIFSIGNALED(waiter) && WCOREDUMP(waiter))
 			Debug(DPROC, (", dumped core"))
 		Debug(DPROC, ("\n"))
 	}
 }
 
+static int
+safe_p(const char *usernm, const char *s) {
+	static const char safe_delim[] = "@!:%-.,";     /* conservative! */
+	const char *t;
+	int ch, first;
 
-static void
-do_univ(u)
-	user	*u;
-{
-#if defined(sequent)
-/* Dynix (Sequent) hack to put the user associated with
- * the passed user structure into the ATT universe if
- * necessary.  We have to dig the gecos info out of
- * the user's password entry to see if the magic
- * "universe(att)" string is present.
- */
-
-	struct	passwd	*p;
-	char	*s;
-	int	i;
-
-	p = getpwuid(u->uid);
-	(void) endpwent();
-
-	if (p == NULL)
-		return;
-
-	s = p->pw_gecos;
-
-	for (i = 0; i < 4; i++)
-	{
-		if ((s = strchr(s, ',')) == NULL)
-			return;
-		s++;
+	for (t = s, first = 1; (ch = *t++) != '\0'; first = 0) {
+		if (isascii(ch) && isprint(ch) &&
+		    (isalnum(ch) || (!first && strchr(safe_delim, ch))))
+			continue;
+		log_it(usernm, getpid(), "UNSAFE", s);
+		return (FALSE);
 	}
-	if (strcmp(s, "universe(att)"))
-		return;
-
-	(void) universe(U_ATT);
-#endif
+	return (TRUE);
 }

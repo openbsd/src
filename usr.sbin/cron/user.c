@@ -1,36 +1,37 @@
+/*	$OpenBSD: user.c,v 1.3 2001/02/18 19:48:36 millert Exp $	*/
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
+ */
+
+/*
+ * Copyright (c) 1997,2000 by Internet Software Consortium, Inc.
  *
- * Distribute freely, except: don't remove my name from the source or
- * documentation (don't take credit for my work), mark your changes (don't
- * get me blamed for your possible bugs), don't alter or remove this
- * notice.  May be sold if buildable source is provided to buyer.  No
- * warrantee of any kind, express or implied, is included with this
- * software; use at your own risk, responsibility for damages (if any) to
- * anyone resulting from the use of this software rests entirely with the
- * user.
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
  *
- * Send bug reports, bug fixes, enhancements, requests, flames, etc., and
- * I'll try to keep a version up to date.  I can be reached as follows:
- * Paul Vixie          <paul@vix.com>          uunet!decwrl!vixie!paul
+ * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM DISCLAIMS
+ * ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL INTERNET SOFTWARE
+ * CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
+ * DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
+ * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS
+ * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
+ * SOFTWARE.
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$Id: user.c,v 1.2 1996/11/01 23:27:39 millert Exp $";
+static char rcsid[] = "$OpenBSD: user.c,v 1.3 2001/02/18 19:48:36 millert Exp $";
 #endif
 
 /* vix 26jan87 [log is in RCS file]
  */
 
-
 #include "cron.h"
 
-
 void
-free_user(u)
-	user	*u;
-{
-	entry	*e, *ne;
+free_user(user *u) {
+	entry *e, *ne;
 
 	free(u->name);
 	for (e = u->crontab;  e != NULL;  e = ne) {
@@ -40,51 +41,45 @@ free_user(u)
 	free(u);
 }
 
-
 user *
-load_user(crontab_fd, pw, name)
-	int		crontab_fd;
-	struct passwd	*pw;		/* NULL implies syscrontab */
-	char		*name;
-{
-	char	envstr[MAX_ENVSTR];
-	FILE	*file;
-	user	*u;
-	entry	*e;
-	int	status;
-	char	**envp, **tenvp;
+load_user(int crontab_fd, struct passwd	*pw, const char *name) {
+	char envstr[MAX_ENVSTR];
+	FILE *file;
+	user *u;
+	entry *e;
+	int status, save_errno;
+	char **envp, **tenvp;
 
 	if (!(file = fdopen(crontab_fd, "r"))) {
 		perror("fdopen on crontab_fd in load_user");
-		return NULL;
+		return (NULL);
 	}
 
 	Debug(DPARS, ("load_user()\n"))
 
 	/* file is open.  build user entry, then read the crontab file.
 	 */
-	if ((u = (user *) malloc(sizeof(user))) == NULL) {
-		errno = ENOMEM;
-		return NULL;
-	}
+	if ((u = (user *) malloc(sizeof(user))) == NULL)
+		return (NULL);
 	if ((u->name = strdup(name)) == NULL) {
+		save_errno = errno;
 		free(u);
-		errno = ENOMEM;
-		return NULL;
+		errno = save_errno;
+		return (NULL);
 	}
 	u->crontab = NULL;
 
-	/* 
-	 * init environment.  this will be copied/augmented for each entry.
+	/* init environment.  this will be copied/augmented for each entry.
 	 */
 	if ((envp = env_init()) == NULL) {
+		save_errno = errno;
 		free(u->name);
 		free(u);
-		return NULL;
+		errno = save_errno;
+		return (NULL);
 	}
 
-	/*
-	 * load the crontab
+	/* load the crontab
 	 */
 	while ((status = load_env(envstr, file)) >= OK) {
 		switch (status) {
@@ -103,8 +98,10 @@ load_user(crontab_fd, pw, name)
 			if ((tenvp = env_set(envp, envstr))) {
 				envp = tenvp;
 			} else {
+				save_errno = errno;
 				free_user(u);
 				u = NULL;
+				errno = save_errno;
 				goto done;
 			}
 			break;
@@ -115,5 +112,5 @@ load_user(crontab_fd, pw, name)
 	env_free(envp);
 	fclose(file);
 	Debug(DPARS, ("...load_user() done\n"))
-	return u;
+	return (u);
 }

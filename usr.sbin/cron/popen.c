@@ -1,3 +1,4 @@
+/*	$OpenBSD: popen.c,v 1.8 2001/02/18 19:48:36 millert Exp $	*/
 /*
  * Copyright (c) 1988 The Regents of the University of California.
  * All rights reserved.
@@ -24,22 +25,14 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: popen.c,v 1.7 2000/08/21 21:01:21 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: popen.c,v 1.8 2001/02/18 19:48:36 millert Exp $";
 static char sccsid[] = "@(#)popen.c	5.7 (Berkeley) 2/14/89";
 #endif /* not lint */
 
 #include "cron.h"
 
-#include <signal.h>
-#include <syslog.h>
-#include <unistd.h>
-#include <grp.h>
-
-#if defined(LOGIN_CAP)
-# include <login_cap.h>
-#endif
-
 #define MAX_ARGS 100
+#define MAX_GARGS 1000
 #define WANT_GLOBBING 0
 
 /*
@@ -52,37 +45,34 @@ static int fds;
 
 FILE *
 cron_popen(program, type, e)
-	char *program, *type;
+	char *program;
+	char *type;
 	entry *e;
 {
-	register char *cp;
-	FILE *iop;
+	char *cp;
+	FILE * volatile iop;
 	int argc, pdes[2];
 	PID_T pid;
 	char *argv[MAX_ARGS + 1];
 #if WANT_GLOBBING
 	char **pop, *vv[2];
 	int gargc;
-	char *gargv[1000];
+	char *gargv[MAX_GARGS];
 	extern char **glob(), **copyblk();
 #endif
 
-#ifdef __GNUC__
-	(void) &iop;	/* Avoid vfork clobbering */
-#endif
-
-	if ((*type != 'r' && *type != 'w') || type[1])
-		return(NULL);
+	if ((*type != 'r' && *type != 'w') || type[1] != '\0')
+		return (NULL);
 
 	if (!pids) {
-		if ((fds = getdtablesize()) <= 0)
-			return(NULL);
-		if (!(pids = (PID_T *)malloc((u_int)(fds * sizeof(PID_T)))))
-			return(NULL);
+		if ((fds = sysconf(_SC_OPEN_MAX)) <= 0)
+			return (NULL);
+		if (!(pids = (PID_T *)malloc((size_t)(fds * sizeof(PID_T)))))
+			return (NULL);
 		bzero((char *)pids, fds * sizeof(PID_T));
 	}
 	if (pipe(pdes) < 0)
-		return(NULL);
+		return (NULL);
 
 	/* break up string into pieces */
 	for (argc = 0, cp = program; argc < MAX_ARGS; cp = NULL)
@@ -100,7 +90,7 @@ cron_popen(program, type, e)
 			pop = copyblk(vv);
 		}
 		argv[argc] = (char *)pop;		/* save to free later */
-		while (*pop && gargc < 1000)
+		while (*pop && gargc < MAX_GARGS)
 			gargv[gargc++] = *pop++;
 	}
 	gargv[gargc] = NULL;
@@ -144,14 +134,14 @@ cron_popen(program, type, e)
 			}
 #else
 			if (setgid(e->gid) ||
-			    setgroups(0, NULL) ||
-			    initgroups(env_get("LOGNAME", e->envp), e->gid))
-				_exit(1);
+				setgroups(0, NULL) ||
+				initgroups(env_get("LOGNAME", e->envp), e->gid))
+				    _exit(1);
 			setlogin(env_get("LOGNAME", e->envp));
 			if (setuid(e->uid))
 				_exit(1);
 			chdir(env_get("HOME", e->envp));
-#endif
+#endif /* LOGIN_CAP */
 		}
 #if WANT_GLOBBING
 		execvp(gargv[0], gargv);
@@ -177,14 +167,14 @@ pfree:
 		free((char *)argv[argc]);
 	}
 #endif
-	return(iop);
+	return (iop);
 }
 
 int
 cron_pclose(iop)
 	FILE *iop;
 {
-	register int fdes;
+	int fdes;
 	int omask;
 	WAIT_T stat_loc;
 	PID_T pid;
@@ -194,7 +184,7 @@ cron_pclose(iop)
 	 * `popened' command, or, if already `pclosed'.
 	 */
 	if (pids == 0 || pids[fdes = fileno(iop)] == 0)
-		return(-1);
+		return (-1);
 	(void)fclose(iop);
 	omask = sigblock(sigmask(SIGINT)|sigmask(SIGQUIT)|sigmask(SIGHUP));
 	while ((pid = wait(&stat_loc)) != pids[fdes] && pid != -1)

@@ -1,22 +1,27 @@
+/*	$OpenBSD: env.c,v 1.8 2001/02/18 19:48:34 millert Exp $	*/
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
+ */
+
+/*
+ * Copyright (c) 1997,2000 by Internet Software Consortium, Inc.
  *
- * Distribute freely, except: don't remove my name from the source or
- * documentation (don't take credit for my work), mark your changes (don't
- * get me blamed for your possible bugs), don't alter or remove this
- * notice.  May be sold if buildable source is provided to buyer.  No
- * warrantee of any kind, express or implied, is included with this
- * software; use at your own risk, responsibility for damages (if any) to
- * anyone resulting from the use of this software rests entirely with the
- * user.
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
  *
- * Send bug reports, bug fixes, enhancements, requests, flames, etc., and
- * I'll try to keep a version up to date.  I can be reached as follows:
- * Paul Vixie          <paul@vix.com>          uunet!decwrl!vixie!paul
+ * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM DISCLAIMS
+ * ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL INTERNET SOFTWARE
+ * CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
+ * DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
+ * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS
+ * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
+ * SOFTWARE.
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$Id: env.c,v 1.7 2000/08/21 21:08:56 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: env.c,v 1.8 2001/02/18 19:48:34 millert Exp $";
 #endif
 
 
@@ -26,9 +31,9 @@ static char rcsid[] = "$Id: env.c,v 1.7 2000/08/21 21:08:56 deraadt Exp $";
 char **
 env_init()
 {
-	register char	**p = (char **) malloc(sizeof(char **));
+	char	**p = (char **) malloc(sizeof(char **));
 
-	if (p)
+	if (p != NULL)
 		p[0] = NULL;
 	return (p);
 }
@@ -48,27 +53,26 @@ env_free(envp)
 
 char **
 env_copy(envp)
-	register char	**envp;
+	char	**envp;
 {
-	register int	count, i;
-	register char	**p;
+	int	count, i, save_errno;
+	char	**p;
 
 	for (count = 0;  envp[count] != NULL;  count++)
 		;
 	p = (char **) malloc((count+1) * sizeof(char *));  /* 1 for the NULL */
-	if (p == NULL) {
-		errno = ENOMEM;
-		return NULL;
+	if (p != NULL) {
+		for (i = 0;  i < count;  i++)
+			if ((p[i] = strdup(envp[i])) == NULL) {
+				save_errno = errno;
+				while (--i >= 0)
+					free(p[i]);
+				free(p);
+				errno = save_errno;
+				return (NULL);
+			}
+		p[count] = NULL;
 	}
-	for (i = 0;  i < count;  i++)
-		if ((p[i] = strdup(envp[i])) == NULL) {
-			while (--i >= 0)
-				(void) free(p[i]);
-			free(p);
-			errno = ENOMEM;
-			return NULL;
-		}
-	p[count] = NULL;
 	return (p);
 }
 
@@ -78,8 +82,8 @@ env_set(envp, envstr)
 	char	**envp;
 	char	*envstr;
 {
-	register int	count, found;
-	register char	**p;
+	int	count, found;
+	char	**p, *cp;
 
 	/*
 	 * count the number of elements, including the null pointer;
@@ -100,8 +104,7 @@ env_set(envp, envstr)
 		free(envp[found]);
 		if ((envp[found] = strdup(envstr)) == NULL) {
 			envp[found] = "";
-			errno = ENOMEM;
-			return NULL;
+			return (NULL);
 		}
 		return (envp);
 	}
@@ -112,16 +115,14 @@ env_set(envp, envstr)
 	 * array.
 	 */
 	p = (char **) realloc((void *) envp,
-			      (unsigned) ((count+1) * sizeof(char **)));
-	if (p == NULL) 	{
-		errno = ENOMEM;
-		return NULL;
-	}
+			      (size_t) ((count+1) * sizeof(char **)));
+	if (p == NULL)
+		return (NULL);
+	cp = strdup(envstr);
+	if (cp == NULL)
+		return(NULL);
 	p[count] = p[count-1];
-	if ((p[count-1] = strdup(envstr)) == NULL) {
-		errno = ENOMEM;
-		return NULL;
-	}
+	p[count-1] = cp;
 	return (p);
 }
 
@@ -157,7 +158,8 @@ load_env(envstr, f)
 		return (FALSE);
 	}
 
-	/* 2 fields from scanf; looks like an env setting
+	/*
+	 * 2 fields from scanf; looks like an env setting.
 	 */
 
 	/*
@@ -176,8 +178,10 @@ load_env(envstr, f)
 		}
 	}
 
-	if (strlen(name) + 1 + strlen(val) >= MAX_ENVSTR-1)
-		return (FALSE);
+	/*
+	 * This can't overflow because get_string() limited the size of the
+	 * name and val fields.  Still, it doesn't hurt...
+	 */
 	(void) snprintf(envstr, MAX_ENVSTR, "%s=%s", name, val);
 	Debug(DPARS, ("load_env, <%s> <%s> -> <%s>\n", name, val, envstr))
 	return (TRUE);
@@ -186,13 +190,13 @@ load_env(envstr, f)
 
 char *
 env_get(name, envp)
-	register char	*name;
-	register char	**envp;
+	char	*name;
+	char	**envp;
 {
-	register int	len = strlen(name);
-	register char	*p, *q;
+	int	len = strlen(name);
+	char	*p, *q;
 
-	while ((p = *envp++) != NULL) {
+	while ((p = *envp++) != '\0') {
 		if (!(q = strchr(p, '=')))
 			continue;
 		if ((q - p) == len && !strncmp(p, name, len))
