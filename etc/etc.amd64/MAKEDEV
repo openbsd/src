@@ -3,7 +3,7 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.amd64/MAKEDEV.md,v 1.1 2004/01/28 02:11:53 mickey Exp 
+#	OpenBSD: etc.amd64/MAKEDEV.md,v 1.2 2004/02/07 20:30:59 deraadt Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.67 2004/02/05 22:22:15 todd Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.9 2004/01/12 22:18:24 todd Exp 
 #
@@ -96,6 +96,7 @@
 #	radio*	FM tuner device
 #	systrace*	system call tracing device
 #	gpr*	gpr400 pcmcia device
+#	ptm	pty master device
 #	usbs	make USB devices
 #
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
@@ -267,6 +268,10 @@ mouse*)
 usbs)
 	R ttyU0 ttyU1 ugen0 ugen1 ulpt0 ulpt1 uhid0 uhid1 uhid2 uhid3
 	R uscanner0 urio0 usb0 usb1
+	;;
+
+ptm)
+	M ptm c 81 0 666
 	;;
 
 gpr*)
@@ -575,8 +580,8 @@ all)
 	R sd3 sd4 cd0 cd1 rd0 tun0 tun1 tun2 tun3 bpf0 bpf1 bpf2 bpf3
 	R bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 pty0 pty1 pty2 fd1 fd1B fd1C
 	R fd1D fd1E fd1F fd1G fd1H fd0 fd0B fd0C fd0D fd0E fd0F fd0G
-	R fd0H xfs0 ss0 ss1 ch0 ses0 gpr0 wscons pci iop0 iop1 usbs
-	R rmidi0 rmidi1 rmidi2 rmidi3 rmidi4 rmidi5 rmidi6 rmidi7
+	R fd0H xfs0 ss0 ss1 ch0 ses0 ptm gpr0 wscons pci iop0 iop1
+	R usbs rmidi0 rmidi1 rmidi2 rmidi3 rmidi4 rmidi5 rmidi6 rmidi7
 	R tuner0 radio0 music0 speaker audio0 wdt0 wt0 uk0 random joy0
 	R joy1 lpa0 lpa1 lpa2 lpt0 lpt1 lpt2 lkm tty00 tty01 tty02
 	R tty03 ttyc0 ttyc1 ttyc2 ttyc3 ttyc4 ttyc5 ttyc6 ttyc7 apm
