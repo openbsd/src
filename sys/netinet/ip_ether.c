@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ether.c,v 1.11 2000/12/30 22:55:33 angelos Exp $  */
+/*	$OpenBSD: ip_ether.c,v 1.12 2000/12/31 18:18:56 angelos Exp $  */
 
 /*
  * The author of this code is Angelos D. Keromytis (kermit@adk.gr)
@@ -97,9 +97,13 @@ va_dcl
 {
     union sockaddr_union ssrc, sdst;
     struct ether_header eh;
-    int iphlen, i;
+    int iphlen;
     u_int8_t v;
     va_list ap;
+
+#if NGIF > 0
+    int i;
+#endif /* NGIF */
 
     va_start(ap, m);
     iphlen = va_arg(ap, int);
