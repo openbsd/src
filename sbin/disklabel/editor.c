@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.25 1997/11/04 19:46:39 millert Exp $	*/
+/*	$OpenBSD: editor.c,v 1.26 1997/11/05 02:48:43 millert Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.25 1997/11/04 19:46:39 millert Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.26 1997/11/05 02:48:43 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1322,15 +1322,14 @@ has_overlap(lp, freep, resolve)
 
 				/* Get partition to disable or ^D */
 				do {
-					printf("Disable which one? [%c %c] ",
+					printf("Disable which one? (^D to abort) [%c %c] ",
 					    'a' + i, 'a' + j);
 					buf[0] = '\0';
-					if (!fgets(buf, sizeof(buf), stdin))
+					if (!fgets(buf, sizeof(buf), stdin)) {
+						putchar('\n');
 						return(1);	/* ^D */
+					}
 					c = buf[0] - 'a';
-					if ((buf[1] == '\n' || buf[1] == '\0')
-					    && (c == i || c == j))
-						break;
 				} while (buf[1] != '\n' && buf[1] != '\0' &&
 				    c != i && c != j);
 
