@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccd.c,v 1.39 1999/09/10 23:31:54 art Exp $	*/
+/*	$OpenBSD: ccd.c,v 1.40 1999/09/11 00:13:45 mickey Exp $	*/
 /*	$NetBSD: ccd.c,v 1.33 1996/05/05 04:21:14 thorpej Exp $	*/
 
 /*-
@@ -777,7 +777,7 @@ ccdstart(cs, bp)
 	    M_WAITOK);
 	bzero(cbpp, 2 * cs->sc_nccdisks * sizeof(struct ccdbuf *));
 	addr = bp->b_data;
-	old_io = old_io || ((vm_offset_t)addr & CLOFSET); /* XXX !claligned */
+	old_io = old_io || ((vaddr_t)addr & CLOFSET); /* XXX !claligned */
 	for (bcount = bp->b_bcount; bcount > 0; bcount -= rcount) {
 		rcount = ccdbuffer(cs, bp, bn, addr, bcount, cbpp, old_io);
 		
@@ -1194,7 +1194,7 @@ ccdioctl(dev, cmd, data, flag, p)
 	struct ccddevice ccd;
 	char **cpp;
 	struct vnode **vpp;
-	vm_offset_t min, max;
+	vaddr_t min, max;
 
 	if (unit >= numccd)
 		return (ENXIO);
