@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.44 2002/04/04 18:44:35 millert Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.45 2002/04/05 15:35:34 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -124,7 +124,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.44 2002/04/04 18:44:35 millert Exp $";
+	"$OpenBSD: if_wi.c,v 1.45 2002/04/05 15:35:34 millert Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -341,7 +341,7 @@ wi_intr(vsc)
 
 	ifp = &sc->arpcom.ac_if;
 
-	if (!(ifp->if_flags & IFF_UP)) {
+	if (sc->wi_gone || !(ifp->if_flags & IFF_UP)) {
 		CSR_WRITE_2(sc, WI_EVENT_ACK, 0xFFFF);
 		CSR_WRITE_2(sc, WI_INT_EN, 0);
 		return (0);
