@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.14 2005/03/09 19:12:57 henning Exp $
+# $OpenBSD: Makefile,v 1.15 2005/03/10 18:27:47 henning Exp $
 
 PROG=	mg
 
@@ -12,7 +12,7 @@ DPADD+=	${LIBCURSES}
 #	FKEYS		-- add support for function key sequences.
 #	XKEYS		-- use termcap function key definitions. Warning -
 #				XKEYS and bsmap mode do _not_ get along.
-#	NOBACKUP	-- disable "make-backup-files"
+#	NO_BACKUP	-- disable "make-backup-files"
 #	PREFIXREGION	-- enable function "prefix-region"
 #	REGEX		-- create regular expression functions
 #

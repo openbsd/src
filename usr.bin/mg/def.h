@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.57 2005/03/09 16:20:48 jfb Exp $	*/
+/*	$OpenBSD: def.h,v 1.58 2005/03/10 18:27:47 henning Exp $	*/
 
 #include <sys/queue.h>
 
@@ -8,9 +8,8 @@
  * general definitions and macros. It also contains some
  * conditional compilation flags. All of the per-system and
  * per-terminal definitions are in special header files.
- * The most common reason to edit this file would be to zap
- * the definition of CVMVAS or BACKUP.
  */
+
 #include	"sysdef.h"	/* Order is critical.		 */
 #include	"ttydef.h"
 #include	"chrdef.h"

@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.30 2005/03/09 16:20:48 jfb Exp $	*/
+/*	$OpenBSD: file.c,v 1.31 2005/03/10 18:27:47 henning Exp $	*/
 
 /*
  *	File commands.
@@ -197,11 +197,11 @@ readin(char *fname)
 /*
  * Insert a file in the current buffer, after dot.  Set mark at the end of
  * the text inserted; point at the beginning.  Return a standard status.
- * Print a summary (lines read, error message) out as well.  If the BACKUP
- * conditional is set, then this routine also does the read end of backup
- * processing.  The BFBAK flag, if set in a buffer, says that a backup
- * should be taken.  It is set when a file is read in, but not on a new
- * file.  (You don't need to make a backup copy of nothing.)
+ * Print a summary (lines read, error message) out as well.  Unless the
+ * NO_BACKUP conditional is set, this routine also does the read end of 
+ * backup processing.  The BFBAK flag, if set in a buffer, says that a
+ * backup should be taken.  It is set when a file is read in, but not on
+ * a new file.  (You don't need to make a backup copy of nothing.)
  */
 static char	*line = NULL;
 static int	linesize = 0;
