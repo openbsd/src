@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_kue.c,v 1.29 2004/11/10 10:14:48 grange Exp $ */
+/*	$OpenBSD: if_kue.c,v 1.30 2004/11/22 18:49:05 deraadt Exp $ */
 /*	$NetBSD: if_kue.c,v 1.50 2002/07/16 22:00:31 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -132,12 +132,7 @@
 #include <dev/usb/usbdevs.h>
 
 #include <dev/usb/if_kuereg.h>
-
-#if defined(__OpenBSD__)
-#include <dev/microcode/kue/kue_fw.h>
-#else
-#include <dev/usb/kue_fw.h>
-#endif
+#include <dev/usb/if_kuevar.h>
 
 #ifdef KUE_DEBUG
 #define DPRINTF(x)	do { if (kuedebug) logprintf x; } while (0)
@@ -253,6 +248,9 @@ kue_load_fw(struct kue_softc *sc)
 {
 	usb_device_descriptor_t dd;
 	usbd_status		err;
+	struct kue_firmware	*fw;
+	u_char			*buf;
+	size_t			buflen;
 
 	DPRINTFN(1,("%s: %s: enter\n", USBDEVNAME(sc->kue_dev), __func__));
 
@@ -278,6 +276,14 @@ kue_load_fw(struct kue_softc *sc)
 		return (0);
 	}
 
+	err = loadfirmware("kue", &buf, &buflen);
+	if (err) {
+		printf("%s: failed loadfirmware of file %s: errno %d\n",
+		    USBDEVNAME(sc->kue_dev), "kue", err);
+		return (err);
+	}
+	fw = (struct kue_firmware *)buf;
+
 	printf("%s: cold boot, downloading firmware\n",
 	       USBDEVNAME(sc->kue_dev));
 
@@ -285,34 +291,39 @@ kue_load_fw(struct kue_softc *sc)
 	DPRINTFN(1,("%s: kue_load_fw: download code_seg\n",
 		    USBDEVNAME(sc->kue_dev)));
 	err = kue_ctl(sc, KUE_CTL_WRITE, KUE_CMD_SEND_SCAN,
-	    0, (void *)kue_code_seg, sizeof(kue_code_seg));
+	    0, (void *)&fw->data[0], fw->codeseglen);
 	if (err) {
 		printf("%s: failed to load code segment: %s\n",
 		    USBDEVNAME(sc->kue_dev), usbd_errstr(err));
-			return (EIO);
+		free(buf, M_DEVBUF);
+		return (EIO);
 	}
 
 	/* Load fixup segment */
 	DPRINTFN(1,("%s: kue_load_fw: download fix_seg\n",
 		    USBDEVNAME(sc->kue_dev)));
 	err = kue_ctl(sc, KUE_CTL_WRITE, KUE_CMD_SEND_SCAN,
-	    0, (void *)kue_fix_seg, sizeof(kue_fix_seg));
+	    0, (void *)&fw->data[fw->codeseglen], fw->fixseglen);
 	if (err) {
 		printf("%s: failed to load fixup segment: %s\n",
 		    USBDEVNAME(sc->kue_dev), usbd_errstr(err));
-			return (EIO);
+		free(buf, M_DEVBUF);
+		return (EIO);
 	}
 
 	/* Send trigger command. */
 	DPRINTFN(1,("%s: kue_load_fw: download trig_seg\n",
 		    USBDEVNAME(sc->kue_dev)));
 	err = kue_ctl(sc, KUE_CTL_WRITE, KUE_CMD_SEND_SCAN,
-	    0, (void *)kue_trig_seg, sizeof(kue_trig_seg));
+	    0, (void *)&fw->data[fw->codeseglen + fw->fixseglen],
+	    fw->trigseglen);
 	if (err) {
 		printf("%s: failed to load trigger segment: %s\n",
 		    USBDEVNAME(sc->kue_dev), usbd_errstr(err));
-			return (EIO);
+		free(buf, M_DEVBUF);
+		return (EIO);
 	}
+	free(buf, M_DEVBUF);
 
 	usbd_delay_ms(sc->kue_udev, 10);
 

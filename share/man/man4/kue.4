@@ -1,4 +1,4 @@
-.\" $OpenBSD: kue.4,v 1.10 2004/10/16 01:22:52 jsg Exp $
+.\" $OpenBSD: kue.4,v 1.11 2004/11/22 18:49:03 deraadt Exp $
 .\" $NetBSD: kue.4,v 1.5 2000/03/20 01:34:22 augustss Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999, 2000
@@ -94,6 +94,13 @@ issued, however the device failed to acknowledge the transmission
 before a timeout expired.
 .It "kue%d: no memory for rx list"
 The driver failed to allocate an mbuf for the receiver ring.
+.El
+.Sh FILES
+The driver need to load a firmware files which is loaded on
+demand when the device is attached.
+.Pp
+.Bl -tag -width Ds -offset indent -compact
+.It Pa /etc/firmware/kue
 .El
 .Sh SEE ALSO
 .Xr arp 4 ,

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.usb,v 1.40 2004/11/17 14:13:47 deraadt Exp $
+#	$OpenBSD: files.usb,v 1.41 2004/11/22 18:49:05 deraadt Exp $
 #	$NetBSD: files.usb,v 1.16 2000/02/14 20:29:54 augustss Exp $
 #
 # Config file and device description for machine-independent USB code.
@@ -136,7 +136,7 @@ attach	cue at uhub
 file	dev/usb/if_cue.c		cue
 
 # Kawasaki LSI KL5KUSB101B
-device	kue: ether, ifnet, ifmedia
+device	kue: ether, ifnet, ifmedia, firmload
 attach	kue at uhub
 file	dev/usb/if_kue.c		kue
 
