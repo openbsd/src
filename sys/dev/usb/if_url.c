@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_url.c,v 1.18 2004/11/10 10:14:48 grange Exp $ */
+/*	$OpenBSD: if_url.c,v 1.19 2004/11/17 05:00:28 deraadt Exp $ */
 /*	$NetBSD: if_url.c,v 1.6 2002/09/29 10:19:21 martin Exp $	*/
 /*
  * Copyright (c) 2001, 2002
@@ -177,10 +177,14 @@ static const struct url_type {
 	{{ USB_VENDOR_MELCO, USB_PRODUCT_MELCO_LUAKTX }, 0},
 	/* GREEN HOUSE USBKR100 */
 	{{ USB_VENDOR_GREENHOUSE2, USB_PRODUCT_GREENHOUSE2_USBKR100}, 0},
+	/* GREEN HOUSE USBKR100PNA */
+	{{ USB_VENDOR_GREENHOUSE2, USB_PRODUCT_GREENHOUSE2_USBKR100PNA}, 0},
 	/* Longshine LCS-8138TX */
 	{{ USB_VENDOR_ABOCOM, USB_PRODUCT_ABOCOM_LCS8138TX}, 0},
 	/* Micronet SP128AR */
-	{{ USB_VENDOR_MICRONET, USB_PRODUCT_MICRONET_SP128AR}, 0}
+	{{ USB_VENDOR_MICRONET, USB_PRODUCT_MICRONET_SP128AR}, 0},
+	/* Abocom RTL8151 and TrendNet TU-ET100C */
+	{{ USB_VENDOR_ABOCOM, USB_PRODUCT_ABOCOM_RTL8151}, 0}
 };
 #define url_lookup(v, p) ((struct url_type *)usb_lookup(url_devs, v, p))
 

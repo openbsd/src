@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.122 2004/11/11 14:17:46 dlg Exp $
+$OpenBSD: usbdevs,v 1.123 2004/11/17 05:00:27 deraadt Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -436,6 +436,7 @@ product ABOCOM DSB650TX_PNA	0x4003	1/10/100 ethernet
 product ABOCOM XX4		0x4004	XX4
 product ABOCOM XX5		0x4007	XX5
 product ABOCOM XX6		0x400b	XX6
+product ABOCOM RTL8151		0x401a	RTL8151
 product ABOCOM XX7		0x400c	XX7
 product ABOCOM XX8		0x4102	XX8
 product ABOCOM XX9		0x4104	XX9
@@ -837,6 +838,7 @@ product GRAVIS GAMEPADPRO	0x4001	GamePad Pro
 /* GREENHOUSE products */
 product GREENHOUSE KANA21	0x0001	CF-writer/MP3 Player
 product GREENHOUSE2 USBKR100	0x8150	GH-USB100B Ethernet
+product GREENHOUSE2 USBKR100PNA	0x8151	GH-USB100B Ethernet PNA
 
 /* Griffin Technology */
 product GRIFFIN IMATE		0x0405	iMate, ADB adapter
