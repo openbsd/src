@@ -1,0 +1,13 @@
+#	$Sendmail: SunOS.4.0,v 8.9 1999/06/02 22:53:41 gshapiro Exp $
+define(`confBEFORE', `stdlib.h stddef.h limits.h')
+define(`confMAPDEF', `-DNDBM -DNIS')
+define(`confENVDEF', `-DSUNOS403')
+define(`confLDOPTS', `-Bstatic')
+define(`confMBINDIR', `/usr/lib')
+define(`confSBINDIR', `/usr/etc')
+define(`confUBINDIR', `/usr/ucb')
+define(`confEBINDIR', `/usr/lib')
+PUSHDIVERT(3)
+stddef.h stdlib.h limits.h:
+	cp /dev/null $@
+POPDIVERT

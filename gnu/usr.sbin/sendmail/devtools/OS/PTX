@@ -1,0 +1,8 @@
+#	$Sendmail: PTX,v 8.8 1999/04/24 05:37:57 gshapiro Exp $
+define(`confMAPDEF', `-DNDBM')
+define(`confOPTIMIZE', `-g')
+define(`confLIBS', `-lsocket -linet -lelf -lnsl -lseq')
+define(`confMBINDIR', `/usr/lib')
+define(`confSBINDIR', `/usr/etc')
+define(`confEBINDIR', `/usr/lib')
+define(`confSBINGRP', `sys')

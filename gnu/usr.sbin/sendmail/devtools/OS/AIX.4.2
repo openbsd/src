@@ -1,0 +1,10 @@
+#	$Sendmail: AIX.4.2,v 8.11 1999/06/02 22:53:35 gshapiro Exp $
+define(`confMAPDEF', `-DNDBM -DNIS -DMAP_REGEX')
+define(`confENVDEF', `-D_AIX4=40200')
+define(`confOPTIMIZE', `-O3 -qstrict')
+define(`confLIBS', `-ldbm')
+define(`confLIBSEARCH', `db resolv 44bsd')
+define(`confINSTALL', `/usr/ucb/install')
+define(`confEBINDIR', `/usr/lib')
+define(`confSBINGRP', `system')
+define(`confDEPEND_TYPE', `AIX')

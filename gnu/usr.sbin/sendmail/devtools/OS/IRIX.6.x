@@ -1,0 +1,13 @@
+#	$Sendmail: IRIX.6.x,v 8.20 1999/12/13 02:08:29 ca Exp $
+define(`confCC', `cc -mips3 -n32 -OPT:Olimit=2700')
+define(`confLIBSEARCHPATH', `/lib32 /usr/lib32')
+define(`confMAPDEF', `-DNDBM -DNIS -DMAP_REGEX')
+define(`confENVDEF', `-DIRIX6')
+define(`confMBINDIR', `/usr/lib')
+define(`confSBINDIR', `/usr/etc')
+define(`confUBINDIR', `/usr/bsd')
+define(`confEBINDIR', `/usr/lib')
+define(`confSBINGRP', `sys')
+define(`confSTDIR', `/var')
+define(`confINSTALL', `${BUILDBIN}/install.sh')
+define(`confDEPEND_TYPE', `CC-M')

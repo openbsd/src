@@ -1,0 +1,11 @@
+#	$Sendmail: OSF1,v 8.12 1999/11/12 21:19:05 rand Exp $
+define(`confCC', `cc -std1 -Olimit 1000')
+define(`confMAPDEF', `-DNDBM -DNIS -DMAP_REGEX')
+define(`confLIBS', `-ldbm')
+define(`confSTDIR', `/var/adm/sendmail')
+define(`confINSTALL', `installbsd')
+define(`confEBINDIR', `/usr/lbin')
+define(`confUBINDIR', `${BINDIR}')
+define(`confDEPEND_TYPE', `CC-M')
+
+define(`confMTLDOPTS', `-lpthread')

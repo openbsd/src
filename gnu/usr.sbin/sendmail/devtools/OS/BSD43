@@ -1,0 +1,19 @@
+#	$Sendmail: BSD43,v 8.8 1999/06/02 22:53:35 gshapiro Exp $
+define(`confBEFORE', `unistd.h stddef.h stdlib.h dirent.h sys/time.h')
+define(`confMAPDEF', `-DNDBM')
+define(`confENVDEF', `-DoldBSD43')
+define(`confLIBS', `-ldbm -ll')
+define(`confUBINDIR', `/usr/ucb')
+PUSHDIVERT(3)
+unistd.h stddef.h stdlib.h sys/time.h:
+	cp /dev/null $@
+
+sys/time.h: sys
+
+sys:
+	mkdir sys
+
+dirent.h:
+	echo "#include <sys/dir.h>" > dirent.h
+	echo "#define dirent	direct" >> dirent.h
+POPDIVERT

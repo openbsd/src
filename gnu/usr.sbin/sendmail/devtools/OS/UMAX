@@ -1,0 +1,15 @@
+#	$Sendmail: UMAX,v 8.7 1999/06/02 22:53:42 gshapiro Exp $
+define(`confBEFORE', `stddef.h')
+define(`confMAPDEF', `-DNIS')
+define(`confENVDEF', `-DUMAXV')
+define(`confLIBS', `-lyp -lrpc')
+define(`confMBINDIR', `/usr/lib')
+define(`confSBINDIR', `/usr/etc')
+define(`confUBINDIR', `/usr/ucb')
+define(`confEBINDIR', `/usr/lib')
+define(`confHFDIR', `/usr/lib')
+PUSHDIVERT(3)
+stddef.h:
+	echo "#define _STDDEF_H" > stddef.h
+	chmod 444 stddef.h
+POPDIVERT

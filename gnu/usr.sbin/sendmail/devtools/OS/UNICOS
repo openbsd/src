@@ -1,0 +1,7 @@
+#	$Sendmail: UNICOS,v 8.10 1999/06/02 22:53:43 gshapiro Exp $
+define(`confENVDEF', `-DUNICOS')
+define(`confOPTIMIZE', `-O')
+define(`confMBINDIR', `/usr/lib')
+define(`confSBINDIR', `/usr/etc')
+define(`confUBINDIR', `/usr/ucb')
+define(`confEBINDIR', `/usr/lib')

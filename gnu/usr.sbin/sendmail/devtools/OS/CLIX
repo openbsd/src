@@ -1,0 +1,12 @@
+#	$Sendmail: CLIX,v 8.12 1999/06/02 22:53:36 gshapiro Exp $
+define(`confCC', `gcc')
+define(`confMAPDEF', `-DNDBM')
+define(`confENVDEF', `-DCLIX')
+APPENDDEF(`confINCDIRS', `-I/usr/include')
+define(`confLIBS', `-lnsl -lbsd')
+define(`confMBINDIR', `/usr/lib')
+define(`confSBINDIR', `/usr/etc')
+define(`confEBINDIR', `/usr/lib')
+define(`confSBINGRP', `mail')
+define(`confINSTALL', `cp')
+define(`confDEPEND_TYPE', `CC-M')

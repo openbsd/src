@@ -1,0 +1,4 @@
+#	$Sendmail: OpenBSD,v 8.7 1999/05/06 19:45:41 gshapiro Exp $
+define(`confMAPDEF', `-DNEWDB -DNIS -DMAP_REGEX')
+define(`confENVDEF', ` -DNETISO')
+define(`confSTDIO_TYPE', `torek')

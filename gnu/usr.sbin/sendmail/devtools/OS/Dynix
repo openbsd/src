@@ -1,0 +1,12 @@
+#	$Sendmail: Dynix,v 8.10 1999/05/07 17:19:01 gshapiro Exp $
+define(`confCC', `gcc')
+define(`confOPTIMIZE', `-O -g')
+define(`confLIBS', `-lseq')
+define(`confMBINDIR', `/usr/lib')
+define(`confSBINDIR', `/usr/etc')
+define(`confUBINDIR', `/usr/ucb')
+define(`confEBINDIR', `/usr/lib')
+define(`confSBINGRP', `staff # no kmem group,')
+define(`confOBJADD', `strtol.o')
+define(`confSRCADD', `strtol.c')
+define(`confDEPEND_TYPE', `CC-M')

@@ -1,0 +1,7 @@
+#	$Sendmail: CSOS,v 8.7 1999/04/24 05:37:49 gshapiro Exp $
+define(`confLIBS', `-lnet')
+define(`confMBINDIR', `/usr/lib')
+define(`confSBINDIR', `/usr/etc')
+define(`confEBINDIR', `/usr/lib')
+define(`confUBINDIR', `/usr/ucb')
+define(`confINSTALL', `${BUILDBIN}/install.sh')

@@ -1,0 +1,13 @@
+#	$Sendmail: AIX.4.3,v 8.11 1999/07/03 02:06:07 rand Exp $
+define(`confMAPDEF', `-DNDBM -DNIS -DMAP_REGEX')
+define(`confENVDEF', `-D_AIX4=40300')
+define(`confOPTIMIZE', `-O3 -qstrict')
+define(`confCC', `/usr/bin/xlc')
+define(`confLIBS', `-ldbm')
+define(`confINSTALL', `/usr/ucb/install')
+define(`confEBINDIR', `/usr/lib')
+define(`confSBINGRP', `system')
+define(`confDEPEND_TYPE', `AIX')
+
+define(`confMTLDOPTS', `-lpthread')
+define(`confLDOPTS_SO', `-Wl,-G -Wl,-bexpall')

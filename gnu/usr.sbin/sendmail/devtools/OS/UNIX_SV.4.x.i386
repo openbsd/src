@@ -1,0 +1,11 @@
+#	$Sendmail: UNIX_SV.4.x.i386,v 8.10 1999/09/17 20:49:59 gshapiro Exp $
+define(`confCC', `gcc')
+define(`confMAPDEF', `-DNDBM')
+define(`confENVDEF', `-D__svr4__ -DUNIXWARE')
+define(`confLIBS', `-lc -ldbm -lsocket -lnsl -lgen -lelf')
+define(`confMBINDIR', `/usr/ucblib')
+define(`confSBINDIR', `/usr/ucbetc')
+define(`confUBINDIR', `/usr/ucb')
+define(`confEBINDIR', `/usr/ucblib')
+define(`confSBINGRP', `mail')
+define(`confINSTALL', `/usr/ucb/install')

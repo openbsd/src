@@ -1,0 +1,11 @@
+#	$Sendmail: HP-UX,v 8.12 1999/08/10 00:06:41 gshapiro Exp $
+define(`confCC', `cc -Aa')
+define(`confENVDEF', `-D_HPUX_SOURCE')
+define(`confMAPDEF', `-DNDBM -DNIS -DMAP_REGEX')
+define(`confOPTIMIZE', `+O1')
+define(`confLIBS', `-lndbm')
+define(`confMBINDIR', `/usr/lib')
+define(`confSBINDIR', `/usr/etc')
+define(`confEBINDIR', `/usr/lib')
+define(`confSBINGRP', `mail')
+define(`confINSTALL', `${BUILDBIN}/install.sh')
