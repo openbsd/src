@@ -272,10 +272,6 @@ nosyms:
          *  arg7 = conventional memory size (640)
          *  arg8 = extended memory size (8196)
 	 */
-	if (maj == 2) {
-		printf("\n\nInsert file system floppy\n");
-		getc();
-	}
 
 	startaddr &= 0xffffff;
 	argv[1] = howto;

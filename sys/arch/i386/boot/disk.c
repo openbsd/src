@@ -69,7 +69,13 @@ devopen()
 	int i, sector, di;
 	
 	di = get_diskinfo(dosdev);
-	spc = (spt = SPT(di)) * HEADS(di);
+	spt = SPT(di);
+
+	/* Hack for 2.88MB floppy drives. */
+	if (!(dosdev & 0x80) && (spt == 36))
+		spt = 18;
+
+	spc = spt * HEADS(di);
 	if (dosdev == 2) {
 		boff = 0;
 		part = (spt == 15 ? 3 : 1);
