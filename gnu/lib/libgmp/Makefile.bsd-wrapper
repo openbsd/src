@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.6 1998/06/07 23:28:07 millert Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.7 1998/09/10 03:28:44 millert Exp $
 
 SUBDIR+=	mpn mpz mpf mpq
 
@@ -47,6 +47,7 @@ install:
 
 clean cleandir:
 	-@if [ -e Makefile ]; then ${MAKE} distclean; fi
+	-@rm -f sublibs gmp.info gmp.info-1 gmp.info-2 gmp.info-3
 
 depend:
 	# Nothing here so far...
