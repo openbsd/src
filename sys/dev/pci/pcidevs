@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.50 1998/04/27 03:01:30 deraadt Exp $
+$OpenBSD: pcidevs,v 1.51 1998/05/15 14:25:44 deraadt Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -874,6 +874,7 @@ product OPTI 82C557		0xc557	82C557
 product OPTI 82C558		0xc558	82C558
 product OPTI 82C621		0xc621	82C621
 product OPTI 82C822		0xc822	82C822
+product OPTI RM861HA		0xc861	RM861HA
 
 /* PC Tech products */
 product PCTECH RZ1000		0x1000	RZ1000
