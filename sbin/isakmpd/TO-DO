@@ -1,5 +1,5 @@
-$OpenBSD: TO-DO,v 1.18 1999/08/26 22:30:46 niklas Exp $
-$EOM: TO-DO,v 1.44 1999/08/12 22:34:26 niklas Exp $
+$OpenBSD: TO-DO,v 1.19 2000/04/07 22:49:46 niklas Exp $
+$EOM: TO-DO,v 1.45 2000/04/07 22:47:38 niklas Exp $
 
 This file mixes small nitpicks with large projects to be done.
 
@@ -104,9 +104,6 @@ This file mixes small nitpicks with large projects to be done.
 * Remove referring flows when a SPI is removed.
 
 * IPCOMP.
-
-* Remove log_fatals from policy code, if error in policy file reading fall
-  back to check policy against connections.
 
 * Acknowledged notification exchange.
 
