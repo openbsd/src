@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.533 2002/07/27 18:55:43 maja Exp $
+	$OpenBSD: pcidevs,v 1.534 2002/07/29 19:09:54 mickey Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -1873,7 +1873,8 @@ product RCC CNB20HE		0x0008	CNB20HE Host
 product RCC CNB20LE		0x0009	CNB20LE Host
 product RCC CIOB30		0x0010	CIOB30
 product RCC CMIC_HE		0x0011	CMIC_HE Host
-product RCC IDE			0x0211	IDE
+product RCC OSB4_IDE		0x0211	OSB4 IDE
+product RCC CSB5_IDE		0x0212	CSB5 IDE
 product RCC USB			0x0220	USB
 
 /* Picopower */
