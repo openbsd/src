@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_select.c,v 1.6 2003/01/19 21:22:31 marc Exp $	*/
+/*	$OpenBSD: uthread_select.c,v 1.7 2003/10/16 21:50:50 millert Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -51,9 +51,10 @@ select(int numfds, fd_set * readfds, fd_set * writefds,
 {
 	struct pthread	*curthread = _get_curthread();
 	struct timespec ts;
-	int             i, ret = 0, f_wait = 1;
-	int		pfd_index, got_one = 0, fd_count = 0;
+	int             bit, i, j, ret = 0, f_wait = 1;
+	int		events, got_one = 0, fd_count = 0;
 	struct pthread_poll_data data;
+	fd_mask		mask, rmask, wmask, emask;
 
 	/* this is a cancellation point per IEEE Std 1003.1-2001 */
 	_thread_enter_cancellation_point();
@@ -84,12 +85,13 @@ select(int numfds, fd_set * readfds, fd_set * writefds,
 
 	/* Count the number of file descriptors to be polled: */
 	if (readfds || writefds || exceptfds) {
-		for (i = 0; i < numfds; i++) {
-			if ((readfds && FD_ISSET(i, readfds)) ||
-			    (exceptfds && FD_ISSET(i, exceptfds)) ||
-			    (writefds && FD_ISSET(i, writefds))) {
+		for (i = (numfds - 1) / NFDBITS; i >= 0; i--) {
+			rmask = readfds ? readfds->fds_bits[i] : 0;
+			wmask = writefds ? writefds->fds_bits[i] : 0;
+			emask = exceptfds ? exceptfds->fds_bits[i] : 0;
+			mask = rmask | wmask | emask;
+			for (; (bit = ffs(mask)); mask ^= (1 << (bit - 1)))
 				fd_count++;
-			}
 		}
 	}
 
@@ -125,27 +127,33 @@ select(int numfds, fd_set * readfds, fd_set * writefds,
 		 * running the loop in reverse and stopping when
 		 * the number of selected file descriptors is reached.
 		 */
-		for (i = numfds - 1, pfd_index = fd_count - 1;
-		    (i >= 0) && (pfd_index >= 0); i--) {
-			data.fds[pfd_index].events = 0;
-			if (readfds && FD_ISSET(i, readfds)) {
-				data.fds[pfd_index].events = POLLRDNORM;
-			}
-			if (exceptfds && FD_ISSET(i, exceptfds)) {
-				data.fds[pfd_index].events |= POLLRDBAND;
-			}
-			if (writefds && FD_ISSET(i, writefds)) {
-				data.fds[pfd_index].events |= POLLWRNORM;
-			}
-			if (data.fds[pfd_index].events != 0) {
-				/*
-				 * Set the file descriptor to be polled and
-				 * clear revents in case of a timeout which
-				 * leaves fds unchanged:
-				 */
-				data.fds[pfd_index].fd = i;
-				data.fds[pfd_index].revents = 0;
-				pfd_index--;
+		for (i = (numfds - 1) / NFDBITS, j = fd_count;
+		    j != 0 && i >= 0; i--) {
+			rmask = readfds ? readfds->fds_bits[i] : 0;
+			wmask = writefds ? writefds->fds_bits[i] : 0;
+			emask = exceptfds ? exceptfds->fds_bits[i] : 0;
+			mask = rmask | wmask | emask;
+			while ((bit = ffs(mask))) {
+				int n = 1 << (bit - 1);
+				mask ^= n;
+				events = 0;
+				if (rmask & n)
+					events |= POLLRDNORM;
+				if (wmask & n)
+					events |= POLLWRNORM;
+				if (emask & n)
+					events |= POLLRDBAND;
+				if (events != 0) {
+					/*
+					 * Set the file descriptor to be polled
+					 * and clear revents in case of a
+					 * timeout which leaves fds unchanged:
+					 */
+					data.fds[--j].fd =
+					    (i * NFDBITS) + bit - 1;
+					data.fds[j].events = events;
+					data.fds[j].revents = 0;
+				}
 			}
 		}
 		if (((ret = _thread_sys_poll(data.fds, data.nfds, 0)) == 0) &&
