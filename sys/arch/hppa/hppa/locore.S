@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.79 2002/08/03 20:56:42 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.80 2002/08/13 05:27:44 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -2264,14 +2264,15 @@ LEAF_ENTRY(spstrcpy)
 	/* setup fault handler */
 	ldil	L%curproc, t4
 	ldw	R%curproc(t4), t4
-	ldw	P_ADDR(t4), t4
-	ldw	PCB_ONFAULT+U_PCB(t4), r1
 	ldil	L%copy_on_fault, t2
+	ldw	P_ADDR(t4), t4
 	ldo	R%copy_on_fault(t2), t2
+	ldw	PCB_ONFAULT+U_PCB(t4), r1
 	stw	t2, PCB_ONFAULT+U_PCB(t4)
 
 	ldw	HPPA_FRAME_ARG(4)(sp), ret1
-	mfsp	sr2, ret0	/* XXX need this? */
+	mfsp	sr1, ret0	/* XXX need this? */
+	mfsp	sr2, ret1	/* XXX need this? */
 	mtsp	arg0, sr1
 	mtsp	arg2, sr2
 	add	ret1, arg1, ret1
@@ -2285,12 +2286,12 @@ $spstrcpy_loop
 	nop
 
 $spstrcpy_exit
-	/* reset fault handler */
 	sub	arg1, arg0, arg1
-	mtsp	ret0, sr2	/* XXX need this? */
+	mtsp	ret0, sr1
+	mtsp	ret1, sr2	/* XXX need this? */
 	ldw	HPPA_FRAME_ARG(5)(sp), arg0
 	copy	r0, ret0
-	add,=	r0, arg0, r0
+	sub,=	r0, arg0, r0
 	stw	arg1, 0(arg0)
 	bv	0(rp)
 	stw	r1, PCB_ONFAULT+U_PCB(t4)
