@@ -1,4 +1,4 @@
-/*	$Id: sys_machdep.c,v 1.3 1995/11/07 08:50:26 deraadt Exp $ */
+/*	$Id: sys_machdep.c,v 1.4 1995/11/28 01:24:16 deraadt Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -238,18 +238,6 @@ cachectl(req, addr, len)
 		break;
 	}
 	return(error);
-}
-
-int
-sysarch(p, uap, retval)
-	struct proc *p;
-	struct sysarch_args /* {
-		syscallarg(int) op;
-		syscallarg(char *) parms;
-	} */ *uap;
-	register_t *retval;
-{
-	return ENOSYS;
 }
 
 /*
