@@ -139,13 +139,16 @@ static int	eeprom_nvram = 0;	/* non-zero if eeprom is on Mostek */
 
 static int	eeprom_match __P((struct device *, void *, void *));
 static void	eeprom_attach __P((struct device *, struct device *, void *));
-static int	eeprom_update __P((char *, int, int));
-static int	eeprom_take __P((void));
-static void	eeprom_give __P((void));
 struct	cfdriver eepromcd = {
 	NULL, "eeprom", eeprom_match, eeprom_attach,
 	DV_DULL, sizeof(struct device)
 };
+
+#if defined(SUN4)
+static int	eeprom_update __P((char *, int, int));
+static int	eeprom_take __P((void));
+static void	eeprom_give __P((void));
+#endif
 
 static int	clockmatch __P((struct device *, void *, void *));
 static void	clockattach __P((struct device *, struct device *, void *));
@@ -255,7 +258,8 @@ eeprom_attach(parent, self, aux)
 
 	printf("\n");
 
-	eeprom_va = (char *)mapiodev(ra->ra_paddr, EEPROM_SIZE, ca->ca_bustype);
+	eeprom_va = (char *)mapiodev(ra->ra_paddr, sizeof(struct eeprom),
+	    ca->ca_bustype);
 
 	eeprom_nvram = 0;
 #endif /* SUN4 */
@@ -277,7 +281,7 @@ clockmatch(parent, vcf, aux)
 	if (cputyp==CPU_SUN4) {
 		if (cpumod == SUN4_300 || cpumod == SUN4_400)
 			return (strcmp(clockcd.cd_name,
-				       ca->ca_ra.ra_name) == 0);
+			    ca->ca_ra.ra_name) == 0);
 		return (0);
 	}
 #endif /* SUN4 */
@@ -438,15 +442,16 @@ myetheraddr(cp)
 }
 
 /*
- * Delay: wait for `about' n microseconds to pass.
- * This is easy to do on the SparcStation since we have
- * freerunning microsecond timers -- no need to guess at
- * cpu speed factors.  We just wait for it to change n times
- * (if we calculated a limit, we might overshoot, and precision
- * is irrelevant here---we want less object code).
+ * This is easy to do on the machine with new-style clock chips
+ * since we have freerunning microsecond timers -- no need to
+ * guess at cpu speed factors.  We just wait for it to change
+ * n times (if we calculated a limit, we might overshoot, and
+ * precision is irrelevant here---we want less object code).
+ * On machines with the old-style clocks, we've determined good
+ * estimates.
  */
 delay(n)
-	volatile register int n;
+	register int n;
 {
 	register int c, t;
 
@@ -454,18 +459,15 @@ delay(n)
 	if (oldclk) {
 		volatile register int lcv;
 
-		/*
-		 * feel free to improve this code
+  		/*
+		 * Two cases: 4/100 and 4/200.
 		 */
-		if (cpumod == SUN4_100)
-			t = 1; /* 4/100, untested */
+		if (cpumod == SUN4_200)
+			n = cacheinfo.c_enabled ? (n << 3) : (n << 1);
 		else
-			t = (cacheinfo.c_enabled) ? 3 : 1; /* 4/200 */
-
-		while (--n >= 0) {
-			for (lcv = 0 ; lcv < t ; lcv++)
-				;
-		}
+			n = n << 1;
+		while (--n >= 0)
+			lcv = n;
 		return (0);
 	}
 #endif /* SUN4 */
@@ -481,6 +483,7 @@ delay(n)
 			continue;
 		c = t;
 	}
+	return (0);
 }
 
 /*
@@ -817,24 +820,24 @@ resettodr()
 static long
 oclk_get_secs()
 {
-        struct date_time dt;
-        long gmt;
+	struct date_time dt;
+	long gmt;
 
-        oclk_get_dt(&dt);
-        dt_to_gmt(&dt, &gmt);
-        return (gmt);
+	oclk_get_dt(&dt);
+	dt_to_gmt(&dt, &gmt);
+	return (gmt);
 }
 
 static void
 oclk_set_secs(secs)
 	long secs;
 {
-        struct date_time dt;
-        long gmt;
+	struct date_time dt;
+	long gmt;
 
-        gmt = secs;
-        gmt_to_dt(&gmt, &dt);
-        oclk_set_dt(&dt);
+	gmt = secs;
+	gmt_to_dt(&gmt, &dt);
+	oclk_set_dt(&dt);
 }
 
 /*
@@ -846,48 +849,48 @@ static void
 oclk_get_dt(dt)
 	struct date_time *dt;
 {
-        int s;
-        register volatile char *src, *dst;
+	int s;
+	register volatile char *src, *dst;
 
-        src = (char *) &i7->counters;
+	src = (char *) &i7->counters;
 
-        s = splhigh();
-        i7->clk_cmd_reg =
-                intersil_command(INTERSIL_CMD_STOP, INTERSIL_CMD_IENABLE);
+	s = splhigh();
+	i7->clk_cmd_reg =
+		intersil_command(INTERSIL_CMD_STOP, INTERSIL_CMD_IENABLE);
 
-        dst = (char *) dt;
-        dt++;   /* end marker */
-        do {
-                *dst++ = *src++;
-        } while (dst < (char*)dt);
+	dst = (char *) dt;
+	dt++;   /* end marker */
+	do {
+		*dst++ = *src++;
+	} while (dst < (char*)dt);
 
-        i7->clk_cmd_reg =
-                intersil_command(INTERSIL_CMD_RUN, INTERSIL_CMD_IENABLE);
-        splx(s);
+	i7->clk_cmd_reg =
+		intersil_command(INTERSIL_CMD_RUN, INTERSIL_CMD_IENABLE);
+	splx(s);
 }
 
 static void
 oclk_set_dt(dt)
 	struct date_time *dt;
 {
-        int s;
-        register volatile char *src, *dst;
+	int s;
+	register volatile char *src, *dst;
 
-        dst = (char *) &i7->counters;
+	dst = (char *) &i7->counters;
 
-        s = splhigh();
-        i7->clk_cmd_reg =
-                intersil_command(INTERSIL_CMD_STOP, INTERSIL_CMD_IENABLE);
+	s = splhigh();
+	i7->clk_cmd_reg =
+		intersil_command(INTERSIL_CMD_STOP, INTERSIL_CMD_IENABLE);
 
-        src = (char *) dt;
-        dt++;   /* end marker */
-        do {
-                *dst++ = *src++;
-        } while (src < (char *)dt);
+	src = (char *) dt;
+	dt++;   /* end marker */
+	do {
+		*dst++ = *src++;
+	} while (src < (char *)dt);
 
-        i7->clk_cmd_reg =
-                intersil_command(INTERSIL_CMD_RUN, INTERSIL_CMD_IENABLE);
-        splx(s);
+	i7->clk_cmd_reg =
+		intersil_command(INTERSIL_CMD_RUN, INTERSIL_CMD_IENABLE);
+	splx(s);
 }
 
 
@@ -899,14 +902,14 @@ oclk_set_dt(dt)
 
 /* Traditional UNIX base year */
 #define POSIX_BASE_YEAR 1970
-#define FEBRUARY        2
+#define FEBRUARY	2
 
-#define leapyear(year)          ((year) % 4 == 0)
-#define days_in_year(a)         (leapyear(a) ? 366 : 365)
-#define days_in_month(a)        (month_days[(a) - 1])
+#define leapyear(year)		((year) % 4 == 0)
+#define days_in_year(a)		(leapyear(a) ? 366 : 365)
+#define days_in_month(a)	(month_days[(a) - 1])
 
 static int month_days[12] = {
-        31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31
+	31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31
 };
 
 static void
@@ -914,90 +917,90 @@ gmt_to_dt(tp, dt)
 	long *tp;
 	struct date_time *dt;
 {
-        register int i;
-        register long days, secs;
+	register int i;
+	register long days, secs;
 
-        days = *tp / SECDAY;
-        secs = *tp % SECDAY;
+	days = *tp / SECDAY;
+	secs = *tp % SECDAY;
 
-        /* Hours, minutes, seconds are easy */
-        dt->dt_hour = secs / 3600;
-        secs = secs % 3600;
-        dt->dt_min  = secs / 60;
-        secs = secs % 60;
-        dt->dt_sec  = secs;
+	/* Hours, minutes, seconds are easy */
+	dt->dt_hour = secs / 3600;
+	secs = secs % 3600;
+	dt->dt_min  = secs / 60;
+	secs = secs % 60;
+	dt->dt_sec  = secs;
 
-        /* Day of week (Note: 1/1/1970 was a Thursday) */
-        dt->dt_dow = (days + 4) % 7;
+	/* Day of week (Note: 1/1/1970 was a Thursday) */
+	dt->dt_dow = (days + 4) % 7;
 
-        /* Number of years in days */
-        i = POSIX_BASE_YEAR;
-        while (days >= days_in_year(i)) {
-                days -= days_in_year(i);
-                i++;
-        }
-        dt->dt_year = i - CLOCK_BASE_YEAR;
+	/* Number of years in days */
+	i = POSIX_BASE_YEAR;
+	while (days >= days_in_year(i)) {
+		days -= days_in_year(i);
+		i++;
+	}
+	dt->dt_year = i - CLOCK_BASE_YEAR;
 
-        /* Number of months in days left */
-        if (leapyear(i))
-                days_in_month(FEBRUARY) = 29;
-        for (i = 1; days >= days_in_month(i); i++)
-                days -= days_in_month(i);
-        days_in_month(FEBRUARY) = 28;
-        dt->dt_month = i;
+	/* Number of months in days left */
+	if (leapyear(i))
+		days_in_month(FEBRUARY) = 29;
+	for (i = 1; days >= days_in_month(i); i++)
+		days -= days_in_month(i);
+	days_in_month(FEBRUARY) = 28;
+	dt->dt_month = i;
 
-        /* Days are what is left over (+1) from all that. */
-        dt->dt_day = days + 1;
+	/* Days are what is left over (+1) from all that. */
+	dt->dt_day = days + 1;
 }
-
 
 static void
 dt_to_gmt(dt, tp)
 	struct date_time *dt;
 	long *tp;
 {
-        register int i;
-        register long tmp;
-        int year;
+	register int i;
+	register long tmp;
+	int year;
 
-        /*
-         * Hours are different for some reason. Makes no sense really.
-         */
+	/*
+	 * Hours are different for some reason. Makes no sense really.
+	 */
+	tmp = 0;
 
-        tmp = 0;
+	if (dt->dt_hour >= 24)
+		goto out;
+	if (dt->dt_day > 31)
+		goto out;
+	if (dt->dt_month > 12)
+		goto out;
 
-        if (dt->dt_hour >= 24) goto out;
-        if (dt->dt_day  >  31) goto out;
-        if (dt->dt_month > 12) goto out;
+	year = dt->dt_year + CLOCK_BASE_YEAR;
 
-        year = dt->dt_year + CLOCK_BASE_YEAR;
+	/*
+	 * Compute days since start of time
+	 * First from years, then from months.
+	 */
+	for (i = POSIX_BASE_YEAR; i < year; i++)
+		tmp += days_in_year(i);
+	if (leapyear(year) && dt->dt_month > FEBRUARY)
+		tmp++;
 
+	/* Months */
+	for (i = 1; i < dt->dt_month; i++)
+		tmp += days_in_month(i);
+	tmp += (dt->dt_day - 1);
 
-        /*
-         * Compute days since start of time
-         * First from years, then from months.
-         */
-        for (i = POSIX_BASE_YEAR; i < year; i++)
-                tmp += days_in_year(i);
-        if (leapyear(year) && dt->dt_month > FEBRUARY)
-                tmp++;
+	/* Now do hours */
+	tmp = tmp * 24 + dt->dt_hour;
 
-        /* Months */
-        for (i = 1; i < dt->dt_month; i++)
-                tmp += days_in_month(i);
-        tmp += (dt->dt_day - 1);
+	/* Now do minutes */
+	tmp = tmp * 60 + dt->dt_min;
 
-        /* Now do hours */
-        tmp = tmp * 24 + dt->dt_hour;
-
-        /* Now do minutes */
-        tmp = tmp * 60 + dt->dt_min;
-
-        /* Now do seconds */
-        tmp = tmp * 60 + dt->dt_sec;
+	/* Now do seconds */
+	tmp = tmp * 60 + dt->dt_sec;
 
 out:
-        *tp = tmp;
+	*tp = tmp;
 }
 #endif /* SUN4 */
 
@@ -1097,7 +1100,7 @@ eeprom_uio(uio)
 	if (uio->uio_rw != UIO_READ)
 		error = eeprom_update(buf, off, cnt);
 
- out:
+out:
 	if (buf)
 		free(buf, M_DEVBUF);
 	eeprom_give();
@@ -1107,6 +1110,7 @@ eeprom_uio(uio)
 #endif /* SUN4 */
 }
 
+#if defined(SUN4)
 /*
  * Update the EEPROM from the passed buf.
  */
@@ -1115,7 +1119,6 @@ eeprom_update(buf, off, cnt)
 	char *buf;
 	int off, cnt;
 {
-#if defined(SUN4)
 	int error = 0;
 	volatile char *ep;
 	char *bp;
@@ -1129,7 +1132,6 @@ eeprom_update(buf, off, cnt)
 	/*
 	 * XXX: I'm not totally sure if this is necessary, and I don't
 	 * know if there are any harmful side effects, either.
-	 *	--thorpej
 	 */
 	if (eeprom_nvram)
 		clk_wenable(1);
@@ -1159,23 +1161,20 @@ eeprom_update(buf, off, cnt)
 		++bp;
 		--cnt;
 	}
- out:
+out:
 	/* XXX: see above. */
 	if (eeprom_nvram)
 		clk_wenable(0);
 
 	return (error);
-#else /* ! SUN4 */
-	return (0);
-#endif /* SUN4 */
 }
 
 /* Take a lock on the eeprom. */
 static int
 eeprom_take()
 {
-#if defined(SUN4)
 	int error = 0;
+
 	while (eeprom_busy) {
 		eeprom_wanted = 1;
 		error = tsleep(&eeprom_busy, PZERO | PCATCH, "eeprom", 0);
@@ -1184,22 +1183,18 @@ eeprom_take()
 			goto out;
 	}
 	eeprom_busy = 1;
- out:
+out:
 	return (error);
-#else /* ! SUN4 */
-	return (ENODEV);
-#endif /* SUN4 */
 }
 
 /* Give a lock on the eeprom away. */
 static void
 eeprom_give()
 {
-#if defined(SUN4)
 	eeprom_busy = 0;
 	if (eeprom_wanted) {
 		eeprom_wanted = 0;
 		wakeup(&eeprom_busy);
 	}
-#endif /* SUN4 */
 }
+#endif /* SUN4 */
