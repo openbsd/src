@@ -258,7 +258,7 @@ parse_client_statement(FILE *cfile, struct interface_info *ip,
 	case INTERFACE:
 		if (ip)
 			parse_warn("nested interface declaration.");
-		parse_interface_declaration (cfile, config);
+		parse_interface_declaration(cfile, config);
 		return;
 	case LEASE:
 		parse_client_lease_statement(cfile, 1);
@@ -330,7 +330,7 @@ parse_X(FILE *cfile, u_int8_t *buf, int max)
    		   option_list COMMA option_name */
 
 int
-parse_option_list (FILE *cfile, u_int8_t *list)
+parse_option_list(FILE *cfile, u_int8_t *list)
 {
 	int	 ix, i;
 	int	 token;
@@ -438,8 +438,8 @@ interface_or_dummy(char *name)
 	if (!ip) {
 		ip = malloc(sizeof *ip);
 		if (!ip)
-			error ("Insufficient memory to record interface %s",
-			       name);
+			error("Insufficient memory to record interface %s",
+			    name);
 		memset(ip, 0, sizeof *ip);
 		strlcpy(ip->name, name, IFNAMSIZ);
 		ip->next = dummy_interfaces;
@@ -493,7 +493,7 @@ parse_client_lease_statement(FILE *cfile, int is_static)
 
 	lease = malloc(sizeof(struct client_lease));
 	if (!lease)
-		error ("no memory for lease.\n");
+		error("no memory for lease.\n");
 	memset(lease, 0, sizeof *lease);
 	lease->is_static = is_static;
 
@@ -553,7 +553,7 @@ parse_client_lease_statement(FILE *cfile, int is_static)
 		ip->client->leases = lease;
 		return;
 	}
-		
+
 	/* The last lease in the lease file on a particular interface is
 	   the active lease for that interface.    Of course, we don't know
 	   what the last lease in the file is until we've parsed the whole
@@ -572,7 +572,7 @@ parse_client_lease_statement(FILE *cfile, int is_static)
 		    lease->address.len &&
 		    !memcmp(ip->client->active->address.iabuf,
 		    lease->address.iabuf, lease->address.len))
-			free_client_lease (ip->client->active);
+			free_client_lease(ip->client->active);
 		else {
 			ip->client->active->next = ip->client->leases;
 			ip->client->leases = ip->client->active;
@@ -602,7 +602,7 @@ parse_client_lease_declaration(FILE *cfile, struct client_lease *lease,
 	char			*val;
 	struct interface_info	*ip;
 
-	switch(next_token (&val, cfile)) {
+	switch (next_token (&val, cfile)) {
 	case BOOTP:
 		lease->is_bootp = 1;
 		break;
@@ -668,7 +668,7 @@ parse_option_decl(FILE *cfile, struct option_data *options)
 	struct iaddr	 ip_addr;
 	u_int8_t	*dp;
 	int		 len;
-	int 		 nul_term = 0;
+	int		 nul_term = 0;
 
 	token = next_token(&val, cfile);
 	if (!is_identifier(token)) {
@@ -679,7 +679,7 @@ parse_option_decl(FILE *cfile, struct option_data *options)
 	}
 	if (asprintf(&vendor, "%s", val) == -1)
 		error("no memory for vendor information.");
-	
+
 	token = peek_token (&val, cfile);
 	if (token == DOT) {
 		/* Go ahead and take the DOT token... */
@@ -740,7 +740,7 @@ parse_option_decl(FILE *cfile, struct option_data *options)
 				len = parse_X(cfile, &hunkbuf[hunkix],
 				    sizeof hunkbuf - hunkix);
 				hunkix += len;
-				break;	
+				break;
 			case 't': /* Text string... */
 				token = next_token(&val, cfile);
 				if (token != STRING) {
@@ -766,12 +766,12 @@ parse_option_decl(FILE *cfile, struct option_data *options)
 				dp = ip_addr.iabuf;
 alloc:
 				if (hunkix + len > sizeof hunkbuf) {
-					parse_warn ("option data buffer %s",
+					parse_warn("option data buffer "
 					    "overflow");
 					skip_to_semi(cfile);
 					return (NULL);
 				}
-				memcpy (&hunkbuf[hunkix], dp, len);
+				memcpy(&hunkbuf[hunkix], dp, len);
 				hunkix += len;
 				break;
 			case 'L':	/* Unsigned 32-bit integer... */
@@ -784,7 +784,7 @@ need_number:
 						skip_to_semi(cfile);
 					return (NULL);
 				}
-				convert_num (buf, val, 0, 32);
+				convert_num(buf, val, 0, 32);
 				len = 4;
 				dp = buf;
 				goto alloc;
@@ -853,7 +853,7 @@ bad_flag:
 }
 
 void
-parse_string_list (FILE *cfile, struct string_list **lp, int multiple)
+parse_string_list(FILE *cfile, struct string_list **lp, int multiple)
 {
 	int			 token;
 	char			*val;
@@ -874,10 +874,10 @@ parse_string_list (FILE *cfile, struct string_list **lp, int multiple)
 			return;
 		}
 
-		tmp = new_string_list(strlen(val) + 1, "parse tmp"); 
+		tmp = new_string_list(strlen(val) + 1, "parse tmp");
 		if (tmp == NULL)
-			error ("no memory for string list entry.");
-		strlcpy (tmp->string, val, strlen(val) + 1);
+			error("no memory for string list entry.");
+		strlcpy(tmp->string, val, strlen(val) + 1);
 		tmp->next = NULL;
 
 		/* Store this medium at the end of the media list. */
@@ -926,4 +926,4 @@ parse_reject_statement(FILE *cfile, struct client_config *config)
 		parse_warn("expecting semicolon.");
 		skip_to_semi(cfile);
 	}
-}	
+}

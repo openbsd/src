@@ -105,7 +105,7 @@ putUShort(unsigned char *obuf, unsigned int val)
 }
 
 void
-putShort (unsigned char *obuf, int val)
+putShort(unsigned char *obuf, int val)
 {
 	int16_t	tmp = htons(val);
 

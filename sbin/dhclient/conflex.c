@@ -89,7 +89,7 @@ get_char(FILE *cfile)
 	int	c = getc (cfile);
 	if (!ugflag) {
 		if (c == EOL) {
-			if (cur_line == line1) {	
+			if (cur_line == line1) {
 				cur_line = line2;
 				prev_line = line1;
 			} else {
@@ -108,11 +108,11 @@ get_char(FILE *cfile)
 		}
 	} else
 		ugflag = 0;
-	return c;		
+	return c;
 }
 
 static int
-get_token (FILE *cfile)
+get_token(FILE *cfile)
 {
 	int		c, ttok;
 	static char	tb[2];
@@ -270,7 +270,7 @@ read_number(int c, FILE *cfile)
 		tokbuf[i] = c;
 	}
 	if (i == sizeof(tokbuf)) {
-		parse_warn ("numeric token larger than internal buffer");
+		parse_warn("numeric token larger than internal buffer");
 		--i;
 	}
 	tokbuf[i] = 0;
@@ -280,7 +280,7 @@ read_number(int c, FILE *cfile)
 }
 
 static int
-read_num_or_name (int c, FILE *cfile)
+read_num_or_name(int c, FILE *cfile)
 {
 	int	i = 0;
 	int	rv = NUMBER_OR_NAME;
@@ -313,7 +313,7 @@ intern(char *atom, int dfv)
 	if (!isascii(atom[0]))
 		return dfv;
 
-	switch(tolower(atom[0])) {
+	switch (tolower(atom[0])) {
 	case 'a':
 		if (!strcasecmp(atom + 1, "lways-reply-rfc1048"))
 			return (ALWAYS_REPLY_RFC1048);
