@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_we.c,v 1.6 1998/12/23 06:02:19 aaron Exp $	*/
+/*	$OpenBSD: if_we.c,v 1.7 1998/12/23 07:58:26 aaron Exp $	*/
 /*	$NetBSD: if_we.c,v 1.11 1998/07/05 06:49:14 jonathan Exp $	*/
 
 /*-
@@ -377,7 +377,7 @@ we_attach(parent, self, aux)
 	memt = ia->ia_memt;
 
 	/* Map the device. */
-	if (ia->ia_ioh)
+	if (!strcmp(parent->dv_cfdata->cf_driver->cd_name, "isapnp") && ia->ia_ioh)
 		asich = ia->ia_ioh;
 	else if (bus_space_map(asict, ia->ia_iobase, WE_NPORTS, 0, &asich)) {
 		printf(": can't map nic i/o space\n");
@@ -401,7 +401,7 @@ we_attach(parent, self, aux)
 	 * Map memory space.  Note we use the size that might have
 	 * been overridden by the user.
 	 */
-	if (ia->ia_memh)
+	if (!strcmp(parent->dv_cfdata->cf_driver->cd_name, "isapnp") && ia->ia_memh)
 		memh = ia->ia_memh;
 	else if (bus_space_map(memt, ia->ia_maddr, ia->ia_msize, 0, &memh)) {
 		printf(": can't map shared memory\n");
