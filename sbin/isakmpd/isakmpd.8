@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.8,v 1.25 2001/04/30 12:51:13 provos Exp $
+.\" $OpenBSD: isakmpd.8,v 1.26 2001/04/30 14:38:12 ho Exp $
 .\" $EOM: isakmpd.8,v 1.23 2000/05/02 00:30:23 niklas Exp $
 .\"
 .\" Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -40,7 +40,7 @@
 .Nm isakmpd
 .Nd ISAKMP/Oakley a.k.a. IKE key management daemon
 .Sh SYNOPSIS
-.Nm isakmpd
+.Nm 
 .Op Fl c Ar config-file
 .Op Fl d
 .Op Fl D Ar class=level
@@ -74,10 +74,14 @@ a FIFO or by signals, upcalls from the kernel via a
 .Dv PF_KEY
 socket, and lastly by scheduled events triggered by timers running out.
 .Pp
-Most uses of isakmpd will be to implement so called "virtual private
+Most uses of 
+.Nm
+will be to implement so called "virtual private
 networks" or VPNs for short.  The
 .Xr vpn 8
-manual page describes how to setup isakmpd for a simple VPN.  For other
+manual page describes how to setup 
+.Nm
+for a simple VPN.  For other
 uses, some more knowledge of IKE as a protocol is required.  One source
 of information are the RFCs mentioned below.
 .Pp
@@ -264,8 +268,9 @@ unique.
 .Pp
 Now take these certificate signing requests to your CA and process
 them like below.  You have to add some extensions to the certificate
-in order to make it usable for isakmpd.  There are two
-possible ways to add the extensions to the certificate.
+in order to make it usable for 
+.Nm isakmpd .
+There are two possible ways to add the extensions to the certificate.
 Either you have to to run
 .Xr certpatch 8
 or you have to make use of an OpenSSL configuration file, for example
@@ -290,7 +295,7 @@ Otherwise do
 # setenv CERTIP 10.0.0.1
 # openssl x509 -req -days 365 -in 10.0.0.1.csr -CA /etc/ssl/ca.crt \\
 	-CAkey /etc/ssl/private/ca.key -CAcreateserial \\
-        -extfile /etc/ssl/x509v3.cnf -extensions x509v3_IPAddr \\
+	-extfile /etc/ssl/x509v3.cnf -extensions x509v3_IPAddr \\
 	-out 10.0.0.1.crt
 .Ed
 .Pp
@@ -306,7 +311,7 @@ The
 .Fl P
 flag does not do what we document, rather it does nothing.
 .Sh FILES
-.Bl -tag -width /var/run/isakmpd.report
+.Bl -tag -width /etc/isakmpd/private/local.
 .It Pa /etc/isakmpd/ca/
 The directory where CA certificates can be found.
 .It Pa /etc/isakmpd/certs/
@@ -315,14 +320,17 @@ certificate(s) and those of the peers, if a choice to have them kept
 permanently has been made.
 .It Pa /etc/isakmpd/isakmpd.conf
 The configuration file. As this file can contain sensitive information
-it must not be readable by anyone but the user running isakmpd.
+it must not be readable by anyone but the user running
+.Nm isakmpd .
 .It Pa /etc/isakmpd/isakmpd.policy
-The keynote policy configuration file. Same mode requirements as
-for isakmpd.conf.
+The keynote policy configuration file.  The same mode 
+requirements as
+.Nm isakmpd.conf .
 .It Pa /etc/isakmpd/private/local.key
 A local private key for certificate based authentication.  There has
 to be a certificate for this key in the certificate directory mentioned
-above. Same mode requirements as isakmpd.conf.
+above.  The same mode requirements as
+.Nm isakmpd.conf .
 .It Pa /var/run/isakmpd.fifo
 The FIFO used to manually control
 .Nm isakmpd .
@@ -332,6 +340,10 @@ The default IKE packet capture file.
 The report file written when
 .Dv SIGUSR1
 is received.
+.It Pa /usr/share/ipsec/isakmpd/
+A directory containing some sample 
+.Nm 
+and keynote policy configuration files.
 .El
 .Sh SEE ALSO
 .Xr ipsec 4 ,
