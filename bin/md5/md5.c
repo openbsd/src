@@ -1,4 +1,4 @@
-/*	$OpenBSD: md5.c,v 1.26 2003/07/21 00:11:03 millert Exp $	*/
+/*	$OpenBSD: md5.c,v 1.27 2004/03/03 22:00:06 millert Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -85,7 +85,7 @@ struct hash_functions functions[] = {
 extern char *__progname;
 static void usage(void);
 static void digest_file(char *, struct hash_functions *, int);
-static int digest_filelist(char *);
+static int digest_filelist(int, char *);
 static void digest_string(char *, struct hash_functions *);
 static void digest_test(struct hash_functions *);
 static void digest_time(struct hash_functions *);
@@ -145,10 +145,10 @@ main(int argc, char **argv)
 		digest_string(input_string, &functions[digest_type]);
 	else if (cflag)
 		if (argc == 0)
-			error = digest_filelist("-");
+			error = digest_filelist(digest_type, "-");
 		else
 			while (argc--)
-				error += digest_filelist(*argv++);
+				error += digest_filelist(digest_type, *argv++);
 	else if (pflag || argc == 0)
 		digest_file("-", &functions[digest_type], pflag);
 	else
@@ -216,7 +216,7 @@ digest_file(char *file, struct hash_functions *hf, int echo)
  * Print out the result of each comparison.
  */
 static int
-digest_filelist(char *file)
+digest_filelist(int algorithm_def, char *file)
 {
 	int fd, found, error;
 	int algorithm_max, algorithm_min;
@@ -263,36 +263,57 @@ digest_filelist(char *file)
 		 * Crack the line into an algorithm, filename, and checksum.
 		 * Lines are of the form:
 		 *  ALGORITHM (FILENAME) = CHECKSUM
+		 *
+		 * Fallback on GNU form:
+		 *  CHECKSUM  FILENAME
 		 */
-		algorithm = buf;
-		p = strchr(algorithm, ' ');
-		if (p == NULL || *(p + 1) != '(')
-			continue;
-		*p = '\0';
-		len = strlen(algorithm);
-		if (len > algorithm_max || len < algorithm_min)
-			continue;
+		p = strchr(buf, ' ');
+		if (p != NULL && *(p + 1) == '(') {
+			/* BSD form */
+			*p = '\0';
+			algorithm = buf;
+			len = strlen(algorithm);
+			if (len > algorithm_max || len < algorithm_min)
+				continue;
 
-		filename = p + 2;
-		p = strrchr(filename, ')');
-		if (p == NULL || strncmp(p + 1, " = ", (size_t)3) != 0)
-			continue;
-		*p = '\0';
-
-		checksum = p + 4;
-		p = strpbrk(checksum, " \t\r");
-		if (p != NULL)
+			filename = p + 2;
+			p = strrchr(filename, ')');
+			if (p == NULL || strncmp(p + 1, " = ", (size_t)3) != 0)
+				continue;
 			*p = '\0';
 
-		/*
-		 * Check that the algorithm is one we recognize.
-		 */
-		for (hf = functions; hf->name != NULL; hf++) {
-			if (strcmp(algorithm, hf->name) == 0)
-				break;
+			checksum = p + 4;
+			p = strpbrk(checksum, " \t\r");
+			if (p != NULL)
+				*p = '\0';
+
+			/*
+			 * Check that the algorithm is one we recognize.
+			 */
+			for (hf = functions; hf->name != NULL; hf++) {
+				if (strcmp(algorithm, hf->name) == 0)
+					break;
+			}
+			if (hf->name == NULL ||
+			    strlen(checksum) != hf->digestlen)
+				continue;
+		} else {
+			/* could be GNU form */
+			hf = &functions[algorithm_def];
+			algorithm = hf->name;
+			checksum = buf;
+			if ((p = strchr(checksum, ' ')) == NULL)
+				continue;
+			*p++ = '\0';
+			while (isspace(*p))
+				p++;
+			if (*p == '\0')
+				continue;
+			filename = p;
+			p = strpbrk(filename, " \t\r");
+			if (p != NULL)
+				*p = '\0';
 		}
-		if (hf->name == NULL || strlen(checksum) != hf->digestlen)
-			continue;
 
 		if ((fd = open(filename, O_RDONLY, 0)) == -1) {
 			warn("cannot open %s", filename);
