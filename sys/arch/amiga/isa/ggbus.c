@@ -1,4 +1,4 @@
-/*	$OpenBSD: ggbus.c,v 1.8 1996/11/28 23:33:08 niklas Exp $	*/
+/*	$OpenBSD: ggbus.c,v 1.9 1997/01/04 12:49:24 niklas Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Niklas Hallqvist
@@ -37,7 +37,7 @@
 #include <sys/syslog.h>
 #include <sys/systm.h>
 
-#include <machine/bus.old.h>
+#include <machine/bus.h>
 #include <machine/cpu.h>
 #include <machine/intr.h>
 
