@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.9 2002/01/21 00:44:06 hugh Exp $
+#	$OpenBSD: Makefile.inc,v 1.10 2002/07/20 17:30:26 millert Exp $
 
 .include <bsd.own.mk>
 .include <bsd.obj.mk>
@@ -46,6 +46,7 @@ LDFLAGS+=-L${.CURDIR}/../libsm
 .endif
 
 .if defined(WANT_LIBMILTER)
+ENVDEF+=-DMILTER -D_FFR_MILTER_ROOT_UNSAFE
 LDADD+= -lmilter
 .if exists(${.CURDIR}/../libmilter/${__objdir})
 DPADD+= ${.CURDIR}/../libmilter/${__objdir}/libmilter.a
