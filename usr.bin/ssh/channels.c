@@ -39,7 +39,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: channels.c,v 1.208 2004/07/11 17:48:47 deraadt Exp $");
+RCSID("$OpenBSD: channels.c,v 1.209 2004/08/11 21:43:04 avsm Exp $");
 
 #include "ssh.h"
 #include "ssh1.h"
@@ -68,7 +68,7 @@ static Channel **channels = NULL;
  * Size of the channel array.  All slots of the array must always be
  * initialized (at least the type field); unused slots set to NULL
  */
-static int channels_alloc = 0;
+static u_int channels_alloc = 0;
 
 /*
  * Maximum file descriptor value used in any of the channels.  This is
@@ -141,7 +141,7 @@ channel_lookup(int id)
 {
 	Channel *c;
 
-	if (id < 0 || id >= channels_alloc) {
+	if (id < 0 || (u_int)id >= channels_alloc) {
 		logit("channel_lookup: %d: bad id", id);
 		return NULL;
 	}
@@ -208,7 +208,8 @@ Channel *
 channel_new(char *ctype, int type, int rfd, int wfd, int efd,
     u_int window, u_int maxpack, int extusage, char *remote_name, int nonblock)
 {
-	int i, found;
+	int found;
+	u_int i;
 	Channel *c;
 
 	/* Do initial allocation if this is the first call. */
@@ -222,10 +223,10 @@ channel_new(char *ctype, int type, int rfd, int wfd, int efd,
 	for (found = -1, i = 0; i < channels_alloc; i++)
 		if (channels[i] == NULL) {
 			/* Found a free slot. */
-			found = i;
+			found = (int)i;
 			break;
 		}
-	if (found == -1) {
+	if (found < 0) {
 		/* There are no free slots.  Take last+1 slot and expand the array.  */
 		found = channels_alloc;
 		if (channels_alloc > 10000)
@@ -272,7 +273,8 @@ channel_new(char *ctype, int type, int rfd, int wfd, int efd,
 static int
 channel_find_maxfd(void)
 {
-	int i, max = 0;
+	u_int i;
+	int max = 0;
 	Channel *c;
 
 	for (i = 0; i < channels_alloc; i++) {
@@ -321,12 +323,12 @@ void
 channel_free(Channel *c)
 {
 	char *s;
-	int i, n;
+	u_int i, n;
 
 	for (n = 0, i = 0; i < channels_alloc; i++)
 		if (channels[i])
 			n++;
-	debug("channel %d: free: %s, nchannels %d", c->self,
+	debug("channel %d: free: %s, nchannels %u", c->self,
 	    c->remote_name ? c->remote_name : "???", n);
 
 	s = channel_open_message();
@@ -352,7 +354,7 @@ channel_free(Channel *c)
 void
 channel_free_all(void)
 {
-	int i;
+	u_int i;
 
 	for (i = 0; i < channels_alloc; i++)
 		if (channels[i] != NULL)
@@ -367,7 +369,7 @@ channel_free_all(void)
 void
 channel_close_all(void)
 {
-	int i;
+	u_int i;
 
 	for (i = 0; i < channels_alloc; i++)
 		if (channels[i] != NULL)
@@ -381,7 +383,7 @@ channel_close_all(void)
 void
 channel_stop_listening(void)
 {
-	int i;
+	u_int i;
 	Channel *c;
 
 	for (i = 0; i < channels_alloc; i++) {
@@ -438,7 +440,7 @@ channel_not_very_much_buffered_data(void)
 int
 channel_still_open(void)
 {
-	int i;
+	u_int i;
 	Channel *c;
 
 	for (i = 0; i < channels_alloc; i++) {
@@ -481,7 +483,7 @@ channel_still_open(void)
 int
 channel_find_open(void)
 {
-	int i;
+	u_int i;
 	Channel *c;
 
 	for (i = 0; i < channels_alloc; i++) {
@@ -529,7 +531,7 @@ channel_open_message(void)
 	Buffer buffer;
 	Channel *c;
 	char buf[1024], *cp;
-	int i;
+	u_int i;
 
 	buffer_init(&buffer);
 	snprintf(buf, sizeof buf, "The following connections are open:\r\n");
@@ -1668,7 +1670,7 @@ static void
 channel_handler(chan_fn *ftab[], fd_set * readset, fd_set * writeset)
 {
 	static int did_init = 0;
-	int i;
+	u_int i;
 	Channel *c;
 
 	if (!did_init) {
@@ -1691,10 +1693,9 @@ channel_handler(chan_fn *ftab[], fd_set * readset, fd_set * writeset)
  */
 void
 channel_prepare_select(fd_set **readsetp, fd_set **writesetp, int *maxfdp,
-    int *nallocp, int rekeying)
+    u_int *nallocp, int rekeying)
 {
-	int n;
-	u_int sz;
+	u_int n, sz;
 
 	n = MAX(*maxfdp, channel_max_fd);
 
@@ -1730,8 +1731,7 @@ void
 channel_output_poll(void)
 {
 	Channel *c;
-	int i;
-	u_int len;
+	u_int i, len;
 
 	for (i = 0; i < channels_alloc; i++) {
 		c = channels[i];
@@ -2260,7 +2260,8 @@ channel_setup_fwd_listener(int type, const char *listen_addr, u_short listen_por
 int
 channel_cancel_rport_listener(const char *host, u_short port)
 {
-	int i, found = 0;
+	u_int i;
+	int found = 0;
 
 	for(i = 0; i < channels_alloc; i++) {
 		Channel *c = channels[i];
@@ -2560,7 +2561,7 @@ channel_connect_to(const char *host, u_short port)
 void
 channel_send_window_changes(void)
 {
-	int i;
+	u_int i;
 	struct winsize ws;
 
 	for (i = 0; i < channels_alloc; i++) {
