@@ -1,4 +1,4 @@
-/*      $OpenBSD: pf_key_v2.c,v 1.79 2001/07/25 11:42:06 markus Exp $  */
+/*      $OpenBSD: pf_key_v2.c,v 1.80 2001/07/25 15:29:47 markus Exp $  */
 /*	$EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	*/
 
 /*
@@ -1749,7 +1749,8 @@ pf_key_v2_flow (struct sockaddr *laddr, struct sockaddr *lmask,
     }
   pf_key_v2_msg_free (ret);
 
-  LOG_DBG ((LOG_MISC, 50, "pf_key_v2_flow: done"));
+  LOG_DBG ((LOG_MISC, 50, "pf_key_v2_flow: %sFLOW: done",
+	    delete ? "DEL" : "ADD"));
 
   return 0;
 
@@ -1944,7 +1945,8 @@ pf_key_v2_flow (struct sockaddr *laddr, struct sockaddr *lmask,
     }
   pf_key_v2_msg_free (ret);
 
-  LOG_DBG ((LOG_SYSDEP, 50, "pf_key_v2_flow: done"));
+  LOG_DBG ((LOG_SYSDEP, 50, "pf_key_v2_flow: SPD%s: done",
+	    delete ? "DELETE" : "ADD"));
 
   return 0;
 
