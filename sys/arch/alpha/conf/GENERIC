@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.108 2002/06/16 22:12:22 miod Exp $
+#	$OpenBSD: GENERIC,v 1.109 2002/06/19 19:18:51 miod Exp $
 #	$NetBSD: GENERIC,v 1.31 1996/12/03 17:25:29 cgd Exp $
 
 machine	alpha
@@ -166,7 +166,7 @@ rl*	at pci? dev ? function ?	# RealTek 81[23]9 ethernet
 vr*	at pci? dev ? function ?	# VIA Rhine ethernet
 gx*	at pci? dev ? function ?	# Intel Pro/1000 ethernet
 
-#UNTESTED:  the vollowing section of drivers is untested on alpha.
+#UNTESTED:  the following section of drivers is untested on alpha.
 en*	at pci? dev ? function ?	# ENI PCI ATM (untested)
 tl*	at pci? dev ? function ?	# Compaq Thunderlan ethernet
 le*	at pci? dev ? function ?	# PCI LANCE Ethernet (untested)
