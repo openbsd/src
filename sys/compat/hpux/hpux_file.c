@@ -1,8 +1,8 @@
-/*	$OpenBSD: hpux_file.c,v 1.5 1997/04/16 09:18:05 downsj Exp $	*/
-/*	$NetBSD: hpux_file.c,v 1.4 1997/04/01 19:59:01 scottr Exp $	*/
+/*	$OpenBSD: hpux_file.c,v 1.6 1997/07/06 07:27:59 downsj Exp $	*/
+/*	$NetBSD: hpux_file.c,v 1.5 1997/04/27 21:40:48 thorpej Exp $	*/
 
 /*
- * Copyright (c) 1995 Jason R. Thorpe.  All rights reserved.
+ * Copyright (c) 1995, 1997 Jason R. Thorpe.  All rights reserved.
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -570,12 +570,6 @@ bsd_to_hpux_stat(sb, hsb)
 	 */
 	hsb->hst_old_uid = (u_short)sb->st_uid;
 	hsb->hst_old_gid = (u_short)sb->st_gid;
-
-	/*
-	 * Call machine-dependent stat conversion.  Is it just me
-	 * who thinks HP-UX device semantics are strange?!
-	 */
-	hpux_cpu_bsd_to_hpux_stat(sb, hsb);
 
 	if (sb->st_size < (off_t)(((off_t)1) << 32))
 		hsb->hst_size = (long)sb->st_size;
