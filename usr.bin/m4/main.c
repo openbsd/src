@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.49 2001/09/27 11:40:33 espie Exp $	*/
+/*	$OpenBSD: main.c,v 1.50 2001/09/28 12:05:38 espie Exp $	*/
 /*	$NetBSD: main.c,v 1.12 1997/02/08 23:54:49 cgd Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.49 2001/09/27 11:40:33 espie Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.50 2001/09/28 12:05:38 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -627,7 +627,6 @@ static void
 enlarge_stack()
 {
 	STACKMAX *= 2;
-	fprintf(stderr, "%lu\n", (unsigned long)STACKMAX);
 	mstack = realloc(mstack, sizeof(stae) * STACKMAX);
 	sstack = realloc(sstack, STACKMAX);
 	if (mstack == NULL || sstack == NULL)
