@@ -1,4 +1,4 @@
-.\"	$OpenBSD: apm.4,v 1.4 2002/10/01 20:59:48 miod Exp $
+.\"	$OpenBSD: apm.4,v 1.5 2003/04/01 07:31:27 jmc Exp $
 .\"
 .\"	Copyright (c) 1998 Marco S. Hyman
 .\"
@@ -24,7 +24,9 @@ driver provides an interface which simulates the Advanced Power Management
 .Pq Tn APM
 .Tn BIOS
 functions.
-The bios functions are translated into the appropriate PowerManager requests.
+The
+.Tn BIOS
+functions are translated into the appropriate PowerManager requests.
 Currently only battery level, AC connection, and charging status is available
 from the
 .Nm
