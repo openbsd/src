@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp-proxy.c,v 1.14 2001/08/28 19:57:29 beck Exp $ */
+/*	$OpenBSD: ftp-proxy.c,v 1.15 2001/09/05 20:40:10 beck Exp $ */
 
 /*
  * Copyright (c) 1996-2001
@@ -141,7 +141,8 @@ char ClientName[NI_MAXHOST];
 char RealServerName[NI_MAXHOST];
 char OurName[NI_MAXHOST];
 
-char *User, *Group;
+char *User = "proxy";
+char *Group;
 
 extern int Debug_Level;
 extern int Use_Rdns;
@@ -202,7 +203,7 @@ drop_privs()
 	if (User != NULL) {
 		pw = getpwnam(User);
 		if (pw == NULL) {
-			syslog(LOG_ERR, "can't find user %s (%m)", User);
+			syslog(LOG_ERR, "can't find user %s", User);
 			exit(EX_USAGE);
 		}
 		uid = pw->pw_uid;
@@ -212,7 +213,7 @@ drop_privs()
 	if (Group != NULL) {
 		gr = getgrnam(User);
 		if (gr == NULL) {
-			syslog(LOG_ERR, "can't find group %s (%m)", Group);
+			syslog(LOG_ERR, "can't find group %s", Group);
 			exit(EX_USAGE);
 		}
 		gid = gr->gr_gid;
@@ -731,7 +732,7 @@ out:
 
 		/*
 		 * If we aren't in NAT mode, deal with EPSV.
-		 * EPSV is a problem - Unliks PASV, the reply from the
+		 * EPSV is a problem - Unlike PASV, the reply from the
 		 * server contains *only* a port, we can't modify the reply
 		 * to the client and get the client to connect to us without
 		 * resorting to using a dynamic rdr rule we have to add in

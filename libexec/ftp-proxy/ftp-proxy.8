@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ftp-proxy.8,v 1.6 2001/08/22 17:22:00 beck Exp $
+.\"	$OpenBSD: ftp-proxy.8,v 1.7 2001/09/05 20:40:10 beck Exp $
 .\"
 .\" Copyright (c) 1996-2001
 .\"	Obtuse Systems Corporation, All rights reserved.
@@ -61,17 +61,18 @@ The proxy will allow connections to log in to other sites as the user
 "ftp" or "anonymous" only.
 Any attempt to log in as another user will be blocked by the proxy.
 .It Fl g Ar groupname
-specify the named group to drop group priviledges to, after doing pf lookups
+specify the named group to drop group privileges to, after doing pf lookups
 which require root.
 By default
 .Nm ftp-proxy
-uses the default group of the user it drops priviledge to.
+uses the default group of the user it drops privilege to.
 .It Fl u Ar username
-specify the named user to drop priviledge to, after doing pf lookups
-which require root priviledge.
+specify the named user to drop privilege to, after doing pf lookups
+which require root privilege.
 By default
 .Nm ftp-proxy
-does not drop priviledge and runs as root.
+drops privilege to the user
+.Em proxy .
 .Pp 
 Running as root means that the source of data connections the proxy makes
 for PORT and EPRT will be the RFC mandated port 20.
