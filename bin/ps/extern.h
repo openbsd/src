@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.5 1997/09/03 13:51:39 kstailey Exp $	*/
+/*	$OpenBSD: extern.h,v 1.6 2001/12/05 02:23:59 art Exp $	*/
 /*	$NetBSD: extern.h,v 1.10 1995/05/21 13:38:27 mycroft Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@ struct var;
 struct varent;
 
 extern fixpt_t ccpu;
-extern int eval, fscale, mempages, nlistread, rawcpu;
+extern int eval, fscale, mempages, nlistread, rawcpu, maxslp;
 extern int sumrusage, termwidth, totwidth;
 extern VAR var[];
 extern VARENT *vhead;

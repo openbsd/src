@@ -1,4 +1,4 @@
-/*	$OpenBSD: nlist.c,v 1.7 2001/06/03 04:18:22 angelos Exp $	*/
+/*	$OpenBSD: nlist.c,v 1.8 2001/12/05 02:23:59 art Exp $	*/
 /*	$NetBSD: nlist.c,v 1.11 1995/03/21 09:08:03 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)nlist.c	8.4 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: nlist.c,v 1.7 2001/06/03 04:18:22 angelos Exp $";
+static char rcsid[] = "$OpenBSD: nlist.c,v 1.8 2001/12/05 02:23:59 art Exp $";
 #endif
 #endif /* not lint */
 
@@ -65,6 +65,8 @@ struct	nlist psnl[] = {
 #define	X_CCPU		1
 	{"_physmem"},
 #define	X_PHYSMEM	2
+	{"_maxslp"},
+#define X_MAXSLP	3
 	{NULL}
 };
 
@@ -72,6 +74,7 @@ fixpt_t	ccpu;				/* kernel _ccpu variable */
 int	nlistread;			/* if nlist already read. */
 int	mempages;			/* number of pages of phys. memory */
 int	fscale;				/* kernel _fscale variable */
+int	maxslp;
 
 extern kvm_t *kd;
 
@@ -105,6 +108,10 @@ donlist()
 			warnx("ccpu: %s", kvm_geterr(kd));
 			eval = rval = 1;
 		}
+		if (kread(X_MAXSLP, maxslp)) {
+			warnx("maxslp: %s", kvm_geterr(kd));
+			eval = rval = 1;
+		}
 	}
 	else {
 		siz = sizeof (fscale);
@@ -125,7 +132,14 @@ donlist()
 		mib[0] = CTL_KERN;
 		mib[1] = KERN_CCPU;
 		if (sysctl(mib, 2, &ccpu, &siz, NULL, 0) < 0) {
-			warnx("avail_ccpu: failed to get kern.ccpu");
+			warnx("ccpu: failed to get kern.ccpu");
+			eval = rval = 1;
+		}
+		siz = sizeof (maxslp);
+		mib[0] = CTL_VM;
+		mib[1] = VM_MAXSLP;
+		if (sysctl(mib, 2, &maxslp, &siz, NULL, 0) < 0) {
+			warnx("maxslp: failed to get vm.maxslp");
 			eval = rval = 1;
 		}
 	}
