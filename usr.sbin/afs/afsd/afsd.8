@@ -1,4 +1,4 @@
-.\"	$OpenBSD: afsd.8,v 1.1.1.1 1998/09/14 21:53:33 art Exp $
+.\"	$OpenBSD: afsd.8,v 1.2 1998/09/15 18:29:11 art Exp $
 .\"
 .Dd September  5, 1998
 .Dt AFSD 8
@@ -54,7 +54,7 @@ run in test mode
 .Fl c Ar string Ns ,
 .Fl -conffile= Ns Ar string
 .Xc
-path to configuration file (default: /etc/arla.conf)
+path to configuration file (default: /etc/afs/afsd.conf)
 .It Xo
 .Fl l Ar string Ns ,
 .Fl -log= Ns Ar string
@@ -115,7 +115,11 @@ print version information
 print usage information
 .El
 .Sh FILES
-/etc/arla.conf - default configuration for afsd.
+/etc/afs/afsd.conf - default configuration for afsd.
+.Pp
+/etc/afs/CellServDB - The "database" with all known AFS servers.
+.Pp
+/etc/afs/ThisCell - Our default cell (where we get the root directory).
 .Pp
 /var/spool/afs - default cache directory. It is highly recommended that this
 directory is a separate filesystem. When enough memory is available this
