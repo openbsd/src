@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.47 2001/05/17 18:41:48 provos Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.48 2001/05/23 15:12:06 millert Exp $	*/
 /*	$NetBSD: machdep.c,v 1.121 1999/03/26 23:41:29 mycroft Exp $	*/
 
 /*
@@ -195,7 +195,7 @@ int	conforced;		/* console has been forced */
  * and 68030 systems.  See clock.c for the delay
  * calibration algorithm.
  */
-int	cpuspeed;		/* relative cpu speed; XXX skewed on 68040 */
+int	cpuspeed;		/* relative cpu speed */
 int	delay_divisor;		/* delay constant */
 
  /*
@@ -606,32 +606,23 @@ setregs(p, pack, stack, retval)
 char	cpu_model[120];
 extern	char version[];
 
-struct hp300_model {
-	int id;
-	const char *name;
-	const char *speed;
-};
-
 /*
- * Note that we examine the cpuspeed variable instead of using the speed
- * in this table for 68040-based models since the CPU and/or oscillator
- * may have been replaced.  The table below lists the default values.
+ * Text description of models we support, indexed by machineid.
  */
-struct hp300_model hp300_models[] = {
-	{ HP_320,	"320",		"16.67"	},
-	{ HP_330,	"318/319/330",	"16.67"	},
-	{ HP_340,	"340",		"16.67"	},
-	{ HP_345,	"345",		"50"	},
-	{ HP_350,	"350",		"25"	},
-	{ HP_360,	"360",		"25"	},
-	{ HP_370,	"370",		"33.33"	},
-	{ HP_375,	"375",		"50"	},
-	{ HP_380,	"380",		"25"	},
-	{ HP_385,	"385",		"33"	},
-	{ HP_400,	"400",		"50"	},
-	{ HP_425,	"425",		"25"	},
-	{ HP_433,	"433",		"33"	},
-	{ 0,		NULL,		NULL	},
+const char *hp300_models[] = {
+	"320",		/* HP_320 */
+	"318/319/330",	/* HP_330 */
+	"350",		/* HP_350 */
+	"360",		/* HP_360 */
+	"370",		/* HP_370 */
+	"340",		/* HP_340 */
+	"345",		/* HP_345 */
+	"375",		/* HP_375 */
+	"400",		/* HP_400 */
+	"380",		/* HP_380 */
+	"425",		/* HP_425 */
+	"433",		/* HP_433 */
+	"385"		/* HP_385 */
 };
 
 /* Map mmuid to single letter designation in 4xx models (e.g. 425s, 425t) */
@@ -640,24 +631,18 @@ char hp300_designations[] = "    ttss e";
 void
 identifycpu()
 {
-	const char *t, *mc, *s;
-	char *td;
-	int i, len;
+	const char *t;
+	char mc, *td;
+	int len;
 
 	/*
-	 * Find the model number.
+	 * Map machineid to model name.
 	 */
-	for (t = s = NULL, i = 0; hp300_models[i].name != NULL; i++) {
-		if (hp300_models[i].id == machineid) {
-			t = hp300_models[i].name;
-			s = hp300_models[i].speed;
-			break;
-		}
-	}
-	if (t == NULL) {
+	if (machineid >= sizeof(hp300_models) / sizeof(char *)) {
 		printf("\nunknown machineid %d\n", machineid);
 		goto lose;
 	}
+	t = hp300_models[machineid];
 
 	/*
 	 * Look up special designation (425s, 425t, etc) by mmuid.
@@ -670,33 +655,27 @@ identifycpu()
 		td = "";
 
 	/*
-	 * ...and the CPU type (XXX - not used for 68040).
+	 * ...and the CPU type
 	 */
 	switch (cputype) {
 	case CPU_68040:
-		mc = "40";
+		mc = '4';
+		/* adjust cpuspeed by 3/8 on '040 boxes */
+		cpuspeed *= 3;
+		cpuspeed /= 8;
 		break;
 	case CPU_68030:
-		mc = "30";
+		mc = '3';
 		break;
 	case CPU_68020:
-		mc = "20";
+		mc = '2';
 		break;
 	default:
 		printf("\nunknown cputype %d\n", cputype);
 		goto lose;
 	}
-
-	/*
-	 * On the 68040 we need to multiply cpuspeed by 3/8.
-	 * We do this rather than use hard-coded strings since
-	 * the CPU and/or oscillator may have been upgraded.
-	 */
-	if (cputype == CPU_68040)
-		sprintf(cpu_model, "HP 9000/%s%s (%dMHz MC68040 CPU", t, td,
-		    cpuspeed * 3 / 8);
-	else
-		sprintf(cpu_model, "HP 9000/%s (%sMHz MC680%s CPU", t, s, mc);
+	sprintf(cpu_model, "HP 9000/%s%s (%dMHz MC680%c0 CPU", t, td, cpuspeed,
+	    mc);
 
 	/*
 	 * ...and the MMU type.
@@ -727,11 +706,11 @@ identifycpu()
 		len += sprintf(cpu_model + len, "+FPU");
 		break;
 	case FPU_68882:
-		len += sprintf(cpu_model + len, ", %sMHz MC68882 FPU", s);
+		len += sprintf(cpu_model + len, ", %dMHz MC68882 FPU", cpuspeed);
 		break;
 	case FPU_68881:
-		len += sprintf(cpu_model + len, ", %sMHz MC68881 FPU",
-		    machineid == HP_350 ? "20" : "16.67");
+		len += sprintf(cpu_model + len, ", %dMHz MC68881 FPU",
+		    machineid == HP_350 ? 20 : 16);
 		break;
 	default:
 		len += sprintf(cpu_model + len, ", unknown FPU");
