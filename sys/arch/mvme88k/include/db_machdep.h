@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.25 2003/12/21 13:23:34 miod Exp $ */
+/*	$OpenBSD: db_machdep.h,v 1.26 2004/01/07 16:22:18 miod Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -90,7 +90,6 @@ extern db_regs_t	ddb_regs;	/* register state */
 #define	DDB_REGS	(&ddb_regs)
 
 extern int db_noisy;
-extern int quiet_db_read_bytes;
 
 unsigned inst_load(unsigned);
 unsigned inst_store(unsigned);

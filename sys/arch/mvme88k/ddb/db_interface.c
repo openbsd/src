@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.34 2004/01/02 17:08:55 miod Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.35 2004/01/07 16:22:17 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -54,7 +54,6 @@
 #include <ddb/db_sym.h>
 
 extern label_t *db_recover;
-extern unsigned int db_maxoff;
 extern unsigned db_trace_get_val(vaddr_t, unsigned *);
 extern int frame_is_sane(db_regs_t *);
 extern void cnpollc(int);
@@ -81,9 +80,8 @@ void m88k_db_translate(db_expr_t, int, db_expr_t, char *);
 void m88k_db_cmmucfg(db_expr_t, int, db_expr_t, char *);
 void m88k_db_prom_cmd(db_expr_t, int, db_expr_t, char *);
 
-int 	db_active = 0;
-int 	db_noisy = 0;
-int	quiet_db_read_bytes = 0;
+int 	db_active;
+int 	db_noisy;
 
 db_regs_t	ddb_regs;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.21 2003/12/21 13:23:32 miod Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.22 2004/01/07 16:22:17 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -29,7 +29,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 
-#include <machine/db_machdep.h> /* lots of stuff                  */
+#include <machine/db_machdep.h>
 #include <machine/locore.h>
 
 #include <ddb/db_variables.h>	/* db_variable, DB_VAR_GET, etc.  */
@@ -37,6 +37,7 @@
 #include <ddb/db_sym.h>		/* DB_STGY_PROC, etc.             */
 #include <ddb/db_command.h>	/* db_recover                     */
 #include <ddb/db_access.h>
+#include <ddb/db_interface.h>
 
 union instruction {
 	unsigned rawbits;
@@ -99,8 +100,6 @@ static inline unsigned br_dest(unsigned addr, union instruction inst)
 int frame_is_sane(db_regs_t *regs);
 char *m88k_exception_name(unsigned vector);
 unsigned db_trace_get_val(vaddr_t addr, unsigned *ptr);
-void db_stack_trace_print(db_regs_t *addr, int have_addr,
-    db_expr_t count, char *modif, int (*pr)(const char *, ...));
 
 /*
  * Some macros to tell if the given text is the instruction.
@@ -139,7 +138,7 @@ static int trace_flags = 0;
 #endif
 
 extern label_t *db_recover;
-extern int quiet_db_read_bytes;
+
 /*
  * m88k trace/register state interface for ddb.
  */
@@ -372,22 +371,16 @@ db_trace_get_val(vaddr_t addr, unsigned *ptr)
 {
 	label_t db_jmpbuf;
 	label_t *prev = db_recover;
-	boolean_t old_quiet_db_read_bytes = quiet_db_read_bytes;
-
-	quiet_db_read_bytes = 1;
 
 	if (setjmp((db_recover = &db_jmpbuf)) != 0) {
 		db_recover = prev;
-		quiet_db_read_bytes = old_quiet_db_read_bytes;
 		return 0;
 	} else {
 		db_read_bytes(addr, 4, (char *)ptr);
 		db_recover = prev;
-		quiet_db_read_bytes = old_quiet_db_read_bytes;
 		return 1;
 	}
 }
-
 
 #define FIRST_CALLPRESERVED_REG 14
 #define LAST_CALLPRESERVED_REG  29
@@ -1005,7 +998,7 @@ db_stack_trace_cmd2(db_regs_t *regs, int (*pr)(const char *, ...))
  * printed.
  */
 void
-db_stack_trace_print(db_regs_t *addr,
+db_stack_trace_print(db_expr_t addr,
 		   int have_addr,
 		   db_expr_t count,
 		   char *modif,
@@ -1018,9 +1011,10 @@ db_stack_trace_print(db_regs_t *addr,
 	db_regs_t *regs;
 	union {
 		db_regs_t *frame;
-		unsigned num;
+		db_expr_t num;
 	} arg;
-	arg.frame = addr;
+
+	arg.num = addr;
 
 	trace_flags = 0; /* flags will be set via modifers */
 
