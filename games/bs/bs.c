@@ -1,4 +1,4 @@
-/*	$OpenBSD: bs.c,v 1.6 1998/03/12 06:17:25 pjanzen Exp $	*/
+/*	$OpenBSD: bs.c,v 1.7 1998/03/12 09:03:49 pjanzen Exp $	*/
 /*
  * bs.c - original author: Bruce Holloway
  *		salvo option by: Chuck A DeGaul
@@ -9,7 +9,12 @@
  * v2.1 with ncurses mouse support, September 1995
  * v2.2 with bugfixes and strategical improvements, March 1998.
  */
-/* #define _POSIX_SOURCE  */  
+
+#ifndef lint
+static char rcsid[] = "$OpenBSD: bs.c,v 1.7 1998/03/12 09:03:49 pjanzen Exp $";
+#endif
+
+/* #define _POSIX_SOURCE  */  /* (setegid, random) */
 
 #include <curses.h>
 #include <signal.h>
@@ -1328,8 +1333,8 @@ static int scount(int who)
 int main(int argc, char *argv[])
 {
     /* revoke privs */
-    /*setegid(getgid());
-    setgid(getgid());*/
+    setegid(getgid());
+    setgid(getgid());
 
     do_options(argc, argv);
 
