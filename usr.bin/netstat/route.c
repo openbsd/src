@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.48 2002/09/19 16:22:33 ho Exp $	*/
+/*	$OpenBSD: route.c,v 1.49 2002/09/23 17:48:46 deraadt Exp $	*/
 /*	$NetBSD: route.c,v 1.15 1996/05/07 02:55:06 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-static char *rcsid = "$OpenBSD: route.c,v 1.48 2002/09/19 16:22:33 ho Exp $";
+static char *rcsid = "$OpenBSD: route.c,v 1.49 2002/09/23 17:48:46 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -130,6 +130,7 @@ int	NewTree = 0;
 static struct sockaddr *kgetsa(struct sockaddr *);
 static void p_tree(struct radix_node *);
 static void p_rtnode();
+static void p_rtflags(u_char);
 static void ntreestuff();
 static void np_rtentry(struct rt_msghdr *);
 static void p_sockaddr(struct sockaddr *, struct sockaddr *, int, int);
@@ -320,6 +321,23 @@ again:
 	}
 }
 
+static void
+p_rtflags(u_char flags)
+{
+	putchar('<');
+	if (flags & RNF_NORMAL)
+		putchar('N');
+	if (flags & RNF_ROOT)
+		putchar('R');
+	if (flags & RNF_ACTIVE)
+		putchar('A');
+	if (flags & RNF_IGNORE)
+		putchar('I');
+	if (flags & ~(RNF_NORMAL | RNF_ROOT | RNF_ACTIVE | RNF_IGNORE))
+		printf("/0x%02x", flags);
+	putchar('>');
+}
+
 char	nbuf[25];
 
 static void
@@ -339,12 +357,27 @@ p_rtnode()
 		printf("%6.6s %16p : %16p", nbuf, rnode.rn_l,
 		    rnode.rn_r);
 	}
+
+	putchar(' ');
+	p_rtflags(rnode.rn_flags);
+
 	while (rm) {
 		kget(rm, rmask);
 		snprintf(nbuf, sizeof nbuf, " %d refs, ", rmask.rm_refs);
 		printf(" mk = %16p {(%d),%s",
 		    rm, -1 - rmask.rm_b, rmask.rm_refs ? nbuf : " ");
-		p_sockaddr(kgetsa((struct sockaddr *)rmask.rm_mask), 0, 0, -1);
+		p_rtflags(rmask.rm_flags);
+		printf(", ");
+		if (rmask.rm_flags & RNF_NORMAL) {
+			struct radix_node rnode_aux;
+
+			printf("leaf = %p ", rmask.rm_leaf);
+			kget(rmask.rm_leaf, rnode_aux);
+			p_sockaddr(kgetsa((struct sockaddr *)rnode_aux.rn_mask),
+			    0, 0, -1);
+		} else
+			p_sockaddr(kgetsa((struct sockaddr *)rmask.rm_mask),
+			    0, 0, -1);
 		putchar('}');
 		if ((rm = rmask.rm_mklist))
 			printf(" ->");
