@@ -1,4 +1,4 @@
-/*	$OpenBSD: script.c,v 1.21 2004/10/10 03:59:04 mickey Exp $	*/
+/*	$OpenBSD: script.c,v 1.22 2004/12/19 14:15:19 millert Exp $	*/
 /*	$NetBSD: script.c,v 1.3 1994/12/21 08:55:43 jtc Exp $	*/
 
 /*
@@ -65,7 +65,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)script.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: script.c,v 1.21 2004/10/10 03:59:04 mickey Exp $";
+static const char rcsid[] = "$OpenBSD: script.c,v 1.22 2004/12/19 14:15:19 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -237,6 +237,7 @@ dooutput(void)
 {
 	struct sigaction sa;
 	struct itimerval value;
+	sigset_t blkalrm;
 	char obuf[BUFSIZ];
 	time_t tvec;
 	ssize_t outcc = 0, cc, off;
@@ -245,6 +246,8 @@ dooutput(void)
 	tvec = time(NULL);
 	(void)fprintf(fscript, "Script started on %s", ctime(&tvec));
 
+	sigemptyset(&blkalrm);
+	sigaddset(&blkalrm, SIGALRM);
 	bzero(&sa, sizeof sa);
 	sigemptyset(&sa.sa_mask);
 	sa.sa_handler = scriptflush;
@@ -267,6 +270,7 @@ dooutput(void)
 			continue;
 		if (cc <= 0)
 			break;
+		sigprocmask(SIG_BLOCK, &blkalrm, NULL);
 		for (off = 0; off < cc; ) {
 			ssize_t n = write(1, obuf + off, cc - off);
 			if (n == 0)
@@ -276,6 +280,7 @@ dooutput(void)
 		}
 		(void)fwrite(obuf, 1, cc, fscript);
 		outcc += cc;
+		sigprocmask(SIG_UNBLOCK, &blkalrm, NULL);
 	}
 	done(0);
 }
