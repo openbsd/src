@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mmap.2,v 1.24 2001/08/20 05:57:55 mpech Exp $
+.\"	$OpenBSD: mmap.2,v 1.25 2001/09/05 06:23:01 deraadt Exp $
 .\"	$NetBSD: mmap.2,v 1.5 1995/06/24 10:48:59 cgd Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -139,7 +139,7 @@ Modifications are shared.
 .It Dv MAP_COPY
 Modifications are private and unlike
 .Dv MAP_PRIVATE
-you don't see modifications made by others.
+Modifications made by others are not visible.
 This option is deprecated, shouldn't be used and behaves just like
 .Dv MAP_PRIVATE
 in the current implementation.
@@ -228,7 +228,7 @@ is useless
 (results in a segmentation fault when first accessing the mapping).
 This means that such descriptors must be opened with
 .Dv O_RDWR ,
-for which you need both read and write permissions on the underlying
+which requires both read and write permissions on the underlying
 object.
 .Sh SEE ALSO
 .Xr madvise 2 ,
