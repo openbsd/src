@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.9 1996/05/07 07:21:29 deraadt Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.10 1996/06/01 11:54:31 deraadt Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.20 1996/05/03 19:41:56 christos Exp $	*/
 
 /*-
@@ -62,6 +62,7 @@
 
 void swapconf __P((void));
 void setroot __P((void));
+void setconf __P((void));
 
 /*
  * The following several variables are related to
@@ -88,13 +89,8 @@ configure()
 
 	spl0();
 
-#if GENERIC
-	if ((boothowto & RB_ASKNAME) == 0)
-		setroot();
 	setconf();
-#else
-	setroot();
-#endif
+
 	/*
 	 * Configure swap area and related system
 	 * parameter based on device(s) used.
@@ -139,6 +135,11 @@ static	char devname[][2] = {
 	{ 's','d' },	/* 4 = sd -- new SCSI system */
 };
 
+dev_t	argdev = NODEV;
+int	nswap;
+long	dumplo;
+int	dmmin, dmmax, dmtext;
+
 /*
  * Attempt to find the device from which we were booted.
  * If we can do so, and not instructed not to do so,
@@ -154,9 +155,6 @@ setroot()
 #endif
 	struct swdevt *swp;
 
-#if 0
-	printf("howto %x bootdev %x ", boothowto, bootdev);
-#endif
 	if (boothowto & RB_DFLTROOT ||
 	    (bootdev & B_MAGICMASK) != (u_long)B_DEVMAGIC)
 		return;
@@ -175,15 +173,15 @@ setroot()
 	 */
 	if (rootdev == orootdev)
 		return;
-	printf("changing root device to %c%c%d%c\n",
-		devname[majdev][0], devname[majdev][1],
-		unit, part + 'a');
+	printf("root on %c%c%d%c\n",
+	    devname[majdev][0], devname[majdev][1],
+	    unit, part + 'a');
 
 #ifdef DOSWAP
 	for (swp = swdevt; swp->sw_dev != NODEV; swp++) {
 		if (majdev == major(swp->sw_dev) &&
-		    (mindev / MAXPARTITIONS)
-		    == (minor(swp->sw_dev) / MAXPARTITIONS)) {
+		    (mindev / MAXPARTITIONS) ==
+		    (minor(swp->sw_dev) / MAXPARTITIONS)) {
 			temp = swdevt[0].sw_dev;
 			swdevt[0].sw_dev = swp->sw_dev;
 			swp->sw_dev = temp;
@@ -200,4 +198,171 @@ setroot()
 	if (temp == dumpdev)
 		dumpdev = swdevt[0].sw_dev;
 #endif
+}
+
+#include "wdc.h"
+#if NWDC > 0
+extern	struct cfdriver wd_cd;
+#endif
+#include "fdc.h"
+#if NFDC > 0
+extern	struct cfdriver fd_cd;
+#endif
+#include "sd.h"
+#if NSD > 0
+extern	struct cfdriver sd_cd;
+#endif
+#include "cd.h"
+#if NCD > 0
+extern	struct cfdriver cd_cd;
+#endif
+#include "mcd.h"
+#if NMCD > 0
+extern	struct cfdriver mcd_cd;
+#endif
+
+struct	genericconf {
+	struct cfdriver *gc_driver;
+	char *gc_name;
+	dev_t gc_major;
+} genericconf[] = {
+#if NWDC > 0
+	{ &wd_cd,  "wd",  0 },
+#endif
+#if NSD > 0
+	{ &sd_cd,  "sd",  4 },
+#endif
+#if NCD > 0
+	{ &cd_cd,  "cd",  6 },
+#endif
+#if NMCD > 0
+	{ &mcd_cd, "mcd", 7 },
+#endif
+#if NFDC > 0
+	{ &fd_cd,  "fd",  2 },
+#endif
+	{ 0 }
+};
+
+void	gets __P((char *));
+
+void
+setconf()
+{
+	extern int ffs_mountroot __P((void *));
+	extern int (*mountroot) __P((void *));
+	register struct genericconf *gc;
+	int unit;
+#if 0
+	int swaponroot = 0;
+#endif
+	char *num;
+
+	if (boothowto & RB_ASKNAME) {
+		char name[128];
+retry:
+		printf("root device? ");
+		gets(name);
+		if (*name == '\0')
+			goto noask;
+		for (gc = genericconf; gc->gc_driver; gc++)
+			if (gc->gc_driver->cd_ndevs &&
+			    strncmp(gc->gc_name, name,
+			    strlen(gc->gc_name)) == 0)
+				break;
+		if (gc->gc_driver) {
+			num = &name[strlen(gc->gc_name)];
+#if 0
+			if (num[0] == '*') {
+				strcpy(num, num+1);
+				swaponroot++;
+			}
+#endif
+
+			unit = 0;
+			do {
+				unit = (unit * 10) + *num - '0';
+				if (*num < '0' || *num > '9')
+					unit = -1;
+			} while (unit != -1 && *++num);
+
+			if (unit < 0) {
+				printf("%s: not a unit number\n",
+				    &name[strlen(gc->gc_name)]);
+			} else if (unit > gc->gc_driver->cd_ndevs ||
+			    gc->gc_driver->cd_devs[unit] == NULL) {
+				printf("%d: no such unit\n", unit);
+			} else {
+				printf("root on %s%da\n", gc->gc_name, unit);
+				rootdev = makedev(gc->gc_major,
+				    unit * MAXPARTITIONS);
+				goto doswap;
+			}
+		}
+		printf("use one of: ");
+		for (gc = genericconf; gc->gc_driver; gc++) {
+			for (unit=0; unit < gc->gc_driver->cd_ndevs; unit++) {
+				if (gc->gc_driver->cd_devs[unit])
+					printf("%s%d ", gc->gc_name, unit);
+			}
+		}
+		printf("\n");
+		goto retry;
+	}
+noask:
+	if (mountroot == NULL) {
+		/* `swap generic' */
+		setroot();
+	} else {
+		/* preconfigured */
+		return;
+	}
+
+doswap:
+	mountroot = ffs_mountroot;
+	swdevt[0].sw_dev = argdev = dumpdev =
+	    makedev(major(rootdev), minor(rootdev) + 1);
+	/* swap size and dumplo set during autoconfigure */
+#if 0
+	if (swaponroot)
+		rootdev = dumpdev;
+#endif
+}
+
+void
+gets(cp)
+	char *cp;
+{
+	register char *lp;
+	register c;
+
+	lp = cp;
+	for (;;) {
+		c = cngetc() & 0177;
+		switch (c) {
+		case '\n':
+		case '\r':
+			printf("\n");
+			*lp++ = '\0';
+			return;
+		case '\010':
+		case '\177':
+			if (lp > cp) {
+				printf("\b \b");
+				lp--;
+			}
+			break;
+		case 'u' & 037:
+			while (lp > cp) {
+				printf("\b \b");
+				lp--;
+			}
+			break;
+		case '\t':
+			c = ' ';
+		default:
+			printf("%c", c);
+			*lp++ = c;
+		}
+	}
 }

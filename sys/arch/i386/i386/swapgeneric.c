@@ -1,4 +1,4 @@
-/*	$OpenBSD: swapgeneric.c,v 1.5 1996/05/07 07:21:55 deraadt Exp $	*/
+/*	$OpenBSD: swapgeneric.c,v 1.6 1996/06/01 11:54:32 deraadt Exp $	*/
 /*	$NetBSD: swapgeneric.c,v 1.12 1996/05/03 19:42:28 christos Exp $	*/
 
 /*-
@@ -62,157 +62,11 @@
  * Generic configuration;  all in one
  */
 dev_t	rootdev = NODEV;
-dev_t	argdev = NODEV;
 dev_t	dumpdev = NODEV;
-int	nswap;
 struct	swdevt swdevt[] = {
 	{ NODEV,	1,	0 },
 	{ NODEV,	0,	0 },
 };
-long	dumplo;
-int	dmmin, dmmax, dmtext;
 
-#if NWDC > 0
-extern	struct cfdriver wd_cd;
-#endif
-#if NFDC > 0
-extern	struct cfdriver fd_cd;
-#endif
-#if NSD > 0
-extern	struct cfdriver sd_cd;
-#endif
-#if NCD > 0
-extern	struct cfdriver cd_cd;
-#endif
-#if NMCD > 0
-extern	struct cfdriver mcd_cd;
-#endif
+int (*mountroot) __P((void *)) = NULL;
 
-struct	genericconf {
-	struct cfdriver *gc_driver;
-	char *gc_name;
-	dev_t gc_major;
-} genericconf[] = {
-#if NWDC > 0
-	{ &wd_cd,  "wd",  0 },
-#endif
-#if NSD > 0
-	{ &sd_cd,  "sd",  4 },
-#endif
-#if NCD > 0
-	{ &cd_cd,  "cd",  6 },
-#endif
-#if NMCD > 0
-	{ &mcd_cd, "mcd", 7 },
-#endif
-#if NFDC > 0
-	{ &fd_cd,  "fd",  2 },
-#endif
-	{ 0 }
-};
-
-extern int ffs_mountroot __P((void *));
-int (*mountroot) __P((void *)) = ffs_mountroot;
-
-void	gets __P((char *));
-
-void
-setconf()
-{
-	register struct genericconf *gc;
-	int unit, swaponroot = 0;
-
-	if (rootdev != NODEV)
-		goto doswap;
-
-	if (genericconf[0].gc_driver == 0)
-		goto verybad;
-
-	if (boothowto & RB_ASKNAME) {
-		char name[128];
-retry:
-		printf("root device? ");
-		gets(name);
-		for (gc = genericconf; gc->gc_driver; gc++)
-			if (gc->gc_name[0] == name[0] &&
-			    gc->gc_name[1] == name[1])
-				goto gotit;
-		goto bad;
-gotit:
-		if (name[3] == '*') {
-			name[3] = name[4];
-			swaponroot++;
-		}
-		if (name[2] >= '0' && name[2] <= '7' && name[3] == 0) {
-			unit = name[2] - '0';
-			goto found;
-		}
-		printf("bad/missing unit number\n");
-bad:
-		printf("use:\n");	
-		for (gc = genericconf; gc->gc_driver; gc++)
-			printf("\t%s%%d\n", gc->gc_name);
-		goto retry;
-	}
-	unit = 0;
-	for (gc = genericconf; gc->gc_driver; gc++) {
-		if (gc->gc_driver->cd_ndevs > unit &&
-		    gc->gc_driver->cd_devs[unit]) {
-			printf("root on %s0\n", gc->gc_name);
-			goto found;
-		}
-	}
-verybad:
-	printf("no suitable root -- hit any key to reboot\n");
-	printf("\n>");						/* XXX */						/* XXX */						/* XXX */
-	cngetc();
-	cpu_reset();
-	for (;;) ;
-
-found:
-	rootdev = makedev(gc->gc_major, unit * MAXPARTITIONS);
-doswap:
-	swdevt[0].sw_dev = argdev = dumpdev =
-	    makedev(major(rootdev), minor(rootdev) + 1);
-	/* swap size and dumplo set during autoconfigure */
-	if (swaponroot)
-		rootdev = dumpdev;
-}
-
-void
-gets(cp)
-	char *cp;
-{
-	register char *lp;
-	register c;
-
-	lp = cp;
-	for (;;) {
-		printf("%c", c = cngetc()&0177);
-		switch (c) {
-		case '\n':
-		case '\r':
-			*lp++ = '\0';
-			return;
-		case '\b':
-		case '\177':
-			if (lp > cp) {
-				printf(" \b");
-				lp--;
-			}
-			continue;
-		case '#':
-			lp--;
-			if (lp < cp)
-				lp = cp;
-			continue;
-		case '@':
-		case 'u'&037:
-			lp = cp;
-			printf("%c", '\n');
-			continue;
-		default:
-			*lp++ = c;
-		}
-	}
-}
