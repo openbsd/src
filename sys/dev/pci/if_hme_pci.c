@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_hme_pci.c,v 1.6 2002/03/14 01:26:58 millert Exp $	*/
+/*	$OpenBSD: if_hme_pci.c,v 1.7 2003/02/10 22:31:01 jason Exp $	*/
 /*	$NetBSD: if_hme_pci.c,v 1.3 2000/12/28 22:59:13 sommerfeld Exp $	*/
 
 /*
@@ -76,6 +76,7 @@ struct hme_pci_softc {
 
 int	hmematch_pci(struct device *, void *, void *);
 void	hmeattach_pci(struct device *, struct device *, void *);
+int	hme_pci_enaddr(struct hme_softc *, struct pci_attach_args *);
 
 struct cfattach hme_pci_ca = {
 	sizeof(struct hme_pci_softc), hmematch_pci, hmeattach_pci
@@ -96,6 +97,102 @@ hmematch_pci(parent, vcf, aux)
 	return (0);
 }
 
+#define	PCI_EBUS2_BOOTROM	0x10
+#define	PROMHDR_PTR_DATA	0x18
+#define	PROMDATA_PTR_VPD	0x08
+#define	PROMDATA_DATA2		0x0a
+
+static const u_int8_t hme_promhdr[] = { 0x55, 0xaa };
+static const u_int8_t hme_promdat[] = {
+	'P', 'C', 'I', 'R',
+	PCI_VENDOR_SUN & 0xff, PCI_VENDOR_SUN >> 8,
+	PCI_PRODUCT_SUN_HME & 0xff, PCI_PRODUCT_SUN_HME >> 8
+};
+static const u_int8_t hme_promdat2[] = {
+	0x18, 0x00,			/* structure length */
+	0x00,				/* structure revision */
+	0x00,				/* interface revision */
+	PCI_SUBCLASS_NETWORK_ETHERNET,	/* subclass code */
+	PCI_CLASS_NETWORK		/* class code */
+};
+
+int
+hme_pci_enaddr(struct hme_softc *sc, struct pci_attach_args *hpa)
+{
+	struct pci_attach_args epa;
+	struct pci_vpd *vpd;
+	pcireg_t cl, id;
+	bus_space_handle_t romh;
+	bus_space_tag_t romt;
+	bus_size_t romsize = 0;
+	u_int8_t buf[32];
+	int dataoff, vpdoff;
+
+	/*
+	 * Dig out VPD (vital product data) and acquire Ethernet address.
+	 * The VPD of hme resides in the Boot PROM (PCI FCode) attached
+	 * to the EBus interface.
+	 * ``Writing FCode 3.x Programs'' (newer ones, dated 1997 and later)
+	 * chapter 2 describes the data structure.
+	 */
+
+	/* get a PCI tag for the EBus bridge (function 0 of the same device) */
+	epa = *hpa;
+	epa.pa_tag = pci_make_tag(hpa->pa_pc, hpa->pa_bus, hpa->pa_device, 0);
+	cl = pci_conf_read(epa.pa_pc, epa.pa_tag, PCI_CLASS_REG);
+	id = pci_conf_read(epa.pa_pc, epa.pa_tag, PCI_ID_REG);
+
+	if (PCI_CLASS(cl) != PCI_CLASS_BRIDGE ||
+	    PCI_PRODUCT(id) != PCI_PRODUCT_SUN_EBUS)
+		goto fail;
+
+	if (pci_mapreg_map(&epa, PCI_EBUS2_BOOTROM, PCI_MAPREG_TYPE_MEM, 0,
+	    &romt, &romh, 0, &romsize, 0))
+		goto fail;
+
+	bus_space_read_region_1(romt, romh, 0, buf, sizeof(buf));
+	if (bcmp(buf, hme_promhdr, sizeof(hme_promhdr)))
+		goto fail;
+
+	dataoff = buf[PROMHDR_PTR_DATA] | (buf[PROMHDR_PTR_DATA + 1] << 8);
+	if (dataoff < 0x1c)
+		goto fail;
+
+	bus_space_read_region_1(romt, romh, dataoff, buf, sizeof(buf));
+	if (bcmp(buf, hme_promdat, sizeof(hme_promdat)) ||
+	    bcmp(buf + PROMDATA_DATA2, hme_promdat2, sizeof(hme_promdat2)))
+		goto fail;
+
+	vpdoff = buf[PROMDATA_PTR_VPD] | (buf[PROMDATA_PTR_VPD + 1] << 8);
+	if (vpdoff < 0x1c)
+		goto fail;
+
+	/*
+	 * The VPD of hme is not in PCI 2.2 standard format.  The length
+	 * in the resource header is in big endian, and resources are not
+	 * properly terminated (only one resource and no end tag).
+	 */
+	bus_space_read_region_1(romt, romh, vpdoff, buf, sizeof(buf));
+
+	/* XXX TODO: Get the data from VPD */
+	vpd = (struct pci_vpd *)(buf + 3);
+	if (!PCI_VPDRES_ISLARGE(buf[0]) ||
+	    PCI_VPDRES_LARGE_NAME(buf[0]) != PCI_VPDRES_TYPE_VPD)
+		goto fail;
+	if (vpd->vpd_key0 != 'N' || vpd->vpd_key1 != 'A')
+		goto fail;
+
+	bcopy(buf + 6, sc->sc_enaddr, ETHER_ADDR_LEN);
+	sc->sc_enaddr[5] += hpa->pa_device;
+	bus_space_unmap(romt, romh, romsize);
+	return (0);
+
+fail:
+	if (romsize != 0)
+		bus_space_unmap(romt, romh, romsize);
+	return (-1);
+}
+
 void
 hmeattach_pci(parent, self, aux)
 	struct device *parent, *self;
@@ -109,7 +206,7 @@ hmeattach_pci(parent, self, aux)
 	extern void myetheraddr(u_char *);
 	pcireg_t csr;
 	const char *intrstr;
-	int type;
+	int type, gotenaddr = 0;
 
 	/*
 	 * enable io/memory-space accesses.  this is kinda of gross; but
@@ -148,8 +245,7 @@ hmeattach_pci(parent, self, aux)
 
 #define PCI_HME_BASEADDR	0x10
 	if (pci_mapreg_map(pa, PCI_HME_BASEADDR, type, 0,
-	    &hsc->hsc_memt, &hsc->hsc_memh, NULL, NULL, 0) != 0)
-	{
+	    &hsc->hsc_memt, &hsc->hsc_memh, NULL, NULL, 0) != 0) {
 		printf(": could not map hme registers\n");
 		return;
 	}
@@ -159,13 +255,22 @@ hmeattach_pci(parent, self, aux)
 	sc->sc_mac = hsc->hsc_memh + 0x6000;
 	sc->sc_mif = hsc->hsc_memh + 0x7000;
 
+	if (hme_pci_enaddr(sc, pa) == 0)
+		gotenaddr = 1;
+
 #ifdef __sparc__
-	if (OF_getprop(PCITAG_NODE(pa->pa_tag), "local-mac-address",
-	    sc->sc_enaddr, ETHER_ADDR_LEN) <= 0)
+	if (!gotenaddr) {
+		if (OF_getprop(PCITAG_NODE(pa->pa_tag), "local-mac-address",
+		    sc->sc_enaddr, ETHER_ADDR_LEN) <= 0)
 		myetheraddr(sc->sc_enaddr);
+		gotenaddr = 1;
+	}
 #endif
 #ifdef __powerpc__
-	pci_ether_hw_addr(pa->pa_pc, sc->sc_enaddr);
+	if (!gotenaddr) {
+		pci_ether_hw_addr(pa->pa_pc, sc->sc_enaddr);
+		gotenaddr = 1;
+	}
 #endif
 
 
