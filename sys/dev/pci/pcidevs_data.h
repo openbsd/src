@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.29 1998/02/23 23:55:23 millert Exp 
+ *	OpenBSD: pcidevs,v 1.30 1998/03/03 05:24:36 todd Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -403,6 +403,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Cirrus Logic",
 	    "CL-GD5446",
+	},
+	{
+	    PCI_VENDOR_CIRRUS, PCI_PRODUCT_CIRRUS_CL_GD5480,
+	    0,
+	    "Cirrus Logic",
+	    "CL-GD5480",
 	},
 	{
 	    PCI_VENDOR_CIRRUS, PCI_PRODUCT_CIRRUS_CL_GD6729,
