@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_create.1,v 1.13 2004/09/18 09:22:14 espie Exp $
+.\"	$OpenBSD: pkg_create.1,v 1.14 2004/09/22 10:57:27 espie Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -229,6 +229,36 @@ Specialized version of
 to handle shells.
 See
 .Xr shells 5 .
+.It Cm @newuser Ar name:uid:group:loginclass:comment:home:shell
+During
+.Xr pkg_add 1 ,
+create a new user, happens before any file creation.
+All fields correspond to
+.Xr useradd 8
+parameters.
+Some fields are optional and can be left empty.
+If the user already exists, no action is taken.
+Individual fields can be prefixed by a ! to make sure an existing
+user matches.
+For instance, the directive
+.Li @newuser foo:!42
+will make sure user foo has uid 42.
+During
+.Xr pkg_delete 1 ,
+users will be deleted if extra clean-up has been requested, and if
+other installed packages don't list the same user.
+.It Cm @newgroup Ar name:gid
+During
+.Xr pkg_add 1 ,
+create a new group, using
+.Xr groupadd 8 .
+Happens before file and user creations.
+.Ar gid
+can be prefixed with a ! to ensure group has the correct gid.
+During
+.Xr pkg_delete 1 ,
+groups will be deleted if extra clean-up has been requested, and if
+other installed packages don't list the same group.
 .It Cm @arch Ar arches
 List of architectures for which this package is intended.
 .It Cm @cwd Ar pathname
