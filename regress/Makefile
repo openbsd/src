@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.9 2002/02/05 21:48:04 matthieu Exp $
+#	$OpenBSD: Makefile,v 1.10 2002/02/18 10:16:01 art Exp $
 
 #
 # To run full regression tests you just need two steps:
@@ -13,7 +13,7 @@
 # a log file, use an absolute path.
 # To skip the really slow tests, set the REGRESSSKIPSLOW variable.
 
-# missing: bin usr.sbin share games gnu
+# missing: usr.sbin games gnu
 
 SUBDIR+= etc bin include lib libexec sbin sys share usr.bin
 
