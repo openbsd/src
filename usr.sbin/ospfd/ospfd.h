@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.h,v 1.18 2005/03/23 10:46:26 henning Exp $ */
+/*	$OpenBSD: ospfd.h,v 1.19 2005/03/23 11:30:21 henning Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -37,6 +37,7 @@
 
 #define	READ_BUF_SIZE		65535
 #define	RT_BUF_SIZE		16384
+#define	MAX_RTSOCK_BUF		128 * 1024
 
 #define	OSPFD_FLAG_NO_FIB_UPDATE	0x0001
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.7 2005/03/23 11:07:42 henning Exp $ */
+/*	$OpenBSD: kroute.c,v 1.8 2005/03/23 11:30:21 henning Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -121,7 +121,8 @@ kif_init(void)
 int
 kr_init(int fs)
 {
-	int opt = 0;
+	int		opt = 0, rcvbuf, default_rcvbuf;
+	socklen_t	optlen;
 
 	kr_state.fib_sync = fs;
 
@@ -134,6 +135,19 @@ kr_init(int fs)
 	if (setsockopt(kr_state.fd, SOL_SOCKET, SO_USELOOPBACK,
 	    &opt, sizeof(opt)) == -1)
 		log_warn("kr_init: setsockopt");	/* not fatal */
+
+	/* grow receive buffer, don't wanna miss messages */
+	optlen = sizeof(default_rcvbuf);
+	if (getsockopt(kr_state.fd, SOL_SOCKET, SO_RCVBUF,
+	    &default_rcvbuf, &optlen) == -1)
+		log_warn("kr_init getsockopt SOL_SOCKET SO_RCVBUF");
+	else
+		for (rcvbuf = MAX_RTSOCK_BUF;
+		    rcvbuf > default_rcvbuf &&
+		    setsockopt(kr_state.fd, SOL_SOCKET, SO_RCVBUF,
+		    &rcvbuf, sizeof(rcvbuf)) == -1 && errno == ENOBUFS;
+		    rcvbuf /= 2)
+			;	/* nothing */
 
 	kr_state.pid = getpid();
 	kr_state.rtseq = 1;
