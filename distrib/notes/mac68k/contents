@@ -12,7 +12,8 @@ out as follows:
 		*.tar.gz	mac68k binary distribution sets;
 				see below.
 
-		bsd-generic*	mac68k kernel binary.  You MUST install one.
+		bsd-generic*	mac68k kernel binaries.
+				You MUST install one.
 
 		utils/		The mac68k installation utilities for MacOS.
 
@@ -22,9 +23,9 @@ distribution sets.  The binary distribution sets can be found in
 the "mac68k" subdirectory of the OpenBSD 2.3 distribution tree,
 and are as follows:
 
-	bsd-generic.tar.gz	The OpenBSD/mac68k 2.3 kernel binary.  You MUST
-		install this file.  It is the kernel that you need
-		to boot the system.
+	bsd-generic.tar.gz	The OpenBSD/mac68k 2.3 kernel binary.  
+		You MUST install this file.  It is the kernel that you 
+		need to boot the system.
 		[ 1.4M uncompressed ]
 
 	bsd-genericsbc.tar.gz The OpenBSD/mac68k kernel binary.  This is
@@ -32,12 +33,12 @@ and are as follows:
 		it enables a different SCSI driver which may allow
 		some otherwise incompatible SCSI disks to function
 		with OpenBSD/mac68k.  You must install either this
-		or bsd23.tar.gz.
+		or bsd-generic.tar.gz.
 		[ 1.4M uncompressed ]
 
-	base23.tar.gz	The OpenBSD/mac68k 2.3 base binary distribution.  You
-		MUST install this distribution set.  It contains the
-		base OpenBSD utilities that are necessary for the
+	base23.tar.gz	The OpenBSD/mac68k 2.3 base binary distribution.
+		You MUST install this distribution set.  It contains 
+		the base OpenBSD utilities that are necessary for the
 		system to run and be minimally functional.  It
 		includes shared library support, and excludes
 		everything described below.
@@ -65,8 +66,8 @@ and are as follows:
 		CAREFULLY upgrade your configuration files by hand.)
 		[ 93K gzipped, 490K uncompressed ]
 
-	game23.tar.gz	This set includes the BSD games and their manual pages.
-		It's installation is optional.
+	game23.tar.gz	This set includes the BSD games and their manual
+		pages.  It's installation is optional.
 		[ 2.7M gzipped, 6.7M uncompressed ]
 
 	man23.tar.gz	This set includes all of the manual pages for the
@@ -76,8 +77,8 @@ and are as follows:
 		this set is completely optional but is highly recommended.
 		[ 2.4M gzipped, 9.1M uncompressed ]
 
-	misc23.tar.gz	This set includes the system dictionaries (which are
-		rather large), the typesettable document set, and
+	misc23.tar.gz	This set includes the system dictionaries (which
+		are rather large), the typesettable document set, and
 		man pages for other architectures which happen to be
 		installed from the source tree by default as well as
 		many other sundry system files and programs.  This set
@@ -96,15 +97,15 @@ The directory '../2.3/mac68k/utils' contains a number of utilities for the
 MacOS to aid the installation and configuration of OpenBSD.  The files in
 this directory are as follows:
 
-	Booter1.11.0.sea.hqx
+	Booter1.11.1.sea.hqx
 		This MacOS program is used to load the OpenBSD kernel and
 		start the operating system.  In all cases, you will need to
 		download this file.
 
-	Installer_1.1f.sea.hqx
-		This is the MacOS program used to install downloaded sets (such
-		as those from the bins directory) onto a BSD partition.  It
-		is necessary in either the case of a fresh install or an
+	Installer_1.1g.sea.hqx
+		This is the MacOS program used to install downloaded sets
+		(such as those from the bins directory) onto a BSD partition.
+		It is necessary in either the case of a fresh install or an
 		upgrade.
 
 	Mkfs_1.45.sea.hqx

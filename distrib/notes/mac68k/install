@@ -76,9 +76,9 @@ If you are installing onto a single root partition, proceed to the
 Installation of base files:
 
 	Select the "Install" menu item from the "File" menu and install
-	base22.tar.gz, bsd22.tar.gz, comp22.tar.gz, and any other packages
-	you wish to install at this time (see the contents section for
-	information about what's in each package).  The installer will
+	base23.tar.gz, bsd-generic.tar.gz, comp23.tar.gz, and any other 
+	packages you wish to install at this time (see the contents section 
+	for information about what's in each package).  The installer will
 	print out the filename of each file as it is installed and will
 	take quite some time to install everything.
 
