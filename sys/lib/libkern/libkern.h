@@ -1,4 +1,4 @@
-/*	$OpenBSD: libkern.h,v 1.15 2000/06/16 20:20:30 millert Exp $	*/
+/*	$OpenBSD: libkern.h,v 1.16 2000/12/18 18:40:44 provos Exp $	*/
 /*	$NetBSD: libkern.h,v 1.7 1996/03/14 18:52:08 christos Exp $	*/
 
 /*-
@@ -167,6 +167,8 @@ size_t	 strlen __P((const char *));
 char	*strcat __P((char *, const char *));
 char	*strcpy __P((char *, const char *));
 char	*strncpy __P((char *, const char *, size_t));
+size_t	 strlcpy __P((char *, const char *, size_t));
+size_t	 strlcat __P((char *, const char *, size_t));
 int	 strcmp __P((const char *, const char *));
 int	 strncmp __P((const char *, const char *, size_t));
 int	 strncasecmp __P((const char *, const char *, size_t));

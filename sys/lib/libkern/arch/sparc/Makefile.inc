@@ -1,9 +1,10 @@
-#	$OpenBSD: Makefile.inc,v 1.8 2000/06/16 19:56:55 millert Exp $
+#	$OpenBSD: Makefile.inc,v 1.9 2000/12/18 18:40:47 provos Exp $
 #	$NetBSD: Makefile.inc,v 1.12 1996/04/23 23:05:22 christos Exp $
 
 SRCS+=  __main.c imax.c imin.c lmax.c lmin.c max.c min.c ulmax.c ulmin.c \
 	memchr.c memcmp.c memset.c \
-	bcmp.c bzero.S strcat.c strcmp.c strcpy.c strlen.S strncmp.c \
+	bcmp.c bzero.S strcat.c strcmp.c strcpy.c strlcat.c strlcpy.c \
+	strlen.S strncmp.c \
 	strncpy.c htonl.S htons.S ntohl.S ntohs.S scanc.c skpc.c \
 	strncasecmp.c
 
