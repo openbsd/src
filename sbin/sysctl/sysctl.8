@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.8,v 1.52 2000/07/09 13:34:10 itojun Exp $
+.\"	$OpenBSD: sysctl.8,v 1.53 2000/09/19 03:27:27 angelos Exp $
 .\"	$NetBSD: sysctl.8,v 1.4 1995/09/30 07:12:49 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
@@ -160,7 +160,6 @@ privilege can change the value.
 .It net.inet.ip.porthilast	integer	yes
 .It net.inet.ip.maxqueue	integer	yes
 .It net.inet.ip.encdebug	integer	yes
-.It net.inet.ip.ipsec-acl	integer	yes
 .It net.inet.ip.ipsec-pfs	integer	yes
 .It net.inet.ip.ipsec-soft-allocs	integer	yes
 .It net.inet.ip.ipsec-allocs	integer	yes
@@ -172,6 +171,7 @@ privilege can change the value.
 .It net.inet.ip.ipsec-firstuse	integer	yes
 .It net.inet.ip.ipsec-enc-alg	string	yes
 .It net.inet.ip.ipsec-auth-alg	string	yes
+.It net.inet.ip.ipsec-expire-acquire	integer	yes
 .It net.inet.ip.ipsec-invalid-life	integer	yes
 .It net.inet.icmp.maskrepl	integer	yes
 .It net.inet.icmp.bmcastecho	integer	yes
