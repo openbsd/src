@@ -1,4 +1,4 @@
-.\"	$OpenBSD: malloc.9,v 1.18 2001/07/17 15:52:56 art Exp $
+.\"	$OpenBSD: malloc.9,v 1.19 2002/07/17 11:49:36 art Exp $
 .\"	$NetBSD: malloc.9,v 1.2 1996/10/30 05:29:54 lukem Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -411,24 +411,24 @@ A kernel compiled with the
 option allows for more extensive
 debugging of memory allocations.
 You can choose which allocation to debug with the
-.Va malloc_deb_type ,
-.Va malloc_deb_size ,
-.Va malloc_deb_size_lo
+.Va debug_malloc_type ,
+.Va debug_malloc_size ,
+.Va debug_malloc_size_lo
 and
-.Va malloc_deb_size_hi
+.Va debug_malloc_size_hi
 variables.
-.Va malloc_deb_type
+.Va debug_malloc_type
 should be set to the memory type and
-.Va malloc_deb_size
+.Va debug_malloc_size
 should be set to the memory size you want to debug.
 0 can be used as a wildcard.
-.Va malloc_deb_size_lo
+.Va debug_malloc_size_lo
 and
-.Va malloc_deb_size_hi
+.Va debug_malloc_size_hi
 Can be used to specify a range of sizes if the exact size to debug is not
 known.
 When those are used, you need to set
-.Va malloc_deb_size
+.Va debug_malloc_size
 to the wildcard.
 .Pp
 Every call to
