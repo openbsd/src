@@ -954,7 +954,6 @@ static const struct dis386 dis386_twobyte[] = {
   { "btS",		Ev, Gv, XX },
   { "shldS",		Ev, Gv, Ib },
   { "shldS",		Ev, Gv, CL },
-  { "(bad)",		XX, XX, XX },
   { "",			OPXCRYPT2, XX, XX },
   { "",			OPXCRYPT, XX, XX },
   /* a8 */
