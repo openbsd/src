@@ -1,4 +1,4 @@
-/*	$OpenBSD: isadmavar.h,v 1.7 1997/09/24 22:28:14 niklas Exp $	*/
+/*	$OpenBSD: isadmavar.h,v 1.8 1997/11/04 10:32:51 provos Exp $	*/
 /*	$NetBSD: isadmavar.h,v 1.4 1996/03/01 04:08:46 mycroft Exp $	*/
 
 #define	DMAMODE_WRITE	0
@@ -24,6 +24,8 @@ void isadma_unmap __P((caddr_t, vm_size_t, int, struct isadma_seg *));
 void isadma_copytobuf __P((caddr_t, vm_size_t, int, struct isadma_seg *));
 void isadma_copyfrombuf __P((caddr_t, vm_size_t, int, struct isadma_seg *));
 
+int isadma_acquire __P((int));
+void isadma_release __P((int));
 void isadma_cascade __P((int));
 void isadma_start __P((caddr_t, vm_size_t, int, int));
 void isadma_abort __P((int));
@@ -34,6 +36,8 @@ void isadma_done __P((int));
  * XXX these are needed until all drivers have been cleaned up
  */
 
+#define isa_dma_acquire(c)       isadma_acquire(c)
+#define isa_dma_release(c)       isadma_release(c)
 #define isa_dmacascade(c)	isadma_cascade((c))
 #define isa_dmastart(f, a, s, c)	isadma_start((a), (s), (c), (f))
 #define isa_dmaabort(c)		isadma_abort((c))

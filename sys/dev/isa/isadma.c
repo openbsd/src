@@ -1,4 +1,4 @@
-/*	$OpenBSD: isadma.c,v 1.13 1996/12/12 00:21:59 niklas Exp $	*/
+/*	$OpenBSD: isadma.c,v 1.14 1997/11/04 10:32:51 provos Exp $	*/
 /*	$NetBSD: isadma.c,v 1.19 1996/04/29 20:03:26 christos Exp $	*/
 
 #include <sys/param.h>
@@ -22,6 +22,8 @@
 struct dma_info {
 	int flags;
 	int active;
+	int inuse;
+	int bounced;
 	caddr_t addr;
 	vm_size_t nbytes;
 	struct isadma_seg phys[1];
@@ -39,8 +41,8 @@ static int dmapageport[2][4] = {
 static u_int8_t dmamode[4] = {
 	DMA37MD_READ | DMA37MD_SINGLE,
 	DMA37MD_WRITE | DMA37MD_SINGLE,
-	DMA37MD_READ | DMA37MD_LOOP,
-	DMA37MD_WRITE | DMA37MD_LOOP
+	DMA37MD_READ | DMA37MD_SINGLE | DMA37MD_LOOP,
+	DMA37MD_WRITE | DMA37MD_SINGLE | DMA37MD_LOOP
 };
 
 int isadmamatch __P((struct device *, void *, void *));
@@ -73,6 +75,57 @@ isadmaattach(parent, self, aux)
 	void *aux;
 {
 	printf("\n");
+}
+
+/*
+ * Register a DMA channel's usage.  Usually called from a device driver
+ * in open() or during it's initialization.
+ */
+int
+isadma_acquire(chan)
+	int chan;
+{
+	struct dma_info *di;
+#ifdef DIAGNOSTIC
+	if (chan < 0 || chan > 7)
+		panic("isadma_acquire: channel out of range");
+#endif
+
+	di = dma_info + chan;
+
+	if (di->inuse) {
+		log(LOG_ERR, "isadma_acquire: channel %d already in use\n", chan);
+		return (EBUSY);
+	}
+	di->inuse = 1;
+
+	return (0);
+}
+
+/*
+ * Unregister a DMA channel's usage.  Usually called from a device driver
+ * during close() or during it's shutdown.
+ */
+void
+isadma_release(chan)
+	int chan;
+{
+	struct dma_info *di;
+#ifdef DIAGNOSTIC
+	if (chan < 0 || chan > 7)
+		panic("isadma_release: channel out of range");
+#endif
+	di = dma_info + chan;
+
+	if (!di->inuse) {
+		log(LOG_ERR, "isadma_release: channel %d not in use\n", chan);
+		return;
+	}
+
+	if (di->active)
+		isadma_abort(chan);
+
+	di->inuse = 0;
 }
 
 /*
@@ -136,15 +189,24 @@ isadma_start(addr, nbytes, chan, flags)
 	di->addr = addr;
 	di->nbytes = nbytes;
 
-	mflags = ISADMA_MAP_WAITOK | ISADMA_MAP_BOUNCE | ISADMA_MAP_CONTIG;
+	mflags = ISADMA_MAP_WAITOK | ISADMA_MAP_CONTIG;
 	mflags |= (chan & 4) ? ISADMA_MAP_16BIT : ISADMA_MAP_8BIT;
 
-	if (isadma_map(addr, nbytes, di->phys, mflags) != 1)
-		panic("isadma_start: cannot map");
+	if (isadma_map(addr, nbytes, di->phys, mflags) != 1) {
+		mflags |= ISADMA_MAP_BOUNCE;
 
-	/* XXX Will this do what we want with DMAMODE_LOOP?  */
-	if ((flags & DMAMODE_READ) == 0)
-		isadma_copytobuf(addr, nbytes, 1, di->phys);
+		if (isadma_map(addr, nbytes, di->phys, mflags) != 1)
+			panic("isadma_start: cannot map");
+
+		di->bounced = 1;
+
+		if ((flags & DMAMODE_READ) == 0)
+			isadma_copytobuf(addr, nbytes, 1, di->phys);
+
+		/* XXX Will this do what we want with DMAMODE_LOOP?  */
+		if ((flags & DMAMODE_READ) == 0)
+			isadma_copytobuf(addr, nbytes, 1, di->phys);
+        }
 
 	dma_finished &= ~(1 << chan);
 
@@ -180,7 +242,7 @@ isadma_start(addr, nbytes, chan, flags)
 
 		/* send start address */
 		waport = DMA2_CHN(chan & 3);
-		outb(dmapageport[1][chan], di->phys[0].addr>>16);
+		outb(dmapageport[1][chan & 3], di->phys[0].addr>>16);
 		outb(waport, di->phys[0].addr>>1);
 		outb(waport, di->phys[0].addr>>9);
 
@@ -219,6 +281,7 @@ isadma_abort(chan)
 
 	isadma_unmap(di->addr, di->nbytes, 1, di->phys);
 	di->active = 0;
+	di->bounced = 0;
 }
 
 int
@@ -274,9 +337,10 @@ isadma_done(chan)
 		outb(DMA2_SMSK, DMA37SM_SET | (chan & 3));
 
 	/* XXX Will this do what we want with DMAMODE_LOOP?  */
-	if (di->flags & DMAMODE_READ)
+	if (di->bounced & (di->flags & DMAMODE_READ))
 		isadma_copyfrombuf(di->addr, di->nbytes, 1, di->phys);
 
 	isadma_unmap(di->addr, di->nbytes, 1, di->phys);
 	di->active = 0;
+	di->bounced = 0;
 }
