@@ -1,4 +1,4 @@
-.\" $OpenBSD: zkbd.4,v 1.7 2005/04/01 13:16:58 uwe Exp $
+.\" $OpenBSD: zkbd.4,v 1.8 2005/04/01 16:44:48 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Theo de Raadt <deraadt@openbsd.org>
 .\"
@@ -70,11 +70,14 @@ Alt + F1 will select the second virtual console.
 On/Off is special: pressing the key for 2 seconds will suspend
 the system.
 Pressing the key longer than 6 seconds will do a nice halt if
-the machdep.kbdreset sysctl variable is 1.
+the machdep.kbdreset
+.Xr sysctl 8
+variable is 1.
 .Sh SEE ALSO
 .Xr intro 4 ,
 .Xr pxaip 4 ,
-.Xr wskbd 4
+.Xr wskbd 4 ,
+.Xr sysctl 8
 .Sh HISTORY
 The
 .Nm
