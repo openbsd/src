@@ -1,4 +1,4 @@
-/* $OpenBSD: byte.c,v 1.1 1999/05/10 16:14:07 espie Exp $ */
+/* $OpenBSD: byte.c,v 1.2 1999/08/29 17:22:05 espie Exp $ */
 /*
  * Copyright (c) 1999  
  *	Marc Espie.  All rights reserved.
@@ -92,14 +92,14 @@ static void fix_nlists_order(p, n, mid)
 	size_t n;
 	int mid;
 {
-	int i;
+	size_t i;
 
 	if (byte_sex(mid) != BYTE_ORDER)
 		for (i = 0; i < n; i++)
 			swap_nlist(p+i);
 }
 
-static fix_ranlib_order(r, mid)
+static void fix_ranlib_order(r, mid)
 	struct ranlib *r;
 	int mid;
 {
