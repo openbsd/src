@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp.c,v 1.49 2001/08/23 23:11:02 angelos Exp $	*/
+/*	$OpenBSD: udp.c,v 1.50 2001/08/23 23:32:35 angelos Exp $	*/
 /*	$EOM: udp.c,v 1.57 2001/01/26 10:09:57 niklas Exp $	*/
 
 /*
@@ -136,7 +136,7 @@ static struct transport *
 udp_make (struct sockaddr *laddr)
 {
   struct udp_transport *t = 0;
-  int s, on;
+  int s, on, wildcardaddress = 0;
 
   t = calloc (1, sizeof *t);
   if (!t)
@@ -157,6 +157,19 @@ udp_make (struct sockaddr *laddr)
   if (sysdep_cleartext (s, laddr->sa_family) == -1)
     goto err;
 
+  /* Wildcard address ?  */
+  switch (laddr->sa_family)
+    {
+    case AF_INET:
+      if (((struct sockaddr_in *)laddr)->sin_addr.s_addr == INADDR_ANY)
+	wildcardaddress = 1;
+      break;
+    case AF_INET6:
+      if (IN6_IS_ADDR_UNSPECIFIED(&((struct sockaddr_in6 *)laddr)->sin6_addr))
+	wildcardaddress = 1;
+      break;
+    }
+
   /*
    * In order to have several bound specific address-port combinations
    * with the same port SO_REUSEADDR is needed.
@@ -165,23 +178,11 @@ udp_make (struct sockaddr *laddr)
    */
   on = 1;
   if (setsockopt (s, SOL_SOCKET,
-#if 0
-		  (laddr->sin_addr.s_addr == INADDR_ANY
-		   && conf_get_str ("General", "Listen-on"))
-		  ? SO_REUSEPORT : SO_REUSEADDR,
-#else
-		  SO_REUSEADDR,
-#endif
+		  wildcardaddress ? SO_REUSEPORT : SO_REUSEADDR,
 		  (void *)&on, sizeof on) == -1)
     {
       log_error ("udp_make: setsockopt (%d, %d, %d, %p, %d)", s, SOL_SOCKET,
-#if 0
-		 (laddr->sin_addr.s_addr == INADDR_ANY
-		  && conf_get_str ("General", "Listen-on"))
-		 ? SO_REUSEPORT : SO_REUSEADDR,
-#else
-		 SO_REUSEADDR,
-#endif
+		 wildcardaddress ? SO_REUSEPORT : SO_REUSEADDR,
 		 &on, sizeof on);
       goto err;
     }
@@ -658,7 +659,6 @@ udp_init (void)
       log_error ("udp_init: could not allocate default IPv4 ISAKMP UDP port");
       return;
     }
-
   LIST_INSERT_HEAD (&udp_listen_list,
 		    (struct udp_transport *)default_transport, link);
 
