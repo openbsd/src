@@ -337,7 +337,8 @@ int main(int argc, char *argv[])
     int i;
     int args_left = 2;
     int tfd;
-
+    int ch;
+    
     signal(SIGINT, (void (*)(int)) interrupted);
 
     /*
@@ -353,50 +354,49 @@ int main(int argc, char *argv[])
      * Go through the argument list and pick out any options.  They
      * have to precede any other arguments.
      */
-    for (i = 1; i < argc; i++) {
-	arg = argv[i];
-	if (*arg != '-') {
-	    break;
-	}
-	while (*++arg != '\0') {
-	    if (*arg == 'c') {
-		newfile++;
+    while ((ch = getopt(argc, argv, "bcdlnmsp")) != -1) {
+	    switch (ch) {
+	    case 'b':
+		    noninteractive++;
+		    args_left++;
+		    break;
+	    case 'c':
+		    newfile++;
+		    break;
+	    case 'd':
+		    alg = ALG_CRYPT;
+		    break;
+	    case 'l':
+		    alg = ALG_APBLF;
+		    break;
+	    case 'n':
+		    nofile++;
+		    args_left--;
+		    break;
+	    case 'm':
+		    alg = ALG_APMD5;
+		    break;
+	    case 's':
+		    alg = ALG_APSHA;
+		    break;
+	    case 'p':
+		    alg = ALG_PLAIN;
+		    break;
+	    default:
+		    usage();
 	    }
-	    else if (*arg == 'n') {
-		nofile++;
-		args_left--;
-	    }
-	    else if (*arg == 'm') {
-		alg = ALG_APMD5;
-	    }
-	    else if (*arg == 's') {
-		alg = ALG_APSHA;
-	    }
-	    else if (*arg == 'p') {
-		alg = ALG_PLAIN;
-	    }
-	    else if (*arg == 'd') {
-		alg = ALG_CRYPT;
-	    }
-	    else if (*arg == 'l') {
-		alg = ALG_APBLF;
-	    }
-	    else if (*arg == 'b') {
-		noninteractive++;
-		args_left++;
-	    }
-	    else {
-		return usage();
-	    }
-	}
     }
+    argc -= optind;
+    argv += optind;
 
+    i = argc - args_left;
+    
     /*
      * Make sure we still have exactly the right number of arguments left
      * (the filename, the username, and possibly the password if -b was
      * specified).
      */
-    if ((argc - i) != args_left) {
+    if (argc != args_left) {
 	return usage();
     }
     if (newfile && nofile) {
