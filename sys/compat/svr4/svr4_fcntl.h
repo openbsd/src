@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_fcntl.h,v 1.2 1996/08/02 20:35:38 niklas Exp $	 */
+/*	$OpenBSD: svr4_fcntl.h,v 1.3 1997/08/07 09:16:20 niklas Exp $	 */
 /*	$NetBSD: svr4_fcntl.h,v 1.3 1994/10/29 00:43:19 christos Exp $	 */
 
 /*
@@ -41,7 +41,10 @@
 #define	SVR4_O_NDELAY		0x0004
 #define	SVR4_O_APPEND		0x0008
 #define	SVR4_O_SYNC		0x0010
+#if 0
+/* Dellism ??? */
 #define SVR4_O_RAIOSIG		0x0020
+#endif
 #define	SVR4_O_NONBLOCK		0x0080
 #define	SVR4_O_CREAT		0x0100
 #define	SVR4_O_TRUNC		0x0200
