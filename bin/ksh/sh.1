@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sh.1,v 1.61 2005/02/02 07:53:01 otto Exp $
+.\"	$OpenBSD: sh.1,v 1.62 2005/02/05 12:36:21 jmc Exp $
 .\"
 .\"	Public Domain
 .\"
@@ -3038,6 +3038,13 @@ It is normally used as the condition command of
 and
 .Ic while
 statements.
+Symbolic links are followed for all
+.Ar file
+expressions except
+.Fl h
+and
+.Fl L .
+.Pp
 The following basic expressions are available:
 .Bl -tag -width 17n
 .It Fl r Ar file
