@@ -1,8 +1,8 @@
-/*	$OpenBSD: ui.c,v 1.6 1999/03/24 15:00:17 niklas Exp $	*/
-/*	$EOM: ui.c,v 1.28 1999/03/08 00:39:28 niklas Exp $	*/
+/*	$OpenBSD: ui.c,v 1.7 1999/04/19 21:10:21 niklas Exp $	*/
+/*	$EOM: ui.c,v 1.31 1999/04/11 22:35:53 ho Exp $	*/
 
 /*
- * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
+ * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -49,6 +49,7 @@
 #include "isakmp.h"
 #include "log.h"
 #include "sa.h"
+#include "timer.h"
 #include "transport.h"
 #include "ui.h"
 #include "util.h"
@@ -149,6 +150,8 @@ ui_report (char *cmd)
 {
   sa_report ();
   exchange_report ();
+  transport_report ();
+  timer_report ();
 }
 
 /*
