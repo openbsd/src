@@ -1,4 +1,4 @@
-/*	$OpenBSD: bktr_reg.h,v 1.3 2001/03/28 07:13:43 fgsch Exp $	*/
+/*	$OpenBSD: bktr_reg.h,v 1.4 2001/05/16 07:15:42 fgsch Exp $	*/
 /*
  * $FreeBSD: src/sys/dev/bktr/bktr_reg.h,v 1.42 2000/10/31 13:09:56 roger Exp $
  *
@@ -518,9 +518,6 @@ struct bktr_softc {
     bus_dmamap_t	dm_mem;
     bus_dmamap_t	dm_vbidata;
     bus_dmamap_t	dm_vbibuffer;
-#ifdef __OpenBSD__
-    size_t		dm_mapsize;
-#endif
 #endif
 
 #if defined (__FreeBSD__)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bktr_os.c,v 1.1 2001/03/28 03:27:09 fgsch Exp $	*/
+/*	$OpenBSD: bktr_os.c,v 1.2 2001/05/16 07:15:41 fgsch Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_os.c,v 1.20 2000/10/20 08:16:53 roger Exp $ */
 
 /*
@@ -1499,9 +1499,6 @@ get_bktr_mem(bktr, dmapp, size)
                 bus_dmamem_free(dmat, &seg, rseg);
                 return 0;
         }
-#ifdef __OpenBSD__
-        bktr->dm_mapsize = size;
-#endif
         /*
          * Create and locd the DMA map for the DMA area
          */
@@ -1531,11 +1528,7 @@ free_bktr_mem(bktr, dmap, kva)
 {
         bus_dma_tag_t dmat = bktr->dmat;
 
-#ifdef __NetBSD__ 
         bus_dmamem_unmap(dmat, (caddr_t)kva, dmap->dm_mapsize);
-#else
-        bus_dmamem_unmap(dmat, (caddr_t)kva, bktr->dm_mapsize);
-#endif
         bus_dmamem_free(dmat, dmap->dm_segs, 1);
         bus_dmamap_destroy(dmat, dmap);
 }
