@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.88 2002/04/01 17:47:53 beck Exp $
+#	$OpenBSD: Makefile,v 1.89 2002/06/19 08:45:23 deraadt Exp $
 
 # not yet done: catman
 
@@ -14,7 +14,7 @@ SUBDIR=	ac accton adduser altq amd arp authpf \
 	pstat pwd_mkdb quot quotaon rarpd rbootd rdconfig rdate repquota rmt \
 	rpc.bootparamd rpc.lockd rpc.pcnfsd rwhod \
 	sa sesd sliplogin slstats spppcontrol spray \
-	syslogd tcpdump timed tokenadm tokeninit traceroute trpt trsp \
+	syslogd tcpdump timed tokenadm tokeninit traceroute trpt \
 	usbdevs user vipw vnconfig wsmoused zdump zic
 
 # LICENSING ISSUES: mrouted has non-free parts, and the following use them:
