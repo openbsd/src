@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dc.c,v 1.11 2000/03/17 01:27:13 aaron Exp $	*/
+/*	$OpenBSD: dc.c,v 1.1 2000/04/18 19:35:30 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -151,33 +151,10 @@
 
 #define DC_USEIOSPACE
 
-#include <dev/pci/if_dcreg.h>
+#include <dev/ic/dcreg.h>
 
-/*
- * Various supported device vendors/types and their names.
- */
-struct dc_type dc_devs[] = {
-#if 0
-	{ PCI_VENDOR_DEC, PCI_PRODUCT_DEC_21142 },
-#endif
-	{ PCI_VENDOR_DAVICOM, PCI_PRODUCT_DAVICOM_DM9100 },
-	{ PCI_VENDOR_DAVICOM, PCI_PRODUCT_DAVICOM_DM9102 },
-	{ PCI_VENDOR_ADMTEK, PCI_PRODUCT_ADMTEK_AL981 },
-	{ PCI_VENDOR_ADMTEK, PCI_PRODUCT_ADMTEK_AN985 },
-	{ PCI_VENDOR_ASIX, PCI_PRODUCT_ASIX_AX88140A },
-	{ PCI_VENDOR_MACRONIX, PCI_PRODUCT_MACRONIX_MX98713 },
-	{ PCI_VENDOR_MACRONIX, PCI_PRODUCT_MACRONIX_MX98715 },
-	{ PCI_VENDOR_COMPEX, PCI_PRODUCT_COMPEX_98713 },
-	{ PCI_VENDOR_LITEON, PCI_PRODUCT_LITEON_PNIC },
-	{ PCI_VENDOR_LITEON, PCI_PRODUCT_LITEON_PNICII },
-	{ 0, 0 }
-};
-
-int dc_probe		__P((struct device *, void *, void *));
-void dc_attach		__P((struct device *, struct device *, void *));
 int dc_intr		__P((void *));
 void dc_shutdown	__P((void *));
-void dc_acpi		__P((struct device *, void *));
 struct dc_type *dc_devtype	__P((void *));
 int dc_newbuf		__P((struct dc_softc *, int, struct mbuf *));
 int dc_encap		__P((struct dc_softc *, struct mbuf *, u_int32_t *));
@@ -1229,310 +1206,14 @@ void dc_reset(sc)
 }
 
 /*
- * Probe for a 21143 or clone chip. Check the PCI vendor and device
- * IDs against our list and return a device name if we find a match.
- */
-int
-dc_probe(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
-{
-	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
-	struct dc_type *t;
-
-	for (t = dc_devs; t->dc_vid != 0; t++) {
-		if ((PCI_VENDOR(pa->pa_id) == t->dc_vid) &&
-		    (PCI_PRODUCT(pa->pa_id) == t->dc_did))
-			return (1);
-	}
-	return (0);
-}
-
-void dc_acpi(self, aux)
-	struct device		*self;
-	void			*aux;
-{
-	struct dc_softc		*sc = (struct dc_softc *)self;
-	struct pci_attach_args	*pa = (struct pci_attach_args *)aux;
-	pci_chipset_tag_t	pc = pa->pa_pc;
-	u_int32_t		r, cptr;
-	int			unit;
-
-	unit = sc->dc_unit;
-
-	/* Find the location of the capabilities block */
-	cptr = pci_conf_read(pc, pa->pa_tag, DC_PCI_CCAP) & 0xFF;
-
-	r = pci_conf_read(pc, pa->pa_tag, cptr) & 0xFF;
-	if (r == 0x01) {
-
-		r = pci_conf_read(pc, pa->pa_tag, cptr + 4);
-		if (r & DC_PSTATE_D3) {
-			u_int32_t		iobase, membase, irq;
-
-			/* Save important PCI config data. */
-			iobase = pci_conf_read(pc, pa->pa_tag, DC_PCI_CFBIO);
-			membase = pci_conf_read(pc, pa->pa_tag, DC_PCI_CFBMA);
-			irq = pci_conf_read(pc, pa->pa_tag, DC_PCI_CFIT);
-
-			/* Reset the power state. */
-			printf("dc%d: chip is in D%d power mode "
-			    "-- setting to D0\n", unit, r & DC_PSTATE_D3);
-			r &= 0xFFFFFFFC;
-			pci_conf_write(pc, pa->pa_tag, cptr + 4, r);
-
-			/* Restore PCI config data. */
-			pci_conf_write(pc, pa->pa_tag, DC_PCI_CFBIO, iobase);
-			pci_conf_write(pc, pa->pa_tag, DC_PCI_CFBMA, membase);
-			pci_conf_write(pc, pa->pa_tag, DC_PCI_CFIT, irq);
-		}
-	}
-	return;
-}
-
-/*
  * Attach the interface. Allocate softc structures, do ifmedia
  * setup and ethernet/BPF attach.
  */
-void dc_attach(parent, self, aux)
-	struct device		*parent, *self;
-	void			*aux;
+void dc_attach_common(sc)
+	struct dc_softc *sc;
 {
-	int			s;
-	const char		*intrstr = NULL;
-	u_int32_t		command;
-	struct dc_softc		*sc = (struct dc_softc *)self;
-	struct pci_attach_args	*pa = aux;
-	pci_chipset_tag_t	pc = pa->pa_pc;
-	pci_intr_handle_t	ih;
 	struct ifnet		*ifp;
-	bus_addr_t		iobase;
-	bus_size_t		iosize;
-	u_int32_t		revision;
-	int			mac_offset, found = 0;
-
-	s = splimp();
-	sc->dc_unit = sc->sc_dev.dv_unit;
-
-	/*
-	 * Handle power management nonsense.
-	 */
-	dc_acpi(self, aux);
-
-	/*
-	 * Map control/status registers.
-	 */
-	command = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
-	command |= PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE |
-	    PCI_COMMAND_MASTER_ENABLE;
-	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, command);
-	command = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
-
-	sc->dc_csid = pci_conf_read(pc, pa->pa_tag, PCI_SUBSYS_ID_REG);
-
-#ifdef DC_USEIOSPACE
-	if (!(command & PCI_COMMAND_IO_ENABLE)) {
-		printf(": failed to enable I/O ports\n");
-		goto fail;
-	}
-	if (pci_io_find(pc, pa->pa_tag, DC_PCI_CFBIO, &iobase, &iosize)) {
-		printf(": can't find I/O space\n");
-		goto fail;
-	}
-	if (bus_space_map(pa->pa_iot, iobase, iosize, 0, &sc->dc_bhandle)) {
-		printf(": can't map I/O space\n");
-		goto fail;
-	}
-	sc->dc_btag = pa->pa_iot;
-#else
-	if (!(command & PCI_COMMAND_MEM_ENABLE)) {
-		printf(": failed to enable memory mapping\n");
-		goto fail;
-	}
-	if (pci_mem_find(pc, pa->pa_tag, DC_PCI_CFBMA, &iobase, &iosize, NULL)){
-		printf(": can't find mem space\n");
-		goto fail;
-	}
-	if (bus_space_map(pa->pa_memt, iobase, iosize, 0, &sc->dc_bhandle)) {
-		printf(": can't map mem space\n");
-		goto fail;
-	}
-	sc->dc_btag = pa->pa_memt;
-#endif
-
-	/* Allocate interrupt */
-	if (pci_intr_map(pc, pa->pa_intrtag, pa->pa_intrpin, pa->pa_intrline,
-	    &ih)) {
-		printf(": couldn't map interrupt\n");
-		goto fail;
-	}
-	intrstr = pci_intr_string(pc, ih);
-	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, dc_intr, sc,
-	    self->dv_xname);
-	if (sc->sc_ih == NULL) {
-		printf(": couldn't establish interrupt");
-		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
-		goto fail;
-	}
-	printf(": %s", intrstr);
-
-	/* Need this info to decide on a chip type. */
-	revision = pci_conf_read(pc, pa->pa_tag, DC_PCI_CFRV) & 0x000000FF;
-
-	switch (PCI_VENDOR(pa->pa_id)) {
-	case PCI_VENDOR_DEC:
-		if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_DEC_21142) {
-			found = 1;
-			sc->dc_type = DC_TYPE_21143;
-			sc->dc_flags |= DC_TX_POLL|DC_TX_USE_TX_INTR;
-			sc->dc_flags |= DC_REDUCED_MII_POLL;
-		}
-		break;
-	case PCI_VENDOR_DAVICOM:
-		if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_DAVICOM_DM9100 ||
-		    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_DAVICOM_DM9102) {
-			found = 1;
-			sc->dc_type = DC_TYPE_DM9102;
-			sc->dc_flags |= DC_TX_COALESCE|DC_TX_USE_TX_INTR;
-			sc->dc_flags |= DC_REDUCED_MII_POLL;
-			sc->dc_pmode = DC_PMODE_MII;
-		}
-		break;
-	case PCI_VENDOR_ADMTEK:
-		if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ADMTEK_AL981) {
-			found = 1;
-			sc->dc_type = DC_TYPE_AL981;
-			sc->dc_flags |= DC_TX_USE_TX_INTR;
-			sc->dc_flags |= DC_TX_ADMTEK_WAR;
-			sc->dc_pmode = DC_PMODE_MII;
-		}
-		if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ADMTEK_AN985) {
-			found = 1;
-			sc->dc_type = DC_TYPE_AN985;
-			sc->dc_flags |= DC_TX_USE_TX_INTR;
-			sc->dc_flags |= DC_TX_ADMTEK_WAR;
-			sc->dc_pmode = DC_PMODE_MII;
-		}
-		break;
-	case PCI_VENDOR_MACRONIX:
-		if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_MACRONIX_MX98713) {
-			found = 1;
-			if (revision < DC_REVISION_98713A) {
-				sc->dc_type = DC_TYPE_98713;
-				sc->dc_flags |= DC_REDUCED_MII_POLL;
-			}
-			if (revision >= DC_REVISION_98713A)
-				sc->dc_type = DC_TYPE_98713A;
-			sc->dc_flags |= DC_TX_POLL|DC_TX_USE_TX_INTR;
-		}
-		if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_MACRONIX_MX98715) {
-			found = 1;
-			sc->dc_type = DC_TYPE_987x5;
-			sc->dc_flags |= DC_TX_POLL|DC_TX_USE_TX_INTR;
-		}
-		break;
-	case PCI_VENDOR_COMPEX:
-		if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_COMPEX_98713) {
-			found = 1;
-			if (revision < DC_REVISION_98713A) {
-				sc->dc_type = DC_TYPE_98713;
-				sc->dc_flags |= DC_REDUCED_MII_POLL;
-			}
-			if (revision >= DC_REVISION_98713A)
-				sc->dc_type = DC_TYPE_98713A;
-			sc->dc_flags |= DC_TX_POLL|DC_TX_USE_TX_INTR;
-		}
-		break;
-	case PCI_VENDOR_LITEON:
-		if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_LITEON_PNICII) {
-			found = 1;
-			sc->dc_type = DC_TYPE_PNICII;
-			sc->dc_flags |= DC_TX_POLL|DC_TX_USE_TX_INTR;
-		}
-		if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_LITEON_PNIC) {
-			found = 1;
-			sc->dc_type = DC_TYPE_PNIC;
-			sc->dc_flags |= DC_TX_STORENFWD|DC_TX_INTR_ALWAYS;
-			sc->dc_flags |= DC_PNIC_RX_BUG_WAR;
-			sc->dc_pnic_rx_buf = malloc(DC_RXLEN * 5, M_DEVBUF,
-			    M_NOWAIT);
-			if (revision < DC_REVISION_82C169)
-				sc->dc_pmode = DC_PMODE_SYM;
-		}
-		break;
-	case PCI_VENDOR_ASIX:
-		if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ASIX_AX88140A) {
-			found = 1;
-			sc->dc_type = DC_TYPE_ASIX;
-			sc->dc_flags |= DC_TX_USE_TX_INTR|DC_TX_INTR_FIRSTFRAG;
-			sc->dc_flags |= DC_REDUCED_MII_POLL;
-			sc->dc_pmode = DC_PMODE_MII;
-		}
-		break;
-	}
-	if (found == 0) {
-		/* This shouldn't happen if probe has done it's job... */
-		printf(": unknown device: %x:%x\n",
-		    PCI_VENDOR(pa->pa_id), PCI_PRODUCT(pa->pa_id));
-		goto fail;
-	}
-
-	/* Save the cache line size. */
-	if (DC_IS_DAVICOM(sc))
-		sc->dc_cachesize = 0;
-	else
-		sc->dc_cachesize = pci_conf_read(pc, pa->pa_tag,
-		    DC_PCI_CFLT) & 0xFF;
-
-	/* Reset the adapter. */
-	dc_reset(sc);
-
-	/* Take 21143 out of snooze mode */
-	if (DC_IS_INTEL(sc)) {
-		command = pci_conf_read(pc, pa->pa_tag, DC_PCI_CFDD);
-		command &= ~(DC_CFDD_SNOOZE_MODE|DC_CFDD_SLEEP_MODE);
-		pci_conf_write(pc, pa->pa_tag, DC_PCI_CFDD, command);
-	}
-
-	/*
-	 * Try to learn something about the supported media.
-	 * We know that ASIX and ADMtek and Davicom devices
-	 * will *always* be using MII media, so that's a no-brainer.
-	 * The tricky ones are the Macronix/PNIC II and the
-	 * Intel 21143.
-	 */
-	if (DC_IS_INTEL(sc)) {
-		u_int32_t		media, cwuc;
-		cwuc = pci_conf_read(pc, pa->pa_tag, DC_PCI_CWUC);
-		cwuc |= DC_CWUC_FORCE_WUL;
-		pci_conf_write(pc, pa->pa_tag, DC_PCI_CWUC, cwuc);
-		DELAY(10000);
-		media = pci_conf_read(pc, pa->pa_tag, DC_PCI_CWUC);
-		cwuc &= ~DC_CWUC_FORCE_WUL;
-		pci_conf_write(pc, pa->pa_tag, DC_PCI_CWUC, cwuc);
-		DELAY(10000);
-		if (media & DC_CWUC_MII_ABILITY)
-			sc->dc_pmode = DC_PMODE_MII;
-		if (media & DC_CWUC_SYM_ABILITY)
-			sc->dc_pmode = DC_PMODE_SYM;
-		/*
-		 * If none of the bits are set, then this NIC
-		 * isn't meant to support 'wake up LAN' mode.
-		 * This is usually only the case on multiport
-		 * cards, and these cards almost always have
-		 * MII transceivers.
-		 */
-		if (media == 0)
-			sc->dc_pmode = DC_PMODE_MII;
-	} else if (DC_IS_MACRONIX(sc) || DC_IS_PNICII(sc)) {
-		if (sc->dc_type == DC_TYPE_98713)
-			sc->dc_pmode = DC_PMODE_MII;
-		else
-			sc->dc_pmode = DC_PMODE_SYM;
-	} else if (!sc->dc_pmode)
-		sc->dc_pmode = DC_PMODE_MII;
+	int			mac_offset;
 
 	/*
 	 * Get station address from the EEPROM.
@@ -1599,14 +1280,14 @@ void dc_attach(parent, self, aux)
 	sc->sc_mii.mii_writereg = dc_miibus_writereg;
 	sc->sc_mii.mii_statchg = dc_miibus_statchg;
 	ifmedia_init(&sc->sc_mii.mii_media, 0, dc_ifmedia_upd, dc_ifmedia_sts);
-	mii_phy_probe(self, &sc->sc_mii, 0xffffffff);
+	mii_phy_probe(&sc->sc_dev, &sc->sc_mii, 0xffffffff);
 	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
 		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE, 0, NULL);
 		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE);
 	} else
 		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO);
 
-	if (DC_IS_DAVICOM(sc) && revision >= DC_REVISION_DM9102A)
+	if (DC_IS_DAVICOM(sc) && sc->dc_revision >= DC_REVISION_DM9102A)
 		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_HPNA_1,0,NULL);
 
 	/* if (error && DC_IS_INTEL(sc)) {
@@ -1638,7 +1319,6 @@ void dc_attach(parent, self, aux)
 	shutdownhook_establish(dc_shutdown, sc);
 
 fail:
-	splx(s);
 	return;
 }
 
@@ -2169,7 +1849,7 @@ int dc_intr(arg)
 	if (!(ifp->if_flags & IFF_UP)) {
 		if (CSR_READ_4(sc, DC_ISR) & DC_INTRS)
 			dc_stop(sc);
-		return (claimed);
+		return claimed;
 	}
 
 	/* Disable interrupts. */
@@ -2774,10 +2454,6 @@ void dc_shutdown(v)
 
 	dc_stop(sc);
 }
-
-struct cfattach dc_ca = {
-	sizeof(struct dc_softc), dc_probe, dc_attach
-};
 
 struct cfdriver dc_cd = {
 	0, "dc", DV_IFNET

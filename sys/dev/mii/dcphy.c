@@ -1,4 +1,4 @@
-/*	$OpenBSD: dcphy.c,v 1.1 2000/01/09 01:15:16 jason Exp $	*/
+/*	$OpenBSD: dcphy.c,v 1.2 2000/04/18 19:35:32 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -67,7 +67,7 @@
 
 #include <dev/pci/pcivar.h>
 
-#include <dev/pci/if_dcreg.h>
+#include <dev/ic/dcreg.h>
 
 #define DC_SETBIT(sc, reg, x)                           \
         CSR_WRITE_4(sc, reg,                            \
