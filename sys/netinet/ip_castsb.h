@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_castsb.h,v 1.1 1997/11/04 09:11:07 provos Exp $       */
+/*      $OpenBSD: ip_castsb.h,v 1.2 1999/02/17 18:09:55 deraadt Exp $       */
 /*
  *	CAST-128 in C
  *	Written by Steve Reid <sreid@sea-to-sky.net>
@@ -6,7 +6,7 @@
  *	Released 1997.10.11
  */
 
-static const u32 cast_sbox1[256] = {
+static const u_int32_t cast_sbox1[256] = {
 	0x30FB40D4, 0x9FA0FF0B, 0x6BECCD2F, 0x3F258C7A,
 	0x1E213F2F, 0x9C004DD3, 0x6003E540, 0xCF9FC949,
 	0xBFD4AF27, 0x88BBBDB5, 0xE2034090, 0x98D09675,
@@ -73,7 +73,7 @@ static const u32 cast_sbox1[256] = {
 	0x427B169C, 0x5AC9F049, 0xDD8F0F00, 0x5C8165BF
 };
 
-static const u32 cast_sbox2[256] = {
+static const u_int32_t cast_sbox2[256] = {
 	0x1F201094, 0xEF0BA75B, 0x69E3CF7E, 0x393F4380,
 	0xFE61CF7A, 0xEEC5207A, 0x55889C94, 0x72FC0651,
 	0xADA7EF79, 0x4E1D7235, 0xD55A63CE, 0xDE0436BA,
@@ -140,7 +140,7 @@ static const u32 cast_sbox2[256] = {
 	0x7160A539, 0x73BFBE70, 0x83877605, 0x4523ECF1
 };
 
-static const u32 cast_sbox3[256] = {
+static const u_int32_t cast_sbox3[256] = {
 	0x8DEFC240, 0x25FA5D9F, 0xEB903DBF, 0xE810C907,
 	0x47607FFF, 0x369FE44B, 0x8C1FC644, 0xAECECA90,
 	0xBEB1F9BF, 0xEEFBCAEA, 0xE8CF1950, 0x51DF07AE,
@@ -207,7 +207,7 @@ static const u32 cast_sbox3[256] = {
 	0xDFEF4636, 0xA133C501, 0xE9D3531C, 0xEE353783
 };
 
-static const u32 cast_sbox4[256] = {
+static const u_int32_t cast_sbox4[256] = {
 	0x9DB30420, 0x1FB6E9DE, 0xA7BE7BEF, 0xD273A298,
 	0x4A4F7BDB, 0x64AD8C57, 0x85510443, 0xFA020ED1,
 	0x7E287AFF, 0xE60FB663, 0x095F35A1, 0x79EBF120,
@@ -274,7 +274,7 @@ static const u32 cast_sbox4[256] = {
 	0x13ECF0B0, 0xD3FFB372, 0x3F85C5C1, 0x0AEF7ED2
 };
 
-static const u32 cast_sbox5[256] = {
+static const u_int32_t cast_sbox5[256] = {
 	0x7EC90C04, 0x2C6E74B9, 0x9B0E66DF, 0xA6337911,
 	0xB86A7FFF, 0x1DD358F5, 0x44DD9D44, 0x1731167F,
 	0x08FBF1FA, 0xE7F511CC, 0xD2051B00, 0x735ABA00,
@@ -341,7 +341,7 @@ static const u32 cast_sbox5[256] = {
 	0x5E76FFA8, 0xB1534546, 0x6D47DE08, 0xEFE9E7D4
 };
 
-static const u32 cast_sbox6[256] = {
+static const u_int32_t cast_sbox6[256] = {
 	0xF6FA8F9D, 0x2CAC6CE1, 0x4CA34867, 0xE2337F7C,
 	0x95DB08E7, 0x016843B4, 0xECED5CBC, 0x325553AC,
 	0xBF9F0960, 0xDFA1E2ED, 0x83F0579D, 0x63ED86B9,
@@ -408,7 +408,7 @@ static const u32 cast_sbox6[256] = {
 	0x48392905, 0xA65B1DB8, 0x851C97BD, 0xD675CF2F
 };
 
-static const u32 cast_sbox7[256] = {
+static const u_int32_t cast_sbox7[256] = {
 	0x85E04019, 0x332BF567, 0x662DBFFF, 0xCFC65693,
 	0x2A8D7F6F, 0xAB9BC912, 0xDE6008A1, 0x2028DA1F,
 	0x0227BCE7, 0x4D642916, 0x18FAC300, 0x50F18B82,
@@ -475,7 +475,7 @@ static const u32 cast_sbox7[256] = {
 	0xF2A279C7, 0x94E01BE8, 0x90716F4B, 0x954B8AA3
 };
 
-static const u32 cast_sbox8[256] = {
+static const u_int32_t cast_sbox8[256] = {
 	0xE216300D, 0xBBDDFFFC, 0xA7EBDABD, 0x35648095,
 	0x7789F8B7, 0xE6C1121B, 0x0E241600, 0x052CE8B5,
 	0x11A9CFB0, 0xE5952F11, 0xECE7990A, 0x9386D174,
