@@ -1,4 +1,4 @@
-/*	$OpenBSD: rm.c,v 1.9 1999/01/02 08:38:58 deraadt Exp $	*/
+/*	$OpenBSD: rm.c,v 1.10 2001/06/08 13:40:20 millert Exp $	*/
 /*	$NetBSD: rm.c,v 1.19 1995/09/07 06:48:50 jtc Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)rm.c	8.8 (Berkeley) 4/27/95";
 #else
-static char rcsid[] = "$OpenBSD: rm.c,v 1.9 1999/01/02 08:38:58 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rm.c,v 1.10 2001/06/08 13:40:20 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -120,7 +120,7 @@ main(argc, argv)
 	argc -= optind;
 	argv += optind;
 
-	if (argc < 1)
+	if (argc < 1 && fflag == 0)
 		usage();
 
 	checkdot(argv);
