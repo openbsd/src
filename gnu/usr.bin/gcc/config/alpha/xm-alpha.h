@@ -45,7 +45,7 @@ Boston, MA 02111-1307, USA.  */
 #if !defined(__GNUC__) && !defined(_WIN32)
 #include <alloca.h>
 #else
-#ifndef __alpha__
+#if !defined( __alpha__) || defined(__OpenBSD__)
 extern void *alloca ();
 #endif
 #endif

@@ -185,9 +185,9 @@ libu77: libU77/Makefile
 	fi
 
 ${srcdir}/configure: ${srcdir}/configure.in
-	rm -f config.cache && cd ${srcdir} && autoconf && rm -f config.cache
+	rm -f config.cache && cd ${srcdir}
 ${srcdir}/libU77/configure: ${srcdir}/libU77/configure.in
-	rm -f libU77/config.cache && cd ${srcdir}/libU77 && autoconf && rm -f config.cache
+	rm -f libU77/config.cache && cd ${srcdir}/libU77
 #../include/f2c.h libI77/Makefile libF77/Makefile libU77/Makefile Makefile: ${srcdir}/Makefile.in \
 #  config.status libU77/config.status
 #	$(FLAGS_TO_PASS) CONFIG_SITE=/dev/null $(SHELL) config.status
