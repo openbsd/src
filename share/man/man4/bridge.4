@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bridge.4,v 1.11 1999/07/09 13:35:48 aaron Exp $
+.\"	$OpenBSD: bridge.4,v 1.12 1999/09/03 12:47:12 jason Exp $
 .\"
 .\" Copyright (c) 1999 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -40,27 +40,34 @@
 .Sh DESCRIPTION
 The
 .Nm bridge
-device allows an Ethernet bridge to be created between two or more interfaces.
-The bridges provided by this interface are learning bridges with the ability
-to do IP filtering, see
-.Xr ipf 4 , Ns
-before packets are forwarded by the bridge.
+device creates a logical link between two or more Ethernet interfaces.
+This link between the interfaces selectively forwards frames from
+each interface on the bridge to every other interface on the bridge.
+A bridge can serve several services, including, isolation of traffic between
+sets of machines so that traffic local to one set of machines is not
+available on the wire of another set of machines, and it can act as
+a transparent filter for
+.Xr IP 4
+datagrams.
 .Pp
-A bridge is a device that has multiple interfaces attached to it.
-It functions much like a hub, listening to incoming traffic on
-each segment it is attached to and forwarding the traffic to every other
-segment.
-A bridge differs from a hub in that it will "learn" which machines
+The bridges provided by this interface are learning bridges with
+IP filtering, see
+.Xr ipf 4 .
+In general a bridge works like a hub, forwarding traffic from one interface
+to another.
+It differs from a hub in that it will "learn" which machines
 are on each of its attached segments by actively listening to
 incoming traffic and examining the headers of each frame.
 A table is built containing the MAC address and segment to which the
 MAC address is attached.
-This allows a bridge to be more selective about what it forwards.
-This can be used to reduce traffic on a network and also to provide
-an IP firewall without modifying the topology of the network.
+This allows a bridge to be more selective about what it forwards,
+which can be used to reduce traffic on a set of segments and also to provide
+an IP firewall without changing the topology of the network.
 .Pp
 The algorithm works as follows by default, but can be modified via
-.Xr ioctl 2 .
+.Xr ioctl 2 
+or the utility
+.Xr brconfig 8 .
 When a frame comes in, the origin segment and the source address are
 recorded.
 If the bridge has no knowlege about where the destination is to be found,
@@ -70,6 +77,12 @@ bridge will forward the packet only to the destination segment.
 If the destination is on the same segment as the origin segment, the bridge
 will drop the packet because the receiver has already had a chance to see
 the frame.
+Before forwarding a frame, the bridge will check to see if the packet
+contains an
+.Xr ip 4
+datagram; if so, the datagram is run through the
+.Xr ipf 4
+interface so that it can be filtered.
 .Sh IOCTLS
 A
 .Nm bridge
@@ -151,6 +164,16 @@ Set the bridge member interface flags for the interface named in
 .Ar ifbr_ifsname
 attached to the bridge
 .Ar ifbr_name .
+If the flag
+.Ar IFBIF_LEARNING
+is set on an interface, source addresses from frames received on the
+interface are recorded in the address cache.
+If the flag
+.Ar IFBIF_DISCOVER
+is set, the interface will receive packets destined for unknown
+destinations, otherwise a frame that has a destination not found
+in the address cache is not forwarded to this interface.
+The default for newly added interfaces has both flags set.
 .It Dv SIOCBRDGGIFFLGS
 Retrieve the bridge member interface flags for the interface named in
 .Ar ifbr_ifsname
@@ -203,6 +226,14 @@ struct ifbaconf {
 #define	ifbac_req       ifbac_ifbacu.ifbacu_req
 };
 .Ed
+Address cache entries with the type set to
+.Ar IFBAF_DYNAMIC
+in
+.Ar ifba_flags
+are entries learned by the bridge.
+Entries with the type set to
+.Ar IFBAF_STATIC
+are manually added entries.
 .It Dv SIOCBRDGSADDR
 .Pq Li "struct ifbareq"
 Add an entry, manually, to the address cache for the bridge named in
@@ -254,7 +285,15 @@ struct ifbcachetoreq {
 Retrieve the address cache expiration time (see above).
 .It Dv SIOCBRDGFLUSH
 .Pq Li "struct ifbreq"
-Flush all dynamically learned addresses from the cache.
+Flush addresses from the cache.
+.Ar ifbr_name 
+contains the name of the bridge device, and
+.Ar ifbr_ifsflags
+should be set to
+.Ar IFBF_FLUSHALL 
+to flush all addresses from the cache or
+.Ar IFBF_FLUSHDYN
+to flush only the dynamically learned addresses from the cache.
 .El
 .Sh ERRORS
 If the
@@ -294,6 +333,7 @@ No such member interface in the bridge.
 .Sh SEE ALSO
 .Xr errno 2 ,
 .Xr ioctl 2 ,
+.Xr ip 4 ,
 .Xr ipf 4 ,
 .Xr netintro 4 ,
 .Xr brconfig 8

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.16 1999/09/01 21:38:48 jason Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.17 1999/09/03 12:47:12 jason Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -147,7 +147,7 @@ void	bridge_rtage __P((void *));
 void	bridge_rttrim __P((struct bridge_softc *));
 void	bridge_rtdelete __P((struct bridge_softc *, struct ifnet *));
 int	bridge_rtdaddr __P((struct bridge_softc *, struct ether_addr *));
-int	bridge_rtflush __P((struct bridge_softc *));
+int	bridge_rtflush __P((struct bridge_softc *, int));
 struct ifnet *	bridge_rtupdate __P((struct bridge_softc *,
     struct ether_addr *, struct ifnet *ifp, int, u_int8_t));
 struct ifnet *	bridge_rtlookup __P((struct bridge_softc *,
@@ -361,21 +361,13 @@ bridge_ioctl(ifp, cmd, data)
 		p->bif_flags = req->ifbr_ifsflags;
 		break;
 	case SIOCBRDGRTS:
-		if ((ifp->if_flags & IFF_RUNNING) == 0) {
-			error = ENETDOWN;
-			break;
-		}
 		error = bridge_rtfind(sc, baconf);
 		break;
 	case SIOCBRDGFLUSH:
 		if ((error = suser(prc->p_ucred, &prc->p_acflag)) != 0)
 			break;
 
-		if ((ifp->if_flags & IFF_RUNNING) == 0) {
-			error = ENETDOWN;
-			break;
-		}
-		error = bridge_rtflush(sc);
+		error = bridge_rtflush(sc, req->ifbr_ifsflags);
 		break;
 	case SIOCBRDGSADDR:
 		if ((error = suser(prc->p_ucred, &prc->p_acflag)) != 0)
@@ -401,10 +393,6 @@ bridge_ioctl(ifp, cmd, data)
 	case SIOCBRDGDADDR:
 		if ((error = suser(prc->p_ucred, &prc->p_acflag)) != 0)
 			break;
-		if ((ifp->if_flags & IFF_RUNNING) == 0) {
-			error = ENETDOWN;
-			break;
-		}
 		error = bridge_rtdaddr(sc, &bareq->ifba_dst);
 		break;
 	case SIOCBRDGGCACHE:
@@ -542,8 +530,6 @@ bridge_stop(sc)
 	struct bridge_softc *sc;
 {
 	struct ifnet *ifp = &sc->sc_if;
-	struct bridge_rtnode *n, *p;
-	int i, s;
 
 	/*
 	 * If we're not running, there's nothing to do.
@@ -553,25 +539,8 @@ bridge_stop(sc)
 
 	untimeout(bridge_rtage, sc);
 
-	/*
-	 * Free the routing table, if necessary.
-	 */
-	if (sc->sc_rts != NULL) {
-		s = splhigh();
-		for (i = 0; i < BRIDGE_RTABLE_SIZE; i++) {
-			n = LIST_FIRST(&sc->sc_rts[i]);
-			while (n != NULL) {
-				p = LIST_NEXT(n, brt_next);
-				LIST_REMOVE(n, brt_next);
-				free(n, M_DEVBUF);
-				sc->sc_brtcnt--;
-				n = p;
-			}
-		}
-		free(sc->sc_rts, M_DEVBUF);
-		sc->sc_rts = NULL;
-		splx(s);
-	}
+	bridge_rtflush(sc, IFBF_FLUSHDYN);
+
 	ifp->if_flags &= ~IFF_RUNNING;
 }
 
@@ -1020,8 +989,21 @@ bridge_rtupdate(sc, ea, ifp, setflags, flags)
 	int s, dir;
 
 	s = splhigh();
-	if (sc->sc_rts == NULL)
-		goto done;
+	if (sc->sc_rts == NULL) {
+		if (setflags && flags == IFBAF_STATIC) {
+			sc->sc_rts = (struct bridge_rthead *)malloc(
+			    BRIDGE_RTABLE_SIZE *
+			    (sizeof(struct bridge_rthead)),M_DEVBUF,M_NOWAIT);
+
+			if (sc->sc_rts == NULL)
+				goto done;
+
+			for (h = 0; h < BRIDGE_RTABLE_SIZE; h++)
+				LIST_INIT(&sc->sc_rts[h]);
+		}
+		else
+			goto done;
+	}
 
 	h = bridge_hash(ea);
 	p = LIST_FIRST(&sc->sc_rts[h]);
@@ -1230,7 +1212,14 @@ bridge_rttrim(sc)
 			}
 		}
 	}
+
 done:
+	if (sc->sc_rts != NULL && sc->sc_brtcnt == 0 &&
+	    (sc->sc_if.if_flags & IFF_UP) == 0) {
+		free(sc->sc_rts, M_DEVBUF);
+		sc->sc_rts = NULL;
+	}
+
 	splx(s);
 }
 
@@ -1283,22 +1272,22 @@ bridge_rtage(vsc)
  * Remove all dynamic addresses from the cache
  */
 int
-bridge_rtflush(sc)
+bridge_rtflush(sc, full)
 	struct bridge_softc *sc;
+	int full;
 {
 	int s, i;
 	struct bridge_rtnode *p, *n;
 
 	s = splhigh();
-	if (sc->sc_rts == NULL) {
-		splx(s);
-		return (ENETDOWN);
-	}
+	if (sc->sc_rts == NULL)
+		goto done;
 
 	for (i = 0; i < BRIDGE_RTABLE_SIZE; i++) {
 		n = LIST_FIRST(&sc->sc_rts[i]);
 		while (n != NULL) {
-			if ((n->brt_flags & IFBAF_TYPEMASK) == IFBAF_DYNAMIC) {
+			if (full ||
+			    (n->brt_flags & IFBAF_TYPEMASK) == IFBAF_DYNAMIC) {
 				p = LIST_NEXT(n, brt_next);
 				LIST_REMOVE(n, brt_next);
 				sc->sc_brtcnt--;
@@ -1309,6 +1298,12 @@ bridge_rtflush(sc)
 		}
 	}
 
+	if (sc->sc_brtcnt == 0 && (sc->sc_if.if_flags & IFF_UP) == 0) {
+		free(sc->sc_rts, M_DEVBUF);
+		sc->sc_rts = NULL;
+	}
+
+done:
 	splx(s);
 	return (0);
 }
@@ -1325,10 +1320,8 @@ bridge_rtdaddr(sc, ea)
 	struct bridge_rtnode *p;
 
 	s = splhigh();
-	if (sc->sc_rts == NULL) {
-		splx(s);
-		return (ENETDOWN);
-	}
+	if (sc->sc_rts == NULL)
+		goto done;
 
 	h = bridge_hash(ea);
 	p = LIST_FIRST(&sc->sc_rts[h]);
@@ -1337,11 +1330,18 @@ bridge_rtdaddr(sc, ea)
 			LIST_REMOVE(p, brt_next);
 			sc->sc_brtcnt--;
 			free(p, M_DEVBUF);
+			if (sc->sc_brtcnt == 0 &&
+			    (sc->sc_if.if_flags & IFF_UP) == 0) {
+				free(sc->sc_rts, M_DEVBUF);
+				sc->sc_rts = NULL;
+			}
 			splx(s);
 			return (0);
 		}
 		p = LIST_NEXT(p, brt_next);
 	}
+
+done:
 	splx(s);
 	return (ENOENT);
 }
@@ -1357,10 +1357,8 @@ bridge_rtdelete(sc, ifp)
 	struct bridge_rtnode *n, *p;
 
 	s = splhigh();
-	if (sc->sc_rts == NULL) {
-		splx(s);
-		return;
-	}
+	if (sc->sc_rts == NULL)
+		goto done;
 
 	/*
 	 * Loop through all of the hash buckets and traverse each
@@ -1379,7 +1377,12 @@ bridge_rtdelete(sc, ifp)
 				n = LIST_NEXT(n, brt_next);
 		}
 	}
+	if (sc->sc_brtcnt == 0 && (sc->sc_if.if_flags & IFF_UP) == 0) {
+		free(sc->sc_rts, M_DEVBUF);
+		sc->sc_rts = NULL;
+	}
 
+done:
 	splx(s);
 }
 

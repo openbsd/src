@@ -1,4 +1,4 @@
-/*	$OpenBSD: brconfig.c,v 1.1 1999/09/01 03:28:01 deraadt Exp $	*/
+/*	$OpenBSD: brconfig.c,v 1.2 1999/09/03 12:47:12 jason Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -429,31 +429,14 @@ bridge_flushall(s, brdg)
 	int s;
 	char *brdg;
 {
-	struct ifreq ifr;
+	struct ifbreq req;
 
-	strlcpy(ifr.ifr_name, brdg, sizeof(ifr.ifr_name));
-	if (ioctl(s, SIOCGIFFLAGS, (caddr_t)&ifr) < 0) {
-		warn("ioctl(SIOCGIFFLAGS)");
+	strlcpy(req.ifbr_name, brdg, sizeof(req.ifbr_name));
+	req.ifbr_ifsflags = IFBF_FLUSHALL;
+	if (ioctl(s, SIOCBRDGFLUSH, &req) < 0) {
+		warn("ioctl(SIOCBRDGFLUSH)");
 		return (EX_IOERR);
 	}
-
-	if ((ifr.ifr_flags & IFF_UP) == 0)
-		return (0);
-
-	strlcpy(ifr.ifr_name, brdg, sizeof(ifr.ifr_name));
-	ifr.ifr_flags &= ~IFF_UP;
-	if (ioctl(s, SIOCSIFFLAGS, (caddr_t)&ifr) < 0) {
-		warn("ioctl(SIOCSIFFLAGS)");
-		return (EX_IOERR);
-	}
-
-	strlcpy(ifr.ifr_name, brdg, sizeof(ifr.ifr_name));
-	ifr.ifr_flags |= IFF_UP;
-	if (ioctl(s, SIOCSIFFLAGS, (caddr_t)&ifr) < 0) {
-		warn("ioctl(SIOCSIFFLAGS)");
-		return (EX_IOERR);
-	}
-
 	return (0);
 }
 
@@ -465,6 +448,7 @@ bridge_flush(s, brdg)
 	struct ifbreq req;
 
 	strlcpy(req.ifbr_name, brdg, sizeof(req.ifbr_name));
+	req.ifbr_ifsflags = IFBF_FLUSHDYN;
 	if (ioctl(s, SIOCBRDGFLUSH, &req) < 0) {
 		warn("ioctl(SIOCBRDGFLUSH)");
 		return (EX_IOERR);
