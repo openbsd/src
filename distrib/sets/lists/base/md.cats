@@ -1348,6 +1348,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/usb/ehcivar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/usb/ezload.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/usb/hid.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/usb/if_atureg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/usb/if_auereg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/usb/if_axereg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/usb/if_cdcereg.ph
