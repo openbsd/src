@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.20 2000/07/24 23:08:25 espie Exp $	*/
+/*	$OpenBSD: extern.h,v 1.21 2000/07/27 17:44:33 espie Exp $	*/
 /*	$NetBSD: extern.h,v 1.3 1996/01/13 23:25:24 pk Exp $	*/
 
 /*-
@@ -86,6 +86,7 @@ extern void	putback __P((int));
 extern void	*xalloc __P((size_t));
 extern char	*xstrdup __P((const char *));
 extern void	usage __P((void));
+extern void	resizedivs __P((int n));
 
 extern int 	obtain_char __P((struct input_file *));
 extern void	set_input __P((struct input_file *, FILE *, const char *));
@@ -97,7 +98,8 @@ extern stae *mstack;		/* stack of m4 machine */
 extern char *sstack;		/* shadow stack, for string space extension */
 extern FILE *active;		/* active output file pointer */
 extern struct input_file infile[];/* input file stack (0=stdin) */
-extern FILE *outfile[];		/* diversion array(0=bitbucket) */
+extern FILE **outfile;		/* diversion array(0=bitbucket) */
+extern int maxout;		/* maximum number of diversions */
 extern int fp; 			/* m4 call frame pointer */
 extern int ilevel;		/* input file stack pointer */
 extern int oindex;		/* diversion index. */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: eval.c,v 1.27 2000/07/24 23:08:24 espie Exp $	*/
+/*	$OpenBSD: eval.c,v 1.28 2000/07/27 17:44:32 espie Exp $	*/
 /*	$NetBSD: eval.c,v 1.7 1996/11/10 21:21:29 pk Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.2 (Berkeley) 4/27/95";
 #else
-static char rcsid[] = "$OpenBSD: eval.c,v 1.27 2000/07/24 23:08:24 espie Exp $";
+static char rcsid[] = "$OpenBSD: eval.c,v 1.28 2000/07/27 17:44:32 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -743,7 +743,14 @@ dodiv(n)
 	int fd;
 
 	oindex = n;
-	if (n < 0 || n >= MAXOUT)
+	if (n >= maxout) {
+		if (mimic_gnu)
+			resizedivs(n + 10);
+		else
+			n = 0;		/* bitbucket */
+    	}
+
+	if (n < 0)
 		n = 0;		       /* bitbucket */
 	if (outfile[n] == NULL) {
 		char fname[] = _PATH_DIVNAME;
@@ -772,13 +779,13 @@ doundiv(argv, argc)
 	if (argc > 2) {
 		for (ind = 2; ind < argc; ind++) {
 			n = atoi(argv[ind]);
-			if (n > 0 && n < MAXOUT && outfile[n] != NULL)
+			if (n > 0 && n < maxout && outfile[n] != NULL)
 				getdiv(n);
 
 		}
 	}
 	else
-		for (n = 1; n < MAXOUT; n++)
+		for (n = 1; n < maxout; n++)
 			if (outfile[n] != NULL)
 				getdiv(n);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.19 2000/07/02 01:17:00 espie Exp $	*/
+/*	$OpenBSD: misc.c,v 1.20 2000/07/27 17:44:33 espie Exp $	*/
 /*	$NetBSD: misc.c,v 1.6 1995/09/28 05:37:41 tls Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: misc.c,v 1.19 2000/07/02 01:17:00 espie Exp $";
+static char rcsid[] = "$OpenBSD: misc.c,v 1.20 2000/07/27 17:44:33 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -254,10 +254,26 @@ killdiv()
 {
 	int n;
 
-	for (n = 0; n < MAXOUT; n++)
+	for (n = 0; n < maxout; n++)
 		if (outfile[n] != NULL) {
 			(void) fclose(outfile[n]);
 		}
+}
+
+/*
+ * resizedivs: allocate more diversion files */
+void
+resizedivs(n)
+	int n;
+{
+	int i;
+
+	outfile = (FILE **)realloc(outfile, sizeof(FILE *) * n);
+	if (outfile == NULL)
+		    errx(1, "too many diverts %d", n);
+	for (i = maxout; i < n; i++)
+		outfile[i] = NULL;
+	maxout = n;
 }
 
 void *

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.35 2000/07/24 23:08:25 espie Exp $	*/
+/*	$OpenBSD: main.c,v 1.36 2000/07/27 17:44:33 espie Exp $	*/
 /*	$NetBSD: main.c,v 1.12 1997/02/08 23:54:49 cgd Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.35 2000/07/24 23:08:25 espie Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.36 2000/07/27 17:44:33 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -80,7 +80,8 @@ static size_t STACKMAX;		/* current maximum size of stack */
 int sp; 			/* current m4  stack pointer   */
 int fp; 			/* m4 call frame pointer       */
 struct input_file infile[MAXINP];/* input file stack (0=stdin)  */
-FILE *outfile[MAXOUT];		/* diversion array(0=bitbucket)*/
+FILE **outfile;			/* diversion array(0=bitbucket)*/
+int maxout;
 FILE *active;			/* active output file pointer  */
 int ilevel = 0; 		/* input file stack pointer    */
 int oindex = 0; 		/* diversion index..	       */
@@ -188,6 +189,10 @@ main(argc,argv)
 	mstack = (stae *)xalloc(sizeof(stae) * STACKMAX);
 	sstack = (char *)xalloc(STACKMAX);
 
+	maxout = 0;
+	outfile = NULL;
+	resizedivs(MAXOUT);
+
 	while ((c = getopt(argc, argv, "gtD:U:o:I:")) != -1)
 		switch(c) {
 
@@ -246,7 +251,7 @@ main(argc,argv)
 
 	if (active != stdout)
 		active = stdout;	/* reset output just in case */
-	for (n = 1; n < MAXOUT; n++)	/* default wrap-up: undivert */
+	for (n = 1; n < maxout; n++)	/* default wrap-up: undivert */
 		if (outfile[n] != NULL)
 			getdiv(n);
 					/* remove bitbucket if used  */
