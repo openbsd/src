@@ -1,4 +1,4 @@
-/*	$OpenBSD: vars6.c,v 1.1 1999/12/11 08:09:11 itojun Exp $	*/
+/*	$OpenBSD: vars6.c,v 1.2 2003/05/10 10:56:47 jmc Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -33,7 +33,7 @@
 #include <netinet/in.h>
 
 /*
- * Definitions of some costant IPv6 addresses.
+ * Definitions of some constant IPv6 addresses.
  */
 const struct in6_addr in6addr_any = IN6ADDR_ANY_INIT;
 const struct in6_addr in6addr_loopback = IN6ADDR_LOOPBACK_INIT;
