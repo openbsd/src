@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2_linux_ialloc.c,v 1.3 1996/10/18 15:23:37 mickey Exp $	*/
+/*	$OpenBSD: ext2_linux_ialloc.c,v 1.4 1996/11/11 08:36:34 downsj Exp $	*/
 
 /*
  *  modified for Lites 1.1
@@ -32,6 +32,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
+#include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/mount.h>
 #include <sys/vnode.h>
@@ -57,6 +58,16 @@ void mark_buffer_dirty(struct buf *bh)
 {
 	bh->b_flags |= B_DELWRI;
 	bh->b_flags &= ~(B_READ | B_ERROR);
+
+	/*
+	 * Add the block the dirty list.
+	 */
+	TAILQ_INSERT_TAIL(&bdirties, bh, b_synclist);
+	bh->b_synctime = time.tv_sec + 30;
+	if (bdirties.tqh_first == bh) {
+		untimeout((void (*)__P((void *)))wakeup, &bdirties);
+		timeout((void (*)__P((void *)))wakeup, &bdirties, 30 * hz);
+	}
 } 
 
 /* 
@@ -64,6 +75,12 @@ void mark_buffer_dirty(struct buf *bh)
  */
 int ll_w_block(struct buf * bp, int waitfor)
 {
+	/*
+	 * Remove the block from the dirty list.
+	 */
+	if (bp->b_flags & B_DELWRI)
+		TAILQ_REMOVE(&bdirties, bp, b_synclist);
+
 	bp->b_flags &= ~(B_READ|B_DONE|B_ERROR|B_DELWRI);
 	bp->b_flags |= B_WRITEINPROG;
 	bp->b_vp->v_numoutput++;
