@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.17 1999/08/08 00:43:00 niklas Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.18 1999/08/10 02:42:30 deraadt Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -1016,7 +1016,7 @@ bpfselect(dev, rw)
 	 * if there isn't data waiting, and there's a timeout,
 	 * mark the time we started waiting.
 	 */
-	if (b->db_rtout != -1 && (d->bd_rdStart == 0)
+	if (b->db_rtout != -1 && (d->bd_rdStart == 0))
 		d->bd_rdStart = ticks;
 			    
 	return (bpf_select(dev, rw, u.u_procp));
