@@ -1,11 +1,11 @@
-/*	$OpenBSD: ns_resp.c,v 1.7 2002/02/17 19:42:37 millert Exp $	*/
+/*	$OpenBSD: ns_resp.c,v 1.8 2002/06/09 01:27:29 kjell Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 #if 0
 static char sccsid[] = "@(#)ns_resp.c	4.65 (Berkeley) 3/3/91";
 static char rcsid[] = "$From: ns_resp.c,v 8.41 1998/04/07 04:59:45 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: ns_resp.c,v 1.7 2002/02/17 19:42:37 millert Exp $";
+static char rcsid[] = "$OpenBSD: ns_resp.c,v 1.8 2002/06/09 01:27:29 kjell Exp $";
 #endif
 #endif /* not lint */
 
@@ -624,7 +624,7 @@ ns_resp(msg, msglen)
 			    !haveComplained((char*)nhash(sin_ntoa(&from_addr)),
 					    (char*)nhash(qp->q_domain)))
 				syslog(LAME_LOGGING,
-				      "Lame server on '%s' (in '%s'?): %s%s\n",
+				      "Lame server on '%s' (in '%s'?): %s%s",
 				       qname, qp->q_domain, 
 				       sin_ntoa(&from_addr),
 				       learntFrom(qp, &from_addr));
@@ -1264,7 +1264,7 @@ ns_resp(msg, msglen)
 		} else if (qp->q_msg)
 			(void) free(qp->q_msg);
 		if ((qp->q_msg = (u_char *)malloc(PACKETSZ)) == NULL) {
-			syslog(LOG_NOTICE, "resp: malloc error\n");
+			syslog(LOG_NOTICE, "resp: malloc error");
 			goto servfail;
 		}
 		n = res_mkquery(QUERY, dname, qclass, qtype,
@@ -1318,7 +1318,7 @@ ns_resp(msg, msglen)
  formerr:
 	if (!haveComplained((char*)from_addr.sin_addr.s_addr,
 			    (char*)nhash(formerrmsg)))
-		syslog(LOG_INFO, "Malformed response from %s (%s)\n",
+		syslog(LOG_INFO, "Malformed response from %s (%s)",
 		       sin_ntoa(&from_addr), formerrmsg);
 #ifdef XSTATS
 	nameserIncr(from_addr.sin_addr, nssSentFErr);
@@ -2340,7 +2340,7 @@ check_root()
 		if (NAME(*np)[0] == '\0')
 			break;
 	if (np == NULL) {
-		syslog(LOG_NOTICE, "check_root: Can't find root!\n");
+		syslog(LOG_NOTICE, "check_root: Can't find root!");
 		return (0);
 	}
 	for (dp = np->n_data; dp != NULL; dp = dp->d_next)
@@ -2596,7 +2596,7 @@ findns(npp, class, nsp, countp, flag)
 		    p_class(class)));
 	if ((unsigned)class < MAXCLASS && norootlogged[class] == 0) {
 		norootlogged[class] = 1;
-		syslog(LOG_INFO, "No root nameservers for class %s\n",
+		syslog(LOG_INFO, "No root nameservers for class %s",
 		       p_class(class));
 	}
 	return (SERVFAIL);
