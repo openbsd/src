@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.148 2005/04/01 08:25:39 deraadt Exp $
+$OpenBSD: usbdevs,v 1.149 2005/04/01 11:41:49 dlg Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -881,7 +881,7 @@ product FREECOM DVD		0xfc01	Connector for DVD drive
 
 /* Future Technology Devices products */
 product FTDI SERIAL_8U232AM	0x6001	8U232AM Serial
-product FDTI SERIAL_2232C	0x6010	2232C Serial
+product FTDI SERIAL_2232C	0x6010	2232C Serial
 product FTDI PS2KBDMS		0x8371	PS/2 Keyboard/Mouse
 product FTDI SERIAL_8U100AX	0x8372	Serial
 product	FTDI LCD_MX200		0xfa01	Matrix Orbital MX200 Series LCD
