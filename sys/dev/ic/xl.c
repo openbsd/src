@@ -1,4 +1,4 @@
-/*	$OpenBSD: xl.c,v 1.17 2000/10/19 16:33:51 jason Exp $	*/
+/*	$OpenBSD: xl.c,v 1.18 2000/11/09 17:39:06 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1552,7 +1552,7 @@ void xl_stats_update(xsc)
 	XL_SEL_WIN(7);
 
 	if (!sc->xl_stats_no_timeout)
-		timeout(xl_stats_update, sc, hz);
+		timeout_add(&sc->xl_stsup_tmo, hz);
 
 	return;
 }
@@ -2075,7 +2075,7 @@ void xl_init(xsc)
 
 	(void)splx(s);
 
-	timeout(xl_stats_update, sc, hz);
+	timeout_add(&sc->xl_stsup_tmo, hz);
 
 	return;
 }
@@ -2383,7 +2383,7 @@ void xl_stop(sc)
 		(*sc->intr_ack)(sc);
 
 	/* Stop the stats updater. */
-	untimeout(xl_stats_update, sc);
+	timeout_del(&sc->xl_stsup_tmo);
 
 	xl_freetxrx(sc);
 
@@ -2467,6 +2467,8 @@ xl_attach(sc)
 		sc->xl_type = XL_TYPE_905B;
 	else
 		sc->xl_type = XL_TYPE_90X;
+
+	timeout_set(&sc->xl_stsup_tmo, xl_stats_update, sc);
 
 	ifp->if_softc = sc;
 	ifp->if_mtu = ETHERMTU;
@@ -2635,7 +2637,7 @@ xl_detach(sc)
 	struct ifnet *ifp = &sc->arpcom.ac_if;
 
 	/* Unhook our tick handler. */
-	untimeout(xl_stats_update, sc);
+	timeout_del(&sc->xl_stsup_tmo);
 
 	xl_freetxrx(sc);
 
