@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_machdep.c,v 1.9 1998/09/27 03:56:00 rahnds Exp $	*/
+/*	$OpenBSD: ofw_machdep.c,v 1.10 1999/07/05 20:56:26 rahnds Exp $	*/
 /*	$NetBSD: ofw_machdep.c,v 1.1 1996/09/30 16:34:50 ws Exp $	*/
 
 /*
@@ -43,11 +43,26 @@
 #include <sys/stat.h>
 #include <sys/systm.h>
 
+#include <vm/vm.h>
+#include <vm/vm_kern.h>
+
 #include <machine/powerpc.h>
 #include <machine/autoconf.h>
 
 void OF_exit __P((void)) __attribute__((__noreturn__));
 void OF_boot __P((char *bootspec)) __attribute__((__noreturn__));
+void ofw_mem_regions __P((struct mem_region **memp, struct mem_region **availp));
+void ofw_vmon __P((void));
+
+struct firmware ofw_firmware = {
+	ofw_mem_regions,
+	OF_exit,
+	OF_boot,
+	ofw_vmon
+#ifdef FW_HAS_PUTC
+	ofwcnputc;
+#endif
+};
 
 #define	OFMEM_REGIONS	32
 static struct mem_region OFmem[OFMEM_REGIONS + 1], OFavail[OFMEM_REGIONS + 3];
@@ -60,7 +75,7 @@ static struct mem_region OFmem[OFMEM_REGIONS + 1], OFavail[OFMEM_REGIONS + 3];
  * to provide space for two additional entry beyond the terminating one.
  */
 void
-mem_regions(memp, availp)
+ofw_mem_regions(memp, availp)
 	struct mem_region **memp, **availp;
 {
 	int phandle, i, j, cnt;
@@ -80,17 +95,85 @@ mem_regions(memp, availp)
 	*availp = OFavail;
 }
 
-void
-ppc_exit()
-{
-	OF_exit();
-}
+typedef void (fwcall_f) __P((int, int));
+extern fwcall_f *fwcall;
+fwcall_f fwentry;
+extern u_int32_t ofmsr;
 
 void
-ppc_boot(str)
-	char *str;
+ofw_vmon()
 {
-	OF_boot(str);
+	fwcall = &fwentry;
+}
+
+/* code to save and create the necessary mappings for BSD to handle
+ * the vm-setup for OpenFirmware
+ */
+static int N_mapping;
+static struct {
+	vm_offset_t va;
+	int len;
+	vm_offset_t pa;
+	int mode;
+} ofw_mapping[256];
+
+int OF_stdout;
+int
+save_ofw_mapping()
+{
+	int mmui, mmu;
+	int chosen;
+	int stdout;
+	if ((chosen = OF_finddevice("/chosen")) == -1) {
+		return 0;
+	}
+	if (OF_getprop(chosen, "stdout", &stdout, sizeof stdout) != sizeof stdout)
+	{
+		return 0;
+	}
+	OF_stdout = stdout;
+
+	chosen = OF_finddevice("/chosen");
+
+	OF_getprop(chosen, "mmu", &mmui, 4);
+	mmu = OF_instance_to_package(mmui);
+	bzero(ofw_mapping, sizeof(ofw_mapping));
+	N_mapping =
+	    OF_getprop(mmu, "translations", ofw_mapping, sizeof(ofw_mapping));
+	N_mapping /= sizeof(ofw_mapping[0]);
+
+	fw = &ofw_firmware;
+	fwcall = &fwentry;
+	return 0;
+}
+
+struct pmap ofw_pmap;
+int
+restore_ofw_mapping()
+{
+	int i;
+
+	pmap_pinit(&ofw_pmap);
+
+	ofw_pmap.pm_sr[KERNEL_SR] = KERNEL_SEGMENT;
+
+	for (i = 0; i < N_mapping; i++) {
+		vm_offset_t pa = ofw_mapping[i].pa;
+		vm_offset_t va = ofw_mapping[i].va;
+		int size = ofw_mapping[i].len;
+
+		if (va < 0xf8000000)			/* XXX */
+			continue;
+
+		while (size > 0) {
+			pmap_enter(&ofw_pmap, va, pa, VM_PROT_ALL, 1);
+			pa += NBPG;
+			va += NBPG;
+			size -= NBPG;
+		}
+	}
+
+	return 0;
 }
 
 #include <dev/ofw/openfirm.h>
@@ -256,9 +339,6 @@ ofwconprobe()
 		{
 			if (strcmp (name, "serial") == 0) {
 				ofwtrysercon (name, qhandle);
-			}
-			if (strcmp (name, "pci") == 0) {
-				ofwenablepcimemio (name, qhandle);
 			}
 		}
 

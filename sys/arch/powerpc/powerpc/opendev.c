@@ -1,4 +1,4 @@
-/*	$OpenBSD: opendev.c,v 1.1 1998/05/29 04:15:41 rahnds Exp $	*/
+/*	$OpenBSD: opendev.c,v 1.2 1999/07/05 20:56:26 rahnds Exp $	*/
 /*	$NetBSD: openfirm.c,v 1.1 1996/09/30 16:34:52 ws Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 
 #include <dev/ofw/openfirm.h>
 
-char *OF_buf;
+extern char OF_buf[];
 
 extern void ofw_stack __P((void));
 extern void ofbcopy __P((const void *, void *, size_t));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.24 1999/05/24 23:09:07 jason Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.25 1999/07/05 20:56:26 rahnds Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -96,6 +96,7 @@ char ofw_eth_addr[6];		/* Save address of first network ifc found */
 char *bootpath;
 char bootpathbuf[512];
 
+struct firmware *fw = NULL;
 
 /*
  * We use the page just above the interrupt vector as message buffer
@@ -107,6 +108,8 @@ caddr_t allocsys __P((caddr_t));
 int power4e_get_eth_addr __P((void));
 
 
+extern int OF_stdout;
+extern int where;
 void
 initppc(startkernel, endkernel, args)
 	u_int startkernel, endkernel;
@@ -133,10 +136,10 @@ initppc(startkernel, endkernel, args)
 	proc0.p_addr = proc0paddr;
 	bzero(proc0.p_addr, sizeof *proc0.p_addr);
 	
+where = 3;
 	curpcb = &proc0paddr->u_pcb;
 	
 	curpm = curpcb->pcb_pmreal = curpcb->pcb_pm = pmap_kernel();
-
 
 	/*
 	 * Initialize BAT registers to unmapped to not generate
@@ -157,12 +160,16 @@ initppc(startkernel, endkernel, args)
 	battable[0].batl = BATL(0x00000000, BAT_M);
 	battable[0].batu = BATU(0x00000000);
 
+	battable[1].batl = BATL(MPC106_V_ISA_IO_SPACE, BAT_I);
+	battable[1].batu = BATU(MPC106_P_ISA_IO_SPACE);
+#if 0
 	if(system_type == POWER4e) {
 		/* Map ISA I/O */
 		addbatmap(MPC106_V_ISA_IO_SPACE, MPC106_P_ISA_IO_SPACE, BAT_I);
 		battable[1].batl = BATL(0xbfffe000, BAT_I);
 		battable[1].batu = BATU(0xbfffe000);
 	}
+#endif
 
 	/*
 	 * Now setup fixed bat registers
@@ -177,10 +184,9 @@ initppc(startkernel, endkernel, args)
 	__asm__ volatile ("mtdbatl 0,%0; mtdbatu 0,%1"
 		      :: "r"(battable[0].batl), "r"(battable[0].batu));
 
-#if 1
 	__asm__ volatile ("mtdbatl 1,%0; mtdbatu 1,%1"
 		      :: "r"(battable[1].batl), "r"(battable[1].batu));
-#endif
+	__asm__ volatile ("sync;isync");
 	
 	/*
 	 * Set up trap vectors
@@ -195,12 +201,14 @@ initppc(startkernel, endkernel, args)
 			 * This one is (potentially) installed during autoconf
 			 */
 			break;
+#if 1
 		case EXC_DSI:
 			bcopy(&dsitrap, (void *)EXC_DSI, (size_t)&dsisize);
 			break;
 		case EXC_ISI:
 			bcopy(&isitrap, (void *)EXC_ISI, (size_t)&isisize);
 			break;
+#endif
 		case EXC_DECR:
 			bcopy(&decrint, (void *)EXC_DECR, (size_t)&decrsize);
 			break;
@@ -227,15 +235,20 @@ initppc(startkernel, endkernel, args)
 	/*
 	 * Now enable translation (and machine checks/recoverable interrupts).
 	 */
-	__asm__ volatile ("mfmsr %0; ori %0,%0,%1; mtmsr %0; isync"
-		      : "=r"(scratch) : "K"(PSL_IR|PSL_DR|PSL_ME|PSL_RI));
+	(fw->vmon)();
+	#if 0
+	#endif
 
-	ofwconprobe();
+	vm_set_page_size();
 
 	/*
-	 * Now we can set up the console as mapping is enabled.
-         */
-	consinit();
+	 * Initialize pmap module.
+	 */
+	pmap_bootstrap(startkernel, endkernel);
+
+	__asm__ volatile ("eieio; mfmsr %0; ori %0,%0,%1; mtmsr %0; sync;isync"
+		      : "=r"(scratch) : "K"(PSL_IR|PSL_DR|PSL_ME|PSL_RI));
+
 
 	/*                                                              
 	 * Look at arguments passed to us and compute boothowto.      
@@ -288,11 +301,14 @@ initppc(startkernel, endkernel, args)
 #endif
 #endif
 
-	/*
-	 * Initialize pmap module.
-	 */
-	pmap_bootstrap(startkernel, endkernel);
+	ofwconprobe();
 
+	/*
+	 * Now we can set up the console as mapping is enabled.
+         */
+	consinit();
+
+	printf("hello\n");
 	/*
 	 * Figure out ethernet address.
 	 */
@@ -767,7 +783,7 @@ boot(howto)
 	if (howto & RB_HALT) {
 		doshutdownhooks();
 		printf("halted\n\n");
-		ppc_exit();
+		(fw->exit)();
 	}
 	if (!cold && (howto & RB_DUMP))
 		dumpsys();
@@ -792,7 +808,8 @@ boot(howto)
 	if (ap[-2] == '-')
 		*ap1 = 0;
 #endif
-	ppc_boot(str);
+	OF_exit();
+	(fw->boot)(str);
 }
 
 /*
@@ -852,8 +869,9 @@ systype(char *name)
 		char *systypename;
 		int type;
 	} systypes[] = {
-		{ "MOT,",	"(PWRSTK) MCG powerstack family", PWRSTK },
+		{ "MOT",	"(PWRSTK) MCG powerstack family", PWRSTK },
 		{ "V-I Power",	"(POWER4e) V-I ppc vme boards ",  POWER4e},
+		{ "iMac",	"(APPL) Apple iMac ",  APPL},
 		{ NULL,"",0}
 	};
 	for (i = 0; systypes[i].name != NULL; i++) {
@@ -867,7 +885,8 @@ systype(char *name)
 		}
 	}
 	if (system_type == OFWMACH) {
-		printf("System type not recognized, good luck\n");
+		printf("System type %snot recognized, good luck\n",
+			name);
 	}
 }
 /* 

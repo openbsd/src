@@ -1,4 +1,4 @@
-/*	$OpenBSD: openfirm.c,v 1.3 1997/10/13 13:43:00 pefo Exp $	*/
+/*	$OpenBSD: openfirm.c,v 1.4 1999/07/05 20:56:26 rahnds Exp $	*/
 /*	$NetBSD: openfirm.c,v 1.1 1996/09/30 16:34:52 ws Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 
 /*#include <dev/ofw/openfirm.h>*/
 
-char *OF_buf;
+extern char OF_buf[];
 
 extern void ofw_stack __P((void));
 extern void ofbcopy __P((const void *, void *, size_t));
@@ -193,7 +193,8 @@ OF_boot(bootspec)
 	ofbcopy(bootspec, OF_buf, l + 1);
 	args.bootspec = OF_buf;
 	openfirmware(&args);
-	panic ("OF_boot returned!");		/* just in case */
+	printf ("OF_boot returned!");		/* just in case */
+	while (1);
 }
 
 void

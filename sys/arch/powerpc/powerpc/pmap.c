@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.9 1999/03/22 02:41:21 rahnds Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.10 1999/07/05 20:56:26 rahnds Exp $	*/
 /*	$NetBSD: pmap.c,v 1.1 1996/09/30 16:34:52 ws Exp $	*/
 
 /*
@@ -289,7 +289,7 @@ pmap_bootstrap(kernelstart, kernelend)
 	/*
 	 * Get memory.
 	 */
-	mem_regions(&mem, &avail);
+	(fw->mem_regions)(&mem, &avail);
 	for (mp = mem; mp->size; mp++)
 		physmem += btoc(mp->size);
 
@@ -367,13 +367,29 @@ pmap_bootstrap(kernelstart, kernelend)
 			mp1->size = sz;
 		}
 	}
+#if 0
 avail_start = 0;
 avail_end = npgs * NBPG;
+#endif
+
+#ifdef  HTABENTS
+	ptab_cnt = HTABENTS;
+#else /* HTABENTS */
+	ptab_cnt = 1024;
+	while ((HTABSIZE << 7) < ctob(physmem))
+	ptab_cnt <<= 1;
+#endif /* HTABENTS */
+
 	/*
 	 * Find suitably aligned memory for HTAB.
 	 */
 	for (mp = avail; mp->size; mp++) {
-		s = mp->size % HTABSIZE;
+		s = mp->start % HTABSIZE;
+		if (mp->start % HTABSIZE == 0) {
+			s = 0;
+		} else {
+			s = HTABSIZE - (mp->start % HTABSIZE) ;
+		}
 		if (mp->size < s + HTABSIZE)
 			continue;
 		ptable = (pte_t *)(mp->start + s);
