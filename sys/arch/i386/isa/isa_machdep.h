@@ -98,9 +98,7 @@ void	isa_intr_disestablish __P((isa_chipset_tag_t ic, void *handler));
 /*
  * stuff that used to be in pccons.c
  */
-#define	MONO_BASE	0x3B4
 #define	MONO_BUF	0xB0000
-#define	CGA_BASE	0x3D4
 #define	CGA_BUF		0xB8000
 #define	IOPHYSMEM	0xA0000
 
