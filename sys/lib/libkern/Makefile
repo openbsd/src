@@ -1,5 +1,5 @@
-#	$OpenBSD: Makefile,v 1.4 1996/04/17 05:03:07 mickey Exp $
-#	$NetBSD: Makefile,v 1.25 1996/02/02 20:34:38 mycroft Exp $
+#	$OpenBSD: Makefile,v 1.5 1996/05/01 15:18:44 deraadt Exp $
+#	$NetBSD: Makefile,v 1.26 1996/04/18 02:14:48 cgd Exp $
 
 LIB=	kern
 NOPIC=
@@ -7,7 +7,7 @@ NOPIC=
 DIR=	${KERNREL}${KERNDIR}
 
 CPPFLAGS=	-I${DIR}/arch/${MACHINE_ARCH} \
-		${KERNCPPFLAGS:S/-D_KERNEL//:S@-I.@-I${KERNREL}.@g}
+		${KERNCPPFLAGS:S@-I.@-I${KERNREL}.@g}
 
 .if exists (${DIR}/arch/${MACHINE_ARCH}/Makefile.inc)
 .PATH:	${DIR}/arch/${MACHINE_ARCH}

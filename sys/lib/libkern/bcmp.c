@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcmp.c,v 1.2 1996/04/19 16:09:19 niklas Exp $	*/
+/*	$OpenBSD: bcmp.c,v 1.3 1996/05/01 15:18:45 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1987 Regents of the University of California.
@@ -35,11 +35,14 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)bcmp.c	5.6 (Berkeley) 2/24/91";*/
-static char *rcsid = "$OpenBSD: bcmp.c,v 1.2 1996/04/19 16:09:19 niklas Exp $";
+static char *rcsid = "$OpenBSD: bcmp.c,v 1.3 1996/05/01 15:18:45 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
+#ifndef _KERNEL
 #include <string.h>
+#else
 #include <lib/libkern/libkern.h>
+#endif
 
 /*
  * bcmp -- vax cmpc3 instruction

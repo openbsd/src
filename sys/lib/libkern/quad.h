@@ -1,5 +1,5 @@
-/*	$OpenBSD: quad.h,v 1.3 1996/04/19 16:09:31 niklas Exp $	*/
-/*	$NetBSD: quad.h,v 1.6 1996/03/14 18:52:14 christos Exp $	*/
+/*	$OpenBSD: quad.h,v 1.4 1996/05/01 15:18:48 deraadt Exp $	*/
+/*	$NetBSD: quad.h,v 1.7 1996/04/18 02:20:04 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -57,7 +57,11 @@
  */
 
 #include <sys/types.h>
+#ifndef _KERNEL
 #include <limits.h>
+#else
+#include <machine/limits.h>
+#endif
 
 /*
  * Depending on the desired operation, we view a `long long' (aka quad_t) in

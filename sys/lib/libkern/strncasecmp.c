@@ -1,4 +1,4 @@
-/*	$OpenBSD: strncasecmp.c,v 1.1 1996/02/29 13:27:50 niklas Exp $	*/
+/*	$OpenBSD: strncasecmp.c,v 1.2 1996/05/01 15:18:52 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -30,10 +30,14 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$Id: strncasecmp.c,v 1.1 1996/02/29 13:27:50 niklas Exp $";
+static char *rcsid = "$Id: strncasecmp.c,v 1.2 1996/05/01 15:18:52 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
+#ifndef _KERNEL
 #include <string.h>
+#else
+#include <lib/libkern/libkern.h>
+#endif
 
 int
 strncasecmp(s1, s2, n)
