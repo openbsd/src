@@ -1,4 +1,4 @@
-/*	$OpenBSD: intercept-translate.c,v 1.4 2002/06/21 15:26:06 provos Exp $	*/
+/*	$OpenBSD: intercept-translate.c,v 1.5 2002/07/13 08:53:02 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -206,6 +206,10 @@ ic_get_sockaddr(struct intercept_translate *trans, int fd, pid_t pid,
 	return (0);
 }
 
+#ifndef offsetof
+#define offsetof(s, e)	((size_t)&((s *)0)->e)
+#endif
+
 int
 ic_print_sockaddr(char *buf, size_t buflen, struct intercept_translate *tl)
 {
@@ -218,8 +222,9 @@ ic_print_sockaddr(char *buf, size_t buflen, struct intercept_translate *tl)
 
 	switch (sa->sa_family) {
 	case PF_LOCAL:
-		if (sa->sa_len < len)
-			len = sa->sa_len;
+		if (len <= offsetof(struct sockaddr, sa_data))
+			return (-1);
+		len -= offsetof(struct sockaddr, sa_data);
 		if (buflen < len + 1)
 			len = buflen - 1;
 		memcpy(buf, sa->sa_data, len);
