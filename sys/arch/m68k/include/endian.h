@@ -1,4 +1,4 @@
-/*	$OpenBSD: endian.h,v 1.4 1997/01/13 11:51:10 niklas Exp $	*/
+/*	$OpenBSD: endian.h,v 1.5 1997/04/02 20:40:47 niklas Exp $	*/
 /*	$NetBSD: endian.h,v 1.10 1996/10/13 02:59:55 christos Exp $	*/
 
 /*
@@ -59,33 +59,93 @@
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
+#if 0
+/*
+ * prototypes supplied for documentation purposes solely
+ */
+u_int32_t	htobe32 __P((u_int32_t));
+u_int16_t	htobe16 __P((u_int16_t));
+u_int32_t	betoh32 __P((u_int32_t));
+u_int16_t	betoh16 __P((u_int16_t));
+
+u_int32_t	htole32 __P((u_int32_t));
+u_int16_t	htole16 __P((u_int16_t));
+u_int32_t	letoh32 __P((u_int32_t));
+u_int16_t	letoh16 __P((u_int16_t));
+
 u_int32_t	htonl __P((u_int32_t));
 u_int16_t	htons __P((u_int16_t));
 u_int32_t	ntohl __P((u_int32_t));
 u_int16_t	ntohs __P((u_int16_t));
+#endif
 __END_DECLS
+
+#ifdef __GNUC__
+
+#define	__byte_swap_int32_variable(x) \
+({ register u_int32_t __x = (x); \
+   __asm ("rorw #8, %0; swap %0; rorw #8, %0" \
+	: "=r" (__x) \
+	: "0" (__x)); \
+   __x; })
+
+#define	__byte_swap_int16_variable(x) \
+({ register u_int16_t __x = (x); \
+   __asm ("rorw #8, %0" \
+	: "=r" (__x) \
+	: "0" (__x)); \
+   __x; })
+
+#ifdef __OPTIMIZE__
+
+#define	__byte_swap_int32_constant(x) \
+	((((x) & 0xff000000) >> 24) | \
+	 (((x) & 0x00ff0000) >>  8) | \
+	 (((x) & 0x0000ff00) <<  8) | \
+	 (((x) & 0x000000ff) << 24))
+#define	__byte_swap_int16_constant(x) \
+	((((x) & 0xff00) >> 8) | \
+	 (((x) & 0x00ff) << 8))
+#define	__byte_swap_int32(x) \
+	(__builtin_constant_p((x)) ? \
+	 __byte_swap_int32_constant(x) : __byte_swap_int32_variable(x))
+#define	__byte_swap_int16(x) \
+	(__builtin_constant_p((x)) ? \
+	 __byte_swap_int16_constant(x) : __byte_swap_int16_variable(x))
+
+#else /* __OPTIMIZE__ */
+
+#define	__byte_swap_int32(x)	__byte_swap_int32_variable(x)
+#define	__byte_swap_int16(x)	__byte_swap_int16_variable(x)
+
+#endif /* __OPTIMIZE__ */
+#endif /* __GNUC__ */
+
+/*
+ * Macros for big/little endian to host and vice versa.
+ */
+#define	betoh32(x)	(x)
+#define	betoh16(x)	(x)
+#define	htobe32(x)	(x)
+#define	htobe16(x)	(x)
+
+#define	letoh32(x)	__byte_swap_int32(x)
+#define	letoh16(x)	__byte_swap_int16(x)
+#define	htole32(x)	__byte_swap_int32(x)
+#define	htole16(x)	__byte_swap_int16(x)
 
 /*
  * Macros for network/external number representation conversion.
  */
-#if BYTE_ORDER == BIG_ENDIAN && !defined(lint)
-#define	ntohl(x)	(x)
-#define	ntohs(x)	(x)
-#define	htonl(x)	(x)
-#define	htons(x)	(x)
+#define	ntohl(x)	betoh32(x)
+#define	ntohs(x)	betoh16(x)
+#define	htonl(x)	htobe32(x)
+#define	htons(x)	htobe16(x)
 
-#define	NTOHL(x)	(void) (x)
-#define	NTOHS(x)	(void) (x)
-#define	HTONL(x)	(void) (x)
-#define	HTONS(x)	(void) (x)
-
-#else
-
-#define	NTOHL(x)	(x) = ntohl((u_int32_t)x)
-#define	NTOHS(x)	(x) = ntohs((u_int16_t)x)
-#define	HTONL(x)	(x) = htonl((u_int32_t)x)
-#define	HTONS(x)	(x) = htons((u_int16_t)x)
-#endif
+#define	NTOHL(x)	((x) = ntohl((u_int32_t)x))
+#define	NTOHS(x)	((x) = ntohs((u_int16_t)x))
+#define	HTONL(x)	((x) = htonl((u_int32_t)x))
+#define	HTONS(x)	((x) = htons((u_int16_t)x))
 
 #endif /* _POSIX_SOURCE */
 
