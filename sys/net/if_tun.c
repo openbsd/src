@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.16 1997/07/23 20:50:14 mickey Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.17 1997/07/24 22:03:15 deraadt Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -397,7 +397,7 @@ tunioctl(dev, cmd, data, flag, p)
 {
 	int		unit, s;
 	struct tun_softc *tp;
- 	struct tuninfo *tunp;
+	struct tuninfo *tunp;
 
 	if ((unit = minor(dev)) >= NTUN)
 		return (ENXIO);
@@ -406,20 +406,20 @@ tunioctl(dev, cmd, data, flag, p)
 
 	s = splimp();
 	switch (cmd) {
- 	case TUNSIFINFO:
+	case TUNSIFINFO:
 		tunp = (struct tuninfo *)data;
- 		tp->tun_if.if_mtu = tunp->mtu;
- 		tp->tun_if.if_type = tunp->type;
- 		tp->tun_if.if_flags = tunp->flags;
- 		tp->tun_if.if_baudrate = tunp->baudrate;
- 		break;
- 	case TUNGIFINFO:
- 		tunp = (struct tuninfo *)data;
- 		tunp->mtu = tp->tun_if.if_mtu;
- 		tunp->type = tp->tun_if.if_type;
- 		tunp->flags = tp->tun_if.if_flags;
- 		tunp->baudrate = tp->tun_if.if_baudrate;
- 		break;
+		tp->tun_if.if_mtu = tunp->mtu;
+		tp->tun_if.if_type = tunp->type;
+		tp->tun_if.if_flags = tunp->flags;
+		tp->tun_if.if_baudrate = tunp->baudrate;
+		break;
+	case TUNGIFINFO:
+		tunp = (struct tuninfo *)data;
+		tunp->mtu = tp->tun_if.if_mtu;
+		tunp->type = tp->tun_if.if_type;
+		tunp->flags = tp->tun_if.if_flags;
+		tunp->baudrate = tp->tun_if.if_baudrate;
+		break;
 #ifdef TUN_DEBUG
 	case TUNSDEBUG:
 		tundebug = *(int *)data;
