@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.2 2000/03/01 08:52:45 deraadt Exp $
+# $OpenBSD: Makefile,v 1.3 2000/08/31 19:59:47 hin Exp $
 
 LIB	= roken
 
@@ -39,7 +39,6 @@ SRCS=	base64.c		\
 	strlwr.c		\
 	strndup.c		\
 	strnlen.c		\
-	strtok_r.c		\
 	strupr.c		\
 	print_version.c		\
 	socket.c		\
