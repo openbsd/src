@@ -1,4 +1,4 @@
-/*	$OpenBSD: strlcpy.c,v 1.5 2001/05/13 15:40:16 deraadt Exp $	*/
+/*	$OpenBSD: strlcpy.c,v 1.6 2003/03/14 14:35:29 millert Exp $	*/
 
 /*
  * Copyright (c) 1998 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: strlcpy.c,v 1.5 2001/05/13 15:40:16 deraadt Exp $";
+static char *rcsid = "$OpenBSD: strlcpy.c,v 1.6 2003/03/14 14:35:29 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -40,10 +40,7 @@ static char *rcsid = "$OpenBSD: strlcpy.c,v 1.5 2001/05/13 15:40:16 deraadt Exp 
  * Returns strlen(src); if retval >= siz, truncation occurred.
  */
 size_t
-strlcpy(dst, src, siz)
-	char *dst;
-	const char *src;
-	size_t siz;
+strlcpy(char *dst, const char *src, size_t siz)
 {
 	register char *d = dst;
 	register const char *s = src;
