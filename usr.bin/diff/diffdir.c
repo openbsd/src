@@ -1,4 +1,4 @@
-/*	$OpenBSD: diffdir.c,v 1.12 2003/06/25 21:43:49 millert Exp $	*/
+/*	$OpenBSD: diffdir.c,v 1.13 2003/06/25 22:14:43 millert Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -338,7 +338,7 @@ notsame:
 	if (!ascii(f1) || !ascii(f2)) {
 		if (lflag)
 			dp->d_flags |= DIFFER;
-		else if (opt == D_NORMAL || opt == D_CONTEXT)
+		else if (opt == D_NORMAL || opt == D_CONTEXT || opt == D_UNIFIED)
 			printf("Binary files %s and %s differ\n",
 			    file1, file2);
 		goto closem;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: diffreg.c,v 1.16 2003/06/25 21:43:49 millert Exp $	*/
+/*	$OpenBSD: diffreg.c,v 1.17 2003/06/25 22:14:43 millert Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -149,6 +149,7 @@ static void output(void);
 static void check(void);
 static void range(int, int, char *);
 static void dump_context_vec(void);
+static void dump_unified_vec(void);
 static void prepare(int, FILE *);
 static void prune(void);
 static void equiv(struct line *, int, struct line *, int, int *);
@@ -334,7 +335,7 @@ notsame:
 	output();
 	status = anychange;
 same:
-	if (opt == D_CONTEXT && anychange == 0)
+	if (anychange == 0 && (opt == D_CONTEXT || opt == D_UNIFIED))
 		printf("No differences encountered\n");
 	done(0);
 }
@@ -747,8 +748,12 @@ output(void)
 		}
 #undef c
 	}
-	if (anychange && opt == D_CONTEXT)
-		dump_context_vec();
+	if (anychange != 0) {
+		if (opt == D_CONTEXT)
+			dump_context_vec();
+		else if (opt == D_UNIFIED)
+			dump_unified_vec();
+	}
 }
 
 /*
@@ -783,21 +788,20 @@ change(int a, int b, int c, int d)
 		return;
 	if (anychange == 0) {
 		anychange = 1;
-		if (opt == D_CONTEXT) {
-			printf("*** %s	", file1);
+		if (opt == D_CONTEXT || opt == D_UNIFIED) {
 			stat(file1, &stbuf);
-			printf("%s--- %s	",
-			    ctime(&stbuf.st_mtime), file2);
+			printf("%s %s	%s", opt == D_CONTEXT ? "***" : "---",
+			   file1, ctime(&stbuf.st_mtime));
 			stat(file2, &stbuf);
-			printf("%s", ctime(&stbuf.st_mtime));
-
+			printf("%s %s	%s", opt == D_CONTEXT ? "---" : "+++",
+			    file2, ctime(&stbuf.st_mtime));
 			context_vec_start = emalloc(MAX_CONTEXT *
 			    sizeof(struct context_vec));
 			context_vec_end = context_vec_start + MAX_CONTEXT;
 			context_vec_ptr = context_vec_start - 1;
 		}
 	}
-	if (opt == D_CONTEXT) {
+	if (opt == D_CONTEXT || opt == D_UNIFIED) {
 		/*
 		 * if this new change is within 'context' lines of
 		 * the previous change, just add it to the change
@@ -807,10 +811,13 @@ change(int a, int b, int c, int d)
 		 */
 		if (context_vec_ptr >= context_vec_end ||
 		    (context_vec_ptr >= context_vec_start &&
-			a > (context_vec_ptr->b + 2 * context) &&
-			c > (context_vec_ptr->d + 2 * context)))
-			dump_context_vec();
-
+		    a > (context_vec_ptr->b + 2 * context) &&
+		    c > (context_vec_ptr->d + 2 * context))) {
+			if (opt == D_CONTEXT)
+				dump_context_vec();
+			else
+				dump_unified_vec();
+		}
 		context_vec_ptr++;
 		context_vec_ptr->a = a;
 		context_vec_ptr->b = b;
@@ -1112,5 +1119,69 @@ dump_context_vec(void)
 		}
 		fetch(ixnew, d + 1, upd, input[1], "  ", 0);
 	}
+	context_vec_ptr = context_vec_start - 1;
+}
+
+/* dump accumulated "unified" diff changes */
+static void
+dump_unified_vec(void)
+{
+	struct context_vec *cvp = context_vec_start;
+	int lowa, upb, lowc, upd;
+	int a, b, c, d;
+	char ch;
+
+	if (cvp > context_vec_ptr)
+		return;
+
+	b = d = 0;		/* gcc */
+	lowa = max(1, cvp->a - context);
+	upb = min(len[0], context_vec_ptr->b + context);
+	lowc = max(1, cvp->c - context);
+	upd = min(len[1], context_vec_ptr->d + context);
+
+	printf("@@ -%d,%d +%d,%d @@\n", lowa, upb - lowa + 1,
+	    lowc, upd - lowc + 1);
+
+	/*
+	 * Output changes in "unified" diff format--the old and new lines
+	 * are printed together.
+	 */
+	for (; cvp <= context_vec_ptr; cvp++) {
+		a = cvp->a;
+		b = cvp->b;
+		c = cvp->c;
+		d = cvp->d;
+
+		/*
+		 * c: both new and old changes
+		 * d: only changes in the old file
+		 * a: only changes in the new file
+		 */
+		if (a <= b && c <= d)
+			ch = 'c';
+		else
+			ch = (a <= b) ? 'd' : 'a';
+
+		switch (ch) {
+		case 'c':
+			fetch(ixold, lowa, a - 1, input[0], "  ", 0);
+			fetch(ixold, a, b, input[0], "- ", 0);
+			fetch(ixnew, c, d, input[1], "+ ", 0);
+			break;
+		case 'd':
+			fetch(ixold, lowa, a - 1, input[0], "  ", 0);
+			fetch(ixold, a, b, input[0], "- ", 0);
+			break;
+		case 'a':
+			fetch(ixnew, lowc, c - 1, input[1], "  ", 0);
+			fetch(ixnew, c, d, input[1], "+ ", 0);
+			break;
+		}
+		lowa = b + 1;
+		lowc = d + 1;
+	}
+	fetch(ixnew, d + 1, upd, input[1], "  ", 0);
+
 	context_vec_ptr = context_vec_start - 1;
 }

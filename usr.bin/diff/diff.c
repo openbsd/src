@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.8 2003/06/25 21:43:49 millert Exp $	*/
+/*	$OpenBSD: diff.c,v 1.9 2003/06/25 22:14:43 millert Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -65,7 +65,7 @@ main(int argc, char **argv)
 	status = 2;
 	diffargv = argv;
 
-	while ((ch = getopt(argc, argv, "bC:cD:efhilnrS:stw")) != -1) {
+	while ((ch = getopt(argc, argv, "bC:cD:efhilnrS:stU:uw")) != -1) {
 		switch (ch) {
 		case 'b':
 			bflag++;
@@ -117,6 +117,16 @@ main(int argc, char **argv)
 		case 't':
 			tflag++;
 			break;
+		case 'U':
+			opt = D_UNIFIED;
+			if (!isdigit(*optarg))
+				usage();
+			context = atoi(optarg);	/* XXX - use strtol */
+			break;
+		case 'u':
+			opt = D_UNIFIED;
+			context = 3;
+			break;
 		case 'w':
 			wflag++;
 			break;
@@ -133,7 +143,7 @@ main(int argc, char **argv)
 	file1 = argv[0];
 	file2 = argv[1];
 	if (hflag && opt)
-		errx(1, "-h doesn't support -D, -c, -C, -e, -f, -I or -n");
+		errx(1, "-h doesn't support -D, -c, -C, -e, -f, -I, -n, -u or -U");
 	if (!strcmp(file1, "-"))
 		stb1.st_mode = S_IFREG;
 	else if (stat(file1, &stb1) < 0)
@@ -203,9 +213,11 @@ noroom(void)
 __dead void
 usage(void)
 {
-	(void)fprintf(stderr, "usage: diff [-c | -C lines | -e | -f | -h | -n ] [-biwt] file1 file2\n"
-	    "usage: diff [-Dstring] [-biw] file1 file2\n"
-	    "usage: diff [-l] [-r] [-s] [-c | -C lines | -e | -f | -h | -n ] [-biwt]\n            [-Sname] dir1 dir2\n");
+	(void)fprintf(stderr, "usage: diff [-bitw] [-c | -e | -f | -h | -n | -u ] file1 file2\n"
+	    "       diff [-biw] -Dstring file1 file2\n"
+	    "       diff [-biwt] [-c | -e | -f | -h | -n | -u ] [-l] [-r] [-s] [-Sname]\n            dir1 dir2\n"
+	    "       diff [-bitw] -Cnumber [file1 file2 | dir1 dir2]\n"
+	    "       diff [-bitw] -Unumber [file1 file2 | dir1 dir2]\n");
 
 	exit(1);
 }
