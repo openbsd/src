@@ -1,4 +1,4 @@
-/*	$OpenBSD: write.c,v 1.11 2001/01/19 17:58:21 deraadt Exp $	*/
+/*	$OpenBSD: write.c,v 1.12 2001/06/27 06:53:55 jasoni Exp $	*/
 /*	$NetBSD: write.c,v 1.5 1995/08/31 21:48:32 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)write.c	8.2 (Berkeley) 4/27/95";
 #endif
-static char *rcsid = "$OpenBSD: write.c,v 1.11 2001/01/19 17:58:21 deraadt Exp $";
+static char *rcsid = "$OpenBSD: write.c,v 1.12 2001/06/27 06:53:55 jasoni Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -95,7 +95,7 @@ main(argc, argv)
 		errx(1, "can't find your tty");
 	if (!(mytty = ttyname(myttyfd)))
 		errx(1, "can't find your tty's name");
-	if (cp = strrchr(mytty, '/'))
+	if ((cp = strrchr(mytty, '/')))
 		mytty = cp + 1;
 	if (term_chk(mytty, &msgsok, &atime, 1))
 		exit(1);
@@ -128,7 +128,9 @@ main(argc, argv)
 		exit(1);
 	}
 	done(0);
+
 	/* NOTREACHED */
+	return (0);
 }
 
 /*
@@ -255,11 +257,12 @@ do_write(tty, mytty, myuid)
 	char path[MAXPATHLEN], host[MAXHOSTNAMELEN], line[512];
 
 	/* Determine our login name before the we reopen() stdout */
-	if ((login = getlogin()) == NULL)
-		if (pwd = getpwuid(myuid))
+	if ((login = getlogin()) == NULL) {
+		if ((pwd = getpwuid(myuid)))
 			login = pwd->pw_name;
 		else
 			login = "???";
+	}
 
 	(void)snprintf(path, sizeof(path), "%s%s", _PATH_DEV, tty);
 	if ((freopen(path, "w", stdout)) == NULL)
