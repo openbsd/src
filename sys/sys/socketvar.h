@@ -1,4 +1,4 @@
-/*	$OpenBSD: socketvar.h,v 1.28 2002/07/03 21:19:08 miod Exp $	*/
+/*	$OpenBSD: socketvar.h,v 1.29 2002/08/08 19:12:33 provos Exp $	*/
 /*	$NetBSD: socketvar.h,v 1.18 1996/02/09 18:25:38 christos Exp $	*/
 
 /*-
@@ -88,7 +88,10 @@ struct socket {
 		u_long	sb_mbcnt;	/* chars of mbufs used */
 		u_long	sb_mbmax;	/* max chars of mbufs to use */
 		long	sb_lowat;	/* low water mark */
-		struct	mbuf *sb_mb;	/* the mbuf chain */
+		struct mbuf *sb_mb;	/* the mbuf chain */
+		struct mbuf *sb_mbtail;	/* the last mbuf in the chain */
+		struct mbuf *sb_lastrecord;/* first mbuf of last record in
+					      socket buffer */
 		struct	selinfo sb_sel;	/* process selecting read/write */
 		short	sb_flags;	/* flags, see below */
 		short	sb_timeo;	/* timeout for read/write */
@@ -108,6 +111,14 @@ struct socket {
 	uid_t	so_euid, so_ruid;	/* who opened the socket */
 	gid_t	so_egid, so_rgid;
 };
+
+#define	SB_EMPTY_FIXUP(sb)						\
+do {									\
+	if ((sb)->sb_mb == NULL) {					\
+		(sb)->sb_mbtail = NULL;					\
+		(sb)->sb_lastrecord = NULL;				\
+	}								\
+} while (/*CONSTCOND*/0)
 
 /*
  * Socket state bits.
@@ -237,6 +248,7 @@ int	soo_stat(struct file *, struct stat *, struct proc *);
 int	uipc_usrreq(struct socket *, int , struct mbuf *,
 			 struct mbuf *, struct mbuf *);
 void	sbappend(struct sockbuf *sb, struct mbuf *m);
+void	sbappendstream(struct sockbuf *sb, struct mbuf *m);
 int	sbappendaddr(struct sockbuf *sb, struct sockaddr *asa,
 	    struct mbuf *m0, struct mbuf *control);
 int	sbappendcontrol(struct sockbuf *sb, struct mbuf *m0,
@@ -292,5 +304,16 @@ int	sockargs(struct mbuf **, caddr_t, socklen_t, int);
 int	sendit(struct proc *, int, struct msghdr *, int, register_t *);
 int	recvit(struct proc *, int, struct msghdr *, caddr_t,
 		    register_t *);
+
+#ifdef SOCKBUF_DEBUG
+void	sblastrecordchk(struct sockbuf *, const char *);
+#define	SBLASTRECORDCHK(sb, where)	sblastrecordchk((sb), (where))
+
+void	sblastmbufchk(struct sockbuf *, const char *);
+#define	SBLASTMBUFCHK(sb, where)	sblastmbufchk((sb), (where))
+#else
+#define	SBLASTRECORDCHK(sb, where)	/* nothing */
+#define	SBLASTMBUFCHK(sb, where)	/* nothing */
+#endif /* SOCKBUF_DEBUG */
 
 #endif /* _KERNEL */
