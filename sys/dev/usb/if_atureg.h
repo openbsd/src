@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atureg.h,v 1.20 2004/12/20 12:11:57 deraadt Exp $ */
+/*	$OpenBSD: if_atureg.h,v 1.21 2004/12/23 13:19:38 dlg Exp $ */
 /*
  * Copyright (c) 2003
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -52,20 +52,6 @@
  * (+/- 24% increase)
  */
 #define ATU_TX_LIST_CNT	8
-
-/*
- * Whether or not we pad usb packets transfered to the adapter. looking at
- * drivers on other platforms there seems to be something magic about the
- * padding.
- * my measurements :
- * on	- 532.55 KB/sec
- * off	- 536.74 KB/sec
- * I don't see the reason why we should pad bytes here. The adapter seems
- * to be transmitting packets just fine without the padding. So the default is
- * to have no padding, but it's at least supplied as an option. This seems to
- * be necessary with newer firmware versions, but I haven't tested that yet.
- */
-/* #define ATU_TX_PADDING */
 
 /*
  * According to the 802.11 spec (7.1.2) the frame body can be up to 2312 bytes

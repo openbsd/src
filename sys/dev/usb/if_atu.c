@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.46 2004/12/20 12:11:57 deraadt Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.47 2004/12/23 13:19:38 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -192,6 +192,7 @@ int atu_newstate(struct ieee80211com *, enum ieee80211_state, int);
 int atu_tx_start(struct atu_softc *, struct ieee80211_node *,
     struct atu_chain *, struct mbuf *);
 void atu_complete_attach(struct atu_softc *);
+u_int8_t atu_calculate_padding(int);
 
 usbd_status
 atu_usb_request(struct atu_softc *sc, u_int8_t type,
@@ -1700,19 +1701,17 @@ atu_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	atu_start(ifp);
 }
 
-#ifdef ATU_TX_PADDING
 u_int8_t
 atu_calculate_padding(int size)
 {
 	size %= 64;
 
 	if (size < 50)
-		return 50 - size;
+		return (50 - size);
 	if (size >=61)
-		return 64 + 50 - size;
-	return 0;
+		return (64 + 50 - size);
+	return (0);
 }
-#endif /* ATU_TX_PADDING */
 
 int
 atu_tx_start(struct atu_softc *sc, struct ieee80211_node *ni,
@@ -1722,9 +1721,7 @@ atu_tx_start(struct atu_softc *sc, struct ieee80211_node *ni,
 	int			len;
 	struct atu_tx_hdr	*h;
 	usbd_status		err;
-#ifdef ATU_TX_PADDING
-	u_int8_t		padding;
-#endif /* ATU_TX_PADDING */
+	u_int8_t		pad;
 
 	DPRINTFN(25, ("%s: atu_tx_start\n", USBDEVNAME(sc->atu_dev)));
 
@@ -1744,16 +1741,12 @@ atu_tx_start(struct atu_softc *sc, struct ieee80211_node *ni,
 	memset(h, 0, ATU_TX_HDRLEN);
 	USETW(h->length, len);
 	h->tx_rate = 4; /* XXX rate = auto */
-	h->padding = 0;
-
 	len += ATU_TX_HDRLEN;
-#ifdef ATU_TX_PADDING
-/*
-	padding = atu_calculate_padding(len % 64);
-	len += padding;
-	pkt->AtHeader.padding = padding;
-*/
-#endif /* ATU_TX_PADDING */
+
+	pad = atu_calculate_padding(len);
+	len += pad;
+	h->padding = pad;
+
 	c->atu_length = len;
 	c->atu_mbuf = m;
 
