@@ -1,4 +1,4 @@
-/*	$OpenBSD: at.c,v 1.18 2000/01/21 04:22:54 millert Exp $	*/
+/*	$OpenBSD: at.c,v 1.19 2000/04/23 16:32:07 millert Exp $	*/
 /*	$NetBSD: at.c,v 1.4 1995/03/25 18:13:31 glass Exp $	*/
 
 /*
@@ -74,7 +74,7 @@ enum { ATQ, ATRM, AT, BATCH, CAT };	/* what program we want to run */
 
 /* File scope variables */
 #ifndef lint
-static char rcsid[] = "$OpenBSD: at.c,v 1.18 2000/01/21 04:22:54 millert Exp $";
+static char rcsid[] = "$OpenBSD: at.c,v 1.19 2000/04/23 16:32:07 millert Exp $";
 #endif
 
 char *no_export[] =
@@ -316,7 +316,7 @@ writefile(runtimer, queue)
 		char *eqp;
 
 		eqp = strchr(*atenv, '=');
-		if (ap == NULL)
+		if (eqp == NULL)
 			eqp = *atenv;
 		else {
 			int i;
