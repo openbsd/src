@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.97 2004/11/09 10:17:51 espie Exp $
+# $OpenBSD: pkg_add,v 1.98 2004/11/09 11:02:42 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -469,10 +469,12 @@ sub really_add($$)
 		OpenBSD::ProgressMeter::next();
 
 		OpenBSD::ProgressMeter::set_header($plist->{replacing}->pkgname()." (deleting)");
+		$state->set_pkgname($plist->{replacing}->pkgname());
 		require OpenBSD::Delete;
 		OpenBSD::Delete::delete_plist($plist->{replacing}, $state);
 
 		OpenBSD::ProgressMeter::set_header("$pkgname (installing)");
+		$state->set_pkgname($pkgname);
 	}
 
 	do_script($plist, REQUIRE, $state, "INSTALL");
