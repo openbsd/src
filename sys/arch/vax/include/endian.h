@@ -1,4 +1,4 @@
-/*	$OpenBSD: endian.h,v 1.5 1997/04/04 03:05:36 millert Exp $	*/
+/*	$OpenBSD: endian.h,v 1.6 1997/04/04 03:17:06 millert Exp $	*/
 /*	$NetBSD: endian.h,v 1.8 1996/10/13 03:28:00 christos Exp $	*/
 
 /*
@@ -107,9 +107,9 @@ __END_DECLS
  * Macros for network/external number representation conversion.
  */
 #define NTOHL(x)	(x) = ntohl((u_int32_t)(x))
-#define NTOHS(x)	(x) = ntohs((u_int32_t)(x))
+#define NTOHS(x)	(x) = ntohs((u_int16_t)(x))
 #define HTONL(x)	(x) = htonl((u_int32_t)(x))
-#define HTONS(x)	(x) = htons((u_int32_t)(x))
+#define HTONS(x)	(x) = htons((u_int16_t)(x))
 
 #endif	/* _POSIX_SOURCE */
 
