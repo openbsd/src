@@ -1,7 +1,8 @@
+dnl	$OpenBSD: xfer,v 1.7 2005/03/18 13:30:53 miod Exp $
 Installation is supported from several media types, including:
 
 	CD-ROM
-	FFS partitions
+	FFS partitions (for upgrades only)
 	Tape
 	Remote NFS partitions
 	FTP
