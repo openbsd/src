@@ -1,4 +1,4 @@
-.\"	$OpenBSD: inet6_rthdr_space.3,v 1.15 2005/01/06 03:50:46 itojun Exp $
+.\"	$OpenBSD: inet6_rthdr_space.3,v 1.16 2005/01/06 11:08:47 jmc Exp $
 .\"	$KAME: inet6_rthdr_space.3,v 1.11 2005/01/05 03:00:44 itojun Exp $
 .\"
 .\" Copyright (C) 2004 WIDE Project.
@@ -43,8 +43,6 @@
 .Nm inet6_rthdr_getflags
 .Nd IPv6 Routing Header Options Manipulation
 .\"
-.Sh LIBRARY
-.Lb libc
 .Sh SYNOPSIS
 .In sys/types.h
 .In netinet/in.h
@@ -78,9 +76,9 @@ The
 eight functions are split into two groups, the first of which builds
 the header and the second of which can parse it.
 The function prototypes for these functions are all in the
-.In netinet/in.h
+.Aq Pa netinet/in.h
 header.
-Although direct manipulation of a routing header is possible
+Although direct manipulation of a routing header is possible,
 this set of APIs make it unnecessary and such direct manipulation
 should be avoided so that changes to the underlying structures do not
 break applications.
@@ -193,18 +191,18 @@ must be called once.
 .Ss inet6_rthdr_reverse
 This function was never implemented.
 .Pp
-The following four functions provide an API for parsing a received
-routing header.
+The following three functions provide an API for parsing a received
+routing header:
 .\"
 .Ss inet6_rthdr_segments
 The
 .Fn inet6_rthdr_segments
-function returns the number of segments contained in the Routing
+function returns the number of segments contained in the routing
 header pointed to by the
 .Fa cmsg
 argument.
 On success the return value is from 1 to 23.
-When an error occurs \-1 is returned.
+When an error occurs, \-1 is returned.
 .\"
 .Ss inet6_rthdr_getaddr
 The
@@ -220,7 +218,7 @@ An application must call
 .Fn inet6_rthdr_segments
 to obtain the number of segments in the routing header.
 .Pp
-If an error occurs the
+If an error occurs,
 .Dv NULL
 is returned.
 .\"
@@ -242,10 +240,13 @@ or
 indicating whether loose or strict source routing was requested for
 that segment.
 .Pp
-When an error occurs \-1 is returned.
+When an error occurs, \-1 is returned.
 .Pp
 Note: Flags begin at index 0 while segments begin at index 1, to
-maintain consistency with the terminology and figures in RFC2460.
+maintain consistency with the terminology and figures in RFC 2460.
+.\"
+.Sh EXAMPLES
+RFC 2292 gives comprehensive examples in chapter 8.
 .\"
 .Sh DIAGNOSTICS
 The
@@ -270,24 +271,21 @@ The
 .Fn inet6_rthdr_segments
 and
 .Fn inet6_rthdr_getflags
-functions return -1 on error.
-.\"
-.Sh EXAMPLES
-RFC2292 gives comprehensive examples in chapter 8.
+functions return \-1 on error.
 .\"
 .Sh SEE ALSO
 .Rs
 .%A W. Stevens
 .%A M. Thomas
 .%T "Advanced Sockets API for IPv6"
-.%N RFC2292
+.%N RFC 2292
 .%D February 1998
 .Re
 .Rs
 .%A S. Deering
 .%A R. Hinden
 .%T "Internet Protocol, Version 6 (IPv6) Specification"
-.%N RFC2460
+.%N RFC 2460
 .%D December 1998
 .Re
 .\"
