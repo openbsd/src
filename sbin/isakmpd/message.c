@@ -1,4 +1,4 @@
-/* $OpenBSD: message.c,v 1.89 2004/09/17 13:45:02 ho Exp $	 */
+/* $OpenBSD: message.c,v 1.90 2004/12/08 16:05:37 markus Exp $	 */
 /* $EOM: message.c,v 1.156 2000/10/10 12:36:39 provos Exp $	 */
 
 /*
@@ -1225,6 +1225,9 @@ message_recv(struct message *msg)
 	struct keystate *ks = 0;
 	struct proto    tmp_proto;
 	struct sa       tmp_sa;
+#if defined (USE_NAT_TRAVERSAL)
+	struct transport *t;
+#endif
 
 	/* Messages shorter than an ISAKMP header are bad.  */
 	if (sz < ISAKMP_HDR_SZ || sz != GET_ISAKMP_HDR_LENGTH(buf)) {
@@ -1451,6 +1454,18 @@ message_recv(struct message *msg)
 			free(ks);
 		return -1;
 	}
+#if defined (USE_NAT_TRAVERSAL)
+	/*
+	 * Update the isakmp transport, but only in phase 1,
+	 * since phase 2 SAs might use this transport
+	 */
+	if (msg->exchange->phase == 1) {
+		t = msg->isakmp_sa->transport;
+		msg->isakmp_sa->transport = msg->transport;
+		transport_reference(msg->transport);
+		transport_release(t);
+	}
+#endif
 	/*
 	 * Now we can validate DOI-specific exchange types.  If we have no SA
 	 * DOI-specific exchange types are definitely wrong.
