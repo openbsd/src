@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_bootstrap.c,v 1.6 2003/06/02 23:27:48 millert Exp $	*/
+/*	$OpenBSD: pmap_bootstrap.c,v 1.7 2004/07/22 19:37:39 miod Exp $	*/
 
 /* 
  * Copyright (c) 1995 Theo de Raadt
@@ -124,6 +124,7 @@ pmap_bootstrap(nextpa, firstpa)
 	u_int nptpages, kstsize;
 	st_entry_t protoste, *ste;
 	pt_entry_t protopte, *pte, *epte;
+	int num;
 	PMAP_MD_LOCALS
 
 	/*
@@ -204,8 +205,6 @@ pmap_bootstrap(nextpa, firstpa)
 	 * likely be insufficient in the future (at least for the kernel).
 	 */
 	if (RELOC(mmutype, int) <= MMU_68040) {
-		int num;
-
 		/*
 		 * First invalidate the entire "segment table" pages
 		 * (levels 1 and 2 have the same "invalid" value).
@@ -430,14 +429,12 @@ pmap_bootstrap(nextpa, firstpa)
 	/*
 	 * Setup u-area for process 0.
 	 */
-	/*
-	 * Zero the u-area.
-	 * NOTE: `pte' and `epte' aren't PTEs here.
-	 */
+
+	/* Zero the u-area (`pte' is not really a PTE here) */
 	pte = PA2VA(p0upa, u_int *);
-	epte = (u_int *)(PA2VA(p0upa, u_int) + USPACE);
-	while (pte < epte)
-		*pte++ = PG_NV;
+	for (num = USPACE / sizeof(u_int); num != 0; num--)
+		*pte++ = 0;
+
 	/*
 	 * Remember the u-area address so it can be loaded in the
 	 * proc struct p_addr field later.
