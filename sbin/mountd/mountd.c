@@ -1,4 +1,4 @@
-/*	$OpenBSD: mountd.c,v 1.28 1999/03/07 21:02:08 millert Exp $	*/
+/*	$OpenBSD: mountd.c,v 1.29 1999/04/21 02:13:57 alex Exp $	*/
 /*	$NetBSD: mountd.c,v 1.31 1996/02/18 11:57:53 fvdl Exp $	*/
 
 /*
@@ -2044,7 +2044,7 @@ check_options(dp)
 		return (1);
 	}
 	if ((opt_flags & OP_ALLDIRS) && dp->dp_left) {
-		syslog(LOG_ERR, "-alldir has multiple directories");
+		syslog(LOG_ERR, "-alldirs has multiple directories");
 		return (1);
 	}
 	return (0);
