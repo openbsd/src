@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.28 2004/01/27 23:43:37 vincent Exp $	*/
+/*	$OpenBSD: main.c,v 1.29 2004/02/02 20:21:14 vincent Exp $	*/
 
 /*
  *	Mainline.
@@ -19,7 +19,7 @@ int		 lastflag;			/* flags, last command	*/
 int		 curgoal;			/* goal column		*/
 int		 startrow;			/* row to start         */
 BUFFER		*curbp;				/* current buffer	*/
-BUFFER		*bheadp;			/* BUFFER listhead	*/
+BUFFER		*bheadp;			/* BUFFER list head */
 MGWIN		*curwp;				/* current window	*/
 MGWIN		*wheadp;			/* MGWIN listhead	*/
 char		 pat[NPAT];			/* pattern		*/
@@ -105,8 +105,9 @@ main(int argc, char **argv)
 notnum:
 			cp = adjustname(argv[i]);
 			if (cp != NULL) {
-				if (nfiles > 0 && nfiles < 3)
+				if (nfiles == 1) {
 					splitwind(0, 1);
+				}
 				curbp = findbuffer(cp);
 				(void)showbuffer(curbp, curwp, 0);
 				(void)readin(cp);
@@ -116,6 +117,9 @@ notnum:
 			}
 		}
 	}
+
+	if (nfiles > 2)
+		listbuffers(0, 1);
 
 	/* fake last flags */
 	thisflag = 0;
