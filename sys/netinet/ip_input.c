@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.44 1999/12/08 06:50:20 itojun Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.45 2000/01/09 22:17:57 angelos Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -78,6 +78,7 @@
 #endif
 
 int encdebug = 0;
+int ipsp_allow_all = 1;
 
 /*
  * Note: DIRECTED_BROADCAST is handled this way so that previous
@@ -1491,6 +1492,9 @@ ip_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 		    &ip_maxqueue));
 	case IPCTL_ENCDEBUG:
 		return (sysctl_int(oldp, oldlenp, newp, newlen, &encdebug));
+	case IPCTL_IPSEC_ACL:
+		return (sysctl_int(oldp, oldlenp, newp, newlen,
+			&ipsp_allow_all));
 	default:
 		return (EOPNOTSUPP);
 	}
