@@ -56,7 +56,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: dhclient.c,v 1.13 2001/01/03 16:04:39 ericj Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: dhclient.c,v 1.14 2001/01/06 19:55:06 angelos Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -117,7 +117,7 @@ int main (argc, argv, envp)
 	int argc;
 	char **argv, **envp;
 {
-	int i;
+	int i, fd;
 	struct servent *ent;
 	struct interface_info *ip;
 
@@ -180,11 +180,19 @@ int main (argc, argv, envp)
 	/* Parse the dhclient.conf file. */
 	read_client_conf ();
 
+	/* Lock the leases file */
+	fd = open(path_dhclient_db, O_RDONLY | O_EXLOCK, 0);
+	if (fd < 0)
+		error ("can't open and lock %s: %m", path_dhclient_db);
+
 	/* Parse the lease database. */
 	read_client_leases ();
 
 	/* Rewrite the lease database... */
 	rewrite_client_leases ();
+
+	/* Close and unlock */
+	close(fd);
 
 	/* If no broadcast interfaces were discovered, call the script
 	   and tell it so. */
