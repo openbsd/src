@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_tape.h,v 1.6 1997/04/14 04:09:13 downsj Exp $	*/
+/*	$OpenBSD: scsi_tape.h,v 1.7 1998/01/07 17:28:38 deraadt Exp $	*/
 /*	$NetBSD: scsi_tape.h,v 1.9 1996/05/24 02:04:47 thorpej Exp $	*/
 
 /*
@@ -246,6 +246,7 @@ struct block_desc_cipher {
 #define QIC_1320	0x12
 #define DDS		0x13
 #define DAT_1		0x13
+#define QIC_3080	0x29
 #define QIC_3095	0x45
 
 #endif /* _SCSI_TAPE_H_ */
