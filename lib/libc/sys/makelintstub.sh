@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: makelintstub.sh,v 1.3 2003/06/22 00:45:58 deraadt Exp $
+#	$OpenBSD: makelintstub.sh,v 1.4 2004/07/17 07:02:29 deraadt Exp $
 #	$NetBSD: makelintstub,v 1.2 1997/11/05 05:46:18 thorpej Exp $
 #
 # Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -120,55 +120,21 @@ syscall_stub()
 	nargswithva=$#
 
 	# do ANSI C function header
-	if [ $varargs = YES ]; then
-		echo	"#ifdef __STDC__"
-
-		echo -n	"$funcname("
-		i=1
-		while [ $i -le $nargs ]; do
-			eval echo -n \""\$$i"\"
-			echo -n	" arg$i"
-			if [ $i -lt $nargswithva ]; then
-				echo -n	", "
-			fi
-			i=$(($i + 1))
-		done
-		if [ $varargs = YES ]; then
-			echo -n "..."
-		fi
-		echo	")"
-
-		# do K&R C function header
-		echo	"#else"
-	fi
 
 	echo -n	"$funcname("
 	i=1
 	while [ $i -le $nargs ]; do
-		echo -n	"arg$i"
+		eval echo -n \""\$$i"\"
+		echo -n	" arg$i"
 		if [ $i -lt $nargswithva ]; then
 			echo -n	", "
 		fi
 		i=$(($i + 1))
 	done
 	if [ $varargs = YES ]; then
-		echo -n "va_alist"
+		echo -n "..."
 	fi
 	echo	")"
-	i=1
-	while [ $i -le $nargs ]; do
-		eval echo -n \""        \$$i"\"
-		echo	" arg$i;"
-		i=$(($i + 1))
-	done
-	if [ $varargs = YES ]; then
-		echo	"        va_dcl"
-	fi
-
-	# do function body
-	if [ $varargs = YES ]; then
-		echo	"#endif"
-	fi
 	echo	"{"
 	if [ "$returntype" != "void" ]; then
 		echo "        return (($returntype)0);"
