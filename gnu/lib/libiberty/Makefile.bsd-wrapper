@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.6 2003/12/28 20:11:50 espie Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.7 2004/05/17 10:00:37 kettenis Exp $
 
 LIB=		iberty
 CPPFLAGS+=	-DHAVE_CONFIG_H -I$(.CURDIR) -I$(.CURDIR)/include -I$(.OBJDIR)
@@ -13,7 +13,7 @@ SRCS=		argv.c choose-temp.c concat.c cplus-dem.c cp-demangle.c \
 		hashtab.c hex.c fibheap.c partition.c \
 		floatformat.c make-temp-file.c make-relative-prefix.c \
 		objalloc.c obstack.c oldhashtab.c \
-		pexecute.c safe-ctype.c spaces.c splay-tree.c \
+		pexecute.c regex.c safe-ctype.c spaces.c splay-tree.c \
 		strerror.c strsignal.c \
 		xatexit.c xexit.c xmalloc.c xmemdup xstrerror.c xstrdup.c \
 		physmem.c lbasename.c lrealpath.c \
