@@ -1,5 +1,5 @@
 /*	$NetBSD: types.h,v 1.12 1995/12/24 01:08:03 mycroft Exp $	*/
-/*	$OpenBSD: types.h,v 1.9 2001/08/11 01:58:34 art Exp $	*/
+/*	$OpenBSD: types.h,v 1.10 2002/07/23 14:19:46 art Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -79,5 +79,6 @@ typedef	unsigned long long	 uint64_t;
 typedef int32_t			register_t;
 
 #define __HAVE_NWSCONS
+#define __HAVE_SPLASSERT
 
 #endif	/* _MACHTYPES_H_ */

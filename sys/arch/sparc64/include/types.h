@@ -1,4 +1,4 @@
-/*	$OpenBSD: types.h,v 1.3 2002/04/19 11:04:24 espie Exp $	*/
+/*	$OpenBSD: types.h,v 1.4 2002/07/23 14:19:46 art Exp $	*/
 /*	$NetBSD: types.h,v 1.17 2001/05/12 22:42:07 kleink Exp $ */
 
 /*
@@ -72,5 +72,6 @@ typedef paddr_t			psize_t;
 #define	__HAVE_NWSCONS
 #define	__HAVE_DEVICE_REGISTER
 #define	__HAVE_GENERIC_SOFT_INTERRUPTS
+#define __HAVE_SPLASSERT
 
 #endif	/* _MACHTYPES_H_ */
