@@ -1,4 +1,4 @@
-/*	$OpenBSD: more.c,v 1.6 2003/05/28 00:04:20 millert Exp $	*/
+/*	$OpenBSD: more.c,v 1.7 2003/05/28 01:09:11 millert Exp $	*/
 
 /*-
  * Copyright (c) 1980 The Regents of the University of California.
@@ -43,7 +43,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)more.c	5.28 (Berkeley) 3/1/93";
 #else
-static const char rcsid[] = "$OpenBSD: more.c,v 1.6 2003/05/28 00:04:20 millert Exp $";
+static const char rcsid[] = "$OpenBSD: more.c,v 1.7 2003/05/28 01:09:11 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -85,12 +85,20 @@ static const char rcsid[] = "$OpenBSD: more.c,v 1.6 2003/05/28 00:04:20 millert 
 #define Getc(f)		(++file_pos, getc(f))
 #define Ungetc(c,f)	(--file_pos, ungetc(c,f))
 
+#define	cleareol()	(tputs(eraseln, 1, putch))
+#define	clreos()	(tputs(EodClr, 1, putch))
+#define	home()		(tputs(Home, 1, putch))
+
 #define TBUFSIZ		1024
 #define LINSIZ		256
 #define ctrl(letter)	(letter & 077)
 #define RUBOUT		'\177'
 #define ESC		'\033'
 #define QUIT		'\034'
+
+#define	DUM_PROMPT	"[Press space to continue, 'q' to quit.]"
+#define	DUM_ERROR	"[Press 'h' for instructions.]"
+#define	QUIT_IT		"[Use q or Q to quit]"
 
 struct termios	otty, osavetty;
 long		file_pos, file_size;
@@ -150,14 +158,9 @@ int   expand(char *, size_t, char *);
 int   getline(FILE *, int *);
 int   magic(FILE *, char *);
 int   number(char *);
-int   pr(char *);
-int   printd(int);
-int   prtf(char *, ...);
 int   readch(void);
 void  argscan(char *);
 void  chgwinsz(int);
-void  cleareol(void);
-void  clreos(void);
 void  copy_file(FILE *);
 void  do_shell(char *);
 void  doclear(void);
@@ -167,7 +170,6 @@ void  error(char *);
 void  errwrite(char *);
 void  errwrite1(char *);
 void  execute(char *filename, char *cmd, char *, char *, char *);
-void  home(void);
 void  initterm(void);
 void  kill_line(void);
 void  onquit(int);
@@ -182,7 +184,6 @@ void  set_tty(void);
 void  show(int);
 void  skipf(int);
 void  skiplns(int, FILE *);
-void  Sprintf(int);
 void  ttyin(char *, int, char);
 FILE *checkf(char *, int *);
 __dead void usage(void);
@@ -326,16 +327,16 @@ main(int argc, char **argv)
 						erasep(0);
 					if (clreol)
 						cleareol();
-					pr("::::::::::::::");
+					fputs("::::::::::::::", stdout);
 					if (promptlen > 14)
 						erasep(14);
-					prtf("\n");
+					putchar('\n');
 					if (clreol)
 						cleareol();
-					prtf("%s\n", fnames[fnum]);
+					printf("%s\n", fnames[fnum]);
 					if (clreol)
 						cleareol();
-					prtf("::::::::::::::\n");
+					fputs("::::::::::::::\n", stdout);
 					if (left > Lpp - 4)
 						left = Lpp - 4;
 				}
@@ -431,7 +432,7 @@ checkf(char *fs, int *clearfirst)
 		return (NULL);
 	}
 	if ((stbuf.st_mode & S_IFMT) == S_IFDIR) {
-		prtf("\n*** %s: directory ***\n\n", fs);
+		printf("\n*** %s: directory ***\n\n", fs);
 		return (NULL);
 	}
 	if ((f = Fopen(fs, "r")) == NULL) {
@@ -472,7 +473,8 @@ magic(FILE *f, char *fs)
 		case 0411:
 		case 0x457f:
 		case 0177545:
-			prtf("\n******** %s: Not a text file ********\n\n", fs);
+			printf("\n******** %s: Not a text file ********\n\n",
+			    fs);
 			(void)fclose(f);
 			return (1);
 		}
@@ -482,7 +484,7 @@ magic(FILE *f, char *fs)
 }
 
 /*
- * A real function (not a macro), for the tputs routine in termlib
+ * A real function (not a macro), for the tputs() routine in termlib
  */
 void
 putch(int ch)
@@ -590,8 +592,8 @@ onquit(int dummy)
 		} else
 			Pause++;
 	} else if (!dum_opt && notell) {
-		write(STDERR_FILENO, "[Use q or Q to quit]", 20);
-		promptlen += 20;
+		write(STDERR_FILENO, QUIT_IT, sizeof(QUIT_IT) - 1);
+		promptlen += sizeof(QUIT_IT) - 1;
 		notell = 0;
 	}
 	signal(SIGQUIT, onquit);
@@ -603,21 +605,21 @@ onquit(int dummy)
 void
 chgwinsz(int dummy)
 {
-    struct winsize win;
+	struct winsize win;
 
-    (void)signal(SIGWINCH, SIG_IGN);
-    if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &win) != -1) {
-	    if (win.ws_row != 0) {
-		    Lpp = win.ws_row;
-		    nscroll = Lpp/2 - 1;
-		    if (nscroll <= 0)
-			    nscroll = 1;
-		    dlines = Lpp - (noscroll ? 1 : 2);
-	    }
-	    if (win.ws_col != 0)
-		    Mcol = win.ws_col;
-    }
-    (void)signal(SIGWINCH, chgwinsz);
+	(void)signal(SIGWINCH, SIG_IGN);
+	if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &win) != -1) {
+		if (win.ws_row != 0) {
+			Lpp = win.ws_row;
+			nscroll = Lpp/2 - 1;
+			if (nscroll <= 0)
+				nscroll = 1;
+			dlines = Lpp - (noscroll ? 1 : 2);
+		}
+		if (win.ws_col != 0)
+			Mcol = win.ws_col;
+	}
+	(void)signal(SIGWINCH, chgwinsz);
 }
 
 /*
@@ -646,87 +648,6 @@ copy_file(FILE *f)
 
 	while ((c = getc(f)) != EOF)
 		putchar(c);
-}
-
-/*
- * Simplified printf function...
- */
-int
-prtf (char *fmt, ...)
-{
-	va_list ap;
-	char ch;
-	int ccount;
-
-	ccount = 0;
-	va_start(ap, fmt);
-	while (*fmt) {
-		while ((ch = *fmt++) != '%') {
-			if (ch == '\0')
-				return (ccount);
-			ccount++;
-			putchar(ch);
-		}
-		switch (*fmt++) {
-		case 'd':
-			ccount += printd(va_arg(ap, int));
-			break;
-		case 's':
-			ccount += pr(va_arg(ap, char *));
-			break;
-		case '%':
-			ccount++;
-			putchar('%');
-			break;
-		case '0':
-			return (ccount);
-		default:
-			break;
-		}
-	}
-	va_end(ap);
-	return (ccount);
-
-}
-
-/*
- * Print an integer as a string of decimal digits,
- * returning the length of the print representation.
- */
-int
-printd(int n)
-{
-	int a, nchars;
-
-	if ((a = n / 10) != 0)
-		nchars = 1 + printd(a);
-	else
-		nchars = 1;
-	putchar(n % 10 + '0');
-	return (nchars);
-}
-
-static char *sptr;	/* shared between scanstr() and Sprintf() */
-
-/*
- * Put the print representation of an integer into a string.
- */
-void
-scanstr(int n, char *str)
-{
-	sptr = str;
-	Sprintf(n);
-	*sptr = '\0';
-}
-
-void
-Sprintf(int n)
-{
-    int a;
-
-    if ((a = n / 10) != 0)
-	Sprintf(a);
-    *sptr++ = n % 10 + '0';
 }
 
 static char bell = ctrl('G');
@@ -766,15 +687,16 @@ prompt(char *filename)
 		}
 		if (clreol)
 			cleareol();
-		pr("--More--");
+		fputs("--More--", stdout);
 		if (filename != NULL)
-			promptlen += prtf ("(Next file: %s)", filename);
+			promptlen += printf("(Next file: %s)", filename);
 		else if (!no_intty)
-			promptlen += prtf ("(%d%%)",
+			promptlen += printf("(%d%%)",
 			    (int)((file_pos * 100) / file_size));
-		if (dum_opt)
-			promptlen +=
-			    pr("[Press space to continue, 'q' to quit.]");
+		if (dum_opt) {
+			fputs(DUM_PROMPT, stdout);
+			promptlen += sizeof(DUM_PROMPT) - 1;
+		}
 		if (Senter && Sexit)
 			tputs(Sexit, 1, putch);
 		if (clreol)
@@ -899,36 +821,6 @@ kill_line(void)
 }
 
 /*
- * Force clear to end of line
- */
-void
-cleareol(void)
-{
-	tputs(eraseln, 1, putch);
-}
-
-void
-clreos(void)
-{
-	tputs(EodClr, 1, putch);
-}
-
-/*
- *  Print string and return number of characters
- */
-int
-pr(char *s1)
-{
-    char	*s;
-    char	c;
-
-    for (s = s1; (c = *s++) != '\0'; )
-	    putchar(c);
-    return (s - s1 - 1);
-}
-
-
-/*
  * Print a buffer of n characters.
  */
 void
@@ -963,7 +855,7 @@ prbuf(char *s, int n)
 			if (c != ' ' || pstate == 0 || state != 0 || ulglitch == 0)
 				putchar(c);
 			if (state && *chUL) {
-				pr(chBS);
+				fputs(chBS, stdout);
 				tputs(chUL, 1, putch);
 			}
 			pstate = state;
@@ -987,15 +879,6 @@ doclear(void)
 		putchar('\r');
 		promptlen = 0;
 	}
-}
-
-/*
- * Go to home position
- */
-void
-home(void)
-{
-	tputs(Home, 1, putch);
 }
 
 static int lastcmd, lastarg, lastp;
@@ -1064,18 +947,18 @@ command(char *filename, FILE *f)
 
 			putchar('\r');
 			erasep(0);
-			prtf("\n");
+			putchar('\n');
 			if (clreol)
 				cleareol();
-			prtf("...back %d page", nlines);
+			printf("...back %d page", nlines);
 			if (nlines > 1)
-				pr("s\n");
+				fputs("s\n", stdout);
 			else
-				pr("\n");
+				putchar('\n');
 
 			if (clreol)
 				cleareol();
-			pr("\n");
+			putchar('\n');
 
 			initline = Currline - dlines * (nlines + 1);
 			if (! noscroll)
@@ -1114,18 +997,18 @@ command(char *filename, FILE *f)
 				nlines *= dlines;
 			putchar('\r');
 			erasep(0);
-			prtf ("\n");
+			putchar('\n');
 			if (clreol)
 				cleareol();
-			prtf ("...skipping %d line", nlines);
+			printf("...skipping %d line", nlines);
 			if (nlines > 1)
-				pr("s\n");
+				fputs("s\n", stdout);
 			else
-				pr("\n");
+				putchar('\n');
 
 			if (clreol)
 				cleareol();
-			pr("\n");
+			putchar('\n');
 
 			while (nlines > 0) {
 				while ((c = Getc(f)) != '\n') {
@@ -1158,7 +1041,7 @@ command(char *filename, FILE *f)
 		case '\'':
 			if (!no_intty) {
 				kill_line();
-				pr("\n***Back***\n\n");
+				fputs("\n***Back***\n\n", stdout);
 				Fseek(f, context.chrctr);
 				Currline = context.line;
 				ret(dlines);
@@ -1168,7 +1051,7 @@ command(char *filename, FILE *f)
 			}
 		case '=':
 			kill_line();
-			promptlen = printd(Currline);
+			promptlen = printf("%d", Currline);
 			fflush(stdout);
 			break;
 		case 'n':
@@ -1176,7 +1059,7 @@ command(char *filename, FILE *f)
 		case '/':
 			if (nlines == 0) nlines++;
 			kill_line();
-			pr("/");
+			putchar('/');
 			promptlen = 1;
 			fflush(stdout);
 			if (lastp) {
@@ -1216,13 +1099,9 @@ command(char *filename, FILE *f)
 				else
 					p = editor;
 				kill_line();
-				cmdbuf[0] = '+';
-				scanstr(Currline - dlines < 0 ? 0 :
-				    Currline - (dlines + 1) / 2, &cmdbuf[1]);
-				pr("vi ");
-				pr(cmdbuf);
-				putchar(' ');
-				pr(fnames[fnum]);
+				snprintf(cmdbuf, sizeof(cmdbuf), "+%d",
+				    Currline);
+				printf("%s %s %s", p, cmdbuf, fnames[fnum]);
 				execute(filename, editor, p, cmdbuf,
 				    fnames[fnum]);
 				break;
@@ -1232,13 +1111,14 @@ command(char *filename, FILE *f)
 				kill_line();
 				if (Senter && Sexit) {
 					tputs(Senter, 1, putch);
-					promptlen =
-					    pr("[Press 'h' for instructions.]")
-					    + (2 * soglitch);
+					fputs(DUM_ERROR, stdout);
+					promptlen = sizeof(DUM_ERROR) - 1 +
+					    (2 * soglitch);
 					tputs(Sexit, 1, putch);
-				} else
-					promptlen =
-					    pr("[Press 'h' for instructions.]");
+				} else {
+					fputs(DUM_ERROR, stdout);
+					promptlen = sizeof(DUM_ERROR) - 1;
+				}
 				fflush(stdout);
 			} else
 				write(STDERR_FILENO, &bell, 1);
@@ -1273,9 +1153,10 @@ colon(char *filename, int cmd, int nlines)
 	case 'f':
 		kill_line();
 		if (!no_intty)
-			promptlen = prtf("\"%s\" line %d", fnames[fnum], Currline);
+			promptlen =
+			    printf("\"%s\" line %d", fnames[fnum], Currline);
 		else
-			promptlen = prtf("[Not a file] line %d", Currline);
+			promptlen = printf("[Not a file] line %d", Currline);
 		fflush(stdout);
 		return (-1);
 	case 'n':
@@ -1342,16 +1223,16 @@ do_shell(char *filename)
 	char cmdbuf[200];
 
 	kill_line();
-	pr("!");
+	putchar('!');
 	fflush(stdout);
 	promptlen = 1;
 	if (lastp)
-		pr(shell_line);
+		fputs(shell_line, stdout);
 	else {
-		ttyin(cmdbuf, sizeof(cmdbuf)-2, '!');
+		ttyin(cmdbuf, sizeof(cmdbuf) - 2, '!');
 		if (expand(shell_line, sizeof(shell_line), cmdbuf)) {
 			kill_line();
-			promptlen = prtf ("!%s", shell_line);
+			promptlen = printf("!%s", shell_line);
 		}
 	}
 	fflush(stdout);
@@ -1399,10 +1280,10 @@ search(char *buf, FILE *file, int n)
 		if ((rv = regexec(&reg, Line, 0, NULL, 0)) == 0) {
 			if (--n == 0) {
 				if (lncount > 3 || (lncount > 1 && no_intty)) {
-					pr("\n");
+					putchar('\n');
 					if (clreol)
 						cleareol();
-					pr("...skipping\n");
+					fputs("...skipping\n", stdout);
 				}
 				if (!no_intty) {
 					Currline -= (lncount >= 3 ? 3 : lncount);
@@ -1423,7 +1304,7 @@ search(char *buf, FILE *file, int n)
 					    } else
 						    doclear();
 					}
-					pr(Line);
+					fputs(Line, stdout);
 					putchar('\n');
 				}
 				break;
@@ -1438,8 +1319,8 @@ search(char *buf, FILE *file, int n)
 			Currline = saveln;
 			Fseek (file, startline);
 		} else {
-			pr ("\nPattern not found\n");
-			end_it (0);
+			fputs("\nPattern not found\n", stdout);
+			end_it(0);
 		}
 		error("Pattern not found");
 	}
@@ -1484,7 +1365,7 @@ execute(char *filename, char *cmd, char *av0, char *av1, char *av2)
 	} else
 		write(STDERR_FILENO, "can't fork\n", 11);
 	set_tty();
-	pr("------------------------\n");
+	fputs("------------------------\n", stdout);
 	prompt(filename);
 }
 
@@ -1524,17 +1405,14 @@ skipf(int nskip)
 	fnum += nskip;
 	if (fnum < 0)
 		fnum = 0;
-	pr("\n...Skipping ");
-	pr("\n");
+	fputs("\n...Skipping \n", stdout); /* XXX huh? */
 	if (clreol)
 		cleareol();
-	pr("...Skipping ");
-	pr(nskip > 0 ? "to file " : "back to file ");
-	pr(fnames[fnum]);
-	pr("\n");
+	printf("...Skipping %sto file %s\n", nskip > 0 ? "" : "back ",
+	    fnames[fnum]);
 	if (clreol)
 		cleareol();
-	pr ("\n");
+	putchar('\n');
 	--fnum;
 }
 
@@ -1838,10 +1716,10 @@ error(char *mess)
 	promptlen += strlen (mess);
 	if (Senter && Sexit) {
 		tputs(Senter, 1, putch);
-		pr(mess);
+		fputs(mess, stdout);
 		tputs(Sexit, 1, putch);
 	} else
-		pr(mess);
+		fputs(mess, stdout);
 	fflush(stdout);
 	errors++;
 	siglongjmp(restore, 1);
