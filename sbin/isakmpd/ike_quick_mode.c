@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike_quick_mode.c,v 1.49 2001/06/07 04:45:42 angelos Exp $	*/
+/*	$OpenBSD: ike_quick_mode.c,v 1.50 2001/06/27 00:16:30 ho Exp $	*/
 /*	$EOM: ike_quick_mode.c,v 1.139 2001/01/26 10:43:17 niklas Exp $	*/
 
 /*
@@ -890,20 +890,31 @@ initiator_send_HASH_SA_NONCE (struct message *msg)
       /* If we're here, then we are the initiator, so use initiator
 	address for local ID */
       msg->transport->vtbl->get_src (msg->transport, &src, &srclen);
-
-      sz = ISAKMP_ID_SZ 
-	+ sizeof (((struct sockaddr_in *)src)->sin_addr.s_addr);
+      sz = ISAKMP_ID_SZ + sockaddr_len (src);
 
       id = calloc (sz, sizeof (char));
       if (!id)
 	{
 	  log_error ("initiator_send_HASH_SA_NONCE: malloc(%d) failed", sz);
 	  return -1;
-	}  
-      SET_ISAKMP_ID_TYPE (id, IPSEC_ID_IPV4_ADDR);
+	}
 
-      encode_32 (id + ISAKMP_ID_DATA_OFF,
-	      ntohl (((struct sockaddr_in *)src)->sin_addr.s_addr));
+      switch (src->sa_family)
+	{
+	case AF_INET6:
+	  SET_ISAKMP_ID_TYPE (id, IPSEC_ID_IPV6_ADDR);
+	  break;
+	case AF_INET:
+	  SET_ISAKMP_ID_TYPE (id, IPSEC_ID_IPV4_ADDR);
+	  break;
+	default:
+	  log_error ("initiator_send_HASH_SA_NONCE: unknown sa_family %d",
+		     src->sa_family);
+	  free (id);
+	  return -1;
+	}
+      memcpy (id + ISAKMP_ID_DATA_OFF, sockaddr_data (src), 
+	      sockaddr_len (src));
 
       LOG_DBG_BUF ((LOG_NEGOTIATION, 90, "initiator_send_HASH_SA_NONCE: IDic",
 		    id, sz));
@@ -925,7 +936,6 @@ initiator_send_HASH_SA_NONCE (struct message *msg)
 	  return -1;
 	}
     }
-
 
   if (ipsec_fill_in_hash (msg))
     goto bail_out;
@@ -1112,37 +1122,54 @@ initiator_recv_HASH_SA_NONCE (struct message *msg)
 
       ie->flags = IPSEC_EXCH_FLAG_NO_ID;
 
-      /* Get responder address.  */
+      /* Get initiator and responder addresses.  */
+      msg->transport->vtbl->get_src (msg->transport, &src, &srclen);
       msg->transport->vtbl->get_dst (msg->transport, &dst, &dstlen);
-      ie->id_cr_sz = ISAKMP_ID_DATA_OFF
-	+ sizeof ((struct sockaddr_in *)dst)->sin_addr.s_addr;
+      ie->id_ci_sz = ISAKMP_ID_DATA_OFF + sockaddr_len (src);
+      ie->id_cr_sz = ISAKMP_ID_DATA_OFF + sockaddr_len (dst);
+      ie->id_ci = calloc (ie->id_ci_sz, sizeof (char));
       ie->id_cr = calloc (ie->id_cr_sz, sizeof (char));
-      if (!ie->id_cr)
+
+      if (!ie->id_ci || !ie->id_cr)
 	{
 	  log_error ("initiator_recv_HASH_SA_NONCE: malloc (%d) failed",
 		     ie->id_cr_sz);
+	  if (ie->id_ci)
+	    free (ie->id_ci);
+	  if (ie->id_cr)
+	    free (ie->id_cr);
 	  return -1;
 	}
-      SET_ISAKMP_ID_TYPE (ie->id_cr, IPSEC_ID_IPV4_ADDR);
-      memcpy (ie->id_cr + ISAKMP_ID_DATA_OFF,
-	      &((struct sockaddr_in *)dst)->sin_addr.s_addr,
-	      sizeof ((struct sockaddr_in *)dst)->sin_addr.s_addr);
 
-      /* Get initiator address.  */
-      msg->transport->vtbl->get_src (msg->transport, &src, &srclen);
-      ie->id_ci_sz = ISAKMP_ID_DATA_OFF
-	+ sizeof ((struct sockaddr_in *)dst)->sin_addr.s_addr;
-      ie->id_ci = calloc (ie->id_ci_sz, sizeof (char));
-      if (!ie->id_ci)
+      if (src->sa_family != dst->sa_family)
 	{
-	  log_error ("initiator_recv_HASH_SA_NONCE: malloc (%d) failed",
-		     ie->id_ci_sz);
+	  log_error ("initiator_recv_HASH_SA_NONCE: sa_family mismatch");
+	  free (ie->id_ci);
+	  free (ie->id_cr);
 	  return -1;
 	}
-      SET_ISAKMP_ID_TYPE (ie->id_ci, IPSEC_ID_IPV4_ADDR);
-      memcpy (ie->id_ci + ISAKMP_ID_DATA_OFF,
-	      &((struct sockaddr_in *)src)->sin_addr.s_addr,
-	      sizeof ((struct sockaddr_in *)src)->sin_addr.s_addr);
+
+      switch (src->sa_family)
+	{
+	case AF_INET:
+	  SET_ISAKMP_ID_TYPE (ie->id_ci, IPSEC_ID_IPV4_ADDR);
+	  SET_ISAKMP_ID_TYPE (ie->id_cr, IPSEC_ID_IPV4_ADDR);
+	  break;
+	case AF_INET6:
+	  SET_ISAKMP_ID_TYPE (ie->id_ci, IPSEC_ID_IPV6_ADDR);
+	  SET_ISAKMP_ID_TYPE (ie->id_cr, IPSEC_ID_IPV6_ADDR);
+	  break;
+	default:
+	  log_error ("initiator_recv_HASH_SA_NONCE: unknown sa_family %d",
+		     src->sa_family);
+	  free (ie->id_ci);
+	  free (ie->id_cr);
+	  return -1;
+	}
+      memcpy (ie->id_ci + ISAKMP_ID_DATA_OFF, sockaddr_data (src),
+	      sockaddr_len (src));
+      memcpy (ie->id_cr + ISAKMP_ID_DATA_OFF, sockaddr_data (dst), 
+	      sockaddr_len (dst));
     }
 
   /* Build the protection suite in our SA.  */
@@ -1458,7 +1485,7 @@ responder_recv_HASH_SA_NONCE (struct message *msg)
 	{
 	  /* XXX Is this a good notify type?  */
 	  message_drop (msg, ISAKMP_NOTIFY_PAYLOAD_MALFORMED, 0, 1, 0);
-	  return -1;
+	  goto cleanup;
 	}
 
       ie->id_ci_sz = GET_ISAKMP_GEN_LENGTH (idp->p);
@@ -1508,37 +1535,46 @@ responder_recv_HASH_SA_NONCE (struct message *msg)
 
       ie->flags = IPSEC_EXCH_FLAG_NO_ID;
 
-      /* Get initiator address.  */
+      /* Get initiator and responder addresses.  */
+      msg->transport->vtbl->get_src (msg->transport, &src, &srclen);
       msg->transport->vtbl->get_dst (msg->transport, &dst, &dstlen);
-      ie->id_ci_sz = ISAKMP_ID_DATA_OFF
-	+ sizeof ((struct sockaddr_in *)dst)->sin_addr.s_addr;
+      ie->id_ci_sz = ISAKMP_ID_DATA_OFF + sockaddr_len (dst);
+      ie->id_cr_sz = ISAKMP_ID_DATA_OFF + sockaddr_len (dst);
       ie->id_ci = calloc (ie->id_ci_sz, sizeof (char));
-      if (!ie->id_ci)
+      ie->id_cr = calloc (ie->id_cr_sz, sizeof (char));
+
+      if (!ie->id_ci || !ie->id_cr)
 	{
 	  log_error ("responder_recv_HASH_SA_NONCE: malloc (%d) failed",
 		     ie->id_ci_sz);
-	  goto cleanup;
+	  goto cleanup; 
 	}
-      SET_ISAKMP_ID_TYPE (ie->id_ci, IPSEC_ID_IPV4_ADDR);
-      memcpy (ie->id_ci + ISAKMP_ID_DATA_OFF,
-	      &((struct sockaddr_in *)dst)->sin_addr.s_addr,
-	      sizeof ((struct sockaddr_in *)dst)->sin_addr.s_addr);
 
-      /* Get responder address.  */
-      msg->transport->vtbl->get_src (msg->transport, &src, &srclen);
-      ie->id_cr_sz = ISAKMP_ID_DATA_OFF
-	+ sizeof ((struct sockaddr_in *)dst)->sin_addr.s_addr;
-      ie->id_cr = calloc (ie->id_cr_sz, sizeof (char));
-      if (!ie->id_cr)
+      if (src->sa_family != dst->sa_family)
 	{
-	  log_error ("responder_recv_HASH_SA_NONCE: malloc (%d) failed",
-		     ie->id_cr_sz);
+	  log_error ("initiator_recv_HASH_SA_NONCE: sa_family mismatch");
 	  goto cleanup;
 	}
-      SET_ISAKMP_ID_TYPE (ie->id_cr, IPSEC_ID_IPV4_ADDR);
-      memcpy (ie->id_cr + ISAKMP_ID_DATA_OFF,
-	      &((struct sockaddr_in *)src)->sin_addr.s_addr,
-	      sizeof ((struct sockaddr_in *)src)->sin_addr.s_addr);
+
+      switch (src->sa_family)
+	{
+	case AF_INET:
+	  SET_ISAKMP_ID_TYPE (ie->id_ci, IPSEC_ID_IPV4_ADDR);
+	  SET_ISAKMP_ID_TYPE (ie->id_cr, IPSEC_ID_IPV4_ADDR);
+	  break;
+	case AF_INET6:
+	  SET_ISAKMP_ID_TYPE (ie->id_ci, IPSEC_ID_IPV6_ADDR);
+	  SET_ISAKMP_ID_TYPE (ie->id_cr, IPSEC_ID_IPV6_ADDR);
+	  break;
+	default:
+	  log_error ("initiator_recv_HASH_SA_NONCE: unknown sa_family %d",
+		     src->sa_family);
+	  goto cleanup;
+	}
+      memcpy (ie->id_cr + ISAKMP_ID_DATA_OFF, sockaddr_data (src),
+	      sockaddr_len (src));
+      memcpy (ie->id_ci + ISAKMP_ID_DATA_OFF, sockaddr_data (dst), 
+	      sockaddr_len (dst));
     }
 
 #ifdef USE_POLICY
@@ -1671,6 +1707,10 @@ cleanup:
       proto_free (proto);
   if (my_hash)
     free (my_hash);
+  if (ie->id_ci)
+    free (ie->id_ci);
+  if (ie->id_cr)
+    free (ie->id_cr);
   return -1;
 }
 
