@@ -798,7 +798,7 @@ inetname(in)
 	struct in_addr in;
 {
 	register char *cp;
-	static char line[50];
+	static char line[MAXHOSTNAMELEN];
 	struct hostent *hp;
 	static char domain[MAXHOSTNAMELEN + 1];
 	static int first = 1;
