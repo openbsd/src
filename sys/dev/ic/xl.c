@@ -1,4 +1,4 @@
-/*	$OpenBSD: xl.c,v 1.52 2004/05/30 23:49:39 brad Exp $	*/
+/*	$OpenBSD: xl.c,v 1.53 2004/06/01 20:59:25 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -849,7 +849,7 @@ xl_reset(sc)
 	}
 
 	if (i == XL_TIMEOUT)
-		printf("xl%d: reset didn't complete\n", sc->sc_dev.dv_xname);
+		printf("%s: reset didn't complete\n", sc->sc_dev.dv_xname);
 
 	/* Note: the RX reset takes an absurd amount of time
 	 * on newer versions of the Tornado chips such as those
