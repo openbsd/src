@@ -1,4 +1,4 @@
-/*	$OpenBSD: intercept-translate.c,v 1.5 2002/07/13 08:53:02 provos Exp $	*/
+/*	$OpenBSD: intercept-translate.c,v 1.6 2002/07/14 22:34:55 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -144,6 +144,9 @@ ic_get_string(struct intercept_translate *trans, int fd, pid_t pid, void *addr)
 {
 	char *name;
 	int len;
+
+	if (addr == NULL)
+		return (-1);
 
 	name = intercept_get_string(fd, pid, addr);
 	if (name == NULL)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: register.c,v 1.3 2002/07/13 08:54:10 provos Exp $	*/
+/*	$OpenBSD: register.c,v 1.4 2002/07/14 22:34:55 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -75,6 +75,7 @@ systrace_initcb(void)
 	    &ic_translate_connect);
 	X(intercept_register_sccb("native", "execve", trans_cb, NULL));
 	intercept_register_transfn("native", "execve", 0);
+	intercept_register_translation("native", "execve", 1, &argv);
 	X(intercept_register_sccb("native", "stat", trans_cb, NULL));
 	tl = intercept_register_transfn("native", "stat", 0);
 	alias = systrace_new_alias("native", "stat", "native", "fsread");

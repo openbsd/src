@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace-translate.c,v 1.4 2002/07/13 08:54:10 provos Exp $	*/
+/*	$OpenBSD: systrace-translate.c,v 1.5 2002/07/14 22:34:55 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -32,6 +32,7 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/tree.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -170,6 +171,60 @@ print_uname(char *buf, size_t buflen, struct intercept_translate *tl)
 
 	return (0);
 }
+
+int
+get_argv(struct intercept_translate *trans, int fd, pid_t pid, void *addr)
+{
+	char *arg;
+	char buf[_POSIX2_LINE_MAX], *p;
+	int i, off = 0, len;
+	extern struct intercept_system intercept;
+
+	buf[0] = '\0';
+	while (1) {
+		if (intercept.io(fd, pid, INTERCEPT_READ, addr + off,
+			(void *)&arg, sizeof(char *)) == -1) {
+			warn("%s: ioctl", __func__);
+			return (NULL);
+		}
+		if (arg == NULL)
+			break;
+
+		p = intercept_get_string(fd, pid, arg);
+		if (p == NULL)
+			return (-1);
+
+		if (i > 0)
+			strlcat(buf, " ", sizeof(buf));
+		strlcat(buf, p, sizeof(buf));
+
+		off += sizeof(char *);
+	}
+	
+	len = strlen(buf) + 1;
+	trans->trans_data = malloc(len);
+	if (trans->trans_data == NULL)
+		return (-1);
+
+	/* XXX - No argument replacement */
+	trans->trans_size = 0;
+	memcpy(trans->trans_data, buf, len);
+
+	return (0);
+}
+
+int
+print_argv(char *buf, size_t buflen, struct intercept_translate *tl)
+{
+	snprintf(buf, buflen, "%s", (char *)tl->trans_data);
+
+	return (0);
+}
+
+struct intercept_translate argv = {
+	"argv",
+	get_argv, print_argv,
+};
 
 struct intercept_translate oflags = {
 	"oflags",
