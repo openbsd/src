@@ -1,5 +1,5 @@
-/*	$OpenBSD: conf.c,v 1.15 2000/05/03 13:47:15 niklas Exp $	*/
-/*	$EOM: conf.c,v 1.28 2000/05/03 13:24:45 niklas Exp $	*/
+/*	$OpenBSD: conf.c,v 1.16 2000/06/08 20:50:29 niklas Exp $	*/
+/*	$EOM: conf.c,v 1.31 2000/05/18 05:10:18 angelos Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -181,7 +181,7 @@ conf_set_now (char *section, char *tag, char *value, int override,
     conf_remove_now (section, tag);
   else if (conf_get_str (section, tag))
     {
-      if (is_default == 0)
+      if (!is_default)
 	log_print ("conf_set: duplicate tag [%s]:%s, ignoring...\n", section,
 		   tag);
       return 1;
@@ -337,7 +337,7 @@ void
 conf_load_defaults (int tr)
 {
   int enc, auth, hash, proto, mode, pfs;
-  char sect[256];
+  char sect[256], *dflt;
 
   char *mm_auth[]   = { "PRE_SHARED", "DSS", "RSA_SIG", NULL };
   char *mm_hash[]   = { "MD5", "SHA", NULL };
@@ -370,6 +370,11 @@ conf_load_defaults (int tr)
   conf_set (tr, "X509-certificates", "Cert-directory", CONF_DFLT_X509_CERT_DIR,
 	    0, 1);
   conf_set (tr, "X509-certificates", "Private-key", CONF_DFLT_X509_PRIVATE_KEY,
+	    0, 1);
+#endif
+
+#ifdef USE_KEYNOTE
+  conf_set (tr, "KeyNote", "Credential-directory", CONF_DFLT_KEYNOTE_CRED_DIR,
 	    0, 1);
 #endif
 
@@ -459,16 +464,18 @@ conf_load_defaults (int tr)
 			  1);
 	      }
 
-  /* Lifetimes */
+  /* Lifetimes. XXX p1/p2 vs main/quick mode may be unclear.  */
+  dflt = conf_get_str ("General", "Default-phase-1-lifetime");
   conf_set (tr, CONF_DFLT_TAG_LIFE_MAIN_MODE, "LIFE_TYPE", 
 	    CONF_DFLT_TYPE_LIFE_MAIN_MODE, 0, 1);
   conf_set (tr, CONF_DFLT_TAG_LIFE_MAIN_MODE, "LIFE_DURATION", 
-	    CONF_DFLT_VAL_LIFE_MAIN_MODE, 0, 1);
+	    (dflt ? dflt : CONF_DFLT_VAL_LIFE_MAIN_MODE), 0, 1);
 
+  dflt = conf_get_str ("General", "Default-phase-2-lifetime");
   conf_set (tr, CONF_DFLT_TAG_LIFE_QUICK_MODE, "LIFE_TYPE", 
 	    CONF_DFLT_TYPE_LIFE_QUICK_MODE, 0, 1);
   conf_set (tr, CONF_DFLT_TAG_LIFE_QUICK_MODE, "LIFE_DURATION", 
-	    CONF_DFLT_VAL_LIFE_QUICK_MODE, 0, 1);
+	    (dflt ? dflt : CONF_DFLT_VAL_LIFE_QUICK_MODE), 0, 1);
 
   return;
 }
