@@ -1,4 +1,4 @@
-#	$OpenBSD: pnpdevs,v 1.18 1998/09/30 09:06:40 fgsch Exp $
+#	$OpenBSD: pnpdevs,v 1.19 1998/10/09 02:37:36 deraadt Exp $
 
 #
 # NOTE: All `com' devices also need pccom identifiers.
@@ -375,3 +375,4 @@ sb	CTL0044	#SB AWE64 Gold
 sb	CTL0045	#SB AWE64 Value
 ym	YMH0021 #
 sb	ESS1868	#
+ed	SMC8416 #SMC EtherEZ
