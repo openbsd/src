@@ -1,4 +1,4 @@
-/*	$OpenBSD: newsyslog.c,v 1.54 2002/09/19 15:27:31 millert Exp $	*/
+/*	$OpenBSD: newsyslog.c,v 1.55 2002/09/19 20:58:50 millert Exp $	*/
 
 /*
  * Copyright (c) 1999, 2002 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -86,7 +86,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: newsyslog.c,v 1.54 2002/09/19 15:27:31 millert Exp $";
+static const char rcsid[] = "$OpenBSD: newsyslog.c,v 1.55 2002/09/19 20:58:50 millert Exp $";
 #endif /* not lint */
 
 #ifndef CONF
@@ -248,8 +248,10 @@ main(int argc, char **argv)
 			struct pidinfo *pltmp;
 
 			for (pltmp = pidlist; pltmp < pl; pltmp++) {
-				if ((strcmp(pltmp->file, q->pidfile) == 0 &&
-				    pltmp->signal == q->signal) || (q->runcmd &&
+				if ((q->pidfile &&
+				    strcmp(pltmp->file, q->pidfile) == 0 &&
+				    pltmp->signal == q->signal) ||
+				    (q->runcmd &&
 				    strcmp(q->runcmd, pltmp->file) == 0))
 					break;
 			}
@@ -345,7 +347,7 @@ void
 run_command(char *cmd)
 {
 	if (noaction)
-		(void)printf("\trun %s\n", cmd);
+		(void)printf("run %s\n", cmd);
 	else
 		system(cmd);
 }
@@ -619,6 +621,8 @@ parse_file(int *nentries)
 				working->runcmd = strdup(++q);
 				if (working->runcmd == NULL)
 					err(1, "strdup");
+				working->pidfile = NULL;
+				working->signal = -1;
 			} else if (strncmp(q, "SIG", 3) == 0) {
 				int i;
 
