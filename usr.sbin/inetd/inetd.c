@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.64 2000/08/01 18:52:50 itojun Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.65 2000/08/01 19:02:05 itojun Exp $	*/
 /*	$NetBSD: inetd.c,v 1.11 1996/02/22 11:14:41 mycroft Exp $	*/
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$OpenBSD: inetd.c,v 1.64 2000/08/01 18:52:50 itojun Exp $";
+static char rcsid[] = "$OpenBSD: inetd.c,v 1.65 2000/08/01 19:02:05 itojun Exp $";
 #endif /* not lint */
 
 /*
@@ -165,6 +165,7 @@ static char rcsid[] = "$OpenBSD: inetd.c,v 1.64 2000/08/01 18:52:50 itojun Exp $
 #include <string.h>
 #include <rpc/rpc.h>
 #include <rpc/pmap_clnt.h>
+#include <rpcsvc/nfs_prot.h>
 #include "pathnames.h"
 
 #define	TOOMANY		256		/* don't start more than TOOMANY */
@@ -612,18 +613,53 @@ int
 dg_badinput(sa)
 	struct sockaddr *sa;
 {
-	struct sockaddr_in *sin;
+	struct in_addr in;
+#ifdef INET6
+	struct in6_addr *in6;
+#endif
+	u_int16_t port;
+	int i, bad;
 
-	if (sa->sa_family != AF_INET)
-		return (0);
+	bad = 0;
 
-	sin = (struct sockaddr_in *)sa;
-	if (ntohs(sin->sin_port) < IPPORT_RESERVED)
-		return (1);
-	if (sin->sin_addr.s_addr == htonl(INADDR_BROADCAST))
-		return (1);
-	/* XXX compare against broadcast addresses in SIOCGIFCONF list? */
+	switch (sa->sa_family) {
+	case AF_INET:
+		in.s_addr = ntohl(((struct sockaddr_in *)sa)->sin_addr.s_addr);
+		port = ntohs(((struct sockaddr_in *)sa)->sin_port);
+	v4chk:
+		if (IN_MULTICAST(in.s_addr))
+			goto bad;
+		switch ((in.s_addr & 0xff000000) >> 24) {
+		case 0: case 127: case 255:
+			goto bad;
+		}
+		/* XXX check for subnet broadcast using getifaddrs(3) */
+		break;
+#ifdef INET6
+	case AF_INET6:
+		in6 = &((struct sockaddr_in6 *)sa)->sin6_addr;
+		port = ntohs(((struct sockaddr_in6 *)sa)->sin6_port);
+		if (IN6_IS_ADDR_MULTICAST(in6) || IN6_IS_ADDR_UNSPECIFIED(in6))
+			goto bad;
+		if (IN6_IS_ADDR_V4MAPPED(in6) || IN6_IS_ADDR_V4COMPAT(in6)) {
+			memcpy(&in, &in6->s6_addr[12], sizeof(in));
+			in.s_addr = ntohl(in.s_addr);
+			goto v4chk;
+		}
+		break;
+#endif
+	default:
+		/* XXX unsupported af, is it safe to assume it to be safe? */
+		return 0;
+	}
+
+	if (port < IPPORT_RESERVED || port == NFS_PORT)
+		goto bad;
+
 	return (0);
+
+bad:
+	return (1);
 }
 
 void
