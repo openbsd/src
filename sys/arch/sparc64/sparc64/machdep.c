@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.31 2002/01/23 17:51:52 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.32 2002/02/01 19:38:23 jason Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -535,9 +535,9 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 				/*
 				 * We can leave it NULL && let userland handle
 				 * the failure or set it to the default name,
-				 * `netbsd' 
+				 * `bsd' 
 				 */
-				cp = "netbsd";
+				cp = "bsd";
 		}
 		if (cp == NULL || cp[0] == '\0')
 			return (ENOENT);
