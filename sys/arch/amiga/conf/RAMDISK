@@ -1,11 +1,13 @@
-#	$OpenBSD: RAMDISK,v 1.13 2002/01/23 19:16:09 fgsch Exp $
+#	$OpenBSD: RAMDISK,v 1.14 2002/03/14 00:47:56 miod Exp $
 
 #
 # A ramdisk kernel
 #
 
 include "arch/amiga/conf/std.amiga"
+
 include "conf/GENERIC"
+rmoption	PTRACE
 
 maxusers	4
 
