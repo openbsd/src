@@ -1,4 +1,4 @@
-.\"	$OpenBSD: setproctitle.3,v 1.12 2000/12/24 00:30:51 aaron Exp $
+.\"	$OpenBSD: setproctitle.3,v 1.13 2001/01/26 06:38:23 aaron Exp $
 .\"
 .\" Copyright (c) 1994, 1995 Christopher G. Demetriou
 .\" All rights reserved.
@@ -44,7 +44,7 @@ The
 .Fn setproctitle
 function sets the invoking process's title.
 The process title is set to the last component of the program
-name, followed by a colon and the formatted string specified
+name, followed by a colon, a single space, and the formatted string specified
 by
 .Fa fmt .
 If
