@@ -1,4 +1,4 @@
-#	$OpenBSD: services,v 1.7 1996/12/06 13:25:52 deraadt Exp $
+#	$OpenBSD: services,v 1.8 1997/02/05 03:25:33 kstailey Exp $
 #
 # Network services, Internet style
 #
@@ -186,3 +186,4 @@ supfilesrv	871/tcp			# SUP server
 supfiledbg	1127/tcp		# SUP debugging
 radius		1645/udp		# radius authentication
 radacct		1646/udp		# radius accounting
+icb		7326/tcp		# Internet Citizen's Band
