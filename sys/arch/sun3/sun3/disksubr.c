@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.9 1997/02/04 01:31:33 kstailey Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.10 1997/04/07 12:01:19 deraadt Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.14 1996/09/26 18:10:21 gwr Exp $	*/
 
 /*
@@ -135,6 +135,10 @@ readdisklabel(dev, strat, lp, clp)
 		return(NULL);
 	}
 
+#if defined(CD9660)
+	if (iso_disklabelspoof(dev, strat, lp) == 0)
+		return (NULL);
+#endif
 	bzero(clp->cd_block, sizeof(clp->cd_block));
 	return("no disk label");
 }
@@ -237,38 +241,38 @@ writedisklabel(dev, strat, lp, clp)
 int
 bounds_check_with_label(struct buf *bp, struct disklabel *lp, int wlabel)
 {
+#define blockpersec(count, lp) ((count) * (((lp)->d_secsize) / DEV_BSIZE))
 	struct partition *p = lp->d_partitions + dkpart(bp->b_dev);
-	int maxsz = p->p_size;
-	int sz = (bp->b_bcount + DEV_BSIZE - 1) >> DEV_BSHIFT;
+	int sz = howmany(bp->b_bcount, DEV_BSIZE);
 
 	/* overwriting disk label ? */
 	/* XXX should also protect bootstrap in first 8K */
 	/* XXX PR#2598: labelsect is always sector zero. */
-	if (((bp->b_blkno + p->p_offset) <= LABELSECTOR) &&
-	    ((bp->b_flags & B_READ) == 0) && (wlabel == 0))
-	{
+	if (((bp->b_blkno + blockpersec(p->p_offset, lp)) <= LABELSECTOR) &&
+	    ((bp->b_flags & B_READ) == 0) && (wlabel == 0)) {
 		bp->b_error = EROFS;
 		goto bad;
 	}
 
 	/* beyond partition? */
-	if (bp->b_blkno < 0 || bp->b_blkno + sz > maxsz) {
-		/* if exactly at end of disk, return an EOF */
-		if (bp->b_blkno == maxsz) {
+	if (bp->b_blkno + sz > blockpersec(p->p_size, lp)) {
+		sz = blockpersec(p->p_size, lp) - bp->b_blkno;
+		if (sz == 0) {
+			/* if exactly at end of disk, return an EOF */
 			bp->b_resid = bp->b_bcount;
 			return(0);
 		}
-		/* or truncate if part of it fits */
-		sz = maxsz - bp->b_blkno;
-		if (sz <= 0) {
+		if (sz < 0) {
 			bp->b_error = EINVAL;
 			goto bad;
 		}
+		/* or truncate if part of it fits */
 		bp->b_bcount = sz << DEV_BSHIFT;
 	}
 
 	/* calculate cylinder for disksort to order transfers with */
-	bp->b_cylin = (bp->b_blkno + p->p_offset) / lp->d_secpercyl;
+	bp->b_cylin = (bp->b_blkno + blockpersec(p->p_offset, lp)) /
+	    lp->d_secpercyl;
 	return(1);
 
 bad:
