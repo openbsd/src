@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.10 2004/11/11 22:48:24 deraadt Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.11 2004/11/12 02:55:02 deraadt Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -1720,8 +1720,8 @@ USB_ATTACH(atu)
 	}
 
 	/* Show the world our MAC address */
-	DPRINTF(("%s: address %s\n", USBDEVNAME(sc->atu_dev),
-		ether_sprintf(sc->atu_mac_addr)));
+	printf("%s: address %s\n", USBDEVNAME(sc->atu_dev),
+	    ether_sprintf(sc->atu_mac_addr));
 
 	bcopy(sc->atu_mac_addr,
 	    (char *)&sc->arpcom.ac_enaddr, ETHER_ADDR_LEN);
