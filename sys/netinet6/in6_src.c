@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_src.c,v 1.8 2000/06/21 09:07:24 itojun Exp $	*/
+/*	$OpenBSD: in6_src.c,v 1.9 2001/02/06 00:22:23 mickey Exp $	*/
 /*	$KAME: in6_src.c,v 1.27 2000/06/21 08:07:13 itojun Exp $	*/
 
 /*
@@ -89,10 +89,6 @@
 #include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
 #include <netinet6/nd6.h>
-
-#include "loop.h"
-
-extern struct ifnet loif[NLOOP];
 
 /*
  * Return an IPv6 address, which is the most appropriate for given
@@ -189,7 +185,7 @@ in6_selectsrc(dstsock, opts, mopts, ro, laddr, errorp)
 		struct ifnet *ifp = mopts ? mopts->im6o_multicast_ifp : NULL;
 
 		if (ifp == NULL && IN6_IS_ADDR_MC_NODELOCAL(dst)) {
-			ifp = &loif[0];
+			ifp = lo0ifp;
 		}
 
 		if (ifp) {

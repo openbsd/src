@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.18 2001/02/02 15:55:18 itojun Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.19 2001/02/06 00:22:23 mickey Exp $	*/
 /*	$KAME: ip6_output.c,v 1.152 2001/02/02 15:36:33 jinmei Exp $	*/
 
 /*
@@ -103,8 +103,6 @@ extern int ipsec_esp_trans_default_level;
 extern int ipsec_esp_network_default_level;
 #endif /* IPSEC */
 
-#include "loop.h"
-
 #include <net/net_osdep.h>
 
 #ifdef IPV6FIREWALL
@@ -128,8 +126,6 @@ static int ip6_insertfraghdr __P((struct mbuf *, struct mbuf *, int,
 				  struct ip6_frag **));
 static int ip6_insert_jumboopt __P((struct ip6_exthdrs *, u_int32_t));
 static int ip6_splithdr __P((struct mbuf *, struct ip6_exthdrs *));
-extern struct ifnet *loifp;
-extern struct ifnet loif[NLOOP];
 
 /*
  * IP6 output. The packet in mbuf chain m contains a skeletal IP6
@@ -693,7 +689,7 @@ skip_ipsec2:;
 				goto bad;
 			}
 			else {
-				ifp = &loif[0];
+				ifp = lo0ifp;
 			}
 		}
 
@@ -1936,7 +1932,7 @@ ip6_setmoptions(optname, im6op, m)
 			 *   XXX: is it a good approach?
 			 */
 			if (IN6_IS_ADDR_MC_NODELOCAL(&mreq->ipv6mr_multiaddr)) {
-				ifp = &loif[0];
+				ifp = lo0ifp;
 			}
 			else {
 				ro.ro_rt = NULL;
@@ -2318,7 +2314,7 @@ ip6_setpktoptions(control, opt, priv)
  * Routine called from ip6_output() to loop back a copy of an IP6 multicast
  * packet to the input queue of a specified interface.  Note that this
  * calls the output routine of the loopback "driver", but with an interface
- * pointer that might NOT be &loif -- easier than replicating that code here.
+ * pointer that might NOT be lo0ifp -- easier than replicating that code here.
  */
 void
 ip6_mloopback(ifp, m, dst)

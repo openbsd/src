@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_loop.c,v 1.15 2001/01/19 06:37:36 itojun Exp $	*/
+/*	$OpenBSD: if_loop.c,v 1.16 2001/02/06 00:22:21 mickey Exp $	*/
 /*	$NetBSD: if_loop.c,v 1.15 1996/05/07 02:40:33 thorpej Exp $	*/
 
 /*
@@ -82,7 +82,6 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
  */
 
 #include "bpfilter.h"
-#include "loop.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -146,8 +145,6 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #define	LOMTU	(32768 +  MHLEN + MLEN)
 #endif
   
-struct	ifnet loif[NLOOP];
-
 void
 loopattach(n)
 	int n;
@@ -155,8 +152,12 @@ loopattach(n)
 	register int i;
 	register struct ifnet *ifp;
 
-	for (i = NLOOP; i--; ) {
-		ifp = &loif[i];
+	for (i = n; i--; ) {
+		MALLOC(ifp, struct ifnet *, sizeof(*ifp), M_DEVBUF, M_NOWAIT);
+		if (ifp == NULL)
+			return;
+		if (i == 0)
+			lo0ifp = ifp;
 		sprintf(ifp->if_xname, "lo%d", i);
 		ifp->if_softc = NULL;
 		ifp->if_mtu = LOMTU;

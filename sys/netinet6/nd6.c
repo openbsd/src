@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.20 2001/01/19 06:37:38 itojun Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.21 2001/02/06 00:22:23 mickey Exp $	*/
 /*	$KAME: nd6.c,v 1.75 2000/10/15 15:23:11 itojun Exp $	*/
 
 /*
@@ -68,10 +68,6 @@
 #include <netinet6/nd6.h>
 #include <netinet6/in6_prefix.h>
 #include <netinet/icmp6.h>
-
-#include "loop.h"
-
-extern struct ifnet loif[NLOOP];
 
 #include <net/net_osdep.h>
 
@@ -1162,7 +1158,7 @@ nd6_rtrequest(req, rt, info)
 				SDL(gate)->sdl_alen = ifp->if_addrlen;
 			}
 			if (nd6_useloopback) {
-				rt->rt_ifp = &loif[0];	/*XXX*/
+				rt->rt_ifp = lo0ifp;	/*XXX*/
 				/*
 				 * Make sure rt_ifa be equal to the ifaddr
 				 * corresponding to the address.
@@ -1286,7 +1282,7 @@ nd6_p2p_rtrequest(req, rt, info)
 					  &SIN6(rt_key(rt))->sin6_addr);
 		if (ifa) {
 			if (nd6_useloopback) {
-				rt->rt_ifp = &loif[0];	/*XXX*/
+				rt->rt_ifp = lo0ifp;	/*XXX*/
 			}
 		}
 		break;

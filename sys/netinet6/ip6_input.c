@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.19 2000/08/31 08:39:56 itojun Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.20 2001/02/06 00:22:23 mickey Exp $	*/
 /*	$KAME: ip6_input.c,v 1.121 2000/08/31 06:07:29 itojun Exp $	*/
 
 /*
@@ -108,8 +108,6 @@
 
 #include <netinet6/ip6protosw.h>
 
-/* we need it for NLOOP. */
-#include "loop.h"
 #include "faith.h"
 #include "gif.h"
 #include "bpfilter.h"
@@ -124,7 +122,6 @@ static int ip6qmaxlen = IFQ_MAXLEN;
 struct in6_ifaddr *in6_ifaddr;
 struct ifqueue ip6intrq;
 
-extern struct ifnet loif[NLOOP];
 int ip6_forward_srcrt;			/* XXX */
 int ip6_sourcecheck;			/* XXX */
 int ip6_sourcecheck_interval;		/* XXX */
@@ -184,7 +181,7 @@ ip6_init2(dummy)
 	 * to route local address of p2p link to loopback,
 	 * assign loopback address first.
 	 */
-	in6_ifattach(&loif[0], NULL);
+	in6_ifattach(lo0ifp, NULL);
 #else
 	/* you MUST bring lo0 up manually, in rc script. */
 #endif
@@ -267,7 +264,7 @@ ip6_input(m)
 	} else {
 		if (m->m_next) {
 			if (m->m_flags & M_LOOP) {
-				ip6stat.ip6s_m2m[loif[0].if_index]++;	/*XXX*/
+				ip6stat.ip6s_m2m[lo0ifp->if_index]++;	/*XXX*/
 			} else if (m->m_pkthdr.rcvif->if_index <= 31)
 				ip6stat.ip6s_m2m[m->m_pkthdr.rcvif->if_index]++;
 			else

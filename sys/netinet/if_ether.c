@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.27 2001/02/05 15:22:11 jason Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.28 2001/02/06 00:22:24 mickey Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -87,7 +87,6 @@ void arptimer __P((void *));
 static	struct llinfo_arp *arplookup __P((u_int32_t, int, int));
 static	void in_arpinput __P((struct mbuf *));
 
-extern	struct ifnet loif;
 LIST_HEAD(, llinfo_arp) llinfo_arp;
 struct	ifqueue arpintrq = {0, 0, 0, 50};
 int	arp_inuse, arp_allocated, arp_intimer;
@@ -228,7 +227,7 @@ arp_rtrequest(req, rt, info)
 		    (IA_SIN(rt->rt_ifa))->sin_addr.s_addr) {
 			/*
 			 * This test used to be
-			 *	if (loif.if_flags & IFF_UP)
+			 *	if (lo0ifp->if_flags & IFF_UP)
 			 * It allowed local traffic to be forced through
 			 * the hardware by configuring the loopback down.
 			 * However, it causes problems during network
@@ -242,7 +241,7 @@ arp_rtrequest(req, rt, info)
 			    LLADDR(SDL(gate)),
 			    SDL(gate)->sdl_alen = ETHER_ADDR_LEN);
 			if (useloopback)
-				rt->rt_ifp = &loif;
+				rt->rt_ifp = lo0ifp;
 		}
 		break;
 
