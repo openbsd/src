@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)SYS.h	8.1 (Berkeley) 6/4/93
- *      $Id: SYS.h,v 1.4 1999/02/01 07:56:14 d Exp $ 
+ *      $Id: SYS.h,v 1.5 1999/03/12 04:37:20 rahnds Exp $ 
  */
 
 #include <sys/syscall.h>
@@ -59,7 +59,7 @@
 #endif /* !__STDC__ */
 #define PSEUDO_SUFFIX		cmpwi 0, 0 ; \
 				beqlr+ ; \
-				b cerror 
+				b PIC_PLT(_ASM_LABEL(cerror))
 
 
 #define SUFFIX			PSEUDO_SUFFIX

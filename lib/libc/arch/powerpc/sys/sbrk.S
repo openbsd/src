@@ -20,7 +20,7 @@ PREFIX2(sbrk,break)
 #else
 	mflr	10
 	bl	_GLOBAL_OFFSET_TABLE_@local-4
-	mflr	4
+	mflr	9
 	mtlr	10
 	lwz	6,_ASM_LABEL(curbrk)@got(9)
 #endif

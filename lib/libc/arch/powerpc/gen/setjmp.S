@@ -38,7 +38,7 @@ ENTRY(setjmp)
 	stw 0, JMP_lr(3)
 	mr 31, 3
 	li 3, 0
-	bl sigblock
+	bl PIC_PLT(sigblock)
 	stw 3, JMP_sig(31)
 	/* should sigstack be checked and saved */
 	mr 3, 31
@@ -86,7 +86,7 @@ ENTRY(longjmp)
 	mr 30, 3
 	mr 31, 4
 	lwz 3, JMP_sig(3)
-	bl sigsetmask
+	bl PIC_PLT(sigsetmask)
 	/* should we deal with sigonstack here ?? */
 	mr 4, 31
 	mr 3, 30
