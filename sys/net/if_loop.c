@@ -70,6 +70,11 @@
 #include <netns/ns_if.h>
 #endif
 
+#ifdef IPX
+#include <netipx/ipx.h>
+#include <netipx/ipx_if.h>
+#endif
+
 #ifdef ISO
 #include <netiso/iso.h>
 #include <netiso/iso_var.h>
@@ -166,6 +171,12 @@ looutput(ifp, m, dst, rt)
 	case AF_NS:
 		ifq = &nsintrq;
 		isr = NETISR_NS;
+		break;
+#endif
+#ifdef IPX
+	case AF_IPX:
+		ifq = &ipxintrq;
+		isr = NETISR_IPX;
 		break;
 #endif
 #ifdef ISO
