@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_pipe.c,v 1.19 1999/10/29 14:01:44 art Exp $	*/
+/*	$OpenBSD: sys_pipe.c,v 1.20 1999/10/29 14:08:49 art Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -113,9 +113,9 @@ sys_opipe(p, v, retval)
 	struct pipe *rpipe, *wpipe;
 	int fd, error;
 
-	rpipe = malloc(sizeof(*rpipe), M_TEMP, M_WAITOK);
+	rpipe = malloc(sizeof(*rpipe), M_PIPE, M_WAITOK);
 	pipeinit(rpipe);
-	wpipe = malloc(sizeof(*wpipe), M_TEMP, M_WAITOK);
+	wpipe = malloc(sizeof(*wpipe), M_PIPE, M_WAITOK);
 	pipeinit(wpipe);
 
 	error = falloc(p, &rf, &fd);
@@ -739,7 +739,7 @@ pipeclose(cpipe)
 				cpipe->pipe_buffer.size);
 #endif
 		}
-		free(cpipe, M_TEMP);
+		free(cpipe, M_PIPE);
 	}
 }
 #endif
