@@ -1,4 +1,4 @@
-/*	$OpenBSD: xf_flow.c,v 1.1 1998/05/24 13:29:10 provos Exp $	*/
+/*	$OpenBSD: xf_flow.c,v 1.2 1998/05/24 22:32:50 provos Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -100,8 +100,8 @@ xf_flow(struct in_addr dst, u_int32_t spi, int proto,
     ddst->sen_len = SENT_IP4_LEN;
     ddst->sen_family = AF_ENCAP;
     ddst->sen_type = SENT_IP4;
-    ddst->sen_ip_src.s_addr = osrc.s_addr;
-    ddst->sen_ip_dst.s_addr = odst.s_addr;
+    ddst->sen_ip_src.s_addr = osrc.s_addr & osmask.s_addr;
+    ddst->sen_ip_dst.s_addr = odst.s_addr & odmask.s_addr;
     ddst->sen_proto = ddst->sen_sport = ddst->sen_dport = 0;
     
     if (tproto > 0) {
