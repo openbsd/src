@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.29 2001/07/09 10:30:58 dhartmei Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.30 2001/07/09 23:20:45 millert Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -320,6 +320,14 @@ print_rdr(struct pf_rdr *r)
 			printf("! ");
 		printf("%s ", r->ifname);
 	}
+	switch (r->proto) {
+	case IPPROTO_TCP:
+		printf("proto tcp ");
+		break;
+	case IPPROTO_UDP:
+		printf("proto udp ");
+		break;
+	}
 	printf("from ");
 	if (r->saddr || r->smask) {
 		if (r->snot)
@@ -353,15 +361,6 @@ print_rdr(struct pf_rdr *r)
 	printf("port %u", ntohs(r->rport));
 	if (r->opts & PF_RPORT_RANGE)
 		printf(":*");
-	printf(" ");
-	switch (r->proto) {
-	case IPPROTO_TCP:
-		printf("proto tcp");
-		break;
-	case IPPROTO_UDP:
-		printf("proto udp");
-		break;
-	}
 	printf("\n");
 }
 
@@ -1173,6 +1172,21 @@ parse_rdr(int n, char *l, struct pf_rdr *rdr)
 		w = next_word(&l);
 	}
 
+	/* proto (default is tcp) */
+	if (!strcmp(w, "proto")) {
+		w = next_word(&l);
+		if (!strcmp(w, "tcp"))
+			rdr->proto = IPPROTO_TCP;
+		else if (!strcmp(w, "udp"))
+			rdr->proto = IPPROTO_UDP;
+		else {
+			error(n, "expected tcp/udp, got %s\n", w);
+			return (0);
+		}
+		w = next_word(&l);
+	} else
+		rdr->proto = IPPROTO_TCP;
+
 	/* external addr/mask */
 	if (strcmp(w, "to")) {
 		error(n, "expected to, got %s\n", w);
@@ -1206,12 +1220,12 @@ parse_rdr(int n, char *l, struct pf_rdr *rdr)
 	w = next_word(&l);
 	/* check for port range */
 	if ((s = strchr(w, ':')) == NULL) {
-		rdr->dport = htons(next_number(&w));
+		rdr->dport = rule_port(w, rdr->proto);
 		rdr->dport2 = rdr->dport;
 	} else {
 		*s++ = '\0';
-		rdr->dport = htons(next_number(&w));
-		rdr->dport2 = htons(next_number(&s));
+		rdr->dport = rule_port(w, rdr->proto);
+		rdr->dport2 = rule_port(s, rdr->proto);
 		rdr->opts |= PF_DPORT_RANGE;
 	}
 	w = next_word(&l);
@@ -1238,22 +1252,8 @@ parse_rdr(int n, char *l, struct pf_rdr *rdr)
 	        rdr->opts |= PF_RPORT_RANGE;
 	}
 		
-	rdr->rport = htons(next_number(&w));
+	rdr->rport = rule_port(w, rdr->proto);
 	w = next_word(&l);
-
-	/* proto */
-	if (!strcmp(w, "proto")) {
-		w = next_word(&l);
-		if (!strcmp(w, "tcp"))
-			rdr->proto = IPPROTO_TCP;
-		else if (!strcmp(w, "udp"))
-			rdr->proto = IPPROTO_UDP;
-		else {
-			error(n, "expected tcp/udp, got %s\n", w);
-			return (0);
-		}
-		w = next_word(&l);
-	}
 
 	/* no further options expected */
 	while (*w) {
