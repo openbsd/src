@@ -6,13 +6,13 @@ SUBDIR= boot bootxx installboot
 SAREL=
 KERNREL=
 .include "Makefile.inc"
-.include "$S/lib/libsa/Makefile.inc"
 .include "$S/lib/libkern/Makefile.inc"
+.include "$S/lib/libsa/Makefile.inc"
 
-all: ${SALIB} ${KERNLIB} _SUBDIRUSE
+all: ${KERNLIB} ${SALIB} _SUBDIRUSE
 
 libdep:
-	@echo  ${.OBJDIR}/${SALIB} ${.OBJDIR}/${KERNLIB}
+	@echo  ${.OBJDIR}/${KERNLIB} ${.OBJDIR}/${SALIB}
 
 sadep:
 	@echo  ${.OBJDIR}/${SALIB}
