@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88410.h,v 1.4 2001/12/22 08:31:05 smurph Exp $ */
+/*	$OpenBSD: m88410.h,v 1.5 2003/08/17 01:47:10 miod Exp $ */
 /*
  * Copyright (c) 2001 Steve Murphree, Jr.
  * All rights reserved.
@@ -79,7 +79,7 @@ static __inline__ void mc88410_flush_page(vm_offset_t physaddr)
 	__asm__ __volatile__("st.d r2,r4,0");
         
 	/* spin until the operation starts */
-	while (!bs->bs_xccr & BS_XCC_FBSY)
+	while ((bs->bs_xccr & BS_XCC_FBSY) == 0)
 		;
 	
 	/* restore PSR and friends */
@@ -115,7 +115,7 @@ static __inline__ void mc88410_flush(void)
 	__asm__ __volatile__("st.d r2,r4,0");		
         
 	/* spin until the operation starts */
-	while (!bs->bs_xccr & BS_XCC_FBSY)
+	while ((bs->bs_xccr & BS_XCC_FBSY) == 0)
 		;
 	
 	/* restore PSR and friends */
@@ -151,7 +151,7 @@ static __inline__ void mc88410_inval(void)
 	__asm__ __volatile__("st.d r2,r4,0");		
         
 	/* spin until the operation starts */
-	while (!bs->bs_xccr & BS_XCC_FBSY)
+	while ((bs->bs_xccr & BS_XCC_FBSY) == 0)
 		;
 	
 	/* restore PSR and friends */
