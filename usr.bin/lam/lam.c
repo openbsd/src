@@ -1,4 +1,4 @@
-/*	$OpenBSD: lam.c,v 1.10 2003/12/09 00:55:18 mickey Exp $	*/
+/*	$OpenBSD: lam.c,v 1.11 2004/07/03 21:00:37 millert Exp $	*/
 /*	$NetBSD: lam.c,v 1.2 1994/11/14 20:27:42 jtc Exp $	*/
 
 /*-
@@ -31,16 +31,16 @@
  */
 
 #ifndef lint
-static char copyright[] =
+static const char copyright[] =
 "@(#) Copyright (c) 1993\n\
 	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)lam.c	8.1 (Berkeley) 6/6/93";
+static const char sccsid[] = "@(#)lam.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: lam.c,v 1.10 2003/12/09 00:55:18 mickey Exp $";
+static const char rcsid[] = "$OpenBSD: lam.c,v 1.11 2004/07/03 21:00:37 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -48,11 +48,13 @@ static char rcsid[] = "$OpenBSD: lam.c,v 1.10 2003/12/09 00:55:18 mickey Exp $";
  *	Author:  John Kunze, UCB
  */
 
+#include <ctype.h>
+#include <err.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#define	MAXOFILES	20
 #define	BIGBUFSIZ	5 * BUFSIZ
 
 struct	openfile {		/* open file structure */
@@ -62,16 +64,16 @@ struct	openfile {		/* open file structure */
 	char	eol;		/* end of line character */
 	char	*sepstring;	/* string to print before each line */
 	char	*format;	/* printf(3) style string spec. */
-}	input[MAXOFILES];
+}	input[OPEN_MAX];
 
 int	morefiles;		/* set by getargs(), changed by gatherline() */
 int	nofinalnl;		/* normally append \n to each output line */
 char	line[BIGBUFSIZ];
 char	*linep;
 
-void	 error(char *, char *);
+void	 usage(void);
 char	*gatherline(struct openfile *);
-void	 getargs(char *[]);
+void	 getargs(int, char *[]);
 char	*pad(struct openfile *);
 
 int
@@ -79,9 +81,9 @@ main(int argc, char *argv[])
 {
 	struct	openfile *ip;
 
-	getargs(argv);
+	getargs(argc, argv);
 	if (!morefiles)
-		error("lam - laminate files", "");
+		usage();
 	for (;;) {
 		linep = line;
 		for (ip = input; ip->fp != NULL; ip++)
@@ -96,72 +98,70 @@ main(int argc, char *argv[])
 }
 
 void
-getargs(char *av[])
+getargs(int argc, char *argv[])
 {
-	struct	openfile *ip = input;
+	struct openfile *ip = input;
 	char *p;
-	char *c;
-	static char fmtbuf[BUFSIZ];
-	char *fmtp = fmtbuf;
-	int P, S, F, T;
+	int ch, P, S, F, T;
+	size_t siz;
 
 	P = S = F = T = 0;		/* capitalized options */
-	while ((p = *++av) != NULL) {
-		if (*p != '-' || !p[1]) {
-			morefiles++;
-			if (*p == '-')
-				ip->fp = stdin;
-			else if ((ip->fp = fopen(p, "r")) == NULL)
-				err(1, p);
-			ip->pad = P;
-			if (!ip->sepstring)
-				ip->sepstring = (S ? (ip-1)->sepstring : "");
-			if (!ip->format)
-				ip->format = ((P || F) ? (ip-1)->format : "%s");
-			if (!ip->eol)
-				ip->eol = (T ? (ip-1)->eol : '\n');
-			ip++;
-			continue;
-		}
-		switch (*(c = ++p) | 040) {
-		case 's':
-			if (*++p || (p = *++av))
-				ip->sepstring = p;
-			else
-				error("Need string after -%s", c);
-			S = (*c == 'S' ? 1 : 0);
+	while (optind < argc) {
+		switch (ch = getopt(argc, argv, "F:f:P:p:S:s:T:t:")) {
+		case 'F': case 'f':
+			F = (ch == 'F');
+			/* Validate format string argument. */
+			for (p = optarg; *p != '\0'; p++)
+				if (!isdigit(*p) && *p != '.' && *p != '-')
+					errx(1, "%s: invalid width specified",
+					     optarg);
+			/* '%' + width + 's' + '\0' */
+			siz = p - optarg + 3;
+			if ((p = realloc(ip->format, siz)) == NULL)
+				err(1, NULL);
+			snprintf(p, siz, "%%%ss", optarg);
+			ip->format = p;
 			break;
-		case 't':
-			if (*++p || (p = *++av))
-				ip->eol = *p;
-			else
-				error("Need character after -%s", c);
-			T = (*c == 'T' ? 1 : 0);
+		case 'P': case 'p':
+			P = (ch == 'P');
+			ip->pad = 1;
+			break;
+		case 'S': case 's':
+			S = (ch == 'S');
+			ip->sepstring = optarg;
+			break;
+		case 'T': case 't':
+			T = (ch == 'T');
+			if (strlen(optarg) != 1)
+				usage();
+			ip->eol = optarg[0];
 			nofinalnl = 1;
 			break;
-		case 'p':
-			ip->pad = 1;
-			P = (*c == 'P' ? 1 : 0);
-		case 'f':
-			F = (*c == 'F' ? 1 : 0);
-			if (*++p || (p = *++av)) {
-				fmtp += strlen(fmtp) + 1;
-				if (fmtp >= fmtbuf + BUFSIZ)
-					error("No more format space", "");
-				snprintf(fmtp, fmtbuf + BUFSIZ - fmtp,
-				    "%%%ss", p);
-				ip->format = fmtp;
-			}
-			else
-				error("Need string after -%s", c);
+		case -1:
+			if (optind >= argc)
+				break;		/* to support "--" */
+			morefiles++;
+			if (strcmp(argv[optind], "-") == 0)
+				ip->fp = stdin;
+			else if ((ip->fp = fopen(argv[optind], "r")) == NULL)
+				err(1, "%s", argv[optind]);
+			ip->pad = P;
+			if (ip->sepstring == NULL)
+				ip->sepstring = S ? (ip-1)->sepstring : "";
+			if (ip->format == NULL)
+				ip->format = (P || F) ? (ip-1)->format : "%s";
+			if (ip->eol == '\0')
+				ip->eol = T ? (ip-1)->eol : '\n';
+			ip++;
+			optind++;
 			break;
 		default:
-			error("What do you mean by -%s?", c);
-			break;
+			usage();
+			/* NOTREACHED */
 		}
 	}
 	ip->fp = NULL;
-	if (!ip->sepstring)
+	if (ip->sepstring == NULL)
 		ip->sepstring = "";
 }
 
@@ -187,7 +187,7 @@ gatherline(struct openfile *ip)
 	char s[BUFSIZ];
 	char *p;
 	char *lp = linep;
-	char *end = s + BUFSIZ;
+	char *end = s + BUFSIZ - 1;
 	int c;
 
 	if (ip->eof)
@@ -205,25 +205,18 @@ gatherline(struct openfile *ip)
 	}
 	n = strlcpy(lp, ip->sepstring, line + sizeof(line) - lp);
 	lp += (n < line + sizeof(line) - lp) ? n : strlen(lp);
-	n = snprintf(lp, line + sizeof line - lp, ip->format, s);
+	n = snprintf(lp, line + sizeof(line) - lp, ip->format, s);
 	lp += (n < line + sizeof(line) - lp) ? n : strlen(lp);
 	return (lp);
 }
 
 void
-error(char *msg, char *s)
+usage(void)
 {
 	extern char *__progname;
-	warnx(msg, s);
+
 	fprintf(stderr,
-	    "Usage: %s [ -[fp] min.max ] [ -s sepstring ] [ -t c ] file ...\n",
+	    "usage: %s [-f min.max] [-p min.max] [-s sepstring] [-t c] file ...\n",
 	    __progname);
-	if (strncmp("lam - ", msg, 6) == 0)
-		fprintf(stderr, "Options:\n"
-		    "\t-f min.max\tfield widths for file fragments\n"
-		    "\t-p min.max\tlike -f, but pad missing fragments\n"
-		    "\t-s sepstring\tfragment separator\n"
-"\t-t c\t\tinput line terminator is c, no \\n after output lines\n"
-		    "\tCapitalized options affect more than one file.\n");
 	exit(1);
 }
