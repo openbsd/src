@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.213 2002/04/29 00:59:35 krw Exp $
+#	$OpenBSD: install.sub,v 1.214 2002/04/29 01:38:06 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -186,18 +186,6 @@ cutlast () {
 	read _a; set -- $_a
 	[ $# -gt 0 ] || return
 	eval echo \$\{$#\}
-}
-
-basename () {
-	local _oifs
-
-	[ "$1" ] || return
-	_oifs=$IFS
-	IFS=/
-	set -- $1
-	IFS=$_oifs
-	while [ "$#" -gt 10 ]; do shift 10; done
-	eval echo \$$#
 }
 
 isnumeric() {
@@ -1539,13 +1527,11 @@ The installation program needs to know which tape device to use. Make
 sure you use a "no rewind on close" device.
 
 __EOT
-	_tape=`basename $TAPE`
 	resp=
 	while [ -z "$resp" ]; do
-		ask "Name of tape device?" "$_tape"
+		ask "Name of tape device?" "${TAPE##*/}"
 	done
-	_tape=`basename $resp`
-	TAPE=/dev/${_tape}
+	TAPE=/dev/${resp##*/}
 	if [ ! -c $TAPE ]; then
 		echo "$TAPE does not exist or is not a character special file."
 		echo "Aborting."
