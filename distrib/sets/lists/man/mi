@@ -1889,12 +1889,10 @@
 ./usr/share/man/cat8/rquotad.0
 ./usr/share/man/cat8/rrestore.0
 ./usr/share/man/cat8/rshd.0
-./usr/share/man/cat8/rstatd.0
 ./usr/share/man/cat8/rtadvd.0
 ./usr/share/man/cat8/rtquery.0
 ./usr/share/man/cat8/rtsol.0
 ./usr/share/man/cat8/rtsold.0
-./usr/share/man/cat8/rusersd.0
 ./usr/share/man/cat8/rwalld.0
 ./usr/share/man/cat8/rwhod.0
 ./usr/share/man/cat8/sa.0

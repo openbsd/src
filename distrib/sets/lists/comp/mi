@@ -4392,8 +4392,10 @@
 ./usr/share/man/cat3/strtok.0
 ./usr/share/man/cat3/strtok_r.0
 ./usr/share/man/cat3/strtol.0
+./usr/share/man/cat3/strtoll.0
 ./usr/share/man/cat3/strtoq.0
 ./usr/share/man/cat3/strtoul.0
+./usr/share/man/cat3/strtoull.0
 ./usr/share/man/cat3/strtouq.0
 ./usr/share/man/cat3/strunvis.0
 ./usr/share/man/cat3/strvis.0
