@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_mroute.c,v 1.37 2003/06/03 06:24:22 itojun Exp $	*/
+/*	$OpenBSD: ip6_mroute.c,v 1.38 2003/06/06 06:57:23 itojun Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.45 2001/03/25 08:38:51 itojun Exp $	*/
 
 /*
@@ -1421,6 +1421,9 @@ ip6_mdq(m, ifp, rt)
 	 */
 	for (mifp = mif6table, mifi = 0; mifi < nummifs; mifp++, mifi++)
 		if (IF_ISSET(mifi, &rt->mf6c_ifset)) {
+			if (mif6table[mifi].m6_ifp == NULL)
+				continue;
+
 			/*
 			 * check if the outgoing packet is going to break
 			 * a scope boundary.
