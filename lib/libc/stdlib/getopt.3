@@ -25,7 +25,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: getopt.3,v 1.29 2004/12/07 16:14:35 millert Exp $
+.\"	$OpenBSD: getopt.3,v 1.30 2004/12/22 16:24:53 jmc Exp $
 .\"
 .Dd December 17, 2002
 .Dt GETOPT 3
@@ -36,9 +36,9 @@
 .Sh SYNOPSIS
 .Fd #include <unistd.h>
 .Vt extern char *optarg;
+.Vt extern int   opterr;
 .Vt extern int   optind;
 .Vt extern int   optopt;
-.Vt extern int   opterr;
 .Vt extern int   optreset;
 .Ft int
 .Fn getopt "int argc" "char * const *argv" "const char *optstring"
@@ -61,9 +61,8 @@ may contain the following elements: individual characters,
 characters followed by a colon, and characters followed by two colons.
 A character followed by a single colon indicates that an argument
 is to follow the option on the command line.
-Two colons indicates that the argument is optional--this is an
-extension not covered by
-.Px .
+Two colons indicates that the argument is optional \- this is an
+extension not covered by POSIX.
 For example, an option string
 .Qq x
 recognizes an option
@@ -97,7 +96,9 @@ The
 .Va optind
 variable may be set to another value larger than 0 before a set of calls to
 .Fn getopt
-in order to skip over more or less argv entries.
+in order to skip over more or less
+.Fa argv
+entries.
 An
 .Va optind
 value of 0 is reserved for compatibility with GNU
