@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pcmcia,v 1.30 2000/06/12 05:31:23 fgsch Exp $
+#	$OpenBSD: files.pcmcia,v 1.31 2000/06/19 07:22:59 fgsch Exp $
 #	$NetBSD: files.pcmcia,v 1.9 1998/06/21 18:45:41 christos Exp $
 #
 # Config.new file and device description for machine-independent PCMCIA code.
@@ -27,8 +27,8 @@ attach	aic at pcmcia with aic_pcmcia
 file	dev/pcmcia/aic_pcmcia.c			aic_pcmcia
 
 # NCR 53c406-based cards
-#attach	esp at pcmcia with esp_pcmcia
-#file	dev/pcmcia/esp_pcmcia.c			esp_pcmcia
+attach	esp at pcmcia with esp_pcmcia
+file	dev/pcmcia/esp_pcmcia.c			esp_pcmcia
 
 attach	com at pcmcia with com_pcmcia
 file	dev/pcmcia/com_pcmcia.c			com_pcmcia | pccom_pcmcia
