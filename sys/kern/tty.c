@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.34 1998/02/03 19:06:26 deraadt Exp $	*/
+/*	$OpenBSD: tty.c,v 1.35 1998/02/20 14:51:58 niklas Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -900,7 +900,7 @@ ttioctl(tp, cmd, data, flag, p)
 		}
 		if (cmd != TIOCSETAF) {
 			if (ISSET(t->c_lflag, ICANON) !=
-			    ISSET(tp->t_lflag, ICANON))
+			    ISSET(tp->t_lflag, ICANON)) {
 				if (ISSET(t->c_lflag, ICANON)) {
 					SET(tp->t_lflag, PENDIN);
 					ttwakeup(tp);
@@ -913,6 +913,7 @@ ttioctl(tp, cmd, data, flag, p)
 					tp->t_canq = tq;
 					CLR(tp->t_lflag, PENDIN);
 				}
+			}
 		}
 		tp->t_iflag = t->c_iflag;
 		tp->t_oflag = t->c_oflag;
@@ -1469,8 +1470,8 @@ read:
 		    ISSET(lflag, IEXTEN | ISIG) == (IEXTEN | ISIG)) {
 			pgsignal(tp->t_pgrp, SIGTSTP, 1);
 			if (first) {
-				error = ttysleep(tp, &lbolt,
-						 TTIPRI | PCATCH, ttybg, 0);
+				error = ttysleep(tp, &lbolt, TTIPRI | PCATCH,
+				    ttybg, 0);
 				if (error)
 					break;
 				goto loop;

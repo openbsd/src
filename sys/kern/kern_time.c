@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.11 1998/02/08 22:41:35 tholo Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.12 1998/02/20 14:51:56 niklas Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -420,11 +420,13 @@ sys_getitimer(p, v, retval)
 		 * current time and time for the timer to go off.
 		 */
 		aitv = p->p_realtimer;
-		if (timerisset(&aitv.it_value))
+		if (timerisset(&aitv.it_value)) {
 			if (timercmp(&aitv.it_value, &time, <))
 				timerclear(&aitv.it_value);
 			else
-				timersub(&aitv.it_value, &time, &aitv.it_value);
+				timersub(&aitv.it_value, &time,
+				    &aitv.it_value);
+		}
 	} else
 		aitv = p->p_stats->p_timer[SCARG(uap, which)];
 	splx(s);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_autoconf.c,v 1.19 1998/01/21 12:23:45 niklas Exp $	*/
+/*	$OpenBSD: subr_autoconf.c,v 1.20 1998/02/20 14:51:57 niklas Exp $	*/
 /*	$NetBSD: subr_autoconf.c,v 1.21 1996/04/04 06:06:18 cgd Exp $	*/
 
 /*
@@ -200,13 +200,14 @@ config_search(fn, parent, aux)
 					mapply(&m, cf);
 		}
 	}
-	if (autoconf_verbose)
+	if (autoconf_verbose) {
 		if (m.match)
 			printf(">>> probe for %s%d won\n",
 			    ((struct cfdata *)m.match)->cf_driver->cd_name,
 			    ((struct cfdata *)m.match)->cf_unit);
 		else
 			printf(">>> no winning probe\n");
+	}
 	return (m.match);
 }
 
