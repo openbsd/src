@@ -1,4 +1,4 @@
-#	$OpenBSD: README,v 1.3 2004/06/29 23:17:00 jmc Exp $
+#	$OpenBSD: README,v 1.4 2004/07/29 10:50:02 jmc Exp $
 # 
 #  Copyright (c) 2004 Jason McIntyre <jmc@openbsd.org>
 # 
@@ -44,3 +44,8 @@ However, the PostScript output is much prettier :)
 
 The documentation in the html subdirectory can by viewed using any HTML-capable
 browser such as lynx(1).
+
+Note: Some of the subdirectories are empty, for a variety of reasons:
+the papers are simply out of date; the papers refer to applications no
+longer installed on the system; licensing issues; the papers have been
+superseded by GNU info(1) files, etc.
