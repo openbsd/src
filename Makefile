@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.80 2001/09/25 09:43:22 espie Exp $
+#	$OpenBSD: Makefile,v 1.81 2001/09/25 10:26:39 espie Exp $
 
 #
 # For more information on building in tricky environments, please see
@@ -77,7 +77,6 @@ build:
 	cp /dev/null ${GLOBAL_AUTOCONF_CACHE}
 .endif
 	cd ${.CURDIR}/share/mk && exec ${SUDO} ${MAKE} install
-	cd ${.CURDIR}/gnu/share && exec ${SUDO} ${MAKE} install
 	cd ${.CURDIR}/include && ${MAKE} prereq && exec ${SUDO} ${MAKE} includes
 	${SUDO} ${MAKE} cleandir
 	cd ${.CURDIR}/lib && ${MAKE} depend && ${MAKE} && \
