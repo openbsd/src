@@ -1,5 +1,5 @@
-/*	$OpenBSD: ffs_alloc.c,v 1.3 1996/04/21 22:32:28 deraadt Exp $	*/
-/*	$NetBSD: ffs_alloc.c,v 1.10 1996/03/17 02:16:18 christos Exp $	*/
+/*	$OpenBSD: ffs_alloc.c,v 1.4 1996/05/22 11:47:17 deraadt Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.11 1996/05/11 18:27:09 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -339,6 +339,7 @@ ffs_reallocblks(v)
 	daddr_t start_lbn, end_lbn, soff, newblk, blkno;
 	struct indir start_ap[NIADDR + 1], end_ap[NIADDR + 1], *idp;
 	int i, len, start_lvl, end_lvl, pref, ssize;
+	struct timespec ts;
 
 	vp = ap->a_vp;
 	ip = VTOI(vp);
@@ -452,9 +453,10 @@ ffs_reallocblks(v)
 			bwrite(sbp);
 	} else {
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
-		if (!doasyncfree)
-			VOP_UPDATE(vp, (struct timeval *)&time,
-			    (struct timeval *)&time, MNT_WAIT);
+		if (!doasyncfree) {
+			TIMEVAL_TO_TIMESPEC(&time, &ts);
+			VOP_UPDATE(vp, &ts, &ts, 1);
+		}
 	}
 	if (ssize < len)
 		if (doasyncfree)

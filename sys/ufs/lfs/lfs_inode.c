@@ -1,5 +1,5 @@
-/*	$OpenBSD: lfs_inode.c,v 1.2 1996/02/27 07:13:25 niklas Exp $	*/
-/*	$NetBSD: lfs_inode.c,v 1.4 1996/02/09 22:28:52 christos Exp $	*/
+/*	$OpenBSD: lfs_inode.c,v 1.3 1996/05/22 11:47:19 deraadt Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.5 1996/05/11 18:27:35 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -86,8 +86,8 @@ lfs_update(v)
 {
 	struct vop_update_args /* {
 		struct vnode *a_vp;
-		struct timeval *a_access;
-		struct timeval *a_modify;
+		struct timespec *a_access;
+		struct timespec *a_modify;
 		int a_waitfor;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
@@ -99,14 +99,19 @@ lfs_update(v)
 	if ((ip->i_flag &
 	    (IN_ACCESS | IN_CHANGE | IN_MODIFIED | IN_UPDATE)) == 0)
 		return (0);
-	if (ip->i_flag & IN_ACCESS)
+	if (ip->i_flag & IN_ACCESS) {
 		ip->i_atime = ap->a_access->tv_sec;
+		ip->i_atimensec = ap->a_access->tv_nsec;
+	}
 	if (ip->i_flag & IN_UPDATE) {
 		ip->i_mtime = ap->a_modify->tv_sec;
+		ip->i_mtimensec = ap->a_modify->tv_nsec;
 		(ip)->i_modrev++;
 	}
-	if (ip->i_flag & IN_CHANGE)
+	if (ip->i_flag & IN_CHANGE) {
 		ip->i_ctime = time.tv_sec;
+		ip->i_ctimensec = time.tv_usec * 1000;
+	}
 	ip->i_flag &= ~(IN_ACCESS | IN_CHANGE | IN_UPDATE);
 
 	if (!(ip->i_flag & IN_MODIFIED))
@@ -162,7 +167,7 @@ lfs_truncate(v)
 	register struct vnode *vp = ap->a_vp;
 	off_t length = ap->a_length;
 	struct buf *bp, *sup_bp;
-	struct timeval tv;
+	struct timespec ts;
 	struct ifile *ifp;
 	struct inode *ip;
 	struct lfs *fs;
@@ -173,7 +178,7 @@ lfs_truncate(v)
 	int e1, e2, depth, lastseg, num, offset, seg, size;
 
 	ip = VTOI(vp);
-	tv = time;
+	TIMEVAL_TO_TIMESPEC(&time, &ts);
 	if (vp->v_type == VLNK && vp->v_mount->mnt_maxsymlinklen > 0) {
 #ifdef DIAGNOSTIC
 		if (length != 0)
@@ -182,7 +187,7 @@ lfs_truncate(v)
 		bzero((char *)&ip->i_shortlink, (u_int)ip->i_size);
 		ip->i_size = 0;
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
-		return (VOP_UPDATE(vp, &tv, &tv, 0));
+		return (VOP_UPDATE(vp, &ts, &ts, 0));
 	}
 	vnode_pager_setsize(vp, (u_long)length);
 
@@ -191,7 +196,7 @@ lfs_truncate(v)
 	/* If length is larger than the file, just update the times. */
 	if (ip->i_size <= length) {
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
-		return (VOP_UPDATE(vp, &tv, &tv, 0));
+		return (VOP_UPDATE(vp, &ts, &ts, 0));
 	}
 
 	/*
@@ -359,6 +364,6 @@ lfs_truncate(v)
 	fs->lfs_avail += fsbtodb(fs, a_released);
 	e1 = vinvalbuf(vp, (length > 0) ? V_SAVE : 0, ap->a_cred, ap->a_p,
 	    0, 0); 
-	e2 = VOP_UPDATE(vp, &tv, &tv, 0);
+	e2 = VOP_UPDATE(vp, &ts, &ts, 0);
 	return (e1 ? e1 : e2 ? e2 : 0);
 }

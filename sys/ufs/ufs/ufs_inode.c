@@ -1,5 +1,5 @@
-/*	$OpenBSD: ufs_inode.c,v 1.2 1996/02/27 07:21:27 niklas Exp $	*/
-/*	$NetBSD: ufs_inode.c,v 1.6 1996/02/09 22:36:05 christos Exp $	*/
+/*	$OpenBSD: ufs_inode.c,v 1.3 1996/05/22 11:47:21 deraadt Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.7 1996/05/11 18:27:52 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -84,7 +84,7 @@ ufs_inactive(v)
 	} */ *ap = v;
 	register struct vnode *vp = ap->a_vp;
 	register struct inode *ip = VTOI(vp);
-	struct timeval tv;
+	struct timespec ts;
 	int mode, error;
 	extern int prtactive;
 
@@ -121,8 +121,8 @@ ufs_inactive(v)
 		VOP_VFREE(vp, ip->i_number, mode);
 	}
 	if (ip->i_flag & (IN_ACCESS | IN_CHANGE | IN_MODIFIED | IN_UPDATE)) {
-		tv = time;
-		VOP_UPDATE(vp, &tv, &tv, 0);
+		TIMEVAL_TO_TIMESPEC(&time, &ts);
+		VOP_UPDATE(vp, &ts, &ts, 0);
 	}
 	VOP_UNLOCK(vp);
 	/*

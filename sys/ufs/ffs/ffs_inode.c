@@ -1,5 +1,5 @@
-/*	$OpenBSD: ffs_inode.c,v 1.2 1996/02/27 07:27:37 niklas Exp $	*/
-/*	$NetBSD: ffs_inode.c,v 1.9 1996/02/09 22:22:23 christos Exp $	*/
+/*	$OpenBSD: ffs_inode.c,v 1.3 1996/05/22 11:47:18 deraadt Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.10 1996/05/11 18:27:19 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -82,8 +82,8 @@ ffs_update(v)
 {
 	struct vop_update_args /* {
 		struct vnode *a_vp;
-		struct timeval *a_access;
-		struct timeval *a_modify;
+		struct timespec *a_access;
+		struct timespec *a_modify;
 		int a_waitfor;
 	} */ *ap = v;
 	register struct fs *fs;
@@ -100,14 +100,19 @@ ffs_update(v)
 	if ((ip->i_flag &
 	    (IN_ACCESS | IN_CHANGE | IN_MODIFIED | IN_UPDATE)) == 0)
 		return (0);
-	if (ip->i_flag & IN_ACCESS)
+	if (ip->i_flag & IN_ACCESS) {
 		ip->i_atime = ap->a_access->tv_sec;
+		ip->i_atimensec = ap->a_access->tv_nsec;
+	}
 	if (ip->i_flag & IN_UPDATE) {
 		ip->i_mtime = ap->a_modify->tv_sec;
+		ip->i_mtimensec = ap->a_modify->tv_nsec;
 		ip->i_modrev++;
 	}
-	if (ip->i_flag & IN_CHANGE)
+	if (ip->i_flag & IN_CHANGE) {
 		ip->i_ctime = time.tv_sec;
+		ip->i_ctimensec = time.tv_usec * 1000;
+	}
 	ip->i_flag &= ~(IN_ACCESS | IN_CHANGE | IN_MODIFIED | IN_UPDATE);
 	fs = ip->i_fs;
 	/*
@@ -163,7 +168,7 @@ ffs_truncate(v)
 	struct buf *bp;
 	int offset, size, level;
 	long count, nblocks, vflags, blocksreleased = 0;
-	struct timeval tv;
+	struct timespec ts;
 	register int i;
 	int aflags, error, allerror;
 	off_t osize;
@@ -171,7 +176,7 @@ ffs_truncate(v)
 	if (length < 0)
 		return (EINVAL);
 	oip = VTOI(ovp);
-	tv = time;
+	TIMEVAL_TO_TIMESPEC(&time, &ts);
 	if (ovp->v_type == VLNK &&
 	    (oip->i_size < ovp->v_mount->mnt_maxsymlinklen ||
 	     (ovp->v_mount->mnt_maxsymlinklen == 0 &&
@@ -183,11 +188,11 @@ ffs_truncate(v)
 		bzero((char *)&oip->i_shortlink, (u_int)oip->i_size);
 		oip->i_size = 0;
 		oip->i_flag |= IN_CHANGE | IN_UPDATE;
-		return (VOP_UPDATE(ovp, &tv, &tv, 1));
+		return (VOP_UPDATE(ovp, &ts, &ts, 1));
 	}
 	if (oip->i_size == length) {
 		oip->i_flag |= IN_CHANGE | IN_UPDATE;
-		return (VOP_UPDATE(ovp, &tv, &tv, 0));
+		return (VOP_UPDATE(ovp, &ts, &ts, 0));
 	}
 #ifdef QUOTA
 	if ((error = getinoquota(oip)) != 0)
@@ -220,7 +225,7 @@ ffs_truncate(v)
 		else
 			bawrite(bp);
 		oip->i_flag |= IN_CHANGE | IN_UPDATE;
-		return (VOP_UPDATE(ovp, &tv, &tv, 1));
+		return (VOP_UPDATE(ovp, &ts, &ts, 1));
 	}
 	/*
 	 * Shorten the size of the file. If the file is not being
@@ -276,7 +281,7 @@ ffs_truncate(v)
 	for (i = NDADDR - 1; i > lastblock; i--)
 		oip->i_db[i] = 0;
 	oip->i_flag |= IN_CHANGE | IN_UPDATE;
-	if ((error = VOP_UPDATE(ovp, &tv, &tv, MNT_WAIT)) != 0)
+	if ((error = VOP_UPDATE(ovp, &ts, &ts, 1)) != 0)
 		allerror = error;
 	/*
 	 * Having written the new inode to disk, save its new configuration

@@ -1,5 +1,5 @@
-/*	$OpenBSD: ffs_vnops.c,v 1.2 1996/02/27 07:27:41 niklas Exp $	*/
-/*	$NetBSD: ffs_vnops.c,v 1.6 1996/02/09 22:22:27 christos Exp $	*/
+/*	$OpenBSD: ffs_vnops.c,v 1.3 1996/05/22 11:47:18 deraadt Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.7 1996/05/11 18:27:24 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -250,11 +250,11 @@ ffs_fsync(v)
 		struct proc *a_p;
 	} */ *ap = v;
 	register struct vnode *vp = ap->a_vp;
-	struct timeval tv;
+	struct timespec ts;
 
 	vflushbuf(vp, ap->a_waitfor == MNT_WAIT);
-	tv = time;
-	return (VOP_UPDATE(ap->a_vp, &tv, &tv, ap->a_waitfor == MNT_WAIT));
+	TIMEVAL_TO_TIMESPEC(&time, &ts);
+	return (VOP_UPDATE(ap->a_vp, &ts, &ts, ap->a_waitfor == MNT_WAIT));
 }
 
 /*

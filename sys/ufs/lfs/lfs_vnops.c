@@ -1,5 +1,5 @@
-/*	$OpenBSD: lfs_vnops.c,v 1.2 1996/02/27 07:13:31 niklas Exp $	*/
-/*	$NetBSD: lfs_vnops.c,v 1.10 1996/02/09 22:28:59 christos Exp $	*/
+/*	$OpenBSD: lfs_vnops.c,v 1.3 1996/05/22 11:47:20 deraadt Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.11 1996/05/11 18:27:41 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -234,10 +234,10 @@ lfs_fsync(v)
 		int a_waitfor;
 		struct proc *a_p;
 	} */ *ap = v;
-	struct timeval tv;
+	struct timespec ts;
 
-	tv = time;
-	return (VOP_UPDATE(ap->a_vp, &tv, &tv,
+	TIMEVAL_TO_TIMESPEC(&time, &ts);
+	return (VOP_UPDATE(ap->a_vp, &ts, &ts,
 	    ap->a_waitfor == MNT_WAIT ? LFS_SYNC : 0));
 }
 
