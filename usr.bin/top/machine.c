@@ -1,4 +1,4 @@
-/* $OpenBSD: machine.c,v 1.33 2003/06/15 16:24:44 millert Exp $	 */
+/* $OpenBSD: machine.c,v 1.34 2003/06/17 00:51:29 jfb Exp $	 */
 
 /*-
  * Copyright (c) 1994 Thorsten Lockert <tholo@sigmasoft.com>
@@ -621,9 +621,9 @@ proc_owner(pid_t pid)
 	while (--cnt >= 0) {
 		pp = *prefp++;
 		if (PP(pp, p_pid) == pid)
-			return ((int) EP(pp, e_pcred.p_ruid));
+			return ((uid_t) EP(pp, e_pcred.p_ruid));
 	}
-	return (-1);
+	return (uid_t)(-1);
 }
 
 /*

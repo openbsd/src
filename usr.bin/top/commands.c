@@ -1,4 +1,4 @@
-/* $OpenBSD: commands.c,v 1.10 2003/06/15 16:24:44 millert Exp $	 */
+/* $OpenBSD: commands.c,v 1.11 2003/06/17 00:51:29 jfb Exp $	 */
 
 /*
  *  Top users/processes display for Unix
@@ -319,7 +319,7 @@ kill_procs(char *str)
 {
 	int signum = SIGTERM, procnum;
 	struct sigdesc *sigp;
-	uid_t uid;
+	uid_t uid, puid;
 	char *nptr;
 
 	/* reset error array */
@@ -363,7 +363,10 @@ kill_procs(char *str)
 			ERROR(str, 0);
 		} else {
 			/* check process owner if we're not root */
-			if (uid && (uid != proc_owner(procnum))) {
+			puid = proc_owner(procnum);
+			if (puid == (uid_t)(-1)) {
+				ERROR(str, ESRCH);
+			} else if (uid && (uid != puid)) {
 				ERROR(str, EACCES);
 			} else if (kill(procnum, signum) == -1) {
 				ERROR(str, errno);
