@@ -1,4 +1,4 @@
-.\" $OpenBSD: mount_ntfs.8,v 1.4 2003/07/03 08:23:15 jmc Exp $
+.\" $OpenBSD: mount_ntfs.8,v 1.5 2003/09/18 09:13:52 jmc Exp $
 .\" $NetBSD: mount_ntfs.8,v 1.13 2003/02/14 16:21:48 grant Exp $
 .\"
 .\" Copyright (c) 1993,1994 Christopher G. Demetriou
@@ -109,16 +109,17 @@ Default is none.
 .Pp
 To get volume name (in Unicode):
 .Bd -literal -offset indent
-# cat /mnt/\\$Volume:\\$VOLUME_NAME
+# cat /mnt/\e$Volume:\e$VOLUME_NAME
 .Ed
 .Pp
 To read directory raw data:
 .Bd -literal -offset indent
-# cat /mnt/foodir:\\$INDEX_ROOT:\\$I30
+# cat /mnt/foodir:\e$INDEX_ROOT:\e$I30
 .Ed
 .Ss Limited support for writing
 There is limited writing ability for files.
 Limitations:
+.Pp
 .Bl -bullet -compact
 .It
 file must be non-resident
@@ -150,31 +151,27 @@ read-only.
 .Sh HISTORY
 Support for NTFS first appeared in
 .Fx 3.0 .
-It was ported to
-.Nx
+It was later ported to
+.Ox
 and first appeared in
-.Nx 1.5 .
+.Ox 3.4 .
 .Sh AUTHORS
 NTFS kernel implementation,
-.Nm
+.Nm mount_ntfs ,
 and this manual were originally written by
 .An Semen Ustimenko Aq semenu@FreeBSD.org .
 .Pp
 The
-.Nx
+.Ox
 port was done by
-.An Christos Zoulas
-.Aq christos@NetBSD.org
-and
-.An Jaromir Dolecek
-.Aq jdolecek@NetBSD.org .
+.An Julien Bordet Aq zejames@greyhats.org .
 .Sh BUGS
 The write support should be enhanced to actually be able to change
 file size, and to create and remove files and directories.
 It's not very useful right now.
 .Pp
 If the attempt to mount NTFS gives you an error like this:
-.Bd -literal
+.Bd -literal -offset indent
 # mount -t ntfs /dev/wd0k /mnt
 mount_ntfs: /dev/wd0k on /mnt: Invalid argument
 .Ed
@@ -191,5 +188,5 @@ If the NTFS partition is marked as
 .Ql dynamic
 under Microsoft Windows XP,
 it won't be possible to access it under
-.Nx
+.Ox
 anymore.
