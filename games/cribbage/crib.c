@@ -1,4 +1,4 @@
-/*	$OpenBSD: crib.c,v 1.5 1998/08/19 07:40:18 pjanzen Exp $	*/
+/*	$OpenBSD: crib.c,v 1.6 1999/03/27 04:19:31 pjanzen Exp $	*/
 /*	$NetBSD: crib.c,v 1.7 1997/07/10 06:47:29 mikel Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)crib.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: crib.c,v 1.5 1998/08/19 07:40:18 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: crib.c,v 1.6 1999/03/27 04:19:31 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -67,12 +67,16 @@ main(argc, argv)
 	char *argv[];
 {
 	BOOLEAN playing;
-	FILE *f;
 	int ch;
+#ifdef LOGGING
+	FILE *f;
 	gid_t egid;
 
 	egid = getegid();
 	setegid(getgid());
+#else
+	setgid(getgid());
+#endif
 
 	while ((ch = getopt(argc, argv, "eqr")) != -1)
 		switch (ch) {
@@ -134,6 +138,7 @@ main(argc, argv)
 		playing = (getuchar() == 'Y');
 	} while (playing);
 
+#ifdef LOGGING
 	setegid(egid);
 	if ((f = fopen(_PATH_LOG, "a")) != NULL) {
 		(void)fprintf(f, "%s: won %5.5d, lost %5.5d\n",
@@ -144,6 +149,9 @@ main(argc, argv)
 	bye();
 	if (!f)
 		errx(1, "can't open %s", _PATH_LOG);
+#else
+	bye();
+#endif
 	exit(0);
 }
 
