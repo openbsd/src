@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.7 1997/11/30 06:12:31 gene Exp $	*/
+/*	$OpenBSD: param.h,v 1.8 1998/05/03 07:10:47 gene Exp $	*/
 /*	$NetBSD: param.h,v 1.28 1997/03/01 06:57:45 scottr Exp $	*/
 
 /*
@@ -83,6 +83,9 @@
 #ifndef PSL_IPL
 #include <machine/psl.h>
 #endif /* PSL_IPL */
+
+/* Pull in interrupt glue */
+#include <machine/intr.h>
 
 /*
  * Machine dependent constants for Macintosh II-and-similar series.
