@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.18 2004/09/17 08:49:17 espie Exp $
+# $OpenBSD: pkg_create,v 1.19 2004/09/20 10:36:39 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -375,6 +375,10 @@ if (defined $opt_B) {
 
 $plist->makesum($base);
 $plist->avert_duplicates();
+if (defined $plist->{pkgcfl}) {
+	print STDERR "Error: \@pkgcfl is obsolete, use \@conflict instead\n";
+	$errors++;
+}
 if ($errors) {
 	exit(1);
 }

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingOld.pm,v 1.3 2004/09/20 08:53:53 espie Exp $
+# $OpenBSD: PackingOld.pm,v 1.4 2004/09/20 10:36:39 espie Exp $
 #
 # Copyright (c) 2004 Marc Espie <espie@openbsd.org>
 #
@@ -25,12 +25,5 @@ our @ISA=qw(OpenBSD::PackingElement);
 __PACKAGE__->setOldKeyword('src');
 
 sub keyword() { 'src' }
-
-package OpenBSD::PackingElement::PkgConflict;
-our @ISA=qw(OpenBSD::PackingElement);
-
-__PACKAGE__->setOldKeyword('pkgcfl');
-sub keyword() { "pkgcfl" }
-sub category() { "pkgcfl" }
 
 1;
