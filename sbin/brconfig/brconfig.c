@@ -1,4 +1,4 @@
-/*	$OpenBSD: brconfig.c,v 1.2 1999/09/03 12:47:12 jason Exp $	*/
+/*	$OpenBSD: brconfig.c,v 1.3 1999/12/03 03:38:23 jason Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -292,14 +292,14 @@ bridge_ifsetflag(s, brdg, ifsname, flag)
 	strlcpy(req.ifbr_name, brdg, sizeof(req.ifbr_name));
 	strlcpy(req.ifbr_ifsname, ifsname, sizeof(req.ifbr_ifsname));
 	if (ioctl(s, SIOCBRDGGIFFLGS, (caddr_t)&req) < 0) {
-		warn("ioctl(SIOCBRDGGIFFLGS)");
+		warn("%s: %s", brdg, ifsname);
 		return (EX_IOERR);
 	}
 
 	req.ifbr_ifsflags |= flag;
 
 	if (ioctl(s, SIOCBRDGSIFFLGS, (caddr_t)&req) < 0) {
-		warn("ioctl(SIOCBRDGSIFFLGS)");
+		warn("%s: %s", brdg, ifsname);
 		return (EX_IOERR);
 	}
 	return (0);
@@ -317,14 +317,14 @@ bridge_ifclrflag(s, brdg, ifsname, flag)
 	strlcpy(req.ifbr_ifsname, ifsname, sizeof(req.ifbr_ifsname));
 
 	if (ioctl(s, SIOCBRDGGIFFLGS, (caddr_t)&req) < 0) {
-		warn("ioctl(SIOCBRDGGIFFLGS)");
+		warn("%s: %s", brdg, ifsname);
 		return (EX_IOERR);
 	}
 
 	req.ifbr_ifsflags &= ~flag;
 
 	if (ioctl(s, SIOCBRDGSIFFLGS, (caddr_t)&req) < 0) {
-		warn("ioctl(SIOCBRDGSIFFLGS)");
+		warn("%s: %s", brdg, ifsname);
 		return (EX_IOERR);
 	}
 	return (0);
@@ -377,7 +377,7 @@ bridge_setflag(s, brdg, f)
 	strlcpy(ifr.ifr_name, brdg, sizeof(ifr.ifr_name));
 
 	if (ioctl(s, SIOCGIFFLAGS, (caddr_t)&ifr) < 0) {
-		warn("ioctl(SIOCGIFFLAGS)");
+		warn("%s", brdg);
 		if (errno == EPERM)
 			return (EX_NOPERM);
 		return (EX_IOERR);
@@ -386,7 +386,7 @@ bridge_setflag(s, brdg, f)
 	ifr.ifr_flags |= f;
 
 	if (ioctl(s, SIOCSIFFLAGS, (caddr_t)&ifr) < 0) {
-		warn("ioctl(SIOCSIFFLAGS)");
+		warn("%s", brdg);
 		if (errno == EPERM)
 			return (EX_NOPERM);
 		return (EX_IOERR);
@@ -406,7 +406,7 @@ bridge_clrflag(s, brdg, f)
 	strlcpy(ifr.ifr_name, brdg, sizeof(ifr.ifr_name));
 
 	if (ioctl(s, SIOCGIFFLAGS, (caddr_t)&ifr) < 0) {
-		warn("ioctl(SIOCGIFFLAGS)");
+		warn("%s", brdg);
 		if (errno == EPERM)
 			return (EX_NOPERM);
 		return (EX_IOERR);
@@ -415,7 +415,7 @@ bridge_clrflag(s, brdg, f)
 	ifr.ifr_flags &= ~(f);
 
 	if (ioctl(s, SIOCSIFFLAGS, (caddr_t)&ifr) < 0) {
-		warn("ioctl(SIOCSIFFLAGS)");
+		warn("%s", brdg);
 		if (errno == EPERM)
 			return (EX_NOPERM);
 		return (EX_IOERR);
@@ -434,7 +434,7 @@ bridge_flushall(s, brdg)
 	strlcpy(req.ifbr_name, brdg, sizeof(req.ifbr_name));
 	req.ifbr_ifsflags = IFBF_FLUSHALL;
 	if (ioctl(s, SIOCBRDGFLUSH, &req) < 0) {
-		warn("ioctl(SIOCBRDGFLUSH)");
+		warn("%s", brdg);
 		return (EX_IOERR);
 	}
 	return (0);
@@ -450,7 +450,7 @@ bridge_flush(s, brdg)
 	strlcpy(req.ifbr_name, brdg, sizeof(req.ifbr_name));
 	req.ifbr_ifsflags = IFBF_FLUSHDYN;
 	if (ioctl(s, SIOCBRDGFLUSH, &req) < 0) {
-		warn("ioctl(SIOCBRDGFLUSH)");
+		warn("%s", brdg);
 		return (EX_IOERR);
 	}
 	return (0);
@@ -473,7 +473,7 @@ bridge_list(s, brdg, delim)
 		if (inbuf == NULL)
 			err(1, "malloc");
 		if (ioctl(s, SIOCBRDGIFS, &bifc) < 0)
-			err(1, "ioctl(SIOCBRDGIFS)");
+			err(1, brdg);
 		if (bifc.ifbic_len + sizeof(*reqp) < len)
 			break;
 		len *= 2;
@@ -499,7 +499,7 @@ bridge_add(s, brdg, ifn)
 	strlcpy(req.ifbr_name, brdg, sizeof(req.ifbr_name));
 	strlcpy(req.ifbr_ifsname, ifn, sizeof(req.ifbr_ifsname));
 	if (ioctl(s, SIOCBRDGADD, &req) < 0) {
-		warn("ioctl(SIOCADDBRDG)");
+		warn("%s: %s", brdg, ifn);
 		if (errno == EPERM)
 			return (EX_NOPERM);
 		return (EX_IOERR);
@@ -517,7 +517,7 @@ bridge_delete(s, brdg, ifn)
 	strlcpy(req.ifbr_name, brdg, sizeof(req.ifbr_name));
 	strlcpy(req.ifbr_ifsname, ifn, sizeof(req.ifbr_ifsname));
 	if (ioctl(s, SIOCBRDGDEL, &req) < 0) {
-		warn("ioctl(SIOCDELBRDG)");
+		warn("%s: %s", brdg, ifn);
 		if (errno == EPERM)
 			return (EX_NOPERM);
 		return (EX_IOERR);
@@ -543,7 +543,7 @@ bridge_timeout(s, brdg, arg)
 	strlcpy(ifbct.ifbct_name, brdg, sizeof(ifbct.ifbct_name));
 	ifbct.ifbct_time = newtime;
 	if (ioctl(s, SIOCBRDGSTO, (caddr_t)&ifbct) < 0) {
-		warn("ioctl(SIOCBRDGGCACHE)");
+		warn("%s", brdg);
 		return (EX_IOERR);
 	}
 	return (0);
@@ -567,7 +567,7 @@ bridge_maxaddr(s, brdg, arg)
 	strlcpy(ifbc.ifbc_name, brdg, sizeof(ifbc.ifbc_name));
 	ifbc.ifbc_size = newsize;
 	if (ioctl(s, SIOCBRDGSCACHE, (caddr_t)&ifbc) < 0) {
-		warn("ioctl(SIOCBRDGGCACHE)");
+		warn("%s", brdg);
 		return (EX_IOERR);
 	}
 	return (0);
@@ -590,7 +590,7 @@ bridge_deladdr(s, brdg, addr)
 	bcopy(ea, &ifba.ifba_dst, sizeof(struct ether_addr));
 
 	if (ioctl(s, SIOCBRDGDADDR, &ifba) < 0) {
-		warn("ioctl(SIOCBRDGDADDR)");
+		warn("%s: %s", brdg, addr);
 		return (EX_IOERR);
 	}
 
@@ -617,7 +617,7 @@ bridge_addaddr(s, brdg, ifname, addr)
 	ifba.ifba_flags = IFBAF_STATIC;
 
 	if (ioctl(s, SIOCBRDGSADDR, &ifba) < 0) {
-		warn("ioctl(SIOCBRDGSADDR)");
+		warn("%s: %s", brdg, addr);
 		return (EX_IOERR);
 	}
 
@@ -643,7 +643,7 @@ bridge_addrs(s, brdg, delim)
 		if (ioctl(s, SIOCBRDGRTS, &ifbac) < 0) {
 			if (errno == ENETDOWN)
 				return (0);
-			err(EX_IOERR, "ioctl(SIOCBRDGRTS)");
+			err(EX_IOERR, "%s", brdg);
 		}
 		if (ifbac.ifbac_len + sizeof(*ifba) < len)
 			break;
@@ -700,7 +700,7 @@ bridge_status(s, brdg)
 
 	strlcpy(ifr.ifr_name, brdg, sizeof(ifr.ifr_name));
 	if (ioctl(s, SIOCGIFFLAGS, (caddr_t)&ifr) < 0) {
-		warn("ioctl(SIOCGIFFLAGS)");
+		warn("%s", brdg);
 		if (errno == EPERM)
 			return (EX_NOPERM);
 		return (EX_IOERR);
@@ -717,13 +717,13 @@ bridge_status(s, brdg)
 
 	strlcpy(ifbc.ifbc_name, brdg, sizeof(ifbc.ifbc_name));
 	if (ioctl(s, SIOCBRDGGCACHE, (caddr_t)&ifbc) < 0) {
-		warn("ioctl(SIOCBRDGGCACHE)");
+		warn("%s", brdg);
 		return (EX_IOERR);
 	}
 
 	strlcpy(ifbct.ifbct_name, brdg, sizeof(ifbct.ifbct_name));
 	if (ioctl(s, SIOCBRDGGTO, (caddr_t)&ifbct) < 0) {
-		warn("ioctl(SIOCBRDGGTO)");
+		warn("%s", brdg);
 		return (EX_IOERR);
 	}
 
