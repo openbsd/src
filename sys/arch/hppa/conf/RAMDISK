@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.35 2004/08/19 00:38:13 mickey Exp $
+#	$OpenBSD: RAMDISK,v 1.36 2004/08/19 08:13:05 mickey Exp $
 #
 # Diskless kernel config
 #
@@ -77,12 +77,70 @@ cardbus*	at cardslot?
 option		PCMCIADEBUG,PCMCIAVERBOSE
 pcmcia*		at cardslot?
 
+# PCI USB Controllers
+#ehci*	at pci?				# Enhanced Host Controller
+#uhci*	at pci?				# Universal Host Controller (Intel)
+#ohci*	at pci?				# Open Host Controller
+
+# USB bus support
+#usb*	at ehci?
+#usb*	at uhci?
+#usb*	at ohci?
+
+# USB devices
+#uhub*	at usb?				# USB Hubs
+#uhub*	at uhub? port ? configuration ?	# USB Hubs
+#umodem*	at uhub? port ? configuration ?	# USB Modems/Serial
+#ucom*	at umodem?
+#uvisor*	at uhub? port ? configuration ?	# Handspring Visor
+#ucom*	at uvisor?
+#uvscom*	at uhub? port ?			# SUNTAC Slipper U VS-10U serial
+#ucom*	at uvscom? portno ?
+#ubsa*	at uhub? port ?			# Belkin serial adapter
+#ucom*	at ubsa? portno ?
+#uftdi*	at uhub? port ?			# FTDI FT8U100AX serial adapter
+#ucom*	at uftdi? portno ?
+#uplcom* at uhub? port ?			# I/O DATA USB-RSAQ2 serial adapter
+#ucom*	at uplcom? portno ?
+#umct*	at uhub? port ?			# MCT USB-RS232 serial adapter
+#ucom*	at umct? portno ?
+#uaudio* at uhub? port ? configuration ?	# USB Audio
+#audio*	at uaudio?
+#umidi*	at uhub? port ? configuration ?	# USB MIDI
+#midi*	at umidi?
+#ulpt*	at uhub? port ? configuration ? # USB Printers
+#umass*	at uhub? port ? configuration ? # USB Mass Storage devices
+#scsibus* at umass?
+#uhidev*	at uhub? port ? configuration ? interface ?	# Human Interface Devices
+#ums*	at uhidev? reportid ?		# USB mouse
+#wsmouse* at ums? mux 0
+#ukbd*	at uhidev? reportid ?		# USB keyboard
+#wskbd*	at ukbd? console ? mux 1
+#uhid*	at uhidev? reportid ?		# USB generic HID support
+#aue*	at uhub? port ?			# ADMtek AN986 Pegasus Ethernet
+#axe*	at uhub? port ?			# ASIX Electronics AX88172 USB Ethernet
+#cue*	at uhub? port ?			# CATC USB-EL1201A based Ethernet
+#kue*	at uhub? port ?			# Kawasaki KL5KUSB101B based Ethernet
+#cdce*	at uhub? port ?			# CDC Ethernet
+#upl*	at uhub? port ?			# Prolific PL2301/PL2302 host-to-host `network'
+#url*	at uhub? port ?			# Realtek RTL8150L based adapters
+#wi*	at uhub? port ?			# WaveLAN IEEE 802.11DS
+#urio*	at uhub? port ?			# Diamond Multimedia Rio 500
+#uscanner* at uhub? port ?		# USB Scanners
+#usscanner* at uhub? port ?		# USB SCSI scanners, e.g., HP5300
+#scsibus* at usscanner?
+#uyap*	at uhub? port ?			# Y@P firmware loader
+#udsbr*	at uhub? port ?			# D-Link DSB-R100 radio
+#radio*	at udsbr?			# USB radio
+#ugen*	at uhub? port ? configuration ? # USB Generic driver
+
 sti0	at mainbus0 irq 11	# [H]CRX-{8,24,48}[Z] graphics
 sti0	at phantomas0 irq 11	# builtin graphics on BC*
 sti1	at mainbus0 irq 12
 sti1	at phantomas0 irq 12
 
 #medusa* at mainbus? irq 4	# FDDI
+#venus* at mainbus? irq 5	# ATM J2498A/J3420A
 
 # internal i/o space
 gsc0	at asp?			# Snakes, old 715, old 725, 735/755

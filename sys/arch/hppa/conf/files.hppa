@@ -1,4 +1,4 @@
-#	$OpenBSD: files.hppa,v 1.52 2004/07/10 03:40:32 deraadt Exp $
+#	$OpenBSD: files.hppa,v 1.53 2004/08/19 08:13:05 mickey Exp $
 #
 # hppa-specific configuration info
 
@@ -60,6 +60,11 @@ include	"dev/cardbus/files.cardbus"
 # Machine-independent PCMCIA drivers
 #
 include	"dev/pcmcia/files.pcmcia"
+
+#
+# Machine-independent USB drivers
+#
+include "dev/usb/files.usb"
 
 #
 # HIL Human Interface Loop devices
