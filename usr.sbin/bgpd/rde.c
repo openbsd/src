@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.83 2004/02/19 23:07:00 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.84 2004/02/23 17:19:26 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -370,7 +370,7 @@ rde_update_dispatch(struct imsg *imsg)
 	p = imsg->data;
 
 	memcpy(&len, p, 2);
-	withdrawn_len = ntohs(len);
+	withdrawn_len = len = ntohs(len);
 	p += 2;
 	if (imsg->hdr.len < IMSG_HEADER_SIZE + 2 + withdrawn_len + 2) {
 		rde_update_err(peer, ERR_UPDATE, ERR_UPD_ATTRLIST, NULL, 0);
@@ -378,27 +378,27 @@ rde_update_dispatch(struct imsg *imsg)
 	}
 
 	/* withdraw prefix */
-	while (withdrawn_len > 0) {
-		if ((pos = rde_update_get_prefix(p, withdrawn_len, &prefix,
+	while (len > 0) {
+		if ((pos = rde_update_get_prefix(p, len, &prefix,
 		    &prefixlen)) == -1) {
 			/*
 			 * the rfc does not mention what we should do in
 			 * this case. Let's do the same as in the NLRI case.
 			 */
+			log_peer_warnx(&peer->conf, "bad withdraw prefix");
 			rde_update_err(peer, ERR_UPDATE, ERR_UPD_NETWORK,
 			    NULL, 0);
 			return (-1);
 		}
 		if (prefixlen > 32) {
-			log_peer_warnx(&peer->conf, "bad prefix %s/%u",
-			    inet_ntoa(prefix.v4), prefixlen);
+			log_peer_warnx(&peer->conf, "bad withdraw prefix");
 			rde_update_err(peer, ERR_UPDATE, ERR_UPD_NETWORK,
 			    NULL, 0);
 			return (-1);
 		}
 
 		p += pos;
-		withdrawn_len -= pos;
+		len -= pos;
 
 		/* input filter */
 		if (rde_filter(peer, NULL, &prefix, prefixlen,
@@ -460,16 +460,17 @@ rde_update_dispatch(struct imsg *imsg)
 	while (nlri_len > 0) {
 		if ((pos = rde_update_get_prefix(p, nlri_len, &prefix,
 		    &prefixlen)) == -1) {
+			log_peer_warnx(&peer->conf, "bad nlri prefix");
 			rde_update_err(peer, ERR_UPDATE, ERR_UPD_NETWORK,
 			    NULL, 0);
 			attr_free(&attrs);
 			return (-1);
 		}
 		if (prefixlen > 32) {
-			log_peer_warnx(&peer->conf, "bad prefix %s/%u",
-			    inet_ntoa(prefix.v4), prefixlen);
+			log_peer_warnx(&peer->conf, "bad nlri prefix");
 			rde_update_err(peer, ERR_UPDATE, ERR_UPD_NETWORK,
 			    NULL, 0);
+			attr_free(&attrs);
 			return (-1);
 		}
 
