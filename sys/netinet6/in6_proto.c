@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_proto.c,v 1.27 2001/04/06 04:42:09 csapuntz Exp $	*/
+/*	$OpenBSD: in6_proto.c,v 1.28 2001/05/25 22:08:24 itojun Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -122,13 +122,13 @@ struct ip6protosw inet6sw[] = {
   ip6_init,	0,		frag6_slowtimo,	frag6_drain,
   ip6_sysctl,
 },
-{ SOCK_DGRAM,	&inet6domain,	IPPROTO_UDP,	PR_ATOMIC | PR_ADDR,
+{ SOCK_DGRAM,	&inet6domain,	IPPROTO_UDP,	PR_ATOMIC|PR_ADDR,
   udp6_input,	0,		udp6_ctlinput,	ip6_ctloutput,
   udp6_usrreq,	0,
   0,		0,		0,
   udp_sysctl,
 },
-{ SOCK_STREAM,	&inet6domain,	IPPROTO_TCP,	PR_CONNREQUIRED | PR_WANTRCVD,
+{ SOCK_STREAM,	&inet6domain,	IPPROTO_TCP,	PR_CONNREQUIRED|PR_WANTRCVD|PR_ABRTACPTDIS,
   tcp6_input,	0,		tcp6_ctlinput,	tcp_ctloutput,
   tcp6_usrreq,
 #ifdef INET	/* don't call initialization and timeout routines twice */
@@ -138,12 +138,12 @@ struct ip6protosw inet6sw[] = {
 #endif
   tcp_sysctl,
 },
-{ SOCK_RAW,	&inet6domain,	IPPROTO_RAW,	PR_ATOMIC | PR_ADDR,
+{ SOCK_RAW,	&inet6domain,	IPPROTO_RAW,	PR_ATOMIC|PR_ADDR,
   rip6_input,	rip6_output,	rip6_ctlinput,	rip6_ctloutput,
   rip6_usrreq,
   0,		0,		0,		0,
 },
-{ SOCK_RAW,	&inet6domain,	IPPROTO_ICMPV6,	PR_ATOMIC | PR_ADDR,
+{ SOCK_RAW,	&inet6domain,	IPPROTO_ICMPV6,	PR_ATOMIC|PR_ADDR,
   icmp6_input,	rip6_output,	0,		rip6_ctloutput,
   rip6_usrreq,
   icmp6_init,	icmp6_fasttimo,	0,		0,
@@ -219,7 +219,7 @@ struct ip6protosw inet6sw[] = {
   0,            0,              0,              0,
 },
 /* raw wildcard */
-{ SOCK_RAW,	&inet6domain,	0,		PR_ATOMIC | PR_ADDR,
+{ SOCK_RAW,	&inet6domain,	0,		PR_ATOMIC|PR_ADDR,
   rip6_input,	rip6_output,	0,		rip6_ctloutput,
   rip6_usrreq, rip6_init,
   0,		0,		0,

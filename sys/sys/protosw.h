@@ -1,4 +1,4 @@
-/*	$OpenBSD: protosw.h,v 1.4 2000/09/25 09:41:02 provos Exp $	*/
+/*	$OpenBSD: protosw.h,v 1.5 2001/05/25 22:08:22 itojun Exp $	*/
 /*	$NetBSD: protosw.h,v 1.10 1996/04/09 20:55:32 cgd Exp $	*/
 
 /*-
@@ -112,6 +112,8 @@ struct protosw {
 #define	PR_CONNREQUIRED	0x04		/* connection required by protocol */
 #define	PR_WANTRCVD	0x08		/* want PRU_RCVD calls */
 #define	PR_RIGHTS	0x10		/* passes capabilities */
+#define	PR_ABRTACPTDIS	0x20		/* abort on accept(2) to disconnected
+					   socket */
 
 /*
  * The arguments to usrreq are:

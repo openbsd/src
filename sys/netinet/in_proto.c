@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_proto.c,v 1.25 2000/01/27 08:09:08 angelos Exp $	*/
+/*	$OpenBSD: in_proto.c,v 1.26 2001/05/25 22:08:23 itojun Exp $	*/
 /*	$NetBSD: in_proto.c,v 1.14 1996/02/18 18:58:32 christos Exp $	*/
 
 /*
@@ -178,7 +178,7 @@ struct protosw inetsw[] = {
   udp_usrreq,
   udp_init,	0,		0,		0,		udp_sysctl
 },
-{ SOCK_STREAM,	&inetdomain,	IPPROTO_TCP,	PR_CONNREQUIRED|PR_WANTRCVD,
+{ SOCK_STREAM,	&inetdomain,	IPPROTO_TCP,	PR_CONNREQUIRED|PR_WANTRCVD|PR_ABRTACPTDIS,
   tcp_input,	0,		tcp_ctlinput,	tcp_ctloutput,
   tcp_usrreq,
   tcp_init,	tcp_fasttimo,	tcp_slowtimo,	tcp_drain,	tcp_sysctl
@@ -226,7 +226,7 @@ struct protosw inetsw[] = {
   igmp_init,	igmp_fasttimo,	igmp_slowtimo,	0,
 },
 #ifdef TPIP
-{ SOCK_SEQPACKET,&inetdomain,	IPPROTO_TP,	PR_CONNREQUIRED|PR_WANTRCVD,
+{ SOCK_SEQPACKET,&inetdomain,	IPPROTO_TP,	PR_CONNREQUIRED|PR_WANTRCVD|PR_ABRTACPTDIS,
   tpip_input,	0,		tpip_ctlinput,	tp_ctloutput,
   tp_usrreq,
   tp_init,	0,		tp_slowtimo,	tp_drain,

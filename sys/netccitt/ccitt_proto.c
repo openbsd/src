@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccitt_proto.c,v 1.2 1996/03/04 07:36:20 niklas Exp $	*/
+/*	$OpenBSD: ccitt_proto.c,v 1.3 2001/05/25 22:08:23 itojun Exp $	*/
 /*	$NetBSD: ccitt_proto.c,v 1.6 1996/02/13 22:04:21 christos Exp $	*/
 
 /*
@@ -85,7 +85,7 @@ struct protosw ccittsw[] = {
 	hd_init,	0,	 	hd_timer,	0,
 },
 #endif
-{	SOCK_STREAM,	DOMAIN,		CCITTPROTO_X25,	PR_CONNREQUIRED|PR_ATOMIC|PR_WANTRCVD,
+{	SOCK_STREAM,	DOMAIN,		CCITTPROTO_X25,	PR_CONNREQUIRED|PR_ATOMIC|PR_WANTRCVD|PR_ABRTACPTDIS,
 	pk_input,	0,		pk_ctlinput,	pk_ctloutput,
 	pk_usrreq,
 	pk_init,	0,		pk_timer,	0,

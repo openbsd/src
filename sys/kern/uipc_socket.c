@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.33 2001/03/06 19:42:43 provos Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.34 2001/05/25 22:08:23 itojun Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -266,7 +266,8 @@ soaccept(so, nam)
 	if ((so->so_state & SS_NOFDREF) == 0)
 		panic("soaccept: !NOFDREF");
 	so->so_state &= ~SS_NOFDREF;
-	if ((so->so_state & SS_ISDISCONNECTED) == 0)
+	if ((so->so_state & SS_ISDISCONNECTED) == 0 ||
+	    (so->so_proto->pr_flags & PR_ABRTACPTDIS) == 0)
 		error = (*so->so_proto->pr_usrreq)(so, PRU_ACCEPT, NULL,
 		    nam, NULL);
 	else

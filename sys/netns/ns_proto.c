@@ -1,4 +1,4 @@
-/*	$OpenBSD: ns_proto.c,v 1.2 1996/03/04 08:20:31 niklas Exp $	*/
+/*	$OpenBSD: ns_proto.c,v 1.3 2001/05/25 22:08:25 itojun Exp $	*/
 /*	$NetBSD: ns_proto.c,v 1.6 1996/02/13 22:14:08 christos Exp $	*/
 
 /*
@@ -74,12 +74,12 @@ struct protosw nssw[] = {
   idp_usrreq,
   0,		0,		0,		0,
 },
-{ SOCK_STREAM,	&nsdomain,	NSPROTO_SPP,	PR_CONNREQUIRED|PR_WANTRCVD,
+{ SOCK_STREAM,	&nsdomain,	NSPROTO_SPP,	PR_CONNREQUIRED|PR_WANTRCVD|PR_ABRTACPTDIS,
   spp_input,	0,		spp_ctlinput,	spp_ctloutput,
   spp_usrreq,
   spp_init,	spp_fasttimo,	spp_slowtimo,	0,
 },
-{ SOCK_SEQPACKET,&nsdomain,	NSPROTO_SPP,	PR_CONNREQUIRED|PR_WANTRCVD|PR_ATOMIC,
+{ SOCK_SEQPACKET,&nsdomain,	NSPROTO_SPP,	PR_CONNREQUIRED|PR_WANTRCVD|PR_ATOMIC|PR_ABRTACPTDIS,
   spp_input,	0,		spp_ctlinput,	spp_ctloutput,
   spp_usrreq_sp,
   0,		0,		0,		0,

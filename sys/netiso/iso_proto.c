@@ -1,4 +1,4 @@
-/*	$OpenBSD: iso_proto.c,v 1.2 1996/03/04 10:35:38 mickey Exp $	*/
+/*	$OpenBSD: iso_proto.c,v 1.3 2001/05/25 22:08:25 itojun Exp $	*/
 /*	$NetBSD: iso_proto.c,v 1.6 1996/02/13 22:10:21 christos Exp $	*/
 
 /*-
@@ -149,14 +149,14 @@ struct protosw  isosw[] = {
 	},
 
 	/* ISOPROTO_TP */
-	{SOCK_SEQPACKET, &isodomain, ISOPROTO_TP, PR_CONNREQUIRED | PR_WANTRCVD,
+	{SOCK_SEQPACKET, &isodomain, ISOPROTO_TP, PR_CONNREQUIRED | PR_WANTRCVD | PR_ABRTACPTDIS,
 		tpclnp_input, 0, tpclnp_ctlinput, tp_ctloutput,
 		tp_usrreq,
 		tp_init, tp_fasttimo, tp_slowtimo, tp_drain,
 	},
 
 #ifdef TUBA
-	{SOCK_STREAM, &isodomain, ISOPROTO_TCP, PR_CONNREQUIRED | PR_WANTRCVD,
+	{SOCK_STREAM, &isodomain, ISOPROTO_TCP, PR_CONNREQUIRED | PR_WANTRCVD | PR_ABRTACPTDIS,
 		tuba_tcpinput, 0, 0, tuba_ctloutput,
 		tuba_usrreq,
 		tuba_init, tuba_fasttimo, tuba_fasttimo, 0
@@ -165,7 +165,7 @@ struct protosw  isosw[] = {
 
 #ifdef TPCONS
 	/* ISOPROTO_TP */
-	{SOCK_SEQPACKET, &isodomain, ISOPROTO_TP0, PR_CONNREQUIRED | PR_WANTRCVD,
+	{SOCK_SEQPACKET, &isodomain, ISOPROTO_TP0, PR_CONNREQUIRED | PR_WANTRCVD | PR_ABRTACPTDIS,
 		tpcons_input, 0, 0, tp_ctloutput,
 		tp_usrreq,
 		cons_init, 0, 0, 0,

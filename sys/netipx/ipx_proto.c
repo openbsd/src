@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipx_proto.c,v 1.4 2000/01/13 06:48:21 fgsch Exp $	*/
+/*	$OpenBSD: ipx_proto.c,v 1.5 2001/05/25 22:08:24 itojun Exp $	*/
 
 /*-
  *
@@ -67,12 +67,12 @@ struct protosw ipxsw[] = {
   ipx_usrreq,
   0,		0,		0,		0,	ipx_sysctl
 },
-{ SOCK_STREAM,	&ipxdomain,	IPXPROTO_SPX,	PR_CONNREQUIRED|PR_WANTRCVD,
+{ SOCK_STREAM,	&ipxdomain,	IPXPROTO_SPX,	PR_CONNREQUIRED|PR_WANTRCVD|PR_ABRTACPTDIS,
   spx_input,	0,		spx_ctlinput,	spx_ctloutput,
   spx_usrreq,
   spx_init,	spx_fasttimo,	spx_slowtimo,	0,	spx_sysctl
 },
-{ SOCK_SEQPACKET,&ipxdomain,	IPXPROTO_SPX,	PR_CONNREQUIRED|PR_WANTRCVD|PR_ATOMIC,
+{ SOCK_SEQPACKET,&ipxdomain,	IPXPROTO_SPX,	PR_CONNREQUIRED|PR_WANTRCVD|PR_ATOMIC|PR_ABRTACPTDIS,
   spx_input,	0,		spx_ctlinput,	spx_ctloutput,
   spx_usrreq_sp,
   0,		0,		0,		0,	spx_sysctl
