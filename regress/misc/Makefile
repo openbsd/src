@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile,v 1.1 2002/12/04 05:02:15 art Exp $
+#	$OpenBSD: Makefile,v 1.2 2005/03/26 17:21:25 kettenis Exp $
 
-SUBDIR+= exceptions
+SUBDIR+= exceptions objc
 
 install:
 
