@@ -1,6 +1,7 @@
-#	$OpenBSD: perform.c,v 1.1 1996/06/04 07:56:08 niklas Exp $
+/*	$OpenBSD: perform.c,v 1.2 1996/06/04 08:43:38 niklas Exp $	*/
+
 #ifndef lint
-static const char *rcsid = "$OpenBSD: perform.c,v 1.1 1996/06/04 07:56:08 niklas Exp $";
+static const char *rcsid = "$OpenBSD: perform.c,v 1.2 1996/06/04 08:43:38 niklas Exp $";
 #endif
 
 /*

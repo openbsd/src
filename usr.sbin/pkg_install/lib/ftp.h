@@ -1,4 +1,5 @@
-#	$OpenBSD: ftp.h,v 1.1 1996/06/04 07:56:12 niklas Exp $
+/*     $OpenBSD: ftp.h,v 1.2 1996/06/04 08:43:43 niklas Exp $	*/
+
 #ifndef _FTP_H_INCLUDE
 #define _FTP_H_INCLUDE
 
