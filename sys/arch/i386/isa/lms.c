@@ -1,4 +1,4 @@
-/*	$NetBSD: lms.c,v 1.26 1996/05/12 23:12:11 mycroft Exp $	*/
+/*	$NetBSD: lms.c,v 1.30 1996/10/21 22:27:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -37,7 +37,7 @@
 #include <sys/device.h>
 
 #include <machine/cpu.h>
-#include <machine/bus.old.h>
+#include <machine/bus.h>
 #include <machine/intr.h>
 #include <machine/mouse.h>
 #include <machine/conf.h>
@@ -58,8 +58,8 @@ struct lms_softc {		/* driver status information */
 	struct device sc_dev;
 	void *sc_ih;
 
-	bus_chipset_tag_t sc_bc;	/* bus chipset identifier */
-	bus_io_handle_t sc_ioh;		/* bus i/o handle */
+	bus_space_tag_t sc_iot;		/* bus i/o space identifier */
+	bus_space_handle_t sc_ioh;	/* bus i/o handle */
 
 	struct clist sc_q;
 	struct selinfo sc_rsel;
@@ -90,37 +90,37 @@ lmsprobe(parent, match, aux)
 	void *match, *aux;
 {
 	struct isa_attach_args *ia = aux;
-	bus_chipset_tag_t bc = ia->ia_bc;
-	bus_io_handle_t ioh;
+	bus_space_tag_t iot = ia->ia_iot;
+	bus_space_handle_t ioh;
 	int rv;
 	
 	/* Map the i/o space. */
-	if (bus_io_map(bc, ia->ia_iobase, LMS_NPORTS, &ioh))
+	if (bus_space_map(iot, ia->ia_iobase, LMS_NPORTS, 0, &ioh))
 		return 0;
 
 	rv = 0;
 
 	/* Configure and check for port present. */
-	bus_io_write_1(bc, ioh, LMS_CONFIG, 0x91);
+	bus_space_write_1(iot, ioh, LMS_CONFIG, 0x91);
 	delay(10);
-	bus_io_write_1(bc, ioh, LMS_SIGN, 0x0c);
+	bus_space_write_1(iot, ioh, LMS_SIGN, 0x0c);
 	delay(10);
-	if (bus_io_read_1(bc, ioh, LMS_SIGN) != 0x0c)
+	if (bus_space_read_1(iot, ioh, LMS_SIGN) != 0x0c)
 		goto out;
-	bus_io_write_1(bc, ioh, LMS_SIGN, 0x50);
+	bus_space_write_1(iot, ioh, LMS_SIGN, 0x50);
 	delay(10);
-	if (bus_io_read_1(bc, ioh, LMS_SIGN) != 0x50)
+	if (bus_space_read_1(iot, ioh, LMS_SIGN) != 0x50)
 		goto out;
 
 	/* Disable interrupts. */
-	bus_io_write_1(bc, ioh, LMS_CNTRL, 0x10);
+	bus_space_write_1(iot, ioh, LMS_CNTRL, 0x10);
 
 	rv = 1;
 	ia->ia_iosize = LMS_NPORTS;
 	ia->ia_msize = 0;
 
 out:
-	bus_io_unmap(bc, ioh, LMS_NPORTS);
+	bus_space_unmap(iot, ioh, LMS_NPORTS);
 	return rv;
 }
 
@@ -135,8 +135,9 @@ lmsattach(parent, self, aux)
 	printf("\n");
 
 	/* Other initialization was done by lmsprobe. */
-	sc->sc_bc = ia->ia_bc;
-	if (bus_io_map(sc->sc_bc, ia->ia_iobase, LMS_NPORTS, &sc->sc_ioh))
+	sc->sc_iot = ia->ia_iot;
+	if (bus_space_map(sc->sc_iot, ia->ia_iobase, LMS_NPORTS, 0,
+	    &sc->sc_ioh))
 		panic("lmsattach: couldn't map I/O ports");
 
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_PULSE,
@@ -170,7 +171,7 @@ lmsopen(dev, flag, mode, p)
 	sc->sc_x = sc->sc_y = 0;
 
 	/* Enable interrupts. */
-	bus_io_write_1(sc->sc_bc, sc->sc_ioh, LMS_CNTRL, 0);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, LMS_CNTRL, 0);
 
 	return 0;
 }
@@ -185,7 +186,7 @@ lmsclose(dev, flag, mode, p)
 	struct lms_softc *sc = lms_cd.cd_devs[LMSUNIT(dev)];
 
 	/* Disable interrupts. */
-	bus_io_write_1(sc->sc_bc, sc->sc_ioh, LMS_CNTRL, 0x10);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, LMS_CNTRL, 0x10);
 
 	sc->sc_state &= ~LMS_OPEN;
 
@@ -300,8 +301,8 @@ lmsintr(arg)
 	void *arg;
 {
 	struct lms_softc *sc = arg;
-	bus_chipset_tag_t bc = sc->sc_bc;
-	bus_io_handle_t ioh = sc->sc_ioh;
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
 	u_char hi, lo, buttons, changed;
 	char dx, dy;
 	u_char buffer[5];
@@ -310,22 +311,22 @@ lmsintr(arg)
 		/* Interrupts are not expected. */
 		return 0;
 
-	bus_io_write_1(bc, ioh, LMS_CNTRL, 0xab);
-	hi = bus_io_read_1(bc, ioh, LMS_DATA);
-	bus_io_write_1(bc, ioh, LMS_CNTRL, 0x90);
-	lo = bus_io_read_1(bc, ioh, LMS_DATA);
+	bus_space_write_1(iot, ioh, LMS_CNTRL, 0xab);
+	hi = bus_space_read_1(iot, ioh, LMS_DATA);
+	bus_space_write_1(iot, ioh, LMS_CNTRL, 0x90);
+	lo = bus_space_read_1(iot, ioh, LMS_DATA);
 	dx = ((hi & 0x0f) << 4) | (lo & 0x0f);
 	/* Bounding at -127 avoids a bug in XFree86. */
 	dx = (dx == -128) ? -127 : dx;
 
-	bus_io_write_1(bc, ioh, LMS_CNTRL, 0xf0);
-	hi = bus_io_read_1(bc, ioh, LMS_DATA);
-	bus_io_write_1(bc, ioh, LMS_CNTRL, 0xd0);
-	lo = bus_io_read_1(bc, ioh, LMS_DATA);
+	bus_space_write_1(iot, ioh, LMS_CNTRL, 0xf0);
+	hi = bus_space_read_1(iot, ioh, LMS_DATA);
+	bus_space_write_1(iot, ioh, LMS_CNTRL, 0xd0);
+	lo = bus_space_read_1(iot, ioh, LMS_DATA);
 	dy = ((hi & 0x0f) << 4) | (lo & 0x0f);
 	dy = (dy == -128) ? 127 : -dy;
 
-	bus_io_write_1(bc, ioh, LMS_CNTRL, 0);
+	bus_space_write_1(iot, ioh, LMS_CNTRL, 0);
 
 	buttons = (~hi >> 5) & 0x07;
 	changed = ((buttons ^ sc->sc_status) & 0x07) << 3;

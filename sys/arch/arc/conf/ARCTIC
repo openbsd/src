@@ -1,4 +1,4 @@
-#	$OpenBSD: ARCTIC,v 1.4 1996/11/12 08:44:08 niklas Exp $
+#	$OpenBSD: ARCTIC,v 1.5 1996/11/28 23:35:39 niklas Exp $
 #
 #	Generic configuration file for MIPS R4x00 ARC Systems
 #
@@ -82,10 +82,10 @@ isa*	at isabr?
 clock0	at isa? port 0x70 irq 0
 
 pc0     at isa? port 0x60 irq 1         # generic PC console device
-ace0	at isa? port 0x3f8 irq 4
-ace1	at isa? port 0x2f8 irq 3
-ace2	at isa? port 0x3e8 irq 4
-ace3	at isa? port 0x2e8 irq 3
+com0	at isa? port 0x3f8 irq 4
+com1	at isa? port 0x2f8 irq 3
+com2	at isa? port 0x3e8 irq 4
+com3	at isa? port 0x2e8 irq 3
 
 wdc0	at isa? port 0x1f0 irq 14	# ST506, ESDI, and IDE controllers
 wdc1	at isa? port 0x170 irq 15

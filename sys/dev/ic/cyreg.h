@@ -1,4 +1,4 @@
-/*	$OpenBSD: cyreg.h,v 1.1 1996/07/27 07:20:03 deraadt Exp $	*/
+/*	$OpenBSD: cyreg.h,v 1.2 1996/11/28 23:27:49 niklas Exp $	*/
 /*	$FreeBSD: cyreg.h,v 1.1 1995/07/05 12:15:51 bde Exp $	*/
 
 /*-
@@ -89,22 +89,22 @@
 /*
  * read/write cd1400 registers (when cy_port-structure is available)
  */
-#define cd_read_reg(cy,reg)  bus_mem_read_1(cy->cy_bc, cy->cy_memh, \
+#define cd_read_reg(cy,reg)  bus_space_read_1(cy->cy_memt, cy->cy_memh, \
 			     cy->cy_chip_offs+(((reg<<1))<<cy->cy_bustype))
 
-#define cd_write_reg(cy,reg,val) bus_mem_write_1(cy->cy_bc, cy->cy_memh, \
+#define cd_write_reg(cy,reg,val) bus_space_write_1(cy->cy_memt, cy->cy_memh, \
 			  cy->cy_chip_offs+(((reg<<1))<<cy->cy_bustype), \
 			  (val))
 
 /*
  * read/write cd1400 registers (when sc_softc-structure is available)
  */
-#define cd_read_reg_sc(sc,chip,reg) bus_mem_read_1(sc->sc_bc, \
+#define cd_read_reg_sc(sc,chip,reg) bus_space_read_1(sc->sc_memt, \
 				 sc->sc_memh, \
 				 sc->sc_cd1400_offs[chip]+\
 				 (((reg<<1))<<sc->sc_bustype))
 
-#define cd_write_reg_sc(sc,chip,reg,val) bus_mem_write_1(sc->sc_bc, \
+#define cd_write_reg_sc(sc,chip,reg,val) bus_space_write_1(sc->sc_memt, \
 				 sc->sc_memh, \
 				 sc->sc_cd1400_offs[chip]+\
 				 (((reg<<1))<<sc->sc_bustype), \
@@ -119,8 +119,8 @@
 /* software state for one port */
 struct cy_port {
   int cy_port_num;
-  bus_chipset_tag_t cy_bc;
-  bus_mem_handle_t cy_memh;
+  bus_space_tag_t cy_memt;
+  bus_space_handle_t cy_memh;
   int cy_chip_offs;
   int cy_bustype;
   struct tty *cy_tty;
@@ -151,8 +151,8 @@ struct cy_port {
 struct cy_softc {
   struct device sc_dev;
   void *sc_ih;
-  bus_chipset_tag_t sc_bc;
-  bus_mem_handle_t sc_memh;
+  bus_space_tag_t sc_memt;
+  bus_space_handle_t sc_memh;
   int sc_bustype;
   int sc_nports; /* number of ports on this card */
   int sc_cd1400_offs[CY_MAX_CD1400s];

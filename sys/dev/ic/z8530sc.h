@@ -1,5 +1,5 @@
-/*	$OpenBSD: z8530sc.h,v 1.4 1996/10/31 01:01:42 niklas Exp $	*/
-/*	$NetBSD: z8530sc.h,v 1.3 1996/05/17 19:29:37 gwr Exp $	*/
+/*	$OpenBSD: z8530sc.h,v 1.5 1996/11/28 23:27:56 niklas Exp $	*/
+/*	$NetBSD: z8530sc.h,v 1.4 1996/10/16 20:34:54 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -95,7 +95,7 @@ struct zs_chanstate {
 
 	u_char	cs_heldchange;		/* change pending (creg != preg) */
 	u_char	cs_rr0;			/* last rr0 processed */
-	u_char	cs_rr0_new;		/* rr0 saved in status interrupt. */
+	u_char	cs_rr0_delta;		/* rr0 changes at status intr. */
 
 	char	cs_softreq;		/* need soft interrupt call */
 };

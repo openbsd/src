@@ -1,4 +1,4 @@
-/*	$OpenBSD: isabus.c,v 1.6 1996/11/23 21:45:33 kstailey Exp $	*/
+/*	$OpenBSD: isabus.c,v 1.7 1996/11/28 23:35:44 niklas Exp $	*/
 /*	$NetBSD: isa.c,v 1.33 1995/06/28 04:30:51 cgd Exp $	*/
 
 /*-
@@ -116,7 +116,6 @@ static int beeping;
 struct isabr_softc {
 	struct	device sc_dv;
 	struct	arc_isa_bus arc_isa_cs;
-	struct	arc_isa_busmap arc_isa_map;
 	struct	abus sc_bus;
 };
 
@@ -192,11 +191,10 @@ isabrattach(parent, self, aux)
 
 	sc->arc_isa_cs.ic_intr_establish = isabr_intr_establish;
 	sc->arc_isa_cs.ic_intr_disestablish = isabr_intr_disestablish;
-	sc->arc_isa_map.isa_io_base = (void *)isa_io_base;
-	sc->arc_isa_map.isa_mem_base = (void *)isa_mem_base;
 
 	iba.iba_busname = "isa";
-	iba.iba_bc = &sc->arc_isa_map;
+	iba.iba_iot = (bus_space_tag_t)isa_io_base;
+	iba.iba_memt = (bus_space_tag_t)isa_mem_base;
 	iba.iba_ic = &sc->arc_isa_cs;
 	config_found(self, &iba, isabrprint);
 }
@@ -210,7 +208,8 @@ isabrprint(aux, pnp)
 
         if (pnp)
                 printf("%s at %s", ca->ca_name, pnp);
-        printf(" isa_io_base 0x%lx isa_mem_base 0x%lx", isa_io_base, isa_mem_base);
+        printf(" isa_io_base 0x%lx isa_mem_base 0x%lx", isa_io_base,
+	    isa_mem_base);
         return (UNCONF);
 }
 

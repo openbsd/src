@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.10 1996/11/25 14:52:57 niklas Exp $ */
+/*	$OpenBSD: conf.c,v 1.11 1996/11/28 23:35:38 niklas Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)conf.c	8.2 (Berkeley) 11/14/93
- *      $Id: conf.c,v 1.10 1996/11/25 14:52:57 niklas Exp $
+ *      $Id: conf.c,v 1.11 1996/11/28 23:35:38 niklas Exp $
  */
 
 #include <sys/param.h>
@@ -101,7 +101,7 @@ int	nblkdev = sizeof (bdevsw) / sizeof (bdevsw[0]);
 	dev_init(c,n,tty), ttselect, dev_init(c,n,mmap), D_TTY }
 
 /* open, close, write, ioctl */
-#define	cdev_lpr_init(c,n) { \
+#define	cdev_lpt_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
 	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
 	0, seltrue, (dev_type_mmap((*))) enodev }
@@ -136,10 +136,10 @@ bdev_decl(fd);
 cdev_decl(vnd);
 #include "bpfilter.h"
 cdev_decl(bpf);
-#include "ace.h"
-cdev_decl(ace);
-#include "lpr.h"
-cdev_decl(lpr);
+#include "com.h"
+cdev_decl(com);
+#include "lpt.h"
+cdev_decl(lpt);
 cdev_decl(sd);
 #include "pc.h"
 cdev_decl(pc);
@@ -176,8 +176,8 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(NFDC,fd),	/* 13: Floppy disk */
 	cdev_pc_init(NPC,pc),		/* 14: builtin pc style console dev */
 	cdev_mouse_init(1,pms),		/* 15: builtin PS2 style mouse */
-	cdev_lpr_init(NLPR,lpr),	/* 16: lpr parallel printer interface */
-	cdev_tty_init(NACE,ace),	/* 17: ace 16C450 serial interface */
+	cdev_lpt_init(NLPT,lpt),	/* 16: Parallel printer interface */
+	cdev_tty_init(NCOM,com),	/* 17: 16C450 serial interface */
 	cdev_disk_init(NWDC,wd),	/* 18: ST506/ESDI/IDE disk */
 	cdev_disk_init(NACD,acd),	/* 19: ATAPI CD-ROM */
 	cdev_tty_init(NPTY,pts),	/* 20: pseudo-tty slave */
@@ -346,14 +346,14 @@ blktochr(dev)
 #include <dev/cons.h>
 
 cons_decl(pc);
-cons_decl(ace);
+cons_decl(com);
 
 struct	consdev constab[] = {
 #if NPC + NVT > 0
 	cons_init(pc),
 #endif
 #if NACE > 0
-	cons_init(ace),
+	cons_init(com),
 #endif
 	{ 0 },
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_eisa.c,v 1.6 1996/05/14 22:21:05 thorpej Exp $	*/
+/*	$NetBSD: if_ep_eisa.c,v 1.9 1996/10/21 22:31:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Herb Peyerl <hpeyerl@beer.org>
@@ -61,7 +61,7 @@
 #endif
 
 #include <machine/cpu.h>
-#include <machine/bus.old.h>
+#include <machine/bus.h>
 #include <machine/intr.h>
 
 #include <dev/ic/elink3var.h>
@@ -107,8 +107,8 @@ ep_eisa_attach(parent, self, aux)
 {
 	struct ep_softc *sc = (void *)self;
 	struct eisa_attach_args *ea = aux;
-	bus_chipset_tag_t bc = ea->ea_bc;
-	bus_io_handle_t ioh;
+	bus_space_tag_t iot = ea->ea_iot;
+	bus_space_handle_t ioh;
 	u_int16_t k, conn = 0;
 	eisa_chipset_tag_t ec = ea->ea_ec;
 	eisa_intr_handle_t ih;
@@ -116,29 +116,30 @@ ep_eisa_attach(parent, self, aux)
 	u_int irq;
 
 	/* Map i/o space. */
-	if (bus_io_map(bc, EISA_SLOT_ADDR(ea->ea_slot), EISA_SLOT_SIZE, &ioh))
+	if (bus_space_map(iot, EISA_SLOT_ADDR(ea->ea_slot),
+	    EISA_SLOT_SIZE, 0, &ioh))
 		panic("ep_eisa_attach: can't map i/o space");
 
 	sc->bustype = EP_BUS_EISA;
 	sc->sc_ioh = ioh;
-	sc->sc_bc = bc;
+	sc->sc_iot = iot;
 
 	/* Reset card. */
-	bus_io_write_1(bc, ioh, EISA_CONTROL, EISA_ENABLE | EISA_RESET);
+	bus_space_write_1(iot, ioh, EISA_CONTROL, EISA_ENABLE | EISA_RESET);
 	delay(10);
-	bus_io_write_1(bc, ioh, EISA_CONTROL, EISA_ENABLE);
+	bus_space_write_1(iot, ioh, EISA_CONTROL, EISA_ENABLE);
 	/* Wait for reset? */
 	delay(1000);
 
 	/* XXX What is this doing?!  Reading the i/o address? */
-	k = bus_io_read_2(bc, ioh, EP_W0_ADDRESS_CFG);
+	k = bus_space_read_2(iot, ioh, EP_W0_ADDRESS_CFG);
 	k = (k & 0x1f) * 0x10 + 0x200;
 
 	/* Read the IRQ from the card. */
-	irq = bus_io_read_2(bc, ioh, EP_W0_RESOURCE_CFG) >> 12;
+	irq = bus_space_read_2(iot, ioh, EP_W0_RESOURCE_CFG) >> 12;
 
 	GO_WINDOW(0);
-	conn = bus_io_read_2(bc, ioh, EP_W0_CONFIG_CTRL);
+	conn = bus_space_read_2(iot, ioh, EP_W0_CONFIG_CTRL);
 
 	if (strcmp(ea->ea_idstring, "TCM5091") == 0)
 		model = EISA_PRODUCT_TCM5091;

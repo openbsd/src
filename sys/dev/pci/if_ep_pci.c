@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_pci.c,v 1.7 1996/05/13 00:03:15 mycroft Exp $	*/
+/*	$NetBSD: if_ep_pci.c,v 1.13 1996/10/21 22:56:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Herb Peyerl <hpeyerl@beer.org>
@@ -60,7 +60,7 @@
 #endif
 
 #include <machine/cpu.h>
-#include <machine/bus.old.h>
+#include <machine/bus.h>
 #include <machine/intr.h>
 
 #include <dev/ic/elink3var.h>
@@ -96,13 +96,13 @@ ep_pci_match(parent, match, aux)
 
 	switch (PCI_PRODUCT(pa->pa_id)) {
 	case PCI_PRODUCT_3COM_3C590:
-	case PCI_PRODUCT_3COM_3C595:
-	case PCI_PRODUCT_3COM_3C595T:
-	case PCI_PRODUCT_3COM_3C595TM:
-	case PCI_PRODUCT_3COM_3C900:
-	case PCI_PRODUCT_3COM_3C900T:
-	case PCI_PRODUCT_3COM_3C905:
-	case PCI_PRODUCT_3COM_3C905T:
+	case PCI_PRODUCT_3COM_3C595MII:
+	case PCI_PRODUCT_3COM_3C595T4:
+	case PCI_PRODUCT_3COM_3C595TX:
+	case PCI_PRODUCT_3COM_3C900COMBO:
+	case PCI_PRODUCT_3COM_3C900TPO:
+	case PCI_PRODUCT_3COM_3C905T4:
+	case PCI_PRODUCT_3COM_3C905TX:
 		break;
 	default:
 		return 0;
@@ -119,9 +119,9 @@ ep_pci_attach(parent, self, aux)
 	struct ep_softc *sc = (void *)self;
 	struct pci_attach_args *pa = aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
-	bus_chipset_tag_t bc = pa->pa_bc;
-	bus_io_addr_t iobase;
-	bus_io_size_t iosize;
+	bus_space_tag_t iot = pa->pa_iot;
+	bus_addr_t iobase;
+	bus_size_t iosize;
 	pci_intr_handle_t ih;
 	u_short conn = 0;
 	pcireg_t i;
@@ -133,12 +133,12 @@ ep_pci_attach(parent, self, aux)
 		return;
 	}
 
-	if (bus_io_map(bc, iobase, iosize, &sc->sc_ioh)) {
+	if (bus_space_map(iot, iobase, iosize, 0, &sc->sc_ioh)) {
 		printf(": can't map i/o space\n");
 		return;
 	}
 
-	sc->sc_bc = bc;
+	sc->sc_iot = iot;
 	sc->bustype = EP_BUS_PCI;
 
 	i = pci_conf_read(pc, pa->pa_tag, PCI_CONN);
@@ -160,21 +160,22 @@ ep_pci_attach(parent, self, aux)
 	case PCI_PRODUCT_3COM_3C590:
 		model = "3Com 3C590 Ethernet";
 		break;
-	case PCI_PRODUCT_3COM_3C595:
-	case PCI_PRODUCT_3COM_3C595T:
-	case PCI_PRODUCT_3COM_3C595TM:
+	case PCI_PRODUCT_3COM_3C595MII:
+	case PCI_PRODUCT_3COM_3C595T4:
+	case PCI_PRODUCT_3COM_3C595TX:
 		model = "3Com 3C595 Ethernet";
 		break;
-	case PCI_PRODUCT_3COM_3C900:
-	case PCI_PRODUCT_3COM_3C900T:
+	case PCI_PRODUCT_3COM_3C900COMBO:
+	case PCI_PRODUCT_3COM_3C900TPO:
 		model = "3Com 3C900 Ethernet";
 		break;
-	case PCI_PRODUCT_3COM_3C905:
-	case PCI_PRODUCT_3COM_3C905T:
+	case PCI_PRODUCT_3COM_3C905T4:
+	case PCI_PRODUCT_3COM_3C905TX:
 		model = "3Com 3C905 Ethernet";
 		break;
 	default:
 		model = "unknown model!";
+		break;
 	}
 
 	printf(": <%s> ", model);
@@ -204,6 +205,4 @@ ep_pci_attach(parent, self, aux)
 		return;
 	}
 	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
-
-	epstop(sc);
 }

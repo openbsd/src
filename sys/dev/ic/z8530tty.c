@@ -1,5 +1,5 @@
-/*	$OpenBSD: z8530tty.c,v 1.6 1996/06/18 10:23:03 deraadt Exp $ */
-/*	$NetBSD: z8530tty.c,v 1.8.4.2 1996/06/13 23:11:56 gwr Exp $	*/
+/*	$OpenBSD: z8530tty.c,v 1.7 1996/11/28 23:27:57 niklas Exp $ */
+/*	$NetBSD: z8530tty.c,v 1.13 1996/10/16 20:42:14 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -641,7 +641,7 @@ out:
 /*
  * Stop output, e.g., for ^S or output flush.
  */
-int
+void
 zsstop(tp, flag)
 	struct tty *tp;
 	int flag;
@@ -666,7 +666,6 @@ zsstop(tp, flag)
 			tp->t_state |= TS_FLUSH;
 	}
 	splx(s);
-	return (0);
 }
 
 /*
@@ -1068,7 +1067,15 @@ zstty_stint(cs)
 		zst->zst_tx_stopped = 1;
 	}
 
-	cs->cs_rr0_new = rr0;
+	/*
+	 * We have to accumulate status line changes here.
+	 * Otherwise, if we get multiple status interrupts
+	 * before the softint runs, we could fail to notice
+	 * some status line changes in the softint routine.
+	 * Fix from Bill Studenmund, October 1996.
+	 */
+	cs->cs_rr0_delta |= (cs->cs_rr0 ^ rr0);
+	cs->cs_rr0 = rr0;
 	zst->zst_st_check = 1;
 
 	/* Ask for softint() call. */
@@ -1183,9 +1190,9 @@ zstty_softint(cs)
 	if (zst->zst_st_check) {
 		zst->zst_st_check = 0;
 
-		rr0 = cs->cs_rr0_new;
-		delta = rr0 ^ cs->cs_rr0;
-		cs->cs_rr0 = rr0;
+		rr0 = cs->cs_rr0;
+		delta = cs->cs_rr0_delta;
+		cs->cs_rr0_delta = 0;
 		if (delta & ZSRR0_DCD) {
 			c = ((rr0 & ZSRR0_DCD) != 0);
 			if (line->l_modem(tp, c) == 0)

@@ -1,5 +1,5 @@
-/*	$OpenBSD: ncr.c,v 1.19 1996/11/23 21:47:04 kstailey Exp $	*/
-/*	$NetBSD: ncr.c,v 1.35.4.1 1996/06/03 20:32:17 cgd Exp $	*/
+/*	$OpenBSD: ncr.c,v 1.20 1996/11/28 23:28:08 niklas Exp $	*/
+/*	$NetBSD: ncr.c,v 1.48 1996/10/25 21:33:33 cgd Exp $	*/
 
 /**************************************************************************
 **
@@ -166,15 +166,10 @@
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 #ifdef _KERNEL
 #define KERNEL
+#endif
+#endif
 
-/*
- * Normally found in the userland header stddef.h, which isn't available.
- */
 #define	offsetof(type, member)	((size_t)(&((type *)0)->member))
-#endif
-#else
-#include <stddef.h>
-#endif
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -206,7 +201,7 @@
 #include <pci/ncrreg.h>
 #else
 #include <sys/device.h>
-#include <machine/bus.old.h>
+#include <machine/bus.h>
 #include <machine/intr.h>
 #include <dev/pci/ncr_reg.h>
 #include <dev/pci/pcireg.h>
@@ -221,7 +216,8 @@
 
 #if (defined(__NetBSD__) || defined(__OpenBSD__)) && defined(__alpha__)
 /* XXX XXX NEED REAL DMA MAPPING SUPPORT XXX XXX */
-#define	vtophys(va)	__alpha_bus_XXX_dmamap(np->sc_bc, (void *)(va))
+#undef vtophys
+#define	vtophys(va)	alpha_XXX_dmamap((vm_offset_t)(va))
 #endif
 
 /*==========================================================
@@ -270,6 +266,7 @@
 **----------------------------------------------------------
 */
 
+#undef assert
 #define	assert(expression) { \
 	if (!(expression)) { \
 		(void)printf(\
@@ -293,44 +290,44 @@
 #define	INB(r) \
     INB_OFF(offsetof(struct ncr_reg, r))
 #define	INB_OFF(o) \
-    bus_io_read_1 (np->sc_bc, np->sc_ioh, (o))
+    bus_space_read_1 (np->sc_memt, np->sc_bah, (o))
 #define	INW(r) \
-    bus_io_read_2 (np->sc_bc, np->sc_ioh, offsetof(struct ncr_reg, r))
+    bus_space_read_2 (np->sc_memt, np->sc_bah, offsetof(struct ncr_reg, r))
 #define	INL(r) \
     INL_OFF(offsetof(struct ncr_reg, r))
 #define	INL_OFF(o) \
-    bus_io_read_4 (np->sc_bc, np->sc_ioh, (o))
+    bus_space_read_4 (np->sc_memt, np->sc_bah, (o))
 
 #define	OUTB(r, val) \
-    bus_io_write_1 (np->sc_bc, np->sc_ioh, offsetof(struct ncr_reg, r), (val))
+    bus_space_write_1 (np->sc_memt, np->sc_bah, offsetof(struct ncr_reg, r), (val))
 #define	OUTW(r, val) \
-    bus_io_write_2 (np->sc_bc, np->sc_ioh, offsetof(struct ncr_reg, r), (val))
+    bus_space_write_2 (np->sc_memt, np->sc_bah, offsetof(struct ncr_reg, r), (val))
 #define	OUTL(r, val) \
     OUTL_OFF(offsetof(struct ncr_reg, r), (val))
 #define	OUTL_OFF(o, val) \
-    bus_io_write_4 (np->sc_bc, np->sc_ioh, (o), (val))
+    bus_space_write_4 (np->sc_memt, np->sc_bah, (o), (val))
 
 #else
 
 #define	INB(r) \
     INB_OFF(offsetof(struct ncr_reg, r))
 #define	INB_OFF(o) \
-    bus_mem_read_1 (np->sc_bc, np->sc_memh, (o))
+    bus_space_read_1 (np->sc_memt, np->sc_bah, (o))
 #define	INW(r) \
-    bus_mem_read_2 (np->sc_bc, np->sc_memh, offsetof(struct ncr_reg, r))
+    bus_space_read_2 (np->sc_memt, np->sc_bah, offsetof(struct ncr_reg, r))
 #define	INL(r) \
     INL_OFF(offsetof(struct ncr_reg, r))
 #define	INL_OFF(o) \
-    bus_mem_read_4 (np->sc_bc, np->sc_memh, (o))
+    bus_space_read_4 (np->sc_memt, np->sc_bah, (o))
 
 #define	OUTB(r, val) \
-    bus_mem_write_1 (np->sc_bc, np->sc_memh, offsetof(struct ncr_reg, r), (val))
+    bus_space_write_1 (np->sc_memt, np->sc_bah, offsetof(struct ncr_reg, r), (val))
 #define	OUTW(r, val) \
-    bus_mem_write_2 (np->sc_bc, np->sc_memh, offsetof(struct ncr_reg, r), (val))
+    bus_space_write_2 (np->sc_memt, np->sc_bah, offsetof(struct ncr_reg, r), (val))
 #define	OUTL(r, val) \
     OUTL_OFF(offsetof(struct ncr_reg, r), (val))
 #define	OUTL_OFF(o, val) \
-    bus_mem_write_4 (np->sc_bc, np->sc_memh, (o), (val))
+    bus_space_write_4 (np->sc_memt, np->sc_bah, (o), (val))
 
 #endif
 
@@ -1006,13 +1003,9 @@ struct ncb {
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 	struct device sc_dev;
 	void *sc_ih;
-	bus_chipset_tag_t sc_bc;
+	bus_space_tag_t sc_memt;
 	pci_chipset_tag_t sc_pc;
-#ifdef NCR_IOMAPPED
-	bus_io_handle_t sc_ioh;
-#else /* !NCR_IOMAPPED */
-	bus_mem_handle_t sc_memh;
-#endif /* NCR_IOMAPPED */
+	bus_space_handle_t sc_bah;
 #else /* !__NetBSD__ */
 	int	unit;
 #endif /* __NetBSD__ */
@@ -1042,7 +1035,7 @@ struct ncb {
 	vm_offset_t     vaddr;
 	vm_offset_t     paddr;
 #else
-	bus_mem_addr_t	paddr;
+	bus_addr_t	paddr;
 #endif
 
 #if !(defined(__NetBSD__) || defined(__OpenBSD__))
@@ -1339,7 +1332,7 @@ static	void	ncr_attach	(pcici_t tag, int unit);
 
 #if 0
 static char ident[] =
-	"\n$NetBSD: ncr.c,v 1.35.4.1 1996/06/03 20:32:17 cgd Exp $\n";
+	"\n$NetBSD: ncr.c,v 1.48 1996/10/25 21:33:33 cgd Exp $\n";
 #endif
 
 static const u_long	ncr_version = NCR_VERSION	* 11
@@ -1487,8 +1480,11 @@ static char *ncr_name (ncb_p np)
  * Kernel variables referenced in the scripts.
  * THESE MUST ALL BE ALIGNED TO A 4-BYTE BOUNDARY.
  */
-static void *script_kvars[] =
-	{ (void *)&mono_time.tv_sec, (void *)&mono_time, (void *)&ncr_cache };
+static unsigned long script_kvars[] = {
+	(unsigned long)&mono_time.tv_sec,
+	(unsigned long)&mono_time,
+	(unsigned long)&ncr_cache,
+};
 
 static	struct script script0 = {
 /*--------------------------< START >-----------------------*/ {
@@ -3204,7 +3200,7 @@ static void ncr_script_copy_and_bind (struct script *script, ncb_p np)
 					    ((old & ~RELOC_MASK) >
 					     SCRIPT_KVAR_LAST))
 						panic("ncr KVAR out of range");
-					new = vtophys(script_kvars[old &
+					new = vtophys((void *)script_kvars[old &
 					    ~RELOC_MASK]);
 					break;
 				case 0:
@@ -3354,7 +3350,7 @@ static	char* ncr_probe (pcici_t tag, pcidi_t type)
 #define	MIN_ASYNC_PD	40
 #define	MIN_SYNC_PD	20
 
-#if defined(__NetBSD__) || defined(__OpenBSD__)
+#if defined(__OpenBSD__)
 
 int ncr_print __P((void *, const char *));
 
@@ -3369,19 +3365,23 @@ ncr_print(aux, name)
 	return UNCONF;
 }
 
+#endif
+#if defined(__NetBSD__) || defined(__OpenBSD__)
+
 void
 ncr_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
 	struct pci_attach_args *pa = aux;
-	bus_chipset_tag_t bc = pa->pa_bc;
+	bus_space_tag_t memt = pa->pa_memt;
 	pci_chipset_tag_t pc = pa->pa_pc;
-	bus_mem_size_t memsize;
+	bus_size_t memsize;
 	int retval, cacheable;
 	pci_intr_handle_t intrhandle;
 	const char *intrstr;
 	ncb_p np = (void *)self;
+	int wide = 0;
 
 	printf(": NCR ");
 	switch (pa->pa_id) {
@@ -3396,17 +3396,19 @@ ncr_attach(parent, self, aux)
 		break;
 	case NCR_825_ID:
 		printf("53c825 Wide");
+		wide = 1;
 		break;
 	case NCR_860_ID:
 		printf("53c860");
 		break;
 	case NCR_875_ID:
 		printf("53c875 Wide");
+		wide = 1;
 		break;
 	}
 	printf(" SCSI\n");
 
-	np->sc_bc = bc;
+	np->sc_memt = memt;
 	np->sc_pc = pc;
 
 	/*
@@ -3422,7 +3424,8 @@ ncr_attach(parent, self, aux)
 	}
 
 	/* Map the memory.  Note that we never want it to be cacheable. */
-	retval = bus_mem_map(pa->pa_bc, np->paddr, memsize, 0, &np->sc_memh);
+	retval = bus_space_map(pa->pa_memt, np->paddr, memsize, 0,
+	    &np->sc_bah);
 	if (retval) {
 		printf("%s: couldn't map memory region\n", self->dv_xname);
 		return;
@@ -3638,6 +3641,9 @@ static	void ncr_attach (pcici_t config_id, int unit)
 	np->sc_link.adapter_softc = np;
 	np->sc_link.adapter_target = np->myaddr;
 	np->sc_link.openings = 1;
+#ifndef __OpenBSD__
+	np->sc_link.channel      = SCSI_CHANNEL_ONLY_ONE;
+#endif
 #else /* !__NetBSD__ */
 	np->sc_link.adapter_unit = unit;
 	np->sc_link.adapter_softc = np;
@@ -3648,7 +3654,9 @@ static	void ncr_attach (pcici_t config_id, int unit)
 	np->sc_link.device       = &ncr_dev;
 	np->sc_link.flags	 = 0;
 
-#if defined(__NetBSD__) || defined(__OpenBSD__)
+#if defined(__NetBSD__)
+	config_found(self, &np->sc_link, scsiprint);
+#elif defined(__OpenBSD__)
 	config_found(self, &np->sc_link, ncr_print);
 #else /* !__NetBSD__ */
 #if (__FreeBSD__ >= 2)

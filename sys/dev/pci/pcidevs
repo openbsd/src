@@ -1,5 +1,5 @@
-$OpenBSD: pcidevs,v 1.13 1996/10/14 10:22:22 deraadt Exp $
-/*	$NetBSD: pcidevs,v 1.8 1996/05/07 01:59:45 thorpej Exp $ */
+$OpenBSD: pcidevs,v 1.14 1996/11/28 23:28:11 niklas Exp $
+/*	$NetBSD: pcidevs,v 1.20 1996/10/19 13:01:49 jonathan Exp $	*/
 
 
 /*
@@ -200,7 +200,6 @@ vendor SGI		0x10a9	Silicon Graphics
 vendor ACC		0x10aa	ACC Microelectronics
 vendor DIGICOM		0x10ab	Digicom
 vendor HONEYWELL	0x10ac	Honeywell IASD
-vendor SYMPHONY		0x10ad	Symphony Labs (or Winbond?)
 vendor CORNERSTONE	0x10ae	Cornerstone Technology
 vendor MICROCOMPSON	0x10af	Micro Computer Sysytems (M) SON
 vendor CARDEXPER	0x10b0	CardExpert Technology
@@ -252,7 +251,6 @@ vendor ES		0x10dd	Evans & Sutherland
 vendor NVIDIA		0x10de	Nvidia Corporation
 vendor EMULEX		0x10df	Emulex
 vendor IMS		0x10e0	Integrated Micro Solutions
-vendor TEKRAM		0x10e1	Tekram Technology
 vendor APTIX		0x10e2	Aptix Corporation
 vendor NEWBRIDGE	0x10e3	Newbridge Microsystems
 vendor TANDEM		0x10e4	Tandem Computers
@@ -289,7 +287,7 @@ vendor CREATIVELABS	0x1102	Creative Labs
 vendor TRIONES		0x1103	Triones Technologies
 vendor RASTEROPS	0x1104	RasterOps
 vendor SIGMA		0x1105	Sigma Designs
-vendor VIATECH		0x1106	Via Technologies
+vendor VIATECH		0x1106	VIA Technologies
 vendor STRATIS		0x1107	Stratus Computer
 vendor PROTEON		0x1108	Proteon
 vendor COGENT		0x1109	Cogent Data Technologies
@@ -391,8 +389,9 @@ vendor INVENTEC		0x1170	Inventec
 vendor ZEITNET		0x1193	ZeitNet
 vendor SPECIALIX	0x11cb	Specialix
 vendor CYCLADES		0x120e	Cyclades
-vendor SYMPHONY2	0x1c1c	Symphony (duplicate? see 0x10ad)
-vendor TEKRAM2		0x1de1	Tekram (mistyped? see 0x10e1)
+vendor ZEINET		0x1193	Zeinet
+vendor SYMPHONY		0x1c1c	Symphony Labs
+vendor TEKRAM		0x1de1	Tekram Technology
 vendor AVANCE2		0x4005	Avance Logic (mistyped? see 0x1005)
 vendor S3		0x5333	S3
 vendor INTEL		0x8086	Intel
@@ -406,44 +405,78 @@ vendor ARK		0xedd8	Ark Logic (or Arc? or Hercules?)
  */
 
 /* 3COM Products */
-product	3COM 3C590	0x5900	3c590 10Mbps
-product	3COM 3C595	0x5950	3c595 100Base-TX
-product	3COM 3C595T	0x5951	3c595 100Base-T4
-product	3COM 3C595TM	0x5952	3c595 100Base-T/MII
-product	3COM 3C900	0x9000	3c900 10Base-T
-product	3COM 3C900T	0x9001	3c900 10Mbps-Combo
-product	3COM 3C905	0x9050	3c905 100Base-TX
-product	3COM 3C905T	0x9051	3c905 100Base-T4
+product 3COM 3C590	0x5900	3c590 10Mbps
+product 3COM 3C595TX	0x5950	3c595 100Base-TX
+product 3COM 3C595T4	0x5951	3c595 100Base-T4
+product 3COM 3C595MII	0x5952	3c595 10Mbps-MII
+product	3COM 3C900TPO	0x9000	3c900 10Base-T
+product	3COM 3C900COMBO	0x9001	3c900 10Mbps-Combo
+product	3COM 3C905TX	0x9050	3c905 100Base-TX
+product	3COM 3C905T4	0x9051	3c905 100Base-T4
 
-/* Acer products */
-product ACER M1435	0x1435	M1435
+/* Acer Labs products */
+product ALI M1445	0x1445	M1445
+product ALI M1449	0x1449	M1449
+product ALI M1451	0x1451	M1451
+product ALI M4803	0x5215	M4803
 
 /* Adaptec products */
-product	ADP 3940U	0x8278	AHA-3940 Ultra
-product	ADP 2944U	0x8478	AHA-2944 Ultra
-product	ADP 2940U	0x8178	AHA-2940 Ultra
-product	ADP 3940	0x7278	AHA-3940
-product	ADP 2944	0x7478	AHA-2944
-product	ADP 2940	0x7178	AHA-2940
-product	ADP AIC7880	0x8078	AIC-7880 Ultra
-product	ADP AIC7870	0x7078	AIC-7870
-product	ADP AIC7850	0x5078	AIC-7850
+product ADP AIC7850	0x5078	AIC-7850
+product ADP AIC7855	0x5578	AIC-7855
+product ADP AIC7860	0x6078	AIC-7860
+product ADP 2940AU	0x6178	AHA-2940A Ultra
+product ADP AIC7870	0x7078	AIC-7870
+product ADP 2940	0x7178	AHA-2940
+product ADP 3940	0x7278	AHA-3940
+product ADP 2944	0x7478	AHA-2944
+product ADP AIC7880	0x8078	AIC-7880 Ultra
+product ADP 2940U	0x8178	AHA-2940 Ultra
+product ADP 3940U	0x8278	AHA-3940 Ultra
+product ADP 2944U	0x8478	AHA-2944 Ultra
 
 /* AMD products */
-product AMD PCNET_PCI	0x2000	PCnet-PCI Ethernet
+product AMD PCNET_PCI	0x2000	79c970 PCnet-PCI LANCE Ethernet
+product AMD PCSCSI_PCI	0x2020	53c974 PCscsi-PCI SCSI
+
+/* ARK Logic products */
+product ARK 1000PV	0xa091	1000PV
+product ARK 2000PV	0xa099	2000PV
 
 /* ATI products */
 product ATI MACH32	0x4158	Mach32
-product ATI MACH64_CX	0x4358	Mach64-CX
-product ATI MACH64_GX	0x4758	Mach64-GX
+product ATI MACH64_CT	0x4354	Mach64 CT
+product ATI MACH64_CX	0x4358	Mach64 CX
+product ATI MACH64_ET	0x4554	Mach64 ET
+product ATI MACH64_VT	0x4654	Mach64 VT
+product ATI MACH64_GT	0x4754	Mach64 GT
+product ATI MACH64_GX	0x4758	Mach64 GX
+
+/* Atronics products */
+product ATRONICS IDE_2015PL	0x2015	IDE-2015PL
+
+/* Avance Logic products */
+product AVANCE ALG2301	0x2301	ALG2301
 
 /* BusLogic products */
-product BUSLOGIC OLD946C 0x0140	946C
-product BUSLOGIC 946C	0x1040	946C
+product BUSLOGIC OLD946C	0x0140	946C 01
+product BUSLOGIC 946C		0x1040	946C 10
+
+/* Chips and Technologies products */
+product CHIPS 65545	0x00d8	65545
 
 /* Cirrus Logic products */
-/* product CIRRUS UNK	0x00a4	unknown */
-product CIRRUS 5434	0x00a8	5434
+product CIRRUS GD_5430		0x00a0	GD 5430
+product CIRRUS GD_5434_4	0x00a4	GD 5434-4
+product CIRRUS GD_5434_8	0x00a8	GD 5434-8
+product CIRRUS GD_5436		0x00ac	GD 5436
+product CIRRUS CL_6729		0x1100	CL 6729
+product CIRRUS CL_7542		0x1200	CL 7542
+
+/* CMD Technology products */
+product CMDTECH 640A		0x0640	640A
+
+/* Contaq Microsystems products */
+product CONTAQ 82C599		0x0600	82C599
 
 /* DEC products */
 product DEC 21050	0x0001	DECchip 21050 PCI-PCI Bridge
@@ -452,21 +485,36 @@ product DEC 21030	0x0004	DECchip 21030 (\"TGA\")
 product DEC NVRAM	0x0007	Zephyr NV-RAM
 product DEC KZPSA	0x0008	KZPSA
 product DEC 21140	0x0009	DECchip 21140 (\"FasterNet\")
+product DEC PBXGB	0x000d	TGA2
 product DEC DEFPA	0x000f	DEFPA
 /* product DEC ???	0x0010	??? VME Interface */
 product DEC 21041	0x0014  DECchip 21041 (\"Tulip Pass 3\")
+product DEC DGLPB	0x0016	DGLPB (\"OPPO\")
 
 /* Diamond products */
 product DIAMOND vIPER	0x9001	Viper/PCI
 
-/* CMD Technologies Products */
-product CMDTECH PCI0640	0x0640	UNSUPP  PCI to IDE Controller
+/* Distributed Processing Technology products */
+product DPT SC_RAID	0xa400	SmartCache/Raid
 
 /* FORE products */
 product FORE PCA200	0x0210	ATM PCA-200
+product FORE PCA200E	0x0300	ATM PCA-200e
 
-/* ENI products */
-product EFFICIENTNETS ENI155P	0x0002	ENI-155P ATM
+/* Future Domain products */
+product FUTUREDOMAIN TMC_18C30	0x0000	TMC-18C30 (36C70)
+
+/* Efficient Networks products */
+product EFFICIENTNETS ENI155P	0x0002	155P-MF1 ATM
+
+/* Hewlett-Packard products */
+product HP J2585A	0x1030	J2585A
+
+/* IBM products */
+product IBM 82351	0x0022	82351 PCI-PCI Bridge
+
+/* Integrated Micro Solutions products */
+product IMS 8849	0x8849	8849
 
 /* Intel products */
 product INTEL PCEB	0x0482	82375EB PCI-EISA Bridge
@@ -474,9 +522,29 @@ product INTEL CDC	0x0483	82424ZX Cache and DRAM controller
 product INTEL SIO	0x0484	82378IB PCI-ISA Bridge (System I/O)
 product INTEL PCIB	0x0486	82426EX PCI-ISA Bridge
 product INTEL PCMC	0x04a3	82434LX PCI, Cache, and Memory Controller
+product INTEL SAA7116	0x1223	SAA7116
+product INTEL 82437	0x122d	82437 Triton
+product INTEL 82471	0x122e	82471 Triton
+product INTEL 82438	0x1230	82438
+
+/* I. T. T. products */
+product ITT AGX016	0x0001	AGX016
+
+/* LeadTek Research */
+product LEADTEK S3_805	0x0000	S3 805
+
+/* Matrox products */
+product MATROX ATLAS		0x0518	MGA-2 Atlas PX2085
+product MATROX IMPRESSION	0x0d10	MGA Impression
 
 /* Mylex products */
 product MYLEX 960P	0x0001	RAID controller
+
+/* Mutech products */
+product MUTECH MV1000	0x0001	MV1000
+
+/* National Semiconductor products */
+product NS 87410	0xd001	87410
 
 /* NCR/Symbios Logic products */
 product OLDNCR 810	0x0001	53c810
@@ -492,33 +560,100 @@ product OLDNCR 875	0x000f	53c875
 product NUMBER9 IMAG128	0x2309	Imagine-128
 
 /* Opti products */
+product OPTI 82C557	0xc557	82C557
+product OPTI 82C558	0xc558	82C558
+product OPTI 82C621	0xc621	82C621
 product OPTI 82C822	0xc822	82C822
-product OPTI 82C621	0xc821	82C621
+
+/* Promise products */
+product PROMISE DC5030	0x5300	DC5030
 
 /* QLogic products */
 product QLOGIC ISP1020	0x1020	ISP1020
+product QLOGIC ISP1022	0x1022	ISP1022
+
+/* Quantum Designs products */
+product QUANTUMDESIGNS 8500	0x0001	8500
+product QUANTUMDESIGNS 8580	0x0002	8580
+
+/* Realtek (Creative Labs?) products */
+product	REALTEK	RT8029	0x8029	Ethernet
 
 /* S3 products */
-/* Names??? */
-product S3 TRIO64	0x8811	Trio32/64/64V+
+product S3 TRIO64	0x8811	Trio32/64
 product S3 868		0x8880	868
 product S3 928		0x88b0	928
-product S3 864_0	0x88c0	Vision 864-0
-product S3 864_1	0x88c1	Vision 864-1
-product S3 964		0x88d0	964
+product S3 864_0	0x88c0	864-0
+product S3 864_1	0x88c1	864-1
+product S3 964_0	0x88d0	964-0
+product S3 964_1	0x88d1	964-1
 product S3 968		0x88f0	968
 
+/* Silicon Integrated System products */
+product SIS 86C201	0x0001	86C201
+product SIS 86C202	0x0002	86C202
+product SIS 86C205	0x0005	86C205
+product SIS 85C503	0x0008	85C503
+product SIS 85C501	0x0406	85C501
+product SIS 85C496	0x0496	85C496
+product SIS 85C601	0x0601	85C601
+
 /* SMC products */
-product SMC 37C665	0x1000	37C665
+product SMC 37C665	0x1000	FDC 37C665
+
+/* Symphony Labs products */
+product SYMPHONY 82C101	0x0001	82C101
+
+/* Tekram Technology products */
+product TEKRAM DC290	0xdc29	DC290
+
+/* Trident products */
+product TRIDENT	TGUI_9320	0x9320	TGUI 9320
+product TRIDENT	TGUI_9420	0x9420	TGUI 9420
+product TRIDENT	TGUI_9440	0x9440	TGUI 9440
+product TRIDENT	TGUI_9660	0x9660	TGUI 9660
+product TRIDENT	TGUI_9680	0x9680	TGUI 9680
+product TRIDENT	TGUI_9682	0x9682	TGUI 9682
 
 /* Tseng Labs products */
-product TSENG W32P_A	0x3202	ET4000w32p rev A
-product TSENG W32P_D	0x3207	ET4000w32p rev D
+product TSENG ET4000_W32P_A	0x3202	ET4000w32p rev A
+product TSENG ET4000_W32P_B	0x3205	ET4000w32p rev B
+product TSENG ET4000_W32P_C	0x3206	ET4000w32p rev C
+product TSENG ET4000_W32P_D	0x3207	ET4000w32p rev D
+product TSENG ET6000		0x3208	ET6000
 
 /* UMC products */
 product UMC UM8673F	0x0101	UM8673F
 product UMC UM8881F	0x8881	UM8881F PCI-Host bridge
 product UMC UM8886F	0x8886	UM8886F PCI-ISA bridge
+product UMC UM8886A	0x888a	UM8886A
+product UMC UM8891A	0x8891	UM8891A
+
+/* VIA Technologies products */
+product VIATECH 82C505		0x0505	82C505
+product VIATECH ALT_82C505	0x0561	82C505
+product VIATECH 82C576		0x0505	82C576 3V
+
+/* Vortex Computer Systems products */
+product VORTEX GDT_6000B	0x0001	GDT 6000b
+
+/* VLSI products */
+product VLSI 82C592_FC1	0x0005	82C592-FC1
+product VLSI 82C593_FC1	0x0006	82C593-FC1
+
+/* Weitek products */
+product WEITEK P9000	0x9001	P9000
+product WEITEK P9100	0x9100	P9100
+
+/* Winbond Electronics products */
+product WINBOND W83769F	0x0001	W83769F
+
+/* Zeinet products */
+product ZEINET 1221	0x0001	1221
+
+/* Cyclades products */
+product CYCLADES CYCLOMY_1	0x0100	Cyclom-Y below 1M
+product CYCLADES CYCLOMY_2	0x0101	Cyclom-Y above 1M
 
 /* Cyclades products */
 product CYCLADES CYCLOMY_1 0x0100       Cyclom-Y below 1M

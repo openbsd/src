@@ -1,3 +1,6 @@
+/*	$OpenBSD: ahc_pci.c,v 1.6 1996/11/28 23:28:01 niklas Exp $	*/
+/*	$NetBSD: ahc_pci.c,v 1.9 1996/10/21 22:56:24 thorpej Exp $	*/
+
 /*
  * Product specific probe and attach routines for:
  *      3940, 2940, aic7880, aic7870, aic7860 and aic7850 SCSI controllers
@@ -28,8 +31,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	$Id: ahc_pci.c,v 1.5 1996/11/12 20:30:48 niklas Exp $
  */
 
 #if defined(__FreeBSD__)
@@ -43,7 +44,7 @@
 #include <sys/queue.h>
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 #include <sys/device.h>
-#include <machine/bus.old.h>
+#include <machine/bus.h>
 #include <machine/intr.h>
 #endif /* defined(__NetBSD__) */
 
@@ -73,7 +74,16 @@
 #include <dev/ic/aic7xxxvar.h>
 #include <dev/ic/smc93cx6var.h>
 
+/*
+ * Under normal circumstances, these messages are unnecessary
+ * and not terribly cosmetic.
+ */
+#ifdef DEBUG
 #define bootverbose	1
+#else
+#define bootverbose	0
+#endif
+
 #define PCI_BASEADR0	PCI_MAPREG_START
 
 #endif /* defined(__NetBSD__) */
@@ -81,6 +91,7 @@
 #define PCI_DEVICE_ID_ADAPTEC_3940U	0x82789004ul
 #define PCI_DEVICE_ID_ADAPTEC_2944U	0x84789004ul
 #define PCI_DEVICE_ID_ADAPTEC_2940U	0x81789004ul
+#define PCI_DEVICE_ID_ADAPTEC_2940AU	0x61789004ul
 #define PCI_DEVICE_ID_ADAPTEC_3940	0x72789004ul
 #define PCI_DEVICE_ID_ADAPTEC_2944	0x74789004ul
 #define PCI_DEVICE_ID_ADAPTEC_2940	0x71789004ul
@@ -216,6 +227,9 @@ aic7870_probe (pcici_t tag, pcidi_t type)
 		case PCI_DEVICE_ID_ADAPTEC_2940:
 			return ("Adaptec 2940 SCSI host adapter");
 			break;
+		case PCI_DEVICE_ID_ADAPTEC_2940AU:
+			return ("Adaptec 2940A Ultra SCSI host adapter");
+			break;
 		case PCI_DEVICE_ID_ADAPTEC_AIC7880:
 			return ("Adaptec aic7880 Ultra SCSI host adapter");
 			break;
@@ -258,6 +272,7 @@ ahc_pci_probe(parent, match, aux)
 	case PCI_DEVICE_ID_ADAPTEC_3940U:
 	case PCI_DEVICE_ID_ADAPTEC_2944U:
 	case PCI_DEVICE_ID_ADAPTEC_2940U:
+	case PCI_DEVICE_ID_ADAPTEC_2940AU:
 	case PCI_DEVICE_ID_ADAPTEC_3940:
 	case PCI_DEVICE_ID_ADAPTEC_2944:
 	case PCI_DEVICE_ID_ADAPTEC_2940:
@@ -286,12 +301,13 @@ ahc_pci_attach(parent, self, aux)
 {
 #if defined(__FreeBSD__)
 	u_long io_port;
+	int unit = ahc->sc_dev.dv_unit;
 #elif defined(__NetBSD__) || defined(__OpenBSD__)
 	struct pci_attach_args *pa = aux;
 	struct ahc_data *ahc = (void *)self;
-	bus_io_addr_t iobase;
-	bus_io_size_t iosize;
-	bus_io_handle_t ioh;
+	bus_addr_t iobase;
+	bus_size_t iosize;
+	bus_space_handle_t ioh;
 	pci_intr_handle_t ih;
 	const char *intrstr;
 #endif
@@ -316,7 +332,7 @@ ahc_pci_attach(parent, self, aux)
 #elif defined(__NetBSD__) || defined(__OpenBSD__)
 	if (pci_io_find(pa->pa_pc, pa->pa_tag, PCI_BASEADR0, &iobase, &iosize))
 		return;
-	if (bus_io_map(pa->pa_bc, iobase, iosize, &ioh))
+	if (bus_space_map(pa->pa_iot, iobase, iosize, 0, &ioh))
 		return;
 #endif
 
@@ -344,6 +360,9 @@ ahc_pci_attach(parent, self, aux)
 		case PCI_DEVICE_ID_ADAPTEC_2940:
 			ahc_t = AHC_294;
 			break;
+		case PCI_DEVICE_ID_ADAPTEC_2940AU:
+			ahc_t = AHC_294AU;
+			break;
 		case PCI_DEVICE_ID_ADAPTEC_AIC7880:
 			ahc_t = AHC_AIC7880;
 			break;
@@ -370,16 +389,17 @@ ahc_pci_attach(parent, self, aux)
 	if(ahc_t & AHC_ULTRA)
 		ultra_enb = inb(SXFRCTL0 + io_port) & ULTRAEN;
 #else
-	our_id = bus_io_read_1(pa->pa_bc, ioh, SCSIID) & OID;
+	our_id = bus_space_read_1(pa->pa_iot, ioh, SCSIID) & OID;
 	if(ahc_t & AHC_ULTRA)
-		ultra_enb = bus_io_read_1(pa->pa_bc, ioh, SXFRCTL0) & ULTRAEN;
+		ultra_enb = bus_space_read_1(pa->pa_iot, ioh, SXFRCTL0) &
+		    ULTRAEN;
 #endif
 
 #if defined(__FreeBSD__)
 	ahc_reset(io_port);
 #elif defined(__NetBSD__) || defined(__OpenBSD__)
 	printf("\n");
-	ahc_reset(ahc->sc_dev.dv_xname, pa->pa_bc, ioh);
+	ahc_reset(ahc->sc_dev.dv_xname, pa->pa_iot, ioh);
 #endif
 
 	if(ahc_t & AHC_AIC7870){
@@ -429,7 +449,7 @@ ahc_pci_attach(parent, self, aux)
 		return;
 	}
 #elif defined(__NetBSD__) || defined(__OpenBSD__)
-	ahc_construct(ahc, pa->pa_bc, ioh, ahc_t, ahc_f);
+	ahc_construct(ahc, pa->pa_iot, ioh, ahc_t, ahc_f);
 
 	if (pci_intr_map(pa->pa_pc, pa->pa_intrtag, pa->pa_intrpin,
 			 pa->pa_intrline, &ih)) {
@@ -486,14 +506,11 @@ ahc_pci_attach(parent, self, aux)
 			load_seeprom(ahc);
 			break;
 		   }
+		   case AHC_294AU:
 		   case AHC_AIC7860:
 		   {
 			id_string = "aic7860 ";
-			/*
-			 * Use defaults, if the chip wasn't initialized by
-			 * a BIOS.
-			 */
-			ahc->flags |= AHC_USEDEFAULTS;
+			load_seeprom(ahc);
 			break;
 		   }
 		   case AHC_AIC7850:
@@ -602,7 +619,7 @@ load_seeprom(ahc)
 #if defined(__FreeBSD__)
 	sd.sd_iobase = ahc->baseport + SEECTL;
 #elif defined(__NetBSD__) || defined(__OpenBSD__)
-	sd.sd_bc = ahc->sc_bc;
+	sd.sd_iot = ahc->sc_iot;
 	sd.sd_ioh = ahc->sc_ioh;
 	sd.sd_offset = SEECTL;
 #endif

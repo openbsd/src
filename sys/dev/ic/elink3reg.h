@@ -1,5 +1,5 @@
-/*	$OpenBSD: elink3reg.h,v 1.5 1996/10/31 01:01:29 niklas Exp $	*/
-/*	$NetBSD: elink3reg.h,v 1.3 1996/05/10 05:28:09 thorpej Exp $	*/
+/*	$OpenBSD: elink3reg.h,v 1.6 1996/11/28 23:27:50 niklas Exp $	*/
+/*	$NetBSD: elink3reg.h,v 1.5 1996/10/21 22:34:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Herb Peyerl <hpeyerl@beer.org>
@@ -140,6 +140,18 @@
 #define TX_AFTER_X_COLLISIONS	0x02
 #define TX_NO_SQE		0x01
 #define TX_CD_LOST		0x00
+
+/*
+ * Window 7 registers.
+ * Address and length for a single bus-master DMA transfer.
+ */
+#define EP_W7_MASTER_ADDDRES	0x00
+#define EP_W7_RX_ERROR		0x04
+#define EP_W7_MASTER_LEN	0x06
+#define EP_W7_RX_STATUS		0x08
+#define EP_W7_TIMER		0x0a
+#define EP_W7_TX_STATUS		0x0b
+#define EP_W7_MASTER_STATUS	0x0c
 
 /*
  * Window 7 registers.
@@ -332,7 +344,7 @@
 #define ENABLE_DRQ_IRQ			0x0001
 #define MFG_ID				0x506d	/* `TCM' */
 #define PROD_ID				0x5090
-#define GO_WINDOW(x) 			bus_io_write_2(sc->sc_bc, \
+#define GO_WINDOW(x) 			bus_space_write_2(sc->sc_iot, \
 				sc->sc_ioh, EP_COMMAND, WINDOW_SELECT|x)
 #define AUI 				0x1
 #define BNC 				0x2

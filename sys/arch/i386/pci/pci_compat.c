@@ -1,4 +1,5 @@
-/*	$NetBSD: pci_compat.c,v 1.1 1996/03/27 04:01:13 cgd Exp $	*/
+/*	$OpenBSD: pci_compat.c,v 1.2 1996/11/28 23:37:42 niklas Exp $	*/
+/*	$NetBSD: pci_compat.c,v 1.4 1996/10/21 22:28:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -88,13 +89,13 @@ pci_map_io(tag, reg, iobasep)
 	int reg;
 	int *iobasep;
 {
-	bus_io_addr_t ioaddr;
-	bus_io_size_t iosize;
-	bus_io_handle_t ioh;
+	bus_addr_t ioaddr;
+	bus_size_t iosize;
+	bus_space_handle_t ioh;
 
 	if (pci_io_find(NULL, tag, reg, &ioaddr, &iosize))
 		return (1);
-	if (bus_io_map(NULL, ioaddr, iosize, &ioh))
+	if (bus_space_map(I386_BUS_SPACE_IO, ioaddr, iosize, 0, &ioh))
 		return (1);
 
 	*iobasep = ioh;
@@ -111,14 +112,15 @@ pci_map_mem(tag, reg, vap, pap)
 	int reg;
 	vm_offset_t *vap, *pap;
 {
-	bus_mem_addr_t memaddr;
-	bus_mem_size_t memsize;
-	bus_mem_handle_t memh;
+	bus_addr_t memaddr;
+	bus_size_t memsize;
+	bus_space_handle_t memh;
 	int cacheable;
 
 	if (pci_mem_find(NULL, tag, reg, &memaddr, &memsize, &cacheable))
 		return (1);
-	if (bus_mem_map(NULL, memaddr, memsize, cacheable, &memh))
+	if (bus_space_map(I386_BUS_SPACE_MEM, memaddr, memsize,
+	    cacheable, &memh))
 		return (1);
 
 	*vap = (vm_offset_t)memh;

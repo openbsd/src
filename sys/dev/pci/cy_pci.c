@@ -1,4 +1,4 @@
-/*	$OpenBSD: cy_pci.c,v 1.2 1996/11/12 20:30:49 niklas Exp $	*/
+/*	$OpenBSD: cy_pci.c,v 1.3 1996/11/28 23:28:02 niklas Exp $	*/
 
 /*
  * cy.c
@@ -41,7 +41,7 @@
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/systm.h>
-#include <machine/bus.old.h>
+#include <machine/bus.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
@@ -55,8 +55,8 @@
 #define	ISSET(t, f)	((t) & (f))
 
 int cy_probe_pci __P((struct device *, void *, void *));
-int cy_probe_common __P((int card, bus_chipset_tag_t,
-			 bus_mem_handle_t, int bustype));
+int cy_probe_common __P((int card, bus_space_tag_t,
+			 bus_space_handle_t, int bustype));
 
 void cyattach __P((struct device *, struct device *, void *));
 
@@ -75,13 +75,14 @@ cy_probe_pci(parent, match, aux)
   vm_offset_t v_addr, p_addr;
   int card = ((struct device *)match)->dv_unit;
   struct pci_attach_args *pa = aux;
-  bus_chipset_tag_t bc;
-  bus_mem_handle_t memh;
-  bus_mem_addr_t memaddr;
-  bus_mem_size_t memsize;
-  bus_io_handle_t ioh;
-  bus_io_addr_t iobase;
-  bus_io_size_t iosize;
+  bus_space_tag_t memt;
+  bus_space_handle_t memh;
+  bus_addr_t memaddr;
+  bus_size_t memsize;
+  bus_space_tag_t iot;
+  bus_space_handle_t ioh;
+  bus_addr_t iobase;
+  bus_size_t iosize;
   int cacheable;
 
   if(!(PCI_VENDOR(pa->pa_id) == PCI_VENDOR_CYCLADES &&
@@ -93,7 +94,8 @@ cy_probe_pci(parent, match, aux)
   printf("cy: Found Cyclades PCI device, id = 0x%x\n", pa->pa_id);
 #endif
 
-  bc = pa->pa_bc;
+  memt = pa->pa_memt;
+  iot = pa->pa_iot;
 
   if(pci_mem_find(pa->pa_pc, pa->pa_tag, 0x18,
 		  &memaddr, &memsize, &cacheable) != 0) {
@@ -102,20 +104,20 @@ cy_probe_pci(parent, match, aux)
   }
 
   /* map the memory (non-cacheable) */
-  if(bus_mem_map(bc, memaddr, memsize, 0, &memh) != 0) {
+  if(bus_space_map(memt, memaddr, memsize, 0, &memh) != 0) {
     printf("cy%d: couldn't map PCI memory region\n", card);
     return 0;
   }
 
   /* the PCI Cyclom IO space is only used for enabling interrupts */
   if(pci_io_find(pa->pa_pc, pa->pa_tag, 0x14, &iobase, &iosize) != 0) {
-    bus_mem_unmap(bc, memh, memsize);
+    bus_space_unmap(memt, memh, memsize);
     printf("cy%d: couldn't find PCI io region\n", card);
     return 0;
   }
 
-  if(bus_io_map(bc, iobase, iosize, &ioh) != 0) {
-    bus_mem_unmap(bc, memh, memsize);
+  if(bus_space_map(iot, iobase, iosize, &ioh) != 0) {
+    bus_space_unmap(memt, memh, memsize);
     printf("cy%d: couldn't map PCI io region\n", card);
     return 0; 
   }
@@ -125,16 +127,16 @@ cy_probe_pci(parent, match, aux)
 	 card, memaddr, memsize, iobase, iosize);
 #endif
 
-  if(cy_probe_common(card, bc, memh, CY_BUSTYPE_PCI) == 0) {
-    bus_mem_unmap(bc, memh, memsize);
-    bus_io_unmap(bc, ioh, iosize);
+  if(cy_probe_common(card, memt, memh, CY_BUSTYPE_PCI) == 0) {
+    bus_space_unmap(memt, memh, memsize);
+    bus_space_unmap(iot, ioh, iosize);
     printf("cy%d: PCI Cyclom card with no CD1400s!?\n", card);
     return 0;
   }
 
   /* Enable PCI card interrupts */
-  bus_io_write_2(bc, ioh, CY_PCI_INTENA,
-		 bus_io_read_2(bc, ioh, CY_PCI_INTENA) | 0x900);
+  bus_space_write_2(iot, ioh, CY_PCI_INTENA,
+      bus_space_read_2(iot, ioh, CY_PCI_INTENA) | 0x900);
 
   return 1;
 }

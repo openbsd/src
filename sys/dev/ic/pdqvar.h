@@ -1,5 +1,5 @@
-/*	$OpenBSD: pdqvar.h,v 1.9 1996/11/12 20:30:22 niklas Exp $	*/
-/*	$NetBSD: pdqvar.h,v 1.8 1996/07/10 18:55:05 cgd Exp $	*/
+/*	$OpenBSD: pdqvar.h,v 1.10 1996/11/28 23:27:52 niklas Exp $	*/
+/*	$NetBSD: pdqvar.h,v 1.11 1996/10/25 21:33:37 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -85,7 +85,7 @@ enum _pdq_type_t {
 #define	PDQ_OS_USEC_DELAY(n)		DELAY(n)
 #define	PDQ_OS_MEMZERO(p, n)		bzero((caddr_t)(p), (n))
 #if (defined(__NetBSD__) || defined(__OpenBSD__)) && defined(__alpha__)
-#define	PDQ_OS_VA_TO_PA(pdq, p)		(vtophys((vm_offset_t)p) | (pdq->pdq_type == PDQ_DEFTA ? 0 : 0x40000000))
+#define	PDQ_OS_VA_TO_PA(pdq, p)		(alpha_XXX_dmamap((vm_offset_t)p))
 #else
 #define	PDQ_OS_VA_TO_PA(pdq, p)		vtophys(p)
 #endif
@@ -127,26 +127,22 @@ typedef pdq_bus_memaddr_t pdq_bus_memoffset_t;
 
 
 #elif defined(__NetBSD__) || defined(__OpenBSD__)
-#include <machine/bus.old.h>
+#include <machine/bus.h>
 #include <machine/intr.h>
 #define	PDQ_OS_PTR_FMT		"%p"
 typedef void ifnet_ret_t;
 typedef u_long ioctl_cmd_t;
-typedef	bus_chipset_tag_t pdq_bus_t;
-typedef	bus_io_handle_t pdq_bus_ioport_t;
-#if defined(PDQ_IOMAPPED)
-typedef	bus_io_handle_t pdq_bus_memaddr_t;
-#else
-typedef bus_mem_handle_t pdq_bus_memaddr_t;
-#endif
+typedef	bus_space_tag_t pdq_bus_t;
+typedef	bus_space_handle_t pdq_bus_ioport_t;
+typedef	bus_space_handle_t pdq_bus_memaddr_t;
 typedef pdq_uint32_t pdq_bus_memoffset_t;
 #define	PDQ_OS_IOMEM
-#define PDQ_OS_IORD_32(t, base, offset)		bus_io_read_4  (t, base, offset)
-#define PDQ_OS_IOWR_32(t, base, offset, data)	bus_io_write_4 (t, base, offset, data)
-#define PDQ_OS_IORD_8(t, base, offset)		bus_io_read_1  (t, base, offset)
-#define PDQ_OS_IOWR_8(t, base, offset, data)	bus_io_write_1 (t, base, offset, data)
-#define PDQ_OS_MEMRD_32(t, base, offset)	bus_mem_read_4(t, base, offset)
-#define PDQ_OS_MEMWR_32(t, base, offset, data)	bus_mem_write_4(t, base, offset, data)
+#define PDQ_OS_IORD_32(t, base, offset)		bus_space_read_4  (t, base, offset)
+#define PDQ_OS_IOWR_32(t, base, offset, data)	bus_space_write_4 (t, base, offset, data)
+#define PDQ_OS_IORD_8(t, base, offset)		bus_space_read_1  (t, base, offset)
+#define PDQ_OS_IOWR_8(t, base, offset, data)	bus_space_write_1 (t, base, offset, data)
+#define PDQ_OS_MEMRD_32(t, base, offset)	bus_space_read_4(t, base, offset)
+#define PDQ_OS_MEMWR_32(t, base, offset, data)	bus_space_write_4(t, base, offset, data)
 #define	PDQ_CSR_OFFSET(base, offset)		(0 + (offset)*sizeof(pdq_uint32_t))
 
 #if defined(PDQ_IOMAPPED)
@@ -200,21 +196,27 @@ typedef struct {
     struct device sc_dev;		/* base device */
     void *sc_ih;			/* interrupt vectoring */
     void *sc_ats;			/* shutdown hook */
+    bus_space_tag_t sc_csrtag;		/* space tag for CSRs */
+    bus_space_handle_t sc_csrhandle;	/* space handle for CSRs */
+#define sc_bc		sc_csrtag
+#define sc_membase	sc_csrhandle
+    bus_space_tag_t sc_iotag;		/* i/o space tag */
+    bus_space_handle_t sc_iobase;	/* i/o space handle */
 #elif defined(__FreeBSD__)
     struct kern_devconf *sc_kdc;	/* freebsd cruft */
 #endif
     struct arpcom sc_ac;
 #define	sc_if		sc_ac.ac_if
     pdq_t *sc_pdq;
-#if defined(__alpha__) || defined(__i386__)
+#if !defined(__NetBSD__) && !defined(__OpenBSD__)
     pdq_bus_ioport_t sc_iobase;
-#endif
 #ifdef PDQ_IOMAPPED
 #define	sc_membase	sc_iobase
 #else
     pdq_bus_memaddr_t sc_membase;
 #endif
     pdq_bus_t sc_bc;
+#endif /* ! __NetBSD__ && ! __OpenBSD__ */
 #if !defined(__bsdi__) || _BSDI_VERSION >= 199401
 #define	sc_bpf		sc_if.if_bpf
 #else

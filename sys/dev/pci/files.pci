@@ -1,5 +1,5 @@
-#	$OpenBSD: files.pci,v 1.9 1996/07/27 07:20:07 deraadt Exp $
-#	$NetBSD: files.pci,v 1.16 1996/05/16 03:44:16 mycroft Exp $
+#	$OpenBSD: files.pci,v 1.10 1996/11/28 23:28:03 niklas Exp $
+#	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config.new file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -16,15 +16,36 @@ attach	ahc at pci with ahc_pci
 file	dev/pci/ahc_pci.c		ahc_pci
 file	dev/ic/smc93cx6.c		ahc_pci
 
+# BusLogic BT-9xx PCI family
+# device declaration in sys/dev/isa/files.isa
+attach	bha at pci with bha_pci
+file	dev/pci/bha_pci.c		bha_pci
+
 # Ethernet driver for DC21040-based boards
 device	de: ether, ifnet
 attach	de at pci
 file	dev/pci/if_de.c			de
 
+# ENI ATM driver
+device	en: atm, ifnet
+attach	en at pci with en_pci
+file    dev/pci/if_en_pci.c		en
+file    dev/ic/midway.c			en
+
+# 3Com 3c590 and 3c595 Ethernet controllers
+# device declaration in sys/conf/files
+attach	ep at pci with ep_pci
+file	dev/pci/if_ep_pci.c		ep_pci
+
 # Digital DEFPA PCI FDDI Controller
 device	fpa: pdq, fddi, ifnet
 attach	fpa at pci
 file	dev/pci/if_fpa.c		fpa
+
+# AMD am7990 (LANCE) -based Ethernet controllers
+# device declaration in sys/conf/files
+attach	le at pci with le_pci
+file	dev/pci/if_le_pci.c		le_pci
 
 # NCR 53c8xx SCSI chips
 device	ncr: scsi
@@ -36,22 +57,6 @@ device	ppb: pcibus
 attach	ppb at pci
 file	dev/pci/ppb.c			ppb
 
-# 3Com 3c590 and 3c595 Ethernet controllers
-# device declaration in sys/conf/files
-attach	ep at pci with ep_pci
-file	dev/pci/if_ep_pci.c		ep_pci
-
-# AMD am7990 (LANCE) -based Ethernet controllers
-# device declaration in sys/conf/files
-attach	le at pci with le_pci
-file	dev/pci/if_le_pci.c		le_pci
-
-# ENI ATM driver
-device	en: atm, ifnet
-attach	en at pci with en_pci
-file    dev/pci/if_en_pci.c		en
-file    dev/ic/midway.c			en
-
-# Cyclades Cyclom multiport serial cards
+# Cyclades Cyclom-8/16/32 
 attach	cy at pci with cy_pci
 file	dev/pci/cy_pci.c		cy_pci

@@ -1,3 +1,6 @@
+/*	$OpenBSD: ahc_eisa.c,v 1.7 1996/11/28 23:27:37 niklas Exp $	*/
+/*	$NetBSD: ahc_eisa.c,v 1.10 1996/10/21 22:30:58 thorpej Exp $	*/
+  
 /*
  * Product specific probe and attach routines for:
  * 	27/284X and aic7770 motherboard SCSI controllers
@@ -29,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: ahc_eisa.c,v 1.6 1996/11/12 20:30:08 niklas Exp $
+ *	$Id: ahc_eisa.c,v 1.7 1996/11/28 23:27:37 niklas Exp $
  */
 
 #if defined(__FreeBSD__)
@@ -46,9 +49,9 @@
 
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 #include <sys/device.h>
-#include <machine/bus.old.h>
+#include <machine/bus.h>
 #include <machine/intr.h>
-#endif /* defined(__NetBSD__) */
+#endif /* defined(__NetBSD__) || defined(__OpenBSD__) */
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
@@ -169,8 +172,8 @@ aic7770probe(void)
 				break;
 			default:
 				printf("aic7770 at slot %d: illegal "
-				       "irq setting %d\n", e_dev->ioconf.slot,
-					intdef);
+				    "irq setting %d\n", e_dev->ioconf.slot,
+				    intdef);
 				continue;
 		}
 		eisa_add_intr(e_dev, irq);
@@ -187,8 +190,17 @@ aic7770probe(void)
 
 #elif defined(__NetBSD__) || defined(__OpenBSD__)
 
+/*
+ * Under normal circumstances, these messages are unnecessary
+ * and not terribly cosmetic.
+ */
+#ifdef DEBUG
 #define bootverbose	1
-
+#else
+#define bootverbose	0
+#endif
+  
+int	ahc_eisa_irq __P((bus_space_tag_t, bus_space_handle_t));
 int	ahc_eisa_match __P((struct device *, void *, void *));
 void	ahc_eisa_attach __P((struct device *, struct device *, void *));
 
@@ -197,21 +209,19 @@ struct cfattach ahc_eisa_ca = {
 	sizeof(struct ahc_data), ahc_eisa_match, ahc_eisa_attach
 };
 
-int ahc_eisa_irq __P((bus_chipset_tag_t, bus_io_handle_t));
-
 /*
  * Return irq setting of the board, otherwise -1.
  */
 int
-ahc_eisa_irq(bc, ioh)
-	bus_chipset_tag_t bc;
-	bus_io_handle_t ioh;
+ahc_eisa_irq(iot, ioh)
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
 {
 	int irq;
 	u_char intdef;
 
-	ahc_reset("ahc_eisa", bc, ioh);
-	intdef = bus_io_read_1(bc, ioh, INTDEF);
+	ahc_reset("ahc_eisa", iot, ioh);
+	intdef = bus_space_read_1(iot, ioh, INTDEF);
 	switch (irq = (intdef & 0xf)) {
 	case 9:
 	case 10:
@@ -240,8 +250,8 @@ ahc_eisa_match(parent, match, aux)
 	void *match, *aux;
 {
 	struct eisa_attach_args *ea = aux;
-	bus_chipset_tag_t bc = ea->ea_bc;
-	bus_io_handle_t ioh;
+	bus_space_tag_t iot = ea->ea_iot;
+	bus_space_handle_t ioh;
 	int irq;
 
 	/* must match one of our known ID strings */
@@ -254,13 +264,13 @@ ahc_eisa_match(parent, match, aux)
 	    )
 		return (0);
 
-	if (bus_io_map(bc, EISA_SLOT_ADDR(ea->ea_slot) + AHC_EISA_SLOT_OFFSET, 
-	    AHC_EISA_IOSIZE, &ioh))
+	if (bus_space_map(iot, EISA_SLOT_ADDR(ea->ea_slot) +
+	    AHC_EISA_SLOT_OFFSET, AHC_EISA_IOSIZE, 0, &ioh))
 		return (0);
 
-	irq = ahc_eisa_irq(bc, ioh);
+	irq = ahc_eisa_irq(iot, ioh);
 
-	bus_io_unmap(bc, ioh, AHC_EISA_IOSIZE);
+	bus_space_unmap(iot, ioh, AHC_EISA_IOSIZE);
 
 	return (irq >= 0);
 }
@@ -332,17 +342,17 @@ ahc_eisa_attach(parent, self, aux)
 
 	struct ahc_data *ahc = (void *)self;
 	struct eisa_attach_args *ea = aux;
-	bus_chipset_tag_t bc = ea->ea_bc;
-	bus_io_handle_t ioh;
+	bus_space_tag_t iot = ea->ea_iot;
+	bus_space_handle_t ioh;
 	int irq;
 	eisa_chipset_tag_t ec = ea->ea_ec;
 	eisa_intr_handle_t ih;
 	const char *model, *intrstr;
 
-	if (bus_io_map(bc, EISA_SLOT_ADDR(ea->ea_slot) + AHC_EISA_SLOT_OFFSET, 
-		       AHC_EISA_IOSIZE, &ioh))
+	if (bus_space_map(iot, EISA_SLOT_ADDR(ea->ea_slot) +
+	    AHC_EISA_SLOT_OFFSET, AHC_EISA_IOSIZE, 0, &ioh))
 		panic("ahc_eisa_attach: could not map I/O addresses");
-	if ((irq = ahc_eisa_irq(bc, ioh)) < 0)
+	if ((irq = ahc_eisa_irq(iot, ioh)) < 0)
 		panic("ahc_eisa_attach: ahc_eisa_irq failed!");
 
 	if (strcmp(ea->ea_idstring, "ADP7770") == 0) {
@@ -365,10 +375,10 @@ ahc_eisa_attach(parent, self, aux)
 	}
 	printf(": %s\n", model);
 
-	ahc_construct(ahc, bc, ioh, type, AHC_FNONE);
+	ahc_construct(ahc, iot, ioh, type, AHC_FNONE);
 	if (eisa_intr_map(ec, irq, &ih)) {
 		printf("%s: couldn't map interrupt (%d)\n",
-		       ahc->sc_dev.dv_xname, irq);
+		    ahc->sc_dev.dv_xname, irq);
 		return;
 	}
 #endif /* defined(__NetBSD__) */
@@ -379,9 +389,8 @@ ahc_eisa_attach(parent, self, aux)
 	 */
 	if(bootverbose) {
 		printf("%s: Using %s Interrupts\n",
-		       ahc_name(ahc),
-		       ahc->pause & IRQMS ?
-				"Level Sensitive" : "Edge Triggered");
+		    ahc_name(ahc),
+		    ahc->pause & IRQMS ?  "Level Sensitive" : "Edge Triggered");
 	}
 
 	/*
@@ -510,7 +519,7 @@ ahc_eisa_attach(parent, self, aux)
 	    );
 	if (ahc->sc_ih == NULL) {
 		printf("%s: couldn't establish interrupt",
-		       ahc->sc_dev.dv_xname);
+		    ahc->sc_dev.dv_xname);
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");

@@ -1,4 +1,5 @@
-/*	$OpenBSD: cd1400reg.h,v 1.2 1996/06/20 11:39:12 deraadt Exp $	*/
+/*	$OpenBSD: cd1400reg.h,v 1.3 1996/11/28 23:27:47 niklas Exp $	*/
+/*	$NetBSD: cd1400reg.h,v 1.3 1996/09/24 18:02:33 christos Exp $	*/
 
 /*-
  * cyclades cyclom-y serial driver

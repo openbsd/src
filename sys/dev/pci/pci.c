@@ -1,5 +1,5 @@
-/*	$OpenBSD: pci.c,v 1.4 1996/11/23 21:47:05 kstailey Exp $	*/
-/*	$NetBSD: pci.c,v 1.19 1996/05/03 17:33:49 christos Exp $	*/
+/*	$OpenBSD: pci.c,v 1.5 1996/11/28 23:28:09 niklas Exp $	*/
+/*	$NetBSD: pci.c,v 1.24 1996/10/21 22:56:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou.  All rights reserved.
@@ -89,14 +89,15 @@ pciattach(parent, self, aux)
 	void *aux;
 {
 	struct pcibus_attach_args *pba = aux;
-	bus_chipset_tag_t bc;
+	bus_space_tag_t iot, memt;
 	pci_chipset_tag_t pc;
 	int bus, device, maxndevs, function, nfunctions;
 
 	pci_attach_hook(parent, self, pba);
 	printf("\n");
 
-	bc = pba->pba_bc;
+	iot = pba->pba_iot;
+	memt = pba->pba_memt;
 	pc = pba->pba_pc;
 	bus = pba->pba_bus;
 	maxndevs = pci_bus_maxdevs(pc, bus);
@@ -123,7 +124,8 @@ pciattach(parent, self, aux)
 			class = pci_conf_read(pc, tag, PCI_CLASS_REG);
 			intr = pci_conf_read(pc, tag, PCI_INTERRUPT_REG);
 
-			pa.pa_bc = bc;
+			pa.pa_iot = iot;
+			pa.pa_memt = memt;
 			pa.pa_pc = pc;
 			pa.pa_device = device;
 			pa.pa_function = function;
@@ -196,8 +198,8 @@ pci_io_find(pc, pcitag, reg, iobasep, iosizep)
 	pci_chipset_tag_t pc;
 	pcitag_t pcitag;
 	int reg;
-	bus_io_addr_t *iobasep;
-	bus_io_size_t *iosizep;
+	bus_addr_t *iobasep;
+	bus_size_t *iosizep;
 {
 	pcireg_t addrdata, sizedata;
 	int s;
@@ -229,7 +231,7 @@ pci_io_find(pc, pcitag, reg, iobasep, iosizep)
 	if (iobasep != NULL)
 		*iobasep = PCI_MAPREG_IO_ADDR(addrdata);
 	if (iosizep != NULL)
-		*iosizep = ~PCI_MAPREG_IO_ADDR(sizedata) + 1;
+		*iosizep = PCI_MAPREG_IO_SIZE(sizedata);
 
 	return (0);
 }
@@ -239,8 +241,8 @@ pci_mem_find(pc, pcitag, reg, membasep, memsizep, cacheablep)
 	pci_chipset_tag_t pc;
 	pcitag_t pcitag;
 	int reg;
-	bus_mem_addr_t *membasep;
-	bus_mem_size_t *memsizep;
+	bus_addr_t *membasep;
+	bus_size_t *memsizep;
 	int *cacheablep;
 {
 	pcireg_t addrdata, sizedata;
@@ -285,7 +287,7 @@ pci_mem_find(pc, pcitag, reg, membasep, memsizep, cacheablep)
 	if (membasep != NULL)
 		*membasep = PCI_MAPREG_MEM_ADDR(addrdata);	/* PCI addr */
 	if (memsizep != NULL)
-		*memsizep = ~PCI_MAPREG_MEM_ADDR(sizedata) + 1;
+		*memsizep = PCI_MAPREG_MEM_SIZE(sizedata);
 	if (cacheablep != NULL)
 		*cacheablep = PCI_MAPREG_MEM_CACHEABLE(addrdata);
 

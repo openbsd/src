@@ -1,5 +1,5 @@
-/*	$OpenBSD: ahc_isa.c,v 1.2 1996/11/12 20:30:00 niklas Exp $	*/
-/*	$NetBSD: ahc_isa.c,v 1.1 1996/08/05 21:14:29 soda Exp $	*/
+/*	$OpenBSD: ahc_isa.c,v 1.3 1996/11/28 23:37:39 niklas Exp $	*/
+/*	$NetBSD: ahc_isa.c,v 1.5 1996/10/21 22:27:39 thorpej Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -70,7 +70,7 @@
 #include <sys/queue.h>
 #include <sys/malloc.h>
 
-#include <machine/bus.old.h>
+#include <machine/bus.h>
 #include <machine/intr.h>
 
 #include <scsi/scsi_all.h>
@@ -106,9 +106,9 @@
 #define	AHC_ISA_PRIMING_VID(index)	(AHC_ISA_VID + (index))
 #define	AHC_ISA_PRIMING_PID(index)	(AHC_ISA_PID + (index))
 
-int	ahc_isa_irq __P((bus_chipset_tag_t, bus_io_handle_t));
-int	ahc_isa_idstring __P((bus_chipset_tag_t, bus_io_handle_t, char *));
-int	ahc_isa_match __P((struct isa_attach_args *, bus_io_addr_t));
+int	ahc_isa_irq __P((bus_space_tag_t, bus_space_handle_t));
+int	ahc_isa_idstring __P((bus_space_tag_t, bus_space_handle_t, char *));
+int	ahc_isa_match __P((struct isa_attach_args *, bus_addr_t));
 
 int	ahc_isa_probe __P((struct device *, void *, void *));
 void	ahc_isa_attach __P((struct device *, struct device *, void *));
@@ -138,15 +138,15 @@ static int ahc_isa_slot_initialized;
  * Return irq setting of the board, otherwise -1.
  */
 int
-ahc_isa_irq(bc, ioh)
-	bus_chipset_tag_t bc;
-	bus_io_handle_t ioh;
+ahc_isa_irq(iot, ioh)
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
 {
 	int irq;
 	u_char intdef;
 
-	ahc_reset("ahc_isa", bc, ioh);
-	intdef = bus_io_read_1(bc, ioh, INTDEF);
+	ahc_reset("ahc_isa", iot, ioh);
+	intdef = bus_space_read_1(iot, ioh, INTDEF);
 	switch (irq = (intdef & 0xf)) {
 	case 9:
 	case 10:
@@ -165,9 +165,9 @@ ahc_isa_irq(bc, ioh)
 }
 
 int
-ahc_isa_idstring(bc, ioh, idstring)
-	bus_chipset_tag_t bc;
-	bus_io_handle_t ioh;
+ahc_isa_idstring(iot, ioh, idstring)
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
 	char *idstring;
 {
 	u_int8_t vid[EISA_NVIDREGS], pid[EISA_NPIDREGS];
@@ -175,9 +175,9 @@ ahc_isa_idstring(bc, ioh, idstring)
 
 	/* Get the vendor ID bytes */
 	for (i = 0; i < EISA_NVIDREGS; i++) {
-		bus_io_write_1(bc, ioh, AHC_ISA_PRIMING,
+		bus_space_write_1(iot, ioh, AHC_ISA_PRIMING,
 		    AHC_ISA_PRIMING_VID(i));
-		vid[i] = bus_io_read_1(bc, ioh, AHC_ISA_VID + i);
+		vid[i] = bus_space_read_1(iot, ioh, AHC_ISA_VID + i);
 	}
 
 	/* Check for device existence */
@@ -199,9 +199,9 @@ ahc_isa_idstring(bc, ioh, idstring)
 
 	/* Get the product ID bytes */
 	for (i = 0; i < EISA_NPIDREGS; i++) {
-		bus_io_write_1(bc, ioh, AHC_ISA_PRIMING,
+		bus_space_write_1(iot, ioh, AHC_ISA_PRIMING,
 		    AHC_ISA_PRIMING_PID(i));
-		pid[i] = bus_io_read_1(bc, ioh, AHC_ISA_PID + i);
+		pid[i] = bus_space_read_1(iot, ioh, AHC_ISA_PID + i);
 	}
 
 	/* Create the ID string from the vendor and product IDs */
@@ -220,10 +220,10 @@ ahc_isa_idstring(bc, ioh, idstring)
 int
 ahc_isa_match(ia, iobase)
 	struct isa_attach_args *ia;
-	bus_io_addr_t iobase;
+	bus_addr_t iobase;
 {
-	bus_chipset_tag_t bc = ia->ia_bc;
-	bus_io_handle_t ioh;
+	bus_space_tag_t iot = ia->ia_iot;
+	bus_space_handle_t ioh;
 	int irq;
 	char idstring[EISA_IDSTRINGLEN];
 
@@ -232,7 +232,7 @@ ahc_isa_match(ia, iobase)
 	 * space.  If we can't, assume nothing's there, but
 	 * warn about it.
 	 */
-	if (bus_io_map(bc, iobase, AHC_ISA_IOSIZE, &ioh)) {
+	if (bus_space_map(iot, iobase, AHC_ISA_IOSIZE, 0, &ioh)) {
 #if 0
 		/*
 		 * Don't print anything out here, since this could
@@ -245,15 +245,15 @@ ahc_isa_match(ia, iobase)
 		return (0);
 	}
 
-	if (!ahc_isa_idstring(bc, ioh, idstring))
+	if (!ahc_isa_idstring(iot, ioh, idstring))
 		irq = -1;	/* cannot get the ID string */
 	else if (strcmp(idstring, "ADP7756") &&
 	    strcmp(idstring, "ADP7757"))
 		irq = -1;	/* unknown ID strings */
 	else
-		irq = ahc_isa_irq(bc, ioh);
+		irq = ahc_isa_irq(iot, ioh);
 
-	bus_io_unmap(bc, ioh, AHC_ISA_IOSIZE);
+	bus_space_unmap(iot, ioh, AHC_ISA_IOSIZE);
 
 	if (irq < 0)
 		return (0);
@@ -337,17 +337,17 @@ ahc_isa_attach(parent, self, aux)
 	ahc_type type;
 	struct ahc_data *ahc = (void *)self;
 	struct isa_attach_args *ia = aux;
-	bus_chipset_tag_t bc = ia->ia_bc;
-	bus_io_handle_t ioh;
+	bus_space_tag_t iot = ia->ia_iot;
+	bus_space_handle_t ioh;
 	int irq;
 	char idstring[EISA_IDSTRINGLEN];
 	const char *model;
 
-	if (bus_io_map(bc, ia->ia_iobase, ia->ia_iosize, &ioh))
+	if (bus_space_map(iot, ia->ia_iobase, ia->ia_iosize, 0, &ioh))
 		panic("ahc_isa_attach: could not map slot I/O addresses");
-	if (!ahc_isa_idstring(bc, ioh, idstring))
+	if (!ahc_isa_idstring(iot, ioh, idstring))
 		panic("ahc_isa_attach: could not read ID string");
-	if ((irq = ahc_isa_irq(bc, ioh)) < 0)
+	if ((irq = ahc_isa_irq(iot, ioh)) < 0)
 		panic("ahc_isa_attach: ahc_isa_irq failed!");
 
 	if (strcmp(idstring, "ADP7756") == 0) {
@@ -361,14 +361,16 @@ ahc_isa_attach(parent, self, aux)
 	}
 	printf(": %s\n", model);
 
-	ahc_construct(ahc, bc, ioh, type, AHC_FNONE);
+	ahc_construct(ahc, iot, ioh, type, AHC_FNONE);
 
+#ifdef DEBUG
 	/*
 	 * Tell the user what type of interrupts we're using.
 	 * usefull for debugging irq problems
 	 */
 	printf( "%s: Using %s Interrupts\n", ahc_name(ahc),
 	    ahc->pause & IRQMS ?  "Level Sensitive" : "Edge Triggered");
+#endif
 
 	/*
 	 * Now that we know we own the resources we need, do the 

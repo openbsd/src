@@ -1,4 +1,4 @@
-/*	$Id: pcmcia.c,v 1.7 1996/11/23 21:47:07 kstailey Exp $	*/
+/*	$Id: pcmcia.c,v 1.8 1996/11/28 23:28:16 niklas Exp $	*/
 /*
  * Copyright (c) 1996 John T. Kohl.  All rights reserved.
  * Copyright (c) 1994 Stefan Grefen.  All rights reserved.
@@ -82,8 +82,8 @@ static int      ndeldevs = 0;
  */
 #define PCMCIA_MAP_MEM(a,b,c,d,e,f,g) ((a)->chip_link->pcmcia_map_mem(b,c,d,e,f,g))
 
-#define SCRATCH_MEM(a)	((a)->scratch_memh)
-#define SCRATCH_BC(a)	((a)->pa_bc)
+#define SCRATCH_MEM(a)	((caddr_t)(a)->scratch_memh)
+#define SCRATCH_MEMT(a)	((a)->pa_memt)
 #define SCRATCH_SIZE(a)	((a)->scratch_memsiz)
 #define SCRATCH_INUSE(a)((a)->scratch_inuse)
 
@@ -189,7 +189,8 @@ pcmciabusattach(parent, self, aux)
 	printf("\n");
 
 	sc->sc_driver = pca;
-	sc->sc_bc = pba->pba_bc;
+	sc->sc_iot = pba->pba_iot;
+	sc->sc_memt = pba->pba_memt;
 	pcmcia_probe_bus(sc->sc_dev.dv_unit, -1);
 }
 
@@ -647,8 +648,7 @@ pcmcia_mapcard(link, unit, pc_cf)
 	SCRATCH_INUSE(pca) = 1;
 	splx(s);
 	for (i = 0; i < pc_cf->memwin; i++) {
-		if ((err = PCMCIA_MAP_MEM(pca, link,
-					  pca->pa_bc,
+		if ((err = PCMCIA_MAP_MEM(pca, link, pca->pa_memt,
 					  (caddr_t) pc_cf->mem[i].start,
 					  pc_cf->mem[i].caddr,
 					  pc_cf->mem[i].len,
@@ -678,9 +678,9 @@ pcmcia_mapcard(link, unit, pc_cf)
 		}
 	}
 	/* Now we've mapped everything enable it */
-	if ((err = PCMCIA_MAP_MEM(pca, link, SCRATCH_BC(pca), SCRATCH_MEM(pca),
-	     pc_cf->cfg_off & (~(SCRATCH_SIZE(pca) - 1)), SCRATCH_SIZE(pca),
-				  PCMCIA_MAP_ATTR | PCMCIA_LAST_WIN)) != 0) {
+	if ((err = PCMCIA_MAP_MEM(pca, link, SCRATCH_MEMT(pca),
+	     SCRATCH_MEM(pca), pc_cf->cfg_off & (~(SCRATCH_SIZE(pca) - 1)),
+	     SCRATCH_SIZE(pca), PCMCIA_MAP_ATTR | PCMCIA_LAST_WIN)) != 0) {
 		PPRINTF(("pcmcia_mapcard: enable err %d\n", err));
 		goto error;
 	}
@@ -691,11 +691,12 @@ pcmcia_mapcard(link, unit, pc_cf)
 		goto error;
 	}
 
-#define GETMEM(x) bus_mem_read_1(pca->pa_bc, SCRATCH_MEM(pca), \
-				 (pc_cf->cfg_off & (SCRATCH_SIZE(pca)-1)) + x)
-#define PUTMEM(x,v) \
-	bus_mem_write_1(pca->pa_bc, SCRATCH_MEM(pca), \
-			(pc_cf->cfg_off & (SCRATCH_SIZE(pca)-1)) + x, v)
+#define GETMEM(x) bus_space_read_1(pca->pa_memt,			      \
+    (bus_space_handle_t)SCRATCH_MEM(pca),				      \
+    (pc_cf->cfg_off & (SCRATCH_SIZE(pca)-1)) + x)
+#define PUTMEM(x,v) bus_space_write_1(pca->pa_memt,			      \
+    (bus_space_handle_t)SCRATCH_MEM(pca),				      \
+    (pc_cf->cfg_off & (SCRATCH_SIZE(pca)-1)) + x, v)
 
 	if (ISSET(pc_cf->cfgtype, DOSRESET)) {
 		PUTMEM(0, PCMCIA_SRESET);
@@ -737,13 +738,13 @@ pcmcia_mapcard(link, unit, pc_cf)
 		err = 0;		/* XXX */
 	}
 error:
-	PCMCIA_MAP_MEM(pca, link, SCRATCH_BC(pca), SCRATCH_MEM(pca), 0,
+	PCMCIA_MAP_MEM(pca, link, SCRATCH_MEMT(pca), SCRATCH_MEM(pca), 0,
 		       SCRATCH_SIZE(pca), PCMCIA_LAST_WIN | PCMCIA_UNMAP);
 	if (err != 0) {
 		PPRINTF(("pcmcia_mapcard: unmaping\n"));
 		for (i = 0; i < pc_cf->memwin; i++) {
 			PCMCIA_MAP_MEM(pca, link,
-				       pca->pa_bc,
+				       pca->pa_memt,
 				       (caddr_t) pc_cf->mem[i].start,
 				       pc_cf->mem[i].caddr,
 				       pc_cf->mem[i].len,
@@ -786,7 +787,7 @@ pcmcia_unmapcard(link)
 		return ENODEV;
 
 	for (i = 0; i < link->memwin; i++)
-		PCMCIA_MAP_MEM(pca, link, pca->pa_bc, 0, 0, 0,
+		PCMCIA_MAP_MEM(pca, link, pca->pa_memt, 0, 0, 0,
 			       (i | PCMCIA_UNMAP));
 
 	for (i = 0; i < link->iowin; i++)
@@ -862,7 +863,7 @@ pcmcia_read_cis(link, scratch, offs, len)
 		int tlen = min(len + toff, size / 2) - toff;
 		int i;
 
-		if ((err = PCMCIA_MAP_MEM(pca, link, pca->pa_bc, p, pgoff,
+		if ((err = PCMCIA_MAP_MEM(pca, link, pca->pa_memt, p, pgoff,
 					  size,
 					  PCMCIA_MAP_ATTR |
 					  PCMCIA_LAST_WIN)) != 0)
@@ -873,7 +874,7 @@ pcmcia_read_cis(link, scratch, offs, len)
 		for (i = 0; i < tlen; j++, i++)
 			scratch[j] = p[toff + i * 2];
 
-		PCMCIA_MAP_MEM(pca, link, pca->pa_bc, p, 0, size,
+		PCMCIA_MAP_MEM(pca, link, pca->pa_memt, p, 0, size,
 			       PCMCIA_LAST_WIN | PCMCIA_UNMAP);
 		len -= tlen;
 	}
@@ -1155,7 +1156,7 @@ pcmciaslot_ioctl(link, slotid, cmd, data)
 			SCRATCH_INUSE(pca) = 1;
 			splx(s);
 			if ((err = PCMCIA_MAP_MEM(pca, link,
-						  SCRATCH_BC(pca),
+						  SCRATCH_MEMT(pca),
 						  SCRATCH_MEM(pca),
 						  pc_cf.cfg_off &
 						  ~(SCRATCH_SIZE(pca)-1),
@@ -1175,7 +1176,7 @@ pcmciaslot_ioctl(link, slotid, cmd, data)
 				*d++ = 0xff;
 				*d++ = 0xff;
 				PCMCIA_MAP_MEM(pca, link,
-					       SCRATCH_BC(pca),
+					       SCRATCH_MEMT(pca),
 					       SCRATCH_MEM(pca),
 					       0,SCRATCH_SIZE(pca), 
 					       PCMCIA_LAST_WIN|PCMCIA_UNMAP);

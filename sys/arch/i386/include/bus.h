@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.6 1996/11/12 22:46:27 niklas Exp $	*/
+/*	$OpenBSD: bus.h,v 1.7 1996/11/28 23:37:38 niklas Exp $	*/
 /*	$NetBSD: bus.h,v 1.5 1996/10/21 22:26:19 thorpej Exp $	*/
 
 /*
@@ -150,6 +150,27 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 
 #if 0	/* Cause a link error for bus_space_read_multi_8 */
 #define	bus_space_read_multi_8	!!! bus_space_read_multi_8 unimplemented !!!
+#endif
+
+/*
+ *	void bus_space_read_raw_multi_N __P((bus_space_tag_t tag,
+ *	    bus_space_handle_t bsh, bus_size_t offset,
+ *	    u_int8_t *addr, size_t count));
+ *
+ * Read `count' bytes in 2, 4 or 8 byte wide quantities from bus space
+ * described by tag/handle/offset and copy into buffer provided.  The buffer
+ * must have proper alignment for the N byte wide entities.  Furthermore
+ * possible byte-swapping should be done by these functions.
+ */
+
+#define	bus_space_read_raw_multi_2(t, h, o, a, c) \
+    bus_space_read_multi_2((t), (h), (o), (u_int16_t *)(a), (c) >> 1)
+#define	bus_space_read_raw_multi_4(t, h, o, a, c) \
+    bus_space_read_multi_4((t), (h), (o), (u_int32_t *)(a), (c) >> 2)
+
+#if 0	/* Cause a link error for bus_space_read_raw_multi_8 */
+#define	bus_space_read_raw_multi_8 \
+    !!! bus_space_read_raw_multi_8 unimplemented !!!
 #endif
 
 /*
@@ -323,6 +344,27 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 #if 0	/* Cause a link error for bus_space_write_multi_8 */
 #define	bus_space_write_multi_8(t, h, o, a, c)				\
 			!!! bus_space_write_multi_8 unimplimented !!!
+#endif
+
+/*
+ *	void bus_space_write_raw_multi_N __P((bus_space_tag_t tag,
+ *	    bus_space_handle_t bsh, bus_size_t offset,
+ *	    u_int8_t *addr, size_t count));
+ *
+ * Write `count' bytes in 2, 4 or 8 byte wide quantities from the buffer
+ * provided to bus space described by tag/handle/offset.  The buffer
+ * must have proper alignment for the N byte wide entities.  Furthermore
+ * possible byte-swapping should be done by these functions.
+ */
+
+#define	bus_space_write_raw_multi_2(t, h, o, a, c) \
+    bus_space_write_multi_2((t), (h), (o), (u_int16_t *)(a), (c) >> 1)
+#define	bus_space_write_raw_multi_4(t, h, o, a, c) \
+    bus_space_write_multi_4((t), (h), (o), (u_int32_t *)(a), (c) >> 2)
+
+#if 0	/* Cause a link error for bus_space_write_raw_multi_8 */
+#define	bus_space_write_raw_multi_8 \
+    !!! bus_space_write_raw_multi_8 unimplemented !!!
 #endif
 
 /*

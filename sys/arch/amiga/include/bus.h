@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.2 1996/08/04 01:34:38 niklas Exp $	*/
+/*	$OpenBSD: bus.h,v 1.3 1996/11/28 23:33:05 niklas Exp $	*/
 
 /*
  * Copyright (c) 1996 Niklas Hallqvist.
@@ -32,167 +32,177 @@
  * SUCH DAMAGE.
  */
 
-#ifndef _MACHINE_BUS_H_
-#define _MACHINE_BUS_H_
+#ifndef _AMIGA_BUS_H_
+#define _AMIGA_BUS_H_
 
-/* I/O access types.  */
-typedef u_long bus_io_addr_t;
-typedef u_long bus_io_size_t;
-typedef u_long bus_io_handle_t;
+#ifdef __STDC__
+#define CAT(a,b)	a##b
+#define CAT3(a,b,c)	a##b##c
+#else
+#define CAT(a,b)	a/**/b
+#define CAT3(a,b,c)	a/**/b/**/c
+#endif
 
-/* Memory access types.  */
-typedef u_long bus_mem_addr_t;
-typedef u_long bus_mem_size_t;
-typedef u_long bus_mem_handle_t;
+/* Bus access types.  */
+typedef u_int32_t bus_addr_t;
+typedef u_int32_t bus_size_t;
+typedef u_int32_t bus_space_handle_t;
 
-/*
- * The big switch, that delegates each bus operation to the right
- * implementation.
- */
-typedef struct amiga_bus_chipset *bus_chipset_tag_t;
+typedef struct amiga_bus_space *bus_space_tag_t;
 
-struct amiga_bus_chipset {
-	void	*bc_data;
+struct amiga_bus_space {
+	void	*bs_data;
 
-	int	(*bc_io_map)(bus_chipset_tag_t, bus_io_addr_t, bus_io_size_t,
-	    bus_io_handle_t *);
-	int	(*bc_io_unmap)(bus_io_handle_t, bus_io_size_t);
+	int	(*bs_map)(bus_space_tag_t, bus_addr_t, bus_size_t, int,
+	    bus_space_handle_t *);
+	int	(*bs_unmap)(bus_space_tag_t, bus_space_handle_t, bus_size_t);
 
-	u_int8_t (*bc_io_read_1)(bus_io_handle_t, bus_io_size_t);
-	u_int16_t (*bc_io_read_2)(bus_io_handle_t, bus_io_size_t);
-	u_int32_t (*bc_io_read_4)(bus_io_handle_t, bus_io_size_t);
-	u_int64_t (*bc_io_read_8)(bus_io_handle_t, bus_io_size_t);
-
-	void	(*bc_io_read_multi_1)(bus_io_handle_t, bus_io_size_t,
-		    u_int8_t *, bus_io_size_t);
-	void	(*bc_io_read_multi_2)(bus_io_handle_t, bus_io_size_t,
-		    u_int16_t *, bus_io_size_t);
-	void	(*bc_io_read_multi_4)(bus_io_handle_t, bus_io_size_t,
-		    u_int32_t *, bus_io_size_t);
-	void	(*bc_io_read_multi_8)(bus_io_handle_t, bus_io_size_t,
-		    u_int64_t *, bus_io_size_t);
-
-	void	(*bc_io_write_1)(bus_io_handle_t, bus_io_size_t, u_int8_t);
-	void	(*bc_io_write_2)(bus_io_handle_t, bus_io_size_t, u_int16_t);
-	void	(*bc_io_write_4)(bus_io_handle_t, bus_io_size_t, u_int32_t);
-	void	(*bc_io_write_8)(bus_io_handle_t, bus_io_size_t, u_int64_t);
-
-	void	(*bc_io_write_multi_1)(bus_io_handle_t, bus_io_size_t,
-		    const u_int8_t *, bus_io_size_t);
-	void	(*bc_io_write_multi_2)(bus_io_handle_t, bus_io_size_t,
-		    const u_int16_t *, bus_io_size_t);
-	void	(*bc_io_write_multi_4)(bus_io_handle_t, bus_io_size_t,
-		    const u_int32_t *, bus_io_size_t);
-	void	(*bc_io_write_multi_8)(bus_io_handle_t, bus_io_size_t,
-		    const u_int64_t *, bus_io_size_t);
-
-	int	(*bc_mem_map)(bus_chipset_tag_t, bus_mem_addr_t,
-		    bus_mem_size_t, int, bus_mem_handle_t *);
-	int	(*bc_mem_unmap)(bus_mem_handle_t, bus_mem_size_t);
-
-	u_int8_t (*bc_mem_read_1)(bus_mem_handle_t, bus_mem_size_t);
-	u_int16_t (*bc_mem_read_2)(bus_mem_handle_t, bus_mem_size_t);
-	u_int32_t (*bc_mem_read_4)(bus_mem_handle_t, bus_mem_size_t);
-	u_int64_t (*bc_mem_read_8)(bus_mem_handle_t, bus_mem_size_t);
-
-	void	(*bc_mem_write_1)(bus_mem_handle_t, bus_mem_size_t, u_int8_t);
-	void	(*bc_mem_write_2)(bus_mem_handle_t, bus_mem_size_t, u_int16_t);
-	void	(*bc_mem_write_4)(bus_mem_handle_t, bus_mem_size_t, u_int32_t);
-	void	(*bc_mem_write_8)(bus_mem_handle_t, bus_mem_size_t, u_int64_t);
-
-	/* These are extensions to the general NetBSD bus interface.  */
-	void	(*bc_io_read_raw_multi_2)(bus_io_handle_t, bus_io_size_t,
-		    u_int8_t *, bus_io_size_t);
-	void	(*bc_io_read_raw_multi_4)(bus_io_handle_t, bus_io_size_t,
-		    u_int8_t *, bus_io_size_t);
-	void	(*bc_io_read_raw_multi_8)(bus_io_handle_t, bus_io_size_t,
-		    u_int8_t *, bus_io_size_t);
-
-	void	(*bc_io_write_raw_multi_2)(bus_io_handle_t, bus_io_size_t,
-		    const u_int8_t *, bus_io_size_t);
-	void	(*bc_io_write_raw_multi_4)(bus_io_handle_t, bus_io_size_t,
-		    const u_int8_t *, bus_io_size_t);
-	void	(*bc_io_write_raw_multi_8)(bus_io_handle_t, bus_io_size_t,
-		    const u_int8_t *, bus_io_size_t);
+	/* We need swapping of 16-bit entities */
+	int	bs_swapped;
 };
 
-#define bus_io_map(t, port, size, iohp) \
-    (*(t)->bc_io_map)((t), (port), (size), (iohp))
-#define bus_io_unmap(t, iohp, size) \
-    (*(t)->bc_io_unmap)((iohp), (size))
+#define bus_space_map(t, port, size, cacheable, bshp) \
+    (*(t)->bs_map)((t), (port), (size), (cacheable), (bshp))
+#define bus_space_unmap(t, bshp, size) \
+    (*(t)->bs_unmap)((t), (bshp), (size))
 
-#define	bus_io_read_1(t, h, o) \
-    (*(t)->bc_io_read_1)((h), (o))
-#define	bus_io_read_2(t, h, o) \
-    (*(t)->bc_io_read_2)((h), (o))
-#define	bus_io_read_4(t, h, o) \
-    (*(t)->bc_io_read_4)((h), (o))
-#define	bus_io_read_8(t, h, o) \
-    (*(t)->bc_io_read_8)((h), (o))
+/* Swap bytes in a short word.  */
+static __inline u_int16_t
+swap(u_int16_t x)
+{
+	__asm("rolw #8,%0" : "=r" (x) : "0" (x));
+	return x;
+}
 
-#define	bus_io_read_multi_1(t, h, o, a, s) \
-    (*(t)->bc_io_read_multi_1)((h), (o), (a), (s))
-#define	bus_io_read_multi_2(t, h, o, a, s) \
-    (*(t)->bc_io_read_multi_2)((h), (o), (a), (s))
-#define	bus_io_read_multi_4(t, h, o, a, s) \
-    (*(t)->bc_io_read_multi_4)((h), (o), (a), (s))
-#define	bus_io_read_multi_8(t, h, o, a, s) \
-    (*(t)->bc_io_read_multi_8)((h), (o), (a), (s))
+static __inline u_int8_t
+bus_space_read_1(bus_space_tag_t bst, bus_space_handle_t bsh, bus_addr_t ba)
+{
+	return *(volatile u_int8_t *)(bsh + (ba << 1));
+}
 
-#define	bus_io_write_1(t, h, o, v) \
-    (*(t)->bc_io_write_1)((h), (o), (v))
-#define	bus_io_write_2(t, h, o, v) \
-    (*(t)->bc_io_write_2)((h), (o), (v))
-#define	bus_io_write_4(t, h, o, v) \
-    (*(t)->bc_io_write_4)((h), (o), (v))
-#define	bus_io_write_8(t, h, o, v) \
-    (*(t)->bc_io_write_8)((h), (o), (v))
+static __inline u_int16_t
+bus_space_read_2(bus_space_tag_t bst, bus_space_handle_t bsh, bus_addr_t ba)
+{
+	register u_int16_t x = *(volatile u_int16_t *)((bsh & ~1) + (ba << 1));
 
-#define	bus_io_write_multi_1(t, h, o, a, s) \
-    (*(t)->bc_io_write_multi_1)((h), (o), (a), (s))
-#define	bus_io_write_multi_2(t, h, o, a, s) \
-    (*(t)->bc_io_write_multi_2)((h), (o), (a), (s))
-#define	bus_io_write_multi_4(t, h, o, a, s) \
-    (*(t)->bc_io_write_multi_4)((h), (o), (a), (s))
-#define	bus_io_write_multi_8(t, h, o, a, s) \
-    (*(t)->bc_io_write_multi_8)((h), (o), (a), (s))
+	return bst->bs_swapped ? swap(x) : x;
+}
 
-#define bus_mem_map(t, port, size, cacheable, mhp) \
-    (*(t)->bc_mem_map)((t), (port), (size), (cacheable), (mhp))
-#define bus_mem_unmap(t, mhp, size) \
-    (*(t)->bc_mem_unmap)((mhp), (size))
+static __inline u_int32_t
+bus_space_read_4(bus_space_tag_t bst, bus_space_handle_t bsh, bus_addr_t ba)
+{
+	panic("bus_space_read_4: operation not allowed on this bus (tag %x)",
+	    bst);
+	return 0;
+}
 
-#define	bus_mem_read_1(t, h, o) \
-    (*(t)->bc_mem_read_1)((h), (o))
-#define	bus_mem_read_2(t, h, o) \
-    (*(t)->bc_mem_read_2)((h), (o))
-#define	bus_mem_read_4(t, h, o) \
-    (*(t)->bc_mem_read_4)((h), (o))
-#define	bus_mem_read_8(t, h, o) \
-    (*(t)->bc_mem_read_8)((h), (o))
+#define	bus_space_read_8	!!! bus_space_read_8 not implemented !!!
 
-#define	bus_mem_write_1(t, h, o, v) \
-    (*(t)->bc_mem_write_1)((h), (o), (v))
-#define	bus_mem_write_2(t, h, o, v) \
-    (*(t)->bc_mem_write_2)((h), (o), (v))
-#define	bus_mem_write_4(t, h, o, v) \
-    (*(t)->bc_mem_write_4)((h), (o), (v))
-#define	bus_mem_write_8(t, h, o, v) \
-    (*(t)->bc_mem_write_8)((h), (o), (v))
+#define bus_space_read_multi(n, m)					      \
+static __inline void						       	      \
+CAT(bus_space_read_multi_,n)(bus_space_tag_t bst, bus_space_handle_t bsh,     \
+    bus_addr_t ba, CAT3(u_int,m,_t) *buf, bus_size_t cnt)		      \
+{									      \
+	while (cnt--)							      \
+		*buf++ = CAT(bus_space_read_,n)(bst, bsh, ba);		      \
+}
+
+bus_space_read_multi(1,8)
+bus_space_read_multi(2,16)
+bus_space_read_multi(4,32)
+
+#define	bus_space_read_multi_8	!!! bus_space_read_multi_8 not implemented !!!
+
+static __inline void
+bus_space_write_1(bus_space_tag_t bst, bus_space_handle_t bsh, bus_addr_t ba,
+    u_int8_t x)
+{
+	*(volatile u_int8_t *)(bsh + (ba << 1)) = x;
+}
+
+static __inline void
+bus_space_write_2(bus_space_tag_t bst, bus_space_handle_t bsh, bus_addr_t ba,
+    u_int16_t x)
+{
+	*(volatile u_int16_t *)((bsh & ~1) + (ba << 1)) =
+            bst->bs_swapped ? swap(x) : x;
+}
+
+static __inline void
+bus_space_write_4(bus_space_tag_t bst, bus_space_handle_t bsh, bus_addr_t ba,
+    u_int32_t x)
+{
+	panic("bus_space_write_4: operation not allowed on this bus (tag %x)",
+	    bst);
+}
+
+#define	bus_space_write_8	!!! bus_space_write_8 not implemented !!!
+
+#define bus_space_write_multi(n, m)					      \
+static __inline void								      \
+CAT(bus_space_write_multi_,n)(bus_space_tag_t bst, bus_space_handle_t bsh,    \
+    bus_addr_t ba, const CAT3(u_int,m,_t) *buf, bus_size_t cnt)		      \
+{									      \
+	while (cnt--)							      \
+		CAT(bus_space_write_,n)(bst, bsh, ba, *buf++);		      \
+}
+
+bus_space_write_multi(1,8)
+bus_space_write_multi(2,16)
+bus_space_write_multi(4,32)
+
+#define	bus_space_write_multi_8	!!! bus_space_write_multi_8 not implemented !!!
 
 /* OpenBSD extensions */
-#define	bus_io_read_raw_multi_2(t, h, o, a, s) \
-    (*(t)->bc_io_read_raw_multi_2)((h), (o), (a), (s))
-#define	bus_io_read_raw_multi_4(t, h, o, a, s) \
-    (*(t)->bc_io_read_raw_multi_4)((h), (o), (a), (s))
-#define	bus_io_read_raw_multi_8(t, h, o, a, s) \
-    (*(t)->bc_io_read_raw_multi_8)((h), (o), (a), (s))
+static __inline void
+bus_space_read_raw_multi_2(bus_space_tag_t bst, bus_space_handle_t bsh,
+    bus_addr_t ba, u_int8_t *buf, bus_size_t cnt)
+{
+	register u_int16_t *buf16 = (u_int16_t *)buf;
 
-#define	bus_io_write_raw_multi_2(t, h, o, a, s) \
-    (*(t)->bc_io_write_raw_multi_2)((h), (o), (a), (s))
-#define	bus_io_write_raw_multi_4(t, h, o, a, s) \
-    (*(t)->bc_io_write_raw_multi_4)((h), (o), (a), (s))
-#define	bus_io_write_raw_multi_8(t, h, o, a, s) \
-    (*(t)->bc_io_write_raw_multi_8)((h), (o), (a), (s))
+	while (cnt) {
+		register u_int16_t x =
+		    *(volatile u_int16_t *)((bsh & ~1) + (ba << 1));
 
-#endif /* _MACHINE_BUS_H_ */
+		*buf16++ = bst->bs_swapped ? x : swap(x);
+		cnt -= 2;
+	}
+}
+
+static __inline void
+bus_space_read_raw_multi_4(bus_space_tag_t bst, bus_space_handle_t bsh,
+    bus_addr_t ba, u_int8_t *buf, bus_size_t cnt)
+{
+	panic("%s: operation not allowed on this bus (tag %x)",
+	    "bus_space_read_raw_multi_4", bst);
+}
+
+#define	bus_space_read_raw_multi_8 \
+    !!! bus_space_read_raw_multi_8 not implemented !!!
+
+static __inline void
+bus_space_write_raw_multi_2(bus_space_tag_t bst, bus_space_handle_t bsh,
+    bus_addr_t ba, const u_int8_t *buf, bus_size_t cnt)
+{
+	register const u_int16_t *buf16 = (const u_int16_t *)buf;
+
+	while (cnt) {
+		*(volatile u_int16_t *)((bsh & ~1) + (ba << 1)) =
+		    bst->bs_swapped ? *buf16 : swap(*buf16);
+		buf16++;
+		cnt -= 2;
+	}
+}
+
+static __inline void
+bus_space_write_raw_multi_4(bus_space_tag_t bst, bus_space_handle_t bsh,
+    bus_addr_t ba, const u_int8_t *buf, bus_size_t cnt)
+{
+	panic("%s: operation not allowed on this bus (tag %x)",
+	    "bus_space_write_raw_multi_4", bst);
+}
+
+#define	bus_space_write_raw_multi_8 \
+    !!! bus_space_write_raw_multi_8 not implemented !!!
+
+#endif /* _AMIGA_BUS_H_ */

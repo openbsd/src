@@ -1,8 +1,8 @@
-/*	$OpenBSD: crossvar.h,v 1.4 1996/11/28 23:33:08 niklas Exp $	*/
+/*	$OpenBSD: uhavar.h,v 1.1 1996/11/28 23:27:55 niklas Exp $	*/
+/*	$NetBSD: uhavar.h,v 1.3 1996/10/21 22:34:43 thorpej Exp $	*/
 
 /*
- * Copyright (c) 1994, 1996 Niklas Hallqvist
- * All rights reserved.
+ * Copyright (c) 1994, 1996 Charles M. Hannum.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -14,9 +14,9 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by Niklas Hallqvist.
+ *	This product includes software developed by Charles M. Hannum.
  * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission
+ *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -30,43 +30,32 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _CROSSVAR_H_
-#define _CROSSVAR_H_
+#define UHA_MSCP_MAX	32	/* store up to 32 MSCPs at one time */
+#define	MSCP_HASH_SIZE	32	/* hash table size for phystokv */
+#define	MSCP_HASH_SHIFT	9
+#define MSCP_HASH(x)	((((long)(x))>>MSCP_HASH_SHIFT) & (MSCP_HASH_SIZE - 1))
 
-/*
- * Interrupt handler chains.  cross_intr_establish() inserts a handler into
- * the list.  The handler is called with its (single) argument.
- */
-struct intrhand {
-	struct	intrhand *ih_next;
-	int	(*ih_fun) __P ((void *));
-	void	*ih_arg;
-	u_long	ih_count;
-	int	ih_irq;
-	char	*ih_what;
+struct uha_softc {
+	struct device sc_dev;
 
-	struct	isr ih_isr;
-	u_int16_t ih_mask;
-	volatile u_int16_t *ih_status;
+	bus_space_tag_t sc_iot;
+	bus_space_handle_t sc_ioh;
+
+	int sc_irq, sc_drq;
+	void *sc_ih;
+
+	void (*start_mbox) __P((struct uha_softc *, struct uha_mscp *));
+	int (*poll) __P((struct uha_softc *, struct scsi_xfer *, int));
+	void (*init) __P((struct uha_softc *));
+
+	struct uha_mscp *sc_mscphash[MSCP_HASH_SIZE];
+	TAILQ_HEAD(, uha_mscp) sc_free_mscp;
+	int sc_nummscps;
+	int sc_scsi_dev;		/* our scsi id */
+	struct scsi_link sc_link;
 };
 
-#define	ICU_LEN		16	/* number of ISA IRQs (XXX) */
-
-struct cross_softc {
-	struct	device sc_dev;
-
-	struct	zbus_args sc_zargs;
-	struct	intrhand *sc_ih[ICU_LEN];
-	int	sc_intrsharetype[ICU_LEN];
-	u_int16_t sc_imask;
-	volatile u_int16_t *sc_status;
-	struct vm_page sc_page[CROSS_BANK_SIZE / NBPG];
-
-	struct amiga_bus_space sc_iot;
-	struct amiga_bus_space sc_memt;
-	struct amiga_isa_chipset sc_ic;
-};
-
-extern int crossdebug;
-
-#endif
+void	uha_attach __P((struct uha_softc *));
+void	uha_timeout __P((void *arg));
+struct	uha_mscp *uha_mscp_phys_kv __P((struct uha_softc *, u_long));
+void	uha_done __P((struct uha_softc *, struct uha_mscp *));

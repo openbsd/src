@@ -1,4 +1,5 @@
-/*	$OpenBSD: smc93cx6.c,v 1.5 1996/11/12 20:30:23 niklas Exp $	*/
+/*	$OpenBSD: smc93cx6.c,v 1.6 1996/11/28 23:27:53 niklas Exp $	*/
+/*	$NetBSD: smc93cx6.c,v 1.5 1996/10/21 22:34:38 thorpej Exp $	*/
 
 /*
  * Interface for the 93C46/26/06 serial eeprom parts.
@@ -59,7 +60,7 @@
 #include <machine/clock.h>
 #include <i386/scsi/93cx6.h>
 #elif defined(__NetBSD__) || defined(__OpenBSD__)
-#include <machine/bus.old.h>
+#include <machine/bus.h>
 #include <dev/ic/smc93cx6var.h>
 #endif
 
@@ -92,8 +93,8 @@ read_seeprom(sd, buf, start_addr, count)
 	u_int start_addr;
 	int count;
 #elif defined(__NetBSD__) || defined(__OpenBSD__)
-	bus_io_size_t start_addr;
-	bus_io_size_t count;
+	bus_size_t start_addr;
+	bus_size_t count;
 #endif
 {
 	int i = 0, k = 0;

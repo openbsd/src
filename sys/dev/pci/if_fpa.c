@@ -1,4 +1,5 @@
-/*	$NetBSD: if_fpa.c,v 1.11 1996/05/20 15:53:02 thorpej Exp $	*/
+/*	$OpenBSD: if_fpa.c,v 1.10 1996/11/28 23:28:06 niklas Exp $	*/
+/*	$NetBSD: if_fpa.c,v 1.15 1996/10/21 22:56:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -386,13 +387,9 @@ pdq_pci_attach(
     pdq_uint32_t data;
     pci_intr_handle_t intrhandle;
     const char *intrstr;
-#ifdef PDQ_IOMAPPED
-    bus_io_addr_t iobase;
-    bus_io_size_t iosize;
-#else
-    bus_mem_addr_t membase;
-    bus_mem_size_t memsize;
-#endif
+    bus_addr_t csrbase;
+    bus_size_t csrsize;
+    int cacheable = 0;
 
     data = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_CFLT);
     if ((data & 0xFF00) < (DEFPA_LATENCY << 8)) {
@@ -401,26 +398,36 @@ pdq_pci_attach(
 	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_CFLT, data);
     }
 
-    sc->sc_bc = pa->pa_bc;
     bcopy(sc->sc_dev.dv_xname, sc->sc_if.if_xname, IFNAMSIZ);
     sc->sc_if.if_flags = 0;
     sc->sc_if.if_softc = sc;
 
+    /*
+     * NOTE: sc_bc is an alias for sc_csrtag and sc_membase is an
+     * alias for sc_csrhandle.  sc_iobase is not used in this front-end.
+     */
 #ifdef PDQ_IOMAPPED
-    if (pci_io_find(pa->pa_pc, pa->pa_tag, PCI_CBIO, &iobase, &iosize)
-	    || bus_io_map(pa->pa_bc, iobase, iosize, &sc->sc_iobase)){
-        printf("\n%s: can't map I/O space!\n", sc->sc_dev.dv_xname);
+    sc->sc_csrtag = pa->pa_iot;
+    if (pci_io_find(pa->pa_pc, pa->pa_tag, PCI_CBIO, &csrbase, &csrsize)) {
+	printf("\n%s: can't find I/O space!\n", sc->sc_dev.dv_xname);
 	return;
     }
 #else
-    if (pci_mem_find(pa->pa_pc, pa->pa_tag, PCI_CBMA, &membase, &memsize, NULL)
-	    || bus_mem_map(pa->pa_bc, membase, memsize, 0, &sc->sc_membase)) {
-	printf("\n%s: can't map memory space!\n", sc->sc_dev.dv_xname);
+    sc->sc_csrtag = pa->pa_memt;
+    if (pci_mem_find(pa->pa_pc, pa->pa_tag, PCI_CBMA, &csrbase, &csrsize,
+      &cacheable)) {
+	printf("\n%s: can't find memory space!\n", sc->sc_dev.dv_xname);
 	return;
     }
 #endif
 
-    sc->sc_pdq = pdq_initialize(sc->sc_bc, sc->sc_membase,
+    if (bus_space_map(sc->sc_csrtag, csrbase, csrsize, cacheable,
+      &sc->sc_csrhandle)) {
+	printf("\n%s: can't map CSRs!\n", sc->sc_dev.dv_xname);
+	return;
+    }
+
+    sc->sc_pdq = pdq_initialize(sc->sc_csrtag, sc->sc_csrhandle,
 				sc->sc_if.if_xname, 0,
 				(void *) sc, PDQ_DEFPA);
     if (sc->sc_pdq == NULL) {

@@ -71,9 +71,9 @@ pica*		at mainbus0
 clock0		at pica?
 pc0		at pica?
 pms0		at pica?
-ace0		at pica?
-ace1		at pica?
-lpr0		at pica?
+com0		at pica?
+com1		at pica?
+lpt0		at pica?
 sn0		at pica?
 
 fdc0		at pica?
@@ -96,8 +96,8 @@ isabr*		at mainbus0
 
 isa*		at isabr?
 
-ace2		at isa? port 0x3f8 irq 4
-ace3		at isa? port 0x2f8 irq 3
+com2		at isa? port 0x3f8 irq 4
+com3		at isa? port 0x2f8 irq 3
 
 
 pseudo-device	sl		 2	# serial-line IP ports

@@ -1,4 +1,5 @@
-/*	$NetBSD: pci_machdep.c,v 1.23 1996/04/11 22:15:33 cgd Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.9 1996/11/28 23:37:42 niklas Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.26 1996/10/24 12:32:29 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -115,7 +116,9 @@ pci_make_tag(pc, bus, device, function)
 #endif
 
 #if !defined(PCI_CONF_MODE) || (PCI_CONF_MODE == 1)
+#ifndef PCI_CONF_MODE
 mode1:
+#endif
 	if (bus >= 256 || device >= 32 || function >= 8)
 		panic("pci_make_tag: bad request");
 
@@ -125,7 +128,9 @@ mode1:
 #endif
 
 #if !defined(PCI_CONF_MODE) || (PCI_CONF_MODE == 2)
+#ifndef PCI_CONF_MODE
 mode2:
+#endif
 	if (bus >= 256 || device >= 16 || function >= 8)
 		panic("pci_make_tag: bad request");
 
@@ -156,7 +161,9 @@ pci_conf_read(pc, tag, reg)
 #endif
 
 #if !defined(PCI_CONF_MODE) || (PCI_CONF_MODE == 1)
+#ifndef PCI_CONF_MODE
 mode1:
+#endif
 	outl(PCI_MODE1_ADDRESS_REG, tag.mode1 | reg);
 	data = inl(PCI_MODE1_DATA_REG);
 	outl(PCI_MODE1_ADDRESS_REG, 0);
@@ -164,7 +171,9 @@ mode1:
 #endif
 
 #if !defined(PCI_CONF_MODE) || (PCI_CONF_MODE == 2)
+#ifndef PCI_CONF_MODE
 mode2:
+#endif
 	outb(PCI_MODE2_ENABLE_REG, tag.mode2.enable);
 	outb(PCI_MODE2_FORWARD_REG, tag.mode2.forward);
 	data = inl(tag.mode2.port | reg);
@@ -193,14 +202,18 @@ pci_conf_write(pc, tag, reg, data)
 #endif
 
 #if !defined(PCI_CONF_MODE) || (PCI_CONF_MODE == 1)
+#ifndef PCI_CONF_MODE
 mode1:
+#endif
 	outl(PCI_MODE1_ADDRESS_REG, tag.mode1 | reg);
 	outl(PCI_MODE1_DATA_REG, data);
 	outl(PCI_MODE1_ADDRESS_REG, 0);
 #endif
 
 #if !defined(PCI_CONF_MODE) || (PCI_CONF_MODE == 2)
+#ifndef PCI_CONF_MODE
 mode2:
+#endif
 	outb(PCI_MODE2_ENABLE_REG, tag.mode2.enable);
 	outb(PCI_MODE2_FORWARD_REG, tag.mode2.forward);
 	outl(tag.mode2.port | reg, data);

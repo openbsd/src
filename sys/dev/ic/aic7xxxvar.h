@@ -1,4 +1,5 @@
-/*	$OpenBSD: aic7xxxvar.h,v 1.8 1996/10/31 01:01:25 niklas Exp $	*/
+/*	$OpenBSD: aic7xxxvar.h,v 1.9 1996/11/28 23:27:45 niklas Exp $	*/
+/*	$NetBSD: aic7xxxvar.h,v 1.10 1996/10/21 22:34:09 thorpej Exp $	*/
 /*
  * Interface to the generic driver for the aic7xxx based adaptec
  * SCSI controllers.  This is used to implement product specific
@@ -67,15 +68,15 @@
 	outsl((ahc)->baseport+(port), valp, size)
 #elif defined(__NetBSD__) || defined(__OpenBSD__)
 #define	AHC_INB(ahc, port)	\
-	bus_io_read_1((ahc)->sc_bc, (ahc)->sc_ioh, port)
+	bus_space_read_1((ahc)->sc_iot, (ahc)->sc_ioh, port)
 #define	AHC_INSB(ahc, port, valp, size)	\
-	bus_io_read_multi_1((ahc)->sc_bc, (ahc)->sc_ioh, port, valp, size)
+	bus_space_read_multi_1((ahc)->sc_iot, (ahc)->sc_ioh, port, valp, size)
 #define	AHC_OUTB(ahc, port, val)	\
-	bus_io_write_1((ahc)->sc_bc, (ahc)->sc_ioh, port, val)
+	bus_space_write_1((ahc)->sc_iot, (ahc)->sc_ioh, port, val)
 #define	AHC_OUTSB(ahc, port, valp, size)	\
-	bus_io_write_multi_1((ahc)->sc_bc, (ahc)->sc_ioh, port, valp, size)
+	bus_space_write_multi_1((ahc)->sc_iot, (ahc)->sc_ioh, port, valp, size)
 #define	AHC_OUTSL(ahc, port, valp, size)	\
-	bus_io_write_multi_4((ahc)->sc_bc, (ahc)->sc_ioh, port, valp, size)
+	bus_space_write_multi_4((ahc)->sc_iot, (ahc)->sc_ioh, port, valp, size)
 #endif
 
 #define	AHC_NSEG	256	/* number of dma segments supported */
@@ -89,14 +90,14 @@
 				 */
 
 
-typedef unsigned long int physaddr;
+typedef u_int32_t physaddr;
 #if defined(__FreeBSD__)
 extern u_long ahc_unit;
 #endif
 
 struct ahc_dma_seg {
-        physaddr addr;
-            long len;
+	physaddr	addr;
+	u_int32_t	len;
 };
 
 typedef enum {
@@ -112,6 +113,7 @@ typedef enum {
 	AHC_AIC78X0	= 0x060,	/* PCI Based Controller */
 	AHC_274		= 0x110,	/* EISA Based Controller */
 	AHC_284		= 0x210,	/* VL/ISA Based Controller */
+	AHC_294AU	= 0x421,	/* aic7860 based '2940' */
 	AHC_294		= 0x440,	/* PCI Based Controller */
 	AHC_294U	= 0x441,	/* ULTRA PCI Based Controller */
 	AHC_394		= 0x840,	/* Twin Channel PCI Controller */
@@ -142,18 +144,20 @@ typedef enum {
 }ahc_flag;
 
 typedef enum {
-	SCB_FREE		= 0x000,
-	SCB_ACTIVE		= 0x001,
-	SCB_ABORTED		= 0x002,
-	SCB_DEVICE_RESET	= 0x004,
-	SCB_IMMED		= 0x008,
-	SCB_SENSE		= 0x010,
-	SCB_TIMEDOUT		= 0x020,
-	SCB_QUEUED_FOR_DONE	= 0x040,
-	SCB_PAGED_OUT		= 0x080,
-	SCB_WAITINGQ		= 0x100,
-	SCB_ASSIGNEDQ		= 0x200,
-	SCB_SENTORDEREDTAG	= 0x400
+	SCB_FREE		= 0x0000,
+	SCB_ACTIVE		= 0x0001,
+	SCB_ABORTED		= 0x0002,
+	SCB_DEVICE_RESET	= 0x0004,
+	SCB_IMMED		= 0x0008,
+	SCB_SENSE		= 0x0010,
+	SCB_TIMEDOUT		= 0x0020,
+	SCB_QUEUED_FOR_DONE	= 0x0040,
+	SCB_PAGED_OUT		= 0x0080,
+	SCB_WAITINGQ		= 0x0100,
+	SCB_ASSIGNEDQ		= 0x0200,
+	SCB_SENTORDEREDTAG	= 0x0400,
+	SCB_MSGOUT_SDTR		= 0x0800,
+	SCB_MSGOUT_WDTR		= 0x1000
 }scb_flag;
 
 /*
@@ -172,7 +176,7 @@ struct scb {
 /*8*/	u_char residual_SG_segment_count;
 /*9*/	u_char residual_data_count[3];
 /*12*/	physaddr data;
-/*16*/  u_long datalen;			/* Really only three bits, but its
+/*16*/  u_int32_t datalen;		/* Really only three bits, but its
 					 * faster to treat it as a long on
 					 * a quad boundary.
 					 */
@@ -205,8 +209,8 @@ struct ahc_data {
 #elif defined(__NetBSD__) || defined(__OpenBSD__)
 	struct device sc_dev;
 	void	*sc_ih;
-	bus_chipset_tag_t sc_bc;
-	bus_io_handle_t sc_ioh;
+	bus_space_tag_t sc_iot;
+	bus_space_handle_t sc_ioh;
 #endif
 	ahc_type type;
 	ahc_flag flags;
@@ -284,16 +288,18 @@ struct ahc_data *ahc_alloc __P((int unit, u_long io_base, ahc_type type, ahc_fla
 
 #define	ahc_name(ahc)	(ahc)->sc_dev.dv_xname
 
-void ahc_reset __P((char *devname, bus_chipset_tag_t bc, bus_io_handle_t ioh));
-void ahc_construct __P((struct ahc_data *ahc, bus_chipset_tag_t bc, bus_io_handle_t ioh, ahc_type type, ahc_flag flags));
+void	ahc_reset __P((char *devname, bus_space_tag_t iot,
+	    bus_space_handle_t ioh));
+void	ahc_construct __P((struct ahc_data *ahc, bus_space_tag_t iot,
+	    bus_space_handle_t ioh, ahc_type type, ahc_flag flags));
 #endif
-void ahc_free __P((struct ahc_data *));
-int ahc_init __P((struct ahc_data *));
-int ahc_attach __P((struct ahc_data *));
+void	ahc_free __P((struct ahc_data *));
+int	ahc_init __P((struct ahc_data *));
+int	ahc_attach __P((struct ahc_data *));
 #if defined(__FreeBSD__)
-void ahc_intr __P((void *arg));
+void	ahc_intr __P((void *arg));
 #elif defined(__NetBSD__) || defined(__OpenBSD__)
-int ahc_intr __P((void *arg));
+int	ahc_intr __P((void *arg));
 #endif
 
 #endif  /* _AIC7XXX_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.6 1996/06/07 05:18:40 niklas Exp $	*/
+/*	$OpenBSD: trap.c,v 1.7 1996/11/28 23:33:03 niklas Exp $	*/
 /*	$NetBSD: trap.c,v 1.47 1996/05/10 14:31:08 is Exp $	*/
 
 /*
@@ -508,7 +508,7 @@ nogo:
 		       type, code);
 		panictrap(type, code, v, fp);
 	}
-	trapsignal(p, (rv == KERN_PROTECTION_FAILURE) ? SIGBUS : SIGSEGV, v);
+	trapsignal(p, SIGSEGV, v);
 	if ((type & T_USER) == 0)
 		return;
 	userret(p, fp->f_pc, sticks); 

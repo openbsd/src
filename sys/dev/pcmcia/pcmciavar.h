@@ -1,4 +1,4 @@
-/*	$Id: pcmciavar.h,v 1.2 1996/11/12 20:31:01 niklas Exp $	*/
+/*	$Id: pcmciavar.h,v 1.3 1996/11/28 23:28:17 niklas Exp $	*/
 /*
  * Copyright (c) 1995,1996 John T. Kohl.  All rights reserved.
  * Copyright (c) 1993, 1994 Stefan Grefen.  All rights reserved.
@@ -37,7 +37,7 @@
 #include <sys/queue.h>
 #include <sys/select.h>
 #include <machine/cpu.h>
-#include <machine/bus.old.h>
+#include <machine/bus.h>
 
 /*
  * The following documentation tries to describe the relationship between the
@@ -82,7 +82,7 @@ struct pcmcia_funcs {
 /* 4 map io range */
 	int (*pcmcia_map_io) __P((struct pcmcia_link *, u_int, u_int, int));
 /* 8 map memory window */
-	int (*pcmcia_map_mem) __P((struct pcmcia_link *, bus_chipset_tag_t,
+	int (*pcmcia_map_mem) __P((struct pcmcia_link *, bus_space_tag_t,
 				   caddr_t, u_int, u_int, int));
 /*12 map interrupt */
 	int (*pcmcia_map_intr) __P((struct pcmcia_link *, int, int));
@@ -124,11 +124,11 @@ struct pcmciabus_link {			/* Link back to the bus we are on */
 struct pcmcia_adapter {
 	struct pcmcia_funcs *chip_link;
 	struct pcmciabus_link *bus_link;
-	bus_chipset_tag_t pa_bc;	/* bus chipset */
-        void *          adapter_softc;
+	bus_space_tag_t pa_memt;	/* mem access handle */
+        void *adapter_softc;
 	caddr_t scratch_mem;		/* pointer to scratch window */
 	int scratch_memsiz;		/* size of scratch window    */
-	bus_mem_handle_t scratch_memh;	/* bus memory handle */
+	bus_space_handle_t scratch_memh;/* bus memory handle */
 	int scratch_inuse;		/* window in use             */
 	int nslots;			/* # of slots controlled */
 };
@@ -205,7 +205,8 @@ struct pcmcia_link {
  */
 struct pcmciabus_softc {
 	struct device sc_dev;
-	bus_chipset_tag_t sc_bc;
+	bus_space_tag_t sc_iot;
+	bus_space_tag_t sc_memt;
 	struct pcmcia_link *sc_link[4];	/* up to 4 slots per bus */
 	struct pcmcia_adapter *sc_driver;
 };
@@ -289,7 +290,8 @@ struct pcmcia_attach_args {
 };
 
 struct pcmciabus_attach_args {
-	bus_chipset_tag_t pba_bc;
+	bus_space_tag_t pba_iot;
+	bus_space_tag_t pba_memt;
 	int	pba_maddr;
 	int	pba_msize;
 	void	*pba_aux;		/* driver specific */

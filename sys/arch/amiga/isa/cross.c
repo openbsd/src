@@ -1,4 +1,4 @@
-/*	$OpenBSD: cross.c,v 1.7 1996/11/23 21:45:26 kstailey Exp $	*/
+/*	$OpenBSD: cross.c,v 1.8 1996/11/28 23:33:06 niklas Exp $	*/
 
 /*
  * Copyright (c) 1994, 1996 Niklas Hallqvist, Carsten Hammer
@@ -37,7 +37,11 @@
 #include <sys/syslog.h>
 #include <sys/systm.h>
 
-#include <machine/bus.old.h>
+#include <vm/vm.h>
+#include <vm/vm.h>
+#include <vm/vm.h>
+
+#include <machine/bus.h>
 #include <machine/cpu.h>
 #include <machine/intr.h>
 
@@ -48,8 +52,8 @@
 #include <amiga/amiga/isr.h>
 #include <amiga/dev/zbusvar.h>
 #include <amiga/isa/isa_machdep.h>
-#include <amiga/isa/crossvar.h>
 #include <amiga/isa/crossreg.h>
+#include <amiga/isa/crossvar.h>
 
 extern int cold;
 
@@ -59,50 +63,12 @@ void	crossattach __P((struct device *, struct device *, void *));
 int	crossmatch __P((struct device *, void *, void *));
 int	crossprint __P((void *, const char *));
 
-int	cross_io_map __P((bus_chipset_tag_t, bus_io_addr_t, bus_io_size_t,
-	    bus_io_handle_t *));
-int	cross_mem_map __P((bus_chipset_tag_t, bus_mem_addr_t, bus_mem_size_t,
-	    int, bus_mem_handle_t *));
-
-void	cross_io_read_multi_1 __P((bus_io_handle_t, bus_io_size_t, u_int8_t *,
-	    bus_io_size_t));
-void	cross_io_read_multi_2 __P((bus_io_handle_t, bus_io_size_t, u_int16_t *,
-	    bus_io_size_t));
-
-void	cross_io_write_multi_1 __P((bus_io_handle_t, bus_io_size_t,
-	    const u_int8_t *, bus_io_size_t));
-void	cross_io_write_multi_2 __P((bus_io_handle_t, bus_io_size_t,
-	    const u_int16_t *, bus_io_size_t));
-
-void	cross_io_read_raw_multi_2 __P((bus_io_handle_t, bus_io_size_t,
-	    u_int8_t *, bus_io_size_t));
-void	cross_io_write_raw_multi_2 __P((bus_io_handle_t, bus_io_size_t,
-	    const u_int8_t *, bus_io_size_t));
-
-/*
- * Note that the following unified access functions are prototyped for the
- * I/O access case.  We use casts to get type correctness.
- */
-int	cross_unmap __P((bus_io_handle_t, bus_io_size_t));
-
-__inline u_int8_t cross_read_1 __P((bus_io_handle_t, bus_io_size_t));
-__inline u_int16_t cross_read_2 __P((bus_io_handle_t, bus_io_size_t));
-
-__inline void cross_write_1 __P((bus_io_handle_t, bus_io_size_t, u_int8_t));
-__inline void cross_write_2 __P((bus_io_handle_t, bus_io_size_t, u_int16_t));
-
-/*
- * In order to share the access function implementations for I/O and memory
- * access we cast the functions for the memory access case.  These typedefs
- * make that casting look nicer.
- */
-typedef int (*bus_mem_unmap_t) __P((bus_mem_handle_t, bus_mem_size_t));
-typedef u_int8_t (*bus_mem_read_1_t) __P((bus_mem_handle_t, bus_mem_size_t));
-typedef u_int16_t (*bus_mem_read_2_t) __P((bus_mem_handle_t, bus_mem_size_t));
-typedef void (*bus_mem_write_1_t) __P((bus_mem_handle_t, bus_mem_size_t,
-	    u_int8_t));
-typedef void (*bus_mem_write_2_t) __P((bus_mem_handle_t, bus_mem_size_t,
-	    u_int16_t));
+int	cross_io_map __P((bus_space_tag_t, bus_addr_t, bus_size_t, int,
+	    bus_space_handle_t *));
+int	cross_mem_map __P((bus_space_tag_t, bus_addr_t, bus_size_t, int,
+	    bus_space_handle_t *));
+int	cross_io_unmap __P((bus_space_handle_t, bus_size_t));
+int	cross_mem_unmap __P((bus_space_handle_t, bus_size_t));
 
 int	crossintr __P((void *));
 
@@ -112,34 +78,7 @@ void	*cross_intr_establish __P((void *, int, int, int, int (*)(void *),
 	    void *, char *));
 void	cross_intr_disestablish __P((void *, void *));
 
-static u_int16_t swap __P((u_int16_t));
-
-struct amiga_bus_chipset cross_chipset = {
-	0 /* bc_data */,
-
-	cross_io_map, cross_unmap,
-	cross_read_1, cross_read_2,
-	0 /* bc_io_read_4 */, 0 /* bc_io_read_8 */,
-	cross_io_read_multi_1, cross_io_read_multi_2,
-	0 /* bc_io_multi_4 */, 0 /* bc_io_multi_8 */,
-	cross_write_1, cross_write_2,
-	0 /* bc_io_write_4 */, 0 /* bc_io_write_8 */,
-	cross_io_write_multi_1, cross_io_write_multi_2,
-	0 /* bc_io_write_multi_4 */, 0 /* bc_io_write_multi_8 */,
-
-	cross_mem_map, (bus_mem_unmap_t)cross_unmap,
-	(bus_mem_read_1_t)cross_read_1, (bus_mem_read_2_t)cross_read_2,
-	0 /* bc_mem_read_4 */, 0 /* bc_mem_read_8 */,
-	(bus_mem_write_1_t)cross_write_1, (bus_mem_write_2_t)cross_write_2,
-	0 /* bc_mem_write_4 */, 0 /* bc_mem_write_8 */,
-
-	/* These are extensions to the general NetBSD bus interface.  */
-	cross_io_read_raw_multi_2,
-	0 /* bc_io_read_raw_multi_4 */, 0 /* bc_io_read_raw_multi_8 */,
-
-	cross_io_write_raw_multi_2,
-	0 /* bc_io_write_raw_multi_4 */, 0 /* bc_io_write_raw_multi_8 */,
-};
+int	cross_pager_get_pages __P((vm_pager_t, vm_page_t *, int, boolean_t));
 
 struct cfattach cross_ca = {
 	sizeof(struct cross_softc), crossmatch, crossattach
@@ -148,6 +87,21 @@ struct cfattach cross_ca = {
 struct cfdriver cross_cd = {
 	NULL, "cross", DV_DULL, 0
 };
+
+struct pagerops crosspagerops = {
+	NULL,
+	NULL,
+	NULL,
+	cross_pager_get_pages,
+	NULL,
+	NULL,
+	vm_pager_clusternull,
+	NULL,
+	NULL,
+	NULL
+};
+
+struct vm_pager crosspager;
 
 int
 crossmatch(parent, match, aux)
@@ -172,17 +126,25 @@ crossattach(parent, self, aux)
 	struct cross_softc *sc = (struct cross_softc *)self;
 	struct zbus_args *zap = aux;
 	struct isabus_attach_args iba;
+	int i;
 
 	bcopy(zap, &sc->sc_zargs, sizeof(struct zbus_args));
-	bcopy(&cross_chipset, &sc->sc_bc, sizeof(struct amiga_bus_chipset));
-	sc->sc_bc.bc_data = sc;
+	sc->sc_iot.bs_data = sc;
+	sc->sc_iot.bs_map = cross_io_map;
+	sc->sc_iot.bs_unmap = cross_io_unmap;
+	sc->sc_iot.bs_swapped = 1;
+	sc->sc_memt.bs_data = sc;
+	sc->sc_memt.bs_map = cross_mem_map;
+	sc->sc_memt.bs_unmap = cross_mem_unmap;
+	sc->sc_memt.bs_swapped = 1;
 	sc->sc_status = CROSS_STATUS_ADDR(zap->va);
 	sc->sc_imask = 1 << CROSS_MASTER;
 
 	/* Enable interrupts lazily in cross_intr_establish.  */
 	CROSS_ENABLE_INTS(zap->va, 0);
+
 	/* Default 16 bit tranfer  */
-	*CROSS_HANDLE_TO_XLP_LATCH((bus_io_handle_t)zap->va) = CROSS_SBHE; 
+	*CROSS_HANDLE_TO_XLP_LATCH((bus_space_handle_t)zap->va) = CROSS_SBHE; 
 	printf(": pa 0x%08x va 0x%08x size 0x%x\n", zap->pa, zap->va,
 	    zap->size);
 
@@ -191,8 +153,17 @@ crossattach(parent, self, aux)
 	sc->sc_ic.ic_intr_establish = cross_intr_establish;
 	sc->sc_ic.ic_intr_disestablish = cross_intr_disestablish;
 
+	/* Allocate a bunch of pages used for the bank-switching logic.  */
+	for (i = 0; i < CROSS_BANK_SIZE / NBPG; i++) {
+		VM_PAGE_INIT(&sc->sc_page[i], NULL, 0);
+		sc->sc_page[i].phys_addr = zap->pa + CROSS_XL_MEM + i * NBPG;
+		sc->sc_page[i].flags |= PG_FICTITIOUS;
+		vm_page_free(&sc->sc_page[i]);
+	}
+		
 	iba.iba_busname = "isa";
-	iba.iba_bc = &sc->sc_bc;
+	iba.iba_iot = &sc->sc_iot;
+	iba.iba_memt = &sc->sc_memt;
 	iba.iba_ic = &sc->sc_ic;
 	config_found(self, &iba, crossprint);
 }
@@ -209,169 +180,94 @@ crossprint(auxp, pnp)
 
 
 int
-cross_io_map(bct, addr, sz, handle)
-	bus_chipset_tag_t bct;
-	bus_io_addr_t addr;
-	bus_io_size_t sz;
-	bus_io_handle_t *handle;
-{
-	*handle = (bus_io_handle_t)
-	    ((struct cross_softc *)bct->bc_data)->sc_zargs.va + 2 * addr;
-#if 0
-	printf("io_map %x %d -> %x\n", addr, sz, *handle);
-#endif
-	return 0;
-}
-
-int
-cross_mem_map(bct, addr, sz, cacheable, handle)
-	bus_chipset_tag_t bct;
-	bus_mem_addr_t addr;
-	bus_mem_size_t sz;
+cross_io_map(bst, addr, sz, cacheable, handle)
+	bus_space_tag_t bst;
+	bus_addr_t addr;
+	bus_size_t sz;
 	int cacheable;
-	bus_mem_handle_t *handle;
+	bus_space_handle_t *handle;
 {
-	*handle = (bus_mem_handle_t)
-	    ((struct cross_softc *)bct->bc_data)->sc_zargs.va + 2 * addr +
-	    CROSS_MEMORY_OFFSET;
-#if 0
-	printf("mem_map %x %d -> %x\n", addr, sz, *handle);
-#endif
+	*handle = (bus_space_handle_t)
+	    ((struct cross_softc *)bst->bs_data)->sc_zargs.va + 2 * addr;
 	return 0;
 }
 
 int
-cross_unmap(handle, sz)
-	bus_io_handle_t handle;
-	bus_io_size_t sz;
+cross_mem_map(bst, addr, sz, cacheable, handle)
+	bus_space_tag_t bst;
+	bus_addr_t addr;
+	bus_size_t sz;
+	int cacheable;
+	bus_space_handle_t *handle;
+{
+	bus_addr_t banked_start;
+	bus_size_t banked_size;
+	vm_object_t object;
+	vm_offset_t kva;
+	int error;
+
+	/*
+	 * XXX When we do have a good enough extent-manager do extent
+	 * checking here.
+	 */
+
+	/*
+	 * Compute the bank range.  Note that we need to shift bus-addresses
+	 * and sizes left one bit.
+	 */
+	banked_start = (addr << 1) & ~(CROSS_BANK_SIZE - 1);
+        banked_size = ((sz << 1) + CROSS_BANK_SIZE - 1) &
+	    ~(CROSS_BANK_SIZE - 1);
+
+	/* Create the object that will take care of the bankswitching.  */
+	object = vm_allocate_object(banked_size);
+	if (object == NULL)
+		goto fail_obj;
+	vm_object_setpager(object, cross_pager, 0, 0);
+
+	/*
+	 * When done like this double mappings will be possible, thus
+	 * wasting a little mapping space.  This happens when several
+	 * bus_space_map maps stuff from the same bank.  But I don't care.
+	 */
+	kva = kmem_alloc_pageable(kernel_map, banked_size);
+	if (kva == 0)
+		goto fail_alloc;
+	vm_map_lock(kernel_map);
+	error = vm_map_insert(kernel_map, object, 0, kva, kva + banked_size);
+	vm_map_unlock(kernel_map);
+	if (error != KERN_SUCCESS)
+		goto fail_insert;
+
+	/* Tell caller where to find his data.  */
+	*handle = (bus_space_handle_t)(kva + (addr << 1)  - banked_addr));
+	return 0;
+
+fail_insert:
+	kmem_free(kernel_map, kva, banked_size);
+fail_alloc:
+	vm_object_deallocate(object);
+fail_obj:
+	return -1;
+}
+
+int
+cross_io_unmap(bst, handle, sz)
+	bus_space_tag_t bst;
+	bus_space_handle_t handle;
+	bus_size_t sz;
 {
 	return 0;
 }
 
-__inline u_int8_t
-cross_read_1(handle, addr)
-	bus_io_handle_t handle;
-	bus_io_size_t addr;
+int
+cross_mem_unmap(bst, handle, sz)
+	bus_space_tag_t bst;
+	bus_space_handle_t handle;
+	bus_size_t sz;
 {
-	u_int8_t val;
-
-	/* generate A13-A19 for correct page */
-	*CROSS_HANDLE_TO_XLP_LATCH(handle) = addr >> 13 | CROSS_SBHE;
-	val = *(volatile u_int8_t *)(handle + 2 * addr);
-
-#if 0
-	printf("read_1 @%x handle %x -> %d\n", addr, handle, val);
-#endif
-	return val;
-}
-
-__inline u_int16_t
-cross_read_2(handle, addr)
-	bus_io_handle_t handle;
-	bus_io_size_t addr;
-{
-	/* generate A13-A19 for correct page */
-	*CROSS_HANDLE_TO_XLP_LATCH(handle) = addr >> 13 | CROSS_SBHE;
-	return *(volatile u_int16_t *)(handle + 2 * addr);
-}
-
-void
-cross_io_read_multi_1(handle, addr, buf, cnt)
-	bus_io_handle_t handle;
-	bus_io_size_t addr;
-	u_int8_t *buf;
-	bus_io_size_t cnt;
-{
-	while (cnt--)
-		*buf++ = cross_read_1(handle, addr);
-}
-
-void
-cross_io_read_multi_2(handle, addr, buf, cnt)
-	bus_io_handle_t handle;
-	bus_io_size_t addr;
-	u_int16_t *buf;
-	bus_io_size_t cnt;
-{
-	while (cnt--)
-		*buf++ = cross_read_2(handle, addr);
-}
-
-void
-cross_io_read_raw_multi_2(handle, addr, buf, cnt)
-	bus_io_handle_t handle;
-	bus_io_size_t addr;
-	u_int8_t *buf;
-	bus_io_size_t cnt;
-{
-	u_int16_t *buf16 = (u_int16_t *)buf;
-
-	while (cnt) {
-		cnt -= 2;
-		*buf16++ = swap(cross_read_2(handle, addr));
-	}
-}
-
-__inline void
-cross_write_1(handle, addr, val)
-	bus_io_handle_t handle;
-	bus_io_size_t addr;
-	u_int8_t val;
-{
-	/* generate A13-A19 for correct page */
-	*CROSS_HANDLE_TO_XLP_LATCH(handle) = addr >> 13 | CROSS_SBHE;
-#if 0
-	printf("write_1 @%x handle %x: %d\n", addr, handle, val);
-#endif
-	*(volatile u_int8_t *)(handle + 2 * addr + 1) = val;
-}
-
-__inline void
-cross_write_2(handle, addr, val)
-	bus_io_handle_t handle;
-	bus_io_size_t addr;
-	u_int16_t val;
-{
-	/* generate A13-A19 for correct page */
-	*CROSS_HANDLE_TO_XLP_LATCH(handle) = addr >> 13 | CROSS_SBHE;
-	*(volatile u_int16_t *)(handle + 2 * addr) = val;
-}
-
-void
-cross_io_write_multi_1(handle, addr, buf, cnt)
-	bus_io_handle_t handle;
-	bus_io_size_t addr;
-	const u_int8_t *buf;
-	bus_io_size_t cnt;
-{
-	while (cnt--)
-		cross_write_1(handle, addr, *buf++);
-}
-
-void
-cross_io_write_multi_2(handle, addr, buf, cnt)
-	bus_io_handle_t handle;
-	bus_io_size_t addr;
-	const u_int16_t *buf;
-	bus_io_size_t cnt;
-{
-	while (cnt--)
-		cross_write_2(handle, addr, *buf++);
-}
-
-void
-cross_io_write_raw_multi_2(handle, addr, buf, cnt)
-	bus_io_handle_t handle;
-	bus_io_size_t addr;
-	const u_int8_t *buf;
-	bus_io_size_t cnt;
-{
-	const u_int16_t *buf16 = (const u_int16_t *)buf;
-
-	while (cnt) {
-		cnt -= 2;
-		cross_write_2(handle, addr, swap(*buf16++));
-	}
+	/* Remove traphandler */
+	return 0;
 }
 
 static cross_int_map[] = {
@@ -501,10 +397,37 @@ cross_intr_disestablish(ic, arg)
 		sc->sc_intrsharetype[irq] = IST_NONE;
 }
 
-/* Swap bytes in a short word.  */
-static u_short
-swap(u_short x)
+int
+cross_pager_get_pages(pager, mlist, npages, sync)
+	vm_pager_t	pager;
+	vm_page_t	*mlist;
+	int		npages;
+	boolean_t	sync;
 {
-	__asm("rolw #8,%0" : "=r" (x) : "0" (x));
-	return x;
+	int i;
+	vm_object_t object, old_object;
+	vm_offset_t offset;
+
+	while(npages--) {
+		i = ((*mlist)->offset & (CROSS_BANK_SIZE - 1)) / NBPG;
+		object = (*mlist)->object;
+		old_object = sc->sc_page[i].offset;
+		offset = (*mlist)->offset;
+		vm_page_lock_queues();
+		vm_object_lock(object);
+		if (old_object)
+			vm_object_lock(old_object);
+		vm_page_free(*mlist);
+
+		/* generate A13-A19 for correct page */
+		*CROSS_HANDLE_TO_XLP_LATCH(handle) = addr >> 13 | CROSS_SBHE;
+
+		vm_page_rename(sc->sc_page[i], object, offset);
+		if (old_object)
+			vm_object_unlock(old_object);
+		vm_object_unlock(object);
+		vm_page_unlock_queues();
+		mlist++:
+	}
+	return VM_PAGER_OK;
 }

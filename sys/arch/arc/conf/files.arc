@@ -1,4 +1,4 @@
-#	$OpenBSD: files.arc,v 1.8 1996/09/24 21:30:00 niklas Exp $
+#	$OpenBSD: files.arc,v 1.9 1996/11/28 23:35:40 niklas Exp $
 #
 # maxpartitions must be first item in files.${ARCH}
 #
@@ -56,7 +56,8 @@ file	arch/arc/pica/picabus.c		pica
 device	isabr {} : isabus
 attach	isabr at mainbus
 file	arch/arc/isa/isabus.c		isabr
-file    arch/arc/isa/isadma.c		isadma needs-flag
+#file    arch/arc/isa/isadma.c		isadma needs-flag
+file    dev/isa/isadma.c		isadma needs-flag
 
 #	Ethernet chip
 device	sn
@@ -105,23 +106,13 @@ device	pms: tty
 attach	pms at pica
 file	arch/arc/dev/pccons.c		pc & (pc_pica | pc_isa)	needs-flag
 
-#	Serial driver for both ISA and LOCAL bus.
-device  ace: tty
-attach  ace at isa with ace_isa
-attach  ace at commulti with ace_commulti
-attach  ace at pica with ace_pica
-file    arch/arc/dev/ace.c		ace & (ace_isa | ace_commulti | ace_pica) needs-flag 
-
-# 	Parallel ports (XXX what chip?)
-device  lpr
-attach  lpr at isa with lpr_isa
-attach	lpr at pica with lpr_pica
-file	arch/arc/dev/lpr.c		lpr & (lpr_isa | lpr_pica) needs-flag
-
 # BusLogic BT-445C VLB SCSI Controller. Special on TYNE local bus.
 device  btl: scsi
 attach  btl at isa
 file    arch/arc/dti/btl.c                    btl needs-count
+
+# 8250/16[45]50-based "com" ports
+attach	com at pica with com_pica
 
 # National Semiconductor DS8390/WD83C690-based boards
 # (WD/SMC 80x3 family, SMC Ultra [8216], 3Com 3C503, NE[12]000, and clones)
@@ -130,6 +121,10 @@ device  ed: ether, ifnet
 attach  ed at isa with ed_isa
 attach  ed at pcmcia with ed_pcmcia
 file    dev/isa/if_ed.c                 ed & (ed_isa | ed_pcmcia) needs-flag
+
+# PC parallel ports (XXX what chip?)
+attach	lpt at pica with lpt_pica
+file	arch/arc/pica/lpt_pica.c	lpt_pica
 
 #
 

@@ -1,5 +1,5 @@
-/*	$OpenBSD: am7990.c,v 1.8 1996/05/10 12:41:10 deraadt Exp $	*/
-/*	$NetBSD: am7990.c,v 1.19 1996/05/07 01:38:35 thorpej Exp $	*/
+/*	$OpenBSD: am7990.c,v 1.9 1996/11/28 23:27:46 niklas Exp $	*/
+/*	$NetBSD: am7990.c,v 1.22 1996/10/13 01:37:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -588,10 +588,10 @@ am7990_tint(sc)
 #ifdef LEDEBUG
 		if (sc->sc_debug)
 			printf("trans tmd: "
-			       "ladr %04x, hadr %02x, flags %02x, "
-			       "bcnt %04x, mcnt %04x\n",
-				tmd.tmd0, tmd.tmd1_hadr, tmd.tmd1_bits,
-				tmd.tmd2, tmd.tmd3);
+			    "ladr %04x, hadr %02x, flags %02x, "
+			    "bcnt %04x, mcnt %04x\n",
+			    tmd.tmd0, tmd.tmd1_hadr, tmd.tmd1_bits,
+			    tmd.tmd2, tmd.tmd3);
 #endif
 
 		(*sc->sc_copyfromdesc)(sc, &tmd, LE_TMDADDR(sc, bix),
@@ -612,9 +612,13 @@ am7990_tint(sc)
 				am7990_reset(sc);
 				return;
 			}
-			if (tmd.tmd3 & LE_T3_LCAR)
-				printf("%s: lost carrier\n",
-				    sc->sc_dev.dv_xname);
+			if (tmd.tmd3 & LE_T3_LCAR) {
+				if (sc->sc_nocarrier)
+					(*sc->sc_nocarrier)(sc);
+				else
+					printf("%s: lost carrier\n",
+					    sc->sc_dev.dv_xname);
+			}
 			if (tmd.tmd3 & LE_T3_LCOL)
 				ifp->if_collisions++;
 			if (tmd.tmd3 & LE_T3_RTRY) {

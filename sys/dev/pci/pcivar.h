@@ -1,5 +1,5 @@
-/*	$OpenBSD: pcivar.h,v 1.8 1996/11/12 20:30:59 niklas Exp $	*/
-/*	$NetBSD: pcivar.h,v 1.15 1996/03/28 02:16:23 cgd Exp $	*/
+/*	$OpenBSD: pcivar.h,v 1.9 1996/11/28 23:28:14 niklas Exp $	*/
+/*	$NetBSD: pcivar.h,v 1.16 1996/10/21 22:56:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -42,7 +42,7 @@
  * provided by pci_machdep.h.
  */
 
-#include <machine/bus.old.h>
+#include <machine/bus.h>
 #include <dev/pci/pcireg.h>
 
 /*
@@ -68,8 +68,9 @@ ERROR: COMPILING FOR UNSUPPORTED MACHINE, OR MORE THAN ONE.
  * PCI bus attach arguments.
  */
 struct pcibus_attach_args {
-	char		*pba_busname;	/* XXX should be common */
-	bus_chipset_tag_t pba_bc;	/* XXX should be common */
+	char	*pba_busname;		/* XXX should be common */
+	bus_space_tag_t pba_iot;	/* pci i/o space tag */
+	bus_space_tag_t pba_memt;	/* pci mem space tag */
 	pci_chipset_tag_t pba_pc;
 
 	int		pba_bus;	/* PCI bus number */
@@ -86,7 +87,8 @@ struct pcibus_attach_args {
  * PCI device attach arguments.
  */
 struct pci_attach_args {
-	bus_chipset_tag_t pa_bc;
+	bus_space_tag_t pa_iot;		/* pci i/o space tag */
+	bus_space_tag_t pa_memt;	/* pci mem space tag */
 	pci_chipset_tag_t pa_pc;
 
 	u_int		pa_device;
@@ -127,10 +129,10 @@ struct pci_attach_args {
  * Configuration space access and utility functions.  (Note that most,
  * e.g. make_tag, conf_read, conf_write are declared by pci_machdep.h.)
  */
-int	pci_io_find __P((pci_chipset_tag_t, pcitag_t, int, bus_io_addr_t *,
-	    bus_io_size_t *));
-int	pci_mem_find __P((pci_chipset_tag_t, pcitag_t, int, bus_mem_addr_t *,
-	    bus_mem_size_t *, int *));
+int	pci_io_find __P((pci_chipset_tag_t, pcitag_t, int, bus_addr_t *,
+	    bus_size_t *));
+int	pci_mem_find __P((pci_chipset_tag_t, pcitag_t, int, bus_addr_t *,
+	    bus_size_t *, int *));
 
 /*
  * Helper functions for autoconfiguration.

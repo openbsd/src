@@ -1,5 +1,5 @@
-/*	$OpenBSD: am7990var.h,v 1.5 1996/05/10 12:41:11 deraadt Exp $	*/
-/*	$NetBSD: am7990var.h,v 1.7 1996/05/07 01:38:37 thorpej Exp $	*/
+/*	$OpenBSD: am7990var.h,v 1.6 1996/11/28 23:27:47 niklas Exp $	*/
+/*	$NetBSD: am7990var.h,v 1.8 1996/07/05 23:57:01 abrown Exp $	*/
 
 /*
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -78,12 +78,14 @@ struct am7990_softc {
 	 *
 	 *	read/write CSR
 	 *	hardware init hook - may be NULL
+	 *	no carrier hook - may be NULL
 	 */
 	u_int16_t (*sc_rdcsr)
 		    __P((struct am7990_softc *, u_int16_t));
 	void	(*sc_wrcsr)
 		    __P((struct am7990_softc *, u_int16_t, u_int16_t));
 	void	(*sc_hwinit) __P((struct am7990_softc *));
+	void	(*sc_nocarrier) __P((struct am7990_softc *));
 
 	void	*sc_sh;		/* shutdownhook cookie */
 

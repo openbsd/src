@@ -1,4 +1,4 @@
-/*	$OpenBSD: crossreg.h,v 1.3 1996/06/04 13:40:13 niklas Exp $	*/
+/*	$OpenBSD: crossreg.h,v 1.4 1996/11/28 23:33:07 niklas Exp $	*/
 
 /*
  * Copyright (c) 1994, 1996 Niklas Hallqvist, Carsten Hammer
@@ -100,36 +100,38 @@
 
 /* hardware offsets from config address */
 
-#define CROSS_XL_ROM          0x8000
-#define CROSS_XL_MEM          0x4000
-#define CROSS_XL_IO           0x0000
+#define CROSS_XL_ROM		0x8000
+#define CROSS_XL_MEM		0x4000
+#define CROSS_XL_IO		0x0000
 
-#define CROSS_XLP_INTSTAT 0
-#define CROSS_XLP_INTABLE 0
-#define CROSS_XLP_LATCH 2
+#define CROSS_BANK_SIZE		(CROSS_XL_ROM - CROSS_XL_MEM)
+
+#define CROSS_XLP_INTSTAT	0
+#define CROSS_XLP_INTABLE	0
+#define CROSS_XLP_LATCH		2
 #define CROSS_HANDLE_TO_XLP_LATCH(va) \
     ((volatile u_int16_t *)(((va) & 0xffff) | CROSS_XLP_LATCH))
 
-#define CROSS_MEMORY_OFFSET (CROSS_XL_MEM - 2 * 0x90000)
-#define CROSS_SBHE 0x40
+#define CROSS_MEMORY_OFFSET	(CROSS_XL_MEM - 2 * 0x90000)
+#define CROSS_SBHE		0x40
 
 #define CROSS_STATUS_ADDR(va) \
     ((volatile u_int16_t *)((va) + CROSS_XLP_INTSTAT))
 
-#define CROSS_MASTER 5
+#define CROSS_MASTER		5
 
-#define CROSS_IRQ9 10	/* IRQ9 is an alias of IRQ2 */
-#define CROSS_IRQ3 11
-#define CROSS_IRQ4 12
-#define CROSS_IRQ5 13
-#define CROSS_IRQ6 14
-#define CROSS_IRQ7 15
-#define CROSS_IRQ10 2
-#define CROSS_IRQ11 3
-#define CROSS_IRQ12 4
-#define CROSS_IRQ14 6
-#define CROSS_IRQ15 7
-#define CROSS_IRQMASK 0xfcdc
+#define CROSS_IRQ9		10	/* IRQ9 is an alias of IRQ2 */
+#define CROSS_IRQ3		11
+#define CROSS_IRQ4		12
+#define CROSS_IRQ5		13
+#define CROSS_IRQ6		14
+#define CROSS_IRQ7		15
+#define CROSS_IRQ10		2
+#define CROSS_IRQ11		3
+#define CROSS_IRQ12		4
+#define CROSS_IRQ14		6
+#define CROSS_IRQ15		7
+#define CROSS_IRQMASK		0xfcdc
 #define CROSS_GET_INT_STATUS(va) (CROSS_GET_STATUS(va) & CROSS_IRQMASK)
 
 #define CROSS_ENABLE_INTS(va, ints) \

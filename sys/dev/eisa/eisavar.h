@@ -1,5 +1,5 @@
-/*	$OpenBSD: eisavar.h,v 1.5 1996/11/12 20:30:10 niklas Exp $	*/
-/*	$NetBSD: eisavar.h,v 1.9 1996/04/12 06:34:36 cgd Exp $	*/
+/*	$OpenBSD: eisavar.h,v 1.6 1996/11/28 23:27:40 niklas Exp $	*/
+/*	$NetBSD: eisavar.h,v 1.10 1996/10/21 22:31:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -43,7 +43,7 @@
  * separated into eisa_machdep.h.
  */
 
-#include <machine/bus.old.h>
+#include <machine/bus.h>
 #include <dev/eisa/eisareg.h>		/* For ID register & string info. */
 
 /* 
@@ -70,8 +70,9 @@ typedef int	eisa_slot_t;		/* really only needs to be 4 bits */
  * EISA bus attach arguments.
  */
 struct eisabus_attach_args {
-	char		*eba_busname;		/* XXX should be common */
-	bus_chipset_tag_t eba_bc;		/* XXX should be common */
+	char	*eba_busname;		/* XXX should be common */
+	bus_space_tag_t eba_iot;	/* eisa i/o space tag */
+	bus_space_tag_t eba_memt;	/* eisa mem space tag */
 	eisa_chipset_tag_t eba_ec;
 };
 
@@ -79,7 +80,8 @@ struct eisabus_attach_args {
  * EISA device attach arguments.
  */
 struct eisa_attach_args {
-	bus_chipset_tag_t ea_bc;
+	bus_space_tag_t ea_iot;		/* eisa i/o space tag */
+	bus_space_tag_t ea_memt;	/* eisa mem space tag */
 	eisa_chipset_tag_t ea_ec;
 
 	eisa_slot_t	ea_slot;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.27 1996/10/25 11:14:12 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.28 1996/11/28 23:37:36 niklas Exp $	*/
 /*	$NetBSD: machdep.c,v 1.202 1996/05/18 15:54:59 christos Exp $	*/
 
 /*-
@@ -60,6 +60,7 @@
 #include <sys/mount.h>
 #include <sys/vnode.h>
 #include <sys/device.h>
+#include <sys/extent.h>
 #include <sys/sysctl.h>
 #include <sys/syscallargs.h>
 #ifdef SYSVMSG
@@ -84,6 +85,7 @@
 #include <machine/cpufunc.h>
 #include <machine/gdt.h>
 #include <machine/pio.h>
+#include <machine/bus.h>
 #include <machine/psl.h>
 #include <machine/reg.h>
 #include <machine/specialreg.h>
@@ -159,6 +161,9 @@ void	consinit __P((void));
 #ifdef COMPAT_NOMID
 static int exec_nomid	__P((struct proc *, struct exec_package *));
 #endif
+
+int	bus_mem_add_mapping __P((bus_addr_t, bus_size_t,
+	    int, bus_space_handle_t *));
 
 extern long cnvmem;	/* BIOS's conventional memory size */
 extern long extmem;	/* BIOS's extended memory size */
@@ -1453,12 +1458,70 @@ cpu_reset()
 }
 
 int
-bus_mem_map(t, bpa, size, cacheable, mhp)
-	bus_chipset_tag_t t;
-	bus_mem_addr_t bpa;
-	bus_mem_size_t size;
+bus_space_map(t, bpa, size, cacheable, bshp)
+	bus_space_tag_t t;
+	bus_addr_t bpa;
+	bus_size_t size;
 	int cacheable;
-	bus_mem_handle_t *mhp;
+	bus_space_handle_t *bshp;
+{
+	int error;
+
+	/*
+	 * For I/O space, that's all she wrote.
+	 */
+	if (t == I386_BUS_SPACE_IO) {
+		*bshp = bpa;
+		return (0);
+	}
+
+	/*
+	 * For memory space, map the bus physical address to
+	 * a kernel virtual address.
+	 */
+	error = bus_mem_add_mapping(bpa, size, cacheable, bshp);
+	return (error);
+}
+
+int
+bus_space_alloc(t, rstart, rend, size, alignment, boundary, cacheable,
+    bpap, bshp)
+	bus_space_tag_t t;
+	bus_addr_t rstart, rend;
+	bus_size_t size, alignment;
+	bus_addr_t boundary;
+	int cacheable;
+	bus_addr_t *bpap;
+	bus_space_handle_t *bshp;
+{
+	u_long bpa;
+	int error;
+
+	/*
+	 * For I/O space, that's all she wrote.
+	 */
+	if (t == I386_BUS_SPACE_IO) {
+		*bshp = *bpap = bpa;
+		return (0);
+	}
+
+	/*
+	 * For memory space, map the bus physical address to
+	 * a kernel virtual address.
+	 */
+	error = bus_mem_add_mapping(bpa, size, cacheable, bshp);
+
+	*bpap = bpa;
+
+	return (error);
+}
+
+int
+bus_mem_add_mapping(bpa, size, cacheable, bshp)
+	bus_addr_t bpa;
+	bus_size_t size;
+	int cacheable;
+	bus_space_handle_t *bshp;
 {
 	u_long pa, endpa;
 	vm_offset_t va;
@@ -1468,41 +1531,84 @@ bus_mem_map(t, bpa, size, cacheable, mhp)
 
 #ifdef DIAGNOSTIC
 	if (endpa <= pa)
-		panic("bus_mem_map: overflow");
+		panic("bus_mem_add_mapping: overflow");
 #endif
 
 	va = kmem_alloc_pageable(kernel_map, endpa - pa);
 	if (va == 0)
-		return (1);
-	*mhp = (caddr_t)(va + (bpa & PGOFSET));
+		return (ENOMEM);
+
+	*bshp = (bus_space_handle_t)(va + (bpa & PGOFSET));
 
 	for (; pa < endpa; pa += NBPG, va += NBPG) {
-                pmap_enter(pmap_kernel(), va, pa, VM_PROT_READ | VM_PROT_WRITE,
-                    TRUE);
-                if (!cacheable)
-                        pmap_changebit(pa, PG_N, ~0);
-                else
-                        pmap_changebit(pa, 0, ~PG_N);
-        }
+		pmap_enter(pmap_kernel(), va, pa,
+		    VM_PROT_READ | VM_PROT_WRITE, TRUE);
+		if (!cacheable)
+			pmap_changebit(pa, PG_N, ~0);
+		else
+			pmap_changebit(pa, 0, ~PG_N);
+	}
  
-        return 0;
+	return 0;
 }
 
 void
-bus_mem_unmap(t, memh, size)
-	bus_chipset_tag_t t;
-	bus_mem_handle_t memh;
-	bus_mem_size_t size;
+bus_space_unmap(t, bsh, size)
+	bus_space_tag_t t;
+	bus_space_handle_t bsh;
+	bus_size_t size;
 {
-	vm_offset_t va, endva;
+	u_long va, endva;
+	bus_addr_t bpa;
 
-	va = i386_trunc_page(memh);
-	endva = i386_round_page((memh + size) - 1);
+	/*
+	 * Find the correct bus physical address.
+	 */
+	switch (t) {
+	case I386_BUS_SPACE_IO:
+		bpa = bsh;
+		break;
+
+	case I386_BUS_SPACE_MEM:
+		va = i386_trunc_page(bsh);
+		endva = i386_round_page((bsh + size) - 1);
 
 #ifdef DIAGNOSTIC
-	if (endva <= va)
-		panic("bus_mem_unmap: overflow");
+		if (endva <= va)
+			panic("bus_space_unmap: overflow");
 #endif
 
-	kmem_free(kernel_map, va, endva - va);
+		bpa = pmap_extract(pmap_kernel(), va) + (bsh & PGOFSET);
+
+		/*
+		 * Free the kernel virtual mapping.
+		 */
+		kmem_free(kernel_map, va, endva - va);
+		break;
+
+	default:
+		panic("bus_space_unmap: bad bus space tag");
+	}
+}
+
+void    
+bus_space_free(t, bsh, size)
+	bus_space_tag_t t;
+	bus_space_handle_t bsh;
+	bus_size_t size;
+{
+
+	/* bus_space_unmap() does all that we need to do. */
+	bus_space_unmap(t, bsh, size);
+}
+
+int
+bus_space_subregion(t, bsh, offset, size, nbshp)
+	bus_space_tag_t t;
+	bus_space_handle_t bsh;
+	bus_size_t offset, size;
+	bus_space_handle_t *nbshp;
+{
+	*nbshp = bsh + offset;
+	return (0);
 }
