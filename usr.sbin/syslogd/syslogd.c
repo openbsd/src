@@ -798,6 +798,7 @@ cvthname(f)
 	struct sockaddr_in *f;
 {
 	struct hostent *hp;
+	sigset_t omask, nmask;
 	char *p;
 
 	dprintf("cvthname(%s)\n", inet_ntoa(f->sin_addr));
@@ -806,8 +807,12 @@ cvthname(f)
 		dprintf("Malformed from address\n");
 		return ("???");
 	}
+	sigemptyset(&nmask);
+	sigaddset(&nmask, SIGHUP);
+	sigprocmask(SIG_BLOCK, &nmask, &omask);
 	hp = gethostbyaddr((char *)&f->sin_addr,
 	    sizeof(struct in_addr), f->sin_family);
+	sigprocmask(SIG_SETMASK, &omask, NULL);
 	if (hp == 0) {
 		dprintf("Host name for your address (%s) unknown\n",
 			inet_ntoa(f->sin_addr));
