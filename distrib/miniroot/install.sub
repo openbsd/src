@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.307 2003/06/27 22:40:40 krw Exp $
+#	$OpenBSD: install.sub,v 1.308 2003/06/30 14:25:53 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2003 Todd Miller, Theo de Raadt, Ken Westerback
@@ -320,15 +320,6 @@ cutword () {
 	IFS=$_oifs
 }
 
-# read a line of data, return last element. Equiv. of awk '{print $NF}'.
-cutlast () {
-	local _a
-
-	read _a; set -- $_a
-	[ $# -gt 0 ] || return
-	eval echo \$\{$#\}
-}
-
 bsort() {
 	local _l _a=$1 _b
 
@@ -351,7 +342,7 @@ bsort() {
 	echo -n $_a
 
 	# Prevent a trailing blank on the output, and thus a bad value
-	# for cutlast or cutword, by outputting blanks only when $_l
+	# for cutword, by outputting blanks only when $_l
 	# has values to sort.
 
 	if [[ -n "$_l" ]] ; then
@@ -442,10 +433,10 @@ makedev() {
 get_rootdisk() {
 	local _defdsk
 
-	_defdsk=`echo $DKDEVS | cutlast`
-	[ "$_defdsk" = "$DKDEVS" ] || _defdsk=
+	_defdsk=$(echo $DKDEVS | cutword 1)
+	[[ $_defdsk == $DKDEVS ]] || _defdsk=
 
-	if [ "$MODE" = "install" -a ! -f /etc/fstab ]; then
+	if [[ $MODE == install && ! -f /etc/fstab ]]; then
 		cat << __EOT
 
 You will now initialize the disk(s) that OpenBSD will use. To enable all
@@ -460,7 +451,7 @@ fi
 	SWAPDEV=
 
 	ask_which "disk" "is the root disk?" "$DKDEVS" "$_defdsk"
-	[ "$resp" = "done" ] && exit
+	[[ $resp == done ]] && exit
 
 	ROOTDISK=$resp
 	ROOTDEV=${ROOTDISK}a
@@ -1357,11 +1348,11 @@ set_timezone() {
 	# If the timezone directory structure is not
 	# available, return immediately.
 
-	[ ! -d $_zoneroot ] && return
+	[[ ! -d $_zoneroot ]] && return
 
-	if [ -L /mnt/etc/localtime ]; then
-		TZ=`ls -l /mnt/etc/localtime 2>/dev/null | cutlast`
-		TZ=${TZ#${_zoneroot#/mnt}}
+	if [[ -L /mnt/etc/localtime ]]; then
+		TZ=$(ls -l /mnt/etc/localtime 2>/dev/null)
+		TZ=${TZ#*${_zoneroot#/mnt}}
 	fi
 
 	: ${TZ:=GMT}
@@ -1371,23 +1362,23 @@ set_timezone() {
 
 		ask "What timezone are you in? ('?' for list)" "$TZ"
 
-		if [ "$resp" = "?" ]; then
+		if [[ $resp == ? ]]; then
 			ls -F ${_zonepath}
 			continue;
 		fi
 
 		_zonepath=${_zonepath}${resp}
 
-		while [ -d "$_zonepath" ]; do
+		while [[ -d $_zonepath ]]; do
 			ask "What sub-timezone of '${_zonepath#$_zoneroot}' are you in? ('?' for list)"
-			if [ "$resp" = "?" ]; then
-				ls -F ${_zonepath}
+			if [[ $resp == ? ]]; then
+				ls -F $_zonepath
 			else
-				_zonepath=${_zonepath}/${resp}
+				_zonepath=$_zonepath/$resp
 			fi
 		done
 
-		if [ -f "$_zonepath" ]; then
+		if [[ -f $_zonepath ]]; then
 			TZ=${_zonepath#$_zoneroot}
 			echo -n "Setting local timezone to '$TZ'..."
 			ln -sf /usr/share/zoneinfo/$TZ /mnt/etc/localtime
