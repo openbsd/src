@@ -1,0 +1,12 @@
+# more complicated case to provoke queue id assignment errors:
+# -two same named queues must have same qid on all interfaces
+# -two differently named queues must not share a qid, even on different ifs
+
+altq on lo0 tbrsize 1824 bandwidth 10Mb hfsc queue { eins zwei drei }
+queue eins bandwidth 10% hfsc(default)
+queue zwei bandwidth 60% { sub2 sub3 }
+queue  sub2 bandwidth 20%
+queue  sub3 bandwidth 20%
+queue drei bandwidth 10%
+
+
