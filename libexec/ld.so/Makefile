@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 2001/05/15 11:38:25 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.6 2001/05/23 14:24:03 drahn Exp $
 
 SUBDIR=libdl ldconfig ldd
 VPATH=${.CURDIR}/../../lib/libc/string:${.CURDIR}/../../sys/lib/libsa
@@ -21,7 +21,7 @@ LIBCSRCDIR=${.CURDIR}/../../lib/libc
 .endif
 CFLAGS += -I${.CURDIR} -DNO_UNDERSCORE -DVERBOSE_DLINKER \
 	-DUSE_CACHE -D__PIC__ -I${.CURDIR}/${MACHINE_ARCH}
-CFLAGS += -g -DDL_PRINTF_DEBUG
+#CFLAGS += -g -DDL_PRINTF_DEBUG
 INSTALL_STRIP=
 
 .PATH:	${.CURDIR}/${MACHINE_ARCH}
