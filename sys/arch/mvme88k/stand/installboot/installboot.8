@@ -1,0 +1,59 @@
+.\"	$Id: installboot.8,v 1.1 1998/08/22 06:38:35 smurph Exp $
+.\"
+.Dd 31 May 1995
+.Dt INSTALLBOOT 8
+.Os 
+.Sh NAME
+.Nm installboot
+.Nd install a bootstrap on a UFS disk
+.Sh SYNOPSIS
+.Nm installboot
+.Op Fl n
+.Op Fl v
+.Ar ufsboot
+.Ar bootxx
+.Ar rawdev
+.Sh DESCRIPTION
+.Nm installboot
+is used to install a "first-stage" boot program into the boot area
+of a UFS disk partition, and initialize the table of block numbers the
+.Ar bootxx
+program uses to load the second-stage boot program.
+.Pp
+The options are as follows:
+.Bl -tag -width flag
+.It Fl n
+Do not actually write anything on the disk.
+.It Fl v
+Be verbose, printing out the block numbers that
+.Ar bootxx
+will use to load
+.Ar ufsboot .
+.El
+.Pp
+The arguments are:
+.Bl -tag -width ufsboot
+.It Ar ufsboot
+the name of the second-stage boot program in the file system
+where the first-stage boot program is to be installed.
+.It Ar bootxx
+the name of the prototype file for the first stage boot program.
+.It Ar rawdev
+the name of the raw device in which the first-stage boot program
+is to be installed.  This should correspond to the block device
+on which the file system containing
+.Ar ufsboot
+is mounted.
+.El
+.Sh BUGS
+.Nm installboot
+requires simultaneous access to the mounted file system and
+the raw device, but that is not allowed with the kernel
+.Nm securelevel
+variable set to a value greater than zero (the default), so
+.Nm installboot
+only works in single-user mode (or insecure mode - see 
+.Xr init 8 ).
+.Sh "SEE ALSO"
+.Xr disklabel 8 ,
+.Xr init 8
