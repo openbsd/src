@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.h,v 1.7 2003/02/28 18:05:48 deraadt Exp $	*/
+/*	$OpenBSD: common.h,v 1.8 2004/01/05 09:02:03 miod Exp $	*/
 /*	$NetBSD: common.h,v 1.3 1995/06/15 21:41:48 pk Exp $	*/
 
 /*
@@ -55,7 +55,6 @@ extern struct _dynamic	_DYNAMIC;
 static void		__load_rtld(struct _dynamic *);
 extern int		__syscall(int, ...);
 int			_callmain(void);
-static char		*_strrchr(char *, char);
 #ifdef DEBUG
 static char		*_getenv(char *);
 static int		_strncmp(char *, char *, int);
@@ -83,6 +82,7 @@ static int		_strncmp(char *, char *, int);
 
 #endif /* DYNAMIC */
 
+static char		*_strrchr(char *, char);
 extern int		main(int, char **, char **);
 #ifdef MCRT0
 extern void		monstartup(u_long, u_long);
@@ -94,10 +94,6 @@ int			errno;
 static char		empty[1];
 char			*__progname = empty;
 char			__progname_storage[NAME_MAX+1];
-#ifndef DYNAMIC
-#define _strrchr	strrchr
-#endif
 
 extern unsigned char	etext;
 extern unsigned char	eprol asm ("eprol");
-
