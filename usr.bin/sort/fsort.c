@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsort.c,v 1.2 1997/01/22 05:49:19 millert Exp $	*/
+/*	$OpenBSD: fsort.c,v 1.3 1997/01/22 06:43:52 millert Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)fsort.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: fsort.c,v 1.2 1997/01/22 05:49:19 millert Exp $";
+static char rcsid[] = "$OpenBSD: fsort.c,v 1.3 1997/01/22 06:43:52 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -92,12 +92,12 @@ fsort(binno, depth, infiles, nfiles, outfp, ftbl)
 	tfield[0].icol.num = 1;
 	weights = ftbl[0].weights;
 	if (!buffer) {
-		buffer = malloc(BUFSIZE);
+		buffer = malloc(BUFSIZE + 1);
 		keylist = malloc(MAXNUM * sizeof(u_char *));
 		if (!SINGL_FLD)
 			linebuf = malloc(MAXLLEN);
 	}
-	bufend = buffer + BUFSIZE - 1;
+	bufend = buffer + BUFSIZE;
 	if (binno >= 0) {
 		tfiles.top = infiles.top + nfiles;
 		get = getnext;

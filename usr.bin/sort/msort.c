@@ -1,4 +1,4 @@
-/*	$OpenBSD: msort.c,v 1.1 1997/01/20 19:39:53 millert Exp $	*/
+/*	$OpenBSD: msort.c,v 1.2 1997/01/22 06:43:53 millert Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)msort.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: msort.c,v 1.1 1997/01/20 19:39:53 millert Exp $";
+static char rcsid[] = "$OpenBSD: msort.c,v 1.2 1997/01/22 06:43:53 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -151,6 +151,7 @@ merge(infl0, nfiles, get, outfp, put, ftbl)
 	int c, i, j;
 	union f_handle dummy = {0};
 	struct mfile *flist[16], *cfile;
+
 	for (i = j = 0; i < nfiles; i++) {
 		cfile = (MFILE *) (buffer +
 		    i * LALIGN(MAXLLEN + sizeof(TMFILE)));
@@ -170,22 +171,24 @@ merge(infl0, nfiles, get, outfp, put, ftbl)
 		}
 		j++;
 	}
-	cfile = cfilebuf;
-	cfile->flno = flist[0]->flno;
-	cfile->end = cfile->rec->data + MAXLLEN;
-	while (nfiles) {
-		for (c = 1; c == 1;) {
-			if (EOF == (c = get(cfile->flno, dummy, nfiles,
-			   cfile->rec, cfile->end, ftbl))) {
-				put(flist[0]->rec, outfp);
-				memmove(flist, flist + 1,
-				    sizeof(MFILE *) * (--nfiles));
-				cfile->flno = flist[0]->flno;
-				break;
+	if (nfiles > 0) {
+		cfile = cfilebuf;
+		cfile->flno = flist[0]->flno;
+		cfile->end = cfile->rec->data + MAXLLEN;
+		while (nfiles) {
+			for (c = 1; c == 1;) {
+				if (EOF == (c = get(cfile->flno, dummy, nfiles,
+				   cfile->rec, cfile->end, ftbl))) {
+					put(flist[0]->rec, outfp);
+					memmove(flist, flist + 1,
+					    sizeof(MFILE *) * (--nfiles));
+					cfile->flno = flist[0]->flno;
+					break;
+				}
+				if (!(c = insert(flist, &cfile, nfiles, DELETE)))
+					put(cfile->rec, outfp);
 			}
-			if (!(c = insert(flist, &cfile, nfiles, DELETE)))
-				put(cfile->rec, outfp);
-		}
+		}	
 	}	
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: files.c,v 1.1 1997/01/20 19:39:50 millert Exp $	*/
+/*	$OpenBSD: files.c,v 1.2 1997/01/22 06:43:51 millert Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)files.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: files.c,v 1.1 1997/01/20 19:39:50 millert Exp $";
+static char rcsid[] = "$OpenBSD: files.c,v 1.2 1997/01/22 06:43:51 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -184,7 +184,7 @@ makeline(flno, filelist, nfiles, buffer, bufend, dummy2)
 			if(flno >= 0) fstack[flno].fp = 0;
 		} else {
 			buffer->data[100] = '\000';
-			warnx("line too long:ignoring %s...", buffer->data);
+			warnx("line too long: ignoring %s...", buffer->data);
 		}
 	}
 }
