@@ -1,4 +1,4 @@
-.\"     $OpenBSD: tx.4,v 1.7 2000/10/18 02:38:24 aaron Exp $
+.\"     $OpenBSD: tx.4,v 1.8 2001/02/23 23:08:08 jason Exp $
 .\"
 .\" Copyright (c) 1998 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -76,6 +76,10 @@ The supported media types are:
 .Bl -tag -width xxxxxxxxxxxxxx -offset indent
 .It media autoselect
 Attempt to autoselect the media type (default)
+.It media 100baseFX mediaopt full-duplex
+Use 100baseFX (fiber), full duplex
+.It media 100baseFX Op mediaopt half-duplex
+Use 100baseFX (fiber), half duplex
 .It media 100baseTX mediaopt full-duplex
 Use 100baseTX, full duplex
 .It media 100baseTX Op mediaopt half-duplex
@@ -112,8 +116,6 @@ While resetting, the driver failed to stop the device correctly.
 .Xr ifconfig 8
 .Sh BUGS
 Multicast packet filtering is not supported.
-Only one PHY has really been tested,
-.Tn Quality Semiconductor QS6612 .
 .Sh HISTORY
 .Ox
 support for the
