@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hifn.4,v 1.32 2002/09/26 07:55:40 miod Exp $
+.\"	$OpenBSD: hifn.4,v 1.33 2003/02/24 20:40:01 jason Exp $
 .\"
 .\" Copyright (c) 2000 Theo de Raadt
 .\" All rights reserved.
@@ -68,7 +68,7 @@ Contains a 7951 and supports symmetric and random number operations.
 The
 .Nm
 driver registers itself to accelerate DES, Triple-DES, ARC4, MD5,
-MD5-HMAC, SHA1, and SHA1-HMAC operations for
+MD5-HMAC, SHA1, SHA1-HMAC, and LZS operations for
 .Xr ipsec 4
 and
 .Xr crypto 4 .
@@ -98,8 +98,6 @@ to the driver, but all vendors currently just use the obvious ID which is
 The Hifn 9751 shares the same PCI id.
 This chip is basically a 7751, but with the cryptographic functions missing.
 Instead, the 9751 is only capable of doing compression.
-Since we do not currently attempt to use any of these chips to do
-compression, the 9751-based cards are not useful.
 .Sh HISTORY
 The
 .Nm
