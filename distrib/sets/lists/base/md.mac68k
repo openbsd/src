@@ -9,7 +9,7 @@
 ./usr/lib/libacl.so.5.0
 ./usr/lib/libc.so.24.2
 ./usr/lib/libc_r.so.2.1
-./usr/lib/libcrypto.so.2.0
+./usr/lib/libcrypto.so.2.2
 ./usr/lib/libcurses++.so.1.1
 ./usr/lib/libcurses.so.7.0
 ./usr/lib/libdes.so.6.0
@@ -31,7 +31,7 @@
 ./usr/lib/libpanel.so.1.2
 ./usr/lib/libpcap.so.1.0
 ./usr/lib/libskey.so.1.0
-./usr/lib/libssl.so.2.0
+./usr/lib/libssl.so.2.2
 ./usr/lib/libstdc++.so.30.0
 ./usr/lib/libtermcap.so.7.0
 ./usr/lib/libtermlib.so.7.0
