@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sn.c,v 1.10 1997/03/14 14:11:34 briggs Exp $	*/
+/*	$OpenBSD: if_sn.c,v 1.11 1997/03/17 04:04:32 briggs Exp $	*/
 
 /*
  * National Semiconductor  SONIC Driver
@@ -8,6 +8,11 @@
  *
  * This driver has been substantially modified since Algorithmics donated
  * it.
+ *
+ *   Dennis Gentry <denny1@home.com>
+ * and also
+ *   Takeshi Yanagisawa <yanagisw@aa.ap.titech.ac.jp>
+ * did the work to get this running on the Macintosh.
  */
 
 #include <sys/param.h>
@@ -121,15 +126,6 @@ snsetup(sc)
 	int		i;
 
 	sc->sc_csr = (struct sonic_reg *) sc->sc_regh;
-
-/*
- * Disable caching on register and DMA space.
- */
-	physaccess((caddr_t) sc->sc_csr, (caddr_t) kvtop((caddr_t) sc->sc_csr),
-		SN_REGSIZE, PG_V | PG_RW | PG_CI);
-
-	physaccess((caddr_t) sc->space, (caddr_t) kvtop((caddr_t) sc->space),
-		sizeof(sc->space), PG_V | PG_RW | PG_CI);
 
 /*
  * Put the pup in reset mode (sninit() will fix it later)
@@ -335,10 +331,6 @@ outloop:
 		return;
 	}
 
-	if (sc->sc_csr->s_cr & CR_TXP) {
-		return;
-	}
-
 	IF_DEQUEUE(&sc->sc_if.if_snd, m);
 	if (m == 0)
 		return;
@@ -361,16 +353,13 @@ outloop:
 	 * the Tx ring, then send the packet directly.  Otherwise append
 	 * it to the o/p queue.
 	 */
-	len = sonicput(sc, m);
-#if 0
-	if (len != m->m_pkthdr.len) {
-		printf("snstart: len %d != m->m_pkthdr.len %d.\n",
-			len, m->m_pkthdr.len);
+	if ((len = sonicput(sc, m)) > 0) {
+		len = m->m_pkthdr.len;
+		m_freem(m);
+	} else {
+		IF_PREPEND(sc->sc_if.if_snd, m);
+		return;
 	}
-#endif
-	len = m->m_pkthdr.len;
-
-	m_freem(m);
 
 	/* Point to next buffer slot and wrap if necessary. */
 	if (++sc->txb_new == sc->txb_cnt)
@@ -548,6 +537,10 @@ sonicput(sc, m0)
 	int			mtd_free = sc->mtd_free;
 	int			mtd_next;
 	int			txb_new = sc->txb_new;
+
+	if (sc->sc_csr->s_cr & CR_TXP) {
+		return (0);
+	}
 
 	/* grab the replacement mtd */
 	mtdp = &sc->mtda[mtd_free];
