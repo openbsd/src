@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.44 2005/02/18 06:53:10 jsg Exp $
+dnl	$OpenBSD: hardware,v 1.45 2005/02/21 22:01:20 jsg Exp $
 OpenBSD/MACHINE OSREV runs on iMac, G4 Power Macintosh, and G4 Cube, as well
 as PowerBook and iBook machines.
 
@@ -252,8 +252,8 @@ Supported devices {:-include-:}:
 
 	Wireless Ethernet Adapters
 		PCMCIA Adapters
-			Aironet 802.11DS PCMCIA and PCI (an)
-			WaveLAN IEEE 802.11DS PCMCIA (wi)
+			Aironet 802.11B PCMCIA and PCI (an)
+			WaveLAN IEEE 802.11B PCMCIA (wi)
 		USB Adapters
 			Acer Warplink USB-400
 			Actiontec HWU01170

@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.18 2004/10/11 15:20:46 mickey Exp $
+dnl	$OpenBSD: hardware,v 1.19 2005/02/21 22:01:20 jsg Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of HP9000 machines:
 dnl - PA7000-based
 dnl	705, 710, 720, 730, 750
@@ -81,10 +81,10 @@ Supported devices {:-include-:}:
 	    ACTIONTEC HWC01170 PCMCIA
 	    Addtron AWP-100 PCMCIA
 	    Agere Orinoco PCMCIA
-	    Aironet 4500/4800 802.11DS ISA PnP, PCMCIA and PCI
+	    Aironet 4500/4800 802.11B ISA PnP, PCMCIA and PCI
 	    BUFFALO AirStation PCMCIA
 	    Cabletron RoamAbout PCMCIA
-	    Cisco 340/350 802.11DS PCMCIA and PCI
+	    Cisco 340/350 802.11B PCMCIA and PCI
 	    Compaq Agency NC5004 PCMCIA
 	    Contec FLEXLAN/FX-DS110-PCC PCMCIA
 	    Corega PCC-11 PCMCIA

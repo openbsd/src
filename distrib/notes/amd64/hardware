@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.33 2005/02/18 06:53:10 jsg Exp $
+dnl	$OpenBSD: hardware,v 1.34 2005/02/21 22:01:20 jsg Exp $
 OpenBSD/MACHINE OSREV should work on all Athlon 64-based and
 compatible designs.
 
@@ -396,10 +396,10 @@ dnl		    3Com AirConnect 3CRWE737A PCMCIA
 dnl		    ACTIONTEC HWC01170 PCMCIA
 dnl		    Addtron AWP-100 PCMCIA
 dnl		    Agere Orinoco PCMCIA
-dnl		    Aironet 4500/4800 802.11DS PCMCIA and PCI
+dnl		    Aironet 4500/4800 802.11B PCMCIA and PCI
 dnl		    BUFFALO AirStation PCMCIA
 dnl		    Cabletron RoamAbout PCMCIA
-dnl		    Cisco 340/350 802.11DS PCMCIA and PCI
+dnl		    Cisco 340/350 802.11B PCMCIA and PCI
 dnl		    Compaq Agency NC5004 PCMCIA
 dnl		    Contec FLEXLAN/FX-DS110-PCC PCMCIA
 dnl		    Corega PCC-11 PCMCIA

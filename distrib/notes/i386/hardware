@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.179 2005/02/18 06:53:10 jsg Exp $
+dnl	$OpenBSD: hardware,v 1.180 2005/02/21 22:01:20 jsg Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PCs and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -493,10 +493,10 @@ Supported hardware {:-include-:}:
 		    ACTIONTEC HWC01170 PCMCIA [A] [B] [C]
 		    Addtron AWP-100 PCMCIA [A] [B] [C]
 		    Agere Orinoco PCMCIA [A] [B] [C]
-		    Aironet 4500/4800 802.11DS ISA PnP, PCMCIA and PCI [A] [B]
+		    Aironet 4500/4800 802.11B ISA PnP, PCMCIA and PCI [A] [B]
 		    BUFFALO AirStation PCMCIA [A] [B] [C]
 		    Cabletron RoamAbout PCMCIA [A] [B] [C]
-		    Cisco 340/350 802.11DS PCMCIA and PCI [A] [B]
+		    Cisco 340/350 802.11B PCMCIA and PCI [A] [B]
 		    Compaq Agency NC5004 PCMCIA [A] [B] [C]
 		    Contec FLEXLAN/FX-DS110-PCC PCMCIA [A] [B] [C]
 		    Corega PCC-11 PCMCIA [A] [B] [C]
