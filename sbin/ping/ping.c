@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.57 2002/09/06 21:17:39 deraadt Exp $	*/
+/*	$OpenBSD: ping.c,v 1.58 2003/04/14 10:21:03 itojun Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: ping.c,v 1.57 2002/09/06 21:17:39 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ping.c,v 1.58 2003/04/14 10:21:03 itojun Exp $";
 #endif
 #endif /* not lint */
 
@@ -288,7 +288,7 @@ main(int argc, char *argv[])
 			break;
 		case 's':		/* size of packet to send */
 			datalen = strtol(optarg, NULL, 0);
-			if (datalen <= 0)
+			if (datalen < 0)
 				errx(1, "bad packet size: %s", optarg);
 			if (datalen > MAXPAYLOAD)
 				errx(1, "packet size too large: %s", optarg);
