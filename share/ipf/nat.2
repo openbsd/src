@@ -11,3 +11,11 @@ You must have IPF enabled even if you aren't using it for anything or
 NAT will not work.  The standard way to do this is to make sure
 /etc/ipf.rules is installed and edit /etc/rc.conf changing
 "ipfilter=NO" to "ipfilter=YES" then reboot.
+
+When you bring up NAT it needs the interface to have an address.  If you are
+using the ppp0 interface unless you start pppd from /etc/rc you cannot start
+NAT there.  Instead, in the /etc/ppp/ip-up shell script add
+
+/sbin/ipnat -CF -f /etc/ipnat.rules
+
+to start NAT when the link comes up and the interface has an address.
