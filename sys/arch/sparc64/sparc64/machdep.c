@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.15 2001/08/31 06:29:40 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.16 2001/09/07 15:44:08 art Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -604,17 +604,6 @@ sendsig(catcher, sig, mask, code, type, val)
 	/* Allocate an aligned sigframe */
 	fp = (struct sigframe *)((long)(fp - 1) & ~0x0f);
 
-#ifdef DEBUG
-	sigpid = p->p_pid;
-	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid) {
-		printf("sendsig: %s[%d] sig %d newusp %p scp %p oldsp %p\n",
-		    p->p_comm, p->p_pid, sig, fp, &fp->sf_sc, oldsp);
-#ifdef DDB
-		if (sigdebug & SDB_DDB) Debugger();
-#endif
-	}
-#endif
-
 	/*
 	 * Now set up the signal frame.  We build it in kernel space
 	 * and then copy it out.  We probably ought to just build it
@@ -660,12 +649,7 @@ sendsig(catcher, sig, mask, code, type, val)
 	 */
 	newsp = (struct rwindow *)((vaddr_t)fp - sizeof(struct rwindow));
 	write_user_windows();
-#ifdef DEBUG
-	if ((sigdebug & SDB_KSTACK))
-	    printf("sendsig: saving sf to %p, setting stack pointer %p to %p\n",
-		   fp, &(((struct rwindow *)newsp)->rw_in[6]),
-		   (void *)(unsigned long)tf->tf_out[6]);
-#endif
+
 	/* XXX do not copyout siginfo if not needed */
 	if (rwindow_save(p) || copyout((caddr_t)&sf, (caddr_t)fp, sizeof sf) || 
 	    CPOUTREG(&(((struct rwindow *)newsp)->rw_in[6]), tf->tf_out[6])) {
@@ -674,12 +658,7 @@ sendsig(catcher, sig, mask, code, type, val)
 		 * instruction to halt it in its tracks.
 		 */
 #ifdef DEBUG
-		if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
-			printf("sendsig: window save or copyout error\n");
 		printf("sendsig: stack was trashed trying to send sig %d, sending SIGILL\n", sig);
-#ifdef DDB
-		if (sigdebug & SDB_DDB) Debugger();
-#endif
 #endif
 		sigexit(p, SIGILL);
 		/* NOTREACHED */
@@ -701,16 +680,6 @@ sendsig(catcher, sig, mask, code, type, val)
 	tf->tf_pc = addr;
 	tf->tf_npc = addr + 4;
 	tf->tf_out[6] = (vaddr_t)newsp - STACK_OFFSET;
-
-#ifdef DEBUG
-	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid) {
-		printf("sendsig: about to return to catcher %p thru %p\n", 
-		       catcher, (void *)(unsigned long)addr);
-#ifdef DDB
-		if (sigdebug & SDB_DDB) Debugger();
-#endif
-	}
-#endif
 }
 
 /*
@@ -738,40 +707,21 @@ sys_sigreturn(p, v, retval)
 
 	/* First ensure consistent stack state (see sendsig). */
 	write_user_windows();
-if (p->p_addr->u_pcb.pcb_nsaved) 
-printf("sigreturn: pid %d nsaved %d\n",
-       p->p_pid, (p->p_addr->u_pcb.pcb_nsaved));
+
 	if (rwindow_save(p)) {
 #ifdef DEBUG
 		printf("sigreturn: rwindow_save(%p) failed, sending SIGILL\n", p);
-#ifdef DDB
-		Debugger();
-#endif
 #endif
 		sigexit(p, SIGILL);
 	}
-#ifdef DEBUG
-	if (sigdebug & SDB_FOLLOW) {
-		printf("sigreturn: %s[%d], sigcntxp %p\n",
-		    p->p_comm, p->p_pid, SCARG(uap, sigcntxp));
-#ifdef DDB
-		if (sigdebug & SDB_DDB) Debugger();
-#endif
-	}
-#endif
 	scp = SCARG(uap, sigcntxp);
- 	if ((vaddr_t)scp & 3 || (error = copyin((caddr_t)scp, &sc, sizeof sc) != 0))
+ 	if ((vaddr_t)scp & 3 ||
+	    (error = copyin((caddr_t)scp, &sc, sizeof sc) != 0)) {
 #ifdef DEBUG
-	{
 		printf("sigreturn: copyin failed: scp=%p\n", scp);
-#ifdef DDB
-		Debugger();
 #endif
 		return (error);
 	}
-#else
-		return (error);
-#endif
 	scp = &sc;
 
 	tf = p->p_md.md_tf;
@@ -780,20 +730,16 @@ printf("sigreturn: pid %d nsaved %d\n",
 	 * verified.  pc and npc must be multiples of 4.  This is all
 	 * that is required; if it holds, just do it.
 	 */
-	if (((sc.sc_pc | sc.sc_npc) & 3) != 0 || (sc.sc_pc == 0) || (sc.sc_npc == 0))
+	if (((sc.sc_pc | sc.sc_npc) & 3) != 0 ||
+	    (sc.sc_pc == 0) || (sc.sc_npc == 0)) {
 #ifdef DEBUG
-	{
 		printf("sigreturn: pc %p or npc %p invalid\n",
 		   (void *)(unsigned long)sc.sc_pc,
 		   (void *)(unsigned long)sc.sc_npc);
-#ifdef DDB
-		Debugger();
 #endif
 		return (EINVAL);
 	}
-#else
-		return (EINVAL);
-#endif
+
 	/* take only psr ICC field */
 #ifdef __arch64__
 	tf->tf_tstate = (u_int64_t)(tf->tf_tstate & ~TSTATE_CCR) | (scp->sc_tstate & TSTATE_CCR);
@@ -805,17 +751,6 @@ printf("sigreturn: pid %d nsaved %d\n",
 	tf->tf_global[1] = (u_int64_t)scp->sc_g1;
 	tf->tf_out[0] = (u_int64_t)scp->sc_o0;
 	tf->tf_out[6] = (u_int64_t)scp->sc_sp;
-#ifdef DEBUG
-	if (sigdebug & SDB_FOLLOW) {
-		printf("sigreturn: return trapframe pc=%p sp=%p tstate=%llx\n",
-		       (void *)(unsigned long)tf->tf_pc,
-		       (void *)(unsigned long)tf->tf_out[6],
-		       (unsigned long long)tf->tf_tstate);
-#ifdef DDB
-		if (sigdebug & SDB_DDB) Debugger();
-#endif
-	}
-#endif
 
 	/* Restore signal stack. */
 	if (sc.sc_onstack & SS_ONSTACK)
