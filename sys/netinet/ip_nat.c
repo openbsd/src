@@ -1,4 +1,4 @@
-/*       $OpenBSD: ip_nat.c,v 1.17 1998/10/11 05:37:28 deraadt Exp $       */
+/*       $OpenBSD: ip_nat.c,v 1.18 1999/01/29 07:01:46 d Exp $       */
 /*
  * Copyright (C) 1995-1997 by Darren Reed.
  *
@@ -10,7 +10,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_nat.c	1.11 6/5/96 (C) 1995 Darren Reed";
-static const char rcsid[] = "@(#)$Id: ip_nat.c,v 1.17 1998/10/11 05:37:28 deraadt Exp $";
+static const char rcsid[] = "@(#)$Id: ip_nat.c,v 1.18 1999/01/29 07:01:46 d Exp $";
 #endif
 
 #if defined(__FreeBSD__) && defined(KERNEL) && !defined(_KERNEL)
@@ -580,10 +580,8 @@ int direction;
 			in.s_addr = np->in_nip;
 			if (!in.s_addr && (np->in_outmsk == 0xffffffff)) {
 				if ((l > 1) ||
-				    nat_ifpaddr(nat, fin->fin_ifp, &in) == -1) {
-					KFREE(nat);
+				    nat_ifpaddr(nat, fin->fin_ifp, &in) == -1)
 					return NULL;
-				}
 			} else if (!in.s_addr && !np->in_outmsk) {
 				if (l > 1) {
 					KFREE(nat);
