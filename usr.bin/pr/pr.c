@@ -1,4 +1,4 @@
-/*	$OpenBSD: pr.c,v 1.10 2001/05/24 02:58:50 pvalchev Exp $	*/
+/*	$OpenBSD: pr.c,v 1.11 2001/11/02 16:25:02 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1991 Keith Muller.
@@ -45,7 +45,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)pr.c	8.1 (Berkeley) 6/6/93"; */
-static char *rcsid = "$OpenBSD: pr.c,v 1.10 2001/05/24 02:58:50 pvalchev Exp $";
+static char *rcsid = "$OpenBSD: pr.c,v 1.11 2001/11/02 16:25:02 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1701,8 +1701,8 @@ void
 terminate(which_sig)
     int which_sig;
 {
-    flsh_errs();
-    exit(1);
+    flsh_errs();	/* XXX signal race */
+    _exit(1);
 }
 
 
