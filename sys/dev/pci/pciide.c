@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.64 2001/08/25 10:13:30 art Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.65 2001/08/25 12:43:58 art Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -1006,10 +1006,13 @@ pciide_dma_init(v, channel, drive, databuf, datalen, flags)
 	int error, seg;
 	struct pciide_dma_maps *dma_maps =
 	    &sc->pciide_channels[channel].dma_maps[drive];
+#ifndef BUS_DMA_RAW
+#define BUS_DMA_RAW 0
+#endif
 
 	error = bus_dmamap_load(sc->sc_dmat,
 	    dma_maps->dmamap_xfer,
-	    databuf, datalen, NULL, BUS_DMA_NOWAIT);
+	    databuf, datalen, NULL, BUS_DMA_NOWAIT|BUS_DMA_RAW);
 	if (error) {
 		printf("%s:%d: unable to load xfer DMA map for"
 		    "drive %d, error=%d\n", sc->sc_wdcdev.sc_dev.dv_xname,
@@ -1018,8 +1021,7 @@ pciide_dma_init(v, channel, drive, databuf, datalen, flags)
 	}
 
 #ifdef __HAVE_NEW_BUS_DMAMAP_SYNC
-	bus_dmamap_sync(sc->sc_dmat, dma_maps->dmamap_xfer,
-	    0,
+	bus_dmamap_sync(sc->sc_dmat, dma_maps->dmamap_xfer, 0,
 	    dma_maps->dmamap_xfer->dm_mapsize,		
 	    (flags & WDC_DMA_READ) ?
 	    BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
@@ -1058,8 +1060,7 @@ pciide_dma_init(v, channel, drive, databuf, datalen, flags)
 	    htole32(IDEDMA_BYTE_COUNT_EOT);
 
 #ifdef __HAVE_NEW_BUS_DMAMAP_SYNC
-	bus_dmamap_sync(sc->sc_dmat, dma_maps->dmamap_table, 
-	    0,
+	bus_dmamap_sync(sc->sc_dmat, dma_maps->dmamap_table, 0, 
 	    dma_maps->dmamap_table->dm_mapsize,
 	    BUS_DMASYNC_PREWRITE);
 #else
@@ -1136,8 +1137,7 @@ pciide_dma_finish(v, channel, drive)
 
 	/* Unload the map of the data buffer */
 #ifdef __HAVE_NEW_BUS_DMAMAP_SYNC
-	bus_dmamap_sync(sc->sc_dmat, dma_maps->dmamap_xfer, 
-	    0,
+	bus_dmamap_sync(sc->sc_dmat, dma_maps->dmamap_xfer, 0, 
 	    dma_maps->dmamap_xfer->dm_mapsize,
 	    (dma_maps->dma_flags & WDC_DMA_READ) ?
 	    BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
