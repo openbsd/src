@@ -1,6 +1,6 @@
 #!/bin/sh
 
-#	$OpenBSD: spamd-setup.sh,v 1.8 2003/02/14 19:05:33 jason Exp $
+#	$OpenBSD: spamd-setup.sh,v 1.9 2003/02/21 07:15:12 jason Exp $
 #
 # Copyright (c) 2002 Theo de Raadt.  All rights reserved.
 #
@@ -79,7 +79,7 @@ fi
 
 # knock out whitelist here
 
-pfctl -t spamd -T replace -f $R
-pfctl -t spamd -T delete -f $W
+pfctl -q -t spamd -T replace -f $R
+pfctl -q -t spamd -T delete -f $W
 
 exit 0
