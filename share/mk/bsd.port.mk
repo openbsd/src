@@ -1,6 +1,6 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
-#	$OpenBSD: bsd.port.mk,v 1.50 1998/11/19 04:20:09 espie Exp $
+#	$OpenBSD: bsd.port.mk,v 1.51 1998/11/19 22:15:31 marc Exp $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
 #	This file is in the public domain.
@@ -309,7 +309,7 @@ NetBSD_MAINTAINER=	agc@netbsd.org
 #				  use in INDEX files and the like.
 # checkpatch	- Do a "patch -C" instead of a "patch".  Note that it may
 #				  give incorrect results if multiple patches deal with
-#				  the same file.
+#				  the same file. NOT AVAILABLE WITH OPENBSD!
 # checksum		- Use files/md5 to ensure that your distfiles are valid.
 # makesum		- Generate files/md5 (only do this for your own ports!).
 # addsum		- update files/md5 in a non-destructive way (own ports only!)
@@ -515,9 +515,13 @@ PATCH_ARGS+=		--batch
 PATCH_DIST_ARGS+=	--batch
 .endif
 
+# OpenBSD patch does not support the -C option/checkpatch target
+#
+.if (${OPSYS} != "OpenBSD")
 .if defined(PATCH_CHECK_ONLY)
 PATCH_ARGS+=	-C
 PATCH_DIST_ARGS+=	-C
+.endif
 .endif
 
 .if exists(/bin/tar)
@@ -1526,10 +1530,13 @@ post-${name}:
 # Checkpatch
 #
 # Special target to verify patches
-
+# OpenBSD patch does not support the -C option; thus this target disabled
+#
+.if (${OPSYS} != "OpenBSD")
 .if !target(checkpatch)
 checkpatch:
 	@cd ${.CURDIR} && ${MAKE} PATCH_CHECK_ONLY=yes ${.MAKEFLAGS} patch
+.endif
 .endif
 
 # Reinstall
