@@ -1,4 +1,4 @@
-.\"	$OpenBSD: recv.2,v 1.32 2004/11/12 10:36:09 jmc Exp $
+.\"	$OpenBSD: recv.2,v 1.33 2005/01/06 00:32:48 jaredy Exp $
 .\"	$NetBSD: recv.2,v 1.6 1995/02/27 12:36:08 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
@@ -204,10 +204,7 @@ struct cmsghdr {
 .Ed
 .Pp
 As an example, one could use this to learn of changes in the data-stream
-in XNS/SPP, or in ISO, to obtain user-connection-request data by requesting
-a recvmsg with no data buffer provided immediately after an
-.Fn accept
-call.
+in XNS/SPP.
 .Pp
 Open file descriptors are now passed as ancillary data for
 .Dv AF_UNIX
