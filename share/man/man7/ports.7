@@ -23,7 +23,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: ports.7,v 1.29 2003/02/27 00:41:20 david Exp $
+.\" $OpenBSD: ports.7,v 1.30 2003/03/15 18:19:53 avsm Exp $
 .\" $FreeBSD: ports.7,v 1.7 1998/06/23 04:38:50 hoek Exp $
 .\"
 .Dd January 25, 1998
@@ -347,14 +347,14 @@ $ env FLAVOR="static" make package
 .Pp
 and of course, use the same settings for the subsequent invocations of make:
 .Bd -literal -offset indent
-$ env FLAVOR="static" make install
+$ env FLAVOR="static" make package
 $ env FLAVOR="static" make clean
 .Ed
 .Pp
 More than one flavor may be specified:
 .Bd -literal -offset indent
-$ cd /usr/ports/www/php4
-$ env FLAVOR="imap ldap recode" make install
+$ cd /usr/ports/mail/exim
+$ env FLAVOR="mysql ldap" make package
 .Ed
 .Pp
 Specifying a flavor that does not exist is an error.
@@ -385,17 +385,11 @@ should not be changed by the user, and are liable to change without notice.
 .Pp
 .Bl -tag -width MASTER_SITES
 .It Ev PORTSDIR
-Location of the ports tree.
-This is
+Location of the ports tree
+.Po
+usually 
 .Pa /usr/ports
-on
-.Fx
-and
-.Ox
-and
-.Pa /usr/pkgsrc
-on
-.Nx .
+.Pc
 .It Ev DISTDIR
 Where to find/put distfiles, normally
 .Pa distfiles/
@@ -477,31 +471,17 @@ accordingly.
 .Sh FILES
 .Bl -tag -width /usr/ports/xxxxxxxx -compact
 .It Pa /usr/ports
-The default ports directory (
-.Fx
-and
-.Ox
-).
-.It Pa /usr/pkgsrc
-The default ports directory (
-.Nx
-).
+The default ports directory.
 .It Pa /usr/ports/Makefile
 Ports master Makefile.
 .It Pa /usr/ports/INDEX
 Ports index.
 .It Pa /usr/ports/infrastructure/mk/bsd.port.mk
-The ports main engine (
-.Ox
-).
+The ports main engine.
 .It Pa /usr/ports/infrastructure/templates/network.conf.template
-Network configuration defaults (
-.Ox
-).
+Network configuration defaults.
 .It Pa /usr/ports/infrastructure/db/network.conf
-Local network configuration (
-.Ox
-).
+Local network configuration.
 .El
 .Sh SEE ALSO
 .Xr make 1 ,
@@ -536,7 +516,7 @@ It is currently managed by Marc Espie, Brad Smith, and Christian Weisgerber,
 along with a host of others found at ports@openbsd.org.
 .Sh BUGS
 Ports documentation is split over several places ---
-.Pa /usr/share/mk/bsd.port.mk ,
+.Xr bsd.port.mk 5 ,
 the
 .Dq Ports Collection
 section of the
