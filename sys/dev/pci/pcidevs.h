@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.679 2003/10/08 20:52:43 jason Exp 
+ *		OpenBSD: pcidevs,v 1.680 2003/10/11 17:23:41 nordin Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -641,6 +641,7 @@
 #define	PCI_PRODUCT_ATI_RADEON_QF	0x5146		/* Radeon QF */
 #define	PCI_PRODUCT_ATI_RADEON_QG	0x5147		/* Radeon QG */
 #define	PCI_PRODUCT_ATI_R200_QL	0x514C		/* Radeon 8500 QL */
+#define	PCI_PRODUCT_ATI_R200_QM	0x514D		/* Radeon 9100 QM */
 #define	PCI_PRODUCT_ATI_R200_QN	0x514E		/* Radeon 8500 QN */
 #define	PCI_PRODUCT_ATI_R200_QO	0x514F		/* Radeon 8500 QO */
 #define	PCI_PRODUCT_ATI_RV200_QW	0x5157		/* Radeon 7500 QW */
