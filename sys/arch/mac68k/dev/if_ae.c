@@ -1,5 +1,5 @@
-/*	$OpenBSD: if_ae.c,v 1.12 1997/04/17 17:46:41 gene Exp $	*/
-/*	$NetBSD: if_ae.c,v 1.61 1997/04/14 16:28:34 scottr Exp $	*/
+/*	$OpenBSD: if_ae.c,v 1.13 1997/04/25 22:15:26 gene Exp $	*/
+/*	$NetBSD: if_ae.c,v 1.62 1997/04/24 16:52:05 scottr Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -960,8 +960,11 @@ aeget(sc, src, total_len)
 		}
 		if (total_len >= MINCLSIZE) {
 			MCLGET(m, M_DONTWAIT);
-			if (m->m_flags & M_EXT)
-				len = MCLBYTES;
+			if ((m->m_flags & M_EXT) == 0) {
+				m_freem(top);
+				return 0;
+			}
+			len = MCLBYTES;
 		}
 		m->m_len = len = min(total_len, len);
 		src = ae_ring_copy(sc, src, mtod(m, caddr_t), len);
