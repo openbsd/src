@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptodev.h,v 1.40 2003/07/24 08:03:19 itojun Exp $	*/
+/*	$OpenBSD: cryptodev.h,v 1.41 2003/07/24 15:29:38 markus Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -73,7 +73,7 @@
 #define EALG_MAX_BLOCK_LEN	16 /* Keep this updated */
 
 /* Maximum hash algorithm result length */
-#define AALG_MAX_RESULT_LEN	20 /* Keep this updated */
+#define AALG_MAX_RESULT_LEN	64 /* Keep this updated */
 
 #define CRYPTO_DES_CBC		1
 #define CRYPTO_3DES_CBC		2
