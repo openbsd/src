@@ -195,6 +195,7 @@
 .	if "\\$3"sun3"  .as vT \ (SUN3 Architecture)
 .	if "\\$3"tahoe" .as vT \ (TAHOE Architecture)
 .	if "\\$3"vax"   .as vT \ (VAX Architecture)
+.	if "\\$3"x68k"  .as vT \ (X68K Architecture)
 .	if "\\*(vT"LOCAL" .ds vT \\$3
 .\}
 ..
