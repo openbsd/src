@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc.c,v 1.27 1998/02/22 00:38:40 niklas Exp $	*/
+/*	$OpenBSD: wdc.c,v 1.28 1998/04/28 05:41:08 angelos Exp $	*/
 /*	$NetBSD: wd.c,v 1.150 1996/05/12 23:54:03 mycroft Exp $ */
 
 /*
@@ -246,9 +246,9 @@ wdcattach(parent, self, aux)
 	struct isa_attach_args *ia = aux;
 #if NWD > 0
 	int drive;
-#endif	/* NWD */
 	bus_space_tag_t iot = wdc->sc_iot;
 	bus_space_handle_t ioh = wdc->sc_ioh;
+#endif	/* NWD */
 
 	TAILQ_INIT(&wdc->sc_xfer);
 	wdc->sc_drq = ia->ia_drq;
