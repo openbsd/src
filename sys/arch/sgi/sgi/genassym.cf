@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.3 2004/08/10 19:16:18 deraadt Exp $ */
+#	$OpenBSD: genassym.cf,v 1.4 2004/10/08 07:16:53 grange Exp $
 #
 # Copyright (c) 1997 Per Fogelstrom / Opsycon AB
 #
