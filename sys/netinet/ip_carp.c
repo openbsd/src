@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.97 2005/02/07 04:50:51 mcbride Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.98 2005/02/07 08:58:37 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -1543,6 +1543,40 @@ void
 carp_addr_updated(void *v)
 {
 	struct carp_softc *sc = (struct carp_softc *) v;
+	struct ifaddr *ifa;
+	int new_naddrs = 0, new_naddrs6 = 0;
+
+	TAILQ_FOREACH(ifa, &sc->sc_if.if_addrlist, ifa_list) {
+		if (ifa->ifa_addr->sa_family == AF_INET)
+			new_naddrs++;
+		else if (ifa->ifa_addr->sa_family == AF_INET6)
+			new_naddrs6++;
+	}
+
+	/* Handle a callback after SIOCDIFADDR */
+	if (new_naddrs < sc->sc_naddrs || new_naddrs6 < sc->sc_naddrs6) {
+		struct in_addr mc_addr;
+		struct in_multi *inm;
+
+		sc->sc_naddrs = new_naddrs;
+		sc->sc_naddrs6 = new_naddrs6;
+
+		/* Re-establish multicast membership removed by in_control */
+		mc_addr.s_addr = INADDR_CARP_GROUP;
+		IN_LOOKUP_MULTI(mc_addr, &sc->sc_if, inm);
+		if (inm == NULL) {
+			bzero(&sc->sc_imo, sizeof(sc->sc_imo));
+
+			if (sc->sc_carpdev != NULL && sc->sc_naddrs > 0)
+				carp_join_multicast(sc);
+		}
+
+		if (sc->sc_naddrs == 0 && sc->sc_naddrs6 == 0) {
+			sc->sc_if.if_flags &= ~IFF_UP;
+			carp_set_state(sc, INIT);
+		} else
+			carp_hmac_prepare(sc);
+	}
 
 	carp_setrun(sc, 0);
 }
@@ -1811,25 +1845,6 @@ carp_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 		case AF_INET6:
 			sc->sc_if.if_flags |= IFF_UP;
 			error = carp_set_addr6(sc, satosin6(&ifra->ifra_addr));
-			break;
-#endif /* INET6 */
-		default:
-			error = EAFNOSUPPORT;
-			break;
-		}
-		break;
-
-	case SIOCDIFADDR:
-		sc->sc_if.if_flags &= ~IFF_UP;
-		switch (ifa->ifa_addr->sa_family) {
-#ifdef INET
-		case AF_INET:
-			sc->sc_naddrs--;
-			break;
-#endif /* INET */
-#ifdef INET6
-		case AF_INET6:
-			sc->sc_naddrs6--;
 			break;
 #endif /* INET6 */
 		default:
