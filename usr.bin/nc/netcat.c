@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.24 2001/06/26 20:53:14 ericj Exp $ */
+/* $OpenBSD: netcat.c,v 1.25 2001/06/26 21:19:14 ericj Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  *
@@ -296,6 +296,7 @@ remote_connect(host, port, hints)
 			ahints.ai_family = res0->ai_family;
 			ahints.ai_socktype = uflag ? SOCK_DGRAM : SOCK_STREAM;
 			ahints.ai_protocol = uflag ? IPPROTO_UDP : IPPROTO_TCP;
+			ahints.ai_flags = AI_PASSIVE;
 			if (getaddrinfo(sflag, pflag, &ahints, &ares))
 				errx(1, "%s", gai_strerror(error));
 
@@ -447,7 +448,7 @@ atelnet(nfd, buf, size)
 		if (*p != IAC)
 			break;
 
-		obuf[0]=IAC;
+		obuf[0] = IAC;
 		p++;
 		if ((*p == WILL) || (*p == WONT)) {
 			obuf[1] = DONT;
