@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsa.c,v 1.3 2003/05/19 00:29:34 nate Exp $ 	*/
+/*	$OpenBSD: ubsa.c,v 1.4 2003/11/11 15:14:56 miod Exp $ 	*/
 /*	$NetBSD: ubsa.c,v 1.5 2002/11/25 00:51:33 fvdl Exp $	*/
 /*-
  * Copyright (c) 2002, Alexander Kabaev <kan.FreeBSD.org>.
@@ -381,7 +381,6 @@ USB_ATTACH(ubsa)
 	USB_ATTACH_SUCCESS_RETURN;
 
 error:
-	free(devinfo, M_USBDEV);
 	USB_ATTACH_ERROR_RETURN;
 }
 
