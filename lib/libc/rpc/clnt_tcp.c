@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: clnt_tcp.c,v 1.9 1996/09/15 09:31:34 tholo Exp $";
+static char *rcsid = "$OpenBSD: clnt_tcp.c,v 1.10 1996/11/14 06:17:36 etheisen Exp $";
 #endif /* LIBC_SCCS and not lint */
  
 /*
@@ -122,7 +122,7 @@ clnttcp_create(raddr, prog, vers, sockp, sendsz, recvsz)
 	static u_int32_t disrupt;
 
 	if (disrupt == 0)
-		disrupt = (u_int32_t)raddr;
+		disrupt = (u_int32_t)(long)raddr;
 
 	h  = (CLIENT *)mem_alloc(sizeof(*h));
 	if (h == NULL) {
