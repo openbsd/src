@@ -1,11 +1,11 @@
-#	$OpenBSD: Makefile,v 1.8 1996/03/30 08:29:08 etheisen Exp $
+#	$OpenBSD: Makefile,v 1.9 1996/06/17 02:14:15 downsj Exp $
 #	$NetBSD: Makefile,v 1.62 1996/03/10 05:45:43 thorpej Exp $
 #	from: @(#)Makefile	5.8.1.1 (Berkeley) 5/8/91
 
 SUBDIR=	apply apropos asa at banner basename bdes biff cal calendar cap_mkdb \
 	checknr chflags chpass cksum cmp col colcrt colrm column comm \
 	compress cpp crontab ctags cut dirname du \
-	env error expand false fdeject file find finger fmt fold fpr from \
+	env error expand false file find finger fmt fold fpr from \
 	fsplit fstat ftp gencat getconf getopt head hexdump id indent \
 	ipcrm ipcs join jot kdump ktrace lam last lastcomm leave less lex \
 	locate lock logger login logname look lorder m4 machine mail make man \
