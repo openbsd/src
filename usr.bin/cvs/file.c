@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.28 2004/08/13 12:44:25 jfb Exp $	*/
+/*	$OpenBSD: file.c,v 1.29 2004/08/13 13:28:53 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -410,7 +410,6 @@ int
 cvs_file_attach(CVSFILE *parent, CVSFILE *file)
 {
 	struct cvs_dir *dp;
-	struct cvs_ent *ent;
 
 	if (parent->cf_type != DT_DIR)
 		return (-1);
@@ -744,10 +743,7 @@ static CVSFILE*
 cvs_file_lget(const char *path, int flags, CVSFILE *parent)
 {
 	int cwd;
-	size_t len;
-	char buf[32];
 	struct stat st;
-	struct tm lmtm;
 	CVSFILE *cfp;
 	struct cvs_ent *ent;
 
