@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.5 2000/01/31 21:11:12 d Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.6 2000/02/02 04:04:57 d Exp $
 
 MAN=	sudo.8 sudoers.5 visudo.8
 XCFLAGS=	CC="${CC}" CFLAGS="${CFLAGS} ${COPTS}" LDFLAGS="${LDFLAGS}"
@@ -47,7 +47,7 @@ config.status:
 
 .ifdef NOMAN
 maninstall:
-        @echo NOMAN is set
+	@echo NOMAN is set
 .endif
 
 install: maninstall
