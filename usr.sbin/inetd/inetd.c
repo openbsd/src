@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.80 2001/03/15 17:53:09 deraadt Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.81 2001/03/15 18:07:57 deraadt Exp $	*/
 /*	$NetBSD: inetd.c,v 1.11 1996/02/22 11:14:41 mycroft Exp $	*/
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$OpenBSD: inetd.c,v 1.80 2001/03/15 17:53:09 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: inetd.c,v 1.81 2001/03/15 18:07:57 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -451,18 +451,6 @@ main(argc, argv, envp)
 		(void) sigsetmask(0L);
 	    }
 	    
-	    if (readablen != allsockn) {
-		if (readablep)
-		    free(readablep);
-		readablep = (fd_set *)calloc(allsockn, 1);
-		if (readablep == NULL) {
-		    syslog(LOG_ERR, "Out of memory.");
-		    exit(1);
-		}
-		readablen = allsockn;
-	    }
-	    bcopy(allsockp, readablep, allsockn);
-
 	    if (wantretry || wantconfig || wantreap) {
 		if (wantretry) {
 		    doretry();
@@ -478,6 +466,18 @@ main(argc, argv, envp)
 		}
 		continue;
 	    }
+
+	    if (readablen != allsockn) {
+		if (readablep)
+		    free(readablep);
+		readablep = (fd_set *)calloc(allsockn, 1);
+		if (readablep == NULL) {
+		    syslog(LOG_ERR, "Out of memory.");
+		    exit(1);
+		}
+		readablen = allsockn;
+	    }
+	    bcopy(allsockp, readablep, allsockn);
 
 	    if ((n = select(maxsock + 1, readablep, NULL, NULL, NULL)) <= 0) {
 		    if (n < 0 && errno != EINTR) {
