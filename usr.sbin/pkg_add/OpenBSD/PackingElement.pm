@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.29 2004/09/21 22:17:49 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.30 2004/10/04 12:09:07 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -43,11 +43,11 @@ sub Factory
 			$oldkeyword{$cmd}->add(@_, $args);
 			print STDERR "Warning: obsolete construct: \@$cmd $args\n";
 		} else {
-		    print STDERR "Unknown element: \@$cmd $args\n";
-		    exit(1);
+			print STDERR "Unknown element: \@$cmd $args\n";
+			exit(1);
 		}
 	} else {
-			OpenBSD::PackingElement::File->add(@_, $_);
+		OpenBSD::PackingElement::File->add(@_, $_);
 	}
 }
 
@@ -70,7 +70,7 @@ sub new
 	if ($args =~ m|/+$| and defined $class->dirclass()) {
 		bless { name => $` }, $class->dirclass();
 	} else {
-	    bless { name => $args }, $class;
+		bless { name => $args }, $class;
 	}
 }
 
