@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.16 2003/12/09 19:10:35 espie Exp $
+# $OpenBSD: pkg_add,v 1.17 2003/12/10 11:12:22 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -131,13 +131,14 @@ sub can_install($)
 
 
 # This does pre_add a package: finding it and reading its package information
-sub pre_add($)
+sub pre_add($$)
 {
-	my $pkg = shift;
+	my ($pkg, $not) = @_;
 	my $pkgname1;
+	my $operation = $not ? "Pretending to add" : "Adding";
 	
 	if ($pkg ne '-') {
-		print "Adding $pkg\n";
+		print "$operation $pkg\n";
 		$pkgname1 = OpenBSD::PackageName->new($pkg);
 		return undef unless can_install($pkgname1->{pkgname});
 	}
@@ -164,7 +165,7 @@ sub pre_add($)
 			return undef;
 		}
 	} else {
-		print "Adding ",$pkgname->{pkgname}, "\n";
+		print $operation, " ", $pkgname->{pkgname}, "\n";
 		return undef unless can_install($pkgname->{pkgname});
 	}
 	# second handling of conflicts
@@ -382,7 +383,7 @@ sub really_add($)
 	add_installed($pkgname);
 	if ($plist->has(DISPLAY)) {
 		my $pager = $ENV{'PAGER'} || "/usr/bin/more";
-		system($pager, $dest.DISPLAY);
+		system($pager, $dir.DISPLAY);
 	}
 }
 
@@ -392,7 +393,7 @@ my $cache={};
 MAINLOOP:
 while (my $pkg = shift @todo) {
 	if (!defined $cache->{$pkg}) {
-		$cache->{$pkg} = pre_add($pkg);
+		$cache->{$pkg} = pre_add($pkg, $opt_n);
 	}
 	my $handle = $cache->{$pkg};
 	next unless defined $handle;

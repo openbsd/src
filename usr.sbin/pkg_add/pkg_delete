@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_delete,v 1.13 2003/12/09 19:22:36 espie Exp $
+# $OpenBSD: pkg_delete,v 1.14 2003/12/10 11:12:22 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -380,7 +380,8 @@ if ($bad) {
 		}
 		my $deps = OpenBSD::RequiredBy->new($pkgname)->list();
 		next if @$deps > 0;
-		print "Deleting $pkgname\n";
+		print $opt_n ? "Pretending to delete " : "Deleting ", 
+		    "$pkgname\n";
 		$state->{pkgname_tolog} = $pkgname;
 		delete_package($pkgname, $state);
 		delete_installed($pkgname);
