@@ -952,7 +952,7 @@ something you need missing.
   zsh-4.0.6-static.tgz                 zsh-4.0.6.tgz
   zsh-4.1.0dev5-static.tgz             zsh-4.1.0dev5.tgz
   zsh-zftp-4.0.6.tgz                   zsh-zftp-4.1.0dev5.tgz
-  zsnes-1.36.tgz                       
+  zsnes-1.36.tgz
 
 These and many other packages are also available via ftp at
       ftp://ftp.openbsd.org/pub/OpenBSD/3.2/packages/

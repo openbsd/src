@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.209 2002/11/23 18:29:21 deraadt Exp $
+#	$OpenBSD: rc,v 1.210 2002/12/13 10:20:25 henning Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -335,9 +335,9 @@ echo clearing /tmp
 
 # create Unix sockets directories  for X if needed and make sure they have
 # correct permissions
-if [ -d /usr/X11R6/lib ]; then 
+if [ -d /usr/X11R6/lib ]; then
 	for d in /tmp/.X11-unix /tmp/.ICE-unix ; do
-		if [ -d $d ]; then 
+		if [ -d $d ]; then
 			if [ `ls -ld $d | cut -d' ' -f4` != root ]; then
 				chown root $d
 			fi
