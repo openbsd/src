@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_timeout.c,v 1.21 2004/12/12 20:37:01 espie Exp $	*/
+/*	$OpenBSD: kern_timeout.c,v 1.22 2004/12/28 22:48:30 deraadt Exp $	*/
 /*
  * Copyright (c) 2001 Thomas Nordin <nordin@openbsd.org>
  * Copyright (c) 2000-2001 Artur Grabowski <art@openbsd.org>
@@ -156,7 +156,7 @@ timeout_add(struct timeout *new, int to_ticks)
 	if (!(new->to_flags & TIMEOUT_INITIALIZED))
 		panic("timeout_add: not initialized");
 	if (to_ticks < 0)
-		panic("timeout_add: to_ticks < 0");
+		panic("timeout_add: to_ticks (%d) < 0", to_ticks);
 #endif
 
 	mtx_enter(&timeout_mutex);
