@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_all.h,v 1.20 2005/04/06 02:12:54 marco Exp $	*/
+/*	$OpenBSD: scsi_all.h,v 1.21 2005/04/06 16:15:53 marco Exp $	*/
 /*	$NetBSD: scsi_all.h,v 1.10 1996/09/12 01:57:17 thorpej Exp $	*/
 
 /*
@@ -90,15 +90,53 @@ struct scsi_dev_elmt_ctrl_diag {
 struct scsi_enc_ctrl_diag_page {
 	u_int8_t page_code;
 	u_int8_t byte2;
-#define SECDP_INFO	0x08
-#define SECDP_NONCRIT	0x04
+#define SECDP_UNREC	0x01
 #define SECDP_CRIT	0x02
-#define SECDP_UNREC	0x08
+#define SECDP_NONCRIT	0x04
+#define SECDP_INFO	0x08
 	u_int8_t length[2];
 	u_int8_t gencode[4];
 	u_int8_t overallctrl[4];
 	/* first element starts here */
 	struct scsi_dev_elmt_ctrl_diag elmts[0];
+};
+
+/* FIXME does this go in ses.h? */
+struct scsi_dev_elmt_status_diag {
+	u_int8_t common_status;
+	u_int8_t slot_addr;
+	u_int8_t byte3;
+#define SDESD_REPORT		0x01
+#define SDESD_IDENT		0x02
+#define SDESD_RMV		0x04
+#define SDESD_RDY_INSRT		0x08
+#define SDESD_ENC_BYP_B		0x10
+#define SDESD_ENC_BYP_A		0x20
+#define SDESD_DONT_REMV		0x40
+#define SDESD_CLNT_BYP_A	0x80
+	u_int8_t byte4;
+#define SDESD_DEV_BYP_B		0x01
+#define SDESD_DEV_BYP_A		0x02
+#define SDESD_BYP_B		0x04
+#define SDESD_BYP_A		0x08
+#define SDESD_DEV_OFF		0x10
+#define SDESD_FLT_RQSTD		0x20
+#define SDESD_FLT_SENSED	0x40
+#define SDESD_CLNT_BYP_B	0x80
+};
+
+/* FIXME does this go in ses.h? */
+struct scsi_enc_stat_diag_page {
+	u_int8_t page_code;
+	u_int8_t byte2;
+#define SESDP_UNREC	0x01
+#define SESDP_CRIT	0x02
+#define SESDP_NONCRIT	0x04
+#define SESDP_INFO	0x08
+	u_int8_t length[2];
+	u_int8_t gencode[4];
+	u_int8_t overallstat[4];
+	struct scsi_dev_elmt_status_diag elmts[0];
 };
 
 struct scsi_sense {
