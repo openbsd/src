@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.13 2004/11/26 16:23:50 jfb Exp $	*/
+/*	$OpenBSD: util.c,v 1.14 2004/12/03 20:24:37 weingart Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -229,7 +229,9 @@ cvs_strtomode(const char *str, mode_t *mode)
 		if (ep != NULL)
 			*ep = '\0';
 
-		if (sscanf(sp, "%c=%3s", &type, ms) != 2) {
+		memset(ms, 0, sizeof ms);
+		if (sscanf(sp, "%c=%3s", &type, ms) != 2 &&
+			sscanf(sp, "%c=", &type) != 1) {
 			cvs_log(LP_WARN, "failed to scan mode string `%s'", sp);
 			continue;
 		}
