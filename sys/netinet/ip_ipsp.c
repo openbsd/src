@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.84 2000/06/01 04:02:32 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.85 2000/06/01 04:24:26 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -198,7 +198,7 @@ check_ipsec_policy(struct inpcb *inp, void *daddr)
     if (inp == NULL || ((so = inp->inp_socket) == 0))
       return (EINVAL);
 
-    /* If IPSEC is not required just use what we got */
+    /* If IPsec is not required just use what we got */
     if (!(sa_require = inp->inp_secrequire))
       return 0;
 
@@ -344,76 +344,7 @@ check_ipsec_policy(struct inpcb *inp, void *daddr)
 
 	/* Initialize TDB for PF_KEY notification */
 	bzero(&tdb2, sizeof(tdb2));
-	sa_require = get_sa_require(inp);
-
-	/* Check for PFS */
-	if (ipsec_require_pfs)
-	  tdb2.tdb_flags |= TDBF_PFS;
-
-	/* Initialize expirations */
-	if (ipsec_soft_allocations > 0)
-	  tdb2.tdb_soft_allocations = ipsec_soft_allocations;
-
-	if (ipsec_exp_allocations > 0)
-	  tdb2.tdb_exp_allocations = ipsec_exp_allocations;
-
-	if (ipsec_soft_bytes > 0)
-	  tdb2.tdb_soft_bytes = ipsec_soft_bytes;
-
-	if (ipsec_exp_bytes > 0)
-	  tdb2.tdb_exp_bytes = ipsec_exp_bytes;
-
-	if (ipsec_soft_timeout > 0)
-	  tdb2.tdb_soft_timeout = ipsec_soft_timeout;
-
-	if (ipsec_exp_timeout > 0)
-	  tdb2.tdb_exp_timeout = ipsec_exp_timeout;
-
-	if (ipsec_soft_first_use > 0)
-	  tdb2.tdb_soft_first_use = ipsec_soft_first_use;
-
-	if (ipsec_exp_first_use > 0)
-	  tdb2.tdb_exp_first_use = ipsec_exp_first_use;
-
-	if (sa_require & NOTIFY_SATYPE_CONF)
-	{
-	    tdb2.tdb_satype = SADB_SATYPE_ESP;
-
-	    if (!strncasecmp(ipsec_def_enc, "des", sizeof("des")))
-	      tdb2.tdb_encalgxform = &enc_xform_des;
-	    else
-	      if (!strncasecmp(ipsec_def_enc, "3des", sizeof("3des")))
-		tdb2.tdb_encalgxform = &enc_xform_3des;
-	      else
-		if (!strncasecmp(ipsec_def_enc, "blowfish", sizeof("blowfish")))
-		  tdb2.tdb_encalgxform = &enc_xform_blf;
-		else
-		  if (!strncasecmp(ipsec_def_enc, "cast128", sizeof("cast128")))
-		    tdb2.tdb_encalgxform = &enc_xform_cast5;
-		  else
-		    if (!strncasecmp(ipsec_def_enc, "skipjack",
-				     sizeof("skipjack")))
-		      tdb2.tdb_encalgxform = &enc_xform_skipjack;
-	}
-
-	if (tdb2.tdb_satype & NOTIFY_SATYPE_AUTH)
-	{
-	    if (!(sa_require & NOTIFY_SATYPE_CONF))
-	      tdb2.tdb_satype = SADB_SATYPE_AH;
-
-	    if (!strncasecmp(ipsec_def_auth, "hmac-md5", sizeof("hmac-md5")))
-	      tdb2.tdb_authalgxform = &auth_hash_hmac_md5_96;
-	    else
-	      if (!strncasecmp(ipsec_def_auth, "hmac-sha1",
-			       sizeof("hmac-sha1")))
-		tdb2.tdb_authalgxform = &auth_hash_hmac_sha1_96;
-	      else
-		if (!strncasecmp(ipsec_def_auth, "hmac-ripemd160",
-				 sizeof("hmac_ripemd160")))
-		  tdb2.tdb_authalgxform = &auth_hash_hmac_ripemd_160_96;
-	}
-
-	/* XXX Initialize src_id/dst_id */
+	tdb2.tdb_satype = get_sa_require(inp);
 
 #ifdef INET
 	if (!(inp->inp_flags & INP_IPV6))
@@ -441,8 +372,8 @@ check_ipsec_policy(struct inpcb *inp, void *daddr)
 	}
 #endif /* INET6 */
 
-	/* Send PF_KEYv2 Notify */
-	if ((error = pfkeyv2_acquire(&tdb2, 0)) != 0)
+	error = ipsp_acquire_sa(&tdb2);
+	if (error)
 	  return error;
 
 	/* 
@@ -2241,107 +2172,9 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error)
 	    tdb2.tdb_satype = SADB_SATYPE_ESP;
 	}
 
-	/* Check whether Perfect Forward Secrect is required */
-	if (ipsec_require_pfs)
-	  tdb->tdb_flags |= TDBF_PFS;
-	else
-	  tdb->tdb_flags &= ~TDBF_PFS;
-
-	/* Initialize expirations */
-	if (ipsec_soft_allocations > 0) 
-	  tdb->tdb_soft_allocations = ipsec_soft_allocations;
-	else
-	  tdb->tdb_soft_allocations = 0;
-
-	if (ipsec_exp_allocations > 0)
-	  tdb->tdb_exp_allocations = ipsec_exp_allocations;
-	else
-	  tdb->tdb_exp_allocations = 0;
-
-	if (ipsec_soft_bytes > 0)
-	  tdb->tdb_soft_bytes = ipsec_soft_bytes;
-	else
-	  tdb->tdb_soft_bytes = 0;
-
-	if (ipsec_exp_bytes > 0)
-	  tdb->tdb_exp_bytes = ipsec_exp_bytes;
-	else
-	  tdb->tdb_exp_bytes = 0;
-
-	if (ipsec_soft_timeout > 0)
-	  tdb->tdb_soft_timeout = ipsec_soft_timeout;
-	else
-	  tdb->tdb_soft_timeout = 0;
-
-	if (ipsec_exp_timeout > 0)
-	  tdb->tdb_exp_timeout = ipsec_exp_timeout;
-	else
-	  tdb->tdb_exp_timeout = 0;
-
-	if (ipsec_soft_first_use > 0)
-	  tdb->tdb_soft_first_use = ipsec_soft_first_use;
-	else
-	  tdb->tdb_soft_first_use = 0;
-
-	if (ipsec_exp_first_use > 0)
-	  tdb->tdb_exp_first_use = ipsec_exp_first_use;
-	else
-	  tdb->tdb_exp_first_use = 0;
-
-	/* 
-	 * If we don't have an existing desired encryption
-	 * algorithm, use the default.
-	 */
-	if ((tdb->tdb_encalgxform == NULL) &&
-	    (tdb->tdb_satype & NOTIFY_SATYPE_CONF))
-	{
-	    if (!strncasecmp(ipsec_def_enc, "des", sizeof("des")))
-	      tdb->tdb_encalgxform = &enc_xform_des;
-	    else
-	      if (!strncasecmp(ipsec_def_enc, "3des",
-			       sizeof("3des")))
-		tdb->tdb_encalgxform = &enc_xform_3des;
-	      else
-		if (!strncasecmp(ipsec_def_enc, "blowfish",
-				 sizeof("blowfish")))
-		  tdb->tdb_encalgxform = &enc_xform_blf;
-		else
-		  if (!strncasecmp(ipsec_def_enc, "cast128",
-				   sizeof("cast128")))
-		    tdb->tdb_encalgxform = &enc_xform_cast5;
-		  else
-		    if (!strncasecmp(ipsec_def_enc, "skipjack",
-				     sizeof("skipjack")))
-		      tdb->tdb_encalgxform = &enc_xform_skipjack;
-	}
-
-	/*
-	 * If we don't have an existing desired authentication
-	 * algorithm, use the default.
-	 */
-	if ((tdb->tdb_authalgxform == NULL) && 
-	    (tdb->tdb_satype & NOTIFY_SATYPE_AUTH))
-	{
-	    if (!strncasecmp(ipsec_def_auth, "hmac-md5",
-			     sizeof("hmac-md5")))
-	      tdb->tdb_authalgxform = &auth_hash_hmac_md5_96;
-	    else
-	      if (!strncasecmp(ipsec_def_auth, "hmac-sha1",
-			       sizeof("hmac-sha1")))
-		tdb->tdb_authalgxform = &auth_hash_hmac_sha1_96;
-	      else
-		if (!strncasecmp(ipsec_def_auth, "hmac-ripemd160",
-				 sizeof("hmac_ripemd160")))
-		  tdb->tdb_authalgxform = &auth_hash_hmac_ripemd_160_96;
-	}
-
-	/* XXX Initialize src_id/dst_id */
-
-	/* PF_KEYv2 notification message */
-	if ((*error = pfkeyv2_acquire(tdb, 0)) != 0)
-	  return NULL;
-
-	*error = -EINVAL; /* Hack alert... */
+	*error = ipsp_acquire_sa(tdb);
+	if (*error == 0)
+	  *error = -EINVAL; /* Silently drop the packet */
 	return NULL;
     }
 
@@ -2369,4 +2202,110 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error)
     /* Done, IPsec processing necessary */
     *error = 0;
     return tdb;
+}
+
+/*
+ * Use PFKEY to acquire an SA.
+ */
+int
+ipsp_acquire_sa(struct tdb *tdb)
+{
+    /* Check whether Perfect Forward Secrect is required */
+    if (ipsec_require_pfs)
+      tdb->tdb_flags |= TDBF_PFS;
+    else
+      tdb->tdb_flags &= ~TDBF_PFS;
+
+    /* Initialize expirations */
+    if (ipsec_soft_allocations > 0) 
+      tdb->tdb_soft_allocations = ipsec_soft_allocations;
+    else
+      tdb->tdb_soft_allocations = 0;
+
+    if (ipsec_exp_allocations > 0)
+      tdb->tdb_exp_allocations = ipsec_exp_allocations;
+    else
+      tdb->tdb_exp_allocations = 0;
+
+    if (ipsec_soft_bytes > 0)
+      tdb->tdb_soft_bytes = ipsec_soft_bytes;
+    else
+      tdb->tdb_soft_bytes = 0;
+
+    if (ipsec_exp_bytes > 0)
+      tdb->tdb_exp_bytes = ipsec_exp_bytes;
+    else
+      tdb->tdb_exp_bytes = 0;
+
+    if (ipsec_soft_timeout > 0)
+      tdb->tdb_soft_timeout = ipsec_soft_timeout;
+    else
+      tdb->tdb_soft_timeout = 0;
+
+    if (ipsec_exp_timeout > 0)
+      tdb->tdb_exp_timeout = ipsec_exp_timeout;
+    else
+      tdb->tdb_exp_timeout = 0;
+
+    if (ipsec_soft_first_use > 0)
+      tdb->tdb_soft_first_use = ipsec_soft_first_use;
+    else
+      tdb->tdb_soft_first_use = 0;
+
+    if (ipsec_exp_first_use > 0)
+      tdb->tdb_exp_first_use = ipsec_exp_first_use;
+    else
+      tdb->tdb_exp_first_use = 0;
+
+    /* 
+     * If we don't have an existing desired encryption
+     * algorithm, use the default.
+     */
+    if ((tdb->tdb_encalgxform == NULL) &&
+	(tdb->tdb_satype & NOTIFY_SATYPE_CONF))
+    {
+	if (!strncasecmp(ipsec_def_enc, "des", sizeof("des")))
+	  tdb->tdb_encalgxform = &enc_xform_des;
+	else
+	  if (!strncasecmp(ipsec_def_enc, "3des",
+			   sizeof("3des")))
+	    tdb->tdb_encalgxform = &enc_xform_3des;
+	  else
+	    if (!strncasecmp(ipsec_def_enc, "blowfish",
+			     sizeof("blowfish")))
+	      tdb->tdb_encalgxform = &enc_xform_blf;
+	    else
+	      if (!strncasecmp(ipsec_def_enc, "cast128",
+			       sizeof("cast128")))
+		tdb->tdb_encalgxform = &enc_xform_cast5;
+	      else
+		if (!strncasecmp(ipsec_def_enc, "skipjack",
+				 sizeof("skipjack")))
+		  tdb->tdb_encalgxform = &enc_xform_skipjack;
+    }
+
+    /*
+     * If we don't have an existing desired authentication
+     * algorithm, use the default.
+     */
+    if ((tdb->tdb_authalgxform == NULL) && 
+	(tdb->tdb_satype & NOTIFY_SATYPE_AUTH))
+    {
+	if (!strncasecmp(ipsec_def_auth, "hmac-md5",
+			 sizeof("hmac-md5")))
+	  tdb->tdb_authalgxform = &auth_hash_hmac_md5_96;
+	else
+	  if (!strncasecmp(ipsec_def_auth, "hmac-sha1",
+			   sizeof("hmac-sha1")))
+	    tdb->tdb_authalgxform = &auth_hash_hmac_sha1_96;
+	  else
+	    if (!strncasecmp(ipsec_def_auth, "hmac-ripemd160",
+			     sizeof("hmac_ripemd160")))
+	      tdb->tdb_authalgxform = &auth_hash_hmac_ripemd_160_96;
+    }
+
+    /* XXX Initialize src_id/dst_id */
+
+    /* PF_KEYv2 notification message */
+    return pfkeyv2_acquire(tdb, 0);
 }

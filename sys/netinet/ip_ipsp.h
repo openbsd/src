@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.65 2000/06/01 04:01:54 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.66 2000/06/01 04:24:26 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -558,5 +558,6 @@ extern int ipsp_process_packet(struct mbuf *, struct tdb *, int, int);
 extern int ipsp_process_done(struct mbuf *, struct tdb *);
 extern struct tdb *ipsp_spd_lookup(struct mbuf *, int, int, int *);
 extern int ipsec_common_input_cb(struct mbuf *, struct tdb *, int, int);
+extern int ipsp_acquire_sa(struct tdb *);
 #endif /* _KERNEL */
 #endif /* _NETINET_IPSP_H_ */
