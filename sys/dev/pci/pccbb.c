@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccbb.c,v 1.23 2001/08/19 15:11:26 miod Exp $ */
+/*	$OpenBSD: pccbb.c,v 1.24 2001/08/19 15:25:44 mickey Exp $ */
 /*	$NetBSD: pccbb.c,v 1.42 2000/06/16 23:41:35 cgd Exp $	*/
 
 /*
@@ -473,20 +473,20 @@ pccbbattach(parent, self, aux)
 	sc->sc_function = pa->pa_function;
 	sc->sc_sockbase = sock_base;
 	sc->sc_busnum = busreg;
-
-	sc->sc_intrline = pa->pa_intrline;
 	sc->sc_intrtag = pa->pa_intrtag;
 	sc->sc_intrpin = pa->pa_intrpin;
 
 	sc->sc_pcmcia_flags = flags;   /* set PCMCIA facility */
 
 	/* Map and establish the interrupt. */
-	if (pci_intr_map(pc, sc->sc_intrtag, sc->sc_intrpin,
-	    sc->sc_intrline, &ih)) {
+	if (pci_intr_map(pc, pa->pa_intrtag, pa->pa_intrpin,
+	    pa->pa_intrline, &ih)) {
 		printf(": couldn't map interrupt\n");
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
+	/* must do this after intr is mapped and established */
+	sc->sc_intrline = pci_intr_line(ih);
 
 	/*
 	 * XXX pccbbintr should be called under the priority lower
