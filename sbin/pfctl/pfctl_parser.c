@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.190 2004/02/03 17:59:37 henning Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.191 2004/02/10 09:27:01 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -474,13 +474,14 @@ const char	*pf_scounters[FCNT_MAX+1] = FCNT_NAMES;
 void
 print_status(struct pf_status *s, int opts)
 {
-	char	statline[80];
+	char	statline[80], *running;
 	time_t	runtime;
 	int	i;
 
 	runtime = time(NULL) - s->since;
+	running = s->running ? "Enabled" : "Disabled";
 
-	if (s->running) {
+	if (s->since) {
 		unsigned	sec, min, hrs, day = runtime;
 
 		sec = day % 60;
@@ -490,10 +491,10 @@ print_status(struct pf_status *s, int opts)
 		hrs = day % 24;
 		day /= 24;
 		snprintf(statline, sizeof(statline),
-		    "Status: Enabled for %u days %.2u:%.2u:%.2u",
-		    day, hrs, min, sec);
+		    "Status: %s for %u days %.2u:%.2u:%.2u",
+		    running, day, hrs, min, sec);
 	} else
-		snprintf(statline, sizeof(statline), "Status: Disabled");
+		snprintf(statline, sizeof(statline), "Status: %s", running);
 	printf("%-44s", statline);
 	switch (s->debug) {
 	case PF_DEBUG_NONE:
