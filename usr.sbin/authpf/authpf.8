@@ -1,4 +1,4 @@
-\" $OpenBSD: authpf.8,v 1.3 2002/04/01 18:36:27 mickey Exp $
+\" $OpenBSD: authpf.8,v 1.4 2002/04/01 18:54:32 beck Exp $
 .\"
 .\" Copyright (c) 2002 Bob Beck (beck@openbsd.org>.  All rights reserved.
 .\"
@@ -220,19 +220,19 @@ facilities.
 .Pp
 .Nm
 modifies the packet filter and address translation rules, and because
-of this it needs to be configured carefully. After considering the effect
+of this it needs to be configured carefully.
+.Nm
+will not run and will exit silently if the
+.Pa /etc/authpf/authpf.conf
+file does not exist.
+After considering the effect
 .Nm
 may have on the main packet filter rules, the system administrator may
 enable 
 .Nm
 by creating an appropriate
 .Pa /etc/authpf/authpf.conf
-file. Should someone attempt to run
-.Nm
-when the 
-.Pa /etc/authpf/authpf.conf
-file does not exist, the attempt will be logged to 
-.Xr syslog 8
+file.
 .Sh EXAMPLES
 \fBControl Files\fP - To illustrate the user-specific access control
 mechanisms, let us consider a typical user named bob. Normally, as long as

@@ -112,11 +112,10 @@ main(int argc, char *argv[])
 
 	namep = (struct sockaddr *)&peer;
 	namelen = sizeof(peer);
-	memset(namep, 0, namelen);
-
-	openlog("authpf", LOG_PID | LOG_NDELAY, LOG_DAEMON);
 
 	read_config();
+
+	memset(namep, 0, namelen);
 
 	if ((foo = getenv("LOGNAME")) != NULL)
 		strlcpy(luser, foo, sizeof(luser));
@@ -124,7 +123,7 @@ main(int argc, char *argv[])
 		strlcpy(luser, foo, sizeof(luser));
 	else {
 		syslog(LOG_ERR, "No user given!");
-		exit(EX_CONFIG);
+		exit(1);
 	}
 
 	if ((foo = getenv("SSH_CLIENT")) != NULL) {
@@ -138,12 +137,12 @@ main(int argc, char *argv[])
 		}
 	} else {
 		syslog(LOG_ERR, "Can't determine connection source");
-		exit(EX_CONFIG);
+		exit(1);
 	}
 	if (!check_luser(bannedir, luser) || !allowed_luser(luser)) {
 		/* give the luser time to read our nastygram on the screen */
 		sleep(180);
-		exit(EX_NOPERM);
+		exit(1);
 	}
 
 	/*
@@ -280,7 +279,7 @@ main(int argc, char *argv[])
 		unlink(pidfile); /* fail silently */
 	if (userfile[0] != '\0')
 		unlink(userfile); /* fail silently */
-	exit(EX_CONFIG);
+	exit(1);
 }
 
 /* read_config:
@@ -295,16 +294,11 @@ read_config(void)
 	FILE *f;
 
 	f = fopen(configfile, "r");
-	if (f == NULL) {
-		if (errno == ENOTDIR || errno == ENOENT)
-			/* if the config file is not present, refuse to run */
-			syslog(LOG_INFO, "run by uid %d but no %s file exits",
-			    getuid(), configfile);
-		else 
-			syslog(LOG_INFO, "can't open %s (%m)", configfile);
-		exit(EX_CONFIG);
-	}
+	if (f == NULL) 
+		exit(1); /* exit silently if we have no config file */
 
+	openlog("authpf", LOG_PID | LOG_NDELAY, LOG_DAEMON);
+	
 	do {
 		char **ap, *pair[4], *cp, *tp;
 		int len;
@@ -318,7 +312,7 @@ read_config(void)
 		if (buf[len - 1] != '\n' && !feof(f)) {
 			syslog(LOG_ERR, "line %d too long in %s", i,
 			    configfile);
-			exit(EX_CONFIG);
+			exit(1);
 		}
 		buf[len - 1] = '\0';
 
@@ -369,7 +363,7 @@ read_config(void)
  parse_error:
 	fclose(f);
 	syslog(LOG_ERR, "parse error, line %d of %s", i, configfile);
-	exit(EX_CONFIG);
+	exit(1);
 }
 
 
@@ -829,17 +823,17 @@ terminator(int s)
 static __dead void
 go_away(void)
 {
-	int ret = EX_OK;
+	int ret = 0;
 
 	changefilter(0, luser, ipsrc);
 	authpf_kill_states();
 	if (unlink(pidfile) != 0) {
 		syslog(LOG_ERR, "Couldn't unlink %s! (%m)", pidfile);
-		ret = EX_OSERR;
+		ret = 1;
 	}
 	if (unlink(userfile) != 0) {
 		syslog(LOG_ERR, "Couldn't unlink %s! (%m)", userfile);
-		ret = EX_OSERR;
+		ret = 1;
 	}
 	exit(ret);
 }
