@@ -1,4 +1,4 @@
-/*	$OpenBSD: yplog.c,v 1.4 1997/07/25 20:12:30 mickey Exp $ */
+/*	$OpenBSD: yplog.c,v 1.5 1997/08/09 22:44:04 maja Exp $ */
 
 /*
  * Copyright (c) 1996 Charles D. Cranor
@@ -39,7 +39,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <sys/types.h>
-
+#include <sys/stat.h>
 #ifdef __STDC__
 #include <stdarg.h>
 #else
@@ -85,7 +85,8 @@ vyplog(fmt, ap)
 {
         time_t t;
 
-	if (!logfp) return;
+	if (logfp == NULL)
+		return;
 	(void)time(&t);
 	fprintf(logfp,"%.15s ", ctime(&t) + 4);
 	vfprintf(logfp, fmt, ap);
@@ -100,8 +101,13 @@ vyplog(fmt, ap)
 void
 ypopenlog()
 {
+	static char logfn[] = "/var/yp/ypserv.log";
+
+	if (access(logfn, W_OK) == -1)
+		return;
 	logfp = fopen("/var/yp/ypserv.log", "a");
-	if (!logfp) return;
+	if (logfp == NULL)
+		return;
 	yplog("yplog opened");
 }
 
