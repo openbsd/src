@@ -2423,6 +2423,10 @@ copy_rtx_and_substitute (orig, map)
 
 	      seq = gen_sequence ();
 	      end_sequence ();
+#ifdef FRAME_GROWS_DOWNWARD
+	      if (flag_propolice_protection && GET_CODE (seq) == SET)
+		RTX_INTEGRATED_P (SET_SRC (seq)) = 1;
+#endif
 	      emit_insn_after (seq, map->insns_at_start);
 	      return temp;
 	    }
