@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gm.c,v 1.4 2001/11/06 19:53:15 miod Exp $	*/
+/*	$OpenBSD: if_gm.c,v 1.5 2002/03/12 09:51:20 kjc Exp $	*/
 /*	$NetBSD: if_gm.c,v 1.14 2001/07/22 11:29:46 wiz Exp $	*/
 
 /*-
@@ -353,6 +353,7 @@ gmac_attach(parent, self, aux)
 	ifp->if_flags =
 		IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
 	ifp->if_flags |= IFF_ALLMULTI;
+	IFQ_SET_READY(&ifp->if_snd);
 
 	mii->mii_ifp = ifp;
 	mii->mii_readreg = gmac_mii_readreg;
@@ -617,7 +618,7 @@ gmac_start(ifp)
 		if (ifp->if_flags & IFF_OACTIVE)
 			break;
 
-		IF_DEQUEUE(&ifp->if_snd, m);
+		IFQ_DEQUEUE(&ifp->if_snd, m);
 		if (m == 0)
 			break;
 

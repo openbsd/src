@@ -1,4 +1,4 @@
-/*	$OpenBSD: tropic.c,v 1.4 2001/08/19 15:07:30 miod Exp $	*/
+/*	$OpenBSD: tropic.c,v 1.5 2002/03/12 09:51:20 kjc Exp $	*/
 /*	$NetBSD: tropic.c,v 1.6 1999/12/17 08:26:31 fvdl Exp $	*/
 
 /* 
@@ -352,9 +352,7 @@ tr_attach(sc)
 		ifp->if_start = tr_oldstart;
 	ifp->if_flags = IFF_BROADCAST | IFF_NOTRAILERS;
 	ifp->if_watchdog = tr_watchdog;
-#ifdef notyet /* if_tokensubr.c hasn't been converted yet */
 	IFQ_SET_READY(&ifp->if_snd);
-#endif
 
 	switch (MM_INB(sc, TR_MEDIAS_OFFSET)) {
 	case 0xF:

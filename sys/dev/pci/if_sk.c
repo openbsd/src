@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.21 2002/02/15 20:45:31 nordin Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.22 2002/03/12 09:51:20 kjc Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -957,7 +957,8 @@ sk_attach(parent, self, aux)
 	ifp->if_start = sk_start;
 	ifp->if_watchdog = sk_watchdog;
 	ifp->if_baudrate = 1000000000;
-	ifp->if_snd.ifq_maxlen = SK_TX_RING_CNT - 1;
+	IFQ_SET_MAXLEN(&ifp->if_snd, SK_TX_RING_CNT - 1);
+	IFQ_SET_READY(&ifp->if_snd);
 	bcopy(sc_if->sk_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 
 	/*
@@ -1249,6 +1250,7 @@ void sk_start(ifp)
         struct sk_if_softc	*sc_if;
         struct mbuf		*m_head = NULL;
         u_int32_t		idx;
+	int			pkts = 0;
 
 	sc_if = ifp->if_softc;
 	sc = sc_if->sk_softc;
@@ -1256,7 +1258,7 @@ void sk_start(ifp)
 	idx = sc_if->sk_cdata.sk_tx_prod;
 
 	while(sc_if->sk_cdata.sk_tx_chain[idx].sk_mbuf == NULL) {
-		IF_DEQUEUE(&ifp->if_snd, m_head);
+		IFQ_POLL(&ifp->if_snd, m_head);
 		if (m_head == NULL)
 			break;
 
@@ -1266,10 +1268,13 @@ void sk_start(ifp)
 		 * for the NIC to drain the ring.
 		 */
 		if (sk_encap(sc_if, m_head, &idx)) {
-			IF_PREPEND(&ifp->if_snd, m_head);
 			ifp->if_flags |= IFF_OACTIVE;
 			break;
 		}
+
+		/* now we are committed to transmit the packet */
+		IFQ_DEQUEUE(&ifp->if_snd, m_head);
+		pkts++;
 
 		/*
 		 * If there's a BPF listener, bounce a copy of this frame
@@ -1280,6 +1285,8 @@ void sk_start(ifp)
 			bpf_mtap(ifp->if_bpf, m_head);
 #endif
 	}
+	if (pkts == 0)
+		return;
 
 	/* Transmit */
 	sc_if->sk_cdata.sk_tx_prod = idx;
@@ -1630,9 +1637,9 @@ int sk_intr(xsc)
 
 	CSR_WRITE_4(sc, SK_IMR, sc->sk_intrmask);
 
-	if (ifp0 != NULL && ifp0->if_snd.ifq_head != NULL)
+	if (ifp0 != NULL && !IFQ_IS_EMPTY(&ifp0->if_snd))
 		sk_start(ifp0);
-	if (ifp1 != NULL && ifp1->if_snd.ifq_head != NULL)
+	if (ifp1 != NULL && !IFQ_IS_EMPTY(&ifp1->if_snd))
 		sk_start(ifp1);
 
 	return (claimed);

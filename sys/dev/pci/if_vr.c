@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.22 2002/02/15 20:45:31 nordin Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.23 2002/03/12 09:51:20 kjc Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -1290,7 +1290,7 @@ vr_start(ifp)
 	start_tx = sc->vr_cdata.vr_tx_free;
 
 	while(sc->vr_cdata.vr_tx_free->vr_mbuf == NULL) {
-		IFQ_DEQUEUE(&ifp->if_snd, m_head);
+		IFQ_POLL(&ifp->if_snd, m_head);
 		if (m_head == NULL)
 			break;
 
@@ -1300,7 +1300,6 @@ vr_start(ifp)
 
 		/* Pack the data into the descriptor. */
 		if (vr_encap(sc, cur_tx, m_head)) {
-			IF_PREPEND(&ifp->if_snd, m_head);
 			ifp->if_flags |= IFF_OACTIVE;
 			cur_tx = NULL;
 			break;
@@ -1308,6 +1307,9 @@ vr_start(ifp)
 
 		if (cur_tx != start_tx)
 			VR_TXOWN(cur_tx) = VR_TXSTAT_OWN;
+
+		/* now we are committed to transmit the packet */
+		IFQ_DEQUEUE(&ifp->if_snd, m_head);
 
 #if NBPFILTER > 0
 		/*

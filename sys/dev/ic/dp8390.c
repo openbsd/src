@@ -1,4 +1,4 @@
-/*	$OpenBSD: dp8390.c,v 1.20 2002/01/08 05:38:53 fgsch Exp $	*/
+/*	$OpenBSD: dp8390.c,v 1.21 2002/03/12 09:51:20 kjc Exp $	*/
 /*	$NetBSD: dp8390.c,v 1.13 1998/07/05 06:49:11 jonathan Exp $	*/
 
 /*
@@ -138,6 +138,7 @@ dp8390_config(sc)
 
 	/* Initialize media goo. */
 	(*sc->sc_media_init)(sc);
+	IFQ_SET_READY(&ifp->if_snd);
 
 	/* Attach the interface. */
 	if_attach(ifp);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdq_ifsubr.c,v 1.10 2001/11/06 19:53:18 miod Exp $	*/
+/*	$OpenBSD: pdq_ifsubr.c,v 1.11 2002/03/12 09:51:20 kjc Exp $	*/
 /*	$NetBSD: pdq_ifsubr.c,v 1.5 1996/05/20 00:26:21 thorpej Exp $	*/
 
 /*-
@@ -144,13 +144,7 @@ pdq_ifwatchdog(
 
     ifp->if_flags &= ~IFF_OACTIVE;
     ifp->if_timer = 0;
-    for (;;) {
-	struct mbuf *m;
-	IFQ_DEQUEUE(&ifp->if_snd, m);
-	if (m == NULL)
-	    return;
-	m_freem(m);
-    }
+    IFQ_PURGE(&ifp->if_snd);
 }
 
 ifnet_ret_t
@@ -372,9 +366,7 @@ pdq_ifattach(
     ifp->if_ioctl = pdq_ifioctl;
     ifp->if_output = fddi_output;
     ifp->if_start = pdq_ifstart;
-#ifdef notyet /* if_fddisubr.c hasn't been converted yet */
     IFQ_SET_READY(&ifp->if_snd);
-#endif
   
     if_attach(ifp);
     fddi_ifattach(ifp);

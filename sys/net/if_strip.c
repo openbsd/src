@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_strip.c,v 1.15 2001/06/27 06:07:44 kjc Exp $	*/
+/*	$OpenBSD: if_strip.c,v 1.16 2002/03/12 09:51:20 kjc Exp $	*/
 /*	$NetBSD: if_strip.c,v 1.2.4.3 1996/08/03 00:58:32 jtc Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
@@ -744,6 +744,12 @@ stripoutput(ifp, m, dst, rt)
 		printf("\n");
 	}
 #endif
+	/*
+	 * if the queueing discipline needs packet classification,
+	 * do it before prepending link headers.
+	 */
+	IFQ_CLASSIFY(&ifp->if_snd, m, dst->sa_family, &pktattr);
+
 	switch (dst->sa_family) {
 
             case AF_INET:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofnet.c,v 1.6 2001/08/08 21:49:16 miod Exp $	*/
+/*	$OpenBSD: ofnet.c,v 1.7 2002/03/12 09:51:20 kjc Exp $	*/
 /*	$NetBSD: ofnet.c,v 1.4 1996/10/16 19:33:21 ws Exp $	*/
 
 /*
@@ -162,6 +162,7 @@ printf("\nethernet dev: path %s\n", path);
 	ifp->if_ioctl = ofnioctl;
 	ifp->if_watchdog = ofnwatchdog;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS;
+	IFQ_SET_READY(&ifp->if_snd);
 
 	timeout_set(&of->sc_tmo, ofntimer, of);
 
@@ -295,7 +296,7 @@ ofnstart(ifp)
 		ofnread(of);
 		
 		/* Now get the first packet on the queue */
-		IF_DEQUEUE(&ifp->if_snd, m0);
+		IFQ_DEQUEUE(&ifp->if_snd, m0);
 		if (!m0)
 			return;
 		

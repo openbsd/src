@@ -1,4 +1,4 @@
-/*	$OpenBSD: smc90cx6.c,v 1.3 1996/10/31 01:01:39 niklas Exp $ */
+/*	$OpenBSD: smc90cx6.c,v 1.4 2002/03/12 09:51:20 kjc Exp $ */
 /*	$NetBSD: smc90cx6.c,v 1.17 1996/05/07 01:43:18 thorpej Exp $ */
 
 /*
@@ -285,6 +285,7 @@ bah_zbus_attach(parent, self, aux)
 	    IFF_NOTRAILERS | IFF_NOARP;
 
 	ifp->if_mtu = ARCMTU;
+	IFQ_SET_READY(&ifp->if_snd);
 
 	if_attach(ifp);
 	arc_ifattach(ifp);
@@ -557,7 +558,7 @@ bah_start(ifp)
 		return;
 	}
 
-	IF_DEQUEUE(&ifp->if_snd, m);
+	IFQ_DEQUEUE(&ifp->if_snd, m);
 	buffer = sc->sc_tx_act ^ 1;
 
 	splx(s);

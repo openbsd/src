@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txp.c,v 1.61 2002/02/15 20:45:31 nordin Exp $	*/
+/*	$OpenBSD: if_txp.c,v 1.62 2002/03/12 09:51:20 kjc Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -1344,9 +1344,10 @@ txp_start(ifp)
 	cnt = r->r_cnt;
 
 	while (1) {
-		IFQ_DEQUEUE(&ifp->if_snd, m);
+		IFQ_POLL(&ifp->if_snd, m);
 		if (m == NULL)
 			break;
+		mnew = NULL;
 
 		firstprod = prod;
 		firstcnt = cnt;
@@ -1368,6 +1369,7 @@ txp_start(ifp)
 			}
 			m_copydata(m, 0, m->m_pkthdr.len, mtod(mnew, caddr_t));
 			mnew->m_pkthdr.len = mnew->m_len = m->m_pkthdr.len;
+			IFQ_DEQUEUE(&ifp->if_snd, m);
 			m_freem(m);
 			m = mnew;
 			if (bus_dmamap_load_mbuf(sc->sc_dmat, sd->sd_map, m,
@@ -1451,6 +1453,13 @@ txp_start(ifp)
 
 		}
 
+		/*
+		 * if mnew isn't NULL, we already dequeued and copied
+		 * the packet.
+		 */
+		if (mnew == NULL)
+			IFQ_DEQUEUE(&ifp->if_snd, m);
+
 		ifp->if_timer = 5;
 
 #if NBPFILTER > 0
@@ -1494,7 +1503,6 @@ oactive1:
 	ifp->if_flags |= IFF_OACTIVE;
 	r->r_prod = firstprod;
 	r->r_cnt = firstcnt;
-	IF_PREPEND(&ifp->if_snd, m);
 }
 
 /*

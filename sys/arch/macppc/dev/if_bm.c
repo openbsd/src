@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bm.c,v 1.5 2001/11/06 19:53:15 miod Exp $	*/
+/*	$OpenBSD: if_bm.c,v 1.6 2002/03/12 09:51:20 kjc Exp $	*/
 /*	$NetBSD: if_bm.c,v 1.1 1999/01/01 01:27:52 tsubai Exp $	*/
 
 /*-
@@ -266,6 +266,7 @@ bmac_attach(parent, self, aux)
 	ifp->if_flags =
 		IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
 	ifp->if_watchdog = bmac_watchdog;
+	IFQ_SET_READY(&ifp->if_snd);
 
 	mii->mii_ifp = ifp;
 	mii->mii_readreg = bmac_mii_readreg;
@@ -658,7 +659,7 @@ bmac_start(ifp)
 		if (ifp->if_flags & IFF_OACTIVE)
 			return;
 
-		IF_DEQUEUE(&ifp->if_snd, m);
+		IFQ_DEQUEUE(&ifp->if_snd, m);
 		if (m == 0)
 			break;
 #if NBPFILTER > 0

@@ -1,4 +1,4 @@
-/*	$OpenBSD: an.c,v 1.21 2002/01/02 18:34:11 mickey Exp $	*/
+/*	$OpenBSD: an.c,v 1.22 2002/03/12 09:51:20 kjc Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -239,6 +239,7 @@ an_attach(sc)
 	ifp->if_start = an_start;
 	ifp->if_watchdog = an_watchdog;
 	ifp->if_baudrate = 10000000;
+	IFQ_SET_READY(&ifp->if_snd);
 
 	bzero(sc->an_config.an_nodename, sizeof(sc->an_config.an_nodename));
 	bcopy(AN_DEFAULT_NODENAME, sc->an_config.an_nodename,
@@ -518,7 +519,7 @@ an_intr(xsc)
 	/* Re-enable interrupts. */
 	CSR_WRITE_2(sc, AN_INT_EN, AN_INTRS);
 
-	if (ifp->if_snd.ifq_head != NULL)
+	if (!IFQ_IS_EMPTY(&ifp->if_snd))
 		an_start(ifp);
 
 	return 1;
@@ -1237,6 +1238,7 @@ an_start(ifp)
 	int			id;
 	int			idx;
 	unsigned char           txcontrol;
+	int			pkts = 0;
 
 	sc = ifp->if_softc;
 
@@ -1253,10 +1255,11 @@ an_start(ifp)
 	bzero((char *)&tx_frame_802_3, sizeof(tx_frame_802_3));
 
 	while(sc->an_rdata.an_tx_ring[idx] == 0) {
-		IF_DEQUEUE(&ifp->if_snd, m0);
+		IFQ_DEQUEUE(&ifp->if_snd, m0);
 		if (m0 == NULL)
 			break;
 
+		pkts++;
 		id = sc->an_rdata.an_tx_fids[idx];
 		eh = mtod(m0, struct ether_header *);
 
@@ -1301,6 +1304,8 @@ an_start(ifp)
 
 		AN_INC(idx, AN_TX_RING_CNT);
 	}
+	if (pkts == 0)
+		return;
 
 	if (m0 != NULL)
 		ifp->if_flags |= IFF_OACTIVE;
