@@ -1,3 +1,3 @@
-/*	$OpenBSD: spinlock.h,v 1.1 1999/01/21 03:02:00 millert Exp $	*/
+/*	$OpenBSD: spinlock.h,v 1.2 1999/01/26 20:33:06 imp Exp $	*/
 
-#include <m68k/spinlock.h>
+#include <mips/spinlock.h>
