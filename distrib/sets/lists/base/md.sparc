@@ -15,7 +15,7 @@
 ./usr/lib/libg++.so.28.0
 ./usr/lib/libiberty.so.0.1
 ./usr/lib/libkadm.so.5.0
-./usr/lib/libkafs.so.5.0
+./usr/lib/libkafs.so.5.1
 ./usr/lib/libkdb.so.5.0
 ./usr/lib/libkrb.so.7.0
 ./usr/lib/libkvm.so.5.1

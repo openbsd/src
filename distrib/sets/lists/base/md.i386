@@ -19,7 +19,7 @@
 ./usr/lib/libi386.so.0.2
 ./usr/lib/libiberty.so.0.1
 ./usr/lib/libkadm.so.5.0
-./usr/lib/libkafs.so.5.0
+./usr/lib/libkafs.so.5.1
 ./usr/lib/libkdb.so.5.0
 ./usr/lib/libkrb.so.7.0
 ./usr/lib/libkvm.so.4.1

@@ -17,7 +17,7 @@
 ./usr/lib/libedit.so.0.0
 ./usr/lib/libform.so.1.1
 ./usr/lib/libkadm.so.5.0
-./usr/lib/libkafs.so.5.0
+./usr/lib/libkafs.so.5.1
 ./usr/lib/libkdb.so.5.0
 ./usr/lib/libkrb.so.7.0
 ./usr/lib/libkvm.so.4.1

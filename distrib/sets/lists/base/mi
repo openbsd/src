@@ -1,3 +1,4 @@
+./usr/libexec/lockspool
 ./altroot
 ./bin
 ./bin/[
@@ -1298,6 +1299,7 @@
 ./usr/share/sendmail/mailer/usenet.m4
 ./usr/share/sendmail/mailer/uucp.m4
 ./usr/share/sendmail/ostype
+./usr/share/sendmail/ostype/openbsd.m4
 ./usr/share/sendmail/ostype/aix2.m4
 ./usr/share/sendmail/ostype/aix3.m4
 ./usr/share/sendmail/ostype/aix4.m4
