@@ -1,4 +1,4 @@
-.\"	$OpenBSD: queue.3,v 1.18 2001/05/24 19:08:21 aaron Exp $
+.\"	$OpenBSD: queue.3,v 1.19 2001/06/23 04:46:30 angelos Exp $
 .\"	$NetBSD: queue.3,v 1.4 1995/07/03 00:25:36 mycroft Exp $
 .\"
 .\" Copyright (c) 1993 The Regents of the University of California.
@@ -63,6 +63,7 @@
 .Nm LIST_INSERT_BEFORE ,
 .Nm LIST_INSERT_HEAD ,
 .Nm LIST_REMOVE ,
+.Nm LIST_REPLACE ,
 .Nm SIMPLEQ_ENTRY ,
 .Nm SIMPLEQ_HEAD ,
 .Nm SIMPLEQ_HEAD_INITIALIZER ,
@@ -156,6 +157,8 @@
 .Fn LIST_INSERT_HEAD "LIST_HEAD *head" "struct TYPE *elm" "LIST_ENTRY NAME"
 .Ft void
 .Fn LIST_REMOVE "struct TYPE *elm" "LIST_ENTRY NAME"
+.Ft void
+.Fn LIST_REPLACE "struct TYPE *elm" "struct TYPE *elm2" "LIST_ENTRY NAME"
 .Pp
 .Fn SIMPLEQ_ENTRY "TYPE"
 .Fn SIMPLEQ_HEAD "HEADNAME" "TYPE"
@@ -538,6 +541,13 @@ The
 macro removes the element
 .Fa elm
 from the list.
+.Pp
+The
+.Fn LIST_REPLACE
+macro replaces the list element
+.Fa elm
+with the new element
+.Fa elm2 .
 .Pp
 The
 .Fn LIST_FIRST ,
