@@ -583,7 +583,7 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/usb/uhcivar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/usb/ukbdvar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/usb/urio.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/dev/usb/usb.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/usb/usbhid.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/usb/usb_mem.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/usb/usb_port.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/usb/usb_quirks.ph
@@ -593,7 +593,7 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/usb/usbdi.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/usb/usbdi_util.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/usb/usbdivar.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/dev/usb/usbhid.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/usb/usb.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/vndioctl.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/wscons
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/wscons/ascii.ph
@@ -1355,7 +1355,7 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/ufs/ufs/ufsmount.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/unctrl.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/unistd.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/usb.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/usbhid.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/util.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/utime.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/utmp.ph

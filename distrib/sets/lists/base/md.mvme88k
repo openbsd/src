@@ -577,7 +577,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/swap.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/timeout.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/termcap.ph
-./usr/libdata/perl5/site_perl/m88k-openbsd/usb.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/usbhid.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/uvm
 ./usr/libdata/perl5/site_perl/m88k-openbsd/uvm/uvm_param.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/uvm/uvm_pmap.ph
