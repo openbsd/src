@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vnconfig.8,v 1.19 2003/06/12 12:59:54 jmc Exp $
+.\"	$OpenBSD: vnconfig.8,v 1.20 2004/06/20 19:16:37 pedro Exp $
 .\"
 .\" Copyright (c) 1993 University of Utah.
 .\" Copyright (c) 1980, 1989, 1991, 1993
@@ -41,14 +41,18 @@
 .Nm vnconfig
 .Nd "configure vnode disks for file swapping or pseudo file systems"
 .Sh SYNOPSIS
-.Nm vnconfig
+.Nm
 .Op Fl c
 .Op Fl vk
 .Ar rawdev
 .Ar regular_file
-.Nm vnconfig Fl u
+.Nm
+.Fl u
 .Op Fl v
 .Ar rawdev
+.Nm
+.Fl l
+.Op Ar rawdev
 .Sh DESCRIPTION
 The
 .Nm
@@ -90,6 +94,11 @@ Associate an encryption key with the device.
 All data will be encrypted before it is written to the disk.
 Encryption only works with
 .Pa svnd .
+.It Fl l
+List the vnd devices and indicate which ones are in use.
+If a specific
+.Ar rawdev
+is given, then only that one will be described.
 .It Fl u
 Unconfigures the device.
 .It Fl v

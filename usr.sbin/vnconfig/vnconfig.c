@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnconfig.c,v 1.13 2004/06/20 18:04:54 pedro Exp $	*/
+/*	$OpenBSD: vnconfig.c,v 1.14 2004/06/20 19:16:37 pedro Exp $	*/
 /*
  * Copyright (c) 1993 University of Utah.
  * Copyright (c) 1990, 1993
@@ -208,6 +208,7 @@ usage(void)
 
 	(void)fprintf(stderr,
 	    "usage: %s [-c] [-vk] rawdev regular-file\n"
-	    "       %s -u [-v] rawdev\n", __progname, __progname);
+	    "       %s -u [-v] rawdev\n"
+	    "       %s -l [rawdev]\n", __progname, __progname, __progname);
 	exit(1);
 }
