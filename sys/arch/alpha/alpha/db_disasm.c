@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.6 1997/07/09 08:11:39 deraadt Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.7 1997/07/09 09:08:03 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Niklas Hallqvist.  All rights reserverd.
@@ -59,10 +59,10 @@ static struct opcode {
 	{ OPC_RES, "opc0d", 0 },	/* 0D */
 	{ OPC_RES, "opc0e", 0 },	/* 0E */
 	{ OPC_MEM, "stq_u", 1 },	/* 0F */
-	{ OPC_OP, "inta", 1 },		/* 10 */
-	{ OPC_OP, "intl", 1 },		/* 11 */
-	{ OPC_OP, "ints", 1 },		/* 12 */
-	{ OPC_OP, "intm", 1 },		/* 13 */
+	{ OPC_OP, "inta", 0 },		/* 10 */
+	{ OPC_OP, "intl", 0 },		/* 11 */
+	{ OPC_OP, "ints", 0 },		/* 12 */
+	{ OPC_OP, "intm", 0 },		/* 13 */
 	{ OPC_RES, "opc14", 0 },	/* 14 */
 	{ OPC_OP, "fltv", 1 },		/* 15 */
 	{ OPC_OP, "flti", 1 },		/* 16 */
@@ -109,6 +109,55 @@ static struct opcode {
 	{ OPC_BR, "bgt", 1 },		/* 3F */
 };
 
+struct opinstr {
+	char *nam;
+	u_int id;
+} opinstr[] = {
+	{ "addl", 0x1000 },	{ "subl", 0x1009 },	{ "cmpeq", 0x102d },
+	{ "addl/v", 0x1040 },	{ "subl/v", 0x1049 },	{ "cmplt", 0x104d },
+	{ "addq", 0x1020 }, 	{ "subq", 0x1029 },	{ "cmple", 0x106d },
+	{ "addq/v", 0x1060 },	{ "subq/v", 0x1069 },	{ "cmpult", 0x101d },
+	{ "cmpule", 0x103d },
+	{ "cmpbge", 0x100f },
+
+	{ "s4addl", 0x1002 },	{ "s4subl", 0x100b },	{ "s8addl", 0x1012 },
+	    { "s8subl", 0x101b },
+	{ "s4addq", 0x1022 },	{ "s4subq", 0x102b },	{ "s8addq", 0x1032 },
+	    { "s8subq", 0x103b },
+
+	{ "and", 0x1100 },	{ "bis", 0x1120 },	{ "xor", 0x1140 },
+	{ "bic", 0x1108 },	{ "ornot", 0x1128 },	{ "eqv", 0x1148 },	
+	{ "cmovq", 0x1124 },	{ "cmovlt", 0x1144 },	{ "cmovle", 0x1164 },	
+	{ "cmovne", 0x1126 },	{ "cmovge", 0x1146 },	{ "cmovgt", 0x1166 },	
+	{ "cmovbs", 0x1114 },	{ "cmovbc", 0x1116 },
+
+	{ "sll", 0x1239 },	{ "sra", 0x123c },	{ "srl", 0x1234 },
+	{ "extbl", 0x1206 },	{ "insbl", 0x120b },	{ "mskbl", 0x1202 },
+	{ "extwl", 0x1216 },	{ "inswl", 0x121b },	{ "mskwl", 0x1212 },
+	{ "extll", 0x1226 },	{ "insll", 0x122b },	{ "mskll", 0x1222 },
+	{ "extql", 0x1236 },	{ "insql", 0x123b },	{ "mskql", 0x1232 },
+	{ "extwh", 0x125a },	{ "inswh", 0x1257 },	{ "mskwh", 0x1252 },
+	{ "extlh", 0x126a },	{ "inslh", 0x1267 },	{ "msklh", 0x1262 },
+	{ "extqh", 0x127a },	{ "insqh", 0x1277 },	{ "mskqh", 0x1272 },
+							{ "zap", 0x1230 },
+							{ "zapnot", 0x1231 },
+
+	{ "mull", 0x1300 },	{ "mull/v", 0x1340 },	{ "mulq", 0x1320 },
+	{ "mulq/v", 0x1360 },	{ "umulh", 0x1330 },
+
+#if 0
+	{ "cpys", 0x020 },	{ "cpysn", 0x021 },	{ "cpyse", 0x022 },
+	{ "mf_fpcr", 0x025 },	{ "mt_fpcr", 0x024 },	{ "cvtql/sv", 0x530 },
+	{ "cvtlq", 0x010 },	{ "cvtql", 0x030 },	{ "cvtql/v", 0x130 },
+	{ "fcmoveq", 0x02a },	{ "fcmovlt", 0x02c },	{ "fcmovle", 0x02e },
+	{ "fcmovne", 0x02b },	{ "fcmovge", 0x02d },	{ "fcmovgt", 0x02f },
+
+	....
+
+#endif
+
+};
+
 char *jsrnam[] = {
 	"jmp",
 	"jsr",
@@ -124,6 +173,8 @@ regnam(r)
 {
 	extern struct db_variable db_regs[];
 
+	if (r == 31)
+		return ("zero");
 	return (db_regs[r].name);
 }
 
@@ -136,6 +187,8 @@ db_disasm(loc, flag)
 	int opc = ins >> 26;
 	int arg = ins & 0x3ffffff;
 	int ra, rb, rc, disp, func;
+	u_int opcfunc;
+	int i;
 
 	if (opcode[opc].opc_print)
 		db_printf("%s\t", opcode[opc].opc_name);
@@ -208,8 +261,30 @@ db_disasm(loc, flag)
 		rb = (arg >> 16) & 0x1f;
 		func = (arg >> 5) & 0x7ff;
 		rc = arg & 0x1f;
-		db_printf("\t%02x,%s,%s,%s", func, regnam(ra), regnam(rb),
-		    regnam(rc));
+		opcfunc = (opc << 8) | func;
+
+		switch (opc) {
+		case 0x10:
+		case 0x11:
+		case 0x12:
+		case 0x13:
+			for (i = 0; i < sizeof opinstr/sizeof(opinstr[0]); i++)
+				if (opinstr[i].id == opcfunc)
+					break;
+			if (i == sizeof opinstr/sizeof(opinstr[0]))
+				db_printf("%s\t\t%03x,%s,%s,%s",
+				    opcode[opc].opc_name, func,
+				    regnam(ra), regnam(rb), regnam(rc), opcfunc);
+			else
+				db_printf("%s\t\t%s,%s,%s",
+				    opinstr[i].nam, regnam(ra), regnam(rb),
+				    regnam(rc));
+			break;
+		default:
+			db_printf("%03x,%s,%s,%s", func, regnam(ra),
+			    regnam(rb), regnam(rc));
+			break;
+		}
 		break;
 	case OPC_BR:
 		ra = arg >> 21;
