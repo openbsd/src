@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.85 2002/01/14 21:34:41 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.86 2002/01/16 20:50:17 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -48,7 +48,6 @@
 #include <sys/systm.h>
 #include <sys/signalvar.h>
 #include <sys/kernel.h>
-#include <sys/map.h>
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/buf.h>

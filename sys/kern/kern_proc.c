@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_proc.c,v 1.8 2001/03/23 18:42:06 art Exp $	*/
+/*	$OpenBSD: kern_proc.c,v 1.9 2002/01/16 20:50:17 miod Exp $	*/
 /*	$NetBSD: kern_proc.c,v 1.14 1996/02/09 18:59:41 christos Exp $	*/
 
 /*
@@ -38,7 +38,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/map.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/buf.h>

@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.18 2001/09/20 18:31:14 mickey Exp $
+#	$OpenBSD: genassym.cf,v 1.19 2002/01/16 20:50:16 miod Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -38,7 +38,6 @@
 include <sys/param.h>
 include <sys/systm.h>
 include <sys/buf.h>
-include <sys/map.h>
 include <sys/proc.h>
 include <sys/mbuf.h>
 include <sys/msgbuf.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hdc9224.c,v 1.5 1997/10/08 07:09:56 niklas Exp $ */
+/*	$OpenBSD: hdc9224.c,v 1.6 2002/01/16 20:50:17 miod Exp $ */
 /*	$NetBSD: hdc9224.c,v 1.6 1997/03/15 16:32:22 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -65,7 +65,6 @@ static int keepLock = 0;
 #include <sys/buf.h>
 #include <sys/proc.h>
 #include <sys/user.h>
-#include <sys/map.h>
 #include <sys/device.h>
 #include <sys/dkstat.h> 
 #include <sys/disklabel.h>

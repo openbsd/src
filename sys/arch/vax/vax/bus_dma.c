@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.8 2001/12/08 02:24:07 art Exp $	*/
+/*	$OpenBSD: bus_dma.c,v 1.9 2002/01/16 20:50:17 miod Exp $	*/
 /*	$NetBSD: bus_dma.c,v 1.5 1999/11/13 00:32:20 thorpej Exp $	*/
 
 /*-
@@ -45,7 +45,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/map.h>
 #include <sys/proc.h>
 #include <sys/buf.h>
 #include <sys/reboot.h>

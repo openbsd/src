@@ -1,4 +1,4 @@
-/*	$OpenBSD: scc.c,v 1.10 2001/06/25 00:56:10 ericj Exp $	*/
+/*	$OpenBSD: scc.c,v 1.11 2002/01/16 20:50:16 miod Exp $	*/
 /*	$NetBSD: scc.c,v 1.28 1996/12/05 01:39:43 cgd Exp $	*/
 
 /*
@@ -80,7 +80,6 @@
 #include <sys/ioctl.h>
 #include <sys/tty.h>
 #include <sys/proc.h>
-#include <sys/map.h>
 #include <sys/buf.h>
 #include <sys/conf.h>
 #include <sys/file.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.47 2001/11/06 19:53:20 miod Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.48 2002/01/16 20:50:17 miod Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -43,7 +43,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/map.h>
 #include <sys/filedesc.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhu.c,v 1.1 2000/04/27 03:14:47 bjc Exp $	*/
+/*	$OpenBSD: dhu.c,v 1.2 2002/01/16 20:50:17 miod Exp $	*/
 /*	$NetBSD: dhu.c,v 1.17 2000/01/24 02:40:28 matt Exp $	*/
 /*
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
@@ -42,7 +42,6 @@
 #include <sys/ioctl.h>
 #include <sys/tty.h>
 #include <sys/proc.h>
-#include <sys/map.h>
 #include <sys/buf.h>
 #include <sys/conf.h>
 #include <sys/file.h>
