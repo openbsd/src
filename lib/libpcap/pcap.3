@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pcap.3,v 1.23 2002/05/01 08:03:30 mpech Exp $
+.\"	$OpenBSD: pcap.3,v 1.24 2002/05/01 16:23:44 millert Exp $
 .\"
 .\" Copyright (c) 1994, 1996, 1997
 .\"	The Regents of the University of California.  All rights reserved.
@@ -321,7 +321,7 @@ returns 0 and fills in a
 struct.
 The values represent packet statistics from the start of the
 run to the time of the call.
-If there is an error or the under lying
+If there is an error or the underlying
 packet capture doesn't support packet statistics, \-1 is returned and
 the error text can be obtained with
 .Fn pcap_perror
