@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp_new.c,v 1.3 1997/09/23 21:42:21 angelos Exp $	*/
+/*	$OpenBSD: ip_esp_new.c,v 1.4 1997/09/24 00:05:34 angelos Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -180,7 +180,6 @@ esp_new_init(struct tdb *tdbp, struct xformsw *xsp, struct mbuf *m)
 	    }
 
 	    enc_keylen = 8;
-
 	    break;
 
 	case ALG_ENC_3DES:
@@ -199,7 +198,6 @@ esp_new_init(struct tdb *tdbp, struct xformsw *xsp, struct mbuf *m)
             }
 
 	    enc_keylen = 24;
-
             break;
     }
 
@@ -495,7 +493,7 @@ esp_new_input(struct mbuf *m, struct tdb *tdb)
     /* Skip the IP header, IP options, SPI, SN and IV and minus Auth Data*/
     plen = m->m_pkthdr.len - (ip->ip_hl << 2) - 2 * sizeof (u_int32_t) - 
 	   xd->edx_ivlen - alen;
-    if (plen & (blks -1))
+    if (plen & (blks - 1))
     {
 #ifdef ENCDEBUG
 	if (encdebug)
@@ -511,7 +509,7 @@ esp_new_input(struct mbuf *m, struct tdb *tdb)
 	switch (xd->edx_hash_algorithm)
 	{
 	    case ALG_AUTH_MD5:
-		md5ctx = xd->edx_md5_ictx;;
+		md5ctx = xd->edx_md5_ictx;
 		break;
 	      
 	    case ALG_AUTH_SHA1:
@@ -591,7 +589,6 @@ esp_new_input(struct mbuf *m, struct tdb *tdb)
 		SHA1Final(buf2, &sha1ctx);
 		break;
 	}
-
 
 	if (bcmp(buf2, buf, AH_HMAC_HASHLEN))
 	{
@@ -695,7 +692,6 @@ esp_new_input(struct mbuf *m, struct tdb *tdb)
 	    }
 
 	    i = 0;
-
 	}
 
 	plen--;
@@ -948,6 +944,7 @@ esp_new_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
 		MD5Update(&md5ctx, (unsigned char *) &espo, 
 			  2 * sizeof(u_int32_t) + xd->edx_ivlen);
 		break;
+
 	    case ALG_AUTH_SHA1:
 		sha1ctx = xd->edx_sha1_ictx;
 		SHA1Update(&sha1ctx, (unsigned char *) &espo, 
@@ -1139,7 +1136,8 @@ esp_new_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
  * return 3 for packet within current window but already received
  */
 int
-checkreplaywindow32(u_int32_t seq, u_int32_t initial, u_int32_t *lastseq, u_int32_t window, u_int32_t *bitmap)
+checkreplaywindow32(u_int32_t seq, u_int32_t initial, u_int32_t *lastseq,
+		    u_int32_t window, u_int32_t *bitmap)
 {
     u_int32_t diff;
 
