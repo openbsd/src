@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftp.c,v 1.6 2000/12/07 18:13:14 deraadt Exp $	*/
+/*	$OpenBSD: tftp.c,v 1.7 2001/03/22 01:34:01 mickey Exp $	*/
 /*	$NetBSD: tftp.c,v 1.5 1995/04/29 05:55:25 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tftp.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: tftp.c,v 1.6 2000/12/07 18:13:14 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: tftp.c,v 1.7 2001/03/22 01:34:01 mickey Exp $";
 #endif /* not lint */
 
 /* Many bug fixes are from Jim Guyton <guyton@rand-unix> */
@@ -60,6 +60,7 @@ static char rcsid[] = "$OpenBSD: tftp.c,v 1.6 2000/12/07 18:13:14 deraadt Exp $"
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <err.h>
 
 #include "extern.h"
 #include "tftpsubs.h"
@@ -134,7 +135,7 @@ send_data:
 		n = sendto(f, dp, size + 4, 0,
 		    (struct sockaddr *)&peeraddr, sizeof(peeraddr));
 		if (n != size + 4) {
-			perror("tftp: sendto");
+			warn("sendto");
 			goto abort;
 		}
 		read_ahead(file, convert);
@@ -147,7 +148,7 @@ send_data:
 			} while (n <= 0);
 			alarm(0);
 			if (n < 0) {
-				perror("tftp: recvfrom");
+				warn("recvfrom");
 				goto abort;
 			}
 			peeraddr.sin_port = from.sin_port;	/* added */
@@ -238,7 +239,7 @@ send_ack:
 		if (sendto(f, ackbuf, size, 0, (struct sockaddr *)&peeraddr,
 		    sizeof(peeraddr)) != size) {
 			alarm(0);
-			perror("tftp: sendto");
+			warn("sendto");
 			goto abort;
 		}
 		write_behind(file, convert);
@@ -251,7 +252,7 @@ send_ack:
 			} while (n <= 0);
 			alarm(0);
 			if (n < 0) {
-				perror("tftp: recvfrom");
+				warn("recvfrom");
 				goto abort;
 			}
 			peeraddr.sin_port = from.sin_port;	/* added */
@@ -351,7 +352,6 @@ nak(error)
 	register struct errmsg *pe;
 	register struct tftphdr *tp;
 	int length;
-	char *strerror();
 
 	tp = (struct tftphdr *)ackbuf;
 	tp->th_opcode = htons((u_short)ERROR);
@@ -369,7 +369,7 @@ nak(error)
 		tpacket("sent", tp, length);
 	if (sendto(f, ackbuf, length, 0, (struct sockaddr *)&peeraddr,
 	    sizeof(peeraddr)) != length)
-		perror("nak");
+		warn("nak");
 }
 
 static void
