@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.h,v 1.30 2004/11/09 20:49:17 krapht Exp $	*/
+/*	$OpenBSD: cvs.h,v 1.31 2004/11/18 15:57:39 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -280,9 +280,12 @@ int              cvs_hist_parse   (CVSHIST *);
 struct cvs_hent* cvs_hist_getnext (CVSHIST *);
 int              cvs_hist_append  (CVSHIST *, struct cvs_hent *);
 
+/* from logmsg.c */
+char*  cvs_logmsg_open (const char *);
+char*  cvs_logmsg_get  (const char *);
+int    cvs_logmsg_send (struct cvsroot *, const char *);
 
 /* from util.c */
-
 #define CVS_DATE_CTIME  0
 #define CVS_DATE_RFC822 1
 
