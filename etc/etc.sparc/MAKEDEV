@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.29 1997/06/06 09:53:52 grr Exp $
+#	$OpenBSD: MAKEDEV,v 1.30 1997/08/08 09:43:02 downsj Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -39,11 +39,10 @@
 #	std	standard devices
 #	local	configuration specific devices
 # Tapes:
-#	st*	? tape
+#	st*	SCSI tape
 # Disks:
 #	sd*	SCSI disks
 #	cd*	SCSI cdrom drives
-#	st*	SCSI tape
 #	ch*	SCSI changer
 #	uk*	unknown SCSI
 #	ss*	SCSI scanners
@@ -61,10 +60,13 @@
 #	audio
 #	openprom
 #	bwtwo*
+#	cgtwo*
 #	cgthree*
 #	cgfour*
 #	cgsix*
 #	cgeight*
+#	cgfourteen*
+#	tcx*
 #	bpf*	packet filter
 #	lkm	loadable kernel modules interface
 #	tun*	network tunnel driver
@@ -166,8 +168,8 @@ all)
 	sh ${this} ccd0 ccd1 ccd2 ccd3
 	sh ${this} bpf0 bpf1 bpf2 bpf3
 	sh ${this} ipl
-	sh ${this} bwtwo0 cgthree0 cgfour0 cgsix0
-	sh ${this} cgeight0
+	sh ${this} bwtwo0 cgtwo0 cgthree0 cgfour0 cgsix0
+	sh ${this} cgeight0 cgfourteen0 tcx0
 	sh ${this} lkm random local
 	;;
 
@@ -216,6 +218,10 @@ bwtwo*)
 	mknod bwtwo$unit	c 27 $unit; chmod 666 bwtwo$unit
 	;;
 
+cgtwo*)
+	mknod cgtwo$unit	c 31 $unit; chmod 666 cgtwo$unit
+	;;
+
 cgthree*)
 	mknod cgthree$unit	c 55 $unit; chmod 666 cgthree$unit
 	;;
@@ -230,6 +236,14 @@ cgsix*)
 
 cgeight*)
 	mknod cgeight$unit	c 64 $unit; chmod 666 cgeight$unit
+	;;
+
+cgfourteen*)
+	mknod cgfourteen$unit	c 99 $unit; chmod 666 cgfourteen$unit
+	;;
+
+tcx*)
+	mknod tcx$unit		c 109 $unit; chmod 666 tcx$unit
 	;;
 
 audio)
