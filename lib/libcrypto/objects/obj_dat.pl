@@ -1,4 +1,5 @@
 #!/usr/local/bin/perl
+use integer;
 
 sub obj_cmp
 	{
