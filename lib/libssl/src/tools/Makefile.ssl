@@ -40,7 +40,7 @@ files:
 	$(PERL) $(TOP)/util/files.pl Makefile.ssl >> $(TOP)/MINFO
 
 links:
-	@$(SHELL) $(TOP)/util/point.sh Makefile.ssl Makefile
+	@sh $(TOP)/util/point.sh Makefile.ssl Makefile
 
 lint:
 
