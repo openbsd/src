@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.28 2004/01/05 19:06:42 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.29 2004/01/05 19:14:41 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Henning Brauer <henning@openbsd.org>
@@ -579,6 +579,8 @@ parse_config(char *filename, struct bgpd_config *xconf,
 	infile = filename;
 
 	yyparse();
+
+	fclose(fin);
 
 	/* Free macros and check which have not been used. */
 	for (sym = TAILQ_FIRST(&symhead); sym != NULL; sym = next) {
