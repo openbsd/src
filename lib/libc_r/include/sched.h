@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched.h,v 1.3 1999/11/25 07:01:29 d Exp $	*/
+/*	$OpenBSD: sched.h,v 1.4 2000/06/27 19:53:55 art Exp $	*/
 #ifndef _SCHED_H_
 #define _SCHED_H_
 
@@ -68,6 +68,7 @@ int sched_getscheduler __P((pid_t));
 int sched_yield __P((void));
 int sched_get_priority_max __P((int));
 int sched_get_priority_min __P((int));
+struct timespec;
 int sched_rr_get_interval __P((pid_t, struct timespec *));
 __END_DECLS
 
