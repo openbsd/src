@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.23 2001/02/03 21:55:37 mickey Exp $	*/
+/*	$OpenBSD: bus.h,v 1.24 2001/02/04 01:49:21 aaron Exp $	*/
 /*	$NetBSD: bus.h,v 1.6 1996/11/10 03:19:25 thorpej Exp $	*/
 
 /*-
@@ -692,7 +692,7 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 		    "0" (_port2), "1" (_port1), "2" ((_cnt))	:	\
 		    "%edx", "%eax", "cc");				\
 	} else								\
-		i386_space_copy(_port1, _port2, 2, _cnt);			\
+		i386_space_copy(_port1, _port2, 2, _cnt);		\
 } while (0)
 
 #define	bus_space_copy_4(t, h1, o1, h2, o2, cnt) do {			\
