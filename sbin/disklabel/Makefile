@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.36 2005/01/13 19:32:01 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.37 2005/02/16 20:39:37 millert Exp $
 
 PROG=	disklabel
 SRCS=	disklabel.c dkcksum.c editor.c manual.c
@@ -19,7 +19,7 @@ manual.c:
 .else
 manual.c:	disklabel.cat8
 	(echo 'const char manpage[] = {'; \
-	gzip -9c disklabel.cat8 | hexdump -ve '"0x" 1/1 "%02x,"'; \
+	cat disklabel.cat8 | gzip -9c | hexdump -ve '"0x" 1/1 "%02x,"'; \
 	echo '};'; echo 'const int manpage_sz = sizeof(manpage);') > manual.c
 .endif
 
