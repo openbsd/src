@@ -18,7 +18,7 @@ agent connections.
 */
 
 #include "includes.h"
-RCSID("$Id: sshd.c,v 1.41 1999/10/25 20:38:49 markus Exp $");
+RCSID("$Id: sshd.c,v 1.42 1999/11/02 00:08:42 markus Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
@@ -1353,7 +1353,7 @@ do_authentication(char *user, int privileged_port)
   if (pw->pw_uid == 0 && !options.permit_root_login)
     {
       if (forced_command)
-	log("Root login accepted for forced command.", forced_command);
+	log("Root login accepted for forced command.");
       else
 	packet_disconnect("ROOT LOGIN REFUSED FROM %.200s", 
 			  get_canonical_hostname());
