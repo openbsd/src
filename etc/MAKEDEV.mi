@@ -1,6 +1,6 @@
 include(MAKEDEV.sub)dnl
 dnl
-vers(a,{-$OpenBSD: MAKEDEV.mi,v 1.10 2002/01/08 00:52:06 todd Exp $-})dnl
+vers(a,{-$OpenBSD: MAKEDEV.mi,v 1.11 2002/01/08 00:59:59 todd Exp $-})dnl
 dnl
 divert(1)dnl
 {-#-}
@@ -163,7 +163,7 @@ _dl({-std-},{-std-},
 {-pci-},{-pci-},
 {-wsmouse-},{-wscons-},
 {-btw-},{-bwtwo0-},
-{-cgt-},{-cgtwo0-},
+{-ctw-},{-cgtwo0-},
 {-cfr-},{-cgfour0-},
 {-grf-},{-grf0 grf1 grf2 grf3 grf4 grf5 grf6-},
 {-par-},{-par0-},
