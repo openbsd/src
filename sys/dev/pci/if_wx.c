@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wx.c,v 1.1 2000/02/11 14:51:50 jason Exp $	*/
+/*	$OpenBSD: if_wx.c,v 1.2 2000/03/22 18:15:20 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1999, Traakan Software
@@ -211,7 +211,6 @@ wx_attach(parent, self, aux)
 		printf(": can't map registers\n");
 		return;
 	}
-	printf(": Intel GigaBit Ethernet\n");
 
 	/*
 	 * Allocate our interrupt.
@@ -229,13 +228,12 @@ wx_attach(parent, self, aux)
 	sc->w.ih = pci_intr_establish(pc, ih, IPL_NET, wx_intr, sc);
 #endif
 	if (sc->w.ih == NULL) {
-		printf("%s: couldn't establish interrupt", sc->wx_name);
+		printf("couldn't establish interrupt");
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
 		return;
 	}
-	printf("%s: interrupting at %s\n", sc->wx_name, intrstr);
 	sc->revision =
 		pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_CLASS_REG) & 0xff;
 
@@ -248,8 +246,7 @@ wx_attach(parent, self, aux)
 		return;
 	}
 
-	printf("%s: Ethernet address %s\n",
-	    sc->wx_name, ether_sprintf(sc->wx_enaddr));
+	printf(": %s, address %s\n", intrstr, ether_sprintf(sc->wx_enaddr));
 
 	ifp = &sc->wx_if;
 	bcopy(sc->wx_name, ifp->if_xname, IFNAMSIZ);
