@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.49 2005/04/05 12:13:16 krw Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.50 2005/04/06 02:51:13 krw Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -401,7 +401,7 @@ static __inline u_int32_t
 _2btol(bytes)
 	u_int8_t *bytes;
 {
-	register u_int32_t rv;
+	u_int32_t rv;
 
 	rv = (bytes[0] << 8) | bytes[1];
 	return (rv);
@@ -411,7 +411,7 @@ static __inline u_int32_t
 _3btol(bytes)
 	u_int8_t *bytes;
 {
-	register u_int32_t rv;
+	u_int32_t rv;
 
 	rv = (bytes[0] << 16) | (bytes[1] << 8) | bytes[2];
 	return (rv);
@@ -421,7 +421,7 @@ static __inline u_int32_t
 _4btol(bytes)
 	u_int8_t *bytes;
 {
-	register u_int32_t rv;
+	u_int32_t rv;
 
 	rv = (bytes[0] << 24) | (bytes[1] << 16) |
 	    (bytes[2] << 8) | bytes[3];
@@ -465,7 +465,7 @@ static __inline u_int32_t
 _2ltol(bytes)
 	u_int8_t *bytes;
 {
-	register u_int32_t rv;
+	u_int32_t rv;
 
 	rv = bytes[0] | (bytes[1] << 8);
 	return (rv);
@@ -475,7 +475,7 @@ static __inline u_int32_t
 _3ltol(bytes)
 	u_int8_t *bytes;
 {
-	register u_int32_t rv;
+	u_int32_t rv;
 
 	rv = bytes[0] | (bytes[1] << 8) | (bytes[2] << 16);
 	return (rv);
@@ -485,7 +485,7 @@ static __inline u_int32_t
 _4ltol(bytes)
 	u_int8_t *bytes;
 {
-	register u_int32_t rv;
+	u_int32_t rv;
 
 	rv = bytes[0] | (bytes[1] << 8) |
 	    (bytes[2] << 16) | (bytes[3] << 24);

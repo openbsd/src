@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.77 2005/04/05 02:01:50 krw Exp $	*/
+/*	$OpenBSD: cd.c,v 1.78 2005/04/06 02:51:13 krw Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -580,10 +580,10 @@ done:
  */
 void 
 cdstart(v)
-	register void *v;
+	void *v;
 {
-	register struct cd_softc *cd = v;
-	register struct scsi_link *sc_link = cd->sc_link;
+	struct cd_softc *cd = v;
+	struct scsi_link *sc_link = cd->sc_link;
 	struct buf *bp = 0;
 	struct buf *dp;
 	struct scsi_rw_big cmd_big;

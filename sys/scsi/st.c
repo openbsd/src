@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.44 2005/04/05 12:13:16 krw Exp $	*/
+/*	$OpenBSD: st.c,v 1.45 2005/04/06 02:51:13 krw Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -967,7 +967,7 @@ ststart(v)
 {
 	struct st_softc *st = v;
 	struct scsi_link *sc_link = st->sc_link;
-	register struct buf *bp, *dp;
+	struct buf *bp, *dp;
 	struct scsi_rw_tape cmd;
 	int flags;
 

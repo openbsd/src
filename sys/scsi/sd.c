@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.74 2005/04/05 02:01:50 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.75 2005/04/06 02:51:13 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -624,10 +624,10 @@ done:
  */
 void
 sdstart(v)
-	register void *v;
+	void *v;
 {
-	register struct sd_softc *sd = v;
-	register struct	scsi_link *sc_link = sd->sc_link;
+	struct sd_softc *sd = v;
+	struct	scsi_link *sc_link = sd->sc_link;
 	struct buf *bp = 0;
 	struct buf *dp;
 	struct scsi_rw_big cmd_big;
