@@ -1,7 +1,7 @@
 /*
  * THIS FILE AUTOMATICALLY GENERATED. DO NOT EDIT.
  * generated from:
- *	OpenBSD: cpudevs,v 1.6 1998/12/04 01:56:14 mickey Exp 
+ *	OpenBSD: cpudevs,v 1.7 1999/02/17 03:04:19 mickey Exp 
  */
 
 #define	HPPA_BOARD_HP710	0x300
@@ -20,5 +20,5 @@
 #define	HPPA_BOARD_HP725_75	0x319
 #define	HPPA_BOARD_HP725_100	0x60D
 #define	HPPA_BOARD_HP735_99	0x203
-#define	HPPA_BOARD_HP735_135	0x206
+#define	HPPA_BOARD_HP735_125	0x206
 #define	HPPA_BOARD_HP750	0x201

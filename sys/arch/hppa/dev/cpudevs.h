@@ -1,7 +1,7 @@
 /*
  * THIS FILE AUTOMATICALLY GENERATED. DO NOT EDIT.
  * generated from:
- *	OpenBSD: cpudevs,v 1.6 1998/12/04 01:56:14 mickey Exp 
+ *	OpenBSD: cpudevs,v 1.7 1999/02/17 03:04:19 mickey Exp 
  */
 
 #define	HPPA_TYPE_CPU	0
@@ -18,7 +18,9 @@
 #define	HPPA_TYPE_BHA	11
 #define	HPPA_TYPE_MULTI	12
 #define	HPPA_TYPE_FAULTY	31
+#define	HPPA_CPU_HPPA11	0
 #define	HPPA_CPU_HPPA11	4
+#define	HPPA_CPU_HPPA20	8
 #define	HPPA_MEMORY_ARCH	0x8
 #define	HPPA_MEMORY_PDEP	0x9
 #define	HPPA_OTHER_SPECFB	0x48
