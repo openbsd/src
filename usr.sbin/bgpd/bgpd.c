@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.81 2004/03/01 16:53:48 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.82 2004/03/10 13:48:45 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -93,7 +93,7 @@ int
 main(int argc, char *argv[])
 {
 	struct bgpd_config	 conf;
-	struct peer		*peer_l;
+	struct peer		*peer_l, *p;
 	struct mrt_head		 mrt_l;
 	struct network_head	 net_l;
 	struct filter_head	*rules_l;
@@ -320,6 +320,11 @@ main(int argc, char *argv[])
 	do {
 		pid = waitpid(-1, NULL, WNOHANG);
 	} while (pid > 0 || (pid == -1 && errno == EINTR));
+
+	while ((p = peer_l) != NULL) {
+		peer_l = p->next;
+		free(p);
+	}
 
 	free(rules_l);
 	control_cleanup();
