@@ -1063,6 +1063,13 @@ EOF
 EOF
 
 	;;
+  i[345]86-*-openbsd*)
+	COREFILE=trad-core.o
+	cat >> confdefs.h <<\EOF
+#define TRAD_HEADER "hosts/i386nbsd.h"
+EOF
+
+	;;
   i[345]86-esix-sysv3*)
 	COREFILE=trad-core.o
 	cat >> confdefs.h <<\EOF
@@ -1115,6 +1122,13 @@ EOF
 
 	;;
   mips-*-netbsd*)
+	COREFILE=trad-core.o
+	cat >> confdefs.h <<\EOF
+#define TRAD_HEADER "hosts/mipsnbsd.h"
+EOF
+
+	;;
+  mips-*-openbsd*)
 	COREFILE=trad-core.o
 	cat >> confdefs.h <<\EOF
 #define TRAD_HEADER "hosts/mipsnbsd.h"
@@ -1188,6 +1202,13 @@ EOF
 EOF
 
 	;;
+  m68*-*-openbsd*)
+	COREFILE=trad-core.o
+	cat >> confdefs.h <<\EOF
+#define TRAD_HEADER "hosts/m68knbsd.h"
+EOF
+
+	;;
   m88*-*-sysv4*)	;;
   m88*-motorola-sysv*)	COREFILE=ptrace-core.o ;;
   m88*-*-mach3*)
@@ -1211,12 +1232,26 @@ EOF
 EOF
 
 	;;
+  ns32k-*-openbsd*)
+	COREFILE=trad-core.o
+	cat >> confdefs.h <<\EOF
+#define TRAD_HEADER "hosts/ns32knbsd.h"
+EOF
+
+	;;
   rs6000-*-lynx*)	COREFILE=lynx-core.o ;;
   rs6000-*-aix4*)	COREFILE=rs6000-core.o ;;
   rs6000-*-*)		COREFILE=rs6000-core.o ;;
   powerpc-*-aix4*)	COREFILE=rs6000-core.o ;;
   powerpc-*-aix*)	COREFILE=rs6000-core.o ;;
   sparc-*-netbsd*)
+	COREFILE=trad-core.o
+	cat >> confdefs.h <<\EOF
+#define TRAD_HEADER "hosts/sparcnbsd.h"
+EOF
+
+	;;
+  sparc-*-openbsd*)
 	COREFILE=trad-core.o
 	cat >> confdefs.h <<\EOF
 #define TRAD_HEADER "hosts/sparcnbsd.h"

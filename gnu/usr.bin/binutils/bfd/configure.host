@@ -54,6 +54,7 @@ i[345]86-*-win32)	test -z "$CC" && CC="i386-win32-gcc -O2"
 			;;
 
 mips-dec-netbsd*)	;;
+mips-dec-openbsd*)	;;
 mips-dec-*)		HDEFINES="-G 4"	;;
 mips-sgi-irix3*)	HDEFINES="-G 4"
 			test -z "$LDFLAGS" && LDFLAGS=-lmalloc

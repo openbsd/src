@@ -139,6 +139,12 @@ changequote([,])dnl
 	AC_DEFINE(TRAD_HEADER,"hosts/i386nbsd.h")
 	;;
 changequote(,)dnl
+  i[345]86-*-openbsd*)
+changequote([,])dnl
+	COREFILE=trad-core.o
+	AC_DEFINE(TRAD_HEADER,"hosts/i386nbsd.h")
+	;;
+changequote(,)dnl
   i[345]86-esix-sysv3*)
 changequote([,])dnl
 	COREFILE=trad-core.o
@@ -182,6 +188,10 @@ changequote([,])dnl
 	COREFILE=trad-core.o
 	AC_DEFINE(TRAD_HEADER,"hosts/mipsnbsd.h")
 	;;
+  mips-*-openbsd*)
+	COREFILE=trad-core.o
+	AC_DEFINE(TRAD_HEADER,"hosts/mipsnbsd.h")
+	;;
   mips-dec-*)
 	COREFILE=trad-core.o
 	AC_DEFINE(TRAD_HEADER,"hosts/decstation.h")
@@ -222,6 +232,10 @@ changequote([,])dnl
 	COREFILE=trad-core.o
 	AC_DEFINE(TRAD_HEADER,"hosts/m68knbsd.h")
 	;;
+  m68*-*-openbsd*)
+	COREFILE=trad-core.o
+	AC_DEFINE(TRAD_HEADER,"hosts/m68knbsd.h")
+	;;
   m88*-*-sysv4*)	;;
   m88*-motorola-sysv*)	COREFILE=ptrace-core.o ;;
   m88*-*-mach3*)
@@ -236,12 +250,20 @@ changequote([,])dnl
 	COREFILE=trad-core.o
 	AC_DEFINE(TRAD_HEADER,"hosts/ns32knbsd.h")
 	;;
+  ns32k-*-openbsd*)
+	COREFILE=trad-core.o
+	AC_DEFINE(TRAD_HEADER,"hosts/ns32knbsd.h")
+	;;
   rs6000-*-lynx*)	COREFILE=lynx-core.o ;;
   rs6000-*-aix4*)	COREFILE=rs6000-core.o ;;
   rs6000-*-*)		COREFILE=rs6000-core.o ;;
   powerpc-*-aix4*)	COREFILE=rs6000-core.o ;;
   powerpc-*-aix*)	COREFILE=rs6000-core.o ;;
   sparc-*-netbsd*)
+	COREFILE=trad-core.o
+	AC_DEFINE(TRAD_HEADER,"hosts/sparcnbsd.h")
+	;;
+  sparc-*-openbsd*)
 	COREFILE=trad-core.o
 	AC_DEFINE(TRAD_HEADER,"hosts/sparcnbsd.h")
 	;;
