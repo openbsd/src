@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.134 1999/05/03 21:34:20 deraadt Exp $
+$OpenBSD: pcidevs,v 1.135 1999/05/05 06:15:18 deraadt Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -76,7 +76,7 @@ vendor PICTURETEL	0x101f	PictureTel
 vendor HITACHICOMP	0x1020	Hitachi Computer Products
 vendor OKI		0x1021	OKI Electric Industry
 vendor AMD		0x1022	AMD
-vendor TRIDENT		0x1023	Trident Microsystems
+vendor TRIDENT		0x1023	Trident
 vendor ZENITH		0x1024	Zenith Data Systems
 vendor ACER		0x1025	Acer
 vendor DELL		0x1028	Dell Computer
