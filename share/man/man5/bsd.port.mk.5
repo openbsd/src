@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.130 2004/01/28 22:09:10 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.131 2004/02/07 22:05:53 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -396,7 +396,10 @@ by checking the corresponding packages are actually installed,
 and install the missing ports by recursing through the ports tree.
 Invoked right before installing the package.
 .It Ar show
-Invoked as show=name, show the contents of ${name}.
+Invoked as make show=name, show the contents of ${name}.
+Invoked as make show="name1 name2 ...", 
+show the contents of ${name1} ${name2} ...,
+one variable value per line.
 Mostly used from recursive makes, or to know the contents of another
 port's variables without guessing wrongly.
 .It Ar unlink-categories
@@ -465,7 +468,10 @@ and that some variables are marked as
 which means that they shouldn't ever be changed.
 .Bl -tag -width MASTER_SITES
 .It Ev show
-Invoked as make show=name, show the contents of variable name.
+Invoked as make show=name, show the contents of ${name}.
+Invoked as make show="name1 name2 ...", show the contents of 
+${name1} ${name2} ...,
+one variable value per line.
 .It Ev ALLFILES
 List of all files that need to be retrieved by
 .Ar fetch ,
