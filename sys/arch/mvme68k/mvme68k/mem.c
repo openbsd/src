@@ -1,4 +1,4 @@
-/*	$Id: mem.c,v 1.2 1995/11/07 08:50:22 deraadt Exp $ */
+/*	$Id: mem.c,v 1.3 1995/11/30 22:52:05 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -168,6 +168,8 @@ mmrw(dev, uio, flags)
 			c = min(iov->iov_len, MAXPHYS);
 			if (!kernacc((caddr_t)v, c,
 			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE))
+				return (EFAULT);
+			if (v < NBPG)
 				return (EFAULT);
 			error = uiomove((caddr_t)v, c, uio);
 			continue;
