@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_i386.c,v 1.12 2004/06/15 03:52:59 deraadt Exp $ */
+/*	$OpenBSD: kvm_i386.c,v 1.13 2004/07/01 02:04:10 mickey Exp $ */
 /*	$NetBSD: kvm_i386.c,v 1.9 1996/03/18 22:33:38 thorpej Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_hp300.c	8.1 (Berkeley) 6/4/93";
 #else
-static char *rcsid = "$OpenBSD: kvm_i386.c,v 1.12 2004/06/15 03:52:59 deraadt Exp $";
+static char *rcsid = "$OpenBSD: kvm_i386.c,v 1.13 2004/07/01 02:04:10 mickey Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -132,6 +132,11 @@ _kvm_kvatop(kvm_t *kd, u_long va, u_long *pa)
 	u_long offset, pte_pa;
 	struct vmstate *vm;
 	pt_entry_t pte;
+
+	if (!kd->vmst) {
+		_kvm_err(kd, 0, "vatop called before initvtop");
+		return (0);
+	}
 
 	if (ISALIVE(kd)) {
 		_kvm_err(kd, 0, "vatop called in live kernel!");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm.c,v 1.38 2004/06/15 03:52:58 deraadt Exp $ */
+/*	$OpenBSD: kvm.c,v 1.39 2004/07/01 02:04:10 mickey Exp $ */
 /*	$NetBSD: kvm.c,v 1.43 1996/05/05 04:31:59 gwr Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm.c	8.2 (Berkeley) 2/13/94";
 #else
-static char *rcsid = "$OpenBSD: kvm.c,v 1.38 2004/06/15 03:52:58 deraadt Exp $";
+static char *rcsid = "$OpenBSD: kvm.c,v 1.39 2004/07/01 02:04:10 mickey Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -808,6 +808,12 @@ kvm_dump_inval(kvm_t *kd)
 		_kvm_err(kd, 0, "bad namelist");
 		return (-1);
 	}
+
+	if (nlist[0].n_value == 0) {
+		_kvm_err(kd, nlist[0].n_name, "not in name list");
+		return (-1);
+	}
+
 	if (_kvm_kvatop(kd, (u_long)nlist[0].n_value, &pa) == 0)
 		return (-1);
 
