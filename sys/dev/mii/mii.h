@@ -1,5 +1,5 @@
-/*	$OpenBSD: mii.h,v 1.3 2001/06/08 02:16:41 nate Exp $	*/
-/*	$NetBSD: mii.h,v 1.6 2001/04/30 19:49:08 thorpej Exp $	*/
+/*	$OpenBSD: mii.h,v 1.4 2001/10/05 18:33:33 nate Exp $	*/
+/*	$NetBSD: mii.h,v 1.8 2001/05/31 03:06:46 thorpej Exp $	*/
  
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -67,7 +67,7 @@
 #define	BMCR_S100	BMCR_SPEED0	/* 100 Mb/s */
 #define	BMCR_S1000	BMCR_SPEED1	/* 1000 Mb/s */
 
-#define	BMCR_SPEED(x)   ((x) & (BMCR_SPEED0|BMCR_SPEED1))
+#define	BMCR_SPEED(x)	((x) & (BMCR_SPEED0|BMCR_SPEED1))
 
 #define	MII_BMSR	0x01	/* Basic mode status register (ro) */
 #define	BMSR_100T4	0x8000	/* 100 base T4 capable */
@@ -87,12 +87,12 @@
 #define	BMSR_JABBER	0x0002	/* Jabber detected */
 #define	BMSR_EXTCAP	0x0001	/* Extended capability */
 
- /*
-  * Note that the EXTSTAT bit indicates that there is extended status
-  * info available in register 15, but 802.3 section 22.2.4.3 also
-  * states that that all 1000 Mb/s capable PHYs will set this bit to 1.
-  */
-  
+/*
+ * Note that the EXTSTAT bit indicates that there is extended status
+ * info available in register 15, but 802.3 section 22.2.4.3 also
+ * states that that all 1000 Mb/s capable PHYs will set this bit to 1.
+ */
+
 #define	BMSR_MEDIAMASK	(BMSR_100T4|BMSR_100TXFDX|BMSR_100TXHDX| \
 			 BMSR_10TFDX|BMSR_10THDX|BMSR_100T2FDX|BMSR_100T2HDX)
 
@@ -153,9 +153,25 @@
 #define	MII_ANLPRNP	0x08	/* Autonegotiation link partner rx next page */
 		/* section 32.5.1 and 37.2.6.1 */
 
+			/* This is also the 1000baseT control register */
 #define	MII_100T2CR	0x09	/* 100base-T2 control register */
+#define	GTCR_TEST_MASK	0xe000	/* see 802.3ab ss. 40.6.1.1.2 */
+#define	GTCR_MAN_MS	0x1000	/* enable manual master/slave control */
+#define	GTCR_ADV_MS	0x0800	/* 1 = adv. master, 0 = adv. slave */
+#define	GTCR_PORT_TYPE	0x0400	/* 1 = DCE, 0 = DTE (NIC) */
+#define	GTCR_ADV_1000TFDX 0x0200 /* adv. 1000baseT FDX */
+#define	GTCR_ADV_1000THDX 0x0100 /* adv. 1000baseT HDX */
 
+			/* This is also the 1000baseT status register */
 #define	MII_100T2SR	0x0a	/* 100base-T2 status register */
+#define	GTSR_MAN_MS_FLT	0x8000	/* master/slave config fault */
+#define	GTSR_MS_RES	0x4000	/* result: 1 = master, 0 = slave */
+#define	GTSR_LRS	0x2000	/* local rx status, 1 = ok */
+#define	GTSR_RRS	0x1000	/* remove rx status, 1 = ok */
+#define	GTSR_LP_1000TFDX 0x0800	/* link partner 1000baseT FDX capable */
+#define	GTSR_LP_1000THDX 0x0400	/* link partner 1000baseT HDX capable */
+#define	GTSR_LP_ASM_DIR	0x0200	/* link partner asym. pause dir. capable */
+#define	GTSR_IDLE_ERR	0x00ff	/* IDLE error count */
 
 #define	MII_EXTSR	0x0f	/* Extended status register */
 #define	EXTSR_1000XFDX	0x8000	/* 1000X full-duplex capable */
