@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike_auth.c,v 1.58 2001/08/22 17:24:45 ho Exp $	*/
+/*	$OpenBSD: ike_auth.c,v 1.59 2001/08/22 17:30:46 ho Exp $	*/
 /*	$EOM: ike_auth.c,v 1.59 2000/11/21 00:21:31 angelos Exp $	*/
 
 /*
@@ -1188,7 +1188,7 @@ static int
 get_raw_key_from_file (int type, u_int8_t *id, size_t id_len, RSA **rsa)
 {
   char filename[FILENAME_MAX];
-  char *rdir, *base, *addrstr = 0;
+  char *fstr;
   struct stat st;
   BIO *bio;
 
@@ -1201,64 +1201,25 @@ get_raw_key_from_file (int type, u_int8_t *id, size_t id_len, RSA **rsa)
 
   *rsa = 0;
 
-  rdir = conf_get_str ("General", "Pubkey-directory");
-  if (!rdir)
-    rdir = PUBKEY_DIR_DEFAULT;
+  fstr = conf_get_str ("General", "Pubkey-directory");
+  if (!fstr)
+    fstr = PUBKEY_DIR_DEFAULT;
 
-  strncpy (filename, rdir, FILENAME_MAX - 1);
-  filename[FILENAME_MAX - 1] = '\0';
+  if (snprintf (filename, sizeof filename, "%s/", fstr) > sizeof filename - 1)
+    return -1;
 
-  /* Exchanges (and SAs) don't carry the ID in ISAKMP form */
-  id -= ISAKMP_ID_TYPE_OFF;
-  id_len += ISAKMP_ID_TYPE_OFF;
+   /* XXX This can't be the right place for this... */
+  id_len += ISAKMP_GEN_SZ;
 
-  switch (GET_ISAKMP_ID_TYPE (id))
+  fstr = ipsec_id_string (id, id_len);
+  if (!fstr)
     {
-    case IPSEC_ID_IPV4_ADDR:
-      if (id_len < sizeof (struct in_addr))
-	return -1;
-      util_ntoa (&addrstr, AF_INET, id + ISAKMP_ID_DATA_OFF);
-      if (!addrstr)
-	return -1;
-      strncat (filename, "/ipv4/", FILENAME_MAX - 1 - strlen (filename));
-      strncat (filename, addrstr, FILENAME_MAX - 1 - strlen (filename));
-      break;
-
-    case IPSEC_ID_IPV6_ADDR:
-      if (id_len < sizeof (struct in6_addr))
-	return -1;
-      util_ntoa (&addrstr, AF_INET6, id + ISAKMP_ID_DATA_OFF);
-      if (!addrstr)
-	return -1;
-      strncat (filename, "/ipv6/", FILENAME_MAX - 1 - strlen (filename));
-      strncat (filename, addrstr, FILENAME_MAX - 1 - strlen (filename));
-      break;
-
-    case IPSEC_ID_FQDN:
-    case IPSEC_ID_USER_FQDN:
-      if (GET_ISAKMP_ID_TYPE (id) == IPSEC_ID_FQDN)
-	addrstr = "/fqdn/";
-      else
-	addrstr = "/ufqdn/";
-
-      strncat (filename, addrstr, FILENAME_MAX - 1 - strlen (filename));
-
-      /* Id is not NULL-terminated.  */
-      id_len -= ISAKMP_ID_DATA_OFF;
-      id_len = MIN (id_len, FILENAME_MAX - 1 - strlen (filename));
-      base = filename + strlen (filename);
-      memcpy (base, id + ISAKMP_ID_DATA_OFF, id_len);
-      *(base + id_len) = '\0';
-      addrstr = 0;
-      break;
-
-    default:
-      /* Unknown type.  */
-      LOG_DBG ((LOG_NEGOTIATION, 10, "get_raw_key_from_file: "
-		"unknown identity type %d\n", GET_ISAKMP_ID_TYPE (id)));
+      LOG_DBG ((LOG_NEGOTIATION, 50, "get_raw_key_from_file: "
+		"ipsec_id_string failed"));
       return -1;
-      break;
     }
+  strncat (filename, fstr, sizeof filename - 1 - strlen (filename));
+  free (fstr);
 
   /* If the file does not exist, fail silently.  */
   if (stat (filename, &st) == 0)
@@ -1267,14 +1228,14 @@ get_raw_key_from_file (int type, u_int8_t *id, size_t id_len, RSA **rsa)
       if (!bio)
 	{
 	  log_error ("get_raw_key_from_file: could not initialize BIO");
-	  goto out;
+	  return -1;
 	}
       if (LC (BIO_read_filename, (bio, filename)) <= 0)
 	{
 	  LOG_DBG((LOG_NEGOTIATION, 50, "get_raw_key_from_file: "
 		   "BIO_read_filename(bio, \"%s\") failed", filename));
 	  LC (BIO_free, (bio));
-	  goto out;
+	  return -1;
 	}
       LOG_DBG((LOG_NEGOTIATION, 80, "get_raw_key_from_file: reading file %s",
 	       filename));
@@ -1285,10 +1246,6 @@ get_raw_key_from_file (int type, u_int8_t *id, size_t id_len, RSA **rsa)
     LOG_DBG((LOG_NEGOTIATION, 50, "get_raw_key_from_file: file %s not found",
 	     filename));
   
- out:
-  if (addrstr)
-    free (addrstr);
-
   return (*rsa ? 0 : -1);
 }
 #endif /* USE_RAWKEY */
