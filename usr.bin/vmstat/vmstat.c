@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.89 2004/07/02 09:12:37 miod Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.90 2004/09/23 21:09:39 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: vmstat.c,v 1.89 2004/07/02 09:12:37 miod Exp $";
+static const char rcsid[] = "$OpenBSD: vmstat.c,v 1.90 2004/09/23 21:09:39 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -471,6 +471,7 @@ printhdr(void)
 /*
  * Force a header to be prepended to the next output.
  */
+/* ARGSUSED */
 void
 needhdr(int signo)
 {
@@ -726,7 +727,7 @@ dointr_sysctl(void)
 	struct device dev;
 
 	time_t uptime;
-	long inttotal;
+	u_int64_t inttotal;
 	int nintr;
 	char intrname[128];
 	int mib[4];
@@ -744,12 +745,12 @@ dointr_sysctl(void)
 		return;
 	}
 
-	(void)printf("interrupt               total     rate\n");
+	(void)printf("%-12s %20s %8s\n", "interrupt", "total", "rate");
 
 	inttotal = 0;
 	for (i = 0; i < nintr; i++) {
 		char name[128];
-		int cnt;
+		u_quad_t cnt;
 		int vector;
 
 		mib[0] = CTL_KERN;
@@ -781,11 +782,12 @@ dointr_sysctl(void)
 		siz = sizeof(cnt);
 		if (sysctl(mib, 4, &cnt, &siz, NULL, 0) < 0) {
 			warnx("could not read kern.intrcnt.cnt.%d", i);
-			return ;
+			return;
 		}
+
 		if (cnt || zflag)
-			(void)printf("%-16.16s %12d %8ld\n", intrname,
-			    cnt, (long)cnt / uptime);
+			(void)printf("%-12.12s %20llu %8llu\n", intrname,
+			    cnt, cnt / uptime);
 		inttotal += cnt;
 	}
 
@@ -800,19 +802,22 @@ dointr_sysctl(void)
 			    sizeof dev) != sizeof dev)
 				errx(1, "event chain trashed: %s", kvm_geterr(kd));
 			if (evcnt.ev_count)
-				(void)printf("%-14s %12d %8ld\n", dev.dv_xname,
-				    evcnt.ev_count, (long)(evcnt.ev_count / uptime));
-			inttotal += evcnt.ev_count++;
+				(void)printf("%-12.12s %20llu %8llu\n",
+				    dev.dv_xname,
+				    evcnt.ev_count, evcnt.ev_count / uptime);
+			inttotal += evcnt.ev_count;
 		}
 		evptr = evcnt.ev_list.tqe_next;
 	}
-	(void)printf("Total            %12ld %8ld\n", inttotal, inttotal / uptime);
+	(void)printf("%-12s %20llu %8llu\n", "Total", inttotal,
+	    inttotal / uptime);
 }
 
 static void
 dointr_kvm(void)
 {
-	long *intrcnt, inttotal;
+	long *intrcnt;
+	u_int64_t inttotal;
 	time_t uptime;
 	int nintr, inamlen;
 	char *intrname;
@@ -830,12 +835,12 @@ dointr_kvm(void)
 		err(1, "malloc");
 	kread(X_INTRCNT, intrcnt, (size_t)nintr);
 	kread(X_INTRNAMES, intrname, (size_t)inamlen);
-	(void)printf("interrupt             total     rate\n");
+	(void)printf("%-12s %20s %8s\n", "interrupt", "total", "rate");
 	inttotal = 0;
 	nintr /= sizeof(long);
 	while (--nintr >= 0) {
 		if (*intrcnt)
-			(void)printf("%-14s %12ld %8ld\n", intrname,
+			(void)printf("%-12.12s %20lu %8lu\n", intrname,
 			    *intrcnt, *intrcnt / uptime);
 		intrname += strlen(intrname) + 1;
 		inttotal += *intrcnt++;
@@ -851,13 +856,14 @@ dointr_kvm(void)
 			    sizeof dev) != sizeof dev)
 				errx(1, "event chain trashed: %s", kvm_geterr(kd));
 			if (evcnt.ev_count)
-				(void)printf("%-14s %12d %8ld\n", dev.dv_xname,
-				    evcnt.ev_count, (long)(evcnt.ev_count / uptime));
-			inttotal += evcnt.ev_count++;
+				(void)printf("%-12.12s %20lu %8lu\n", dev.dv_xname,
+				    evcnt.ev_count, evcnt.ev_count / uptime);
+			inttotal += evcnt.ev_count;
 		}
 		evptr = evcnt.ev_list.tqe_next;
 	}
-	(void)printf("Total          %12ld %8ld\n", inttotal, inttotal / uptime);
+	(void)printf("%-12s %20llu %8llu\n", "Total", inttotal,
+	    inttotal / uptime);
 }
 
 /*
