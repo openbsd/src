@@ -1,4 +1,4 @@
-/* $OpenBSD: http_main.c,v 1.16 2002/07/16 14:08:34 henning Exp $ */
+/* $OpenBSD: http_main.c,v 1.17 2002/07/17 11:19:10 henning Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -2603,6 +2603,7 @@ static void clean_parent_exit(int code)
 #ifdef EAPI
     ap_kill_alloc_shared();
 #endif
+    fdcache_closeall();
     exit(code);
 }
 
@@ -8045,3 +8046,7 @@ API_EXPORT(int) ap_server_is_chrooted()
     return(is_chrooted);
 }
 
+API_EXPORT(int) ap_server_chroot_desired()
+{
+    return(ap_server_chroot);
+}
