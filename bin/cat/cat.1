@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cat.1,v 1.11 1999/05/30 17:44:54 aaron Exp $
+.\"	$OpenBSD: cat.1,v 1.12 1999/07/04 11:53:50 aaron Exp $
 .\"	$NetBSD: cat.1,v 1.12 1995/09/27 05:38:55 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
@@ -147,7 +147,8 @@ will print the contents of
 .Ar file1 ,
 print data it receives from the standard input until it receives an
 .Dv EOF
-(^D) character, print the contents of
+.Pq Sq ^D
+character, print the contents of
 .Ar file2 ,
 read and output contents of the standard input again, then finally output
 the contents of
@@ -155,9 +156,9 @@ the contents of
 Note that if the standard input referred to a file, the second dash
 on the command-line would have no effect, since the entire contents of the file
 would have already been read and printed by
-.Nm cat
+.Nm
 when it encountered the first
-.Dq \&-
+.Ql \&-
 operand.
 .Sh SEE ALSO
 .Xr head 1 ,

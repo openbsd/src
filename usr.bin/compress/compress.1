@@ -1,4 +1,4 @@
-.\"	$OpenBSD: compress.1,v 1.7 1999/06/05 01:21:22 aaron Exp $
+.\"	$OpenBSD: compress.1,v 1.8 1999/07/04 11:53:52 aaron Exp $
 .\"	$NetBSD: compress.1,v 1.5 1995/03/26 09:44:34 glass Exp $
 .\"
 .\" Copyright (c) 1986, 1990, 1993
@@ -43,9 +43,7 @@
 .Os
 .Sh NAME
 .Nm compress ,
-.\".Nm uncompress ,
 .Nm uncompress
-.\".Nm zcat
 .Nd compress and expand data
 .Sh SYNOPSIS
 .Nm compress
@@ -57,10 +55,8 @@
 .Op Fl cftoqv
 .Op Fl o Ar filename
 .Op Ar
-.\".Nm zcat
-.\".Op Ar
 .Sh DESCRIPTION
-.Nm compress
+.Nm
 reduces the size of the named files using adaptive Lempel-Ziv coding.
 Each
 .Ar file
@@ -78,10 +74,6 @@ restores the compressed files to their original form, renaming the
 files by deleting the
 .Dq .Z
 extension.
-.\".Pp
-.\".Nm Zcat
-.\"is an alias for
-.\".Dq "uncompress -c" .
 .Pp
 If renaming the files would cause files to be overwritten and the standard
 input device is a terminal, the user is prompted (on the standard error
@@ -125,7 +117,7 @@ Be quiet, suppress any messages.
 Print the percentage reduction of each file.
 .El
 .Pp
-.Nm compress
+.Nm
 uses a modified Lempel-Ziv algorithm.
 Common substrings in the file are first replaced by 9-bit codes 257 and up.
 When code 512 is reached, the algorithm switches to 10-bit codes and
@@ -139,15 +131,17 @@ must be between 9 and 16.
 After the
 .Ar bits
 limit is reached,
-.Nm compress
+.Nm
 periodically checks the compression ratio.
 If it is increasing,
-.Nm compress
+.Nm
 continues to use the existing code dictionary.
 However, if the compression ratio decreases,
-.Nm compress
+.Nm
 discards the table of substrings and rebuilds it from scratch.  This allows
-the algorithm to adapt to the next "block" of the file.
+the algorithm to adapt to the next
+.Dq block
+of the file.
 .Pp
 The
 .Fl b
@@ -172,7 +166,7 @@ coding (as used in the historical command compact), and takes less
 time to compute.
 .Pp
 The
-.Nm compress
+.Nm
 utility exits 0 on success, 1 if an error occurred, or 2 if one or
 more files were not compressed because they would have grown in
 size (and
@@ -189,7 +183,7 @@ was not specifed).
 .Re
 .Sh STANDARDS
 The
-.Nm compress
+.Nm
 utility is compliant with the
 .St -p1003.2-92
 specification.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getopt.1,v 1.3 1998/09/26 19:54:50 aaron Exp $	-*- nroff -*-
+.\"	$OpenBSD: getopt.1,v 1.4 1999/07/04 11:53:54 aaron Exp $	-*- nroff -*-
 .Dd June 21, 1993
 .Dt GETOPT 1
 .Os
@@ -8,10 +8,10 @@
 .Sh SYNOPSIS
 .Nm set \-\- \`getopt optstring $*\`
 .Sh DESCRIPTION
-.Nm getopt
+.Nm
 is used to break up options in command lines for easy parsing by
 shell procedures, and to check for legal options.
-.Op Optstring
+.Op optstring
 is a string of recognized option letters (see
 .Xr getopt 3
 );
@@ -21,7 +21,7 @@ separated from it by white space.
 The special option
 .Dq \-\-
 is used to delimit the end of the options.
-.Nm getopt
+.Nm
 will place
 .Dq \-\-
 in the arguments at the end of the options,
@@ -75,7 +75,7 @@ cmd \-a \-oarg \-\- file file
 .Xr sh 1 ,
 .Xr getopt 3
 .Sh DIAGNOSTICS
-.Nm getopt
+.Nm
 prints an error message on the standard error output when it
 encounters an option letter not included in
 .Op optstring .
@@ -92,7 +92,7 @@ generally will not survive intact;  this looks easy to fix but isn't.
 .Pp
 The error message for an invalid option is identified as coming
 from
-.Nm getopt
+.Nm
 rather than from the shell procedure containing the invocation
 of
 .Nm getopt ;

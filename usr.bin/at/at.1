@@ -1,10 +1,13 @@
-.\" $OpenBSD: at.1,v 1.10 1999/06/05 01:21:17 aaron Exp $
+.\" $OpenBSD: at.1,v 1.11 1999/07/04 11:53:51 aaron Exp $
 .\" $FreeBSD: at.man,v 1.6 1997/02/22 19:54:05 peter Exp $
 .Dd April 12, 1995
 .Dt AT 1
 .Os
 .Sh NAME
-.Nm at, atq, atrm, batch
+.Nm at ,
+.Nm atq ,
+.Nm atrm ,
+.Nm batch
 .Nd queue, examine or delete jobs for later execution
 .Sh SYNOPSIS
 .Nm at
@@ -31,7 +34,7 @@
 .Op Fl mv
 .Op Ar time
 .Sh DESCRIPTION
-.Nm at
+.Nm
 and
 .Nm batch
 read commands from standard input or a specified file which
@@ -51,7 +54,7 @@ the load average drops below 1.5, or the value specified in the invocation of
 .Nm atrun .
 .El
 .Pp
-.Nm at
+.Nm
 allows some moderately complex
 .Ar time
 specifications.  It accepts times of the form
@@ -98,7 +101,7 @@ where the time-units can be
 or
 .Nm weeks
 and you can tell
-.Nm at
+.Nm
 to run the job today by suffixing the time with
 .Nm today
 and to run the job tomorrow by suffixing the time with
@@ -112,7 +115,7 @@ To run a job at 1am tomorrow, you would do
 .Nm at 1am tomorrow .
 .Pp
 For both
-.Nm at
+.Nm
 and
 .Nm batch ,
 commands are read from standard input or the file specified
@@ -129,7 +132,7 @@ and the
 .Ar umask
 are retained from the time of invocation.
 An
-.Nm at
+.Nm
 or
 .Nm batch
 command invoked from a
@@ -139,7 +142,7 @@ The user will be mailed standard error and standard output from his
 commands, if any. Mail will be sent using the command
 .Xr sendmail 8 .
 If
-.Nm at
+.Nm
 is executed from a
 .Xr su 1
 shell, the owner of the login shell will receive the mail.
@@ -188,7 +191,7 @@ to
 The
 .Nm c
 queue is the default for
-.Nm at
+.Nm
 and the
 .Nm E
 queue for
@@ -249,13 +252,13 @@ If the file
 .Pa /var/run/utmp
 is not available or corrupted, or if the user is not logged on at the
 time
-.Nm at
+.Nm
 is invoked, the mail is sent to the user ID found
 in the environment variable
 .Ev LOGNAME .
 If that is undefined or empty, the current user ID is assumed.
 .Pp
-.Nm at
+.Nm
 and
 .Nm batch
 as presently implemented are not suitable when users are competing for
@@ -264,6 +267,6 @@ If this is the case for your site, you might want to consider another
 batch system, such as
 .Nm nqs .
 .Sh AUTHORS
-.Nm at
+.Nm
 was mostly written by Thomas Koenig <ig25@rz.uni-karlsruhe.de>.
 The time parsing routines are by David Parsons <orc@pell.chi.il.us>.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: du.1,v 1.9 1999/06/05 01:21:22 aaron Exp $
+.\"	$OpenBSD: du.1,v 1.10 1999/07/04 11:53:53 aaron Exp $
 .\"	$NetBSD: du.1,v 1.6 1996/10/18 07:20:31 thorpej Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -48,7 +48,7 @@
 .Op Ar file ...
 .Sh DESCRIPTION
 The
-.Nm du
+.Nm
 utility displays the file system block usage for each
 .Ar file
 argument
@@ -71,9 +71,9 @@ No symbolic links are followed.
 Display an entry for each file in the file hierarchy.
 .It Fl k
 By default,
-.Nm du
+.Nm
 displays the number of blocks as returned by the
-.Xr stat  2
+.Xr stat 2
 system call, i.e. 512-byte blocks.
 If the
 .Fl k
@@ -93,7 +93,7 @@ This option exists solely for conformance with
 Filesystem mount points are not traversed.
 .El
 .Pp
-.Nm du
+.Nm
 counts the storage used by symbolic links and not the files they
 reference unless the
 .Fl H
@@ -116,7 +116,7 @@ by the last one specified.
 .Pp
 Files having multiple hard links are counted (and displayed) a single
 time per
-.Nm du
+.Nm
 execution.
 .Sh ENVIRONMENT
 .Bl -tag -width BLOCKSIZE
@@ -135,6 +135,6 @@ size block.
 .Xr quot 8
 .Sh HISTORY
 A
-.Nm du
+.Nm
 command appeared in
 .At v6 .

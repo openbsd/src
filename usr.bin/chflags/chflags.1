@@ -1,4 +1,4 @@
-.\"	$OpenBSD: chflags.1,v 1.4 1998/09/23 04:32:36 aaron Exp $
+.\"	$OpenBSD: chflags.1,v 1.5 1999/07/04 11:53:51 aaron Exp $
 .\"	$NetBSD: chflags.1,v 1.4 1995/08/31 22:50:22 jtc Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993, 1994
@@ -53,7 +53,7 @@
 .Ar file Op Ar ...
 .Sh DESCRIPTION
 The
-.Nm chflags
+.Nm
 utility modifies the file flags of the listed files
 as specified by the
 .Ar flags
@@ -104,7 +104,7 @@ Symbolic links do not have flags, so unless the
 or
 .Fl L
 option is set,
-.Nm chflags
+.Nm
 on a symbolic link always succeeds and has no effect.
 The
 .Fl H ,
@@ -120,7 +120,7 @@ command's actions are determined by the last one specified.
 You can use "ls -lo" to see the flags of existing files.
 .Pp
 The
-.Nm chflags
+.Nm
 utility exits 0 on success or >0 if an error occurred.
 .Sh SEE ALSO
 .Xr ls 1 ,

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipcs.1,v 1.6 1999/03/18 11:13:01 aaron Exp $
+.\"	$OpenBSD: ipcs.1,v 1.7 1999/07/04 11:53:55 aaron Exp $
 .\"	$NetBSD: ipcs.1,v 1.4 1995/04/15 02:31:16 cgd Exp $
 .\"
 .\" Copyright (c) 1994 SigmaSoft, Th. Lockert
@@ -42,7 +42,7 @@
 .Op Fl N Ar core
 .Sh DESCRIPTION
 The
-.Nm ipcs
+.Nm
 program provides information on System V interprocess communication
 (IPC) facilities on the system.
 .Pp
@@ -127,9 +127,9 @@ options are specified, information about all active IPC facilities is
 listed.
 .Sh RESTRICTIONS
 System data structures may change while
-.Nm ipcs
+.Nm
 is running; the output of
-.Nm ipcs
+.Nm
 is not guaranteed to be consistent.
 .Sh BUGS
 This manual page is woefully incomplete, because it does not

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: id.1,v 1.6 1999/07/02 20:11:45 aaron Exp $
+.\"	$OpenBSD: id.1,v 1.7 1999/07/04 11:53:55 aaron Exp $
 .\"	$NetBSD: id.1,v 1.5 1995/09/28 08:05:40 perry Exp $
 .\"
 .\" Copyright (c) 1991, 1993, 1994
@@ -59,7 +59,7 @@
 .Op Ar user
 .Sh DESCRIPTION
 The
-.Nm id
+.Nm
 utility displays the user and group names and numeric IDs, of the
 calling process, to the standard output.
 If the real and effective IDs are different, both are displayed,
@@ -114,13 +114,13 @@ Display the effective user ID as a number.
 .El
 .Pp
 The
-.Nm id
+.Nm
 utility exits 0 on success or >0 if an error occurred.
 .Sh SEE ALSO
 .Xr who 1
 .Sh STANDARDS
 The
-.Nm id
+.Nm
 function is expected to conform to
 .St -p1003.2 .
 .Sh HISTORY
@@ -137,6 +137,6 @@ command is equivalent to
 .Dq Nm id Fl un .
 .Pp
 The
-.Nm id
+.Nm
 command first appeared in
 .Bx 4.4 .

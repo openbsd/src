@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ctags.1,v 1.5 1999/06/05 01:21:22 aaron Exp $
+.\"	$OpenBSD: ctags.1,v 1.6 1999/07/04 11:53:52 aaron Exp $
 .\"	$NetBSD: ctags.1,v 1.4 1995/03/26 20:14:04 glass Exp $
 .\"
 .\" Copyright (c) 1987, 1990, 1993
@@ -46,7 +46,7 @@
 .Op Fl f Ar tagsfile
 .Ar name ...
 .Sh DESCRIPTION
-.Nm ctags
+.Nm
 makes a tags file for
 .Xr ex 1
 from the specified C,
@@ -116,7 +116,7 @@ vgrind \-x index
 .It Fl w
 Suppress warning diagnostics.
 .It Fl x
-.Nm ctags
+.Nm
 produces a list of object
 names, the line number and file name on which each is defined, as well
 as the text of that line and prints this on the standard output.  This
@@ -154,7 +154,7 @@ trailing
 .Nm \&.c
 and any leading pathname components removed.  This
 makes use of
-.Nm ctags
+.Nm
 practical in directories with more than one
 program.
 .Pp
@@ -171,7 +171,7 @@ the second section of the lex file.
 default output tags file
 .El
 .Sh DIAGNOSTICS
-.Nm ctags
+.Nm
 exits with a value of 1 if an error occurred, 0 otherwise.
 Duplicate objects are not considered errors.
 .Sh SEE ALSO
@@ -179,7 +179,7 @@ Duplicate objects are not considered errors.
 .Xr vi 1
 .Sh BUGS
 Recognition of
-.Nm functions  ,
+.Nm functions ,
 .Nm subroutines
 and
 .Nm procedures
@@ -188,7 +188,7 @@ for
 and Pascal is done in a very simple-minded way.  No attempt
 is made to deal with block structure; if you have two Pascal procedures
 in different blocks with the same name you lose.
-.Nm ctags
+.Nm
 doesn't
 understand about Pascal types.
 .Pp
@@ -196,7 +196,7 @@ The method of deciding whether to look for C, Pascal or
 .Tn FORTRAN
 functions is a hack.
 .Pp
-.Nm ctags
+.Nm
 relies on the input being well formed, and any syntactical
 errors will completely confuse it.  It also finds some legal syntax
 confusing; for example, since it doesn't understand

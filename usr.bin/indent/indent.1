@@ -1,4 +1,4 @@
-.\"	$OpenBSD: indent.1,v 1.6 1999/06/05 01:21:27 aaron Exp $
+.\"	$OpenBSD: indent.1,v 1.7 1999/07/04 11:53:55 aaron Exp $
 .\" Copyright (c) 1980, 1990 The Regents of the University of California.
 .\" Copyright (c) 1985 Sun Microsystems, Inc.
 .\" Copyright (c) 1976 Board of Trustees of the University of Illinois.
@@ -80,7 +80,7 @@
 .Op Fl troff
 .Op Fl v | Fl \&nv
 .Sh DESCRIPTION
-.Nm indent
+.Nm
 is a
 .Ar C
 program formatter.  It reformats the
@@ -109,9 +109,9 @@ the backup file is named
 If
 .Ar output-file
 is specified,
-.Nm indent
+.Nm
 checks to make sure it is different from
-.Ar input-file  .
+.Ar input-file .
 .Pp
 The options listed below control the formatting style imposed by
 .Nm indent  .
@@ -315,7 +315,7 @@ get rid of blank lines after declarations.  Default:
 .Fl nsob  .
 .It Fl \&st
 Causes
-.Nm indent
+.Nm
 to take its input from stdin, and put its output to stdout.
 .It Fl T Ns Ar typename
 Adds
@@ -332,13 +332,13 @@ a symptom of a problem in C:
 .Ic typedef
 causes a syntactic change in the
 language and
-.Nm indent
+.Nm
 can't find all
 instances of
 .Ic typedef .
 .It Fl troff
 Causes
-.Nm indent
+.Nm
 to format the program for processing by
 .Xr troff 1 .
 It will produce a fancy
@@ -351,20 +351,20 @@ rather than formatting in place.
 turns on `verbose' mode;
 .Fl \&nv
 turns it off.  When in verbose mode,
-.Nm indent
+.Nm
 reports when it splits one line of input into two or more lines of output,
 and gives some size statistics at completion. The default is
 .Fl \&nv  .
 .El
 .Pp
 You may set up your own `profile' of defaults to
-.Nm indent
+.Nm
 by creating a file called
 .Pa .indent.pro
 in your login directory and/or the current directory and including
 whatever switches you like.  A `.indent.pro' in the current directory takes
 precedence over the one in your login directory.  If
-.Nm indent
+.Nm
 is run and a profile file exists, then it is read to set up the program's
 defaults.  Switches on the command line, though, always override profile
 switches.  The switches should be separated by spaces, tabs or newlines.
@@ -372,7 +372,7 @@ switches.  The switches should be separated by spaces, tabs or newlines.
 .Ss Comments
 .Sq Em Box
 .Em comments .
-.Nm indent
+.Nm
 assumes that any comment with a dash, star, or newline immediately after
 the start of comment (that is, `/*\-', `/**' or `/*' followed
 immediately by a newline character) is a comment surrounded
@@ -383,7 +383,7 @@ of the comment.
 .Pp
 .Em Straight text .
 All other comments are treated as straight text.
-.Nm indent
+.Nm
 fits as many words (separated by blanks, tabs, or newlines) on a
 line as possible.  Blank lines break paragraphs.
 .Pp
@@ -403,18 +403,18 @@ automatically extended in extreme cases.
 .Pp
 .Ss Preprocessor lines
 In general,
-.Nm indent
+.Nm
 leaves preprocessor lines alone.  The only
 reformatting that it will do is to straighten up trailing comments.  It
 leaves embedded comments alone.  Conditional compilation
 .Pq Ic #ifdef...#endif
 is recognized and
-.Nm indent
+.Nm
 attempts to correctly
 compensate for the syntactic peculiarities introduced.
 .Pp
 .Ss C syntax
-.Nm indent
+.Nm
 understands a substantial amount about the syntax of C, but it
 has a `forgiving' parser.  It attempts to cope with the usual sorts of
 incomplete and misformed syntax.  In particular, the use of macros like:
@@ -423,7 +423,7 @@ incomplete and misformed syntax.  In particular, the use of macros like:
 .Pp
 is handled properly.
 .Sh ENVIRONMENT
-.Nm indent
+.Nm
 uses the
 .Ev HOME
 environment variable.
@@ -436,11 +436,11 @@ profile file
 .El
 .Sh HISTORY
 The
-.Nm indent
+.Nm
 command appeared in
 .Bx 4.2 .
 .Sh BUGS
-.Nm indent
+.Nm
 has even more switches than
 .Xr ls 1 .
 .Pp

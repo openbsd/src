@@ -1,8 +1,8 @@
 .\" Copyright (c) 1988 Massachusetts Institute of Technology,
 .\" Student Information Processing Board.  All rights reserved.
 .\"
-.\" $OpenBSD: compile_et.1,v 1.4 1998/09/23 04:32:38 aaron Exp $
-.\" $Header: /home/cvs/src/usr.bin/compile_et/Attic/compile_et.1,v 1.4 1998/09/23 04:32:38 aaron Exp $
+.\" $OpenBSD: compile_et.1,v 1.5 1999/07/04 11:53:52 aaron Exp $
+.\" $Header: /home/cvs/src/usr.bin/compile_et/Attic/compile_et.1,v 1.5 1999/07/04 11:53:52 aaron Exp $
 .\"
 .Dd	November 22, 1988
 .Os
@@ -14,7 +14,7 @@
 .Nm compile_et
 .Ar file
 .Sh DESCRIPTION
-.Nm compile_et
+.Nm
 converts a table listing error-code names and associated messages into
 a C source file suitable for use with the
 .Xr com_err 3
@@ -65,7 +65,7 @@ A ``#'' in the source file is treated as a comment character, and all
 remaining text to the end of the source line will be ignored.
 .Sh BUGS
 Since
-.Nm compile_et
+.Nm
 uses a very simple parser based on
 .Xr yacc 1 ,
 its error recovery leaves much to be desired.

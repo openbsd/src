@@ -1,4 +1,4 @@
-.\"	$OpenBSD: encrypt.1,v 1.11 1999/06/05 01:21:23 aaron Exp $
+.\"	$OpenBSD: encrypt.1,v 1.12 1999/07/04 11:53:53 aaron Exp $
 .\"
 .\" Copyright (c) 1996, Jason Downs.  All rights reserved.
 .\"
@@ -38,7 +38,7 @@
 .Op Fl p | Ar string
 .Nm makekey
 .Sh DESCRIPTION
-.Nm encrypt
+.Nm
 prints the encrypted form of
 .Ar string
 to the standard output.  This is mostly useful for encrypting passwords
@@ -67,7 +67,7 @@ Encrypt the string using DES, with the specified
 If no
 .Ar string
 is specified,
-.Nm encrypt
+.Nm
 reads one string per line from standard input, encrypting each one
 with the chosen algorithm from above. In case that no specific algorithm
 was given as a command line option, the default will be looked up from
@@ -89,7 +89,7 @@ standard input is more secure.
 .Xr pw_getconf 3 ,
 .Xr passwd.conf 5
 .Sh HISTORY
-.Nm encrypt
+.Nm
 first appeared in
 .Ox 1.2 .
 .Pp

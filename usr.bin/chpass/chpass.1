@@ -1,4 +1,4 @@
-.\"	$OpenBSD: chpass.1,v 1.11 1999/06/05 01:21:20 aaron Exp $
+.\"	$OpenBSD: chpass.1,v 1.12 1999/07/04 11:53:51 aaron Exp $
 .\"	$NetBSD: chpass.1,v 1.7 1996/05/15 21:50:40 jtc Exp $
 .\"
 .\" Copyright (c) 1988, 1990, 1993
@@ -46,7 +46,7 @@
 .Op Fl s Ar newshell
 .Op Ar user
 .Sh DESCRIPTION
-.Nm chpass
+.Nm
 allows editing of the user database information associated
 with
 .Ar user ,
@@ -187,7 +187,7 @@ and
 numbers.
 .Pp
 Once the information has been verified,
-.Nm chpass
+.Nm
 uses
 .Xr pwd_mkdb 8
 to update the user database.

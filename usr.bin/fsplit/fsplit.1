@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fsplit.1,v 1.5 1999/06/05 01:21:25 aaron Exp $
+.\"	$OpenBSD: fsplit.1,v 1.6 1999/07/04 11:53:54 aaron Exp $
 .\"	$NetBSD: fsplit.1,v 1.3 1995/09/28 05:15:06 perry Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
@@ -47,7 +47,7 @@
 .Op Fl e Ar efile Op Ar ...
 .Op Ar file
 .Sh DESCRIPTION
-.Nm fsplit
+.Nm
 takes as input either a file or standard input containing Fortran source code.
 It attempts to split the input into separate routine files of the
 form
@@ -86,14 +86,14 @@ option are not found, a diagnostic is written to
 standard error.
 .Sh HISTORY
 The
-.Nm fsplit
+.Nm
 command
 appeared in
 .Bx 4.2 .
 .Sh AUTHORS
 Asa Romberger and Jerry Berkman
 .Sh BUGS
-.Nm fsplit
+.Nm
 assumes the subprogram name is on the first noncomment line of the subprogram
 unit.  Nonstandard source formats may confuse
 .Nm fsplit .

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: elf2olf.1,v 1.6 1999/06/05 01:21:23 aaron Exp $
+.\"	$OpenBSD: elf2olf.1,v 1.7 1999/07/04 11:53:53 aaron Exp $
 .\"
 .\" Copyright (c) 1996, 1997 Erik Theisen.
 .\"	All rights reserved.
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"     @(#)$Id: elf2olf.1,v 1.6 1999/06/05 01:21:23 aaron Exp $
+.\"     @(#)$Id: elf2olf.1,v 1.7 1999/07/04 11:53:53 aaron Exp $
 .\"
 .Dd May 5, 1997
 .Dt ELF2OLF 1
@@ -44,7 +44,7 @@
 .Ar file Op Ar ...
 .Sh DESCRIPTION
 The
-.Nm elf2olf
+.Nm
 utility reads the specified
 .Em ELF
 version 1 module operands and converts them to the default operating system's
@@ -83,7 +83,7 @@ as follows:
 .El
 .Pp
 The
-.Nm elf2olf
+.Nm
 and
 .Nm olf2elf
 utilities exit 0 on success or >0 if an error occurred.
@@ -94,7 +94,7 @@ version 1 object module format lacks any real method to determine the native
 operating system for any given binary thus mandating the existance of these
 tools.
 The converted binaries created by
-.Nm elf2olf
+.Nm
 will no longer execute on their native operating system, only on OLF
 enabled platforms, although
 .Nm olf2elf
@@ -106,7 +106,7 @@ will undo the damage.
 Erik Theisen
 .Sh HISTORY
 The
-.Nm elf2olf
+.Nm
 and
 .Nm olf2elf
 utilities first appeared in

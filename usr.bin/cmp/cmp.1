@@ -1,4 +1,4 @@
-.\"     $OpenBSD: cmp.1,v 1.5 1999/06/05 01:21:21 aaron Exp $
+.\"     $OpenBSD: cmp.1,v 1.6 1999/07/04 11:53:52 aaron Exp $
 .\"     $NetBSD: cmp.1,v 1.4 1995/09/08 03:22:55 tls Exp $
 .\"
 .\" Copyright (c) 1987, 1990, 1993
@@ -50,7 +50,7 @@
 .Op Ar skip1 Op Ar skip2
 .Sh DESCRIPTION
 The
-.Nm cmp
+.Nm
 utility compares two files of any type and writes the results
 to the standard output.
 By default,
@@ -83,7 +83,7 @@ The offset is decimal by default, but may be expressed as a hexadecimal
 or octal value by preceding it with a leading ``0x'' or ``0''.
 .Pp
 The
-.Nm cmp
+.Nm
 utility exits with one of the following values:
 .Bl -tag -width 4n
 .It 0
@@ -95,7 +95,7 @@ the other.
 In the latter case, if the
 .Fl s
 option has not been specified,
-.Nm cmp
+.Nm
 writes to standard error that EOF was reached in the shorter
 file (before any differences were found).
 .It >1
@@ -106,7 +106,7 @@ An error occurred.
 .Xr diff3 1
 .Sh STANDARDS
 The
-.Nm cmp
+.Nm
 utility is expected to be
 .St -p1003.2
 compatible.

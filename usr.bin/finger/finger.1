@@ -1,4 +1,4 @@
-.\"	$OpenBSD: finger.1,v 1.9 1999/06/05 01:21:25 aaron Exp $
+.\"	$OpenBSD: finger.1,v 1.10 1999/07/04 11:53:54 aaron Exp $
 .\"
 .\" Copyright (c) 1989, 1990 The Regents of the University of California.
 .\" All rights reserved.
@@ -46,13 +46,13 @@
 .Op Ar user@host ...
 .Sh DESCRIPTION
 The
-.Nm finger
+.Nm
 utility displays information about the system users.
 .Pp
 Options are:
 .Bl -tag -width flag
 .It Fl s
-.Nm finger
+.Nm
 displays the user's login name, real name, terminal name and write
 status (as a ``*'' before the terminal name if write permission is
 denied), idle time, login time, and either office location and office
@@ -125,7 +125,7 @@ Prevents
 the
 .Fl l
 option of
-.Nm finger
+.Nm
 from displaying the contents of the
 .Dq Pa .plan
 and
@@ -141,7 +141,7 @@ users' real names, unless the
 .Fl m
 option is supplied.
 All name matching performed by
-.Nm finger
+.Nm
 is case insensitive.
 .It Fl M
 Enable matching of
@@ -150,7 +150,7 @@ names.  This is disabled by default on systems running YP.
 .El
 .Pp
 If no options are specified,
-.Nm finger
+.Nm
 defaults to the
 .Fl l
 style output if operands are provided, otherwise to the
@@ -160,10 +160,10 @@ Note that some fields may be missing, in either format, if information
 is not available for them.
 .Pp
 If no arguments are specified,
-.Nm finger
+.Nm
 will print an entry for each user currently logged into the system.
 .Pp
-.Nm finger
+.Nm
 may be used to look up users on a remote machine.
 The format is to specify a
 .Ar user
@@ -187,6 +187,6 @@ option is the only option that may be passed to a remote machine.
 .Xr fingerd 8
 .Sh HISTORY
 The
-.Nm finger
+.Nm
 command appeared in
 .Bx 3.0 .

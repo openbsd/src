@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hexdump.1,v 1.7 1999/06/05 01:21:26 aaron Exp $
+.\"	$OpenBSD: hexdump.1,v 1.8 1999/07/04 11:53:55 aaron Exp $
 .\" Copyright (c) 1989, 1990 The Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -50,7 +50,7 @@
 .Ar file Op Ar ...
 .Sh DESCRIPTION
 The
-.Nm hexdump
+.Nm
 utility is a filter which displays the specified files, or
 the standard input, if no files are specified, in a user-specified
 format.
@@ -136,7 +136,7 @@ data, in hexadecimal, per line.
 .El
 .Pp
 For each input file,
-.Nm hexdump
+.Nm
 sequentially copies the input to standard output, transforming the
 data according to the format strings specified by the
 .Fl e
@@ -198,7 +198,7 @@ described in the C standard are supported:
 .Ed
 .El
 .Pp
-.Nm hexdump
+.Nm
 also supports the following additional conversion strings:
 .Bl -tag -width Fl
 .It Cm \&_a Ns Op Cm dox
@@ -309,7 +309,7 @@ to specifying the
 .Fl x
 option.
 .Pp
-.Nm hexdump
+.Nm
 exits 0 on success or >0 if an error occurred.
 .Sh EXAMPLES
 Display the input in perusal format:
@@ -326,7 +326,7 @@ Implement the \-x option:
 .Ed
 .Sh STANDARDS
 The
-.Nm hexdump
+.Nm
 utility is expected to be
 .St -p1003.2
 compatible.
