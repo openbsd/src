@@ -1,4 +1,4 @@
-/*	$OpenBSD: test_stdarg.c,v 1.1 2000/01/04 00:18:15 d Exp $	*/
+/*	$OpenBSD: test_stdarg.c,v 1.2 2000/01/04 02:31:44 d Exp $	*/
 /*
  * Test <stdarg.h>
  */
@@ -22,7 +22,7 @@ test1(char *fmt, ...)
 
 	va_start(ap, fmt);
 	for (; *fmt; fmt++)
-	    switch (*fmt++) {
+	    switch (*fmt) {
 	    case 'i':		
 		i = va_arg(ap, int); 
 		ASSERT(i == 1234);
@@ -51,19 +51,25 @@ run_test(arg)
 	void *arg;
 {
 	char *msg = (char *)arg;
+	int i;
 
 	printf("Testing stdarg: %s\n", msg);
-	ASSERT(test1("iclp", 1234, 'x', 123456789L, &thing) == 9);
+	for (i = 0; i < 1000000; i++) {
+		ASSERT(test1("iclp", 1234, 'x', 123456789L, &thing) == 9);
+	}
+	printf("ok\n");
 	return NULL;
 }
 
 int
 main()
 {
-	pthread_t thread;
+	pthread_t t1, t2;
 
 	run_test("in main thread");
-	CHECKr(pthread_create(&thread, NULL, run_test, "in child thread"));
-	CHECKr(pthread_join(thread, NULL));
+	CHECKr(pthread_create(&t1, NULL, run_test, "in child thread 1"));
+	CHECKr(pthread_create(&t2, NULL, run_test, "in child thread 2"));
+	CHECKr(pthread_join(t1, NULL));
+	CHECKr(pthread_join(t2, NULL));
 	SUCCEED;
 }
