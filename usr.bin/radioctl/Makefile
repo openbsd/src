@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile,v 1.3 2002/01/22 22:09:28 mickey Exp $
+#	$OpenBSD: Makefile,v 1.4 2003/11/20 23:23:09 avsm Exp $
 
 PROG=	radioctl
-CFLAGS+=-Wall -Werror
+CFLAGS+=-Wall
 
 .include <bsd.prog.mk>

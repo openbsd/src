@@ -1,9 +1,9 @@
-#	$OpenBSD: Makefile,v 1.2 2001/05/14 22:18:22 niklas Exp $
+#	$OpenBSD: Makefile,v 1.3 2003/11/20 23:23:09 avsm Exp $
 
 PROG=	ldd
 SRCS=	ldd.c
 MAN=	ldd.1
-CFLAGS+=-Werror
+#CFLAGS+=-Werror
 
 BINDIR=	/usr/bin
 

@@ -38,7 +38,7 @@ CLIENT_PATH = '"PATH=/usr/bin:/usr/sbin:/bin:/sbin"'
 
 
 CPPFLAGS+= -I${.CURDIR}/.. -I${.CURDIR}/../includes \
-	-DCLIENT_PATH=${CLIENT_PATH} -Wall -Werror
+	-DCLIENT_PATH=${CLIENT_PATH} -Wall
 
 COMMONDIR0!=	cd ${.CURDIR}/../common; pwd
 .if exists(${COMMONDIR0}/${__objdir})

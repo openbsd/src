@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.22 2003/07/06 20:03:57 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.23 2003/11/20 23:23:09 avsm Exp $
 
 SUBDIR=ldconfig ldd
 VPATH=${.CURDIR}/../../lib/libc/string
@@ -17,7 +17,7 @@ MAN=	ld.so.1
 .include "${.CURDIR}/${MACHINE_ARCH}/Makefile.inc"
 .PATH:	${.CURDIR}/${MACHINE_ARCH}
 
-CFLAGS += -Werror -Wall
+CFLAGS += -Wall
 CFLAGS += -I${.CURDIR} -I${.CURDIR}/${MACHINE_ARCH} \
 	-Dstrsep=_dl_strsep
 INSTALL_STRIP=

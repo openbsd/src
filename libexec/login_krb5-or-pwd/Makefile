@@ -1,11 +1,11 @@
-#	$OpenBSD: Makefile,v 1.11 2003/07/16 19:10:14 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.12 2003/11/20 23:23:09 avsm Exp $
 
 .include <bsd.own.mk>
 
 PROG=	login_krb5-or-pwd
 SRCS=	login.c login_passwd.c
 MAN=	${PROG}.8
-CFLAGS+=-DPASSWD -Wall -Werror -I${.CURDIR}/../login_passwd
+CFLAGS+=-DPASSWD -Wall -I${.CURDIR}/../login_passwd
 
 .if (${KERBEROS5:L} == "yes")
 SRCS+=	login_krb5.c
