@@ -14,7 +14,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshd.c,v 1.111 2000/04/27 08:01:28 markus Exp $");
+RCSID("$OpenBSD: sshd.c,v 1.112 2000/05/01 18:50:59 markus Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
@@ -724,7 +724,7 @@ main(int ac, char **av)
 			 * fail if there already is a daemon, and this will
 			 * overwrite any old pid in the file.
 			 */
-			f = fopen(SSH_DAEMON_PID_FILE, "w");
+			f = fopen(options.pid_file, "w");
 			if (f) {
 				fprintf(f, "%u\n", (unsigned int) getpid());
 				fclose(f);
