@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifstated.c,v 1.15 2004/03/10 00:09:42 mcbride Exp $	*/
+/*	$OpenBSD: ifstated.c,v 1.16 2004/03/15 19:42:33 markus Exp $	*/
 
 /*
  * Copyright (c) 2004 Marco Pfatschbacher <mpf@openbsd.org>
@@ -125,8 +125,6 @@ main(int argc, char *argv[])
 		}
 	}
 
-	event_init();
-
 	if (opts & IFSD_OPT_NOACTION) {
 		if ((newconf = parse_config(configfile, opts)) == NULL)
 			exit(1);
@@ -134,12 +132,13 @@ main(int argc, char *argv[])
 		exit(0);
 	}
 
-	log_init(opt_debug);
-
 	if (!opt_debug) {
 		daemon(0, 0);
 		setproctitle(NULL);
 	}
+
+	event_init();
+	log_init(opt_debug);
 
 	signal_set(&sigchld_ev, SIGCHLD, sigchld_handler, &sigchld_ev);
 	signal_add(&sigchld_ev, NULL);
