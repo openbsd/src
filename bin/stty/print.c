@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.4 1996/08/02 12:10:39 deraadt Exp $	*/
+/*	$OpenBSD: print.c,v 1.5 1996/09/15 23:13:03 millert Exp $	*/
 /*	$NetBSD: print.c,v 1.11 1996/05/07 18:20:10 jtc Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-static char rcsid[] = "$OpenBSD: print.c,v 1.4 1996/08/02 12:10:39 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: print.c,v 1.5 1996/09/15 23:13:03 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -193,8 +193,10 @@ print(tp, wp, ldisc, fmt)
 			if (fmt != BSD && cc[p->sub] == p->def)
 				continue;
 #define	WD	"%-8s"
-			(void)sprintf(buf1 + cnt * 8, WD, p->name);
-			(void)sprintf(buf2 + cnt * 8, WD, ccval(p, cc[p->sub]));
+			(void)snprintf(buf1 + cnt * 8, sizeof(buf1) - cnt * 8,
+			    WD, p->name);
+			(void)snprintf(buf2 + cnt * 8, sizeof(buf2) - cnt * 8,
+			    WD, ccval(p, cc[p->sub]));
 			if (++cnt == LINELENGTH / 8) {
 				cnt = 0;
 				(void)printf("%s\n", buf1);

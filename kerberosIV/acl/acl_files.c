@@ -1,4 +1,4 @@
-/*	$Id: acl_files.c,v 1.2 1995/12/14 08:43:39 tholo Exp $	*/
+/*	$Id: acl_files.c,v 1.3 1996/09/15 23:17:59 millert Exp $	*/
 
 /*-
  * Copyright (C) 1989 by the Massachusetts Institute of Technology
@@ -143,7 +143,7 @@ acl_lock_file(acl_file)
 
     if(stat(acl_file, &s) < 0) return(NULL);
     mode = s.st_mode;
-    sprintf(new, NEW_FILE, acl_file);
+    snprintf(new, sizeof(new), NEW_FILE, acl_file);
     for(;;) {
 	/* Open the new file */
 	if((nfd = open(new, O_WRONLY|O_CREAT|O_EXCL, mode)) < 0) {
@@ -193,7 +193,7 @@ acl_abort(acl_file, f)
 	   fclose(f);
 	   return(-1);
        } else {
-	   sprintf(new, NEW_FILE, acl_file);
+	   snprintf(new, sizeof(new), NEW_FILE, acl_file);
 	   ret = unlink(new);
 	   fclose(f);
 	   return(ret);
@@ -214,7 +214,7 @@ acl_commit(acl_file, f)
     int ret;
     struct stat s;
 
-    sprintf(new, NEW_FILE, acl_file);
+    snprintf(new, sizeof(new), NEW_FILE, acl_file);
     if(fflush(f) < 0
        || fstat(fileno(f), &s) < 0
        || s.st_nlink == 0) {
@@ -484,10 +484,10 @@ acl_check(acl, principal)
     realm = strchr(canon, REALM_SEP);
     *strchr(canon, INST_SEP) = '\0';	/* Chuck the instance */
 
-    sprintf(buf, "%s.*%s", canon, realm);
+    snprintf(buf, sizeof(buf), "%s.*%s", canon, realm);
     if(acl_exact_match(acl, buf)) return(1);
 
-    sprintf(buf, "*.*%s", realm);
+    snprintf(buf, sizeof(buf), "*.*%s", realm);
     if(acl_exact_match(acl, buf) || acl_exact_match(acl, "*.*@*")) return(1);
        
     return(0);
