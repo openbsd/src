@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prof.c,v 1.7 1995/10/07 06:28:33 mycroft Exp $	*/
+/*	$NetBSD: subr_prof.c,v 1.8 1995/11/22 23:07:26 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -153,8 +153,8 @@ sys_profil(p, v, retval)
 {
 	register struct sys_profil_args /* {
 		syscallarg(caddr_t) samples;
-		syscallarg(u_int) size;
-		syscallarg(u_int) offset;
+		syscallarg(size_t) size;
+		syscallarg(u_long) offset;
 		syscallarg(u_int) scale;
 	} */ *uap = v;
 	register struct uprof *upp;
