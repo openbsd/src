@@ -171,6 +171,8 @@ startrtclock()
 		    NVRAM_DIAG_BITS);
 }
 
+#ifndef	_STANDALONE
+
 int
 clockintr(arg)
 	void *arg;
@@ -195,6 +197,7 @@ rtcintr(arg)
 	}
 	return 0;
 }
+#endif /* _STANDALONE */
 
 int
 gettick()
@@ -275,6 +278,8 @@ delay(n)
 	}
 }
 
+#ifndef	_STANDALONE
+
 static int beeping;
 
 void
@@ -314,6 +319,7 @@ sysbeep(pitch, period)
 	beeping = 1;
 	timeout(sysbeepstop, 0, period);
 }
+#endif /* _STANDALONE */
 
 unsigned int delaycount;	/* calibrated loop variable (1 millisecond) */
 
@@ -339,6 +345,8 @@ findcpuspeed()
 	 */
 	delaycount = (FIRST_GUESS * TIMER_DIV(1000)) / (0xffff-remainder);
 }
+
+#ifndef	_STANDALONE
 
 #ifdef I586_CPU
 void
@@ -566,3 +574,4 @@ setstatclockrate(arg)
 	else
 		mc146818_write(NULL, MC_REGA, MC_BASE_32_KHz | MC_RATE_1024_Hz);
 }
+#endif /* _STANDALONE */
