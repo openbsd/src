@@ -75,7 +75,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: scp.c,v 1.72 2001/06/03 19:38:42 markus Exp $");
+RCSID("$OpenBSD: scp.c,v 1.73 2001/06/10 11:33:02 markus Exp $");
 
 #include "xmalloc.h"
 #include "atomicio.h"
@@ -924,22 +924,24 @@ run_err(const char *fmt,...)
 {
 	static FILE *fp;
 	va_list ap;
-	va_start(ap, fmt);
 
 	++errs;
 	if (fp == NULL && !(fp = fdopen(remout, "w")))
 		return;
 	(void) fprintf(fp, "%c", 0x01);
 	(void) fprintf(fp, "scp: ");
+	va_start(ap, fmt);
 	(void) vfprintf(fp, fmt, ap);
+	va_end(ap);
 	(void) fprintf(fp, "\n");
 	(void) fflush(fp);
 
 	if (!iamremote) {
+		va_start(ap, fmt);
 		vfprintf(stderr, fmt, ap);
+		va_end(ap);
 		fprintf(stderr, "\n");
 	}
-	va_end(ap);
 }
 
 void
