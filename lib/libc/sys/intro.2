@@ -1,4 +1,4 @@
-.\"	$OpenBSD: intro.2,v 1.17 2000/10/18 05:12:10 aaron Exp $
+.\"	$OpenBSD: intro.2,v 1.18 2001/03/11 05:02:29 aaron Exp $
 .\"	$NetBSD: intro.2,v 1.6 1995/02/27 12:33:41 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1983, 1986, 1991, 1993
@@ -55,16 +55,14 @@ variable
 .Va errno ,
 which is defined as:
 .Pp
-.Dl extern int errno
+.Dl extern int errno;
 .Pp
-When a system call detects an error,
-it returns an integer value
-indicating failure (usually \-1)
-and sets the variable
+When a system call detects an error, it returns an integer value
+indicating failure (usually \-1) and sets the variable
 .Va errno
 accordingly.
-<This allows interpretation of the failure on receiving
-a \-1 and to take action accordingly.>
+(This allows interpretation of the failure on receiving
+a \-1 and to take action accordingly.)
 Successful calls never set
 .Va errno ;
 once set, it remains until another error occurs.
@@ -104,11 +102,9 @@ This error will not be reported until a subsequent operation on the same file
 descriptor and may be lost (over written) by any subsequent errors.
 .It Er 6 ENXIO Em "\&No such device or address" .
 Input or output on a special file referred to a device that did not
-exist, or
-made a request beyond the limits of the device.
-This error may also occur when, for example,
-a tape drive is not online or no disk pack is
-loaded on a drive.
+exist, or made a request beyond the limits of the device.
+This error may also occur when, for example, a tape drive is not online or
+no disk pack is loaded on a drive.
 .It Er 7 E2BIG Em "Arg list too long" .
 The number of bytes used for the argument and environment
 list of the new process exceeded the limit
@@ -116,10 +112,8 @@ list of the new process exceeded the limit
 (specified in
 .Aq Pa sys/param.h ) .
 .It Er 8 ENOEXEC Em "Exec format error" .
-A request was made to execute a file
-that, although it has the appropriate permissions,
-was not in the format required for an
-executable file.
+A request was made to execute a file that, although it has the appropriate
+permissions, was not in the format required for an executable file.
 .It Er 9 EBADF Em "Bad file descriptor" .
 A file descriptor argument was out of range, referred to no open file,
 or a read (write) request was made to a file that was only open for
@@ -137,8 +131,7 @@ would have resulted in a deadlock situation.
 .It Er 12 ENOMEM Em "Cannot allocate memory" .
 The new process image required more memory than was allowed by the hardware
 or by system-imposed memory management constraints.
-A lack of swap space is normally temporary; however,
-a lack of core is not.
+A lack of swap space is normally temporary; however, a lack of core is not.
 Soft limits may be increased to their corresponding hard limits.
 .It Er 13 EACCES Em "Permission denied" .
 An attempt was made to access a file in a way forbidden
@@ -157,13 +150,10 @@ for instance, as the new link name in a
 .Xr link 2
 function.
 .It Er 18 EXDEV Em "Improper link" .
-A hard link to a file on another file system
-was attempted.
+A hard link to a file on another file system was attempted.
 .It Er 19 ENODEV Em "Operation not supported by device" .
-An attempt was made to apply an inappropriate
-function to a device,
-for example,
-trying to read a write-only device such as a printer.
+An attempt was made to apply an inappropriate function to a device,
+for example, trying to read a write-only device such as a printer.
 .It Er 20 ENOTDIR Em "Not a directory" .
 A component of the specified pathname existed, but it was
 not a directory, when a directory was expected.
@@ -181,8 +171,8 @@ Maximum number of file descriptors allowable on the system
 has been reached and a requests for an open cannot be satisfied
 until at least one has been closed.
 .It Er 24 EMFILE Em "Too many open files" .
-<As released, the limit on the number of
-open files per process is 64.>
+(As released, the limit on the number of
+open files per process is 64.)
 .Xr getdtablesize 3
 will obtain the current limit.
 .It Er 25 ENOTTY Em "Inappropriate ioctl for device" .
@@ -201,12 +191,11 @@ The size of a file exceeded the maximum (about 2.1E9 bytes).
 .It Er 28 ENOSPC Em "Device out of space" .
 A
 .Xr write 2
-to an ordinary file, the creation of a
-directory or symbolic link, or the creation of a directory
-entry failed because no more disk blocks were available
-on the file system, or the allocation of an inode for a newly
-created file failed because no more inodes were available
-on the file system.
+to an ordinary file, the creation of a directory or symbolic link,
+or the creation of a directory entry failed because no more disk
+blocks were available on the file system, or the allocation of an
+inode for a newly created file failed because no more inodes were
+available on the file system.
 .It Er 29 ESPIPE Em "Illegal seek" .
 An
 .Xr lseek 2
@@ -221,11 +210,10 @@ of 32767 hard links per file).
 .It Er 32 EPIPE Em "Broken pipe" .
 A write on a pipe, socket or
 .Tn FIFO
-for which there is no process
-to read the data.
+for which there is no process to read the data.
 .It Er 33 EDOM Em "Numerical argument out of domain" .
-A numerical input argument was outside the defined domain of the mathematical
-function.
+A numerical input argument was outside the defined domain of
+the mathematical function.
 .It Er 34 ERANGE Em "Numerical result out of range" .
 A numerical result of the function was too large to fit in the
 available space (perhaps exceeded precision).
@@ -271,8 +259,7 @@ system or no implementation for it exists.
 .It Er 45 EOPNOTSUPP Em "Operation not supported" .
 The attempted operation is not supported for the type of object referenced.
 Usually this occurs when a file descriptor refers to a file or socket
-that cannot support this operation,
-for example, trying to
+that cannot support this operation, for example, trying to
 .Em accept
 a connection on a datagram socket.
 .It Er 46 EPFNOSUPPORT Em "Protocol family not supported" .
@@ -344,8 +331,7 @@ A path name lookup involved more than 8 symbolic links.
 .It Er 63 ENAMETOOLONG Em "File name too long" .
 A component of a path name exceeded 255
 .Pq Dv MAXNAMELEN
-characters, or an entire
-path name exceeded 1023
+characters, or an entire path name exceeded 1023
 .Pq Dv MAXPATHLEN Ns -1
 characters.
 .It Er 64 EHOSTDOWN Em "Host is down" .
@@ -364,17 +350,14 @@ The quota system ran out of table entries.
 .It Er 69 EDQUOT Em "Disc quota exceeded" .
 A
 .Xr write 2
-to an ordinary file, the creation of a
-directory or symbolic link, or the creation of a directory
-entry failed because the user's quota of disk blocks was
-exhausted, or the allocation of an inode for a newly
-created file failed because the user's quota of inodes
-was exhausted.
+to an ordinary file, the creation of a directory or symbolic link,
+or the creation of a directory entry failed because the user's quota
+of disk blocks was exhausted, or the allocation of an inode for a newly
+created file failed because the user's quota of inodes was exhausted.
 .It Er 70 ESTALE Em "Stale NFS file handle" .
 An attempt was made to access an open file (on an
 .Tn NFS
-filesystem)
-which is now unavailable as referenced by the file descriptor.
+filesystem) which is now unavailable as referenced by the file descriptor.
 This may indicate the file was deleted on the
 .Tn NFS
 server or some
@@ -386,13 +369,11 @@ information was unsuccessful.
 .It Er 73 ERPCMISMATCH Em "RPC version wrong" .
 The version of
 .Tn RPC
-on the remote peer is not compatible with
-the local version.
+on the remote peer is not compatible with the local version.
 .It Er 74 EPROGUNAVAIL Em "RPC prog. not avail" .
 The requested program is not registered on the remote host.
 .It Er 75 EPROGMISMATCH Em "Program version wrong" .
-The requested version of the program is not available
-on the remote host
+The requested version of the program is not available on the remote host
 .Pq Tn RPC .
 .It Er 76 EPROCUNAVAIL Em "Bad procedure for program" .
 An
@@ -533,7 +514,8 @@ A process is recognized as a
 process and is granted special privileges if its effective user ID is 0.
 .It Special Processes
 The processes with process IDs of 0, 1, and 2 are special.
-Process 0 is the scheduler.  Process 1 is the initialization process
+Process 0 is the scheduler.
+Process 1 is the initialization process
 .Xr init 8 ,
 and is the ancestor of every other process in the system.
 It is used to control the process structure.
@@ -579,8 +561,8 @@ by the shell.
 Note also that
 .Pq Dv MAXNAMELEN
 is an upper limit fixed by the kernel, meant to be used for sizing buffers.
-Some filesystems may have additional restrictions.  These can be queried
-using
+Some filesystems may have additional restrictions.
+These can be queried using
 .Xr pathconf 2
 and
 .Xr fpathconf 2 .
@@ -606,13 +588,13 @@ If a path name begins with a slash, the path search begins at the
 .Em root
 directory.
 Otherwise, the search begins from the current working directory.
-A slash by itself names the root directory.  An empty
-pathname refers to the current directory.
+A slash by itself names the root directory.
+An empty pathname refers to the current directory.
 .It Directory
 A directory is a special type of file that contains entries
 that are references to other files.
-Directory entries are called links.  By convention, a directory
-contains at least two links,
+Directory entries are called links.
+By convention, a directory contains at least two links,
 .Ql \&.
 and
 .Ql \&.. ,
@@ -620,40 +602,43 @@ referred to as
 .Em dot
 and
 .Em dot-dot
-respectively.  Dot refers to the directory itself and
-dot-dot refers to its parent directory.
+respectively.
+Dot refers to the directory itself and dot-dot refers to its
+parent directory.
 .It "Root Directory and Current Working Directory"
 Each process has associated with it a concept of a root directory
 and a current working directory for the purpose of resolving path
-name searches.  A process's root directory need not be the root
-directory of the root file system.
+name searches.
+A process's root directory need not be the root directory of
+the root file system.
 .It File Access Permissions
 Every file in the file system has a set of access permissions.
 These permissions are used in determining whether a process
 may perform a requested operation on the file (such as opening
-a file for writing).  Access permissions are established at the
-time a file is created.  They may be changed at some later time
-through the
+a file for writing).
+Access permissions are established at the time a file is created.
+They may be changed at some later time through the
 .Xr chmod 2
 call.
 .Pp
 File access is broken down according to whether a file may be: read,
-written, or executed.  Directory files use the execute
-permission to control if the directory may be searched.
+written, or executed.
+Directory files use the execute permission to control if the directory
+may be searched.
 .Pp
 File access permissions are interpreted by the system as
 they apply to three different classes of users: the owner
 of the file, those users in the file's group, anyone else.
 Every file has an independent set of access permissions for
-each of these classes.  When an access check is made, the system
-decides if permission should be granted by checking the access
-information applicable to the caller.
+each of these classes.
+When an access check is made, the system decides if permission should be
+granted by checking the access information applicable to the caller.
 .Pp
 Read, write, and execute/search permissions on
 a file are granted to a process if:
 .Pp
-The process's effective user ID is that of the superuser. (Note:
-even the superuser cannot execute a non-executable file.)
+The process's effective user ID is that of the superuser.
+(Note: even the superuser cannot execute a non-executable file.)
 .Pp
 The process's effective user ID matches the user ID of the owner
 of the file and the owner permissions allow the access.

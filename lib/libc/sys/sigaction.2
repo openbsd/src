@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sigaction.2,v 1.26 2001/01/17 19:20:06 deraadt Exp $
+.\"	$OpenBSD: sigaction.2,v 1.27 2001/03/11 05:02:30 aaron Exp $
 .\"	$NetBSD: sigaction.2,v 1.7 1995/10/12 15:41:16 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -438,8 +438,9 @@ signal-catching functions:
 .Ed
 .Pp
 All functions not in the above list are considered to be unsafe
-with respect to signals.  That is to say, the behaviour of such
-functions when called from a signal handler is undefined.
+with respect to signals.
+That is to say, the behaviour of such functions when called from
+a signal handler is undefined.
 In general though, signal handlers should do little more than set a
 flag; most other actions are not safe.
 .Pp
@@ -682,8 +683,9 @@ Extension Interfaces:
 .Fn strlcat .
 .Pp
 All functions not in the above lists are considered to be unsafe
-with respect to signals.  That is to say, the behaviour of such
-functions when called from a signal handler is undefined.
+with respect to signals.
+That is to say, the behaviour of such functions when called from
+a signal handler is undefined.
 .Pp
 As well, inside the signal handler it is also considered more safe to
 make a copy the global variable
