@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftree.c,v 1.23 2003/06/13 17:51:14 millert Exp $	*/
+/*	$OpenBSD: ftree.c,v 1.24 2003/10/20 06:22:27 jmc Exp $	*/
 /*	$NetBSD: ftree.c,v 1.4 1995/03/21 09:07:21 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static const char sccsid[] = "@(#)ftree.c	8.2 (Berkeley) 4/18/94";
 #else
-static const char rcsid[] = "$OpenBSD: ftree.c,v 1.23 2003/06/13 17:51:14 millert Exp $";
+static const char rcsid[] = "$OpenBSD: ftree.c,v 1.24 2003/10/20 06:22:27 jmc Exp $";
 #endif
 #endif /* not lint */
 
@@ -70,7 +70,7 @@ static const char rcsid[] = "$OpenBSD: ftree.c,v 1.23 2003/06/13 17:51:14 miller
  * pax, they are read from stdin
  */
 
-static FTS *ftsp = NULL;		/* curent FTS handle */
+static FTS *ftsp = NULL;		/* current FTS handle */
 static int ftsopts;			/* options to be used on fts_open */
 static char *farray[2];			/* array for passing each arg to fts */
 static FTREE *fthead = NULL;		/* head of linked list of file args */

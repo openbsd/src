@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache.c,v 1.15 2003/08/08 01:39:52 millert Exp $	*/
+/*	$OpenBSD: cache.c,v 1.16 2003/10/20 06:22:27 jmc Exp $	*/
 /*	$NetBSD: cache.c,v 1.4 1995/03/21 09:07:10 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static const char sccsid[] = "@(#)cache.c	8.1 (Berkeley) 5/31/93";
 #else
-static const char rcsid[] = "$OpenBSD: cache.c,v 1.15 2003/08/08 01:39:52 millert Exp $";
+static const char rcsid[] = "$OpenBSD: cache.c,v 1.16 2003/10/20 06:22:27 jmc Exp $";
 #endif
 #endif /* not lint */
 
@@ -209,7 +209,7 @@ name_uid(uid_t uid, int frc)
 	if ((pw = getpwuid(uid)) == NULL) {
 		/*
 		 * no match for this uid in the local password file
-		 * a string that is the uid in numberic format
+		 * a string that is the uid in numeric format
 		 */
 		if (ptr == NULL)
 			return("");

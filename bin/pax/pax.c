@@ -1,4 +1,4 @@
-/*	$OpenBSD: pax.c,v 1.24 2003/06/13 17:51:14 millert Exp $	*/
+/*	$OpenBSD: pax.c,v 1.25 2003/10/20 06:22:27 jmc Exp $	*/
 /*	$NetBSD: pax.c,v 1.5 1996/03/26 23:54:20 mrg Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)pax.c	8.2 (Berkeley) 4/18/94";
 #else
-static const char rcsid[] = "$OpenBSD: pax.c,v 1.24 2003/06/13 17:51:14 millert Exp $";
+static const char rcsid[] = "$OpenBSD: pax.c,v 1.25 2003/10/20 06:22:27 jmc Exp $";
 #endif
 #endif /* not lint */
 
@@ -89,8 +89,8 @@ int	Dflag;			/* same as uflag except inode change time */
 int	Hflag;			/* follow command line symlinks (write only) */
 int	Lflag;			/* follow symlinks when writing */
 int	Xflag;			/* archive files with same device id only */
-int	Yflag;			/* same as Dflg except after name mode */
-int	Zflag;			/* same as uflg except after name mode */
+int	Yflag;			/* same as Dflag except after name mode */
+int	Zflag;			/* same as uflag except after name mode */
 int	zeroflag;		/* use \0 as pathname terminator */
 int	vfpart;			/* is partial verbose output in progress */
 int	patime = 1;		/* preserve file access time */
@@ -160,7 +160,7 @@ char	*tempbase;		/* basename of tempfile to use for mkstemp(3) */
  * 2.1	Write operation will stop instead of allowing a user to create a flawed
  *	flawed archive (due to any problem).
  * 2.2	Archives written by pax are forced to strictly conform to both the
- *	archive and pax the spceific format specifications.
+ *	archive and pax the specific format specifications.
  * 2.3	Blocking size and format is rigidly enforced on writes.
  * 2.4	Formats which may exhibit header overflow problems (they have fields
  *	too small for large file systems, such as inode number storage), use
@@ -384,7 +384,7 @@ gen_init(void)
 	/*
 	 * signal handling to reset stored directory times and modes. Since
 	 * we deal with broken pipes via failed writes we ignore it. We also
-	 * deal with any file size limit thorugh failed writes. Cpu time
+	 * deal with any file size limit through failed writes. Cpu time
 	 * limits are caught and a cleanup is forced.
 	 */
 	if ((sigemptyset(&s_mask) < 0) || (sigaddset(&s_mask, SIGTERM) < 0) ||

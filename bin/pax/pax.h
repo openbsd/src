@@ -1,4 +1,4 @@
-/*	$OpenBSD: pax.h,v 1.15 2003/06/26 00:10:17 deraadt Exp $	*/
+/*	$OpenBSD: pax.h,v 1.16 2003/10/20 06:22:27 jmc Exp $	*/
 /*	$NetBSD: pax.h,v 1.3 1995/03/21 09:07:41 cgd Exp $	*/
 
 /*-
@@ -48,7 +48,7 @@
 				/* Don't even think of changing this */
 #define DEVBLK		8192	/* default read blksize for devices */
 #define FILEBLK		10240	/* default read blksize for files */
-#define PAXPATHLEN	3072	/* maximium path length for pax. MUST be */
+#define PAXPATHLEN	3072	/* maximum path length for pax. MUST be */
 				/* longer than the system MAXPATHLEN */
 
 /*
@@ -133,7 +133,7 @@ typedef struct {
  * The format specific routine table allows new archive formats to be quickly
  * added. Overall pax operation is independent of the actual format used to
  * form the archive. Only those routines which deal directly with the archive
- * are tailored to the oddities of the specifc format. All other routines are
+ * are tailored to the oddities of the specific format. All other routines are
  * independent of the archive format. Data flow in and out of the format
  * dependent routines pass pointers to ARCHD structure (described below).
  */
@@ -197,7 +197,7 @@ typedef struct {
 				/* a flawed archive header. */
 	int (*end_wr)(void);	/* end write. write the trailer and do any */
 				/* other format specific functions needed */
-				/* at the ecnd of a archive write */
+				/* at the end of an archive write */
 	int (*trail)(ARCHD *,	/* returns 0 if a valid trailer, -1 if not */
 	    char *, int,	/* For formats which encode the trailer */
 	    int *);		/* outside of a valid header, a return value */

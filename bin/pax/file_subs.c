@@ -1,4 +1,4 @@
-/*	$OpenBSD: file_subs.c,v 1.24 2003/08/06 21:08:05 millert Exp $	*/
+/*	$OpenBSD: file_subs.c,v 1.25 2003/10/20 06:22:27 jmc Exp $	*/
 /*	$NetBSD: file_subs.c,v 1.4 1995/03/21 09:07:18 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static const char sccsid[] = "@(#)file_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-static const char rcsid[] = "$OpenBSD: file_subs.c,v 1.24 2003/08/06 21:08:05 millert Exp $";
+static const char rcsid[] = "$OpenBSD: file_subs.c,v 1.25 2003/10/20 06:22:27 jmc Exp $";
 #endif
 #endif /* not lint */
 
@@ -211,7 +211,7 @@ int
 cross_lnk(ARCHD *arcn)
 {
 	/*
-	 * try to make a link to orginal file (-l flag in copy mode). make
+	 * try to make a link to original file (-l flag in copy mode). make
 	 * sure we do not try to link to directories in case we are running as
 	 * root (and it might succeed).
 	 */
@@ -996,7 +996,7 @@ set_crc(ARCHD *arcn, int fd)
 
 	/*
 	 * safety check. we want to avoid archiving files that are active as
-	 * they can create inconsistant archive copies.
+	 * they can create inconsistent archive copies.
 	 */
 	if (cpcnt != arcn->sb.st_size)
 		paxwarn(1, "File changed size %s", arcn->org_name);

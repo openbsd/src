@@ -1,4 +1,4 @@
-/*	$OpenBSD: tables.h,v 1.5 2003/06/02 23:32:09 millert Exp $	*/
+/*	$OpenBSD: tables.h,v 1.6 2003/10/20 06:22:27 jmc Exp $	*/
 /*	$NetBSD: tables.h,v 1.3 1995/03/21 09:07:47 cgd Exp $	*/
 
 /*-
@@ -78,7 +78,7 @@ typedef struct hrdlnk {
 typedef struct ftm {
 	int		namelen;	/* file name length */
 	time_t		mtime;		/* files last modification time */
-	off_t		seek;		/* loacation in scratch file */
+	off_t		seek;		/* location in scratch file */
 	struct ftm	*fow;
 } FTM;
 
