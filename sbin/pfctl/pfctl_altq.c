@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_altq.c,v 1.54 2003/04/12 16:39:01 henning Exp $	*/
+/*	$OpenBSD: pfctl_altq.c,v 1.55 2003/04/12 16:44:19 henning Exp $	*/
 
 /*
  * Copyright (C) 2002
@@ -63,15 +63,15 @@ u_int32_t	 qname_to_qid(const char *);
 static int	eval_pfqueue_cbq(struct pfctl *, struct pf_altq *);
 static int	cbq_compute_idletime(struct pfctl *, struct pf_altq *);
 static int	check_commit_cbq(int, int, struct pf_altq *);
-static void	print_cbq_opts(const struct pf_altq *);
+static int	print_cbq_opts(const struct pf_altq *);
 
 static int	eval_pfqueue_priq(struct pfctl *, struct pf_altq *);
 static int	check_commit_priq(int, int, struct pf_altq *);
-static void	print_priq_opts(const struct pf_altq *);
+static int	print_priq_opts(const struct pf_altq *);
 
 static int	eval_pfqueue_hfsc(struct pfctl *, struct pf_altq *);
 static int	check_commit_hfsc(int, int, struct pf_altq *);
-static void	print_hfsc_opts(const struct pf_altq *);
+static int	print_hfsc_opts(const struct pf_altq *);
 
 static void		 gsc_add_sc(struct gen_sc *, struct service_curve *);
 static int		 is_gsc_under_sc(struct gen_sc *,
@@ -169,18 +169,15 @@ print_altq(const struct pf_altq *a, unsigned level, u_int16_t bwpercent)
 
 	switch(a->scheduler) {
 	case ALTQT_CBQ:
-		print_cbq_opts(a);
-		if (!a->pq_u.cbq_opts.flags)
+		if (!print_cbq_opts(a))
 			printf("cbq ");
 		break;
 	case ALTQT_PRIQ:
-		print_priq_opts(a);
-		if (!a->pq_u.priq_opts.flags)
+		if (!print_priq_opts(a))
 			printf("priq ");
 		break;
 	case ALTQT_HFSC:
-		print_hfsc_opts(a);
-		if (!a->pq_u.hfsc_opts.flags)
+		if (!print_hfsc_opts(a))
 			printf("hfsc ");
 		break;
 	}
@@ -536,7 +533,7 @@ check_commit_cbq(int dev, int opts, struct pf_altq *pa)
 	return (error);
 }
 
-static void
+static int
 print_cbq_opts(const struct pf_altq *a)
 {
 	const struct cbq_opts	*opts;
@@ -565,7 +562,10 @@ print_cbq_opts(const struct pf_altq *a)
 		if (opts->flags & CBQCLF_DEFCLASS)
 			printf(" default");
 		printf(" ) ");
-	}
+
+		return (1);
+	} else
+		return (0);
 }
 
 /*
@@ -622,7 +622,7 @@ check_commit_priq(int dev, int opts, struct pf_altq *pa)
 	return (error);
 }
 
-static void
+static int
 print_priq_opts(const struct pf_altq *a)
 {
 	const struct priq_opts	*opts;
@@ -642,7 +642,10 @@ print_priq_opts(const struct pf_altq *a)
 		if (opts->flags & PRCF_DEFAULTCLASS)
 			printf(" default");
 		printf(" ) ");
-	}
+
+		return (1);
+	} else
+		return (0);
 }
 
 /*
@@ -811,7 +814,7 @@ check_commit_hfsc(int dev, int opts, struct pf_altq *pa)
 	return (error);
 }
 
-static void
+static int
 print_hfsc_opts(const struct pf_altq *a)
 {
 	const struct hfsc_opts	*opts;
@@ -862,7 +865,10 @@ print_hfsc_opts(const struct pf_altq *a)
 					    rate2str((double)opts->ulsc_m2));
 		}
 		printf(" ) ");
-	}
+
+		return (1);
+	} else
+		return (0);
 }
 
 /*
