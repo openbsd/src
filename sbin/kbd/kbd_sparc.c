@@ -1,4 +1,4 @@
-/*	$OpenBSD: kbd_sparc.c,v 1.1 1999/07/18 17:21:10 maja Exp $ */
+/*	$OpenBSD: kbd_sparc.c,v 1.2 1999/07/18 18:30:11 deraadt Exp $ */
 
 /*
  * Copyright (c) 1999 Mats O Jansson.  All rights reserved.
@@ -146,37 +146,46 @@ kbd_set(name, verbose)
 	
 	if (map == NULL) {
 		fprintf(stderr, "%s: no such keymap: %s\n",
-			__progname, name);
+		    __progname, name);
 		exit(1);
 	}
 
 	fd = open("/dev/kbd", O_RDWR);
+	if (fd == -1) {
+		perror("/dev/kbd");
+		exit(1);
+	}		
 
-	if (fd != -1) {
-		
-		r = ioctl(fd, KIOCTYPE, &t);
-
-		r = ioctl(fd, KIOCLAYOUT, &l);
-
-		for (i = 0; i < 128; i++) {
-			for (j = 0; j < 4; j++) {
-				k.kio_tablemask = x[j];
-				k.kio_station = i;
-				switch(j) {
-				case 0: k.kio_entry = map[i].unshift; break;
-				case 1: k.kio_entry = map[i].shift; break;
-				case 2: k.kio_entry = map[i].altgr; break;
-				case 3: k.kio_entry = map[i].control; break;
-				}
-				r = ioctl(fd, KIOCSKEY, &k);
+	r = ioctl(fd, KIOCTYPE, &t);
+	r = ioctl(fd, KIOCLAYOUT, &l);
+	for (i = 0; i < 128; i++) {
+		for (j = 0; j < 4; j++) {
+			k.kio_tablemask = x[j];
+			k.kio_station = i;
+			switch(j) {
+			case 0:
+				k.kio_entry = map[i].unshift;
+				break;
+			case 1:
+				k.kio_entry = map[i].shift;
+				break;
+			case 2:
+				k.kio_entry = map[i].altgr;
+				break;
+			case 3:
+				k.kio_entry = map[i].control;
+				break;
 			}
+			r = ioctl(fd, KIOCSKEY, &k);
 		}
+	}
+	close(fd);
 
-		close(fd);
-		
+	if (r == -1) {
+		printf("failure to set keyboard mapping\n");
+		return;
 	}
 
 	if (verbose)
 		fprintf(stderr, "keyboard mapping set to %s\n", name);
-
 }
