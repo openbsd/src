@@ -1,16 +1,26 @@
 
 This is a list of things that still need to be done:
 
+* wrap vfork (basically the same as fork())
+
+* wrap itimer() syscalls so that the _ITIMER_SCHED_TIMER can't be trashed
+
+* Move the md include stuff so that it appears in /usr/include/<arch>/
+  That way, gdb's thread stuff can be built sanely and maybe other
+  uthread-aware stuff can make use of it?
+
+* Move to using -lpthread. Needs weak symbol support in all as and ld.so
+  implementations.
+  [espie@ looking at unifying toolchain]
+
 * Add 
       pthread_condattr_[gs]etpshared()	-- and add warn_references
-      pthread_mutexattr_[gs]etprioceiling()
-      pthread_mutexattr_[gs]etprotocol()
       pthread_mutexattr_[gs]etpshared()
-      pthread_mutex_[gs]etprioceiling()
       sched_setparam()
       sched_setscheduler()
 
 * Add _warn_references to the schedprio stuff
+
 * Quiz jb about pthread_llist_remove.. change name to _thread_llist_remove?
 	- what pthread_setprio() and pthread_yield() for?
 	- shouldn't pthread_yield() be marked depreciated?
@@ -18,21 +28,15 @@ This is a list of things that still need to be done:
 * Add thread stuff to the other archs in libc/arch/; ie change
   some usages of ENTRY to SYSENTRY in some .S files and add
   the new macros to their SYS.h. 
+  [wip]
 
 * Test that thread_init is automatically called on every arch, regardless
   of whether the exe is statically linked or not.
+  [problems with new egcs?]
 
-* Alter the objective-C compiler to see if it can use threads.
-  It looks like the easy way is to just define CC='cc -pthread'.
+* Configure the gnu objective-C compiler to see if it can use threads.
 
-* Find all the static buffers in libc and make them per-thread. This
-  is not absolutely necessary but incurs no penalty for single-threaded
-  operation, and makes life easier & safer for when threads are used.
-  On the other hand, it adds a bit more code bloat when you use threads
-  and makes openbsd programs non-portable to other OSs with less-nicer
-  libraries. If we do the bare posix minimum, we promote portable code.
-  
-* Look into how netbsd are going with their kernel threads
+* Keep a handle on how netbsd are going with their kernel threads
 
 * Look into how asynchronous I/O can help us. In particular, the
   (unimplemented) aio*() functions.
@@ -43,11 +47,23 @@ This is a list of things that still need to be done:
   Should look into standards to see what they suggest/did..
   May also need to document "This is not thread-safe" for some library
   functions (yet to be identified).
+  [Need to ask aaron@ for his opinion.]
 
 * Find out where freebsd/netbsd use pread() and pwrite().. i think
-  its in the database routines mostly. We will need to rip their code.
+  its in the database routines mostly.
 
 * Figure out what to do with the configuration system variables (_SC_*)
   that are defined by POSIX 1003.1c (at least update sysconf(3))
 
-$OpenBSD: TODO,v 1.6 1999/01/17 23:43:47 d Exp $
+* Compare with PTL (http://www3.media.osaka-cu.ac.jp/~k-abe/PTL/)
+  [snarfed some sparc md stuff]
+
+* Check that threads work with:
+	- perl (in-tree)
+	- objc (in-tree gcc)
+	- gdb
+	- ports
+		- lang/python
+		- databases/mysql
+
+$OpenBSD: TODO,v 1.7 1999/11/28 11:28:15 d Exp $
