@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.h,v 1.7 1996/08/31 09:19:14 pefo Exp $	*/
+/*	$OpenBSD: exec_elf.h,v 1.8 1996/10/27 20:08:26 etheisen Exp $	*/
 /*
  * Copyright (c) 1995, 1996 Erik Theisen
  * All rights reserved.
@@ -176,8 +176,7 @@ typedef struct {
 #define SHT_REL		9		/* relation section without addends */
 #define SHT_SHLIB	10		/* reserved - purpose unknown */
 #define SHT_DYNSYM	11		/* dynamic symbol table section */
-
-#define SHT_NUM		13		/* number of section types */
+#define SHT_NUM		12		/* number of section types */
 #define SHT_LOPROC	0x70000000	/* reserved range for processor */
 #define SHT_HIPROC	0x7fffffff	/*  specific section header types */
 #define SHT_LOUSER	0x80000000	/* reserved range for application */
@@ -290,7 +289,7 @@ typedef struct {
 #define PT_NOTE		4		/* auxiliary information */
 #define PT_SHLIB	5		/* reserved - purpose undefined */
 #define PT_PHDR		6		/* program header */
-#define PT_NUM		8		/* Number of segment types */
+#define PT_NUM		7		/* Number of segment types */
 #define PT_LOPROC	0x70000000	/* reserved range for processor */
 #define PT_HIPROC	0x7fffffff	/*  specific segment types */
 
@@ -388,37 +387,6 @@ int exec_elf_makecmds __P((struct proc *, struct exec_package *));
 void *elf_copyargs __P((struct exec_package *, struct ps_strings *,
         void *, void *));
 int exec_elf_fixup __P((struct proc *, struct exec_package *));
-
-/*
- * XXX - OpenBSD hack to determine
- * target OS - This is NOT ABI
- * compliant!!!
- */
-struct elf_oshdr {
-        Elf32_Word      os_name;        /* name string - index into strtab */
-        Elf32_Word      os_type;        /* operating system type */
-        Elf32_Half      os_major;       /* major version tag */
-        Elf32_Half      os_minor;       /* minor version tag */
-        Elf32_Half      os_subminor;    /* sub minor version tag */
-        Elf32_Half      os_nmisc;       /* number of misc strings */
-        Elf32_Word      os_misc;        /* misc string - index into strtab */
-} Elf32_Oshdr;
-
-/* Program header type, section header type,
-    and section header name */
-#define PT_OS		0x7fffffff	/* program header type */
-#define SHT_OS		0xffffffff	/* section header type */
-#define ELF_OS          ".os"		/* section header name string */
-
-/* Operating system types */
-#define OST_NULL        0               /* Invalid */
-#define OST_OPENBSD     1               /* OpenBSD */
-#define OST_LINUX       2               /* Linux */
-#define OST_NUM         3               /* Number of operating system types */
-
-/* Operating system names */
-#define ELF_OPENBSD     "openbsd"       /* OpenBSD */
-#define ELF_LINUX       "linux"         /* Linux */
 
 #endif /* _KERNEL */
 
