@@ -1,4 +1,4 @@
-/*	$OpenBSD: route6d.c,v 1.37 2003/06/28 20:37:30 deraadt Exp $	*/
+/*	$OpenBSD: route6d.c,v 1.38 2003/08/22 08:26:39 itojun Exp $	*/
 /*	$KAME: route6d.c,v 1.94 2002/10/26 20:08:55 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #if 0
-static char _rcsid[] = "$OpenBSD: route6d.c,v 1.37 2003/06/28 20:37:30 deraadt Exp $";
+static char _rcsid[] = "$OpenBSD: route6d.c,v 1.38 2003/08/22 08:26:39 itojun Exp $";
 #endif
 
 #include <stdio.h>
@@ -2606,6 +2606,8 @@ rt_entry(rtm, again)
 	rrt->rrt_t = time(NULL);
 	if (aflag == 0 && (rtm->rtm_flags & RTF_STATIC))
 		rrt->rrt_t = 0;	/* Don't age static routes */
+	if ((rtm->rtm_flags & (RTF_HOST|RTF_GATEWAY)) == RTF_HOST)
+		rrt->rrt_t = 0;	/* Don't age non-gateway host routes */
 	np->rip6_tag = 0;
 	np->rip6_metric = rtm->rtm_rmx.rmx_hopcount;
 	if (np->rip6_metric < 1)
