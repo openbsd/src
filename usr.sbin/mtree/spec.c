@@ -1,5 +1,5 @@
 /*	$NetBSD: spec.c,v 1.6 1995/03/07 21:12:12 cgd Exp $	*/
-/*	$OpenBSD: spec.c,v 1.15 2002/03/14 16:44:25 mpech Exp $	*/
+/*	$OpenBSD: spec.c,v 1.16 2002/03/14 17:01:16 millert Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static const char sccsid[] = "@(#)spec.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: spec.c,v 1.15 2002/03/14 16:44:25 mpech Exp $";
+static const char rcsid[] = "$OpenBSD: spec.c,v 1.16 2002/03/14 17:01:16 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -248,8 +248,13 @@ set(t, ip)
 				error("invalid size %s", val);
 			break;
 		case F_SLINK:
-			if ((ip->slink = strdup(val)) == NULL)
+			if ((ip->slink = malloc(strlen(val) + 1)) == NULL)
 				error("%s", strerror(errno));
+			if (strunvis(ip->slink, val) == -1) {
+				fprintf(stderr,
+				    "mtree: filename (%s) encoded incorrectly\n", val);
+				strcpy(ip->slink, val);
+			}
 			break;
 		case F_TIME:
 			ip->st_mtimespec.tv_sec = strtoul(val, &ep, 10);
