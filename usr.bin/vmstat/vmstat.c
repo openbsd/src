@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.55 2001/06/24 16:05:33 art Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.56 2001/06/24 20:30:52 angelos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -80,6 +80,7 @@ static char rcsid[] = "$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp 
 #include "dkstats.h"
 
 #ifdef UVM
+#include <uvm/uvm_object.h>
 #include <uvm/uvm_extern.h>
 #endif
 
@@ -180,7 +181,6 @@ main(argc, argv)
 	int reps;
 	char errbuf[_POSIX2_LINE_MAX];
 
-	memf = nlistf = NULL;
 	interval = reps = todo = 0;
 	while ((c = getopt(argc, argv, "c:fiM:mN:stw:")) != -1) {
 		switch (c) {
@@ -222,37 +222,46 @@ main(argc, argv)
 	if (todo == 0)
 		todo = VMSTAT;
 
-	/*
-	 * Discard setgid privileges if not the running kernel so that bad
-	 * guys can't print interesting stuff from kernel memory.
-	 */
 	if (nlistf != NULL || memf != NULL) {
 		setegid(getgid());
 		setgid(getgid());
 	}
 
-	kd = kvm_openfiles(nlistf, memf, NULL, O_RDONLY, errbuf);
-	if (kd == 0)
-		errx(1, "kvm_openfiles: %s", errbuf);
+	/*
+	 * Discard setgid privileges if not the running kernel so that bad
+	 * guys can't print interesting stuff from kernel memory.
+	 */
+#if notyet
+	if (nlistf != NULL || memf != NULL) {
+#endif
+		kd = kvm_openfiles(nlistf, memf, NULL, O_RDONLY, errbuf);
+		if (kd == 0)
+			errx(1, "kvm_openfiles: %s", errbuf);
 
-	if ((c = kvm_nlist(kd, namelist)) != 0) {
+		if ((c = kvm_nlist(kd, namelist)) != 0) {
+			setgid(getgid());
+			setegid(getegid());
 
-		setegid(getgid());
-		setgid(getgid());
-
-		if (c > 0) {
-			(void)fprintf(stderr,
-			    "%s: undefined symbols:", __progname);
-			for (c = 0;
-			    c < sizeof(namelist)/sizeof(namelist[0]); c++)
-				if (namelist[c].n_type == 0)
-					fprintf(stderr, " %s",
-					    namelist[c].n_name);
-			(void)fputc('\n', stderr);
-			exit(1);
-		} else
-			errx(1, "kvm_nlist: %s", kvm_geterr(kd));
+			if (c > 0) {
+				(void)fprintf(stderr,
+				    "%s: undefined symbols:", __progname);
+				for (c = 0;
+				    c < sizeof(namelist)/sizeof(namelist[0]);
+				    c++)
+					if (namelist[c].n_type == 0)
+						fprintf(stderr, " %s",
+						    namelist[c].n_name);
+				(void)fputc('\n', stderr);
+				exit(1);
+			} else
+				errx(1, "kvm_nlist: %s", kvm_geterr(kd));
+		}
+#ifdef notyet
 	}
+#endif notyet
+
+	setegid(getegid());
+	setgid(getgid());
 
 	if (todo & VMSTAT) {
 		struct winsize winsize;
@@ -265,9 +274,6 @@ main(argc, argv)
 			winlines = winsize.ws_row;
 
 	}
-
-	setegid(getgid());
-	setgid(getgid());
 
 #define	BACKWARD_COMPATIBILITY
 #ifdef	BACKWARD_COMPATIBILITY
@@ -346,17 +352,16 @@ getuptime()
 	size_t size;
 
 	if (boottime.tv_sec == 0) {
-		if (nlist == NULL && memf == NULL) {
-			kread(X_BOOTTIME, &boottime, sizeof(boottime));
-		} else {
+		if (nlistf == NULL && memf == NULL) {
 			size = sizeof(boottime);
 			mib[0] = CTL_KERN;
 			mib[1] = KERN_BOOTTIME;
 			if (sysctl(mib, 2, &boottime, &size, NULL, 0) < 0) {
-				printf("Can't get kerninfo: %s\n",
-				    strerror(errno));
+				warn("could not get kern.boottime");
 				bzero(&boottime, sizeof(boottime));
 			}
+		} else {
+			kread(X_BOOTTIME, &boottime, sizeof(boottime));
 		}
 	}
 	(void)time(&now);
@@ -389,7 +394,7 @@ dovmstat(interval, reps)
 	mib[1] = KERN_CLOCKRATE;
 	size = sizeof(clkinfo);
 	if (sysctl(mib, 2, &clkinfo, &size, NULL, 0) < 0) {
-		printf("Can't get kerninfo: %s\n", strerror(errno));
+		warn("could not read kern.clockrate");
 		return;
 	}
 	hz = clkinfo.stathz;
@@ -400,17 +405,16 @@ dovmstat(interval, reps)
 		/* Read new disk statistics */
 		dkreadstats();
 #ifdef UVM
-		if (nlist == NULL && memf == NULL) {
-			kread(X_UVMEXP, &uvmexp, sizeof(uvmexp));
-		} else {
-			size = sizeof(uvmexp);
+		if (nlistf == NULL && memf == NULL) {
+			size = sizeof(struct uvmexp);
 			mib[0] = CTL_VM;
 			mib[1] = VM_UVMEXP;
 			if (sysctl(mib, 2, &uvmexp, &size, NULL, 0) < 0) {
-				printf("Can't get kerninfo: %s\n",
-				    strerror(errno));
-				bzero(&uvmexp, sizeof(uvmexp));
+				warn("could not get vm.uvmexp");
+				bzero(&uvmexp, sizeof(struct uvmexp));
 			}
+		} else {
+			kread(X_UVMEXP, &uvmexp, sizeof(struct uvmexp));
 		}
 #else
 		kread(X_SUM, &sum, sizeof(sum));
@@ -419,7 +423,7 @@ dovmstat(interval, reps)
 		mib[0] = CTL_VM;
 		mib[1] = VM_METER;
 		if (sysctl(mib, 2, &total, &size, NULL, 0) < 0) {
-			printf("Can't get kerninfo: %s\n", strerror(errno));
+			warn("could not read vm.vmmeter");
 			bzero(&total, sizeof(total));
 		}
 		(void)printf("%2u%2u%2u",
@@ -518,19 +522,21 @@ dotimes()
 	int mib[2];
 	size_t size;
 
+	/* XXX Why are these set to 0 ? This doesn't look right. */
 	pgintime = 0;
 	rectime = 0;
+
 #ifdef UVM
-	if (nlist == NULL && memf == NULL) {
-		kread(X_UVMEXP, &uvmexp, sizeof(uvmexp));
-	} else {
-		size = sizeof(uvmexp);
+	if (nlistf == NULL && memf == NULL) {
+		size = sizeof(struct uvmexp);
 		mib[0] = CTL_VM;
 		mib[1] = VM_UVMEXP;
 		if (sysctl(mib, 2, &uvmexp, &size, NULL, 0) < 0) {
-			printf("Can't get kerninfo: %s\n", strerror(errno));
-			bzero(&uvmexp, sizeof(uvmexp));
+			warn("could not read vm.uvmexp");
+			bzero(&uvmexp, sizeof(struct uvmexp));
 		}
+	} else {
+		kread(X_UVMEXP, &uvmexp, sizeof(struct uvmexp));
 	}
 
 	(void)printf("%u reactivates, %u total time (usec)\n",
@@ -577,16 +583,16 @@ dosum()
 	int mib[2], nselcoll;
 
 #ifdef UVM
-	if (nlist == NULL && memf == NULL) {
-		kread(X_UVMEXP, &nchstats, sizeof(uvmexp));
-	} else {
-		size = sizeof(uvmexp);
+	if (nlistf == NULL && memf == NULL) {
+		size = sizeof(struct uvmexp);
 		mib[0] = CTL_VM;
 		mib[1] = VM_UVMEXP;
 		if (sysctl(mib, 2, &uvmexp, &size, NULL, 0) < 0) {
-			printf("Can't get kerninfo: %s\n", strerror(errno));
-			bzero(&uvmexp, sizeof(uvmexp));
+			warn("could not read vm.uvmexp");
+			bzero(&uvmexp, sizeof(struct uvmexp));
 		}
+	} else {
+		kread(X_UVMEXP, &uvmexp, sizeof(struct uvmexp));
 	}
 
 	/* vm_page constants */
@@ -667,16 +673,16 @@ dosum()
 	(void)printf("%11u bytes per page\n", sum.v_page_size);
 #endif
 
-	if (nlist == NULL && memf == NULL) {
-		kread(X_NCHSTATS, &nchstats, sizeof(nchstats));
-	} else {
+	if (nlistf == NULL && memf == NULL) {
 		size = sizeof(nchstats);
 		mib[0] = CTL_KERN;
 		mib[1] = KERN_NCHSTATS;
 		if (sysctl(mib, 2, &nchstats, &size, NULL, 0) < 0) {
-		    	printf("Can't get kerninfo: %s\n", strerror(errno));
+			warn("could not read kern.nchstats");
 			bzero(&nchstats, sizeof(nchstats));
 		}
+	} else {
+		kread(X_NCHSTATS, &nchstats, sizeof(nchstats));
 	}
 
 	nchtotal = nchstats.ncs_goodhits + nchstats.ncs_neghits +
@@ -693,16 +699,16 @@ dosum()
 	    PCT(nchstats.ncs_falsehits, nchtotal),
 	    PCT(nchstats.ncs_long, nchtotal));
 
-	if (nlist == NULL && memf == NULL) {
-		kread(X_NSELCOLL, &nselcoll, sizeof(nselcoll));
-	} else {
+	if (nlistf == NULL && memf == NULL) {
 		size = sizeof(nselcoll);
 		mib[0] = CTL_KERN;
 		mib[1] = KERN_NSELCOLL;
 		if (sysctl(mib, 2, &nselcoll, &size, NULL, 0) < 0) {
-		    	printf("Can't get kerninfo: %s\n", strerror(errno));
+			warn("could not read kern.nselcoll");
 			nselcoll = 0;
 		}
+	} else {
+		kread(X_NSELCOLL, &nselcoll, sizeof(nselcoll));
 	}
 	(void)printf("%11d select collisions\n", nselcoll);
 }
@@ -714,16 +720,16 @@ doforkst()
 	size_t size;
 	int mib[2];
 
-	if (nlist == NULL && memf == NULL) {
-		kread(X_FORKSTAT, &fks, sizeof(struct forkstat));
-	} else {
+	if (nlistf == NULL && memf == NULL) {
 		size = sizeof(struct forkstat);
 		mib[0] = CTL_KERN;
 		mib[1] = KERN_FORKSTAT;
 		if (sysctl(mib, 2, &fks, &size, NULL, 0) < 0) {
-		    	printf("Can't get kerninfo: %s\n", strerror(errno));
+			warn("could not read kern.forkstat");
 			bzero(&fks, sizeof(struct forkstat));
 		}
+	} else {
+		kread(X_FORKSTAT, &fks, sizeof(struct forkstat));
 	}
 
 	(void)printf("%d forks, %d pages, average %.2f\n",
@@ -780,38 +786,122 @@ cpustats()
 /* To get struct intrhand */
 #define _KERNEL
 #include <machine/psl.h>
+#include <machine/cpu.h>
 #undef _KERNEL
 void
 dointr()
 {
 	struct intrhand *intrhand[16], *ihp, ih;
-	u_long inttotal;
+	u_long inttotal = 0;
 	time_t uptime;
 	u_long intrstray[16];
 	char iname[17], fname[31];
-	int i;
+	int i, mib[2], l, incflag;
+	size_t size;
+	char *intrnames, *intrcount, *intrn, *intrc, *buf1, *buf2;
 
 	iname[16] = '\0';
 	uptime = getuptime();
-	kread(X_INTRHAND, intrhand, sizeof(intrhand));
-	kread(X_INTRSTRAY, intrstray, sizeof(intrstray));
 
 	(void)printf("interrupt             total     rate\n");
-	inttotal = 0;
-	for (i = 0; i < 16; i++) {
-		ihp = intrhand[i];
-		while (ihp) {
-			if (kvm_read(kd, (u_long)ihp, &ih, sizeof(ih)) != sizeof(ih))
-				errx(1, "vmstat: ih: %s", kvm_geterr(kd));
-			if (kvm_read(kd, (u_long)ih.ih_what, iname, 16) != 16)
-				errx(1, "vmstat: ih_what: %s", kvm_geterr(kd));
-			snprintf(fname, sizeof fname, "irq%d/%s", i, iname);
-			printf("%-16.16s %10lu %8lu\n", fname, ih.ih_count,
-			    ih.ih_count / uptime);
-			inttotal += ih.ih_count;
-			ihp = ih.ih_next;
+
+#if 0  /* XXX Something else is needed here....get on with it Theo! */
+	if (nlistf == NULL && memf == NULL) {
+	 	mib[0] = CTL_MACHDEP;
+		mib[1] = CPU_INTRNAMES;
+		size = 0;
+		if (sysctl(mib, 2, NULL, &size, NULL, 0) < 0)
+			err(1, "could not get machdep.intrnames");
+		intrnames = calloc(size, sizeof(char));
+		if (intrnames == NULL)
+			err(1,
+			    "could not allocate memory for interrupt names");
+		if (sysctl(mib, 2, intrnames, &size, NULL, 0) < 0)
+			err(1, "could not get machdep.intrnames");
+
+		mib[1] = CPU_INTRCOUNT;
+		size = 0;
+		if (sysctl(mib, 2, NULL, &size, NULL, 0) < 0)
+			err(1, "could not get machdep.intrcount");
+		intrcount = calloc(size, sizeof(char));
+		if (intrcount == NULL)
+			err(1,
+			    "could not allocate memory for interrupt count");
+		if (sysctl(mib, 2, intrcount, &size, NULL, 0) < 0)
+			err(1, "could not get machdep.intrcount");
+
+		mib[1] = CPU_INTRSTRAY;
+		size = sizeof(intrstray);
+		if (sysctl(mib, 2, intrstray, &size, NULL, 0) < 0) {
+			warn("could not get machdep.intrstray");
+			bzero(intrstray, sizeof(intrstray));
+		}
+
+		buf1 = intrnames;
+		buf2 = intrcount;
+		i = 0;
+		while ((intrn = strsep(&buf1, ",/")) != NULL) {
+			/* Find what the next delimiter is */
+			for (l = 0; buf2[l] != '\0'; l++) {
+				if (buf2[l] == '/') {
+					/* Don't increase the irq count */
+					incflag = 0;
+					break;
+				} else if (buf2[l] == ',') {
+					incflag = 1;
+					break;
+				}
+			}
+
+			if ((intrc = strsep(&buf2, ",/")) == NULL)
+				errx(1, "unexpected failure matching interrupts with usage counters");
+
+			/* Unused interrupt ? If so, skip this entry */
+			if (intrn[0] == '\0')	{
+				if (incflag)
+					i++;
+				continue;
+			}
+
+			snprintf(fname, sizeof fname, "irq%d/%s", i, intrn);
+			printf("%-16.16s %10lu %8lu\n", fname,
+			       strtoul(intrc, NULL, 10),
+			       strtoul(intrc, NULL, 10) / uptime);
+			inttotal += strtoul(intrc, NULL, 10);
+
+			if (incflag)
+				i++;
+		}
+
+		free(intrnames);
+		free(intrcount);
+	} else
+#endif /* 0 */
+	{
+		kread(X_INTRHAND, intrhand, sizeof(intrhand));
+		kread(X_INTRSTRAY, intrstray, sizeof(intrstray));
+
+		for (i = 0; i < 16; i++) {
+			ihp = intrhand[i];
+			while (ihp) {
+				if (kvm_read(kd, (u_long)ihp, &ih,
+					     sizeof(ih)) != sizeof(ih))
+					errx(1, "vmstat: ih: %s",
+					     kvm_geterr(kd));
+				if (kvm_read(kd, (u_long)ih.ih_what, iname,
+					     16) != 16)
+					errx(1, "vmstat: ih_what: %s",
+					     kvm_geterr(kd));
+				snprintf(fname, sizeof fname, "irq%d/%s", i,
+					 iname);
+				printf("%-16.16s %10lu %8lu\n", fname,
+				       ih.ih_count, ih.ih_count / uptime);
+				inttotal += ih.ih_count;
+				ihp = ih.ih_next;
+			}
 		}
 	}
+
 	for (i = 0; i < 16; i++)
 		if (intrstray[i]) {
 			printf("Stray irq %-2d     %10lu %8lu\n",
@@ -900,7 +990,7 @@ domem()
 		mib[2] = KERN_MALLOC_BUCKETS;
 		siz = sizeof(buf);
 		if (sysctl(mib, 3, buf, &siz, NULL, 0) < 0) {
-			printf("Could not acquire information on kernel memory bucket sizes.\n");
+			warnx("could not read kern.malloc.buckets");
 			return;
 		}
 
@@ -913,8 +1003,7 @@ domem()
 
 			if (sysctl(mib, 4, &buckets[MINBUCKET + i], &siz,
 			    NULL, 0) < 0) {
-				printf("Failed to read statistics for bucket %d.\n",
-				    mib[3]);
+				warn("could not read kern.malloc.bucket.%d", mib[3]);
 				return;
 			}
 			i++;
@@ -1162,6 +1251,7 @@ dopool_kvm(void)
 
 	while (addr != 0) {
 		char name[32];
+
 		if (kvm_read(kd, addr, (void *)pp, sizeof *pp) != sizeof *pp) {
 			(void)fprintf(stderr,
 			    "vmstat: pool chain trashed: %s\n",
@@ -1174,12 +1264,14 @@ dopool_kvm(void)
 			    kvm_geterr(kd));
 			exit(1);
 		}
+
 		name[31] = '\0';
 
 		print_pool(pp, name);
 
 		inuse += (pp->pr_nget - pp->pr_nput) * pp->pr_size;
 		total += pp->pr_npages * pp->pr_pagesz;
+
 		addr = (long)TAILQ_NEXT(pp, pr_poollist);
 	}
 
@@ -1221,4 +1313,3 @@ usage()
 	    "[-N system] [-w wait] [disks]\n", __progname);
 	exit(1);
 }
-
