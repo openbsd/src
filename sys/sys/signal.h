@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.h,v 1.4 1996/09/20 07:27:52 deraadt Exp $	*/
+/*	$OpenBSD: signal.h,v 1.5 1996/10/29 01:35:57 tholo Exp $	*/
 /*	$NetBSD: signal.h,v 1.21 1996/02/09 18:25:32 christos Exp $	*/
 
 /*
@@ -98,19 +98,13 @@
 #define SIGUSR1 30	/* user defined signal 1 */
 #define SIGUSR2 31	/* user defined signal 2 */
 
-#if defined(_ANSI_SOURCE) || defined(__cplusplus) || defined(_KERNEL)
 /*
  * Language spec sez we must list exactly one parameter, even though we
  * actually supply three.  Ugh!
  */
-#define	SIG_DFL		(void (*)(int))0
-#define	SIG_IGN		(void (*)(int))1
-#define	SIG_ERR		(void (*)(int))-1
-#else
-#define	SIG_DFL		(void (*)())0
-#define	SIG_IGN		(void (*)())1
-#define	SIG_ERR		(void (*)())-1
-#endif
+#define	SIG_DFL		(void (*)__P((int)))0
+#define	SIG_IGN		(void (*)__P((int)))1
+#define	SIG_ERR		(void (*)__P((int)))-1
 
 #ifndef _ANSI_SOURCE
 typedef unsigned int sigset_t;
@@ -119,12 +113,7 @@ typedef unsigned int sigset_t;
  * Signal vector "template" used in sigaction call.
  */
 struct	sigaction {
-	void	(*sa_handler)		/* signal handler */
-#ifdef _KERNEL
-			    __P((int));
-#else
-			    __P(());
-#endif
+	void	(*sa_handler) __P((int)); /* signal handler */
 	sigset_t sa_mask;		/* signal mask to apply */
 	int	sa_flags;		/* see signal options below */
 };
@@ -170,12 +159,7 @@ struct	sigaltstack {
  * Signal vector "template" used in sigvec call.
  */
 struct	sigvec {
-	void	(*sv_handler)		/* signal handler */
-#ifdef _KERNEL
-			    __P((int));
-#else
-			    __P(());
-#endif
+	void	(*sv_handler) __P((int)); /* signal handler */
 	int	sv_mask;		/* signal mask to apply */
 	int	sv_flags;		/* see signal options below */
 };
