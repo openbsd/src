@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_kern.c,v 1.27 2003/05/13 16:49:32 marc Exp $	*/
+/*	$OpenBSD: uthread_kern.c,v 1.28 2004/04/09 23:57:17 brad Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -795,7 +795,9 @@ _thread_kern_poll(int wait_reqd)
 			/* File descriptor read wait: */
 			case PS_FDR_WAIT:
 				if ((nfds < _thread_dtablesize) &&
-				    (_thread_pfd_table[nfds].revents & POLLRDNORM)) {
+				    (_thread_pfd_table[nfds].revents
+				       & (POLLRDNORM|POLLERR|POLLHUP|POLLNVAL))
+				      != 0) {
 					PTHREAD_WAITQ_CLEARACTIVE();
 					PTHREAD_WORKQ_REMOVE(pthread);
 					PTHREAD_NEW_STATE(pthread,PS_RUNNING);
@@ -807,7 +809,9 @@ _thread_kern_poll(int wait_reqd)
 			/* File descriptor write wait: */
 			case PS_FDW_WAIT:
 				if ((nfds < _thread_dtablesize) &&
-				    (_thread_pfd_table[nfds].revents & POLLWRNORM)) {
+				    (_thread_pfd_table[nfds].revents
+				       & (POLLWRNORM|POLLERR|POLLHUP|POLLNVAL))
+				      != 0) {
 					PTHREAD_WAITQ_CLEARACTIVE();
 					PTHREAD_WORKQ_REMOVE(pthread);
 					PTHREAD_NEW_STATE(pthread,PS_RUNNING);
