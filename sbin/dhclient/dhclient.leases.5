@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhclient.leases.5,v 1.1 2004/01/18 01:26:20 deraadt Exp $
+.\"	$OpenBSD: dhclient.leases.5,v 1.2 2004/04/08 15:40:43 henning Exp $
 .\"
 .\" Copyright (c) 1997 The Internet Software Consortium.
 .\" All rights reserved.
@@ -51,10 +51,24 @@ If more than one declaration appears for a given lease,
 the last one in the file is used.
 The file is written as a log, so this is not an unusual occurrence.
 .Pp
+The lease file is named
+.Qq dhclient.leases.IFNAME ,
+where
+.Qq IFNAME
+represents the network interface the DHCP client acquired the lease on.
+For example, if
+.Xr dhclient 8
+is configured for the em0 network device,
+the lease file will be named
+.Qq dhclient.leases.em0 .
+.Pp
 The format of the lease declarations is described in
 .Xr dhclient.conf 5 .
 .Sh FILES
-/var/db/dhclient.leases
+.Bl -tag -width "/var/db/dhclient.leases.IFNAME   "
+.It /var/db/dhclient.leases.IFNAME
+Current lease file.
+.El
 .Sh SEE ALSO
 .Xr dhclient.conf 5 ,
 .Xr dhcp-options 5 ,
