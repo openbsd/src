@@ -1,5 +1,5 @@
 #
-# $Id: Makefile.in,v 1.1 2000/10/10 20:40:10 beck Exp $
+# $Id: Makefile.in,v 1.2 2002/12/13 03:12:26 millert Exp $
 #
 ## Makefile for mkhybrid - based on mkisofs v1.12
 # James Pearson 16/3/1999
@@ -46,7 +46,6 @@ CFLAGS=$(COPTS) $(DEFINES) -I. -Iinclude -I$(libhfsdir) -DVANILLA_AUTOCONF
 LDFLAGS=@LDFLAGS@ -L$(libhfsdir) -L$(libfiledir)
 OBJS=mkisofs.o tree.o write.o hash.o rock.o multi.o \
 		joliet.o match.o name.o fnmatch.o eltorito.o \
-		getopt.o getopt1.o \
 		apple.o volume.o desktop.o mac_label.o
 
 World: mkhybrid
@@ -109,12 +108,6 @@ mkisofs.o: mkisofs.c iso9660.h mkisofs.h exclude.h config.h Makefile $(LIBHFS) $
 
 eltorito.o: eltorito.c iso9660.h mkisofs.h config.h Makefile
 	$(CC) -c $(CFLAGS) $(srcdir)/eltorito.c
-
-getopt.o: getopt.c exclude.h config.h Makefile
-	$(CC) -c $(CFLAGS) $(srcdir)/getopt.c
-
-getopt1.o: getopt1.c exclude.h config.h Makefile
-	$(CC) -c $(CFLAGS) $(srcdir)/getopt1.c
 
 apple.o: apple.c apple.h Makefile mkisofs.h
 	$(CC) -c $(CFLAGS) $(srcdir)/apple.c
