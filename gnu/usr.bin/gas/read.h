@@ -1,3 +1,5 @@
+/*	$OpenBSD: read.h,v 1.2 1998/02/15 18:48:59 niklas Exp $	*/
+
 /* read.h - of read.c
 
    Copyright (C) 1986, 1990, 1992 Free Software Foundation, Inc.
@@ -17,10 +19,6 @@
    You should have received a copy of the GNU General Public License
    along with GAS; see the file COPYING.  If not, write to
    the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
-/*
- * $Id: read.h,v 1.1.1.1 1995/10/18 08:38:59 deraadt Exp $
- */
-
 
 extern char *input_line_pointer; /* -> char we are parsing now. */
 

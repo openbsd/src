@@ -1,3 +1,5 @@
+/*	$OpenBSD: ho-vms.h,v 1.2 1998/02/15 18:49:21 niklas Exp $	*/
+
 /* ho-vax.h  Intended for vax vms
    Copyright (C) 1987, 1991, 1992 Free Software Foundation, Inc.
    

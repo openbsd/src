@@ -1,3 +1,5 @@
+/*	$OpenBSD: obj.h,v 1.2 1998/02/15 18:48:55 niklas Exp $	*/
+
 /* obj.h - defines the object dependent hooks for all object
    format backends.
    
@@ -18,10 +20,6 @@
    You should have received a copy of the GNU General Public License
    along with GAS; see the file COPYING.  If not, write to
    the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
-/*
- * $Id: obj.h,v 1.1.1.1 1995/10/18 08:38:57 deraadt Exp $
- */
-
 
 #if __STDC__ == 1
 

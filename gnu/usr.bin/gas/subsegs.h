@@ -1,3 +1,5 @@
+/*	$OpenBSD: subsegs.h,v 1.2 1998/02/15 18:49:01 niklas Exp $	*/
+
 /* subsegs.h -> subsegs.c
 
    Copyright (C) 1987, 1992 Free Software Foundation, Inc.
@@ -17,10 +19,6 @@
    You should have received a copy of the GNU General Public License
    along with GAS; see the file COPYING.  If not, write to
    the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
-/*
- * $Id: subsegs.h,v 1.1.1.1 1995/10/18 08:39:00 deraadt Exp $
- */
-
 
 /*
  * For every sub-segment the user mentions in the ASsembler program,

@@ -1,3 +1,5 @@
+/*	$OpenBSD: hash.h,v 1.2 1998/02/15 18:48:50 niklas Exp $	*/
+
 /* hash.h - for hash.c
    Copyright (C) 1987, 1992 Free Software Foundation, Inc.
    
@@ -16,10 +18,6 @@
    You should have received a copy of the GNU General Public License
    along with GAS; see the file COPYING.  If not, write to
    the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
-/*
- * $Id: hash.h,v 1.1.1.1 1995/10/18 08:38:58 deraadt Exp $
- */
-
 
 #ifndef hashH
 #define hashH

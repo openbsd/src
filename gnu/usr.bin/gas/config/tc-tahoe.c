@@ -1,3 +1,5 @@
+/*	$OpenBSD: tc-tahoe.c,v 1.2 1998/02/15 18:49:45 niklas Exp $	*/
+
 /* tc-tahoe.c
    Not part of GAS yet. */
 

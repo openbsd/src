@@ -1,3 +1,5 @@
+/*	$OpenBSD: h8300.h,v 1.2 1998/02/15 18:50:02 niklas Exp $	*/
+
 /* Opcode table for the H8-300
    Copyright (C) 1991,1992 Free Software Foundation.
    Written by Steve Chamberlain, sac@cygnus.com.

@@ -1,3 +1,5 @@
+/*	$OpenBSD: ns32k.h,v 1.2 1998/02/15 18:50:06 niklas Exp $	*/
+
 /* ns32k-opcode.h -- Opcode table for National Semi 32k processor
    Copyright (C) 1987 Free Software Foundation, Inc.
 

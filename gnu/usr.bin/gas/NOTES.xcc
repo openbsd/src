@@ -1,0 +1,24 @@
+$OpenBSD: NOTES.xcc,v 1.1 1998/02/15 18:48:40 niklas Exp $
+$NetBSD: NOTES.xcc,v 1.1 1997/09/19 01:03:40 jeremy Exp $
+Notes for creating Cross-Assemblers on NetBSD
+=============================================
+
+If your build host runs NetBSD, it is relatively painless to create a
+cross-assembler in this directory.
+
+To create a cross-assembler:
+1.	Set the environment variable ``TARGET_MACHINE_ARCH'' to the
+	desired target architecture:
+		sparc, m68k, i386, ns32k, vax, or powerpc
+
+	If your target is an m68k machine, you must edit config/tc-m68k.h.
+	* Remove the line ``#include <machine/param.h>''.
+	* Replace ``MID_MACHINE'' in the line:
+		#define AOUT_MACHTYPE MID_MACHINE
+	  with:
+		MID_M68K	(for m68k 8k page machine targets)
+		MID_M68K4K	(for m68k 4k page machine targets)
+	  If you are unsure which of these applies to your target, examine
+	  $(BSDSRCDIR)/sys/arch/<target-machine>/include/param.h
+
+2.	Run ``make''.

@@ -1,3 +1,5 @@
+/*	$OpenBSD: cplus-dem.c,v 1.2 1998/02/15 18:49:13 niklas Exp $	*/
+
 /* Demangler for GNU C++ 
    Copyright (C) 1989, 1992 Free Software Foundation, Inc.
    written by James Clark (jjc@jclark.uucp)

@@ -1,3 +1,5 @@
+/*	$OpenBSD: obj-ieee.h,v 1.2 1998/02/15 18:49:31 niklas Exp $	*/
+
 /* This file is obj-ieee.h
 
    Copyright (C) 1987-1992 Free Software Foundation, Inc.

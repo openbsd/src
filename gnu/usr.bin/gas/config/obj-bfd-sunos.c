@@ -1,3 +1,5 @@
+/*	$OpenBSD: obj-bfd-sunos.c,v 1.2 1998/02/15 18:49:23 niklas Exp $	*/
+
 /* obj-bfd-sunos.c
    Copyright (C) 1987, 1992 Free Software Foundation, Inc.
    

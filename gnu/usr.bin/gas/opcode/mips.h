@@ -1,3 +1,5 @@
+/*	$OpenBSD: mips.h,v 1.2 1998/02/15 18:50:05 niklas Exp $	*/
+
 /* Mips opcde list for GDB, the GNU debugger.
    Copyright (C) 1989 Free Software Foundation, Inc.
    Contributed by Nobuyuki Hikichi(hikichi@sra.junet)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: read.c,v 1.4 1997/11/05 09:42:15 deraadt Exp $	*/
+/*	$OpenBSD: read.c,v 1.5 1998/02/15 18:48:58 niklas Exp $	*/
 
 /* read.c - read a source file -
 
@@ -21,7 +21,7 @@
    the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: read.c,v 1.4 1997/11/05 09:42:15 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: read.c,v 1.5 1998/02/15 18:48:58 niklas Exp $";
 #endif
 
 #define MASK_CHAR (0xFF)	/* If your chars aren't 8 bits, you will
@@ -939,8 +939,20 @@ int needs_align;	/* 1 if this was a ".bss" directive, which may require
 			as_warn("Alignment negative. 0 assumed.");
 		}
 		record_alignment(SEG_BSS, align);
-	} /* if needs align */
-	
+	} else { /* if needs align */
+		/* FIXME. This needs to be machine independent. */
+		if (temp >= 8)
+			align = 3;
+		else if (temp >= 4)
+			align = 2;
+		else if (temp >= 2)
+			align = 1;
+		else
+			align = 0;
+		needs_align = 1;
+	} /* if !needs align */
+	record_alignment(SEG_BSS, align);
+
 	*p = 0;
 	symbolP = symbol_find_or_make(name);
 	*p = c;

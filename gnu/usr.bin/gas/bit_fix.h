@@ -1,3 +1,5 @@
+/*	$OpenBSD: bit_fix.h,v 1.2 1998/02/15 18:48:43 niklas Exp $	*/
+
 /* write.h
 
    Copyright (C) 1987, 1992 Free Software Foundation, Inc.
@@ -17,10 +19,6 @@
    You should have received a copy of the GNU General Public License
    along with GAS; see the file COPYING.  If not, write to
    the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
-/*
- * $Id: bit_fix.h,v 1.1.1.1 1995/10/18 08:38:57 deraadt Exp $
- */
-
 
 /* The bit_fix was implemented to support machines that need variables
    to be inserted in bitfields other than 1, 2 and 4 bytes. 

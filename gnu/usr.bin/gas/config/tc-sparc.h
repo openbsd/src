@@ -1,3 +1,5 @@
+/*	$OpenBSD: tc-sparc.h,v 1.3 1998/02/15 18:49:44 niklas Exp $	*/
+
 /* tc-sparc.h - Macros and type defines for the sparc.
    Copyright (C) 1989, 1990, 1991, 1992 Free Software Foundation, Inc.
    
@@ -16,10 +18,6 @@
    You should have received a copy of the GNU General Public
    License along with GAS; see the file COPYING.  If not, write
    to the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
-
-/*
- * $Id: tc-sparc.h,v 1.2 1997/02/17 09:03:32 niklas Exp $
- */
 
 #define TC_SPARC 1
 

@@ -1,3 +1,5 @@
+/*	$OpenBSD: tc-m88k.h,v 1.2 1998/02/15 18:49:39 niklas Exp $	*/
+
 /* m88k.h -- Assembler for the Motorola 88000
    Contributed by Devon Bowen of Buffalo University
    and Torbjorn Granlund of the Swedish Institute of Computer Science.

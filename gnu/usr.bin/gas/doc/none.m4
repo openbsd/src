@@ -1,5 +1,5 @@
 _divert__(-1)
-<$Id: none.m4,v 1.1.1.1 1995/10/18 08:39:09 deraadt Exp $>
+<$OpenBSD: none.m4,v 1.2 1998/02/15 18:49:59 niklas Exp $>
 
 Switches:
 

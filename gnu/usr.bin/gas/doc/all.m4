@@ -1,5 +1,5 @@
 _divert__(-1)
-<$Id: all.m4,v 1.1.1.1 1995/10/18 08:39:08 deraadt Exp $>
+<$OpenBSD: all.m4,v 1.2 1998/02/15 18:49:55 niklas Exp $>
 _define__(<_ALL_ARCH__>,<1>)
 _define__(<_GENERIC__>,<1>)	In case none.m4 changes its mind abt default
 

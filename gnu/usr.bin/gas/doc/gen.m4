@@ -1,5 +1,5 @@
 _divert__(-1)
-<$Id: gen.m4,v 1.1.1.1 1995/10/18 08:39:09 deraadt Exp $>
+<$OpenBSD: gen.m4,v 1.2 1998/02/15 18:49:58 niklas Exp $>
 _define__(<_GENERIC__>,<1>)	In case none.m4 changes its mind abt default
 
 _define__(<_AOUT__>,<1>)

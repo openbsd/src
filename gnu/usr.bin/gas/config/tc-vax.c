@@ -1,3 +1,5 @@
+/*	$OpenBSD: tc-vax.c,v 1.2 1998/02/15 18:49:47 niklas Exp $	*/
+
 /* tc-vax.c - vax-specific -
    Copyright (C) 1987, 1991, 1992 Free Software Foundation, Inc.
    

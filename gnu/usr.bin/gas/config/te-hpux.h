@@ -1,3 +1,5 @@
+/*	$OpenBSD: te-hpux.h,v 1.2 1998/02/15 18:49:49 niklas Exp $	*/
+
 /* Special version of <a.out.h> for use under hp-ux.
    Copyright (C) 1988, 1992 Free Software Foundation, Inc.
 

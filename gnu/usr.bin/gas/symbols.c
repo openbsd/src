@@ -1,3 +1,5 @@
+/*	$OpenBSD: symbols.c,v 1.2 1998/02/15 18:49:01 niklas Exp $	*/
+
 /* symbols.c -symbol table-
 
    Copyright (C) 1987, 1990, 1991, 1992 Free Software Foundation, Inc.
@@ -19,7 +21,7 @@
    the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 #ifndef lint
-static char rcsid[] = "$Id: symbols.c,v 1.1.1.1 1995/10/18 08:39:00 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: symbols.c,v 1.2 1998/02/15 18:49:01 niklas Exp $";
 #endif
 
 #include "as.h"

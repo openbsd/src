@@ -1,3 +1,5 @@
+/*	$OpenBSD: te-ic960.h,v 1.2 1998/02/15 18:49:50 niklas Exp $	*/
+
 /* This file is twe-ic960.h
 
    Copyright (C) 1987-1992 Free Software Foundation, Inc.

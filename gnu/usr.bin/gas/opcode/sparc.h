@@ -1,3 +1,4 @@
+/*	$OpenBSD: sparc.h,v 1.2 1998/02/15 18:50:09 niklas Exp $	*/
 
 /* Table of opcodes for the sparc.
 	Copyright 1989, 1991, 1992 Free Software Foundation, Inc.
@@ -18,10 +19,6 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with GAS or GDB; see the file COPYING.	If not, write to
 the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.	*/
-
-/*
- * $Id: sparc.h,v 1.1.1.1 1995/10/18 08:39:10 deraadt Exp $
- */
 
  /* FIXME-someday: perhaps the ,a's and such should be embedded in the
     instruction's name rather than the args.  This would make gas faster, pinsn
@@ -777,6 +774,7 @@ condfc("fbule",	"cb013", 0xe, 0),
 { "unimp",	F2(0x0, 0x0), 0xffc00000, "n", 0, v6 },
 
 { "iflush",	F3(2, 0x3b, 0), F3(~2, ~0x3b, ~0)|ASI(~0),	"1+2", 0, v6 },
+{ "iflush",	F3(2, 0x3b, 0), F3(~2, ~0x3b, ~0)|SIMM13(~0),	"1", 0, v6 },
 { "iflush",	F3(2, 0x3b, 1), F3(~2, ~0x3b, ~1),		"1+i", 0, v6 },
 { "iflush",	F3(2, 0x3b, 1), F3(~2, ~0x3b, ~1),		"i+1", 0, v6 },
 { "iflush",	F3(2, 0x3b, 1), F3(~2, ~0x3b, ~1)|RS1_G0,	"i", 0, v6 },

@@ -1,3 +1,5 @@
+/*	$OpenBSD: te-sequent.h,v 1.2 1998/02/15 18:49:51 niklas Exp $	*/
+
 /*
  * This file is te-sequent.h and is intended to set up emulation with
  * sequent's development tools.

@@ -1,3 +1,5 @@
+/*	$OpenBSD: a29k.h,v 1.2 1998/02/15 18:50:01 niklas Exp $	*/
+
 /* Table of opcodes for the AMD 29000
    Copyright (C) 1990, 1991 Free Software Foundation, Inc.
 
@@ -285,6 +287,9 @@ CONST unsigned int num_opcodes = (((sizeof a29k_opcodes) / (sizeof a29k_opcodes[
 
 /*
  * $Log: a29k.h,v $
+ * Revision 1.2  1998/02/15 18:50:01  niklas
+ * Merge of NetBSD changes + $OpenBSD$ tags
+ *
  * Revision 1.1.1.1  1995/10/18 08:39:09  deraadt
  * initial import of NetBSD tree
  *

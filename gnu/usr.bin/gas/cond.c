@@ -1,3 +1,5 @@
+/*	$OpenBSD: cond.c,v 1.2 1998/02/15 18:48:43 niklas Exp $	*/
+
 /* cond.c - conditional assembly pseudo-ops, and .include
    Copyright (C) 1990, 1991, 1992, 1993 Free Software Foundation, Inc.
 
@@ -18,7 +20,7 @@
    the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 #ifndef lint
-static char rcsid[] = "$Id: cond.c,v 1.1.1.1 1995/10/18 08:38:57 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: cond.c,v 1.2 1998/02/15 18:48:43 niklas Exp $";
 #endif
 
 #include "as.h"

@@ -1,4 +1,5 @@
+#	$OpenBSD: Makefile.vax,v 1.2 1998/02/15 18:49:09 niklas Exp $
+#	$NetBSD: Makefile.vax,v 1.4 1997/10/25 10:10:47 lukem Exp $
 #	from: @(#)Makefile.vax	6.1 (Berkeley) 3/3/91
-#	$Id: Makefile.vax,v 1.1.1.1 1995/10/18 08:39:01 deraadt Exp $
 
 SRCS+=		tc-vax.c atof-vax.c

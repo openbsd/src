@@ -1,3 +1,5 @@
+/*	$OpenBSD: tc-m68k.h,v 1.2 1998/02/15 18:49:37 niklas Exp $	*/
+
 /* This file is tc-m68k.h
 
    Copyright (C) 1987-1992 Free Software Foundation, Inc.
@@ -25,7 +27,6 @@
 
 #define	MID_M68K	135
 #define	MID_M68K4K	136
-#include <machine/param.h>
 
 #define TC_M68K 1
 
@@ -33,7 +34,7 @@
 #define REVERSE_SORT_RELOCS
 #endif /* OLD_GAS */
 
-#define AOUT_MACHTYPE MID_MACHINE
+#define AOUT_MACHTYPE MID_M68K
 #define LOCAL_LABELS_FB
     
 #define tc_crawl_symbol_chain(a)	{;} /* not used */

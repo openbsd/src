@@ -1,3 +1,5 @@
+#	$OpenBSD: Makefile.in,v 1.2 1998/02/15 18:48:39 niklas Exp $
+
 # Makefile for GNU Assembler
 #   Copyright (C) 1987-1992 Free Software Foundation, Inc.
 

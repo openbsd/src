@@ -1,3 +1,5 @@
+/*	$OpenBSD: tc-i860.h,v 1.2 1998/02/15 18:49:36 niklas Exp $	*/
+
 /*
  * This file is tc-i860.h.
  */

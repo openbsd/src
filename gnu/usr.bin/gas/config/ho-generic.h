@@ -1,3 +1,5 @@
+/*	$OpenBSD: ho-generic.h,v 1.2 1998/02/15 18:49:14 niklas Exp $	*/
+
 /* ho-generic.h  Generic host-specific header file.
    Copyright 1987, 1991, 1992 Free Software Foundation, Inc.
    
@@ -25,6 +27,6 @@
 
 #define HAVE_STRERROR
 
-extern int free();
+extern void free();
 
 /* end of ho-generic.h */

@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: doboth,v 1.1.1.1 1995/10/18 08:39:10 deraadt Exp $
+# $OpenBSD: doboth,v 1.2 1998/02/15 18:50:11 niklas Exp $
 
 x=$1 ; shift
 y=$1 ; shift

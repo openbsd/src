@@ -1,8 +1,8 @@
+` $OpenBSD: pretex.m4,v 1.2 1998/02/15 18:49:59 niklas Exp $'
 divert(-1)				-*-Text-*-
 ` Copyright (c) 1991 Free Software Foundation, Inc.'
 ` This file defines and documents the M4 macros used '
 `      to preprocess some GNU manuals'
-` $Id: pretex.m4,v 1.1.1.1 1995/10/18 08:39:09 deraadt Exp $'
 
 I. INTRODUCTION
 

@@ -1,3 +1,5 @@
+/*	$OpenBSD: input-scrub.c,v 1.2 1998/02/15 18:48:53 niklas Exp $	*/
+
 /* input_scrub.c - Break up input buffers into whole numbers of lines.
    Copyright (C) 1987, 1990, 1991, 1992 Free Software Foundation, Inc.
 
@@ -18,7 +20,7 @@
    the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
 
 #ifndef lint
-static char rcsid[] = "$Id: input-scrub.c,v 1.1.1.1 1995/10/18 08:38:58 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: input-scrub.c,v 1.2 1998/02/15 18:48:53 niklas Exp $";
 #endif
 
 #include <errno.h>		/* Need this to make errno declaration right */

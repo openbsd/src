@@ -1,3 +1,5 @@
+/*	$OpenBSD: output-file.c,v 1.2 1998/02/15 18:48:57 niklas Exp $	*/
+
 /* output-file.c -  Deal with the output file
    Copyright (C) 1987, 1990, 1991, 1992 Free Software Foundation, Inc.
    
@@ -27,7 +29,7 @@
 /* note that we do need config info.  xoxorich. */
 
 #ifndef lint
-static char rcsid[] = "$Id: output-file.c,v 1.1.1.1 1995/10/18 08:38:59 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: output-file.c,v 1.2 1998/02/15 18:48:57 niklas Exp $";
 #endif
 
 #include <stdio.h>

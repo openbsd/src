@@ -1,3 +1,5 @@
+/*	$OpenBSD: te-dpx2.h,v 1.2 1998/02/15 18:49:48 niklas Exp $	*/
+
 /* Machine specific defines for the dpx2 machine */
 #define dpx2
 #define TC_M68K

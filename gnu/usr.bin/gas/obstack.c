@@ -1,3 +1,5 @@
+/*	$OpenBSD: obstack.c,v 1.2 1998/02/15 18:48:56 niklas Exp $	*/
+
 /* obstack.c - subroutines used implicitly by object stack macros
    Copyright (C) 1988 Free Software Foundation, Inc.
 
@@ -16,7 +18,7 @@ along with this program; if not, write to the Free Software
 Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 #ifndef lint
-static char rcsid[] = "$Id: obstack.c,v 1.1.1.1 1995/10/18 08:38:59 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: obstack.c,v 1.2 1998/02/15 18:48:56 niklas Exp $";
 #endif
 
 #include "obstack.h"

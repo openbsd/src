@@ -1,3 +1,5 @@
+/*	$OpenBSD: m68k.h,v 1.2 1998/02/15 18:50:04 niklas Exp $	*/
+
 /* Opcode table for m680[01234]0/m6888[12]/m68851.
    Copyright (C) 1989, 1991 Free Software Foundation.
 

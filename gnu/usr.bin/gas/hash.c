@@ -1,3 +1,5 @@
+/*	$OpenBSD: hash.c,v 1.2 1998/02/15 18:48:49 niklas Exp $	*/
+
 /* hash.c - hash table lookup strings -
    Copyright (C) 1987, 1990, 1991, 1992 Free Software Foundation, Inc.
    
@@ -123,7 +125,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: hash.c,v 1.1.1.1 1995/10/18 08:38:58 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: hash.c,v 1.2 1998/02/15 18:48:49 niklas Exp $";
 #endif
 
 #include <stdio.h>

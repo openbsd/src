@@ -1,5 +1,5 @@
+#	$OpenBSD: Makefile.mvme88k,v 1.2 1998/02/15 18:49:06 niklas Exp $
 #	from: @(#)Makefile.hp300	6.1 (Berkeley) 3/3/91
-#	$Id: Makefile.mvme88k,v 1.1 1997/04/23 21:24:39 rahnds Exp $
 
-#CFLAGS+=	-DPIC
+#CPPFLAGS+=	-DPIC
 SRCS+=		tc-mvme88k.c atof-ieee.c

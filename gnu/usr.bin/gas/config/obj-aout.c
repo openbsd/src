@@ -1,3 +1,5 @@
+/*	$OpenBSD: obj-aout.c,v 1.3 1998/02/15 18:49:22 niklas Exp $	*/
+
 /* a.out object file format
    Copyright (C) 1989, 1990, 1991, 1992 Free Software Foundation, Inc.
    
@@ -477,7 +479,8 @@ object_headers *headers;
 			
 			symbolP->sy_aux |= symbolP->sy_forward->sy_aux;
 			symbolP->sy_sizexp = symbolP->sy_forward->sy_sizexp;
-			if (S_IS_EXTERNAL(symbolP->sy_forward))
+			if (S_IS_EXTERNAL(symbolP->sy_forward)
+			    && !S_IS_DEBUG(symbolP))
 				S_SET_EXTERNAL(symbolP);
 		} /* if it has a forward reference */
 		symbolP->sy_forward=0;

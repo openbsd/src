@@ -1,3 +1,5 @@
+/*	$OpenBSD: obj-ieee.c,v 1.2 1998/02/15 18:49:30 niklas Exp $	*/
+
 /* obj-format for ieee-695 records.
    Copyright (C) 1991, 1992 Free Software Foundation, Inc.
    

@@ -1,3 +1,5 @@
+/*	$OpenBSD: ho-decstation.h,v 1.2 1998/02/15 18:49:14 niklas Exp $	*/
+
 /* ho-pmax.h  Host-specific header file for decstation 3100.
    Copyright (C) 1987, 1990, 1991, 1992 Free Software Foundation, Inc.
    

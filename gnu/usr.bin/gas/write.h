@@ -1,3 +1,5 @@
+/*	$OpenBSD: write.h,v 1.2 1998/02/15 18:49:02 niklas Exp $	*/
+
 /* write.h
 
    Copyright (C) 1987, 1992 Free Software Foundation, Inc.

@@ -1,3 +1,5 @@
+/*	$OpenBSD: subsegs.c,v 1.2 1998/02/15 18:49:00 niklas Exp $	*/
+
 /* subsegs.c - subsegments -
    Copyright (C) 1987, 1990, 1991, 1992 Free Software Foundation, Inc.
    
@@ -22,7 +24,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: subsegs.c,v 1.1.1.1 1995/10/18 08:39:00 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: subsegs.c,v 1.2 1998/02/15 18:49:00 niklas Exp $";
 #endif
 
 #include "as.h"

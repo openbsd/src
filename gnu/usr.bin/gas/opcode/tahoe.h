@@ -1,3 +1,5 @@
+/*	$OpenBSD: tahoe.h,v 1.2 1998/02/15 18:50:09 niklas Exp $	*/
+
 /* tahoe-opcode.h - tahoe-specific
  * Not part of GAS yet
  *

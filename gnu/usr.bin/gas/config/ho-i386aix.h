@@ -1,3 +1,5 @@
+/*	$OpenBSD: ho-i386aix.h,v 1.2 1998/02/15 18:49:16 niklas Exp $	*/
+
 /* ho-386aix.h  AIX PS/2 i386 specific header file.
    Copyright (C) 1987, 1991, 1992 Free Software Foundation, Inc.
    

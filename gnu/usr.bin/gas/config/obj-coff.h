@@ -1,3 +1,5 @@
+/*	$OpenBSD: obj-coff.h,v 1.2 1998/02/15 18:49:27 niklas Exp $	*/
+
 /* coff object file format
    Copyright (C) 1989, 1990, 1991, 1992 Free Software Foundation, Inc.
    

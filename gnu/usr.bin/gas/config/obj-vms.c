@@ -1,3 +1,5 @@
+/*	$OpenBSD: obj-vms.c,v 1.2 1998/02/15 18:49:32 niklas Exp $	*/
+
 /* vms.c -- Write out a VAX/VMS object file
    Copyright (C) 1987, 1988, 1992 Free Software Foundation, Inc.
 

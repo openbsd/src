@@ -1,3 +1,5 @@
+/*	$OpenBSD: tc-tahoe.h,v 1.2 1998/02/15 18:49:46 niklas Exp $	*/
+
 /* This file is tc-tahoe.h
 
    Copyright (C) 1987-1992 Free Software Foundation, Inc.

@@ -1,3 +1,5 @@
+/*	$OpenBSD: input-file.h,v 1.2 1998/02/15 18:48:52 niklas Exp $	*/
+
 /* input_file.h header for input-file.c
    Copyright (C) 1987, 1992 Free Software Foundation, Inc.
    
@@ -18,11 +20,6 @@
    the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 /*"input_file.c":Operating-system dependant functions to read source files.*/
-
-/*
- * $Id: input-file.h,v 1.1.1.1 1995/10/18 08:38:58 deraadt Exp $
- */
-
 
 /*
  * No matter what the operating system, this module must provide the

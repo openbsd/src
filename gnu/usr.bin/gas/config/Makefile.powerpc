@@ -1,0 +1,5 @@
+#	$OpenBSD: Makefile.powerpc,v 1.1 1998/02/15 18:49:07 niklas Exp $
+#	$NetBSD: Makefile.powerpc,v 1.2 1997/10/25 10:10:44 lukem Exp $
+
+CPPFLAGS+=	-DNON_BROKEN_WORDS -DPIC
+SRCS+=		tc-powerpc.c atof-ieee.c

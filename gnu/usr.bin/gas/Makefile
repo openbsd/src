@@ -1,17 +1,29 @@
-#	$OpenBSD: Makefile,v 1.2 1996/08/20 05:14:07 tholo Exp $
-#	$NetBSD: Makefile,v 1.17 1995/04/23 07:58:35 cgd Exp $
+#	$OpenBSD: Makefile,v 1.3 1998/02/15 18:48:39 niklas Exp $
+#	$NetBSD: Makefile,v 1.25 1997/10/25 10:10:35 lukem Exp $
 #	@(#)Makefile	6.1 (Berkeley) 3/3/91
+TARGET_MACHINE_ARCH?=	$(MACHINE_ARCH)
 
-.include "config/Makefile.$(MACHINE_ARCH)"
+.if	(${TARGET_MACHINE_ARCH} == "i386") || \
+	(${TARGET_MACHINE_ARCH} == "m68k") || \
+	(${TARGET_MACHINE_ARCH} == "ns32k") || \
+	(${TARGET_MACHINE_ARCH} == "sparc") || \
+	(${TARGET_MACHINE_ARCH} == "vax")
+.if exists(config/Makefile.$(TARGET_MACHINE_ARCH))
+.include "config/Makefile.$(TARGET_MACHINE_ARCH)"
+.endif
 
 .if !defined (gas_hosttype)
 gas_hosttype=$(MACHINE_ARCH)
 .endif
 .if !defined (gas_target)
-gas_target=$(MACHINE_ARCH)
+gas_target=$(TARGET_MACHINE_ARCH)
 .endif
 .if !defined (gas_objformat)
 gas_objformat=aout
+.endif
+
+.if ($(TARGET_MACHINE_ARCH) != $(MACHINE_ARCH))
+CPPFLAGS+=	-DCROSS_COMPILE
 .endif
 
 ADDINCLUDE=-I${.OBJDIR}
@@ -23,7 +35,7 @@ SRCS+=		app.c as.c atof-generic.c bignum-copy.c \
 		listing.c messages.c obstack.c output-file.c read.c subsegs.c \
 		symbols.c version.c write.c xmalloc.c xrealloc.c \
 		obj-$(gas_objformat).c
-CFLAGS+=	-I$(.CURDIR) ${ADDINCLUDE} -I$(.CURDIR)/config \
+CPPFLAGS+=	-I$(.CURDIR) ${ADDINCLUDE} -I$(.CURDIR)/config \
 		-DOLD_GAS -DSIGTY=void -Derror=as_fatal \
 		-DNETBSD_AOUT
 
@@ -33,12 +45,12 @@ CONF_HEADERS=	targ-cpu.h obj-format.h host.h targ-env.h
 
 beforedepend ${PROG}: ${CONF_HEADERS}
 
-targ-cpu.h: Makefile config/Makefile.$(MACHINE_ARCH)
+targ-cpu.h: Makefile config/Makefile.$(TARGET_MACHINE_ARCH)
 	@cmp -s $(.CURDIR)/config/tc-$(gas_target).h targ-cpu.h || \
 	    ( echo "updating ${.TARGET}..." ; /bin/rm -f targ-cpu.h ; \
 	    cp $(.CURDIR)/config/tc-$(gas_target).h targ-cpu.h )
 
-obj-format.h: Makefile config/Makefile.$(MACHINE_ARCH)
+obj-format.h: Makefile config/Makefile.$(TARGET_MACHINE_ARCH)
 	@cmp -s $(.CURDIR)/config/obj-$(gas_objformat).h obj-format.h || \
 	    ( echo "updating ${.TARGET}..." ; /bin/rm -f obj-format.h ; \
 	    cp $(.CURDIR)/config/obj-$(gas_objformat).h obj-format.h )
@@ -54,17 +66,21 @@ host.h: Makefile config/Makefile.$(MACHINE_ARCH)
 	    ( echo "updating ${.TARGET}..." ; /bin/rm -f host.h ; \
 	    cp $(config_hostfile) host.h )
 
-.if exists ($(.CURDIR)/config/te-$(MACHINE_ARCH).h)
-config_targenvfile=	$(.CURDIR)/config/te-$(MACHINE_ARCH).h
+.if exists ($(.CURDIR)/config/te-$(TARGET_MACHINE_ARCH).h)
+config_targenvfile=	$(.CURDIR)/config/te-$(TARGET_MACHINE_ARCH).h
 .else
 config_targenvfile=	$(.CURDIR)/config/te-generic.h
 .endif
 
-targ-env.h: Makefile config/Makefile.$(MACHINE_ARCH)
+targ-env.h: Makefile config/Makefile.$(TARGET_MACHINE_ARCH)
 	@cmp -s $(config_targenvfile) targ-env.h || \
 	    ( echo "updating ${.TARGET}..." ; /bin/rm -f targ-env.h ; \
 	    cp $(config_targenvfile) targ-env.h )
 
 CLEANFILES+= ${CONF_HEADERS}
+
+.endif
+
+MAN=	as.1
 
 .include <bsd.prog.mk>

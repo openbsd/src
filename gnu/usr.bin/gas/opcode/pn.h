@@ -1,3 +1,5 @@
+/*	$OpenBSD: pn.h,v 1.2 1998/02/15 18:50:07 niklas Exp $	*/
+
 /* Print GOULD PN (PowerNode) instructions for GDB, the GNU debugger.
    Copyright (C) 1986, 1987, 1989 Free Software Foundation, Inc.
 

@@ -1,3 +1,5 @@
+/*	$OpenBSD: np1.h,v 1.2 1998/02/15 18:50:06 niklas Exp $	*/
+
 /* Print GOULD NPL instructions for GDB, the GNU debugger.
    Copyright (C) 1986, 1987, 1989 Free Software Foundation, Inc.
 
