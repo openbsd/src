@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.43 2003/04/25 18:30:18 drahn Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.44 2003/04/25 20:32:07 drahn Exp $	*/
 /*	$NetBSD: uvm_mmap.c,v 1.49 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -127,92 +127,11 @@ sys_sstk(p, v, retval)
  * off: offset within the file
  */
 
-int
-sys_mquery(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	struct sys_mquery_args /* {
-		syscallarg(caddr_t) addr;
-		syscallarg(size_t) len;
-		syscallarg(int) prot;
-		syscallarg(int) flags;
-		syscallarg(int) fd;
-		syscallarg(long) pad;
-		syscallarg(off_t) pos;
-	} */ *uap = v;
-	struct file *fp;
-	struct uvm_object *uobj;
-	voff_t uoff;
-	int error;
-	vaddr_t vaddr;
-	int flags = 0;
-	vsize_t size;
-	vm_prot_t prot;
-	int fd;
-
-	vaddr = (vaddr_t) SCARG(uap, addr);
-	prot = SCARG(uap, prot) & VM_PROT_ALL;
-	size = (vsize_t) SCARG(uap, len);
-	fd = SCARG(uap, fd);
-
-	if (SCARG(uap, flags) & MAP_FIXED)
-		flags |= UVM_FLAG_FIXED;
-
-	if (fd >= 0) {
-		if ((error = getvnode(p->p_fd, fd, &fp)) != 0)
-			return (error);
-		uobj = &((struct vnode *)fp->f_data)->v_uvm.u_obj;
-		uoff = SCARG(uap, pos);
-	} else {
-		fp = NULL;
-		uobj = NULL;
-		uoff = 0;
-	}
-
-	if (vaddr == 0)
-		vaddr = uvm_map_hint(p, prot);
-
-	/* prevent a user requested address from falling in heap space */
-	if ((vaddr + size > (vaddr_t)p->p_vmspace->vm_daddr) &&
-	    (vaddr < (vaddr_t)p->p_vmspace->vm_daddr + MAXDSIZ)) {
-		if (flags & UVM_FLAG_FIXED) {
-			error = EINVAL;
-			goto done;
-		}
-		vaddr = round_page((vaddr_t)p->p_vmspace->vm_daddr + MAXDSIZ);
-	}
-again:
-
-	if (uvm_map_findspace(&p->p_vmspace->vm_map, vaddr, size,
-	    &vaddr, uobj, uoff, 0, flags) == NULL) {
-		if (flags & UVM_FLAG_FIXED)
-			error = EINVAL;
-		else
-			error = ENOMEM;
-	} else {
-		/* prevent a returned address from falling in heap space */
-		if ((vaddr + size > (vaddr_t)p->p_vmspace->vm_daddr)
-		    && (vaddr < (vaddr_t)p->p_vmspace->vm_daddr + MAXDSIZ)) {
-			vaddr = round_page((vaddr_t)p->p_vmspace->vm_daddr +
-			    MAXDSIZ);
-			goto again;
-		}
-		error = 0;
-		*retval = (register_t)(vaddr);
-	}
-done:
-	if (fp != NULL)
-		FRELE(fp);
-	return (error);
-}
-
 /* ARGSUSED */
 int
-sys_omquery(struct proc *p, void *v, register_t *retval)
+sys_mquery(struct proc *p, void *v, register_t *retval)
 {
-	struct sys_omquery_args /* {
+	struct sys_mquery_args /* {
 		syscallarg(int) flags;
 		syscallarg(void **) addr;
 		syscallarg(size_t) size;
