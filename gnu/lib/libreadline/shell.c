@@ -102,20 +102,19 @@ set_lines_and_columns (lines, cols)
   char *b;
 
 #if defined (HAVE_PUTENV)
-  if (asprintf (&b, "LINES=%d", lines) == -1)
-	  memory_error_and_abort("asprintf");
+  b = xmalloc (24);
+  sprintf (b, "LINES=%d", lines);
   putenv (b);
   b = xmalloc (24);
-  if (asprintf (&b, "COLUMNS=%d", cols) == -1)
-	  memory_error_and_abort("asprintf");
+  sprintf (b, "COLUMNS=%d", cols);
   putenv (b);
 #else /* !HAVE_PUTENV */
 #  if defined (HAVE_SETENV)
-  if (asprintf(&b, "%d", lines) == -1)
-	  memory_error_and_abort("asprintf");
+  b = xmalloc (8);
+  sprintf (b, "%d", lines);
   setenv ("LINES", b, 1);
-  if (asprintf (&b, "%d", cols) == -1)
-	  memory_error_and_abort("asprintf");
+  b = xmalloc (8);
+  sprintf (b, "%d", cols);
   setenv ("COLUMNS", b, 1);
 #  endif /* HAVE_SETENV */
 #endif /* !HAVE_PUTENV */

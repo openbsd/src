@@ -128,20 +128,18 @@ _rl_copy_to_kill_ring (text, append)
   /* If the last command was a kill, prepend or append. */
   if (_rl_last_command_was_kill && rl_editing_mode != vi_mode)
     {
-      int len;
       old = rl_kill_ring[slot];
-      len = 1 + strlen (old) + strlen (text);
-      new = xmalloc (len);
+      new = xmalloc (1 + strlen (old) + strlen (text));
 
       if (append)
 	{
-	  strlcpy (new, old, len);
-	  strlcat (new, text, len);
+	  strcpy (new, old);
+	  strcat (new, text);
 	}
       else
 	{
-	  strlcpy (new, text, len);
-	  strlcat (new, old, len);
+	  strcpy (new, text);
+	  strcat (new, old);
 	}
       free (old);
       free (text);

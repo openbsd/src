@@ -63,9 +63,11 @@ extern struct passwd *getpwuid (), *getpwnam ();
 #endif /* !HAVE_GETPW_DECLS */
 
 #if !defined (savestring)
-extern char *xstrdup (char *);
-#define savestring(x) xstrdup(x)
-#endif /* !savestring  */
+#  ifndef strcpy
+extern char *strcpy ();
+#  endif
+#define savestring(x) strcpy (xmalloc (1 + strlen (x)), (x))
+#endif /* !savestring */
 
 #if !defined (NULL)
 #  if defined (__STDC__)
@@ -242,8 +244,7 @@ tilde_expand (string)
 	  if ((result_index + len + 1) > result_size)
 	    result = xrealloc (result, 1 + (result_size += (len + 20)));
 
-	  strlcpy (result + result_index, expansion,
-		   result_size - result_index);
+	  strcpy (result + result_index, expansion);
 	  result_index += len;
 	}
       free (expansion);
@@ -292,8 +293,8 @@ glue_prefix_and_suffix (prefix, suffix, suffind)
   slen = strlen (suffix + suffind);
   ret = xmalloc (plen + slen + 1);
   if (plen)
-    strlcpy (ret, prefix, plen + slen + 1);
-  strlcat (ret, suffix + suffind, plen + slen + 1);
+    strcpy (ret, prefix);
+  strcpy (ret + plen, suffix + suffind);
   return ret;
 }
 
@@ -395,7 +396,7 @@ main (argc, argv)
       fflush (stdout);
 
       if (!gets (line))
-	strlcpy (line, "done", sizeof(line));
+	strcpy (line, "done");
 
       if ((strcmp (line, "done") == 0) ||
 	  (strcmp (line, "quit") == 0) ||

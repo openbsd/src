@@ -88,7 +88,6 @@ history_filename (filename)
 {
   char *return_val, *home;
   int home_len;
-  char dot;
 
   return_val = filename ? savestring (filename) : (char *)NULL;
 
@@ -103,13 +102,15 @@ history_filename (filename)
   }
   home_len = strlen (home);
 
+  return_val = xmalloc (2 + home_len + 8); /* strlen(".history") == 8 */
+  strcpy (return_val, home);
+  return_val[home_len] = '/';
 #if defined (__MSDOS__)
-  dot = '_';
+  strcpy (return_val + home_len + 1, "_history");
 #else
-  dot = '.';
+  strcpy (return_val + home_len + 1, ".history");
 #endif
-  if (asprintf(&return_val, "%s/%c%s", home, dot, "history") == -1)
-	  memory_error_and_abort("asprintf");
+
   return (return_val);
 }
 
@@ -334,6 +335,7 @@ history_do_write (filename, nelements, overwrite)
      Suggested by Peter Ho (peter@robosts.oxford.ac.uk). */
   {
     HIST_ENTRY **the_history;	/* local */
+    register int j;
     int buffer_size;
     char *buffer;
 
@@ -344,12 +346,12 @@ history_do_write (filename, nelements, overwrite)
 
     /* Allocate the buffer, and fill it. */
     buffer = xmalloc (buffer_size);
-    buffer[0] = '\0';
 
-    for (i = history_length - nelements; i < history_length; i++)
+    for (j = 0, i = history_length - nelements; i < history_length; i++)
       {
-	strlcat (buffer, the_history[i]->line, buffer_size);
-	strlcat (buffer, "\n", buffer_size);
+	strcpy (buffer + j, the_history[i]->line);
+	j += strlen (the_history[i]->line);
+	buffer[j++] = '\n';
       }
 
     write (file, buffer, buffer_size);

@@ -1761,15 +1761,14 @@ rl_invoking_keyseqs_in_map (function, map)
 
 	    for (i = 0; seqs[i]; i++)
 	      {
-		int len = 6 + strlen(seqs[i]);
-		char *keyname = (char *)xmalloc (len);
+		char *keyname = (char *)xmalloc (6 + strlen (seqs[i]));
 
 		if (key == ESC)
-		  snprintf(keyname, len, "\\e");
+		  sprintf (keyname, "\\e");
 		else if (CTRL_CHAR (key))
-		  snprintf(keyname, len, "\\C-%c", _rl_to_lower (UNCTRL (key)));
+		  sprintf (keyname, "\\C-%c", _rl_to_lower (UNCTRL (key)));
 		else if (key == RUBOUT)
-		  snprintf(keyname, len, "\\C-?");
+		  sprintf (keyname, "\\C-?");
 		else if (key == '\\' || key == '"')
 		  {
 		    keyname[0] = '\\';
@@ -1782,7 +1781,7 @@ rl_invoking_keyseqs_in_map (function, map)
 		    keyname[1] = '\0';
 		  }
 		
-		strlcat (keyname, seqs[i], len);
+		strcat (keyname, seqs[i]);
 		free (seqs[i]);
 
 		if (result_index + 2 > result_size)
@@ -1936,10 +1935,9 @@ _rl_macro_dumper_internal (print_readably, map, prefix)
 	  prefix_len = prefix ? strlen (prefix) : 0;
 	  if (key == ESC)
 	    {
-	      int len = 3 + prefix_len;
-	      keyname = xmalloc (len);
+	      keyname = xmalloc (3 + prefix_len);
 	      if (prefix)
-		strlcpy (keyname, prefix, len);
+		strcpy (keyname, prefix);
 	      keyname[prefix_len] = '\\';
 	      keyname[prefix_len + 1] = 'e';
 	      keyname[prefix_len + 2] = '\0';
@@ -1949,8 +1947,9 @@ _rl_macro_dumper_internal (print_readably, map, prefix)
 	      keyname = _rl_get_keyname (key);
 	      if (prefix)
 		{
-		  if (asprintf(&out, "%s%s", prefix, keyname) == -1)
-		    memory_error_and_abort("asprintf");
+		  out = xmalloc (strlen (keyname) + prefix_len + 1);
+		  strcpy (out, prefix);
+		  strcpy (out + prefix_len, keyname);
 		  free (keyname);
 		  keyname = out;
 		}

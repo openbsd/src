@@ -40,7 +40,7 @@
 /*								    */
 /* **************************************************************** */
 
-void
+static void
 memory_error_and_abort (fname)
      char *fname;
 {

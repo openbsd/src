@@ -341,7 +341,7 @@ readline_internal_teardown (eof)
       entry = replace_history_entry (where_history (), the_line, (histdata_t)NULL);
       _rl_free_history_entry (entry);
 
-      strlcpy (the_line, temp, rl_line_buffer_len);
+      strcpy (the_line, temp);
       free (temp);
     }
 
@@ -1865,7 +1865,7 @@ maybe_unsave_line ()
       if (line_len >= rl_line_buffer_len)
 	rl_extend_line_buffer (line_len);
 
-      strlcpy (the_line, saved_line_for_history->line, rl_line_buffer_len);
+      strcpy (the_line, saved_line_for_history->line);
       rl_undo_list = (UNDO_LIST *)saved_line_for_history->data;
       _rl_free_history_entry (saved_line_for_history);
       saved_line_for_history = (HIST_ENTRY *)NULL;
@@ -1948,7 +1948,7 @@ rl_get_next_history (count, key)
       if (line_len >= rl_line_buffer_len)
 	rl_extend_line_buffer (line_len);
 
-      strlcpy (the_line, temp->line, rl_line_buffer_len);
+      strcpy (the_line, temp->line);
       rl_undo_list = (UNDO_LIST *)temp->data;
       rl_end = rl_point = strlen (the_line);
 #if defined (VI_MODE)
@@ -2005,7 +2005,7 @@ rl_get_previous_history (count, key)
       if (line_len >= rl_line_buffer_len)
 	rl_extend_line_buffer (line_len);
 
-      strlcpy (the_line, temp->line, rl_line_buffer_len);
+      strcpy (the_line, temp->line);
       rl_undo_list = (UNDO_LIST *)temp->data;
       rl_end = rl_point = line_len;
 

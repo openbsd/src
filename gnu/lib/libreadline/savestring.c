@@ -22,25 +22,14 @@
 
 #include <string.h>
 
-extern char * xmalloc();
-extern void memory_error_and_abort(char *);
+extern char *strcpy ();
+extern char *xmalloc ();
 
 /* Backwards compatibility, now that savestring has been removed from
    all `public' readline header files. */
-
-char *
-xstrdup(char *s) 
-{
-	char * cp;
-	cp = strdup(s);
-	if (cp == NULL)
-		memory_error_and_abort("savestring");
-	return(cp);
-}
-
 char *
 savestring (s)
      char *s;
 {
-	return(xstrdup(s));
+  return ((char *)strcpy (xmalloc (1 + (int)strlen (s)), (s)));
 }

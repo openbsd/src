@@ -347,9 +347,5 @@ char *
 _rl_savestring (s)
      char *s;
 {
-	char *cp;
-	cp = strdup(s);
-	if (cp == NULL)
-		memory_error_and_abort ("savestring");
-	return(cp);
+  return ((char *)strcpy (xmalloc (1 + (int)strlen (s)), (s)));
 }

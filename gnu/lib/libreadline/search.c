@@ -78,7 +78,7 @@ make_history_line_current (entry)
   line_len = strlen (entry->line);
   if (line_len >= rl_line_buffer_len)
     rl_extend_line_buffer (line_len);
-  strlcpy (rl_line_buffer, entry->line, rl_line_buffer_len);
+  strcpy (rl_line_buffer, entry->line);
 
   rl_undo_list = (UNDO_LIST *)entry->data;
   rl_end = line_len;

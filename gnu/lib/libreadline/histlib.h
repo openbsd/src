@@ -37,10 +37,12 @@ typedef char **CPPFunction ();
 				    : ((a)[0] == (b)[0]) && (strncmp ((a), (b), (n)) == 0))
 #endif
 
-#if !defined (savestring)
-extern char *xstrdup (char *);
-#define savestring(x) xstrdup(x)
-#endif /* !savestring */
+#ifndef savestring
+#  ifndef strcpy
+extern char *strcpy ();
+#  endif
+#define savestring(x) strcpy (xmalloc (1 + strlen (x)), (x))
+#endif
 
 #ifndef whitespace
 #define whitespace(c) (((c) == ' ') || ((c) == '\t'))

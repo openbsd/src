@@ -93,18 +93,17 @@ rl_display_search (search_string, reverse_p, where)
      int reverse_p, where;
 {
   char *message;
-  int msglen, searchlen, mlen;
+  int msglen, searchlen;
 
   searchlen = (search_string && *search_string) ? strlen (search_string) : 0;
 
-  mlen = searchlen + 33;
-  message = xmalloc (mlen);
+  message = xmalloc (searchlen + 33);
   msglen = 0;
 
 #if defined (NOTDEF)
   if (where != -1)
     {
-      snprintf (message, mlen, "[%d]", where + history_base);
+      sprintf (message, "[%d]", where + history_base);
       msglen = strlen (message);
     }
 #endif /* NOTDEF */
@@ -113,17 +112,20 @@ rl_display_search (search_string, reverse_p, where)
 
   if (reverse_p)
     {
-      strlcat (message, "reverse-", mlen);
+      strcpy (message + msglen, "reverse-");
+      msglen += 8;
     }
 
-  strlcat (message, "i-search)`", mlen);
+  strcpy (message + msglen, "i-search)`");
+  msglen += 10;
 
   if (search_string)
     {
-      strlcat (message, search_string, mlen);
+      strcpy (message + msglen, search_string);
+      msglen += searchlen;
     }
 
-  strlcat (message, "': ", mlen);
+  strcpy (message + msglen, "': ");
 
   rl_message ("%s", message, 0);
   free (message);
@@ -200,9 +202,8 @@ rl_search_history (direction, invoking_key)
   else
     {
       /* Keep track of this so we can free it. */
-      allocated_line = strdup(rl_line_buffer);
-      if (allocated_line == NULL)
-	      memory_error_and_abort("strdup");
+      allocated_line = xmalloc (1 + strlen (rl_line_buffer));
+      strcpy (allocated_line, &rl_line_buffer[0]);
       lines[i] = allocated_line;
     }
 
@@ -296,7 +297,7 @@ rl_search_history (direction, invoking_key)
 	  break;
 
 	case CTRL ('G'):
-	  strlcpy (rl_line_buffer, lines[orig_line], rl_line_buffer_len);
+	  strcpy (rl_line_buffer, lines[orig_line]);
 	  rl_point = orig_point;
 	  rl_end = strlen (rl_line_buffer);
 	  rl_restore_prompt();
@@ -401,7 +402,7 @@ rl_search_history (direction, invoking_key)
 	  if (line_len >= rl_line_buffer_len)
 	    rl_extend_line_buffer (line_len);
 
-	  strlcpy (rl_line_buffer, lines[i], rl_line_buffer_len);
+	  strcpy (rl_line_buffer, lines[i]);
 	  rl_point = line_index;
 	  rl_end = line_len;
 	  last_found_line = i;
@@ -415,7 +416,7 @@ rl_search_history (direction, invoking_key)
      not found.  We use this to determine where to place rl_point. */
 
   /* First put back the original state. */
-  strlcpy (rl_line_buffer, lines[orig_line], rl_line_buffer_len);
+  strcpy (rl_line_buffer, lines[orig_line]);
 
   rl_restore_prompt ();
 

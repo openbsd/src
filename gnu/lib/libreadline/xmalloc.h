@@ -42,5 +42,5 @@
 extern char *xmalloc __P((int));
 extern char *xrealloc __P((void *, int));
 extern void xfree __P((void *));
-extern void memory_error_and_abort __P((char *));
+
 #endif /* _XMALLOC_H_ */
