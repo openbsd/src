@@ -1396,3 +1396,209 @@ search.  The only need to set it is when debugging a stripped executable.",
   c->function.sfunc = reinit_frame_cache_sfunc;
   add_show_from_set (c, &showlist);
 }
+
+#ifdef NO_SINGLE_STEP
+/*
+ * If NO_SINGLE_STEP defined, we're simulating single step with
+ * breakpoints, either because the kernel doesn't provide it or
+ * Just Because We Want To.
+ */
+
+/*
+ * Branch types.  Only two types are distinguished:
+ * conditional and unconditional.
+ *
+ * We don't bother to set breakpoint after an unconditional
+ * branch, as it's (supposedly 8-) unconditional!
+ */
+
+typedef enum {
+	Error, not_branch,
+	branch_conditional, branch_unconditional,
+} branch_type;
+
+/*
+ * Information about the various breakpoints we may have set:
+ * (1) their addresses, (2) whether or not we actually set them,
+ * and (3) the previous contents of the memory.
+ */
+
+static CORE_ADDR next_pc, target;
+static int brk_next_pc, brk_target;
+typedef char binsn_quantum[BREAKPOINT_MAX];
+static binsn_quantum brkmem_next_pc, brkmem_target;
+
+/*
+ * Non-zero if we just simulated a single-step ptrace call.  This is
+ * needed because we cannot remove the breakpoints in the inferior
+ * process until after the `wait' in `wait_for_inferior'.
+ */  
+
+int one_stepped;
+
+/*
+ * single_step() is called just before we want to resume the inferior,
+ * if we want to single-step it but there is no hardware or kernel
+ * single-step support (as in NetBSD, on the Alpha).  We find all the
+ * possible targets of the coming instruction and breakpoint them.
+ *
+ * single_step() is also called just after the inferior stops.  IF we
+ * had set up a simulated single-step, we undo our damage.
+ */
+
+void
+single_step(ignore)
+	enum target_signal ignore;			/* pid, but we don't need it. */
+{
+	branch_type br, isbranch();
+	CORE_ADDR pc;
+	unsigned int pc_instruction;
+
+	pc = read_register(PC_REGNUM);
+
+	if (one_stepped) {
+		/*
+		 * The inferior has stopped.  Adjust the PC to
+		 * deal with the breakpoint we just took and
+		 * clean up the breakpoints we set.
+		 */
+
+		write_pc(pc - DECR_PC_AFTER_BREAK);
+
+		/* If no breakpoints set, we have a problem. */
+		if (!brk_next_pc && !brk_target)
+			abort();
+
+		if (brk_next_pc)
+			target_remove_breakpoint(next_pc, brkmem_next_pc);
+
+		if (brk_target)
+			target_remove_breakpoint(target, brkmem_target);
+
+		one_stepped = 0;
+		return;
+	}
+
+	pc_instruction = read_memory_integer(pc, sizeof(pc_instruction));
+	br = isbranch(pc_instruction, pc, &target);
+
+	switch (br) {
+	default:
+	case Error:
+		abort();
+
+	case not_branch:
+		next_pc = pc + 4;
+		brk_next_pc = 1;
+		brk_target = 0;
+		break;
+
+	case branch_unconditional:
+		brk_next_pc = 0;
+		brk_target = 1;
+		break;
+
+	case branch_conditional:
+		next_pc = pc + 4;
+		brk_next_pc = brk_target = 1;
+		break;
+	}
+	
+	if (brk_next_pc)
+		target_insert_breakpoint(next_pc, brkmem_next_pc);
+	if (brk_target)
+		target_insert_breakpoint(target, brkmem_target);
+
+	/* Let it go. */
+	one_stepped = 1;
+}
+
+/*
+ * Check instruction at ADDR to see if it is a branch or other
+ * instruction whose target isn't pc+4.  All other instructions
+ * will go to NPC or will trap.  Set *TARGET if we find a
+ * candidate branch.
+ */
+
+branch_type
+isbranch(instruction, addr, target)
+	unsigned int instruction;
+	CORE_ADDR addr, *target;
+{
+	branch_type val;
+	long offset;			/* Must be signed for sign-extend. */
+	union {
+		unsigned int code;			/* raw bits */
+		struct {				/* common bits */
+			unsigned int unk:26;
+			unsigned int op:6;
+		} common;
+		struct {				/* memory format */
+			         int disp:16;
+			unsigned int rb:5;
+			unsigned int ra:5;
+			unsigned int op:6;
+		} m;
+		struct {				/* branch format */
+				 int disp:21;
+			unsigned int ra:5;
+			unsigned int op:6;
+		} b;
+	} insn;
+
+	insn.code = instruction;
+	switch (insn.common.op) {
+	/*
+	 * memory-format branches.  all unconditional.
+	 */
+	case 0x1a:			/* JMP/RET/JSR/JSR_C; memory format */
+		val = branch_unconditional;
+
+		/*
+		 * Target PC is (contents of instruction's "RB") & ~3.
+		 */
+		*target = read_register(insn.m.rb) & ~3;
+		break;
+
+	/*
+	 * branch-format branches.  conditional unless otherwise noted.
+	 */
+	case 0x30:			/* BR; unconditional*/
+	case 0x31:			/* FBEQ */
+	case 0x32:			/* FBLT */
+	case 0x33:			/* FBLE */
+	case 0x34:			/* BSR; unconditional */
+	case 0x35:			/* FBNE */
+	case 0x36:			/* FBGE */
+	case 0x37:			/* FBGT */
+	case 0x38:			/* BLBC */
+	case 0x39:			/* BEQ */
+	case 0x3a:			/* BLT */
+	case 0x3b:			/* BLE */
+	case 0x3c:			/* BLBS */
+	case 0x3d:			/* BNE */
+	case 0x3e:			/* BGE */
+	case 0x3f:			/* BGT */
+
+		if (insn.b.op == 0x30 || insn.b.op == 0x34)
+			val = branch_unconditional;
+		else
+			val = branch_conditional;
+		
+		/*
+		 * Branch format is easy.
+		 * Target PC is (new PC) + (4 * sign-ext(displacement)).
+		 */
+		offset = 4 + (4 * insn.b.disp);
+		*target = addr + offset;
+		break;
+
+
+	default:
+		val = not_branch;
+		break;
+	}
+
+	return val;
+}
+#endif
