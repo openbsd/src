@@ -852,7 +852,11 @@ int flag_instrument_function_entry_exit = 0;
    On SVR4 targets, it also controls whether or not to emit a
    string identifying the compiler.  */
 
+#ifdef OPENBSD_NATIVE
+int flag_no_ident = 1;
+#else
 int flag_no_ident = 0;
+#endif
 
 /* This will perform a peephole pass before sched2.  */
 int flag_peephole2 = 0;
@@ -903,6 +907,9 @@ int align_functions_log;
 /* Like align_functions_log above, but used by front-ends to force the
    minimum function alignment.  Zero means no alignment is forced.  */
 int force_align_functions_log;
+
+/* Fake StackProtector option, does nothing. */
+int flag_propolice_protection = 0;
 
 /* Table of supported debugging formats.  */
 static const struct
@@ -1186,6 +1193,8 @@ static const lang_independent_options f_options[] =
    N_("Report on permanent memory allocation at end of run") },
   { "trapv", &flag_trapv, 1,
    N_("Trap for signed overflow in addition / subtraction / multiplication") },
+  { "no-stack-protector", &flag_propolice_protection, 0,
+   N_("Fake disable stack protection") },
   { "new-ra", &flag_new_regalloc, 1,
    N_("Use graph coloring register allocation.") },
 };
@@ -1362,6 +1371,9 @@ documented_lang_options[] =
   { "-Wwrite-strings",
     N_("Mark strings as 'const char *'") },
   { "-Wno-write-strings", "" },
+  { "-Wbounded",
+    N_("Fake bounds checking option") },
+  { "-Wno-bounded", "" },
 
 #define DEFINE_LANG_NAME(NAME) { NULL, NAME },
 
@@ -4898,7 +4910,6 @@ parse_options_and_default_flags (argc, argv)
       flag_schedule_insns_after_reload = 1;
 #endif
       flag_regmove = 1;
-      flag_strict_aliasing = 1;
       flag_delete_null_pointer_checks = 1;
       flag_reorder_blocks = 1;
       flag_reorder_functions = 1;
@@ -4906,6 +4917,7 @@ parse_options_and_default_flags (argc, argv)
 
   if (optimize >= 3)
     {
+      flag_strict_aliasing = 1;
       flag_inline_functions = 1;
       flag_rename_registers = 1;
     }

@@ -765,6 +765,8 @@ static tree handle_deprecated_attribute	PARAMS ((tree *, tree, tree, int,
 						 bool *));
 static tree handle_vector_size_attribute PARAMS ((tree *, tree, tree, int,
 						  bool *));
+static tree handle_bounded_attribute    PARAMS ((tree *, tree, tree, int,
+						  bool *));
 static tree handle_nonnull_attribute	PARAMS ((tree *, tree, tree, int,
 						 bool *));
 static tree handle_nothrow_attribute	PARAMS ((tree *, tree, tree, int,
@@ -850,6 +852,8 @@ const struct attribute_spec c_common_attribute_table[] =
 			      handle_deprecated_attribute },
   { "vector_size",	      1, 1, false, true, false,
 			      handle_vector_size_attribute },
+  { "bounded",		      3, 4, false, true, false,
+			      handle_bounded_attribute },
   { "visibility",	      1, 1, true,  false, false,
 			      handle_visibility_attribute },
   { "tls_model",	      1, 1, true,  false, false,
@@ -6381,6 +6385,21 @@ vector_size_helper (type, bottom)
   return outer;
 }
 
+/* Handle a "bounded" attribute; arguments as in
+   struct attribute_spec.handler. 
+   Just a stub for now. */
+
+static tree
+handle_bounded_attribute (node, name, args, flags, no_add_attrs)
+     tree *node ATTRIBUTE_UNUSED;
+     tree name ATTRIBUTE_UNUSED;
+     tree args ATTRIBUTE_UNUSED;
+     int flags ATTRIBUTE_UNUSED;
+     bool *no_add_attrs ATTRIBUTE_UNUSED;
+{
+  return NULL_TREE;
+}
+ 
 /* Handle the "nonnull" attribute.  */
 static tree
 handle_nonnull_attribute (node, name, args, flags, no_add_attrs)
