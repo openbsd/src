@@ -1,3 +1,4 @@
+/*	$OpenBSD: rf_geniq.c,v 1.4 2001/07/09 17:20:07 fgsch Exp $	*/
 /*	$NetBSD: rf_geniq.c,v 1.3 1999/02/05 00:06:12 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
