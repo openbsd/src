@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: tty.c,v 1.7 1999/05/24 16:39:19 brian Exp $
+ *	$Id: tty.c,v 1.8 1999/05/27 08:44:59 brian Exp $
  */
 
 #include <sys/param.h>
@@ -238,6 +238,8 @@ tty_Cooked(struct physical *p)
   struct ttydevice *dev = device2tty(p->handler);
   int oldflag;
 
+  tty_Offline(p);	/* In case of emergency close()s */
+
   tcflush(p->fd, TCIOFLUSH);
   if (!physical_IsSync(p)) {
     tcsetattr(p->fd, TCSAFLUSH, &dev->ios);
@@ -260,6 +262,7 @@ tty_Free(struct physical *p)
 {
   struct ttydevice *dev = device2tty(p->handler);
 
+  tty_Offline(p);	/* In case of emergency close()s */
   free(dev);
 }
 
