@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_pci.c,v 1.10 2001/12/20 17:39:50 mickey Exp $	*/
+/*	$OpenBSD: if_wi_pci.c,v 1.11 2001/12/20 17:41:48 mickey Exp $	*/
 
 /*
  * Copyright (c) 2001 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -232,7 +232,7 @@ wi_pci_attach(parent, self, aux)
 	}
 	printf(": %s", intrstr);
 
-	if (pp->pp_plx)
+	if (pp->pp_plx) {
 		/*
 		 * Setup the PLX chip for level interrupts and config index 1
 		 * XXX - should really reset the PLX chip too.
@@ -241,7 +241,7 @@ wi_pci_attach(parent, self, aux)
 		    WI_PLX_COR_OFFSET, WI_PLX_COR_VALUE);
 
 		wi_attach(sc, 1);
-	else {
+	} else {
 		bus_space_write_2(iot, ioh, WI_PCI_COR, WI_PCI_SOFT_RESET);
 		DELAY(100*1000); /* 100 m sec */
 		bus_space_write_2(iot, ioh, WI_PCI_COR, 0x0);
