@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.7 1997/01/24 19:56:35 niklas Exp $	*/
+/*	$OpenBSD: locore.s,v 1.8 1997/07/06 16:26:46 niklas Exp $	*/
 /*	$NetBSD: locore.s,v 1.27 1996/12/03 19:54:16 cgd Exp $	*/
 
 /*
@@ -131,6 +131,9 @@ Lstart1: LDGP(pv)
 	.data
 EXPORT(cold)
 	.long 1			/* cold start flag (.long -> _4_ bytes) */
+	.align 3
+EXPORT(esym)
+	.quad			/* store end of kernel symbol table here */
 	.text
 
 /**************************************************************************/
@@ -1579,3 +1582,34 @@ LXconsole_restart1: LDGP(pv)
 
 	call_pal PAL_halt
 	END(XentRestart)
+
+LEAF(setjmp, 1)
+	LDGP(pv)
+	stq	ra, (0 * 8)(a0)
+	stq	s0, (1 * 8)(a0)
+	stq	s1, (2 * 8)(a0)
+	stq	s2, (3 * 8)(a0)
+	stq	s3, (4 * 8)(a0)
+	stq	s4, (5 * 8)(a0)
+	stq	s5, (6 * 8)(a0)
+	stq	s6, (7 * 8)(a0)
+	stq	sp, (8 * 8)(a0)
+	/* We don't need to store the FP context in the kernel */
+	mov	zero, v0			/* return zero */
+	RET
+END(setjmp)
+
+LEAF(longjmp, 2)
+	LDGP(pv)
+	mov	a1, v0
+	ldq	ra, (0 * 8)(a0)
+	ldq	s0, (1 * 8)(a0)
+	ldq	s1, (2 * 8)(a0)
+	ldq	s2, (3 * 8)(a0)
+	ldq	s3, (4 * 8)(a0)
+	ldq	s4, (5 * 8)(a0)
+	ldq	s5, (6 * 8)(a0)
+	ldq	s6, (7 * 8)(a0)
+	ldq	sp, (8 * 8)(a0)
+	RET
+END(longjmp)
