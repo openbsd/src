@@ -1,4 +1,4 @@
-/*	$OpenBSD: mixerctl.c,v 1.11 2003/05/15 04:16:57 jsyn Exp $	*/
+/*	$OpenBSD: mixerctl.c,v 1.12 2003/05/15 09:30:06 todd Exp $	*/
 /*	$NetBSD: mixerctl.c,v 1.11 1998/04/27 16:55:23 augustss Exp $	*/
 
 /*
@@ -398,7 +398,7 @@ usage(void)
 	fprintf(stderr,
 	    "usage: %s [-f file] [-n] [-v] -a\n"
 	    "	    %s [-f file] [-n] [-v] name ...\n"
-	    "       %s [-f file] [-n] [-q] -w name=value ...\n"
+	    "       %s [-f file] [-n] [-q] -w name=value ...\n",
 	    __progname, __progname, __progname);
 
 	exit(1);
