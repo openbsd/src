@@ -1,4 +1,4 @@
-/*	$OpenBSD: umap_vnops.c,v 1.18 2003/06/02 23:28:11 millert Exp $ */
+/*	$OpenBSD: umap_vnops.c,v 1.19 2003/10/24 19:13:22 tedu Exp $ */
 /*	$NetBSD: umap_vnops.c,v 1.22 2002/01/04 07:19:34 chs Exp $	*/
 
 /*
@@ -122,7 +122,7 @@ umap_bypass(v)
 	 */
 	if (descp->vdesc_vp_offsets == NULL ||
 	    descp->vdesc_vp_offsets[0] == VDESC_NO_OFFSET)
-		panic ("umap_bypass: no vp's in map.\n");
+		panic("umap_bypass: no vp's in map");
 #endif
 	vps_p[0] = VOPARG_OFFSETTO(struct vnode**,descp->vdesc_vp_offsets[0],
 				ap);
