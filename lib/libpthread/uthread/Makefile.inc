@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.17 2004/01/15 22:22:11 marc Exp $
+# $OpenBSD: Makefile.inc,v 1.18 2004/02/22 23:59:26 brad Exp $
 # $FreeBSD: Makefile.inc,v 1.19 1999/08/28 00:03:19 peter Exp $
 
 # uthread sources
@@ -15,6 +15,7 @@ SRCS+= \
 	uthread_attr_getschedparam.c \
 	uthread_attr_getschedpolicy.c \
 	uthread_attr_getscope.c \
+	uthread_attr_getstack.c \
 	uthread_attr_getstackaddr.c \
 	uthread_attr_getstacksize.c \
 	uthread_attr_setcreatesuspend_np.c \
@@ -23,6 +24,7 @@ SRCS+= \
 	uthread_attr_setschedparam.c \
 	uthread_attr_setschedpolicy.c \
 	uthread_attr_setscope.c \
+	uthread_attr_setstack.c \
 	uthread_attr_setstackaddr.c \
 	uthread_attr_setstacksize.c \
 	uthread_autoinit.c \
