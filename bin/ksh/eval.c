@@ -1,4 +1,4 @@
-/*	$OpenBSD: eval.c,v 1.23 2004/12/22 18:39:31 millert Exp $	*/
+/*	$OpenBSD: eval.c,v 1.24 2004/12/22 18:52:37 millert Exp $	*/
 
 /*
  * Expansion - quoting, separation, substitution, globbing
@@ -766,7 +766,6 @@ varsub(Expand *xp, char *sp, char *word,
 		  case '=':	/* can't assign to a vector */
 		  case '%':	/* can't trim a vector (yet) */
 		  case '#':
-		  case '?':
 			return -1;
 		}
 		if (e->loc->argc == 0) {
@@ -787,6 +786,7 @@ varsub(Expand *xp, char *sp, char *word,
 			  case '=':	/* can't assign to a vector */
 			  case '%':	/* can't trim a vector (yet) */
 			  case '#':
+			  case '?':
 				return -1;
 			}
 			XPinit(wv, 32);
