@@ -31,10 +31,64 @@
 .Sh SYNOPSIS
 .Fd #include <sys/vnode.h>
 .Ft int
+.Fo VOP_GETEXTATTR
+.Fa "struct vnode *vp"
+.Fa "int attrnamespace"
+.Fa "const char *name"
+.Fa "struct uio *uio"
+.Fa "size_t *size"
+.Fa "struct ucred *cred"
+.Fa "struct proc *p"
+.Fc
+.Ft int
+.Fo VOP_LOCK
+.Fa "struct vnode *vp"
+.Fa "int flags"
+.Fa "struct proc *p"
+.Fc
+.Ft int
 .Fo VOP_LOOKUP
 .Fa "struct vnode *dvp"
 .Fa "struct vnode **vpp"
 .Fa "struct componentname *cnp"
+.Fc
+.Ft int
+.Fo VOP_MKDIR
+.Fa "struct vnode *dvp"
+.Fa "struct vnode **vpp"
+.Fa "struct componentname *cnp"
+.Fa "struct vattr *vap"
+.Fc
+.Ft int
+.Fo VOP_RECLAIM
+.Fa "struct vnode *vp"
+.Fa "struct proc *p"
+.Fc
+.Ft int
+.Fo VOP_REVOKE
+.Fa "struct vnode *vp"
+.Fa "int flags"
+.Fc
+.Ft int
+.Fo VOP_RMDIR
+.Fa "struct vnode *dvp"
+.Fa "struct vnode *vp"
+.Fa "struct componentname *cnp"
+.Fc
+.Ft int
+.Fo VOP_SETEXTATTR
+.Fa "struct vnode *vp"
+.Fa "int attrnamespace"
+.Fa "const char *name"
+.Fa "struct uio *uio"
+.Fa "struct ucred *cred"
+.Fa "struct proc *p"
+.Fc
+.Ft int
+.Fo VOP_UNLOCK
+.Fa "struct vnode *vp"
+.Fa "int flags"
+.Fa "struct proc *p"
 .Fc
 .\" and many more
 .Sh DESCRIPTION
@@ -47,6 +101,7 @@ Not all file systems implement all operations, in which case a generic
 method will be used.
 These functions exist to provide an abstract method to invoke vnode 
 operations without needing to know anything about the underlying file system.
+Many syscalls map directly to a specific VOP function.
 .Pp
 The arguments for each VOP
 function consist of one or more vnode pointers along with other data
@@ -56,6 +111,33 @@ VOP functions.
 The locking discipline for all currently defined VOP
 functions is described in the file
 .Pa sys/kern/vnode_if.src .
+Most VOP calls take a struct proc *p argument.
+This should be the current process.
+VOP calls are not safe to call in an interrupt context.
+.Sh VOP_GETEXTATTR
+.Nm VOP_GETEXTATTR
+and
+.Nm VOP_SETEXTATTR
+are called to get and set named extended file attributes (see
+.Xr extattr 9 ) .
+.Ar vp
+is the vnode for which to get or set the attribute.
+It should be locked.
+.Ar attrnamespace
+is an integer describing whether the attribute belongs in the
+user or system namespace.
+.Ar name
+is the extended attribute to get or set.
+.Ar uio
+is a
+.Xr uio 9
+structure with the userland address containing the userland data.
+VOP_GETEXTATTR will return the actual length of the attribute
+in
+.Ar size
+if it is non-NULL.
+.Ar cred
+should be a pointer to the credentials used to access the file.
 .Sh VOP_LOOKUP
 .Nm VOP_LOOKUP
 finds the file corresponding to the name
@@ -67,16 +149,69 @@ and returns a vnode in
 .Ar dvp
 is locked on entry and exit, and
 .Ar vpp
-is locked upon a succesful return.
+is locked upon a successful return.
 .Ar vpp
 will be NULL on error, and cnp->cn_flags will be set to PDIRUNLOCK
 if
 .Ar dvp
 has been unlocked for an unsuccessful return.
+.Sh VOP_MKDIR
+.Nm VOP_MKDIR
+implements the mkdir syscall.
+A new directory with name matching that in
+.Ar cnp
+and with permissions
+.Ar vattr
+will be created in the directory
+.Ar dvp .
+On success, the new vnode is returned locked in
+.Ar vpp .
+.Ar dvp
+must be locked on entry and is unlocked on exit.
+.Sh VOP_RECLAIM
+.Nm VOP_RECLAIM
+is used by
+.Xr vclean 9
+so that the file system has an opportunity to free memory
+and perform any other cleanup activity related to
+.Ar vp .
+.Ar vp
+is unlocked on entry and exit.
+VOP_RECLAIM should not be used by generic code.
+.Sh VOP_REVOKE
+.Nm VOP_REVOKE
+is used by the
+.Xr revoke 2
+syscall to prevent any further access to a vnode.
+The vnode ops will be changed to those of deadfs, which returns only
+errors.
+.Ar vp
+must be unlocked.
+.Sh VOP_RMDIR
+.Nm VOP_RMDIR
+implements the rmdir syscall.
+The directory
+.Ar vp
+will be removed from the directory
+.Ar dvp .
+Both are locked on entry and unlocked on exit.
+The name of the directory for removal is additionally contained in
+.Ar cnp .
+.Sh VOP_UNLOCK
+.Nm VOP_LOCK
+is used internally by
+.Xr vn_lock 9
+to lock a vnode.
+It should not be used by other file system code.
+.Nm VOP_UNLOCK
+unlocks a vnode.
+.Ar flags
+should be zero in most cases.
+Note the asymmetry between vn_lock and VOP_UNLOCK.
 .Sh RETURN VALUES
 The
 .Nm
-functions return 0 to indicate success and a non zero error code
+functions return 0 to indicate success and a non-zero error code
 to indicate failure.
 .Sh FILES
 .Bl -tag -width sys/kern/vnode_if.src
