@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.12 1998/02/24 22:02:11 weingart Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.13 1998/07/09 19:26:42 deraadt Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.28 1997/06/06 23:29:17 thorpej Exp $	*/
 
 /*-
@@ -324,6 +324,7 @@ mode1:
 	outl(PCI_MODE1_ADDRESS_REG, tag.mode1 | reg);
 	outl(PCI_MODE1_DATA_REG, data);
 	outl(PCI_MODE1_ADDRESS_REG, 0);
+	return;
 #endif
 
 #if !defined(PCI_CONF_MODE) || (PCI_CONF_MODE == 2)
