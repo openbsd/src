@@ -3,7 +3,7 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.hppa/MAKEDEV.md,v 1.21 2004/08/06 20:34:04 mickey Exp 
+#	OpenBSD: etc.hppa/MAKEDEV.md,v 1.22 2004/09/15 01:02:31 mickey Exp 
 #	OpenBSD: MAKEDEV.common,v 1.12 2004/08/19 07:05:20 miod Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.72 2004/02/16 18:58:53 miod Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.12 2004/02/20 19:13:01 miod Exp 
@@ -220,6 +220,7 @@ std)
 	M ksyms		c 25 0 640 kmem
 	M drum		c 3 0 640 kmem
 	M klog		c 6 0 600
+	M pdc		c 22 0 640 operator
 	;;
 
 xfs*)

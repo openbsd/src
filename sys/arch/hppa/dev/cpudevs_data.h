@@ -1,7 +1,7 @@
 /*
  * THIS FILE AUTOMATICALLY GENERATED. DO NOT EDIT.
  * generated from:
- *	OpenBSD: cpudevs,v 1.35 2004/04/21 17:07:02 mickey Exp 
+ *	OpenBSD: cpudevs,v 1.36 2004/09/15 01:01:31 mickey Exp 
  */
 
 {HPPA_TYPE_BOARD,	HPPA_BOARD_HP840,	"840/930 (Indigo)" },
@@ -340,7 +340,8 @@
 {HPPA_TYPE_BHA,	HPPA_BHA_WEISA,	"WAX EISA Bus Adapter" },
 {HPPA_TYPE_BHA,	HPPA_BHA_TIMI,	"TIMI Bus Adapter" },
 {HPPA_TYPE_BHA,	HPPA_BHA_EPIC,	"Epic PCI Bus Adapter" },
-{HPPA_TYPE_IOA,	HPPA_IOA_RUNWAY,	"BC Runway Port" },
+{HPPA_TYPE_IOA,	HPPA_IOA_UTURN,	"U2/UTurn Runway BC Port" },
+{HPPA_TYPE_IOA,	HPPA_IOA_PLUTO,	"Pluto BC Port" },
 {HPPA_TYPE_BRIDGE,	HPPA_BRIDGE_DINO,	"PCI Bridge" },
 {HPPA_TYPE_BRIDGE,	HPPA_BRIDGE_SAGA,	"Saga PCI Bridge" },
 {HPPA_TYPE_FABRIC,	HPPA_FABRIC_DNACA,	"Halfdome DNA Central Agent" },
