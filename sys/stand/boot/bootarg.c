@@ -1,4 +1,4 @@
-/*	$OpenBSD: bootarg.c,v 1.1 1997/10/21 04:05:53 mickey Exp $	*/
+/*	$OpenBSD: bootarg.c,v 1.2 1997/10/22 23:48:40 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -47,7 +47,7 @@ addbootarg(t, l, p)
 
 	q->ba_type = t;
 	q->ba_size = sizeof(*q) + l - sizeof(q->ba_arg);
-	memcpy(q->ba_arg, p, l);
+	bcopy(p, q->ba_arg, l);
 	q->ba_next = list;
 	list = q;
 }
@@ -63,11 +63,16 @@ makebootargs(lenp)
 	*lenp = 0;
 	for (p = list; p != NULL; p = p->ba_next)
 		*lenp += p->ba_size;
-	r = alloc(*lenp + sizeof(p->ba_type));
+	r = alloc(*lenp += sizeof(*p));
 	/* copy them out */
-	for (p = list, q = r; p != NULL; p = p->ba_next, q += p->ba_size)
-		memcpy(q, p, p->ba_size);
-	*(int *)q = BOOTARG_END;
+	for (p = list, q = r; p != NULL; q += p->ba_size, p = p->ba_next) {
+#ifdef DEBUG
+		printf("%d,%d ", p->ba_type, p->ba_size);
+#endif
+		bcopy(p, q, p->ba_size);
+	}
+	p = (bootarg_t *)q;
+	p->ba_type = BOOTARG_END;
 	return r;
 }
 
