@@ -1,5 +1,5 @@
 #!./perl
-#	$OpenBSD$
+#	$OpenBSD: installperl,v 1.2 1996/08/26 05:31:51 downsj Exp $
 #
 # This is hacked up, in order to support DESTDIR.
 #
@@ -51,6 +51,8 @@ if ($installdest ne '') {
     $installsitelib = "$installdest/$Config{installsitelib}";
     $installsitearch = "$installdest/$Config{installsitearch}";
     $installman1dir = "$installdest/$Config{installman1dir}";
+    # Also whack $mainperldir.
+    $mainperldir = "$installdest/$mainperldir";
 } else {
     # Fetch some frequently-used items from %Config.
     $installbin = $Config{installbin};
