@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 #
-# $OpenBSD: recover,v 1.2 1999/10/11 20:07:19 millert Exp $
+# $OpenBSD: recover,v 1.3 2000/01/20 18:19:45 millert Exp $
 #
 # Script to (safely) recover nvi edit sessions.
 #
@@ -54,7 +54,7 @@ foreach $file (readdir(RECDIR)) {
 
 	# Slurp in the recover.* file and search for X-vi-recover-path
 	# (which should point to an existing vi.* file).
-	open(RECFILE, $file) || die "$0: can't open $file: $!\n";
+	sysopen(RECFILE, $file, O_RDONLY) || die "$0: can't open $file: $!\n";
 	@recfile = <RECFILE>;
 	close(RECFILE);
 	@backups = grep(s/^X-vi-recover-path:\s*(.*)[\r\n]*$/$1/, @recfile);
