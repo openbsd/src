@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.7 2000/03/10 08:44:59 mickey Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.8 2000/03/10 19:54:24 deraadt Exp $	*/
 
 /*
  * Invertex AEON driver
@@ -342,12 +342,14 @@ aeon_enable_crypto(sc, pciid)
 		return (1);
 	}
 
+	ramcfg = READ_REG_0(sc, AEON_RAM_CONFIG);
+	dmacfg = READ_REG_1(sc, AEON_DMA_CFG);
+
 	/*
 	 * The RAM config register's encrypt level bit needs to be set before
 	 * every read performed on the encryption level register.
 	 */
-	WRITE_REG_0(sc, AEON_RAM_CONFIG,
-	    READ_REG_0(sc, AEON_RAM_CONFIG) | (0x1 << 5));
+	WRITE_REG_0(sc, AEON_RAM_CONFIG, ramcfg | 0x20);
 
 	encl = READ_REG_0(sc, AEON_CRYPTLEVEL);
 
@@ -360,20 +362,10 @@ aeon_enable_crypto(sc, pciid)
 		printf("%s: Strong Crypto already enabled!\n",
 		    sc->sc_dv.dv_xname);
 #endif
-#if 0
-		/* XXX impossible, this writes garbage to these registers */
 		WRITE_REG_0(sc, AEON_RAM_CONFIG, ramcfg);
 		WRITE_REG_1(sc, AEON_DMA_CFG, dmacfg);
-#endif
 		return 0;	/* success */
 	}
-
-	ramcfg = READ_REG_0(sc, AEON_RAM_CONFIG);
-	dmacfg = READ_REG_1(sc, AEON_DMA_CFG);
-
-	WRITE_REG_0(sc, AEON_RAM_CONFIG, ramcfg | 0x20);
-
-	encl = READ_REG_0(sc, AEON_CRYPTLEVEL);
 
 	if (encl != 0 && encl != 0x3020) {
 #ifdef AEON_DEBUG
