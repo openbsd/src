@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.h,v 1.3 1997/02/24 19:42:32 angelos Exp $	*/
+/*	$OpenBSD: ip_ah.h,v 1.4 1997/02/26 02:38:11 angelos Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -53,6 +53,8 @@ struct ahstat
         u_int32_t       ahs_wrap;
         u_int32_t       ahs_replay;
 	u_int32_t	ahs_badauthl;	/* bad authenticator length */
+	u_int32_t	ahs_input;	/* Input AH packets */
+	u_int32_t	ahs_output;	/* Output AH packets */
 };
 
 #define AHHMACMD5_KMAX  64              /* max 512 bits key */
