@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.29 1998/05/24 14:14:00 provos Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.30 1998/05/24 23:03:47 provos Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -168,7 +168,7 @@ ip_output(m0, va_alist)
 	      inp->inp_seclevel[SL_ESP_TRANS] != IPSEC_LEVEL_BYPASS ||
 	      inp->inp_seclevel[SL_ESP_NETWORK] != IPSEC_LEVEL_BYPASS))) {
 		struct route_enc re0, *re = &re0;
-		struct sockaddr_encap *dst, *gw;
+		struct sockaddr_encap *ddst, *gw;
 		struct tdb *tdb;
 		u_int8_t sa_require, sa_have = 0;
 
@@ -178,13 +178,13 @@ ip_output(m0, va_alist)
 			sa_require = inp->inp_secrequire;
 
 		bzero((caddr_t) re, sizeof(*re));
-		dst = (struct sockaddr_encap *) &re->re_dst;
-		dst->sen_family = AF_ENCAP;
-		dst->sen_len = SENT_IP4_LEN;
-		dst->sen_type = SENT_IP4;
-		dst->sen_ip_src = ip->ip_src;
-		dst->sen_ip_dst = ip->ip_dst;
-		dst->sen_proto = ip->ip_p;
+		ddst = (struct sockaddr_encap *) &re->re_dst;
+		ddst->sen_family = AF_ENCAP;
+		ddst->sen_len = SENT_IP4_LEN;
+		ddst->sen_type = SENT_IP4;
+		ddst->sen_ip_src = ip->ip_src;
+		ddst->sen_ip_dst = ip->ip_dst;
+		ddst->sen_proto = ip->ip_p;
 
 		switch (ip->ip_p) {
 		case IPPROTO_UDP:
@@ -195,8 +195,8 @@ ip_output(m0, va_alist)
 				ip = mtod(m, struct ip *);
 			}
 			udp = (struct udphdr *) (mtod(m, u_char *) + hlen);
-			dst->sen_sport = ntohs(udp->uh_sport);
-			dst->sen_dport = ntohs(udp->uh_dport);
+			ddst->sen_sport = ntohs(udp->uh_sport);
+			ddst->sen_dport = ntohs(udp->uh_dport);
 			break;
 
 		case IPPROTO_TCP:
@@ -207,13 +207,13 @@ ip_output(m0, va_alist)
 				ip = mtod(m, struct ip *);
 			}
 			tcp = (struct tcphdr *) (mtod(m, u_char *) + hlen);
-			dst->sen_sport = ntohs(tcp->th_sport);
-			dst->sen_dport = ntohs(tcp->th_dport);
+			ddst->sen_sport = ntohs(tcp->th_sport);
+			ddst->sen_dport = ntohs(tcp->th_dport);
 			break;
 
 		default:
-			dst->sen_sport = 0;
-			dst->sen_dport = 0;
+			ddst->sen_sport = 0;
+			ddst->sen_dport = 0;
 		}
 
 		rtalloc((struct route *) re);
@@ -295,8 +295,48 @@ ip_output(m0, va_alist)
 #endif ENCDEBUG
 
 		/* Fix the ip_src field if necessary */
-		if ((ip->ip_src.s_addr == INADDR_ANY) && tdb)
+		if (ip->ip_src.s_addr == INADDR_ANY) {
+		    if (tdb && tdb->tdb_src.s_addr != 0)   /* Provided */
 			ip->ip_src = tdb->tdb_src;
+		    else
+		    {
+			if (ro == 0) {
+			    ro = &iproute;
+			    bzero((caddr_t)ro, sizeof (*ro));
+			}
+
+			dst = satosin(&ro->ro_dst);
+
+			/*
+			 * If there is a cached route,
+			 * check that it is to the same destination
+			 * and is still up.  If not, free it and try again.
+			 */
+			if (ro->ro_rt &&
+			    ((ro->ro_rt->rt_flags & RTF_UP) == 0 ||
+			     dst->sin_addr.s_addr != ip->ip_dst.s_addr)) {
+			    RTFREE(ro->ro_rt);
+			    ro->ro_rt = (struct rtentry *)0;
+			}
+
+			if (ro->ro_rt == 0) {
+			    dst->sin_family = AF_INET;
+			    dst->sin_len = sizeof(*dst);
+			    dst->sin_addr = ip->ip_dst;
+			    rtalloc(ro);
+			}			
+
+			if (ro->ro_rt == 0) {
+			    ipstat.ips_noroute++;
+			    error = EHOSTUNREACH;
+			    goto bad;
+			}
+			
+			ia = ifatoia(ro->ro_rt->rt_ifa);
+			ro->ro_rt->rt_use++;
+			ip->ip_src = ia->ia_addr.sin_addr;
+		    }
+		}
 
 		/* Now fix the checksum */
 		ip->ip_sum = in_cksum(m, hlen);
