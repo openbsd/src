@@ -1,4 +1,4 @@
-/*	$OpenBSD: reverse.c,v 1.6 1999/08/04 18:24:10 mickey Exp $	*/
+/*	$OpenBSD: reverse.c,v 1.7 2000/06/23 17:04:46 ericj Exp $	*/
 /*	$NetBSD: reverse.c,v 1.6 1994/11/23 07:42:10 jtc Exp $	*/
 
 /*-
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)reverse.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: reverse.c,v 1.6 1999/08/04 18:24:10 mickey Exp $";
+static char rcsid[] = "$OpenBSD: reverse.c,v 1.7 2000/06/23 17:04:46 ericj Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -93,11 +93,11 @@ reverse(fp, style, off, sbp)
 		switch(style) {
 		case FBYTES:
 		case RBYTES:
-			bytes(fp, off);
+			(void)bytes(fp, off);
 			break;
 		case FLINES:
 		case RLINES:
-			lines(fp, off);
+			(void)lines(fp, off);
 			break;
 		case REVERSE:
 			r_buf(fp);

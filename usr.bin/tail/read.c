@@ -1,4 +1,4 @@
-/*	$OpenBSD: read.c,v 1.3 1997/01/12 23:43:06 millert Exp $	*/
+/*	$OpenBSD: read.c,v 1.4 2000/06/23 17:04:46 ericj Exp $	*/
 /*	$NetBSD: read.c,v 1.4 1994/11/23 07:42:07 jtc Exp $	*/
 
 /*-
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)read.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: read.c,v 1.3 1997/01/12 23:43:06 millert Exp $";
+static char rcsid[] = "$OpenBSD: read.c,v 1.4 2000/06/23 17:04:46 ericj Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -66,8 +66,11 @@ static char rcsid[] = "$OpenBSD: read.c,v 1.3 1997/01/12 23:43:06 millert Exp $"
  * routine has the usual nastiness of trying to find the newlines.  Otherwise,
  * it is displayed from the character closest to the beginning of the input to
  * the end.
+ *
+ * A non-zero return means an (non-fatal) error occured.
+ *
  */
-void
+int
 bytes(fp, off)
 	register FILE *fp;
 	off_t off;
@@ -89,7 +92,7 @@ bytes(fp, off)
 	}
 	if (ferror(fp)) {
 		ierr();
-		return;
+		return(1);
 	}
 
 	if (rflag) {
@@ -122,6 +125,7 @@ bytes(fp, off)
 		if ((len = p - sp))
 			WR(sp, len);
 	}
+	return(0);
 }
 
 /*
@@ -133,8 +137,11 @@ bytes(fp, off)
  * routine has the usual nastiness of trying to find the newlines.  Otherwise,
  * it is displayed from the line closest to the beginning of the input to
  * the end.
+ *
+ * A non-zero return means an (non-fatal) error occured.
+ *
  */
-void
+int
 lines(fp, off)
 	register FILE *fp;
 	off_t off;
@@ -179,7 +186,7 @@ lines(fp, off)
 	}
 	if (ferror(fp)) {
 		ierr();
-		return;
+		return(1);
 	}
 	if (cnt) {
 		lines[recno].l = sp;
@@ -203,4 +210,5 @@ lines(fp, off)
 		for (cnt = 0; cnt < recno; ++cnt)
 			WR(lines[cnt].l, lines[cnt].len);
 	}
+	return(0);
 }
