@@ -1,4 +1,4 @@
-/* $OpenBSD: wsconsio.h,v 1.18 2002/05/29 20:43:44 maja Exp $ */
+/* $OpenBSD: wsconsio.h,v 1.19 2002/06/07 20:56:38 drahn Exp $ */
 /* $NetBSD: wsconsio.h,v 1.31.2.1 2000/07/07 09:49:17 hannken Exp $ */
 
 /*
@@ -187,6 +187,7 @@ struct wskbd_map_data {
 #define		WSMOUSE_TYPE_TPANEL	6	/* Generic Touch Panel */
 #define		WSMOUSE_TYPE_NEXT	7	/* NeXT mouse */
 #define		WSMOUSE_TYPE_ARCHIMEDES	8	/* Archimedes mouse */
+#define		WSMOUSE_TYPE_ADB	9	/* ADB */
 
 /* Set resolution.  Not applicable to all mouse types. */
 #define	WSMOUSEIO_SRES		_IOW('W', 33, u_int)
