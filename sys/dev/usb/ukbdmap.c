@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukbdmap.c,v 1.13 2002/07/29 03:04:16 nate Exp $ */
+/*	$OpenBSD: ukbdmap.c,v 1.14 2002/08/26 20:48:12 mickey Exp $ */
 /*	$NetBSD: ukbdmap.c,v 1.11 2002/07/11 21:14:31 augustss Exp $	*/
 
 /*
@@ -86,7 +86,7 @@ Static const keysym_t ukbd_keydesc_us[] = {
     KC(39), 			KS_0,		KS_parenright,
     KC(40), 			KS_Return,
     KC(41),   KS_Cmd_Debugger,	KS_Escape,
-    KC(42), 			KS_BackSpace,
+    KC(42), 			KS_Delete,
     KC(43), 			KS_Tab,
     KC(44), 			KS_space,
     KC(45), 			KS_minus,	KS_underscore,
