@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ypserv.acl.5,v 1.12 2001/08/02 18:37:35 mpech Exp $
+.\"	$OpenBSD: ypserv.acl.5,v 1.13 2002/02/17 19:38:52 maja Exp $
 .\"
 .\" Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
 .\" All rights reserved.
@@ -75,9 +75,10 @@ If access is denied every call will cause a
 .Nm no such domain
 error for the caller.
 .Pp
-Don't forget to allow localhost access if you want the machine running
+Normally both the local hostname and localhost must be
+allowed access. Otherwise
 .Nm ypserv
-to be able to access it too.
+might not work correctly
 .Pp
 There is no default name for this file.
 Start
@@ -139,6 +140,7 @@ A configuration file might look like the following:
 # multiple ip-addresses all will be added (I hope). ip-address
 # processed by inet_aton.
 allow host localhost
+allow host myypserver
 deny host jodie
 
 ###########################################################################
