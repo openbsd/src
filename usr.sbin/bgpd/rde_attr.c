@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_attr.c,v 1.15 2004/02/26 14:00:33 claudio Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.16 2004/02/27 20:53:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -128,7 +128,7 @@ attr_parse(u_char *p, u_int16_t len, struct attr_flags *a, int ebgp,
 		 * Check if the nexthop is a valid IP address. We consider
 		 * multicast, experimental and loopback addresses as invalid.
 		 */
-		tmp32 = ntohl(a->nexthop);
+		tmp32 = ntohl(a->nexthop.s_addr);
 		if (IN_MULTICAST(tmp32) || IN_BADCLASS(tmp32) ||
 		    (tmp32 & 0x7f000000) == 0x7f000000) 
 			return (-1);
@@ -335,9 +335,9 @@ attr_compare(struct attr_flags *a, struct attr_flags *b)
 		return (1);
 	if (a->origin < b->origin)
 		return (-1);
-	if (a->nexthop > b->nexthop)
+	if (a->nexthop.s_addr > b->nexthop.s_addr)
 		return (1);
-	if (a->nexthop < b->nexthop)
+	if (a->nexthop.s_addr < b->nexthop.s_addr)
 		return (-1);
 	if (a->med > b->med)
 		return (1);

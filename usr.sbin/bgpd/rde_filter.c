@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.3 2004/02/24 15:44:33 claudio Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.4 2004/02/27 20:53:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -64,8 +64,7 @@ rde_apply_set(struct attr_flags *attrs, struct filter_set *set)
 	if (set->flags & SET_MED)
 		attrs->med = set->med;
 	if (set->flags & SET_NEXTHOP)
-		/* TODO switch attr->nexthop to struct in_addr */
-		attrs->nexthop = set->nexthop.s_addr;
+		attrs->nexthop = set->nexthop;
 	if (set->flags & SET_PREPEND) {
 		/*
 		 * The acctual prepending is done afterwards because 

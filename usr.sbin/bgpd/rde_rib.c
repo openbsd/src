@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.38 2004/02/27 14:46:09 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.39 2004/02/27 20:53:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -349,14 +349,13 @@ prefix_move(struct rde_aspath *asp, struct prefix *p)
 	struct rde_aspath	*oasp;
 
 	RIB_STAT(prefix_move);
-	ENSURE(asp->peer == p->peer);
+	ENSURE(asp->peer == p->aspath->peer);
 
 	/* create new prefix node */
 	np = prefix_alloc();
 	np->aspath = asp;
 	/* peer and prefix pointers are still equal */
 	np->prefix = p->prefix;
-	np->peer = p->peer;
 	np->lastchange = time(NULL);
 
 	/* add to new as path */
@@ -391,7 +390,6 @@ prefix_move(struct rde_aspath *asp, struct prefix *p)
 	/* destroy all references to other objects and free the old prefix */
 	p->aspath = NULL;
 	p->prefix = NULL;
-	p->peer = NULL;
 	prefix_free(p);
 
 	/* destroy old path if empty */
@@ -444,7 +442,7 @@ prefix_bypeer(struct pt_entry *pte, struct rde_peer *peer)
 	ENSURE(pte != NULL);
 
 	LIST_FOREACH(p, &pte->prefix_h, prefix_l) {
-		if (p->peer == peer)
+		if (p->aspath->peer == peer)
 			return p;
 	}
 	return NULL;
@@ -525,8 +523,7 @@ prefix_link(struct prefix *pref, struct pt_entry *pte, struct rde_aspath *asp)
 {
 	RIB_STAT(prefix_link);
 	ENSURE(pref->aspath == NULL &&
-	    pref->prefix == NULL &&
-	    pref->peer == NULL);
+	    pref->prefix == NULL);
 	ENSURE(pref != NULL && pte != NULL && asp != NULL);
 	ENSURE(prefix_bypeer(pte, asp->peer) == NULL);
 
@@ -539,7 +536,6 @@ prefix_link(struct prefix *pref, struct pt_entry *pte, struct rde_aspath *asp)
 
 	pref->aspath = asp;
 	pref->prefix = pte;
-	pref->peer = asp->peer;
 	pref->lastchange = time(NULL);
 
 	/* make route decision */
@@ -569,7 +565,6 @@ prefix_unlink(struct prefix *pref)
 	/* destroy all references to other objects */
 	pref->aspath = NULL;
 	pref->prefix = NULL;
-	pref->peer = NULL;
 
 	/*
 	 * It's the caller's duty to remove empty aspath respectively pt_entry
@@ -597,8 +592,7 @@ prefix_free(struct prefix *pref)
 {
 	RIB_STAT(prefix_free);
 	ENSURE(pref->aspath == NULL &&
-	    pref->prefix == NULL &&
-	    pref->peer == NULL);
+	    pref->prefix == NULL);
 	free(pref);
 }
 
@@ -614,7 +608,7 @@ prefix_free(struct prefix *pref)
  * hash table has more benefits and the table walk should not happen too often.
  */
 
-static struct nexthop	*nexthop_get(in_addr_t);
+static struct nexthop	*nexthop_get(struct in_addr);
 static struct nexthop	*nexthop_alloc(void);
 static void		 nexthop_free(struct nexthop *);
 
@@ -632,8 +626,8 @@ struct nexthop_table {
 	u_int32_t		 nexthop_hashmask;
 } nexthoptable;
 
-#define NEXTHOP_HASH(x)					\
-	&nexthoptable.nexthop_hashtbl[ntohl((x)) &	\
+#define NEXTHOP_HASH(x)						\
+	&nexthoptable.nexthop_hashtbl[ntohl((x.s_addr)) &	\
 	    nexthoptable.nexthop_hashmask]
 
 void
@@ -659,7 +653,7 @@ nexthop_init(u_int32_t hashsize)
 	nh->exit_nexthop.af = AF_INET;
 	nh->exit_nexthop.v4.s_addr = INADDR_ANY;
 
-	LIST_INSERT_HEAD(NEXTHOP_HASH(nh->exit_nexthop.v4.s_addr), nh,
+	LIST_INSERT_HEAD(NEXTHOP_HASH(nh->exit_nexthop.v4), nh,
 	    nexthop_l);
 
 	memcpy(&nh->true_nexthop, &nh->exit_nexthop,
@@ -685,7 +679,7 @@ nexthop_add(struct rde_aspath *asp)
 		nh = nexthop_alloc();
 		nh->state = NEXTHOP_LOOKUP;
 		nh->exit_nexthop.af = AF_INET;
-		nh->exit_nexthop.v4.s_addr = asp->flags.nexthop;
+		nh->exit_nexthop.v4 = asp->flags.nexthop;
 		LIST_INSERT_HEAD(NEXTHOP_HASH(asp->flags.nexthop), nh,
 		    nexthop_l);
 		rde_send_nexthop(&nh->exit_nexthop, 1);
@@ -719,14 +713,14 @@ nexthop_remove(struct rde_aspath *asp)
 }
 
 static struct nexthop *
-nexthop_get(in_addr_t nexthop)
+nexthop_get(struct in_addr nexthop)
 {
 	struct nexthop	*nh;
 
 	RIB_STAT(nexthop_get);
 
 	LIST_FOREACH(nh, NEXTHOP_HASH(nexthop), nexthop_l) {
-		if (nh->exit_nexthop.v4.s_addr == nexthop)
+		if (nh->exit_nexthop.v4.s_addr == nexthop.s_addr)
 			return nh;
 	}
 	return NULL;
@@ -740,7 +734,7 @@ nexthop_update(struct kroute_nexthop *msg)
 
 	RIB_STAT(nexthop_update);
 
-	nh = nexthop_get(msg->nexthop.v4.s_addr);
+	nh = nexthop_get(msg->nexthop.v4);
 	if (nh == NULL) {
 		log_warnx("nexthop_update: non-existent nexthop");
 		return;

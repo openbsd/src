@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.90 2004/02/27 14:46:09 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.91 2004/02/27 20:53:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -576,15 +576,12 @@ rde_update_log(const char *message,
     const struct bgpd_addr *prefix, u_int8_t prefixlen)
 {
 	char		*nexthop = NULL;
-	struct in_addr	 nh;
 
 	if (! (conf->log & BGPD_LOG_UPDATES))
 		return;
 
-	if (attr != NULL) {
-		nh.s_addr = attr->nexthop;
-		asprintf(&nexthop, " via %s", inet_ntoa(nh));
-	}
+	if (attr != NULL)
+		asprintf(&nexthop, " via %s", inet_ntoa(attr->nexthop));
 
 	log_debug("neighbor %s (AS%u) %s %s/%u %s",
 	    log_addr(&peer->conf.remote_addr), peer->conf.remote_as, message,
@@ -618,7 +615,7 @@ rde_dump_rib(struct prefix *p, pid_t pid)
 		rib.flags |= F_RIB_ELIGIBLE;
 	if (p->prefix->active == p)
 		rib.flags |= F_RIB_ACTIVE;
-	if (p->peer->conf.ebgp == 0)
+	if (p->aspath->peer->conf.ebgp == 0)
 		rib.flags |= F_RIB_INTERNAL;
 	if (p->aspath->nexthop->flags & NEXTHOP_ANNOUNCE)
 		rib.flags |= F_RIB_ANNOUNCE;
@@ -654,7 +651,7 @@ rde_dump_prefix(struct prefix *p, pid_t pid)
 		prefix.flags |= F_RIB_ELIGIBLE;
 	if (p->prefix->active == p)
 		prefix.flags |= F_RIB_ACTIVE;
-	if (p->peer->conf.ebgp == 0)
+	if (p->aspath->peer->conf.ebgp == 0)
 		prefix.flags |= F_RIB_INTERNAL;
 	if (p->aspath->nexthop->flags & NEXTHOP_ANNOUNCE)
 		prefix.flags |= F_RIB_ANNOUNCE;
@@ -1016,7 +1013,7 @@ network_add(struct network_config *nc)
 	bzero(&attrs, sizeof(attrs));
 
 	attrs.aspath = aspath_create(NULL, 0);
-	attrs.nexthop = INADDR_ANY;
+	attrs.nexthop.s_addr = INADDR_ANY;
 	/* med = 0 */
 	/* lpref = 0 */
 	attrs.origin = ORIGIN_IGP;

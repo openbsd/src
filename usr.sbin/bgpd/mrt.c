@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.c,v 1.27 2004/02/25 19:48:18 claudio Exp $ */
+/*	$OpenBSD: mrt.c,v 1.28 2004/02/27 20:53:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -303,7 +303,8 @@ mrt_dump_upcall(struct pt_entry *pt, void *ptr)
 	 * be dumped p should be set to p = pt->active.
 	 */
 	LIST_FOREACH(p, &pt->prefix_h, prefix_l)
-		mrt_dump_entry(mrtbuf, p, sequencenum++, &p->peer->conf);
+		mrt_dump_entry(mrtbuf, p, sequencenum++,
+		    &p->aspath->peer->conf);
 }
 
 static int

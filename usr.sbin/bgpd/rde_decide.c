@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_decide.c,v 1.30 2004/02/26 15:46:30 claudio Exp $ */
+/*	$OpenBSD: rde_decide.c,v 1.31 2004/02/27 20:53:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -154,26 +154,26 @@ prefix_cmp(struct prefix *p1, struct prefix *p2)
 	 * It is absolutely important that the ebgp value in peer_config.ebgp
 	 * is bigger than all other ones (IBGP, confederations)
 	 */
-	if ((p1->peer->conf.ebgp - p2->peer->conf.ebgp) != 0) {
-		if (p1->peer->conf.ebgp == 1) /* p1 is EBGP other is lower */
+	if ((asp1->peer->conf.ebgp - asp2->peer->conf.ebgp) != 0) {
+		if (asp1->peer->conf.ebgp == 1) /* p1 is EBGP other is lower */
 			return 1;
-		else if (p2->peer->conf.ebgp == 1) /* p2 is EBGP */
+		else if (asp2->peer->conf.ebgp == 1) /* p2 is EBGP */
 			return -1;
 	}
 
 	/* 7. nexthop costs. NOT YET -> IGNORE */
 
 	/* 8. lowest BGP Id wins */
-	if ((p2->peer->remote_bgpid - p1->peer->remote_bgpid) != 0)
-		return (p2->peer->remote_bgpid - p1->peer->remote_bgpid);
+	if ((asp2->peer->remote_bgpid - asp1->peer->remote_bgpid) != 0)
+		return (asp2->peer->remote_bgpid - asp1->peer->remote_bgpid);
 
 	/* 9. lowest peer address wins */
-	if (memcmp(&p1->peer->conf.remote_addr,
-	    &p2->peer->conf.remote_addr,
-	    sizeof(p1->peer->conf.remote_addr)) != 0)
-		return (memcmp(&p1->peer->conf.remote_addr,
-		    &p2->peer->conf.remote_addr,
-		    sizeof(p1->peer->conf.remote_addr)));
+	if (memcmp(&asp1->peer->conf.remote_addr,
+	    &asp2->peer->conf.remote_addr,
+	    sizeof(asp1->peer->conf.remote_addr)) != 0)
+		return (memcmp(&asp1->peer->conf.remote_addr,
+		    &asp2->peer->conf.remote_addr,
+		    sizeof(asp1->peer->conf.remote_addr)));
 
 
 	fatalx("Uh, oh a politician in the decision process");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.8 2004/02/25 22:14:31 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.9 2004/02/27 20:53:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -213,7 +213,7 @@ up_generate_updates(struct rde_peer *peer,
 
 	if (new == NULL || new->aspath->nexthop == NULL ||
 	    new->aspath->nexthop->state != NEXTHOP_REACH) {
-		if (peer == old->peer)
+		if (peer == old->aspath->peer)
 			/* Do not send routes back to sender */
 			return;
 
@@ -226,7 +226,7 @@ up_generate_updates(struct rde_peer *peer,
 			 */
 			return;
 
-		if (peer->conf.ebgp == 0 && old->peer->conf.ebgp == 0 &&
+		if (peer->conf.ebgp == 0 && old->aspath->peer->conf.ebgp == 0 &&
 		    (old->aspath->nexthop->flags & NEXTHOP_ANNOUNCE) == 0)
 			/* Do not redistribute updates to ibgp peers */
 			return;
@@ -269,7 +269,7 @@ up_generate_updates(struct rde_peer *peer,
 		if (up_add(peer, p, NULL) == -1)
 			log_warnx("queuing update failed.");
 	} else {
-		if (peer == new->peer)
+		if (peer == new->aspath->peer)
 			/* Do not send routes back to sender */
 			return;
 
@@ -282,7 +282,7 @@ up_generate_updates(struct rde_peer *peer,
 			 */
 			return;
 
-		if (peer->conf.ebgp == 0 && new->peer->conf.ebgp == 0 &&
+		if (peer->conf.ebgp == 0 && new->aspath->peer->conf.ebgp == 0 &&
 		    (new->aspath->nexthop->flags & NEXTHOP_ANNOUNCE) == 0)
 			/* Do not redistribute updates to ibgp peers */
 			return;
@@ -373,7 +373,7 @@ up_generate_attr(struct rde_peer *peer, struct update_attr *upa,
 		 */
 		if (nh->flags & NEXTHOP_ANNOUNCE)
 			nexthop = peer->local_addr.v4.s_addr;
-		else if (a->nexthop == peer->remote_addr.v4.s_addr)
+		else if (a->nexthop.s_addr == peer->remote_addr.v4.s_addr)
 			/*
 			 * per rfc: if remote peer address is equal to
 			 * the nexthop set the nexthop to our local address.
