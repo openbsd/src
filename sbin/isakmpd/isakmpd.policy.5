@@ -1,5 +1,5 @@
-.\" $OpenBSD: isakmpd.policy.5,v 1.3 2000/02/07 01:32:32 niklas Exp $
-.\" $EOM: isakmpd.policy.5,v 1.8 2000/02/07 01:30:35 angelos Exp $
+.\" $OpenBSD: isakmpd.policy.5,v 1.4 2000/02/11 10:22:08 niklas Exp $
+.\" $EOM: isakmpd.policy.5,v 1.11 2000/02/10 16:25:01 angelos Exp $
 .\"
 .\" Copyright (c) 1999, Angelos D. Keromytis.  All rights reserved.
 .\"
@@ -160,14 +160,14 @@ encrypted).
 The following policy assertion:
 .Bd -literal
     Authorizer: "POLICY"
-    Licensees: "CN:/CN=CA Certificate"
+    Licensees: "DN:/CN=CA Certificate"
     Conditions: app_domain == "IPsec policy" && esp_present == "yes"
 		&& esp_enc_alg != "null" -> "true";
 .Ed
 
 is similar to the previous one, but instead of including a complete
 X509 credential in the Licensees field, only the X509 certificate's
-Subject Canonical Name need to be specified (note that the "CN:"
+Subject Canonical Name need to be specified (note that the "DN:"
 prefix is necessary).
 .Pp
 KeyNote credentials have the same format as policy assertions, with
@@ -242,6 +242,12 @@ Always set to
 .It doi
 Always set to
 .Va ipsec .
+.It initiator
+Set to
+.Va yes
+if the local daemon is initiating the Phase 2 SA,
+.Va no
+otherwise.
 .It pfs
 Set to
 .Va yes
@@ -380,7 +386,7 @@ these contain the lower end of the address range. For
 or
 .Va IPv6 subnet ,
 these contain the lowest address in the specified subnet.
-.It remote_filter, local_filter, remote_id_filter
+.It remote_filter, local_filter, remote_id
 When the corresponding filter_type specifies an address (or range, or
 subnet), theseares set to the upper and lower part of the address
 space separated by a dash ('-') character (if the type specifies a
@@ -453,7 +459,7 @@ Set to the local date/time, in YYYYMMDDHHmmSS format.
     keynote-version: 2
     comment: this is an example of a policy delegating to a CN.
     authorizer: "POLICY"
-    licensees: "CN:/CN=CA Certificate/Email=ca@foo.bar.com"
+    licensees: "DN:/CN=CA Certificate/Email=ca@foo.bar.com"
 
 
 
