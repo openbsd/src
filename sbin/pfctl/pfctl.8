@@ -1,4 +1,4 @@
-.\" $OpenBSD: pfctl.8,v 1.3 2001/06/25 19:32:19 ian Exp $
+.\" $OpenBSD: pfctl.8,v 1.4 2001/06/25 21:27:16 ian Exp $
 .\"
 .\" Copyright (c) 2001 Kjell Wooding.  All rights reserved.
 .\"
@@ -58,28 +58,20 @@ command is normally invoked automatically at system initialization
 time to start and load the packet filter,
 but can also be used when the filter or translation rules change.
 .Pp
-To use
 .Nm
-successfully, you must:
-.Bl -enum
-.It
-Be running a kernel with
-.Xr pf 8
-configured in (the GENERIC kernel qualifies);
-.It
-Have written a rules and/or nat file;
-.It
-If you are forwarding packets (using NAT), have enabled 
+requires a kernel with
+.Xr pf 4
+configured in (the GENERIC kernel qualifies).
+To forward packets (using NAT), 
+.Nm
+also requires
 .Li net.inet.ip.forwarding=1
 in the file
-.Pa /etc/sysctl.conf ,
-and rebooted since enabling it.
-.El
-.Pp
-For this mechanism to be started when the system reboots,
-you should enable IPF and IPNAT in 
+.Pa /etc/sysctl.conf .
+The variables IPF and IPNAT in 
 .Pa /etc/rc.conf
-as well.
+determine whether this mechanism will be started automatically
+when the system is booted.
 .Pp
 The
 .Nm
@@ -126,8 +118,6 @@ Load rules into NAT
 Enable logging for an interface
 .El
 .Pp
-.Sh BUGS
-Yes
 .Sh FILES
 .Bl -tag -width /etc/nat.rules
 .It Pa /etc/pf.rules
@@ -135,4 +125,25 @@ packet filter rules file
 .It Pa /etc/nat.rules
 rules for Network Address Translation
 .Sh SEE ALSO
+.Xr pf 4, 
+.Xr pf.rules 5 ,
+.Xr nat.rules 5 .
+.Sh COMPATIBILITY
+This mechanism is largely compatible with the previous
+IP Filter mechanism, which was removed from
+.Os
+due to a licensing conflict.
+.Sh AUTHORS
+Daniel Hartmeier wrote the program and the underlying mechanism.
+.Sh HISTORY
+The
+.Nm
+program and the 
 .Xr pf 4
+filter mechanism first appeared in
+.Os
+2.10.
+.Sh BUGS
+Probably.
+.Sh CAVEATS
+It is not yet as fully featured as the mechanism it replaced.
