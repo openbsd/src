@@ -25,7 +25,7 @@ changecom(,)dnl
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $OpenBSD: ppp.8.m4,v 1.14 2004/03/15 10:00:52 jmc Exp $
+.\" $OpenBSD: ppp.8.m4,v 1.15 2004/05/23 17:25:22 jmc Exp $
 .\"
 .Dd September 20, 1995
 .Dt PPP 8
@@ -52,7 +52,8 @@ and it's thus somewhat hard to debug and/or modify its behaviour.
 However, in this implementation
 .Em PPP
 is done as a user process with the help of the
-tunnel device driver (tun).
+tunnel device driver
+.Pq Xr tun 4 .
 .Pp
 The
 .Fl nat
@@ -320,7 +321,7 @@ filter to {define} a dialing trigger packet and the
 filter for keeping a connection alive with the trigger packet.
 .It Tunnel driver supports bpf.
 The user can use
-.Xr tcpdump 1
+.Xr tcpdump 8
 to check the packet flow over the
 .Em PPP
 link.
@@ -414,21 +415,21 @@ with permissions
 .Dv 04554 .
 By default,
 .Nm
-will not run if the invoking user id is not zero.
+will not run if the invoking user ID is not zero.
 This may be overridden by using the
 .Dq allow users
 command in
 .Pa /etc/ppp/ppp.conf .
 When running as a normal user,
 .Nm
-switches to user id 0 in order to alter the system routing table, set up
+switches to user ID 0 in order to alter the system routing table, set up
 system lock files and read the ppp configuration files.
 All external commands (executed via the "shell" or "!bg" commands) are executed
-as the user id that invoked
+as the user ID that invoked
 .Nm ppp .
 Refer to the
 .Sq ID0
-logging facility if you're interested in what exactly is done as user id
+logging facility if you're interested in what exactly is done as user ID
 zero.
 .Sh GETTING STARTED
 When you first run
@@ -438,17 +439,21 @@ you may need to deal with some initial configuration details.
 .It
 Your kernel must {include} a tunnel device (the GENERIC kernel includes
 one by default).
-If it doesn't, or if you require more than one tun
-interface, you'll need to rebuild your kernel with the following line in
+If it doesn't,
+you'll need to rebuild your kernel with the following line in
 your kernel configuration file:
 .Pp
-.Dl pseudo-device tun N
+.Dl pseudo-device tun
 .Pp
-where
-.Ar N
-is the maximum number of
-.Em PPP
-connections you wish to support.
+Tun interfaces can be created at runtime using the
+.Cm ifconfig tunN create
+command or by opening the character special device
+.Pa /dev/tunN .
+See
+.Xr ifconfig 8
+and
+.Xr tun 4
+for more information.
 .It
 Check your
 .Pa /dev
@@ -960,7 +965,7 @@ You must also specify the destination label in
 to use.
 It must contain the
 .Dq set ifaddr
-command to {define} the remote peers IP address.
+command to {define} the remote peer's IP address.
 (refer to
 .Pa /etc/ppp/ppp.conf.sample )
 .Bd -literal -offset indent
@@ -1999,7 +2004,7 @@ As you may have already noticed, 192.244.177.2 is equivalent to saying
 192.244.177.2/32.
 .It
 As an exception, 0 is equivalent to 0.0.0.0/0, meaning that I have no
-preferred IP address and will obey the remote peers selection.
+preferred IP address and will obey the remote peer's selection.
 When using zero, no routing table entries will be made until a connection
 is established.
 .It
@@ -2316,7 +2321,7 @@ Log packets permitted by the dial filter and denied by any filter.
 .It Li HDLC
 Dump HDLC packet in hex.
 .It Li ID0
-Log all function calls specifically made as user id 0.
+Log all function calls specifically made as user ID 0.
 .It Li IPCP
 Generate an IPCP packet trace.
 .It Li LCP
@@ -2436,7 +2441,7 @@ Refer to RFC 1990 for specification details.
 The peer is identified using a combination of his
 .Dq endpoint discriminator
 and his
-.Dq authentication id .
+.Dq authentication ID .
 Either or both of these may be specified.
 It is recommended that
 at least one is specified, otherwise there is no way of ensuring that
@@ -2754,7 +2759,7 @@ We only send our discriminator if
 is used and
 .Ar enddisc
 is enabled.
-We reject the peers discriminator if
+We reject the peer's discriminator if
 .Ar enddisc
 is denied.
 .It LANMan|chap80lm
@@ -3242,13 +3247,13 @@ in
 .Fl background
 mode.
 .Pp
-User id 0 is immune to these commands.
+User ID 0 is immune to these commands.
 .Bl -tag -width 2n
 .It allow user Ns Xo
 .Op s
 .Ar logname Ns No ...
 .Xc
-By default, only user id 0 is allowed access to
+By default, only user ID 0 is allowed access to
 .Nm ppp .
 If this command is used, all of the listed users are allowed access to
 the section in which the
@@ -3514,9 +3519,9 @@ See the
 .Dq set enddisc
 command below.
 .It Li HISADDR
-This is replaced with the peers IP number.
+This is replaced with the peer's IP number.
 .It Li HISADDR6
-This is replaced with the peers IPv6 number.
+This is replaced with the peer's IPv6 number.
 .It Li INTERFACE
 This is replaced with the name of the interface that's in use.
 .It Li IPOCTETSIN
@@ -3571,9 +3576,9 @@ was established.
 This is replaced with the number of packets sent since the connection
 was established.
 .It Li PEER_ENDDISC
-This is replaced with the value of the peers endpoint discriminator.
+This is replaced with the value of the peer's endpoint discriminator.
 .It Li PROCESSID
-This is replaced with the current process id.
+This is replaced with the current process ID.
 .It Li SOCKNAME
 This is replaced with the name of the diagnostic socket.
 .It Li UPTIME
@@ -4135,7 +4140,7 @@ to be sent with the CHAP response.
 .It
 The
 .Dq authkey ,
-which is encrypted with the challenge and request id, the answer being sent
+which is encrypted with the challenge and request ID, the answer being sent
 in the CHAP response packet.
 .El
 .Pp
@@ -4145,13 +4150,13 @@ in this manner, it's expected that the host challenge is a series of ASCII
 digits or characters.
 An encryption device or Secure ID card is usually
 required to calculate the secret appropriate for the given challenge.
-.It set authname Ar id
-This sets the authentication id used in client mode PAP or CHAP negotiation.
+.It set authname Ar ID
+This sets the authentication ID used in client mode PAP or CHAP negotiation.
 .Pp
 If used in
 .Fl direct
 mode with CHAP enabled,
-.Ar id
+.Ar ID
 is used in the initial authentication challenge and should normally be set to
 the local machine name.
 .It set autoload Xo
@@ -4239,7 +4244,7 @@ authentication.
 If
 .Nm
 is the callee, the number should be specified as the fifth field of
-the peers entry in
+the peer's entry in
 .Pa /etc/ppp/ppp.secret .
 .It cbcp
 Microsoft's callback control protocol is used.
@@ -4890,7 +4895,7 @@ numbers to the peer.
 If the peer requests one of these numbers,
 and that number is not already in use,
 .Nm
-will grant the peers request.
+will grant the peer's request.
 This is useful if the peer wants
 to re-establish a link using the same IP number as was previously
 allocated (thus maintaining any existing tcp or udp connections).
@@ -4996,7 +5001,7 @@ If
 is specified, it tells
 .Nm
 how many terminate requests should be sent before giving up waiting for the
-peers response.
+peer's response.
 The default is 3 attempts.
 Authentication protocols are
 not terminated and it is therefore invalid to specify
@@ -5159,7 +5164,7 @@ A value must be given when
 is specified.
 .It set nbns Op Ar x.x.x.x Op Ar y.y.y.y
 This option allows the setting of the Microsoft NetBIOS name server
-values to be returned at the peers request.
+values to be returned at the peer's request.
 If no values are given,
 .Nm
 will reject any such requests.
@@ -5262,7 +5267,7 @@ The peer IP address is set to the given value.
 .It RAD_FRAMED_IP_NETMASK
 The tun interface netmask is set to the given value.
 .It RAD_FRAMED_MTU
-If the given MTU is less than the peers MRU as agreed during LCP
+If the given MTU is less than the peer's MRU as agreed during LCP
 negotiation, *and* it is less that any configured MTU (see the
 .Dq set mru
 command), the tun interface MTU is set to the given value.
@@ -5813,7 +5818,7 @@ Refer to
 .Xr uucplock 3
 for further details.
 .It Pa /var/run/tunN.pid
-The process id (pid) of the
+The process ID (PID) of the
 .Nm
 program connected to the tunN device, where
 .Sq N
@@ -5848,17 +5853,17 @@ This socket is used to pass links between different instances of
 .Xr gzip 1 ,
 .Xr hostname 1 ,
 .Xr login 1 ,
-.Xr tcpdump 1 ,
 .Xr telnet 1 ,
-.Xr kldload 2 ,
-ifdef({LOCALNAT},{},{.Xr libalias 3 ,
-})dnl
-ifdef({LOCALRAD},{},{.Xr libradius 3 ,
-})dnl
+.\" .Xr kldload 2 ,
+.\" ifdef({LOCALNAT},{},{.Xr libalias 3 ,
+.\" })dnl
+.\" ifdef({LOCALRAD},{},{.Xr libradius 3 ,
+.\" })dnl
 .Xr syslog 3 ,
 .Xr uucplock 3 ,
-.Xr netgraph 4 ,
-.Xr ng_pppoe 4 ,
+.\" .Xr netgraph 4 ,
+.\" .Xr ng_pppoe 4 ,
+.Xr tun 4 ,
 .Xr crontab 5 ,
 .Xr group 5 ,
 .Xr passwd 5 ,
@@ -5868,9 +5873,10 @@ ifdef({LOCALRAD},{},{.Xr libradius 3 ,
 .Xr adduser 8 ,
 .Xr chat 8 ,
 .Xr getty 8 ,
+.Xr ifconfig 8 ,
 .Xr inetd 8 ,
 .Xr init 8 ,
-.Xr isdn 8 ,
+.\" .Xr isdn 8 ,
 .Xr named 8 ,
 .Xr ping 8 ,
 .Xr pppctl 8 ,
@@ -5879,6 +5885,7 @@ ifdef({LOCALRAD},{},{.Xr libradius 3 ,
 .Xr route 8 ,
 .Xr sshd 8 ,
 .Xr syslogd 8 ,
+.Xr tcpdump 8 ,
 .Xr traceroute 8 ,
 .Xr vipw 8
 .Sh HISTORY
