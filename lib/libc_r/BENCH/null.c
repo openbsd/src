@@ -6,7 +6,8 @@
 static char name[] =  "Null test";
 static char doc[] = 
 "\tThe time needed for performing a tight empty loop. This indicates\n"
-"\tthe overhead incurred by the measurement harness.";
+"\tthe overhead incurred by the measurement harness. It should be zero,\n"
+"\tand may even be negative.";
 
 
 

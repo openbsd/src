@@ -1,22 +1,22 @@
 
-#define BENCH_LOOPS	(16384)
+/* The default number of cycles per test */
+#define BENCH_LOOPS	(100000)
+
 #include <sys/time.h>
 
 typedef struct  {
-	int i;
-	int n;
-	int divisor;
-	struct timespec start;
-	struct timespec end;
-	struct timespec elapsed;
-	double average;
-	char *name;
-	char *doc;
-	char *units;
+	int i;				/* loop counter */
+	int n;				/* loop maximum */
+	int divisor;			/* operations per cycle */
+	struct timeval start;		/* start time */
+	struct timeval end;		/* end time */
+	char *name;			/* benchmark title */
+	char *doc;			/* benchmark description */
+	char *units;			/* measurement units information */
 } bench_t;
 
-#define bench_now(tsp) \
-	clock_gettime(CLOCK_REALTIME, (tsp))
+#define bench_now(tvp) \
+	gettimeofday((tvp),0)
 
 /*
  * Repeat the body of the loop 'max' times, with a few extra 'warm up'
@@ -36,9 +36,8 @@ typedef struct  {
 	(b)->name = (nm);						\
 	(b)->doc = (dc);						\
 	(b)->units = (un);						\
-	timespecclear(&(b)->start);					\
-	timespecclear(&(b)->end);					\
-	timespecclear(&(b)->elapsed);					\
+	timerclear(&(b)->start);					\
+	timerclear(&(b)->end);						\
 	(b)->n = (b)->i = 0;						\
 	(b)->divisor = 1;						\
 } while (0)
@@ -48,18 +47,23 @@ typedef struct  {
 	       "Name:\t%s\nDesc:%s\n",	(b)->name, (b)->doc)
 
 #define bench_report(b) do {						\
-	struct timespec elapsed;					\
 	bench_t overhead;						\
+	struct timeval oh_elapsed;					\
+	struct timeval elapsed;						\
+	struct timeval normal;						\
+	double average;							\
 									\
 	/* compute the loop overhead */					\
-	bench_amortize(&overhead, BENCH_LOOPS) { /* nothing */ }	\
+	bench_amortize(&overhead, (b)->n) { /* nothing */ }		\
 									\
-	timespecsub(&(b)->end, &(b)->start, &(b)->elapsed);		\
-	(b)->average = ((double)(b)->elapsed.tv_sec * 1000000000.0 +	\
-	    (b)->elapsed.tv_nsec) / (double)((b)->divisor) / 		\
+	/* compute the test time */					\
+	timersub(&(b)->end, &(b)->start, &elapsed);			\
+	timersub(&overhead.end, &overhead.start, &oh_elapsed);		\
+	timersub(&elapsed, &oh_elapsed, &normal);			\
+									\
+	average = ((double)normal.tv_sec * 1000000.0 +			\
+	    normal.tv_usec) / (double)((b)->divisor) / 			\
 	    (double)((b)->n);						\
 									\
-	printf("Time: %f usec %s\n", (b)->average, (b)->units);		\
-	if ((b)->divisor != 1)						\
-		printf("\t(%d operations per cycle)\n", (b)->divisor);	\
+	printf("Time: %f usec %s\n", average, (b)->units);		\
 } while (0)

@@ -3,7 +3,7 @@ CPPFLAGS +=	-pthread
 LDFLAGS +=	-pthread
 CFLAGS +=	-O -ggdb
 METRICS =	null once_overhead self_overhead mutex_nocont mutex_cont\
-		cond_nowait cond_wake cond_timed
+		cond_nowait cond_timed
 MKDEP =		-p
 SRCS =		${METRICS:=.c}
 CLEANFILES +=	${METRICS}

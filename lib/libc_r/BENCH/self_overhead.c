@@ -1,4 +1,6 @@
+#include <stdio.h>
 #include <pthread.h>
+#include <sched.h>
 #include <string.h>
 #include <err.h>
 #include "bench.h"
@@ -34,7 +36,7 @@ numthreads(n)
 		if (error != 0)
 			errx(1, "pthread_create #%d: %s", nthreads, 
 				strerror(error));
-		pthread_yield();
+		sched_yield();
 		nthreads++;
 	}
 
@@ -42,7 +44,7 @@ numthreads(n)
 		error = pthread_cancel(children[nthreads - 1]);
 		if (error != 0)
 			errx(1, "pthread_cancel: %s", strerror(error));
-		pthread_yield();
+		sched_yield();
 		nthreads --;
 	}
 

@@ -1,4 +1,6 @@
+#include <stdio.h>
 #include <pthread.h>
+#include <sched.h>
 #include <string.h>
 #include <err.h>
 #include "bench.h"
@@ -12,6 +14,8 @@ static char doc[] =
 "\tMetrics shall be provided for both the case when the\n"
 "\tpthread_cond_signal() call is executed under the associated mutex,\n"
 "\tas well as not under the mutex.";
+
+/* BROKEN */
 
 pthread_mutex_t	m1, m2;
 pthread_cond_t	c;
@@ -44,7 +48,7 @@ main() {
 	pthread_mutex_lock(&m1);
 	pthread_create(&other, NULL, other_thread, NULL);
 
-	pthread_yield();
+	sched_yield();
 	while (b.i < b.n) {
 		pthread_cond_signal(&c);
 		pthread_cond_wait(&c, &m1);
@@ -52,6 +56,7 @@ main() {
 
 	b.divisor = 2;
 	bench_report(&b);
+	pthread_join(other, NULL);
 	exit(0);
 }
 

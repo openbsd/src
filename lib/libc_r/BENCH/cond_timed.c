@@ -1,11 +1,13 @@
+#include <stdio.h>
 #include <pthread.h>
+#include <sched.h>
 #include <string.h>
 #include <err.h>
 #include "bench.h"
 
 static char name[] =  "Time of Wakeup After Timed Wait";
 static char doc[] = 
-"\tThe tiem required for the highest-priority thread to rresume\n"
+"\tThe time required for the highest-priority thread to resume\n"
 "\texecution after a call to pthread_cond_timedwait(). Metrics\n"
 "\tare provided for both the cases when the pthread_cond_timedwait()\n"
 "\tcall is awakened by a call to pthread_cond_signal() and when\n"
@@ -50,7 +52,7 @@ main() {
 	pthread_mutex_lock(&m1);
 
 	pthread_create(&other, NULL, other_thread, NULL);
-	pthread_yield();
+	sched_yield();
 	while (b.i < b.n) {
 		pthread_cond_signal(&c);
 		pthread_cond_timedwait(&c, &m1, &waketime);
@@ -65,7 +67,7 @@ main() {
 	bench_init(&b, NULL, NULL, "per call when already expired");
 	pthread_mutex_init(&m, NULL);
 	pthread_mutex_lock(&m);
-	timespecclear(&ts);
+	timespecclear(&ts);	/* 1 Jan, 1970 */
 	bench_amortize(&b, BENCH_LOOPS) {
 		pthread_cond_timedwait(&c, &m, &ts);
 	}

@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <pthread.h>
+#include <sched.h>
 #include <string.h>
 #include <err.h>
 #include "bench.h"
@@ -63,7 +64,7 @@ thread_a(arg)
 {
 	pthread_set_name_np(pthread_self(), "ta");
 	pthread_mutex_lock(&m2);
-	pthread_yield();
+	sched_yield();
 
 	pthread_mutex_lock(&m1);
 	bench_amortize(&ba, BENCH_LOOPS) {
@@ -85,7 +86,7 @@ thread_b(arg)
 	pthread_set_name_np(pthread_self(), "tb");
 	pthread_mutex_lock(&m1);
 	pthread_mutex_lock(&m3);
-	pthread_yield();
+	sched_yield();
 
 	bench_amortize(&bb, BENCH_LOOPS) {
 		pthread_mutex_unlock(&m1);
