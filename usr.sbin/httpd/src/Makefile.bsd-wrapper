@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.3 1998/03/26 17:10:09 pefo Exp $	
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.4 1998/03/26 18:10:43 deraadt Exp $	
 .include <bsd.own.mk>
 PROG=httpd
 BINDIR=/usr/sbin
@@ -20,7 +20,7 @@ config:	.FORCE
 Makefile: helpers/GuessOS
 	sh ${.CURDIR}/Configure -file ${.CURDIR}/Configuration -make ${.CURDIR}/Makefile.tmpl
 
-install: maninistall
+install:
 	${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} ${PROG} ${DESTDIR}${BINDIR} 
 
 clean cleandir:
