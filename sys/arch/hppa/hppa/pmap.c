@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.99 2003/02/18 09:40:43 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.100 2003/02/26 22:32:42 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -810,7 +810,7 @@ pmap_remove(pmap, sva, eva)
 	int batch;
 
 	DPRINTF(PDB_FOLLOW|PDB_REMOVE,
-	    ("pmap_remove(%p, 0x%x, 0x%x\n", pmap, sva, eva));
+	    ("pmap_remove(%p, 0x%x, 0x%x)\n", pmap, sva, eva));
 
 	simple_lock(&pmap->pm_obj.vmobjlock);
 
