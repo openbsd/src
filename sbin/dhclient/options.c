@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.14 2004/11/02 01:18:45 deraadt Exp $	*/
+/*	$OpenBSD: options.c,v 1.15 2004/12/26 03:17:07 deraadt Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -600,7 +600,7 @@ pretty_print_option(unsigned int code, unsigned char *data, int len,
 			case 'l':
 				opcount = snprintf(op, opleft, "%ld",
 				    (long)getLong(dp));
-				if (opcount >= opleft)
+				if (opcount >= opleft || opcount == -1)
 					goto toobig;
 				opleft -= opcount;
 				dp += 4;
@@ -608,7 +608,7 @@ pretty_print_option(unsigned int code, unsigned char *data, int len,
 			case 'L':
 				opcount = snprintf(op, opleft, "%ld",
 				    (unsigned long)getULong(dp));
-				if (opcount >= opleft)
+				if (opcount >= opleft || opcount == -1)
 					goto toobig;
 				opleft -= opcount;
 				dp += 4;
@@ -616,7 +616,7 @@ pretty_print_option(unsigned int code, unsigned char *data, int len,
 			case 's':
 				opcount = snprintf(op, opleft, "%d",
 				    getShort(dp));
-				if (opcount >= opleft)
+				if (opcount >= opleft || opcount == -1)
 					goto toobig;
 				opleft -= opcount;
 				dp += 2;
@@ -624,7 +624,7 @@ pretty_print_option(unsigned int code, unsigned char *data, int len,
 			case 'S':
 				opcount = snprintf(op, opleft, "%d",
 				    getUShort(dp));
-				if (opcount >= opleft)
+				if (opcount >= opleft || opcount == -1)
 					goto toobig;
 				opleft -= opcount;
 				dp += 2;
@@ -632,19 +632,19 @@ pretty_print_option(unsigned int code, unsigned char *data, int len,
 			case 'b':
 				opcount = snprintf(op, opleft, "%d",
 				    *(char *)dp++);
-				if (opcount >= opleft)
+				if (opcount >= opleft || opcount == -1)
 					goto toobig;
 				opleft -= opcount;
 				break;
 			case 'B':
 				opcount = snprintf(op, opleft, "%d", *dp++);
-				if (opcount >= opleft)
+				if (opcount >= opleft || opcount == -1)
 					goto toobig;
 				opleft -= opcount;
 				break;
 			case 'x':
 				opcount = snprintf(op, opleft, "%x", *dp++);
-				if (opcount >= opleft)
+				if (opcount >= opleft || opcount == -1)
 					goto toobig;
 				opleft -= opcount;
 				break;
