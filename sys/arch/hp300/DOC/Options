@@ -1,48 +1,47 @@
-$OpenBSD: Options,v 1.9 2001/08/19 17:07:02 miod Exp $
+$OpenBSD: Options,v 1.10 2001/12/06 01:02:50 miod Exp $
 $NetBSD: Options,v 1.7 1997/09/12 08:04:12 mycroft Exp $
 
-Here is a list of hp300 specific kernel compilation options and what they
+Here is a list of HP300 specific kernel compilation options and what they
 mean:
 
 HP320
-	Support for old hp320 machines: 16mhz 68020, HP MMU, 16mhz 68881
-	and VAC.  Compiles in support for a VAC, HP MMU, and the 98620A
-	16-bit DMA channel.
+	Support for HP320 machines: 16MHz 68020, HP MMU, 16MHz 68881 and VAC.
+	Compiles in support for a VAC, HP MMU, and the 98620A 16-bit DMA
+	channel.
 
 HP350
-	Support for old hp350 machines: 25mhz 68020, HP MMU, 20mhz 68881
-	and VAC.  Compiles in support for a VAC and the HP MMU.  Differs
-	from HP320 in that it has no support for 16-bit DMA controller.
+	Support for HP350 machines: 25MHz 68020, HP MMU, 20MHz 68881 and VAC.
+	Compiles in support for a VAC and the HP MMU.  Differs from HP320 in
+	that it has no support for 16-bit DMA controller.
 
 HP330
-	Support for old hp330 (and 318/319) machines: 16mhz 68020, 68551 PMMU
-	and 16mhz 68881.  Compiles in support for PMMU.
+	Support for HP330 (and 318, 319) machines: 16MHz 68020, 68851 PMMU
+	and 16MHz 68881.  Compiles in support for PMMU.
 
 HP340
-HP360
-	Support for old 340 and hp360 machines: 25mhz 68030+MMU and 25mhz
-	68882.  Compiles in support for PMMU and 68030.  Differs from HP330
-	in support for 68030 on-chip data cache.
+	Support for HP340 machines: 25MHz 68030+MMU and 25MHz 68882.  Compiles
+	in support for PMMU and 68030.  Differs from HP330 in support for
+	68030 on-chip data cache.
 
+HP345
+HP360
 HP370
-	Support for old hp370 (and current 345/375/400) machines: 33 (50) mhz
-	68030+MMU and 33 (50) mhz 68882.  Compiles in support for PMMU, 68030
-	and off-chip physically addressed cache.  Differs from 360 in only one
-	place, in dealing with flushing the external cache.
+HP375
+HP400
+	Support for HP345, 360, 370, 375 and 400 machines: 33 (or 50) MHz
+	68030+MMU and 33 (or 50) MHz 68882.  Compiles in support for PMMU,
+	68030 and off-chip physically addressed cache.  Differs from 340
+	in only one place, in dealing with flushing the external cache.
 
 HP380
 HP385
-	Support for "current" hp380/425/385/433 machines: 25 (33) mhz 68040
+HP425
+HP433
+	Support for HP380, 385, 425 and 433 machines: 25 (or 33) MHz 68040
 	with MMU/FPU.  Compiles in support for 68040.
 
-FPSP
-	Compiles in support to link with Motorola's 68040 FP emulation
-	library.  Kernel will build and run without this option, but many
-	binaries will core dump.  Should not be defined unless HP380 is.
-
-
 USELEDS
-	Twinkle the hp4xx front panel (or hp3xx internal) LEDs in the HP
+	Twinkle the HP4xx front panel (or HP3xx internal) LEDs in the HP
 	designated way.  Somewhat frivolous, but the heartbeat LED is
 	useful to see if your machine is alive.
 
@@ -52,7 +51,7 @@ DEBUG
 
 COMPAT_HPUX
 	Enables HP-UX binary compatibility mode.  Allows a variety of
-	"recent" HP-UX binaries to be run unchanged.  Due to the
+	"recent" HP-UX m68k binaries to be run unchanged.  Due to the
 	evolutionary and "as-needed" nature of this code, "recent" is
 	anywhere from release 6.2 to 8.0 of HP-UX.  It will run 8.0
 	shared-library binaries (assuming all the necessary shared-libraries
@@ -65,18 +64,3 @@ DCMSTATS
 WAITHIST
 	Compile in code to collect statistics about the distribution of
 	wait-times for various busy waits in the SCSI host-adaptor driver.
-
-SCSI_REVPRI
-	Changes autoconf to start matching logical SCSI devices starting
-	at slave 6 and working backwards instead of starting at slave 0
-	and working up.  Later releases of the HP boot ROM search for
-	boot devices in this manner.  This is apparently the order in
-	which priority is given to slaves on the host adaptor.  Define
-	this if you use wildcarding and want to stay in sync with the
-	boot ROM's strategy.
-
-MAPPEDCOPY
-	Use page remapping to do large copyin/copyouts.  When defined
-	the default is to use mapped copy for operations on one page
-	or more except on machines with virtually-indexed caches.
-	See initcpu() in machdep.c
