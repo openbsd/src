@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.395 2003/07/03 21:09:13 cedric Exp $	*/
+/*	$OpenBSD: parse.y,v 1.396 2003/07/04 10:42:16 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -373,7 +373,7 @@ typedef struct {
 %token	<v.i>			PORTBINARY
 %type	<v.interface>		interface if_list if_item_not if_item
 %type	<v.number>		number icmptype icmp6type uid gid
-%type	<v.number>		tos not yesno
+%type	<v.number>		tos not yesno natpass
 %type	<v.i>			no dir log af fragcache
 %type	<v.i>			staticport unaryop
 %type	<v.b>			action nataction flags flag blockspec
@@ -2516,19 +2516,25 @@ redirection	: /* empty */			{ $$ = NULL; }
 		}
 		;
 
-nataction	: no NAT {
+natpass		: /* empty */	{ $$ = 0; }
+		| PASS		{ $$ = 1; }
+		;
+
+nataction	: no NAT natpass {
 			$$.b2 = $$.w = 0;
 			if ($1)
 				$$.b1 = PF_NONAT;
 			else
 				$$.b1 = PF_NAT;
+			$$.b2 = $3;
 		}
-		| no RDR {
+		| no RDR natpass {
 			$$.b2 = $$.w = 0;
 			if ($1)
 				$$.b1 = PF_NORDR;
 			else
 				$$.b1 = PF_RDR;
+			$$.b2 = $3;
 		}
 		;
 
@@ -2543,6 +2549,7 @@ natrule		: nataction interface af proto fromto tag redirpool pooltype
 			memset(&r, 0, sizeof(r));
 
 			r.action = $1.b1;
+			r.natpass = $1.b2;
 			r.af = $3;
 
 			if (!r.af) {
@@ -2678,7 +2685,7 @@ natrule		: nataction interface af proto fromto tag redirpool pooltype
 		}
 		;
 
-binatrule	: no BINAT interface af proto FROM host TO ipspec tag
+binatrule	: no BINAT natpass interface af proto FROM host TO ipspec tag
 		  redirection
 		{
 			struct pf_rule		binat;
@@ -2693,107 +2700,108 @@ binatrule	: no BINAT interface af proto FROM host TO ipspec tag
 				binat.action = PF_NOBINAT;
 			else
 				binat.action = PF_BINAT;
-			binat.af = $4;
-			if (!binat.af && $7 != NULL && $7->af)
-				binat.af = $7->af;
-			if (!binat.af && $9 != NULL && $9->af)
-				binat.af = $9->af;
-			if (!binat.af && $11 != NULL && $11->host)
-				binat.af = $11->host->af;
+			binat.natpass = $3;
+			binat.af = $5;
+			if (!binat.af && $8 != NULL && $8->af)
+				binat.af = $8->af;
+			if (!binat.af && $10 != NULL && $10->af)
+				binat.af = $10->af;
+			if (!binat.af && $12 != NULL && $12->host)
+				binat.af = $12->host->af;
 			if (!binat.af) {
 				yyerror("address family (inet/inet6) "
 				    "undefined");
 				YYERROR;
 			}
 
-			if ($3 != NULL) {
-				memcpy(binat.ifname, $3->ifname,
+			if ($4 != NULL) {
+				memcpy(binat.ifname, $4->ifname,
 				    sizeof(binat.ifname));
-				free($3);
+				free($4);
 			}
-			if ($10 != NULL)
-				if (strlcpy(binat.tagname, $10,
+			if ($11 != NULL)
+				if (strlcpy(binat.tagname, $11,
 				    PF_TAG_NAME_SIZE) > PF_TAG_NAME_SIZE) {
 					yyerror("tag too long, max %u chars",
 					    PF_TAG_NAME_SIZE - 1);
 					YYERROR;
 				}
 
-			if ($5 != NULL) {
-				binat.proto = $5->proto;
-				free($5);
+			if ($6 != NULL) {
+				binat.proto = $6->proto;
+				free($6);
 			}
 
-			if ($7 != NULL && disallow_table($7, "invalid use of "
+			if ($8 != NULL && disallow_table($8, "invalid use of "
 			    "table <%s> as the source address of a binat rule"))
 				YYERROR;
-			if ($11 != NULL && $11->host != NULL && disallow_table(
-			    $11->host, "invalid use of table <%s> as the "
+			if ($12 != NULL && $12->host != NULL && disallow_table(
+			    $12->host, "invalid use of table <%s> as the "
 			    "redirect address of a binat rule"))
 				YYERROR;
 
-			if ($7 != NULL) {
-				if ($7->next) {
+			if ($8 != NULL) {
+				if ($8->next) {
 					yyerror("multiple binat ip addresses");
 					YYERROR;
 				}
-				if ($7->addr.type == PF_ADDR_DYNIFTL)
-					$7->af = binat.af;
-				if ($7->af != binat.af) {
+				if ($8->addr.type == PF_ADDR_DYNIFTL)
+					$8->af = binat.af;
+				if ($8->af != binat.af) {
 					yyerror("binat ip versions must match");
 					YYERROR;
 				}
-				if (check_netmask($7, binat.af))
+				if (check_netmask($8, binat.af))
 					YYERROR;
-				memcpy(&binat.src.addr, &$7->addr,
+				memcpy(&binat.src.addr, &$8->addr,
 				    sizeof(binat.src.addr));
-				free($7);
+				free($8);
 			}
-			if ($9 != NULL) {
-				if ($9->next) {
+			if ($10 != NULL) {
+				if ($10->next) {
 					yyerror("multiple binat ip addresses");
 					YYERROR;
 				}
-				if ($9->af != binat.af && $9->af) {
+				if ($10->af != binat.af && $10->af) {
 					yyerror("binat ip versions must match");
 					YYERROR;
 				}
-				if (check_netmask($9, binat.af))
+				if (check_netmask($10, binat.af))
 					YYERROR;
-				memcpy(&binat.dst.addr, &$9->addr,
+				memcpy(&binat.dst.addr, &$10->addr,
 				    sizeof(binat.dst.addr));
-				binat.dst.not = $9->not;
-				free($9);
+				binat.dst.not = $10->not;
+				free($10);
 			}
 
 			if (binat.action == PF_NOBINAT) {
-				if ($11 != NULL) {
+				if ($12 != NULL) {
 					yyerror("'no binat' rule does not need"
 					    " '->'");
 					YYERROR;
 				}
 			} else {
-				if ($11 == NULL || $11->host == NULL) {
+				if ($12 == NULL || $12->host == NULL) {
 					yyerror("'binat' rule requires"
 					    " '-> address'");
 					YYERROR;
 				}
 
-				remove_invalid_hosts(&$11->host, &binat.af);
-				if (invalid_redirect($11->host, binat.af))
+				remove_invalid_hosts(&$12->host, &binat.af);
+				if (invalid_redirect($12->host, binat.af))
 					YYERROR;
-				if ($11->host->next != NULL) {
+				if ($12->host->next != NULL) {
 					yyerror("binat rule must redirect to "
 					    "a single address");
 					YYERROR;
 				}
-				if (check_netmask($11->host, binat.af))
+				if (check_netmask($12->host, binat.af))
 					YYERROR;
 
 				if (!PF_AZERO(&binat.src.addr.v.a.mask,
 				    binat.af) &&
 				    !PF_AEQ(&binat.src.addr.v.a.mask,
-				    &$11->host->addr.v.a.mask, binat.af)) {
+				    &$12->host->addr.v.a.mask, binat.af)) {
 					yyerror("'binat' source mask and "
 					    "redirect mask must be the same");
 					YYERROR;
@@ -2803,12 +2811,12 @@ binatrule	: no BINAT interface af proto FROM host TO ipspec tag
 				pa = calloc(1, sizeof(struct pf_pooladdr));
 				if (pa == NULL)
 					err(1, "binat: calloc");
-				pa->addr.addr = $11->host->addr;
+				pa->addr.addr = $12->host->addr;
 				pa->ifname[0] = 0;
 				TAILQ_INSERT_TAIL(&binat.rpool.list,
 				    pa, entries);
 
-				free($11);
+				free($12);
 			}
 
 			pfctl_add_rule(pf, &binat);
