@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_ops.c,v 1.4 1996/04/03 14:13:06 dm Exp $	*/
+/*	$OpenBSD: nfs_ops.c,v 1.5 1996/05/24 09:22:06 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -40,7 +40,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)nfs_ops.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$OpenBSD: nfs_ops.c,v 1.4 1996/04/03 14:13:06 dm Exp $";
+static char *rcsid = "$OpenBSD: nfs_ops.c,v 1.5 1996/05/24 09:22:06 deraadt Exp $";
 #endif /* not lint */
 
 #include "am.h"
@@ -164,10 +164,10 @@ voidp idv;
 int done;
 {
 	fh_cache *fp = find_nfs_fhandle_cache(idv, done);
-#if NFS_PROTOCOL_VERSION >= 3
-	fp->fh_handle.fhs_vers = MOUNTVERS;
-#endif
 	if (fp) {
+#if NFS_PROTOCOL_VERSION >= 3
+		fp->fh_handle.fhs_vers = MOUNTVERS;
+#endif
 		fp->fh_error = pickup_rpc_reply(pkt, len, (voidp) &fp->fh_handle, xdr_fhstatus);
 		if (!fp->fh_error) {
 #ifdef DEBUG
