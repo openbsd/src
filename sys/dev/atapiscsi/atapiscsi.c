@@ -1,4 +1,4 @@
-/*      $OpenBSD: atapiscsi.c,v 1.6 1999/07/23 04:24:31 csapuntz Exp $     */
+/*      $OpenBSD: atapiscsi.c,v 1.7 1999/07/23 16:23:39 csapuntz Exp $     */
 
 /*
  * This code is derived from code with the copyright below.
@@ -203,9 +203,11 @@ atapiscsi_attach(parent, self, aux)
 	as->sc_wdc->channels[as->sc_channel]->ch_as = as;
 
 	for (drive = 0; drive < 2 ; drive++ ) {
-		if (wdc_atapi_get_params(as, drive,
-		    SCSI_POLL|SCSI_NOSLEEP, id) == COMPLETE) {
-			struct ata_drive_datas *drvp = &as->sc_drvs[drive];
+		struct ata_drive_datas *drvp = &as->sc_drvs[drive];
+			
+		if ((drvp->drive_flags & DRIVE_ATAPI) &&
+		    (wdc_atapi_get_params(as, drive,
+		    SCSI_POLL|SCSI_NOSLEEP, id) == COMPLETE)) {
 
 			as->valid[drive] = 1;
 
