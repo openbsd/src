@@ -397,7 +397,7 @@ static void OpenFile (dw)
 		mktemp (tmpName);
 		fd = open (tmpName, O_CREAT|O_EXCL|O_RDWR, S_IRUSR|S_IWUSR);
 #endif /* not HAVE_MKSTEMP */
-		dw->dvi.tmpFile = fdopen (tmpName, "w+");
+		dw->dvi.tmpFile = fdopen (fd, "w+");
 		unlink (tmpName);
 	}
 	dw->dvi.requested_page = 1;
