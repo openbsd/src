@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcp.c,v 1.40 2004/07/08 12:53:42 dtucker Exp $	*/
+/*	$OpenBSD: rcp.c,v 1.41 2005/03/31 18:39:21 deraadt Exp $	*/
 /*	$NetBSD: rcp.c,v 1.9 1995/03/21 08:19:06 cgd Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)rcp.c	8.2 (Berkeley) 4/2/94";
 #else
-static const char rcsid[] = "$OpenBSD: rcp.c,v 1.40 2004/07/08 12:53:42 dtucker Exp $";
+static const char rcsid[] = "$OpenBSD: rcp.c,v 1.41 2005/03/31 18:39:21 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -231,7 +231,7 @@ void
 toremote(char *targ, int argc, char *argv[])
 {
 	int i, len, tos;
-	char *bp, *host, *src, *suser, *thost, *tuser, *user;
+	char *bp, *host, *src, *suser, *thost, *tuser, *user, *arg;
 
 	if ((user = strdup(pwd->pw_name)) == NULL)
 		err(1, "malloc");
@@ -240,16 +240,19 @@ toremote(char *targ, int argc, char *argv[])
 	if (*targ == 0)
 		targ = ".";
 
-	if ((thost = strchr(argv[argc - 1], '@'))) {
+	arg = strdup(argv[argc - 1]);
+	if (!arg)
+		err(1, "malloc");
+	if ((thost = strchr(arg, '@'))) {
 		/* user@host */
 		*thost++ = 0;
-		tuser = argv[argc - 1];
+		tuser = arg;
 		if (*tuser == '\0')
 			tuser = NULL;
 		else if (!okname(tuser))
 			exit(1);
 	} else {
-		thost = argv[argc - 1];
+		thost = arg;
 		tuser = NULL;
 	}
 
