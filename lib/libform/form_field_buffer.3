@@ -1,5 +1,5 @@
 '\" t
-.\" $OpenBSD: form_field_buffer.3,v 1.10 1999/06/27 08:16:02 millert Exp $
+.\" $OpenBSD: form_field_buffer.3,v 1.11 2000/04/12 21:48:03 aaron Exp $
 .\"
 .\"***************************************************************************
 .\" Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -52,7 +52,7 @@ to contain a given string.  Buffer 0 is the displayed value of the field; other
 numbered buffers may be allocated by applications through the \fBnbuf\fR
 argument of (see \fBform_field_new\fR(3)) but are not manipulated by the forms
 library.  The function \fBfield_buffer\fR returns the address of the buffer.
-Please note that this buffer has always the length of the buffer, that means 
+Please note that this buffer has always the length of the buffer, that means
 that it may typically contain trailing spaces. If you entered leading spaces
 the buffer may also contain them. If you want the raw data, you must write your
 own routine that copies the value out of the buffer and removes the leading

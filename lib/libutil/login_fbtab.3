@@ -12,26 +12,26 @@
 .Sh DESCRIPTION
 The
 .Fn login_fbtab
-function reads the 
-.Pa /etc/fbtab 
+function reads the
+.Pa /etc/fbtab
 file and implements device security as described in the
 .Xr fbtab 5
-manual page. 
+manual page.
 .Pp
 If errors occur a null string is returned.
-.Sh DIAGNOSTICS 
-Problems are reported via the 
+.Sh DIAGNOSTICS
+Problems are reported via the
 .Xr syslogd 8
-daemon with the severity of 
+daemon with the severity of
 .Dv LOG_ERR.
 .Sh FILES
 .Bl -tag -width /etc/fbtab -compact
 .It Pa /etc/fbtab
 .El
 .Sh SEE ALSO
-.Xr fbtab 5 
+.Xr fbtab 5
 .Sh BUGS
-This module uses 
+This module uses
 .Xr strtok 3 ,
 which may cause conflicts with other uses of that same routine.
 .Sh AUTHOR

@@ -1,4 +1,4 @@
-.\" $OpenBSD: pthreads.3,v 1.8 2000/03/14 21:31:40 aaron Exp $
+.\" $OpenBSD: pthreads.3,v 1.9 2000/04/12 21:48:03 aaron Exp $
 .\" David Leonard <d@openbsd.org>, 1998. Public domain.
 .Dd August 17, 1998
 .Dt PTHREADS 3
@@ -24,10 +24,10 @@ The
 .Dv SIGINFO
 signal can be sent to a threaded process to have the library show the state of
 all of its threads. The information is sent to the process'
-controlling tty and descrbes each thread's 
-ID, 
+controlling tty and descrbes each thread's
+ID,
 state (see
-.Sx Thread states ) , 
+.Sx Thread states ) ,
 current priority,
 flags (see
 .Sx Thread flags )
@@ -153,12 +153,12 @@ the process terminates with an exit code of zero.
 Each thread has (or should have) a different stack, whether it be provided by a
 user attribute, or provided automatically by the system.
 If a thread overflows its stack, unpredictable results may occur.
-System-allocated stacks (including that of the initial thread) 
+System-allocated stacks (including that of the initial thread)
 are typically allocated in such a way that a
 .Dv SIGSEGV
 signal is deliverred to the process when a stack overflows.
 .Pp
-Signals handlers are normally  run on the stack of the currently executing 
+Signals handlers are normally  run on the stack of the currently executing
 thread.
 Hence, if you want to handle the
 .Dv SIGSEGV

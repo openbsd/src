@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipf.5,v 1.22 2000/03/18 22:55:58 aaron Exp $
+.\"	$OpenBSD: ipf.5,v 1.23 2000/04/12 21:47:58 aaron Exp $
 .Dd July 9, 1999
 .Dt IPF 5
 .Os
@@ -6,14 +6,14 @@
 .Nm ipf
 .Nd "IP packet filter rule syntax"
 .Sh DESCRIPTION
-A rule file for 
+A rule file for
 .Nm
 may have any name or even be stdin.
 As
 .Xr ipfstat 8
 produces parseable rules as output when displaying the internal
 kernel filter lists, it is quite plausible to use its output to feed back
-into 
+into
 .Nm ipf .
 Thus, to remove all filters on input packets, the following
 could be done:
@@ -23,7 +23,7 @@ could be done:
 .Pp
 .Sh GRAMMAR
 .Pp
-The format used by 
+The format used by
 .Nm
 for construction of filtering rules can be
 described using the following grammar in BNF:
@@ -91,7 +91,7 @@ facility = "kern" | "user" | "mail" | "daemon" | "auth" | "syslog" |
 	   "audit" | "logalert" | "local0" | "local1" | "local2" |
 	   "local3" | "local4" | "local5" | "local6" | "local7" .
 priority = "emerg" | "alert" | "crit" | "err" | "warn" | "notice" |
-	   "info" | "debug" . 
+	   "info" | "debug" .
 
 hexnumber = "0" "x" hexstring .
 hexstring = hexdigit [ hexstring ] .
@@ -107,7 +107,7 @@ flag	= "F" | "S" | "R" | "P" | "A" | "U" .
 .Pp
 This syntax is somewhat simplified for readability, some combinations
 that match this grammar are disallowed by the software because they do
-not make sense (such as tcp 
+not make sense (such as tcp
 .Cm flags
 for non-TCP packets).
 .Sh FILTER RULES
@@ -120,12 +120,12 @@ count in all
 .Ed
 .Pp
 Filter rules are checked in order, with the last matching rule
-determining the fate of the packet (but see the 
+determining the fate of the packet (but see the
 .Cm quick
 option, below).
 .Pp
 Filters are installed by default at the end of the kernel's filter
-lists, prepending the rule with 
+lists, prepending the rule with
 .Cm @n
 will cause it to be inserted
 as the n'th entry in the current list.
@@ -183,7 +183,7 @@ the filter.
 causes the packet to be included in the accounting statistics kept by
 the filter, and has no effect on whether the packet will be allowed through
 the filter.
-These statistics are viewable with 
+These statistics are viewable with
 .Xr ipfstat 8 .
 .It call
 this action is used to invoke the named function in the kernel, which
@@ -226,7 +226,7 @@ to the firewall and it sets up some temporary rules defining
 the access for that person.
 .El
 .Pp
-The next word must be either 
+The next word must be either
 .Cm in
 or
 .Cm out .
@@ -477,7 +477,7 @@ appending "/<flags>" to the set of TCP flags you wish to match
 against, e.g.:
 .Bd -literal
  ... flags S
-		# becomes "flags S/AUPRFS" and 
+		# becomes "flags S/AUPRFS" and
 		# will match packets with ONLY
 		# the SYN flag set.
 

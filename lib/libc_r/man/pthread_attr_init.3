@@ -1,4 +1,4 @@
-.\" $OpenBSD: pthread_attr_init.3,v 1.1 2000/01/06 06:15:29 d Exp $
+.\" $OpenBSD: pthread_attr_init.3,v 1.2 2000/04/12 21:48:02 aaron Exp $
 .\" Manual page derived from TOG's UNIX98 documentation.
 .Dd January 6, 2000
 .Dt PTHREAD_ATTR_INIT 3
@@ -17,7 +17,7 @@
 The function
 .Fn pthread_attr_init
 initialises a thread attributes
-object 
+object
 .Fa attr
 with the default value for all of the individual
 attributes used by a given implementation.
@@ -34,13 +34,13 @@ The
 function is used to destroy a thread
 attributes object. An implementation may cause
 .Fn pthread_attr_destroy
-to set 
+to set
 .Fa attr
 to an implementation-dependent
 invalid value. The behaviour of using the attribute after it has
 been destroyed is undefined.
 .Sh RETURN VALUE
-Upon successful completion, 
+Upon successful completion,
 .Fn pthread_attr_init
 and
 .Fn pthread_attr_destroy

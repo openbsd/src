@@ -1,4 +1,4 @@
-.\" $OpenBSD: pkg_sign.1,v 1.4 2000/03/19 17:57:11 aaron Exp $ 
+.\" $OpenBSD: pkg_sign.1,v 1.5 2000/04/12 21:47:55 aaron Exp $
 .\"
 .\" Copyright (c) 1999 Marc Espie.
 .\"
@@ -15,16 +15,16 @@
 .\"    This product includes software developed by Marc Espie for the OpenBSD
 .\"    Project.
 .\"
-.\" THIS SOFTWARE IS PROVIDED BY THE OPENBSD PROJECT AND CONTRIBUTORS 
-.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT 
-.\" LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR 
+.\" THIS SOFTWARE IS PROVIDED BY THE OPENBSD PROJECT AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+.\" LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
 .\" A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OPENBSD
-.\" PROJECT OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, 
-.\" SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT 
-.\" LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
-.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY 
-.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT 
-.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE 
+.\" PROJECT OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+.\" SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+.\" LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 .\" OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 .Dd September 24, 1999
@@ -49,28 +49,28 @@
 embeds a cryptographic signature within a gzip file
 .Ar file .
 .Ar type
-can be 
-.Li pgp 
-(default) or 
+can be
+.Li pgp
+(default) or
 .Li sha1 .
 If
-.Ar type 
-is 
-.Li pgp , 
-it will always prompt you for a passphrase to unlock your private 
+.Ar type
+is
+.Li pgp ,
+it will always prompt you for a passphrase to unlock your private
 pgp key, even if you don't use a passphrase (which is a bad idea, anyway).
 If
 .Ar type
-is 
-.Li sha1 , 
+is
+.Li sha1 ,
 you must supply an
 .Ar id,
-which will be recorded as the name of the package, and printed as the 
+which will be recorded as the name of the package, and printed as the
 SHA1 checksum.
 .Pp
 .Nm pkg_check
 checks that cryptographic signature.
-It currently disregards 
+It currently disregards
 .Ar type
 and checks only the topmost signature.
 For sha1, it checksums the file
@@ -88,15 +88,15 @@ For pgp, the
 to use to sign the package or verify the signature can be forced with
 .Fl u .
 .Pp
-If 
-.Ar file 
-is a single dash 
+If
+.Ar file
+is a single dash
 .Pq Sq \&-
 or absent,
 .Nm check_sign
 reads from the standard input.
 .Pp
-Package signing uses a feature of the gzip format, namely that one can 
+Package signing uses a feature of the gzip format, namely that one can
 set a flag
 .Dv EXTRA_FIELD
 in the gzip header and store extra data between the gzip header and the
@@ -108,7 +108,7 @@ eight bytes long).
 .Nm pkg_sign
 and
 .Nm pkg_check
-return with an exit code > 0 if anything went wrong for any 
+return with an exit code > 0 if anything went wrong for any
 .Ar file .
 For
 .Nm pkg_check ,
@@ -118,7 +118,7 @@ signature is forged.
 .Bl -diag
 .It "File %s is already signed"
 There is a signature embedded within the gzip file already.
-.Nm pkg_sign 
+.Nm pkg_sign
 currently does not handle multiple signatures.
 .It "File %s is not a signed gzip file"
 This is an unsigned package.
@@ -134,7 +134,7 @@ substantially slower.
 .Xr pgp 1
 is an ill-designed program, which is hard to interface with.
 For instance, the `separate signing scheme' it pretends to offer is
-useless, as it can't be used with pipes, so that 
+useless, as it can't be used with pipes, so that
 .Nm pgp_sign
 needs to kludge it by knowing the length of a pgp signature, and invoking
 pgp in `seamless' signature mode, without compression of the main file,
@@ -143,19 +143,19 @@ and just retrieving the signature.
 The checking scheme is little less convoluted, namely we rebuild the file
 that pgp expects on the fly.
 .Pp
-Paths to 
+Paths to
 .Nm pgp
 and
 the checksum file are hard-coded to avoid tampering and hinder flexibility.
 .Sh FILES
 .Bl -tag -width "/usr/local/bin/pgp" -compact
 .It Pa file.sign
-Temporary file built by 
+Temporary file built by
 .Nm pkg_sign
 from
 .Ar file .
 .It Pa /usr/local/bin/pgp
-Default path to 
+Default path to
 .Xr pgp 1 .
 .It Pa /var/db/pkgs/SHA1
 Recorded checksums.
@@ -164,4 +164,4 @@ Recorded checksums.
 .Xr gzip 1 ,
 .Xr pgp 1 ,
 .Xr pkg_add 1 ,
-.Xr sha1 1 
+.Xr sha1 1

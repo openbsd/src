@@ -1,4 +1,4 @@
-.\" $OpenBSD: keynote.3,v 1.20 2000/03/06 21:47:27 aaron Exp $
+.\" $OpenBSD: keynote.3,v 1.21 2000/04/12 21:48:03 aaron Exp $
 .\"
 .\" The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
 .\"
@@ -6,7 +6,7 @@
 .\" in April-May 1998
 .\"
 .\" Copyright (C) 1998, 1999 by Angelos D. Keromytis.
-.\"      
+.\"
 .\" Permission to use, copy, and modify this software without fee
 .\" is hereby granted, provided that this entire notice is included in
 .\" all copies of any software which is or includes a copy or
@@ -121,7 +121,7 @@ see RFC 2704.
 .Va keynote_errno
 contains an error code if some library call failed. Failed calls
 return \-1 (if their return value is integer), or
-.Dv NULL 
+.Dv NULL
 (if their return value is a pointer) and set
 .Va keynote_errno .
 The defined error codes are:
@@ -171,7 +171,7 @@ session, and performs any necessary initializations. On success, this
 function returns the new session ID, which is used by all subsequent
 calls with a
 .Fa sessid
-argument. 
+argument.
 On failure, it returns \-1 and sets
 .Va keynote_errno
 to
@@ -490,7 +490,7 @@ in session
 It also sets the
 .Fa algorithm
 argument to the algorithm of the authorizer key.
-On failure, 
+On failure,
 .Fn kn_get_authorizer
 returns
 .Dv NULL ,
@@ -506,8 +506,8 @@ in session
 .Fa sessid .
 The keys are returned in a linked list of
 .Fa struct keynote_keylist
-structures. 
-On failure, 
+structures.
+On failure,
 .Fn kn_get_licensees
 returns
 .Dv NULL .
@@ -832,10 +832,10 @@ algorithm was not supported.
 .Xr keynote 4 ,
 .Xr keynote 5
 .Bl -tag -width "AAAAAAA"
-.It ``The KeyNote Trust-Management System, Version 2'' 
+.It ``The KeyNote Trust-Management System, Version 2''
 M. Blaze, J. Feigenbaum, A. D. Keromytis,
 Internet Drafts, RFC 2704.
-.It ``Decentralized Trust Management'' 
+.It ``Decentralized Trust Management''
 M. Blaze, J. Feigenbaum, J. Lacy,
 1996 IEEE Conference on Privacy and Security
 .It ``Compliance-Checking in the PolicyMaker Trust Management System''

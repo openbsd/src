@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mailwrapper.8,v 1.2 2000/03/19 17:57:07 aaron Exp $
+.\"	$OpenBSD: mailwrapper.8,v 1.3 2000/04/12 21:47:54 aaron Exp $
 .\"	$NetBSD: mailwrapper.8,v 1.5 1999/03/22 18:44:01 garbled Exp $
 .\"
 .\" Copyright (c) 1998
@@ -77,7 +77,7 @@ is
 or
 .Dq newaliases
 and behaves appropriately.
-Typically, replacement MTAs provide similar 
+Typically, replacement MTAs provide similar
 functionality, either through a program that also switches behavior
 based on calling name, or through a set of programs that provide
 similar functionality.
@@ -91,7 +91,7 @@ This leads to configuration problems for many administrators, since
 they may wish to install a new MTA without altering the system
 provided
 .Pa /usr .
-(This may be, for example, to avoid having upgrade problems when a new 
+(This may be, for example, to avoid having upgrade problems when a new
 version of the system is installed over the old.)
 They may also have a shared
 .Pa /usr
@@ -109,19 +109,19 @@ and to invoke an appropriate MTA instead of
 based on configuration information placed in
 .Pa /etc/mailer.conf .
 This permits the administrator to configure which MTA is to be invoked on
-the system at run time. 
+the system at run time.
 .Sh FILES
 Configuration for
 .Nm
 is kept in
 .Pa /etc/mailer.conf .
-.Pa /usr/sbin/sendmail 
+.Pa /usr/sbin/sendmail
 is typically set up as a symlink to
 .Nm
 which is not usually invoked on its own.
 .Sh DIAGNOSTICS
 .Nm
-will return an error value and print a diagnostic if its configuration 
+will return an error value and print a diagnostic if its configuration
 file is missing or malformed, or does not contain a mapping for the
 name under which
 .Nm

@@ -1,8 +1,8 @@
-.\"	$OpenBSD: rtadvd.conf.5,v 1.5 2000/03/23 21:39:57 aaron Exp $
-.\" 
+.\"	$OpenBSD: rtadvd.conf.5,v 1.6 2000/04/12 21:47:57 aaron Exp $
+.\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
 .\" All rights reserved.
-.\" 
+.\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
 .\" are met:
@@ -14,7 +14,7 @@
 .\" 3. Neither the name of the project nor the names of its contributors
 .\"    may be used to endorse or promote products derived from this software
 .\"    without specific prior written permission.
-.\" 
+.\"
 .\" THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
 .\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 .\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -83,14 +83,14 @@ the value of
 .El
 .Pp
 The following items are for ICMPv6 router advertisement message
-header. 
+header.
 .Bl -tag -width indent
 .It Cm \&chlim
 (num) The value for Cur Hop Limit field.
 The default value is 64.
 .It Cm \&raflags
 (num) Flags field in router advertisement message header.
-Bit 7 
+Bit 7
 .Po
 .Li 0x80
 .Pc
@@ -140,7 +140,7 @@ Each index shall follows the name of each item, e.g.,
 The default value is 64.
 .It Cm \&pinfoflags
 (num) Flags field in prefix information option.
-Bit 7 
+Bit 7
 .Po
 .Li 0x80
 .Pc
@@ -246,7 +246,7 @@ RFC 2461
 .Sh HISTORY
 The
 .Xr rtadvd 8
-and the configuration file 
+and the configuration file
 .Nm
 first appeared in WIDE Hydrangea IPv6 protocol stack kit.
 .\" .Sh BUGS

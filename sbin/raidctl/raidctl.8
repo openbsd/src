@@ -1,4 +1,4 @@
-.\"	$OpenBSD: raidctl.8,v 1.12 2000/03/18 22:56:03 aaron Exp $
+.\"	$OpenBSD: raidctl.8,v 1.13 2000/04/12 21:47:59 aaron Exp $
 .\"     $NetBSD: raidctl.8,v 1.11 2000/01/05 03:02:41 oster Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
 .Op Fl a Ar component Ar dev
 .Nm raidctl
 .Op Fl v
-.Op Fl B Ar dev 
+.Op Fl B Ar dev
 .Nm raidctl
 .Op Fl v
 .Op Fl c Ar config_file Ar dev
@@ -133,14 +133,14 @@ RAID and RAID concepts.
 The options are as follows:
 .Bl -tag -width indent
 .It Fl a Ar component Ar dev
-Add 
+Add
 .Ar component
-as a hot spare for the device 
+as a hot spare for the device
 .Ar dev .
 .It Fl B Ar dev
-Initiate a copyback of reconstructed data from a spare disk to 
+Initiate a copyback of reconstructed data from a spare disk to
 it's original disk.
-This is performed after a component has failed, 
+This is performed after a component has failed,
 and the failed drive has been reconstructed onto a spare drive.
 .It Fl c Ar config_file Ar dev
 Configure the RAIDframe device
@@ -171,7 +171,7 @@ the reconstruction process if a component does have a hardware failure.
 Get the component label for the specified component.
 .It Fl i Ar dev
 Initialize (re-write) the parity on the device.
-This 
+This
 .Em must
 be done before the RAID device is labeled and before
 filesystems are created on the RAID device, and is normally used after
@@ -180,7 +180,7 @@ a system crash (and before a
 ) to ensure the integrity of the parity.
 .It Fl I Ar serial_number Ar dev
 Initialize the component labels on each component of the device.
-.Ar serial_number 
+.Ar serial_number
 is used as one of the keys in determining whether a
 particular set of components belong to the same RAID set.
 While not strictly enforced, different serial numbers should be used for
@@ -192,13 +192,13 @@ Displays a status message; returns successfully if the parity is up-to-date.
 Check the status of the parity on the RAID set, and initialize
 (re-write) the parity if the parity is not known to be up-to-date.
 .It Fl r Ar component Ar dev
-Remove the spare disk specified by 
-.Ar component 
+Remove the spare disk specified by
+.Ar component
 from the set of available spare components.
 .It Fl R Ar component Ar dev
-Fails the specified 
-.Ar component , 
-if necessary, and immediately begins a reconstruction back to 
+Fails the specified
+.Ar component ,
+if necessary, and immediately begins a reconstruction back to
 .Ar component .
 This is another mechanism for starting the reconstruction process if a
 component has a hardware failure.
@@ -207,11 +207,11 @@ Display the status of the RAIDframe device for each of the components
 and spares.
 .It Fl S Ar dev
 Check the status of component reconstruction.
-The output indicates 
+The output indicates
 the amount of progress achieved in reconstructing a failed component.
 .It Fl u Ar dev
 Unconfigure the RAIDframe device.
-.It Fl v 
+.It Fl v
 Be more verbose.
 For operations such as reconstructions, parity
 re-writing, and copybacks, provide a progress indicator.
@@ -436,7 +436,7 @@ in case one of
 the three main drives should fail.
 If the above configuration is in a file called
 .Pa rfconfig ,
-raid device 0 in the normal case can be configured with: 
+raid device 0 in the normal case can be configured with:
 .Bd -unfilled -offset indent
 raidctl -c rfconfig raid0
 .Ed
@@ -452,16 +452,16 @@ On all other architectures,
 is used in place of
 .Pa /dev/rraid0d .
 .Pp
-A RAID set will not configure with 
+A RAID set will not configure with
 .Fl c
 if the component labels are not correct.
 A
 .Sq component label
 contains important information about the component, including a
 user-specified serial number, the row and column of that component in the RAID
-set, and whether the data (and parity) on the component is 
+set, and whether the data (and parity) on the component is
 .Sq clean .
-See 
+See
 .Xr raid 4
 for more information about component labels.
 .Pp
@@ -474,7 +474,7 @@ instead of
 raidctl -C rfconfig raid0
 .Ed
 .Pp
-The 
+The
 .Fl C
 forces the configuration to succeed, even if any of the component
 labels are incorrect.
@@ -483,7 +483,7 @@ situations other than initial configurations, as if
 the system is refusing to configure a RAID set, there is probably a
 very good reason for it.
 .Pp
-When the RAID set is configured for the first time, it is 
+When the RAID set is configured for the first time, it is
 necessary to initialize the component labels, and to initialize the
 parity on the RAID set.
 Initializing the component labels is done with:
@@ -491,7 +491,7 @@ Initializing the component labels is done with:
 raidctl -I 112341 raid0
 .Ed
 .Pp
-where 
+where
 .Sq 112341
 is a user-specified serial number for the RAID set.
 Using different
@@ -550,7 +550,7 @@ Spares:
            /dev/sd4e: spare
 .Ed
 .Pp
-This indicates that all is well with the RAID set. 
+This indicates that all is well with the RAID set.
 .Pp
 To check the component label of /dev/sd1e, the following is used:
 .Bd -unfilled -offset indent
@@ -610,7 +610,7 @@ option must be used:
 raidctl -F /dev/sd2e raid0
 .Ed
 .Pp
-The 
+The
 .Fl f
 option may be used first, and then the
 .Fl F
@@ -726,21 +726,21 @@ Spares:
            /dev/sd4e: spare
 .Ed
 .Pp
-Reconstruction could then take place using 
+Reconstruction could then take place using
 .Fl F
 as describe above.
 .Pp
 A second option is to rebuild directly onto
 .Pa /dev/sd2e .
-Once the disk 
-containing 
+Once the disk
+containing
 .Pa /dev/sd2e
 has been replaced, one can simply use:
 .Bd -unfilled -offset indent
 raidctl -R /dev/sd2e raid0
 .Ed
 .Pp
-to rebuild the 
+to rebuild the
 .Pa /dev/sd2e
 component.
 As the rebuilding is in progress, the status will be:
@@ -797,7 +797,7 @@ At least with RAID 0 there is no perception of increased data security.
 .Sh FILES
 .Bl -tag -width /dev/XXrXraidX -compact
 .It Pa /dev/{,r}raid*
-.Cm raid 
+.Cm raid
 device special files
 .El
 .Pp

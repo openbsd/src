@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sleep.1,v 1.11 2000/02/19 23:03:50 aaron Exp $
+.\"	$OpenBSD: sleep.1,v 1.12 2000/04/12 21:47:47 aaron Exp $
 .\"	$NetBSD: sleep.1,v 1.9 1995/07/25 19:37:43 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
@@ -68,7 +68,7 @@ To repetitively run a command (with
 .Xr csh 1 ) :
 .Pp
 .Bd -literal -offset indent -compact
-while (! -r zzz.rawdata) 
+while (! -r zzz.rawdata)
 	sleep 300
 end
 foreach i (*.rawdata)
@@ -79,8 +79,8 @@ end
 .Pp
 The scenario for such a script might be: a program currently
 running is taking longer than expected to process a series of
-files, and it would be nice to have another program start 
-processing the files created by the first program as soon as it is finished 
+files, and it would be nice to have another program start
+processing the files created by the first program as soon as it is finished
 (when
 .Pa zzz.rawdata
 is created).

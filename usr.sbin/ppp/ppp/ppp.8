@@ -1,11 +1,11 @@
-.\" $OpenBSD: ppp.8,v 1.82 2000/03/31 14:32:51 brian Exp $
+.\" $OpenBSD: ppp.8,v 1.83 2000/04/12 21:47:56 aaron Exp $
 .Dd 20 September 1995
 .nr XX \w'\fC00'
 .Dt PPP 8
 .Os
 .Sh NAME
 .Nm ppp
-.Nd Point to Point Protocol (a.k.a. user-ppp) 
+.Nd Point to Point Protocol (a.k.a. user-ppp)
 .Sh SYNOPSIS
 .Nm
 .Op Fl Va mode
@@ -39,7 +39,7 @@ enabling
 network address translation features.
 This allows
 .Nm
-to act as a NAT or masquerading engine for all machines on an internal 
+to act as a NAT or masquerading engine for all machines on an internal
 LAN.
 Refer to
 .Xr libalias 3
@@ -362,7 +362,7 @@ and group
 .Dv network ,
 with permissions
 .Dv 04554 .
-By default, 
+By default,
 .Nm
 will not run if the invoking user id is not zero.
 This may be overridden by using the
@@ -427,7 +427,7 @@ command in
 .It
 Create a log file.
 .Nm
-uses 
+uses
 .Xr syslog 3
 to log information.
 A common log file name is
@@ -577,7 +577,7 @@ Defaults:
 Connect time: 0 secs
 0 octets in, 0 octets out
 Overall 0 bytes/sec
-ppp ON awfulhak> 
+ppp ON awfulhak>
 .Ed
 .Pp
 The term command can now be used to talk directly to the device:
@@ -1487,7 +1487,7 @@ from the outside world.
 In general, correct
 .Nm
 operation should first be verified with network address translation disabled.
-Then, the 
+Then, the
 .Fl nat
 option should be switched on, and network applications (web browser,
 .Xr telnet 1 ,
@@ -2876,7 +2876,7 @@ layer shuts down, and is also available using the
 command.
 Throughput statistics are available at the
 .Dq IPCP
-and 
+and
 .Dq physical
 levels.
 .It utmp
@@ -4246,8 +4246,8 @@ command before dialing):
 .Bd -literal -offset indent
 Dial attempt 1 of 1
 dial OK!
-Chat: Expecting: 
-Chat: Sending: 
+Chat: Expecting:
+Chat: Sending:
 Chat: Expecting: login:--login:
 Chat: Wait for (5): login:
 Chat: Sending: ppp
@@ -4258,7 +4258,7 @@ Chat: Expecting: !sh \\-c "echo \\-n label: >&2"
 Chat: Exec: sh -c "echo -n label: >&2"
 Chat: Wait for (5): !sh \\-c "echo \\-n label: >&2" --> label:
 Chat: Exec: /bin/echo in
-Chat: Sending: 
+Chat: Sending:
 Chat: Expecting: HELLO
 Chat: Wait for (5): HELLO
 login OK!
@@ -5211,7 +5211,7 @@ Note, this name is specified in
 See
 .Xr syslog.conf 5
 for further details.
-.It Pa /var/spool/lock/LCK..* 
+.It Pa /var/spool/lock/LCK..*
 tty port locking file.
 Refer to
 .Xr uucplock 3

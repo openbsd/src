@@ -1,4 +1,4 @@
-.\" $OpenBSD: pthread_attr_setstackaddr.3,v 1.1 2000/01/06 06:15:29 d Exp $
+.\" $OpenBSD: pthread_attr_setstackaddr.3,v 1.2 2000/04/12 21:48:02 aaron Exp $
 .\" Manual page derived from TOG's UNIX98 documentation.
 .Dd January 6, 2000
 .Dt PTHREAD_ATTR_SETSTACKADDR 3
@@ -14,14 +14,14 @@
 .Ft int
 .Fn pthread_attr_getstackaddr "pthread_attr_t *attr" "void **stackaddr"
 .Sh DESCRIPTION
-The functions 
+The functions
 .Fn pthread_attr_setstackaddr
 and
 .Fn pthread_attr_getstackaddr ,
 respectively, set and get the thread
 creation
-.Va stackaddr 
-attribute in the 
+.Va stackaddr
+attribute in the
 .Fa attr
 object.
 .Pp
@@ -32,7 +32,7 @@ used for the created thread's stack. The size of the storage is at
 least
 .Dv PTHREAD_STACK_MIN.
 .Sh RETURN VALUE
-Upon successful completion, 
+Upon successful completion,
 .Fn pthread_attr_setstackaddr
 and
 .Fn pthread_attr_getstackaddr

@@ -1,8 +1,8 @@
-.\"	$OpenBSD: ndp.8,v 1.5 2000/03/19 17:57:08 aaron Exp $
-.\" 
+.\"	$OpenBSD: ndp.8,v 1.6 2000/04/12 21:47:55 aaron Exp $
+.\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
 .\" All rights reserved.
-.\" 
+.\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
 .\" are met:
@@ -14,7 +14,7 @@
 .\" 3. Neither the name of the project nor the names of its contributors
 .\"    may be used to endorse or promote products derived from this software
 .\"    without specific prior written permission.
-.\" 
+.\"
 .\" THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
 .\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 .\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -35,7 +35,7 @@
 .\"
 .Sh NAME
 .Nm ndp
-.Nd control/diagnose  IPv6 neighbor discovery protocol 
+.Nd control/diagnose  IPv6 neighbor discovery protocol
 .\"
 .Sh SYNOPSIS
 .Nm ndp
@@ -133,11 +133,11 @@ Flush all the entries in the default router list.
 Register a NDP entry for a node.
 The entry will be permanent unless the word
 .Li temp
-is given in the command. 
+is given in the command.
 If the word
 .Li proxy
 is given, this system will act as an proxy NDP server,
-responding to requests for 
+responding to requests for
 .Ar hostname
 even though the host address is not its own.
 .It Fl t

@@ -1,4 +1,4 @@
-.\"	@(#) $OpenBSD: m4.1,v 1.14 2000/03/23 21:39:54 aaron Exp $
+.\"	@(#) $OpenBSD: m4.1,v 1.15 2000/04/12 21:47:48 aaron Exp $
 .\"
 .\"
 .Dd January 26, 1993
@@ -63,12 +63,12 @@ to have some value (or
 Undefine the symbol
 .Ar name .
 .It Fl I Ar "dirname"
-Add directory 
+Add directory
 .Ar dirname
 to the include path.
 .It Fl g
 Activate GNU-m4 compatibility mode.
-In this mode, changequote with 
+In this mode, changequote with
 two empty parameters deactivates quotes, translit handles simple character
 ranges (e.g., a-z) and regular expressions mimic emacs behavior.
 .Sh SYNTAX
@@ -206,7 +206,7 @@ causes the macro cleanup to be
 invoked after all other processing is done.)
 .It Ic maketemp
 Translates the string
-.Dq XXXXX 
+.Dq XXXXX
 in the first argument with the current process
 ID leaving other characters alone.
 This can be used to create unique
@@ -219,7 +219,7 @@ included.
 .It Ic patsubst
 Substitutes a regular expression in a string with a replacement string.
 Usual substitution patterns apply: an ampersand
-.Pq Ql & 
+.Pq Ql &
 is replaced by the string matching the regular expression.
 The string
 .Ql \e# ,

@@ -1,4 +1,4 @@
-.\" $OpenBSD: pthread_attr_setdetachstate.3,v 1.1 2000/01/06 06:15:29 d Exp $
+.\" $OpenBSD: pthread_attr_setdetachstate.3,v 1.2 2000/04/12 21:48:02 aaron Exp $
 .\" Manual page derived from TOG's UNIX98 documentation.
 .Dd January 6, 2000
 .Dt PTHREAD_ATTR_SETDETACHSTATE 3
@@ -18,7 +18,7 @@ The
 .Va detachstate
 attribute controls whether the thread is created in
 a detached state. If the thread is created detached, then use of
-the ID of the newly created thread by the 
+the ID of the newly created thread by the
 .Xr pthread_detach 3
 or
 .Xr pthread_join 3
@@ -46,7 +46,7 @@ causes
 all threads created with
 .Fa attr
 to be in the detached state, whereas
-using a value of 
+using a value of
 .Dv PTHREAD_CREATE_JOINABLE
 causes all threads created
 with
@@ -66,9 +66,9 @@ error number is returned to indicate the error.
 .Pp
 The
 .Fn pthread_attr_getdetachstate
-function stores the value of the 
+function stores the value of the
 .Va detachstate
-attribute in 
+attribute in
 .Fa detachstate
 if successful.
 .Sh ERRORS

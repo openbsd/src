@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.40 2000/01/21 02:25:25 angelos Exp $
+.\"	$OpenBSD: sysctl.3,v 1.41 2000/04/12 21:48:01 aaron Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -651,12 +651,12 @@ or as a result of dynamic
 entries.
 Supported values are des, 3des, blowfish, cast128, and skipjack.
 If set to any other value, it is left to the key management daemons to
-select an encryption algorithm for the security association. 
+select an encryption algorithm for the security association.
 The default value is 3des.
 .It Li ip.ipsec-auth-alg
 This is the default authentication algorithm the kernel will instruct
 key management daemons to negotiate when establishing security
-associations on behalf of the kernel.  
+associations on behalf of the kernel.
 Such security associations can occur as a result of a process having
 requested some security level through
 .Xr setsockopt 3 ,
@@ -665,7 +665,7 @@ or as a result of dynamic
 entries.
 Supported values are hmac-md5, hmac-sha1, and hmac-ripemd160.
 If set to any other value, it is left to the key management daemons to
-select an authentiction algorithm for the security association. 
+select an authentiction algorithm for the security association.
 The default value is hmac-sha1.
 .It Li ipip.allow
 If set to 0, incoming IP-in-IP packets will not be processed.
@@ -704,8 +704,8 @@ socket is filled in with the euid and ruid of the process that owns the socket.
 If no such socket exists then the euid and ruid values are both
 set to -1.
 .It Li tcp.keepidle
-If the socket option 
-.Pa SO_KEEPALIVE 
+If the socket option
+.Pa SO_KEEPALIVE
 has been set, time a connection needs to be idle before keepalives are sent.
 See also tcp.slowhz.
 .It Li tcp.keepintvl

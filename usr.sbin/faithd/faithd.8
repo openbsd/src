@@ -1,8 +1,8 @@
-.\"	$OpenBSD: faithd.8,v 1.4 2000/03/12 16:50:26 itojun Exp $
+.\"	$OpenBSD: faithd.8,v 1.5 2000/04/12 21:47:52 aaron Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
 .\" All rights reserved.
-.\" 
+.\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
 .\" are met:
@@ -14,7 +14,7 @@
 .\" 3. Neither the name of the project nor the names of its contributors
 .\"    may be used to endorse or promote products derived from this software
 .\"    without specific prior written permission.
-.\" 
+.\"
 .\" THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
 .\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 .\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -122,7 +122,7 @@ To use
 .Nm
 translation service,
 an IPv6 address prefix must be reserved for mapping IPv4 addresses into.
-Kernel must be properly configured to route all the TCP connection 
+Kernel must be properly configured to route all the TCP connection
 toward the reserved IPv6 address prefix into the
 .Dv faith
 pseudo interface, by using
@@ -152,7 +152,7 @@ and
 .Fl p
 is not necessary as special program code is supplied.
 .Pp
-.Nm 
+.Nm
 will relay both normal and out-of-band TCP data.
 It is capable of emulating TCP half close as well.
 .Nm
@@ -195,7 +195,7 @@ service, and provide no local telnet service, invoke
 as either of the following:
 .Bd -literal -offset
 # faithd
-# faithd telnet 
+# faithd telnet
 .Ed
 .Pp
 If you would like to provide local telnet service via
@@ -252,7 +252,7 @@ and any other TCP relaying services
 .Pc .
 .Pp
 .Nm
-itself does not implement access controls, as 
+itself does not implement access controls, as
 it intends to implement transparent TCP relay services.
 Administrators are advised to filter packets based on IPv6 address.
 IPv6 destination address can be limited by

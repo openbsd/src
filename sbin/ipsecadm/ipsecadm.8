@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipsecadm.8,v 1.21 2000/03/18 22:55:59 aaron Exp $
+.\" $OpenBSD: ipsecadm.8,v 1.22 2000/04/12 21:47:59 aaron Exp $
 .\"
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -174,7 +174,7 @@ and
 The
 .Xr netstat 1
 command shows the existing egress (outbound) flows.
-A 
+A
 .Nm bypass
 flow is used to specify a flow for which IPSec processing will be
 bypassed, i.e packets will not be processed by any SAs.
@@ -209,7 +209,7 @@ This can be useful while travelling where the IP address of potential
 clients is not known.
 .It flush
 Flush SAs from from kernel.
-This includes flushing any flows and 
+This includes flushing any flows and
 routing entries associated with the SAs.
 Allowed modifiers are:
 .Fl ah ,
@@ -218,7 +218,7 @@ Allowed modifiers are:
 .Fl oldesp ,
 and
 .Fl ip4 .
-Default action is to flush all types of security associations 
+Default action is to flush all types of security associations
 from the kernel.
 .El
 .Pp

@@ -1,4 +1,4 @@
-.\" $OpenBSD: magic.5,v 1.5 2000/03/23 21:39:53 aaron Exp $
+.\" $OpenBSD: magic.5,v 1.6 2000/04/12 21:47:48 aaron Exp $
 .\"
 .\" @(#)$FreeBSD: src/usr.bin/file/magic.5,v 1.11 2000/03/01 12:19:39 sheldonh Exp $
 .\"
@@ -105,10 +105,10 @@ value,
 to specify that the value from the file must be greater than the specified
 value,
 .Ql &
-to specify that the value from the file must have set all of the bits 
+to specify that the value from the file must have set all of the bits
 that are set in the specified value,
 .Ql ^
-to specify that the value from the file must have clear any of the bits 
+to specify that the value from the file must have clear any of the bits
 that are set in the specified value, or
 .Sq x
 to specify that any value will match.
@@ -125,7 +125,7 @@ is octal, and
 is hexadecimal.
 .It Sy ""
 For string values, the byte string from the
-file must match the specified byte string. 
+file must match the specified byte string.
 The operators
 .Ql = ,
 .Ql < ,
@@ -187,11 +187,11 @@ in the file.
 .Pp
 Indirect offsets are of the form:
 .Dq (x[.[bsl]][+-][y]) .
-The value of 
+The value of
 .Sq x
 is used as an offset in the file.
 A byte, short or long is read at that offset
-depending on the 
+depending on the
 .Dq [bsl]
 type specifier.
 To that number the value of
@@ -204,13 +204,13 @@ Sometimes you do not know the exact offset as this depends on the length of
 preceding fields.
 You can specify an offset relative to the end of the
 last uplevel field (of course this may only be done for sublevel tests, i.e.,
-test beginning with 
+test beginning with
 .Ql > ) .
 Such a relative offset is specified using
 .Ql &
 as a prefix to the offset.
 .Sh BUGS
-The formats 
+The formats
 .Li long ,
 .Li belong ,
 .Li lelong ,
@@ -222,7 +222,7 @@ The formats
 and
 .Li ledate
 are system-dependent; perhaps they should be specified as a number
-of bytes (2B, 4B, etc), 
+of bytes (2B, 4B, etc),
 since the files being recognized typically come from
 a system on which the lengths are invariant.
 .Pp
@@ -242,7 +242,7 @@ indirect offsets.
 .\" Date: 3 Sep 85 08:19:07 GMT
 .\" Organization: Sun Microsystems, Inc.
 .\" Lines: 136
-.\" 
+.\"
 .\" Here's a manual page for the format accepted by the "file" made by adding
 .\" the changes I posted to the S5R2 version.
 .\"

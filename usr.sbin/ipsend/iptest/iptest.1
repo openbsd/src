@@ -1,4 +1,4 @@
-.\"     $OpenBSD: iptest.1,v 1.4 1999/10/10 17:50:03 ericj Exp $
+.\"     $OpenBSD: iptest.1,v 1.5 2000/04/12 21:47:53 aaron Exp $
 .Dd October  8, 1999
 .Dt IPTEST 1
 .Os
@@ -31,9 +31,9 @@ This interface does not normally exist on
 so an existing interface must be specified with the
 .Fl d
 option.
-To limit the tests to a single group or to a single test within a group the 
+To limit the tests to a single group or to a single test within a group the
 .Fl 1234567
-and 
+and
 .Fl p
 options are available. It is not possible to specify more than one
 test group or point test at a time.
@@ -64,9 +64,9 @@ ip_len > packet size, short packets
 Zero length fragments
 .It 8
 packet > 64k after reassembly
-.It 9 
+.It 9
 IP offset with MSB set
-.It 10 
+.It 10
 ttl variations
 .El
 .It Fl 2
@@ -75,9 +75,9 @@ options constructed with invalid values given other packet characteristics.
 The point tests are:
 .Pp
 .Bl -tag -compact -width "1  " -offset indent
-.It 1 
+.It 1
 option length > packet length
-.It 2 
+.It 2
 option length = 0
 .El
 .It Fl 3
@@ -86,7 +86,7 @@ header fields set to non-standard values.
 The point tests are:
 .Pp
 .Bl -tag -compact -width "1  " -offset indent
-.It 1 
+.It 1
 ICMP types 0-31 & 255
 .It 2
 type 3 & codes 0-31
@@ -124,19 +124,19 @@ header fields set to non-standard values. The point tests are:
 .Bl -tag -width "1  " -compact -offset indent
 .It 1
 TCP flags variations, all combinations
-.It 2 
+.It 2
 seq = 0, 0x7fffffff, 0x8000000, 0xa0000000, 0xffffffff
-.It 3 
+.It 3
 ack = 0, 0x7fffffff, 0x8000000, 0xa0000000, 0xffffffff
-.It 4 
-SYN packet with window of 0, 32768, 65535 
-.It 5 
+.It 4
+SYN packet with window of 0, 32768, 65535
+.It 5
 set urgent pointer to 1, 0x7fff, 0x8000, 0xffff
-.It 6 
+.It 6
 data offset
-.It 7 
+.It 7
 sport = 0, 1, 32767, 32768, 65535
-.It 8 
+.It 8
 dport = 0, 1, 32767, 32768, 65535
 .El
 .It Fl 6
@@ -172,6 +172,6 @@ Specify the source address of the IP packets as
 .Sh SEE ALSO
 .Xr ipsend 1 ,
 .Xr ipresend 1 ,
-.Xr bpf 4 
+.Xr bpf 4
 .Sh BUGS
 If you find any, please send email to me at darrenr@cyber.com.au
