@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.36 2004/11/16 14:27:43 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.37 2004/11/24 03:21:28 brad Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -2632,7 +2632,7 @@ bge_init(xsc)
 	}
 
 	/* Init jumbo RX ring. */
-	if (ifp->if_mtu > (ETHERMTU + ETHER_HDR_LEN + ETHER_CRC_LEN))
+	if (ifp->if_mtu > ETHER_MAX_LEN)
 		bge_init_rx_ring_jumbo(sc);
 
 	/* Init our RX return ring index */
