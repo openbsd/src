@@ -8,7 +8,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: session.c,v 1.25 2000/08/17 20:06:34 markus Exp $");
+RCSID("$OpenBSD: session.c,v 1.26 2000/08/20 18:25:53 millert Exp $");
 
 #include "xmalloc.h"
 #include "ssh.h"
@@ -725,7 +725,7 @@ do_child(const char *command, struct passwd * pw, const char *term,
 	 const char *display, const char *auth_proto,
 	 const char *auth_data, const char *ttyname)
 {
-	const char *shell, *cp = NULL;
+	const char *shell, *hostname, *cp = NULL;
 	char buf[256];
 	char cmd[1024];
 	FILE *f;
@@ -867,6 +867,9 @@ do_child(const char *command, struct passwd * pw, const char *term,
 		for (i = 0; env[i]; i++)
 			fprintf(stderr, "  %.200s\n", env[i]);
 	}
+	/* we have to stash the hostname before we close our socket. */
+	if (options.use_login)
+		hostname = get_remote_name_or_ip();
 	/*
 	 * Close the connection descriptors; note that this is the child, and
 	 * the server will still have the socket open, and it is important
@@ -1023,8 +1026,7 @@ do_child(const char *command, struct passwd * pw, const char *term,
 		} else {
 			/* Launch login(1). */
 
-			execl("/usr/bin/login", "login",
-			     "-h", get_remote_name_or_ip(),
+			execl("/usr/bin/login", "login", "-h", hostname,
 			     "-p", "-f", "--", pw->pw_name, NULL);
 
 			/* Login couldn't be executed, die. */
