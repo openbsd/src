@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_misc.c,v 1.14 1998/02/23 08:57:54 niklas Exp $	*/
+/*	$OpenBSD: linux_misc.c,v 1.15 1998/03/22 23:33:06 millert Exp $	*/
 /*	$NetBSD: linux_misc.c,v 1.27 1996/05/20 01:59:21 fvdl Exp $	*/
 
 /*
@@ -523,7 +523,7 @@ linux_sys_mremap(p, v, retval)
 }
 
 /*
- * This code is partly stolen from src/lib/libc/compat-43/times.c
+ * This code is partly stolen from src/lib/libc/gen/times.c
  * XXX - CLK_TCK isn't declared in /sys, just in <time.h>, done here
  */
 
