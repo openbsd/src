@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.16 1995/08/18 08:20:26 pk Exp $	*/
+/*	$NetBSD: obio.c,v 1.15 1995/05/27 08:12:51 pk Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Theo de Raadt
@@ -72,10 +72,6 @@ struct cfdriver vmescd = { NULL, "vmes", busmatch, vmesattach,
 
 static int	busattach __P((struct device *, void *, void *, int));
 
-void *		bus_map __P((void *, int, int));
-void *		bus_tmp __P((void *, int));
-void		bus_untmp __P((void));
-
 int
 busmatch(parent, vcf, aux)
 	struct device *parent;
@@ -101,17 +97,16 @@ busprint(args, obio)
 		ca->ca_ra.ra_name = "<unknown>";
 	if (obio)
 		printf("[%s at %s]", ca->ca_ra.ra_name, obio);
-	printf(" addr %x", ca->ca_ra.ra_paddr);
+	printf(" addr 0x%x", ca->ca_ra.ra_paddr);
 	if (ca->ca_ra.ra_intr[0].int_vec != -1)
 		printf(" vec 0x%x", ca->ca_ra.ra_intr[0].int_vec);
 	return (UNCONF);
 }
 
-
 int
 busattach(parent, child, args, bustype)
 	struct device *parent;
-	void *args, *child;
+	void *child, *args;
 	int bustype;
 {
 	struct cfdata *cf = child;
@@ -129,14 +124,14 @@ busattach(parent, child, args, bustype)
 		 * must be 0xZYYYYYYY, where (Z != 0)
 		 */
 		if (cpumod==SUN4_100 && (cf->cf_loc[0] & 0xf0000000))
-			return 0;
+			return (0);
 		if (cpumod!=SUN4_100 && !(cf->cf_loc[0] & 0xf0000000))
-			return 0;
+			return (0);
 	}
 
 	if (parent->dv_cfdata->cf_driver->cd_indirect) {
 		printf(" indirect devices not supported\n");
-		return 0;
+		return (0);
 	}
 
 	oca.ca_ra.ra_iospace = -1;
@@ -144,32 +139,32 @@ busattach(parent, child, args, bustype)
 	oca.ca_ra.ra_len = 0;
 	oca.ca_ra.ra_nreg = 1;
 	tmp = NULL;
-	if (oca.ca_ra.ra_paddr)
-		tmp = bus_tmp(oca.ca_ra.ra_paddr,
-		    bustype);
+	if (oca.ca_ra.ra_paddr != (void *)-1)
+		tmp = bus_tmp(oca.ca_ra.ra_paddr, bustype);
 	oca.ca_ra.ra_vaddr = tmp;
 	oca.ca_ra.ra_intr[0].int_pri = cf->cf_loc[1];
 	if (bustype == BUS_VME16 || bustype == BUS_VME32)
 		oca.ca_ra.ra_intr[0].int_vec = cf->cf_loc[2];
 	else
 		oca.ca_ra.ra_intr[0].int_vec = -1;
-	oca.ca_ra.ra_nintr = 1;
+	oca.ca_ra.ra_nintr = 0;
+	if (oca.ca_ra.ra_intr[0].int_pri != -1)
+		oca.ca_ra.ra_nintr = 1;
 	oca.ca_ra.ra_name = cf->cf_driver->cd_name;
+	oca.ca_ra.ra_bp = NULL;
 	if (ca->ca_ra.ra_bp != NULL &&
-	  ((bustype == BUS_VME16 && strcmp(ca->ca_ra.ra_bp->name,"vmes") ==0) ||
-	   (bustype == BUS_VME32 && strcmp(ca->ca_ra.ra_bp->name,"vmel") ==0) ||
-	   (bustype == BUS_OBIO && strcmp(ca->ca_ra.ra_bp->name,"obio") == 0)))
+	    ((bustype == BUS_VME16 && strcmp(ca->ca_ra.ra_bp->name, "vmes") == 0) ||
+	    (bustype == BUS_VME32 && strcmp(ca->ca_ra.ra_bp->name, "vmel") == 0) ||
+	    (bustype == BUS_OBIO && strcmp(ca->ca_ra.ra_bp->name, "obio") == 0)))
 		oca.ca_ra.ra_bp = ca->ca_ra.ra_bp + 1;
-	else
-		oca.ca_ra.ra_bp = NULL;
 	oca.ca_bustype = bustype;
 
 	if ((*cf->cf_driver->cd_match)(parent, cf, &oca) == 0)
-		return 0;
+		return (0);
 
 	/*
-	 * check if XXmatch routine replaced the
-	 * temporary mapping with a real mapping.
+	 * check if XXmatch() replaced the temporary
+	 * mapping with a real mapping.
 	 */
 	if (tmp == oca.ca_ra.ra_vaddr)
 		oca.ca_ra.ra_vaddr = NULL;
@@ -179,12 +174,11 @@ busattach(parent, child, args, bustype)
 	 * so not as useful as it seems.)
 	 */
 	if (oca.ca_ra.ra_len)
-		oca.ca_ra.ra_vaddr =
-		    bus_map(oca.ca_ra.ra_paddr,
+		oca.ca_ra.ra_vaddr = bus_map(oca.ca_ra.ra_paddr,
 		    oca.ca_ra.ra_len, oca.ca_bustype);
 
 	config_attach(parent, cf, &oca, busprint);
-	return 1;
+	return (1);
 }
 
 int
@@ -298,7 +292,7 @@ vmeintr(arg)
 	vec = ldcontrolb(AC_VMEINTVEC | (pil_to_vme[level] << 1) | 1);
 	if (vec == -1) {
 		printf("vme: spurious interrupt\n");
-		return 0;
+		return (0);
 	}
 
 	for (ih = vmeints[vec]; ih; ih = ih->ih_next)
