@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.217 2002/04/30 23:26:27 krw Exp $
+#	$OpenBSD: install.sub,v 1.218 2002/05/04 22:21:21 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -185,19 +185,6 @@ cutlast () {
 	read _a; set -- $_a
 	[ $# -gt 0 ] || return
 	eval echo \$\{$#\}
-}
-
-isnumeric() {
-	local _a=$1
-
-	while [ ${#_a} != 0 ]; do
-		case $_a in
-		[0-9]*)	;;
-		*)	echo 0; return;;
-		esac
-		_a=${_a#?}
-	done
-	echo 1; return
 }
 
 # return available network devices
@@ -1069,47 +1056,51 @@ __EOT
 		# ftp.openbsd.org == 129.128.5.191 and will remain at
 		# that address for the forseeable future.
 		ftp ${_ftp_active} -V -a -o /tmp/ftplist ftp://129.128.5.191/pub/OpenBSD/${VERSION_MAJOR}.${VERSION_MINOR}/ftplist > /dev/null
-		cat /tmp/ftplist | grep "^${_url_type}:" | cat -n | less -XE
+		grep "^${_url_type}:" /tmp/ftplist | cat -n | less -XE
 		;;
 	esac
 
-	# Get server IP address
+	# Get server IP address or hostname
 	resp=
 	while [ -z "$resp" ] ; do
-		if [ -f /tmp/ftplist ]; then
-			eval ask \"Server IP address, hostname, or list#?\" \"\$_${_url_type}_server_ip\"
-		else
+		if [ ! -f /tmp/ftplist ]; then
 			eval ask \"Server IP address, or hostname?\" \"\$_${_url_type}_server_ip\"
+			continue;
 		fi
-		if [ "$resp" = "?" -a -f /tmp/ftplist ]; then
-			cat /tmp/ftplist | grep "^${_url_type}:" | cat -n | less -XE
+	
+		eval ask \"Server IP address, hostname, or list#?\" \"\$_${_url_type}_server_ip\"
+
+		case $resp in
+		"?")
+			grep "^${_url_type}:" /tmp/ftplist | cat -n | less -XE
 			resp=
-		elif [ -n "$resp" \
-			-a `isnumeric $resp` -eq 1 \
-			-a ${resp:-0} -ge 1 \
-			-a -f /tmp/ftplist ]
-			then
+			;;
+		+([0-9]))
 			maxlines=`grep "^${_url_type}:" /tmp/ftplist | sed -ne '$='`
-			if [ $maxlines -lt $resp ]; then
+
+			if [ $maxlines -lt $resp -o $resp -lt 1 ]; then
 				echo "There is no ${resp}th line in the list."
-				resp=
-				continue
+			else	
+				tline=`grep "^${_url_type}:" /tmp/ftplist | sed -ne "${resp}p"`
+				url=`echo $tline | sed -e "s/^${_url_type}:\/\///" |
+					cutword -t' ' 1 | cutword -t' ' 1`
+				host=`echo $url | cutword -t/ 1`
+				path=`echo $url | sed -e "s/^${host}\///"`
+				path=${path}/${VERSION_MAJOR}.${VERSION_MINOR}/${ARCH}
+				eval _${_url_type}_server_ip=$host
+				eval _${_url_type}_server_dir=$path
+				echo "Using	$tline"
 			fi
-			tline=`grep "^${_url_type}:" /tmp/ftplist | sed -ne "${resp}p"`
-			url=`echo $tline | sed -e "s/^${_url_type}:\/\///" |
-				cutword -t' ' 1 | cutword -t' ' 1`
-			host=`echo $url | cutword -t/ 1`
-			path=`echo $url | sed -e "s/^${host}\///"`
-			path=${path}/${VERSION_MAJOR}.${VERSION_MINOR}/${ARCH}
-			eval _${_url_type}_server_ip=$host
-			eval _${_url_type}_server_dir=$path
-			# do it again, just to double check
+
+			# Always do it again, just to double check
 			resp=
-			echo "Using	$tline"
-		else
-			eval _${_url_type}_server_ip=$resp
-		fi
+			;;
+		*)
+			;;
+		esac
 	done
+
+	eval _${_url_type}_server_ip=$resp
 
 	# Get server directory
 	if [ "$_url_type" = "ftp" -a -z "$_ftp_server_dir" ] ; then
