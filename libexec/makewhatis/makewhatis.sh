@@ -4,7 +4,17 @@
 # Public domain.
 #
 
-trap "rm -f /tmp/whatis$$; exit 1" 1 2 15
+TDIR=/tmp/whatis$$
+FILE=$TDIR/whatis
+
+umask 077
+if ! mkdir $TDIR ; then
+	printf "tmp directory %s already exists, looks like:\n" $TDIR
+	ls -alF $TDIR
+	exit 1
+fi
+
+trap "rm -rf $TDIR; exit 1" 1 2 15
 
 MANDIR=${1-/usr/share/man}
 if test ! -d "$MANDIR"; then 
@@ -15,19 +25,20 @@ fi
 find $MANDIR -type f -name '*.0' -print | while read file
 do
 	sed -n -f /usr/share/man/makewhatis.sed $file;
-done > /tmp/whatis$$
+done > $FILE
 
 find $MANDIR -type f -name '*.0.Z' -print | while read file
 do
 	zcat $file | sed -n -f /usr/share/man/makewhatis.sed;
-done >> /tmp/whatis$$
+done >> $FILE
 
 find $MANDIR -type f -name '*.0.gz' -print | while read file
 do
 	gzip -dc $file | sed -n -f /usr/share/man/makewhatis.sed;
-done >> /tmp/whatis$$
+done >> $FILE
 
-sort -u -o /tmp/whatis$$ /tmp/whatis$$
+sort -u -o $FILE $FILE
 
-install -o bin -g bin -m 444 /tmp/whatis$$ "$MANDIR/whatis.db"
+install -o bin -g bin -m 444 $FILE "$MANDIR/whatis.db"
+rm -rf $TDIR
 exit 0
