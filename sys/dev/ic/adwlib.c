@@ -608,19 +608,24 @@ ADW_SOFTC      *sc;
 
 
 	/*
-	 * Set-up the Host->RISC Initiator Command Queue (ICQ).
+	 * Set-up the Host->RISC Initiator Command Queue (ICQ) if
+	 * one is not already set up, i.e. this is the first
+	 * time through as opposed to a bus reset.
 	 */
 
-	if ((sc->icq_sp = sc->carr_freelist) == NULL) {
-		return ASC_IERR_NO_CARRIER;
+	if (sc->icq_sp == NULL) {
+		sc->carr_pending_cnt = 0;
+		if ((sc->icq_sp = sc->carr_freelist) == NULL) {
+			return ASC_IERR_NO_CARRIER;
+		}
+		sc->carr_freelist = adw_carrier_phys_kv(sc,
+				ASC_GET_CARRP(sc->icq_sp->next_vpa));
+
+		/*
+	 	 * The first command issued will be placed in the stopper carrier.
+		 */
+		sc->icq_sp->next_vpa = ASC_CQ_STOPPER;
 	}
-	sc->carr_freelist = adw_carrier_phys_kv(sc,
-			ASC_GET_CARRP(sc->icq_sp->next_vpa));
-
-	/*
-	 * The first command issued will be placed in the stopper carrier.
-	 */
-	sc->icq_sp->next_vpa = ASC_CQ_STOPPER;
 
 	/*
 	 * Set RISC ICQ physical address start value.
@@ -628,28 +633,31 @@ ADW_SOFTC      *sc;
 	ADW_WRITE_DWORD_LRAM(iot, ioh, ASC_MC_ICQ, sc->icq_sp->carr_pa);
 
 	/*
-	 * Set-up the RISC->Host Initiator Response Queue (IRQ).
+	 * Set-up the RISC->Host Initiator Response Queue (IRQ) if
+	 * one is not already set up, i.e. this is the first
+	 * time through as opposed to a bus reset.
 	 */
-	if ((sc->irq_sp = sc->carr_freelist) == NULL) {
-		return ASC_IERR_NO_CARRIER;
+	if (sc->irq_sp == NULL) {
+		if ((sc->irq_sp = sc->carr_freelist) == NULL) {
+			return ASC_IERR_NO_CARRIER;
+		}
+		sc->carr_freelist = adw_carrier_phys_kv(sc,
+				ASC_GET_CARRP(sc->irq_sp->next_vpa));
+
+		/*
+ 	 	 * The first command completed by the RISC will be placed in
+ 	 	 * the stopper.
+ 	 	 *
+ 	 	 * Note: Set 'next_vpa' to ASC_CQ_STOPPER. When the request is
+ 	 	 * completed the RISC will set the ASC_RQ_DONE bit.
+ 	 	 */
+		sc->irq_sp->next_vpa = ASC_CQ_STOPPER;
 	}
-	sc->carr_freelist = adw_carrier_phys_kv(sc,
-			ASC_GET_CARRP(sc->irq_sp->next_vpa));
 
 	/*
-	 * The first command completed by the RISC will be placed in
-	 * the stopper.
-	 *
-	 * Note: Set 'next_vpa' to ASC_CQ_STOPPER. When the request is
-	 * completed the RISC will set the ASC_RQ_STOPPER bit.
-	 */
-	sc->irq_sp->next_vpa = ASC_CQ_STOPPER;
-
-	/*
-	 * Set RISC IRQ physical address start value.
-	 */
+ 	 * Set RISC IRQ physical address start value.
+ 	 */
 	ADW_WRITE_DWORD_LRAM(iot, ioh, ASC_MC_IRQ, sc->irq_sp->carr_pa);
-	sc->carr_pending_cnt = 0;
 
 	ADW_WRITE_BYTE_REGISTER(iot, ioh, IOPB_INTR_ENABLES,
 		(ADW_INTR_ENABLE_HOST_INTR | ADW_INTR_ENABLE_GLOBAL_INTR));
@@ -1140,20 +1148,25 @@ ADW_SOFTC      *sc;
 
 
 	/*
-	 * Set-up the Host->RISC Initiator Command Queue (ICQ).
+	 * Set-up the Host->RISC Initiator Command Queue (ICQ) if
+	 * one is not already set up, i.e. this is the first
+	 * time through as opposed to a bus reset.
 	 */
 
-	if ((sc->icq_sp = sc->carr_freelist) == NULL) {
-		return ASC_IERR_NO_CARRIER;
+	if (sc->icq_sp == NULL) {
+		sc->carr_pending_cnt = 0;
+		if ((sc->icq_sp = sc->carr_freelist) == NULL) {
+			return ASC_IERR_NO_CARRIER;
+		}
+		sc->carr_freelist = adw_carrier_phys_kv(sc,
+				ASC_GET_CARRP(sc->icq_sp->next_vpa));
+
+
+		/*
+	 	 * The first command issued will be placed in the stopper carrier.
+	 	 */
+		sc->icq_sp->next_vpa = ASC_CQ_STOPPER;
 	}
-	sc->carr_freelist = adw_carrier_phys_kv(sc,
-			ASC_GET_CARRP(sc->icq_sp->next_vpa));
-
-
-	/*
-	 * The first command issued will be placed in the stopper carrier.
-	 */
-	sc->icq_sp->next_vpa = ASC_CQ_STOPPER;
 
 	/*
 	 * Set RISC ICQ physical address start value.
@@ -1161,28 +1174,31 @@ ADW_SOFTC      *sc;
 	ADW_WRITE_DWORD_LRAM(iot, ioh, ASC_MC_ICQ, sc->icq_sp->carr_pa);
 
 	/*
-	 * Set-up the RISC->Host Initiator Response Queue (IRQ).
+	 * Set-up the RISC->Host Initiator Response Queue (IRQ) if
+	 * one is not already set up, i.e. this is the first
+	 * time through as opposed to a bus reset.
 	 */
-	if ((sc->irq_sp = sc->carr_freelist) == NULL) {
-		return ASC_IERR_NO_CARRIER;
-	}
-	sc->carr_freelist = adw_carrier_phys_kv(sc,
-			ASC_GET_CARRP(sc->irq_sp->next_vpa));
+	if (sc->irq_sp == NULL) {
+		if ((sc->irq_sp = sc->carr_freelist) == NULL) {
+			return ASC_IERR_NO_CARRIER;
+		}
+		sc->carr_freelist = adw_carrier_phys_kv(sc,
+				ASC_GET_CARRP(sc->irq_sp->next_vpa));
 
-	/*
-	 * The first command completed by the RISC will be placed in
-	 * the stopper.
-	 *
-	 * Note: Set 'next_vpa' to ASC_CQ_STOPPER. When the request is
-	 * completed the RISC will set the ASC_RQ_STOPPER bit.
-	 */
-	sc->irq_sp->next_vpa = ASC_CQ_STOPPER;
+		/*
+	 	 * The first command completed by the RISC will be placed in
+	 	 * the stopper.
+	 	 *
+	 	 * Note: Set 'next_vpa' to ASC_CQ_STOPPER. When the request is
+	 	 * completed the RISC will set the ASC_RQ_DONE bit.
+	 	 */
+		sc->irq_sp->next_vpa = ASC_CQ_STOPPER;
+	}
 
 	/*
 	 * Set RISC IRQ physical address start value.
 	 */
 	ADW_WRITE_DWORD_LRAM(iot, ioh, ASC_MC_IRQ, sc->irq_sp->carr_pa);
-	sc->carr_pending_cnt = 0;
 
 	ADW_WRITE_BYTE_REGISTER(iot, ioh, IOPB_INTR_ENABLES,
 		(ADW_INTR_ENABLE_HOST_INTR | ADW_INTR_ENABLE_GLOBAL_INTR));
