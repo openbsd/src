@@ -486,9 +486,10 @@ ehci_intr(void *v)
 
 	/* If we get an interrupt while polling, then just ignore it. */
 	if (sc->sc_bus.use_polling) {
-#ifdef DIAGNOSTIC
-		printf("ehci_intr: ignored interrupt while polling\n");
-#endif
+		u_int32_t intrs = EHCI_STS_INTRS(EOREAD4(sc, EHCI_USBSTS));
+
+		if (intrs)
+			EOWRITE4(sc, EHCI_USBSTS, intrs); /* Acknowledge */
 		return (0);
 	}
 
