@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_bootstrap.c,v 1.14 2001/12/20 19:02:27 miod Exp $	*/
+/*	$OpenBSD: pmap_bootstrap.c,v 1.15 2002/01/10 21:10:45 miod Exp $	*/
 /*	$NetBSD: pmap_bootstrap.c,v 1.13 1997/06/10 18:56:50 veego Exp $	*/
 
 /* 
@@ -68,7 +68,6 @@ extern int maxmem, physmem;
 extern paddr_t avail_start, avail_end;
 extern vaddr_t virtual_avail, virtual_end;
 extern vsize_t mem_size;
-extern int protection_codes[];
 #ifdef M68K_MMU_HP
 extern int pmap_aliasmask;
 #endif
@@ -448,25 +447,6 @@ pmap_bootstrap(nextpa, firstpa)
 #endif
 
 	/*
-	 * Initialize protection array.
-	 * XXX don't use a switch statement, it might produce an
-	 * absolute "jmp" table.
-	 */
-	{
-		int *kp;
-
-		kp = &RELOC(protection_codes, int);
-		kp[VM_PROT_NONE|VM_PROT_NONE|VM_PROT_NONE] = 0;
-		kp[VM_PROT_READ|VM_PROT_NONE|VM_PROT_NONE] = PG_RO;
-		kp[VM_PROT_READ|VM_PROT_NONE|VM_PROT_EXECUTE] = PG_RO;
-		kp[VM_PROT_NONE|VM_PROT_NONE|VM_PROT_EXECUTE] = PG_RO;
-		kp[VM_PROT_NONE|VM_PROT_WRITE|VM_PROT_NONE] = PG_RW;
-		kp[VM_PROT_NONE|VM_PROT_WRITE|VM_PROT_EXECUTE] = PG_RW;
-		kp[VM_PROT_READ|VM_PROT_WRITE|VM_PROT_NONE] = PG_RW;
-		kp[VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE] = PG_RW;
-	}
-
-	/*
 	 * Kernel page/segment table allocated in locore,
 	 * just initialize pointers.
 	 */
@@ -519,4 +499,23 @@ pmap_bootstrap(nextpa, firstpa)
 		va += MSGBUFSIZE;
 		RELOC(virtual_avail, vaddr_t) = va;
 	}
+}
+
+void
+pmap_init_md()
+{
+	vaddr_t		addr;
+
+	/*
+	 * mark as unavailable the regions which we have mapped in
+	 * pmap_bootstrap().
+	 */
+	addr = (vaddr_t) intiobase;
+	if (uvm_map(kernel_map, &addr,
+		    m68k_ptob(IIOMAPSIZE+EIOMAPSIZE),
+		    NULL, UVM_UNKNOWN_OFFSET, 0,
+		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE,
+				UVM_INH_NONE, UVM_ADV_RANDOM,
+				UVM_FLAG_FIXED)))
+		panic("pmap_init: bogons in the VM system!\n");
 }
