@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.7 1997/08/08 08:27:10 downsj Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.8 1997/09/11 20:31:33 deraadt Exp $	*/
 /*	$NetBSD: cpu.c,v 1.52 1997/07/29 09:41:58 fair Exp $ */
 
 /*
@@ -333,6 +333,7 @@ void getcacheinfo_obp __P((struct cpu_softc *, int node));
 void sun4_hotfix __P((struct cpu_softc *));
 void viking_hotfix __P((struct cpu_softc *));
 void turbosparc_hotfix __P((struct cpu_softc *));
+void swift_hotfix __P((struct cpu_softc *));
 
 void ms1_mmu_enable __P((void));
 void viking_mmu_enable __P((void));
@@ -731,7 +732,7 @@ struct module_info module_swift = {		/* UNTESTED */
 	VAC_WRITETHROUGH,
 	0,
 	getcacheinfo_obp,
-	0,
+	swift_hotfix,
 	0,
 	swift_cache_enable,
 	256,
@@ -743,6 +744,17 @@ struct module_info module_swift = {		/* UNTESTED */
 	srmmu_vcache_flush_context,
 	srmmu_pcache_flush_line
 };
+
+void
+swift_hotfix(sc)
+	struct cpu_softc *sc;
+{
+	int pcr = lda(SRMMU_PCR, ASI_SRMMU);
+
+	/* Turn off branch prediction */
+	pcr &= ~SWIFT_PCR_BF;
+	sta(SRMMU_PCR, ASI_SRMMU, pcr);
+}
 
 void
 swift_mmu_enable()
