@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: upgrade.sh,v 1.18 2001/10/11 23:14:59 krw Exp $
+#	$OpenBSD: upgrade.sh,v 1.19 2001/11/18 22:48:58 krw Exp $
 #	$NetBSD: upgrade.sh,v 1.2.4.5 1996/08/27 18:15:08 gwr Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -40,8 +40,6 @@
 #	OpenBSD installation script.
 #	In a perfect world, this would be a nice C program, with a reasonable
 #	user interface.
-
-ROOTDISK=				# filled in below
 
 trap "unmount_fs -check /tmp/fstab.shadow > /dev/null 2>&1; rm -f /tmp/fstab.shadow" 0
 
@@ -93,14 +91,14 @@ done
 
 # Assume partition 'a' of $ROOTDISK is for the root filesystem.  Confirm
 # this with the user.  Check and mount the root filesystem.
-resp=			# force one iteration
+resp=
 while [ "X${resp}" = "X" ]; do
 	echo -n	"Root filesystem? [${ROOTDISK}a] "
 	getresp "${ROOTDISK}a"
 	_root_filesystem="/dev/`basename $resp`"
 	if [ ! -b ${_root_filesystem} ]; then
 		echo "Sorry, ${resp} is not a block device."
-		resp=	# force loop to repeat
+		resp=
 	fi
 done
 

@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.172 2001/11/17 20:23:23 krw Exp $
+#	$OpenBSD: install.sub,v 1.173 2001/11/18 22:48:58 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -68,19 +68,18 @@
 
 #	OpenBSD installation/upgrade script - common subroutines.
 
-ROOTDISK=				# filled in below
+ROOTDISK=
 VERSION=30
 VERSION_MAJOR=$(( $VERSION / 10 ))
 VERSION_MINOR=$(( $VERSION % 10 ))
 export VERSION VERSION_MAJOR VERSION_MINOR
 
-# extra "site" set can be provided by person doing install
-ALLSETS="base etc misc comp man game xbase xshare xfont xserv site"	# install
-UPGRSETS="base misc comp man game xbase xshare xfont xserv site"	# upgrade
-SNAPSETS="bin dev etc games man misc sbin \
-	  usr.bin usr.binutils usr.games usr.include \
-	  usr.lib usr.libexec usr.misc usr.sbin usr.share var"
-THESETS=					# one of the above
+# extra "site" set can be provided by person doing install or
+# upgrade. THESETS is set to ALLSETS for installs and UPGRSETS
+# for upgrades.
+ALLSETS="base etc misc comp man game xbase xshare xfont xserv site"
+UPGRSETS="base misc comp man game xbase xshare xfont xserv site"
+THESETS=
 
 # Path searched for sets by install_sets on the local filesystems
 local_sets_dir=
@@ -485,7 +484,8 @@ configure_all_interfaces() {
 	local _ifsdone= _ifs _ouranswer= _reprompt=1
 
 	_IFS=`get_ifdevs`
-	resp=		# force at least one iteration
+
+	resp=
 	while [ "X${resp}" != X"done" ]; do
 		if [ $_reprompt = 1 ]; then
 			cat << __EOT
@@ -566,7 +566,7 @@ configure_ifs() {
 	fi
 
 	# Get IP address
-	resp=		# force one iteration
+	resp=
 	while [ "X${resp}" = X"" ]; do
 		echo -n "IP address${_dhcp_prompt} ? [$_if_ip] "
 		getresp "$_if_ip"
@@ -578,7 +578,7 @@ configure_ifs() {
 
 	# Get symbolic name
 	_hostname=`hostname`
-	resp=		# force one iteration
+	resp=
 	while [ "X${resp}" = X"" ]; do
 		echo -n "Symbolic (host) name? [$_hostname] "
 		getresp "$_hostname"
@@ -901,10 +901,12 @@ glob_selection() {
 	if [ X"$_selection" = X"all" ]; then
 		_selection=*
 	fi
-	_tfile=/tmp/install_case.$$	# safe in single user mode
+	# This is safe in single user mode.
+	_tfile=/tmp/install_case.$$
 	cat >$_tfile << OOF
 	case \$_f in
-		$_selection)	# Add/remove file to extraction list
+		$_selection)
+			# Add/remove file to extraction list
 			if [ "\$_action" = "add" ]; then
 				_get_files=\`addel \${_f} \${_get_files}\`
 				_setsdone=\`addel \${_f} \${_setsdone}\`
@@ -1024,7 +1026,7 @@ if [ X"$_reuse" = X ]; then
 	esac
 
 	# Get server IP address
-	resp=		# force one iteration
+	resp=
 	while [ "X${resp}" = X"" ]; do
 		if [ -f /tmp/ftplist ]; then
 			eval echo -n "Server IP address, hostname, or list#? [\$_${_url_type}_server_ip]\ "
@@ -1052,7 +1054,8 @@ if [ X"$_reuse" = X ]; then
 			path="${path}/${VERSION_MAJOR}.${VERSION_MINOR}/${ARCH}"
 			eval _${_url_type}_server_ip=$host
 			eval _${_url_type}_server_dir=$path
-			resp=		# do it again, just to double check
+			# do it again, just to double check
+			resp=
 			echo "Using	$tline"
 		else
 			eval _${_url_type}_server_ip="$resp"
@@ -1064,7 +1067,7 @@ if [ X"$_reuse" = X ]; then
 		# Default ftp dir
 		_ftp_server_dir="pub/OpenBSD/${VERSION_MAJOR}.${VERSION_MINOR}/${ARCH}"
 	fi
-	resp=		# force one iteration
+	resp=
 	while [ "X${resp}" = X"" ]; do
 		eval echo -n "Server directory? [\$_${_url_type}_server_dir]\ "
 		eval getresp "\$_${_url_type}_server_dir"
@@ -1081,7 +1084,7 @@ if [ X"$_reuse" = X ]; then
 		fi
 
 		# Get login name
-		resp=		# force one iteration
+		resp=
 		while [ "X${resp}" = X"" ]; do
 			echo -n "Login? [${_ftp_server_login}] "
 			getresp "${_ftp_server_login}"
@@ -1090,7 +1093,7 @@ if [ X"$_reuse" = X ]; then
 
 		# Get password unless anonymous
 		if [ ${_ftp_server_login} != "anonymous" ]; then
-			resp=		# force one iteration
+			resp=
 			while [ "X${resp}" = X"" ]; do
 				echo -n "Password (will not echo): "
 				stty -echo
@@ -1493,7 +1496,7 @@ if grep -q '^ *c: .*ISO9660' /tmp/label.$_drive; then
 else
 	# Get partition from user
 	_range=`md_get_partition_range`
-	resp=		# force one iteration
+	resp=
 	while [ "X${resp}" = X"" ]; do
 		echo -n 'CD-ROM partition to mount (normally "c")? [c] '
 		getresp c
@@ -1504,7 +1507,8 @@ else
 
 			*)
 				echo "Invalid response: $resp"
-				resp=		# force loop to repeat
+				# force loop to repeat
+				resp=
 				;;
 		esac
 	done
@@ -1517,7 +1521,7 @@ cd9660		ISO-9660
 ffs		Berkeley Fast Filesystem
 
 __EOT
-	resp=		# force one iteration
+	resp=
 	while [ "X${resp}" = X"" ]; do
 		echo -n "Which filesystem type? [cd9660] "
 		getresp "cd9660"
@@ -1528,7 +1532,8 @@ __EOT
 
 			*)
 				echo "Invalid response: $resp"
-				resp=		# force loop to repeat
+				# force loop to repeat
+				resp=
 				;;
 		esac
 	done
@@ -1546,7 +1551,7 @@ fi
 if [ "X${_directory}" = X"" ]; then
 	_directory="/${VERSION_MAJOR}.${VERSION_MINOR}/${ARCH}"
 fi
-resp=		# force one iteration
+resp=
 while [ "X${resp}" = X"" ]; do
 	echo "Enter the directory relative to the mount point that"
 	echo -n "contains the file. [${_directory}] "
@@ -1610,7 +1615,7 @@ if [ -z "$_def_partition" ]; then
 		return 0
 	fi
 fi
-resp=		# force one iteration
+resp=
 while [ "X${resp}" = X"" ]; do
 	echo -n "Partition? [$_def_partition] "
 	getresp "$_def_partition"
@@ -1621,7 +1626,8 @@ while [ "X${resp}" = X"" ]; do
 
 		*)
 			echo "Invalid response: $resp"
-			resp=		# force loop to repeat
+			# force loop to repeat
+			resp=
 			;;
 	esac
 done
@@ -1640,7 +1646,7 @@ if [ ! -z "$_md_fstype" ]; then
 else
 	_md_fstype="_undefined_"
 fi
-resp=		# force one iteration
+resp=
 while [ "X${resp}" = X"" ]; do
 	echo -n "Which filesystem type? [default] "
 	getresp "default"
@@ -1659,7 +1665,8 @@ while [ "X${resp}" = X"" ]; do
 			;;
 		*)
 			echo "Invalid response: $resp"
-			resp=		# force loop to repeat
+			# force loop to repeat
+			resp=
 			;;
 	esac
 done
@@ -1691,7 +1698,7 @@ if mount_a_disk ; then
 fi
 
 # Get the directory where the file lives
-resp=		# force one iteration
+resp=
 while [ "X${resp}" = X"" ]; do
 	echo "Enter the directory relative to the mount point that"
 	echo -n "contains the file. [${_directory}] "
@@ -1705,7 +1712,7 @@ umount -f /mnt2 > /dev/null 2>&1
 
 install_nfs() {
 # Get the IP address of the server
-resp=		# force one iteration
+resp=
 while [ "X${resp}" = X"" ]; do
 	echo -n "Server IP address or hostname? [${_nfs_server_ip}] "
 	getresp "${_nfs_server_ip}"
@@ -1713,7 +1720,7 @@ done
 _nfs_server_ip=$resp
 
 # Get server path to mount
-resp=		# force one iteration
+resp=
 while [ "X${resp}" = X"" ]; do
 	echo -n "Filesystem on server to mount? [${_nfs_server_path}] "
 	getresp "${_nfs_server_path}"
@@ -1742,7 +1749,7 @@ if ! mount_nfs $_nfs_tcp ${_nfs_server_ip}:${_nfs_server_path} \
 fi
 
 # Get the directory where the file lives
-resp=		# force one iteration
+resp=
 while [ "X${resp}" = X"" ]; do
 	echo "Enter the directory relative to the mount point that"
 	echo -n "contains the file. [${_nfs_directory}] "
@@ -1765,7 +1772,7 @@ sure you use a "no rewind on close" device.
 
 __EOT
 _tape=`basename $TAPE`
-resp=		# force one iteration
+resp=
 while [ "X${resp}" = X"" ]; do
 	echo -n "Name of tape device? [${_tape}]"
 	getresp "${_tape}"
@@ -1789,7 +1796,7 @@ fi
 echo "done."
 
 # Get the file number
-resp=		# force one iteration
+resp=
 while [ "X${resp}" = X"" ]; do
 	echo -n "File number? "
 	getresp ""
@@ -1800,7 +1807,8 @@ while [ "X${resp}" = X"" ]; do
 
 		*)
 			echo "Invalid file number ${resp}."
-			resp=		# force loop to repeat
+			# force loop to repeat
+			resp=
 			;;
 	esac
 done
@@ -1823,7 +1831,7 @@ There are 2 different ways the file can be stored on tape:
 2) a standard tar image
 
 __EOT
-resp=		# force one iteration
+resp=
 while [ "X${resp}" = X"" ]; do
 	echo -n "Which way is it? [1] "
 	getresp "1"
@@ -1838,7 +1846,8 @@ while [ "X${resp}" = X"" ]; do
 
 	*)
 		echo "Invalid response: $resp."
-		resp=		# force loop to repeat
+		# force loop to repeat
+		resp=
 		;;
 	esac
 	( cd /mnt; dd if=$TAPE | $_xcmd )
@@ -1977,7 +1986,7 @@ if [ "X$local_sets_dir" != "X" ]; then
 fi
 
 # Go on prodding for alternate locations
-resp=		# force at least one iteration
+resp=
 while [ X"${resp}" = X ]; do
 	# If _yup is not FALSE, it means that we extracted sets above.
 	# If that's the case, bypass the menu the first time.
@@ -2025,7 +2034,8 @@ while [ X"${resp}" = X ]; do
 			;;
 		esac
 	else
-		_yup="FALSE"	# So we'll ask next time
+		# So we'll ask next time
+		_yup="FALSE"
 	fi
 
 	# Perform sanity checks...
@@ -2235,11 +2245,13 @@ get_fqdn() {
 
 donetconfig() {
 	_didnet=1
-	resp=		# force at least one iteration
+
 	_nam=
 	if [ -f /tmp/myname ]; then
 		_nam=`cat /tmp/myname`
 	fi
+
+	resp=
 	while [ "X${resp}" = X"" ]; do
 		echo -n "Enter system hostname (short form, e.g. \"foo\"): [$_nam] "
 		getresp "$_nam"

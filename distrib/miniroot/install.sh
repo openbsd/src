@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.79 2001/10/14 02:35:57 millert Exp $
+#	$OpenBSD: install.sh,v 1.80 2001/11/18 22:48:58 krw Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -70,8 +70,12 @@
 #	In a perfect world, this would be a nice C program, with a reasonable
 #	user interface.
 
-FILESYSTEMS="/tmp/filesystems"		# used throughout
-FQDN=					# domain name
+# A list of devices holding filesystems and the associated mount points
+# is kept in the file named FILESYSTEMS.
+FILESYSTEMS="/tmp/filesystems"
+
+# The Fully Qualified Domain Name
+FQDN=
 
 trap "umount /tmp > /dev/null 2>&1" 0
 
@@ -337,9 +341,9 @@ mount | while read line; do
 	fi
 done
 
-resp=		# force one iteration
 echo
 echo 'Please enter the initial password that the root account will have.'
+resp=
 while [ "X${resp}" = X"" ]; do
 	echo -n "Password (will not echo): "
 	stty -echo
