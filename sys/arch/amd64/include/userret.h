@@ -1,4 +1,4 @@
-/*	$OpenBSD: userret.h,v 1.1 2004/01/28 01:39:39 mickey Exp $	*/
+/*	$OpenBSD: userret.h,v 1.2 2004/06/22 01:16:50 art Exp $	*/
 /*	$NetBSD: userret.h,v 1.1 2003/04/26 18:39:49 fvdl Exp $	*/
 
 /*
@@ -95,5 +95,5 @@ userret(struct proc *p)
 	while ((sig = CURSIG(p)) != 0)
 		postsig(sig);
 
-	curpriority = p->p_priority = p->p_usrpri;
+	curcpu()->ci_schedstate.spc_curpriority = p->p_priority = p->p_usrpri;
 }

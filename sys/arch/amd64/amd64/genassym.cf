@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.4 2004/06/13 21:49:12 niklas Exp $
+#	$OpenBSD: genassym.cf,v 1.5 2004/06/22 01:16:50 art Exp $
 
 #	Written by Artur Grabowski art@openbsd.org, Public Domain
 
@@ -41,6 +41,7 @@ member	P_MD_REGS	p_md.md_regs
 member	P_MD_FLAGS	p_md.md_flags
 member	P_MD_ASTPENDING	p_md.md_astpending
 member	p_flag
+member	p_cpu
 
 export	P_SYSTEM
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.7 2004/06/13 21:49:13 niklas Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.8 2004/06/22 01:16:50 art Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 2003/04/26 18:39:39 fvdl Exp $	*/
 
 /*-
@@ -53,13 +53,12 @@
 
 #include <sys/device.h>
 #include <sys/lock.h>
+#include <sys/sched.h>
 
 struct cpu_info {
 	struct device *ci_dev;
 	struct cpu_info *ci_self;
-#if 0
 	struct schedstate_percpu ci_schedstate; /* scheduler state */
-#endif
 	struct cpu_info *ci_next;
 
 	struct proc *ci_curproc;
@@ -141,6 +140,12 @@ extern struct cpu_info *cpu_info_list;
 #define CPU_INFO_FOREACH(cii, ci)	cii = 0, ci = cpu_info_list; \
 					ci != NULL; ci = ci->ci_next
 
+/*      
+ * Preempt the current process if in interrupt from user mode,
+ * or after the current trap/syscall if in system mode.
+ */
+extern void need_resched(struct cpu_info *);
+
 #if defined(MULTIPROCESSOR)
 
 #define X86_MAXPROCS		32	/* bitmask; can be bumped to 64 */
@@ -161,13 +166,6 @@ extern struct cpu_info *cpu_info[X86_MAXPROCS];
 void cpu_boot_secondary_processors(void);
 void cpu_init_idle_pcbs(void);    
 
-
-/*      
- * Preempt the current process if in interrupt from user mode,
- * or after the current trap/syscall if in system mode.
- */
-extern void need_resched(struct cpu_info *);
-
 #else /* !MULTIPROCESSOR */
 
 #define X86_MAXPROCS		1
@@ -179,25 +177,14 @@ extern struct cpu_info cpu_info_primary;
 
 #endif
 
+#include <machine/psl.h>
+
 /*
  * definitions of cpu-dependent requirements
  * referenced in generic code
  */
 #define	cpu_number()		0
 #define CPU_IS_PRIMARY(ci)	1
-
-/*
- * Preempt the current process if in interrupt from user mode,
- * or after the current trap/syscall if in system mode.
- */
-
-#define need_resched(ci)						\
-do {									\
-	struct cpu_info *__ci = curcpu();					\
-	__ci->ci_want_resched = 1;					\
-	if (__ci->ci_curproc != NULL)					\
-		aston(__ci->ci_curproc);				\
-} while (/*CONSTCOND*/0)
 
 #endif	/* MULTIPROCESSOR */
 
@@ -312,8 +299,6 @@ void x86_bus_space_init(void);
 void x86_bus_space_mallocok(void);
 
 #endif /* _KERNEL */
-
-#include <machine/psl.h>
 
 /* 
  * CTL_MACHDEP definitions.

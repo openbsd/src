@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched.h,v 1.9 2004/06/21 23:12:14 art Exp $	*/
+/*	$OpenBSD: sched.h,v 1.10 2004/06/22 01:16:50 art Exp $	*/
 /* $NetBSD: sched.h,v 1.2 1999/02/28 18:14:58 ross Exp $ */
 
 /*-
@@ -138,7 +138,7 @@ void roundrobin(struct cpu_info *);
 	(parent)->p_estcpu = ESTCPULIM((parent)->p_estcpu + (child)->p_estcpu);\
 } while (0)
 
-#ifndef splsched
+#if !defined(__HAVE_CPUINFO) && !defined(splsched)
 #define splsched() splhigh()
 #endif
 #ifndef IPL_SCHED

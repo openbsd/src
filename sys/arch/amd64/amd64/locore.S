@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.12 2004/06/21 22:35:47 niklas Exp $	*/
+/*	$OpenBSD: locore.S,v 1.13 2004/06/22 01:16:50 art Exp $	*/
 /*	$NetBSD: locore.S,v 1.2 2003/04/26 19:34:45 fvdl Exp $	*/
 
 /*
@@ -142,19 +142,10 @@
 
 #include <machine/asm.h>
 
-#if defined(MULTIPROCESSOR)
-
 #define SET_CURPROC(proc,cpu)			\
 	movq	CPUVAR(SELF),cpu	;	\
 	movq	proc,CPUVAR(CURPROC)      ;	\
 	movq	cpu,P_CPU(proc)
-
-#else
-
-#define SET_CURPROC(proc,tcpu)		movq	proc,CPUVAR(CURPROC)
-#define GET_CURPROC(reg)		movq	CPUVAR(CURPROC),reg
-
-#endif
 
 #define GET_CURPCB(reg)			movq	CPUVAR(CURPCB),reg      
 #define SET_CURPCB(reg)			movq	reg,CPUVAR(CURPCB)

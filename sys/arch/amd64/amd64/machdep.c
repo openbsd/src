@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.24 2004/05/13 20:20:24 sturm Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.25 2004/06/22 01:16:50 art Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -1821,7 +1821,6 @@ microtime(struct timeval *tv)
 }
 #endif
 
-#ifdef MULTIPROCESSOR
 void
 need_resched(struct cpu_info *ci)
 {
@@ -1829,7 +1828,6 @@ need_resched(struct cpu_info *ci)
 	if ((ci)->ci_curproc != NULL)
 		aston((ci)->ci_curproc);
 }
-#endif
 
 /*
  * Allocate an IDT vector slot within the given range.
