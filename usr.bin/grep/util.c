@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.9 2003/06/24 22:36:40 millert Exp $	*/
+/*	$OpenBSD: util.c,v 1.10 2003/06/25 05:31:11 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -55,9 +55,9 @@ static void	grep_revstr(unsigned char *, int);
 int
 grep_tree(char **argv)
 {
-	FTS	       *fts;
-	FTSENT	       *p;
-	int		c, fts_flags;
+	FTS	*fts;
+	FTSENT	*p;
+	int	c, fts_flags;
 
 	c = fts_flags = 0;
 
@@ -230,8 +230,7 @@ print:
 }
 
 /*
- * Returns: -1 on failure
- *           0 on success
+ * Returns: -1 on failure, 0 on success
  */
 int
 fastcomp(fastgrep_t *fg, const char *pattern)
@@ -330,7 +329,7 @@ fastcomp(fastgrep_t *fg, const char *pattern)
 	 * wildcards, the position of the last dot effects the maximum shift
 	 * distance.
 	 * The closer to the end the wild card is the slower the search.  A
-	 * reverse version of this algorithm would be useful for wildcards near 
+	 * reverse version of this algorithm would be useful for wildcards near
 	 * the end of the string.
 	 *
 	 * Examples:
@@ -444,7 +443,7 @@ grep_search(fastgrep_t *fg, unsigned char *data, int dataLen, regmatch_t *pmatch
 void *
 grep_malloc(size_t size)
 {
-	void	       *ptr;
+	void	*ptr;
 
 	if ((ptr = malloc(size)) == NULL)
 		err(1, "malloc");
