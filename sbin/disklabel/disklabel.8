@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disklabel.8,v 1.48 2003/02/01 16:29:52 jmc Exp $
+.\"	$OpenBSD: disklabel.8,v 1.49 2003/02/13 00:10:39 tedu Exp $
 .\"	$NetBSD: disklabel.8,v 1.9 1995/03/18 14:54:38 cgd Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
@@ -47,6 +47,7 @@
 .Nm disklabel
 .Op Fl n
 .Op Fl cd Li \&| Fl r
+.Op Fl p Ar unit
 .Op Fl t
 .Op Fl v
 .Ar disk
@@ -187,6 +188,12 @@ flag.
 If
 .Ar tempfile
 already exists, it will be overwritten.
+.It Fl p Ar unit
+Print partition sizes and offsets in
+.Ar unit
+instead of sectors.
+Valid units are b(ytes), c(ylinders), k(ilobytes), m(egabytes) and
+g(igabytes).
 .It Fl t
 Format the label as a
 .Xr disktab 5
