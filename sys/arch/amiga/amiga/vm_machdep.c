@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.19 2001/06/08 08:08:42 art Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.20 2001/06/27 03:54:13 art Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.30 1997/05/19 10:14:50 veego Exp $	*/
 
 /*
@@ -59,9 +59,7 @@
 #include <vm/vm.h>
 #include <sys/user.h>
 #include <vm/vm_kern.h>
-#if defined(UVM)
 #include <uvm/uvm_extern.h>
-#endif
 #include <machine/pte.h>
 
 /* XXX - Put this in some header file? */
@@ -160,11 +158,7 @@ cpu_exit(p)
 {
 
 	(void)splhigh();
-#if defined(UVM)
 	uvmexp.swtch++;
-#else
-	cnt.v_swtch++;
-#endif
 	switch_exit(p);
 	/* NOTREACHED */
 }
@@ -377,11 +371,7 @@ vmapbuf(bp, len)
 	uva = m68k_trunc_page(bp->b_saveaddr = bp->b_data);
 	off = (vaddr_t)bp->b_data - uva;
 	len = m68k_round_page(off + len);
-#if defined(UVM)
 	kva = uvm_km_valloc_wait(phys_map, len);
-#else
-	kva = kva = kmem_alloc_wait(phys_map, len);
-#endif
 	bp->b_data = (caddr_t)(kva + off);
 
 	upmap = vm_map_pmap(&bp->b_proc->p_vmspace->vm_map);
@@ -419,11 +409,7 @@ vunmapbuf(bp, len)
          * pmap_remove() is unnecessary here, as kmem_free_wakeup()
          * will do it for us.
          */
-#if defined(UVM)
         uvm_km_free_wakeup(phys_map, kva, len);
-#else
-	kmem_free_wakeup(phys_map, kva, len);
-#endif
-        bp->b_data = bp->b_saveaddr;
-        bp->b_saveaddr = 0;
+	bp->b_data = bp->b_saveaddr;
+	bp->b_saveaddr = 0;
 }

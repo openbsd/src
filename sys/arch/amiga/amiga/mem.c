@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.12 2001/05/05 20:56:32 art Exp $	*/
+/*	$OpenBSD: mem.c,v 1.13 2001/06/27 03:54:13 art Exp $	*/
 /*	$NetBSD: mem.c,v 1.18 1997/02/02 07:17:14 thorpej Exp $	*/
 
 /*
@@ -56,9 +56,7 @@
 #include <machine/cpu.h>
 
 #include <vm/vm.h>
-#if defined(UVM)
 #include <uvm/uvm_extern.h>
-#endif
 
 extern int kernel_reload_write(struct uio *uio);
 extern u_int lowram;
@@ -160,15 +158,9 @@ mmrw(dev, uio, flags)
 		case 1:
 			v = uio->uio_offset;
 			c = min(iov->iov_len, MAXPHYS);
-#if defined(UVM)
 			if (!uvm_kernacc((caddr_t)v, c,
 			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE))
 				return (EFAULT);
-#else
-			if (!kernacc((caddr_t)v, c,
-			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE))
-				return (EFAULT);
-#endif
 			if (v < NBPG) {
 #ifdef DEBUG
 				/*

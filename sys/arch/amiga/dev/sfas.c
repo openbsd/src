@@ -1,4 +1,4 @@
-/*    $OpenBSD: sfas.c,v 1.9 2001/05/05 21:26:35 art Exp $  */
+/*    $OpenBSD: sfas.c,v 1.10 2001/06/27 03:54:13 art Exp $  */
 /*	$NetBSD: sfas.c,v 1.12 1996/10/13 03:07:33 christos Exp $	*/
 
 /*
@@ -232,13 +232,8 @@ sfasinitialize(dev)
 			dev->sc_bump_pa = (vm_offset_t)
 					  PREP_DMA_MEM(dev->sc_bump_va);
 	} else {
-#if defined(UVM)
 		dev->sc_bump_va = (u_char *)uvm_km_zalloc(kernel_map,
 							  dev->sc_bump_sz);
-#else
-		dev->sc_bump_va = (u_char *)kmem_alloc(kernel_map,
-						       dev->sc_bump_sz);
-#endif
 		dev->sc_bump_pa = kvtop(dev->sc_bump_va);
 	}
 
@@ -262,32 +257,7 @@ sfasinitialize(dev)
  * of virtual memory to which we can later map physical memory to.
  */
 #ifdef SFAS_NEED_VM_PATCH
-#if defined(UVM)
 	dev->sc_vm_link = (u_char *)uvm_km_valloc(kernel_map, MAXPHYS + NBPG);
-#else
-	vm_map_lock(kernel_map);
-
-/* Locate available space. */
-	if (vm_map_findspace(kernel_map, 0, MAXPHYS+NBPG,
-			     (vm_offset_t *)&dev->sc_vm_link)) {
-		vm_map_unlock(kernel_map);
-		panic("SFAS_SCSICMD: No VM space available.");
-	} else {
-		int	offset;
-
-/*
- * Map space to virtual memory in kernel_map. This vm will always be available
- * to us during interrupt time.
- */
-		offset = (vm_offset_t)dev->sc_vm_link - VM_MIN_KERNEL_ADDRESS;
-		printf(" vmlnk %p", dev->sc_vm_link);
-		vm_object_reference(kernel_object);
-		vm_map_insert(kernel_map, kernel_object, offset,
-			      (vm_offset_t)dev->sc_vm_link,
-			      (vm_offset_t)dev->sc_vm_link+(MAXPHYS+NBPG));
-		vm_map_unlock(kernel_map);
-	}
-#endif /* UVM */
 
 	dev->sc_vm_link_pages = 0;
 #endif

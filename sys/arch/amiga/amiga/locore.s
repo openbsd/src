@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.29 2000/06/05 11:02:55 art Exp $	*/
+/*	$OpenBSD: locore.s,v 1.30 2001/06/27 03:54:12 art Exp $	*/
 /*	$NetBSD: locore.s,v 1.89 1997/07/17 16:22:54 is Exp $	*/
 
 /*
@@ -465,11 +465,7 @@ _trace:
 
 _spurintr:
 	addql	#1,_intrcnt+0
-#ifdef UVM
 	addql	#1,_uvmexp+UVMEXP_INTRS
-#else
-	addql	#1,_cnt+V_INTR
-#endif
 	jra	rei
 
 #ifdef DRACO
@@ -497,11 +493,7 @@ _DraCoLev2intr:
 
 Ldraciaend:
 	moveml	sp@+,#0x0303
-#ifdef UVM
 	addql	#1,_uvmexp+UVMEXP_INTRS
-#else
-	addql	#1,_cnt+V_INTR
-#endif
 	jra	rei
 
 /* XXX on the DraCo rev. 4 or later, lev 1 is vectored here. */
@@ -535,11 +527,7 @@ Ldrclockretry:
 	clrb	a0@(9)		| reset timer irq
 
 	moveml	sp@+,#0x0303
-#ifdef UVM
 	addql	#1,_uvmexp+UVMEXP_INTRS
-#else
-	addql	#1,_cnt+V_INTR
-#endif
 	jra	rei
 
 /* XXX on the DraCo, lev 1, 3, 4, 5 and 6 are vectored here by initcpu() */
@@ -556,11 +544,7 @@ Ldrintrcommon:
 	jbsr	_intrhand		| handle interrupt
 	addql	#4,sp			| pop SR
 	moveml	sp@+,#0x0303
-#ifdef UVM
 	addql	#1,_uvmexp+UVMEXP_INTRS
-#else
-	addql	#1,_cnt+V_INTR
-#endif
 	jra	rei
 #endif
 	
@@ -575,11 +559,7 @@ _lev5intr:
 #endif
 	moveml	sp@+,d0/d1/a0/a1
 	addql	#1,_intrcnt+20
-#ifdef UVM
 	addql	#1,_uvmexp+UVMEXP_INTRS
-#else
-	addql	#1,_cnt+V_INTR
-#endif
 	jra	rei
 
 _lev1intr:
@@ -599,11 +579,7 @@ Lintrcommon:
 	jbsr	_intrhand		| handle interrupt
 	addql	#4,sp			| pop SR
 	moveml	sp@+,d0-d1/a0-a1
-#ifdef UVM
 	addql	#1,_uvmexp+UVMEXP_INTRS
-#else
-	addql	#1,_cnt+V_INTR
-#endif
 	jra	rei
 
 | Both IPL_REMAP_1 and IPL_REMAP_2 are experimental interruptsystems from
@@ -689,11 +665,7 @@ Lskipciab:
 | other ciab interrupts?
 Llev6done:
 	moveml	sp@+,d0-d1/a0-a1	| restore scratch regs
-#ifdef UVM
 	addql	#1,_uvmexp+UVMEXP_INTRS
-#else
-	addql	#1,_cnt+V_INTR
-#endif
 	jra	rei			| all done [can we do rte here?]
 Lchkexter:
 | check to see if EXTER request is really set?
@@ -748,11 +720,7 @@ Lexter:
 	addql	#8,sp
 	addql	#1,_intrcnt+24		| add another exter interrupt
 	moveml	sp@+,d0-d1/a0-a1	| restore scratch regs
-#ifdef UVM
 	addql	#1,_uvmexp+UVMEXP_INTRS
-#else
-	addql	#1,_cnt+V_INTR
-#endif
 	jra	Lastchk			| all done [can we do rte here?]
 #endif
 	
