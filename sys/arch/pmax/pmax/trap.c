@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.15 1998/09/15 10:53:55 pefo Exp $	*/
+/*	$OpenBSD: trap.c,v 1.16 1998/09/30 12:38:44 pefo Exp $	*/
 /*	$NetBSD: trap.c,v 1.50 1996/10/13 21:37:49 jonathan Exp $	*/
 
 /*
@@ -620,6 +620,7 @@ trap(trapframe)
 		struct trap_frame *locr0 = p->p_md.md_regs;
 		struct sysent *callp;
 		unsigned int code;
+		unsigned int tpc;
 		int numsys;
 		struct args {
 			int i[8];
@@ -628,6 +629,7 @@ trap(trapframe)
 
 		cnt.v_syscall++;
 		/* compute next PC after syscall instruction */
+		tpc = trapframe->pc; /* Remember if restarted! */
 		if ((int)trapframe->cause < 0)
 			locr0->pc = MachEmulateBranch(locr0, trapframe->pc, 0, 0);
 		else
@@ -787,7 +789,7 @@ trap(trapframe)
 			break;
 
 		case ERESTART:
-			locr0->pc = trapframe->pc;
+			locr0->pc = tpc;
 			break;
 
 		case EJUSTRETURN:

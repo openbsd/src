@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.18 1998/09/15 10:58:54 pefo Exp $	*/
+/*	$OpenBSD: trap.c,v 1.19 1998/09/30 12:40:41 pefo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -475,6 +475,7 @@ trap(trapframe)
 		struct trap_frame *locr0 = p->p_md.md_regs;
 		struct sysent *callp;
 		unsigned int code;
+		unsigned int tpc;
 		int numsys;
 		struct args {
 			int i[8];
@@ -483,6 +484,7 @@ trap(trapframe)
 
 		cnt.v_syscall++;
 		/* compute next PC after syscall instruction */
+		tpc = trapframe->pc; /* Remember if restart */
 		if ((int)trapframe->cause < 0) {	/* Check BD bit */
 			locr0->pc = MipsEmulateBranch(locr0, trapframe->pc, 0, 0);
 		}
@@ -643,7 +645,7 @@ trap(trapframe)
 			break;
 
 		case ERESTART:
-			locr0->pc = trapframe->pc;
+			locr0->pc = tpc;
 			break;
 
 		case EJUSTRETURN:
