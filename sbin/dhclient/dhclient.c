@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.51 2004/05/08 16:16:33 henning Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.52 2004/05/13 07:19:32 henning Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1589,11 +1589,14 @@ rewrite_client_leases(void)
 {
 	struct client_lease *lp;
 
-	if (leaseFile)
-		fclose(leaseFile);
-	leaseFile = fopen(path_dhclient_db, "w");
-	if (!leaseFile)
-		error("can't create %s: %m", path_dhclient_db);
+	if (!leaseFile) {
+		leaseFile = fopen(path_dhclient_db, "w");
+		if (!leaseFile)
+			error("can't create %s: %m", path_dhclient_db);
+	} else {
+		fflush(leaseFile);
+		rewind(leaseFile);
+	}
 
 	for (lp = ifi->client->leases; lp; lp = lp->next)
 		write_client_lease(ifi, lp, 1);
@@ -1601,6 +1604,8 @@ rewrite_client_leases(void)
 		write_client_lease(ifi, ifi->client->active, 1);
 
 	fflush(leaseFile);
+	ftruncate(fileno(leaseFile), ftell(leaseFile));
+	fsync(fileno(leaseFile));
 }
 
 void
