@@ -1,5 +1,4 @@
-/*	$OpenBSD: isabus.c,v 1.6 1998/08/25 02:58:21 rahnds Exp $	*/
-/*	$NetBSD: isa.c,v 1.33 1995/06/28 04:30:51 cgd Exp $	*/
+/*	$OpenBSD: isabus.c,v 1.7 1998/08/25 08:37:24 pefo Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -104,10 +103,11 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pcivar.h>
+
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
 
-static int beeping;
+#include <powerpc/pci/mpc106reg.h>
 
 #define IO_ELCR1 0x04d0
 #define IO_ELCR2 0x04d1
@@ -140,11 +140,11 @@ void	isabr_initicu __P((void));
 void	intr_calculatemasks __P((void));
 
 struct p4e_bus_space	p4e_isa_io = {
-	0x80000000, 1 
+	MPC106_V_ISA_IO_SPACE, 1 
 };
 
 struct p4e_bus_space	p4e_isa_mem = {
-	0xc0000000, 1
+	MPC106_V_PCI_MEM_SPACE, 1
 };
 
 int
@@ -155,26 +155,24 @@ isabrmatch(parent, cfdata, aux)
 {
 	struct confargs *ca = aux;
 
-        /* Make sure that we're looking for a ISABR. */
-        if (strcmp(ca->ca_name, isabr_cd.cd_name) == 0)
-                return (1);
+	if (strcmp(ca->ca_name, isabr_cd.cd_name) == 0)
+		return (1);
+
 	{
-	        struct pci_attach_args *pa = aux;
+		struct pci_attach_args *pa = aux;
 
 		if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_INTEL &&
 		    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_SIO)
 			return (1);
-
 	}
-
 	return (0);
 }
 
 typedef void (void_f) (void);
 extern void_f *pending_int_f;
 void isa_do_pending_int();
-
 struct evcnt evirq[ICU_LEN*2];
+
 void
 isabrattach(parent, self, aux)
 	struct device *parent;
@@ -187,6 +185,7 @@ isabrattach(parent, self, aux)
 	/* notyet -dsr
 	ppc_intr_setup( isabr_intr_establish, isabr_intr_disestablish);
 	*/
+
 	pending_int_f = isa_do_pending_int;
 
 	printf("\n");
@@ -203,10 +202,6 @@ isabrattach(parent, self, aux)
 	sc->p4e_isa_cs.ic_intr_establish = isabr_intr_establish;
 	sc->p4e_isa_cs.ic_intr_disestablish = isabr_intr_disestablish;
 
-	iba.iba_busname = "isa";
-	iba.iba_iot = (bus_space_tag_t)&p4e_isa_io;
-	iba.iba_memt = (bus_space_tag_t)&p4e_isa_mem;
-	iba.iba_ic = &sc->p4e_isa_cs;
 	{
 		int i;
 		for (i = 0; i < (ICU_LEN*2); i++) {
@@ -215,6 +210,11 @@ isabrattach(parent, self, aux)
 			evirq[i].ev_count++;
 		}
 	}
+
+	iba.iba_busname = "isa";
+	iba.iba_iot = (bus_space_tag_t)&p4e_isa_io;
+	iba.iba_memt = (bus_space_tag_t)&p4e_isa_mem;
+	iba.iba_ic = &sc->p4e_isa_cs;
 	config_found(self, &iba, isabrprint);
 }
 
@@ -333,7 +333,6 @@ intr_calculatemasks()
 		isa_outb(IO_ICU1 + 1, imen);
 		isa_outb(IO_ICU2 + 1, imen >> 8);
 	}
-printf("isa calcmasks imen %x\n", imen);
 }
 
 /*
@@ -421,7 +420,7 @@ isabr_intr_disestablish(ic, arg)
         isa_chipset_tag_t ic;
         void *arg;      
 {               
-
+	/* Not yet */
 }
 
 void
@@ -445,6 +444,7 @@ static int processing;
 	pcpl = splhigh();		/* Turn off all */
 	hwpend = ipending & ~pcpl;	/* Do now unmasked pendings */
 	hwpend &= ((1L << ICU_LEN) - 1);
+	ipending &= ~hwpend;
 	imen &= ~hwpend;
 	while(hwpend) {
 		evirq[ICU_LEN].ev_count++;
@@ -458,11 +458,11 @@ static int processing;
 		}
 		ipending &= ~(1L << vector);
 	}
-	if((ipending & SINT_CLOCK)& ~pcpl) {
+	if((ipending & SINT_CLOCK) & ~pcpl) {
 		ipending &= ~SINT_CLOCK;
 		softclock();
 	}
-	if((ipending & SINT_NET)& ~pcpl){
+	if((ipending & SINT_NET) & ~pcpl) {
 		extern int netisr;
 		int pisr = netisr;
 		netisr = 0;
@@ -470,11 +470,12 @@ static int processing;
 		softnet(pisr);
 	}
 	cpl = pcpl;	/* Don't use splx... we are here already! */
-	__asm__ volatile("mtmsr %0" :: "r"(emsr));
-	processing = 0;
 
 	isa_outb(IO_ICU1 + 1, imen);
 	isa_outb(IO_ICU2 + 1, imen >> 8);
+
+	__asm__ volatile("mtmsr %0" :: "r"(emsr));
+	processing = 0;
 }
 
 /*
@@ -491,47 +492,21 @@ isabr_iointr(mask, cf)
         struct clockframe *cf;
 {
 	struct intrhand *ih;
-	int isa_vector;
 	int o_imen, r_imen;
-	char vector;
+	u_int8_t isa_vector;
 	int pcpl;
-
 
 	/* what about enabling external interrupt in here? */
 	pcpl = splhigh() ;	/* Turn off all */
 
-	vector = pci_iack();
+	isa_vector = *(volatile u_int8_t *)0xbffffff0;
+	isa_vector &= (ICU_LEN - 1);	/* XXX Better safe than sorry */
 	evirq[0].ev_count++;
-
-	if((vector & 0xf ) == 2) { 
-		isa_vector = (vector >> 4) | 8;
-	} else {
-		isa_vector = vector & 0xf;
-	}
 
 	o_imen = imen;
 	r_imen = 1 << (isa_vector & (ICU_LEN - 1));
 	imen |= r_imen;
-#if 0   /* just use the pci_iack for the vector */
-#if 0	/* XXX I'm not sure which method to prefere... */
-	if(isa_vector & 0x08) {
-		isa_inb(IO_ICU2 + 1);
-		isa_outb(IO_ICU2 + 1, imen >> 8);
-		isa_outb(IO_ICU2, 0x60 + (isa_vector & 7));
-		isa_outb(IO_ICU1, 0x60 + IRQ_SLAVE);
-	}
-	else {
-		isa_inb(IO_ICU1 + 1);
-		isa_outb(IO_ICU1 + 1, imen);
-		isa_outb(IO_ICU1, 0x60 + isa_vector);
-	}
-#else
-	isa_outb(IO_ICU1, 0x20);
-	isa_outb(IO_ICU2, 0x20);
-	isa_outb(IO_ICU1 + 1, imen);
-	isa_outb(IO_ICU2 + 1, imen >> 8);
-#endif
-#endif
+
 	if((pcpl & r_imen) != 0) {
 		ipending |= r_imen;	/* Masked! Mark this as pending */
 		evirq[isa_vector].ev_count++;
@@ -548,22 +523,10 @@ isabr_iointr(mask, cf)
 		}
 		imen = o_imen;
 	}
-
-	/* change level */
-	if (o_imen != imen) {
-		if (vector > 7) {
-			isa_outb(IO_ICU2 + 1, imen >> 8);
-		} else {
-			isa_outb(IO_ICU1 + 1, imen & 0xff);
-		}
-	}
-
-	/* now ack the interrupt */
-
-	if (vector > 7) {
-		isa_outb(IO_ICU2, 0x60 | isa_vector & 0x07);
-	}
-	isa_outb(IO_ICU1, 0x60 | (isa_vector > 7 ? 2 : isa_vector));
+	isa_outb(IO_ICU1 + 1, imen);
+	isa_outb(IO_ICU2 + 1, imen >> 8);
+	isa_outb(IO_ICU1, 0x20);
+	isa_outb(IO_ICU2, 0x20);
 
 	splx(pcpl);	/* Process pendings. */
 }
