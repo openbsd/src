@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.167 2004/05/24 22:52:52 mickey Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.168 2004/06/02 18:55:08 grange Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -4214,6 +4214,12 @@ ns_scx200_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		sc->sc_dma_maxsegsz = IDEDMA_BYTE_COUNT_MAX - PAGE_SIZE;
 		sc->sc_dma_boundary = IDEDMA_BYTE_COUNT_MAX - PAGE_SIZE;
 	}
+
+	/*
+	 * This chip seems to be unable to do one-sector transfers
+	 * using DMA.
+	 */
+	sc->sc_wdcdev.quirks = WDC_QUIRK_NOSHORTDMA;
 
 	pciide_print_channels(sc->sc_wdcdev.nchannels, interface);
 

@@ -1,4 +1,4 @@
-/*      $OpenBSD: ata_wdc.c,v 1.26 2004/01/23 20:48:33 grange Exp $	*/
+/*      $OpenBSD: ata_wdc.c,v 1.27 2004/06/02 18:55:08 grange Exp $	*/
 /*	$NetBSD: ata_wdc.c,v 1.21 1999/08/09 09:43:11 bouyer Exp $	*/
 
 /*
@@ -144,7 +144,9 @@ wdc_ata_bio(struct ata_drive_datas *drvp, struct ata_bio *ata_bio)
 		xfer->c_flags |= C_POLL;
 	if (!(ata_bio->flags & ATA_POLL) &&
 	    (drvp->drive_flags & (DRIVE_DMA | DRIVE_UDMA)) &&
-	    (ata_bio->flags & ATA_SINGLE) == 0)
+	    (ata_bio->flags & ATA_SINGLE) == 0 &&
+	    (ata_bio->bcount > 512 ||
+	    (chp->wdc->quirks & WDC_QUIRK_NOSHORTDMA) == 0))
 		xfer->c_flags |= C_DMA;
 	xfer->drive = drvp->drive;
 	xfer->cmd = ata_bio;
