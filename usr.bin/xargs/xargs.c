@@ -1,4 +1,4 @@
-/*	$OpenBSD: xargs.c,v 1.5 1997/09/12 01:47:25 deraadt Exp $	*/
+/*	$OpenBSD: xargs.c,v 1.6 1997/11/04 08:47:15 deraadt Exp $	*/
 /*	$NetBSD: xargs.c,v 1.7 1994/11/14 06:51:41 jtc Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)xargs.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: xargs.c,v 1.5 1997/09/12 01:47:25 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: xargs.c,v 1.6 1997/11/04 08:47:15 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -59,6 +59,7 @@ static char rcsid[] = "$OpenBSD: xargs.c,v 1.5 1997/09/12 01:47:25 deraadt Exp $
 #include <unistd.h>
 #include <limits.h>
 #include <locale.h>
+#include <signal.h>
 #include <err.h>
 #include "pathnames.h"
 
@@ -321,7 +322,14 @@ run(argv)
 			rval = 123;
 		}
 	} else if (WIFSIGNALED (status)) {
-		warnx ("%s terminated by signal %d", argv[0], WTERMSIG(status));
+		if (WTERMSIG(status) != SIGPIPE) {
+			if (WTERMSIG(status) < NSIG)
+				warnx ("%s terminated by SIG%s", argv[0],
+				    sys_signame[WTERMSIG(status)]);
+			else
+				warnx ("%s terminated by signal %d", argv[0],
+				    WTERMSIG(status));
+		}
 		exit(125);
 	}
 }
