@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.S,v 1.7 1997/08/08 22:46:13 weingart Exp $	*/
+/*	$OpenBSD: mbr.S,v 1.8 1997/08/09 21:03:47 weingart Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff and Tobias Weingartner
@@ -206,23 +206,25 @@ err_stop:
 	/* Found bootable partition */
 found:
 	DBGMSG(CHAR_B)
-#if 0
 	pushl	%ax
 	/* Save drive and partition */
 	movl	%dx, %ax
 	andl	$0x0F, %ax
 	orl		$0x30, %ax
-	movb	%al, adrive
+	#movb	%al, adrive
+	.byte	0xA2
+	.word	adrive
 
 	movl	%cx, %ax
 	decl	%ax
 	xor		$0x03, %ax
 	andl	$0x0F, %ax
 	orl		$0x30, %ax
-	movb	%al, aprtn
+	#movb	%al, aprtn
+	.byte	0xA2
+	.word	aprtn
 
 	popl	%ax
-#endif
 
 	/* Load values from active partition table entry */
 	# movb	1(%si), %dh	# head
@@ -258,12 +260,10 @@ found:
 
 1:
 	DBGMSG(CHAR_G)
-#if 1
 	data32
 	movl	$info, %esi
 	data32
 	call	message
-#endif
 
 	# jump to the new code (%ds:%si is at he right point)
 	data32
