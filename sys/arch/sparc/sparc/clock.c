@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.8 1997/08/08 08:27:05 downsj Exp $	*/
+/*	$OpenBSD: clock.c,v 1.9 1997/11/11 10:03:03 niklas Exp $	*/
 /*	$NetBSD: clock.c,v 1.52 1997/05/24 20:16:05 pk Exp $ */
 
 /*
@@ -121,16 +121,16 @@ extern struct idprom idprom;
 static int oldclk = 0;
 struct intersil7170 *i7;
 
-static long oclk_get_secs __P((void));
-static void oclk_get_dt __P((struct intersil_dt *));
-static void dt_to_gmt __P((struct intersil_dt *, long *));
-static void oclk_set_dt __P((struct intersil_dt *));
-static void oclk_set_secs __P((long));
-static void gmt_to_dt __P((long *, struct intersil_dt *));
+long	oclk_get_secs __P((void));
+void	oclk_get_dt __P((struct intersil_dt *));
+void	dt_to_gmt __P((struct intersil_dt *, long *));
+void	oclk_set_dt __P((struct intersil_dt *));
+void	oclk_set_secs __P((long));
+void	gmt_to_dt __P((long *, struct intersil_dt *));
 #endif
 
-static int oclockmatch __P((struct device *, void *, void *));
-static void oclockattach __P((struct device *, struct device *, void *));
+int	oclockmatch __P((struct device *, void *, void *));
+void	oclockattach __P((struct device *, struct device *, void *));
 
 struct cfattach oclock_ca = {
 	sizeof(struct device), oclockmatch, oclockattach
@@ -154,13 +154,13 @@ char		*eeprom_va = NULL;
 static int	eeprom_busy = 0;
 static int	eeprom_wanted = 0;
 static int	eeprom_nvram = 0;	/* non-zero if eeprom is on Mostek */
-static int	eeprom_take __P((void));
-static void	eeprom_give __P((void));
-static int	eeprom_update __P((char *, int, int));
+int	eeprom_take __P((void));
+void	eeprom_give __P((void));
+int	eeprom_update __P((char *, int, int));
 #endif
 
-static int	eeprom_match __P((struct device *, void *, void *));
-static void	eeprom_attach __P((struct device *, struct device *, void *));
+int	eeprom_match __P((struct device *, void *, void *));
+void	eeprom_attach __P((struct device *, struct device *, void *));
 
 struct cfattach eeprom_ca = {
 	sizeof(struct device), eeprom_match, eeprom_attach
@@ -170,8 +170,8 @@ struct	cfdriver eeprom_cd = {
 	NULL, "eeprom", DV_DULL
 };
 
-static int	clockmatch __P((struct device *, void *, void *));
-static void	clockattach __P((struct device *, struct device *, void *));
+int	clockmatch __P((struct device *, void *, void *));
+void	clockattach __P((struct device *, struct device *, void *));
 
 struct cfattach clock_ca = {
 	sizeof(struct device), clockmatch, clockattach
@@ -181,8 +181,8 @@ struct cfdriver clock_cd = {
 	NULL, "clock", DV_DULL
 };
 
-static int	timermatch __P((struct device *, void *, void *));
-static void	timerattach __P((struct device *, struct device *, void *));
+int	timermatch __P((struct device *, void *, void *));
+void	timerattach __P((struct device *, struct device *, void *));
 
 struct timer_4m	*timerreg_4m;	/* XXX - need more cleanup */
 struct counter_4m	*counterreg_4m;
@@ -207,7 +207,7 @@ int timerblurb = 10; /* Guess a value; used before clock is attached */
 /*
  * old clock match routine
  */
-static int
+int
 oclockmatch(parent, vcf, aux)
 	struct device *parent;
 	void *vcf, *aux;
@@ -232,7 +232,7 @@ oclockmatch(parent, vcf, aux)
 }
 
 /* ARGSUSED */
-static void
+void
 oclockattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
@@ -287,7 +287,7 @@ oclockattach(parent, self, aux)
 /*
  * Sun 4/100, 4/200 EEPROM match routine.
  */
-static int
+int
 eeprom_match(parent, vcf, aux)
 	struct device *parent;
 	void *vcf, *aux;
@@ -320,7 +320,7 @@ eeprom_match(parent, vcf, aux)
 	return (1);
 }
 
-static void
+void
 eeprom_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
@@ -341,7 +341,7 @@ eeprom_attach(parent, self, aux)
  * The OPENPROM calls the clock the "eeprom", so we have to have our
  * own special match function to call it the "clock".
  */
-static int
+int
 clockmatch(parent, vcf, aux)
 	struct device *parent;
 	void *vcf, *aux;
@@ -368,7 +368,7 @@ clockmatch(parent, vcf, aux)
 }
 
 /* ARGSUSED */
-static void
+void
 clockattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
@@ -442,7 +442,7 @@ clockattach(parent, self, aux)
 /*
  * The OPENPROM calls the timer the "counter-timer".
  */
-static int
+int
 timermatch(parent, vcf, aux)
 	struct device *parent;
 	void *vcf, *aux;
@@ -476,7 +476,7 @@ timermatch(parent, vcf, aux)
 }
 
 /* ARGSUSED */
-static void
+void
 timerattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
@@ -992,7 +992,7 @@ resettodr()
 /*
  * Now routines to get and set clock as POSIX time.
  */
-static long
+long
 oclk_get_secs()
 {
         struct intersil_dt dt;
@@ -1003,7 +1003,7 @@ oclk_get_secs()
         return (gmt);
 }
 
-static void
+void
 oclk_set_secs(secs)
 	long secs;
 {
@@ -1020,7 +1020,7 @@ oclk_set_secs(secs)
  * The clock registers have to be read or written
  * in sequential order (or so it appears). -gwr
  */
-static void
+void
 oclk_get_dt(dt)
 	struct intersil_dt *dt;
 {
@@ -1044,7 +1044,7 @@ oclk_get_dt(dt)
         splx(s);
 }
 
-static void
+void
 oclk_set_dt(dt)
 	struct intersil_dt *dt;
 {
@@ -1087,7 +1087,7 @@ static int month_days[12] = {
         31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31
 };
 
-static void
+void
 gmt_to_dt(tp, dt)
 	long *tp;
 	struct intersil_dt *dt;
@@ -1129,7 +1129,7 @@ gmt_to_dt(tp, dt)
 }
 
 
-static void
+void
 dt_to_gmt(dt, tp)
 	struct intersil_dt *dt;
 	long *tp;
@@ -1284,7 +1284,7 @@ eeprom_uio(uio)
 /*
  * Update the EEPROM from the passed buf.
  */
-static int
+int
 eeprom_update(buf, off, cnt)
 	char *buf;
 	int off, cnt;
@@ -1335,7 +1335,7 @@ eeprom_update(buf, off, cnt)
 }
 
 /* Take a lock on the eeprom. */
-static int
+int
 eeprom_take()
 {
 	int error = 0;
@@ -1353,7 +1353,7 @@ eeprom_take()
 }
 
 /* Give a lock on the eeprom away. */
-static void
+void
 eeprom_give()
 {
 
