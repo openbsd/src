@@ -1,4 +1,4 @@
-.\"	$OpenBSD: adv.4,v 1.5 2000/04/11 12:08:19 deraadt Exp $
+.\"	$OpenBSD: adv.4,v 1.6 2000/05/01 02:04:22 krw Exp $
 .\"
 .\" Copyright (c) 1998, Jason Downs.  All rights reserved.
 .\"
@@ -39,22 +39,32 @@
 .Sh DESCRIPTION
 The
 .Nm
-drivers support most AdvanSys PCI SCSI host adapters.  The
-.Nm adv
-driver includes support for the ABP-940/970[UA], SIIG Fast SCSI Pro PCI, and
-Iomega Jaz Jet PCI adapters.  The ABP-1200 series should also work, but have
-not been tested.  The
-.Nm adw
-driver supports the
-ABP-940UW,
-ABP-940UW (68),
-ABP-940UWD,
-ABP-970UW,
-ASB-3940UW
-and
-ASB-3940U2W-00
-adapters.
+drivers support most AdvanSys PCI SCSI host adapters, as shown
+in this table:
+.Bl -column "ABP940UWxxxxx" "ASB3940U2W" -offset indent
+.It Nm adv	adw
+.It ABP-920	ABP-940UW
+.It ABP-930 (1)	ASB-3940UW-00
+.It ABP-930U	ASB-3940U2W-00
+.It ABP-930UA
+.It ABP-940
+.It ABP-940U
+.It ABP-940UA
+.It ABP-950
+.It ABP-960 (2)
+.It ABP-960U (2)
+.It ABP-970
+.It ABP-970U
+.It ABP-980
+.It ABP-980U
+.El 
 .Pp
+.Bl -enum -compact
+.It
+This board has been sold by SIIG as the Fast SCSI Pro PCI.
+.It
+This board has been sold by Iomega as a Jaz Jet PCI adapter.
+.El
 .Sh BUGS
 Probably.
 .Pp
@@ -64,6 +74,8 @@ Probably.
 .Xr scsi 4 ,
 .Xr sd 4 ,
 .Xr st 4
+.Pp
+.Pa http://www.advansys.com/
 .Sh AUTHOR
 The
 .Nm
