@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.old.h,v 1.11 1999/09/17 16:52:05 deraadt Exp $	*/
+/*	$OpenBSD: pmap.old.h,v 1.12 1999/09/20 02:47:43 deraadt Exp $	*/
 /*	$NetBSD: pmap.h,v 1.23 1996/05/03 19:26:30 christos Exp $	*/
 
 /* 
@@ -70,7 +70,9 @@
 #define	PTDPTDI		(KPTDI-1)	/* ptd entry that points to ptd! */
 #define	APTDPTDI	0x3ff		/* start of alternate page directory */
 #define	MAXKPDE		(APTDPTDI-KPTDI)
+#ifndef NKPDE		/* permit config file override */
 #define	NKPDE		127		/* # to static alloc */
+#endif
 
 /*
  * Address of current and alternate address space page table maps
