@@ -1,4 +1,4 @@
-/*	$OpenBSD: history.c,v 1.26 2004/12/18 20:55:52 millert Exp $	*/
+/*	$OpenBSD: history.c,v 1.27 2004/12/18 21:25:44 millert Exp $	*/
 
 /*
  * command history
@@ -609,7 +609,7 @@ histsave(lno, cmd, dowrite)
 	const char *cmd;
 	int dowrite;
 {
-	register char **hp;
+	char **hp;
 	char *c, *cp;
 
 	c = str_save(cmd, APERM);
@@ -734,8 +734,8 @@ typedef enum state {
 
 static int
 hist_count_lines(base, bytes)
-	register unsigned char *base;
-	register int bytes;
+	unsigned char *base;
+	int bytes;
 {
 	State state = shdr;
 	int lines = 0;
@@ -827,8 +827,8 @@ hist_skip_back(base, bytes, no)
 	int *bytes;
 	int no;
 {
-	register int lines = 0;
-	register unsigned char *ep;
+	int lines = 0;
+	unsigned char *ep;
 
 	for (ep = base + *bytes; --ep > base; ) {
 		/* this doesn't really work: the 4 byte line number that is
@@ -853,8 +853,8 @@ hist_skip_back(base, bytes, no)
 static void
 histload(s, base, bytes)
 	Source *s;
-	register unsigned char *base;
-	register int bytes;
+	unsigned char *base;
+	int bytes;
 {
 	State state;
 	int	lno = 0;
@@ -909,7 +909,7 @@ histinsert(s, lno, line)
 	int lno;
 	unsigned char *line;
 {
-	register char **hp;
+	char **hp;
 
 	if (lno >= s->line-(histptr-history) && lno <= s->line) {
 		hp = &histptr[lno-s->line];

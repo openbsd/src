@@ -1,4 +1,4 @@
-/*	$OpenBSD: mail.c,v 1.11 2004/12/18 21:04:52 millert Exp $	*/
+/*	$OpenBSD: mail.c,v 1.12 2004/12/18 21:25:44 millert Exp $	*/
 
 /*
  * Mailbox checking code by Robert J. Gibson, adapted for PD ksh by
@@ -38,7 +38,7 @@ static void     mprintit(mbox_t *mbp);
 void
 mcheck()
 {
-	register mbox_t	*mbp;
+	mbox_t		*mbp;
 	time_t		 now;
 	struct tbl	*vp;
 	struct stat	 stbuf;
@@ -88,7 +88,7 @@ mcset(interval)
 
 void
 mbset(p)
-	register char	*p;
+	char	*p;
 {
 	struct stat	stbuf;
 
@@ -107,10 +107,10 @@ mbset(p)
 
 void
 mpset(mptoparse)
-	register char	*mptoparse;
+	char	*mptoparse;
 {
-	register mbox_t	*mbp;
-	register char	*mpath, *mmsg, *mval;
+	mbox_t	*mbp;
+	char	*mpath, *mmsg, *mval;
 	char *p;
 
 	munset( mplist );
@@ -147,9 +147,9 @@ mpset(mptoparse)
 
 static void
 munset(mlist)
-register mbox_t	*mlist;
+mbox_t	*mlist;
 {
-	register mbox_t	*mbp;
+	mbox_t	*mbp;
 
 	while (mlist != NULL) {
 		mbp = mlist;
@@ -166,7 +166,7 @@ mballoc(p, m)
 	char	*m;
 {
 	struct stat	stbuf;
-	register mbox_t	*mbp;
+	mbox_t	*mbp;
 
 	mbp = (mbox_t *)alloc(sizeof(mbox_t), APERM);
 	mbp->mb_next = NULL;

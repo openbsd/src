@@ -1,4 +1,4 @@
-/*	$OpenBSD: c_ksh.c,v 1.20 2004/12/18 21:04:52 millert Exp $	*/
+/*	$OpenBSD: c_ksh.c,v 1.21 2004/12/18 21:25:44 millert Exp $	*/
 
 /*
  * built-in Korn commands: c_*
@@ -294,7 +294,7 @@ c_print(wp)
 	Xinit(xs, xp, 128, ATEMP);
 
 	while (*wp != NULL) {
-		register int c;
+		int c;
 		s = *wp;
 		while ((c = *s++) != '\0') {
 			Xcheck(xs, xp);
@@ -962,8 +962,8 @@ int
 c_unalias(wp)
 	char **wp;
 {
-	register struct table *t = &aliases;
-	register struct tbl *ap;
+	struct table *t = &aliases;
+	struct tbl *ap;
 	int rv = 0, all = 0;
 	int optc;
 
@@ -1351,9 +1351,8 @@ int
 c_bind(wp)
 	char **wp;
 {
-	int rv = 0, macro = 0, list = 0;
-	register char *cp;
-	int optc;
+	int optc, rv = 0, macro = 0, list = 0;
+	char *cp;
 
 	while ((optc = ksh_getopt(wp, &builtin_opt, "lm")) != EOF)
 		switch (optc) {

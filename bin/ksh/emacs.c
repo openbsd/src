@@ -1,4 +1,4 @@
-/*	$OpenBSD: emacs.c,v 1.29 2004/12/18 20:55:52 millert Exp $	*/
+/*	$OpenBSD: emacs.c,v 1.30 2004/12/18 21:25:44 millert Exp $	*/
 
 /*
  *  Emacs-like command line editing and history
@@ -438,8 +438,8 @@ static int
 x_ins(s)
 	char	*s;
 {
-	char *cp = xcp;
-	register int	adj = x_adj_done;
+	char	*cp = xcp;
+	int	adj = x_adj_done;
 
 	if (x_do_ins(s, strlen(s)) < 0)
 		return -1;
@@ -604,7 +604,7 @@ static int
 x_bword()
 {
 	int	nc = 0;
-	register char *cp = xcp;
+	char	*cp = xcp;
 
 	if (cp == xbuf)  {
 		x_e_putc(BEL);
@@ -631,7 +631,7 @@ static int
 x_fword()
 {
 	int	nc = 0;
-	register char	*cp = xcp;
+	char	*cp = xcp;
 
 	if (cp == xep)  {
 		x_e_putc(BEL);
@@ -655,7 +655,7 @@ x_fword()
 
 static void
 x_goto(cp)
-	register char *cp;
+	char *cp;
 {
   if (cp < xbp || cp >= (xbp + x_displen))
   {
@@ -685,7 +685,7 @@ static void
 x_bs(c)
 	int c;
 {
-	register int i;
+	int i;
 	i = x_size(c);
 	while (i--)
 		x_e_putc('\b');
@@ -693,9 +693,9 @@ x_bs(c)
 
 static int
 x_size_str(cp)
-	register char *cp;
+	char *cp;
 {
-	register int size = 0;
+	int size = 0;
 	while (*cp)
 		size += x_size(*cp++);
 	return size;
@@ -714,13 +714,13 @@ x_size(c)
 
 static void
 x_zots(str)
-	register char *str;
+	char *str;
 {
-  register int	adj = x_adj_done;
+	int	adj = x_adj_done;
 
-  x_lastcp();
-  while (*str && str < xlp && adj == x_adj_done)
-    x_zotc(*str++);
+	x_lastcp();
+	while (*str && str < xlp && adj == x_adj_done)
+		x_zotc(*str++);
 }
 
 static void
@@ -855,7 +855,7 @@ x_goto_hist(c)
 
 static void
 x_load_hist(hp)
-	register char **hp;
+	char **hp;
 {
 	int	oldsize;
 
@@ -900,7 +900,7 @@ x_search_hist(c)
 {
 	int offset = -1;	/* offset of match in xbuf, else -1 */
 	char pat [256+1];	/* pattern buffer */
-	register char *p = pat;
+	char *p = pat;
 	Findex f;
 
 	*p = '\0';
@@ -963,7 +963,7 @@ x_search(pat, sameline, offset)
 	int sameline;
 	int offset;
 {
-	register char **hp;
+	char **hp;
 	int i;
 
 	for (hp = x_histp - (sameline ? 0 : 1) ; hp >= history; --hp) {
@@ -1333,7 +1333,7 @@ x_mapout(c)
 	int c;
 {
 	static char buf[8];
-	register char *p = buf;
+	char *p = buf;
 
 	if (iscntrl(c))  {
 		*p++ = '^';
@@ -1455,7 +1455,7 @@ x_bind(a1, a2, macro, list)
 void
 x_init_emacs()
 {
-	register int i, j;
+	int i, j;
 	char *locale;
 
 	ainit(AEDIT);
@@ -1609,7 +1609,7 @@ x_game_of_life(c)
 	int c;
 {
 	char	newbuf [256+1];
-	register char *ip, *op;
+	char	*ip, *op;
 	int	i, len;
 
 	i = xep - xbuf;
@@ -1908,7 +1908,7 @@ static void
 x_e_puts(s)
 	const char *s;
 {
-  register int	adj = x_adj_done;
+  int	adj = x_adj_done;
 
   while (*s && adj == x_adj_done)
     x_e_putc(*s++);
@@ -1989,49 +1989,48 @@ static int
 x_prev_histword(c)
 	int c;
 {
-  register char *rcp;
-  char *cp;
+	char *rcp;
+	char *cp;
 
-  cp = *histptr;
-  if (!cp)
-    x_e_putc(BEL);
-  else if (x_arg_defaulted) {
-    rcp = &cp[strlen(cp) - 1];
-    /*
-     * ignore white-space after the last word
-     */
-    while (rcp > cp && is_cfs(*rcp))
-      rcp--;
-    while (rcp > cp && !is_cfs(*rcp))
-      rcp--;
-    if (is_cfs(*rcp))
-      rcp++;
-    x_ins(rcp);
-  } else {
-    int c;
+	cp = *histptr;
+	if (!cp)
+		x_e_putc(BEL);
+	else if (x_arg_defaulted) {
+		  rcp = &cp[strlen(cp) - 1];
+		  /*
+		   * ignore white-space after the last word
+		   */
+		  while (rcp > cp && is_cfs(*rcp))
+		  	rcp--;
+		  while (rcp > cp && !is_cfs(*rcp))
+		  	rcp--;
+		  if (is_cfs(*rcp))
+		  	rcp++;
+		  x_ins(rcp);
+	} else {
+		  int c;
 
-    rcp = cp;
-    /*
-     * ignore white-space at start of line
-     */
-    while (*rcp && is_cfs(*rcp))
-      rcp++;
-    while (x_arg-- > 1)
-    {
-      while (*rcp && !is_cfs(*rcp))
-	rcp++;
-      while (*rcp && is_cfs(*rcp))
-	rcp++;
-    }
-    cp = rcp;
-    while (*rcp && !is_cfs(*rcp))
-      rcp++;
-    c = *rcp;
-    *rcp = '\0';
-    x_ins(cp);
-    *rcp = c;
-  }
-  return KSTD;
+		  rcp = cp;
+		  /*
+		   * ignore white-space at start of line
+		   */
+		  while (*rcp && is_cfs(*rcp))
+		  	rcp++;
+		  while (x_arg-- > 1) {
+		  	while (*rcp && !is_cfs(*rcp))
+		  		rcp++;
+		  	while (*rcp && is_cfs(*rcp))
+		  		rcp++;
+		  }
+		  cp = rcp;
+		  while (*rcp && !is_cfs(*rcp))
+		  	rcp++;
+		  c = *rcp;
+		  *rcp = '\0';
+		  x_ins(cp);
+		  *rcp = c;
+	}
+	return KSTD;
 }
 
 /* Uppercase N(1) words */
@@ -2140,17 +2139,16 @@ x_fold_case(c)
 static char *
 x_lastcp()
 {
-  register char *rcp;
-  register int i;
+	char *rcp;
+	int i;
 
-  if (!xlp_valid)
-  {
-    for (i = 0, rcp = xbp; rcp < xep && i < x_displen; rcp++)
-      i += x_size(*rcp);
-    xlp = rcp;
-  }
-  xlp_valid = TRUE;
-  return (xlp);
+	if (!xlp_valid) {
+		for (i = 0, rcp = xbp; rcp < xep && i < x_displen; rcp++)
+			i += x_size(*rcp);
+		xlp = rcp;
+	}
+	xlp_valid = TRUE;
+	return (xlp);
 }
 
 #endif /* EDIT */

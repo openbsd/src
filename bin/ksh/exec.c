@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.33 2004/12/18 21:04:52 millert Exp $	*/
+/*	$OpenBSD: exec.c,v 1.34 2004/12/18 21:25:44 millert Exp $	*/
 
 /*
  * execute command tree
@@ -395,13 +395,13 @@ static int
 comexec(t, tp, ap, flags)
 	struct op *t;
 	struct tbl *volatile tp;
-	register char **ap;
+	char **ap;
 	int volatile flags;
 {
 	int i;
 	volatile int rv = 0;
-	register char *cp;
-	register char **lastp;
+	char *cp;
+	char **lastp;
 	static struct op texec; /* Must be static (XXX but why?) */
 	int type_flags;
 	int keepasn_ok;
@@ -695,8 +695,8 @@ comexec(t, tp, ap, flags)
 
 static void
 scriptexec(tp, ap)
-	register struct op *tp;
-	register char **ap;
+	struct op *tp;
+	char **ap;
 {
 	char *shell;
 
@@ -717,9 +717,9 @@ scriptexec(tp, ap)
 
 int
 shcomexec(wp)
-	register char **wp;
+	char **wp;
 {
-	register struct tbl *tp;
+	struct tbl *tp;
 
 	tp = tsearch(&builtins, *wp, hash(*wp));
 	if (tp == NULL)
@@ -809,7 +809,7 @@ builtin(name, func)
 	const char *name;
 	int (*func)(char **);
 {
-	register struct tbl *tp;
+	struct tbl *tp;
 	Tflag flag;
 
 	/* see if any flags should be set for this builtin */
@@ -1052,10 +1052,10 @@ call_builtin(tp, wp)
  */
 static int
 iosetup(iop, tp)
-	register struct ioword *iop;
+	struct ioword *iop;
 	struct tbl *tp;
 {
-	register int u = -1;
+	int u = -1;
 	char *cp = iop->name;
 	int iotype = iop->flag & IOTYPE;
 	int do_open = 1, do_close = 0, flags = 0;
@@ -1261,7 +1261,7 @@ herein(content, sub)
  */
 static char *
 do_selectargs(ap, print_menu)
-	register char **ap;
+	char **ap;
 	bool_t print_menu;
 {
 	static const char *const read_args[] = {

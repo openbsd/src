@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.c,v 1.12 2004/12/18 21:04:52 millert Exp $	*/
+/*	$OpenBSD: tree.c,v 1.13 2004/12/18 21:25:44 millert Exp $	*/
 
 /*
  * command tree climbing
@@ -23,11 +23,11 @@ static void     iofree(struct ioword **iow, Area *ap);
 
 static void
 ptree(t, indent, shf)
-	register struct op *t;
+	struct op *t;
 	int indent;
-	register struct shf *shf;
+	struct shf *shf;
 {
-	register char **w;
+	char **w;
 	struct ioword **ioact;
 	struct op *t1;
 
@@ -208,9 +208,9 @@ ptree(t, indent, shf)
 
 static void
 pioact(shf, indent, iop)
-	register struct shf *shf;
+	struct shf *shf;
 	int indent;
-	register struct ioword *iop;
+	struct ioword *iop;
 {
 	int flag = iop->flag;
 	int type = flag & IOTYPE;
@@ -269,8 +269,8 @@ pioact(shf, indent, iop)
 
 static void
 tputC(c, shf)
-	register int c;
-	register struct shf *shf;
+	int c;
+	struct shf *shf;
 {
 	if ((c&0x60) == 0) {		/* C0|C1 */
 		tputc((c&0x80) ? '$' : '^', shf);
@@ -284,10 +284,10 @@ tputC(c, shf)
 
 static void
 tputS(wp, shf)
-	register char *wp;
-	register struct shf *shf;
+	char *wp;
+	struct shf *shf;
 {
-	register int c, quoted=0;
+	int c, quoted=0;
 
 	/* problems:
 	 *	`...` -> $(...)
@@ -394,17 +394,17 @@ snptreef(char *s, int n, const char *fmt, ...)
 
 static void
 vfptreef(shf, indent, fmt, va)
-	register struct shf *shf;
+	struct shf *shf;
 	int indent;
 	const char *fmt;
-	register va_list va;
+	va_list va;
 {
-	register int c;
+	int c;
 
 	while ((c = *fmt++))
 	    if (c == '%') {
-		register long n;
-		register char *p;
+		long n;
+		char *p;
 		int neg;
 
 		switch ((c = *fmt++)) {
@@ -466,11 +466,11 @@ vfptreef(shf, indent, fmt, va)
 
 struct op *
 tcopy(t, ap)
-	register struct op *t;
+	struct op *t;
 	Area *ap;
 {
-	register struct op *r;
-	register char **tw, **rw;
+	struct op *r;
+	char **tw, **rw;
 
 	if (t == NULL)
 		return NULL;
@@ -527,10 +527,10 @@ wdcopy(wp, ap)
 /* return the position of prefix c in wp plus 1 */
 char *
 wdscan(wp, c)
-	register const char *wp;
-	register int c;
+	const char *wp;
+	int c;
 {
-	register int nest = 0;
+	int nest = 0;
 
 	while (1)
 		switch (*wp++) {
@@ -649,18 +649,18 @@ wdstrip(wp)
 
 static	struct ioword **
 iocopy(iow, ap)
-	register struct ioword **iow;
+	struct ioword **iow;
 	Area *ap;
 {
-	register struct ioword **ior;
-	register int i;
+	struct ioword **ior;
+	int i;
 
 	for (ior = iow; *ior++ != NULL; )
 		;
 	ior = (struct ioword **) alloc((ior - iow + 1) * sizeof(*ior), ap);
 
 	for (i = 0; iow[i] != NULL; i++) {
-		register struct ioword *p, *q;
+		struct ioword *p, *q;
 
 		p = iow[i];
 		q = (struct ioword *) alloc(sizeof(*p), ap);
@@ -684,10 +684,10 @@ iocopy(iow, ap)
 
 void
 tfree(t, ap)
-	register struct op *t;
+	struct op *t;
 	Area *ap;
 {
-	register char **w;
+	char **w;
 
 	if (t == NULL)
 		return;
@@ -721,8 +721,8 @@ iofree(iow, ap)
 	struct ioword **iow;
 	Area *ap;
 {
-	register struct ioword **iop;
-	register struct ioword *p;
+	struct ioword **iop;
+	struct ioword *p;
 
 	for (iop = iow; (p = *iop++) != NULL; ) {
 		if (p->name != NULL)

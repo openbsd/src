@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.22 2004/12/18 20:55:52 millert Exp $	*/
+/*	$OpenBSD: misc.c,v 1.23 2004/12/18 21:25:44 millert Exp $	*/
 
 /*
  * Miscellaneous functions
@@ -19,10 +19,10 @@ static const unsigned char *cclass(const unsigned char *p, int sub);
  */
 void
 setctypes(s, t)
-	register const char *s;
-	register int t;
+	const char *s;
+	int t;
 {
-	register int i;
+	int i;
 
 	if (t & C_IFS) {
 		for (i = 0; i < UCHAR_MAX+1; i++)
@@ -36,7 +36,7 @@ setctypes(s, t)
 void
 initctypes()
 {
-	register int c;
+	int c;
 
 	for (c = 'a'; c <= 'z'; c++)
 		ctypes[c] |= C_ALPHA;
@@ -56,10 +56,10 @@ initctypes()
 
 char *
 ulton(n, base)
-	register unsigned long n;
+	unsigned long n;
 	int base;
 {
-	register char *p;
+	char *p;
 	static char buf [20];
 
 	p = &buf[sizeof(buf)];
@@ -73,7 +73,7 @@ ulton(n, base)
 
 char *
 str_save(s, ap)
-	register const char *s;
+	const char *s;
 	Area *ap;
 {
 	size_t len;
@@ -93,7 +93,7 @@ str_save(s, ap)
  */
 char *
 str_nsave(s, n, ap)
-	register const char *s;
+	const char *s;
 	int n;
 	Area *ap;
 {
@@ -263,7 +263,7 @@ getoptions()
 {
 	int i;
 	char m[(int) FNFLAGS + 1];
-	register char *cp = m;
+	char *cp = m;
 
 	for (i = 0; i < NELEM(options); i++)
 		if (options[i].c && Flag(i))
@@ -614,7 +614,7 @@ do_gmatch(s, se, p, pe)
 	const unsigned char *s, *p;
 	const unsigned char *se, *pe;
 {
-	register int sc, pc;
+	int sc, pc;
 	const unsigned char *prest, *psub, *pnext;
 	const unsigned char *srest;
 
@@ -742,9 +742,9 @@ do_gmatch(s, se, p, pe)
 static const unsigned char *
 cclass(p, sub)
 	const unsigned char *p;
-	register int sub;
+	int sub;
 {
-	register int c, d, not, found = 0;
+	int c, d, not, found = 0;
 	const unsigned char *orig_p = p;
 
 	if ((not = (ISMAGIC(*p) && *++p == NOT)))
@@ -824,10 +824,10 @@ qsortp(base, n, f)
 }
 
 #define	swap2(a, b)	{\
-	register void *t; t = *(a); *(a) = *(b); *(b) = t;\
+	void *t; t = *(a); *(a) = *(b); *(b) = t;\
 }
 #define	swap3(a, b, c)	{\
-	register void *t; t = *(a); *(a) = *(c); *(c) = *(b); *(b) = t;\
+	void *t; t = *(a); *(a) = *(c); *(c) = *(b); *(b) = t;\
 }
 
 static void
@@ -835,8 +835,8 @@ qsort1(base, lim, f)
 	void **base, **lim;
 	int (*f)(void *, void *);
 {
-	register void **i, **j;
-	register void **lptr, **hptr;
+	void **i, **j;
+	void **lptr, **hptr;
 	size_t n;
 	int c;
 

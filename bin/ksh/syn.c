@@ -1,4 +1,4 @@
-/*	$OpenBSD: syn.c,v 1.16 2004/12/18 21:04:52 millert Exp $	*/
+/*	$OpenBSD: syn.c,v 1.17 2004/12/18 21:25:44 millert Exp $	*/
 
 /*
  * shell parser (C version)
@@ -75,7 +75,7 @@ static struct op *
 pipeline(cf)
 	int cf;
 {
-	register struct op *t, *p, *tl = NULL;
+	struct op *t, *p, *tl = NULL;
 
 	t = get_command(cf);
 	if (t != NULL) {
@@ -95,8 +95,8 @@ pipeline(cf)
 static struct op *
 andor()
 {
-	register struct op *t, *p;
-	register int c;
+	struct op *t, *p;
+	int c;
 
 	t = pipeline(0);
 	if (t != NULL) {
@@ -114,8 +114,8 @@ static struct op *
 c_list(multi)
 	int multi;
 {
-	register struct op *t = NULL, *p, *tl = NULL;
-	register int c;
+	struct op *t = NULL, *p, *tl = NULL;
+	int c;
 	int have_sep;
 
 	while (1) {
@@ -152,7 +152,7 @@ static struct ioword *
 synio(cf)
 	int cf;
 {
-	register struct ioword *iop;
+	struct ioword *iop;
 	int ishere;
 
 	if (tpeek(cf) != REDIR)
@@ -185,7 +185,7 @@ static struct op *
 nested(type, smark, emark)
 	int type, smark, emark;
 {
-	register struct op *t;
+	struct op *t;
 	struct nesting_state old_nesting;
 
 	nesting_push(&old_nesting, smark);
@@ -199,8 +199,8 @@ static struct op *
 get_command(cf)
 	int cf;
 {
-	register struct op *t;
-	register int c, iopn = 0, syniocf;
+	struct op *t;
+	int c, iopn = 0, syniocf;
 	struct ioword *iop, **iops;
 	XPtrV args, vars;
 	struct nesting_state old_nesting;
@@ -411,8 +411,8 @@ get_command(cf)
 static struct op *
 dogroup()
 {
-	register int c;
-	register struct op *list;
+	int c;
+	struct op *list;
 
 	c = token(CONTIN|KEYWORD|ALIAS);
 	/* A {...} can be used instead of do...done for for/select loops
@@ -434,7 +434,7 @@ dogroup()
 static struct op *
 thenpart()
 {
-	register struct op *t;
+	struct op *t;
 
 	musthave(THEN, KEYWORD|ALIAS);
 	t = newtp(0);
@@ -448,7 +448,7 @@ thenpart()
 static struct op *
 elsepart()
 {
-	register struct op *t;
+	struct op *t;
 
 	switch (token(KEYWORD|ALIAS|VARASN)) {
 	  case ELSE:
@@ -471,7 +471,7 @@ elsepart()
 static struct op *
 caselist()
 {
-	register struct op *t, *tl;
+	struct op *t, *tl;
 	int c;
 
 	c = token(CONTIN|KEYWORD|ALIAS);
@@ -498,8 +498,8 @@ static struct op *
 casepart(endtok)
 	int endtok;
 {
-	register struct op *t;
-	register int c;
+	struct op *t;
+	int c;
 	XPtrV ptns;
 
 	XPinit(ptns, 16);
@@ -587,7 +587,7 @@ function_body(name, ksh_func)
 static char **
 wordlist()
 {
-	register int c;
+	int c;
 	XPtrV args;
 
 	XPinit(args, 16);
@@ -620,7 +620,7 @@ block(type, t1, t2, wp)
 	struct op *t1, *t2;
 	char **wp;
 {
-	register struct op *t;
+	struct op *t;
 
 	t = newtp(type);
 	t->left = t1;
@@ -669,8 +669,8 @@ const	struct tokeninfo {
 void
 initkeywords()
 {
-	register struct tokeninfo const *tt;
-	register struct tbl *p;
+	struct tokeninfo const *tt;
+	struct tbl *p;
 
 	tinit(&keywords, APERM, 32); /* must be 2^n (currently 20 keywords) */
 	for (tt = tokentab; tt->name; tt++) {
@@ -757,7 +757,7 @@ static struct op *
 newtp(type)
 	int type;
 {
-	register struct op *t;
+	struct op *t;
 
 	t = (struct op *) alloc(sizeof(*t), ATEMP);
 	t->type = type;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.15 2004/12/18 21:04:52 millert Exp $	*/
+/*	$OpenBSD: trap.c,v 1.16 2004/12/18 21:25:44 millert Exp $	*/
 
 /*
  * signal handling
@@ -82,7 +82,7 @@ gettrap(name, igncase)
 	int igncase;
 {
 	int i;
-	register Trap *p;
+	Trap *p;
 
 	if (digit(*name)) {
 		int n;
@@ -185,7 +185,7 @@ runtraps(flag)
 	int flag;
 {
 	int i;
-	register Trap *p;
+	Trap *p;
 
 	if (ksh_tmout_state == TMOUT_LEAVING) {
 		ksh_tmout_state = TMOUT_EXECUTING;

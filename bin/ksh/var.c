@@ -1,4 +1,4 @@
-/*	$OpenBSD: var.c,v 1.19 2004/12/18 21:04:52 millert Exp $	*/
+/*	$OpenBSD: var.c,v 1.20 2004/12/18 21:25:44 millert Exp $	*/
 
 #include "sh.h"
 #include <time.h>
@@ -33,7 +33,7 @@ static struct tbl *arraysearch(struct tbl *, int);
 void
 newblock()
 {
-	register struct block *l;
+	struct block *l;
 	static char *const empty[] = {null};
 
 	l = (struct block *) alloc(sizeof(struct block), ATEMP);
@@ -59,9 +59,9 @@ newblock()
 void
 popblock()
 {
-	register struct block *l = e->loc;
-	register struct tbl *vp, **vpp = l->vars.tbls, *vq;
-	register int i;
+	struct block *l = e->loc;
+	struct tbl *vp, **vpp = l->vars.tbls, *vq;
+	int i;
 
 	e->loc = l->next;	/* pop block */
 	for (i = l->vars.size; --i >= 0; )
@@ -160,11 +160,11 @@ array_index_calc(n, arrayp, valp)
  */
 struct tbl *
 global(n)
-	register const char *n;
+	const char *n;
 {
-	register struct block *l = e->loc;
-	register struct tbl *vp;
-	register int c;
+	struct block *l = e->loc;
+	struct tbl *vp;
+	int c;
 	unsigned h;
 	bool_t	 array;
 	int	 val;
@@ -243,11 +243,11 @@ global(n)
  */
 struct tbl *
 local(n, copy)
-	register const char *n;
+	const char *n;
 	bool_t copy;
 {
-	register struct block *l = e->loc;
-	register struct tbl *vp;
+	struct block *l = e->loc;
+	struct tbl *vp;
 	unsigned h;
 	bool_t	 array;
 	int	 val;
@@ -289,7 +289,7 @@ local(n, copy)
 /* get variable string value */
 char *
 str_val(vp)
-	register struct tbl *vp;
+	struct tbl *vp;
 {
 	char *s;
 
@@ -306,8 +306,8 @@ str_val(vp)
 		const char *digits = (vp->flag & UCASEV_AL) ?
 				  "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 				: "0123456789abcdefghijklmnopqrstuvwxyz";
-		register unsigned long n;
-		register int base;
+		unsigned long n;
+		int base;
 
 		s = strbuf + sizeof(strbuf);
 		if (vp->flag & INT_U)
@@ -338,7 +338,7 @@ str_val(vp)
 /* get variable integer value, with error checking */
 long
 intval(vp)
-	register struct tbl *vp;
+	struct tbl *vp;
 {
 	long num;
 	int base;
@@ -353,7 +353,7 @@ intval(vp)
 /* set variable to string value */
 int
 setstr(vq, s, error_ok)
-	register struct tbl *vq;
+	struct tbl *vq;
 	const char *s;
 	int error_ok;
 {
@@ -397,11 +397,11 @@ setstr(vq, s, error_ok)
 /* set variable to integer */
 void
 setint(vq, n)
-	register struct tbl *vq;
+	struct tbl *vq;
 	long n;
 {
 	if (!(vq->flag&INTEGER)) {
-		register struct tbl *vp = &vtemp;
+		struct tbl *vp = &vtemp;
 		vp->flag = (ISSET|INTEGER);
 		vp->type = 0;
 		vp->areap = ATEMP;
@@ -420,8 +420,8 @@ getint(vp, nump)
 	struct tbl *vp;
 	long *nump;
 {
-	register char *s;
-	register int c;
+	char *s;
+	int c;
 	int base, neg;
 	int have_base = 0;
 	long num;
@@ -476,7 +476,7 @@ getint(vp, nump)
  */
 struct tbl *
 setint_v(vq, vp)
-	register struct tbl *vq, *vp;
+	struct tbl *vq, *vp;
 {
 	int base;
 	long num;
@@ -562,10 +562,10 @@ formatstr(vp, s)
  */
 static void
 export(vp, val)
-	register struct tbl *vp;
+	struct tbl *vp;
 	const char *val;
 {
-	register char *xp;
+	char *xp;
 	char *op = (vp->flag&ALLOC) ? vp->val.s : NULL;
 	int namelen = strlen(vp->name);
 	int vallen = strlen(val) + 1;
@@ -588,11 +588,11 @@ export(vp, val)
  */
 struct tbl *
 typeset(var, set, clr, field, base)
-	register const char *var;
+	const char *var;
 	Tflag clr, set;
 	int field, base;
 {
-	register struct tbl *vp;
+	struct tbl *vp;
 	struct tbl *vpbase, *t;
 	char *tvar;
 	const char *val;
@@ -742,7 +742,7 @@ typeset(var, set, clr, field, base)
  */
 void
 unset(vp, array_ref)
-	register struct tbl *vp;
+	struct tbl *vp;
 	int array_ref;
 {
 	if (vp->flag & ALLOC)
@@ -848,16 +848,16 @@ makenv()
 {
 	struct block *l = e->loc;
 	XPtrV env;
-	register struct tbl *vp, **vpp;
-	register int i;
+	struct tbl *vp, **vpp;
+	int i;
 
 	XPinit(env, 64);
 	for (l = e->loc; l != NULL; l = l->next)
 		for (vpp = l->vars.tbls, i = l->vars.size; --i >= 0; )
 			if ((vp = *vpp++) != NULL
 			    && (vp->flag&(ISSET|EXPORT)) == (ISSET|EXPORT)) {
-				register struct block *l2;
-				register struct tbl *vp2;
+				struct block *l2;
+				struct tbl *vp2;
 				unsigned h = hash(vp->name);
 
 				/* unexport any redefined instances */
@@ -905,9 +905,9 @@ change_random()
 /* Test if name is a special parameter */
 static int
 special(name)
-	register const char * name;
+	const char * name;
 {
-	register struct tbl *tp;
+	struct tbl *tp;
 
 	tp = tsearch(&specials, name, hash(name));
 	return tp && (tp->flag & ISSET) ? tp->type : V_NONE;
@@ -916,9 +916,9 @@ special(name)
 /* Make a variable non-special */
 static void
 unspecial(name)
-	register const char * name;
+	const char * name;
 {
-	register struct tbl *tp;
+	struct tbl *tp;
 
 	tp = tsearch(&specials, name, hash(name));
 	if (tp)
@@ -930,7 +930,7 @@ static	int	user_lineno;		/* what user set $LINENO to */
 
 static void
 getspec(vp)
-	register struct tbl *vp;
+	struct tbl *vp;
 {
 	switch (special(vp->name)) {
 	  case V_SECONDS:
@@ -973,7 +973,7 @@ getspec(vp)
 
 static void
 setspec(vp)
-	register struct tbl *vp;
+	struct tbl *vp;
 {
 	char *s;
 
@@ -1073,7 +1073,7 @@ setspec(vp)
 
 static void
 unsetspec(vp)
-	register struct tbl *vp;
+	struct tbl *vp;
 {
 	switch (special(vp->name)) {
 	  case V_PATH:
