@@ -1,4 +1,4 @@
-.\" $OpenBSD: usermod.8,v 1.16 2003/09/04 08:32:15 jmc Exp $
+.\" $OpenBSD: usermod.8,v 1.17 2004/06/04 18:04:21 otto Exp $
 .\" $NetBSD: usermod.8,v 1.17 2003/02/14 16:11:37 grant Exp $
 .\"
 .\" Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -86,15 +86,14 @@ without populating it; if the
 option is specified, tries to move the old home directory to
 .Ar home-directory .
 .It Fl e Ar expiry-time
-sets the time at which the current password expires.
-This can be used to implement password aging.
+sets the time at which the account expires.
 It should be entered in the form
 .Dq month day year ,
 where month is the month name (the first three characters are
 sufficient), day is the day of the month, and year is the year.
 Time in seconds since the epoch (UTC) is also valid.
 A value of 0 can be used to disable this feature.
-This value can be preset for all users using the
+This value can be preset for new users using the
 .Ar expire
 field in the
 .Pa /etc/usermgmt.conf
@@ -103,7 +102,7 @@ See
 .Xr usermgmt.conf 5
 for more details.
 .It Fl f Ar inactive-time
-sets the time at which the account expires.
+sets the time at which the password expires.
 See the
 .Fl e
 option.

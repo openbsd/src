@@ -1,4 +1,4 @@
-.\" $OpenBSD: useradd.8,v 1.19 2003/12/22 12:06:16 jmc Exp $
+.\" $OpenBSD: useradd.8,v 1.20 2004/06/04 18:04:21 otto Exp $
 .\" $NetBSD: useradd.8,v 1.26 2003/02/25 10:36:21 wiz Exp $
 .\"
 .\" Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -128,8 +128,7 @@ option is specified and no
 .Fl d
 option is specified.
 .It Fl e Ar expiry-time
-sets the default time at which the current password will expire for new
-users.
+sets the default time at which new accounts will expire.
 It should be entered in the form
 .Dq month day year ,
 where month is the month name (the first three characters are
@@ -137,7 +136,7 @@ sufficient), day is the day of the month, and year is the year.
 Time in seconds since the epoch (UTC) is also valid.
 A value of 0 can be used to disable this feature.
 .It Fl f Ar inactive-time
-sets the default time at which new user accounts will expire.
+sets the time at which passwords of new accounts will expire.
 Also see the
 .Fl e
 option above.
@@ -185,8 +184,7 @@ should the
 .Fl m
 option be specified.
 .It Fl e Ar expiry-time
-sets the time at which the current password will expire for new
-users.
+sets the time at which the user account will expire.
 It should be entered in the form
 .Dq month day year ,
 where month is the month name (the first three characters are
@@ -197,7 +195,7 @@ See
 .Xr passwd 5
 for more details.
 .It Fl f Ar inactive-time
-sets the time at which new user accounts will expire.
+sets the time at which the current password will expire.
 Also see the
 .Fl e
 option above.

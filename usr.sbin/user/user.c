@@ -1,4 +1,4 @@
-/* $OpenBSD: user.c,v 1.59 2004/05/10 18:41:11 otto Exp $ */
+/* $OpenBSD: user.c,v 1.60 2004/06/04 18:04:21 otto Exp $ */
 /* $NetBSD: user.c,v 1.69 2003/04/14 17:40:07 agc Exp $ */
 
 /*
@@ -77,8 +77,8 @@ typedef struct user_t {
 	const char     *u_groupv[NGROUPS_MAX];	/* secondary groups */
 	char	       *u_shell;		/* user's shell */
 	char	       *u_basedir;		/* base directory for home */
-	char	       *u_expire;		/* when password will expire */
-	char	       *u_inactive;		/* when account will expire */
+	char	       *u_expire;		/* when account will expire */
+	char	       *u_inactive;		/* when password will expire */
 	char	       *u_skeldir;		/* directory for startup files */
 	char	       *u_class;		/* login class */
 	unsigned int	u_rsize;		/* size of range array */
@@ -1045,11 +1045,11 @@ adduser(char *login_name, user_t *up)
 		    login_name);
 	}
 	if (!scantime(&inactive, up->u_inactive)) {
-		warnx("Warning: inactive time `%s' invalid, account expiry off",
+		warnx("Warning: inactive time `%s' invalid, password expiry off",
 				up->u_inactive);
 	}
 	if (!scantime(&expire, up->u_expire)) {
-		warnx("Warning: expire time `%s' invalid, password expiry off",
+		warnx("Warning: expire time `%s' invalid, account expiry off",
 				up->u_expire);
 	}
 	if (lstat(home, &st) < 0 && !(up->u_flags & F_MKDIR) &&
@@ -1382,7 +1382,7 @@ moduser(char *login_name, char *newlogin, user_t *up)
 		}
 		if (up->u_flags & F_EXPIRE) {
 			if (!scantime(&pwp->pw_expire, up->u_expire)) {
-				warnx("Warning: expire time `%s' invalid, password expiry off",
+				warnx("Warning: expire time `%s' invalid, account expiry off",
 					up->u_expire);
 			}
 		}
