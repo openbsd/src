@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wi.4tbl,v 1.21 2002/06/21 08:33:44 henning Exp $
+.\"	$OpenBSD: wi.4tbl,v 1.22 2002/07/29 19:04:19 millert Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -181,6 +181,8 @@ Samsung MagicLAN SWL-2000N:Prism-II:PCMCIA
 Symbol Spectrum24:Spectrum24:PCMCIA
 SMC 2632 EZ Connect:Prism-II:PCMCIA
 TDK LAK-CD011WL:Prism-II:PCMCIA
+US Robotics 2410:Prism-II:PCMCIA
+US Robotics 2445:Prism-II:PCMCIA
 .TE
 .in -\n(dIu
 .Pp
