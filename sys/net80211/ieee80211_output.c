@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.7 2005/03/03 14:36:41 damien Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.8 2005/03/11 23:20:26 jsg Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -889,6 +889,7 @@ ieee80211_beacon_alloc(struct ieee80211com *ic, struct ieee80211_node *ni)
 	}
 	frm = ieee80211_add_xrates(frm, rs);
 	m->m_pkthdr.len = m->m_len = frm - mtod(m, u_int8_t *);
+	m->m_pkthdr.rcvif = (void *)ni;
 	IASSERT(m->m_pkthdr.len <= pktlen,
 		("beacon bigger than expected, len %u calculated %u",
 		m->m_pkthdr.len, pktlen));
