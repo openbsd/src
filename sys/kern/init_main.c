@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.43 2000/01/01 19:27:18 deraadt Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.44 2000/01/28 19:45:04 art Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -399,7 +399,7 @@ main(framep)
 	siginit(p);
 
 	/* Create process 1 (init(8)). */
-	if (fork1(p, ISFORK, 0, NULL, 0, rval))
+	if (fork1(p, FORK_FORK, NULL, 0, rval))
 		panic("fork init");
 #ifdef cpu_set_init_frame			/* XXX should go away */
 	if (rval[1]) {

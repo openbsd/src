@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.24 1999/08/17 10:32:18 niklas Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.25 2000/01/28 19:45:04 art Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -78,7 +78,7 @@ sys_fork(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	return (fork1(p, ISFORK, 0, NULL, 0, retval));
+	return (fork1(p, FORK_FORK, NULL, 0, retval));
 }
 
 /*ARGSUSED*/
@@ -88,7 +88,7 @@ sys_vfork(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	return (fork1(p, ISVFORK, 0, NULL, 0, retval));
+	return (fork1(p, FORK_VFORK|FORK_PPWAIT, NULL, 0, retval));
 }
 
 int
@@ -100,15 +100,41 @@ sys_rfork(p, v, retval)
 	struct sys_rfork_args /* {
 		syscallarg(int) flags;
 	} */ *uap = v;
+	int rforkflags;
+	int flags;
 
-	return (fork1(p, ISRFORK, SCARG(uap, flags), NULL, 0, retval));
+	flags = FORK_RFORK;
+	rforkflags = SCARG(uap, flags);
+
+	if ((rforkflags & RFPROC) == 0)
+		return (EINVAL);
+
+	switch(rforkflags & (RFFDG|RFCFDG)) {
+	case (RFFDG|RFCFDG):
+		return EINVAL;
+	case RFCFDG:
+		flags |= FORK_CLEANFILES;
+		break;
+	case RFFDG:
+		break;
+	default:
+		flags |= FORK_SHAREFILES;
+		break;
+	}
+
+	if (rforkflags & RFNOWAIT)
+		flags |= FORK_NOZOMBIE;
+
+	if (rforkflags & RFMEM)
+		flags |= FORK_SHAREVM;
+
+	return (fork1(p, flags, NULL, 0, retval));
 }
 
 int
-fork1(p1, forktype, rforkflags, stack, stacksize, retval)
+fork1(p1, flags, stack, stacksize, retval)
 	register struct proc *p1;
-	int forktype;
-	int rforkflags;
+	int flags;
 	void *stack;
 	size_t stacksize;
 	register_t *retval;
@@ -119,20 +145,7 @@ fork1(p1, forktype, rforkflags, stack, stacksize, retval)
 	struct vmspace *vm;
 	int count;
 	static int pidchecked = 0;
-	int dupfd = 1, cleanfd = 0;
 	vaddr_t uaddr;
-
-	if (forktype == ISRFORK) {
-		dupfd = 0;
-		if ((rforkflags & RFPROC) == 0)
-			return (EINVAL);
-		if ((rforkflags & (RFFDG|RFCFDG)) == (RFFDG|RFCFDG))
-			return (EINVAL);
-		if (rforkflags & RFFDG)
-			dupfd = 1;
-		if (rforkflags & RFCFDG)
-			cleanfd = 1;
-	}
 
 	/*
 	 * Although process entries are dynamically created, we still keep
@@ -257,12 +270,12 @@ again:
 	if (p2->p_textvp)
 		VREF(p2->p_textvp);
 
-	if (cleanfd)
+	if (flags & FORK_CLEANFILES)
 		p2->p_fd = fdinit(p1);
-	else if (dupfd)
-		p2->p_fd = fdcopy(p1);
-	else
+	else if (flags & FORK_SHAREFILES)
 		p2->p_fd = fdshare(p1);
+	else
+		p2->p_fd = fdcopy(p1);
 
 	/*
 	 * If p_limit is still copy-on-write, bump refcnt,
@@ -279,11 +292,11 @@ again:
 
 	if (p1->p_session->s_ttyvp != NULL && p1->p_flag & P_CONTROLT)
 		p2->p_flag |= P_CONTROLT;
-	if (forktype == ISVFORK)
+	if (flags & FORK_PPWAIT)
 		p2->p_flag |= P_PPWAIT;
 	LIST_INSERT_AFTER(p1, p2, p_pglist);
 	p2->p_pptr = p1;
-	if (forktype == ISRFORK && (rforkflags & RFNOWAIT))
+	if (flags & FORK_NOZOMBIE)
 		p2->p_flag |= P_NOZOMBIE;
 	LIST_INSERT_HEAD(&p1->p_children, p2, p_sibling);
 	LIST_INIT(&p2->p_children);
@@ -293,7 +306,7 @@ again:
 	 * Copy traceflag and tracefile if enabled.
 	 * If not inherited, these were zeroed above.
 	 */
-	if (p1->p_traceflag&KTRFAC_INHERIT) {
+	if (p1->p_traceflag & KTRFAC_INHERIT) {
 		p2->p_traceflag = p1->p_traceflag;
 		if ((p2->p_tracep = p1->p_tracep) != NULL)
 			VREF(p2->p_tracep);
@@ -314,7 +327,7 @@ again:
 	p1->p_holdcnt++;
 
 #if !defined(UVM) /* We do this later for UVM */
-	if (forktype == ISRFORK && (rforkflags & RFMEM)) {
+	if (flags & FORK_SHAREVM)
 		/* share as much address space as possible */
 		(void) vm_map_inherit(&p1->p_vmspace->vm_map,
 		    VM_MIN_ADDRESS, VM_MAXUSER_ADDRESS - MAXSSIZ,
@@ -344,28 +357,23 @@ again:
 	 * different path later.
 	 */
 #if defined(UVM)
-	uvm_fork(p1, p2,
-	    (forktype == ISRFORK && (rforkflags & RFMEM)) ? TRUE : FALSE,
-	    stack, stacksize);
+	uvm_fork(p1, p2, ((flags & FORK_SHAREVM) ? TRUE : FALSE), stack,
+		 stacksize);
 #else /* UVM */
 	vm_fork(p1, p2, stack, stacksize);
 #endif /* UVM */
 #endif
 	vm = p2->p_vmspace;
 
-	switch (forktype) {
-		case ISFORK:
-			forkstat.cntfork++;
-			forkstat.sizfork += vm->vm_dsize + vm->vm_ssize;
-			break;
-		case ISVFORK:
-			forkstat.cntvfork++;
-			forkstat.sizvfork += vm->vm_dsize + vm->vm_ssize;
-			break;
-		case ISRFORK:
-			forkstat.cntrfork++;
-			forkstat.sizrfork += vm->vm_dsize + vm->vm_ssize;
-			break;
+	if (flags & FORK_FORK) {
+		forkstat.cntfork++;
+		forkstat.sizfork += vm->vm_dsize + vm->vm_ssize;
+	} else if (flags & FORK_VFORK) {
+		forkstat.cntvfork++;
+		forkstat.sizvfork += vm->vm_dsize + vm->vm_ssize;
+	} else if (flags & FORK_RFORK) {
+		forkstat.cntrfork++;
+		forkstat.sizrfork += vm->vm_dsize + vm->vm_ssize;
 	}
 
 	/*
@@ -385,9 +393,9 @@ again:
 
 #if defined(UVM)
 	uvmexp.forks++;
-	if (forktype == ISVFORK)
+	if (flags & FORK_PPWAIT)
 		uvmexp.forks_ppwait++;
-	if (forktype == ISRFORK && (rforkflags & RFMEM))
+	if (flags & FORK_SHAREVM)
 		uvmexp.forks_sharevm++;
 #endif
 
@@ -396,7 +404,7 @@ again:
 	 * child to exec or exit, set P_PPWAIT on child, and sleep on our
 	 * proc (in case of exit).
 	 */
-	if (forktype == ISVFORK)
+	if (flags & FORK_PPWAIT)
 		while (p2->p_flag & P_PPWAIT)
 			tsleep(p1, PWAIT, "ppwait", 0);
 
