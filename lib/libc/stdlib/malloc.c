@@ -8,7 +8,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: malloc.c,v 1.64 2003/10/16 17:05:05 tedu Exp $";
+static char rcsid[] = "$OpenBSD: malloc.c,v 1.65 2003/11/19 02:27:18 tedu Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -992,11 +992,10 @@ irealloc(void *ptr, size_t size)
  */
 
 static __inline__ void
-free_pages(void *ptr, int index, struct pginfo *info)
+free_pages(void *ptr, u_long index, struct pginfo *info)
 {
-    int i;
+    u_long i, l;
     struct pgfree *pf, *pt=NULL;
-    u_long l;
     void *tail;
 
     if (info == MALLOC_FREE) {
@@ -1205,7 +1204,7 @@ static void
 ifree(void *ptr)
 {
     struct pginfo *info;
-    int index;
+    u_long index;
 
     /* This is legal */
     if (ptr == NULL)
@@ -1241,12 +1240,29 @@ ifree(void *ptr)
     return;
 }
 
+static int malloc_active;
+
+/*
+ * Common function for handling recursion.  Only
+ * print the error message once, to avoid making the problem
+ * potentially worse.
+ */
+static void
+malloc_recurse(void)
+{
+    static int noprint;
+
+    if (noprint == 0)
+	wrtwarning("recursive call\n");
+    noprint = 1;
+    malloc_active--;
+    _MALLOC_UNLOCK();
+    errno = EDEADLK;
+}
+
 /*
  * These are the public exported interface routines.
  */
-
-static int malloc_active;
-
 void *
 malloc(size_t size)
 {
@@ -1255,10 +1271,7 @@ malloc(size_t size)
     _MALLOC_LOCK();
     malloc_func = " in malloc():";
     if (malloc_active++) {
-	wrtwarning("recursive call\n");
-        malloc_active--;
-	_MALLOC_UNLOCK();
-	errno = EDEADLK;
+	malloc_recurse();
 	return (NULL);
     }
     r = imalloc(size);
@@ -1276,10 +1289,7 @@ free(void *ptr)
     _MALLOC_LOCK();
     malloc_func = " in free():";
     if (malloc_active++) {
-	wrtwarning("recursive call\n");
-        malloc_active--;
-	_MALLOC_UNLOCK();
-	errno = EDEADLK;
+	malloc_recurse();
 	return;
     }
     ifree(ptr);
@@ -1297,10 +1307,7 @@ realloc(void *ptr, size_t size)
     _MALLOC_LOCK();
     malloc_func = " in realloc():";
     if (malloc_active++) {
-	wrtwarning("recursive call\n");
-        malloc_active--;
-	_MALLOC_UNLOCK();
-	errno = EDEADLK;
+	malloc_recurse();
 	return (NULL);
     }
     if (ptr == NULL) {
