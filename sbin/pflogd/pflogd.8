@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pflogd.8,v 1.1 2001/08/21 22:29:14 deraadt Exp $
+.\"	$OpenBSD: pflogd.8,v 1.2 2001/08/22 16:15:00 deraadt Exp $
 .\"
 .\" Copyright (c) 2001 Can Erkin Acar.  All rights reserved.
 .\"
@@ -52,6 +52,8 @@ binary format.
 These logs can be reviewed later using the
 .Ar -r
 option of
+.Xr tcpdump 8 , hopefully offline in case there are bugs in the packet
+parsing code of
 .Xr tcpdump 8 .
 .Pp
 .Nm
@@ -93,6 +95,7 @@ Analyze at most the first
 bytes of data from each packet rather than the default of 96.
 The default of 96 is adequate for IP, ICMP, TCP, and UDP headers but may
 truncate protocol information for other protocols.
+Other file parsers may desire a higher snaplen.
 .It Ar expression
 selects which packets will be dumped, using the regular language of
 .Xr tcpdump 8 .
