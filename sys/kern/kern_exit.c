@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.26 2000/06/05 14:55:16 art Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.27 2000/06/06 18:50:32 art Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -82,6 +82,8 @@
 #if defined(UVM)
 #include <uvm/uvm_extern.h>
 #endif
+
+void proc_zap __P((struct proc *));
 
 /*
  * exit --
@@ -379,11 +381,16 @@ reaper()
 #endif
 
 		/* Process is now a true zombie. */
-		p->p_stat = SZOMB;
+		if ((p->p_flag & P_NOZOMBIE) == 0) {
+			p->p_stat = SZOMB;
 
-		/* Wake up the parent so it can get exit status. */
-		psignal(p->p_pptr, SIGCHLD);
-		wakeup((caddr_t)p->p_pptr);
+			/* Wake up the parent so it can get exit status. */
+			psignal(p->p_pptr, SIGCHLD);
+			wakeup((caddr_t)p->p_pptr);
+		} else {
+			/* Noone will wait for us. Just zap the process now */
+			proc_zap(p);
+		}
 	}
 }
 
@@ -437,6 +444,7 @@ loop:
 			    (caddr_t)SCARG(uap, rusage),
 			    sizeof(struct rusage))))
 				return (error);
+
 			/*
 			 * If we got the child via a ptrace 'attach',
 			 * we need to give it back to the old parent.
@@ -452,37 +460,9 @@ loop:
 			scheduler_wait_hook(q, p);
 			p->p_xstat = 0;
 			ruadd(&q->p_stats->p_cru, p->p_ru);
-			FREE(p->p_ru, M_ZOMBIE);
 
-			/*
-			 * Finally finished with old proc entry.
-			 * Unlink it from its process group and free it.
-			 */
-			leavepgrp(p);
-			LIST_REMOVE(p, p_list);	/* off zombproc */
-			LIST_REMOVE(p, p_sibling);
+			proc_zap(p);
 
-			/*
-			 * Decrement the count of procs running with this uid.
-			 */
-			(void)chgproccnt(p->p_cred->p_ruid, -1);
-
-			/*
-			 * Free up credentials.
-			 */
-			if (--p->p_cred->p_refcnt == 0) {
-				crfree(p->p_cred->pc_ucred);
-				FREE(p->p_cred, M_SUBPROC);
-			}
-
-			/*
-			 * Release reference to text vnode
-			 */
-			if (p->p_textvp)
-				vrele(p->p_textvp);
-
-			FREE(p, M_PROC);
-			nprocs--;
 			return (0);
 		}
 		if (p->p_stat == SSTOP && (p->p_flag & P_WAITED) == 0 &&
@@ -527,3 +507,42 @@ proc_reparent(child, parent)
 	LIST_INSERT_HEAD(&parent->p_children, child, p_sibling);
 	child->p_pptr = parent;
 }
+
+void
+proc_zap(p)
+	struct proc *p;
+{
+
+	FREE(p->p_ru, M_ZOMBIE);
+
+	/*
+	 * Finally finished with old proc entry.
+	 * Unlink it from its process group and free it.
+	 */
+	leavepgrp(p);
+	LIST_REMOVE(p, p_list);	/* off zombproc */
+	LIST_REMOVE(p, p_sibling);
+
+	/*
+	 * Decrement the count of procs running with this uid.
+	 */
+	(void)chgproccnt(p->p_cred->p_ruid, -1);
+
+	/*
+	 * Free up credentials.
+	 */
+	if (--p->p_cred->p_refcnt == 0) {
+		crfree(p->p_cred->pc_ucred);
+		FREE(p->p_cred, M_SUBPROC);
+	}
+
+	/*
+	 * Release reference to text vnode
+	 */
+	if (p->p_textvp)
+		vrele(p->p_textvp);
+
+	FREE(p, M_PROC);
+	nprocs--;
+}
+
