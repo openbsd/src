@@ -1,4 +1,4 @@
-/* $OpenBSD: if_pflog.h,v 1.1 2001/06/25 20:48:17 provos Exp $ */
+/* $OpenBSD: if_pflog.h,v 1.2 2001/06/25 23:02:19 provos Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -36,15 +36,19 @@
 #ifndef _NET_IF_PFLOG_H_
 #define _NET_IF_PFLOG_H_
 
-#define PFLOG_HDRLEN	4
-
 struct pflog_softc {
 	struct ifnet		sc_if;  /* the interface */
 };
 
 struct pfloghdr {
 	u_int32_t af;
+	char ifname[IFNAMSIZ];
+	int rnr;
+	short dir;
+	short action;
 };
+
+#define PFLOG_HDRLEN	sizeof(struct pfloghdr)
 
 extern struct pflog_softc pflogif[];
 #endif /* _NET_IF_ENC_H_ */

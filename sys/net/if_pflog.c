@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflog.c,v 1.2 2001/06/25 21:07:44 art Exp $	*/
+/*	$OpenBSD: if_pflog.c,v 1.3 2001/06/25 23:02:18 provos Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -69,10 +69,6 @@
 #define DPRINTF(x)
 #endif
 
-#if NPFLOG != 2
-#error "if_plog needs exactly two interfaces, fix sys/conf/GENERIC"
-#endif
-
 struct pflog_softc pflogif[NPFLOG];
 
 void	pflogattach(int);
@@ -100,13 +96,13 @@ pflogattach(int npflog)
 		ifp->if_ioctl = pflogioctl;
 		ifp->if_output = pflogoutput;
 		ifp->if_start = pflogstart;
-		ifp->if_type = IFT_LOOP;
+		ifp->if_type = IFT_PFLOG;
 		ifp->if_snd.ifq_maxlen = ifqmaxlen;
 		ifp->if_hdrlen = PFLOG_HDRLEN;
 		if_attach(ifp);
 
 #if NBPFILTER > 0
-		bpfattach(&pflogif[i].sc_if.if_bpf, ifp, DLT_LOOP,
+		bpfattach(&pflogif[i].sc_if.if_bpf, ifp, DLT_PFLOG,
 			  PFLOG_HDRLEN);
 #endif
 #ifdef INET6

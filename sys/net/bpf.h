@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.h,v 1.15 2001/06/09 06:16:37 angelos Exp $	*/
+/*	$OpenBSD: bpf.h,v 1.16 2001/06/25 23:02:17 provos Exp $	*/
 /*	$NetBSD: bpf.h,v 1.15 1996/12/13 07:57:33 mikel Exp $	*/
 
 /*
@@ -164,6 +164,7 @@ struct bpf_hdr {
 #define DLT_RAW		14	/* raw IP */
 #define DLT_SLIP_BSDOS	15	/* BSD/OS Serial Line IP */
 #define DLT_PPP_BSDOS	16	/* BSD/OS Point-to-point Protocol */
+#define DLT_PFLOG	17	/* Packet filter logging */
 
 /*
  * The instruction encodings.

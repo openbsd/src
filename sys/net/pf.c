@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.38 2001/06/25 22:53:39 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.39 2001/06/25 23:02:20 provos Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -57,6 +57,7 @@
 #include <netinet/ip_icmp.h>
 
 #include "bpfilter.h"
+#include "pflog.h"
 
 /*
  * Tree data structure
@@ -161,16 +162,21 @@ struct pf_state	*pf_test_state_icmp(int, struct ifnet *, struct mbuf **, int,
 void		*pull_hdr(struct ifnet *, struct mbuf **, int, int, int,
 		    struct ip *, int *);
 int		 pf_test(int, struct ifnet *, struct mbuf **);
-int		 pflog_packet(struct mbuf *, int, int);
+int		 pflog_packet(struct mbuf *, int, short,int,
+		    struct pf_rule *);
 
-#define		 PFLOG_PACKET(x,a,b,c) \
+#if NPFLOG > 0
+#define		 PFLOG_PACKET(x,a,b,c,d,e) \
 		do { \
 			HTONS((x)->ip_len); \
 			HTONS((x)->ip_off); \
-			pflog_packet(a,b,c); \
+			pflog_packet(a,b,c,d,e); \
 			NTOHS((x)->ip_len); \
 			NTOHS((x)->ip_off); \
 		} while (0)
+#else
+#define		 PFLOG_PACKET
+#endif
 
 int
 tree_key_compare(struct pf_tree_key *a, struct pf_tree_key *b)
@@ -349,30 +355,31 @@ tree_remove(struct pf_tree_node **p, struct pf_tree_key *key)
 }
 
 int
-pflog_packet(struct mbuf *m, int af, int action)
+pflog_packet(struct mbuf *m, int af, short dir, int nr, struct pf_rule *rm)
 {
 #if NBPFILTER > 0
-        struct ifnet *ifn;
+        struct ifnet *ifn, *ifp = rm->ifp;
         struct pfloghdr hdr;
         struct mbuf m1;
 
         hdr.af = htonl(af);
+	/* Set the right interface name */
+	if (m->m_pkthdr.rcvif != NULL)
+		ifp = m->m_pkthdr.rcvif;
+	if (ifp != NULL)
+		memcpy(hdr.ifname, ifp->if_xname, sizeof(hdr.ifname));
+	else
+		strcpy(hdr.ifname, "unkn");
+
+	hdr.dir = htons(dir);
+	hdr.action = htons(rm->action);
+	hdr.rnr = htonl(nr);
 
         m1.m_next = m;
         m1.m_len = PFLOG_HDRLEN;
         m1.m_data = (char *) &hdr;
 
-	switch (action) {
-	case PF_DROP_RST:
-	case PF_DROP:
-		ifn = &(pflogif[0].sc_if);
-		break;
-	case PF_PASS:
-		ifn = &(pflogif[1].sc_if);
-		break;
-	default:
-		return (-1);
-	}
+	ifn = &(pflogif[0].sc_if);
 
         if (ifn->if_bpf)
 		bpf_mtap(ifn->if_bpf, &m1);
@@ -1254,7 +1261,7 @@ pf_test_tcp(int direction, struct ifnet *ifp, struct mbuf **m, int off,
 	}
 
 	if ((rm != NULL) && rm->log)
-		PFLOG_PACKET(h, *m, AF_INET, rm->action);
+		PFLOG_PACKET(h, *m, AF_INET, direction, mnr, rm);
 
 	if ((rm != NULL) && (rm->action == PF_DROP_RST)) {
 		/* undo NAT/RST changes, if they have taken place */
@@ -1380,7 +1387,7 @@ pf_test_udp(int direction, struct ifnet *ifp, struct mbuf **m, int off,
 	}
 
 	if (rm != NULL && rm->log)
-		PFLOG_PACKET(h, *m, AF_INET, rm->action);
+		PFLOG_PACKET(h, *m, AF_INET, direction, mnr, rm);
 
 	if (rm != NULL && rm->action != PF_PASS)
 		return (PF_DROP);
@@ -1479,7 +1486,7 @@ pf_test_icmp(int direction, struct ifnet *ifp, struct mbuf **m, int off,
 	}
 
 	if (rm != NULL && rm->log)
-		PFLOG_PACKET(h, *m, AF_INET, rm->action);
+		PFLOG_PACKET(h, *m, AF_INET, direction, mnr, rm);
 
 	if (rm != NULL && rm->action != PF_PASS)
 		return (PF_DROP);
