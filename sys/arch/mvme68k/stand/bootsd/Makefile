@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/10/93
-#	$OpenBSD: Makefile,v 1.8 1997/10/20 00:33:42 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.9 1998/08/18 04:17:07 smurph Exp $
 
 RELOC=0x3F0000 
 
@@ -11,14 +11,14 @@ CFLAGS=	-O2 ${INCPATH} ${DEFS} ${COPTS}
 LDFLAGS=-N -T ${RELOC}
 CLEANFILES+=bootsd
 
-.include "${S}/arch/mvme68k/stand/bugcrt/Makefile.inc"
-.include "${S}/arch/mvme68k/stand/libbug/Makefile.inc"
-.include "${S}/arch/mvme68k/stand/libsa/Makefile.inc"
-.include "${S}/arch/mvme68k/stand/libz/Makefile.inc"
+.include "${S}/arch/${MACHINE}/stand/bugcrt/Makefile.inc"
+.include "${S}/arch/${MACHINE}/stand/libbug/Makefile.inc"
+.include "${S}/arch/${MACHINE}/stand/libsa/Makefile.inc"
+.include "${S}/arch/${MACHINE}/stand/libz/Makefile.inc"
 
 SRCS=   boot.c conf.c version.c
 
-LIBS=	${LIBSA} ${LIBBUG} ${LIBZ}
+LIBS=	${LIBSA} ${LIBBUG} ${LIBZ} libgcc.a
 
 OBJS= ${SRCS:N*.h:R:S/$/.o/g}
 
@@ -29,8 +29,8 @@ all: ${ALL}
 
 bootsd: ${OBJS} ${BUGCRT} ${LIBS}
 	${LD} ${LDFLAGS} -o $@ \
-		${SRTOBJ} ${BUGCRT} ${OBJS} ${LIBS}
-
+		${BUGCRT} ${OBJS} ${LIBS}
+#${SRTOBJ}
 install:
 	install -c -m 555 -g bin -o bin ${BOOTS} ${DESTDIR}${MDEC_DIR}
 
