@@ -1,4 +1,4 @@
-/*      $OpenBSD: pf_key_v2.c,v 1.81 2001/07/29 13:45:28 itojun Exp $  */
+/*      $OpenBSD: pf_key_v2.c,v 1.82 2001/08/14 19:38:38 ho Exp $  */
 /*	$EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	*/
 
 /*
@@ -1722,8 +1722,8 @@ pf_key_v2_flow (struct sockaddr *laddr, struct sockaddr *lmask,
 
   LOG_DBG ((LOG_SYSDEP, 50,
 	    "pf_key_v2_flow: src %s %s dst %s %s proto %u sport %u dport %u",
-	    laddr_str ? laddr_str : "<???>", lmask_str ? laddr_str : "<???>",
-	    raddr_str ? laddr_str : "<???>", rmask_str ? laddr_str : "<???>",
+	    laddr_str ? laddr_str : "<???>", lmask_str ? lmask_str : "<???>",
+	    raddr_str ? raddr_str : "<???>", rmask_str ? rmask_str : "<???>",
 	    tproto, ntohs (sport), ntohs (dport)));
 
   if (laddr_str)
