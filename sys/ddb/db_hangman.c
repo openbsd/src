@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_hangman.c,v 1.20 2002/03/14 01:26:51 millert Exp $	*/
+/*	$OpenBSD: db_hangman.c,v 1.21 2002/06/11 07:54:22 jason Exp $	*/
 
 /*
  * Copyright (c) 1996 Theo de Raadt, Michael Shalayeff
@@ -55,7 +55,9 @@ u_long		db_plays, db_guesses;
 static __inline size_t
 db_random(size_t mod)
 {
-	return arc4random() % mod;
+	if (cold)
+		return (random() % mod);
+	return (arc4random() % mod);
 }
 
 struct db_hang_forall_arg {
