@@ -1,4 +1,4 @@
-/*	$OpenBSD: rmd160.h,v 1.7 2002/12/23 04:33:31 millert Exp $	*/
+/*	$OpenBSD: rmd160.h,v 1.8 2003/06/26 18:35:13 avsm Exp $	*/
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
  *
@@ -41,7 +41,8 @@ void	 RMD160Update(RMD160_CTX *, const u_char *, u_int32_t);
 void	 RMD160Final(u_char [20], RMD160_CTX *);
 char	*RMD160End(RMD160_CTX *, char *);
 char	*RMD160File(char *, char *);
-char	*RMD160Data(const u_char *, size_t, char *);
+char	*RMD160Data(const u_char *, size_t, char *)
+		__attribute__((__bounded__(__string__,3,2)));
 __END_DECLS
 
 #endif  /* _RMD160_H */
