@@ -1,4 +1,4 @@
-.\" $OpenBSD: io.4tbl,v 1.7 2003/06/02 21:39:56 mickey Exp $
+.\" $OpenBSD: io.4,v 1.1 2004/01/15 14:15:00 mickey Exp $
 .\"
 .\" Copyright (c) 2003 Paul Weissmann
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd December 17, 2002
+.Dd January 15, 2004
 .Dt IO 4 hppa
 .Os
 .Sh NAME
@@ -36,52 +36,39 @@ The following table lists the
 I/O subsystems and connected devices found in the supported
 .Tn HP 9000/700
 machines.
+.Bl -column "715-100" "MBA" "SExxFWD" "CA, FDDI" "Video" -offset left
+.It "Model" Ta "MBA" Ta "SCSI" Ta "Network" Ta "Video"
+.It 705 Ta "A" Ta "SE" Ta "DX" Ta unknown
+.It 710 Ta "A" Ta "SE" Ta "DX" Ta unknown
+.It 712 Ta "LW" Ta "SE" Ta "CA, TR" Ta Artist
+.It 715/33 Ta "A" Ta "SE" Ta "DX" Ta Stinger
+.It 715/50 Ta "A" Ta "SE" Ta "DX" Ta Stinger
+.It 715/64 Ta "LW" Ta "SE" Ta "CA" Ta Artist
+.It 715/75 Ta "A" Ta "SE" Ta "DX" Ta Stinger
+.It 715/80 Ta "LW" Ta "SE" Ta "CA" Ta Artist
+.It 715/100 Ta "LW" Ta "SE" Ta "CA" Ta Artist
+.It 720 Ta "A" Ta "SE" Ta "DX" Ta "[SGC]"
+.It 725/50 Ta "A" Ta "SE" Ta "DX" Ta Stinger
+.It 725/75 Ta "A" Ta "SE" Ta "DX" Ta Stinger
+.It 725/64 Ta "LW" Ta "SE" Ta "CA" Ta Artist
+.It 725/100 Ta "LW" Ta "SE" Ta "CA" Ta Artist
+.It 730 Ta "A" Ta "SE" Ta "DX" Ta "[SGC]"
+.It 735 Ta "A" Ta "SE, FWD" Ta "DX, FDDI" Ta "[SGC]"
+.It 745i Ta "A" Ta "SE" Ta "DX" Ta Stinger
+.It 747i Ta "A" Ta "SE" Ta "DX" Ta Stinger
+.It 750 Ta "A" Ta "SE" Ta "DX" Ta "[SGC]"
+.It 755 Ta "A" Ta "SE, FWD" Ta "DX, FDDI" Ta "[SGC]"
+.It J2x0/XC Ta "LW" Ta "SE, FWD" Ta "CA" Ta "[GSC]"
+.It A180 Ta "DL" Ta "SE" Ta "DC" Ta "[GSC/PCI]
+.It B1xxL Ta "DLW" Ta "SE, FWD" Ta "CA" Ta Visualize-EG
+.It B1xxL+ Ta "DLW" Ta "SE, UW" Ta "DC" Ta Visualize-EG
+.It C1x0 Ta "LW" Ta "SE, FWD" Ta "CA" Ta "[GSC]"
+.It C1xxL Ta "DLW" Ta "SE, UW" Ta "DC" Ta Visualize-EG
+.It "RDI" Ta "DL" Ta "SE" Ta "CA" Ta Visualize-EG
+.It "SAIC" Ta "LW" Ta "SE" Ta "CA" Ta Artist
+.El
 .Pp
-.in +\n(dIu
-.TS
-tab (:) ;
-l l l l l
-_ _ _ _ _
-l l l l l .
-Model:MBA:SCSI:Network:Video
-705:A:NCR53700 SE:i82596DX 10:?
-710:A:NCR53700 SE:i82596DX 10:?
-712:LW:NCR53710 SE:i82596CA 10  :Artist
-   :  :           :[TR/9000 4/16]:
-715/33:A:NCR53700 SE:i82596DX 10:Stinger
-715/50:A:NCR53700 SE:i82596DX 10:Stinger
-715/64:LW:NCR53710 SE:i82596CA 10:Artist
-715/75:A:NCR53700 SE:i82596DX 10:Stinger
-715/80:LW:NCR53710 SE:i82596CA 10:Artist
-715/100:LW:NCR53710 SE:i82596CA 10:Artist
-720:A:NCR53700 SE:i82596DX 10:[SGC]
-725/50:A:NCR53700 SE:i82596DX 10:Stinger
-725/75:A:NCR53700 SE:i82596DX 10:Stinger
-725/64:LW:NCR53710 SE:i82596CA 10:Artist
-725/100:LW:NCR53710 SE:i82596CA 10:Artist
-730:A:NCR53700 SE:i82596DX 10:[SGC]
-735:A:NCR53700 SE:i82596DX 10:[SGC]
-   :   :NCR53720 FWD:[Am78830 FDDI]:
-745i:A:NCR53700 SE:i82596DX 10:Stinger
-747i:A:NCR53700 SE:i82596DX 10:Stinger
-750:A:NCR53700 SE:i82596DX 10:[SGC]
-755:A:NCR53700 SE:i82596DX 10:[SGC]
-   :   :NCR53720 FWD:[Am78830 FDDI]:
-J2x0:LW:NCR53710 SE:i82596CA 10:[GSC]
-    :  :NCR53720 FWD:
-C1x0:LW:NCR53710 SE:i82596CA 10:[GSC]
-    :  :NCR53720 FWD:
-A180:DL:NCR53710 SE:DC21142 100:[PCI]
-B1xxL:DLW:NCR53710 SE:i82596CA 10:Visualize-EG
-     :   :NCR53720 FWD:
-B1xxL+:DLW:NCR53710 SE:DC21142 100:Visualize-EG
-      :   :NCR53875 UW:
-C1xxL:DLW:NCR53710 SE:DC21142 100:Visualize-EG
-     :   :NCR53875 UW:
-.TE
-.in -\n(dIu
-.Pp
-The MBA column denotes the bus adapters in use:
+The MBA column denotes the bus adapters in use Ta 
 .Bl -tag -width XXXX -compact -offset indent
 .It A
 .Xr asp 4
@@ -94,38 +81,55 @@ The MBA column denotes the bus adapters in use:
 .El
 .Pp
 The trailing characters in the SCSI row denote the
-SCSI bus configuration:
+SCSI bus configuration
 .Pp
 .Bl -tag -width XXXX -compact -offset indent
 .It SE
+.Xr osiop 4 ;
+.Tn NCR53700/710
 8-bit (fast) single-ended,
 .It FWD
-16-bit fast high-voltage differential (HVD),
+.Xr siop 4 ;
+.Tn NCR53720
+16-bit fast differential (HVD),
 .It UW
+.Xr siop 4 ;
+.Tn NCR53875
 16-bit ultra single-ended.
 .El
 .Pp
 The trailing digits in the Network row denote the
-interface speed:
+interface speed Ta 
 .Pp
 .Bl -tag -width XXXXX -compact -offset indent
-.It 10
+.It CA
+.Xr ie 4 ;
+.Tn i82596CA
 10Mb/s,
-.It 4/16
-4Mb/s or 16Mb/s TokenRing
-.It 100
+.It DX
+.Xr ie 4 ;
+.Tn i82596DX
+10Mb/s,
+.It DC
+.Xr dc 4 ;
+.Tn DEC 21142/3
 10/100Mb/s,
 .It FDDI
-AMD Formac+ FDDI
+.Tn Am78830
+Formac+ FDDI,
+.It TR
+4Mb/s or 16Mb/s TokenRing.
 .El
 .Pp
 .Sh SEE ALSO
 .Xr asp 4 ,
+.Xr dc 4 ,
 .Xr gsc 4 ,
 .Xr ie 4 ,
 .Xr intro 4 ,
 .Xr lasi 4 ,
 .Xr osiop 4 ,
+.Xr siop 4 ,
 .Xr sti 4 ,
 .Xr wax 4
 .Sh HISTORY
