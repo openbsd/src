@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptodev.h,v 1.18 2002/03/01 02:46:57 provos Exp $	*/
+/*	$OpenBSD: cryptodev.h,v 1.19 2002/03/01 02:50:02 provos Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -291,7 +291,7 @@ struct cryptop {
 	caddr_t		crp_mac;
 };
 
-#define CRYPTO_BUF_CONTIG	0x1
+#define CRYPTO_BUF_IOV		0x1
 #define CRYPTO_BUF_MBUF		0x2
 
 #define CRYPTO_OP_DECRYPT	0x0
