@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.43 2002/04/01 21:35:52 nate Exp $
+$OpenBSD: usbdevs,v 1.44 2002/06/10 01:22:33 nate Exp $
 /* $NetBSD: usbdevs,v 1.240 2002/03/31 00:41:37 ichiro Exp $ */
 
 /*
@@ -206,6 +206,7 @@ vendor ALARIS		0x0620	Alaris
 vendor APEX		0x0624	Apex
 vendor AVISION		0x0638	Avision
 vendor TEAC		0x0644	TEAC
+vendor SANWASUPPLY	0x0663	Sanwa Supply
 vendor LINKSYS		0x066b	Linksys
 vendor ACERSA		0x066e	Acer Semiconductor America
 vendor SIGMATEL		0x066f	Sigmatel
@@ -289,6 +290,7 @@ vendor BILLIONTON	0x08dd	Billionton Systems
 vendor EXTENDED		0x08e9	Extended Systems
 vendor MSYSTEMS		0x08ec	M-Systems
 vendor AUTHENTEC	0x08ff	AuthenTec
+vendor AUDIOTECHNICA	0x0909	Audio-Technica
 vendor ALATION		0x0910	Alation Systems
 vendor CONCORDCAMERA	0x0919	Concord Camera
 vendor BIOMETRIC	0x0929	American Biometric Company
@@ -321,10 +323,13 @@ vendor GEOCAST		0x0a79	Geocast Network Systems
 vendor TODOS		0x0b0c	Todos Data System
 vendor NEC2		0x0b62	NEC
 vendor ATI2		0x0b6f	ATI
+vendor KURUSUGAWA	0x0b7e	Kurusugawa Electronics, Inc.
 vendor GREENHOUSE2	0x0bda	GREENHOUSE
 vendor ADDONICS2	0x0bf6	Addonics Technology
 vendor AGATE		0x0c08	Agate Technologies
 vendor DMI		0x0c0b	DMI
+vendor EASYDISK		0x0c76	EasyDisk
+vendor TANGTOP		0x0d3d	Tangtop
 vendor PEN		0x0d7d	Pen Drive
 vendor MOTOROLA		0x1063	Motorola
 vendor CCYU		0x1065	CCYU Technology
@@ -465,6 +470,9 @@ product ATI2 205		0xa001	USB Cable 205
 product ATMEL UHB124		0x3301	UHB124 hub
 product ATMEL DWL120		0x7602	DWL-120 Wireless adapter
 
+/* Audio-Technica products */
+product AUDIOTECHNICA ATCHA4USB	0x0009	ATC-HA4USB USB headphone
+
 /* Avision products */
 product AVISION 1200U		0x0268	1200U scanner
 
@@ -579,6 +587,9 @@ product DLINK DSB650		0xabc1	10/100 Ethernet
 /* DMI products */
 product DMI SA2_0		0xb001	Storage Adapter
 
+/* EasyDisk products */
+product EASYDISK EASYDISK	0x0005	Flash Disk
+
 /* EIZO products */
 product EIZO HUB		0x0000	hub
 product EIZO MONITOR		0x0001	monitor
@@ -636,6 +647,7 @@ product EXTENDED XTNDACCESS	0x0100	XTNDAccess IrDA
 product FREECOM DVD		0xfc01	Connector for DVD drive
 
 /* Future Technology Devices products */
+product FTDI SERIAL_8U232AM	0x6001	8U232AM Serial converter
 product FTDI PS2KBDMS		0x8371	PS/2 Keyboard/Mouse
 product FTDI SERIAL		0x8372	Serial converter
 
@@ -649,14 +661,14 @@ product GRAVIS GAMEPADPRO	0x4001	GamePad Pro
 product GREENHOUSE KANA21	0x0001	CF-writer/MP3 Player
 product GREENHOUSE2 USBKR100	0x8150	GH-USB100B Ethernet
 
+/* Genesys Logic products */
+product GENESYS GL641USB	0x0700	GL641USB CompactFlash
+
 /* Griffin Technology */
 product GRIFFIN IMATE		0x0405	iMate, ADB adapter
 
 /* Guillemot Corporation */
 product GUILLEMOT DALEADER	0xa300	DA Leader
-
-/* Genesys Logic products */
-product GENESYS GL641USB	0x0700	GL641USB CompactFlash
 
 /* Hagiwara products */
 product HAGIWARA FGSM		0x0002  FlashGate SmartMedia Reader
@@ -689,11 +701,13 @@ product HP 810C			0x0304	DeskJet 810C/812C
 product HP 4300C		0x0305	Scanjet 4300C
 product HP CD4E			0x0307	CD-Writer+ CD-4e
 product HP G85XI		0x0311	OfficeJet G85xi
+product HP 1200			0x0317	LaserJet 1200
 product HP 5200C		0x0401	Scanjet 5200C
 product HP 830C			0x0404	DeskJet 830C
 product HP 3400CSE		0x0405	ScanJet 3400cse
 product HP 6300C		0x0601	Scanjet 6300C
 product HP 840C			0x0604	DeskJet 840c
+product HP 2200C		0x0605	ScanJet 2200C
 product HP 5300C		0x0701	Scanjet 5300C
 product HP 970CSE		0x1004	Deskjet 970Cse
 product HP 5400C		0x1005	Scanjet 5400C
@@ -712,7 +726,27 @@ product IBM USBCDROMDRIVE	0x4427	USB CD-ROM Drive
 product IIYAMA HUB		0x0201	Hub
 
 /* Inside Out Networks products */
-product INSIDEOUT EDGEPORT4	0x0001	EdgePort/4 serial ports
+product INSIDEOUT EDGEPORT4	0x0001	EdgePort/4 RS232
+product INSIDEOUT HUBPORT7	0x0002	Hubport/7
+product INSIDEOUT RAPIDPORT4	0x0003	Rapidport/4
+product INSIDEOUT EDGEPORT4T	0x0004	Edgeport/4 RS232
+product INSIDEOUT EDGEPORT2	0x0005	Edgeport/2 RS232
+product INSIDEOUT EDGEPORT4I	0x0006	Edgeport/4 RS422
+product INSIDEOUT EDGEPORT2I	0x0007	Edgeport/2 RS422/RS485
+product	INSIDEOUT HUBPORT4	0x0008	Hubport/4
+product INSIDEOUT EDGEPORT8HAND	0x0009	Hand-built Edgeport/8
+product	INSIDEOUT MULTIMODEM	0x000A	MultiTech version of RP/4
+product	INSIDEOUT EDGEPORTPPORT	0x000B	Edgeport/(4)21 Parallel port
+product	INSIDEOUT EDGEPORT421	0x000C	Edgeport/421 Hub+RS232+Parallel
+product	INSIDEOUT EDGEPORT21	0x000D	Edgeport/21  RS232+Parallel
+product INSIDEOUT EDGEPORT8DC	0x000E	1/2 Edgeport/8
+product INSIDEOUT EDGEPORT8	0x000F	Edgeport/8
+product INSIDEOUT EDGEPORT2DIN	0x0010	Edgeport/2 RS232/DIN
+product INSIDEOUT EDGEPORT4DIN	0x0011	Edgeport/4 RS232/DIN
+product INSIDEOUT EDGEPORT16DC	0x0012	1/2 Edgeport/16
+product INSIDEOUT EDGEPORTCOMP	0x0013	Edgeport Compatible
+product INSIDEOUT EDGEPORT8I	0x0014	Edgeport/8 RS422
+product INSIDEOUT MT4X56USB	0x1403	OEM device
 
 /* In-System products */
 product INSYSTEM F5U002		0x0002	Parallel adapter
@@ -732,6 +766,8 @@ product INTEL TESTBOARD		0x9890	82930 test board
 product INTERSIL PRISM_2X	0x3642	Prism2.x WLAN
 
 /* I/O DATA products */
+product IODATA USBSSMRW		0x0314	USB-SSMRW SD-card adapter
+product IODATA USBSDRW		0x031e	USB-SDRW SD-card adapter
 product IODATA USBETT		0x0901	USB ETT
 product IODATA USBETTX		0x0904	USB ETTX
 product IODATA USBETTXS		0x0913	USB ETTX
@@ -762,14 +798,33 @@ product KENSINGTON ORBIT_MAC	0x1009	Orbit USB trackball for Mac
 product KENSINGTON VIDEOCAM_VGA	0x5002	VideoCAM VGA
 
 /* Keyspan products */
-product KEYSPAN USA28		0x0101	USA-28 serial adapter
-product KEYSPAN USA28X		0x0102	USA-28X serial adapter
-product KEYSPAN USA19		0x0103	USA-19 serial adapter
-product KEYSPAN USA18X		0x0105	USA-18X serial adapter
-product KEYSPAN USA19W		0x0106	USA-19W serial adapter
-product KEYSPAN USA49W		0x0109	USA-49W serial adapter
-product KEYSPAN USA19Q		0x010b	USA-19Q serial adapter
-product KEYSPAN UIA10_NF	0x0201	UIA-10 remote control
+product KEYSPAN USA28_NF	0x0101	USA-28 serial adapter
+product KEYSPAN USA28X_NF	0x0102	USA-28X serial adapter
+product KEYSPAN USA19_NF	0x0103	USA-19 serial adapter
+product KEYSPAN USA18_NF	0x0104	USA-18 serial adapter
+product KEYSPAN USA18X_NF	0x0105	USA-18X serial adapter
+product KEYSPAN USA19W_NF	0x0106	USA-19W serial adapter
+product KEYSPAN USA19		0x0107	USA-19 serial adapter
+product KEYSPAN USA19W		0x0108	USA-19W serial adapter
+product KEYSPAN USA49W_NF	0x0109	USA-49W serial adapter
+product KEYSPAN USA49W		0x010a	USA-49W serial adapter
+product KEYSPAN USA19QI_NF	0x010b	USA-19QI serial adapter
+product KEYSPAN USA19QI		0x010c	USA-19QI serial adapter
+product KEYSPAN USA19Q_NF	0x010d	USA-19Q serial adapter
+product KEYSPAN USA19Q		0x010e	USA-19Q serial adapter
+product KEYSPAN USA28		0x010f	USA-28 serial adapter
+product KEYSPAN USA28XXB	0x0110	USA-28X/XB serial adapter
+product KEYSPAN USA18		0x0111	USA-18 serial adapter
+product KEYSPAN USA18X		0x0112	USA-18X serial adapter
+product KEYSPAN USA28XB_NF	0x0113	USA-28XB serial adapter
+product KEYSPAN USA28XA_NF	0x0114	USA-28XB serial adapter
+product KEYSPAN USA28XA		0x0115	USA-28XA serial adapter
+product KEYSPAN USA18XA_NF	0x0116	USA-18XA serial adapter
+product KEYSPAN USA18XA		0x0117	USA-18XA serial adapter
+product KEYSPAN USA19QW_NF	0x0118	USA-19WQ serial adapter
+product KEYSPAN USA19QW		0x0119	USA-19WQ serial adapter
+product KEYSPAN UIA10		0x0201	UIA-10 remote control
+product KEYSPAN UIA11		0x0202	UIA-11 remote control
 
 /* Kingston products */
 product KINGSTON XX1		0x0008	Ethernet
@@ -827,9 +882,11 @@ product LOGITECH MBA47		0xc002	M-BA47 mouse
 product LOGITECH WMMOUSE	0xc004	WingMan Gaming Mouse
 product LOGITECH BD58		0xc00c	BD58 mouse
 product LOGITECH UN58A		0xc030	iFeel Mouse
-product LOGITECH BB13		0xc401	USB-PS/2 Trackball
 product LOGITECH WMPAD		0xc208	WingMan GamePad Extreme
 product LOGITECH WMJOY		0xc281	WingMan Force joystick
+product LOGITECH WMFFGP		0xc293	WingMan Formula Force GP (GT-Force)
+product LOGITECH BB13		0xc401	USB-PS/2 Trackball
+product LOGITECH BB18		0xc404	TrackMan Wheel
 product LOGITECH RK53		0xc501	Cordless mouse
 product LOGITECH RB6		0xc503	Cordless keyboard
 product LOGITECH CDO		0xc504	Cordless Desktop Optical
@@ -863,6 +920,7 @@ product MICROSOFT INTELLIMOUSE	0x0009	IntelliMouse
 product MICROSOFT NATURALKBD	0x000b	Natural
 product MICROSOFT DDS80		0x0014	Digital Sound System 80
 product MICROSOFT SIDEWINDER	0x001a	Sidewinder Precision Racing Wheel
+product MICROSOFT TBEXPLORER	0x0024  Trackball Explorer
 product MICROSOFT INTELLIEYE	0x0025	IntelliEye mouse
 product MICROSOFT INETPRO	0x002b	Internet Keyboard Pro
 
@@ -893,6 +951,7 @@ product MINOLTA X		0x4009	Dimage X
 
 /* Mitsumi products */
 product MITSUMI CDRRW		0x0000	CD-R/RW Drive
+product MITSUMI MOUSE		0x6407	Mouse
 product MITSUMI FDD		0x6901	FDD
 
 /* Mobility products */
@@ -983,8 +1042,14 @@ product PERACOM ENET2		0x0005	Ethernet
 product PHILIPS DSS350		0x0101	DSS 350 Digital Speaker System
 product PHILIPS DSS		0x0104	DSS XXX Digital Speaker System
 product PHILIPS HUB		0x0201	hub
+product PHILIPS PCA645VC	0x0302	PCA645VC PC Camera
 product PHILIPS PCA646VC	0x0303	PCA646VC PC Camera
+product PHILIPS PCVC675K	0x0307	PCVC675K Vesta PC Camera
 product PHILIPS PCVC680K	0x0308	PCVC680K Vesta Pro PC Camera
+product PHILIPS PCVC690K	0x030c	PCVC690K Vesta Pro Scan Camera
+product PHILIPS PCVC730K	0x0310	PCVC730K ToUCam Fun PC Camera
+product PHILIPS PCVC740K	0x0311	PCVC740K ToUCam Pro PC Camera
+product PHILIPS PCVC750K	0x0312	PCVC750K ToUCam Pro Scan Camera
 product PHILIPS DSS150		0x0471	DSS 150 Digital Speaker System
 product PHILIPS DIVAUSB		0x1801	DIVA USB mp3 player
 
@@ -1062,6 +1127,9 @@ product SANDISK SDDR31		0x0002	ImageMate SDDR-31
 product SANDISK SDDR12		0x0100	ImageMate SDDR-12
 product SANDISK SDDR09		0x0200	ImageMate SDDR-09
 
+/* Sanwa Supply products */
+product SANWASUPPLY JYDV9USB	0x9806	JY-DV9USB gamepad
+
 /* ScanLogic products */
 product SCANLOGIC SL11R		0x0002	SL11R-IDE
 product SCANLOGIC 336CX		0x0300	Phantom 336CX - C3 scanner
@@ -1120,6 +1188,9 @@ product SONY DRIVEV2		0x002b	Harddrive V2
 product SONY MSACUS1		0x002d	Memorystick MSAC-US1
 product SONY HANDYCAM		0x002e	Handycam
 product SONY MSC		0x0032	Sony MSC Memorystick Slot
+product SONY PS2KEYBOARD	0x005c	PlayStation2 keyboard
+product SONY PS2KEYBOARDHUB	0x005d	PlayStation2 keyboard hub
+product SONY PS2MOUSE		0x0061	PlayStatoin2 mouse
 product SONY CLIE_35		0x0038	Sony Clie v3.5
 product SONY CLIE_40		0x0066	Sony Clie v4.0
 product SONY CLIE_40_MS		0x006d	Sony Clie v4.0 Memory Stick slot
@@ -1144,6 +1215,9 @@ product DIAMOND2 SUPRAEXPRESS56K 0x07da	Supra Express 56K
 product DIAMOND2 SUPRA2890	0x0b4a	SupraMax 2890 56K
 product DIAMOND2 RIO600USB	0x5001	Rio 600
 product DIAMOND2 RIO800USB	0x5002	Rio 800 USB
+
+/* Tangtop products */
+product TANGTOP USBPS2		0x0001	USBPS2
 
 /* Taugagreining products */
 product TAUGA CAMERAMATE	0x0005	CameraMate (DPCM_USB)
@@ -1213,6 +1287,7 @@ product YEDATA FLASHBUSTERU	0x0000	Flashbuster-U
 /* Yamaha products */
 product YAMAHA UX256		0x1000	UX256 MIDI I/F
 product	YAMAHA UX96		0x1008	UX96 MIDI I/F
+product YAMAHA RPU200		0x3104	RP-U200
 
 /* Yano products */
 product YANO U640MO		0x0101	U640MO-03
