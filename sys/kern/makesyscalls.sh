@@ -1,8 +1,7 @@
 #! /bin/sh -
-#	$OpenBSD: makesyscalls.sh,v 1.4 1997/02/24 14:19:57 niklas Exp $
-#	$NetBSD: makesyscalls.sh,v 1.18 1996/03/15 01:25:12 cgd Exp $
+#	$NetBSD: makesyscalls.sh,v 1.21 1996/12/22 06:45:14 cgd Exp $
 #
-# Copyright (c) 1994 Christopher G. Demetriou
+# Copyright (c) 1994,1996 Christopher G. Demetriou
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -249,7 +248,17 @@ function parseline() {
 		parserr($end, ")")
 	end--
 
-	f++			# toss return type
+	returntype = oldf = "";
+	do {
+		if (returntype != "" && oldf != "*")
+			returntype = returntype" ";
+		returntype = returntype$f;
+		oldf = $f;
+		f++
+	} while (f < (end - 1) && $(f+1) != "(");
+	if (f == (end - 1)) {
+		parserr($f, "function argument definition (maybe \"(\"?)");
+	}
 
 	funcname=$f
 	if (funcalias == "") {
@@ -262,14 +271,33 @@ function parseline() {
 		parserr($f, ")")
 	f++
 
-	argc= 0;
+	argc=0;
 	if (f == end) {
 		if ($f != "void")
 			parserr($f, "argument definition")
+		isvarargs = 0;
+		varargc = 0;
 		return
 	}
 
+	# some system calls (open() and fcntl()) can accept a variable
+	# number of arguments.  If syscalls accept a variable number of
+	# arguments, they must still have arguments specified for
+	# the remaining argument "positions," because of the way the
+	# kernel system call argument handling works.
+	#
+	# Indirect system calls, e.g. syscall(), are exceptions to this
+	# rule, since they are handled entirely by machine-dependent code
+	# and do not need argument structures built.
+
+	isvarargs = 0;
 	while (f <= end) {
+		if ($f == "...") {
+			f++;
+			isvarargs = 1;
+			varargc = argc;
+			continue;
+		}
 		argc++
 		argtype[argc]=""
 		oldf=""
@@ -285,43 +313,61 @@ function parseline() {
 		argname[argc]=$f;
 		f += 2;			# skip name, and any comma
 	}
+	# must see another argument after varargs notice.
+	if (isvarargs) {
+		if (argc == varargc && $2 != "INDIR")
+			parserr($f, "argument definition")
+	} else
+		varargc = argc;
 }
 function putent(nodefs, compatwrap) {
-	# output syscall declaration for switch table
-	prototype = "__P((struct proc *, void *, register_t *))"
-	if (compatwrap == "")
-		printf("int\t%s\t%s;\n", funcname, prototype) > sysprotos
-	else
-		printf("int\t%s_%s\t%s;\n", compatwrap, funcname, prototype) > sysprotos
+	# output syscall declaration for switch table.  INDIR functions
+	# get none, since they always have sys_nosys() for their table
+	# entries.
+	if (nodefs != "INDIR") {
+		prototype = "__P((struct proc *, void *, register_t *))"
+		if (compatwrap == "")
+			printf("int\t%s\t%s;\n", funcname,
+			    prototype) > sysprotos
+		else
+			printf("int\t%s_%s\t%s;\n", compatwrap, funcname,
+			    prototype) > sysprotos
+	}
 
 	# output syscall switch entry
-#	printf("\t{ { %d", argc) > sysent
-#	for (i = 1; i <= argc; i++) {
-#		if (i == 5) 		# wrap the line
-#			printf(",\n\t    ") > sysent
-#		else
-#			printf(", ") > sysent
-#		printf("s(%s)", argtypenospc[i]) > sysent
-#	}
-	printf("\t{ %d, ", argc) > sysent
-	if (argc == 0)
-		printf("0") > sysent
-	else if (compatwrap == "")
-		printf("s(struct %s_args)", funcname) > sysent
-	else
-		printf("s(struct %s_%s_args)", compatwrap, funcname) > sysent
-	if (compatwrap == "")
-		wfn = sprintf("%s", funcname);
-	else
-		wfn = sprintf("%s(%s)", compatwrap, funcname);
-	printf(",\n\t    %s },", wfn) > sysent
-	for (i = 0; i < (33 - length(wfn)) / 8; i++)
-		printf("\t") > sysent
-	if (compatwrap == "")
-		printf("/* %d = %s */\n", syscall, funcalias) > sysent
-	else
-		printf("/* %d = %s %s */\n", syscall, compatwrap,
-		    funcalias) > sysent
+	if (nodefs == "INDIR") {
+		printf("\t{ 0, 0,\n\t    sys_nosys },\t\t\t/* %d = %s (indir) */\n", \
+		    syscall, funcalias) > sysent
+	} else {
+#		printf("\t{ { %d", argc) > sysent
+#		for (i = 1; i <= argc; i++) {
+#			if (i == 5) 		# wrap the line
+#				printf(",\n\t    ") > sysent
+#			else
+#				printf(", ") > sysent
+#			printf("s(%s)", argtypenospc[i]) > sysent
+#		}
+		printf("\t{ %d, ", argc) > sysent
+		if (argc == 0)
+			printf("0") > sysent
+		else if (compatwrap == "")
+			printf("s(struct %s_args)", funcname) > sysent
+		else
+			printf("s(struct %s_%s_args)", compatwrap,
+			    funcname) > sysent
+		if (compatwrap == "")
+			wfn = sprintf("%s", funcname);
+		else
+			wfn = sprintf("%s(%s)", compatwrap, funcname);
+		printf(",\n\t    %s },", wfn) > sysent
+		for (i = 0; i < (33 - length(wfn)) / 8; i++)
+			printf("\t") > sysent
+		if (compatwrap == "")
+			printf("/* %d = %s */\n", syscall, funcalias) > sysent
+		else
+			printf("/* %d = %s %s */\n", syscall, compatwrap,
+			    funcalias) > sysent
+	}
 
 	# output syscall name for names table
 	if (compatwrap == "")
@@ -332,15 +378,25 @@ function putent(nodefs, compatwrap) {
 		    funcalias, syscall, compatwrap, funcalias) > sysnames
 
 	# output syscall number of header, if appropriate
-	if (nodefs == "" || nodefs == "NOARGS")
-		printf("#define\t%s%s\t%d\n", constprefix, funcalias,
+	if (nodefs == "" || nodefs == "NOARGS" || nodefs == "INDIR") {
+		# output a prototype, to be used to generate lint stubs in
+		# libc.
+		printf("/* syscall: \"%s\" ret: \"%s\" args:", funcalias,
+		    returntype) > sysnumhdr
+		for (i = 1; i <= varargc; i++)
+			printf(" \"%s\"", argtype[i]) > sysnumhdr
+		if (isvarargs)
+			printf(" \"...\"") > sysnumhdr
+		printf(" */\n") > sysnumhdr
+
+		printf("#define\t%s%s\t%d\n\n", constprefix, funcalias,
 		    syscall) > sysnumhdr
-	else if (nodefs != "NODEF")
-		printf("\t\t\t\t/* %d is %s %s */\n", syscall,
+	} else if (nodefs != "NODEF")
+		printf("\t\t\t\t/* %d is %s %s */\n\n", syscall,
 		    compatwrap, funcalias) > sysnumhdr
 
 	# output syscall argument structure, if it has arguments
-	if (argc != 0 && nodefs != "NOARGS") {
+	if (argc != 0 && nodefs != "NOARGS" && nodefs != "INDIR") {
 		if (compatwrap == "")
 			printf("\nstruct %s_args {\n", funcname) > sysarghdr
 		else
@@ -358,7 +414,7 @@ $2 == "STD" {
 	syscall++
 	next
 }
-$2 == "NODEF" || $2 == "NOARGS" {
+$2 == "NODEF" || $2 == "NOARGS" || $2 == "INDIR" {
 	parseline()
 	putent($2, "")
 	syscall++
