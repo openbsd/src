@@ -1,4 +1,4 @@
-/*	$OpenBSD: chpass.c,v 1.13 1998/08/03 17:09:46 millert Exp $	*/
+/*	$OpenBSD: chpass.c,v 1.14 1999/12/05 20:18:35 millert Exp $	*/
 /*	$NetBSD: chpass.c,v 1.8 1996/05/15 21:50:43 jtc Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)chpass.c	8.4 (Berkeley) 4/2/94";
 #else 
-static char rcsid[] = "$OpenBSD: chpass.c,v 1.13 1998/08/03 17:09:46 millert Exp $";
+static char rcsid[] = "$OpenBSD: chpass.c,v 1.14 1999/12/05 20:18:35 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -67,7 +67,7 @@ static char rcsid[] = "$OpenBSD: chpass.c,v 1.13 1998/08/03 17:09:46 millert Exp
 #include "chpass.h"
 #include "pathnames.h"
 
-char *tempname;
+char tempname[] = __CONCAT(_PATH_VARTMP,"pw.XXXXXXXX");
 uid_t uid;
 
 extern char *__progname;
@@ -81,6 +81,7 @@ int pw_yp __P((struct passwd *, uid_t));
 #endif
 
 void	baduser __P((void));
+void	tempcleanup __P((void));
 void	usage __P((void));
 
 int
@@ -91,7 +92,7 @@ main(argc, argv)
 	enum { NEWSH, LOADENTRY, EDITENTRY } op;
 	struct passwd *pw, lpw;
 	int ch, pfd, tfd, dfd;
-	char *arg, tempname[] = __CONCAT(_PATH_VARTMP,"pw.XXXXXXXX");
+	char *arg;
 
 #ifdef	YP
 	use_yp = _yp_check(NULL);
@@ -197,9 +198,9 @@ main(argc, argv)
 		dfd = mkstemp(tempname);
 		if (dfd == -1 || fcntl(dfd, F_SETFD, 1) == -1)
 			pw_error(tempname, 1, 1);
+		atexit(tempcleanup);
 		display(tempname, dfd, pw);
 		edit(tempname, pw);
-		(void)unlink(tempname);
 	}
 
 #ifdef	YP
@@ -230,6 +231,13 @@ baduser()
 {
 
 	errx(1, "%s", strerror(EACCES));
+}
+
+void
+tempcleanup()
+{
+
+	unlink(tempname);
 }
 
 void
