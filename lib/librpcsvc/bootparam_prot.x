@@ -1,3 +1,5 @@
+/*	$OpenBSD: bootparam_prot.x,v 1.4 1997/08/19 07:54:46 niklas Exp $	*/
+
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -47,7 +49,7 @@
 %#ifndef lint
 %/*static char sccsid[] = "from: @(#)bootparam_prot.x 1.2 87/06/24 Copyr 1987 Sun Micro";*/
 %/*static char sccsid[] = "from: @(#)bootparam_prot.x	2.1 88/08/01 4.0 RPCSRC";*/
-%static char rcsid[] = "$Id: bootparam_prot.x,v 1.3 1996/12/08 10:26:32 deraadt Exp $";
+%static char rcsid[] = "$OpenBSD: bootparam_prot.x,v 1.4 1997/08/19 07:54:46 niklas Exp $";
 %#endif /* not lint */
 #endif
 

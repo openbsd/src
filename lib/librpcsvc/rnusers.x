@@ -1,3 +1,5 @@
+/*	$OpenBSD: rnusers.x,v 1.6 1997/08/19 07:54:49 niklas Exp $	*/
+
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -35,7 +37,7 @@
 %#ifndef lint
 %/*static char sccsid[] = "from: @(#)rnusers.x 1.2 87/09/20 Copyr 1987 Sun Micro";*/
 %/*static char sccsid[] = "from: @(#)rnusers.x	2.1 88/08/01 4.0 RPCSRC";*/
-%static char rcsid[] = "$Id: rnusers.x,v 1.5 1997/08/01 19:29:44 millert Exp $";
+%static char rcsid[] = "$OpenBSD: rnusers.x,v 1.6 1997/08/19 07:54:49 niklas Exp $";
 %#endif /* not lint */
 #endif
 

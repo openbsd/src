@@ -1,3 +1,5 @@
+/*	$OpenBSD: nlm_prot.x,v 1.3 1997/08/19 07:54:48 niklas Exp $	*/
+
 /*
  * Network lock manager protocol definition
  * Copyright (C) 1986 Sun Microsystems, Inc.
@@ -12,7 +14,7 @@
 %#ifndef lint
 %/*static char sccsid[] = "from: @(#)nlm_prot.x 1.8 87/09/21 Copyr 1987 Sun Micro";*/
 %/*static char sccsid[] = "from: * @(#)nlm_prot.x	2.1 88/08/01 4.0 RPCSRC";*/
-%static char rcsid[] = "$Id: nlm_prot.x,v 1.2 1997/08/01 19:27:15 deraadt Exp $";
+%static char rcsid[] = "$OpenBSD: nlm_prot.x,v 1.3 1997/08/19 07:54:48 niklas Exp $";
 %#endif /* not lint */
 #endif
 
