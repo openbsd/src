@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_socket.c,v 1.30 2002/07/30 19:00:43 csapuntz Exp $	*/
+/*	$OpenBSD: nfs_socket.c,v 1.31 2002/08/01 22:38:44 csapuntz Exp $	*/
 /*	$NetBSD: nfs_socket.c,v 1.27 1996/04/15 20:20:00 thorpej Exp $	*/
 
 /*
@@ -1864,7 +1864,7 @@ nfsrv_getstream(slp, waitflag)
 	struct mbuf *m, **mpp;
 	char *cp1, *cp2;
 	int len;
-	struct mbuf *om, *m2, *recm = NULL;
+	struct mbuf *om, *m2, *recm;
 	u_int32_t recmark;
 
 	if (slp->ns_flag & SLP_GETSTREAM)
@@ -1910,6 +1910,7 @@ nfsrv_getstream(slp, waitflag)
 	    /*
 	     * Now get the record part.
 	     */
+	    recm = NULL;
 	    if (slp->ns_cc == slp->ns_reclen) {
 		recm = slp->ns_raw;
 		slp->ns_raw = slp->ns_rawend = (struct mbuf *)0;
