@@ -1,4 +1,4 @@
-/*	$OpenBSD: inp.c,v 1.30 2003/11/21 21:25:59 mickey Exp $	*/
+/*	$OpenBSD: inp.c,v 1.31 2003/12/08 22:44:18 mickey Exp $	*/
 
 /*
  * patch - a program to apply diffs to original files
@@ -27,7 +27,7 @@
  */
 
 #ifndef lint
-static const char     rcsid[] = "$OpenBSD: inp.c,v 1.30 2003/11/21 21:25:59 mickey Exp $";
+static const char     rcsid[] = "$OpenBSD: inp.c,v 1.31 2003/12/08 22:44:18 mickey Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -248,7 +248,7 @@ plan_a(const char *filename)
 	if ((ifd = open(filename, O_RDONLY)) < 0)
 		pfatal("can't open file %s", filename);
 
-	i_womp = mmap(NULL, i_size, PROT_READ, MAP_FILE, ifd, 0);
+	i_womp = mmap(NULL, i_size, PROT_READ, MAP_PRIVATE, ifd, 0);
 	if (i_womp == MAP_FAILED) {
 		perror("mmap failed");
 		i_womp = NULL;
