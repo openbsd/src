@@ -589,6 +589,7 @@ alpha*-*-netbsd*)
 
 alpha*-*-openbsd*)
  	tm_file="alpha/alpha.h alpha/elf.h alpha/openbsd1.h openbsd.h ${tm_file}"
+	tm_file="${tm_file} exec-stack.h"
 	# default x-alpha is only appropriate for dec-osf.
 	target_cpu_default="MASK_GAS"
 	tmake_file="alpha/t-alpha alpha/t-ieee"
@@ -704,6 +705,7 @@ arm*-*-netbsdelf*)
 	;;
 arm*-*-openbsd*)
 	tm_file="dbxelf.h elfos.h arm/openbsd1.h arm/elf.h arm/aout.h arm/arm.h openbsd.h ${tm_file}"
+	tm_file="${tm_file} exec-stack.h"
 	tmake_file="${tmake_file} arm/t-openbsd"
 	;;
 arm*-*-netbsd*)
@@ -839,6 +841,7 @@ hppa*-*-openbsd*)
 hppa1.1-*-pro*)
 	target_cpu_default="(MASK_JUMP_IN_DELAY | MASK_PORTABLE_RUNTIME | MASK_GAS | MASK_NO_SPACE_REGS | MASK_SOFT_FLOAT)"
 	tm_file="${tm_file} pa/pa32-regs.h dbxelf.h elfos.h pa/elf.h pa/pa-pro-end.h libgloss.h"
+	tm_file="${tm_file} exec-stack.h"
 	tmake_file="pa/t-bsd pa/t-pro"
 	xmake_file="pa/x-ada"
 	;;
@@ -1176,6 +1179,7 @@ i[34567]86-*-openbsd*)
   	;;
 x86_64-*-openbsd*)
 	tm_file="i386/biarch64.h i386/i386.h i386/unix.h i386/att.h dbxelf.h elfos.h openbsd.h openbsd-libpthread.h i386/x86-64.h i386/openbsd64.h"
+	tm_file="${tm_file} exec-stack.h"
 	tmake_file="t-libc-ok t-openbsd i386/t-openbsd"
 	;;
 i[34567]86-*-coff*)
@@ -1740,6 +1744,7 @@ m68k*-*-openbsd*)
 	tmake_file="t-libc-ok t-openbsd m68k/t-openbsd"
 	# we need collect2 until our bug is fixed...
 	use_collect2=yes
+	tm_file="${tm_file} exec-stack.h"
 	;;
 m68k-*-sysv4*)			# Motorola m68k's running system V.4
 	tm_file=m68k/m68kv4.h
@@ -1791,6 +1796,7 @@ m88k-*-aout*)
 m88k-*-openbsd*)
 	tmake_file="${tmake_file} m88k/t-luna-gas"
 	tm_file="m88k/aout-dbx.h aoutos.h m88k/m88k.h openbsd.h ${tm_file}"
+	tm_file="${tm_file} exec-stack.h"
 	;;
 m88k-*-sysv4*)
 	xm_defines=POSIX
@@ -1924,10 +1930,12 @@ mips*-*-linux*)				# Linux MIPS, either endian.
 	;;
 mips*el-*-openbsd*)	# mips little endian
 	target_cpu_default="MASK_GAS|MASK_ABICALLS"
+	tm_file="${tm_file} exec-stack.h"
 	;;
 mips*-*-openbsd*)		# mips big endian
 	target_cpu_default="MASK_GAS|MASK_ABICALLS"
 	tm_file="mips/openbsd-be.h ${tm_file}"
+	tm_file="${tm_file} exec-stack.h"
 	;;
 mips-*-ecoff* | mipsel-*-ecoff*)
 	if test x$stabs = xyes; then
@@ -2047,6 +2055,7 @@ romp-*-openbsd*)
 powerpc-*-openbsd*)
 	tm_file="rs6000/rs6000.h rs6000/openbsd1.h dbxelf.h elfos.h svr4.h freebsd-spec.h rs6000/sysv4.h openbsd.h ${tm_file}"
 	tmake_file="${tmake_file} rs6000/t-ppcos rs6000/t-openbsd"
+	tm_file="${tm_file} exec-stack.h"
 	;;
 powerpc64-*-linux*)
 	tm_file="${tm_file} dbxelf.h elfos.h svr4.h freebsd-spec.h rs6000/sysv4.h rs6000/linux64.h"
@@ -2427,6 +2436,7 @@ sparc-*-netbsd*)
 	;;
 sparc-*-openbsd*)
 	tm_file="sparc/sparc.h elfos.h svr4.h sparc/sysv4.h ${tm_file}"
+	tm_file="${tm_file} exec-stack.h"
 	# needed to unconfuse gdb
 	tmake_file="t-libc-ok t-openbsd sparc/t-openbsd"
 	# we need collect2 until our bug is fixed...
@@ -2435,6 +2445,7 @@ sparc-*-openbsd*)
 	;;
 sparc64-*-openbsd*)
 	tm_file="sparc/openbsd1-64.h sparc/sparc.h elfos.h svr4.h sparc/sysv4.h sparc/sp64-elf.h openbsd.h ${openbsd_libspec} sparc/openbsd64.h"
+	tm_file="${tm_file} exec-stack.h"
 	xm_file=sparc/xm-sp64.h
 	gas=yes gnu_ld=yes
 	with_cpu=ultrasparc
@@ -2748,6 +2759,7 @@ vax-*-netbsd*)
 	;;
 vax-*-openbsd*)
 	tm_file="vax/vax.h vax/openbsd1.h openbsd.h ${tm_file}"
+	tm_file="${tm_file} exec-stack.h"
 	use_collect2=yes
 	;;
 vax-*-ultrix*)			# VAXen running ultrix

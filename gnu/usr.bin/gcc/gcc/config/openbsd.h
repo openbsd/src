@@ -319,3 +319,7 @@ do {									 \
  * them easier to spot in the object files. 
  */
 #define NO_UNSAFE_BUILTINS
+
+/* pick up defines for mprotect (used in TRANSFER_FROM_TRAMPOLINE) */
+#include <sys/types.h>
+#include <sys/mman.h>
