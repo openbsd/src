@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.15 2002/03/21 01:02:09 mickey Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.16 2002/03/26 05:29:02 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -149,7 +149,7 @@ cpuattach(parent, self, aux)
 		ver = HPPA_FPUVER(ver);
 		name = hppa_mod_info(HPPA_TYPE_FPU, ver >> 5);
 		if (name)
-			printf("FPU %s rev %d", name, ver);
+			printf("FPU %s rev %d", name, ver & 0x1f);
 		else
 			printf("FPU v%d.%02d", ver >> 5, ver & 0x1f);
 	}
