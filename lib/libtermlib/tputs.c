@@ -1,4 +1,4 @@
-/*	$OpenBSD: tputs.c,v 1.1.1.1 1996/05/31 05:40:02 tholo Exp $	*/
+/*	$OpenBSD: tputs.c,v 1.2 1996/08/02 00:18:48 tholo Exp $	*/
 
 /*
  * Copyright (c) 1996 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
@@ -31,15 +31,13 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: tputs.c,v 1.1.1.1 1996/05/31 05:40:02 tholo Exp $";
+static char rcsid[] = "$OpenBSD: tputs.c,v 1.2 1996/08/02 00:18:48 tholo Exp $";
 #endif
 
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
 #include "term.h"
-
-extern char PC;
 
 #undef ospeed
 extern short ospeed;
@@ -54,50 +52,58 @@ tputs(cp, count, outc)
      int count;
      int (*outc) __P((int));
 {
-    register int i = 0;
     register int mspc10;
+    float i = 0.0;
+    char pc;
 
     if (cp == 0)
 	return ERR;
 
     /*
-     * Convert the number representing the delay.
-     */
-    if (isdigit(*cp)) {
-	do
-	    i = i * 10 + *cp++ - '0';
-	while (isdigit(*cp));
-    }
-    i *= 10;
-    if (*cp == '.') {
-	cp++;
-	if (isdigit(*cp))
-	    i += *cp - '0';
-	/*
-	 * Only one digit to the right of the decimal point.
-	 */
-	while (isdigit(*cp))
-	    cp++;
-    }
-
-    /*
-     * If the delay is followed by a `*', then
-     * multiply by the affected lines count.
-     */
-    if (*cp == '*')
-	cp++, i *= count;
-
-    /*
      * The guts of the string.
      */
-    while (*cp)
-	(*outc)(*cp++);
+    while (*cp) {
+	if (*cp != '$')
+	    (*outc)(*cp++);
+	else {
+	    cp++;
+	    if (*cp != '<') {
+		(*outc)('$');
+		(*outc)(*cp);
+	    }
+	    else {
+		cp++;
+		if (*cp != '.' || strchr(cp, '>') == NULL || !isdigit(*cp)) {
+		    (*outc)('$');
+		    (*outc)('<');
+		    continue;
+		}
+		while (isdigit(*cp)) {
+		    i *= 10;
+		    i += *cp++ - '0';
+		}
+		if (*cp == '.') {
+		    if (isdigit(*++cp))
+			i += (float)(*cp - '0') / 10.0;
+		    while (isdigit(*cp))
+			cp++;
+		}
+		if (*cp == '*') {
+		    i *= count;
+		    cp++;
+		}
+		if (*cp == '/')
+		    cp++;
+	    }
+	}
+    }
 
     /*
      * If no delay needed, or output speed is
      * not comprehensible, then don't try to delay.
      */
-    if (i == 0)
+    if (i > 0.0 ||
+	(padding_baud_rate != 0 && cur_term->baudrate < padding_baud_rate))
 	return OK;
     if (ospeed <= 0 || ospeed >= (sizeof tmspc10 / sizeof tmspc10[0]))
 	return OK;
@@ -110,8 +116,9 @@ tputs(cp, count, outc)
      * terminals down and also loads the system.
      */
     mspc10 = tmspc10[ospeed];
-    i += mspc10 / 2;
-    for (i /= mspc10; i > 0; i--)
-	(*outc)(PC);
+    i += mspc10 / 2.0;
+    pc = (pad_char && *pad_char) ? *pad_char : '\0';
+    for (i /= mspc10; i > 0; i -= 1.0)
+	(*outc)(pc);
     return OK;
 }
