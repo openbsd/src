@@ -1,4 +1,4 @@
-/*	$NetBSD: if_levar.h,v 1.5 1996/05/07 01:50:07 thorpej Exp $	*/
+/*	$NetBSD: if_levar.h,v 1.1 1996/05/07 02:03:04 thorpej Exp $	*/
 
 /*
  * LANCE Ethernet driver header file
@@ -13,28 +13,8 @@
  *   for damages incurred with its use.
  */
 
-/* Board types */
-#define	BICC		1
-#define	BICC_RDP	0xc
-#define	BICC_RAP	0xe
-
-#define	NE2100		2
-#define	PCnet_ISA	4
-#define	NE2100_RDP	0x10
-#define	NE2100_RAP	0x12
-
-#define	DEPCA		3
-#define	DEPCA_CSR	0x0
-#define	DEPCA_CSR_SHE		0x80	/* Shared memory enabled */
-#define	DEPCA_CSR_SWAP32	0x40	/* Byte swapped */
-#define	DEPCA_CSR_DUM		0x08	/* rev E compatibility */
-#define	DEPCA_CSR_IM		0x04	/* Interrupt masked */
-#define	DEPCA_CSR_IEN		0x02	/* Interrupt enabled */
-#define	DEPCA_CSR_NORMAL \
-	(DEPCA_CSR_SHE | DEPCA_CSR_DUM | DEPCA_CSR_IEN)
-#define	DEPCA_RDP	0x4
-#define	DEPCA_RAP	0x6
-#define	DEPCA_ADP	0xc
+#define	PCNET_PCI_RDP	0x10
+#define	PCNET_PCI_RAP	0x12
 
 /*
  * Ethernet software status per interface.
@@ -47,7 +27,5 @@ struct le_softc {
 	struct	am7990_softc sc_am7990;	/* glue to MI code */
 
 	void	*sc_ih;
-	bus_io_handle_t sc_ioh;
-	int	sc_card;
 	int	sc_rap, sc_rdp;		/* offsets to LANCE registers */
 };

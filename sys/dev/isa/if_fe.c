@@ -201,7 +201,7 @@ void	fe_init		__P((struct fe_softc *));
 int	fe_ioctl	__P((struct ifnet *, u_long, caddr_t));
 void	fe_start	__P((struct ifnet *));
 void	fe_reset	__P((struct fe_softc *));
-void	fe_watchdog	__P((int));
+void	fe_watchdog	__P((struct ifnet *));
 
 /* Local functions.  Order of declaration is confused.  FIXME. */
 int	fe_probe_fmv	__P((struct fe_softc *, struct isa_attach_args *));
@@ -991,8 +991,8 @@ feattach(parent, self, aux)
 	fe_stop(sc);
 
 	/* Initialize ifnet structure. */
-	ifp->if_unit = sc->sc_dev.dv_unit;
-	ifp->if_name = fe_cd.cd_name;
+	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
+	ifp->if_softc = sc;
 	ifp->if_start = fe_start;
 	ifp->if_ioctl = fe_ioctl;
 	ifp->if_watchdog = fe_watchdog;
@@ -1194,10 +1194,10 @@ fe_stop(sc)
  * generate an interrupt after a transmit has been started on it.
  */
 void
-fe_watchdog(unit)
-	int unit;
+fe_watchdog(ifp)
+	struct ifnet *ifp;
 {
-	struct fe_softc *sc = fe_cd.cd_devs[unit];
+	struct fe_softc *sc = ifp->if_softc;
 
 	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
 #if FE_DEBUG >= 3
@@ -1419,7 +1419,7 @@ void
 fe_start(ifp)
 	struct ifnet *ifp;
 {
-	struct fe_softc *sc = fe_cd.cd_devs[ifp->if_unit];
+	struct fe_softc *sc = ifp->if_softc;
 	struct mbuf *m;
 
 #if FE_DEBUG >= 1
@@ -1920,7 +1920,7 @@ fe_ioctl(ifp, command, data)
 	u_long command;
 	caddr_t data;
 {
-	struct fe_softc *sc = fe_cd.cd_devs[ifp->if_unit];
+	struct fe_softc *sc = ifp->if_softc;
 	register struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;

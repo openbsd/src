@@ -1,5 +1,5 @@
-/*	$OpenBSD: if_ed.c,v 1.14 1996/05/07 07:36:47 deraadt Exp $	*/
-/*	$NetBSD: if_ed.c,v 1.96 1996/05/03 19:05:30 christos Exp $	*/
+/*	$OpenBSD: if_ed.c,v 1.15 1996/05/10 12:41:16 deraadt Exp $	*/
+/*	$NetBSD: if_ed.c,v 1.98 1996/05/07 01:55:13 thorpej Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -77,6 +77,7 @@ struct ed_softc {
 
 	bus_chipset_tag_t sc_bc;  /* bus identifier */
 	bus_io_handle_t sc_ioh;   /* io handle */
+	bus_io_handle_t sc_delayioh; /* io handle for `delay port' */
 	bus_mem_handle_t sc_memh; /* bus memory handle */
 
 	bus_io_size_t	asic_base;	/* offset of ASIC I/O port */
@@ -128,7 +129,7 @@ int ed_find_Novell __P((struct ed_softc *, struct cfdata *,
 int edintr __P((void *));
 int edioctl __P((struct ifnet *, u_long, caddr_t));
 void edstart __P((struct ifnet *));
-void edwatchdog __P((int));
+void edwatchdog __P((struct ifnet *));
 void edreset __P((struct ed_softc *));
 void edinit __P((struct ed_softc *));
 void edstop __P((struct ed_softc *));
@@ -451,6 +452,7 @@ ed_find_WD80x3(sc, cf, ia)
 {
 	bus_chipset_tag_t bc;
 	bus_io_handle_t ioh;
+	bus_io_handle_t delayioh = ia->ia_delayioh;
 	bus_mem_handle_t memh;
 	u_int memsize;
 	u_char iptr, isa16bit, sum;
@@ -537,7 +539,8 @@ ed_find_WD80x3(sc, cf, ia)
 		isa16bit = 1;
 		break;
 	case ED_TYPE_WD8013EP:		/* also WD8003EP */
-		if (inb(asicbase + ED_WD_ICR) & ED_WD_ICR_16BIT) {
+		if (bus_io_read_1(bc, ioh, asicbase + ED_WD_ICR)
+		    & ED_WD_ICR_16BIT) {
 			isa16bit = 1;
 			memsize = 16384;
 			sc->type_str = "WD8013EP";
@@ -788,8 +791,8 @@ ed_find_WD80x3(sc, cf, ia)
 	bus_io_write_1(bc, ioh, asicbase + ED_WD_MSR,
 	    sc->wd_msr_proto | ED_WD_MSR_MENB);
 
-	(void) bus_io_read_1(bc, ioh, 0x84);		/* XXX */
-	(void) bus_io_read_1(bc, ioh, 0x84);		/* XXX */
+	(void) bus_io_read_1(bc, delayioh, 0);
+	(void) bus_io_read_1(bc, delayioh, 0);
 
 	/* Now zero memory and verify that it is clear. */
 	for (i = 0; i < memsize; ++i)
@@ -807,8 +810,8 @@ ed_find_WD80x3(sc, cf, ia)
 			if (isa16bit)
 				bus_io_write_1(bc, ioh, asicbase + ED_WD_LAAR,
 				    sc->wd_laar_proto);
-			(void) bus_io_read_1(bc, ioh, 0x84);	/* XXX */
-			(void) bus_io_read_1(bc, ioh, 0x84);	/* XXX */
+			(void) bus_io_read_1(bc, delayioh, 0);
+			(void) bus_io_read_1(bc, delayioh, 0);
 			goto out;
 		}
 
@@ -824,8 +827,8 @@ ed_find_WD80x3(sc, cf, ia)
 	if (isa16bit)
 		bus_io_write_1(bc, ioh, asicbase + ED_WD_LAAR,
 		    sc->wd_laar_proto);
-	(void) bus_io_read_1(bc, ioh, 0x84);	/* XXX */
-	(void) bus_io_read_1(bc, ioh, 0x84);	/* XXX */
+	(void) bus_io_read_1(bc, delayioh, 0);
+	(void) bus_io_read_1(bc, delayioh, 0);
 
 	ia->ia_iosize = ED_WD_IO_PORTS;
 	rv = 1;
@@ -1399,13 +1402,14 @@ edattach(parent, self, aux)
 	ioh = sc->sc_ioh;		/* XXX */
 
 	asicbase = sc->asic_base;
+	sc->sc_delayioh = ia->ia_delayioh;
 
 	/* Set interface to stopped condition (reset). */
 	edstop(sc);
 
 	/* Initialize ifnet structure. */
-	ifp->if_unit = sc->sc_dev.dv_unit;
-	ifp->if_name = ed_cd.cd_name;
+	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
+	ifp->if_softc = sc;
 	ifp->if_start = edstart;
 	ifp->if_ioctl = edioctl;
 	ifp->if_watchdog = edwatchdog;
@@ -1518,10 +1522,10 @@ edstop(sc)
  * an interrupt after a transmit has been started on it.
  */
 void
-edwatchdog(unit)
-	int unit;
+edwatchdog(ifp)
+	struct ifnet *ifp;
 {
-	struct ed_softc *sc = ed_cd.cd_devs[unit];
+	struct ed_softc *sc = ifp->if_softc;
 
 	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
 	++sc->sc_arpcom.ac_if.if_oerrors;
@@ -1735,7 +1739,7 @@ void
 edstart(ifp)
 	struct ifnet *ifp;
 {
-	struct ed_softc *sc = ed_cd.cd_devs[ifp->if_unit];
+	struct ed_softc *sc = ifp->if_softc;
 	bus_chipset_tag_t bc = sc->sc_bc;
 	bus_io_handle_t ioh = sc->sc_ioh;
 	struct mbuf *m0, *m;
@@ -1796,8 +1800,8 @@ outloop:
 				    sc->wd_laar_proto | ED_WD_LAAR_M16EN);
 			bus_io_write_1(bc, ioh, asicbase + ED_WD_MSR,
 			    sc->wd_msr_proto | ED_WD_MSR_MENB);
-			(void) bus_io_read_1(bc, ioh, 0x84);	/* XXX */
-			(void) bus_io_read_1(bc, ioh, 0x84);	/* XXX */
+			(void) bus_io_read_1(bc, sc->sc_delayioh, 0);
+			(void) bus_io_read_1(bc, sc->sc_delayioh, 0);
 			break;
 		}
 
@@ -1822,8 +1826,8 @@ outloop:
 			if (sc->isa16bit)
 				bus_io_write_1(bc, ioh, asicbase + ED_WD_LAAR,
 				    sc->wd_laar_proto);
-			(void) bus_io_read_1(bc, ioh, 0x84);	/* XXX */
-			(void) bus_io_read_1(bc, ioh, 0x84);	/* XXX */
+			(void) bus_io_read_1(bc, sc->sc_delayioh, 0);
+			(void) bus_io_read_1(bc, sc->sc_delayioh, 0);
 			break;
 		}
 	} else
@@ -2118,9 +2122,10 @@ edintr(arg)
 					bus_io_write_1(bc, ioh,
 					    asicbase + ED_WD_MSR,
 					    sc->wd_msr_proto | ED_WD_MSR_MENB);
-					/* XXX */
-					(void) bus_io_read_1(bc, ioh, 0x84);
-					(void) bus_io_read_1(bc, ioh, 0x84);
+					(void) bus_io_read_1(bc,
+					    sc->sc_delayioh, 0);
+					(void) bus_io_read_1(bc,
+					    sc->sc_delayioh, 0);
 				}
 
 				ed_rint(sc);
@@ -2134,9 +2139,10 @@ edintr(arg)
 						bus_io_write_1(bc, ioh,
 						    asicbase + ED_WD_LAAR,
 						    sc->wd_laar_proto);
-					/* XXX */
-					(void) bus_io_read_1(bc, ioh, 0x84);
-					(void) bus_io_read_1(bc, ioh, 0x84);
+					(void) bus_io_read_1(bc,
+					    sc->sc_delayioh, 0);
+					(void) bus_io_read_1(bc,
+					    sc->sc_delayioh, 0);
 				}
 			}
 		}
@@ -2183,7 +2189,7 @@ edioctl(ifp, cmd, data)
 	u_long cmd;
 	caddr_t data;
 {
-	struct ed_softc *sc = ed_cd.cd_devs[ifp->if_unit];
+	struct ed_softc *sc = ifp->if_softc;
 	register struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;

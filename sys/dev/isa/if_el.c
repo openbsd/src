@@ -1,5 +1,5 @@
-/*    $OpenBSD: if_el.c,v 1.9 1996/05/07 07:36:53 deraadt Exp $       */
-/*	$NetBSD: if_el.c,v 1.37 1996/04/29 20:03:17 christos Exp $	*/
+/*    $OpenBSD: if_el.c,v 1.10 1996/05/10 12:41:18 deraadt Exp $       */
+/*	$NetBSD: if_el.c,v 1.38 1996/05/07 01:55:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, Matthew E. Kimmel.  Permission is hereby granted
@@ -82,7 +82,7 @@ int elintr __P((void *));
 void elinit __P((struct el_softc *));
 int elioctl __P((struct ifnet *, u_long, caddr_t));
 void elstart __P((struct ifnet *));
-void elwatchdog __P((int));
+void elwatchdog __P((struct ifnet *));
 void elreset __P((struct el_softc *));
 void elstop __P((struct el_softc *));
 static int el_xmit __P((struct el_softc *));
@@ -184,8 +184,8 @@ elattach(parent, self, aux)
 	elstop(sc);
 
 	/* Initialize ifnet structure. */
-	ifp->if_unit = sc->sc_dev.dv_unit;
-	ifp->if_name = el_cd.cd_name;
+	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
+	ifp->if_softc = sc;
 	ifp->if_start = elstart;
 	ifp->if_ioctl = elioctl;
 	ifp->if_watchdog = elwatchdog;
@@ -303,7 +303,7 @@ void
 elstart(ifp)
 	struct ifnet *ifp;
 {
-	struct el_softc *sc = el_cd.cd_devs[ifp->if_unit];
+	struct el_softc *sc = ifp->if_softc;
 	int iobase = sc->sc_iobase;
 	struct mbuf *m, *m0;
 	int s, i, off, retries;
@@ -615,7 +615,7 @@ elioctl(ifp, cmd, data)
 	u_long cmd;
 	caddr_t data;
 {
-	struct el_softc *sc = el_cd.cd_devs[ifp->if_unit];
+	struct el_softc *sc = ifp->if_softc;
 	struct ifaddr *ifa = (struct ifaddr *)data;
 	int s, error = 0;
 
@@ -682,10 +682,10 @@ elioctl(ifp, cmd, data)
  * Device timeout routine.
  */
 void
-elwatchdog(unit)
-	int unit;
+elwatchdog(ifp)
+	struct ifnet *ifp;
 {
-	struct el_softc *sc = el_cd.cd_devs[unit];
+	struct el_softc *sc = ifp->if_softc;
 
 	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
 	sc->sc_arpcom.ac_if.if_oerrors++;

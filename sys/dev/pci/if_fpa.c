@@ -1,5 +1,5 @@
-/*	$OpenBSD: if_fpa.c,v 1.5 1996/04/21 22:25:19 deraadt Exp $	*/
-/*	$NetBSD: if_fpa.c,v 1.7 1996/03/17 00:55:30 thorpej Exp $	*/
+/*	$OpenBSD: if_fpa.c,v 1.6 1996/05/10 12:41:26 deraadt Exp $	*/
+/*	$NetBSD: if_fpa.c,v 1.8 1996/05/07 02:17:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995 Matt Thomas (thomas@lkg.dec.com)
@@ -191,9 +191,24 @@ extern struct cfdriver fpa_cd;
 #define	PDQ_PCI_UNIT_TO_SOFTC(unit)	((pdq_softc_t *)fpa_cd.cd_devs[unit])
 #endif
 
+#if defined(__NetBSD__)
 static ifnet_ret_t
 pdq_pci_ifinit(
-    int unit)
+    struct ifnet *ifp)
+{
+    pdq_ifinit((pdq_softc_t *)(ifp->if_softc));
+}
+
+static ifnet_ret_t
+pdq_pci_ifwatchdog(
+    struct ifnet *ifp)
+{
+    pdq_ifwatchdog((pdq_softc_t *)(ifp->if_softc));
+}
+#else
+static ifnet_ret_t 
+pdq_pci_ifinit(
+    int unit) 
 {
     pdq_ifinit(PDQ_PCI_UNIT_TO_SOFTC(unit));
 }
@@ -204,6 +219,7 @@ pdq_pci_ifwatchdog(
 {
     pdq_ifwatchdog(PDQ_PCI_UNIT_TO_SOFTC(unit));
 }
+#endif
 
 static int
 pdq_pci_ifintr(
@@ -428,39 +444,40 @@ pdq_pci_attach(
     pdq_uint32_t data;
     pdq_softc_t * const sc = (pdq_softc_t *) self;
     struct pci_attach_args * const pa = (struct pci_attach_args *) aux;
+    pci_chipset_tag_t pc = pa->pa_pc;
 
-    data = pci_conf_read(pa->pa_tag, PCI_CFLT);
+    data = pci_conf_read(pc, pa->pa_tag, PCI_CFLT);
     if ((data & 0xFF00) == 0) {
 	data &= ~0xFF00;
 	data |= DEFPA_LATENCY << 8;
-	pci_conf_write(pa->pa_tag, PCI_CFLT, data);
+	pci_conf_write(pc, pa->pa_tag, PCI_CFLT, data);
     }
 
     if (pci_map_mem(pa->pa_tag, PCI_CBMA, &va_csrs, &pa_csrs))
 	return;
 
-    sc->sc_if.if_name = "fpa";
-    sc->sc_if.if_unit = sc->sc_dev.dv_unit;
+    bcopy(sc->sc_dev.dv_xname, sc->sc_if.if_xname, IFNAMSIZ);
+    sc->sc_if.if_softc = sc;
     sc->sc_if.if_flags = 0;
-    sc->sc_pdq = pdq_initialize((void *) va_csrs, sc->sc_if.if_name,
-				sc->sc_if.if_unit, (void *) sc, PDQ_DEFPA);
+    sc->sc_pdq = pdq_initialize((void *) va_csrs,
+        sc->sc_dev.dv_cfdata->cf_driver->cd_name, sc->sc_dev.dv_unit,
+	(void *) sc, PDQ_DEFPA);
     if (sc->sc_pdq == NULL)
 	return;
     bcopy((caddr_t) sc->sc_pdq->pdq_hwaddr.lanaddr_bytes, sc->sc_ac.ac_enaddr,
 	6);
     pdq_ifattach(sc, pdq_pci_ifinit, pdq_pci_ifwatchdog);
 
-    sc->sc_ih = pci_map_int(pa->pa_tag, IPL_NET, pdq_pci_ifintr, sc
-	sc->sc_dev.dv_xname);
+    sc->sc_ih = pci_map_int(pa->pa_tag, IPL_NET, pdq_pci_ifintr, sc);
     if (sc->sc_ih == NULL) {
-	printf("fpa%d: error: couldn't map interrupt\n",  sc->sc_if.if_unit);
+	printf("%s: error: couldn't map interrupt\n", sc->sc_dev.dv_xname);
 	return;
     }
 #if 0
     sc->sc_ats = shutdownhook_establish(pdq_hwreset, sc);
     if (sc->sc_ats == NULL)
-	printf("fpa%d: warning: couldn't establish shutdown hook\n",
-	       sc->sc_if.if_unit);
+	printf("%s: warning: couldn't establish shutdown hook\n",
+	       sc->sc_dev.dv_xname);
 #endif
 }
 

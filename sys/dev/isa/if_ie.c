@@ -1,5 +1,5 @@
-/*    $OpenBSD: if_ie.c,v 1.9 1996/05/07 07:36:59 deraadt Exp $       */
-/*	$NetBSD: if_ie.c,v 1.49 1996/04/30 22:21:54 thorpej Exp $	*/
+/*    $OpenBSD: if_ie.c,v 1.10 1996/05/10 12:41:20 deraadt Exp $       */
+/*	$NetBSD: if_ie.c,v 1.50 1996/05/07 01:55:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -261,7 +261,7 @@ struct ie_softc {
 #endif
 };
 
-void iewatchdog __P((int));
+void iewatchdog __P((struct ifnet *));
 int ieintr __P((void *));
 void iestop __P((struct ie_softc *));
 int ieinit __P((struct ie_softc *));
@@ -788,8 +788,8 @@ ieattach(parent, self, aux)
 	struct isa_attach_args *ia = aux;
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 
-	ifp->if_unit = sc->sc_dev.dv_unit;
-	ifp->if_name = ie_cd.cd_name;
+	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
+	ifp->if_softc = sc;
 	ifp->if_start = iestart;
 	ifp->if_ioctl = ieioctl;
 	ifp->if_watchdog = iewatchdog;
@@ -818,10 +818,10 @@ ieattach(parent, self, aux)
  * an interrupt after a transmit has been started on it.
  */
 void
-iewatchdog(unit)
-	int unit;
+iewatchdog(ifp)
+	struct ifnet *ifp;
 {
-	struct ie_softc *sc = ie_cd.cd_devs[unit];
+	struct ie_softc *sc = ifp->if_softc;
 
 	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
 	++sc->sc_arpcom.ac_if.if_oerrors;
@@ -1473,7 +1473,7 @@ void
 iestart(ifp)
 	struct ifnet *ifp;
 {
-	struct ie_softc *sc = ie_cd.cd_devs[ifp->if_unit];
+	struct ie_softc *sc = ifp->if_softc;
 	struct mbuf *m0, *m;
 	u_char *buffer;
 	u_short len;
@@ -2142,7 +2142,7 @@ ieioctl(ifp, cmd, data)
 	u_long cmd;
 	caddr_t data;
 {
-	struct ie_softc *sc = ie_cd.cd_devs[ifp->if_unit];
+	struct ie_softc *sc = ifp->if_softc;
 	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;

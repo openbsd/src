@@ -1,5 +1,5 @@
-/*	$OpenBSD: pdq_ifsubr.c,v 1.1 1996/04/18 23:47:23 niklas Exp $	*/
-/*	$NetBSD: pdq_ifsubr.c,v 1.2 1996/03/11 21:41:32 thorpej Exp $	*/
+/*	$OpenBSD: pdq_ifsubr.c,v 1.2 1996/05/10 12:41:12 deraadt Exp $	*/
+/*	$NetBSD: pdq_ifsubr.c,v 1.3 1996/05/07 01:43:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995 Matt Thomas (thomas@lkg.dec.com)
@@ -407,8 +407,8 @@ pdq_ifioctl(
 void
 pdq_ifattach(
     pdq_softc_t *sc,
-    ifnet_ret_t (*ifinit)(int unit),
-    ifnet_ret_t (*ifwatchdog)(int unit))
+    pdq_ifinit_t ifinit,
+    pdq_ifwatchdog_t ifwatchdog)
 {
     struct ifnet *ifp = &sc->sc_if;
 

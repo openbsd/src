@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.4 1996/05/03 19:08:47 christos Exp $	*/
+/*	$NetBSD: elink3.c,v 1.5 1996/05/07 01:43:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Herb Peyerl <hpeyerl@novatel.ca>
@@ -80,7 +80,7 @@ static int epstatus __P((struct ep_softc *));
 void epinit __P((struct ep_softc *));
 int epioctl __P((struct ifnet *, u_long, caddr_t));
 void epstart __P((struct ifnet *));
-void epwatchdog __P((int));
+void epwatchdog __P((struct ifnet *));
 void epreset __P((struct ep_softc *));
 void epread __P((struct ep_softc *));
 struct mbuf *epget __P((struct ep_softc *, int));
@@ -96,11 +96,10 @@ epconfig(sc, conn)
 	struct ep_softc *sc;
 	u_int conn;
 {
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	bus_chipset_tag_t bc = sc->sc_bc;
 	bus_io_handle_t ioh = sc->sc_ioh;
 	u_short i;
-
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 
 	sc->ep_connectors = 0;
 	if (conn & IS_AUI) {
@@ -139,8 +138,8 @@ epconfig(sc, conn)
 
 	printf(" address %s\n", ether_sprintf(sc->sc_arpcom.ac_enaddr));
 
-	ifp->if_unit = sc->sc_dev.dv_unit;
-	ifp->if_name = ep_cd.cd_name;
+	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
+	ifp->if_softc = sc;
 	ifp->if_start = epstart;
 	ifp->if_ioctl = epioctl;
 	ifp->if_watchdog = epwatchdog;
@@ -294,7 +293,7 @@ void
 epstart(ifp)
 	struct ifnet *ifp;
 {
-	register struct ep_softc *sc = ep_cd.cd_devs[ifp->if_unit];
+	register struct ep_softc *sc = ifp->if_softc;
 	bus_chipset_tag_t bc = sc->sc_bc;
 	bus_io_handle_t ioh = sc->sc_ioh;
 	struct mbuf *m, *m0;
@@ -798,7 +797,7 @@ epioctl(ifp, cmd, data)
 	u_long cmd;
 	caddr_t data;
 {
-	struct ep_softc *sc = ep_cd.cd_devs[ifp->if_unit];
+	struct ep_softc *sc = ifp->if_softc;
 	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
@@ -893,10 +892,10 @@ epreset(sc)
 }
 
 void
-epwatchdog(unit)
-	int unit;
+epwatchdog(ifp)
+	struct ifnet *ifp;
 {
-	struct ep_softc *sc = ep_cd.cd_devs[unit];
+	struct ep_softc *sc = ifp->if_softc;
 
 	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
 	++sc->sc_arpcom.ac_if.if_oerrors;

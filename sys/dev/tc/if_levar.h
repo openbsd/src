@@ -1,4 +1,4 @@
-/*	$NetBSD: if_levar.h,v 1.2 1996/04/18 00:50:15 cgd Exp $	*/
+/*	$NetBSD: if_levar.h,v 1.3 1996/05/07 02:24:58 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -60,44 +60,9 @@ struct lereg1 {
  * This structure contains the output queue for the interface, its address, ...
  */
 struct le_softc {
-	struct	device sc_dev;		/* base structure */
-	struct	arpcom sc_arpcom;	/* Ethernet common part */
-
-	void	(*sc_copytodesc)	/* Copy to descriptor */
-		    __P((struct le_softc *, void *, int, int));
-	void	(*sc_copyfromdesc)	/* Copy from descriptor */
-		    __P((struct le_softc *, void *, int, int));
-
-	void	(*sc_copytobuf)		/* Copy to buffer */
-		    __P((struct le_softc *, void *, int, int));
-	void	(*sc_copyfrombuf)	/* Copy from buffer */
-		    __P((struct le_softc *, void *, int, int));
-	void	(*sc_zerobuf)		/* and Zero bytes in buffer */
-		    __P((struct le_softc *, int, int));
-
-	u_int16_t sc_conf3;		/* CSR3 value */
-
-	void	*sc_mem;		/* base addr of RAM -- CPU's view */
-	u_long	sc_addr;		/* base addr of RAM -- LANCE's view */
-	u_long	sc_memsize;		/* size of RAM */
-
-	int	sc_nrbuf;		/* number of receive buffers */
-	int	sc_ntbuf;		/* number of transmit buffers */
-	int	sc_last_rd;
-	int	sc_first_td, sc_last_td, sc_no_td;
-
-	int	sc_initaddr;
-	int	sc_rmdaddr;
-	int	sc_tmdaddr;
-	int	sc_rbufaddr;
-	int	sc_tbufaddr;
-
-#ifdef LEDEBUG
-	int	sc_debug;
-#endif
+	struct	am7990_softc sc_am7990;	/* glue to MI code */
 
 	struct	lereg1 *sc_r1;		/* LANCE registers */
 };
 
-int	leintr __P((void *));
-void	dec_le_common_attach __P((struct le_softc *, u_char *));
+void	dec_le_common_attach __P((struct am7990_softc *, u_char *));

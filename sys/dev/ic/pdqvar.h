@@ -1,5 +1,5 @@
-/*	$OpenBSD: pdqvar.h,v 1.2 1996/04/18 23:47:25 niklas Exp $	*/
-/*	$NetBSD: pdqvar.h,v 1.4 1996/03/11 21:41:35 thorpej Exp $	*/
+/*	$OpenBSD: pdqvar.h,v 1.3 1996/05/10 12:41:13 deraadt Exp $	*/
+/*	$NetBSD: pdqvar.h,v 1.5 1996/05/07 01:43:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995 Matt Thomas (thomas@lkg.dec.com)
@@ -142,13 +142,21 @@ typedef struct {
 #define	sc_if		sc_ac.ac_if
 #define	sc_bpf		sc_if.if_bpf
 
+#if defined(__NetBSD__)
+typedef ifnet_ret_t (*pdq_ifwatchdog_t)(struct ifnet *ifp);
+typedef ifnet_ret_t (*pdq_ifinit_t)(struct ifnet *ifp);
+#else
+typedef ifnet_ret_t (*pdq_ifwatchdog_t)(int unit);
+typedef ifnet_ret_t (*pdq_ifinit_t)(int unit);
+#endif
+
 extern void pdq_ifreset(pdq_softc_t *sc);
 extern void pdq_ifinit(pdq_softc_t *sc);
 extern void pdq_ifwatchdog(pdq_softc_t *sc);
 extern ifnet_ret_t pdq_ifstart(struct ifnet *ifp);
 extern int pdq_ifioctl(struct ifnet *ifp, ioctl_cmd_t cmd, caddr_t data);
-extern void pdq_ifattach(pdq_softc_t *sc, ifnet_ret_t (*ifinit)(int unit),
-			 ifnet_ret_t (*ifwatchdog)(int unit));
+extern void pdq_ifattach(pdq_softc_t *sc, pdq_ifinit_t ifinit,
+			 pdq_ifwatchdog_t ifwatchdog);
 #endif /* PDQ_HWSUPPORT */
 #elif defined(DLPI_PDQ)
 #include <sys/param.h>

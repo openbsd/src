@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eg.c,v 1.24 1996/04/11 22:29:03 cgd Exp $	*/
+/*	$NetBSD: if_eg.c,v 1.25 1996/05/07 01:55:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993 Dean Huxley <dean@fsa.ca>
@@ -125,7 +125,7 @@ void eginit __P((struct eg_softc *));
 int egioctl __P((struct ifnet *, u_long, caddr_t));
 void egrecv __P((struct eg_softc *));
 void egstart __P((struct ifnet *));
-void egwatchdog __P((int));
+void egwatchdog __P((struct ifnet *));
 void egreset __P((struct eg_softc *));
 void egread __P((struct eg_softc *, caddr_t, int));
 struct mbuf *egget __P((struct eg_softc *, caddr_t, int));
@@ -396,8 +396,8 @@ egattach(parent, self, aux)
 	}
 
 	/* Initialize ifnet structure. */
-	ifp->if_unit = sc->sc_dev.dv_unit;
-	ifp->if_name = eg_cd.cd_name;
+	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
+	ifp->if_softc = sc;
 	ifp->if_start = egstart;
 	ifp->if_ioctl = egioctl;
 	ifp->if_watchdog = egwatchdog;
@@ -475,8 +475,8 @@ egrecv(sc)
 		sc->eg_pcb[3] = 0;
 		sc->eg_pcb[4] = 0;
 		sc->eg_pcb[5] = 0;
-		sc->eg_pcb[6] = EG_BUFLEN; /* our buffer size */
-		sc->eg_pcb[7] = EG_BUFLEN >> 8;
+		sc->eg_pcb[6] = EG_BUFLEN & 0xff; /* our buffer size */
+		sc->eg_pcb[7] = (EG_BUFLEN >> 8) & 0xff;
 		sc->eg_pcb[8] = 0; /* timeout, 0 == none */
 		sc->eg_pcb[9] = 0;
 		if (egwritePCB(sc) != 0)
@@ -489,7 +489,7 @@ void
 egstart(ifp)
 	struct ifnet *ifp;
 {
-	register struct eg_softc *sc = eg_cd.cd_devs[ifp->if_unit];
+	register struct eg_softc *sc = ifp->if_softc;
 	struct mbuf *m0, *m;
 	caddr_t buffer;
 	int len;
@@ -728,7 +728,7 @@ egioctl(ifp, cmd, data)
 	u_long cmd;
 	caddr_t data;
 {
-	struct eg_softc *sc = eg_cd.cd_devs[ifp->if_unit];
+	struct eg_softc *sc = ifp->if_softc;
 	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
@@ -810,10 +810,10 @@ egreset(sc)
 }
 
 void
-egwatchdog(unit)
-	int     unit;
+egwatchdog(ifp)
+	struct ifnet *ifp;
 {
-	struct eg_softc *sc = eg_cd.cd_devs[unit];
+	struct eg_softc *sc = ifp->if_softc;
 
 	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
 	sc->sc_arpcom.ac_if.if_oerrors++;

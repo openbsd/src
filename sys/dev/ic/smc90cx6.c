@@ -1,4 +1,4 @@
-/*	$NetBSD: smc90cx6.c,v 1.16 1996/03/20 13:28:50 is Exp $ */
+/*	$NetBSD: smc90cx6.c,v 1.17 1996/05/07 01:43:18 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -183,7 +183,7 @@ void	bah_stop __P((struct bah_softc *));
 void	bah_start __P((struct ifnet *));
 int	bahintr __P((struct bah_softc *sc));
 int	bah_ioctl __P((struct ifnet *, unsigned long, caddr_t));
-void	bah_watchdog __P((int));
+void	bah_watchdog __P((struct ifnet *));
 void	movepout __P((u_char *from, u_char __volatile *to, int len));
 void	movepin __P((u_char __volatile *from, u_char *to, int len));
 void	bah_srint __P((void *vsc, void *dummy));
@@ -272,8 +272,8 @@ bah_zbus_attach(parent, self, aux)
 	 */
 	bah_stop(sc); 
 
-	ifp->if_unit = sc->sc_dev.dv_unit;
-	ifp->if_name = bah_cd.cd_name;
+	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
+	ifp->if_softc = sc;
 	ifp->if_output = arc_output;
 	ifp->if_start = bah_start;
 	ifp->if_ioctl = bah_ioctl;
@@ -360,8 +360,8 @@ bah_reset(sc)
 	linkaddress = sc->sc_base->dipswitches;
 
 #if defined(BAH_DEBUG) && (BAH_DEBUG > 2)
-	printf("bah%ld: reset: card reset, link addr = 0x%02x (%ld)\n",
-	    ifp->if_unit, linkaddress, linkaddress);
+	printf("%s: reset: card reset, link addr = 0x%02x (%ld)\n",
+	    sc->sc_dev.dv_xname, linkaddress, linkaddress);
 #endif
 	sc->sc_arccom.ac_anaddr = linkaddress;
 
@@ -540,7 +540,7 @@ bah_start(ifp)
 	u_long copystart, lencopy, perbyte;
 #endif
 
-	sc = bah_cd.cd_devs[ifp->if_unit];
+	sc = ifp->if_softc;
 
 #if defined(BAH_DEBUG) && (BAH_DEBUG > 3)
 	printf("%s: start(0x%x)\n", sc->sc_dev.dv_xname, ifp);
@@ -1150,7 +1150,7 @@ bah_ioctl(ifp, command, data)
 	int s, error;
 
 	error = 0;
-	sc = bah_cd.cd_devs[ifp->if_unit];
+	sc = ifp->if_softc;
 	ifa = (struct ifaddr *)data;
 	s = splnet();
 
@@ -1217,14 +1217,10 @@ bah_ioctl(ifp, command, data)
  */
 
 void
-bah_watchdog(unit)
-int unit;
-{
-	struct bah_softc *sc;
+bah_watchdog(ifp)
 	struct ifnet *ifp;
-
-	sc = bah_cd.cd_devs[unit];
-	ifp = &(sc->sc_arccom.ac_if);
+{
+	struct bah_softc *sc = ifp->if_softc;
 
 	sc->sc_base->command = ARC_TXDIS;
 	return;

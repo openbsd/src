@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_tc.c,v 1.1 1996/04/18 00:50:14 cgd Exp $	*/
+/*	$NetBSD: if_le_tc.c,v 1.2 1996/05/07 02:24:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -45,11 +45,10 @@
 #include <netinet/if_ether.h>
 #endif
 
-#include <dev/tc/if_levar.h>
 #include <dev/ic/am7990reg.h>
-#define LE_NEED_BUF_CONTIG
 #include <dev/ic/am7990var.h>
 
+#include <dev/tc/if_levar.h>
 #include <dev/tc/tcvar.h>
 
 int	le_tc_match __P((struct device *, void *, void *));
@@ -82,14 +81,15 @@ le_tc_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	register struct le_softc *sc = (void *)self;
+	register struct le_softc *lesc = (void *)self;
+	register struct am7990_softc *sc = &lesc->sc_am7990;
 	struct tc_attach_args *d = aux;
 
 	/*
 	 * It's on the turbochannel proper, or a kn02
 	 * baseboard implementation of a TC option card.
 	 */
-	sc->sc_r1 = (struct lereg1 *)(d->ta_addr + LE_OFFSET_LANCE);
+	lesc->sc_r1 = (struct lereg1 *)(d->ta_addr + LE_OFFSET_LANCE);
 	sc->sc_mem = (void *)(d->ta_addr + LE_OFFSET_RAM);
 
 	sc->sc_copytodesc = am7990_copytobuf_contig;
@@ -106,5 +106,5 @@ le_tc_attach(parent, self, aux)
 
 	dec_le_common_attach(sc, (u_char *)(d->ta_addr + LE_OFFSET_ROM + 2));
 
-	tc_intr_establish(parent, d->ta_cookie, TC_IPL_NET, leintr, sc);
+	tc_intr_establish(parent, d->ta_cookie, TC_IPL_NET, am7990_intr, sc);
 }
