@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_autoconf.c,v 1.9 1996/07/02 06:51:59 niklas Exp $	*/
+/*	$OpenBSD: subr_autoconf.c,v 1.10 1996/07/02 22:21:24 deraadt Exp $	*/
 /*	$NetBSD: subr_autoconf.c,v 1.21 1996/04/04 06:06:18 cgd Exp $	*/
 
 /*
@@ -373,7 +373,7 @@ config_attach(parent, match, aux, print)
 	 * cfdata for this device.
 	 */
 	for (t = allcftables.tqh_first; t; t = t->list.tqe_next) {
-		for (cf = t->tab; cf->cf_driver; cf++)
+	  for (cf = t->tab; cf->cf_driver; cf++)
 	    if (cf->cf_driver == cd && cf->cf_unit == dev->dv_unit) {
 			if (cf->cf_fstate == FSTATE_NOTFOUND)
 				cf->cf_fstate = FSTATE_FOUND;
@@ -612,24 +612,21 @@ attach_loadable(parentname, parentunit, cftable)
 
 	TAILQ_INSERT_TAIL(&allcftables, cftable, list);
 
-	for(d = alldevs.tqh_first;
-	    d != NULL;
-	    d = d->dv_list.tqe_next) {
+	for(d = alldevs.tqh_first; d != NULL; d = d->dv_list.tqe_next) {
 		struct cfdriver *drv = d->dv_cfdata->cf_driver;
 
-		if ((!strcmp(parentname, drv->cd_name))
-		    && ((parentunit == -1) || (parentunit == d->dv_unit))) {
+		if (strcmp(parentname, drv->cd_name) == NULL &&
+		    (parentunit == -1 || parentunit == d->dv_unit)) {
 			int s;
 
 			s = splhigh(); /* ??? */
-			found |= (*d->dv_cfdata->cf_attach->ca_reprobe)(d, &(cftable->tab[0]));
+			found |= (*d->dv_cfdata->cf_attach->ca_reprobe)(d,
+			    &(cftable->tab[0]));
 			splx(s);
 		}
 	}
-
 	if (!found)
 		TAILQ_REMOVE(&allcftables, cftable, list);
-
 	return(found);
 }
 
