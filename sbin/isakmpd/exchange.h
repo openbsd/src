@@ -1,5 +1,5 @@
-/*	$OpenBSD: exchange.h,v 1.12 1999/07/07 22:09:53 niklas Exp $	*/
-/*	$EOM: exchange.h,v 1.25 1999/06/07 00:02:11 ho Exp $	*/
+/*	$OpenBSD: exchange.h,v 1.13 1999/07/17 21:54:39 niklas Exp $	*/
+/*	$EOM: exchange.h,v 1.26 1999/07/17 20:44:10 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -149,6 +149,14 @@ struct exchange {
   struct crypto_xf *crypto;
   int key_length;
   struct keystate *keystate;
+
+  /* 
+   * Received certificate - used to verify signatures on packet,
+   * stored here for later policy processing. 
+   * a type of ISAKMP_CERTENC_NONE implies pre-shared key.
+   */
+  int recv_certtype, recv_certlen;
+  void *recv_cert;
 
   /* XXX This is no longer necessary, it is covered by policy. */
 

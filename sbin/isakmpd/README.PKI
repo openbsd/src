@@ -1,0 +1,59 @@
+$OpenBSD: README.PKI,v 1.1 1999/07/17 21:54:39 niklas Exp $
+
+1	Create your own CA as root.
+
+	ssleay genrsa -out /etc/ssl/private/ca.key 1024
+	ssleay req -new -key /etc/ssl/private/ca.key \
+		-out /etc/ssl/private/ca.csr
+
+	You are now being asked to enter information that will be incorporated
+	into your certificate request.  What you are about to enter is what is
+	called a Distinguished Name or a DN.  There are quite a few fields but
+	you can leave some blank.  For some fields there will be a default
+	value, if you enter '.', the field will be left blank.
+
+	ssleay x509 -req -days 365 -in /etc/ssl/private/ca.csr \
+		-signkey /etc/ssl/private/ca.key \
+		-out /etc/ssl/ca.crt
+
+2	Create keys and certificates for your isakmpd peers.  This step as well
+	as the next one, needs to be done for every peer.  Furthermore the
+	last step will need to be done once for each ID you want the peer
+	to have.  The 10.0.0.1 below symbolizes that ID, and should be
+	changed for each invocation.  You will be asked for a DN for each
+	run too.  See to encode the ID in the common name too, so it gets
+	unique.
+
+	mkdir -p /etc/isakmpd/private /etc/isakmpd/ca /etc/isakmpd/certs
+	chmod 600 /etc/isakmpd/private
+	ssleay genrsa -out /etc/isakmpd/private/local.key 1024
+	ssleay req -new -key /etc/isakmpd/private/local.key \
+		-out /etc/isakmpd/private/10.0.0.1.csr
+
+	Now take these certificate signing requests to your CA and process
+	them like below.  You have to add some extensions to the certificate
+	in order to make it usable for isakmpd, which is why you will need
+	to run certpatch.  Replace 10.0.0.1 with the IP-address which isakmpd
+	will be using for identity.
+
+	ssleay x509 -req -days 365 -in 10.0.0.1.csr -CA /etc/ssl/ca.crt \
+		-CAkey /etc/ssl/private/ca.key -CAcreateserial \
+		-out 10.0.0.1.crt
+	certpatch -i 10.0.0.1 -k /etc/ssl/private/ca.key \
+		10.0.0.1.crt 10.0.0.1.crt
+
+	Put the certificate (the file ending in .crt) in /etc/isakmpd/certs/
+	on your local system.  Also carry over the CA cert /etc/ssl/ca.crt
+	and put it in /etc/isakmpd/ca/.
+
+3	See to that your config files will point out the directories where
+	you keep certificates.  I.e. add something like this to
+	/etc/isakmp/conf:
+
+	# Certificates stored in PEM format
+	[X509-certificates]
+	CA-directory=		/etc/isakmpd/ca/
+	Cert-directory=		/etc/isakmpd/certs/
+
+	[RSA_SIG]
+	PRIVKEY=		/etc/isakmpd/private/local.key

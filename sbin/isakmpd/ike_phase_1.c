@@ -1,5 +1,5 @@
-/*	$OpenBSD: ike_phase_1.c,v 1.5 1999/07/16 02:01:59 niklas Exp $	*/
-/*	$EOM: ike_phase_1.c,v 1.6 1999/07/16 02:01:52 niklas Exp $	*/
+/*	$OpenBSD: ike_phase_1.c,v 1.6 1999/07/17 21:54:39 niklas Exp $	*/
+/*	$EOM: ike_phase_1.c,v 1.7 1999/07/17 20:44:10 niklas Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
@@ -925,7 +925,7 @@ ike_phase_1_recv_AUTH (struct message *msg)
   /* The decoded hash will be in ie->hash_r or ie->hash_i */
   if (ie->ike_auth->decode_hash (msg))
     {
-      message_drop (msg, ISAKMP_NOTIFY_PAYLOAD_MALFORMED, 0, 1, 0);
+      message_drop (msg, ISAKMP_NOTIFY_INVALID_ID_INFORMATION, 0, 1, 0);
       return -1;
     }
   

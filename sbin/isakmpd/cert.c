@@ -1,8 +1,8 @@
-/*	$OpenBSD: cert.c,v 1.9 1999/04/19 19:57:29 niklas Exp $	*/
-/*	$EOM: cert.c,v 1.10 1999/04/18 15:17:23 niklas Exp $	*/
+/*	$OpenBSD: cert.c,v 1.10 1999/07/17 21:54:39 niklas Exp $	*/
+/*	$EOM: cert.c,v 1.11 1999/07/17 20:44:09 niklas Exp $	*/
 
 /*
- * Copyright (c) 1998 Niels Provos.  All rights reserved.
+ * Copyright (c) 1998, 1999 Niels Provos.  All rights reserved.
  * Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -36,8 +36,11 @@
  */
 
 #include <sys/param.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include <ssl/ssl.h>
 
 #include "sysdep.h"
 
@@ -49,10 +52,29 @@
 struct cert_handler cert_handler[] = {
   {
     ISAKMP_CERTENC_X509_SIG, 
+    x509_cert_init, x509_cert_get, x509_cert_validate, 
+    x509_cert_insert, x509_cert_free,
     x509_certreq_validate, x509_certreq_decode, x509_free_aca,
     x509_cert_obtain, x509_cert_get_key, x509_cert_get_subject
   }
 };
+
+/* Initialize all certificate handlers */
+
+int
+cert_init (void)
+{
+  int i, err = 1;
+
+  /* Add all algorithms know by SSL */
+  SSLeay_add_all_algorithms ();
+
+  for (i = 0; i < sizeof cert_handler / sizeof cert_handler[0]; i++)
+    if (cert_handler[i].cert_init && !(*cert_handler[i].cert_init) ())
+      err = 0;
+
+  return err;
+}
 
 struct cert_handler *
 cert_get (u_int16_t id)

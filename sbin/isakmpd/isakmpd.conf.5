@@ -1,5 +1,5 @@
-.\" $OpenBSD: isakmpd.conf.5,v 1.21 1999/07/09 13:35:49 aaron Exp $
-.\" $EOM: isakmpd.conf.5,v 1.26 1999/07/07 19:17:31 niklas Exp $
+.\" $OpenBSD: isakmpd.conf.5,v 1.22 1999/07/17 21:54:39 niklas Exp $
+.\" $EOM: isakmpd.conf.5,v 1.27 1999/07/17 20:44:11 niklas Exp $
 .\"
 .\" Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
 .\"
@@ -129,6 +129,20 @@ These names are section names where further information can be found.  Look
 at <IPSec-connection> below.  Currently only the Local-ID and Remote-ID tags
 are looked at in those sections, as they are matched against the IDs given
 by the initiator.
+.El
+.It Em X509-Certificates
+.Bl -tag -width 12n
+.It Em Ca-directory
+A directory containing PEM certificates of certification authorities
+that we trust to sign other certificates.
+.It Em Cert-directory
+A directory containing PEM certificates that we trust to be valid.  
+These certificates are used in preference to those passed in messages and
+are required to have a SubjectAltName extension.
+.It Em Accept-self-signed
+If this tag is defined, whatever the value is, certificates that
+do not originate from a trusted CA but are self-signed will be
+accepted.
 .El
 .El
 .Ss Referred-to sections
@@ -389,6 +403,11 @@ DOI=			IPSEC
 EXCHANGE_TYPE=		ID_PROT
 Transforms=		3DES-SHA
 
+# Certificates stored in PEM format
+[X509-certificates]
+CA-directory=           /etc/isakmpd/ca/
+Cert-directory=         /etc/isakmpd/certs/
+
 # Main mode transforms
 ######################
 
@@ -644,9 +663,7 @@ LIFE_TYPE=		KILOBYTES
 LIFE_DURATION=		4608000,4096000:8192000
 
 [RSA_SIG]
-CERT=			/etc/isakmpd_cert
-PRIVKEY=		/etc/isakmpd_key
-PUBKEY=			/etc/isakmpd_key.pub
+PRIVKEY=		/etc/isakmpd/private/local.key
 .Ed
 .Sh SEE ALSO
 .Xr ipsec 4 ,

@@ -1,5 +1,5 @@
-$OpenBSD: DESIGN-NOTES,v 1.12 1999/07/07 22:14:56 niklas Exp $
-$EOM: DESIGN-NOTES,v 1.45 1999/06/15 11:33:37 niklas Exp $
+$OpenBSD: DESIGN-NOTES,v 1.13 1999/07/17 21:54:39 niklas Exp $
+$EOM: DESIGN-NOTES,v 1.46 1999/07/17 20:44:07 niklas Exp $
 
 General coding conventions
 --------------------------
@@ -333,6 +333,18 @@ noone else.
 In quick mode the identities are implicitly the IP addresses of the peers,
 which must mean the IP addresses actually used for the ISAKMP tunnel.
 Otherwise we today support IPV4_ADDR & IPV4_ADDR_SUBNET as ID types.
+
+X509-Certificates
+-----------------
+To use RSA Signature mode you are required to generate certificates.
+This can be done with ssleay, see man ssl. But the X509 certificates
+require a subjectAltname extension that can either be an IPV4 address,
+a User-FQDN or just FQDN.  ssleay can not create those extension,
+insead use the x509test program in regress/x509 to modify an existing
+certificate.  It will insert the subjectAltname extension and sign it
+with the provided private Key.  The resulting certificate then needs
+to be stored in the directory pointed to by "Certs-directory" in
+section "X509-certificates".
 
 License to use
 --------------

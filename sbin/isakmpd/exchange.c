@@ -1,5 +1,5 @@
-/*	$OpenBSD: exchange.c,v 1.22 1999/07/07 22:05:06 niklas Exp $	*/
-/*	$EOM: exchange.c,v 1.108 1999/06/06 17:48:30 ho Exp $	*/
+/*	$OpenBSD: exchange.c,v 1.23 1999/07/17 21:54:39 niklas Exp $	*/
+/*	$EOM: exchange.c,v 1.109 1999/07/17 20:44:09 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -1140,6 +1140,7 @@ exchange_free_aux (void *v_exch)
 {
   struct exchange *exchange = v_exch;
   struct sa *sa, *next_sa;
+  struct cert_handler *handler;
 
   log_debug (LOG_EXCHANGE, 80, "exchange_free_aux: freeing exchange %p", 
 	     exchange);
@@ -1166,6 +1167,14 @@ exchange_free_aux (void *v_exch)
     free (exchange->data);
   if (exchange->name)
     free (exchange->name);
+  if (exchange->recv_cert)
+    {
+      handler = cert_get (exchange->recv_certtype);
+      if (handler)
+	handler->cert_free (exchange->recv_cert);
+      else if (exchange->recv_certtype == ISAKMP_CERTENC_NONE)
+	free (exchange->recv_cert);
+    }
   exchange_free_aca_list (exchange);
   LIST_REMOVE (exchange, link);
 
@@ -1430,12 +1439,17 @@ exchange_add_certs (struct message *msg)
   struct certreq_aca *aca;
   u_int8_t *cert;
   u_int32_t certlen;
+  u_int8_t *id;
+  size_t id_len;
+
+  id = exchange->initiator ? exchange->id_r : exchange->id_i;
+  id_len = exchange->initiator ? exchange->id_r_len : exchange->id_i_len;
 
   for (aca = TAILQ_FIRST (&exchange->aca_list); aca; 
        aca = TAILQ_NEXT (aca, link))
     {
       /* XXX? If we can not satisfy a CERTREQ we drop the message */
-      if (!aca->handler->cert_obtain (exchange, aca->data, &cert, &certlen))
+      if (!aca->handler->cert_obtain (id, id_len, aca->data, &cert, &certlen))
 	{
 	  log_print ("exchange_add_certs: could not obtain cert for a type %d "
 		     "cert request", aca->id);

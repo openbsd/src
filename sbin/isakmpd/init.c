@@ -1,5 +1,5 @@
-/*	$OpenBSD: init.c,v 1.8 1999/07/07 22:09:54 niklas Exp $	*/
-/*	$EOM: init.c,v 1.15 1999/06/07 00:02:14 ho Exp $	*/
+/*	$OpenBSD: init.c,v 1.9 1999/07/17 21:54:39 niklas Exp $	*/
+/*	$EOM: init.c,v 1.16 1999/07/17 20:44:10 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -39,6 +39,7 @@
 #include "sysdep.h"
 
 #include "app.h"
+#include "cert.h"
 #include "conf.h"
 #include "connection.h"
 #include "cookie.h"
@@ -73,6 +74,9 @@ init ()
   conf_init ();
   connection_init ();
   cookie_init ();
+
+  /* Depends on conf_init having run */
+  cert_init ();
 
   sa_init ();
   transport_init ();

@@ -1,8 +1,8 @@
-/*	$OpenBSD: cert.h,v 1.3 1998/11/17 11:10:08 niklas Exp $	*/
-/*	$EOM: cert.h,v 1.5 1998/08/21 13:47:51 provos Exp $	*/
+/*	$OpenBSD: cert.h,v 1.4 1999/07/17 21:54:39 niklas Exp $	*/
+/*	$EOM: cert.h,v 1.6 1999/07/17 20:44:09 niklas Exp $	*/
 
 /*
- * Copyright (c) 1998 Niels Provos.  All rights reserved.
+ * Copyright (c) 1998, 1999 Niels Provos.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -41,16 +41,29 @@
 #include <sys/types.h>
 #include <sys/queue.h>
 
-struct exchange;
+/* 
+ * CERT handler for each kind of certificate:
+ *
+ * cert_init - Initialize CERT handler - called only once
+ * cert_get  - Get a certificate in internal representation from raw data
+ * cert_validate - validated a certificate, if it returns != 0 we can use it.
+ * cert_insert - inserts cert into memory storage, we can retrieve with
+ *               cert_obtain.
+ */
 
 struct cert_handler {
   u_int16_t id;				/* ISAKMP Cert Encoding ID */
+  int (*cert_init) (void);		
+  void *(*cert_get) (u_int8_t *, u_int32_t); 
+  int (*cert_validate) (void *);
+  int (*cert_insert) (void *);
+  void (*cert_free) (void *);
   int (*certreq_validate) (u_int8_t *, u_int32_t);
   void *(*certreq_decode) (u_int8_t *, u_int32_t);
   void (*free_aca) (void *);
-  int (*cert_obtain) (struct exchange *, void *, u_int8_t **, u_int32_t *);
-  int (*cert_get_key) (u_int8_t *, u_int32_t, void *);
-  int (*cert_get_subject) (u_int8_t *, u_int32_t, u_int8_t **, u_int32_t *);
+  int (*cert_obtain) (u_int8_t *, size_t, void *, u_int8_t **, u_int32_t *);
+  int (*cert_get_key) (void *, void *);
+  int (*cert_get_subject) (void *, u_int8_t **, u_int32_t *);
 };
 
 /* the acceptable authority of cert request */
@@ -65,5 +78,6 @@ struct certreq_aca {
 
 struct cert_handler *cert_get (u_int16_t);
 struct certreq_aca *certreq_decode (u_int16_t, u_int8_t *, u_int32_t);
+int cert_init (void);
 
 #endif /* _CERT_H_ */

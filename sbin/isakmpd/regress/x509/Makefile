@@ -1,17 +1,51 @@
-#	$OpenBSD: Makefile,v 1.5 1999/03/02 15:27:36 niklas Exp $
-#	$EOM: Makefile,v 1.5 1999/02/25 15:10:11 niklas Exp $
+#	$OpenBSD: Makefile,v 1.6 1999/07/17 21:54:38 niklas Exp $
+#	$EOM: Makefile,v 1.6 1999/07/17 20:44:13 niklas Exp $
+
+#
+# Copyright (c) 1999 Niels Provos.  All rights reserved.
+# Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+# 3. All advertising materials mentioning features or use of this software
+#    must display the following acknowledgement:
+#	This product includes software developed by Ericsson Radio Systems.
+# 4. The name of the author may not be used to endorse or promote products
+#    derived from this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+# IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+# OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+# IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+# NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+# THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+
+#
+# This code was written under funding by Ericsson Radio Systems.
+#
 
 # Test X509
 
 PROG=		x509test
-SRCS=		x509test.c conf.c asn.c asn_useful.c gmp_util.c log.c pkcs.c \
-		sysdep.c hash.c x509.c
+SRCS=		x509test.c conf.c log.c sysdep.c x509.c field.c util.c \
+		isakmp_fld.c ipsec_fld.c ipsec_num.c isakmp_num.c constants.c
 TOPSRC=		${.CURDIR}/../..
 TOPOBJ!=	cd ${TOPSRC}; printf "all:\n\t@pwd\n" |${MAKE} -f-
 OS!=		awk '/^OS=/ { print $$2 }' ${.CURDIR}/../../Makefile
 .PATH:		${TOPSRC} ${TOPSRC}/sysdep/${OS} ${TOPOBJ}
 CFLAGS+=	-I${TOPSRC} -I${TOPSRC}/sysdep/${OS} -I${TOPOBJ} -Wall
-LDADD+=		-lgmp
+LDADD+=		-lgmp -lcrypto
 DPADD+=		${LIBDES}
 NOMAN=
 DEBUG=		-g
