@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.122 1999/02/23 22:40:55 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.123 1999/02/26 13:56:43 jason Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -942,6 +942,7 @@
 
 /* Lite-On Communications */
 #define	PCI_PRODUCT_LITEON_PNIC	0x0002		/* PNIC */
+#define	PCI_PRODUCT_LITEON_PNICII	0xc115		/* PNIC-II */
 
 /* Macronix */
 #define	PCI_PRODUCT_MACRONIX_MX98713	0x0512		/* PMAC 98713 */
