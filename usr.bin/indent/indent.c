@@ -1,4 +1,4 @@
-/*	$OpenBSD: indent.c,v 1.4 1997/07/25 22:00:45 mickey Exp $	*/
+/*	$OpenBSD: indent.c,v 1.5 1997/09/10 06:59:35 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1985 Sun Microsystems, Inc.
@@ -45,7 +45,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)indent.c	5.16 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$OpenBSD: indent.c,v 1.4 1997/07/25 22:00:45 mickey Exp $";
+static char rcsid[] = "$OpenBSD: indent.c,v 1.5 1997/09/10 06:59:35 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -197,19 +197,19 @@ main(argc, argv)
 		out_name = argv[i];	/* remember name of output file */
 		if (strcmp(in_name, out_name) == 0)	/* attempt to overwrite
 							 * the file */
-			errx(1, "input and output files must be different\n");
+			errx(1, "input and output files must be different");
 		output = fopen(out_name, "w");
 		if (output == NULL)	/* check for create error */
 			err(1, out_name);
 		continue;
 	    }
-	    errx(1, "unknown parameter: %s\n", argv[i]);
+	    errx(1, "unknown parameter: %s", argv[i]);
 	}
 	else
 	    set_option(argv[i]);
     }				/* end of for */
     if (input == NULL)
-	errx(1, "usage: indent file [ outfile ] [ options ]\n");
+	errx(1, "usage: indent file [ outfile ] [ options ]");
     if (output == NULL)
 	if (troff)
 	    output = stdout;
