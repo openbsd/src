@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.110 2004/02/16 13:17:31 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.111 2004/02/17 14:40:16 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -873,9 +873,11 @@ session_tcp_established(struct peer *peer)
 	socklen_t	len;
 
 	session_socket_blockmode(peer->sock, BM_NORMAL);
+	len = sizeof(peer->sa_local);
 	if (getsockname(peer->sock, (struct sockaddr *)&peer->sa_local,
 	    &len) == -1)
 		log_warn("getsockname");
+	len = sizeof(peer->sa_remote);
 	if (getpeername(peer->sock, (struct sockaddr *)&peer->sa_remote,
 	    &len) == -1)
 		log_warn("getpeername");
