@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipx.h,v 1.2 1996/10/26 09:34:48 mickey Exp $	*/
+/*	$OpenBSD: ipx.h,v 1.3 1996/10/26 09:40:30 mickey Exp $	*/
 
 /*-
  *
@@ -131,8 +131,8 @@ struct ipx_addr {
 struct sockaddr_ipx {
 	u_int8_t	sipx_len;
 	u_int8_t	sipx_family;
-	struct ipx_addr	sipx_addr;
 	u_int16_t	sipx_type;
+	struct ipx_addr	sipx_addr;
 };
 #define sipx_net  sipx_addr.ipx_net
 #define sipx_network  sipx_addr.ipx_net.l_net
