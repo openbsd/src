@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_hfsc.c,v 1.15 2003/04/12 14:07:31 henning Exp $	*/
+/*	$OpenBSD: altq_hfsc.c,v 1.16 2003/04/12 15:19:54 henning Exp $	*/
 /*	$KAME: altq_hfsc.c,v 1.17 2002/11/29 07:48:33 kjc Exp $	*/
 
 /*
@@ -226,12 +226,12 @@ hfsc_add_queue(struct pf_altq *a)
 	parent = clh_to_clp(hif, a->parent_qid);
 	if (parent == NULL)
 		return (EINVAL);
-	if (a->qid != 0) {
-		if (a->qid >= HFSC_MAX_CLASSES)
-			return (EINVAL);
-		if (clh_to_clp(hif, a->qid) != NULL)
-			return (EBUSY);
-	}
+
+	if (a->qid >= HFSC_MAX_CLASSES || a->qid == 0)
+		return (EINVAL);
+	if (clh_to_clp(hif, a->qid) != NULL)
+		return (EBUSY);
+
 	rtsc.m1 = opts->rtsc_m1;
 	rtsc.d  = opts->rtsc_d;
 	rtsc.m2 = opts->rtsc_m2;
@@ -246,9 +246,6 @@ hfsc_add_queue(struct pf_altq *a)
 	    parent, a->qlimit, opts->flags, a->qid);
 	if (cl == NULL)
 		return (ENOMEM);
-
-	/* return handle to user space. */
-	a->qid = cl->cl_handle;
 
 	return (0);
 }
@@ -351,7 +348,7 @@ hfsc_class_create(struct hfsc_if *hif, struct service_curve *rsc,
     struct hfsc_class *parent, int qlimit, int flags, int qid)
 {
 	struct hfsc_class *cl, *p;
-	int i, s, chandle;
+	int s;
 
 #ifndef ALTQ_RED
 	if (flags & HFCF_RED) {
@@ -361,18 +358,6 @@ hfsc_class_create(struct hfsc_if *hif, struct service_curve *rsc,
 		return (NULL);
 	}
 #endif
-
-	if (qid)
-		chandle = qid;
-	else {
-		/* find a free class slot. */
-		for (i = 0; i < HFSC_MAX_CLASSES; i++)
-			if (hif->hif_class_tbl[i] == NULL)
-				break;
-		if (i == HFSC_MAX_CLASSES)
-			return (NULL);
-		chandle = i + 1;
-	}
 
 	MALLOC(cl, struct hfsc_class *, sizeof(struct hfsc_class),
 	       M_DEVBUF, M_WAITOK);
@@ -467,13 +452,13 @@ hfsc_class_create(struct hfsc_if *hif, struct service_curve *rsc,
 	}
 
 	cl->cl_id = hif->hif_classid++;
-	cl->cl_handle = chandle;
+	cl->cl_handle = qid;
 	cl->cl_hif = hif;
 	cl->cl_parent = parent;
 
 	s = splimp();
 	hif->hif_classes++;
-	hif->hif_class_tbl[chandle - 1] = cl;
+	hif->hif_class_tbl[qid - 1] = cl;
 	if (flags & HFCF_DEFAULTCLASS)
 		hif->hif_defaultclass = cl;
 
