@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_var.h,v 1.24 2003/10/01 21:41:05 itojun Exp $	*/
+/*	$OpenBSD: ip6_var.h,v 1.25 2004/10/18 03:59:34 itojun Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -226,7 +226,6 @@ extern time_t	ip6_log_time;
 extern int	ip6_hdrnestlimit; /* upper limit of # of extension headers */
 extern int	ip6_dad_count;		/* DupAddrDetectionTransmits */
 
-extern u_int32_t ip6_flow_seq;
 extern int ip6_auto_flowlabel;
 extern int ip6_auto_linklocal;
 

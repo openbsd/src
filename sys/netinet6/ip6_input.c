@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.59 2004/06/21 19:26:02 mcbride Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.60 2004/10/18 03:59:34 itojun Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -151,7 +151,6 @@ ip6_init()
 	ip6intrq.ifq_maxlen = ip6qmaxlen;
 	nd6_init();
 	frag6_init();
-	ip6_flow_seq = arc4random();
 	ip6_init2((void *)0);
 }
 
