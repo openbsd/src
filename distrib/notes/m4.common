@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.23 2001/10/07 21:50:50 miod Exp $
+dnl	$OpenBSD: m4.common,v 1.24 2001/10/10 22:15:03 miod Exp $
 dnl
 dnl simulate an include path with a macro 'includeit'.
 define(`includeit',`sinclude('INCLUDE/`$1)sinclude('INCLUDE/../`$1)')dnl
@@ -157,11 +157,11 @@ define({:-OpenBSDxfont-:},
 {:-	xfont{:--:}OSrev  This set includes all of the X fonts.showsize($1,$2)-:})dnl
 dnl
 dnl
-dnl OpenBSDxserv( compressed size, uncompressed size )
+dnl OpenBSDxserv(compressed size,uncompressed size,optional extra notes)
 dnl Describes xservXX.tgz.
 dnl
 define({:-OpenBSDxserv-:},
-{:-	xserv{:--:}OSrev  This set includes all of the X servers.showsize($1,$2)-:})dnl
+{:-	xserv{:--:}OSrev  This set includes all of the X servers.$3{:--:}showsize($1,$2)-:})dnl
 dnl
 dnl
 dnl Floppy and bootable cdrom stuff
