@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.10 2000/09/16 04:03:00 rahnds Exp $
+#	$OpenBSD: RAMDISK,v 1.11 2000/12/07 18:19:31 deraadt Exp $
 #
 # PPC GENERIC config file
 #
@@ -12,10 +12,10 @@ maxusers	32
 option		SYS_TYPE=APPL
 
 option		FIREPOWERBUGS
-options		PPC_MPC106_BUG
+option		PPC_MPC106_BUG
 option		PCIVERBOSE
-option          WSEMUL_VT100
-option          WSEMUL_NO_DUMB
+option		WSEMUL_VT100
+option		WSEMUL_NO_DUMB
 
 # include "../../../conf/GENERIC"
 option		TIMEZONE=0	# time zone to adjust RTC time by
@@ -50,22 +50,22 @@ pchb*		at pci?		# host bridge identifiers
 
 #### PCI Bus devices.
 
-pci*		at mpcpcibr?
-pci*		at ppb? bus ?
-ppb*		at pci? dev ? function ?	# PCI-PCI bridges
+pci*	at mpcpcibr?
+pci*	at ppb? bus ?
+ppb*	at pci? dev ? function ?	# PCI-PCI bridges
 
-ncr*		at pci? dev ? function ?
-de*		at pci? dev ? function ?
-vgafb0		at pci? dev ? function ?	# PCI VGA graphics 
-#ep*		at pci? dev ? function ?        # 3Com 3c59x
-#ne*		at pci? dev ? function ?        # NE2000-compatible Ethernet
-#adv*	at pci? dev ? function ?        # AdvanSys 1200[A,B], 9xx[U,UA] SCSI
-#ahc*		at pci? dev ? function ?        # Adaptec 294x, aic78x0 SCSI
-#bha*		at pci? dev ? function ?        # BusLogic 9xx SCSI
-#pcscp*		at pci? dev ? function ?        # AMD Am53c974 PCscsi-PCI SCSI
-#pciide*		at pci? dev ? function ?
-obio0   at pci? dev ? function ?
-gm*     at pci? dev ? function ?       		# gmac ethernet  G4 
+ncr*	at pci? dev ? function ?
+de*	at pci? dev ? function ?
+vgafb0	at pci? dev ? function ?	# PCI VGA graphics 
+#ep*	at pci? dev ? function ?	# 3Com 3c59x
+#ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
+#adv*	at pci? dev ? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI
+#ahc*	at pci? dev ? function ?	# Adaptec 294x, aic78x0 SCSI
+#bha*	at pci? dev ? function ?	# BusLogic 9xx SCSI
+#pcscp*	at pci? dev ? function ?	# AMD Am53c974 PCscsi-PCI SCSI
+#pciide* at pci? dev ? function ?
+obio0	at pci? dev ? function ?
+gm*	at pci? dev ? function ?       		# gmac ethernet  G4 
 
 # how many of these are needed?
 exphy*  at mii? phy ?                   # 3Com internal PHYs
