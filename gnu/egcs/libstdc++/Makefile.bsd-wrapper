@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.1 1999/05/26 15:47:01 espie Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.2 1999/05/28 14:26:17 espie Exp $
 
 IO_DIR=		$(.CURDIR)/../libio
 LIBIBERTY_DIR=	$(.CURDIR)/../libiberty
@@ -44,7 +44,7 @@ PREREQ!=	test ! -f $(IO_OBJDIR)/iostream.list && \
 		test ! -f $(LIBIBERTY_OBJDIR)/needed-list && \
 			(cd $(LIBIBERTY_DIR); \
 			 make -f Makefile.bsd-wrapper needed-list); \
-		echo 'Prerequistes made'
+		echo 'Prerequisites made'
 
 IO_OBJS!=	cat $(IO_OBJDIR)/iostream.list
 QIO_OBJS=	$(IO_OBJS:S/^/$(IO_OBJDIR)\//g)
@@ -60,13 +60,6 @@ SRCS=		$(STD_SRCS)
 
 OBJS=		$(SPEC_OBJS) $(QIO_OBJS) $(QLIBIBERTY_OBJS)
 
-HEADERS=	cassert cctype cerrno cfloat ciso646 climits clocale cmath complex \
-		csetjmp csignal cstdarg cstddef cstdio cstdlib cstring ctime \
-		cwchar cwctype string stdexcept \
-		algorithm deque functional hash_map hash_set iterator list map \
-		memory numeric pthread_alloc queue rope set slist stack utility \
-		vector fstream iomanip iostream strstream iosfwd
-
 G_CFG_H=	$(IO_OBJDIR)/_G_config.h
 
 all:		$(G_CFG_H)
@@ -74,7 +67,7 @@ all:		$(G_CFG_H)
 beforedepend:	$(G_CFG_H)
 
 $(G_CFG_H):
-	cd $(IO_DIR); make -f Makefile.bsd-wrapper _G_config.h
+	cd $(IO_DIR); ${MAKE} -f Makefile.bsd-wrapper _G_config.h
 
 clean:	_SUBDIRUSE
 	rm -f a.out [Ee]rrs mklog core *.core ${CLEANFILES}
@@ -83,28 +76,25 @@ clean:	_SUBDIRUSE
 	rm -f lib${LIB}_pic.a lib${LIB}.so.*.* ${STD_OBJS:.o=.so}
 	rm -f llib-l${LIB}.ln ${STD_OBJS:.o=.ln}
 
+GXX_INCDIR=$(DESTDIR)/usr/include/g++
+
+
+# stl stuff needs to be installed directly under GXX_INCDIR
 includes:
-	install -d -m 755 -o $(BINOWN) -g $(BINGRP) \
-		$(DESTDIR)/usr/include/g++/std
-	@-cd $(.CURDIR); for i in $(HEADERS) *.h std/*.*; do \
-		if [ -f stl/$$i ]; then \
-			install -C -o $(BINOWN) -g $(BINGRP) -m $(NONBINMODE) \
-				stl/$$i $(DESTDIR)/usr/include/g++/$$i; \
-		else \
-			install -C -o $(BINOWN) -g $(BINGRP) -m $(NONBINMODE) \
-				$$i $(DESTDIR)/usr/include/g++/$$i; \
-		fi \
-	done
-	@-cd $(.CURDIR); for i in *.h std/*.*; do \
-	install -C -o $(BINOWN) -g $(BINGRP) -m $(NONBINMODE) \
-		$$i $(DESTDIR)/usr/include/g++/$$i; \
-	done
-	@-cd $(.CURDIR)/stl; for i in *.h; do \
-	install -C -o $(BINOWN) -g $(BINGRP) -m $(NONBINMODE) \
-		$$i $(DESTDIR)/usr/include/g++/$$i; \
+	@test -d $(GXX_INCDIR) || \
+		install -d -m 755 -o $(BINOWN) -g $(BINGRP) $(GXX_INCDIR) 
+	@test -d $(GXX_INCDIR)/std || \
+		install -d -m 755 -o $(BINOWN) -g $(BINGRP) $(GXX_INCDIR) $(GXX_INCDIR)/std
+	@-cd $(.CURDIR); for i in `${MAKE} -f Makefile.in -V HEADERS` \
+		*.h stl/*.h std/*.h std/*.cc; do \
+		[ -f stl/$$i ] && i=stl/$$i; \
+		case $$i in stl*) j=`basename $$i`;; *) j=$$i;; esac; \
+		cmp -s $(GXX_INCDIR)/$$j $$i || \
+		${INSTALL} ${INSTALL_COPY} -o $(BINOWN) -g $(BINGRP) -m $(NONBINMODE) \
+				$$i $(GXX_INCDIR)/$$j; \
 	done
 #
-# Misc GNU overidden targets.
+# Misc GNU overridden targets.
 #
 $(QIO_OBJS) $(QIO_OBJS:.o=.po) $(QIO_OBJS:.o=.so):
 	cd $(IO_DIR); $(MAKE) -f Makefile.bsd-wrapper
