@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.18 1997/07/23 03:46:01 denny Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.19 1997/07/23 16:13:26 denny Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -532,6 +532,7 @@ decapsulate:
 			 * gets handled by stripping off the SNAP header
 			 * and going back up to decapsulate.
 			 */
+#ifdef NETATALK
 			if (l->llc_control == LLC_UI &&
 			    l->llc_ssap == LLC_SNAP_LSAP &&
 			    Bcmp(&(l->llc_snap_org_code)[0],
@@ -553,7 +554,7 @@ decapsulate:
 				aarpinput((struct arpcom *)ifp, m);
 				return;
 			}
-
+#endif
 			if (l->llc_control == LLC_UI &&
 			    l->llc_dsap == LLC_SNAP_LSAP &&
 			    l->llc_ssap == LLC_SNAP_LSAP) {
