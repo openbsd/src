@@ -1,4 +1,4 @@
-/*	$OpenBSD: gidt.S,v 1.6 1997/07/18 00:48:19 mickey Exp $	*/
+/*	$OpenBSD: gidt.S,v 1.7 1997/07/24 21:50:10 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -47,11 +47,20 @@
 #define addr32  .byte 0x67
 #define data32  .byte 0x66
 
+#define	SNULL	0x00
+#define S32TEXT	0x08
+#define	S32DATA	0x10
+#define S16TEXT	0x18
+#define	S16DATA	0x20
+
 #ifdef	GIDT_DEBUG
 #define	gidt_debug0		; \
 	movl	$0xb8000, %eax	; \
-	movl	$0x47314730, (%eax)
+	movl	$0x47314730, (%eax)		; \
+	movw	$S16DATA, %ax
 #define	gidt_debug1		; \
+	movl	%ax, %ds	; \
+	movl	%ax, %es	; \
 	data32			; \
 	movl	$(0xb8000 - START), %eax	; \
 	data32			; \
@@ -83,16 +92,11 @@
 #define prot2real						\
 	gidt_debug0;						\
 								\
-	movl	$0x20, %eax;					\
-								\
-	/* ljmp	$0x18, $1f */;					\
+	/* ljmp	$S16TEXT, $1f */;				\
 	.byte	0xea;		/* Change to 16bit mode */	\
 	.long	1f - START;					\
-	.word	0x18;						\
+	.word	S16TEXT;					\
 1:								\
-	movl	%ax, %ds;					\
-	movl	%ax, %es;					\
-								\
 	gidt_debug1;						\
 								\
 	movl	%cr0, %eax;	/* disable pmmm */		\
@@ -129,10 +133,10 @@
 	movl	%eax, %cr0;					\
 								\
 	data32;							\
-	ljmp	$0x08, $1f;   /* reload %cs flushing pipeline */\
+	ljmp	$S32TEXT, $1f;   /* reload %cs flush pipeline */\
 1:								\
 	/* reload 32bit %ds, %ss, %es */			\
-	movl	$0x10, %eax;					\
+	movl	$S32DATA, %eax;					\
 	movl	%ax, %ds;					\
 	movl	%ax, %ss;					\
 	movl	%ax, %es;					\
@@ -190,7 +194,7 @@ pmm_init:
 	lgdt	Gdtr
 	ljmp	$8, $1f
 1:	
-	movw	$0x10, %ax
+	movw	$S32DATA, %ax
 	movl	%ax, %ds
 	movl	%ax, %ss
 	movl	%ax, %es
@@ -205,7 +209,8 @@ pmm_init:
 #define IEMU(n)		IPROC(emu/**/n)
 	.align 3
 idt:
-#define idte(e)	.word IPROC(e), 0x8, (0x80|SDT_SYS386TGT) << 8, (START >> 16)
+#define idte(e)	\
+	.word IPROC(e), S32TEXT, (0x80|SDT_SYS386TGT) << 8, (START >> 16)
 		/* internal (0-31) */
 	idte(de); idte(db); idte(nmi); idte(bp); idte(of); idte(br)
 	idte(ud); idte(nm); idte(df);  idte(fo); idte(ts); idte(np)
