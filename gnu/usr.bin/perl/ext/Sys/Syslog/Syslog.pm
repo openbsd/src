@@ -244,9 +244,9 @@ sub syslog {
 	    else {
 		if (open(CONS,">/dev/console")) {
 		    print CONS "<$facility.$priority>$whoami: $message\r";
-		    exit if defined $pid;		# if fork failed, we're parent
 		    close CONS;
 		}
+		exit if defined $pid;		# if fork failed, we're parent
 	    }
 	}
     }
