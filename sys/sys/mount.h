@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.h,v 1.12 1996/12/24 20:14:35 dm Exp $	*/
+/*	$OpenBSD: mount.h,v 1.13 1997/03/02 09:38:22 millert Exp $	*/
 /*	$NetBSD: mount.h,v 1.48 1996/02/18 11:55:47 fvdl Exp $	*/
 
 /*
@@ -133,22 +133,23 @@ struct mount {
 #define	MNT_NODEV	0x00000010	/* don't interpret special files */
 #define	MNT_UNION	0x00000020	/* union with underlying filesystem */
 #define	MNT_ASYNC	0x00000040	/* file system written asynchronously */
+#define	MNT_NOATIME	0x00000080	/* don't update atime on files */
 
 /*
  * exported mount flags.
  */
-#define	MNT_EXRDONLY	0x00000080	/* exported read only */
-#define	MNT_EXPORTED	0x00000100	/* file system is exported */
-#define	MNT_DEFEXPORTED	0x00000200	/* exported to the world */
-#define	MNT_EXPORTANON	0x00000400	/* use anon uid mapping for everyone */
-#define	MNT_EXKERB	0x00000800	/* exported with Kerberos uid mapping */
+#define	MNT_EXRDONLY	0x00000100	/* exported read only */
+#define	MNT_EXPORTED	0x00000200	/* file system is exported */
+#define	MNT_DEFEXPORTED	0x00000400	/* exported to the world */
+#define	MNT_EXPORTANON	0x00000800	/* use anon uid mapping for everyone */
+#define	MNT_EXKERB	0x00001000	/* exported with Kerberos uid mapping */
 
 /*
  * Flags set by internal operations.
  */
-#define	MNT_LOCAL	0x00001000	/* filesystem is stored locally */
-#define	MNT_QUOTA	0x00002000	/* quotas are enabled on filesystem */
-#define	MNT_ROOTFS	0x00004000	/* identifies the root filesystem */
+#define	MNT_LOCAL	0x00002000	/* filesystem is stored locally */
+#define	MNT_QUOTA	0x00004000	/* quotas are enabled on filesystem */
+#define	MNT_ROOTFS	0x00008000	/* identifies the root filesystem */
 
 /*
  * Mask of flags that are visible to statfs()

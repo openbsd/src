@@ -1,4 +1,4 @@
-/*	$OpenBSD: lfs_inode.c,v 1.4 1996/07/01 07:41:51 downsj Exp $	*/
+/*	$OpenBSD: lfs_inode.c,v 1.5 1997/03/02 09:38:18 millert Exp $	*/
 /*	$NetBSD: lfs_inode.c,v 1.5 1996/05/11 18:27:35 mycroft Exp $	*/
 
 /*
@@ -90,6 +90,9 @@ lfs_update(v)
 	if (vp->v_mount->mnt_flag & MNT_RDONLY)
 		return (0);
 	ip = VTOI(vp);
+	if ((ap->a_vp->v_mount->mnt_flag & MNT_NOATIME) &&
+	    !(ip->i_flag & (IN_CHANGE | IN_UPDATE)))
+		ip->i_flag &= ~IN_ACCESS;
 	if ((ip->i_flag &
 	    (IN_ACCESS | IN_CHANGE | IN_MODIFIED | IN_UPDATE)) == 0)
 		return (0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_inode.c,v 1.4 1996/11/05 03:30:12 tholo Exp $	*/
+/*	$OpenBSD: ffs_inode.c,v 1.5 1997/03/02 09:38:13 millert Exp $	*/
 /*	$NetBSD: ffs_inode.c,v 1.10 1996/05/11 18:27:19 mycroft Exp $	*/
 
 /*
@@ -96,6 +96,9 @@ ffs_update(v)
 		ip->i_flag &=
 		    ~(IN_ACCESS | IN_CHANGE | IN_MODIFIED | IN_UPDATE);
 		return (0);
+	} else if ((ap->a_vp->v_mount->mnt_flag & MNT_NOATIME) &&
+	    !(ip->i_flag & (IN_CHANGE | IN_UPDATE))) {
+		ip->i_flag &= ~IN_ACCESS;
 	}
 	if ((ip->i_flag &
 	    (IN_ACCESS | IN_CHANGE | IN_MODIFIED | IN_UPDATE)) == 0)
