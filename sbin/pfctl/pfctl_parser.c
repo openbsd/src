@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.198 2004/05/07 16:54:20 henning Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.199 2004/05/19 17:50:51 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -626,7 +626,7 @@ print_src_node(struct pf_src_node *sn, int opts)
 }
 
 void
-print_rule(struct pf_rule *r, int verbose)
+print_rule(struct pf_rule *r, const char *anchor_call, int verbose)
 {
 	static const char *actiontypes[] = { "pass", "block", "scrub", "nat",
 	    "no nat", "binat", "no binat", "rdr", "no rdr" };
@@ -639,8 +639,8 @@ print_rule(struct pf_rule *r, int verbose)
 		printf("@%d ", r->nr);
 	if (r->action > PF_NORDR)
 		printf("action(%d)", r->action);
-	else if (r->anchorname[0])
-		printf("%s %s", anchortypes[r->action], r->anchorname);
+	else if (anchor_call[0])
+		printf("%s %s", anchortypes[r->action], anchor_call);
 	else {
 		printf("%s", actiontypes[r->action]);
 		if (r->natpass)
@@ -899,7 +899,7 @@ print_rule(struct pf_rule *r, int verbose)
 			printf(" !");
 		printf(" tagged %s", r->match_tagname);
 	}
-	if (!r->anchorname[0] && (r->action == PF_NAT ||
+	if (!anchor_call[0] && (r->action == PF_NAT ||
 	    r->action == PF_BINAT || r->action == PF_RDR)) {
 		printf(" -> ");
 		print_pool(&r->rpool, r->rpool.proxy_port[0],
@@ -1569,31 +1569,26 @@ append_addr_host(struct pfr_buffer *b, struct node_host *n, int test, int not)
 }
 
 int
-pfctl_add_trans(struct pfr_buffer *buf, int rs_num, const char *anchor,
-    const char *ruleset)
+pfctl_add_trans(struct pfr_buffer *buf, int rs_num, const char *anchor)
 {
 	struct pfioc_trans_e trans;
 
 	bzero(&trans, sizeof(trans));
 	trans.rs_num = rs_num;
 	if (strlcpy(trans.anchor, anchor,
-	    sizeof(trans.anchor)) >= sizeof(trans.anchor) ||
-	    strlcpy(trans.ruleset, ruleset,
-	    sizeof(trans.ruleset)) >= sizeof(trans.ruleset))
+	    sizeof(trans.anchor)) >= sizeof(trans.anchor))
 		errx(1, "pfctl_add_trans: strlcpy");
 
 	return pfr_buf_add(buf, &trans);
 }
 
 u_int32_t
-pfctl_get_ticket(struct pfr_buffer *buf, int rs_num, const char *anchor,
-    const char *ruleset)
+pfctl_get_ticket(struct pfr_buffer *buf, int rs_num, const char *anchor)
 {
 	struct pfioc_trans_e *p;
 
 	PFRB_FOREACH(p, buf)
-		if (rs_num == p->rs_num && !strcmp(anchor, p->anchor) &&
-		    !strcmp(ruleset, p->ruleset))
+		if (rs_num == p->rs_num && !strcmp(anchor, p->anchor))
 			return (p->ticket);
 	errx(1, "pfctl_get_ticket: assertion failed");
 }

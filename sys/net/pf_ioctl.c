@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.120 2004/05/18 10:35:22 dhartmei Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.121 2004/05/19 17:50:52 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -80,13 +80,12 @@
 void			 pfattach(int);
 int			 pfopen(dev_t, int, int, struct proc *);
 int			 pfclose(dev_t, int, int, struct proc *);
-struct pf_pool		*pf_get_pool(char *, char *, u_int32_t,
-			    u_int8_t, u_int32_t, u_int8_t, u_int8_t, u_int8_t);
+struct pf_pool		*pf_get_pool(char *, u_int32_t, u_int8_t, u_int32_t,
+			    u_int8_t, u_int8_t, u_int8_t);
 int			 pf_get_ruleset_number(u_int8_t);
 void			 pf_init_ruleset(struct pf_ruleset *);
-struct pf_anchor	*pf_find_or_create_anchor(char[PF_ANCHOR_NAME_SIZE]);
-void			 pf_remove_if_empty_anchor(struct pf_anchor *);
-int			 pf_anchor_setup(struct pf_ruleset *, struct pf_rule *);
+int			 pf_anchor_setup(struct pf_rule *,
+			    const struct pf_ruleset *, const char *);
 void			 pf_anchor_remove(struct pf_rule *);
 
 void			 pf_mv_pool(struct pf_palist *, struct pf_palist *);
@@ -99,9 +98,9 @@ int			 pf_commit_altq(u_int32_t);
 int			 pf_enable_altq(struct pf_altq *);
 int			 pf_disable_altq(struct pf_altq *);
 #endif /* ALTQ */
-int			 pf_begin_rules(u_int32_t *, int, char *, char *);
-int			 pf_rollback_rules(u_int32_t, int, char *, char *);
-int			 pf_commit_rules(u_int32_t, int, char *, char *);
+int			 pf_begin_rules(u_int32_t *, int, const char *);
+int			 pf_rollback_rules(u_int32_t, int, char *);
+int			 pf_commit_rules(u_int32_t, int, char *);
 
 extern struct timeout	 pf_expire_to;
 
@@ -146,7 +145,7 @@ pfattach(int num)
 	    pf_pool_limits[PF_LIMIT_STATES].limit, NULL, 0);
 
 	RB_INIT(&tree_src_tracking);
-	TAILQ_INIT(&pf_anchors);
+	RB_INIT(&pf_anchors);
 	pf_init_ruleset(&pf_main_ruleset);
 	TAILQ_INIT(&pf_altqs[0]);
 	TAILQ_INIT(&pf_altqs[1]);
@@ -208,15 +207,15 @@ pfclose(dev_t dev, int flags, int fmt, struct proc *p)
 }
 
 struct pf_pool *
-pf_get_pool(char *anchorname, char *rulesetname, u_int32_t ticket,
-    u_int8_t rule_action, u_int32_t rule_number, u_int8_t r_last,
-    u_int8_t active, u_int8_t check_ticket)
+pf_get_pool(char *anchor, u_int32_t ticket, u_int8_t rule_action,
+    u_int32_t rule_number, u_int8_t r_last, u_int8_t active,
+    u_int8_t check_ticket)
 {
 	struct pf_ruleset	*ruleset;
 	struct pf_rule		*rule;
 	int			 rs_num;
 
-	ruleset = pf_find_ruleset(anchorname, rulesetname);
+	ruleset = pf_find_ruleset(anchor);
 	if (ruleset == NULL)
 		return (NULL);
 	rs_num = pf_get_ruleset_number(rule_action);
@@ -295,151 +294,186 @@ pf_init_ruleset(struct pf_ruleset *ruleset)
 }
 
 struct pf_anchor *
-pf_find_anchor(const char *anchorname)
+pf_find_anchor(const char *path)
 {
-	struct pf_anchor	*anchor;
-	int			 n = -1;
+	static struct pf_anchor	 key;
 
-	anchor = TAILQ_FIRST(&pf_anchors);
-	while (anchor != NULL && (n = strcmp(anchor->name, anchorname)) < 0)
-		anchor = TAILQ_NEXT(anchor, entries);
-	if (n == 0)
-		return (anchor);
-	else
-		return (NULL);
+	memset(&key, 0, sizeof(key));
+	strlcpy(key.path, path, sizeof(key.path));
+	return (RB_FIND(pf_anchor_global, &pf_anchors, &key));
 }
 
 struct pf_ruleset *
-pf_find_ruleset(char *anchorname, char *rulesetname)
+pf_find_ruleset(const char *path)
 {
 	struct pf_anchor	*anchor;
+
+	while (*path == ':')
+		path++;
+	if (!*path)
+		return (&pf_main_ruleset);
+	anchor = pf_find_anchor(path);
+	if (anchor == NULL)
+		return (NULL);
+	else
+		return (&anchor->ruleset);
+}
+
+struct pf_ruleset *
+pf_find_or_create_ruleset(const char *path)
+{
+	static char		 p[MAXPATHLEN];
+	char			*q, *r;
 	struct pf_ruleset	*ruleset;
+	struct pf_anchor	*anchor, *dup, *parent = NULL;
 
-	if (!anchorname[0] && !rulesetname[0])
-		return (&pf_main_ruleset);
-	if (!anchorname[0] || !rulesetname[0])
-		return (NULL);
-	anchorname[PF_ANCHOR_NAME_SIZE-1] = 0;
-	rulesetname[PF_RULESET_NAME_SIZE-1] = 0;
-	anchor = pf_find_anchor(anchorname);
-	if (anchor == NULL)
-		return (NULL);
-	ruleset = TAILQ_FIRST(&anchor->rulesets);
-	while (ruleset != NULL && strcmp(ruleset->name, rulesetname) < 0)
-		ruleset = TAILQ_NEXT(ruleset, entries);
-	if (ruleset != NULL && !strcmp(ruleset->name, rulesetname))
+	while (*path == ':')
+		path++;
+	ruleset = pf_find_ruleset(path);
+	if (ruleset != NULL)
 		return (ruleset);
-	else
-		return (NULL);
-}
-
-struct pf_ruleset *
-pf_find_or_create_ruleset(char anchorname[PF_ANCHOR_NAME_SIZE],
-    char rulesetname[PF_RULESET_NAME_SIZE])
-{
-	struct pf_anchor	*anchor;
-	struct pf_ruleset	*ruleset, *r;
-
-	if (!anchorname[0] && !rulesetname[0])
-		return (&pf_main_ruleset);
-	if (!anchorname[0] || !rulesetname[0])
-		return (NULL);
-	rulesetname[PF_RULESET_NAME_SIZE-1] = 0;
-	anchor = pf_find_or_create_anchor(anchorname);
-	if (anchor == NULL)
-		return (NULL);
-	r = TAILQ_FIRST(&anchor->rulesets);
-	while (r != NULL && strcmp(r->name, rulesetname) < 0)
-		r = TAILQ_NEXT(r, entries);
-	if (r != NULL && !strcmp(r->name, rulesetname))
-		return (r);
-	ruleset = (struct pf_ruleset *)malloc(sizeof(struct pf_ruleset),
-	    M_TEMP, M_NOWAIT);
-	if (ruleset != NULL) {
-		pf_init_ruleset(ruleset);
-		bcopy(rulesetname, ruleset->name, sizeof(ruleset->name));
-		ruleset->anchor = anchor;
-		if (r != NULL)
-			TAILQ_INSERT_BEFORE(r, ruleset, entries);
-		else
-			TAILQ_INSERT_TAIL(&anchor->rulesets, ruleset, entries);
+	strlcpy(p, path, sizeof(p));
+	while (parent == NULL && (q = strrchr(p, ':')) != NULL) {
+		*q = 0;
+		if ((ruleset = pf_find_ruleset(p)) != NULL) {
+			parent = ruleset->anchor;
+			break;
+		}
 	}
-	return (ruleset);
-}
-
-struct pf_anchor *
-pf_find_or_create_anchor(char anchorname[PF_ANCHOR_NAME_SIZE])
-{
-	struct pf_anchor	*anchor, *a;
-
-	if (!anchorname[0])
+	if (q == NULL)
+		q = p;
+	else
+		q++;
+	strlcpy(p, path, sizeof(p));
+	if (!*q)
 		return (NULL);
-	anchorname[PF_ANCHOR_NAME_SIZE-1] = 0;
-	a = TAILQ_FIRST(&pf_anchors);
-	while (a != NULL && strcmp(a->name, anchorname) < 0)
-		a = TAILQ_NEXT(a, entries);
-	if (a != NULL && !strcmp(a->name, anchorname))
-		anchor = a;
-	else {
-		anchor = (struct pf_anchor *)malloc(sizeof(struct pf_anchor),
-		    M_TEMP, M_NOWAIT);
+	while ((r = strchr(q, ':')) != NULL || *q) {
+		if (r != NULL)
+			*r = 0;
+		if (!*q || strlen(q) >= PF_ANCHOR_NAME_SIZE ||
+		    (parent != NULL && strlen(parent->path) >=
+		    MAXPATHLEN - PF_ANCHOR_NAME_SIZE - 1))
+			return (NULL);
+		anchor = (struct pf_anchor *)malloc(sizeof(*anchor), M_TEMP,
+		    M_NOWAIT);
 		if (anchor == NULL)
 			return (NULL);
-		memset(anchor, 0, sizeof(struct pf_anchor));
-		bcopy(anchorname, anchor->name, sizeof(anchor->name));
-		TAILQ_INIT(&anchor->rulesets);
-		if (a != NULL)
-			TAILQ_INSERT_BEFORE(a, anchor, entries);
+		memset(anchor, 0, sizeof(*anchor));
+		RB_INIT(&anchor->children);
+		strlcpy(anchor->name, q, sizeof(anchor->name));
+		if (parent != NULL) {
+			strlcpy(anchor->path, parent->path,
+			    sizeof(anchor->path));
+			strlcat(anchor->path, ":", sizeof(anchor->path));
+		}
+		strlcat(anchor->path, anchor->name, sizeof(anchor->path));
+		if ((dup = RB_INSERT(pf_anchor_global, &pf_anchors, anchor)) !=
+		    NULL) {
+			printf("pf_find_or_create_ruleset: RB_INSERT1 "
+			    "'%s' '%s' collides with '%s' '%s'\n",
+			    anchor->path, anchor->name, dup->path, dup->name);
+			free(anchor, M_TEMP);
+			return (NULL);
+		}
+		if (parent != NULL) {
+			anchor->parent = parent;
+			if ((dup = RB_INSERT(pf_anchor_node, &parent->children,
+			    anchor)) != NULL) {
+				printf("pf_find_or_create_ruleset: "
+				    "RB_INSERT2 '%s' '%s' collides with "
+				    "'%s' '%s'\n", anchor->path, anchor->name,
+				    dup->path, dup->name);
+				RB_REMOVE(pf_anchor_global, &pf_anchors,
+				    anchor);
+				free(anchor, M_TEMP);
+				return (NULL);
+			}
+		}
+		pf_init_ruleset(&anchor->ruleset);
+		anchor->ruleset.anchor = anchor;
+		parent = anchor;
+		if (r != NULL)
+			q = r + 1;
 		else
-			TAILQ_INSERT_TAIL(&pf_anchors, anchor, entries);
+			*q = 0;
 	}
-	return (anchor);
+	return (&anchor->ruleset);
 }
 
 void
 pf_remove_if_empty_ruleset(struct pf_ruleset *ruleset)
 {
-	struct pf_anchor	*anchor;
+	struct pf_anchor	*parent;
 	int			 i;
 
-	if (ruleset == NULL || ruleset->anchor == NULL || ruleset->tables > 0 ||
-	    ruleset->topen)
-		return;
-	for (i = 0; i < PF_RULESET_MAX; ++i)
-		if (!TAILQ_EMPTY(ruleset->rules[i].active.ptr) ||
-		    !TAILQ_EMPTY(ruleset->rules[i].inactive.ptr) ||
-		    ruleset->rules[i].inactive.open)
+	while (ruleset != NULL) {
+		if (ruleset == &pf_main_ruleset || ruleset->anchor == NULL ||
+		    !RB_EMPTY(&ruleset->anchor->children) ||
+		    ruleset->anchor->refcnt > 0 || ruleset->tables > 0 ||
+		    ruleset->topen)
 			return;
-
-	anchor = ruleset->anchor;
-	TAILQ_REMOVE(&anchor->rulesets, ruleset, entries);
-	free(ruleset, M_TEMP);
-
-	pf_remove_if_empty_anchor(anchor);
-}
-
-void
-pf_remove_if_empty_anchor(struct pf_anchor *anchor)
-{
-	if (anchor->refcnt > 0)
-		return;
-	if (TAILQ_EMPTY(&anchor->rulesets)) {
-		TAILQ_REMOVE(&pf_anchors, anchor, entries);
-		free(anchor, M_TEMP);
+		for (i = 0; i < PF_RULESET_MAX; ++i)
+			if (!TAILQ_EMPTY(ruleset->rules[i].active.ptr) ||
+			    !TAILQ_EMPTY(ruleset->rules[i].inactive.ptr) ||
+			    ruleset->rules[i].inactive.open)
+				return;
+		RB_REMOVE(pf_anchor_global, &pf_anchors, ruleset->anchor);
+		if ((parent = ruleset->anchor->parent) != NULL)
+			RB_REMOVE(pf_anchor_node, &parent->children,
+			    ruleset->anchor);
+		free(ruleset->anchor, M_TEMP);
+		if (parent == NULL)
+			return;
+		ruleset = &parent->ruleset;
 	}
 }
 
 int
-pf_anchor_setup(struct pf_ruleset *rs, struct pf_rule *r)
+pf_anchor_setup(struct pf_rule *r, const struct pf_ruleset *s,
+    const char *name)
 {
+	static char		*p, path[MAXPATHLEN];
+	struct pf_ruleset	*ruleset;
+
 	r->anchor = NULL;
-	if (rs != &pf_main_ruleset && *r->anchorname)
-		return (1);	/* anchors are not recursive */
-	if (!*r->anchorname)
-		return (0);	/* no anchor, nothing to do */
-	r->anchor = pf_find_or_create_anchor(r->anchorname);
-	if (r->anchor == NULL)
-		return (1);	/* memory? */
+	r->anchor_relative = 0;
+	r->anchor_wildcard = 0;
+	if (!name[0])
+		return (0);
+	if (name[0] == ':')
+		strlcpy(path, name + 1, sizeof(path));
+	else {
+		/* relative path */
+		if (s->anchor == NULL || !s->anchor->path[0])
+			path[0] = 0;
+		else
+			strlcpy(path, s->anchor->path, sizeof(path));
+		while (name[0] == '.' && name[1] == '.' && name[2] == ':') {
+			if (!path[0]) {
+				printf("pf_anchor_setup: .. beyond root\n");
+				return (1);
+			}
+			if ((p = strrchr(path, ':')) != NULL)
+				*p = 0;
+			else
+				path[0] = 0;
+			r->anchor_relative++;
+			name += 3;
+		}
+		if (path[0])
+			strlcat(path, ":", sizeof(path));
+		strlcat(path, name, sizeof(path));
+	}
+	if ((p = strrchr(path, ':')) != NULL && !strcmp(p, ":*")) {
+		r->anchor_wildcard = 1;
+		*p = 0;
+	}
+	ruleset = pf_find_or_create_ruleset(path);
+	if (ruleset == NULL || ruleset->anchor == NULL) {
+		printf("pf_anchor_setup: ruleset\n");
+		return (1);
+	}
+	r->anchor = ruleset->anchor;
 	r->anchor->refcnt++;
 	return (0);
 }
@@ -455,7 +489,7 @@ pf_anchor_remove(struct pf_rule *r)
 		return;
 	}
 	if (!--r->anchor->refcnt)
-		pf_remove_if_empty_anchor(r->anchor);
+		pf_remove_if_empty_ruleset(&r->anchor->ruleset);
 	r->anchor = NULL;
 }
 
@@ -794,14 +828,14 @@ pf_disable_altq(struct pf_altq *altq)
 #endif /* ALTQ */
 
 int
-pf_begin_rules(u_int32_t *ticket, int rs_num, char *anchor, char *ruleset)
+pf_begin_rules(u_int32_t *ticket, int rs_num, const char *anchor)
 {
 	struct pf_ruleset	*rs;
 	struct pf_rule		*rule;
 
 	if (rs_num < 0 || rs_num >= PF_RULESET_MAX)
 		return (EINVAL);
-	rs = pf_find_or_create_ruleset(anchor, ruleset);
+	rs = pf_find_or_create_ruleset(anchor);
 	if (rs == NULL)
 		return (EINVAL);
 	while ((rule = TAILQ_FIRST(rs->rules[rs_num].inactive.ptr)) != NULL)
@@ -812,14 +846,14 @@ pf_begin_rules(u_int32_t *ticket, int rs_num, char *anchor, char *ruleset)
 }
 
 int
-pf_rollback_rules(u_int32_t ticket, int rs_num, char *anchor, char *ruleset)
+pf_rollback_rules(u_int32_t ticket, int rs_num, char *anchor)
 {
 	struct pf_ruleset	*rs;
 	struct pf_rule		*rule;
 
 	if (rs_num < 0 || rs_num >= PF_RULESET_MAX)
 		return (EINVAL);
-	rs = pf_find_ruleset(anchor, ruleset);
+	rs = pf_find_ruleset(anchor);
 	if (rs == NULL || !rs->rules[rs_num].inactive.open ||
 	    rs->rules[rs_num].inactive.ticket != ticket)
 		return (0);
@@ -830,7 +864,7 @@ pf_rollback_rules(u_int32_t ticket, int rs_num, char *anchor, char *ruleset)
 }
 
 int
-pf_commit_rules(u_int32_t ticket, int rs_num, char *anchor, char *ruleset)
+pf_commit_rules(u_int32_t ticket, int rs_num, char *anchor)
 {
 	struct pf_ruleset	*rs;
 	struct pf_rule		*rule;
@@ -839,7 +873,7 @@ pf_commit_rules(u_int32_t ticket, int rs_num, char *anchor, char *ruleset)
 
 	if (rs_num < 0 || rs_num >= PF_RULESET_MAX)
 		return (EINVAL);
-	rs = pf_find_ruleset(anchor, ruleset);
+	rs = pf_find_ruleset(anchor);
 	if (rs == NULL || !rs->rules[rs_num].inactive.open ||
 	    ticket != rs->rules[rs_num].inactive.ticket)
 		return (EBUSY);
@@ -891,8 +925,6 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		case DIOCGETALTQS:
 		case DIOCGETALTQ:
 		case DIOCGETQSTATS:
-		case DIOCGETANCHORS:
-		case DIOCGETANCHOR:
 		case DIOCGETRULESETS:
 		case DIOCGETRULESET:
 		case DIOCRGETTABLES:
@@ -938,8 +970,6 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		case DIOCGETALTQS:
 		case DIOCGETALTQ:
 		case DIOCGETQSTATS:
-		case DIOCGETANCHORS:
-		case DIOCGETANCHOR:
 		case DIOCGETRULESETS:
 		case DIOCGETRULESET:
 		case DIOCRGETTABLES:
@@ -997,8 +1027,9 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	case DIOCBEGINRULES: {
 		struct pfioc_rule	*pr = (struct pfioc_rule *)addr;
 
+		pr->anchor[sizeof(pr->anchor) - 1] = 0;
 		error = pf_begin_rules(&pr->ticket, pf_get_ruleset_number(
-		    pr->rule.action), pr->anchor, pr->ruleset);
+		    pr->rule.action), pr->anchor);
 		break;
 	}
 
@@ -1009,17 +1040,14 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		struct pf_pooladdr	*pa;
 		int			 rs_num;
 
-		ruleset = pf_find_ruleset(pr->anchor, pr->ruleset);
+		pr->anchor[sizeof(pr->anchor) - 1] = 0;
+		ruleset = pf_find_ruleset(pr->anchor);
 		if (ruleset == NULL) {
 			error = EINVAL;
 			break;
 		}
 		rs_num = pf_get_ruleset_number(pr->rule.action);
 		if (rs_num >= PF_RULESET_MAX) {
-			error = EINVAL;
-			break;
-		}
-		if (pr->rule.anchorname[0] && ruleset != &pf_main_ruleset) {
 			error = EINVAL;
 			break;
 		}
@@ -1107,7 +1135,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			error = EINVAL;
 		if (pf_tbladdr_setup(ruleset, &rule->dst.addr))
 			error = EINVAL;
-		if (pf_anchor_setup(ruleset, rule))
+		if (pf_anchor_setup(rule, ruleset, pr->anchor_call))
 			error = EINVAL;
 		TAILQ_FOREACH(pa, &pf_pabuf, entries)
 			if (pf_tbladdr_setup(ruleset, &pa->addr))
@@ -1115,7 +1143,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 
 		pf_mv_pool(&pf_pabuf, &rule->rpool.list);
 		if (((((rule->action == PF_NAT) || (rule->action == PF_RDR) ||
-		    (rule->action == PF_BINAT)) && !rule->anchorname[0]) ||
+		    (rule->action == PF_BINAT)) && !pr->anchor[0]) ||
 		    (rule->rt > PF_FASTROUTE)) &&
 		    (TAILQ_FIRST(&rule->rpool.list) == NULL))
 			error = EINVAL;
@@ -1134,8 +1162,9 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	case DIOCCOMMITRULES: {
 		struct pfioc_rule	*pr = (struct pfioc_rule *)addr;
 
+		pr->anchor[sizeof(pr->anchor) - 1] = 0;
 		error = pf_commit_rules(pr->ticket, pf_get_ruleset_number(
-		    pr->rule.action), pr->anchor, pr->ruleset);
+		    pr->rule.action), pr->anchor);
 		break;
 	}
 
@@ -1145,7 +1174,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		struct pf_rule		*tail;
 		int			 rs_num;
 
-		ruleset = pf_find_ruleset(pr->anchor, pr->ruleset);
+		pr->anchor[sizeof(pr->anchor) - 1] = 0;
+		ruleset = pf_find_ruleset(pr->anchor);
 		if (ruleset == NULL) {
 			error = EINVAL;
 			break;
@@ -1173,7 +1203,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		struct pf_rule		*rule;
 		int			 rs_num, i;
 
-		ruleset = pf_find_ruleset(pr->anchor, pr->ruleset);
+		pr->anchor[sizeof(pr->anchor) - 1] = 0;
+		ruleset = pf_find_ruleset(pr->anchor);
 		if (ruleset == NULL) {
 			error = EINVAL;
 			break;
@@ -1197,6 +1228,17 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			break;
 		}
 		bcopy(rule, &pr->rule, sizeof(struct pf_rule));
+		if (rule->anchor == NULL)
+			pr->anchor_call[0] = 0;
+		else {
+			/* XXX relative paths */
+			strlcpy(pr->anchor_call, ":", sizeof(pr->anchor_call));
+			strlcat(pr->anchor_call, rule->anchor->path,
+			    sizeof(pr->anchor_call));
+			if (rule->anchor_wildcard)
+				strlcat(pr->anchor_call, ":*",
+				    sizeof(pr->anchor_call));
+		}
 		pfi_dynaddr_copyout(&pr->rule.src.addr);
 		pfi_dynaddr_copyout(&pr->rule.dst.addr);
 		pf_tbladdr_copyout(&pr->rule.src.addr);
@@ -1230,7 +1272,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			error = EINVAL;
 			break;
 		}
-		ruleset = pf_find_ruleset(pcr->anchor, pcr->ruleset);
+		ruleset = pf_find_ruleset(pcr->anchor);
 		if (ruleset == NULL) {
 			error = EINVAL;
 			break;
@@ -1324,7 +1366,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				error = EINVAL;
 			if (pf_tbladdr_setup(ruleset, &newrule->dst.addr))
 				error = EINVAL;
-			if (pf_anchor_setup(ruleset, newrule))
+			if (pf_anchor_setup(newrule, ruleset, pcr->anchor_call))
 				error = EINVAL;
 
 			pf_mv_pool(&pf_pabuf, &newrule->rpool.list);
@@ -1332,7 +1374,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			    (newrule->action == PF_RDR) ||
 			    (newrule->action == PF_BINAT) ||
 			    (newrule->rt > PF_FASTROUTE)) &&
-			    !newrule->anchorname[0])) &&
+			    !pcr->anchor[0])) &&
 			    (TAILQ_FIRST(&newrule->rpool.list) == NULL))
 				error = EINVAL;
 
@@ -1995,8 +2037,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 
 		pp->nr = 0;
 		s = splsoftnet();
-		pool = pf_get_pool(pp->anchor, pp->ruleset, pp->ticket,
-		    pp->r_action, pp->r_num, 0, 1, 0);
+		pool = pf_get_pool(pp->anchor, pp->ticket, pp->r_action,
+		    pp->r_num, 0, 1, 0);
 		if (pool == NULL) {
 			error = EBUSY;
 			splx(s);
@@ -2013,8 +2055,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		u_int32_t		 nr = 0;
 
 		s = splsoftnet();
-		pool = pf_get_pool(pp->anchor, pp->ruleset, pp->ticket,
-		    pp->r_action, pp->r_num, 0, 1, 1);
+		pool = pf_get_pool(pp->anchor, pp->ticket, pp->r_action,
+		    pp->r_num, 0, 1, 1);
 		if (pool == NULL) {
 			error = EBUSY;
 			splx(s);
@@ -2054,13 +2096,13 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			break;
 		}
 
-		ruleset = pf_find_ruleset(pca->anchor, pca->ruleset);
+		ruleset = pf_find_ruleset(pca->anchor);
 		if (ruleset == NULL) {
 			error = EBUSY;
 			break;
 		}
-		pool = pf_get_pool(pca->anchor, pca->ruleset, pca->ticket,
-		    pca->r_action, pca->r_num, pca->r_last, 1, 1);
+		pool = pf_get_pool(pca->anchor, pca->ticket, pca->r_action,
+		    pca->r_num, pca->r_last, 1, 1);
 		if (pool == NULL) {
 			error = EBUSY;
 			break;
@@ -2150,68 +2192,61 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		break;
 	}
 
-	case DIOCGETANCHORS: {
-		struct pfioc_anchor	*pa = (struct pfioc_anchor *)addr;
-		struct pf_anchor	*anchor;
-
-		pa->nr = 0;
-		TAILQ_FOREACH(anchor, &pf_anchors, entries)
-			pa->nr++;
-		break;
-	}
-
-	case DIOCGETANCHOR: {
-		struct pfioc_anchor	*pa = (struct pfioc_anchor *)addr;
-		struct pf_anchor	*anchor;
-		u_int32_t		 nr = 0;
-
-		anchor = TAILQ_FIRST(&pf_anchors);
-		while (anchor != NULL && nr < pa->nr) {
-			anchor = TAILQ_NEXT(anchor, entries);
-			nr++;
-		}
-		if (anchor == NULL)
-			error = EBUSY;
-		else
-			bcopy(anchor->name, pa->name, sizeof(pa->name));
-		break;
-	}
-
 	case DIOCGETRULESETS: {
 		struct pfioc_ruleset	*pr = (struct pfioc_ruleset *)addr;
-		struct pf_anchor	*anchor;
 		struct pf_ruleset	*ruleset;
+		struct pf_anchor	*anchor;
 
-		pr->anchor[PF_ANCHOR_NAME_SIZE-1] = 0;
-		if ((anchor = pf_find_anchor(pr->anchor)) == NULL) {
+		pr->path[sizeof(pr->path) - 1] = 0;
+		if ((ruleset = pf_find_ruleset(pr->path)) == NULL) {
 			error = EINVAL;
 			break;
 		}
 		pr->nr = 0;
-		TAILQ_FOREACH(ruleset, &anchor->rulesets, entries)
-			pr->nr++;
+		if (ruleset->anchor == NULL) {
+			/* XXX kludge for pf_main_ruleset */
+			RB_FOREACH(anchor, pf_anchor_global, &pf_anchors)
+				if (anchor->parent == NULL)
+					pr->nr++;
+		} else {
+			RB_FOREACH(anchor, pf_anchor_node,
+			    &ruleset->anchor->children)
+				pr->nr++;
+		}
 		break;
 	}
 
 	case DIOCGETRULESET: {
 		struct pfioc_ruleset	*pr = (struct pfioc_ruleset *)addr;
-		struct pf_anchor	*anchor;
 		struct pf_ruleset	*ruleset;
+		struct pf_anchor	*anchor;
 		u_int32_t		 nr = 0;
 
-		if ((anchor = pf_find_anchor(pr->anchor)) == NULL) {
+		pr->path[sizeof(pr->path) - 1] = 0;
+		if ((ruleset = pf_find_ruleset(pr->path)) == NULL) {
 			error = EINVAL;
 			break;
 		}
-		ruleset = TAILQ_FIRST(&anchor->rulesets);
-		while (ruleset != NULL && nr < pr->nr) {
-			ruleset = TAILQ_NEXT(ruleset, entries);
-			nr++;
+		pr->name[0] = 0;
+		if (ruleset->anchor == NULL) {
+			/* XXX kludge for pf_main_ruleset */
+			RB_FOREACH(anchor, pf_anchor_global, &pf_anchors)
+				if (anchor->parent == NULL && nr++ == pr->nr) {
+					strlcpy(pr->name, anchor->name,
+					    sizeof(pr->name));
+					break;
+				}
+		} else {
+			RB_FOREACH(anchor, pf_anchor_node,
+			    &ruleset->anchor->children)
+				if (nr++ == pr->nr) {
+					strlcpy(pr->name, anchor->name,
+					    sizeof(pr->name));
+					break;
+				}
 		}
-		if (ruleset == NULL)
+		if (!pr->name[0])
 			error = EBUSY;
-		else
-			bcopy(ruleset->name, pr->name, sizeof(pr->name));
 		break;
 	}
 
@@ -2457,10 +2492,11 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	}
 
 	case DIOCXBEGIN: {
-		struct pfioc_trans	*io = (struct pfioc_trans *)addr;
-		struct pfioc_trans_e	 ioe;
-		struct pfr_table	 table;
-		int			 i;
+		struct pfioc_trans		*io = (struct pfioc_trans *)
+						    addr;
+		static struct pfioc_trans_e	 ioe;
+		static struct pfr_table		 table;
+		int			 	 i;
 
 		if (io->esize != sizeof(ioe)) {
 			error = ENODEV;
@@ -2474,7 +2510,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			switch (ioe.rs_num) {
 #ifdef ALTQ
 			case PF_RULESET_ALTQ:
-				if (ioe.anchor[0] || ioe.ruleset[0]) {
+				if (ioe.anchor[0]) {
 					error = EINVAL;
 					goto fail;
 				}
@@ -2486,15 +2522,13 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				bzero(&table, sizeof(table));
 				strlcpy(table.pfrt_anchor, ioe.anchor,
 				    sizeof(table.pfrt_anchor));
-				strlcpy(table.pfrt_ruleset, ioe.ruleset,
-				    sizeof(table.pfrt_ruleset));
 				if ((error = pfr_ina_begin(&table,
 				    &ioe.ticket, NULL, 0)))
 					goto fail;
 				break;
 			default:
 				if ((error = pf_begin_rules(&ioe.ticket,
-				    ioe.rs_num, ioe.anchor, ioe.ruleset)))
+				    ioe.rs_num, ioe.anchor)))
 					goto fail;
 				break;
 			}
@@ -2507,10 +2541,11 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	}
 
 	case DIOCXROLLBACK: {
-		struct pfioc_trans	*io = (struct pfioc_trans *)addr;
-		struct pfioc_trans_e	 ioe;
-		struct pfr_table	 table;
-		int			 i;
+		struct pfioc_trans		*io = (struct pfioc_trans *)
+						    addr;
+		static struct pfioc_trans_e	 ioe;
+		static struct pfr_table		 table;
+		int				 i;
 
 		if (io->esize != sizeof(ioe)) {
 			error = ENODEV;
@@ -2524,7 +2559,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			switch (ioe.rs_num) {
 #ifdef ALTQ
 			case PF_RULESET_ALTQ:
-				if (ioe.anchor[0] || ioe.ruleset[0]) {
+				if (ioe.anchor[0]) {
 					error = EINVAL;
 					goto fail;
 				}
@@ -2536,15 +2571,13 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				bzero(&table, sizeof(table));
 				strlcpy(table.pfrt_anchor, ioe.anchor,
 				    sizeof(table.pfrt_anchor));
-				strlcpy(table.pfrt_ruleset, ioe.ruleset,
-				    sizeof(table.pfrt_ruleset));
 				if ((error = pfr_ina_rollback(&table,
 				    ioe.ticket, NULL, 0)))
 					goto fail; /* really bad */
 				break;
 			default:
 				if ((error = pf_rollback_rules(ioe.ticket,
-				    ioe.rs_num, ioe.anchor, ioe.ruleset)))
+				    ioe.rs_num, ioe.anchor)))
 					goto fail; /* really bad */
 				break;
 			}
@@ -2553,11 +2586,12 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	}
 
 	case DIOCXCOMMIT: {
-		struct pfioc_trans	*io = (struct pfioc_trans *)addr;
-		struct pfioc_trans_e	 ioe;
-		struct pfr_table	 table;
-		struct pf_ruleset	*rs;
-		int			 i;
+		struct pfioc_trans		*io = (struct pfioc_trans *)
+						    addr;
+		static struct pfioc_trans_e	 ioe;
+		static struct pfr_table		 table;
+		struct pf_ruleset		*rs;
+		int				 i;
 
 		if (io->esize != sizeof(ioe)) {
 			error = ENODEV;
@@ -2572,7 +2606,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			switch (ioe.rs_num) {
 #ifdef ALTQ
 			case PF_RULESET_ALTQ:
-				if (ioe.anchor[0] || ioe.ruleset[0]) {
+				if (ioe.anchor[0]) {
 					error = EINVAL;
 					goto fail;
 				}
@@ -2584,7 +2618,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				break;
 #endif /* ALTQ */
 			case PF_RULESET_TABLE:
-				rs = pf_find_ruleset(ioe.anchor, ioe.ruleset);
+				rs = pf_find_ruleset(ioe.anchor);
 				if (rs == NULL || !rs->topen || ioe.ticket !=
 				     rs->tticket) {
 					error = EBUSY;
@@ -2597,7 +2631,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 					error = EINVAL;
 					goto fail;
 				}
-				rs = pf_find_ruleset(ioe.anchor, ioe.ruleset);
+				rs = pf_find_ruleset(ioe.anchor);
 				if (rs == NULL ||
 				    !rs->rules[ioe.rs_num].inactive.open ||
 				    rs->rules[ioe.rs_num].inactive.ticket !=
@@ -2625,15 +2659,13 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				bzero(&table, sizeof(table));
 				strlcpy(table.pfrt_anchor, ioe.anchor,
 				    sizeof(table.pfrt_anchor));
-				strlcpy(table.pfrt_ruleset, ioe.ruleset,
-				    sizeof(table.pfrt_ruleset));
 				if ((error = pfr_ina_commit(&table, ioe.ticket,
 				    NULL, NULL, 0)))
 					goto fail; /* really bad */
 				break;
 			default:
 				if ((error = pf_commit_rules(ioe.ticket,
-				    ioe.rs_num, ioe.anchor, ioe.ruleset)))
+				    ioe.rs_num, ioe.anchor)))
 					goto fail; /* really bad */
 				break;
 			}

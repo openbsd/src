@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_if.c,v 1.12 2004/04/28 02:43:09 pb Exp $ */
+/*	$OpenBSD: pf_if.c,v 1.13 2004/05/19 17:50:52 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -75,10 +75,6 @@ long			  pfi_update = 1;
 struct pfr_addr		 *pfi_buffer;
 int			  pfi_buffer_cnt;
 int			  pfi_buffer_max;
-char			  pfi_reserved_anchor[PF_ANCHOR_NAME_SIZE] =
-				PF_RESERVED_ANCHOR;
-char			  pfi_interface_ruleset[PF_RULESET_NAME_SIZE] =
-				PF_INTERFACE_RULESET;
 
 void		 pfi_dynaddr_update(void *);
 void		 pfi_kifaddr_update(void *);
@@ -314,8 +310,7 @@ pfi_dynaddr_setup(struct pf_addr_wrap *aw, sa_family_t af)
 	if (dyn->pfid_net != 128)
 		snprintf(tblname + strlen(tblname),
 		    sizeof(tblname) - strlen(tblname), "/%d", dyn->pfid_net);
-	ruleset = pf_find_or_create_ruleset(pfi_reserved_anchor,
-	    pfi_interface_ruleset);
+	ruleset = pf_find_or_create_ruleset(PF_RESERVED_ANCHOR);
 	if (ruleset == NULL)
 		senderr(1);
 

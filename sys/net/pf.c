@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.448 2004/05/11 07:34:11 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.449 2004/05/19 17:50:51 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -92,7 +92,7 @@
  * Global variables
  */
 
-struct pf_anchorqueue	 pf_anchors;
+struct pf_anchor_global	 pf_anchors;
 struct pf_ruleset	 pf_main_ruleset;
 struct pf_altqqueue	 pf_altqs[2];
 struct pf_palist	 pf_pabuf;
@@ -106,6 +106,13 @@ int			 altqs_inactive_open;
 u_int32_t		 ticket_pabuf;
 
 struct timeout		 pf_expire_to;			/* expire timeout */
+
+struct pf_anchor_stackframe {
+	struct pf_ruleset			*rs;
+	struct pf_rule				*r;
+	struct pf_anchor_node			*parent;
+	struct pf_anchor			*child;
+} pf_anchor_stack[64];
 
 struct pool		 pf_src_tree_pl, pf_rule_pl;
 struct pool		 pf_state_pl, pf_altq_pl, pf_pooladdr_pl;
@@ -250,6 +257,7 @@ static __inline int pf_state_compare_ext_gwy(struct pf_state *,
 	struct pf_state *);
 static __inline int pf_state_compare_id(struct pf_state *,
 	struct pf_state *);
+static __inline int pf_anchor_compare(struct pf_anchor *, struct pf_anchor *);
 
 struct pf_src_tree tree_src_tracking;
 
@@ -263,6 +271,8 @@ RB_GENERATE(pf_state_tree_ext_gwy, pf_state,
     u.s.entry_ext_gwy, pf_state_compare_ext_gwy);
 RB_GENERATE(pf_state_tree_id, pf_state,
     u.s.entry_id, pf_state_compare_id);
+RB_GENERATE(pf_anchor_global, pf_anchor, entry_global, pf_anchor_compare);
+RB_GENERATE(pf_anchor_node, pf_anchor, entry_node, pf_anchor_compare);
 
 static __inline int
 pf_src_compare(struct pf_src_node *a, struct pf_src_node *b)
@@ -457,6 +467,14 @@ pf_state_compare_id(struct pf_state *a, struct pf_state *b)
 		return (-1);
 
 	return (0);
+}
+
+static __inline int
+pf_anchor_compare(struct pf_anchor *a, struct pf_anchor *b)
+{
+	int c = strcmp(a->path, b->path);
+
+	return (c ? (c < 0 ? -1 : 1) : 0);
 }
 
 #ifdef INET6
@@ -1603,36 +1621,64 @@ pf_tag_packet(struct mbuf *m, struct pf_tag *pftag, int tag)
 	return (0);
 }
 
-#define PF_STEP_INTO_ANCHOR(r, a, s, n)					\
-	do {								\
-		if ((r) == NULL || (r)->anchor == NULL ||		\
-		    (s) != NULL || (a) != NULL)				\
-			panic("PF_STEP_INTO_ANCHOR");			\
-		(a) = (r);						\
-		(s) = TAILQ_FIRST(&(r)->anchor->rulesets);		\
-		(r) = NULL;						\
-		while ((s) != NULL && ((r) =				\
-		    TAILQ_FIRST((s)->rules[n].active.ptr)) == NULL)	\
-			(s) = TAILQ_NEXT((s), entries);			\
-		if ((r) == NULL) {					\
-			(r) = TAILQ_NEXT((a), entries);			\
-			(a) = NULL;					\
-		}							\
-	} while (0)
+static void
+pf_step_into_anchor(int *depth, struct pf_ruleset **rs, int n,
+    struct pf_rule **r, struct pf_rule **a)
+{
+	struct pf_anchor_stackframe	*f;
 
-#define PF_STEP_OUT_OF_ANCHOR(r, a, s, n)				\
-	do {								\
-		if ((r) != NULL || (a) == NULL || (s) == NULL)		\
-			panic("PF_STEP_OUT_OF_ANCHOR");			\
-		(s) = TAILQ_NEXT((s), entries);				\
-		while ((s) != NULL && ((r) =				\
-		    TAILQ_FIRST((s)->rules[n].active.ptr)) == NULL)	\
-			(s) = TAILQ_NEXT((s), entries);			\
-		if ((r) == NULL) {					\
-			(r) = TAILQ_NEXT((a), entries);			\
-			(a) = NULL;					\
-		}							\
-	} while (0)
+	if (*depth >= sizeof(pf_anchor_stack) /
+	    sizeof(pf_anchor_stack[0])) {
+		printf("pf_step_into_anchor: stack overflow\n");
+		*r = TAILQ_NEXT(*r, entries);
+		return;
+	} else if (*depth == 0 && a != NULL)
+		*a = *r;
+	f = pf_anchor_stack + (*depth)++;
+	f->rs = *rs;
+	f->r = *r;
+	if ((*r)->anchor_wildcard) {
+		f->parent = &(*r)->anchor->children;
+		if ((f->child = RB_MIN(pf_anchor_node, f->parent)) ==
+		    NULL) {
+			*r = NULL;
+			return;
+		}
+		*rs = &f->child->ruleset;
+	} else {
+		f->parent = NULL;
+		f->child = NULL;
+		*rs = &(*r)->anchor->ruleset;
+	}
+	*r = TAILQ_FIRST((*rs)->rules[n].active.ptr);
+}
+
+static void
+pf_step_out_of_anchor(int *depth, struct pf_ruleset **rs, int n,
+    struct pf_rule **r, struct pf_rule **a)
+{
+	struct pf_anchor_stackframe	*f;
+
+	do {
+		if (*depth <= 0)
+			break;
+		f = pf_anchor_stack + *depth - 1;
+		if (f->parent != NULL && f->child != NULL) {
+			f->child = RB_NEXT(pf_anchor_node, f->parent, f->child);
+			if (f->child != NULL) {
+				*rs = &f->child->ruleset;
+				*r = TAILQ_FIRST((*rs)->rules[n].active.ptr);
+				if (*r == NULL)
+					continue;
+				else
+					break;
+			}
+		}
+		(*depth)--;
+		*rs = f->rs;
+		*r = TAILQ_NEXT(f->r, entries);
+	} while (*r == NULL);
+}
 
 #ifdef INET6
 void
@@ -2017,8 +2063,9 @@ pf_match_translation(struct pf_pdesc *pd, struct mbuf *m, int off,
     int direction, struct pfi_kif *kif, struct pf_addr *saddr, u_int16_t sport,
     struct pf_addr *daddr, u_int16_t dport, int rs_num)
 {
-	struct pf_rule		*r, *rm = NULL, *anchorrule = NULL;
+	struct pf_rule		*r, *rm = NULL;
 	struct pf_ruleset	*ruleset = NULL;
+	int			 asd = 0;
 
 	r = TAILQ_FIRST(pf_main_ruleset.rules[rs_num].active.ptr);
 	while (r && rm == NULL) {
@@ -2067,10 +2114,9 @@ pf_match_translation(struct pf_pdesc *pd, struct mbuf *m, int off,
 		else if (r->anchor == NULL)
 				rm = r;
 		else
-			PF_STEP_INTO_ANCHOR(r, anchorrule, ruleset, rs_num);
-		if (r == NULL && anchorrule != NULL)
-			PF_STEP_OUT_OF_ANCHOR(r, anchorrule, ruleset,
-			    rs_num);
+			pf_step_into_anchor(&asd, &ruleset, rs_num, &r, NULL);
+		if (r == NULL)
+			pf_step_out_of_anchor(&asd, &ruleset, rs_num, &r, NULL);
 	}
 	if (rm != NULL && (rm->action == PF_NONAT ||
 	    rm->action == PF_NORDR || rm->action == PF_NOBINAT))
@@ -2468,6 +2514,7 @@ pf_test_tcp(struct pf_rule **rm, struct pf_state **sm, int direction,
 	struct pf_tag		*pftag = NULL;
 	int			 tag = -1;
 	u_int16_t		 mss = tcp_mssdflt;
+	int			 asd = 0;
 
 	if (pf_check_congestion(ifq))
 		return (PF_DROP);
@@ -2559,12 +2606,12 @@ pf_test_tcp(struct pf_rule **rm, struct pf_state **sm, int direction,
 					break;
 				r = TAILQ_NEXT(r, entries);
 			} else
-				PF_STEP_INTO_ANCHOR(r, a, ruleset,
-				    PF_RULESET_FILTER);
+				pf_step_into_anchor(&asd, &ruleset,
+				    PF_RULESET_FILTER, &r, &a);
 		}
-		if (r == NULL && a != NULL)
-			PF_STEP_OUT_OF_ANCHOR(r, a, ruleset,
-			    PF_RULESET_FILTER);
+		if (r == NULL)
+			pf_step_out_of_anchor(&asd, &ruleset,
+			    PF_RULESET_FILTER, &r, &a);
 	}
 	r = *rm;
 	a = *am;
@@ -2829,6 +2876,7 @@ pf_test_udp(struct pf_rule **rm, struct pf_state **sm, int direction,
 	int			 rewrite = 0;
 	struct pf_tag		*pftag = NULL;
 	int			 tag = -1;
+	int			 asd = 0;
 
 	if (pf_check_congestion(ifq))
 		return (PF_DROP);
@@ -2917,12 +2965,12 @@ pf_test_udp(struct pf_rule **rm, struct pf_state **sm, int direction,
 					break;
 				r = TAILQ_NEXT(r, entries);
 			} else
-				PF_STEP_INTO_ANCHOR(r, a, ruleset,
-				    PF_RULESET_FILTER);
+				pf_step_into_anchor(&asd, &ruleset,
+				    PF_RULESET_FILTER, &r, &a);
 		}
-		if (r == NULL && a != NULL)
-			PF_STEP_OUT_OF_ANCHOR(r, a, ruleset,
-			    PF_RULESET_FILTER);
+		if (r == NULL)
+			pf_step_out_of_anchor(&asd, &ruleset,
+			    PF_RULESET_FILTER, &r, &a);
 	}
 	r = *rm;
 	a = *am;
@@ -3096,6 +3144,7 @@ pf_test_icmp(struct pf_rule **rm, struct pf_state **sm, int direction,
 #ifdef INET6
 	int			 rewrite = 0;
 #endif /* INET6 */
+	int			 asd = 0;
 
 	if (pf_check_congestion(ifq))
 		return (PF_DROP);
@@ -3222,12 +3271,12 @@ pf_test_icmp(struct pf_rule **rm, struct pf_state **sm, int direction,
 					break;
 				r = TAILQ_NEXT(r, entries);
 			} else
-				PF_STEP_INTO_ANCHOR(r, a, ruleset,
-				    PF_RULESET_FILTER);
+				pf_step_into_anchor(&asd, &ruleset,
+				    PF_RULESET_FILTER, &r, &a);
 		}
-		if (r == NULL && a != NULL)
-			PF_STEP_OUT_OF_ANCHOR(r, a, ruleset,
-			    PF_RULESET_FILTER);
+		if (r == NULL)
+			pf_step_out_of_anchor(&asd, &ruleset,
+			    PF_RULESET_FILTER, &r, &a);
 	}
 	r = *rm;
 	a = *am;
@@ -3371,6 +3420,7 @@ pf_test_other(struct pf_rule **rm, struct pf_state **sm, int direction,
 	u_short			 reason;
 	struct pf_tag		*pftag = NULL;
 	int			 tag = -1;
+	int			 asd = 0;
 
 	if (pf_check_congestion(ifq))
 		return (PF_DROP);
@@ -3459,12 +3509,12 @@ pf_test_other(struct pf_rule **rm, struct pf_state **sm, int direction,
 					break;
 				r = TAILQ_NEXT(r, entries);
 			} else
-				PF_STEP_INTO_ANCHOR(r, a, ruleset,
-				    PF_RULESET_FILTER);
+				pf_step_into_anchor(&asd, &ruleset,
+				    PF_RULESET_FILTER, &r, &a);
 		}
-		if (r == NULL && a != NULL)
-			PF_STEP_OUT_OF_ANCHOR(r, a, ruleset,
-			    PF_RULESET_FILTER);
+		if (r == NULL)
+			pf_step_out_of_anchor(&asd, &ruleset,
+			    PF_RULESET_FILTER, &r, &a);
 	}
 	r = *rm;
 	a = *am;
@@ -3622,6 +3672,7 @@ pf_test_fragment(struct pf_rule **rm, int direction, struct pfi_kif *kif,
 	u_short			 reason;
 	struct pf_tag		*pftag = NULL;
 	int			 tag = -1;
+	int			 asd = 0;
 
 	r = TAILQ_FIRST(pf_main_ruleset.rules[PF_RULESET_FILTER].active.ptr);
 	while (r != NULL) {
@@ -3658,12 +3709,12 @@ pf_test_fragment(struct pf_rule **rm, int direction, struct pfi_kif *kif,
 					break;
 				r = TAILQ_NEXT(r, entries);
 			} else
-				PF_STEP_INTO_ANCHOR(r, a, ruleset,
-				    PF_RULESET_FILTER);
+				pf_step_into_anchor(&asd, &ruleset,
+				    PF_RULESET_FILTER, &r, &a);
 		}
-		if (r == NULL && a != NULL)
-			PF_STEP_OUT_OF_ANCHOR(r, a, ruleset,
-			    PF_RULESET_FILTER);
+		if (r == NULL)
+			pf_step_out_of_anchor(&asd, &ruleset,
+			    PF_RULESET_FILTER, &r, &a);
 	}
 	r = *rm;
 	a = *am;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.194 2004/05/11 07:34:11 dhartmei Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.195 2004/05/19 17:50:52 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -33,6 +33,7 @@
 #ifndef _NET_PFVAR_H_
 #define _NET_PFVAR_H_
 
+#include <sys/param.h>
 #include <sys/types.h>
 #include <sys/queue.h>
 #include <sys/tree.h>
@@ -444,6 +445,8 @@ union pf_rule_ptr {
 	u_int32_t		 nr;
 };
 
+#define	PF_ANCHOR_NAME_SIZE	 64
+
 struct pf_rule {
 	struct pf_rule_addr	 src;
 	struct pf_rule_addr	 dst;
@@ -463,8 +466,6 @@ struct pf_rule {
 	char			 ifname[IFNAMSIZ];
 	char			 qname[PF_QNAME_SIZE];
 	char			 pqname[PF_QNAME_SIZE];
-#define	PF_ANCHOR_NAME_SIZE	 16
-	char			 anchorname[PF_ANCHOR_NAME_SIZE];
 #define	PF_TAG_NAME_SIZE	 16
 	char			 tagname[PF_TAG_NAME_SIZE];
 	char			 match_tagname[PF_TAG_NAME_SIZE];
@@ -526,6 +527,8 @@ struct pf_rule {
 	u_int8_t		 rt;
 	u_int8_t		 return_ttl;
 	u_int8_t		 tos;
+	u_int8_t		 anchor_relative;
+	u_int8_t		 anchor_wildcard;
 };
 
 /* rule flags */
@@ -650,9 +653,6 @@ TAILQ_HEAD(pf_rulequeue, pf_rule);
 struct pf_anchor;
 
 struct pf_ruleset {
-	TAILQ_ENTRY(pf_ruleset)	 entries;
-#define PF_RULESET_NAME_SIZE	 16
-	char			 name[PF_RULESET_NAME_SIZE];
 	struct {
 		struct pf_rulequeue	 queues[2];
 		struct {
@@ -667,20 +667,22 @@ struct pf_ruleset {
 	int			 topen;
 };
 
-TAILQ_HEAD(pf_rulesetqueue, pf_ruleset);
-
+RB_HEAD(pf_anchor_global, pf_anchor);
+RB_HEAD(pf_anchor_node, pf_anchor);
 struct pf_anchor {
-	TAILQ_ENTRY(pf_anchor)	 entries;
+	RB_ENTRY(pf_anchor)	 entry_global;
+	RB_ENTRY(pf_anchor)	 entry_node;
+	struct pf_anchor	*parent;
+	struct pf_anchor_node	 children;
 	char			 name[PF_ANCHOR_NAME_SIZE];
-	struct pf_rulesetqueue	 rulesets;
-	int			 tables;
+	char			 path[MAXPATHLEN];
+	struct pf_ruleset	 ruleset;
 	int			 refcnt;	/* anchor rules */
 };
-
-TAILQ_HEAD(pf_anchorqueue, pf_anchor);
+RB_PROTOTYPE(pf_anchor_global, pf_anchor, entry_global, pf_anchor_compare);
+RB_PROTOTYPE(pf_anchor_node, pf_anchor, entry_node, pf_anchor_compare);
 
 #define PF_RESERVED_ANCHOR	"_pf"
-#define PF_INTERFACE_RULESET	"_if"
 
 #define PFR_TFLAG_PERSIST	0x00000001
 #define PFR_TFLAG_CONST		0x00000002
@@ -693,8 +695,7 @@ TAILQ_HEAD(pf_anchorqueue, pf_anchor);
 #define PFR_TFLAG_ALLMASK	0x0000003F
 
 struct pfr_table {
-	char			 pfrt_anchor[PF_ANCHOR_NAME_SIZE];
-	char			 pfrt_ruleset[PF_RULESET_NAME_SIZE];
+	char			 pfrt_anchor[MAXPATHLEN];
 	char			 pfrt_name[PF_TABLE_NAME_SIZE];
 	u_int32_t		 pfrt_flags;
 	u_int8_t		 pfrt_fback;
@@ -1048,8 +1049,7 @@ struct pfioc_pooladdr {
 	u_int8_t		 r_action;
 	u_int8_t		 r_last;
 	u_int8_t		 af;
-	char			 anchor[PF_ANCHOR_NAME_SIZE];
-	char			 ruleset[PF_RULESET_NAME_SIZE];
+	char			 anchor[MAXPATHLEN];
 	struct pf_pooladdr	 addr;
 };
 
@@ -1058,8 +1058,8 @@ struct pfioc_rule {
 	u_int32_t	 ticket;
 	u_int32_t	 pool_ticket;
 	u_int32_t	 nr;
-	char		 anchor[PF_ANCHOR_NAME_SIZE];
-	char		 ruleset[PF_RULESET_NAME_SIZE];
+	char		 anchor[MAXPATHLEN];
+	char		 anchor_call[MAXPATHLEN];
 	struct pf_rule	 rule;
 };
 
@@ -1140,15 +1140,10 @@ struct pfioc_qstats {
 	u_int8_t	 scheduler;
 };
 
-struct pfioc_anchor {
-	u_int32_t	 nr;
-	char		 name[PF_ANCHOR_NAME_SIZE];
-};
-
 struct pfioc_ruleset {
 	u_int32_t	 nr;
-	char		 anchor[PF_ANCHOR_NAME_SIZE];
-	char		 name[PF_RULESET_NAME_SIZE];
+	char		 path[MAXPATHLEN];
+	char		 name[PF_ANCHOR_NAME_SIZE];
 };
 
 #define PF_RULESET_ALTQ		(PF_RULESET_MAX)
@@ -1158,8 +1153,7 @@ struct pfioc_trans {
 	int		 esize; /* size of each element in bytes */
 	struct pfioc_trans_e {
 		int		rs_num;
-		char		anchor[PF_ANCHOR_NAME_SIZE];
-		char		ruleset[PF_RULESET_NAME_SIZE];
+		char		anchor[MAXPATHLEN];
 		u_int32_t	ticket;
 	}		*array;
 };
@@ -1253,8 +1247,7 @@ struct pfioc_iface {
 #define DIOCGETADDRS	_IOWR('D', 53, struct pfioc_pooladdr)
 #define DIOCGETADDR	_IOWR('D', 54, struct pfioc_pooladdr)
 #define DIOCCHANGEADDR	_IOWR('D', 55, struct pfioc_pooladdr)
-#define	DIOCGETANCHORS	_IOWR('D', 56, struct pfioc_anchor)
-#define	DIOCGETANCHOR	_IOWR('D', 57, struct pfioc_anchor)
+/* XXX cut 55 - 57 */
 #define	DIOCGETRULESETS	_IOWR('D', 58, struct pfioc_ruleset)
 #define	DIOCGETRULESET	_IOWR('D', 59, struct pfioc_ruleset)
 #define	DIOCRCLRTABLES	_IOWR('D', 60, struct pfioc_table)
@@ -1298,7 +1291,7 @@ RB_PROTOTYPE(pf_state_tree_id, pf_state,
 extern struct pf_state_tree_id tree_id;
 extern struct pf_state_queue state_updates;
 
-extern struct pf_anchorqueue		  pf_anchors;
+extern struct pf_anchor_global		  pf_anchors;
 extern struct pf_ruleset		  pf_main_ruleset;
 TAILQ_HEAD(pf_poolqueue, pf_pool);
 extern struct pf_poolqueue		  pf_pools[2];
@@ -1339,10 +1332,8 @@ extern struct pf_state		*pf_find_state_all(struct pf_state *key,
 extern void			 pf_print_state(struct pf_state *);
 extern void			 pf_print_flags(u_int8_t);
 extern struct pf_anchor		*pf_find_anchor(const char *);
-extern struct pf_ruleset	*pf_find_ruleset(char *, char *);
-extern struct pf_ruleset	*pf_find_or_create_ruleset(
-				    char[PF_ANCHOR_NAME_SIZE],
-				    char[PF_RULESET_NAME_SIZE]);
+extern struct pf_ruleset	*pf_find_ruleset(const char *);
+extern struct pf_ruleset	*pf_find_or_create_ruleset(const char *);
 extern void			 pf_remove_if_empty_ruleset(
 				    struct pf_ruleset *);
 extern u_int16_t		 pf_cksum_fixup(u_int16_t, u_int16_t, u_int16_t,

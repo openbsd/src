@@ -1,4 +1,4 @@
-/*	$OpenBSD: authpf.c,v 1.81 2004/05/13 17:14:55 henning Exp $	*/
+/*	$OpenBSD: authpf.c,v 1.82 2004/05/19 17:50:52 dhartmei Exp $	*/
 
 /*
  * Copyright (C) 1998 - 2002 Bob Beck (beck@openbsd.org).
@@ -63,8 +63,8 @@ static void	authpf_kill_states(void);
 
 int	dev;			/* pf device */
 char	anchorname[PF_ANCHOR_NAME_SIZE] = "authpf";
+char	rulesetname[MAXPATHLEN - PF_ANCHOR_NAME_SIZE - 2];
 char	tablename[PF_TABLE_NAME_SIZE] = "authpf_users";
-char	rulesetname[PF_RULESET_NAME_SIZE];
 
 FILE	*pidfp;
 char	*infile;		/* file name printed by yyerror() in parse.y */
@@ -568,7 +568,7 @@ remove_stale_rulesets(void)
 	u_int32_t		 nr, mnr;
 
 	memset(&prs, 0, sizeof(prs));
-	strlcpy(prs.anchor, anchorname, sizeof(prs.anchor));
+	strlcpy(prs.path, anchorname, sizeof(prs.path));
 	if (ioctl(dev, DIOCGETRULESETS, &prs)) {
 		if (errno == EINVAL)
 			return (0);
@@ -601,8 +601,8 @@ remove_stale_rulesets(void)
 				struct pfioc_rule pr;
 
 				memset(&pr, 0, sizeof(pr));
-				memcpy(pr.anchor, prs.anchor, sizeof(pr.anchor));
-				memcpy(pr.ruleset, prs.name, sizeof(pr.ruleset));
+				snprintf(pr.anchor, sizeof(pr.anchor),
+				    "%s:%s", anchorname, prs.name);
 				pr.rule.action = action[i];
 				if ((ioctl(dev, DIOCBEGINRULES, &pr) ||
 				    ioctl(dev, DIOCCOMMITRULES, &pr)) &&

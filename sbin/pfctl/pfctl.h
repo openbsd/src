@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.h,v 1.34 2004/04/09 12:42:06 cedric Exp $ */
+/*	$OpenBSD: pfctl.h,v 1.35 2004/05/19 17:50:51 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -79,10 +79,10 @@ int	 pfi_get_ifaces(const char *, struct pfi_if *, int *, int);
 int	 pfi_clr_istats(const char *, int *, int);
 
 void	 pfctl_print_title(char *);
-int	 pfctl_clear_tables(const char *, const char *, int);
-int	 pfctl_show_tables(const char *, const char *, int);
+int	 pfctl_clear_tables(const char *, int);
+int	 pfctl_show_tables(const char *, int);
 int	 pfctl_command_tables(int, char *[], char *, const char *, char *,
-	    const char *, const char *, int);
+	    const char *, int);
 int	 pfctl_show_altq(int, const char *, int, int);
 void	 warn_namespace_collision(const char *);
 int	 pfctl_show_ifaces(const char *, int);
@@ -117,9 +117,9 @@ void	 print_state(struct pf_state *, int);
 int	 unmask(struct pf_addr *, sa_family_t);
 
 int	 pfctl_cmdline_symset(char *);
-int	 pfctl_add_trans(struct pfr_buffer *, int, const char *, const char *);
+int	 pfctl_add_trans(struct pfr_buffer *, int, const char *);
 u_int32_t
-	 pfctl_get_ticket(struct pfr_buffer *, int, const char *, const char *);
+	 pfctl_get_ticket(struct pfr_buffer *, int, const char *);
 int	 pfctl_trans(int, struct pfr_buffer *, u_long, int);
 
 #endif /* _PFCTL_H_ */

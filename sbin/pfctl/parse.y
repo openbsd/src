@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.452 2004/04/24 23:22:54 cedric Exp $	*/
+/*	$OpenBSD: parse.y,v 1.453 2004/05/19 17:50:50 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -263,7 +263,8 @@ void	expand_label(char *, size_t, const char *, u_int8_t, struct node_host *,
 void	expand_rule(struct pf_rule *, struct node_if *, struct node_host *,
 	    struct node_proto *, struct node_os*, struct node_host *,
 	    struct node_port *, struct node_host *, struct node_port *,
-	    struct node_uid *, struct node_gid *, struct node_icmp *);
+	    struct node_uid *, struct node_gid *, struct node_icmp *,
+	    const char *);
 int	expand_altq(struct pf_altq *, struct node_if *, struct node_queue *,
 	    struct node_queue_bw bwspec, struct node_queue_opt *);
 int	expand_queue(struct pf_altq *, struct node_if *, struct node_queue *,
@@ -372,18 +373,6 @@ typedef struct {
 	} v;
 	int lineno;
 } YYSTYPE;
-
-#define PREPARE_ANCHOR_RULE(r, a)				\
-	do {							\
-		memset(&(r), 0, sizeof(r));			\
-		if (strlcpy(r.anchorname, (a),			\
-		    sizeof(r.anchorname)) >=			\
-		    sizeof(r.anchorname)) {			\
-			yyerror("anchor name '%s' too long",	\
-			    (a));				\
-			YYERROR;				\
-		}						\
-	} while (0)
 
 #define DYNIF_MULTIADDR(addr) ((addr).type == PF_ADDR_DYNIFTL && \
 	(!((addr).iflags & PFI_AFLAG_NOALIAS) ||		 \
@@ -602,7 +591,7 @@ anchorrule	: ANCHOR string	dir interface af proto fromto filter_opts {
 				YYERROR;
 			}
 
-			PREPARE_ANCHOR_RULE(r, $2);
+			memset(&r, 0, sizeof(r));
 			r.direction = $3;
 			r.af = $5;
 			r.prob = $8.prob;
@@ -621,7 +610,8 @@ anchorrule	: ANCHOR string	dir interface af proto fromto filter_opts {
 
 			expand_rule(&r, $4, NULL, $6, $7.src_os,
 			    $7.src.host, $7.src.port, $7.dst.host, $7.dst.port,
-			    0, 0, 0);
+			    0, 0, 0, $2);
+			free($2);
 		}
 		| NATANCHOR string interface af proto fromto {
 			struct pf_rule	r;
@@ -631,8 +621,7 @@ anchorrule	: ANCHOR string	dir interface af proto fromto filter_opts {
 				YYERROR;
 			}
 
-			PREPARE_ANCHOR_RULE(r, $2);
-			free($2);
+			memset(&r, 0, sizeof(r));
 			r.action = PF_NAT;
 			r.af = $4;
 
@@ -641,7 +630,8 @@ anchorrule	: ANCHOR string	dir interface af proto fromto filter_opts {
 
 			expand_rule(&r, $3, NULL, $5, $6.src_os,
 			    $6.src.host, $6.src.port, $6.dst.host, $6.dst.port,
-			    0, 0, 0);
+			    0, 0, 0, $2);
+			free($2);
 		}
 		| RDRANCHOR string interface af proto fromto {
 			struct pf_rule	r;
@@ -651,8 +641,7 @@ anchorrule	: ANCHOR string	dir interface af proto fromto filter_opts {
 				YYERROR;
 			}
 
-			PREPARE_ANCHOR_RULE(r, $2);
-			free($2);
+			memset(&r, 0, sizeof(r));
 			r.action = PF_RDR;
 			r.af = $4;
 
@@ -682,7 +671,8 @@ anchorrule	: ANCHOR string	dir interface af proto fromto filter_opts {
 
 			expand_rule(&r, $3, NULL, $5, $6.src_os,
 			    $6.src.host, $6.src.port, $6.dst.host, $6.dst.port,
-			    0, 0, 0);
+			    0, 0, 0, $2);
+			free($2);
 		}
 		| BINATANCHOR string interface af proto fromto {
 			struct pf_rule	r;
@@ -692,8 +682,7 @@ anchorrule	: ANCHOR string	dir interface af proto fromto filter_opts {
 				YYERROR;
 			}
 
-			PREPARE_ANCHOR_RULE(r, $2);
-			free($2);
+			memset(&r, 0, sizeof(r));
 			r.action = PF_BINAT;
 			r.af = $4;
 			if ($5 != NULL) {
@@ -716,39 +705,24 @@ anchorrule	: ANCHOR string	dir interface af proto fromto filter_opts {
 			decide_address_family($6.src.host, &r.af);
 			decide_address_family($6.dst.host, &r.af);
 
-			pfctl_add_rule(pf, &r);
+			pfctl_add_rule(pf, &r, $2);
+			free($2);
 		}
 		;
 
 loadrule	: LOAD ANCHOR string FROM string	{
-			char			*t;
 			struct loadanchors	*loadanchor;
 
-			t = strsep(&$3, ":");
-			if (*t == '\0' || $3 == NULL || *$3 == '\0') {
-				yyerror("anchor '%s' invalid\n", $3);
-				free(t);
-				YYERROR;
-			}
-			if (strlen(t) >= PF_ANCHOR_NAME_SIZE) {
+			if (strlen($3) >= MAXPATHLEN) {
 				yyerror("anchorname %s too long, max %u\n",
-				    t, PF_ANCHOR_NAME_SIZE - 1);
-				free(t);
+				    $3, MAXPATHLEN - 1);
+				free($3);
 				YYERROR;
 			}
-			if (strlen($3) >= PF_RULESET_NAME_SIZE) {
-				yyerror("rulesetname %s too long, max %u\n",
-				    $3, PF_RULESET_NAME_SIZE - 1);
-				free(t);
-				YYERROR;
-			}
-
 			loadanchor = calloc(1, sizeof(struct loadanchors));
 			if (loadanchor == NULL)
 				err(1, "loadrule: calloc");
-			if ((loadanchor->anchorname = strdup(t)) == NULL)
-				err(1, "loadrule: strdup");
-			if ((loadanchor->rulesetname = strdup($3)) == NULL)
+			if ((loadanchor->anchorname = strdup($3)) == NULL)
 				err(1, "loadrule: strdup");
 			if ((loadanchor->filename = strdup($5)) == NULL)
 				err(1, "loadrule: strdup");
@@ -756,7 +730,7 @@ loadrule	: LOAD ANCHOR string FROM string	{
 			TAILQ_INSERT_TAIL(&loadanchorshead, loadanchor,
 			    entries);
 
-			free(t); /* not $3 */
+			free($3);
 			free($5);
 		};
 
@@ -800,7 +774,7 @@ scrubrule	: SCRUB dir logquick interface af proto fromto scrub_opts
 
 			expand_rule(&r, $4, NULL, $6, $7.src_os,
 			    $7.src.host, $7.src.port, $7.dst.host, $7.dst.port,
-			    NULL, NULL, NULL);
+			    NULL, NULL, NULL, "");
 		}
 		;
 
@@ -938,7 +912,8 @@ antispoof	: ANTISPOOF logquick antispoof_ifspc af antispoof_opts {
 
 				if (h != NULL)
 					expand_rule(&r, j, NULL, NULL, NULL, h,
-					    NULL, NULL, NULL, NULL, NULL, NULL);
+					    NULL, NULL, NULL, NULL, NULL,
+					    NULL, "");
 
 				if ((i->ifa_flags & IFF_LOOPBACK) == 0) {
 					bzero(&r, sizeof(r));
@@ -957,7 +932,7 @@ antispoof	: ANTISPOOF logquick antispoof_ifspc af antispoof_opts {
 					if (h != NULL)
 						expand_rule(&r, NULL, NULL,
 						    NULL, NULL, h, NULL, NULL,
-						    NULL, NULL, NULL, NULL);
+						    NULL, NULL, NULL, NULL, "");
 				} else
 					free(hh);
 			}
@@ -1735,7 +1710,7 @@ pfrule		: action dir logquick interface route af proto fromto
 
 			expand_rule(&r, $4, $5.host, $7, $8.src_os,
 			    $8.src.host, $8.src.port, $8.dst.host, $8.dst.port,
-			    $9.uid, $9.gid, $9.icmpspec);
+			    $9.uid, $9.gid, $9.icmpspec, "");
 		}
 		;
 
@@ -3205,7 +3180,7 @@ natrule		: nataction interface af proto fromto tag redirpool pool_opts
 
 			expand_rule(&r, $2, $7 == NULL ? NULL : $7->host, $4,
 			    $5.src_os, $5.src.host, $5.src.port, $5.dst.host,
-			    $5.dst.port, 0, 0, 0);
+			    $5.dst.port, 0, 0, 0, "");
 			free($7);
 		}
 		;
@@ -3353,7 +3328,7 @@ binatrule	: no BINAT natpass interface af proto FROM host TO ipspec tag
 				free($12);
 			}
 
-			pfctl_add_rule(pf, &binat);
+			pfctl_add_rule(pf, &binat, "");
 		}
 		;
 
@@ -3616,7 +3591,7 @@ filter_consistent(struct pf_rule *r)
 		problems++;
 	}
 	if ((r->tagname[0] || r->match_tagname[0]) && !r->keep_state &&
-	    r->action == PF_PASS && !r->anchorname[0]) {
+	    r->action == PF_PASS) {
 		yyerror("tags cannot be used without keep state");
 		problems++;
 	}
@@ -3687,7 +3662,7 @@ process_tabledef(char *name, struct table_opts *opts)
 		    &opts->init_nodes);
 	if (!(pf->opts & PF_OPT_NOACTION) &&
 	    pfctl_define_table(name, opts->flags, opts->init_addr,
-	    pf->anchor, pf->ruleset, &ab, pf->tticket)) {
+	    pf->anchor, &ab, pf->tticket)) {
 		yyerror("cannot define table %s: %s", name,
 		    pfr_strerror(errno));
 		goto _error;
@@ -4153,7 +4128,8 @@ expand_rule(struct pf_rule *r,
     struct node_proto *protos, struct node_os *src_oses,
     struct node_host *src_hosts, struct node_port *src_ports,
     struct node_host *dst_hosts, struct node_port *dst_ports,
-    struct node_uid *uids, struct node_gid *gids, struct node_icmp *icmp_types)
+    struct node_uid *uids, struct node_gid *gids, struct node_icmp *icmp_types,
+    const char *anchor_call)
 {
 	sa_family_t		 af = r->af;
 	int			 added = 0, error = 0;
@@ -4305,7 +4281,7 @@ expand_rule(struct pf_rule *r,
 			yyerror("skipping rule due to errors");
 		else {
 			r->nr = pf->rule_nr++;
-			pfctl_add_rule(pf, r);
+			pfctl_add_rule(pf, r, anchor_call);
 			added++;
 		}
 
@@ -4958,7 +4934,7 @@ pfctl_load_anchors(int dev, int opts, struct pfr_buffer *trans)
 			fprintf(stderr, "\nLoading anchor %s:%s from %s\n",
 			    la->anchorname, la->rulesetname, la->filename);
 		if (pfctl_rules(dev, la->filename, opts, la->anchorname,
-		    la->rulesetname, trans) == -1)
+		    trans) == -1)
 			return (-1);
 	}
 
