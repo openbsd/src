@@ -278,8 +278,7 @@ mmmmap(dev, off, prot)
 	dev_t dev;
 	int off, prot;
 {
-
-	return (EOPNOTSUPP);
+	return (-1);
 }
 
 /*ARGSUSED*/

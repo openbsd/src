@@ -1,4 +1,4 @@
-/*	$OpenBSD: gscbus.c,v 1.9 2000/02/09 05:04:22 mickey Exp $	*/
+/*	$OpenBSD: gscbus.c,v 1.10 2001/01/31 22:39:41 jason Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -407,5 +407,5 @@ gsc_dmamem_mmap(v, segs, nsegs, off, prot, flags)
 	int prot;
 	int flags;
 {
-	return 0;
+	return (-1);
 }

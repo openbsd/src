@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf.c,v 1.7 1998/03/06 17:24:11 millert Exp $	*/
+/*	$OpenBSD: grf.c,v 1.8 2001/01/31 22:39:41 jason Exp $	*/
 /*	$NetBSD: grf.c,v 1.25 1997/04/02 22:37:30 scottr Exp $	*/
 
 /*
@@ -680,7 +680,7 @@ iommap(dev, addrp)
 	if (grfdebug & (GDB_MMAP|GDB_IOMAP))
 		printf("iommap(%d): addr %p\n", curproc->p_pid, *addrp);
 #endif
-	return(EINVAL);
+	return(-1);
 }
 
 int
@@ -785,7 +785,7 @@ grflckmmap(dev, addrp)
 		printf("grflckmmap(%d): addr %p\n",
 		       p->p_pid, *addrp);
 #endif
-	return(EINVAL);
+	return(-1);
 }
 
 int
