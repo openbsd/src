@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot_i386.8,v 1.11 2004/11/22 00:58:40 jmc Exp $
+.\"	$OpenBSD: boot_i386.8,v 1.12 2004/12/27 16:41:13 miod Exp $
 .\"
 .\" Copyright (c) 1997 Tobias Weingartner
 .\"
@@ -158,6 +158,8 @@ It is also possible to force other behaviours from ddb.
 .Bl -tag -width /usr/mdec/biosboot -compact
 .It Pa /bsd
 default system kernel
+.It Pa /bsd.rd
+standalone installation kernel, suitable for disaster recovery
 .It Pa /usr/mdec/mbr
 system MBR image
 .It Pa /usr/mdec/biosboot

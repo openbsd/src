@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot_macppc.8,v 1.15 2004/05/25 09:44:51 jmc Exp $
+.\"	$OpenBSD: boot_macppc.8,v 1.16 2004/12/27 16:41:14 miod Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -166,6 +166,8 @@ row LEDs light up.
 .Bl -tag -width /usr/mdec/ofwboot -compact
 .It Pa /bsd
 default system kernel
+.It Pa /bsd.rd
+standalone installation kernel, suitable for disaster recovery
 .It Pa /usr/mdec/ofwboot
 system bootstrap (usually installed on a stand-alone FAT partition or an
 .Tn Apple

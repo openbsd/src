@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot_vax.8,v 1.6 2004/02/09 19:21:52 espie Exp $
+.\"	$OpenBSD: boot_vax.8,v 1.7 2004/12/27 16:41:16 miod Exp $
 .\"	$NetBSD: boot_vax.8,v 1.3 1995/04/23 10:33:39 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -308,7 +308,9 @@ can be used to boot from a distribution tape.
 .Sh FILES
 .Bl -tag -width /usr/mdec/xxboot -compact
 .It Pa /bsd
-system code
+default system kernel
+.It Pa /bsd.rd
+standalone installation kernel, suitable for disaster recovery
 .It Pa /boot
 system bootstrap
 .It Pa /usr/mdec/xxboot

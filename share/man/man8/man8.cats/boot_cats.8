@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot_cats.8,v 1.4 2004/03/08 22:05:12 miod Exp $
+.\"	$OpenBSD: boot_cats.8,v 1.5 2004/12/27 16:41:12 miod Exp $
 .\"
 .\" Copyright (c) 2004, Miodrag Vallat.
 .\" All rights reserved.
@@ -100,9 +100,11 @@ The crash dump will then be recovered by
 during the next multi-user boot cycle.
 It is also possible to force other behaviours from ddb.
 .Sh FILES
-.Bl -tag -width /bsd -compact
+.Bl -tag -width /bsd.rd -compact
 .It Pa /bsd
 default system kernel
+.It Pa /bsd.rd
+standalone installation kernel, suitable for disaster recovery
 .El
 .Sh SEE ALSO
 .Xr ddb 4 ,

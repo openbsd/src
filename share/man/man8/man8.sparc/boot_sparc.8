@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot_sparc.8,v 1.10 2004/02/09 19:21:52 espie Exp $
+.\"	$OpenBSD: boot_sparc.8,v 1.11 2004/12/27 16:41:15 miod Exp $
 .\"	$NetBSD: boot_sparc.8,v 1.4 1995/04/25 11:37:25 pk Exp $
 .\"
 .\" Copyright (c) 1992, 1993
@@ -221,6 +221,8 @@ to return to the system.
 .Bl -tag -width /usr/mdec/bootxx -compact
 .It Pa /bsd
 default system kernel
+.It Pa /bsd.rd
+standalone installation kernel, suitable for disaster recovery
 .It Pa /usr/mdec/bootxx
 primary bootstrap for
 .Dq ffs

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot_hppa.8,v 1.11 2004/05/25 22:27:44 jmc Exp $
+.\"	$OpenBSD: boot_hppa.8,v 1.12 2004/12/27 16:41:12 miod Exp $
 .\"
 .\" Copyright (c) 2002, Miodrag Vallat.
 .\" All rights reserved.
@@ -318,6 +318,8 @@ during the next multi-user boot cycle), and after the dump is complete
 .Bl -tag -width /usr/mdec/xxbootxx -compact
 .It Pa /bsd
 default system kernel
+.It Pa /bsd.rd
+standalone installation kernel, suitable for disaster recovery
 .It Pa boot.lif
 network bootstrap and kernel combined image
 .It Pa /usr/mdec/cdboot
