@@ -1,5 +1,5 @@
-/*	$OpenBSD: policy.c,v 1.13 2000/06/08 20:51:42 niklas Exp $	*/
-/*	$EOM: policy.c,v 1.38 2000/06/08 04:36:26 angelos Exp $ */
+/*	$OpenBSD: policy.c,v 1.14 2000/08/03 07:25:11 niklas Exp $	*/
+/*	$EOM: policy.c,v 1.40 2000/07/26 06:04:27 angelos Exp $ */
 
 /*
  * Copyright (c) 1999, 2000 Angelos D. Keromytis.  All rights reserved.
@@ -171,6 +171,7 @@ policy_callback (char *name)
   size_t id_sz, idlocalsz, idremotesz;
   struct sockaddr_in *sin;
   struct ipsec_exch *ie;
+  struct ipsec_sa *is;
   int fmt, lifetype = 0;
   in_addr_t net, subnet;
   u_int16_t len, type;
@@ -196,6 +197,7 @@ policy_callback (char *name)
   static char *remote_filter_proto, *local_filter_proto, *pfs, *initiator;
   static char remote_filter_proto_num[3], local_filter_proto_num[3];
   static char remote_id_proto_num[3];
+  static char phase1_group[32];
 
   /* Allocated.  */
   static char *remote_filter = 0, *local_filter = 0, *remote_id = 0;
@@ -256,6 +258,7 @@ policy_callback (char *name)
       memset (remote_id_port, 0, sizeof remote_id_port);
       memset (remote_filter_port, 0, sizeof remote_filter_port);
       memset (local_filter_port, 0, sizeof local_filter_port);
+      memset (phase1_group, 0, sizeof phase1_group);
 
       dirty = 1;
       return "";
@@ -271,6 +274,9 @@ policy_callback (char *name)
 
       if (ie->pfs)
 	pfs = "yes";
+
+      is = policy_isakmp_sa->data;
+      sprintf (phase1_group, "%d", is->group_desc);
 
       for (proto = TAILQ_FIRST (&policy_sa->protos); proto;
 	   proto = TAILQ_NEXT (proto, link))
@@ -1228,6 +1234,7 @@ policy_callback (char *name)
       LOG_DBG ((LOG_SA, 80, "local_negotiation_address == %s", local_ike_address));
       LOG_DBG ((LOG_SA, 80, "pfs == %s", pfs));
       LOG_DBG ((LOG_SA, 80, "initiator == %s", initiator));
+      LOG_DBG ((LOG_SA, 80, "phase1_group_desc == %s", phase1_group));
 
       /* Unset dirty now.  */
       dirty = 0;
@@ -1396,6 +1403,9 @@ policy_callback (char *name)
 
   if (strcmp (name, "remote_id_proto") == 0)
     return remote_id_proto;
+
+  if (strcmp (name, "phase1_group_desc") == 0)
+    return phase1_group;
 
   return "";
 
