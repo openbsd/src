@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.100 2002/05/15 15:15:41 jason Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.101 2002/05/16 02:54:02 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -137,7 +137,7 @@ ubsec_probe(parent, match, aux)
 	void *match;
 	void *aux;
 {
-	struct pci_attach_args *pa = (struct pci_attach_args *) aux;
+	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
 
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_BLUESTEEL &&
 	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BLUESTEEL_5501 ||
@@ -175,7 +175,7 @@ ubsec_attach(parent, self, aux)
 
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_BLUESTEEL &&
 	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BLUESTEEL_5601)
-		sc->sc_flags |= UBS_FLAGS_KEY;
+		sc->sc_flags |= UBS_FLAGS_KEY | UBS_FLAGS_RNG;
 
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_BROADCOM &&
 	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BROADCOM_5805)
