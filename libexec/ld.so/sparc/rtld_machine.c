@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.20 2003/09/04 19:37:08 drahn Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.21 2004/05/25 15:56:18 deraadt Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -392,9 +392,9 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 		 * The second entry holds the object identification.
 		 * Note: each PLT entry is three words long.
 		 */
-#define SAVE    0x9de3bfc0      /* i.e. `save %sp,-64,%sp' */
-#define CALL    0x40000000
-#define NOP     0x01000000
+#define SAVE	0x9de3bfc0	/* i.e. `save %sp,-64,%sp' */
+#define CALL	0x40000000
+#define NOP	0x01000000
 		pltgot[0] = SAVE;
 		pltgot[1] = CALL |
 		    ((Elf_Addr)&_dl_bind_start - (Elf_Addr)&pltgot[1]) >> 2;
@@ -494,7 +494,7 @@ _dl_mul_fixup()
 	size_t len;
 
 
-        mib[0] = CTL_MACHDEP;
+	mib[0] = CTL_MACHDEP;
 	mib[1] = CPU_V8MUL;
 	len = sizeof(v8mul);
 	_dl_sysctl(mib, 2, &v8mul, &len, NULL, 0);

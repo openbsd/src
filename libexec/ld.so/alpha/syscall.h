@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.h,v 1.13 2003/07/06 20:04:00 deraadt Exp $ */
+/*	$OpenBSD: syscall.h,v 1.14 2004/05/25 15:56:18 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Niklas Hallqvist
@@ -57,7 +57,7 @@ int	_dl_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 static inline off_t
 _dl_lseek(int fildes, off_t offset, int whence)
 {
-        return _dl__syscall((quad_t)SYS_lseek, fildes, 0, offset, whence);
+	return _dl__syscall((quad_t)SYS_lseek, fildes, 0, offset, whence);
 }
 
 #endif /*__DL_SYSCALL_H__*/

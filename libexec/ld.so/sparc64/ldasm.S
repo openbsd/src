@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.22 2004/01/10 22:47:54 pvalchev Exp $	*/
+/*	$OpenBSD: ldasm.S,v 1.23 2004/05/25 15:56:19 deraadt Exp $	*/
 /*	$NetBSD: rtld_start.S,v 1.5 2001/08/14 22:17:48 eeh Exp $	*/
 
 /*
@@ -113,7 +113,7 @@ _ENTRY(_dl_start)
 	sll	%o2, 2, %o2		! extract PC offset
 	sra	%o2, 0, %o2		! sign-extend
 
-	add	%o2, %o7, %o2           ! real &_DYNAMIC
+	add	%o2, %o7, %o2		! real &_DYNAMIC
 
 	call	_dl_boot_bind		! _dl_boot_bind(sp,dl_data,dynamicp)
 	 mov	%l3, %o1
@@ -280,21 +280,21 @@ _ENTRY(_dl_fstat)
 	add %o7, 8, %g2				! just return on success
 	t ST_SYSCALL				! off to wonderland
 	retl
-	 sub %g0, %o0, %o0                      ! error: result = -errno
+	 sub %g0, %o0, %o0			! error: result = -errno
 
 _ENTRY(_dl_fcntl)
 	mov  SYS_fcntl | SYSCALL_G2RFLAG, %g1	! call sys_fcntl
 	add %o7, 8, %g2				! just return on success
 	t ST_SYSCALL				! off to wonderland
 	retl
-	 sub %g0, %o0, %o0                      ! error: result = -errno
+	 sub %g0, %o0, %o0			! error: result = -errno
 
 _ENTRY(_dl_getdirentries)
 	mov  SYS_getdirentries | SYSCALL_G2RFLAG, %g1	! call sys_getdirentries
 	add %o7, 8, %g2					! just return on success
 	t ST_SYSCALL					! off to wonderland
 	retl
-	 sub %g0, %o0, %o0                      ! error: result = -errno
+	 sub %g0, %o0, %o0				! error: result = -errno
 
 	/* _dl_sigprocmask does not support NULL new mask */
 _ENTRY(_dl_sigprocmask)
@@ -314,4 +314,4 @@ _ENTRY(_dl_sysctl)
 	add %o7, 8, %g2					! just return on success
 	t ST_SYSCALL					! off to wonderland
 	retl
-	 sub %g0, %o0, %o0                      ! error: result = -errno
+	 sub %g0, %o0, %o0				! error: result = -errno

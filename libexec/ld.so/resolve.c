@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.c,v 1.21 2003/09/04 19:33:48 drahn Exp $ */
+/*	$OpenBSD: resolve.c,v 1.22 2004/05/25 15:56:18 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -253,7 +253,7 @@ _dl_find_symbol(const char *name, elf_object_t *startlook,
 			found = 1;
 			goto found;
 		}
-		    
+
 retry_nonglobal_dlo:
 	for (object = startlook; object;
 	    object = ((flags & SYM_SEARCH_SELF) ? 0 : object->next)) {
@@ -261,7 +261,7 @@ retry_nonglobal_dlo:
 		if ((lastchance == 0) &&
 		    ((object->obj_flags & RTLD_GLOBAL) == 0) &&
 		    (object->obj_type == OBJTYPE_DLO) &&
-		    (object != req_obj)) 
+		    (object != req_obj))
 			continue;
 
 		if (find_symbol_obj(object, name, h, flags, ref, &weak_sym,

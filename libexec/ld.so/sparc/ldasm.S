@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.13 2003/07/09 21:01:10 drahn Exp $	*/
+/*	$OpenBSD: ldasm.S,v 1.14 2004/05/25 15:56:18 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -263,7 +263,7 @@ _dl_fstat:
 	add %o7, 8, %g2				! just return on success
 	t ST_SYSCALL				! off to wonderland
 	retl
-	 sub %g0, %o0, %o0                      ! error: result = -errno
+	 sub %g0, %o0, %o0			! error: result = -errno
 
 
 	.section ".text"
@@ -275,7 +275,7 @@ _dl_fcntl:
 	add %o7, 8, %g2				! just return on success
 	t ST_SYSCALL				! off to wonderland
 	retl
-	 sub %g0, %o0, %o0                      ! error: result = -errno
+	 sub %g0, %o0, %o0			! error: result = -errno
 
 
 	.section ".text"
@@ -287,7 +287,7 @@ _dl_getdirentries:
 	add %o7, 8, %g2					! just return on success
 	t ST_SYSCALL					! off to wonderland
 	retl
-	 sub %g0, %o0, %o0                      ! error: result = -errno
+	 sub %g0, %o0, %o0				! error: result = -errno
 
 
 	.section ".text"
@@ -299,7 +299,7 @@ _dl_sysctl:
 	add %o7, 8, %g2					! just return on success
 	t ST_SYSCALL					! off to wonderland
 	retl
-	 sub %g0, %o0, %o0                      ! error: result = -errno
+	 sub %g0, %o0, %o0				! error: result = -errno
 
 
 	/* _dl_sigprocmask does not support NULL new mask */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.31 2003/09/04 19:37:08 drahn Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.32 2004/05/25 15:56:19 deraadt Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -574,12 +574,12 @@ _dl_reloc_plt(Elf_Word *where, Elf_Addr value, Elf_RelA *rela)
 		 *	nop
 		 *
 		 */
-		where[6] = JMP     | LOVAL(value);
+		where[6] = JMP | LOVAL(value);
 		where[5] = ORG5;
-		where[4] = SLLX    | 12;
-		where[3] = OR      | LOVAL((value) >> 32);
+		where[4] = SLLX | 12;
+		where[3] = OR | LOVAL((value) >> 32);
 		where[2] = SETHIG5 | HIVAL(value, 10);
-		where[1] = SETHI   | HIVAL(value, 42);
+		where[1] = SETHI | HIVAL(value, 42);
 		__asm __volatile("iflush %0+24" : : "r" (where));
 		__asm __volatile("iflush %0+20" : : "r" (where));
 		__asm __volatile("iflush %0+16" : : "r" (where));

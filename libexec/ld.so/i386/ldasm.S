@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.7 2003/07/09 21:01:10 drahn Exp $ */
+/*	$OpenBSD: ldasm.S,v 1.8 2004/05/25 15:56:18 deraadt Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -28,7 +28,7 @@
  */
 
 
-#define DL_DATA_SIZE      (16*4)
+#define DL_DATA_SIZE	(16*4)
 #include <sys/syscall.h>
 #include <machine/asm.h>
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.13 2003/09/04 19:37:07 drahn Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.14 2004/05/25 15:56:18 deraadt Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -333,9 +333,9 @@ struct jmpslot {
 	u_short opcode;
 	u_short addr[2];
 	u_short reloc_index;
-#define JMPSLOT_RELOC_MASK              0xffff
+#define JMPSLOT_RELOC_MASK	0xffff
 };
-#define JUMP    0xe990          /* NOP + JMP opcode */
+#define JUMP			0xe990	/* NOP + JMP opcode */
 #endif
 
 void
@@ -371,7 +371,7 @@ _dl_bind(elf_object_t *object, int index)
 	    SYM_SEARCH_ALL|SYM_WARNNOTFOUND|SYM_PLT, sym->st_size, object);
 	if (this == NULL) {
 		_dl_printf("lazy binding failed!\n");
-		*((int *)0) = 0;        /* XXX */
+		*((int *)0) = 0;	/* XXX */
 	}
 
 	/* if GOT is protected, allow the write */
@@ -397,7 +397,7 @@ _dl_bind(elf_object_t *object, int index)
 void
 _dl_md_reloc_got(elf_object_t *object, int lazy)
 {
-	extern void _dl_bind_start(void);       /* XXX */
+	extern void _dl_bind_start(void);	/* XXX */
 	Elf_Addr *pltgot = (Elf_Addr *)object->Dyn.info[DT_PLTGOT];
 	int i, num;
 	Elf_Rel *rel;

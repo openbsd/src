@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.3 2004/02/09 21:09:31 drahn Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.4 2004/05/25 15:56:18 deraadt Exp $ */
 
 /*
  * Copyright (c) 2004 Dale Rahn
@@ -63,37 +63,37 @@ static int reloc_target_flags[] = {
 	_RF_S|_RF_B|_RF_A|	_RF_E,			/*  9 SBREL32 */
 	_RF_S|_RF_P|_RF_A|	_RF_E,			/* 10 T_PC22 */
 	_RF_S|_RF_P|_RF_A|	_RF_E,			/* 11 T_PC8 */
-	_RF_E,			 			/* 12 Reserved */
+	_RF_E,						/* 12 Reserved */
 	_RF_S|_RF_A|		_RF_E,			/* 13 SWI24 */
 	_RF_S|_RF_A|		_RF_E,			/* 14 T_SWI8 */
-	_RF_E,			 			/* 15 OBSL */
-	_RF_E,			 			/* 16 OBSL */
-	_RF_E,			 			/* 17 UNUSED */
-	_RF_E,			 			/* 18 UNUSED */
-	_RF_E,			 			/* 19 UNUSED */
+	_RF_E,						/* 15 OBSL */
+	_RF_E,						/* 16 OBSL */
+	_RF_E,						/* 17 UNUSED */
+	_RF_E,						/* 18 UNUSED */
+	_RF_E,						/* 19 UNUSED */
 	_RF_S|			_RF_SZ(32) | _RF_RS(0),	/* 20 COPY */
 	_RF_S|_RF_A|		_RF_SZ(32) | _RF_RS(0),	/* 21 GLOB_DAT */
 	_RF_S|			_RF_SZ(32) | _RF_RS(0),	/* 22 JUMP_SLOT */
 	      _RF_A|	_RF_B|	_RF_SZ(32) | _RF_RS(0),	/* 23 RELATIVE */
-	_RF_E,			 			/* 24 GOTOFF */
-	_RF_E,			 			/* 25 GOTPC */
-	_RF_E,			 			/* 26 GOT32 */
-	_RF_E,			 			/* 27 PLT32 */
-	_RF_E,			 			/* 28 UNUSED */
-	_RF_E,			 			/* 29 UNUSED */
-	_RF_E,			 			/* 30 UNUSED */
-	_RF_E,			 			/* 31 UNUSED */
-	_RF_E,			 			/* 32 A_PCR 0 */
-	_RF_E,			 			/* 33 A_PCR 8 */
-	_RF_E,			 			/* 34 A_PCR 16 */
-	_RF_E,			 			/* 35 B_PCR 0 */
-	_RF_E,			 			/* 36 B_PCR 12 */
-	_RF_E,			 			/* 37 B_PCR 20 */
-	_RF_E,			 			/* 38 RELAB32 */
-	_RF_E,			 			/* 39 ROSGREL32 */
-	_RF_E,			 			/* 40 V4BX */
-	_RF_E,			 			/* 41 STKCHK */
-	_RF_E			 			/* 42 TSTKCHK */
+	_RF_E,						/* 24 GOTOFF */
+	_RF_E,						/* 25 GOTPC */
+	_RF_E,						/* 26 GOT32 */
+	_RF_E,						/* 27 PLT32 */
+	_RF_E,						/* 28 UNUSED */
+	_RF_E,						/* 29 UNUSED */
+	_RF_E,						/* 30 UNUSED */
+	_RF_E,						/* 31 UNUSED */
+	_RF_E,						/* 32 A_PCR 0 */
+	_RF_E,						/* 33 A_PCR 8 */
+	_RF_E,						/* 34 A_PCR 16 */
+	_RF_E,						/* 35 B_PCR 0 */
+	_RF_E,						/* 36 B_PCR 12 */
+	_RF_E,						/* 37 B_PCR 20 */
+	_RF_E,						/* 38 RELAB32 */
+	_RF_E,						/* 39 ROSGREL32 */
+	_RF_E,						/* 40 V4BX */
+	_RF_E,						/* 41 STKCHK */
+	_RF_E						/* 42 TSTKCHK */
 };
 
 #define RELOC_RESOLVE_SYMBOL(t)		((reloc_target_flags[t] & _RF_S) != 0)
@@ -212,7 +212,7 @@ _dl_md_reloc(elf_object_t *object, int rel, int relsz)
 
 		type = ELF_R_TYPE(rels->r_info);
 
-		if (reloc_target_flags[type] & _RF_E) { 
+		if (reloc_target_flags[type] & _RF_E) {
 			_dl_printf(" bad relocation %d %d\n", i, type);
 			_dl_exit(1);
 		}
@@ -439,7 +439,7 @@ _dl_bind(elf_object_t *object, int relidx)
 
 	if (*addr != newval)
 		*addr = newval;
-		
+
 	/* put the GOT back to RO */
 	if (object->got_size != 0) {
 		_dl_mprotect((void*)object->got_start, object->got_size,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dlfcn.c,v 1.34 2004/05/22 19:42:52 drahn Exp $ */
+/*	$OpenBSD: dlfcn.c,v 1.35 2004/05/25 15:56:18 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -276,6 +276,8 @@ dlerror(void)
 void
 _dl_show_objects(void)
 {
+	extern int _dl_symcachestat_hits;
+	extern int _dl_symcachestat_lookups;
 	elf_object_t *object;
 	char *objtypename;
 	int outputfd;
@@ -318,15 +320,12 @@ _dl_show_objects(void)
 		    objtypename, object->refcount, object->load_name);
 		object = object->next;
 	}
-	{
-		extern int _dl_symcachestat_hits;
-		extern int _dl_symcachestat_lookups;
-		if (_dl_symcachestat_lookups != 0)
-			DL_DEB(("symcache lookups %d hits %d ratio %d% hits\n",
-			    _dl_symcachestat_lookups, _dl_symcachestat_hits,
-			    (_dl_symcachestat_hits * 100) /
-			    _dl_symcachestat_lookups));
-	}
+
+	if (_dl_symcachestat_lookups != 0)
+		DL_DEB(("symcache lookups %d hits %d ratio %d% hits\n",
+		    _dl_symcachestat_lookups, _dl_symcachestat_hits,
+		    (_dl_symcachestat_hits * 100) /
+		    _dl_symcachestat_lookups));
 }
 
 static void

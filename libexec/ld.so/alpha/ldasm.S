@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.15 2003/07/09 21:01:10 drahn Exp $ */
+/*	$OpenBSD: ldasm.S,v 1.16 2004/05/25 15:56:18 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Niklas Hallqvist
@@ -291,7 +291,7 @@ END(_dl_getdirentries)
 /* _dl_sigprocmask does not support NULL new mask */
 LEAF_NOPROFILE(_dl_sigprocmask, 4)
 	mov	a2, a5
-	ldl     a1, 0(a1)               /* load the set from *set */
+	ldl	a1, 0(a1)		/* load the set from *set */
 	ldiq	v0, SYS_sigprocmask
 	call_pal PAL_OSF1_callsys
 	/* What about syscalls failing? */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.75 2004/05/24 20:24:54 mickey Exp $ */
+/*	$OpenBSD: loader.c,v 1.76 2004/05/25 15:56:18 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -646,7 +646,7 @@ _dl_rtld(elf_object_t *object)
 	_dl_md_reloc_got(object, !(_dl_bindnow || object->dyn.bind_now));
 
 	if (_dl_symcache != NULL) {
-		if (sz != 0) 
+		if (sz != 0)
 			_dl_munmap( _dl_symcache, sz);
 		_dl_symcache = NULL;
 	}
@@ -716,9 +716,9 @@ _dl_unsetenv(const char *var, char **env)
 	}
 }
 
-/* 
+/*
  * _dl_fixup_user_env()
- * 
+ *
  * Set the user environment so that programs can use the environment
  * while running constructors. Specifically, MALLOC_OPTIONS= for malloc()
  */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.3 2004/02/09 21:09:31 drahn Exp $ */
+/*	$OpenBSD: ldasm.S,v 1.4 2004/05/25 15:56:18 deraadt Exp $ */
 
 /*
  * Copyright (c) 2004 Dale Rahn
@@ -68,7 +68,7 @@ ENTRY(_dl_bind_start)
 
 	sub	r1, ip, lr		/* r1 = 4 * (n + 1) */
 	sub	r1, r1, #4		/* r1 = 4 * n */
-	mov     r1, r1, lsr #2		/* r1 = n */
+	mov	r1, r1, lsr #2		/* r1 = n */
 
 	ldr	r0, [lr, #-4]
 	bl	_dl_bind
@@ -94,7 +94,7 @@ __CONCAT(_dl_,n):					;\
 	.align		4
 DL_SYSCALL(close)
 
-	
+
 	.global		_dl_exit
 	.type		_dl_exit%function
 _dl_exit:
@@ -115,7 +115,7 @@ DL_SYSCALL(fcntl)
 DL_SYSCALL2(sysctl,__sysctl)
 
 DL_SYSCALL(getdirentries)
-	
+
 	.global		_dl_sigprocmask
 	.type		_dl_sigprocmask%function
 _dl_sigprocmask:
@@ -129,7 +129,7 @@ _dl_sigprocmask:
 	strne	r0, [r2]
 	mov	r0, #0
 	mov	pc, lr
-	
+
 .L_cerr:
 	mov	r0, #0
 	sub	r0, r0, #1
