@@ -1,12 +1,9 @@
-.\"	$OpenBSD: boot_i386.8,v 1.3 1996/06/29 18:24:17 mickey Exp $
-.\"	$NetBSD: boot_i386.8,v 1.3 1995/04/23 10:33:35 cgd Exp $
+.\"	$OpenBSD: boot_i386.8,v 1.4 1997/09/09 21:33:45 weingart Exp $
 .\"
-.\" Copyright (c) 1991, 1993
-.\"	The Regents of the University of California.  All rights reserved.
+.\" Copyright (c) 1997 Tobias Weingartner
 .\"
-.\" This code is derived from software written and contributed
-.\" to Berkeley by William Jolitz.
-.\"
+.\" All rights reserved.
+.\" 
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
 .\" are met:
@@ -17,15 +14,13 @@
 .\"    documentation and/or other materials provided with the distribution.
 .\" 3. All advertising materials mentioning features or use of this software
 .\"    must display the following acknowledgement:
-.\"	This product includes software developed by the University of
-.\"	California, Berkeley and its contributors.
-.\" 4. Neither the name of the University nor the names of its contributors
-.\"    may be used to endorse or promote products derived from this software
-.\"    without specific prior written permission.
-.\"
-.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
-.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\"      This product includes software developed by Michael Shalayeff.
+.\" 4. The name of the author may not be used to endorse or promote products
+.\"    derived from this software without specific prior written permission.
+.\" 
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR 
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+.\" WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
 .\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
 .\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
 .\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
@@ -34,10 +29,9 @@
 .\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
-.\"
-.\"     @(#)boot_i386.8	8.2 (Berkeley) 4/19/94
-.\"
-.Dd April 19, 1994
+.\" 
+
+.Dd September 4, 1997
 .Dt BOOT 8 i386
 .Os
 .Sh NAME
@@ -51,79 +45,103 @@ An automatic consistency check of the file systems will be performed,
 and unless this fails, the system will resume multi-user operations.
 .Pp
 .Sy Cold starts.
-The 386
+The
 .Tn "PC AT"
-clones attempt to boot the floppy disk drive A (otherwise known as drive
-0) first, and failing that, attempt to boot the hard disk C (otherwise
-known as hard disk controller 1, drive 0).
-The automatic boot will attempt to load
-.Pa bsd
-from partition A of either the floppy or the hard disk.
-This boot may be aborted by typing any character on the keyboard repeatedly
-(four or five times at least) during the operating system load phase, after
-which the bootstrap will prompt for the file that you wish to load instead.
+clones will perform a POST (Power On Self Test) upon being booted cold.
+This test will find and initialize memory, keyboard, and other devices.
+It will search for and initialize any extension ROMs that are present,
+and then attempt to boot the operating system from an available boot
+drive.  Failing this, older IBM systems came up in ROM BASIC.
 .Pp
-One exception to this is the
-.Ql d
-key, which will not abort the load but instead silently force the
-.Dv DEBUG
-boot flags.
-The boot flags for an autoboot are 0, and 3 for the successive boot after
-an aborted autoboot sequence.
-No other provison is made for setting boot flags (yet).
-A specific device or bootstrap file may be used; for example,
+The newer
+.Tn "PC AT"
+clones attempt to boot off the drive specified in the BIOS setup, or
+if it is an older BIOS, it will start with checking for a disk in floppy
+drive A (otherwise known as drive 0) first, and failing that, attempt to
+boot the hard disk C (otherwise known as hard disk controller 1, drive 0).
 .Pp
-The file specifications used for the boostrap
-when loaded with the
-.Dq askme
-flag
-(e.g. an aborted autoboot)
-are of the form:
+.Sy Warm starts.
+The BIOS loads the first block (at physical location: track 0, head 0,
+sector 1) off the boot device into memory, and if the last two bytes in the
+block match the signature 0x55AA, the BIOS considers the block a valid
+bootable drive.  The BIOS then proceeds to call the machine code program
+in this block.  If the BIOS is current, it will also pass the boot drive
+to the boot block in register
+.Sy %dl.
 .Pp
-.Dl device unit partition:
+There are two different types of boot blocks on devices.  There is the
+MBR (master boot record), and the PBR (partition boot record).  A digression
+into a little piece of history will quickly give light as to why this is so.
+In the beginning, the PC ``architecture'' came with a single or dual floppy
+drives, and no hard drives.  The only type of bootable sectors on any device
+were the PBRs.  They were responsible for loading the rest of the operating
+system from the right device.  When hard disks came out, it was felt that
+such a huge space should be able to be partitioned into separate drives,
+and this is where the MBR was invented.
 .Pp
-where
-.Ar device
-is the type of the device, assumed to be on the ISA bus, to be searched,
-.Ar unit
-is the unit number of the disk or tape,
-and
-.Ar partition
-is the disk partition or tape file number.
-Normal line editing characters can be used when typing the file specification.
-The following list of supported devices may vary from installation to
-installation:
-.Bd -unfilled -offset indent
-wd	ST506, IDE, ESDI, RLL disks on a WD100[2367] or lookalike
-	controller
-fd	5 1/4" or 3 1/2" High density floppies
-.Ed
+The MBR relocates itself upon being loaded and invoked by the BIOS.
+Embeded within the MBR is a partition table, with four partitions table
+entries.  The MBR code traverses this table (which was loaded with the
+MBR by the BIOS), looking for an active entry, and then loads the MBR or
+PBR from the disk location specified by the partition table entry.  So
+in all reality, the MBR is nothing more than a fancy chaining PBR.
 .Pp
-For example,
-to boot from a file system which starts at cylinder 0
-of unit 0 of an IDE disk, type
-.Dq Li wd0a:bsd
-to the boot prompt;
-.Dq Li fd0a:bsd
-would specify a 3 1/2" floppy drive 0 .
+Note: The MBR could load another MBR, which is the case when you are booting
+off an extended partition.  In other words, the first block of an extended
+partition is really an MBR, which will then load the corresponding MBR or PBR
+out of its extended partition's partition table.
+.Sh GEOMETRY TRANSLATION
+.Em WARNING:
+This portion of the ``PC BIOS Architecture'' is a mess, and a compatibility
+nightmare.
 .Pp
-In an emergency, the bootstrap methods described in the paper
-.%T "Installing and Operating 4.3 BSD-Reno UNIX on the AT/386"
-can be used
-to boot from a distribution tape.
+The PC BIOS has an API to manipulate any disk that the BIOS happens to
+support.  This interface uses 10 bits to address the cylinder, 8 bits to
+address the head, and 6 bits to address the sector of a drive.  This
+restricts any application using the BIOS to being able to address only
+1024 cylinders, 256 heads, and 63 (since the sectors are 1 based) sectors
+on a disk.  These limitations proved to be fine for roughly 3 years after
+the debut of hard disks on PC computers.
+.Pp
+Many (if not all) newer drives have many more cylinders than the BIOS API
+can support, and likely more sectors per track as well.  To allow the BIOS
+the ability of accessing these large drives, the BIOS would ``re-map'' the
+cylinder/head/sector of the real drive geometry into something that would
+allow the applications using the BIOS to access a larger portion of the
+drive, still using the restricted BIOS API.
+.Pp
+The reason this has become a problem, is that any modern OS will use its own
+drivers to access the disk drive, bypassing the BIOS completely.  However,
+the MBR, PBR, and partition tables are all still written using the original
+BIOS access methods.  This is for backwards compatibility to the original
+IBM PC!
+.Pp
+So the gist of it is, the MBR, PBR, and partition table need to have BIOS
+geometry offsets and cylinder/head/sector values for them to be able to
+load any type of operating system.  This geometry can, and likely will,
+change whenever you move a disk from machine to machine, or from controller
+to controller.
+.Em They are controller and machine specific.
 .Sh FILES
-.Bl -tag -width /bsdxx -compact
+.Bl -tag -width /usr/mdec/biosboot -compact
 .It Pa /bsd
 system code
+.It Pa /usr/mdec/mbr
+system MBR image
+.It Pa /usr/mdec/biosboot
+system primary stage bootstrap (PBR)
 .It Pa /boot
-system bootstrap
+system second stage bootstrap
 .El
 .Sh SEE ALSO
 .Xr halt 8 ,
 .Xr reboot 8 ,
-.Xr shutdown 8
+.Xr shutdown 8 ,
+.Xr installboot 8 ,
+.Xr boot 8
 .Sh BUGS
-The disklabel format used by this version of
-.Bx
-is quite
-different from that of other architectures.
+The ``PC BIOS Architecture'' makes this process very prone to weird and
+wonderfull interactions between differing operating systems.  There is
+no published standard to the MBR and PBR, which makes coding these a
+nightmare.  Somebody *please* write me a decent BIOS, and make them (the
+masses) use it!
