@@ -1,4 +1,4 @@
-/*	$OpenBSD: schizo.c,v 1.1 2002/06/08 21:56:02 jason Exp $	*/
+/*	$OpenBSD: schizo.c,v 1.2 2002/06/08 23:31:30 jason Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -50,48 +50,9 @@
 
 #include <sparc64/dev/iommureg.h>
 #include <sparc64/dev/iommuvar.h>
-#include <sparc64/dev/psychoreg.h>
-#include <sparc64/dev/psychovar.h>
+#include <sparc64/dev/schizoreg.h>
+#include <sparc64/dev/schizovar.h>
 #include <sparc64/sparc64/cache.h>
-
-#define	SCZ_PCIA_MEM_MATCH		0x00040
-#define	SCZ_PCIA_MEM_MASK		0x00048
-#define	SCZ_PCIA_IO_MATCH		0x00050
-#define	SCZ_PCIA_IO_MASK		0x00058
-#define	SCZ_PCIB_MEM_MATCH		0x00060
-#define	SCZ_PCIB_MEM_MASK		0x00068
-#define	SCZ_PCIB_IO_MATCH		0x00070
-#define	SCZ_PCIB_IO_MASK		0x00078
-
-struct schizo_range {
-	u_int32_t	cspace;
-	u_int32_t	child_hi;
-	u_int32_t	child_lo;
-	u_int32_t	phys_hi;
-	u_int32_t	phys_lo;
-	u_int32_t	size_hi;
-	u_int32_t	size_lo;
-};
-
-struct schizo_pbm {
-	struct schizo_softc *sp_sc;
-
-	struct schizo_range *sp_range;
-	pci_chipset_tag_t sp_pc;
-	int sp_nreg;
-	int sp_nrange;
-	int sp_nintmap;
-
-	bus_space_tag_t		sp_memt;
-	bus_space_tag_t		sp_iot;
-	bus_space_tag_t		sp_cfgt;
-	bus_space_handle_t	sp_cfgh;
-	bus_dma_tag_t		sp_dmat;
-	int			sp_bus;
-	int			sp_flags;
-	int			sp_bus_a;
-	bus_addr_t		sp_confpaddr;
-};
 
 extern struct sparc_pci_chipset _sparc_pci_chipset;
 
@@ -101,16 +62,6 @@ void schizo_init(struct schizo_softc *, int);
 int schizo_print(void *, const char *);
 
 u_int64_t schizo_read(bus_addr_t);
-
-struct schizo_softc {
-	struct device sc_dv;
-	int sc_node;
-	bus_dma_tag_t sc_dmat;
-	bus_space_tag_t sc_bust;
-	bus_space_tag_t sc_bustag;
-	struct iommu_state *sc_is;
-	bus_addr_t sc_ctrl;
-};
 
 struct cfattach schizo_ca = {
 	sizeof(struct schizo_softc), schizo_match, schizo_attach
