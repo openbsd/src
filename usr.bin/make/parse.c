@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.35 1999/12/18 21:58:07 espie Exp $	*/
+/*	$OpenBSD: parse.c,v 1.36 2000/01/08 09:45:15 espie Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: parse.c,v 1.35 1999/12/18 21:58:07 espie Exp $";
+static char rcsid[] = "$OpenBSD: parse.c,v 1.36 2000/01/08 09:45:15 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -848,7 +848,7 @@ ParseDoDependency (line)
 		 * no errors in this, as they would have been discovered
 		 * in the initial Var_Subst and we wouldn't be here.
 		 */
-		int 	length;
+		size_t 	length;
 		Boolean	freeIt;
 		char	*result;
 

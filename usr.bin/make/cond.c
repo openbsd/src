@@ -1,4 +1,4 @@
-/*	$OpenBSD: cond.c,v 1.13 1999/12/19 00:04:25 espie Exp $	*/
+/*	$OpenBSD: cond.c,v 1.14 2000/01/08 09:45:15 espie Exp $	*/
 /*	$NetBSD: cond.c,v 1.7 1996/11/06 17:59:02 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-static char rcsid[] = "$OpenBSD: cond.c,v 1.13 1999/12/19 00:04:25 espie Exp $";
+static char rcsid[] = "$OpenBSD: cond.c,v 1.14 2000/01/08 09:45:15 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -228,7 +228,7 @@ CondGetArg(linePtr, argPtr, argLen, func, parens)
 	     * though perhaps we should...
 	     */
 	    char  	*cp2;
-	    int		len;
+	    size_t	len;
 	    Boolean	doFree;
 
 	    cp2 = Var_Parse(cp, VAR_CMD, TRUE, &len, &doFree);
@@ -520,7 +520,7 @@ CondToken(doEval)
 		char	*lhs;
 		char	*rhs;
 		char	*op;
-		int	varSpecLen;
+		size_t	varSpecLen;
 		Boolean	doFree;
 
 		/*
@@ -629,7 +629,7 @@ do_string_compare:
 			    cp++;
 			    Buf_AddChar(&buf, *cp);
 			} else if (*cp == '$') {
-			    int	len;
+			    size_t  len;
 			    Boolean freeIt;
 
 			    cp2 = Var_Parse(cp, VAR_CMD, doEval,&len, &freeIt);
@@ -682,7 +682,7 @@ do_string_compare:
 		    if (!CondCvtArg(lhs, &left))
 			goto do_string_compare;
 		    if (*rhs == '$') {
-			int 	len;
+			size_t 	len;
 			Boolean	freeIt;
 
 			string = Var_Parse(rhs, VAR_CMD, doEval,&len,&freeIt);
@@ -805,7 +805,7 @@ error:
 		     * Use Var_Parse to parse the spec in parens and return
 		     * True if the resulting string is empty.
 		     */
-		    int	    length;
+		    size_t  length;
 		    Boolean doFree;
 		    char    *val;
 

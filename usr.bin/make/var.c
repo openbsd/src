@@ -1,4 +1,4 @@
-/*	$OpenBSD: var.c,v 1.28 1999/12/19 00:04:25 espie Exp $	*/
+/*	$OpenBSD: var.c,v 1.29 2000/01/08 09:45:16 espie Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -70,7 +70,7 @@
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: var.c,v 1.28 1999/12/19 00:04:25 espie Exp $";
+static char rcsid[] = "$OpenBSD: var.c,v 1.29 2000/01/08 09:45:16 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -1314,7 +1314,7 @@ VarGetPattern(ctxt, err, tstr, delim, flags, length, pattern)
 {
     char *cp;
     BUFFER buf;
-    int junk;
+    size_t junk;
 
     Buf_Init(&buf, 0);
     if (length == NULL)
@@ -1347,7 +1347,7 @@ VarGetPattern(ctxt, err, tstr, delim, flags, length, pattern)
 	    }
 	    else {
 		char   *cp2;
-		int     len;
+		size_t     len;
 		Boolean freeIt;
 
 		/*
@@ -1436,7 +1436,7 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
     char    	  *str;	    	/* The string to parse */
     GNode   	  *ctxt;    	/* The context for the variable */
     Boolean 	    err;    	/* TRUE if undefined variables are an error */
-    int	    	    *lengthPtr;	/* OUT: The length of the specification */
+    size_t	    *lengthPtr;	/* OUT: The length of the specification */
     Boolean 	    *freePtr; 	/* OUT: TRUE if caller should free result */
 {
     register char   *tstr;    	/* Pointer into str */
