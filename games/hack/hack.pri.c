@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.pri.c,v 1.8 2003/05/19 06:30:56 pjanzen Exp $	*/
+/*	$OpenBSD: hack.pri.c,v 1.9 2003/05/19 09:00:54 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -62,11 +62,12 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: hack.pri.c,v 1.8 2003/05/19 06:30:56 pjanzen Exp $";
+static const char rcsid[] = "$OpenBSD: hack.pri.c,v 1.9 2003/05/19 09:00:54 pjanzen Exp $";
 #endif /* not lint */
 
 #include <curses.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <stdarg.h>
 #include "hack.h"
 

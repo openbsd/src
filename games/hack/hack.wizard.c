@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.wizard.c,v 1.4 2003/05/19 06:30:56 pjanzen Exp $	*/
+/*	$OpenBSD: hack.wizard.c,v 1.5 2003/05/19 09:00:54 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -62,14 +62,14 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: hack.wizard.c,v 1.4 2003/05/19 06:30:56 pjanzen Exp $";
+static const char rcsid[] = "$OpenBSD: hack.wizard.c,v 1.5 2003/05/19 09:00:54 pjanzen Exp $";
 #endif /* not lint */
 
 /* wizard code - inspired by rogue code from Merlyn Leroy (digi-g!brian) */
 
+#include <stdlib.h>
 #include "hack.h"
 extern struct permonst pm_wizard;
-extern struct monst *makemon();
 
 static void clonewiz(struct monst *);
 

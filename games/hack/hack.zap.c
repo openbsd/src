@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.zap.c,v 1.7 2003/05/19 06:30:56 pjanzen Exp $	*/
+/*	$OpenBSD: hack.zap.c,v 1.8 2003/05/19 09:00:54 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -62,9 +62,10 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: hack.zap.c,v 1.7 2003/05/19 06:30:56 pjanzen Exp $";
+static const char rcsid[] = "$OpenBSD: hack.zap.c,v 1.8 2003/05/19 09:00:54 pjanzen Exp $";
 #endif /* not lint */
 
+#include <stdlib.h>
 #include "hack.h"
 
 extern struct monst youmonst;
