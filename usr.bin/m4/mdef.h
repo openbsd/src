@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdef.h,v 1.16 2000/07/04 17:28:38 espie Exp $	*/
+/*	$OpenBSD: mdef.h,v 1.17 2000/07/24 23:08:25 espie Exp $	*/
 /*	$NetBSD: mdef.h,v 1.7 1996/01/13 23:25:27 pk Exp $	*/
 
 /*
@@ -79,6 +79,7 @@
 #define FILENAMETYPE	38
 #define LINETYPE	39
 #define REGEXPTYPE	40
+#define ESYSCMDTYPE	41
  
 #define TYPEMASK	63	/* Keep bits really corresponding to a type. */
 #define STATIC          128	/* Name is statically allocated, don't free. */

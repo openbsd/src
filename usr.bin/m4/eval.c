@@ -1,4 +1,4 @@
-/*	$OpenBSD: eval.c,v 1.26 2000/03/18 01:06:55 espie Exp $	*/
+/*	$OpenBSD: eval.c,v 1.27 2000/07/24 23:08:24 espie Exp $	*/
 /*	$NetBSD: eval.c,v 1.7 1996/11/10 21:21:29 pk Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.2 (Berkeley) 4/27/95";
 #else
-static char rcsid[] = "$OpenBSD: eval.c,v 1.26 2000/03/18 01:06:55 espie Exp $";
+static char rcsid[] = "$OpenBSD: eval.c,v 1.27 2000/07/24 23:08:24 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -210,6 +210,10 @@ eval(argv, argc, td)
 		pbnum(sysval);
 		break;
 
+	case ESYSCMDTYPE:
+		if (argc > 2)
+			doesyscmd(argv[2]);
+	    	break;
 	case INCLTYPE:
 		if (argc > 2)
 			if (!doincl(argv[2]))

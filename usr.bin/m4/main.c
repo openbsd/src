@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.34 2000/07/02 01:17:00 espie Exp $	*/
+/*	$OpenBSD: main.c,v 1.35 2000/07/24 23:08:25 espie Exp $	*/
 /*	$NetBSD: main.c,v 1.12 1997/02/08 23:54:49 cgd Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.34 2000/07/02 01:17:00 espie Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.35 2000/07/24 23:08:25 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -117,6 +117,7 @@ struct keyblk keywrds[] = {	/* m4 keywords to be installed */
 	{ "builtin",      BUILTINTYPE},
 	{ "patsubst",	  PATSTYPE},
 	{ "regexp",	  REGEXPTYPE},
+	{ "esyscmd",	  ESYSCMDTYPE},
 	{ "__file__",	  FILENAMETYPE | NOARGS},
 	{ "__line__",	  LINETYPE | NOARGS},
 #endif
