@@ -568,6 +568,22 @@ Same as the control character
 Same as the control character
 .Cm reprint .
 .El
+.Ss Control operations:
+.Pp
+These operations are not modes, but rather commands to be performed by
+the tty layer.
+.Bl -tag -width Fl
+.It Cm ostart
+Performs a "start output" operation, as normally done by an
+incoming START character when
+.Cm ixon
+is set.
+.It Cm ostop
+Performs a "stop output" operation, as normally done by an
+incoming STOP character when
+.Cm ixon
+is set.
+.El
 .Pp
 The
 .Nm stty
@@ -584,4 +600,5 @@ compatible.  The flags
 and
 .Fl f
 are
-extensions to the standard.
+extensions to the standard, as are the operands mentioned in the control
+operations section.
