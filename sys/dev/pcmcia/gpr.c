@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpr.c,v 1.5 2002/07/10 21:53:26 mickey Exp $	*/
+/*	$OpenBSD: gpr.c,v 1.6 2002/07/29 18:53:32 fgsch Exp $	*/
 
 /*
  * Copyright (c) 2002, Federico G. Schwindt
@@ -63,10 +63,10 @@
 /* Registers in attribute memory (read only) */ 
 #define GPR400_SETUP		0x018	/* General Setup 		*/
 #define  GPR400_LOCK_MASK	 0x08	/* 0: locked, 1: unlocked	*/
-#define GPR400_SCARD1		0x01a	/* SmartCard Reg. 1 		*/
-#define  GPR400_INS_MASK	 0x08	/* 0: in the reader, 1: removed	*/
-#define  GPR400_DET_MASK	 0x80	/* 0: no inserted, 1: inserted	*/
-#define GPR400_SCARD2		0x01c	/* SmartCard Reg. 2 		*/
+#define GPR400_REG1		0x01a	/* SmartCard Reg. 1 		*/
+#define  GPR400_DET_MASK	 0x08	/* 0: in the reader, 1: removed	*/
+#define  GPR400_INS_MASK	 0x80	/* 0: not inserted, 1: inserted	*/
+#define GPR400_REG2		0x01c	/* SmartCard Reg. 2 		*/
 #define GPR400_CAC		0x01e	/* Clock and Control 		*/
 
 /* TLV */
@@ -275,7 +275,7 @@ gpropen(dev_t dev, int flags, int mode, struct proc *p)
 	    (sc = gpr_cd.cd_devs[unit]) == NULL)
 		return (ENXIO);
 
-	return (tlvput(sc, GPR_SELECT, "\x02", 1));
+	return (tlvput(sc, GPR400_SELECT, "\x02", 1));
 }
 
 int
@@ -286,7 +286,7 @@ gprclose(dev_t dev, int flags, int mode, struct proc *p)
 
 	DPRINTF(("%s: flags %d, mode %d\n", __func__, flags, mode));
 
-	(void)tlvput(sc, GPR_CLOSE, (u_int8_t *)0, 0);
+	(void)tlvput(sc, GPR400_CLOSE, (u_int8_t *)0, 0);
 
 	return (0);
 }
@@ -377,33 +377,34 @@ gpr_intr(void *arg)
 int
 tlvput(struct gpr_softc *sc, int cmd, u_int8_t *data, int len)
 {
-	int i, resid;
+	int resid, ret;
 
 	DPRINTF(("%s: cmd 0x%x, data %p, len %d\n", __func__,
 	    cmd, data, len));
 
-	for (i = 0, resid = 1; resid || i < len; i += 28) {
-		u_int8_t ret;
-		int s;
+	resid = len;
+	do {
+		int n, s;
 
-		resid = len - i - 28;
-		if (resid < 0)
-			resid = 0;
+		n = min(resid, 28);
+		resid -= n;
 
-		if (resid)
+		if (n)
 			cmd |= GPR400_CONT;
 		else
 			cmd &= ~GPR400_CONT;
 
-		DPRINTF(("%s: sending cmd 0x%x, len %d, resid %d\n",
-		    __func__, cmd, len - resid, resid));
+		DPRINTF(("%s: sending cmd 0x%x, len %d, left %d\n",
+		    __func__, cmd, n, resid));
 
 		bus_space_write_1(sc->sc_iot, sc->sc_ioh, 0x02, cmd);
-		bus_space_write_1(sc->sc_iot, sc->sc_ioh, 0x03, len - resid);
+		bus_space_write_1(sc->sc_iot, sc->sc_ioh, 0x03, n);
 
-		bus_space_write_region_1(sc->sc_iot, sc->sc_ioh,
-		    0x04, data, len - resid);
-		data += len - resid;
+		if (n) {
+			bus_space_write_region_1(sc->sc_iot, sc->sc_ioh,
+			    0x04, data, n);
+			data += n;
+		}
 
 		s = spltty();
 
@@ -422,7 +423,8 @@ tlvput(struct gpr_softc *sc, int cmd, u_int8_t *data, int len)
 
 		if (ret != 0x00 || (!resid && ret != 0xe7))
 			return (EIO);
-	}
+
+	} while (resid > 0);
 
 	return (0);
 }
