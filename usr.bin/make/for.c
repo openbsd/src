@@ -1,4 +1,4 @@
-/*	$OpenBSD: for.c,v 1.4 1998/12/05 00:06:27 espie Exp $	*/
+/*	$OpenBSD: for.c,v 1.5 1999/11/11 11:42:19 espie Exp $	*/
 /*	$NetBSD: for.c,v 1.4 1996/11/06 17:59:05 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)for.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: for.c,v 1.4 1998/12/05 00:06:27 espie Exp $";
+static char rcsid[] = "$OpenBSD: for.c,v 1.5 1999/11/11 11:42:19 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -72,18 +72,20 @@ static char rcsid[] = "$OpenBSD: for.c,v 1.4 1998/12/05 00:06:27 espie Exp $";
  * then we evaluate the for loop for each variable in the varlist.
  */
 
-static int  	  forLevel = 0;  	/* Nesting level	*/
-static char	 *forVar;		/* Iteration variable	*/
-static Buffer	  forBuf;		/* Commands in loop	*/
-static Lst	  forLst;		/* List of items	*/
+static int  	  forLevel = 0;  	/* Nesting level	     */
+static char	 *forVar;		/* Iteration variable	     */
+static Buffer	  forBuf;		/* Commands in loop	     */
+static Lst	  forLst;		/* List of items	     */
+static unsigned long forLineno;		/* Line at beginning of loop */
 
 /*
  * State of a for loop.
  */
 typedef struct _For {
-    Buffer	  buf;			/* Unexpanded buffer	*/
-    char*	  var;			/* Index name		*/
-    Lst  	  lst;			/* List of variables	*/
+    Buffer	  buf;			/* Unexpanded buffer	     */
+    char*	  var;			/* Index name		     */
+    Lst  	  lst;			/* List of variables	     */
+    unsigned long lineno;
 } For;
 
 static int ForExec	__P((ClientData, ClientData));
@@ -175,6 +177,7 @@ For_Eval (line)
 	 * Make a list with the remaining words
 	 */
 	forLst = Lst_Init(FALSE);
+	forLineno = Parse_Getlineno();
 	buf = Buf_Init(0);
 	sub = Var_Subst(NULL, ptr, VAR_GLOBAL, FALSE);
 
@@ -264,7 +267,7 @@ ForExec(namep, argp)
     if (DEBUG(FOR))
 	(void) fprintf(stderr, "--- %s = %s\n", arg->var, name);
     Parse_FromString(Var_Subst(arg->var, (char *) Buf_GetAll(arg->buf, &len),
-			       VAR_GLOBAL, FALSE));
+			       VAR_GLOBAL, FALSE), arg->lineno);
     Var_Delete(arg->var, VAR_GLOBAL);
 
     return 0;
@@ -294,6 +297,7 @@ For_Run()
     arg.var = forVar;
     arg.buf = forBuf;
     arg.lst = forLst;
+    arg.lineno = forLineno;
     forVar = NULL;
     forBuf = NULL;
     forLst = NULL;
