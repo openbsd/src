@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: fts.c,v 1.3 1996/12/23 04:58:34 millert Exp $";
+static char rcsid[] = "$OpenBSD: fts.c,v 1.4 1996/12/23 06:08:59 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -336,30 +336,12 @@ fts_read(sp)
 		 * FTS_STOP or the fts_info field of the node.
 		 */
 		if (sp->fts_child) {
-			if (!ISSET(FTS_NOCHDIR)) {
-				struct stat *parent1, *fts_statp2, *parent2;
-				int ret;
-
-				/* XXX - make readable somehow */
-				if (!ISSET(FTS_NOSTAT) && !ISSET(FTS_LOGICAL))
-					ret = ((lstat(".", parent1) != 0) ||
-					(chdir(p->fts_accpath) != 0) ||
-					(lstat(".", fts_statp2) != 0) ||
-					(lstat("..", parent2) != 0) ||
-					(p->fts_dev != fts_statp2->st_dev) ||
-					(p->fts_ino != fts_statp2->st_ino) ||
-					(parent1->st_dev != parent2->st_dev) ||
-					(parent1->st_ino != parent2->st_ino));
-				else
-					ret = chdir(p->fts_accpath);
-
-				if (ret) {
-					p->fts_errno = errno;
-					p->fts_flags |= FTS_DONTCHDIR;
-					for (p = sp->fts_child; p; p = p->fts_link)
-						p->fts_accpath =
-						    p->fts_parent->fts_accpath;
-				}
+			if (CHDIR(sp, p->fts_accpath)) {
+				p->fts_errno = errno;
+				p->fts_flags |= FTS_DONTCHDIR;
+				for (p = sp->fts_child; p; p = p->fts_link)
+					p->fts_accpath =
+					    p->fts_parent->fts_accpath;
 			}
 		} else if ((sp->fts_child = fts_build(sp, BREAD)) == NULL) {
 			if (ISSET(FTS_STOP))
