@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.krb5.inc,v 1.1 2003/05/14 09:05:59 hin Exp $
+# $OpenBSD: Makefile.krb5.inc,v 1.2 2003/05/15 04:16:10 hin Exp $
 
 INCLUDE_FILES+=	${KRB5SRC}/lib/krb5/{krb5.h,krb5-protos.h,krb5-private.h} \
 		${KRB5DIR}/include/krb5-types.h \
@@ -174,7 +174,7 @@ SRCS+=	add_et_list.c \
 	init_creds.c \
 	init_creds_pw.c \
 	keyblock.c \
-	keytab.c \
+	krb5_keytab.c \
 	keytab_any.c \
 	keytab_file.c \
 	keytab_memory.c \
@@ -253,4 +253,9 @@ krb5_net_write.c:      ${KRB5SRC}/lib/krb5/net_write.c
 	ln -sf ${KRB5SRC}/lib/krb5/net_write.c krb5_net_write.c
 krb5_net_read.c:       ${KRB5SRC}/lib/krb5/net_read.c
 	ln -sf ${KRB5SRC}/lib/krb5/net_read.c krb5_net_read.c
-CLEANFILES+=krb5_net_{read,write}.c
+
+krb5_keytab.c:       ${KRB5SRC}/lib/krb5/keytab.c
+	ln -sf ${KRB5SRC}/lib/krb5/keytab.c krb5_keytab.c
+
+CLEANFILES+=krb5_net_{read,write}.c krb5_keytab.c
+
