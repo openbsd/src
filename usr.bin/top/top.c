@@ -1,4 +1,4 @@
-/*	$OpenBSD: top.c,v 1.4 2000/10/04 21:19:38 millert Exp $	*/
+/*	$OpenBSD: top.c,v 1.5 2000/11/21 07:22:19 deraadt Exp $	*/
 
 const char copyright[] = "Copyright (c) 1984 through 1996, William LeFebvre";
 
@@ -38,6 +38,7 @@ const char copyright[] = "Copyright (c) 1984 through 1996, William LeFebvre";
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <errno.h>
 #include <sys/time.h>
 
 /* includes specific to top */
@@ -903,6 +904,8 @@ void tstop(i)	/* SIGTSTP handler */
 int i;
 
 {
+    int save_errno = errno;
+
     /* move to the lower left */
     end_screen();
     fflush(stdout);
@@ -924,6 +927,8 @@ int i;
     /* reinit screen */
     reinit_screen();
 
+    errno = save_errno;
+
     /* jump to appropriate place */
     longjmp(jmp_int, 1);
 
@@ -936,6 +941,8 @@ void winch(i)		/* SIGWINCH handler */
 int i;
 
 {
+    int save_errno = errno;
+
     /* reascertain the screen dimensions */
     get_screensize();
 
@@ -944,6 +951,8 @@ int i;
 
     /* reset the signal handler */
     (void) signal(SIGWINCH, winch);
+
+    errno = save_errno;
 
     /* jump to appropriate place */
     longjmp(jmp_int, 1);
