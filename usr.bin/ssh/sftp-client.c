@@ -29,7 +29,7 @@
 /* XXX: copy between two remote sites */
 
 #include "includes.h"
-RCSID("$OpenBSD: sftp-client.c,v 1.6 2001/02/07 18:01:18 itojun Exp $");
+RCSID("$OpenBSD: sftp-client.c,v 1.7 2001/02/07 21:58:34 markus Exp $");
 
 #include "ssh.h"
 #include "buffer.h"
@@ -338,6 +338,8 @@ do_ls(int fd_in, int fd_out, char *path)
 			    SSH2_FXP_NAME, type);
 
 		count = buffer_get_int(&msg);
+		if (count == 0)
+			break;
 		debug3("Received %i SSH2_FXP_NAME responses", count);
 		for(i = 0; i < count; i++) {
 			char *filename, *longname;
