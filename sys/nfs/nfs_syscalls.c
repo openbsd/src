@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_syscalls.c,v 1.7 1996/06/14 04:41:08 tholo Exp $	*/
+/*	$OpenBSD: nfs_syscalls.c,v 1.8 1997/03/30 20:02:32 mickey Exp $	*/
 /*	$NetBSD: nfs_syscalls.c,v 1.19 1996/02/18 11:53:52 fvdl Exp $	*/
 
 /*
@@ -104,7 +104,9 @@ static struct nfsdrt nfsdrt;
 #define	TRUE	1
 #define	FALSE	0
 
+#ifdef NFSCLIENT
 static int nfs_asyncdaemon[NFS_MAXASYNCDAEMON];
+#endif
 
 #ifdef NFSSERVER
 static void nfsd_rt __P((int, struct nfsrv_descript *, int));
@@ -172,12 +174,12 @@ sys_nfssvc(p, v, retval)
 		syscallarg(int) flag;
 		syscallarg(caddr_t) argp;
 	} */ *uap = v;
+#ifdef NFSCLIENT
 	struct nameidata nd;
 	struct nfsmount *nmp;
-	int error;
-#ifdef NFSCLIENT
 	struct nfsd_cargs ncd;
 #endif
+	int error;
 #ifdef NFSSERVER
 	struct file *fp;
 	struct mbuf *nam;
