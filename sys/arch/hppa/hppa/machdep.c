@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.9 1999/06/12 18:13:18 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.10 1999/07/12 18:16:46 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -277,8 +277,12 @@ hppa_init(start)
 #ifndef BUFCACHEPERCENT
 #define BUFCACHEPERCENT 10
 #endif /* BUFCACHEPERCENT */
-	if (bufpages == 0)
-		bufpages = totalphysmem / 100 * BUFCACHEPERCENT;
+	if (bufpages == 0) {
+		if (totalphysmem <= 0x1000) /* 16M */
+			bufpages = totalphysmem / 100 * 5;
+		else
+			bufpages = totalphysmem / 100 * BUFCACHEPERCENT;
+	}
 	if (nbuf == 0) {
 		nbuf = bufpages;
 		if (nbuf < 16)
