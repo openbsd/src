@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.12 2002/03/16 22:05:19 mickey Exp $	*/
+/*	$OpenBSD: mem.c,v 1.13 2002/06/06 16:32:33 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -206,9 +206,10 @@ viper_eisa_en()
 	register struct mem_softc *sc;
 
 	sc = mem_cd.cd_devs[0];
-
+#if 0
 	if (sc->sc_vp)
 		((struct vi_ctrl *)&VI_CTRL)->eisa_den = 0;
+#endif
 }
 
 int
