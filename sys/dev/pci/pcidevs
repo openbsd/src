@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.231 2000/03/27 19:36:04 deraadt Exp $
+	$OpenBSD: pcidevs,v 1.232 2000/03/28 00:02:08 deraadt Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1476,6 +1476,7 @@ product VIATECH VT82C586_ISA	0x0586	VT82C586 (Apollo VP) PCI-ISA
 product VIATECH VT82C595	0x0595	VT82C595 (Apollo VP2) Host-PCI
 product VIATECH VT82C597PCI	0x0597	VT82C597 (Apollo VP3) Host-PCI
 product VIATECH VT82C598PCI	0x0598	VT82C598 (Apollo MVP3) Host-PCI
+product VIATECH VT82C686	0x0686	VT82C686 PCI-ISA
 product VIATECH VT86C926	0x0926	VT86C926 Amazon
 product VIATECH	VT82C570M	0x1000	VT82C570M (Apollo) Host-PCI
 product VIATECH VT82C570MV	0x1006	VT82C570M (Apollo) PCI-ISA
@@ -1583,6 +1584,9 @@ product MOT	MPC106		0x0002	MPC106 PPC PCI bridge
 
 /* Yamaha products */
 product YAMAHA YMF724E_V	0x0004	724 Audio
+product YAMAHA YMF744		0x0010	DS-1S Audio
+product YAMAHA YMF724		0x000d	DS-1 Audio
+product YAMAHA YMF740		0x000d	DS-1L Audio
 
 /* Zeinet products */
 product ZEINET 1221		0x0001	1221
