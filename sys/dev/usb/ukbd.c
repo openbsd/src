@@ -186,14 +186,15 @@ struct ukbd_softc {
 	int sc_console_keyboard;	/* we are the console keyboard */
 
 	char sc_debounce;		/* for quirk handling */
-	struct callout sc_delay;	/* for quirk handling */
 	struct ukbd_data sc_data;	/* for quirk handling */
 
 	int sc_leds;
 
 #if defined(__OpenBSD__)
+	struct timeout sc_delay;	/* for quirk handling */
 	struct timeout sc_rawrepeat_ch;
 #else
+	struct callout sc_delay;	/* for quirk handling */
 	struct callout sc_rawrepeat_ch;
 #endif
 
