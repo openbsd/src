@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.54 1995/10/12 17:56:48 mycroft Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.55 1995/12/09 04:37:44 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -77,6 +77,7 @@ extern struct proc *npxproc;
  * address in each process; in the future we will probably relocate
  * the frame pointers on the stack after copying.
  */
+void
 cpu_fork(p1, p2)
 	register struct proc *p1, *p2;
 {
@@ -143,8 +144,6 @@ cpu_fork(p1, p2)
 	sf->sf_ebx = (int)p2;
 	sf->sf_eip = (int)proc_trampoline;
 	pcb->pcb_esp = (int)sf;
-
-	return (0);
 }
 
 void
