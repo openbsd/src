@@ -1,4 +1,4 @@
-/*	$OpenBSD: rln.c,v 1.5 1999/08/25 07:20:29 d Exp $	*/
+/*	$OpenBSD: rln.c,v 1.6 1999/08/26 22:27:44 d Exp $	*/
 /*
  * David Leonard <d@openbsd.org>, 1999. Public Domain.
  *
@@ -372,6 +372,7 @@ rln_transmit(sc, m0, len, pad)
 #endif
 	if (pad) {
 #ifdef RLNDUMP
+		printf(":");
 		RLNDUMPHEX(zeroes, pad);
 #endif
 		rln_msg_tx_data(sc, zeroes, pad, &state);
@@ -597,22 +598,6 @@ rlnread(sc, hdr, len)
 		eh = mtod(m, struct ether_header *);
 		m_adj(m, sizeof *eh);
 
-#ifdef RLNDUMP
-		{
-			struct mbuf *n;
-
-			printf("m=<%s,", ether_sprintf(eh->ether_dhost));
-			printf("%s,%04x|", ether_sprintf(eh->ether_shost),
-			    ntohs(eh->ether_type));
-			for (n = m; n; n = n->m_next)	{
-				if (n->m_len)
-					RLNDUMPHEX(mtod(n, void *), n->m_len);
-				if (n->m_next)
-					printf("|");
-			}
-			printf(">\n");
-		}
-#endif
 		ether_input(ifp, eh, m);
 		return;
 	}
