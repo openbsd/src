@@ -56,6 +56,15 @@ distribution: distrib-dirs
 		rm -f ${DESTDIR}/.cshrc ${DESTDIR}/.profile; \
 		ln ${DESTDIR}/root/.cshrc ${DESTDIR}/.cshrc; \
 		ln ${DESTDIR}/root/.profile ${DESTDIR}/.profile)
+	(cd kerberosIV; \
+		install -c -o root -g wheel -m 644 README \
+		    ${DESTDIR}/etc/kerberosIV; \
+		install -c -o root -g wheel -m 644 krb.conf \
+		    ${DESTDIR}/etc/kerberosIV; \
+		install -c -o root -g wheel -m 644 krb.equiv \
+		    ${DESTDIR}/etc/kerberosIV; \
+		install -c -o root -g wheel -m 444 krb.realms \
+		    ${DESTDIR}/etc/kerberosIV)
 	(cd mtree; \
 		install -c -o root -g wheel -m 600 special \
 		    ${DESTDIR}/etc/mtree; \
