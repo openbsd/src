@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_aout.c,v 1.23 1998/12/20 23:49:56 millert Exp $	*/
+/*	$OpenBSD: db_aout.c,v 1.24 1999/09/11 00:44:59 mickey Exp $	*/
 /*	$NetBSD: db_aout.c,v 1.14 1996/02/27 20:54:43 gwr Exp $	*/
 
 /* 
@@ -115,7 +115,7 @@ X_db_sym_init(symtab, esymtab, name)
 	estrtab = strtab + slen;
 
 #define	round_to_size(x) \
-	(((vm_offset_t)(x) + sizeof(vm_size_t) - 1) & ~(sizeof(vm_size_t) - 1))
+	(((vaddr_t)(x) + sizeof(vsize_t) - 1) & ~(sizeof(vsize_t) - 1))
 
 	if (round_to_size(estrtab) != round_to_size(esymtab)) {
 	    db_printf("[ %s symbol table not valid ]\n", name);

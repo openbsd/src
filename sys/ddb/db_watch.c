@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_watch.c,v 1.4 1996/04/21 22:19:21 deraadt Exp $ */
+/*	$OpenBSD: db_watch.c,v 1.5 1999/09/11 00:44:59 mickey Exp $ */
 /*	$NetBSD: db_watch.c,v 1.9 1996/03/30 22:30:12 christos Exp $	*/
 
 /* 
@@ -88,7 +88,7 @@ void
 db_set_watchpoint(map, addr, size)
 	vm_map_t	map;
 	db_addr_t	addr;
-	vm_size_t	size;
+	vsize_t 	size;
 {
 	register db_watchpoint_t	watch;
 
@@ -190,11 +190,11 @@ db_watchpoint_cmd(addr, have_addr, count, modif)
 	db_expr_t	count;
 	char *		modif;
 {
-	vm_size_t	size;
+	vsize_t 	size;
 	db_expr_t	value;
 
 	if (db_expression(&value))
-	    size = (vm_size_t) value;
+	    size = (vsize_t) value;
 	else
 	    size = 4;
 	db_skip_to_eol();

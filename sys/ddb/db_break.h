@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_break.h,v 1.4 1996/04/21 22:18:56 deraadt Exp $	*/
+/*	$OpenBSD: db_break.h,v 1.5 1999/09/11 00:44:59 mickey Exp $	*/
 /*	$NetBSD: db_break.h,v 1.8 1996/02/05 01:56:52 christos Exp $	*/
 
 /* 
@@ -66,6 +66,6 @@ void db_breakpoint_cmd __P((db_expr_t, int, db_expr_t, char *));
 void db_listbreak_cmd __P((db_expr_t, int, db_expr_t, char *));
 boolean_t db_map_equal __P((vm_map_t, vm_map_t));
 boolean_t db_map_current __P((vm_map_t));
-vm_map_t db_map_addr __P((vm_offset_t));
+vm_map_t db_map_addr __P((vaddr_t));
 
 #endif	/* _DDB_DB_BREAK_H_ */

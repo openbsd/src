@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_break.c,v 1.7 1997/08/07 09:18:40 niklas Exp $	*/
+/*	$OpenBSD: db_break.c,v 1.8 1999/09/11 00:44:59 mickey Exp $	*/
 /*	$NetBSD: db_break.c,v 1.7 1996/03/30 22:30:03 christos Exp $	*/
 
 /* 
@@ -347,7 +347,7 @@ db_map_current(map)
 
 vm_map_t
 db_map_addr(addr)
-	vm_offset_t addr;
+	vaddr_t addr;
 {
 #if 0
 	thread_t	thread;
