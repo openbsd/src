@@ -1,6 +1,9 @@
-.\"	$OpenBSD: options.4,v 1.7 1998/03/16 03:57:51 millert Exp $
+.\"	$OpenBSD: options.4,v 1.8 1998/03/16 07:44:52 deraadt Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
+.\" Copyright (c) 1998 Theo de Raadt 
+.\" Copyright (c) 1998 Todd Miller
+.\" Copyright (c) 1998 Gene Skonicki
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
 .\"
@@ -50,97 +53,92 @@ Options are passed to the compile process as -D flags to the C
 compiler.
 .Ss Compatibility Options
 .Bl -ohang
-.It Cd option COMPAT_09
-Enable binary compatibility with
-.Nx 0.9 .
-This enables support for
-16-bit user, group, and process ids (following revisions support
-32-bit identifiers),
-It also allows the use of the deprecated getdomainname, setdomainname,
-and uname syscalls.
-This option also allows using numeric filesystem identifiers rather
-than strings.  Post 0.9 versions use string identifiers.
-.It Cd option COMPAT_10
-Enable binary compatibility with
-.Nx 1.0 .
-This option allows the use of the filesystem name of 
-.Dq ufs
-as an alias for
-.Dq ffs .
-The name
-.Dq ffs
-should be used post 1.0 in 
-.Pa /etc/fstab
-and other files.  It also adds old syscalls for the
-.At V
-shared memory interface.  This was changed post 1.0 to work on 64-bit
-architectures.  This option also enables 
-.Dq sgtty
-compatibility, without which programs using the old interface produce
-an
-.Dq inappropriate ioctl
-error.
-.It Cd option COMPAT_43
-Use of this option is discouraged.
-Enables compatibility with
-.Bx 4.3 .
-This adds an old syscall for lseek.  It also adds the ioctls for
-TIOCGETP and TIOCSETP.  The return values for getpid, getgid, and
-getuid syscalls are modified as well, to return the parent's pid and
-uid as well as the current process's.  It also enables the deprecated
-NTTYDISC terminal line discipline.
-It also provides backwards compatibility with 
-.Dq old
-SIOC[GS]IF{ADDR,DSTADDR,BRDADDR,NETMASK} interface ioctls, including
-binary compatibility with code written before the introduction of the
-sa_len field in sockaddrs.
-It also enables support for some older pre BSD 4.4 socket calls.
 .It Cd option COMPAT_SVR4
 On those architectures that support it, this enables binary
 compatibility with
 .At V.4
-applications built for the same architecture.  This currently includes
-the sparc, and i386.
+(and thus also Solaris)
+applications built for the same architecture.  This option is
+supported on the sparc and i386 architectures.
+See
+.Xr compat_svr4 8 .
 .It Cd option COMPAT_LINUX
 On those architectures that support it, this enables binary
-compatibility with Linux ELF and a.out
-applications built for the same architecture.  This is currently limited
-to the i386.
+compatibility with
+.Em Linux
+ELF and a.out
+applications built for the same architecture.  This option is
+supported on the i386 architecture.
+See
+.Xr compat_linux 8 .
 .It Cd option COMPAT_SUNOS
 On those architectures that support it, this enables binary
-compatibility with SunOS 4.1
-applications built for the same architecture.  This currently includes
-the sparc and most or all m68k platforms.
+compatibility with
+.Em SunOS 4.x
+applications built for the same architecture.  This option is
+supported on the sparc and most m68k platforms.
+See
+.Xr compat_sunos 8 .
 .It Cd option COMPAT_ULTRIX
 On those architectures that support it, this enables binary
-compatibility with Ultrix
-applications built for the same architecture.  This currently is limited
-to the pmax.  The functionality of this option is unknown.
+compatibility with
+.Em Ultrix
+applications built for the same architecture.  This option is
+available on the little-endian MIPS platforms like the pmax and arc.
+See
+.Xr compat_ultrix 8 .
 .It Cd option COMPAT_FREEBSD
 On those architectures that support it, this enables binary
-compatibility with FreeBSD
-applications built for the same architecture.  This is obviously limited
-to the i386.
+compatibility with
+.Em FreeBSD
+applications built for the same architecture.  This option is
+available on the i386 architecture.
+See
+.Xr compat_freebsd 8 .
 .It Cd option COMPAT_HPUX
 On those architectures that support it, this enables binary
-compatibility with HP/UX
-applications built for the same architecture.  This is limited to the
-certain ports, and has some known bugs.  A limited set of programs do work.
+compatibility with
+.Em HP/UX
+applications built for the same architecture.  This option is
+available on some m68k architectures.
+See
+.Xr compat_hpux 8 .
 .It Cd option COMPAT_IBCS2
 On those architectures that support it, this enables binary
-compatibility with iBCS2 
-applications built for the same architecture.  This is currently
-limited to the i386.
+compatibility with
+.Em iBCS2
+applications built for the same architecture.  This option is
+available on the i386 architecture.
+See
+.Xr compat_ibcs2 8 .
 .It Cd option COMPAT_OSF1
 On those architectures that support it, this enables binary
-compatibility with Digital UNIX (formerly OSF/1)
-applications built for the same architecture.  This is currently
-limited to the alpha, and may not even work.
+compatibility with
+.Em Digital UNIX
+(formerly
+.Em OSF/1 )
+applications built for the same architecture.  This option is
+available on the alpha architecture.
+See
+.Xr compat_osf1 8 .
 .It Cd option COMPAT_NOMID
 Enable compatibility with a.out executables that lack a machine id.
-On the i386, this includes NetBSD 0.8's ZMAGIC format, and 386BSD and BSDI's
-QMAGIC, NMAGIC, and OMAGIC a.out formats.  On the hp300 this enabled
-certain old 4.3BSD binaries to work, though it's use is discouraged now.
+On the i386, this includes NetBSD 0.8's ZMAGIC format, and 386BSD
+and BSDI's QMAGIC, NMAGIC, and OMAGIC a.out formats.  On the hp300
+this enables certain old 4.3BSD binaries to work as well.
+.It Cd option COMPAT_43
+Use of this option is discouraged. It enables compatibility with
+.Bx 4.3 .
+It adds an old syscall for lseek as well as ioctls for TIOCGETP and
+TIOCSETP.  The return values for getpid, getgid, and getuid syscalls
+are modified as well, to return the parent's pid and uid as well as
+the current process's.  It also enables the deprecated NTTYDISC terminal
+line discipline. It also provides backwards compatibility with the
+.Dq old
+SIOC[GS]IF{ADDR,DSTADDR,BRDADDR,NETMASK} interface ioctls, including
+binary compatibility for code written before the introduction of the
+sa_len field in sockaddrs.
+It also enables support for some older pre BSD 4.4 socket calls.
 .El
 .Ss Debugging Options
 .Bl -ohang
@@ -172,8 +170,7 @@ invokes gdb in kernel debugger mode.
 See
 .Xr gdb 1
 for details. This also turns on
-.Em option DEBUG
-(which see).
+.Em option DEBUG .
 .It Cd option DEBUG
 Turns on miscellaneous kernel debugging. Since options are turned into
 preprocessor defines (see above),
@@ -209,11 +206,12 @@ Most machines need this if they are not running diskless.
 Includes code implementing the Second Extended File System
 .Em ( EXT2FS ) .
 This is the most commonly used file system on the Linux operating system,
-and is provided here for compatibility. Some of the specific features
+and is provided here for compatibility. Some specific features
 of
 .Em EXT2FS 
-like the "behavior on errors" are not implemented. This file system can't be
-used with UID or GID greater than 65535. See
+under linux, such as the behavior on errors are not implemented in the same
+fashion. This file system can't be
+used with uid_t or gid_t values greater than 65535. See
 .Xr mount_ext2fs 8
 for details.
 .It Cd option MFS
@@ -247,31 +245,28 @@ for details.
 .It Cd option MSDOSFS
 Includes the
 .Tn MS-DOS
-FAT file system, which is reportedly still used
-by unfortunate people who have not heard about
-.Nx .
-Also implements the 
+FAT file system.
+This also impliments the
 .Tn Windows 95
-extensions to the same, which permit the use of longer, mixed case
-file names. see
+extensions which permit the use of longer, mixed case file names.
+See
 .Xr mount_msdos 8
 and
 .Xr fsck_msdos 8
 for details.
 .It Cd option FDESC
-Includes code for a file system, conventionally mounted on
-.Pa /dev/fd ,
-which permits access to the per-process file descriptor space via
-special files in the file system.
+Includes code for a file system which can be mounted on
+.Pa /dev/fd .
+This filesystem permits access to the per-process file descriptor
+space via special files in the file system.
 See
 .Xr mount_fdesc 8
 for details.
 Note that this facility is redundant, and thus unneeded on most
-.Nx
 systems, since the
 .Xr fd 4
-pseudodevice driver already provides identical functionality. On most
-.Nx
+pseudodevice driver already provides identical functionality.
+On most
 systems, instances of
 .Xr fd 4
 are mknoded under
@@ -335,9 +330,9 @@ for details.
 .Bl -ohang
 .It Cd option FFS_SOFTUPDATES
 Enables a scheme that uses partial ordering of buffer cache operations
-to allow metadata updates in FFS to happen asynchronously.  See
-.Xr ffs_softupdates 4
-for details.
+to allow metadata updates in FFS to happen asynchronously.  For more
+details see
+.Xr ffs_softupdates 4 .
 .It Cd option NFSSERVER
 Include the server side of the
 .Em NFS
