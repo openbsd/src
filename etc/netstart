@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.31 1997/11/04 09:15:31 deraadt Exp $
+#	$OpenBSD: netstart,v 1.32 1997/11/29 02:03:43 kstailey Exp $
 
 # /etc/myname contains my symbolic name
 #
@@ -24,7 +24,7 @@ fi
 
 # Configure NAT before configuring network interfaces
 #
-if [ X"${nat}" = X"YES" -a -f "${nat_rules}" ]; then
+if [ "${nat}" = "YES" -a "${ipfilter}" = "YES" -a -f "${nat_rules}" ]; then
 	echo 'configuring NAT'
 	ipnat -CF -f ${nat_rules}
 else
