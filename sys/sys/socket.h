@@ -1,4 +1,4 @@
-/*	$OpenBSD: socket.h,v 1.9 1997/02/20 01:07:35 deraadt Exp $	*/
+/*	$OpenBSD: socket.h,v 1.10 1997/02/22 07:24:25 angelos Exp $	*/
 /*	$NetBSD: socket.h,v 1.14 1996/02/09 18:25:36 christos Exp $	*/
 
 /*
@@ -77,6 +77,26 @@
 #define SO_RCVTIMEO	0x1006		/* receive timeout */
 #define	SO_ERROR	0x1007		/* get error status and clear */
 #define	SO_TYPE		0x1008		/* get socket type */
+
+/*
+ * Security levels
+ */
+
+#define IPSEC_LEVEL_BYPASS	0x00	/* Bypass policy altogether */
+#define IPSEC_LEVEL_NONE	0x00	/* Send clear, accept any */
+#define IPSEC_LEVEL_AVAIL	0x01	/* Send secure if SA available */
+#define IPSEC_LEVEL_USE		0x02	/* Send secure, accept any */
+#define IPSEC_LEVEL_REQUIRE	0x03	/* Require secure inbound, also use */
+#define IPSEC_LEVEL_UNIQUE	0x04	/* Use outbound SA that is unique */
+#define IPSEC_LEVEL_DEFAULT	IPSEC_LEVEL_NONE
+
+/*
+ * Security categories
+ */
+
+#define IP_AUTH_LEVEL		0x00
+#define IP_ESP_TRANS_LEVEL	0x01
+#define IP_ESP_NETWORK_LEVEL	0x02
 
 /*
  * Structure used for manipulating linger option.
