@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.14 2003/08/19 22:20:10 itojun Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.15 2004/05/01 00:39:22 deraadt Exp $	*/
 /*	$NetBSD: bpf.c,v 1.5.2.1 1995/11/14 08:45:42 thorpej Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "@(#)bpf.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$OpenBSD: bpf.c,v 1.14 2003/08/19 22:20:10 itojun Exp $";
+static char rcsid[] = "$OpenBSD: bpf.c,v 1.15 2004/05/01 00:39:22 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -220,11 +220,11 @@ BpfOpen(void)
 char *
 BpfGetIntfName(char **errmsg)
 {
-	int minunit, n;
+	int minunit = 999, n;
 	char *cp;
 	static char device[IFNAMSIZ];
 	static char errbuf[128] = "No Error!";
-	struct ifaddrs *ifap, *ifa, *mp;
+	struct ifaddrs *ifap, *ifa, *mp = NULL;
 
 	if (errmsg != NULL)
 		*errmsg = errbuf;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rbootd.c,v 1.19 2004/01/23 03:48:43 deraadt Exp $	*/
+/*	$OpenBSD: rbootd.c,v 1.20 2004/05/01 00:39:22 deraadt Exp $	*/
 /*	$NetBSD: rbootd.c,v 1.5 1995/10/06 05:12:17 thorpej Exp $	*/
 
 /*
@@ -51,7 +51,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "@(#)rbootd.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$OpenBSD: rbootd.c,v 1.19 2004/01/23 03:48:43 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rbootd.c,v 1.20 2004/05/01 00:39:22 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -68,6 +68,7 @@ static char rcsid[] = "$OpenBSD: rbootd.c,v 1.19 2004/01/23 03:48:43 deraadt Exp
 #include <syslog.h>
 #include <unistd.h>
 #include <util.h>
+#include <pwd.h>
 
 #include "defs.h"
 
@@ -93,19 +94,15 @@ int
 main(int argc, char *argv[])
 {
 	int c, fd, maxfds;
-	fd_set rset;
 	sigset_t hmask, omask;
+	struct passwd *pw;
+	fd_set rset;
 
-	/*
-	 *  Close any open file descriptors.
-	 *  Temporarily leave stdin & stdout open for `-d',
-	 *  and stderr open for any pre-syslog error messages.
-	 */
 	closefrom(STDERR_FILENO + 1);
 
-	/*
-	 *  Parse any arguments.
-	 */
+	if ((pw = getpwnam("_rbootd")) == NULL)
+		err(1, "getpwnam");
+
 	while ((c = getopt(argc, argv, "adi:")) != -1)
 		switch (c) {
 		case 'a':
@@ -144,8 +141,6 @@ main(int argc, char *argv[])
 		(void) signal(SIGUSR2, DebugOff);
 	}
 
-	openlog(__progname, LOG_PID, LOG_DAEMON);
-
 	/*
 	 *  If no interface was specified, get one now.
 	 *
@@ -165,26 +160,18 @@ main(int argc, char *argv[])
 		}
 	}
 
+	openlog(__progname, LOG_PID, LOG_DAEMON);
+	fd = BpfOpen();
 	syslog(LOG_NOTICE, "restarted (%s)", IntfName);
 
 	(void) signal(SIGHUP, ReConfig);
 	(void) signal(SIGINT, Exit);
 	(void) signal(SIGTERM, Exit);
 
-	/*
-	 *  Grab our host name and pid.
-	 */
-	if (gethostname(MyHost, MAXHOSTNAMELEN) < 0) {
-		syslog(LOG_ERR, "gethostname: %m");
-		DoExit();
-	}
+	gethostname(MyHost, MAXHOSTNAMELEN);
 
-	/*
-	 *  Write proc's pid to a file.
-	 */
-	if (pidfile(NULL) < 0) {
+	if (pidfile(NULL) < 0)
 		syslog(LOG_WARNING, "pidfile: failed");
-	}
 
 	/*
 	 *  All boot files are relative to the boot directory, we might
@@ -206,12 +193,21 @@ main(int argc, char *argv[])
 	if (ParseConfig() == 0)			/* parse config file */
 		DoExit();
 
-	/*
-	 *  Open and initialize a BPF device for the appropriate interface.
-	 *  If an error is encountered, a message is displayed and DoExit()
-	 *  is called.
-	 */
-	fd = BpfOpen();
+	if (chroot(BootDir) == -1) {
+		syslog(LOG_CRIT, "chroot %s: %m", BootDir);
+		exit(1);
+	}
+	if (chdir("/") == -1) {
+		syslog(LOG_CRIT, "chdir(\"/\"): %m");
+		exit(1);
+	}
+	if (setgroups(1, &pw->pw_gid) ||
+	    setegid(pw->pw_gid) || setgid(pw->pw_gid) ||
+	    seteuid(pw->pw_uid) || setuid(pw->pw_uid)) {
+		syslog(LOG_CRIT, "can't drop privileges: %m");
+		exit(1);
+	}
+	endpwent();
 
 	sigprocmask(SIG_SETMASK, &omask, NULL);	/* allow reconfig's */
 
@@ -259,7 +255,7 @@ main(int argc, char *argv[])
 			syslog(LOG_ERR, "select: %m");
 			DoExit();
 		} else if (nsel == 0) {		/* timeout */
-			DoTimeout();			/* clear stale conns */
+			DoTimeout();		/* clear stale conns */
 			continue;
 		}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.5 2003/06/02 23:36:54 millert Exp $	*/
+/*	$OpenBSD: conf.c,v 1.6 2004/05/01 00:39:22 deraadt Exp $	*/
 /*	$NetBSD: conf.c,v 1.5 1995/10/06 05:12:13 thorpej Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "@(#)conf.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$OpenBSD: conf.c,v 1.5 2003/06/02 23:36:54 millert Exp $";
+static char rcsid[] = "$OpenBSD: conf.c,v 1.6 2004/05/01 00:39:22 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -71,7 +71,7 @@ int	BootAny = 0;				/* set true if we boot anyone */
 
 char	*ConfigFile = NULL;			/* configuration file */
 char	*DfltConfig = _PATH_RBOOTDCONF;		/* default configuration file */
-char	*BootDir = _PATH_RBOOTDLIB;		/* directory w/boot files */
+char	*BootDir = _PATH_RBOOTDDIR;		/* directory w/boot files */
 char	*DbgFile = _PATH_RBOOTDDBG;		/* debug output file */
 
 FILE	*DbgFp = NULL;				/* debug file pointer */
