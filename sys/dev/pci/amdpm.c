@@ -1,4 +1,4 @@
-/*	$OpenBSD: amdpm.c,v 1.1 2002/06/05 22:35:16 mickey Exp $	*/
+/*	$OpenBSD: amdpm.c,v 1.2 2002/06/05 22:49:49 mickey Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -96,8 +96,8 @@ amdpm_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct amdpm_softc *sc = (struct amdpm_softc *) self;
 	struct pci_attach_args *pa = aux;
+	struct timeval tv1, tv2;
 	pcireg_t reg;
-	u_int32_t pmreg;
 	int i;
 
 	sc->sc_pc = pa->pa_pc;
@@ -121,16 +121,22 @@ amdpm_attach(struct device *parent, struct device *self, void *aux)
 		/* Check to see if we can read data from the RNG. */
 		(void) bus_space_read_4(sc->sc_iot, sc->sc_ioh,
 		    AMDPM_RNGDATA);
-		for (i = 0; i < 1000; i++) {
-			pmreg = bus_space_read_4(sc->sc_iot,
-			    sc->sc_ioh, AMDPM_RNGSTAT);
-			if (pmreg & AMDPM_RNGDONE)
-				break;
-			delay(1);
+		/* benchmark the RNG */
+		microtime(&tv1);
+		for (i = 2 * 1024; i--; ) {
+			while(!(bus_space_read_1(sc->sc_iot, sc->sc_ioh,
+			    AMDPM_RNGSTAT) & AMDPM_RNGDONE))
+				;
+			(void) bus_space_read_4(sc->sc_iot, sc->sc_ioh,
+			    AMDPM_RNGDATA);
 		}
-		if ((pmreg & AMDPM_RNGDONE) != 0) {
-			printf(": rng active (apprx. %dms)\n", i);
-			timeout_set(&sc->sc_rnd_ch, amdpm_rnd_callout, sc);
+		microtime(&tv2);
+
+		timersub(&tv2, &tv1, &tv1);
+		if (tv1.tv_sec)
+			tv1.tv_usec += 1000000 * tv1.tv_sec;
+		printf(": rng active, %dKb/sec", 8 * 1000000 / tv1.tv_usec);
+
 #ifdef AMDPM_RND_COUNTERS
 			evcnt_attach_dynamic(&sc->sc_rnd_hits, EVCNT_TYPE_MISC,
 			    NULL, sc->sc_dev.dv_xname, "rnd hits");
@@ -142,8 +148,8 @@ amdpm_attach(struct device *parent, struct device *self, void *aux)
 				    "rnd data");
 			}
 #endif
-			amdpm_rnd_callout(sc);
-		}
+		timeout_set(&sc->sc_rnd_ch, amdpm_rnd_callout, sc);
+		amdpm_rnd_callout(sc);
 	}
 }
 
