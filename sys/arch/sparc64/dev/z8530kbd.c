@@ -1,4 +1,4 @@
-/*	$OpenBSD: z8530kbd.c,v 1.4 2002/01/16 18:04:42 jason Exp $	*/
+/*	$OpenBSD: z8530kbd.c,v 1.5 2002/01/16 21:32:59 jason Exp $	*/
 /*	$NetBSD: z8530tty.c,v 1.77 2001/05/30 15:24:24 lukem Exp $	*/
 
 /*-
@@ -147,7 +147,6 @@ u_int zskbd_rbuf_lowat = (ZSKBD_RING_SIZE * 3) / 4;
 
 struct zskbd_softc {
 	struct	device zst_dev;		/* required first: base device */
-	struct  tty *zst_tty;
 	struct	zs_chanstate *zst_cs;
 
 	struct timeout zst_diag_ch;
@@ -176,6 +175,9 @@ struct zskbd_softc {
 	u_char *zst_tba;		/* transmit buffer address */
 	u_int zst_tbc,			/* transmit byte count */
 	      zst_heldtbc;		/* held tbc while xmission stopped */
+
+	u_char zst_tbuf[ZSKBD_RING_SIZE];
+	u_char *zst_tbeg, *zst_tend, *zst_tbp;
 
 	/* Flags to communicate with zskbd_softint() */
 	volatile u_char zst_rx_flags,	/* receiver blocked */
@@ -216,10 +218,7 @@ struct cfattach zskbd_ca = {
 
 struct zsops zsops_kbd;
 
-static void	zsstart __P((struct tty *));
-static int	zsparam __P((struct tty *, struct termios *));
 static void zs_modem __P((struct zskbd_softc *, int));
-static int    zshwiflow __P((struct tty *, int));
 static void  zs_hwiflow __P((struct zskbd_softc *));
 static void zs_maskintr __P((struct zskbd_softc *));
 
@@ -244,6 +243,9 @@ int zskbd_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
 void zskbd_cngetc __P((void *, u_int *, int *));
 void zskbd_cnpollc __P((void *, int));
 
+void zsstart_tx __P((struct zskbd_softc *));
+int zsenqueue_tx __P((struct zskbd_softc *, u_char *, int));
+
 struct wskbd_accessops zskbd_accessops = {
 	zskbd_enable,
 	zskbd_set_leds,
@@ -258,8 +260,8 @@ struct wskbd_consops zskbd_consops = {
 #define	KC(n)	KS_KEYCODE(n)
 const keysym_t zskbd_keydesc_us[] = {
     KC(0x01), KS_Cmd,
-    KC(0x02),				KS_Cmd_BrightnessDown,
-    KC(0x04),				KS_Cmd_BrightnessUp,
+    KC(0x02), KS_Cmd_BrightnessDown,
+    KC(0x04), KS_Cmd_BrightnessUp,
     KC(0x05),				KS_f1,
     KC(0x06),				KS_f2,
     KC(0x07),				KS_f10,
@@ -278,6 +280,7 @@ const keysym_t zskbd_keydesc_us[] = {
     KC(0x15),				KS_Pause,
     KC(0x16),				KS_Print_Screen,
     KC(0x18),				KS_Left,
+    KC(0x19),				KS_Hold_Screen,
     KC(0x1b),				KS_Down,
     KC(0x1c),				KS_Right,
     KC(0x1d),				KS_Escape,
@@ -432,11 +435,13 @@ zskbd_attach(parent, self, aux)
 	struct zsc_attach_args *args = aux;
 	struct wskbddev_attach_args a;
 	struct zs_chanstate *cs;
-	struct tty *tp;
 	int channel, s, tty_unit, console = 0;
 	dev_t dev;
 
 	timeout_set(&zst->zst_diag_ch, zskbd_diag, zst);
+
+	zst->zst_tbp = zst->zst_tba = zst->zst_tbeg = zst->zst_tbuf;
+	zst->zst_tend = zst->zst_tbeg + ZSKBD_RING_SIZE;
 
 	tty_unit = zst->zst_dev.dv_unit;
 	channel = args->channel;
@@ -467,14 +472,6 @@ zskbd_attach(parent, self, aux)
 		console = 1;
 	}
 
-	tp = ttymalloc();
-	tp->t_dev = dev;
-	tp->t_oproc = zsstart;
-	tp->t_param = zsparam;
-	tp->t_hwiflow = zshwiflow;
-	tty_attach(tp);
-
-	zst->zst_tty = tp;
 	zst->zst_rbuf = malloc(zskbd_rbuf_size << 1, M_DEVBUF, M_WAITOK);
 	zst->zst_ebuf = zst->zst_rbuf + (zskbd_rbuf_size << 1);
 	/* Disable the high water mark. */
@@ -640,7 +637,7 @@ zskbd_init(zst)
 	 */
 	if (zst->zst_tx_stopped) {
 		zst->zst_tx_stopped = 0;
-		zsstart(zst->zst_tty);
+		zsstart_tx(zst);
 	}
 
 	zskbd_softint(cs);
@@ -769,245 +766,62 @@ zskbd_putc(zst, c)
 	splx(s);
 }
 
-/*
- * Start or restart transmission.
- */
-static void
-zsstart(tp)
-	struct tty *tp;
+int
+zsenqueue_tx(zst, str, len)
+	struct zskbd_softc *zst;
+	u_char *str;
+	int len;
 {
-	struct zskbd_softc *zst = zskbd_device_lookup(&zskbd_cd, ZSKBDUNIT(tp->t_dev));
+	int s, i;
+
+	s = splzs();
+	if (zst->zst_tbc + len > ZSKBD_RING_SIZE)
+		return (-1);
+	zst->zst_tbc += len;
+	for (i = 0; i < len; i++) {
+		*zst->zst_tbp = str[i];
+		if (++zst->zst_tbp == zst->zst_tend)
+			zst->zst_tbp = zst->zst_tbeg;
+	}
+	splx(s);
+	zsstart_tx(zst);
+	return (0);
+}
+
+void
+zsstart_tx(zst)
+	struct zskbd_softc *zst;
+{
 	struct zs_chanstate *cs = zst->zst_cs;
-	int s;
+	int s, s1;
 
 	s = spltty();
-	if (ISSET(tp->t_state, TS_BUSY | TS_TIMEOUT | TS_TTSTOP))
-		goto out;
+
 	if (zst->zst_tx_stopped)
 		goto out;
+	if (zst->zst_tbc == 0)
+		goto out;
 
-	if (tp->t_outq.c_cc <= tp->t_lowat) {
-		if (ISSET(tp->t_state, TS_ASLEEP)) {
-			CLR(tp->t_state, TS_ASLEEP);
-			wakeup((caddr_t)&tp->t_outq);
-		}
-		selwakeup(&tp->t_wsel);
-		if (tp->t_outq.c_cc == 0)
-			goto out;
-	}
+	s1 = splzs();
 
-	/* Grab the first contiguous region of buffer space. */
-	{
-		u_char *tba;
-		int tbc;
-
-		tba = tp->t_outq.c_cf;
-		tbc = ndqb(&tp->t_outq, 0);
-	
-		(void) splzs();
-
-		zst->zst_tba = tba;
-		zst->zst_tbc = tbc;
-	}
-
-	SET(tp->t_state, TS_BUSY);
 	zst->zst_tx_busy = 1;
 
-	/* Enable transmit completion interrupts if necessary. */
 	if (!ISSET(cs->cs_preg[1], ZSWR1_TIE)) {
 		SET(cs->cs_preg[1], ZSWR1_TIE);
 		cs->cs_creg[1] = cs->cs_preg[1];
 		zs_write_reg(cs, 1, cs->cs_creg[1]);
 	}
 
-	/* Output the first character of the contiguous buffer. */
-	{
-		zs_write_data(cs, *zst->zst_tba);
-		zst->zst_tbc--;
-		zst->zst_tba++;
-	}
+	zs_write_data(cs, *zst->zst_tba);
+
+	zst->zst_tbc--;
+	if (++zst->zst_tba == zst->zst_tend)
+		zst->zst_tba = zst->zst_tbeg;
+
+	splx(s1);
+
 out:
 	splx(s);
-	return;
-}
-
-/*
- * Set ZS tty parameters from termios.
- * XXX - Should just copy the whole termios after
- * making sure all the changes could be done.
- */
-static int
-zsparam(tp, t)
-	struct tty *tp;
-	struct termios *t;
-{
-	struct zskbd_softc *zst = zskbd_device_lookup(&zskbd_cd, ZSKBDUNIT(tp->t_dev));
-	struct zs_chanstate *cs = zst->zst_cs;
-	int ospeed, cflag;
-	u_char tmp3, tmp4, tmp5;
-	int s, error;
-
-	ospeed = t->c_ospeed;
-	cflag = t->c_cflag;
-
-	/* Check requested parameters. */
-	if (ospeed < 0)
-		return (EINVAL);
-	if (t->c_ispeed && t->c_ispeed != ospeed)
-		return (EINVAL);
-
-	/*
-	 * For the console, always force CLOCAL and !HUPCL, so that the port
-	 * is always active.
-	 */
-	if (ISSET(zst->zst_swflags, TIOCFLAG_SOFTCAR) ||
-	    ISSET(zst->zst_hwflags, ZS_HWFLAG_CONSOLE)) {
-		SET(cflag, CLOCAL);
-		CLR(cflag, HUPCL);
-	}
-
-	/*
-	 * Only whack the UART when params change.
-	 * Some callers need to clear tp->t_ospeed
-	 * to make sure initialization gets done.
-	 */
-	if (tp->t_ospeed == ospeed &&
-	    tp->t_cflag == cflag)
-		return (0);
-
-	/*
-	 * Call MD functions to deal with changed
-	 * clock modes or H/W flow control modes.
-	 * The BRG divisor is set now. (reg 12,13)
-	 */
-	error = zs_set_speed(cs, ospeed);
-	if (error)
-		return (error);
-	error = zs_set_modes(cs, cflag);
-	if (error)
-		return (error);
-
-	/*
-	 * Block interrupts so that state will not
-	 * be altered until we are done setting it up.
-	 *
-	 * Initial values in cs_preg are set before
-	 * our attach routine is called.  The master
-	 * interrupt enable is handled by zsc.c
-	 *
-	 */
-	s = splzs();
-
-	/*
-	 * Recalculate which status ints to enable.
-	 */
-	zs_maskintr(zst);
-
-	/* Recompute character size bits. */
-	tmp3 = cs->cs_preg[3];
-	tmp5 = cs->cs_preg[5];
-	CLR(tmp3, ZSWR3_RXSIZE);
-	CLR(tmp5, ZSWR5_TXSIZE);
-	switch (ISSET(cflag, CSIZE)) {
-	case CS5:
-		SET(tmp3, ZSWR3_RX_5);
-		SET(tmp5, ZSWR5_TX_5);
-		break;
-	case CS6:
-		SET(tmp3, ZSWR3_RX_6);
-		SET(tmp5, ZSWR5_TX_6);
-		break;
-	case CS7:
-		SET(tmp3, ZSWR3_RX_7);
-		SET(tmp5, ZSWR5_TX_7);
-		break;
-	case CS8:
-		SET(tmp3, ZSWR3_RX_8);
-		SET(tmp5, ZSWR5_TX_8);
-		break;
-	}
-	cs->cs_preg[3] = tmp3;
-	cs->cs_preg[5] = tmp5;
-
-	/*
-	 * Recompute the stop bits and parity bits.  Note that
-	 * zs_set_speed() may have set clock selection bits etc.
-	 * in wr4, so those must preserved.
-	 */
-	tmp4 = cs->cs_preg[4];
-	CLR(tmp4, ZSWR4_SBMASK | ZSWR4_PARMASK);
-	if (ISSET(cflag, CSTOPB))
-		SET(tmp4, ZSWR4_TWOSB);
-	else
-		SET(tmp4, ZSWR4_ONESB);
-	if (!ISSET(cflag, PARODD))
-		SET(tmp4, ZSWR4_EVENP);
-	if (ISSET(cflag, PARENB))
-		SET(tmp4, ZSWR4_PARENB);
-	cs->cs_preg[4] = tmp4;
-
-	/* And copy to tty. */
-	tp->t_ispeed = 0;
-	tp->t_ospeed = ospeed;
-	tp->t_cflag = cflag;
-
-	/*
-	 * If nothing is being transmitted, set up new current values,
-	 * else mark them as pending.
-	 */
-	if (!cs->cs_heldchange) {
-		if (zst->zst_tx_busy) {
-			zst->zst_heldtbc = zst->zst_tbc;
-			zst->zst_tbc = 0;
-			cs->cs_heldchange = 1;
-		} else
-			zs_loadchannelregs(cs);
-	}
-
-	/*
-	 * If hardware flow control is disabled, turn off the buffer water
-	 * marks and unblock any soft flow control state.  Otherwise, enable
-	 * the water marks.
-	 */
-	if (!ISSET(cflag, CHWFLOW)) {
-		zst->zst_r_hiwat = 0;
-		zst->zst_r_lowat = 0;
-		if (ISSET(zst->zst_rx_flags, RX_TTY_OVERFLOWED)) {
-			CLR(zst->zst_rx_flags, RX_TTY_OVERFLOWED);
-			zst->zst_rx_ready = 1;
-			cs->cs_softreq = 1;
-		}
-		if (ISSET(zst->zst_rx_flags, RX_TTY_BLOCKED|RX_IBUF_BLOCKED)) {
-			CLR(zst->zst_rx_flags, RX_TTY_BLOCKED|RX_IBUF_BLOCKED);
-			zs_hwiflow(zst);
-		}
-	} else {
-		zst->zst_r_hiwat = zskbd_rbuf_hiwat;
-		zst->zst_r_lowat = zskbd_rbuf_lowat;
-	}
-
-	/*
-	 * Force a recheck of the hardware carrier and flow control status,
-	 * since we may have changed which bits we're looking at.
-	 */
-	zskbd_stint(cs, 1);
-
-	splx(s);
-
-	/*
-	 * If hardware flow control is disabled, unblock any hard flow control
-	 * state.
-	 */
-	if (!ISSET(cflag, CHWFLOW)) {
-		if (zst->zst_tx_stopped) {
-			zst->zst_tx_stopped = 0;
-			zsstart(tp);
-		}
-	}
-
-	zskbd_softint(cs);
-
-	return (0);
 }
 
 /*
@@ -1068,45 +882,6 @@ zs_modem(zst, onoff)
 }
 
 /*
- * Try to block or unblock input using hardware flow-control.
- * This is called by kern/tty.c if MDMBUF|CRTSCTS is set, and
- * if this function returns non-zero, the TS_TBLOCK flag will
- * be set or cleared according to the "block" arg passed.
- */
-int
-zshwiflow(tp, block)
-	struct tty *tp;
-	int block;
-{
-	struct zskbd_softc *zst = zskbd_device_lookup(&zskbd_cd, ZSKBDUNIT(tp->t_dev));
-	struct zs_chanstate *cs = zst->zst_cs;
-	int s;
-
-	if (cs->cs_wr5_rts == 0)
-		return (0);
-
-	s = splzs();
-	if (block) {
-		if (!ISSET(zst->zst_rx_flags, RX_TTY_BLOCKED)) {
-			SET(zst->zst_rx_flags, RX_TTY_BLOCKED);
-			zs_hwiflow(zst);
-		}
-	} else {
-		if (ISSET(zst->zst_rx_flags, RX_TTY_OVERFLOWED)) {
-			CLR(zst->zst_rx_flags, RX_TTY_OVERFLOWED);
-			zst->zst_rx_ready = 1;
-			cs->cs_softreq = 1;
-		}
-		if (ISSET(zst->zst_rx_flags, RX_TTY_BLOCKED)) {
-			CLR(zst->zst_rx_flags, RX_TTY_BLOCKED);
-			zs_hwiflow(zst);
-		}
-	}
-	splx(s);
-	return (1);
-}
-
-/*
  * Internal version of zshwiflow
  * called at splzs
  */
@@ -1136,7 +911,7 @@ zs_hwiflow(zst)
 
 #define	integrate
 integrate void zskbd_rxsoft __P((struct zskbd_softc *));
-integrate void zskbd_txsoft __P((struct zskbd_softc *, struct tty *));
+integrate void zskbd_txsoft __P((struct zskbd_softc *));
 integrate void zskbd_stsoft __P((struct zskbd_softc *));
 /*
  * receiver ready interrupt.
@@ -1239,7 +1014,8 @@ zskbd_txint(cs)
 	if (zst->zst_tbc > 0) {
 		zs_write_data(cs, *zst->zst_tba);
 		zst->zst_tbc--;
-		zst->zst_tba++;
+		if (++zst->zst_tba == zst->zst_tend)
+			zst->zst_tba = zst->zst_tbeg;
 	} else {
 		/* Disable transmit completion interrupts if necessary. */
 		if (ISSET(cs->cs_preg[1], ZSWR1_TIE)) {
@@ -1395,17 +1171,9 @@ zskbd_rxsoft(zst)
 }
 
 integrate void
-zskbd_txsoft(zst, tp)
+zskbd_txsoft(zst)
 	struct zskbd_softc *zst;
-	struct tty *tp;
 {
-
-	CLR(tp->t_state, TS_BUSY);
-	if (ISSET(tp->t_state, TS_FLUSH))
-		CLR(tp->t_state, TS_FLUSH);
-	else
-		ndflush(&tp->t_outq, (int)(zst->zst_tba - tp->t_outq.c_cf));
-	(*linesw[tp->t_line].l_start)(tp);
 }
 
 integrate void
@@ -1448,7 +1216,6 @@ zskbd_softint(cs)
 	struct zs_chanstate *cs;
 {
 	struct zskbd_softc *zst = cs->cs_private;
-	struct tty *tp = zst->zst_tty;
 	int s;
 
 	s = spltty();
@@ -1465,7 +1232,7 @@ zskbd_softint(cs)
 
 	if (zst->zst_tx_done) {
 		zst->zst_tx_done = 0;
-		zskbd_txsoft(zst, tp);
+		zskbd_txsoft(zst);
 	}
 
 	splx(s);
@@ -1493,6 +1260,7 @@ zskbd_set_leds(v, wled)
 {
 	struct zskbd_softc *zst = v;
 	u_int8_t sled = 0;
+	u_int8_t cmd[2];
 
 	zst->zst_leds = wled;
 
@@ -1504,6 +1272,10 @@ zskbd_set_leds(v, wled)
 		sled |= SKBD_LED_SCROLLLOCK;
 	if (wled & WSKBD_LED_COMPOSE)
 		sled |= SKBD_LED_COMPOSE;
+
+	cmd[0] = SKBD_CMD_SETLED;
+	cmd[1] = sled;
+	zsenqueue_tx(zst, cmd, sizeof(cmd));
 }
 
 int
