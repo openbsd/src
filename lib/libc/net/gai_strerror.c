@@ -1,3 +1,5 @@
+/*	$OpenBSD: gai_strerror.c,v 1.4 1999/12/30 08:54:20 itojun Exp $	*/
+
 /*
  * %%% copyright-cmetz-97-bsd
  * Copyright (c) 1997-1999, Craig Metz, All rights reserved.
@@ -65,6 +67,10 @@ gai_strerror(int errnum)
 		return "memory allocation failure";
 	case EAI_SYSTEM:
 		return "system error";
+	case EAI_BADHINTS:
+		return "invalid value for hints";
+	case EAI_PROTOCOL:
+		return "resolved protocol is unknown";
 	default:
 		return "unknown/invalid error";
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: netdb.h,v 1.7 1999/07/03 18:14:51 deraadt Exp $	*/
+/*	$OpenBSD: netdb.h,v 1.8 1999/12/30 08:54:20 itojun Exp $	*/
 
 /*
  * ++Copyright++ 1980, 1983, 1988, 1993
@@ -148,9 +148,15 @@ struct	protoent {
 #define NI_NOFQDN	4	/* return a short name if in the local domain */
 #define NI_NAMEREQD	8	/* fail if either host or service name is unknown */
 #define NI_DGRAM	16	/* look up datagram service instead of stream */
+#define NI_WITHSCOPEID	32	/* KAME hack: attach scopeid to host portion */
 
 #define NI_MAXHOST	MAXHOSTNAMELEN	/* max host name returned by getnameinfo */
 #define NI_MAXSERV	32	/* max serv. name length returned by getnameinfo */
+
+/*
+ * Scope delimit character (KAME hack)
+ */
+#define SCOPE_DELIMITER '@'
 
 #define EAI_BADFLAGS	-1	/* invalid value for ai_flags */
 #define EAI_NONAME	-2	/* name or service is not known */
@@ -163,6 +169,8 @@ struct	protoent {
 #define EAI_ADDRFAMILY	-9	/* address family for name not supported */
 #define EAI_MEMORY	-10	/* memory allocation failure */
 #define EAI_SYSTEM	-11	/* system error (code indicated in errno) */
+#define EAI_BADHINTS	-12	/* invalid value for hints */
+#define EAI_PROTOCOL	-13	/* resolved protocol is unknown */
 
 struct addrinfo {
 	int ai_flags;		/* input flags */
