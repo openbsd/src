@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.116 2003/07/28 20:02:44 sturm Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.117 2003/07/31 11:11:02 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -48,6 +48,22 @@ Mostly because undocumented stuff has fuzzy semantics, and it hasn't been
 decided yet how to define it.
 .Sh TARGETS
 .Bl -tag -width do-configure
+.It Ar {build,run,all}-dir-depends
+Print all dependencies for a port in order to build it, run it, 
+or both.
+The output is formatted as package specification pairs, in a form suitable
+for
+.Xr tsort 1 .
+.It Ar full-{build,run,all}-depends
+Print all dependencies a package depends upon for building, running, 
+or both, as a list of package names.
+.It Ar {build,lib,run}-depends-list
+Print a list of first level package specifications a port depends as
+build dependencies, library dependencies, or run dependencies.
+.It Ar print-{build,run}-depends
+User convenience target that displays the result of
+.Ar full-{build,run}-depends
+in a more readable way.
 .It Ar {pre,do,post}-*
 Most standard targets can be specialized according to a given port's needs.
 If defined,
@@ -85,6 +101,12 @@ Essentially invoke
 env -i ${MAKE_ENV} ${MAKE_PROGRAM} ${MAKE_FLAGS} \e
 	-f ${MAKE_FILE} ${ALL_TARGET}
 .Ed
+.It Ar build-depends
+Verify the ports mentioned in
+.Ev BUILD_DEPENDS ,
+by checking the corresponding packages are actually installed,
+and install the missing ports by recursing through the ports tree.
+Invoked right after creating the working directory.
 .It Ar checkpatch
 Debugging version of the
 .Ar patch
@@ -135,6 +157,8 @@ clean subpackages as well.
 .It Va packages
 Short-hand for `sub package'.
 .El
+.It Ar clean-depends
+Short hand for make clean=depends.
 .It Ar configure
 Configure the port.
 Might be a void operation.
@@ -142,6 +166,12 @@ Unless overridden, configure creates the ${WRKBUILD}
 directory (see SEPARATE_BUILD), runs ${SCRIPTDIR}/configure if it exists,
 and runs whatever configuration methods are recorded in
 .Ev CONFIGURE_STYLE .
+.It Ar depends
+Check all the port's dependencies, that is:
+.Ar build-depends ,
+.Ar lib-depends ,
+.Ar run-depends ,
+.Ar regress-depends .
 .It Ar describe
 Prints a one-line index entry of the port, suitable for
 .Pa ${PORTSDIR}/INDEX .
@@ -220,6 +250,9 @@ See the description of THE FAKE FRAMEWORK
 for the non-intuitive details of the way
 .Ar {pre,do,post}-install
 hooks are actually used by the ports tree.
+.It Ar lib-depends
+Verify that the library dependencies a port needs are actually there,
+by checking the library specifications.
 .It Ar lib-depends-check
 Verify that the
 .Ev LIB_DEPENDS
@@ -303,8 +336,6 @@ exists, the files described under
 .Ev PATCH_LIST
 will be applied under
 .Ev WRKDIST .
-.It Ar print-depends
-Print all dependencies for the given port.
 .It Ar rebuild
 Force rebuild of the port.
 .It Ar regress
@@ -322,10 +353,21 @@ If a port needs special configuration or build options to enable regression
 testing, define a
 .Sq regress
 .Ev FLAVOR .
+.It Ar regress-depends
+Verify packages needed for regression tests, using the same scheme as
+.Ar build-depends .
+Only invoked when regression tests are run, or explicitly through
+.Ar depends .
 .It Ar reinstall
 Force reinstallation of a port, by first cleaning the old installation.
 .It Ar repackage
 For rebuilding of the packages of a port, by first removing the old packages.
+.It Ar run-depends
+Verify the ports mentioned in
+.Ev RUN_DEPENDS ,
+by checking the corresponding packages are actually installed,
+and install the missing ports by recursing through the ports tree.
+Invoked right before installing the package.
 .It Ar show
 Invoked as show=name, show the contents of ${name}.
 Mostly used from recursive makes, or to know the contents of another
@@ -555,7 +597,6 @@ If set to
 .Sq Yes ,
 .Sq make clean
 will also clean dependencies.
-Note that distclean never recurses down to dependencies.
 .It Ev COMMENT
 Comment used for the package, and in the INDEX.
 .It Ev COMMENT-foo
@@ -1507,6 +1548,9 @@ All depend targets will look there after the normal lookup fails.
 Links are now created during the
 .Ar package
 target.
+.It Ar depends-list
+Renamed into
+.Ar full-build-depends
 .It Ar {pre,do}-extract
 Don't override.
 Set
@@ -1527,6 +1571,18 @@ no longer creates a symlink between the current directory and
 a subdirectory of ${WRKOBJDIR}, so
 .Ar obj
 is no longer applicable.
+.It Ar print-depends
+Use
+.Ar print-build-depends
+and
+.Ar print-run-depends
+instead.
+.It Ar print-depends-list
+Renamed into 
+.Ar print-build-depends
+.It Ar print-package-depends
+Renamed into
+.It Ar print-run-depends
 .El
 .Sh OBSOLETE VARIABLES
 .Bl -tag -width MASTER_SITES
