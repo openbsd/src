@@ -18,7 +18,7 @@ Modified to work with SSL by Niels Provos <provos@citi.umich.edu> in Canada.
 */
 
 #include "includes.h"
-RCSID("$Id: ssh.c,v 1.5 1999/09/29 06:15:00 deraadt Exp $");
+RCSID("$Id: ssh.c,v 1.6 1999/09/29 06:15:18 deraadt Exp $");
 
 #include "xmalloc.h"
 #include "ssh.h"
@@ -324,10 +324,13 @@ main(int ac, char **av)
 	  break;
 
 	case 'v':
+	case 'V':
 	  debug_flag = 1;
 	  fprintf(stderr, "SSH Version %s, protocol version %d.%d.\n",
 		  SSH_VERSION, PROTOCOL_MAJOR, PROTOCOL_MINOR);
 	  fprintf(stderr, "Compiled with SSL.\n");
+	  if (opt == 'V')
+	    exit(0);
 	  break;
 
 	case 'q':
