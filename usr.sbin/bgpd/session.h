@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.h,v 1.1 2003/12/17 11:46:54 henning Exp $ */
+/*	$OpenBSD: session.h,v 1.2 2003/12/19 21:07:05 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -75,23 +75,3 @@ struct msg_open {
 	u_int32_t		 bgpid;
 	u_int8_t		 optparamlen;
 };
-
-struct msg_notification {
-	struct msg_header	 header;
-	u_int8_t		 errcode;
-	u_int8_t		 subcode;
-};
-
-struct msg_keepalive {
-	struct msg_header	 header;
-};
-
-struct msg_update {
-	struct msg_header	 header;
-	u_int16_t		 withdrawn_len;
-	char			*withdrawn_data;
-	u_int16_t		 path_len;
-	char			*path_data;
-	char			*nlri;	/* Network Layer Reachability Info */
-};
-
