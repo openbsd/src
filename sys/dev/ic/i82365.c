@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82365.c,v 1.11 2000/04/08 05:50:50 aaron Exp $	*/
+/*	$OpenBSD: i82365.c,v 1.12 2000/04/19 07:27:42 fgsch Exp $	*/
 /*	$NetBSD: i82365.c,v 1.10 1998/06/09 07:36:55 thorpej Exp $	*/
 
 /*
@@ -105,7 +105,7 @@ void	pcic_queue_event __P((struct pcic_handle *, int));
 void	pcic_wait_ready __P((struct pcic_handle *));
 
 u_int8_t st_pcic_read __P((struct pcic_handle *, int));
-void st_pcic_write __P((struct pcic_handle *, int, u_int8_t));
+void st_pcic_write __P((struct pcic_handle *, int, int));
 
 struct cfdriver pcic_cd = {
 	NULL, "pcic", DV_DULL
@@ -1358,8 +1358,8 @@ pcic_chip_socket_enable(pch)
 	 */
 	delay((100 + 20 + 200) * 1000);
 
-	pcic_write(h, PCIC_PWRCTL, PCIC_PWRCTL_DISABLE_RESETDRV | PCIC_PWRCTL_OE
-			   | PCIC_PWRCTL_PWR_ENABLE);
+	pcic_write(h, PCIC_PWRCTL, PCIC_PWRCTL_DISABLE_RESETDRV |
+	    PCIC_PWRCTL_OE | PCIC_PWRCTL_PWR_ENABLE);
 	pcic_write(h, PCIC_INTR, 0);
 
 	/*
@@ -1440,10 +1440,9 @@ st_pcic_read(h, idx)
 	struct pcic_handle *h;
 	int idx;
 {
-	if (idx != -1) {
-		bus_space_write_1(h->ph_bus_t, h->ph_bus_h, PCIC_REG_INDEX, h->sock + idx);
-	}
-
+	if (idx != -1)
+		bus_space_write_1(h->ph_bus_t, h->ph_bus_h, PCIC_REG_INDEX,
+		    h->sock + idx);
 	return bus_space_read_1(h->ph_bus_t, h->ph_bus_h, PCIC_REG_DATA);
 }
 
@@ -1451,11 +1450,12 @@ void
 st_pcic_write(h, idx, data)
 	struct pcic_handle *h;
 	int idx;
-	u_int8_t data;
+	int data;
 {
-	if (idx != -1) {
-		bus_space_write_1(h->ph_bus_t, h->ph_bus_h, PCIC_REG_INDEX, h->sock + idx);
-	}
-
-	bus_space_write_1(h->ph_bus_t, h->ph_bus_h, PCIC_REG_DATA, data);
+	if (idx != -1)
+		bus_space_write_1(h->ph_bus_t, h->ph_bus_h, PCIC_REG_INDEX,
+		    h->sock + idx);
+	if (data != -1)
+		bus_space_write_1(h->ph_bus_t, h->ph_bus_h, PCIC_REG_DATA,
+		    data);
 }

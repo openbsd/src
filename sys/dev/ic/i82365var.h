@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82365var.h,v 1.6 2000/04/08 05:50:50 aaron Exp $	*/
+/*	$OpenBSD: i82365var.h,v 1.7 2000/04/19 07:27:43 fgsch Exp $	*/
 /*	$NetBSD: i82365var.h,v 1.4 1998/05/23 18:32:29 matt Exp $	*/
 
 /*
@@ -53,7 +53,7 @@ struct pcic_handle {
 	bus_space_tag_t ph_bus_t;
 	bus_space_handle_t ph_bus_h;
 	u_int8_t (*ph_read) __P((struct pcic_handle *, int));
-	void (*ph_write) __P((struct pcic_handle *, int, u_int8_t));
+	void (*ph_write) __P((struct pcic_handle *, int, int));
 
 	int	vendor;
 	int	sock;
