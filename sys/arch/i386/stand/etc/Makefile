@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 1997/10/14 20:07:00 weingart Exp $
+#	$OpenBSD: Makefile,v 1.6 1997/10/14 20:19:19 weingart Exp $
 
 S=	${.CURDIR}/../../../..
 I386=	${.CURDIR}/../..
@@ -10,9 +10,9 @@ machine-links:
 	@ln -fs ${.CURDIR}/../.. i386
 	@ln -fs ${.CURDIR}/../../include machine
 
-depend:: assym.h machine-links
+depend:: assym.h
 
-assym.h: $S/kern/genassym.sh ${.CURDIR}/genassym.cf
+assym.h: $S/kern/genassym.sh ${.CURDIR}/genassym.cf machine-links
 	sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} \
 	    ${PARAM} < ${.CURDIR}/genassym.cf > assym.h.tmp && \
 	    mv -f assym.h.tmp assym.h
