@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_aout.c,v 1.21 1997/07/19 22:31:15 niklas Exp $	*/
+/*	$OpenBSD: db_aout.c,v 1.22 1998/08/21 23:29:03 millert Exp $	*/
 /*	$NetBSD: db_aout.c,v 1.14 1996/02/27 20:54:43 gwr Exp $	*/
 
 /* 
@@ -64,6 +64,14 @@
 int db_symtabsize = SYMTAB_SPACE;
 int db_symtab[SYMTAB_SPACE/sizeof(int)] = { 0, 1 };
 #endif
+static char *strtab;
+static int slen;
+
+#ifdef	SYMTAB_SPACE
+#define X_db_getname(s)		(s->n_un.n_name)
+#else
+#define X_db_getname(s)	(s->n_un.n_strx > slen ? NULL : strtab + s->n_un.n_strx)
+#endif
 
 /*
  * Find the symbol table and strings; tell ddb about them.
@@ -77,11 +85,7 @@ X_db_sym_init(symtab, esymtab, name)
 	char *name;
 {
 	struct nlist	*sym_start, *sym_end;
-	struct nlist	*sp;
-	char		*strtab;
-	int		slen;
 	char		*estrtab;
-	long		strx;
 
 #ifdef SYMTAB_SPACE
 	if (*symtab < sizeof(int)) {
@@ -121,18 +125,6 @@ X_db_sym_init(symtab, esymtab, name)
         
 #endif
 
-	for (sp = sym_start; sp < sym_end; sp++) {
-	    strx = sp->n_un.n_strx;
-	    if (strx != 0) {
-		if (strx > slen) {
-		    db_printf("Bad string table index (%#x)\n", strx);
-		    sp->n_un.n_name = 0;
-		    continue;
-		}
-		sp->n_un.n_name = strtab + strx;
-	    }
-	}
-
 	if (db_add_symbol_table((char *)sym_start, (char *)sym_end, name,
 	    (char *)symtab, esymtab) !=  -1) {
 #ifndef	SYMTAB_SPACE
@@ -166,19 +158,16 @@ X_db_lookup(stab, symstr)
 	char *		symstr;
 {
 	register struct nlist *sp, *ep;
+	char *n_name;
 
 	sp = (struct nlist *)stab->start;
 	ep = (struct nlist *)stab->end;
 
 	for (; sp < ep; sp++) {
-	    if (sp->n_un.n_name == 0)
+	    if ((n_name = X_db_getname(sp)) == 0)
 		continue;
-	    if ((sp->n_type & N_STAB) == 0 &&
-		sp->n_un.n_name != 0 &&
-		db_eqname(sp->n_un.n_name, symstr, '_'))
-	    {
+	    if ((sp->n_type & N_STAB) == 0 && db_eqname(n_name, symstr, '_'))
 		return ((db_sym_t)sp);
-	    }
 	}
 	return ((db_sym_t)0);
 }
@@ -199,7 +188,7 @@ X_db_search_symbol(symtab, off, strategy, diffp)
 	ep = (struct nlist *)symtab->end;
 
 	for (; sp < ep; sp++) {
-	    if (sp->n_un.n_name == 0)
+	    if (X_db_getname(sp) == 0)
 		continue;
 	    if ((sp->n_type & N_STAB) != 0 || (sp->n_type & N_TYPE) == N_FN)
 		continue;
@@ -246,7 +235,7 @@ X_db_symbol_values(sym, namep, valuep)
 	if ((sp = (struct nlist *)sym) == NULL)
 	    return;
 	if (namep)
-	    *namep = sp->n_un.n_name;
+	    *namep = X_db_getname(sp);
 	if (valuep)
 	    *valuep = sp->n_value;
 }
@@ -279,9 +268,9 @@ X_db_line_at_pc(symtab, cursym, filename, linenum, off)
 	     */
 #if 0
 	    if (sp->n_value <= off && (off - sp->n_value) <= sodiff &&
-		NEWSRC(sp->n_un.n_name)) {
+		NEWSRC(X_db_getname(sp))) {
 #endif
-	    if ((sp->n_type & N_TYPE) == N_FN || NEWSRC(sp->n_un.n_name)) { 
+	    if ((sp->n_type & N_TYPE) == N_FN || NEWSRC(X_db_getname(sp))) {
 		sodiff = lndiff = -1UL;
 		ln = 0;
 		fname = NULL;
@@ -291,7 +280,7 @@ X_db_line_at_pc(symtab, cursym, filename, linenum, off)
 		if ((db_expr_t)sp->n_value <= off &&
 		    (off - sp->n_value) < sodiff) {
 			sodiff = off - sp->n_value;
-			fname = sp->n_un.n_name;
+			fname = X_db_getname(sp);
 		}
 		continue;
 	    }
@@ -327,6 +316,7 @@ X_db_sym_numargs(symtab, cursym, nargp, argnamep)
 	register struct nlist	*sp, *ep;
 	u_long			addr;
 	int			maxnarg = *nargp, nargs = 0;
+	char			*n_name;
 
 	if (cursym == NULL)
 		return FALSE;
@@ -341,9 +331,11 @@ X_db_sym_numargs(symtab, cursym, nargp, argnamep)
 			if (nargs >= maxnarg)
 				break;
 			nargs++;
-			*argnamep++ = sp->n_un.n_name?sp->n_un.n_name:"???";
+			n_name = X_db_getname(sp);
+			*argnamep++ = n_name ? n_name : "???";
 			{
 			/* XXX - remove trailers */
+			/* XXX - this could hose /dev/ksyms! */
 			char *cp = *(argnamep-1);
 			while (*cp != '\0' && *cp != ':') cp++;
 			if (*cp == ':') *cp = '\0';
@@ -409,7 +401,6 @@ X_db_symatoff(sym, off, buf, len)
 
 		bcopy (&((struct nlist *)sym->start)[off / sizeof(n)],
 		       &n, sizeof(n));
-		n.n_un.n_strx = n.n_un.n_name - sym->end;
 		*len = min(*len, sizeof(n) - off % sizeof(n));
 		bcopy ((u_int8_t*)&n + off % sizeof(n), buf, *len);
 	} else {
