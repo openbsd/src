@@ -1,4 +1,4 @@
-/*	$OpenBSD: wscons.c,v 1.6 1997/11/06 12:26:58 niklas Exp $	*/
+/*	$OpenBSD: wscons.c,v 1.7 1998/08/15 22:47:53 kstailey Exp $	*/
 /*	$NetBSD: wscons.c,v 1.10 1996/12/05 01:39:47 cgd Exp $	*/
 
 /*
@@ -233,8 +233,11 @@ wscons_input(cp)
 	tp = sc->sc_tty;
 #endif
 
-	while (*cp)
-		(*linesw[tp->t_line].l_rint)(*cp++, tp);
+	if (*cp == '\0')	/* deal with kbd generated NULs */
+		(*linesw[tp->t_line].l_rint)(*cp, tp);
+	else
+		while (*cp)
+			(*linesw[tp->t_line].l_rint)(*cp++, tp);
 }
 
 
