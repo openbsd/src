@@ -1,5 +1,5 @@
-/*	$OpenBSD: exchange.c,v 1.15 1999/04/19 19:58:17 niklas Exp $	*/
-/*	$EOM: exchange.c,v 1.88 1999/04/18 18:01:21 ho Exp $	*/
+/*	$OpenBSD: exchange.c,v 1.16 1999/04/27 21:07:40 niklas Exp $	*/
+/*	$EOM: exchange.c,v 1.95 1999/04/27 09:40:33 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -70,7 +70,7 @@
 #define MAX_BUCKET_BITS 16
 
 static void exchange_dump (char *, struct exchange *);
-static void exchange_free_aux (struct exchange *);
+static void exchange_free_aux (void *);
 
 static LIST_HEAD (exchange_list, exchange) *exchange_tab;
 
@@ -236,9 +236,9 @@ exchange_run (struct message *msg)
 {
   int i, done = 0;
   struct exchange *exchange = msg->exchange;
-  int (*handler) (struct message *) = (exchange->initiator
-				       ? exchange->doi->initiator
-				       : exchange->doi->responder);
+  struct doi *doi = exchange->doi;
+  int (*handler) (struct message *)
+    = exchange->initiator ? doi->initiator : doi->responder;
   struct payload *payload;
 
   while (!done)
@@ -263,7 +263,7 @@ exchange_run (struct message *msg)
 	       * implement automatic SA teardown after a certain amount
 	       * of inactivity.
 	       */
-	      log_print ("exchange_run: exchange->doi->%s (%p) failed",
+	      log_print ("exchange_run: doi->%s (%p) failed",
 			 exchange->initiator ? "initiator" : "responder", msg);
 	      message_free (msg);
 	      return;
@@ -273,27 +273,16 @@ exchange_run (struct message *msg)
 	    {
 	    case 1:
 	      /*
-	       * The last message of an exchange should not be retransmitted.
-	       * We should save this message in the ISAKMP SA if this is the
-	       * final message of a phase 1 exchange.  Then we can retransmit
-	       * "on-demand" if we see retransmits of the last message of the
-	       * peer later.
-	       * XXX Think about this some more wrt the last message in
-	       * phase 2 messages, does this not apply there too?
+	       * The last message of a multi-message exchange should
+	       * not be retransmitted other than "on-demand", i.e. if we
+	       * see retransmits of the last message of the peer
+	       * later.
 	       */
-	      msg->flags |= MSG_NO_RETRANS;
-	      if (exchange->phase == 1 && msg->isakmp_sa)
-		{
-		  if (msg->isakmp_sa->last_sent_in_setup)
-		    {
-		      exchange_release (msg->isakmp_sa->last_sent_in_setup
-					->exchange);
-		      message_free (msg->isakmp_sa->last_sent_in_setup);
-		    }
-		  msg->isakmp_sa->last_sent_in_setup = msg;
-		  msg->flags |= MSG_KEEP;
-		  exchange_reference (msg->exchange);
-		}
+	      if (exchange->step > 0)
+		msg->flags |= MSG_LAST;
+	      if (exchange->last_sent)
+		message_free (exchange->last_sent);
+	      exchange->last_sent = msg;
 
 	      /*
 	       * After we physically have sent our last message we need to
@@ -345,8 +334,10 @@ exchange_run (struct message *msg)
 		  for (payload = TAILQ_FIRST (&msg->payload[i]); payload;
 		       payload = TAILQ_NEXT (payload, link))
 		    if ((payload->flags & PL_MARK) == 0)
-		      log_print ("exchange_run: unexpected payload %s",
-				 constant_name (isakmp_payload_cst, i));
+		      if (!doi->handle_leftover_payload
+			  || doi->handle_leftover_payload (msg, i, payload))
+			log_print ("exchange_run: unexpected payload %s",
+				   constant_name (isakmp_payload_cst, i));
 
 	      /*
 	       * We have advanced the state.  If we have been processing an
@@ -455,8 +446,15 @@ exchange_lookup_by_name (char *name, int phase)
 		   "exchange_lookup_by_name: %s == %s && %d == %d?", name,
 		   exchange->name ? exchange->name : "<unnamed>", phase,
 		   exchange->phase);
+
+	/* 
+	 * Match by name, but don't select finished exchanges, i.e
+	 * where MSG_LAST are set in last_sent msg.
+	 */
 	if (exchange->name && strcasecmp (exchange->name, name) == 0
-	    && exchange->phase == phase)
+	    && exchange->phase == phase
+	    && (!exchange->last_sent
+		|| (exchange->last_sent->flags & MSG_LAST) == 0))
 	  return exchange;
       }
   return 0;
@@ -469,7 +467,7 @@ exchange_lookup_active (char *name, int phase)
   int i;
   struct exchange *exchange;
 
-  /* XXX Almost identical to exchange_lookup_by_name().  */
+  /* XXX Almost identical to exchange_lookup_by_name.  */
 
   if (!name)
     return 0;
@@ -583,8 +581,8 @@ exchange_create (int phase, int initiator, int doi, int type)
   int delta;
 
   /*
-   * We want the exchange zeroed for exchange_free to be able to find out
-   * what fields have been filled-in.
+   * We want the exchange zeroed for exchange_free to be able to find
+   * out what fields have been filled-in.
    */
   exchange = calloc (1, sizeof *exchange);
   if (!exchange)
@@ -592,7 +590,6 @@ exchange_create (int phase, int initiator, int doi, int type)
       log_error ("exchange_create: calloc (1, %d) failed", sizeof *exchange);
       return 0;
     }
-  exchange_reference (exchange);
   exchange->phase = phase;
   exchange->step = 0;
   exchange->initiator = initiator;
@@ -621,13 +618,12 @@ exchange_create (int phase, int initiator, int doi, int type)
   gettimeofday(&expiration, 0);
   delta = conf_get_num ("General", "Exchange-max-time", EXCHANGE_MAX_TIME);
   expiration.tv_sec += delta;
-  exchange->death = timer_add_event ("exchange_free_aux",
-				     (void (*) (void *))exchange_free_aux,
+  exchange->death = timer_add_event ("exchange_free_aux", exchange_free_aux,
 				     exchange, &expiration);
   if (!exchange->death)
     {
       /* If we don't give up we might start leaking... */
-      exchange_free (exchange);
+      exchange_free_aux (exchange);
       return 0;
     }
 
@@ -1118,22 +1114,21 @@ exchange_report (void)
       exchange_dump_real ("exchange_report", exchange, LOG_REPORT, 0);
 }
 
-/* Add a reference to EXCHANGE.  */
-void exchange_reference (struct exchange *exchange)
+/*
+ * Release all resources this exchange is using *except* for the "death"
+ * event.  When removing an exchange from the expiration handler that event
+ * will be dealt with therein instead.
+ */
+static void
+exchange_free_aux (void *v_exch)
 {
-  exchange->refcnt++;
-}
+  struct exchange *exchange = v_exch;
 
-/* Remove a reference to EXCHANGE, and deallocate if the last.  */
-void
-exchange_release (struct exchange *exchange)
-{
-  if (--exchange->refcnt)
-    return;
-
-  log_debug (LOG_EXCHANGE, 80, "exchange_release: freeing exchange %p", 
+  log_debug (LOG_EXCHANGE, 80, "exchange_free_aux: freeing exchange %p", 
 	     exchange);
 
+  if (exchange->last_received)
+    message_free (exchange->last_received);
   if (exchange->nonce_i)
     free (exchange->nonce_i);
   if (exchange->nonce_r)
@@ -1151,28 +1146,13 @@ exchange_release (struct exchange *exchange)
   if (exchange->name)
     free (exchange->name);
   exchange_free_aca_list (exchange);
+  LIST_REMOVE (exchange, link);
 
   /* Tell potential finalize routine we never got there.  */
   if (exchange->finalize)
     exchange->finalize (exchange, exchange->finalize_arg, 1);
 
   free (exchange);
-}
-
-/*
- * Release all resources this exchange is using *except* for the "death"
- * event.  When removing an exchange from the expiration handler that event
- * will be dealt with therein instead.
- */
-static void
-exchange_free_aux (struct exchange *exchange)
-{
-  if (exchange->last_received)
-    message_free (exchange->last_received);
-  if (exchange->last_sent)
-    message_free (exchange->last_sent);
-  LIST_REMOVE (exchange, link);
-  exchange_release (exchange);
 }
 
 /* Release all resources this exchange is using.  */
@@ -1205,19 +1185,19 @@ exchange_check_old_sa (struct sa *sa, void *v_arg)
 {
   struct sa *new_sa = v_arg;
   
-  if(sa == new_sa || !sa->name || !(sa->flags & SA_FLAG_READY) || 
-     (sa->flags & SA_FLAG_REPLACED))
+  if (sa == new_sa || !sa->name || !(sa->flags & SA_FLAG_READY) || 
+      (sa->flags & SA_FLAG_REPLACED))
     return 0;
 
   return sa->phase == new_sa->phase && new_sa->name &&
-    strcasecmp(sa->name, new_sa->name) == 0;
+    strcasecmp (sa->name, new_sa->name) == 0;
 }
 
 void
 exchange_finalize (struct message *msg)
 {
   struct exchange *exchange = msg->exchange;
-  struct sa *sa;
+  struct sa *sa, *old_sa;
   struct proto *proto;
   struct conf_list *attrs;
   struct conf_list_node *attr;
@@ -1226,15 +1206,14 @@ exchange_finalize (struct message *msg)
   exchange_dump ("exchange_finalize", exchange);
 
   /*
-   * Walk over all the SAs and noting them as ready.  If we set the COMMIT
-   * bit, tell the peer each SA is connected.
+   * Walk over all the SAs and noting them as ready.  If we set the
+   * COMMIT bit, tell the peer each SA is connected.
+   *
    * XXX The decision should really be based on if a SA was installed
    * successfully.
    */
   for (sa = TAILQ_FIRST (&exchange->sa_list); sa; sa = TAILQ_NEXT (sa, next))
     {
-      struct sa *old_sa;
-
       /* Move over the name to the SA.  */
       sa->name = exchange->name ? strdup (exchange->name) : 0;
 
@@ -1284,8 +1263,9 @@ exchange_finalize (struct message *msg)
     exchange->finalize (exchange, exchange->finalize_arg, 0);
   exchange->finalize = 0;
 
-  /* No need for this anymore.  */
-  exchange_free (exchange);
+  /* If we have nothing to retransmit we can safely remove ourselves.  */
+  if (!exchange->last_sent)
+    exchange_free (exchange);
 }
 
 /* Stash a nonce into the exchange data.  */
