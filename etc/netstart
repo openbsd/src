@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.32 1997/11/29 02:03:43 kstailey Exp $
+#	$OpenBSD: netstart,v 1.33 1997/12/20 23:19:30 deraadt Exp $
 
 # /etc/myname contains my symbolic name
 #
@@ -29,6 +29,10 @@ if [ "${nat}" = "YES" -a "${ipfilter}" = "YES" -a -f "${nat_rules}" ]; then
 	ipnat -CF -f ${nat_rules}
 else
 	nat=NO
+fi
+
+if [ X"${iproute}" = X"YES" ]; then
+	sysctl -w net.inet.ip.forwarding=1
 fi
 
 # set the address for the loopback interface
