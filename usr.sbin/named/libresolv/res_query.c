@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_query.c,v 1.1 1997/03/12 10:42:10 downsj Exp $	*/
+/*	$OpenBSD: res_query.c,v 1.2 1997/03/14 03:40:34 downsj Exp $	*/
 
 /*
  * ++Copyright++ 1988, 1993
@@ -60,7 +60,7 @@
 static char sccsid[] = "@(#)res_query.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "$From: res_query.c,v 8.9 1996/09/22 00:13:28 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: res_query.c,v 1.1 1997/03/12 10:42:10 downsj Exp $";
+static char rcsid[] = "$OpenBSD: res_query.c,v 1.2 1997/03/14 03:40:34 downsj Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -387,8 +387,8 @@ hostalias(name)
 				break;
 			for (cp2 = cp1 + 1; *cp2 && !isspace(*cp2); ++cp2)
 				;
-			abuf[sizeof(abuf) - 1] = *cp2 = '\0';
 			strncpy(abuf, cp1, sizeof(abuf) - 1);
+			abuf[sizeof(abuf) - 1] = *cp2 = '\0';
 			fclose(fp);
 			return (abuf);
 		}

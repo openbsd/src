@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_init.c,v 1.1 1997/03/12 10:42:09 downsj Exp $	*/
+/*	$OpenBSD: res_init.c,v 1.2 1997/03/14 03:40:33 downsj Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1989, 1993
@@ -60,7 +60,7 @@
 static char sccsid[] = "@(#)res_init.c	8.1 (Berkeley) 6/7/93";
 static char rcsid[] = "$From: res_init.c,v 8.7 1996/09/28 06:51:07 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: res_init.c,v 1.1 1997/03/12 10:42:09 downsj Exp $";
+static char rcsid[] = "$OpenBSD: res_init.c,v 1.2 1997/03/14 03:40:33 downsj Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -222,8 +222,9 @@ res_init()
 	_res.pfcode = 0;
 
 	/* Allow user to override the local domain definition */
-	if ((cp = getenv("LOCALDOMAIN")) != NULL) {
+	if (issetugid() == 0 && (cp = getenv("LOCALDOMAIN")) != NULL) {
 		(void)strncpy(_res.defdname, cp, sizeof(_res.defdname) - 1);
+		_res.defdname[sizeof(_res.defdname) - 1] = '\0';
 		haveenv++;
 
 		/*
@@ -279,6 +280,7 @@ res_init()
 		    if ((*cp == '\0') || (*cp == '\n'))
 			    continue;
 		    strncpy(_res.defdname, cp, sizeof(_res.defdname) - 1);
+		    _res.defdname[sizeof(_res.defdname) - 1] = '\0';
 		    if ((cp = strpbrk(_res.defdname, " \t\n")) != NULL)
 			    *cp = '\0';
 		    havesearch = 0;
@@ -294,6 +296,7 @@ res_init()
 		    if ((*cp == '\0') || (*cp == '\n'))
 			    continue;
 		    strncpy(_res.defdname, cp, sizeof(_res.defdname) - 1);
+		    _res.defdname[sizeof(_res.defdname) - 1] = '\0';
 		    if ((cp = strchr(_res.defdname, '\n')) != NULL)
 			    *cp = '\0';
 		    /*
@@ -427,12 +430,15 @@ res_init()
 #endif /* !RFC1535 */
 	}
 
-	if ((cp = getenv("RES_OPTIONS")) != NULL)
+	if (issetugid())
+		_res.options |= RES_NOALIASES;
+	else if ((cp = getenv("RES_OPTIONS")) != NULL)
 		res_setoptions(cp, "env");
 	_res.options |= RES_INIT;
 	return (0);
 }
 
+/* ARGSUSED */
 static void
 res_setoptions(options, source)
 	char *options, *source;
