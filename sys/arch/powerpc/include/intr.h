@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.2 1998/08/25 06:53:19 pefo Exp $ */
+/*	$OpenBSD: intr.h,v 1.3 1998/10/09 02:06:40 rahnds Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom, Opsycon AB and RTMX Inc, USA.
@@ -138,8 +138,8 @@ set_sint(pending)
 #define	splsofttty()	splraise(SINT_TTY)
 
 #define	setsoftclock()	set_sint(SINT_CLOCK);
-#define	setsoftnet()	set_sint(SINT_NET|SINT_CLOCK);
-#define	setsofttty()	set_sint(SINT_TTY|SINT_CLOCK);
+#define	setsoftnet()	set_sint(SINT_NET);
+#define	setsofttty()	set_sint(SINT_TTY);
 
 #define	splhigh()	splraise(0xffffffff)
 #define	spl0()		spllower(0)
