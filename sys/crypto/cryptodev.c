@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
+/*	$OpenBSD: cryptodev.c,v 1.54 2002/11/12 18:23:13 jason Exp $	*/
 
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -174,6 +174,9 @@ cryptof_ioctl(struct file *fp, u_long cmd, caddr_t data, struct proc *p)
 			break;
 		case CRYPTO_ARC4:
 			txform = &enc_xform_arc4;
+			break;
+		case CRYPTO_NULL:
+			txform = &enc_xform_null;
 			break;
 		default:
 			return (EINVAL);

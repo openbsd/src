@@ -1,4 +1,4 @@
-/*	$OpenBSD: xform.c,v 1.19 2002/08/16 22:47:25 dhartmei Exp $	*/
+/*	$OpenBSD: xform.c,v 1.20 2002/11/12 18:23:13 jason Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -84,6 +84,10 @@ void blf_zerokey(u_int8_t **);
 void cast5_zerokey(u_int8_t **);
 void skipjack_zerokey(u_int8_t **);
 void rijndael128_zerokey(u_int8_t **);
+void null_encrypt(caddr_t, u_int8_t *);
+void null_zerokey(u_int8_t **);
+void null_setkey(u_int8_t **, u_int8_t *, int);
+void null_decrypt(caddr_t, u_int8_t *);
 
 int MD5Update_int(void *, u_int8_t *, u_int16_t);
 int SHA1Update_int(void *, u_int8_t *, u_int16_t);
@@ -154,6 +158,15 @@ struct enc_xform enc_xform_arc4 = {
 	NULL,
 	NULL,
 	NULL,
+};
+
+struct enc_xform enc_xform_null = {
+	CRYPTO_NULL, "NULL",
+	8, 24, 24,
+	null_encrypt,
+	null_decrypt,
+	null_setkey,
+	null_zerokey,
 };
 
 /* Authentication instances */
@@ -300,6 +313,26 @@ blf_zerokey(u_int8_t **sched)
 	bzero(*sched, sizeof(blf_ctx));
 	FREE(*sched, M_CRYPTO_DATA);
 	*sched = NULL;
+}
+
+void
+null_setkey(u_int8_t **sched, u_int8_t *key, int len)
+{
+}
+
+void
+null_zerokey(u_int8_t **sched)
+{
+}
+
+void
+null_encrypt(caddr_t key, u_int8_t *blk)
+{
+}
+
+void
+null_decrypt(caddr_t key, u_int8_t *blk)
+{
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptosoft.c,v 1.35 2002/04/26 08:43:50 deraadt Exp $	*/
+/*	$OpenBSD: cryptosoft.c,v 1.36 2002/11/12 18:23:13 jason Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -612,6 +612,9 @@ swcr_newsession(u_int32_t *sid, struct cryptoini *cri)
 		case CRYPTO_RIJNDAEL128_CBC:
 			txf = &enc_xform_rijndael128;
 			goto enccommon;
+		case CRYPTO_NULL:
+			txf = &enc_xform_null;
+			goto enccommon;
 		enccommon:
 			txf->setkey(&((*swd)->sw_kschedule), cri->cri_key,
 			    cri->cri_klen / 8);
@@ -759,6 +762,7 @@ swcr_freesession(u_int64_t tid)
 		case CRYPTO_CAST_CBC:
 		case CRYPTO_SKIPJACK_CBC:
 		case CRYPTO_RIJNDAEL128_CBC:
+		case CRYPTO_NULL:
 			txf = swd->sw_exf;
 
 			if (swd->sw_kschedule)
@@ -873,6 +877,7 @@ swcr_process(struct cryptop *crp)
 		case CRYPTO_CAST_CBC:
 		case CRYPTO_SKIPJACK_CBC:
 		case CRYPTO_RIJNDAEL128_CBC:
+		case CRYPTO_NULL:
 			if ((crp->crp_etype = swcr_encdec(crd, sw,
 			    crp->crp_buf, type)) != 0)
 				goto done;
@@ -948,5 +953,7 @@ swcr_init(void)
 	crypto_register(swcr_id, CRYPTO_RIJNDAEL128_CBC, 0, 0,
 	    NULL, NULL, NULL);
 	crypto_register(swcr_id, CRYPTO_DEFLATE_COMP, 0, 0,
+	    NULL, NULL, NULL);
+	crypto_register(swcr_id, CRYPTO_NULL, 0, 0,
 	    NULL, NULL, NULL);
 }

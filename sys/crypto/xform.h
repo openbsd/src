@@ -1,4 +1,4 @@
-/*	$OpenBSD: xform.h,v 1.10 2002/04/22 23:10:09 deraadt Exp $	*/
+/*	$OpenBSD: xform.h,v 1.11 2002/11/12 18:23:13 jason Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -73,6 +73,7 @@ extern struct enc_xform enc_xform_cast5;
 extern struct enc_xform enc_xform_skipjack;
 extern struct enc_xform enc_xform_rijndael128;
 extern struct enc_xform enc_xform_arc4;
+extern struct enc_xform enc_xform_null;
 
 extern struct auth_hash auth_hash_md5;
 extern struct auth_hash auth_hash_sha1;
