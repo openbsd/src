@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_lookup.c,v 1.22 2003/01/31 17:37:50 art Exp $	*/
+/*	$OpenBSD: vfs_lookup.c,v 1.23 2003/05/04 00:22:12 tedu Exp $	*/
 /*	$NetBSD: vfs_lookup.c,v 1.17 1996/02/09 19:00:59 christos Exp $	*/
 
 /*
@@ -617,7 +617,6 @@ relookup(dvp, vpp, cnp)
 {
 	struct proc *p = cnp->cn_proc;
 	register struct vnode *dp = 0;	/* the directory we are searching */
-	int docache;			/* == 0 do not cache last component */
 	int wantparent;			/* 1 => wantparent or lockparent flag */
 	int rdonly;			/* lookup read-only flag bit */
 	int error = 0;
@@ -630,10 +629,6 @@ relookup(dvp, vpp, cnp)
 	 * Setup: break out flag bits into variables.
 	 */
 	wantparent = cnp->cn_flags & (LOCKPARENT|WANTPARENT);
-	docache = (cnp->cn_flags & NOCACHE) ^ NOCACHE;
-	if (cnp->cn_nameiop == DELETE ||
-	    (wantparent && cnp->cn_nameiop != CREATE))
-		docache = 0;
 	rdonly = cnp->cn_flags & RDONLY;
 	cnp->cn_flags &= ~ISSYMLINK;
 	dp = dvp;
