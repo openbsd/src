@@ -82,7 +82,4 @@ void *mm_zalloc(struct mm_master *, u_int, u_int);
 void mm_zfree(struct mm_master *, void *);
 void mm_init_compression(struct mm_master *);
 
-/* Utility functions */
-
-void pwfree(struct passwd *);
 #endif /* _MM_H_ */

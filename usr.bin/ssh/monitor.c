@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: monitor.c,v 1.3 2002/03/19 10:41:32 markus Exp $");
+RCSID("$OpenBSD: monitor.c,v 1.4 2002/03/19 14:27:39 markus Exp $");
 
 #include <openssl/dh.h>
 
@@ -486,7 +486,7 @@ mm_answer_pwnamallow(int socket, Buffer *m)
 	}
 
 	allowed = 1;
-	authctxt->pw = pwcopy(pwent);
+	authctxt->pw = pwent;
 	authctxt->valid = 1;
 
 	buffer_put_char(m, 1);

@@ -23,7 +23,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth.c,v 1.39 2002/03/19 10:49:35 markus Exp $");
+RCSID("$OpenBSD: auth.c,v 1.40 2002/03/19 14:27:39 markus Exp $");
 
 #include <libgen.h>
 
@@ -39,6 +39,7 @@ RCSID("$OpenBSD: auth.c,v 1.39 2002/03/19 10:49:35 markus Exp $");
 #include "bufaux.h"
 #include "uidswap.h"
 #include "tildexpand.h"
+#include "misc.h"
 
 /* import */
 extern ServerOptions options;
@@ -417,5 +418,5 @@ getpwnamallow(const char *user)
 		auth_close(as);
 #endif
 #endif
-	return (pw);
+	return (pwcopy(pw));
 }

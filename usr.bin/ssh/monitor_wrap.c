@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: monitor_wrap.c,v 1.3 2002/03/19 10:41:32 markus Exp $");
+RCSID("$OpenBSD: monitor_wrap.c,v 1.4 2002/03/19 14:27:39 markus Exp $");
 
 #include <openssl/bn.h>
 #include <openssl/dh.h>
@@ -203,18 +203,6 @@ mm_getpwnamallow(const char *login)
 	buffer_free(&m);
 
 	return (pw);
-}
-
-void
-pwfree(struct passwd *pw)
-{
-	xfree(pw->pw_name);
-	xfree(pw->pw_passwd);
-	xfree(pw->pw_gecos);
-	xfree(pw->pw_class);
-	xfree(pw->pw_dir);
-	xfree(pw->pw_shell);
-	xfree(pw);
 }
 
 /* Inform the privileged process about service and style */

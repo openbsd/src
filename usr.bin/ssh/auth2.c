@@ -23,7 +23,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth2.c,v 1.88 2002/03/18 17:50:31 provos Exp $");
+RCSID("$OpenBSD: auth2.c,v 1.89 2002/03/19 14:27:39 markus Exp $");
 
 #include <openssl/evp.h>
 
@@ -47,7 +47,6 @@ RCSID("$OpenBSD: auth2.c,v 1.88 2002/03/18 17:50:31 provos Exp $");
 #include "pathnames.h"
 #include "uidswap.h"
 #include "auth-options.h"
-#include "misc.h"
 #include "hostfile.h"
 #include "canohost.h"
 #include "match.h"
@@ -183,25 +182,18 @@ input_userauth_request(int type, u_int32_t seq, void *ctxt)
 
 	if (authctxt->attempt++ == 0) {
 		/* setup auth context */
-		struct passwd *pw = NULL;
-		pw = PRIVSEP(getpwnamallow(user));
-		if (pw && strcmp(service, "ssh-connection")==0) {
-			authctxt->pw = pwcopy(pw);
+		authctxt->pw = PRIVSEP(getpwnamallow(user));
+		if (authctxt->pw && strcmp(service, "ssh-connection")==0) {
 			authctxt->valid = 1;
 			debug2("input_userauth_request: setting up authctxt for %s", user);
 		} else {
 			log("input_userauth_request: illegal user %s", user);
 		}
-		/* Free memory */
-		if (use_privsep && pw != NULL)
-			pwfree(pw);
-
-		setproctitle("%s%s", pw ? user : "unknown",
+		setproctitle("%s%s", authctxt->pw ? user : "unknown",
 		    use_privsep ? " [net]" : "");
 		authctxt->user = xstrdup(user);
 		authctxt->service = xstrdup(service);
 		authctxt->style = style ? xstrdup(style) : NULL;
-
 		if (use_privsep)
 			mm_inform_authserv(service, style);
 	} else if (strcmp(user, authctxt->user) != 0 ||
