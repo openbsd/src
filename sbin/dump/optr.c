@@ -1,4 +1,4 @@
-/*	$OpenBSD: optr.c,v 1.17 2001/01/19 17:57:34 deraadt Exp $	*/
+/*	$OpenBSD: optr.c,v 1.18 2001/06/13 20:13:28 markus Exp $	*/
 /*	$NetBSD: optr.c,v 1.11 1997/05/27 08:34:36 mrg Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)optr.c	8.2 (Berkeley) 1/6/94";
 #else
-static char rcsid[] = "$OpenBSD: optr.c,v 1.17 2001/01/19 17:57:34 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: optr.c,v 1.18 2001/06/13 20:13:28 markus Exp $";
 #endif
 #endif /* not lint */
 
@@ -254,8 +254,14 @@ msg(fmt, va_alist)
 	va_start(ap);
 #endif
 	(void) vfprintf(stderr, fmt, ap);
+	va_end(ap);
 	(void) fflush(stdout);
 	(void) fflush(stderr);
+#ifdef __STDC__
+	va_start(ap, fmt);
+#else
+	va_start(ap);
+#endif
 	(void) vsnprintf(lastmsg, sizeof(lastmsg), fmt, ap);
 	va_end(ap);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.10 2001/01/19 17:57:42 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.11 2001/06/13 20:13:29 markus Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -39,7 +39,7 @@ char copyright[] =
 #if !defined(lint)
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.10 2001/01/19 17:57:42 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.11 2001/06/13 20:13:29 markus Exp $";
 #endif
 
 #include "defs.h"
@@ -812,11 +812,14 @@ msglog(char *p, ...)
 
 	va_start(args, p);
 	vsyslog(LOG_ERR, p, args);
+	va_end(args);
 
 	if (ftrace != 0) {
 		if (ftrace == stdout)
 			(void)fputs("routed: ", ftrace);
+		va_start(args, p);
 		(void)vfprintf(ftrace, p, args);
+		va_end(args);
 		(void)fputc('\n', ftrace);
 	}
 }
@@ -831,9 +834,12 @@ logbad(int dump, char *p, ...)
 
 	va_start(args, p);
 	vsyslog(LOG_ERR, p, args);
+	va_end(args);
 
 	(void)fputs("routed: ", stderr);
+	va_start(args, p);
 	(void)vfprintf(stderr, p, args);
+	va_end(args);
 	(void)fputs("; giving up\n",stderr);
 	(void)fflush(stderr);
 

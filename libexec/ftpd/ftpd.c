@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.98 2001/06/11 15:18:49 mickey Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.99 2001/06/13 20:13:29 markus Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -73,7 +73,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.4 (Berkeley) 4/16/94";
 #else
-static char rcsid[] = "$OpenBSD: ftpd.c,v 1.98 2001/06/11 15:18:49 mickey Exp $";
+static char rcsid[] = "$OpenBSD: ftpd.c,v 1.99 2001/06/13 20:13:29 markus Exp $";
 #endif
 #endif /* not lint */
 
@@ -1879,11 +1879,18 @@ lreply(n, fmt, va_alist)
 #endif
 	(void)printf("%d- ", n);
 	(void)vprintf(fmt, ap);
+	va_end(ap);
 	(void)printf("\r\n");
 	(void)fflush(stdout);
 	if (debug) {
+#ifdef __STDC__
+		va_start(ap, fmt);
+#else
+		va_start(ap);
+#endif
 		syslog(LOG_DEBUG, "<--- %d- ", n);
 		vsyslog(LOG_DEBUG, fmt, ap);
+		va_end(ap);
 	}
 }
 

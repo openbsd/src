@@ -1,4 +1,4 @@
-/*	$OpenBSD: rarpd.c,v 1.29 2000/04/14 02:52:35 itojun Exp $ */
+/*	$OpenBSD: rarpd.c,v 1.30 2001/06/13 20:13:29 markus Exp $ */
 /*	$NetBSD: rarpd.c,v 1.25 1998/04/23 02:48:33 mrg Exp $	*/
 
 /*
@@ -28,7 +28,7 @@ char    copyright[] =
 #endif				/* not lint */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: rarpd.c,v 1.29 2000/04/14 02:52:35 itojun Exp $";
+static char rcsid[] = "$OpenBSD: rarpd.c,v 1.30 2001/06/13 20:13:29 markus Exp $";
 #endif
 
 
@@ -995,19 +995,25 @@ va_dcl
 #endif
 {
 	va_list ap;
-#ifdef __STDC__
-	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
 	if (dflag) {
 		if (fatal)
 			(void) fprintf(stderr, "rarpd: error: ");
 		else
 			(void) fprintf(stderr, "rarpd: warning: ");
+#ifdef __STDC__
+		va_start(ap, fmt);
+#else
+		va_start(ap);
+#endif
 		(void) vfprintf(stderr, fmt, ap);
+		va_end(ap);
 		(void) fprintf(stderr, "\n");
 	}
+#ifdef __STDC__
+	va_start(ap, fmt);
+#else
+	va_start(ap);
+#endif
 	vsyslog(LOG_ERR, fmt, ap);
 	va_end(ap);
 	if (fatal) {
