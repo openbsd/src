@@ -1,4 +1,4 @@
-/*	$OpenBSD: sig_machdep.c,v 1.2 1997/07/06 07:46:29 downsj Exp $	*/
+'/*	$OpenBSD: sig_machdep.c,v 1.3 2000/05/27 21:40:29 art Exp $	*/
 /*	$NetBSD: sig_machdep.c,v 1.3 1997/04/30 23:28:03 gwr Exp $	*/
 
 /*
@@ -84,6 +84,11 @@
 #include <sys/malloc.h>
 #include <sys/buf.h>
 
+#include <vm/vm.h>
+#if defined(UVM)
+#include <uvm/uvm_extern.h>
+#endif
+
 #include <sys/syscallargs.h>
 
 #include <machine/cpu.h>
@@ -164,8 +169,13 @@ sendsig(catcher, sig, mask, code, type, val)
 		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
 	} else
 		fp = (struct sigframe *)(frame->f_regs[SP] - fsize);
+#if defined(UVM)
+	if ((unsigned)fp <= USRSTACK - ctob(p->p_vmspace->vm_ssize)) 
+		(void)uvm_grow(p, (unsigned)fp);
+#else
 	if ((unsigned)fp <= USRSTACK - ctob(p->p_vmspace->vm_ssize)) 
 		(void)grow(p, (unsigned)fp);
+#endif
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
 		printf("sendsig(%d): sig %d ssp %p usp %p scp %p ft %d\n",
