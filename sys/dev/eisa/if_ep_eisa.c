@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ep_eisa.c,v 1.14 2001/03/09 09:36:31 mickey Exp $	*/
+/*	$OpenBSD: if_ep_eisa.c,v 1.15 2001/09/18 20:30:23 jason Exp $	*/
 /*	$NetBSD: if_ep_eisa.c,v 1.13 1997/04/18 00:50:33 cgd Exp $	*/
 
 /*
@@ -104,6 +104,7 @@ ep_eisa_match(parent, match, aux)
 	    strcmp(ea->ea_idstring, "TCM5093") &&
 	    strcmp(ea->ea_idstring, "TCM5094") &&
 	    strcmp(ea->ea_idstring, "TCM5095") &&
+	    strcmp(ea->ea_idstring, "TCM5098") &&
 	    strcmp(ea->ea_idstring, "TCM5920") &&
 	    strcmp(ea->ea_idstring, "TCM5970") &&
 	    strcmp(ea->ea_idstring, "TCM5971") &&
@@ -140,7 +141,7 @@ ep_eisa_attach(parent, self, aux)
 
 	/* Reset card. */
 	bus_space_write_1(iot, ioh, EISA_CONTROL, EISA_ENABLE | EISA_RESET);
-	delay(10);
+	delay(4000);
 	bus_space_write_1(iot, ioh, EISA_CONTROL, EISA_ENABLE);
 	/* Wait for reset? */
 	delay(1000);
@@ -165,6 +166,8 @@ ep_eisa_attach(parent, self, aux)
 		model = EISA_PRODUCT_TCM5094;
 	else if (strcmp(ea->ea_idstring, "TCM5095") == 0)
 		model = EISA_PRODUCT_TCM5095;
+	else if (strcmp(ea->ea_idstring, "TCM5098") == 0)
+		model = EISA_PRODUCT_TCM5098;
 	else if (strcmp(ea->ea_idstring, "TCM5920") == 0) {
 		model = EISA_PRODUCT_TCM5920;
 		chipset = EP_CHIPSET_VORTEX;
