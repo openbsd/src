@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.16 2000/09/06 03:57:23 rahnds Exp $
+#	$OpenBSD: GENERIC,v 1.17 2000/09/07 01:43:05 rahnds Exp $
 #
 # PPC GENERIC config file
 #
@@ -14,6 +14,8 @@ option		SYS_TYPE=APPL
 option		FIREPOWERBUGS
 options		PPC_MPC106_BUG
 option		PCIVERBOSE
+option          WSEMUL_VT100
+option          WSEMUL_NO_DUMB
 
 include "../../../conf/GENERIC"
 
