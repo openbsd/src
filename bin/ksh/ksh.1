@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ksh.1,v 1.49 2003/03/14 11:05:55 jmc Exp $
+.\"	$OpenBSD: ksh.1,v 1.50 2003/03/20 07:30:37 jmc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"     The Regents of the University of California.  All rights reserved.
@@ -1032,7 +1032,7 @@ form
 where
 .Ar expr
 is an arithmetic expression.
-Array indicies are currently limited to the range 0 through 1023, inclusive.
+Array indices are currently limited to the range 0 through 1023, inclusive.
 Parameter substitutions take the form
 .Ic $ Ns Ar name ,
 .Ic ${ Ns Ar name Ns Ic \&} ,
@@ -2150,7 +2150,7 @@ close that file descriptor (e.g.,
 In order for co-processes to share a common output, the shell must keep the
 write portion of the output pipe open.
 This means that end-of-file will not be
-detected until all co-processes sharing the co-process output have exited
+detected until all co-processes sharing the co-process's output have exited
 (when they all exit, the shell closes its copy of the pipe).
 This can be
 avoided by redirecting the output to a numbered file descriptor (as this also
