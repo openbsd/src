@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_machdep.c,v 1.11 2005/02/23 00:01:09 drahn Exp $	*/
+/*	$OpenBSD: zaurus_machdep.c,v 1.12 2005/03/26 16:46:19 uwe Exp $	*/
 /*	$NetBSD: lubbock_machdep.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
@@ -341,7 +341,7 @@ boot(int howto)
 			cngetc();
 		}
 		printf("rebooting...\n");
-		delay(500000);
+		delay(6000000);
 		zaurus_reset();
 		printf("reboot failed; spinning\n");
 		while(1);
@@ -378,7 +378,7 @@ boot(int howto)
 		if (howto & RB_POWERDOWN) {
 
 			printf("\nAttempting to power down...\n");
-			delay(500000);
+			delay(6000000);
 			zaurus_powerdown();
 		}
 
@@ -388,7 +388,7 @@ boot(int howto)
 	}
 
 	printf("rebooting...\n");
-	delay(500000);
+	delay(6000000);
 	zaurus_reset();
 	printf("reboot failed; spinning\n");
 	while(1);
@@ -1177,41 +1177,68 @@ initarm(void *arg)
 void
 process_kernel_args(char *args)
 {
+	char *cp = args;
 
-	if (*(int *)args != BOOT_STRING_MAGIC) {
+	if (cp == NULL || *(int *)cp != BOOT_STRING_MAGIC) {
 		boothowto = RB_AUTOBOOT;
 		return;
 	}
 
-	*(int *)args = 0;
-	args += sizeof(int);
+	/* Eat the cookie */
+	*(int *)cp = 0;
+	cp += sizeof(int);
 
 	boothowto = 0;
 
 	/* Make a local copy of the bootargs */
-	strncpy(bootargs, args, MAX_BOOT_STRING - sizeof(int));
+	strncpy(bootargs, cp, MAX_BOOT_STRING - sizeof(int));
 
-	args = bootargs;
+	cp = bootargs;
 	boot_file = bootargs;
 
 	/* Skip the kernel image filename */
-	while (*args != ' ' && *args != 0)
-		++args;
+	while (*cp != ' ' && *cp != 0)
+		++cp;
 
-	if (*args != 0)
-		*args++ = 0;
+	if (*cp != 0)
+		*cp++ = 0;
 
-	while (*args == ' ')
-		++args;
+	while (*cp == ' ')
+		++cp;
 
-	boot_args = args;
+	boot_args = cp;
 
 	printf("bootfile: %s\n", boot_file);
 	printf("bootargs: %s\n", boot_args);
 
-#if 1
-	parse_mi_bootargs(boot_args);
-#endif
+	/* Setup pointer to boot flags */
+	while (*cp != '-')
+		if (*cp++ == '\0')
+			return;
+
+	for (;*++cp;) {
+		int fl;
+
+		fl = 0;
+		switch(*cp) {
+		case 'a':
+			fl |= RB_ASKNAME;
+			break;
+		case 'c':
+			fl |= RB_CONFIG;
+			break;
+		case 'd':
+			fl |= RB_KDB;
+			break;
+		case 's':
+			fl |= RB_SINGLE;
+			break;
+		default:
+			printf("unknown option `%c'\n", *cp);
+			break;
+		}
+		boothowto |= fl;
+	}
 }
 
 #ifdef KGDB
