@@ -1,4 +1,4 @@
-/*	$OpenBSD: nlist.c,v 1.19 2000/06/30 16:00:25 millert Exp $	*/
+/*	$OpenBSD: nlist.c,v 1.20 2001/01/25 05:40:28 art Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)nlist.c	8.1 (Berkeley) 6/6/93";
 #else
-static char *rcsid = "$OpenBSD: nlist.c,v 1.19 2000/06/30 16:00:25 millert Exp $";
+static char *rcsid = "$OpenBSD: nlist.c,v 1.20 2001/01/25 05:40:28 art Exp $";
 #endif
 #endif /* not lint */
 
@@ -298,11 +298,11 @@ __elf_knlist(fd, db)
 	register u_long symsize;
 	register u_long kernvma, kernoffs;
 	register int i;
-	Elf32_Sym sbuf;
+	Elf_Sym sbuf;
 	size_t symstrsize;
 	char *shstr, buf[1024];
-	Elf32_Ehdr eh;
-	Elf32_Shdr *sh = NULL;
+	Elf_Ehdr eh;
+	Elf_Shdr *sh = NULL;
 	DBT data, key;
 	NLIST nbuf;
 	FILE *fp;
@@ -315,17 +315,17 @@ __elf_knlist(fd, db)
 	    !IS_ELF(eh))
 		return (1);
 
-	sh = (Elf32_Shdr *)malloc(sizeof(Elf32_Shdr) * eh.e_shnum);
+	sh = (Elf_Shdr *)malloc(sizeof(Elf_Shdr) * eh.e_shnum);
 	if (sh == NULL)
 		errx(1, "cannot allocate %d bytes for symbol header",
-		    sizeof(Elf32_Shdr) * eh.e_shnum);
+		    sizeof(Elf_Shdr) * eh.e_shnum);
 
 	if (fseek (fp, eh.e_shoff, SEEK_SET) < 0) {
 		fmterr = "no exec header";
 		return (-1);
 	}
 
-	if (fread(sh, sizeof(Elf32_Shdr) * eh.e_shnum, 1, fp) != 1) {
+	if (fread(sh, sizeof(Elf_Shdr) * eh.e_shnum, 1, fp) != 1) {
 		fmterr = "no exec header";
 		return (-1);
 	}
@@ -388,7 +388,7 @@ __elf_knlist(fd, db)
 
 	/* Read each symbol and enter it into the database. */
 	while (symsize > 0) {
-		symsize -= sizeof(Elf32_Sym);
+		symsize -= sizeof(Elf_Sym);
 		if (fread((char *)&sbuf, sizeof(sbuf), 1, fp) != 1) {
 			if (feof(fp))
 				fmterr = "corrupted symbol table";
@@ -402,7 +402,7 @@ __elf_knlist(fd, db)
 		nbuf.n_value = sbuf.st_value;
 
 		/*XXX type conversion is pretty rude... */
-		switch(ELF32_ST_TYPE(sbuf.st_info)) {
+		switch(ELF_ST_TYPE(sbuf.st_info)) {
 		case STT_NOTYPE:
 			nbuf.n_type = N_UNDF;
 			break;
@@ -413,7 +413,7 @@ __elf_knlist(fd, db)
 			nbuf.n_type = N_DATA;
 			break;
 		}
-		if(ELF32_ST_BIND(sbuf.st_info) == STB_LOCAL)
+		if(ELF_ST_BIND(sbuf.st_info) == STB_LOCAL)
 			nbuf.n_type = N_EXT;
 
 		if(eh.e_machine == EM_MIPS) {
