@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.41 2003/09/07 18:50:58 jmc Exp $	*/
+/*	$OpenBSD: diff.c,v 1.42 2003/09/07 22:05:30 millert Exp $	*/
 
 /*
  * Copyright (c) 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -21,12 +21,13 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: diff.c,v 1.41 2003/09/07 18:50:58 jmc Exp $";
+static const char rcsid[] = "$OpenBSD: diff.c,v 1.42 2003/09/07 22:05:30 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/stat.h>
 
+#include <ctype.h>
 #include <err.h>
 #include <errno.h>
 #include <getopt.h>
@@ -84,22 +85,25 @@ main(int argc, char **argv)
 {
 	char *ep, **oargv;
 	long  l;
-	int   ch, lastch, gotstdin;
+	int   ch, lastch, gotstdin, prevoptind, newarg;
 
 	oargv = argv;
 	gotstdin = 0;
 
-	lastch = 0;
+	lastch = '\0';
+	prevoptind = 1;
+	newarg = 1;
 	while ((ch = getopt_long(argc, argv, OPTIONS, longopts, NULL)) != -1) {
 		switch (ch) {
 		case '0': case '1': case '2': case '3': case '4':
 		case '5': case '6': case '7': case '8': case '9':
-			if (!(lastch == 'c' || lastch == 'u' ||
-			    (lastch >= '0' && lastch <= '9')))
-				usage();
-			if (lastch == 'c' || lastch == 'u')
+			if (newarg)
+				usage();	/* disallow -[0-9]+ */
+			else if (lastch == 'c' || lastch == 'u')
 				context = 0;
-			context = context * 10 + ch - '0';
+			else if (!isdigit(lastch) || context > INT_MAX / 10)
+				usage();
+			context = (context * 10) + (ch - '0');
 			break;
 		case 'a':
 			aflag = 1;
@@ -196,6 +200,8 @@ main(int argc, char **argv)
 			break;
 		}
 		lastch = ch;
+		newarg = optind != prevoptind;
+		prevoptind = optind;
 	}
 	argc -= optind;
 	argv += optind;
