@@ -1,11 +1,30 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.57 2004/05/25 09:00:56 miod Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.58 2004/06/01 23:01:44 drahn Exp $
 
 NEW_BINUTILS=alpha arm hppa i386 mips powerpc sparc sparc64 amd64
 
-SUBDIRS=	opcodes bfd
+.for _arch in ${MACHINE_ARCH}
+.  if !empty(NEW_BINUTILS:M${_arch})
+USING_NEW_BINUTILS=yes
+.else
+USING_NEW_BINUTILS=no
+.  endif
+.endfor
+
+SUBDIRS=
+CONF_SUBDIRS=
 ALL_X11_MODULES=
 INSTALL_X11_MODULES=
 
+.if ${USING_NEW_BINUTILS} == "yes"
+CONF_SUBDIRS+=	opcodes bfd
+SUBDIRS+=	opcodes bfd
+INST_SUBDIRS+=	opcodes bfd
+.else
+CONF_SUBDIRS+=	opcodes bfd
+SUBDIRS+=	opcodes bfd
+.endif
+ALL_X11_MODULES=
+INSTALL_X11_MODULES=
 
 # This allows moving the whole binutils installation around for 
 # testing purposes
@@ -17,30 +36,34 @@ MANDIR=${PREFIX}/share/man/cat
 MAN=		binutils/objdump.1 c++filt.1
 
 .if (${MACHINE_ARCH} != "unknown")
+CONF_SUBDIRS+=	gdb
 SUBDIRS+=	gdb
+INST_SUBDIRS+=	gdb
 MAN+=		gdb/gdb.1
 ALL_X11_MODULES+=all-gdb
 INSTALL_X11_MODULES+=install-gdb
 .endif
 
-SUBDIRS+=	binutils
 
-.for _arch in ${MACHINE_ARCH}
-.  if !empty(NEW_BINUTILS:M${_arch})
-SUBDIRS+=	ld gas
+.if ${USING_NEW_BINUTILS} == "yes"
+SUBDIRS+=	binutils ld gas
+CONF_SUBDIRS+=	binutils ld gas
+INST_SUBDIRS+=	binutils ld gas
 MAN+=		binutils/ar.1 binutils/ranlib.1 \
 		binutils/objcopy.1 \
 		binutils/strings.1 binutils/strip.1 \
 		gas/doc/as.1 ld/ld.1
-.  endif
-.endfor
+.  else
+CONF_SUBDIRS=${SUBDIRS}
+CONF_SUBDIRS+= binutils
+.endif
 
 # Used by the GNU Makefile
 ALL_MODULES=${SUBDIRS:S/^/all-/g}
-CONFIGURE_MODULES=${SUBDIRS:S/^/configure-/g}
-CONFIGURE_HOST_MODULES=${SUBDIRS:S/^/configure-/g}
+CONFIGURE_MODULES=${CONF_SUBDIRS:S/^/configure-/g}
+CONFIGURE_HOST_MODULES=${CONF_SUBDIRS:S/^/configure-/g}
 ALL_HOST_MODULES=${SUBDIRS:S/^/all-/g}
-INSTALL_MODULES=${SUBDIRS:S/^/install-/g}
+INSTALL_MODULES=${INST_SUBDIRS:S/^/install-/g}
 	
 all:	config.status
 	SUBDIRS='${SUBDIRS}' \
@@ -53,9 +76,11 @@ all:	config.status
 	    ALL_MODULES="${ALL_MODULES}" \
 	    ALL_HOST_MODULES='${ALL_HOST_MODULES}' \
 	    ALL_X11_MODULES="${ALL_X11_MODULES}" all info
+.if ${USING_NEW_BINUTILS} != "yes"
 	cd ${.OBJDIR}/binutils && \
 	    ${MAKE} CC="${CC}" CFLAGS="${CFLAGS} ${COPTS}" \
 	    LDFLAGS=${LDSTATIC} objdump
+.endif
 
 .include <bsd.own.mk>
 
@@ -85,16 +110,18 @@ config.status: do-config
 
 # Need to pass SUBDIRS because of install-info
 install: maninstall
-	SUBDIRS='${SUBDIRS}' ${MAKE} DESTDIR='${DESTDIR}' \
+	SUBDIRS='${INST_SUBDIRS}' ${MAKE} DESTDIR='${DESTDIR}' \
 	    INSTALL_X11_MODULES="${INSTALL_X11_MODULES}" \
 	    INSTALL_MAN= \
 	    scriptdir=${PREFIX}/libdata \
 	    tooldir=${PREFIX} \
 	    BSDSRCDIR=${BSDSRCDIR} \
 	    INSTALL_MODULES='${INSTALL_MODULES}' install install-info
+.if ${USING_NEW_BINUTILS} != "yes"
 	cd ${.OBJDIR}/binutils && \
-		${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP} -o ${BINOWN} -g ${BINGRP} \
-			-m ${BINMODE} objdump ${DESTDIR}${PREFIX}/bin
+		${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP} -o ${BINOWN} \
+		    -g ${BINGRP} -m ${BINMODE} objdump ${DESTDIR}${PREFIX}/bin
+.endif
 
 clean cleandir:
 	-@if [ -e Makefile ]; then ${MAKE} distclean; fi
@@ -110,10 +137,12 @@ c++filt.1: binutils/cxxfilt.man
 	sed -e 's,@PROGRAM@,c++filt,' <${.CURDIR}/binutils/cxxfilt.man >$@
 
 includes:
+.if ${USING_NEW_BINUTILS} == "yes"
 	install -C -o ${BINOWN} -g ${BINGRP} -m ${NONBINMODE} \
 		${.CURDIR}/include/bfdlink.h ${DESTDIR}/usr/include
 	install -C -o ${BINOWN} -g ${BINGRP} -m ${NONBINMODE} \
 		bfd/mybfd.h ${DESTDIR}/usr/include/bfd.h
+.endif
 
 depend:
 	# Nothing here so far...
