@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.14 1997/09/05 05:56:50 millert Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.15 1998/02/16 21:23:26 deraadt Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -155,8 +155,9 @@ struct scsi_link {
 #define	SDEV_NOSYNCWIDE		0x02	/* does not grok SDTR or WDTR */
 #define	SDEV_NOLUNS		0x04	/* does not grok LUNs */
 #define	SDEV_FORCELUNS		0x08	/* prehistoric drive/ctlr groks LUNs */
-#define SDEV_NOMODESENSE	0x10	/* removable media/optical drives */
-#define SDEV_NOSTARTUNIT	0x20	/* do not issue start unit requests in sd.c */
+#define	SDEV_NOMODESENSE	0x10	/* removable media/optical drives */
+#define	SDEV_NOSTARTUNIT	0x20	/* do not issue start unit requests in sd.c */
+#define	SDEV_NOTAGS		0x40	/* lies about having tagged queueing */
 	u_int8_t inquiry_flags;		/* copy of flags from probe INQUIRY */
 	struct	scsi_device *device;	/* device entry points etc. */
 	void	*device_softc;		/* needed for call to foo_start */
