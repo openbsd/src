@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.362 2003/06/09 11:14:46 mcbride Exp $ */
+/*	$OpenBSD: pf.c,v 1.363 2003/06/10 22:05:03 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -4676,6 +4676,7 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0)
 		goto done;
 	}
 
+	memset(&pd, 0, sizeof(pd));
 	pd.src = (struct pf_addr *)&h->ip_src;
 	pd.dst = (struct pf_addr *)&h->ip_dst;
 	pd.ip_sum = &h->ip_sum;
@@ -4885,6 +4886,7 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0)
 	m = *m0;
 	h = mtod(m, struct ip6_hdr *);
 
+	memset(&pd, 0, sizeof(pd));
 	pd.src = (struct pf_addr *)&h->ip6_src;
 	pd.dst = (struct pf_addr *)&h->ip6_dst;
 	pd.ip_sum = NULL;
