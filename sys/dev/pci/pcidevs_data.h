@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.351 2000/12/06 00:18:06 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.352 2000/12/07 20:48:34 mickey Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -304,6 +304,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	},
 	{
 	    PCI_VENDOR_TRIWARE, PCI_PRODUCT_TRIWARE_ESCALADE,
+	    0,
+	    "3ware",
+	    "Escalade IDE RAID",
+	},
+	{
+	    PCI_VENDOR_TRIWARE, PCI_PRODUCT_TRIWARE_ESCALADE_ASIC,
 	    0,
 	    "3ware",
 	    "Escalade IDE RAID",
