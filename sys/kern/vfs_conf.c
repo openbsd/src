@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_conf.c,v 1.16 2003/02/24 02:17:22 deraadt Exp $	*/
+/*	$OpenBSD: vfs_conf.c,v 1.17 2003/02/24 20:02:13 deraadt Exp $	*/
 /*	$NetBSD: vfs_conf.c,v 1.21.4.1 1995/11/01 00:06:26 jtc Exp $	*/
 
 /*
@@ -285,7 +285,6 @@ extern struct vnodeopv_desc ext2fs_vnodeop_opv_desc;
 extern struct vnodeopv_desc ext2fs_specop_opv_desc;
 extern struct vnodeopv_desc ext2fs_fifoop_opv_desc;
 extern struct vnodeopv_desc xfs_vnodeop_opv_desc;
-extern struct vnodeopv_desc tcfs_vnodeop_opv_desc;
 
 struct vnodeopv_desc *vfs_opv_descs[] = {
 	&sync_vnodeop_opv_desc,
