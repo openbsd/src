@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.65 2001/08/25 12:43:58 art Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.66 2001/08/31 18:14:37 chris Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -608,7 +608,7 @@ pciide_attach(parent, self, aux)
 		pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, csr);
 	}
 
-	WDCDEBUG_PRINT(("pciide: command/status register=%x\n",
+	WDCDEBUG_PRINT(("pciide: command/status register=0x%x\n",
 	    pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG)), DEBUG_PROBE);
 }
 
