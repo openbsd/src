@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: MAKEDEV,v 1.27 1998/09/25 10:40:58 todd Exp $
+#	$OpenBSD: MAKEDEV,v 1.28 1998/09/25 11:11:58 todd Exp $
 #	@(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
 
@@ -14,7 +14,7 @@
 #	st*	SCSI tapes
 #
 # Disks:
-#	fd*	Floppy disks
+#	fd*	Floppy disk drives (3 1/2", 5 1/4")
 #	sd*	SCSI disks
 #	wd*	ISA "winchester" disk drives (ST506,IDE,ESDI,RLL,...)
 #	cd*	SCSI cdrom drives
@@ -119,7 +119,7 @@ case $i in
 
 all)
 	sh $this std fd fd0 wd0 wd1 wd2 wd3 sd0 sd1 sd2 st0 acd0 cd0 ss0
-	sh $this ccd0 ccd1 ccd2
+	sh $this ccd0 ccd1 ccd2 xfs0
 	sh $this vnd0 vnd1 vnd2 vnd3 tty00 tty01 tty02 tty03 pty0 pty1
 	sh $this bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9
 	sh $this ipl tun0 tun1 tun2

@@ -1,6 +1,5 @@
 #!/bin/sh -
-#
-#	$OpenBSD: MAKEDEV,v 1.48 1998/09/21 23:15:53 deraadt Exp $
+#	$OpenBSD: MAKEDEV,v 1.49 1998/09/25 11:11:59 todd Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -36,51 +35,67 @@
 #	@(#)MAKEDEV	5.5 (Berkeley) 5/28/91
 #
 # Device "make" file.  Valid arguments:
+#	all	makes all known devices, including local devices.
+#		Tries to make the ``standard'' number of each type.
 #	std	standard devices
 #	local	configuration specific devices
+#
 # Tapes:
-#	st*	SCSI tape
+#	st*	SCSI tapes
+#
 # Disks:
 #	sd*	SCSI disks
 #	cd*	SCSI cdrom drives
-#	ch*	SCSI changer
-#	uk*	unknown SCSI
+#	ch*	SCSI media changer
+#	uk*	SCSI Unknown device
 #	ss*	SCSI scanners
 #	xy*	Xylogic 450/451 disks
 #	rd*	"ramdisk" pseudo-disks
 #	xd*	Xylogic 753/7053 disks
-#	fd*	Floppies
+#	fd*	Floppy disk drives (3 1/2", 5 1/4")
 #	vnd*	"file" pseudo-disks
 #	ccd*	concatenated disk devices
+#
 # Pseudo terminals:
 #	pty*	set of 16 master and slave pseudo terminals
+#
 # Printers:
+#
 # Terminal ports:
 #	tty[a-d]	onboard zs serial ports
 #	cua[a-d]	onboard zs serial ports
+#
 # Special purpose devices:
-#	audio
-#	openprom
-#	bwtwo*
-#	cgtwo*
-#	cgthree*
-#	cgfour*
-#	cgsix*
-#	cgeight*
-#	cgfourteen*
-#	tcx*
-#	bpf*	packet filter
+#	audio	
+#	openprom	
+#	bwtwo*	
+#	cgtwo*	
+#	cgthree*	
+#	cgfour*	
+#	cgsix*	
+#	cgeight*	
+#	cgfourteen*	
+#	tcx*	
+#	bpf*	Berkeley Packet Filter
 #	lkm	loadable kernel modules interface
 #	tun*	network tunnel driver
-#	*random	random data source
+#	*random	inkernal random data source
 #	magma*	magma card (makes 16 tty and 2 bpp)
+#	xfs*	XFS filesystem devices
+#	ipl	IP filter log
 
-PATH=/sbin:/bin/:/usr/bin:/usr/sbin:/usr/etc
+PATH=/sbin:/bin:/usr/bin:/usr/sbin
 this=$0
 umask 77
 
-case "$os" in # set os in the environment if not OpenBSD
-SunOS) add ()
+if ! [ "$os" ]; then
+	os=OpenBSD
+fi
+
+# SunOS shell support functions
+if [ "$os" = "SunOS" ]
+then
+	add ()
 	{
 		expr $1 + $2
 	}
@@ -91,27 +106,36 @@ SunOS) add ()
 	hex ()
 	{
 		case $1 in
-		[0-9]) echo $1;;
-		10) echo a;;
-		11) echo b;;
-		12) echo c;;
-		13) echo d;;
-		14) echo e;;
-		15) echo f;;
+			[0-9]) echo -n $1;;
+			10) echo -n a;;
+			11) echo -n b;;
+			12) echo -n c;;
+			13) echo -n d;;
+			14) echo -n e;;
+			15) echo -n f;;
 		esac
 	}
 	trunc ()
 	{
 		expr $1 : $2'\(.*\)'
 	}
-	unt ()
+	unt()
 	{
 		expr $1 : '[a-z]*\([0-9]*\)[a-p]*'
 	}
-	 ;;
-*) add ()
+fi
+# OpenBSD shell support functions
+if [ "$os" = "OpenBSD" ]
+then
+	add ()
 	{
-		echo "$(( $1 + $2 ))"
+		tmp=0
+		while [ "$1" ]
+		do
+			tmp=$(( $1 + $tmp ))
+			shift
+		done
+		echo $tmp
 	}
 	mult ()
 	{
@@ -120,7 +144,7 @@ SunOS) add ()
 	hex ()
 	{
 		case $1 in
-			[0-9]) echo -n $1 ;;
+			[0-9]) echo -n $1;;
 			10) echo -n a;;
 			11) echo -n b;;
 			12) echo -n c;;
@@ -137,54 +161,60 @@ SunOS) add ()
 		arg2="$2"
 		echo ${arg1#$arg2}
 	}
-	unt ()
+	unt()
 	{
 		# XXX pdksh can't seem to deal with locally scoped variables
 		# in ${foo#$bar} expansions
 		arg1="$1"
-		if [ "${arg1#xy}" != "$arg1" ]
-		then
-			unt=${arg1#xy}
-		else
-			unt=${arg1#*d}
-		fi
-		echo ${unt%*[a-p]}
+		tmp="${arg1#[a-z]*}"
+		while [ "$tmp" != "$arg1" ]
+		do
+			arg1=$tmp
+			tmp="${arg1#[a-z]*}"
+		done
+		tmp="${arg1%*[a-z]}"
+		while [ "$tmp" != "$arg1" ]
+		do
+			arg1=$tmp
+			tmp="${arg1%*[a-z]}"
+		done
+		echo $arg1
 	}
-	 ;;
-esac
+fi
 
 for i
 do
 
-unit=`expr $i : '[a-z][a-z]*\([0-9][0-9]*\)'`
+unit=`unt $i`
 [ "$unit" ] || unit=0
 
 case $i in
 
 all)
-	sh ${this} std sd0 sd1 sd2 sd3 sd4 xd0 xd1 xd2 xd3 xy0 xy1 xy2 xy3
-	sh ${this} cd0 st0 st1 rd0
-	sh ${this} fd0 fd0B fd0C fd0D fd0E fd0F fd0G fd0H
-	sh ${this} uk0 uk1
-	sh ${this} ss0 ss1
-	sh ${this} pty0 vnd0 vnd1 vnd2 vnd3 audio tun0 tun1 tun2 tun3
-	sh ${this} ccd0 ccd1 ccd2 ccd3
-	sh ${this} bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9
-	sh ${this} ipl
-	sh ${this} bwtwo0 cgtwo0 cgthree0 cgfour0 cgsix0
-	sh ${this} cgeight0 cgfourteen0 tcx0
-	sh ${this} lkm random local
+	sh $this std sd0 sd1 sd2 sd3 sd4 xd0 xd1 xd2 xd3 xy0 xy1 xy2 xy3
+	sh $this cd0 st0 st1 rd0
+	sh $this fd0 fd0B fd0C fd0D fd0E fd0F fd0G fd0H
+	sh $this uk0 uk1
+	sh $this ss0 ss1
+	sh $this pty0 vnd0 vnd1 vnd2 vnd3 audio tun0 tun1 tun2 tun3
+	sh $this ccd0 ccd1 ccd2 ccd3
+	sh $this bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9
+	sh $this ipl
+	sh $this bwtwo0 cgtwo0 cgthree0 cgfour0 cgsix0
+	sh $this cgeight0 cgfourteen0 tcx0
+	sh $this lkm random local
+	sh $this xfs0
 	;;
 
 floppy)
-	sh ${this} std random
-	sh ${this} fd0 sd0 sd1
+	sh $this std random
+	sh $this fd0 sd0 sd1
 	;;
 
 ramdisk)
-	sh ${this} std random
-	sh ${this} fd0 sd0 sd1 sd2 sd3 rd0 cd0
-	sh ${this} bpf0
+	sh $this std random
+	sh $this fd0 sd0 sd1 sd2 sd3 rd0 cd0
+	sh $this bpf0
 	;;
 
 std)
@@ -203,8 +233,8 @@ std)
 	mknod stdin		c 24 0	; chmod 666 stdin
 	mknod stdout		c 24 1	; chmod 666 stdout
 	mknod stderr		c 24 2	; chmod 666 stderr
-	sh ${this} ttya ttyb ttyc ttyd
-	sh ${this} cuaa cuab cuac cuad
+	sh $this ttya ttyb ttyc ttyd
+	sh $this cuaa cuab cuac cuad
 	mknod fb		c 22 0 ; chmod 666 fb
 	mknod mouse		c 13 0 ; chmod 666 mouse
 	mknod kbd		c 29 0 ; chmod 666 kbd
@@ -254,25 +284,32 @@ tcx*)
 	;;
 
 audio*)
-	unit=${i#audio}
+	major=69  
 	audio=audio$unit
 	sound=sound$unit
 	mixer=mixer$unit
-	major=69
 	audioctl=audioctl$unit
-	if [ "$unit" = "" ]; then unit=0; fi
 	rm -f $audio $sound $mixer $audioctl
-	mknod $sound    c $major $(($unit + 0))
-	mknod $audio    c $major $(($unit + 128))
-	mknod $mixer    c $major $(($unit + 16))
-	mknod $audioctl c $major $(($unit + 192))
-	chown root.wheel $audio $sound $mixer $audioctl
+	mknod $sound	c $major $unit
+	mknod $audio	c $major `add $unit 128`
+	mknod $mixer	c $major `add $unit 16`
+	mknod $audioctl	c $major `add $unit 192`
+	chown root.wheel $audio $sound $mixer $audioioctl
 	chmod 666 $audio $sound $mixer $audioctl
 	;;
 
-openprom)
-	mknod openprom		c 70 0; chmod 600 openprom
+xfs*)
+	rm -f xfs$unit
+	mknod xfs$unit c 51 $unit 
+	chmod 600 xfs$unit 
+	chown root.wheel xfs$unit
 	;;
+
+openprom)
+	rm -f openprom
+	mknod openprom c 70 0 ;chmod 600 openprom
+	;;
+
 
 bpf*)
 	rm -f bpf$unit
@@ -377,7 +414,7 @@ ccd*|sd*|xd*|xy*|cd*)
 		n=0
 		while [ $n -lt 32 ]
 		do
-			sh ${this} $name$n
+			sh $this $name$n
 			n=`add $n 1`
 		done
 	fi
@@ -414,7 +451,7 @@ vnd*)
 			n=0
 			while [ $n -lt 32 ]
 			do
-				sh ${this} $name$n
+				sh $this $name$n
 				n=`add $n 1`
 			done
 		fi

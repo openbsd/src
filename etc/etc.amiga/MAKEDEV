@@ -1,6 +1,5 @@
 #!/bin/sh -
-#
-#	$OpenBSD: MAKEDEV,v 1.37 1998/09/25 10:22:15 todd Exp $
+#	$OpenBSD: MAKEDEV,v 1.38 1998/09/25 11:11:58 todd Exp $
 #	$NetBSD: MAKEDEV,v 1.21 1996/05/19 21:03:49 veego Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -34,6 +33,7 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
+#	@(#)MAKEDEV	5.5 (Berkeley) 5/28/91
 #	from:
 #	hp300/MAKEDEV (1/15/94), from:
 #	@(#)MAKEDEV	5.5 (Berkeley) 5/28/91
@@ -50,7 +50,7 @@
 #	st*	SCSI tapes
 #
 # Disks:
-#	fd*	Floppy disks
+#	fd*	Floppy disk drives (3 1/2", 5 1/4")
 #	sd*	SCSI disks
 #	cd*	SCSI cdrom drives
 #	vnd*	"file" pseudo-disks
@@ -89,7 +89,7 @@
 #	tun*	network tunnel driver
 #	ipf	IP filter
 #	ss*	SCSI scanners
-#	uk*	unknown SCSI
+#	uk*	SCSI Unknown device
 #	*random	inkernal random data source
 #	audio*	one unit of the audio device. Unit 0 is custom chip audio.
 

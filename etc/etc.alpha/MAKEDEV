@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: MAKEDEV,v 1.38 1998/09/25 09:51:09 todd Exp $
+#	$OpenBSD: MAKEDEV,v 1.39 1998/09/25 11:11:58 todd Exp $
 #	$NetBSD: MAKEDEV,v 1.8.4.1 1996/06/18 00:41:56 cgd Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -36,20 +36,20 @@
 #	@(#)MAKEDEV	5.5 (Berkeley) 5/28/91
 # Device "make" file.  Valid arguments:
 #	all	makes all known devices, including local devices.
-#		Tries to make the 'standard' number of each type.
+#		Tries to make the ``standard'' number of each type.
 #	std	standard devices
 #	local	configuration specific devices
 #
 # Tapes:
-#	st*	SCSI tape
+#	st*	SCSI tapes
 #
 # Disks:
 #	sd*	SCSI disks
 #	cd*	SCSI cdrom drives
 #	vnd*	"file" pseudo-disks
 #	ccd*	concatenated disk devices
-#	wd*	IDE disks
-#	acd*	ATAPI cdrom drives
+#	wd*	ISA "winchester" disk drives (ST506,IDE,ESDI,RLL,...)
+#	acd*	ISA ATAPI cdrom drives
 #
 # Terminal ports:
 #	ttyB?	DEC 3000 ZS8530 ("scc") serial ports
@@ -65,15 +65,15 @@
 #
 # Special purpose devices:
 #	ch*	SCSI media changer
-#	bpf*	packet filter
-#	fd	file descriptors
+#	bpf*	Berkeley Packet Filter
+#	fd	makes fd/* for the fdescfs.
 #	lkm	loadable kernel modules interface
 #	tun*	network tunnel driver
 #	mmclock	memory mapped clock
 #	kbd	keyboard (provides events, for X11)
 #	mouse	mouse (provides events, for X11)
 #	*random	inkernal random data source
-#	uk*	unknown SCSI
+#	uk*	SCSI Unknown device
 #	ss*	SCSI scanners
 #	ipl	IP filter log
 
