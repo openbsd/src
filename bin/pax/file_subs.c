@@ -1,4 +1,4 @@
-/*	$OpenBSD: file_subs.c,v 1.18 2002/10/16 17:43:10 millert Exp $	*/
+/*	$OpenBSD: file_subs.c,v 1.19 2002/10/16 18:40:30 millert Exp $	*/
 /*	$NetBSD: file_subs.c,v 1.4 1995/03/21 09:07:18 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)file_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: file_subs.c,v 1.18 2002/10/16 17:43:10 millert Exp $";
+static char rcsid[] = "$OpenBSD: file_subs.c,v 1.19 2002/10/16 18:40:30 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -88,12 +88,12 @@ file_creat(ARCHD *arcn)
 	int oerrno;
 
 	/*
-	 * assume file doesn't exist, so just try to create it, most times this
+	 * Assume file doesn't exist, so just try to create it, most times this
 	 * works. We have to take special handling when the file does exist. To
 	 * detect this, we use O_EXCL. For example when trying to create a
 	 * file and a character device or fifo exists with the same name, we
-	 * can accidently open the device by mistake (or block waiting to open)
-	 * If we find that the open has failed, then figure spend the effore to
+	 * can accidently open the device by mistake (or block waiting to open).
+	 * If we find that the open has failed, then spend the effore to
 	 * figure out why. This strategy was found to have better average
 	 * performance in common use than checking the file (and the path)
 	 * first with lstat.
@@ -215,9 +215,9 @@ int
 cross_lnk(ARCHD *arcn)
 {
 	/*
-	 * try to make a link to orginal file (-l flag in copy mode). make sure
-	 * we do not try to link to directories in case we are running as root
-	 * (and it might succeed).
+	 * try to make a link to orginal file (-l flag in copy mode). make
+	 * sure we do not try to link to directories in case we are running as
+	 * root (and it might succeed).
 	 */
 	if (arcn->type == PAX_DIR)
 		return(1);
@@ -600,7 +600,7 @@ chk_path(char *name, uid_t st_uid, gid_t st_gid)
 
 	for(;;) {
 		/*
-		 * work foward from the first / and check each part of the path
+		 * work forward from the first / and check each part of the path
 		 */
 		spt = strchr(spt, '/');
 		if (spt == NULL)
@@ -641,7 +641,7 @@ chk_path(char *name, uid_t st_uid, gid_t st_gid)
 			(void)set_ids(name, st_uid, st_gid);
 
 		/*
-		 * make sure the user doen't have some strange umask that
+		 * make sure the user doesn't have some strange umask that
 		 * causes this newly created directory to be unusable. We fix
 		 * the modes and restore them back to the creation default at
 		 * the end of pax
@@ -659,8 +659,8 @@ chk_path(char *name, uid_t st_uid, gid_t st_gid)
 
 /*
  * set_ftime()
- *	Set the access time and modification time for a named file. If frc is
- *	non-zero we force these times to be set even if the user did not
+ *	Set the access time and modification time for a named file. If frc
+ *	is non-zero we force these times to be set even if the user did not
  *	request access and/or modification time preservation (this is also
  *	used by -t to reset access times).
  *	When ign is zero, only those times the user has asked for are set, the
@@ -781,11 +781,11 @@ set_pmode(char *fnm, mode_t mode)
  *	uses lseek whenever it detects the input data is all 0 within that
  *	file block. In more detail, the strategy is as follows:
  *	While the input is all zero keep doing an lseek. Keep track of when we
- *	pass over file block boundries. Only write when we hit a non zero
+ *	pass over file block boundaries. Only write when we hit a non zero
  *	input. once we have written a file block, we continue to write it to
  *	the end (we stop looking at the input). When we reach the start of the
  *	next file block, start checking for zero blocks again. Working on file
- *	block boundries significantly reduces the overhead when copying files
+ *	block boundaries significantly reduces the overhead when copying files
  *	that are NOT very sparse. This overhead (when compared to a write) is
  *	almost below the measurement resolution on many systems. Without it,
  *	files with holes cannot be safely copied. It does has a side effect as

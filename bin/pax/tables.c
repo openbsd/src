@@ -1,4 +1,4 @@
-/*	$OpenBSD: tables.c,v 1.16 2002/10/16 17:43:10 millert Exp $	*/
+/*	$OpenBSD: tables.c,v 1.17 2002/10/16 18:40:30 millert Exp $	*/
 /*	$NetBSD: tables.c,v 1.4 1995/03/21 09:07:45 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tables.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: tables.c,v 1.16 2002/10/16 17:43:10 millert Exp $";
+static char rcsid[] = "$OpenBSD: tables.c,v 1.17 2002/10/16 18:40:30 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -475,7 +475,7 @@ chk_ftime(ARCHD *arcn)
  * Interactive rename table routines
  *
  * The interactive rename table keeps track of the new names that the user
- * assignes to files from tty input. Since this map is unique for each file
+ * assigns to files from tty input. Since this map is unique for each file
  * we must store it in case there is a reference to the file later in archive
  * (a link). Otherwise we will be unable to find the file we know was
  * extracted. The remapping of these files is stored in a memory based hash
@@ -697,7 +697,7 @@ add_dev(ARCHD *arcn)
  *	check for a device value in the device table. If not found and the add
  *	flag is set, it is added. This does NOT assign any mapping values, just
  *	adds the device number as one that need to be remapped. If this device
- *	is alread mapped, just return with a pointer to that entry.
+ *	is already mapped, just return with a pointer to that entry.
  * Return:
  *	pointer to the entry for this device in the device map table. Null
  *	if the add flag is not set and the device is not in the table (it is

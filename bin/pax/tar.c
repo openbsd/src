@@ -1,4 +1,4 @@
-/*	$OpenBSD: tar.c,v 1.26 2002/10/16 17:43:10 millert Exp $	*/
+/*	$OpenBSD: tar.c,v 1.27 2002/10/16 18:40:30 millert Exp $	*/
 /*	$NetBSD: tar.c,v 1.5 1995/03/21 09:07:49 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tar.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: tar.c,v 1.26 2002/10/16 17:43:10 millert Exp $";
+static char rcsid[] = "$OpenBSD: tar.c,v 1.27 2002/10/16 18:40:30 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -257,7 +257,7 @@ uqd_oct(u_quad_t val, char *str, int len, int term)
 /*
  * tar_chksm()
  *	calculate the checksum for a tar block counting the checksum field as
- *	all blanks (BLNKSUM is that value pre-calculated, the sume of 8 blanks).
+ *	all blanks (BLNKSUM is that value pre-calculated, the sum of 8 blanks).
  *	NOTE: we use len to short circuit summing 0's on write since we ALWAYS
  *	pad headers with 0.
  * Return:
@@ -470,7 +470,7 @@ tar_rd(ARCHD *arcn, char *buf)
 		} else {
 			/*
 			 * have a file that will be followed by data. Set the
-			 * skip value to the size field and caluculate the size
+			 * skip value to the size field and calculate the size
 			 * of the padding.
 			 */
 			arcn->type = PAX_REG;
@@ -1065,7 +1065,7 @@ name_split(char *name, int len)
 
 	/*
 	 * we start looking at the biggest sized piece that fits in the name
-	 * field. We walk foward looking for a slash to split at. The idea is
+	 * field. We walk forward looking for a slash to split at. The idea is
 	 * to find the biggest piece to fit in the name field (or the smallest
 	 * prefix we can find)
 	 */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf_subs.c,v 1.12 2002/10/16 17:43:10 millert Exp $	*/
+/*	$OpenBSD: buf_subs.c,v 1.13 2002/10/16 18:40:30 millert Exp $	*/
 /*	$NetBSD: buf_subs.c,v 1.5 1995/03/21 09:07:08 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)buf_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: buf_subs.c,v 1.12 2002/10/16 17:43:10 millert Exp $";
+static char rcsid[] = "$OpenBSD: buf_subs.c,v 1.13 2002/10/16 18:40:30 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -191,13 +191,13 @@ cp_start(void)
  *	the start of the header of the first file added to the archive. The
  *	format specific end read function tells us how many bytes to move
  *	backwards in the archive to be positioned BEFORE the trailer. Two
- *	different postions have to be adjusted, the O.S. file offset (e.g. the
+ *	different position have to be adjusted, the O.S. file offset (e.g. the
  *	position of the tape head) and the write point within the data we have
  *	stored in the read (soon to become write) buffer. We may have to move
  *	back several records (the number depends on the size of the archive
  *	record and the size of the format trailer) to read up the record where
  *	the first byte of the trailer is recorded. Trailers may span (and
- *	overlap) record boundries.
+ *	overlap) record boundaries.
  *	We first calculate which record has the first byte of the trailer. We
  *	move the OS file offset back to the start of this record and read it
  *	up. We set the buffer write pointer to be at this byte (the byte where
@@ -374,7 +374,7 @@ rd_sync(void)
  * pback()
  *	push the data used during the archive id phase back into the I/O
  *	buffer. This is required as we cannot be sure that the header does NOT
- *	overlap a block boundry (as in the case we are trying to recover a
+ *	overlap a block boundary (as in the case we are trying to recover a
  *	flawed archived). This was not designed to be used for any other
  *	purpose. (What software engineering, HA!)
  *	WARNING: do not even THINK of pback greater than BLKMULT, unless the
@@ -391,7 +391,7 @@ pback(char *pt, int cnt)
 
 /*
  * rd_skip()
- *	skip foward in the archive during a archive read. Used to get quickly
+ *	skip forward in the archive during a archive read. Used to get quickly
  *	past file data and padding for files the user did NOT select.
  * Return:
  *	0 if ok, -1 failure, and 1 when EOF on the archive volume was detected.
@@ -405,7 +405,7 @@ rd_skip(off_t skcnt)
 	off_t skipped = 0;
 
 	/*
-	 * consume what data we have in the buffer. If we have to move foward
+	 * consume what data we have in the buffer. If we have to move forward
 	 * whole records, we call the low level skip function to see if we can
 	 * move within the archive without doing the expensive reads on data we
 	 * do not want.
@@ -562,7 +562,7 @@ rd_wrbuf(char *in, int cpcnt)
 
 /*
  * wr_skip()
- *	skip foward during a write. In other words add padding to the file.
+ *	skip forward during a write. In other words add padding to the file.
  *	we add zero filled padding as it makes flawed archives much easier to
  *	recover from. the caller tells us how many bytes of padding to add
  *	This routine was not designed to add HUGE amount of padding, just small
@@ -730,7 +730,7 @@ rd_wrfile(ARCHD *arcn, int ofd, off_t *left)
 	/*
 	 * if the last block has a file hole (all zero), we must make sure this
 	 * gets updated in the file. We force the last block of zeros to be
-	 * written. just closing with the file offset moved foward may not put
+	 * written. just closing with the file offset moved forward may not put
 	 * a hole at the end of the file.
 	 */
 	if (isem && (arcn->sb.st_size > 0L))
@@ -822,7 +822,7 @@ cp_file(ARCHD *arcn, int fd1, int fd2)
 	/*
 	 * if the last block has a file hole (all zero), we must make sure this
 	 * gets updated in the file. We force the last block of zeros to be
-	 * written. just closing with the file offset moved foward may not put
+	 * written. just closing with the file offset moved forward may not put
 	 * a hole at the end of the file.
 	 */
 	if (!no_hole && isem && (arcn->sb.st_size > 0L))

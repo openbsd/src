@@ -1,4 +1,4 @@
-/*	$OpenBSD: pax.h,v 1.11 2001/05/16 03:04:58 mickey Exp $	*/
+/*	$OpenBSD: pax.h,v 1.12 2002/10/16 18:40:30 millert Exp $	*/
 /*	$NetBSD: pax.h,v 1.3 1995/03/21 09:07:41 cgd Exp $	*/
 
 /*-
@@ -106,7 +106,7 @@ typedef struct {
 	int hlk;		/* does archive store hard links info? if */
 				/* not, we do not bother to look for them */
 				/* during archive write operations */
-	int blkalgn;		/* writes must be aligned to blkalgn boundry */
+	int blkalgn;		/* writes must be aligned to blkalgn boundary */
 	int inhead;		/* is the trailer encoded in a valid header? */
 				/* if not, trailers are assumed to be found */
 				/* in invalid headers (i.e like tar) */

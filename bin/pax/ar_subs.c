@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar_subs.c,v 1.19 2002/10/16 17:43:10 millert Exp $	*/
+/*	$OpenBSD: ar_subs.c,v 1.20 2002/10/16 18:40:30 millert Exp $	*/
 /*	$NetBSD: ar_subs.c,v 1.5 1995/03/21 09:07:06 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: ar_subs.c,v 1.19 2002/10/16 17:43:10 millert Exp $";
+static char rcsid[] = "$OpenBSD: ar_subs.c,v 1.20 2002/10/16 18:40:30 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -251,7 +251,7 @@ extract(void)
 		}
 
 		/*
-		 * Non standard -Y and -Z flag. When the exisiting file is
+		 * Non standard -Y and -Z flag. When the existing file is
 		 * same age or newer skip
 		 */
 		if ((Yflag || Zflag) && ((lstat(arcn->name, &sb) == 0))) {
@@ -527,7 +527,7 @@ wr_archive(ARCHD *arcn, int is_app)
 	}
 
 	/*
-	 * tell format to write trailer; pad to block boundry; reset directory
+	 * tell format to write trailer; pad to block boundary; reset directory
 	 * mode/access times, and check if all patterns supplied by the user
 	 * were matched. block off signals to avoid chance for multiple entry
 	 * into the cleanup code
@@ -580,7 +580,7 @@ append(void)
 
 	/*
 	 * Do not allow an append operation if the actual archive is of a
-	 * different format than the user specified foramt.
+	 * different format than the user specified format.
 	 */
 	if (get_arc() < 0)
 		return;
@@ -676,7 +676,7 @@ append(void)
 	lnk_end();
 
 	/*
-	 * try to postion for write, if this fails quit. if any error occurs,
+	 * try to position for write, if this fails quit. if any error occurs,
 	 * we will refuse to write
 	 */
 	if (appnd_start(tlen) < 0)
@@ -858,7 +858,7 @@ copy(void)
 		}
 
 		/*
-		 * Non standard -Y and -Z flag. When the exisiting file is
+		 * Non standard -Y and -Z flag. When the existing file is
 		 * same age or newer skip
 		 */
 		if ((Yflag || Zflag) && ((lstat(arcn->name, &sb) == 0))) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpio.c,v 1.11 2002/10/16 17:43:10 millert Exp $	*/
+/*	$OpenBSD: cpio.c,v 1.12 2002/10/16 18:40:30 millert Exp $	*/
 /*	$NetBSD: cpio.c,v 1.5 1995/03/21 09:07:13 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)cpio.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: cpio.c,v 1.11 2002/10/16 17:43:10 millert Exp $";
+static char rcsid[] = "$OpenBSD: cpio.c,v 1.12 2002/10/16 18:40:30 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -625,7 +625,7 @@ vcpio_rd(ARCHD *arcn, char *buf)
 		return(-1);
 
 	/*
-	 * skip padding. header + filename is aligned to 4 byte boundries
+	 * skip padding. header + filename is aligned to 4 byte boundaries
 	 */
 	if (rd_skip((off_t)(VCPIO_PAD(sizeof(HD_VCPIO) + nsz))) < 0)
 		return(-1);
@@ -895,7 +895,7 @@ bcpio_rd(ARCHD *arcn, char *buf)
 	hd = (HD_BCPIO *)buf;
 	if (swp_head) {
 		/*
-		 * header has swapped bytes on 16 bit boundries
+		 * header has swapped bytes on 16 bit boundaries
 		 */
 		arcn->sb.st_dev = (dev_t)(RSHRT_EXT(hd->h_dev));
 		arcn->sb.st_ino = (ino_t)(RSHRT_EXT(hd->h_ino));
@@ -940,7 +940,7 @@ bcpio_rd(ARCHD *arcn, char *buf)
 		return(-1);
 
 	/*
-	 * header + file name are aligned to 2 byte boundries, skip if needed
+	 * header + file name are aligned to 2 byte boundaries, skip if needed
 	 */
 	if (rd_skip((off_t)(BCPIO_PAD(sizeof(HD_BCPIO) + nsz))) < 0)
 		return(-1);
@@ -988,7 +988,7 @@ bcpio_endrd(void)
  *	copy the data in the ARCHD to buffer in old binary cpio format
  *	There is a real chance of field overflow with this critter. So we
  *	always check the conversion is ok. nobody in his their right mind
- *	should write an achive in this format...
+ *	should write an archive in this format...
  * Return
  *      0 if file has data to be written after the header, 1 if file has NO
  *	data to write after the header, -1 if archive write failed

@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.52 2002/10/16 17:43:10 millert Exp $	*/
+/*	$OpenBSD: options.c,v 1.53 2002/10/16 18:40:30 millert Exp $	*/
 /*	$NetBSD: options.c,v 1.6 1996/03/26 23:54:18 mrg Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: options.c,v 1.52 2002/10/16 17:43:10 millert Exp $";
+static char rcsid[] = "$OpenBSD: options.c,v 1.53 2002/10/16 18:40:30 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -310,7 +310,7 @@ pax_options(int argc, char **argv)
 					break;
 				case 'p':
 					/*
-					 * preserver file mode bits
+					 * preserve file mode bits
 					 */
 					pmode = 1;
 					break;
@@ -1340,7 +1340,7 @@ bad_opt(void)
  * opt_add()
  *	breaks the value supplied to -o into a option name and value. options
  *	are given to -o in the form -o name-value,name=value
- *	mulltiple -o may be specified.
+ *	multiple -o may be specified.
  * Return:
  *	0 if format in name=value format, -1 if -o is passed junk
  */

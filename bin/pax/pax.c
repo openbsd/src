@@ -1,4 +1,4 @@
-/*	$OpenBSD: pax.c,v 1.20 2002/02/19 19:39:35 millert Exp $	*/
+/*	$OpenBSD: pax.c,v 1.21 2002/10/16 18:40:30 millert Exp $	*/
 /*	$NetBSD: pax.c,v 1.5 1996/03/26 23:54:20 mrg Exp $	*/
 
 /*-
@@ -48,7 +48,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)pax.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: pax.c,v 1.20 2002/02/19 19:39:35 millert Exp $";
+static char rcsid[] = "$OpenBSD: pax.c,v 1.21 2002/10/16 18:40:30 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -156,13 +156,13 @@ char	*tempbase;		/* basename of tempfile to use for mkstemp(3) */
  *	-U options.
  * 1.10	Files can be selected based on group (group name or gid) via one o
  *	more -G options.
- * 1.11	File modification time can be checked against exisiting file after
+ * 1.11	File modification time can be checked against existing file after
  *	name modification (-Z)
  *
  * 2	WRITE ENHANCEMENTS
  * 2.1	Write operation will stop instead of allowing a user to create a flawed
  *	flawed archive (due to any problem).
- * 2.2	Archives writtens by pax are forced to strictly conform to both the
+ * 2.2	Archives written by pax are forced to strictly conform to both the
  *	archive and pax the spceific format specifications.
  * 2.3	Blocking size and format is rigidly enforced on writes.
  * 2.4	Formats which may exhibit header overflow problems (they have fields
@@ -176,7 +176,7 @@ char	*tempbase;		/* basename of tempfile to use for mkstemp(3) */
  * 2.6	A archive volume record limit allows the user to specify the number
  *	of bytes stored on an archive volume. When reached the user is
  *	prompted for the next archive volume. This is specified with the
- *	non-standard -B flag. THe limit is rounded up to the next blocksize.
+ *	non-standard -B flag. The limit is rounded up to the next blocksize.
  * 2.7	All archive padding during write use zero filled sections. This makes
  *	it much easier to pull data out of flawed archive during read
  *	operations.
@@ -211,11 +211,11 @@ char	*tempbase;		/* basename of tempfile to use for mkstemp(3) */
  *	more -G options.
  * 3.8	Symlinks which appear on the command line can be followed (without
  *	following other symlinks; -H flag)
- * 3.9  File inode change time can be checked against exisiting file before
+ * 3.9  File inode change time can be checked against existing file before
  *	name modification (-D)
- * 3.10 File inode change time can be checked against exisiting file after
+ * 3.10 File inode change time can be checked against existing file after
  *	name modification (-Y)
- * 3.11	File modification time can be checked against exisiting file after
+ * 3.11	File modification time can be checked against existing file after
  *	name modification (-Z)
  *
  * 4	GENERAL ENHANCEMENTS

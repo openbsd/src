@@ -1,4 +1,4 @@
-/*	$OpenBSD: getoldopt.c,v 1.4 2000/01/22 20:24:51 deraadt Exp $	*/
+/*	$OpenBSD: getoldopt.c,v 1.5 2002/10/16 18:40:30 millert Exp $	*/
 /*	$NetBSD: getoldopt.c,v 1.3 1995/03/21 09:07:28 cgd Exp $	*/
 
 /*
@@ -7,11 +7,11 @@
  * otherwise, it uses the old rules used by tar, dump, and ps.
  *
  * Written 25 August 1985 by John Gilmore (ihnp4!hoptoad!gnu) and placed
- * in the Pubic Domain for your edification and enjoyment.
+ * in the Public Domain for your edification and enjoyment.
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: getoldopt.c,v 1.4 2000/01/22 20:24:51 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: getoldopt.c,v 1.5 2002/10/16 18:40:30 millert Exp $";
 #endif /* not lint */
 
 #include <stdio.h>

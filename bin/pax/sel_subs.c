@@ -1,4 +1,4 @@
-/*	$OpenBSD: sel_subs.c,v 1.13 2002/10/16 17:43:10 millert Exp $	*/
+/*	$OpenBSD: sel_subs.c,v 1.14 2002/10/16 18:40:30 millert Exp $	*/
 /*	$NetBSD: sel_subs.c,v 1.5 1995/03/21 09:07:42 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)sel_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: sel_subs.c,v 1.13 2002/10/16 17:43:10 millert Exp $";
+static char rcsid[] = "$OpenBSD: sel_subs.c,v 1.14 2002/10/16 18:40:30 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -97,8 +97,8 @@ sel_chk(ARCHD *arcn)
  * User/group selection routines
  *
  * Routines to handle user selection of files based on the file uid/gid. To
- * add an entry, the user supplies either then name or the uid/gid starting with
- * a # on the command line. A \# will eascape the #.
+ * add an entry, the user supplies either the name or the uid/gid starting with
+ * a # on the command line. A \# will escape the #.
  */
 
 /*
@@ -528,7 +528,7 @@ trng_match(ARCHD *arcn)
 /*
  * str_sec()
  *	Convert a time string in the format of [[[[[cc]yy]mm]dd]HH]MM[.SS] to
- *	UTC seconds. Tval already has current time loaded into it at entry.
+ *	seconds UTC. Tval already has current time loaded into it at entry.
  * Return:
  *	0 if converted ok, -1 otherwise
  */

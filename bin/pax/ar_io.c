@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar_io.c,v 1.27 2002/10/16 17:43:10 millert Exp $	*/
+/*	$OpenBSD: ar_io.c,v 1.28 2002/10/16 18:40:30 millert Exp $	*/
 /*	$NetBSD: ar_io.c,v 1.5 1996/03/26 23:54:13 mrg Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_io.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: ar_io.c,v 1.27 2002/10/16 17:43:10 millert Exp $";
+static char rcsid[] = "$OpenBSD: ar_io.c,v 1.28 2002/10/16 18:40:30 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -73,8 +73,8 @@ static char rcsid[] = "$OpenBSD: ar_io.c,v 1.27 2002/10/16 17:43:10 millert Exp 
 #define EXT_MODE	O_RDONLY	/* open mode for list/extract */
 #define AR_MODE		(O_WRONLY | O_CREAT | O_TRUNC)	/* mode for archive */
 #define APP_MODE	O_RDWR		/* mode for append */
-#define STDO		"<STDOUT>"	/* psuedo name for stdout */
-#define STDN		"<STDIN>"	/* psuedo name for stdin */
+#define STDO		"<STDOUT>"	/* pseudo name for stdout */
+#define STDN		"<STDIN>"	/* pseudo name for stdin */
 static int arfd = -1;			/* archive file descriptor */
 static int artyp = ISREG;		/* archive type: file/FIFO/tape */
 static int arvol = 1;			/* archive volume number */
@@ -275,7 +275,7 @@ ar_open(char *name)
 			if ((arsb.st_size % rdblksz) == 0)
 				break;
 		/*
-		 * When we cannont find a match, we may have a flawed archive.
+		 * When we cannot find a match, we may have a flawed archive.
 		 */
 		if (rdblksz <= 0)
 			rdblksz = FILEBLK;
@@ -289,7 +289,7 @@ ar_open(char *name)
 		break;
 	default:
 		/*
-		 * should never happen, worse case, slow...
+		 * should never happen, worst case, slow...
 		 */
 		blksz = rdblksz = BLKMULT;
 		break;
@@ -675,7 +675,7 @@ ar_write(char *buf, int bsz)
 	/*
 	 * Better tell the user the bad news...
 	 * if this is a block aligned archive format, we may have a bad archive
-	 * if the format wants the header to start at a BLKMULT boundry. While
+	 * if the format wants the header to start at a BLKMULT boundary.. While
 	 * we can deal with the mis-aligned data, it violates spec and other
 	 * archive readers will likely fail. if the format is not block
 	 * aligned, the user may be lucky (and the archive is ok).
@@ -743,7 +743,7 @@ ar_rdsync(void)
 		 * if the last i/o was a successful data transfer, we assume
 		 * the fault is just a bad record on the tape that we are now
 		 * past. If we did not get any data since the last resync try
-		 * to move the tape foward one PHYSICAL record past any
+		 * to move the tape forward one PHYSICAL record past any
 		 * damaged tape section. Some tape drives are stubborn and need
 		 * to be pushed.
 		 */
@@ -792,7 +792,7 @@ ar_rdsync(void)
 
 /*
  * ar_fow()
- *	Move the I/O position within the archive foward the specified number of
+ *	Move the I/O position within the archive forward the specified number of
  *	bytes as supported by the device. If we cannot move the requested
  *	number of bytes, return the actual number of bytes moved in skipped.
  * Return:
@@ -811,7 +811,7 @@ ar_fow(off_t sksz, off_t *skipped)
 		return(0);
 
 	/*
-	 * we cannot move foward at EOF or error
+	 * we cannot move forward at EOF or error
 	 */
 	if (lstrval <= 0)
 		return(lstrval);
@@ -820,7 +820,7 @@ ar_fow(off_t sksz, off_t *skipped)
 	 * Safer to read forward on devices where it is hard to find the end of
 	 * the media without reading to it. With tapes we cannot be sure of the
 	 * number of physical blocks to skip (we do not know physical block
-	 * size at this point), so we must only read foward on tapes!
+	 * size at this point), so we must only read forward on tapes!
 	 */
 	if (artyp != ISREG)
 		return(0);
@@ -1044,7 +1044,7 @@ get_phys(void)
 	}
 
 	/*
-	 * read foward to the file mark, then back up in front of the filemark
+	 * read forward to the file mark, then back up in front of the filemark
 	 * (this is a bit paranoid, but should be safe to do).
 	 */
 	while ((res = read(arfd, scbuf, sizeof(scbuf))) > 0)
