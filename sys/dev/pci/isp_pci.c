@@ -1,4 +1,4 @@
-/*	$OpenBSD: isp_pci.c,v 1.27 2001/12/14 00:20:55 mjacob Exp $	*/
+/*	$OpenBSD: isp_pci.c,v 1.28 2002/05/17 01:22:38 mjacob Exp $	*/
 /*
  * PCI specific probe and attach routines for Qlogic ISP SCSI adapters.
  *
@@ -73,42 +73,42 @@ static int isp_pci_intr (void *);
 #if	defined(ISP_DISABLE_1040_SUPPORT) || !defined(ISP_COMPILE_1040_FW)
 #define	ISP_1040_RISC_CODE	NULL
 #else
-#define	ISP_1040_RISC_CODE	isp_1040_risc_code
+#define	ISP_1040_RISC_CODE	(u_int16_t *) isp_1040_risc_code
 #include <dev/microcode/isp/asm_1040.h>
 #endif
 
 #if	defined(ISP_DISABLE_1080_SUPPORT) || !defined(ISP_COMPILE_1080_FW)
 #define	ISP_1080_RISC_CODE	NULL
 #else
-#define	ISP_1080_RISC_CODE	isp_1080_risc_code
+#define	ISP_1080_RISC_CODE	(u_int16_t *) isp_1080_risc_code
 #include <dev/microcode/isp/asm_1080.h>
 #endif
 
 #if	defined(ISP_DISABLE_12160_SUPPORT) || !defined(ISP_COMPILE_12160_FW)
-#define	ISP_12160_RISC_CODE	NULL
+#define	ISP_12160_RISC_CODE	(u_int16_t *) NULL
 #else
-#define	ISP_12160_RISC_CODE	isp_12160_risc_code
+#define	ISP_12160_RISC_CODE	(u_int16_t *) isp_12160_risc_code
 #include <dev/microcode/isp/asm_12160.h>
 #endif
 
 #if	defined(ISP_DISABLE_2100_SUPPORT) || !defined(ISP_COMPILE_2100_FW)
 #define	ISP_2100_RISC_CODE	NULL
 #else
-#define	ISP_2100_RISC_CODE	isp_2100_risc_code
+#define	ISP_2100_RISC_CODE	(u_int16_t *) isp_2100_risc_code
 #include <dev/microcode/isp/asm_2100.h>
 #endif
 
 #if	defined(ISP_DISABLE_2200_SUPPORT) || !defined(ISP_COMPILE_2200_FW)
 #define	ISP_2200_RISC_CODE	NULL
 #else
-#define	ISP_2200_RISC_CODE	isp_2200_risc_code
+#define	ISP_2200_RISC_CODE	(u_int16_t *) isp_2200_risc_code
 #include <dev/microcode/isp/asm_2200.h>
 #endif
 
 #if	defined(ISP_DISABLE_2300_SUPPORT) || !defined(ISP_COMPILE_2300_FW)
 #define	ISP_2300_RISC_CODE	NULL
 #else
-#define	ISP_2300_RISC_CODE	isp_2300_risc_code
+#define	ISP_2300_RISC_CODE	(u_int16_t *) isp_2300_risc_code
 #include <dev/microcode/isp/asm_2300.h>
 #endif
 
@@ -270,6 +270,11 @@ static struct ispmdvec mdvec_2300 = {
 
 #define	PCI_QLOGIC_ISP2312	\
 	((PCI_PRODUCT_QLOGIC_ISP2312 << 16) | PCI_VENDOR_QLOGIC)
+/*
+ * Odd case for some AMI raid cards... We need to *not* attach to this.
+ */
+#define	AMI_RAID_SUBVENDOR_ID	0x101e
+
 
 #define IO_MAP_REG	0x10
 #define MEM_MAP_REG	0x14
@@ -331,7 +336,14 @@ isp_pci_probe(struct device *parent, void *match, void *aux)
 #endif
 #ifndef	ISP_DISABLE_12160_SUPPORT
 	case PCI_QLOGIC_ISP12160:
+	{
+		pcireg_t subvid = 
+			pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_SUBVEND_0);
+		if (subvid == AMI_RAID_SUBVENDOR_ID) {
+			return (0);
+                }
 		return (1);
+	}
 #endif
 #ifndef	ISP_DISABLE_2100_SUPPORT
 	case PCI_QLOGIC_ISP2100:
@@ -550,7 +562,12 @@ isp_pci_attach(struct device *parent, struct device *self, void *aux)
 	if (pa->pa_id == PCI_QLOGIC_ISP2300 ||
 	    pa->pa_id == PCI_QLOGIC_ISP2312) {
 		isp->isp_mdvec = &mdvec_2300;
-		isp->isp_type = ISP_HA_FC_2300;
+		if (pa->pa_id  == PCI_QLOGIC_ISP2300) {
+			isp->isp_type = ISP_HA_FC_2300;
+		} else {
+			isp->isp_type = ISP_HA_FC_2312;
+			isp->isp_port = pa->pa_function;
+		}
 		isp->isp_param = malloc(sizeof (fcparam), M_DEVBUF, M_NOWAIT);
 		if (isp->isp_param == NULL) {
 			printf(nomem);
@@ -593,6 +610,9 @@ isp_pci_attach(struct device *parent, struct device *self, void *aux)
 	 * Make sure that command register set sanely.
 	 */
 	data = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
+	if (IS_2300(isp)) {	/* per QLogic errata */
+		data &= ~PCI_COMMAND_PARITY_ENABLE;
+	}
 	data |= PCI_COMMAND_MASTER_ENABLE | PCI_COMMAND_INVALIDATE_ENABLE;
 
 	/*
@@ -762,6 +782,7 @@ isp_pci_rd_isr_2300(struct ispsoftc *isp, u_int16_t *isrp,
 	case ISPR2HST_MBX_OK:
 	case ISPR2HST_MBX_FAIL:
 	case ISPR2HST_ASYNC_EVENT:
+	case ISPR2HST_RIO_16:
 	case ISPR2HST_FPOST:
 	case ISPR2HST_FPOST_CTIO:
 		*isrp = r2hisr & 0xffff;
@@ -1163,6 +1184,9 @@ isp_pci_reset1(struct ispsoftc *isp)
 {
 	/* Make sure the BIOS is disabled */
 	isp_pci_wr_reg(isp, HCCR, PCI_HCCR_CMD_BIOS);
+	if (isp->isp_osinfo.no_mbox_ints == 0) {
+		ENABLE_INTS(isp);
+	}
 }
 
 static void
