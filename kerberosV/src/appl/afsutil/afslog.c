@@ -75,7 +75,7 @@ expand_cell_name(const char *cell)
     static char buf[128];
     char *p;
 
-    f = fopen(_PATH_CELLSERVDB, "r");
+    f = fopen(_PATH_ARLA_CELLSERVDB, "r");
     if(f == NULL)
 	return cell;
     while (fgets (buf, sizeof(buf), f) != NULL) {
