@@ -1,4 +1,4 @@
-.\" $OpenBSD: crypt.3,v 1.9 1997/11/30 23:16:30 provos Exp $
+.\" $OpenBSD: crypt.3,v 1.10 1998/02/25 11:25:13 provos Exp $
 .\"
 .\" FreeSec: libcrypt
 .\"
@@ -99,11 +99,13 @@ For
 crypt the version number, 
 .Fa salt 
 and the hashed password are separated
-by the ``$'' character. A valid password looks like this: 
+by the ``$'' character. The maximum length of a password is limited by
+the length counter of the MD5 context, which is about
+2**64. A valid MD5 password entry looks like this: 
 .Pp
 ``$1$caeiHQwX$hsKqOjrFRRN6K32OWkCBf1''.
 .Pp
-The whole password string is passed as 
+The whole MD5 password string is passed as 
 .Fa setting
 for interpretation.
 .Ss "Blowfish" crypt:
@@ -121,7 +123,8 @@ cipher is expanded using the
 and the
 .Fa password 
 repeating the process a variable number of rounds, which is encoded in
-the password string. The final password entry is created by encrypting
+the password string. The maximum password length is 72. The final Blowfish
+password entry is created by encrypting
 the string ``OrpheanBeholderScryDoubt'' with the 
 .Tn Blowfish 
 state 64 times.
@@ -130,11 +133,11 @@ The version number, the logarithm of the number of rounds and
 the concatenation of salt and
 hashed password are separated by the ``$'' character. An encoded ``8''
 would specify 256 rounds.
-A valid password looks like this:
+A valid Blowfish password looks like this:
 .Pp
 ``$2a$12$eIAq8PR8sIUnJ1HaohxX2O9x9Qlm2vK97LJ5dsXdmB.eXF42qjchC''.
 .Pp
-The whole password string is passed as 
+The whole Blowfish password string is passed as 
 .Fa setting
 for interpretation.
 .Ss "Traditional" crypt:
