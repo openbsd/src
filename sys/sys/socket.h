@@ -1,4 +1,4 @@
-/*	$OpenBSD: socket.h,v 1.40 2002/01/10 10:19:39 itojun Exp $	*/
+/*	$OpenBSD: socket.h,v 1.41 2002/03/08 00:56:34 espie Exp $	*/
 /*	$NetBSD: socket.h,v 1.14 1996/02/09 18:25:36 christos Exp $	*/
 
 /*
@@ -314,11 +314,11 @@ struct sockcred {
  * Used value-result for recvmsg, value only for sendmsg.
  */
 struct msghdr {
-	caddr_t		msg_name;	/* optional address */
+	void		*msg_name;	/* optional address */
 	socklen_t	msg_namelen;	/* size of address */
 	struct		iovec *msg_iov;	/* scatter/gather array */
 	u_int		msg_iovlen;	/* # elements in msg_iov */
-	caddr_t		msg_control;	/* ancillary data, see below */
+	void		*msg_control;	/* ancillary data, see below */
 	socklen_t	msg_controllen;	/* ancillary data buffer len */
 	int		msg_flags;	/* flags on received message */
 };
