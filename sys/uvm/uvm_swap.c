@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.32 2001/07/31 13:34:46 art Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.33 2001/08/06 22:34:44 mickey Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.34 2000/02/07 20:16:59 thorpej Exp $	*/
 
 /*
@@ -48,9 +48,9 @@
 #include <sys/pool.h>
 #include <sys/syscallargs.h>
 #include <sys/swap.h>
+#include <sys/conf.h>
 
 #include <vm/vm.h>
-#include <vm/vm_conf.h>
 
 #include <uvm/uvm.h>
 #ifdef UVM_SWAP_ENCRYPT

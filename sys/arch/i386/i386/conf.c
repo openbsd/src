@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.77 2001/07/05 02:35:34 mickey Exp $	*/
+/*	$OpenBSD: conf.c,v 1.78 2001/08/06 22:34:43 mickey Exp $	*/
 /*	$NetBSD: conf.c,v 1.75 1996/05/03 19:40:20 christos Exp $	*/
 
 /*
@@ -45,7 +45,6 @@
 
 #include "wd.h"
 bdev_decl(wd);
-bdev_decl(sw);
 #include "fdc.h"
 #include "fd.h"
 bdev_decl(fd);
@@ -149,7 +148,6 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 #define	mmwrite	mmrw
 cdev_decl(mm);
 cdev_decl(wd);
-cdev_decl(sw);
 cdev_decl(crypto);
 #include "pty.h"
 #include "com.h"

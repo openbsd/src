@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.29 2001/07/05 02:40:43 mickey Exp $	*/
+/*	$OpenBSD: conf.c,v 1.30 2001/08/06 22:34:43 mickey Exp $	*/
 /*	$NetBSD: conf.c,v 1.16 1996/10/18 21:26:57 cgd Exp $	*/
 
 /*-
@@ -46,7 +46,6 @@
 
 #include "wd.h"
 bdev_decl(wd);
-bdev_decl(sw);
 #include "st.h"
 #include "cd.h"
 #include "sd.h"
@@ -90,7 +89,6 @@ int	nblkdev = sizeof (bdevsw) / sizeof (bdevsw[0]);
 #define	mmread  mmrw
 #define	mmwrite mmrw
 cdev_decl(mm);
-cdev_decl(sw);
 #include "pty.h"
 #include "tun.h"
 dev_type_open(filedescopen);

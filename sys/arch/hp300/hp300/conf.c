@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.25 2001/06/27 06:56:28 kjc Exp $	*/
+/*	$OpenBSD: conf.c,v 1.26 2001/08/06 22:34:43 mickey Exp $	*/
 /*	$NetBSD: conf.c,v 1.39 1997/05/12 08:17:53 thorpej Exp $	*/
 
 /*-
@@ -50,7 +50,6 @@ bdev_decl(ct);
 bdev_decl(mt);
 #include "hd.h"
 bdev_decl(hd);
-bdev_decl(sw);
 #include "sd.h"
 bdev_decl(sd);
 #include "ccd.h"
@@ -107,7 +106,6 @@ cdev_decl(ctty);
 #define	mmread	mmrw
 #define	mmwrite	mmrw
 cdev_decl(mm);
-cdev_decl(sw);
 #include "pty.h"
 #define	ptstty		ptytty
 #define	ptsioctl	ptyioctl

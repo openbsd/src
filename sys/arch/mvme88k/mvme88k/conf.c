@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.17 2001/06/27 06:56:29 kjc Exp $	*/
+/*	$OpenBSD: conf.c,v 1.18 2001/08/06 22:34:44 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -45,7 +45,6 @@
 
 int	ttselect	__P((dev_t, int, struct proc *));
 
-bdev_decl(sw);
 #include "st.h"
 bdev_decl(st);
 #include "sd.h"
@@ -105,7 +104,6 @@ cdev_decl(ctty);
 #define mmread  mmrw
 #define mmwrite mmrw
 cdev_decl(mm);
-cdev_decl(sw);
 
 #include "sram.h"
 cdev_decl(sram);

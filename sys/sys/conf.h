@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.46 2001/08/06 20:50:22 miod Exp $	*/
+/*	$OpenBSD: conf.h,v 1.47 2001/08/06 22:34:44 mickey Exp $	*/
 /*	$NetBSD: conf.h,v 1.33 1996/05/03 20:03:32 christos Exp $	*/
 
 /*-
@@ -492,6 +492,9 @@ cdev_decl(midi);
 cdev_decl(sequencer);
 
 cdev_decl(cn);
+
+bdev_decl(sw);
+cdev_decl(sw);
 
 bdev_decl(vnd);
 cdev_decl(vnd);

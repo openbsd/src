@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.6 2001/07/06 05:14:30 smurph Exp $ */
+/*	$OpenBSD: conf.c,v 1.7 2001/08/06 22:34:44 mickey Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -44,7 +44,6 @@
 bdev_decl(wd);
 #include "sd.h"
 bdev_decl(sd);
-bdev_decl(sw);
 #include "cd.h"
 bdev_decl(cd);
 
@@ -99,7 +98,6 @@ cdev_decl(pts);
 #define	ptcioctl	ptyioctl
 cdev_decl(ptc);
 cdev_decl(log);
-cdev_decl(sw);
 
 #include "bugtty.h"
 cdev_decl(bugtty);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap_encrypt.c,v 1.7 2001/01/29 02:07:49 niklas Exp $	*/
+/*	$OpenBSD: uvm_swap_encrypt.c,v 1.8 2001/08/06 22:34:44 mickey Exp $	*/
 
 /*
  * Copyright 1999 Niels Provos <provos@citi.umich.edu>
@@ -36,11 +36,11 @@
 #include <sys/malloc.h>
 #include <sys/sysctl.h>
 #include <sys/time.h>
+#include <sys/conf.h>
 #include <dev/rndvar.h>
 #include <crypto/rijndael.h>
 
 #include <vm/vm.h>
-#include <vm/vm_conf.h>
 
 #include <uvm/uvm.h>
 

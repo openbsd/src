@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.12 2001/08/01 20:30:58 miod Exp $	*/
+/*	$OpenBSD: conf.c,v 1.13 2001/08/06 22:34:43 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -44,7 +44,6 @@
 
 #include <machine/conf.h>
 
-bdev_decl(sw);
 #include "ccd.h"
 #include "vnd.h"
 #include "rd.h"
@@ -96,7 +95,6 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 #define mmread  mmrw
 #define mmwrite mmrw
 cdev_decl(mm);
-cdev_decl(sw);
 #include "pty.h"
 #include "wsdisplay.h"
 #include "wskbd.h"
