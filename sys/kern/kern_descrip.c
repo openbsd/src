@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.15 1998/03/01 19:34:12 deraadt Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.16 1998/12/04 19:40:55 deraadt Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -589,7 +589,7 @@ fdavail(p, n)
 	if ((i = lim - fdp->fd_nfiles) > 0 && (n -= i) <= 0)
 		return (1);
 	fpp = &fdp->fd_ofiles[fdp->fd_freefile];
-	for (i = fdp->fd_nfiles - fdp->fd_freefile; --i >= 0; fpp++)
+	for (i = min(lim, fdp->fd_nfiles) - fdp->fd_freefile; --i >= 0; fpp++)
 		if (*fpp == NULL && --n <= 0)
 			return (1);
 	return (0);
