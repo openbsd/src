@@ -1,4 +1,4 @@
-.\"	$OpenBSD: newsyslog.8,v 1.39 2005/03/02 15:42:08 jmc Exp $
+.\"	$OpenBSD: newsyslog.8,v 1.40 2005/03/02 15:47:29 jmc Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -74,6 +74,22 @@ The archived logs may be optionally compressed to save space.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl a Ar directory
+Specify a
+.Ar directory
+into which archived log files will be written.
+If
+.Ar directory
+is a relative path, it is appended to the parent directory
+of each log and the archived log is stored in the result.
+If an absolute path is given, all archived logs are stored in the given
+.Ar directory .
+If
+.Ar directory
+does not exist for a specified log, it is ignored for that entry and
+the log is rotated as if the
+.Fl a
+option was not specified.
 .It Fl F
 Force
 .Nm
@@ -85,6 +101,12 @@ or
 .Fl v
 flags to aid in debugging problems with
 .Pa /etc/newsyslog.conf .
+.It Fl f Ar config_file
+Use
+.Ar config_file
+instead of
+.Pa /etc/newsyslog.conf
+for the configuration file.
 .It Fl m
 Monitoring mode; only entries marked with an
 .Sq M
@@ -113,28 +135,6 @@ Place
 in verbose mode.
 In this mode it will print out each log and its
 reasons for either trimming that log or skipping it.
-.It Fl a Ar directory
-Specify a
-.Ar directory
-into which archived log files will be written.
-If
-.Ar directory
-is a relative path, it is appended to the parent directory
-of each log and the archived log is stored in the result.
-If an absolute path is given, all archived logs are stored in the given
-.Ar directory .
-If
-.Ar directory
-does not exist for a specified log, it is ignored for that entry and
-the log is rotated as if the
-.Fl a
-option was not specified.
-.It Fl f Ar config_file
-Use
-.Ar config_file
-instead of
-.Pa /etc/newsyslog.conf
-for the configuration file.
 .El
 .Pp
 If one or more
