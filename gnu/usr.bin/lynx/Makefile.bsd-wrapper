@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.15 2004/06/24 20:44:06 deraadt Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.16 2004/07/05 08:33:54 miod Exp $
 
 MAN=	lynx.1
 CLEANFILES=	lynx.cat1 lynx.1
@@ -6,6 +6,8 @@ DPADD=	${LIBSSL} ${LIBCRYPTO}
 
 .if (${MACHINE} == "vax")
 OPT=-O0
+.elif (${MACHINE_ARCH} == "m68k")
+OPT=-O1
 .endif
 
 GNUCFLAGS=	CC="${CC}" CFLAGS="${CFLAGS} ${COPTS} ${OPT}"
