@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpc.c,v 1.5 1997/01/17 16:12:37 millert Exp $	*/
+/*	$OpenBSD: lpc.c,v 1.6 2000/08/24 16:00:19 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)lpc.c	8.3 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: lpc.c,v 1.5 1997/01/17 16:12:37 millert Exp $";
+static char rcsid[] = "$OpenBSD: lpc.c,v 1.6 2000/08/24 16:00:19 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -308,6 +308,7 @@ ingroup(grname)
 	static gid_t groups[NGROUPS];
 	register gid_t gid;
 	register int i;
+	int maxgroups;
 
 	if (gptr == NULL) {
 		if ((gptr = getgrnam(grname)) == NULL) {
@@ -315,13 +316,13 @@ ingroup(grname)
 				grname);
 			return(0);
 		}
-		if (getgroups(NGROUPS, groups) < 0) {
+		if ((maxgroups = getgroups(NGROUPS, groups)) < 0) {
 			perror("getgroups");
 			exit(1);
 		}
 	}
 	gid = gptr->gr_gid;
-	for (i = 0; i < NGROUPS; i++)
+	for (i = 0; i < maxgroups; i++)
 		if (gid == groups[i])
 			return(1);
 	return(0);
