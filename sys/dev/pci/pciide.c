@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.156 2004/01/31 19:46:44 grange Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.157 2004/01/31 19:53:18 grange Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -288,7 +288,6 @@ void artisea_chip_map(struct pciide_softc *, struct pci_attach_args *);
 
 void ite_chip_map(struct pciide_softc *, struct pci_attach_args *);
 void ite_setup_channel(struct channel_softc *);
-int  ite_pci_intr(void *);
 
 void pciide_channel_dma_setup(struct pciide_channel *);
 int  pciide_dma_table_setup(struct pciide_softc *, int, int);
@@ -6161,7 +6160,7 @@ ite_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		if (cp->hw_ok == 0)
 			continue;
 		pciide_mapchan(pa, cp, interface, &cmdsize, &ctlsize,
-		    ite_pci_intr);
+		    pciide_pci_intr);
 		if (cp->hw_ok == 0) {
 			pciide_unmap_compat_intr(pa, cp, channel, interface);
 			continue;
@@ -6278,37 +6277,4 @@ pio:
 	}
 
 	pciide_print_modes(cp);
-}
-
-int
-ite_pci_intr(void *arg)
-{
-	struct pciide_softc *sc = arg;
-	struct pciide_channel *cp;
-	struct channel_softc *wdc_cp;
-	int i, rv, crv;
-	u_int8_t dmastat;
-
-	rv = 0;
-	for (i = 0; i < sc->sc_wdcdev.nchannels; i++) {
-		cp = &sc->pciide_channels[i];
-		wdc_cp = &cp->wdc_channel;
-
-		/* Skip compat channel */
-		if (cp->compat)
-			continue;
-
-		dmastat = bus_space_read_1(sc->sc_dma_iot, sc->sc_dma_ioh,
-		    IDEDMA_CTL(i));
-		if ((dmastat & IDEDMA_CTL_INTR) == 0)
-			continue;
-
-		crv = wdcintr(wdc_cp);
-		if (crv == 0)
-			printf("%s:%d: bogus intr\n",
-			    sc->sc_wdcdev.sc_dev.dv_xname, i);
-		else
-			rv = 1;
-	}
-	return rv;
 }
