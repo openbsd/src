@@ -1,5 +1,5 @@
-/*	$OpenBSD: atw.c,v 1.3 2004/07/07 19:11:27 millert Exp $	*/
-/*	$NetBSD: atw.c,v 1.35 2004/06/23 09:05:50 dyoung Exp $	*/
+/*	$OpenBSD: atw.c,v 1.4 2004/07/07 19:18:35 millert Exp $	*/
+/*	$NetBSD: atw.c,v 1.36 2004/06/23 09:27:59 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.35 2004/06/23 09:05:50 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.36 2004/06/23 09:27:59 dyoung Exp $");
 #endif
 
 #include "bpfilter.h"
@@ -190,6 +190,7 @@ void	atw_start(struct ifnet *);
 void	atw_watchdog(struct ifnet *);
 int	atw_ioctl(struct ifnet *, u_long, caddr_t);
 int	atw_init(struct ifnet *);
+void	atw_txdrain(struct atw_softc *);
 void	atw_stop(struct ifnet *, int);
 
 void	atw_reset(struct atw_softc *);
@@ -2511,6 +2512,26 @@ atw_add_rxbuf(struct atw_softc *sc, int idx)
 }
 
 /*
+ * Release any queued transmit buffers.
+ */
+void
+atw_txdrain(struct atw_softc *sc)
+{
+	struct atw_txsoft *txs;
+
+	while ((txs = SIMPLEQ_FIRST(&sc->sc_txdirtyq)) != NULL) {
+		SIMPLEQ_REMOVE_HEAD(&sc->sc_txdirtyq, txs_q);
+		if (txs->txs_mbuf != NULL) {
+			bus_dmamap_unload(sc->sc_dmat, txs->txs_dmamap);
+			m_freem(txs->txs_mbuf);
+			txs->txs_mbuf = NULL;
+		}
+		SIMPLEQ_INSERT_TAIL(&sc->sc_txfreeq, txs, txs_q);
+	}
+	sc->sc_tx_timer = 0;
+}
+
+/*
  * atw_stop:		[ ifnet interface function ]
  *
  *	Stop transmission on the interface.
@@ -2520,7 +2541,6 @@ atw_stop(struct ifnet *ifp, int disable)
 {
 	struct atw_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct atw_txsoft *txs;
 
 	ieee80211_new_state(ic, IEEE80211_S_INIT, -1);
 
@@ -2534,18 +2554,7 @@ atw_stop(struct ifnet *ifp, int disable)
 	ATW_WRITE(sc, ATW_TDBP, 0);
 	ATW_WRITE(sc, ATW_RDB, 0);
 
-	/*
-	 * Release any queued transmit buffers.
-	 */
-	while ((txs = SIMPLEQ_FIRST(&sc->sc_txdirtyq)) != NULL) {
-		SIMPLEQ_REMOVE_HEAD(&sc->sc_txdirtyq, txs_q);
-		if (txs->txs_mbuf != NULL) {
-			bus_dmamap_unload(sc->sc_dmat, txs->txs_dmamap);
-			m_freem(txs->txs_mbuf);
-			txs->txs_mbuf = NULL;
-		}
-		SIMPLEQ_INSERT_TAIL(&sc->sc_txfreeq, txs, txs_q);
-	}
+	atw_txdrain(sc);
 
 	if (disable) {
 		atw_rxdrain(sc);
@@ -2558,8 +2567,7 @@ atw_stop(struct ifnet *ifp, int disable)
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 	ifp->if_timer = 0;
 
-	/* XXX */
-	if (ATW_IS_ENABLED(sc))
+	if (!disable)
 		atw_reset(sc);
 }
 
@@ -2883,6 +2891,7 @@ atw_idle(struct atw_softc *sc, u_int32_t bits)
 		    sc->sc_dev.dv_xname, bits, test0, stsr));
 	}
 out:
+	atw_txdrain(sc);
 	splx(s);
 	return;
 }
