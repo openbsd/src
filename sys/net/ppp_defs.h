@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppp_defs.h,v 1.4 1997/02/24 13:34:04 niklas Exp $	*/
+/*	$OpenBSD: ppp_defs.h,v 1.5 1998/05/08 05:01:59 millert Exp $	*/
 /*	$NetBSD: ppp_defs.h,v 1.1 1995/07/04 06:28:26 paulus Exp $	*/
 
 /*
@@ -55,11 +55,14 @@
  * Protocol field values.
  */
 #define PPP_IP		0x21	/* Internet Protocol */
+#define PPP_AT		0x29	/* AppleTalk Protocol */
 #define	PPP_IPX		0x2b	/* Internetwork Packet Exchange */
 #define	PPP_VJC_COMP	0x2d	/* VJ compressed TCP */
 #define	PPP_VJC_UNCOMP	0x2f	/* VJ uncompressed TCP */
+#define PPP_IPV6	0x57	/* Internet Protocol Version 6 */
 #define PPP_COMP	0xfd	/* compressed packet */
 #define PPP_IPCP	0x8021	/* IP Control Protocol */
+#define PPP_ATCP	0x8029	/* AppleTalk Control Protocol */
 #define	PPP_IPXCP	0x802b	/* IPX Control Protocol */
 #define PPP_CCP		0x80fd	/* Compression Control Protocol */
 #define PPP_LCP		0xc021	/* Link Control Protocol */
@@ -83,6 +86,7 @@
 typedef UINT32_T	u_int32_t;
 #else
 typedef unsigned int	u_int32_t;
+typedef unsigned short	u_int16_t;
 #endif
 #endif
 
