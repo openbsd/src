@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getsockopt.2,v 1.13 1999/07/05 06:08:05 aaron Exp $
+.\"	$OpenBSD: getsockopt.2,v 1.14 1999/08/15 13:14:11 deraadt Exp $
 .\"	$NetBSD: getsockopt.2,v 1.7 1995/02/27 12:33:29 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -245,6 +245,8 @@ if flow control does not allow the smaller of the low water mark value
 or the entire request to be processed.
 A
 .Xr select 2
+or
+.Xr poll 2
 operation testing the ability to write to a socket will return true
 only if the low water mark amount could be processed.
 The default value for
@@ -342,6 +344,7 @@ is not in a valid part of the process address space.
 .Xr ioctl 2 ,
 .Xr poll 2 ,
 .Xr select 2 ,
+.Xr poll 2 ,
 .Xr socket 2 ,
 .Xr getprotoent 3 ,
 .Xr protocols 5

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: connect.2,v 1.13 1999/06/29 14:09:53 aaron Exp $
+.\"	$OpenBSD: connect.2,v 1.14 1999/08/15 13:14:11 deraadt Exp $
 .\"	$NetBSD: connect.2,v 1.8 1995/10/12 15:40:48 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1993
@@ -118,6 +118,8 @@ and the connection cannot
 be completed immediately.
 It is possible to
 .Xr select 2
+or
+.Xr poll 2
 for completion by selecting the socket for writing, and also use
 .Xr getsockopt 2
 with

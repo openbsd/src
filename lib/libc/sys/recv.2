@@ -1,4 +1,4 @@
-.\"	$OpenBSD: recv.2,v 1.20 1999/07/02 20:58:01 aaron Exp $
+.\"	$OpenBSD: recv.2,v 1.21 1999/08/15 13:14:12 deraadt Exp $
 .\"	$NetBSD: recv.2,v 1.6 1995/02/27 12:36:08 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
@@ -110,7 +110,9 @@ described in
 .Pp
 The
 .Xr select 2
-call may be used to determine when more data arrive.
+or
+.Xr poll 2
+system calls may be used to determine when more data arrive.
 .Pp
 The
 .Fa flags
@@ -305,6 +307,7 @@ was less than 0 or larger than
 .Xr poll 2 ,
 .Xr read 2 ,
 .Xr select 2 ,
+.Xr poll 2 ,
 .Xr socket 2
 .Sh HISTORY
 The

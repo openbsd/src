@@ -1,4 +1,4 @@
-.\"	$OpenBSD: accept.2,v 1.8 1999/06/29 14:09:49 aaron Exp $
+.\"	$OpenBSD: accept.2,v 1.9 1999/08/15 13:14:11 deraadt Exp $
 .\"	$NetBSD: accept.2,v 1.7 1996/01/31 20:14:42 mycroft Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
@@ -99,6 +99,8 @@ is used with connection-based socket types, currently with
 .Pp
 It is possible to
 .Xr select 2
+or
+.Xr poll 2
 a socket for the purposes of doing an
 .Fn accept
 by selecting it for read.
@@ -170,6 +172,7 @@ The system file table is full.
 .Xr listen 2 ,
 .Xr poll 2 ,
 .Xr select 2 ,
+.Xr poll 2 ,
 .Xr socket 2
 .Sh HISTORY
 The
