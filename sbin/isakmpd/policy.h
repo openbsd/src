@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.h,v 1.10 2002/06/10 18:08:58 ho Exp $	*/
+/*	$OpenBSD: policy.h,v 1.11 2003/05/14 18:10:30 ho Exp $	*/
 /*	$EOM: policy.h,v 1.12 2000/09/28 12:53:27 niklas Exp $ */
 
 /*
@@ -37,10 +37,6 @@
 
 #ifndef _POLICY_H_
 #define _POLICY_H_
-
-#ifndef POLICY_FILE_DEFAULT
-#define POLICY_FILE_DEFAULT "/etc/isakmpd/isakmpd.policy"
-#endif /* POLICY_FILE_DEFAULT */
 
 #if defined (USE_KEYNOTE)
 #define CREDENTIAL_FILE "credentials"

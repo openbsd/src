@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.59 2003/05/14 17:37:22 ho Exp $	*/
+/*	$OpenBSD: policy.c,v 1.60 2003/05/14 18:10:30 ho Exp $	*/
 /*	$EOM: policy.c,v 1.49 2000/10/24 13:33:39 niklas Exp $ */
 
 /*
@@ -1801,7 +1801,7 @@ policy_init (void)
   /* Get policy file from configuration.  */
   policy_file = conf_get_str ("General", "Policy-file");
   if (!policy_file)
-    policy_file = POLICY_FILE_DEFAULT;
+    policy_file = CONF_DFLT_POLICY_FILE;
 
   /* Check file modes and collect file size */
   if (check_file_secrecy (policy_file, &sz))
