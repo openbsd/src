@@ -1,4 +1,4 @@
-/*	$OpenBSD: ls.c,v 1.8 1997/09/18 07:58:41 deraadt Exp $	*/
+/*	$OpenBSD: ls.c,v 1.9 1998/08/07 19:45:06 deraadt Exp $	*/
 /*	$NetBSD: ls.c,v 1.18 1996/07/09 09:16:29 mycroft Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ls.c	8.7 (Berkeley) 8/5/94";
 #else
-static char rcsid[] = "$OpenBSD: ls.c,v 1.8 1997/09/18 07:58:41 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ls.c,v 1.9 1998/08/07 19:45:06 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -106,6 +106,8 @@ int f_statustime;		/* use time of last mode change */
 int f_dirname;			/* if precede with directory name */
 int f_type;			/* add type character for non-regular files */
 int f_whiteout;			/* show whiteout entries */
+
+int rval;
 
 int
 main(argc, argv)
@@ -310,7 +312,7 @@ main(argc, argv)
 		traverse(argc, argv, fts_options);
 	else
 		traverse(1, dotav, fts_options);
-	exit(0);
+	exit(rval);
 }
 
 static int output;			/* If anything output. */
@@ -352,6 +354,7 @@ traverse(argc, argv, options)
 		case FTS_DNR:
 		case FTS_ERR:
 			warnx("%s: %s", p->fts_name, strerror(p->fts_errno));
+			rval = 1;
 			break;
 		case FTS_D:
 			if (p->fts_level != FTS_ROOTLEVEL &&
@@ -423,6 +426,7 @@ display(p, list)
 			warnx("%s: %s",
 			    cur->fts_name, strerror(cur->fts_errno));
 			cur->fts_number = NO_PRINT;
+			rval = 1;
 			continue;
 		}
 
