@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.58 2002/02/19 21:11:23 miod Exp $	*/
+/*	$OpenBSD: inet.c,v 1.59 2002/05/16 14:18:34 kjc Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-static char *rcsid = "$OpenBSD: inet.c,v 1.58 2002/02/19 21:11:23 miod Exp $";
+static char *rcsid = "$OpenBSD: inet.c,v 1.59 2002/05/16 14:18:34 kjc Exp $";
 #endif
 #endif /* not lint */
 
@@ -315,6 +315,18 @@ tcp_stats(off, name)
 	p(tcps_preddat, "\t%u correct data packet header prediction%s\n");
 	p3(tcps_pcbhashmiss, "\t%u PCB cache miss%s\n");
 	p(tcps_badsyn, "\t%u SYN packet%s received with same src/dst address/port\n");
+
+	p(tcps_ecn_accepts, "\t%u ECN connection%s accepted\n");
+	p(tcps_ecn_rcvece, "\t\t%u ECE packet%s received\n");
+	p(tcps_ecn_rcvcwr, "\t\t%u CWR packet%s received\n");
+	p(tcps_ecn_rcvce, "\t\t%u CE packet%s received\n");
+	p(tcps_ecn_sndect, "\t\t%u ECT packet%s sent\n");
+	p(tcps_ecn_sndece, "\t\t%u ECE packet%s sent\n");
+	p(tcps_ecn_sndcwr, "\t\t%u CWR packet%s sent\n");
+	p1(tcps_cwr_frecovery, "\t\t\tcwr by fastrecovery: %u\n");
+	p1(tcps_cwr_timeout, "\t\t\tcwr by timeout: %u\n");
+	p1(tcps_cwr_ecn, "\t\t\tcwr by ecn: %u\n");
+
 #undef p
 #undef p1
 #undef p2
