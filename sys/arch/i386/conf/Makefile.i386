@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.i386,v 1.30 2002/06/26 08:42:39 art Exp $
+#	$OpenBSD: Makefile.i386,v 1.31 2002/08/09 20:24:43 miod Exp $
 #	$NetBSD: Makefile.i386,v 1.67 1996/05/11 16:12:11 mycroft Exp $
 
 # Makefile for OpenBSD
@@ -122,7 +122,7 @@ LINKFLAGS+=	-x
 
 %LOAD
 
-assym.h: $S/kern/genassym.sh ${I386}/i386/genassym.cf
+assym.h: $S/kern/genassym.sh ${I386}/i386/genassym.cf Makefile
 	sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} \
 	    ${PARAM} < ${I386}/i386/genassym.cf > assym.h.tmp && \
 	    mv -f assym.h.tmp assym.h

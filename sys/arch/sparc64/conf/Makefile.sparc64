@@ -96,7 +96,7 @@ LINKFLAGS+=	-x
 
 %LOAD
 
-assym.h: $S/kern/genassym.sh ${SPARC64}/sparc64/genassym.cf
+assym.h: $S/kern/genassym.sh ${SPARC64}/sparc64/genassym.cf Makefile
 	sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} \
 	    ${PARAM} < ${SPARC64}/sparc64/genassym.cf > assym.h.tmp && \
 	    mv -f assym.h.tmp assym.h

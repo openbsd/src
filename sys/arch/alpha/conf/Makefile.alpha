@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.alpha,v 1.24 2002/06/22 14:05:51 millert Exp $
+#	$OpenBSD: Makefile.alpha,v 1.25 2002/08/09 20:24:41 miod Exp $
 #	$NetBSD: Makefile.alpha,v 1.27 1996/12/01 06:12:25 jonathan Exp $
 
 # Makefile for OpenBSD
@@ -104,7 +104,7 @@ LINKFLAGS+=	-S
 
 %LOAD
 
-assym.h: $S/kern/genassym.sh ${ALPHA}/alpha/genassym.cf
+assym.h: $S/kern/genassym.sh ${ALPHA}/alpha/genassym.cf Makefile
 	sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} \
 	    ${PARAM} < ${ALPHA}/alpha/genassym.cf > assym.h.tmp && \
 	    mv -f assym.h.tmp assym.h

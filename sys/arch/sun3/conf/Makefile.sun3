@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.sun3,v 1.31 2002/06/22 14:05:51 millert Exp $
+#	$OpenBSD: Makefile.sun3,v 1.32 2002/08/09 20:24:43 miod Exp $
 #	$NetBSD: Makefile.sun3,v 1.51 1996/09/09 21:07:08 mycroft Exp $
 
 # Makefile for OpenBSD
@@ -109,7 +109,7 @@ LINKFLAGS+=	-S
 %LOAD
 
 assym.h: $S/kern/genassym.sh \
-	 ${M68K}/m68k/genassym.cf ${SUN3}/sun3/genassym.cf
+	 ${M68K}/m68k/genassym.cf ${SUN3}/sun3/genassym.cf Makefile
 	cat ${M68K}/m68k/genassym.cf ${SUN3}/sun3/genassym.cf | \
 	    sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} \
 	    > assym.h.tmp && \

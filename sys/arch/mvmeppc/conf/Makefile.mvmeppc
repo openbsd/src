@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.mvmeppc,v 1.8 2002/06/22 14:05:51 millert Exp $
+#	$OpenBSD: Makefile.mvmeppc,v 1.9 2002/08/09 20:24:43 miod Exp $
 #
 # Makefile for OpenBSD PowerPC
 #
@@ -119,7 +119,7 @@ LINKFLAGS+=	-S
 
 %LOAD
 
-assym.h: $S/kern/genassym.sh ${PPC}/mvmeppc/genassym.cf
+assym.h: $S/kern/genassym.sh ${PPC}/mvmeppc/genassym.cf Makefile
 	sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} \
 	    < ${PPC}/mvmeppc/genassym.cf > assym.h.tmp && \
 	    mv -f assym.h.tmp assym.h
