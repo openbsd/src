@@ -1,4 +1,4 @@
-.\"	$OpenBSD: afterboot.8,v 1.53 2000/10/20 23:27:21 obecian Exp $
+.\"	$OpenBSD: afterboot.8,v 1.54 2000/10/26 00:23:33 deraadt Exp $
 .Dd October 20, 1997
 .Dt AFTERBOOT 8
 \!\" Originally created by Marshall M. Midden -- 1997-10-20, m4@umn.edu
@@ -385,18 +385,6 @@ section if you won't be using Kerberos).
 We suggest that you
 .Ic cd /etc
 and edit most of the files in that directory.
-.Ss /etc/motd
-Edit
-.Pa motd
-to make lawyers comfortable and make sure that no mention
-of the word "Welcome" appears.
-(Some U.S. lawyers have stated that
-the word "Welcome" is an invitation to come on in.)
-Note that this file is modified by
-.Pa /etc/rc
-whenever the system is booted. To keep any custom message intact, ensure
-that you leave two blank lines at the top, or your message will be
-overwritten.
 .Ss Add new users
 Add users.
 There is an
