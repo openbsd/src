@@ -33,20 +33,26 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: strtoul.3,v 1.9 2002/04/30 16:31:42 mpech Exp $
+.\"	$OpenBSD: strtoul.3,v 1.10 2002/06/29 00:20:11 millert Exp $
 .\"
 .Dd June 25, 1992
 .Dt STRTOUL 3
 .Os
 .Sh NAME
 .Nm strtoul ,
+.Nm strtoull ,
 .Nm strtouq
-.Nd convert a string to an unsigned long or uquad_t integer
+.Nd convert a string to an unsigned long or unsigned long long integer
 .Sh SYNOPSIS
 .Fd #include <stdlib.h>
 .Fd #include <limits.h>
 .Ft unsigned long
 .Fn strtoul "const char *nptr" "char **endptr" "int base"
+.Pp
+.Fd #include <stdlib.h>
+.Fd #include <limits.h>
+.Ft unsigned long long
+.Fn strtoull "const char *nptr" "char **endptr" "int base"
 .Pp
 .Fd #include <sys/types.h>
 .Fd #include <stdlib.h>
@@ -62,12 +68,17 @@ to an
 .Li unsigned long
 value.
 The
-.Fn strtouq
+.Fn strtoull
 function converts the string in
 .Fa nptr
-to a
-.Li u_quad_t
+to an
+.Li unsigned long long
 value.
+The
+.Fn strtouq
+function is a deprecated equivalent of
+.Fn strtoull
+and is provided for backwards compatibility with legacy programs.
 The conversion is done according to the given
 .Fa base ,
 which must be a number between 2 and 36 inclusive
@@ -147,6 +158,14 @@ and sets the global variable
 .Va errno
 to
 .Er ERANGE .
+.Pp
+The
+.Fn strtoull
+function has identical return values except that
+.Dv ULLONG_MIN
+and
+.Dv ULLONG_MAX
+are used to indicate underflow and overflow respectively.
 .Pp
 There is no way to determine if
 .Fn strtoul

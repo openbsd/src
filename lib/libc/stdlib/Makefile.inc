@@ -6,8 +6,8 @@
 SRCS+=	a64l.c abort.c atexit.c atoi.c atof.c atol.c bsearch.c calloc.c \
 	cfree.c exit.c getenv.c getopt.c getsubopt.c heapsort.c l64a.c \
 	malloc.c merge.c multibyte.c putenv.c qsort.c radixsort.c rand.c \
-	random.c realpath.c setenv.c strtod.c strtol.c strtoq.c strtoul.c \
-	strtouq.c system.c tfind.c tsearch.c \
+	random.c realpath.c setenv.c strtod.c strtol.c strtoll.c strtoul.c \
+	strtoull.c system.c tfind.c tsearch.c \
 	_rand48.c drand48.c erand48.c jrand48.c lcong48.c lrand48.c \
 	mrand48.c nrand48.c seed48.c srand48.c qabs.c qdiv.c
 
@@ -48,8 +48,8 @@ MLINKS+=random.3 srandom.3 random.3 srandomdev.3
 MLINKS+=rand48.3 drand48.3 rand48.3 erand48.3 rand48.3 lrand48.3
 MLINKS+=rand48.3 mrand48.3 rand48.3 nrand48.3 rand48.3 jrand48.3
 MLINKS+=rand48.3 srand48.3 rand48.3 seed48.3 rand48.3 lcong48.3
-MLINKS+=strtol.3 strtoq.3
-MLINKS+=strtoul.3 strtouq.3
+MLINKS+=strtol.3 strtoll.3 strtol.3 strtoq.3
+MLINKS+=strtoul.3 strtoull.3 strtoul.3 strtouq.3
 MLINKS+=tsearch.3 tfind.3
 MLINKS+=tsearch.3 tdelete.3
 MLINKS+=tsearch.3 twalk.3

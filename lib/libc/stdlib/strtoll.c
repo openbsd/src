@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: strtoq.c,v 1.4 1996/08/19 08:33:52 tholo Exp $";
+static const char rcsid[] = "$OpenBSD: strtoll.c,v 1.1 2002/06/29 00:20:11 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -43,21 +43,21 @@ static char rcsid[] = "$OpenBSD: strtoq.c,v 1.4 1996/08/19 08:33:52 tholo Exp $"
 #include <stdlib.h>
 
 /*
- * Convert a string to a quad integer.
+ * Convert a string to a long long.
  *
  * Ignores `locale' stuff.  Assumes that the upper and lower case
  * alphabets and digits are each contiguous.
  */
-quad_t
-strtoq(nptr, endptr, base)
+long long
+strtoll(nptr, endptr, base)
 	const char *nptr;
 	char **endptr;
-	register int base;
+	int base;
 {
-	register const char *s;
-	register quad_t acc, cutoff;
-	register int c;
-	register int neg, any, cutlim;
+	const char *s;
+	long long acc, cutoff;
+	int c;
+	int neg, any, cutlim;
 
 	/*
 	 * Skip white space and pick up leading +/- sign if any.
@@ -92,7 +92,7 @@ strtoq(nptr, endptr, base)
 	 * followed by a legal input character, is too big.  One that
 	 * is equal to this value may be valid or not; the limit
 	 * between valid and invalid numbers is then based on the last
-	 * digit.  For instance, if the range for quads is
+	 * digit.  For instance, if the range for long longs is
 	 * [-9223372036854775808..9223372036854775807] and the input base
 	 * is 10, cutoff will be set to 922337203685477580 and cutlim to
 	 * either 7 (neg==0) or 8 (neg==1), meaning that if we have
@@ -103,7 +103,7 @@ strtoq(nptr, endptr, base)
 	 * Set any if any `digits' consumed; make it negative to indicate
 	 * overflow.
 	 */
-	cutoff = neg ? QUAD_MIN : QUAD_MAX;
+	cutoff = neg ? LLONG_MIN : LLONG_MAX;
 	cutlim = cutoff % base;
 	cutoff /= base;
 	if (neg) {
@@ -125,9 +125,9 @@ strtoq(nptr, endptr, base)
 		if (any < 0)
 			continue;
 		if (neg) {
-			if (acc < cutoff || acc == cutoff && c > cutlim) {
+			if (acc < cutoff || (acc == cutoff && c > cutlim)) {
 				any = -1;
-				acc = QUAD_MIN;
+				acc = LLONG_MIN;
 				errno = ERANGE;
 			} else {
 				any = 1;
@@ -135,9 +135,9 @@ strtoq(nptr, endptr, base)
 				acc -= c;
 			}
 		} else {
-			if (acc > cutoff || acc == cutoff && c > cutlim) {
+			if (acc > cutoff || (acc == cutoff && c > cutlim)) {
 				any = -1;
-				acc = QUAD_MAX;
+				acc = LLONG_MAX;
 				errno = ERANGE;
 			} else {
 				any = 1;
@@ -150,3 +150,17 @@ strtoq(nptr, endptr, base)
 		*endptr = (char *) (any ? s - 1 : nptr);
 	return (acc);
 }
+
+#ifdef __weak_alias
+__weak_alias(strtoq, strtoll);
+#else
+quad_t
+strtoq(nptr, endptr, base)
+	const char *nptr;
+	char **endptr;
+	int base;
+{
+
+        return ((quad_t)strtoll(nptr, endptr, base);
+}
+#endif

@@ -33,20 +33,26 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: strtol.3,v 1.9 2000/08/09 15:51:21 aaron Exp $
+.\"	$OpenBSD: strtol.3,v 1.10 2002/06/29 00:20:11 millert Exp $
 .\"
 .Dd June 25, 1992
 .Dt STRTOL 3
 .Os
 .Sh NAME
 .Nm strtol ,
+.Nm strtoll ,
 .Nm strtoq
-.Nd convert string value to a long or quad_t integer
+.Nd convert string value to a long or long long integer
 .Sh SYNOPSIS
 .Fd #include <stdlib.h>
 .Fd #include <limits.h>
 .Ft long
 .Fn strtol "const char *nptr" "char **endptr" "int base"
+.Pp
+.Fd #include <stdlib.h>
+.Fd #include <limits.h>
+.Ft long long
+.Fn strtoll "const char *nptr" "char **endptr" "int base"
 .Pp
 .Fd #include <sys/types.h>
 .Fd #include <stdlib.h>
@@ -62,12 +68,17 @@ to a
 .Li long
 value.
 The
-.Fn strtoq
+.Fn strtoll
 function converts the string in
 .Fa nptr
 to a
-.Li quad_t
+.Li long long
 value.
+The
+.Fn strtoq
+function is a deprecated equivalent of
+.Fn strtoll
+and is provided for backwards compatibility with legacy programs.
 The conversion is done according to the given
 .Fa base ,
 which must be a number between 2 and 36 inclusive or the special value 0.
@@ -141,6 +152,14 @@ In both cases,
 .Va errno
 is set to
 .Er ERANGE .
+.Pp
+The
+.Fn strtoll
+function has identical return values except that
+.Dv LLONG_MIN
+and
+.Dv LLONG_MAX
+are used to indicate underflow and overflow respectively.
 .Sh EXAMPLES
 Ensuring that a string is a valid number (i.e., in range and containing no
 trailing characters) requires clearing

@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: strtouq.c,v 1.4 1996/08/19 08:33:53 tholo Exp $";
+static const char rcsid[] = "$OpenBSD: strtoull.c,v 1.1 2002/06/29 00:20:11 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -43,21 +43,21 @@ static char rcsid[] = "$OpenBSD: strtouq.c,v 1.4 1996/08/19 08:33:53 tholo Exp $
 #include <stdlib.h>
 
 /*
- * Convert a string to an unsigned quad integer.
+ * Convert a string to an unsigned long long.
  *
  * Ignores `locale' stuff.  Assumes that the upper and lower case
  * alphabets and digits are each contiguous.
  */
-u_quad_t
-strtouq(nptr, endptr, base)
+unsigned long long
+strtoull(nptr, endptr, base)
 	const char *nptr;
 	char **endptr;
-	register int base;
+	int base;
 {
-	register const char *s;
-	register u_quad_t acc, cutoff;
-	register int c;
-	register int neg, any, cutlim;
+	const char *s;
+	unsigned long long acc, cutoff;
+	int c;
+	int neg, any, cutlim;
 
 	/*
 	 * See strtoq for comments as to the logic used.
@@ -83,8 +83,8 @@ strtouq(nptr, endptr, base)
 	if (base == 0)
 		base = c == '0' ? 8 : 10;
 
-	cutoff = UQUAD_MAX / (u_quad_t)base;
-	cutlim = UQUAD_MAX % (u_quad_t)base;
+	cutoff = ULLONG_MAX / (unsigned long long)base;
+	cutlim = ULLONG_MAX % (unsigned long long)base;
 	for (acc = 0, any = 0;; c = (unsigned char) *s++) {
 		if (isdigit(c))
 			c -= '0';
@@ -96,13 +96,13 @@ strtouq(nptr, endptr, base)
 			break;
 		if (any < 0)
 			continue;
-		if (acc > cutoff || acc == cutoff && c > cutlim) {
+		if (acc > cutoff || (acc == cutoff && c > cutlim)) {
 			any = -1;
-			acc = UQUAD_MAX;
+			acc = ULLONG_MAX;
 			errno = ERANGE;
 		} else {
 			any = 1;
-			acc *= (u_quad_t)base;
+			acc *= (unsigned long long)base;
 			acc += c;
 		}
 	}
@@ -112,3 +112,17 @@ strtouq(nptr, endptr, base)
 		*endptr = (char *) (any ? s - 1 : nptr);
 	return (acc);
 }
+
+#ifdef __weak_alias
+__weak_alias(strtouq, strtoull);
+#else
+u_quad_t
+strtouq(nptr, endptr, base)
+	const char *nptr;
+	char **endptr;
+	int base;
+{
+
+	return ((u_quad_t)strtoull(nptr, endptr, base);
+}
+#endif
