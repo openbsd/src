@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_intr_fixup.c,v 1.8 2000/10/27 05:05:28 mickey Exp $	*/
+/*	$OpenBSD: pci_intr_fixup.c,v 1.9 2000/10/31 18:56:42 deraadt Exp $	*/
 /*	$NetBSD: pci_intr_fixup.c,v 1.10 2000/08/10 21:18:27 soda Exp $	*/
 
 /*-
@@ -83,7 +83,7 @@
 
 #include <i386/isa/icu.h>
 #include <i386/pci/pci_intr_fixup.h>
-#include <i386/pci/pcibios.h>
+#include <i386/pci/pcibiosvar.h>
 
 struct pciintr_link_map {
 	int link;

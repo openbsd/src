@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_addr_fixup.c,v 1.4 2000/10/16 16:24:36 mickey Exp $	*/
+/*	$OpenBSD: pci_addr_fixup.c,v 1.5 2000/10/31 18:56:42 deraadt Exp $	*/
 /*	$NetBSD: pci_addr_fixup.c,v 1.7 2000/08/03 20:10:45 nathanw Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 
-#include <i386/pci/pcibios.h>
+#include <i386/pci/pcibiosvar.h>
 #include <i386/pci/pci_addr_fixup.h>
 
 struct pciaddr pciaddr;
