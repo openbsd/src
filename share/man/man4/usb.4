@@ -1,4 +1,4 @@
-.\"	$OpenBSD: usb.4,v 1.38 2005/02/21 21:48:32 jsg Exp $
+.\"	$OpenBSD: usb.4,v 1.39 2005/03/13 05:00:50 dlg Exp $
 .\"	$NetBSD: usb.4,v 1.15 1999/07/29 14:20:32 augustss Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -42,6 +42,11 @@
 .Nm usb
 .Nd introduction to Universal Serial Bus support
 .Sh SYNOPSIS
+.Cd "# zaurus specific"
+.Cd "ohci0   at pxaip?"
+.Cd "# all architectures"
+.Cd "ehci*   at cardbus?"
+.Cd "ohci*   at cardbus?"
 .Cd "ehci*   at pci?"
 .Cd "uhci*   at pci?"
 .Cd "ohci*   at pci?"
@@ -70,13 +75,14 @@ and
 .Xr pcmcia 4 ) :
 the controller, the bus, and the device layer.
 The controller attaches to a physical bus (like
-.Xr pci 4 ) .
+.Xr pci 4
+or
+.Xr cardbus 4 ) .
 The
 .Tn USB
 bus attaches to the controller and the root hub attaches
 to the controller.
-Further devices, which may include further hubs,
-attach to other hubs.
+Devices, which may include further hubs, attach to the root hub.
 The attachment forms the same tree structure as the physical
 .Tn USB
 device tree.
@@ -86,7 +92,7 @@ device there may be additional drivers attached to it.
 .Pp
 The
 .Cm uhub
-device controls
+driver controls
 .Tn USB
 hubs and must always be present since there is at least one root hub in any
 .Tn USB
@@ -106,11 +112,6 @@ bus will be probed when the
 .Tn USB
 host device is attached instead of waiting
 until kernel processes start running.
-This is useful for
-.Tn USB
-console keyboards so that the keyboard is attached
-before getting the root prompt on
-.Dq boot -a .
 .Sh SUPPORTED DEVICES
 .Ox
 includes machine-independent
@@ -212,9 +213,13 @@ Handspring Visor.
 YAP phone firmware loader.
 .El
 .Sh INTRODUCTION TO USB
-The
+There are different versions of the
 .Tn USB
-is a 12 Mb/s serial bus (1.5 Mb/s for low speed devices).
+which provide different speeds.
+.Tn USB
+2 operates at 480Mb/s, while
+.Tn USB
+versions 1 and 1.1 operate at 12 Mb/s and 1.5 Mb/s for low speed devices.
 Each
 .Tn USB
 has a host controller that is the master of the bus;
