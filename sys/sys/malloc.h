@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.h,v 1.25 1999/10/29 14:08:13 art Exp $	*/
+/*	$OpenBSD: malloc.h,v 1.26 1999/11/20 11:11:27 matthieu Exp $	*/
 /*	$NetBSD: malloc.h,v 1.39 1998/07/12 19:52:01 augustss Exp $	*/
 
 /*
@@ -160,6 +160,8 @@
 
 #define M_PIPE		104	/* Pipe structures */
 
+#define M_MEMDESC	105	/* Memory range */
+
 #define	M_TEMP		127	/* misc temporary data buffers */
 #define M_LAST          128     /* Must be last type + 1 */
 
@@ -270,7 +272,8 @@
 	"USB device",	/* 102 M_USBDEV */ \
 	"USB HC",	/* 103 M_USBHC */ \
 	"pipe", 	/* 104 M_PIPE */ \
-	NULL, NULL, \
+	"memdesc",	/* 105 M_MEMDESC */ \
+	NULL, \
 	NULL, NULL, NULL, NULL, NULL, \
 	NULL, NULL, NULL, NULL, NULL, \
 	NULL, NULL, NULL, NULL, NULL, \

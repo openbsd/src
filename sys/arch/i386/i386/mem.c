@@ -1,5 +1,5 @@
 /*	$NetBSD: mem.c,v 1.31 1996/05/03 19:42:19 christos Exp $	*/
-/*	$OpenBSD: mem.c,v 1.13 1999/09/06 06:19:08 matthieu Exp $ */
+/*	$OpenBSD: mem.c,v 1.14 1999/11/20 11:11:28 matthieu Exp $ */
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -48,7 +48,9 @@
 #include <sys/buf.h>
 #include <sys/systm.h>
 #include <sys/uio.h>
+#include <sys/ioccom.h>
 #include <sys/malloc.h>
+#include <sys/memrange.h>
 #include <sys/proc.h>
 #include <sys/fcntl.h>
 
@@ -61,6 +63,8 @@
 #include <uvm/uvm_extern.h>
 #endif
 
+#include "mtrr.h"
+
 extern char *vmmap;            /* poor name! */
 caddr_t zeropage;
 
@@ -71,6 +75,11 @@ extern int allowaperture;
 
 #define VGA_START 0xA0000
 #define BIOS_END  0xFFFFF
+#endif
+
+#if NMTRR > 0
+struct mem_range_softc mem_range_softc;
+static int mem_ioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
 #endif
 
 /*ARGSUSED*/
@@ -270,3 +279,121 @@ mmmmap(dev, off, prot)
 		return -1;
 	}
 }
+
+int
+mmioctl(dev, cmd, data, flags, p)
+	dev_t dev;
+	u_long cmd;
+	caddr_t data;
+	int flags;
+	struct proc *p;
+{
+#if NMTRR > 0
+	switch (minor(dev)) {
+	case 0:
+	case 4:
+		return mem_ioctl(dev, cmd, data, flags, p);
+	}
+#endif
+	return (ENODEV);
+}
+
+#if NMTRR > 0
+/*
+ * Operations for changing memory attributes.
+ *
+ * This is basically just an ioctl shim for mem_range_attr_get
+ * and mem_range_attr_set.
+ */
+static int 
+mem_ioctl(dev, cmd, data, flags, p)
+	dev_t dev;
+	u_long cmd;
+	caddr_t data;
+	int flags;
+	struct proc *p;
+{
+	int nd, error = 0;
+	struct mem_range_op *mo = (struct mem_range_op *)data;
+	struct mem_range_desc *md;
+	
+	/* is this for us? */
+	if ((cmd != MEMRANGE_GET) &&
+	    (cmd != MEMRANGE_SET))
+		return (ENOTTY);
+
+	/* any chance we can handle this? */
+	if (mem_range_softc.mr_op == NULL)
+		return (EOPNOTSUPP);
+
+	/* do we have any descriptors? */
+	if (mem_range_softc.mr_ndesc == 0)
+		return (ENXIO);
+
+	switch (cmd) {
+	case MEMRANGE_GET:
+		nd = imin(mo->mo_arg[0], mem_range_softc.mr_ndesc);
+		if (nd > 0) {
+			md = (struct mem_range_desc *)
+				malloc(nd * sizeof(struct mem_range_desc),
+				       M_MEMDESC, M_WAITOK);
+			error = mem_range_attr_get(md, &nd);
+			if (!error)
+				error = copyout(md, mo->mo_desc, 
+					nd * sizeof(struct mem_range_desc));
+			free(md, M_MEMDESC);
+		} else {
+			nd = mem_range_softc.mr_ndesc;
+		}
+		mo->mo_arg[0] = nd;
+		break;
+		
+	case MEMRANGE_SET:
+		md = (struct mem_range_desc *)malloc(sizeof(struct mem_range_desc),
+						    M_MEMDESC, M_WAITOK);
+		error = copyin(mo->mo_desc, md, sizeof(struct mem_range_desc));
+		/* clamp description string */
+		md->mr_owner[sizeof(md->mr_owner) - 1] = 0;
+		if (error == 0)
+			error = mem_range_attr_set(md, &mo->mo_arg[0]);
+		free(md, M_MEMDESC);
+		break;
+	}
+	return (error);
+}
+
+/*
+ * Implementation-neutral, kernel-callable functions for manipulating
+ * memory range attributes.
+ */
+int
+mem_range_attr_get(mrd, arg)
+	struct mem_range_desc *mrd;
+	int *arg;
+{
+	/* can we handle this? */
+	if (mem_range_softc.mr_op == NULL)
+		return (EOPNOTSUPP);
+
+	if (*arg == 0) {
+		*arg = mem_range_softc.mr_ndesc;
+	} else {
+		bcopy(mem_range_softc.mr_desc, mrd, (*arg) * sizeof(struct mem_range_desc));
+	}
+	return (0);
+}
+
+int
+mem_range_attr_set(mrd, arg)
+	struct mem_range_desc *mrd;
+	int *arg;
+{
+	/* can we handle this? */
+	if (mem_range_softc.mr_op == NULL)
+		return (EOPNOTSUPP);
+
+	return (mem_range_softc.mr_op->set(&mem_range_softc, mrd, arg));
+}
+
+#endif /* NMTRR > 0 */
+
