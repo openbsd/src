@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.1 1997/07/14 08:14:29 downsj Exp $	*/
+/*	$OpenBSD: sd.c,v 1.2 1997/09/14 12:54:24 downsj Exp $	*/
 /*	$NetBSD: sd.c,v 1.9 1996/12/21 21:34:41 thorpej Exp $	*/
 
 /*
@@ -149,7 +149,13 @@ sdgetinfo(ss)
 		       ss->sc_ctlr, ss->sc_unit, ss->sc_part, msg);
 		printf("defining `c' partition as entire disk\n");
 		pi->npart = 3;
-		pi->offset[0] = pi->offset[1] = -1;
+#ifdef CD9660_DUMMYLABEL
+		pi->offset[0] = 0;
+		lp->d_partitions[0].p_fstype = FS_ISO9660; /* just for kicks */
+#else
+		pi->offset[0] = -1;
+#endif
+		pi->offset[1] = -1;
 		pi->offset[2] = 0;
 	} else {
 		pi->npart = lp->d_npartitions;

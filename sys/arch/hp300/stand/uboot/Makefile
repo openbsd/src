@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 1997/07/14 08:14:54 downsj Exp $
+#	$OpenBSD: Makefile,v 1.2 1997/09/14 12:54:29 downsj Exp $
 
 PROG=	uboot
 
@@ -18,20 +18,25 @@ LIBS=	${LIBCOMMON} ${LIBSA} ${LIBZ} ${LIBKERN}
 
 ${OBJS}:	${.CURDIR}/../Makefile.inc
 
-CLEANFILES+=	uboot.lif
+CLEANFILES+=	uboot.lif uboot.raw
 
 uboot.lif:	uboot
 	${MKBOOT_PROG} uboot $@
+
+uboot.raw:	uboot
+	${STRIPBOOT_PROG} uboot $@
 
 uboot:	${OBJS} ${LIBS}
 	${LD} -N -T ${RELOC} -e begin ${OBJS} ${LIBS} -o $@
 	@size $@
 	@echo $@ total size should not exceed 1044480 bytes
 
-install:	uboot.lif ${MKBOOT_PROG}
+install:	uboot.lif uboot.raw ${MKBOOT_PROG}
 	${INSTALL} -d -m 755 -o ${BINOWN} -g ${BINGRP} \
 	    ${DESTDIR}/usr/mdec/rbootd
 	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 444 uboot.lif \
+	    ${DESTDIR}/usr/mdec
+	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 444 uboot.raw \
 	    ${DESTDIR}/usr/mdec
 	rm -f ${DESTDIR}/usr/mdec/hdboot
 	ln ${DESTDIR}/usr/mdec/uboot.lif ${DESTDIR}/usr/mdec/hdboot

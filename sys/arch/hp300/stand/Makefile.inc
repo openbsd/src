@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.1 1997/07/14 08:13:25 downsj Exp $
+#	$OpenBSD: Makefile.inc,v 1.2 1997/09/14 12:54:20 downsj Exp $
 #	$NetBSD: Makefile.inc,v 1.7 1997/05/12 07:43:18 thorpej Exp $
 
 BINDIR=			/usr/mdec
@@ -80,6 +80,23 @@ MKBOOTOBJDIR=		${MKBOOTDIR}
 
 MKBOOT_PROG=		${MKBOOTOBJDIR}/mkboot
 
+### Figure out what to use for stripboot
+STRIPBOOTDIR=		${.CURDIR}/../stripboot
+
+.if exists(${STRIPBOOTDIR}/obj.${MACHINE})
+STRIPBOOTOBJDIR=	${STRIPBOOTDIR}/obj.${MACHINE}
+.elif exists(${STRIPBOOTDIR}/obj)
+STRIPBOOTOBJDIR=	${STRIPBOOTDIR}/obj
+.else
+STRIPBOOTOBJDIR=	${STRIPBOOTDIR}
+.endif
+
+STRIPBOOT_PROG=		${STRIPBOOTOBJDIR}/stripboot
+
 # Make sure ${MKBOOT_PROG} is always available
 ${MKBOOT_PROG}:
 	@cd ${MKBOOTDIR} && make depend && make
+
+# Make sure ${STRIPBOOT_PROG} is always available
+${STRIPBOOT_PROG}:
+	@cd ${STRIPBOOTDIR} && make depend && make
