@@ -1,4 +1,4 @@
-.\"	$OpenBSD: xdr.3,v 1.6 1998/02/24 12:57:52 deraadt Exp $
+.\"	$OpenBSD: xdr.3,v 1.7 1998/03/11 18:54:17 deraadt Exp $
 .\" Mostly converted to mandoc by Theo de Raadt, Tue Feb 24 04:04:46 MST 1998
 .\"
 .Dd February 16, 1988
@@ -518,9 +518,8 @@ routines that require a function parameter, but where nothing is to be done.
 .Pp
 .Fn xdr_wrapstring
 is a primitive that calls
-.B "xdr_string(xdrs, sp, MAXUN.UNSIGNED );"
+.Pa "xdr_string(xdrs, sp, MAXUN.UNSIGNED );"
 where
-.B
 .Tn MAXUN.UNSIGNED
 is the maximum value of an unsigned integer.
 .Fn xdr_wrapstring
