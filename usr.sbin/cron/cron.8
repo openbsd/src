@@ -15,62 +15,79 @@
 .\" * Paul Vixie          <paul@vix.com>          uunet!decwrl!vixie!paul
 .\" */
 .\"
-.\" $Id: cron.8,v 1.4 1999/06/05 22:16:34 aaron Exp $
+.\" $Id: cron.8,v 1.5 1999/06/18 02:11:44 aaron Exp $
 .\"
-.TH CRON 8 "20 December 1993"
-.UC 4
-.SH NAME
-cron \- daemon to execute scheduled commands (Vixie Cron)
-.SH SYNOPSIS
-cron
-.SH DESCRIPTION
-.I Cron
-should be started from /etc/rc or /etc/rc.local.  It will return immediately,
-so you don't need to start it with '&'.
-.PP
-.I Cron
-searches /var/cron/tabs for crontab files which are named after accounts in
-/etc/passwd; crontabs found are loaded into memory.
-.I Cron
-also searches for /etc/crontab which is in a different format (see
-.IR crontab(5)).
-.I Cron
-then wakes up every minute, examining all stored crontabs, checking each
-command to see if it should be run in the current minute.  When executing
-commands, any output is mailed to the owner of the crontab (or to the user
-named in the MAILTO environment variable in the crontab, if such exists).
-.PP
+.Dd 6 June, 1999
+.Os
+.Dt CRON 8
+.Sh NAME
+.Nm cron
+.Nd daemon to execute scheduled commands (Vixie Cron)
+.Sh SYNOPSIS
+.Nm cron
+.Sh DESCRIPTION
+.Nm
+should be started from
+.Pa /etc/rc
+or
+.Pa /etc/rc.local .
+It will return immediately, so you don't need to start it with
+.Ql \&& .
+.Pp
+.Nm
+searches its spool directory
+.Pf ( Pa /var/cron/tabs Ns )
+for
+.Xr crontab 5
+files which are named after accounts in
+.Pa /etc/passwd ;
+crontabs found are loaded into memory.
+.Nm
+also searches for
+.Pa /etc/crontab
+which is in a different format (see
+.Xr crontab 5 ) .
+.Nm
+then wakes up every minute, examining all loaded crontabs, checking each
+command to see if it should be run in the current minute. When executing
+commands, any output is mailed to the user named in the
+.Ev MAILTO
+environment variable in the crontab, or to the owner of the crontab if
+.Ev MAILTO
+is not present.
+.Pp
 Additionally,
-.I cron
-checks each minute to see if its spool directory's modtime (or the modtime
-on
-.IR /etc/crontab)
+.Nm
+checks each minute to see if its spool directory's modtime (or the modtime on
+.Pa /etc/crontab )
 has changed, and if it has,
-.I cron
-will then examine the modtime on all crontabs and reload those which have
-changed.  Thus
-.I cron
-need not be restarted whenever a crontab file is modified.  Note that the
-.IR Crontab (1)
+.Nm
+examines the modtime on all crontabs and reloads those which have
+changed. Thus
+.Nm
+need not be restarted whenever a crontab file is modified. Note that the
+.Xr crontab 1
 command updates the modtime of the spool directory whenever it changes a
 crontab.
-.PP
+.Pp
 Special considerations exist when the clock is changed by less than 3
-hours, for example at the beginning and end of Daylight Saving
-Time. If the time has moved forwards, those jobs which would have
+hours; for example, at the beginning and end of Daylight Saving
+Time. If the time has moved forward, those jobs which would have
 run in the time that was skipped will be run soon after the change.
-Conversely, if the time has moved backwards by less than 3 hours,
+Conversely, if the time has moved backward by less than 3 hours,
 those jobs that fall into the repeated time will not be run.
-.PP
-Only jobs that run at a particular time (not specified as
-@hourly, nor with '*' in the hour or minute specifier) are
+.Pp
+Only jobs that run at a particular time (not specified as @hourly, nor with
+.Ql *
+in the hour or minute specifier)
+are
 affected. Jobs which are specified with wildcards are run based on the
 new time immediately.
-.PP
+.Pp
 Clock changes of more than 3 hours are considered to be corrections to
 the clock, and the new time is used immediately.
-.SH "SEE ALSO"
-crontab(1), crontab(5)
-.SH AUTHOR
-.nf
+.Sh SEE ALSO
+.Xr crontab 1 ,
+.Xr crontab 5
+.Sh AUTHOR
 Paul Vixie <paul@vix.com>
