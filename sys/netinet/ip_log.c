@@ -1,4 +1,4 @@
-/*       $OpenBSD: ip_log.c,v 1.4 1999/02/05 05:58:52 deraadt Exp $       */
+/* $OpenBSD: ip_log.c,v 1.5 1999/12/15 05:20:22 kjell Exp $ */
 /*
  * Copyright (C) 1997-1998 by Darren Reed.
  *
@@ -6,22 +6,28 @@
  * provided that this notice is preserved and due credit is given
  * to the original author and the contributors.
  *
- * $Id: ip_log.c,v 1.4 1999/02/05 05:58:52 deraadt Exp $
+ * $Id: ip_log.c,v 1.5 1999/12/15 05:20:22 kjell Exp $
  */
+#include <sys/param.h>
+#if defined(KERNEL) && !defined(_KERNEL)
+# define       _KERNEL
+#endif
+#if defined(__NetBSD__) && (NetBSD >= 199905) && !defined(IPFILTER_LKM)
+# include "opt_ipfilter_log.h"
+#endif
+#ifdef  __FreeBSD__
+# if defined(_KERNEL) && !defined(IPFILTER_LKM)
+#  include <sys/osreldate.h>
+#  if defined(__FreeBSD_version) && (__FreeBSD_version >= 300000)
+#   include "opt_ipfilter.h"
+#  endif
+# else
+#  include <osreldate.h>
+# endif
+#endif
 #ifdef	IPFILTER_LOG
 # ifndef SOLARIS
 #  define SOLARIS (defined(sun) && (defined(__svr4__) || defined(__SVR4)))
-# endif
-
-# if defined(KERNEL) && !defined(_KERNEL)
-#  define       _KERNEL
-# endif
-# ifdef  __FreeBSD__
-#  if defined(_KERNEL) && !defined(IPFILTER_LKM)
-#   include <sys/osreldate.h>
-#  else
-#   include <osreldate.h>
-#  endif
 # endif
 # ifndef _KERNEL
 #  include <stdio.h>
@@ -31,7 +37,6 @@
 # endif
 # include <sys/errno.h>
 # include <sys/types.h>
-# include <sys/param.h>
 # include <sys/file.h>
 # if __FreeBSD_version >= 220000 && defined(_KERNEL)
 #  include <sys/fcntl.h>
@@ -45,7 +50,7 @@
 # endif
 # include <sys/uio.h>
 # if !SOLARIS
-#  if (NetBSD > 199609) || (OpenBSD > 199603)
+#  if (NetBSD > 199609) || (OpenBSD > 199603) || (__FreeBSD_version >= 300000)
 #   include <sys/dirent.h>
 #  else
 #   include <sys/dir.h>
@@ -98,11 +103,7 @@
 # ifndef _KERNEL
 #  include <syslog.h>
 # endif
-# if defined(__OpenBSD__)
-#  include <netinet/ip_fil_compat.h>
-# else
-#  include <netinet/ip_compat.h>
-# endif
+# include <netinet/ip_fil_compat.h>
 # include <netinet/tcpip.h>
 # include <netinet/ip_fil.h>
 # include <netinet/ip_proxy.h>
@@ -110,6 +111,10 @@
 # include <netinet/ip_frag.h>
 # include <netinet/ip_state.h>
 # include <netinet/ip_auth.h>
+# if (__FreeBSD_version >= 300000)
+#  include <sys/malloc.h>
+# endif
+
 # ifndef MIN
 #  define	MIN(a,b)	(((a)<(b))?(a):(b))
 # endif
@@ -122,10 +127,9 @@ extern	kcondvar_t	iplwait;
 #  endif
 # endif
 
-iplog_t	**iplh[IPL_LOGMAX+1], *iplt[IPL_LOGMAX+1];
-int	iplused[IPL_LOGMAX+1];
-u_long	iplcrc[IPL_LOGMAX+1];
-u_long	iplcrcinit;
+iplog_t	**iplh[IPL_LOGMAX+1], *iplt[IPL_LOGMAX+1], *ipll[IPL_LOGMAX+1];
+size_t	iplused[IPL_LOGMAX+1];
+fr_info_t	iplcrc[IPL_LOGMAX+1];
 # ifdef	linux
 static struct wait_queue *iplwait[IPL_LOGMAX+1];
 # endif
@@ -137,20 +141,15 @@ static struct wait_queue *iplwait[IPL_LOGMAX+1];
  */
 void ipflog_init()
 {
-	struct	timeval	tv;
 	int	i;
 
 	for (i = IPL_LOGMAX; i >= 0; i--) {
 		iplt[i] = NULL;
+		ipll[i] = NULL;
 		iplh[i] = &iplt[i];
 		iplused[i] = 0;
+		bzero((char *)&iplcrc[i], sizeof(iplcrc[i]));
 	}
-# if BSD >= 199306 || defined(__FreeBSD__) || defined(__sgi)
-	microtime(&tv);
-# else
-	uniqtime(&tv);
-# endif
-	iplcrcinit = tv.tv_sec ^ (tv.tv_usec << 8) ^ tv.tv_usec;
 }
 
 
@@ -169,8 +168,7 @@ fr_info_t *fin;
 mb_t *m;
 {
 	ipflog_t ipfl;
-	register int mlen, hlen;
-	u_long crc;
+	register size_t mlen, hlen;
 	size_t sizes[2];
 	void *ptrs[2];
 	int types[2];
@@ -193,12 +191,12 @@ mb_t *m;
 			struct	icmp	*icmp;
 
 			icmp = (struct icmp *)((char *)ip + hlen);
-	
+	 
 			/*
-			* For ICMP, if the packet is an error packet, also
-			* include the information about the packet which
-			* caused the error.
-			*/
+			 * For ICMP, if the packet is an error packet, also
+			 * include the information about the packet which
+			 * caused the error.
+			 */
 			switch (icmp->icmp_type)
 			{
 			case ICMP_UNREACH :
@@ -243,11 +241,15 @@ mb_t *m;
 	ipfl.fl_hlen = (u_char)hlen;
 	ipfl.fl_rule = fin->fin_rule;
 	ipfl.fl_group = fin->fin_group;
+	if (fin->fin_fr != NULL)
+		ipfl.fl_loglevel = fin->fin_fr->fr_loglevel;
+	else
+		ipfl.fl_loglevel = 0xffff;
 	ipfl.fl_flags = flags;
 	ptrs[0] = (void *)&ipfl;
 	sizes[0] = sizeof(ipfl);
 	types[0] = 0;
-#if SOLARIS
+# if SOLARIS
 	/*
 	 * Are we copied from the mblk or an aligned array ?
 	 */
@@ -260,45 +262,47 @@ mb_t *m;
 		sizes[1] = hlen + mlen;
 		types[1] = 0;
 	}
-#else
+# else
 	ptrs[1] = m;
 	sizes[1] = hlen + mlen;
 	types[1] = 1;
-#endif
-	crc = (ipf_cksum((u_short *)fin, FI_CSIZE) << 8) + iplcrcinit;
-	return ipllog(IPL_LOGIPF, crc, ptrs, sizes, types, 2);
+# endif
+	return ipllog(IPL_LOGIPF, fin, ptrs, sizes, types, 2);
 }
 
 
 /*
  * ipllog
  */
-int ipllog(dev, crc, items, itemsz, types, cnt)
+int ipllog(dev, fin, items, itemsz, types, cnt)
 int dev;
-u_long crc;
+fr_info_t *fin;
 void **items;
 size_t *itemsz;
 int *types, cnt;
 {
-	iplog_t *ipl;
 	caddr_t buf, s;
-	int len, i;
+	iplog_t *ipl;
+	size_t len;
+	int i;
  
 	/*
 	 * Check to see if this log record has a CRC which matches the last
 	 * record logged.  If it does, just up the count on the previous one
 	 * rather than create a new one.
 	 */
-	if (crc) {
-		MUTEX_ENTER(&ipl_mutex);
-		if ((iplcrc[dev] == crc) && *iplh[dev]) {
-			(*iplh[dev])->ipl_count++;
+	MUTEX_ENTER(&ipl_mutex);
+	if (fin != NULL) {
+		if ((ipll[dev] != NULL) &&
+		    bcmp((char *)fin, (char *)&iplcrc[dev], FI_CSIZE) == 0) {
+			ipll[dev]->ipl_count++;
 			MUTEX_EXIT(&ipl_mutex);
 			return 1;
 		}
-		iplcrc[dev] = crc;
-		MUTEX_EXIT(&ipl_mutex);
-	}
+		bcopy((char *)fin, (char *)&iplcrc[dev], FI_CSIZE);
+	} else
+		bzero((char *)&iplcrc[dev], FI_CSIZE);
+	MUTEX_EXIT(&ipl_mutex);
 
 	/*
 	 * Get the total amount of data to be logged.
@@ -310,7 +314,7 @@ int *types, cnt;
 	 * check that we have space to record this information and can
 	 * allocate that much.
 	 */
-	KMALLOC(buf, caddr_t, len);
+	KMALLOCS(buf, caddr_t, len);
 	if (!buf)
 		return 0;
 	MUTEX_ENTER(&ipl_mutex);
@@ -356,6 +360,7 @@ int *types, cnt;
 		s += itemsz[i];
 	}
 	MUTEX_ENTER(&ipl_mutex);
+	ipll[dev] = ipl;
 	*iplh[dev] = ipl;
 	iplh[dev] = &ipl->ipl_next;
 # if SOLARIS
@@ -374,11 +379,12 @@ int *types, cnt;
 
 
 int ipflog_read(unit, uio)
-int unit;
+minor_t unit;
 struct uio *uio;
 {
+	size_t dlen, copied;
+	int error = 0;
 	iplog_t *ipl;
-	int error = 0, dlen, copied;
 # if defined(_KERNEL) && !SOLARIS
 	int s;
 # endif
@@ -387,7 +393,7 @@ struct uio *uio;
 	 * Sanity checks.  Make sure the minor # is valid and we're copying
 	 * a valid chunk of data.
 	 */
-	if ((IPL_LOGMAX < unit) || (unit < 0))
+	if (IPL_LOGMAX < unit)
 		return ENXIO;
 	if (!uio->uio_resid)
 		return 0;
@@ -431,43 +437,48 @@ struct uio *uio;
 
 	for (copied = 0; (ipl = iplt[unit]); copied += dlen) {
 		dlen = ipl->ipl_dsize;
-		if (dlen + sizeof(iplog_t) > uio->uio_resid)
+		if (dlen > uio->uio_resid)
 			break;
 		/*
 		 * Don't hold the mutex over the uiomove call.
 		 */
 		iplt[unit] = ipl->ipl_next;
+		iplused[unit] -= dlen;
 		MUTEX_EXIT(&ipl_mutex);
 		SPL_X(s);
-		error = UIOMOVE((caddr_t)ipl, ipl->ipl_dsize, UIO_READ, uio);
-		KFREES((caddr_t)ipl, ipl->ipl_dsize);
-		if (error)
+		error = UIOMOVE((caddr_t)ipl, dlen, UIO_READ, uio);
+		if (error) {
+			SPL_NET(s);
+			MUTEX_ENTER(&ipl_mutex);
+			ipl->ipl_next = iplt[unit];
+			iplt[unit] = ipl;
+			iplused[unit] += dlen;
 			break;
+		}
+		KFREES((caddr_t)ipl, dlen);
 		SPL_NET(s);
 		MUTEX_ENTER(&ipl_mutex);
-		iplused[unit] -= dlen;
 	}
-	if (!ipl) {
+	if (!iplt[unit]) {
 		iplused[unit] = 0;
 		iplh[unit] = &iplt[unit];
+		ipll[unit] = NULL;
 	}
 
-	if (!error) {
-		MUTEX_EXIT(&ipl_mutex);
-		SPL_X(s);
-	}
-#ifdef 	linux
+	MUTEX_EXIT(&ipl_mutex);
+	SPL_X(s);
+# ifdef 	linux
 	if (!error)
-		return copied;
+		return (int)copied;
 	return -error;
-#else
+# else
 	return error;
-#endif
+# endif
 }
 
 
 int ipflog_clear(unit)
-int unit;
+minor_t unit;
 {
 	iplog_t *ipl;
 	int used;
@@ -478,9 +489,10 @@ int unit;
 		KFREES((caddr_t)ipl, ipl->ipl_dsize);
 	}
 	iplh[unit] = &iplt[unit];
+	ipll[unit] = NULL;
 	used = iplused[unit];
 	iplused[unit] = 0;
-	iplcrc[unit] = 0;
+	bzero((char *)&iplcrc[unit], FI_CSIZE);
 	MUTEX_EXIT(&ipl_mutex);
 	return used;
 }

@@ -1,8 +1,8 @@
-#	$OpenBSD: Makefile,v 1.4 1998/09/15 09:58:33 pattonme Exp $
+#	$OpenBSD: Makefile,v 1.5 1999/12/15 05:20:25 kjell Exp $
 
 PROG=	ipfstat
 MAN=	ipfstat.8
-SRCS=	fils.c parse.c opt.c kmem.c 
+SRCS=	fils.c parse.c opt.c kmem.c facpri.c 
 .PATH:  ${.CURDIR}/../../sbin/ipf
 CFLAGS+=-I${.CURDIR}/../../sbin/ipf
 

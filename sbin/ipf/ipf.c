@@ -1,4 +1,4 @@
-/*     $OpenBSD: ipf.c,v 1.19 1999/07/06 19:06:42 kjell Exp $      */
+/* $OpenBSD: ipf.c,v 1.20 1999/12/15 05:20:24 kjell Exp $ */
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
  *
@@ -35,20 +35,18 @@
 #include <netdb.h>
 #include <arpa/nameser.h>
 #include <resolv.h>
-#if defined(__OpenBSD__)
-# include <netinet/ip_fil_compat.h>
-#else
-# include <netinet/ip_compat.h>
-#endif
+#include <netinet/ip_fil_compat.h>
 #include <netinet/ip_fil.h>
+#include <netinet/ip_nat.h>
+#include <netinet/ip_state.h>
 #include "ipf.h"
+#include <netinet/ipl.h>
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)ipf.c	1.23 6/5/96 (C) 1993-1995 Darren Reed";
-static const char rcsid[] = "@(#)$Id: ipf.c,v 1.19 1999/07/06 19:06:42 kjell Exp $";
+static const char rcsid[] = "@(#)$Id: ipf.c,v 1.20 1999/12/15 05:20:24 kjell Exp $";
 #endif
 
-static	void	frsync __P((void));
 #if	SOLARIS
 static	void	blockunknown __P((void));
 #endif
@@ -60,6 +58,7 @@ extern	char	*optarg;
 extern	int	optind;
 extern	int	optreset;
 
+void	frsync __P((void));
 void	zerostats __P((void));
 int	main __P((int, char *[]));
 
@@ -74,23 +73,27 @@ static	int	opendevice __P((char *));
 static	void	closedevice __P((void));
 static	char	*getline __P((char *, size_t, FILE *));
 static	char	*ipfname = IPL_NAME;
+static	void	usage __P((void));
+static	void	showversion __P((void));
+static	int	get_flags __P((void));
 
 #if SOLARIS
-#define OPTS	"AdDEf:F:Il:noPrsUvyzZ"
+#define OPTS	"AdDEf:F:Il:noPrsUvVyzZ"
 #else
-#define OPTS	"AdDEf:F:Il:noPrsvyzZ"
+#define OPTS	"AdDEf:F:Il:noPrsvVyzZ"
 #endif
 
-void usage()
+static void usage()
 {
 #if SOLARIS
-	fprintf(stderr, "usage: ipf [-AdDEInorsUvyzZ] [-l block|pass|nomatch] "
+	fprintf(stderr, "usage: ipf [-AdDEInoPrsUvVyzZ] %s %s %s\n",
 #else
-	fprintf(stderr, "usage: ipf [-AdDEInorsvyzZ] [-l block|pass|nomatch] "
+	fprintf(stderr, "usage: ipf [-AdDEInoPrsvVyzZ] %s %s %s\n",
 #endif
-	    "[-F i|o|a|s|S] [-f filename]\n");
+		"[-l block|pass|nomatch]", "[-F i|o|a|s|S]", "[-f filename]");
 	exit(1);
 }
+
 
 int main(argc,argv)
 int argc;
@@ -154,6 +157,9 @@ char *argv[];
 		case 'v' :
 			opts |= OPT_VERBOSE;
 			break;
+		case 'V' :
+			showversion();
+			break;
 		case 'y' :
 			frsync();
 			break;
@@ -198,6 +204,18 @@ static void closedevice()
 }
 
 
+static	int	get_flags()
+{
+	int i;
+
+	if ((opendevice(ipfname) != -2) && (ioctl(fd, SIOCGETFF, &i) == -1)) {
+		perror("SIOCFRENB");
+		return 0;
+	}
+	return i;
+}
+
+
 static	void	set_state(enable)
 u_int	enable;
 {
@@ -213,13 +231,17 @@ char	*name, *file;
 	FILE	*fp;
 	char	line[513], *s;
 	struct	frentry	*fr;
-	u_int	add = SIOCADAFR, del = SIOCRMAFR;
+	u_int	add, del;
+	int     linenum = 0;
 
 	(void) opendevice(ipfname);
 
 	if (opts & OPT_INACTIVE) {
 		add = SIOCADIFR;
 		del = SIOCRMIFR;
+	} else {
+		add = SIOCADAFR;
+		del = SIOCRMAFR;
 	}
 	if (opts & OPT_DEBUG)
 		printf("add %x del %x\n", add, del);
@@ -235,6 +257,7 @@ char	*name, *file;
 	}
 
 	while (getline(line, sizeof(line), fp)) {
+	        linenum++;
 		/*
 		 * treat CR as EOL.  LF is converted to NUL by getline().
 		 */
@@ -252,7 +275,7 @@ char	*name, *file;
 		if (opts & OPT_VERBOSE)
 			(void)fprintf(stderr, "[%s]\n", line);
 
-		fr = parse(line);
+		fr = parse(line, linenum);
 		(void)fflush(stdout);
 
 		if (fr) {
@@ -339,13 +362,12 @@ FILE	*file;
 static void packetlogon(opt)
 char	*opt;
 {
-	int	err, flag = 0;
+	int	flag, err;
 
-	if ((opts & (OPT_DONOTHING|OPT_VERBOSE)) == OPT_VERBOSE) {
-		if ((err = ioctl(fd, SIOCGETFF, &flag)))
-			perror("ioctl(SIOCGETFF)");
-
-		printf("log flag is currently %#x\n", flag);
+	err = get_flags();
+	if (err != 0) {
+		if ((opts & (OPT_DONOTHING|OPT_VERBOSE)) == OPT_VERBOSE)
+			printf("log flag is currently %#x\n", flag);
 	}
 
 	flag &= ~(FF_LOGPASS|FF_LOGNOMATCH|FF_LOGBLOCK);
@@ -370,9 +392,7 @@ char	*opt;
 		perror("ioctl(SIOCSETFF)");
 
 	if ((opts & (OPT_DONOTHING|OPT_VERBOSE)) == OPT_VERBOSE) {
-		if ((err = ioctl(fd, SIOCGETFF, &flag)))
-			perror("ioctl(SIOCGETFF)");
-
+		flag = get_flags();
 		printf("log flag is now %#x\n", flag);
 	}
 }
@@ -434,7 +454,7 @@ static void swapactive()
 }
 
 
-static void frsync()
+void frsync()
 {
 	int frsyn = 0;
 
@@ -495,17 +515,14 @@ friostat_t	*fp;
 #if SOLARIS
 static void blockunknown()
 {
-	int	flag;
+	u_32_t	flag;
 
 	if (opendevice(ipfname) == -1)
 		return;
 
-	if ((opts & (OPT_DONOTHING|OPT_VERBOSE)) == OPT_VERBOSE) {
-		if (ioctl(fd, SIOCGETFF, &flag))
-			perror("ioctl(SIOCGETFF)");
-
+	flag = get_flags();
+	if ((opts & (OPT_DONOTHING|OPT_VERBOSE)) == OPT_VERBOSE)
 		printf("log flag is currently %#x\n", flag);
-	}
 
 	flag ^= FF_BLOCKNONIP;
 
@@ -520,3 +537,54 @@ static void blockunknown()
 	}
 }
 #endif
+
+
+static void showversion()
+{
+	struct friostat fio;
+	u_32_t flags;
+	char *s;
+
+	printf("ipf: %s (%d)\n", IPL_VERSION, sizeof(frentry_t));
+
+	if (opendevice(ipfname) != -2 && ioctl(fd, SIOCGETFS, &fio)) {
+		perror("ioctl(SIOCGETFS");
+		return;
+	}
+	flags = get_flags();
+
+	printf("Kernel: %-*.*s\n", (int)sizeof(fio.f_version),
+		(int)sizeof(fio.f_version), fio.f_version);
+	printf("Running: %s\n", fio.f_running ? "yes" : "no");
+	printf("Log Flags: %#x = ", flags);
+	s = "";
+	if (flags & FF_LOGPASS) {
+		printf("pass");
+		s = ", ";
+	}
+	if (flags & FF_LOGBLOCK) {
+		printf("%sblock", s);
+		s = ", ";
+	}
+	if (flags & FF_LOGNOMATCH) {
+		printf("%snomatch", s);
+		s = ", ";
+	}
+	if (flags & FF_BLOCKNONIP) {
+		printf("%snonip", s);
+		s = ", ";
+	}
+	if (!*s)
+		printf("none set");
+	putchar('\n');
+
+	printf("Default: ");
+	if (fio.f_defpass & FR_PASS)
+		s = "pass";
+	else if (fio.f_defpass & FR_BLOCK)
+		s = "block";
+	else
+		s = "nomatch -> block";
+	printf("%s all, Logging: %savailable\n", s, fio.f_logging ? "" : "un");
+	printf("Active list: %d\n", fio.f_active);
+}

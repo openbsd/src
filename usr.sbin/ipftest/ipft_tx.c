@@ -1,4 +1,4 @@
-/*    $OpenBSD: ipft_tx.c,v 1.12 1999/02/05 05:58:46 deraadt Exp $     */
+/* $OpenBSD: ipft_tx.c,v 1.13 1999/12/15 05:20:26 kjell Exp $ */
 /*
  * Copyright (C) 1995-1998 by Darren Reed.
  *
@@ -37,18 +37,14 @@
 #include <netdb.h>
 #include <arpa/nameser.h>
 #include <resolv.h>
-#if defined(__OpenBSD__)
-# include <netinet/ip_fil_compat.h>
-#else
-# include <netinet/ip_compat.h>
-#endif
+#include <netinet/ip_fil_compat.h>
 #include <netinet/tcpip.h>
 #include "ipf.h"
 #include "ipt.h"
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)ipft_tx.c	1.7 6/5/96 (C) 1993 Darren Reed";
-static const char rcsid[] = "@(#)$Id: ipft_tx.c,v 1.12 1999/02/05 05:58:46 deraadt Exp $";
+static const char rcsid[] = "@(#)$Id: ipft_tx.c,v 1.13 1999/12/15 05:20:26 kjell Exp $";
 #endif
 
 extern	int	opts;
@@ -201,7 +197,7 @@ int	cnt, *dir;
 		*dir = 0;
 		if (!parseline(line, (ip_t *)buf, ifn, dir))
 #if 0
-			return sizeof(struct tcpiphdr);
+			return sizeof(*ip) + sizeof(tcphdr_t);
 #else
 			return sizeof(ip_t);
 #endif
@@ -268,6 +264,9 @@ int	*out;
 			tx_proto = "icmp";
 		}
 		cpp++;
+	} else if (isdigit(**cpp) && !index(*cpp, '.')) {
+		ip->ip_p = atoi(*cpp);
+		cpp++;
 	} else
 		ip->ip_p = IPPROTO_IP;
 
@@ -314,6 +313,7 @@ int	*out;
 			cpp++;
 		assert(tcp->th_flags != 0);
 		tcp->th_win = htons(4096);
+		tcp->th_off = sizeof(*tcp) >> 2;
 	} else if (*cpp && ip->ip_p == IPPROTO_ICMP) {
 		extern	char	*tx_icmptypes[];
 		char	**s, *t;
@@ -346,5 +346,6 @@ int	*out;
 	else if (ip->ip_p == IPPROTO_ICMP)
 		bcopy((char *)ic, ((char *)ip) + (ip->ip_hl << 2),
 			sizeof(*ic));
+	ip->ip_len = htons(ip->ip_len);
 	return 0;
 }

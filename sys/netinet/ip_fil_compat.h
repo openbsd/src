@@ -1,4 +1,4 @@
-/*       $OpenBSD: ip_fil_compat.h,v 1.10 1999/02/05 05:58:51 deraadt Exp $ */
+/* $OpenBSD: ip_fil_compat.h,v 1.11 1999/12/15 05:20:21 kjell Exp $ */
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
  *
@@ -7,7 +7,7 @@
  * to the original author and the contributors.
  *
  * @(#)ip_compat.h	1.8 1/14/96
- * $Id: ip_fil_compat.h,v 1.10 1999/02/05 05:58:51 deraadt Exp $
+ * $Id: ip_fil_compat.h,v 1.11 1999/12/15 05:20:21 kjell Exp $
  */
 
 #ifndef	__IP_COMPAT_H__
@@ -18,8 +18,11 @@
 #  define	__P(x)  x
 # else
 #  define	__P(x)  ()
-#  define	const
 # endif
+#endif
+#ifndef	__STDC__
+# undef		const
+# define	const
 #endif
 
 #ifndef	SOLARIS
@@ -73,6 +76,7 @@ struct  ether_addr {
 #endif
 #if	SOLARIS
 # define	MTYPE(m)	((m)->b_datap->db_type)
+# include	<sys/isa_defs.h>
 # include	<sys/ioccom.h>
 # include	<sys/sysmacros.h>
 # include	<sys/kmem.h>
@@ -96,6 +100,15 @@ struct  ether_addr {
 #  include <inet/ip.h>
 #  include <inet/ip_ire.h>
 # endif /* _KERNEL */
+# if SOLARIS2 >= 8
+#  include <netinet/ip6.h>
+#  include <inet/ip6.h>
+#  define	ipif_local_addr	ipif_lcl_addr
+# endif
+#else
+# if !defined(__sgi)
+typedef	 int	minor_t;
+#endif
 #endif /* SOLARIS */
 #define	IPMINLEN(i, h)	((i)->ip_len >= ((i)->ip_hl * 4 + sizeof(struct h)))
 
@@ -122,7 +135,7 @@ typedef u_int32_t       u_32_t;
 /*
  * Really, any arch where sizeof(long) != sizeof(int).
  */
-# if defined(__alpha__) || defined(__alpha)
+# if defined(__alpha__) || defined(__alpha) || defined(_LP64)
 typedef unsigned int    u_32_t;
 # else
 typedef unsigned long   u_32_t;
@@ -214,6 +227,10 @@ typedef unsigned long   u_32_t;
 #   define	KRWLOCK_T		krwlock_t
 #   define	READ_ENTER(x)		rw_enter(x, RW_READER)
 #   define	WRITE_ENTER(x)		rw_enter(x, RW_WRITER)
+#   define	RW_UPGRADE(x)		{ if (rw_tryupgrade(x) == 0) { \
+					      rw_exit(x); \
+					      rw_enter(x, RW_WRITER); } \
+					}
 #   define	MUTEX_DOWNGRADE(x)	rw_downgrade(x)
 #   define	RWLOCK_INIT(x, y, z)	rw_init((x), (y), RW_DRIVER, (z))
 #   define	RWLOCK_EXIT(x)		rw_exit(x)
@@ -242,7 +259,8 @@ typedef unsigned long   u_32_t;
 #   define	htons(x)	(x)
 #   define	htonl(x)	(x)
 #  endif /* sparc */
-#  define	KMALLOC(a,b,c)	(a) = (b)kmem_alloc((c), KM_NOSLEEP)
+#  define	KMALLOC(a,b)	(a) = (b)kmem_alloc(sizeof(*(a)), KM_NOSLEEP)
+#  define	KMALLOCS(a,b,c)	(a) = (b)kmem_alloc((c), KM_NOSLEEP)
 #  define	GET_MINOR(x)	getminor(x)
 typedef	struct	qif	{
 	struct	qif	*qf_next;
@@ -258,18 +276,19 @@ typedef	struct	qif	{
 	struct	qinit	qf_rqinit;
 	mblk_t	*qf_m;	/* These three fields are for passing data up from */
 	queue_t	*qf_q;	/* fr_qin and fr_qout to the packet processing. */
-	int	qf_off;
-	int	qf_len;	/* this field is used for in ipfr_fastroute */
+	size_t	qf_off;
+	size_t	qf_len;	/* this field is used for in ipfr_fastroute */
 	char	qf_name[8];
 	/*
 	 * in case the ILL has disappeared...
 	 */
-	int	qf_hl;	/* header length */
+	size_t	qf_hl;	/* header length */
 } qif_t;
 extern	ill_t	*get_unit __P((char *));
 #  define	GETUNIT(n)	get_unit((n))
 # else /* SOLARIS */
 #  if defined(__sgi)
+#   define  hz HZ
 #   include <sys/ksynch.h>
 #   define	IPF_LOCK_PL	plhi
 #   include <sys/sema.h>
@@ -286,6 +305,7 @@ typedef struct {
 #   define	KRWLOCK_T		kmutex_t
 #   define	READ_ENTER(x)		MUTEX_ENTER(x)
 #   define	WRITE_ENTER(x)		MUTEX_ENTER(x)
+#   define	RW_UPGRADE(x)		;
 #   define	MUTEX_DOWNGRADE(x)	;
 #   define	RWLOCK_EXIT(x)	MUTEX_EXIT(x)
 #   define	MUTEX_EXIT(x)	UNLOCK((x)->l, (x)->pl);
@@ -295,6 +315,7 @@ typedef struct {
 #   define	MUTEX_ENTER(x)		;
 #   define	READ_ENTER(x)	;
 #   define	WRITE_ENTER(x)	;
+#   define	RW_UPGRADE(x)	;
 #   define	MUTEX_DOWNGRADE(x)	;
 #   define	RWLOCK_EXIT(x)	;
 #   define	MUTEX_EXIT(x)	;
@@ -331,11 +352,14 @@ extern	void	m_copyback __P((struct mbuf *, int, int, caddr_t));
 #  ifdef __sgi
 #   include <sys/kmem.h>
 #   include <sys/ddi.h>
-#   define	KMALLOC(a,b,c)	(a) = (b)kmem_alloc((c), KM_NOSLEEP)
+#   define	KMALLOC(a,b)	(a) = (b)kmem_alloc(sizeof(*(a)), KM_NOSLEEP)
+#   define	KMALLOCS(a,b,c)	(a) = (b)kmem_alloc((c), KM_NOSLEEP)
 #   define	GET_MINOR(x)	getminor(x)
 #  else
 #   if !SOLARIS
-#    define	KMALLOC(a,b,c)	(a) = (b)new_kmem_alloc((c), KMEM_NOSLEEP)
+#    define	KMALLOC(a,b)	(a) = (b)new_kmem_alloc(sizeof(*(a)), \
+							KMEM_NOSLEEP)
+#    define	KMALLOCS(a,b,c)	(a) = (b)new_kmem_alloc((c), KMEM_NOSLEEP)
 #   endif /* SOLARIS */
 #  endif /* __sgi */
 # endif /* sun && !linux */
@@ -352,11 +376,13 @@ extern	vm_map_t	kmem_map;
 #   include <vm/vm_kern.h>
 #  endif /* !__FreeBSD__ || (__FreeBSD__ && __FreeBSD__>=3) */
 #  ifdef	M_PFIL
-#   define	KMALLOC(a, b, c)	MALLOC((a), b, (c), M_PFIL, M_NOWAIT)
+#   define	KMALLOC(a, b)	MALLOC((a), b, sizeof(*(a)), M_PFIL, M_NOWAIT)
+#   define	KMALLOCS(a, b, c)	MALLOC((a), b, (c), M_PFIL, M_NOWAIT)
 #   define	KFREE(x)	FREE((x), M_PFIL)
 #   define	KFREES(x,s)	FREE((x), M_PFIL)
 #  else
-#   define	KMALLOC(a, b, c)	MALLOC((a), b, (c), M_TEMP, M_NOWAIT)
+#   define	KMALLOC(a, b)	MALLOC((a), b, sizeof(*(a)), M_TEMP, M_NOWAIT)
+#   define	KMALLOCS(a, b, c)	MALLOC((a), b, (c), M_TEMP, M_NOWAIT)
 #   define	KFREE(x)	FREE((x), M_TEMP)
 #   define	KFREES(x,s)	FREE((x), M_TEMP)
 #  endif /* M_PFIL */
@@ -384,6 +410,7 @@ extern	vm_map_t	kmem_map;
 # define	MUTEX_ENTER(x)	;
 # define	READ_ENTER(x)	;
 # define	WRITE_ENTER(x)	;
+# define	RW_UPGRADE(x)	;
 # define	MUTEX_DOWNGRADE(x)	;
 # define	RWLOCK_EXIT(x)	;
 # define	MUTEX_EXIT(x)	;
@@ -391,7 +418,8 @@ extern	vm_map_t	kmem_map;
 # define	SPL_IMP(x)	;
 # undef		SPL_X
 # define	SPL_X(x)	;
-# define	KMALLOC(a,b,c)	(a) = (b)malloc(c)
+# define	KMALLOC(a,b)	(a) = (b)malloc(sizeof(*a))
+# define	KMALLOCS(a,b,c)	(a) = (b)malloc(c)
 # define	KFREE(x)	free(x)
 # define	KFREES(x,s)	free(x)
 # define	GETUNIT(x)	get_unit(x)
@@ -401,6 +429,15 @@ extern	vm_map_t	kmem_map;
 
 #if SOLARIS
 typedef mblk_t mb_t;
+# if SOLARIS2 >= 7
+#  ifdef lint
+#   define ALIGN32(ptr)    (ptr ? 0L : 0L)
+#   define ALIGN16(ptr)    (ptr ? 0L : 0L)
+#  else
+#   define ALIGN32(ptr)    (ptr)
+#   define ALIGN16(ptr)    (ptr)
+#  endif
+# endif
 #else
 # ifdef	linux
 #  ifndef kernel
@@ -619,8 +656,8 @@ typedef	struct	{
 	__u8	ip_hl:4;
 	__u8	ip_v:4;
 # else
-	__u8	ip_hl:4;
 	__u8	ip_v:4;
+	__u8	ip_hl:4;
 # endif
 	__u8	ip_tos;
 	__u16	ip_len;
@@ -727,7 +764,8 @@ typedef	struct	uio	{
 
 #  define	UNITNAME(n)	dev_get((n))
 
-#  define	KMALLOC(a,b,c)	(a) = (b)kmalloc((c), GFP_ATOMIC)
+#  define	KMALLOC(a,b)	(a) = (b)kmalloc(sizeof(*(a)), GFP_ATOMIC)
+#  define	KMALLOCS(a,b,c)	(a) = (b)kmalloc((c), GFP_ATOMIC)
 #  define	KFREE(x)	kfree_s((x), sizeof(*(x)))
 #  define	KFREES(x,s)	kfree_s((x), (s))
 #  define	IRCOPY(a,b,c)	{ \
@@ -791,7 +829,9 @@ struct	ether_addr	{
  * another IP header and then 64 bits of data, totalling 56.  Of course,
  * the last 64 bits is dependant on that being available.
  */
-#define       ICMPERR_MINPKTLEN       (20 + 8 + 20)
-#define       ICMPERR_MAXPKTLEN       (20 + 8 + 20 + 8)
+#define	ICMPERR_ICMPHLEN	8
+#define	ICMPERR_IPICMPHLEN	(20 + 8)
+#define	ICMPERR_MINPKTLEN	(20 + 8 + 20)
+#define	ICMPERR_MAXPKTLEN	(20 + 8 + 20 + 8)
 
 #endif	/* __IP_COMPAT_H__ */

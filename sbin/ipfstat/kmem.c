@@ -1,4 +1,4 @@
-/*    $OpenBSD: kmem.c,v 1.11 1999/07/08 00:02:26 deraadt Exp $    */
+/* $OpenBSD: kmem.c,v 1.12 1999/12/15 05:20:25 kjell Exp $ */
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
  *
@@ -21,7 +21,7 @@
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)kmem.c	1.4 1/12/96 (C) 1992 Darren Reed";
-static const char rcsid[] = "@(#)$Id: kmem.c,v 1.11 1999/07/08 00:02:26 deraadt Exp $";
+static const char rcsid[] = "@(#)$Id: kmem.c,v 1.12 1999/12/15 05:20:25 kjell Exp $";
 #endif
 
 static	int	kmemfd = -1;
@@ -68,5 +68,40 @@ register int	n;
 			buf += r;
 			n -= r;
 		    }
+	return 0;
+}
+
+int	kstrncpy(buf, pos, n)
+register char	*buf;
+long	pos;
+register int	n;
+{
+	register int	r;
+
+	if (!n)
+		return 0;
+	if (kmemfd == -1)
+		if (openkmem(nlistf, memf) == -1)
+			return -1;
+	if (lseek(kmemfd, pos, 0) == -1)
+	    {
+		perror("kmemcpy:lseek");
+		return -1;
+	    }
+	while (n > 0) {
+		r = read(kmemfd, buf, 1);
+		if (r <= 0)
+		    {
+			perror("kmemcpy:read");
+			return -1;
+		    }
+		else
+		    {
+			if (*buf == '\0')
+				break;
+			buf++;
+			n--;
+		    }
+	}
 	return 0;
 }

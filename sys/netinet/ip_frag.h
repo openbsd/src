@@ -1,4 +1,4 @@
-/*       $OpenBSD: ip_frag.h,v 1.8 1999/02/05 05:58:51 deraadt Exp $       */
+/* $OpenBSD: ip_frag.h,v 1.9 1999/12/15 05:20:22 kjell Exp $ */
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
  *
@@ -7,7 +7,7 @@
  * to the original author and the contributors.
  *
  * @(#)ip_frag.h	1.5 3/24/96
- * $Id: ip_frag.h,v 1.8 1999/02/05 05:58:51 deraadt Exp $
+ * $Id: ip_frag.h,v 1.9 1999/12/15 05:20:22 kjell Exp $
  */
 
 #ifndef	__IP_FRAG_H__
@@ -25,7 +25,7 @@ typedef	struct	ipfr	{
 	u_char	ipfr_tos;
 	u_short	ipfr_off;
 	u_short	ipfr_ttl;
-	u_char	ipfr_pass;
+	frentry_t *ipfr_rule;
 } ipfr_t;
 
 
@@ -44,16 +44,21 @@ typedef	struct	ipfrstat {
 
 extern	int	fr_ipfrttl;
 extern	ipfrstat_t	*ipfr_fragstats __P((void));
-extern	int	ipfr_newfrag __P((ip_t *, fr_info_t *, int));
-extern	int	ipfr_nat_newfrag __P((ip_t *, fr_info_t *, int, struct nat *));
+extern	int	ipfr_newfrag __P((ip_t *, fr_info_t *, u_int));
+extern	int	ipfr_nat_newfrag __P((ip_t *, fr_info_t *, u_int, struct nat *));
 extern	nat_t	*ipfr_nat_knownfrag __P((ip_t *, fr_info_t *));
-extern	int	ipfr_knownfrag __P((ip_t *, fr_info_t *));
+extern	frentry_t *ipfr_knownfrag __P((ip_t *, fr_info_t *));
 extern	void	ipfr_forget __P((void *));
 extern	void	ipfr_unload __P((void));
 
 #if     (BSD >= 199306) || SOLARIS || defined(__sgi)
+# if defined(SOLARIS2) && (SOLARIS2 < 7)
 extern	void	ipfr_slowtimer __P((void));
+# else
+extern	void	ipfr_slowtimer __P((void *));
+# endif
 #else
 extern	int	ipfr_slowtimer __P((void));
 #endif
+
 #endif	/* __IP_FIL_H__ */

@@ -1,4 +1,4 @@
-/*    $OpenBSD: fils.c,v 1.16 1999/07/08 00:05:21 deraadt Exp $    */
+/* $OpenBSD: fils.c,v 1.17 1999/12/15 05:20:25 kjell Exp $ */
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
  *
@@ -6,11 +6,13 @@
  * provided that this notice is preserved and due credit is given
  * to the original author and the contributors.
  */
-
+#ifdef  __FreeBSD__
+# include <osreldate.h>
+#endif
 #include <stdio.h>
 #include <string.h>
 #if !defined(__SVR4) && !defined(__svr4__)
-#include <strings.h>
+# include <strings.h>
 #endif
 #include <sys/types.h>
 #include <sys/time.h>
@@ -28,15 +30,14 @@
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <net/if.h>
+#if __FreeBSD_version >= 300000
+# include <net/if_var.h>
+#endif
 #include <netdb.h>
 #include <arpa/nameser.h>
 #include <resolv.h>
 #include <netinet/tcp.h>
-#if defined(__OpenBSD__)
-# include <netinet/ip_fil_compat.h>
-#else
-# include <netinet/ip_compat.h>
-#endif
+#include <netinet/ip_fil_compat.h>
 #include <netinet/ip_fil.h>
 #include "ipf.h"
 #include <netinet/ip_proxy.h>
@@ -51,7 +52,7 @@
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)fils.c	1.21 4/20/96 (C) 1993-1996 Darren Reed";
-static const char rcsid[] = "@(#)$Id: fils.c,v 1.16 1999/07/08 00:05:21 deraadt Exp $";
+static const char rcsid[] = "@(#)$Id: fils.c,v 1.17 1999/12/15 05:20:25 kjell Exp $";
 #endif
 
 #define	F_IN	0
@@ -70,16 +71,21 @@ static	void	showfrstates __P((int, ipfrstat_t *));
 static	void	showlist __P((friostat_t *));
 static	void	showipstates __P((int, ips_stat_t *));
 static	void	showauthstates __P((int, fr_authstat_t *));
+static	void	showgroups __P((friostat_t *));
 static	void	Usage __P((char *));
 static	void	printlist __P((frentry_t *));
+static	char	*get_ifname __P((void *));
+
 
 static void Usage(name)
 char *name;
 {
 	fprintf(stderr,
-	    "usage: %s [-aAfhIinosv] [-d device] [-M core] [-N system]\n", name);
+	    "usage: %s [-aAfhIinosv] [-d device] [-M core] [-N system]\n", 
+		name);
 	exit(1);
 }
+
 
 int main(argc,argv)
 int argc;
@@ -107,6 +113,9 @@ char *argv[];
 			break;
 		case 'f' :
 			opts |= OPT_FRSTATES;
+			break;
+		case 'g' :
+			opts |= OPT_GROUPS;
 			break;
 		case 'h' :
 			opts |= OPT_HITS;
@@ -202,6 +211,8 @@ char *argv[];
 			showfrstates(fd, &ifrst);
 		else if (opts & OPT_AUTHSTATS)
 			showauthstates(fd, &frauthst);
+		else if (opts & OPT_GROUPS)
+			showgroups(&fio);
 		else
 			showstats(fd, &fio);
 	}
@@ -216,7 +227,7 @@ static	void	showstats(fd, fp)
 int	fd;
 struct	friostat	*fp;
 {
-	int	frf = 0;
+	u_32_t	frf = 0;
 
 	if (ioctl(fd, SIOCGETFF, &frf) == -1)
 		perror("ioctl(SIOCGETFF)");
@@ -374,19 +385,19 @@ ips_stat_t *ipsp;
 	printf("IP states added:\n\t%lu TCP\n\t%lu UDP\n\t%lu ICMP\n",
 		ipsp->iss_tcp, ipsp->iss_udp, ipsp->iss_icmp);
 	printf("\t%lu hits\n\t%lu misses\n", ipsp->iss_hits, ipsp->iss_miss);
-	printf("\t%lu maximum\n\t%lu no memory\n",
-		ipsp->iss_max, ipsp->iss_nomem);
+	printf("\t%lu maximum\n\t%lu no memory\n\tbuckets in use\t%lu\n",
+		ipsp->iss_max, ipsp->iss_nomem, ipsp->iss_inuse);
 	printf("\t%lu active\n\t%lu expired\n\t%lu closed\n",
 		ipsp->iss_active, ipsp->iss_expire, ipsp->iss_fin);
 	if (kmemcpy((char *)istab, (u_long)ipsp->iss_table, sizeof(istab)))
 		return;
-	for (i = 0; i < IPSTATE_SIZE; i++)
+	for (i = 0; i < IPSTATE_SIZE; i++) {
 		while (istab[i]) {
 			if (kmemcpy((char *)&ips, (u_long)istab[i],
 				    sizeof(ips)) == -1)
 				break;
 			printf("%s -> ", inet_ntoa(ips.is_src));
-			printf("%s ttl %ld pass %d pr %d state %d/%d\n",
+			printf("%s ttl %ld pass %#x pr %d state %d/%d\n",
 				inet_ntoa(ips.is_dst), ips.is_age,
 				ips.is_pass, ips.is_p, ips.is_state[0],
 				ips.is_state[1]);
@@ -398,11 +409,20 @@ ips_stat_t *ipsp;
 				ips.is_pkts, ips.is_bytes);
 #endif
 			if (ips.is_p == IPPROTO_TCP)
-				printf("\t%hu -> %hu %lu:%lu %hu:%hu",
+#if defined(NetBSD) && (NetBSD >= 199905) && (NetBSD < 1991011) || \
+    (__FreeBSD_version >= 220000) || defined(__OpenBSD__)
+				printf("\t%hu -> %hu %x:%x %hu:%hu",
 					ntohs(ips.is_sport),
 					ntohs(ips.is_dport),
-					ips.is_seq, ips.is_ack,
-					ips.is_swin, ips.is_dwin);
+					ips.is_send, ips.is_dend,
+					ips.is_maxswin, ips.is_maxdwin);
+#else
+				printf("\t%hu -> %hu %lx:%lx %hu:%hu",
+					ntohs(ips.is_sport),
+					ntohs(ips.is_dport),
+					ips.is_send, ips.is_dend,
+					ips.is_maxswin, ips.is_maxdwin);
+#endif
 			else if (ips.is_p == IPPROTO_UDP)
 				printf(" %hu -> %hu", ntohs(ips.is_sport),
 					ntohs(ips.is_dport));
@@ -417,10 +437,20 @@ ips_stat_t *ipsp;
 				printf("pass");
 			} else if (ips.is_pass & FR_BLOCK) {
 				printf("block");
-				if (ips.is_pass & FR_RETICMP)
+				switch (ips.is_pass & FR_RETMASK)
+				{
+				case FR_RETICMP :
 					printf(" return-icmp");
-				if (ips.is_pass & FR_RETRST)
+					break;
+				case FR_FAKEICMP :
+					printf(" return-icmp-as-dest");
+					break;
+				case FR_RETRST :
 					printf(" return-rst");
+					break;
+				default :
+					break;
+				}
 			} else if ((ips.is_pass & FR_LOGMASK) == FR_LOG) {
 					printf("log");
 				if (ips.is_pass & FR_LOGBODY)
@@ -435,7 +465,7 @@ ips_stat_t *ipsp;
 			else
 				printf(" in");
 
-			if ((ips.is_pass & (FR_LOGB|FR_LOGP)) != 0) {
+			if ((ips.is_pass & FR_LOG) != 0) {
 				printf(" log");
 				if (ips.is_pass & FR_LOGBODY)
 					printf(" body");
@@ -453,7 +483,8 @@ ips_stat_t *ipsp;
 				printf(" keep state");
 			printf("\n");
 
-			printf("\tpkt_flags & %x = %x,\t", ips.is_flags & 0xf,
+			printf("\tpkt_flags & %x(%x) = %x,\t",
+				ips.is_flags & 0xf, ips.is_flags,
 				ips.is_flags >> 4);
 			printf("\tpkt_options & %x = %x\n", ips.is_optmsk,
 				ips.is_opt);
@@ -461,7 +492,12 @@ ips_stat_t *ipsp;
 				ips.is_secmsk, ips.is_sec, ips.is_authmsk,
 				ips.is_auth);
 			istab[i] = ips.is_next;
+			printf("interfaces: in %s[%p] ",
+			       get_ifname(ips.is_ifpin), ips.is_ifpin);
+			printf("out %s[%p]\n",
+			       get_ifname(ips.is_ifpout), ips.is_ifpout);
 		}
+	}
 }
 
 
@@ -470,6 +506,7 @@ int fd;
 ipfrstat_t *ifsp;
 {
 	struct ipfr *ipfrtab[IPFT_SIZE], ifr;
+	frentry_t fr;
 	int i;
 
 	printf("IP fragment states:\n\t%lu new\n\t%lu expired\n\t%lu hits\n",
@@ -485,10 +522,13 @@ ipfrstat_t *ifsp;
 				    sizeof(ifr)) == -1)
 				break;
 			printf("%s -> ", inet_ntoa(ifr.ipfr_src));
+			if (kmemcpy((char *)&fr, (u_long)ifr.ipfr_rule,
+				    sizeof(fr)) == -1)
+				break;
 			printf("%s %d %d %d %#02x = %#x\n",
 				inet_ntoa(ifr.ipfr_dst), ifr.ipfr_id,
 				ifr.ipfr_ttl, ifr.ipfr_p, ifr.ipfr_tos,
-				ifr.ipfr_pass);
+				fr.fr_flags);
 			ipfrtab[i] = ifr.ipfr_next;
 		}
 }
@@ -498,6 +538,8 @@ static void showauthstates(fd, asp)
 int fd;
 fr_authstat_t *asp;
 {
+	frauthent_t *frap, fra;
+
 #ifdef	USE_QUAD_T
 	printf("Authorisation hits: %qd\tmisses %qd\n", asp->fas_hits,
 		asp->fas_miss);
@@ -510,4 +552,98 @@ fr_authstat_t *asp;
 		asp->fas_sendok);
 	printf("queok %ld\nquefail %ld\nexpire %ld\n",
 		asp->fas_queok, asp->fas_quefail, asp->fas_expire);
+
+	frap = asp->fas_faelist;
+	while (frap) {
+		if (kmemcpy((char *)&fra, (u_long)frap, sizeof(fra)) == -1)
+			break;
+
+		printf("age %ld\t", fra.fae_age);
+		printfr(&fra.fae_fr);
+		frap = fra.fae_next;
+	}
+}
+
+
+static char *get_ifname(ptr)
+void *ptr;
+{
+#if SOLARIS
+	char *ifname;
+	ill_t ill;
+
+	if (ptr == (void *)-1)
+		return "!";
+	if (ptr == NULL)
+		return "-";
+
+	if (kmemcpy((char *)&ill, (u_long)ptr, sizeof(ill)) == -1)
+		return "X";
+	ifname = malloc(ill.ill_name_length + 1);
+	if (kmemcpy(ifname, (u_long)ill.ill_name,
+		    ill.ill_name_length) == -1)
+		return "X";
+	return ifname;
+#else
+# if defined(NetBSD) && (NetBSD >= 199905) && (NetBSD < 1991011) || \
+    defined(__OpenBSD__)
+#else
+	char buf[32];
+	int len;
+# endif
+	struct ifnet netif;
+
+	if (ptr == (void *)-1)
+		return "!";
+	if (ptr == NULL)
+		return "-";
+
+	if (kmemcpy((char *)&netif, (u_long)ptr, sizeof(netif)) == -1)
+		return "X";
+# if defined(NetBSD) && (NetBSD >= 199905) && (NetBSD < 1991011) || \
+    defined(__OpenBSD__)
+	return strdup(netif.if_xname);
+# else
+	if (kstrncpy(buf, (u_long)netif.if_name, sizeof(buf)) == -1)
+		return "X";
+	if (netif.if_unit < 10)
+		len = 2;
+	else if (netif.if_unit < 1000)
+		len = 3;
+	else if (netif.if_unit < 10000)
+		len = 4;
+	else
+		len = 5;
+	buf[sizeof(buf) - len] = '\0';
+	sprintf(buf + strlen(buf), "%d", netif.if_unit % 10000);
+	return strdup(buf);
+# endif
+#endif
+}
+
+
+static void showgroups(fiop)
+struct friostat	*fiop;
+{
+	static char *gnames[3] = { "Filter", "Accounting", "Authentication" };
+	frgroup_t *fp, grp;
+	int on, off, i;
+
+	on = fiop->f_active;
+	off = 1 - on;
+
+	for (i = 0; i < 3; i++) {
+		printf("%s groups (active):\n", gnames[i]);
+		for (fp = fiop->f_groups[i][on]; fp; fp = grp.fg_next)
+			if (kmemcpy((char *)&grp, (u_long)fp, sizeof(grp)))
+				break;
+			else
+				printf("%hu\n", grp.fg_num);
+		printf("%s groups (inactive):\n", gnames[i]);
+		for (fp = fiop->f_groups[i][off]; fp; fp = grp.fg_next)
+			if (kmemcpy((char *)&grp, (u_long)fp, sizeof(grp)))
+				break;
+			else
+				printf("%hu\n", grp.fg_num);
+	}
 }

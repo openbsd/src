@@ -1,22 +1,26 @@
-/*     $OpenBSD: ipt.h,v 1.6 1999/02/05 05:58:47 deraadt Exp $     */
+/* $OpenBSD: ipt.h,v 1.7 1999/12/15 05:20:27 kjell Exp $ */
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
  *
  * Redistribution and use in source and binary forms are permitted
  * provided that this notice is preserved and due credit is given
  * to the original author and the contributors.
- * $Id: ipt.h,v 1.6 1999/02/05 05:58:47 deraadt Exp $
+ * $Id: ipt.h,v 1.7 1999/12/15 05:20:27 kjell Exp $
  */
 
 #ifndef	__IPT_H__
 #define	__IPT_H__
 
-#include <fcntl.h>
-#ifdef	__STDC__
-#include <stdarg.h>
-#else
-#include <varargs.h>
+#ifndef	__P
+# define P_DEF
+# ifdef	__STDC__
+#  define	__P(x) x
+# else
+#  define	__P(x) ()
+# endif
 #endif
+
+#include <fcntl.h>
 
 
 struct	ipread	{
@@ -27,5 +31,10 @@ struct	ipread	{
 
 extern	void	debug __P((char *, ...));
 extern	void	verbose __P((char *, ...));
+
+#ifdef P_DEF
+# undef	__P
+# undef	P_DEF
+#endif
 
 #endif /* __IPT_H__ */
