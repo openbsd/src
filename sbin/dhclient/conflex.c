@@ -1,4 +1,4 @@
-/*	$OpenBSD: conflex.c,v 1.6 2004/02/24 13:08:26 henning Exp $	*/
+/*	$OpenBSD: conflex.c,v 1.7 2004/09/15 19:02:38 deraadt Exp $	*/
 
 /* Lexical scanner for dhcpd config file... */
 
@@ -117,12 +117,11 @@ get_token(FILE *cfile)
 {
 	int		c, ttok;
 	static char	tb[2];
-	int		l, p, u;
+	int		l, p;
 
 	do {
 		l = line;
 		p = lpos;
-		u = ugflag;
 
 		c = get_char(cfile);
 
