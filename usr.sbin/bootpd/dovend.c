@@ -293,7 +293,7 @@ insert_ip(tag, iplist, dest, bytesleft)
 	int *bytesleft;
 {
 	struct in_addr *addrptr;
-	unsigned addrcount = 1;
+	unsigned int addrcount = 1;
 	byte *d;
 
 	if (iplist == NULL)

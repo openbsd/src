@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.7 2002/03/14 16:44:25 mpech Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.8 2002/05/27 19:48:42 deraadt Exp $	*/
 /*	$NetBSD: bpf.c,v 1.5.2.1 1995/11/14 08:45:42 thorpej Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "@(#)bpf.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$OpenBSD: bpf.c,v 1.7 2002/03/14 16:44:25 mpech Exp $";
+static char rcsid[] = "$OpenBSD: bpf.c,v 1.8 2002/05/27 19:48:42 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -71,7 +71,7 @@ static char rcsid[] = "$OpenBSD: bpf.c,v 1.7 2002/03/14 16:44:25 mpech Exp $";
 #include "pathnames.h"
 
 static int BpfFd = -1;
-static unsigned BpfLen = 0;
+static unsigned int BpfLen = 0;
 static u_int8_t *BpfPkt = NULL;
 
 /*

@@ -21,7 +21,7 @@ SOFTWARE.
 ************************************************************************/
 
 #ifndef lint
-static char rcsid[] = "$Id: bootpd.c,v 1.9 2001/01/16 23:34:41 deraadt Exp $";
+static char rcsid[] = "$Id: bootpd.c,v 1.10 2002/05/27 19:49:58 deraadt Exp $";
 #endif
 
 /*
@@ -610,7 +610,7 @@ handle_request()
 	struct host *hp = NULL;
 	struct host dummyhost;
 	int32 bootsize = 0;
-	unsigned hlen, hashcode;
+	unsigned int hlen, hashcode;
 	int32 dest;
 	char realpath[MAXPATHLEN];
 	char *clntpath;

@@ -21,7 +21,7 @@ SOFTWARE.
 ************************************************************************/
 
 #ifndef lint
-static char rcsid[] = "$Id: readfile.c,v 1.5 2002/03/14 16:44:24 mpech Exp $";
+static char rcsid[] = "$Id: readfile.c,v 1.6 2002/05/27 19:49:58 deraadt Exp $";
 #endif
 
 
@@ -330,7 +330,7 @@ readtab(force)
 	struct host *hp;
 	FILE *fp;
 	struct stat st;
-	unsigned hashcode, buflen;
+	unsigned int hashcode, buflen;
 	static char buffer[MAXENTRYLEN];
 
 	/*
@@ -510,7 +510,7 @@ PRIVATE void
 read_entry(fp, buffer, bufsiz)
 	FILE *fp;
 	char *buffer;
-	unsigned *bufsiz;
+	unsigned int *bufsiz;
 {
 	int c, length;
 
@@ -800,7 +800,7 @@ eval_symbol(symbol, hp)
 	u_int32 value;
 	int32 timeoff;
 	int i, numsymbols;
-	unsigned len;
+	unsigned int len;
 	int optype;					/* Indicates boolean, addition, or deletion */
 
 	eat_whitespace(symbol);
@@ -1167,7 +1167,7 @@ eval_symbol(symbol, hp)
 PRIVATE char *
 get_string(src, dest, length)
 	char **src, *dest;
-	unsigned *length;
+	unsigned int *length;
 {
 	int n, len, quoteflag;
 
@@ -1222,7 +1222,7 @@ get_shared_string(src)
 {
 	char retstring[MAXSTRINGLEN];
 	struct shared_string *s;
-	unsigned length;
+	unsigned int length;
 
 	length = sizeof(retstring);
 	(void) get_string(src, retstring, &length);
@@ -1620,7 +1620,7 @@ get_addresses(src)
 	struct in_addr tmpaddrlist[MAXINADDRS];
 	struct in_addr *address1, *address2;
 	struct in_addr_list *result;
-	unsigned addrcount, totalsize;
+	unsigned int addrcount, totalsize;
 
 	address1 = tmpaddrlist;
 	for (addrcount = 0; addrcount < MAXINADDRS; addrcount++) {
@@ -1781,7 +1781,7 @@ prs_haddr(src, htype)
 	byte *hap;
 	char tmpstr[MAXSTRINGLEN];
 	u_int tmplen;
-	unsigned hal;
+	unsigned int hal;
 	char *p;
 
 	hal = haddrlength(htype);	/* Get length of this address type */
@@ -2029,7 +2029,7 @@ del_bindata(dataptr)
 
 PRIVATE char *
 smalloc(nbytes)
-	unsigned nbytes;
+	unsigned int nbytes;
 {
 	char *retvalue;
 

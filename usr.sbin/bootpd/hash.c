@@ -21,7 +21,7 @@ SOFTWARE.
 ************************************************************************/
 
 #ifndef lint
-static char rcsid[] = "$Id: hash.c,v 1.2 2002/03/14 16:44:24 mpech Exp $";
+static char rcsid[] = "$Id: hash.c,v 1.3 2002/05/27 19:49:58 deraadt Exp $";
 #endif
 
 
@@ -86,7 +86,7 @@ PRIVATE void hashi_FreeMembers P((hash_member *, hash_freefp));
 
 hash_tbl *
 hash_Init(tablesize)
-	unsigned tablesize;
+	unsigned int tablesize;
 {
 	hash_tbl *hashtblptr;
 	unsigned int totalsize;
@@ -142,7 +142,7 @@ hash_Reset(hashtable, free_data)
 	hash_freefp free_data;
 {
 	hash_member **bucketptr;
-	unsigned i;
+	unsigned int i;
 
 	bucketptr = hashtable->table;
 	for (i = 0; i < hashtable->size; i++) {
@@ -175,7 +175,7 @@ hash_Reset(hashtable, free_data)
  * features of this package.
  */
 
-unsigned
+unsigned int
 hash_HashFunction(string, len)
 	unsigned char *string;
 	unsigned int len;
@@ -200,7 +200,7 @@ hash_HashFunction(string, len)
 int
 hash_Exists(hashtable, hashcode, compare, key)
 	hash_tbl *hashtable;
-	unsigned hashcode;
+	unsigned int hashcode;
 	hash_cmpfp compare;
 	hash_datum *key;
 {
@@ -231,7 +231,7 @@ hash_Exists(hashtable, hashcode, compare, key)
 int
 hash_Insert(hashtable, hashcode, compare, key, element)
 	hash_tbl *hashtable;
-	unsigned hashcode;
+	unsigned int hashcode;
 	hash_cmpfp compare;
 	hash_datum *key, *element;
 {
@@ -262,7 +262,7 @@ hash_Insert(hashtable, hashcode, compare, key, element)
 int
 hash_Delete(hashtable, hashcode, compare, key, free_data)
 	hash_tbl *hashtable;
-	unsigned hashcode;
+	unsigned int hashcode;
 	hash_cmpfp compare;
 	hash_datum *key;
 	hash_freefp free_data;
@@ -328,7 +328,7 @@ hash_Delete(hashtable, hashcode, compare, key, free_data)
 hash_datum *
 hash_Lookup(hashtable, hashcode, compare, key)
 	hash_tbl *hashtable;
-	unsigned hashcode;
+	unsigned int hashcode;
 	hash_cmpfp compare;
 	hash_datum *key;
 {

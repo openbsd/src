@@ -352,7 +352,7 @@ list_ipaddresses(fp, ipptr)
 	FILE *fp;
 	struct in_addr_list *ipptr;
 {
-	unsigned count;
+	unsigned int count;
 	struct in_addr *addrptr;
 
 	if (ipptr) {
