@@ -1,4 +1,4 @@
-.\"	$OpenBSD: socketpair.2,v 1.4 1998/06/08 17:24:01 deraadt Exp $
+.\"	$OpenBSD: socketpair.2,v 1.5 1999/04/28 20:59:35 aaron Exp $
 .\"	$NetBSD: socketpair.2,v 1.5 1995/02/27 12:38:00 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -72,7 +72,7 @@ Too many descriptors are in use by this process.
 The specified address family is not supported on this machine.
 .It Bq Er EPROTONOSUPPORT
 The specified protocol is not supported on this machine.
-.It Bq Er EOPNOSUPPORT
+.It Bq Er EOPNOTSUPP
 The specified protocol does not support creation of socket pairs.
 .It Bq Er EFAULT
 The address
@@ -81,8 +81,8 @@ does not specify a valid part of the
 process address space.
 .Sh SEE ALSO
 .Xr read 2 ,
-.Xr write 2 ,
-.Xr pipe 2
+.Xr pipe 2 ,
+.Xr write 2
 .Sh BUGS
 This call is currently implemented only for the
 .Tn LOCAL
