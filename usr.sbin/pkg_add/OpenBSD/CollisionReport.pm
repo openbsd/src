@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: CollisionReport.pm,v 1.3 2004/11/14 19:50:44 espie Exp $
+# $OpenBSD: CollisionReport.pm,v 1.4 2004/11/15 17:05:50 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -27,6 +27,7 @@ sub collision_report($$)
 	my ($list, $state) = @_;
 	my %todo = map {($_->fullname(), $_->{md5})} @$list;
 	my $bypkg = {};
+	my $clueless_bat = 0;
 	
 
 	BIGLOOP: {
@@ -51,19 +52,32 @@ sub collision_report($$)
 	    for my $item (sort @{$bypkg->{$pkg}}) {
 	    	print "\t$item ($pkg)\n";
 	    }
+	    if ($pkg =~ m/^borked\.\d+$/) {
+	    	$clueless_bat = $pkg;
+	    }
 	}
 	if (%todo) {
 		require OpenBSD::md5;
 		my $destdir = $state->{destdir};
 
 		for my $item (sort keys %todo) {
-		    my $md5 = OpenBSD::md5::fromfile($destdir.$item);
-		    if ($md5 eq $todo{$item}) {
-			print "\t$item (same md5)\n";
+		    if (defined $todo{$item}) {
+			    my $md5 = OpenBSD::md5::fromfile($destdir.$item);
+			    if ($md5 eq $todo{$item}) {
+				print "\t$item (same md5)\n";
+			    } else {
+				print "\t$item (different md5)\n";
+			    }
 		    } else {
-			print "\t$item (different md5)\n";
+			    print "\t$item\n";
 		    }
 	    	}
+	}
+	if ($clueless_bat) {
+		print "The package name $clueless_bat suggests that a former installation\n";
+		print "of a similar package got interrupted.  It is likely that\n";
+		print "\tpkg_delete borked.*\n";
+		print "will solve the problem\n";
 	}
 }
 
