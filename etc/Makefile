@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.143 2002/02/08 20:13:36 todd Exp $
+#	$OpenBSD: Makefile,v 1.144 2002/02/09 14:13:37 deraadt Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	US/Pacific
@@ -341,18 +341,18 @@ clean:
 
 cleandir:
 	@cd ${.CURDIR}; for m in ${MAKEDEVARCHS}; do \
-		make MACHINE=$$m clean; done
+	    make MACHINE=$$m clean; done
 
 m4: etc.${M}/MAKEDEV
 
 etc.${M}/MAKEDEV: MAKEDEV.sub MAKEDEV.mi etc.${M}/MAKEDEV.md
 	@echo "==> etc.${M}/MAKEDEV"
 	@m4 -DMACHINE=${M} MAKEDEV.mi > etc.${M}/.MAKEDEV.tmp && \
-	mv etc.${M}/.MAKEDEV.tmp etc.${M}/MAKEDEV || \
-	rm etc.${M}/.MAKEDEV.tmp
+	    mv etc.${M}/.MAKEDEV.tmp etc.${M}/MAKEDEV || \
+	    rm etc.${M}/.MAKEDEV.tmp
 
 allarchs: MAKEDEV.sub MAKEDEV.mi
 	@cd ${.CURDIR}; for m in ${MAKEDEVARCHS}; do \
-	make M=$$m m4; done
+	    make M=$$m m4; done
 
 .include <bsd.prog.mk>
