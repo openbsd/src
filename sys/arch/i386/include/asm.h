@@ -68,10 +68,15 @@
 #endif
 #define	_ASM_LABEL(x)	x
 
-#define _ENTRY(x) \
-	.text; .align 2, 0x90; .globl x; .type x,@function; x:
+/* let kernels and others override entrypoint alignment */
+#ifndef _ALIGN_TEXT
+# define _ALIGN_TEXT .align 2, 0x90
+#endif
 
-#ifdef PROF
+#define _ENTRY(x) \
+	.text; _ALIGN_TEXT; .globl x; .type x,@function; x:
+
+#ifdef GPROF
 # define _PROF_PROLOGUE	\
 	pushl %ebp; movl %esp,%ebp; call PIC_PLT(mcount); popl %ebp
 #else
@@ -79,7 +84,10 @@
 #endif
 
 #define	ENTRY(y)	_ENTRY(_C_LABEL(y)); _PROF_PROLOGUE
+#define	NENTRY(y)	_ENTRY(_C_LABEL(y))
 #define	ASENTRY(y)	_ENTRY(_ASM_LABEL(y)); _PROF_PROLOGUE
+
+#define	ALTENTRY(name)	.globl _C_LABEL(name); _C_LABEL(name):
 
 #define	ASMSTR		.asciz
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.38 1997/12/17 08:54:47 downsj Exp $	*/
+/*	$OpenBSD: locore.s,v 1.39 1998/01/29 11:30:27 niklas Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -66,9 +66,14 @@
 
 #include <dev/isa/isareg.h>
 
+/*
+ * override user-land alignment before including asm.h
+ */
 #define	ALIGN_DATA	.align	2
 #define	ALIGN_TEXT	.align	2,0x90	/* 4-byte boundaries, NOP-filled */
 #define	SUPERALIGN_TEXT	.align	4,0x90	/* 16-byte boundaries better for 486 */
+#define _ALIGN_TEXT	ALIGN_TEXT
+#include <machine/asm.h>
 
 /* NB: NOP now preserves registers so NOPs can be inserted anywhere */
 /* XXX: NOP and FASTER_NOP are misleadingly named */
@@ -128,23 +133,6 @@
 	.set	_APTmap,(APTDPTDI << PDSHIFT)
 	.set	_APTD,(_APTmap + APTDPTDI * NBPG)
 	.set	_APTDpde,(_PTD + APTDPTDI * 4)		# XXX 4 == sizeof pde
-
-#ifdef        GPROF
-#define       PENTRY(name)    \
-	ENTRY(name) \
-	pushl	%ebp; \
-	movl	%esp,%ebp; \
-	pushl	%ebx; \
-	pushl	_cpl; \
-	movl	$0,_cpl; \
-	call	_Xspllower; \
-	call	mcount; \
-	popl	_cpl; \
-	leal	4(%esp),%esp; \
-	popl	%ebp
-#endif
-#define	ENTRY(name)	.globl _/**/name; ALIGN_TEXT; _/**/name:
-#define	ALTENTRY(name)	.globl _/**/name; _/**/name:
 
 /*
  * Initialization
@@ -560,7 +548,7 @@ begin:
 
 	call 	_main
 
-ENTRY(proc_trampoline)
+NENTRY(proc_trampoline)
 	pushl	%ebx
 	call	%esi
 	addl	$4,%esp
@@ -572,7 +560,7 @@ ENTRY(proc_trampoline)
 /*
  * Signal trampoline; copied to top of user stack.
  */
-ENTRY(sigcode)
+NENTRY(sigcode)
 	call	SIGF_HANDLER(%esp)
 	leal	SIGF_SC(%esp),%eax	# scp (the call may have clobbered the
 					# copy at SIGF_SCP(%esp))
@@ -596,7 +584,7 @@ _esigcode:
 /*****************************************************************************/
 
 #ifdef COMPAT_SVR4
-ENTRY(svr4_sigcode)
+NENTRY(svr4_sigcode)
 	call	SVR4_SIGF_HANDLER(%esp)
 	leal	SVR4_SIGF_UC(%esp),%eax	# ucp (the call may have clobbered the
 					# copy at SIGF_UCP(%esp))
@@ -625,7 +613,7 @@ _svr4_esigcode:
 /*
  * Signal trampoline; copied to top of user stack.
  */
-ENTRY(linux_sigcode)
+NENTRY(linux_sigcode)
 	call	LINUX_SIGF_HANDLER(%esp)
 	leal	LINUX_SIGF_SC(%esp),%ebx # scp (the call may have clobbered the
 					# copy at SIGF_SCP(%esp))
@@ -652,7 +640,7 @@ _linux_esigcode:
 /*
  * Signal trampoline; copied to top of user stack.
  */
-ENTRY(freebsd_sigcode)
+NENTRY(freebsd_sigcode)
 	call	FREEBSD_SIGF_HANDLER(%esp)
 	leal	FREEBSD_SIGF_SC(%esp),%eax # scp (the call may have clobbered
 					# the copy at SIGF_SCP(%esp))
@@ -774,21 +762,17 @@ ENTRY(bcopyw)
  * bcopy(caddr_t from, caddr_t to, size_t len);
  * Copy len bytes.
  */
-#ifdef        GPROF
-ENTRY(ovbcopy)
-	jmp _bcopy
-PENTRY(bcopy)
-#else
-ENTRY(bcopy)
 ALTENTRY(ovbcopy)
-#endif
+ENTRY(bcopy)
 	pushl	%esi
 	pushl	%edi
 	movl	12(%esp),%esi
 	movl	16(%esp),%edi
 	movl	20(%esp),%ecx
-	cmpl	%esi,%edi		# potentially overlapping? */
-	jnb	1f
+	movl	%edi,%eax
+	subl	%esi,%eax
+	cmpl	%ecx,%eax		# overlapping?
+	jb	1f
 	cld				# nope, copy forward
 	shrl	$2,%ecx			# copy by 32-bit words
 	rep
@@ -832,11 +816,7 @@ ALTENTRY(ovbcopy)
  * copyout(caddr_t from, caddr_t to, size_t len);
  * Copy len bytes into the user's address space.
  */
-#ifdef        GPROF
-PENTRY(copyout)
-#else
 ENTRY(copyout)
-#endif
 	pushl	%esi
 	pushl	%edi
 	movl	_curpcb,%eax
@@ -931,11 +911,7 @@ ENTRY(copyout)
  * copyin(caddr_t from, caddr_t to, size_t len);
  * Copy len bytes from the user's address space.
  */
-#ifdef        GPROF
-PENTRY(copyin)
-#else
 ENTRY(copyin)
-#endif
 	pushl	%esi
 	pushl	%edi
 	movl	_curpcb,%eax
@@ -1222,7 +1198,7 @@ ENTRY(fuword)
 	ret
 	
 /*
- * fusword(u_short *uaddr);
+ * fusword(caddr_t uaddr);
  * Fetch a short from the user's address space.
  */
 ENTRY(fusword)
@@ -1331,7 +1307,7 @@ ENTRY(suword)
 	ret
 	
 /*
- * susword(u_short *uaddr, short x);
+ * susword(caddr_t uaddr, short x);
  * Store a short in the user's address space.
  */
 ENTRY(susword)
@@ -1457,7 +1433,7 @@ ENTRY(subyte)
  * void lgdt(struct region_descriptor *rdp);
  * Change the global descriptor table.
  */
-ENTRY(lgdt)
+NENTRY(lgdt)
 	/* Reload the descriptor table. */
 	movl	4(%esp),%eax
 	lgdt	(%eax)
@@ -1517,7 +1493,7 @@ ENTRY(longjmp)
  * setrunqueue(struct proc *p);
  * Insert a process on the appropriate queue.  Should be called at splclock().
  */
-ENTRY(setrunqueue)
+NENTRY(setrunqueue)
 	movl	4(%esp),%eax
 #ifdef DIAGNOSTIC
 	cmpl	$0,P_BACK(%eax)	# should not be on q already
@@ -1548,7 +1524,7 @@ ENTRY(setrunqueue)
  * remrunqueue(struct proc *p);
  * Remove a process from its queue.  Should be called at splclock().
  */
-ENTRY(remrunqueue)
+NENTRY(remrunqueue)
 	movl	4(%esp),%ecx
 	movzbl	P_PRIORITY(%ecx),%eax
 #ifdef DIAGNOSTIC
@@ -1605,7 +1581,7 @@ ENTRY(idle)
 	jmp	_idle
 
 #ifdef DIAGNOSTIC
-ENTRY(switch_error)
+NENTRY(switch_error)
 	pushl	$1f
 	call	_panic
 	/* NOTREACHED */
@@ -2009,16 +1985,16 @@ IDTVEC(align)
  * necessary, and resume as if we were handling a general protection fault.
  * This will cause the process to get a SIGBUS.
  */
-ENTRY(resume_iret)
+NENTRY(resume_iret)
 	ZTRAP(T_PROTFLT)
-ENTRY(resume_pop_ds)
+NENTRY(resume_pop_ds)
 	movl	$GSEL(GDATA_SEL, SEL_KPL),%eax
 	movl	%ax,%es
-ENTRY(resume_pop_es)
+NENTRY(resume_pop_es)
 	movl	$T_PROTFLT,TF_TRAPNO(%esp)
 	jmp	calltrap
 
-ENTRY(alltraps)
+NENTRY(alltraps)
 	INTRENTRY
 calltrap:
 #ifdef DIAGNOSTIC
@@ -2063,7 +2039,7 @@ calltrap:
  * This code checks for a kgdb trap, then falls through
  * to the regular trap code.
  */
-ENTRY(bpttraps)
+NENTRY(bpttraps)
 	INTRENTRY
 	testb	$SEL_RPL,TF_CS(%esp)
 	jne	calltrap
@@ -2133,11 +2109,7 @@ syscall1:
  *	write len zero bytes to the string b.
  */
 
-#ifdef        GPROF
-PENTRY(bzero)
-#else
 ENTRY(bzero)
-#endif
 	pushl	%edi
 	movl	8(%esp),%edi
 	movl	12(%esp),%edx
