@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sl.c,v 1.2 1996/03/03 21:07:10 niklas Exp $	*/
+/*	$OpenBSD: if_sl.c,v 1.3 1996/03/14 08:41:45 tholo Exp $	*/
 /*	$NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
 /*
@@ -255,9 +255,7 @@ slopen(dev, tp)
 	register struct sl_softc *sc;
 	register int nsl;
 	int error;
-#ifdef NetBSD
 	int s;
-#endif
 
 	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 		return (error);
@@ -272,6 +270,9 @@ slopen(dev, tp)
 			tp->t_sc = (caddr_t)sc;
 			sc->sc_ttyp = tp;
 			sc->sc_if.if_baudrate = tp->t_ospeed;
+			s = spltty();
+			tp->t_state |= TS_ISOPEN | TS_XCLUDE;
+			splx(s);
 			ttyflush(tp, FREAD | FWRITE);
 #ifdef NetBSD
 			/*
