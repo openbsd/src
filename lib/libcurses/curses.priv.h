@@ -1,4 +1,4 @@
-/*	$OpenBSD: curses.priv.h,v 1.31 2001/01/22 18:01:34 millert Exp $	*/
+/*	$OpenBSD: curses.priv.h,v 1.32 2003/04/13 11:20:47 jmc Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -824,7 +824,7 @@ extern NCURSES_EXPORT_VAR(SCREEN *) SP;
 /*
  * We don't want to use the lines or columns capabilities internally,
  * because if the application is running multiple screens under
- * X windows, it's quite possible they could all have type xterm
+ * the X Window System, it's quite possible they could all have type xterm
  * but have different sizes!  So...
  */
 #define screen_lines	SP->_lines

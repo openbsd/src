@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmoused.c,v 1.13 2002/05/30 19:09:05 deraadt Exp $ */
+/* $OpenBSD: wsmoused.c,v 1.14 2003/04/13 11:20:47 jmc Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Baptiste Marchand, Julien Montagne and Jerome Verdon
@@ -420,7 +420,7 @@ wsmoused(void)
 			event.value = 0;
 	}
 	else
-		/* X-Window won't start using wsmoused(8) with a serial mouse */
+		/* X11 won't start using wsmoused(8) with a serial mouse */
 		event.value = 0;
 
 	/* notify kernel to start wsmoused */
