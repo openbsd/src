@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5210.c,v 1.5 2004/11/08 16:48:25 reyk Exp $	*/
+/*	$OpenBSD: ar5210.c,v 1.6 2004/11/11 20:11:28 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004 Reyk Floeter <reyk@vantronix.net>.
@@ -270,7 +270,7 @@ ar5k_ar5210_nic_wakeup(hal, turbo, initial)
 		/* ...reset hardware */
 		if (ar5k_ar5210_nic_reset(hal,
 			AR5K_AR5210_RC_PCI) == AH_FALSE) {
-			AR5K_PRINTF("failed to reset the PCI chipset\n");
+			AR5K_PRINT("failed to reset the PCI chipset\n");
 			return (AH_FALSE);
 		}
 
@@ -280,7 +280,7 @@ ar5k_ar5210_nic_wakeup(hal, turbo, initial)
 	/* ...wakeup the device */
 	if (ar5k_ar5210_setPowerMode(hal,
 		HAL_PM_AWAKE, AH_TRUE, 0) == AH_FALSE) {
-		AR5K_PRINTF("failed to resume the AR5210 chipset\n");
+		AR5K_PRINT("failed to resume the AR5210 chipset\n");
 		return (AH_FALSE);
 	}
 
@@ -290,7 +290,7 @@ ar5k_ar5210_nic_wakeup(hal, turbo, initial)
 
 	/* ...reset chipset */
 	if (ar5k_ar5210_nic_reset(hal, AR5K_AR5210_RC_CHIP) == AH_FALSE) {
-		AR5K_PRINTF("failed to reset the AR5210 chipset\n");
+		AR5K_PRINT("failed to reset the AR5210 chipset\n");
 		return (AH_FALSE);
 	}
 
@@ -299,7 +299,7 @@ ar5k_ar5210_nic_wakeup(hal, turbo, initial)
 	/* ...reset chipset and PCI device */
 	if (ar5k_ar5210_nic_reset(hal,
 		AR5K_AR5210_RC_CHIP | AR5K_AR5210_RC_PCI) == AH_FALSE) {
-		AR5K_PRINTF("failed to reset the AR5210 + PCI chipset\n");
+		AR5K_PRINT("failed to reset the AR5210 + PCI chipset\n");
 		return (AH_FALSE);
 	}
 
@@ -308,13 +308,13 @@ ar5k_ar5210_nic_wakeup(hal, turbo, initial)
 	/* ...wakeup (again) */
 	if (ar5k_ar5210_setPowerMode(hal,
 		HAL_PM_AWAKE, AH_TRUE, 0) == AH_FALSE) {
-		AR5K_PRINTF("failed to resume the AR5210 (again)\n");
+		AR5K_PRINT("failed to resume the AR5210 (again)\n");
 		return (AH_FALSE);
 	}
 
 	/* ...final warm reset */
 	if (ar5k_ar5210_nic_reset(hal, 0) == AH_FALSE) {
-		AR5K_PRINTF("failed to warm reset the AR5210\n");
+		AR5K_PRINT("failed to warm reset the AR5210\n");
 		return (AH_FALSE);
 	}
 
@@ -333,8 +333,8 @@ ar5k_ar5210_chan2athchan(channel)
 	 * newer chipsets like the AR5212A who have a completely
 	 * different RF/PHY part.
 	 */
-	athchan = (ar5k_bitswap((ieee80211_mhz2ieee(channel->channel,
-				     channel->channelFlags) - 24)
+	athchan = (ar5k_bitswap((ieee80211_mhz2ieee(channel->c_channel,
+				     channel->c_channel_flags) - 24)
 		       / 2, 5) << 1) | (1 << 6) | 0x1;
 
 	return (athchan);
@@ -355,10 +355,10 @@ ar5k_ar5210_set_channel(hal, channel)
 	 * Check bounds supported by the PHY
 	 * (don't care about regulation restrictions at this point)
 	 */
-	if (channel->channel < hal->ah_capabilities.cap_range.range_5ghz_min ||
-	    channel->channel > hal->ah_capabilities.cap_range.range_5ghz_max) {
-		AR5K_PRINTF("channel out of supported range (%u MHz)\n",
-		    channel->channel);
+	if (channel->c_channel < hal->ah_capabilities.cap_range.range_5ghz_min ||
+	    channel->c_channel > hal->ah_capabilities.cap_range.range_5ghz_max) {
+		AR5K_PRINTF("channel out of supported range (%uMHz)\n",
+		    channel->c_channel);
 		return (AH_FALSE);
 	}
 
@@ -376,9 +376,9 @@ ar5k_ar5210_set_channel(hal, channel)
 	AR5K_REG_WRITE(AR5K_AR5210_PHY_ACTIVE, AR5K_AR5210_PHY_ENABLE);
 	AR5K_DELAY(1000);
 
-	hal->ah_current_channel.channel = channel->channel;
-	hal->ah_current_channel.channelFlags = channel->channelFlags;
-	hal->ah_turbo = channel->channelFlags == CHANNEL_T ? AH_TRUE : AH_FALSE;
+	hal->ah_current_channel.channel = channel->c_channel;
+	hal->ah_current_channel.channelFlags = channel->c_channel_flags;
+	hal->ah_turbo = channel->c_channel_flags == CHANNEL_T ? AH_TRUE : AH_FALSE;
 
 	return (AH_TRUE);
 }
@@ -424,7 +424,7 @@ ar5k_ar5210_reset(hal, op_mode, channel, change_channel, status)
 	struct ar5k_ini initial[] = AR5K_AR5210_INI;
 
 	if (ar5k_ar5210_nic_wakeup(hal,
-		channel->channelFlags & IEEE80211_CHAN_T ?
+		channel->c_channel_flags & IEEE80211_CHAN_T ?
 		AH_TRUE : AH_FALSE, AH_FALSE) == AH_FALSE)
 		return (AH_FALSE);
 
@@ -572,7 +572,8 @@ ar5k_ar5210_perCalibration(hal, channel)
 
 	if (ar5k_register_timeout(hal, AR5K_AR5210_PHY_AGCCTL,
 		AR5K_AR5210_PHY_AGC_CAL, 0, AH_FALSE) == AH_FALSE) {
-		AR5K_PRINTF("calibration timeout\n");
+		AR5K_PRINTF("calibration timeout (%uMHz)\n",
+		    channel->c_channel);
 		return (AH_FALSE);
 	}
 

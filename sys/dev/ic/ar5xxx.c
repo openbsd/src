@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5xxx.c,v 1.4 2004/11/06 03:05:20 reyk Exp $	*/
+/*	$OpenBSD: ar5xxx.c,v 1.5 2004/11/11 20:11:28 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004 Reyk Floeter <reyk@vantronix.net>.
@@ -125,7 +125,7 @@ ath_hal_attach(device, sc, st, sh, status)
 	HAL_RATE_TABLE rt_11g = AR5K_RATES_11G;
 	HAL_RATE_TABLE rt_turbo = AR5K_RATES_TURBO;
 	struct ath_hal *hal = NULL;
-	ar5k_attach_t *attach;
+	ar5k_attach_t *attach = NULL;
 	u_int8_t mac[IEEE80211_ADDR_LEN];
 	int i;
 
@@ -142,14 +142,14 @@ ath_hal_attach(device, sc, st, sh, status)
 
 	if (attach == NULL) {
 		*status = ENXIO;
-		AR5K_PRINTF("device not supported\n");
+		AR5K_PRINTF("device not supported: 0x%04x\n", device);
 		return (NULL);
 	}
 
         if ((hal = malloc(sizeof(struct ath_hal),
 		 M_DEVBUF, M_NOWAIT)) == NULL) {
 		*status = ENOMEM;
-		AR5K_PRINTF("out of memory\n");
+		AR5K_PRINT("out of memory\n");
 		return (NULL);
 	}
 
@@ -185,12 +185,14 @@ ath_hal_attach(device, sc, st, sh, status)
 	 */
 
 	if (hal->ah_get_capabilities(hal) != AH_TRUE) {
-		AR5K_PRINTF("unable to get device capabilities\n");
+		AR5K_PRINTF("unable to get device capabilities: 0x%04x\n",
+		    device);
 		goto failed;
 	}
 
 	if ((*status = ar5k_eeprom_read_mac(hal, mac)) != HAL_OK) {
-		AR5K_PRINTF("unable to read address from EEPROM\n");
+		AR5K_PRINTF("unable to read address from EEPROM: 0x%04x\n",
+		    device);
 		goto failed;
 	}
 
@@ -222,7 +224,7 @@ ath_hal_computetxtime(hal, rates, frame_length, rate_index, short_preamble)
 	u_int16_t rate_index;
 	HAL_BOOL short_preamble;
 {
-	HAL_RATE *rate;
+	const HAL_RATE *rate;
 	u_int32_t value;
 
 	AR5K_ASSERT_ENTRY(rate_index, rates->rateCount);
@@ -230,7 +232,7 @@ ath_hal_computetxtime(hal, rates, frame_length, rate_index, short_preamble)
 	/*
 	 * Get rate by index
 	 */
-	rate = (HAL_RATE*)&rates->info[rate_index];
+	rate = &rates->info[rate_index];
 
 	/*
 	 * Calculate the transmission time by operation (PHY) mode

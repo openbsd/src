@@ -1,4 +1,4 @@
-/*      $OpenBSD: ath.c,v 1.2 2004/11/02 14:05:49 reyk Exp $  */
+/*      $OpenBSD: ath.c,v 1.3 2004/11/11 20:11:28 reyk Exp $  */
 /*	$NetBSD: ath.c,v 1.37 2004/08/18 21:59:39 dyoung Exp $	*/
 
 /*-
@@ -179,7 +179,7 @@ static	int ath_calinterval = 30;		/* calibrate every 30 secs */
 static	int ath_outdoor = AH_TRUE;		/* outdoor operation */
 static	int ath_xchanmode = AH_TRUE;		/* enable extended channels */
 static	int ath_countrycode = CTRY_DEFAULT;	/* country code */
-static	int ath_regdomain = 0;			/* regulatory domain */
+static	int ath_regdomain = DMN_DEFAULT;	/* regulatory domain */
 
 #ifdef AR_DEBUG
 enum {
