@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mdoc.samples.7,v 1.51 2004/02/14 18:04:00 jmc Exp $
+.\"	$OpenBSD: mdoc.samples.7,v 1.52 2004/02/20 10:34:41 jmc Exp $
 .\"	$NetBSD: mdoc.samples.7,v 1.5 1996/04/03 20:17:34 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -142,16 +142,19 @@ outlined as follows:
 .It "Defined Variables" .
 .It "Environment Variables" .
 .It "Errno (section two only)" .
+.It "Exit Values" .
 .It "Flags" .
 .It "Functions (library routines)" .
 .It "Function Argument" .
 .It "Function Declaration" .
 .It "Function Types" .
 .It "Interactive Commands" .
+.It "Includes" .
 .It "Literals" .
 .It "Names" .
 .It "Options" .
 .It "Pathnames" .
+.It "Return Values" .
 .It "Standards" .
 .It "Variables" .
 .It "Cross References" .
@@ -1017,6 +1020,26 @@ without arguments.
 The
 .Ql \&.Er
 macro is parsed and is callable.
+.Ss Exit Values (sections one, six, and eight only)
+The
+.Ql \&.Ex
+macro displays a standardised text concerning the exit values of applications.
+The
+.Ql \&.Ex
+macro does not call other macros and is not callable by other macros.
+The
+.Ql -std
+flag is purely for compatibility purposes, and must be included.
+.Pp
+.Dl Usage: .Ex [-std] utility
+.Pp
+For example,
+.Ql \&.Ex -std cat
+produces:
+.Pp
+The
+.Nm cat
+utility exits 0 on success, and \*(Gt0 if an error occurs.
 .Ss Flags
 The
 .Ql \&.Fl
@@ -1188,8 +1211,7 @@ The
 .Ql \&.Fd
 macro is used in the
 .Sx SYNOPSIS
-section with section two or three
-functions.
+section with section two, three, and nine functions.
 The
 .Ql \&.Fd
 macro does not call other macros and is not callable by other
@@ -1248,6 +1270,31 @@ without arguments.
 The
 .Ql \&.Ic
 macro is parsed and is callable.
+.Ss Includes
+The
+.Ql \&.In
+macro is used in the
+.Sx SYNOPSIS
+section with section two, three, and nine header files.
+The
+.Ql \&.In
+macro does not call other macros and is not callable by other macros.
+.Pp
+.Dl Usage: .In include_file
+.Bl -tag -width ".In stdio.h    " -compact -offset 14n
+.It Li \&.In stdio.h
+.In stdio.h
+.El
+.Pp
+In the
+.Sx SYNOPSIS
+section a
+.Ql \&.In
+request causes a line break if a function has already been presented
+and a break has not occurred.
+This leaves a nice vertical space
+in between the previous function call and the declaration for the
+include file.
 .Ss Literals
 The
 .Ql \&.Li
@@ -1406,6 +1453,29 @@ macro formats path or file names.
 The
 .Ql \&.Pa
 macro is parsed and is callable.
+.Ss Return Values (sections two and three only)
+The
+.Ql \&.Rv
+macro displays a standardised text concerning the return values of functions.
+The
+.Ql \&.Rv
+macro does not call other macros and is not callable by other macros.
+The
+.Ql -std
+flag is purely for compatibility purposes, and must be included.
+.Pp
+.Dl Usage: .Rv [-std] function
+.Pp
+For example,
+.Ql \&.Rv -std open
+produces:
+.Pp
+The
+.Fn open
+function returns the value 0 if successful;
+otherwise the value \-1 is returned and the global variable
+.Va errno
+is set to indicate the error.
 .Ss Standards
 The
 .Ql \&.St
