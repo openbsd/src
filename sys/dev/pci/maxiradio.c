@@ -1,9 +1,9 @@
-/* $OpenBSD: maxiradio.c,v 1.2 2001/12/05 10:27:06 mickey Exp $ */
+/* $OpenBSD: maxiradio.c,v 1.3 2002/01/02 22:25:25 mickey Exp $ */
 /* $RuOBSD: maxiradio.c,v 1.5 2001/10/18 16:51:36 pva Exp $ */
 
 /*
  * Copyright (c) 2001 Maxim Tsyplakov <tm@oganer.net>
- * 		      Vladimir Popov <jumbo@narod.ru>
+ *		      Vladimir Popov <jumbo@narod.ru>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -54,7 +54,7 @@ int     mr_set_info(void *, struct radio_info *);
 int     mr_search(void *, int);
 
 /* config base I/O address ? */
-#define PCI_CBIO 0x6400	
+#define PCI_CBIO 0x6400
 
 #define MAXIRADIO_CAPS	RADIO_CAPS_DETECT_SIGNAL |			\
 			RADIO_CAPS_SET_MONO |				\
@@ -136,17 +136,10 @@ mr_attach(struct device *parent, struct device *self, void *aux)
 	struct mr_softc *sc = (struct mr_softc *) self;
 	struct pci_attach_args *pa = aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
-	bus_addr_t iobase;
-	bus_size_t iosize;
 	pcireg_t csr;
-	
-	if (pci_io_find(pc, pa->pa_tag, PCI_CBIO, &iobase, &iosize)) {
-		printf (": can't find i/o base\n");
-		return;
-	}
 
-	if (bus_space_map(sc->tea.iot = pa->pa_iot, iobase, iosize,
-			  0, &sc->tea.ioh)) {
+	if (pci_mapreg_map(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0,
+	    &sc->tea.iot, &sc->tea.ioh, NULL, NULL, 0)) {
 		printf(": can't map i/o space\n");
 		return;
 	}
@@ -155,7 +148,7 @@ mr_attach(struct device *parent, struct device *self, void *aux)
 	csr = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
 	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
 	    csr | PCI_COMMAND_MASTER_ENABLE);
-	
+
 	sc->freq = MIN_FM_FREQ;
 	sc->vol = 0;
 	sc->mute = 0;
@@ -166,7 +159,7 @@ mr_attach(struct device *parent, struct device *self, void *aux)
 	sc->tea.rset = mr_rset;
 	sc->tea.write_bit = mr_write_bit;
 	sc->tea.read = mr_hardware_read;
-	
+
 	radio_attach_mi(&mr_hw_if, sc, &sc->sc_dev);
 }
 

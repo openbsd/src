@@ -1,4 +1,4 @@
-/* $OpenBSD: sf64pcr.c,v 1.2 2001/12/05 10:27:06 mickey Exp $ */
+/* $OpenBSD: sf64pcr.c,v 1.3 2002/01/02 22:25:25 mickey Exp $ */
 /* $RuOBSD: sf64pcr.c,v 1.11 2001/12/05 10:19:40 mickey Exp $ */
 
 /*
@@ -54,7 +54,7 @@
 #include <dev/ic/tea5757.h>
 
 /* config base I/O address ? */
-#define PCI_CBIO 0x6400	
+#define PCI_CBIO 0x6400
 #define SF64PCR_PCI_OFFSET	0x52
 
 #define CARD_RADIO_CAPS	RADIO_CAPS_DETECT_STEREO |			\
@@ -89,7 +89,7 @@
 
 #define SF64PCR_WRITE_ONE_CLOCK_LOW			\
 			SF64PCR_0xF800   |		\
-			SF64PCR_WREN1_ON | 		\
+			SF64PCR_WREN1_ON |		\
 			SF64PCR_WREN2_ON |		\
 			SF64PCR_DATA_ON  |		\
 			SF64PCR_CLCK_OFF
@@ -100,7 +100,7 @@
 			SF64PCR_CLCK_OFF  |		\
 			SF64PCR_WREN1_OFF |		\
 			SF64PCR_DATA_OFF  |		\
-			SF64PCR_WREN2_OFF 
+			SF64PCR_WREN2_OFF
 
 /* 0xFC03 */
 #define SF64PCR_READ_CLOCK_HIGH				\
@@ -149,12 +149,12 @@ struct cfdriver sf4r_cd = {
 /*
  * Function prototypes
  */
-void	sf64pcr_set_mute(struct sf64pcr_softc *);
+void sf64pcr_set_mute(struct sf64pcr_softc *);
 
-void	sf64pcr_init(bus_space_tag_t, bus_space_handle_t, bus_size_t, u_int32_t);
-void	sf64pcr_rset(bus_space_tag_t, bus_space_handle_t, bus_size_t, u_int32_t);
-void	sf64pcr_write_bit(bus_space_tag_t, bus_space_handle_t, bus_size_t, int);
-u_int32_t	sf64pcr_hw_read(bus_space_tag_t, bus_space_handle_t, bus_size_t);
+void sf64pcr_init(bus_space_tag_t, bus_space_handle_t, bus_size_t, u_int32_t);
+void sf64pcr_rset(bus_space_tag_t, bus_space_handle_t, bus_size_t, u_int32_t);
+void sf64pcr_write_bit(bus_space_tag_t, bus_space_handle_t, bus_size_t, int);
+u_int32_t sf64pcr_hw_read(bus_space_tag_t, bus_space_handle_t, bus_size_t);
 
 /*
  * PCI initialization stuff
@@ -166,7 +166,7 @@ sf64pcr_match(struct device *parent, void *match, void *aux)
 	/* FIXME: more thorough testing */
 	/* desc = "SoundForte RadioLink SF64-PCR PCI"; */
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_FORTEMEDIA &&
-		PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_FORTEMEDIA_FM801)
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_FORTEMEDIA_FM801)
 		return (1);
 	return (0);
 }
@@ -177,17 +177,10 @@ sf64pcr_attach(struct device *parent, struct device *self, void *aux)
 	struct sf64pcr_softc *sc = (struct sf64pcr_softc *) self;
 	struct pci_attach_args *pa = aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
-	bus_addr_t iobase;
-	bus_size_t iosize;
 	pcireg_t csr;
 
-	if (pci_io_find(pc, pa->pa_tag, PCI_CBIO, &iobase, &iosize)) {
-		printf (": can't find i/o base\n");
-		return;
-	}
-
-	if (bus_space_map(sc->tea.iot = pa->pa_iot, iobase, iosize, 0,
-				&sc->tea.ioh)) {
+	if (pci_mapreg_map(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0,
+	    &sc->tea.iot, &sc->tea.ioh, NULL, NULL, 0)) {
 		printf(": can't map i/o space\n");
 		return;
 	}
@@ -195,7 +188,7 @@ sf64pcr_attach(struct device *parent, struct device *self, void *aux)
 	/* Enable the card */
 	csr = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
 	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
-			csr | PCI_COMMAND_MASTER_ENABLE);
+	    csr | PCI_COMMAND_MASTER_ENABLE);
 
 	sc->vol = 0;
 	sc->mute = 0;
@@ -277,7 +270,7 @@ sf64pcr_hw_read(bus_space_tag_t iot, bus_space_handle_t ioh, bus_size_t offset)
 	rb = 23;
 	while (rb--) {
 		bus_space_write_2(iot, ioh, offset, SF64PCR_READ_CLOCK_HIGH);
-		DELAY(4);			
+		DELAY(4);
 
 		bus_space_write_2(iot, ioh, offset, SF64PCR_READ_CLOCK_LOW);
 		DELAY(4);
@@ -288,7 +281,7 @@ sf64pcr_hw_read(bus_space_tag_t iot, bus_space_handle_t ioh, bus_size_t offset)
 	}
 
 	bus_space_write_2(iot, ioh, offset, SF64PCR_READ_CLOCK_HIGH);
-	DELAY(4);			
+	DELAY(4);
 
 	rb = bus_space_read_1(iot, ioh, offset);
 	ind = rb & SF64PCR_SIGNAL ? (1 << 1) : (0 << 1); /* Tuning */
