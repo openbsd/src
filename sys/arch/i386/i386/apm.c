@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.43 2001/01/02 16:16:50 mickey Exp $	*/
+/*	$OpenBSD: apm.c,v 1.44 2001/02/06 00:15:01 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1998-2000 Michael Shalayeff. All rights reserved.
@@ -525,13 +525,17 @@ apm_periodic_check(sc)
 	if (apm_op_inprog)
 		apm_set_powstate(APM_DEV_ALLDEVS, APM_LASTREQ_INPROG);
 
-	while (apm_get_event(&regs) == 0)
+	while (1) {
+		if (apm_get_event(&regs) != 0) {
+			/* i think some bioses combine the error codes */
+			if (!(APM_ERR_CODE(&regs) & APM_ERR_NOEVENTS))
+				apm_perror("get event", &regs);
+			break;
+		}
+
 		if (apm_handle_event(sc, &regs))
 			break;
-
-	/* i think some bioses actually combine the error codes */
-	if (!(APM_ERR_CODE(&regs) & APM_ERR_NOEVENTS))
-		apm_perror("periodic get event", &regs);
+	}
 
 	if (apm_error || APM_ERR_CODE(&regs) == APM_ERR_NOTCONN)
 		ret = -1;
