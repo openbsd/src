@@ -1,4 +1,4 @@
-/*	$OpenBSD: forward.c,v 1.11 2000/11/21 22:01:47 art Exp $	*/
+/*	$OpenBSD: forward.c,v 1.12 2001/08/18 14:49:15 art Exp $	*/
 /*	$NetBSD: forward.c,v 1.7 1996/02/13 16:49:10 ghudson Exp $	*/
 
 /*-
@@ -41,12 +41,13 @@
 #if 0
 static char sccsid[] = "@(#)forward.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: forward.c,v 1.11 2000/11/21 22:01:47 art Exp $";
+static char rcsid[] = "$OpenBSD: forward.c,v 1.12 2001/08/18 14:49:15 art Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/mman.h>
+#include <sys/event.h>
 
 #include <err.h>
 #include <errno.h>
@@ -90,8 +91,10 @@ forward(fp, style, off, sbp)
 	long off;
 	struct stat *sbp;
 {
-	register int ch;
+	int ch;
 	struct stat nsb;
+	int kq;
+	struct kevent ke;
 
 	switch(style) {
 	case FBYTES:
@@ -170,19 +173,58 @@ forward(fp, style, off, sbp)
 		break;
 	}
 
+	kq = -1;
+kq_retry:
+	if (fflag && ((kq = kqueue()) >= 0)) {
+		ke.ident = fileno(fp);
+		ke.flags = EV_ENABLE|EV_ADD|EV_CLEAR;
+		ke.filter = EVFILT_READ;
+		ke.fflags = ke.data = 0;
+		ke.udata = NULL;
+		if (kevent(kq, &ke, 1, NULL, 0, NULL) < 0) {
+			close(kq);
+			kq = -1;
+		} else if (S_ISREG(sbp->st_mode)) {
+			ke.ident = fileno(fp);
+			ke.flags = EV_ENABLE|EV_ADD|EV_CLEAR;
+			ke.filter = EVFILT_VNODE;
+			ke.fflags = NOTE_DELETE | NOTE_RENAME;
+			if (kevent(kq, &ke, 1, NULL, 0, NULL) < 0) {
+				close(kq);
+				kq = -1;
+			}
+		}
+	}
+
 	for (;;) {
 		while (!feof(fp) && (ch = getc(fp)) != EOF)
 			if (putchar(ch) == EOF)
 				oerr();
 		if (ferror(fp)) {
 			ierr();
+			if (kq != -1)
+				close(kq);
 			return;
 		}
 		(void)fflush(stdout);
 		if (!fflag)
 			break;
-		sleep(1);
 		clearerr(fp);
+		if (kq < 0 || kevent(kq, NULL, 0, &ke, 1, NULL) <= 0) {
+			sleep(1);
+		} else if (ke.filter == EVFILT_READ) {
+			continue;
+		} else {
+			/*
+			 * File was renamed or deleted.
+			 *
+			 * Continue to look at it until a new file reappears
+			 * with the same name. 
+			 * Fall back to the old algorithm for that.
+			 */
+			close(kq);
+			kq = -1;
+		}
 
 		if (is_stdin || stat(fname, &nsb) != 0)
 			continue;
@@ -191,15 +233,20 @@ forward(fp, style, off, sbp)
 			warnx("%s has been replaced, reopening.", fname);
 			if ((fp = freopen(fname, "r", fp)) == NULL) {
 				ierr();
+				if (kq >= 0)
+					close(kq);
 				return;
 			}
 			(void)memcpy(sbp, &nsb, sizeof(nsb));
+			goto kq_retry;
 		} else if (nsb.st_size < sbp->st_size) {
 			warnx("%s has been truncated, resetting.", fname);
 			rewind(fp);
 			(void)memcpy(sbp, &nsb, sizeof(nsb));
 		}
 	}
+	if (kq >= 0)
+		close(kq);
 }
 
 /*
