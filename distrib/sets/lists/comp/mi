@@ -1936,8 +1936,10 @@
 ./usr/share/man/cat2/setpgid.0
 ./usr/share/man/cat2/setpgrp.0
 ./usr/share/man/cat2/setpriority.0
+./usr/share/man/cat2/setregid.0
 ./usr/share/man/cat2/setresgid.0
 ./usr/share/man/cat2/setresuid.0
+./usr/share/man/cat2/setreuid.0
 ./usr/share/man/cat2/setrlimit.0
 ./usr/share/man/cat2/setsid.0
 ./usr/share/man/cat2/setsockopt.0
@@ -4305,8 +4307,6 @@
 ./usr/share/man/cat3/setprotoent.0
 ./usr/share/man/cat3/setpwent.0
 ./usr/share/man/cat3/setpwfile.0
-./usr/share/man/cat3/setregid.0
-./usr/share/man/cat3/setreuid.0
 ./usr/share/man/cat3/setrgid.0
 ./usr/share/man/cat3/setrpcent.0
 ./usr/share/man/cat3/setruid.0
