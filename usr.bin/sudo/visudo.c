@@ -310,7 +310,9 @@ main(argc, argv)
 	    switch (whatnow()) {
 		case 'Q' :	parse_error = FALSE;	/* ignore parse error */
 				break;
-		case 'x' :	Exit(0);
+		case 'x' :	if (sudoers_sb.st_size == 0)
+				    unlink(sudoers);
+				Exit(0);
 				break;
 	    }
 	    yyrestart(yyin);	/* reset lexer */
