@@ -1,4 +1,4 @@
-/*	$OpenBSD: sunos_misc.c,v 1.28 2001/10/26 12:03:27 art Exp $	*/
+/*	$OpenBSD: sunos_misc.c,v 1.29 2001/10/31 10:56:10 art Exp $	*/
 /*	$NetBSD: sunos_misc.c,v 1.65 1996/04/22 01:44:31 christos Exp $	*/
 
 /*
@@ -456,15 +456,12 @@ sunos_sys_getdents(p, v, retval)
 
 int
 sunos_sys_mmap(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	register struct sunos_sys_mmap_args *uap = v;
+	struct sunos_sys_mmap_args *uap = v;
 	struct sys_mmap_args ouap;
-	register struct filedesc *fdp;
-	register struct file *fp;
-	register struct vnode *vp;
 
 	/*
 	 * Verify the arguments.
@@ -487,20 +484,6 @@ sunos_sys_mmap(p, v, retval)
 	SCARG(&ouap, prot) = SCARG(uap, prot);
 	SCARG(&ouap, fd) = SCARG(uap, fd);
 	SCARG(&ouap, pos) = SCARG(uap, pos);
-
-	/*
-	 * Special case: if fd refers to /dev/zero, map as MAP_ANON.  (XXX)
-	 * XXXART - this is probably completly unnecessary. mmap deals with
-	 * XXXART - this just fine.
-	 */
-	fdp = p->p_fd;
-	if ((fp = fd_getfile(fdp, SCARG(&ouap, fd))) != NULL &&		/*XXX*/
-	    fp->f_type == DTYPE_VNODE &&				/*XXX*/
-	    (vp = (struct vnode *)fp->f_data)->v_type == VCHR &&	/*XXX*/
-	    iszerodev(vp->v_rdev)) {					/*XXX*/
-		SCARG(&ouap, flags) |= MAP_ANON;
-		SCARG(&ouap, fd) = -1;
-	}
 
 	return (sys_mmap(p, &ouap, retval));
 }
