@@ -1,4 +1,4 @@
-/*	$OpenBSD: psl.h,v 1.5 1999/09/07 21:22:49 mickey Exp $	*/
+/*	$OpenBSD: psl.h,v 1.6 1999/11/25 18:29:01 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -99,9 +99,8 @@
 					   Check Interrupt unmask */
 
 /*
- * Frequently Used PSL Values
+ * Frequently Used PSW Values
  */
 #define	RESET_PSW	(PSW_R | PSW_Q | PSW_P | PSW_D | PSW_I)
-#define	KERNEL_PSW	(PSW_C | PSW_Q | PSW_P | PSW_D)
 
 #endif  /* _MACHINE_PSL_H_ */
