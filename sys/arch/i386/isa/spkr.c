@@ -1,4 +1,4 @@
-/*	$OpenBSD: spkr.c,v 1.10 1996/07/27 11:16:10 deraadt Exp $ */
+/*	$OpenBSD: spkr.c,v 1.11 1996/10/18 15:48:10 mickey Exp $ */
 /*	$NetBSD: spkr.c,v 1.23.4.1 1996/07/15 22:15:11 fvdl Exp $	*/
 
 /*
@@ -436,7 +436,14 @@ spkrprobe (parent, match, aux)
 	void *aux;
 {
 	struct cfdata *cf = match;
-	extern struct cfattach pc_ca, vt_ca;
+#include "vt.h"
+#include "pc.h"
+#if NPC > 0
+	extern struct cfattach pc_ca;
+#endif
+#if NVT > 0
+	extern struct cfattach vt_ca;
+#endif
 	/*
 	 * We only attach to the keyboard controller via
 	 * the console drivers. (We really wish we could be the
@@ -444,8 +451,6 @@ spkrprobe (parent, match, aux)
 	 */
 	if ((parent == NULL) || (parent->dv_cfdata == NULL) ||
 	   (
-#include "vt.h"
-#include "pc.h"
 #if NPC > 0
 	    (parent->dv_cfdata->cf_attach != &pc_ca)
 #endif
