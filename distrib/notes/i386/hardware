@@ -82,6 +82,13 @@ Supported devices {:-include-:}:
 		Novell NE1000, NE2000
 		Digital DEFPA PCI FDDI adapters
 		Intel EtherExpress 100 Fast Ethernet adapters.
+		Texas Instruments ThunderLAN PCI Ethernet adapters, including:
+			Compaq Netelligent PCI Adapters
+			Compaq NetFlex 3/P
+			Compaq Deskpro integrated adapter
+			Compaq Prosignia integrated adapter
+			Olicom OC2183, OC2325, OC2326
+			TI ThunerLAN adapters
 	Tape drives:
 		Most SCSI tape drives
 		QIC-02 and QIC-36 format (Archive- and Wangtek-
