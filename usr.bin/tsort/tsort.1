@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tsort.1,v 1.7 2001/03/26 22:53:33 espie Exp $
+.\"	$OpenBSD: tsort.1,v 1.8 2001/04/07 14:17:37 espie Exp $
 .\"	$NetBSD: tsort.1,v 1.6 1996/01/17 20:37:49 mycroft Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
@@ -81,16 +81,18 @@ of the first component of the pairs.
 Use
 .Ar file ,
 which holds an ordered list of nodes, to resolve ambiguities.
+In case of duplicates, the first entry is chosen.
 .It Fl l
 Search for and display the longest cycle.
 .It Fl q
-Do not display informational messages about cycles.  This is primarily
-intended for building libraries, where optimal ordering is not critical,
-and cycles occur often.
+Do not display informational messages about cycles.  
+This is primarily intended for building libraries, where optimal ordering 
+is not critical, and cycles occur often.
 .It Fl r
 Reverse the ordering relation.
 .It Fl v
 Inform on the exact number of edges broken while breaking cycles.
+If a hints file was used, inform on seen nodes absent from that file.
 .It Fl w
 Exit with exit code the number of cycles
 .Nm

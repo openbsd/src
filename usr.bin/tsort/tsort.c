@@ -1,4 +1,4 @@
-/* $OpenBSD: tsort.c,v 1.5 2001/03/26 22:53:33 espie Exp $ */
+/* $OpenBSD: tsort.c,v 1.6 2001/04/07 14:17:38 espie Exp $ */
 /* ex:ts=8 sw=4: 
  */
 
@@ -133,7 +133,7 @@ static void dump_node __P((struct node *));
 static void dump_array __P((struct array *));
 static void dump_hash __P((struct ohash *));
 #endif
-static void read_hints __P((FILE *, struct ohash *, const char *));
+static void read_hints __P((FILE *, struct ohash *, int, const char *));
 static struct node *find_smallest_node __P((struct array *));
 static struct node *find_good_cycle_break __P((struct array *));
 static void print_cycle __P((struct array *));
@@ -143,7 +143,7 @@ static unsigned int traverse_node __P((struct node *, unsigned int, struct array
 static struct node *find_longest_cycle __P((struct array *, struct array *));
 
 static void heap_down __P((struct array *, unsigned int));
-static void heapify __P((struct array *));
+static void heapify __P((struct array *, int));
 static struct node *dequeue __P((struct array *));
 static void enqueue __P((struct array *, struct node *));
 
@@ -376,9 +376,10 @@ read_pairs(f, h, reverse, name)
 }
 
 static void
-read_hints(f, h, name)
+read_hints(f, h, quiet, name)
 	FILE 		*f;
 	struct ohash 	*h;
+	int 		quiet;
 	const char 	*name;
 {
 	char 		*str;
@@ -403,7 +404,8 @@ read_hints(f, h, name)
 				continue;
 			a = node_lookup(h, str, e);
 			if (a->order != 0)
-				errx(EX_DATAERR, 
+				if (!quiet)
+				    warnx(
 					"duplicate node %s in hints file %s",
 					a->k, name);
 			else
@@ -438,13 +440,17 @@ heap_down(h, i)
 }
 
 static void 
-heapify(h)
+heapify(h, verbose)
 	struct array 	*h;
+	int		verbose;
 {
 	unsigned int 	i;
 
-	for (i = h->entries; i != 0;)
-		heap_down(h, --i);
+	for (i = h->entries; i != 0;) {
+		if (h->t[--i]->order == 0 && verbose)
+			warnx("node %s absent from hints file", h->t[i]->k);
+		heap_down(h, i);
+	}
 }
 
 #define DEQUEUE(h) ( hints_flag ? dequeue(h) : (h)->t[--(h)->entries] )
@@ -813,7 +819,7 @@ main(argc, argv)
 			    if (f == NULL)
 				    err(EX_NOINPUT, "Can't open hint file %s",
 					optarg);
-			    read_hints(f, &pairs, optarg);
+			    read_hints(f, &pairs, quiet_flag, optarg);
 			    fclose(f);
 		    }
 			    /*FALLTHRU*/
@@ -877,7 +883,7 @@ main(argc, argv)
 	    ohash_delete(&pairs);
 
 	    if (hints_flag)
-		    heapify(&aux);
+		    heapify(&aux, verbose_flag);
 
 	    left = remaining.entries + aux.entries;
 	    while (left != 0) {
