@@ -1,4 +1,4 @@
-.\" $OpenBSD: pthread_cond_init.3,v 1.6 1999/11/24 05:35:31 d Exp $
+.\" $OpenBSD: pthread_cond_init.3,v 1.7 2001/05/31 21:48:23 jasoni Exp $
 .\" Copyright (c) 1997 Brian Cully <shmit@kublai.com>
 .\" All rights reserved.
 .\"
@@ -66,7 +66,8 @@ is invalid.
 The process cannot allocate enough memory to create another condition
 variable.
 .It Bq Er EAGAIN
-The temporarily lacks the resources to create another condition variable.
+The system temporarily lacks the resources to create another condition 
+variable.
 .El
 .Sh SEE ALSO
 .Xr pthread_cond_broadcast 3 ,
