@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.55 1999/12/21 15:41:07 itojun Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.56 1999/12/21 17:49:28 provos Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -837,14 +837,14 @@ findpcb:
 				ND6_HINT(tp);
 				sbdrop(&so->so_snd, acked);
 				tp->snd_una = th->th_ack;
-#if defined(TCP_SACK) || defined(TCP_NEWRENO)
+#if defined(TCP_SACK)
 				/* 
 				 * We want snd_last to track snd_una so
 				 * as to avoid sequence wraparound problems
 				 * for very large transfers.
 				 */
 				tp->snd_last = tp->snd_una;
-#endif /* TCP_SACK or TCP_NEWRENO */
+#endif /* TCP_SACK */
 #if defined(TCP_SACK) && defined(TCP_FACK)
 				tp->snd_fack = tp->snd_una;
 				tp->retran_data = 0;
@@ -1108,9 +1108,9 @@ findpcb:
 #endif /* !TCP_COMPAT_42 */
 		tp->irs = th->th_seq;
 		tcp_sendseqinit(tp);
-#if defined (TCP_SACK) || defined (TCP_NEWRENO)
+#if defined (TCP_SACK)
 		tp->snd_last = tp->snd_una;
-#endif /* TCP_SACK || TCP_NEWRENO */
+#endif /* TCP_SACK */
 #if defined(TCP_SACK) && defined(TCP_FACK)
 		tp->snd_fack = tp->snd_una;
 		tp->retran_data = 0;
@@ -1545,7 +1545,7 @@ trimthenstep6:
 					    ulmin(tp->snd_wnd, tp->snd_cwnd) /
 						2 / tp->t_maxseg;
 
-#if defined(TCP_SACK) || defined(TCP_NEWRENO) 
+#if defined(TCP_SACK) 
 					if (SEQ_LT(th->th_ack, tp->snd_last)){
 					    	/* 
 						 * False fast retx after 
@@ -1560,7 +1560,7 @@ trimthenstep6:
 					if (win < 2)
 						win = 2;
 					tp->snd_ssthresh = win * tp->t_maxseg;
-#if defined(TCP_SACK) || defined(TCP_NEWRENO)
+#if defined(TCP_SACK)
 					tp->snd_last = tp->snd_max;
 #endif
 #ifdef TCP_SACK
@@ -1631,23 +1631,7 @@ trimthenstep6:
 		 * If the congestion window was inflated to account
 		 * for the other side's cached packets, retract it.
 		 */
-#ifdef TCP_NEWRENO
-		if (tp->t_dupacks >= tcprexmtthresh && !tcp_newreno(tp, th)) {
-			/* Out of fast recovery */
-			tp->snd_cwnd = tp->snd_ssthresh;
-			/* 
-			 * Window inflation should have left us with approx.
-			 * snd_ssthresh outstanding data.  But in case we
-			 * would be inclined to send a burst, better to do
-			 * it via the slow start mechanism.
-			 */
-			if (tcp_seq_subtract(tp->snd_max, th->th_ack) <
-			    tp->snd_ssthresh)
-				tp->snd_cwnd = tcp_seq_subtract(tp->snd_max,
-				    th->th_ack) + tp->t_maxseg;	
-			tp->t_dupacks = 0;
-		}
-#elif defined(TCP_SACK)
+#if defined(TCP_SACK)
 		if (!tp->sack_disable) {
 			if (tp->t_dupacks >= tcprexmtthresh) {
 				/* Check for a partial ACK */
@@ -1688,7 +1672,7 @@ trimthenstep6:
 				tp->t_dupacks = 0;
 			}
 		}
-#else /* else neither TCP_NEWRENO nor TCP_SACK */
+#else /* else no TCP_SACK */
 		if (tp->t_dupacks >= tcprexmtthresh &&
 		    tp->snd_cwnd > tp->snd_ssthresh)
 			tp->snd_cwnd = tp->snd_ssthresh;
@@ -1740,7 +1724,7 @@ trimthenstep6:
 
 		if (cw > tp->snd_ssthresh)
 			incr = incr * incr / cw;
-#if defined (TCP_NEWRENO) || defined (TCP_SACK)
+#if defined (TCP_SACK)
 		if (SEQ_GEQ(th->th_ack, tp->snd_last)) 
 #endif
 		tp->snd_cwnd = min(cw + incr, TCP_MAXWIN<<tp->snd_scale);
@@ -2178,7 +2162,7 @@ tcp_dooptions(tp, cp, cnt, th, ts_present, ts_val, ts_ecr)
 		(void) tcp_mss(tp, mss);	/* sets t_maxseg */
 }
 
-#if defined(TCP_SACK) || defined(TCP_NEWRENO)
+#if defined(TCP_SACK)
 u_long 
 tcp_seq_subtract(a, b)
 	u_long a, b;
@@ -2911,7 +2895,7 @@ tcp_mss(tp, offer)
 }
 #endif /* TUBA_INCLUDE */
 
-#if defined(TCP_NEWRENO) || defined (TCP_SACK)
+#if defined (TCP_SACK)
 /* 
  * Checks for partial ack.  If partial ack arrives, force the retransmission
  * of the next unacknowledged segment, do not clear tp->t_dupacks, and return
@@ -2953,4 +2937,4 @@ tcp_newreno(tp, th)
     }
     return 0;
 }
-#endif /* TCP_NEWRENO || TCP_SACK */
+#endif /* TCP_SACK */

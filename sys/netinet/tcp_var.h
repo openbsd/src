@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.25 1999/12/08 06:50:20 itojun Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.26 1999/12/21 17:49:28 provos Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -103,7 +103,7 @@ struct tcpcb {
 	int retran_data;		/* amount of outstanding retx. data  */
 #endif /* TCP_FACK */
 #endif /* TCP_SACK */
-#if defined(TCP_SACK) || defined(TCP_NEWRENO)
+#if defined(TCP_SACK)
 	tcp_seq snd_last;		/* for use in fast recovery */
 #endif
 /* receive sequence variables */
@@ -383,10 +383,10 @@ int	 tcp_sack_partialack __P((struct tcpcb *, struct tcphdr *));
 void	 tcp_print_holes __P((struct tcpcb *tp));
 #endif
 #endif /* TCP_SACK */
-#if defined(TCP_NEWRENO) || defined(TCP_SACK)
+#if defined(TCP_SACK)
 int	 tcp_newreno __P((struct tcpcb *, struct tcphdr *));
 u_long	 tcp_seq_subtract  __P((u_long, u_long )); 
-#endif /* TCP_NEWRENO || TCP_SACK */
+#endif /* TCP_SACK */
 #ifdef TCP_SIGNATURE
 int	tcp_signature_apply __P((caddr_t, caddr_t, unsigned int));
 #endif /* TCP_SIGNATURE */

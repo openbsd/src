@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_output.c,v 1.27 1999/12/15 16:37:20 provos Exp $	*/
+/*	$OpenBSD: tcp_output.c,v 1.28 1999/12/21 17:49:28 provos Exp $	*/
 /*	$NetBSD: tcp_output.c,v 1.16 1997/06/03 16:17:09 kml Exp $	*/
 
 /*
@@ -187,7 +187,7 @@ tcp_output(tp)
 	int i, sack_rxmit = 0;
 	struct sackhole *p;
 #endif
-#if defined(TCP_SACK) || defined(TCP_NEWRENO)
+#if defined(TCP_SACK)
 	int maxburst = TCP_MAXBURST;
 #endif
 #ifdef TCP_SIGNATURE
@@ -1061,7 +1061,7 @@ out:
 		tp->rcv_adv = tp->rcv_nxt + win;
 	tp->last_ack_sent = tp->rcv_nxt;
 	tp->t_flags &= ~(TF_ACKNOW|TF_DELACK);
-#if defined(TCP_SACK) || defined(TCP_NEWRENO)
+#if defined(TCP_SACK)
 	if (sendalot && --maxburst)
 #else
 	if (sendalot)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_timer.c,v 1.15 1999/11/15 05:50:59 hugh Exp $	*/
+/*	$OpenBSD: tcp_timer.c,v 1.16 1999/12/21 17:49:28 provos Exp $	*/
 /*	$NetBSD: tcp_timer.c,v 1.14 1996/02/13 23:44:09 christos Exp $	*/
 
 /*
@@ -250,13 +250,13 @@ tcp_timers(tp, timer)
 			tp->t_srtt = 0;
 		}
 		tp->snd_nxt = tp->snd_una;
-#if defined(TCP_SACK) || defined(TCP_NEWRENO)
+#if defined(TCP_SACK)
 		/*
 		 * Note:  We overload snd_last to function also as the
 		 * snd_last variable described in RFC 2582
 		 */
 		tp->snd_last = tp->snd_max;
-#endif /* TCP_SACK or TCP_NEWRENO */
+#endif /* TCP_SACK */
 		/*
 		 * If timing a segment in this window, stop the timer.
 		 */
