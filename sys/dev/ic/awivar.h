@@ -1,3 +1,4 @@
+/* $OpenBSD: awivar.h,v 1.3 2001/07/04 09:02:59 niklas Exp $ */
 /* $NetBSD: awivar.h,v 1.12 2000/07/21 04:48:56 onoe Exp $ */
 
 /*-

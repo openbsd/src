@@ -1,3 +1,4 @@
+/* $OpenBSD: am79c930.c,v 1.3 2001/07/04 09:02:56 niklas Exp $ */
 /* $NetBSD: am79c930.c,v 1.5 2000/03/23 13:57:58 onoe Exp $ */
 
 /*-

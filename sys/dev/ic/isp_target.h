@@ -1,3 +1,5 @@
+/*	$OpenBSD: isp_target.h,v 1.6 2001/07/04 09:03:02 niklas Exp $	*/
+
 /* @(#)isp_target.h 1.3 */
 /*
  * Qlogic Target Mode Structure and Flag Definitions

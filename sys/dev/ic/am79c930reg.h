@@ -1,4 +1,4 @@
-/* $NetBSD$ */
+/* $OpenBSD: am79c930reg.h,v 1.3 2001/07/04 09:02:57 niklas Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.

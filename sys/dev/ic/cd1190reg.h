@@ -1,3 +1,5 @@
+/*	$OpenBSD: cd1190reg.h,v 1.2 2001/07/04 09:03:00 niklas Exp $	*/
+
 /*
  * Copyright (c) 1998 Iain Hibbert.
  * All rights reserved.
