@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.323 2003/02/18 21:59:34 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.324 2003/02/19 21:54:46 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -2735,7 +2735,9 @@ filter_consistent(struct pf_rule *r)
 	}
 	if ((r->proto == IPPROTO_ICMP && r->af == AF_INET6) ||
 	    (r->proto == IPPROTO_ICMPV6 && r->af == AF_INET)) {
-		yyerror("icmp version does not match address family");
+		yyerror("proto %s doesn't match address family %s",
+		    r->proto == IPPROTO_ICMP ? "icmp" : "icmp6",
+		    r->af == AF_INET ? "inet" : "inet6");
 		problems++;
 	}
 	if (r->keep_state == PF_STATE_MODULATE && r->proto &&
