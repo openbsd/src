@@ -40,7 +40,7 @@ Creating a bootable floppy disk using DOS/Windows:
 
 	First you need to get access to the OpenBSD Bootable floppy
 	images.  If you can access the CD-ROM distribution under DOS
-	the bootable disks are in the 2.3/sparc directory, otherwise
+	the bootable disks are in the OSREV/sparc directory, otherwise
 	you you will have to download them from one of the OpenBSD
 	ftp or http mirror sites, using ftp or a web-viewer.  In either
 	case, take care to do "binary" transfers, since these are
@@ -74,7 +74,7 @@ Creating a bootable floppy disk using SunOS or other Un*x-like system:
 	Next, use the dd(1) utility to copy the file to the floppy drive.
 	Under SunOS, the command would be:
 
-		dd if=floppy23.fs of=/dev/rfd0c bs=36b
+		dd if=floppy{:--:}OSrev.fs of=/dev/rfd0c bs=36b
 
 	If you are using something other than SunOS, you may have to adapt
 	this to conform to local naming conventions for the floppy and
@@ -96,7 +96,7 @@ Creating a bootable floppy disk using SunOS or other Un*x-like system:
 Creating a bootable hard disk using SunOS or other Un*x-like system:
 
 	If you don't have a floppy drive you can copy the single floppy
-	installation image "floppy23.fs" or the mini-root "miniroot23.fs"
+	installation image "floppy{:--:}OSrev.fs" or the mini-root "miniroot{:--:}OSrev.fs"
 	onto the hard disk you intend to boot on.  Traditionally, the
 	way to do this is to use dd(1) to place the bootable filesystem
 	image in the "swap" partition of the disk (while running in
@@ -113,9 +113,9 @@ Creating a bootable hard disk using SunOS or other Un*x-like system:
 	Use the dd(1) utility to copy the file to the hard drive.
 	Under SunOS, the command would be:
 
-		dd if=floppy23.fs of=/dev/rsd0b bs=36b
+		dd if=floppy{:--:}OSrev.fs of=/dev/rsd0b bs=36b
 				- or -
-		dd if=miniroot23.fs of=/dev/rsd0b bs=36b
+		dd if=miniroot{:--:}OSrev.fs of=/dev/rsd0b bs=36b
 
 	The blocksize is arbitrary as long as it's a multiple of 512-bytes
 	and within the maximum supported by the driver, i.e. bs=126b may
@@ -140,7 +140,7 @@ Creating a bootable hard disk using SunOS or other Un*x-like system:
 
 	To copy the floppy image to the whole disk, overwriting labels:
 
-		dd if=floppy23.fs of=/dev/rsdXc bs=36b
+		dd if=floppy{:--:}OSrev.fs of=/dev/rsdXc bs=36b
 
 	Two notes - X should be replaced by the unit number of the target
 	disk, which is most likely *not* the disk/partition that's your
@@ -159,13 +159,13 @@ Creating a bootable hard disk using SunOS or other Un*x-like system:
 	To copy the floppy image to the hard disk, preserving SunOS,
 	Solaris NetBSD or OpenBSD labels:
 
-		dd if=floppy23.fs of=/dev/rsdXc bs=1b skip=1 seek=1
+		dd if=floppy{:--:}OSrev.fs of=/dev/rsdXc bs=1b skip=1 seek=1
 
 	You need to be sure that your version of dd(1) supports the
 	skip and seek operands, otherwise you can try a technique like:
 
 		dd if=/dev/rsdXc of=/tmp/label bs=1b count=1
-		dd if=floppy23.fs of=/dev/rsdXc bs=36b
+		dd if=floppy{:--:}OSrev.fs of=/dev/rsdXc bs=36b
 		dd if=/tmp/label of=/dev/rsdXc bs=1b count=1
 
 	In either case, you've created a situation where the disklabel
@@ -177,7 +177,7 @@ Creating a network bootable setup using SunOS or other Un*x-like system:
 
 	The details of setting up a network bootable environment vary
 	considerably, depending on the networks host.  Extract the
-	OpenBSD diskless(8) man page from the man23.tar.gz distribution
+	OpenBSD diskless(8) man page from the man{:--:}OSrev.tar.gz distribution
 	set or see the copy on the OpenBSD web page.  You will also
 	need to reference the relevant man pages or administrators guide
 	for the host system.
@@ -217,7 +217,7 @@ To install or upgrade OpenBSD using a tape, you need to do the following:
 	#! /bin/sh
 	tape=/dev/nrst0
 	mt -f ${tape} rewind
-	for file in base23 etc23 comp23 game23 man23 misc23 x*23
+	for file in base{:--:}OSrev etc{:--:}OSrev comp{:--:}OSrev game{:--:}OSrev man{:--:}OSrev misc{:--:}OSrev x*{:--:}OSrev
 	do
 		dd if=${file}.tar.gz of=${tape}
 	done
@@ -228,7 +228,7 @@ To install or upgrade OpenBSD using a tape, you need to do the following:
 
 	And then:
 
-	cd .../2.3/sparc
+	cd .../OSREV/sparc
 	sh -x /tmp/maketape
 
 
@@ -275,7 +275,7 @@ following:
 	Place the distribution sets you wish to upgrade somewhere in
 	your current file system tree.  At a bare minimum, you must
 	upgrade the "base" binary distribution, and so must put the
-	"base23" set somewhere in your file system.  If you wish,
+	"base{:--:}OSrev" set somewhere in your file system.  If you wish,
 	you can do the other sets, as well, but you should NOT upgrade
 	the "etc" distribution; the "etc" distribution contains system
 	configuration files that you should review and update by hand.

@@ -1,4 +1,4 @@
-To upgrade to OpenBSD 2.3 from a previous version start with the general
+To upgrade to OpenBSD OSREV from a previous version start with the general
 instructions in the section "Installing OpenBSD".
 
 If you are upgrading with the miniroot or the new single floppy image,
@@ -6,7 +6,7 @@ select the (U)pdate option rather than the (I)nstall option at the prompt
 in the install process. 
 
 If you are using the old multi-floppy installation procedure, use the
-"upgr23.fs" floppy rather than the "inst23.fs" floppy when prompted to
+"upgr{:--:}OSrev.fs" floppy rather than the "inst{:--:}OSrev.fs" floppy when prompted to
 put in the filesystem diskette.  When you arrive at the shell prompt,
 run the "upgrade" script rather than "install" script.
 

@@ -69,16 +69,16 @@ Bootable installation/upgrade floppies:
   upgr{:--:}OSrev.fs
 	This disk contains a file system, and has holds the utilities 
 	needed in order to upgrade an existing OpenBSD (or NetBSD) system
-	to a minimal working OpenBSD 2.3 system.
+	to a minimal working OpenBSD OSREV system.
 
   floppy{:--:}OSrev.fs
 	This disk contains a compressed ramdisk filesystem, and holds
-        all utilities needed to install or upgrade to OpenBSD 2.3
+        all utilities needed to install or upgrade to OpenBSD OSREV
   
   miniroot{:--:}OSrev.fs
 	This is a miniroot filesystem image which can be copied to the
 	swap partition of an existing OpenBSD, NetBSD, Linux, SunOS, 
-	or Solaris installation to allow upgrading to OpenBSD 2.3
+	or Solaris installation to allow upgrading to OpenBSD OSREV
 
 
 DistributionDescription
