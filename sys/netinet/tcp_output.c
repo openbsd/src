@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_output.c,v 1.24 1999/12/02 16:31:17 deraadt Exp $	*/
+/*	$OpenBSD: tcp_output.c,v 1.25 1999/12/08 06:50:20 itojun Exp $	*/
 /*	$NetBSD: tcp_output.c,v 1.16 1997/06/03 16:17:09 kml Exp $	*/
 
 /*
@@ -440,17 +440,13 @@ send:
 	 * NOTE: we assume that the IP/TCP header plus TCP options
 	 * always fit in a single mbuf, leaving room for a maximum
 	 * link header, i.e.
-	 *	max_linkhdr + sizeof(network header) + sizeof(struct tcphdr) +
-	 *		optlen <= MHLEN
+	 *	max_linkhdr + sizeof(network header) + sizeof(struct tcphdr +
+	 * 		optlen <= MHLEN
 	 */
 	optlen = 0;
 
-#if defined(INET) && defined(INET6)
 	switch (tp->pf) {
-#else /* defined(INET) && defined(INET6) */
-	switch (0) {
-#endif /* defined(INET) && defined(INET6) */
-	case 0:		/* If tp->pf is 0, then assume IPv4 unless not avail */
+	case 0:	/*default to PF_INET*/
 #ifdef INET
 	case PF_INET:
 		hdrlen = sizeof(struct ip) + sizeof(struct tcphdr);
@@ -458,7 +454,7 @@ send:
 #endif /* INET */
 #ifdef INET6
 	case PF_INET6:
-		hdrlen = sizeof(struct ipv6) + sizeof(struct tcphdr);
+		hdrlen = sizeof(struct ip6_hdr) + sizeof(struct tcphdr);
 		break;
 #endif /* INET6 */
 	default:
@@ -626,13 +622,20 @@ send:
 		m->m_data -= hdrlen;
 #else
 		MGETHDR(m, M_DONTWAIT, MT_HEADER);
+		if (m != NULL) {
+			MCLGET(m, M_DONTWAIT);
+			if ((m->m_flags & M_EXT) == 0) {
+				m_freem(m);
+				m = NULL;
+			}
+		}
 		if (m == NULL) {
 			error = ENOBUFS;
 			goto out;
 		}
 		m->m_data += max_linkhdr;
 		m->m_len = hdrlen;
-		if (len <= MHLEN - hdrlen - max_linkhdr) {
+		if (len <= MCLBYTES - hdrlen - max_linkhdr) {
 			m_copydata(so->so_snd.sb_mb, off, (int) len,
 			    mtod(m, caddr_t) + hdrlen);
 			m->m_len += len;
@@ -664,6 +667,13 @@ send:
 			tcpstat.tcps_sndwinup++;
 
 		MGETHDR(m, M_DONTWAIT, MT_HEADER);
+		if (m != NULL) {
+			MCLGET(m, M_DONTWAIT);
+			if ((m->m_flags & M_EXT) == 0) {
+				m_freem(m);
+				m = NULL;
+			}
+		}
 		if (m == NULL) {
 			error = ENOBUFS;
 			goto out;
@@ -763,12 +773,8 @@ send:
 		tp->snd_up = tp->snd_una;		/* drag it along */
 
 	/* Put TCP length in pseudo-header */
-#if defined(INET) && defined(INET6)
 	switch (tp->pf) {
-#else /* defined(INET) && defined(INET6) */
-	switch (0) {
-#endif /* defined(INET) && defined(INET6) */
-	case 0:
+	case 0:	/*default to PF_INET*/
 #ifdef INET
 	case AF_INET:
 		if (len + optlen)
@@ -790,12 +796,8 @@ send:
 
 		memset(&sa, 0, sizeof(union sockaddr_union));
 
-#if defined(INET) && defined(INET6)
-		switch(tp->pf) {
-#else /* defined(INET) && defined(INET6) */
-		switch (0) {
-#endif /* defined(INET) && defined(INET6) */
-		case 0:
+		switch (tp->pf) {
+		case 0:	/*default to PF_INET*/
 #ifdef INET
 		case AF_INET:
 			sa.sa.sa_len = sizeof(struct sockaddr_in);
@@ -807,7 +809,7 @@ send:
 		case AF_INET6:
 			sa.sa.sa_len = sizeof(struct sockaddr_in6);
 			sa.sa.sa_family = AF_INET6;
-			sa.sin6.sin6_addr = mtod(m, struct ipv6 *)->ipv6_dst;
+			sa.sin6.sin6_addr = mtod(m, struct ip6_hdr *)->ip6_dst;
 			break;
 #endif /* INET6 */
 		}
@@ -820,12 +822,8 @@ send:
 
 		MD5Init(&ctx);
 
-#if defined(INET) && defined(INET6)
-		switch(tp->pf) {
-#else /* defined(INET) && defined(INET6) */
-		switch (0) {
-#endif /* defined(INET) && defined(INET6) */
-		case 0:
+		switch (tp->pf) {
+		case 0:	/*default to PF_INET*/
 #ifdef INET
 		case AF_INET:
 			{
@@ -875,12 +873,8 @@ send:
 	 * Put TCP length in extended header, and then
 	 * checksum extended header and data.
 	 */
-#if defined(INET) && defined(INET6)
 	switch (tp->pf) {
-#else /* defined(INET) && defined(INET6) */
-	switch (0) {
-#endif /* defined(INET) && defined(INET6) */
-	case 0:
+	case 0:	/*default to PF_INET*/
 #ifdef INET
 	case AF_INET:
 		th->th_sum = in_cksum(m, (int)(hdrlen + len));
@@ -888,8 +882,9 @@ send:
 #endif /* INET */
 #ifdef INET6
 	case AF_INET6:
-  		th->th_sum = in6_cksum(m, IPPROTO_TCP, hdrlen + len,
-			sizeof(struct ipv6));
+		m->m_pkthdr.len = hdrlen + len;
+  		th->th_sum = in6_cksum(m, IPPROTO_TCP, sizeof(struct ip6_hdr),
+			hdrlen - sizeof(struct ip6_hdr) + len);
 		break;
 #endif /* INET6 */
 	}
@@ -981,12 +976,8 @@ send:
 	 */
 	m->m_pkthdr.len = hdrlen + len;
 
-#if defined(INET) && defined(INET6)
 	switch (tp->pf) {
-#else /* defined(INET) && defined(INET6) */
-	switch (0) {
-#endif /* defined(INET) && defined(INET6) */
-	case 0:
+	case 0:	/*default to PF_INET*/
 #ifdef INET
 	case AF_INET:
 		{
@@ -997,7 +988,6 @@ send:
 			ip->ip_ttl = tp->t_inpcb->inp_ip.ip_ttl;
 			ip->ip_tos = tp->t_inpcb->inp_ip.ip_tos;
 		}
-
 		error = ip_output(m, tp->t_inpcb->inp_options,
 			&tp->t_inpcb->inp_route, so->so_options & SO_DONTROUTE,
 			0, tp->t_inpcb);
@@ -1006,16 +996,17 @@ send:
 #ifdef INET6
 	case AF_INET6:
 		{
-			struct ipv6 *ipv6;
+			struct ip6_hdr *ipv6;
 			
-			ipv6->ipv6_length = m->m_pkthdr.len -
-				sizeof(struct ipv6);
-			ipv6->ipv6_nexthdr = IPPROTO_TCP;
+			ipv6 = mtod(m, struct ip6_hdr *);
+			ipv6->ip6_plen = m->m_pkthdr.len -
+				sizeof(struct ip6_hdr);
+			ipv6->ip6_nxt = IPPROTO_TCP;
+			ipv6->ip6_hlim = in6_selecthlim(tp->t_inpcb, NULL);
 		}
-
-		error = ipv6_output(m, &tp->t_inpcb->inp_route6,
-			(so->so_options & SO_DONTROUTE), NULL, NULL,
-			tp->t_inpcb->inp_socket);
+		error = ip6_output(m, tp->t_inpcb->inp_outputopts6,
+			  &tp->t_inpcb->inp_route6,
+			  (so->so_options & SO_DONTROUTE), NULL, NULL);
 		break;
 #endif /* INET6 */
 #ifdef TUBA

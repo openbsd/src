@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.h,v 1.4 1999/08/08 00:43:00 niklas Exp $	*/
+/*	$OpenBSD: ip_mroute.h,v 1.5 1999/12/08 06:50:20 itojun Exp $	*/
 /*	$NetBSD: ip_mroute.h,v 1.10 1996/02/13 23:42:55 christos Exp $	*/
 
 /*
@@ -222,7 +222,11 @@ int	legal_vif_num __P((int));
 int	ip_rsvp_vif_init __P((struct socket *, struct mbuf *));
 int	ip_rsvp_vif_done __P((struct socket *, struct mbuf *));
 void	ip_rsvp_force_done __P((struct socket *));
+#if 0
 void	rsvp_input __P((struct mbuf *, struct ifnet *));
+#else
+void rsvp_input __P((struct mbuf *, int, int));
+#endif
 #else
 int	ip_mforward __P((struct mbuf *, struct ifnet *));
 #endif

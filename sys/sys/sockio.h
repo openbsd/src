@@ -1,4 +1,4 @@
-/*	$OpenBSD: sockio.h,v 1.9 1999/03/19 02:46:55 jason Exp $	*/
+/*	$OpenBSD: sockio.h,v 1.10 1999/12/08 06:50:24 itojun Exp $	*/
 /*	$NetBSD: sockio.h,v 1.5 1995/08/23 00:40:47 thorpej Exp $	*/
 
 /*-
@@ -75,6 +75,12 @@
 #define	SIOCAIFADDR	 _IOW('i', 26, struct ifaliasreq)/* add/chg IF alias */
 #define	SIOCGIFDATA	_IOWR('i', 27, struct ifreq)	/* get if_data */
 
+/* KAME IPv6 */
+/* SIOCAIFALIAS? */
+#define SIOCALIFADDR	 _IOW('i', 28, struct if_laddrreq) /* add IF addr */
+#define SIOCGLIFADDR	_IOWR('i', 29, struct if_laddrreq) /* get IF addr */
+#define SIOCDLIFADDR	 _IOW('i', 30, struct if_laddrreq) /* delete IF addr */
+
 #define	SIOCADDMULTI	 _IOW('i', 49, struct ifreq)	/* add m'cast addr */
 #define	SIOCDELMULTI	 _IOW('i', 50, struct ifreq)	/* del m'cast addr */
 #define	SIOCGETVIFCNT	_IOWR('u', 51, struct sioc_vif_req)/* vif pkt cnt */
@@ -82,6 +88,10 @@
 
 #define	SIOCSIFMEDIA	_IOWR('i', 53, struct ifreq)	/* set net media */
 #define	SIOCGIFMEDIA	_IOWR('i', 54, struct ifmediareq) /* get net media */
+
+#define SIOCSIFPHYADDR   _IOW('i', 70, struct ifaliasreq) /* set gif addres */
+#define	SIOCGIFPSRCADDR	_IOWR('i', 71, struct ifreq)	/* get gif psrc addr */
+#define	SIOCGIFPDSTADDR	_IOWR('i', 72, struct ifreq)	/* get gif pdst addr */
 
 #define	SIOCBRDGADD	_IOWR('i', 60, struct ifbreq)	/* add bridge ifs */
 #define	SIOCBRDGDEL	_IOWR('i', 61, struct ifbreq)	/* del bridge ifs */

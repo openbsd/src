@@ -1,5 +1,34 @@
-/*	$OpenBSD: if_loop.c,v 1.11 1999/01/08 00:56:45 deraadt Exp $	*/
+/*	$OpenBSD: if_loop.c,v 1.12 1999/12/08 06:50:18 itojun Exp $	*/
 /*	$NetBSD: if_loop.c,v 1.15 1996/05/07 02:40:33 thorpej Exp $	*/
+
+/*
+ * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the project nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE PROJECT OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -78,6 +107,14 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #include <netinet/ip.h>
 #endif
 
+#ifdef INET6
+#ifndef INET
+#include <netinet/in.h>
+#endif
+#include <netinet6/in6_var.h>
+#include <netinet6/ip6.h>
+#endif
+
 #ifdef NS
 #include <netns/ns.h>
 #include <netns/ns_if.h>
@@ -103,13 +140,12 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #include <net/bpf.h>
 #endif
 
-#ifdef INET6
-#include <netinet6/in6.h>
-#include <netinet6/in6_var.h>
-#endif /* INET6 */
-
-#define	LOMTU	(32768)
-
+#if defined(LARGE_LOMTU)
+#define LOMTU	(131072 +  MHLEN + MLEN)
+#else
+#define	LOMTU	(32768 +  MHLEN + MLEN)
+#endif
+  
 struct	ifnet loif[NLOOP];
 
 void
@@ -181,6 +217,55 @@ looutput(ifp, m, dst, rt)
 		return (rt->rt_flags & RTF_BLACKHOLE ? 0 :
 			rt->rt_flags & RTF_HOST ? EHOSTUNREACH : ENETUNREACH);
 	}
+
+#ifndef PULLDOWN_TEST
+	/*
+	 * KAME requires that the packet to be contiguous on the
+	 * mbuf.  We need to make that sure.
+	 * this kind of code should be avoided.
+	 * XXX other conditions to avoid running this part?
+	 */
+	if (m && m->m_next != NULL) {
+		struct mbuf *n;
+
+		MGETHDR(n, M_DONTWAIT, MT_HEADER);
+		if (n) {
+			MCLGET(n, M_DONTWAIT);
+			if ((n->m_flags & M_EXT) == 0) {
+				m_free(n);
+				n = NULL;
+			}
+		}
+		if (!n) {
+			printf("looutput: mbuf allocation failed\n");
+			m_freem(m);
+			return ENOBUFS;
+		}
+
+		n->m_pkthdr.rcvif = m->m_pkthdr.rcvif;
+		n->m_pkthdr.len = m->m_pkthdr.len;
+		if (m->m_pkthdr.len <= MCLBYTES) {
+			m_copydata(m, 0, m->m_pkthdr.len, mtod(n, caddr_t));
+			n->m_len = m->m_pkthdr.len;
+			m_freem(m);
+		} else {
+			m_copydata(m, 0, MCLBYTES, mtod(n, caddr_t));
+			m_adj(m, MCLBYTES);
+			n->m_len = MCLBYTES;
+			n->m_next = m;
+			m->m_flags &= ~M_PKTHDR;
+		}
+		m = n;
+	}
+#if 0
+	if (m && m->m_next != NULL) {
+		printf("loop: not contiguous...\n");
+		m_freem(m);
+		return ENOBUFS;
+	}
+#endif
+#endif
+
 	ifp->if_opackets++;
 	ifp->if_obytes += m->m_pkthdr.len;
 	switch (dst->sa_family) {
@@ -193,7 +278,7 @@ looutput(ifp, m, dst, rt)
 #endif
 #ifdef INET6
 	case AF_INET6:
-		ifq = &ipv6intrq;
+		ifq = &ip6intrq;
 		isr = NETISR_IPV6;
 		break;
 #endif /* INET6 */
@@ -273,7 +358,7 @@ loioctl(ifp, cmd, data)
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
 		ifa = (struct ifaddr *)data;
-		if (ifa != 0 && ifa->ifa_addr->sa_family == AF_ISO)
+		if (ifa != 0 /*&& ifa->ifa_addr->sa_family == AF_ISO*/)
 			ifa->ifa_rtrequest = lortrequest;
 		/*
 		 * Everything else is done at a higher level.
@@ -293,7 +378,6 @@ loioctl(ifp, cmd, data)
 		case AF_INET:
 			break;
 #endif
-
 #ifdef INET6
 		case AF_INET6:
 			break;

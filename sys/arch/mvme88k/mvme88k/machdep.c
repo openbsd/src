@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.17 1999/09/27 19:13:23 smurph Exp $	*/
+/* $OpenBSD: machdep.c,v 1.18 1999/12/08 06:50:16 itojun Exp $	*/
 /*
  * Copyright (c) 1998, 1999 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -1827,7 +1827,7 @@ void netintr()
 #ifdef INET6
    if (netisr & (1 << NETISR_IPV6)) {
       netisr &= ~(1 << NETISR_IPV6);
-      ipv6intr();
+      ip6intr();
    }
 #endif
 #ifdef NETATALK

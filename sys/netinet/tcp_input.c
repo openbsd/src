@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.51 1999/11/15 05:50:59 hugh Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.52 1999/12/08 06:50:20 itojun Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -82,18 +82,32 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #endif /* IPSEC */
 
 #ifdef INET6
+#ifndef INET
+#include <netinet/in.h>
+#endif
 #include <sys/domain.h>
 #include <netinet6/in6_var.h>
-#include <netinet6/ipv6.h>
-#include <netinet6/ipv6_var.h>
+#include <netinet/ip6.h>
+#include <netinet6/ip6_var.h>
 #include <netinet6/tcpipv6.h>
+#include <netinet/icmp6.h>
+#include <netinet6/nd6.h>
+
+#ifndef CREATE_IPV6_MAPPED
+#define CREATE_IPV6_MAPPED(a6, a4) \
+do { \
+	bzero(&(a6), sizeof(a6));			\
+	(a6).s6_addr[10] = (a6).s6_addr[11] = 0xff;	\
+	*(u_int32_t *)&(a6).s6_addr[12] = (a4);		\
+} while (0)
+#endif
 
 struct	tcpiphdr tcp_saveti;
 struct  tcpipv6hdr tcp_saveti6;
 
 /* for the packet header length in the mbuf */
 #define M_PH_LEN(m)      (((struct mbuf *)(m))->m_pkthdr.len)
-#define M_V6_LEN(m)      (M_PH_LEN(m) - sizeof(struct ipv6))
+#define M_V6_LEN(m)      (M_PH_LEN(m) - sizeof(struct ip6_hdr))
 #define M_V4_LEN(m)      (M_PH_LEN(m) - sizeof(struct ip))
 #endif /* INET6 */
 
@@ -109,6 +123,22 @@ extern u_long sb_max;
 /* for modulo comparisons of timestamps */
 #define TSTMP_LT(a,b)	((int)((a)-(b)) < 0)
 #define TSTMP_GEQ(a,b)	((int)((a)-(b)) >= 0)
+
+/*
+ * Neighbor Discovery, Neighbor Unreachability Detection Upper layer hint.
+ */
+#ifdef INET6
+#define ND6_HINT(tp) \
+do { \
+	if (tp && tp->t_inpcb && (tp->t_inpcb->inp_flags & INP_IPV6) \
+	 && !(tp->t_inpcb->inp_flags & INP_IPV6_MAPPED) \
+	 && tp->t_inpcb->inp_route6.ro_rt) { \
+		nd6_nud_hint(tp->t_inpcb->inp_route6.ro_rt, NULL); \
+	} \
+} while (0)
+#else
+#define ND6_HINT(tp)
+#endif
 
 /*
  * Insert segment ti into reassembly queue of tcp with
@@ -237,6 +267,7 @@ present:
 
 		nq = q->ipqe_q.le_next;
 		LIST_REMOVE(q, ipqe_q);
+		ND6_HINT(tp);
 		if (so->so_state & SS_CANTRCVMORE)
 			m_freem(q->ipqe_m);
 		else
@@ -295,6 +326,44 @@ done:
 	splx(s);
 }
 
+#if defined(INET6) && !defined(TCP6)
+int
+tcp6_input(mp, offp, proto)
+	struct mbuf **mp;
+	int *offp, proto;
+{
+	struct mbuf *m = *mp;
+
+#if defined(NFAITH) && 0 < NFAITH
+	if (m->m_pkthdr.rcvif) {
+		if (m->m_pkthdr.rcvif->if_type == IFT_FAITH) {
+			/* XXX send icmp6 host/port unreach? */
+			m_freem(m);
+			return IPPROTO_DONE;
+		}
+	}
+#endif
+
+	/*
+	 * draft-itojun-ipv6-tcp-to-anycast
+	 * better place to put this in?
+	 */
+	if (m->m_flags & M_ANYCAST6) {
+		if (m->m_len >= sizeof(struct ip6_hdr)) {
+			struct ip6_hdr *ip6 = mtod(m, struct ip6_hdr *);
+			icmp6_error(m, ICMP6_DST_UNREACH,
+				ICMP6_DST_UNREACH_ADDR,
+				(caddr_t)&ip6->ip6_dst - (caddr_t)ip6);
+		} else
+			m_freem(m);
+		return IPPROTO_DONE;
+	}
+
+	tcp_input(m, *offp, proto);
+	return IPPROTO_DONE;
+}
+#endif
+
 /*
  * TCP input routine, follows pages 65-76 of the
  * protocol specification dated September, 1981 very closely.
@@ -316,6 +385,7 @@ tcp_input(m, va_alist)
 	register int tiflags;
 	struct socket *so = NULL;
 	int todrop, acked, ourfinisacked, needoutput = 0;
+	int hdroptlen = 0;
 	short ostate = 0;
 	struct in_addr laddr;
 	int dropsocket = 0;
@@ -332,7 +402,7 @@ tcp_input(m, va_alist)
 #ifdef INET6
 	struct in6_addr laddr6;
 	unsigned short is_ipv6;     /* Type of incoming datagram. */
-	struct ipv6 *ipv6 = NULL;
+	struct ip6_hdr *ipv6 = NULL;
 #endif /* INET6 */
 
 	va_start(ap, m);
@@ -369,8 +439,15 @@ tcp_input(m, va_alist)
 #else /* INET6 */
 	if (!is_ipv6)
 #endif /* INET6 */
-	if (iphlen > sizeof (struct ip))
+	if (iphlen > sizeof (struct ip)) {
+#if 0	/*XXX*/
 		ip_stripoptions(m, (struct mbuf *)0);
+#else
+		printf("extension headers are not allowed\n");
+		m_freem(m);
+		return;
+#endif
+	}
 	if (m->m_len < iphlen + sizeof(struct tcphdr)) {
 		if ((m = m_pullup2(m, iphlen + sizeof(struct tcphdr))) == 0) {
 			tcpstat.tcps_rcvshort++;
@@ -391,22 +468,28 @@ tcp_input(m, va_alist)
 
 	if (is_ipv6) {
 #ifdef DIAGNOSTIC
-	  if (iphlen < sizeof(struct ipv6)) {
+	  if (iphlen < sizeof(struct ip6_hdr)) {
 	    m_freem(m);
 	    return;
 	  }
 #endif /* DIAGNOSTIC */
 
 	  /* strip off any options */
-	  if (iphlen > sizeof(struct ipv6)) {
+	  if (iphlen > sizeof(struct ip6_hdr)) {
+#if 0 /*XXX*/
 	    ipv6_stripoptions(m, iphlen);
-	    iphlen = sizeof(struct ipv6);
+#else
+		printf("extension headers are not allowed\n");
+		m_freem(m);
+		return;
+#endif
+	    iphlen = sizeof(struct ip6_hdr);
 	  }
 
 	  ti = NULL;
-	  ipv6 = mtod(m, struct ipv6 *);
+	  ipv6 = mtod(m, struct ip6_hdr *);
 
-	  if (in6_cksum(m, IPPROTO_TCP, tlen, sizeof(struct ipv6))) {
+	  if (in6_cksum(m, IPPROTO_TCP, sizeof(struct ip6_hdr), tlen)) {
 	    tcpstat.tcps_rcvbadsum++;
 	    goto drop;
 	  } /* endif in6_cksum */
@@ -453,7 +536,7 @@ tcp_input(m, va_alist)
 			}
 #ifdef INET6
 			if (is_ipv6)
-			  ipv6 = mtod(m, struct ipv6 *);
+			  ipv6 = mtod(m, struct ip6_hdr *);
 			else
 #endif /* INET6 */
 			ti = mtod(m, struct tcpiphdr *);
@@ -495,8 +578,8 @@ tcp_input(m, va_alist)
 findpcb:
 #ifdef INET6
 	if (is_ipv6) {
-	  inp = in6_pcbhashlookup(&tcbtable, &ipv6->ipv6_src, th->th_sport,
-				 &ipv6->ipv6_dst, th->th_dport);
+	  inp = in6_pcbhashlookup(&tcbtable, &ipv6->ip6_src, th->th_sport,
+				 &ipv6->ip6_dst, th->th_dport);
 	} else
 #endif /* INET6 */
 	inp = in_pcbhashlookup(&tcbtable, ti->ti_src, ti->ti_sport,
@@ -505,8 +588,8 @@ findpcb:
 		++tcpstat.tcps_pcbhashmiss;
 #ifdef INET6
 		if (is_ipv6)
-			inp = in_pcblookup(&tcbtable, &ipv6->ipv6_src,
-			    th->th_sport, &ipv6->ipv6_dst, th->th_dport,
+			inp = in_pcblookup(&tcbtable, &ipv6->ip6_src,
+			    th->th_sport, &ipv6->ip6_dst, th->th_dport,
 			    INPLOOKUP_WILDCARD | INPLOOKUP_IPV6);
 		else
 #endif /* INET6 */
@@ -601,10 +684,10 @@ findpcb:
 						      | INP_IPV6_MAPPED));
 			  if ((inp->inp_flags & INP_IPV6) &&
 			      !(inp->inp_flags & INP_IPV6_MAPPED)) {
-			    inp->inp_ipv6.ipv6_hoplimit = 
-			      oldinpcb->inp_ipv6.ipv6_hoplimit;
-			    inp->inp_ipv6.ipv6_versfl = 
-			      oldinpcb->inp_ipv6.ipv6_versfl;
+			    inp->inp_ipv6.ip6_hlim = 
+			      oldinpcb->inp_ipv6.ip6_hlim;
+			    inp->inp_ipv6.ip6_flow = 
+			      oldinpcb->inp_ipv6.ip6_flow;
 			  }
 			}
 #else /* INET6 */
@@ -613,11 +696,11 @@ findpcb:
 			inp->inp_lport = th->th_dport;
 #ifdef INET6
 			if (is_ipv6) {
-			  inp->inp_laddr6 = ipv6->ipv6_dst;
+			  inp->inp_laddr6 = ipv6->ip6_dst;
 			  inp->inp_fflowinfo = htonl(0x0fffffff) & 
-			    ipv6->ipv6_versfl;
+			    ipv6->ip6_flow;
 			  
-			  /*inp->inp_options = ipv6_srcroute();*/ /* soon. */
+			  /*inp->inp_options = ip6_srcroute();*/ /* soon. */
 			  /* still need to tweak outbound options
 			     processing to include this mbuf in
 			     the right place and put the correct
@@ -656,7 +739,7 @@ findpcb:
 #ifdef notyet
 #ifdef INET6
 		if (is_ipv6)
-			ipv6_icmp_error(m, ICMPV6_BLAH, ICMPV6_BLAH, 0);
+			icmp6_error(m, ICMPV6_BLAH, ICMPV6_BLAH, 0);
 		else
 #endif /* INET6 */
 		icmp_error(m, ICMP_BLAH, ICMP_BLAH, 0, 0);
@@ -744,6 +827,7 @@ findpcb:
 				acked = th->th_ack - tp->snd_una;
 				tcpstat.tcps_rcvackpack++;
 				tcpstat.tcps_rcvackbyte += acked;
+				ND6_HINT(tp);
 				sbdrop(&so->so_snd, acked);
 				tp->snd_una = th->th_ack;
 #if defined(TCP_SACK) || defined(TCP_NEWRENO)
@@ -797,12 +881,12 @@ findpcb:
 			tp->rcv_nxt += tlen;
 			tcpstat.tcps_rcvpack++;
 			tcpstat.tcps_rcvbyte += tlen;
+			ND6_HINT(tp);
 			/*
 			 * Drop TCP, IP headers and TCP options then add data
 			 * to socket buffer.
 			 */
-			m->m_data += iphlen + off;
-			m->m_len -= iphlen + off;
+			m_adj(m, iphlen + off);
 			sbappend(&so->so_rcv, m);
 			sorwakeup(so);
 			if (th->th_flags & TH_PUSH)
@@ -814,10 +898,9 @@ findpcb:
 	}
 
 	/*
-	 * Drop TCP, IP headers and TCP options.
+	 * Compute mbuf offset to TCP data segment.
 	 */
-	m->m_data += iphlen + off;
-	m->m_len  -= iphlen + off;
+	hdroptlen = iphlen + off;
 
 	/*
 	 * Calculate amount of space in receive window,
@@ -865,7 +948,7 @@ findpcb:
 		if (th->th_dport == th->th_sport) {
 #ifdef INET6
 		  if (is_ipv6) {
-		    if (IN6_ARE_ADDR_EQUAL(&ipv6->ipv6_src, &ipv6->ipv6_dst))
+		    if (IN6_ARE_ADDR_EQUAL(&ipv6->ip6_src, &ipv6->ip6_dst))
 		      goto drop;
 		  } else {
 #endif /* INET6 */
@@ -886,7 +969,7 @@ findpcb:
 #ifdef INET6
 		if (is_ipv6) {
 			/* XXX What about IPv6 Anycasting ?? :-(  rja */
-			if (IN6_IS_ADDR_MULTICAST(&ipv6->ipv6_dst))
+			if (IN6_IS_ADDR_MULTICAST(&ipv6->ip6_dst))
 				goto drop;
 		} else
 #endif /* INET6 */
@@ -912,13 +995,13 @@ findpcb:
 		  sin6 = mtod(am, struct sockaddr_in6 *);
 		  sin6->sin6_family = AF_INET6;
 		  sin6->sin6_len = sizeof(struct sockaddr_in6);
-		  sin6->sin6_addr = ipv6->ipv6_src;
+		  sin6->sin6_addr = ipv6->ip6_src;
 		  sin6->sin6_port = th->th_sport;
 		  sin6->sin6_flowinfo = htonl(0x0fffffff) &
-		    inp->inp_ipv6.ipv6_versfl;
+		    inp->inp_ipv6.ip6_flow;
 		  laddr6 = inp->inp_laddr6;
 		  if (IN6_IS_ADDR_UNSPECIFIED(&inp->inp_laddr6))
-		    inp->inp_laddr6 = ipv6->ipv6_dst;
+		    inp->inp_laddr6 = ipv6->ip6_dst;
 		  /* This is a good optimization. */
 		  if (in6_pcbconnect(inp, am)) {
 		    inp->inp_laddr6 = laddr6;
@@ -982,6 +1065,7 @@ findpcb:
 			goto drop;
 		}
 		(void) m_free(am);
+		tp->pf = PF_INET;
 #ifdef INET6
 		  }  /* if (inp->inp_flags & INP_IPV6) */
 		} /* if (is_ipv6) */
@@ -1210,7 +1294,7 @@ trimthenstep6:
 			tcpstat.tcps_rcvpartduppack++;
 			tcpstat.tcps_rcvpartdupbyte += todrop;
 		}
-		m_adj(m, todrop);
+		hdroptlen += todrop;	/* drop from head afterwards */
 		th->th_seq += todrop;
 		tlen -= todrop;
 		if (th->th_urp > todrop)
@@ -1295,7 +1379,11 @@ trimthenstep6:
 	 *	Close the tcb.
 	 */
 	if (tiflags & TH_RST) {
+#ifndef INET6
 		if (ti->ti_seq != tp->last_ack_sent)
+#else
+		if (th->th_seq != tp->last_ack_sent)
+#endif
 			goto drop;
 
 		switch (tp->t_state) {
@@ -1662,6 +1750,7 @@ trimthenstep6:
 #endif
 		tp->snd_cwnd = min(cw + incr, TCP_MAXWIN<<tp->snd_scale);
 		}
+		ND6_HINT(tp);
 		if (acked > so->so_snd.sb_cc) {
 			tp->snd_wnd -= so->so_snd.sb_cc;
 			sbdrop(&so->so_snd, (int)so->so_snd.sb_cc);
@@ -1814,7 +1903,7 @@ step6:
 		     && (so->so_options & SO_OOBINLINE) == 0
 #endif
 		     )
-		        tcp_pulloutofband(so, th->th_urp, m); /* XXX? */
+		        tcp_pulloutofband(so, th->th_urp, m, hdroptlen);
 	} else
 		/*
 		 * If no out of band data is expected,
@@ -1845,9 +1934,12 @@ dodata:							/* XXX */
 			tiflags = th->th_flags & TH_FIN;
 			tcpstat.tcps_rcvpack++;
 			tcpstat.tcps_rcvbyte += tlen;
+			ND6_HINT(tp);
+			m_adj(m, hdroptlen);
 			sbappend(&so->so_rcv, m);
 			sorwakeup(so);
 		} else {
+			m_adj(m, hdroptlen);
 			tiflags = tcp_reass(tp, th, m, &tlen);
 			tp->t_flags |= TF_ACKNOW;
 		}
@@ -1973,7 +2065,7 @@ dropwithreset:
 	if (is_ipv6) {
 	  /* For following calls to tcp_respond */
 	  ti = mtod(m, struct tcpiphdr *);
-	  if (IN6_IS_ADDR_MULTICAST(&ipv6->ipv6_dst))
+	  if (IN6_IS_ADDR_MULTICAST(&ipv6->ip6_dst))
 	    goto drop;
 	} else {
 #endif /* INET6 */
@@ -2515,12 +2607,13 @@ tcp_sack_partialack(tp, th)
  * sequencing purposes.
  */
 void
-tcp_pulloutofband(so, urgent, m)
+tcp_pulloutofband(so, urgent, m, off)
 	struct socket *so;
 	u_int urgent;
 	register struct mbuf *m;
+	int off;
 {
-        int cnt = urgent - 1;
+        int cnt = off + urgent - 1;
 	
 	while (cnt >= 0) {
 		if (m->m_len > cnt) {
@@ -2665,7 +2758,7 @@ tcp_mss(tp, offer)
 	   * Get a new IPv6 route if an IPv6 destination, otherwise, get
 	   * and IPv4 route (including those pesky IPv4-mapped addresses).
 	   */
-	  bzero(ro,sizeof(struct route6));
+	  bzero(ro,sizeof(struct route_in6));
 	  if (sotopf(so) == AF_INET6) {
 	    if (IN6_IS_ADDR_V4MAPPED(&inp->inp_faddr6)) {
 	      /* Get an IPv4 route. */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.36 1999/09/01 21:38:21 provos Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.37 1999/12/08 06:50:20 itojun Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -100,6 +100,18 @@ extern	struct baddynamicports baddynamicports;
 
 int tcp_ident __P((void *, size_t *, void *, size_t));
 
+#if defined(INET6) && !defined(TCP6)
+int
+tcp6_usrreq(so, req, m, nam, control, p)
+	struct socket *so;
+	int req;
+	struct mbuf *m, *nam, *control;
+	struct proc *p;
+{
+	return tcp_usrreq(so, req, m, nam, control);
+}
+#endif
+
 /*
  * Process a TCP user request for TCP tb.  If this is a send request
  * then m is the mbuf chain of send data.  If this is a timer expiration
@@ -196,7 +208,12 @@ tcp_usrreq(so, req, m, nam, control)
 	 * Give the socket an address.
 	 */
 	case PRU_BIND:
-		error = in_pcbbind(inp, nam);
+#ifdef INET6
+		if (inp->inp_flags & INP_IPV6)
+			error = in6_pcbbind(inp, nam);
+		else
+#endif
+			error = in_pcbbind(inp, nam);
 		if (error)
 			break;
 #ifdef INET6
@@ -219,8 +236,14 @@ tcp_usrreq(so, req, m, nam, control)
 	 * Prepare to accept connections.
 	 */
 	case PRU_LISTEN:
-		if (inp->inp_lport == 0)
-			error = in_pcbbind(inp, NULL);
+		if (inp->inp_lport == 0) {
+#ifdef INET6
+			if (inp->inp_flags & INP_IPV6)
+				error = in6_pcbbind(inp, NULL);
+			else
+#endif
+				error = in_pcbbind(inp, NULL);
+		}
 		/* If the in_pcbbind() above is called, the tp->pf
 		   should still be whatever it was before. */
 		if (error == 0)
@@ -251,8 +274,16 @@ tcp_usrreq(so, req, m, nam, control)
 				error = EINVAL;
 				break;
 			}
+
+			if (inp->inp_lport == 0) {
+				error = in6_pcbbind(inp, NULL);
+				if (error)
+					break;
+			}
+			error = in6_pcbconnect(inp, nam);
 		} else if (sin->sin_family == AF_INET)
 #endif /* INET6 */
+		{
 			if ((sin->sin_addr.s_addr == INADDR_ANY) ||
 			    IN_MULTICAST(sin->sin_addr.s_addr) ||
 			    in_broadcast(sin->sin_addr, NULL)) {
@@ -260,18 +291,20 @@ tcp_usrreq(so, req, m, nam, control)
 				break;
 			}
 
-		/* Trying to connect to some broadcast address */
-		if (in_broadcast(sin->sin_addr, NULL)) {
-			error = EINVAL;
-			break;
+			/* Trying to connect to some broadcast address */
+			if (in_broadcast(sin->sin_addr, NULL)) {
+				error = EINVAL;
+				break;
+			}
+
+			if (inp->inp_lport == 0) {
+				error = in_pcbbind(inp, NULL);
+				if (error)
+					break;
+			}
+			error = in_pcbconnect(inp, nam);
 		}
 
-		if (inp->inp_lport == 0) {
-			error = in_pcbbind(inp, NULL);
-			if (error)
-				break;
-		}
-		error = in_pcbconnect(inp, nam);
 		if (error)
 			break;
 
@@ -358,7 +391,12 @@ tcp_usrreq(so, req, m, nam, control)
 	 * of the peer, storing through addr.
 	 */
 	case PRU_ACCEPT:
-		in_setpeeraddr(inp, nam);
+#ifdef INET6
+		if (inp->inp_flags & INP_IPV6)
+			in6_setpeeraddr(inp, nam);
+		else
+#endif
+			in_setpeeraddr(inp, nam);
 		break;
 
 	/*
@@ -446,11 +484,21 @@ tcp_usrreq(so, req, m, nam, control)
 		break;
 
 	case PRU_SOCKADDR:
-		in_setsockaddr(inp, nam);
+#ifdef INET6
+		if (inp->inp_flags & INP_IPV6)
+			in6_setsockaddr(inp, nam);
+		else
+#endif
+			in_setsockaddr(inp, nam);
 		break;
 
 	case PRU_PEERADDR:
-		in_setpeeraddr(inp, nam);
+#ifdef INET6
+		if (inp->inp_flags & INP_IPV6)
+			in6_setpeeraddr(inp, nam);
+		else
+#endif
+			in_setpeeraddr(inp, nam);
 		break;
 
 	/*
@@ -504,7 +552,7 @@ tcp_ctloutput(op, so, level, optname, mp)
 		 * AF_INET6 sockets which get SET/GET options for IPv4.
 		 */
 		if (tp->pf == PF_INET6)
-			error = ipv6_ctloutput(op, so, level, optname, mp);
+			error = ip6_ctloutput(op, so, level, optname, mp);
 		else
 #endif /* INET6 */
 			error = ip_ctloutput(op, so, level, optname, mp);

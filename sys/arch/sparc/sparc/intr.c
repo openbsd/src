@@ -66,6 +66,15 @@
 #include <netinet/if_ether.h>
 #include <netinet/ip_var.h>
 #endif
+
+#ifdef INET6
+# ifndef INET
+#  include <netinet/in.h>
+# endif
+#include <netinet6/ip6.h>
+#include <netinet6/ip6_var.h>
+#endif
+
 #include "ppp.h"
 #include "bridge.h"
 
@@ -135,7 +144,7 @@ soft01intr(fp)
 #endif
 #ifdef INET6
 			if (n & (1 << NETISR_IPV6))
-				ipv6intr();
+				ip6intr();
 #endif
 #ifdef NETATALK
 			if (n & (1 << NETISR_ATALK))

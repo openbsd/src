@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.6 1999/05/16 00:34:40 ho Exp $	*/
+/*	$OpenBSD: route.h,v 1.7 1999/12/08 06:50:18 itojun Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -35,6 +35,8 @@
  *
  *	@(#)route.h	8.3 (Berkeley) 4/19/94
  */
+
+#include <sys/queue.h>
 
 /*
  * Kernel resident routing tables.
@@ -105,6 +107,7 @@ struct rtentry {
 	struct	rt_metrics rt_rmx;	/* metrics used by rx'ing protocols */
 	struct	rtentry *rt_gwroute;	/* implied entry for gatewayed routes */
 	struct	rtentry *rt_parent;	/* If cloned, parent of this route. */
+	LIST_HEAD(, rttimer) rt_timer;  /* queue of timeouts for misc funcs */
 };
 #define	rt_use	rt_rmx.rmx_pksent
 
@@ -233,9 +236,32 @@ struct rt_addrinfo {
 
 struct route_cb {
 	int	ip_count;
+	int	ip6_count;
 	int	ns_count;
 	int	iso_count;
 	int	any_count;
+};
+
+/* 
+ * This structure, and the prototypes for the rt_timer_{init,remove_all,
+ * add,timer} functions all used with the kind permission of BSDI.
+ * These allow functions to be called for routes at specific times.
+ */
+
+struct rttimer {
+	TAILQ_ENTRY(rttimer)	rtt_next;  /* entry on timer queue */
+	LIST_ENTRY(rttimer) 	rtt_link;  /* multiple timers per rtentry */
+	struct rttimer_queue	*rtt_queue;/* back pointer to queue */
+	struct rtentry  	*rtt_rt;   /* Back pointer to the route */
+	void            	(*rtt_func) __P((struct rtentry *, 
+						 struct rttimer *));
+	time_t          	rtt_time; /* When this timer was registered */
+};
+
+struct rttimer_queue {
+	long				rtq_timeout;
+	TAILQ_HEAD(, rttimer)		rtq_head;
+	LIST_ENTRY(rttimer_queue)	rtq_link;
 };
 
 #ifdef _KERNEL
@@ -270,6 +296,16 @@ void	 rt_newaddrmsg __P((int, struct ifaddr *, int, struct rtentry *));
 int	 rt_setgate __P((struct rtentry *, struct sockaddr *,
 			 struct sockaddr *));
 void	 rt_setmetrics __P((u_long, struct rt_metrics *, struct rt_metrics *));
+int      rt_timer_add __P((struct rtentry *,
+             void(*)(struct rtentry *, struct rttimer *),
+	     struct rttimer_queue *));
+void	 rt_timer_init __P((void));
+struct rttimer_queue *
+	 rt_timer_queue_create __P((u_int));
+void	 rt_timer_queue_change __P((struct rttimer_queue *, long));
+void	 rt_timer_queue_destroy __P((struct rttimer_queue *, int));
+void	 rt_timer_remove_all __P((struct rtentry *));
+void	 rt_timer_timer __P((void *));
 void	 rtable_init __P((void **));
 void	 rtalloc __P((struct route *));
 struct rtentry *

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.28 1999/05/24 23:08:55 jason Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.29 1999/12/08 06:50:14 itojun Exp $	*/
 /*	$NetBSD: machdep.c,v 1.61 1996/12/07 01:54:49 cgd Exp $	*/
 
 /*
@@ -95,6 +95,15 @@
 #include <netinet/if_ether.h>
 #include <netinet/ip_var.h>
 #endif
+
+#ifdef INET6
+# ifndef INET
+#  include <netinet/in.h>
+# endif
+#include <netinet6/ip6.h>
+#include <netinet6/ip6_var.h>
+#endif
+
 #include "ppp.h"
 #include "bridge.h"
 
@@ -1474,7 +1483,7 @@ netintr()
 	DONETISR(NETISR_IP, ipintr());
 #endif
 #ifdef INET6
-	DONETISR(NETISR_IPV6, ipv6intr());
+	DONETISR(NETISR_IPV6, ip6intr());
 #endif
 #ifdef NETATALK
 	DONETISR(NETISR_ATALK, atintr());

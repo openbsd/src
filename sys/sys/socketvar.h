@@ -1,4 +1,4 @@
-/*	$OpenBSD: socketvar.h,v 1.16 1999/02/19 15:06:52 millert Exp $	*/
+/*	$OpenBSD: socketvar.h,v 1.17 1999/12/08 06:50:24 itojun Exp $	*/
 /*	$NetBSD: socketvar.h,v 1.18 1996/02/09 18:25:38 christos Exp $	*/
 
 /*-
@@ -234,6 +234,8 @@ int	sbappendcontrol __P((struct sockbuf *sb, struct mbuf *m0,
 void	sbappendrecord __P((struct sockbuf *sb, struct mbuf *m0));
 void	sbcheck __P((struct sockbuf *sb));
 void	sbcompress __P((struct sockbuf *sb, struct mbuf *m, struct mbuf *n));
+struct mbuf *
+	sbcreatecontrol __P((caddr_t p, int size, int type, int level));
 void	sbdrop __P((struct sockbuf *sb, int len));
 void	sbdroprecord __P((struct sockbuf *sb));
 void	sbflush __P((struct sockbuf *sb));

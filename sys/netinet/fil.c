@@ -1,4 +1,4 @@
-/*       $OpenBSD: fil.c,v 1.15 1999/02/19 20:52:22 kjell Exp $       */
+/*       $OpenBSD: fil.c,v 1.16 1999/12/08 06:50:18 itojun Exp $       */
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
  *
@@ -8,7 +8,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-1996 Darren Reed";
-static const char rcsid[] = "@(#)$Id: fil.c,v 1.15 1999/02/19 20:52:22 kjell Exp $";
+static const char rcsid[] = "@(#)$Id: fil.c,v 1.16 1999/12/08 06:50:18 itojun Exp $";
 #endif
 
 #include <sys/errno.h>
@@ -45,6 +45,11 @@ static const char rcsid[] = "@(#)$Id: fil.c,v 1.15 1999/02/19 20:52:22 kjell Exp
 # include <net/af.h>
 #endif
 #include <net/route.h>
+#ifdef _KERNEL
+#ifndef INET
+#error ipfilter assumes options INET
+#endif
+#endif
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
@@ -1137,7 +1142,7 @@ nodata:
  * SUCH DAMAGE.
  *
  *	@(#)uipc_mbuf.c	8.2 (Berkeley) 1/4/94
- * $Id: fil.c,v 1.15 1999/02/19 20:52:22 kjell Exp $
+ * $Id: fil.c,v 1.16 1999/12/08 06:50:18 itojun Exp $
  */
 /*
  * Copy data from an mbuf chain starting "off" bytes from the beginning,

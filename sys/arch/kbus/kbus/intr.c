@@ -149,6 +149,9 @@ netintr()
 	DONETISR(NETISR_ARP, arpintr());
 	DONETISR(NETISR_IP, ipintr());
 #endif
+#ifdef INET6
+	DONETISR(NETISR_IPV6, ip6intr());
+#endif
 #ifdef NS
 	DONETISR(NETISR_NS, nsintr());
 #endif

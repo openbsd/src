@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.h,v 1.26 1999/11/20 11:11:27 matthieu Exp $	*/
+/*	$OpenBSD: malloc.h,v 1.27 1999/12/08 06:50:24 itojun Exp $	*/
 /*	$NetBSD: malloc.h,v 1.39 1998/07/12 19:52:01 augustss Exp $	*/
 
 /*
@@ -146,7 +146,9 @@
 #define M_DISCQ		93	/* IPv6 discq */
 #define M_FRAGQ		94	/* IPv6 fragq */
 #define M_SECA		95	/* Sec Assoc */
+#if 0 /* NRL IPv6 */
 #define M_I6IFP		96	/* IPv6 if info */
+#endif
 
 #define	M_RAIDFRAME	97	/* Raidframe data */
 
@@ -157,6 +159,13 @@
 #define	M_USB		101	/* USB general */
 #define	M_USBDEV	102	/* USB device driver */
 #define	M_USBHC		103	/* USB host controller */
+  
+
+/* KAME IPv6 */
+#define	M_IP6OPT	123	/* IPv6 options */
+#define	M_IP6NDP	124	/* IPv6 Neighbour Discovery */
+#define	M_IP6RR		125	/* IPv6 Router Renumbering Prefix */
+#define	M_RR_ADDR	126	/* IPv6 Router Renumbering Ifid */
 
 #define M_PIPE		104	/* Pipe structures */
 
@@ -277,7 +286,11 @@
 	NULL, NULL, NULL, NULL, NULL, \
 	NULL, NULL, NULL, NULL, NULL, \
 	NULL, NULL, NULL, NULL, NULL, \
-	NULL, NULL, NULL, NULL, NULL, \
+	NULL, \
+	"ip6_options",	/* 123 M_IP6OPT */ \
+	"NDP",		/* 124 M_IP6NDP */ \
+	"ip6rr",	/* 125 M_IP6RR */ \
+	"rp_addr",	/* 126 M_RR_ADDR */ \
 	"temp",		/* 127 M_TEMP */ \
 }
 

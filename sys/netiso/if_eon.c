@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_eon.c,v 1.6 1999/04/22 20:02:44 art Exp $	*/
+/*	$OpenBSD: if_eon.c,v 1.7 1999/12/08 06:50:24 itojun Exp $	*/
 /*	$NetBSD: if_eon.c,v 1.15 1996/05/09 22:29:37 scottr Exp $	*/
 
 /*-
@@ -78,6 +78,7 @@ SOFTWARE.
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
+#include <sys/buf.h>
 #include <sys/protosw.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
@@ -108,8 +109,11 @@ SOFTWARE.
 
 #include <machine/stdarg.h>
 
+#include "loop.h"
+
+extern struct ifnet loif[NLOOP];
+
 extern struct timeval time;
-extern struct ifnet loif;
 
 #define EOK 0
 
@@ -294,7 +298,7 @@ eonrtrequest(cmd, rt, gate)
 
 	case RTM_ADD:
 	case RTM_RESOLVE:
-		rt->rt_rmx.rmx_mtu = loif.if_mtu;	/* unless better below */
+		rt->rt_rmx.rmx_mtu = loif[0].if_mtu;	/* unless better below */
 		R_Malloc(el, struct eon_llinfo *, sizeof(*el));
 		rt->rt_llinfo = (caddr_t) el;
 		if (el == 0)

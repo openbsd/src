@@ -12,11 +12,11 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #ifndef _NETINET6_TCPIPV6_H
 #define _NETINET6_TCPIPV6_H 1
 
-#include <netinet6/ipv6.h>
+#include <netinet6/ip6.h>
 #include <netinet/tcp.h>
 
 struct tcpipv6hdr {
-	struct ipv6 ti6_i;
+	struct ip6_hdr ti6_i;
 	struct tcphdr ti6_t;
 };
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.13 1999/08/08 00:43:00 niklas Exp $	*/
+/*	$OpenBSD: if.h,v 1.14 1999/12/08 06:50:17 itojun Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -111,6 +111,7 @@ TAILQ_HEAD(ifnet_head, ifnet);		/* the actual queue head */
  * Note: this is the same size as a generic device's external name.
  */
 #define	IFNAMSIZ	16
+#define	IF_NAMESIZE	IFNAMSIZ
 
 struct ifnet {				/* and the entries */
 	void	*if_softc;		/* lower-level data for this if */
@@ -143,6 +144,7 @@ struct ifnet {				/* and the entries */
 		int	ifq_maxlen;
 		int	ifq_drops;
 	} if_snd;			/* output queue */
+	struct ifprefix *if_prefixlist; /* linked list of prefixes per if */
 };
 #define	if_mtu		if_data.ifi_mtu
 #define	if_type		if_data.ifi_type
@@ -244,6 +246,20 @@ struct ifaddr {
 #define	IFA_ROUTE	RTF_UP		/* route installed */
 
 /*
+ * The prefix structure contains information about one prefix
+ * of an interface.  They are maintained by the different address families,
+ * are allocated and attached when an prefix or an address is set,
+ * and are linked together so all prfefixes for an interface can be located.
+ */
+struct ifprefix {
+	struct	sockaddr *ifpr_prefix;	/* prefix of interface */
+	struct	ifnet *ifpr_ifp;	/* back-pointer to interface */
+	struct ifprefix *ifpr_next;
+	u_char	ifpr_plen;		/* prefix length in bits */
+	u_char	ifpr_type;		/* protocol dependent prefix type */
+};
+
+/*
  * Message format for use in obtaining information about interfaces
  * from sysctl and the routing socket.
  */
@@ -331,16 +347,31 @@ struct	ifconf {
 #define	ifc_req	ifc_ifcu.ifcu_req	/* array of structures returned */
 };
 
+/*
+ * Structure for SIOC[AGD]LIFADDR
+ */
+struct if_laddrreq {
+	char iflr_name[IFNAMSIZ];
+	unsigned int flags;
+#define IFLR_PREFIX	0x8000	/* in: prefix given  out: kernel fills id */
+	unsigned int prefixlen;		/* in/out */
+	struct sockaddr_storage addr;	/* in/out */
+	struct sockaddr_storage dstaddr; /* out */
+};
+
 struct if_nameindex {
 	unsigned int	if_index;
 	char 		*if_name;
 };
 
+#ifndef _KERNEL
+__BEGIN_DECLS
 unsigned int if_nametoindex __P((const char *));
 char 	*if_indextoname __P((unsigned int, char *));
 struct	if_nameindex *if_nameindex __P((void));
-
-#define if_freenameindex(x) free(x)
+__END_DECLS
+#define if_freenameindex(x)	free(x)
+#endif
 
 #include <net/if_arp.h>
 
@@ -353,6 +384,11 @@ struct	if_nameindex *if_nameindex __P((void));
 	}
 
 struct ifnet_head ifnet;
+struct ifnet **ifindex2ifnet;
+#if 0
+struct ifnet loif[];
+#endif
+int if_index;
 
 void	ether_ifattach __P((struct ifnet *));
 void	ether_ifdetach __P((struct ifnet *));
@@ -375,6 +411,7 @@ void	ifinit __P((void));
 int	ifioctl __P((struct socket *, u_long, caddr_t, struct proc *));
 int	ifpromisc __P((struct ifnet *, int));
 struct	ifnet *ifunit __P((char *));
+struct  ifnet *if_withname __P((struct sockaddr *));
 
 struct	ifaddr *ifa_ifwithaddr __P((struct sockaddr *));
 struct	ifaddr *ifa_ifwithaf __P((int));

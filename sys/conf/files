@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.137 1999/11/30 07:55:55 cmetz Exp $
+#	$OpenBSD: files,v 1.138 1999/12/08 06:50:17 itojun Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -189,6 +189,8 @@ pseudo-device random
 pseudo-device enc: ifnet
 pseudo-device bridge: ifnet, ether
 pseudo-device sppp: ifnet
+pseudo-device faith: ifnet
+pseudo-device gif: ifnet
 
 pseudo-device sequencer
 
@@ -666,19 +668,54 @@ file uvm/uvm_vnode.c			uvm
 # XXX
 file kern/subr_pool.c			uvm
 
-# ... IPv6
-file netinet6/in6.c			inet6
-file netinet6/ipv6_icmp.c		inet6
-file netinet6/in6_cksum.c		inet6
+# ... NRL IPv6
+#file netinet6/in6.c			inet6
+#file netinet6/ipv6_icmp.c		inet6
+#file netinet6/in6_cksum.c		inet6
 file netinet6/in6_pcb.c			inet6
 file netinet6/raw_ipv6.c		inet6
-file netinet6/ipv6_input.c   		inet6
-file netinet6/ipv6_discovery.c		inet6
-file netinet6/ipv6_addrconf.c		inet6
-file netinet6/ipv6_rtrequest.c		inet6
-file netinet6/ipv6_output.c  		inet6
+#file netinet6/ipv6_input.c   		inet6
+#file netinet6/ipv6_discovery.c		inet6
+#file netinet6/ipv6_addrconf.c		inet6
+#file netinet6/ipv6_rtrequest.c		inet6
+#file netinet6/ipv6_output.c  		inet6
+#file netinet6/in6_proto.c		inet6
+#file netinet6/ipv6_trans.c   		inet6
+
+# ... KAME IPv6
+file net/if_faith.c			faith			needs-count
+file net/if_gif.c			gif			needs-count
+file net/net_osdep.c
+file netinet/ip_ecn.c			inet | inet6
+file netinet/in_gif.c			gif & inet
+file netinet6/in6_gif.c			gif & inet6
+file netinet6/in6.c			inet6
+file netinet6/in6_ifattach.c		inet6
+file netinet6/in6_cksum.c		inet6
+#file netinet6/in6_pcb.c		inet6
+file netinet6/in6_src.c			inet6
+file netinet6/in6_prefix.c		inet6
 file netinet6/in6_proto.c		inet6
-file netinet6/ipv6_trans.c   		inet6
+file netinet6/dest6.c			inet6
+file netinet6/frag6.c			inet6
+file netinet6/icmp6.c			inet6
+file netinet6/ip6_input.c		inet6
+file netinet6/ip6_forward.c		inet6
+file netinet6/ip6_mroute.c		inet6
+file netinet6/ip6_output.c		inet6
+file netinet6/route6.c			inet6
+file netinet6/mld6.c			inet6
+file netinet6/nd6.c			inet6
+file netinet6/nd6_nbr.c			inet6
+file netinet6/nd6_rtr.c			inet6
+#file netinet6/raw_ip6.c			inet6
+#file netinet6/tcp6_debug.c		inet6 & tcp6
+#file netinet6/tcp6_input.c		inet6 & tcp6
+#file netinet6/tcp6_output.c		inet6 & tcp6
+#file netinet6/tcp6_subr.c		inet6 & tcp6
+#file netinet6/tcp6_timer.c		inet6 & tcp6
+#file netinet6/tcp6_usrreq.c		inet6 & tcp6
+#file netinet6/udp6_usrreq.c		inet6
 
 # ... PF_KEY
 file net/pfkey.c			key | ipsec | tcp_signature

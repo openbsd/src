@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.28 1999/07/13 15:17:51 provos Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.29 1999/12/08 06:50:17 itojun Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -718,12 +718,25 @@ recvit(p, s, mp, namelenp, retsize)
 		if (len <= 0 || control == 0)
 			len = 0;
 		else {
-			if (len >= control->m_len)
-				len = control->m_len;
-			else
-				mp->msg_flags |= MSG_CTRUNC;
-			error = copyout((caddr_t)mtod(control, caddr_t),
-			    (caddr_t)mp->msg_control, (unsigned)len);
+			struct mbuf *m = control;
+			caddr_t p = (caddr_t)mp->msg_control;
+
+			do {
+				i = m->m_len;
+				if (len < i) {
+					mp->msg_flags |= MSG_CTRUNC;
+					i = len;
+				}
+				error = copyout(mtod(m, caddr_t), p,
+				    (unsigned)i);
+				if (m->m_next)
+					i = ALIGN(i);
+				p += i;
+				len -= i;
+				if (error != 0 || len <= 0)
+					break;
+			} while ((m = m->m_next) != NULL);
+			len = p - (caddr_t)mp->msg_control;
 		}
 		mp->msg_controllen = len;
 	}
@@ -774,10 +787,17 @@ sys_setsockopt(p, v, retval)
 
 	if ((error = getsock(p->p_fd, SCARG(uap, s), &fp)) != 0)
 		return (error);
-	if (SCARG(uap, valsize) > MLEN)
+	if (SCARG(uap, valsize) > MCLBYTES)
 		return (EINVAL);
 	if (SCARG(uap, val)) {
 		m = m_get(M_WAIT, MT_SOOPTS);
+		if (SCARG(uap, valsize) > MLEN) {
+			MCLGET(m, M_DONTWAIT);
+			if ((m->m_flags & M_EXT) == 0) {
+				m_freem(m);
+				return (ENOBUFS);
+			}
+		}
 		if (m == NULL)
 			return (ENOBUFS);
 		error = copyin(SCARG(uap, val), mtod(m, caddr_t),

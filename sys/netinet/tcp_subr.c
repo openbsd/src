@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.20 1999/10/29 02:10:02 angelos Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.21 1999/12/08 06:50:20 itojun Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -76,7 +76,7 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #include <dev/rndvar.h>
 
 #ifdef INET6
-#include <netinet6/ipv6_var.h>
+#include <netinet6/ip6_var.h>
 #include <netinet6/tcpipv6.h>
 #include <sys/domain.h>
 #endif /* INET6 */
@@ -118,7 +118,7 @@ int    tcp_do_sack = TCP_DO_SACK;		/* RFC 2018 selective ACKs */
 int	tcbhashsize = TCBHASHSIZE;
 
 #ifdef INET6
-extern int ipv6_defhoplmt;
+extern int ip6_defhlim;
 #endif /* INET6 */
 
 /*
@@ -136,12 +136,12 @@ tcp_init()
 
 #ifdef INET6
 	/*
-	 * Since sizeof(struct ipv6) > sizeof(struct ip), we
+	 * Since sizeof(struct ip6_hdr) > sizeof(struct ip), we
 	 * do max length checks/computations only on the former.
 	 */
-	if (max_protohdr < (sizeof(struct ipv6) + sizeof(struct tcphdr)))
-		max_protohdr = (sizeof(struct ipv6) + sizeof(struct tcphdr));
-	if ((max_linkhdr + sizeof(struct ipv6) + sizeof(struct tcphdr)) >
+	if (max_protohdr < (sizeof(struct ip6_hdr) + sizeof(struct tcphdr)))
+		max_protohdr = (sizeof(struct ip6_hdr) + sizeof(struct tcphdr));
+	if ((max_linkhdr + sizeof(struct ip6_hdr) + sizeof(struct tcphdr)) >
 	    MHLEN)
 		panic("tcp_init");
 #endif /* INET6 */
@@ -171,12 +171,8 @@ tcp_template(tp)
 		if (m == NULL)
 			return (0);
 
-#if defined(INET) && defined(INET6)
 		switch (tp->pf) {
-#else /* defined(INET) && defined(INET6) */
-		switch (0) {
-#endif /* defined(INET) && defined(INET6) */
-		case 0:
+		case 0:	/*default to PF_INET*/
 #ifdef INET
 		case AF_INET:
 			m->m_len = sizeof(struct ip);
@@ -184,7 +180,7 @@ tcp_template(tp)
 #endif /* INET */
 #ifdef INET6
 		case AF_INET6:
-			m->m_len = sizeof(struct ipv6);
+			m->m_len = sizeof(struct ip6_hdr);
 			break;
 #endif /* INET6 */
 		}
@@ -204,12 +200,7 @@ tcp_template(tp)
 		}
 	}
 
-#if defined(INET) && defined(INET6)
 	switch(tp->pf) {
-#else /* defined(INET) && defined(INET6) */
-	switch(0) {
-#endif /* defined(INET) && defined(INET6) */
-	case 0:
 #ifdef INET
 	case AF_INET:
 		{
@@ -232,22 +223,22 @@ tcp_template(tp)
 #ifdef INET6
 	case AF_INET6:
 		{
-			struct ipv6 *ipv6;
+			struct ip6_hdr *ipv6;
 
-			ipv6 = mtod(m, struct ipv6 *);
+			ipv6 = mtod(m, struct ip6_hdr *);
 
-			ipv6->ipv6_src = inp->inp_laddr6;
-			ipv6->ipv6_dst = inp->inp_faddr6;
-			ipv6->ipv6_versfl = htonl(0x60000000) |
-				(inp->inp_ipv6.ipv6_versfl &
-				htonl(0x0fffffff));  
+			ipv6->ip6_src = inp->inp_laddr6;
+			ipv6->ip6_dst = inp->inp_faddr6;
+			ipv6->ip6_flow = htonl(0x60000000) |
+			    (inp->inp_ipv6.ip6_flow & htonl(0x0fffffff));  
+						  
 
-			ipv6->ipv6_nexthdr = IPPROTO_TCP;
-			ipv6->ipv6_length = htons(sizeof(struct tcphdr));
-			ipv6->ipv6_hoplimit = inp->inp_ipv6.ipv6_hoplimit;
+			ipv6->ip6_nxt = IPPROTO_TCP;
+			ipv6->ip6_plen = htons(sizeof(struct tcphdr)); /*XXX*/
+			ipv6->ip6_hlim = in6_selecthlim(inp, NULL);	/*XXX*/
 
 			th = (struct tcphdr *)(mtod(m, caddr_t) +
-				sizeof(struct ipv6));
+				sizeof(struct ip6_hdr));
 		}
 		break;
 #endif /* INET6 */
@@ -332,7 +323,7 @@ tcp_respond(tp, template, m, ack, seq, flags)
 #ifdef INET6
 		if (is_ipv6)
 			bcopy(ti, mtod(m, caddr_t), sizeof(struct tcphdr) +
-			    sizeof(struct ipv6));
+			    sizeof(struct ip6_hdr));
 		else
 #endif /* INET6 */
 			bcopy(ti, mtod(m, caddr_t), sizeof(struct tcphdr) +
@@ -348,11 +339,11 @@ tcp_respond(tp, template, m, ack, seq, flags)
 #define xchg(a,b,type) { type t; t=a; a=b; b=t; }
 #ifdef INET6
 		if (is_ipv6) {
-			m->m_len = sizeof(struct tcphdr) + sizeof(struct ipv6);
-			xchg(((struct ipv6 *)ti)->ipv6_dst,\
-			    ((struct ipv6 *)ti)->ipv6_src,\
+			m->m_len = sizeof(struct tcphdr) + sizeof(struct ip6_hdr);
+			xchg(((struct ip6_hdr *)ti)->ip6_dst,\
+			    ((struct ip6_hdr *)ti)->ip6_src,\
 			    struct in6_addr);
-			th = (void *)ti + sizeof(struct ipv6);
+			th = (void *)ti + sizeof(struct ip6_hdr);
 		} else
 #endif /* INET6 */
 		{
@@ -365,8 +356,8 @@ tcp_respond(tp, template, m, ack, seq, flags)
 	}
 #ifdef INET6
 	if (is_ipv6) {
-		tlen += sizeof(struct tcphdr) + sizeof(struct ipv6); 
-		th = (struct tcphdr *)((caddr_t)ti + sizeof(struct ipv6));
+		tlen += sizeof(struct tcphdr) + sizeof(struct ip6_hdr); 
+		th = (struct tcphdr *)((caddr_t)ti + sizeof(struct ip6_hdr));
 	} else
 #endif /* INET6 */
 	{
@@ -391,15 +382,17 @@ tcp_respond(tp, template, m, ack, seq, flags)
 
 #ifdef INET6
 	if (is_ipv6) {
-		((struct ipv6 *)ti)->ipv6_versfl   = htonl(0x60000000);
-		((struct ipv6 *)ti)->ipv6_nexthdr  = IPPROTO_TCP;
-		((struct ipv6 *)ti)->ipv6_hoplimit = MAXHOPLIMIT;
-		((struct ipv6 *)ti)->ipv6_length = tlen - sizeof(struct ipv6);
+		((struct ip6_hdr *)ti)->ip6_flow   = htonl(0x60000000);
+		((struct ip6_hdr *)ti)->ip6_nxt  = IPPROTO_TCP;
+		((struct ip6_hdr *)ti)->ip6_hlim =
+			in6_selecthlim(tp ? tp->t_inpcb : NULL, NULL);	/*XXX*/
+		((struct ip6_hdr *)ti)->ip6_plen = tlen - sizeof(struct ip6_hdr);
 		th->th_sum = 0;
 		th->th_sum = in6_cksum(m, IPPROTO_TCP,
-		   ((struct ipv6 *)ti)->ipv6_length, sizeof(struct ipv6));
-		HTONS(((struct ipv6 *)ti)->ipv6_length);
-		ipv6_output(m, (struct route6 *)ro, 0, NULL, NULL, NULL);
+		   sizeof(struct ip6_hdr), ((struct ip6_hdr *)ti)->ip6_plen);
+		HTONS(((struct ip6_hdr *)ti)->ip6_plen);
+		ip6_output(m, tp ? tp->t_inpcb->inp_outputopts6 : NULL,
+			(struct route_in6 *)ro, 0, NULL, NULL);
 	} else
 #endif /* INET6 */
 	{
@@ -457,9 +450,13 @@ tcp_newtcpcb(inp)
 	 */
 	if ((inp->inp_flags & INP_IPV6) == 0)
 		tp->pf = PF_INET;  /* If AF_INET socket, we can't do v6 from it. */
+#else
+	tp->pf = PF_INET;
+#endif
 
+#ifdef INET6
 	if (inp->inp_flags & INP_IPV6) 
-		inp->inp_ipv6.ipv6_hoplimit = ipv6_defhoplmt;
+		inp->inp_ipv6.ip6_hlim = ip6_defhlim;
 	else
 #endif /* INET6 */
 		inp->inp_ip.ip_ttl = ip_defttl;
@@ -604,7 +601,7 @@ tcp_close(tp)
 #ifdef INET6
 			if (tp->pf == PF_INET6)
 				i *= (u_long)(tp->t_maxseg + sizeof (struct tcphdr)
-				    + sizeof(struct ipv6));
+				    + sizeof(struct ip6_hdr));
 			else
 #endif /* INET6 */
 				i *= (u_long)(tp->t_maxseg +
@@ -698,6 +695,17 @@ tcp_notify(inp, error)
 	sowwakeup(so);
 }
 
+#if defined(INET6) && !defined(TCP6)
+void
+tcp6_ctlinput(cmd, sa, d)
+	int cmd;
+	struct sockaddr *sa;
+	void *d;
+{
+	(void)tcp_ctlinput(cmd, sa, NULL);	/*XXX*/
+}
+#endif
+
 void *
 tcp_ctlinput(cmd, sa, v)
 	int cmd;
@@ -725,14 +733,19 @@ tcp_ctlinput(cmd, sa, v)
 #ifdef INET6
 	if (sa->sa_family == AF_INET6) {
 		if (ip) {
-			struct ipv6 *ipv6 = (struct ipv6 *)ip;
+			struct ip6_hdr *ipv6 = (struct ip6_hdr *)ip;
 
 			th = (struct tcphdr *)(ipv6 + 1);
+#if 0 /*XXX*/
 			in6_pcbnotify(&tcbtable, sa, th->th_dport,
-			    &ipv6->ipv6_src, th->th_sport, cmd, notify);
-		} else
+			    &ipv6->ip6_src, th->th_sport, cmd, notify);
+#endif
+		} else {
+#if 0 /*XXX*/
 			in6_pcbnotify(&tcbtable, sa, 0,
 			    (struct in6_addr *)&in6addr_any, 0, cmd, notify);
+#endif
+		}
 	} else
 #endif /* INET6 */
 	{

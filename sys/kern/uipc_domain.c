@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_domain.c,v 1.8 1999/03/30 00:19:05 niklas Exp $	*/
+/*	$OpenBSD: uipc_domain.c,v 1.9 1999/12/08 06:50:17 itojun Exp $	*/
 /*	$NetBSD: uipc_domain.c,v 1.14 1996/02/09 19:00:44 christos Exp $	*/
 
 /*
@@ -67,9 +67,12 @@ domaininit()
 	register struct protosw *pr;
 
 #undef unix
+	/*
+	 * KAME NOTE: ADDDOMAIN(route) is moved to the last part so that
+	 * it will be initialized as the *first* element.  confusing!
+	 */
 #ifndef lint
 	ADDDOMAIN(unix);
-	ADDDOMAIN(route);
 #ifdef INET
 	ADDDOMAIN(inet);
 #endif
@@ -100,6 +103,12 @@ domaininit()
 	ADDDOMAIN(imp);
 #endif
 #endif
+#ifdef IPSEC
+#ifdef __KAME__
+	ADDDOMAIN(key);
+#endif
+#endif
+	ADDDOMAIN(route);
 #endif
 
 	for (dp = domains; dp; dp = dp->dom_next) {
@@ -177,14 +186,15 @@ net_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	int family, protocol;
 
 	/*
-	 * All sysctl names at this level are nonterminal;
-	 * next two components are protocol family and protocol number,
-	 * then at least one addition component.
+	 * All sysctl names at this level are nonterminal.
+	 * PF_KEY: next component is protocol family, and then at least one
+	 *	additional component.
+	 * usually: next two components are protocol family and protocol
+	 *	number, then at least one addition component.
 	 */
-	if (namelen < 3)
+	if (namelen < 2)
 		return (EISDIR);		/* overloaded */
 	family = name[0];
-	protocol = name[1];
 
 	if (family == 0)
 		return (0);
@@ -193,6 +203,23 @@ net_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 			goto found;
 	return (ENOPROTOOPT);
 found:
+	switch (family) {
+#ifdef IPSEC
+#ifdef __KAME__
+	case PF_KEY:
+		pr = dp->dom_protosw;
+		if (pr->pr_sysctl)
+			return ((*pr->pr_sysctl)(name + 1, namelen - 1,
+				oldp, oldlenp, newp, newlen));
+		return (ENOPROTOOPT);
+#endif
+#endif
+	default:
+		break;
+	}
+	if (namelen < 3)
+		return (EISDIR);		/* overloaded */
+	protocol = name[1];
 	for (pr = dp->dom_protosw; pr < dp->dom_protoswNPROTOSW; pr++)
 		if (pr->pr_protocol == protocol && pr->pr_sysctl)
 			return ((*pr->pr_sysctl)(name + 2, namelen - 2,

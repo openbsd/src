@@ -1,4 +1,4 @@
-/*    $OpenBSD: ip_fil.c,v 1.24 1999/06/07 22:00:32 deraadt Exp $    */
+/*    $OpenBSD: ip_fil.c,v 1.25 1999/12/08 06:50:19 itojun Exp $    */
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
  *
@@ -8,7 +8,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-1995 Darren Reed";
-static const char rcsid[] = "@(#)$Id: ip_fil.c,v 1.24 1999/06/07 22:00:32 deraadt Exp $";
+static const char rcsid[] = "@(#)$Id: ip_fil.c,v 1.25 1999/12/08 06:50:19 itojun Exp $";
 #endif
 
 #ifndef	SOLARIS
@@ -73,6 +73,11 @@ static const char rcsid[] = "@(#)$Id: ip_fil.c,v 1.24 1999/06/07 22:00:32 deraad
 # endif
 #endif
 #include <net/route.h>
+#ifdef _KERNEL
+#ifndef INET
+#error ipfilter assumes options INET
+#endif
+#endif
 #include <netinet/in.h>
 #if !(defined(__sgi) && !defined(IFF_DRVRLOCK)) /* IRIX < 6 */
 #include <netinet/in_var.h>

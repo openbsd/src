@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip.h,v 1.5 1999/07/06 20:17:52 cmetz Exp $	*/
+/*	$OpenBSD: ip.h,v 1.6 1999/12/08 06:50:19 itojun Exp $	*/
 /*	$NetBSD: ip.h,v 1.9 1995/05/15 01:22:44 cgd Exp $	*/
 
 /*
@@ -77,6 +77,11 @@ struct ip {
 #define	IPTOS_THROUGHPUT	0x08
 #define	IPTOS_RELIABILITY	0x04
 /*	IPTOS_LOWCOST		0x02 XXX */
+#if 1
+/* ECN bits proposed by Sally Floyd */
+#define IPTOS_CE		0x01	/* congestion experienced */
+#define IPTOS_ECT		0x02	/* ECN-capable transport */
+#endif
 
 /*
  * Definitions for IP precedence (also in ip_tos) (hopefully unused)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.63 1999/09/03 18:01:12 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.64 1999/12/08 06:50:16 itojun Exp $	*/
 /*	$NetBSD: machdep.c,v 1.134 1997/02/14 06:15:30 scottr Exp $	*/
 
 /*
@@ -1038,7 +1038,7 @@ netintr()
 #ifdef INET6
 	if (netisr & (1 << NETISR_IPV6)) {
 		netisr &= ~(1 << NETISR_IPV6);
-		ipv6intr();
+		ip6intr();
 	}
 #endif
 #ifdef NETATALK

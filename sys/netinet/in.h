@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.h,v 1.25 1999/10/28 03:29:49 angelos Exp $	*/
+/*	$OpenBSD: in.h,v 1.26 1999/12/08 06:50:19 itojun Exp $	*/
 /*	$NetBSD: in.h,v 1.20 1996/02/13 23:41:47 christos Exp $	*/
 
 /*
@@ -63,6 +63,7 @@
 #define IPPROTO_IPV6		41		/* IPv6 in IPv6 */
 #define IPPROTO_ROUTING		43		/* Routing header. */
 #define IPPROTO_FRAGMENT	44		/* Fragmentation/reassembly header. */
+#define IPPROTO_RSVP		46		/* resource reservation */
 #define	IPPROTO_ESP		50		/* Encap. Security Payload */
 #define	IPPROTO_AH		51		/* Authentication header */
 #define IPPROTO_ICMPV6		58		/* ICMP for IPv6 */
@@ -71,6 +72,8 @@
 #define	IPPROTO_EON		80		/* ISO cnlp */
 #define IPPROTO_ETHERIP		97		/* Ethernet in IPv4 */
 #define	IPPROTO_ENCAP		98		/* encapsulation header */
+#define IPPROTO_PIM		103		/* Protocol indep. multicast */
+#define IPPROTO_IPCOMP		108		/* IP Payload Comp. Protocol */
 #define	IPPROTO_RAW		255		/* raw IP packet */
 
 #define	IPPROTO_MAX		256
@@ -133,6 +136,7 @@ struct in_addr {
 	in_addr_t s_addr;
 };
 
+#if 0	/*NRL IPv6*/
 /*
  * IP Version 6 Internet address
  */
@@ -151,6 +155,10 @@ struct in6_addr {
 #define s6_addr16 s6_u.s6u_addr16
 #define s6_addr32 s6_u.s6u_addr32
 };
+#endif
+
+/* last return value of *_input(), meaning "all job for this pkt is done".  */
+#define	IPPROTO_DONE		257
 
 /*
  * Definitions of bits in internet address integers.
@@ -216,6 +224,7 @@ struct in6_addr {
 
 #define	IN_LOOPBACKNET		127			/* official! */
 
+#if 0	/*NRL IPv6*/
 /*
  * Tests for IPv6 address types
  */
@@ -294,6 +303,7 @@ extern const struct in6_addr in6addr_any;
 
 extern const struct in6_addr in6addr_loopback;
 #define IN6ADDR_LOOPBACK_INIT {{{ 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1 }}}
+#endif
 
 /*
  * IP Version 4 socket address.
@@ -306,6 +316,7 @@ struct sockaddr_in {
 	int8_t	    sin_zero[8];
 };
 
+#if 0	/*NRL IPv6*/
 /*
  * IP Version 6 socket address.
  */
@@ -318,6 +329,9 @@ struct sockaddr_in6 {
 	struct in6_addr	sin6_addr;
 	u_int32_t	sin6_scope_id;
 };
+#endif
+
+#define INET_ADDRSTRLEN                 16
 
 /*
  * Structure used to describe IP options.
@@ -360,6 +374,7 @@ struct ip_opts {
 #define IP_ESP_TRANS_LEVEL	21   /* u_char; transport encryption */
 #define IP_ESP_NETWORK_LEVEL	22   /* u_char; full-packet encryption */
 
+#if 0 /* NRL IPv6 */
 #define IPV6_MULTICAST_IF	23   /* u_int; set/get multicast interface */
 #define IPV6_MULTICAST_HOPS	24   /* int; set/get multicast hop limit */
 #define IPV6_MULTICAST_LOOP	25   /* u_int; set/get multicast loopback */
@@ -379,8 +394,13 @@ struct ip_opts {
 #define IPV6_CHECKSUM		37   /* int; offset to place send checksum */
 #define ICMPV6_FILTER		38   /* struct icmpv6_filter; get/set filter */
 #define ICMP6_FILTER		ICMP6_FILTER
+#endif
 
 #define IPSEC_OUTSA		39   /* set the outbound SA for a socket */
+
+#if 0 /*KAME IPSEC*/
+#define IP_IPSEC_POLICY		?? /* struct; get/set security policy */
+#endif
 
 /*
  * Security levels - IPsec, not IPSO
@@ -398,6 +418,7 @@ struct ip_opts {
 #define IPSEC_ESP_TRANS_LEVEL_DEFAULT IPSEC_LEVEL_DEFAULT
 #define IPSEC_ESP_NETWORK_LEVEL_DEFAULT IPSEC_LEVEL_DEFAULT
 
+#if 0 /* NRL IPv6 */
 /*
  * IPv6 Routing header types
  */
@@ -405,6 +426,7 @@ struct ip_opts {
 
 #define IPV6_RTHDR_LOOSE	0 /* this hop need not be a neighbor */
 #define IPV6_RTHDR_STRICT	1 /* this hop must be a neighbor */
+#endif
 
 /*
  * Defaults and limits for options
@@ -421,6 +443,7 @@ struct ip_mreq {
 	struct	in_addr imr_interface;	/* local IP address of interface */
 };
 
+#if 0 /* NRL IPv6 */
 /*
  * Argument structure for IPV6_ADD_MEMBERSHIP and IPV6_DROP_MEMBERSHIP.
  */
@@ -436,6 +459,7 @@ struct in6_pktinfo {
 	struct in6_addr ipi6_addr;
 	unsigned int ipi6_ifindex;
 };
+#endif
 
 /*
  * Argument for IP_PORTRANGE:
@@ -449,7 +473,9 @@ struct in6_pktinfo {
  * Buffer lengths for strings containing printable IP addresses
  */
 #define INET_ADDRSTRLEN		16
+#if 0 /* NRL IPv6 */
 #define INET6_ADDRSTRLEN	46
+#endif
 
 /*
  * Definitions for inet sysctl operations.
@@ -577,7 +603,8 @@ struct in6_pktinfo {
 #define IPCTL_IPPORT_HILASTAUTO	10
 #define	IPCTL_IPPORT_MAXQUEUE	11
 #define	IPCTL_ENCDEBUG		12
-#define	IPCTL_MAXID		13
+#define IPCTL_GIF_TTL		13	/* default TTL for gif encap packet */
+#define	IPCTL_MAXID		14
 
 #define	IPCTL_NAMES { \
 	{ 0, 0 }, \
@@ -593,7 +620,11 @@ struct in6_pktinfo {
 	{ "porthilast", CTLTYPE_INT }, \
 	{ "maxqueue", CTLTYPE_INT }, \
 	{ "encdebug", CTLTYPE_INT }, \
+	{ "gifttl", CTLTYPE_INT }, \
 }
+
+/* INET6 stuff */
+#include <netinet6/in6.h>
 
 #ifndef _KERNEL
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.34 1999/05/16 21:48:29 niklas Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.35 1999/12/08 06:50:19 itojun Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -73,7 +73,7 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #include <dev/rndvar.h>
 
 #ifdef INET6
-#include <netinet6/ipv6_var.h>
+#include <netinet6/ip6_var.h>
 #endif /* INET6 */
 
 #ifdef IPSEC
@@ -81,6 +81,12 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 
 extern int	check_ipsec_policy  __P((struct inpcb *, u_int32_t));
 #endif
+
+#if 0 /*KAME IPSEC*/
+#include <netinet6/ipsec.h>
+#include <netkey/key.h>
+#include <netkey/key_debug.h>
+#endif /* IPSEC */
 
 struct	in_addr zeroin_addr;
 
@@ -165,6 +171,7 @@ in_pcballoc(so, v)
 	    &inp->inp_laddr, inp->inp_lport), inp, inp_hash);
 	splx(s);
 	so->so_pcb = inp;
+	inp->inp_hops = -1;
 
 #ifdef INET6
 	/*
@@ -355,10 +362,8 @@ in_pcbconnect(v, nam)
 	struct mbuf *nam;
 {
 	register struct inpcb *inp = v;
-	struct in_ifaddr *ia;
 	struct sockaddr_in *ifaddr = NULL;
 	register struct sockaddr_in *sin = mtod(nam, struct sockaddr_in *);
-	struct sockaddr_in *sin2;
 
 #ifdef INET6
 	if (sotopf(inp->inp_socket) == PF_INET6)
@@ -386,7 +391,10 @@ in_pcbconnect(v, nam)
 			sin->sin_addr = in_ifaddr.tqh_first->ia_broadaddr.sin_addr;
 	}
 	if (inp->inp_laddr.s_addr == INADDR_ANY) {
+#if 0
 		register struct route *ro;
+		struct sockaddr_in *sin2;
+		struct in_ifaddr *ia;
 
 		ia = (struct in_ifaddr *)0;
 		/* 
@@ -446,10 +454,11 @@ in_pcbconnect(v, nam)
 		if (IN_MULTICAST(sin->sin_addr.s_addr) &&
 #ifdef INET6
 		    inp->inp_moptions != NULL &&
-		    !(inp->inp_flags & INP_IPV6_MCAST)) {
+		    !(inp->inp_flags & INP_IPV6_MCAST))
 #else
-		    inp->inp_moptions != NULL) {
+		    inp->inp_moptions != NULL)
 #endif
+		{
 			struct ip_moptions *imo;
 			struct ifnet *ifp;
 
@@ -465,6 +474,16 @@ in_pcbconnect(v, nam)
 			}
 		}
 		ifaddr = satosin(&ia->ia_addr);
+#else
+		int error;
+		ifaddr = in_selectsrc(sin, &inp->inp_route,
+			inp->inp_socket->so_options, inp->inp_moptions, &error);
+		if (ifaddr == NULL) {
+			if (error == 0)
+				error = EADDRNOTAVAIL;
+			return error;
+		}
+#endif
 	}
 	if (in_pcbhashlookup(inp->inp_table, sin->sin_addr, sin->sin_port,
 	    inp->inp_laddr.s_addr ? inp->inp_laddr : ifaddr->sin_addr,
@@ -515,6 +534,14 @@ in_pcbdetach(v)
 	struct socket *so = inp->inp_socket;
 	int s;
 
+#if 0 /*KAME IPSEC*/
+	if (so->so_pcb) {
+		KEYDEBUG(KEYDEBUG_KEY_STAMP,
+			printf("DP call free SO=%p from in_pcbdetach\n", so));
+		key_freeso(so);
+	}
+	ipsec4_delete_pcbpolicy(inp);
+#endif /*IPSEC*/
 	so->so_pcb = 0;
 	sofree(so);
 	if (inp->inp_options)
@@ -522,10 +549,10 @@ in_pcbdetach(v)
 	if (inp->inp_route.ro_rt)
 		rtfree(inp->inp_route.ro_rt);
 #ifdef INET6
-	if (inp->inp_flags & INP_IPV6_MCAST)
-		ipv6_freemoptions(inp->inp_moptions6);
+	if (inp->inp_flags & INP_IPV6)
+		ip6_freemoptions(inp->inp_moptions6);
 	else 
-#endif /* INET6 */
+#endif
 		ip_freemoptions(inp->inp_moptions);
 #ifdef IPSEC
 	/* XXX IPsec cleanup here */
@@ -778,8 +805,9 @@ in_pcblookup(table, faddrp, fport_arg, laddrp, lport_arg, flags)
 				if (!IN6_IS_ADDR_UNSPECIFIED(faddr6))
 					wildcard++;
 			}
-		} else {
+		} else
 #endif /* INET6 */
+		{
 			if (inp->inp_faddr.s_addr != INADDR_ANY) {
 				if (faddr.s_addr == INADDR_ANY)
 					wildcard++;
@@ -799,9 +827,7 @@ in_pcblookup(table, faddrp, fport_arg, laddrp, lport_arg, flags)
 				if (laddr.s_addr != INADDR_ANY)
 					wildcard++;
 			}
-#ifdef INET6
 		}
-#endif /* INET6 */
 		if ((!wildcard || (flags & INPLOOKUP_WILDCARD)) &&
 		    wildcard < matchwild) {
 			match = inp;
@@ -810,6 +836,100 @@ in_pcblookup(table, faddrp, fport_arg, laddrp, lport_arg, flags)
 		}
 	}
 	return (match);
+}
+
+struct sockaddr_in *
+in_selectsrc(sin, ro, soopts, mopts, errorp)
+	struct sockaddr_in *sin;
+	struct route *ro;
+	int soopts;
+	struct ip_moptions *mopts;
+	int *errorp;
+{
+	struct sockaddr_in *sin2;
+	struct in_ifaddr *ia;
+
+	ia = (struct in_ifaddr *)0;
+	/* 
+	 * If route is known or can be allocated now,
+	 * our src addr is taken from the i/f, else punt.
+	 */
+	if (ro->ro_rt &&
+	    (satosin(&ro->ro_dst)->sin_addr.s_addr !=
+		sin->sin_addr.s_addr || 
+	    soopts & SO_DONTROUTE)) {
+		RTFREE(ro->ro_rt);
+		ro->ro_rt = (struct rtentry *)0;
+	}
+	if ((soopts & SO_DONTROUTE) == 0 && /*XXX*/
+	    (ro->ro_rt == (struct rtentry *)0 ||
+	    ro->ro_rt->rt_ifp == (struct ifnet *)0)) {
+		/* No route yet, so try to acquire one */
+		ro->ro_dst.sa_family = AF_INET;
+		ro->ro_dst.sa_len = sizeof(struct sockaddr_in);
+		satosin(&ro->ro_dst)->sin_addr = sin->sin_addr;
+		rtalloc(ro);
+
+		/*
+		 * It is important to bzero out the rest of the
+		 * struct sockaddr_in when mixing v6 & v4!
+		 */
+		sin2 = (struct sockaddr_in *)&ro->ro_dst;
+		bzero(sin2->sin_zero, sizeof(sin2->sin_zero));
+	}
+	/*
+	 * If we found a route, use the address
+	 * corresponding to the outgoing interface
+	 * unless it is the loopback (in case a route
+	 * to our address on another net goes to loopback).
+	 */
+	if (ro->ro_rt && !(ro->ro_rt->rt_ifp->if_flags & IFF_LOOPBACK))
+		ia = ifatoia(ro->ro_rt->rt_ifa);
+	if (ia == 0) {
+		u_int16_t fport = sin->sin_port;
+
+		sin->sin_port = 0;
+		ia = ifatoia(ifa_ifwithdstaddr(sintosa(sin)));
+		if (ia == 0)
+			ia = ifatoia(ifa_ifwithnet(sintosa(sin)));
+		sin->sin_port = fport;
+		if (ia == 0)
+			ia = in_ifaddr.tqh_first;
+		if (ia == 0) {
+			*errorp = EADDRNOTAVAIL;
+			return NULL;
+		}
+	}
+	/*
+	 * If the destination address is multicast and an outgoing
+	 * interface has been set as a multicast option, use the
+	 * address of that interface as our source address.
+	 */
+	if (IN_MULTICAST(sin->sin_addr.s_addr) &&
+#if 0 /*def INET6*/
+	    mopts != NULL &&
+	    !(inp->inp_flags & INP_IPV6_MCAST))
+#else
+	    mopts != NULL)
+#endif
+	{
+		struct ip_moptions *imo;
+		struct ifnet *ifp;
+
+		imo = mopts;
+		if (imo->imo_multicast_ifp != NULL) {
+			ifp = imo->imo_multicast_ifp;
+			for (ia = in_ifaddr.tqh_first; ia != 0;
+			    ia = ia->ia_list.tqe_next)
+				if (ia->ia_ifp == ifp)
+					break;
+			if (ia == 0) {
+				*errorp = EADDRNOTAVAIL;
+				return NULL;
+			}
+		}
+	}
+	return satosin(&ia->ia_addr);
 }
 
 void
@@ -919,3 +1039,5 @@ in6_pcbhashlookup(table, faddr, fport_arg, laddr, lport_arg)
 	return (inp);
 }
 #endif /* INET6 */
+
+

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.10 1999/02/19 15:06:52 millert Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.11 1999/12/08 06:50:17 itojun Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -777,4 +777,41 @@ sbdroprecord(sb)
 			MFREE(m, mn);
 		} while ((m = mn) != NULL);
 	}
+}
+
+/*
+ * Create a "control" mbuf containing the specified data
+ * with the specified type for presentation on a socket buffer.
+ */
+struct mbuf *
+sbcreatecontrol(p, size, type, level)
+	caddr_t p;
+	register int size;
+	int type, level;
+{
+	register struct cmsghdr *cp;
+	struct mbuf *m;
+
+	if (size + sizeof(*cp) > MCLBYTES) {
+		printf("sbcreatecontrol: message too large %d\n", size);
+		return NULL;
+	}
+
+	if ((m = m_get(M_DONTWAIT, MT_CONTROL)) == NULL)
+		return ((struct mbuf *) NULL);
+	if (size + sizeof(*cp) > MLEN) {
+		MCLGET(m, M_DONTWAIT);
+		if ((m->m_flags & M_EXT) == 0) {
+			m_free(m);
+			return NULL;
+		}
+	}
+	cp = mtod(m, struct cmsghdr *);
+	bcopy(p, CMSG_DATA(cp), size);
+	size += sizeof(*cp);
+	m->m_len = size;
+	cp->cmsg_len = size;
+	cp->cmsg_level = level;
+	cp->cmsg_type = type;
+	return (m);
 }

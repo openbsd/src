@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.18 1999/09/26 23:59:15 deraadt Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.19 1999/12/08 06:50:19 itojun Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -72,6 +72,12 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #include <netinet/ip_var.h>
 #include <netinet/icmp_var.h>
 
+#if 0 /*KAME IPSEC*/
+#include <netinet6/ipsec.h>
+#include <netkey/key.h>
+#include <netkey/key_debug.h>
+#endif
+
 #include <machine/stdarg.h>
 
 /*
@@ -84,6 +90,12 @@ int	icmpmaskrepl = 0;
 int	icmpbmcastecho = 0;
 #ifdef ICMPPRINTFS
 int	icmpprintfs = 0;
+#endif
+
+#if 0
+static int	ip_next_mtu __P((int, int));
+#else
+/*static*/ int	ip_next_mtu __P((int, int));
 #endif
 
 extern	struct protosw inetsw[];
@@ -211,6 +223,7 @@ icmp_input(m, va_alist)
 	va_dcl
 #endif
 {
+	int proto;
 	register struct icmp *icp;
 	register struct ip *ip = mtod(m, struct ip *);
 	int icmplen = ip->ip_len;
@@ -224,6 +237,7 @@ icmp_input(m, va_alist)
 
 	va_start(ap, m);
 	hlen = va_arg(ap, int);
+	proto = va_arg(ap, int);
 	va_end(ap);
 
 	/*
@@ -267,6 +281,13 @@ icmp_input(m, va_alist)
 		printf("icmp_input, type %d code %d\n", icp->icmp_type,
 		    icp->icmp_code);
 #endif
+#if 0 /*KAME IPSEC*/
+	/* drop it if it does not match the policy */
+	if (ipsec4_in_reject(m, NULL)) {
+		ipsecstat.in_polvio++;
+		goto freeit;
+	}
+#endif
 	if (icp->icmp_type > ICMP_MAXTYPE)
 		goto raw;
 	icmpstat.icps_inhist[icp->icmp_type]++;
@@ -284,7 +305,7 @@ icmp_input(m, va_alist)
 			break;
 
 		case ICMP_UNREACH_NEEDFRAG:
-#ifdef INET6
+#if 0 /*NRL INET6*/
 			if (icp->icmp_nextmtu) {
 				extern int ipv6_trans_mtu
 				    __P((struct mbuf **, int, int));
@@ -385,6 +406,10 @@ icmp_input(m, va_alist)
 			printf("deliver to protocol %d\n", icp->icmp_ip.ip_p);
 #endif
 		icmpsrc.sin_addr = icp->icmp_ip.ip_dst;
+		/*
+		 * XXX if the packet contains [IPv4 AH TCP], we can't make a
+		 * notification to TCP layer.
+		 */
 		ctlfunc = inetsw[ip_protox[icp->icmp_ip.ip_p]].pr_ctlinput;
 		if (ctlfunc)
 			(*ctlfunc)(code, sintosa(&icmpsrc), &icp->icmp_ip);
@@ -484,6 +509,9 @@ reflect:
 		    (struct sockaddr *)0, RTF_GATEWAY | RTF_HOST,
 		    sintosa(&icmpgw), (struct rtentry **)0);
 		pfctlinput(PRC_REDIRECT_HOST, sintosa(&icmpsrc));
+#if 0 /*KAME IPSEC*/
+		key_sa_routechange((struct sockaddr *)&icmpsrc);
+#endif
 		break;
 
 	/*
@@ -501,7 +529,7 @@ reflect:
 	}
 
 raw:
-	rip_input(m, 0);
+	rip_input(m, hlen, proto);
 	return;
 
 freeit:
@@ -661,6 +689,9 @@ icmp_send(m, opts)
 		    buf, inet_ntoa(ip->ip_src));
 	}
 #endif
+#if 0 /*KAME IPSEC*/
+	m->m_pkthdr.rcvif = NULL;
+#endif /*IPSEC*/
 	(void) ip_output(m, opts, NULL, 0, NULL, NULL);
 }
 

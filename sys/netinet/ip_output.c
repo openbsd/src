@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.54 1999/12/06 07:14:36 angelos Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.55 1999/12/08 06:50:20 itojun Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -47,6 +47,9 @@
 #include <sys/kernel.h>
 #include <sys/proc.h>
 
+#include <vm/vm.h>
+#include <sys/proc.h>
+
 #include <net/if.h>
 #include <net/route.h>
 
@@ -83,6 +86,12 @@
 extern u_int8_t get_sa_require  __P((struct inpcb *));
 
 #endif
+
+#if 0 /*KAME IPSEC*/
+#include <netinet6/ipsec.h>
+#include <netkey/key.h>
+#include <netkey/key_debug.h>
+#endif /*IPSEC*/
 
 static struct mbuf *ip_insertoptions __P((struct mbuf *, struct mbuf *, int *));
 static void ip_mloopback
@@ -152,6 +161,10 @@ ip_output(m0, va_alist)
 	va_end(ap);
 
 
+
+#if 0 /*KAME IPSEC*/
+	m->m_pkthdr.rcvif = NULL;
+#endif /*IPSEC*/
 
 #ifdef	DIAGNOSTIC
 	if ((m->m_flags & M_PKTHDR) == 0)
@@ -699,10 +712,21 @@ no_encap:
 		error = (*ifp->if_output)(ifp, m, sintosa(dst), ro->ro_rt);
 		goto done;
 	}
+
 	/*
 	 * Too large for interface; fragment if possible.
 	 * Must be able to put at least 8 bytes per fragment.
 	 */
+#if 0
+	/*
+	 * If IPsec packet is too big for the interface, try fragment it.
+	 * XXX This really is a quickhack.  May be inappropriate.
+	 * XXX fails if somebody is sending AH'ed packet, with:
+	 *	sizeof(packet without AH) < mtu < sizeof(packet with AH)
+	 */
+	if (sab && ip->ip_p != IPPROTO_AH && (flags & IP_FORWARDING) == 0)
+		ip->ip_off &= ~IP_DF;
+#endif /*IPSEC*/
 	if (ip->ip_off & IP_DF) {
 		error = EMSGSIZE;
 		ipstat.ips_cantfrag++;
@@ -1066,6 +1090,30 @@ ip_ctloutput(op, so, level, optname, mp)
 #endif
 			break;
 
+#if 0 /*KAME IPSEC*/
+		case IP_IPSEC_POLICY:
+		    {
+			caddr_t req = NULL;
+			int len = 0;
+			int priv = 0;
+#ifdef __NetBSD__
+			if (p == 0 || suser(p->p_ucred, &p->p_acflag))
+				priv = 0;
+			else
+				priv = 1;
+#else
+			priv = (in6p->in6p_socket->so_state & SS_PRIV);
+#endif
+			if (m != 0) {
+				req = mtod(m, caddr_t);
+				len = m->m_len;
+			}
+			error = ipsec_set_policy(&inp->inp_sp,
+			                         optname, req, len, priv);
+			break;
+		    }
+#endif /*IPSEC*/
+
 		default:
 			error = ENOPROTOOPT;
 			break;
@@ -1120,6 +1168,12 @@ ip_ctloutput(op, so, level, optname, mp)
 			}
 			*mtod(m, int *) = optval;
 			break;
+
+#if 0 /*KAME IPSEC*/
+		case IP_IPSEC_POLICY:
+			error = ipsec_get_policy(inp->inp_sp, mp);
+			break;
+#endif /*IPSEC*/
 
 		case IP_MULTICAST_IF:
 		case IP_MULTICAST_TTL:

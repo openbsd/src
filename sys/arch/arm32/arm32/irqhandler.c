@@ -444,6 +444,9 @@ dosoftints()
 #endif
 		ipintr();
 #endif
+#ifdef INET6
+		ip6intr();
+#endif
 #ifdef IMP
 		impintr();
 #endif

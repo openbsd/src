@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_debug.c,v 1.5 1999/07/02 20:39:07 cmetz Exp $	*/
+/*	$OpenBSD: tcp_debug.c,v 1.6 1999/12/08 06:50:20 itojun Exp $	*/
 /*	$NetBSD: tcp_debug.c,v 1.10 1996/02/13 23:43:36 christos Exp $	*/
 
 /*
@@ -81,8 +81,10 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #include <netinet/tcp_debug.h>
 
 #ifdef INET6
-#include <netinet6/ipv6.h>
-#include <netinet6/in6.h>
+#ifndef INET
+#include <netinet/in.h>
+#endif
+#include <netinet6/ip6.h>
 #endif /* INET6 */
 
 #ifdef TCPDEBUG
