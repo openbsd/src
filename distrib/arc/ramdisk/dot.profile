@@ -1,4 +1,4 @@
-#       $OpenBSD: dot.profile,v 1.1 1997/05/14 20:52:44 pefo Exp $
+#       $OpenBSD: dot.profile,v 1.2 1997/05/19 10:33:20 pefo Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # All rights reserved.
@@ -45,8 +45,6 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 	echo ''
 
 	mount /dev/rd0a /
-
-	ldconfig
 
 	# mount the kern_fs so that we can examine the dmesg state
 	mount -t kernfs /kern /kern

@@ -1,81 +1,63 @@
-#	$OpenBSD: list,v 1.2 1997/05/18 13:40:54 pefo Exp $
+#	$OpenBSD: list,v 1.3 1997/05/19 10:33:21 pefo Exp $
 
 # copy the crunched binary, link to it, and kill it
-COPY	${OBJDIR}/bin/cat		bin/cat
-COPY	${OBJDIR}/bin/chmod		bin/chmod
-COPY	${OBJDIR}/bin/cp		bin/cp
-COPY	${OBJDIR}/bin/cpio		bin/cpio
-LINK	bin/cpio			bin/pax
-LINK	bin/cpio			bin/tar
-COPY	${OBJDIR}/bin/dd		bin/dd
-COPY	${OBJDIR}/bin/df		bin/df
-COPY	${OBJDIR}/bin/ed		bin/ed
-COPY	${OBJDIR}/bin/expr		bin/expr
-COPY	${OBJDIR}/bin/hostname		bin/hostname
-COPY	${OBJDIR}/bin/ln		bin/ln
-COPY	${OBJDIR}/bin/ls		bin/ls
-COPY	${OBJDIR}/bin/mkdir		bin/mkdir
-COPY	${OBJDIR}/bin/mv		bin/mv
-COPY	${OBJDIR}/bin/pwd		bin/pwd
-COPY	${OBJDIR}/bin/rm		bin/rm
-COPY	${OBJDIR}/bin/sh		bin/sh
-LINK	bin/sh				bin/pdksh
-COPY	${OBJDIR}/bin/sleep		bin/sleep
-COPY	${OBJDIR}/bin/stty		bin/stty
-COPY	${OBJDIR}/bin/sync		bin/sync
-COPY	${OBJDIR}/bin/test		bin/test
-LINK	bin/test			bin/[
-COPY	${OBJDIR}/sbin/disklabel	sbin/disklabel
-COPY	${OBJDIR}/sbin/fdisk		sbin/fdisk
-COPY	${OBJDIR}/sbin/fsck		sbin/fsck
-LINK	sbin/fsck			sbin/fsck_ffs
-COPY	${OBJDIR}/sbin/halt		sbin/halt
-LINK	sbin/halt			sbin/reboot
-COPY	${OBJDIR}/sbin/ifconfig		sbin/ifconfig
-COPY	${OBJDIR}/sbin/init		sbin/init
-COPY	${OBJDIR}/sbin/ldconfig		sbin/ldconfig
-COPY	${OBJDIR}/sbin/mknod		sbin/mknod
-COPY	${OBJDIR}/sbin/mount		sbin/mount
-COPY	${OBJDIR}/sbin/mount_cd9660	sbin/mount_cd9660
-COPY	${OBJDIR}/sbin/mount_ffs	sbin/mount_ffs
-COPY	${OBJDIR}/sbin/mount_msdos	sbin/mount_msdos
-COPY	${OBJDIR}/sbin/mount_nfs	sbin/mount_nfs
-COPY	${OBJDIR}/sbin/mount_kernfs	sbin/mount_kernfs
-#COPY	${OBJDIR}/sbin/mount_ext2fs	sbin/mount_ext2fs
-COPY	${OBJDIR}/sbin/newfs		sbin/newfs
-LINK	sbin/newfs			sbin/mount_mfs
-COPY	${OBJDIR}/sbin/ping		sbin/ping
-#COPY	${OBJDIR}/sbin/restore		sbin/restore
-COPY	${OBJDIR}/sbin/route		sbin/route
-#COPY	${OBJDIR}/sbin/slattach		sbin/slattach
-#COPY	${OBJDIR}/sbin/scsi		sbin/scsi
-COPY	${OBJDIR}/sbin/umount		sbin/umount
-COPY	${OBJDIR}/usr/bin/cut		usr/bin/cut
-COPY	${OBJDIR}/usr/bin/egrep		usr/bin/egrep
-COPY	${OBJDIR}/usr/bin/elf2ecoff	usr/bin/elf2ecoff
-LINK	usr/bin/egrep			usr/bin/fgrep
-LINK	usr/bin/egrep			usr/bin/grep
-COPY	${OBJDIR}/usr/bin/ftp		usr/bin/ftp
-COPY	${OBJDIR}/usr/bin/gzip		usr/bin/gzip
-LINK	usr/bin/gzip			usr/bin/gunzip
-LINK	usr/bin/gzip			usr/bin/gzcat
-COPY	${OBJDIR}/usr/bin/less		usr/bin/less
-LINK	usr/bin/less			usr/bin/more
-COPY	${OBJDIR}/usr/bin/rsh		usr/bin/rsh
-COPY	${OBJDIR}/usr/bin/sed		usr/bin/sed
-COPY	${OBJDIR}/usr/bin/sort		usr/bin/sort
-#COPY	${OBJDIR}/usr/bin/tip		usr/bin/tip
-COPY	${OBJDIR}/usr/bin/vi		usr/bin/vi
-#COPY	${OBJDIR}/usr/sbin/bad144	usr/sbin/bad144
-#COPY	${OBJDIR}/usr/sbin/chat		usr/sbin/chat
-COPY	${OBJDIR}/usr/sbin/chown	usr/sbin/chown usr/sbin/chgrp
-LINK	usr/sbin/chown			usr/sbin/chgrp
-#COPY	${OBJDIR}/usr/sbin/pppd		usr/sbin/pppd
-COPY	${OBJDIR}/usr/lib/libc.so.16.1	usr/lib/libc.so.16.1
-COPY	${OBJDIR}/usr/lib/libedit.so.0.0	usr/lib/libedit.so.0.0
-COPY	${OBJDIR}/usr/lib/libtermcap.so.0.0	usr/lib/libtermcap.so.0.0
-COPY	${OBJDIR}/usr/lib/libtermlib.so.2.0	usr/lib/libtermlib.so.2.0
-COPY	${OBJDIR}/usr/libexec/ld.so	usr/libexec/ld.so
+COPY	${OBJDIR}/instbin	instbin
+LINK	instbin			bin/cat
+LINK	instbin			bin/chmod
+LINK	instbin			bin/cp
+LINK	instbin			bin/cpio bin/pax bin/tar
+LINK	instbin			bin/dd
+LINK	instbin			bin/df
+LINK	instbin			bin/ed
+LINK	instbin			bin/expr
+LINK	instbin			bin/hostname
+LINK	instbin			bin/ln
+LINK	instbin			bin/ls
+LINK	instbin			bin/mkdir
+LINK	instbin			bin/mv
+LINK	instbin			bin/pwd
+LINK	instbin			bin/rm
+LINK	instbin			bin/sh bin/pdksh
+LINK	instbin			bin/sleep
+LINK	instbin			bin/stty
+LINK	instbin			bin/sync
+LINK	instbin			bin/test bin/[
+LINK	instbin			sbin/disklabel
+LINK	instbin			sbin/fdisk
+LINK	instbin			sbin/fsck sbin/fsck_ffs
+LINK	instbin			sbin/halt sbin/reboot
+LINK	instbin			sbin/ifconfig
+LINK	instbin			sbin/init
+LINK	instbin			sbin/mknod
+LINK	instbin			sbin/mount
+LINK	instbin			sbin/mount_cd9660
+LINK	instbin			sbin/mount_ffs
+LINK	instbin			sbin/mount_msdos
+LINK	instbin			sbin/mount_nfs
+LINK	instbin			sbin/mount_kernfs
+LINK	instbin			sbin/mount_ext2fs
+LINK	instbin			sbin/newfs sbin/mount_mfs
+LINK	instbin			sbin/ping
+LINK	instbin			sbin/restore
+LINK	instbin			sbin/route
+LINK	instbin			sbin/slattach
+LINK	instbin			sbin/scsi
+LINK	instbin			sbin/umount
+LINK	instbin			usr/bin/cut
+LINK	instbin			usr/bin/egrep usr/bin/fgrep usr/bin/grep
+LINK	instbin			usr/bin/elf2ecoff
+LINK	instbin			usr/bin/ftp
+LINK	instbin			usr/bin/gzip usr/bin/gunzip usr/bin/gzcat
+LINK	instbin			usr/bin/less usr/bin/more
+LINK	instbin			usr/bin/rsh
+LINK	instbin			usr/bin/sed
+LINK	instbin			usr/bin/sort
+LINK	instbin			usr/bin/tip
+LINK	instbin			usr/bin/vi
+LINK	instbin			usr/sbin/chat
+LINK	instbin			usr/sbin/chown usr/sbin/chgrp
+LINK	instbin			usr/sbin/pppd
+SPECIAL	/bin/rm instbin
 
 # `internal' crunchgen links
 ARGVLINK sh		-sh
@@ -105,7 +87,7 @@ COPY	${DESTDIR}/usr/share/misc/scsi_modes	usr/share/misc/scsi_modes
 COPY	dot.profile			.profile
 COPY	dot.instutils			.instutils
 COPY	install.md			install.md
-COPY	${TOPDIR}/../miniroot/install.sh		install
-COPY	${TOPDIR}/../miniroot/upgrade.sh		upgrade
-SPECIAL sed "/^VERSION=/s/=.*/=${REV}/" < ${TOPDIR}/../miniroot/install.sub > install.sub
+COPY	${CURDIR}/../../miniroot/install.sh		install
+COPY	${CURDIR}/../../miniroot/upgrade.sh		upgrade
+SPECIAL sed "/^VERSION=/s/=.*/=${REV}/" < ${CURDIR}/../../miniroot/install.sub > install.sub
 SPECIAL	chmod 755 install

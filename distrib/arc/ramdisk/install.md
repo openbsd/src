@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.3 1997/05/18 13:40:52 pefo Exp $
+#	$OpenBSD: install.md,v 1.4 1997/05/19 10:33:20 pefo Exp $
 #
 #
 # Copyright rc) 1996 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 #
 
 # Machine-dependent install sets
-MDSETS="kern"
+MDSETS="kernel"
 
 md_set_term() {
 	if [ ! -z "$TERM" ]; then
@@ -72,7 +72,7 @@ md_get_cddevs() {
 
 md_get_ifdevs() {
 	# return available network devices
-	cat /kern/msgbuf | egrep "^(e[dglp][0-9] |[dil]e[0-9] |f[ep]a[0-9] )" | cut -d" " -f1 | sort -u
+	cat /kern/msgbuf | egrep "^(sn[0-9] |e[dglp][0-9] |[dil]e[0-9] |f[ep]a[0-9] )" | cut -d" " -f1 | sort -u
 }
 
 md_get_partition_range() {
@@ -88,7 +88,6 @@ md_installboot() {
 	else
 		echo "Failed, you will not be able to boot from /dev/${1}."
 	fi
-	ldconfig
 }
 
 md_native_fstype() {
@@ -126,8 +125,8 @@ md_init_mbr() {
 		echo "It's completly normal. The disk has no label yet."
 		echo "This will take a minute or two..."
 		sleep 2
-		dd if=/usr/mdec/mbr of=/dev/$1c 2>&1 >/dev/null
-		gunzip < /usr/mdec/msdos5mb.gz | dd of=/dev/$1c bs=512 seek=32 2>&1 >/dev/null
+		dd if=/usr/mdec/mbr of=/dev/r$1c >/dev/null 2>&1
+		gunzip < /usr/mdec/msdos5mb.gz | dd of=/dev/r$1c bs=512 seek=32 >/dev/null 2>&1
 	;;
 	esac
 }
@@ -189,11 +188,11 @@ md_prep_fdisk()
 
 	_disk=$1
 	echo
-	echo "This disk has not previously been used with OpenBSD.  You may share"
+	echo "This disk has not previously been used with OpenBSD. You may share"
 	echo "this disk with other operating systems (probably Windows/NT or"
 	echo "maybe Linux/Mips etc.) Anyhow, to be able to boot the system you"
 	echo "will need a small DOS partition in the begining of the disk to"
-	echo "hold the bootable kernel. This has been take care of if you choosed"
+	echo "hold the bootable kernel. This has been taken care of if you choosed"
 	echo "to do that initialization just before."
 	echo
 	echo "WARNING: Wrong information in the BIOS partition table might"
@@ -214,11 +213,12 @@ md_prep_fdisk()
 		cat << \__md_prep_fdisk_1
 
 An OpenBSD partition should have type 166 (A6), and should be the only
-partition marked as active.  Furthermore, the partitions must NOT
-overlap each others.  fdisk will be started in update mode, and you
-will be able to add this information as needed.  If you make a mistake,
-exit fdisk without storing the new information, and you will be allowed
-to start over.
+partition marked as active. Also make sure that the size of the partition
+to be used by OpenBSD is correct, otherwise OpenBSD disklabel installation
+will fail. Furthermore, the partitions must NOT overlap each others. fdisk
+will be started in update mode, and you will be able to add this information
+as needed.  If you make a mistake, exit fdisk without storing the new
+information, and you will be allowed to start over.
 __md_prep_fdisk_1
 		echo -n "Press [Enter] to continue "
 		getresp ""
@@ -240,11 +240,10 @@ __md_prep_fdisk_1
 		esac
 	done
 
-	echo
 	echo "Please take note of the offset and size of the OpenBSD partition"
 	echo "*AND* the MSDOS partitions you may want to access from OpenBSD."
 	echo "At least the MSDOS partition used for booting must be accessible"
-	echo "by OpenBSD as partition 'i'. You will need this information to "
+	echo "by OpenBSD as partition 'i'. You may need this information to "
 	echo "fill in the OpenBSD disk label later."
 	echo -n "Press [Enter] to continue "
 	getresp ""
@@ -281,18 +280,15 @@ md_prep_disklabel()
 	# display example
 	cat << \__md_prep_disklabel_1
 
-Here is an example of what the partition information will look like once
+Here is an example of what the partition information may look like once
 you have entered the disklabel editor. Disk partition sizes and offsets
 are in sector (most likely 512 bytes) units. You may set these size/offset
 pairs on cylinder boundaries (the number of sector per cylinder is given
-in the `sectors/cylinder' entry, which is not shown here). Although this
-is not requiered. 
-
-Also, you *must* make sure that the 'd' partition points at the MSDOS
+in the `sectors/cylinder' entry, which is not shown here).
+Also, you *must* make sure that the 'i' partition points at the MSDOS
 partition that will be used for booting. The 'c' partition shall start
 at offset 0 and include the entire disk. This is most likely correct when
 you see the default label in the editor.
-
 
 Do not change any parameters except the partition layout and the label name.
 
@@ -302,14 +298,12 @@ Do not change any parameters except the partition layout and the label name.
   a:   120832    10240    4.2BSD     1024  8192    16   # (Cyl.   11*- 142*)
   b:   131072   131072      swap                        # (Cyl.  142*- 284*)
   c:  6265200        0    unused     1024  8192         # (Cyl.    0 - 6809)
-  d:    10208       32     MSDOS                        # (Cyl.    0*- 11*)
   e:   781250   262144    4.2BSD     1024  8192    16   # (Cyl.  284*- 1134*)
   f:  1205000  1043394    4.2BSD     1024  8192    16   # (Cyl. 1134*- 2443*)
   g:  2008403  2248394    4.2BSD     1024  8192    16   # (Cyl. 2443*- 4626*)
   h:  2008403  4256797    4.2BSD     1024  8192    16   # (Cyl. 4626*- 6809*)
   i:    10208       32     MSDOS                        # (Cyl.    0*- 11*)
 [End of example]
-
 __md_prep_disklabel_1
 	echo -n "Press [Enter] to continue "
 	getresp ""

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.3 1997/05/18 13:40:50 pefo Exp $
+#	$OpenBSD: Makefile,v 1.4 1997/05/19 10:33:19 pefo Exp $
 
 # NOTE! We don't do crunched yet!
 
@@ -23,7 +23,7 @@ REALIMAGE!=	echo /tmp/image.${PID}
 
 
 DISKTYPE=       rdroot
-NBLKS=          20000
+NBLKS=          8192
 # minfree, opt, b/i  trks, sects, cpg
 NEWFSARGS= -m 0 -o space -c 16 -i 4096
 
@@ -35,7 +35,7 @@ all ${IMAGE}:
 
 all:	${BSD_RD}
 
-${BSD_RD}: ${IMAGE} bsd rdsetroot
+${BSD_RD}: ${CBIN} ${IMAGE} bsd rdsetroot
 	cp bsd ${BSD_RD}.elf
 	${.OBJDIR}/rdsetroot ${BSD_RD}.elf < ${IMAGE}
 	elf2ecoff ${BSD_RD}.elf ${BSD_RD}
@@ -83,14 +83,14 @@ install:
 	cp ${BSD_RD} ${DESTDIR}/snapshot/${BSD_RD}
 
 ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
-	crunchgen -D ${BSDSRCDIR} -L ${DESTDIR}/usr/lib ${CRUNCHCONF}
+	crunchgen -E -D ${BSDSRCDIR} -L ${DESTDIR}/usr/lib ${CRUNCHCONF}
 
 ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
 	make -f ${CBIN}.mk all
 
 do_files:
 	mtree -def ${MTREE} -p ${MOUNT_POINT}/ -u
-	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${DESTDIR} \
+	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
 	    REV=${REV} TARGDIR=${MOUNT_POINT} sh ${TOP}/runlist.sh ${LISTS}
 
 clean cleandir:
