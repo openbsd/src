@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sn.c,v 1.3 1996/08/26 11:12:01 pefo Exp $	*/
+/*	$OpenBSD: if_sn.c,v 1.4 1996/09/21 10:57:21 deraadt Exp $	*/
 /*
  * National Semiconductor  SONIC Driver
  * Copyright (c) 1991   Algorithmics Ltd (http://www.algor.co.uk)
@@ -326,7 +326,7 @@ snattach(parent, self, aux)
 	p += NRBA * RBASIZE;
 
 	DMA_MAP(sc->dma, (caddr_t)SONICBUF, p - SONICBUF, SONICBUF - pp);
-	printf(" buf:%d",p - SONICBUF);
+	printf(": bufsize %d",p - SONICBUF);
 
 #if 0
 	camdump(sc);
