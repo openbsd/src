@@ -1,4 +1,4 @@
-/*	$OpenBSD: microtime.s,v 1.10 1997/12/30 23:35:19 mickey Exp $	*/
+/*	$OpenBSD: microtime.s,v 1.11 1998/05/13 19:49:25 mickey Exp $	*/
 /*	$NetBSD: microtime.s,v 1.16 1995/04/17 12:06:47 cgd Exp $	*/
 
 /*-
@@ -57,6 +57,7 @@ ENTRY(microtime)
 #endif
 	movb	$(TIMER_SEL0|TIMER_LATCH),%al
 
+	pushfl
 	cli				# disable interrupts
 
 	outb	%al,$TIMER_MODE		# latch timer 0's counter
@@ -125,7 +126,7 @@ common_microtime:
 	movl	_time,%edx	# get time.tv_sec
 	addl	_time+4,%eax	# add time.tv_usec
 
-	sti			# enable interrupts
+	popfl			# enable interrupts
 	
 	cmpl	$1000000,%eax	# carry in timeval?
 	jb	3f
@@ -147,14 +148,22 @@ common_microtime:
 #if defined (NTP)
 	.align	2, 0x90
 pentium_microtime:
+	pushfl
 	cli
 	.byte	0x0f, 0x31	# RDTSC
 	subl	_pentium_base_tsc,%eax
 	sbbl	_pentium_base_tsc+4,%edx
-	orl	%ecx, %ecx
-	jnz	1f
-	incl	%ecx
-1:	divl	%ecx		# convert to usec
+	/*
+	 * correct the high word first so we won't
+	 * receive a result overflow aka div/0 fault
+	 */
+	pushl	%eax
+	movl	%edx, %eax
+	shll	$16, %edx
+	divw	%cx
+	movzwl	%dx, %edx
+	popl	%eax
+	divl	%ecx
 	jmp	common_microtime
 #endif
 #endif
