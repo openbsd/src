@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.11 1996/08/12 00:28:16 downsj Exp $	*/
+/*	$OpenBSD: zs.c,v 1.12 1996/08/12 03:14:49 downsj Exp $	*/
 /*	$NetBSD: zs.c,v 1.37.4.1 1996/06/02 09:07:55 mrg Exp $ */
 
 /*
@@ -260,7 +260,7 @@ zsattach(parent, dev, aux)
 	void *aux;
 {
 	register int zs = dev->dv_unit, unit;
-	register struct zs_softc *zi;
+	register struct zs_softc *sc;
 	register struct zs_chanstate *cs;
 	register volatile struct zsdevice *addr;
 	register struct tty *tp, *ctp;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: zsvar.h,v 1.8 1996/08/12 00:28:17 downsj Exp $	*/
+/*	$OpenBSD: zsvar.h,v 1.9 1996/08/12 03:14:50 downsj Exp $	*/
 /*	$NetBSD: zsvar.h,v 1.8 1996/03/31 22:39:08 pk Exp $ */
 
 /*
@@ -92,8 +92,9 @@ struct zsdevice {
 #define	ZRING_MAKE(t, v)	((t) | (v) << 8)
 
 struct zs_chanstate {
-	struct	zs_chanstate *cs_next;	/* linked list for zshard() */
+	struct zs_chanstate *cs_next;	/* linked list for zshard() */
 	struct zs_softc *cs_sc;		/* points to my softc */
+	volatile struct zschan *cs_zc;	/* points to hardware regs */
 	int	cs_unit;		/* unit number */
 	struct	tty *cs_ttyp;		/* ### */
 
