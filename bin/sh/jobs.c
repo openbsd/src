@@ -1,4 +1,4 @@
-/*	$OpenBSD: jobs.c,v 1.3 1996/10/20 00:54:51 millert Exp $	*/
+/*	$OpenBSD: jobs.c,v 1.4 1996/11/02 05:18:26 millert Exp $	*/
 /*	$NetBSD: jobs.c,v 1.17 1995/07/04 16:26:45 pk Exp $	*/
 
 /*-
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)jobs.c	8.5 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$OpenBSD: jobs.c,v 1.3 1996/10/20 00:54:51 millert Exp $";
+static char rcsid[] = "$OpenBSD: jobs.c,v 1.4 1996/11/02 05:18:26 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -1101,7 +1101,7 @@ cmdputs(s)
 			subtype = 0;
 		} else if (c == CTLENDVAR) {
 			*q++ = '}';
-		} else if (c == CTLBACKQ | c == CTLBACKQ+CTLQUOTE)
+		} else if (c == CTLBACKQ || c == CTLBACKQ+CTLQUOTE)
 			cmdnleft++;		/* ignore it */
 		else
 			*q++ = c;

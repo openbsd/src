@@ -1,4 +1,4 @@
-/*	$OpenBSD: var.h,v 1.3 1996/10/20 00:55:09 millert Exp $	*/
+/*	$OpenBSD: var.h,v 1.4 1996/11/02 05:18:28 millert Exp $	*/
 /*	$NetBSD: var.h,v 1.9 1995/05/11 21:30:44 christos Exp $	*/
 
 /*-
@@ -131,3 +131,4 @@ void poplocalvars __P((void));
 int setvarcmd __P((int, char **));
 int unsetcmd __P((int, char **));
 int unsetvar __P((char *));
+int setvarsafe __P((char *, char *, int));

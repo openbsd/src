@@ -1,4 +1,4 @@
-/*	$OpenBSD: input.c,v 1.3 1996/06/23 14:21:16 deraadt Exp $	*/
+/*	$OpenBSD: input.c,v 1.4 1996/11/02 05:18:25 millert Exp $	*/
 /*	$NetBSD: input.c,v 1.19 1995/10/19 04:14:37 christos Exp $	*/
 
 /*-
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)input.c	8.3 (Berkeley) 6/9/95";
 #else
-static char rcsid[] = "$OpenBSD: input.c,v 1.3 1996/06/23 14:21:16 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: input.c,v 1.4 1996/11/02 05:18:25 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -186,7 +186,6 @@ pread()
 retry:
 	if (parsefile->fd == 0 && el) {
 		const char *rl_cp;
-		int len;
 
 		rl_cp = el_gets(el, &nr);
 		if (rl_cp == NULL)
