@@ -1,4 +1,4 @@
-#	$OpenBSD: files.hppa,v 1.29 2001/05/11 06:41:41 deraadt Exp $
+#	$OpenBSD: files.hppa,v 1.30 2001/05/11 07:55:35 deraadt Exp $
 #
 # hppa-specific configuration info
 
@@ -109,9 +109,6 @@ file	arch/hppa/dev/sti_sgc.c		sti_sgc
 
 major	{ccd = 1}
 major	{vnd = 2}
-
-# RAM disk
-file	dev/rd.c			ramdisk_hooks
 major	{rd = 3}
 
 #
