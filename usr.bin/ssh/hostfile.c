@@ -14,7 +14,7 @@ Functions for manipulating the known hosts files.
 */
 
 #include "includes.h"
-RCSID("$Id: hostfile.c,v 1.5 1999/11/15 20:53:24 markus Exp $");
+RCSID("$Id: hostfile.c,v 1.6 1999/11/16 15:44:41 provos Exp $");
 
 #include "packet.h"
 #include "ssh.h"
@@ -231,7 +231,7 @@ check_host_in_hostfile(const char *filename, const char *host,
       }
 
       /* Check if the current key is the same as the given key. */
-      if (kbits == bits && BN_cmp(ke, e) == 0 && BN_cmp(kn, n) == 0)
+      if (BN_cmp(ke, e) == 0 && BN_cmp(kn, n) == 0)
 	{
 	  /* Ok, they match. */
 	  fclose(f);
