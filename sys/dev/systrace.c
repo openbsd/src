@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace.c,v 1.24 2002/10/25 23:22:58 fgsch Exp $	*/
+/*	$OpenBSD: systrace.c,v 1.25 2002/11/10 04:34:56 art Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -660,6 +660,11 @@ systrace_redirect(int code, struct proc *p, void *v, register_t *retval)
 	systrace_lock();
 	strp = p->p_systrace;
 	if (strp == NULL) {
+		systrace_unlock();
+		return (EINVAL);
+	}
+
+	if (code < 0 || code >= p->p_emul->e_nsysent) {
 		systrace_unlock();
 		return (EINVAL);
 	}
