@@ -1,4 +1,5 @@
-/*	$NetBSD: byte_swap_2.S,v 1.1 1996/04/17 22:46:37 cgd Exp $	*/
+/*	$OpenBSD: byte_swap_2.S,v 1.2 1996/10/31 00:43:14 niklas Exp $	*/
+/*	$NetBSD: byte_swap_2.S,v 1.2 1996/10/17 04:26:21 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -27,7 +28,7 @@
  * rights to redistribute these changes.
  */
 
-#include "DEFS.h"
+#include <machine/asm.h>
 
 #ifndef NAME
 #define	NAME byte_swap_2

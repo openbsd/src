@@ -1,20 +1,17 @@
-#	$OpenBSD: Makefile,v 1.9 1996/08/10 21:41:14 deraadt Exp $
-#	$NetBSD: Makefile,v 1.27 1996/05/10 21:27:32 scottr Exp $
+#	$OpenBSD: Makefile,v 1.10 1996/10/31 00:43:07 niklas Exp $
+#	$NetBSD: Makefile,v 1.31 1996/08/10 04:01:31 mycroft Exp $
 
 LIB=	kern
 NOPIC=
 
-DIR=	${KERNREL}${KERNDIR}
+M=	${.CURDIR}/arch/${MACHINE_ARCH}
 
-CPPFLAGS=	-I${DIR}/arch/${MACHINE_ARCH} \
-		${KERNCPPFLAGS:S@-I.@-I${KERNREL}.@g}
+CPPFLAGS=	-I$M ${KERNCPPFLAGS}
 
-.if exists (${DIR}/arch/${MACHINE_ARCH}/Makefile.inc)
-.PATH:	${DIR}/arch/${MACHINE_ARCH}
-.include "${DIR}/arch/${MACHINE_ARCH}/Makefile.inc"
+.if exists ($M/Makefile.inc)
+.PATH:	$M
+.include "$M/Makefile.inc"
 .endif
-
-.PATH: ${DIR}
 
 .if (${MACHINE_ARCH} != "alpha")
 # Quad support
@@ -26,6 +23,7 @@ SRCS+=	adddi3.c anddi3.c ashldi3.c ashrdi3.c cmpdi2.c divdi3.c iordi3.c \
 # Other stuff
 SRCS+=	md5.c getsn.c srandom.c
 
+# Files to clean up
 CLEANFILES+= lib${LIB}.o lib${LIB}.po
 
 # mcount cannot be compiled with profiling

@@ -1,32 +1,44 @@
-#	$OpenBSD: Makefile.inc,v 1.4 1996/05/23 08:34:03 deraadt Exp $
-#	$NetBSD: Makefile.inc,v 1.15 1996/05/20 17:23:25 mrg Exp $
+#	$OpenBSD: Makefile.inc,v 1.5 1996/10/31 00:43:09 niklas Exp $
+#	$NetBSD: Makefile.inc,v 1.22 1996/09/30 15:54:35 ws Exp $
 #
 #	NOTE: $S must correspond to the top of the 'sys' tree
 
 KERNDIR=	$S/lib/libkern
 
-KERNDST=	lib/kern
-KERNREL?=	../../
-KERNLIB?=	${KERNDST}/libkern.o
+KERNDST?=	${.OBJDIR}/lib/kern
+KERN_AS?=	obj
+
+.if (${KERN_AS} == "library")
+KERNLIB=	${KERNDST}/libkern.a
+KERNLIB_PROF=	${KERNDST}/libkern_p.a
+.else
+KERNLIB=	${KERNDST}/libkern.o
 KERNLIB_PROF=	${KERNDST}/libkern.po
+.endif
 
 KERNMAKE= \
-	cd ${KERNDST} && ${MAKE} -f ${KERNREL}${KERNDIR}/Makefile \
+	cd ${KERNDIR} && MAKEOBJDIR=${KERNDST} ${MAKE} \
 	    CC='${CC}' CFLAGS='${CFLAGS}' \
 	    AS='${AS}' AFLAGS='${AFLAGS}' \
-	    LD='${LD}' \
+	    LD='${LD}' STRIP='${STRIP}' \
 	    MACHINE='${MACHINE}' MACHINE_ARCH='${MACHINE_ARCH}' \
-	    KERNCPPFLAGS='${CPPFLAGS}' \
-	    KERNREL='${KERNREL}' \
-	    KERNDIR='${KERNDIR}'
+	    KERNCPPFLAGS='${CPPFLAGS:S@^-I.@-I../../.@g}'
 
 ${KERNLIB}:		.NOTMAIN __always_make_kernlib
 	@echo making sure the kern library is up to date...
+.if (${KERN_AS} == "library")
+	@${KERNMAKE} libkern.a
+.else
 	@${KERNMAKE} libkern.o
+.endif
 
 ${KERNLIB_PROF}:	.NOTMAIN __always_make_kernlib
 	@echo making sure the profiled kern library is up to date...
+.if (${KERN_AS} == "library")
+	@${KERNMAKE} libkern_p.a
+.else
 	@${KERNMAKE} libkern.po
+.endif
 
 clean:: 		.NOTMAIN __always_make_kernlib
 	@echo cleaning the kern library objects

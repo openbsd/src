@@ -1,3 +1,4 @@
+/*	$OpenBSD: ntohl.S,v 1.2 1996/10/31 00:43:21 niklas Exp $	*/
 /*	$NetBSD: ntohl.S,v 1.1 1996/04/17 22:46:45 cgd Exp $	*/
 
 /*
