@@ -580,7 +580,7 @@ ac_configure=$ac_aux_dir/configure # This should be Cygnus configure.
 
 
 # Make sure we can run config.sub.
-if $ac_config_sub sun4 >/dev/null 2>&1; then :
+if sh $ac_config_sub sun4 >/dev/null 2>&1; then :
 else { echo "configure: error: can not run $ac_config_sub" 1>&2; exit 1; }
 fi
 
@@ -592,14 +592,14 @@ case "$host_alias" in
 NONE)
   case $nonopt in
   NONE)
-    if host_alias=`$ac_config_guess`; then :
+    if host_alias=`sh $ac_config_guess`; then :
     else { echo "configure: error: can not guess host type; you must specify one" 1>&2; exit 1; }
     fi ;;
   *) host_alias=$nonopt ;;
   esac ;;
 esac
 
-host=`$ac_config_sub $host_alias`
+host=`sh $ac_config_sub $host_alias`
 host_cpu=`echo $host | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\1/'`
 host_vendor=`echo $host | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\2/'`
 host_os=`echo $host | sed 's/^\([^-]*\)-\([^-]*\)-\(.*\)$/\3/'`
