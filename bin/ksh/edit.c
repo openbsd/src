@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.20 2004/12/18 20:55:52 millert Exp $	*/
+/*	$OpenBSD: edit.c,v 1.21 2004/12/18 20:58:03 millert Exp $	*/
 
 /*
  * Command line editing - common code
@@ -30,8 +30,6 @@ static int	x_command_glob(int flags, const char *str, int slen,
 static int	x_locate_word(const char *buf, int buflen, int pos,
 				    int *startp, int *is_command);
 
-static char vdisable_c;
-
 
 /* Called from main */
 void
@@ -51,8 +49,6 @@ x_init()
 #ifdef EMACS
 	x_init_emacs();
 #endif /* EMACS */
-
-	vdisable_c = (char) _POSIX_VDISABLE;
 }
 
 static void
@@ -189,26 +185,26 @@ x_mode(onoff)
 		cb.c_iflag &= ~(INLCR|ICRNL);
 		cb.c_lflag &= ~(ISIG|ICANON|ECHO);
 		/* osf/1 processes lnext when ~icanon */
-		cb.c_cc[VLNEXT] = vdisable_c;
+		cb.c_cc[VLNEXT] = _POSIX_VDISABLE;
 		/* sunos 4.1.x & osf/1 processes discard(flush) when ~icanon */
-		cb.c_cc[VDISCARD] = vdisable_c;
+		cb.c_cc[VDISCARD] = _POSIX_VDISABLE;
 		cb.c_cc[VTIME] = 0;
 		cb.c_cc[VMIN] = 1;
 
 		set_tty(tty_fd, &cb, TF_WAIT);
 
 		/* Convert unset values to internal `unset' value */
-		if (edchars.erase == vdisable_c)
+		if (edchars.erase == _POSIX_VDISABLE)
 			edchars.erase = -1;
-		if (edchars.kill == vdisable_c)
+		if (edchars.kill == _POSIX_VDISABLE)
 			edchars.kill = -1;
-		if (edchars.intr == vdisable_c)
+		if (edchars.intr == _POSIX_VDISABLE)
 			edchars.intr = -1;
-		if (edchars.quit == vdisable_c)
+		if (edchars.quit == _POSIX_VDISABLE)
 			edchars.quit = -1;
-		if (edchars.eof == vdisable_c)
+		if (edchars.eof == _POSIX_VDISABLE)
 			edchars.eof = -1;
-		if (edchars.werase == vdisable_c)
+		if (edchars.werase == _POSIX_VDISABLE)
 			edchars.werase = -1;
 		if (memcmp(&edchars, &oldchars, sizeof(edchars)) != 0) {
 #ifdef EMACS
