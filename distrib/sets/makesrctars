@@ -35,7 +35,8 @@ find . \
     \! \( -name CVS -prune \) \! \( -name obj -prune \) -print | \
 	sort | pax -wv -d -s'|^./|./usr/src/|' | gzip -9 | \
 	split -b ${SPLITSIZE} - ${DESTDIR}/src${RELEASE}/src${RELEASE}.
-(cd ${DESTDIR}/src${RELEASE}; cksum src${RELEASE}.* > CKSUM)
+(cd ${DESTDIR}/src${RELEASE}; cksum src${RELEASE}.* > CKSUM; \
+	md5 src${RELEASE}.* > MD5)
 chmod 444 ${DESTDIR}/src${RELEASE}/*
 
 mkdir ${DESTDIR}/gsrc${RELEASE}
@@ -43,7 +44,8 @@ find gnu \
     \! \( -name CVS -prune \) \! \( -name obj -prune \) -print | \
 	sort | pax -wv -d -s'|^|./usr/src/|' | gzip -9 | \
 	split -b ${SPLITSIZE} - ${DESTDIR}/gsrc${RELEASE}/gsrc${RELEASE}.
-(cd ${DESTDIR}/gsrc${RELEASE}; cksum gsrc${RELEASE}.* > CKSUM)
+(cd ${DESTDIR}/gsrc${RELEASE}; cksum gsrc${RELEASE}.* > CKSUM; \
+	md5 gsrc${RELEASE}.* > MD5)
 chmod 444 ${DESTDIR}/gsrc${RELEASE}/*
 
 mkdir ${DESTDIR}/ksrc${RELEASE}
@@ -51,7 +53,8 @@ find sys usr.sbin/config usr.sbin/config.old usr.sbin/dbsym \
     \! \( -name CVS -prune \) \! \( -name obj -prune \) -print | \
 	sort | pax -wv -d -s'|^|./usr/src/|' | gzip -9 | \
 	split -b ${SPLITSIZE} - ${DESTDIR}/ksrc${RELEASE}/ksrc${RELEASE}.
-(cd ${DESTDIR}/ksrc${RELEASE}; cksum ksrc${RELEASE}.* > CKSUM)
+(cd ${DESTDIR}/ksrc${RELEASE}; cksum ksrc${RELEASE}.* > CKSUM; \
+	md5 ksrc${RELEASE}.* > MD5)
 chmod 444 ${DESTDIR}/ksrc${RELEASE}/*
 
 mkdir ${DESTDIR}/ssrc${RELEASE}
@@ -59,7 +62,8 @@ find share \
     \! \( -name CVS -prune \) \! \( -name obj -prune \) -print | \
 	sort | pax -wv -d -s'|^|./usr/src/|' | gzip -9 | \
 	split -b ${SPLITSIZE} - ${DESTDIR}/ssrc${RELEASE}/ssrc${RELEASE}.
-(cd ${DESTDIR}/ssrc${RELEASE}; cksum ssrc${RELEASE}.* > CKSUM)
+(cd ${DESTDIR}/ssrc${RELEASE}; cksum ssrc${RELEASE}.* > CKSUM; \
+	md5 ssrc${RELEASE}.* > MD5)
 chmod 444 ${DESTDIR}/ssrc${RELEASE}/*
 
 mkdir ${DESTDIR}/dsrc${RELEASE}
@@ -67,5 +71,6 @@ find domestic \
     \! \( -name CVS -prune \) \! \( -name obj -prune \) -print | \
 	sort | pax -wv -d -s'|^|./usr/src/|' | gzip -9 | \
 	split -b ${SPLITSIZE} - ${DESTDIR}/dsrc${RELEASE}/dsrc${RELEASE}.
-(cd ${DESTDIR}/dsrc${RELEASE}; cksum dsrc${RELEASE}.* > CKSUM)
+(cd ${DESTDIR}/dsrc${RELEASE}; cksum dsrc${RELEASE}.* > CKSUM; \
+	md5 dsrc${RELEASE}.* > MD5)
 chmod 444 ${DESTDIR}/dsrc${RELEASE}/*
