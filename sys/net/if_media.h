@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_media.h,v 1.15 2004/10/07 22:21:20 brad Exp $	*/
+/*	$OpenBSD: if_media.h,v 1.16 2004/10/28 20:35:44 henning Exp $	*/
 /*	$NetBSD: if_media.h,v 1.22 2000/02/17 21:53:16 sommerfeld Exp $	*/
 
 /*-
@@ -265,6 +265,11 @@ int	ifmedia_baudrate(int);
 #define IFM_TDM_FR_ITU		0x1000	/* Frame Relay + LMI ITU "Q933A" */
 
 /*
+ * Common Access Redundancy Protocol
+ */
+#define	IFM_CARP		0x000000c0
+
+/*
  * Shared media sub-types
  */
 #define	IFM_AUTO	0		/* Autoselect best media */
@@ -356,6 +361,7 @@ struct ifmedia_description {
 	{ IFM_FDDI,			"FDDI" },			\
 	{ IFM_IEEE80211,		"IEEE802.11" },			\
 	{ IFM_TDM,			"TDM" },			\
+	{ IFM_CARP,			"CARP" },			\
 	{ 0, NULL },							\
 }
 
@@ -576,6 +582,8 @@ struct ifmedia_status_description {
 	    { "no network", "active" } },				\
 	{ IFM_TDM,		IFM_AVALID,	IFM_ACTIVE,		\
 	    { "no carrier", "active" } },				\
+	{ IFM_CARP,		IFM_AVALID,	IFM_ACTIVE,		\
+	    { "backup", "master" } },					\
 	{ 0,			0,		0,			\
 	    { NULL, NULL } }						\
 }
