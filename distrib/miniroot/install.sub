@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.24 1997/05/14 21:12:14 millert Exp $
+#	$OpenBSD: install.sub,v 1.25 1997/05/15 06:26:08 millert Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -591,7 +591,7 @@ enable_network() {
 	return 0
 }
 
-install_ftp() {
+install_url() {
 	# Get several parameters from the user, and xfer
 	# files from the server.
 	# Note:	_ftp_server_ip, _ftp_server_dir, _ftp_server_login,
@@ -600,25 +600,26 @@ install_ftp() {
 	local _sets
 	local _f
 	local _filename
-	local _ftp_file_list
-	local _ftp_get_files
-	local _ftp_failed_files
+	local _file_list
+	local _get_files
+	local _failed_files
 	local _osetsdone
+	local _url_type
 
-	cat << \__install_ftp_1
+	# Is this an ftp or http install?
+	_url_type=$1; shift
 
-This is an automated ftp-based installation process.  You will be asked
-several questions and then the files will be retrieved iteratively via ftp(1).
-
-__install_ftp_1
-
-	# Proxy ftp connections?
-	echo -n "ftp proxy IP? [${ftp_proxy}] "
-	getresp "${ftp_proxy}"
+	echo "\nThis is an automated ${_url_type}-based installation process.\n"\
+	     "You will be asked several questions and then the\n"\
+	     "files will be retrieved iteratively via ftp(1).\n"
+	    
+	# Proxy the connections?
+	eval echo -n "${_url_type} proxy IP? [\$${_url_type}_proxy]\ "
+	eval getresp "\$${_url_type}_proxy"
 	if [ "X$resp" != "X" ]; then
-		ftp_proxy=$resp
-		export ftp_proxy
-	else
+		eval ${_url_type}_proxy=$resp
+		eval export ${_url_type}_proxy
+	elif [ "${_url_type}" = "ftp" ]; then
 		# Use passive mode ftp? (incompatible with proxy)
 		case "${_ftp_passive}" in
 			-p)	resp=y ;;
@@ -632,74 +633,88 @@ __install_ftp_1
 		esac
 	fi
 
-	# Provide a list of possible FTP servers
-	echo -n "Do you want a list of potential FTP servers? [y] "
+	# Provide a list of possible servers
+	echo -n "Do you want a list of potential ${_url_type} servers? [y] "
 	getresp "y"
 	case "$resp" in
 	n*|N*) ;;
 	*)
-		ftp ${_ftp_passive} -V -a ftp://ftp.openbsd.org/pub/OpenBSD/`echo ${VERSION} | sed 's/\(.\)\(.\)/\1.\2/'`/ftplist | cat
+		ftp ${_ftp_passive} -V -a ftp://ftp.openbsd.org/pub/OpenBSD/`echo ${VERSION} | sed 's/\(.\)\(.\)/\1.\2/'`/${_url_type}list | cat
 		;;
 	esac
 
 	# Get server IP address
 	resp=""		# force one iteration
 	while [ "X${resp}" = X"" ]; do
-		echo -n "Server IP? [${_ftp_server_ip}] "
-		getresp "${_ftp_server_ip}"
-		_ftp_server_ip=$resp
+		eval echo -n "Server IP? [\$_${_url_type}_server_ip]\ "
+		eval getresp "\$_${_url_type}_server_ip"
+		eval _${_url_type}_server_ip=$resp
 	done
 
 	# Get server directory
+	if [ "${_url_type}" = "ftp" -a "X${ftp_server_dir}" = X"" ]; then
+		# Default ftp dir
+		ftp_server_dir="pub/OpenBSD/${VERSION_MAJOR}.${VERSION_MINOR}/${ARCH}"
+	fi
 	resp=""		# force one iteration
 	while [ "X${resp}" = X"" ]; do
-		echo -n "Server directory? [${_ftp_server_dir}] "
-		getresp "${_ftp_server_dir}"
-		_ftp_server_dir=$resp
+		eval echo -n "Server directory? [\$_${_url_type}_server_dir]\ "
+		eval getresp "\$_${_url_type}_server_dir"
+		eval _${_url_type}_server_dir=$resp
 	done
 
-	if [ "X${ftp_proxy}" = X"" ]; then
-		# Get login name
-		resp=""		# force one iteration
+	if [ "${_url_type}" = "ftp" ]; then
+		# Need default values even if we proxy ftp...
 		if [ "X${_ftp_server_login}" = X"" ]; then
 			_ftp_server_login=anonymous
 		fi
-		while [ "X${resp}" = X"" ]; do
-			echo -n "Login? [${_ftp_server_login}] "
-			getresp "${_ftp_server_login}"
-			_ftp_server_login=$resp 
-		done
-
-		# Get password
-		resp=""		# force one iteration
 		if [ "X${_ftp_server_password}" = X"" ]; then
 			_ftp_server_password=root@`hostname`.${FQDN}
 		fi
-		while [ "X${resp}" = X"" ]; do
-			echo -n "Password? [${_ftp_server_password}] "
-			getresp "${_ftp_server_password}"
-			_ftp_server_password=$resp
-		done
+
+		if [ "X${ftp_proxy}" = X"" ]; then
+			# Get login name
+			resp=""		# force one iteration
+			while [ "X${resp}" = X"" ]; do
+				echo -n "Login? [${_ftp_server_login}] "
+				getresp "${_ftp_server_login}"
+				_ftp_server_login=$resp 
+			done
+
+			# Get password
+			resp=""		# force one iteration
+			while [ "X${resp}" = X"" ]; do
+				echo -n "Password? [${_ftp_server_password}] "
+				getresp "${_ftp_server_password}"
+				_ftp_server_password=$resp
+			done
+		fi
 	fi
 
-	# Get list of files from ftp server.
-	_ftp_file_list=`ftp_list_files $_ftp_server_ip $_ftp_server_login $_ftp_server_password $_ftp_server_dir`
+	# Get list of files from the server.
+	# XXX - check for nil $_file_list and deal
+	if [ "${_url_type}" = "ftp" ]; then
+		_file_list=`ftp_list_files "$_ftp_server_ip" "$_ftp_server_login" "$_ftp_server_password" "$_ftp_server_dir"`
+	else
+		# Assumes index file is "index.txt" for http
+		_file_list="`eval ftp -V ${_url_type}://\\$_${_url_type}_server_ip/\\$_${_url_type}_server_dir/index.txt | cat`"
+	fi
 
 	_sets=""
-	if list_has_sets "$_ftp_file_list" $_ftp_server_dir $THESETS; then
+	if eval list_has_sets \"$_file_list\" \$_${_url_type}_server_dir $THESETS; then
 		for _f in $THESETS ; do
 			if [ "X${_f}" = "Xkernel" ]; then
-				if isin $_ftp_server_dir/bsd $_ftp_file_list; then
+				if eval isin \$_${_url_type}_server_dir/bsd $_file_list; then
 					_kernel=bsd
 				fi
-			elif isin $_ftp_server_dir/${_f}${VERSION}.tar.gz $_ftp_file_list; then
+			elif eval isin \$_${_url_type}_server_dir/${_f}${VERSION}.tar.gz $_file_list; then
 				_sets="$_sets ${_f}${VERSION}.tar.gz"
-			elif isin $_ftp_server_dir/${_f}${VERSION}.tgz $_ftp_file_list; then
+			elif eval isin \$_${_url_type}_server_dir/${_f}${VERSION}.tgz $_file_list; then
 				_sets="$_sets ${_f}${VERSION}.tgz"
 			fi
 		done
 	else
-		echo "There are no OpenBSD install sets available in \"$_ftp_server_dir\"."
+		eval echo "There are no OpenBSD install sets available in \"\$_${_url_type}_server_dir\"."
 		echo -n "Search for *.tar.gz and *.tgz files? [y] "
 		getresp "y"
 		case "$resp" in
@@ -709,7 +724,7 @@ __install_ftp_1
 		# *.tar.gz and *.tgz are possible sets
 		_sets=""
 		_kernel=""
-		for _f in `echo "${_ftp_file_list}" | sed 's/^.*\///'` ; do
+		for _f in `echo "${_file_list}" | sed 's/^.*\///'` ; do
 			case "$_f" in
 			    *.tar.gz|*.tgz)	_sets="$_sets ${_f}"
 			esac
@@ -723,7 +738,7 @@ __install_ftp_1
 				*)	;;
 			esac
 			echo ""
-			echo "${_ftp_file_list}"
+			echo "${_file_list}"
 			echo ""
 			return
 		else
@@ -731,18 +746,16 @@ __install_ftp_1
 		fi
 	fi
 
-	cat << __install_ftp_2
-
-You will now be asked for files to extract.  In addition to the
-files listed in the selector you may enter any file located at
-${_ftp_server_ip}:${_ftp_server_dir}.  You can also enter
-'all' to install all the standard sets, or 'list' to list the
-files avilable at ${_ftp_server_ip}:${_ftp_server_dir}.  When
-you are done selecting files, enter 'done'.
-
-Some of these sets are required for your ${MODE} and some are optional.
-Consult the intallation notes if you are not sure which sets are required!
-__install_ftp_2
+	# Yes, all those blackslashes really are necesary...
+	eval echo "\\\\n"\
+"You will now be asked for files to extract.  In addition to the\\\\n"\
+"files listed in the selector you may enter any file located at\\\\n"\
+"\$_${_url_type}_server_ip:\$_${_url_type}_server_dir.  You can also enter\\\\n"\
+"'all' to install all the standard sets, or 'list' to list the\\\\n"\
+"files avilable at \$_${_url_type}_server_ip:\$_${_url_type}_server_dir.\\\\n"\
+"When you are done selecting files, enter 'done'.\\\\n"\
+"Some of these sets are required for your ${MODE} and some are optional.\\\\n"\
+"Consult the intallation notes if you are not sure which sets are required!\\\\n"
 
 	_osetsdone="$_setsdone"
 	while : ; do
@@ -773,32 +786,37 @@ __install_ftp_2
 			break
 		elif [ "X${resp}" = X"list" ]; then
 			echo ""
-			echo "${_ftp_file_list}"
+			echo "${_file_list}"
 			continue
 		elif [ "X${resp}" = X"all" ]; then
 			# XXX - setting _setsdone like this
 			#       is not entirely correct.
-			_ftp_get_files="$_sets $_kernel"
+			_get_files="$_sets $_kernel"
 			_setsdone="$_sets $_kernel"
 			break
 		fi
 		_f=$resp
-		_filename="$_ftp_server_dir/$_f"
+		eval _filename="\$_${_url_type}_server_dir/$_f"
 
 		# Ensure file exists
-		if ! isin $_filename $_ftp_file_list ; then
+		if ! isin $_filename $_file_list ; then
 			echo "File $_filename does not exist.  Check to make"
 			echo "sure you entered the information properly."
 			continue
 		fi
 
 		# Add file to extraction list
-		_ftp_get_files="${_ftp_get_files} $_f"
+		_get_files="${_get_files} $_f"
 		_setsdone="$_f $_setsdone"
 	done
 
+	# User may have said "done" without selecting any files
+	if [ "X${_get_files}" = X"" ]; then
+		return
+	fi
+
 	echo	""
-	echo	"Fetching files via ftp may take a long time,"
+	echo	"Fetching files via ${_url_type} may take a long time,"
 	echo	"especially over a slow network connection."
 	echo -n	"Ready to download files? [y] "
 	getresp "y"
@@ -812,40 +830,40 @@ __install_ftp_2
 	esac
 
 	# Download the files one at a time and keep track of which ones failed
-	while test -n "${_ftp_get_files}" ; do
-		_ftp_failed_files=""
-		for _f in $_ftp_get_files ; do
+	while test -n "${_get_files}" ; do
+		_failed_files=""
+		for _f in $_get_files ; do
 			echo ""
 			if [ "X${_f}" = "X${_kernel}" ]; then
-				if [ "X${ftp_proxy}" = X"" ]; then
+				if [ "${_url_type}" = "ftp" -a "X${ftp_proxy}" = X"" ]; then
 					( cd /mnt ; ftp ${_ftp_passive} -V ftp://${_ftp_server_login}:${_ftp_server_password}@${_ftp_server_ip}/${_ftp_server_dir}/${_f} )
 				else
-					( cd /mnt ; ftp -V ftp://${_ftp_server_ip}/${_ftp_server_dir}/${_f} )
+					( cd /mnt ; eval ftp -V ${_url_type}://\$_${_url_type}_server_ip/\$_${_url_type}_server_dir/${_f} )
 				fi
 			else
-				if [ "X${ftp_proxy}" = X"" ]; then
+				if [ "${_url_type}" = "ftp" -a "X${ftp_proxy}" = X"" ]; then
 					( cd /mnt ; ftp ${_ftp_passive} -V ftp://${_ftp_server_login}:${_ftp_server_password}@${_ftp_server_ip}/${_ftp_server_dir}/${_f} | tar zxvpf - )
 				else
-					( cd /mnt ; ftp -V ftp://${_ftp_server_ip}/${_ftp_server_dir}/${_f} | tar zxvpf - )
+					( cd /mnt ; eval ftp -V ${_url_type}://\$_${_url_type}_server_ip/\$_${_url_type}_server_dir/${_f} | tar zxvpf - )
 				fi
 			fi
 			if [ $? -ne 0 ]; then
 				# Mark xfer as having failed,.
 				_setsdone=`rmel $_f $_setsdone`
-				_ftp_failed_files="${_ftp_failed_files} ${_f}"
+				_failed_files="${_failed_files} ${_f}"
 			fi
 		done
 
 		# Give them the option of refetching failed files.
-		_ftp_get_files=""
-		while test -n "${_ftp_failed_files}" ; do
+		_get_files=""
+		while test -n "${_failed_files}" ; do
 			echo ""
 			echo "The following files failed to transfer and extract correctly:"
 			echo "Choose which one(s) to refetch or 'done' to exit selector."
 			echo ""
 
 			_next=""
-			for _f in $_ftp_failed_files ; do
+			for _f in $_failed_files ; do
 				if isin $_f $_setsdone ; then
 					echo -n "[X] "
 					_next=""
@@ -866,20 +884,20 @@ __install_ftp_2
 				break
 			elif [ "X${resp}" = X"list" ]; then
 				echo ""
-				echo "${_ftp_file_list}"
+				echo "${_file_list}"
 				echo ""
 				continue
 			fi
 			_f=$resp
-			_filename="$_ftp_server_dir/$_f"
+			eval _filename="\$_${_url_type}_server_dir/$_f"
 
 			# Ensure file exists
-			if ! isin $_filename $_ftp_file_list ; then
+			if ! isin $_filename $_file_list ; then
 				echo "File $_filename does not exist.  Check to make"
 				echo "sure you entered the information properly."				continue
 			fi
 			# Add file to extraction list
-			_ftp_get_files="${_ftp_get_files} ${_f}"
+			_get_files="${_get_files} ${_f}"
 			_setsdone="${_f} ${_setsdone}"
 		done
 	done
@@ -1054,6 +1072,9 @@ __install_cdrom_2
 	fi
 
 	# Get the directory where the file lives
+	if [ "X${_directory}" = X"" ]; then
+		_directory="/${VERSION_MAJOR}.${VERSION_MINOR}/${ARCH}"
+	fi
 	resp=""		# force one iteration
 	while [ "X${resp}" = X"" ]; do
 		echo "Enter the directory relative to the mount point that"
@@ -1437,8 +1458,8 @@ __install_sets_1
 		# If _yup is not FALSE, it means that we extracted sets above.
 		# If that's the case, bypass the menu the first time.
 		if [ X"$_yup" = X"FALSE" ]; then
-			echo -n	"Install from (f)tp, (t)ape, (C)D-ROM, (N)FS"
-			echo -n " or local (d)isk? "
+			echo -n	"Install from (f)tp, h(ttp), (t)ape, (C)D-ROM,"
+			echo -n "(N)FS or local (d)isk? "
 			getresp ""
 			case "$resp" in
 			d*|D*)
@@ -1446,8 +1467,12 @@ __install_sets_1
 				resp=d
 				;;
 			f*|F*)
-				install_ftp
+				install_url ftp
 				resp=f
+				;;
+			h*|H*)
+				install_url http
+				resp=h
 				;;
 			t*|T*)
 				install_tape
