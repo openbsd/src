@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.49 2005/03/16 22:50:09 jsg Exp $
+dnl	$OpenBSD: hardware,v 1.50 2005/03/17 13:05:04 jsg Exp $
 OpenBSD/MACHINE OSREV runs on iMac, G4 Power Macintosh, and G4 Cube, as well
 as PowerBook and iBook machines.
 
@@ -255,7 +255,51 @@ Supported devices {:-include-:}:
 		PCMCIA Adapters
 			Aironet 802.11B PCMCIA and PCI (an)
 			WaveLAN IEEE 802.11B PCMCIA (wi)
-		USB Adapters
+		Atmel AT76C50x based USB 802.11b adapters
+			3Com 3CRSHEW696
+			AboCom BWU613
+			Accton 2664W
+			Acer Peripherals AWL300
+			Acer Peripherals AWL400
+			Actiontec 802UAT1
+			Addtron AWU120
+			Aincomm AWU2000B
+			Askey Computer Voyager 1010
+			Askey Computer WLL013 (Intersil Radio)
+			Askey Computer WLL013 (RFMD Radio)
+			Belkin F5D6050
+			Bluetake BW002
+			Compaq iPAQ h54xx/h55xx Internal WLAN
+			Conceptronic C11U
+			Conceptronic WL210
+			Corega WLAN USB Stick 11
+			Dick Smith Electronics CHUSB 611G
+			Dick Smith Electronics WL200U
+			Dick Smith Electronics WL240U
+			Dick Smith Electronics XH1153
+			D-Link DWL-120 rev E
+			Geowave GW-US11S
+			Gigabyte GN-WLBM101
+			Gigaset WLAN
+			Hewlett-Packard HN210W
+			Intel AP310 AnyPoint II
+			I/O DATA USB WN-B11
+			Lexar 2662W-AR
+			Linksys WUSB11
+			Linksys WUSB11 v2.8
+			MSI WLAN
+			Netgear MA101
+			Netgear MA101 rev B
+			Ovislink AirLive WL-1120USB
+			OvisLink AirLive WL-1130USB
+			Planex Communications GW-US11S
+			Samsung SWL2100W
+			Siemens WLL013
+			SMC 2662W-AR
+			SMC 2662W-V4
+			Tekram U-300C
+			Z-Com M4Y-750
+		Intersil PRISM 2.5/3 based USB 802.11b adapters
 			Acer Warplink USB-400
 			Actiontec HWU01170
 			AirVast WM168b

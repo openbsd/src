@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.189 2005/03/16 23:38:49 jsg Exp $
+dnl	$OpenBSD: hardware,v 1.190 2005/03/17 13:05:04 jsg Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PCs and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -488,7 +488,16 @@ Supported hardware {:-include-:}:
 		    Trendware TE100-PCIE
 		    Compex RL100-ATX 10/100baseTX
 	Wireless Ethernet Adapters
-		ADMtek ADM8211 based 802.11b CardBus/PCI adapters [A] [B] [C]
+		ADMtek ADM8211 based 802.11b CardBus adapters [A] [B] [C]
+		    3Com OfficeConnect 3CRSHPW796
+		    Blitz NetWave Point
+		    D-Link DWL-650 Rev. L1
+		    TrendNet TEW-221PC CardBus
+		ADMtek ADM8211 based 802.11b PCI adapters [A] [B] [C]
+		    Belkin F5D6001 v2
+		    D-Link DWL-520 Rev. C1
+		    LanReady WP2000
+		    Xterasys XN2511B
 		Aironet 4500/4800 802.11b ISA PnP, PCMCIA and PCI [A] [B] [C]
 		Atheros AR521x based CardBus 802.11a/b/g adapters [A] [B] [C]
 		    3Com 3CRPAG175
@@ -530,20 +539,50 @@ Supported hardware {:-include-:}:
 		    Proxim Skyline 4032
 		    Senao NL-5354MP
 		Atmel AT76C50x based USB 802.11b adapters [G]
+		    3Com 3CRSHEW696
+		    AboCom BWU613
+		    Accton 2664W
 		    Acer Peripherals AWL300
 		    Acer Peripherals AWL400
+		    Actiontec 802UAT1
+		    Addtron AWU120
 		    Aincomm AWU2000B
+		    Askey Computer Voyager 1010
+		    Askey Computer WLL013 (Intersil Radio)
+		    Askey Computer WLL013 (RFMD Radio)
+		    Belkin F5D6050
 		    Bluetake BW002
-		    D-Link DWL-120
+		    Compaq iPAQ h54xx/h55xx Internal WLAN
+		    Conceptronic C11U
+		    Conceptronic WL210
+		    Corega WLAN USB Stick 11
+		    Dick Smith Electronics CHUSB 611G
+		    Dick Smith Electronics WL200U
+		    Dick Smith Electronics WL240U
+		    Dick Smith Electronics XH1153
+		    D-Link DWL-120 rev E
 		    Geowave GW-US11S
+		    Gigabyte GN-WLBM101
+		    Gigaset WLAN
+		    Hewlett-Packard HN210W
+		    Intel AP310 AnyPoint II
+		    I/O DATA USB WN-B11
+		    Lexar 2662W-AR
 		    Linksys WUSB11
-		    Linksys WUSB11-V28
+		    Linksys WUSB11 v2.8
+		    MSI WLAN
+		    Netgear MA101
 		    Netgear MA101 rev B
 		    OQO model 01 builtin wireless
 		    Ovislink AirLive WL-1120USB
 		    OvisLink AirLive WL-1130USB
+		    Planex Communications GW-US11S
+		    Samsung SWL2100W
+		    Siemens WLL013
 		    SMC 2662W-AR
 		    SMC 2662W-V4
+		    Tekram U-300C
+		    Z-Com M4Y-750
 		Intel PRO/Wireless 2100 802.11b adapters [G]
 		Intel PRO/Wireless 2200BG/2225BG/2915ABG
 		  802.11a/b/g adapters [G]
@@ -690,6 +729,7 @@ Supported hardware {:-include-:}:
 		    AMIT WL531P
 		    AOpen AOI-831
 		    ASUS WL-130g
+		    ASUS WIFI-G-AAY
 		    Atlantis Land A02-PCI-W54
 		    Belkin F5D7000 v3
 		    Billionton MIWLGRL mini-PCI
@@ -728,8 +768,36 @@ Supported hardware {:-include-:}:
 		    Zinwell ZWX-G360 mini-PCI
 		    Zinwell ZWX-G361
 		    Zonet ZEW1600
+		Ralink RT2500 based USB 2.0 802.11b/g adapters [A] [B] [C]
+		    AMIT WL532U
+		    ASUS WL-167g
+		    Buffalo WLI-U2-KG54-AI
+		    CNet CWD-854
+		    Compex WLU54G
+		    Conceptronic C54RU
+		    D-Link DWL-G122 (b1)
+		    E-Tech WGUS02
+		    Gigabyte GN-WBKG
+		    Linksys WUSB54G v4
+		    Linksys WUSB54GP v4
+		    MSI MS-6861
+		    MSI MS-6865
+		    MSI MS-6869
+		    Repotec RP-WU0402
+		    Surecom EP-9001-g
+		    Zinwell ZWX-G261
 		Raytheon Raylink PCMCIA 802.11 FH adapters [A] [B] [C]
 		Realtek RTL8180L based CardBus 802.11b adapters [A] [B]
+		    Belkin F5D6020 V3
+		    Corega CG-WLCB11V3
+		    D-Link DWL-610
+		    Level-One WPC-0101
+		    Linksys WPC11 v4
+		    Netgear MA521
+		    Ovislink AirLive WL-1120PCM
+		    Planet WL-3553
+		    TrendNET TEW-266PC
+		    VCTnet PC-11B1
 	Gigabit Ethernet Adapters
 		Alteon Tigon I/II PCI Gigabit Ethernet boards, including: [A]
 		  [B] [C]
