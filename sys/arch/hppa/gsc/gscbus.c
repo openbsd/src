@@ -1,4 +1,4 @@
-/*	$OpenBSD: gscbus.c,v 1.2 1999/02/25 21:07:48 mickey Exp $	*/
+/*	$OpenBSD: gscbus.c,v 1.3 1999/04/20 21:12:24 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -28,6 +28,44 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/*
+ * Sample IO layouts:
+ * 712:
+ *
+ * f0100000 -- lasi0
+ * f0102000 -- lpt0
+ * f0104000 -- audio0
+ * f0105000 -- com0
+ * f0106000 -- siop0
+ * f0107000 -- ie0
+ * f0108000 -- kbd0
+ * f0108100 -- pms0
+ * f010a000 -- fdc0
+ * f010c000 -- *lasi0
+ * f8000000 -- sti0
+ * fffbe000 -- cpu0
+ * fffbf000 -- mem0
+ *
+ * 725/50:
+ *
+ * f0820000 -- dma
+ * f0821000 -- hil
+ * f0822000 -- com1
+ * f0823000 -- com0
+ * f0824000 -- lpt0
+ * f0825000 -- siop0
+ * f0826000 -- ie0
+ * f0827000 -- dma reset
+ * f0828000 -- timers
+ * f0829000 -- domain kbd
+ * f082f000 -- asp0
+ * f1000000 -- audio0
+ * fc000000 -- eisa0
+ * fffbe000 -- cpu0
+ * fffbf000 -- mem0
+ *
  */
 
 #define GSCDEBUG
