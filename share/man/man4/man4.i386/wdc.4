@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wdc.4,v 1.6 1999/07/09 13:35:44 aaron Exp $
+.\"	$OpenBSD: wdc.4,v 1.7 1999/07/21 11:20:33 deraadt Exp $
 .\"
 .\" Copyright (c) 1994 James A. Jegers
 .\" All rights reserved.
@@ -32,6 +32,7 @@
 .Cd "wdc0 at isa? port 0x1f0 irq 14"
 .Cd "wdc0 at isa? port 0x170 irq 15"
 .Cd "wdc* at isapnp?"
+.Cd "wdc* at pcmcia? function ?"
 .Cd "wd* at wdc? drive ?"
 .Sh DESCRIPTION
 The
@@ -42,9 +43,6 @@ controllers.
 .\" .Pp
 .\" Support for extended EIDE controllers is
 .\" .Ud .
-.Sh BUGS
-A PnP device that actually works with this driver has yet to be found; the
-Soundblaster IDE port does not.
 .Pp
 Enhanced IDE and UltraDMA is not supported by this driver, though such
 devices should still work (in normal PIO mode).

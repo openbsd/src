@@ -1,4 +1,4 @@
-.\" $OpenBSD: midi.4,v 1.3 1999/07/09 13:35:48 aaron Exp $
+.\" $OpenBSD: midi.4,v 1.4 1999/07/21 11:20:33 deraadt Exp $
 .\" $NetBSD: midi.4,v 1.4 1998/08/22 14:45:35 augustss Exp $
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -43,6 +43,8 @@
 .Cd "midi* at pcppi?"
 .Cd "midi* at sb?"
 .Cd "midi* at wss?"
+.Ct "midi* at ym?"
+.Ct "midi* at mpu?"
 .Cd "pseudo-device sequencer"
 .Pp
 .Fd #include <sys/types.h>
@@ -71,6 +73,7 @@ downloading patches to a device, since it is hard to get the accurate timing
 needed for quality music from a user program.  But the devices can act as
 a simple patchboard for MIDI devices.  For example, a MIDI keyboard could
 be connected to a synthesizer by the command
+.Pp
 .Cd "cat -u /dev/rmidi1 >/dev/rmidi2"
 .Pp
 The
@@ -96,10 +99,8 @@ interface.
 .Xr ioctl 2 ,
 .Xr ossaudio 3 ,
 .Xr audio 4 ,
-.Xr opl 4
-.br
-For ports using the ISA bus:
-.\" .Xr pcppi 4 ,
+.Xr opl 4 ,
+.Xr pcppi 4 ,
 .Xr sb 4 ,
 .Xr wss 4 .
 .Sh HISTORY
