@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_subr.c,v 1.10 2002/11/26 01:03:34 henning Exp $	*/
+/*	$OpenBSD: altq_subr.c,v 1.11 2002/11/26 03:44:53 kjc Exp $	*/
 /*	$KAME: altq_subr.c,v 1.11 2002/01/11 08:11:49 kjc Exp $	*/
 
 /*
@@ -106,6 +106,8 @@ static void 	ip4f_free(struct ip4_frag *);
 int (*altq_input)(struct mbuf *, int) = NULL;
 static int tbr_timer = 0;	/* token bucket regulator timer */
 static struct callout tbr_callout = CALLOUT_INITIALIZER;
+
+int pfaltq_running;	/* keep track of running state */
 
 /*
  * alternate queueing support routines
@@ -449,9 +451,16 @@ altq_pfattach(struct pf_altq *a)
 		error = EINVAL;
 	}
 
+	ifp = ifunit(a->ifname);
+
+	/* if the state is running, enable altq */
+	if (error == 0 && pfaltq_running &&
+	    ifp != NULL && ifp->if_snd.altq_type != ALTQT_NONE &&
+	    !ALTQ_IS_ENABLED(&ifp->if_snd))
+			error = altq_enable(&ifp->if_snd);
+
 	/* if altq is already enabled, reset set tokenbucket regulator */
-	if (error == 0 && (ifp = ifunit(a->ifname)) != NULL &&
-	    ALTQ_IS_ENABLED(&ifp->if_snd)) {
+	if (error == 0 && ifp != NULL && ALTQ_IS_ENABLED(&ifp->if_snd)) {
 		tb.rate = a->ifbandwidth;
 		tb.depth = a->tbrsize;
 		s = splimp();

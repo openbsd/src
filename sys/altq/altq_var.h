@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_var.h,v 1.7 2002/10/11 09:30:30 kjc Exp $	*/
+/*	$OpenBSD: altq_var.h,v 1.8 2002/11/26 03:44:53 kjc Exp $	*/
 /*	$KAME: altq_var.h,v 1.8 2001/02/09 09:44:41 kjc Exp $	*/
 
 /*
@@ -234,6 +234,8 @@ typedef void (timeout_t)(void *);
 
 /* define a macro to check pf/altq until the transition is complete */
 #define	PFALTQ_IS_ACTIVE()	(!TAILQ_EMPTY(pf_altqs_active))
+
+extern int pfaltq_running;
 
 struct ifnet; struct mbuf; struct flowinfo;
 struct pf_altq; struct pf_qstats;

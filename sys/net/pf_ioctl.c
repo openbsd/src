@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.18 2002/11/23 09:37:02 deraadt Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.19 2002/11/26 03:44:53 kjc Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1915,6 +1915,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 					break;
 			}
 		}
+		if (error == 0)
+			pfaltq_running = 1;
 		splx(s);
 		DPFPRINTF(PF_DEBUG_MISC, ("altq: started\n"));
 		break;
@@ -1946,6 +1948,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 					error = err;
 			}
 		}
+		if (error == 0)
+			pfaltq_running = 0;
 		splx(s);
 		DPFPRINTF(PF_DEBUG_MISC, ("altq: stopped\n"));
 		break;
