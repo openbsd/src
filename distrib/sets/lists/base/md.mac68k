@@ -656,7 +656,6 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/smc90cx6reg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/smc91cxxreg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/smc91cxxvar.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/smc93cx6var.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/stireg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/stivar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/tea5757.ph

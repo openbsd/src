@@ -266,7 +266,6 @@
 ./usr/include/dev/ic/smc90cx6reg.h
 ./usr/include/dev/ic/smc91cxxreg.h
 ./usr/include/dev/ic/smc91cxxvar.h
-./usr/include/dev/ic/smc93cx6var.h
 ./usr/include/dev/ic/stireg.h
 ./usr/include/dev/ic/stivar.h
 ./usr/include/dev/ic/tcic2reg.h
