@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pciide.4,v 1.15 2001/07/20 06:19:56 csapuntz Exp $
+.\"	$OpenBSD: pciide.4,v 1.16 2001/08/03 22:37:36 chris Exp $
 .\"	$NetBSD: pciide.4,v 1.8 1999/03/16 01:19:17 garbled Exp $
 .\"
 .\" Copyright (c) 1998 Manuel Bouyer.
@@ -55,9 +55,13 @@ controllers:
 .Pp
 .Bl -item -compact -offset indent
 .It
+Acard ATP850, ATP860
+.It
+Acer Labs M5229
+.It
 Advanced Micro Devices AMD-756, AMD-766
 .It
-CMD Tech PCI0640, PCI0643, PCI0646, PCI0648, and PCI0649
+CMD Tech PCI0640, PCI0643, PCI0646, PCI0648, PCI0649
 .It
 Contaq Microsystems/Cypress CY82C693
 .It
@@ -67,7 +71,9 @@ Intel PIIX, PIIX3, and PIIX4
 .It
 Intel 82801 (ICH/ICH0/ICH2)
 .It
-Promise PDC20246, PDC20262, PDC20265/7 (Ultra 33, 66, 100)
+OPTi 82c621
+.It
+Promise PDC20246, PDC20262, PDC20265, PDC20267
 .It
 Silicon Integrated System 5513 (5597/5598)
 .It
@@ -99,6 +105,9 @@ This will be a problem only if the controller has been disabled in the BIOS
 and another controller has been installed which uses the ISA legacy I/O ports
 and interrupts.
 .Pp
+The OPTi controller code is disabled by default because the driver
+does not yet work around all bugs in current chipsets.
+.Pp
 For proper operation of UltraDMA 3
 .Pq 44 MB/sec ,
 4
@@ -116,6 +125,15 @@ corrupted data, check to make sure you are using the correct cable.
 An 80-conductor cable is recommended for any IDE installation, not just
 ones using faster UltraDMA modes, because it will decrease electrical
 noise and increase data reliability.
+.Pp
+The AMD756 chip revision D2 has a bug affecting DMA (but not Ultra-DMA)
+modes.  The workaround documented by AMD is to not use DMA on any drive which
+does not support Ultra-DMA modes.  This does not appear to be necessary on all
+drives, the PCIIDE_AMD756_ENABLEDMA option can be used to force multiword DMA
+on the buggy revisions.  Multiword DMA can eventually be disabled on a
+per-drive basis with config flags, see
+.Xr wd 4 .
+The bug, if triggered, will cause a total system hang.
 .Pp
 The timings used for the PIO and DMA modes for controllers listed above
 are for a PCI bus running at 30 or 33 MHz.
