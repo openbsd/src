@@ -1,4 +1,4 @@
-.\"	$OpenBSD: regex.3,v 1.11 1999/07/09 13:35:22 aaron Exp $
+.\"	$OpenBSD: regex.3,v 1.12 2000/03/06 21:46:56 aaron Exp $
 .\"
 .\" Copyright (c) 1997, Phillip F Knaack. All rights reserved.
 .\"
@@ -397,8 +397,8 @@ and if the error code came from
 it should have been the result from the most recent
 .Fn regcomp
 using that
-.Li regex_t . (
-.Fn regerror
+.Li regex_t .
+.Pf ( Fn regerror
 may be able to supply a more detailed message using information
 from the
 .Li regex_t . )

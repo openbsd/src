@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipf.5,v 1.19 2000/02/19 21:46:46 aaron Exp $
+.\"	$OpenBSD: ipf.5,v 1.20 2000/03/06 21:46:55 aaron Exp $
 .Dd July 9, 1999
 .Dt IPF 5
 .Os
@@ -491,8 +491,8 @@ rule, rule processing isn't stopped until it has returned from processing
 the group.
 .Pp
 A rule may be both the head for a new group and a member of a non-default
-group (
-.Cm head
+group
+.Pf ( Cm head
 and
 .Cm group
 may be used together in a rule).

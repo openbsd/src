@@ -1,4 +1,4 @@
-.\"	$OpenBSD: raid.4,v 1.9 2000/01/07 14:52:28 peter Exp $
+.\"	$OpenBSD: raid.4,v 1.10 2000/03/06 21:46:57 aaron Exp $
 .\"     $NetBSD: raid.4,v 1.8 1999/12/15 22:07:33 abs Exp $
 .\"
 .\"
@@ -211,8 +211,8 @@ pseudo-device   raid   4       # RAIDframe disk device
 .Pp
 to the kernel configuration file.  The
 .Sq count
-argument (
-.Sq 4 ,
+argument
+.Pf ( Sq 4 ,
 in this case), specifies the number of RAIDframe drivers to configure.
 At the time of this writing, 4 is the MAXIMUM of
 .Nm

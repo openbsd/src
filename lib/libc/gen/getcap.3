@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getcap.3,v 1.17 2000/03/04 22:19:30 aaron Exp $
+.\"	$OpenBSD: getcap.3,v 1.18 2000/03/06 21:46:56 aaron Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -134,11 +134,11 @@ the current entry is removed from the database.
 must precede the database traversal.  It must be called before
 .Fn cgetent .
 If a sequential access is being performed (see below), it must be called
-before the first sequential access call (
-.Fn cgetfirst
+before the first sequential access call
+.Pf ( Fn cgetfirst
 or
-.Fn cgetnext
-), or be directly preceded by a
+.Fn cgetnext ) ,
+or be directly preceded by a
 .Fn cgetclose
 call.
 On success 0 is returned and \-1 on failure.

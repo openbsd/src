@@ -1,5 +1,5 @@
 .\"
-.\"	$OpenBSD: pms.4,v 1.6 1999/10/10 13:16:21 matthieu Exp $
+.\"	$OpenBSD: pms.4,v 1.7 2000/03/06 21:46:57 aaron Exp $
 .\"
 .\" Copyright (c) 1996, Jason Downs.
 .\" Copyright (c) 1993 Christopher G. Demetriou
@@ -95,14 +95,14 @@ should be used in
 .Pa /etc/XF86Config
 with the 
 .Em PS/2
-protocol, or one of its variants (
-.Em IMPS/2
+protocol, or one of its variants
+.Pf ( Em IMPS/2
 for MS Intellimouse,
 .Em ThinkingMousePS/2
 for Kensington Thinking Mouse).
 .Pp
 .Sh FILES
-.Bl -tag -width Pa -compact
+.Bl -tag -width /dev/pms0 -compact
 .It Pa /dev/psm0
 PS/2 mouse device file, defaulting to raw mode
 .It Pa /dev/pms0

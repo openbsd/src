@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_delete.1,v 1.7 1999/10/09 20:35:45 beck Exp $
+.\"	$OpenBSD: pkg_delete.1,v 1.8 2000/03/06 21:46:55 aaron Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintainance
 .\" of non-core utilities.
@@ -53,8 +53,8 @@ attacks from miscreants who create dangerous package files.
 .Pp
 You are advised to verify the competence and identity of those who
 provide installable package files.  For extra protection, examine all
-the package control files in the package record directory (
-.Pa /var/db/pkg/<pkg-name>/ ).
+the package control files in the package record directory
+.Pq Pa /var/db/pkg/<pkg-name>/ .
 Pay particular
 attention to any +INSTALL, +DEINSTALL, +REQUIRE or +MTREE_DIRS files,
 and inspect the +CONTENTS file for

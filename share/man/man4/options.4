@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.48 2000/03/02 13:44:33 aaron Exp $
+.\"	$OpenBSD: options.4,v 1.49 2000/03/06 21:46:57 aaron Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -749,8 +749,8 @@ objects (i.e. BSS pages)).
 .It Cd option DEVPAGER
 Support for mmap()ing of devices.  (Specifically, this enables the
 virtual memory module responsible for handling page faults on mapped
-devices (
-.Dq cdev
+devices
+.Pf ( Dq cdev
 vnodes)).
 .Em MANDATORY
 -- the system cannot actually run without this
