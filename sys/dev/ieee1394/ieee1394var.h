@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee1394var.h,v 1.3 2002/12/13 02:52:04 tdeval Exp $	*/
+/*	$OpenBSD: ieee1394var.h,v 1.4 2002/12/30 11:19:45 tdeval Exp $	*/
 /*	$NetBSD: ieee1394var.h,v 1.15 2002/02/27 05:04:28 jmc Exp $	*/
 
 /*
@@ -86,7 +86,7 @@ typedef struct ieee1394_softc {
 	struct device		  sc1394_dev;
 	struct device		 *sc1394_if;	/* Move to fwohci level. */
 
-  const	struct ieee1394_callbacks sc1394_callback; /* Nuke probably. */
+	struct ieee1394_callbacks sc1394_callback; /* Nuke probably. */
 	u_int32_t		 *sc1394_configrom;
 	u_int32_t		  sc1394_configrom_len;	/* quadlets. */
 	u_int32_t		  sc1394_max_receive;
