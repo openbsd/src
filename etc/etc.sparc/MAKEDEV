@@ -5,8 +5,8 @@
 #
 #	OpenBSD: etc.sparc/MAKEDEV.md,v 1.24 2004/04/11 18:05:23 millert Exp 
 #	OpenBSD: MAKEDEV.common,v 1.15 2005/01/28 18:56:27 danh Exp 
-#	OpenBSD: MAKEDEV.mi,v 1.72 2004/02/16 18:58:53 miod Exp 
-#	OpenBSD: MAKEDEV.sub,v 1.13 2005/01/28 18:51:38 danh Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.73 2005/02/07 06:14:18 david Exp 
+#	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
 #
 # Copyright (c) 2001-2004 Todd T. Fries <todd@OpenBSD.org>
