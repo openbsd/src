@@ -1,4 +1,4 @@
-/*	$OpenBSD: panic.c,v 1.8 2002/05/11 23:16:44 millert Exp $	*/
+/*	$OpenBSD: panic.c,v 1.9 2002/05/13 16:12:07 millert Exp $	*/
 /*	$NetBSD: panic.c,v 1.2 1995/03/25 18:13:33 glass Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
 /* File scope variables */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: panic.c,v 1.8 2002/05/11 23:16:44 millert Exp $";
+static const char rcsid[] = "$OpenBSD: panic.c,v 1.9 2002/05/13 16:12:07 millert Exp $";
 #endif
 
 /* External variables */
@@ -92,12 +92,24 @@ __dead void
 usage(void)
 {
 	/* Print usage and exit.  */
-	(void)fprintf(stderr,
-	    "Usage: at [-blmrv] [-f file] [-q queue] -t [[CC]YY]MMDDhhmm[.SS]\n"
-	    "       at [-blmrv] [-f file] [-q queue] time\n"
-	    "       at -c job [job ...]\n"
-	    "       atq [-q queue] [-v]\n"
-	    "       atrm job [job ...]\n"
-	    "       batch [-mv] [-f file] [-q queue]\n");
+	switch (program) {
+	case AT:
+	case CAT:
+		(void)fprintf(stderr,
+		    "Usage: at [-blmrv] [-f file] [-q queue] -t time_arg\n"
+		    "       at [-blmrv] [-f file] [-q queue] timespec\n"
+		    "       at -c job [job ...]\n");
+		break;
+	case ATQ:
+		(void)fprintf(stderr, "Usage: atq [-q queue] [-v]\n");
+		break;
+	case ATRM:
+		(void)fprintf(stderr, "Usage: atrm job [job ...]\n");
+		break;
+	case BATCH:
+		(void)fprintf(stderr,
+		    "Usage: batch [-mv] [-f file] [-q queue] [timespec]\n");
+		break;
+	}
 	exit(EXIT_FAILURE);
 }

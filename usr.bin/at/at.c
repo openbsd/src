@@ -1,4 +1,4 @@
-/*	$OpenBSD: at.c,v 1.26 2002/05/11 23:16:44 millert Exp $	*/
+/*	$OpenBSD: at.c,v 1.27 2002/05/13 16:12:07 millert Exp $	*/
 /*	$NetBSD: at.c,v 1.4 1995/03/25 18:13:31 glass Exp $	*/
 
 /*
@@ -69,11 +69,9 @@
 
 #define TIMESIZE 50
 
-enum { ATQ, ATRM, AT, BATCH, CAT };	/* what program we want to run */
-
 /* File scope variables */
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: at.c,v 1.26 2002/05/11 23:16:44 millert Exp $";
+static const char rcsid[] = "$OpenBSD: at.c,v 1.27 2002/05/13 16:12:07 millert Exp $";
 #endif
 
 char *no_export[] =
@@ -86,6 +84,7 @@ static int send_mail = 0;
 
 extern char **environ;
 int fcreated;
+int program = AT;		/* default program mode */
 char atfile[FILENAME_MAX];
 
 char *atinput = (char *)0;	/* where to get input from */
@@ -452,7 +451,7 @@ list_jobs(void)
 
 		runtimer = 60 * (time_t) ctm;
 		runtime = *localtime(&runtimer);
-		strftime(timestr, TIMESIZE, "%+", &runtime);
+		strftime(timestr, TIMESIZE, "%a %b %e %T %Y", &runtime);
 		if (first) {
 			(void)printf("Date\t\t\t\tOwner\t\tQueue\tJob#\n");
 			first = 0;
@@ -627,7 +626,6 @@ main(int argc, char **argv)
 	int c;
 	char queue = DEFAULT_AT_QUEUE;
 	char queue_set = 0;
-	int program = AT;			/* default program mode */
 	char *options = "q:f:t:bcdlmrv";	/* default options for at */
 	time_t timer;
 	int tflag = 0;

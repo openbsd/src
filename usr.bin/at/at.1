@@ -1,4 +1,4 @@
-.\" $OpenBSD: at.1,v 1.22 2002/05/11 23:02:33 millert Exp $
+.\" $OpenBSD: at.1,v 1.23 2002/05/13 16:12:07 millert Exp $
 .\" $FreeBSD: at.man,v 1.6 1997/02/22 19:54:05 peter Exp $
 .Dd April 12, 1995
 .Dt AT 1
@@ -14,12 +14,12 @@
 .Op Fl blmrv
 .Op Fl f Ar file
 .Op Fl q Ar queue
-.Fl t Ar [[CC]YY]MMDDhhmm[.SS]
+.Fl t Ar time_arg
 .Nm at
 .Op Fl blmrv
 .Op Fl f Ar file
 .Op Fl q Ar queue
-.Ar time
+.Ar timespec
 .Nm at
 .Fl c Ar job Op Ar job ...
 .Nm atq
@@ -32,7 +32,7 @@
 .Op Fl mv
 .Op Fl f Ar file
 .Op Fl q Ar queue
-.Op Ar time
+.Op Ar timespec
 .Sh DESCRIPTION
 .Nm at
 and
@@ -102,13 +102,14 @@ is given a specific queue, it will only show jobs pending in that queue.
 .It Fl r
 An alias for
 .Nm atrm .
-.It Fl t
-Specify the job time using the \*[Px] time format.
+.It Fl t Ar time_arg
+Specify the job time using the format specified by
+.Xr touch 1 .
 The argument should be in the form
 .Ar [[CC]YY]MMDDhhmm[.SS]
 where each pair of letters represents the following:
 .Pp
-.Bl -tag -width indent -compact -offset indent
+.Bl -tag -width Ds -compact -offset indent
 .It Ar CC
 The first two digits of the year (the century).
 .It Ar YY
@@ -143,7 +144,7 @@ Otherwise shows the time the job will be executed.
 .Pp
 .Nm at
 allows some moderately complex
-.Ar time
+.Ar timespec
 specifications.
 It accepts times of the form
 .Ar HHMM
@@ -209,7 +210,9 @@ To run a job at 1am tomorrow, you would do
 .Pp
 The
 .Nm at
-utility also supports the \*[Px] time format (see the
+utility also supports the time format used by
+.Xr touch 1
+(see the
 .Fl t
 option).
 .Pp
@@ -290,6 +293,7 @@ job sequence file
 .Sh SEE ALSO
 .Xr nice 1 ,
 .Xr sh 1 ,
+.Xr touch 1 ,
 .Xr umask 2 ,
 .Xr atrun 8 ,
 .Xr cron 8 ,
