@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.47 2004/01/02 02:27:57 henning Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.48 2004/01/03 13:54:27 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -218,7 +218,8 @@ enum imsg_type {
 	IMSG_NEXTHOP_ADD,
 	IMSG_NEXTHOP_REMOVE,
 	IMSG_NEXTHOP_UPDATE,
-	IMSG_CTL_SHOW_NEIGHBOR
+	IMSG_CTL_SHOW_NEIGHBOR,
+	IMSG_CTL_END
 };
 
 struct imsg_hdr {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.4 2004/01/03 13:28:02 henning Exp $ */
+/*	$OpenBSD: control.c,v 1.5 2004/01/03 13:54:27 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -198,6 +198,7 @@ control_dispatch_msg(struct pollfd *pfd, int i)
 			for (p = conf->peers; p != NULL; p = p->next)
 				imsg_compose(&c->ibuf, IMSG_CTL_SHOW_NEIGHBOR,
 				    0, p, sizeof(struct peer));
+			imsg_compose(&c->ibuf, IMSG_CTL_END, 0, NULL, 0);
 			break;
 		default:
 			break;
