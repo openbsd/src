@@ -1,4 +1,4 @@
-/*	$OpenBSD: board.h,v 1.2 2004/04/29 14:35:22 miod Exp $	*/
+/*	$OpenBSD: board.h,v 1.3 2004/06/14 12:57:02 aoyama Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -86,6 +86,7 @@
 #define OBIO_CAL_DAY	U(0x45001FF4) 	/* days */
 #define OBIO_CAL_MON	U(0x45001FF8) 	/* months */
 #define OBIO_CAL_YEAR	U(0x45001FFC) 	/* years */
+#define NVRAM_ADDR_88K2	U(0x47000000)	/* Non Volatile RAM area for LUNA-88K2 */
 #define OBIO_PIO0_BASE	U(0x49000000) 	/* PIO-0 */
 #define OBIO_PIO0_SPACE	U(0x0000000C) 
 #define OBIO_PIO0A	U(0x49000000) 	/* PIO-0 port A */

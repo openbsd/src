@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_table.c,v 1.2 2004/06/02 13:49:43 miod Exp $	*/
+/*	$OpenBSD: pmap_table.c,v 1.3 2004/06/14 12:57:02 aoyama Exp $	*/
 
 /* 
  * Mach Operating System
@@ -46,6 +46,7 @@ luna88k_board_table[] = {
 	{ PROM_ADDR   , PROM_ADDR   , PROM_SPACE  ,  R,   CI },
 	{ FUSE_ROM_ADDR, FUSE_ROM_ADDR, FUSE_ROM_SPACE,  RW,    CI },
 	{ NVRAM_ADDR   , NVRAM_ADDR   , NVRAM_SPACE  ,   RW,     CI },
+	{ NVRAM_ADDR_88K2,    NVRAM_ADDR_88K2, PAGE_SIZE, RW,     CI },
 	{ OBIO_PIO0_BASE,     OBIO_PIO0_BASE, PAGE_SIZE,  RW,     CI },
 	{ OBIO_PIO1_BASE,     OBIO_PIO1_BASE, PAGE_SIZE,  RW,     CI },
 	{ OBIO_SIO      ,     OBIO_SIO,       PAGE_SIZE,  RW,     CI },

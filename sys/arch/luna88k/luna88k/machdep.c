@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.5 2004/06/02 13:49:43 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.6 2004/06/14 12:57:02 aoyama Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -118,6 +118,10 @@ void load_u_area(struct proc *);
 void dumpconf(void);
 void luna88k_ext_int(u_int v, struct trapframe *eframe);
 void powerdown(void);
+void get_fuse_rom_data(void);
+void get_nvram_data(void);
+char *nvram_by_symbol(char *);
+void get_autoboot_device(void);			/* in disksubr.c */
 
 /*
  * *int_mask_reg[CPU]
@@ -139,6 +143,24 @@ unsigned int *volatile clock_reg[MAX_CPUS] = {
 	(unsigned int *)OBIO_CLOCK2,
 	(unsigned int *)OBIO_CLOCK3
 };
+
+/*
+ * FUSE ROM and NVRAM data
+ */
+struct fuse_rom_byte {
+	u_int32_t h;
+	u_int32_t l;
+};
+#define FUSE_ROM_BYTES        (FUSE_ROM_SPACE / sizeof(struct fuse_rom_byte))
+static char fuse_rom_data[FUSE_ROM_BYTES];
+
+#define NNVSYM		8
+#define NVSYMLEN	16
+#define NVVALLEN	16
+struct nvram_t {
+	char symbol[NVSYMLEN];
+	char value[NVVALLEN];
+} nvram[NNVSYM];
 
 volatile vaddr_t obiova;
 
@@ -201,7 +223,7 @@ char  cpu_model[120];
 extern char *esym;
 #endif
 
-int machtype = LUNA_88K2;	/* XXX: aoyama */
+int machtype = LUNA_88K;	/* may be overwritten in cpu_startup() */
 int cputyp = CPU_88100;		/* XXX: aoyama */
 int boothowto;			/* XXX: should be set in boot loader and locore.S */
 int bootdev;			/* XXX: should be set in boot loader and locore.S */
@@ -407,6 +429,16 @@ cpu_startup()
 		    avail_end + i * NBPG, VM_PROT_READ | VM_PROT_WRITE);
 	pmap_update(pmap_kernel());
 	initmsgbuf((caddr_t)msgbufp, round_page(MSGBUFSIZE));
+
+	/* Determine the machine type from FUSE ROM data */
+	get_fuse_rom_data();
+	if (strncmp(fuse_rom_data, "MNAME=LUNA88K+", 14) == 0) {
+		machtype = LUNA_88K2;
+	}
+
+        /* Determine the 'auto-boot' device from NVRAM data */
+        get_nvram_data();
+        get_autoboot_device();
 
 	/*
 	 * Good {morning,afternoon,evening,night}.
@@ -1815,4 +1847,74 @@ powerdown(void)
 	DELAY(100000);
 	p1->cntrl = (PIO1_POWER << 1) | PIO1_DISABLE;
 	*(volatile u_int8_t *)&p1->portC;
+}
+
+/* Get data from FUSE ROM */
+
+void
+get_fuse_rom_data(void)
+{
+	int i;
+	struct fuse_rom_byte *p = (struct fuse_rom_byte *)FUSE_ROM_ADDR;
+
+	for (i = 0; i < FUSE_ROM_BYTES; i++) {
+		fuse_rom_data[i] =
+		    (char)((((p->h) >> 24) & 0x000000f0) |
+		           (((p->l) >> 28) & 0x0000000f));
+		p++;                                                                            
+	}
+}
+
+/* Get data from NVRAM */
+
+void
+get_nvram_data(void)
+{
+	int i;
+	u_int8_t *page;
+	char *data;
+
+	if (machtype == LUNA_88K) {
+#if 0
+		/* this is not tested... */
+		int i;
+		struct nvram_byte *p = (struct nvram_byte *)NVRAM_ADDR;
+
+		for (i = 0; i < NVRAM_BYTES; i++) {
+			nvram_data[i] = p->data;
+			p++;
+		}
+#endif
+	} else if (machtype == LUNA_88K2) {
+		page = (u_int8_t *)(NVRAM_ADDR_88K2 + 0x20);
+
+		for (i = 0; i < NNVSYM; i++) {
+			*page = (u_int8_t)i;
+
+			data = (char *)NVRAM_ADDR_88K2;
+			strlcpy(nvram[i].symbol, data, sizeof(nvram[i].symbol));
+
+			data = (char *)(NVRAM_ADDR_88K2 + 0x10);
+			strlcpy(nvram[i].value, data, sizeof(nvram[i].value));
+		}
+	}
+}
+
+char *
+nvram_by_symbol(symbol)
+	char *symbol;
+{
+	char *value;
+	int i;
+
+	value = NULL;
+
+	for (i = 0; i < NNVSYM; i++) {
+		if (strncmp(nvram[i].symbol, symbol, NVSYMLEN) == 0) {
+			value = nvram[i].value;
+			break;
+		}
+	}
+
+	return value;
 }
