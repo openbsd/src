@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.96 2004/01/05 01:33:40 mickey Exp $
+#	$OpenBSD: Makefile,v 1.97 2004/01/14 23:26:24 brad Exp $
 
 #
 # For more information on building in tricky environments, please see
@@ -134,7 +134,7 @@ ${CROSSDIRS}:
 			echo m68k ;;\
 		mvme88k) \
 			echo m88k ;;\
-		mvmeppc|macppc) \
+		mvmeppc|macppc|pegasos) \
 			echo powerpc ;;\
 		sgi) \
 			echo mips ;;\
