@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld.c,v 1.17 2000/04/24 17:56:34 niklas Exp $	*/
+/*	$OpenBSD: rtld.c,v 1.18 2000/04/27 19:33:09 espie Exp $	*/
 /*	$NetBSD: rtld.c,v 1.43 1996/01/14 00:35:17 pk Exp $	*/
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -717,6 +717,7 @@ init_maps(head)
 			continue;
 		call_map(smp, ".init");
 		call_map(smp, "__init");
+		call_map(smp, "__GLOBAL__DI");
 	}
 }
 
@@ -1563,6 +1564,7 @@ xprintf("dlclose(%s): refcount = %d\n", smp->som_path, LM_PRIVATE(smp)->spd_refc
 
 	/* Dismantle shared object map and descriptor */
 	call_map(smp, "__fini");
+	call_map(smp, "__GLOBAL__DD");
 #if 0
 	unload_subs(smp);		/* XXX should unload implied objects */
 #endif
@@ -1627,6 +1629,7 @@ __dlexit()
 		if (LM_PRIVATE(smp)->spd_flags & RTLD_RTLD)
 			continue;
 		call_map(smp, ".fini");
+		call_map(smp, "__GLOBAL__DD");
 	}
 }
 
