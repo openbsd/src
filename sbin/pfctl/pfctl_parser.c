@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.40 2001/08/11 12:05:00 dhartmei Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.41 2001/08/16 11:46:56 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -236,7 +236,7 @@ print_flags(u_int8_t f)
 void
 print_nat(struct pf_nat *n)
 {
-	printf("nat ");
+	printf("@nat ");
 	if (n->ifname[0]) {
 		printf("on ");
 		if (n->ifnot)
@@ -287,7 +287,7 @@ print_nat(struct pf_nat *n)
 void
 print_rdr(struct pf_rdr *r)
 {
-	printf("rdr ");
+	printf("@rdr ");
 	if (r->ifname[0]) {
 		printf("on ");
 		if (r->ifnot)
