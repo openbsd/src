@@ -1,6 +1,5 @@
-.\"	$OpenBSD: join.1,v 1.2 1996/06/26 05:34:39 deraadt Exp $
-.\" Copyright (c) 1990 The Regents of the University of California.
-.\" All rights reserved.
+.\" Copyright (c) 1990, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" This code is derived from software contributed to Berkeley by
 .\" the Institute of Electrical and Electronics Engineers, Inc.
@@ -33,9 +32,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	from: @(#)join.1	6.8 (Berkeley) 11/18/91
+.\"	@(#)join.1	8.3 (Berkeley) 4/28/95
 .\"
-.Dd November 18, 1991
+.Dd April 28, 1995
 .Dt JOIN 1
 .Os
 .Sh NAME
@@ -66,9 +65,9 @@ There is one line in the output for each pair of lines in
 and
 .Ar file2
 which have identical join fields.
-Each output line consists of the join field, the remaining fields from
+Each output line consists of the join field, the other fields from
 .Ar file1
-and then the remaining fields from
+and then the other fields from
 .Ar file2 .
 .Pp
 The default field separators are tab and space characters.
@@ -85,6 +84,11 @@ The following options are available:
 In addition to the default output, produce a line for each unpairable
 line in file
 .Ar file_number .
+(The argument to
+.Fl a
+must not be preceded by a space; see the
+.Sx COMPATIBILITY
+section.)
 .It Fl e Ar string
 Replace empty output fields with
 .Ar string .
@@ -103,7 +107,7 @@ is a file number and
 .Ar field
 is a field number.
 The elements of list must be either comma (``,'') or whitespace separated.
-(This will require quoting to protect it from the shell, or, a simpler
+(The latter requires quoting to protect it from the shell, or, a simpler
 approach is to use multiple
 .Fl o
 options.)
@@ -166,6 +170,10 @@ the following options are available:
 .It Fl a
 In addition to the default output, produce a line for each unpairable line
 in both file 1 and file 2.
+(To distinguish between this and
+.Fl a Ar file_number ,
+.Nm join
+currently requires that the latter not include any white space.)
 .It Fl j1 Ar field
 Join on the
 .Ar field Ns 'th
