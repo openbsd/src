@@ -1,4 +1,4 @@
-/*	$OpenBSD: su.c,v 1.8 1996/10/12 20:40:37 millert Exp $	*/
+/*	$OpenBSD: su.c,v 1.9 1996/10/16 00:37:11 millert Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)su.c	5.26 (Berkeley) 7/6/91";*/
-static char rcsid[] = "$OpenBSD: su.c,v 1.8 1996/10/12 20:40:37 millert Exp $";
+static char rcsid[] = "$OpenBSD: su.c,v 1.9 1996/10/16 00:37:11 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -87,7 +87,7 @@ main(argc, argv)
 	register struct passwd *pwd;
 	register char *p, **g;
 	struct group *gr;
-	uid_t ruid, getuid();
+	uid_t ruid;
 	int asme, ch, asthem, fastlogin, prio;
 	enum { UNSET, YES, NO } iscsh = UNSET;
 	char *user, *shell, *avshell, *username, *cleanenv[10], **np;
@@ -137,10 +137,11 @@ main(argc, argv)
 		pwd = getpwuid(ruid);
 	if (pwd == NULL)
 		errx(1, "who are you?");
-	username = strdup(pwd->pw_name);
+	if ((username = strdup(pwd->pw_name)) == NULL)
+		err(1, "can't allocate memory");
 	if (asme)
 		if (pwd->pw_shell && *pwd->pw_shell)
-			shell = strcpy(shellbuf,  pwd->pw_shell);
+			shell = strcpy(shellbuf, pwd->pw_shell);
 		else {
 			shell = _PATH_BSHELL;
 			iscsh = NO;
@@ -274,7 +275,7 @@ badlogin:
 	(void)setpriority(PRIO_PROCESS, 0, prio);
 
 	execv(shell, np);
-	err(1, "%s", shell);
+	err(1, shell);
 }
 
 int
