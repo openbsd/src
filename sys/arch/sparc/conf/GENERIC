@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.56 2002/09/20 11:17:55 fgsch Exp $
+#	$OpenBSD: GENERIC,v 1.57 2002/11/23 20:47:04 miod Exp $
 # 	$NetBSD: GENERIC,v 1.48 1997/08/23 19:19:01 mjacob Exp $
 
 # Machine architecture; required by config(8)
@@ -174,7 +174,7 @@ ie2	at vmes0 addr 0xff31ff02 level 5 vect 0x76
 ie3	at vmes0 addr 0xff35ff02 level 5 vect 0x77
 ie4	at vmes0 addr 0xff2dff02 level 5 vect 0x7c
 
-# HappyMeal ethernet
+# HappyMeal ethernet (will not work on sun4c)
 hme*	at sbus? slot ? offset ?
 # Media Independent Interface (mii) drivers (required by hme)
 nsphy*	at mii? phy ?				# NS and compatible PHYs

@@ -1,4 +1,4 @@
-#	$OpenBSD: SUN4C,v 1.35 2002/10/27 23:00:14 miod Exp $
+#	$OpenBSD: SUN4C,v 1.36 2002/11/23 20:47:04 miod Exp $
 # 	$NetBSD: GENERIC,v 1.48 1997/08/23 19:19:01 mjacob Exp $
 
 # Machine architecture; required by config(8)
@@ -98,12 +98,6 @@ isp*	at sbus? slot ? offset ?
 # sun4/300 and sun4c Ethernet - an AMD 7990 LANCE
 le0	at sbus0 slot ? offset ?			# sun4c on-board
 le*	at sbus? slot ? offset ?
-
-# HappyMeal ethernet
-hme*	at sbus? slot ? offset ?
-# Media Independent Interface (mii) drivers (required by hme)
-nsphy*	at mii? phy ?				# NS and compatible PHYs
-qsphy*	at mii? phy ?				# Quality Semi QS6612 PHYs
 
 # Quad-ethernet glue device, and sub-devices
 qec*	at sbus? slot ? offset ?

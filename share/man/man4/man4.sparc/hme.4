@@ -1,4 +1,4 @@
-.\"     $OpenBSD: hme.4,v 1.10 2002/10/01 21:02:19 miod Exp $
+.\"     $OpenBSD: hme.4,v 1.11 2002/11/23 20:47:02 miod Exp $
 .\"
 .\" Copyright (c) 1998 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -36,9 +36,9 @@
 .Nm hme
 .Nd SPARC National DP83840 ethernet interface
 .Sh SYNOPSIS
-.Cd "hme* at sbus? slot ? offset ?                 " Pq "sun4c/sun4m"
-.Cd "nsphy* at mii? phy ?                          " Pq "sun4c/sun4m"
-.Cd "qsphy* at mii? phy ?                          " Pq "sun4c/sun4m"
+.Cd "hme* at sbus? slot ? offset ?                 " Pq "sun4m"
+.Cd "nsphy* at mii? phy ?                          " Pq "sun4m"
+.Cd "qsphy* at mii? phy ?                          " Pq "sun4m"
 .Sh DESCRIPTION
 The
 .Nm
@@ -110,3 +110,8 @@ support for the
 .Nm
 first appeared in
 .Ox 2.4 .
+.Sh CAVEATS
+The
+.Nm
+cards will not function in a sun4c class machine,
+due to PROM limitations.
