@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdc.c,v 1.16 2000/04/10 07:06:14 csapuntz Exp $     */
+/*      $OpenBSD: wdc.c,v 1.17 2000/06/13 04:12:02 chris Exp $     */
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $ */
 
 
@@ -1395,7 +1395,7 @@ __wdccommand_start(chp, xfer)
 	CHP_WRITE_REG(chp, wdr_sdh, WDSD_IBM | (drive << 4));
 
 	if (wdc_c->r_command != ATAPI_SOFT_RESET) {
-		if (wdcwait(chp, wdc_c->r_st_bmask, wdc_c->r_st_bmask,
+		if (wdcwait(chp, wdc_c->r_st_bmask | WDCS_DRQ, wdc_c->r_st_bmask,
 		    wdc_c->timeout) != 0) {
 			wdc_c->flags |= AT_TIMEOU;
 			__wdccommand_done(chp, xfer);
