@@ -1,4 +1,4 @@
-.\"	$OpenBSD: lpt.4,v 1.4 1998/07/12 09:55:25 downsj Exp $
+.\"	$OpenBSD: lpt.4,v 1.5 1999/01/07 16:01:57 niklas Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
 .\" All rights reserved.
@@ -44,7 +44,8 @@ This driver provides access to parallel ports.
 .Pp
 The highest bit in the minor (bit 7, or add 128) number selects
 whether to do polling or wait for interrupts.  If no IRQ is specified
-in the kernel configuration, only the polling device may be used.
+in the kernel configuration, or the IRQ specified is not available at
+attach time, only the polling device may be used.
 .Pp
 The next lower bit (bit 6, or add 64) indicates the driver should
 avoid initializing the printer.
