@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cvs.1,v 1.20 2004/12/28 20:38:20 jmc Exp $
+.\"	$OpenBSD: cvs.1,v 1.21 2005/01/05 23:45:56 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
 .\" All rights reserved.
@@ -261,8 +261,36 @@ Display status information on checked out files.
 Aliases:
 .Ic st ,
 .Ic stat .
-.It Ic tag
-Add a symbolic tag to checked out version of files.
+.It Xo Ic tag
+.Op Fl bdl
+.Op Fl r Ar old_tag
+.Op Ar symbolic_tag
+.Op Ar file ...
+.Xc
+.Pp
+Add a symbolic tag to a checked out version of
+.Ar file .
+.Pp
+The
+.Fl b
+flag is used to specify a branch tag.
+If the
+.Fl d
+flag is specified the tag will be deleted.
+The
+.Fl l
+flag is used to specify a local change only and disables the recursive
+behaviour.
+If the
+.Fl r
+flag is used,
+.Nm
+will only tag the files with
+.Ar symbolic_tag
+if they are already tagged with
+.Ar old_tag .
+When done, it will remove the old tag
+leaving only the new tag behind on exactly the same files.
 .Pp
 Aliases:
 .Ic ta ,
