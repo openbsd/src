@@ -166,6 +166,7 @@ sbc_obio_attach(parent, self, args)
 	ncr_sc->sc_link.adapter_target = 7;
 	ncr_sc->sc_link.adapter = &sbc_ops;
 	ncr_sc->sc_link.device = &sbc_dev;
+	ncr_sc->sc_link.openings = 4;
 
 	/*
 	 * Initialize fields used by the MI code

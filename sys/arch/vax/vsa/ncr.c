@@ -239,6 +239,7 @@ si_attach(parent, self, aux)
 	ncr_sc->sc_link.adapter_target = 7;
 	ncr_sc->sc_link.adapter = &si_ops;
 	ncr_sc->sc_link.device = &si_dev;
+	ncr_sc->sc_link.openings = 4;
 
 	/*
 	 * Initialize si board itself.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: si.c,v 1.13 1999/07/09 21:34:45 art Exp $	*/
+/*	$OpenBSD: si.c,v 1.14 2000/09/21 17:45:12 mickey Exp $	*/
 /*	$NetBSD: si.c,v 1.38 1997/08/27 11:24:20 bouyer Exp $	*/
 
 /*-
@@ -359,6 +359,7 @@ si_attach(parent, self, args)
 	ncr_sc->sc_link.adapter_target = 7;
 	ncr_sc->sc_link.adapter = &si_ops;
 	ncr_sc->sc_link.device = &si_dev;
+	ncr_sc->sc_link.openings = 4;
 
 	/*
 	 * Initialize fields used by the MI code
