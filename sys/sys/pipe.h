@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipe.h,v 1.3 1999/02/16 21:27:37 art Exp $	*/
+/*	$OpenBSD: pipe.h,v 1.4 1999/10/29 14:01:44 art Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -34,17 +34,6 @@
 #endif /* _KERNEL */
 
 /*
- * Use this define if you want to disable *fancy* VM things.  Expect an
- * approx 30% decrease in transfer rate.  This could be useful for
- * NetBSD or OpenBSD.
- */
-#ifdef _KERNEL
-#if defined(__NetBSD__) || defined(__OpenBSD__)
-#define PIPE_NODIRECT
-#endif
-#endif
-
-/*
  * Pipe buffer size, keep moderate in value, pipes take kva space.
  */
 #ifndef PIPE_SIZE
@@ -53,20 +42,6 @@
 
 #ifndef BIG_PIPE_SIZE
 #define BIG_PIPE_SIZE	(64*1024)
-#endif
-
-/*
- * PIPE_MINDIRECT MUST be smaller than PIPE_SIZE and MUST be bigger
- * than PIPE_BUF.
- */
-#ifndef PIPE_MINDIRECT
-#define PIPE_MINDIRECT	8192
-#endif
-
-#if defined(__FreeBSD__)
-#define PIPENPAGES	(BIG_PIPE_SIZE / PAGE_SIZE + 1)
-#else /* (__NetBSD__) || (__OpenBSD__) */
-#define PIPENPAGES	(BIG_PIPE_SIZE / NBPG + 1)
 #endif
 
 /*
@@ -83,19 +58,6 @@ struct pipebuf {
 	struct	vm_object *object;	/* VM object containing buffer */
 };
 
-#ifndef PIPE_NODIRECT
-/*
- * Information to support direct transfers between processes for pipes.
- */
-struct pipemapping {
-	vm_offset_t	kva;		/* kernel virtual address */
-	vm_size_t	cnt;		/* number of chars in buffer */
-	vm_size_t	pos;		/* current position of transfer */
-	int		npages;		/* number of pages */
-	vm_page_t	ms[PIPENPAGES];	/* pages in source process */
-};
-#endif
-
 /*
  * Bits in pipe_state.
  */
@@ -107,8 +69,6 @@ struct pipemapping {
 #define PIPE_EOF	0x080	/* Pipe is in EOF condition. */
 #define PIPE_LOCK	0x100	/* Process has exclusive access to pointers/data. */
 #define PIPE_LWANT	0x200	/* Process wants exclusive access to pointers/data. */
-#define PIPE_DIRECTW	0x400	/* Pipe direct write active. */
-#define PIPE_DIRECTOK	0x800	/* Direct mode ok. */
 
 /*
  * Per-pipe data structure.
@@ -116,9 +76,6 @@ struct pipemapping {
  */
 struct pipe {
 	struct	pipebuf pipe_buffer;	/* data storage */
-#ifndef PIPE_NODIRECT
-	struct	pipemapping pipe_map;	/* pipe mapping for direct I/O */
-#endif
 	struct	selinfo pipe_sel;	/* for compat with select */
 	struct	timeval pipe_atime;	/* time of last access */
 	struct	timeval pipe_mtime;	/* time of last modify */
