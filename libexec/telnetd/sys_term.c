@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_term.c,v 1.4 1996/04/23 03:03:47 deraadt Exp $	*/
+/*	$OpenBSD: sys_term.c,v 1.5 1996/12/23 14:29:46 robin Exp $	*/
 /*	$NetBSD: sys_term.c,v 1.9 1996/03/20 04:25:53 tls Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
 static char sccsid[] = "@(#)sys_term.c	8.4+1 (Berkeley) 5/30/95";
 static char rcsid[] = "$NetBSD: sys_term.c,v 1.8 1996/02/28 20:38:21 thorpej Exp $";
 #else
-static char rcsid[] = "$OpenBSD: sys_term.c,v 1.4 1996/04/23 03:03:47 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: sys_term.c,v 1.5 1996/12/23 14:29:46 robin Exp $";
 #endif
 #endif /* not lint */
 
@@ -1527,7 +1527,7 @@ init_env()
 	char **envp;
 
 	envp = envinit;
-	if (*envp = getenv("TZ"))
+	if ((*envp = getenv("TZ")))
 		*envp++ -= 3;
 #if	defined(CRAY) || defined(__hpux)
 	else
