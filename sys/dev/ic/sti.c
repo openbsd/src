@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti.c,v 1.40 2005/01/23 16:55:18 miod Exp $	*/
+/*	$OpenBSD: sti.c,v 1.41 2005/01/24 19:20:04 miod Exp $	*/
 
 /*
  * Copyright (c) 2000-2003 Michael Shalayeff
@@ -259,6 +259,14 @@ sti_attach_common(sc, codebase)
 	sc->utiming	= (sti_utiming_t)O(STI_UTIMING);
 	sc->pmgr	= (sti_pmgr_t)	O(STI_PROC_MGR);
 	sc->util	= (sti_util_t)	O(STI_UTIL);
+
+	/*
+	 * Set colormap entry is not implemented until 8.04, so force
+	 * a NULL pointer here.
+	 */
+	if (dd->dd_grrev < STI_REVISION(8,4)) {
+		sc->scment = NULL;
+	}
 
 	if ((error = uvm_map_protect(kernel_map, sc->sc_code,
 	    sc->sc_code + round_page(size), UVM_PROT_RX, FALSE))) {
@@ -668,7 +676,10 @@ sti_ioctl(v, cmd, data, flag, p)
 		wdf->height = sc->sc_cfg.scr_height;
 		wdf->width  = sc->sc_cfg.scr_width;
 		wdf->depth  = sc->sc_bpp;
-		wdf->cmsize = STI_NCMAP;
+		if (sc->scment == NULL)
+			wdf->cmsize = 0;
+		else
+			wdf->cmsize = STI_NCMAP;
 		break;
 
 	case WSDISPLAYIO_LINEBYTES:
@@ -677,11 +688,11 @@ sti_ioctl(v, cmd, data, flag, p)
 
 	case WSDISPLAYIO_GETCMAP:
 		if (sc->scment == NULL)
-			return ENOTTY;
+			return ENODEV;
 		cmapp = (struct wsdisplay_cmap *)data;
 		idx = cmapp->index;
 		count = cmapp->count;
-		if (idx > STI_NCMAP || idx + count >= STI_NCMAP)
+		if (idx >= STI_NCMAP || idx + count > STI_NCMAP)
 			return EINVAL;
 		if ((ret = copyout(&sc->sc_rcmap[idx], cmapp->red, count)))
 			break;
@@ -693,11 +704,11 @@ sti_ioctl(v, cmd, data, flag, p)
 
 	case WSDISPLAYIO_PUTCMAP:
 		if (sc->scment == NULL)
-			return ENOTTY;
+			return ENODEV;
 		cmapp = (struct wsdisplay_cmap *)data;
 		idx = cmapp->index;
 		count = cmapp->count;
-		if (idx > STI_NCMAP || idx + count >= STI_NCMAP)
+		if (idx >= STI_NCMAP || idx + count > STI_NCMAP)
 			return EINVAL;
 		if ((ret = copyin(cmapp->red, &sc->sc_rcmap[idx], count)))
 			break;
@@ -730,7 +741,7 @@ sti_ioctl(v, cmd, data, flag, p)
 	case WSDISPLAYIO_GCURSOR:
 	case WSDISPLAYIO_SCURSOR:
 	default:
-		return (ENOTTY);	/* not supported yet */
+		return (-1);		/* not supported yet */
 	}
 
 	return (ret);
