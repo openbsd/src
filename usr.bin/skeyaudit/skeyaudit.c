@@ -1,4 +1,4 @@
-/*	$OpenBSD: skeyaudit.c,v 1.12 2002/02/16 21:27:52 millert Exp $	*/
+/*	$OpenBSD: skeyaudit.c,v 1.13 2002/05/16 03:50:42 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -58,9 +58,6 @@ main(argc, argv)
 	int ch, errs = 0, left = 0, aflag = 0, iflag = 0, limit = 12;
 	char *name;
 
-	if (geteuid() != 0)
-		errx(1, "must be setuid root");
-
 	while ((ch = getopt(argc, argv, "ail:")) != -1)
 		switch(ch) {
 		case 'a':
@@ -100,7 +97,7 @@ main(argc, argv)
 			notify(pw, left, iflag);
 		}
 		if (ch == -1)
-			errx(-1, "cannot open %s", _PATH_SKEYKEYS);
+			errx(-1, "cannot open %s", _PATH_SKEYDIR);
 		else
 			(void)fclose(key.keyfile);
 	} else {
@@ -116,11 +113,11 @@ main(argc, argv)
 				left = key.n - 1;
 				break;
 			case -1:	/* File error */
-				errx(errs, "cannot open %s", _PATH_SKEYKEYS);
+				errx(errs, "cannot open %s", _PATH_SKEYDIR);
 				break;
 			case 1:		/* Unknown user */
 				warnx("%s is not listed in %s", name,
-				    _PATH_SKEYKEYS);
+				    _PATH_SKEYDIR);
 		}
 		(void)fclose(key.keyfile);
 

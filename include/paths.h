@@ -1,4 +1,4 @@
-/*	$OpenBSD: paths.h,v 1.18 2000/06/10 20:01:06 deraadt Exp $	*/
+/*	$OpenBSD: paths.h,v 1.19 2002/05/16 03:50:42 millert Exp $	*/
 /*	$NetBSD: paths.h,v 1.7 1994/10/26 00:56:12 cgd Exp $	*/
 
 /*
@@ -66,7 +66,6 @@
 #define	_PATH_RSH	"/usr/bin/rsh"
 #define	_PATH_SENDMAIL	"/usr/sbin/sendmail"
 #define	_PATH_SHELLS	"/etc/shells"
-#define	_PATH_SKEYKEYS	"/etc/skeykeys"
 #define	_PATH_TTY	"/dev/tty"
 #define	_PATH_UNIX	"/bsd"
 #define	_PATH_VI	"/usr/bin/vi"

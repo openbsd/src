@@ -10,23 +10,22 @@
  *
  * Main client header
  *
- * $OpenBSD: skey.h,v 1.17 2002/02/16 21:27:28 millert Exp $
+ * $OpenBSD: skey.h,v 1.18 2002/05/16 03:50:42 millert Exp $
  */
 
 #ifndef _SKEY_H_
 #define _SKEY_H_ 1
 
-#include <sys/cdefs.h>
+#include <dirent.h>
 
 /* Server-side data structure for reading keys file during login */
 struct skey {
 	FILE *keyfile;
+	DIR  *keydir;
 	char *logname;
 	char *seed;
 	char *val;
-	int n;
-	int len;
-	long recstart;		/* needed so reread of buffer is efficient */
+	unsigned int n;
 	char buf[256];
 };
 
@@ -60,6 +59,9 @@ struct mc {
 
 /* Location of random file for bogus challenges */
 #define _SKEY_RAND_FILE_PATH_	"/var/db/host.random"
+
+/* Directory for S/Key per-user files */
+#define _PATH_SKEYDIR		"/etc/skey"
 
 __BEGIN_DECLS
 void f(char *);

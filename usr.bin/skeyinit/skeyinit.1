@@ -1,4 +1,4 @@
-.\"	$OpenBSD: skeyinit.1,v 1.20 2001/06/20 22:25:08 millert Exp $
+.\"	$OpenBSD: skeyinit.1,v 1.21 2002/05/16 03:50:42 millert Exp $
 .\"	$NetBSD: skeyinit.1,v 1.4 1995/07/07 22:24:09 jtc Exp $
 .\"	@(#)skeyinit.1	1.1 	10/28/93
 .\"
@@ -11,7 +11,12 @@
 .Sh SYNOPSIS
 .Nm skeyinit
 .Op Fl s
+.Op Fl x
 .Op Fl z
+.Op Fl C
+.Op Fl D
+.Op Fl E
+.Op Fl a Ar auth-type
 .Op Fl n Ar count
 .Oo
 .Fl md4 | Fl md5 | Fl sha1 |
@@ -49,8 +54,25 @@ S/Key challenge and allowed to proceed if it is correct.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl x
-Displays pass phrase in hexadecimal instead of ASCII.
+.It Fl C
+Converts from the old-style
+.Pa /etc/skeykeys
+database to a new-style database where user records are stored in the
+.Pa /etc/skey
+directory.
+If an entry already exists in the new-style database it will not
+be overwritten.
+.Pa 
+.It Fl D
+Disables access to the S/Key database.
+Only the superuser may use the
+.Fl D
+option.
+.It Fl E
+Enables access to the S/Key database.
+Only the superuser may use the
+.Fl E
+option.
 .It Fl s
 Set secure mode where the user is expected to have used a secure
 machine to generate the first one-time password.
@@ -76,8 +98,15 @@ count and seed.
 You can then "cut-and-paste" or type the words into the
 .Nm
 window.
+.It Fl x
+Displays pass phrase in hexadecimal instead of ASCII.
 .It Fl z
 Allows the user to zero their S/Key entry.
+.It Fl a Ar auth-type
+Specify an authentication type such as
+.Dq krb4
+or
+.Dq krb5 .
 .It Fl n Ar count
 Start the
 .Nm skey
@@ -99,17 +128,20 @@ By default the current user is operated on.
 .Sh ERRORS
 .Bl -tag -compact -width "skey disabled"
 .It "skey disabled"
-.Pa /etc/skeykeys
-does not exist.
-It must be created by the superuser in order to use
-.Nm skeyinit .
+.Pa /etc/skey
+does not exist or is not accessable by the user.
+The superuser may enable
+.Nm
+via the
+.Fl E
+flag.
 .El
 .Sh FILES
-.Bl -tag -width /etc/skeykeys
-.It Pa /etc/skeykeys
-database of information for S/Key system
+.Bl -tag -width /etc/skey
+.It Pa /etc/skey
+directory containing user entries for S/Key
 .El
 .Sh SEE ALSO
 .Xr skey 1
 .Sh AUTHORS
-Phil Karn, Neil M. Haller, John S. Walden, Scott Chasin
+Phil Karn, Neil M. Haller, John S. Walden, Scott Chasin, Todd Miller

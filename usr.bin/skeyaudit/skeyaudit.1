@@ -1,4 +1,4 @@
-.\" $OpenBSD: skeyaudit.1,v 1.8 2000/11/09 17:52:38 aaron Exp $
+.\" $OpenBSD: skeyaudit.1,v 1.9 2002/05/16 03:50:42 millert Exp $
 .\"
 .Dd 22 July 1997
 .Dt SKEYAUDIT 1
@@ -13,8 +13,8 @@
 .Op Fl l Ar limit
 .Sh DESCRIPTION
 .Nm
-searches through the file
-.Pa /etc/skeykeys
+searches through the files in
+.Pa /etc/skey
 for users whose S/Key sequence number is less than
 .Ar limit ,
 and mails them a reminder to run
@@ -25,7 +25,7 @@ The options are as follows:
 .Bl -tag -width Ds
 .It Fl a
 Check all keys in
-.Pa /etc/skeykeys .
+.Pa /etc/skey
 This option is only available to the superuser and
 is useful to run regularly via
 .Xr cron 8 .
@@ -37,9 +37,9 @@ The limit used to determine whether or not a user should be notified.
 The default is to notify if there are fewer than 12 keys left.
 .El
 .Sh FILES
-.Bl -tag -width /etc/skeykeys -compact
-.It Pa /etc/skeykeys
-S/Key key information database
+.Bl -tag -width /etc/skey
+.It Pa /etc/skey
+directory containing user entries for S/Key
 .El
 .Sh SEE ALSO
 .Xr skey 1 ,

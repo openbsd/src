@@ -1,4 +1,4 @@
-/*	$OpenBSD: skeyinit.c,v 1.31 2002/02/16 21:27:52 millert Exp $	*/
+/*	$OpenBSD: skeyinit.c,v 1.32 2002/05/16 03:50:42 millert Exp $	*/
 
 /* OpenBSD S/Key (skeyinit.c)
  *
@@ -14,12 +14,13 @@
 
 #include <sys/param.h>
 #include <sys/file.h>
-#include <sys/time.h>
 #include <sys/resource.h>
+#include <sys/stat.h>
+#include <sys/time.h>
 
+#include <ctype.h>
 #include <err.h>
 #include <errno.h>
-#include <ctype.h>
 #include <pwd.h>
 #include <readpassphrase.h>
 #include <stdio.h>
@@ -31,37 +32,35 @@
 #include <utmp.h>
 
 #include <skey.h>
+#include <bsd_auth.h>
 
 #ifndef SKEY_NAMELEN
 #define SKEY_NAMELEN    4
 #endif
 
-void	lockeof(struct skey *, char *);
 void	usage(char *);
 void	secure_mode(int *, char *, char *, char *, char *, size_t);
 void	normal_mode(char *, int, char *, char *, char *);
 void	timedout(int);
+void	convert_db(void);
+void	enable_db(int);
 
 int
 main(argc, argv)
 	int     argc;
 	char   *argv[];
 {
-	int     rval, i, l, n=0, defaultsetup=1, zerokey=0, hexmode=0;
-	int	oldmd4=0;
-	time_t  now;
-	size_t	seedlen;
+	int     rval, i, l, n, defaultsetup, zerokey, hexmode, enable, convert;
 	char	hostname[MAXHOSTNAMELEN];
-	char    passwd[SKEY_MAX_PW_LEN+2];
-	char	seed[SKEY_MAX_SEED_LEN+2], defaultseed[SKEY_MAX_SEED_LEN+1];
-	char    tbuf[27], buf[256], key[SKEY_BINKEY_SIZE];
-	char    lastc, me[UT_NAMESIZE+1], *salt, *p, *ht=NULL;
+	char	seed[SKEY_MAX_SEED_LEN + 2], defaultseed[SKEY_MAX_SEED_LEN + 1];
+	char    buf[256], key[SKEY_BINKEY_SIZE], filename[PATH_MAX], *ht;
+	char    lastc, me[UT_NAMESIZE + 1], *p, *auth_type;
 	struct skey skey;
 	struct passwd *pp;
-	struct tm *tm;
 
-	if (geteuid() != 0)
-		errx(1, "must be setuid root.");
+	n = zerokey = hexmode = enable = convert = 0;
+	defaultsetup = 1;
+	ht = auth_type = NULL;
 
 	/* Build up a default seed based on the hostname and time */
 	if (gethostname(hostname, sizeof(hostname)) < 0)
@@ -75,9 +74,6 @@ main(argc, argv)
 			*p++ = hostname[i];
 	}
 	*p = '\0';
-	(void)time(&now);
-	(void)sprintf(tbuf, "%05ld", (long) (now % 100000));
-	(void)strncat(defaultseed, tbuf, sizeof(defaultseed) - 5);
 
 	if ((pp = getpwuid(getuid())) == NULL)
 		err(1, "no user with uid %d", getuid());
@@ -85,14 +81,19 @@ main(argc, argv)
 
 	if ((pp = getpwnam(me)) == NULL)
 		err(1, "Who are you?");
-	salt = pp->pw_passwd;
 
 	for (i = 1; i < argc && argv[i][0] == '-' && strcmp(argv[i], "--");) {
 		if (argv[i][2] == '\0') {
 			/* Single character switch */
 			switch (argv[i][1]) {
+			case 'a':
+				if (argv[++i] == NULL || argv[i][0] == '\0')
+					usage(argv[0]);
+				auth_type = argv[i];
+				break;
 			case 's':
 				defaultsetup = 0;
+				auth_type = "skey";
 				break;
 			case 'x':
 				hexmode = 1;
@@ -107,6 +108,15 @@ main(argc, argv)
 					errx(1, "count must be > 0 and < %d",
 					     SKEY_MAX_SEQ);
 				break;
+			case 'C':
+				convert = 1;
+				break;
+			case 'D':
+				enable = -1;
+				break;
+			case 'E':
+				enable = 1;
+				break;
 			default:
 				usage(argv[0]);
 			}
@@ -119,11 +129,21 @@ main(argc, argv)
 		}
 		i++;
 	}
+	argv += i;
+	argc -= i;
 
-	/* check for optional user string */
-	if (argc - i  > 1) {
+	if (argc > 1 || (enable && convert) || (enable && argc) ||
+	    (convert && argc))
 		usage(argv[0]);
-	} else if (argv[i]) {
+
+	/* Handle -C, -D, and -E */
+	if (enable)
+		enable_db(enable);
+	if (convert)
+		convert_db();
+
+	/* Check for optional user string. */
+	if (argc == 1) {
 		if ((pp = getpwnam(argv[i])) == NULL) {
 			if (getuid() == 0) {
 				static struct passwd _pp;
@@ -134,42 +154,23 @@ main(argc, argv)
 			} else {
 				errx(1, "User unknown: %s", argv[i]);
 			}
-		} else if (strcmp(pp->pw_name, me) != 0) {
-			if (getuid() != 0) {
-				/* Only root can change other's passwds */
-				errx(1, "Permission denied.");
-			}
+		} else if (strcmp(pp->pw_name, me) != 0 && getuid() != 0) {
+			/* Only root can change other's S/Keys. */
+			errx(1, "Permission denied.");
 		}
 	}
 
 	if (defaultsetup)
-		fputs("Reminder - Only use this method if you are directly connected\n           or have an encrypted channel.  If you are using telnet\n           or rlogin, hit return now and use skeyinit -s.\n", stderr);
+		fputs("Reminder - Only use this method if you are directly "
+		    "connected\n           or have an encrypted channel.  If "
+		    "you are using telnet,\n           hit return now and use "
+		    "skeyinit -s.\n", stderr);
 
 	if (getuid() != 0) {
-		/* XXX - use BSD auth */
-		passwd[0] = '\0';
-		if (!defaultsetup && skeychallenge(&skey, me, buf) == 0) {
-			printf("Enter S/Key password below or hit return twice "
-			    "to enter standard password.\n%s\n", buf);
-			fflush(stdout);
-			if (!readpassphrase("S/Key Password: ", passwd,
-			    sizeof(passwd), 0) || passwd[0] == '\0') {
-				readpassphrase("S/Key Password: [echo on] ",
-				    passwd, sizeof(passwd), RPP_ECHO_ON);
-			}
-		}
-		if (passwd[0]) {
-			if (skeyverify(&skey, passwd) != 0)
-				errx(1, "Password incorrect.");
-		} else {
-			fflush(stdout);
-			readpassphrase("Password: ", passwd, sizeof(passwd), 0);
-			if (strcmp(crypt(passwd, salt), pp->pw_passwd)) {
-				if (passwd[0])
-					warnx("Password incorrect.");
-				exit(1);
-			}
-		}
+		if ((pp = pw_dup(pp)) == NULL)
+			err(1, NULL);
+		if (!auth_userokay(pp->pw_name, auth_type, NULL, NULL))
+			errx(1, "Password incorrect");
 	}
 
 	/*
@@ -229,16 +230,23 @@ main(argc, argv)
 				errx(1, "You have no entry to zero.");
 			(void)printf("[Adding %s with %s]\n", pp->pw_name,
 			    ht ? ht : skey_get_algorithm());
-			lockeof(&skey, pp->pw_name);
+			if (snprintf(filename, sizeof(filename), "%s/%s",
+			    _PATH_SKEYDIR, pp->pw_name) >= sizeof(filename)) {
+				errno = ENAMETOOLONG;
+				err(1, "Cannot create S/Key entry");
+			}
+			if ((l = open(filename, O_RDWR | O_CREAT | O_EXCL,
+			    S_IRUSR | S_IWUSR)) == -1 ||
+			    flock(l, LOCK_EX) != 0 ||
+			    (skey.keyfile = fdopen(l, "r+")) == NULL)
+				err(1, "Cannot create S/Key entry");
 			break;
 	}
+	if (fchown(fileno(skey.keyfile), pp->pw_uid, -1) != 0 ||
+	    fchmod(fileno(skey.keyfile), S_IRUSR | S_IWUSR) != 0)
+		err(1, "can't set owner/mode for %s", pp->pw_name);
 	if (n == 0)
 		n = 99;
-
-	/* Do we have an old-style md4 entry? */
-	if (rval == 0 && strcmp("md4", skey_get_algorithm()) == 0 &&
-	    strcmp("md4", skey.logname + strlen(skey.logname) + 1) != 0)
-		oldmd4 = 1;
 
 	/* Set hash type if asked to */
 	if (ht && strcmp(ht, skey_get_algorithm()) != 0)
@@ -251,55 +259,14 @@ main(argc, argv)
 		normal_mode(pp->pw_name, n, key, seed, defaultseed);
 	alarm(0);
 
-	(void)time(&now);
-	tm = localtime(&now);
-	(void)strftime(tbuf, sizeof(tbuf), " %b %d,%Y %T", tm);
-
-	/* If this is an exiting entry, compute the line length and seed pad */
-	seedlen = SKEY_MAX_SEED_LEN;
-	if (rval == 0) {
-		int nlen;
-
-		nlen = strlen(pp->pw_name) + 1 + strlen(skey_get_algorithm()) +
-		    1 + 4 + 1 + strlen(seed) + 1 + 16 + 1 + strlen(tbuf) + 1;
-
-		/*
-		 * If there was no hash type (md4) add one unless we
-		 * are short on space.
-		 */ 
-		if (oldmd4) {
-			if (nlen > skey.len)
-				nlen -= 4;
-			else
-				oldmd4 = 0;
-		}
-
-		/* If new entry is longer than the old, comment out the old. */
-		if (nlen > skey.len) {
-			(void)skeyzero(&skey);
-			/* Re-open keys file and seek to the end */
-			if (skeylookup(&skey, pp->pw_name) == -1)
-				err(1, "cannot reopen database");
-			lockeof(&skey, pp->pw_name);
-		} else {
-			/* Compute how much to space-pad the seed */
-			seedlen = strlen(seed) + (skey.len - nlen);
-		}
-	}
-
+	/* XXX - why use malloc here? */
 	if ((skey.val = (char *)malloc(16 + 1)) == NULL)
 		err(1, "Can't allocate memory");
 	btoa8(skey.val, key);
 
-	/* Don't save algorithm type for md4 (maintain record length) */
-	/* XXX - should check return values of fprintf + fclose */
-	if (oldmd4)
-		(void)fprintf(skey.keyfile, "%s %04d %-*s %s %-21s\n",
-		    pp->pw_name, n, seedlen, seed, skey.val, tbuf);
-	else
-		(void)fprintf(skey.keyfile, "%s %s %04d %-*s %s %-21s\n",
-		    pp->pw_name, skey_get_algorithm(), n, seedlen, seed,
-		    skey.val, tbuf);
+	(void)fseek(skey.keyfile, 0L, SEEK_SET);
+	(void)fprintf(skey.keyfile, "%s\n%s\n%04d\n%s\n%s\n",
+	    pp->pw_name, skey_get_algorithm(), n, seed, skey.val);
 	(void)fclose(skey.keyfile);
 
 	(void)printf("\nID %s skey is otp-%s %d %s\n", pp->pw_name,
@@ -307,35 +274,6 @@ main(argc, argv)
 	(void)printf("Next login password: %s\n\n",
 	    hexmode ? put8(buf, key) : btoe(buf, key));
 	exit(0);
-}
-
-void
-lockeof(mp, user)
-	struct skey *mp;
-	char *user;
-{
-	struct flock fl;
-
-	fseek(mp->keyfile, 0, SEEK_END);
-dolock:
-	fl.l_start = ftell(mp->keyfile);
-	fl.l_len = mp->len;
-	fl.l_pid = getpid();
-	fl.l_type = F_WRLCK;
-	fl.l_whence = SEEK_SET;
-
-	if (fcntl(fileno(mp->keyfile), F_SETLKW, &fl) == -1)
-		err(1, "Can't lock database");
-
-	/* Make sure we are still at the end. */
-	fseek(mp->keyfile, 0, SEEK_END);
-	if (fl.l_start == ftell(mp->keyfile))
-		return;		/* still at EOF */
-
-	fclose(mp->keyfile);
-	if (skeylookup(mp, user) != 1)
-		errx(1, "user %s already added", user);
-	goto dolock;
 }
 
 void
@@ -483,6 +421,97 @@ normal_mode(username, n, key, seed, defaultseed)
 		f(key);
 }
 
+void
+enable_db(op)
+	int op;
+{
+	if (op == 1) {
+		/* enable */
+		if (mkdir(_PATH_SKEYDIR, 01730) != 0 && errno != EEXIST)
+			err(1, "can't mkdir %s", _PATH_SKEYDIR);
+		if (chmod(_PATH_SKEYDIR, 01730) != 0)
+			err(1, "can't chmod %s", _PATH_SKEYDIR);
+	} else {
+		/* disable */
+		if (chmod(_PATH_SKEYDIR, 0) != 0 && errno != ENOENT)
+			err(1, "can't chmod %s", _PATH_SKEYDIR);
+	}
+	exit(0);
+}
+
+#define _PATH_SKEYKEYS	"/etc/skeykeys"
+void
+convert_db(void)
+{
+	struct passwd *pp;
+	uid_t uid;
+	FILE *keyfile;
+	FILE *newfile;
+	char buf[256], *logname, *hashtype, *seed, *val, *cp;
+	char filename[PATH_MAX];
+	int fd, n;
+
+	if ((keyfile = fopen(_PATH_SKEYKEYS, "r")) == NULL)
+		err(1, "can't open %s", _PATH_SKEYKEYS);
+	if (flock(fileno(keyfile), LOCK_EX) != 0)
+		err(1, "can't lock %s", _PATH_SKEYKEYS);
+	if (mkdir(_PATH_SKEYDIR, 01730) != 0 && errno != EEXIST)
+		err(1, "can't mkdir %s", _PATH_SKEYDIR);
+	if (chmod(_PATH_SKEYDIR, 01730) != 0)
+		err(1, "can't chmod %s", _PATH_SKEYDIR);
+
+	/*
+	 * Loop over each entry in _PATH_SKEYKEYS, creating a file
+	 * in _PATH_SKEYDIR for each one.
+	 */
+	while (fgets(buf, sizeof(buf), keyfile) != NULL) {
+		if (buf[0] == '#')
+			continue;
+		if ((logname = strtok(buf, " \t")) == NULL)
+			continue;
+		if ((cp = strtok(NULL, " \t")) == NULL)
+			continue;
+		if (isalpha(*cp)) {
+			hashtype = cp;
+			if ((cp = strtok(NULL, " \t")) == NULL)
+				continue;
+		} else
+			hashtype = "md4";
+		n = atoi(cp);
+		if ((seed = strtok(NULL, " \t")) == NULL)
+			continue;
+		if ((val = strtok(NULL, " \t")) == NULL)
+			continue;
+
+		if ((pp = getpwnam(logname)) != NULL)
+			uid = pp->pw_uid;
+		else
+			uid = 0;
+
+		/* Now write the new-style record. */
+		if (snprintf(filename, sizeof(filename), "%s/%s", _PATH_SKEYDIR,
+		    logname) >= sizeof(filename)) {
+			errno = ENAMETOOLONG;
+			warn("%s", logname);
+			continue;
+		}
+		fd = open(filename, O_RDWR | O_CREAT | O_EXCL, S_IRUSR | S_IWUSR);
+		if (fd == -1 || flock(fd, LOCK_EX) != 0 ||
+		    (newfile = fdopen(fd, "r+")) == NULL) {
+			warn("%s", logname);
+			continue;
+		}
+		(void)fprintf(newfile, "%s\n%s\n%04d\n%s\n%s\n", logname,
+			    hashtype, n, seed, val);
+		(void)fchown(fileno(newfile), uid, -1);
+		(void)fclose(newfile);
+	}
+	printf("%s has been populated.  NOTE: %s has *not* been removed.\n"
+	    "It should be removed once you have verified that the new keys "
+	    "work.\n", _PATH_SKEYDIR, _PATH_SKEYKEYS);
+	exit(0);
+}
+
 #define TIMEOUT_MSG	"Timed out waiting for input.\n"
 void
 timedout(signo)
@@ -497,7 +526,8 @@ void
 usage(s)
 	char *s;
 {
-	(void)fprintf(stderr,
-		"Usage: %s [-s] [-x] [-z] [-n count] [-md4|-md5|-sha1|-rmd160] [user]\n", s);
+	(void)fprintf(stderr, "usage: %s [-s] [-x] [-z] [-C] [-D] [-E] "
+	    "[-a auth_type] [-n count]\n                "
+	    "[-md4|-md5|-sha1|-rmd160] [user]\n", s);
 	exit(1);
 }
