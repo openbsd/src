@@ -1,4 +1,4 @@
-/*	$OpenBSD: archdep.h,v 1.3 2001/09/24 23:40:10 art Exp $ */
+/*	$OpenBSD: archdep.h,v 1.4 2001/09/25 06:57:03 art Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -45,6 +45,7 @@
 #include <elf_abi.h>
 #include <machine/exec.h>
 #include <machine/reloc.h>
+#include <sys/syscall.h>
 
 int	_dl_write __P((int, const char *, int));
 
@@ -124,6 +125,14 @@ _dl_strchr(const char *p, const int c)
 		p++;
 	}
 	return(0);
+}
+
+static inline long
+_dl_mmap(void *addr, unsigned int len, unsigned int prot,
+	unsigned int flags, int fd, off_t offset)
+{ 
+	return(_dl___syscall((quad_t)SYS_mmap, addr, len, prot,
+		flags, fd, 0, offset));
 }
 
 static inline void

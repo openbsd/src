@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.h,v 1.1 2001/09/21 14:54:19 jason Exp $ */
+/*	$OpenBSD: syscall.h,v 1.2 2001/09/25 06:57:03 art Exp $ */
 
 /*
  * Copyright (c) 2001 Niklas Hallqvist
@@ -48,8 +48,7 @@ int	_dl_getegid __P((void));
 int	_dl_geteuid __P((void));
 int	_dl_getgid __P((void));
 int	_dl_getuid __P((void));
-long	_dl_mmap __P((void *, unsigned int, unsigned int, unsigned int, int,
-		      off_t));
+long	_dl___syscall(quad_t, ...);
 int	_dl_mprotect __P((const void *, int, int));
 int	_dl_munmap __P((const void*, unsigned int));
 int	_dl_open __P((const char*, unsigned int));

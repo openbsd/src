@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.6 2001/09/25 06:34:31 art Exp $	*/
+/*	$OpenBSD: ldasm.S,v 1.7 2001/09/25 06:57:03 art Exp $	*/
 /*	$NetBSD: rtld_start.S,v 1.5 2001/08/14 22:17:48 eeh Exp $	*/
 	
 /*
@@ -300,14 +300,15 @@ _dl_getuid:
 
 	.section ".text"
 	.align 4
-	.global _dl_mmap
-	.type _dl_mmap,@function
-_dl_mmap:
-	mov SYS_mmap | SYSCALL_G2RFLAG, %g1	! calling sys_mmap
+	.global _dl___syscall
+	.type _dl___syscall,@function
+_dl___syscall:
+	mov SYS___syscall | SYSCALL_G2RFLAG, %g1	! call sys_exit
 	add %o7, 8, %g2				! just return on sucess
 	t ST_SYSCALL				! off to wonderland
 	retl
 	 sub %g0, %o0, %o0			! error: result = -errno
+
 
 	.section ".text"
 	.align 4
