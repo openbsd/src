@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_hostap.c,v 1.27 2003/09/21 11:22:24 fgsch Exp $	*/
+/*	$OpenBSD: if_wi_hostap.c,v 1.28 2004/03/02 21:55:07 millert Exp $	*/
 
 /*
  * Copyright (c) 2002
@@ -1108,12 +1108,19 @@ wihap_data_input(struct wi_softc *sc, struct wi_frame *rxfrm, struct mbuf *m)
 	struct wihap_info	*whi = &sc->wi_hostap_info;
 	struct wihap_sta_info	*sta;
 	int			mcast, s;
+	u_int16_t		fctl;
 
-	/* TODS flag must be set. */
-	if (!(rxfrm->wi_frame_ctl & htole16(WI_FCTL_TODS))) {
+	/*
+	 * TODS flag must be set.  However, Lucent cards set NULLFUNC but
+	 * not TODS when probing an AP to see if it is alive after it has
+	 * been down for a while.  We accept these probe packets and send a
+	 * disassoc packet later on if the station is not already associated.
+	 */
+	fctl = letoh16(rxfrm->wi_frame_ctl);
+	if (!(fctl & WI_FCTL_TODS) && !(fctl & WI_STYPE_NULLFUNC)) {
 		if (ifp->if_flags & IFF_DEBUG)
-			printf("wihap_data_input: no TODS src=%s\n",
-			    ether_sprintf(rxfrm->wi_addr2));
+			printf("wihap_data_input: no TODS src=%s, fctl=0x%x\n",
+			    ether_sprintf(rxfrm->wi_addr2), fctl);
 		m_freem(m);
 		return (1);
 	}

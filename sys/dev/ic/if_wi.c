@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.103 2004/02/27 21:34:58 millert Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.104 2004/03/02 21:55:07 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -126,7 +126,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.103 2004/02/27 21:34:58 millert Exp $";
+	"$OpenBSD: if_wi.c,v 1.104 2004/03/02 21:55:07 millert Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -291,7 +291,8 @@ wi_attach(struct wi_softc *sc, struct wi_funcs *funcs)
 		sc->wi_flags |= WI_FLAGS_HAS_ROAMING;
 		if (sc->sc_sta_firmware_ver >= 800) {
 #ifndef SMALL_KERNEL
-			sc->wi_flags |= WI_FLAGS_HAS_HOSTAP;
+			if (sc->sc_sta_firmware_ver != 10402)
+				sc->wi_flags |= WI_FLAGS_HAS_HOSTAP;
 #endif
 			sc->wi_flags |= WI_FLAGS_HAS_IBSS;
 			sc->wi_flags |= WI_FLAGS_HAS_CREATE_IBSS;
@@ -518,7 +519,7 @@ wi_rxeof(sc)
 	struct ether_header	*eh;
 	struct mbuf		*m;
 	caddr_t			olddata;
-	u_int16_t		msg_type;
+	u_int16_t		ftype;
 	int			maxlen;
 	int			id;
 
@@ -627,8 +628,8 @@ wi_rxeof(sc)
 			return;
 		}
 
-		/* Stash message type in host byte order for later use */
-		msg_type = letoh16(rx_frame.wi_status) & WI_RXSTAT_MSG_TYPE;
+		/* Stash frame type in host byte order for later use */
+		ftype = letoh16(rx_frame.wi_frame_ctl) & WI_FCTL_FTYPE;
 
 		MGETHDR(m, M_DONTWAIT, MT_DATA);
 		if (m == NULL) {
@@ -651,7 +652,7 @@ wi_rxeof(sc)
 		maxlen = MCLBYTES - (m->m_data - olddata);
 		m->m_pkthdr.rcvif = ifp;
 
-		if (msg_type == WI_STAT_MGMT &&
+		if (ftype == WI_FTYPE_MGMT &&
 		    sc->wi_ptype == WI_PORTTYPE_HOSTAP) {
 
 			u_int16_t rxlen = letoh16(rx_frame.wi_dat_len);
@@ -689,7 +690,7 @@ wi_rxeof(sc)
 			return;
 		}
 
-		switch (msg_type) {
+		switch (letoh16(rx_frame.wi_status) & WI_RXSTAT_MSG_TYPE) {
 		case WI_STAT_1042:
 		case WI_STAT_TUNNEL:
 		case WI_STAT_WMP_MSG:

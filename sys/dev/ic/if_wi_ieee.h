@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_ieee.h,v 1.19 2003/10/26 15:34:15 drahn Exp $	*/
+/*	$OpenBSD: if_wi_ieee.h,v 1.20 2004/03/02 21:55:07 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -130,6 +130,15 @@ struct wi_80211_hdr {
 #define WI_STYPE_CTL_ACK	0x00D0
 #define WI_STYPE_CTL_CFEND	0x00E0
 #define WI_STYPE_CTL_CFENDACK	0x00F0
+
+#define WI_STYPE_DATA		0x0000
+#define WI_STYPE_DATA_CFACK	0x0010
+#define WI_STYPE_DATA_CFPOLL	0x0020
+#define WI_STYPE_DATA_CFACKPOLL	0x0030
+#define WI_STYPE_NULLFUNC	0x0040
+#define WI_STYPE_CFACK		0x0050
+#define WI_STYPE_CFPOLL		0x0060
+#define WI_STYPE_CFACKPOLL	0x0070
 
 struct wi_mgmt_hdr {
 	u_int16_t		frame_ctl;
