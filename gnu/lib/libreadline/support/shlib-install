@@ -63,10 +63,11 @@ fi
 
 # post-install/uninstall
 
-# HP-UX requires that a shared library have execute permission
+# HP-UX and Darwin/MacOS X require that a shared library have execute permission
 case "$host_os" in
-hpux*)	if [ -z "$uninstall" ]; then
-		chmod 755 ${INSTALLDIR}/${LIBNAME}
+hpux*|darwin*|macosx*)
+	if [ -z "$uninstall" ]; then
+		chmod 555 ${INSTALLDIR}/${LIBNAME}
 	fi ;;
 *)	;;
 esac
@@ -82,54 +83,60 @@ case "$LIBNAME" in
 *.[0-9])		# libname.M
 	LINK1=`echo $LIBNAME | sed 's:\(.*\)\.[0-9]:\1:'`		# libname
 	;;
+*.[0-9].[0-9].dylib)	# libname.M.N.dylib
+	LINK2=`echo $LIBNAME | sed 's:\(.*\.[0-9]\)\.[0-9]:\1:'`	# libname.M.dylib
+	LINK1=`echo $LIBNAME | sed 's:\(.*\)\.[0-9]\.[0-9]:\1:'`	# libname.dylib
 esac
+
+INSTALL_LINK1='cd $INSTALLDIR ; ln -s $LIBNAME $LINK1'
+INSTALL_LINK2='cd $INSTALLDIR ; ln -s $LIBNAME $LINK2'
 
 #
 # Create symlinks to the installed library.  This section is incomplete.
 #
 case "$host_os" in
-*linux*|bsdi4*)
+*linux*|bsdi4*|*gnu*|darwin*|macosx*)
 	# libname.so.M -> libname.so.M.N
 	${echo} ${RM} ${INSTALLDIR}/$LINK2
 	if [ -z "$uninstall" ]; then
-		${echo} ln -s $INSTALLDIR/$LIBNAME ${INSTALLDIR}/$LINK2
+		${echo} ln -s $LIBNAME ${INSTALLDIR}/$LINK2
 	fi
 
 	# libname.so -> libname.so.M.N
 	${echo} ${RM} ${INSTALLDIR}/$LINK1
 	if [ -z "$uninstall" ]; then
-		${echo} ln -s $INSTALLDIR/$LIBNAME ${INSTALLDIR}/$LINK1
+		${echo} ln -s $LIBNAME ${INSTALLDIR}/$LINK1
 	fi
 	;;
 
-solaris2*|aix4.[2-9]*|osf*|irix[56]*)
+solaris2*|aix4.[2-9]*|osf*|irix[56]*|sysv[45]*|dgux*)
 	# libname.so -> libname.so.M
 	${echo} ${RM} ${INSTALLDIR}/$LINK1
 	if [ -z "$uninstall" ]; then
-		${echo} ln -s $INSTALLDIR/$LIBNAME ${INSTALLDIR}/$LINK1
+		${echo} ln -s $LIBNAME ${INSTALLDIR}/$LINK1
 	fi
 	;;
 
 
-# FreeBSD 3.x can have either a.out or ELF shared libraries
-freebsd3*)
+# FreeBSD 3.x and above can have either a.out or ELF shared libraries
+freebsd[3-9]*|freebsdelf[3-9]*|freebsdaout[3-9]*)
 	if [ -x /usr/bin/objformat ] && [ "`/usr/bin/objformat`" = "elf" ]; then
 		# libname.so -> libname.so.M
 		${echo} ${RM} ${INSTALLDIR}/$LINK1
 		if [ -z "$uninstall" ]; then
-			${echo} ln -s $INSTALLDIR/$LIBNAME ${INSTALLDIR}/$LINK1
+			${echo} ln -s $LIBNAME ${INSTALLDIR}/$LINK1
 		fi
 	else
 		# libname.so.M -> libname.so.M.N
 		${echo} ${RM} ${INSTALLDIR}/$LINK2
 		if [ -z "$uninstall" ]; then
-			${echo} ln -s $INSTALLDIR/$LIBNAME ${INSTALLDIR}/$LINK2
+			${echo} ln -s $LIBNAME ${INSTALLDIR}/$LINK2
 		fi
 
 		# libname.so -> libname.so.M.N
 		${echo} ${RM} ${INSTALLDIR}/$LINK1
 		if [ -z "$uninstall" ]; then
-			${echo} ln -s $INSTALLDIR/$LIBNAME ${INSTALLDIR}/$LINK1
+			${echo} ln -s $LIBNAME ${INSTALLDIR}/$LINK1
 		fi
 	fi
 	;;
@@ -138,7 +145,8 @@ hpux1*)
 	# libname.sl -> libname.M
 	${echo} ${RM} ${INSTALLDIR}/$LINK1.sl
 	if [ -z "$uninstall" ]; then
-		${echo} ln -s $INSTALLDIR/$LIBNAME ${INSTALLDIR}/${LINK1}.sl
+#		${echo} ln -s $LIBNAME ${INSTALLDIR}/${LINK1}.sl
+		${echo} ln -s $LIBNAME ${INSTALLDIR}/${LINK1}
 	fi
 	;;
 

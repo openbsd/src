@@ -1,3 +1,23 @@
+/* Copyright (C) 1987-2002 Free Software Foundation, Inc.
+
+   This file is part of the GNU Readline Library, a library for
+   reading lines of text with interactive input and history editing.
+
+   The GNU Readline Library is free software; you can redistribute it
+   and/or modify it under the terms of the GNU General Public License
+   as published by the Free Software Foundation; either version 2, or
+   (at your option) any later version.
+
+   The GNU Readline Library is distributed in the hope that it will be
+   useful, but WITHOUT ANY WARRANTY; without even the implied warranty
+   of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   The GNU General Public License is often shipped with GNU software, and
+   is generally kept in a file called COPYING or LICENSE.  If you do not
+   have a copy of the license, write to the Free Software Foundation,
+   59 Temple Place, Suite 330, Boston, MA 02111 USA. */
+
 /* fileman.c -- A tiny application which demonstrates how to use the
    GNU Readline library.  This application interactively allows users
    to manipulate files and their modes. */
@@ -41,15 +61,22 @@
 extern char *xmalloc ();
 
 /* The names of functions that actually do the manipulation. */
-int com_list (), com_view (), com_rename (), com_stat (), com_pwd ();
-int com_delete (), com_help (), com_cd (), com_quit ();
+int com_list PARAMS((char *));
+int com_view PARAMS((char *));
+int com_rename PARAMS((char *));
+int com_stat PARAMS((char *));
+int com_pwd PARAMS((char *));
+int com_delete PARAMS((char *));
+int com_help PARAMS((char *));
+int com_cd PARAMS((char *));
+int com_quit PARAMS((char *));
 
 /* A structure which contains information on the commands this program
    can understand. */
 
 typedef struct {
   char *name;			/* User printable name of the function. */
-  Function *func;		/* Function to call to do the job. */
+  rl_icpfunc_t *func;		/* Function to call to do the job. */
   char *doc;			/* Documentation for this function.  */
 } COMMAND;
 
@@ -65,7 +92,7 @@ COMMAND commands[] = {
   { "rename", com_rename, "Rename FILE to NEWNAME" },
   { "stat", com_stat, "Print out statistics on FILE" },
   { "view", com_view, "View the contents of FILE" },
-  { (char *)NULL, (Function *)NULL, (char *)NULL }
+  { (char *)NULL, (rl_icpfunc_t *)NULL, (char *)NULL }
 };
 
 /* Forward declarations. */
@@ -205,8 +232,8 @@ stripwhite (string)
 /*                                                                  */
 /* **************************************************************** */
 
-char *command_generator ();
-char **fileman_completion ();
+char *command_generator PARAMS((const char *, int));
+char **fileman_completion PARAMS((const char *, int, int));
 
 /* Tell the GNU Readline library how to complete.  We want to try to complete
    on command names if this is the first word in the line, or on filenames
@@ -217,7 +244,7 @@ initialize_readline ()
   rl_readline_name = "FileMan";
 
   /* Tell the completer that we want a crack first. */
-  rl_attempted_completion_function = (CPPFunction *)fileman_completion;
+  rl_attempted_completion_function = fileman_completion;
 }
 
 /* Attempt to complete on the contents of TEXT.  START and END bound the
@@ -227,7 +254,7 @@ initialize_readline ()
    or NULL if there aren't any. */
 char **
 fileman_completion (text, start, end)
-     char *text;
+     const char *text;
      int start, end;
 {
   char **matches;
@@ -238,7 +265,7 @@ fileman_completion (text, start, end)
      to complete.  Otherwise it is the name of a file in the current
      directory. */
   if (start == 0)
-    matches = completion_matches (text, command_generator);
+    matches = rl_completion_matches (text, command_generator);
 
   return (matches);
 }
@@ -248,7 +275,7 @@ fileman_completion (text, start, end)
    start at the top of the list. */
 char *
 command_generator (text, state)
-     char *text;
+     const char *text;
      int state;
 {
   static int list_index, len;

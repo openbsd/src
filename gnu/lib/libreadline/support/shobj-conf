@@ -10,6 +10,22 @@
 # Chet Ramey
 # chet@po.cwru.edu
 
+# Copyright (C) 1996-2002 Free Software Foundation, Inc.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2, or (at your option)
+# any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111 USA.
+
 #
 # defaults
 #
@@ -43,7 +59,7 @@ while [ $# -gt 0 ]; do
 done
 
 case "${host_os}-${SHOBJ_CC}" in
-sunos4*-gcc*)
+sunos4*-*gcc*)
 	SHOBJ_CFLAGS=-fpic
 	SHOBJ_LD=/usr/bin/ld
 	SHOBJ_LDFLAGS='-assert pure-text'
@@ -59,10 +75,13 @@ sunos4*)
 	SHLIB_LIBVERSION='$(SHLIB_LIBSUFF).$(SHLIB_MAJOR)$(SHLIB_MINOR)'
 	;;
 
-sunos5*-gcc*|solaris2*-gcc*)
+sunos5*-*gcc*|solaris2*-*gcc*)
 	SHOBJ_CFLAGS=-fpic
 	SHOBJ_LD='${CC}'
+	# This line works for the Solaris linker in /usr/ccs/bin/ld
 	SHOBJ_LDFLAGS='-shared -Wl,-i -Wl,-h,$@'
+	# This line works for the GNU ld
+#	SHOBJ_LDFLAGS='-shared -Wl,-h,$@'
 
 #	SHLIB_XLDFLAGS='-R $(libdir)'
 	SHLIB_LIBVERSION='$(SHLIB_LIBSUFF).$(SHLIB_MAJOR)'
@@ -77,7 +96,17 @@ sunos5*|solaris2*)
 	SHLIB_LIBVERSION='$(SHLIB_LIBSUFF).$(SHLIB_MAJOR)'
 	;;
 
-freebsd2* | netbsd* | openbsd*)
+# All versions of Linux or the semi-mythical GNU Hurd.
+linux*|gnu*)
+	SHOBJ_CFLAGS=-fPIC
+	SHOBJ_LD='${CC}'
+	SHOBJ_LDFLAGS='-shared -Wl,-soname,$@'
+
+	SHLIB_XLDFLAGS='-Wl,-rpath,$(libdir) -Wl,-soname,`basename $@ $(SHLIB_MINOR)`'
+	SHLIB_LIBVERSION='$(SHLIB_LIBSUFF).$(SHLIB_MAJOR)$(SHLIB_MINOR)'
+	;;
+
+freebsd2* | netbsd*)
 	SHOBJ_CFLAGS=-fpic
 	SHOBJ_LD=ld
 	SHOBJ_LDFLAGS='-x -Bshareable'
@@ -86,18 +115,8 @@ freebsd2* | netbsd* | openbsd*)
 	SHLIB_LIBVERSION='$(SHLIB_LIBSUFF).$(SHLIB_MAJOR)$(SHLIB_MINOR)'
 	;;
 
-# FreeBSD-3.x can have either a.out or ELF object files
-#freebsd3*)
-#	SHOBJ_CFLAGS=-fpic
-#	SHOBJ_LD='${CC}'
-#	SHOBJ_LDFLAGS='-shared'
-#
-#	SHLIB_XLDFLAGS='-R$(libdir)'
-#	SHLIB_LIBVERSION='$(SHLIB_LIBSUFF).$(SHLIB_MAJOR)$(SHLIB_MINOR)'
-#	;;
-
 # FreeBSD-3.x ELF
-freebsd3*)
+freebsd[3-9]*|freebsdelf[3-9]*|freebsdaout[3-9]*)
 	SHOBJ_CFLAGS=-fpic
 	SHOBJ_LD='${CC}'
 
@@ -114,12 +133,30 @@ freebsd3*)
 	fi
 	;;
 
-linux*)
+# Darwin/MacOS X
+darwin*|macosx*)
+	SHOBJ_STATUS=unsupported
+	SHLIB_STATUS=supported
+
+	SHOBJ_CFLAGS='-dynamic -fno-common'
+
+	SHOBJ_LD=/usr/bin/libtool
+
+	SHLIB_LIBVERSION='$(SHLIB_MAJOR)$(SHLIB_MINOR).$(SHLIB_LIBSUFF)'
+	SHLIB_LIBSUFF='dylib'
+
+	SHOBJ_LDFLAGS='-dynamic'
+	SHLIB_XLDFLAGS='-arch_only `/usr/bin/arch` -install_name $(libdir)/$@ -current_version $(SHLIB_MAJOR)$(SHLIB_MINOR) -compatibility_version $(SHLIB_MAJOR) -v'
+
+	SHLIB_LIBS='-lSystem'
+	;;
+
+openbsd*)
 	SHOBJ_CFLAGS=-fPIC
 	SHOBJ_LD='${CC}'
-	SHOBJ_LDFLAGS='-shared -Wl,-soname,$@'
+	SHOBJ_LDFLAGS='-shared'
 
-	SHLIB_XLDFLAGS='-Wl,-rpath,$(libdir)'
+	SHLIB_XLDFLAGS='-R$(libdir)'
 	SHLIB_LIBVERSION='$(SHLIB_LIBSUFF).$(SHLIB_MAJOR)$(SHLIB_MINOR)'
 	;;
 
@@ -158,10 +195,11 @@ bsdi4*)
 	SHOBJ_LD='${CC}'
 	SHOBJ_LDFLAGS='-shared -Wl,-soname,$@'
 
+	SHLIB_XLDFLAGS='-Wl,-soname,`basename $@ $(SHLIB_MINOR)`'
 	SHLIB_LIBVERSION='$(SHLIB_LIBSUFF).$(SHLIB_MAJOR)$(SHLIB_MINOR)'
 	;;
 
-osf*-gcc*)
+osf*-*gcc*)
 	# Fix to use gcc linker driver from bfischer@TechFak.Uni-Bielefeld.DE
 	SHOBJ_LD='${CC}'
 	SHOBJ_LDFLAGS='-shared -Wl,-soname,$@'
@@ -178,7 +216,7 @@ osf*)
 	SHLIB_LIBVERSION='$(SHLIB_LIBSUFF).$(SHLIB_MAJOR)'
 	;;
 
-aix4.[2-9]*-gcc*)		# lightly tested by jik@cisco.com
+aix4.[2-9]*-*gcc*)		# lightly tested by jik@cisco.com
 	SHOBJ_CFLAGS=-fpic
 	SHOBJ_LD='ld'
 	SHOBJ_LDFLAGS='-bdynamic -bnoentry -bexpall'
@@ -203,7 +241,7 @@ aix4.[2-9]*)
 #
 # THE FOLLOWING ARE UNTESTED -- and some may not support the dlopen interface
 #
-irix[56]*-gcc*)
+irix[56]*-*gcc*)
 	SHOBJ_CFLAGS='-fpic'
 	SHOBJ_LD='${CC}'
 	SHOBJ_LDFLAGS='-shared -Wl,-soname,$@'
@@ -216,14 +254,15 @@ irix[56]*)
 	SHOBJ_CFLAGS='-K PIC'
 	SHOBJ_LD=ld
 #	SHOBJ_LDFLAGS='-call_shared -hidden_symbol -no_unresolved -soname $@'
-#	Change from David Kaelbling <drk@sgi.com>
+#	Change from David Kaelbling <drk@sgi.com>.  If you have problems,
+#	remove the `-no_unresolved'
 	SHOBJ_LDFLAGS='-shared -no_unresolved -soname $@'
 
 	SHLIB_XLDFLAGS='-rpath $(libdir)'
 	SHLIB_LIBVERSION='$(SHLIB_LIBSUFF).$(SHLIB_MAJOR)'
 	;;
 
-hpux9*-gcc*)
+hpux9*-*gcc*)
 	# must use gcc; the bundled cc cannot compile PIC code
 	SHOBJ_CFLAGS='-fpic'
 	SHOBJ_LD='${CC}'
@@ -237,9 +276,23 @@ hpux9*-gcc*)
 hpux9*)
 	SHOBJ_STATUS=unsupported
 	SHLIB_STATUS=unsupported
+
+	# If you are using the HP ANSI C compiler, you can uncomment and use
+	# this code (I have not tested it)
+#	SHOBJ_STATUS=supported
+#	SHLIB_STATUS=supported
+#
+#	SHOBJ_CFLAGS='+z'
+#	SHOBJ_LD='ld'
+#	SHOBJ_LDFLAGS='-b +s'
+#
+#	SHLIB_XLDFLAGS='+b $(libdir)'
+#	SHLIB_LIBSUFF='sl'
+#	SHLIB_LIBVERSION='$(SHLIB_LIBSUFF).$(SHLIB_MAJOR)'	
+
 	;;
 
-hpux10*-gcc*)
+hpux10*-*gcc*)
 	# must use gcc; the bundled cc cannot compile PIC code
 	SHOBJ_CFLAGS='-fpic'
 	SHOBJ_LD='${CC}'
@@ -253,14 +306,28 @@ hpux10*-gcc*)
 hpux10*)
 	SHOBJ_STATUS=unsupported
 	SHLIB_STATUS=unsupported
+
+	# If you are using the HP ANSI C compiler, you can uncomment and use
+	# this code (I have not tested it)
+#	SHOBJ_STATUS=supported
+#	SHLIB_STATUS=supported
+#
+#	SHOBJ_CFLAGS='+z'
+#	SHOBJ_LD='ld'
+#	SHOBJ_LDFLAGS='-b +s +h $@'
+#
+#	SHLIB_XLDFLAGS='+b $(libdir)'
+#	SHLIB_LIBSUFF='sl'
+#	SHLIB_LIBVERSION='$(SHLIB_LIBSUFF).$(SHLIB_MAJOR)'	
+
 	;;
 
-hpux11*-gcc*)
+hpux11*-*gcc*)
 	# must use gcc; the bundled cc cannot compile PIC code
 	SHOBJ_CFLAGS='-fpic'
 	SHOBJ_LD='${CC}'
 #	SHOBJ_LDFLAGS='-shared -Wl,-b -Wl,-B,symbolic -Wl,+s -Wl,+std -Wl,+h,$@'
-	SHOBJ_LDFLAGS='-shared -Wl,-b -Wl,+s -Wl,+h,$@'
+	SHOBJ_LDFLAGS='-shared -fpic -Wl,-b -Wl,+s -Wl,+h,$@'
 
 	SHLIB_XLDFLAGS='-Wl,+b,$(libdir)'
 	SHLIB_LIBSUFF='sl'
@@ -270,9 +337,23 @@ hpux11*-gcc*)
 hpux11*)
 	SHOBJ_STATUS=unsupported
 	SHLIB_STATUS=unsupported
+
+	# If you are using the HP ANSI C compiler, you can uncomment and use
+	# this code (I have not tested it)
+#	SHOBJ_STATUS=supported
+#	SHLIB_STATUS=supported
+#
+#	SHOBJ_CFLAGS='+z'
+#	SHOBJ_LD='ld'
+#	SHOBJ_LDFLAGS='-b +s +h $@'
+#
+#	SHLIB_XLDFLAGS='+b $(libdir)'
+#	SHLIB_LIBSUFF='sl'
+#	SHLIB_LIBVERSION='$(SHLIB_LIBSUFF).$(SHLIB_MAJOR)'	
+
 	;;
 
-sysv4*-gcc*)
+sysv4*-*gcc*)
 	SHOBJ_CFLAGS=-shared
 	SHOBJ_LDFLAGS='-shared -h $@'
 	SHOBJ_LD='${CC}'
@@ -288,7 +369,7 @@ sysv4*)
 	SHLIB_LIBVERSION='$(SHLIB_LIBSUFF).$(SHLIB_MAJOR)'
 	;;
 
-sco3.2v5*-gcc*)
+sco3.2v5*-*gcc*)
 	SHOBJ_CFLAGS='-fpic'		# DEFAULTS TO ELF
 	SHOBJ_LD='${CC}'
 	SHOBJ_LDFLAGS='-shared'
@@ -304,7 +385,7 @@ sco3.2v5*)
 	SHLIB_LIBVERSION='$(SHLIB_LIBSUFF).$(SHLIB_MAJOR)'
 	;;
 
-sysv5uw7*-gcc*)
+sysv5uw7*-*gcc*)
 	SHOBJ_CFLAGS='-fpic'
 	SHOBJ_LD='${CC}'
 	SHOBJ_LDFLAGS='-shared'
@@ -320,7 +401,7 @@ sysv5uw7*)
 	SHLIB_LIBVERSION='$(SHLIB_LIBSUFF).$(SHLIB_MAJOR)'
 	;;
 	
-dgux*-gcc*)
+dgux*-*gcc*)
 	SHOBJ_CFLAGS=-fpic
 	SHOBJ_LD='${CC}'
 	SHOBJ_LDFLAGS='-shared'
@@ -344,7 +425,7 @@ msdos*)
 #
 # Rely on correct gcc configuration for everything else
 #
-*-gcc*)
+*-*gcc*)
 	SHOBJ_CFLAGS=-fpic
 	SHOBJ_LD='${CC}'
 	SHOBJ_LDFLAGS='-shared'
