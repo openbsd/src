@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncheck_ffs.c,v 1.14 2002/08/12 00:42:56 aaron Exp $	*/
+/*	$OpenBSD: ncheck_ffs.c,v 1.15 2003/01/17 17:56:53 millert Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: ncheck_ffs.c,v 1.14 2002/08/12 00:42:56 aaron Exp $";
+static char rcsid[] = "$OpenBSD: ncheck_ffs.c,v 1.15 2003/01/17 17:56:53 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -167,9 +167,9 @@ findinodes(ino_t maxino)
 		if (mode == IFDIR)
 			cacheino(ino, dp);
 		if (iflag ||
-		    (sflag &&
-		     (((dp->di_mode & (ISGID | ISUID)) == 0) &&
-		      ((mode == IFREG) || (mode == IFDIR) || (mode == IFLNK)))))
+		    (sflag && (mode == IFDIR ||
+		     ((dp->di_mode & (ISGID | ISUID)) == 0 &&
+		      (mode == IFREG || mode == IFLNK)))))
 			continue;
 		addinode(ino);
 	}
