@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_object.c,v 1.15 1997/04/17 01:25:20 niklas Exp $	*/
+/*	$OpenBSD: vm_object.c,v 1.16 1997/05/28 22:40:04 mickey Exp $	*/
 /*	$NetBSD: vm_object.c,v 1.46 1997/03/30 20:56:12 mycroft Exp $	*/
 
 /*-
@@ -139,7 +139,7 @@ struct vm_object	kmem_object_store;
 
 #define	VM_OBJECT_HASH_COUNT	157
 
-int	vm_cache_max = 100;	/* can patch if necessary */
+extern int vm_cache_max;	/* now in param.c */
 struct	vm_object_hash_head vm_object_hashtable[VM_OBJECT_HASH_COUNT];
 
 long	object_collapses = 0;
