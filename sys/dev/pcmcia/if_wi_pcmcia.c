@@ -1,4 +1,4 @@
-/* $OpenBSD: if_wi_pcmcia.c,v 1.40 2003/02/26 18:58:32 millert Exp $ */
+/* $OpenBSD: if_wi_pcmcia.c,v 1.41 2003/07/06 21:17:50 millert Exp $ */
 /* $NetBSD: if_wi_pcmcia.c,v 1.14 2001/11/26 04:34:56 ichiro Exp $ */
 
 /*
@@ -123,6 +123,11 @@ static const struct wi_pcmcia_product {
 	  PCMCIA_PRODUCT_COREGA_WIRELESS_LAN_PCCB_11,
 	  PCMCIA_CIS_COREGA_WIRELESS_LAN_PCCB_11,
 	  "Corega Wireless LAN PCCB-11",
+	},
+	{ PCMCIA_VENDOR_COREGA,
+	  PCMCIA_PRODUCT_COREGA_WIRELESS_LAN_PCCL_11,
+	  PCMCIA_CIS_COREGA_WIRELESS_LAN_PCCL_11,
+	  "Corega Wireless LAN PCCL-11",
 	},
 	{ PCMCIA_VENDOR_INTEL,
 	  PCMCIA_PRODUCT_INTEL_PRO_WLAN_2011,
