@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.121 2004/09/14 22:28:41 deraadt Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.122 2004/09/15 08:46:00 otto Exp $	*/
 
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -37,7 +37,7 @@ char copyright[] =
 
 #ifndef lint
 /*static const char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static const char rcsid[] = "$OpenBSD: inetd.c,v 1.121 2004/09/14 22:28:41 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: inetd.c,v 1.122 2004/09/15 08:46:00 otto Exp $";
 #endif /* not lint */
 
 /*
@@ -441,16 +441,16 @@ main(int argc, char *argv[])
 
 		while (wantretry || wantconfig || wantreap || wantdie) {
 			if (wantretry) {
-				doretry();
 				wantretry = 0;
+				doretry();
 			}
 			if (wantconfig) {
-				doconfig();
 				wantconfig = 0;
+				doconfig();
 			}
 			if (wantreap) {
-				doreap();
 				wantreap = 0;
+				doreap();
 			}
 			if (wantdie)
 				dodie();
