@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.495 2002/03/25 20:47:37 mickey Exp $
+	$OpenBSD: pcidevs,v 1.496 2002/03/26 16:38:16 mickey Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -553,6 +553,7 @@ vendor SYBA		0x1592	Syba
 vendor EUMITCOM		0x1638	Eumitcom
 vendor NETSEC		0x1660	NetSec
 vendor GLOBALSUN	0x16ab	Global Sun
+vendor USR2		0x16ec	US Robotics
 vendor ALTIMA		0x173b	Altima
 vendor ANTARES		0x1754	Antares Microsystems
 vendor SYMPHONY2	0x1c1c	Symphony Labs
@@ -2071,6 +2072,7 @@ product ULSI US201		0x0201	US201
 
 /* US Rebotics */
 product USR 3CP5610		0x1008	3CP5610
+product USR2 USR11000P		0x3685	USR11000P
 
 /* V3 Semiconductor products */
 product V3 V292PBC		0x0292	V292PBC AMD290x0 Host-PCI
