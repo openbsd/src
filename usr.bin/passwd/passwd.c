@@ -1,4 +1,4 @@
-/*	$OpenBSD: passwd.c,v 1.7 1998/01/20 15:32:21 art Exp $	*/
+/*	$OpenBSD: passwd.c,v 1.8 2000/05/19 02:14:31 ericj Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)passwd.c	5.5 (Berkeley) 7/6/91";*/
-static char rcsid[] = "$OpenBSD: passwd.c,v 1.7 1998/01/20 15:32:21 art Exp $";
+static char rcsid[] = "$OpenBSD: passwd.c,v 1.8 2000/05/19 02:14:31 ericj Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -69,7 +69,7 @@ int force_yp;
 extern int local_passwd(char *);
 extern int yp_passwd(char *);
 extern int krb_passwd(int, char **);
-void usage(void);
+void usage(int value);
 
 
 int
@@ -123,8 +123,7 @@ main(argc, argv)
 			exit(1);
 #endif
 		default:
-			usage();
-			exit(1);
+			usage(1);
 		}
 
 	argc -= optind;
@@ -152,8 +151,7 @@ main(argc, argv)
 		username = argv[0];
 		break;
 	default:
-		usage();
-		exit(1);
+		usage(1);
 	}
 
 #if defined(KERBEROS) || defined(KERBEROS5)
@@ -170,7 +168,9 @@ main(argc, argv)
 }
 
 void
-usage(void)
+usage(retval)
+	int retval;
 {
 	fprintf(stderr, "usage: passwd [-l] [-y] [-k [-n name] [-i instance] [-r realm] [-u username[.instance][@realm]] [user]\n");
+	exit(retval);
 }
