@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.46 2004/01/01 23:46:47 henning Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.47 2004/01/02 02:27:57 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -45,6 +45,8 @@
 #define	BGPD_FLAG_NO_FIB_UPDATE		0x0001
 
 #define BGPD_LOG_UPDATES		0x0001
+
+#define	SOCKET_NAME			"/var/run/bgpd.sock"
 
 enum {
 	PROC_MAIN,
