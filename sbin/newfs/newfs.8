@@ -1,4 +1,4 @@
-.\"	$OpenBSD: newfs.8,v 1.5 1997/02/23 03:51:24 millert Exp $
+.\"	$OpenBSD: newfs.8,v 1.6 1997/06/16 00:03:10 deraadt Exp $
 .\"	$NetBSD: newfs.8,v 1.12 1995/03/18 14:58:41 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993, 1994
@@ -192,8 +192,8 @@ The number of distinct rotational positions.  The default is 1.
 .Pq ``space'' or ``time''
 The file system can either be instructed to try to minimize the time spent
 allocating blocks, or to try to minimize the space fragmentation on the disk.
-If the value of minfree (see above) is less than 5%,
-the default is to optimize for space;
+Unless an optimizations has been specified, if the value of minfree
+(see above) is less than 5%, the default is to optimize for space;
 if the value of minfree is greater than or equal to 5%,
 the default is to optimize for time.
 See

@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs.c,v 1.14 1997/02/23 03:51:25 millert Exp $	*/
+/*	$OpenBSD: newfs.c,v 1.15 1997/06/16 00:03:12 deraadt Exp $	*/
 /*	$NetBSD: newfs.c,v 1.20 1996/05/16 07:13:03 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.8 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: newfs.c,v 1.14 1997/02/23 03:51:25 millert Exp $";
+static char rcsid[] = "$OpenBSD: newfs.c,v 1.15 1997/06/16 00:03:12 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -169,6 +169,7 @@ int	cpg = DESCPG;		/* cylinders/cylinder group */
 int	cpgflg;			/* cylinders/cylinder group flag was given */
 int	minfree = MINFREE;	/* free space threshold */
 int	opt = DEFAULTOPT;	/* optimization preference (space or time) */
+int	reqopt = -1;		/* opt preference has not been specified */
 int	density;		/* number of bytes per inode */
 int	maxcontig = 8;		/* max contiguous blocks to allocate */
 int	rotdelay = ROTDELAY;	/* rotational delay between blocks */
@@ -287,9 +288,9 @@ main(argc, argv)
 				getmntopts(optarg, mopts, &mntflags);
 			else {
 				if (strcmp(optarg, "space") == 0)
-					opt = FS_OPTSPACE;
+					reqopt = opt = FS_OPTSPACE;
 				else if (strcmp(optarg, "time") == 0)
-					opt = FS_OPTTIME;
+					reqopt = opt = FS_OPTTIME;
 				else
 	fatal("%s: unknown optimization preference: use `space' or `time'.");
 			}
@@ -514,7 +515,7 @@ havelabel:
 		maxcontig = MAX(1, MIN(MAXPHYS, MAXBSIZE) / bsize - 1);
 	if (density == 0)
 		density = NFPI * fsize;
-	if (minfree < MINFREE && opt != FS_OPTSPACE) {
+	if (minfree < MINFREE && opt != FS_OPTSPACE && reqopt == -1) {
 		fprintf(stderr, "Warning: changing optimization to space ");
 		fprintf(stderr, "because minfree is less than %d%%\n", MINFREE);
 		opt = FS_OPTSPACE;
