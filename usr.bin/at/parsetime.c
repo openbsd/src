@@ -1,4 +1,4 @@
-/*	$OpenBSD: parsetime.c,v 1.6 1998/07/09 20:40:59 mickey Exp $	*/
+/*	$OpenBSD: parsetime.c,v 1.7 1998/07/10 07:07:04 deraadt Exp $	*/
 /*	$NetBSD: parsetime.c,v 1.3 1995/03/25 18:13:36 glass Exp $	*/
 
 /* 
@@ -109,6 +109,18 @@ struct {
 	{ "oct", OCT, 0 },
 	{ "nov", NOV, 0 },
 	{ "dec", DEC, 0 },
+	{ "january", JAN,0 },
+	{ "february", FEB,0 },
+	{ "march", MAR,0 },
+	{ "april", APR,0 },
+	{ "may", MAY,0 },
+	{ "june", JUN,0 },
+	{ "july", JUL,0 },
+	{ "august", AUG,0 },
+	{ "september", SEP,0 },
+	{ "october", OCT,0 },
+	{ "november", NOV,0 },
+	{ "december", DEC,0 },
 	{ "sunday", SUN, 0 },
 	{ "sun", SUN, 0 },
 	{ "monday", MON, 0 },
@@ -138,7 +150,7 @@ static int sc_tokid;	/* scanner - token id */
 static int sc_tokplur;	/* scanner - is token plural? */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: parsetime.c,v 1.6 1998/07/09 20:40:59 mickey Exp $";
+static char rcsid[] = "$OpenBSD: parsetime.c,v 1.7 1998/07/10 07:07:04 deraadt Exp $";
 #endif
 
 /* Local functions */
