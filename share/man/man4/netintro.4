@@ -1,4 +1,4 @@
-.\"	$OpenBSD: netintro.4,v 1.23 2003/11/09 16:06:07 jmc Exp $
+.\"	$OpenBSD: netintro.4,v 1.24 2004/05/29 17:54:46 jcs Exp $
 .\"	$NetBSD: netintro.4,v 1.4 1995/10/19 08:03:40 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
@@ -238,6 +238,14 @@ Get interface address for protocol family.
 Get point to point address for protocol family and interface.
 .It Dv SIOCGIFBRDADDR
 Get broadcast address for protocol family and interface.
+.It Dv SIOCGIFDESCR
+Get interface description, returned in the
+.Ar ifru_data
+field.
+.It Dv SIOCSIFDESCR
+Set interface description to the value of the
+.Ar ifru_data
+field, limited to the size of IFDESCRSIZE.
 .It Dv SIOCSIFFLAGS
 Set interface flags field.
 If the interface is marked down, any processes currently routing packets

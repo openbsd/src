@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.99 2004/05/18 10:54:07 otto Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.100 2004/05/29 17:54:46 jcs Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.99 2004/05/18 10:54:07 otto Exp $";
+static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.100 2004/05/29 17:54:46 jcs Exp $";
 #endif
 #endif /* not lint */
 
@@ -163,6 +163,7 @@ void	setifaddr(const char *, int);
 void	setifdstaddr(const char *, int);
 void	setifflags(const char *, int);
 void	setifbroadaddr(const char *, int);
+void	setifdesc(const char *, int);
 void	setifipdst(const char *, int);
 void	setifmetric(const char *, int);
 void	setifmtu(const char *, int);
@@ -317,6 +318,8 @@ const struct	cmd {
 	{ "-mediaopt",	NEXTARG,	A_MEDIAOPTCLR,	unsetmediaopt },
 	{ "instance",	NEXTARG,	A_MEDIAINST,	setmediainst },
 	{ "inst",	NEXTARG,	A_MEDIAINST,	setmediainst },
+	{ "description", NEXTARG,	0,		setifdesc },
+	{ "descr",	NEXTARG,	0,		setifdesc },
 	{ NULL, /*src*/	0,		0,		setifaddr },
 	{ NULL, /*dst*/	0,		0,		setifdstaddr },
 	{ NULL, /*illegal*/0,		0,		NULL },
@@ -868,6 +871,14 @@ void
 setifbroadaddr(const char *addr, int ignored)
 {
 	(*afp->af_getaddr)(addr, DSTADDR);
+}
+
+void
+setifdesc(const char *val, int ignored)
+{
+	ifr.ifr_data = (caddr_t)val;
+	if (ioctl(s, SIOCSIFDESCR, &ifr) < 0)
+		warn("SIOCSIFDESCR");
 }
 
 void
@@ -1667,7 +1678,9 @@ status(int link, struct sockaddr_dl *sdl)
 {
 	const struct afswtch *p = afp;
 	struct ifmediareq ifmr;
+	struct ifreq ifrdesc;
 	int *media_list, i;
+	char *ifdescr[IFDESCRSIZE];
 
 	printf("%s: ", name);
 	printb("flags", flags, IFFBITS);
@@ -1679,6 +1692,13 @@ status(int link, struct sockaddr_dl *sdl)
 	if (sdl != NULL && sdl->sdl_type == IFT_ETHER && sdl->sdl_alen)
 		(void)printf("\taddress: %s\n", ether_ntoa(
 		    (struct ether_addr *)LLADDR(sdl)));
+
+	(void) memset(&ifrdesc, 0, sizeof(ifrdesc));
+	(void) strlcpy(ifrdesc.ifr_name, name, sizeof(ifrdesc.ifr_name));
+	ifrdesc.ifr_data = (caddr_t)&ifdescr;
+	if (ioctl(s, SIOCGIFDESCR, &ifrdesc) == 0 &&
+	    strlen(ifrdesc.ifr_data))
+		printf("\tdescription: %s\n", ifrdesc.ifr_data);
 
 	vlan_status();
 	carp_status();
@@ -2540,6 +2560,7 @@ usage(void)
 	    "\t[[-]alias] [[-]arp] [broadcast addr]\n"
 	    "\t[[-]debug] [delete] [up] [down] [ipdst addr]\n"
 	    "\t[tunnel src_address dest_address] [deletetunnel]\n"
+	    "\t[description value]\n"
 	    "\t[[-]link0] [[-]link1] [[-]link2]\n"
 	    "\t[media type] [[-]mediaopt opts] [instance minst]\n"
 	    "\t[mtu value] [metric nhops] [netmask mask] [prefixlen n]\n"

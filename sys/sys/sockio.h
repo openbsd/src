@@ -1,4 +1,4 @@
-/*	$OpenBSD: sockio.h,v 1.24 2003/12/08 09:09:03 markus Exp $	*/
+/*	$OpenBSD: sockio.h,v 1.25 2004/05/29 17:54:45 jcs Exp $	*/
 /*	$NetBSD: sockio.h,v 1.5 1995/08/23 00:40:47 thorpej Exp $	*/
 
 /*-
@@ -142,5 +142,8 @@
 #define	SIOCIFCREATE	 _IOW('i', 122, struct ifreq)	/* create clone if */
 #define	SIOCIFDESTROY	 _IOW('i', 121, struct ifreq)	/* destroy clone if */
 #define	SIOCIFGCLONERS	_IOWR('i', 120, struct if_clonereq) /* get cloners */
+
+#define	SIOCSIFDESCR	 _IOW('i', 128, struct ifreq)	/* set ifnet descr */
+#define	SIOCGIFDESCR	_IOWR('i', 129, struct ifreq)	/* get ifnet descr */
 
 #endif /* !_SYS_SOCKIO_H_ */

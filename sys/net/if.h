@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.52 2004/05/18 21:10:14 brad Exp $	*/
+/*	$OpenBSD: if.h,v 1.53 2004/05/29 17:54:45 jcs Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -165,6 +165,11 @@ TAILQ_HEAD(ifnet_head, ifnet);		/* the actual queue head */
 #define	IFNAMSIZ	16
 #define	IF_NAMESIZE	IFNAMSIZ
 
+/*
+ * Length of interface description, including terminating '\0'.
+ */
+#define	IFDESCRSIZE	64
+
 struct ifnet {				/* and the entries */
 	void	*if_softc;		/* lower-level data for this if */
 	TAILQ_ENTRY(ifnet) if_list;	/* all struct ifnets are chained */
@@ -180,6 +185,7 @@ struct ifnet {				/* and the entries */
 	short	if_flags;		/* up/down, broadcast, etc. */
 	struct	if_data if_data;	/* stats and other data about if */
 	int	if_capabilities;	/* interface capabilities */
+	char	if_description[IFDESCRSIZE]; /* interface description */
 
 	/* procedure handles */
 					/* output routine (enqueue) */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.87 2004/04/28 01:20:29 deraadt Exp $	*/
+/*	$OpenBSD: if.c,v 1.88 2004/05/29 17:54:45 jcs Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1117,7 +1117,9 @@ ifioctl(so, cmd, data, p)
 {
 	struct ifnet *ifp;
 	struct ifreq *ifr;
+	char ifdescrbuf[IFDESCRSIZE];
 	int error = 0;
+	size_t bytesdone;
 	short oif_flags;
 
 	switch (cmd) {
@@ -1229,6 +1231,23 @@ ifioctl(so, cmd, data, p)
 		if (ifp->if_ioctl == 0)
 			return (EOPNOTSUPP);
 		error = (*ifp->if_ioctl)(ifp, cmd, data);
+		break;
+
+	case SIOCGIFDESCR:
+		strlcpy(ifdescrbuf, ifp->if_description, IFDESCRSIZE);
+		error = copyoutstr(ifdescrbuf, ifr->ifr_data, IFDESCRSIZE,
+		    &bytesdone);
+		break;
+
+	case SIOCSIFDESCR:
+		if ((error = suser(p, 0)) != 0)
+			return (error);
+		error = copyinstr(ifr->ifr_data, ifdescrbuf,
+		    IFDESCRSIZE, &bytesdone);
+		if (error == 0) {
+			(void)memset(ifp->if_description, 0, IFDESCRSIZE);
+			strlcpy(ifp->if_description, ifdescrbuf, IFDESCRSIZE);
+		}
 		break;
 
 	default:
