@@ -1,4 +1,4 @@
-/*	$OpenBSD: theo.c,v 1.65 2004/06/28 02:35:52 mcbride Exp $	*/
+/*	$OpenBSD: theo.c,v 1.66 2004/07/30 01:50:56 marco Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved.
@@ -148,7 +148,8 @@ static const char *talk[] = {
 	"#ifdef is for emacs developers.",
 	"Many well known people become net-kooks in their later life, because they lose touch with reality.",
 	"You're not allowed to have an opinion.",
-	"tweep tweep tweep"
+	"tweep tweep tweep",
+	"Quite frankly, SSE's alignment requirement is the most utterly retarded idea since eating your own shit."
 };
 
 static const int ntalk = sizeof(talk)/sizeof(talk[0]);
