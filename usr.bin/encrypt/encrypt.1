@@ -1,4 +1,4 @@
-.\"	$OpenBSD: encrypt.1,v 1.16 2000/11/09 17:52:07 aaron Exp $
+.\"	$OpenBSD: encrypt.1,v 1.17 2001/07/31 18:12:02 millert Exp $
 .\"
 .\" Copyright (c) 1996, Jason Downs.  All rights reserved.
 .\"
@@ -70,9 +70,10 @@ is specified,
 .Nm
 reads one string per line from standard input, encrypting each one
 with the chosen algorithm from above.
-In case that no specific algorithm
-was given as a command line option, the default will be looked up from
-.Pa /etc/passwd.conf .
+In case that no specific algorithm was given as a command line option,
+the algorithm specified in the default class in
+.Pa /etc/login.conf
+will be used.
 .Pp
 For MD5 and Blowfish a new random salt is automatically generated for each
 password.
@@ -82,13 +83,12 @@ Specifying the
 on the command line should be discouraged; using the
 standard input is more secure.
 .Sh FILES
-.Bl -tag -width /etc/passwd.conf -compact
-.It Pa /etc/passwd.conf
+.Bl -tag -width /etc/login.conf -compact
+.It Pa /etc/login.conf
 .El
 .Sh SEE ALSO
 .Xr crypt 3 ,
-.Xr pw_getconf 3 ,
-.Xr passwd.conf 5
+.Xr login.conf 5
 .Sh HISTORY
 .Nm
 first appeared in

@@ -1,4 +1,4 @@
-/*	$OpenBSD: encrypt.c,v 1.13 2000/11/11 15:34:25 provos Exp $	*/
+/*	$OpenBSD: encrypt.c,v 1.14 2001/07/31 18:12:02 millert Exp $	*/
 
 /*
  * Copyright (c) 1996, Jason Downs.  All rights reserved.
@@ -34,6 +34,7 @@
 #include <unistd.h>
 #include <pwd.h>
 #include <ctype.h>
+#include <login_cap.h>
 
 /*
  * Very simple little program, for encrypting passwords from the command
@@ -78,7 +79,8 @@ void print_passwd(char *string, int operation, void *extra)
 {
      char msalt[3], *salt;
      struct passwd pwd;
-     extern int pwd_gensalt __P((char *, int, struct passwd *, char));
+     login_cap_t *lc;
+     extern int pwd_gensalt __P((char *, int, struct passwd *, login_cap_t *, char));
      extern void to64 __P((char *, int32_t, int n));
 
      switch(operation) {
@@ -111,7 +113,12 @@ void print_passwd(char *string, int operation, void *extra)
 	  break;
      default:
 	  pwd.pw_name = "default";
-	  if (!pwd_gensalt(buffer, _PASSWORD_LEN, &pwd, 'l')) {
+	  if ((lc = login_getclass(NULL)) == NULL) {
+	       fprintf(stderr, "%s: unable to get default login class.\n",
+		    progname);
+	       exit (1);
+	  }
+	  if (!pwd_gensalt(buffer, _PASSWORD_LEN, &pwd, lc, 'l')) {
 	       fprintf (stderr, "%s: Can't generate salt\n", progname);
 	       exit (1);
 	  }
