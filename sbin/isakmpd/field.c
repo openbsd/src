@@ -1,4 +1,4 @@
-/*	$OpenBSD: field.c,v 1.10 2002/01/23 18:44:47 ho Exp $	*/
+/*	$OpenBSD: field.c,v 1.11 2003/03/06 13:48:18 cedric Exp $	*/
 /*	$EOM: field.c,v 1.11 2000/02/20 19:58:37 niklas Exp $	*/
 
 /*
@@ -76,7 +76,7 @@ field_debug_raw (u_int8_t *buf, size_t len, struct constant_map **maps)
     return 0;
   strlcpy (retval, "0x", 3 + len * 2);
   p = retval + 2;
-  while (len--)
+  for(; len > 0; len--)
     {
       snprintf (p, 1 + len * 2, "%02x", *buf++);
       p += 2;
