@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.431 2001/08/21 21:37:11 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.432 2001/08/22 11:55:53 art Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1779,6 +1779,7 @@
 #define	PCI_PRODUCT_STB2_RIVA128	0x0018		/* Velocity128 */
 
 /* Sun */
+#define	PCI_PRODUCT_SUN_EBUS	0x1000		/* PCIO Ebus2 */
 #define	PCI_PRODUCT_SUN_HME	0x1001		/* HME */
 
 /* Sundance products */
