@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wireg.h,v 1.14 2002/03/28 18:21:06 mickey Exp $	*/
+/*	$OpenBSD: if_wireg.h,v 1.15 2002/03/28 20:49:39 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -494,6 +494,7 @@ struct wi_ltv_mcast {
 #define WI_SUPPRATES_2M		0x0002
 #define WI_SUPPRATES_5M		0x0004
 #define WI_SUPPRATES_11M	0x0008
+#define	WI_RATES_BITS	"\20\0011M\0022M\0035.5M\00411M"
 
 /*
  * Information frame types.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ieee80211.h,v 1.6 2002/03/28 18:23:07 mickey Exp $	*/
+/*	$OpenBSD: if_ieee80211.h,v 1.7 2002/03/28 20:49:39 mickey Exp $	*/
 /*	$NetBSD: if_ieee80211.h,v 1.6 2000/12/12 04:03:38 thorpej Exp $	*/
 
 
@@ -102,6 +102,7 @@ typedef u_int8_t *ieee80211_mgt_beacon_t;
 #define	IEEE80211_CAPINFO_CF_POLLABLE           0x04
 #define	IEEE80211_CAPINFO_CF_POLLREQ            0x08
 #define	IEEE80211_CAPINFO_PRIVACY               0x10
+#define	IEEE80211_CAPINFO_BITS	"\20\01ESS\02IBSS\03POLLABLE\04POLLREQ\5PRIVACY"
 
 
 /*
