@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: scan.l,v 1.9 1997/11/13 08:21:55 deraadt Exp $	*/
+/*	$OpenBSD: scan.l,v 1.10 1998/05/18 12:25:12 art Exp $	*/
 /*	$NetBSD: scan.l,v 1.13 1997/02/02 21:12:37 thorpej Exp $	*/
 
 /*
@@ -100,6 +100,7 @@ include		return INCLUDE;
 machine		return XMACHINE;
 major		return MAJOR;
 makeoptions	return MAKEOPTIONS;
+makeoption	return MAKEOPTIONS;
 maxpartitions	return MAXPARTITIONS;
 maxusers	return MAXUSERS;
 minor		return MINOR;
