@@ -1,4 +1,4 @@
-/*	$OpenBSD: flash.c,v 1.13 2004/01/14 20:50:48 miod Exp $ */
+/*	$OpenBSD: flash.c,v 1.14 2004/07/03 14:36:34 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -486,7 +486,7 @@ flashmmap(dev, off, prot)
 	struct flashsoftc *sc = (struct flashsoftc *) flash_cd.cd_devs[unit];
 
 	/* allow access only in RAM */
-	if (off > sc->sc_len)
+	if (off < 0 || off > sc->sc_len)
 		return (-1);
 	return (m68k_btop(sc->sc_paddr + off));
 }
