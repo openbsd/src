@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pcmcia.4,v 1.10 2000/04/11 14:08:04 aaron Exp $
+.\"	$OpenBSD: pcmcia.4,v 1.11 2000/04/11 20:39:04 deraadt Exp $
 .\"	$NetBSD: pcmcia.4,v 1.4 1998/06/07 09:10:30 enami Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -55,44 +55,45 @@ The following devices are supported, sorted by function
 and driver name:
 .Pp
 .Ss Serial interfaces and modems
-.Bl -tag -width speaker -offset indent -compact
-.It com
+.Bl -tag -width speaker -offset ind -compact
+.It Xr com 4 , Xr pccom 4
 8250/16450/16550-compatible PCMCIA serial cards and modems.
-.It pccom
-8250/16450/16550-compatible PCMCIA serial cards and modems.
-i386-specific driver.
 .El
 .Pp
 .Ss Network interfaces
-.Bl -tag -width speaker -offset indent -compact
-.It awi
-BayStack 650 wireless 802.11 FH controller.
-.It cnw
+.Bl -tag -width speaker -offset ind -compact
+.It Xr awi 4
+BayStack 650 wireless 802.11FH wireless controller.
+.It Xr cnw 4
 Xircom Creditcard Netwave cards.
-.It ep
+.It Xr ep 4
 3com 3c589 Etherlink-III ethernet cards.
-.It ne
+.It Xr ne 4
 NE2000 compatible cards.
-.It rln
+.It Xr rln 4
 Proxim RangeLAN2 PC-Card
-.It sm
+.It Xr sm 4
 Megahertz ethernet cards.
-.It xe
+.It Xr xe 4
 Xircom 16bit ethernet cards.
-.It wi
-Lucent WaveLAN IEEE 802.11-compatible cards.
+.It Xr wi 4
+Lucent WaveLAN IEEE 802.11DS and compatible cards.
+.It Xr an 4
+Aironet Communications 4500/4800 IEEE 802.11DS wireless controller.
+.It Xr ray 4
+Raytheon Raylink / WebGear Aviator IEEE 802.11FH 2Mbps wireless controller.
 .El
 .Pp
 .Ss SCSI controllers
 .Bl -tag -width speaker -offset indent -compact
-.It aic
+.It Xr aic 4
 Adaptec APA-14[56]0 and NewMedia BusToaster SCSI controller cards.
 .El
 .Ss IDE controllers
 .Bl -tag -width speaker -offset indent -compact
-.It wdc
+.It Xr wdc 4
 Devices which implement an ATA/IDE interface, such as mini disk drives,
-CDROMS.  This includes flash cards which emulate a disk drive.
+CDROMS.  This includes Compact Flash cards which emulate a disk drive.
 .El
 .Pp
 The supported PCMCIA controllers are those that are i82365 compatible.

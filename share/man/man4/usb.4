@@ -1,4 +1,4 @@
-.\"	$OpenBSD: usb.4,v 1.6 2000/04/11 14:08:04 aaron Exp $
+.\"	$OpenBSD: usb.4,v 1.7 2000/04/11 20:39:05 deraadt Exp $
 .\"	$NetBSD: usb.4,v 1.15 1999/07/29 14:20:32 augustss Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -95,28 +95,28 @@ includes machine-independent
 .Tn USB
 drivers, sorted by driver name:
 .Pp
-.Bl -tag -width speaker -offset indent -compact
-.It if_aue
+.Bl -tag -width speakerxx -offset ind -compact
+.It Xr aue 4
 AN986 Pegasus-based Ethernet interfaces.
-.It if_cue
+.It Xr cue 4
 CATC USB-EL1201A-based Ethernet interfaces.
-.It if_kue
+.It Xr kue 4
 Kawasaki LSI KL5KUSB101B-based Ethernet interfaces.
-.It uaudio
+.It Xr uaudio 4
 Audio devices.
-.It ugen
+.It Xr ugen 4
 Generic driver for unknown
 .Tn USB
 devices.
-.It uhid
+.It Xr uhid 4
 Generic driver for Human Interface Devices.
-.It ulpt
+.It Xr ulpt 4
 .Tn USB
 Printers.
-.It umass
+.It Xr umass 4
 .Tn USB
 Mass Storage Devices, i.e., external disk drives.
-.It umodem
+.It Xr umodem 4
 .Tn USB
 Modems.
 .El
