@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.15 1998/04/25 00:38:15 millert Exp $	*/
+/*	$OpenBSD: sd.c,v 1.16 1998/04/30 04:55:46 millert Exp $	*/
 /*	$NetBSD: sd.c,v 1.34 1997/07/10 18:14:10 kleink Exp $	*/
 
 /*
@@ -435,7 +435,8 @@ sdgetinfo(dev)
 			sc->sc_blksize = DEV_BSIZE;
 
 		/* Fill in info from disk geometry if it exists. */
-		if (sc->sc_blks != 0 && sc->sc_heads != 0 && sc->sc_cyls != 0) {
+		if (sc->sc_format_pid >= 0 && sc->sc_blks > 0 &&
+		    sc->sc_heads > 0 && sc->sc_cyls > 0) {
 			lp->d_secperunit = sc->sc_blks >> sc->sc_bshift;
 			lp->d_ntracks = sc->sc_heads;
 			lp->d_ncylinders = sc->sc_cyls;
