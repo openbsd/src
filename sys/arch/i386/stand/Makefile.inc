@@ -1,11 +1,12 @@
-#	$OpenBSD: Makefile.inc,v 1.6 1997/04/11 19:07:07 weingart Exp $
+#	$OpenBSD: Makefile.inc,v 1.7 1997/04/18 01:28:00 mickey Exp $
 
 #CPPFLAGS+=-nostdinc -I/sys
 CPPFLAGS+=-Wall -Werror -I. -Imachine
-SACFLAGS+=-Wa,-R -fno-common -fpack-struct -fno-builtin -fomit-frame-pointer
+SACFLAGS+=-Wa,-R -fpack-struct -fno-builtin -fomit-frame-pointer
 CPPFLAGS+=-D_STANDALONE
-# CPPFLAGS+=-DSAVE_MEMORY	/* XXX - Does *NOT* work */
+# CPPFLAGS+=-DSAVE_MEMORY
 # CPPFLAGS+=-DDEBUG
+# CPPFLAGS+=-DGIDT_DEBUG
 # CPPFLAGS+=-DBIOS_DEBUG
 # CPPFLAGS+=-DEXEC_DEBUG
 # CPPFLAGS+=-DALLOC_TRACE
@@ -13,11 +14,10 @@ CPPFLAGS+=-D_STANDALONE
 # CPPFLAFS+=-DUNIX_DEBUG
 # CPPFLAFS+=-DBOOTP_DEBUG -DNETIF_DEBUG -DETHER_DEBUG
 # CPPFLAGS+=-DNFS_DEBUG -DRPC_DEBUG -DRARP_DEBUG
-START=0x1000
-HEAP_START=0x10000
-HEAP_LIMIT=0x40000
+START=0x10000
+HEAP_LIMIT=0x50000
 BOOTREL=0x3000
 BOOTMAGIC=0xdeadbeef
 
-NO_NET=no_net
+# NO_NET=no_net
 BINDIR=	/usr/mdec

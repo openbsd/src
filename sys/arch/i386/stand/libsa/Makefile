@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.8 1997/04/15 20:01:55 mickey Exp $
+#	$OpenBSD: Makefile,v 1.9 1997/04/18 01:28:01 mickey Exp $
 
 
 LIB=	sa
@@ -8,14 +8,18 @@ DIR_SA=	$S/lib/libsa
 DIR_KERN=$S/lib/libkern
 
 CFLAGS+=$(SACFLAGS) -D__INTERNAL_LIBSA_CREAD
-CFLAGS+=-DHEAP_START=$(HEAP_START) -DHEAP_LIMIT=$(HEAP_LIMIT)
+CFLAGS+=-DSTART=$(START) -DHEAP_LIMIT=$(HEAP_LIMIT)
 CFLAGS+=${DEBUGFLAGS} -I${.CURDIR} -I${.CURDIR}/..
 CFLAGS+=-I$(S)/lib/libsa -I$(S)
 AS+=	-R
-#AS+=	-Wa,-a
+AS+=	-Wa,-a
+
+# i386 stuff (so, it will possibly load in the same 64k)
+SRCS=	unixsys.S bioscom.S biosdisk.S bioskbd.S biostime.S biosmem.S gidt.S \
+	debug_i386.S dev_i386.c exec_i386.c biosdev.c gateA20.c memprobe.c
 
 # stand routines
-SRCS=	alloc.c exit.c exec.c getfile.c gets.c globals.c strcmp.c strlen.c \
+SRCS+=	alloc.c exit.c exec.c getfile.c gets.c globals.c strcmp.c strlen.c \
 	strncmp.c memcmp.c memcpy.c memset.c printf.c strerror.c strncpy.c
 
 # math for cd9660
@@ -35,12 +39,7 @@ SRCS+=	bootp.c bootparam.c rarp.c
 SRCS+=	ufs.c nfs.c cd9660.c
 
 # debugger
-SRCS+=	debug.c debug_aout.c debug_i386.S
-
-# i386 stuff
-SRCS+=	asm.S bioscom.S biosdev.c biosdisk.S bioskbd.S biostime.S biosmem.S \
-	dev_i386.c gateA20.c memprobe.c real_prot.S unixsys.S exec_i386.c \
-	gidt.S
+SRCS+=	debug.c debug_aout.c
 
 NOPROFILE=noprofile
 NOPIC=nopic

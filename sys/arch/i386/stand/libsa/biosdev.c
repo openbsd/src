@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosdev.c,v 1.8 1997/04/17 19:03:20 weingart Exp $	*/
+/*	$OpenBSD: biosdev.c,v 1.9 1997/04/18 01:28:01 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -263,7 +263,7 @@ biosstrategy(void *devdata, int rw,
 {
 	u_int8_t error = 0;
 	register struct biosdisk *bd = (struct biosdisk *)devdata;
-	register size_t i, nsect, n;
+	register size_t i, nsect, n, spt;
 	register const struct bd_error *p = bd_errors;
 
 	nsect = (size + DEV_BSIZE-1) / DEV_BSIZE;
@@ -278,15 +278,20 @@ biosstrategy(void *devdata, int rw,
 		       buf, rsize, bd->biosdev, bd->bsddev);
 #endif
 
+	/* handle floppies w/ different from drive geometry */
+	if (!(bd->biosdev & 0x80))
+		spt = bd->disklabel.d_nsectors;
+	else
+		spt = BIOSNSECTS(bd->dinfo);
+
 	for (i = 0; error == 0 && i < nsect;
 	     i += n, blk += n, buf += n * DEV_BSIZE) {
 		register int	cyl, hd, sect, j;
 		void *bb;
 
-		btochs(blk, cyl, hd, sect, 
-			BIOSNHEADS(bd->dinfo), BIOSNSECTS(bd->dinfo));
-		if ((sect + (nsect - i)) >= BIOSNSECTS(bd->dinfo))
-			n = BIOSNSECTS(bd->dinfo) - sect;
+		btochs(blk, cyl, hd, sect, BIOSNHEADS(bd->dinfo), spt);
+		if ((sect + (nsect - i)) >= spt)
+			n = spt - sect;
 		else
 			n = nsect - i;
 		
