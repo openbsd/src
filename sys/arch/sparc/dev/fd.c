@@ -1400,7 +1400,6 @@ fdioctl(dev, cmd, addr, flag)
 	int flag;
 {
 	struct fd_softc *fd = fdcd.cd_devs[FDUNIT(dev)];
-	struct mtop *mtop;
 	struct disklabel buffer;
 	int error;
 
@@ -1442,8 +1441,7 @@ fdioctl(dev, cmd, addr, flag)
 		return error;
 
 	case MTIOCTOP:
-		mtop = (struct mtop *)addr;
-		if (mtop->mt_op != MTOFFL)
+		if (((struct mtop *)addr)->mt_op != MTOFFL)
 			return EIO;
 #ifdef COMPAT_SUNOS
 	case SUNOS_FDIOCEJECT:
