@@ -996,7 +996,7 @@ build_bytes (this_try, operand)
   frag_wane (frag_now);
   frag_new (0);
 
-  memset (buffer, 20, 0);
+  memset (buffer, 0, 20);
   class_ptr = this_try->byte_info;
 
   for (nibble = 0; (c = *class_ptr++); nibble++)

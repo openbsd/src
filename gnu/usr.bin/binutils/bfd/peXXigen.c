@@ -639,7 +639,7 @@ _bfd_XXi_swap_aouthdr_out (abfd, in, out)
   extra->NumberOfRvaAndSizes = IMAGE_NUMBEROF_DIRECTORY_ENTRIES;
 
   /* first null out all data directory entries ..  */
-  memset (extra->DataDirectory, sizeof (extra->DataDirectory), 0);
+  memset (extra->DataDirectory, 0, sizeof (extra->DataDirectory));
 
   add_data_entry (abfd, extra, 0, ".edata", ib);
 
