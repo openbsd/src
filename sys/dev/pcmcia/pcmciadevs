@@ -1,4 +1,4 @@
-	$OpenBSD: pcmciadevs,v 1.110 2004/04/06 21:08:25 millert Exp $
+	$OpenBSD: pcmciadevs,v 1.111 2004/05/11 04:38:17 deraadt Exp $
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
 /*
@@ -216,6 +216,7 @@ product IBM ETHERJET		0x003f IBM EtherJet
 
 /* I-O DATA */
 product IODATA PCLATE		0x2216 I-O DATA PCLA/TE
+product IODATA 8041TX		0x8041 SMC8041TX
 product IODATA2 WNB11PCM	0x0002 I-O DATA WN-B11/PCM
 
 /* Intel */
