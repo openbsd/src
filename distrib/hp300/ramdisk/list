@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.17 2000/06/12 16:02:49 deraadt Exp $
+#	$OpenBSD: list,v 1.18 2000/10/31 16:32:46 millert Exp $
 
 COPY	${OBJDIR}/raminst		raminst
 LINK	raminst				bin/cat
@@ -10,7 +10,6 @@ LINK	raminst				bin/ed
 LINK	raminst				bin/expr
 LINK	raminst				bin/ln
 LINK	raminst				bin/ls
-LINK	raminst				bin/hostname
 LINK	raminst				bin/mkdir
 LINK	raminst				bin/mv
 LINK	raminst				bin/rm
@@ -35,7 +34,6 @@ LINK	raminst				sbin/mount_mfs
 LINK	raminst				sbin/newfs
 LINK	raminst				sbin/reboot
 LINK	raminst				sbin/route
-LINK	raminst				sbin/slattach
 LINK	raminst				sbin/umount
 LINK	raminst				usr/bin/ftp
 LINK	raminst				usr/bin/egrep
@@ -46,9 +44,6 @@ LINK	raminst				usr/bin/sed
 LINK	raminst				usr/bin/sort
 LINK	raminst				bin/pax
 LINK	raminst				usr/bin/tar
-LINK	raminst				usr/bin/tip
-LINK	raminst				usr/sbin/chat
-LINK	raminst				usr/sbin/pppd
 LINK	raminst				usr/bin/vi
 LINK	raminst				sbin/dhclient
 SPECIAL	/bin/rm raminst

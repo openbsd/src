@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$OpenBSD: install.md,v 1.19 1999/09/03 18:55:26 deraadt Exp $
+#	$OpenBSD: install.md,v 1.20 2000/10/31 16:32:45 millert Exp $
 #	$NetBSD: install.md,v 1.1.2.4 1996/08/26 15:45:14 gwr Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -467,4 +467,12 @@ md_native_fstype() {
 
 md_native_fsopts() {
 	# Nothing to do.
+}
+
+hostname() {
+	case $# in
+		0)      cat /kern/hostname ;;
+		1)      echo "$1" > /kern/hostname ;;
+		*)      echo usage: hostname [name-of-host]
+	esac
 }
