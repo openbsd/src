@@ -291,6 +291,9 @@ extern "C" {
 /* The size of the server's internal read-write buffers */
 #define IOBUFSIZE 8192
 
+/* The max number of regex captures that can be expanded by ap_pregsub */
+#define AP_MAX_REG_MATCH 10
+
 /* Number of servers to spawn off by default --- also, if fewer than
  * this free when the caretaker checks, it will spawn more.
  */
