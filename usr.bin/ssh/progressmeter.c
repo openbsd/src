@@ -23,7 +23,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: progressmeter.c,v 1.11 2003/07/30 07:44:14 markus Exp $");
+RCSID("$OpenBSD: progressmeter.c,v 1.12 2003/07/30 07:53:27 markus Exp $");
 
 #include "progressmeter.h"
 #include "atomicio.h"
@@ -61,7 +61,6 @@ can_output(void)
 {
 	return (getpgrp() == tcgetpgrp(STDOUT_FILENO));
 }
-
 
 static void
 format_size(char *buf, int size, off_t bytes)
@@ -217,7 +216,7 @@ start_progress_meter(char *f, off_t filesize, off_t *stat)
 	} else
 		win_size = DEFAULT_WINSIZE;
 	win_size += 1;					/* trailing \0 */
-	
+
 	if (can_output())
 		refresh_progress_meter();
 
@@ -236,6 +235,6 @@ stop_progress_meter(void)
 	/* Ensure we complete the progress */
 	if (cur_pos != end_pos)
 		refresh_progress_meter();
-	
+
 	atomicio(vwrite, STDOUT_FILENO, "\n", 1);
 }
