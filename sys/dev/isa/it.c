@@ -1,4 +1,4 @@
-/*	$OpenBSD: it.c,v 1.2 2003/05/28 19:21:11 grange Exp $	*/
+/*	$OpenBSD: it.c,v 1.3 2003/10/19 17:29:41 grange Exp $	*/
 
 /*
  * Copyright (c) 2003 Julien Bordet <zejames@greygats.org>
@@ -80,12 +80,6 @@ it_match(struct device *parent, void *match, void *aux)
 	int iobase;
 	int rv;
 	u_int8_t cr;
-
-	/* Must supply an address */
-	if (ia->ipa_nio < 1) {
-		DPRINTF(("%s: ipa_nio=%d\n", __func__, ia->ipa_nio));
-		return (0);
-	}
 
 	iot = ia->ia_iot;
 	iobase = ia->ipa_io[0].base;
