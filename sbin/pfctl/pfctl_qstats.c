@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_qstats.c,v 1.13 2003/03/02 23:37:24 henning Exp $ */
+/*	$OpenBSD: pfctl_qstats.c,v 1.14 2003/03/08 14:26:31 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer
@@ -51,6 +51,7 @@
 #include <altq/altq_hfsc.h>
 
 #include "pfctl.h"
+#include "pfctl_parser.h"
 
 union class_stats {
 	class_stats_t		cbq_stats;
@@ -91,7 +92,7 @@ double	calc_rate(u_int64_t, u_int64_t, double);
 double	calc_pps(u_int64_t, u_int64_t, double);
 
 int
-pfctl_show_altq(int dev, int verbose, int verbose2)
+pfctl_show_altq(int dev, int opts, int verbose2)
 {
 	struct pf_altq_node	*root = NULL, *node;
 
@@ -99,7 +100,7 @@ pfctl_show_altq(int dev, int verbose, int verbose2)
 		return (-1);
 
 	for (node = root; node != NULL; node = node->next)
-		pfctl_print_altq_node(dev, node, 0, verbose);
+		pfctl_print_altq_node(dev, node, 0, opts);
 
 	while (verbose2) {
 		printf("\n");
@@ -107,7 +108,7 @@ pfctl_show_altq(int dev, int verbose, int verbose2)
 		if (pfctl_update_qstats(dev, &root))
 			return (-1);
 		for (node = root; node != NULL; node = node->next)
-			pfctl_print_altq_node(dev, node, 0, verbose);
+			pfctl_print_altq_node(dev, node, 0, opts);
 	}
 	pfctl_free_altq_node(root);
 	return (0);
@@ -221,7 +222,7 @@ pfctl_find_altq_node(struct pf_altq_node *root, const char *qname,
 
 void
 pfctl_print_altq_node(int dev, const struct pf_altq_node *node, unsigned level,
-    int verbose)
+    int opts)
 {
 	const struct pf_altq_node	*child;
 
@@ -242,12 +243,16 @@ pfctl_print_altq_node(int dev, const struct pf_altq_node *node, unsigned level,
 	}
 	printf("\n");
 
-	if (verbose)
+	if (opts & PF_OPT_VERBOSE)
 		pfctl_print_altq_nodestat(dev, node);
+
+	if (opts & PF_OPT_DEBUG)
+		printf("[ qid=%d ifname=%s ifbandwidth=%s ]\n", node->altq.qid,
+		    node->altq.ifname, rate2str(node->altq.ifbandwidth));
 
 	for (child = node->children; child != NULL;
 	    child = child->next)
-		pfctl_print_altq_node(dev, child, level+1, verbose);
+		pfctl_print_altq_node(dev, child, level+1, opts);
 }
 
 void

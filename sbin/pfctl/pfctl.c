@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.157 2003/03/07 12:55:37 henning Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.158 2003/03/08 14:26:31 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -498,6 +498,9 @@ pfctl_print_rule_counters(struct pf_rule *rule, int opts)
 				printf("%u ", rule->skip[i].nr);
 		}
 		printf("]\n");
+
+		printf("[ Queue: qname=%s qid=%d pqname=%s pqid=%d ]\n",
+		    rule->qname, rule->qid, rule->pqname, rule->pqid);
 	}
 	if (opts & PF_OPT_VERBOSE)
 		printf("[ Evaluations: %-8llu  Packets: %-8llu  "
@@ -1503,8 +1506,7 @@ main(int argc, char *argv[])
 			pfctl_show_nat(dev, opts);
 			break;
 		case 'q':
-			pfctl_show_altq(dev, opts & PF_OPT_VERBOSE,
-			    opts & PF_OPT_VERBOSE2);
+			pfctl_show_altq(dev, opts, opts & PF_OPT_VERBOSE2);
 			break;
 		case 's':
 			pfctl_show_states(dev, 0, opts);
@@ -1521,7 +1523,7 @@ main(int argc, char *argv[])
 		case 'a':
 			pfctl_show_rules(dev, opts, 0);
 			pfctl_show_nat(dev, opts);
-			pfctl_show_altq(dev, opts & PF_OPT_VERBOSE, 0);
+			pfctl_show_altq(dev, opts, 0);
 			pfctl_show_states(dev, 0, opts);
 			pfctl_show_status(dev);
 			pfctl_show_rules(dev, opts, 1);
