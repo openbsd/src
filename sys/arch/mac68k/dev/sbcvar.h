@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbcvar.h,v 1.3 2002/03/14 01:26:35 millert Exp $	*/
+/*	$OpenBSD: sbcvar.h,v 1.4 2004/12/02 06:43:25 miod Exp $	*/
 /*	$NetBSD: sbcvar.h,v 1.1 1997/03/01 20:19:00 scottr Exp $	*/
 
 /*
@@ -109,8 +109,8 @@ extern struct scsi_device sbc_dev;
 
 int	sbc_pdma_in(struct ncr5380_softc *, int, int, u_char *);
 int	sbc_pdma_out(struct ncr5380_softc *, int, int, u_char *);
-void	sbc_irq_intr(void *);
-void	sbc_drq_intr(void *);
+int	sbc_irq_intr(void *);
+int	sbc_drq_intr(void *);
 void	sbc_dma_alloc(struct ncr5380_softc *);
 void	sbc_dma_free(struct ncr5380_softc *);
 void	sbc_dma_poll(struct ncr5380_softc *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbc.c,v 1.14 2002/03/14 01:26:35 millert Exp $	*/
+/*	$OpenBSD: sbc.c,v 1.15 2004/12/02 06:43:25 miod Exp $	*/
 /*	$NetBSD: sbc.c,v 1.24 1997/04/18 17:38:08 scottr Exp $	*/
 
 /*
@@ -114,7 +114,7 @@ sbc_minphys(struct buf *bp)
  * General support for Mac-specific SCSI logic.
  ***/
 
-void
+int
 sbc_irq_intr(p)
 	void *p;
 {
@@ -141,6 +141,8 @@ sbc_irq_intr(p)
 #endif
 		}
 	}
+
+	return (claimed);
 }
 
 #ifdef SBC_DEBUG
@@ -374,7 +376,7 @@ interrupt:
  * detect and handle the bus error for early termination of a command.
  * This is usually caused by a disconnecting target.
  */
-void
+int
 sbc_drq_intr(p)
 	void *p;
 {
@@ -397,7 +399,7 @@ sbc_drq_intr(p)
 	 * If we're not ready to xfer data, or have no more, just return.
 	 */
 	if ((*ncr_sc->sci_csr & SCI_CSR_DREQ) == 0 || dh->dh_len == 0)
-		return;
+		return (0);
 
 #ifdef SBC_DEBUG
 	if (sbc_debug & SBC_DB_INTR)
@@ -436,7 +438,7 @@ sbc_drq_intr(p)
 #endif
 		m68k_fault_addr = 0;
 
-		return;
+		return (1);
 	}
 
 	if (dh->dh_flags & SBC_DH_OUT) { /* Data Out */
@@ -577,6 +579,8 @@ sbc_drq_intr(p)
 		    ncr_sc->sc_dev.dv_xname, *ncr_sc->sci_csr,
 		    *ncr_sc->sci_bus_csr);
 #endif
+
+	return (1);
 }
 
 void
