@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.1 1998/06/23 19:45:20 mickey Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.2 1999/04/20 19:51:35 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -33,10 +33,10 @@
 #ifndef _MACHINE_DISKLABEL_H_
 #define _MACHINE_DISKLABEL_H_
 
-#define	LABELSECTOR	(1024 / DEV_BSIZE)	/* sector containing label */
-#define	LABELOFFSET	0			/* offset of label in sector */
-#define	MAXPARTITIONS	16			/* number of partitions */
-#define	RAW_PART	2			/* raw partition: xx?c */
+#define	LABELSECTOR	0	/* sector containing label */
+#define	LABELOFFSET	64	/* offset of label in sector */
+#define	MAXPARTITIONS	16	/* number of partitions */
+#define	RAW_PART	2	/* raw partition: xx?c */
 
 /* Just a dummy */
 struct cpu_disklabel {
