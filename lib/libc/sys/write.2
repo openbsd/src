@@ -1,4 +1,4 @@
-.\"	$OpenBSD: write.2,v 1.19 2000/04/15 11:46:04 aaron Exp $
+.\"	$OpenBSD: write.2,v 1.20 2000/04/20 06:34:37 deraadt Exp $
 .\"	$NetBSD: write.2,v 1.6 1995/02/27 12:39:43 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -39,7 +39,9 @@
 .Os
 .Sh NAME
 .Nm write ,
-.Nm writev
+.Nm writev ,
+.Nm pwrite ,
+.Nm pwritev
 .Nd write output
 .Sh SYNOPSIS
 .Fd #include <sys/types.h>
@@ -49,6 +51,10 @@
 .Fn write "int d" "const void *buf" "size_t nbytes"
 .Ft ssize_t
 .Fn writev "int d" "const struct iovec *iov" "int iovcnt"
+.Ft ssize_t
+.Fn pwrite "int d" "const void *buf" "size_t nbytes" "off_t offset"
+.Ft ssize_t
+.Fn pwritev "int d" "const struct iovec *iov" "int iovcnt" "off_t offset"
 .Sh DESCRIPTION
 .Fn write
 attempts to write
@@ -57,16 +63,23 @@ of data to the object referenced by the descriptor
 .Fa d
 from the buffer pointed to by
 .Fa buf .
-.Fn \ Writev
+.Fn writev
 performs the same action, but gathers the output data
 from the
 .Fa iovcnt
 buffers specified by the members of the
 .Fa iov
 array: iov[0], iov[1], ..., iov[iovcnt\|-\|1].
+.Fn pwrite
+and
+.Fn pwritev
+perform the same functions, but write to the specified position in
+the file without modifying the file pointer.
 .Pp
 For
-.Fn writev ,
+.Fn writev
+and
+.Fn pwritev ,
 the
 .Fa iovec
 structure is defined as:
@@ -83,6 +96,8 @@ Each
 entry specifies the base address and length of an area
 in memory from which data should be written.
 .Fn writev
+and
+.Fn pwritev
 will always write a complete area before proceeding
 to the next.
 .Pp
@@ -127,6 +142,8 @@ and the remainder of the operation should be retried when possible.
 .Pp
 Note that
 .Fn writev
+and
+.Fn pwritev
 will fail if the value of
 .Fa iovcnt
 exceedes the constant
@@ -137,9 +154,11 @@ is returned.  Otherwise, a \-1 is returned and the global variable
 .Va errno
 is set to indicate the error.
 .Sh ERRORS
-.Fn write
+.Fn write ,
+.Fn pwrite ,
+.Fn writev ,
 and
-.Fn writev
+.Fn pwritev
 will fail and the file pointer will remain unchanged if:
 .Bl -tag -width Er
 .It Bq Er EBADF
@@ -174,6 +193,8 @@ and no data could be written immediately.
 .Pp
 In addition,
 .Fn write
+and
+.Fn pwrite
 may return the following error:
 .Bl -tag -width Er
 .It Bq Er EFAULT
@@ -189,6 +210,8 @@ was larger than
 .Pp
 Also,
 .Fn writev
+and
+.Fn pwritev
 may return one of the following errors:
 .Bl -tag -width Er
 .It Bq Er EDESTADDRREQ
@@ -219,8 +242,14 @@ array overflowed an
 .Sh STANDARDS
 The
 .Fn write
-function is expected to conform to
-.St -p1003.1-88 .
+function conforms to
+.St -p1003.1-90 .
+The
+.Fn writev
+and
+.Fn pwrite
+functions conform to
+.St -xpg4.2 .
 .Sh CAVEATS
 Error checks should explicitly test for \-1.
 Code such as
@@ -242,6 +271,16 @@ Proper loops should use
 	while ((nr = write(fd, buf, sizeof buf)) != -1 && nr != 0)
 .Ed
 .Sh HISTORY
+The
+.Fn pwritev
+function call
+appeared in
+.Ox 2.7 .
+The
+.Fn pwrite
+function call
+appeared in
+.At V.4 .
 The
 .Fn writev
 function call

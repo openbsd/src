@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.33 2000/02/07 04:59:30 assar Exp $
+#	$OpenBSD: Makefile.inc,v 1.34 2000/04/20 06:34:36 deraadt Exp $
 #	$NetBSD: Makefile.inc,v 1.35 1995/10/16 23:49:07 jtc Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
@@ -28,7 +28,7 @@ DPSRCS+= Lint_Ovfork.c Lint_brk.c Lint_exect.c Lint_fork.c \
 # with old syscall interfaces.
 SRCS+=	ftruncate.c lseek.c mmap.c ptrace.c semctl.c truncate.c \
 	timer_create.c timer_delete.c timer_getoverrun.c timer_gettime.c \
-	timer_settime.c
+	timer_settime.c pread.c preadv.c pwrite.c pwritev.c
 
 # modules with default implementations on all architectures:
 ASM=	accept.o access.o acct.o adjtime.o bind.o chdir.o chflags.o chmod.o \
@@ -196,7 +196,7 @@ MLINKS+=intro.2 errno.2
 MLINKS+=mlock.2 munlock.2
 MLINKS+=mount.2 unmount.2
 MLINKS+=pathconf.2 fpathconf.2
-MLINKS+=read.2 readv.2
+MLINKS+=read.2 readv.2 read.2 pread.2 read.2 preadv.2
 MLINKS+=recv.2 recvfrom.2 recv.2 recvmsg.2
 MLINKS+=send.2 sendmsg.2 send.2 sendto.2
 MLINKS+=setpgid.2 setpgrp.2
@@ -208,4 +208,4 @@ MLINKS+=syscall.2 __syscall.2
 MLINKS+=truncate.2 ftruncate.2
 MLINKS+=utimes.2 futimes.2
 MLINKS+=wait.2 wait3.2 wait.2 wait4.2 wait.2 waitpid.2
-MLINKS+=write.2 writev.2
+MLINKS+=write.2 writev.2 write.2 pwrite.2 write.2 pwritev.2
