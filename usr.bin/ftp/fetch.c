@@ -1,5 +1,5 @@
-/*	$OpenBSD: fetch.c,v 1.10 1997/04/23 20:33:06 deraadt Exp $	*/
-/*	$NetBSD: fetch.c,v 1.6 1997/04/14 09:09:19 lukem Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.11 1997/04/28 21:10:06 millert Exp $	*/
+/*	$NetBSD: fetch.c,v 1.8 1997/04/21 18:45:47 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: fetch.c,v 1.10 1997/04/23 20:33:06 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: fetch.c,v 1.11 1997/04/28 21:10:06 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -436,13 +436,13 @@ auto_fetch(argc, argv, fd)
 			dir = strchr(host, '/');
 
 			/* Look for [user:pass@]host[:port] */
-			user = host;
-			pass = strpbrk(user, ":@/");
+			pass = strpbrk(host, ":@/");
 			if (pass == NULL || *pass == '/') {
-				user = pass = NULL;
+				pass = NULL;
 				goto parsed_url;
 			}
-			if (*pass == '@') {
+			if (pass == host || *pass == '@') {
+bad_ftp_url:
 				warnx("Bad ftp URL: %s", argv[argpos]);
 				rval = argpos + 1;
 				continue;
@@ -451,15 +451,15 @@ auto_fetch(argc, argv, fd)
 			cp = strpbrk(pass, ":@/");
 			if (cp == NULL || *cp == '/') {
 				portnum = pass;
-				user = pass = NULL;
+				pass = NULL;
 				goto parsed_url;
 			}
-			if (*cp == ':') {
-				warnx("Bad ftp URL: %s", argv[argpos]);
-				rval = argpos + 1;
-				continue;
-			}
+			if (EMPTYSTRING(cp) || *cp == ':')
+				goto bad_ftp_url;
 			*cp++ = '\0';
+			user = host;
+			if (EMPTYSTRING(user))
+				goto bad_ftp_url;
 			host = cp;
 			portnum = strchr(host, ':');
 			if (portnum != NULL)
