@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_ecoff.c,v 1.1 1998/07/14 15:08:27 mickey Exp $	*/
+/*	$OpenBSD: exec_ecoff.c,v 1.2 1998/07/14 16:51:26 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -63,7 +63,7 @@ ecoff_load(fd, xp)
 	xp->data.size = x->a.dsize;
 	xp->bss.size = x->a.bsize;
 	xp->sym.size = x->f.f_nsyms * sizeof (struct ecoff_extsym);
-	xp->str.size = 0;	/* will be hacked later in exec() */
+	xp->str.size = 0;
 
 	xp->text.foff = ECOFF_TXTOFF(x);
 	xp->data.foff = xp->text.foff + x->a.tsize;
