@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.456 2001/10/24 17:29:27 millert Exp $
+	$OpenBSD: pcidevs,v 1.457 2001/10/25 16:43:02 mickey Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -499,6 +499,7 @@ vendor LINEARSYS	0x1254	Linear Systems
 vendor ASIX		0x125b	ASIX
 vendor AURORA		0x125c	Aurora Technologies
 vendor ESSTECH		0x125d	ESS
+vendor INTERSIL		0x126c	Intersil
 vendor NORTEL		0x126c	Nortel Networks
 vendor ENSONIQ		0x1274	Ensoniq
 vendor NETAPP		0x1275	Network Appliance
@@ -1333,6 +1334,9 @@ product INTEL 82802AC		0x89ac	82802AC Firmware Hub 8Mbit
 
 /* Intergraph products */
 product INTERGRAPH 4D50T	0x00e4	Powerstorm 4D50T
+
+/* Intersil products */
+product INTERSIL MINI_PCI_WLAN	0x3873	PRISM2.5 Mini-PCI WLAN
 
 /* Invertex */
 product INVERTEX AEON		0x0005	AEON
