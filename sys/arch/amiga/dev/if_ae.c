@@ -1,4 +1,5 @@
-/*	$NetBSD: if_ae.c,v 1.4 1995/12/24 02:29:52 mycroft Exp $	*/
+/*	$OpenBSD: if_ae.c,v 1.3 1996/02/26 21:11:40 niklas Exp $	*/
+/*	$NetBSD: if_ae.c,v 1.5 1996/02/24 07:47:36 chopps Exp $	*/
 
 /*
  * Copyright (c) 1995 Bernd Ernesti and Klaus Burkert. All rights reserved.
@@ -206,18 +207,13 @@ aeattach(parent, self, aux)
 	 * Manufacturer decides the 3 first bytes, i.e. ethernet vendor ID.
 	 */
 
-	/*
-	 * currently borrowed from C= 
-	 * the next four lines will soon have to be altered 
-	 */
-
 	sc->sc_arpcom.ac_enaddr[0] = 0x00;
-	sc->sc_arpcom.ac_enaddr[1] = 0x80;
-	sc->sc_arpcom.ac_enaddr[2] = 0x10;
+	sc->sc_arpcom.ac_enaddr[1] = 0x60;
+	sc->sc_arpcom.ac_enaddr[2] = 0x30;
 
-	sc->sc_arpcom.ac_enaddr[3] = ((ser >> 16) & 0x0f) | 0xf0; /* to diff from A2065 */
-	sc->sc_arpcom.ac_enaddr[4] = (ser >>  8 ) & 0xff;
-	sc->sc_arpcom.ac_enaddr[5] = (ser       ) & 0xff;
+	sc->sc_arpcom.ac_enaddr[3] = (ser >> 16) & 0xff;
+	sc->sc_arpcom.ac_enaddr[4] = (ser >> 8) & 0xff;
+	sc->sc_arpcom.ac_enaddr[5] = ser & 0xff;
 
 	printf("%s: hardware address %s 32K", sc->sc_dev.dv_xname,
 		ether_sprintf(sc->sc_arpcom.ac_enaddr));
