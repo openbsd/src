@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.24 2001/02/04 01:49:21 aaron Exp $	*/
+/*	$OpenBSD: bus.h,v 1.25 2001/02/04 06:51:14 aaron Exp $	*/
 /*	$NetBSD: bus.h,v 1.6 1996/11/10 03:19:25 thorpej Exp $	*/
 
 /*-
@@ -725,7 +725,7 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 #define	i386_space_copy(a1, a2, sz, cnt) do {				\
 	int _len = (sz) * (cnt);					\
 	if ((void *)(a2) < ((void *)(a1) + _len)) {			\
-		a1 += _len; a2 += _len;					\
+		a1 += (_len - (sz)); a2 += (_len - (sz));		\
 		switch (sz) {						\
 		case 1:	i386_space_copy1(a1,a2,cnt,"movsb","std");break;\
 		case 2:	i386_space_copy1(a1,a2,cnt,"movsw","std");break;\
