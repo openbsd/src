@@ -1,4 +1,4 @@
-/*	$OpenBSD: process.c,v 1.10 2001/12/07 18:45:33 mpech Exp $	*/
+/*	$OpenBSD: process.c,v 1.11 2002/05/22 00:32:27 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)process.c	5.10 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$Id: process.c,v 1.10 2001/12/07 18:45:33 mpech Exp $";
+static char rcsid[] = "$Id: process.c,v 1.11 2002/05/22 00:32:27 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -98,11 +98,14 @@ process_request(mp, rp)
 			return;
 		}
 	if (memcmp(&satosin(&rp->addr)->sin_addr,
-		   &satosin(&mp->ctl_addr)->sin_addr,
-		   sizeof(struct in_addr))) {
-		char	buf1[32], buf2[32];
-		strcpy(buf1, inet_ntoa(satosin(&rp->addr)->sin_addr));
-		strcpy(buf2, inet_ntoa(satosin(&mp->ctl_addr)->sin_addr));
+	    &satosin(&mp->ctl_addr)->sin_addr,
+	    sizeof(struct in_addr))) {
+		char buf1[32], buf2[32];
+
+		strlcpy(buf1, inet_ntoa(satosin(&rp->addr)->sin_addr),
+		    sizeof buf1);
+		strlcpy(buf2, inet_ntoa(satosin(&mp->ctl_addr)->sin_addr),
+		    sizeof buf2);
 		syslog(LOG_WARNING, "addresses are different, %s != %s",
 		       buf1, buf2);
 	}
@@ -158,7 +161,7 @@ do_announce(mp, rp)
 	int result;
 
 	/* see if the user is logged */
-	result = find_user(mp->r_name, mp->r_tty);
+	result = find_user(mp->r_name, mp->r_tty, sizeof mp->r_tty);
 	if (result != SUCCESS) {
 		rp->answer = result;
 		return;
@@ -196,13 +199,14 @@ do_announce(mp, rp)
  * Search utmp for the local user
  */
 int
-find_user(name, tty)
+find_user(name, tty, ttyl)
 	char *name, *tty;
+	int ttyl;
 {
 	struct utmp ubuf, ubuf1;
 	int status;
 	FILE *fd;
-	char ftty[20];
+	char ftty[MAXPATHLEN];
 	time_t	idle, now;
 
 	time(&now);
@@ -213,14 +217,15 @@ find_user(name, tty)
 	}
 #define SCMPN(a, b)	strncmp(a, b, sizeof (a))
 	status = NOT_HERE;
-	(void) strcpy(ftty, _PATH_DEV);
+	(void) strlcpy(ftty, _PATH_DEV, sizeof ftty);
 	while (fread((char *) &ubuf, sizeof ubuf, 1, fd) == 1)
 		if (SCMPN(ubuf.ut_name, name) == 0) {
 			if (*tty == '\0') {
 				/* no particular tty was requested */
 				struct stat statb;
 
-				strcpy(ftty+sizeof(_PATH_DEV)-1, ubuf.ut_line);
+				strlcpy(ftty+sizeof(_PATH_DEV)-1, ubuf.ut_line,
+				    sizeof(ftty) - sizeof(_PATH_DEV)-1);
 				if (stat(ftty, &statb) == 0) {
 					if (!(statb.st_mode & S_IWGRP)) {
 						if (status == NOT_HERE)
@@ -238,6 +243,6 @@ find_user(name, tty)
 		}
 	fclose(fd);
 	if (*tty == '\0' && status == SUCCESS)
-		strcpy(tty, ubuf1.ut_line);
+		strlcpy(tty, ubuf1.ut_line, ttyl);
 	return (status);
 }
