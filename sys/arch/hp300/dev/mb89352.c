@@ -1,4 +1,4 @@
-/*	$OpenBSD: mb89352.c,v 1.2 2004/08/18 17:18:00 miod Exp $	*/
+/*	$OpenBSD: mb89352.c,v 1.3 2004/08/19 10:18:41 miod Exp $	*/
 /*	$NetBSD: mb89352.c,v 1.5 2000/03/23 07:01:31 thorpej Exp $	*/
 /*	NecBSD: mb89352.c,v 1.4 1998/03/14 07:31:20 kmatsuda Exp	*/
 
@@ -1472,7 +1472,6 @@ spc_intr(void *arg)
 	ints = spc_read(INTS);
 	if (ints != 0)
 		spc_process_intr(arg, ints);
-else printf("spc_intr: 0\n");
 
 	spc_write(SCTL, spc_read(SCTL) | SCTL_INTR_ENAB);
 	return 1;
