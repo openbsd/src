@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.16 2004/12/03 06:37:51 miod Exp $
+#	$OpenBSD: RAMDISK,v 1.17 2004/12/08 20:21:31 miod Exp $
 #
 # RAMDISK - bsd.rd configuration file (non-SBC version)
 
@@ -37,7 +37,7 @@ option		DISABLE_ADB_WITH_SERIAL_CONSOLE
 #option		MRG_ADB		  # Use ROM-based ADB driver
 
 config		bsd		root on rd0a
-maxusers	16
+maxusers	32
 
 mainbus0 at root
 
