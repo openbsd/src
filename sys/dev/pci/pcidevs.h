@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.85 1998/09/20 04:16:40 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.86 1998/09/26 04:17:49 downsj Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -246,7 +246,7 @@
 #define	PCI_VENDOR_FUJITSU	0x10ca		/* Fujitsu */
 #define	PCI_VENDOR_OMRON	0x10cb		/* Omron */
 #define	PCI_VENDOR_MENTOR	0x10cc		/* Mentor ARC */
-#define	PCI_VENDOR_ADVSYSPROD	0x10cd		/* Advanced System Products */
+#define	PCI_VENDOR_ADVSYS	0x10cd		/* Advanced System Products */
 #define	PCI_VENDOR_RADIUS	0x10ce		/* Radius */
 #define	PCI_VENDOR_CITICORP	0x10cf		/* Citicorp TTI */
 #define	PCI_VENDOR_FUJITSU2	0x10d0		/* Fujitsu (2nd ID) */
@@ -603,6 +603,12 @@
 #define	PCI_PRODUCT_ADP2_7890	0x001f		/* AIC-7890/1 */
 #define	PCI_PRODUCT_ADP2_3940U2	0x0050		/* AHA-3940 Ultra2 */
 #define	PCI_PRODUCT_ADP2_7896	0x005f		/* AIC-7896/7 */
+
+/* Advanced System Products */
+#define	PCI_PRODUCT_ADVSYS_1200A	0x1100	
+#define	PCI_PRODUCT_ADVSYS_1200B	0x1200	
+#define	PCI_PRODUCT_ADVSYS_ULTRA	0x1300		/* ABP-930/40UA */
+#define	PCI_PRODUCT_ADVSYS_2300	0x2300	
 
 /* Alliance products */
 #define	PCI_PRODUCT_ALLIANCE_AT24	0x6424		/* AT24 */

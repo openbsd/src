@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.85 1998/09/20 04:16:40 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.86 1998/09/26 04:17:49 downsj Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -361,6 +361,30 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Adaptec (2nd ID)",
 	    "AIC-7896/7",
+	},
+	{
+	    PCI_VENDOR_ADVSYS, PCI_PRODUCT_ADVSYS_1200A,
+	    0,
+	    "Advanced System Products",
+	    "",
+	},
+	{
+	    PCI_VENDOR_ADVSYS, PCI_PRODUCT_ADVSYS_1200B,
+	    0,
+	    "Advanced System Products",
+	    "",
+	},
+	{
+	    PCI_VENDOR_ADVSYS, PCI_PRODUCT_ADVSYS_ULTRA,
+	    0,
+	    "Advanced System Products",
+	    "ABP-930/40UA",
+	},
+	{
+	    PCI_VENDOR_ADVSYS, PCI_PRODUCT_ADVSYS_2300,
+	    0,
+	    "Advanced System Products",
+	    "",
 	},
 	{
 	    PCI_VENDOR_ALLIANCE, PCI_PRODUCT_ALLIANCE_AT24,
@@ -3789,7 +3813,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	    NULL,
 	},
 	{
-	    PCI_VENDOR_ADVSYSPROD, 0,
+	    PCI_VENDOR_ADVSYS, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Advanced System Products",
 	    NULL,
