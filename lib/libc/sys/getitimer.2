@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getitimer.2,v 1.6 1999/02/27 21:56:19 deraadt Exp $
+.\"	$OpenBSD: getitimer.2,v 1.7 1999/03/02 10:30:34 deraadt Exp $
 .\"	$NetBSD: getitimer.2,v 1.6 1995/10/12 15:40:54 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -129,15 +129,33 @@ delivered.  Because this signal may interrupt in-progress
 system calls, programs using this timer must be prepared to
 restart interrupted system calls.
 .Sh NOTES
-Three macros for manipulating time values are defined in
-.Ao Pa sys/time.h Ac .
-.Fa timerclear
-sets a time value to zero,
-.Fa timerisset
-tests if a time value is non-zero, and
-.Fa timercmp
-compares two time values (beware that >= and <= do not
-work with this macro).
+Five macros for manipulating time values are defined in
+.Ao Pa sys/time.h Ac :
+.Pp
+.Bl -tag -width xxxx
+.It Fn timerclear "struct timeval *"
+Sets a time value to zero.
+.It Fn timerisset "struct timeval *"
+Tests if a time value is non-zero.
+.It Fn timercmp "struct timeval *a, struct timeval *b, CMP"
+Compares two time values in the form
+.Va a
+CMP
+.Va b Ns ,
+where CMP is <, =, or >
+(beware that >= and <= do not work with this macro).
+.It Fn timersub "struct timeval *a, struct timeval *b, struct timeval *res"
+Subtracts
+.Va a
+-
+.Va b
+and stores the result in
+.Va res Ns .
+.It Fn timeradd "struct timeval *a, struct timeval *a, struct timeval *res"
+Adds two timers and stores the result in
+.Va res Ns .
+.El
+.Pp
 .Sh RETURN VALUES
 If the calls succeed, a value of 0 is returned.  If an error occurs,
 the value -1 is returned, and a more precise error code is placed
