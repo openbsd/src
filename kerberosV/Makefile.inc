@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.6 2001/08/07 22:10:02 miod Exp $
+# $OpenBSD: Makefile.inc,v 1.7 2003/05/11 03:53:07 hin Exp $
 
 KRB5DIR	= ${.CURDIR}/${KRBDEPTH}
 KRB5SRC	= ${.CURDIR}/${KRBDEPTH}/src
@@ -7,7 +7,7 @@ KRB4DIR	= ${KRB5DIR}/../kerberosIV
 KRB4SRC	= ${KRB4DIR}/src
 
 CFLAGS	+= -DHAVE_CONFIG_H -DBINDIR=\"/usr/bin\" -DSBINDIR=\"/usr/sbin\"\
-	   -DLIBEXECDIR=\"/usr/libexec\" \
+	   -DLIBEXECDIR=\"/usr/libexec\" -DSYSCONFDIR=\"/etc/kerberosV\" \
 	   -I${DESTDIR}/usr/include/kerberosV \
 	   -I${DESTDIR}/usr/include/kerberosIV \
 	   -I${KRB5DIR}/include -I${KRB5SRC}/lib/roken\
