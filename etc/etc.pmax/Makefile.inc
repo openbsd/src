@@ -1,11 +1,11 @@
 #
 #	etc.pmax/Makefile.inc -- pmax-specific etc Makefile targets
 #
-#	$Id: Makefile.inc,v 1.3 1997/05/05 07:54:55 deraadt Exp $
+#	$Id: Makefile.inc,v 1.4 1997/05/10 22:38:20 deraadt Exp $
 
 .ifdef DESTDIR
 
-snap_md: binutils bsd
+snap_md: binutils bsd simpleroot
 	cp ${.CURDIR}/../sys/arch/sparc/compile/GENERIC/bsd \
 	    ${DESTDIR}/snapshot/bsd
 
@@ -19,5 +19,9 @@ bsd:
 	    make clean && make depend && make
 	cp ${.CURDIR}/../sys/arch/pmax/compile/GENERIC/bsd \
 	    ${DESTDIR}/snapshot/bsd
+
+simpleroot:
+	cd ${.CURDIR}/../distrib/simpleroot && make cleandir && \
+	    make && make install
 
 .endif	# DESTDIR check
