@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.4 2002/06/07 01:00:55 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.5 2002/06/08 15:45:31 miod Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 1996/09/30 16:34:21 ws Exp $	*/
 
 /*
@@ -36,45 +36,8 @@
 
 #include <powerpc/cpu.h>
 
-#define	CACHELINESIZE	32			/* For now		XXX */
-
-static __inline void
-syncicache(void *from, int len)
-{
-	int l;
-	char *p = from;
-
-	len = len + (((u_int32_t) from) & (CACHELINESIZE - 1));
-	l = len;
-	
-	do {
-		__asm__ __volatile__ ("dcbst 0,%0" :: "r"(p));
-		p += CACHELINESIZE;
-	} while ((l -= CACHELINESIZE) > 0);
-	__asm__ __volatile__ ("sync");
-	p = from;
-	l = len;
-	do {
-		__asm__ __volatile__ ("icbi 0,%0" :: "r"(p));
-		p += CACHELINESIZE;
-	} while ((l -= CACHELINESIZE) > 0);
-	__asm__ __volatile__ ("isync");
-}
-
-static __inline void
-invdcache(void *from, int len)
-{
-	int l;
-	char *p = from;
-	
-	len = len + (((u_int32_t) from) & (CACHELINESIZE - 1));
-	l = len;
-	
-	do {
-		__asm__ __volatile__ ("dcbi 0,%0" :: "r"(p));
-		p += CACHELINESIZE;
-	} while ((l -= CACHELINESIZE) > 0);
-	__asm__ __volatile__ ("sync");
-}
+u_int32_t ppc_set_msr(u_int32_t);
+u_int32_t ppc_get_msr(void);
+void install_extint(void (*)(void));
 
 #endif	/* _MACHINE_CPU_H_ */

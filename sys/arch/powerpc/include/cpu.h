@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.10 2002/06/07 21:33:43 nordin Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.11 2002/06/08 15:45:32 miod Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 1996/09/30 16:34:21 ws Exp $	*/
 
 /*
@@ -56,5 +56,48 @@ extern volatile int astpending;
 #define	signotify(p)		(astpending = 1)
 
 extern char *bootpath;
+
+#ifndef	CACHELINESIZE
+#define	CACHELINESIZE	32			/* For now		XXX */
+#endif
+
+static __inline void
+syncicache(void *from, int len)
+{
+	int l;
+	char *p = from;
+
+	len = len + (((u_int32_t) from) & (CACHELINESIZE - 1));
+	l = len;
+	
+	do {
+		__asm__ __volatile__ ("dcbst 0,%0" :: "r"(p));
+		p += CACHELINESIZE;
+	} while ((l -= CACHELINESIZE) > 0);
+	__asm__ __volatile__ ("sync");
+	p = from;
+	l = len;
+	do {
+		__asm__ __volatile__ ("icbi 0,%0" :: "r"(p));
+		p += CACHELINESIZE;
+	} while ((l -= CACHELINESIZE) > 0);
+	__asm__ __volatile__ ("isync");
+}
+
+static __inline void
+invdcache(void *from, int len)
+{
+	int l;
+	char *p = from;
+	
+	len = len + (((u_int32_t) from) & (CACHELINESIZE - 1));
+	l = len;
+	
+	do {
+		__asm__ __volatile__ ("dcbi 0,%0" :: "r"(p));
+		p += CACHELINESIZE;
+	} while ((l -= CACHELINESIZE) > 0);
+	__asm__ __volatile__ ("sync");
+}
 
 #endif	/* _POWERPC_CPU_H_ */
