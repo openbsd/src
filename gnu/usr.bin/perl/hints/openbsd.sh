@@ -52,6 +52,9 @@ d_suidsafe=$define
 # Allow a command-line override, such as -Doptimize=-g
 test "$optimize" || optimize='-O2'
 
+# However, -O2 implies -fstrict-aliasing and perl is not (currently) alias safe
+ccflags="$ccflags -fno-strict-aliasing"
+
 # This script UU/usethreads.cbu will get 'called-back' by Configure 
 # after it has prompted the user for whether to use threads.
 cat > UU/usethreads.cbu <<'EOCBU'
