@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.23 2002/07/31 22:08:42 millert Exp $	*/
+/*	$OpenBSD: edit.c,v 1.24 2003/02/02 18:38:22 millert Exp $	*/
 /*	$NetBSD: edit.c,v 1.6 1996/05/15 21:50:45 jtc Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)edit.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: edit.c,v 1.23 2002/07/31 22:08:42 millert Exp $";
+static char rcsid[] = "$OpenBSD: edit.c,v 1.24 2003/02/02 18:38:22 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -48,6 +48,7 @@ static char rcsid[] = "$OpenBSD: edit.c,v 1.23 2002/07/31 22:08:42 millert Exp $
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <paths.h>
 #include <pwd.h>
 #include <stdio.h>
@@ -152,12 +153,14 @@ verify(tempname, pw)
 	char *p, *q;
 	ENTRY *ep;
 	FILE *fp;
+	int fd;
 
-	if (!(fp = fopen(tempname, "r")))
+	if ((fd = open(tempname, O_RDONLY|O_NOFOLLOW)) == -1 ||
+	    (fp = fdopen(fd, "r")) == NULL)
 		pw_error(tempname, 1, 1);
-	if (fstat(fileno(fp), &sb))
+	if (fstat(fd, &sb))
 		pw_error(tempname, 1, 1);
-	if (sb.st_size == 0) {
+	if (sb.st_size == 0 || sb.st_nlink != 1) {
 		warnx("corrupted temporary file");
 		goto bad;
 	}
