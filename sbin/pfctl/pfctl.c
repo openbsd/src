@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.44 2001/10/02 17:55:24 dhartmei Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.45 2001/10/02 18:00:38 frantzen Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -113,6 +113,7 @@ static const struct pf_hint pf_hint_normal[] = {
 static const struct pf_hint pf_hint_satellite[] = {
 	{ "tcp.first",		3 * 60},
 	{ "tcp.opening",	30 + 5},
+	{ "tcp.established",	24 * 60 * 60 },
 	{ "tcp.closing",	15 * 60 + 5},
 	{ "tcp.finwait",	45 + 5},
 	{ "tcp.closed",		90 + 5},
@@ -130,7 +131,7 @@ static const struct pf_hint pf_hint_aggressive[] = {
 	{ "tcp.opening",	5 },
 	{ "tcp.established",	5 * 60 * 60 },
 	{ "tcp.closing",	60 },
-	{ "tcp.finwait",	60 },
+	{ "tcp.finwait",	30 },
 	{ "tcp.closed",		30 },
 	{ NULL,			0}};
 
@@ -545,7 +546,8 @@ pfctl_hint(int dev, const char *opt, int opts)
 		if (strcasecmp(opt, pf_hints[i].name) == 0)
 			break;
 
-	if (pf_hints[i].name == NULL) {
+	hint = pf_hints[i].hint;
+	if (hint == NULL) {
 		warnx("Bad hint name.  Format -O hint");
 		return 1;
 	}
