@@ -1,7 +1,8 @@
-#	$OpenBSD: Makefile,v 1.1.1.1 2001/06/27 18:23:36 kjc Exp $
+#	$OpenBSD: Makefile,v 1.2 2002/06/05 11:01:55 deraadt Exp $
 #	$NetBSD: Makefile,v 1.2 2001/04/05 21:48:05 thorpej Exp $
 
 BINDIR=/sbin
+LDSTATIC=-static
 
 PROG=	tbrconfig
 MAN=	tbrconfig.8
