@@ -1,4 +1,4 @@
-/*	$OpenBSD: movem.c,v 1.3 1998/09/15 05:12:32 pjanzen Exp $	*/
+/*	$OpenBSD: movem.c,v 1.4 1999/03/12 08:45:45 pjanzen Exp $	*/
 /*	$NetBSD: movem.c,v 1.5 1997/10/18 20:03:34 christos Exp $	*/
 
 /*
@@ -12,7 +12,7 @@
  * movsphere()		Function to look for and move spheres of annihilation
  */
 #ifndef lint
-static char rcsid[] = "$OpenBSD: movem.c,v 1.3 1998/09/15 05:12:32 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: movem.c,v 1.4 1999/03/12 08:45:45 pjanzen Exp $";
 #endif				/* not lint */
 
 #include "header.h"
@@ -287,6 +287,7 @@ mmove(aa, bb, cc, dd)
 	i = item[cc][dd];
 	if ((i == OPIT) || (i == OTRAPDOOR))
 		switch (mitem[aa][bb]) {
+		case BAT:
 		case SPIRITNAGA:
 		case PLATINUMDRAGON:
 		case WRAITH:
