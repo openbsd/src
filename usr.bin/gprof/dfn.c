@@ -1,4 +1,4 @@
-/*	$OpenBSD: dfn.c,v 1.3 2001/03/22 05:18:30 mickey Exp $	*/
+/*	$OpenBSD: dfn.c,v 1.4 2002/03/25 16:30:55 danh Exp $	*/
 /*	$NetBSD: dfn.c,v 1.5 1995/04/19 07:15:56 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)dfn.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: dfn.c,v 1.3 2001/03/22 05:18:30 mickey Exp $";
+static char rcsid[] = "$OpenBSD: dfn.c,v 1.4 2002/03/25 16:30:55 danh Exp $";
 #endif
 #endif /* not lint */
 
@@ -80,7 +80,7 @@ dfn( parentp )
 	    printname( parentp );
 	    printf( ")\n" );
 	}
-#   endif DEBUG
+#   endif /* DEBUG */
 	/*
 	 *	if we're already numbered, no need to look any furthur.
 	 */
@@ -132,7 +132,7 @@ dfn_pre_visit( parentp )
 	    printname( parentp );
 	    printf( "\n" );
 	}
-#   endif DEBUG
+#   endif /* DEBUG */
 }
 
     /*
@@ -191,7 +191,7 @@ dfn_findcycle( childp )
 	    printname( cycleheadp );
 	    printf( "\n" );
 	}
-#   endif DEBUG
+#   endif /* DEBUG */
     if ( cycletop == dfn_depth ) {
 	    /*
 	     *	this is previous function, e.g. this calls itself
@@ -213,7 +213,7 @@ dfn_findcycle( childp )
 		    printname( tailp );
 		    printf( "\n" );
 		}
-#	    endif DEBUG
+#	    endif /* DEBUG */
 	}
 	    /*
 	     *	if what we think is the top of the cycle
@@ -228,7 +228,7 @@ dfn_findcycle( childp )
 		    printname( cycleheadp );
 		    printf( "\n" );
 		}
-#	    endif DEBUG
+#	    endif /* DEBUG */
 	}
 	for ( index = cycletop + 1 ; index <= dfn_depth ; index += 1 ) {
 	    childp = dfn_stack[ index ].nlentryp;
@@ -247,7 +247,7 @@ dfn_findcycle( childp )
 			printname( cycleheadp );
 			printf( "\n" );
 		    }
-#		endif DEBUG
+#		endif /* DEBUG */
 		for ( tailp = childp ; tailp->cnext ; tailp = tailp->cnext ) {
 		    tailp -> cnext -> cyclehead = cycleheadp;
 #		    ifdef DEBUG
@@ -258,7 +258,7 @@ dfn_findcycle( childp )
 			    printname( cycleheadp );
 			    printf( "\n" );
 			}
-#		    endif DEBUG
+#		    endif /* DEBUG */
 		}
 	    } else if ( childp -> cyclehead != cycleheadp /* firewall */ )
 		warnx("[dfn_busy] glommed, but not to cyclehead");
@@ -284,7 +284,7 @@ dfn_self_cycle( parentp )
 	    printname( parentp );
 	    printf( "\n" );
 	}
-#   endif DEBUG
+#   endif /* DEBUG */
 }
 
     /*
@@ -304,7 +304,7 @@ dfn_post_visit( parentp )
 	    printname( parentp );
 	    printf( "\n" );
 	}
-#   endif DEBUG
+#   endif /* DEBUG */
 	/*
 	 *	number functions and things in their cycles
 	 *	unless the function is itself part of a cycle
@@ -319,14 +319,14 @@ dfn_post_visit( parentp )
 		    printname( memberp );
 		    printf( " -> toporder = %d\n" , dfn_counter );
 		}
-#	    endif DEBUG
+#	    endif /* DEBUG */
 	}
     } else {
 #	ifdef DEBUG
 	    if ( debug & DFNDEBUG ) {
 		printf( "[dfn_post_visit]\t\tis part of a cycle\n" );
 	    }
-#	endif DEBUG
+#	endif /* DEBUG */
     }
     dfn_depth -= 1;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: arcs.c,v 1.5 2001/11/19 19:02:14 mpech Exp $	*/
+/*	$OpenBSD: arcs.c,v 1.6 2002/03/25 16:30:55 danh Exp $	*/
 /*	$NetBSD: arcs.c,v 1.6 1995/04/19 07:15:52 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)arcs.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: arcs.c,v 1.5 2001/11/19 19:02:14 mpech Exp $";
+static char rcsid[] = "$OpenBSD: arcs.c,v 1.6 2002/03/25 16:30:55 danh Exp $";
 #endif
 #endif /* not lint */
 
@@ -67,7 +67,7 @@ addarc( parentp , childp , count )
 	    printf( "[addarc] %d arcs from %s to %s\n" ,
 		    count , parentp -> name , childp -> name );
 	}
-#   endif DEBUG
+#   endif /* DEBUG */
     arcp = arclookup( parentp , childp );
     if ( arcp != 0 ) {
 	    /*
@@ -78,7 +78,7 @@ addarc( parentp , childp , count )
 		printf( "[tally] hit %d += %d\n" ,
 			arcp -> arc_count , count );
 	    }
-#	endif DEBUG
+#	endif /* DEBUG */
 	arcp -> arc_count += count;
 	return;
     }
@@ -179,7 +179,7 @@ doarcs()
 	    if ( debug & BREAKCYCLE ) {
 		printf("[doarcs] pass %d, cycle(s) %d\n" , pass , ncycle );
 	    }
-#	endif DEBUG
+#	endif /* DEBUG */
 	if ( pass == 1 ) {
 	    printf( "\n\n%s %s\n%s %d:\n" ,
 		"The following arcs were deleted" ,
@@ -222,7 +222,7 @@ doarcs()
 		printf( "\n" );
 	    }
 	}
-#   endif DEBUG
+#   endif /* DEBUG */
 	/*
 	 *	starting from the topological top,
 	 *	propagate print flags to children.
@@ -352,7 +352,7 @@ timepropagate( parentp )
 		printname( parentp );
 		printf( "\n[dotime] share %f\n" , share );
 	    }
-#	endif DEBUG
+#	endif /* DEBUG */
     }
 }
 
@@ -419,7 +419,7 @@ cyclelink()
 		printname( nlp );
 		printf( " is the head of cycle %d\n" , cycle );
 	    }
-#	endif DEBUG
+#	endif /* DEBUG */
 	    /*
 	     *	link members to cycle header
 	     */
@@ -495,7 +495,7 @@ cycleanalyze()
 		printf( "[cycleanalyze] starting cycle %d of %d, size %d\n" ,
 		    cycleno , ncycle , size );
 	    }
-#	endif DEBUG
+#	endif /* DEBUG */
 	for ( nlp = cyclenl[ cycleno ] . cnext ; nlp ; nlp = nlp -> cnext ) {
 	    stkp = &cyclestack[0];
 	    nlp -> flags |= CYCLEHEAD;
@@ -523,7 +523,7 @@ cycleanalyze()
 	    printf("%s visited %d, viable %d, newcycle %d, oldcycle %d\n",
 		"[doarcs]" , visited , viable , newcycle , oldcycle);
 	}
-#   endif DEBUG
+#   endif /* DEBUG */
     return (done);
 }
 
@@ -539,14 +539,14 @@ descend( node , stkstart , stkp )
     for ( arcp = node -> children ; arcp ; arcp = arcp -> arc_childlist ) {
 #	ifdef DEBUG
 	    visited++;
-#	endif DEBUG
+#	endif /* DEBUG */
 	if ( arcp -> arc_childp -> cycleno != node -> cycleno
 	    || ( arcp -> arc_childp -> flags & VISITED )
 	    || ( arcp -> arc_flags & DEADARC ) )
 	    continue;
 #	ifdef DEBUG
 	    viable++;
-#	endif DEBUG
+#	endif /* DEBUG */
 	*stkp = arcp;
 	if ( arcp -> arc_childp -> flags & CYCLEHEAD ) {
 	    if ( addcycle( stkstart , stkp ) == FALSE )
@@ -599,7 +599,7 @@ addcycle( stkstart , stkend )
 	if ( arcpp == endlist ) {
 #	    ifdef DEBUG
 		oldcycle++;
-#	    endif DEBUG
+#	    endif /* DEBUG */
 	    return( TRUE );
 	}
     }
@@ -631,7 +631,7 @@ addcycle( stkstart , stkend )
 	if ( debug & SUBCYCLELIST ) {
 	    printsubcycle( clp );
 	}
-#   endif DEBUG
+#   endif /* DEBUG */
     cyclecnt++;
     if ( cyclecnt >= CYCLEMAX )
 	return( FALSE );
@@ -700,7 +700,7 @@ compresslist()
 	maxarcp = maxexitarcp;
 #	ifdef DEBUG
 	    type = "exit";
-#	endif DEBUG
+#	endif /* DEBUG */
     } else if ( maxwithparentcnt > 0 ) {
 	/*
 	 *	second choice is edge leading to node with at least one
@@ -709,7 +709,7 @@ compresslist()
 	maxarcp = maxwithparentarcp;
 #	ifdef DEBUG
 	    type = "internal";
-#	endif DEBUG
+#	endif /* DEBUG */
     } else {
 	/*
 	 *	last choice is edge leading to node with only this arc as
@@ -718,7 +718,7 @@ compresslist()
 	maxarcp = maxnoparentarcp;
 #	ifdef DEBUG
 	    type = "orphan";
-#	endif DEBUG
+#	endif /* DEBUG */
     }
     maxarcp -> arc_flags |= DEADARC;
     maxarcp -> arc_childp -> parentcnt -= 1;
@@ -730,7 +730,7 @@ compresslist()
 		maxarcp -> arc_parentp -> name, maxarcp -> arc_count,
 		maxarcp -> arc_childp -> name, maxarcp -> arc_cyclecnt);
 	}
-#   endif DEBUG
+#   endif /* DEBUG */
     printf("\t%s to %s with %ld calls\n", maxarcp->arc_parentp -> name,
 	maxarcp->arc_childp->name, maxarcp->arc_count);
     prev = &cyclehead;
@@ -827,7 +827,7 @@ doflags()
 		printf( " inherits printflag %d and propfraction %f\n" ,
 			childp -> printflag , childp -> propfraction );
 	    }
-#	endif DEBUG
+#	endif /* DEBUG */
 	if ( ! childp -> printflag ) {
 		/*
 		 *	printflag is off
@@ -883,7 +883,7 @@ doflags()
 		printf( "time %f propself %f printtime %f\n" ,
 			childp -> time , childp -> propself , printtime );
 	    }
-#	endif DEBUG
+#	endif /* DEBUG */
     }
 }
 

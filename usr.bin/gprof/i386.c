@@ -1,8 +1,8 @@
-/*	$OpenBSD: i386.c,v 1.4 2001/03/22 05:18:30 mickey Exp $	*/
+/*	$OpenBSD: i386.c,v 1.5 2002/03/25 16:30:55 danh Exp $	*/
 /*	$NetBSD: i386.c,v 1.5 1995/04/19 07:16:04 cgd Exp $	*/
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: i386.c,v 1.4 2001/03/22 05:18:30 mickey Exp $";
+static char rcsid[] = "$OpenBSD: i386.c,v 1.5 2002/03/25 16:30:55 danh Exp $";
 #endif /* not lint */
 
 #include "gprof.h"
@@ -34,7 +34,7 @@ findcall( parentp , p_lowpc , p_highpc )
 			printf( "[findcall] %s: 0x%x to 0x%x\n" ,
 				parentp -> name , p_lowpc , p_highpc );
 		}
-#	endif DEBUG
+#	endif /* DEBUG */
 	for (pc = textspace + p_lowpc - N_TXTADDR(xbuf) ; pc < textspace + p_highpc - N_TXTADDR(xbuf) ; pc += len) {
 		len = 1;
 		if (iscall(pc)) {
@@ -44,7 +44,7 @@ findcall( parentp , p_lowpc , p_highpc )
 					printf( "[findcall]\t0x%x:calls" , pc - textspace );
 					printf( "\tdestpc 0x%x" , destpc );
 				}
-#			endif DEBUG
+#			endif /* DEBUG */
 			if (destpc >= s_lowpc && destpc <= s_highpc) {
 				childp = nllookup(destpc);
 #				ifdef DEBUG
@@ -53,7 +53,7 @@ findcall( parentp , p_lowpc , p_highpc )
 						printf( " childp->value 0x%x\n" ,
 							childp -> value );
 					}
-#				endif DEBUG
+#				endif /* DEBUG */
 				if (childp != NULL && childp->value == destpc) {
 					addarc(parentp, childp, 0L);
 					len += 4;
@@ -64,7 +64,7 @@ findcall( parentp , p_lowpc , p_highpc )
 				if ( debug & CALLDEBUG ) {
 					printf( "\tbut it's a botch\n" );
 				}
-#			endif DEBUG
+#			endif /* DEBUG */
 		}
 	}
 }

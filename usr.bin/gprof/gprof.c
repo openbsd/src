@@ -1,4 +1,4 @@
-/*	$OpenBSD: gprof.c,v 1.9 2001/11/19 19:02:14 mpech Exp $	*/
+/*	$OpenBSD: gprof.c,v 1.10 2002/03/25 16:30:55 danh Exp $	*/
 /*	$NetBSD: gprof.c,v 1.8 1995/04/19 07:15:59 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)gprof.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: gprof.c,v 1.9 2001/11/19 19:02:14 mpech Exp $";
+static char rcsid[] = "$OpenBSD: gprof.c,v 1.10 2002/03/25 16:30:55 danh Exp $";
 #endif
 #endif /* not lint */
 
@@ -98,9 +98,9 @@ main(argc, argv)
 	    debug |= ANYDEBUG;
 #	    ifdef DEBUG
 		printf("[main] debug = %d\n", debug);
-#	    else not DEBUG
+#	    else /* not DEBUG */
 		warnx("-d ignored");
-#	    endif DEBUG
+#	    endif /* DEBUG */
 	    break;
 	case 'E':
 	    ++argv;
@@ -240,7 +240,7 @@ getnfile()
 		printf("[getnfile] 0X%08x\t%s\n", nl[j].value, nl[j].name);
 	    }
 	}
-#   endif DEBUG
+#   endif /* DEBUG */
 }
 
 void
@@ -299,7 +299,7 @@ getsymtab(nfile)
 		    printf( "[getsymtab] rejecting: 0x%x %s\n" ,
 			    nbuf.n_type , strtab + nbuf.n_un.n_strx );
 		}
-#	    endif DEBUG
+#	    endif /* DEBUG */
 	    continue;
 	}
 	npe->value = nbuf.n_value;
@@ -309,7 +309,7 @@ getsymtab(nfile)
 		printf( "[getsymtab] %d %s 0x%08x\n" ,
 			nname , npe -> name , npe -> value );
 	    }
-#	endif DEBUG
+#	endif /* DEBUG */
 	npe++;
 	nname++;
     }
@@ -365,7 +365,7 @@ getpfile(filename)
 		printf( "[getpfile] frompc 0x%x selfpc 0x%x count %d\n" ,
 			arc.raw_frompc , arc.raw_selfpc , arc.raw_count );
 	    }
-#	endif DEBUG
+#	endif /* DEBUG */
 	    /*
 	     *	add this arc
 	     */
@@ -422,7 +422,7 @@ openpfile(filename)
 		sampbytes , nsamples );
 	    printf( "[openpfile] sample rate %d\n" , hz );
 	}
-#   endif DEBUG
+#   endif /* DEBUG */
     return(pfile);
 }
 
@@ -448,7 +448,7 @@ tally( rawp )
 	    printf( "[tally] arc from %s to %s traversed %d times\n" ,
 		    parentp -> name , childp -> name , rawp -> raw_count );
 	}
-#   endif DEBUG
+#   endif /* DEBUG */
     addarc( parentp , childp , rawp -> raw_count );
 }
 
@@ -491,7 +491,7 @@ dumpsum( sumfile )
 		    printf( "[dumpsum] frompc 0x%x selfpc 0x%x count %d\n" ,
 			    arc.raw_frompc , arc.raw_selfpc , arc.raw_count );
 		}
-#	    endif DEBUG
+#	    endif /* DEBUG */
 	}
     }
     fclose( sfile );
@@ -591,7 +591,7 @@ asgnsamples()
 		printf( "[asgnsamples] pcl 0x%x pch 0x%x ccnt %d\n" ,
 			pcl , pch , ccnt );
 	    }
-#	endif DEBUG
+#	endif /* DEBUG */
 	totime += time;
 	for (j = j - 1; j < nname; j++) {
 	    svalue0 = nl[j].svalue;
@@ -617,7 +617,7 @@ asgnsamples()
 				nl[j].name, 
 				overlap * time / scale, overlap);
 		    }
-#		endif DEBUG
+#		endif /* DEBUG */
 		nl[j].time += overlap * time / scale;
 	    }
 	}
@@ -626,7 +626,7 @@ asgnsamples()
 	if (debug & SAMPLEDEBUG) {
 	    printf("[asgnsamples] totime %f\n", totime);
 	}
-#   endif DEBUG
+#   endif /* DEBUG */
 }
 
 
@@ -671,7 +671,7 @@ alignentries()
 		    printf("[alignentries] pushing svalue 0x%x to 0x%x\n",
 			    nlp->svalue, nlp->svalue + UNITS_TO_CODE);
 		}
-#	    endif DEBUG
+#	    endif /* DEBUG */
 	    nlp->svalue += UNITS_TO_CODE;
 	}
     }

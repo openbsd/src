@@ -1,4 +1,4 @@
-/*	$OpenBSD: printgprof.c,v 1.5 2001/11/19 19:02:14 mpech Exp $	*/
+/*	$OpenBSD: printgprof.c,v 1.6 2002/03/25 16:30:55 danh Exp $	*/
 /*	$NetBSD: printgprof.c,v 1.5 1995/04/19 07:16:21 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)printgprof.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: printgprof.c,v 1.5 2001/11/19 19:02:14 mpech Exp $";
+static char rcsid[] = "$OpenBSD: printgprof.c,v 1.6 2002/03/25 16:30:55 danh Exp $";
 #endif
 #endif /* not lint */
 
@@ -371,7 +371,7 @@ printname( selfp )
 	    if ( debug & PROPDEBUG ) {
 		printf( "%5.2f%% " , selfp -> propfraction );
 	    }
-#	endif DEBUG
+#	endif /* DEBUG */
     }
     if ( selfp -> cycleno != 0 ) {
 	printf( " <cycle %d>" , selfp -> cycleno );
@@ -601,7 +601,7 @@ arccmp( thisp , thatp )
 		    thatp -> arc_count , thatchildp -> ncall );
 	    printf( "\n" );
 	}
-#   endif DEBUG
+#   endif /* DEBUG */
     if ( thisparentp == thischildp ) {
 	    /* this is a self call */
 	return LESSTHAN;
