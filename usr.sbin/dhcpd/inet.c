@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.2 2004/04/14 01:27:49 henning Exp $	*/
+/*	$OpenBSD: inet.c,v 1.3 2004/04/16 04:30:09 deraadt Exp $	*/
 
 /*
  * Subroutines to manipulate internet addresses in a safely portable
@@ -160,11 +160,12 @@ addr_eq(struct iaddr addr1, struct iaddr addr2)
 	return (memcmp(addr1.iabuf, addr2.iabuf, addr1.len) == 0);
 }
 
-char *piaddr(struct iaddr addr)
+char *
+piaddr(struct iaddr addr)
 {
 	static char pbuf[32];
-	char *s;
 	struct in_addr a;
+	char *s;
 
 	memcpy(&a, &(addr.iabuf), sizeof(struct in_addr));
 

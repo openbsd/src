@@ -1,4 +1,4 @@
-/*	$Id: print.c,v 1.3 2004/04/15 22:22:21 hshoexer Exp $	 */
+/*	$Id: print.c,v 1.4 2004/04/16 04:30:09 deraadt Exp $	 */
 
 /* Turn data structures into printable text. */
 
@@ -45,9 +45,9 @@
 char *
 print_hw_addr(int htype, int hlen, unsigned char *data)
 {
-	static char     habuf[49];
-	char           *s;
-	int             i;
+	static char	habuf[49];
+	char	*s;
+	int	i;
 
 	if (htype == 0 || hlen == 0) {
 		goto bad;
@@ -76,8 +76,8 @@ bad:
 void 
 print_lease(struct lease *lease)
 {
-	struct tm      *t;
-	char            tbuf[32];
+	struct tm	*t;
+	char	tbuf[32];
 
 	debug("      Lease %s", piaddr(lease->ip_addr));
 
@@ -123,7 +123,7 @@ dump_packet(struct packet *tp)
 	debug("filename = %s", tdp->file);
 	debug("server_name = %s", tdp->sname);
 	if (tp->options_valid) {
-		int             i;
+		int	i;
 
 		for (i = 0; i < 256; i++) {
 			if (tp->options[i].data)
@@ -138,10 +138,8 @@ dump_packet(struct packet *tp)
 void 
 dump_raw(unsigned char *buf, int len)
 {
-	int             i, j;
-	char            lbuf[80];
-	int             llen = sizeof(lbuf);
-	int             lbix = 0;
+	char	lbuf[80];
+	int	i, j, llen = sizeof(lbuf), lbix = 0;
 
 	lbuf[0] = 0;
 
@@ -170,8 +168,8 @@ dump_raw(unsigned char *buf, int len)
 void 
 hash_dump(struct hash_table *table)
 {
-	int             i;
 	struct hash_bucket *bp;
+	int	i;
 
 	if (!table)
 		return;

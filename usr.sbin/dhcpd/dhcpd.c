@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.c,v 1.11 2004/04/15 23:20:42 henning Exp $ */
+/*	$OpenBSD: dhcpd.c,v 1.12 2004/04/16 04:30:09 deraadt Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@cvs.openbsd.org>
@@ -204,7 +204,7 @@ lease_pinged(struct iaddr from, u_int8_t *packet, int length)
 		return;
 	}
 
-	if (!lp->state && ! lp->releasing) {
+	if (!lp->state && !lp->releasing) {
 		warn("ICMP Echo Reply for %s arrived late or is spurious.",
 		    piaddr(from));
 		return;
