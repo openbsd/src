@@ -478,6 +478,9 @@ sunos_sys_ioctl(p, v, retval)
 	case _IO('t', 132):
 		SCARG(uap, com) = TIOCSCTTY;
 		break;
+	case SUNOS_TCFLSH:
+		/* XXX: fixme */
+		return (0);
 	case SUNOS_TCGETA:
 	case SUNOS_TCGETS: 
 	    {
@@ -766,15 +769,22 @@ sunos_sys_ioctl(p, v, retval)
 	    {
 		int tmp = 0;
 		switch ((int)SCARG(uap, data)) {
-		case SUNOS_S_FLUSHR:	tmp = FREAD;
-		case SUNOS_S_FLUSHW:	tmp = FWRITE;
-		case SUNOS_S_FLUSHRW:	tmp = FREAD|FWRITE;
+		case SUNOS_S_FLUSHR:
+			tmp = FREAD;
+			break;
+		case SUNOS_S_FLUSHW:
+			tmp = FWRITE;
+			break;
+		case SUNOS_S_FLUSHRW:
+			tmp = FREAD|FWRITE;
+			break;
 		}
                 return (*ctl)(fp, TIOCFLUSH, (caddr_t)&tmp, p);
 	    }
 	case _IO('S', 9):	/* I_SIGSET */
 	    {
 		int on = 1;
+
 		if (((int)SCARG(uap, data) & (SUNOS_S_HIPRI|SUNOS_S_INPUT)) ==
 		    SUNOS_S_HIPRI)
 			return EOPNOTSUPP;
