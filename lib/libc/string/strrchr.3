@@ -33,18 +33,21 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: strrchr.3,v 1.4 1999/06/06 06:57:52 pjanzen Exp $
+.\"	$OpenBSD: strrchr.3,v 1.5 1999/09/21 16:44:01 espie Exp $
 .\"
 .Dd June 29, 1991
 .Dt STRRCHR 3
 .Os
 .Sh NAME
-.Nm strrchr
+.Nm strrchr ,
+.Nm rindex
 .Nd locate last occurrence of a character in a string
 .Sh SYNOPSIS
 .Fd #include <string.h>
 .Ft char *
 .Fn strrchr "const char *s" "int c"
+.Ft char *
+.Fn rindex "const char *s" "int c"
 .Sh DESCRIPTION
 The
 .Fn strrchr
@@ -60,6 +63,11 @@ is
 .Fn strrchr
 locates the terminating
 .Ql \e0 .
+.Pp
+The
+.Fn rindex
+function is an old synonym for
+.Fn strrchr .
 .Sh RETURN VALUES
 The
 .Fn strrchr
@@ -79,9 +87,7 @@ char *s = "foobar";
 p = strrchr(s, 'o');
 .Ed
 .Sh SEE ALSO
-.Xr index 3 ,
 .Xr memchr 3 ,
-.Xr rindex 3 ,
 .Xr strchr 3 ,
 .Xr strcspn 3 ,
 .Xr strpbrk 3 ,
@@ -95,3 +101,7 @@ The
 function
 conforms to
 .St -ansiC .
+.Pp
+The
+.Fn rindex
+function is deprecated and shouldn't be used in new code.

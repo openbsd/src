@@ -33,18 +33,21 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: strchr.3,v 1.5 1999/06/06 06:57:52 pjanzen Exp $
+.\"	$OpenBSD: strchr.3,v 1.6 1999/09/21 16:44:01 espie Exp $
 .\"
 .Dd June 29, 1991
 .Dt STRCHR 3
 .Os
 .Sh NAME
-.Nm strchr
+.Nm strchr ,
+.Nm index
 .Nd locate first occurrence of a character in a string
 .Sh SYNOPSIS
 .Fd #include <string.h>
 .Ft char *
 .Fn strchr "const char *s" "int c"
+.Ft char *
+.Fn index "const char *s" "int c"
 .Sh DESCRIPTION
 The
 .Fn strchr
@@ -60,6 +63,11 @@ is
 .Fn strchr
 locates the terminating
 .Ql \e0 .
+.Pp
+The
+.Fn index
+function is an old synonym for
+.Fn strchr .
 .Sh RETURN VALUES
 The
 .Fn strchr
@@ -79,9 +87,7 @@ char *s = "foobar";
 p = strchr(s, 'o');
 .Ed
 .Sh SEE ALSO
-.Xr index 3 ,
 .Xr memchr 3 ,
-.Xr rindex 3 ,
 .Xr strcspn 3 ,
 .Xr strpbrk 3 ,
 .Xr strrchr 3 ,
@@ -95,3 +101,7 @@ The
 function
 conforms to
 .St -ansiC .
+.Pp
+The
+.Fn index
+function is deprecated and shouldn't be used in new code.
