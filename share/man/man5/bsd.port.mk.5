@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.11 2000/07/11 13:06:46 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.12 2000/09/11 18:11:28 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -196,6 +196,36 @@ and patchfiles will be located. See target fetch.
 Used to display
 .Sq ===> Configuring for foo
 and similar informative messages. Override to turn off, for instance.
+.It Ev EXTRACT_CASES
+In the normal extraction stage (when
+.Ev EXTRACT_ONLY
+is not empty), this is the contents of a case statement, used to extract
+files. Fragments are automatically appended to extract tar and zip
+archives, so that the default case is equivalent to the following shell
+fragment:
+.Bd -literal -indent
+set -e
+cd ${WKRDIR}
+for archive in ${EXTRACT_ONLY}
+do
+    case $$archive in
+	*.zip)
+	  unzip -q ${FULLDISTDIR}/$$archive -d ${WRKDIR};;
+	*.tar.bz2)
+	  bzip2 -dc ${FULLDISTDIR}/$$archive| tar xf -;;
+	*.tar)
+	  tar xf ${FULLDISTDIR}/$$archive;;
+	*)
+	  gzip -dc ${FULLDISTDIR}/$$archive | tar xf -;;
+    esac
+done
+.Ed
+.It Ev EXTRACT_ONLY
+Set if not all ${DISTFILES} should be extracted at do-extract stage.
+Default value is ${DISTFILES}.
+.It Ev EXTRACT_SUFX
+Used to set DISTFILES default value to ${DISTNAME}${EXTRACT_SUFX}.
+Default value is .tar.gz.
 .It Ev FAKE
 Automatically set to
 .Sq Yes
@@ -387,6 +417,12 @@ Location for ports system configuration files. Defaults to /etc, should
 never be set to /usr/local/etc.
 .It Ev TEMPLATES
 Base location for the templates used in the readme target.
+.It Ev USE_ZIP
+Set to Yes if port needs zip to build properly. This is automatic if
+EXTRACT_ONLY holds files matching *.zip.
+.It Ev USE_BZIP2
+Set to Yes if port needs bzip2 to build properly. This is automatic if
+EXTRACT_ONLY holds files matching *.bzip2.
 .It Ev WRKDIR
 Location where all port activity occurs.  Apart from the actual port, may
 hold all kinds of cookies that checkpoint the port's build.  Read-only.
@@ -466,6 +502,20 @@ This is DESCR.
 .Ox
 does not give a specific name to the generated file. It is not recommended
 to try to access them directly.
+.It Ev EXTRACT_AFTER_ARGS
+Was used to cobble together the normal extraction command, as
+${EXTRACT_CMD} ${EXTRACT_BEFORE_ARGS} ${EXTRACT_AFTER_ARGS}.
+Use
+.Ev EXTRACT_CASES
+instead.
+.It Ev EXTRACT_BEFORE_ARGS
+Likewise, use
+.Ev EXTRACT_CASES
+instead.
+.It Ev EXTRACT_CMD
+Likewise, use
+.Ev EXTRACT_CASES
+instead.
 .It Ev GNU_CONFIGURE
 Use
 .Ev CONFIGURE_STYLE
