@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.133 1999/05/03 17:23:59 deraadt Exp $
+$OpenBSD: pcidevs,v 1.134 1999/05/03 21:34:20 deraadt Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -500,8 +500,10 @@ vendor LUXSONOR		0x1287	LuxSonor
 vendor TRITECH		0x1292	TriTech Microelectronics
 vendor KOFAX		0x1296	Kofax Image Products
 vendor RISCOM		0x12aa	RISCom
+vendor ALTEON		0x12ae	Alteon
 vendor PICTUREEL	0x12c5	Picture Elements
 vendor STB2		0x12d2	NVidia/SGS-Thomson
+vendor NETGEAR		0x1385	Netgear
 vendor INVERTEX		0x14e1	Invertex
 vendor DELTA		0x1500	Delta
 vendor SYMPHONY2	0x1c1c	Symphony Labs (2nd ID)
@@ -550,6 +552,7 @@ product 3COM 3C905BTX		0x9055	3c905B 100Base-TX
 product 3COM 3C905BT4		0x9056	3c905B 100Base-T4
 product 3COM 3C905BFX		0x905a	3c905B 100Base-FX
 product 3COM 3C980TX		0x9800	3c980 100Base-TX
+product 3COM 3c985		0x0001	3c985
 
 /* 3DFX Interactive */
 product 3DFX VOODOO		0x0001	Voodoo
@@ -628,6 +631,9 @@ product ADVSYS WIDE		0x2300	ABP-940UW
 
 /* Alliance products */
 product ALLIANCE AT24		0x6424	AT24
+
+/* Alteon products */
+product ALTEON ACENIC		0x0001	Acenic
 
 /* Apple products */
 product APPLE BANDIT		0x0001	PCI
@@ -991,6 +997,9 @@ product NEOMAGIC 128V		0x0002	Magicgraph 128V
 product NEOMAGIC 128ZV		0x0003	Magicgraph 128ZV
 product NEOMAGIC NM2160		0x0004	Magicgraph NM2160
 
+/* Netgear products */
+product NETGEAR GA620		0x620a	GA620
+
 /* NetVin */
 product NETVIN NV5000		0x5000	NetVin 5000
 
@@ -1098,6 +1107,9 @@ product S3 VIRGE_GX2		0x8a10	ViRGE GX2
 product S3 VIRGE_MX		0x8c01	ViRGE MX
 product S3 VIRGE_MXP		0x8c03	ViRGE MXP
 product S3 SONICVIBES		0xca00	SonicVibes
+
+/* SGI products */
+product SGI TIGON		0x0009	Tigon
 
 /* SGS Thomson products */
 product SGSTHOMSON 2000		0x0008	STG 2000X
