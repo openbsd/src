@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.5 2004/02/07 13:59:45 henning Exp $	*/
+/*	$OpenBSD: options.c,v 1.6 2004/02/24 17:02:40 henning Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -47,6 +47,12 @@
 
 int bad_options = 0;
 int bad_options_max = 5;
+
+void	parse_options(struct packet *);
+void	parse_option_buffer(struct packet *, unsigned char *, int);
+int	store_options(unsigned char *, int, struct tree_cache **,
+	    unsigned char *, int, int, int, int);
+
 
 /*
  * Parse all available options out of the specified packet.

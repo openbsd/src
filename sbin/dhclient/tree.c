@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.c,v 1.8 2004/02/24 13:08:26 henning Exp $	*/
+/*	$OpenBSD: tree.c,v 1.9 2004/02/24 17:02:40 henning Exp $	*/
 
 /* Routines for manipulating parse trees... */
 
@@ -44,12 +44,12 @@
 
 extern int h_errno;
 
-static time_t tree_evaluate_recurse(
-    int *, unsigned char **, int *, struct tree *);
-static time_t do_host_lookup(
-    int *, unsigned char **, int *, struct dns_host_entry *);
-static void do_data_copy(
-    int *, unsigned char **, int *, unsigned char *, int);
+static time_t	tree_evaluate_recurse(int *, unsigned char **, int *,
+		    struct tree *);
+static time_t	do_host_lookup(int *, unsigned char **, int *,
+		    struct dns_host_entry *);
+static void	do_data_copy(int *, unsigned char **, int *, unsigned char *,
+		    int);
 
 pair
 cons(caddr_t car, pair cdr)
@@ -60,33 +60,6 @@ cons(caddr_t car, pair cdr)
 	foo->car = car;
 	foo->cdr = cdr;
 	return (foo);
-}
-
-struct tree_cache *
-tree_cache(struct tree *tree)
-{
-	struct tree_cache *tc;
-
-	tc = new_tree_cache("tree_cache");
-	if (!tc)
-		return (NULL);
-	tc->value = NULL;
-	tc->len = tc->buf_size = 0;
-	tc->timeout = 0;
-	tc->tree = tree;
-	return (tc);
-}
-
-struct tree *
-tree_host_lookup(char *name)
-{
-	struct tree *nt;
-	nt = new_tree("tree_host_lookup");
-	if (!nt)
-		error("No memory for host lookup tree node.");
-	nt->op = TREE_HOST_LOOKUP;
-	nt->data.host_lookup.host = enter_dns_host(name);
-	return (nt);
 }
 
 struct dns_host_entry *
@@ -104,84 +77,6 @@ enter_dns_host(char *name)
 	dh->buf_len = 0;
 	dh->timeout = 0;
 	return (dh);
-}
-
-struct tree *
-tree_const(unsigned char *data, int len)
-{
-	struct tree *nt;
-	if (!(nt = new_tree("tree_const"))
-	    || !(nt->data.const_val.data = dmalloc(len, "tree_const")))
-		error("No memory for constant data tree node.");
-	nt->op = TREE_CONST;
-	memcpy(nt->data.const_val.data, data, len);
-	nt->data.const_val.len = len;
-	return (nt);
-}
-
-struct tree *
-tree_concat(struct tree *left, struct tree *right)
-{
-	struct tree *nt;
-
-	/*
-	 * If we're concatenating a null tree to a non-null tree, just
-	 * return the non-null tree; if both trees are null, return a
-	 * null tree.
-	 */
-	if (!left)
-		return (right);
-	if (!right)
-		return (left);
-
-	/* If both trees are constant, combine them. */
-	if (left->op == TREE_CONST && right->op == TREE_CONST) {
-		unsigned char *buf = dmalloc(left->data.const_val.len +
-		    right->data.const_val.len, "tree_concat");
-		if (!buf)
-			error("No memory to concatenate constants.");
-		memcpy(buf, left->data.const_val.data,
-			left->data.const_val.len);
-		memcpy(buf + left->data.const_val.len,
-			right->data.const_val.data,
-			right->data.const_val.len);
-		dfree(left->data.const_val.data, "tree_concat");
-		dfree(right->data.const_val.data, "tree_concat");
-		left->data.const_val.data = buf;
-		left->data.const_val.len += right->data.const_val.len;
-		free_tree(right, "tree_concat");
-		return (left);
-	}
-
-	/* Otherwise, allocate a new node to concatenate the two. */
-	if (!(nt = new_tree("tree_concat")))
-		error("No memory for data tree concatenation node.");
-	nt->op = TREE_CONCAT;
-	nt->data.concat.left = left;
-	nt->data.concat.right = right;
-	return (nt);
-}
-
-struct tree *
-tree_limit(struct tree *tree, int limit)
-{
-	struct tree *rv;
-
-	/* If the tree we're limiting is constant, limit it now. */
-	if (tree->op == TREE_CONST) {
-		if (tree->data.const_val.len > limit)
-			tree->data.const_val.len = limit;
-		return (tree);
-	}
-
-	/* Otherwise, put in a node which enforces the limit on evaluation. */
-	rv = new_tree("tree_limit");
-	if (!rv)
-		return (NULL);
-	rv->op = TREE_LIMIT;
-	rv->data.limit.tree = tree;
-	rv->data.limit.limit = limit;
-	return (rv);
 }
 
 int

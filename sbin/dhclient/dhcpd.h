@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.16 2004/02/24 15:35:56 henning Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.17 2004/02/24 17:02:40 henning Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -74,8 +74,6 @@
 
 #include "dhcp.h"
 #include "tree.h"
-#include "hash.h"
-#include "inet.h"
 
 #define	LOCAL_PORT	68
 #define	REMOTE_PORT	67
@@ -88,6 +86,16 @@ struct option_data {
 struct string_list {
 	struct string_list	*next;
 	char			*string;
+};
+
+struct iaddr {
+	int len;
+	unsigned char iabuf[16];
+};
+
+struct iaddrlist {
+	struct iaddrlist *next;
+	struct iaddr addr;
 };
 
 struct packet {
@@ -218,6 +226,20 @@ struct protocol {
 	void *local;
 };
 
+#define DEFAULT_HASH_SIZE 97
+
+struct hash_bucket {
+	struct hash_bucket *next;
+	unsigned char *name;
+	int len;
+	unsigned char *value;
+};
+
+struct hash_table {
+	int hash_count;
+	struct hash_bucket *buckets[DEFAULT_HASH_SIZE];
+};
+
 /* Default path to dhcpd config file. */
 #define	_PATH_DHCLIENT_CONF	"/etc/dhclient.conf"
 #define	_PATH_DHCLIENT_DB	"/var/db/dhclient.leases"
@@ -229,12 +251,8 @@ struct protocol {
 /* External definitions... */
 
 /* options.c */
-void parse_options(struct packet *);
-void parse_option_buffer(struct packet *, unsigned char *, int);
 int cons_options(struct packet *, struct dhcp_packet *, int,
     struct tree_cache **, int, int, int, u_int8_t *, int);
-int store_options(unsigned char *, int, struct tree_cache **,
-    unsigned char *, int, int, int, int);
 char *pretty_print_option(unsigned int,
     unsigned char *, int, int, int);
 void do_packet(struct interface_info *, struct dhcp_packet *,
@@ -272,14 +290,9 @@ void convert_num(unsigned char *, char *, int, int);
 time_t parse_date(FILE *);
 
 /* tree.c */
-pair cons(caddr_t, pair);
-struct tree_cache *tree_cache(struct tree *);
-struct tree *tree_host_lookup(char *);
-struct dns_host_entry *enter_dns_host(char *);
-struct tree *tree_const(unsigned char *, int);
-struct tree *tree_concat(struct tree *, struct tree *);
-struct tree *tree_limit(struct tree *, int);
 int tree_evaluate(struct tree_cache *);
+struct dns_host_entry *enter_dns_host(char *);
+pair cons(caddr_t, pair);
 
 /* alloc.c */
 void *dmalloc(int, char *);
@@ -294,12 +307,6 @@ void free_hash_table(struct hash_table *, char *);
 void free_tree_cache(struct tree_cache *, char *);
 void free_tree(struct tree *, char *);
 void free_string_list(struct string_list *, char *);
-
-/* print.c */
-char *print_hw_addr(int, int, unsigned char *);
-void dump_raw(unsigned char *, int);
-void dump_packet(struct packet *);
-void hash_dump(struct hash_table *);
 
 /* bpf.c */
 int if_register_bpf(struct interface_info *);
