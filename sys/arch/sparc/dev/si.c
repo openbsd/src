@@ -190,7 +190,7 @@ struct si_softc {
 #define	SI_DO_RESELECT	0x04	/* Allow disconnect/reselect */
 #define	SI_OPTIONS_MASK	(SI_ENABLE_DMA|SI_DMA_INTR|SI_DO_RESELECT)
 #define SI_OPTIONS_BITS	"\10\3RESELECT\2DMA_INTR\1DMA"
-int si_options = SI_ENABLE_DMA;
+int si_options = 0;		/* XXX SI_ENABLE_DMA when dma works */
 int sw_options = SI_ENABLE_DMA;
 
 /* How long to wait for DMA before declaring an error. */
