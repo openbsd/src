@@ -8,7 +8,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: malloc.c,v 1.40 2000/04/10 19:36:29 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: malloc.c,v 1.41 2001/05/10 16:14:19 art Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -243,7 +243,7 @@ static int malloc_silent;
 /* always realloc ?  */
 static int malloc_realloc;
 
-#ifdef __FreeBSD__
+#if defined(__FreeBSD__) || (defined(__OpenBSD__) && defined(MADV_FREE))
 /* pass the kernel a hint on free pages ?  */
 static int malloc_hint;
 #endif
@@ -547,7 +547,7 @@ malloc_init ()
 		case 'd': malloc_stats   = 0; break;
 		case 'D': malloc_stats   = 1; break;
 #endif /* MALLOC_STATS */
-#ifdef __FreeBSD__
+#if defined(__FreeBSD__) || (defined(__OpenBSD__) && defined(MADV_FREE))
 		case 'h': malloc_hint    = 0; break;
 		case 'H': malloc_hint    = 1; break;
 #endif /* __FreeBSD__ */
@@ -1004,7 +1004,7 @@ free_pages(ptr, index, info)
     if (malloc_junk)
 	memset(ptr, SOME_JUNK, l);
 
-#ifdef __FreeBSD__
+#if defined(__FreeBSD__) || (defined(__OpenBSD__) && defined(MADV_FREE))
     if (malloc_hint)
 	madvise(ptr, l, MADV_FREE);
 #endif
