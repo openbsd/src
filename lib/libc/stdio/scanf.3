@@ -1,4 +1,4 @@
-.\"	$OpenBSD: scanf.3,v 1.11 2003/06/02 20:18:37 millert Exp $
+.\"	$OpenBSD: scanf.3,v 1.12 2003/09/26 16:24:56 deraadt Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -250,12 +250,17 @@ Equivalent to
 Matches a sequence of non-whitespace characters;
 the next pointer must be a pointer to
 .Li char ,
-and the array must be large enough to accept all the sequence and the
-terminating
+and the provided array must be large enough to accept and store
+all the sequence and the terminating
 .Tn NUL
 character.
 The input string stops at whitespace
 or at the maximum field width, whichever occurs first.
+If specified, the maximum field length refers to the sequence
+being scanned rather than the storage space, hence the provided
+array must be 1 larger for the terminating
+.Tn NUL
+character.
 .It Cm c
 Matches a sequence of
 .Li width
