@@ -1,4 +1,4 @@
-/*	$OpenBSD: ispvar.h,v 1.9 2000/02/20 21:22:41 mjacob Exp $ */
+/*	$OpenBSD: ispvar.h,v 1.10 2000/04/06 05:47:00 mjacob Exp $ */
 /*
  * Soft Definitions for for Qlogic ISP SCSI adapters.
  *
@@ -59,7 +59,7 @@
 #endif
 
 #define	ISP_CORE_VERSION_MAJOR	1
-#define	ISP_CORE_VERSION_MINOR	12
+#define	ISP_CORE_VERSION_MINOR	13
 
 /*
  * Vector for bus specific code to provide specific services.
@@ -231,11 +231,12 @@ typedef struct {
 
 typedef struct {
 	u_int32_t		isp_fwoptions	: 16,
-						: 7,
+						: 4,
 				loop_seen_once	: 1,
 				isp_loopstate	: 3,	/* Current Loop State */
 				isp_fwstate	: 3,	/* ISP F/W state */
 				isp_gotdparms	: 1,
+				isp_topo	: 3,
 				isp_onfabric	: 1;
 	u_int8_t		isp_loopid;	/* hard loop id */
 	u_int8_t		isp_alpa;	/* ALPA */
@@ -290,6 +291,12 @@ typedef struct {
 #define	LOOP_LIP_RCVD		1
 #define	LOOP_PDB_RCVD		2
 #define	LOOP_READY		7
+
+#define	TOPO_NL_PORT		0
+#define	TOPO_FL_PORT		1
+#define	TOPO_N_PORT		2
+#define	TOPO_F_PORT		3
+#define	TOPO_PTP_STUB		4
 
 /*
  * Soft Structure per host adapter
