@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vnops.c,v 1.6 1996/10/04 03:05:32 deraadt Exp $	*/
+/*	$OpenBSD: msdosfs_vnops.c,v 1.7 1996/10/24 17:56:18 tholo Exp $	*/
 /*	$NetBSD: msdosfs_vnops.c,v 1.48 1996/03/20 00:45:43 thorpej Exp $	*/
 
 /*-
@@ -62,7 +62,7 @@
 #include <sys/signalvar.h>
 #include <miscfs/specfs/specdev.h> /* XXX */	/* defines v_rdev */
 #include <sys/malloc.h>
-#include <sys/dir.h>		/* defines dirent structure */
+#include <sys/dirent.h>		/* defines dirent structure */
 #include <sys/lockf.h>
 
 #include <vm/vm.h>

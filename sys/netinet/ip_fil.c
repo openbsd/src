@@ -8,7 +8,7 @@
 #if 0
 #ifndef	lint
 static	char	sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-1995 Darren Reed";
-static	char	rcsid[] = "$OpenBSD: ip_fil.c,v 1.6 1996/10/08 07:33:25 niklas Exp $";
+static	char	rcsid[] = "$OpenBSD: ip_fil.c,v 1.7 1996/10/24 17:56:20 tholo Exp $";
 #endif
 #endif
 
@@ -17,7 +17,11 @@ static	char	rcsid[] = "$OpenBSD: ip_fil.c,v 1.6 1996/10/08 07:33:25 niklas Exp $
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/file.h>
-#include <sys/dir.h>
+#if defined(__OpenBSD__)
+# include <sys/dirent.h>
+#else
+# include <sys/dir.h>
+#endif
 #include <sys/ioctl.h>
 #include <sys/systm.h>
 #include <sys/uio.h>

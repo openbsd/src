@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.h,v 1.2 1996/03/03 12:11:31 niklas Exp $	*/
+/*	$OpenBSD: dir.h,v 1.3 1996/10/24 17:56:17 tholo Exp $	*/
 /*	$NetBSD: dir.h,v 1.8 1994/06/29 06:43:52 cgd Exp $	*/
 
 /*
@@ -43,6 +43,10 @@
 
 #ifndef _SYS_DIR_H_
 #define	_SYS_DIR_H_
+
+#ifdef _KERNEL
+#warning "<sys/dir.h> is a compatibility interface only, and should not be used"
+#endif
 
 #include <dirent.h>
 
