@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.64 2003/07/08 01:28:11 avsm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.65 2003/07/31 18:20:07 avsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -30,16 +30,16 @@
  */
 
 #ifndef lint
-static char copyright[] =
+static const char copyright[] =
 "@(#) Copyright (c) 1983, 1988, 1993, 1994\n\
 	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
+static const char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-static char rcsid[] = "$OpenBSD: syslogd.c,v 1.64 2003/07/08 01:28:11 avsm Exp $";
+static const char rcsid[] = "$OpenBSD: syslogd.c,v 1.65 2003/07/31 18:20:07 avsm Exp $";
 #endif
 #endif /* not lint */
 
@@ -104,13 +104,13 @@ static char rcsid[] = "$OpenBSD: syslogd.c,v 1.64 2003/07/08 01:28:11 avsm Exp $
 #define SYSLOG_NAMES
 #include <sys/syslog.h>
 
-char	*ConfFile = _PATH_LOGCONF;
-char	*PidFile = _PATH_LOGPID;
-char	ctty[] = _PATH_CONSOLE;
+#include "syslogd.h"
 
-#define	dprintf		if (Debug) printf
+char *ConfFile = _PATH_LOGCONF;
+const char ctty[] = _PATH_CONSOLE;
 
 #define MAXUNAMES	20	/* maximum number of user names */
+
 
 /*
  * Flags to logmsg().
@@ -159,7 +159,7 @@ int	repeatinterval[] = { 30, 120, 600 };	/* # of secs before flush */
 #define	MAXREPEAT ((sizeof(repeatinterval) / sizeof(repeatinterval[0])) - 1)
 #define	REPEATTIME(f)	((f)->f_time + repeatinterval[(f)->f_repeatcount])
 #define	BACKOFF(f)	{ if (++(f)->f_repeatcount > MAXREPEAT) \
-				 (f)->f_repeatcount = MAXREPEAT; \
+				(f)->f_repeatcount = MAXREPEAT; \
 			}
 
 /* values for f_type */
@@ -180,10 +180,12 @@ struct	filed *Files;
 struct	filed consfile;
 
 int	Debug;			/* debug flag */
+int	Startup = 1;		/* startup flag */
 char	LocalHostName[MAXHOSTNAMELEN];	/* our hostname */
 char	*LocalDomain;		/* our local domain name */
 int	InetInuse = 0;		/* non-zero if INET sockets are being used */
-int	finet;			/* Internet datagram socket */
+int	finet = -1;		/* Internet datagram socket */
+int	fklog = -1;		/* Kernel log device socket */
 int	LogPort;		/* port number for INET connections */
 int	Initialized = 0;	/* set when we have initialized ourselves */
 
@@ -197,8 +199,8 @@ volatile sig_atomic_t WantDie;
 volatile sig_atomic_t DoInit;
 
 void	cfline(char *, struct filed *, char *);
-char   *cvthname(struct sockaddr_in *);
-int	decode(const char *, CODE *);
+void    cvthname(struct sockaddr_in *, char *, size_t);
+int	decode(const char *, const CODE *);
 void	dodie(int);
 void	doinit(int);
 void	die(int);
@@ -225,12 +227,14 @@ int funix[MAXFUNIX];
 int
 main(int argc, char *argv[])
 {
-	int ch, i, fklog, linesize, fdsrmax = 0;
+	int ch, i, linesize, fdsrmax = 0;
 	struct sockaddr_un sunx, fromunix;
 	struct sockaddr_in sin, frominet;
 	socklen_t slen, len;
 	fd_set *fdsr = NULL;
 	char *p, *line;
+	char resolve[MAXHOSTNAMELEN];
+	int lockpipe[2], nullfd = -1;
 	FILE *fp;
 
 	while ((ch = getopt(argc, argv, "dnuf:m:p:a:")) != -1)
@@ -277,9 +281,7 @@ main(int argc, char *argv[])
 	if ((argc -= optind) != 0)
 		usage();
 
-	if (!Debug)
-		(void)daemon(0, 0);
-	else
+	if (Debug)
 		setlinebuf(stdout);
 
 	consfile.f_type = F_CONSOLE;
@@ -297,14 +299,6 @@ main(int argc, char *argv[])
 		linesize = MAXLINE;
 	linesize++;
 	line = malloc(linesize);
-
-	(void)signal(SIGHUP, doinit);
-	(void)signal(SIGTERM, dodie);
-	(void)signal(SIGINT, Debug ? dodie : SIG_IGN);
-	(void)signal(SIGQUIT, Debug ? dodie : SIG_IGN);
-	(void)signal(SIGCHLD, reapchild);
-	(void)signal(SIGALRM, domark);
-	(void)alarm(TIMERINTVL);
 
 #ifndef SUN_LEN
 #define SUN_LEN(unp) (strlen((unp)->sun_path) + 2)
@@ -367,18 +361,70 @@ main(int argc, char *argv[])
 	if ((fklog = open(_PATH_KLOG, O_RDONLY, 0)) < 0)
 		dprintf("can't open %s (%d)\n", _PATH_KLOG, errno);
 
+	dprintf("off & running....\n");
+
+	chdir("/");
+
+	if (!Debug) {
+		char c;
+
+		pipe(lockpipe);
+
+		switch(fork()) {
+		case -1:
+			exit(1);
+		case 0:
+			setsid();
+			nullfd = open(_PATH_DEVNULL, O_RDWR);
+			close(lockpipe[0]);
+			break;
+		default:
+			close(lockpipe[1]);
+			read(lockpipe[0], &c, 1);
+			_exit(0);
+		}
+	}
+
 	/* tuck my process id away */
 	if (!Debug) {
-		fp = fopen(PidFile, "w");
+		fp = fopen(_PATH_LOGPID, "w");
 		if (fp != NULL) {
 			fprintf(fp, "%ld\n", (long)getpid());
 			(void) fclose(fp);
 		}
 	}
 
-	dprintf("off & running....\n");
+	/* Privilege separation begins here */
+	if (priv_init(ConfFile, NoDNS, lockpipe[1], nullfd, argv) < 0)
+		errx(1, "unable to privsep");
 
+	/* Process is now unprivileged and inside a chroot */
 	init();
+
+	Startup = 0;
+
+	if (!Debug) {
+		dup2(nullfd, STDIN_FILENO);
+		dup2(nullfd, STDOUT_FILENO);
+		dup2(nullfd, STDERR_FILENO);
+		if (nullfd > 2)
+			close(nullfd);
+		close(lockpipe[1]);
+	}
+
+	/*
+	 * Signal to the priv process that the initial config parsing is done
+	 * so that it will reject any future attempts to open more files
+	 */
+	priv_config_parse_done();
+
+	(void)signal(SIGHUP, doinit);
+	(void)signal(SIGTERM, dodie);
+	(void)signal(SIGINT, Debug ? dodie : SIG_IGN);
+	(void)signal(SIGQUIT, Debug ? dodie : SIG_IGN);
+	(void)signal(SIGCHLD, reapchild);
+	(void)signal(SIGALRM, domark);
+	(void)alarm(TIMERINTVL);
 
 	if (fklog != -1 && fklog > fdsrmax)
 		fdsrmax = fklog;
@@ -445,7 +491,9 @@ main(int argc, char *argv[])
 			} else {
 				if (i > 0) {
 					line[i] = '\0';
-					printline(cvthname(&frominet), line);
+					cvthname(&frominet, resolve, sizeof resolve);
+					dprintf("cvthname res: %s\n", resolve);
+					printline(resolve, line);
 				} else if (i < 0 && errno != EINTR)
 					logerror("recvfrom inet");
 			}
@@ -504,7 +552,7 @@ printline(char *hname, char *msg)
 	/*
 	 * Don't allow users to log kernel messages.
 	 * NOTE: since LOG_KERN == 0 this will also match
-	 *       messages with no facility specified.
+	 * messages with no facility specified.
 	 */
 	if (LOG_FAC(pri) == LOG_KERN)
 		pri = LOG_USER | LOG_PRI(pri);
@@ -613,7 +661,7 @@ logmsg(int pri, char *msg, char *from, int flags)
 	/* log the message to the particular outputs */
 	if (!Initialized) {
 		f = &consfile;
-		f->f_file = open(ctty, O_WRONLY|O_NONBLOCK, 0);
+		f->f_file = priv_open_tty(ctty);
 
 		if (f->f_file >= 0) {
 			fprintlog(f, flags, msg);
@@ -791,8 +839,7 @@ fprintlog(struct filed *f, int flags, char *msg)
 				break;
 			} else if ((e == EIO || e == EBADF) &&
 			    f->f_type != F_FILE) {
-				f->f_file = open(f->f_un.f_fname,
-				    O_WRONLY|O_APPEND|O_NONBLOCK, 0);
+				f->f_file = priv_open_tty(f->f_un.f_fname);
 				if (f->f_file < 0) {
 					f->f_type = F_UNUSED;
 					logerror(f->f_un.f_fname);
@@ -836,7 +883,7 @@ wallmsg(struct filed *f, struct iovec *iov)
 
 	if (reenter++)
 		return;
-	if ((uf = fopen(_PATH_UTMP, "r")) == NULL) {
+	if ((uf = priv_open_utmp()) == NULL) {
 		logerror(_PATH_UTMP);
 		reenter = 0;
 		return;
@@ -888,37 +935,39 @@ reapchild(int signo)
 /*
  * Return a printable representation of a host address.
  */
-char *
-cvthname(struct sockaddr_in *f)
+void
+cvthname(struct sockaddr_in *f, char *result, size_t res_len)
 {
-	struct hostent *hp;
 	sigset_t omask, nmask;
-	char *p;
-	char *ip;
+	char *p, *ip;
+	int ret_len;
 
 	if (f->sin_family != AF_INET) {
 		dprintf("Malformed from address\n");
-		return ("???");
+		strlcpy(result, "???", res_len);
+		return;
 	}
 
 	ip = inet_ntoa(f->sin_addr);
 	dprintf("cvthname(%s)\n", ip);
-	if (NoDNS)
-		return (ip);
+	if (NoDNS) {
+		strlcpy(result, ip, res_len);
+		return;
+	}
 
 	sigemptyset(&nmask);
 	sigaddset(&nmask, SIGHUP);
 	sigprocmask(SIG_BLOCK, &nmask, &omask);
-	hp = gethostbyaddr((char *)&f->sin_addr,
-	    sizeof(struct in_addr), f->sin_family);
+
+	ret_len = priv_gethostbyaddr((char *)&f->sin_addr,
+		sizeof(struct in_addr), f->sin_family, result, res_len);
+
 	sigprocmask(SIG_SETMASK, &omask, NULL);
-	if (hp == 0) {
+	if (ret_len == 0) {
 		dprintf("Host name for your address (%s) unknown\n", ip);
-		return (ip);
-	}
-	if ((p = strchr(hp->h_name, '.')) && strcmp(p + 1, LocalDomain) == 0)
+		strlcpy(result, ip, res_len);
+	} else if ((p = strchr(result, '.')) && strcmp(p + 1, LocalDomain) == 0)
 		*p = '\0';
-	return (hp->h_name);
 }
 
 void
@@ -954,7 +1003,10 @@ logerror(char *type)
 		(void)snprintf(buf, sizeof(buf), "syslogd: %s", type);
 	errno = 0;
 	dprintf("%s\n", buf);
-	logmsg(LOG_SYSLOG|LOG_ERR, buf, LocalHostName, ADDDATE);
+	if (Startup)
+		fprintf(stderr, "%s\n", buf);
+	else
+		logmsg(LOG_SYSLOG|LOG_ERR, buf, LocalHostName, ADDDATE);
 }
 
 void
@@ -963,7 +1015,6 @@ die(int signo)
 	struct filed *f;
 	int was_initialized = Initialized;
 	char buf[100];
-	int i;
 
 	Initialized = 0;		/* Don't log SIGCHLDs */
 	alarm(0);
@@ -979,9 +1030,7 @@ die(int signo)
 		errno = 0;
 		logerror(buf);
 	}
-	for (i = 0; i < nfunix; i++)
-		if (funixn[i] && funix[i] != -1)
-			(void)unlink(funixn[i]);
+	dprintf("[unpriv] syslogd child about to exit\n");
 	exit(0);
 }
 
@@ -997,6 +1046,12 @@ init(void)
 	int i;
 
 	dprintf("init\n");
+
+	/* If config file has been modified, then just die to restart */
+	if (priv_config_modified()) {
+		dprintf("config file changed: dying\n");
+		die(0);
+	}
 
 	/*
 	 *  Close all open log files.
@@ -1025,7 +1080,7 @@ init(void)
 	nextp = &Files;
 
 	/* open the configuration file */
-	if ((cf = fopen(ConfFile, "r")) == NULL) {
+	if ((cf = priv_open_config()) == NULL) {
 		dprintf("cannot open %s\n", ConfFile);
 		*nextp = (struct filed *)calloc(1, sizeof(*f));
 		cfline("*.ERR\t/dev/console", *nextp, "*");
@@ -1125,10 +1180,10 @@ init(void)
 void
 cfline(char *line, struct filed *f, char *prog)
 {
-	struct hostent *hp;
-	int i, pri;
+	int i, pri, addr_len;
 	char *bp, *p, *q;
 	char buf[MAXLINE], ebuf[100];
+	char addr[MAXHOSTNAMELEN];
 
 	dprintf("cfline(\"%s\", f, \"%s\")\n", line, prog);
 
@@ -1219,10 +1274,9 @@ cfline(char *line, struct filed *f, char *prog)
 			break;
 		(void)strlcpy(f->f_un.f_forw.f_hname, ++p,
 		    sizeof(f->f_un.f_forw.f_hname));
-		hp = gethostbyname(f->f_un.f_forw.f_hname);
-		if (hp == NULL) {
-			extern int h_errno;
-
+		addr_len = priv_gethostbyname(f->f_un.f_forw.f_hname,
+		    addr, sizeof addr);
+		if (addr_len < 1) {
 			logerror((char *)hstrerror(h_errno));
 			break;
 		}
@@ -1231,14 +1285,16 @@ cfline(char *line, struct filed *f, char *prog)
 		f->f_un.f_forw.f_addr.sin_len = sizeof(f->f_un.f_forw.f_addr);
 		f->f_un.f_forw.f_addr.sin_family = AF_INET;
 		f->f_un.f_forw.f_addr.sin_port = LogPort;
-		memmove(&f->f_un.f_forw.f_addr.sin_addr, hp->h_addr,
-		    hp->h_length);
+		memmove(&f->f_un.f_forw.f_addr.sin_addr, addr, addr_len);
 		f->f_type = F_FORW;
 		break;
 
 	case '/':
 		(void)strlcpy(f->f_un.f_fname, p, sizeof(f->f_un.f_fname));
-		f->f_file = open(p, O_WRONLY|O_APPEND|O_NONBLOCK, 0);
+		if (strcmp(p, ctty) == 0)
+			f->f_file = priv_open_tty(p);
+		else
+			f->f_file = priv_open_log(p);
 		if (f->f_file < 0) {
 			f->f_type = F_UNUSED;
 			logerror(p);
@@ -1305,9 +1361,9 @@ getmsgbufsize(void)
  *  Decode a symbolic name to a numeric value
  */
 int
-decode(const char *name, CODE *codetab)
+decode(const char *name, const CODE *codetab)
 {
-	CODE *c;
+	const CODE *c;
 	char *p, buf[40];
 
 	if (isdigit(*name))
