@@ -1,4 +1,5 @@
 /*	$NetBSD: types.h,v 1.9 1996/03/14 00:48:30 pk Exp $ */
+/*	$OpenBSD: types.h,v 1.3 1999/01/08 03:04:08 millert Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -69,16 +70,16 @@ typedef	unsigned long	vm_size_t;
 #define	__BIT_TYPES_DEFINED__
 typedef	__signed char		   int8_t;
 typedef	unsigned char		 u_int8_t;
-typedef	unsigned char		 uint8_t;
+typedef	unsigned char		  uint8_t;
 typedef	short			  int16_t;
 typedef	unsigned short		u_int16_t;
-typedef	unsigned short		uint16_t;
+typedef	unsigned short		 uint16_t;
 typedef	int			  int32_t;
 typedef	unsigned int		u_int32_t;
-typedef	unsigned int		uint32_t;
+typedef	unsigned int		 uint32_t;
 typedef	long long		  int64_t;
 typedef	unsigned long long	u_int64_t;
-typedef	unsigned long long	uint64_t;
+typedef	unsigned long long	 uint64_t;
 
 typedef int32_t			register_t;
 
