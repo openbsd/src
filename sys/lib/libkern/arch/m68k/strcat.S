@@ -1,8 +1,12 @@
-/*	$NetBSD: strcat.c,v 1.2 1994/10/26 06:39:33 cgd Exp $	*/
+/*	$NetBSD: strcat.S,v 1.1 1996/04/18 01:53:06 cgd Exp $	*/
 
-/*
- * Copyright (c) 1988 Regents of the University of California.
+/*-
+ * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
+ *
+ * This code is derived from software contributed to Berkeley by
+ * the Systems Programming Group of the University of Utah Computer
+ * Science Department.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,23 +37,25 @@
  * SUCH DAMAGE.
  */
 
+#include "DEFS.h"
+
 #if defined(LIBC_SCCS) && !defined(lint)
-#ifdef notdef
-static char *sccsid = "@(#)strcat.c	5.6 (Berkeley) 2/24/91";
+#if 0
+	RCSID("from: @(#)strcpy.s	5.1 (Berkeley) 5/12/90")
+#else
+	RCSID("$NetBSD: strcat.S,v 1.1 1996/04/18 01:53:06 cgd Exp $")
 #endif
-static char *rcsid = "$NetBSD: strcat.c,v 1.2 1994/10/26 06:39:33 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
-#include <string.h>
-
-char *
-strcat(s, append)
-	register char *s;
-	register const char *append;
-{
-	char *save = s;
-
-	for (; *s; ++s);
-	while (*s++ = *append++);
-	return(save);
-}
+ENTRY(strcat)
+	movl	sp@(8),a0		| a0 = fromaddr
+	movl	sp@(4),d0		| return value is toaddr
+	movl	d0,a1			| a1 = toaddr
+slloop:
+	tstb	a1@+			| null?
+	bne	slloop			| no, keep going
+	subql	#1,a1
+scloop:
+	movb	a0@+,a1@+		| copy a byte
+	bne	scloop			| copied non-null, keep going
+	rts
