@@ -1,4 +1,4 @@
-/*	$OpenBSD: osiop.c,v 1.7 2003/04/09 02:30:32 krw Exp $	*/
+/*	$OpenBSD: osiop.c,v 1.8 2003/04/11 02:00:49 krw Exp $	*/
 /*	$NetBSD: osiop.c,v 1.9 2002/04/05 18:27:54 bouyer Exp $	*/
 
 /*
@@ -1953,8 +1953,6 @@ osiop_timeout(arg)
 	/* reset the scsi bus */
 	osiop_resetbus(sc);
 
-	/* deactivate timeout */
-	timeout_del(&xs->stimeout);
 	acb->flags |= ACB_F_TIMEOUT;
 	osiop_reset(sc);
 	splx(s);
