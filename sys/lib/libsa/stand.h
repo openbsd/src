@@ -1,4 +1,4 @@
-/*	$OpenBSD: stand.h,v 1.16 1996/12/12 08:16:30 mickey Exp $	*/
+/*	$OpenBSD: stand.h,v 1.17 1997/01/17 07:28:15 downsj Exp $	*/
 /*	$NetBSD: stand.h,v 1.18 1996/11/30 04:35:51 gwr Exp $	*/
 
 /*-
@@ -38,6 +38,7 @@
 
 #include <sys/types.h>
 #include <sys/cdefs.h>
+#include <sys/stat.h>
 #include <machine/stdarg.h>
 #include "saioctl.h"
 #include "saerrno.h"
@@ -47,7 +48,6 @@
 #endif
 
 struct open_file;
-struct stat;
 
 /*
  * Useful macros
