@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.8 1996/09/18 22:03:43 deraadt Exp $
+#	$OpenBSD: MAKEDEV,v 1.9 1996/11/11 22:55:56 kstailey Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -59,6 +59,8 @@
 #	tun*	network tunnel driver
 #	lkm	Device to for loadable kernel modules
 #	*random	random data source
+#	uk*	unknown SCSI
+#	ss*	SCSI scanners
 #
 
 PATH=/sbin:/bin/:/usr/bin:/usr/sbin
@@ -79,6 +81,8 @@ all)
 	sh MAKEDEV tun0 tun1 tun2 tun3
 	sh MAKEDEV lkm
 	sh MAKEDEV random
+	sh MAKEDEV uk0 uk1
+	sh MAKEDEV ss0
 	sh MAKEDEV local
 	;;
 
@@ -333,6 +337,25 @@ random|srandom|urandom|prandom|arandom)
 	mknod arandom c 33 4
 	chown root.wheel random srandom urandom prandom arandom
 	chmod 644 random srandom urandom prandom arandom
+	;;
+
+uk*)
+	unit=`expr $i : 'uk\(.*\)'`
+	rm -f uk$unit
+	mknod uk$unit c 34 $unit
+	chown root.operator uk$unit
+	chmod 640 uk$unit
+	;;
+
+ss*)
+	unit=`expr $i : 'ss\(.*\)'`
+	rm -f ss$unit
+	mknod ss$unit c 35 $unit
+	chown root.operator ss$unit
+	chmod 440 ss$unit
+#	backwards compatibility with older PINTs
+	rm -f scan$unit
+	ln -s ss$unit scan$unit
 	;;
 
 local)

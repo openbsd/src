@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.11 1996/10/19 13:26:08 mickey Exp $	*/
+/*	$OpenBSD: conf.c,v 1.12 1996/11/11 22:55:57 kstailey Exp $	*/
 /*	$NetBSD: conf.c,v 1.34 1996/06/19 02:20:54 briggs Exp $	*/
 
 /*
@@ -51,17 +51,11 @@ int	ttselect	__P((dev_t, int, struct proc *));
 
 bdev_decl(sw);
 #include "st.h"
-bdev_decl(st);
 #include "sd.h"
-bdev_decl(sd);
 #include "cd.h"
-bdev_decl(cd);
 #include "ch.h"
-bdev_decl(ch);
 #include "vnd.h"
-bdev_decl(vnd);
 #include "ccd.h"
-bdev_decl(ccd);
 #include "rd.h"
 bdev_decl(rd);
 /* No cdev for rd */
@@ -98,9 +92,6 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 	(dev_type_stop((*))) enodev, 0, dev_init(c,n,select), \
 	dev_init(c,n,mmap) }
 
-cdev_decl(cn);
-cdev_decl(ctty);
-
 #include "ite.h"
 cdev_decl(ite);
 #define mmread	mmrw
@@ -108,16 +99,8 @@ cdev_decl(ite);
 cdev_decl(mm);
 cdev_decl(sw);
 #include "pty.h"
-#define	ptstty		ptytty
-#define	ptsioctl	ptyioctl
-cdev_decl(pts);
-#define	ptctty		ptytty
-#define	ptcioctl	ptyioctl
-cdev_decl(ptc);
-cdev_decl(log);
-cdev_decl(st);
-cdev_decl(sd);
-cdev_decl(cd);
+#include "ss.h"
+#include "uk.h"
 cdev_decl(fd);
 #include "grf.h"
 cdev_decl(grf);
@@ -127,22 +110,9 @@ cdev_decl(adb);
 cdev_decl(zsc);
 #include "zstty.h"
 cdev_decl(zs);
-cdev_decl(vnd);
-cdev_decl(ccd);
 #include "bpfilter.h"
-cdev_decl(bpf);
 #include "tun.h"
-cdev_decl(tun);
 dev_decl(filedesc,open);
-cdev_decl(random);
-
-#ifdef LKM
-#define NLKM	1
-#else
-#define NLKM	0
-#endif
-
-cdev_decl(lkm);
 
 /* open, close, read, ioctl */
 cdev_decl(ipl);
@@ -189,6 +159,8 @@ struct cdevsw	cdevsw[] =
 	cdev_lkm_dummy(),		/* 31 */
 	cdev_gen_ipf(NIPF,ipl),         /* 32: IP filter log */
 	cdev_random_init(1,random),	/* 33: random data source */
+	cdev_uk_init(NUK,uk),		/* 34: unknown SCSI */
+	cdev_ss_init(NSS,ss),           /* 35: SCSI scanner */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
