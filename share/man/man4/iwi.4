@@ -1,4 +1,4 @@
-.\" $OpenBSD: iwi.4,v 1.6 2004/11/22 21:34:32 damien Exp $
+.\" $OpenBSD: iwi.4,v 1.7 2004/11/23 00:42:43 deraadt Exp $
 .\"
 .\" Copyright (c) 2004
 .\"	Damien Bergamini <damien.bergamini@free.fr>. All rights reserved.
@@ -61,6 +61,15 @@ The driver needs a couple of firmware files which are loaded on demand.
 .It Pa /etc/firmware/iwi-monitor
 .It Pa /etc/firmware/iwi-ucode
 .El
+.Pp
+These firmware files are not free because Intel refuses to grant
+distribution rights without contractual obligations.
+As a result, even though
+.Ox
+includes the driver, the firmware files cannot be included and
+the user has to find these files on their own.
+The official person to state your views to about this issue is
+peter.engelbrecht@intel.com at (858) 391 1857.
 .Sh EXAMPLES
 Join an existing BSS network (ie: connect to an access point):
 .Pp
