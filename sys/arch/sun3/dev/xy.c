@@ -36,7 +36,7 @@
  * x y . c   x y l o g i c s   4 5 0 / 4 5 1   s m d   d r i v e r
  *
  * author: Chuck Cranor <chuck@ccrc.wustl.edu>
- * id: $Id: xy.c,v 1.3 1996/01/13 03:52:45 chuck Exp $
+ * id: $Id: xy.c,v 1.4 1996/02/21 03:44:01 chuck Exp $
  * started: 14-Sep-95
  * references: [1] Xylogics Model 753 User's Manual
  *                 part number: 166-753-001, Revision B, May 21, 1988.
@@ -1009,9 +1009,6 @@ xystrategy(bp)
 
 	xyc_start(xy->parent, NULL);
 
-	/* Instrumentation. */
-	disk_busy(&xy->sc_dk);
-
 	/* done! */
 
 	splx(s);
@@ -1283,6 +1280,9 @@ xyc_startbuf(xycsc, xysc, bp)
 	    bp->b_bcount / XYFM_BPS, dbuf, bp);
 
 	xyc_rqtopb(iorq, iopb, (bp->b_flags & B_READ) ? XYCMD_RD : XYCMD_WR, 0);
+
+	/* Instrumentation. */
+	disk_busy(&xysc->sc_dk);
 
 	return (XY_ERR_AOK);
 }
@@ -1798,11 +1798,11 @@ xyc_remove_iorq(xycsc)
 			/* Sun3: map/unmap regardless of B_PHYS */
 			dvma_mapout(iorq->dbufbase,
 					    iorq->buf->b_bcount);
-			iorq->mode = XY_SUB_FREE;
 			iorq->xy->xyq.b_actf = bp->b_actf;
 			disk_unbusy(&iorq->xy->sc_dk,
 			    (bp->b_bcount - bp->b_resid));
 			biodone(bp);
+			iorq->mode = XY_SUB_FREE;
 			break;
 		case XY_SUB_WAIT:
 			iorq->mode = XY_NEWSTATE(iorq->mode, XY_SUB_DONE);
