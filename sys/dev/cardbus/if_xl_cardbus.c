@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xl_cardbus.c,v 1.6 2000/09/05 18:18:50 aaron Exp $ */
+/*	$OpenBSD: if_xl_cardbus.c,v 1.7 2000/09/16 21:11:16 aaron Exp $ */
 /*	$NetBSD: if_xl_cardbus.c,v 1.13 2000/03/07 00:32:52 mycroft Exp $	*/
 
 /*
@@ -86,8 +86,8 @@ int xl_cardbus_match __P((struct device *, void *, void *));
 void xl_cardbus_attach __P((struct device *, struct device *,void *));
 int xl_cardbus_detach __P((struct device *, int));
 
-#define XL_3C575	0x01
-#define XL_3C575B	0x02
+#define XL_CB_BOOMERANG	0x01
+#define XL_CB_CYCLONE	0x02
 
 struct xl_cardbus_softc {
 	struct xl_softc sc_softc;
@@ -120,42 +120,42 @@ const struct xl_cardbus_product {
 	{ CARDBUS_PRODUCT_3COM_3C575,
 	  0,
 	  CARDBUS_COMMAND_IO_ENABLE | CARDBUS_COMMAND_MASTER_ENABLE,
-	  XL_3C575,
+	  XL_CB_BOOMERANG,
 	  "3c575-TX Ethernet" },
 
 	{ CARDBUS_PRODUCT_3COM_3CCFE575BT,
 	  XL_CARDBUS_INVERT_LED_PWR,
 	  CARDBUS_COMMAND_IO_ENABLE | CARDBUS_COMMAND_MEM_ENABLE |
 	      CARDBUS_COMMAND_MASTER_ENABLE,
-	  XL_3C575B,
+	  XL_CB_CYCLONE,
 	  "3c575B-TX Ethernet" },
 
 	{ CARDBUS_PRODUCT_3COM_3CCFE575CT,
 	  XL_CARDBUS_INVERT_MII_PWR,
 	  CARDBUS_COMMAND_IO_ENABLE | CARDBUS_COMMAND_MEM_ENABLE |
 	      CARDBUS_COMMAND_MASTER_ENABLE,
-	  XL_3C575B,
+	  XL_CB_CYCLONE,
 	  "3c575C-TX Ethernet" },
 
 	{ CARDBUS_PRODUCT_3COM_3CCFEM656,
 	  XL_CARDBUS_INVERT_LED_PWR | XL_CARDBUS_INVERT_MII_PWR,
 	  CARDBUS_COMMAND_IO_ENABLE | CARDBUS_COMMAND_MEM_ENABLE |
 	      CARDBUS_COMMAND_MASTER_ENABLE,
-	  XL_3C575B,
+	  XL_CB_CYCLONE,
 	  "3c656-TX Ethernet" },
 
 	{ CARDBUS_PRODUCT_3COM_3CCFEM656B,
 	  XL_CARDBUS_INVERT_LED_PWR | XL_CARDBUS_INVERT_MII_PWR,
 	  CARDBUS_COMMAND_IO_ENABLE | CARDBUS_COMMAND_MEM_ENABLE |
 	      CARDBUS_COMMAND_MASTER_ENABLE,
-	  XL_3C575B,
+	  XL_CB_CYCLONE,
 	  "3c656B-TX Ethernet" },
 
 	{ CARDBUS_PRODUCT_3COM_3CCFEM656C,
 	  XL_CARDBUS_INVERT_MII_PWR,
 	  CARDBUS_COMMAND_IO_ENABLE | CARDBUS_COMMAND_MEM_ENABLE |
 	      CARDBUS_COMMAND_MASTER_ENABLE,
-	  XL_3C575B,
+	  XL_CB_CYCLONE,
 	  "3c656C-TX Ethernet" },
 
 	{ 0,
@@ -202,8 +202,8 @@ xl_cardbus_attach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
-	struct xl_cardbus_softc *psc = (void *)self;
-	struct xl_softc *sc = &psc->sc_softc;
+	struct xl_cardbus_softc *csc = (void *)self;
+	struct xl_softc *sc = &csc->sc_softc;
 	struct cardbus_attach_args *ca = aux;
 	cardbus_devfunc_t ct = ca->ca_ct;
 	cardbus_chipset_tag_t cc = ct->ct_cc;
@@ -214,7 +214,7 @@ xl_cardbus_attach(parent, self, aux)
 	bus_addr_t adr;
 
 	if (Cardbus_mapreg_map(ct, CARDBUS_BASE0_REG, CARDBUS_MAPREG_TYPE_IO, 0,
-	    &sc->xl_btag, &ioh, &adr, &psc->sc_mapsize)) {
+	    &sc->xl_btag, &ioh, &adr, &csc->sc_mapsize)) {
 		printf(": can't map i/o space\n");
 		return;
 	}
@@ -242,13 +242,13 @@ xl_cardbus_attach(parent, self, aux)
 	command = cardbus_conf_read(cc, cf, ca->ca_tag,
 	    CARDBUS_COMMAND_STATUS_REG);
 	command |= ecp->ecp_csr;
-	psc->sc_cardtype = ecp->ecp_cardtype;
+	csc->sc_cardtype = ecp->ecp_cardtype;
 
-	if (psc->sc_cardtype == XL_3C575B) {
+	if (csc->sc_cardtype == XL_CB_CYCLONE) {
 		/* map CardBus function status window */
-		if (Cardbus_mapreg_map(ct, CARDBUS_3C575BTX_FUNCSTAT_PCIREG,
-		    CARDBUS_MAPREG_TYPE_MEM, 0, &psc->sc_funct,
-		    &psc->sc_funch, 0, &psc->sc_funcsize)) {
+		if (Cardbus_mapreg_map(ct, CARDBUS_BASE2_REG,
+		    CARDBUS_MAPREG_TYPE_MEM, 0, &csc->sc_funct,
+		    &csc->sc_funch, 0, &csc->sc_funcsize)) {
 			printf("%s: unable to map function status window\n",
 			    self->dv_xname);
 			return;
@@ -279,13 +279,13 @@ xl_cardbus_attach(parent, self, aux)
 		cardbus_conf_write(cc, cf, ca->ca_tag, CARDBUS_BHLC_REG, bhlc);
 	}
 
-	psc->sc_ct = ca->ca_ct;
-	psc->sc_intrline = ca->ca_intrline;
+	csc->sc_ct = ca->ca_ct;
+	csc->sc_intrline = ca->ca_intrline;
 
 	/* Map and establish the interrupt. */
 
 	sc->xl_intrhand = cardbus_intr_establish(cc, cf, ca->ca_intrline,
-	    IPL_NET, xl_intr, psc);
+	    IPL_NET, xl_intr, csc);
 
 	if (sc->xl_intrhand == NULL) {
 		printf(": couldn't establish interrupt");
@@ -295,30 +295,10 @@ xl_cardbus_attach(parent, self, aux)
 	}
 	printf(": irq %d", ca->ca_intrline);
 
-	bus_space_write_2(sc->xl_btag, sc->xl_bhandle, XL_COMMAND,
-	    XL_CMD_RESET);
-	delay(5000);
-
-	{
-		int i = 0;
-		while (bus_space_read_2(sc->xl_btag, sc->xl_bhandle, XL_STATUS)
-		    & XL_STAT_CMDBUSY) {
-			if (++i > 10000) {
-				printf("ex: timeout %x\n",
-				    bus_space_read_2(sc->xl_btag,
-				        sc->xl_bhandle, XL_STATUS));
-				printf("ex: addr %x\n",
-				    cardbus_conf_read(cc, cf, ca->ca_tag,
-				    CARDBUS_BASE0_REG));
-				return;		/* emergency exit */
-			}
-		}
-	}
-
 	xl_attach(sc);
 
-	if (psc->sc_cardtype == XL_3C575B)
-		bus_space_write_4(psc->sc_funct, psc->sc_funch,
+	if (csc->sc_cardtype == XL_CB_CYCLONE)
+		bus_space_write_4(csc->sc_funct, csc->sc_funch,
 		    XL_CARDBUS_INTR, XL_CARDBUS_INTR_ACK);
 
 }
@@ -328,9 +308,9 @@ xl_cardbus_detach(self, arg)
 	struct device *self;
 	int arg;
 {
-	struct xl_cardbus_softc *psc = (void *)self;
-	struct xl_softc *sc = &psc->sc_softc;
-	struct cardbus_devfunc *ct = psc->sc_ct;
+	struct xl_cardbus_softc *csc = (void *)self;
+	struct xl_softc *sc = &csc->sc_softc;
+	struct cardbus_devfunc *ct = csc->sc_ct;
 	int rv = 0;
 
 #if defined(DIAGNOSTIC)
@@ -347,14 +327,13 @@ xl_cardbus_detach(self, arg)
 		cardbus_intr_disestablish(ct->ct_cc, ct->ct_cf,
 		    sc->xl_intrhand);
 
-		if (psc->sc_cardtype == XL_3C575B) {
-			Cardbus_mapreg_unmap(ct,
-			    CARDBUS_3C575BTX_FUNCSTAT_PCIREG,
-			    psc->sc_funct, psc->sc_funch, psc->sc_funcsize);
+		if (csc->sc_cardtype == XL_CB_CYCLONE) {
+			Cardbus_mapreg_unmap(ct, CARDBUS_BASE2_REG,
+			    csc->sc_funct, csc->sc_funch, csc->sc_funcsize);
 		}
 
 		Cardbus_mapreg_unmap(ct, CARDBUS_BASE0_REG, sc->xl_btag,
-		    sc->xl_bhandle, psc->sc_mapsize);
+		    sc->xl_bhandle, csc->sc_mapsize);
 	}
 	return (rv);
 }
