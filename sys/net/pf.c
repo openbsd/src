@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.410 2003/12/15 07:28:25 mcbride Exp $ */
+/*	$OpenBSD: pf.c,v 1.411 2003/12/15 09:10:25 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1732,7 +1732,7 @@ pf_map_addr(sa_family_t af, struct pf_rule *r, struct pf_addr *saddr,
 				pf_print_host(naddr, 0, af);
 				printf("\n");
 			}
-			return(0);
+			return (0);
 		}
 	}
 
@@ -2064,7 +2064,7 @@ pf_get_translation(struct pf_pdesc *pd, struct mbuf *m, int off, int direction,
 			}
 			break;
 		case PF_RDR: {
- 			if (pf_map_addr(r->af, r, saddr, naddr, NULL, sn))
+			if (pf_map_addr(r->af, r, saddr, naddr, NULL, sn))
 				return (NULL);
 
 			if (r->rpool.proxy_port[1]) {
@@ -2445,7 +2445,7 @@ pf_test_tcp(struct pf_rule **rm, struct pf_state **sm, int direction,
 		if (nr != NULL) {
 			if (direction == PF_OUT) {
 				pf_change_ap(saddr, &th->th_sport, pd->ip_sum,
-			  	  &th->th_sum, &pd->baddr, bport, 0, af);
+				    &th->th_sum, &pd->baddr, bport, 0, af);
 				rewrite++;
 			} else {
 				pf_change_ap(daddr, &th->th_dport, pd->ip_sum,
@@ -2496,7 +2496,7 @@ pf_test_tcp(struct pf_rule **rm, struct pf_state **sm, int direction,
 			goto cleanup;
 		/* src node for flter rule */
 		if ((r->rule_flag & PFRULE_SRCTRACK ||
-	    	    r->rpool.opts & PF_POOL_STICKYADDR) &&
+		    r->rpool.opts & PF_POOL_STICKYADDR) &&
 		    pf_insert_src_node(&sn, r, saddr, af) != 0)
 			goto cleanup;
 		/* src node for translation rule */
@@ -2829,7 +2829,7 @@ pf_test_udp(struct pf_rule **rm, struct pf_state **sm, int direction,
 			goto cleanup;
 		/* src node for flter rule */
 		if ((r->rule_flag & PFRULE_SRCTRACK ||
-	    	    r->rpool.opts & PF_POOL_STICKYADDR) &&
+		    r->rpool.opts & PF_POOL_STICKYADDR) &&
 		    pf_insert_src_node(&sn, r, saddr, af) != 0)
 			goto cleanup;
 		/* src node for translation rule */
@@ -3110,7 +3110,7 @@ pf_test_icmp(struct pf_rule **rm, struct pf_state **sm, int direction,
 			goto cleanup;
 		/* src node for flter rule */
 		if ((r->rule_flag & PFRULE_SRCTRACK ||
-	    	    r->rpool.opts & PF_POOL_STICKYADDR) &&
+		    r->rpool.opts & PF_POOL_STICKYADDR) &&
 		    pf_insert_src_node(&sn, r, saddr, af) != 0)
 			goto cleanup;
 		/* src node for translation rule */
@@ -3372,7 +3372,7 @@ pf_test_other(struct pf_rule **rm, struct pf_state **sm, int direction,
 			goto cleanup;
 		/* src node for flter rule */
 		if ((r->rule_flag & PFRULE_SRCTRACK ||
-	    	    r->rpool.opts & PF_POOL_STICKYADDR) &&
+		    r->rpool.opts & PF_POOL_STICKYADDR) &&
 		    pf_insert_src_node(&sn, r, saddr, af) != 0)
 			goto cleanup;
 		/* src node for translation rule */

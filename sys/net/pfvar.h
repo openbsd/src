@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.178 2003/12/15 07:11:30 mcbride Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.179 2003/12/15 09:10:26 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -827,8 +827,8 @@ struct pf_pdesc {
 
 #define SCNT_SRC_NODE_SEARCH	0
 #define SCNT_SRC_NODE_INSERT	1
-#define SCNT_SRC_NODE_REMOVALS	2	
-#define SCNT_MAX		3	
+#define SCNT_SRC_NODE_REMOVALS	2
+#define SCNT_MAX		3
 
 #define ACTION_SET(a, x) \
 	do { \
@@ -1051,7 +1051,7 @@ struct pfioc_ruleset {
 };
 
 #define PF_RULESET_ALTQ		(PF_RULESET_MAX)
-#define PF_RULESET_TABLE 	(PF_RULESET_MAX+1)
+#define PF_RULESET_TABLE	(PF_RULESET_MAX+1)
 struct pfioc_trans {
 	int		 size;	/* number of elements */
 	int		 esize; /* size of each element in bytes */
