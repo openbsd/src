@@ -1,4 +1,4 @@
-/*	$OpenBSD: wump.c,v 1.14 2000/06/29 07:37:38 pjanzen Exp $	*/
+/*	$OpenBSD: wump.c,v 1.15 2001/05/02 23:28:31 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)wump.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: wump.c,v 1.14 2000/06/29 07:37:38 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: wump.c,v 1.15 2001/05/02 23:28:31 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -123,6 +123,7 @@ void	cave_init __P((void));
 void	clear_things_in_cave __P((void));
 void	display_room_stats __P((void));
 void	dodecahedral_cave_init __P((void));
+int	gcd __P((int, int));
 int	getans __P((const char *));
 void	initialize_things_in_cave __P((void));
 void	instructions __P((void));
@@ -568,6 +569,17 @@ into room %d!\n", arrow_location, next, cave[arrow_location].tunnel[link]);
 	return(0);
 }
 
+int
+gcd(a, b)
+	int a, b;
+{
+	int r;
+
+	if (!(r = (a % b)))
+		return(b);
+	return(gcd(b, r));
+}
+
 void
 cave_init()
 {
@@ -598,8 +610,13 @@ cave_init()
 		for (j = 0; j < link_num ; ++j)
 			cave[i].tunnel[j] = -1;
 
-	/* choose a random 'hop' delta for our guaranteed link */
-	while (!(delta = random() % ((room_num - 1) / 2)));
+	/* choose a random 'hop' delta for our guaranteed link.
+	 * To keep the cave connected, require greatest common
+	 * divisor of (delta + 1) and room_num to be 1
+	 */
+	do {
+		delta = (random() % (room_num - 1)) + 1;
+	} while (gcd(room_num, delta + 1) != 1);
 
 	for (i = 1; i <= room_num; ++i) {
 		link = ((i + delta) % room_num) + 1;	/* connection */
