@@ -1722,3 +1722,5 @@
 ./usr/sbin/eeprom
 ./usr/sbin/fdformat
 ./usr/sbin/screenblank
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ic/twereg.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ic/twevar.ph

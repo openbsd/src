@@ -485,3 +485,5 @@
 ./usr/mipsel-unknown-openbsd2.8/bin
 ./usr/mipsel-unknown-openbsd2.8/lib
 ./usr/mipsel-unknown-openbsd2.8/lib/ldscripts
+./usr/libdata/perl5/site_perl/mips-openbsd/dev/ic/twereg.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/dev/ic/twevar.ph

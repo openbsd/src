@@ -429,3 +429,5 @@
 ./usr/mdec/installboot
 ./usr/mdec/netboot
 ./usr/mdec/stboot
+./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ic/twereg.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ic/twevar.ph

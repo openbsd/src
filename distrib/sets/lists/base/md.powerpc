@@ -1718,3 +1718,5 @@
 ./sbin/ldconfig
 ./sbin/wsconsctl
 ./usr/sbin/wsconscfg
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/twereg.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/twevar.ph
