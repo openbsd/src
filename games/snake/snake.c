@@ -1,4 +1,4 @@
-/*	$OpenBSD: snake.c,v 1.1 1999/03/13 02:08:10 pjanzen Exp $	*/
+/*	$OpenBSD: snake.c,v 1.2 1999/04/20 23:01:12 pjanzen Exp $	*/
 /*	$NetBSD: snake.c,v 1.8 1995/04/29 00:06:41 mycroft Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)snake.c	8.2 (Berkeley) 1/7/94";
 #else
-static char rcsid[] = "$OpenBSD: snake.c,v 1.1 1999/03/13 02:08:10 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: snake.c,v 1.2 1999/04/20 23:01:12 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -196,6 +196,7 @@ main(argc, argv)
 	setup();
 	mainloop();
 	/* NOT REACHED */
+	return(0);
 }
 
 /* Main command loop */
@@ -204,9 +205,12 @@ mainloop()
 {
 	int	j, k;
 	int	c, match, lastc = 0;
+	struct point tmp;
 
 	for (;;) {
-		move(&you);
+		tmp.col = you.col + 1;
+		tmp.line = you.line + 1; /* Highlight you, not left & above */
+		move(&tmp);
 		fflush(stdout);
 		if (((c = getchar() & 0177) <= '9') && (c >= '0')) {
 			ungetc(c, stdin);
