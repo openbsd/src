@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_fd.c,v 1.17 2003/02/04 22:14:27 marc Exp $	*/
+/*	$OpenBSD: uthread_fd.c,v 1.18 2003/02/05 05:51:51 marc Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -88,11 +88,11 @@ _thread_fd_init(void)
 		flags[fd] = _thread_sys_fcntl(fd, F_GETFL, 0);
 
 	/*
-	 * Now toggle the non-block flags and see what other fd's
+	 * Now toggle the sync flags and see what other fd's
 	 * change.   Those are the dup-ed fd's.   Dup-ed fd's are
 	 * added to the table, all others are NOT added to the
 	 * table.  They MUST NOT be added as the fds may belong
-	 * to dlopen and dlclose doesn't go through the thread code
+	 * to dlopen.   As dlclose doesn't go through the thread code
 	 * so the entries would never be cleaned.
 	 */
 
@@ -104,7 +104,7 @@ _thread_fd_init(void)
 		if (entry != NULL) {
 			entry->flags = flags[fd];
 			_thread_sys_fcntl(fd, F_SETFL,
-					  entry->flags ^ O_NONBLOCK);
+					  entry->flags ^ O_SYNC);
 			for (fd2 = fd + 1; fd2 < _thread_dtablesize; fd2 += 1) {
 				if (flags[fd2] == -1)
 					continue;
@@ -118,18 +118,20 @@ _thread_fd_init(void)
 			if (entry->refcnt) {
 				entry->refcnt += 1;
 				_thread_fd_table[fd] = entry;
+				flags[fd] |= O_NONBLOCK;
 			} else
 				free(entry);
 		}
 	}
 	_SPINUNLOCK(&fd_table_lock);
 
-	/* lastly, set all files to non-blocking, ignoring errors for
-	   those files/devices that don't support such a mode. */
+	/* lastly, restore the file flags.   Flags for files that we
+	   know to be duped have been modified so set the non-blocking'
+	   flag.  Other files will be set to non-blocking when the
+	   thread code is forced to take notice of the file. */
 	for (fd = 0; fd < _thread_dtablesize; fd += 1)
 		if (flags[fd] != -1)
-			_thread_sys_fcntl(fd, F_SETFL,
-					  flags[fd] | O_NONBLOCK);
+			_thread_sys_fcntl(fd, F_SETFL, flags[fd]);
 
 	free(flags);
 	errno = saved_errno;
@@ -175,10 +177,12 @@ _thread_fd_table_init(int fd)
 				 * not support non-blocking calls, or if the
 				 * driver is naturally non-blocking.
 				 */
-				saved_errno = errno;
-				_thread_sys_fcntl(fd, F_SETFL,
+				if ((entry->flags & O_NONBLOCK) == 0) {
+					saved_errno = errno;
+					_thread_sys_fcntl(fd, F_SETFL,
 						  entry->flags | O_NONBLOCK);
-				errno = saved_errno;
+					errno = saved_errno;
+				}
 
 				/* Lock the file descriptor table: */
 				_SPINLOCK(&fd_table_lock);

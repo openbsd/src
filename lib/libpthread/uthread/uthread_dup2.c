@@ -1,4 +1,4 @@
-/* $OpenBSD: uthread_dup2.c,v 1.6 2003/02/04 22:14:27 marc Exp $ */
+/* $OpenBSD: uthread_dup2.c,v 1.7 2003/02/05 05:51:51 marc Exp $ */
 /* PUBLIC DOMAIN <marc@snafu.org> */
 
 #include <errno.h>
@@ -18,7 +18,10 @@ dup2(int fd, int newfd)
 		if (ret == 0) {
 			ret = _thread_sys_dup2(fd, newfd);
 			if (ret != -1)
-				ret = _thread_fd_table_dup(fd, newfd);
+				if (_thread_fd_table_dup(fd, newfd) == -1) {
+					close(newfd);
+					ret = -1;
+				}
 			_FD_UNLOCK(fd, FD_RDWR);
 		}
 	} else {
