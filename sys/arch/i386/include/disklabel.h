@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.15 1997/09/29 01:12:19 deraadt Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.16 1997/10/14 01:02:52 weingart Exp $	*/
 /*	$NetBSD: disklabel.h,v 1.3 1996/03/09 20:52:54 ghudson Exp $	*/
 
 /*
@@ -71,13 +71,11 @@ struct dos_partition {
 #define DOSPTYP_NETBSD	DOSPTYP_386BSD	/* NetBSD partition type (XXX) */
 #define DOSPTYP_OPENBSD	0xa6		/* OpenBSD partition type */
 
-#define __MBR_XXX	__attribute__((packed))
 struct dos_mbr {
-	u_int8_t		dmbr_boot[DOSPARTOFF] __MBR_XXX;
-	struct dos_partition	dmbr_parts[NDOSPART]  __MBR_XXX;
-	u_int16_t		dmbr_sign             __MBR_XXX;
-};
-#undef __MBR_XXX
+	u_int8_t		dmbr_boot[DOSPARTOFF];
+	struct dos_partition	dmbr_parts[NDOSPART];
+	u_int16_t		dmbr_sign;
+} __attribute__((packed));
 
 #define DOSMBR_SIGNATURE	(0xaa55)
 
