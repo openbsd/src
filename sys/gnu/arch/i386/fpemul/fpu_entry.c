@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu_entry.c,v 1.2 2003/01/09 22:27:11 miod Exp $	*/
+/*	$OpenBSD: fpu_entry.c,v 1.3 2003/07/30 20:24:03 jason Exp $	*/
 /*
  *  fpu_entry.c
  *
@@ -76,10 +76,6 @@
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/kernel.h>
-
-#if defined(LKM) && defined(__FreeBSD__)
-#include <sys/lkm.h>
-#endif
 
 #include <machine/cpu.h>
 #include <machine/pcb.h>
@@ -199,11 +195,7 @@ char    emulating = 0;
 #define math_abort(signo) \
     FPU_EIP = FPU_ORIG_EIP;REENTRANT_CHECK(OFF);return(signo);
 
-#if defined(__FreeBSD__)
-static int
-#else
 int
-#endif
 math_emulate(struct trapframe * tframe)
 {
 
@@ -212,6 +204,7 @@ math_emulate(struct trapframe * tframe)
 #ifdef LOOKAHEAD_LIMIT
 	int lookahead_limit = LOOKAHEAD_LIMIT;
 #endif
+
 #ifdef PARANOID
 	if (emulating) {
 		printf("ERROR: wm-FPU-emu is not RE-ENTRANT!\n");
@@ -219,13 +212,6 @@ math_emulate(struct trapframe * tframe)
 	REENTRANT_CHECK(ON);
 #endif				/* PARANOID */
 
-#if defined(__FreeBSD__)
-	if ((((struct pcb *) curproc->p_addr)->pcb_flags & FP_SOFTFP) == 0) {
-		finit();
-		control_word = __INITIAL_NPXCW__;
-		((struct pcb *) curproc->p_addr)->pcb_flags |= FP_SOFTFP;
-	}
-#else
 	if (!USERMODE(tframe->tf_cs, tframe->tf_eflags))
 		panic("math emulator called from supervisor mode");
 
@@ -235,23 +221,9 @@ math_emulate(struct trapframe * tframe)
 		finit();
 		control_word = __INITIAL_NPXCW__;
 	}
-#endif
+
 	FPU_info = tframe;
 	FPU_ORIG_EIP = FPU_EIP;	/* --pink-- */
-
-#if defined(__FreeBSD__)
-	if (FPU_CS != 0x001f) {
-		printf("math_emulate: %x : %x\n", FPU_CS, FPU_EIP);
-		panic("FPU emulation in kernel");
-	}
-#endif
-#ifdef notyet
-	/* We cannot handle emulation in v86-mode */
-	if (FPU_EFLAGS & 0x00020000) {
-		FPU_ORIG_EIP = FPU_EIP;
-		math_abort(FPU_info, SIGILL);
-	}
-#endif
 
 	FPU_lookahead = FPU_LOOKAHEAD;
 	if (curproc->p_flag & P_TRACED)
@@ -507,49 +479,3 @@ if (--lookahead_limit)
 	REENTRANT_CHECK(OFF);
 	return (0);		/* --pink-- */
 }
-
-#if defined(__FreeBSD__)
-#ifdef LKM
-MOD_MISC(gnufpu);
-static int
-gnufpu_load(struct lkm_table *lkmtp, int cmd)
-{
-	if (pmath_emulate) {
-		printf("Math emulator already present\n");
-		return EBUSY;
-	}
-	pmath_emulate = math_emulate;
-	return 0;
-}
-
-static int
-gnufpu_unload(struct lkm_table *lkmtp, int cmd)
-{
-	if (pmath_emulate != math_emulate) {
-		printf("Cannot unload another math emulator\n");
-		return EACCES;
-	}
-	pmath_emulate = 0;
-	return 0;
-}
-
-int
-gnufpu(struct lkm_table *lkmtp, int cmd, int ver)
-{
-	DISPATCH(lkmtp, cmd, ver, gnufpu_load, gnufpu_unload, lkm_nullcmd);
-}
-#else /* !LKM */
-
-static void
-gnufpu_init(void *unused)
-{
-	if (pmath_emulate)
-		printf("Another Math emulator already present\n");
-	else
-		pmath_emulate = math_emulate;
-}
-
-SYSINIT(gnufpu, SI_SUB_CPU, SI_ORDER_ANY, gnufpu_init, NULL);
-
-#endif /* LKM */
-#endif /* __FreeBSD__ */

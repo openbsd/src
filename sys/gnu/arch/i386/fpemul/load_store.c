@@ -1,4 +1,4 @@
-/*	$OpenBSD: load_store.c,v 1.2 2003/01/09 22:27:11 miod Exp $	*/
+/*	$OpenBSD: load_store.c,v 1.3 2003/07/30 20:24:03 jason Exp $	*/
 /*
  *  load_store.c
  *
@@ -73,9 +73,6 @@
 #include <sys/proc.h>
 #include <sys/systm.h>
 #include <machine/cpu.h>
-#if defined(__FreeBSD__)
-#include <machine/md_var.h>
-#endif
 #include <machine/pcb.h>
 
 #include <gnu/arch/i386/fpemul/fpu_emu.h>
