@@ -1,4 +1,4 @@
-/*	$OpenBSD: mountd.c,v 1.22 1997/09/29 19:31:05 millert Exp $	*/
+/*	$OpenBSD: mountd.c,v 1.23 1997/12/19 09:21:40 deraadt Exp $	*/
 /*	$NetBSD: mountd.c,v 1.31 1996/02/18 11:57:53 fvdl Exp $	*/
 
 /*
@@ -228,7 +228,6 @@ int opt_flags;
 #define	OP_ALLDIRS	0x40
 
 int debug = 0;
-void	SYSLOG __P((int, const char *, ...));
 
 /*
  * Mountd server for NFS mount protocol as described in:
@@ -304,6 +303,7 @@ main(argc, argv)
 	}
 	signal(SIGHUP, (void (*) __P((int))) new_exportlist);
 	signal(SIGTERM, (void (*) __P((int))) send_umntall);
+	signal(SIGSYS, SIG_IGN);
 	if ((udptransp = svcudp_create(RPC_ANYSOCK)) == NULL ||
 	    (tcptransp = svctcp_create(RPC_ANYSOCK, 0, 0)) == NULL) {
 		syslog(LOG_ERR, "Can't create socket");
@@ -406,6 +406,12 @@ mntsrv(rqstp, transp)
 			/* Get the file handle */
 			memset(&fhr.fhr_fh, 0, sizeof(nfsfh_t));
 			if (getfh(dirpath, (fhandle_t *)&fhr.fhr_fh) < 0) {
+				if (errno == ENOSYS) {
+					syslog(LOG_ERR,
+					    "Kernel does not support NFS exporting, "
+					    "mountd aborting..");
+					_exit(1);
+				}
 				bad = errno;
 				syslog(LOG_ERR, "Can't get fh for %s", dirpath);
 				if (!svc_sendreply(transp, xdr_long,
