@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.31 2003/04/03 21:54:23 mickey Exp $
+#	$OpenBSD: GENERIC,v 1.32 2003/04/07 16:33:41 mickey Exp $
 
 # Machine architecture; required by config(8)
 machine		hppa
@@ -74,6 +74,7 @@ hilid*	at hil? code ?	# ID module
 # RS/232 serial ports
 com0	at gsc0 offset 0x5000 irq 5	# on lasi
 com1	at gsc1 offset 0x5000 irq 5
+com1	at gsc2 offset 0x2000 irq 6	# on wax
 com0	at gsc0 offset 0x23000 irq 5	# on asp
 com1	at gsc0 offset 0x22000 irq 6
 com2	at gsc0 offset 0x0 irq 13	# only on asp0 w/o audio (off ?)
