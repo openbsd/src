@@ -1,4 +1,4 @@
-/*	$OpenBSD: start.S,v 1.3 1996/05/18 10:33:14 mickey Exp $	*/
+/*	$OpenBSD: start.S,v 1.4 1996/06/02 11:18:14 mickey Exp $	*/
 /*	$NetBSD: start.S,v 1.12 1995/01/18 17:34:18 mycroft Exp $	*/
 
 /*-
@@ -114,9 +114,9 @@ start1:
 #endif
 #if	!defined(NOFD) && !defined(NOHD)
 	# bootstrap passes us drive number in %dl
-	cmpb	$0x80, %dl
+	testb	$0x80, %dl
 	data32
-	jae	hd
+	jnz	hd
 #endif
 #ifndef	NOFD
 fd:
@@ -139,7 +139,7 @@ fd:
 	movl	$0x0001, %ecx	# cyl 0, sector 1
 	movb	$0x00, %dh	# head
 	# XXX Override the drive number.
-	movb	$0x00, %dl
+	# movb	$0x00, %dl
 	data32
 	jmp	load
 #endif
@@ -181,11 +181,6 @@ again:
 	data32
 	jmp	err_stop
 #endif
-#else /* !DOSREAD */
-	movb	$0xff, %dl
-	jmp	_C_LABEL(boot2)
-
-#endif	/* DOSREAD */
 
 /*
 # BIOS call "INT 0x13 Function 0x2" to read sectors from disk into memory
@@ -254,9 +249,9 @@ load:
 	jb	read_error
 
 #ifndef	NOHD
-	cmpb	$0x80, %dl	/* no concurent dos on floppy */
+	testb	$0x80, %dl	/* no fdisk partion table on floppy */
 	data32
-	jl	dobsd
+	jz	dobsd
 
 	addr32
 	movb	%es:4(%ebx), %al
@@ -350,6 +345,10 @@ done:
 	popl	%eax
 	data32
 	ret
+#else	/* !DOSREAD */
+	movb	$0xff, %dl
+	jmp	_C_LABEL(boot2)
+#endif /* DOSREAD */
 
 /* Conventional GDT indexes. */
 BOOT_CS_INDEX	=	3
@@ -411,7 +410,7 @@ stop:
 
 /* error messages */
 
-#ifdef	DEBUG
+#if	defined(DEBUG) && !defined(DOSREAD)
 #ifdef	FDDEBUG
 one:	.asciz		"1\r\n"
 two:	.asciz		"2\r\n"
@@ -422,6 +421,7 @@ five:	.asciz		"5\r\n"
 six:	.asciz		"6\r\n"
 seven:	.asciz		"7\r\n"
 #endif	/* DEBUG */
+#ifndef	DOSREAD
 eread:	.asciz		"Read error\r\n"
 enoboot: .asciz		"No bootable partition\r\n"
 endofcode:
@@ -440,6 +440,7 @@ endofcode:
 	. = _C_LABEL(boot1) + 0x1fe
 	.short	SIGNATURE
 	. = _C_LABEL(boot1) + 0x200
+#endif
 	.globl	_disklabel
 _disklabel:
 	. = _C_LABEL(boot1) + 0x400	
