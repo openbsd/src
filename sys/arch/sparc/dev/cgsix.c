@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgsix.c,v 1.11 1999/04/22 16:52:47 art Exp $	*/
+/*	$OpenBSD: cgsix.c,v 1.12 1999/05/08 01:15:58 jason Exp $	*/
 /*	$NetBSD: cgsix.c,v 1.33 1997/08/07 19:12:30 pk Exp $ */
 
 /*
@@ -326,7 +326,7 @@ cgsixattach(parent, self, args)
 		((char *)&sc->sc_cmap)[i] = bt->bt_cmap >> 24;
 
 	/* enable video */
-	sc->sc_thc->thc_misc |= THC_MISC_VIDEN;
+	sc->sc_thc->thc_misc |= THC_MISC_VIDEN | THC_MISC_SYNCEN;
 
 	if (isconsole) {
 		printf(" (console)\n");
@@ -429,7 +429,7 @@ cgsixioctl(dev, cmd, data, flags, p)
 			cg6_unblank(&sc->sc_dev);
 		else if (!sc->sc_blanked) {
 			sc->sc_blanked = 1;
-			sc->sc_thc->thc_misc &= ~THC_MISC_VIDEN;
+			sc->sc_thc->thc_misc &= ~(THC_MISC_VIDEN|THC_MISC_SYNCEN);
 		}
 		break;
 
@@ -692,7 +692,7 @@ cg6_unblank(dev)
 
 	if (sc->sc_blanked) {
 		sc->sc_blanked = 0;
-		sc->sc_thc->thc_misc |= THC_MISC_VIDEN;
+		sc->sc_thc->thc_misc |= THC_MISC_VIDEN|THC_MISC_SYNCEN;
 	}
 }
 
