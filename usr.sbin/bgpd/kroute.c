@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.70 2004/01/17 15:35:09 henning Exp $ */
+/*	$OpenBSD: kroute.c,v 1.71 2004/01/17 18:05:46 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -62,8 +62,7 @@ LIST_HEAD(kif_kr_head, kif_kr);
 
 struct kif_node {
 	RB_ENTRY(kif_node)	 entry;
-	u_short			 ifindex;
-	int			 flags;
+	struct kif		 k;
 	struct kif_kr_head	 kroute_l;
 };
 
@@ -311,6 +310,7 @@ kr_show_route(struct imsg *imsg)
 	int			 flags;
 	struct ctl_show_nexthop	 snh;
 	struct knexthop_node	*h;
+	struct kif_node		*kif;
 
 	switch (imsg->hdr.type) {
 	case IMSG_CTL_KROUTE:
@@ -349,9 +349,15 @@ kr_show_route(struct imsg *imsg)
 			    &snh, sizeof(snh));
 		}
 		break;
+	case IMSG_CTL_SHOW_INTERFACE:
+		RB_FOREACH(kif, kif_tree, &kit)
+			send_imsg_session(IMSG_CTL_SHOW_INTERFACE,
+			    imsg->hdr.pid, &kif->k, sizeof(kif->k));
+		break;
 	default:	/* nada */
 		break;
 	}
+
 	send_imsg_session(IMSG_CTL_END, imsg->hdr.pid, NULL, 0);
 }
 
@@ -404,7 +410,7 @@ knexthop_compare(struct knexthop_node *a, struct knexthop_node *b)
 int
 kif_compare(struct kif_node *a, struct kif_node *b)
 {
-	return (b->ifindex - a->ifindex);
+	return (b->k.ifindex - a->k.ifindex);
 }
 
 
@@ -527,7 +533,7 @@ kif_find(int ifindex)
 	struct kif_node	*kif, s;
 
 	bzero(&s, sizeof(s));
-	s.ifindex = ifindex;
+	s.k.ifindex = ifindex;
 
 	if ((kif = RB_FIND(kif_tree, &kit, &s)) != NULL)
 		return (kif);
@@ -804,7 +810,7 @@ if_change(u_short ifindex, int flags)
 		return;
 	}
 
-	kif->flags = flags;
+	kif->k.flags = flags;
 
 	LIST_FOREACH(kkr, &kif->kroute_l, entry) {
 		if (flags & IFF_UP)
@@ -845,7 +851,7 @@ if_announce(void *msg)
 			return;
 		}
 
-		kif->ifindex = ifan->ifan_index;
+		kif->k.ifindex = ifan->ifan_index;
 		kif_insert(kif);
 		break;
 	case IFAN_DEPARTURE:
@@ -1054,8 +1060,8 @@ fetchifs(int ifindex)
 			return (-1);
 		}
 
-		kif->ifindex = ifm->ifm_index;
-		kif->flags = ifm->ifm_flags;
+		kif->k.ifindex = ifm->ifm_index;
+		kif->k.flags = ifm->ifm_flags;
 		kif_insert(kif);
 	}
 	return (0);
