@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.124 2002/11/26 19:20:12 henning Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.125 2002/11/26 20:19:56 henning Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -354,9 +354,9 @@ All queues for this interface have to be listed after
 .Pp
 In the following example, the interface
 .Pa dc0
-should queue up to 5 Mbit/s in two queues using CBQ.
+should queue up to 5 Mbit/s in four queues using CBQ.
 .Bd -literal
-    altq on dc0 scheduler cbq bandwidth 5Mb queue { qname1, qname2 }
+    altq on dc0 scheduler cbq bandwidth 5Mb queue { std, http, mail, ssh }
 .Ed
 .Pp
 Parameters for the queues are specified in
@@ -402,13 +402,32 @@ Furthermore child queues can be specified like in an
 .Pa altq
 rule.
 .Pp
-Following the previous example, this would specify the two referenced
-queues, plus one child queue:
+Following the previous example, this would specify the four referenced
+queues, plus a few child queues. The tos field is used to give interactive
+ssh sessions priority over bulk transfers over ssh like scp and sftp.
 .Pp
 .Bd -literal
-    queue qname1 bandwidth 50% cbq(default ecn) { qname1a }
-    queue  qname1a bandwidth 1Mb cbq(borrow)
-    queue qname2 bandwidth 1000b priority 3
+    queue std bandwidth 10% cbq(default)
+    queue http bandwidth 60% priority 2 cbq(borrow red) \\
+        { employees, developers }
+    queue  developers bandwidth 75% cbq(borrow)
+    queue  employees bandwidth 15%
+    queue mail bandwidth 10% priority 0 cbq(borrow ecn)
+    queue ssh bandwidth 20% cbq(borrow) { ssh_interactive, ssh_bulk }
+    queue  ssh_interactive priority 7
+    queue  ssh_bulk priority 0
+
+    block return out on $ext_if inet all queue std
+    pass out on dc0 inet proto tcp from $developerhosts to any port 80 \\
+	keep state queue developers
+    pass out on dc0 inet proto tcp from $employeehosts to any port 80 \\
+	keep state queue employees
+    pass out on dc0 inet proto tcp from any to any port 22 tos 0x10 \\
+	keep state queue ssh_interactive #priority for interactive sessions
+    pass out on dc0 inet proto tcp from any to any port 22 tos 0x08 \\
+	keep state queue ssh_bulk        #less priority for scp/sftp/...
+    pass out on dc0 inet proto tcp from any to any port 25 \\
+	keep state queue mail
 .Ed
 .Pp
 Please note that child queues must not exceed the bandwidth definition
