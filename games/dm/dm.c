@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)dm.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: dm.c,v 1.7 1998/05/14 09:58:27 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: dm.c,v 1.8 1998/07/03 23:28:21 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -129,7 +129,7 @@ read_config()
 	while (fgets(lbuf, sizeof(lbuf), cfp))
 		switch(*lbuf) {
 		case 'b':		/* badtty */
-			if (sscanf(lbuf, "%40s40%s", f1, f2) != 2 ||
+			if (sscanf(lbuf, "%40s%40s", f1, f2) != 2 ||
 			    strcasecmp(f1, "badtty"))
 				break;
 			c_tty(f2);
