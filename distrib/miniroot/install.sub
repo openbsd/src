@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.276 2002/11/28 01:54:58 krw Exp $
+#	$OpenBSD: install.sub,v 1.277 2002/11/28 03:06:30 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -113,7 +113,7 @@ __EOT
 
 	cat << __EOT
 
-IS YOUR DATA BACKED UP? As with anything that modifies disk contents, this 
+IS YOUR DATA BACKED UP? As with anything that modifies disk contents, this
 program can cause SIGNIFICANT data loss.
 
 __EOT
@@ -874,10 +874,10 @@ install_get_files () {
 	[[ -n $GET_FILES ]] || return
 
 	ask "Ready to ${MODE} sets?" y
-	case $resp in 
+	case $resp in
 	n*|N*)	return ;;
 	esac
-	
+
 	echo
 	for _f in $THESETS ; do
 		isin $_f $GET_FILES || continue
@@ -910,7 +910,7 @@ encode_for_url() {
 }
 
 # Check for the presence of an error message in the output of the ftp commands
-# used to get the list of files in a directory. 
+# used to get the list of files in a directory.
 #
 # $1 = error message to look for
 # $2 = ftp command output
@@ -967,7 +967,7 @@ install_url() {
 			eval ask \"Server IP address, or hostname?\" \"\$_${_url_type}_server_ip\"
 			continue;
 		fi
-	
+
 		eval ask \"Server IP address, hostname, or list#?\" \"\$_${_url_type}_server_ip\"
 
 		case $resp in
@@ -980,7 +980,7 @@ install_url() {
 
 			if [ $maxlines -lt $resp -o $resp -lt 1 ]; then
 				echo "There is no ${resp}th line in the list."
-			else	
+			else
 				tline=`grep "^${_url_type}:" /tmp/ftplist | sed -ne "${resp}p"`
 				url=`echo $tline | sed -e "s/^${_url_type}:\/\///" |
 					cutword -t' ' 1 | cutword -t' ' 1`
@@ -1077,7 +1077,7 @@ install_url() {
 # $2 - default directory
 install_mounted_fs() {
 	local _mp=$1 _dir=$2
-	
+
 	while : ; do
 		ask "Pathname to the sets? (or 'done')" "$_dir"
 		case $resp in
@@ -1494,7 +1494,7 @@ __EOT
 # user selects from that location. Repeat as many times as the user
 # needs to get all desired sets.
 install_sets() {
- 	cat << __EOT
+	cat << __EOT
 
 You will now specify the location and names of the ${MODE} sets you want to
 load. You will be able to repeat this step until all of your sets have been
@@ -1553,7 +1553,7 @@ munge_fstab() {
 		# and success is not guaranteed. The user
 		# will have to mount nfs filesystems manually.
 		[ "$_fstype" != "nfs" ] || continue
-		
+
 		# Remove any softdep options, as soft updates are not
 		# available in the ramdisk kernels.
 		_opt="$(echo ${_opt} | \
@@ -1571,7 +1571,7 @@ munge_fstab() {
 		echo $_dev /mnt$_mp $_fstype $_opt $_rest
 
 	done < /tmp/fstab > /etc/fstab
-	
+
 	# If no /etc/fstab was created, we have nowhere to ${MODE} to.
 	if [ ! -s /etc/fstab ]; then
 		echo "Unable to create valid /etc/fstab."
@@ -1856,7 +1856,7 @@ finish_up() {
 
 	[ -x /mnt/${MODE}.site ] && /mnt/usr/sbin/chroot /mnt /${MODE}.site
 
-	# Disable trap(s) that do cleanup on exit. With success comes a 
+	# Disable trap(s) that do cleanup on exit. With success comes a
 	# reboot which washes away all sins.
 	trap - HUP INT QUIT TERM EXIT
 
@@ -1905,10 +1905,10 @@ DEVSMADE=
 THESETS="bsd $MDSETS"
 DEFAULTSETS="bsd"
 for _set in base etc misc comp man game xbase xshare xfont xserv site ; do
-       [[ $MODE == upgrade && $_set == etc ]] && continue
-       THESETS="$THESETS ${_set}${VERSION}.tgz"
-       isin $_set xbase xshare xfont xserv site && continue
-       DEFAULTSETS="$DEFAULTSETS ${_set}${VERSION}.tgz"
+	[[ $MODE == upgrade && $_set == etc ]] && continue
+	THESETS="$THESETS ${_set}${VERSION}.tgz"
+	isin $_set xbase xshare xfont xserv site && continue
+	DEFAULTSETS="$DEFAULTSETS ${_set}${VERSION}.tgz"
 done
 
 # Global variable using during sets installation
@@ -1935,5 +1935,5 @@ trap 'exit 2' HUP INT QUIT TERM
 # Introduce ourselves.
 welcome
 
-# Get ROOTDISK and default ROOTDEV 
+# Get ROOTDISK and default ROOTDEV
 get_rootdisk

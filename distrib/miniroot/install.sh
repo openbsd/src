@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.122 2002/11/28 01:54:58 krw Exp $
+#	$OpenBSD: install.sh,v 1.123 2002/11/28 03:06:30 deraadt Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -141,14 +141,14 @@ if [ ! -f /etc/fstab ]; then
 					[[ -f $FILESYSTEMS && -n $(grep " $_mp\$" $FILESYSTEMS) ]] && break
 					isin $_mp ${_mount_points[*]} && break
 					# Ignore '/' for any partition but ROOTDEV. Check just
-					# in case ROOTDEV isn't first partition processed. 
-					[[ $_mp == '/' ]] && break					
+					# in case ROOTDEV isn't first partition processed.
+					[[ $_mp == '/' ]] && break
 					# Otherwise, record user specified mount point.
 					_mount_points[$_i]=$_mp
 				done < /tmp/fstab.$DISK
 			fi
 			: $(( _i += 1 ))
- 		done
+		done
 
 		if [[ $DISK == $ROOTDISK ]]; then
 			# Ensure that ROOTDEV was configured.
@@ -170,7 +170,7 @@ if [ ! -f /etc/fstab ]; then
 
 		# If there are no BSD partitions, or $DISK has been reset, go on to next disk.
 		[[ ${#_partitions[*]} > 0 && -n $DISK ]] || continue
-		
+
 		# Now prompt the user for the mount points. Loop until "done" entered.
 		_i=0
 		while : ; do
@@ -192,9 +192,9 @@ if [ ! -f /etc/fstab ]; then
 					# been specified on this one?
 					_j=0
 					for _pp in ${_partitions[*]} ""; do
-						if [ $_i -ne $_j ]; then	
+						if [ $_i -ne $_j ]; then
 							[ "$resp" = "${_mount_points[$_j]}" ] && break
-						fi	
+						fi
 						: $(( _j += 1 ))
 					done
 				fi
@@ -355,7 +355,7 @@ install_sets
 # Set machdep.apertureallowed if required. install_sets must be
 # done first so that /etc/sysctl.conf is available.
 set_machdep_apertureallowed
-	
+
 # Copy configuration files to /mnt/etc.
 cfgfiles="fstab hostname.* mygate resolv.conf kbdtype sysctl.conf"
 

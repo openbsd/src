@@ -1,4 +1,4 @@
-#	$OpenBSD: list2sh.awk,v 1.11 2002/08/29 01:53:37 krw Exp $
+#	$OpenBSD: list2sh.awk,v 1.12 2002/11/28 03:06:30 deraadt Exp $
 #	$NetBSD: list2sh.awk,v 1.2 1996/05/04 15:45:31 pk Exp $
 
 BEGIN {
@@ -19,7 +19,7 @@ $1 == "REMOVE" {
 	printf("echo '%s'\n", $0);
 	printf("rm -f ${TARGDIR}/%s\n", $2);
 	next;
-}	
+}
 $1 == "STRIP" {
 	printf("echo '%s'\n", $0);
 	printf("test -f ${TARGDIR}/%s && rm -fr ${TARGDIR}/%s\n", $3, $3);
