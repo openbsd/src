@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp_new.c,v 1.17 1998/03/07 21:30:24 provos Exp $	*/
+/*	$OpenBSD: ip_esp_new.c,v 1.18 1998/05/05 08:54:48 provos Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -555,7 +555,7 @@ esp_new_input(struct mbuf *m, struct tdb *tdb)
     plen = m->m_pkthdr.len - (ip->ip_hl << 2) - 2 * sizeof(u_int32_t) - 
 	   xd->edx_ivlen - alen;
 
-    if (plen & (blks - 1))
+    if ((plen & (blks - 1)) || (plen <= 0))
     {
 #ifdef ENCDEBUG
 	if (encdebug)
@@ -765,6 +765,16 @@ esp_new_input(struct mbuf *m, struct tdb *tdb)
 
     if ((xd->edx_flags & ESP_NEW_FLAG_NPADDING) == 0)
     {
+        if (blk[6] + 2 + alen > m->m_pkthdr.len - (ip->ip_hl << 2) - 2 * sizeof(u_int32_t) - xd->edx_ivlen)
+        {
+#ifdef ENCDEBUG
+	    if (encdebug)
+	      printf("esp_new_input(): invalid padding length %d for packet from %x to %x, SA %x/%08x\n", blk[6], ipo.ip_src, ipo.ip_dst, tdb->tdb_dst, ntohl(tdb->tdb_spi));
+#endif /* ENCDEBUG */	    
+	    espstat.esps_badilen++;
+	    m_freem(m);
+	    return NULL;
+	}
         if ((blk[6] != blk[5]) && (blk[6] != 0))
 	{
 	    if (encdebug)
@@ -777,6 +787,16 @@ esp_new_input(struct mbuf *m, struct tdb *tdb)
     }
     else
     {
+        if (blk[6] + 1 + alen > m->m_pkthdr.len - (ip->ip_hl << 2) - 2 * sizeof(u_int32_t) - xd->edx_ivlen)
+        {
+#ifdef ENCDEBUG
+	    if (encdebug)
+	      printf("esp_new_input(): invalid padding length %d for packet from %x to %x, SA %x/%08x\n", blk[6], ipo.ip_src, ipo.ip_dst, tdb->tdb_dst, ntohl(tdb->tdb_spi));
+#endif /* ENCDEBUG */	    
+	    espstat.esps_badilen++;
+	    m_freem(m);
+	    return NULL;
+	}
 	if (blk[6] == 0)
 	{
 	    if (encdebug)

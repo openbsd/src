@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp_old.c,v 1.15 1998/03/07 21:30:26 provos Exp $	*/
+/*	$OpenBSD: ip_esp_old.c,v 1.16 1998/05/05 08:54:50 provos Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -344,7 +344,7 @@ esp_old_input(struct mbuf *m, struct tdb *tdb)
     /* Skip the IP header, IP options, SPI and IV */
     plen = m->m_pkthdr.len - (ip->ip_hl << 2) - sizeof(u_int32_t) -
 	   xd->edx_ivlen;
-    if (plen & (blks - 1))
+    if ((plen & (blks - 1)) || (plen <= 0))
     {
 #ifdef ENCDEBUG
 	if (encdebug)
@@ -497,6 +497,18 @@ esp_old_input(struct mbuf *m, struct tdb *tdb)
      * We cannot verify the decryption here (as in ip_esp_new.c), since
      * the padding may be random.
      */
+    
+    if (blk[6] + 2 > m->m_pkthdr.len - (ip->ip_hl << 2) - sizeof(u_int32_t) -
+	xd->edx_ivlen)
+    {
+#ifdef ENCDEBUG
+        if (encdebug)
+	  printf("esp_old_input(): invalid padding length %d for packet from %x to %x, SA %x/%08x\n", blk[6], ipo.ip_src, ipo.ip_dst, tdb->tdb_dst, ntohl(tdb->tdb_spi));
+#endif /* ENCDEBUG */
+	espstat.esps_badilen++;
+	m_freem(m);
+	return NULL;
+    }
 
     m_adj(m, -blk[6] - 2);
     m_adj(m, 4 + xd->edx_ivlen);
