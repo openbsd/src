@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_addr_fixup.c,v 1.9 2001/03/15 03:55:19 mickey Exp $	*/
+/*	$OpenBSD: pci_addr_fixup.c,v 1.10 2001/06/17 21:11:12 mickey Exp $	*/
 /*	$NetBSD: pci_addr_fixup.c,v 1.7 2000/08/03 20:10:45 nathanw Exp $	*/
 
 /*-
@@ -59,6 +59,8 @@ int	pciaddr_do_resource_allocate __P((struct pcibios_softc *,
     bus_size_t));
 bus_addr_t pciaddr_ioaddr __P((u_int32_t));
 void	pciaddr_print_devid __P((pci_chipset_tag_t, pcitag_t));
+
+int	pciaddr_device_is_agp __P((pci_chipset_tag_t, pcitag_t));
 
 #define PCIADDR_MEM_START	0x0
 #define PCIADDR_MEM_END		0xffffffff
@@ -278,6 +280,10 @@ pciaddr_do_resource_allocate(sc, pc, tag, mapreg, ex, type, addr, size)
 	
 	if (*addr) /* no need to allocate */
 		return (0);
+
+	/* XXX Don't allocate if device is AGP device to avoid conflict. */
+	if (pciaddr_device_is_agp(pc, tag)) 
+		return (0);
 	
 	start = (type == PCI_MAPREG_TYPE_MEM ? sc->mem_alloc_start
 		: sc->port_alloc_start);
@@ -359,6 +365,33 @@ pciaddr_print_devid(pc, tag)
 	printf("%03d:%02d:%d %04x:%04x\n", bus, device, function, 
 	       PCI_VENDOR(id), PCI_PRODUCT(id));
 }
+
+int
+pciaddr_device_is_agp(pc, tag)
+	pci_chipset_tag_t pc;
+	pcitag_t tag;
+{
+	pcireg_t class, status, rval;
+	int off;
+
+	/* Check AGP device. */
+	class = pci_conf_read(pc, tag, PCI_CLASS_REG);
+	if (PCI_CLASS(class) == PCI_CLASS_DISPLAY) {
+		status = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
+		if (status & PCI_STATUS_CAPLIST_SUPPORT) {
+			rval = pci_conf_read(pc, tag, PCI_CAPLISTPTR_REG);
+			for (off = PCI_CAPLIST_PTR(rval);
+			    off != 0;
+			    off = PCI_CAPLIST_NEXT(rval) ) {
+				rval = pci_conf_read(pc, tag, off);
+				if (PCI_CAPLIST_CAP(rval) == PCI_CAP_AGP) 
+					return (1);
+			}
+		}
+	}
+	return (0);
+}
+
 
 struct extent *
 pciaddr_search(mem_port, startp, size)
