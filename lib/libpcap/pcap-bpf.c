@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcap-bpf.c,v 1.3 1996/03/04 15:47:25 mickey Exp $	*/
+/*	$OpenBSD: pcap-bpf.c,v 1.4 1996/03/23 18:30:11 tholo Exp $	*/
 /*	$NetBSD: pcap-bpf.c,v 1.3 1995/04/29 05:42:31 cgd Exp $	*/
 
 /*
@@ -133,7 +133,7 @@ pcap_inject(pcap_t *p, const void *buf, size_t len)
 	return (write(p->fd, buf, len));
 }
 
-static inline int
+static __inline int
 bpf_open(pcap_t *p, char *errbuf)
 {
 	int fd;
