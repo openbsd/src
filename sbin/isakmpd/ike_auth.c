@@ -1,5 +1,5 @@
-/*	$OpenBSD: ike_auth.c,v 1.26 2000/06/20 05:55:15 niklas Exp $	*/
-/*	$EOM: ike_auth.c,v 1.52 2000/06/19 07:41:07 niklas Exp $	*/
+/*	$OpenBSD: ike_auth.c,v 1.27 2000/08/03 07:23:32 niklas Exp $	*/
+/*	$EOM: ike_auth.c,v 1.53 2000/07/25 17:15:40 provos Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -371,6 +371,10 @@ pre_shared_gen_skeyid (struct exchange *exchange, size_t *sz)
   key = ike_auth_get_key (IKE_AUTH_PRE_SHARED, exchange->name, buf, &keylen);
   if (buf)
     free (buf);
+
+  /* Fail if no key could be found */
+  if (key == NULL) 
+    return 0;
 
   /* Store the secret key for later policy processing.  */
   exchange->recv_cert = malloc (keylen);
