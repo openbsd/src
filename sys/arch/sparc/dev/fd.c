@@ -431,11 +431,12 @@ fdmatch(parent, match, aux)
 	if (fdc->sc_flags & FDC_82077) {
 		/* select drive and turn on motor */
 		*fdc->sc_reg_dor = drive | FDO_FRST | FDO_MOEN(drive);
-		/* wait for motor to spin up */
-		delay(250000);
 	} else {
 		auxregbisc(AUXIO_FDS, 0);
 	}
+	/* wait for motor to spin up */
+	delay(250000);
+
 	fdc->sc_nstat = 0;
 	out_fdc(fdc, NE7CMD_RECAL);
 	out_fdc(fdc, drive);
@@ -470,12 +471,10 @@ fdmatch(parent, match, aux)
 	if (n != 2 || (fdc->sc_status[0] & 0xf8) != 0x20)
 		return 0;
 	/* turn off motor */
-	if (fdc->sc_flags & FDC_82077) {
-		/* select drive and turn on motor */
+	if (fdc->sc_flags & FDC_82077)
 		*fdc->sc_reg_dor = FDO_FRST;
-	} else {
+	else
 		auxregbisc(0, AUXIO_FDS);
-	}
 
 	return 1;
 }
@@ -497,7 +496,7 @@ fdattach(parent, self, aux)
 	/* XXX Allow `flags' to override device type? */
 
 	if (type)
-		printf(": %s %d cyl, %d head, %d sec\n", type->name,
+		printf(": %s, %d cyl, %d head, %d sec\n", type->name,
 		    type->tracks, type->heads, type->sectrac);
 	else
 		printf(": density unknown\n");
