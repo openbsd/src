@@ -1,23 +1,24 @@
 .Dd September 26, 1997
-.Dt PDISK 8
+.Dt PDISK 8 macppc
 .Os
 .Sh NAME
 .Nm pdisk
 .Nd HFS(DPME) partition maintenance program
 .Sh SYNOPSIS
 .Nm pdisk
+.Op Fl c
 .Op Fl h
 .Op Fl i
 .Op Fl l
 .Op Fl r
-.Op Fl c
+.Op Fl v
 .Ar device
 .Sh DESCRIPTION
 .Nm
 is a menu driven program which partitions disks using the standard Apple
 disk partitioning scheme described in "Inside Macintosh: Devices".
 It does not support the intel/dos partitioning scheme supported by
-.BR fdisk .
+.Em fdisk .
 The
 .Ar device
 is usually one of the following:
@@ -36,8 +37,11 @@ is usually one of the following:
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl v
-Prints version number of the program.
+.It Fl c
+Causes
+.Nm
+to always ignore the device size listed in the partition table
+and compute the device size by other means.
 .It Fl h
 Prints a rather lame set of help messages for the
 .Nm
@@ -48,29 +52,22 @@ Causes
 to go into an interactive mode similar to the MacOS version of the program.
 .It Fl l
 List the partition tables for the specified
-.Ar devices
-.
-.Tp
+.Ar devices .
 .It Fl r
 Prevents
 .Nm
 from writing to the device.
-.TP
-.It Fl c
-Causes
-.Nm
-to always ignore the device size listed in the partition table
-and compute the device size by other means.
-.SH "Editing Partition Tables"
+.It Fl v
+Prints version number of the program.
+.El
+.Pp
 An argument which is simply the name of a
-.I device
+.Ar device
 indicates that
 .Nm
 should edit the partition table of that device.
-.El
 .Sh COMMAND MODE
 The list of commands and their explanations are given below.
-.Pp
 .Bl -tag -width "update"
 .It Em h
 command help
@@ -184,10 +181,10 @@ Some people believe there should really be just one disk partitioning utility.
 .Pp
 .Nm
 should be able to create HFS partitions that work.
-.br
+.Pp
 Even more help should be available during user input.
 .Sh SEE ALSO
-.Xr fdisk 8 , 
-.Xr disklabel 8
+.Xr disklabel 8 ,
+.Xr fdisk 8
 .Sh AUTHORS
-Eryk Vershen (eryk@apple.com)
+.An Eryk Vershen Aq eryk@apple.com .
