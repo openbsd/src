@@ -1,4 +1,4 @@
-/*	$OpenBSD: authpf.c,v 1.12 2002/04/09 23:19:01 frantzen Exp $	*/
+/*	$OpenBSD: authpf.c,v 1.13 2002/04/24 23:03:56 dhartmei Exp $	*/
 
 /*
  * Copyright (C) 1998 - 2002 Bob Beck (beck@openbsd.org).
@@ -804,14 +804,14 @@ authpf_kill_states()
 	inet_pton(AF_INET, ipsrc, &target);
 
 	/* Kill all states from ipsrc */
-	psk.psk_src.addr.v4 = target;
+	psk.psk_src.addr.addr.v4 = target;
 	memset(&psk.psk_src.mask, 0xff, sizeof(psk.psk_src.mask));
 	if (ioctl(dev, DIOCKILLSTATES, &psk))
 		syslog(LOG_ERR, "DIOCKILLSTATES failed (%m)");
 
 	/* Kill all states to ipsrc */
 	memset(&psk.psk_src, 0, sizeof(psk.psk_src));
-	psk.psk_dst.addr.v4 = target;
+	psk.psk_dst.addr.addr.v4 = target;
 	memset(&psk.psk_dst.mask, 0xff, sizeof(psk.psk_dst.mask));
 	if (ioctl(dev, DIOCKILLSTATES, &psk))
 		syslog(LOG_ERR, "DIOCKILLSTATES failed (%m)");
