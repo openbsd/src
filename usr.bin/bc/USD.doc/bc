@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bc,v 1.7 2003/11/11 21:06:28 otto Exp $
+.\"	$OpenBSD: bc,v 1.8 2004/04/06 10:00:31 jmc Exp $
 .\"
 .\" Copyright (C) Caldera International Inc.  2001-2002.
 .\" All rights reserved.
@@ -34,6 +34,10 @@
 .\"
 .\"	@(#)bc	6.2 (Berkeley) 4/17/91
 .\"
+.if n \{\
+.po 5n
+.ll 70n
+.\}
 .EH 'USD:6-%''BC \- An Arbitrary Precision Desk-Calculator Language'
 .OH 'BC \- An Arbitrary Precision Desk-Calculator Language''USD:6-%'
 .\".RP
@@ -505,15 +509,15 @@ x>y
 .ft P
 .DE
 where  two expressions are related by one of the six relational
-operators \fS <, >, <=, >=, ==,\fP or \fS!=.\fP
-The relation \fS==\fP
-stands for `equal to' and \fS!=\fP stands for `not equal to'.
+operators `<', `>', `<=', `>=', `==', or `!='.
+The relation `=='
+stands for `equal to' and `!=' stands for `not equal to'.
 The meaning of the remaining relational operators is
 clear.
 .PP
-BEWARE of using \fS=\fP instead of \fS==\fP in a relational.  Unfortunately,
+BEWARE of using `=' instead of `==' in a relational.  Unfortunately,
 both of them are legal, so you will not get a diagnostic
-message, but \fS=\fP really will not do a comparison.
+message, but `=' really will not do a comparison.
 .PP
 The `if' statement causes execution of its range
 if and only if the relation is true.

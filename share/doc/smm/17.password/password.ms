@@ -1,4 +1,4 @@
-.\"	$OpenBSD: password.ms,v 1.1 2003/11/10 20:32:17 otto Exp $
+.\"	$OpenBSD: password.ms,v 1.2 2004/04/06 10:00:32 jmc Exp $
 .\"
 .\" Copyright (C) Caldera International Inc.  2001-2002.
 .\" All rights reserved.
@@ -35,6 +35,10 @@
 .\"	@(#)password.ms	8.1 (Berkeley) 6/8/93
 .\"
 .\" tbl mm ^ eqn ^ troff -ms
+.if n \{\
+.po 5n
+.ll 70n
+.\}
 .EH 'SMM:17-%''Password Security: A Case History'
 .OH 'Password Security: A Case History''SMM:17-%'
 .EQ
