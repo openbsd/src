@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mk.conf.5,v 1.3 2003/05/10 18:20:30 jmc Exp $
+.\"	$OpenBSD: mk.conf.5,v 1.4 2003/08/27 07:58:35 jmc Exp $
 .\"
 .\" Copyright (c) 2003 Jason McIntyre
 .\"
@@ -42,8 +42,12 @@ If
 .Ev MAKECONF
 is not set, or no such file exists, the system make configuration file
 .Pa /etc/mk.conf
-is included.
-For more information on how the make process works, see
+is included, if it exists.
+By default, this file does not exist,
+and must be created from scratch.
+For more information on how the make process works,
+and details of the format of make files,
+see
 .Xr make 1 .
 .Pp
 .Aq bsd.own.mk
