@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_hppa.c,v 1.6 1999/04/20 20:01:02 mickey Exp $	*/
+/*	$OpenBSD: exec_hppa.c,v 1.7 1999/05/06 02:13:15 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -54,8 +54,8 @@ machdep_exec(xp, howto, loadaddr)
 	int howto;
 	void *loadaddr;
 {
-	extern int debug;
 #ifdef EXEC_DEBUG
+	extern int debug;
 	register int i;
 #endif
 	size_t ac = BOOTARG_LEN;
