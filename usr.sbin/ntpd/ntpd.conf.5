@@ -1,4 +1,4 @@
-.\" $OpenBSD: ntpd.conf.5,v 1.7 2004/07/13 19:51:38 jmc Exp $
+.\" $OpenBSD: ntpd.conf.5,v 1.8 2004/11/07 21:42:33 jmc Exp $
 .\"
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
 .\"
@@ -30,13 +30,14 @@ Empty lines and lines beginning with the
 .Sq #
 character are ignored.
 .Pp
-The possible keywords are as follows:
+Keywords may be specified multiple times within the configuration file.
+They are as follows:
 .Bl -tag -width Ds
 .It Ic listen on Ar address
 Specify a local IP address or a hostname the
 .Xr ntpd 8
 daemon should listen on.
-It can appear multiple times:
+If it appears multiple times,
 .Xr ntpd 8
 will listen on each given address.
 If
@@ -55,7 +56,10 @@ listen on ::1
 .It Ic server Ar address
 Specify the IP address or the hostname of an NTP
 server to synchronize to.
-If the hostname resolves to multiple IPv4 and/or IPv6 addresses,
+If it appears multiple times,
+.Xr ntpd 8
+will try to synchronize to all of the servers specified.
+If a hostname resolves to multiple IPv4 and/or IPv6 addresses,
 .Xr ntpd 8
 uses the first address.
 If it does not get a reply,
@@ -71,6 +75,9 @@ server ntp.example.org
 As with
 .Cm server ,
 specify the IP address or hostname of an NTP server to synchronize to.
+If it appears multiple times,
+.Xr ntpd 8
+will try to synchronize to all of the servers specified.
 Should the hostname resolve to multiple IP addresses,
 .Xr ntpd 8
 will try to synchronize to all of them.
