@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.1 1998/12/29 21:35:42 mickey Exp $	*/
+/*	$OpenBSD: clock.c,v 1.2 1999/02/07 20:24:51 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -62,6 +62,7 @@ microtime(tvp)
 void
 cpu_initclocks()
 {
+	extern u_int cpu_hzticks;
 	u_int time_inval;
 #ifdef USELEDS
 	static u_int hbcnt = 0;
