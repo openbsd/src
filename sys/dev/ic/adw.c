@@ -1,3 +1,4 @@
+/*	$OpenBSD: adw.c,v 1.6 2000/04/29 21:05:32 krw Exp $ */
 /* $NetBSD: adw.c,v 1.14 2000/02/12 19:19:42 thorpej Exp $	*/
 
 /*

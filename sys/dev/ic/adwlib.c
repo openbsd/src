@@ -1,3 +1,4 @@
+/*	$OpenBSD: adwlib.c,v 1.8 2000/04/29 21:07:17 krw Exp $ */
 /* $NetBSD: adwlib.c,v 1.7 2000/02/03 20:29:15 dante Exp $        */
 
 /*
