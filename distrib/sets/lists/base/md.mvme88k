@@ -585,6 +585,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/netinet6/ip6_mroute.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/netinet6/ip6_var.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/netinet6/ip6protosw.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/netinet6/raw_ip6.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/netnatm
 ./usr/libdata/perl5/site_perl/m88k-openbsd/netnatm/natm.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/ohash.ph

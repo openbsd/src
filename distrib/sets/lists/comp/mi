@@ -1048,6 +1048,7 @@
 ./usr/include/netinet6/nd6.h
 ./usr/include/netinet6/pim6.h
 ./usr/include/netinet6/pim6_var.h
+./usr/include/netinet6/raw_ip6.h
 ./usr/include/netinet6/tcpipv6.h
 ./usr/include/netipx
 ./usr/include/netipx/ipx.h

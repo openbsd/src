@@ -1447,6 +1447,7 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/netinet6/nd6.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/netinet6/pim6.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/netinet6/pim6_var.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/netinet6/raw_ip6.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/netinet6/tcpipv6.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/netipx
 ./usr/libdata/perl5/site_perl/alpha-openbsd/netipx/ipx.ph

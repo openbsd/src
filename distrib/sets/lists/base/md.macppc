@@ -1448,6 +1448,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/netinet6/nd6.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/netinet6/pim6.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/netinet6/pim6_var.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/netinet6/raw_ip6.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/netinet6/tcpipv6.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/netipx
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/netipx/ipx.ph
@@ -1548,7 +1549,6 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/bat.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/cdefs.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/cpu.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/dlfcn.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/elf_abi.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/endian.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/exec.ph
