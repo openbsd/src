@@ -1067,6 +1067,10 @@ boot(howto)
 
 	boothowto = howto;
 	if ((howto & RB_NOSYNC) == 0 && waittime < 0) {
+		extern struct proc proc0;
+		/* avoid panic at boot XXX */
+		if (curproc == NULL)
+			curproc = &proc0;
 		/*
 		 * Synchronize the disks....
 		 */
