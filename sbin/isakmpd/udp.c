@@ -1,4 +1,4 @@
-/* $OpenBSD: udp.c,v 1.81 2005/02/25 14:14:31 hshoexer Exp $	 */
+/* $OpenBSD: udp.c,v 1.82 2005/03/04 16:09:59 hshoexer Exp $	 */
 /* $EOM: udp.c,v 1.57 2001/01/26 10:09:57 niklas Exp $	 */
 
 /*
@@ -276,7 +276,7 @@ udp_create(char *name)
 {
 	struct virtual_transport *v;
 	struct udp_transport *u;
-	struct transport *rv, *t;
+	struct transport *rv;
 	struct sockaddr	*dst, *addr;
 	char	*addr_str, *port_str;
 	struct conf_list *addr_list = 0;
@@ -352,7 +352,6 @@ udp_create(char *name)
 		rv = 0;
 		goto ret;
 	}
-	t = (struct transport *)v;
 	rv = udp_clone(v->main, dst);
 	if (rv)
 		rv->vtbl = &udp_transport_vtbl;
