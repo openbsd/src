@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.h,v 1.65 2003/05/10 17:55:57 miod Exp $	*/
+/*	$OpenBSD: syscall.h,v 1.66 2003/06/22 21:34:27 deraadt Exp $	*/
 
 /*
  * System call numbers.
@@ -567,7 +567,7 @@
 /* syscall: "rfork" ret: "int" args: "int" */
 #define	SYS_rfork	251
 
-/* syscall: "poll" ret: "int" args: "struct pollfd *" "unsigned long" "int" */
+/* syscall: "poll" ret: "int" args: "struct pollfd *" "int" "int" */
 #define	SYS_poll	252
 
 /* syscall: "issetugid" ret: "int" args: */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_sysent.c,v 1.66 2003/05/10 17:55:57 miod Exp $	*/
+/*	$OpenBSD: init_sysent.c,v 1.67 2003/06/22 21:34:27 deraadt Exp $	*/
 
 /*
  * System call switch table.
@@ -13,6 +13,8 @@
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 #include <sys/poll.h>
+#include <sys/event.h>
+#include <xfs/xfs_pioctl.h>
 
 #ifdef COMPAT_43
 #define compat_43(func) __CONCAT(compat_43_,func)

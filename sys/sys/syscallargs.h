@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscallargs.h,v 1.67 2003/05/10 17:55:57 miod Exp $	*/
+/*	$OpenBSD: syscallargs.h,v 1.68 2003/06/22 21:34:27 deraadt Exp $	*/
 
 /*
  * System call argument lists.
@@ -1018,7 +1018,7 @@ struct sys_rfork_args {
 
 struct sys_poll_args {
 	syscallarg(struct pollfd *) fds;
-	syscallarg(unsigned long) nfds;
+	syscallarg(int) nfds;
 	syscallarg(int) timeout;
 };
 
