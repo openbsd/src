@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.101 2004/12/30 17:33:59 millert Exp $
+#	$OpenBSD: netstart,v 1.102 2005/01/04 15:40:53 mcbride Exp $
 
 # Strip comments (and leading/trailing whitespace if IFS is set)
 # from a file and spew to stdout
@@ -295,6 +295,29 @@ if [ "$ip6kernel" = "YES" ]; then
 	sleep `sysctl -n net.inet6.ip6.dad_count`
 fi
 
+# The pfsync interface needs to come up before carp.
+if [ -f /etc/hostname.pfsync0 ]; then
+	ifstart pfsync0
+fi
+
+# Configure all the carp interfaces which we know about.
+# They must come up after pfsync but before default route.
+for hn in /etc/hostname.*; do
+	# Strip off /etc/hostname. prefix
+	if=${hn#/etc/hostname.}
+	test "$if" = "*" && continue
+
+	case $if in
+	"carp"*)
+		ifstart $if
+		;;
+	*)
+		# Regular interfaces have already been configured.
+		continue
+		;;
+	esac
+done
+
 # /etc/mygate, if it exists, contains the name of my gateway host
 # that name must be in /etc/hosts.
 if [ -f /etc/mygate ]; then
@@ -334,12 +357,7 @@ EOF
 	;;
 esac
 
-# The pfsync interface needs to come up before carp.
-if [ -f /etc/hostname.pfsync0 ]; then
-		ifstart pfsync0
-fi
-
-# Configure all the carp, gif and gre interfaces which we know about.
+# Configure all the gif and gre interfaces which we know about.
 # They were delayed because they require the routes to be set.
 for hn in /etc/hostname.*; do
 	# Strip off /etc/hostname. prefix
@@ -347,7 +365,7 @@ for hn in /etc/hostname.*; do
 	test "$if" = "*" && continue
 
 	case $if in
-	"carp"*|"gif"*|"gre"*)
+	"gif"*|"gre"*)
 		ifstart $if
 		;;
 	*)
