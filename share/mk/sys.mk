@@ -1,4 +1,4 @@
-#	$OpenBSD: sys.mk,v 1.42 2004/11/22 18:51:23 miod Exp $
+#	$OpenBSD: sys.mk,v 1.43 2004/12/11 16:29:05 miod Exp $
 #	$NetBSD: sys.mk,v 1.27 1996/04/10 05:47:19 mycroft Exp $
 #	@(#)sys.mk	5.11 (Berkeley) 3/13/91
 
@@ -32,9 +32,7 @@ LINK.S?=	${CC} ${AFLAGS} ${CPPFLAGS} ${LDFLAGS}
 
 CC?=		cc
 
-.if ${MACHINE_ARCH} != "m88k" && ${MACHINE} != "mac68k"
 PIPE?=		-pipe
-.endif
 
 CFLAGS?=	-O2 ${PIPE} ${DEBUG}
 COMPILE.c?=	${CC} ${CFLAGS} ${CPPFLAGS} -c
