@@ -18,7 +18,7 @@ agent connections.
 */
 
 #include "includes.h"
-RCSID("$Id: sshd.c,v 1.52 1999/11/14 23:20:09 markus Exp $");
+RCSID("$Id: sshd.c,v 1.53 1999/11/15 00:42:01 markus Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
@@ -1241,7 +1241,7 @@ do_authloop(struct passwd *pw)
 	packet_integrity_check(plen, nlen, type);
 	authenticated = auth_rsa(pw, n);
 	BN_clear_free(n);
-	log("RSA authentication %s for %.100s failed.",
+	log("RSA authentication %s for %.100s.",
 	    authenticated ? "accepted" : "failed",
 	    pw->pw_name);
 	break;
@@ -1811,8 +1811,10 @@ void do_exec_pty(const char *command, int ptyfd, int ttyfd,
 	{
 	  fromlen = sizeof(from);
 	  if (getpeername(packet_get_connection_in(),
-			  (struct sockaddr *)&from, &fromlen) < 0)
-	    fatal("getpeername: %.100s", strerror(errno));
+			  (struct sockaddr *)&from, &fromlen) < 0) {
+	    debug("getpeername: %.100s", strerror(errno));
+            fatal_cleanup();
+          }
 	}
 
       /* Record that there was a login on that terminal. */
