@@ -1,4 +1,4 @@
-/*	$OpenBSD: brconfig.c,v 1.30 2004/03/08 17:23:33 mcbride Exp $	*/
+/*	$OpenBSD: brconfig.c,v 1.31 2004/05/23 06:47:49 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -490,10 +490,8 @@ bridge_show_all(int s)
 	while (1) {
 		ifc.ifc_len = len;
 		inb = realloc(inbuf, len);
-		if (inb == NULL) {
-			free(inbuf);
+		if (inb == NULL)
 			err(1, "malloc");
-		}
 		ifc.ifc_buf = inbuf = inb;
 		if (ioctl(s, SIOCGIFCONF, &ifc) < 0)
 			err(1, "ioctl(SIOCGIFCONF)");
@@ -647,10 +645,8 @@ bridge_list(int s, char *brdg, char *delim)
 	while (1) {
 		bifc.ifbic_len = len;
 		inb = realloc(inbuf, len);
-		if (inb == NULL) {
-			free(inbuf);
+		if (inb == NULL)
 			err(1, "malloc");
-		}
 		bifc.ifbic_buf = inbuf = inb;
 		strlcpy(bifc.ifbic_name, brdg, sizeof(bifc.ifbic_name));
 		if (ioctl(s, SIOCBRDGIFS, &bifc) < 0)
@@ -1000,10 +996,8 @@ bridge_addrs(int s, char *brdg, char *delim)
 	while (1) {
 		ifbac.ifbac_len = len;
 		inb = realloc(inbuf, len);
-		if (inb == NULL) {
-			free(inbuf);
+		if (inb == NULL)
 			err(EX_IOERR, "malloc");
-		}
 		ifbac.ifbac_buf = inbuf = inb;
 		strlcpy(ifbac.ifbac_name, brdg, sizeof(ifbac.ifbac_name));
 		if (ioctl(s, SIOCBRDGRTS, &ifbac) < 0) {
@@ -1125,10 +1119,8 @@ bridge_rules(int s, char *brdg, char *ifname, char *delim)
 	while (1) {
 		ifc.ifbrl_len = len;
 		inb = realloc(inbuf, len);
-		if (inb == NULL) {
-			free(inbuf);
+		if (inb == NULL)
 			err(1, "malloc");
-		}
 		ifc.ifbrl_buf = inbuf = inb;
 		strlcpy(ifc.ifbrl_name, brdg, sizeof(ifc.ifbrl_name));
 		strlcpy(ifc.ifbrl_ifsname, ifname, sizeof(ifc.ifbrl_ifsname));
