@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vsbus.4,v 1.3 2003/03/06 17:30:06 jason Exp $
+.\"	$OpenBSD: smg.4,v 1.1 2003/03/06 17:30:06 jason Exp $
 .\"
 .\" Copyright (c) 2003 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -30,38 +30,26 @@
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
 .Dd March 6, 2003
-.Dt VSBUS 4 VAX
+.Dt SMG 4 VAX
 .Os
 .Sh NAME
-.Nm vsbus
-.Nd VAXstation bus
+.Nm smg
+.Nd small monochrome graphics
 .Sh SYNOPSIS
-.Cd "vsbus0 at mainbus0"
+.Cd "smg0 at vsbus0 csr 0x200f0000"
+.Cd "wsdisplay* at smg?"
 .Sh DESCRIPTION
 The
-.Nm vsbus
-driver supports the internal I/O bus found on VAXstation systems.
-.Sh SUPPORTED DEVICES
-The following devices are supported on
-.Nm vsbus .
-.Bl -tag -width uba(4) -compact -offset indent
-.It Xr asc 4
-NCR 53c94 SCSI controller.
-.It Xr dz 4
-DZ-11 terminal multiplexer.
-.It Xr le 4
-LANCE ethernet interface.
-.It Xr ncr 4
-NCR 5380 SCSI controller.
-.It Xr smg 4
-Small monochrome graphics adapter.
-.It Xr ze 4
-SGEC ethernet interface.
+.Nm
+is a memory based monochrome frame buffer driver for the
+.Xr wscons 4
+console framework.
+It does not provide direct device driver entry points
+but makes its functions available via the internal
+.Xr wsdisplay 4
+interface.
 .Sh SEE ALSO
-.Xr asc 4 ,
-.Xr dz 4 ,
 .Xr intro 4 ,
-.Xr le 4 ,
-.Xr ncr 4 ,
-.Xr smg 4 ,
-.Xr ze 4
+.Xr vsbus 4 ,
+.Xr wscons 4 ,
+.Xr wsdisplay 4
