@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.15 2001/06/24 23:48:53 itojun Exp $ */
+/*	$OpenBSD: pf.c,v 1.16 2001/06/24 23:50:11 itojun Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -1686,7 +1686,7 @@ pull_hdr(struct ifnet *ifp, struct mbuf **m, int ipoff, int off, int len,
 
 	/* sanity check */
 	if (ipoff > off) {
-		printf("packetfilter: dropping following fragment");
+		printf("packetfilter: assumption failed on header location");
 		*action = PF_DROP;
 		return NULL;
 	}
