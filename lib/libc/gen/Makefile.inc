@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.13 1997/08/20 04:02:15 millert Exp $
+#	$OpenBSD: Makefile.inc,v 1.14 1997/09/06 20:59:48 millert Exp $
 
 # gen sources
 .PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/gen ${.CURDIR}/gen
@@ -99,3 +99,4 @@ MLINKS+=syslog.3 closelog.3 syslog.3 openlog.3 syslog.3 setlogmask.3 \
 	syslog.3 vsyslog.3
 MLINKS+=ttyname.3 isatty.3 ttyname.3 ttyslot.3
 MLINKS+=vis.3 strvis.3 vis.3 strvisx.3 unvis.3 strunvis.3
+MLINKS+=basename.3 dirname.3
