@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmvar.h,v 1.11 2001/06/24 20:38:06 fgsch Exp $	*/
+/*	$OpenBSD: apmvar.h,v 1.12 2001/06/24 21:17:33 mickey Exp $	*/
 
 /*
  *  Copyright (c) 1995 John T. Kohl
@@ -291,7 +291,6 @@ struct apm_ctl {
 					   if the percentage changes */
 
 #ifdef _KERNEL
-extern int cold;
 extern void apm_cpu_busy __P((void));
 extern void apm_cpu_idle __P((void));
 extern void apminit __P((void));
