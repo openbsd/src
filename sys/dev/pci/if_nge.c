@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nge.c,v 1.4 2001/07/02 06:53:43 nate Exp $	*/
+/*	$OpenBSD: if_nge.c,v 1.5 2001/07/06 01:55:25 angelos Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -123,8 +123,6 @@
 #include <dev/mii/miivar.h>
 
 #include <dev/pci/if_ngereg.h>
-
-#define NGE_CSUM_FEATURES	(CSUM_IP | CSUM_TCP | CSUM_UDP)
 
 int nge_probe		__P((struct device *, void *, void *));
 void nge_attach		__P((struct device *, struct device *, void *));
@@ -905,6 +903,7 @@ void nge_attach(parent, self, aux)
 	ifp->if_watchdog = nge_watchdog;
 	ifp->if_baudrate = 1000000000;
 	ifp->if_snd.ifq_maxlen = NGE_TX_LIST_CNT - 1;
+	ifp->if_capabilities =  IFCAP_CSUM_IPv4 | IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4;
 	DPRINTFN(5, ("bcopy\n"));
 	bcopy(sc->sc_dv.dv_xname, ifp->if_xname, IFNAMSIZ);
 
@@ -1279,13 +1278,22 @@ void nge_rxeof(sc)
 			bpf_mtap(ifp->if_bpf, m);
 #endif
 
-#ifdef NGE_CSUM_OFFLOAD
 		/* Do IP checksum checking. */
-		if (extsts & NGE_RXEXTSTS_IPPKT)
-			m->m_pkthdr.csum_flags |= CSUM_IP_CHECKED;
-		if (!(extsts & NGE_RXEXTSTS_IPCSUMERR))
-			m->m_pkthdr.csum_flags |= CSUM_IP_CHECKED;
-#endif
+		if (extsts & NGE_RXEXTSTS_IPPKT && 
+		    !(extsts & NGE_RXEXTSTS_IPCSUMERR))
+			m->m_pkthdr.csum |= M_IPV4_CSUM_IN_OK;
+		else if (extsts & NGE_RXEXTSTS_IPCSUMERR)
+			m->m_pkthdr.csum |= M_IPV4_CSUM_IN_BAD;
+		if (extsts & NGE_RXEXTSTS_TCPPKT &&
+		    !(extsts & NGE_RXEXTSTS_TCPCSUMERR)) 
+			m->m_pkthdr.csum |= M_TCP_CSUM_IN_OK;
+		else if (extsts & NGE_RXEXTSTS_TCPCSUMERR)
+			m->m_pkthdr.csum |= M_TCP_CSUM_IN_BAD;
+		if (extsts & NGE_RXEXTSTS_UDPPKT &&
+		    !(extsts & NGE_RXEXTSTS_UDPCSUMERR))
+			m->m_pkthdr.csum |= M_UDP_CSUM_IN_OK;
+		else if (extsts & NGE_RXEXTSTS_UDPCSUMERR)
+			m->m_pkthdr.csum |= M_UDP_CSUM_IN_BAD;
 
 #if NVLAN > 0
 		/*
@@ -1541,7 +1549,21 @@ int nge_encap(sc, m_head, txidx)
 	if (m != NULL)
 		return(ENOBUFS);
 
-	sc->nge_ldata->nge_tx_list[cur].nge_extsts = 0;
+	/*
+	 * Card handles checksumming on a packet by packet
+	 * basis.
+	 */
+	if (m_head->m_pkthdr.csum) {
+		if (m_head->m_pkthdr.csum & M_IPV4_CSUM_OUT) 
+			sc->nge_ldata->nge_tx_list[*txidx].nge_extsts |=
+				NGE_TXEXTSTS_IPCSUM;
+		if (m_head->m_pkthdr.csum & M_TCPV4_CSUM_OUT) 
+			sc->nge_ldata->nge_tx_list[*txidx].nge_extsts |=
+				NGE_TXEXTSTS_TCPCSUM;
+		if (m_head->m_pkthdr.csum & M_UDPV4_CSUM_OUT) 
+			sc->nge_ldata->nge_tx_list[*txidx].nge_extsts |=
+				NGE_TXEXTSTS_UDPCSUM;
+	}
 
 #if NVLAN > 0
 	if (ifv != NULL) {
@@ -1712,9 +1734,7 @@ void nge_init(xsc)
 	 * Enable hardware checksum validation for all IPv4
 	 * packets, do not reject packets with bad checksums.
 	 */
-#ifdef NGE_CSUM_OFFLOAD
 	CSR_WRITE_4(sc, NGE_VLAN_IP_RXCTL, NGE_VIPRXCTL_IPCSUM_ENB);
-#endif
 
 #if NVLAN > 0
 	/*
@@ -1733,9 +1753,7 @@ void nge_init(xsc)
 	/*
 	 * Enable TX IPv4 checksumming on a per-packet basis.
 	 */
-#ifdef NGE_CSUM_OFFLOAD
 	CSR_WRITE_4(sc, NGE_VLAN_IP_TXCTL, NGE_VIPTXCTL_CSUM_PER_PKT);
-#endif
 
 #if NVLAN > 0
 	/*
@@ -1759,10 +1777,12 @@ void nge_init(xsc)
 
 	/*
 	 * Enable the delivery of PHY interrupts based on
-	 * link/speed/duplex status changes.
+	 * link/speed/duplex status changes and enable return
+	 * of extended status information in the DMA descriptors,
+	 * required for checksum offloading.
 	 */
 	NGE_SETBIT(sc, NGE_CFG, NGE_CFG_PHYINTR_SPD|NGE_CFG_PHYINTR_LNK|
-		   NGE_CFG_PHYINTR_DUP);
+		   NGE_CFG_PHYINTR_DUP|NGE_CFG_EXTSTS_ENB);
 
 	DPRINTFN("NGE_CFG: 0x%08X\n", CSR_READ_4(sc, NGE_CFG));
 
@@ -1839,6 +1859,23 @@ int nge_ioctl(ifp, command, data)
        }
 
 	switch(command) {
+	case SIOCSIFMTU:
+		if (ifr->ifr_mtu > NGE_JUMBO_MTU || ifr->ifr_mtu < ETHERMIN)
+			error = EINVAL;
+		else {
+			ifp->if_mtu = ifr->ifr_mtu;
+			/*
+			 * If requested MTU is larger than the
+			 * size of the TX buffer, turn off TX
+			 * checksumming.
+			 */
+			if (ifr->ifr_mtu >= 8152) 
+				ifp->if_capabilities = 0;
+			else
+				ifp->if_capabilities = IFCAP_CSUM_IPv4 | 
+					IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4;
+		}
+		break;
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
 		switch (ifa->ifa_addr->sa_family) {
