@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgsix.c,v 1.7 2002/02/05 20:00:04 jason Exp $	*/
+/*	$OpenBSD: cgsix.c,v 1.8 2002/02/06 18:20:34 jason Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -86,8 +86,65 @@ union bt_cmap {
 #define	CGSIX_THC_SIZE		(sizeof(u_int32_t) * 640)
 #define	CGSIX_FBC_OFFSET	0x700000
 #define	CGSIX_TEC_OFFSET	0x701000
+#define	CGSIX_TEC_SIZE		(sizeof(u_int32_t) * 3)
 #define	CGSIX_VID_OFFSET	0x800000
 #define	CGSIX_VID_SIZE		(1024 * 1024)
+
+#define	CG6_FHC			0x0		/* fhc register */
+
+#define	FHC_FBID_MASK		0xff000000	/* frame buffer id */
+#define	FHC_FBID_SHIFT		24
+#define	FHC_REV_MASK		0x00f00000	/* revision */
+#define	FHC_REV_SHIFT		20
+#define	FHC_FROP_DISABLE	0x00080000	/* disable fast rasterop */
+#define	FHC_ROW_DISABLE		0x00040000	/* ??? */
+#define	FHC_SRC_DISABLE		0x00020000	/* ??? */
+#define	FHC_DST_DISABLE		0x00010000	/* disable dst cache */
+#define	FHC_RESET		0x00008000	/* ??? */
+#define	FHC_LEBO		0x00002000	/* set little endian order */
+#define	FHC_RES_MASK		0x00001800	/* resolution: */
+#define	FHC_RES_1024		0x00000000	/*  1024x768 */
+#define	FHC_RES_1152		0x00000800	/*  1152x900 */
+#define	FHC_RES_1280		0x00001000	/*  1280x1024 */
+#define	FHC_RES_1600		0x00001800	/*  1600x1200 */
+#define	FHC_CPU_MASK		0x00000600	/* cpu type: */
+#define	FHC_CPU_SPARC		0x00000000	/*  sparc */
+#define	FHC_CPU_68020		0x00000200	/*  68020 */
+#define	FHC_CPU_386		0x00000400	/*  i386 */
+#define	FHC_TEST		0x00000100	/* test window */
+#define	FHC_TESTX_MASK		0x000000f0	/* test window X */
+#define	FHC_TESTX_SHIFT		4
+#define	FHC_TESTY_MASK		0x0000000f	/* test window Y */
+#define	FHC_TESTY_SHIFT		0
+
+#define	CG6_TEC_MV		0x0		/* matrix stuff */
+#define	CG6_TEC_CLIP		0x4		/* clipping stuff */
+#define	CG6_TEC_VDC		0x8		/* ??? */
+
+#define	CG6_THC_HSYNC1		0x800		/* horizontal sync timing */
+#define	CG6_THC_HSYNC2		0x804		/* more hsync timing */
+#define	CG6_THC_HSYNC3		0x808		/* yet more hsync timing */
+#define	CG6_THC_VSYNC1		0x80c		/* vertical sync timing */
+#define	CG6_THC_VSYNC2		0x810		/* only two of these */
+#define	CG6_THC_REFRESH		0x814		/* refresh counter */
+#define	CG6_THC_MISC		0x818		/* misc control/status */
+#define	CG6_THC_CURSXY		0x8fc		/* cursor x/y, 16 bit each */
+#define	CG6_THC_CURSMASK	0x900		/* cursor mask bits */
+#define	CG6_THC_CURSBITS	0x980		/* cursor bits */
+
+/* cursor x/y position for 'off' */
+#define	THC_CURSOFF		((65536-32) | ((65536-32) << 16))
+
+#define	THC_MISC_REV_M		0x000f0000
+#define	THC_MISC_REV_S		16
+#define	THC_MISC_RESET		0x00001000	/* ??? */
+#define	THC_MISC_VIDEN		0x00000400	/* video enable */
+#define	THC_MISC_SYNC		0x00000200	/* not sure what ... */
+#define	THC_MISC_VSYNC		0x00000100	/* ... these really are */
+#define	THC_MISC_SYNCEN		0x00000080	/* sync enable */
+#define	THC_MISC_CURSRES	0x00000040	/* cursor resolution */
+#define	THC_MISC_INTEN		0x00000020	/* v.retrace intr enable */
+#define	THC_MISC_INTR		0x00000010	/* intr pending/ack */
 
 struct cgsix_softc {
 	struct device sc_dev;
@@ -97,6 +154,7 @@ struct cgsix_softc {
 	bus_space_handle_t sc_bt_regs;
 	bus_space_handle_t sc_fhc_regs;
 	bus_space_handle_t sc_thc_regs;
+	bus_space_handle_t sc_tec_regs;
 	bus_space_handle_t sc_vid_regs;
 	int sc_nscreens;
 	int sc_width, sc_height, sc_depth, sc_linebytes;
@@ -161,6 +219,8 @@ int cg6_bt_putcmap __P((union bt_cmap *, struct wsdisplay_cmap *));
 void cgsix_loadcmap __P((struct cgsix_softc *, u_int, u_int));
 void cgsix_setcolor __P((struct cgsix_softc *, u_int,
     u_int8_t, u_int8_t, u_int8_t));
+void cgsix_reset __P((struct cgsix_softc *));
+void cgsix_blank __P((struct cgsix_softc *, int));
 
 static int a2int __P((char *, int));
 
@@ -245,14 +305,25 @@ cgsixattach(parent, self, aux)
 		goto fail_vid;
 	}
 
+	if (sbus_bus_map(sa->sa_bustag, sa->sa_reg[0].sbr_slot,
+	    sa->sa_reg[0].sbr_offset + CGSIX_TEC_OFFSET,
+	    CGSIX_TEC_SIZE, BUS_SPACE_MAP_LINEAR, 0, &sc->sc_tec_regs) != 0) {
+		printf(": cannot map tec registers\n", self->dv_xname);
+		goto fail_tec;
+	}
+
 	console = cgsix_is_console(sa->sa_node);
 
+	/* grab the current palette */
 	BT_WRITE(sc, BT_ADDR, 0);
 	for (i = 0; i < 256; i++) {
 		sc->sc_cmap.cm_map[i][0] = BT_READ(sc, BT_CMAP) >> 24;
 		sc->sc_cmap.cm_map[i][1] = BT_READ(sc, BT_CMAP) >> 24;
 		sc->sc_cmap.cm_map[i][2] = BT_READ(sc, BT_CMAP) >> 24;
 	}
+
+	cgsix_reset(sc);
+	cgsix_blank(sc, 0);
 
 	sc->sc_depth = getpropint(sa->sa_node, "depth", -1);
 	if (sc->sc_depth == -1)
@@ -324,6 +395,8 @@ cgsixattach(parent, self, aux)
 
 	return;
 
+fail_tec:
+	bus_space_unmap(sa->sa_bustag, sc->sc_vid_regs, CGSIX_VID_SIZE);
 fail_vid:
 	bus_space_unmap(sa->sa_bustag, sc->sc_thc_regs, CGSIX_THC_SIZE);
 fail_thc:
@@ -556,4 +629,71 @@ cgsix_setcolor(sc, index, r, g, b)
 	bcm->cm_map[index][1] = g;
 	bcm->cm_map[index][2] = b;
 	cgsix_loadcmap(sc, index, 1);
+}
+
+#define	THC_READ(sc,r) \
+    bus_space_read_4((sc)->sc_bustag, (sc)->sc_thc_regs, (r))
+#define	THC_WRITE(sc,r,v) \
+    bus_space_write_4((sc)->sc_bustag, (sc)->sc_thc_regs, (r), (v))
+
+#define	TEC_READ(sc,r) \
+    bus_space_read_4((sc)->sc_bustag, (sc)->sc_tec_regs, (r))
+#define	TEC_WRITE(sc,r,v) \
+    bus_space_write_4((sc)->sc_bustag, (sc)->sc_tec_regs, (r), (v))
+
+#define	FHC_READ(sc) \
+    bus_space_read_4((sc)->sc_bustag, (sc)->sc_fhc_regs, CG6_FHC)
+#define	FHC_WRITE(sc,v) \
+    bus_space_write_4((sc)->sc_bustag, (sc)->sc_fhc_regs, CG6_FHC, (v))
+
+void
+cgsix_reset(sc)
+	struct cgsix_softc *sc;
+{
+	u_int32_t fhc, rev;
+
+	/* hide the cursor, just in case */
+	THC_WRITE(sc, CG6_THC_CURSXY, THC_CURSOFF);
+
+	TEC_WRITE(sc, CG6_TEC_MV, 0);
+	TEC_WRITE(sc, CG6_TEC_CLIP, 0);
+	TEC_WRITE(sc, CG6_TEC_VDC, 0);
+
+	fhc = FHC_READ(sc);
+	rev = (fhc & FHC_REV_MASK) >> FHC_REV_SHIFT;
+	/* take core of hardware bugs in old revisions */
+	if (rev < 5) {
+		/*
+		 * Keep current resolution; set cpu to 68020, set test
+		 * window (size 1Kx1K), and for rev 1, disable dest cache.
+		 */
+		fhc &= FHC_RES_MASK;
+		fhc |= FHC_CPU_68020 | FHC_TEST |
+		    (11 << FHC_TESTX_SHIFT) | (11 << FHC_TESTY_SHIFT);
+		if (rev < 2)
+			fhc |= FHC_DST_DISABLE;
+		FHC_WRITE(sc, fhc);
+	}
+
+	/* enable cursor in brooktree DAC */
+	BT_WRITE(sc, BT_ADDR, 0x6 << 24);
+	BT_WRITE(sc, BT_CTRL, BT_READ(sc, BT_CTRL) | (0x3 << 24));
+}
+
+void
+cgsix_blank(sc, blank)
+	struct cgsix_softc *sc;
+	int blank;
+{
+	int s;
+	u_int32_t thcm;
+
+	s = splhigh();
+	thcm = THC_READ(sc, CG6_THC_MISC);
+	if (blank)
+		thcm &= ~(THC_MISC_VIDEN | THC_MISC_SYNCEN);
+	else
+		thcm |= THC_MISC_VIDEN | THC_MISC_SYNCEN;
+	THC_WRITE(sc, CG6_THC_MISC, thcm);
+	splx(s);
 }
