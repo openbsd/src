@@ -1,4 +1,4 @@
-.\"	$OpenBSD: usbhid.3,v 1.7 2004/06/04 00:47:32 deraadt Exp $
+.\"	$OpenBSD: usbhid.3,v 1.8 2004/06/04 08:36:09 jmc Exp $
 .\"	$NetBSD: usbhid.3,v 1.5 2002/02/07 07:00:52 ross Exp $
 .\"
 .\" Copyright (c) 1999, 2001 Lennart Augustsson <augustss@netbsd.org>
@@ -178,7 +178,7 @@ are the inverses of
 .Fn hid_usage_page
 and
 .Fn hid_usage_in_page .
-They take a usage string and return the number of the usage, or -1
+They take a usage string and return the number of the usage, or \-1
 if it cannot be found.
 .Pp
 Before any of these functions can be called the usage table
@@ -188,7 +188,7 @@ with the name of the table.
 Passing
 .Fa NULL
 to this function will cause it to use the default table.
-A return value of -1 indicates that an error has occured, and
+A return value of \-1 indicates that an error has occurred, and
 .Va errno
 is set.
 .Ss DATA EXTRACTION FUNCTIONS
