@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint) 
-static char *rcsid = "$OpenBSD: svc.c,v 1.11 1998/02/25 12:21:18 deraadt Exp $";
+static char *rcsid = "$OpenBSD: svc.c,v 1.12 1999/11/23 22:37:28 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -90,6 +90,7 @@ xprt_register(xprt)
 		fd_set *fds;
 
 		fds = (fd_set *)malloc(bytes);
+		/* XXX */
 		memset(fds, 0, bytes);
 		if (__svc_fdset) {
 			memcpy(fds, __svc_fdset, howmany(__svc_fdsetsize,
@@ -111,6 +112,7 @@ xprt_register(xprt)
 		if (sock+1 > size)
 			size = sock+1;
 		xp = (SVCXPRT **)mem_alloc(size * sizeof(SVCXPRT *));
+		/* XXX */
 		memset(xp, 0, size * sizeof(SVCXPRT *));
 		if (xports) {
 			memcpy(xp, xports, xportssize * sizeof(SVCXPRT *));
