@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.84 2004/12/17 21:40:04 mpf Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.85 2004/12/18 00:52:21 pascoe Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -760,6 +760,10 @@ carpdetach(struct carp_softc *sc)
 	if (sc->sc_suppress)
 		carp_suppress_preempt--;
 	sc->sc_suppress = 0;
+
+	if (sc->sc_sendad_errors >= CARP_SENDAD_MAX_ERRORS)
+		carp_suppress_preempt--;
+	sc->sc_sendad_errors = 0;
 
 	carp_set_state(sc, INIT);
 	sc->sc_ac.ac_if.if_flags &= ~IFF_UP;
