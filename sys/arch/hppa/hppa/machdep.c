@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.54 2002/02/06 19:39:20 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.55 2002/02/07 05:48:54 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2002 Michael Shalayeff
@@ -184,7 +184,7 @@ struct pdc_coherence pdc_coherence PDC_ALIGNMENT;
 struct pdc_spidb pdc_spidbits PDC_ALIGNMENT;
 
 #ifdef DEBUG
-int sigdebug = 0xff;
+int sigdebug = 0;
 pid_t sigpid = 0;
 #define SDB_FOLLOW	0x01
 #endif
@@ -1151,7 +1151,8 @@ setregs(p, pack, stack, retval)
 	/* setup terminal stack frame */
 	stack = hppa_round_page(stack);
 	stack += HPPA_FRAME_SIZE;
-	suword((caddr_t)(stack + HPPA_FRAME_PSP), 0);
+	suword((caddr_t)(stack - HPPA_FRAME_PSP), 0);
+	suword((caddr_t)(stack - HPPA_FRAME_CRP), 0);
 	tf->tf_sp = stack;
 
 	retval[1] = 0;
@@ -1176,10 +1177,12 @@ sendsig(catcher, sig, mask, code, type, val)
 	int sss;
 
 #ifdef DEBUG
-	if ((sigdebug | SDB_FOLLOW) && (!sigpid || p->p_pid == sigpid))
+	if ((sigdebug & SDB_FOLLOW) && (!sigpid || p->p_pid == sigpid))
 		printf("sendsig: %s[%d] sig %d catcher %p\n",
 		    p->p_comm, p->p_pid, sig, catcher);
 #endif
+
+	ksc.sc_onstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
 
 	/*
 	 * Allocate space for the signal handler context.
@@ -1200,7 +1203,6 @@ sendsig(catcher, sig, mask, code, type, val)
 		sss += sizeof(*sip);
 	}
 
-	ksc.sc_onstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
 	ksc.sc_mask = mask;
 	ksc.sc_sp = tf->tf_sp;
 	ksc.sc_fp = (register_t)scp + sss;
@@ -1211,12 +1213,13 @@ sendsig(catcher, sig, mask, code, type, val)
 	if (copyout((caddr_t)&ksc, scp, sizeof(*scp)))
 		sigexit(p, SIGILL);
 
-	if (suword((caddr_t)scp + sss + HPPA_FRAME_SIZE - HPPA_FRAME_PSP, 0))
-		sigexit(p, SIGILL);
 	sss += HPPA_FRAME_SIZE;
+	if (suword((caddr_t)scp + sss - HPPA_FRAME_PSP, 0) ||
+	    suword((caddr_t)scp + sss - HPPA_FRAME_CRP, 0))
+		sigexit(p, SIGILL);
 
 #ifdef DEBUG
-	if (sigdebug & SDB_FOLLOW)
+	if ((sigdebug & SDB_FOLLOW) && (!sigpid || p->p_pid == sigpid))
 		printf("sendsig(%d): sig %d scp %p fp %p sp %x\n",
 		    p->p_pid, sig, scp, ksc.sc_fp, ksc.sc_sp);
 #endif
@@ -1229,11 +1232,12 @@ sendsig(catcher, sig, mask, code, type, val)
 	tf->tf_iioq_head = HPPA_PC_PRIV_USER |
 	    ((register_t)PS_STRINGS + sizeof(struct ps_strings));
 	tf->tf_iioq_tail = tf->tf_iioq_head + 4;
+	/* disable tracing in the trapframe */
 
 	/* TODO FPU */
 
 #ifdef DEBUG
-	if (sigdebug & SDB_FOLLOW)
+	if ((sigdebug & SDB_FOLLOW) && (!sigpid || p->p_pid == sigpid))
 		printf("sendsig(%d): pc %x, catcher %x\n", p->p_pid,
 		    tf->tf_iioq_head, tf->tf_arg3);
 #endif
@@ -1253,7 +1257,7 @@ sys_sigreturn(p, v, retval)
 
 	scp = SCARG(uap, sigcntxp);
 #ifdef DEBUG
-	if (sigdebug & SDB_FOLLOW)
+	if ((sigdebug & SDB_FOLLOW) && (!sigpid || p->p_pid == sigpid))
 		printf("sigreturn: pid %d, scp %p\n", p->p_pid, scp);
 #endif
 
@@ -1282,7 +1286,7 @@ sys_sigreturn(p, v, retval)
 	/* TODO FPU */
 
 #ifdef DEBUG
-	if (sigdebug & SDB_FOLLOW)
+	if ((sigdebug & SDB_FOLLOW) && (!sigpid || p->p_pid == sigpid))
 		printf("sigreturn(%d): returns\n", p->p_pid);
 #endif
 	return (EJUSTRETURN);
