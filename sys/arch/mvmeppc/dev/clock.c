@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.9 2004/05/14 20:38:32 miod Exp $	*/
+/*	$OpenBSD: clock.c,v 1.10 2004/12/24 22:50:30 miod Exp $	*/
 /*	$NetBSD: clock.c,v 1.1 1996/09/30 16:34:40 ws Exp $	*/
 
 /*
@@ -302,9 +302,6 @@ decr_intr(struct clockframe *frame)
 		nextstatevent += statmin + r;
 	}
 
-	/* only count timer ticks for CLK_IRQ */
-	intrcnt[PPC_STAT_IRQ] += nstats;
-
 	if (nexttimerevent < nextstatevent)
 		nextevent = nexttimerevent;
 	else
@@ -337,7 +334,6 @@ decr_intr(struct clockframe *frame)
 		while (lasttb < prevtb - ticks_per_intr) {
 			/* sync lasttb with hardclock */
 			lasttb += ticks_per_intr;
-			intrcnt[PPC_CLK_IRQ]++;
 			hardclock(frame);
 		}
 
@@ -345,7 +341,6 @@ decr_intr(struct clockframe *frame)
 		while (lasttb < prevtb) {
 			/* sync lasttb with hardclock */
 			lasttb += ticks_per_intr;
-			intrcnt[PPC_CLK_IRQ]++;
 			hardclock(frame);
 #if NBUGTTY > 0
 			{

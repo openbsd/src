@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.56 2004/12/06 20:12:25 miod Exp $ */
+/*	$OpenBSD: trap.c,v 1.57 2004/12/24 22:50:30 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -1179,14 +1179,12 @@ hardintr(pc, evec, frame)
 {
 	extern void straytrap(int, u_short);
 	int vec = (evec & 0xfff) >> 2;	/* XXX should be m68k macro? */
-	/*extern u_long intrcnt[];*/	/* XXX from locore */
 	struct intrhand *ih;
 	intrhand_t *list;
 	int count = 0;
 	int r;
 
 	uvmexp.intrs++;
-/*	intrcnt[level]++; */
 
 	list = &intrs[vec];
 	if (SLIST_EMPTY(list)) {

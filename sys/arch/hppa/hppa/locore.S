@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.142 2004/10/26 20:18:01 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.143 2004/12/24 22:50:29 miod Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -138,17 +138,6 @@ cpu_itmr			/* itmr value at the most recent clk int */
 	BSS(fpu_scratch, 16)	/* FPU scratch space, enough for a quad */
 	.export hppa_vtop, data
 	BSS(hppa_vtop, 4)	/* a vtop translation table addr (pa=va) */
-
-	.export intrcnt, data
-	.export eintrcnt, data
-	.export intrnames, data
-	.export eintrnames, data
-intrcnt
-	.word	0
-eintrcnt
-intrnames
-	.word	0
-eintrnames
 
 	.text
 	.import	$kernel_setup, entry

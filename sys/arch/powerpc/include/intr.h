@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.27 2004/10/01 15:07:36 drahn Exp $ */
+/*	$OpenBSD: intr.h,v 1.28 2004/12/24 22:50:30 miod Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom, Opsycon AB and RTMX Inc, USA.
@@ -57,7 +57,6 @@
 #define PPC_NIRQ	66
 #define PPC_CLK_IRQ	64
 #define PPC_STAT_IRQ	65
-extern int intrcnt[PPC_NIRQ];
 
 void setsoftclock(void);
 void clearsoftclock(void);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.45 2004/12/01 21:13:59 miod Exp $ */
+/*	$OpenBSD: locore.s,v 1.46 2004/12/24 22:50:30 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -1091,7 +1091,6 @@ Lbrkpt3:
  */
 
 ENTRY_NOPROFILE(spurintr)
-	addql	#1,_C_LABEL(intrcnt)+0
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
 	jra	_ASM_LABEL(rei)		| all done
 
@@ -1927,23 +1926,5 @@ ASGLOBAL(fulltflush)
 ASGLOBAL(fullcflush)
 	.long	0
 #endif
-
-/* interrupt counters */
-GLOBAL(intrnames)
-	.asciz	"spur"
-	.asciz	"lev1"
-	.asciz	"lev2"
-	.asciz	"lev3"
-	.asciz	"lev4"
-	.asciz	"clock"
-	.asciz	"lev6"
-	.asciz	"nmi"
-	.asciz	"statclock"
-GLOBAL(eintrnames)
-	.even
-
-GLOBAL(intrcnt)
-	.long	0,0,0,0,0,0,0,0,0,0
-GLOBAL(eintrcnt)
 
 #include <mvme68k/mvme68k/vectors.s>

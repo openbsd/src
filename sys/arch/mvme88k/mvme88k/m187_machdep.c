@@ -1,4 +1,4 @@
-/*	$OpenBSD: m187_machdep.c,v 1.4 2004/11/09 21:50:01 miod Exp $	*/
+/*	$OpenBSD: m187_machdep.c,v 1.5 2004/12/24 22:50:30 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -174,7 +174,6 @@ m187_ext_int(u_int v, struct trapframe *eframe)
 	list = &intr_handlers[vec];
 	if (SLIST_EMPTY(list)) {
 		/* increment intr counter */
-		intrcnt[M88K_SPUR_IRQ]++;
 		printf("Spurious interrupt (level %x and vec %x)\n",
 		       level, vec);
 	} else {
@@ -200,7 +199,6 @@ m187_ext_int(u_int v, struct trapframe *eframe)
 			else
 				ret = (*intr->ih_fn)(intr->ih_arg);
 			if (ret != 0) {
-				intrcnt[level]++;
 				intr->ih_count.ec_count++;
 				break;
 			}

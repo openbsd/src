@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.2 2004/04/26 12:34:05 miod Exp $	*/
+/*	$OpenBSD: intr.h,v 1.3 2004/12/24 22:50:30 miod Exp $	*/
 /*
  * Copyright (C) 2000 Steve Murphree, Jr.
  * All rights reserved.
@@ -28,37 +28,6 @@
 
 #ifndef _LUNA88K_INTR_H_
 #define _LUNA88K_INTR_H_
-
-/*
- * INTERRUPT STAT levels.  for 'systat vmstat'
- * intrcnt and friends are defined in locore.S
- * XXX smurph
- */
-
-#ifndef _LOCORE
-
-#define M88K_NIRQ	12
-
-#define M88K_SPUR_IRQ	0
-#define M88K_LEVEL1_IRQ	1
-#define M88K_LEVEL2_IRQ	2
-#define M88K_LEVEL3_IRQ	3
-#define M88K_LEVEL4_IRQ	4
-#define M88K_LEVEL5_IRQ	5
-#define M88K_LEVEL6_IRQ	6
-#define M88K_LEVEL7_IRQ	7
-/*
- * We keep track of these separately, but
- * they will be reflected with the above also.
- */
-#define M88K_CLK_IRQ	8
-#define M88K_SCLK_IRQ	9
-#define M88K_PCLK_IRQ	10
-#define M88K_NMI_IRQ	11
-
-extern int intrcnt[M88K_NIRQ];
-
-#endif
 
 /*
  * IPL levels.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.47 2004/06/28 01:47:41 aaron Exp $	*/
+/*	$OpenBSD: locore.s,v 1.48 2004/12/24 22:50:31 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -9512,16 +9512,6 @@ _C_LABEL(ssym):
 	.globl	_C_LABEL(proc0paddr)
 _C_LABEL(proc0paddr):
 	.xword	_C_LABEL(u0)		! KVA of proc0 uarea
-
-/* Some bogus data, to keep vmstat happy, for now. */
-	.globl	_C_LABEL(intrnames), _C_LABEL(eintrnames)
-	.globl	_C_LABEL(intrcnt), _C_LABEL(eintrcnt)
-_C_LABEL(intrnames):
-	.long	0
-_C_LABEL(eintrnames):
-_C_LABEL(intrcnt):
-	.long	0
-_C_LABEL(eintrcnt):
 
 	.comm	_C_LABEL(nwindows), 4
 

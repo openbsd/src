@@ -1,4 +1,4 @@
-/* $OpenBSD: clock.c,v 1.2 2004/08/18 13:29:46 aoyama Exp $ */
+/* $OpenBSD: clock.c,v 1.3 2004/12/24 22:50:30 miod Exp $ */
 /* $NetBSD: clock.c,v 1.2 2000/01/11 10:29:35 nisimura Exp $ */
 
 /*
@@ -226,7 +226,6 @@ clockintr(void *eframe)
 	extern unsigned int *clock_reg[];
 	int cpu = cpu_number();
 
-	intrcnt[M88K_CLK_IRQ]++;
 	clockevc->ec_count++;
 
 	*clock_reg[cpu] = 0xffffffff;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.9 2004/11/17 20:10:26 miod Exp $	*/
+/*	$OpenBSD: locore.S,v 1.10 2004/12/24 22:50:30 miod Exp $	*/
 /*	$NetBSD: locore.S,v 1.2 1996/10/16 19:33:09 ws Exp $	*/
 
 /*
@@ -1134,59 +1134,6 @@ _C_LABEL(sigcode):
 	sc				/* exit(errno) */
 _C_LABEL(esigcode):
 
-
-
-	.data
-	.globl	_C_LABEL(intrnames)
-	.type	_C_LABEL(intrnames),@object
-	.globl	_C_LABEL(eintrnames)
-	.type	_C_LABEL(eintrnames),@object
-_C_LABEL(intrnames):
-	.string "irq0" "irq1" "irq2" "irq3"
-	.string "irq4" "irq5" "irq6" "irq7"
-	.string "irq8" "irq9" "irq10" "irq11"
-	.string "irq12" "irq13" "irq14" "irq15"
-	.string "irq16" "irq17" "irq18" "irq19"
-	.string "irq20" "irq21" "irq22" "irq23"
-	.string "irq24" "irq25" "irq26" "irq27"
-	.string "irq28" "irq29" "irq30" "irq31"
-	.string "irq32" "irq33" "irq34" "irq35"
-	.string "irq36" "irq37" "irq38" "irq39"
-	.string "irq40" "irq41" "irq42" "irq43"
-	.string "irq44" "irq45" "irq46" "irq47"
-	.string "irq48" "irq49" "irq50" "irq51"
-	.string "irq52" "irq53" "irq54" "irq55"
-	.string "irq56" "irq57" "irq58" "irq59"
-	.string "irq60" "irq61" "irq62" "irq63"
-	.string "clock"
-	.string "stat"
-	.space 512
-_C_LABEL(eintrnames):
-	.align 4
-	.globl	_C_LABEL(intrcnt)
-	.type	_C_LABEL(intrcnt),@object
-	.globl	_C_LABEL(eintrcnt)
-	.type	_C_LABEL(eintrcnt),@object
-_C_LABEL(intrcnt):
-	.long 0,0,0,0
-	.long 0,0,0,0
-	.long 0,0,0,0
-	.long 0,0,0,0
-	.long 0,0,0,0
-	.long 0,0,0,0
-	.long 0,0,0,0
-	.long 0,0,0,0
-	.long 0,0,0,0
-	.long 0,0,0,0
-	.long 0,0,0,0
-	.long 0,0,0,0
-	.long 0,0,0,0
-	.long 0,0,0,0
-	.long 0,0,0,0
-	.long 0,0,0,0
-	.long 0
-	.long 0
-_C_LABEL(eintrcnt):
 
 #ifdef DDB
 /*

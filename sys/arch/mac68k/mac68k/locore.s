@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.41 2004/12/01 23:02:55 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.42 2004/12/24 22:50:30 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.103 1998/07/09 06:02:50 scottr Exp $	*/
 
 /*
@@ -1925,9 +1925,3 @@ ASGLOBAL(fulltflush)
 ASGLOBAL(fullcflush)
 	.long	0
 #endif
-
-/* old interrupt counters */
-GLOBAL(intrnames)
-GLOBAL(eintrnames)
-GLOBAL(intrcnt)
-GLOBAL(eintrcnt)

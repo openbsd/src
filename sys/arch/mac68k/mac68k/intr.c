@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.3 2004/12/02 22:00:31 martin Exp $	*/
+/*	$OpenBSD: intr.c,v 1.4 2004/12/24 22:50:30 miod Exp $	*/
 /*	$NetBSD: intr.c,v 1.2 1998/08/25 04:03:56 scottr Exp $	*/
 
 /*-
@@ -77,7 +77,6 @@ u_short	mac68k_clockipl;
 u_short	mac68k_statclockipl;
 
 struct	intrhand intrs[NISR];
-extern	int intrcnt[];		/* from locore.s */
 
 void	intr_computeipl(void);
 

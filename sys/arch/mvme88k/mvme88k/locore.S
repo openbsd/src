@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.40 2004/11/09 21:50:01 miod Exp $	*/
+/*	$OpenBSD: locore.S,v 1.41 2004/12/24 22:50:30 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -540,23 +540,3 @@ GLOBAL(sigcode)			/* r31 points to sigframe */
 	NOP
 	NOP
 GLOBAL(esigcode)
-
-/* interrupt counters */
-GLOBAL(intrnames)
-	string	"spur\0"
-	string	"lev1\0"
-	string	"lev2\0"
-	string	"lev3\0"
-	string	"lev4\0"
-	string	"lev5\0"
-	string	"lev6\0"
-	string	"lev7\0"
-	string	"clk\0"
-	string	"sclk\0"
-	string	"pclk\0"
-	string	"nmi\0"
-GLOBAL(eintrnames)
-	.align	8
-GLOBAL(intrcnt)
-	word	0,0,0,0,0,0,0,0,0,0,0,0
-GLOBAL(eintrcnt)

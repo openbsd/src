@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.43 2004/11/08 16:39:31 miod Exp $ */
+/*	$OpenBSD: clock.c,v 1.44 2004/12/24 22:50:30 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1995 Theo de Raadt
@@ -282,8 +282,6 @@ sbc_clockintr(void *eframe)
 	*(volatile u_int8_t *)(OBIO_START + PCC2_BASE + PCCTWO_T1ICR) =
 	    prof_reset;
 
-	intrcnt[M88K_CLK_IRQ]++;
-
 	hardclock(eframe);
 #if NBUGTTY > 0
 	bugtty_chkinput();
@@ -299,8 +297,6 @@ sbc_statintr(void *eframe)
 
 	*(volatile u_int8_t *)(OBIO_START + PCC2_BASE + PCCTWO_T2ICR) =
 	    stat_reset;
-
-	intrcnt[M88K_SCLK_IRQ]++;
 
 	statclock((struct clockframe *)eframe);
 
@@ -420,7 +416,6 @@ m188_clockintr(void *eframe)
 	CIO_LOCK;
 	write_cio(CIO_CSR1, CIO_GCB | CIO_CIP);  /* Ack the interrupt */
 
-	intrcnt[M88K_CLK_IRQ]++;
 	hardclock(eframe);
 #if NBUGTTY > 0
 	bugtty_chkinput();
@@ -443,7 +438,6 @@ m188_statintr(void *eframe)
 	tmp = *(volatile u_int32_t *)DART_STOPC;
 	tmp = *(volatile u_int32_t *)DART_ISR;
 
-	intrcnt[M88K_SCLK_IRQ]++;
 	statclock((struct clockframe *)eframe);
 
 	/*

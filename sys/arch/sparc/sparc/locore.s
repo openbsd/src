@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.60 2004/09/29 07:35:14 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.61 2004/12/24 22:50:31 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.73 1997/09/13 20:36:48 pk Exp $	*/
 
 /*
@@ -2354,11 +2354,7 @@ softintr_common:
 	wr	%l4, PSR_ET, %psr	! song and dance is necessary
 	std	%l0, [%sp + CCFSZ + 0]	! set up intrframe/clockframe
 	sll	%l3, 2, %l5
-	set	_C_LABEL(intrcnt), %l4	! intrcnt[intlev]++;
-	ld	[%l4 + %l5], %o0
 	std	%l2, [%sp + CCFSZ + 8]
-	inc	%o0
-	st	%o0, [%l4 + %l5]
 	set	_C_LABEL(intrhand), %l4	! %l4 = intrhand[intlev];
 	ld	[%l4 + %l5], %l4
 	b	3f
@@ -2434,11 +2430,7 @@ _C_LABEL(sparc_interrupt_common):
 	wr	%l4, PSR_ET, %psr	! song and dance is necessary
 	std	%l0, [%sp + CCFSZ + 0]	! set up intrframe/clockframe
 	sll	%l3, 2, %l5
-	set	_C_LABEL(intrcnt), %l4		! intrcnt[intlev]++;
-	ld	[%l4 + %l5], %o0
 	std	%l2, [%sp + CCFSZ + 8]	! set up intrframe/clockframe
-	inc	%o0
-	st	%o0, [%l4 + %l5]
 	set	_C_LABEL(intrhand), %l4	! %l4 = intrhand[intlev];
 	ld	[%l4 + %l5], %l4
 	clr	%l5			! %l5 = 0
@@ -6450,33 +6442,6 @@ _C_LABEL(proc0paddr):
 ! StackGhost:  added 2 symbols to ease debugging
 	.globl slowtrap
 	.globl winuf_invalid
-
-/* interrupt counters	XXX THESE BELONG ELSEWHERE (if anywhere) */
-	.globl _C_LABEL(intrcnt) ; OTYPE(_C_LABEL(intrcnt))
-	.globl _C_LABEL(eintrcnt) ; OTYPE(_C_LABEL(eintrcnt))
-	.globl _C_LABEL(intrnames) ; OTYPE(_C_LABEL(intrnames))
-	.globl _C_LABEL(eintrnames) ; OTYPE(_C_LABEL(eintrnames))
-_C_LABEL(intrnames):
-	.asciz	"spur"
-	.asciz	"lev1"
-	.asciz	"lev2"
-	.asciz	"lev3"
-	.asciz	"lev4"
-	.asciz	"lev5"
-	.asciz	"lev6"
-	.asciz	"lev7"
-	.asciz  "lev8"
-	.asciz	"lev9"
-	.asciz	"clock"
-	.asciz	"lev11"
-	.asciz	"lev12"
-	.asciz	"lev13"
-	.asciz	"prof"
-_C_LABEL(eintrnames):
-	_ALIGN
-_C_LABEL(intrcnt):
-	.skip	4*15
-_C_LABEL(eintrcnt):
 
 	.comm	_C_LABEL(nwindows), 4
 	.comm	_C_LABEL(promvec), 4

@@ -1,4 +1,4 @@
-/* $OpenBSD: locore.s,v 1.26 2004/07/03 19:22:57 deraadt Exp $ */
+/* $OpenBSD: locore.s,v 1.27 2004/12/24 22:50:27 miod Exp $ */
 /* $NetBSD: locore.s,v 1.94 2001/04/26 03:10:44 ross Exp $ */
 
 /*-
@@ -1454,21 +1454,6 @@ LEAF(copyerr, 0)
 	ldiq	v0, EFAULT			/* return EFAULT.	     */
 	RET
 END(copyerr)
-
-/**************************************************************************/
-
-	.data
-/* Some bogus data, to keep vmstat happy, for now. */
-EXPORT(intrnames)
-	.type intrnames,@object
-EXPORT(eintrnames)
-	.type eintrnames,@object
-	.align 3
-EXPORT(intrcnt)
-	.type intrcnt,@object
-EXPORT(eintrcnt)
-	.type eintrcnt,@object
-	.text
 
 /**************************************************************************/
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: isr.c,v 1.2 2004/07/27 12:36:34 miod Exp $	*/
+/*	$OpenBSD: isr.c,v 1.3 2004/12/24 22:50:30 miod Exp $	*/
 /*	$NetBSD: isr.c,v 1.5 2000/07/09 08:08:20 nisimura Exp $	*/
 
 /*-
@@ -56,8 +56,6 @@
 #include <luna88k/luna88k/isr.h>
 
 isr_autovec_list_t isr_autovec[NISRAUTOVEC];
-
-extern	int intrcnt[];		/* from locore.s */
 
 void
 isrinit()
@@ -163,7 +161,6 @@ isrdispatch_autovec(int ipl)
 		panic("isrdispatch_autovec: bad ipl 0x%d\n", ipl);
 #endif
 
-	intrcnt[ipl]++;
 #if 0	/* XXX: already counted in machdep.c */
 	uvmexp.intrs++;
 #endif

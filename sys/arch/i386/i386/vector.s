@@ -1,4 +1,4 @@
-/*	$OpenBSD: vector.s,v 1.5 2004/12/24 21:22:00 pvalchev Exp $	*/
+/*	$OpenBSD: vector.s,v 1.6 2004/12/24 22:50:29 miod Exp $	*/
 /*	$NetBSD: vector.s,v 1.32 1996/01/07 21:29:47 mycroft Exp $	*/
 
 /*
@@ -250,13 +250,3 @@ IDTVEC(recurse)
 	.long	_C_LABEL(Xsofttty), _C_LABEL(Xsoftnet)
 	.long	_C_LABEL(Xsoftclock)
 	.long	0, 0
-
-/* Some bogus data, to keep vmstat happy, for now. */
-	.globl	_C_LABEL(intrnames), _C_LABEL(eintrnames)
-	.globl	_C_LABEL(intrcnt), _C_LABEL(eintrcnt)
-_C_LABEL(intrnames):
-	.long	0
-_C_LABEL(eintrnames):
-_C_LABEL(intrcnt):
-	.long	0
-_C_LABEL(eintrcnt):

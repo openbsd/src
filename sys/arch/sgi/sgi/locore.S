@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.5 2004/10/20 12:49:15 pefo Exp $ */
+/*	$OpenBSD: locore.S,v 1.6 2004/12/24 22:50:31 miod Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -66,27 +66,3 @@ start:
 	jal	main				# main(regs)
 	move	a0, zero
 	PANIC("Startup failed!")
-
-
-/*
- * Interrupt counters for vmstat.
- */
-	.data
-	.globl intrcnt
-	.globl eintrcnt
-	.globl intrnames
-	.globl eintrnames
-intrnames:
-	.asciiz	"softclock"
-	.asciiz	"softnet"
-	.asciiz	"local_dma"
-	.asciiz	"local_dev"
-	.asciiz	"isa_dev"
-	.asciiz	"isa_nmi"
-	.asciiz	"clock"
-	.asciiz	"statclock"
-eintrnames:
-	.align	3
-intrcnt:
-	.word	0,0,0,0,0,0,0,0
-eintrcnt:

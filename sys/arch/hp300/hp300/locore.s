@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.42 2004/09/29 07:35:54 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.43 2004/12/24 22:50:29 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.91 1998/11/11 06:41:25 thorpej Exp $	*/
 
 /*
@@ -1002,7 +1002,6 @@ Lbrkpt3:
 #define INTERRUPT_RESTOREREG	moveml	sp@+,#0x0303
 
 ENTRY_NOPROFILE(spurintr)	/* level 0 */
-	addql	#1,_C_LABEL(intrcnt)+0
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
 	jra	_ASM_LABEL(rei)
 
@@ -1010,7 +1009,6 @@ ENTRY_NOPROFILE(lev1intr)	/* level 1: HIL XXX this needs to go away */
 	INTERRUPT_SAVEREG
 	jbsr	_C_LABEL(hilint)
 	INTERRUPT_RESTOREREG
-	addql	#1,_C_LABEL(intrcnt)+4
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
 	jra	_ASM_LABEL(rei)
 
@@ -1035,7 +1033,6 @@ Lnotim1:
 	btst	#2,d0			| timer3 interrupt?
 	jeq	Lnotim3			| no, skip statclock
 	movpw	a0@(CLKMSB3),d1		| clear timer3 interrupt
-	addql	#1,_C_LABEL(intrcnt)+28	| count clock interrupts
 	lea	sp@(16),a1		| a1 = &clockframe
 	movl	d0,sp@-			| save status
 	movl	a1,sp@-
@@ -1046,7 +1043,6 @@ Lnotim1:
 Lnotim3:
 	btst	#0,d0			| timer1 interrupt?
 	jeq	Lrecheck		| no, skip hardclock
-	addql	#1,_C_LABEL(intrcnt)+24	| count hardclock interrupts
 	lea	sp@(16),a1		| a1 = &clockframe
 	movl	a1,sp@-
 #ifdef USELEDS
@@ -1089,7 +1085,6 @@ Lrecheck:
 	jra	_ASM_LABEL(rei)		| all done
 
 ENTRY_NOPROFILE(lev7intr)	/* level 7: parity errors, reset key */
-	addql	#1,_C_LABEL(intrcnt)+32
 	clrl	sp@-
 	moveml	#0xFFFF,sp@-		| save registers
 	movl	usp,a0			| and save
@@ -2006,21 +2001,3 @@ ASGLOBAL(fulltflush)
 ASGLOBAL(fullcflush)
 	.long	0
 #endif
-
-/* interrupt counters */
-GLOBAL(intrnames)
-	.asciz	"spur"
-	.asciz	"hil"
-	.asciz	"lev2"
-	.asciz	"lev3"
-	.asciz	"lev4"
-	.asciz	"lev5"
-	.asciz	"clock"
-	.asciz  "statclock"
-	.asciz	"nmi"
-GLOBAL(eintrnames)
-	.even
-
-GLOBAL(intrcnt)
-	.long	0,0,0,0,0,0,0,0,0
-GLOBAL(eintrcnt)

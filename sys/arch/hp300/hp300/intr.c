@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.13 2004/09/29 07:35:54 miod Exp $	*/
+/*	$OpenBSD: intr.c,v 1.14 2004/12/24 22:50:29 miod Exp $	*/
 /*	$NetBSD: intr.c,v 1.5 1998/02/16 20:58:30 thorpej Exp $	*/
 
 /*-
@@ -68,8 +68,6 @@ typedef LIST_HEAD(, isr) isr_list_t;
 isr_list_t isr_list[NISR];
 
 u_short	hp300_bioipl, hp300_netipl, hp300_ttyipl, hp300_impipl;
-
-extern	int intrcnt[];		/* from locore.s */
 
 void	intr_computeipl(void);
 
@@ -253,7 +251,6 @@ intr_dispatch(evec)
 #endif
 	ipl = vec - ISRLOC;
 
-	intrcnt[ipl]++;
 	uvmexp.intrs++;
 
 	list = &isr_list[ipl];

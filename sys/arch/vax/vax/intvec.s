@@ -1,4 +1,4 @@
-/*	$OpenBSD: intvec.s,v 1.19 2004/07/07 23:10:46 deraadt Exp $   */
+/*	$OpenBSD: intvec.s,v 1.20 2004/12/24 22:50:31 miod Exp $   */
 /*	$NetBSD: intvec.s,v 1.39 1999/06/28 08:20:48 itojun Exp $   */
 
 /*
@@ -424,14 +424,6 @@ noemulate:
 	addl2	$48,sp			# adjust stack for
 #endif
 	.word	0xffff			# "reserved instruction fault"
-
-	.globl	_intrnames, _eintrnames, _intrcnt, _eintrcnt
-_intrnames:
-	.long	0
-_eintrnames:
-_intrcnt:
-	.long	0
-_eintrcnt:
 
 	.data
 _scb:	.long 0
