@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_regs.c,v 1.3 1997/08/16 02:00:49 millert Exp $	*/
+/*	$OpenBSD: procfs_regs.c,v 1.4 1997/08/29 04:24:38 millert Exp $	*/
 /*	$NetBSD: procfs_regs.c,v 1.9 1995/08/13 09:06:07 mycroft Exp $	*/
 
 /*
@@ -52,8 +52,8 @@
 
 int
 procfs_doregs(curp, p, pfs, uio)
-	struct proc *curp;
-	struct proc *p;
+	struct proc *curp;		/* tracer */
+	struct proc *p;			/* traced */
 	struct pfsnode *pfs;
 	struct uio *uio;
 {

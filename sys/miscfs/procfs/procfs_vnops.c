@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_vnops.c,v 1.5 1997/08/16 02:00:50 millert Exp $	*/
+/*	$OpenBSD: procfs_vnops.c,v 1.6 1997/08/29 04:24:38 millert Exp $	*/
 /*	$NetBSD: procfs_vnops.c,v 1.40 1996/03/16 23:52:55 christos Exp $	*/
 
 /*
@@ -217,8 +217,8 @@ procfs_open(v)
 		struct proc *a_p;
 	} */ *ap = v;
 	struct pfsnode *pfs = VTOPFS(ap->a_vp);
-	struct proc *p1 = ap->a_p;
-	struct proc *p2;
+	struct proc *p1 = ap->a_p;	/* tracer */
+	struct proc *p2;		/* traced */
 	int error;
 
 	if ((p2 = PFIND(pfs->pfs_pid)) == 0)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_ctl.c,v 1.6 1997/08/16 02:00:48 millert Exp $	*/
+/*	$OpenBSD: procfs_ctl.c,v 1.7 1997/08/29 04:24:37 millert Exp $	*/
 /*	$NetBSD: procfs_ctl.c,v 1.14 1996/02/09 22:40:48 christos Exp $	*/
 
 /*
@@ -109,8 +109,8 @@ static int procfs_control __P((struct proc *, struct proc *, int));
 
 static int
 procfs_control(curp, p, op)
-	struct proc *curp;
-	struct proc *p;
+	struct proc *curp;		/* tracer */
+	struct proc *p;			/* traced */
 	int op;
 {
 	int error;

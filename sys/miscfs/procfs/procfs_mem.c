@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_mem.c,v 1.5 1997/08/16 02:00:49 millert Exp $	*/
+/*	$OpenBSD: procfs_mem.c,v 1.6 1997/08/29 04:24:38 millert Exp $	*/
 /*	$NetBSD: procfs_mem.c,v 1.8 1996/02/09 22:40:50 christos Exp $	*/
 
 /*
@@ -208,8 +208,8 @@ procfs_rwmem(p, uio)
  */
 int
 procfs_domem(curp, p, pfs, uio)
-	struct proc *curp;
-	struct proc *p;
+	struct proc *curp;		/* tracer */
+	struct proc *p;			/* traced */
 	struct pfsnode *pfs;
 	struct uio *uio;
 {
@@ -244,20 +244,25 @@ procfs_findtextvp(p)
 }
 
 /*
+ * Ensure that a process has permission to perform I/O on another.
+ * Arguments:
+ *	p   The process wishing to do the I/O (the tracer).
+ *	t   The process who's memory/registers will be read/written.
+ *
  * You cannot attach to a process's mem/regs if:
  *
- *	(1) it's not owned by you, or the last exec
+ *	(1) It's not owned by you, or the last exec
  *	    gave us setuid/setgid privs (unless
  *	    you're root), or...
  *
- *	(2) ...it's init, which controls the security level
+ *	(2) It's init, which controls the security level
  *	    of the entire system, and the system was not
  *	    compiled with permanently insecure mode turned
  *	    on.
  */
 int
-procfs_checkioperm(t, p)
-	struct proc *t, *p;
+procfs_checkioperm(p, t)
+	struct proc *p, *t;
 {
 	int error;
 
