@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: syslog.c,v 1.19 2002/06/20 23:01:10 jjbg Exp $";
+static char rcsid[] = "$OpenBSD: syslog.c,v 1.20 2002/11/24 01:49:37 cloder Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -373,6 +373,7 @@ closelog_r(data)
 	(void)close(data->log_file);
 	data->log_file = -1;
 	data->connected = 0;
+	data->log_tag = NULL;
 }
 
 /* setlogmask -- set the log mask level */
