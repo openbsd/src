@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.103 2004/07/05 16:54:53 henning Exp $ */
+/*	$OpenBSD: kroute.c,v 1.104 2004/07/13 17:57:20 jaredy Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -997,7 +997,7 @@ if_change(u_short ifindex, int flags, struct if_data *ifd)
 	LIST_FOREACH(kkr, &kif->kroute_l, entry) {
 		/*
 		 * we treat link_state == LINK_STATE_UNKNOWN as valid
-		 * not all interfaces have a conecpt of "link state" and/or
+		 * not all interfaces have a concept of "link state" and/or
 		 * do not report up
 		 */
 		if (reachable)

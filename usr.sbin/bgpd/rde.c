@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.126 2004/07/05 16:54:53 henning Exp $ */
+/*	$OpenBSD: rde.c,v 1.127 2004/07/13 17:57:20 jaredy Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -675,7 +675,7 @@ rde_update_dispatch(struct imsg *imsg)
 		nlri_len -= pos;
 
 		/*
-		 * We need to copy attrs befor calling the filter because
+		 * We need to copy attrs before calling the filter because
 		 * the filter may change the attributes.
 		 */
 		attr_copy(&fattrs, &attrs);
@@ -915,7 +915,7 @@ rde_reflector(struct rde_peer *peer, struct attr_flags *attrs)
 	/* check for originator id if eq router_id drop */
 	if ((a = attr_optget(attrs, ATTR_ORIGINATOR_ID)) != NULL) {
 		if (memcmp(&conf->bgpid, a->data, sizeof(conf->bgpid)) == 0)
-			/* this is comming from myself */
+			/* this is coming from myself */
 			return (0);
 	} else if ((conf->flags & BGPD_FLAG_REFLECTOR) &&
 	    attr_optadd(attrs, ATTR_OPTIONAL, ATTR_ORIGINATOR_ID,
@@ -928,7 +928,7 @@ rde_reflector(struct rde_peer *peer, struct attr_flags *attrs)
 		if ((a = attr_optget(attrs, ATTR_CLUSTER_LIST)) != NULL) {
 			for (len = 0; len < a->len;
 			    len += sizeof(conf->clusterid))
-				/* check if comming from my cluster */
+				/* check if coming from my cluster */
 				if (memcmp(&conf->clusterid, a->data + len,
 				    sizeof(conf->clusterid)) == 0)
 					return (0);
@@ -1543,7 +1543,7 @@ rde_shutdown(void)
 	u_int32_t		 i;
 
 	/*
-	 * the decision process is turend of if rde_quit = 1 and
+	 * the decision process is turned off if rde_quit = 1 and
 	 * rde_shutdown depends on this.
 	 */
 

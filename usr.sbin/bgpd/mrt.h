@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.h,v 1.11 2004/07/03 17:19:59 claudio Exp $ */
+/*	$OpenBSD: mrt.h,v 1.12 2004/07/13 17:57:20 jaredy Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -201,7 +201,7 @@ enum MRT_BGP_TYPES {
  * +--------+--------+--------+--------+
  *
  * For IPv6 the type is MSG_PROTOCOL_BGP4PLUS and the subtype remains
- * MSG_BGP_UPDATE. The sourec_ip and dest_ip are again extended to 16 bytes.
+ * MSG_BGP_UPDATE. The source_ip and dest_ip are again extended to 16 bytes.
  */
 
 /*
