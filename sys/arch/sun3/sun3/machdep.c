@@ -105,7 +105,7 @@ extern int cold;
 
 int physmem;
 int fpu_type;
-int	msgbufmapped;
+int msgbufmapped;
 
 /*
  * safepri is a safe priority for sleep to set for a spin-wait
@@ -138,8 +138,8 @@ void identifycpu();
  */
 void consinit()
 {
-	extern void cninit();
-	cninit();
+    extern void cninit();
+    cninit();
 
 #ifdef KGDB
 	/* XXX - Ask on console for kgdb_dev? */
@@ -154,7 +154,7 @@ void consinit()
 	ddb_init();
 	if (boothowto & RB_KDB)
 		Debugger();
-#endif DDB
+#endif
 }
 
 /*
@@ -239,12 +239,12 @@ cpu_startup()
 	vm_size_t size;	
 	int base, residual;
 	vm_offset_t minaddr, maxaddr;
-
+	
 	/*
 	 * The msgbuf was set up earlier (in sun3_startup.c)
 	 * just because it was more convenient to do there.
 	 */
-
+	
 	/*
 	 * Good {morning,afternoon,evening,night}.
 	 */
@@ -359,6 +359,13 @@ cpu_startup()
 	/*
 	 * Configure the system.
 	 */
+	if (boothowto & RB_CONFIG) {
+#ifdef BOOT_CONFIG
+		user_config();
+#else
+		printf("kernel does not support -c; continuing..\n");
+#endif
+	}
 	configure();
 }
 
@@ -765,12 +772,16 @@ sys_sigreturn(p, v, retval)
 int waittime = -1;	/* XXX - Who else looks at this? -gwr */
 static void reboot_sync()
 {
+	extern struct proc proc0;
 	struct buf *bp;
 	int iter, nbusy;
 
 	/* Check waittime here to localize its use to this function. */
 	if (waittime >= 0)
 		return;
+	/* fix curproc */
+	if (curproc == NULL)
+		curproc = &proc0;
 	waittime = 0;
 	vfs_shutdown();
 }
@@ -778,8 +789,7 @@ static void reboot_sync()
 /*
  * Common part of the BSD and SunOS reboot system calls.
  */
-__dead void
-boot(howto, user_boot_string)
+int reboot2(howto, user_boot_string)
 	int howto;
 	char *user_boot_string;
 {
@@ -852,6 +862,21 @@ boot(howto, user_boot_string)
 }
 
 /*
+ * BSD reboot system call
+ * XXX - Should be named: cpu_reboot maybe? -gwr
+ * XXX - It would be nice to allow a second argument
+ * that specifies a machine-dependent boot string that
+ * is passed to the boot program if RB_STRING is set.
+ */
+void boot(howto)
+	int howto;
+{
+	(void) reboot2(howto, NULL);
+	for(;;);
+	/* NOTREACHED */
+}
+
+/*
  * These variables are needed by /sbin/savecore
  */
 u_long	dumpmag = 0x8fca0101;	/* magic number */
@@ -862,7 +887,7 @@ long	dumplo = 0; 		/* blocks */
 vm_offset_t dumppage_va;
 vm_offset_t dumppage_pa;
 
-#define	DUMP_EXTRA 	3	/* CPU-dependent extra pages */
+#define		DUMP_EXTRA	3	/* CPU-dependent extra pages */
 
 /*
  * This is called by cpu_startup to set dumplo, dumpsize.
@@ -892,12 +917,12 @@ dumpconf()
 		return;
 
 	/* Position dump image near end of space, page aligned. */
-	dumpsize = physmem + DUMP_EXTRA;	/* pages */
+	dumpsize = physmem + DUMP_EXTRA; /* pages */
 	dumplo = nblks - ctod(dumpsize);
 	dumplo &= ~(ctod(1)-1);
 
 	/* If it does not fit, truncate it by moving dumplo. */
-	/* Note: Must force signed comparison. */
+	/* Note: Must force signed comparison (fixes PR#887) */
 	if (dumplo < ((long)ctod(1))) {
 		dumplo = ctod(1);
 		dumpsize = dtoc(nblks - dumplo);
@@ -919,7 +944,7 @@ dumpsys()
 {
 	struct bdevsw *dsw;
 	kcore_seg_t	*kseg_p;
-	cpu_kcore_hdr_t *chdr_p;
+	cpu_kcore_hdr_t	*chdr_p;
 	char *vaddr;
 	vm_offset_t paddr;
 	int psize, todo, chunk;
@@ -932,7 +957,7 @@ dumpsys()
 	if (dumppage_va == 0)
 		return;
 
-	/*
+	/* 
 	 * For dumps during autoconfiguration,
 	 * if dump device has already configured...
 	 */
