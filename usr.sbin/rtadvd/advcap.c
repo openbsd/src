@@ -1,5 +1,5 @@
-/*	$OpenBSD: advcap.c,v 1.6 2002/03/14 16:44:25 mpech Exp $	*/
-/*	$KAME: advcap.c,v 1.5 2001/02/01 09:12:08 jinmei Exp $	*/
+/*	$OpenBSD: advcap.c,v 1.7 2002/05/29 14:34:05 itojun Exp $	*/
+/*	$KAME: advcap.c,v 1.9 2002/05/29 14:28:35 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983 The Regents of the University of California.
@@ -96,7 +96,7 @@ int getent(char *, char *, char *);
 int tnchktc(void);
 int tnamatch(char *);
 static char *tskip(char *);
-long long tgetnum(char *);
+int64_t tgetnum(char *);
 int tgetflag(char *);
 char *tgetstr(char *, char **);
 static char *tdecode(char *, char **);
@@ -161,7 +161,7 @@ getent(bp, name, cp)
 				}
 				break;
 			}
-			if (cp >= bp+BUFSIZ) {
+			if (cp >= bp + BUFSIZ) {
 				write(2,"Remcap entry too long\n", 23);
 				break;
 			} else
@@ -197,7 +197,7 @@ tnchktc()
 
 	p = tbuf + strlen(tbuf) - 2;	/* before the last colon */
 	while (*--p != ':')
-		if (p<tbuf) {
+		if (p < tbuf) {
 			write(2, "Bad remcap entry\n", 18);
 			return (0);
 		}
@@ -205,7 +205,7 @@ tnchktc()
 	/* p now points to beginning of last field */
 	if (p[0] != 't' || p[1] != 'c')
 		return (1);
-	strcpy(tcname, p+3);
+	strlcpy(tcname, p + 3, sizeof tcname);
 	q = tcname;
 	while (*q && *q != ':')
 		q++;
@@ -307,11 +307,11 @@ breakbreak:
  * a # character.  If the option is not found we return -1.
  * Note that we handle octal numbers beginning with 0.
  */
-long long
+int64_t
 tgetnum(id)
 	char *id;
 {
-	long long i;
+	int64_t i;
 	int base;
 	char *bp = tbuf;
 

@@ -1,5 +1,5 @@
-.\"	$OpenBSD: rtadvd.8,v 1.16 2001/07/25 10:04:57 mpech Exp $
-.\"	$KAME: rtadvd.8,v 1.17 2001/02/04 05:34:38 jinmei Exp $
+.\"	$OpenBSD: rtadvd.8,v 1.17 2002/05/29 14:34:05 itojun Exp $
+.\"	$KAME: rtadvd.8,v 1.18 2002/04/28 10:43:02 jinmei Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
 .\" All rights reserved.
@@ -36,8 +36,8 @@
 .Nd router advertisement daemon
 .Sh SYNOPSIS
 .Nm
+.Op Fl dDfMRs
 .Op Fl c Ar configfile
-.Op Fl dDfRs
 .Ar interface ...
 .Sh DESCRIPTION
 .Nm
@@ -102,6 +102,7 @@ Print debugging information.
 Even more debugging information is printed.
 .It Fl f
 Foreground mode (useful when debugging).
+Log messages will be dumped to stderr when this option is specified.
 .It Fl M
 Specify an interface to join the all-routers site-local multicast group.
 By default,

@@ -1,5 +1,5 @@
-/*	$OpenBSD: rtadvd.h,v 1.8 2002/05/21 23:29:46 itojun Exp $	*/
-/*	$KAME: rtadvd.h,v 1.19 2001/12/20 02:09:37 k-sugyou Exp $	*/
+/*	$OpenBSD: rtadvd.h,v 1.9 2002/05/29 14:34:05 itojun Exp $	*/
+/*	$KAME: rtadvd.h,v 1.20 2002/05/29 10:13:10 itojun Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -46,9 +46,7 @@
 #define DEF_ADVPREFERREDLIFETIME 604800
 
 /*XXX int-to-double comparison for INTERVAL items */
-#ifndef MIP6
 #define mobileip6 0
-#endif
 
 #define MAXROUTERLIFETIME 9000
 #define MIN_MAXINTERVAL (mobileip6 ? 1.5 : 4.0)
@@ -56,9 +54,7 @@
 #define MIN_MININTERVAL	(mobileip6 ? 0.05 : 3.0)
 #define MAXREACHABLETIME 3600000
 
-#ifndef MIP6
 #undef miobileip6
-#endif
 
 #define MAX_INITIAL_RTR_ADVERT_INTERVAL  16
 #define MAX_INITIAL_RTR_ADVERTISEMENTS    3
@@ -80,13 +76,11 @@ struct prefix {
 	long	pltimeexpire;	/* expiration of pltime; decrement case only */
 	u_int onlinkflg;	/* bool: AdvOnLinkFlag */
 	u_int autoconfflg;	/* bool: AdvAutonomousFlag */
-#ifdef MIP6
-	u_int routeraddr;	/* bool: RouterAddress */
-#endif
 	int prefixlen;
 	int origin;		/* from kernel or cofig */
 	struct in6_addr prefix;
 };
+
 
 struct soliciter {
 	struct soliciter *next;
@@ -116,9 +110,7 @@ struct	rainfo {
 	u_int	mininterval;	/* MinRtrAdvInterval */
 	int 	managedflg;	/* AdvManagedFlag */
 	int	otherflg;	/* AdvOtherConfigFlag */
-#ifdef MIP6
-	int	haflg;		/* HAFlag */
-#endif
+	int	rtpref;		/* router preference */
 	u_int32_t linkmtu;	/* AdvLinkMTU */
 	u_int32_t reachabletime; /* AdvReachableTime */
 	u_int32_t retranstimer;	/* AdvRetransTimer */
@@ -127,10 +119,6 @@ struct	rainfo {
 	int	pfxs;		/* number of prefixes */
 	long	clockskew;	/* used for consisitency check of lifetimes */
 
-#ifdef MIP6
-	u_short	hapref;		/* Home Agent Preference */
-	u_short	hatime;		/* Home Agent Lifetime */
-#endif
 
 	/* actual RA packet data and its length */
 	size_t ra_datalen;
@@ -154,6 +142,3 @@ struct rainfo *if_indextorainfo(int);
 struct prefix *find_prefix(struct rainfo *, struct in6_addr *, int);
 
 extern struct in6_addr in6a_site_allrouters;
-#ifdef MIP6
-extern int mobileip6;
-#endif

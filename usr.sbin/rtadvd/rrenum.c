@@ -1,5 +1,5 @@
-/*	$OpenBSD: rrenum.c,v 1.8 2002/05/21 23:29:46 itojun Exp $	*/
-/*	$KAME: rrenum.c,v 1.10 2001/01/21 15:32:16 itojun Exp $	*/
+/*	$OpenBSD: rrenum.c,v 1.9 2002/05/29 14:34:05 itojun Exp $	*/
+/*	$KAME: rrenum.c,v 1.11 2002/05/21 14:26:55 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -36,9 +36,6 @@
 #include <sys/sysctl.h>
 
 #include <net/if.h>
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
-#include <net/if_var.h>
-#endif /* __FreeBSD__ >= 3 */
 #include <net/route.h>
 #include <netinet/in.h>
 #include <netinet/in_var.h>

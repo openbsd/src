@@ -1,4 +1,4 @@
-/*	$OpenBSD: timer.c,v 1.6 2002/05/21 23:29:46 itojun Exp $	*/
+/*	$OpenBSD: timer.c,v 1.7 2002/05/29 14:34:05 itojun Exp $	*/
 /*	$KAME: timer.c,v 1.7 2002/05/21 14:26:55 itojun Exp $	*/
 
 /*
@@ -36,9 +36,7 @@
 #include <syslog.h>
 #include <stdlib.h>
 #include <string.h>
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 #include <search.h>
-#endif
 #include "timer.h"
 
 static struct rtadvd_timer timer_head;
