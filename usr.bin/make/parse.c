@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.19 1999/05/04 16:44:45 millert Exp $	*/
+/*	$OpenBSD: parse.c,v 1.20 1999/10/05 22:06:24 espie Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: parse.c,v 1.19 1999/05/04 16:44:45 millert Exp $";
+static char rcsid[] = "$OpenBSD: parse.c,v 1.20 1999/10/05 22:06:24 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -112,7 +112,9 @@ static char rcsid[] = "$OpenBSD: parse.c,v 1.19 1999/05/04 16:44:45 millert Exp 
 #define	CONTINUE	1
 #define	DONE		0
 static Lst     	    targets;	/* targets we're working on */
+#ifdef CLEANUP
 static Lst     	    targCmds;	/* command lines for targets */
+#endif
 static Boolean	    inLine;	/* true if currently in a dependency
 				 * line or its commands */
 typedef struct {
@@ -2514,7 +2516,9 @@ Parse_File(name, stream)
 			 * commands of all targets in the dependency spec
 			 */
 			Lst_ForEach (targets, ParseAddCmd, cp);
+#ifdef CLEANUP
 			Lst_AtEnd(targCmds, (ClientData) line);
+#endif
 			continue;
 		    } else {
 			Parse_Error (PARSE_FATAL,
@@ -2637,18 +2641,22 @@ Parse_Init ()
     parseIncPath = Lst_Init (FALSE);
     sysIncPath = Lst_Init (FALSE);
     includes = Lst_Init (FALSE);
+#ifdef CLEANUP
     targCmds = Lst_Init (FALSE);
+#endif
 }
 
 void
 Parse_End()
 {
+#ifdef CLEANUP
     Lst_Destroy(targCmds, (void (*) __P((ClientData))) free);
     if (targets)
 	Lst_Destroy(targets, NOFREE);
     Lst_Destroy(sysIncPath, Dir_Destroy);
     Lst_Destroy(parseIncPath, Dir_Destroy);
     Lst_Destroy(includes, NOFREE);	/* Should be empty now */
+#endif
 }
 
 

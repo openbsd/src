@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.8 1998/12/05 00:06:27 espie Exp $	*/
+/*	$OpenBSD: dir.c,v 1.9 1999/10/05 22:06:23 espie Exp $	*/
 /*	$NetBSD: dir.c,v 1.14 1997/03/29 16:51:26 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
-static char rcsid[] = "$OpenBSD: dir.c,v 1.8 1998/12/05 00:06:27 espie Exp $";
+static char rcsid[] = "$OpenBSD: dir.c,v 1.9 1999/10/05 22:06:23 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -250,6 +250,7 @@ Dir_Init ()
 void
 Dir_End()
 {
+#ifdef CLEANUP
     dot->refCount -= 1;
     Dir_Destroy((ClientData) dot);
     Dir_ClearPath(dirSearchPath);
@@ -257,6 +258,7 @@ Dir_End()
     Dir_ClearPath(openDirectories);
     Lst_Destroy(openDirectories, NOFREE);
     Hash_DeleteTable(&mtimes);
+#endif
 }
 
 /*-

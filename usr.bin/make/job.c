@@ -1,4 +1,4 @@
-/*	$OpenBSD: job.c,v 1.12 1998/12/05 00:06:27 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.13 1999/10/05 22:06:24 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: job.c,v 1.12 1998/12/05 00:06:27 espie Exp $";
+static char rcsid[] = "$OpenBSD: job.c,v 1.13 1999/10/05 22:06:24 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -2991,7 +2991,9 @@ Job_Finish()
 void
 Job_End()
 {
+#ifdef CLEANUP
     efree(shellArgv);
+#endif
 }
  
 /*-

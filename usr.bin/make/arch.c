@@ -1,4 +1,4 @@
-/*	$OpenBSD: arch.c,v 1.15 1999/06/01 17:54:31 pefo Exp $	*/
+/*	$OpenBSD: arch.c,v 1.16 1999/10/05 22:06:23 espie Exp $	*/
 /*	$NetBSD: arch.c,v 1.17 1996/11/06 17:58:59 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)arch.c	8.2 (Berkeley) 1/2/94";
 #else
-static char rcsid[] = "$OpenBSD: arch.c,v 1.15 1999/06/01 17:54:31 pefo Exp $";
+static char rcsid[] = "$OpenBSD: arch.c,v 1.16 1999/10/05 22:06:23 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -130,7 +130,9 @@ typedef struct Arch {
 } Arch;
 
 static int ArchFindArchive __P((ClientData, ClientData));
+#ifdef CLEANUP
 static void ArchFree __P((ClientData));
+#endif
 static struct ar_hdr *ArchStatMember __P((char *, char *, Boolean));
 static FILE *ArchFindMember __P((char *, char *, struct ar_hdr *, char *));
 #if defined(__svr4__) || defined(__SVR4) || \
@@ -140,6 +142,7 @@ static FILE *ArchFindMember __P((char *, char *, struct ar_hdr *, char *));
 static int ArchSVR4Entry __P((Arch *, char *, size_t, FILE *));
 #endif
 
+#ifdef CLEANUP
 /*-
  *-----------------------------------------------------------------------
  * ArchFree --
@@ -172,6 +175,7 @@ ArchFree(ap)
     Hash_DeleteTable(&a->members);
     free((Address) a);
 }
+#endif
 
 
 
@@ -1245,7 +1249,9 @@ Arch_Init ()
 void
 Arch_End ()
 {
+#ifdef CLEANUP
     Lst_Destroy(archives, ArchFree);
+#endif
 }
 
 /*-

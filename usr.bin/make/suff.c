@@ -1,4 +1,4 @@
-/*	$OpenBSD: suff.c,v 1.13 1999/03/06 20:27:40 millert Exp $	*/
+/*	$OpenBSD: suff.c,v 1.14 1999/10/05 22:06:24 espie Exp $	*/
 /*	$NetBSD: suff.c,v 1.13 1996/11/06 17:59:25 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
-static char rcsid[] = "$OpenBSD: suff.c,v 1.13 1999/03/06 20:27:40 millert Exp $";
+static char rcsid[] = "$OpenBSD: suff.c,v 1.14 1999/10/05 22:06:24 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -104,7 +104,9 @@ static char rcsid[] = "$OpenBSD: suff.c,v 1.13 1999/03/06 20:27:40 millert Exp $
 #include	  "dir.h"
 
 static Lst       sufflist;	/* Lst of suffixes */
+#ifdef CLEANUP
 static Lst	 suffClean;	/* Lst of suffixes to be cleaned */
+#endif
 static Lst	 srclist;	/* Lst of sources */
 static Lst       transforms;	/* Lst of transformation rules */
 
@@ -487,7 +489,9 @@ SuffInsert (l, s)
 void
 Suff_ClearSuffixes ()
 {
+#ifdef CLEANUP
     Lst_Concat (suffClean, sufflist, LST_CONCLINK);
+#endif
     sufflist = Lst_Init(FALSE);
     sNum = 0;
     suffNull = emptySuff;
@@ -2334,7 +2338,9 @@ void
 Suff_Init ()
 {
     sufflist = Lst_Init (FALSE);
+#ifdef CLEANUP
     suffClean = Lst_Init(FALSE);
+#endif
     srclist = Lst_Init (FALSE);
     transforms = Lst_Init (FALSE);
 
@@ -2376,12 +2382,14 @@ Suff_Init ()
 void
 Suff_End()
 {
+#ifdef CLEANUP
     Lst_Destroy(sufflist, SuffFree);
     Lst_Destroy(suffClean, SuffFree);
     if (suffNull)
 	SuffFree(suffNull);
     Lst_Destroy(srclist, NOFREE);
     Lst_Destroy(transforms, NOFREE);
+#endif
 }
 
 
