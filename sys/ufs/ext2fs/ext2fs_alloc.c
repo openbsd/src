@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_alloc.c,v 1.11 2003/06/02 23:28:22 millert Exp $	*/
+/*	$OpenBSD: ext2fs_alloc.c,v 1.12 2003/07/06 05:24:16 tedu Exp $	*/
 /*	$NetBSD: ext2fs_alloc.c,v 1.10 2001/07/05 08:38:27 toshii Exp $	*/
 
 /*
@@ -535,7 +535,7 @@ ext2fs_inode_free(struct inode *pip, ino_t ino, int mode)
 	int error, cg;
 
 	fs = pip->i_e2fs;
-	if ((u_int)ino >= fs->e2fs.e2fs_icount || (u_int)ino < EXT2_FIRSTINO)
+	if ((u_int)ino > fs->e2fs.e2fs_icount || (u_int)ino < EXT2_FIRSTINO)
 		panic("ifree: range: dev = 0x%x, ino = %d, fs = %s",
 			pip->i_dev, ino, fs->e2fs_fsmnt);
 	cg = ino_to_cg(fs, ino);
