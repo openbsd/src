@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lmc.c,v 1.3 2000/02/01 18:01:40 chris Exp $ */
+/*	$OpenBSD: if_lmc.c,v 1.4 2000/02/06 17:51:41 chris Exp $ */
 /*	$NetBSD: if_lmc.c,v 1.1 1999/03/25 03:32:43 explorer Exp $	*/
 
 /*-
@@ -62,6 +62,23 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+/*
+ * LMC1200 (DS1) & LMC5245 (DS3) LED definitions
+ * led0 yellow = far-end link is in Red alarm condition
+ * led1 blue   = received an Alarm Indication signal (upstream failure)
+ * led2 Green  = power to adapter, Gate Array loaded & driver attached
+ * led3 red    = Loss of Signal (LOS) or out of frame (OOF) conditions
+ *               detected on T3 receive signal
+ *
+ * LMC1000 (SSI) & LMC5200 (HSSI) LED definitions
+ * led0 Green  = power to adapter, Gate Array loaded & driver attached
+ * led1 Green  = DSR and DTR and RTS and CTS are set (CA, TA for LMC5200)
+ * led2 Green  = Cable detected (Green indicates non-loopback mode for LMC5200)
+ * led3 red    = No timing is available from the cable or the on-board
+ *               frequency generator. (ST not available for LMC5200)
+ */
+
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -413,6 +430,14 @@ lmc_watchdog(int unit)
 
 	state = 0;
 
+	/*
+	 * Make sure the tx jabber and rx watchdog are off,
+	 * and the transmit and recieve processes are running.
+	 */
+	LMC_CSR_WRITE (sc, csr_15, 0x00000011);
+	sc->lmc_cmdmode |= TULIP_CMD_TXRUN | TULIP_CMD_RXRUN;
+	LMC_CSR_WRITE (sc, csr_command, sc->lmc_cmdmode);
+
 	link_status = sc->lmc_media->get_link_status(sc);
 	ostatus = ((sc->lmc_flags & LMC_MODEMOK) == LMC_MODEMOK);
 
@@ -420,11 +445,21 @@ lmc_watchdog(int unit)
 	 * hardware level link lost, but the interface is marked as up.
 	 * Mark it as down.
 	 */
-        if (link_status == 0 && ostatus) {
+        if (link_status == LMC_LINK_DOWN && ostatus) {
 		printf(LMC_PRINTF_FMT ": physical link down\n",
 		       LMC_PRINTF_ARGS);
 		sc->lmc_flags &= ~LMC_MODEMOK;
-		lmc_led_off(sc, LMC_MII16_LED1);
+		if (sc->lmc_cardtype == LMC_CARDTYPE_DS3 ||
+		    sc->lmc_cardtype == LMC_CARDTYPE_T1)
+			lmc_led_on (sc, LMC_DS3_LED3 | LMC_DS3_LED2);
+							/* turn on red LED */
+		else {
+			lmc_led_off (sc, LMC_MII16_LED1);
+			lmc_led_on (sc, LMC_MII16_LED0);
+			if (sc->lmc_timing == LMC_CTL_CLOCK_SOURCE_EXT)
+				lmc_led_on (sc, LMC_MII16_LED3);
+		}
+
 	}
 
 	/*
@@ -437,9 +472,25 @@ lmc_watchdog(int unit)
 		if (sc->lmc_flags & LMC_IFUP)
 			lmc_ifup(sc);
 		sc->lmc_flags |= LMC_MODEMOK;
-		lmc_led_on(sc, LMC_MII16_LED1); 
+		if (sc->lmc_cardtype == LMC_CARDTYPE_DS3 ||
+		    sc->lmc_cardtype == LMC_CARDTYPE_T1)
+		{
+			sc->lmc_miireg16 |= LMC_DS3_LED3;
+			lmc_led_off (sc, LMC_DS3_LED3);
+							/* turn off red LED */
+			lmc_led_on (sc, LMC_DS3_LED2);
+		} else {
+			lmc_led_on (sc, LMC_MII16_LED0 | LMC_MII16_LED1 \
+				    | LMC_MII16_LED2);
+			if (sc->lmc_timing != LMC_CTL_CLOCK_SOURCE_EXT)
+				lmc_led_off (sc, LMC_MII16_LED3);
+		}
+
 		return;
 	}
+
+	/* Call media specific watchdog functions */
+	sc->lmc_media->watchdog(sc);
 
 	/*
 	 * remember the timer value
@@ -468,7 +519,14 @@ lmc_ifup(lmc_softc_t * const sc)
 
 	sc->lmc_flags |= LMC_IFUP;
 
-	lmc_led_on(sc, LMC_MII16_LED1);
+	/*
+	 * for DS3 & DS1 adapters light the green light, led2
+	 */
+	if (sc->lmc_cardtype == LMC_CARDTYPE_DS3 ||
+	    sc->lmc_cardtype == LMC_CARDTYPE_T1)
+		lmc_led_on (sc, LMC_MII16_LED2);
+	else
+		lmc_led_on (sc, LMC_MII16_LED0 | LMC_MII16_LED2);
 
 	/*
 	 * select what interrupts we want to get
@@ -501,8 +559,8 @@ lmc_ifdown(lmc_softc_t * const sc)
 	sc->lmc_if.if_timer = 0;
 	sc->lmc_flags &= ~LMC_IFUP;
 
-	sc->lmc_media->set_link_status(sc, 0);
-	lmc_led_off(sc, LMC_MII16_LED1);
+	sc->lmc_media->set_link_status(sc, LMC_LINK_DOWN);
+	lmc_led_off(sc, LMC_MII16_LED_ALL);
 
 	lmc_dec_reset(sc);
 	lmc_reset(sc);
@@ -1380,7 +1438,14 @@ lmc_attach(lmc_softc_t * const sc)
 	 * turn off those LEDs...
 	 */
 	sc->lmc_miireg16 |= LMC_MII16_LED_ALL;
-	lmc_led_on(sc, LMC_MII16_LED0);
+	/*
+	 * for DS3 & DS1 adapters light the green light, led2
+	 */
+	if (sc->lmc_cardtype == LMC_CARDTYPE_DS3 ||
+	    sc->lmc_cardtype == LMC_CARDTYPE_T1)
+		lmc_led_on (sc, LMC_MII16_LED2);
+	else
+		lmc_led_on (sc, LMC_MII16_LED0 | LMC_MII16_LED2);
 }
 
 void
