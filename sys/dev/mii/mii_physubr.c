@@ -1,4 +1,4 @@
-/*	$OpenBSD: mii_physubr.c,v 1.22 2004/11/18 16:15:33 brad Exp $	*/
+/*	$OpenBSD: mii_physubr.c,v 1.23 2004/12/08 06:57:55 mcbride Exp $	*/
 /*	$NetBSD: mii_physubr.c,v 1.20 2001/04/13 23:30:09 thorpej Exp $	*/
 
 /*-
@@ -382,7 +382,7 @@ mii_phy_statusmsg(struct mii_softc *sc)
 		splx(s);
 #if NCARP > 0
 		if (ifp->if_carp)
-			carp_carpdev_state(ifp->if_carp);
+			carp_carpdev_state(ifp);
 #endif
 	}
 }

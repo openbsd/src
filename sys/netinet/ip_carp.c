@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.73 2004/12/07 20:38:47 mcbride Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.74 2004/12/08 06:57:55 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -2041,10 +2041,15 @@ carp_set_state(struct carp_softc *sc, int state)
 }
 
 void
-carp_carpdev_state(void *v)
+carp_carpdev_state(struct ifnet *ifp)
 {
-	struct carp_if *cif = v;
+	struct carp_if *cif;
 	struct carp_softc *sc;
+
+	if (ifp->if_type == IFT_CARP)
+		return;
+
+	cif = (struct carp_if *)ifp->if_carp;
 
 	TAILQ_FOREACH(sc, &cif->vhif_vrs, sc_list) {
 		if (sc->sc_carpdev->if_link_state == LINK_STATE_DOWN ||
