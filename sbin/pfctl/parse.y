@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.293 2003/01/18 15:06:13 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.294 2003/01/19 10:19:15 camield Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -220,6 +220,7 @@ void	expand_rdr(struct pf_rule *, struct node_if *, struct node_proto *,
 void	expand_nat(struct pf_rule *, struct node_if *, struct node_proto *,
 	    struct node_host *, struct node_port *,
 	    struct node_host *, struct node_port *, struct node_host *);
+void	expand_label_str(char *, const char *, const char *);
 void	expand_label_if(const char *, char *, const char *);
 void	expand_label_addr(const char *, char *, u_int8_t, struct node_host *);
 void	expand_label_port(const char *, char *, struct node_port *);
@@ -2809,28 +2810,33 @@ struct keywords {
 	} while (0)
 
 void
+expand_label_str(char *label, const char *srch, const char *repl)
+{
+	char tmp[PF_RULE_LABEL_SIZE] = "";
+	char *p, *q;
+
+	p = q = label;
+	while ((q = strstr(p, srch)) != NULL) {
+		*q = '\0';
+		if ((strlcat(tmp, p, sizeof(tmp)) >= sizeof(tmp)) ||
+		    (strlcat(tmp, repl, sizeof(tmp)) >= sizeof(tmp)))
+			err(1, "expand_label: label too long");
+		q += strlen(srch);
+		p = q;
+	}
+	if (strlcat(tmp, p, sizeof(tmp)) >= sizeof(tmp))
+		err(1, "expand_label: label too long");
+	strlcpy(label, tmp, PF_RULE_LABEL_SIZE);	/* always fits */
+}
+
+void
 expand_label_if(const char *name, char *label, const char *ifname)
 {
-	char	 tmp[PF_RULE_LABEL_SIZE];
-	char	*p;
-
-	while ((p = strstr(label, name)) != NULL) {
-		if (p-label >= sizeof(tmp))
-			errx(1, "expand_label_if: label too long");
-		memcpy(tmp, label, p-label);
-		tmp[p-label] = 0;
-		if (!*ifname) {
-			if (strlcat(tmp, "any", sizeof(tmp)) >= sizeof(tmp))
-				errx(1, "expand_label_if: strlcat");
-		} else {
-			if (strlcat(tmp, ifname, sizeof(tmp)) >= sizeof(tmp))
-				errx(1, "expand_label_if: strlcat");
-		}
-		if (strlcat(tmp, p+strlen(name), sizeof(tmp)) >= sizeof(tmp))
-			errx(1, "expand_label_if: strlcat");
-		if (strlcpy(label, tmp, PF_RULE_LABEL_SIZE) >=
-		    PF_RULE_LABEL_SIZE)
-			errx(1, "expand_label_if: strlcpy");
+	if (strstr(label, name) != NULL) {
+		if (!*ifname)
+			expand_label_str(label, name, "any");
+		else
+			expand_label_str(label, name, ifname);
 	}
 }
 
@@ -2838,73 +2844,50 @@ void
 expand_label_addr(const char *name, char *label, sa_family_t af,
     struct node_host *h)
 {
-	char	 tmp[PF_RULE_LABEL_SIZE];
-	char	*p;
+	char tmp[64], tmp_not[66];
 
-	while ((p = strstr(label, name)) != NULL) {
-		if (p-label >= sizeof(tmp))
-			errx(1, "expand_label_addr: label too long");
-		memcpy(tmp, label, p-label);
-		tmp[p-label] = 0;
-		if (h->not) {
-			if (strlcat(tmp, "! ", sizeof(tmp)) >= sizeof(tmp))
-				errx(1, "expand_label_addr: strlcat");
-		}
-		if (h->addr.type == PF_ADDR_DYNIFTL) {
-			if (strlcat(tmp, "(", sizeof(tmp)) >= sizeof(tmp))
-				errx(1, "expand_label_addr: strlcat");
-			if (strlcat(tmp, h->addr.v.ifname, sizeof(tmp)) >=
-			    sizeof(tmp))
-				errx(1, "expand_label_addr: strlcat");
-			if (strlcat(tmp, ")", sizeof(tmp)) >= sizeof(tmp))
-				errx(1, "expand_label_addr: strlcat");
-		} else if (!af || (PF_AZERO(&h->addr.v.a.addr, af) &&
-		    PF_AZERO(&h->addr.v.a.mask, af))) {
-			if (strlcat(tmp, "any", sizeof(tmp)) >= sizeof(tmp))
-				errx(1, "expand_label_addr: strlcat");
-		} else {
+	if (strstr(label, name) != NULL) {
+		if (h->addr.type == PF_ADDR_DYNIFTL)
+			snprintf(tmp, sizeof(tmp), "(%s)", h->addr.v.ifname);
+		else if (!af || (PF_AZERO(&h->addr.v.a.addr, af) &&
+		    PF_AZERO(&h->addr.v.a.mask, af)))
+			snprintf(tmp, sizeof(tmp), "any");
+		else {
 			char	a[48];
 			int	bits;
 
-			if (inet_ntop(af, &h->addr.v.a.addr, a,
-			    sizeof(a)) == NULL) {
-				if (strlcat(a, "?", sizeof(a)) >= sizeof(a))
-					errx(1, "expand_label_addr: strlcat");
+			if (inet_ntop(af, &h->addr.v.a.addr, a, sizeof(a)) ==
+			    NULL)
+				snprintf(tmp, sizeof(tmp), "?");
+			else {
+				bits = unmask(&h->addr.v.a.mask, af);
+				if ((af == AF_INET && bits < 32) ||
+				    (af == AF_INET6 && bits < 128))
+					snprintf(tmp, sizeof(tmp), "%s/%d",
+					    a, bits);
+				else
+					snprintf(tmp, sizeof(tmp), "%s", a);
 			}
-			if (strlcat(tmp, a, sizeof(tmp)) >= sizeof(tmp))
-				errx(1, "expand_label_addr: strlcat");
-			bits = unmask(&h->addr.v.a.mask, af);
-			a[0] = 0;
-			if ((af == AF_INET && bits < 32) ||
-			    (af == AF_INET6 && bits < 128))
-				snprintf(a, sizeof(a), "/%d", bits);
-			if (strlcat(tmp, a, sizeof(tmp)) >= sizeof(tmp))
-				errx(1, "expand_label_addr: strlcat");
 		}
-		if (strlcat(tmp, p+strlen(name), sizeof(tmp)) >= sizeof(tmp))
-			errx(1, "expand_label_addr: strlcat");
-		if (strlcpy(label, tmp, PF_RULE_LABEL_SIZE) >=
-		    PF_RULE_LABEL_SIZE)
-			errx(1, "expand_label_addr: strlcpy");
+
+		if (h->not) {
+			snprintf(tmp_not, sizeof(tmp_not), "! %s", tmp);
+			expand_label_str(label, name, tmp_not);
+		} else
+			expand_label_str(label, name, tmp);
 	}
 }
 
 void
 expand_label_port(const char *name, char *label, struct node_port *port)
 {
-	char	 tmp[PF_RULE_LABEL_SIZE];
-	char	*p;
-	char	 a1[6], a2[6], op[13];
+	char	 a1[6], a2[6], op[13] = "";
 
-	while ((p = strstr(label, name)) != NULL) {
-		if (p-label >= sizeof(tmp))
-			errx(1, "expand_label_port: label too long");
-		memcpy(tmp, label, p-label);
-		tmp[p-label] = 0;
+	if (strstr(label, name) != NULL) {
 		snprintf(a1, sizeof(a1), "%u", ntohs(port->port[0]));
 		snprintf(a2, sizeof(a2), "%u", ntohs(port->port[1]));
 		if (!port->op)
-			op[0] = 0;
+			;
 		else if (port->op == PF_OP_IRG)
 			snprintf(op, sizeof(op), "%s><%s", a1, a2);
 		else if (port->op == PF_OP_XRG)
@@ -2921,61 +2904,35 @@ expand_label_port(const char *name, char *label, struct node_port *port)
 			snprintf(op, sizeof(op), ">%s", a1);
 		else if (port->op == PF_OP_GE)
 			snprintf(op, sizeof(op), ">=%s", a1);
-		if (strlcat(tmp, op, sizeof(tmp)) >= sizeof(tmp))
-			errx(1, "expand_label_port: strlcat");
-		if (strlcat(tmp, p+strlen(name), sizeof(tmp)) >= sizeof(tmp))
-			errx(1, "expand_label_port: strlcat");
-		if (strlcpy(label, tmp, PF_RULE_LABEL_SIZE) >=
-		    PF_RULE_LABEL_SIZE)
-			errx(1, "expand_label_port: strlcpy");
+		expand_label_str(label, name, op);
 	}
 }
 
 void
 expand_label_proto(const char *name, char *label, u_int8_t proto)
 {
-	char		 tmp[PF_RULE_LABEL_SIZE];
-	char		*p;
-	struct protoent	*pe;
+	struct protoent *pe;
+	char n[4];
 
-	while ((p = strstr(label, name)) != NULL) {
-		if (p-label >= sizeof(tmp))
-			errx(1, "expand_label_proto: label too long");
-		memcpy(tmp, label, p-label);
-		tmp[p-label] = 0;
+	if (strstr(label, name) != NULL) {
 		pe = getprotobynumber(proto);
-		if (pe != NULL) {
-			if (strlcat(tmp, pe->p_name, sizeof(tmp)) >= sizeof(tmp))
-				errx(1, "expand_label_proto: strlcat");
-		} else
-			snprintf(tmp+strlen(tmp), PF_RULE_LABEL_SIZE-strlen(tmp),
-			    "%u", proto);
-		if (strlcat(tmp, p+strlen(name), sizeof(tmp)) >= sizeof(tmp))
-			errx(1, "expand_label_proto: strlcat");
-		if (strlcpy(label, tmp, PF_RULE_LABEL_SIZE) >=
-		    PF_RULE_LABEL_SIZE)
-			errx(1, "expand_label_proto: strlcpy");
+		if (pe != NULL)
+			expand_label_str(label, name, pe->p_name);
+		else {
+			snprintf(n, sizeof(n), "%u", proto);
+			expand_label_str(label, name, n);
+		}
 	}
 }
 
 void
 expand_label_nr(const char *name, char *label)
 {
-	char	 tmp[PF_RULE_LABEL_SIZE];
-	char	*p;
+	char n[11];
 
-	while ((p = strstr(label, name)) != NULL) {
-		if (p-label >= sizeof(tmp))
-			errx(1, "expand_label_nr: label too long");
-		memcpy(tmp, label, p-label);
-		tmp[p-label] = 0;
-		snprintf(tmp+strlen(tmp), PF_RULE_LABEL_SIZE-strlen(tmp),
-		    "%u", pf->rule_nr);
-		if (strlcat(tmp, p+strlen(name), sizeof(tmp)) >= sizeof(tmp))
-			errx(1, "expand_label_nr: strlcat");
-		if (strlcpy(label, tmp, PF_RULE_LABEL_SIZE) >=
-		    PF_RULE_LABEL_SIZE)
-			errx(1, "expand_label_nr: strlcpy");
+	if (strstr(label, name) != NULL) {
+		snprintf(n, sizeof(n), "%u", pf->rule_nr);
+		expand_label_str(label, name, n);
 	}
 }
 
