@@ -1,6 +1,6 @@
 include(MAKEDEV.sub)dnl
 dnl
-vers(a, {-$OpenBSD: MAKEDEV.mi,v 1.30 2002/02/14 14:32:26 todd Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.mi,v 1.31 2002/02/14 17:44:38 todd Exp $-})dnl
 dnl
 divert(1)dnl
 {-#-}
@@ -89,6 +89,17 @@ dnl Note: be very wary of adding whitespace, carriage returns, or not
 dnl finishing a macro with ')dnl' .. otherwise, extra blank lines show up
 dnl in the output.
 dnl
+dnl TODO:
+dnl
+dnl make a 'disktgt' macro that automatically does:
+dnl disktgt(rd, {-Ramdisk-})
+dnl
+dnl	target(all,rd,0)
+dnl	target(ramd,rd,0)
+dnl	disk_q(rd)
+dnl	__devitem(rd, {-rd*-}, {-Ramdisk-})dnl
+dnl
+dnl
 _mkdev(loc, local, {-test -s $T.local && sh $T.local-})dnl
 dnl
 __devtitle(make, Device "make" file.  Valid arguments)dnl
@@ -125,7 +136,6 @@ target(all, rb, 0, 1, 2, 3)dnl
 target(all, rl, 0, 1, 2, 3)dnl
 target(all, rx, 0, 1)dnl
 target(all, tm, 0)dnl
-target(all, ts, 0)dnl
 target(all, up, 0, 1, 2, 3)dnl
 target(all, ut, 0)dnl
 target(all, wd, 0, 1, 2, 3)dnl
@@ -267,7 +277,7 @@ __devitem(ts, ts*, unibus ts11)dnl
 __devitem(ut, ut*, unibus tu45 emulations (e.g.si 9700))dnl
 __devtitle(dis, Disks)dnl
 __devitem(rz, rz*, SCSI disks)dnl
-__devitem(sd, {-sd*-}, SCSI disks{-,-} includes flopticals)dnl
+__devitem(sd, {-sd*-}, {-SCSI disks, includes flopticals-})dnl
 __devitem(hd, {-hd*-}, HP300 HP-IB disks)dnl
 __devitem(cd, {-cd*-}, SCSI cdrom drives)dnl
 __devitem(acd, acd*, ATAPI cdrom drives)dnl
@@ -280,7 +290,9 @@ _mcdev(ch, ch*, ch, {-major_ch_c-}, 660, operator)dnl
 __devitem(uk, uk*, SCSI Unknown device)dnl
 _mcdev(uk, uk*, uk, {-major_uk_c-}, 640, operator)dnl
 __devitem(ss, ss*, SCSI scanners)dnl
-_mkdev(ss, ss*, {-M ss$U c major_ss_c $U 440 operator
+_mkdev(ss, ss*, {-M ss$U c major_ss_c Mult($U,16) 640 operator
+	M nss$U c major_ss_c Add(Mult($U,16),1) 640 operator
+	M enss$U c major_ss_c Add(Mult($U,16),3) 640 operator
 	RMlist="$RMlist scan$U"
 	MKlist="$MKlist;umask 77;ln -s ss$U scan$U"-})dnl
 __devitem(ses, ses*, SES/SAF-TE SCSI devices)dnl
@@ -457,19 +469,18 @@ __devitem(dmf, dmf*, unibus dmf32)dnl
 __devitem(dh, dh*, {-unibus dh11 and emulations (e.g. Able dmax, Emulex cs-11)-})
 __devitem(vt, vt*, {-console-})dnl
 __devitem(dz, dz*, unibus dz11 and dz32)dnl
+__devitem(dl, dl*, unibus dl11)dnl
 _mkdev(dz, dz*,
-{-unit=${i#dz};
-       case $unit in
+{-case $U in
        [0-7])
 	       i=0
 	       while [ $i -lt 8 ]; do
-		       no=$(($unit * 8 + $i))
+		       no=Add(Mult($U, 8), $i)
 		       if [ $no -lt 10 ]; then
 			       no="0${no}"
 		       fi
-		       rm -f tty${no}
-		       mknod tty${no} c 1 $no
-		       i=$(($i + 1))
+		       M tty${no} c 1 $no 600
+		       let i=i+1
 	       done
 	       ;;
 	*)
@@ -477,38 +488,33 @@ _mkdev(dz, dz*,
 	       ;;
        esac-})dnl
 dnl XXX split this up abit?
-_mkdev(dhu, dhu*|dmz*|dmf*|dh*,
+_mkdev(dhu, dhu*|dmz*|dmf*|dh*|vt*,
 {-set -A cnvtbl 0 1 2 3 4 5 6 7 8 9 a b c d e f g h i j k l m n o p q r s t u v
 	case $i in
 	vt*)    name=vt; major=68; count=8;
-		unit=${i#vt}
-		case $unit in
+		case $U in
 		0) ch=w ;;
 		*) echo bad unit for $name in: $i ;;
 		esac;;
 	dmz*)   name=dmz; major=37; count=24;
-		unit=${i#dmz}
-		case $unit in
+		case $U in
 		0) ch=a ;; 1) ch=b ;; 2) ch=c ;; 3) ch=e ;; 4) ch=f ;;
 		*) echo bad unit for $name in: $i ;;
 		esac;;
 	dmf*)   name=dmf; major=22; count=8;
-		unit=${i#dmf}
-		case $unit in
+		case $U in
 		0) ch=A ;; 1) ch=B ;; 2) ch=C ;; 3) ch=E ;;
 		4) ch=F ;; 5) ch=G ;; 6) ch=H ;; 7) ch=I ;;
 		*) echo bad unit for $name in: $i ;;
 		esac;;
 	dhu*)   name=dhu; major=34; count=16;
-		unit=${i#dhu}
-		case $unit in
+		case $U in
 		0) ch=S ;; 1) ch=T ;; 2) ch=U ;; 3) ch=V ;;
 		4) ch=W ;; 5) ch=X ;; 6) ch=Y ;; 7) ch=Z ;;
 		*) echo bad unit for $name in: $i ;;
 		esac;;
 	dh*)    name=dh; major=12; count=16;
-		unit=${i#dh}
-		case $unit in
+		case $U in
 		0) ch=h ;; 1) ch=i ;; 2) ch=j ;; 3) ch=k ;;
 		4) ch=l ;; 5) ch=m ;; 6) ch=n ;; 7) ch=o ;;
 		*) echo bad unit for $name in: $i ;;
@@ -518,35 +524,35 @@ _mkdev(dhu, dhu*|dmz*|dmf*|dh*,
 	while [ $i -lt $count ]; do
 		let=${cnvtbl[$i]}
 		if [ -n "$let" ] ;then
-			rm -f tty${ch}${let}
-			mknod tty${ch}${let} c $major $(($unit * $count + $i))
+			M tty${ch}${let} c $major Add(Mult($U, $count), $i) 600
 		else
-			echo bad count for ${name}: $unit, $count, $i
+			echo bad count for ${name}: $U, $count, $i
 		fi
-		i=$(($i + 1))
+		let i=i+1
 	done
 	;;
 
 dl*)
-	unit=${i#dl}
 	major=66
-	let=${cnvtbl[$unit]}
+	let=${cnvtbl[$U]}
 	if [ -n "$let" ] ;then
-		rm -f ttyJ${let}
-		mknod ttyJ${let} c $major $unit
+		M ttyJ${let} c $major $U 600
 	else
-		echo bad number for ${name}: $unit
+		echo bad number for ${name}: $U
 	fi-})dnl
 dnl
 target( all, hd, 0, 1, 2)dnl
-target( all, mt, 0)dnl
+target( all, mt, 0, 1)dnl
+target( all, ts, 0, 1)dnl
 target( all, uu, 0)dnl
-target( all, st, 0)dnl
+target( all, st, 0, 1)dnl
 target( all, dhu, 0)dnl
 target( all, dmz, 0)dnl
 target( all, dmf, 0)dnl
 target( all, dh, 0)dnl
 target( all, dz, 0)dnl
+target( all, dl, 0)dnl
+target( all, vt, 0)dnl
 target(ramd, fd, 0)dnl
 target(ramd, sd, 0, 1, 2, 3)dnl
 target(ramd, rd, 0)dnl
@@ -676,29 +682,17 @@ __devitem(quad, quadmouse, "quadrature mouse")dnl
 __devtitle(pty, Pseudo terminals)dnl
 __devitem(tty, tty*, set of 16 slave psuedo terminals)dnl
 __devitem(pty, pty*, set of 16 master pseudo terminals)dnl
-_mkdev(pty, pty*, {-case $U in
-	0) off=0 name=p;;
-	1) off=16 name=q;;
-	2) off=32 name=r;;
-	3) off=48 name=s;;
-	4) off=64 name=t;;
-	5) off=80 name=u;;
-	6) off=96 name=v;;
-	7) off=112 name=w;;
-	8) off=128 name=x;;
-	9) off=144 name=y;;
-	10) off=160 name=z;;
-	11) off=176 name=P;;
-	12) off=192 name=Q;;
-	13) off=206 name=R;;
-	14) off=224 name=S;;
-	15) off=240 name=T;;
-	*) echo bad unit for pty in: $i; continue;;
-	esac
+_mkdev(pty, pty*, {-if [ $U -gt 15 ]; then
+		echo bad unit for pty in: $i
+		continue
+	fi
+	set -A tbl p q r s t u v w x y z P Q R S T
+	name=${tbl[$U]}
 	n=0
 	while [ $n -lt 16 ]
 	do
 		nam=$name$(hex $n)
+		off=Mult($U, 16)
 		M tty$nam c major_tty_c Add($off, $n)
 		M pty$nam c major_pty_c Add($off, $n)
 		n=Add($n, 1)

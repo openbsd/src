@@ -1,5 +1,5 @@
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.4 2002/02/14 14:32:26 todd Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.5 2002/02/14 17:44:38 todd Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001 Todd T. Fries <todd@OpenBSD.org>
@@ -30,7 +30,7 @@ _DEV(all)
 _DEV(std)
 _DEV(loc)
 _TITLE(tap)
-_DEV(st, 38, 21)
+_DEV(st, 60, 21)
 _DEV(mt, 38, 15)
 _DEV(ht, 5, 1)
 _DEV(tm, 14, 5)
@@ -67,8 +67,8 @@ _DEV(dmf, 22)
 _DEV(dmz, 37)
 _DEV(vt, 68)
 _DEV(dz, 1)
+_DEV(dl, 66)
 _TITLE(spec)
-_DEV(au, 69)
 _DEV(oppr)
 _DEV(bpf, 56)
 _DEV(pf, 42)
@@ -90,16 +90,17 @@ ramdisk)
 	;;
 
 _std(2, 3, 50, 7, 33)
-	M ttyg0		c 25 0
-	M ttyg1		c 25 1
-	M ttyg2		c 25 2
-	M ttyg3		c 25 3
-	M crl		c 35 0
+	M ttyg0		c 25 0 600
+	M ttyg1		c 25 1 600
+	M ttyg2		c 25 2 600
+	M ttyg3		c 25 3 600
+	M crl		c 35 0 600
 	M csa1		c 51 0 600
 	M csa2		c 51 1 600
-	M tu0		b 8 0
-	M tu1		b 8 1
-	M kUmem		c 3 3 660
+	M tu0		b 8 0 600
+	M tu1		b 8 1 600
+	M floppy	c 8 0 600
+	M kUmem		c 3 3 600
 	;;
 
 ht*|tm*|mt*|ts*|ut*)
@@ -112,21 +113,23 @@ ht*|tm*|mt*|ts*|ut*)
 	esac
 	case $U in
 	[0-7])
-		four=Add($U, 4) eight=Add($U, 8)
-		twelve=Add($U, 12) twenty=Add($U, 20)
+		four=Add($U, 4)
+		eight=Add($U, 8)
+		twelve=Add($U, 12)
+		twenty=Add($U, 20)
 		M $n$U		b $b $U	660 operator
 		M $n$four	b $b $four	660 operator
 		M $n$eight	b $b $eight	660 operator
 		M $n$twelve	b $b $twelve	660 operator
-		M n$n$four	b $b $four	660 operator
-		M n$n$twelve	b $b $twelve	660 operator
-		M nr$n$four	c $c $four	660 operator
-		M nr$n$twelve	c $c $twelve	660 operator
+		M n$n$U		b $b $four	660 operator;: sanity w/pdp11 v7
+		M n$n$eight	b $b $twelve	660 operator;: ditto
+		M nr$n$U	c $c $four	660 operator;: ditto
+		M nr$n$twelve	c $c $twelve	660 operator;: ditto
 		M r$n$U		c $c $U		660 operator
 		M r$n$four	c $c $four	660 operator
 		M r$n$eight	c $c $eight	660 operator
 		M r$n$twelve	c $c $twelve	660 operator
-		if [ $i = ut ]; : XXXX
+		if [ "$i" = "ut" ];
 		then
 			M $n$twenty	b $b $twenty 660 operator
 			M r$n$twenty	c $b $twenty 660 operator
