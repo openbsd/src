@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.7.2.1 1995/10/15 14:17:17 ragge Exp $	*/
+/*	$NetBSD: clock.c,v 1.8 1995/11/30 00:59:32 jtc Exp $	*/
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.

@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.7.2.1 1995/10/15 13:52:58 ragge Exp $
+#	$NetBSD: GENERIC,v 1.8 1995/11/30 00:59:20 jtc Exp $
 #
 # GENERIC VAX, currently only supports 11/750 anyway.
 #

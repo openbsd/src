@@ -1,4 +1,4 @@
-#	$NetBSD: RAMDISK,v 1.1.2.1 1995/11/18 07:16:14 gwr Exp $
+#	$NetBSD: RAMDISK,v 1.2 1995/11/17 23:31:15 gwr Exp $
 
 #
 # RAMDISK: Root/swap on ramdisk

@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.3.2.3 1995/11/21 11:30:22 leo Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.5 1995/11/30 00:57:35 jtc Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.

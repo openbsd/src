@@ -1,4 +1,4 @@
-/*	$NetBSD: ppi.c,v 1.6 1994/10/26 07:24:46 cgd Exp $	*/
+/*	$NetBSD: ppi.c,v 1.7 1995/12/02 18:22:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -51,10 +51,10 @@
 #include <hp300/dev/device.h>
 #include <hp300/dev/ppiioctl.h>
 
-int	ppiattach(), ppistart();
-void	ppitimo();
+int	ppimatch(), ppistart();
+void	ppiattach(), ppitimo();
 struct	driver ppidriver = {
-	ppiattach, "ppi", ppistart,
+	ppimatch, ppiattach, "ppi", ppistart,
 };
 
 struct	ppi_softc {
@@ -84,7 +84,8 @@ int	ppidebug = 0x80;
 #define PDB_NOCHECK	0x80
 #endif
 
-ppiattach(hd)
+int
+ppimatch(hd)
 	register struct hp_device *hd;
 {
 	register struct ppi_softc *sc = &ppi_softc[hd->hp_unit];
@@ -98,14 +99,25 @@ ppiattach(hd)
 	 * a cs80 disk or tape for a ppi device.
 	 */
 	if (hpibid(hd->hp_ctlr, hd->hp_slave) & 0x200)
-		return(0);
+		return (0);
+
+	sc->sc_hd = hd;
+	return (1);
+}
+
+void
+ppiattach(hd)
+	register struct hp_device *hd;
+{
+	struct ppi_softc *sc = &ppi_softc[hd->hp_unit];
+
+	printf("\n");
+
 	sc->sc_flags = PPIF_ALIVE;
 	sc->sc_dq.dq_ctlr = hd->hp_ctlr;
 	sc->sc_dq.dq_unit = hd->hp_unit;
 	sc->sc_dq.dq_slave = hd->hp_slave;
 	sc->sc_dq.dq_driver = &ppidriver;
-	sc->sc_hd = hd;
-	return(1);
 }
 
 ppiopen(dev, flags)

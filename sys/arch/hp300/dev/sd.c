@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.16.2.2 1995/10/16 09:01:36 thorpej Exp $	*/
+/*	$NetBSD: sd.c,v 1.20 1995/12/09 07:31:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -85,11 +85,12 @@ extern void biodone();
 extern int physio();
 extern void TBIS();
 
-int	sdinit();
-void	sdstrategy(), sdstart(), sdustart(), sdgo(), sdintr();
+int	sdmatch();
+void	sdattach(), sdstrategy(), sdstart(), sdustart(), sdgo(), sdintr();
 
 struct	driver sddriver = {
-	sdinit, "sd", (int (*)())sdstart, (int (*)())sdgo, (int (*)())sdintr,
+	sdmatch, sdattach, "sd", (int (*)())sdstart,
+	(int (*)())sdgo, (int (*)())sdintr,
 };
 
 #ifdef DEBUG
@@ -170,9 +171,10 @@ sdgetgeom(sc, hd)
 }
 
 static int
-sdident(sc, hd)
+sdident(sc, hd, verbose)
 	struct sd_softc *sc;
 	struct hp_device *hd;
+	int verbose;
 {
 	int unit;
 	register int ctlr, slave;
@@ -265,45 +267,50 @@ sdident(sc, hd)
 	switch (inqbuf.version) {
 	case 1:
 	case 2:
-		printf("sd%d: %s %s", hd->hp_unit, vendor, product);
-		if (revision[0] != '\0')
-			printf(" rev %s", revision);
-		if (inqbuf.version == 2)
-			printf(" (SCSI-2)");
+		if (verbose) {
+			printf(": <%s, %s, %s>", vendor, product, revision);
+			if (inqbuf.version == 2)
+				printf(" (SCSI-2)");
+		}
 		break;
 	default:
-		printf("sd%d: type 0x%x, qual 0x%x, ver %d", hd->hp_unit,
-		       inqbuf.type, inqbuf.qual, inqbuf.version);
+		if (verbose)
+			printf(": type 0x%x, qual 0x%x, ver %d",
+			       inqbuf.type, inqbuf.qual, inqbuf.version);
 		break;
 	}
-	printf("\n");
+	if (verbose)
+		printf("\n");
 
-	/*
-	 * Print out some additional information.
-	 */
-	printf("sd%d: ", hd->hp_unit);
-	switch (inqbuf.type) {
-	case 4:	
-		printf("WORM, ");
-		break;
+	if (verbose) {
+		/*
+		 * Print out some additional information.
+		 */
+		printf("%s: ", hd->hp_xname);
+		switch (inqbuf.type) {
+		case 4:	
+			printf("WORM, ");
+			break;
 
-	case 5:
-		printf("CD-ROM, ");
-		break;
+		case 5:
+			printf("CD-ROM, ");
+			break;
 
-	case 7:
-		printf("Magneto-optical, ");
-		break;
+		case 7:
+			printf("Magneto-optical, ");
+			break;
 
-	default:
-		printf("%d cylinders, %d heads, ", sc->sc_cyls, sc->sc_heads);
+		default:
+			printf("%d cylinders, %d heads, ",
+			    sc->sc_cyls, sc->sc_heads);
+		}
+
+		if (sc->sc_blks)
+			printf("%d blocks, %d bytes/block\n",
+			    sc->sc_blks >> sc->sc_bshift, sc->sc_blksize);
+		else
+			printf("drive empty\n");
 	}
-
-	if (sc->sc_blks)
-		printf("%d blocks, %d bytes/block\n",
-		    sc->sc_blks >> sc->sc_bshift, sc->sc_blksize);
-	else
-		printf("drive empty\n");
 
 	sc->sc_wpms = 32 * (60 * DEV_BSIZE / 2);	/* XXX */
 	scsi_delay(0);
@@ -314,7 +321,7 @@ failed:
 }
 
 int
-sdinit(hd)
+sdmatch(hd)
 	register struct hp_device *hd;
 {
 	register struct sd_softc *sc = &sd_softc[hd->hp_unit];
@@ -327,16 +334,27 @@ sdinit(hd)
 	 */
 	sc->sc_format_pid = -1;
 	sc->sc_punit = sdpunit(hd->hp_flags);
-	sc->sc_type = sdident(sc, hd);
+	sc->sc_type = sdident(sc, hd, 0);
 	if (sc->sc_type < 0)
-		return(0);
+		return (0);
+
+	return (1);
+}
+
+void
+sdattach(hd)
+	register struct hp_device *hd;
+{
+	struct sd_softc *sc = &sd_softc[hd->hp_unit];
+
+	(void)sdident(sc, hd, 1);	/* XXX Ick. */
+
 	sc->sc_dq.dq_ctlr = hd->hp_ctlr;
 	sc->sc_dq.dq_unit = hd->hp_unit;
 	sc->sc_dq.dq_slave = hd->hp_slave;
 	sc->sc_dq.dq_driver = &sddriver;
 
 	sc->sc_flags |= SDF_ALIVE;
-	return(1);
 }
 
 void
@@ -400,8 +418,8 @@ sdgetcapacity(sc, hd, dev)
 		if (i != STS_CHECKCOND || (sc->sc_flags & SDF_RMEDIA) == 0) {
 #ifdef DEBUG
 			if (sddebug & SDB_CAPACITY)
-				printf("sd%d: read_capacity returns %d\n",
-				       hd->hp_unit, i);
+				printf("%s: read_capacity returns %d\n",
+				       hd->hp_xname, i);
 #endif
 			free(capbuf, M_DEVBUF);
 			return (-1);
@@ -414,8 +432,8 @@ sdgetcapacity(sc, hd, dev)
 		sc->sc_bshift = 0;
 #ifdef DEBUG
 		if (sddebug & SDB_CAPACITY)
-			printf("sd%d: removable media not present\n",
-			       hd->hp_unit);
+			printf("%s: removable media not present\n",
+			       hd->hp_xname);
 #endif
 		free(capbuf, M_DEVBUF);
 		return (1);
@@ -430,8 +448,8 @@ sdgetcapacity(sc, hd, dev)
 
 	if (sc->sc_blksize != DEV_BSIZE) {
 		if (sc->sc_blksize < DEV_BSIZE) {
-			printf("sd%d: need at least %d byte blocks - %s\n",
-				hd->hp_unit, DEV_BSIZE, "drive ignored");
+			printf("%s: need at least %d byte blocks - %s\n",
+			    hd->hp_xname, DEV_BSIZE, "drive ignored");
 			return (-1);
 		}
 		for (i = sc->sc_blksize; i > DEV_BSIZE; i >>= 1)
@@ -440,7 +458,7 @@ sdgetcapacity(sc, hd, dev)
 	}
 #ifdef DEBUG
 	if (sddebug & SDB_CAPACITY)
-		printf("sd%d: blks=%d, blksize=%d, bshift=%d\n", hd->hp_unit,
+		printf("%s: blks=%d, blksize=%d, bshift=%d\n", hd->hp_xname,
 		       sc->sc_blks, sc->sc_blksize, sc->sc_bshift);
 #endif
 	sdgetgeom(sc, hd);
@@ -520,13 +538,13 @@ sdgetinfo(dev)
 		/* XXX ensure size is at least one device block */
 		lp->d_partitions[2].p_size =
 			roundup(LABELSECTOR+1, btodb(sc->sc_blksize));
-		msg = readdisklabel(sdlabdev(dev), sdstrategy, lp);
+		msg = readdisklabel(sdlabdev(dev), sdstrategy, lp, NULL);
 		if (msg == NULL)
 			return (0);
 	}
 
 	pi = lp->d_partitions;
-	printf("sd%d: WARNING: %s, ", unit, msg);
+	printf("%s: WARNING: %s, ", sc->sc_hd->hp_xname, msg);
 #ifdef COMPAT_NOLABEL
 	if (usedefault) {
 		printf("using old default partitioning\n");
@@ -825,7 +843,7 @@ sderror(unit, sc, hp, stat)
 				   sc->sc_punit, sdsense[unit].sense,
 				   sizeof(sdsense[unit].sense));
 		sp = (struct scsi_xsense *)sdsense[unit].sense;
-		printf("sd%d: scsi sense class %d, code %d", unit,
+		printf("%s: scsi sense class %d, code %d", hp->hp_xname,
 			sp->class, sp->code);
 		if (sp->class == 7) {
 			printf(", key %d", sp->key);
@@ -955,8 +973,8 @@ sdgo(unit)
 		pad = (bp->b_bcount & (sc->sc_blksize - 1)) != 0;
 #ifdef DEBUG
 		if (pad)
-			printf("sd%d: partial block xfer -- %x bytes\n",
-			       unit, bp->b_bcount);
+			printf("%s: partial block xfer -- %x bytes\n",
+			       sc->sc_hd->hp_xname, bp->b_bcount);
 #endif
 		sdstats[unit].sdtransfers++;
 	}
@@ -975,8 +993,9 @@ sdgo(unit)
 	}
 #ifdef DEBUG
 	if (sddebug & SDB_ERROR)
-		printf("sd%d: sdstart: %s adr %d blk %d len %d ecnt %d\n",
-		       unit, bp->b_flags & B_READ? "read" : "write",
+		printf("%s: sdstart: %s adr %d blk %d len %d ecnt %d\n",
+		       sc->sc_hd->hp_xname,
+		       bp->b_flags & B_READ? "read" : "write",
 		       bp->b_un.b_addr, bp->b_cylin, bp->b_bcount,
 		       sdtab[unit].b_errcnt);
 #endif
@@ -996,7 +1015,7 @@ sdintr(unit, stat)
 	int cond;
 	
 	if (bp == NULL) {
-		printf("sd%d: bp == NULL\n", unit);
+		printf("%s: bp == NULL\n", sc->sc_hd->hp_xname);
 		return;
 	}
 	if (hp->hp_dk >= 0)
@@ -1004,16 +1023,17 @@ sdintr(unit, stat)
 	if (stat) {
 #ifdef DEBUG
 		if (sddebug & SDB_ERROR)
-			printf("sd%d: sdintr: bad scsi status 0x%x\n",
-				unit, stat);
+			printf("%s: sdintr: bad scsi status 0x%x\n",
+				sc->sc_hd->hp_xname, stat);
 #endif
 		cond = sderror(unit, sc, hp, stat);
 		if (cond) {
 			if (cond < 0 && sdtab[unit].b_errcnt++ < SDRETRY) {
 #ifdef DEBUG
 				if (sddebug & SDB_ERROR)
-					printf("sd%d: retry #%d\n",
-					       unit, sdtab[unit].b_errcnt);
+					printf("%s: retry #%d\n",
+					    sc->sc_hd->hp_xname,
+					    sdtab[unit].b_errcnt);
 #endif
 				sdstart(unit);
 				return;

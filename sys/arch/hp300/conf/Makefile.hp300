@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.hp300,v 1.26.2.2 1995/10/22 03:41:15 thorpej Exp $
+#	$NetBSD: Makefile.hp300,v 1.28 1995/10/22 06:05:21 thorpej Exp $
 
 #	@(#)Makefile.hp300	8.2 (Berkeley) 1/23/94
 #

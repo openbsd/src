@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.29.2.1 1995/11/10 22:09:00 gwr Exp $	*/
+/*	$NetBSD: param.h,v 1.30 1995/11/10 22:04:48 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross

@@ -1,4 +1,4 @@
-/*	$NetBSD: hilvar.h,v 1.8 1994/10/26 07:24:16 cgd Exp $	*/
+/*	$NetBSD: hilvar.h,v 1.11 1995/12/11 19:41:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -95,7 +95,7 @@ struct hilloopdev {
 #define HIL_ASLEEP	0x40	/* process awaiting input on device */
 #define HIL_DERROR	0x80	/* loop has reconfigured, reality altered */
 
-struct hilloop {
+struct hil_softc {
 	struct	hil_dev	*hl_addr;	/* base of hardware registers */
 	u_char 	hl_cmddone;		/* */
 	u_char 	hl_cmdending;		/* */

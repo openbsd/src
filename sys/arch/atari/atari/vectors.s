@@ -1,4 +1,4 @@
-/*	$NetBSD: vectors.s,v 1.2 1995/05/05 16:30:35 leo Exp $	*/
+/*	$NetBSD: vectors.s,v 1.3 1995/11/30 21:52:50 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah
@@ -133,7 +133,11 @@ Lvectab:
 	.long	_badmfpint	|  66: modem port 1 - CTS
 	.long	_badmfpint	|  67: unassigned
 	.long	_badmfpint	|  68: modem port 1 baudgen (Timer D)
+#ifdef STATCLOCK
+	.long	mfp_timc	|  69: Timer C {stat,prof}clock
+#else
 	.long	_badmfpint	|  69: Timer C
+#endif /* STATCLOCK */
 	.long	mfp_kbd		|  70: KBD/MIDI IRQ
 	.long	mfp_fd_acsi	|  71: FDC/ACSI DMA
 	.long	_badmfpint	|  72: Display enable counter

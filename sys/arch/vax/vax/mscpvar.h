@@ -1,4 +1,4 @@
-/*	$NetBSD: mscpvar.h,v 1.5.2.1 1995/10/15 14:18:53 ragge Exp $	*/
+/*	$NetBSD: mscpvar.h,v 1.6 1995/11/10 19:09:58 ragge Exp $	*/
 
 /*
  * Copyright (c) 1988 Regents of the University of California.

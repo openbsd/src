@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.2.2.1 1995/10/13 03:22:51 jonathan Exp $	*/
+/*	$NetBSD: if_le.c,v 1.3 1995/11/25 01:23:51 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -77,6 +77,7 @@ extern u_long asic_base;
 #include <pmax/tc/tc.h>
 #include <pmax/pmax/asic.h>
 #include <pmax/tc/if_levar.h>
+#define LEINTR_UNIT	1	/* pmax interrupts take a unit as arg */
 #else /* Alpha */
 
 typedef  u_int64 word_t;
@@ -93,8 +94,10 @@ typedef  u_int64 word_t;
 
 
 #include <dev/ic/am7990reg.h>
+#define LE_NEED_BUF_CONTIG
+#define LE_NEED_BUF_GAP2
+#define LE_NEED_BUF_GAP16
 #include <dev/ic/am7990var.h>
-
 
 /* access LANCE registers */
 void lewritereg();
@@ -110,42 +113,18 @@ extern caddr_t le_iomem;
 #define	LE_SOFTC(unit)	lecd.cd_devs[unit]
 #define	LE_DELAY(x)	DELAY(x)
 
-/*
- * Routines for accessing the transmit and receive buffers. Unfortunately,
- * CPU addressing of these buffers is done in one of 3 ways:
- * - contiguous (for the 3max and turbochannel option card)
- * - gap2, which means shorts (2 bytes) interspersed with short (2 byte)
- *   spaces (for the kn01)
- * - gap16, which means 16bytes interspersed with 16byte spaces
- *   for buffers which must begin on a 32byte boundary (for 3min,
- *   maxine and 3maxplus).  The gap16 machines still need gap2 for DMA
- *   ring-buffer descriptors.
- * These functions are now defined in the machine-independent code;
- * set the preprocessor macros that say which ones we need.
- */
-
-#define	LE_NEED_BUF_CONTIG
-#define	LE_NEED_BUF_GAP2
-#define	LE_NEED_BUF_GAP16
-
 int lematch __P((struct device *, void *, void *));
 void leattach __P((struct device *, struct device *, void *));
 
-int leintr __P((void *));
+#ifdef LEINTR_UNIT
+int leintr __P((int unit));
+#else
+int leintr __P((void *sc));
+#endif
 
 struct cfdriver lecd = {
 	NULL, "le", lematch, leattach, DV_IFNET, sizeof (struct le_softc)
 };
-
-void copytobuf_contig __P((struct le_softc *, void *, int, int));
-void copyfrombuf_contig __P((struct le_softc *, void *, int, int));
-void zerobuf_contig __P((struct le_softc *, int, int));
-integrate void copytobuf_gap16 __P((struct le_softc *, void *, int, int));
-integrate void copyfrombuf_gap16 __P((struct le_softc *, void *, int, int));
-integrate void zerobuf_gap16 __P((struct le_softc *, int, int));
-integrate void copytobuf_gap2 __P((struct le_softc *, void *, int, int));
-integrate void copyfrombuf_gap2 __P((struct le_softc *, void *, int, int));
-integrate void zerobuf_gap2 __P((struct le_softc *, int, int));
 
 integrate void
 lewrcsr(sc, port, val)
@@ -191,7 +170,7 @@ lematch(parent, match, aux)
 	/* make sure that we're looking for this type of device. */
 	if (!BUS_MATCHNAME(ca, "PMAD-BA ") &&	/* untested alpha TC option */
 	    !BUS_MATCHNAME(ca, "PMAD-AA ") && /* KN02 baseboard, old option */
-	    !BUS_MATCHNAME(ca, "lance"))  /* Our name for baseboard devices */
+	    !BUS_MATCHNAME(ca, "lance"))	/* NetBSD name for b'board  */
 		return (0);
 
 #ifdef notdef /* XXX */
@@ -225,11 +204,9 @@ leattach(parent, self, aux)
 
 		sc->sc_r1 = (struct lereg1 *)
 		    MACH_PHYS_TO_UNCACHED(BUS_CVTADDR(ca));
-
-#ifdef alpha	/* !pmax */
+#ifdef alpha
 		sc->sc_r1 = TC_DENSE_TO_SPARSE(sc->sc_r1);
-#endif	/* !pmax */
-
+#endif
 		sc->sc_mem = (void *)MACH_PHYS_TO_UNCACHED(le_iomem);
 /* XXX */	cp = (u_char *)ASIC_SYS_ETHER_ADDRESS(asic_base);
 
@@ -244,20 +221,17 @@ leattach(parent, self, aux)
 		 */
 		ldp = (volatile u_int *) (ASIC_REG_LANCE_DMAPTR(asic_base));
 		dma_mask = ((word_t)le_iomem << 3);
-
-#ifdef alpha /* !pmax */
+#ifdef alpha
 		/* Set upper 64 bits of DMA mask */
 		dma_mask  = (dma_mask & ~(word_t)0x1f) |
 			(((word_t)le_iomem >> 29) & 0x1f);
-#endif /* alpha*/
-
-		*ldp = dma_mask;
+#endif /*alpha*/
 		*(volatile u_int *)ASIC_REG_CSR(asic_base) |=
 		    ASIC_CSR_DMAEN_LANCE;
 		wbflush();
-	} else
+	}
 #ifdef pmax
-	if (sc->sc_dev.dv_unit == 0 && (pmax_boardtype == DS_PMAX)) {
+	 else if (sc->sc_dev.dv_unit == 0 && (pmax_boardtype == DS_PMAX)) {
 		/* It's on the baseboard, attached directly to mainbus. */
 
 		sc->sc_r1 = (struct lereg1 *)BUS_CVTADDR(ca);
@@ -270,7 +244,7 @@ leattach(parent, self, aux)
 		sc->sc_copyfrombuf = copyfrombuf_gap2;
 		sc->sc_zerobuf = zerobuf_gap2;
 	}
-#endif	/* pmax */
+#endif
 	else {
 		/* It's on the turbochannel proper, or on KN02 baseboard. */
 		sc->sc_r1 = (struct lereg1 *)
@@ -301,8 +275,11 @@ leattach(parent, self, aux)
 	sc->sc_arpcom.ac_if.if_name = lecd.cd_name;
 	leconfig(sc);
 
+#ifdef LEINTR_UNIT
+	BUS_INTR_ESTABLISH(ca, leintr, self->dv_unit);
+#else
 	BUS_INTR_ESTABLISH(ca, leintr, sc);
-
+#endif
 	if (SYSTEM_HAS_ASIC()) {
 		/* XXX YEECH!!! */
 		*(volatile u_int *)ASIC_REG_IMSK(asic_base) |= ASIC_INTR_LANCE;
@@ -334,238 +311,17 @@ lewritereg(regptr, val)
 	}
 }
 
+/*
+ * Routines for accessing the transmit and receive buffers are provided
+ * by am7990.c, because of the LE_NEED_BUF_* macros defined above.
+ * Unfortunately, CPU addressing of these buffers is done in one of
+ * 3 ways:
+ * - contiguous (for the 3max and turbochannel option card)
+ * - gap2, which means shorts (2 bytes) interspersed with short (2 byte)
+ *   spaces (for the pmax)
+ * - gap16, which means 16bytes interspersed with 16byte spaces
+ *   for buffers which must begin on a 32byte boundary (for 3min and maxine)
+ * The buffer offset is the logical byte offset, assuming contiguous storage.
+ */
+
 #include <dev/ic/am7990.c>
-
-/**
- ** XXX These could arguably go in dev/ic/am7990.c, or at least somewhere
- **     sharable with other Lance drivers that need them.
- **/
-
-/*
- * Routines for accessing the transmit and receive buffers.
- * The various CPU and adapter configurations supported by this
- * driver require three different access methods for buffers
- * and descriptors:
- *	(1) contig (contiguous data; no padding),
- *	(2) gap2 (two bytes of data followed by two bytes of padding),
- *	(3) gap16 (16 bytes of data followed by 16 bytes of padding).
- */
-
-#ifdef LE_NEED_BUF_CONTIG
-/*
- * contig: contiguous data with no padding.
- *
- * Buffers may have any alignment.
- */
-
-/*integrate*/ void
-copytobuf_contig(sc, from, boff, len)
-	struct le_softc *sc;
-	void *from;
-	int boff, len;
-{
-	volatile caddr_t buf = sc->sc_mem;
-
-	/*
-	 * Just call bcopy() to do the work.
-	 */
-	bcopy(from, buf + boff, len);
-}
-
-/*integrate*/ void
-copyfrombuf_contig(sc, to, boff, len)
-	struct le_softc *sc;
-	void *to;
-	int boff, len;
-{
-	volatile caddr_t buf = sc->sc_mem;
-
-	/*
-	 * Just call bcopy() to do the work.
-	 */
-	bcopy(buf + boff, to, len);
-}
-
-/*integrate*/ void
-zerobuf_contig(sc, boff, len)
-	struct le_softc *sc;
-	int boff, len;
-{
-	volatile caddr_t buf = sc->sc_mem;
-
-	/*
-	 * Just let bzero() do the work
-	 */
-	bzero(buf + boff, len);
-}
-#endif /* LE_NEED_BUF_CONTIG */
-
-#ifdef LE_NEED_BUF_GAP2
-/*
- * gap2: two bytes of data followed by two bytes of pad.
- *
- * Buffers must be 4-byte aligned.  The code doesn't worry about
- * doing an extra byte.
- */
-
-integrate void
-copytobuf_gap2(sc, fromv, boff, len)
-	struct le_softc *sc;
-	void *fromv;
-	int boff;
-	register int len;
-{
-	volatile caddr_t buf = sc->sc_mem;
-	register caddr_t from = fromv;
-	register volatile u_int16_t *bptr;
-	register int xfer;
-
-	if (boff & 0x1) {
-		/* handle unaligned first byte */
-		bptr = ((volatile u_int16_t *)buf) + (boff - 1);
-		*bptr = (*from++ << 8) | (*bptr & 0xff);
-		bptr += 2;
-		len--;
-	} else
-		bptr = ((volatile u_int16_t *)buf) + boff;
-	while (len > 1) {
-		*bptr = (from[1] << 8) | (from[0] & 0xff);
-		bptr += 2;
-		from += 2;
-		len -= 2;
-	}
-	if (len == 1)
-		*bptr = (u_int16_t)*from;
-}
-
-integrate void
-copyfrombuf_gap2(sc, tov, boff, len)
-	struct le_softc *sc;
-	void *tov;
-	int boff, len;
-{
-	volatile caddr_t buf = sc->sc_mem;
-	register caddr_t to = tov;
-	register volatile u_int16_t *bptr;
-	register u_int16_t tmp;
-	register int xfer;
-
-	if (boff & 0x1) {
-		/* handle unaligned first byte */
-		bptr = ((volatile u_int16_t *)buf) + (boff - 1);
-		*to++ = (*bptr >> 8) & 0xff;
-		bptr += 2;
-		len--;
-	} else
-		bptr = ((volatile u_int16_t *)buf) + boff;
-	while (len > 1) {
-		tmp = *bptr;
-		*to++ = tmp & 0xff;
-		*to++ = (tmp >> 8) & 0xff;
-		bptr += 2;
-		len -= 2;
-	}
-	if (len == 1)
-		*to = *bptr & 0xff;
-}
-
-integrate void
-zerobuf_gap2(sc, boff, len)
-	struct le_softc *sc;
-	int boff, len;
-{
-	volatile caddr_t buf = sc->sc_mem;
-	register volatile u_int16_t *bptr;
-
-	if ((unsigned)boff & 0x1) {
-		bptr = ((volatile u_int16_t *)buf) + (boff - 1);
-		*bptr &= 0xff;
-		bptr += 2;
-		len--;
-	} else
-		bptr = ((volatile u_int16_t *)buf) + boff;
-	while (len > 0) {
-		*bptr = 0;
-		bptr += 2;
-		len -= 2;
-	}
-}
-#endif /* LE_NEED_BUF_GAP2 */
-
-#ifdef LE_NEED_BUF_GAP16
-/*
- * gap16: 16 bytes of data followed by 16 bytes of pad.
- *
- * Buffers must be 32-byte aligned.
- */
-
-integrate void
-copytobuf_gap16(sc, fromv, boff, len)
-	struct le_softc *sc;
-	void *fromv;
-	int boff;
-	register int len;
-{
-	volatile caddr_t buf = sc->sc_mem;
-	register caddr_t from = fromv;
-	register caddr_t bptr;
-	register int xfer;
-
-	bptr = buf + ((boff << 1) & ~0x1f);
-	boff &= 0xf;
-	xfer = min(len, 16 - boff);
-	while (len > 0) {
-		bcopy(from, bptr + boff, xfer);
-		from += xfer;
-		bptr += 32;
-		boff = 0;
-		len -= xfer;
-		xfer = min(len, 16);
-	}
-}
-
-integrate void
-copyfrombuf_gap16(sc, tov, boff, len)
-	struct le_softc *sc;
-	void *tov;
-	int boff, len;
-{
-	volatile caddr_t buf = sc->sc_mem;
-	register caddr_t to = tov;
-	register caddr_t bptr;
-	register int xfer;
-
-	bptr = buf + ((boff << 1) & ~0x1f);
-	boff &= 0xf;
-	xfer = min(len, 16 - boff);
-	while (len > 0) {
-		bcopy(bptr + boff, to, xfer);
-		to += xfer;
-		bptr += 32;
-		boff = 0;
-		len -= xfer;
-		xfer = min(len, 16);
-	}
-}
-
-integrate void
-zerobuf_gap16(sc, boff, len)
-	struct le_softc *sc;
-	int boff, len;
-{
-	volatile caddr_t buf = sc->sc_mem;
-	register caddr_t bptr;
-	register int xfer;
-
-	bptr = buf + ((boff << 1) & ~0x1f);
-	boff &= 0xf;
-	xfer = min(len, 16 - boff);
-	while (len > 0) {
-		bzero(bptr + boff, xfer);
-		bptr += 32;
-		boff = 0;
-		len -= xfer;
-		xfer = min(len, 16);
-	}
-}
-#endif /* LE_NEED_BUF_GAP16 */

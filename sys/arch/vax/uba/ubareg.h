@@ -1,4 +1,4 @@
-/*	$NetBSD: ubareg.h,v 1.3 1995/02/13 00:44:23 ragge Exp $	*/
+/*	$NetBSD: ubareg.h,v 1.4 1995/11/10 19:25:50 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -81,14 +81,17 @@
  * address space, and the return from the allocation routine
  * can accommodate at most 2047 (ubavar.h: UBA_MAXMR);
  * QBAPAGES must be at least UBAPAGES.  Choose pragmatically.
+ * 
+ * Is there ever any need to have QBAPAGES != UBAPAGES???
+ * Wont work now anyway, QBAPAGES _must_ be .eq. UBAPAGES.
  */
 #define	UBAPAGES	496
 #define	NUBMREG		496
-#if defined(GATEWAY) && !defined(QNIVERT)
-#define	QBAPAGES	1024
-#else
+/* #if defined(GATEWAY) && !defined(QNIVERT) */
+/* #define	QBAPAGES	1024 */
+/* #else */
 #define	QBAPAGES	UBAPAGES
-#endif
+/* #endif */
 #define	UBAIOADDR	0760000		/* start of I/O page */
 #define	UBAIOPAGES	16
 

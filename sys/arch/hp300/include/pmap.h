@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.9 1995/05/11 16:53:03 jtc Exp $	*/
+/*	$NetBSD: pmap.h,v 1.10 1995/12/11 17:09:23 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -43,9 +43,10 @@
 #ifndef	_HP300_PMAP_H_
 #define	_HP300_PMAP_H_
 
+#include <machine/cpu.h>
 #include <machine/pte.h>
 
-#if defined(HP380)
+#if defined(M68040)
 #define HP_SEG_SIZE	(mmutype == MMU_68040 ? 0x40000 : NBSEG)
 #else
 #define HP_SEG_SIZE	NBSEG
@@ -135,11 +136,6 @@ struct pv_page {
 	struct pv_entry pvp_pv[NPVPPG];
 };
 
-#ifdef	_KERNEL
-#if defined(HP320) || defined(HP350)
-#define	HAVEVAC				/* include cheezy VAC support */
-#endif
-
 extern struct pmap	kernel_pmap_store;
 
 #define pmap_kernel()	(&kernel_pmap_store)
@@ -156,6 +152,5 @@ extern struct pv_entry	*pv_table;	/* array of entries, one per page */
 
 extern pt_entry_t	*Sysmap;
 extern char		*vmmap;		/* map for mem, dumps, etc. */
-#endif /* _KERNEL */
 
 #endif /* !_HP300_PMAP_H_ */

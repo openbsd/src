@@ -1,4 +1,4 @@
-/*	$NetBSD: uda.c,v 1.8 1995/08/31 22:24:39 ragge Exp $	*/
+/*	$NetBSD: uda.c,v 1.9 1995/11/10 19:25:53 ragge Exp $	*/
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -282,6 +282,7 @@ void	udawatch();	/* watchdog timer */
  * Externals
  */
 int	hz;
+extern	struct cfdriver ubacd;
 
 /*
  * Poke at a supposed UDA50 to see if it is there.
@@ -298,6 +299,7 @@ udaprobe(reg, ctlr, um)
 	struct uda_softc *sc;
 	volatile struct udadevice *udaddr;
 	struct mscp_info *mi;
+	struct uba_softc *ubasc;
 	extern int cpu_type;
 	int timeout, tries, count;
 #ifdef notyet
@@ -354,7 +356,9 @@ udaprobe(reg, ctlr, um)
 	 * problem; but it would be easily fixed if we had a controller
 	 * attach routine.  Sigh.
 	 */
-	sc->sc_ivec = (uba_hd[numuba].uh_lastiv -= 4);
+	ubasc = ubacd.cd_devs[0]; /* XXX */
+	sc->sc_ivec = ubasc->uh_lastiv -= 4;
+/*	sc->sc_ivec = (uba_hd[numuba].uh_lastiv -= 4); */
 	udaddr = (struct udadevice *) reg;
 
 	/*
@@ -1385,7 +1389,7 @@ udasaerror(um, doreset)
  * continue initialisation, or acknowledge command and response
  * interrupts, and process responses.
  */
-udaintr(vektor,level,uba,ctlr)
+udaintr(ctlr)
 {
 	struct uba_ctlr *um = udaminfo[ctlr];
 	volatile struct uda_softc *sc = &uda_softc[ctlr];
@@ -1966,7 +1970,7 @@ udadump(dev)
 	 * device registers, and of communications area and command and
 	 * response packet.
 	 */
-	uba = phys(struct uba_hd *, ui->ui_hd)->uh_physuba;
+	uba = phys(struct uba_softc *, ui->ui_hd)->uh_physuba;
 	ubainit(uba);
 	udaddr = (struct udadevice *)ui->ui_physaddr;
 	ud = phys(struct uda1 *, &uda1);
@@ -1981,7 +1985,7 @@ printf("H{r.\n");
 	reg = NUBMREG - num;
 	io = (void *)&uba->uba_map[reg];
 	for (i = 0; i < num; i++)
-		*(int *)io++ = UBAMR_MRV | (vax_btop(ud) + i);
+		*(int *)io++ = UBAMR_MRV | (btop(ud) + i);
 	ud_ubaddr = (struct uda1 *)(((int)ud & PGOFSET) | (reg << 9));
 
 	/*
@@ -2049,10 +2053,10 @@ printf("H{r.\n");
 		 * Then do the write.
 		 */
 		for (i = 0; i < blk; i++)
-			*(int *)io++ = UBAMR_MRV | (vax_btop(start) + i);
+			*(int *)io++ = UBAMR_MRV | (btop(start) + i);
 		*(int *)io = 0;
 		ud->uda1_cmd.mscp_unit = ui->ui_slave;
-		ud->uda1_cmd.mscp_seq.seq_lbn = vax_btop(start) + blkoff;
+		ud->uda1_cmd.mscp_seq.seq_lbn = btop(start) + blkoff;
 		ud->uda1_cmd.mscp_seq.seq_bytecount = blk << PGSHIFT;
 		if (udadumpcmd(M_OP_WRITE, ud, ui))
 			return (EIO);

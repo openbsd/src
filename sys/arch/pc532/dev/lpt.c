@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.6.2.1 1995/10/19 01:33:06 phil Exp $	*/
+/*	$NetBSD: lpt.c,v 1.7 1995/11/30 00:58:45 jtc Exp $	*/
 
 /*
  * Copyright (c) 1994 Matthias Pfaller.

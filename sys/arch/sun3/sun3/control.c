@@ -1,4 +1,4 @@
-/*	$NetBSD: control.c,v 1.12.2.1 1995/11/18 06:56:12 gwr Exp $	*/
+/*	$NetBSD: control.c,v 1.13 1995/11/17 23:29:30 gwr Exp $	*/
 
 /*
  * Copyright (c) 1993 Adam Glass

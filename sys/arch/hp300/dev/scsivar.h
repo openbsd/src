@@ -1,4 +1,4 @@
-/*	$NetBSD: scsivar.h,v 1.4 1994/10/26 07:25:01 cgd Exp $	*/
+/*	$NetBSD: scsivar.h,v 1.5 1995/12/02 18:22:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -45,6 +45,7 @@ struct	scsi_softc {
 	u_char	sc_flags;
 	u_char	sc_sync;
 	u_char	sc_scsi_addr;
+	u_char	sc_scsiid;	/* XXX unencoded copy of sc_scsi_addr */
 	u_char	sc_stat[2];
 	u_char	sc_msg[7];
 };

@@ -1,6 +1,7 @@
-/*	$NetBSD: dma.c,v 1.5 1994/10/26 07:23:40 cgd Exp $	*/
+/*	$NetBSD: dma.c,v 1.6 1995/12/02 02:46:45 thorpej Exp $	*/
 
 /*
+ * Copyright (c) 1995 Jason R. Thorpe.
  * Copyright (c) 1982, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -72,16 +73,23 @@ struct	dma_chain {
 	char	*dc_addr;
 };
 
+struct	dma_channel {
+	struct	dma_softc *dm_softc;		/* pointer back to softc */
+	struct	dmadevice *dm_hwaddr;		/* registers if DMA_C */
+	struct	dmaBdevice *dm_Bhwaddr;		/* registers if not DMA_C */
+	char	dm_flags;			/* misc. flags */
+	u_short	dm_cmd;				/* DMA controller command */
+	struct	dma_chain *dm_cur;		/* current segment */
+	struct	dma_chain *dm_last;		/* last segment */
+	struct	dma_chain dm_chain[DMAMAXIO];	/* all segments */
+};
+
 struct	dma_softc {
-	struct	dmadevice *sc_hwaddr;
-	struct	dmaBdevice *sc_Bhwaddr;
-	char	sc_type;
-	char	sc_flags;
-	u_short	sc_cmd;
-	struct	dma_chain *sc_cur;
-	struct	dma_chain *sc_last;
-	struct	dma_chain sc_chain[DMAMAXIO];
-} dma_softc[NDMA];
+	char	*sc_xname;			/* XXX external name */
+	struct	dmareg *sc_dmareg;		/* pointer to our hardware */
+	struct	dma_channel sc_chan[NDMACHAN];	/* 2 channels */
+	char	sc_type;			/* A, B, or C */
+} Dma_softc;
 
 /* types */
 #define	DMA_B	0
@@ -92,7 +100,7 @@ struct	dma_softc {
 #define DMAF_VCFLUSH	0x02
 #define DMAF_NOINTR	0x04
 
-struct	devqueue dmachan[NDMA + 1];
+struct	devqueue dmachan[NDMACHAN + 1];
 int	dmaintr();
 
 #ifdef DEBUG
@@ -103,54 +111,75 @@ int	dmadebug = 0;
 #define DDB_IO		0x08
 
 void	dmatimeout __P((void *));
-int	dmatimo[NDMA];
+int	dmatimo[NDMACHAN];
 
-long	dmahits[NDMA];
-long	dmamisses[NDMA];
-long	dmabyte[NDMA];
-long	dmaword[NDMA];
-long	dmalword[NDMA];
+long	dmahits[NDMACHAN];
+long	dmamisses[NDMACHAN];
+long	dmabyte[NDMACHAN];
+long	dmaword[NDMACHAN];
+long	dmalword[NDMACHAN];
 #endif
 
 void
 dmainit()
 {
-	register struct dmareg *dma = (struct dmareg *)DMA_BASE;
-	register struct dma_softc *dc;
-	register int i;
+	struct dma_softc *sc = &Dma_softc;
+	struct dmareg *dma;
+	struct dma_channel *dc;
+	int i;
 	char rev;
 
+	/* There's just one. */
+	sc->sc_dmareg = (struct dmareg *)DMA_BASE;
+	dma = sc->sc_dmareg;
+	sc->sc_xname = "dma0";
+
 	/*
-	 * Determine the DMA type.
-	 * Don't know how to easily differentiate the A and B cards,
+	 * Determine the DMA type.  A DMA_A or DMA_B will fail the
+	 * following probe.
+	 *
+	 * XXX Don't know how to easily differentiate the A and B cards,
 	 * so we just hope nobody has an A card (A cards will work if
 	 * DMAINTLVL is set to 3).
 	 */
-	if (!badbaddr((char *)&dma->dma_id[2]))
-		rev = dma->dma_id[2];
-	else {
+	if (badbaddr((char *)&dma->dma_id[2])) {
 		rev = 'B';
 #if !defined(HP320)
 		panic("dmainit: DMA card requires hp320 support");
 #endif
-	}
+	} else
+		rev = dma->dma_id[2];
 
-	dc = &dma_softc[0];
-	for (i = 0; i < NDMA; i++) {
-		dc->sc_hwaddr = (i & 1) ? &dma->dma_chan1 : &dma->dma_chan0;
-		dc->sc_Bhwaddr = (i & 1) ? &dma->dma_Bchan1 : &dma->dma_Bchan0;
-		dc->sc_type = rev == 'B' ? DMA_B : DMA_C;
-		dc++;
+	sc->sc_type = (rev == 'B') ? DMA_B : DMA_C;
+
+	for (i = 0; i < NDMACHAN; i++) {
+		dc = &sc->sc_chan[i];
+		dc->dm_softc = sc;
+		switch (i) {
+		case 0:
+			dc->dm_hwaddr = &dma->dma_chan0;
+			dc->dm_Bhwaddr = &dma->dma_Bchan0;
+			break;
+
+		case 1:
+			dc->dm_hwaddr = &dma->dma_chan1;
+			dc->dm_Bhwaddr = &dma->dma_Bchan1;
+			break;
+
+		default:
+			panic("dmainit: more than 2 channels?");
+			/* NOTREACHED */
+		}
 		dmachan[i].dq_forw = dmachan[i].dq_back = &dmachan[i];
 	}
 	dmachan[i].dq_forw = dmachan[i].dq_back = &dmachan[i];
 #ifdef DEBUG
 	/* make sure timeout is really not needed */
-	timeout(dmatimeout, (void *)0, 30 * hz);
+	timeout(dmatimeout, sc, 30 * hz);
 #endif
 
-	printf("dma: 98620%c with 2 channels, %d bit DMA\n",
-	       rev, rev == 'B' ? 16 : 32);
+	printf("%s: 98620%c, 2 channels, %d bit\n", sc->sc_xname,
+	       rev, (rev == 'B') ? 16 : 32);
 }
 
 int
@@ -162,7 +191,7 @@ dmareq(dq)
 	register int s = splbio();
 
 	chan = dq->dq_ctlr;
-	i = NDMA;
+	i = NDMACHAN;
 	while (--i >= 0) {
 		if ((chan & (1 << i)) == 0)
 			continue;
@@ -173,7 +202,7 @@ dmareq(dq)
 		splx(s);
 		return(1);
 	}
-	insque(dq, dmachan[NDMA].dq_back);
+	insque(dq, dmachan[NDMACHAN].dq_back);
 	splx(s);
 	return(0);
 }
@@ -183,7 +212,8 @@ dmafree(dq)
 	register struct devqueue *dq;
 {
 	int unit = dq->dq_ctlr;
-	register struct dma_softc *dc = &dma_softc[unit];
+	struct dma_softc *sc = &Dma_softc;
+	register struct dma_channel *dc = &sc->sc_chan[unit];
 	register struct devqueue *dn;
 	register int chan, s;
 
@@ -196,13 +226,13 @@ dmafree(dq)
 	/*
 	 * XXX we may not always go thru the flush code in dmastop()
 	 */
-	if (dc->sc_flags & DMAF_PCFLUSH) {
+	if (dc->dm_flags & DMAF_PCFLUSH) {
 		PCIA();
-		dc->sc_flags &= ~DMAF_PCFLUSH;
+		dc->dm_flags &= ~DMAF_PCFLUSH;
 	}
 #endif
 #if defined(HP320) || defined(HP350)
-	if (dc->sc_flags & DMAF_VCFLUSH) {
+	if (dc->dm_flags & DMAF_VCFLUSH) {
 		/*
 		 * 320/350s have VACs that may also need flushing.
 		 * In our case we only flush the supervisor side
@@ -213,13 +243,13 @@ dmafree(dq)
 		 * mapping.
 		 */
 		DCIS();
-		dc->sc_flags &= ~DMAF_VCFLUSH;
+		dc->dm_flags &= ~DMAF_VCFLUSH;
 	}
 #endif
 	remque(dq);
 	chan = 1 << unit;
-	for (dn = dmachan[NDMA].dq_forw;
-	     dn != &dmachan[NDMA]; dn = dn->dq_forw) {
+	for (dn = dmachan[NDMACHAN].dq_forw;
+	     dn != &dmachan[NDMACHAN]; dn = dn->dq_forw) {
 		if (dn->dq_ctlr & chan) {
 			remque((caddr_t)dn);
 			insque((caddr_t)dn, (caddr_t)dq->dq_back);
@@ -239,7 +269,8 @@ dmago(unit, addr, count, flags)
 	register int count;
 	register int flags;
 {
-	register struct dma_softc *dc = &dma_softc[unit];
+	struct dma_softc *sc = &Dma_softc;
+	register struct dma_channel *dc = &sc->sc_chan[unit];
 	register struct dma_chain *dcp;
 	register char *dmaend = NULL;
 	register int tcount;
@@ -247,7 +278,7 @@ dmago(unit, addr, count, flags)
 	if (count > MAXPHYS)
 		panic("dmago: count > MAXPHYS");
 #if defined(HP320)
-	if (dc->sc_type == DMA_B && (flags & DMAGO_LWORD))
+	if (sc->sc_type == DMA_B && (flags & DMAGO_LWORD))
 		panic("dmago: no can do 32-bit DMA");
 #endif
 #ifdef DEBUG
@@ -264,7 +295,7 @@ dmago(unit, addr, count, flags)
 	/*
 	 * Build the DMA chain
 	 */
-	for (dcp = dc->sc_chain; count > 0; dcp++) {
+	for (dcp = dc->dm_chain; count > 0; dcp++) {
 		dcp->dc_addr = (char *) kvtop(addr);
 #if defined(HP380)
 		/*
@@ -285,7 +316,7 @@ dmago(unit, addr, count, flags)
 		if (dcp->dc_addr == dmaend
 #if defined(HP320)
 		    /* only 16-bit count on 98620B */
-		    && (dc->sc_type != DMA_B ||
+		    && (sc->sc_type != DMA_B ||
 			(dcp-1)->dc_count + tcount <= 65536)
 #endif
 		) {
@@ -302,21 +333,21 @@ dmago(unit, addr, count, flags)
 			dcp->dc_count = tcount;
 		}
 	}
-	dc->sc_cur = dc->sc_chain;
-	dc->sc_last = --dcp;
-	dc->sc_flags = 0;
+	dc->dm_cur = dc->dm_chain;
+	dc->dm_last = --dcp;
+	dc->dm_flags = 0;
 	/*
 	 * Set up the command word based on flags
 	 */
-	dc->sc_cmd = DMA_ENAB | DMA_IPL(DMAINTLVL) | DMA_START;
+	dc->dm_cmd = DMA_ENAB | DMA_IPL(DMAINTLVL) | DMA_START;
 	if ((flags & DMAGO_READ) == 0)
-		dc->sc_cmd |= DMA_WRT;
+		dc->dm_cmd |= DMA_WRT;
 	if (flags & DMAGO_LWORD)
-		dc->sc_cmd |= DMA_LWORD;
+		dc->dm_cmd |= DMA_LWORD;
 	else if (flags & DMAGO_WORD)
-		dc->sc_cmd |= DMA_WORD;
+		dc->dm_cmd |= DMA_WORD;
 	if (flags & DMAGO_PRI)
-		dc->sc_cmd |= DMA_PRI;
+		dc->dm_cmd |= DMA_PRI;
 #if defined(HP380)
 	/*
 	 * On the 68040 we need to flush (push) the data cache before a
@@ -326,7 +357,7 @@ dmago(unit, addr, count, flags)
 	 * involved in the DMA we might purge some valid data.
 	 */
 	if (mmutype == MMU_68040 && (flags & DMAGO_READ))
-		dc->sc_flags |= DMAF_PCFLUSH;
+		dc->dm_flags |= DMAF_PCFLUSH;
 #endif
 #if defined(HP360) || defined(HP370)
 	/*
@@ -334,30 +365,30 @@ dmago(unit, addr, count, flags)
 	 * DMA is done.  We only do this if we are reading (writing memory).
 	 */
 	if (ectype == EC_PHYS && (flags & DMAGO_READ))
-		dc->sc_flags |= DMAF_PCFLUSH;
+		dc->dm_flags |= DMAF_PCFLUSH;
 #endif
 #if defined(HP320) || defined(HP350)
 	if (ectype == EC_VIRT && (flags & DMAGO_READ))
-		dc->sc_flags |= DMAF_VCFLUSH;
+		dc->dm_flags |= DMAF_VCFLUSH;
 #endif
 	/*
 	 * Remember if we can skip the dma completion interrupt on
 	 * the last segment in the chain.
 	 */
 	if (flags & DMAGO_NOINT) {
-		if (dc->sc_cur == dc->sc_last)
-			dc->sc_cmd &= ~DMA_ENAB;
+		if (dc->dm_cur == dc->dm_last)
+			dc->dm_cmd &= ~DMA_ENAB;
 		else
-			dc->sc_flags |= DMAF_NOINTR;
+			dc->dm_flags |= DMAF_NOINTR;
 	}
 #ifdef DEBUG
 	if (dmadebug & DDB_IO)
-		if ((dmadebug&DDB_WORD) && (dc->sc_cmd&DMA_WORD) ||
-		    (dmadebug&DDB_LWORD) && (dc->sc_cmd&DMA_LWORD)) {
+		if ((dmadebug&DDB_WORD) && (dc->dm_cmd&DMA_WORD) ||
+		    (dmadebug&DDB_LWORD) && (dc->dm_cmd&DMA_LWORD)) {
 			printf("dmago: cmd %x, flags %x\n",
-			       dc->sc_cmd, dc->sc_flags);
-			for (dcp = dc->sc_chain; dcp <= dc->sc_last; dcp++)
-				printf("  %d: %d@%x\n", dcp-dc->sc_chain,
+			       dc->dm_cmd, dc->dm_flags);
+			for (dcp = dc->dm_chain; dcp <= dc->dm_last; dcp++)
+				printf("  %d: %d@%x\n", dcp-dc->dm_chain,
 				       dcp->dc_count, dcp->dc_addr);
 		}
 	dmatimo[unit] = 1;
@@ -369,7 +400,8 @@ void
 dmastop(unit)
 	register int unit;
 {
-	register struct dma_softc *dc = &dma_softc[unit];
+	struct dma_softc *sc = &Dma_softc;
+	register struct dma_channel *dc = &sc->sc_chan[unit];
 	register struct devqueue *dq;
 
 #ifdef DEBUG
@@ -379,13 +411,13 @@ dmastop(unit)
 #endif
 	DMA_CLEAR(dc);
 #if defined(HP360) || defined(HP370) || defined(HP380)
-	if (dc->sc_flags & DMAF_PCFLUSH) {
+	if (dc->dm_flags & DMAF_PCFLUSH) {
 		PCIA();
-		dc->sc_flags &= ~DMAF_PCFLUSH;
+		dc->dm_flags &= ~DMAF_PCFLUSH;
 	}
 #endif
 #if defined(HP320) || defined(HP350)
-	if (dc->sc_flags & DMAF_VCFLUSH) {
+	if (dc->dm_flags & DMAF_VCFLUSH) {
 		/*
 		 * 320/350s have VACs that may also need flushing.
 		 * In our case we only flush the supervisor side
@@ -396,7 +428,7 @@ dmastop(unit)
 		 * mapping.
 		 */
 		DCIS();
-		dc->sc_flags &= ~DMAF_VCFLUSH;
+		dc->dm_flags &= ~DMAF_VCFLUSH;
 	}
 #endif
 	/*
@@ -412,7 +444,8 @@ dmastop(unit)
 int
 dmaintr()
 {
-	register struct dma_softc *dc;
+	struct dma_softc *sc = &Dma_softc;
+	register struct dma_channel *dc;
 	register int i, stat;
 	int found = 0;
 
@@ -420,31 +453,33 @@ dmaintr()
 	if (dmadebug & DDB_FOLLOW)
 		printf("dmaintr\n");
 #endif
-	for (i = 0, dc = dma_softc; i < NDMA; i++, dc++) {
+	for (i = 0; i < NDMACHAN; i++) {
+		dc = &sc->sc_chan[i];
 		stat = DMA_STAT(dc);
 		if ((stat & DMA_INTR) == 0)
 			continue;
 		found++;
 #ifdef DEBUG
 		if (dmadebug & DDB_IO) {
-			if ((dmadebug&DDB_WORD) && (dc->sc_cmd&DMA_WORD) ||
-			    (dmadebug&DDB_LWORD) && (dc->sc_cmd&DMA_LWORD))
+			if ((dmadebug&DDB_WORD) && (dc->dm_cmd&DMA_WORD) ||
+			    (dmadebug&DDB_LWORD) && (dc->dm_cmd&DMA_LWORD))
 				printf("dmaintr: unit %d stat %x next %d\n",
-				       i, stat, (dc->sc_cur-dc->sc_chain)+1);
+				       i, stat, (dc->dm_cur-dc->dm_chain)+1);
 		}
 		if (stat & DMA_ARMED)
-			printf("dma%d: intr when armed\n", i);
+			printf("%s, chan %d: intr when armed\n",
+			    sc->sc_xname, i);
 #endif
-		if (++dc->sc_cur <= dc->sc_last) {
+		if (++dc->dm_cur <= dc->dm_last) {
 #ifdef DEBUG
 			dmatimo[i] = 1;
 #endif
 			/*
 			 * Last chain segment, disable DMA interrupt.
 			 */
-			if (dc->sc_cur == dc->sc_last &&
-			    (dc->sc_flags & DMAF_NOINTR))
-				dc->sc_cmd &= ~DMA_ENAB;
+			if (dc->dm_cur == dc->dm_last &&
+			    (dc->dm_flags & DMAF_NOINTR))
+				dc->dm_cmd &= ~DMA_ENAB;
 			DMA_CLEAR(dc);
 			DMA_ARM(dc);
 		} else
@@ -459,17 +494,18 @@ dmatimeout(arg)
 	void *arg;
 {
 	register int i, s;
+	struct dma_softc *sc = arg;
 
-	for (i = 0; i < NDMA; i++) {
+	for (i = 0; i < NDMACHAN; i++) {
 		s = splbio();
 		if (dmatimo[i]) {
 			if (dmatimo[i] > 1)
-				printf("dma%d: timeout #%d\n",
+				printf("%s: timeout #%d\n", sc->sc_xname,
 				       i, dmatimo[i]-1);
 			dmatimo[i]++;
 		}
 		splx(s);
 	}
-	timeout(dmatimeout, (void *)0, 30 * hz);
+	timeout(dmatimeout, sc, 30 * hz);
 }
 #endif

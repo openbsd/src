@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.2.2.1 1995/10/12 08:18:09 leo Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.4 1995/12/03 14:34:24 leo Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
@@ -55,12 +55,12 @@
 #ifdef TRACE
 int	nvualarm;
 
-vtrace(p, v, retval)
+sys_vtrace(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	register struct vtrace_args /* {
+	register struct sys_vtrace_args /* {
 		syscallarg(int) request;
 		syscallarg(int) value;
 	} */ *uap = v;
@@ -276,7 +276,7 @@ sys_sysarch(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	struct sysarch_args /* {
+	struct sys_sysarch_args /* {
 		syscallarg(int) op;
 		syscallarg(char*)parms; 
 	} */ *uap = v;

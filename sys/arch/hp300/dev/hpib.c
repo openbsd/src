@@ -1,4 +1,4 @@
-/*	$NetBSD: hpib.c,v 1.5 1995/01/07 10:30:12 mycroft Exp $	*/
+/*	$NetBSD: hpib.c,v 1.7 1995/12/02 18:22:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -52,47 +52,107 @@
 #include <machine/cpu.h>
 #include <hp300/hp300/isr.h>
 
-int	hpibinit(), hpibstart(), hpibgo(), hpibintr(), hpibdone();
+int	hpibmatch __P((struct hp_ctlr *));
+void	hpibattach __P((struct hp_ctlr *));
+void	hpibstart __P((int));
+void	hpibgo __P((int, int, int, void *, int, int, int));
+void	hpibdone __P((int));
+int	hpibintr __P((int));
+
 struct	driver hpibdriver = {
-	hpibinit, "hpib", hpibstart, hpibgo, hpibintr, hpibdone,
+	hpibmatch,
+	hpibattach,
+	"hpib",
+	(int(*)())hpibstart,			/* XXX */
+	(int(*)())hpibgo,			/* XXX */
+	hpibintr,
+	(int(*)())hpibdone,			/* XXX */
 };
 
 struct	hpib_softc hpib_softc[NHPIB];
 struct	isr hpib_isr[NHPIB];
-int	nhpibppoll(), fhpibppoll();
+
+extern	int nhpibtype __P((struct hp_ctlr *));	/* XXX */
+extern	int fhpibtype __P((struct hp_ctlr *));	/* XXX */
+extern	void nhpibattach __P((struct hp_ctlr *));	/* XXX */
+extern	void fhpibattach __P((struct hp_ctlr *));	/* XXX */
 
 int	hpibtimeout = 100000;	/* # of status tests before we give up */
 int	hpibidtimeout = 10000;	/* # of status tests for hpibid() calls */
 int	hpibdmathresh = 3;	/* byte count beyond which to attempt dma */
 
-hpibinit(hc)
+int
+hpibmatch(hc)
 	register struct hp_ctlr *hc;
 {
-	register struct hpib_softc *hs = &hpib_softc[hc->hp_unit];
-	
-	if (!nhpibtype(hc) && !fhpibtype(hc))
-		return(0);
+	struct hp_hw *hw = hc->hp_args;
+	extern caddr_t internalhpib;
+
+	/* Special case for internal HP-IB. */
+	if ((hw->hw_sc == 7) && internalhpib)
+		goto hwid_ok;
+
+	switch (hw->hw_id) {
+	case 8:			/* 98625B */
+	case 128:		/* 98624A */
+ hwid_ok:
+		if (nhpibtype(hc) || fhpibtype(hc))
+			return (1);
+	}
+
+	return (0);
+}
+
+void
+hpibattach(hc)
+	struct hp_ctlr *hc;
+{
+	struct hpib_softc *hs = &hpib_softc[hc->hp_unit];
+
+	/*
+	 * Call the appropriate "attach" routine for this controller.
+	 * The type is set in the "type" routine.
+	 */
+	switch (hs->sc_type) {
+	case HPIBA:
+	case HPIBB:
+		nhpibattach(hc);
+		break;
+
+	case HPIBC:
+		fhpibattach(hc);
+		break;
+
+	default:
+		panic("hpibattach: unknown type 0x%x", hs->sc_type);
+		/* NOTREACHED */
+	}
+
 	hs->sc_hc = hc;
 	hs->sc_dq.dq_unit = hc->hp_unit;
 	hs->sc_dq.dq_driver = &hpibdriver;
 	hs->sc_sq.dq_forw = hs->sc_sq.dq_back = &hs->sc_sq;
+
+	/* Establish the interrupt handler. */
 	hpib_isr[hc->hp_unit].isr_intr = hpibintr;
 	hpib_isr[hc->hp_unit].isr_ipl = hc->hp_ipl;
 	hpib_isr[hc->hp_unit].isr_arg = hc->hp_unit;
 	isrlink(&hpib_isr[hc->hp_unit]);
+
+	/* Reset the controller, display what we've seen, and we're done. */
 	hpibreset(hc->hp_unit);
-	return(1);
+	printf(": %s\n", hs->sc_descrip);
 }
 
+void
 hpibreset(unit)
 	register int unit;
 {
-	if (hpib_softc[unit].sc_type == HPIBC)
-		fhpibreset(unit);
-	else
-		nhpibreset(unit);
+
+	(hpib_softc[unit].sc_controller->hpib_reset)(unit);
 }
 
+int
 hpibreq(dq)
 	register struct devqueue *dq;
 {
@@ -105,6 +165,7 @@ hpibreq(dq)
 	return(0);
 }
 
+void
 hpibfree(dq)
 	register struct devqueue *dq;
 {
@@ -116,6 +177,7 @@ hpibfree(dq)
 		(dq->dq_driver->d_start)(dq->dq_unit);
 }
 
+int
 hpibid(unit, slave)
 	int unit, slave;
 {
@@ -134,36 +196,37 @@ hpibid(unit, slave)
 	return(id);
 }
 
+int
 hpibsend(unit, slave, sec, addr, cnt)
-	register int unit;
-	int slave, sec, addr, cnt;
+	int unit, slave, sec, cnt;
+	void *addr;
 {
-	if (hpib_softc[unit].sc_type == HPIBC)
-		return(fhpibsend(unit, slave, sec, addr, cnt));
-	else
-		return(nhpibsend(unit, slave, sec, addr, cnt));
+
+	return ((hpib_softc[unit].sc_controller->hpib_send)(unit, slave,
+	    sec, addr, cnt));
 }
 
+int
 hpibrecv(unit, slave, sec, addr, cnt)
-	register int unit;
-	int slave, sec, addr, cnt;
+	int unit, slave, sec, cnt;
+	void *addr;
 {
-	if (hpib_softc[unit].sc_type == HPIBC)
-		return(fhpibrecv(unit, slave, sec, addr, cnt));
-	else
-		return(nhpibrecv(unit, slave, sec, addr, cnt));
+
+	return ((hpib_softc[unit].sc_controller->hpib_recv)(unit, slave,
+	    sec, addr, cnt));
 }
 
+int
 hpibpptest(unit, slave)
 	register int unit;
 	int slave;
 {
-	int (*ppoll)();
 
-	ppoll = (hpib_softc[unit].sc_type == HPIBC) ? fhpibppoll : nhpibppoll;
-	return((*ppoll)(unit) & (0x80 >> slave));
+	return ((hpib_softc[unit].sc_controller->hpib_ppoll)(unit) &
+	    (0x80 >> slave));
 }
 
+void
 hpibppclear(unit)
 	int unit;
 {
@@ -176,29 +239,29 @@ hpibawait(unit)
 	register struct hpib_softc *hs = &hpib_softc[unit];
 
 	hs->sc_flags |= HPIBF_PPOLL;
-	if (hs->sc_type == HPIBC)
-		fhpibppwatch((void *)unit);
-	else
-		nhpibppwatch((void *)unit);
+	(hs->sc_controller->hpib_ppwatch)((void *)unit);
 }
 
+int
 hpibswait(unit, slave)
 	register int unit;
 	int slave;
 {
 	register int timo = hpibtimeout;
-	register int mask, (*ppoll)();
+	register int mask, (*ppoll) __P((int));
 
-	ppoll = (hpib_softc[unit].sc_type == HPIBC) ? fhpibppoll : nhpibppoll;
+	ppoll = hpib_softc[unit].sc_controller->hpib_ppoll;
 	mask = 0x80 >> slave;
 	while (((ppoll)(unit) & mask) == 0)
 		if (--timo == 0) {
-			printf("hpib%d: swait timeout\n", unit);
+			printf("%s: swait timeout\n",
+			    hpib_softc[unit].sc_hc->hp_xname);
 			return(-1);
 		}
 	return(0);
 }
 
+int
 hpibustart(unit)
 	int unit;
 {
@@ -213,6 +276,7 @@ hpibustart(unit)
 	return(0);
 }
 
+void
 hpibstart(unit)
 	int unit;
 {
@@ -222,34 +286,29 @@ hpibstart(unit)
 	(dq->dq_driver->d_go)(dq->dq_unit);
 }
 
+void
 hpibgo(unit, slave, sec, addr, count, rw, timo)
-	register int unit;
-	int slave, sec, addr, count, rw;
+	int unit, slave, sec, count, rw, timo;
+	void *addr;
 {
-	if (hpib_softc[unit].sc_type == HPIBC)
-		fhpibgo(unit, slave, sec, addr, count, rw, timo);
-	else
-		nhpibgo(unit, slave, sec, addr, count, rw, timo);
+
+	(hpib_softc[unit].sc_controller->hpib_go)(unit, slave, sec,
+	    addr, count, rw, timo);
 }
 
+void
 hpibdone(unit)
 	register int unit;
 {
-	if (hpib_softc[unit].sc_type == HPIBC)
-		fhpibdone(unit);
-	else
-		nhpibdone(unit);
+
+	(hpib_softc[unit].sc_controller->hpib_done)(unit);
 }
 
+int
 hpibintr(unit)
 	register int unit;
 {
-	int found;
 
-	if (hpib_softc[unit].sc_type == HPIBC)
-		found = fhpibintr(unit);
-	else
-		found = nhpibintr(unit);
-	return(found);
+	return ((hpib_softc[unit].sc_controller->hpib_intr)(unit));
 }
-#endif
+#endif /* NHPIB > 0 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.11 1995/09/02 23:36:09 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.12 1995/12/02 18:11:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -199,25 +199,38 @@ find_controller(hw)
 	if (match_c == NULL)
 		return(0);
 	/*
-	 * Found a match, attempt to initialize and configure all attached
-	 * slaves.  Note, we can still fail if HW won't initialize.
+	 * Found a configuration match, now let's see if the hardware
+	 * agrees with us.  If it does, attach it.
 	 */
 	hc = match_c;
 	oaddr = hc->hp_addr;
 	hc->hp_addr = hw->hw_kva;
-	if ((*hc->hp_driver->d_init)(hc)) {
+	hc->hp_args = hw;
+	if ((*hc->hp_driver->d_match)(hc)) {
 		hc->hp_alive = 1;
-		printf("%s%d", hc->hp_driver->d_name, hc->hp_unit);
+
+		/* Set up external name. */
+		bzero(hc->hp_xname, sizeof(hc->hp_xname));
+		sprintf(hc->hp_xname, "%s%d", hc->hp_driver->d_name,
+		    hc->hp_unit);
+
+		/* Print what we've found. */
+		printf("%s at ", hc->hp_xname);
 		sc = patosc(hw->hw_pa);
 		if (sc < 256)
-			printf(" at sc%d,", sc);
+			printf("scode%d", sc);
 		else
-			printf(" csr 0x%x,", sc);
+			printf("addr 0x%x,", sc);
 		printf(" ipl %d", hc->hp_ipl);
 		if (hc->hp_flags)
 			printf(" flags 0x%x", hc->hp_flags);
-		printf("\n");
-		find_slaves(hc);
+
+		/*
+		 * Call device "attach" routine.  It will print the
+		 * newline for us.
+		 */
+		(*hc->hp_driver->d_attach)(hc);
+		find_slaves(hc);	/* XXX do this in attach? */
 	} else
 		hc->hp_addr = oaddr;
 	return(1);
@@ -289,25 +302,38 @@ find_device(hw)
 	if (match_d == NULL)
 		return(0);
 	/*
-	 * Found a match, attempt to initialize.
-	 * Note, we can still fail if HW won't initialize.
+	 * Found a configuration match, now let's see if the hardware
+	 * agrees with us.  If it does, attach it.
 	 */
 	hd = match_d;
 	oaddr = hd->hp_addr;
 	hd->hp_addr = hw->hw_kva;
-	if ((*hd->hp_driver->d_init)(hd)) {
+	hd->hp_args = hw;
+	if ((*hd->hp_driver->d_match)(hd)) {
 		hd->hp_alive = 1;
-		printf("%s%d", hd->hp_driver->d_name, hd->hp_unit);
+
+		/* Set up external name. */
+		bzero(hd->hp_xname, sizeof(hd->hp_xname));
+		sprintf(hd->hp_xname, "%s%d", hd->hp_driver->d_name,
+		    hd->hp_unit);
+
+		/* Print what we've found. */
+		printf("%s at ", hd->hp_xname);
 		sc = patosc(hw->hw_pa);
 		if (sc < 256)
-			printf(" at sc%d", sc);
+			printf("scode%d", sc);
 		else
-			printf(" csr 0x%x", sc);
+			printf("addr 0x%x", sc);
 		if (hd->hp_ipl)
-			printf(", ipl %d", hd->hp_ipl);
+			printf(" ipl %d", hd->hp_ipl);
 		if (hd->hp_flags)
-			printf(", flags 0x%x", hd->hp_flags);
-		printf("\n");
+			printf(" flags 0x%x", hd->hp_flags);
+
+		/*
+		 * Call device "attach" routine.  It will print the
+		 * newline for us.
+		 */
+		(*hd->hp_driver->d_attach)(hd);
 	} else
 		hd->hp_addr = oaddr;
 	return(1);
@@ -360,8 +386,7 @@ find_busslaves(hc, startslave, endslave)
 #define LASTSLAVE(s) (startslave < endslave ? (s)-- : (s)++)
 #ifdef DEBUG
 	if (acdebug)
-		printf("find_busslaves: for %s%d\n",
-		       hc->hp_driver->d_name, hc->hp_unit);
+		printf("find_busslaves: for %s\n", hc->hp_xname);
 #endif
 	NEXTSLAVE(endslave);
 	for (s = startslave; s != endslave; NEXTSLAVE(s)) {
@@ -453,24 +478,35 @@ find_busslaves(hc, startslave, endslave)
 				       hd->hp_unit, hd->hp_slave);
 #endif
 
-			if ((*hd->hp_driver->d_init)(hd)) {
+			if ((*hd->hp_driver->d_match)(hd)) {
 #ifdef DEBUG
 				if (acdebug)
 					printf("found\n");
 #endif
-				printf("%s%d at %s%d, slave %d",
-				       hd->hp_driver->d_name, hd->hp_unit,
-				       hc->hp_driver->d_name, hd->hp_ctlr,
+				/* Set up external name. */
+				bzero(hd->hp_xname, sizeof(hd->hp_xname));
+				sprintf(hd->hp_xname, "%s%d",
+				    hd->hp_driver->d_name,
+				    hd->hp_unit);
+
+				/* Print what we've found. */
+				printf("%s at %s slave %d",
+				       hd->hp_xname, hc->hp_xname,
 				       hd->hp_slave);
 				if (hd->hp_flags)
 					printf(" flags 0x%x", hd->hp_flags);
-				printf("\n");
 				hd->hp_alive = 1;
 				if (hd->hp_dk && dkn < DK_NDRIVE)
 					hd->hp_dk = dkn++;
 				else
 					hd->hp_dk = -1;
 				rescan = 1;
+
+				/*
+				 * Call the device "attach" routine.
+				 * It will print the newline for us.
+				 */
+				 (*hd->hp_driver->d_attach)(hd);
 			} else {
 #ifdef DEBUG
 				if (acdebug)

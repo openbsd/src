@@ -1,4 +1,4 @@
-/*      $NetBSD: subr.s,v 1.11 1995/06/16 15:36:50 ragge Exp $     */
+/*      $NetBSD: subr.s,v 1.12 1995/11/10 19:08:59 ragge Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -33,15 +33,13 @@
  /* All bugs are subject to removal without further notice */
 		
 
-
-#include "vax/include/mtpr.h"
-#include "vax/include/param.h"
-#include "vax/include/loconf.h"
-#include "vax/include/vmparam.h"
-#include "vax/include/pte.h"
-#include "vax/include/nexus.h"
 #include "sys/syscall.h"
 #include "sys/errno.h"
+
+#include "machine/mtpr.h"
+#include "machine/vmparam.h"
+#include "machine/pte.h"
+#include "machine/nexus.h"
 
 
 		.text
@@ -56,6 +54,15 @@ _sigcode:	pushr	$0x3f
 		halt	
 		.align	2
 _esigcode:
+
+		.globl	_idsptch, _eidsptch
+_idsptch:	pushr	$0x3f
+		pushl	$1
+		nop
+		calls	$1, *$0x12345678
+		popr	$0x3f
+		rei
+_eidsptch:
 
 		.globl	_subyte
 _subyte:	.word 0x0
@@ -76,36 +83,6 @@ _fubyte:        .word 0x0
 #                beql    suerr
                 movzbl	(r0),r0
                 ret
-
-
-
-
-
-
-
-		.globl _physcopypage
-_physcopypage:	.word 0x7
-		movl	4(ap),r0
-		ashl	$-PGSHIFT,r0,r0
-		bisl2	$(PG_V|PG_RO),r0
-
-		movl	8(ap),r1
-		ashl    $-PGSHIFT,r1,r1
-		bisl2   $(PG_V|PG_KW),r1
-
-		movl	r0,*(_pte_cmap)
-		movl	r1,*$4+(_pte_cmap)
-
-		movl	_vmmap,r2
-		addl3	$0x200,r2,r1
-		mtpr	r1,$PR_TBIS
-		mtpr	r2,$PR_TBIS
-
-		movl	r1,r0
-1:		movl	(r2)+,(r1)+
-		cmpl	r0,r2
-		bneq	1b
-		ret
 
 
 		.globl _badaddr
@@ -242,16 +219,6 @@ _loswtch:	.globl	_loswtch,_rei
 _rei:	rei
 
 	.data
-
-mbanum:		.long 0
-	
-
-/*** DATA ********************************************************************/
-
-
-
-_pte_cmap:	.long 0 ; .globl _pte_cmap	/* Address of PTE 
-						   corresponding to cmap    */
 
 _memtest:	.long 0 ; .globl _memtest	# Memory test in progress.
 

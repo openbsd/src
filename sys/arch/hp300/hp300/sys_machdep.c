@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.12 1995/10/08 19:01:26 thorpej Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.13 1995/12/11 17:09:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -137,7 +137,7 @@ cachectl(req, addr, len)
 {
 	int error = 0;
 
-#if defined(HP380)
+#if defined(M68040)
 	if (mmutype == MMU_68040) {
 		register int inc = 0;
 		int pa = 0, doall = 0;

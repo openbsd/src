@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr_sireg.h,v 1.1.2.1 1995/11/18 07:08:55 gwr Exp $	*/
+/*	$NetBSD: ncr_sireg.h,v 1.2 1995/11/17 23:27:55 gwr Exp $	*/
 
 /*
  * Register map for the Sun3 SCSI Interface (si)

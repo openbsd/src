@@ -1,4 +1,4 @@
-/*	$NetBSD: bw2.c,v 1.4.2.1 1995/11/10 22:12:54 gwr Exp $	*/
+/*	$NetBSD: bw2.c,v 1.5 1995/11/10 21:59:30 gwr Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993

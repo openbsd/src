@@ -1,4 +1,4 @@
-/*	$NetBSD: ac.c,v 1.2 1994/10/26 07:23:23 cgd Exp $	*/
+/*	$NetBSD: ac.c,v 1.3 1995/12/02 18:21:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991 University of Utah.
@@ -73,13 +73,15 @@ extern int scsigo();
 extern void scsifree();
 extern void scsireset();
 extern void scsi_delay();
+extern void scsi_str __P((char *, char *, size_t));
 
 extern int scsi_immed_command();
 
-int	acinit(), acstart(), acgo(), acintr();
+int	acmatch(), acstart(), acgo(), acintr();
+void	acattach();
 
 struct	driver acdriver = {
-	acinit, "ac", acstart, acgo, acintr,
+	acmatch, acattach, "ac", acstart, acgo, acintr,
 };
 
 struct	ac_softc ac_softc[NAC];
@@ -92,7 +94,8 @@ int ac_debug = 0x0000;
 #define ACD_OPEN	0x0002
 #endif
 
-acinit(hd)
+int
+acmatch(hd)
 	register struct hp_device *hd;
 {
 	int unit = hd->hp_unit;
@@ -100,8 +103,21 @@ acinit(hd)
 
 	sc->sc_hd = hd;
 	sc->sc_punit = hd->hp_flags & 7;
-	if (acident(sc, hd) < 0)
-		return(0);
+	if (acident(sc, hd, 0) < 0)
+		return (0);
+
+	return (1);
+}
+
+void
+acattach(hd)
+	register struct hp_device *hd;
+{
+	int unit = hd->hp_unit;
+	register struct ac_softc *sc = &ac_softc[unit];
+
+	(void)acident(sc, hd, 1);	/* XXX Ick. */
+
 	sc->sc_dq.dq_unit = unit;
 	sc->sc_dq.dq_ctlr = hd->hp_ctlr;
 	sc->sc_dq.dq_slave = hd->hp_slave;
@@ -109,19 +125,19 @@ acinit(hd)
 	sc->sc_bp = &acbuf[unit];
 	sc->sc_cmd = &accmd[unit];
 	sc->sc_flags = ACF_ALIVE;
-	return(1);
 }
 
-acident(sc, hd)
+acident(sc, hd, verbose)
 	register struct ac_softc *sc;
 	register struct hp_device *hd;
+	int verbose;
 {
 	int unit;
 	register int ctlr, slave;
 	int i, stat;
 	int tries = 5;
-	char idstr[32];
 	struct scsi_inquiry inqbuf;
+	char vendor[9], product[17], revision[5];
 	static struct scsi_fmt_cdb inq = {
 		6,
 		CMD_INQUIRY, 0, 0, 0, sizeof(inqbuf), 0
@@ -162,21 +178,18 @@ acident(sc, hd)
 	if (inqbuf.type != 8 || inqbuf.qual != 0x80 || inqbuf.version != 2)
 		goto failed;
 
-	bcopy((caddr_t)&inqbuf.vendor_id, (caddr_t)idstr, 28);
-	for (i = 27; i > 23; --i)
-		if (idstr[i] != ' ')
-			break;
-	idstr[i+1] = 0;
-	for (i = 23; i > 7; --i)
-		if (idstr[i] != ' ')
-			break;
-	idstr[i+1] = 0;
-	for (i = 7; i >= 0; --i)
-		if (idstr[i] != ' ')
-			break;
-	idstr[i+1] = 0;
-	printf("ac%d: %s %s rev %s\n", hd->hp_unit,
-	       &idstr[0], &idstr[8], &idstr[24]);
+	/*
+	 * Get a usable id string
+	 */
+	bzero(vendor, sizeof(vendor));
+	bzero(product, sizeof(product));
+	bzero(revision, sizeof(revision));
+	scsi_str(inqbuf.vendor_id, vendor, sizeof(inqbuf.vendor_id));
+	scsi_str(inqbuf.product_id, product, sizeof(inqbuf.product_id));
+	scsi_str(inqbuf.rev, revision, sizeof(inqbuf.rev));
+
+	if (verbose)
+		printf(": <%s, %s, %s>\n", vendor, product, revision);
 
 	scsi_delay(0);
 	return(inqbuf.type);
@@ -429,13 +442,14 @@ acintr(unit, stat)
 		scsi_request_sense(sc->sc_hd->hp_ctlr, sc->sc_hd->hp_slave,
 				   sc->sc_punit, sensebuf, sizeof sensebuf);
 		sp = (struct scsi_xsense *)sensebuf;
-		printf("ac%d: acintr sense key=%x, ac=%x, acq=%x\n",
-		       unit, sp->key, sp->info4, sp->len);
+		printf("%s: acintr sense key=%x, ac=%x, acq=%x\n",
+		       sc->sc_hd->hp_xname, sp->key, sp->info4, sp->len);
 		bp->b_flags |= B_ERROR;
 		bp->b_error = EIO;
 		break;
 	default:
-		printf("ac%d: acintr unknown status 0x%x\n", unit, stat);
+		printf("%s: acintr unknown status 0x%x\n", sc->sc_hd->hp_xname,
+		    stat);
 		break;
 	}
 	(void) biodone(sc->sc_bp);

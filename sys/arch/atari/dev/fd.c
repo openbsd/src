@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.10.2.1 1995/10/14 20:19:41 leo Exp $	*/
+/*	$NetBSD: fd.c,v 1.12 1995/12/10 14:25:12 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -185,6 +185,7 @@ static void	fdtestdrv __P((struct fd_softc *));
 static int	fdgetdisklabel __P((struct fd_softc *, dev_t));
 static int	fdselect __P((int, int, int));
 static void	fddeselect __P((void));
+static void	fdmoff __P((struct fd_softc *));
 
 extern __inline__ u_char read_fdreg(u_short regno)
 {
@@ -231,8 +232,10 @@ fdcattach(pdp, dp, auxp)
 struct device	*pdp, *dp;
 void		*auxp;
 {
+	extern struct cfdriver fdcd;
+
 	struct fd_softc	fdsoftc;
-	int		i, nfound = 0;
+	int		i, nfound, first_found = 0;
 
 	printf("\n");
 	fddeselect();
@@ -247,12 +250,24 @@ void		*auxp;
 		st_dmafree(&fdsoftc, &lock_stat);
 
 		if(!(fdsoftc.flags & FLPF_NOTRESP)) {
+			if(!nfound)
+				first_found = i;
 			nfound++;
 			config_found(dp, (void*)i, fdcprint);
 		}
 	}
 
 	if(nfound) {
+
+		/*
+		 * Make sure motor will be turned of when a floppy is
+		 * inserted in the first selected drive.
+		 */
+		fdselect(first_found, 0, FLP_DD);
+		fd_state = FLP_MON;
+		timeout((FPV)fdmotoroff, (void*)getsoftc(fdcd, first_found),
+					 			FLP_MONDELAY);
+
 		/*
 		 * enable disk related interrupts
 		 */
@@ -1076,9 +1091,12 @@ struct fd_softc	*sc;
 			/*
 			 * Turn motor off.
 			 */
-			if(selected)
-				fddeselect();
-			fd_state = FLP_IDLE;
+			if(selected) {
+				int tmp;
+
+				st_dmagrab(fdcint, fdmoff, sc, &tmp, 0);
+			}
+			else  fd_state = FLP_IDLE;
 			break;
 	}
 	splx(sps);
@@ -1112,6 +1130,35 @@ struct buf	*bp;
 #endif
 
 	minphys(bp);
+}
+
+/*
+ * Called from fdmotoroff to turn the motor actually off....
+ * This can't be done in fdmotoroff itself, because exclusive access to the
+ * DMA controller is needed to read the FDC-status register. The function
+ * 'fdmoff()' always runs as the result of a 'dmagrab()'.
+ * We need to test the status-register because we want to be sure that the
+ * drive motor is really off before deselecting the drive. The FDC only
+ * turns off the drive motor after having seen 10 index-pulses. You only
+ * get index-pulses when a drive is selected....This means that if the
+ * drive is deselected when the motor is still spinning, it will continue
+ * to spin _even_ when you insert a floppy later on...
+ */
+static void
+fdmoff(fdsoftc)
+struct fd_softc	*fdsoftc;
+{
+	int tmp;
+
+	if ((fd_state == FLP_MON) && selected) {
+		tmp = read_fdreg(FDC_CS);
+		if (!(tmp & MOTORON)) {
+			fddeselect();
+			fd_state = FLP_IDLE;
+		}
+		else timeout((FPV)fdmotoroff, (void*)fdsoftc, 10*FLP_MONDELAY);
+	}
+	st_dmafree(fdsoftc, &tmp);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: intvec.s,v 1.11 1995/06/16 15:36:40 ragge Exp $   */
+/*	$NetBSD: intvec.s,v 1.12 1995/11/10 19:05:46 ragge Exp $   */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -34,10 +34,9 @@
 		
 
 
-#include "vax/include/mtpr.h"
-#include "vax/include/pte.h"
-#include "vax/include/trap.h"
-#include "uba.h"
+#include "machine/mtpr.h"
+#include "machine/pte.h"
+#include "machine/trap.h"
 
 #define	TRAPCALL(namn, typ)	\
 	.align 2; namn ## :;.globl namn ;pushl $0; pushl $typ; jbr trap;
@@ -61,11 +60,11 @@
 _kernbase:
 _rpb:	
 /*
- * First page in memory we have rpb; so that we know where :-)
- * Second page contain scb, and thereafter uba vectors.
- * Virtual adress is 0x80000000.
+ * First page in memory we have rpb; so that we know where
+ * (must be on a 64k page boundary, easiest here). We use it
+ * to store SCB vectors generated when compiling the kernel,
+ * and move the SCB later to somewhere else.
  */
-	.space	512	/* rpb takes one page */
 
 	INTVEC(stray00, ISTACK)	# Unused., 0
 	INTVEC(mcheck, ISTACK)		# Machine Check., 4
@@ -88,7 +87,7 @@ _rpb:
 	INTVEC(resopflt, KSTACK)	# chms, 48
 	INTVEC(resopflt, KSTACK)	# chmu, 4C
 	INTVEC(stray50, ISTACK)	# System Backplane Exception, 50
-	INTVEC(stray54, ISTACK)	# Corrected Memory Read, 54
+	INTVEC(cmrerr, ISTACK)	# Corrected Memory Read, 54
 	INTVEC(stray58, ISTACK)	# System Backplane Alert, 58
 	INTVEC(stray5C, ISTACK)	# System Backplane Fault, 5C
 	INTVEC(stray60, ISTACK)	# Memory Write Timeout, 60
@@ -127,22 +126,18 @@ _rpb:
 	INTVEC(strayE4, ISTACK)	# Unused, E4
 	INTVEC(strayE8, ISTACK)	# Unused, E8
 	INTVEC(strayEC, ISTACK)	# Unused, EC
-	INTVEC(strayF0, ISTACK)	# Console Storage Recieve Interrupt
-	INTVEC(strayF4, ISTACK)	# Console Storage Transmit Interrupt
+#ifdef VAX750
+	INTVEC(cstrint, ISTACK)	# Console Storage Recieve Interrupt
+	INTVEC(csttint, ISTACK)	# Console Storage Transmit Interrupt
+#else
+	INTVEC(strayF0, ISTACK)
+	INTVEC(strayF4, ISTACK)
+#endif
 	INTVEC(consrint, ISTACK)	# Console Terminal Recieve Interrupt
 	INTVEC(constint, ISTACK)	# Console Terminal Transmit Interrupt
 
-
-		.globl _V_DEVICE_VEC
-_V_DEVICE_VEC:  .space 0x100
-
-#if NUBA
-#include "vax/uba/ubavec.s"
-#endif
-
-#if NUBA>4 /* Safety belt */
-#error "Number of bus adapters must be increased in ubavec.s"
-#endif
+	/* space for adapter vectors */
+	.space 0x100
 
 	STRAY(0, 00)
 
@@ -232,7 +227,7 @@ syscall:
 	STRAY(0, 48)
 	STRAY(0, 4C)
 	STRAY(0, 50)
-	STRAY(0, 54)
+	FASTINTR(cmrerr, cmrerr)
 	STRAY(0, 58)
 	STRAY(0, 5C)
 	STRAY(0, 60)
@@ -286,8 +281,14 @@ hardclock:	mtpr	$0xc1,$PR_ICCS		# Reset interrupt flag
 	STRAY(0, E4)
 	STRAY(0, E8)
 	STRAY(0, EC)
+
+#ifdef VAX750
+	FASTINTR(cstrint, cturintr)
+	FASTINTR(csttint, ctutintr)
+#else
 	STRAY(0, F0)
 	STRAY(0, F4)
+#endif
 
 	FASTINTR(consrint, gencnrint)
 	FASTINTR(constint, gencntint)
@@ -395,4 +396,8 @@ _eintrnames:
 _intrcnt:
         .long   0
 _eintrcnt:
+
+	.data
+_scb:	.long 0
+	.globl _scb
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rd_root.c,v 1.1.2.1 1995/11/18 06:59:42 gwr Exp $	*/
+/*	$NetBSD: rd_root.c,v 1.2 1995/11/17 23:24:56 gwr Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.22 1995/10/08 19:33:36 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.24 1995/12/11 17:09:14 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -176,7 +176,7 @@ int pmapdebug = 0x2000;
 #define PDB_WIRING	0x4000
 #define PDB_PVDUMP	0x8000
 
-#ifdef HAVEVAC
+#ifdef M68K_MMU_HP
 int pmapvacflush = 0;
 #define	PVF_ENTER	0x01
 #define	PVF_REMOVE	0x02
@@ -184,7 +184,7 @@ int pmapvacflush = 0;
 #define	PVF_TOTAL	0x80
 #endif
 
-#if defined(HP380)
+#if defined(M68040)
 int dowriteback = 1;	/* 68040: enable writeback caching */
 int dokwriteback = 1;	/* 68040: enable writeback caching of kernel AS */
 #endif
@@ -195,7 +195,7 @@ extern vm_offset_t pager_sva, pager_eva;
 /*
  * Get STEs and PTEs for user/kernel address space
  */
-#if defined(HP380)
+#if defined(M68040)
 #define	pmap_ste1(m, v)	\
 	(&((m)->pm_stab[(vm_offset_t)(v) >> SG4_SHIFT1]))
 /* XXX assumes physically contiguous ST pages (if more than one) */
@@ -281,10 +281,10 @@ char		*pmap_attributes;	/* reference and modify bits */
 TAILQ_HEAD(pv_page_list, pv_page) pv_page_freelist;
 int		pv_nfree;
 
-#ifdef HAVEVAC
+#ifdef M68K_MMU_HP
 int		pmap_aliasmask;	/* seperation at which VA aliasing ok */
 #endif
-#if defined(HP380)
+#if defined(M68040)
 int		protostfree;	/* prototype (default) free ST map */
 #endif
 
@@ -457,7 +457,17 @@ bogons:
 	 * map where we want it.
 	 */
 	addr = HP_PTBASE;
-	s = min(HP_PTMAXSIZE, maxproc*HP_MAX_PTSIZE);
+	if ((HP_PTMAXSIZE / HP_MAX_PTSIZE) < maxproc) {
+		s = HP_PTMAXSIZE;
+		/*
+		 * XXX We don't want to hang when we run out of
+		 * page tables, so we lower maxproc so that fork()
+		 * will fail instead.  Note that root could still raise
+		 * this value via sysctl(2).
+		 */
+		maxproc = (HP_PTMAXSIZE / HP_MAX_PTSIZE);
+	} else
+		s = (maxproc * HP_MAX_PTSIZE);
 	addr2 = addr + s;
 	rv = vm_map_find(kernel_map, NULL, 0, &addr, s, TRUE);
 	if (rv != KERN_SUCCESS)
@@ -474,7 +484,7 @@ bogons:
 		printf("pmap_init: pt_map [%x - %x)\n", addr, addr2);
 #endif
 
-#if defined(HP380)
+#if defined(M68040)
 	if (mmutype == MMU_68040) {
 		protostfree = ~l2tobm(0);
 		for (rv = MAXUL2SIZE; rv < sizeof(protostfree)*NBBY; rv++)
@@ -693,7 +703,7 @@ pmap_pinit(pmap)
 	 */
 	pmap->pm_stab = Segtabzero;
 	pmap->pm_stpa = Segtabzeropa;
-#if defined(HP380)
+#if defined(M68040)
 	if (mmutype == MMU_68040)
 		pmap->pm_stfree = protostfree;
 #endif
@@ -853,7 +863,7 @@ pmap_remove(pmap, sva, eva)
 		pte = pmap_pte(pmap, sva);
 		while (sva < nssva) {
 			if (pmap_pte_v(pte)) {
-#ifdef HAVEVAC
+#ifdef M68K_MMU_HP
 				if (pmap_aliasmask) {
 					/*
 					 * Purge kernel side of VAC to ensure
@@ -888,7 +898,7 @@ pmap_remove(pmap, sva, eva)
 	 */
 	if (firstpage)
 		return;
-#ifdef HAVEVAC
+#ifdef M68K_MMU_HP
 	/*
 	 * In a couple of cases, we don't need to worry about flushing
 	 * the VAC:
@@ -1041,7 +1051,7 @@ pmap_protect(pmap, sva, eva, prot)
 		pte = pmap_pte(pmap, sva);
 		while (sva < nssva) {
 			if (pmap_pte_v(pte) && pmap_pte_prot_chg(pte, isro)) {
-#ifdef HAVEVAC
+#ifdef M68K_MMU_HP
 				/*
 				 * Purge kernel side of VAC to ensure we
 				 * get the correct state of any hardware
@@ -1053,7 +1063,7 @@ pmap_protect(pmap, sva, eva, prot)
 				if (firstpage && pmap_aliasmask)
 					DCIS();
 #endif
-#if defined(HP380)
+#if defined(M68040)
 				/*
 				 * Clear caches if making RO (see section
 				 * "7.3 Cache Coherency" in the manual).
@@ -1085,7 +1095,7 @@ pmap_protect(pmap, sva, eva, prot)
 			sva += NBPG;
 		}
 	}
-#if defined(HAVEVAC) && defined(DEBUG)
+#if defined(M68K_MMU_HP) && defined(DEBUG)
 	if (pmap_aliasmask && (pmapvacflush & PVF_PROTECT)) {
 		if (pmapvacflush & PVF_TOTAL)
 			DCIA();
@@ -1279,7 +1289,7 @@ pmap_enter(pmap, va, pa, prot, wired)
 			if (!npv->pv_next)
 				enter_stats.secondpv++;
 #endif
-#ifdef HAVEVAC
+#ifdef M68K_MMU_HP
 			/*
 			 * Since there is another logical mapping for the
 			 * same page we may need to cache-inhibit the
@@ -1351,7 +1361,7 @@ pmap_enter(pmap, va, pa, prot, wired)
 		pmap->pm_stats.wired_count++;
 
 validate:
-#ifdef HAVEVAC
+#ifdef M68K_MMU_HP
 	/*
 	 * Purge kernel side of VAC to ensure we get correct state
 	 * of HW bits so we don't clobber them.
@@ -1367,7 +1377,7 @@ validate:
 		npte |= PG_W;
 	if (!checkpv && !cacheable)
 		npte |= PG_CI;
-#if defined(HP380)
+#if defined(M68040)
 	if (mmutype == MMU_68040 && (npte & (PG_PROT|PG_CI)) == PG_RW)
 #ifdef DEBUG
 		if (dowriteback && (dokwriteback || pmap != pmap_kernel()))
@@ -1383,7 +1393,7 @@ validate:
 	 * If so, we need not flush the TLB and caches.
 	 */
 	wired = ((*pte ^ npte) == PG_W);
-#if defined(HP380)
+#if defined(M68040)
 	if (mmutype == MMU_68040 && !wired) {
 		DCFP(pa);
 		ICPP(pa);
@@ -1392,7 +1402,7 @@ validate:
 	*pte = npte;
 	if (!wired && active_pmap(pmap))
 		TBIS(va);
-#ifdef HAVEVAC
+#ifdef M68K_MMU_HP
 	/*
 	 * The following is executed if we are entering a second
 	 * (or greater) mapping for a physical page and the mappings
@@ -1973,7 +1983,7 @@ pmap_remove_mapping(pmap, va, pte, flags)
 		if (*pte == PG_NV)
 			return;
 	}
-#ifdef HAVEVAC
+#ifdef M68K_MMU_HP
 	if (pmap_aliasmask && (flags & PRM_CFLUSH)) {
 		/*
 		 * Purge kernel side of VAC to ensure we get the correct
@@ -2087,7 +2097,7 @@ pmap_remove_mapping(pmap, va, pte, flags)
 		pmap_free_pv(npv);
 		pv = pa_to_pvh(pa);
 	}
-#ifdef HAVEVAC
+#ifdef M68K_MMU_HP
 	/*
 	 * If only one mapping left we no longer need to cache inhibit
 	 */
@@ -2119,7 +2129,7 @@ pmap_remove_mapping(pmap, va, pte, flags)
 			printf("remove: ste was %x@%x pte was %x@%x\n",
 			       *ste, ste, opte, pmap_pte(pmap, va));
 #endif
-#if defined(HP380)
+#if defined(M68040)
 		if (mmutype == MMU_68040) {
 			st_entry_t *este = &ste[NPTEPG/SG4_LEV3SIZE];
 
@@ -2156,7 +2166,7 @@ pmap_remove_mapping(pmap, va, pte, flags)
 						 HP_STSIZE);
 				ptpmap->pm_stab = Segtabzero;
 				ptpmap->pm_stpa = Segtabzeropa;
-#if defined(HP380)
+#if defined(M68040)
 				if (mmutype == MMU_68040)
 					ptpmap->pm_stfree = protostfree;
 #endif
@@ -2218,7 +2228,7 @@ pmap_testbit(pa, bit)
 		splx(s);
 		return(TRUE);
 	}
-#ifdef HAVEVAC
+#ifdef M68K_MMU_HP
 	/*
 	 * Flush VAC to get correct state of any hardware maintained bits.
 	 */
@@ -2305,7 +2315,7 @@ pmap_changebit(pa, bit, setem)
 			}
 
 			pte = pmap_pte(pv->pv_pmap, va);
-#ifdef HAVEVAC
+#ifdef M68K_MMU_HP
 			/*
 			 * Flush VAC to ensure we get correct state of HW bits
 			 * so we don't clobber them.
@@ -2320,7 +2330,7 @@ pmap_changebit(pa, bit, setem)
 			else
 				npte = *pte & ~bit;
 			if (*pte != npte) {
-#if defined(HP380)
+#if defined(M68040)
 				/*
 				 * If we are changing caching status or
 				 * protection make sure the caches are
@@ -2353,7 +2363,7 @@ pmap_changebit(pa, bit, setem)
 			}
 #endif
 		}
-#if defined(HAVEVAC) && defined(DEBUG)
+#if defined(M68K_MMU_HP) && defined(DEBUG)
 		if (setem && bit == PG_RO && (pmapvacflush & PVF_PROTECT)) {
 			if ((pmapvacflush & PVF_TOTAL) || toflush == 3)
 				DCIA();
@@ -2397,7 +2407,7 @@ pmap_enter_ptpage(pmap, va)
 			kmem_alloc(st_map, HP_STSIZE);
 		pmap->pm_stpa = (st_entry_t *)
 			pmap_extract(pmap_kernel(), (vm_offset_t)pmap->pm_stab);
-#if defined(HP380)
+#if defined(M68040)
 		if (mmutype == MMU_68040) {
 #ifdef DEBUG
 			if (dowriteback && dokwriteback)
@@ -2421,7 +2431,7 @@ pmap_enter_ptpage(pmap, va)
 	}
 
 	ste = pmap_ste(pmap, va);
-#if defined(HP380)
+#if defined(M68040)
 	/*
 	 * Allocate level 2 descriptor block if necessary
 	 */
@@ -2534,7 +2544,7 @@ pmap_enter_ptpage(pmap, va)
 		PHYS_TO_VM_PAGE(ptpa)->flags |= PG_PTPAGE;
 #endif
 	}
-#if defined(HP380)
+#if defined(M68040)
 	/*
 	 * Turn off copyback caching of page table pages,
 	 * could get ugly otherwise.
@@ -2586,7 +2596,7 @@ pmap_enter_ptpage(pmap, va)
 	 * it would be difficult to identify ST pages in pmap_pageable to
 	 * release them.  We also avoid the overhead of vm_map_pageable.
 	 */
-#if defined(HP380)
+#if defined(M68040)
 	if (mmutype == MMU_68040) {
 		st_entry_t *este;
 

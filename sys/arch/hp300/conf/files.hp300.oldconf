@@ -1,4 +1,4 @@
-#	$NetBSD: files.hp300.oldconf,v 1.20 1995/08/18 16:07:40 thorpej Exp $
+#	$NetBSD: files.hp300.oldconf,v 1.21 1995/11/28 08:10:09 thorpej Exp $
 #
 arch/hp300/hp300/autoconf.c		standard
 arch/hp300/hp300/clock.c		standard
@@ -65,6 +65,8 @@ thisisfor_in_proto.c			optional hy
 # include "../../../compat/hpux/files.hpux"
 
 compat/hpux/hpux_compat.c		optional compat_hpux
+compat/hpux/hpux_file.c			optional compat_hpux
+compat/hpux/hpux_exec.c			optional compat_hpux
 compat/hpux/hpux_net.c			optional compat_hpux
 compat/hpux/hpux_sig.c			optional compat_hpux
 compat/hpux/hpux_syscalls.c		optional compat_hpux

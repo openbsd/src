@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.31 1995/09/26 04:02:30 gwr Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.32 1995/12/09 04:37:58 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -76,7 +76,7 @@ void cpu_set_kpc __P((struct proc *p, u_long func));
  * ready to run, and marking it so that it can return differently
  * than the parent.  Returns 1 in the child process, 0 in the parent.
  */
-int
+void
 cpu_fork(p1, p2)
 	register struct proc *p1, *p2;
 {
@@ -132,8 +132,6 @@ cpu_fork(p1, p2)
 	 * When p2 runs, it will find itself in child_return().
 	 */
 	cpu_set_kpc(p2, (long)child_return);
-
-	return (0);
 }
 
 /*

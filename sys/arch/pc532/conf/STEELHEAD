@@ -1,4 +1,4 @@
-#	$NetBSD: STEELHEAD,v 1.9 1995/09/26 20:16:02 phil Exp $
+#	$NetBSD: STEELHEAD,v 1.10 1995/11/30 00:58:40 jtc Exp $
 #
 # STEELHEAD: Phil Nelson's pc532
 #
@@ -59,7 +59,8 @@ membus0 at root
 
 #rd0 at membus?
 
-ncr0 at membus?
+#ncr0 at membus?
+oldncr0 at membus?
 
 scsibus0 at scsi?
 

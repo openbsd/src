@@ -1,5 +1,5 @@
 #
-#	$NetBSD: files.atari,v 1.12 1995/08/28 19:31:16 leo Exp $
+#	$NetBSD: files.atari,v 1.13 1995/12/01 19:53:07 leo Exp $
 #
 
 maxpartitions 16
@@ -109,7 +109,7 @@ file	arch/m68k/m68k/copy.s
 
 # Emulation modules
 # 6888x emulator (FPU_EMULATE)
-file	arch/m68k/fpe/fpu_emulate.c		fpu_emulate
+include "../../m68k/fpe/files.fpe"
 
 # Compatibility modules
 

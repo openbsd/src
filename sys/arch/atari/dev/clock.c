@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.4 1995/09/23 20:23:28 leo Exp $	*/
+/*	$NetBSD: clock.c,v 1.6 1995/12/01 19:51:53 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -56,20 +56,19 @@
 #endif
 
 /*
+ * The MFP clock runs at 2457600Hz. We use a {system,stat,prof}clock divider
+ * of 200. Therefore the timer runs at an effective rate of:
+ * 2457600/200 = 12288Hz.
+ */
+#define CLOCK_HZ	12288
+
+/*
  * Machine-dependent clock routines.
- *
- * Startrtclock restarts the real-time clock, which provides
- * hardclock interrupts to kern_clock.c.
  *
  * Inittodr initializes the time of day hardware which provides
  * date functions.
  *
  * Resettodr restores the time of day hardware after a time change.
- *
- * A note on the real-time clock:
- * We actually load the clock with CLK_INTERVAL-1 instead of CLK_INTERVAL.
- * This is because the counter decrements to zero after N+1 enabled clock
- * periods where N is the value loaded into the counter.
  */
 
 int	clockmatch __P((struct device *, struct cfdata *, void *));
@@ -83,7 +82,22 @@ struct cfdriver clockcd = {
 static u_long	gettod __P((void));
 static int	settod __P((u_long));
 
-static int	divisor;
+static int	divisor;	/* Systemclock divisor	*/
+
+/*
+ * Statistics and profile clock intervals and variances. Variance must
+ * be a power of 2. Since this gives us an even number, not an odd number,
+ * we discard one case and compensate. That is, a variance of 64 would
+ * give us offsets in [0..63]. Instead, we take offsets in [1..63].
+ * This is symetric around the point 32, or statvar/2, and thus averages
+ * to that value (assuming uniform random numbers).
+ */
+#ifdef STATCLOCK
+static int	statvar = 32;	/* {stat,prof}clock variance		*/
+static int	statmin;	/* statclock divisor - variance/2	*/
+static int	profmin;	/* profclock divisor - variance/2	*/
+static int	clk2min;	/* current, from above choises		*/
+#endif
 
 int
 clockmatch(pdp, cfp, auxp)
@@ -109,12 +123,32 @@ void			*auxp;
 	 * at an effective rate of: 2457600/200 = 12288Hz. The
 	 * following expression works for 48, 64 or 96 hz.
 	 */
-	divisor       = 12288/hz;
+	divisor       = CLOCK_HZ/hz;
 	MFP->mf_tacr  = 0;		/* Stop timer			*/
 	MFP->mf_iera &= ~IA_TIMA;	/* Disable timer interrupts	*/
 	MFP->mf_tadr  = divisor;	/* Set divisor			*/
 
+	if (hz != 48 && hz != 64 && hz != 96) { /* XXX */
+		printf (": illegal value %d for systemclock, reset to %d\n\t",
+								hz, 64);
+		hz = 64;
+	}
 	printf(": system hz %d timer-A divisor 200/%d\n", hz, divisor);
+
+#ifdef STATCLOCK
+	if ((stathz == 0) || (stathz > hz) || (CLOCK_HZ % stathz))
+		stathz = hz;
+	if ((profhz == 0) || (profhz > (hz << 1)) || (CLOCK_HZ % profhz))
+		profhz = hz << 1;
+
+	MFP->mf_tcdcr &= 0x7;			/* Stop timer		*/
+	MFP->mf_ierb  &= ~IB_TIMC;		/* Disable timer inter.	*/
+	MFP->mf_tcdr   = CLOCK_HZ/stathz;	/* Set divisor		*/
+
+	statmin  = (CLOCK_HZ/stathz) - (statvar >> 1);
+	profmin  = (CLOCK_HZ/profhz) - (statvar >> 1);
+	clk2min  = statmin;
+#endif /* STATCLOCK */
 
 	/*
 	 * Initialize Timer-B in the ST-MFP. This timer is used by the 'delay'
@@ -134,12 +168,49 @@ void cpu_initclocks()
 	MFP->mf_ipra &= ~IA_TIMA;	/* Clear pending interrupts	*/
 	MFP->mf_iera |= IA_TIMA;	/* Enable timer interrupts	*/
 	MFP->mf_imra |= IA_TIMA;	/*    .....			*/
+
+#ifdef STATCLOCK
+	MFP->mf_tcdcr = (MFP->mf_tcdcr & 0x7) | (T_Q200<<4); /* Start	*/
+	MFP->mf_iprb &= ~IB_TIMC;	/* Clear pending interrupts	*/
+	MFP->mf_ierb |= IB_TIMC;	/* Enable timer interrupts	*/
+	MFP->mf_imrb |= IB_TIMC;	/*    .....			*/
+#endif /* STATCLOCK */
 }
 
-setstatclockrate(hz)
-	int hz;
+setstatclockrate(newhz)
+	int newhz;
 {
+#ifdef STATCLOCK
+	if (newhz == stathz)
+		clk2min = statmin;
+	else clk2min = profmin;
+#endif /* STATCLOCK */
 }
+
+#ifdef STATCLOCK
+void
+statintr(frame)
+	register struct clockframe *frame;
+{
+	register int	var, r;
+
+	var = statvar - 1;
+	do {
+		r = random() & var;
+	} while(r == 0);
+
+	/*
+	 * Note that we are always lagging behind as the new divisor
+	 * value will not be loaded until the next interrupt. This
+	 * shouldn't disturb the median frequency (I think ;-) ) as
+	 * only the value used when switching frequencies is used
+	 * twice. This shouldn't happen very often.
+	 */
+	MFP->mf_tcdr = clk2min + r;
+
+	statclock(frame);
+}
+#endif /* STATCLOCK */
 
 /*
  * Returns number of usec since last recorded clock "tick"
@@ -203,97 +274,6 @@ int	n;
 	}
 }
 
-#ifdef PROFTIMER
-/*
- * This code allows the amiga kernel to use one of the extra timers on
- * the clock chip for profiling, instead of the regular system timer.
- * The advantage of this is that the profiling timer can be turned up to
- * a higher interrupt rate, giving finer resolution timing. The profclock
- * routine is called from the lev6intr in locore, and is a specialized
- * routine that calls addupc. The overhead then is far less than if
- * hardclock/softclock was called. Further, the context switch code in
- * locore has been changed to turn the profile clock on/off when switching
- * into/out of a process that is profiling (startprofclock/stopprofclock).
- * This reduces the impact of the profiling clock on other users, and might
- * possibly increase the accuracy of the profiling. 
- */
-int  profint   = PRF_INTERVAL;	/* Clock ticks between interrupts */
-int  profscale = 0;		/* Scale factor from sys clock to prof clock */
-char profon    = 0;		/* Is profiling clock on? */
-
-/* profon values - do not change, locore.s assumes these values */
-#define PRF_NONE	0x00
-#define	PRF_USER	0x01
-#define	PRF_KERNEL	0x80
-
-initprofclock()
-{
-#if NCLOCK > 0
-	struct proc *p = curproc;		/* XXX */
-
-	/*
-	 * If the high-res timer is running, force profiling off.
-	 * Unfortunately, this gets reflected back to the user not as
-	 * an error but as a lack of results.
-	 */
-	if (clockon) {
-		p->p_stats->p_prof.pr_scale = 0;
-		return;
-	}
-	/*
-	 * Keep track of the number of user processes that are profiling
-	 * by checking the scale value.
-	 *
-	 * XXX: this all assumes that the profiling code is well behaved;
-	 * i.e. profil() is called once per process with pcscale non-zero
-	 * to turn it on, and once with pcscale zero to turn it off.
-	 * Also assumes you don't do any forks or execs.  Oh well, there
-	 * is always adb...
-	 */
-	if (p->p_stats->p_prof.pr_scale)
-		profprocs++;
-	else
-		profprocs--;
-#endif
-	/*
-	 * The profile interrupt interval must be an even divisor
-	 * of the CLK_INTERVAL so that scaling from a system clock
-	 * tick to a profile clock tick is possible using integer math.
-	 */
-	if (profint > CLK_INTERVAL || (CLK_INTERVAL % profint) != 0)
-		profint = CLK_INTERVAL;
-	profscale = CLK_INTERVAL / profint;
-}
-
-startprofclock()
-{
-  unsigned short interval;
-
-  /* stop timer B */
-  ciab.crb = ciab.crb & 0xc0;
-
-  /* load interval into registers.
-     the clocks run at NTSC: 715.909kHz or PAL: 709.379kHz */
-
-  interval = profint - 1;
-
-  /* order of setting is important ! */
-  ciab.tblo = interval & 0xff;
-  ciab.tbhi = interval >> 8;
-
-  /* enable interrupts for timer B */
-  ciab.icr = (1<<7) | (1<<1);
-
-  /* start timer B in continuous shot mode */
-  ciab.crb = (ciab.crb & 0xc0) | 1;
-}
-
-stopprofclock()
-{
-  /* stop timer B */
-  ciab.crb = ciab.crb & 0xc0;
-}
-
 #ifdef GPROF
 /*
  * profclock() is expanded in line in lev6intr() unless profiling kernel.
@@ -332,7 +312,6 @@ profclock(pc, ps)
 			stopprofclock();
 	}
 }
-#endif
 #endif
 
 /*

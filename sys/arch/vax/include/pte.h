@@ -1,4 +1,4 @@
-/*      $NetBSD: pte.h,v 1.5 1995/08/21 03:28:50 ragge Exp $      */
+/*      $NetBSD: pte.h,v 1.6 1995/11/12 14:40:26 ragge Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -30,10 +30,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
- /* All bugs are subject to removal without further notice */
-		
-
-#include "vax/include/param.h"
+#include "machine/param.h"
 
 #ifndef ASSEMBLER
 
@@ -41,19 +38,19 @@
  * VAX page table entries
  */
 struct pte {
-  unsigned int	pg_pfn:21;	/* Page Frame Number or 0 */
-  unsigned int	pg_u:1;         /* Uniform bit, does WHAT?? XXX */
-  unsigned int	pg_w:1;         /* Wired bit */
-  unsigned int	pg_sref:1;	/* Help for ref simulation */
-  unsigned int	pg_ref:1;	/* Simulated reference bit */
-  unsigned int	pg_z:1;		/* Zero DIGITAL = 0 */
-  unsigned int	pg_m:1;	        /* Modify DIGITAL */
-  unsigned int	pg_prot:4;     	/* reserved at zero */
-  unsigned int	pg_v:1;		/* valid bit */
+	unsigned int	pg_pfn:21;	/* Page Frame Number or 0 */
+	unsigned int	pg_u:1;         /* Uniform bit, does WHAT?? XXX */
+	unsigned int	pg_w:1;         /* Wired bit */
+	unsigned int	pg_sref:1;	/* Help for ref simulation */
+	unsigned int	pg_ref:1;	/* Simulated reference bit */
+	unsigned int	pg_z:1;		/* Zero DIGITAL = 0 */
+	unsigned int	pg_m:1;	        /* Modify DIGITAL */
+	unsigned int	pg_prot:4;     	/* reserved at zero */
+	unsigned int	pg_v:1;		/* valid bit */
 };
 
 
-typedef unsigned int	pt_entry_t;	/* Mach page table entry */
+typedef struct pte	pt_entry_t;	/* Mach page table entry */
 
 #endif ASSEMBLER
 
@@ -74,11 +71,7 @@ typedef unsigned int	pt_entry_t;	/* Mach page table entry */
 #define PG_W            0x00400000
 #define PG_U            0x00200000
 #define PG_FRAME        0x001fffff
-#define PG_SHIFT        9
-#define	PG_PFNUM(x)	((x) >> PG_SHIFT)
-
-
-#define VAX_MAX_KPTSIZE VM_KERNEL_PT_PAGES
+#define	PG_PFNUM(x)	((x) >> PGSHIFT)
 
 #ifndef ASSEMBLER
 extern pt_entry_t *Sysmap;
@@ -88,8 +81,8 @@ extern pt_entry_t *Sysmap;
 #endif
 
 #define	kvtopte(va) \
-	(&Sysmap[((unsigned)(va) - KERNBASE) >> PGSHIFT])
+	(&Sysmap[((unsigned)(va) & ~KERNBASE) >> PGSHIFT])
 #define	ptetokv(pt) \
 	((((pt_entry_t *)(pt) - Sysmap) << PGSHIFT) + 0x80000000)
 #define	kvtophys(va) \
-	((kvtopte(va)->pg_pfnum << PGSHIFT) | ((int)(va) & PGOFSET))
+	(((kvtopte(va))->pg_pfn << PGSHIFT) | ((int)(va) & PGOFSET))

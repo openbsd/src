@@ -1,4 +1,4 @@
-/*	$NetBSD: uvaxII.c,v 1.2 1995/04/18 22:08:25 ragge Exp $	*/
+/*	$NetBSD: uvaxII.c,v 1.3 1995/11/10 18:52:58 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -37,34 +37,28 @@
 
 /* All bugs are subject to removal without further notice */
 
-#if VAX630 || VAX410
-
 #include "sys/param.h"
 #include "sys/types.h"
 #include "sys/device.h"
+#include "vm/vm.h"
+#include "vm/vm_kern.h"
+
 #include "machine/uvaxII.h"
-#include "machine/nexus.h"
 #include "machine/pte.h"
 #include "machine/mtpr.h"
 #include "machine/sid.h"
-#include "vax/uba/ubavar.h"
-#include "vax/uba/ubareg.h"
+#include "machine/pmap.h"
+#include "machine/nexus.h"
 
-#include "mba.h"
-#include "uba.h"
-
-#include "vm/vm.h"
-#include "vm/vm_kern.h"
-#include "vax/include/pmap.h"
-
-struct nexus *nexus;
 struct uvaxIIcpu *uvaxIIcpu_ptr;
+
 #if VAX630
-struct ka630clock *ka630clk_ptr;
-u_long ka630_clkread();
-void ka630_clkwrite();
+struct	ka630clock *ka630clk_ptr;
+u_long	ka630_clkread();
+void	ka630_clkwrite();
 #endif
-extern int cpu_type, nmba, numuba;
+
+extern int cpu_type;
 
 int
 uvaxII_conf()
@@ -251,12 +245,48 @@ ka630_clkwrite(year_secs)
 	claddr->min = t / MINSEC;
 	claddr->sec = t % MINSEC;
 #ifndef lint
-	{ int t = claddr->csr2; }	/* ??? */
-	{ int t = claddr->csr3; }	/* ??? */
+	{ volatile int t = claddr->csr2; }	/* ??? */
+	{ volatile int t = claddr->csr3; }	/* ??? */
 #endif
 	claddr->csr0 = KA630CLK_RATE;
 	claddr->csr1 = KA630CLK_ENABLE;
 	splx(s);
 }
 #endif
-#endif
+
+uvaxII_steal_pages()
+{
+	extern  vm_offset_t avail_start, virtual_avail, avail_end;
+	int	junk;
+
+	/*
+	 * MicroVAX II: get 10 pages from top of memory,
+	 * map in Qbus map registers, cpu and clock registers.
+	 */
+	avail_end -= 10;
+
+	MAPPHYS(junk, 2, VM_PROT_READ|VM_PROT_WRITE);
+	MAPVIRT(nexus, btoc(0x400000));
+	pmap_map((vm_offset_t)nexus, 0x20088000, 0x20090000,
+	    VM_PROT_READ|VM_PROT_WRITE);
+
+	MAPVIRT(uvaxIIcpu_ptr, 1);
+	pmap_map((vm_offset_t)uvaxIIcpu_ptr, (vm_offset_t)UVAXIICPU,
+	    (vm_offset_t)UVAXIICPU + NBPG, VM_PROT_READ|VM_PROT_WRITE);
+
+	MAPVIRT(ka630clk_ptr, 1);
+	pmap_map((vm_offset_t)ka630clk_ptr, (vm_offset_t)KA630CLK,
+	    (vm_offset_t)KA630CLK + NBPG, VM_PROT_READ|VM_PROT_WRITE);
+
+	/*
+	 * Clear restart and boot in progress flags
+	 * in the CPMBX.
+	 /
+	ka630clk_ptr->cpmbx = (ka630clk_ptr->cpmbx & KA630CLK_LANG);
+
+	/*
+	 * Enable memory parity error detection and clear error bits.
+	 */
+	uvaxIIcpu_ptr->uvaxII_mser = (UVAXIIMSER_PEN | UVAXIIMSER_MERR |
+	    UVAXIIMSER_LEB);
+}

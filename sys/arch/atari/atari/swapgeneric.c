@@ -1,4 +1,4 @@
-/*	$NetBSD: swapgeneric.c,v 1.1.1.1 1995/03/26 07:12:19 leo Exp $	*/
+/*	$NetBSD: swapgeneric.c,v 1.2 1995/11/30 21:55:01 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -123,23 +123,23 @@ char	*bp;
 		printf("format: <dev-name><unit> [ ':'<part> ] [ * ]\n");
 		printf("root device> ");
 		gets(bp);
-		for(gc = genericconf; gc->gc_driver; gc++)
-			if(gc->gc_driver->cd_name[0] == bp[0] &&
+		for (gc = genericconf; gc->gc_driver; gc++)
+			if (gc->gc_driver->cd_name[0] == bp[0] &&
 			   gc->gc_driver->cd_name[1] == bp[1])
 				break;
-		if(gc->gc_driver == NULL) {
+		if (gc->gc_driver == NULL) {
 			printf("use one of:");
-			for(gc = genericconf; gc->gc_driver; gc++)
+			for (gc = genericconf; gc->gc_driver; gc++)
 				printf(" %s%%d", gc->gc_driver->cd_name);
 			printf("\n");
 			continue;
 		}
 		cp = bp + 2;
-		if(*cp >= '0' && *cp <= '9')
+		if (*cp >= '0' && *cp <= '9')
 			break;
 		printf("bad/missing unit number\n");
 	}
-	return(gc);
+	return (gc);
 }
 
 setconf()
@@ -153,17 +153,17 @@ setconf()
 	part       = 0;
 	unit       = 0;
 
-	if(rootdev != NODEV)
+	if (rootdev != NODEV)
 		goto justdoswap;
 
-	if(boothowto & RB_ASKNAME) {
+	if (boothowto & RB_ASKNAME) {
 		gc = getgenconf(name);
 		cp = name + 2;
 
 		/*
 		 * Get unit number
 		 */
-		while(*cp >= '0' && *cp <= '9')
+		while (*cp >= '0' && *cp <= '9')
 			unit = 10 * unit + *cp++ - '0';
 
 		/*
@@ -171,20 +171,20 @@ setconf()
 		 * This is only usefull when booting from floppy. So it is
 		 * possible to select the correct density.
 		 */
-		if(*cp == ':') {
+		if (*cp == ':') {
 			cp++;
-			while(*cp >= '0' && *cp <= '9')
+			while (*cp >= '0' && *cp <= '9')
 				part = 10 * part + *cp++ - '0';
 		}
 
-		if(*cp == '*')
+		if (*cp == '*')
 			swaponroot = 1;
 		unit &= 0x7;
 	}
 	else {
 		gc = guess_gc(1, &unit);
 
-		if(gc == NULL) {
+		if (gc == NULL) {
 			printf("no suitable root\n");
 			asm("stop #0x2700");
 		}
@@ -196,9 +196,9 @@ setconf()
 
 
 justdoswap:
-	if(!swaponroot) {
+	if (!swaponroot) {
 		/* Find a suitable swap device */
-		if((gc = guess_gc(0, &unit)) == NULL) {
+		if ((gc = guess_gc(0, &unit)) == NULL) {
 			swdevt[0].sw_dev = dumpdev =
 				MAKEDISKDEV(major(rootdev),DISKUNIT(rootdev),1);
 		}
@@ -261,11 +261,11 @@ int	*rv_unit;
 	struct partition	*pp;
 	struct dkdevice		*dkp;
 	struct bdevsw		*bdp;
-	int					unit;
+	int			unit;
 
-	for(gc = genericconf; gc->gc_driver; gc++) {
-	     for(unit = 0; unit < gc->gc_driver->cd_ndevs; unit++) {
-		if(gc->gc_driver->cd_devs[unit] == NULL)
+	for (gc = genericconf; gc->gc_driver; gc++) {
+	     for (unit = 0; unit < gc->gc_driver->cd_ndevs; unit++) {
+		if (gc->gc_driver->cd_devs[unit] == NULL)
 			continue;
 		/*
 		 * this is a hack these drivers should use
@@ -273,31 +273,31 @@ int	*rv_unit;
 		 */
 		dkp = (struct dkdevice *)
 		   ((struct device *)gc->gc_driver->cd_devs[unit] + 1);
-		if(dkp->dk_driver == NULL || dkp->dk_driver->d_strategy == NULL)
+		if (dkp->dk_driver==NULL || dkp->dk_driver->d_strategy==NULL)
 			continue;
-		for(bdp = bdevsw; bdp < (bdevsw + nblkdev); bdp++)
-			if(bdp->d_strategy == dkp->dk_driver->d_strategy)
+		for (bdp = bdevsw; bdp < (bdevsw + nblkdev); bdp++)
+			if (bdp->d_strategy == dkp->dk_driver->d_strategy)
 				break;
-		if(bdp->d_open(MAKEDISKDEV(major(gc->gc_root),
+		if (bdp->d_open(MAKEDISKDEV(major(gc->gc_root),
 			    unit, 3), FREAD | FNONBLOCK, 0, curproc))
 			continue;
 		bdp->d_close(MAKEDISKDEV(major(gc->gc_root), unit, 3),
 			    FREAD | FNONBLOCK, 0, curproc);
-		if(search_root) {
+		if (search_root) {
 			pp = &dkp->dk_label.d_partitions[0];
-			if(pp->p_size == 0 || pp->p_fstype != FS_BSDFFS)
+			if (pp->p_size == 0 || pp->p_fstype != FS_BSDFFS)
 				continue;
 		}
 		else { /* must be swap */
 			pp = &dkp->dk_label.d_partitions[1];
-			if(pp->p_size == 0 || pp->p_fstype != FS_SWAP)
+			if (pp->p_size == 0 || pp->p_fstype != FS_SWAP)
 				continue;
 		}
 		goto found;
 	    }
 	}
-	return(NULL);
+	return (NULL);
 found:
 	*rv_unit = unit;
-	return(gc);
+	return (gc);
 }

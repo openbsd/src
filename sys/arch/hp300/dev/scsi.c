@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi.c,v 1.5.2.1 1995/10/16 09:01:39 thorpej Exp $	*/
+/*	$NetBSD: scsi.c,v 1.7 1995/12/02 18:22:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -72,10 +72,10 @@ extern void isrlink();
 extern void _insque();
 extern void _remque();
 
-int	scsiinit(), scsigo(), scsiintr(), scsixfer();
-void	scsistart(), scsidone(), scsifree(), scsireset();
+int	scsimatch(), scsigo(), scsiintr(), scsixfer();
+void	scsiattach(), scsistart(), scsidone(), scsifree(), scsireset();
 struct	driver scsidriver = {
-	scsiinit, "scsi", (int (*)())scsistart, scsigo, scsiintr,
+	scsimatch, scsiattach, "scsi", (int (*)())scsistart, scsigo, scsiintr,
 	(int (*)())scsidone,
 };
 
@@ -122,8 +122,8 @@ scsiabort(hs, hd, where)
 	int startlen;	/* XXX - kludge till I understand whats *supposed* to happen */
 	u_char junk;
 
-	printf("scsi%d: abort from %s: phase=0x%x, ssts=0x%x, ints=0x%x\n",
-		hs->sc_hc->hp_unit, where, hd->scsi_psns, hd->scsi_ssts,
+	printf("%s: abort from %s: phase=0x%x, ssts=0x%x, ints=0x%x\n",
+		hs->sc_hc->hp_xname, where, hd->scsi_psns, hd->scsi_ssts,
 		hd->scsi_ints);
 
 	hd->scsi_ints = hd->scsi_ints;
@@ -178,8 +178,8 @@ out:
 	 * Either way, reset the card & the SPC.
 	 */
 	if (len < 0 && hs)
-		printf("scsi%d: abort failed.  phase=0x%x, ssts=0x%x\n",
-			hs->sc_hc->hp_unit, hd->scsi_psns, hd->scsi_ssts);
+		printf("%s: abort failed.  phase=0x%x, ssts=0x%x\n",
+			hs->sc_hc->hp_xname, hd->scsi_psns, hd->scsi_ssts);
 
 	if (! ((junk = hd->scsi_ints) & INTS_RESEL)) {
 		hd->scsi_sctl |= SCTL_CTRLRST;
@@ -220,15 +220,39 @@ scsi_delay(delay)
 }
 
 int
-scsiinit(hc)
+scsimatch(hc)
 	register struct hp_ctlr *hc;
 {
 	register struct scsi_softc *hs = &scsi_softc[hc->hp_unit];
 	register struct scsidevice *hd = (struct scsidevice *)hc->hp_addr;
-	
-	if ((hd->scsi_id & ID_MASK) != SCSI_ID)
-		return(0);
-	hc->hp_ipl = SCSI_IPL(hd->scsi_csr);
+	struct hp_hw *hw = hc->hp_args;
+
+	/*
+	 * This is probably a little redundant, but what the heck.
+	 */
+	switch (hw->hw_id) {
+	case 7:
+	case 7+32:
+	case 7+64:
+	case 7+96:
+		if ((hd->scsi_id & ID_MASK) != SCSI_ID)
+			return (0);
+
+		hc->hp_ipl = SCSI_IPL(hd->scsi_csr);
+		return (1);
+		/* NOTREACHED */
+	}
+
+	return (0);
+}
+
+void
+scsiattach(hc)
+	struct hp_ctlr *hc;
+{
+	register struct scsi_softc *hs = &scsi_softc[hc->hp_unit];
+	register struct scsidevice *hd = (struct scsidevice *)hc->hp_addr;
+
 	hs->sc_hc = hc;
 	hs->sc_dq.dq_unit = hc->hp_unit;
 	hs->sc_dq.dq_driver = &scsidriver;
@@ -238,12 +262,45 @@ scsiinit(hc)
 	scsi_isr[hc->hp_unit].isr_arg = hc->hp_unit;
 	isrlink(&scsi_isr[hc->hp_unit]);
 	scsireset(hc->hp_unit);
+
+	/*
+	 * Print information about what we've found.
+	 */
+	printf(":");
+	if (hs->sc_flags & SCSI_DMA32)
+		printf(" 32 bit dma, ");
+
+	switch (hs->sc_sync) {
+	case 0:
+		printf("async");
+		break;
+
+	case (TMOD_SYNC | 0x3e):
+		printf("250ns sync");
+		break;
+
+	case (TMOD_SYNC | 0x5e):
+		printf("375ns sync");
+		break;
+
+	case (TMOD_SYNC | 0x7d):
+		printf("500ns sync");
+		break;
+
+	default:
+		panic("scsiattach: unknown sync param 0x%x", hs->sc_sync);
+	}
+
+	if ((hd->scsi_hconf & HCONF_PARITY) == 0)
+		printf(", no parity");
+
+	printf(", scsi id %d\n", hs->sc_scsiid);
+
 	/*
 	 * XXX scale initialization wait according to CPU speed.
 	 * Should we do this for all wait?  Should we do this at all?
 	 */
 	scsi_init_wait *= cpuspeed;
-	return(1);
 }
 
 void
@@ -258,8 +315,6 @@ scsireset(unit)
 	if (hs->sc_flags & SCSI_ALIVE)
 		scsiabort(hs, hd, "reset");
 		
-	printf("scsi%d: ", unit);
-
 	hd->scsi_id = 0xFF;
 	DELAY(100);
 	/*
@@ -276,10 +331,8 @@ scsireset(unit)
 	hd->scsi_tcl  = 0;
 	hd->scsi_ints = 0;
 
-	if ((hd->scsi_id & ID_WORD_DMA) == 0) {
+	if ((hd->scsi_id & ID_WORD_DMA) == 0)
 		hs->sc_flags |= SCSI_DMA32;
-		printf("32 bit dma, ");
-	}
 
 	/* Determine Max Synchronous Transfer Rate */
 	if (scsi_nosync)
@@ -289,19 +342,15 @@ scsireset(unit)
 	switch (i) {
 		case 0:
 			hs->sc_sync = TMOD_SYNC | 0x3e; /* 250 nsecs */
-			printf("250ns sync");
 			break;
 		case 1:
 			hs->sc_sync = TMOD_SYNC | 0x5e; /* 375 nsecs */
-			printf("375ns sync");
 			break;
 		case 2:
 			hs->sc_sync = TMOD_SYNC | 0x7d; /* 500 nsecs */
-			printf("500ns sync");
 			break;
 		case 3:
 			hs->sc_sync = 0;
-			printf("async");
 			break;
 		}
 
@@ -312,19 +361,17 @@ scsireset(unit)
 	i = (~hd->scsi_hconf) & 0x7;
 	hs->sc_scsi_addr = 1 << i;
 	hd->scsi_bdid = i;
+	hs->sc_scsiid = i;
 	if (hd->scsi_hconf & HCONF_PARITY)
 		hd->scsi_sctl = SCTL_DISABLE | SCTL_ABRT_ENAB |
 				SCTL_SEL_ENAB | SCTL_RESEL_ENAB |
 				SCTL_INTR_ENAB | SCTL_PARITY_ENAB;
-	else {
+	else
 		hd->scsi_sctl = SCTL_DISABLE | SCTL_ABRT_ENAB |
 				SCTL_SEL_ENAB | SCTL_RESEL_ENAB |
 				SCTL_INTR_ENAB;
-		printf(", no parity");
-	}
-	hd->scsi_sctl &=~ SCTL_DISABLE;
 
-	printf(", scsi id %d\n", i);
+	hd->scsi_sctl &=~ SCTL_DISABLE;
 	hs->sc_flags |= SCSI_ALIVE;
 }
 
@@ -337,7 +384,7 @@ scsierror(hs, hd, ints)
 	int unit = hs->sc_hc->hp_unit;
 	char *sep = "";
 
-	printf("scsi%d: ", unit);
+	printf("%s: ", hs->sc_hc->hp_xname);
 	if (ints & INTS_RST) {
 		DELAY(100);
 		if (hd->scsi_hconf & HCONF_SD)
@@ -668,8 +715,8 @@ scsiicmd(hs, target, cbuf, clen, buf, len, xferphase)
 			goto out;
 
 		default:
-			printf("scsi%d: unexpected phase %d in icmd from %d\n",
-				hs->sc_hc->hp_unit, phase, target);
+			printf("%s: unexpected phase %d in icmd from %d\n",
+				hs->sc_hc->hp_xname, phase, target);
 			goto abort;
 		}
 		/* wait for last command to complete */
@@ -773,8 +820,8 @@ finishxfer(hs, hd, target)
 			return;
 
 		default:
-			printf("scsi%d: unexpected phase %d in finishxfer from %d\n",
-				hs->sc_hc->hp_unit, phase, target);
+			printf("%s: unexpected phase %d in finishxfer from %d\n",
+				hs->sc_hc->hp_xname, phase, target);
 			goto abort;
 		}
 		if (ints = hd->scsi_ints) {
@@ -996,8 +1043,8 @@ scsigo(ctlr, slave, unit, bp, cdb, pad)
 			goto out;
 
 		default:
-			printf("scsi%d: unexpected phase %d in go from %d\n",
-				hs->sc_hc->hp_unit, phase, slave);
+			printf("%s: unexpected phase %d in go from %d\n",
+				hs->sc_hc->hp_xname, phase, slave);
 			goto abort;
 		}
 		while ((ints = hd->scsi_ints) == 0) {
@@ -1073,8 +1120,8 @@ out:
 #ifdef DEBUG
 		hs->sc_flags |= SCSI_PAD;
 		if (i & 1)
-			printf("scsi%d: odd byte count: %d bytes @ %d\n",
-				ctlr, i, bp->b_cylin);
+			printf("%s: odd byte count: %d bytes @ %d\n",
+				hs->sc_hc->hp_xname, i, bp->b_cylin);
 #endif
 	} else
 		i += 4;
@@ -1102,7 +1149,7 @@ scsidone(unit)
 
 #ifdef DEBUG
 	if (scsi_debug)
-		printf("scsi%d: done called!\n", unit);
+		printf("%s: done called!\n", scsi_softc[unit].sc_hc->hp_xname);
 #endif
 	/* dma operation is done -- turn off card dma */
 	hd->scsi_csr &=~ (CSR_DE1|CSR_DE0);

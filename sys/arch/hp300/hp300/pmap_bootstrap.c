@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.7 1995/10/05 06:54:12 thorpej Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.9 1995/12/11 17:09:16 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -61,7 +61,7 @@ extern int maxmem, physmem;
 extern vm_offset_t avail_start, avail_end, virtual_avail, virtual_end;
 extern vm_size_t mem_size;
 extern int protection_codes[];
-#ifdef HAVEVAC
+#ifdef M68K_MMU_HP
 extern int pmap_aliasmask;
 #endif
 
@@ -410,18 +410,25 @@ pmap_bootstrap(nextpa, firstpa)
 	/*
 	 * VM data structures are now initialized, set up data for
 	 * the pmap module.
+	 *
+	 * Note about avail_end: msgbuf is initialized just after
+	 * avail_end in machdep.c.  Since the last page is used
+	 * for rebooting the system (code is copied there and
+	 * excution continues from copied code before the MMU
+	 * is disabled), the msgbuf will get trounced between
+	 * reboots if it's placed in the last physical page.
+	 * To work around this, we move avail_end back one more
+	 * page so the msgbuf can be preserved.
 	 */
 	RELOC(avail_start, vm_offset_t) = nextpa;
-	RELOC(avail_end, vm_offset_t) =
-		hp300_ptob(RELOC(maxmem, int))
-			/* XXX allow for msgbuf */
-			- hp300_round_page(sizeof(struct msgbuf));
+	RELOC(avail_end, vm_offset_t) = hp300_ptob(RELOC(maxmem, int)) -
+	    (hp300_round_page(sizeof(struct msgbuf)) + hp300_ptob(1));
 	RELOC(mem_size, vm_size_t) = hp300_ptob(RELOC(physmem, int));
 	RELOC(virtual_avail, vm_offset_t) =
 		VM_MIN_KERNEL_ADDRESS + (nextpa - firstpa);
 	RELOC(virtual_end, vm_offset_t) = VM_MAX_KERNEL_ADDRESS;
 
-#ifdef HAVEVAC
+#ifdef M68K_MMU_HP
 	/*
 	 * Determine VA aliasing distance if any
 	 */

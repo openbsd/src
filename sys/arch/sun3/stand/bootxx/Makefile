@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2.2.1 1995/11/18 06:47:36 gwr Exp $
+#	$NetBSD: Makefile,v 1.3 1995/11/17 23:23:48 gwr Exp $
 
 SA_PROG= bootxx
 SRCS=   bootxx.c conf.c

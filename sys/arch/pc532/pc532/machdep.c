@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.40.2.2 1995/11/22 20:36:08 phil Exp $	*/
+/*	$NetBSD: machdep.c,v 1.41 1995/11/30 00:59:02 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1987, 1990 The Regents of the University of California.

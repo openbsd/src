@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr_si.c,v 1.1.2.1 1995/11/18 07:08:48 gwr Exp $	*/
+/*	$NetBSD: ncr_si.c,v 1.2 1995/11/17 23:27:52 gwr Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross

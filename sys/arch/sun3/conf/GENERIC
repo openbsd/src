@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.24.2.1 1995/11/18 07:15:57 gwr Exp $
+#	$NetBSD: GENERIC,v 1.25 1995/11/17 23:31:12 gwr Exp $
 
 #
 # GENERIC Sun3 (3/50, 3/60, 3/110, 3/160, 3/260)

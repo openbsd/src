@@ -1,4 +1,4 @@
-/*	$NetBSD: nexus.h,v 1.4 1995/02/23 17:51:42 ragge Exp $	*/
+/*	$NetBSD: nexus.h,v 1.5 1995/11/12 14:37:22 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -57,14 +57,6 @@
 #define	NNEX780	NNEXSBI
 #define	NEX780	((struct nexus *)0x20000000)
 #endif
-#if VAX750
-#define	NNEX750	NNEXSBI
-#ifndef ASSEMBLER
-#define NEX750           ((struct nexus*)0xf20000)
-#else
-#define NEX750           (0xF20000)
-#endif
-#endif
 #if VAX730
 #define	NNEX730	NNEXSBI
 #define	NEX730	((struct nexus *)0xf20000)
@@ -94,9 +86,10 @@ struct	nexus {
 };
 
 struct sbi_attach_args {
-	u_int	nexnum;
-	u_int	type;
-	void	*nexaddr;
+	u_int	nexnum; 	/* This nexus TR number */
+	u_int	type;		/* This nexus type */
+	int	nexinfo;	/* Some info sent between attach & match */
+	void	*nexaddr;	/* Virtual address of this nexus */
 };
 
 struct iobus {
@@ -177,3 +170,7 @@ extern caddr_t *nex_vec;
 #define	NEX_MEM256U	0x72		/* 256K chips, non-interleaved, upper */
 #define	NEX_MEM256UI	0x73		/* 256K chips, ext-interleaved, upper */
 #define	NEX_MEM256I	0x74		/* 256K chips, interleaved */
+
+#ifndef	ASSEMBLER
+struct	nexus *nexus;
+#endif

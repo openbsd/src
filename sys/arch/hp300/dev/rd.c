@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.13 1995/10/09 07:57:46 thorpej Exp $	*/
+/*	$NetBSD: rd.c,v 1.16 1995/12/09 07:31:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -69,10 +69,10 @@
 #include <vm/vm_prot.h>
 #include <vm/pmap.h>
 
-int	rdinit(), rdstart(), rdgo(), rdintr();
-void	rdstrategy();
+int	rdmatch(), rdstart(), rdgo(), rdintr();
+void	rdattach(), rdstrategy();
 struct	driver rddriver = {
-	rdinit, "rd", rdstart, rdgo, rdintr,
+	rdmatch, rdattach, "rd", rdstart, rdgo, rdintr,
 };
 
 struct	rd_softc rd_softc[NRD];
@@ -162,38 +162,88 @@ int	rddebug = 0x80;
  * Nothing really critical here, could do without it.
  */
 struct rdidentinfo rdidentinfo[] = {
-	{ RD7946AID,	0,	"7945A",	 108416 },
-	{ RD9134DID,	1,	"9134D",	  29088 },
-	{ RD9134LID,	1,	"9122S",	   1232 },
-	{ RD7912PID,	0,	"7912P",	 128128 },
-	{ RD7914PID,	0,	"7914P",	 258048 },
-	{ RD7958AID,	0,	"7958A",	 255276 },
-	{ RD7957AID,	0,	"7957A",	 159544 },
-	{ RD7933HID,	0,	"7933H",	 789958 },
-	{ RD9134LID,	1,	"9134L",	  77840 },
-	{ RD7936HID,	0,	"7936H",	 600978 },
-	{ RD7937HID,	0,	"7937H",	1116102 },
-	{ RD7914CTID,	0,	"7914CT",	 258048 },
-	{ RD7946AID,	0,	"7946A",	 108416 },
-	{ RD9134LID,	1,	"9122D",	   1232 },
-	{ RD7957BID,	0,	"7957B",	 159894 },
-	{ RD7958BID,	0,	"7958B",	 297108 },
-	{ RD7959BID,	0,	"7959B",	 594216 },
-	{ RD2200AID,	0,	"2200A",	 654948 },
-	{ RD2203AID,	0,	"2203A",	1309896 }
+	{ RD7946AID,	0,	"7945A",	NRD7945ABPT,
+	  NRD7945ATRK,	968,	 108416 },
+
+	{ RD9134DID,	1,	"9134D",	NRD9134DBPT,
+	  NRD9134DTRK,	303,	  29088 },
+
+	{ RD9134LID,	1,	"9122S",	NRD9122SBPT,
+	  NRD9122STRK,	77,	   1232 },
+
+	{ RD7912PID,	0,	"7912P",	NRD7912PBPT,
+	  NRD7912PTRK,	572,	 128128 },
+
+	{ RD7914PID,	0,	"7914P",	NRD7914PBPT,
+	  NRD7914PTRK,	1152,	 258048 },
+
+	{ RD7958AID,	0,	"7958A",	NRD7958ABPT,
+	  NRD7958ATRK,	1013,	 255276 },
+
+	{ RD7957AID,	0,	"7957A",	NRD7957ABPT,
+	  NRD7957ATRK,	1036,	 159544 },
+
+	{ RD7933HID,	0,	"7933H",	NRD7933HBPT,
+	  NRD7933HTRK,	1321,	 789958 },
+
+	{ RD9134LID,	1,	"9134L",	NRD9134LBPT,
+	  NRD9134LTRK,	973,	  77840 },
+
+	{ RD7936HID,	0,	"7936H",	NRD7936HBPT,
+	  NRD7936HTRK,	698,	 600978 },
+
+	{ RD7937HID,	0,	"7937H",	NRD7937HBPT,
+	  NRD7937HTRK,	698,	1116102 },
+
+	{ RD7914CTID,	0,	"7914CT",	NRD7914PBPT,
+	  NRD7914PTRK,	1152,	 258048 },
+
+	{ RD7946AID,	0,	"7946A",	NRD7945ABPT,
+	  NRD7945ATRK,	968,	 108416 },
+
+	{ RD9134LID,	1,	"9122D",	NRD9122SBPT,
+	  NRD9122STRK,	77,	   1232 },
+
+	{ RD7957BID,	0,	"7957B",	NRD7957BBPT,
+	  NRD7957BTRK,	1269,	 159894 },
+
+	{ RD7958BID,	0,	"7958B",	NRD7958BBPT,
+	  NRD7958BTRK,	786,	 297108 },
+
+	{ RD7959BID,	0,	"7959B",	NRD7959BBPT,
+	  NRD7959BTRK,	1572,	 594216 },
+
+	{ RD2200AID,	0,	"2200A",	NRD2200ABPT,
+	  NRD2200ATRK,	1449,	 654948 },
+
+	{ RD2203AID,	0,	"2203A",	NRD2203ABPT,
+	  NRD2203ATRK,	1449,	1309896 }
 };
 int numrdidentinfo = sizeof(rdidentinfo) / sizeof(rdidentinfo[0]);
 
-rdinit(hd)
+int
+rdmatch(hd)
 	register struct hp_device *hd;
 {
 	register struct rd_softc *rs = &rd_softc[hd->hp_unit];
 
 	rs->sc_hd = hd;
 	rs->sc_punit = rdpunit(hd->hp_flags);
-	rs->sc_type = rdident(rs, hd);
+	rs->sc_type = rdident(rs, hd, 0);
 	if (rs->sc_type < 0)
-		return(0);
+		return (0);
+
+	return (1);
+}
+
+void
+rdattach(hd)
+	register struct hp_device *hd;
+{
+	register struct rd_softc *rs = &rd_softc[hd->hp_unit];
+
+	(void)rdident(rs, hd, 1);	/* XXX Ick. */
+
 	rs->sc_dq.dq_ctlr = hd->hp_ctlr;
 	rs->sc_dq.dq_unit = hd->hp_unit;
 	rs->sc_dq.dq_slave = hd->hp_slave;
@@ -204,14 +254,15 @@ rdinit(hd)
 	if (rddebug & RDB_ERROR)
 		rderrthresh = 0;
 #endif
-	return(1);
 }
 
-rdident(rs, hd)
+int
+rdident(rs, hd, verbose)
 	struct rd_softc *rs;
 	struct hp_device *hd;
+	int verbose;
 {
-	struct rd_describe desc;
+	struct rd_describe *desc = &rs->sc_rddesc;
 	u_char stat, cmd[3];
 	int unit, lunit;
 	char name[7];
@@ -252,33 +303,34 @@ rdident(rs, hd)
 	cmd[1] = C_SVOL(0);
 	cmd[2] = C_DESC;
 	hpibsend(ctlr, slave, C_CMD, cmd, sizeof(cmd));
-	hpibrecv(ctlr, slave, C_EXEC, &desc, 37);
+	hpibrecv(ctlr, slave, C_EXEC, desc, 37);
 	hpibrecv(ctlr, slave, C_QSTAT, &stat, sizeof(stat));
 	bzero(name, sizeof(name));
 	if (!stat) {
-		register int n = desc.d_name;
+		register int n = desc->d_name;
 		for (i = 5; i >= 0; i--) {
 			name[i] = (n & 0xf) + '0';
 			n >>= 4;
 		}
 		/* use drive characteristics to calculate xfer rate */
-		rs->sc_wpms = 1000000 * (desc.d_sectsize/2) / desc.d_blocktime;
+		rs->sc_wpms = 1000000 * (desc->d_sectsize/2) /
+		    desc->d_blocktime;
 	}
 #ifdef DEBUG
 	if (rddebug & RDB_IDENT) {
 		printf("rd%d: name: %x ('%s')\n",
-		       lunit, desc.d_name, name);
+		       lunit, desc->d_name, name);
 		printf("  iuw %x, maxxfr %d, ctype %d\n",
-		       desc.d_iuw, desc.d_cmaxxfr, desc.d_ctype);
+		       desc->d_iuw, desc->d_cmaxxfr, desc->d_ctype);
 		printf("  utype %d, bps %d, blkbuf %d, burst %d, blktime %d\n",
-		       desc.d_utype, desc.d_sectsize,
-		       desc.d_blkbuf, desc.d_burstsize, desc.d_blocktime);
+		       desc->d_utype, desc->d_sectsize,
+		       desc->d_blkbuf, desc->d_burstsize, desc->d_blocktime);
 		printf("  avxfr %d, ort %d, atp %d, maxint %d, fv %x, rv %x\n",
-		       desc.d_uavexfr, desc.d_retry, desc.d_access,
-		       desc.d_maxint, desc.d_fvbyte, desc.d_rvbyte);
+		       desc->d_uavexfr, desc->d_retry, desc->d_access,
+		       desc->d_maxint, desc->d_fvbyte, desc->d_rvbyte);
 		printf("  maxcyl/head/sect %d/%d/%d, maxvsect %d, inter %d\n",
-		       desc.d_maxcyl, desc.d_maxhead, desc.d_maxsect,
-		       desc.d_maxvsectl, desc.d_interleave);
+		       desc->d_maxcyl, desc->d_maxhead, desc->d_maxsect,
+		       desc->d_maxvsectl, desc->d_interleave);
 	}
 #endif
 	/*
@@ -309,7 +361,18 @@ rdident(rs, hd)
 			id = RD9134D;
 		break;
 	}
-	printf("rd%d: %s\n", lunit, rdidentinfo[id].ri_desc);
+	/*
+	 * XXX We use DEV_BSIZE instead of the sector size value pulled
+	 * off the driver because all of this code assumes 512 byte
+	 * blocks.  ICK!
+	 */
+	if (verbose) {
+		printf(": %s\n", rdidentinfo[id].ri_desc);
+		printf("%s: %d cylinders, %d heads, %d blocks, %d bytes/block\n",
+		    rs->sc_hd->hp_xname, rdidentinfo[id].ri_ncyl,
+		    rdidentinfo[id].ri_ntpc, rdidentinfo[id].ri_nblocks,
+		    DEV_BSIZE);
+	}
 	return(id);
 }
 
@@ -379,12 +442,12 @@ rdgetinfo(dev)
 	/*
 	 * Now try to read the disklabel
 	 */
-	msg = readdisklabel(rdlabdev(dev), rdstrategy, lp);
+	msg = readdisklabel(rdlabdev(dev), rdstrategy, lp, NULL);
 	if (msg == NULL)
 		return(0);
 
 	pi = lp->d_partitions;
-	printf("rd%d: WARNING: %s, ", unit, msg);
+	printf("%s: WARNING: %s, ", rs->sc_hd->hp_xname, msg);
 #ifdef COMPAT_NOLABEL
 	printf("using old default partitioning\n");
 	rdmakedisklabel(unit, lp);
@@ -643,8 +706,8 @@ again:
 	 */
 #ifdef DEBUG
 	if (rddebug & RDB_ERROR)
-		printf("rd%d: rdstart: cmd %x adr %d blk %d len %d ecnt %d\n",
-		       unit, rs->sc_ioc.c_cmd, rs->sc_ioc.c_addr,
+		printf("%s: rdstart: cmd %x adr %d blk %d len %d ecnt %d\n",
+		       rs->sc_hd->hp_xname, rs->sc_ioc.c_cmd, rs->sc_ioc.c_addr,
 		       bp->b_blkno, rs->sc_resid, rdtab[unit].b_errcnt);
 	rdstats[unit].rdretries++;
 #endif
@@ -652,8 +715,8 @@ again:
 	rdreset(rs, hp);
 	if (rdtab[unit].b_errcnt++ < RDRETRY)
 		goto again;
-	printf("rd%d: rdstart err: cmd 0x%x sect %d blk %d len %d\n",
-	       unit, rs->sc_ioc.c_cmd, rs->sc_ioc.c_addr,
+	printf("%s: rdstart err: cmd 0x%x sect %d blk %d len %d\n",
+	       rs->sc_hd->hp_xname, rs->sc_ioc.c_cmd, rs->sc_ioc.c_addr,
 	       bp->b_blkno, rs->sc_resid);
 	bp->b_flags |= B_ERROR;
 	bp->b_error = EIO;
@@ -703,7 +766,7 @@ rdintr(unit)
 		printf("rdintr(%d): bp %x, %c, flags %x\n", unit, bp,
 		       (bp->b_flags & B_READ) ? 'R' : 'W', rs->sc_flags);
 	if (bp == NULL) {
-		printf("rd%d: bp == NULL\n", unit);
+		printf("%s: bp == NULL\n", rs->sc_hd->hp_xname);
 		return;
 	}
 #endif
@@ -812,7 +875,7 @@ rderror(unit)
 
 	if (rdstatus(rs)) {
 #ifdef DEBUG
-		printf("rd%d: couldn't get status\n", unit);
+		printf("%s: couldn't get status\n", rs->sc_hd->hp_xname);
 #endif
 		rdreset(rs, rs->sc_hd);
 		return(1);
@@ -835,8 +898,8 @@ rderror(unit)
 		extern int hz;
 		int rdtimo = RDWAITC << rdtab[unit].b_errcnt;
 #ifdef DEBUG
-		printf("rd%d: internal maintenance, %d second timeout\n",
-		       unit, rdtimo);
+		printf("%s: internal maintenance, %d second timeout\n",
+		       rs->sc_hd->hp_xname, rdtimo);
 		rdstats[unit].rdtimeouts++;
 #endif
 		hpibfree(&rs->sc_dq);

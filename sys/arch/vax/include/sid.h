@@ -1,4 +1,4 @@
-/*	$NetBSD: sid.h,v 1.5 1995/02/23 17:51:44 ragge Exp $	*/
+/*	$NetBSD: sid.h,v 1.6 1995/11/12 14:37:18 ragge Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -48,7 +48,6 @@
 #define MACHID(x)       ((x>>24)&255)
 
 #define V750UCODE(x)    ((x>>8)&255)
-#define V750HARDW(x)    (cpu_type&255)
 
 /*
  * The MicroVAXII CPU chip (78032) is used on more than one type of system

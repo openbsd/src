@@ -1,4 +1,4 @@
-/*	$NetBSD: device.h,v 1.5 1995/03/28 18:15:55 jtc Exp $	*/
+/*	$NetBSD: device.h,v 1.6 1995/12/02 18:21:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -36,12 +36,23 @@
  */
 
 struct driver {
-	int	(*d_init)();
+	int	(*d_match)();
+	void	(*d_attach)();
 	char	*d_name;
 	int	(*d_start)();
 	int	(*d_go)();
 	int	(*d_intr)();
 	int	(*d_done)();
+};
+
+struct hp_hw {
+	caddr_t	hw_pa;		/* physical address of control space */
+	int	hw_size;	/* size of control space */
+	caddr_t	hw_kva;		/* kernel virtual address of control space */
+	short	hw_id;		/* HW returned id */
+	short	hw_secid;	/* secondary HW id (displays) */
+	short	hw_type;	/* type (defined below) */
+	short	hw_sc;		/* select code (if applicable) */
 };
 
 struct hp_ctlr {
@@ -51,6 +62,8 @@ struct hp_ctlr {
 	char		*hp_addr;
 	int		hp_flags;
 	int		hp_ipl;
+	struct hp_hw	*hp_args;
+	char		hp_xname[8];
 };
 
 struct hp_device {
@@ -64,6 +77,8 @@ struct hp_device {
 	int		hp_flags;
 	int		hp_alive;
 	int		hp_ipl;
+	struct hp_hw	*hp_args;
+	char		hp_xname[8];
 };
 
 struct	devqueue {
@@ -77,16 +92,6 @@ struct	devqueue {
 
 #define	MAXCTLRS	16	/* Size of HW table (arbitrary) */
 #define	MAXSLAVES	8	/* Slaves per controller (HPIB/SCSI limit) */
-
-struct hp_hw {
-	caddr_t	hw_pa;		/* physical address of control space */
-	int	hw_size;	/* size of control space */
-	caddr_t	hw_kva;		/* kernel virtual address of control space */
-	short	hw_id;		/* HW returned id */
-	short	hw_secid;	/* secondary HW id (displays) */
-	short	hw_type;	/* type (defined below) */
-	short	hw_sc;		/* select code (if applicable) */
-};
 
 /* bus types */
 #define	B_MASK		0xE000

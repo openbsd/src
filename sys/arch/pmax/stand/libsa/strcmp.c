@@ -1,4 +1,4 @@
-/*	$NetBSD: strcmp.c,v 1.5 1995/01/18 06:53:58 mellon Exp $	*/
+/*	$NetBSD: strcmp.c,v 1.6 1995/10/26 01:39:49 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -39,9 +39,10 @@
  */
 
 #include <arch/pmax/stand/dec_prom.h>
+#undef strcmp
 
 strcmp(s1, s2)
 	char *s1, *s2;
 {
-	return (callv->strcmp(s1, s2));
+	return (callv->_strcmp(s1, s2));
 }

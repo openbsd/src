@@ -1,4 +1,4 @@
-/*	$NetBSD: dmareg.h,v 1.5 1995/03/28 18:15:59 jtc Exp $	*/
+/*	$NetBSD: dmareg.h,v 1.6 1995/12/02 02:46:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -70,7 +70,8 @@ struct	dmareg {
 	struct dmadevice  dma_chan1;
 };
 
-#define	NDMA		2
+/* The hp300 has 2 DMA channels. */
+#define	NDMACHAN	2
 
 /* intr level must be >= level of any device using dma.  i.e., splbio */
 #define	DMAINTLVL	5
@@ -110,29 +111,29 @@ struct	dmareg {
  *		look at the 98620C status to get the extended bits.
  * DMA_ARM:	Load address, count and kick-off DMA.
  */
-#define	DMA_CLEAR(dc)	{ v_int dmaclr = (int)dc->sc_Bhwaddr->dmaB_addr; }
-#define	DMA_STAT(dc)	dc->sc_Bhwaddr->dmaB_stat
+#define	DMA_CLEAR(dc)	{ v_int dmaclr = (int) dc->dm_Bhwaddr->dmaB_addr; }
+#define	DMA_STAT(dc)	dc->dm_Bhwaddr->dmaB_stat
 
 #if defined(HP320)
 #define	DMA_ARM(dc)	\
-	if (dc->sc_type == DMA_B) { \
-		register struct dmaBdevice *dma = dc->sc_Bhwaddr; \
-		dma->dmaB_addr = dc->sc_cur->dc_addr; \
-		dma->dmaB_count = dc->sc_cur->dc_count - 1; \
-		dma->dmaB_cmd = dc->sc_cmd; \
+	if (dc->dm_softc->sc_type == DMA_B) { \
+		register struct dmaBdevice *dma = dc->dm_Bhwaddr; \
+		dma->dmaB_addr = dc->dm_cur->dc_addr; \
+		dma->dmaB_count = dc->dm_cur->dc_count - 1; \
+		dma->dmaB_cmd = dc->dm_cmd; \
 	} else { \
-		register struct dmadevice *dma = dc->sc_hwaddr; \
-		dma->dma_addr = dc->sc_cur->dc_addr; \
-		dma->dma_count = dc->sc_cur->dc_count - 1; \
-		dma->dma_cmd = dc->sc_cmd; \
+		register struct dmadevice *dma = dc->dm_hwaddr; \
+		dma->dma_addr = dc->dm_cur->dc_addr; \
+		dma->dma_count = dc->dm_cur->dc_count - 1; \
+		dma->dma_cmd = dc->dm_cmd; \
 	}
 #else
 #define	DMA_ARM(dc)	\
 	{ \
-		register struct dmadevice *dma = dc->sc_hwaddr; \
-		dma->dma_addr = dc->sc_cur->dc_addr; \
-		dma->dma_count = dc->sc_cur->dc_count - 1; \
-		dma->dma_cmd = dc->sc_cmd; \
+		register struct dmadevice *dma = dc->dm_hwaddr; \
+		dma->dma_addr = dc->dm_cur->dc_addr; \
+		dma->dma_count = dc->dm_cur->dc_count - 1; \
+		dma->dma_cmd = dc->dm_cmd; \
 	}
 #endif
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.6.2.1 1995/10/12 08:16:07 leo Exp $	*/
+/*	$NetBSD: pmap.c,v 1.7 1995/11/30 00:57:39 jtc Exp $	*/
 
 /* 
  * Copyright (c) 1991 Regents of the University of California.

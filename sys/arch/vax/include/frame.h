@@ -1,7 +1,6 @@
-/*	$NetBSD: loconf.h,v 1.2 1994/10/26 08:02:13 cgd Exp $	*/
-
+/*	$NetBSD: frame.h,v 1.1 1995/11/12 15:07:30 ragge Exp $ */
 /*
- * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
+ * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -14,7 +13,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *     This product includes software developed at Ludd, University of Lule}.
+ *      This product includes software developed at Ludd, University of 
+ *      Lule}, Sweden and its contributors.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission
  *
@@ -30,28 +30,21 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
- /* All bugs are subject to removal without further notice */
-		
-
-
-
-
-#define ISTACK_SIZE 4*NBPG
-
-/* XXX If kernel never crashes with kernel stack overflow trap
- *     kstack can be removed altogether. (Was 4*NBPG)
+/*
+ * Description of calls frame on stack. This is the 
+ * standard way of making procedure calls on vax systems.
  */
+struct callsframe {
+	unsigned int	ca_cond;	/* condition handler */
+	unsigned int	ca_maskpsw;	/* register mask and saved psw */
+	unsigned int	ca_ap;		/* argument pointer */
+	unsigned int	ca_fp;		/* frame pointer */
+	unsigned int	ca_pc;		/* program counter */
+	unsigned int	ca_argno;	/* argument count on stack */
+	unsigned int	ca_arg1;	/* first arg on stack */
+	/* This can be followed by more arguments */
+};
 
-#define PROC_PAGES 0
+/* Offset to beginning of calls frame from first arg */
+#define	FRAMEOFFSET(arg1) ((struct callsframe *)((unsigned int)&(arg1) - 24))
 
-#define MAX_UCODE 1024*1024*6
-#define MAX_UDATA 1024*1024*32
-#define MAX_USTCK 1024*1024*8
-
-#define MAX_PROCESSES 32
-
-#define PROCOFFSET (MAX_UCODE+MAX_UDATA+MAX_USTCK)/16384
-
-/* Add 1 to USERPAGES if (MAX_PROCESSES mod 8) != 0 */
-
-#define USERPAGES (MAX_UCODE+MAX_UDATA+MAX_USTCK)*MAX_PROCESSES/(512*128*128)

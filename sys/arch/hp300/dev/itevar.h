@@ -1,4 +1,4 @@
-/*	$NetBSD: itevar.h,v 1.7.2.1 1995/11/19 23:18:31 thorpej Exp $	*/
+/*	$NetBSD: itevar.h,v 1.8 1995/11/19 23:14:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.

@@ -1,4 +1,4 @@
-/*	$NetBSD: bt478.c,v 1.1 1995/09/11 08:11:22 jonathan Exp $	*/
+/*	$NetBSD: bt478.c,v 1.2 1995/11/25 10:38:42 mellon Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -121,7 +121,6 @@ bt478init(fi)
 	 * Initialize the color map and the screen.
 	 */
 	bt478InitColorMap(fi);
-	bt478RestoreCursorColor (fi);
 	return (1);
 }
 
@@ -211,14 +210,15 @@ bt478InitColorMap (fi)
 	if (fi -> fi_type.fb_depth == 1) {
 		vdac->mapWA = 0; MachEmptyWriteBuffer();
 		for (i = 0; i < 256; i++) {
-			((u_char *)(fi -> fi_cmap_bits)) [i * 3]
-				= vdac->map = (i < 128) ? 0x00 : 0xff;
-			MachEmptyWriteBuffer();
+			((u_char *)(fi -> fi_cmap_bits)) [i * 3] = 0;
 			((u_char *)(fi -> fi_cmap_bits)) [i * 3 + 1]
-				= vdac->map = (i < 128) ? 0x00 : 0xff;
+				= (i < 128) ? 0x00 : 0xff;
+			((u_char *)(fi -> fi_cmap_bits)) [i * 3 + 2] = 0;
+			vdac->map = 0;
 			MachEmptyWriteBuffer();
-			((u_char *)(fi -> fi_cmap_bits)) [i * 3 + 2]
-				= vdac->map = (i < 128) ? 0x00 : 0xff;
+			vdac->map = (i < 128) ? 0x00 : 0xff;
+			MachEmptyWriteBuffer();
+			vdac->map = 0;
 			MachEmptyWriteBuffer();
 		}
 	} else {
@@ -244,8 +244,6 @@ bt478InitColorMap (fi)
 			vdac->map = 0xff;
 			MachEmptyWriteBuffer();
 		}
-#if 0
-#endif
 	}
 
 	for (i = 0; i < 3; i++) {

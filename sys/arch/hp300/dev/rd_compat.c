@@ -1,4 +1,4 @@
-/*	$NetBSD: rd_compat.c,v 1.3 1994/10/26 07:24:52 cgd Exp $	*/
+/*	$NetBSD: rd_compat.c,v 1.4 1995/11/19 19:07:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -228,34 +228,29 @@ struct	size {
  * Indexed the same as rdidentinfo array.
  */
 struct rdcompatinfo {
-	int	nbpt;		/* DEV_BSIZE blocks per track */
-	int	ntpc;		/* tracks per cylinder */
-	int	ncyl;		/* cylinders per unit */
 	struct	size *sizes;	/* partition info */
 } rdcompatinfo[] = {
-	NRD7945ABPT,	NRD7945ATRK,	968,	rd7945A_sizes,
-	NRD9134DBPT,	NRD9134DTRK,	303,	rd9134D_sizes,
-	NRD9122SBPT,	NRD9122STRK,	77,	rd9122S_sizes,
-	NRD7912PBPT,	NRD7912PTRK,	572,	rd7912P_sizes,
-	NRD7914PBPT,	NRD7914PTRK,	1152,	rd7914P_sizes,
-	NRD7958ABPT,	NRD7958ATRK,	1013,	rd7958A_sizes,
-	NRD7957ABPT,	NRD7957ATRK,	1036,	rd7957A_sizes,
-	NRD7933HBPT,	NRD7933HTRK,	1321,	rd7933H_sizes,
-	NRD9134LBPT,	NRD9134LTRK,	973,	rd9134L_sizes,
-	NRD7936HBPT,	NRD7936HTRK,	698,	rd7936H_sizes,
-	NRD7937HBPT,	NRD7937HTRK,	698,	rd7937H_sizes,
-	NRD7914PBPT,	NRD7914PTRK,	1152,	rd7914P_sizes,
-	NRD7945ABPT,	NRD7945ATRK,	968,	rd7945A_sizes,
-	NRD9122SBPT,	NRD9122STRK,	77,	rd9122S_sizes,
-	NRD7957BBPT,	NRD7957BTRK,	1269,	rd7957B_sizes,
-	NRD7958BBPT,	NRD7958BTRK,	786,	rd7958B_sizes,
-	NRD7959BBPT,	NRD7959BTRK,	1572,	rd7959B_sizes,
-	NRD2200ABPT,	NRD2200ATRK,	1449,	rd2200A_sizes,
-	NRD2203ABPT,	NRD2203ATRK,	1449,	rd2203A_sizes,
+	rd7945A_sizes,
+	rd9134D_sizes,
+	rd9122S_sizes,
+	rd7912P_sizes,
+	rd7914P_sizes,
+	rd7958A_sizes,
+	rd7957A_sizes,
+	rd7933H_sizes,
+	rd9134L_sizes,
+	rd7936H_sizes,
+	rd7937H_sizes,
+	rd7914P_sizes,
+	rd7945A_sizes,
+	rd9122S_sizes,
+	rd7957B_sizes,
+	rd7958B_sizes,
+	rd7959B_sizes,
+	rd2200A_sizes,
+	rd2203A_sizes,
 };
 int nrdcompatinfo = sizeof(rdcompatinfo) / sizeof(rdcompatinfo[0]);
-
-extern struct rd_softc rd_softc[];
 
 rdmakedisklabel(unit, lp)
 	int unit;
@@ -263,14 +258,15 @@ rdmakedisklabel(unit, lp)
 {
 	register struct rd_softc *rs = &rd_softc[unit];
 	register struct rdcompatinfo *ci = &rdcompatinfo[rs->sc_type];
+	struct rdidentinfo *ri = &rdidentinfo[rs->sc_type];
 	register struct partition *pi;
 	register int dcount;
 	
-	lp->d_nsectors = ci->nbpt;
-	lp->d_ntracks = ci->ntpc;
-	lp->d_ncylinders = ci->ncyl;
-	lp->d_secpercyl = ci->nbpt * ci->ntpc;
-	lp->d_secperunit = lp->d_secpercyl * ci->ncyl;
+	lp->d_nsectors = ri->ri_nbpt;
+	lp->d_ntracks = ri->ri_ntpc;
+	lp->d_ncylinders = ri->ri_ncyl;
+	lp->d_secpercyl = ri->ri_nbpt * ri->ri_ntpc;
+	lp->d_secperunit = lp->d_secpercyl * ri->ri_ncyl;
 	lp->d_rpm = 3600;
 	lp->d_interleave = 1;
 	lp->d_npartitions = 8;

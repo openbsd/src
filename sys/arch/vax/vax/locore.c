@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.c,v 1.8 1995/06/16 15:36:42 ragge Exp $	*/
+/*	$NetBSD: locore.c,v 1.9 1995/11/10 19:05:47 ragge Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -47,8 +47,6 @@
 #include "machine/vmparam.h"
 #include "machine/pcb.h"
 
-#define ROUND_PAGE(x)   (((uint)(x)+PAGE_SIZE-1)& ~(PAGE_SIZE-1))
-
 u_int	proc0paddr;
 volatile int	cpunumber, *Sysmap, boothowto, cpu_type;
 volatile char *esym;
@@ -69,7 +67,12 @@ start(how, dev)
 	register curtop;
 
 	mtpr(0x1f,PR_IPL); /* No interrupts before istack is ok, please */
-#ifdef COMPAT_RENO
+
+	/*
+	 * We can be running either in system or user space when
+	 * getting here. Need to figure out which and take care
+	 * of it.
+	 */
 	asm("
 	movl	r9,_esym
 	movl	r10,_bootdev
@@ -84,15 +87,11 @@ tvo:	movl	(sp)+,_boothowto
 	movl	(sp)+,_bootdev
 to_kmem:
 	");
-#else
-	bootdev=dev;
-	boothowto=how;
-#endif
 
-/*
- * FIRST we must set up kernel stack, directly after end.
- * This is the only thing we have to setup here, rest in pmap.
- */
+	/*
+	 * FIRST we must set up kernel stack, directly after end.
+	 * This is the only thing we have to setup here, rest in pmap.
+	 */
 
 	PAGE_SIZE = NBPG*2; /* Set logical page size */
 #ifdef DDB
@@ -121,7 +120,7 @@ to_kmem:
 	mtpr(0,PR_P1LR);
 	mtpr(0x80000000,PR_P1BR);
 
-	mtpr(512,PR_SCBB); /* SCB at physical addr 512 */
+	mtpr(0, PR_SCBB); /* SCB at physical addr  */
 	mtpr(0,PR_ESP); /* Must be zero, used in page fault routine */
 	mtpr(AST_NO,PR_ASTLVL);
 	

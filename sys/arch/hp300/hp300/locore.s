@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.44 1995/10/08 20:19:22 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.46 1995/12/11 17:09:11 thorpej Exp $	*/
 
 #undef STACKCHECK	/* doesn't work any more */
 
@@ -109,8 +109,8 @@ _buserr:
 	movl	_nofault,sp@-		| yes,
 	jbsr	_longjmp		|  longjmp(nofault)
 Lberr:
-#if defined(HP380)
-	cmpl	#-2,_mmutype		| 68040?
+#if defined(M68040)
+	cmpl	#MMU_68040,_mmutype	| 68040?
 	jne	_addrerr		| no, skip
 	clrl	sp@-			| stack adjust count
 	moveml	#0xFFFF,sp@-		| save user registers
@@ -144,8 +144,8 @@ _addrerr:
 	movl	usp,a0			| save the user SP
 	movl	a0,sp@(FR_SP)		|   in the savearea
 	lea	sp@(FR_HW),a1		| grab base of HW berr frame
-#if defined(HP380)
-	cmpl	#-2,_mmutype		| 68040?
+#if defined(M68040)
+	cmpl	#MMU_68040,_mmutype	| 68040?
 	jne	Lbenot040		| no, skip
 	movl	a1@(8),sp@-		| yes, push fault address
 	clrl	sp@-			| no SSW for address fault
@@ -193,7 +193,7 @@ Lbe10:
 	andw	#0x0FFF,d0		| clear out frame format
 	cmpw	#12,d0			| address error vector?
 	jeq	Lisaerr			| yes, go to it
-#if defined(HP330) || defined(HP360) || defined(HP370)
+#if defined(M68K_MMU_MOTOROLA)
 	tstl	_mmutype		| HP MMU?
 	jeq	Lbehpmmu		| yes, skip
 	movl	d1,a0			| fault address
@@ -205,7 +205,7 @@ Lbe10:
 	jra	Lisberr			| and process as normal bus error
 Lbehpmmu:
 #endif
-#if defined(HP320) || defined(HP350)
+#if defined(M68K_MMU_HP)
 	MMUADDR(a0)
 	movl	a0@(MMUSTAT),d0		| read status
 	btst	#3,d0			| MMU fault?
@@ -247,7 +247,7 @@ Lstkadj:
  * FP exceptions.
  */
 _fpfline:
-#if defined(HP380)
+#if defined(M68040)
 	cmpw	#0x202c,sp@(6)		| format type 2?
 	jne	_illinst		| no, not an FP emulation
 #ifdef FPSP
@@ -264,8 +264,8 @@ _fpfline:
 #endif
 
 _fpunsupp:
-#if defined(HP380)
-	cmpl	#-2,_mmutype		| 68040?
+#if defined(M68040)
+	cmpl	#MMU_68040,_mmutype	| 68040?
 	jne	_illinst		| no, treat as illinst
 #ifdef FPSP
 	.globl	fpsp_unsupp
@@ -898,7 +898,7 @@ start:
 	tstl	d0			| zero?
 	jeq	Lnot68030		| yes, we have 68020/68040
 	RELOC(_mmutype, a0)		| no, we have 68030
-	movl	#-1,a0@			| set to reflect 68030 PMMU
+	movl	#MMU_68030,a0@		| set to reflect 68030 PMMU
 	RELOC(_machineid, a0)
 	movl	#0x80,a1@(MMUCMD)	| set magic cookie
 	movl	a1@(MMUCMD),d0		| read it back
@@ -933,7 +933,7 @@ Lnot68030:
 	moveq	#0,d0			| now turn it back off
 	movec	d0,cacr			|   before we access any data
 	RELOC(_mmutype, a0)
-	movl	#-2,a0@			| with a 68040 MMU
+	movl	#MMU_68040,a0@		| with a 68040 MMU
 	RELOC(_ectype, a0)
 	movl	#0,a0@			| and no cache (for now XXX)
 	RELOC(_machineid, a0)
@@ -952,7 +952,7 @@ Lis68020:
 	btst	#0,d0			| non-zero?
 	jne	Lishpmmu		| yes, we have HP MMU
 	RELOC(_mmutype, a0)
-	movl	#1,a0@			| no, we have PMMU
+	movl	#MMU_68851,a0@		| no, we have PMMU
 	RELOC(_machineid, a0)
 	movl	#1,a0@			| and 330 CPU
 	jra	Lstart1
@@ -1018,7 +1018,7 @@ Lstart2:
 	RELOC(_mmutype, a0)
 	tstl	a0@			| HP MMU?
 	jeq	Lhpmmu2			| yes, skip
-	cmpl	#-2,a0@			| 68040?
+	cmpl	#MMU_68040,a0@		| 68040?
 	jne	Lmotommu1		| no, skip
 	.long	0x4e7b1807		| movc d1,srp
 	jra	Lstploaddone
@@ -1047,7 +1047,7 @@ Lhighcode:
 	RELOC(_mmutype, a0)
 	tstl	a0@			| HP MMU?
 	jeq	Lhpmmu3			| yes, skip
-	cmpl	#-2,a0@			| 68040?
+	cmpl	#MMU_68040,a0@		| 68040?
 	jne	Lmotommu2		| no, skip
 	movw	#0,INTIOBASE+MMUBASE+MMUCMD+2
 	movw	#MMU_IEN+MMU_CEN+MMU_FPE,INTIOBASE+MMUBASE+MMUCMD+2
@@ -1102,7 +1102,7 @@ Lfinish:
 #endif
 /* flush TLB and turn on caches */
 	jbsr	_TBIA			| invalidate TLB
-	cmpl	#-2,_mmutype		| 68040?
+	cmpl	#MMU_68040,_mmutype	| 68040?
 	jeq	Lnocache0		| yes, cache already on
 	movl	#CACHE_ON,d0
 	movc	d0,cacr			| clear cache(s)
@@ -1186,8 +1186,8 @@ ENTRY(copypage)
 	movl	sp@(4),a0		| source address
 	movl	sp@(8),a1		| destination address
 	movl	#NBPG/32,d0		| number of 32 byte chunks
-#if defined(HP380)
-	cmpl	#-2,_mmutype		| 68040?
+#if defined(M68040)
+	cmpl	#MMU_68040,_mmutype	| 68040?
 	jne	Lmlloop			| no, use movl
 Lm16loop:
 	.long	0xf6209000		| move16 a0@+,a1@+
@@ -1467,8 +1467,8 @@ Lswnofpsave:
 Lswnochg:
 
 	lea	tmpstk,sp		| now goto a tmp stack for NMI
-#if defined(HP380)
-	cmpl	#-2,_mmutype		| 68040?
+#if defined(M68040)
+	cmpl	#MMU_68040,_mmutype	| 68040?
 	jne	Lres1a			| no, skip
 	.word	0xf518			| yes, pflusha
 	movl	a1@(PCB_USTP),d0	| get USTP
@@ -1480,7 +1480,7 @@ Lres1a:
 #endif
 	movl	#CACHE_CLR,d0
 	movc	d0,cacr			| invalidate cache(s)
-#if defined(HP330) || defined(HP360) || defined(HP370)
+#if defined(M68K_MMU_MOTOROLA)
 	tstl	_mmutype		| HP MMU?
 	jeq	Lhpmmu4			| yes, skip
 	pflusha				| flush entire TLB
@@ -1493,7 +1493,7 @@ Lres1a:
 	jra	Lcxswdone		| thats it
 Lhpmmu4:	
 #endif
-#if defined(HP320) || defined(HP350)
+#if defined(M68K_MMU_HP)
 	MMUADDR(a0)
 	movl	a0@(MMUTBINVAL),d1	| invalidate TLB
 	tstl	_ectype			| got external VAC?
@@ -1511,8 +1511,8 @@ Lcxswdone:
 	lea	a1@(PCB_FPCTX),a0	| pointer to FP save area
 	tstb	a0@			| null state frame?
 	jeq	Lresfprest		| yes, easy
-#if defined(HP380)
-	cmpl	#-2,_mmutype		| 68040?
+#if defined(M68040)
+	cmpl	#MMU_68040,_mmutype	| 68040?
 	jne	Lresnot040		| no, skip
 	clrl	sp@-			| yes...
 	frestore sp@+			| ...magic!
@@ -1549,7 +1549,7 @@ Lsvnofpsave:
 	moveq	#0,d0			| return 0
 	rts
 
-#if defined(HP380)
+#if defined(M68040)
 ENTRY(suline)
 	movl	sp@(4),a0		| address to write
 	movl	_curpcb,a1		| current pcb
@@ -1582,27 +1582,25 @@ Lsldone:
  */
 ENTRY(TBIA)
 __TBIA:
-#if defined(HP380)
-	cmpl	#-2,_mmutype		| 68040?
+#if defined(M68040)
+	cmpl	#MMU_68040,_mmutype	| 68040?
 	jne	Lmotommu3		| no, skip
 	.word	0xf518			| yes, pflusha
 	rts
 Lmotommu3:
 #endif
-#if defined(HP330) || defined(HP360) || defined(HP370)
+#if defined(M68K_MMU_MOTOROLA)
 	tstl	_mmutype		| HP MMU?
 	jeq	Lhpmmu6			| yes, skip
 	pflusha				| flush entire TLB
-#if defined(HP360) || defined(HP370)
 	jpl	Lmc68851a		| 68851 implies no d-cache
 	movl	#DC_CLEAR,d0
 	movc	d0,cacr			| invalidate on-chip d-cache
 Lmc68851a:
-#endif
 	rts
 Lhpmmu6:
 #endif
-#if defined(HP320) || defined(HP350)
+#if defined(M68K_MMU_HP)
 	MMUADDR(a0)
 	movl	a0@(MMUTBINVAL),sp@-	| do not ask me, this
 	addql	#4,sp			|   is how hpux does it
@@ -1621,8 +1619,8 @@ ENTRY(TBIS)
 	tstl	fulltflush		| being conservative?
 	jne	__TBIA			| yes, flush entire TLB
 #endif
-#if defined(HP380)
-	cmpl	#-2,_mmutype		| 68040?
+#if defined(M68040)
+	cmpl	#MMU_68040,_mmutype	| 68040?
 	jne	Lmotommu4		| no, skip
 	movl	sp@(4),a0
 	movc	dfc,d1
@@ -1636,23 +1634,21 @@ ENTRY(TBIS)
 	rts
 Lmotommu4:
 #endif
-#if defined(HP330) || defined(HP360) || defined(HP370)
+#if defined(M68K_MMU_MOTOROLA)
 	tstl	_mmutype		| HP MMU?
 	jeq	Lhpmmu5			| yes, skip
 	movl	sp@(4),a0		| get addr to flush
-#if defined(HP360) || defined(HP370)
 	jpl	Lmc68851b		| is 68851?
 	pflush	#0,#0,a0@		| flush address from both sides
 	movl	#DC_CLEAR,d0
 	movc	d0,cacr			| invalidate on-chip data cache
 	rts
 Lmc68851b:
-#endif
 	pflushs	#0,#0,a0@		| flush address from both sides
 	rts
 Lhpmmu5:
 #endif
-#if defined(HP320) || defined(HP350)
+#if defined(M68K_MMU_HP)
 	movl	sp@(4),d0		| VA to invalidate
 	bclr	#0,d0			| ensure even
 	movl	d0,a0
@@ -1676,29 +1672,27 @@ ENTRY(TBIAS)
 	tstl	fulltflush		| being conservative?
 	jne	__TBIA			| yes, flush everything
 #endif
-#if defined(HP380)
-	cmpl	#-2,_mmutype		| 68040?
+#if defined(M68040)
+	cmpl	#MMU_68040,_mmutype	| 68040?
 	jne	Lmotommu5		| no, skip
 	.word	0xf518			| yes, pflusha (for now) XXX
 	rts
 Lmotommu5:
 #endif
-#if defined(HP330) || defined(HP360) || defined(HP370)
+#if defined(M68K_MMU_MOTOROLA)
 	tstl	_mmutype		| HP MMU?
 	jeq	Lhpmmu7			| yes, skip
-#if defined(HP360) || defined(HP370)
 	jpl	Lmc68851c		| 68851?
 	pflush #4,#4			| flush supervisor TLB entries
 	movl	#DC_CLEAR,d0
 	movc	d0,cacr			| invalidate on-chip d-cache
 	rts
 Lmc68851c:
-#endif
 	pflushs #4,#4			| flush supervisor TLB entries
 	rts
 Lhpmmu7:
 #endif
-#if defined(HP320) || defined(HP350)
+#if defined(M68K_MMU_HP)
 	MMUADDR(a0)
 	movl	#0x8000,d0		| more
 	movl	d0,a0@(MMUTBINVAL)	|   HP magic
@@ -1717,29 +1711,27 @@ ENTRY(TBIAU)
 	tstl	fulltflush		| being conservative?
 	jne	__TBIA			| yes, flush everything
 #endif
-#if defined(HP380)
-	cmpl	#-2,_mmutype		| 68040?
+#if defined(M68040)
+	cmpl	#MMU_68040,_mmutype	| 68040?
 	jne	Lmotommu6		| no, skip
 	.word	0xf518			| yes, pflusha (for now) XXX
 	rts
 Lmotommu6:
 #endif
-#if defined(HP330) || defined(HP360) || defined(HP370)
+#if defined(M68K_MMU_MOTOROLA)
 	tstl	_mmutype		| HP MMU?
 	jeq	Lhpmmu8			| yes, skip
-#if defined(HP360) || defined(HP370)
 	jpl	Lmc68851d		| 68851?
 	pflush	#0,#4			| flush user TLB entries
 	movl	#DC_CLEAR,d0
 	movc	d0,cacr			| invalidate on-chip d-cache
 	rts
 Lmc68851d:
-#endif
 	pflushs	#0,#4			| flush user TLB entries
 	rts
 Lhpmmu8:
 #endif
-#if defined(HP320) || defined(HP350)
+#if defined(M68K_MMU_HP)
 	MMUADDR(a0)
 	moveq	#0,d0			| more
 	movl	d0,a0@(MMUTBINVAL)	|   HP magic
@@ -1754,9 +1746,9 @@ Lhpmmu8:
  * Invalidate instruction cache
  */
 ENTRY(ICIA)
-#if defined(HP380)
+#if defined(M68040)
 ENTRY(ICPA)
-	cmpl	#-2,_mmutype		| 68040
+	cmpl	#MMU_68040,_mmutype	| 68040
 	jne	Lmotommu7		| no, skip
 	.word	0xf498			| cinva ic
 	rts
@@ -1776,14 +1768,14 @@ Lmotommu7:
  */
 ENTRY(DCIA)
 __DCIA:
-#if defined(HP380)
-	cmpl	#-2,_mmutype		| 68040
+#if defined(M68040)
+	cmpl	#MMU_68040,_mmutype	| 68040
 	jne	Lmotommu8		| no, skip
 	/* XXX implement */
 	rts
 Lmotommu8:
 #endif
-#if defined(HP320) || defined(HP350)
+#if defined(M68K_MMU_HP)
 	tstl	_ectype			| got external VAC?
 	jle	Lnocache2		| no, all done
 	MMUADDR(a0)
@@ -1795,14 +1787,14 @@ Lnocache2:
 
 ENTRY(DCIS)
 __DCIS:
-#if defined(HP380)
-	cmpl	#-2,_mmutype		| 68040
+#if defined(M68040)
+	cmpl	#MMU_68040,_mmutype	| 68040
 	jne	Lmotommu9		| no, skip
 	/* XXX implement */
 	rts
 Lmotommu9:
 #endif
-#if defined(HP320) || defined(HP350)
+#if defined(M68K_MMU_HP)
 	tstl	_ectype			| got external VAC?
 	jle	Lnocache3		| no, all done
 	MMUADDR(a0)
@@ -1814,14 +1806,14 @@ Lnocache3:
 
 ENTRY(DCIU)
 __DCIU:
-#if defined(HP380)
-	cmpl	#-2,_mmutype		| 68040
+#if defined(M68040)
+	cmpl	#MMU_68040,_mmutype	| 68040
 	jne	LmotommuA		| no, skip
 	/* XXX implement */
 	rts
 LmotommuA:
 #endif
-#if defined(HP320) || defined(HP350)
+#if defined(M68K_MMU_HP)
 	tstl	_ectype			| got external VAC?
 	jle	Lnocache4		| no, all done
 	MMUADDR(a0)
@@ -1831,7 +1823,7 @@ Lnocache4:
 #endif
 	rts
 
-#if defined(HP380)
+#if defined(M68040)
 ENTRY(ICPL)
 	movl	sp@(4),a0		| address
 	.word	0xf488			| cinvl ic,a0@
@@ -1862,15 +1854,15 @@ ENTRY(DCFP)
 #endif
 
 ENTRY(PCIA)
-#if defined(HP380)
+#if defined(M68040)
 ENTRY(DCFA)
-	cmpl	#-2,_mmutype		| 68040
+	cmpl	#MMU_68040,_mmutype	| 68040
 	jne	LmotommuB		| no, skip
 	.word	0xf478			| cpusha dc
 	rts
 LmotommuB:
 #endif
-#if defined(HP360) || defined(HP370)
+#if defined(M68K_MMU_MOTOROLA)
 	movl	#DC_CLEAR,d0
 	movc	d0,cacr			| invalidate on-chip d-cache
 	tstl	_ectype			| got external PAC?
@@ -1910,14 +1902,14 @@ _getdfc:
  * Load a new user segment table pointer.
  */
 ENTRY(loadustp)
-#if defined(HP330) || defined(HP360) || defined(HP370) || defined(HP380)
+#if defined(M68K_MMU_MOTOROLA)
 	tstl	_mmutype		| HP MMU?
 	jeq	Lhpmmu9			| yes, skip
 	movl	sp@(4),d0		| new USTP
 	moveq	#PGSHIFT,d1
 	lsll	d1,d0			| convert to addr
-#if defined(HP380)
-	cmpl	#-2,_mmutype		| 68040?
+#if defined(M68040)
+	cmpl	#MMU_68040,_mmutype	| 68040?
 	jne	LmotommuC		| no, skip
 	.long	0x4e7b0806		| movc d0,urp
 	rts
@@ -1931,16 +1923,25 @@ LmotommuC:
 	rts				|   since pmove flushes TLB
 Lhpmmu9:
 #endif
-#if defined(HP320) || defined(HP350)
+#if defined(M68K_MMU_HP)
 	MMUADDR(a0)
 	movl	sp@(4),a0@(MMUUSTP)	| load a new USTP
 #endif
 	rts
 
 ENTRY(ploadw)
-#if defined(HP330) || defined(HP360) || defined(HP370)
+#if defined(M68K_MMU_MOTOROLA)
 	movl	sp@(4),a0		| address to load
+#if defined(M68K_MMU_HP)
+	tstl	_mmutype		| HP MMU?
+	jeq	Lploadwskp		| yes, skip
+#endif
+#if defined(M68040)
+	cmpl	#MMU_68040,_mmutype	| 68040?
+	jeq	Lploadwskp		| yes, skip
+#endif
 	ploadw	#1,a0@			| pre-load translation
+Lploadwskp:
 #endif
 	rts
 
@@ -1988,82 +1989,6 @@ ENTRY(_remque)
 	movw	d0,sr
 	rts
 
-/*
- * {ov}bcopy(from, to, len)
- * memcpy(to, from len)
- *
- * Works for counts up to 128K.
- */
-ENTRY(memcpy)
-	movl	sp@(12),d0		| get count
-	jeq	Lcpyexit		| if zero, return
-	movl	sp@(8), a0		| src address
-	movl	sp@(4), a1		| dest address
-	jra	Ldocopy			| jump into bcopy
-ALTENTRY(ovbcopy, _bcopy)
-ENTRY(bcopy)
-	movl	sp@(12),d0		| get count
-	jeq	Lcpyexit		| if zero, return
-	movl	sp@(4),a0		| src address
-	movl	sp@(8),a1		| dest address
-Ldocopy:
-	cmpl	a1,a0			| src before dest?
-	jlt	Lcpyback		| yes, copy backwards (avoids overlap)
-	movl	a0,d1
-	btst	#0,d1			| src address odd?
-	jeq	Lcfeven			| no, go check dest
-	movb	a0@+,a1@+		| yes, copy a byte
-	subql	#1,d0			| update count
-	jeq	Lcpyexit		| exit if done
-Lcfeven:
-	movl	a1,d1
-	btst	#0,d1			| dest address odd?
-	jne	Lcfbyte			| yes, must copy by bytes
-	movl	d0,d1			| no, get count
-	lsrl	#2,d1			| convert to longwords
-	jeq	Lcfbyte			| no longwords, copy bytes
-	subql	#1,d1			| set up for dbf
-Lcflloop:
-	movl	a0@+,a1@+		| copy longwords
-	dbf	d1,Lcflloop		| til done
-	andl	#3,d0			| get remaining count
-	jeq	Lcpyexit		| done if none
-Lcfbyte:
-	subql	#1,d0			| set up for dbf
-Lcfbloop:
-	movb	a0@+,a1@+		| copy bytes
-	dbf	d0,Lcfbloop		| til done
-Lcpyexit:
-	rts
-Lcpyback:
-	addl	d0,a0			| add count to src
-	addl	d0,a1			| add count to dest
-	movl	a0,d1
-	btst	#0,d1			| src address odd?
-	jeq	Lcbeven			| no, go check dest
-	movb	a0@-,a1@-		| yes, copy a byte
-	subql	#1,d0			| update count
-	jeq	Lcpyexit		| exit if done
-Lcbeven:
-	movl	a1,d1
-	btst	#0,d1			| dest address odd?
-	jne	Lcbbyte			| yes, must copy by bytes
-	movl	d0,d1			| no, get count
-	lsrl	#2,d1			| convert to longwords
-	jeq	Lcbbyte			| no longwords, copy bytes
-	subql	#1,d1			| set up for dbf
-Lcblloop:
-	movl	a0@-,a1@-		| copy longwords
-	dbf	d1,Lcblloop		| til done
-	andl	#3,d0			| get remaining count
-	jeq	Lcpyexit		| done if none
-Lcbbyte:
-	subql	#1,d0			| set up for dbf
-Lcbbloop:
-	movb	a0@-,a1@-		| copy bytes
-	dbf	d0,Lcbbloop		| til done
-	rts
-
 #ifdef FPCOPROC
 /*
  * Save and restore 68881 state.
@@ -2101,18 +2026,16 @@ Lm68881rdone:
  */
 	.globl	_doboot
 _doboot:
-#if defined(HP380)
-	cmpl	#-2,_mmutype		| 68040?
+#if defined(M68040)
+	cmpl	#MMU_68040,_mmutype	| 68040?
 	jeq	Lnocache5		| yes, skip
 #endif
 	movl	#CACHE_OFF,d0
 	movc	d0,cacr			| disable on-chip cache(s)
-#if defined(HP320) || defined(HP350) || defined(HP370)
-	tstl	_ectype
-	jeq	Lnocache5
+	tstl	_ectype			| external cache?
+	jeq	Lnocache5		| no, skip
 	MMUADDR(a0)
 	andl	#~MMU_CEN,a0@(MMUCMD)	| disable external cache
-#endif
 Lnocache5:
 	lea	MAXADDR,a0		| last page of physical memory
 	movl	_boothowto,a0@+		| store howto
@@ -2123,8 +2046,8 @@ Lbootcopy:
 	movw	a1@+,a0@+		| copy a word
 	cmpl	a3,a1			| done yet?
 	jcs	Lbootcopy		| no, keep going
-#if defined(HP380)
-	cmpl	#-2,_mmutype		| 68040?
+#if defined(M68040)
+	cmpl	#MMU_68040,_mmutype	| 68040?
 	jne	LmotommuE		| no, skip
 	.word	0xf4f8			| cpusha bc
 LmotommuE:
@@ -2133,8 +2056,8 @@ LmotommuE:
 
 Lbootcode:
 	lea	MAXADDR+0x800,sp	| physical SP in case of NMI
-#if defined(HP380)
-	cmpl	#-2,_mmutype		| 68040?
+#if defined(M68040)
+	cmpl	#MMU_68040,_mmutype	| 68040?
 	jne	LmotommuF		| no, skip
 	movl	#0,d0
 	movc	d0,cacr			| caches off
@@ -2143,7 +2066,7 @@ Lbootcode:
 	jmp	0x1A4			| goto REQ_REBOOT
 LmotommuF:
 #endif
-#if defined(HP330) || defined(HP360) || defined(HP370)
+#if defined(M68K_MMU_MOTOROLA)
 	tstl	_mmutype		| HP MMU?
 	jeq	LhpmmuB			| yes, skip
 	movl	#0,a0@			| value for pmove to TC (turn off MMU)
@@ -2151,7 +2074,7 @@ LmotommuF:
 	jmp	0x1A4			| goto REQ_REBOOT
 LhpmmuB:
 #endif
-#if defined(HP320) || defined(HP350)
+#if defined(M68K_MMU_HP)
 	MMUADDR(a0)
 	movl	#0xFFFF0000,a0@(MMUCMD)	| totally disable MMU
 	movl	d2,MAXADDR+NBPG-4	| restore old high page contents

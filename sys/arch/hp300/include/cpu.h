@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.14 1995/06/28 02:55:45 cgd Exp $	*/
+/*	$NetBSD: cpu.h,v 1.15 1995/12/11 17:09:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -41,6 +41,9 @@
  *
  *	@(#)cpu.h	8.4 (Berkeley) 1/5/94
  */
+
+#ifndef _HP300_CPU_H_
+#define	_HP300_CPU_H_
 
 /*
  * Exported definitions unique to hp300/68k cpu support.
@@ -125,6 +128,58 @@ extern unsigned char ssir;
 	{ 0, 0 }, \
 	{ "console_device", CTLTYPE_STRUCT }, \
 }
+
+#ifdef _KERNEL
+/*
+ * Associate HP 9000/300 models with CPU/MMU combinations.
+ */
+
+/*
+ * HP 68020-based computers.  HP320 and HP350 have an HP MMU.
+ * HP330 has a Motorola MMU.
+ */
+#if (defined(HP320) || defined(HP330) || defined(HP350))
+#ifndef M68020
+#define	M68020
+#endif /* ! M68020 */
+
+#if defined(HP330) && !defined(M68K_MMU_MOTOROLA)
+#define	M68K_MMU_MOTOROLA
+#endif /* HP330 && ! M68K_MMU_MOTOROLA */
+
+#if (defined(HP320) || defined(HP350)) && !defined(M68K_MMU_HP)
+#define M68K_MMU_HP		/* include cheezy VAC support */
+#endif /* (HP320 || HP350) && ! M68K_MMU_HP */
+#endif /* HP320 || HP330 || HP350 */
+
+/*
+ * HP 68030-based computers.  HP375 includes support for the
+ * 345, 400t, and 400s.
+ */
+#if (defined(HP340) || defined(HP360) || defined(HP370) || defined(HP375))
+#ifndef M68030
+#define	M68030
+#endif /* ! M68030 */
+
+#ifndef M68K_MMU_MOTOROLA
+#define	M68K_MMU_MOTOROLA
+#endif /* ! M68K_MMU_MOTOROLA */
+#endif /* HP340 || HP360 || HP370 || HP375 */
+
+/*
+ * HP 68040-based computers.  HP380 includes support for the
+ * 425t, 425s, and 433s.
+ */
+#if defined(HP380)
+#ifndef M68040
+#define	M68040
+#endif /* ! M68040 */
+
+#ifndef M68K_MMU_MOTOROLA
+#define	M68K_MMU_MOTOROLA
+#endif /* ! M68K_MMU_MOTOROLA */
+#endif /* HP380 */
+#endif /* _KERNEL */
 
 /*
  * The rest of this should probably be moved to ../hp300/hp300cpu.h,
@@ -302,3 +357,5 @@ extern	char *intiobase, *intiolimit;
 
 #define	CACHE4_ON	(IC4_ENABLE|DC4_ENABLE)
 #define	CACHE4_OFF	(0)
+
+#endif /* _HP300_CPU_H_ */

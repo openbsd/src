@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.4.2.1 1995/11/06 21:51:12 leo Exp $	*/
+/*	$NetBSD: dma.c,v 1.5 1995/11/06 21:13:38 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.

@@ -63,7 +63,8 @@ options		GENERIC
 
 membus0 at root
 
-ncr0 at membus?
+#ncr0 at membus?
+oldncr0 at membus?
 
 scsibus0 at scsi?
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.44.2.1 1995/10/29 04:22:44 gwr Exp $	*/
+/*	$NetBSD: conf.c,v 1.45 1995/10/29 04:15:59 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1994 Adam Glass, Gordon W. Ross

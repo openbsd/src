@@ -1,4 +1,4 @@
-#	$NetBSD: DISKLESS,v 1.3 1995/10/10 02:12:37 thorpej Exp $
+#	$NetBSD: DISKLESS,v 1.4 1995/11/28 08:47:39 thorpej Exp $
 #
 # Diskless HP 9000/300-series workstation.
 #
@@ -51,7 +51,10 @@ options		FPSP		# floating point interface for 68040
 options		USELEDS		# make the lights twinkle
 #options	PANICBUTTON	# two fast <reset>s on HIL dump kernel
 
-# XXX DOESN'T WORK YET!
+#
+# HP-UX binary compatibility.
+# NOTE: THIS IS STILL VERY EXPERIMENTAL.  YOUR MILEAGE MAY VARY.
+#
 #options	COMPAT_HPUX	# HP-UX binary compatibility
 
 # Debugging options

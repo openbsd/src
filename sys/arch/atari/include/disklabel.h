@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.3 1995/08/05 20:24:42 leo Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.4 1995/11/30 00:58:03 jtc Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -33,41 +33,27 @@
 #ifndef _MACHINE_DISKLABEL_H_
 #define _MACHINE_DISKLABEL_H_
 
-#define LABELSECTOR	0		/* start of boot block		*/
+/*
+ * On a volume, exclusively used by NetBSD, the boot block starts at
+ * sector 0. To allow shared use of a volume between two or more OS's
+ * the vendor specific AHDI format is supported. In this case the boot
+ * block is located at the start of an AHDI partition. In any case the
+ * size of the boot block is 8KB, the disk label is at offset 7KB.
+ */
+#define LABELSECTOR	0		/* `natural' start of boot block   */
 #define LABELOFFSET	(7 * 1024)	/* offset of disklabel in bytes,
 					   relative to start of boot block */
 #define MAXPARTITIONS	16
-#define RAW_PART	 2		/* xx?c is raw partition	*/
+#define RAW_PART	2		/* xx?c is raw partition	   */
 
-#define MK_PARTID(x,y,z)	(   ((u_int32_t)(x) << 16)	\
-				  | ((u_int32_t)(y) << 8)	\
-				  | ((u_int32_t)(z))		\
-				)
-/*
- * Various `well known' AHDI partition identifiers.
- */
-#define	CPU_PID_XGM	MK_PARTID('X','G','M')
-#define	CPU_PID_BGM	MK_PARTID('B','G','M')
-#define	CPU_PID_GEM	MK_PARTID('G','E','M')
-#define	CPU_PID_RAW	MK_PARTID('R','A','W')
-#define	CPU_PID_SWP	MK_PARTID('S','W','P')
-#define	CPU_PID_NBD	MK_PARTID('N','B','D')
-#define	CPU_PID_NBR	MK_PARTID('N','B','R')
-#define	CPU_PID_NBS	MK_PARTID('N','B','S')
-#define	CPU_PID_NBU	MK_PARTID('N','B','U')
-
-struct cpu_partition {			/* AHDI partition descriptor:	*/
-	u_int32_t	cp_id;		/* identifier (see above)	*/
-	u_int32_t	cp_st;		/* start and size in		*/
-	u_int32_t	cp_size;	/*  512 byte blocks		*/
-};
+#define MAX_TOS_ROOTS	61		/* max. # of auxilary root sectors */
 
 struct cpu_disklabel {
-   u_int32_t		cd_bslst;	/* start of AHDI bad sector list */
-   u_int32_t		cd_bslsize;	/* size of AHDI bad sector list  */
-   u_int32_t		cd_npartitions;	/* number of AHDI partitions     */
-   struct cpu_partition	*cd_partitions;	/* list of AHDI partitions       */
-   struct cpu_partition	*cd_labelpart;	/* AHDI partition with disklabel */
+	u_int32_t	cd_bblock;	/* start of NetBSD boot block      */
+#define NO_BOOT_BLOCK	((u_int32_t) -1)
+	u_int32_t	cd_bslst;	/* start of TOS bad sector list    */
+	u_int32_t	cd_bslsize;	/* size of TOS bad sector list     */
+	u_int32_t	cd_roots[MAX_TOS_ROOTS]; /* TOS root sectors       */
 };
 
 #endif /* _MACHINE_DISKLABEL_H_ */

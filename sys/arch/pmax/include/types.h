@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.10 1995/07/06 03:39:43 cgd Exp $	*/
+/*	$NetBSD: types.h,v 1.11 1995/12/09 04:41:47 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -74,5 +74,6 @@ typedef int32_t			register_t;
 
 #define	__BDEVSW_DUMP_OLD_TYPE
 #define	__SWAP_BROKEN
+#define	__FORK_BRAINDAMAGE
 
 #endif	/* _MACHTYPES_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: sbi.c,v 1.2 1995/02/23 17:54:03 ragge Exp $ */
+/*	$NetBSD: sbi.c,v 1.3 1995/11/10 19:14:43 ragge Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -29,20 +29,19 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
- /* All bugs are subject to removal without further notice */
-		
-
 #include "sys/types.h"
 #include "sys/param.h"
 #include "sys/device.h"
 #include "vm/vm.h"
 #include "vm/vm_kern.h"
 #include "vm/vm_page.h"
-#include "machine/nexus.h"
+#include "machine/ka750.h"
 #include "machine/pmap.h"
 #include "machine/sid.h"
 
-static int sbi_attached=0;
+struct nexus *nexus;
+
+static int sbi_attached = 0;
 
 struct bp_conf {
 	char *type;
@@ -55,23 +54,23 @@ sbi_print(aux, name)
 	void *aux;
 	char *name;
 {
-	struct sbi_attach_args *sa=(struct sbi_attach_args *)aux;
-	int unsupp=0;
+	struct sbi_attach_args *sa = (struct sbi_attach_args *)aux;
+	int unsupp = 0;
 	extern int nmba;
 
-	if(name){
-		switch(sa->type){
+	if (name) {
+		switch (sa->type) {
 		case NEX_MBA:
 			printf("mba%d at %s",nmba++, name);
 			unsupp++;
 			break;
 		default:
-			printf("unknown device 0x%x at %s",sa->type,name);
+			printf("unknown device 0x%x at %s", sa->type, name);
 			unsupp++;
 		}		
 	}
-	printf(" tr%d",sa->nexnum);
-	return(unsupp?UNSUPP:UNCONF);
+	printf(" tr%d", sa->nexnum);
+	return (unsupp ? UNSUPP : UNCONF);
 }
 
 int
@@ -80,9 +79,9 @@ sbi_match(parent, cf, aux)
 	struct  cfdata  *cf;
 	void    *aux;
 {
-	struct bp_conf *bp=aux;
+	struct bp_conf *bp = aux;
 
-	if(strcmp(bp->type,"sbi"))
+	if (strcmp(bp->type, "sbi"))
 		return 1;
 	return 0;
 }
@@ -93,69 +92,64 @@ sbi_attach(parent, self, aux)
 	void    *aux;
 {
 	void *nisse;
-	struct nexus *nexus;
 	u_int nextype, nexnum, maxnex;
 	struct sbi_attach_args sa;
 
-	/* SBI space should be alloc'ed in SYSPT instead */
-	kmem_suballoc(kernel_map, (void*)&nexus, (void*)&nisse,
-		(NNEXSBI*sizeof(struct nexus)), FALSE);
-	switch(cpunumber){
+	switch (cpunumber) {
 #ifdef VAX730
 	case VAX_730:
-	pmap_map((int)nexus, 0xf20000, 0xf40000, VM_PROT_READ|VM_PROT_WRITE);
-	maxnex = NNEX730;
-	printf(": BL[730\n");
-	break;
+		maxnex = NNEX730;
+		printf(": BL[730\n");
+		break;
 #endif
 #ifdef VAX750
 	case VAX_750:
-	pmap_map((int)nexus, 0xf20000, 0xf40000, VM_PROT_READ|VM_PROT_WRITE);
-	maxnex = NNEX750;
-	printf(": CMI750\n");
-	break;
+		maxnex = NNEX750;
+		printf(": CMI750\n");
+		break;
 #endif
 #ifdef VAX630
 	case VAX_78032:
-	switch (cpu_type) {
-	case VAX_630:
-		pmap_map((int)nexus, 0x20088000, 0x200a8000,
-			VM_PROT_READ|VM_PROT_WRITE);
-		maxnex = NNEX630;
-		printf(": Q22\n");
+		switch (cpu_type) {
+		case VAX_630:
+			maxnex = NNEX630;
+			printf(": Q22\n");
+			break;
+		default:
+			panic("Microvax not supported");
+		};
 		break;
-	default:
-		panic("Microvax not supported");
-	};
-	break;
 #endif
-
+#if VAX780 || VAX8600
 	case VAX_780:
 	case VAX_8600:
-	maxnex = NNEXSBI;
-	printf(": SBI780\n");
+		maxnex = NNEXSBI;
+		printf(": SBI780\n");
+		break;
+#endif
 	}
 
-/*
- * Now a problem: on different machines with SBI units identifies
- * in different ways (if they identifies themselves at all).
- * We have to fake identifying depending on different CPUs.
- */
-	for(nexnum=0;nexnum<maxnex;nexnum++){
-		if(badaddr((caddr_t)&nexus[nexnum],4))continue;
+	/*
+	 * Now a problem: on different machines with SBI units identifies
+	 * in different ways (if they identifies themselves at all).
+	 * We have to fake identifying depending on different CPUs.
+	 */
+	for (nexnum = 0; nexnum < maxnex; nexnum++) {
+		if (badaddr((caddr_t)&nexus[nexnum], 4))
+			continue;
 
 		switch(cpunumber){
 #ifdef VAX750
 		case VAX_750:
 		{	extern int nexty750[];
-			sa.type=nexty750[nexnum];
+			sa.type = nexty750[nexnum];
 			break;
 		}
 #endif
 #ifdef VAX730
 		case VAX_730:
 		{	extern int nexty730[];
-			sa.type=nexty730[nexnum];
+			sa.type = nexty730[nexnum];
 			break;
 		}
 #endif
@@ -165,10 +159,10 @@ sbi_attach(parent, self, aux)
 			break;
 #endif
 		default:
-			sa.type=nexus[nexnum].nexcsr.nex_type;
+			sa.type = nexus[nexnum].nexcsr.nex_type;
 		}
-		sa.nexnum=nexnum;
-		sa.nexaddr=nexus+nexnum;
+		sa.nexnum = nexnum;
+		sa.nexaddr = nexus + nexnum;
 		config_found(self, (void*)&sa, sbi_print);
 	}
 }

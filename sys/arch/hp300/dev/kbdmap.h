@@ -1,4 +1,4 @@
-/*	$NetBSD: kbdmap.h,v 1.5 1995/03/28 18:16:17 jtc Exp $	*/
+/*	$NetBSD: kbdmap.h,v 1.6 1995/12/06 22:13:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -52,6 +52,7 @@ struct kbdmap {
 #define KBD_SPECIAL	0x00		/* user defined */
 #define KBD_US		0x1F		/* US ASCII */
 #define KBD_UK		0x17		/* United Kingdom */
+#define KBD_SE		0x0e		/* Swedish */
 
 #define KBD_DEFAULT	KBD_US		/* default type */
 

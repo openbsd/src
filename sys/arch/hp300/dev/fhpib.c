@@ -1,4 +1,4 @@
-/*	$NetBSD: fhpib.c,v 1.6 1995/01/07 10:30:10 mycroft Exp $	*/
+/*	$NetBSD: fhpib.c,v 1.8 1995/12/02 18:21:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -79,6 +79,30 @@ long	fhpibppollfail[NHPIB] = { 0 };
 
 int	fhpibcmd[NHPIB];
 
+void	fhpibreset __P((int));
+int	fhpibsend __P((int, int, int, void *, int));
+int	fhpibrecv __P((int, int, int, void *, int));
+int	fhpibppoll __P((int));
+void	fhpibppwatch __P((void *));
+void	fhpibgo __P((int, int, int, void *, int, int, int));
+void	fhpibdone __P((int));
+int	fhpibintr __P((int));
+
+/*
+ * Our controller ops structure.
+ */
+struct	hpib_controller fhpib_controller = {
+	fhpibreset,
+	fhpibsend,
+	fhpibrecv,
+	fhpibppoll,
+	fhpibppwatch,
+	fhpibgo,
+	fhpibdone,
+	fhpibintr
+};
+
+int
 fhpibtype(hc)
 	register struct hp_ctlr *hc;
 {
@@ -86,13 +110,30 @@ fhpibtype(hc)
 	register struct fhpibdevice *hd = (struct fhpibdevice *)hc->hp_addr;
 
 	if (hd->hpib_cid != HPIBC)
-		return(0);
+		return (0);
+
 	hs->sc_type = HPIBC;
-	hs->sc_ba = HPIBC_BA;
 	hc->hp_ipl = HPIB_IPL(hd->hpib_ids);
-	return(1);
+
+	return (1);
 }
 
+void
+fhpibattach(hc)
+	struct hp_ctlr *hc;
+{
+	register struct hpib_softc *hs = &hpib_softc[hc->hp_unit];
+
+	if (hs->sc_type != HPIBC)
+		panic("fhpibattach: unknown type 0x%x", hs->sc_type);
+		/* NOTREACHED */
+
+	hs->sc_ba = HPIBC_BA;
+	hs->sc_descrip = "98625A or 98625B fast HP-IB";
+	hs->sc_controller = &fhpib_controller;
+}
+
+void
 fhpibreset(unit)
 	int unit;
 {
@@ -135,14 +176,16 @@ fhpibifc(hd)
 	hd->hpib_stat = ST_ATN;
 }
 
-fhpibsend(unit, slave, sec, addr, origcnt)
+int
+fhpibsend(unit, slave, sec, ptr, origcnt)
 	int unit, slave, sec, origcnt;
-	register char *addr;
+	void *ptr;
 {
 	register struct hpib_softc *hs = &hpib_softc[unit];
 	register struct fhpibdevice *hd;
 	register int cnt = origcnt;
 	register int timo;
+	char *addr = ptr;
 
 	hd = (struct fhpibdevice *)hs->sc_hc->hp_addr;
 	hd->hpib_stat = 0;
@@ -189,22 +232,24 @@ senderr:
 	fhpibifc(hd);
 #ifdef DEBUG
 	if (fhpibdebug & FDB_FAIL) {
-		printf("hpib%d: fhpibsend failed: slave %d, sec %x, ",
-			unit, slave, sec);
+		printf("%s: fhpibsend failed: slave %d, sec %x, ",
+		    hs->sc_hc->hp_xname, slave, sec);
 		printf("sent %d of %d bytes\n", origcnt-cnt-1, origcnt);
 	}
 #endif
 	return (origcnt - cnt - 1);
 }
 
-fhpibrecv(unit, slave, sec, addr, origcnt)
+int
+fhpibrecv(unit, slave, sec, ptr, origcnt)
 	int unit, slave, sec, origcnt;
-	register char *addr;
+	void *ptr;
 {
 	register struct hpib_softc *hs = &hpib_softc[unit];
 	register struct fhpibdevice *hd;
 	register int cnt = origcnt;
 	register int timo;
+	char *addr = ptr;
 
 	hd = (struct fhpibdevice *)hs->sc_hc->hp_addr;
 	/*
@@ -251,22 +296,23 @@ recvbyteserror:
 	hd->hpib_imask = 0;
 #ifdef DEBUG
 	if (fhpibdebug & FDB_FAIL) {
-		printf("hpib%d: fhpibrecv failed: slave %d, sec %x, ",
-		       unit, slave, sec);
+		printf("%s: fhpibrecv failed: slave %d, sec %x, ",
+		    hs->sc_hc->hp_xname, slave, sec);
 		printf("got %d of %d bytes\n", origcnt-cnt-1, origcnt);
 	}
 #endif
 	return (origcnt - cnt - 1);
 }
 
-fhpibgo(unit, slave, sec, addr, count, rw, timo)
-	register int unit;
-	int slave, sec, count, rw;
-	char *addr;
+void
+fhpibgo(unit, slave, sec, ptr, count, rw, timo)
+	int unit, slave, sec, count, rw, timo;
+	void *ptr;
 {
 	register struct hpib_softc *hs = &hpib_softc[unit];
 	register struct fhpibdevice *hd;
 	register int i;
+	char *addr = ptr;
 	int flags = 0;
 
 	hd = (struct fhpibdevice *)hs->sc_hc->hp_addr;
@@ -381,6 +427,7 @@ fhpibdmadone(arg)
 	(void) splx(s);
 }
 
+void
 fhpibdone(unit)
 	int unit;
 {
@@ -423,6 +470,7 @@ fhpibdone(unit)
 	hd->hpib_ie = IDS_IE;
 }
 
+int
 fhpibintr(unit)
 	register int unit;
 {
@@ -437,8 +485,8 @@ fhpibintr(unit)
 #ifdef DEBUG
 		if ((fhpibdebug & FDB_FAIL) && (stat0 & IDS_IR) &&
 		    (hs->sc_flags & (HPIBF_IO|HPIBF_DONE)) != HPIBF_IO)
-			printf("hpib%d: fhpibintr: bad status %x\n",
-			       unit, stat0);
+			printf("%s: fhpibintr: bad status %x\n",
+			hs->sc_hc->hp_xname, stat0);
 		fhpibbadint[0]++;
 #endif
 		return(0);
@@ -471,8 +519,8 @@ fhpibintr(unit)
 #ifdef DEBUG
 		if ((fhpibdebug & FDB_FAIL) &&
 		    doppollint && (stat0 & IM_PPRESP) == 0)
-			printf("hpib%d: fhpibintr: bad intr reg %x\n",
-			       unit, stat0);
+			printf("%s: fhpibintr: bad intr reg %x\n",
+			    hs->sc_hc->hp_xname, stat0);
 #endif
 		hd->hpib_stat = 0;
 		hd->hpib_imask = 0;
@@ -499,6 +547,7 @@ fhpibintr(unit)
 	return(1);
 }
 
+int
 fhpibppoll(unit)
 	int unit;
 {
@@ -521,6 +570,7 @@ fhpibppoll(unit)
 	return(ppoll);
 }
 
+int
 fhpibwait(hd, x)
 	register struct fhpibdevice *hd;
 	int x;
@@ -576,4 +626,4 @@ fhpibppwatch(arg)
 	hd->hpib_imask = IM_PPRESP | IM_PABORT;
 	hd->hpib_ie = IDS_IE;
 }
-#endif
+#endif /* NHPIB > 0 */

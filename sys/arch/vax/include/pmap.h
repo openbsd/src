@@ -1,4 +1,4 @@
-/*      $NetBSD: pmap.h,v 1.10 1995/05/11 16:53:14 jtc Exp $     */
+/*      $NetBSD: pmap.h,v 1.11 1995/11/12 14:41:41 ragge Exp $     */
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -82,6 +82,21 @@ typedef struct pv_entry {
 #define	PV_REF	0x00000001	/* Simulated phys ref bit */
 
 #define PHYS_TO_PV(phys_page) (&pv_table[((phys_page)>>PAGE_SHIFT)])
+
+/* ROUND_PAGE used before vm system is initialized */
+#define ROUND_PAGE(x)   (((uint)(x) + PAGE_SIZE-1)& ~(PAGE_SIZE - 1))
+
+/* Mapping macros used when allocating SPT */
+#define	MAPVIRT(ptr, count)					\
+	(vm_offset_t)ptr = virtual_avail;			\
+	virtual_avail += (count) * NBPG;
+
+#define	MAPPHYS(ptr, count, perm)				\
+	pmap_map(virtual_avail, avail_start, avail_start +	\
+	    (count) * NBPG, perm);				\
+	(vm_offset_t)ptr = virtual_avail;			\
+	virtual_avail += (count) * NBPG;				\
+	avail_start += (count) * NBPG;
 
 #ifdef	_KERNEL
 pv_entry_t	pv_table;		/* array of entries, 

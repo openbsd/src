@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.27.2.1 1995/11/19 23:18:27 thorpej Exp $	*/
+/*	$NetBSD: ite.c,v 1.28 1995/11/19 23:14:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.

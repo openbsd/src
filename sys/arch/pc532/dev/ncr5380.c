@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380.c,v 1.5.2.1 1995/10/19 01:33:09 phil Exp $	*/
+/*	$NetBSD: ncr5380.c,v 1.6 1995/11/30 00:58:50 jtc Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.

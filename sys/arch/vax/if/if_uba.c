@@ -1,4 +1,4 @@
-/*	$NetBSD: if_uba.c,v 1.6 1995/04/11 06:19:09 mycroft Exp $	*/
+/*	$NetBSD: if_uba.c,v 1.7 1995/11/10 19:25:56 ragge Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -46,13 +46,13 @@
 
 #include "net/if.h"
 
-#include "vax/include/pte.h"
-#include "vax/include/mtpr.h"
+#include "machine/pte.h"
+#include "machine/mtpr.h"
+#include "machine/vmparam.h"
+#include "machine/macros.h"
 #include "if_uba.h"
-#include "vax/include/vmparam.h"
 #include "vax/uba/ubareg.h"
 #include "vax/uba/ubavar.h"
-#include "machine/macros.h"
 
 static if_ubaalloc(struct ifubinfo *, struct ifrw *, int);
 static rcv_xmtbuf(struct ifxmt *);
@@ -78,6 +78,7 @@ if_ubaminit(ifu, uban, hlen, nmr, ifr, nr, ifw, nw)
 	register struct ifrw *ifr;
 	register struct ifxmt *ifw;
 {
+	struct	uba_softc *ubasc;
 	register caddr_t p;
 	caddr_t cp;
 	int i, nclbytes, off;
@@ -108,8 +109,9 @@ if_ubaminit(ifu, uban, hlen, nmr, ifr, nr, ifw, nw)
 		}
 		ifu->iff_hlen = hlen;
 		ifu->iff_uban = uban;
-		ifu->iff_uba = uba_hd[uban].uh_uba;
-		ifu->iff_ubamr = uba_hd[uban].uh_mr;
+		ubasc = ubacd.cd_devs[uban];
+		ifu->iff_uba = ubasc->uh_uba;
+		ifu->iff_ubamr = ubasc->uh_mr;
 	}
 	for (i = 0; i < nr; i++)
 		if (if_ubaalloc(ifu, &ifr[i], nmr) == 0) {
@@ -233,7 +235,7 @@ if_ubaget(ifu, ifr, totlen, ifp)
 			pp = mtod(m, char *);
 			cpte = (struct pte *)kvtopte(cp);
 			ppte = (struct pte *)kvtopte(pp);
-			x = vax_btop(cp - ifr->ifrw_addr);
+			x = btop(cp - ifr->ifrw_addr);
 			ip = (int *)&ifr->ifrw_mr[x];
 			for (i = 0; i < MCLBYTES/NBPG; i++) {
 				struct pte t;
@@ -347,7 +349,7 @@ if_ubaput(ifu, ifw, m)
 			int *ip;
 
 			pte = (struct pte *)kvtopte(dp);
-			x = vax_btop(cp - ifw->ifw_addr);
+			x = btop(cp - ifw->ifw_addr);
 			ip = (int *)&ifw->ifw_mr[x];
 			for (i = 0; i < MCLBYTES/NBPG; i++)
 				*ip++ = ifw->ifw_proto | pte++->pg_pfn;

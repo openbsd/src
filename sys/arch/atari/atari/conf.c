@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.10.2.1 1995/10/12 08:18:59 leo Exp $	*/
+/*	$NetBSD: conf.c,v 1.11 1995/11/30 00:57:33 jtc Exp $	*/
 
 /*
  * Copyright (c) 1991 The Regents of the University of California.

@@ -1,10 +1,8 @@
-/*      $NetBSD: param.h,v 1.12 1995/08/13 00:45:21 mycroft Exp $    */
+/*      $NetBSD: param.h,v 1.13 1995/12/04 22:32:53 ragge Exp $    */
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
- *
- * Modified for VAX 940213/Ragge
  *
  * This code is derived from software contributed to Berkeley by
  * William Jolitz.
@@ -44,15 +42,15 @@
 #define _VAX_PARAM_H_
 
 #include "machine/macros.h"
-#include "psl.h"
+#include "machine/psl.h"
 
 /*
  * Machine dependent constants for VAX.
  */
 
 #define MACHINE		"vax"
+#define	MACHINE_ARCH	"vax"
 #define MID_MACHINE	MID_VAX
-#define UNIX		"vmunix"
 
 /*
  * Round p (pointer or byte index) up to a correctly-aligned value
@@ -132,6 +130,7 @@
 /* clicks to bytes */
 #define	ctob(x)		((x) << PGSHIFT)
 #define	btoc(x)		(((x) + PGOFSET) >> PGSHIFT)
+#define	btop(x)		(((unsigned)(x)) >> PGSHIFT)
 
 /* bytes to disk blocks */
 #define	btodb(x)	((x) >> DEV_BSHIFT)
@@ -145,19 +144,6 @@
  */
 
 #define	bdbtofsb(bn)	((bn) / (BLKDEV_IOSIZE/DEV_BSIZE))
-
-/*
- * Mach derived conversion macros
- */
-
-#define vax_round_pdr(x)	((((unsigned)(x)) + NBPDR - 1) & ~(NBPDR-1))
-#define vax_trunc_pdr(x)	((unsigned)(x) & ~(NBPDR-1))
-#define vax_round_page(x)	((((unsigned)(x)) + NBPG - 1) & ~(NBPG-1))
-#define vax_trunc_page(x)	((unsigned)(x) & ~(NBPG-1))
-#define vax_btod(x)		((unsigned)(x) >> PDRSHIFT)
-#define vax_dtob(x)		((unsigned)(x) << PDRSHIFT)
-#define vax_btop(x)		((unsigned)(x) >> PGSHIFT)
-#define vax_ptob(x)		((unsigned)(x) << PGSHIFT)
 
 #define splx(reg)                                       \
 ({                                                      \
@@ -187,9 +173,6 @@
 #define vmapbuf(p,q)
 #define vunmapbuf(p,q)
 
-#if !defined(VAX630) && !defined(VAX410)
-#define todr()          mfpr(PR_TODR)
-#endif
-#define	DELAY(x) {int N=todr()+(x/1000)+1;while(todr()!=N);}
+#define	DELAY(x) delay(x)
 
 #endif /* _VAX_PARAM_H_ */

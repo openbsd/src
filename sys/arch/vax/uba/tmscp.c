@@ -1,4 +1,4 @@
-/*	$NetBSD: tmscp.c,v 1.4.2.1 1995/10/15 13:57:40 ragge Exp $ */
+/*	$NetBSD: tmscp.c,v 1.6 1995/11/30 00:59:29 jtc Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -192,6 +192,8 @@
 #include "vax/vax/tmscpinf.h"
 #include "vax/vax/mscpvar.h"
 
+void     tmscpstrategy __P((struct buf *));
+
 /* Software state per controller */
 
 struct tmscp_softc {
@@ -312,7 +314,7 @@ struct  uba_driver tmscpdriver =
 /*************************************************************************/
 
 #define DELAYTEN 1000
-
+extern	struct cfdriver ubacd;
 
 /*
  * Unfortunately qbgetpri can't be used because the TK50 doesn't flip the
@@ -330,6 +332,7 @@ tmscpprobe(reg, ctlr, um)
 				/* ptr to software controller structure */
 	volatile struct tmscpdevice *tmscpaddr;
 	int count;		/* for probe delay time out */
+	struct	uba_softc *ubasc;
 
 #	ifdef lint
 	br = 0; cvec = br; br = cvec; reg = reg;
@@ -344,7 +347,8 @@ tmscpprobe(reg, ctlr, um)
 	 * The device is not really initialized at this point, this is just to
 	 * find out if the device exists.
 	 */
-	sc->sc_ivec = (uba_hd[numuba].uh_lastiv -= 4);
+	ubasc = ubacd.cd_devs[0]; /* XXX */
+	sc->sc_ivec = (ubasc->uh_lastiv -= 4);
 	tmscpaddr->tmscpip = 0;
 
 	count=0;
@@ -487,7 +491,7 @@ tmscpattach (ui)
 /*
  * TMSCP interrupt routine.
  */
-tmscpintr(uba,vector,level,d)
+tmscpintr(d)
 {
 	volatile struct uba_ctlr *um = tmscpminfo[d];
 	volatile struct tmscpdevice *tmscpaddr =
@@ -1360,6 +1364,7 @@ tmscprsp(um, tm, sc, i)
 	struct uba_device *ui;
 	struct buf *dp, *bp;
 	int st;
+	struct  uba_softc *ubasc;
 
 	mp = &tm->tmscp_rsp[i];
 	mp->mscp_header.tmscp_msglen = mscp_msglen;
@@ -1543,6 +1548,7 @@ tmscprsp(um, tm, sc, i)
 			panic("tmscp: don't work2!");
 		dp->b_actf = bp->b_actf;
 #		if defined(VAX750)
+		ubasc = ubacd.cd_devs[um->um_ubanum];
 		if (cpunumber == VAX_750) { 
 		    if ((tmscpwtab[um->um_ctlr].b_actf == NULL) &&
 					(um->um_ubinfo != 0)) {
@@ -1551,7 +1557,7 @@ tmscprsp(um, tm, sc, i)
 		    else {
 			if (mp->mscp_opcode == (M_OP_READ|M_OP_END) ||
 		    	    mp->mscp_opcode == (M_OP_WRITE|M_OP_END))
-				UBAPURGE(uba_hd[um->um_ubanum].uh_uba,(um->um_ubinfo >>28) & 0x0f);
+				UBAPURGE(ubasc->uh_uba,(um->um_ubinfo >>28) & 0x0f);
 		    }
 		}
 #		endif
@@ -1704,7 +1710,6 @@ errinfo(st)
 /*
  * Manage buffers and perform block mode read and write operations.
  */
-
 void
 tmscpstrategy (bp)
 	register struct buf *bp;
@@ -1819,7 +1824,7 @@ tmscpdump(dev)
 	ui = phys(struct uba_device *, tmsdinfo[unit]);
 	if (ui->ui_alive == 0)
 		return (ENXIO);
-	uba = phys(struct uba_hd *, ui->ui_hd)->uh_physuba;
+	uba = phys(struct uba_softc *, ui->ui_hd)->uh_physuba;
 	ubainit(uba);
 	tmscpaddr = (struct tmscpdevice *)ui->ui_physaddr;
 	DELAY(2000000);

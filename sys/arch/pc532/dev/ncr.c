@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.20.2.1 1995/10/19 01:33:08 phil Exp $ */
+/*	$NetBSD: ncr.c,v 1.21 1995/11/30 00:58:47 jtc Exp $ */
 
 /*
  * Copyright (c) 1994 Matthias Pfaller.
@@ -29,7 +29,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: ncr.c,v 1.2 1995/10/26 01:11:45 deraadt Exp $
+ *	$Id: ncr.c,v 1.3 1995/12/14 05:29:21 deraadt Exp $
  */
 
 #include <sys/param.h>

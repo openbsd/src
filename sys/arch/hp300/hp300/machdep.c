@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.52 1995/10/07 06:25:31 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.54 1995/11/20 00:58:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1104,12 +1104,20 @@ void
 boot(howto)
 	register int howto;
 {
+	extern int cold;
+
 	/* take a snap shot before clobbering any registers */
 	if (curproc && curproc->p_addr)
 		savectx(curproc->p_addr);
 
+	/* If system is cold, just halt. */
+	if (cold) {
+		howto |= RB_HALT;
+		goto haltsys;
+	}
+
 	boothowto = howto;
-	if ((howto&RB_NOSYNC) == 0 && waittime < 0) {
+	if ((howto & RB_NOSYNC) == 0 && waittime < 0) {
 		waittime = 0;
 		vfs_shutdown();
 		/*
@@ -1118,16 +1126,36 @@ boot(howto)
 		 */
 		resettodr();
 	}
-	splhigh();			/* extreme priority */
-	if (howto&RB_HALT) {
-		printf("halted\n\n");
-		asm("	stop	#0x2700");
-	} else {
-		if (howto & RB_DUMP)
-			dumpsys();
-		doboot();
-		/*NOTREACHED*/
+
+	/* Disable interrupts. */
+	splhigh();
+
+	/* If rebooting and a dump is requested do it. */
+	if (howto & RB_DUMP)
+		dumpsys();
+
+ haltsys:
+	/* Run any shutdown hooks. */
+	doshutdownhooks();
+
+#ifdef PANICWAIT
+	if ((howto & RB_HALT) == 0) {
+		printf("hit any hey to reboot...\n");
+		(void)cngetc();
+		printf("\n");
 	}
+#endif
+
+	/* Finally, halt/reboot the system. */
+	if (howto & RB_HALT) {
+		printf("System halted.\n\n");
+		asm("	stop	#0x2700");
+		/* NOTREACHED */
+	}
+
+	printf("rebooting...\n");
+	DELAY(1000000);
+	doboot();
 	/*NOTREACHED*/
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.4.2.1 1995/10/17 00:19:15 phil Exp $	*/
+/*	$NetBSD: boot.c,v 1.5 1995/11/30 00:59:06 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -36,7 +36,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: boot.c,v 1.4.2.1 1995/10/17 00:19:15 phil Exp $";
+static char rcsid[] = "$NetBSD: boot.c,v 1.5 1995/11/30 00:59:06 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -74,7 +74,7 @@ main()
 	cninit();
 	scsiinit();
 
-	printf("\n>> NetBSD BOOT pc532 [$Revision: 1.2 $]\n");
+	printf("\n>> NetBSD BOOT pc532 [$Revision: 1.3 $]\n");
 
 	bdev  = B_TYPE(bootdev);
 	bctlr = B_CONTROLLER(bootdev);

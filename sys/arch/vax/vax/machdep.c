@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.19.2.1 1995/10/15 14:06:18 ragge Exp $  */
+/* $NetBSD: machdep.c,v 1.20 1995/11/10 19:05:49 ragge Exp $  */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -712,4 +712,12 @@ setsoftnet()
 ns_cksum()
 {
 	panic("ns_cksum");
+}
+
+cmrerr()
+{
+	switch (cpunumber) {
+	case VAX_750:
+		ka750_memerr();
+	}
 }

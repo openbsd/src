@@ -1,4 +1,4 @@
-/*	$NetBSD: zsvar.h,v 1.2.2.1 1995/11/15 21:39:47 leo Exp $	*/
+/*	$NetBSD: zsvar.h,v 1.3 1995/11/30 00:58:00 jtc Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman (Atari modifications)

@@ -1,4 +1,4 @@
-/*	$NetBSD: mt.c,v 1.1 1995/10/02 00:28:20 thorpej Exp $	*/
+/*	$NetBSD: mt.c,v 1.2 1995/12/02 18:22:04 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1992, The University of Utah and
@@ -62,6 +62,7 @@ struct	mtinfo {
 int	nmtinfo = sizeof(mtinfo) / sizeof(mtinfo[0]);
 
 struct	mt_softc {
+	struct	hp_device *sc_hd;
 	short	sc_hpibno;	/* logical HPIB this slave it attached to */
 	short	sc_slave;	/* HPIB slave address (0-6) */
 	short	sc_flags;	/* see below */
@@ -90,13 +91,36 @@ int	mtdebug = 0;
 #define B_CMD		B_XXX		/* command buf instead of data */
 #define	b_cmd		b_blkno		/* blkno holds cmd when B_CMD */
 
-int	mtinit(), mtintr();
-void	mtustart(), mtstart(), mtgo(), mtstrategy();
+int	mtmatch(), mtintr();
+void	mtattach(), mtustart(), mtstart(), mtgo(), mtstrategy();
 struct	driver mtdriver = {
-	mtinit, "mt", (int (*)()) mtstart, (int (*)()) mtgo, mtintr,
+	mtmatch, mtattach, "mt", (int (*)()) mtstart, (int (*)()) mtgo, mtintr,
 };
 
-mtinit(hd)
+int
+mtmatch(hd)
+	register struct hp_device *hd;
+{
+	register int unit;
+	register int hpibno = hd->hp_ctlr;
+	register int slave = hd->hp_slave;
+	register struct mt_softc *sc = &mt_softc[hd->hp_unit];
+	register int id;
+	register struct buf *bp;
+
+	sc->sc_hd = hd;
+
+	for (bp = mttab; bp < &mttab[NMT]; bp++)
+		bp->b_actb = &bp->b_actf;
+	unit = hpibid(hpibno, slave);
+	for (id = 0; id < nmtinfo; id++)
+		if (unit == mtinfo[id].hwid)
+			return (1);
+	return (0);			/* not a known HP magtape */
+}
+
+void
+mtattach(hd)
 	register struct hp_device *hd;
 {
 	register int unit;
@@ -105,20 +129,17 @@ mtinit(hd)
 	register struct mt_softc *sc;
 	register int id;
 	register struct buf *bp;
-  
-	for (bp = mttab; bp < &mttab[NMT]; bp++)
-		bp->b_actb = &bp->b_actf;
+
+	/* XXX Ick. */
 	unit = hpibid(hpibno, slave);
 	for (id = 0; id < nmtinfo; id++)
 		if (unit == mtinfo[id].hwid)
-			goto gottype;
-	return (0);			/* not a known HP magtape */
+			break;
 
-    gottype:
 	unit = hd->hp_unit;
 	sc = &mt_softc[unit];
 	sc->sc_type = mtinfo[id].hwid;
-	printf("mt%d: %s tape\n", unit, mtinfo[id].desc);
+	printf(": %s tape\n", mtinfo[id].desc);
 
 	sc->sc_hpibno = hpibno;
 	sc->sc_slave = slave;
@@ -127,7 +148,6 @@ mtinit(hd)
 	sc->sc_dq.dq_unit = unit;
 	sc->sc_dq.dq_slave = slave;
 	sc->sc_dq.dq_driver = &mtdriver;
-	return (1);
 }
 
 /*
@@ -248,7 +268,7 @@ mtopen(dev, flag, mode, p)
 		goto errout;
 	}
 	if (!(sc->sc_stat1 & SR1_ONLINE)) {
-		uprintf("mt%d: not online\n", unit);
+		uprintf("%s: not online\n", sc->sc_hd->hp_xname);
 		error = EIO;
 		goto errout;
 	}
@@ -285,7 +305,8 @@ mtopen(dev, flag, mode, p)
 	if (flag & FWRITE) {
 		if (!(sc->sc_stat1 & SR1_BOT)) {
 			if (sc->sc_density != req_den) {
-				uprintf("mt%d: can't change density mid-tape\n", unit);
+				uprintf("%s: can't change density mid-tape\n",
+				    sc->sc_hd->hp_xname);
 				error = EIO;
 				goto errout;
 			}
@@ -376,8 +397,8 @@ mtstrategy(bp)
 #if 0
 		if (bp->b_bcount & ((1 << WRITE_BITS_IGNORED) - 1)) {
 			tprintf(sc->sc_ttyp,
-				"mt%d: write record must be multiple of %d\n",
-				unit, 1 << WRITE_BITS_IGNORED);
+				"%s: write record must be multiple of %d\n",
+				sc->sc_hd->hp_xname, 1 << WRITE_BITS_IGNORED);
 			goto error;
 		}
 #endif
@@ -396,8 +417,8 @@ mtstrategy(bp)
 		}
 		if (bp->b_bcount > s) {
 			tprintf(sc->sc_ttyp,
-				"mt%d: write record (%d) too big: limit (%d)\n",
-				unit, bp->b_bcount, s);
+				"%s: write record (%d) too big: limit (%d)\n",
+				sc->sc_hd->hp_xname, bp->b_bcount, s);
 	    error:
 			bp->b_flags |= B_ERROR;
 			bp->b_error = EIO;
@@ -732,8 +753,8 @@ mtintr(unit)
 	}
 	if (sc->sc_stat1 & (SR1_ERR | SR1_REJECT)) {
 		i = sc->sc_stat4 & SR4_ERCLMASK;
-		log(LOG_ERR, "mt%d: %s error, retry %d, SR2/3 %x/%x, code %d\n",
-			unit, i == SR4_DEVICE ? "device" :
+		log(LOG_ERR, "%s: %s error, retry %d, SR2/3 %x/%x, code %d\n",
+			sc->sc_hd->hp_xname, i == SR4_DEVICE ? "device" :
 			(i == SR4_PROTOCOL ? "protocol" :
 			(i == SR4_SELFTEST ? "selftest" : "unknown")),
 			sc->sc_stat4 & SR4_RETRYMASK, sc->sc_stat2,
@@ -749,8 +770,8 @@ mtintr(unit)
 	 * Report and clear any soft errors.
 	 */
 	if (sc->sc_stat1 & SR1_SOFTERR) {
-		log(LOG_WARNING, "mt%d: soft error, retry %d\n",
-			unit, sc->sc_stat4 & SR4_RETRYMASK);
+		log(LOG_WARNING, "%s: soft error, retry %d\n",
+			sc->sc_hd->hp_xname, sc->sc_stat4 & SR4_RETRYMASK);
 		sc->sc_stat1 &= ~SR1_SOFTERR;
 	}
 	/*
@@ -810,8 +831,8 @@ mtintr(unit)
 				unit, bp->b_bcount, bp->b_resid);
 		} else {
 			tprintf(sc->sc_ttyp,
-				"mt%d: record (%d) larger than wanted (%d)\n",
-				unit, i, bp->b_bcount);
+				"%s: record (%d) larger than wanted (%d)\n",
+				sc->sc_hd->hp_xname, i, bp->b_bcount);
     error:
 			sc->sc_flags &= ~MTF_IO;
 			bp->b_error = EIO;

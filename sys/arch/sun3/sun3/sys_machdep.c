@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.2.2.1 1995/10/27 18:41:58 gwr Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.3 1995/10/27 15:58:23 gwr Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993

@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.9.2.2 1995/11/18 06:58:03 gwr Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.11 1995/11/17 23:30:19 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross

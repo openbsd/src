@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_machdep.c,v 1.2 1994/10/26 07:23:59 cgd Exp $	*/
+/*	$NetBSD: grf_machdep.c,v 1.3 1995/12/02 18:21:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991 University of Utah.
@@ -57,8 +57,9 @@
 #include <hp300/dev/grfvar.h>
 #include <hp300/dev/grfreg.h>
 
-int grfprobe();
-struct	driver grfdriver = { grfprobe, "grf" };
+int grfmatch();
+void grfattach();
+struct	driver grfdriver = { grfmatch, grfattach, "grf" };
 
 /*
  * XXX called from ite console init routine.
@@ -109,22 +110,32 @@ grfconfig()
 /*
  * Normal init routine called by configure() code
  */
-grfprobe(hd)
+int
+grfmatch(hd)
 	struct hp_device *hd;
 {
 	struct grf_softc *gp = &grf_softc[hd->hp_unit];
 
 	if ((gp->g_flags & GF_ALIVE) == 0 &&
 	    !grfinit(hd->hp_addr, hd->hp_unit))
-		return(0);
-	printf("grf%d: %d x %d ", hd->hp_unit,
-	       gp->g_display.gd_dwidth, gp->g_display.gd_dheight);
+		return (0);
+
+	return(1);
+}
+
+void
+grfattach(hd)
+	struct hp_device *hd;
+{
+	struct grf_softc *gp = &grf_softc[hd->hp_unit];
+
+	printf(": %d x %d ", gp->g_display.gd_dwidth,
+	    gp->g_display.gd_dheight);
 	if (gp->g_display.gd_colors == 2)
 		printf("monochrome");
 	else
 		printf("%d color", gp->g_display.gd_colors);
 	printf(" %s display\n", gp->g_sw->gd_desc);
-	return(1);
 }
 
 grfinit(addr, unit)

@@ -1,4 +1,4 @@
-/*      $NetBSD: uba.c,v 1.8 1995/06/16 15:26:11 ragge Exp $      */
+/*      $NetBSD: uba.c,v 1.10 1995/12/01 19:22:56 ragge Exp $      */
 
 /*
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -37,8 +37,6 @@
  *      @(#)autoconf.c  7.20 (Berkeley) 5/9/91
  */
 
- /* All bugs are subject to removal without further notice */
-
 #include "sys/param.h"
 #include "sys/types.h"
 #include "sys/time.h"
@@ -53,34 +51,38 @@
 #include "sys/malloc.h"
 #include "sys/device.h"
 
+#include "vm/vm.h"
+#include "vm/vm_kern.h"
+
 #include "machine/pte.h"
 #include "machine/cpu.h"
 #include "machine/mtpr.h"
 #include "machine/nexus.h"
 #include "machine/sid.h"
-#if VAX630
-#include "machine/uvaxII.h"
-#endif
-#include "uba.h"
+#include "machine/scb.h"
+#include "machine/trap.h"
+#include "machine/frame.h"
+
 #include "ubareg.h"
 #include "ubavar.h"
 
-int	(*vekmatris[NUBA][128])();
-int	interinfo[NUBA][128];
 int dkn;
 extern int cold;
-struct uba_hd uba_hd[NUBA];
 
-/* F|r att f} genom kompilatorn :( Nollpekare f|r interrupt... */
-int cvec=0;
 volatile int rbr,rcvec;
-#if VAX630 || VAX410
-extern struct uvaxIIcpu *uvaxIIcpu_ptr;
-#endif
-#if VAX630
-extern struct ka630clock *ka630clk_ptr;
-#endif
 
+int	uba_match __P((struct device *, void *, void *));
+void	uba_attach __P((struct device *, struct device *, void *));
+void	ubascan __P((struct device *, void *));
+int	ubaprint __P((void *, char *));
+
+struct	cfdriver ubacd = {
+	NULL, "uba", uba_match, uba_attach, DV_DULL,
+	sizeof(struct uba_softc), 1
+};
+
+
+#ifdef 0
 /*
  * Mark addresses starting at "addr" and continuing
  * "size" bytes as allocated in the map "ualloc".
@@ -105,46 +107,27 @@ csralloc(ualloc, addr, size)
 		*p = 1;
 	}
 }
-
-/*
- * Make an IO register area accessible at physical address physa
- * by mapping kernel ptes starting at pte.
- */
-ioaccess(physa, pte, size)
-	u_int physa;
-	u_int *pte;
-	u_int size;
-{
-	u_int i = (size>>PG_SHIFT);
-	u_int v = (physa>>PG_SHIFT);
-
-	do {
-		*pte = PG_V|PG_KW|v;
-		pte++;
-		v++;
-	} while (--i > 0);
-	mtpr(0, PR_TBIA);
-}
-
-/*
- * General uba interrupt handler.
- */
-ubainterrupt(level, uba,vektor){
-/*printf("ubainterrupt: level %x, uba %x, vektor %x\n",level, uba,vektor); */
-	(*vekmatris[uba][vektor])(vektor,level,uba,interinfo[uba][vektor]);
-}
-
+#endif
 /* 
  * Stray interrupt vector handler, used when nowhere else to 
  * go to.
  */
-ubastray(vektor, level,uba){
+void
+ubastray(arg)
+	int arg;
+{
+	struct	callsframe *cf = FRAMEOFFSET(arg);
+	struct	uba_softc *sc = ubacd.cd_devs[arg];
+	int	vektor;
+
+	vektor = (cf->ca_pc - (unsigned)&sc->uh_idsp[0]) >> 4;
+
 	if(cold){
-		rbr=level;
-		rcvec=vektor;
+		rbr = mfpr(PR_IPL);
+		rcvec = vektor;
 	} else {
-	printf("uba%d: unexpected interrupt at vector %d on level %d",
-		uba, vektor, level);
+		printf("uba%d: unexpected interrupt, vector %o, level %d",
+		    arg, vektor << 2, mfpr(PR_IPL));
 	}
 }
 
@@ -153,28 +136,25 @@ ubastray(vektor, level,uba){
  * Uses per-driver routine to set <br,cvec> into <r11,r10>,
  * and then fills in the tables, with help from a per-driver
  * slave initialization routine.
- *
- * Changed this ugly written code assuming special registers
- * from the C compiler :( 940516/ragge
  */
 
 unifind(uhp0, pumem)
-	struct uba_hd *uhp0;
+	struct uba_softc *uhp0;
 	caddr_t pumem;
 {
 	register struct uba_device *ui;
 	register struct uba_ctlr *um;
-	register struct uba_hd *uhp = uhp0;
+	register struct uba_softc *uhp = uhp0;
 	u_short *reg, *ap, addr;
 	struct uba_driver *udp;
-	int i, (*ivec)();
+	int i;
 	caddr_t ualloc;
 	volatile extern int br, cvec;
 	volatile extern int rbr, rcvec;
 #if DW780 || DWBUA
 	struct uba_regs *vubp = uhp->uh_uba;
 #endif
-
+#if 0
 	/*
 	 * Initialize the UNIBUS, by freeing the map
 	 * registers and the buffered data path registers
@@ -186,21 +166,6 @@ unifind(uhp0, pumem)
 		panic("no mem for unibus map");
 	bzero((caddr_t)uhp->uh_map, (unsigned)(UAMSIZ * sizeof (struct map)));
 	ubainitmaps(uhp);
-
-	/*
-	 * Initialize space for the UNIBUS interrupt vectors.
-	 * On the 8600, can't use first slot in UNIvec
-	 * (the vectors for the second SBI overlap it);
-	 * move each set of vectors forward.
-	 */
-#if	VAX8600
-	if (cpu == VAX_8600)
-		uhp->uh_vec = UNIvec[numuba + 1];
-	else
-#endif
-		uhp->Nuh_vec = vekmatris[numuba];
-	for (i = 0; i < 128; i++)
-		uhp->Nuh_vec[i] = ubastray;
 
 	/*
 	 * Set last free interrupt vector for devices with
@@ -224,7 +189,7 @@ unifind(uhp0, pumem)
 	 * First configure devices that have unibus memory,
 	 * allowing them to allocate the correct map registers.
 	 */
-	ubameminit(numuba);
+	ubameminit(uhp->uh_dev.dv_unit);
 	/*
 	 * Grab some memory to record the umem address space we allocate,
 	 * so we can be sure not to place two devices at the same address.
@@ -248,7 +213,7 @@ unifind(uhp0, pumem)
 	 * output to produce an interrupt.
 	 */
 	*(int *)(&uhp->uh_mr[0]) = UBAMR_MRV;
-
+#endif
 #define	ubaddr(uhp, off)    (u_short *)((int)(uhp)->uh_iopage + ubdevreg(off))
 	/*
 	 * Check each unibus mass storage controller.
@@ -257,8 +222,8 @@ unifind(uhp0, pumem)
 	 * then go looking for slaves.
 	 */
 	for (um = ubminit; udp = um->um_driver; um++) {
-		if (um->um_ubanum != numuba && um->um_ubanum != '?' ||
-		    um->um_alive)
+		if (um->um_ubanum != uhp->uh_dev.dv_unit &&
+		    um->um_ubanum != '?' || um->um_alive)
 			continue;
 		addr = (u_short)(u_long)um->um_addr;
 		/*
@@ -268,9 +233,10 @@ unifind(uhp0, pumem)
 		 * in the driver til we find it
 		 */
 	    for (ap = udp->ud_addr; addr || (addr = *ap++); addr = 0) {
-
+#if 0
 		if (ualloc[ubdevreg(addr)])
 			continue;
+#endif
 		reg = ubaddr(uhp, addr);
 
 		if (badaddr((caddr_t)reg, 2))
@@ -282,7 +248,6 @@ unifind(uhp0, pumem)
 			continue;
 		}
 #endif
-		cvec = 0x200;
 		rcvec = 0x200;
 		i = (*udp->ud_probe)(reg, um->um_ctlr, um);
 #ifdef DW780
@@ -294,7 +259,7 @@ unifind(uhp0, pumem)
 		if (i == 0)
 			continue;
 		printf("%s%d at uba%d csr %o ",
-		    udp->ud_mname, um->um_ctlr, numuba, addr);
+		    udp->ud_mname, um->um_ctlr, uhp->uh_dev.dv_unit, addr);
 		if (rcvec == 0) {
 			printf("zero vector\n");
 			continue;
@@ -303,21 +268,24 @@ unifind(uhp0, pumem)
 			printf("didn't interrupt\n");
 			continue;
 		}
-		interinfo[numuba][rcvec]=um->um_ctlr;
-		printf("vec %o, ipl %x\n", rcvec, rbr);
+		printf("vec %o, ipl %x\n", rcvec << 2, rbr);
+#if 0
 		csralloc(ualloc, addr, i);
+#endif
 		um->um_alive = 1;
-		um->um_ubanum = numuba;
+		um->um_ubanum = uhp->uh_dev.dv_unit;
 		um->um_hd = uhp;
 		um->um_addr = (caddr_t)reg;
 		udp->ud_minfo[um->um_ctlr] = um;
-		uhp->Nuh_vec[rcvec] = um->um_intr;
+		uhp->uh_idsp[rcvec].hoppaddr = um->um_intr;
+		uhp->uh_idsp[rcvec].pushlarg = um->um_ctlr;
 		for (ui = ubdinit; ui->ui_driver; ui++) {
 			int t;
 
 			if (ui->ui_driver != udp || ui->ui_alive ||
 			    ui->ui_ctlr != um->um_ctlr && ui->ui_ctlr != '?' ||
-			    ui->ui_ubanum != numuba && ui->ui_ubanum != '?')
+			    ui->ui_ubanum != uhp->uh_dev.dv_unit &&
+			    ui->ui_ubanum != '?')
 				continue;
 			t = ui->ui_ctlr;
 			ui->ui_ctlr = um->um_ctlr;
@@ -325,7 +293,7 @@ unifind(uhp0, pumem)
 				ui->ui_ctlr = t;
 			else {
 				ui->ui_alive = 1;
-				ui->ui_ubanum = numuba;
+				ui->ui_ubanum = uhp->uh_dev.dv_unit;
 				ui->ui_hd = uhp;
 				ui->ui_addr = (caddr_t)reg;
 				ui->ui_physaddr = pumem + ubdevreg(addr);
@@ -346,100 +314,9 @@ unifind(uhp0, pumem)
 		break;
 	    }
 	}
-	/*
-	 * Now look for non-mass storage peripherals.
-	 */
-	for (ui = ubdinit; udp = ui->ui_driver; ui++) {
-		if (ui->ui_ubanum != numuba && ui->ui_ubanum != '?' ||
-		    ui->ui_alive || ui->ui_slave != -1)
-			continue;
-		addr = (u_short)(u_long)ui->ui_addr;
-
-	    for (ap = udp->ud_addr; addr || (addr = *ap++); addr = 0) {
-		
-		if (ualloc[ubdevreg(addr)])
-			continue;
-		reg = ubaddr(uhp, addr);
-		if (badaddr((caddr_t)reg, 2))
-			continue;
-#ifdef DW780
-		if (uhp->uh_type == DW780 && vubp->uba_sr) {
-			vubp->uba_sr = vubp->uba_sr;
-			continue;
-		}
-#endif
-		rcvec = 0x200;
-		cvec = 0x200;
-		i = (*udp->ud_probe)(reg, ui);
-#ifdef DW780
-		if (uhp->uh_type == DW780 && vubp->uba_sr) {
-			vubp->uba_sr = vubp->uba_sr;
-			continue;
-		}
-#endif
-		if (i == 0)
-			continue;
-		printf("%s%d at uba%d csr %o ",
-		    ui->ui_driver->ud_dname, ui->ui_unit, numuba, addr);
-		if (rcvec == 0) {
-			printf("zero vector\n");
-			continue;
-		}
-		if (rcvec == 0x200) {
-			printf("didn't interrupt\n");
-			continue;
-		}
-		interinfo[numuba][rcvec]=ui->ui_unit;
-		printf("vec %o, ipl %x\n", rcvec, rbr);
-		csralloc(ualloc, addr, i);
-		ui->ui_hd = uhp;
-		uhp->Nuh_vec[rcvec] = ui->ui_intr;
-		ui->ui_alive = 1;
-		ui->ui_ubanum = numuba;
-		ui->ui_addr = (caddr_t)reg;
-		ui->ui_physaddr = pumem + ubdevreg(addr);
-		ui->ui_dk = -1;
-		/* ui_type comes from driver */
-		udp->ud_dinfo[ui->ui_unit] = ui;
-		(*udp->ud_attach)(ui);
-		break;
-	    }
-	}
-
-#ifdef DW780
-	if (uhp->uh_type == DW780)
-		uhp->uh_uba->uba_cr = UBACR_IFS | UBACR_BRIE |
-		    UBACR_USEFIE | UBACR_SUEFIE |
-		    (uhp->uh_uba->uba_cr & 0x7c000000);
-#endif
-	numuba++;
-
-#ifdef	AUTO_DEBUG
-	printf("Unibus allocation map");
-	for (i = 0; i < 8*1024; ) {
-		register n, m;
-
-		if ((i % 128) == 0) {
-			printf("\n%6o:", i);
-			for (n = 0; n < 128; n++)
-				if (ualloc[i+n])
-					break;
-			if (n == 128) {
-				i += 128;
-				continue;
-			}
-		}
-
-		for (n = m = 0; n < 16; n++) {
-			m <<= 1;
-			m |= ualloc[i++];
-		}
-
-		printf(" %4x", m);
-	}
-	printf("\n");
-#endif
+#if 0
 	free(ualloc, M_TEMP);
+#endif
 }
 
 
@@ -470,11 +347,11 @@ ubaqueue(ui, onq)
 	int onq;
 {
 	register struct uba_ctlr *um = ui->ui_mi;
-	register struct uba_hd *uh;
+	register struct uba_softc *uh;
 	register struct uba_driver *ud;
 	register int s, unit;
 
-	uh = &uba_hd[um->um_ubanum];
+	uh = ubacd.cd_devs[um->um_ubanum];
 	ud = um->um_driver;
 	s = spluba();
 	/*
@@ -530,9 +407,9 @@ rwait:
 }
 
 ubadone(um)
-	register struct uba_ctlr *um;
+	struct uba_ctlr *um;
 {
-	register struct uba_hd *uh = &uba_hd[um->um_ubanum];
+	struct uba_softc *uh = ubacd.cd_devs[um->um_ubanum];
 
 	if (um->um_driver->ud_xclu)
 		uh->uh_xclu = 0;
@@ -549,8 +426,11 @@ ubadone(um)
  * Return value encodes map register plus page offset,
  * bdp number and number of map registers.
  */
-ubasetup(int uban,struct buf *bp,int flags) {
-	struct uba_hd *uh = &uba_hd[uban];
+ubasetup(uban, bp, flags)
+	struct	buf *bp;
+	int	uban, flags;
+{
+	struct uba_softc *uh = ubacd.cd_devs[uban];
 	struct pte *pte, *io;
 	int npf;
 	int pfnum, temp;
@@ -611,32 +491,33 @@ ubasetup(int uban,struct buf *bp,int flags) {
 		temp |= UBAMR_BO;
 	if ((bp->b_flags & B_PHYS) == 0)
 		pte = (struct pte *)kvtopte(bp->b_un.b_addr);
-	else if (bp->b_flags & B_PAGET) {
-		panic("ubasetup: B_PAGET");
-	} else {
-		if( bp->b_flags&B_DIRTY){
-			rp=&pageproc[2];
-			panic("ubasetup: B_DIRTY");
-		} else {
-			rp =bp->b_proc;
-		}
-		v = vax_btop((u_int)bp->b_un.b_addr&0x3fffffff);
-		if (bp->b_flags & B_UAREA){
-			panic("ubasetup: B_UAREA");
-		} else {
-/*
- * It may be better to use pmap_extract() here somewhere,
- * but so far we do it "the hard way" :)
- */
-			u_int *hej;
+	else {
+		u_int *hej, i;
 
-			if(((u_int)bp->b_un.b_addr<0x40000000)||
-				((u_int)bp->b_un.b_addr>0x7fffffff)){
-				hej=rp->p_vmspace->vm_pmap.pm_pcb->P0BR;
-			} else {
-				hej=rp->p_vmspace->vm_pmap.pm_pcb->P1BR;
+		rp = bp->b_proc;
+		v = btop((u_int)bp->b_un.b_addr&0x3fffffff);
+
+		/*
+		 * It may be better to use pmap_extract() here
+		 * somewhere, but so far we do it "the hard way" :)
+		 */
+		if (((u_int)bp->b_un.b_addr < 0x40000000) ||
+		    ((u_int)bp->b_un.b_addr > 0x7fffffff))
+			hej = rp->p_vmspace->vm_pmap.pm_pcb->P0BR;
+		else
+			hej = rp->p_vmspace->vm_pmap.pm_pcb->P1BR;
+
+		pte = (struct pte *)&hej[v];
+		for (i = 0; i < (npf - 1); i++) {
+			if ((pte + i)->pg_pfn == 0) {
+				int rv;
+
+				rv = vm_fault(&rp->p_vmspace->vm_map,
+				    (u_int)bp->b_un.b_addr + i * NBPG,
+				    VM_PROT_READ, FALSE);
+				if (rv)
+					panic("DMA to nonexistent page");
 			}
-			pte=(struct pte*)&hej[v];
 		}
 	}
 	io = &uh->uh_mr[reg];
@@ -654,7 +535,10 @@ ubasetup(int uban,struct buf *bp,int flags) {
 /*
  * Non buffer setup interface... set up a buffer and call ubasetup.
  */
-uballoc(int uban,caddr_t addr,int bcnt,int flags) {
+uballoc(uban, addr, bcnt, flags)
+	caddr_t addr;
+	int	uban, bcnt, flags;
+{
 	struct buf ubabuf;
 
 	ubabuf.b_un.b_addr = addr;
@@ -670,9 +554,9 @@ uballoc(int uban,caddr_t addr,int bcnt,int flags) {
  * against uba resets on 11/780's.
  */
 ubarelse(uban, amr)
-	int *amr;
+	int uban, *amr;
 {
-	register struct uba_hd *uh = &uba_hd[uban];
+	register struct uba_softc *uh = ubacd.cd_devs[uban];
 	register int bdp, reg, npf, s;
 	int mr;
  
@@ -747,7 +631,7 @@ sdjhfgsadjkfhgasj
 ubapurge(um)
 	register struct uba_ctlr *um;
 {
-	register struct uba_hd *uh = um->um_hd;
+	register struct uba_softc *uh = um->um_hd;
 	register int bdp = UBAI_BDP(um->um_ubinfo);
 
 	switch (uh->uh_type) {
@@ -772,7 +656,7 @@ ubapurge(um)
 }
 
 ubainitmaps(uhp)
-	register struct uba_hd *uhp;
+	register struct uba_softc *uhp;
 {
 
 	if (uhp->uh_memsize > UBA_MAXMR)
@@ -808,7 +692,7 @@ ubareset(uban)
 	int uban;
 {
 	register struct cdevsw *cdp;
-	register struct uba_hd *uh = &uba_hd[uban];
+	register struct uba_softc *uh = ubacd.cd_devs[uban];
 	int s;
 
 	s = spluba();
@@ -822,14 +706,18 @@ ubareset(uban)
 	wakeup((caddr_t)&uh->uh_bdpwant);
 	wakeup((caddr_t)&uh->uh_mrwant);
 	printf("uba%d: reset", uban);
-	ubainit(uh->uh_uba);
+	ubainit(uh);
+#ifdef notyet
 	ubameminit(uban);
-/* XXX Intressant, vi m}ste l|sa det h{r med ubareset() p} n}t smart
- *     s{tt. En l{nkad lista som s{tts upp vid autoconfiggen? Kanske.
- *     N{r anv{nds dom? Jag vet faktiskt inte; det verkar vara en
- *     ren sm|rja den gamla koden. F}r peturba lite mer docs...
- *     950428/Ragge
- */
+#endif
+	/* XXX - ???
+	 * Intressant, vi m}ste l|sa det h{r med ubareset() p} n}t smart
+	 * s{tt. En l{nkad lista som s{tts upp vid autoconfiggen? Kanske.
+	 * N{r anv{nds dom? Jag vet faktiskt inte; det verkar vara en
+	 * ren sm|rja den gamla koden. F}r peturba lite mer docs...
+	 * 950428/Ragge
+	 */
+	udareset(0); /* XXX */
 /*	for (cdp = cdevsw; cdp < cdevsw + nchrdev; cdp++)
 		(*cdp->d_reset)(uban); 
 	ifubareset(uban);
@@ -845,37 +733,17 @@ ubareset(uban)
  * In these cases we really don't need the interrupts
  * enabled, but since we run with ipl high, we don't care
  * if they are, they will never happen anyways.
- * SHOULD GET POINTER TO UBA_HD INSTEAD OF UBA.
  */
-ubainit(uba)
-	register struct uba_regs *uba;
+void
+ubainit(uhp)
+	struct uba_softc *uhp;
 {
-	register struct uba_hd *uhp;
-#ifdef QBA
-	int isphys = 0;
-#endif
-
-	for (uhp = uba_hd; uhp < uba_hd + numuba; uhp++) {
-		if (uhp->uh_uba == uba)
-			break;
-		if (uhp->uh_physuba == uba) {
-#ifdef QBA
-			isphys++;
-#endif
-			break;
-		}
-	}
-	if (uhp >= uba_hd + numuba) {
-		printf("init unknown uba\n");
-		return;
-	}
-
 	switch (uhp->uh_type) {
 #ifdef DWBUA
 	case DWBUA:
 		BUA(uba)->bua_csr |= BUACSR_UPI;
 		/* give devices time to recover from power fail */
-		waitabit(500);
+		DELAY(500000);
 		break;
 #endif
 #ifdef DW780
@@ -898,22 +766,18 @@ ubainit(uba)
 #if DW750 || DW730 || QBA
 		mtpr(0, PR_IUR);
 		/* give devices time to recover from power fail */
-#if 0
+
 /* THIS IS PROBABLY UNNECESSARY */
-		waitabit(50);
+		DELAY(500000);
 /* END PROBABLY UNNECESSARY */
-#endif
+
 #ifdef QBA
 		/*
 		 * Re-enable local memory access
 		 * from the Q-bus.
 		 */
-		if (uhp->uh_type == QBA) {
-			if (isphys)
-				*((char *)QIOPAGE630 + QIPCR) = Q_LMEAE;
-			else
-				*(uhp->uh_iopage + QIPCR) = Q_LMEAE;
-		}
+		if (uhp->uh_type == QBA)
+			*((u_short *)(uhp->uh_iopage + QIPCR)) = Q_LMEAE;
 #endif QBA
 		break;
 #endif DW750 || DW730 || QBA
@@ -933,6 +797,8 @@ qbgetpri()
 	int pri;
 	extern int cvec;
 
+	panic("qbgetpri");
+#if 0
 	for (pri = 0x17; pri > 0x14; ) {
 		if (cvec && cvec != 0x200)	/* interrupted at pri */
 			break;
@@ -941,6 +807,7 @@ qbgetpri()
 	}
 	(void) spl0();
 	return (pri);
+#endif
 }
 #endif
 
@@ -959,7 +826,7 @@ int	zvcnt_max = 5000;	/* in 8 sec */
 /*ARGSUSED*/
 ubaerror(uban, uh, ipl, uvec, uba)
 	register int uban;
-	register struct uba_hd *uh;
+	register struct uba_softc *uh;
 	int ipl, uvec;
 	register struct uba_regs *uba;
 {
@@ -1024,13 +891,15 @@ ubaerror(uban, uh, ipl, uvec, uba)
  * configured (has no csr or interrupt, so doesn't need to be probed),
  * and -1 on failure.
  */
+#ifdef notyet
 ubameminit(uban)
 {
 	register struct uba_device *ui;
-	register struct uba_hd *uh = &uba_hd[uban];
-	caddr_t umembase = Tumem(uban) + 0x3e000, addr;
+	register struct uba_softc *uh = ubacd.cd_devs[uban];
+	caddr_t umembase, addr;
 #define	ubaoff(off)	((int)(off) & 0x1fff)
 
+	umembase = uh->uh_iopage;
 	uh->uh_lastmem = 0;
 	for (ui = ubdinit; ui->ui_driver; ui++) {
 		if (ui->ui_ubanum != uban && ui->ui_ubanum != '?')
@@ -1062,12 +931,13 @@ jdhfgsjdkfhgsdjkfghak
 	if (uh->uh_type == DW780) {
 		register i;
 
-		i = vax_btop(((uh->uh_lastmem + 8191) / 8192) * 8192);
+		i = btop(((uh->uh_lastmem + 8191) / 8192) * 8192);
 		while (i)
 			(void) rmget(uh->uh_map, 1, i--);
 	}
 #endif
 }
+#endif
 
 rmget(){
 	showstate(curproc);
@@ -1088,7 +958,7 @@ rmget(){
 ubamem(uban, addr, npg, doalloc)
 	int uban, addr, npg, doalloc;
 {
-	register struct uba_hd *uh = &uba_hd[uban];
+	register struct uba_softc *uh = ubacd.cd_devs[uban];
 	register int a;
 	int s;
 
@@ -1158,39 +1028,34 @@ resuba()
 }
 
 int
-uba_match(parent, cf, aux)
+uba_match(parent, vcf, aux)
 	struct	device *parent;
-	struct cfdata *cf;
-	void *aux;
+	void *vcf, *aux;
 {
-	struct sbi_attach_args *sa=(struct sbi_attach_args *)aux;
-	extern int numuba;
-	int ubanr;
+	struct sbi_attach_args *sa = (struct sbi_attach_args *)aux;
+	struct cfdata *cf = vcf;
 
-#if VAX630
-	/*
-	 * The MicroVAXII always has a single QBA.
-	 */
-	if (cpu_type == VAX_630)
-		if (numuba == 0)
-			return 1;
-		else
-			return 0;
-#endif
-	if(numuba) return 0;
-	if((cf->cf_loc[0]!=sa->nexnum)&&(cf->cf_loc[0]>-1))
-		return 0; /* UBA doesn't match spec's */
+	if ((cf->cf_loc[0] != sa->nexnum) && (cf->cf_loc[0] > -1 ))
+		return 0;
 
-	switch(sa->type){
+	switch (sa->type) {
 	case NEX_UBA0:
+		sa->nexinfo = 0;
+		break;
 	case NEX_UBA1:
+		sa->nexinfo = 1;
+		break;
 	case NEX_UBA2:
+		sa->nexinfo = 2;
+		break;
 	case NEX_UBA3:
-		return 1;
+		sa->nexinfo = 3;
+		break;
 	
 	default:
 		return 0;
 	}
+	return 1;
 }
 
 void
@@ -1198,97 +1063,207 @@ uba_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct sbi_attach_args *sa=(struct sbi_attach_args *)aux;
-	extern struct uba_hd uba_hd[];
-	struct uba_regs *ubar=(struct uba_regs *)sa->nexaddr;
-	struct uba_hd *uhp = &uba_hd[numuba];
+	struct sbi_attach_args *sa = (struct sbi_attach_args *)aux;
+	struct uba_regs *ubar = (struct uba_regs *)sa->nexaddr;
+	struct uba_softc *sc = (struct uba_softc *)self;
+	vm_offset_t	min, max, ubaphys, ubaiophys;
+#if DW780 || DWBUA
+	struct uba_regs *vubp = sc->uh_uba;
+#endif
 	void ubascan();
 
 	printf("\n");
+	/*
+	 * Allocate place for unibus memory in virtual space.
+	 * This is done with kmem_suballoc() but after that
+	 * never used in the vm system. Is it OK to do so?
+	 */
+	(void)kmem_suballoc(kernel_map, &min, &max,
+	    (UBAPAGES + UBAIOPAGES) * NBPG, FALSE);
+	sc->uh_mem = (caddr_t)min;
+	sc->uh_uba = (void*)ubar;
+	sc->uh_memsize = UBAPAGES;
+	sc->uh_iopage = (void *)min + (sc->uh_memsize * NBPG);
+	sc->uh_iarea = (void *)scb + NBPG + sa->nexinfo * NBPG;
+	/*
+	 * Create interrupt dispatchers for this uba.
+	 */
+#define	NO_IVEC	128
+	{
+		vm_offset_t	iarea;
+		extern	struct	ivec_dsp idsptch;
+		int	i;
+
+		iarea = kmem_alloc(kernel_map,
+		    NO_IVEC * sizeof(struct ivec_dsp));
+		sc->uh_idsp = (struct ivec_dsp *)iarea;
+
+		for (i = 0; i < NO_IVEC; i++) {
+			bcopy(&idsptch, &sc->uh_idsp[i],
+			    sizeof(struct ivec_dsp));
+			sc->uh_idsp[i].pushlarg = sa->nexinfo;
+			sc->uh_idsp[i].hoppaddr = ubastray;
+			sc->uh_iarea[i] = (unsigned int)&sc->uh_idsp[i];
+		}
+	}
+
 	switch (cpunumber) {
 #if VAX750
 	case VAX_750:
-	uhp->uh_mr = (void *)ubar->uba_map;
-	uhp->uh_type = DW750;
-	uhp->uh_uba = (void*)ubar;
-	uhp->uh_physuba = (void*)0xf20000+sa->nexnum*0x2000;
-	uhp->uh_memsize = UBAPAGES;
-	uhp->uh_mem = Tumem(numuba);
-	uhp->uh_iopage = Tumem(numuba) + (uhp->uh_memsize * NBPG);
-	ioaccess(UMEM750(numuba), UMEMmap[numuba], (UBAPAGES+UBAIOPAGES)*NBPG);
-/* Now everything should be set up (I hope...) */
-#ifdef notyet
-	config_scan(ubascan,self);
-
-#else
-	unifind(uhp, UMEM750(numuba) + (uhp->uh_memsize * NBPG));
-#endif
-	break;
+		sc->uh_mr = (void *)ubar->uba_map;
+		sc->uh_type = DW750;
+		sc->uh_physuba = (struct uba_regs *)kvtophys(sa->nexaddr);
+		ubaphys = UMEM750(sa->nexinfo);
+		ubaiophys = UMEM750(sa->nexinfo) + (UBAPAGES * NBPG);
+		break;
 #endif
 #if VAX630 || VAX410
 	case VAX_78032:
-	switch (cpu_type) {
+		switch (cpu_type) {
 #if VAX630
-	case VAX_630:
-		uhp->uh_mr = (void *)sa->nexaddr;
-		uhp->uh_type = QBA;
-		uhp->uh_uba = (void*)ubar;
-		uhp->uh_physuba = (void*)QBAMAP630;
-		uhp->uh_memsize = QBAPAGES;
-		uhp->uh_mem = Numem;
-		uhp->uh_iopage = Numem + (uhp->uh_memsize * NBPG);
-
-		/*
-		 * For the MicroVAXII, the qbus address space is not contiguous
-		 * in physical address space. I also map the page that has the
-		 * memory error registers and the watch chip here and init them,
-		 * for want of a better place to do it.
-		 */
-		ioaccess(QMEM630, UMEMmap[0], QBAPAGES * NBPG);
-		ioaccess(QIOPAGE630, UMEMmap[0] + QBAPAGES, UBAIOPAGES * NBPG);
-		ioaccess(UVAXIICPU, UMEMmap[0] + QBAPAGES + UBAIOPAGES, NBPG);
-		uvaxIIcpu_ptr =
-			(struct uvaxIIcpu *)(Numem+(QBAPAGES+UBAIOPAGES)*NBPG);
-		ioaccess(KA630CLK,UMEMmap[0] + QBAPAGES + UBAIOPAGES + 1,NBPG);
-		ka630clk_ptr =
-		    (struct ka630clock *)(Numem+(QBAPAGES+UBAIOPAGES+1)*NBPG);
-
-		/*
-		 * Clear restart and boot in progress flags in the CPMBX.
-		 */
-		ka630clk_ptr->cpmbx = (ka630clk_ptr->cpmbx & KA630CLK_LANG);
-
-		/*
-		 * Enable memory parity error detection and clear error bits.
-		 */
-		uvaxIIcpu_ptr->uvaxII_mser = (UVAXIIMSER_PEN|UVAXIIMSER_MERR|
-			UVAXIIMSER_LEB);
-
-		/*
-		 * Now that QBus space is mapped, set the local memory external
-		 * access enable.
-		 */
-		*((u_short *)(uhp->uh_iopage + QIPCR)) = Q_LMEAE;
-/* Now everything should be set up (I hope...) */
-#ifdef notyet
-		config_scan(ubascan,self);
-
-#else
-		unifind(uhp, QIOPAGE630);
+		case VAX_630:
+			sc->uh_mr = (void *)sa->nexaddr;
+			sc->uh_type = QBA;
+			sc->uh_physuba = (void*)QBAMAP630;
+			ubaphys = QMEM630;
+			ubaiophys = QIOPAGE630;
+			break;
 #endif
+		};
 		break;
 #endif
 	};
-	break;
+	/*
+	 * Map uba space in kernel virtual; especially i/o space.
+	 */
+	pmap_map(min, ubaphys, ubaphys + (UBAPAGES * NBPG),
+	    VM_PROT_READ|VM_PROT_WRITE);
+	pmap_map(min + (UBAPAGES * NBPG), ubaiophys, ubaiophys + 
+	    (UBAIOPAGES * NBPG), VM_PROT_READ|VM_PROT_WRITE);
+#if VAX630
+	/* Enable access to local memory. */
+	if (cpu_type == VAX_630)
+		*((u_short *)(sc->uh_iopage + QIPCR)) = Q_LMEAE;
 #endif
-	};
-	numuba++;
+	/*
+	 * Initialize the UNIBUS, by freeing the map
+	 * registers and the buffered data path registers
+	 */
+	sc->uh_map = (struct map *)malloc((u_long)
+	    (UAMSIZ * sizeof(struct map)), M_DEVBUF, M_NOWAIT);
+	bzero((caddr_t)sc->uh_map, (unsigned)(UAMSIZ * sizeof (struct map)));
+	ubainitmaps(sc);
+
+	/*
+	 * Set last free interrupt vector for devices with
+	 * programmable interrupt vectors.  Use is to decrement
+	 * this number and use result as interrupt vector.
+	 */
+	sc->uh_lastiv = 0x200;
+
+#ifdef DWBUA
+        if (uhp->uh_type == DWBUA)
+                BUA(vubp)->bua_offset = (int)uhp->uh_vec - (int)&scb[0];
+#endif
+
+#ifdef DW780
+        if (uhp->uh_type == DW780) {
+                vubp->uba_sr = vubp->uba_sr;
+                vubp->uba_cr = UBACR_IFS|UBACR_BRIE;
+        }
+#endif
+#ifdef notyet
+	/*
+	 * First configure devices that have unibus memory,
+	 * allowing them to allocate the correct map registers.
+	 */
+	ubameminit(uhp->uh_dev.dv_unit);
+#endif
+	/*
+	 * Map the first page of UNIBUS i/o space to the first page of memory
+	 * for devices which will need to dma output to produce an interrupt.
+	 * ??? - Why? This is rpb page... /ragge
+	 */
+	*(int *)(&sc->uh_mr[0]) = UBAMR_MRV;
+
+	/*
+	 * Now start searching for devices.
+	 */
+	unifind(sc, ubaiophys);	/* Some devices are not yet converted */
+	config_scan(ubascan,self);
+
+#ifdef DW780
+	if (uhp->uh_type == DW780)
+		uhp->uh_uba->uba_cr = UBACR_IFS | UBACR_BRIE |
+		    UBACR_USEFIE | UBACR_SUEFIE |
+		    (uhp->uh_uba->uba_cr & 0x7c000000);
+#endif
+
 }
 
+void
+ubascan(parent, match)
+	struct device *parent;
+	void *match;
+{
+	struct	device *dev = match;
+	struct	cfdata *cf = dev->dv_cfdata;
+	struct	uba_softc *sc = (struct uba_softc *)parent;
+	struct	uba_attach_args ua;
+	int	i;
 
+	ua.ua_addr = (caddr_t)ubaddr(sc, cf->cf_loc[0]);
 
-struct	cfdriver ubacd=
-	{ NULL, "uba", uba_match, uba_attach, DV_CPU, sizeof(struct device),1,0};
+	if (badaddr(ua.ua_addr, 2))
+		goto forgetit;
 
+#ifdef DW780
+	if (uhp->uh_type == DW780 && vubp->uba_sr) {
+	        vubp->uba_sr = vubp->uba_sr;
+	        continue;
+	}
+#endif
+	rcvec = 0x200;
+	i = (*cf->cf_driver->cd_match) (parent, dev, &ua);
 
+#ifdef DW780
+	if (uhp->uh_type == DW780 && vubp->uba_sr) {
+	        vubp->uba_sr = vubp->uba_sr;
+	        continue;
+	}
+#endif
+	if (i == 0)
+		goto forgetit;
 
+	if (rcvec == 0 || rcvec == 0x200)
+		goto fail;
+		
+	sc->uh_idsp[rcvec].hoppaddr = ua.ua_ivec;
+	sc->uh_idsp[rcvec].pushlarg = ua.ua_iarg;
+	ua.ua_br = rbr;
+	ua.ua_cvec = rcvec;
+	ua.ua_iaddr = dev->dv_cfdata->cf_loc[0];
+
+	config_attach(parent, dev, &ua, ubaprint);
+	return;
+
+fail:
+	printf("%s at %s csr %o %s\n", dev->dv_cfdata->cf_driver->cd_name, 
+	    parent->dv_xname, dev->dv_cfdata->cf_loc[0] << 2, 
+	    rcvec ? "didn't interrupt\n" : "zero vector\n");
+
+forgetit:
+	free(dev, M_DEVBUF);
+}
+
+int
+ubaprint(aux, uba)
+	void *aux;
+	char *uba;
+{
+	struct uba_attach_args *ua = aux;
+
+	printf(" csr %o vec %o ipl %x", ua->ua_iaddr,
+	    ua->ua_cvec << 2, ua->ua_br);
+	return UNCONF;
+}

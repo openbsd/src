@@ -1,4 +1,5 @@
-/*	$NetBSD: if_qe.c,v 1.4.2.1 1995/10/15 13:56:26 ragge Exp $ */
+/*	$NetBSD: if_qe.c,v 1.7 1995/12/01 19:37:59 ragge Exp $ */
+
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -133,8 +134,6 @@
  * ---------------------------------------------------------------------
  */
 
-#include "qe.h"
-#if	NQE > 0
 /*
  * Digital Q-BUS to NI Adapter
  */
@@ -174,19 +173,15 @@
 extern char all_es_snpa[], all_is_snpa[], all_l1is_snpa[], all_l2is_snpa[];
 #endif
 
-#include "vax/include/pte.h"
-#include "vax/include/cpu.h"
-#include "vax/include/mtpr.h"
+#include "machine/pte.h"
+#include "machine/cpu.h"
+#include "machine/mtpr.h"
 #include "if_qereg.h"
 #include "if_uba.h"
 #include "vax/uba/ubareg.h"
 #include "vax/uba/ubavar.h"
 
-#if NQE == 1 && !defined(QNIVERT)
 #define NRCV	15	 		/* Receive descriptors		*/
-#else
-#define NRCV	10	 		/* Receive descriptors		*/
-#endif
 #define NXMT	5	 		/* Transmit descriptors		*/
 #define NTOT	(NXMT + NRCV)
 
@@ -205,12 +200,14 @@ void qetimeout(int);
  * This structure contains the output queue for the interface, its address, ...
  */
 struct	qe_softc {
+	struct	device qe_device;	/* Configuration common part	*/
 	struct	arpcom qe_ac;		/* Ethernet common part 	*/
 #define	qe_if	qe_ac.ac_if		/* network-visible interface 	*/
 #define	qe_addr	qe_ac.ac_enaddr		/* hardware Ethernet address 	*/
 	struct	ifubinfo qe_uba;	/* Q-bus resources 		*/
-	volatile struct	ifrw qe_ifr[NRCV]; /*	for receive buffers;	*/
-	volatile struct	ifxmt qe_ifw[NXMT]; /*	for xmit buffers;	*/
+	struct	ifrw qe_ifr[NRCV]; /*	for receive buffers;	*/
+	struct	ifxmt qe_ifw[NXMT]; /*	for xmit buffers;	*/
+	struct	qedevice *qe_vaddr;
 	int	qe_flags;		/* software state		*/
 #define	QEF_RUNNING	0x01
 #define	QEF_SETADDR	0x02
@@ -219,30 +216,38 @@ struct	qe_softc {
 	int	ipl;			/* interrupt priority		*/
 	struct	qe_ring *rringaddr;	/* mapping info for rings	*/
 	struct	qe_ring *tringaddr;	/*       ""			*/
-	volatile struct	qe_ring rring[NRCV+1]; /* Receive ring descriptors */
-	volatile struct qe_ring tring[NXMT+1]; /* Xmit ring descriptors */
+	struct	qe_ring rring[NRCV+1]; /* Receive ring descriptors */
+	struct	qe_ring tring[NXMT+1]; /* Xmit ring descriptors */
 	u_char	setup_pkt[16][8];	/* Setup packet			*/
 	int	rindex;			/* Receive index		*/
 	int	tindex;			/* Transmit index		*/
 	int	otindex;		/* Old transmit index		*/
 	int	qe_intvec;		/* Interrupt vector 		*/
-	volatile struct	qedevice *addr; /* device addr		*/
+	struct	qedevice *addr; /* device addr		*/
 	int 	setupqueued;		/* setup packet queued		*/
 	int	nxmit;			/* Transmits in progress	*/
 	int	qe_restarts;		/* timeouts			*/
-} qe_softc[NQE];
+};
 
-struct	uba_device *qeinfo[NQE];
+int	qematch __P((struct device *, void *, void *));
+void	qeattach __P((struct device *, struct device *, void *));
+int	qereset __P((int));
+void	qeinit __P((int));
+void	qestart __P((struct ifnet *));
+void	qeintr __P((int));
+void	qetint __P((int));
+void	qerint __P((int));
+int	qeioctl __P((struct ifnet *, u_long, caddr_t));
+void	qe_setaddr __P((u_char *, int));
+void	qeinitdesc __P((struct qe_ring *, caddr_t, int));
+void	qesetup __P((struct qe_softc *));
+void	qeread __P((struct qe_softc *, struct ifrw *, int));
+void	qetimeout __P((int));
+void	qerestart __P((struct qe_softc *));
 
-extern struct timeval time;
+struct	cfdriver qecd =
+	{ 0, "qe", qematch, qeattach, DV_IFNET, sizeof(struct qe_softc) };
 
-int	qeprobe(), qeattach(), qeintr();
-int	qeinit(), qeioctl(), qereset();
-void	qestart();
-
-u_short qestd[] = { 0 };
-struct	uba_driver qedriver =
-	{ qeprobe, 0, qeattach, 0, qestd, "qe", qeinfo };
 
 #define	QEUNIT(x)	minor(x)
 /*
@@ -252,40 +257,39 @@ struct	uba_driver qedriver =
  * size buffers.
  */
 #define MAXPACKETSIZE 2048		/* Should really be ETHERMTU	*/
+
 /*
  * Probe the QNA to see if it's there
  */
-qeprobe(reg, ui)
-	caddr_t reg;
-	struct uba_device *ui;
+int
+qematch(parent, match, aux)
+	struct	device *parent;
+	void	*match, *aux;
 {
-	/* register int br, cvec;		r11, r10 value-result */
-	register volatile struct qedevice *addr = (struct qedevice *)reg;
-	register volatile struct qe_ring *rp;
-	register struct qe_ring *prp; 	/* physical rp 		*/
-	register int i;
-	register volatile struct qe_softc *sc = &qe_softc[ui->ui_unit];
-
-#ifdef lint
-	br = 0; cvec = br; br = cvec;
-	qeintr(0);
-#endif
+	struct	qe_softc *sc = match;
+	struct	uba_attach_args *ua = aux;
+	struct	uba_softc *ubasc = (struct uba_softc *)parent;
+	struct	qe_ring	*rp;
+	struct	qe_ring *prp;   /* physical rp          */
+	volatile struct qedevice *addr = (struct qedevice *)ua->ua_addr;
+	int i;
 
 	/*
 	 * The QNA interrupts on i/o operations. To do an I/O operation
 	 * we have to setup the interface by transmitting a setup  packet.
 	 */
+
 	addr->qe_csr = QE_RESET;
 	addr->qe_csr &= ~QE_RESET;
-	addr->qe_vector = (uba_hd[numuba].uh_lastiv -= 4);
+	addr->qe_vector = (ubasc->uh_lastiv -= 4);
 
 	/*
 	 * Map the communications area and the setup packet.
 	 */
 	sc->setupaddr =
-		uballoc(0, (caddr_t)sc->setup_pkt, sizeof(sc->setup_pkt), 0);
+	    uballoc(0, (caddr_t)sc->setup_pkt, sizeof(sc->setup_pkt), 0);
 	sc->rringaddr = (struct qe_ring *) uballoc(0, (caddr_t)sc->rring,
-		sizeof(struct qe_ring) * (NTOT+2), 0);
+	    sizeof(struct qe_ring) * (NTOT+2), 0);
 	prp = (struct qe_ring *)UBAI_ADDR((int)sc->rringaddr);
 
 	/*
@@ -314,10 +318,10 @@ qeprobe(reg, ui)
 	 * packet. This code looks strange due to the fact that the address
 	 * is placed in the setup packet in col. major order.
 	 */
-	for( i = 0 ; i < 6 ; i++ )
+	for (i = 0; i < 6; i++)
 		sc->setup_pkt[i][1] = addr->qe_sta_addr[i];
 
-	qesetup( sc );
+	qesetup(sc);
 	/*
 	 * Start the interface and wait for the packet.
 	 */
@@ -334,7 +338,9 @@ qeprobe(reg, ui)
 	ubarelse(0, &sc->setupaddr);
 	ubarelse(0, (int *)&sc->rringaddr);
 	sc->ipl = 0x15;
-	return( sizeof(struct qedevice) );
+	ua->ua_ivec = qeintr;
+	ua->ua_iarg = sc->qe_device.dv_unit;
+	return 1;
 }
 
 /*
@@ -342,15 +348,20 @@ qeprobe(reg, ui)
  * record.  System will initialize the interface when it is ready
  * to accept packets.
  */
-qeattach(ui)
-	struct uba_device *ui;
+void
+qeattach(parent, self, aux)
+	struct	device *parent, *self;
+	void	*aux;
 {
-	struct qe_softc *sc = &qe_softc[ui->ui_unit];
-	struct ifnet *ifp = (struct ifnet *)&sc->qe_if;
-	volatile struct qedevice *addr=(struct qedevice *)ui->ui_addr;
+	struct	uba_attach_args *ua = aux;
+	struct	qe_softc *sc = (struct qe_softc *)self;
+	struct	ifnet *ifp = (struct ifnet *)&sc->qe_if;
+	struct qedevice *addr =(struct qedevice *)ua->ua_addr;
 	int i;
 
-	ifp->if_unit = ui->ui_unit;
+	printf("\n");
+	sc->qe_vaddr = addr;
+	ifp->if_unit = sc->qe_device.dv_unit;
 	ifp->if_name = "qe";
 	/*
 	 * The Deqna is cable of transmitting broadcasts, but
@@ -361,10 +372,11 @@ qeattach(ui)
 	/*
 	 * Read the address from the prom and save it.
 	 */
-	for( i=0 ; i<6 ; i++ )
-		sc->setup_pkt[i][1] = sc->qe_addr[i] = addr->qe_sta_addr[i] & 0xff;
+	for (i = 0; i < 6; i++)
+		sc->setup_pkt[i][1] = sc->qe_addr[i] =
+		    addr->qe_sta_addr[i] & 0xff;
 	addr->qe_vector |= 1;
-	printf("qe%d: %s, hardware address %s\n", ui->ui_unit,
+	printf("qe%d: %s, hardware address %s\n", sc->qe_device.dv_unit,
 		addr->qe_vector&01 ? "delqa":"deqna",
 		ether_sprintf(sc->qe_addr));
 	addr->qe_vector &= ~1;
@@ -387,28 +399,31 @@ qeattach(ui)
  * Reset of interface after UNIBUS reset.
  * If interface is on specified uba, reset its state.
  */
-qereset(unit, uban)
-	int unit, uban;
+qereset(unit)
+	int unit;
 {
 	register struct uba_device *ui;
 
+	panic("qereset");
+#ifdef notyet
 	if (unit >= NQE || (ui = qeinfo[unit]) == 0 || ui->ui_alive == 0 ||
 		ui->ui_ubanum != uban)
 		return;
 	printf(" qe%d", unit);
 	qe_softc[unit].qe_if.if_flags &= ~IFF_RUNNING;
 	qeinit(unit);
+#endif
 }
 
 /*
  * Initialization of interface.
  */
+void
 qeinit(unit)
 	int unit;
 {
-	volatile struct qe_softc *sc = &qe_softc[unit];
-	struct uba_device *ui = qeinfo[unit];
-	volatile struct qedevice *addr=(struct qedevice *)ui->ui_addr;
+	struct qe_softc *sc = (struct qe_softc *)qecd.cd_devs[unit];
+	struct qedevice *addr = sc->qe_vaddr;
 	struct ifnet *ifp = (struct ifnet *)&sc->qe_if;
 	int i;
 	int s;
@@ -437,7 +452,7 @@ qeinit(unit)
 		/*
 		 * init buffers and maps
 		 */
-		if (if_ubaminit(&sc->qe_uba, ui->ui_ubanum,
+		if (if_ubaminit(&sc->qe_uba, sc->qe_device.dv_parent->dv_unit,
 		    sizeof (struct ether_header), (int)btoc(MAXPACKETSIZE),
 		    sc->qe_ifr, NRCV, sc->qe_ifw, NXMT) == 0) {
 	fail:
@@ -504,17 +519,15 @@ qestart(ifp)
 	struct ifnet *ifp;
 {
 	int unit =  ifp->if_unit;
-	struct uba_device *ui = qeinfo[unit];
-	register volatile struct qe_softc *sc = &qe_softc[unit];
-	register volatile struct qedevice *addr;
-	register volatile struct qe_ring *rp;
+	register struct qe_softc *sc = qecd.cd_devs[ifp->if_unit];
+	volatile struct qedevice *addr = sc->qe_vaddr;
+	register struct qe_ring *rp;
 	register index;
 	struct mbuf *m;
 	int buf_addr, len, s;
 
 
 	s = splimp();
-	addr = (struct qedevice *)ui->ui_addr;
 	/*
 	 * The deqna doesn't look at anything but the valid bit
 	 * to determine if it should transmit this packet. If you have
@@ -537,7 +550,7 @@ qestart(ifp)
 			sc->setupqueued = 0;
 		} else {
 			IF_DEQUEUE(&sc->qe_if.if_snd, m);
-			if( m == 0 ){
+			if (m == 0) {
 				splx(s);
 				return;
 			}
@@ -582,26 +595,31 @@ qestart(ifp)
 /*
  * Ethernet interface interrupt processor
  */
-qeintr(uba, vector, level, unit)
+void
+qeintr(unit)
+	int	unit;
 {
-	register volatile struct qe_softc *sc = &qe_softc[unit];
-	volatile struct qedevice *addr =
-		(struct qedevice *)qeinfo[unit]->ui_addr;
+	register struct qe_softc *sc;
+	volatile struct qedevice *addr;
 	int buf_addr, csr;
 
+	sc = qecd.cd_devs[unit];
+	addr = sc->qe_vaddr;
 	splx(sc->ipl);
 	if (!(sc->qe_flags & QEF_FASTTIMEO))
 		sc->qe_if.if_timer = QESLOWTIMEOUT; /* Restart timer clock */
 	csr = addr->qe_csr;
-	addr->qe_csr = QE_RCV_ENABLE | QE_INT_ENABLE | QE_XMIT_INT | QE_RCV_INT | QE_ILOOP;
-	if( csr & QE_RCV_INT )
-		qerint( unit );
-	if( csr & QE_XMIT_INT )
-		qetint( unit );
-	if( csr & QE_NEX_MEM_INT )
+	addr->qe_csr = QE_RCV_ENABLE | QE_INT_ENABLE |
+	    QE_XMIT_INT | QE_RCV_INT | QE_ILOOP;
+	if (csr & QE_RCV_INT)
+		qerint(unit);
+	if (csr & QE_XMIT_INT)
+		qetint(unit );
+	if (csr & QE_NEX_MEM_INT)
 		printf("qe%d: Nonexistent memory interrupt\n", unit);
 
-	if( addr->qe_csr & QE_RL_INVALID && sc->rring[sc->rindex].qe_status1 == QE_NOTYET ) {
+	if (addr->qe_csr & QE_RL_INVALID && sc->rring[sc->rindex].qe_status1 ==
+	    QE_NOTYET) {
 		buf_addr = (int)&sc->rringaddr[sc->rindex];
 		addr->qe_rcvlist_lo = (short)buf_addr;
 		addr->qe_rcvlist_hi = (short)(buf_addr >> 16);
@@ -611,18 +629,19 @@ qeintr(uba, vector, level, unit)
 /*
  * Ethernet interface transmit interrupt.
  */
-
+void
 qetint(unit)
 	int unit;
 {
-	register volatile struct qe_softc *sc = &qe_softc[unit];
-	register volatile struct qe_ring *rp;
-	register volatile struct ifxmt *ifxp;
+	register struct qe_softc *sc = qecd.cd_devs[unit];
+	register struct qe_ring *rp;
+	register struct ifxmt *ifxp;
 	int status1, setupflag;
 	short len;
 
 
-	while( sc->otindex != sc->tindex && sc->tring[sc->otindex].qe_status1 != QE_NOTYET && sc->nxmit > 0 ) {
+	while (sc->otindex != sc->tindex && sc->tring[sc->otindex].qe_status1
+	    != QE_NOTYET && sc->nxmit > 0) {
 		/*
 		 * Save the status words from the descriptor so that it can
 		 * be released.
@@ -657,7 +676,7 @@ qetint(unit)
 		}
 		sc->otindex = ++sc->otindex % NXMT;
 	}
-	qestart( &sc->qe_if );
+	qestart(&sc->qe_if);
 }
 
 /*
@@ -666,11 +685,12 @@ qetint(unit)
  * Othewise decapsulate packet based on type and pass to type specific
  * higher-level input routine.
  */
+void
 qerint(unit)
 	int unit;
 {
-	register volatile struct qe_softc *sc = &qe_softc[unit];
-	register volatile struct qe_ring *rp;
+	register struct qe_softc *sc = qecd.cd_devs[unit];
+	register struct qe_ring *rp;
 	register int nrcv = 0;
 	int len, status1, status2;
 	int bufaddr;
@@ -708,7 +728,8 @@ qerint(unit)
 		log(LOG_ERR, "qe%d: ring overrun, resync'd by skipping %d\n",
 		    unit, nrcv);
 
-	for( ; sc->rring[sc->rindex].qe_status1 != QE_NOTYET ; sc->rindex = ++sc->rindex % NRCV ){
+	for (; sc->rring[sc->rindex].qe_status1 != QE_NOTYET;
+	    sc->rindex = ++sc->rindex % NRCV) {
 		rp = &sc->rring[sc->rindex];
 		status1 = rp->qe_status1;
 		status2 = rp->qe_status2;
@@ -725,7 +746,7 @@ qerint(unit)
 			/*
 			 * We don't process setup packets.
 			 */
-			if( !(status1 & QE_ESETUP) )
+			if (!(status1 & QE_ESETUP))
 				qeread(sc, &sc->qe_ifr[sc->rindex],
 					len - sizeof(struct ether_header));
 		}
@@ -744,12 +765,13 @@ qerint(unit)
 /*
  * Process an ioctl request.
  */
+int
 qeioctl(ifp, cmd, data)
 	register struct ifnet *ifp;
-	int cmd;
+	u_long cmd;
 	caddr_t data;
 {
-	struct qe_softc *sc = &qe_softc[ifp->if_unit];
+	struct qe_softc *sc = qecd.cd_devs[ifp->if_unit];
 	struct ifaddr *ifa = (struct ifaddr *)data;
 	int s = splimp(), error = 0;
 
@@ -782,8 +804,7 @@ qeioctl(ifp, cmd, data)
 	case SIOCSIFFLAGS:
 		if ((ifp->if_flags & IFF_UP) == 0 &&
 		    sc->qe_flags & QEF_RUNNING) {
-			((volatile struct qedevice *)
-			   (qeinfo[ifp->if_unit]->ui_addr))->qe_csr = QE_RESET;
+			sc->qe_vaddr->qe_csr = QE_RESET;
 			sc->qe_flags &= ~QEF_RUNNING;
 		} else if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) ==
 		    IFF_RUNNING && (sc->qe_flags & QEF_RUNNING) == 0)
@@ -801,11 +822,12 @@ qeioctl(ifp, cmd, data)
 /*
  * set ethernet address for unit
  */
+void
 qe_setaddr(physaddr, unit)
 	u_char *physaddr;
 	int unit;
 {
-	register volatile struct qe_softc *sc = &qe_softc[unit];
+	register struct qe_softc *sc = qecd.cd_devs[unit];
 	register int i;
 
 	for (i = 0; i < 6; i++)
@@ -820,8 +842,9 @@ qe_setaddr(physaddr, unit)
 /*
  * Initialize a ring descriptor with mbuf allocation side effects
  */
+void
 qeinitdesc(rp, addr, len)
-	register volatile struct qe_ring *rp;
+	register struct qe_ring *rp;
 	caddr_t addr; 			/* mapped address */
 	int len;
 {
@@ -830,7 +853,7 @@ qeinitdesc(rp, addr, len)
 	 */
 	bzero((caddr_t)rp, sizeof(struct qe_ring));
 
-	if( len ) {
+	if (len) {
 		rp->qe_buf_len = -(len/2);
 		rp->qe_addr_lo = (short)((int)addr);
 		rp->qe_addr_hi = (short)((int)addr >> 16);
@@ -840,16 +863,17 @@ qeinitdesc(rp, addr, len)
  * Build a setup packet - the physical address will already be present
  * in first column.
  */
-qesetup( sc )
-	volatile struct qe_softc *sc;
+void
+qesetup(sc)
+	struct qe_softc *sc;
 {
 	register i, j;
 
 	/*
 	 * Copy the target address to the rest of the entries in this row.
 	 */
-	 for ( j = 0; j < 6 ; j++ )
-		for ( i = 2 ; i < 8 ; i++ )
+	 for (j = 0; j < 6; j++)
+		for (i = 2; i < 8; i++)
 			sc->setup_pkt[j][i] = sc->setup_pkt[j][1];
 	/*
 	 * Duplicate the first half.
@@ -858,7 +882,7 @@ qesetup( sc )
 	/*
 	 * Fill in the broadcast (and ISO multicast) address(es).
 	 */
-	for ( i = 0; i < 6 ; i++ ) {
+	for (i = 0; i < 6; i++) {
 		sc->setup_pkt[i][2] = 0xff;
 #ifdef ISO
 		sc->setup_pkt[i][3] = all_es_snpa[i];
@@ -874,9 +898,10 @@ qesetup( sc )
  * Pass a packet to the higher levels.
  * We deal with the trailer protocol here.
  */
+void
 qeread(sc, ifrw, len)
-	register volatile struct qe_softc *sc;
-	volatile struct ifrw *ifrw;
+	register struct qe_softc *sc;
+	struct ifrw *ifrw;
 	int len;
 {
 	struct ether_header *eh;
@@ -923,9 +948,9 @@ void
 qetimeout(unit)
 	int unit;
 {
-	register volatile struct qe_softc *sc;
+	register struct qe_softc *sc;
 
-	sc = &qe_softc[unit];
+	sc = qecd.cd_devs[unit];
 #ifdef notdef
 	log(LOG_ERR, "qe%d: transmit timeout, restarted %d\n",
 	     unit, sc->qe_restarts++);
@@ -935,17 +960,18 @@ qetimeout(unit)
 /*
  * Restart for board lockup problem.
  */
+void
 qerestart(sc)
-	register volatile struct qe_softc *sc;
+	struct qe_softc *sc;
 {
 	register struct ifnet *ifp = (struct ifnet *)&sc->qe_if;
-	register volatile struct qedevice *addr = sc->addr;
-	register volatile struct qe_ring *rp;
+	register struct qedevice *addr = sc->addr;
+	register struct qe_ring *rp;
 	register i;
 
 	addr->qe_csr = QE_RESET;
 	addr->qe_csr &= ~QE_RESET;
-	qesetup( sc );
+	qesetup(sc);
 	for (i = 0, rp = sc->tring; i < NXMT; rp++, i++) {
 		rp->qe_flag = rp->qe_status1 = QE_NOTYET;
 		rp->qe_valid = 0;
@@ -958,18 +984,3 @@ qerestart(sc)
 	sc->qe_flags |= QEF_RUNNING;
 	qestart(ifp);
 }
-
-qe_match(){
-	printf("qe_match\n");
-	return 0;
-}
-
-void
-qe_attach(){
-	printf("qe_attach\n");
-}
-
-struct  cfdriver qecd =
-        { 0,"qe",qe_match, qe_attach, DV_IFNET, sizeof(struct uba_driver) };
-
-#endif

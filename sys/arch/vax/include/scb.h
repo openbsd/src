@@ -1,4 +1,4 @@
-/*	$NetBSD: scb.h,v 1.2 1994/10/26 08:02:26 cgd Exp $	*/
+/*	$NetBSD: scb.h,v 1.3 1995/11/12 14:38:31 ragge Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -30,10 +30,10 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
- /* All bugs are subject to removal without further notice */
-		
-
 
 struct scb {
 };
 
+#ifdef _KERNEL
+extern	struct scb *scb;
+#endif

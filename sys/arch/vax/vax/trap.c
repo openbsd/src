@@ -1,4 +1,4 @@
-/*      $NetBSD: trap.c,v 1.13 1995/07/05 08:39:48 ragge Exp $     */
+/*      $NetBSD: trap.c,v 1.14 1995/11/12 14:33:13 ragge Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -140,6 +140,10 @@ faulter:
 		if (kdb_trap(frame))
 			return;
 #endif
+		printf("Trap: type %x, code %x, pc %x, psl %x\n",
+		    frame->trap, frame->code, frame->pc, frame->psl);
+		showregs(frame);
+asm("halt");
 		panic("trap: adr %x",frame->code);
 	case T_KSPNOTVAL:
 		goto faulter;
@@ -154,8 +158,8 @@ faulter:
 			else
 				ptep=(u_int *)p->p_addr->u_pcb.P1BR;
 			pte1=(u_int *)trunc_page(&ptep[(frame->code
-				&0x3fffffff)>>PG_SHIFT]);
-			pte=(u_int*)&Sysmap[((u_int)pte1&0x3fffffff)>>PG_SHIFT];	
+				&0x3fffffff)>>PGSHIFT]);
+			pte=(u_int*)&Sysmap[((u_int)pte1&0x3fffffff)>>PGSHIFT];	
 			if(*pte&PG_SREF){ /* Yes, simulated */
 				s=splhigh();
 
@@ -171,13 +175,13 @@ faulter:
 			frame->code=trunc_page(frame->code);
 			if(frame->code<0x40000000){
 				ptep=(u_int *)p->p_addr->u_pcb.P0BR;
-				pte=&ptep[(frame->code>>PG_SHIFT)];
+				pte=&ptep[(frame->code>>PGSHIFT)];
 			} else if(frame->code>0x7fffffff){
 				pte=(u_int *)&Sysmap[((u_int)frame->code&
-					0x3fffffff)>>PG_SHIFT];
+					0x3fffffff)>>PGSHIFT];
 			} else {
 				ptep=(u_int *)p->p_addr->u_pcb.P1BR;
-				pte=&ptep[(frame->code&0x3fffffff)>>PG_SHIFT];
+				pte=&ptep[(frame->code&0x3fffffff)>>PGSHIFT];
 			}
 			if(*pte&PG_SREF){
 				s=splhigh();
@@ -208,10 +212,10 @@ if(faultdebug)printf("trap accflt type %x, code %x, pc %x, psl %x\n",
 
 			if(P0){
 				faultaddr=(u_int)pm->pm_pcb->P0BR+
-					((testaddr>>PG_SHIFT)<<2);
+					((testaddr>>PGSHIFT)<<2);
 			} else if(P1){
 				faultaddr=(u_int)pm->pm_pcb->P1BR+
-					((testaddr>>PG_SHIFT)<<2);
+					((testaddr>>PGSHIFT)<<2);
 			} else panic("pageflt: PTE fault in SPT\n");
 	
 			faultaddr&=~PAGE_MASK;
@@ -411,31 +415,6 @@ if(startsysc)
 
 stray(scb, vec){
 	printf("stray interrupt scb %d, vec 0x%x\n", scb, vec);
-}
-
-struct inta {
-	char pushr[2];	/* pushr $3f */
-	char pushl[2];	/* pushl $? */
-	char nop;	/* nop, for foolish gcc */
-	char calls[3];	/* $1,? */
-	u_int hoppaddr; /* jump for calls */
-	char popr[2];	/* popr $0x3f */
-	char rei;	/* rei */
-} intasm = {0xbb, 0x3f, 0xdd, 0, 1, 0xfb, 1, 0xef, 0, 0xba, 0x3f, 2};
-
-u_int
-settrap(plats, nyrut,arg)
-	u_int plats;  /* Pointer to place to copy interrupt routine */
-	u_int nyrut;  /* Pointer to new routine to jump to */
-	u_int arg;    /* arg number to pass to routine. */
-{
-	struct inta *introut;
-
-	introut=(void *)((plats&0xfffffffc)+4);
-	bcopy(&intasm, introut, sizeof(struct inta));
-	introut->pushl[1]=arg;
-	introut->hoppaddr=nyrut-(u_int)&introut->popr[0];
-	return (u_int)introut;
 }
 
 printstack(loaddr, highaddr)

@@ -1,4 +1,4 @@
-/*      $NetBSD: vm_machdep.c,v 1.16.2.1 1995/10/15 14:01:06 ragge Exp $       */
+/*      $NetBSD: vm_machdep.c,v 1.17 1995/11/10 19:07:16 ragge Exp $       */
 
 #undef SWDEBUG
 /*

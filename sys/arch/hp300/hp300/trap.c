@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.38 1995/09/03 00:44:43 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.40 1995/12/11 17:09:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -66,7 +66,7 @@
 #include <vm/pmap.h>
 
 #ifdef COMPAT_HPUX
-#include <hp300/hpux/hpux.h>
+#include <compat/hpux/hpux.h>
 #endif
 
 char	*trap_type[] = {
@@ -104,7 +104,7 @@ short	exframesize[] = {
 	-1, -1, -1, -1	/* type C-F - undefined */
 };
 
-#ifdef HP380
+#ifdef M68040
 #define KDFAULT(c)	(mmutype == MMU_68040 ? \
 			    ((c) & SSW4_TMMASK) == SSW4_TMKD : \
 			    ((c) & (SSW_DF|FC_SUPERD)) == (SSW_DF|FC_SUPERD))
@@ -138,7 +138,7 @@ userret(p, fp, oticks, faultaddr, fromtrap)
 	int fromtrap;
 {
 	int sig, s;
-#ifdef HP380
+#ifdef M68040
 	int beenhere = 0;
 
 again:
@@ -174,7 +174,7 @@ again:
 		addupc_task(p, fp->f_pc,
 			    (int)(p->p_sticks - oticks) * psratio);
 	}
-#ifdef HP380
+#ifdef M68040
 	/*
 	 * Deal with user mode writebacks (from trap, or from sigreturn).
 	 * If any writeback fails, go back and attempt signal delivery.
@@ -314,7 +314,7 @@ copyfault:
 		break;
 #endif
 
-#ifdef HP380
+#ifdef M68040
 	case T_FPEMULI|T_USER:	/* unimplemented FP instuction */
 	case T_FPEMULD|T_USER:	/* unimplemented FP data type */
 		/* XXX need to FSAVE */
@@ -546,7 +546,7 @@ copyfault:
 		}
 		if (rv == KERN_SUCCESS) {
 			if (type == T_MMUFLT) {
-#ifdef HP380
+#ifdef M68040
 				if (mmutype == MMU_68040)
 					(void) writeback(&frame, 1);
 #endif
@@ -575,7 +575,7 @@ out:
 	userret(p, &frame, sticks, v, 1);
 }
 
-#ifdef HP380
+#ifdef M68040
 #ifdef DEBUG
 struct writebackstats {
 	int calls;
