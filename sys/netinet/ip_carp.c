@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.47 2004/05/10 02:18:52 mcbride Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.48 2004/05/13 00:04:20 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -804,7 +804,7 @@ carp_send_ad(void *v)
 			sc->sc_sendad_success = 0;
 		} else {
 			if (sc->sc_sendad_errors >= CARP_SENDAD_MAX_ERRORS) {
-			   	if (++sc->sc_sendad_success >=
+				if (++sc->sc_sendad_success >=
 				    CARP_SENDAD_MIN_SUCCESS) {
 					carp_suppress_preempt--;
 					sc->sc_sendad_errors = 0;
@@ -869,7 +869,7 @@ carp_send_ad(void *v)
 			sc->sc_sendad_success = 0;
 		} else {
 			if (sc->sc_sendad_errors >= CARP_SENDAD_MAX_ERRORS) {
-			   	if (++sc->sc_sendad_success >=
+				if (++sc->sc_sendad_success >=
 				    CARP_SENDAD_MIN_SUCCESS) {
 					carp_suppress_preempt--;
 					sc->sc_sendad_errors = 0;
@@ -1813,8 +1813,8 @@ carp_carpdev_state(void *v)
 	struct carp_softc *sc;
 
 	TAILQ_FOREACH(sc, &cif->vhif_vrs, sc_list) {
-		if (sc->sc_ifp->if_link_state == LINK_STATE_DOWN || 
-		    !(sc->sc_ifp->if_flags & IFF_UP)) { 
+		if (sc->sc_ifp->if_link_state == LINK_STATE_DOWN ||
+		    !(sc->sc_ifp->if_flags & IFF_UP)) {
 			sc->sc_flags_backup = sc->sc_ac.ac_if.if_flags;
 			sc->sc_ac.ac_if.if_flags &= ~(IFF_UP|IFF_RUNNING);
 			timeout_del(&sc->sc_ad_tmo);
