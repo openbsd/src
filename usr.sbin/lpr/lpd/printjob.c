@@ -1,4 +1,4 @@
-/*	$OpenBSD: printjob.c,v 1.16 1997/07/25 20:12:12 mickey Exp $ */
+/*	$OpenBSD: printjob.c,v 1.17 1997/07/27 20:01:36 deraadt Exp $ */
 /*	$NetBSD: printjob.c,v 1.9.4.3 1996/07/12 22:31:39 jtc Exp $	*/
 
 /*
@@ -1046,7 +1046,6 @@ sendmail(user, bombed)
 	register int i, nofile;
 	int p[2], s;
 	register char *cp = NULL;
-	char buf[100];
 	struct stat stb;
 	FILE *fp;
 
@@ -1062,8 +1061,7 @@ sendmail(user, bombed)
 			cp++;
 		else
 			cp = _PATH_SENDMAIL;
-		snprintf(buf, sizeof buf, "%s@%s", user, fromhost);
-		execl(_PATH_SENDMAIL, cp, buf, 0);
+		execl(_PATH_SENDMAIL, cp, "-t", 0);
 		exit(0);
 	} else if (s > 0) {				/* parent */
 		dup2(p[1], 1);
