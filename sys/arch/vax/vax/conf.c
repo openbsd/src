@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.24 2001/03/15 20:32:11 bjc Exp $ */
+/*	$OpenBSD: conf.c,v 1.25 2001/04/18 16:15:20 hugh Exp $ */
 /*	$NetBSD: conf.c,v 1.44 1999/10/27 16:38:54 ragge Exp $	*/
 
 /*-
@@ -93,8 +93,10 @@ bdev_decl(idc);
 #include "uu.h"
 bdev_decl(uu);
 
+#if 0
 #include "rl.h"
 bdev_decl(rl);
+#endif
 
 #include "ccd.h"
 bdev_decl(ccd);
@@ -143,7 +145,7 @@ struct bdevsw	bdevsw[] =
 	bdev_disk_init(NRB,idc),	/* 11: IDC (RB730) */
 	bdev_disk_init(NRX,rx),		/* 12: RX?? on MSCP */
 	bdev_disk_init(NUU,uu),		/* 13: TU58 on DL11 */
-	bdev_disk_init(NRL,rl),		/* 14: RL01/02 */
+	bdev_notdef(),			/* 14: RL01/02 */
 	bdev_tape_init(NMT,mt),		/* 15: MSCP tape */
 	bdev_notdef(),			/* 16: was: KDB50/RA?? */
 	bdev_disk_init(NCCD,ccd),	/* 17: concatenated disk driver */
@@ -312,7 +314,9 @@ cdev_decl(idc);
 cdev_decl(fd);
 cdev_decl(gencn);
 cdev_decl(rx);
+#if 0
 cdev_decl(rl);
+#endif
 cdev_decl(ccd);
 cdev_decl(raid);
 cdev_decl(hd);
@@ -467,7 +471,7 @@ struct cdevsw	cdevsw[] =
 	cdev_ch_init(NAD,ad),		/* 29: DT A/D converter */
 	cdev_disk_init(NRX,rx),		/* 30: RX?? on MSCP */
 	cdev_graph_init(NIK,ik),	/* 31: Ikonas frame buffer */
-	cdev_disk_init(NRL,rl),		/* 32: RL01/02 on unibus */
+	cdev_notdef(),			/* 32: RL01/02 on unibus */
 	cdev_log_init(1,log),		/* 33: /dev/klog */
 	cdev_tty_init(NDHU,dhu),	/* 34: DHU-11 */
 	cdev_cnstore_init(NCRL,crl),	/* 35: Console RL02 on 8600 */
