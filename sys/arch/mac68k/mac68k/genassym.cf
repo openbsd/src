@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.1 1997/04/18 17:29:51 gene Exp $
+#	$OpenBSD: genassym.cf,v 1.2 2001/04/06 09:34:15 art Exp $
 #	$NetBSD: genassym.cf,v 1.1 1997/04/15 06:11:40 scottr Exp $
 
 #
@@ -73,7 +73,7 @@ define	MD_REGS 		offsetof(struct mdproc, md_regs)
 
 define	PM_STCHG		offsetof(struct pmap, pm_stchanged)
 
-define	VM_PMAP 		offsetof(struct vmspace, vm_pmap)
+define	VM_PMAP 		offsetof(struct vmspace, vm_map.pmap)
 define	V_SWTCH 		offsetof(struct vmmeter, v_swtch)
 define	V_TRAP			offsetof(struct vmmeter, v_trap)
 define	V_SYSCALL		offsetof(struct vmmeter, v_syscall)

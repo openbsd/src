@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.23 2000/06/05 11:02:59 art Exp $	*/
+/*	$OpenBSD: locore.s,v 1.24 2001/04/06 09:34:15 art Exp $	*/
 /*	$NetBSD: locore.s,v 1.74 1997/02/02 08:17:46 thorpej Exp $	*/
 
 /*
@@ -1347,7 +1347,7 @@ Lswnofpsave:
 	tstl	a0			| map == VM_MAP_NULL?
 	jeq	Lbadsw			| panic
 #endif /* DIAGNOSTIC */
-	lea	a0@(VM_PMAP),a0		| pmap = &vmspace.vm_pmap
+	movl	a0@(VM_PMAP),a0		| pmap = vmspace->vm_map.pmap
 	tstl	a0@(PM_STCHG)		| pmap->st_changed?
 	jeq	Lswnochg		| no, skip
 	pea	a1@			| push pcb (at p_addr)
