@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lge.c,v 1.3 2001/09/11 20:05:25 miod Exp $	*/
+/*	$OpenBSD: if_lge.c,v 1.4 2001/11/05 04:16:11 fgsch Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -1015,10 +1015,6 @@ void lge_rxeof(sc, cnt)
 		}
 
 		ifp->if_ipackets++;
-		eh = mtod(m, struct ether_header *);
-
-		/* Remove header from mbuf and pass it on. */
-		m_adj(m, sizeof(struct ether_header));
 
 #if NBPFILTER > 0
 		/*
@@ -1063,7 +1059,7 @@ void lge_rxeof(sc, cnt)
 				m->m_pkthdr.csum |= M_UDP_CSUM_IN_OK;
 		}
 
-		ether_input(ifp, eh, m);
+		ether_input_mbuf(ifp, m);
 	}
 
 	sc->lge_cdata.lge_rx_cons = i;
