@@ -1,5 +1,5 @@
-/*	$OpenBSD: exchange.c,v 1.29 2000/04/07 22:07:30 niklas Exp $	*/
-/*	$EOM: exchange.c,v 1.119 2000/04/07 19:16:44 niklas Exp $	*/
+/*	$OpenBSD: exchange.c,v 1.30 2000/06/08 20:49:54 niklas Exp $	*/
+/*	$EOM: exchange.c,v 1.123 2000/05/19 06:31:45 angelos Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -610,6 +610,7 @@ exchange_create (int phase, int initiator, int doi, int type)
   memset (exchange->message_id, 0, ISAKMP_HDR_MESSAGE_ID_LEN);
   exchange->doi = doi_lookup (doi);
   exchange->type = type;
+  exchange->policy_id = -1;
   exchange->exch_pc = exchange_script (exchange);
   exchange->last_sent = exchange->last_received = 0;
   TAILQ_INIT (&exchange->sa_list);
@@ -740,16 +741,10 @@ exchange_establish_p1 (struct transport *t, u_int8_t type, u_int32_t doi,
 
 	  /* Figure out the DOI.  XXX Factor out?  */
 	  str = conf_get_str (tag, "DOI");
-	  if (!str)
-	    {
-	      log_print ("exchange_establish_p1: "
-			 "no \"DOI\" tag in [%s] section", tag);
-	      return;
-	    }
-	  if (strcasecmp (str, "ISAKMP") == 0)
-	    doi = ISAKMP_DOI_ISAKMP;
-	  else if (strcasecmp (str, "IPSEC") == 0)
+	  if (!str || strcasecmp (str, "IPSEC") == 0)
 	    doi = IPSEC_DOI_IPSEC;
+	  else if (strcasecmp (str, "ISAKMP") == 0)
+	    doi = ISAKMP_DOI_ISAKMP;
 	  else
 	    {
 	      log_print ("exchange_establish_p1: DOI \"%s\" unsupported", str);
@@ -853,17 +848,16 @@ exchange_establish_p2 (struct sa *isakmp_sa, u_int8_t type, char *name,
 
       /* Figure out the DOI.  */
       str = conf_get_str (tag, "DOI");
-      if (str)
+      if (!str || strcasecmp (str, "IPSEC") == 0)
+	doi = IPSEC_DOI_IPSEC;
+      else if (strcasecmp (str, "ISAKMP") == 0)
+	doi = ISAKMP_DOI_ISAKMP;
+      else
 	{
-	  if (strcasecmp (str, "IPSEC") == 0)
-	    doi = IPSEC_DOI_IPSEC;
-	  else
-	    {
-	      log_print ("exchange_establish_p2: DOI \"%s\" unsupported", str);
-	      return;
-	    }
+	  log_print ("exchange_establish_p2: DOI \"%s\" unsupported", str);
+	  return;
 	}
-
+      
       /* What exchange type do we want?  */
       if (!type)
 	{
@@ -997,16 +991,10 @@ exchange_setup_p1 (struct message *msg, u_int32_t doi)
 
       /* Figure out the DOI.  */
       str = conf_get_str (policy, "DOI");
-      if (!str)
-	{
-	  log_print ("exchange_setup_p1: no \"DOI\" tag in [%s] section",
-		     policy);
-	  return 0;
-	}
-      if (strcasecmp (str, "ISAKMP") == 0)
-	want_doi = ISAKMP_DOI_ISAKMP;
-      else if (strcasecmp (str, "IPSEC") == 0)
+      if (!str || strcasecmp (str, "IPSEC") == 0)
 	want_doi = IPSEC_DOI_IPSEC;
+      else if (strcasecmp (str, "ISAKMP") == 0)
+	want_doi = ISAKMP_DOI_ISAKMP;
       else
 	{
 	  log_print ("exchange_setup_p1: DOI \"%s\" unsupported", str);
@@ -1185,6 +1173,14 @@ exchange_free_aux (void *v_exch)
       else if (exchange->recv_certtype == ISAKMP_CERTENC_NONE)
 	free (exchange->recv_cert);
     }
+  if (exchange->recv_key)
+    free (exchange->recv_key);
+
+#if defined(POLICY) || defined(KEYNOTE)
+  if (exchange->policy_id != -1)
+    LK (kn_close, (exchange->policy_id));
+#endif
+
   exchange_free_aca_list (exchange);
   LIST_REMOVE (exchange, link);
 
@@ -1317,6 +1313,10 @@ exchange_finalize (struct message *msg)
 
       msg->isakmp_sa->recv_certtype = exchange->recv_certtype;
       msg->isakmp_sa->recv_certlen = exchange->recv_certlen;
+      msg->isakmp_sa->recv_key = exchange->recv_key;
+      exchange->recv_key = NULL; /* Reset */
+      msg->isakmp_sa->policy_id = exchange->policy_id;
+      exchange->policy_id = -1; /* Reset */
       msg->isakmp_sa->id_i_len = exchange->id_i_len;
       msg->isakmp_sa->id_r_len = exchange->id_r_len;
       msg->isakmp_sa->initiator = exchange->initiator;
@@ -1344,6 +1344,7 @@ exchange_finalize (struct message *msg)
       switch (exchange->recv_certtype)
         {
         case ISAKMP_CERTENC_NONE:
+	case ISAKMP_CERTENC_KEYNOTE: /* No need for special handling */
 	    msg->isakmp_sa->recv_cert = strdup (exchange->recv_cert);
 	    if (!msg->isakmp_sa->recv_cert)
 	      {
@@ -1378,7 +1379,6 @@ exchange_finalize (struct message *msg)
 	case ISAKMP_CERTENC_ARL:
 	case ISAKMP_CERTENC_SPKI:
 	case ISAKMP_CERTENC_X509_ATTR:
-/*      case ISAKMP_CERTENC_KEYNOTE: */
 	}
     }
 
