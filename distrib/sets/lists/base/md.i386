@@ -9,6 +9,8 @@
 ./etc/firmware/atu-rfmd2958-int
 ./etc/firmware/atu-rfmd2958smc-ext
 ./etc/firmware/atu-rfmd2958smc-int
+./etc/firmware/cs4280
+./etc/firmware/cs4280-license
 ./etc/firmware/kue
 ./etc/firmware/kue-license
 ./etc/firmware/neo-coefficients
@@ -19,6 +21,8 @@
 ./etc/firmware/tigon-license
 ./etc/firmware/tigon1
 ./etc/firmware/tigon2
+./etc/firmware/uyap
+./etc/firmware/uyap-license
 ./sbin/ancontrol
 ./sbin/fdisk
 ./sbin/iopctl

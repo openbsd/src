@@ -9,6 +9,8 @@
 ./etc/firmware/atu-rfmd2958-int
 ./etc/firmware/atu-rfmd2958smc-ext
 ./etc/firmware/atu-rfmd2958smc-int
+./etc/firmware/uyap
+./etc/firmware/uyap-license
 ./sbin/fdisk
 ./sbin/ipwcontrol
 ./sbin/iwicontrol
