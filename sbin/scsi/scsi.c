@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi.c,v 1.11 2003/06/11 06:22:15 deraadt Exp $	*/
+/*	$OpenBSD: scsi.c,v 1.12 2003/06/26 15:41:12 mickey Exp $	*/
 /*	$FreeBSD: scsi.c,v 1.11 1996/04/06 11:00:28 joerg Exp $	*/
 
 /*
@@ -53,6 +53,7 @@
 #include <scsi.h>
 #include <ctype.h>
 #include <signal.h>
+#include <err.h>
 
 int	fd;
 int	debuglevel;
@@ -79,7 +80,7 @@ int seconds = 2;
 void
 usage(void)
 {
-	printf(
+	fprintf(stderr,
 "Usage:\n"
 "\n"
 "  scsi -f device -d debug_level                    # To set debug level\n"
@@ -108,7 +109,7 @@ procargs(int *argc_p, char ***argv_p)
 {
 	int argc = *argc_p;
 	char **argv = *argv_p;
-	int		    fflag, ch;
+	int fflag, ch;
 
 	fflag = 0;
 	commandflag = 0;
@@ -133,12 +134,8 @@ procargs(int *argc_p, char ***argv_p)
 			editflag = 1;
 			break;
 		case 'f':
-			if ((fd = scsi_open(optarg, O_RDWR)) < 0) {
-				(void) fprintf(stderr,
-					  "%s: unable to open device %s: %s\n",
-					       argv[0], optarg, strerror(errno));
-				exit(errno);
-			}
+			if ((fd = scsi_open(optarg, O_RDWR)) < 0)
+				err(errno, "unable to open device %s", optarg);
 			fflag = 1;
 			break;
 		case 'd':
@@ -353,10 +350,7 @@ do_cmd(int fd, char *fmt, int argc, char **argv)
 						bp += amount;
 					}
 					if (amount == -1)
-					{
-						perror("read");
-						exit(errno);
-					}
+						err(errno, "read");
 					else if (amount == 0)
 					{
 						/* early EOF */
@@ -399,15 +393,12 @@ do_cmd(int fd, char *fmt, int argc, char **argv)
 				bp += amount;
 			}
 			if (amount < 0)
-			{
-				perror("write");
-				exit(errno);
-			}
+				err(errno, "write");
 			else if (amount == 0)
 				fprintf(stderr, "Warning: wrote only %u bytes out of %u.\n",
 					scsireq->datalen - count,
 					scsireq->datalen);
-			
+
 		}
 		else
 		{
@@ -425,10 +416,9 @@ freeze_ioctl(int fd, int op, void *data)
 		if (errno == ENODEV) {
 			fprintf(stderr,
 			"Your kernel must be configured with option SCSI_FREEZE.\n");
-		}
-		else
-			perror("SCIOCFREEZE");
-		exit(errno);
+			exit(errno);
+		} else
+			err(errno, "SCIOCFREEZE");
 	}
 }
 
@@ -577,9 +567,8 @@ static char *mode_lookup(int page)
 		match = 1;
 		while (match != 0) {
 			c = getc(modes);
-			if (c == EOF) {
+			if (c == EOF)
 				fprintf(stderr, "Expected %c.\n", END_ENTRY);
-			}
 
 			if (c == START_ENTRY) {
 				match++;
@@ -654,14 +643,10 @@ edit_init(void)
 
 	edit_rewind();
 	strlcpy(edit_name, "/var/tmp/scXXXXXXXX", sizeof edit_name);
-	if ((fd = mkstemp(edit_name)) == -1) {
-		perror("mkstemp failed");
-		exit(errno);
-	}
-	if ( (edit_file = fdopen(fd, "w+")) == 0) {
-		perror("fdopen failed");
-		exit(errno);
-	}
+	if ((fd = mkstemp(edit_name)) == -1)
+		err(errno, "mkstemp failed");
+	if ( (edit_file = fdopen(fd, "w+")) == 0)
+		err(errno, "fdopen failed");
 	edit_opened = 1;
 
 	atexit(edit_done);
@@ -717,16 +702,14 @@ edit_get(void *hook, char *name)
 
 	if (editinfo[editind].can_edit) {
 		char line[80];
-		if (fgets(line, sizeof(line), edit_file) == 0) {
-			perror("fgets");
-			exit(errno);
-		}
+		if (fgets(line, sizeof(line), edit_file) == 0)
+			err(errno, "fgets");
 
 		line[strlen(line) - 1] = 0;
 
 		if (strncmp(name, line, strlen(name)) != 0) {
 			fprintf(stderr, "Expected \"%s\" and read \"%s\"\n",
-			name, line);
+			    name, line);
 			exit(1);
 		}
 
@@ -751,10 +734,8 @@ edit_edit(void)
 	system(system_line);
 	free(system_line);
 
-	if ( (edit_file = fopen(edit_name, "r")) == 0) {
-		perror(edit_name);
-		exit(errno);
-	}
+	if ( (edit_file = fopen(edit_name, "r")) == 0)
+		err(errno, "open %s", edit_name);
 }
 
 static void
@@ -957,9 +938,9 @@ main(int argc, char **argv)
 	} else
 #endif
 #ifdef SCIOCADDR
-	if (probe_all) {
+	if (probe_all)
 		do_probe_all();
-	} else
+	else
 #endif
 	if(reprobe) {
 		scaddr.scbus = bus;
@@ -967,13 +948,10 @@ main(int argc, char **argv)
 		scaddr.lun = lun;
 
 		if (ioctl(fd,SCIOCREPROBE,&scaddr) == -1)
-			perror("ioctl");
+			warn("SCIOCREPROBE");
 	} else if(debugflag) {
 		if (ioctl(fd,SCIOCDEBUG,&debuglevel) == -1)
-		{
-			perror("ioctl [SCIODEBUG]");
-			exit(1);
-		}
+			err(errno, "SCIODEBUG");
 	} else if (commandflag) {
 		char *fmt;
 
@@ -989,8 +967,8 @@ main(int argc, char **argv)
 		argv += 1;
 
 		do_cmd(fd, fmt, argc, argv);
-	} else if (modeflag) {
+	} else if (modeflag)
 		mode_edit(fd, modepage, editflag, argc, argv);
-	}
+
 	exit(0);
 }
