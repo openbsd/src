@@ -1,3 +1,4 @@
+/*	$OpenBSD: magma.c,v 1.5 2000/07/05 12:53:20 art Exp $	*/
 /*
  * magma.c
  *
