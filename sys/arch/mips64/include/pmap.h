@@ -1,4 +1,4 @@
-/*      $OpenBSD: pmap.h,v 1.1 2004/08/06 20:56:02 pefo Exp $ */
+/*      $OpenBSD: pmap.h,v 1.2 2004/08/06 22:39:13 deraadt Exp $ */
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -118,7 +118,8 @@ int pmap_is_pa_mapped(vaddr_t);
 vaddr_t pmap_pa_to_va(paddr_t);
 void pmap_page_cache(vaddr_t, int);
 
-#define pmap_proc_iflush(p,va,len) /* nothing yet (handled in trap now) */
+#define pmap_proc_iflush(p,va,len)	/* nothing yet (handled in trap now) */
+#define pmap_unuse_final(p)		/* nothing yet */
 
 void pmap_kenter_cache(vaddr_t va, paddr_t pa, vm_prot_t prot, int cache);
 

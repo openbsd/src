@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.21 2004/06/13 21:49:19 niklas Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.22 2004/08/06 22:39:14 deraadt Exp $	*/
 /*	$NetBSD: cpu.h,v 1.24 1997/03/15 22:25:15 pk Exp $ */
 
 /*
@@ -207,7 +207,7 @@ void	qzero(void *, size_t);
 /* locore2.c */
 void	remrunqueue(struct proc *);
 /* trap.c */
-void	kill_user_windows(struct proc *);
+void	pmap_unuse_final(struct proc *);
 int	rwindow_save(struct proc *);
 /* amd7930intr.s */
 void	amd7930_trap(void);

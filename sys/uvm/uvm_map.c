@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.68 2004/07/21 01:02:09 art Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.69 2004/08/06 22:39:14 deraadt Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /* 
@@ -3228,10 +3228,7 @@ uvmspace_exec(p, start, end)
 	struct vmspace *nvm, *ovm = p->p_vmspace;
 	vm_map_t map = &ovm->vm_map;
 
-#ifdef __sparc__
-	/* XXX cgd 960926: the sparc #ifdef should be a MD hook */
-	kill_user_windows(p);   /* before stack addresses go away */
-#endif
+	pmap_unuse_final(p);   /* before stack addresses go away */
 
 	/*
 	 * see if more than one process is using this vmspace...
