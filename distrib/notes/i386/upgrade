@@ -11,8 +11,8 @@ disk with 386BSD, FreeBSD or NetBSD.  Note that the latter three can
 NOT easily share the disk with each other.
 
 To do the upgrade, you must have the appropriate kernel-copy floppy
-image on a disk, and the floppy22.fs floppy image on another.  You must
-also have at least the "base22" binary distribution set available,
+image on a disk, and the floppy23.fs floppy image on another.  You must
+also have at least the "base23" binary distribution set available,
 so that you can upgrade with it, using one of the upgrade methods
 described above.  Finally, you must have sufficient disk space
 available to install the new binaries.  Since the old binaries are
@@ -34,7 +34,7 @@ To upgrade your system, follow the following instructions:
 	When presented with the boot prompt (the "boot>" prompt), hit return.
 
 	You will be prompted to insert a file system floppy.  Remove
-	the kernel-copy floppy and insert the upgr22 floppy, then hit
+	the kernel-copy floppy and insert the upgr23 floppy, then hit
 	any key to continue booting.
 
 	While booting, you will probably see several warnings.  You
@@ -95,13 +95,13 @@ To upgrade your system, follow the following instructions:
 
 	After the software has been transferred to the machine (or
 	mounted, in the case of upgrading via NFS), change into the
-	directory containing the "base22" distribution set.  Once you
+	directory containing the "base23" distribution set.  Once you
 	are there, run the "Set_tmp_dir" command, and hit return at
 	the prompt to select the default answer for the temporary
 	directory's path name.  (It should be the path name of the
 	directory that you're in.)
 
-	Run the command "Extract base22" to upgrade the base
+	Run the command "Extract base23" to upgrade the base
 	distribution.
 
 	Repeat the above two steps for all of the sets you wish to
@@ -120,7 +120,7 @@ To upgrade your system, follow the following instructions:
 	up the installation, by remaking some system databases.  When
 	it is complete, you should use "halt" to halt the system.
 
-	When the system is halted, remove the "upgr22" floppy from
+	When the system is halted, remove the "upgr23" floppy from
 	the floppy drive, and replace it with the OpenBSD 2.3
 	kernel-copy floppy that you previously booted from. Reboot
 	with that floppy.
@@ -158,7 +158,7 @@ Your system has now been upgraded to OpenBSD 2.3.
 	There are several things that you should do, or might have to
 	do, to insure that the system works properly.
 
-	Second, you will probably want to get the etc22 distribution,
+	Second, you will probably want to get the etc23 distribution,
 	extract it, and compare its contents with those in your /etc/
 	directory.  You will probably want to replace some of your
 	system configuration files, or incorporate some of the changes

@@ -6,7 +6,7 @@ select the (U)pdate option rather than the (I)nstall option at the prompt
 in the install process. 
 
 If you are using the old multi-floppy installation procedure, use the
-"upgr22.fs" floppy rather than the "inst22.fs" floppy when prompted to
+"upgr23.fs" floppy rather than the "inst23.fs" floppy when prompted to
 put in the filesystem diskette.  When you arrive at the shell prompt,
 run the "upgrade" script rather than "install" script.
 

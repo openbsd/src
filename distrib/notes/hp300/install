@@ -299,7 +299,7 @@ process again from scratch.
 	using, all the device nodes needed by the installed system will
 	be created for you and the file systems will be unmounted.  For
 	this to work properly, it is expected that you have installed
-	at least the "base22" and "etc22" distribution sets.
+	at least the "base23" and "etc23" distribution sets.
 
 
 Congratulations, you have successfully installed OpenBSD 2.3.  When you

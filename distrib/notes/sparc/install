@@ -45,8 +45,8 @@ same thing, but the install/upgrade scripts and procedures are quite
 different between the old and new version.
 
 The other difference between the the two forms are in their bootblocks,
-and filesystems.  The "floppy22.fs" image is the compressed ramdisk form,
-the "kc22.fs" paired with either "inst22.fs" or "upgr22.fs" comprise a
+and filesystems.  The "floppy23.fs" image is the compressed ramdisk form,
+the "kc23.fs" paired with either "inst23.fs" or "upgr23.fs" comprise a
 bootable kernel floppy and associated install/upgrade filesystem floppy.
 
 The CD-ROM, miniroot and netboot install scripts are essentially the
@@ -504,7 +504,7 @@ may be a better option.
 	using, all the device nodes needed by the installed system will
 	be created for you and the file systems will be unmounted.  For
 	this to work properly, it is expected that you have installed
-	at least the "base22" and "etc22" distribution sets.
+	at least the "base23" and "etc23" distribution sets.
 
 
 
@@ -663,10 +663,10 @@ The installboot man page says to do something like this:
 You can now extract the provided "*.tar.gz files onto your disk.
 
     sunos# ls -FC
-    base22.tar.gz      etc22.tar.gz       man22.tar.gz       secr22.tar.gz
-    comp22.tar.gz      games22.tar.gz     misc22.tar.gz      text22.tar.gz
+    base23.tar.gz      etc23.tar.gz       man23.tar.gz       secr23.tar.gz
+    comp23.tar.gz      games23.tar.gz     misc23.tar.gz      text23.tar.gz
     bsd                bsd.scsi3
-    sunos# gunzip < base22.tar.gz | (cd /mnt; gtar xvpf -)
+    sunos# gunzip < base23.tar.gz | (cd /mnt; gtar xvpf -)
     [...] for each set
 
 And finally copy an OpenBSD kernel (either bsd or bsd.scsi3) onto your disk.
@@ -745,7 +745,7 @@ handle corresponding to the root filesystem. If successful, the boot
 program starts reading from the remote root filesystem in search of the
 kernel which is then read into memory.
 
-You will want export the miniroot22.fs filesystem to the client.  You
+You will want export the miniroot23.fs filesystem to the client.  You
 can dd this filesystem image to some spare partition, mount and export
 tat partition or use tar to copy the contents to a more convenient spot.
 

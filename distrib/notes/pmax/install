@@ -28,7 +28,7 @@ onto the pmax which allows you to write to the raw disk - i.e. on all
 UN*X like operating systems it should work using "dd". On OpenBSD
 as well as SunOS you use a command like:
 
-	# dd if=simpleroot22.fs of=/dev/rsd0c bs=20b conv=sync
+	# dd if=simpleroot23.fs of=/dev/rsd0c bs=20b conv=sync
 
 Especially on OpenBSD/pmax you'll have to use /dev/rrz0c or something
 like that instead of /dev/rsd0c.
@@ -83,7 +83,7 @@ documentation that came with it (on SunOS systems, add_client(8) is a
 good start).
 
 One part of the distribution of OpenBSD/pmax is a file called
-simpleroot22.tar.gz which is a good start for the root filesystem area on
+simpleroot23.tar.gz which is a good start for the root filesystem area on
 the NFS server then you want to install via network.
 
 A few configuration files need to be edited:
@@ -102,7 +102,7 @@ A few configuration files need to be edited:
 
 Now you must populate the the `/dev' directory for your client. If you
 have an intelligent tar command on the NFS server the /dev directory
-inside the simpleroot22.tar.gz should be usable (i.e. containing
+inside the simpleroot23.tar.gz should be usable (i.e. containing
 special devices and not only files) - else you'll have to remake the
 devices on the server using
 
@@ -172,7 +172,7 @@ Ok - now let's see what to do to set up the server:
     
     mkdir /export/root
     cd /export/root
-    tar xvpzf /some_path/simpleroot22.tar.gz
+    tar xvpzf /some_path/simpleroot23.tar.gz
     vi /etc/exports (to add the above line)
     kill -HUP `cat /var/run/mountd.pid` (so that mountd rereads exports)
 
