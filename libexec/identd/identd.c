@@ -5,16 +5,6 @@
  * Please send bug fixes/bug reports to: Peter Eriksson <pen@lysator.liu.se>
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <ctype.h>
-#include <errno.h>
-#include <netdb.h>
-#include <signal.h>
-#include <fcntl.h>
-#include <unistd.h>
-
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -23,14 +13,21 @@
 #include <sys/time.h>
 #include <sys/wait.h>
 
-#include <pwd.h>
-#include <grp.h>
-
 #include <netinet/in.h>
-
 #include <arpa/inet.h>
 
-extern int errno;
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
+#include <errno.h>
+#include <netdb.h>
+#include <syslog.h>
+#include <signal.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <pwd.h>
+#include <grp.h>
 
 #include "identd.h"
 #include "error.h"
@@ -63,10 +60,10 @@ static int syslog_facility = LOG_DAEMON;
 void
 usage()
 {
-	fprintf(stderr,
-	    "identd [-i | -w | -b] [-t seconds] [-u uid] [-g gid] [-p port]\n"
-	    "\t[-a address] [-c charset] [-noelVvmNdh]\n");
-	exit(1);
+	syslog(LOG_ERR,
+	    "identd [-i | -w | -b] [-t seconds] [-u uid] [-g gid] [-p port] "
+	    "[-a address] [-c charset] [-noelVvmNdh]");
+	exit(2);
 }
 
 

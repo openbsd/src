@@ -1,4 +1,4 @@
-/*	$OpenBSD: telnetd.c,v 1.16 1998/12/19 01:27:07 deraadt Exp $	*/
+/*	$OpenBSD: telnetd.c,v 1.17 1999/07/20 22:40:42 deraadt Exp $	*/
 /*	$NetBSD: telnetd.c,v 1.6 1996/03/20 04:25:57 tls Exp $	*/
 
 /*
@@ -45,7 +45,7 @@ static char copyright[] =
 static char sccsid[] = "@(#)telnetd.c	8.4 (Berkeley) 5/30/95";
 static char rcsid[] = "$NetBSD: telnetd.c,v 1.5 1996/02/28 20:38:23 thorpej Exp $";
 #else
-static char rcsid[] = "$OpenBSD: telnetd.c,v 1.16 1998/12/19 01:27:07 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: telnetd.c,v 1.17 1999/07/20 22:40:42 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -537,44 +537,43 @@ main(argc, argv)
 	void
 usage()
 {
-	fprintf(stderr, "Usage: telnetd");
+	syslog(LOG_ERR, "usage: telnetd"
 #ifdef	AUTHENTICATION
-	fprintf(stderr, " [-a (debug|other|user|valid|off|none)]\n\t");
+	" [-a (debug|other|user|valid|off|none)]"
 #endif
 #ifdef BFTPDAEMON
-	fprintf(stderr, " [-B]");
+	" [-B]"
 #endif
-	fprintf(stderr, " [-debug]");
+	" [-debug]"
 #ifdef DIAGNOSTICS
-	fprintf(stderr, " [-D (options|report|exercise|netdata|ptydata)]\n\t");
+	" [-D (options|report|exercise|netdata|ptydata)]\n\t"
 #endif
 #ifdef	AUTHENTICATION
-	fprintf(stderr, " [-edebug]");
+	" [-edebug]"
 #endif
-	fprintf(stderr, " [-h]");
+	" [-h]"
 #if	defined(CRAY) && defined(NEWINIT)
-	fprintf(stderr, " [-Iinitid]");
+	" [-Iinitid]"
 #endif
 #if	defined(LINEMODE) && defined(KLUDGELINEMODE)
-	fprintf(stderr, " [-k]");
+	" [-k]"
 #endif
 #ifdef LINEMODE
-	fprintf(stderr, " [-l]");
+	" [-l]"
 #endif
-	fprintf(stderr, " [-n]");
+	" [-n]"
 #ifdef	CRAY
-	fprintf(stderr, " [-r[lowpty]-[highpty]]");
+	" [-r[lowpty]-[highpty]]"
 #endif
-	fprintf(stderr, "\n\t");
 #ifdef	HAS_GETTOS
-	fprintf(stderr, " [-S tos]");
+	" [-S tos]"
 #endif
 #ifdef	AUTHENTICATION
-	fprintf(stderr, " [-X auth-type]");
+	" [-X auth-type]"
 #endif
-	fprintf(stderr, " [-u utmp_hostname_length] [-U]");
-	fprintf(stderr, " [port]\n");
-	exit(1);
+	" [-u utmp_hostname_length] [-U]"
+	" [port]");
+	exit(2);
 }
 
 /*

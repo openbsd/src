@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)rlogind.c	8.1 (Berkeley) 6/4/93"; */
-static char *rcsid = "$Id: rlogind.c,v 1.20 1997/06/29 11:10:29 provos Exp $";
+static char *rcsid = "$Id: rlogind.c,v 1.21 1999/07/20 22:40:40 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -717,4 +717,5 @@ usage()
 #else
 	syslog(LOG_ERR, "usage: rlogind [-aln]");
 #endif
+	exit(2);
 }
