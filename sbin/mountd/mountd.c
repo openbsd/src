@@ -1,4 +1,4 @@
-/*	$OpenBSD: mountd.c,v 1.14 1997/01/15 23:41:28 millert Exp $	*/
+/*	$OpenBSD: mountd.c,v 1.15 1997/04/11 17:09:02 millert Exp $	*/
 /*	$NetBSD: mountd.c,v 1.31 1996/02/18 11:57:53 fvdl Exp $	*/
 
 /*
@@ -75,6 +75,7 @@ static char rcsid[] = "$NetBSD: mountd.c,v 1.31 1996/02/18 11:57:53 fvdl Exp $";
 #include <errno.h>
 #include <grp.h>
 #include <netdb.h>
+#include <netgroup.h>
 #include <pwd.h>
 #include <signal.h>
 #include <stdio.h>
@@ -199,11 +200,6 @@ int	xdr_explist __P((XDR *, caddr_t));
 int	xdr_fhs __P((XDR *, caddr_t));
 int	xdr_mlist __P((XDR *, caddr_t));
 
-/* C library */
-int	getnetgrent();
-void	endnetgrent();
-void	setnetgrent();
-
 #ifdef ISO
 struct iso_addr *iso_addr();
 #endif
@@ -288,14 +284,23 @@ main(argc, argv)
 		signal(SIGINT, SIG_IGN);
 		signal(SIGQUIT, SIG_IGN);
 	}
-	signal(SIGHUP, (void (*) __P((int))) get_exportlist);
-	signal(SIGTERM, (void (*) __P((int))) send_umntall);
-	{ FILE *pidfile = fopen(_PATH_MOUNTDPID, "w");
-	  if (pidfile != NULL) {
+	/* Store pid in file unless mountd is already running */
+	{
+	    FILE *pidfile = fopen(_PATH_MOUNTDPID, "r");
+	    if (pidfile != NULL) {
+		if (fscanf(pidfile, "%d\n", &c) > 0 && c > 0) {
+		    if (kill(c, 0) == 0) {
+			syslog(LOG_ERR, "Already running (pid %d)", c);
+			exit(1);
+		    }
+		}
+		pidfile = freopen(_PATH_MOUNTDPID, "w", pidfile);
 		fprintf(pidfile, "%d\n", getpid());
 		fclose(pidfile);
-	  }
+	    }
 	}
+	signal(SIGHUP, (void (*) __P((int))) get_exportlist);
+	signal(SIGTERM, (void (*) __P((int))) send_umntall);
 	if ((udptransp = svcudp_create(RPC_ANYSOCK)) == NULL ||
 	    (tcptransp = svctcp_create(RPC_ANYSOCK, 0, 0)) == NULL) {
 		syslog(LOG_ERR, "Can't create socket");
@@ -829,7 +834,8 @@ get_exportlist()
 			     * Get the host or netgroup.
 			     */
 			    setnetgrent(cp);
-			    netgrp = getnetgrent(&hst, &usr, &dom);
+			    netgrp = getnetgrent((const char **)&hst,
+			    	(const char **)&usr, (const char **)&dom);
 			    do {
 				if (has_host) {
 				    grp->gr_next = get_grp();
@@ -847,7 +853,8 @@ get_exportlist()
 				    goto nextline;
 				}
 				has_host = TRUE;
-			    } while (netgrp && getnetgrent(&hst, &usr, &dom));
+			    } while (netgrp && getnetgrent((const char **)&hst,
+				(const char **)&usr, (const char **)&dom));
 			    endnetgrent();
 			    *endcp = savedc;
 			}
@@ -889,11 +896,24 @@ get_exportlist()
 		 */
 		grp = tgrp;
 		do {
-		    if (do_mount(ep, grp, exflags, &anon, dirp,
-			dirplen, &fsb)) {
-			getexp_err(ep, tgrp);
-			goto nextline;
-		    }
+			/*
+			 * Non-zero return indicates an error.  Return
+			 * val of 1 means line is invalid (not just entry).
+			 */
+			i = do_mount(ep, grp, exflags, &anon, dirp, dirplen,
+			    &fsb);
+			if (i == 1) {
+				getexp_err(ep, tgrp);
+				goto nextline;
+			} else if (i == 2) {
+				syslog(LOG_ERR,
+				    "Bad exports list entry (%s) in line %s",
+				    (grp->gr_type == GT_HOST)
+				    ? grp->gr_ptr.gt_hostent->h_name
+				    : (grp->gr_type == GT_NET)
+				    ? grp->gr_ptr.gt_net.nt_name
+				    : "Unknown", line);
+			}
 		} while (grp->gr_next && (grp = grp->gr_next));
 
 		/*
@@ -1519,7 +1539,8 @@ out_of_mem()
 
 /*
  * Do the mount syscall with the update flag to push the export info into
- * the kernel.
+ * the kernel.  Returns 0 on success, 1 for fatal error, and 2 for error
+ * that only invalidates the specific entry/host.
  */
 int
 do_mount(ep, grp, exflags, anoncrp, dirp, dirplen, fsb)
@@ -1632,13 +1653,13 @@ do_mount(ep, grp, exflags, anoncrp, dirp, dirplen, fsb)
 				    ?grp->gr_ptr.gt_net.nt_name
 				    :"Unknown");
 			      /* XXX: Get address from sockaddr_iso? */
-				return (1);
+				return (2);
 			}
 			if (opt_flags & OP_ALLDIRS) {
 #if 0
 				syslog(LOG_ERR, "Could not remount %s: %m",
 					dirp);
-				return (1);
+				return (2);
 #endif
 			}
 			/* back up over the last component */
@@ -1650,7 +1671,7 @@ do_mount(ep, grp, exflags, anoncrp, dirp, dirplen, fsb)
 				if (debug)
 					fprintf(stderr, "mnt unsucc\n");
 				syslog(LOG_ERR, "Can't export %s", dirp);
-				return (1);
+				return (2);
 			}
 			savedc = *cp;
 			*cp = '\0';
