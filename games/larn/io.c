@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.6 1999/05/30 02:23:16 pjanzen Exp $	*/
+/*	$OpenBSD: io.c,v 1.7 2000/06/29 07:55:41 pjanzen Exp $	*/
 /*	$NetBSD: io.c,v 1.7 1997/10/18 20:03:26 christos Exp $	*/
 
 /*
@@ -61,7 +61,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: io.c,v 1.6 1999/05/30 02:23:16 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: io.c,v 1.7 2000/06/29 07:55:41 pjanzen Exp $";
 #endif /* not lint */
 
 #include "header.h"
@@ -417,13 +417,8 @@ lwrite(buf, len)
 		c[BYTESOUT] += len;
 #endif
 
-#ifndef VT100
 		for (str = buf; len > 0; --len)
 			lprc(*str++);
-#else	/* VT100 */
-		lflush();
-		write(lfd, buf, len);
-#endif	/* VT100 */
 	} else
 		while (len) {
 			if (lpnt >= lpend)
@@ -621,7 +616,7 @@ lopen(str)
 	ipoint = iepoint = MAXIBUF;
 	if (str == NULL)
 		return (fd = 0);
-	if ((fd = open(str, 0)) < 0) {
+	if ((fd = open(str, O_RDONLY, 0)) < 0) {
 		lwclose();
 		lfd = 1;
 		lpnt = lpbuf;
@@ -645,11 +640,11 @@ lappend(str)
 	lpend = lpbuf + BUFBIG;
 	if (str == NULL)
 		return (lfd = 1);
-	if ((lfd = open(str, 2)) < 0) {
+	if ((lfd = open(str, O_RDWR, 0)) < 0) {
 		lfd = 1;
 		return (-1);
 	}
-	lseek(lfd, 0, 2);	/* seek to end of file */
+	lseek(lfd, 0, SEEK_END);
 	return (lfd);
 }
 
@@ -696,48 +691,6 @@ lprcat(str)
 	lpnt = str2 - 1;
 }
 
-#ifdef VT100
-/*
- *	cursor(x,y)		Subroutine to set the cursor position
- *
- *	x and y are the cursor coordinates, and lpbuff is the output buffer where
- *	escape sequence will be placed.
- */
-static char	*y_num[] = {
-"\33[", "\33[", "\33[2", "\33[3", "\33[4", "\33[5", "\33[6",
-"\33[7", "\33[8", "\33[9", "\33[10", "\33[11", "\33[12", "\33[13", "\33[14",
-"\33[15", "\33[16", "\33[17", "\33[18", "\33[19", "\33[20", "\33[21", "\33[22",
-"\33[23", "\33[24"};
-
-static char	*x_num[] = {
-"H", "H", ";2H", ";3H", ";4H", ";5H", ";6H", ";7H", ";8H", ";9H",
-";10H", ";11H", ";12H", ";13H", ";14H", ";15H", ";16H", ";17H", ";18H", ";19H",
-";20H", ";21H", ";22H", ";23H", ";24H", ";25H", ";26H", ";27H", ";28H", ";29H",
-";30H", ";31H", ";32H", ";33H", ";34H", ";35H", ";36H", ";37H", ";38H", ";39H",
-";40H", ";41H", ";42H", ";43H", ";44H", ";45H", ";46H", ";47H", ";48H", ";49H",
-";50H", ";51H", ";52H", ";53H", ";54H", ";55H", ";56H", ";57H", ";58H", ";59H",
-";60H", ";61H", ";62H", ";63H", ";64H", ";65H", ";66H", ";67H", ";68H", ";69H",
-";70H", ";71H", ";72H", ";73H", ";74H", ";75H", ";76H", ";77H", ";78H", ";79H",
-";80H"};
-
-void
-cursor(x, y)
-	int	x, y;
-{
-	char	*p;
-
-	if (lpnt >= lpend)
-		lflush();
-
-	p = y_num[y];		/* get the string to print */
-	while (*p)
-		*lpnt++ = *p++;	/* print the string */
-
-	p = x_num[x];		/* get the string to print */
-	while (*p)
-		*lpnt++ = *p++;	/* print the string */
-}
-#else	/* VT100 */
 /*
  * cursor(x,y)	  Put cursor at specified coordinates staring at [1,1] (termcap)
  */
@@ -752,7 +705,6 @@ cursor(x, y)
 	*lpnt++ = x;
 	*lpnt++ = y;
 }
-#endif	/* VT100 */
 
 /*
  *	Routine to position cursor at beginning of 24th line
@@ -763,7 +715,6 @@ cursors()
 	cursor(1, 24);
 }
 
-#ifndef VT100
 /*
  * Warning: ringing the bell is control code 7. Don't use in defines.
  * Don't change the order of these defines.
@@ -838,7 +789,6 @@ init_term()
 		died(-285);	/* malloc() failure */
 	}
 }
-#endif	/* VT100 */
 
 /*
  * cl_line(x,y)  Clear the whole line indicated by 'y' and leave cursor at [x,y]
@@ -847,14 +797,9 @@ void
 cl_line(x, y)
 	int	x, y;
 {
-#ifdef VT100
-	cursor(x, y);
-	lprcat("\33[2K");
-#else	/* VT100 */
 	cursor(1, y);
 	*lpnt++ = CL_LINE;
 	cursor(x, y);
-#endif	/* VT100 */
 }
 
 /*
@@ -864,10 +809,6 @@ void
 cl_up(x, y)
 	int	x, y;
 {
-#ifdef VT100
-	cursor(x, y);
-	lprcat("\33[1J\33[2K");
-#else	/* VT100 */
 	int	i;
 	cursor(1, 1);
 	for (i = 1; i <= y; i++) {
@@ -875,7 +816,6 @@ cl_up(x, y)
 		*lpnt++ = '\n';
 	}
 	cursor(x, y);
-#endif	/* VT100 */
 }
 
 /*
@@ -885,10 +825,6 @@ void
 cl_dn(x, y)
 	int	x, y;
 {
-#ifdef VT100
-	cursor(x, y);
-	lprcat("\33[J\33[2K");
-#else	/* VT100 */
 	int	i;
 	cursor(1, y);
 	if (!CD) {
@@ -902,7 +838,6 @@ cl_dn(x, y)
 	} else
 		*lpnt++ = CL_DOWN;
 	cursor(x, y);
-#endif	/* VT100 */
 }
 
 /*
@@ -912,17 +847,10 @@ void
 lstandout(str)
 	char	*str;
 {
-#ifdef VT100
-	setbold();
-	while (*str)
-		*lpnt++ = *str++;
-	resetbold();
-#else	/* VT100 */
 	*lpnt++ = ST_START;
 	while (*str)
 		*lpnt++ = *str++;
 	*lpnt++ = ST_END;
-#endif	/* VT100 */
 }
 
 /*
@@ -941,7 +869,6 @@ set_score_output()
  *	for termcap version: Flush output in output buffer according to output
  *	status as indicated by `enable_scroll'
  */
-#ifndef VT100
 static int	scrline = 18;	/* line # for wraparound instead of scrolling
 				 * if no DL */
 void
@@ -1036,29 +963,7 @@ lflush()
 	lpnt = lpbuf;
 	flush_buf();		/* flush real output buffer now */
 }
-#else	/* VT100 */
-/*
- *	lflush()		flush the output buffer
- *
- *	Returns nothing of value.
- */
-void
-lflush()
-{
-	int	lpoint;
 
-	if ((lpoint = lpnt - lpbuf) > 0) {
-#ifdef EXTRA
-		c[BYTESOUT] += lpoint;
-#endif
-		if (write(lfd, lpbuf, lpoint) != lpoint)
-			write(2, "error writing to output file\n", 29);
-	}
-	lpnt = lpbuf;		/* point back to beginning of buffer */
-}
-#endif	/* VT100 */
-
-#ifndef VT100
 static int	vindex = 0;
 /*
  * xputchar(ch)		Print one character in decoded output buffer.
@@ -1138,7 +1043,6 @@ tmcapcnv(sd, ss)
 	*sd = 0;		/* NULL terminator */
 	return (sd);
 }
-#endif	/* VT100 */
 
 /*
  *	lbeep()	Routine to emit a beep if enabled (see no-beep in .larnopts)

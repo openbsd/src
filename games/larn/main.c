@@ -1,9 +1,9 @@
-/*	$OpenBSD: main.c,v 1.9 1998/10/01 05:31:38 pjanzen Exp $	*/
+/*	$OpenBSD: main.c,v 1.10 2000/06/29 07:55:42 pjanzen Exp $	*/
 /*	$NetBSD: main.c,v 1.12 1998/02/12 08:07:49 mikel Exp $	*/
 
 /* main.c		 */
 #ifndef lint
-static char rcsid[] = "$OpenBSD: main.c,v 1.9 1998/10/01 05:31:38 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.10 2000/06/29 07:55:42 pjanzen Exp $";
 #endif				/* not lint */
 
 #include <sys/types.h>
@@ -35,20 +35,15 @@ u_char		restorflag = 0;	/* 1 means restore has been done	 */
 static char	cmdhelp[] = "\
 Cmd line format: larn [-slicnh] [-o<optsfile>] [-##] [++]\n\
   -s   show the scoreboard\n\
-  -l   show the logfile (wizard id only)\n\
+  -l   show the logfile (wizards only)\n\
   -i   show scoreboard with inventories of dead characters\n\
-  -c   create new scoreboard (wizard id only)\n\
+  -c   create new scoreboard (wizards only)\n\
   -n   suppress welcome message on starting game\n\
   -##  specify level of difficulty (example: -5)\n\
   -h   print this help text\n\
   ++   restore game from checkpoint file\n\
   -o<optsfile>   specify .larnopts filename to be used instead of \"~/.larnopts\"\n\
 ";
-#ifdef VT100
-static char	*termtypes[] = {"vt100", "vt101", "vt102", "vt103", "vt125",
-	"vt131", "vt140", "vt180", "vt220", "vt240", "vt241", "vt320", "vt340",
-"vt341"};
-#endif	/* VT100 */
 
 /*
  *	************
@@ -71,17 +66,16 @@ main(argc, argv)
 	/*
 	 *	first task is to identify the player
 	 */
-#ifndef VT100
 	init_term();		/* setup the terminal (find out what type)
 				 * for termcap */
-#endif	/* VT100 */
 	/* try to get login name */
 	if (((ptr = getlogin()) == 0) || (*ptr == 0)) {
 		/* can we get it from /etc/passwd? */
 		if ((pwe = getpwuid(getuid())) != NULL)
 			ptr = pwe->pw_name;
+		else
 #ifdef NOSPAM
-		else if ((ptr = getenv("LOGNAME")) == 0)
+		    if ((ptr = getenv("LOGNAME")) == 0)
 			if ((ptr = getenv("USER")) == 0)
 #endif
 		noone:		errx(1, "can't find your logname.  Who Are You?");
@@ -93,10 +87,9 @@ main(argc, argv)
 	/*
 	 *	second task is to prepare the pathnames the player will need
 	 */
-	strcpy(loginname, ptr);	/* save loginname of the user for logging
-				 * purposes */
-	strcpy(logname, ptr);	/* this will be overwritten with the players
-				 * name */
+	strlcpy(loginname, ptr, LOGIN_NAME_MAX);
+	/* this will be overwritten with the player's name */
+	strlcpy(logname, ptr, LOGNAMESIZE);
 	if ((ptr = getenv("HOME")) == NULL)
 		ptr = ".";
 	if (strlen(ptr) + 9 < sizeof(savefilename)) {
@@ -129,23 +122,6 @@ main(argc, argv)
 	lcreat((char *) 0);
 	newgame();		/* set the initial clock  */
 	hard = -1;
-
-#ifdef VT100
-	/*
-	 *	check terminal type to avoid users who have not vt100 type terminals
-	 */
-	ttype = getenv("TERM");
-	for (j = 1, i = 0; i < sizeof(termtypes) / sizeof(char *); i++)
-		if (strcmp(ttype, termtypes[i]) == 0) {
-			j = 0;
-			break;
-		}
-	if (j) {
-		lprcat("Sorry, Larn needs a VT100 family terminal for all it's features.\n");
-		lflush();
-		exit(1);
-	}
-#endif	/* VT100 */
 
 	/*
 	 *	now make scoreboard if it is not there (don't clear)
@@ -204,8 +180,7 @@ main(argc, argv)
 				exit(0);
 
 			case 'o':	/* specify a .larnopts filename */
-				strncpy(optsfile, argv[i] + 2, 127);
-				optsfile[127] = '\0';
+				strlcpy(optsfile, argv[i] + 2, PATH_MAX);
 				break;
 
 			default:
@@ -237,23 +212,6 @@ main(argc, argv)
 		write(2, "Can't obtain playerid\n", 22);
 		exit(1);
 	}
-#ifdef HIDEBYLINK
-	/*
-	 *	this section of code causes the program to look like something else to ps
-	 */
-	if (strcmp(psname, argv[0])) {	/* if a different process name only */
-		if ((i = access(psname, 1)) < 0) {	/* link not there */
-			if (link(argv[0], psname) >= 0) {
-				argv[0] = psname;
-				execv(psname, argv);
-			}
-		} else
-			unlink(psname);
-	}
-	for (i = 1; i < argc; i++) {
-		szero(argv[i]);	/* zero the argument to avoid ps snooping */
-	}
-#endif	/* HIDEBYLINK */
 
 	if (access(savefilename, 0) == 0) {	/* restore game if need to */
 		clear();
@@ -795,7 +753,8 @@ parse()
 			clear();
 			lprcat("Saving . . .");
 			lflush();
-			savegame(savefilename);
+			if (savegame(savefilename) < 0)
+				return;
 			wizard = 1;
 			died(-257);	/* save the game - doesn't return */
 
@@ -1336,16 +1295,3 @@ readnum(mx)
 	scbr();
 	return (amt);
 }
-
-#ifdef HIDEBYLINK
-/*
- *	routine to zero every byte in a string
- */
-void
-szero(str)
-	char	*str;
-{
-	while (*str)
-		*str++ = 0;
-}
-#endif	/* HIDEBYLINK */

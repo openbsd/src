@@ -1,4 +1,4 @@
-/*	$OpenBSD: scores.c,v 1.6 1999/03/27 03:45:50 pjanzen Exp $	*/
+/*	$OpenBSD: scores.c,v 1.7 2000/06/29 07:55:42 pjanzen Exp $	*/
 /*	$NetBSD: scores.c,v 1.10 1997/10/18 20:03:48 christos Exp $	*/
 
 /*
@@ -27,7 +27,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: scores.c,v 1.6 1999/03/27 03:45:50 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: scores.c,v 1.7 2000/06/29 07:55:42 pjanzen Exp $";
 #endif				/* not lint */
 
 #include <sys/types.h>
@@ -47,7 +47,7 @@ struct scofmt {	/* This is the structure for the scoreboard */
 	short	level;	/* the level player was on when he died		*/
 	short	hardlev;/* the level of difficulty player played at	*/
 	short	order;	/* the relative ordering place of this entry	*/
-	char	who[40];/* the name of the character			*/
+	char	who[LOGNAMESIZE];/* the name of the character		*/
 	char	sciv[26][2];	/* the inventory list of the character	*/
 };
 struct wscofmt {/* This is the structure for the winning scoreboard	*/
@@ -57,7 +57,7 @@ struct wscofmt {/* This is the structure for the winning scoreboard	*/
 	long	suid;	/* the user id number of the player		*/
 	short	hardlev;/* the level of difficulty player played at	*/
 	short	order;	/* the relative ordering place of this entry	*/
-	char	who[40];/* the name of the character			*/
+	char	who[LOGNAMESIZE];/* the name of the character		*/
 };
 
 struct log_fmt {		/* 102 bytes struct for the log file	*/
@@ -77,7 +77,7 @@ struct log_fmt {		/* 102 bytes struct for the log file	*/
 	short	usage;		/* usage of the cpu in %		*/
 	short	lev;		/* player level				*/
 #endif
-	char	who[12];	/* player name				*/
+	char	who[LOGIN_NAME_MAX];	/* player name			*/
 	char	what[46];	/* what happened to player		*/
 };
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fortune.c,v 1.2 1998/09/15 05:12:31 pjanzen Exp $	*/
+/*	$OpenBSD: fortune.c,v 1.3 2000/06/29 07:55:40 pjanzen Exp $	*/
 /*	$NetBSD: fortune.c,v 1.4 1997/10/18 20:03:18 christos Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char     sccsid[] = "@(#)fortune.c	5.5 (Berkeley) 6/10/91";
 #else
-static char rcsid[] = "$OpenBSD: fortune.c,v 1.2 1998/09/15 05:12:31 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: fortune.c,v 1.3 2000/06/29 07:55:40 pjanzen Exp $";
 #endif
 #endif				/* not lint */
 
@@ -81,7 +81,7 @@ char		*flines[] = {
 	"never enter the dungeon naked!  the monsters will laugh at you!",
 	"did someone put itching powder in your armor?",
 	"you klutz!",
-	"avoid opening doors.  you never know whats on the other side.",
+	"avoid opening doors.  you never know what's on the other side.",
 	"infinite regeneration ---> temptation",
 	"the greatest weapon in the game has not the highest Weapon Class",
 	"you can't buy the most powerful scroll",

@@ -1,9 +1,9 @@
-/*	$OpenBSD: help.c,v 1.2 1998/09/15 05:12:32 pjanzen Exp $	*/
+/*	$OpenBSD: help.c,v 1.3 2000/06/29 07:55:41 pjanzen Exp $	*/
 /*	$NetBSD: help.c,v 1.4 1997/10/18 20:03:24 christos Exp $	*/
 
 /* help.c		Larn is copyrighted 1986 by Noah Morgan. */
 #ifndef lint
-static char rcsid[] = "$OpenBSD: help.c,v 1.2 1998/09/15 05:12:32 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: help.c,v 1.3 2000/06/29 07:55:41 pjanzen Exp $";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -23,10 +23,8 @@ void
 help()
 {
 	int	i, j;
-#ifndef VT100
 	char	tmbuf[128];	/* intermediate translation buffer
 					 * when not a VT100 */
-#endif	/* VT100 */
 	if ((j = openhelp()) < 0)
 		return;		/* open the help file and get # pages */
 	for (i = 0; i < 23; i++)
@@ -34,15 +32,10 @@ help()
 	for (; j > 0; j--) {
 		clear();
 		for (i = 0; i < 23; i++)
-#ifdef VT100
-			lprcat(lgetl());	/* print out each line that
-						 * we read in */
-#else	/* VT100 */
 		{
 			tmcapcnv(tmbuf, lgetl());
 			lprcat(tmbuf);
 		}		/* intercept \33's */
-#endif	/* VT100 */
 		if (j > 1) {
 			lprcat("    ---- Press ");
 			lstandout("return");
@@ -72,22 +65,16 @@ void
 welcome()
 {
 	int	i;
-#ifndef VT100
 	char	tmbuf[128];	/* intermediate translation buffer
 					 * when not a VT100 */
-#endif	/* VT100 */
 	if (openhelp() < 0)
 		return;		/* open the help file */
 	clear();
 	for (i = 0; i < 23; i++)
-#ifdef VT100
-		lprcat(lgetl());/* print out each line that we read in */
-#else	/* VT100 */
 	{
 		tmcapcnv(tmbuf, lgetl());
 		lprcat(tmbuf);
 	}			/* intercept \33's */
-#endif	/* VT100 */
 	lrclose();
 	retcont();		/* press return to continue */
 }

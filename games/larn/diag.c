@@ -1,9 +1,9 @@
-/*	$OpenBSD: diag.c,v 1.3 1998/09/15 05:12:31 pjanzen Exp $	*/
+/*	$OpenBSD: diag.c,v 1.4 2000/06/29 07:55:40 pjanzen Exp $	*/
 /*	$NetBSD: diag.c,v 1.8 1997/10/18 20:03:12 christos Exp $	*/
 
 /* diag.c		Larn is copyrighted 1986 by Noah Morgan. */
 #ifndef lint
-static char rcsid[] = "$OpenBSD: diag.c,v 1.3 1998/09/15 05:12:31 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: diag.c,v 1.4 2000/06/29 07:55:40 pjanzen Exp $";
 #endif				/* not lint */
 
 #include <sys/types.h>
@@ -230,9 +230,7 @@ savegame(fname)
 		lprint((long) statbuf.st_ino);	/* inode # */
 	lwclose();
 	lastmonst[0] = 0;
-#ifndef VT100
 	setscroll();
-#endif	/* VT100 */
 	lcreat((char *) 0);
 	nosignal = 0;
 	return (0);

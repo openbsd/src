@@ -1,4 +1,4 @@
-/*	$OpenBSD: data.c,v 1.7 1999/05/30 02:23:16 pjanzen Exp $	*/
+/*	$OpenBSD: data.c,v 1.8 2000/06/29 07:55:40 pjanzen Exp $	*/
 /*	$NetBSD: data.c,v 1.9 1997/10/25 01:40:47 thorpej Exp $	 */
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char     sccsid[] = "@(#)data.c	5.3 (Berkeley) 5/13/91";
 #else
-static char rcsid[] = "$OpenBSD: data.c,v 1.7 1999/05/30 02:23:16 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: data.c,v 1.8 2000/06/29 07:55:40 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -143,8 +143,8 @@ u_char		predostuff = 0;	/* 2 means that the trap handling routines
 				 * means don't showplayer() 0 - we are in
 				 * create player screen 1 - we are in welcome
 				 * screen 2 - we are in the normal game	*/
-char		loginname[20];	/* players login name */
-char		logname[LOGNAMESIZE];	/* players name storage for scoring */
+char		loginname[LOGIN_NAME_MAX];	/* player's login name */
+char		logname[LOGNAMESIZE];	/* player's name storage for scoring */
 u_char		sex = 1;	/* default is a man  0=woman		*/
 u_char		boldon = 1;	/* 1=bold objects  0=inverse objects	*/
 u_char		ckpflag = 0;	/* 1 if checkpointing of game, 0 otherwise */

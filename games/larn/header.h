@@ -1,9 +1,12 @@
-/*	$OpenBSD: header.h,v 1.9 1999/05/30 02:23:16 pjanzen Exp $	*/
+/*	$OpenBSD: header.h,v 1.10 2000/06/29 07:55:40 pjanzen Exp $	*/
 /* $NetBSD: header.h,v 1.12 1997/10/25 01:40:48 thorpej Exp $	 */
 
 /* header.h		Larn is copyrighted 1986 by Noah Morgan. */
 
+#include <sys/param.h>
+#include <sys/syslimits.h>
 #include <sys/types.h>
+#include <limits.h>
 
 #define MAXLEVEL 11
 /* max # levels in the dungeon			 */
@@ -333,12 +336,12 @@ extern char     VERSION, SUBVERSION;
 extern u_char   alpha[], beenhere[], boldon, cheat, ckpflag;
 extern u_char  *class[], course[];
 extern char     diagfile[], helpfile[], ckpfile[], larnlevels[],
-		playerids[], optsfile[], psname[], savefilename[1024],
+		playerids[], optsfile[PATH_MAX], savefilename[PATH_MAX],
 		scorefile[];
 extern u_char  *inbuffer;
 extern u_char   item[MAXX][MAXY], iven[], know[MAXX][MAXY];
-extern char    *levelname[], logfile[], loginname[], logname[],
-                lastmonst[];
+extern char    *levelname[], logfile[], loginname[LOGIN_NAME_MAX],
+		logname[LOGNAMESIZE], lastmonst[];
 extern u_char  *lpbuf, *lpend;
 extern u_char  *lpnt, moved[MAXX][MAXY], mitem[MAXX][MAXY], monstlevel[];
 extern char     monstnamelist[], objnamelist[];
@@ -387,19 +390,6 @@ extern int      rmst, maxitm, lasttime;
 /* macro to wipe out a monster at a location */
 #define disappear(x,y) (mitem[x][y]=know[x][y]=0)
 
-#ifdef VT100
-/* macro to turn on bold display for the terminal */
-#define setbold() (lprcat(boldon?"\33[1m":"\33[7m"))
-/* macro to turn off bold display for the terminal */
-#define resetbold() (lprcat("\33[m"))
-/* macro to setup the scrolling region for the terminal */
-#define setscroll() (lprcat("\33[20;24r"))
-/* macro to clear the scrolling region for the terminal */
-#define resetscroll() (lprcat("\33[;24r"))
-/* macro to clear the screen and home the cursor */
-#define clear() (lprcat("\33[2J\33[f"), cbak[SPELLS]= -50)
-#define cltoeoln() lprcat("\33[K")
-#else	/* VT100 */
 /* defines below are for use in the termcap mode only */
 #define ST_START 1
 #define ST_END   2
@@ -421,7 +411,6 @@ extern int      rmst, maxitm, lasttime;
 #define clear() (*lpnt++ =CLEAR, cbak[SPELLS]= -50)
 /* macro to clear to end of line */
 #define cltoeoln() (*lpnt++ = CL_LINE)
-#endif	/* VT100 */
 
 /* macro to output one byte to the output buffer */
 #define lprc(ch) ((lpnt>=lpend)?(*lpnt++ =(ch), lflush()):(*lpnt++ =(ch)))

@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.3 1998/09/15 05:12:31 pjanzen Exp $	*/
+/*	$OpenBSD: config.c,v 1.4 2000/06/29 07:55:40 pjanzen Exp $	*/
 /*	$NetBSD: config.c,v 1.5 1997/10/18 20:03:08 christos Exp $	 */
 
 /*
@@ -11,7 +11,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-static char rcsid[] = "$OpenBSD: config.c,v 1.3 1998/09/15 05:12:31 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: config.c,v 1.4 2000/06/29 07:55:40 pjanzen Exp $";
 #endif /* not lint */
 
 #include "header.h"
@@ -22,7 +22,7 @@ static char rcsid[] = "$OpenBSD: config.c,v 1.3 1998/09/15 05:12:31 pjanzen Exp 
  */
 
 /* the game save filename */
-char	savefilename[1024];
+char	savefilename[PATH_MAX];
 
 /* the logging file */
 char	logfile[] = _PATH_LOG;
@@ -37,7 +37,7 @@ char	scorefile[] = _PATH_SCORE;
 char	larnlevels[] = _PATH_LEVELS;
 
 /* the .larnopts filename */
-char	optsfile[1024] = "/.larnopts";
+char	optsfile[PATH_MAX] = "/.larnopts";
 
 /* the player id datafile name */
 char	playerids[] = _PATH_PLAYERIDS;
@@ -45,7 +45,6 @@ char	playerids[] = _PATH_PLAYERIDS;
 char	diagfile[] = "Diagfile";	/* the diagnostic filename */
 char	ckpfile[] = "Larn12.0.ckp";	/* the checkpoint filename */
 char	*password = "pvnert(x)";	/* the wizards password <=32 */
-char	psname[PSNAMESIZE] = "larn";	/* the process name */
 
 #define	WIZID	1
 int	wisid = 0;	/* the user id of the only person who can be wizard */

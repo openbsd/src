@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.11 1999/03/27 03:45:49 pjanzen Exp $
+#	$OpenBSD: Makefile,v 1.12 2000/06/29 07:55:39 pjanzen Exp $
 
 # EXTRA
 #	Incorporates code to gather additional performance statistics
@@ -6,13 +6,6 @@
 #	Use sysv termio
 # TERMIOS
 #	Use posix termios
-# BSD
-#	Use BSD specific features (mostly timer and signal stuff)
-# BSD4.1
-#	Use BSD4.1 to avoid some 4.2 dependencies (must be used with
-#	BSD above; do not mix with SYSV)
-# HIDEBYLINK
-#	If defined, the program attempts to hide from ps
 # DOCHECKPOINTS
 #	If not defined, checkpoint files are periodically written by the
 #	larn process (no forking) if enabled in the .larnopts description
@@ -37,14 +30,6 @@
 #	cause player id's from the file ".playerids" to be used instead.
 #	(.playerids is created upon demand).  Only one entry per id # is
 #	allowed in each scoreboard (winning & non-winning).
-# VT100
-#	Compile for using vt100 family of terminals.  Omission of this
-#	define will cause larn to use termcap, but it will be MUCH slower
-#	due to an extra layer of output interpretation.  Also, only VT100
-#	mode allows 2 different standout modes, inverse video, and bold video.
-#	And only in VT100 mode is the scrolling region of the terminal used
-#	(much nicer than insert/delete line sequences to simulate it, if
-#	VT100 is omitted).
 # NONAP
 #	This causes napms() to return immediately instead of delaying n
 #	milliseconds.  This define may be needed on some systems if the nap
@@ -57,7 +42,7 @@
 
 PROG=	larn
 MAN=	larn.6
-CFLAGS+=-DBSD -DVER=12 -DSUBVER=0 -DNONAP -DUIDSCORE -DTERMIOS
+CFLAGS+=-DVER=12 -DSUBVER=0 -DNONAP -DUIDSCORE -DTERMIOS
 SRCS=	main.c object.c create.c tok.c display.c global.c data.c io.c \
 	monster.c store.c diag.c help.c config.c nap.c bill.c scores.c \
 	signal.c moreobj.c movem.c regen.c fortune.c savelev.c

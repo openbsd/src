@@ -1,9 +1,9 @@
-/*	$OpenBSD: tok.c,v 1.4 1999/05/30 02:23:17 pjanzen Exp $	*/
+/*	$OpenBSD: tok.c,v 1.5 2000/06/29 07:55:42 pjanzen Exp $	*/
 /*	$NetBSD: tok.c,v 1.5 1997/10/18 20:03:54 christos Exp $	*/
 
 /* tok.c		Larn is copyrighted 1986 by Noah Morgan. */
 #ifndef lint
-static char rcsid[] = "$OpenBSD: tok.c,v 1.4 1999/05/30 02:23:17 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: tok.c,v 1.5 2000/06/29 07:55:42 pjanzen Exp $";
 #endif				/* not lint */
 
 #include <sys/types.h>
@@ -191,7 +191,7 @@ readopts()
 	flag = 1;		/* set to 0 if he specifies a name for his
 				 * character */
 	if (lopen(optsfile) < 0) {
-		strcpy(logname, loginname);
+		strlcpy(logname, loginname, LOGNAMESIZE);
 		return;		/* user name if no character name */
 	}
 	i = " ";
@@ -225,9 +225,7 @@ readopts()
 			if (strcmp(i, "monster:") == 0) {	/* name favorite monster */
 				if ((i = lgetw()) == 0)
 					break;
-				if (strlen(i) >= MAXMNAME)
-					i[MAXMNAME - 1] = 0;
-				strcpy(usermonster[usermpoint], i);
+				strlcpy(usermonster[usermpoint], i, MAXMNAME);
 				if (usermpoint >= MAXUM)
 					break;	/* defined all of em */
 				if (isalpha(j = usermonster[usermpoint][0])) {
@@ -245,9 +243,7 @@ readopts()
 			if (strcmp(i, "name:") == 0) {	/* defining players name */
 				if ((i = lgetw()) == 0)
 					break;
-				if (strlen(i) >= LOGNAMESIZE)
-					i[LOGNAMESIZE - 1] = 0;
-				strcpy(logname, i);
+				strlcpy(logname, i, LOGNAMESIZE);
 				flag = 0;
 			} else if (strcmp(i, "no-introduction") == 0)
 				nowelcome = 1;
@@ -255,27 +251,16 @@ readopts()
 				nobeep = 1;
 			break;
 
-		case 'p':
-			if (strcmp(i, "process-name:") == 0) {
-				if ((i = lgetw()) == 0)
-					break;
-				if (strlen(i) >= PSNAMESIZE)
-					i[PSNAMESIZE - 1] = 0;
-				strcpy(psname, i);
-			} else if (strcmp(i, "play-day-play") == 0)
-				dayplay = 1;
-			break;
-
 		case 's':
 			if (strcmp(i, "savefile:") == 0) {	/* defining savefilename */
 				if ((i = lgetw()) == 0)
 					break;
-				strcpy(savefilename, i);
+				strlcpy(savefilename, i, PATH_MAX);
 				flag = 0;
 			}
 			break;
 		};
 	}
 	if (flag)
-		strcpy(logname, loginname);
+		strlcpy(logname, loginname, LOGNAMESIZE);
 }
