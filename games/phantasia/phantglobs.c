@@ -24,6 +24,9 @@ int	Users;		/* number of users currently playing		*/
 int	Whichmonster;	/* which monster we are fighting		*/
 int	Lines;		/* line on screen counter for fight routines	*/
 
+char	Ch_Erase;	/* backspace key */
+char	Ch_Kill;	/* linekill key */
+
 jmp_buf Fightenv;	/* used to jump into fight routine		*/
 jmp_buf Timeoenv;	/* used for timing out waiting for input	*/
 

@@ -1,3 +1,4 @@
+/*	$OpenBSD: io.c,v 1.3 1998/07/10 09:46:46 downsj Exp $	*/
 /*	$NetBSD: io.c,v 1.2 1995/03/24 03:58:50 cgd Exp $	*/
 
 /*
@@ -66,16 +67,8 @@ int	ch;			/* input */
 
 	switch (ch)
 	    {
-	    case CH_ERASE:	/* back up one character */
-		if (inptr > cp)
-		    --inptr;
-		break;
-
-	    case CH_KILL:	/* back up to original location */
-		inptr = cp;
-		break;
-
 	    case CH_NEWLINE:	/* terminate string */
+	    case CH_RETURN:
 		break;
 
 	    case CH_REDRAW:	/* redraw screen */
@@ -83,14 +76,22 @@ int	ch;			/* input */
 		continue;
 
 	    default:		/* put data in string */
-		if (ch >= ' ' || Wizard)
+		if (ch == Ch_Erase) {	/* back up one character */
+		    if (inptr > cp)
+			--inptr;
+		    break;
+		} else if (ch == Ch_Kill) { /* back up to original location */
+		    inptr = cp;
+		    break;
+		} else if (isprint(ch) || Wizard) {
 		    /* printing char; put in string */
 		    *inptr++ = ch;
+		}
 	    }
 
 	*inptr = '\0';		/* terminate string */
 	}
-    while (ch != CH_NEWLINE && inptr < cp + mx);
+    while (ch != CH_NEWLINE && ch != CH_RETURN && inptr < cp + mx);
 }
 /**/
 /************************************************************************

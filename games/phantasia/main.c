@@ -1,3 +1,4 @@
+/*	$OpenBSD: main.c,v 1.4 1998/07/10 09:46:47 downsj Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1995/04/24 12:24:37 cgd Exp $	*/
 
 /*
@@ -29,6 +30,9 @@
 
 #include <sys/types.h>
 #include <pwd.h>
+#ifdef TERMIOS
+#include <termios.h>
+#endif
 
 /*
  * The program allocates as much file space as it needs to store characters,
@@ -338,6 +342,10 @@ double	dtemp;			/* for temporary calculations */
 
 initialstate()
 {
+#ifdef TERMIOS
+    struct termios tty;
+#endif
+
     Beyond = FALSE;
     Marsh = FALSE;
     Throne = FALSE;
@@ -347,6 +355,20 @@ initialstate()
     Users = 0;
     Windows = FALSE;
     Echo = TRUE;
+
+#ifdef TERMIOS
+    /* setup terminal keys */
+    if (tcgetattr(0, &tty) == 0) {
+	Ch_Erase = tty.c_cc[VERASE];
+	Ch_Kill = tty.c_cc[VKILL];
+    } else {
+	Ch_Erase = CH_ERASE;
+	Ch_Kill = CH_KILL;
+    }
+#else
+    Ch_Erase = CH_ERASE;
+    Ch_Kill = CH_KILL;
+#endif
 
     /* setup login name */
     if ((Login = getlogin()) == NULL)

@@ -1,3 +1,4 @@
+/*	$OpenBSD: phantglobs.h,v 1.2 1998/07/10 09:46:50 downsj Exp $	*/
 /*	$NetBSD: phantglobs.h,v 1.3 1995/04/24 12:24:39 cgd Exp $	*/
 
 /*
@@ -21,6 +22,9 @@ extern	bool	Echo;		/* set if echo input to terminal		*/
 extern	int	Users;		/* number of users currently playing		*/
 extern	int	Whichmonster;	/* which monster we are fighting		*/
 extern	int	Lines;		/* line on screen counter for fight routines	*/
+
+extern	char	Ch_Erase;	/* backspace key */
+extern	char	Ch_Kill;	/* linekill key */
 
 extern	jmp_buf Fightenv;	/* used to jump into fight routine		*/
 extern	jmp_buf Timeoenv;	/* used for timing out waiting for input	*/

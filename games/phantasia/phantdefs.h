@@ -138,4 +138,5 @@
 #define	CH_KILL		'\030'		/* kill character (ctrl-X) */
 #define	CH_ERASE	'\010'		/* erase character (ctrl-H) */
 #define	CH_NEWLINE	'\n'		/* newline */
+#define CH_RETURN	'\r'		/* carriage return */
 #define	CH_REDRAW	'\014'		/* redraw screen character (ctrl-L) */
