@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.4 1996/10/12 19:38:36 millert Exp $	*/
+/*	$OpenBSD: io.c,v 1.5 1996/12/12 12:37:53 mickey Exp $	*/
 /*	$NetBSD: io.c,v 1.2 1995/03/21 09:04:43 cgd Exp $	*/
 
 /* io.c: This file contains the i/o routines for the ed line editor */
@@ -32,7 +32,7 @@
 #if 0
 static char *rcsid = "@(#)io.c,v 1.1 1994/02/01 00:34:41 alm Exp";
 #else
-static char rcsid[] = "$OpenBSD: io.c,v 1.4 1996/10/12 19:38:36 millert Exp $";
+static char rcsid[] = "$OpenBSD: io.c,v 1.5 1996/12/12 12:37:53 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -298,7 +298,7 @@ get_tty_line()
 			return i;
 		case EOF:
 			if (ferror(stdin)) {
-				perror(stdin);
+				perror("stdin");
 				strcpy(errmsg, "cannot read stdin");
 				clearerr(stdin);
 				ibufp = NULL;
