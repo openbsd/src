@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctype.h,v 1.6 2002/12/13 22:39:27 millert Exp $	*/
+/*	$OpenBSD: ctype.h,v 1.7 2002/12/13 23:16:38 millert Exp $	*/
 /*	$NetBSD: ctype.h,v 1.14 1994/10/26 00:55:47 cgd Exp $	*/
 
 /*
@@ -166,14 +166,14 @@ static __inline int isxdigit(int c)
 
 static __inline int tolower(int c)
 {
-	if (c != (c & 0177))
+	if ((unsigned int)c > 0177)
 		return (c);
 	return ((_tolower_tab_ + 1)[c]);
 }
 
 static __inline int toupper(int c)
 {
-	if (c != (c & 0177))
+	if ((unsigned int)c > 0177)
 		return (c);
 	return ((_toupper_tab_ + 1)[c]);
 }
@@ -186,9 +186,7 @@ static __inline int isblank(int c)
 
 static __inline int isascii(int c)
 {
-	if (c == EOF)
-		return (0);
-	return ((unsigned int)(c) <= 0177);
+	return ((unsigned int)c <= 0177);
 }
 
 static __inline int toascii(int c)
