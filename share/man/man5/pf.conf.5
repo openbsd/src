@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.136 2002/12/05 12:28:02 deraadt Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.137 2002/12/05 15:00:47 henning Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -49,7 +49,7 @@ the configuration file.
 .It Options
 Options tune the behaviour of the packet filtering engine.
 .It Traffic Normalization (e.g. Pa scrub No )
-Traffic normalization protects internal machines against inconsistancies
+Traffic normalization protects internal machines against inconsistencies
 in Internet protocols and implementations.
 .It Queueing
 Queuing provides rule-based bandwidth control.
@@ -592,7 +592,7 @@ and layer 3 (see
 .Xr icmp 4 ,
 and
 .Xr icmp6 4 Ns ) 
-headbers. 
+headers. 
 In addition, packets may also be 
 assigned to queues for the purpose of bandwidth control.
 .Pp
@@ -890,7 +890,7 @@ expands to
 	label "1.2.3.5:>1023"
 .Ed
 .Pp
-The macro expasion for the
+The macro expansion for the
 .Pa label
 directive occurs only at configuration file parse time, not during runtime.
 .It Pa queue <string>
@@ -1038,7 +1038,7 @@ For instance:
 .Pp
 This rule set blocks everything by default.
 Only outgoing connections and incoming connection to port 25 are allowed.
-The inital packet of each connection has the SYN flag set, will be passed
+The initial packet of each connection has the SYN flag set, will be passed
 and creates state.
 All further packets of these connections are passed if they match a state.
 .Pp
@@ -1058,7 +1058,7 @@ as well.
 UDP packets are matched to states using only host addresses and ports.
 .Pp
 ICMP messages fall in two categories: ICMP error messages, which always
-refer to a TCP or UDP packet, are matched against the refered to connection.
+refer to a TCP or UDP packet, are matched against the referred to connection.
 If one keeps state on a TCP connection, and an ICMP source quench message
 referring to this TCP connection arrives, it will be matched to the right
 state and get passed.
@@ -1266,7 +1266,7 @@ In the example below, vlan12 is configured for the 192.168.168.1;
 the machine translates all packets coming from 192.168.168.0/24 to 204.92.77.111
 when they are going out any interface except vlan12.
 This has the net effect of making traffic from the 192.168.168.0/24
-network appear as though it is the Internet routeable address
+network appear as though it is the Internet routable address
 204.92.77.111 to nodes behind any interface on the router except
 for the nodes on vlan12.
 (Thus, 192.168.168.1 can talk to the 192.168.168.0/24 nodes.)
