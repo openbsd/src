@@ -1,8 +1,8 @@
-/*	$OpenBSD: message.h,v 1.6 1999/02/26 03:48:04 niklas Exp $	*/
-/*	$EOM: message.h,v 1.39 1999/02/06 15:03:40 niklas Exp $	*/
+/*	$OpenBSD: message.h,v 1.7 1999/04/19 21:01:45 niklas Exp $	*/
+/*	$EOM: message.h,v 1.43 1999/04/13 20:00:40 ho Exp $	*/
 
 /*
- * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
+ * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -108,7 +108,7 @@ struct message {
    * A segmented buffer structure holding the messages raw contents.  On input
    * only segment 0 will be filled, holding all of the message.  On output, as
    * long as the message body is unencrypted each segment will be one payload,
-   * after encryption segment 0 will be the unencryptd header, and segment 1
+   * after encryption segment 0 will be the unencrypted header, and segment 1
    * will be the encrypted payloads, all of them.
    */
   struct iovec *iov;
@@ -179,5 +179,6 @@ extern void message_send_notification (struct message *, struct sa *,
 				       u_int16_t, struct proto *, int);
 extern void message_setup_header (struct message *, u_int8_t, u_int8_t,
 				  u_int8_t *);
+extern void message_dump_raw (char *, struct message *, int);
 
 #endif /* _MESSAGE_H_ */
