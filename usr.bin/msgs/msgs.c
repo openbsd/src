@@ -1,4 +1,4 @@
-/*	$OpenBSD: msgs.c,v 1.6 1996/12/22 03:25:56 tholo Exp $	*/
+/*	$OpenBSD: msgs.c,v 1.7 1997/04/02 08:28:01 deraadt Exp $	*/
 /*	$NetBSD: msgs.c,v 1.7 1995/09/28 06:57:40 tls Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)msgs.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: msgs.c,v 1.6 1996/12/22 03:25:56 tholo Exp $";
+static char rcsid[] = "$OpenBSD: msgs.c,v 1.7 1997/04/02 08:28:01 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -764,16 +764,18 @@ char *prompt;
 			}
 			else
 				strcpy(fname, "Messages");
+			fd = open(fname, O_RDWR|O_EXCL|O_CREAT|O_APPEND);
 		}
 		else {
 			strcpy(fname, _PATH_TMPFILE);
-			mktemp(fname);
-			snprintf(cmdbuf, sizeof(cmdbuf), _PATH_MAIL, fname);
-			mailing = YES;
+			fd = mkstemp(fname);
+			if (fd != -1) {
+				snprintf(cmdbuf, sizeof(cmdbuf), _PATH_MAIL, fname);
+				mailing = YES;
+			}
 		}
-		if ((fd = open(fname, O_RDWR|O_EXCL|O_CREAT|O_APPEND)) == -1 ||
-		    (cpto = fdopen(fd, "a")) == NULL) {
-			if (fd == -1)
+		if (fd == -1 || (cpto = fdopen(fd, "a")) == NULL) {
+			if (fd != -1)
 				close(fd);
 			perror(fname);
 			mailing = NO;
