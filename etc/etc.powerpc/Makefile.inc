@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.11 1998/09/16 20:27:26 rahnds Exp $
+#	$OpenBSD: Makefile.inc,v 1.12 1998/09/17 05:56:08 rahnds Exp $
 #	etc.powerpc/Makefile.inc -- powerpc-specific etc Makefile targets
 
 .ifdef DESTDIR
@@ -53,6 +53,14 @@ distrib:
 	cp ${DESTDIR}/usr/mdec/ofwboot ${DESTDIR}/snapshot/bootmix
 	mkisofs -r ${DESTDIR}/snapshot/bootmix > ${DESTDIR}/snapshot/bootmix.fs
 	rm -rf ${DESTDIR}/snapshot/bootmix
+	# compress the bsd.rd files but keep original naming,
+	# bootloader can deal with it.
+	gzip -9 ${DESTDIR}/snapshot/bsd.rd
+	mv ${DESTDIR}/snapshot/bsd.rd.gz ${DESTDIR}/snapshot/bsd.rd
+	gzip -9 ${DESTDIR}/snapshot/bsdofw.rd
+	mv ${DESTDIR}/snapshot/bsd.rdofw.gz ${DESTDIR}/snapshot/bsdofw.rd
+	gzip -9 ${DESTDIR}/snapshot/bsdmix.rd
+	mv ${DESTDIR}/snapshot/bsd.rdmix.gz ${DESTDIR}/snapshot/bsdmix.rd
 
 
 .endif	# DESTDIR check
