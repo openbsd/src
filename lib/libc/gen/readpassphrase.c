@@ -26,7 +26,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: readpassphrase.c,v 1.5 2001/06/27 13:23:30 djm Exp $";
+static const char rcsid[] = "$OpenBSD: readpassphrase.c,v 1.6 2001/08/07 19:29:20 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <ctype.h>
@@ -47,10 +47,9 @@ readpassphrase(prompt, buf, bufsiz, flags)
 	size_t bufsiz;
 	int flags;
 {
-	struct termios term;
+	struct termios term, oterm;
 	char ch, *p, *end;
-	u_char status;
-	int echo, input, output;
+	int input, output;
 	sigset_t oset, nset;
 
 	/* I suppose we could alloc on demand in this case (XXX). */
@@ -83,25 +82,15 @@ readpassphrase(prompt, buf, bufsiz, flags)
 	(void)sigprocmask(SIG_BLOCK, &nset, &oset);
 
 	/* Turn off echo if possible. */
-	echo = 0;
-	status = _POSIX_VDISABLE;
-	if (tcgetattr(input, &term) == 0) {
-		if (!(flags & RPP_ECHO_ON) && (term.c_lflag & ECHO)) {
-			echo = 1;
+	memset(&term, 0, sizeof(term));
+	memset(&oterm, 0, sizeof(oterm));
+	if (tcgetattr(input, &oterm) == 0) {
+		memcpy(&term, &oterm, sizeof(term));
+		if (!(flags & RPP_ECHO_ON) && (term.c_lflag & ECHO))
 			term.c_lflag &= ~ECHO;
-		}
-		if (term.c_cc[VSTATUS] != _POSIX_VDISABLE) {
-			status = term.c_cc[VSTATUS];
+		if (term.c_cc[VSTATUS] != _POSIX_VDISABLE)
 			term.c_cc[VSTATUS] = _POSIX_VDISABLE;
-		}
 		(void)tcsetattr(input, TCSAFLUSH|TCSASOFT, &term);
-	}
-	if (!(flags & RPP_ECHO_ON)) {
-		if (tcgetattr(input, &term) == 0 && (term.c_lflag & ECHO)) {
-			echo = 1;
-			term.c_lflag &= ~ECHO;
-			(void)tcsetattr(input, TCSAFLUSH|TCSASOFT, &term);
-		}
 	}
 
 	(void)write(output, prompt, strlen(prompt));
@@ -120,15 +109,12 @@ readpassphrase(prompt, buf, bufsiz, flags)
 		}
 	}
 	*p = '\0';
-	if (echo || status != _POSIX_VDISABLE) {
-		if (echo) {
-			(void)write(output, "\n", 1);
-			term.c_lflag |= ECHO;
-		}
-		if (status != _POSIX_VDISABLE)
-			term.c_cc[VSTATUS] = status;
-		(void)tcsetattr(input, TCSAFLUSH|TCSASOFT, &term);
-	}
+	if (!(term.c_lflag & ECHO))
+		(void)write(output, "\n", 1);
+
+	/* Restore old terminal settings and signal mask. */
+	if (memcmp(&term, &oterm, sizeof(term)) != 0)
+		(void)tcsetattr(input, TCSAFLUSH|TCSASOFT, &oterm);
 	(void)sigprocmask(SIG_SETMASK, &oset, NULL);
 	if (input != STDIN_FILENO)
 		(void)close(input);
