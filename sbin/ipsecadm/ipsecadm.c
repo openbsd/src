@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsecadm.c,v 1.83 2004/11/25 21:32:52 markus Exp $ */
+/* $OpenBSD: ipsecadm.c,v 1.84 2004/12/28 15:19:23 deraadt Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -346,6 +346,7 @@ main(int argc, char *argv[])
 	struct iovec iov[30];
 	struct addrinfo hints, *res;
 	const char *errstr;
+	u_long ll;
 	char *ep;
 
 	if (argc < 2)
@@ -645,34 +646,37 @@ main(int argc, char *argv[])
 		}
 		if (!strcmp(argv[i] + 1, "spi") && spi == SPI_LOCAL_USE &&
 		    (i + 1 < argc) && !bypass && !deny) {
-			spi = strtoul(argv[i + 1], &ep, 16);
+			ll = strtoul(argv[i + 1], &ep, 16);
 			if ((argv[i + 1] == '\0' || *ep != '\0') ||
-			    (errno == ERANGE && spi == ULONG_MAX) ||
-			    (spi >= SPI_RESERVED_MIN && spi <= SPI_RESERVED_MAX))
+			    (errno == ERANGE && ll == ULONG_MAX) ||
+			    (ll >= SPI_RESERVED_MIN && ll <= SPI_RESERVED_MAX))
 				errx(1, "invalid spi %s", argv[i + 1]);
+			spi = ll;
 			sa.sadb_sa_spi = htonl(spi);
 			i++;
 			continue;
 		}
 		if (!strcmp(argv[i] + 1, "spi2") && spi2 == SPI_LOCAL_USE &&
 		    iscmd(mode, GRP_SPI) && (i + 1 < argc)) {
-			spi2 = strtoul(argv[i + 1], &ep, 16);
+			ll = strtoul(argv[i + 1], &ep, 16);
 			if ((argv[i + 1] == '\0' || *ep != '\0') ||
-			    (errno == ERANGE && spi == ULONG_MAX) ||
-			    (spi2 >= SPI_RESERVED_MIN && spi2 <= SPI_RESERVED_MAX))
+			    (errno == ERANGE && ll == ULONG_MAX) ||
+			    (ll >= SPI_RESERVED_MIN && ll <= SPI_RESERVED_MAX))
 				errx(1, "invalid spi2 %s", argv[i + 1]);
+			spi2 = ll;
 			sa2.sadb_sa_spi = htonl(spi2);
 			i++;
 			continue;
 		}
 		if (!strcmp(argv[i] + 1, "cpi") && cpi == SPI_LOCAL_USE &&
 		    (i + 1 < argc) && !bypass && !deny) {
-			cpi = strtoul(argv[i + 1], &ep, 16);
+			ll = strtoul(argv[i + 1], &ep, 16);
 			if ((argv[i + 1] == '\0' || *ep != '\0') ||
-			    (errno == ERANGE && spi == ULONG_MAX) ||
-			    (cpi >= CPI_RESERVED_MIN && cpi <= CPI_RESERVED_MAX) ||
-			    (cpi > USHRT_MAX))
+			    (errno == ERANGE && ll == ULONG_MAX) ||
+			    (ll >= CPI_RESERVED_MIN && ll <= CPI_RESERVED_MAX) ||
+			    (ll > USHRT_MAX))
 				errx(1, "invalid cpi %s", argv[i + 1]);
+			cpi = ll;
 			sa.sadb_sa_spi = ntohl(cpi);
 			i++;
 			continue;
