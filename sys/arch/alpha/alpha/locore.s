@@ -1,4 +1,4 @@
-/* $OpenBSD: locore.s,v 1.14 2000/11/08 19:16:59 ericj Exp $ */
+/* $OpenBSD: locore.s,v 1.15 2001/02/08 13:38:14 art Exp $ */
 /* $NetBSD: locore.s,v 1.80 2000/09/04 00:31:59 thorpej Exp $ */
 
 /*-
@@ -1920,7 +1920,7 @@ EXPORT(cold)
 	.long 1			/* cold start flag (.long -> _4_ bytes) */
 	.align 3
 EXPORT(esym)
-	.quad			/* store end of kernel symbol table here */
+	.quad 1			/* store end of kernel symbol table here */
 
 
 /**************************************************************************/
