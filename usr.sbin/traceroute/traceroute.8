@@ -1,4 +1,4 @@
-.\"	$OpenBSD: traceroute.8,v 1.22 2000/04/20 17:26:37 angelos Exp $
+.\"	$OpenBSD: traceroute.8,v 1.23 2001/06/09 21:09:05 pvalchev Exp $
 .\"	$NetBSD: traceroute.8,v 1.6 1995/10/12 03:05:50 mycroft Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
@@ -45,10 +45,11 @@
 .Nd print the route packets take to network host
 .Sh SYNOPSIS
 .Nm traceroute
-.Op Fl c
-.Op Fl d
+.Op Fl S
 .Op Fl D
 .Op Fl I
+.Op Fl c
+.Op Fl d
 .Op Fl f Ar first_ttl
 .Op Fl g Ar gateway_addr
 .Op Fl l
@@ -84,10 +85,12 @@ name.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl d
-Turn on socket-level debugging.
+.It Fl S
+Print how many probes were not answered for each hop.
 .It Fl D
 Dump the packet data to standard error before transmitting it.
+.It Fl d
+Turn on socket-level debugging.
 .It Fl f Ar first_ttl
 Set the first time-to-live used in outgoing probe packets. The effect is that
 the first first_ttl - 1 hosts will be skipped in the output of
