@@ -1,0 +1,3 @@
+stdin:4: linkshare already specified
+pfctl: Syntax error in config file: pf rules not loaded
+altq on lo0 hfsc bandwidth 10Mb tbrsize 1824 queue { eins }

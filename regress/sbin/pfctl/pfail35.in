@@ -1,0 +1,6 @@
+# linkshare
+
+altq on lo0 tbrsize 1824 bandwidth 10Mb hfsc queue { eins }
+queue eins bandwidth 10% hfsc(default linkshare(20% 20 5%) linkshare 1Mb)
+
+
