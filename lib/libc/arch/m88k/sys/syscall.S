@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.S,v 1.6 2003/06/02 20:18:31 millert Exp $	*/
+/*	$OpenBSD: syscall.S,v 1.7 2003/12/08 19:36:29 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #if defined(LIBC_SCCS)
 	.data
-	.string "$OpenBSD: syscall.S,v 1.6 2003/06/02 20:18:31 millert Exp $"
+	.string "$OpenBSD: syscall.S,v 1.7 2003/12/08 19:36:29 millert Exp $"
 #endif /* LIBC_SCCS */
 
 #include "SYS.h"
@@ -44,7 +44,7 @@ SYSENTRY(syscall)
 	ld	r10,r31,32
 	ld	r11,r31,36
 	ld	r12,r31,40
-	or	r9,r0,0
+	or	r13,r0,0
 	tb0	0,r0,128
 	br	__cerror
 	jmp	r1
