@@ -1,4 +1,4 @@
-#	$OpenBSD: files.vax,v 1.20 2001/02/24 10:31:59 hugh Exp $
+#	$OpenBSD: files.vax,v 1.21 2001/04/17 15:19:33 hugh Exp $
 #       $NetBSD: files.vax,v 1.60 1999/08/27 20:04:32 ragge Exp $
 #
 # new style config file for vax architecture
@@ -224,11 +224,11 @@ attach	ps at uba
 file	arch/vax/uba/ps.c		ps needs-flag
 
 # RL02/RL11 at UBA
-device	hl { drive=-1 }
-attach	hl at uba
-device	rl: disk
-attach	rl at hl
-file	arch/vax/uba/rl.c		rl needs-flag
+#device	hl { drive=-1 }
+#attach	hl at uba
+#device	rl: disk
+#attach	rl at hl
+#file	arch/vax/uba/rl.c		rl needs-flag
 
 # SC-21/SC-31 at UBA
 device	sc { drive=-1 }
@@ -368,5 +368,4 @@ include "compat/ultrix/files.ultrix"
 
 # wscons files.
 include "dev/wscons/files.wscons"
-
 
