@@ -1,4 +1,4 @@
-/*	$OpenBSD: vsreg.h,v 1.11 2004/07/19 20:35:37 miod Exp $	*/
+/*	$OpenBSD: vsreg.h,v 1.12 2004/07/20 20:32:02 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1999 Steve Murphree, Jr.
@@ -56,6 +56,7 @@
 
 #define	NUM_CQE			10
 #define	NUM_IOPB		NUM_CQE
+#define	NUM_WQ			15
 
 /*
  * Master Control Status Block (MCSB)
@@ -341,7 +342,8 @@
 #define	CNTR_ISSUE_ABORT		0x4e /* abort has been issued */
 #define	CNTR_DOWNLOAD_FIRMWARE		0x4f /* download firmware (COUGAR) */
 
-#define	IOPB_UNIT_VALUE(target, lun)	((lun) << 3 | (target & 7))
+#define	IOPB_UNIT_VALUE(bus, target, lun) \
+	(((bus) << 6) | ((lun) << 3) | (target & 7))
 
 /*
  * Memory types

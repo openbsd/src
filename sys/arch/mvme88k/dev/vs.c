@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs.c,v 1.48 2004/07/20 20:28:54 miod Exp $	*/
+/*	$OpenBSD: vs.c,v 1.49 2004/07/20 20:32:02 miod Exp $	*/
 
 /*
  * Copyright (c) 2004, Miodrag Vallat.
@@ -107,12 +107,12 @@ void	vs_link_sg_element(sg_list_element_t *, vaddr_t, int);
 void	vs_link_sg_list(sg_list_element_t *, vaddr_t, int);
 int	vs_nintr(void *);
 int	vs_poll(struct vs_softc *, struct scsi_xfer *);
-void	vs_reset(struct vs_softc *);
+int	vs_queue_number(struct scsi_link *, struct vs_softc *);
+void	vs_reset(struct vs_softc *, int);
 void	vs_resync(struct vs_softc *);
 void	vs_scsidone(struct vs_softc *, struct scsi_xfer *, int);
 
 static __inline__ void vs_clear_return_info(struct vs_softc *);
-static __inline__ int vs_queue_number(int, int);
 static __inline__ paddr_t kvtop(vaddr_t);
 
 int
@@ -136,7 +136,8 @@ vsattach(struct device *parent, struct device *self, void *args)
 {
 	struct vs_softc *sc = (struct vs_softc *)self;
 	struct confargs *ca = args;
-	int evec;
+	struct scsi_link *sc_link;
+	int evec, bus;
 	int tmp;
 
 	/* get the next available vector for the error interrupt */
@@ -166,13 +167,6 @@ vsattach(struct device *parent, struct device *self, void *args)
 	if (vs_initialize(sc))
 		return;
 
-	sc->sc_link.adapter_softc = sc;
-	sc->sc_link.adapter_target = sc->sc_pid;
-	sc->sc_link.adapter = &vs_scsiswitch;
-	sc->sc_link.device = &vs_scsidev;
-	sc->sc_link.luns = 1;
-	sc->sc_link.openings = NUM_IOPB / 8;
-
 	sc->sc_ih_n.ih_fn = vs_nintr;
 	sc->sc_ih_n.ih_arg = sc;
 	sc->sc_ih_n.ih_wantframe = 0;
@@ -193,14 +187,43 @@ vsattach(struct device *parent, struct device *self, void *args)
 	evcount_attach(&sc->sc_intrcnt_e, sc->sc_intrname_e,
 	    (void *)&sc->sc_ih_e.ih_ipl, &evcount_intr);
 
+	printf("SCSI ID");
+
+	for (bus = 0; bus < 2; bus++) {
+		if (sc->sc_id[bus] < 0)
+			continue;
+
+		sc_link = &sc->sc_link[bus];
+		sc_link->adapter = &vs_scsiswitch;
+		sc_link->adapter_buswidth = 8;
+		sc_link->adapter_softc = sc;
+		sc_link->adapter_target = sc->sc_id[bus];
+		sc_link->device = &vs_scsidev;
+		sc_link->luns = 1;
+		sc_link->openings = NUM_IOPB / 8;
+		if (bus != 0)
+			sc_link->flags = SDEV_2NDBUS;
+
+		printf("%c%d", bus == 0 ? ' ' : '/', sc->sc_id[bus]);
+	}
+
+	printf("\n");
+
 	/*
-	 * attach all scsi units on us, watching for boot device
+	 * Attach all scsi units on us, watching for boot device
 	 * (see dk_establish).
 	 */
 	tmp = bootpart;
 	if (sc->sc_paddr != bootaddr)
 		bootpart = -1;		/* invalid flag to dk_establish */
-	config_found(self, &sc->sc_link, scsiprint);
+
+	for (bus = 0; bus < 2; bus++) {
+		if (sc->sc_id[bus] < 0)
+			continue;
+
+		config_found(self, &sc->sc_link[bus], scsiprint);
+	}
+
 	bootpart = tmp;		    /* restore old value */
 }
 
@@ -208,10 +231,16 @@ int
 do_vspoll(struct vs_softc *sc, struct scsi_xfer *xs, int to, int canreset)
 {
 	int i;
-	int crsw;
+	int crsw, bus;
 
-	if (to <= 0 ) to = 50000;
-	/* use cmd_wait values? */
+	if (xs != NULL)
+		bus = !!(xs->sc_link->flags & SDEV_2NDBUS);
+	else
+		bus = -1;
+
+	/* XXX use cmd_wait values */
+	if (to <= 0)
+		to = 50000;
 	i = 10000;
 
 	while (((crsw = CRSW) & (M_CRSW_CRBV | M_CRSW_CC)) == 0) {
@@ -220,7 +249,7 @@ do_vspoll(struct vs_softc *sc, struct scsi_xfer *xs, int to, int canreset)
 			--to;
 			if (to <= 0) {
 				if (canreset) {
-					vs_reset(sc);
+					vs_reset(sc, bus);
 					vs_resync(sc);
 				}
 				if (xs == NULL)
@@ -283,7 +312,7 @@ thaw_all_queues(struct vs_softc *sc)
 {
 	int i;
 
-	for (i = 1; i <= 7; i++)
+	for (i = 1; i < NUM_WQ ; i++)
 		thaw_queue(sc, i);
 }
 
@@ -291,18 +320,18 @@ void
 vs_scsidone(struct vs_softc *sc, struct scsi_xfer *xs, int stat)
 {
 	int tgt;
+
+	tgt = vs_queue_number(xs->sc_link, sc);
 	xs->status = stat;
 
 	while (xs->status == SCSI_CHECK) {
 		vs_chksense(xs);
-		tgt = vs_queue_number(xs->sc_link->target, sc->sc_pid);
 		thaw_queue(sc, tgt);
 	}
 
-	tgt = vs_queue_number(xs->sc_link->target, sc->sc_pid);
 	xs->flags |= ITSDONE;
-
 	thaw_queue(sc, tgt);
+
 	scsi_done(xs);
 }
 
@@ -336,7 +365,8 @@ vs_scsicmd(struct scsi_xfer *xs)
 	    (u_int8_t *)xs->cmd, xs->cmdlen);
 
 	vs_write(2, iopb + IOPB_CMD, IOPB_PASSTHROUGH);
-	vs_write(2, iopb + IOPB_UNIT, IOPB_UNIT_VALUE(slp->target, slp->lun));
+	vs_write(2, iopb + IOPB_UNIT,
+	  IOPB_UNIT_VALUE(!!(slp->flags & SDEV_2NDBUS), slp->target, slp->lun));
 	vs_write(1, iopb + IOPB_NVCT, sc->sc_nvec);
 	vs_write(1, iopb + IOPB_EVCT, sc->sc_evec);
 
@@ -372,7 +402,7 @@ vs_scsicmd(struct scsi_xfer *xs)
 	vs_write(2, cqep + CQE_IOPB_ADDR, iopb);
 	vs_write(1, cqep + CQE_IOPB_LENGTH, iopb_len);
 	vs_write(1, cqep + CQE_WORK_QUEUE,
-	    flags & SCSI_POLL ? 0 : vs_queue_number(slp->target, sc->sc_pid));
+	    flags & SCSI_POLL ? 0 : vs_queue_number(slp, sc));
 
 	MALLOC(m328_cmd, M328_CMD*, sizeof(M328_CMD), M_DEVBUF, M_WAITOK);
 
@@ -427,7 +457,8 @@ vs_chksense(struct scsi_xfer *xs)
 	mce_iopb_write(2, IOPB_ADDR, ADDR_MOD);
 	mce_iopb_write(4, IOPB_BUFF, kvtop((vaddr_t)&xs->sense));
 	mce_iopb_write(4, IOPB_LENGTH, sizeof(struct scsi_sense_data));
-	mce_iopb_write(2, IOPB_UNIT, IOPB_UNIT_VALUE(slp->target, slp->lun));
+	mce_iopb_write(2, IOPB_UNIT,
+	  IOPB_UNIT_VALUE(!!(slp->flags & SDEV_2NDBUS), slp->target, slp->lun));
 
 	vs_bzero(sh_MCE, CQE_SIZE);
 	mce_write(2, CQE_IOPB_ADDR, sh_MCE_IOPB);
@@ -513,13 +544,15 @@ vs_initialize(struct vs_softc *sc)
 	}
 
 	/* initialize channels id */
-	sc->sc_pid = csb_read(1, CSB_PID);
-	sc->sc_sid = -1;
+	sc->sc_id[0] = csb_read(1, CSB_PID);
+	sc->sc_id[1] = -1;
 	switch (dbid = csb_read(1, CSB_DBID)) {
 	case DBID_SCSI2:
 	case DBID_SCSI:
+#if 0
 		printf("daughter board, ");
-		sc->sc_sid = csb_read(1, CSB_SID);
+#endif
+		sc->sc_id[1] = csb_read(1, CSB_SID);
 		break;
 	case DBID_PRINTER:
 		printf("printer port, ");
@@ -539,8 +572,8 @@ vs_initialize(struct vs_softc *sc)
 	cib_write(2, CIB_BURST, 0);
 	cib_write(2, CIB_NVECT, (sc->sc_ipl << 8) | sc->sc_nvec);
 	cib_write(2, CIB_EVECT, (sc->sc_ipl << 8) | sc->sc_evec);
-	cib_write(2, CIB_PID, sc->sc_pid);
-	cib_write(2, CIB_SID, 0);	/* disable second channel */
+	cib_write(2, CIB_PID, 0x08);	/* XXX default */
+	cib_write(2, CIB_SID, 0x08);
 	cib_write(2, CIB_CRBO, sh_CRB);
 	cib_write(4, CIB_SELECT, SELECTION_TIMEOUT);
 	cib_write(4, CIB_WQTIMO, 4);
@@ -572,7 +605,7 @@ vs_initialize(struct vs_softc *sc)
 	do_vspoll(sc, NULL, 0, 1);
 
 	/* initialize work queues */
-	for (i = 1; i < 8; i++) {
+	for (i = 1; i < NUM_WQ; i++) {
 		vs_bzero(sh_MCE_IOPB, IOPB_LONG_SIZE);
 		mce_iopb_write(2, WQCF_CMD, CNTR_INIT_WORKQ);
 		mce_iopb_write(2, WQCF_OPTION, 0);
@@ -847,14 +880,30 @@ vs_clear_return_info(struct vs_softc *sc)
 /*
  * Choose the work queue number for a specific target.
  *
- * Targets on the primary channel should be mapped to queues 1-7,
- * so we assign each target the queue matching its own number, except for
- * target zero which gets assigned to the queue matching the controller id.
+ * Targets on the primary channel are mapped to queues 1-7, while targets
+ * on the secondary channel are mapped to queues 8-14.
+ * To do so, we assign each target the queue matching its own number,
+ * plus eight on the secondary bus, except for target 0 on the first channel
+ * and 7 on the secondary channel which gets assigned to the queue matching
+ * the controller id.
  */
-static int
-vs_queue_number(int target, int host)
+int
+vs_queue_number(struct scsi_link *sl, struct vs_softc *sc)
 {
-	return target == 0 ? host : target;
+	int bus;
+
+	bus = !!(sl->flags & SDEV_2NDBUS);
+
+	if (sl->target == sc->sc_id[bus])
+		return 0;
+
+	if (bus == 0)
+		return sl->target == 0 ? sc->sc_id[bus] : sl->target;
+	else
+		if (sl->target > sc->sc_id[bus])
+			return 8 + sl->target - 1;
+		else
+			return 8 + sl->target;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vsvar.h,v 1.14 2004/07/02 14:00:43 miod Exp $	*/
+/*	$OpenBSD: vsvar.h,v 1.15 2004/07/20 20:32:02 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1999 Steve Murphree, Jr.
@@ -100,8 +100,8 @@ struct vs_softc {
 	char			sc_intrname_e[16 + 4];
 	int			sc_ipl;
 	int			sc_evec, sc_nvec;
-	int			sc_pid, sc_sid;
-	struct scsi_link	sc_link;
+	int			sc_id[2];
+	struct scsi_link	sc_link[2];
 };
 
 /* Access macros */
