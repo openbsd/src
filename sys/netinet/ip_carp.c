@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.61 2004/06/24 19:35:25 tholo Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.62 2004/08/31 05:31:39 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -1081,7 +1081,7 @@ carp_iamatch(void *v, struct in_ifaddr *ia,
 		TAILQ_FOREACH(vh, &cif->vhif_vrs, sc_list) {
 			if ((vh->sc_ac.ac_if.if_flags & (IFF_UP|IFF_RUNNING)) ==
 			    (IFF_UP|IFF_RUNNING) && ia->ia_ifp ==
-			    &vh->sc_ac.ac_if) {
+			    &vh->sc_ac.ac_if && vh->sc_state == MASTER) {
 				*enaddr = vh->sc_ac.ac_enaddr;
 				return (1);
 			}
@@ -1104,7 +1104,8 @@ carp_iamatch6(void *v, struct in6_addr *taddr)
 			if (IN6_ARE_ADDR_EQUAL(taddr,
 			    &ifatoia6(ifa)->ia_addr.sin6_addr) &&
 			    ((vh->sc_ac.ac_if.if_flags &
-			    (IFF_UP|IFF_RUNNING)) == (IFF_UP|IFF_RUNNING)))
+			    (IFF_UP|IFF_RUNNING)) == (IFF_UP|IFF_RUNNING)) &&
+			    vh->sc_state == MASTER)
 				return (ifa);
 		}
 	}
