@@ -1,4 +1,4 @@
-/*	$OpenBSD: stp4020.c,v 1.5 2003/06/23 09:28:00 miod Exp $	*/
+/*	$OpenBSD: stp4020.c,v 1.6 2003/06/25 17:36:49 miod Exp $	*/
 /*	$NetBSD: stp4020.c,v 1.23 2002/06/01 23:51:03 lukem Exp $	*/
 
 /*-
@@ -589,7 +589,7 @@ stp4020_chip_mem_alloc(pch, size, pcmhp)
 	struct stp4020_socket *h = (struct stp4020_socket *)pch;
 
 	/* we can not do much here, defere work to _mem_map */
-	pcmhp->memt = h->tag;
+	pcmhp->memt = h->wintag;
 	pcmhp->size = size;
 	pcmhp->addr = 0;
 	pcmhp->mhandle = 0;
@@ -618,13 +618,13 @@ stp4020_chip_mem_map(pch, kind, card_addr, size, pcmhp, offsetp, windowp)
 	struct stp4020_socket *h = (struct stp4020_socket *)pch;
 	int win = (kind & PCMCIA_MEM_ATTR) ? STP_WIN_ATTR : STP_WIN_MEM;
 
-	pcmhp->memt = h->tag;
-	bus_space_subregion(h->tag, h->windows[win].winaddr,
+	pcmhp->memt = h->wintag;
+	bus_space_subregion(h->wintag, h->windows[win].winaddr,
 	    card_addr, size, &pcmhp->memh);
 	pcmhp->size = size;
 	pcmhp->realsize = STP4020_WINDOW_SIZE - card_addr;
 	*offsetp = 0;
-	*windowp = 0;
+	*windowp = win;
 
 	return (0);
 }
@@ -646,7 +646,7 @@ stp4020_chip_io_alloc(pch, start, size, align, pcihp)
 {
 	struct stp4020_socket *h = (struct stp4020_socket *)pch;
 
-	pcihp->iot = h->tag;
+	pcihp->iot = h->wintag;
 	pcihp->ioh = h->windows[STP_WIN_IO].winaddr;
 	pcihp->size = size;
 	return (0);
@@ -670,8 +670,8 @@ stp4020_chip_io_map(pch, width, offset, size, pcihp, windowp)
 {
 	struct stp4020_socket *h = (struct stp4020_socket *)pch;
 
-	pcihp->iot = h->tag;
-	bus_space_subregion(h->tag, h->windows[STP_WIN_IO].winaddr,
+	pcihp->iot = h->wintag;
+	bus_space_subregion(h->wintag, h->windows[STP_WIN_IO].winaddr,
 	    offset, size, &pcihp->ioh);
 	*windowp = 0;
 	return (0);

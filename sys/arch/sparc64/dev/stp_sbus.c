@@ -1,4 +1,4 @@
-/*	$OpenBSD: stp_sbus.c,v 1.3 2003/06/24 21:54:39 henric Exp $	*/
+/*	$OpenBSD: stp_sbus.c,v 1.4 2003/06/25 17:36:51 miod Exp $	*/
 /*	$NetBSD: stp4020.c,v 1.23 2002/06/01 23:51:03 lukem Exp $	*/
 
 /*-
@@ -152,9 +152,11 @@ stpattach(parent, self, aux)
 		} else if (i < STP4020_BANK_CTRL) {
 			/* banks 1-3 */
 			sc->sc_socks[0].windows[i-1].winaddr = bh;
+			sc->sc_socks[0].wintag = sc->sc_bustag;
 		} else {
 			/* banks 5-7 */
 			sc->sc_socks[1].windows[i-5].winaddr = bh;
+			sc->sc_socks[1].wintag = sc->sc_bustag;
 		}
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: stp4020var.h,v 1.1 2003/06/23 09:28:00 miod Exp $	*/
+/*	$OpenBSD: stp4020var.h,v 1.2 2003/06/25 17:36:49 miod Exp $	*/
 /*	$NetBSD: stp4020.c,v 1.23 2002/06/01 23:51:03 lukem Exp $	*/
 
 /*-
@@ -57,6 +57,7 @@ struct stp4020_socket {
 			    (void *);
 	void		*intrarg;	/* Card interrupt handler argument */
 	int		ipl;		/* Interrupt level suggested by card */
+	bus_space_tag_t	wintag;		/* windows access tag */
 	struct {
 		bus_space_handle_t	winaddr;/* this window's address */
 	} windows[STP4020_NWIN];
