@@ -41,7 +41,7 @@ distribution: distrib-dirs
 	install -c -o ${BINOWN} -g ${BINGRP} -m 664 ${BIN2} ${DESTDIR}/etc
 	install -c -o root -g wheel -m 600 crontab ${DESTDIR}/var/cron/tabs/root
 	install -c -o root -g wheel -m 600 master.passwd ${DESTDIR}/etc
-	chroot ${DESTDIR}/ pwd_mkdb -p /etc/master.passwd
+	pwd_mkdb -p -d ${DESTDIR} /etc/master.passwd
 	install -c -o ${BINOWN} -g ${BINGRP} -m 555 \
 	     MAKEDEV.local etc.${MACHINE}/MAKEDEV ${DESTDIR}/dev
 	(cd root; \
