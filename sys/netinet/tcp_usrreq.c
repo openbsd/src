@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.83 2004/04/25 04:34:05 markus Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.84 2004/04/26 18:16:09 markus Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -790,22 +790,23 @@ tcp_ident(oldp, oldlenp, newp, newlen, dodrop)
 	struct sockaddr_in6 *fin6, *lin6;
 	struct in6_addr f6, l6;
 #endif
-
 	if (oldp == NULL)
 		return (EINVAL);
+	if (*oldlenp < sizeof(tir))
+		return (ENOMEM);
 	if (dodrop) {
-		/*
-		 * XXX stupid permission hack:
-		 * only root may set newp, so we require newp for tcp_drop()
-		 */
 		if (newp == NULL)
 			return (EPERM);
-	} else if (newp != NULL || newlen != 0)
-		return (EINVAL);
-	if  (*oldlenp < sizeof(tir))
-		return (ENOMEM);
-	if ((error = copyin(oldp, &tir, sizeof (tir))) != 0 )
-		return (error);
+		if (newlen < sizeof(tir))
+			return (ENOMEM);
+		if ((error = copyin(newp, &tir, sizeof (tir))) != 0 )
+			return (error);
+	} else {
+		if (newp != NULL || newlen != 0)
+			return (EINVAL);
+		if ((error = copyin(oldp, &tir, sizeof (tir))) != 0 )
+			return (error);
+	}
 	switch (tir.faddr.ss_family) {
 #ifdef INET6
 	case AF_INET6:
