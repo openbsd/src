@@ -27,7 +27,7 @@
  * Mountain View, California  94043
  */
 #if defined(LIBC_SCCS) && !defined(lint) 
-static char *rcsid = "$OpenBSD: xdr_rec.c,v 1.5 1997/05/28 21:28:56 deraadt Exp $";
+static char *rcsid = "$OpenBSD: xdr_rec.c,v 1.6 1998/05/20 23:50:02 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -548,6 +548,8 @@ set_input_fragment(rstrm)
 		return (FALSE);
 	header = (long)ntohl(header);
 	rstrm->last_frag = ((header & LAST_FRAG) == 0) ? FALSE : TRUE;
+	if ((header & (~LAST_FRAG)) == 0)
+		return(FALSE);
 	rstrm->fbtbc = header & (~LAST_FRAG);
 	return (TRUE);
 }
