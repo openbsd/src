@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.394 2001/05/07 19:42:51 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.395 2001/05/11 14:56:02 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -2525,6 +2525,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_CMI, PCI_PRODUCT_CMI_CMI8738,
 	    "CMI8738/C3DX Audio",
+	},
+	{
+	    PCI_VENDOR_CMI, PCI_PRODUCT_CMI_CMI8738B,
+	    "CMI8738B Audio",
 	},
 	{
 	    PCI_VENDOR_CMI, PCI_PRODUCT_CMI_HSP56,
@@ -6227,6 +6231,14 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	    "Aironet",
 	},
 	{
+	    PCI_VENDOR_COMPAL,
+	    "COMPAL",
+	},
+	{
+	    PCI_VENDOR_TITAN,
+	    "Titan",
+	},
+	{
 	    PCI_VENDOR_BROADCOM,
 	    "Broadcom",
 	},
@@ -6337,6 +6349,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_ARC,
 	    "ARC Logic",
+	},
+	{
+	    PCI_VENDOR_CHRYSALIS,
+	    "Chrysalis-ITS",
 	},
 	{
 	    PCI_VENDOR_INVALID,
