@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.108 2003/08/03 18:55:04 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.109 2003/08/07 19:26:19 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2002 Michael Shalayeff
@@ -1225,10 +1225,10 @@ sendsig(catcher, sig, mask, code, type, val)
 	struct proc *p = curproc;
 	struct trapframe *tf = p->p_md.md_regs;
 	struct sigacts *psp = p->p_sigacts;
-	struct sigcontext ksc, *scp;
-	siginfo_t ksi, *sip;
+	struct sigcontext ksc;
+	siginfo_t ksi;
 	int sss;
-	register_t zero;
+	register_t zero, scp, sip;
 
 #ifdef DEBUG
 	if ((sigdebug & SDB_FOLLOW) && (!sigpid || p->p_pid == sigpid))
@@ -1249,23 +1249,26 @@ sendsig(catcher, sig, mask, code, type, val)
 	 */
 	if ((psp->ps_flags & SAS_ALTSTACK) && !ksc.sc_onstack &&
 	    (psp->ps_sigonstack & sigmask(sig))) {
-		scp = (struct sigcontext *)psp->ps_sigstk.ss_sp;
+		scp = (register_t)psp->ps_sigstk.ss_sp;
 		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
 	} else
-		scp = (struct sigcontext *)tf->tf_sp;
+		scp = (tf->tf_sp + 63) & ~63;
 
-	sss = sizeof(*scp);
-	sip = NULL;
+	sss = (sizeof(ksc) + 63) & ~63;
+	sip = 0;
 	if (psp->ps_siginfo & sigmask(sig)) {
-		initsiginfo(&ksi, sig, code, type, val);
-		sip = (siginfo_t *)(scp + 1);
-		if (copyout((caddr_t)&ksi, sip, sizeof(ksi)))
-			sigexit(p, SIGILL);
-		sss += sizeof(*sip);
+		sip = scp + sizeof(ksc);
+		sss += (sizeof(ksi) + 63) & ~63;
 	}
 
+#ifdef DEBUG
+	if ((tf->tf_iioq_head & ~PAGE_MASK) == SYSCALLGATE)
+		printf("sendsig: interrupted syscall at 0x%x:0x%x, flags %b\n",
+		    tf->tf_iioq_head, tf->tf_iioq_tail, tf->tf_ipsw, PSL_BITS);
+#endif
+
 	ksc.sc_mask = mask;
-	ksc.sc_fp = (register_t)scp + sss;
+	ksc.sc_fp = scp + sss;
 	ksc.sc_ps = tf->tf_ipsw;
 	ksc.sc_pcoqh = tf->tf_iioq_head;
 	ksc.sc_pcoqt = tf->tf_iioq_tail;
@@ -1303,16 +1306,17 @@ sendsig(catcher, sig, mask, code, type, val)
 	ksc.sc_regs[31] = tf->tf_r31;
 	bcopy(p->p_addr->u_pcb.pcb_fpregs, ksc.sc_fpregs,
 	    sizeof(ksc.sc_fpregs));
-	if (copyout((caddr_t)&ksc, scp, sizeof(*scp)))
-		sigexit(p, SIGILL);
 
 	sss += HPPA_FRAME_SIZE;
-	zero = 0;
-	if (copyout(&zero, (caddr_t)scp + sss - HPPA_FRAME_SIZE,
-	    sizeof(register_t)) ||
-	    copyout(&zero, (caddr_t)scp + sss + HPPA_FRAME_CRP,
-	    sizeof(register_t)))
-		sigexit(p, SIGILL);
+	tf->tf_arg0 = sig;
+	tf->tf_arg1 = sip;
+	tf->tf_arg2 = tf->tf_r4 = scp;
+	tf->tf_arg3 = (register_t)catcher;
+	tf->tf_sp = scp + sss;
+	tf->tf_ipsw &= ~(PSL_N|PSL_B);
+	tf->tf_iioq_head = HPPA_PC_PRIV_USER | p->p_sigcode;
+	tf->tf_iioq_tail = tf->tf_iioq_head + 4;
+	/* disable tracing in the trapframe */
 
 #ifdef DEBUG
 	if ((sigdebug & SDB_FOLLOW) && (!sigpid || p->p_pid == sigpid))
@@ -1320,15 +1324,19 @@ sendsig(catcher, sig, mask, code, type, val)
 		    p->p_pid, sig, scp, ksc.sc_fp, (register_t)scp + sss);
 #endif
 
-	tf->tf_arg0 = sig;
-	tf->tf_arg1 = (register_t)sip;
-	tf->tf_arg2 = tf->tf_r3 = (register_t)scp;
-	tf->tf_arg3 = (register_t)catcher;
-	tf->tf_sp = (register_t)scp + sss;
-	tf->tf_ipsw &= ~(PSL_B | PSL_N);
-	tf->tf_iioq_head = HPPA_PC_PRIV_USER | p->p_sigcode;
-	tf->tf_iioq_tail = tf->tf_iioq_head + 4;
-	/* disable tracing in the trapframe */
+	if (copyout(&ksc, (void *)scp, sizeof(ksc)))
+		sigexit(p, SIGILL);
+
+	if (sip) {
+		initsiginfo(&ksi, sig, code, type, val);
+		if (copyout(&ksi, (void *)sip, sizeof(ksi)))
+			sigexit(p, SIGILL);
+	}
+
+	zero = 0;
+	if (copyout(&zero, (caddr_t)scp + sss - HPPA_FRAME_SIZE,
+	    sizeof(register_t)))
+		sigexit(p, SIGILL);
 
 #ifdef DEBUG
 	if ((sigdebug & SDB_FOLLOW) && (!sigpid || p->p_pid == sigpid))
@@ -1414,8 +1422,8 @@ sys_sigreturn(p, v, retval)
 	fdcache(HPPA_SID_KERNEL, (vaddr_t)p->p_addr->u_pcb.pcb_fpregs,
 	    sizeof(ksc.sc_fpregs));
 
-	tf->tf_iioq_head = ksc.sc_pcoqh | HPPA_PC_PRIV_USER;
-	tf->tf_iioq_tail = ksc.sc_pcoqt | HPPA_PC_PRIV_USER;
+	tf->tf_iioq_head = ksc.sc_pcoqh;
+	tf->tf_iioq_tail = ksc.sc_pcoqt;
 	tf->tf_ipsw = ksc.sc_ps;
 
 #ifdef DEBUG
