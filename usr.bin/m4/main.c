@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.60 2003/06/30 21:47:21 espie Exp $	*/
+/*	$OpenBSD: main.c,v 1.61 2003/06/30 22:10:21 espie Exp $	*/
 /*	$NetBSD: main.c,v 1.12 1997/02/08 23:54:49 cgd Exp $	*/
 
 /*-
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.60 2003/06/30 21:47:21 espie Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.61 2003/06/30 22:10:21 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -181,6 +181,7 @@ main(int argc, char *argv[])
 		signal(SIGINT, onintr);
 
 	init_trace();
+	init_macros();
 	initkwds();
 	initspaces();
 	STACKMAX = INITSTACKMAX;
@@ -563,7 +564,12 @@ inspect(int c, char *tp)
 		return NULL;
 	}
 
-	return lookup(name);
+	p = lookup(name);
+	if (p == NULL)
+		return NULL;
+	if (macro_getdef(p) == NULL)
+		return NULL;
+	return p;
 }
 
 /*

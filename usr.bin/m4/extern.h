@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.35 2003/06/30 21:47:21 espie Exp $	*/
+/*	$OpenBSD: extern.h,v 1.36 2003/06/30 22:10:21 espie Exp $	*/
 /*	$NetBSD: extern.h,v 1.3 1996/01/13 23:25:24 pk Exp $	*/
 
 /*-
@@ -58,6 +58,7 @@ extern void doesyscmd(const char *);
  
 
 /* look.c */
+extern void	init_macros(void);
 extern ndptr	lookup(const char *);
 
 extern struct macro_definition *lookup_macro_definition(const char *);

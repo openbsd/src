@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdef.h,v 1.26 2003/06/30 21:47:21 espie Exp $	*/
+/*	$OpenBSD: mdef.h,v 1.27 2003/06/30 22:10:21 espie Exp $	*/
 /*	$NetBSD: mdef.h,v 1.7 1996/01/13 23:25:27 pk Exp $	*/
 
 /*
@@ -137,6 +137,7 @@
 typedef struct ndblock *ndptr;
  
 struct macro_definition {
+	struct macro_definition *next;
 	char		*defn;	/* definition..               */
 	unsigned int	type;	/* type of the entry..        */
 };
