@@ -1,9 +1,9 @@
-# $OpenBSD: Makefile,v 1.4 2000/03/29 18:23:46 deraadt Exp $
+# $OpenBSD: Makefile,v 1.5 2001/01/09 02:41:18 angelos Exp $
 
 LIB	= krb
 
 KRBDEPTH=../..
-.include <../../Makefile.inc>
+.include "../../Makefile.inc"
 
 INCLUDE_FILES	= ${KRBSRC}/lib/krb/{krb.h,krb-protos.h,prot.h} krb_err.h
 

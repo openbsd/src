@@ -1,9 +1,9 @@
-# $OpenBSD: Makefile,v 1.2 2000/09/16 18:26:10 rahnds Exp $
+# $OpenBSD: Makefile,v 1.3 2001/01/09 02:41:20 angelos Exp $
 
 PROG	= pagsh
 
 KRBDEPTH=../..
-.include <../../Makefile.inc>
+.include "../../Makefile.inc"
 
 .PATH:	${KRBSRC}/appl/afsutil
 

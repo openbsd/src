@@ -1,9 +1,9 @@
-# $OpenBSD: Makefile,v 1.1 2000/02/25 16:35:26 hin Exp $
+# $OpenBSD: Makefile,v 1.2 2001/01/09 02:41:18 angelos Exp $
 
 LIB	= sl
 
 KRBDEPTH=../..
-.include <../../Makefile.inc>
+.include "../../Makefile.inc"
 
 .PATH:	${KRBSRC}/lib/sl
 

@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.4 2000/11/08 11:15:05 hin Exp $
+# $OpenBSD: Makefile,v 1.5 2001/01/09 02:41:18 angelos Exp $
 
 LIB	= roken
 
@@ -6,7 +6,7 @@ NOPIC=
 NOPROFILE=
 
 KRBDEPTH=../..
-.include <../../Makefile.inc>
+.include "../../Makefile.inc"
 
 .PATH:	${KRBSRC}/lib/roken
 

@@ -1,9 +1,9 @@
-# $OpenBSD: Makefile,v 1.2 2000/03/01 08:55:01 deraadt Exp $
+# $OpenBSD: Makefile,v 1.3 2001/01/09 02:41:19 angelos Exp $
 
 PROG	= kpropd
 
 KRBDEPTH=../..
-.include <../../Makefile.inc>
+.include "../../Makefile.inc"
 
 .PATH:	${KRBSRC}/slave
 

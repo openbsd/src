@@ -1,9 +1,9 @@
-# $OpenBSD: Makefile,v 1.1 2000/02/25 16:35:25 hin Exp $
+# $OpenBSD: Makefile,v 1.2 2001/01/09 02:41:17 angelos Exp $
 
 LIB	= kadm
 
 KRBDEPTH=../..
-.include <../../Makefile.inc>
+.include "../../Makefile.inc"
 
 INCLUDE_FILES	= ${KRBSRC}/lib/kadm/kadm.h kadm_err.h
 

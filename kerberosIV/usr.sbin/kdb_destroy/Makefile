@@ -1,9 +1,9 @@
-# $OpenBSD: Makefile,v 1.1 2000/02/25 16:35:33 hin Exp $
+# $OpenBSD: Makefile,v 1.2 2001/01/09 02:41:21 angelos Exp $
 
 PROG	= kdb_destroy
 
 KRBDEPTH=../..
-.include <../../Makefile.inc>
+.include "../../Makefile.inc"
 
 .PATH:	${KRBSRC}/admin
 
