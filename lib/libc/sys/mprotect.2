@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mprotect.2,v 1.7 1999/06/29 14:10:08 aaron Exp $
+.\"	$OpenBSD: mprotect.2,v 1.8 2001/10/24 14:09:53 jjbg Exp $
 .\"	$NetBSD: mprotect.2,v 1.6 1995/10/12 15:41:08 jtc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -53,6 +53,23 @@ changes the specified pages to have protection
 .Fa prot .
 Not all implementations will guarantee protection on a page basis;
 the granularity of protection changes may be as large as an entire region.
+.Pp
+The protections (region accessibility) are specified in the
+.Fa prot
+argument by
+.Tn OR Ns 'ing
+the following values:
+.Pp
+.Bl -tag -width MAP_FIXEDX
+.It Dv PROT_EXEC
+Pages may be executed.
+.It Dv PROT_READ
+Pages may be read.
+.It Dv PROT_WRITE
+Pages may be written.
+.It Dv PROT_NONE
+No permissions.
+.El
 .Sh RETURN VALUES
 Upon successful completion,
 a value of 0 is returned.

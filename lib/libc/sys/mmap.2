@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mmap.2,v 1.25 2001/09/05 06:23:01 deraadt Exp $
+.\"	$OpenBSD: mmap.2,v 1.26 2001/10/24 14:09:52 jjbg Exp $
 .\"	$NetBSD: mmap.2,v 1.5 1995/06/24 10:48:59 cgd Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -89,6 +89,8 @@ Pages may be executed.
 Pages may be read.
 .It Dv PROT_WRITE
 Pages may be written.
+.It Dv PROT_NONE
+No permissions.
 .El
 .Pp
 The
