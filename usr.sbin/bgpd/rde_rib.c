@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.7 2003/12/25 23:22:13 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.8 2003/12/25 23:41:23 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Claudio Jeker <claudio@openbsd.org>
@@ -948,8 +948,7 @@ nexthop_add(struct rde_aspath *asp)
 		nh = nexthop_get(asp->flags.nexthop.s_addr);
 	if (nh == NULL) {
 		nh = nexthop_alloc();
-		//nh->state = NEXTHOP_LOOKUP;
-		nh->state = NEXTHOP_REACH;
+		nh->state = NEXTHOP_LOOKUP;
 		nh->exit_nexthop = asp->flags.nexthop;
 		LIST_INSERT_HEAD(NEXTHOP_HASH(asp->flags.nexthop.s_addr), nh,
 		    nexthop_l);
