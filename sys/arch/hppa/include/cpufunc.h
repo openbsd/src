@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.h,v 1.11 1999/11/25 18:27:06 mickey Exp $	*/
+/*	$OpenBSD: cpufunc.h,v 1.12 1999/12/18 08:52:05 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -139,6 +139,18 @@ fdcache(pa_space_t sp, vaddr_t va, vsize_t size)
 	mtsp(sp, 1);
 	while (va < eva)
 		__asm __volatile ("fdc,m %1(%%sr1, %0)"
+				  : "+r" (va) : "r" (dcache_stride));
+}
+
+static __inline void
+pdcache(pa_space_t sp, vaddr_t va, vsize_t size)
+{
+	extern int dcache_stride;
+	register vaddr_t eva = (va + size + dcache_stride-1) & ~(dcache_stride-1);
+
+	mtsp(sp, 1);
+	while (va < eva)
+		__asm __volatile ("pdc,m %1(%%sr1, %0)"
 				  : "+r" (va) : "r" (dcache_stride));
 }
 
