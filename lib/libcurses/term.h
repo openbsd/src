@@ -1,4 +1,4 @@
-/*	$OpenBSD: term.h,v 1.1 1998/07/23 21:20:05 millert Exp $	*/
+/*	$OpenBSD: term.h,v 1.2 1998/08/14 23:02:34 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -57,6 +57,16 @@ extern "C" {
  * and BROKEN_LINKER definition (based on the system for which this was configured).
  */
 
+#ifdef __OpenBSD__
+#define BROKEN_LINKER 0
+#define TERMIOS 1
+#define NCURSES_CONST /*nothing*/
+
+#include <termios.h>
+#define TTY struct termios
+
+#else
+
 #ifndef HAVE_TERMIOS_H
 #define HAVE_TERMIOS_H 1
 #endif
@@ -114,6 +124,8 @@ extern "C" {
 #endif /* HAVE_TERMIO_H */
 
 #endif /* HAVE_TERMIOS_H */
+
+#endif /* OpenBSD */
 
 #ifdef TERMIOS
 #define GET_TTY(fd, buf) tcgetattr(fd, buf)

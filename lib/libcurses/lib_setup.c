@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_setup.c,v 1.1 1998/07/23 21:19:24 millert Exp $	*/
+/*	$OpenBSD: lib_setup.c,v 1.2 1998/08/14 23:02:31 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -59,7 +59,7 @@ MODULE_ID("$From: lib_setup.c,v 1.38 1998/04/04 19:08:22 juergen Exp $")
  ****************************************************************************/
 
 #if HAVE_SIZECHANGE
-# if !defined(sun) || !HAVE_TERMIOS_H
+# if !defined(sun) || !TERMIOS
 #  if HAVE_SYS_IOCTL_H
 #   include <sys/ioctl.h>
 #  endif
