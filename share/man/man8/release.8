@@ -1,4 +1,4 @@
-\.\"	$OpenBSD: release.8,v 1.4 2000/07/07 18:40:01 deraadt Exp $
+.\"	$OpenBSD: release.8,v 1.5 2000/07/11 17:04:27 aaron Exp $
 .\"
 .\"	Copyright (c) 2000 Marco S. Hyman
 .\"
@@ -18,41 +18,46 @@
 .Ox
 release
 .Sh DESCRIPTION
-There are several steps necessary to build a system release.   They are
+There are several steps necessary to build a system release.
+They are:
 .Pp
 .Bl -enum -compact
 .It
-Update sources
+Update sources.
 .It
-Build and install a new kernel
+Build and install a new kernel.
 .It
-Build a new system
+Build a new system.
 .It
-Make and validate the system release
+Make and validate the system release.
 .It
-Build and install X11
+Build and install X11.
 .It
-Make and validate the X11 release
+Make and validate the X11 release.
 .It
-Make the third party packages
+Make the third party packages.
 .El
 .Pp
-The following sections describe each of the needed steps in detail.
+The following sections describe each of the required steps in detail.
 .Ss "1. Update sources"
 .Pp
-A release should always start from a known set of
+A
+.Nm
+should always start from a known set of
 .Em coherent
-sources.  The easiest way to ensure that the sources are complete
-and coherent is to check the sources out using the
+sources.
+The easiest way to ensure that the sources are complete and coherent
+is to check them out using the
 .Tn CVS
 tag the
 .Ox
-developers add to the repository prior to making a release.   There
-are two tags, one which identifies the release as it exists on the
+developers add to the repository prior to making a release.
+There are two tags, one which identifies the release as it exists on the
 .Tn CD\-ROM
 and another which identifies the
 .Em stable
-branch.   The
+branch.
+The
 .Em stable
 branch, starting with
 .Ox 2.7 ,
@@ -60,17 +65,18 @@ contains the patches described in
 .Pa http://www.openbsd.org/errata.html .
 The tags are of the form:
 .Bl -tag -width OPENBSD_x_y_BASE
-.It Pa OPENBSD_x_y_BASE
+.It Va OPENBSD_x_y_BASE
 This tag marks the source as it exists on the release
 .Tn CD\-ROM
 where
-.Pa x
+.Ar x
 is the major release number and
-.Pa y
+.Ar y
 is the minor release number.
-.It Pa OPENBSD_x_y
-This tag is a moving target.  It marks the sources that belong to the
-stable branch.   This branch
+.It Va OPENBSD_x_y
+This tag is a moving target.
+It marks the sources that belong to the stable branch.
+This branch
 .Em only
 contains errata, no new features.
 .El
@@ -78,7 +84,7 @@ contains errata, no new features.
 To update your sources to the versions identified by one of the above
 tags use the commands:
 .Pp
-.Bl -bullet -compact -offset indent
+.Bl -bullet -offset indent -compact
 .It
 .Li "cd /usr/src && cvs up -r TAG -Pd"
 .It
@@ -88,14 +94,17 @@ tags use the commands:
 .El
 .Pp
 Replace
-.Pa X11SRC
+.Va X11SRC
 with the path to your
 .Tn X11R6
-sources.  Replace
-$PORTSPATH
+sources.
+Replace
+.Va PORTSPATH
 with the path to your ports tree sources, typically
 .Pa /usr/ports .
-The above command assume an existing source tree.   See
+The above command assume an existing source tree.
+.Pp
+See
 .Pa http://www.openbsd.org/anoncvs.html
 for instructions on fetching the sources for the first time.
 .Bd -offset indent
@@ -110,31 +119,34 @@ for more information.
 .Ss "2. Build and install a new kernel"
 .Pp
 For safety, you should always build and install a new kernel before
-building the programs that will use the kernel.  This ensures that
-any new system calls, for example, will be present when needed.
+building the programs that will use the kernel.
+This ensures that any new system calls, for example, will be present
+when needed.
 To build a kernel the steps are:
 .Pp
-.Bl -bullet -compact -offset indent
+.Bl -bullet -offset indent -compact
 .It
 .Li "cd /sys/arch/${ARCH}/conf"
 .br
 where
 .Va ${ARCH}
-is the architecture of your machine, e.g.
+is the architecture of your machine, e.g.,
 .Li i386 .
 .It
 .Li "vi ${NAME}"
 .br
 where
 .Va ${NAME}
-is your kernel configuration file.   You should
+is your kernel configuration file.
+You should
 .Em not
 edit
 .Li GENERIC ,
 create your own kernel configuration if you need to make modifications.
 If using
 .Li GENERIC
-you can skip this step.  And yes, you may use
+you can skip this step.
+And yes, you may use
 .Li emacs
 or any other editor you choose.
 .It
@@ -161,9 +173,10 @@ If the system does not come up you can boot using
 .Pp
 Now that you are running using your new kernel you can build a new system.
 It's safer (but slower) to remove and re-build your object directories
-and re-building them before the build.   The steps are:
+and re-building them before the build.
+The steps are:
 .Pp
-.Bl -bullet -compact -offset indent
+.Bl -bullet -offset indent -compact
 .It
 .Li "cd /usr/obj && mkdir -p .old && sudo mv * .old && sudo rm -rf .old &"
 .br
@@ -181,7 +194,7 @@ this re-builds your obj directories
 If you have set
 .Xr sudo 8
 up, you can combine this with the previous step using the command
-.Bd -literal -compact -offset indent
+.Bd -literal -offset indent -compact
 nice make SUDO=sudo build
 .Ed
 .It
@@ -203,9 +216,10 @@ and two floppy boot-able file-systems, the release
 .Sq tarballs ,
 installation instructions, and checksum files.
 .Pp
-The release process requires two work areas.  They are:
+The release process requires two work areas.
+They are:
 .Bl -tag -width "RELEASEDIR "
-.It Pa DESTDIR
+.It Va DESTDIR
 This is the name of a directory which will be the root of a a complete
 .Ox
 installation, thus it must be on a disk partition large enough to
@@ -213,19 +227,20 @@ store the entire operating system (less
 .Tn X11R6
 and any third party
 .Sq packages ) .
-The directory can be removed once the release is created.  In any case the
-release process ensures the directory is empty before starting.
-.It Pa RELEASEDIR
-This is the name of a directory where the release output files are
-stored.   The following process will create the directory if necessary.
+The directory can be removed once the release is created.
+In any case the release process ensures the directory is empty before starting.
+.It Va RELEASEDIR
+This is the name of a directory where the release output files are stored.
+The following process will create the directory if necessary.
 .El
 .Pp
 The floppy and
 .Tn CD\-ROM
 .Pa RAMDISK
-images require a special tool which is created first.   The release process
-is:
-.Bl -bullet -compact -offset indent
+images require a special tool which is created first.
+The release process is:
+.Pp
+.Bl -bullet -offset indent -compact
 .It
 .Li su
 .br
@@ -242,9 +257,9 @@ create the special tools needed to build the release
 .Li "mkdir -p ${DESTDIR} ${RELEASEDIR}"
 .br
 these two steps ensure
-.Pa ${DESTDIR}
+.Va ${DESTDIR}
 exists an empty directory and
-.Pa ${RELEASEDIR}
+.Va ${RELEASEDIR}
 exists.
 .It
 .Li "cd /usr/src/etc && nice make release"
@@ -252,7 +267,7 @@ exists.
 .Li "cd /usr/src/distrib/sets && csh checkflist"
 .br
 this checks that the contents of
-.Pa ${DESTDIR}
+.Va ${DESTDIR}
 pretty much match the contents of the release
 .Sq tarballs .
 .It
@@ -261,32 +276,36 @@ pretty much match the contents of the release
 .Pp
 At this point you have most of an
 .Ox
-release.   The only thing missing is
-.Pa X11R6
+release.
+The only thing missing is
+.Va X11R6
 (which is covered in the next section).
 .Ss "5. Build and install X11"
 .Pp
 The
-.Pa X11
+.Va X11
 tree is primarily
-.Pa imake
-based and doesn't contain the
-.Pa obj
+.Xr imake 1 No Ns -based
+and doesn't contain the
+.Dq obj
 directory mechanism that comes with Berkeley
-.Pa make .
+.Xr make 1 .
 While the tree can be built in place, it's better to refrain from
-polluting the cvs sources.  An alternate build location needs to
-be selected, large enough to hold the
+polluting the cvs sources.
+An alternate build location needs to be selected, large enough to hold the
 .Tn X11R6
-object files, libraries, and binaries.  Call this location
-.Pa X11BLD .
-.Pa X11SRC
+object files, libraries, and binaries.
+Call this location
+.Va X11BLD .
+.Va X11SRC
 is the path to your
-.Pa X11R6
-sources.  Once you've selected
-.Pa X11BLD the build process is:
+.Tn X11R6
+sources.
+Once you've selected
+.Va X11BLD
+the build process is:
 .Pp
-.Bl -bullet -compact -offset indent
+.Bl -bullet -offset indent -compact
 .It
 .Li su
 .It
@@ -298,28 +317,29 @@ sources.  Once you've selected
 .El
 .Pp
 Once the build is done you've a new
-.Pa X11R6 ...
-almost.  The install phase of the build does
+.Va X11R6 ...
+almost.
+The install phase of the build does
 .Em not
 overwrite
 .Pa /var/X11/xdm .
 That directory must be installed by hand.
 .Ss "6. Make and validate the X11 release"
 .Pp
-.Pa X11R6
+.Va X11R6
 uses the same
-.Pa DESTDIR
+.Va DESTDIR
 and
-.Pa RELEASEDIR
+.Va RELEASEDIR
 mechanism noted in the section on building a system release, above.
 They may be the same values used above, but be warned that the
 contents of
-.Pa DESTDIR
-will be removed.   The steps to build the release are (assuming you
-are still root, and still in
-.Pa X11BLD ) :
+.Va DESTDIR
+will be removed.
+The steps to build the release are (assuming you are still root, and still in
+.Va X11BLD ) :
 .Pp
-.Bl -bullet -compact -offset indent
+.Bl -bullet -offset indent -compact
 .It
 .Li "export DESTDIR=your-destdir RELEASEDIR=your-releasedir"
 .It
@@ -333,7 +353,7 @@ are still root, and still in
 .El
 .Pp
 At this point you have both system and
-.Pa X11R6
+.Tn X11R6
 .Sq tarballs
 in your release directory.
 .Ss "7. Make the third party packages"
@@ -341,17 +361,17 @@ in your release directory.
 The
 .Sq ports
 sub-system of contributed applications is described in
-.Xr ports 7 .  For ease of installation ports can be pre-compiled
-into
+.Xr ports 7 .
+For ease of installation ports can be pre-compiled into
 .Sq packages
 which can them be installed onto machines using
 .Xr pkg_add 1 .
 Packages are created by:
 .Pp
-.Bl -bullet -compact -offset indent
+.Bl -bullet -offset indent -compact
 .It
 Select an application to build, we'll call it
-.Pa CATEGORY/PORT .
+.Va CATEGORY/PORT .
 .It
 .Li "cd /usr/ports/CATEGORY/PORT"
 .It
@@ -361,20 +381,16 @@ Select an application to build, we'll call it
 .El
 .Pp
 That's all there is to it.
-.\".Sh ENVIRONMENT
-.\".Sh FILES
-.\".Sh EXAMPLES
-.\".Sh DIAGNOSTICS
 .Sh SEE ALSO
 .Xr cvs 1 ,
 .Xr pkg_add 1 ,
 .Xr ports 7 ,
 .Xr sudo 8
-.Sh HISTORY
-This document first appeared just after the release of
-.Ox 2.7 .
 .Sh AUTHORS
 Written by Marco S. Hyman using information gleaned from the various
 .Ox
 mailing lists and e-mail conversions with Theo de Raadt, Niklas Hallqvist,
 Todd T. Fries, and Todd C. Miller.
+.Sh HISTORY
+This document first appeared in
+.Ox 2.8 .
