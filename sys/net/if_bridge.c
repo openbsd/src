@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.49 2001/02/04 18:10:10 jason Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.50 2001/02/06 06:48:08 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -31,11 +31,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "bridge.h"
 #include "bpfilter.h"
 #include "gif.h"
-
-#if NBRIDGE > 0
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -105,7 +102,8 @@
 
 extern int ifqmaxlen;
 
-struct bridge_softc bridgectl[NBRIDGE];
+struct bridge_softc *bridgectl;
+int nbridge;
 
 void	bridgeattach __P((int));
 int	bridge_ioctl __P((struct ifnet *, u_long, caddr_t));
@@ -152,16 +150,19 @@ struct mbuf *bridge_filter __P((struct bridge_softc *, struct ifnet *,
 #endif
 
 void
-bridgeattach(unused)
-	int unused;
+bridgeattach(n)
+	int n;
 {
-	int i;
+	struct bridge_softc *sc;
 	struct ifnet *ifp;
+	int i;
 
-	for (i = 0; i < NBRIDGE; i++) {
-		struct bridge_softc *sc;
-
-		sc = &bridgectl[i];
+	bridgectl = malloc(n * sizeof(*sc), M_DEVBUF, M_NOWAIT);
+	if (!bridgectl)
+		return;
+	nbridge = n;
+	bzero(bridgectl, n * sizeof(*sc));
+	for (sc = bridgectl, i = 0; i < nbridge; i++, sc++) {
 
 		sc->sc_brtmax = BRIDGE_RTABLE_MAX;
 		sc->sc_brttimeout = BRIDGE_RTABLE_TIMEOUT;
@@ -869,7 +870,7 @@ bridgeintr(void)
 	struct mbuf *m;
 	int i, s;
 
-	for (i = 0; i < NBRIDGE; i++) {
+	for (i = 0; i < nbridge; i++) {
 		sc = &bridgectl[i];
 		for (;;) {
 			s = splimp();
@@ -1984,5 +1985,3 @@ dropit:
 	return (NULL);
 }
 #endif
-
-#endif  /* NBRIDGE */
