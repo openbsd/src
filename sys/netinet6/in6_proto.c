@@ -1,4 +1,4 @@
-/* $OpenBSD: in6_proto.c,v 1.10 2000/01/13 04:09:00 angelos Exp $ */
+/* $OpenBSD: in6_proto.c,v 1.11 2000/01/13 04:59:38 angelos Exp $ */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -90,13 +90,9 @@
 #include <netinet/tcp_var.h>
 #include <netinet/udp.h>
 #include <netinet/udp_var.h>
-#include <netinet/ip_ip4.h>
-
-#ifdef IPSEC
 #include <netinet/ip_ipsp.h>
 #include <netinet/ip_ah.h>
 #include <netinet/ip_esp.h>
-#endif /* IPSEC */
 
 #include <netinet6/pim6_var.h>
 
@@ -214,13 +210,13 @@ struct ip6protosw inet6sw[] = {
 #endif /* INET6 */
 #else /* NFIG */
 { SOCK_RAW,     &inet6domain,    IPPROTO_IPV4,  PR_ATOMIC|PR_ADDR,
-  ip4_input,    rip6_output,     0,              rip6_ctloutput,
+  ip4_input6,    rip6_output,     0,              rip6_ctloutput,
   rip6_usrreq,   /* XXX */
   0,            0,              0,              0,              ip4_sysctl
 },
 #ifdef INET6
 { SOCK_RAW,     &inet6domain,    IPPROTO_IPV6,  PR_ATOMIC|PR_ADDR,
-  ip4_input,    rip6_output,     0,              rip6_ctloutput,
+  ip4_input6,    rip6_output,     0,              rip6_ctloutput,
   0,   
   0,            0,              0,              0,
 },
