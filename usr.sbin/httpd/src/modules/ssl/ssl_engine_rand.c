@@ -116,21 +116,15 @@ int ssl_rand_seed(server_rec *s, pool *p, ssl_rsctx_t nCtx, char *prefix)
                 nDone += ssl_rand_feedfp(p, fp, pRandSeed->nBytes);
                 ssl_util_ppclose(s, p, fp);
             }
-#if SSL_LIBRARY_VERSION >= 0x00905100
             else if (pRandSeed->nSrc == SSL_RSSRC_EGD) {
                 /*
                  * seed in contents provided by the external
                  * Entropy Gathering Daemon (EGD)
                  */
-#if SSL_LIBRARY_VERSION >= 0x00906000
                 if ((n = RAND_egd_bytes(pRandSeed->cpPath, pRandSeed->nBytes)) == -1)
-#else
-                if ((n = RAND_egd(pRandSeed->cpPath)) == -1)
-#endif
                     continue;
                 nDone += n;
             }
-#endif
             else if (pRandSeed->nSrc == SSL_RSSRC_BUILTIN) {
                 /*
                  * seed in the current time (usually just 4 bytes)
@@ -170,10 +164,8 @@ int ssl_rand_seed(server_rec *s, pool *p, ssl_rsctx_t nCtx, char *prefix)
     }
     ssl_log(s, SSL_LOG_INFO, "%sSeeding PRNG with %d bytes of entropy", prefix, nDone);
 
-#if SSL_LIBRARY_VERSION >= 0x00905100
     if (RAND_status() == 0)
         ssl_log(s, SSL_LOG_WARN, "%sPRNG still contains insufficient entropy!", prefix);
-#endif
     return nDone;
 }
 

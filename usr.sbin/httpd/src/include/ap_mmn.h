@@ -255,13 +255,9 @@
  * the module structure. See also the code in mod_so for details on loading
  * (we accept both "AP13" and "EAPI").
  */
-#ifdef EAPI
 #define MODULE_MAGIC_COOKIE_AP13 0x41503133UL /* "AP13" */
 #define MODULE_MAGIC_COOKIE_EAPI 0x45415049UL /* "EAPI" */
 #define MODULE_MAGIC_COOKIE      MODULE_MAGIC_COOKIE_EAPI 
-#else
-#define MODULE_MAGIC_COOKIE 0x41503133UL /* "AP13" */
-#endif
 
 #ifndef MODULE_MAGIC_NUMBER_MAJOR
 #define MODULE_MAGIC_NUMBER_MAJOR 19990320

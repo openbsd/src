@@ -72,8 +72,6 @@
 **             the pod2man translater.
 */
 
-#ifdef EAPI
-
 #ifndef AP_HOOK_H
 #define AP_HOOK_H
 
@@ -387,7 +385,6 @@ API_EXPORT(int)           ap_hook_call         (char *hook, ...);
 
 #endif /* AP_HOOK_H */
 
-#endif /* EAPI */
 /*
 =pod
 ##

@@ -81,11 +81,7 @@ API_EXPORT(long) ap_strtol(const char *nptr, char **endptr, int base);
 
 /* small utility macros to make things easier to read */
 
-#ifdef NO_KILLPG
-#define ap_killpg(x, y)		(kill (-(x), (y)))
-#else
 #define ap_killpg(x, y)		(killpg ((x), (y)))
-#endif
 
 /* ap_vformatter() is a generic printf-style formatting routine
  * with some extensions.  The extensions are:

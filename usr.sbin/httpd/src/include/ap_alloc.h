@@ -90,7 +90,6 @@ typedef struct pool ap_pool;
 API_EXPORT(pool *) ap_init_alloc(void);		/* Set up everything */
 void ap_cleanup_alloc(void);
 API_EXPORT(pool *) ap_make_sub_pool(pool *);	/* All pools are subpools of permanent_pool */
-#if defined(EAPI)
 typedef enum { AP_POOL_RD, AP_POOL_RW } ap_pool_lock_mode;
 int ap_shared_pool_possible(void);
 void ap_init_alloc_shared(int);
@@ -98,7 +97,6 @@ void ap_kill_alloc_shared(void);
 API_EXPORT(pool *) ap_make_shared_sub_pool(pool *);
 API_EXPORT(int) ap_acquire_pool(pool *, ap_pool_lock_mode);
 API_EXPORT(int) ap_release_pool(pool *);
-#endif
 API_EXPORT(void) ap_destroy_pool(pool *);
 
 /* pools have nested lifetimes -- sub_pools are destroyed when the

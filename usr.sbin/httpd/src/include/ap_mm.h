@@ -60,8 +60,6 @@
 **
 */
 
-#ifdef EAPI
-
 #ifndef AP_MM_H 
 #define AP_MM_H 1
 
@@ -125,6 +123,3 @@ API_EXPORT(char *)  ap_mm_lib_error_get(void);
 API_EXPORT(int)     ap_mm_lib_version(void);
 
 #endif /* AP_MM_H */
-
-#endif /* EAPI */
-

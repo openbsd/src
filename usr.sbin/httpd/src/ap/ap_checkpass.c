@@ -67,9 +67,6 @@
 #include "ap_md5.h"
 #include "ap_sha1.h"
 #include "ap.h"
-#if HAVE_CRYPT_H
-#include <crypt.h>
-#endif
 
 /*
  * Validate a plaintext password against a smashed one.  Use either

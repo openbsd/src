@@ -67,13 +67,6 @@
 #define MOD_SSL_H 1
 
 /* 
- * Check whether Extended API (EAPI) is enabled
- */
-#ifndef EAPI
-#error "mod_ssl requires Extended API (EAPI)"
-#endif
-
-/* 
  * Optionally enable the experimental stuff, but allow the user to
  * override the decision which experimental parts are included by using
  * CFLAGS="-DSSL_EXPERIMENTAL_xxxx_IGNORE".
@@ -244,10 +237,6 @@
  * Support for file locking: Try to determine whether we should use fcntl() or
  * flock().  Would be better ap_config.h could provide this... :-(
   */
-#if defined(USE_FCNTL_SERIALIZED_ACCEPT)
-#define SSL_USE_FCNTL 1
-#include <fcntl.h>
-#endif
 #if defined(USE_FLOCK_SERIALIZED_ACCEPT)
 #define SSL_USE_FLOCK 1
 #include <sys/file.h>
@@ -266,14 +255,6 @@
  * Support for Mutex
  */
 #define SSL_MUTEX_LOCK_MODE ( S_IRUSR|S_IWUSR )
-#if defined(USE_SYSVSEM_SERIALIZED_ACCEPT) ||\
-    defined(__OpenBSD__) ||\
-    (defined(__FreeBSD__) && defined(__FreeBSD_version) &&\
-     __FreeBSD_version >= 300000) ||\
-    (defined(LINUX) && defined(__GLIBC__) && defined(__GLIBC_MINOR__) &&\
-     LINUX >= 2 && __GLIBC__ >= 2 && __GLIBC_MINOR__ >= 1) ||\
-    defined(SOLARIS2) || defined(__hpux) ||\
-    (defined (__digital__) && defined (__unix__))
 #define SSL_CAN_USE_SEM
 #define SSL_HAVE_IPCSEM
 #include <sys/types.h>
@@ -291,7 +272,6 @@ union ssl_ipc_semun {
     struct semid_ds *buf;
     unsigned short int *array;
 };
-#endif
 
 /*
  * Support for MM library
@@ -340,8 +320,8 @@ union ssl_ipc_semun {
 /*
  * Check for OpenSSL version 
  */
-#if SSL_LIBRARY_VERSION < 0x00903100
-#error "mod_ssl requires OpenSSL 0.9.3 or higher"
+#if SSL_LIBRARY_VERSION < 0x00907000
+#error "mod_ssl requires OpenSSL 0.9.7 or higher"
 #endif
 
 /*
@@ -482,9 +462,7 @@ typedef enum {
     SSL_RSSRC_BUILTIN = 1,
     SSL_RSSRC_FILE    = 2,
     SSL_RSSRC_EXEC    = 3
-#if SSL_LIBRARY_VERSION >= 0x00905100
    ,SSL_RSSRC_EGD     = 4
-#endif
 } ssl_rssrc_t;
 typedef struct {
     ssl_rsctx_t  nCtx;
@@ -689,11 +667,7 @@ int          ssl_callback_SSLVerify_CRL(int, X509_STORE_CTX *, server_rec *);
 int          ssl_callback_NewSessionCacheEntry(SSL *, SSL_SESSION *);
 SSL_SESSION *ssl_callback_GetSessionCacheEntry(SSL *, unsigned char *, int, int *);
 void         ssl_callback_DelSessionCacheEntry(SSL_CTX *, SSL_SESSION *);
-#if SSL_LIBRARY_VERSION >= 0x00907000
 void         ssl_callback_LogTracingState(const SSL *, int, int);
-#else
-void         ssl_callback_LogTracingState(SSL *, int, int);
-#endif
 
 /*  Session Cache Support  */
 void         ssl_scache_init(server_rec *, pool *);

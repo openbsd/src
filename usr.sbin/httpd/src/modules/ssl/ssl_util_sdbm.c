@@ -528,13 +528,8 @@ register long dbit;
 
         db->dirbuf[c % DBLKSIZ] |= (1 << dbit % BYTESIZ);
 
-#if 0
-        if (dbit >= db->maxbno)
-                db->maxbno += DBLKSIZ * BYTESIZ;
-#else
         if (OFF_DIR((dirb+1))*BYTESIZ > db->maxbno) 
                 db->maxbno = OFF_DIR((dirb+1)) * BYTESIZ;
-#endif
 
         if (lseek(db->dirf, OFF_DIR(dirb), SEEK_SET) < 0
             || write(db->dirf, db->dirbuf, DBLKSIZ) < 0)

@@ -264,7 +264,6 @@ typedef struct module_struct {
     void (*child_exit) (server_rec *, pool *);
     int (*post_read_request) (request_rec *);
 
-#ifdef EAPI
     /*
      * ANSI C guarantees us that we can at least _extend_ the module structure
      * with additional hooks without the need to change all existing modules.
@@ -313,7 +312,6 @@ typedef struct module_struct {
     char *(*rewrite_command) (cmd_parms *, void *config, const char *);
     void  (*new_connection) (conn_rec *);
     void  (*close_connection) (conn_rec *);
-#endif /* EAPI */
 } module;
 
 /* Initializer for the first few module slots, which are only

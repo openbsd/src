@@ -73,8 +73,6 @@
                                         * "What you see is all you get."
                                         *     -- Brian Kernighan
                                         */
-#ifdef EAPI
-
 #include "httpd.h"
 #include "ap_mm.h"
 
@@ -174,5 +172,3 @@ API_EXPORT(char *) ap_mm_lib_error_get(void)
     STUB(mm_lib_error_get(), NULL)
 API_EXPORT(int) ap_mm_lib_version(void)
     STUB(mm_lib_version(), 0)
-
-#endif /* EAPI */

@@ -62,19 +62,6 @@ static void stats(FILE *output);
 /* number of buckets in cache hash table */
 #define BUCKETS 256
 
-#if defined(NEED_STRDUP)
-char *strdup (const char *str)
-{
-    char *dup;
-
-    if (!(dup = (char *) malloc(strlen(str) + 1)))
-	return NULL;
-    dup = strlcpy(dup, str, strlen(str) + 1);
-
-    return dup;
-}
-#endif
-
 /*
  * struct nsrec - record of nameservice for cache linked list
  * 

@@ -105,11 +105,7 @@ X509 *SSL_read_X509(FILE *fp, X509 **x509, int (*cb)())
     BIO *bioF;
 
     /* 1. try PEM (= DER+Base64+headers) */
-#if SSL_LIBRARY_VERSION < 0x00904000
-    rc = PEM_read_X509(fp, x509, cb);
-#else
     rc = PEM_read_X509(fp, x509, cb, NULL);
-#endif
     if (rc == NULL) {
         /* 2. try DER+Base64 */
         fseek(fp, 0L, SEEK_SET);
@@ -141,16 +137,6 @@ X509 *SSL_read_X509(FILE *fp, X509 **x509, int (*cb)())
     return rc;
 }
 
-#if SSL_LIBRARY_VERSION <= 0x00904100
-static EVP_PKEY *d2i_PrivateKey_bio(BIO *bio, EVP_PKEY **key)
-{
-     return ((EVP_PKEY *)ASN1_d2i_bio(
-             (char *(*)())EVP_PKEY_new, 
-             (char *(*)())d2i_PrivateKey, 
-             (bio), (unsigned char **)(key)));
-}
-#endif
-
 EVP_PKEY *SSL_read_PrivateKey(FILE *fp, EVP_PKEY **key, int (*cb)())
 {
     EVP_PKEY *rc;
@@ -158,11 +144,7 @@ EVP_PKEY *SSL_read_PrivateKey(FILE *fp, EVP_PKEY **key, int (*cb)())
     BIO *bioF;
 
     /* 1. try PEM (= DER+Base64+headers) */
-#if SSL_LIBRARY_VERSION < 0x00904000
-    rc = PEM_read_PrivateKey(fp, key, cb);
-#else
     rc = PEM_read_PrivateKey(fp, key, cb, NULL);
-#endif
     if (rc == NULL) {
         /* 2. try DER+Base64 */
         fseek(fp, 0L, SEEK_SET);
@@ -409,11 +391,7 @@ BOOL SSL_load_CrtAndKeyInfo_file(pool *p, STACK_OF(X509_INFO) *sk, char *filenam
         return FALSE;
     }
     ERR_clear_error();
-#if SSL_LIBRARY_VERSION < 0x00904000
-    PEM_X509_INFO_read_bio(in, sk, NULL);
-#else
     PEM_X509_INFO_read_bio(in, sk, NULL, NULL);
-#endif
     BIO_free(in);
     return TRUE;
 }
@@ -476,11 +454,7 @@ int SSL_CTX_use_certificate_chain(
     }
     /* optionally skip a leading server certificate */
     if (skipfirst) {
-#if SSL_LIBRARY_VERSION < 0x00904000
-        if ((x509 = PEM_read_bio_X509(bio, NULL, cb)) == NULL) {
-#else
         if ((x509 = PEM_read_bio_X509(bio, NULL, cb, NULL)) == NULL) {
-#endif
             BIO_free(bio);
             return -1;
         }
@@ -493,11 +467,7 @@ int SSL_CTX_use_certificate_chain(
     }
     /* create new extra chain by loading the certs */
     n = 0;
-#if SSL_LIBRARY_VERSION < 0x00904000
-    while ((x509 = PEM_read_bio_X509(bio, NULL, cb)) != NULL) {
-#else
     while ((x509 = PEM_read_bio_X509(bio, NULL, cb, NULL)) != NULL) {
-#endif
         if (!SSL_CTX_add_extra_chain_cert(ctx, x509)) { 
             X509_free(x509);
             BIO_free(bio);

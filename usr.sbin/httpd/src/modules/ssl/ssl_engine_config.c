@@ -404,11 +404,7 @@ const char *ssl_cmd_SSLMutex(
                                       (unsigned long)getpid());
     }
     else if (strcEQ(arg, "sem")) {
-#ifdef SSL_CAN_USE_SEM
         mc->nMutexMode  = SSL_MUTEXMODE_SEM;
-#else
-        return "SSLMutex: Semaphores not available on this platform";
-#endif
     }
     else
         return "SSLMutex: Invalid argument";
@@ -446,7 +442,6 @@ const char *ssl_cmd_SSLCryptoDevice(
     SSLModConfigRec *mc = myModConfig();
     const char *err;
     ENGINE *e;
-#if SSL_LIBRARY_VERSION >= 0x00907000
     static int loaded_engines = FALSE;
 
     /* early loading to make sure the engines are already 
@@ -455,7 +450,6 @@ const char *ssl_cmd_SSLCryptoDevice(
         ENGINE_load_builtin_engines();
         loaded_engines = TRUE;
     }
-#endif
     if ((err = ap_check_cmd_context(cmd, GLOBAL_ONLY)) != NULL)
         return err;
     if (strcEQ(arg, "builtin")) {
@@ -498,12 +492,10 @@ const char *ssl_cmd_SSLRandomSeed(
         pRS->nSrc   = SSL_RSSRC_EXEC;
         pRS->cpPath = ap_pstrdup(mc->pPool, ssl_util_server_root_relative(cmd->pool, "random", arg2+5));
     }
-#if SSL_LIBRARY_VERSION >= 0x00905100
     else if (strlen(arg2) > 4 && strEQn(arg2, "egd:", 4)) {
         pRS->nSrc   = SSL_RSSRC_EGD;
         pRS->cpPath = ap_pstrdup(mc->pPool, ssl_util_server_root_relative(cmd->pool, "random", arg2+4));
     }
-#endif
     else if (strcEQ(arg2, "builtin")) {
         pRS->nSrc   = SSL_RSSRC_BUILTIN;
         pRS->cpPath = NULL;

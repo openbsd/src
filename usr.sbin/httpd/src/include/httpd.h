@@ -70,19 +70,15 @@ extern "C" {
 /* Headers in which EVERYONE has an interest... */
 
 #include "ap_config.h"
-#ifdef EAPI
 #include "ap_mm.h"
-#endif
 #include "ap_alloc.h"
 /*
  * Include the Extended API headers.
  * Don't move the position. It has to be after ap_alloc.h because it uses the
  * pool stuff but before buff.h because the buffer stuff uses the EAPI, too. 
  */
-#ifdef EAPI
 #include "ap_hook.h"
 #include "ap_ctx.h"
-#endif /* EAPI */
 #include "buff.h"
 #include "ap.h"
 
@@ -136,13 +132,8 @@ extern "C" {
 #define DEFAULT_HTTP_PORT	80
 #define DEFAULT_HTTPS_PORT	443
 #define ap_is_default_port(port,r)	((port) == ap_default_port(r))
-#ifdef EAPI
 #define ap_http_method(r)   (((r)->ctx != NULL && ap_ctx_get((r)->ctx, "ap::http::method") != NULL) ? ((char *)ap_ctx_get((r)->ctx, "ap::http::method")) : "http")
 #define ap_default_port(r)  (((r)->ctx != NULL && ap_ctx_get((r)->ctx, "ap::default::port") != NULL) ? atoi((char *)ap_ctx_get((r)->ctx, "ap::default::port")) : DEFAULT_HTTP_PORT)
-#else /* EAPI */
-#define ap_http_method(r)	"http"
-#define ap_default_port(r)	DEFAULT_HTTP_PORT
-#endif /* EAPI */
 
 /* --------- Default user name and group name running standalone ---------- */
 /* --- These may be specified as numbers by placing a # before a number --- */
@@ -334,13 +325,11 @@ extern "C" {
  * Unix only:
  * Path to Shared Memory Files 
  */
-#ifdef EAPI
 #ifndef EAPI_MM_CORE_PATH
 #define EAPI_MM_CORE_PATH "logs/mm"
 #endif
 #ifndef EAPI_MM_CORE_MAXSIZE
 #define EAPI_MM_CORE_MAXSIZE 1024*1024*1 /* max. 1MB */
-#endif
 #endif
 
 /* Number of requests to try to handle in a single process.  If <= 0,
@@ -435,9 +424,7 @@ enum server_token_type {
 API_EXPORT(const char *) ap_get_server_version(void);
 API_EXPORT(void) ap_add_version_component(const char *component);
 API_EXPORT(const char *) ap_get_server_built(void);
-#ifdef EAPI
 API_EXPORT(void) ap_add_config_define(const char *define);
-#endif /* EAPI */
 
 /* Numeric release version identifier: MMNNFFRBB: major minor fix final beta
  * Always increases along the same track as the source branch.
@@ -813,9 +800,7 @@ struct request_rec {
  * binary compatibility for some other reason.
  */
 
-#ifdef EAPI
     ap_ctx *ctx;
-#endif /* EAPI */
 };
 
 
@@ -864,9 +849,7 @@ struct conn_rec {
     char *local_host;		/* used for ap_get_server_name when
 				 * UseCanonicalName is set to DNS
 				 * (ignores setting of HostnameLookups) */
-#ifdef EAPI
     ap_ctx *ctx;
-#endif /* EAPI */
 };
 
 /* Per-vhost config... */
@@ -940,9 +923,7 @@ struct server_rec {
     int limit_req_fieldsize; /* limit on size of any request header field */
     int limit_req_fields;    /* limit on number of request header fields  */
 
-#ifdef EAPI
     ap_ctx *ctx;
-#endif /* EAPI */
 };
 
 /* These are more like real hosts than virtual hosts */
@@ -1066,10 +1047,6 @@ API_EXPORT(int) ap_cfg_getc(configfile_t *cfp);
 /* Detach from open configfile_t, calling the close handler */
 API_EXPORT(int) ap_cfg_closefile(configfile_t *cfp);
 
-#ifdef NEED_STRERROR
-char *strerror(int err);
-#endif
-
 /* Misc system hackery */
 
 API_EXPORT(uid_t) ap_uname2id(const char *name);
@@ -1122,13 +1099,9 @@ extern API_VAR_EXPORT time_t ap_restart_time;
  * never fails.  If the high line was requested and it fails it will also try
  * the low line.
  */
-#ifdef NO_SLACK
-#define ap_slack(fd,line)   (fd)
-#else
 int ap_slack(int fd, int line);
 #define AP_SLACK_LOW	1
 #define AP_SLACK_HIGH	2
-#endif
 
 API_EXPORT(char *) ap_escape_quotes(pool *p, const char *instr);
 

@@ -60,8 +60,6 @@
 **  Written by Ralf S. Engelschall <rse@engelschall.com> 
 */
 
-#ifdef EAPI
-
 #include "httpd.h"
 #include "ap_config.h"
 #include "ap_ctx.h"
@@ -151,5 +149,3 @@ API_EXPORT(ap_ctx *) ap_ctx_overlay(pool *p, ap_ctx *over, ap_ctx *base)
         ap_ctx_set(new, over->cr_entry[i]->ce_key, over->cr_entry[i]->ce_val);
     return new;
 }
-
-#endif /* EAPI */

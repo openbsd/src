@@ -65,14 +65,8 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
-#ifndef NO_WRITEV
 #include <sys/types.h>
 #include <sys/uio.h>
-#endif
-
-#ifdef HAVE_BSTRING_H
-#include <bstring.h>		/* for IRIX, FD_SET calls bzero() */
-#endif
 
 #ifndef DEFAULT_BUFSIZE
 #define DEFAULT_BUFSIZE (4096)
@@ -128,9 +122,7 @@ static int ap_read(BUFF *fb, void *buf, int nbyte)
 {
     int rv;
     
-#ifdef EAPI
 	if (!ap_hook_call("ap::buff::read", &rv, fb, buf, nbyte))
-#endif /* EAPI */
 	rv = read(fb->fd_in, buf, nbyte);
     
     return rv;
@@ -149,9 +141,7 @@ static int ap_write(BUFF *fb, const void *buf, int nbyte)
 {
     int rv;
     
-#ifdef EAPI
 	if (!ap_hook_call("ap::buff::write", &rv, fb, buf, nbyte))
-#endif /* EAPI */
 #if defined (B_SFIO)
 	rv = sfwrite(fb->sf_out, buf, nbyte);
 #else
@@ -232,9 +222,7 @@ API_EXPORT(BUFF *) ap_bcreate(pool *p, int flags)
     fb->callback_data = NULL;
     fb->filter_callback = NULL;
 
-#ifdef EAPI
     fb->ctx = ap_ctx_new(p);
-#endif /* EAPI */
 
     return fb;
 }
@@ -812,7 +800,6 @@ static int write_it_all(BUFF *fb, const void *buf, int nbyte)
 }
 
 
-#ifndef NO_WRITEV
 /* Similar to previous, but uses writev.  Note that it modifies vec.
  * return 0 if successful, -1 otherwise.
  *
@@ -834,9 +821,7 @@ static int writev_it_all(BUFF *fb, struct iovec *vec, int nvec)
     i = 0;
     while (i < nvec) {
 	do
-#ifdef EAPI
 	    if (!ap_hook_call("ap::buff::writev", &rv, fb, &vec[i], nvec -i))
-#endif /* EAPI */
 	    rv = writev(fb->fd, &vec[i], nvec - i);
 	while (rv == -1 && (errno == EINTR || errno == EAGAIN)
 	       && !(fb->flags & B_EOUT));
@@ -865,7 +850,6 @@ static int writev_it_all(BUFF *fb, struct iovec *vec, int nvec)
     /* if we got here, we wrote it all */
     return 0;
 }
-#endif
 
 /* A wrapper for buff_write which deals with error conditions and
  * bytes_sent.  Also handles non-blocking writes.
@@ -904,9 +888,7 @@ static int write_with_errors(BUFF *fb, const void *buf, int nbyte)
 static int bcwrite(BUFF *fb, const void *buf, int nbyte)
 {
     char chunksize[16];		/* Big enough for practically anything */
-#ifndef NO_WRITEV
     struct iovec vec[3];
-#endif
 
     if (fb->flags & (B_WRERR | B_EOUT))
 	return -1;
@@ -915,18 +897,6 @@ static int bcwrite(BUFF *fb, const void *buf, int nbyte)
 	return write_with_errors(fb, buf, nbyte);
     }
 
-#ifdef NO_WRITEV
-    /* without writev() this has poor performance, too bad */
-
-    ap_snprintf(chunksize, sizeof(chunksize), "%x" CRLF, nbyte);
-    if (write_it_all(fb, chunksize, strlen(chunksize)) == -1)
-	return -1;
-    if (write_it_all(fb, buf, nbyte) == -1)
-	return -1;
-    if (write_it_all(fb, ascii_CRLF, 2) == -1)
-	return -1;
-    return nbyte;
-#else
     vec[0].iov_base = chunksize;
     vec[0].iov_len = ap_snprintf(chunksize, sizeof(chunksize), "%x" CRLF,
 				 nbyte);
@@ -936,11 +906,9 @@ static int bcwrite(BUFF *fb, const void *buf, int nbyte)
     vec[2].iov_len = 2;
 
     return writev_it_all(fb, vec, (sizeof(vec) / sizeof(vec[0]))) ? -1 : nbyte;
-#endif
 }
 
 
-#ifndef NO_WRITEV
 /*
  * Used to combine the contents of the fb buffer, and a large buffer
  * passed in.
@@ -988,7 +956,6 @@ static int large_write(BUFF *fb, const void *buf, int nbyte)
     }
     return nbyte;
 }
-#endif
 
 
 /*
@@ -1013,7 +980,6 @@ API_EXPORT(int) ap_bwrite(BUFF *fb, const void *buf, int nbyte)
 	return bcwrite(fb, buf, nbyte);
     }
 
-#ifndef NO_WRITEV
 /*
  * Detect case where we're asked to write a large buffer, and combine our
  * current buffer with it in a single writev().  Note we don't consider
@@ -1025,7 +991,6 @@ API_EXPORT(int) ap_bwrite(BUFF *fb, const void *buf, int nbyte)
 	&& nbyte + fb->outcnt >= fb->bufsiz) {
 	return large_write(fb, buf, nbyte);
     }
-#endif
 
 /*
  * Whilst there is data in the buffer, keep on adding to it and writing it

@@ -105,9 +105,6 @@
 #include "ap_config.h"
 #include "ap_md5.h"
 #include "ap.h"
-#if HAVE_CRYPT_H
-#include <crypt.h>
-#endif
 
 /* Constants for MD5Transform routine.
  */

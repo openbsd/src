@@ -88,11 +88,6 @@
 #include "ap_md5.h"
 #include "ap_sha1.h"
 
-#ifdef HAVE_CRYPT_H
-#include <crypt.h>
-#endif
-
-
 #define LF 10
 #define CR 13
 

@@ -1540,9 +1540,7 @@ int ssl_callback_SSLVerify(int ok, X509_STORE_CTX *ctx)
     if (   (   errnum == X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT
             || errnum == X509_V_ERR_SELF_SIGNED_CERT_IN_CHAIN
             || errnum == X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY
-#if SSL_LIBRARY_VERSION >= 0x00905000
             || errnum == X509_V_ERR_CERT_UNTRUSTED
-#endif
             || errnum == X509_V_ERR_UNABLE_TO_VERIFY_LEAF_SIGNATURE  )
         && verify == SSL_CVERIFY_OPTIONAL_NO_CA                       ) {
         ssl_log(s, SSL_LOG_TRACE,
@@ -1735,17 +1733,9 @@ int ssl_callback_SSLVerify_CRL(
         /*
          * Check if the current certificate is revoked by this CRL
          */
-#if SSL_LIBRARY_VERSION < 0x00904000
-        n = sk_num(X509_CRL_get_REVOKED(crl));
-#else
         n = sk_X509_REVOKED_num(X509_CRL_get_REVOKED(crl));
-#endif
         for (i = 0; i < n; i++) {
-#if SSL_LIBRARY_VERSION < 0x00904000
-            revoked = (X509_REVOKED *)sk_value(X509_CRL_get_REVOKED(crl), i);
-#else
             revoked = sk_X509_REVOKED_value(X509_CRL_get_REVOKED(crl), i);
-#endif
             if (ASN1_INTEGER_cmp(revoked->serialNumber, X509_get_serialNumber(xs)) == 0) {
 
                 serial = ASN1_INTEGER_get(revoked->serialNumber);
@@ -1903,11 +1893,7 @@ void ssl_callback_DelSessionCacheEntry(
  * SSL handshake and does SSL record layer stuff. We use it to
  * trace OpenSSL's processing in out SSL logfile.
  */
-#if SSL_LIBRARY_VERSION >= 0x00907000
 void ssl_callback_LogTracingState(const SSL *ssl, int where, int rc)
-#else
-void ssl_callback_LogTracingState(SSL *ssl, int where, int rc)
-#endif
 {
     conn_rec *c;
     server_rec *s;

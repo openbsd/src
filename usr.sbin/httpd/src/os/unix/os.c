@@ -36,16 +36,7 @@ void ap_os_dso_unload(void *handle)
 
 void *ap_os_dso_sym(void *handle, const char *symname)
 {
-#if defined(DLSYM_NEEDS_UNDERSCORE)
-    char *symbol;
-    void *retval;
-    asprintf(&symbol, "_%s", symname);
-    retval = dlsym(handle, symbol);
-    free(symbol);
-    return retval;
-#else
     return dlsym(handle, symname);
-#endif
 }
 
 const char *ap_os_dso_error(void)

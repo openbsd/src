@@ -178,24 +178,6 @@
  * so as to decrease "struct-bloat". sigh.
  */
 typedef struct {
-#if 0
-    unsigned char division_mask;
-    unsigned int division_offset;
-    unsigned int division_size;
-    unsigned int queue_size;
-    unsigned int index_num;
-    unsigned int index_offset;
-    unsigned int index_size;
-    unsigned int cache_data_offset;
-    unsigned int cache_data_size;
-    unsigned long num_stores;
-    unsigned long num_expiries;
-    unsigned long num_scrolled;
-    unsigned long num_retrieves_hit;
-    unsigned long num_retrieves_miss;
-    unsigned long num_removes_hit;
-    unsigned long num_removes_miss;
-#else
     unsigned long num_stores;
     unsigned long num_expiries;
     unsigned long num_scrolled;
@@ -212,7 +194,6 @@ typedef struct {
     unsigned int index_num;
     unsigned int index_offset;
     unsigned int index_size;
-#endif
 } SHMCBHeader;
 
 /* 
@@ -269,16 +250,6 @@ static void shmcb_set_safe_uint_ex(unsigned char *, const unsigned char *);
 		shmcb_set_safe_uint_ex((unsigned char *)pdest, \
 			(const unsigned char *)(&tmp_uint)); \
 	} while(0)
-#if 0 /* Unused so far */
-static unsigned long shmcb_get_safe_ulong(unsigned long *);
-static void shmcb_set_safe_ulong_ex(unsigned char *, const unsigned char *);
-#define shmcb_set_safe_ulong(pdest, src) \
-	do { \
-		unsigned long tmp_ulong = src; \
-		shmcb_set_safe_ulong_ex((unsigned char *)pdest, \
-			(const unsigned char *)(&tmp_ulong)); \
-	} while(0)
-#endif
 static time_t shmcb_get_safe_time(time_t *);
 static void shmcb_set_safe_time_ex(unsigned char *, const unsigned char *);
 #define shmcb_set_safe_time(pdest, src) \
@@ -342,22 +313,6 @@ static void shmcb_set_safe_uint_ex(unsigned char *dest,
 {
     memcpy(dest, src, sizeof(unsigned int));
 }
-
-#if 0 /* Unused so far */
-static unsigned long shmcb_get_safe_ulong(unsigned long *ptr)
-{
-    unsigned long ret;
-    shmcb_set_safe_ulong_ex((unsigned char *)(&ret),
-		    (const unsigned char *)ptr);
-    return ret;
-}
-
-static void shmcb_set_safe_ulong_ex(unsigned char *dest,
-				const unsigned char *src)
-{
-    memcpy(dest, src, sizeof(unsigned long));
-}
-#endif
 
 static time_t shmcb_get_safe_time(time_t * ptr)
 {

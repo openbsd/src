@@ -100,28 +100,7 @@ extern int ap_os_is_path_absolute(const char *file);
  *  dynamic shared object (DSO) mechanism
  */
 
-#ifdef HAVE_DL_H
-#include <dl.h>
-#endif
-
-/*
- * Do not use native AIX DSO support on releases of AIX prior
- * to 4.3. 
- */
-#ifdef AIX
-#if AIX < 430
-#undef HAVE_DLFCN_H
-#endif
-#endif
-
-#ifdef HAVE_DLFCN_H
 #include <dlfcn.h>
-#else
-void *dlopen(const char *, int);
-int dlclose(void *);
-void *dlsym(void *, const char *);
-const char *dlerror(void);
-#endif
 
 /* probably on an older system that doesn't support RTLD_NOW or RTLD_LAZY.
  * The below define is a lie since we are really doing RTLD_LAZY since the
@@ -133,12 +112,6 @@ const char *dlerror(void);
 
 #ifndef RTLD_GLOBAL
 #define RTLD_GLOBAL 0
-#endif
-
-#if (defined(__FreeBSD__) ||\
-     defined(__OpenBSD__) ||\
-     defined(__NetBSD__)     ) && !defined(__ELF__)
-#define DLSYM_NEEDS_UNDERSCORE
 #endif
 
 #define     ap_os_dso_handle_t  void *

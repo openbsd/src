@@ -145,13 +145,8 @@
      * Small monkey business to ensure that fcntl is preferred,
      * unless we specified USE_FLOCK_SERIALIZED_ACCEPT during compile.
      */
-#if defined(HAVE_FCNTL_SERIALIZED_ACCEPT) && !defined(USE_FLOCK_SERIALIZED_ACCEPT)
-#define USE_FCNTL 1
-#include <fcntl.h>
-#elif defined(HAVE_FLOCK_SERIALIZED_ACCEPT)
 #define USE_FLOCK 1
 #include <sys/file.h>
-#endif
 #if !defined(USE_FCNTL) && !defined(USE_FLOCK)
 #define USE_FLOCK 1
 #include <sys/file.h>

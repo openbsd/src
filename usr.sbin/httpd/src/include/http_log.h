@@ -63,7 +63,6 @@
 extern "C" {
 #endif
 
-#ifdef HAVE_SYSLOG
 #include <syslog.h>
 
 #define APLOG_EMERG     LOG_EMERG     /* system is unusable */
@@ -76,21 +75,6 @@ extern "C" {
 #define APLOG_DEBUG     LOG_DEBUG     /* debug-level messages */
 
 #define APLOG_LEVELMASK LOG_PRIMASK   /* mask off the level value */
-
-#else
-
-#define	APLOG_EMERG	0	/* system is unusable */
-#define	APLOG_ALERT	1	/* action must be taken immediately */
-#define	APLOG_CRIT	2	/* critical conditions */
-#define	APLOG_ERR	3	/* error conditions */
-#define	APLOG_WARNING	4	/* warning conditions */
-#define	APLOG_NOTICE	5	/* normal but significant condition */
-#define	APLOG_INFO	6	/* informational */
-#define	APLOG_DEBUG	7	/* debug-level messages */
-
-#define	APLOG_LEVELMASK	7	/* mask off the level value */
-
-#endif
 
 #define APLOG_NOERRNO		(APLOG_LEVELMASK + 1)
 
@@ -132,24 +116,15 @@ API_EXPORT(void) ap_log_reason(const char *reason, const char *fname,
 
 typedef struct piped_log {
     pool *p;
-#if !defined(NO_RELIABLE_PIPED_LOGS) || defined(TPF)
     char *program;
     int pid;
     int fds[2];
-#else
-    FILE *write_f;
-#endif
 } piped_log;
 
 API_EXPORT(piped_log *) ap_open_piped_log (pool *p, const char *program);
 API_EXPORT(void) ap_close_piped_log (piped_log *);
-#if !defined(NO_RELIABLE_PIPED_LOGS) || defined(TPF)
 #define ap_piped_log_read_fd(pl)	((pl)->fds[0])
 #define ap_piped_log_write_fd(pl)	((pl)->fds[1])
-#else
-#define ap_piped_log_read_fd(pl)	(-1)
-#define ap_piped_log_write_fd(pl)	(fileno((pl)->write_f))
-#endif
 
 #ifdef __cplusplus
 }

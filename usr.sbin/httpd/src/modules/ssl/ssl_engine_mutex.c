@@ -272,15 +272,11 @@ BOOL ssl_mutex_file_release(void)
 
 void ssl_mutex_sem_create(server_rec *s, pool *p)
 {
-#ifdef SSL_CAN_USE_SEM
     int semid;
     SSLModConfigRec *mc = myModConfig();
-#ifdef SSL_HAVE_IPCSEM
     union ssl_ipc_semun semctlarg;
     struct semid_ds semctlbuf;
-#endif
 
-#ifdef SSL_HAVE_IPCSEM
     semid = semget(IPC_PRIVATE, 1, IPC_CREAT|IPC_EXCL|S_IRUSR|S_IWUSR);
     if (semid == -1 && errno == EEXIST)
         semid = semget(IPC_PRIVATE, 1, IPC_EXCL|S_IRUSR|S_IWUSR);
@@ -304,49 +300,28 @@ void ssl_mutex_sem_create(server_rec *s, pool *p)
                 "Parent process could not set permissions for SSLMutex semaphore");
         ssl_die();
     }
-#endif
-#ifdef SSL_HAVE_W32SEM
-    semid = (int)ap_create_mutex("mod_ssl_mutex");
-#endif
     mc->nMutexSEMID = semid;
-#endif
     return;
 }
 
 void ssl_mutex_sem_open(server_rec *s, pool *p)
 {
-#ifdef SSL_CAN_USE_SEM
-#ifdef SSL_HAVE_W32SEM
-    SSLModConfigRec *mc = myModConfig();
-
-    mc->nMutexSEMID = (int)ap_open_mutex("mod_ssl_mutex");
-#endif
-#endif
     return;
 }
 
 void ssl_mutex_sem_remove(void *data)
 {
-#ifdef SSL_CAN_USE_SEM
     SSLModConfigRec *mc = myModConfig();
 
-#ifdef SSL_HAVE_IPCSEM
     semctl(mc->nMutexSEMID, 0, IPC_RMID, 0);
-#endif
-#ifdef SSL_HAVE_W32SEM
-    ap_destroy_mutex((mutex *)mc->nMutexSEMID);
-#endif
-#endif
     return;
 }
 
 BOOL ssl_mutex_sem_acquire(void)
 {
     int rc = 0;
-#ifdef SSL_CAN_USE_SEM
     SSLModConfigRec *mc = myModConfig();
 
-#ifdef SSL_HAVE_IPCSEM
     struct sembuf sb[] = {
         { 0, 0, 0 },       /* wait for semaphore */
         { 0, 1, SEM_UNDO } /* increment semaphore */
@@ -355,11 +330,6 @@ BOOL ssl_mutex_sem_acquire(void)
     while (   (rc = semop(mc->nMutexSEMID, sb, 2)) < 0
            && (errno == EINTR)                        ) 
         ;
-#endif
-#ifdef SSL_HAVE_W32SEM
-    rc = ap_acquire_mutex((mutex *)mc->nMutexSEMID);
-#endif
-#endif
     if (rc != 0)
         return FALSE;
     else
@@ -369,10 +339,8 @@ BOOL ssl_mutex_sem_acquire(void)
 BOOL ssl_mutex_sem_release(void)
 {
     int rc = 0;
-#ifdef SSL_CAN_USE_SEM
     SSLModConfigRec *mc = myModConfig();
 
-#ifdef SSL_HAVE_IPCSEM
     struct sembuf sb[] = {
         { 0, -1, SEM_UNDO } /* decrements semaphore */
     };
@@ -380,11 +348,6 @@ BOOL ssl_mutex_sem_release(void)
     while (   (rc = semop(mc->nMutexSEMID, sb, 1)) < 0 
            && (errno == EINTR)                        ) 
         ;
-#endif
-#ifdef SSL_HAVE_W32SEM
-    rc = ap_release_mutex((mutex *)mc->nMutexSEMID);
-#endif
-#endif
     if (rc != 0)
         return FALSE;
     else

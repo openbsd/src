@@ -926,20 +926,16 @@ API_EXPORT(int) ap_vformatter(int (*flush_func)(ap_vformatter_buff *),
 		/*
 		 * * We use &num_buf[ 1 ], so that we have room for the sign
 		 */
-#ifdef HAVE_ISNAN
 		if (isnan(fp_num)) {
 		    s = "nan";
 		    s_len = 3;
 		}
 		else
-#endif
-#ifdef HAVE_ISINF
 		if (isinf(fp_num)) {
 		    s = "inf";
 		    s_len = 3;
 		}
 		else
-#endif
 		{
 		    s = conv_fp(*fmt, fp_num, alternate_form,
 			    (adjust_precision == NO) ? FLOAT_DIGITS : precision,

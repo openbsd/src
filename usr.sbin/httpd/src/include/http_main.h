@@ -137,7 +137,6 @@ void setup_signal_names(char *prefix);
 char *ap_default_mutex_method(void);
 char *ap_init_mutex_method(char *t);
 
-#ifndef NO_OTHER_CHILD
 /*
  * register an other_child -- a child which the main loop keeps track of
  * and knows it is different than the rest of the scoreboard.
@@ -174,8 +173,6 @@ API_EXPORT(void) ap_register_other_child(int pid,
  * write_fd are possibly killed off separately.
  */
 API_EXPORT(void) ap_unregister_other_child(void *data);
-
-#endif
 
 #ifdef __cplusplus
 }

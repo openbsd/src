@@ -295,24 +295,18 @@ static int ssl_io_suck_read(SSL *ssl, char *buf, int len)
 **  _________________________________________________________________
 */
 
-#ifndef NO_WRITEV
 #include <sys/types.h>
 #include <sys/uio.h>
-#endif
 
 static int ssl_io_hook_read(BUFF *fb, char *buf, int len);
 static int ssl_io_hook_write(BUFF *fb, char *buf, int len);
-#ifndef NO_WRITEV
 static int ssl_io_hook_writev(BUFF *fb, const struct iovec *iov, int iovcnt);
-#endif
 
 void ssl_io_register(void)
 {
     ap_hook_register("ap::buff::read",   ssl_io_hook_read,  AP_HOOK_NOCTX);
     ap_hook_register("ap::buff::write",  ssl_io_hook_write, AP_HOOK_NOCTX);
-#ifndef NO_WRITEV
     ap_hook_register("ap::buff::writev", ssl_io_hook_writev, AP_HOOK_NOCTX);
-#endif
     return;
 }
 
@@ -320,9 +314,7 @@ void ssl_io_unregister(void)
 {
     ap_hook_unregister("ap::buff::read",   ssl_io_hook_read);
     ap_hook_unregister("ap::buff::write",  ssl_io_hook_write);
-#ifndef NO_WRITEV
     ap_hook_unregister("ap::buff::writev", ssl_io_hook_writev);
-#endif
     return;
 }
 
@@ -392,7 +384,6 @@ static int ssl_io_hook_write(BUFF *fb, char *buf, int len)
     return rc;
 }
 
-#ifndef NO_WRITEV
 /* the prototype for our own SSL_writev() */
 static int SSL_writev(SSL *, const struct iovec *, int);
 
@@ -427,7 +418,6 @@ static int ssl_io_hook_writev(BUFF *fb, const struct iovec *iov, int iovcnt)
         rc = writev(fb->fd, iov, iovcnt);
     return rc;
 }
-#endif
 
 
 /*  _________________________________________________________________
@@ -444,7 +434,6 @@ static int ssl_io_hook_writev(BUFF *fb, const struct iovec *iov, int iovcnt)
  * to at least being able to use the write() like interface. But keep in mind
  * that the network I/O performance is not write() like, of course.
  */
-#ifndef NO_WRITEV
 static int SSL_writev(SSL *ssl, const struct iovec *iov, int iovcnt)
 {
     int i;
@@ -461,7 +450,6 @@ static int SSL_writev(SSL *ssl, const struct iovec *iov, int iovcnt)
     }
     return rc;
 }
-#endif
 
 /*  _________________________________________________________________
 **

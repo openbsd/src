@@ -60,8 +60,6 @@
 **  Written by Ralf S. Engelschall <rse@engelschall.com> 
 */
 
-#ifdef EAPI
-
 #ifndef AP_CTX_H
 #define AP_CTX_H
 
@@ -106,5 +104,3 @@ API_EXPORT(void *)  ap_ctx_get(ap_ctx *ctx, char *key);
 API_EXPORT(ap_ctx *)ap_ctx_overlay(pool *p, ap_ctx *over, ap_ctx *base);
 
 #endif /* AP_CTX_H */
-
-#endif /* EAPI */

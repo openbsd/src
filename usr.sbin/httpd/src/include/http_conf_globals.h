@@ -92,9 +92,7 @@ extern int ap_acceptfilter;
 #endif
 extern int ap_dump_settings;
 extern API_VAR_EXPORT int ap_extended_status;
-#ifdef EAPI
 extern API_VAR_EXPORT ap_ctx *ap_global_ctx;
-#endif /* EAPI */
 
 extern API_VAR_EXPORT char *ap_pid_fname;
 extern API_VAR_EXPORT char *ap_scoreboard_fname;

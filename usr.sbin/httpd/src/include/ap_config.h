@@ -1,4 +1,4 @@
-/*	$OpenBSD: ap_config.h,v 1.18 2004/12/02 19:42:46 henning Exp $ */
+/*	$OpenBSD: ap_config.h,v 1.19 2004/12/06 13:14:09 henning Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -134,53 +134,9 @@ stat() properly */
 #endif
 #endif
 #define SINGLE_LISTEN_UNSERIALIZED_ACCEPT
-
-#elif defined(__FreeBSD__) || defined(__bsdi__)
-#if defined(__FreeBSD__)
-#include <osreldate.h>
-#endif
-#define HAVE_GMTOFF 1
-#undef NO_KILLPG
-#undef NO_SETSID
-#define HAVE_MMAP 1
-#define USE_MMAP_SCOREBOARD
-#define USE_MMAP_FILES
-#ifndef DEFAULT_USER
-#define DEFAULT_USER "nobody"
-#endif
-#ifndef DEFAULT_GROUP
-#define DEFAULT_GROUP "nogroup"
-#endif
-#if defined(__bsdi__) || \
-(defined(__FreeBSD_version) && (__FreeBSD_version < 220000))
-typedef quad_t rlim_t;
-#endif
-#define HAVE_FLOCK_SERIALIZED_ACCEPT
-#define SINGLE_LISTEN_UNSERIALIZED_ACCEPT
-#define HAVE_SYSLOG 1
-#define SYS_SIGLIST sys_siglist
-#if (defined(__FreeBSD_version) && (__FreeBSD_version >= 400000))
-#define NET_SIZE_T socklen_t
 #endif
 
-#else
-/* Unknown system - Edit these to match */
-#ifdef BSD
-#define HAVE_GMTOFF 1
-#else
-#undef HAVE_GMTOFF
-#endif
-/* NO_KILLPG is set on systems that don't have killpg */
-#undef NO_KILLPG
-/* NO_SETSID is set on systems that don't have setsid */
-#undef NO_SETSID
-/* NEED_STRDUP is set on stupid systems that don't have strdup. */
-#undef NEED_STRDUP
-#endif
-
-#ifdef HAVE_SYS_PARAM_H
 #include <sys/param.h>
-#endif /* HAVE_SYS_PARAM_H */
 
 /* stuff marked API_EXPORT is part of the API, and intended for use
  * by modules
@@ -246,9 +202,7 @@ typedef quad_t rlim_t;
 #include "ap_ctype.h"
 #include <sys/file.h>
 #include <sys/socket.h>
-#ifdef HAVE_SYS_SELECT_H
 #include <sys/select.h>
-#endif /* HAVE_SYS_SELECT_H */
 #include <netinet/in.h>
 #include <netdb.h>
 #include <sys/ioctl.h>
@@ -268,65 +222,31 @@ typedef quad_t rlim_t;
 #include <errno.h>
 #include <memory.h>
 
-#ifdef NEED_PROCESS_H
-#include <process.h>
-#endif
-
 #if defined(WIN32) || defined(USE_HSREGEX)
 #include "hsregex.h"
 #else
 #include <regex.h>
 #endif
 
-#ifdef HAVE_SYS_RESOURCE_H
 #include <sys/resource.h>
-#endif
-#ifdef USE_MMAP_SCOREBOARD
 #include <sys/mman.h>
-#endif
 #if !defined(MAP_ANON) && defined(MAP_ANONYMOUS)
 #define MAP_ANON MAP_ANONYMOUS
 #endif
 
-#if defined(USE_MMAP_FILES) && (defined(NO_MMAP) || !defined(HAVE_MMAP))
-#undef USE_MMAP_FILES
-#endif
-
-#if defined(USE_MMAP_SCOREBOARD) && (defined(NO_MMAP) || !defined(HAVE_MMAP))
-#undef USE_MMAP_SCOREBOARD
-#endif
-
-#if defined(USE_SHMGET_SCOREBOARD) && (defined(NO_SHMGET) || !defined(HAVE_SHMGET))
-#undef USE_SHMGET_SCOREBOARD
-#endif
-
 /* A USE_FOO_SERIALIZED_ACCEPT implies a HAVE_FOO_SERIALIZED_ACCEPT */
-#if defined(USE_USLOCK_SERIALIZED_ACCEPT) && !defined(HAVE_USLOCK_SERIALIZED_ACCEPT)
-#define HAVE_USLOCK_SERIALIZED_ACCEPT
-#endif
-#if defined(USE_PTHREAD_SERIALIZED_ACCEPT) && !defined(HAVE_PTHREAD_SERIALIZED_ACCEPT)
-#define HAVE_PTHREAD_SERIALIZED_ACCEPT
-#endif
 #if defined(USE_SYSVSEM_SERIALIZED_ACCEPT) && !defined(HAVE_SYSVSEM_SERIALIZED_ACCEPT)
 #define HAVE_SYSVSEM_SERIALIZED_ACCEPT
 #endif
-#if defined(USE_FCNTL_SERIALIZED_ACCEPT) && !defined(HAVE_FCNTL_SERIALIZED_ACCEPT)
-#define HAVE_FCNTL_SERIALIZED_ACCEPT
-#endif
 #if defined(USE_FLOCK_SERIALIZED_ACCEPT) && !defined(HAVE_FLOCK_SERIALIZED_ACCEPT)
 #define HAVE_FLOCK_SERIALIZED_ACCEPT
-#endif
-#if defined(USE_NONE_SERIALIZED_ACCEPT) && !defined(HAVE_NONE_SERIALIZED_ACCEPT)
-#define HAVE_NONE_SERIALIZED_ACCEPT
 #endif
 
 #ifndef LOGNAME_MAX
 #define LOGNAME_MAX 25
 #endif
 
-#ifdef HAVE_UNISTD_H
 #include <unistd.h>
-#endif
 
 #ifndef S_ISLNK
 #define S_ISLNK(m) (((m) & S_IFMT) == S_IFLNK)
@@ -385,11 +305,7 @@ Sigfunc *signal(int signo, Sigfunc * func);
 
 #define ap_accept(_fd, _sa, _ln)	accept(_fd, _sa, _ln)
 
-#ifdef NEED_SIGNAL_INTERRUPT
-#define ap_check_signals()	tpf_process_signals()
-#else
 #define ap_check_signals()
-#endif
 
 #define ap_fdopen(d,m) fdopen((d), (m))
 
@@ -397,47 +313,23 @@ Sigfunc *signal(int signo, Sigfunc * func);
 #define ap_inet_addr inet_addr
 #endif
 
-#ifdef NO_OTHER_CHILD
-#define NO_RELIABLE_PIPED_LOGS
-#endif
-
-/* When the underlying OS doesn't support exec() of scripts which start
- * with a HASHBANG (#!) followed by interpreter name and args, define this.
- */
-#ifdef NEED_HASHBANG_EMUL
-extern int ap_execle(const char *filename, const char *arg,...);
-extern int ap_execve(const char *filename, char * const argv[],
-                     char * const envp[]);
-/* ap_execle() is a wrapper function around ap_execve(). */
-#define execle  ap_execle
-#define execve(path,argv,envp)  ap_execve(path,argv,envp)
-#endif
-
 /* Finding offsets of elements within structures.
  * Taken from the X code... they've sweated portability of this stuff
  * so we don't have to.  Sigh...
  */
 
-#if defined(CRAY) || (defined(__arm) && !defined(LINUX))
+#if defined(__arm)
 #ifdef __STDC__
 #define XtOffset(p_type,field) _Offsetof(p_type,field)
 #else
-#ifdef CRAY2
-#define XtOffset(p_type,field) \
-	(sizeof(int)*((unsigned int)&(((p_type)NULL)->field)))
-
-#else /* !CRAY2 */
-
 #define XtOffset(p_type,field) ((unsigned int)&(((p_type)NULL)->field))
-
-#endif /* !CRAY2 */
 #endif /* __STDC__ */
-#else /* ! (CRAY || __arm) */
+#else /* ! (__arm) */
 
 #define XtOffset(p_type,field) \
 	((long) (((char *) (&(((p_type)NULL)->field))) - ((char *) NULL)))
 
-#endif /* !CRAY */
+#endif /* __arm */
 
 #ifdef offsetof
 #define XtOffsetOf(s_type,field) offsetof(s_type,field)
@@ -476,91 +368,10 @@ extern int ap_execve(const char *filename, char * const argv[],
 #define WCOREDUMP __WCOREDUMP
 #endif
 
-#ifdef SUNOS_LIB_PROTOTYPES
-/* Prototypes needed to get a clean compile with gcc -Wall.
- * Believe it or not, these do have to be declared, at least on SunOS,
- * because they aren't mentioned in the relevant system headers.
- * Sun Quality Software.  Gotta love it.  This section is not 
- * currently (13Nov97) used.
- */
-
-int getopt(int, char **, char *);
-
-int strcasecmp(const char *, const char *);
-int strncasecmp(const char *, const char *, int);
-int toupper(int);
-int tolower(int);
-
-int printf(char *,...);
-int fprintf(FILE *, char *,...);
-int fputs(char *, FILE *);
-int fread(char *, int, int, FILE *);
-int fwrite(char *, int, int, FILE *);
-int fgetc(FILE *);
-char *fgets(char *s, int, FILE*);
-int fflush(FILE *);
-int fclose(FILE *);
-int ungetc(int, FILE *);
-int _filbuf(FILE *);	/* !!! */
-int _flsbuf(unsigned char, FILE *);	/* !!! */
-int sscanf(char *, char *,...);
-void setbuf(FILE *, char *);
-void perror(char *);
-
-time_t time(time_t *);
-int strftime(char *, int, const char *, struct tm *);
-
-int initgroups(char *, int);
-int wait3(int *, int, void *);	/* Close enough for us... */
-int lstat(const char *, struct stat *);
-int stat(const char *, struct stat *);
-int flock(int, int);
-#ifndef NO_KILLPG
-int killpg(int, int);
-#endif
-int socket(int, int, int);
-int setsockopt(int, int, int, const char *, int);
-int listen(int, int);
-int bind(int, struct sockaddr *, int);
-int connect(int, struct sockaddr *, int);
-int accept(int, struct sockaddr *, int *);
-int shutdown(int, int);
-
-int getsockname(int s, struct sockaddr *name, int *namelen);
-int getpeername(int s, struct sockaddr *name, int *namelen);
-int gethostname(char *name, int namelen);
-void syslog(int, char *,...);
-char *mktemp(char *);
-
-int vfprintf(FILE *, const char *, va_list);
-
-#endif /* SUNOS_LIB_PROTOTYPES */
-
 /* The assumption is that when the functions are missing,
  * then there's no matching prototype available either.
  * Declare what is needed exactly as the replacement routines implement it.
  */
-#ifdef NEED_STRDUP
-extern char *strdup (const char *str);
-#endif
-#ifdef NEED_STRCASECMP
-extern int strcasecmp (const char *a, const char *b);
-#endif
-#ifdef NEED_STRNCASECMP
-extern int strncasecmp (const char *a, const char *b, int n);
-#endif
-#ifdef NEED_INITGROUPS
-extern int initgroups(const char *name, gid_t basegid);
-#endif
-#ifdef NEED_WAITPID
-extern int waitpid(pid_t pid, int *statusp, int options);
-#endif
-#ifdef NEED_STRERROR
-extern char *strerror (int err);
-#endif
-#ifdef NEED_DIFFTIME
-extern double difftime(time_t time1, time_t time0);
-#endif
 
 #ifndef ap_wait_t
 #define ap_wait_t int
