@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec.c,v 1.81 2003/10/14 14:29:15 ho Exp $	*/
+/*	$OpenBSD: ipsec.c,v 1.82 2003/11/06 15:50:53 ho Exp $	*/
 /*	$EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	*/
 
 /*
@@ -998,7 +998,7 @@ ipsec_delete_spi_list (struct sockaddr *addr, u_int8_t proto,
         {
 	  LOG_DBG ((LOG_SA, 30, "ipsec_delete_spi_list: "
 		   "could not locate SA (SPI %08x, proto %u)",
-		   spis[i], proto));
+		   ((u_int32_t *)spis)[i], proto));
 	  continue;
 	}
 
