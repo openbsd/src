@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.own.mk,v 1.82 2004/05/18 19:07:32 mickey Exp $
+#	$OpenBSD: bsd.own.mk,v 1.83 2004/06/01 20:43:44 mickey Exp $
 #	$NetBSD: bsd.own.mk,v 1.24 1996/04/13 02:08:09 thorpej Exp $
 
 # Host-specific overrides
@@ -32,9 +32,9 @@ ELF_TOOLCHAIN?=	yes
 .endif
 
 # do the dew
-.if (${MACHINE_ARCH} == "arm" || ${MACHINE_ARCH} == "hppa64" || \
-    ${MACHINE_ARCH} == "x86_64" || ${MACHINE_ARCH} == "sparc64") || \
-    ${MACHINE} == "amd64"
+.if ${MACHINE} == "amd64" || (${MACHINE_ARCH} == "arm" || \
+    ${MACHINE_ARCH} == "hppa" || ${MACHINE_ARCH} == "hppa64" || \
+    ${MACHINE_ARCH} == "sparc64" || ${MACHINE_ARCH} == "x86_64")
 USE_GCC3?=yes
 .else
 USE_GCC3?=no
@@ -112,8 +112,7 @@ STATIC?=	-static
 
 # don't try to generate PIC versions of libraries on machines
 # which don't support PIC.
-.if (${MACHINE_ARCH} == "vax") || (${MACHINE_ARCH} == "hppa") || \
-    (${MACHINE_ARCH} == "m88k")
+.if (${MACHINE_ARCH} == "vax") || (${MACHINE_ARCH} == "m88k")
 NOPIC=
 .endif
 
