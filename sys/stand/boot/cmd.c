@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.34 1997/10/07 07:59:57 mickey Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.35 1997/11/04 20:15:31 weingart Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -522,7 +522,7 @@ ls(name, sb)
 {
 	putchar("-fc-d-b---l-s-w-"[(sb->st_mode & S_IFMT) >> 12]);
 	lsrwx(sb->st_mode >> 6, (sb->st_mode & S_ISUID? "sS" : "x-"));
-	lsrwx(sb->st_mode >> 3, (sb->st_mode & S_ISUID? "sS" : "x-"));
+	lsrwx(sb->st_mode >> 3, (sb->st_mode & S_ISGID? "sS" : "x-"));
 	lsrwx(sb->st_mode     , (sb->st_mode & S_ISTXT? "tT" : "x-"));
 
 	printf (" %u,%u\t%lu\t%s\n", sb->st_uid, sb->st_gid,
