@@ -1,5 +1,5 @@
-/*	$OpenBSD: sa.c,v 1.15 1999/04/20 11:32:21 niklas Exp $	*/
-/*	$EOM: sa.c,v 1.84 1999/04/20 09:49:08 ho Exp $	*/
+/*	$OpenBSD: sa.c,v 1.16 1999/04/27 20:59:46 niklas Exp $	*/
+/*	$EOM: sa.c,v 1.88 1999/04/27 09:42:29 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -62,6 +62,8 @@
 #define MAX_BUCKET_BITS 16
 
 static void sa_dump (char *, struct sa *);
+static void sa_soft_expire (void *);
+static void sa_hard_expire (void *);
 
 static LIST_HEAD (sa_list, sa) *sa_tab;
 
@@ -123,6 +125,7 @@ sa_find (int (*check) (struct sa *, void *), void *arg)
   return 0;
 }
 
+/* Check if SA is an ISAKMP SA with an initiar cookie equal to ICOOKIE.  */
 static int
 sa_check_icookie (struct sa *sa, void *icookie)
 {
@@ -142,6 +145,7 @@ struct name_phase_arg {
   u_int8_t phase;
 };
 
+/* Check if SA has the name and phase given by V_ARG.  */
 static int
 sa_check_name_phase (struct sa *sa, void *v_arg)
 {
@@ -158,6 +162,52 @@ sa_lookup_by_name (char *name, int phase)
   struct name_phase_arg arg = { name, phase };
 
   return sa_find (sa_check_name_phase, &arg);
+}
+
+struct addr_arg
+{
+  struct sockaddr *addr;
+  socklen_t len;
+  int phase;
+  int flags;
+};
+
+/*
+ * Check if SA is ready and has a peer with an address equal the one given
+ * by V_ADDR.  Furthermore if we are searching for a specific phase, check
+ * that too.
+ */
+static int
+sa_check_peer (struct sa *sa, void *v_addr)
+{
+  struct addr_arg *addr = v_addr;
+  struct sockaddr *dst;
+  socklen_t dstlen;
+
+  if (!sa->transport || (sa->flags & SA_FLAG_READY) == 0
+      || (addr->phase && addr->phase != sa->phase))
+    return 0;
+
+  sa->transport->vtbl->get_dst (sa->transport, &dst, &dstlen);
+  return dstlen == addr->len && memcmp (dst, addr->addr, dstlen) == 0;
+}
+
+/* Lookup a ready SA by the peer's address.  */
+struct sa *
+sa_lookup_by_peer (struct sockaddr *dst, socklen_t dstlen)
+{
+  struct addr_arg arg = { dst, dstlen, 0 };
+
+  return sa_find (sa_check_peer, &arg);
+}
+
+/* Lookup a ready ISAKMP SA given its peer address.  */
+struct sa *
+sa_isakmp_lookup_by_peer (struct sockaddr *dst, socklen_t dstlen)
+{
+  struct addr_arg arg = { dst, dstlen, 1 };
+
+  return sa_find (sa_check_peer, &arg);
 }
 
 int
@@ -244,7 +294,7 @@ sa_lookup (u_int8_t *cookies, u_int8_t *message_id)
   return sa;
 }
 
-/* Create a SA.  */
+/* Create an SA.  */
 int
 sa_create (struct exchange *exchange, struct transport *t)
 {
@@ -293,6 +343,10 @@ sa_create (struct exchange *exchange, struct transport *t)
   return 0;
 }
 
+/*
+ * Dump the internal state of SA to the report channel, with HEADER
+ * prepended to each line.
+ */
 static void
 sa_dump (char *header, struct sa *sa)
 {
@@ -328,6 +382,7 @@ sa_dump (char *header, struct sa *sa)
     }
 }
 
+/* Report all the SAs to the report channel.  */
 void
 sa_report (void)
 {
@@ -339,6 +394,7 @@ sa_report (void)
       sa_dump ("sa_report", sa);
 }
 
+/* Free the protocol structure pointed to by PROTO.  */
 void
 proto_free (struct proto *proto)
 {
@@ -381,11 +437,6 @@ sa_free (struct sa *sa)
 void
 sa_free_aux (struct sa *sa)
 {
-  if (sa->last_sent_in_setup)
-    {
-      exchange_release (sa->last_sent_in_setup->exchange);
-      message_free (sa->last_sent_in_setup);
-    }
   LIST_REMOVE (sa, link);
   log_debug (LOG_SA, 70, "sa_free_aux: SA %p removed from SA list", sa);
   sa_release (sa);
@@ -532,30 +583,6 @@ sa_add_transform (struct sa *sa, struct payload *xf, int initiator,
   return -1;
 }
 
-/* Lookup an ISAKMP SA given its peer address.  */
-struct sa *
-sa_isakmp_lookup_by_peer (struct sockaddr *addr, size_t addr_len)
-{
-  int i;
-  struct sa *sa;
-  struct sockaddr *taddr;
-  int taddr_len;
-
-  for (i = 0; i <= bucket_mask; i++)
-    for (sa = LIST_FIRST (&sa_tab[i]); sa; sa = LIST_NEXT (sa, link))
-      /*
-       * XXX We check the transport because it can be NULL until we fix
-       * the initiator case to set the transport always.
-       */
-      if (sa->phase == 1 && (sa->flags & SA_FLAG_READY) && sa->transport)
-	{
-	  sa->transport->vtbl->get_dst (sa->transport, &taddr, &taddr_len);
-	  if (taddr_len == addr_len && memcmp (taddr, addr, addr_len) == 0)
-	    return sa;
-	}
-  return 0;
-}
-
 /* Delete an SA.  Tell the peer if NOTIFY is set.  */
 void
 sa_delete (struct sa *sa, int notify)
@@ -568,9 +595,10 @@ sa_delete (struct sa *sa, int notify)
 /*
  * This function will get called when we are closing in on the death time of SA
  */
-void
-sa_soft_expire (struct sa *sa)
+static void
+sa_soft_expire (void *v_sa)
 {
+  struct sa *sa = v_sa;
   sa->soft_death = 0;
 
   if ((sa->flags & (SA_FLAG_STAYALIVE | SA_FLAG_REPLACED))
@@ -585,9 +613,10 @@ sa_soft_expire (struct sa *sa)
 }
 
 /* SA has passed its best before date.  */
-void
-sa_hard_expire (struct sa *sa)
+static void
+sa_hard_expire (void *v_sa)
 {
+  struct sa *sa = v_sa;
   sa->death = 0;
 
   if ((sa->flags & (SA_FLAG_STAYALIVE | SA_FLAG_REPLACED))
@@ -625,4 +654,53 @@ sa_mark_replaced (struct sa *sa)
 {
   log_debug (LOG_SA, 60, "sa_mark_replaced: SA %p marked as replaced", sa);
   sa->flags |= SA_FLAG_REPLACED;
+}
+
+/*
+ * Setup expiration timers for SA.  This is used for ISAKMP SAs, but also
+ * possible to use for application SAs if the application does not deal
+ * with expirations itself.  An example is the Linux FreeS/WAN KLIPS IPsec
+ * stack.
+ */
+int
+sa_setup_expirations (struct sa *sa)
+{
+  u_int64_t seconds;
+  struct timeval expiration;
+
+  /* 
+   * Decrease lifetime by random 0-5% to break strictly synchronized
+   * renegotiations. Works better when the randomization is of the
+   * order of processing plus network-roundtrip times, or larger.
+   * I.e depends on configuration and negotiated lifetimes.
+   * XXX Better scheme to come?
+   */
+  seconds = sa->seconds * (950 + sysdep_random () % 51) / 1000;
+
+  log_debug (LOG_TIMER, 95,
+	     "sa_setup_expirations: SA lifetime reset from %qd to %qd seconds",
+	     sa->seconds, seconds);
+
+  gettimeofday (&expiration, 0);
+  expiration.tv_sec += seconds * 9 / 10;
+  sa->soft_death
+    = timer_add_event ("sa_soft_expire", sa_soft_expire, sa, &expiration);
+  if (!sa->soft_death)
+    {
+      /* If we don't give up we might start leaking... */
+      sa_delete (sa, 1);
+      return -1;
+    }
+
+  gettimeofday(&expiration, 0);
+  expiration.tv_sec += seconds;
+  sa->death
+    = timer_add_event ("sa_hard_expire", sa_hard_expire, sa, &expiration);
+  if (!sa->death)
+    {
+      /* If we don't give up we might start leaking... */
+      sa_delete (sa, 1);
+      return -1;
+    }
+  return 0;
 }

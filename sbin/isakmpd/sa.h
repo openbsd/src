@@ -1,5 +1,5 @@
-/*	$OpenBSD: sa.h,v 1.11 1999/04/19 19:59:28 niklas Exp $	*/
-/*	$EOM: sa.h,v 1.47 1999/04/13 14:22:58 niklas Exp $	*/
+/*	$OpenBSD: sa.h,v 1.12 1999/04/27 20:59:47 niklas Exp $	*/
+/*	$EOM: sa.h,v 1.51 1999/04/27 09:42:30 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -101,7 +101,7 @@ struct sa {
   /* A name of the major policy deciding offers and acceptable proposals.  */
   char *name;
 
-  /* What transport does this SA denote (ISAKMP SA only).  */
+  /* The transport this SA got negotiated over.  */
   struct transport *transport;
 
   /* Both initiator and responder cookies.  */
@@ -122,9 +122,6 @@ struct sa {
   /* A reference counter for this structure.  */
   u_int8_t refcnt;
 
-  /* Save last message from setup, which can be retransmitted for dups */
-  struct message *last_sent_in_setup;
-  
   /* Various flags, look below for descriptions.  */
   u_int32_t flags;
 
@@ -173,17 +170,17 @@ extern int sa_flag (char *);
 extern void sa_free (struct sa *);
 extern void sa_free_aux (struct sa *);
 extern void sa_init (void);
-extern struct sa *sa_isakmp_lookup_by_peer (struct sockaddr *, size_t addr);
+extern struct sa *sa_isakmp_lookup_by_peer (struct sockaddr *, socklen_t);
 extern void sa_isakmp_upgrade (struct message *);
 extern struct sa *sa_lookup (u_int8_t *, u_int8_t *);
+extern struct sa *sa_lookup_by_peer (struct sockaddr *, socklen_t);
 extern struct sa *sa_lookup_by_header (u_int8_t *, int);
 extern struct sa *sa_lookup_by_name (char *, int);
 extern struct sa *sa_lookup_from_icookie (u_int8_t *);
 extern void sa_mark_replaced (struct sa *);
 extern void sa_reference (struct sa *);
 extern void sa_release (struct sa *);
-extern void sa_soft_expire (struct sa *);
-extern void sa_hard_expire (struct sa *);
 extern void sa_report (void);
+extern int sa_setup_expirations (struct sa *);
 
 #endif /* _SA_H_ */
