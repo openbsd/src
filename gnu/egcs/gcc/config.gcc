@@ -319,6 +319,12 @@ arm*-*-netbsd*)
 	tmake_file="t-netbsd arm/t-netbsd"
 use_collect2=yes
 	;;
+arm*-*-openbsd*)
+	tm_file="${tm_file} exec-stack.h"
+	xm_file="arm/xm-openbsd.h ${xm_file}"
+	tmake_file="t-libc-ok t-openbsd arm/t-openbsd"
+	use_collect2=yes
+	;;
 arm*-*-linux-gnuaout*)		# ARM GNU/Linux with a.out
 	cpu_type=arm
 	xmake_file=x-linux
