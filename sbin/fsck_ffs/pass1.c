@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass1.c,v 1.7 1999/03/01 07:45:17 d Exp $	*/
+/*	$OpenBSD: pass1.c,v 1.8 2001/03/02 08:33:55 art Exp $	*/
 /*	$NetBSD: pass1.c,v 1.16 1996/09/27 22:45:15 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pass1.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: pass1.c,v 1.7 1999/03/01 07:45:17 d Exp $";
+static char rcsid[] = "$OpenBSD: pass1.c,v 1.8 2001/03/02 08:33:55 art Exp $";
 #endif
 #endif /* not lint */
 
@@ -230,8 +230,10 @@ checkinode(inumber, idesc)
 		zlnp = (struct zlncnt *)malloc(sizeof *zlnp);
 		if (zlnp == NULL) {
 			pfatal("LINK COUNT TABLE OVERFLOW");
-			if (reply("CONTINUE") == 0)
+			if (reply("CONTINUE") == 0) {
+				ckfini(0);
 				errexit("%s", "");
+			}
 		} else {
 			zlnp->zlncnt = inumber;
 			zlnp->next = zlnhead;
@@ -300,8 +302,10 @@ pass1check(idesc)
 				idesc->id_number);
 			if (preen)
 				printf(" (SKIPPING)\n");
-			else if (reply("CONTINUE") == 0)
+			else if (reply("CONTINUE") == 0) {
+				ckfini(0);
 				errexit("%s", "");
+			}
 			return (STOP);
 		}
 	}
@@ -318,15 +322,19 @@ pass1check(idesc)
 					idesc->id_number);
 				if (preen)
 					printf(" (SKIPPING)\n");
-				else if (reply("CONTINUE") == 0)
+				else if (reply("CONTINUE") == 0) {
+					ckfini(0);
 					errexit("%s", "");
+				}
 				return (STOP);
 			}
 			new = (struct dups *)malloc(sizeof(struct dups));
 			if (new == NULL) {
 				pfatal("DUP TABLE OVERFLOW.");
-				if (reply("CONTINUE") == 0)
+				if (reply("CONTINUE") == 0) {
+					ckfini(0);
 					errexit("%s", "");
+				}
 				return (STOP);
 			}
 			new->dup = blkno;
