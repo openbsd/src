@@ -1,4 +1,4 @@
-# $OpenBSD: PackingElement.pm,v 1.13 2004/07/22 22:23:26 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.14 2004/08/02 12:08:25 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -441,13 +441,21 @@ sub new
 {
 	my ($class, $args) = @_;
 	my ($name, $pattern, $def) = split /\:/, $args;
-	bless { name => $name, pattern => $pattern, def => $def }, $class;
+	my $self = bless { pattern => $pattern, def => $def }, $class;
+	# very old packages still work
+	if ($name =~ m|/|) {
+		$self->{pkgpath} = $name;
+	} else {
+		$self->{name} = $name;
+	}
+	return $self;
 }
 
 sub stringize($)
 {
 	my $self = $_[0];
-	return $self->{name}.':'.$self->{pattern}.':'.$self->{def};
+	return (defined $self->{name} ? $self->{name} : $self->{pkgpath}).
+	    ':'.$self->{pattern}.':'.$self->{def};
 }
 
 package OpenBSD::PackingElement::LibDepend;
@@ -462,15 +470,22 @@ sub new
 {
 	my ($class, $args) = @_;
 	my ($name, $libspec, $pattern, $def)  = split /\:/, $args;
-	bless { name => $name, libspec => $libspec, pattern => $pattern, 
+	my $self = bless { libspec => $libspec, pattern => $pattern, 
 	    def => $def }, $class;
+	# very old packages still work
+	if ($name =~ m|/|) {
+		$self->{pkgpath} = $name;
+	} else {
+		$self->{name} = $name;
+	}
+	return $self;
 }
 
 sub stringize($)
 {
 	my $self = $_[0];
-	return $self->{name}.':'.$self->{libspec}.':'.$self->{pattern}.
-	    ':'.$self->{def};
+	return (defined $self->{name} ? $self->{name} : $self->{pkgpath}).
+	    ':'.$self->{libspec}.':'.$self->{pattern}.':'.$self->{def};
 }
 
 package OpenBSD::PackingElement::Unique;

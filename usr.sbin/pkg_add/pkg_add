@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.35 2004/07/20 18:58:41 espie Exp $
+# $OpenBSD: pkg_add,v 1.36 2004/08/02 12:08:25 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -299,7 +299,7 @@ sub solve_dependencies
 		push(@$to_register, $dep->{name});
 	}
 	for my $dep (@{$plist->{newdepend}}, @{$plist->{libdepend}}) {
-	    next if $dep->{name} ne $plist->pkgname();
+	    next if defined $dep->{name} and $dep->{name} ne $plist->pkgname();
 	    my @candidates = OpenBSD::PackageName::pkgspec_match($dep->{pattern}, installed_packages());
 	    if (@candidates >= 1) {
 		    push(@$to_register, $candidates[0]);
@@ -629,7 +629,7 @@ while (my $pkg = shift @todo) {
 	}
 	for my $dep (@{$plist->{libdepend}}) {
 		# can't check libspecs yet
-		next if $dep->{name} ne $plist->pkgname();
+		next if defined $dep->{name} and $dep->{name} ne $plist->pkgname();
 		if (!check_lib_specs($plist->pkgbase(), $dep->{libspec})) {
 			print "Can't install $pkg: incorrect libspec: ",
 			    $dep->{libspec}, "\n";
