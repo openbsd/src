@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.6 1997/01/16 03:57:31 millert Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.7 1997/04/06 20:19:22 millert Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-static char *rcsid = "$OpenBSD: sysctl.c,v 1.6 1997/01/16 03:57:31 millert Exp $";
+static char *rcsid = "$OpenBSD: sysctl.c,v 1.7 1997/04/06 20:19:22 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -216,12 +216,12 @@ parse(string, flags)
 	char *string;
 	int flags;
 {
-	int indx, type, state, len;
+	int indx, type, state;
 	int special = 0;
 	void *newval = 0;
 	int intval, newsize = 0;
 	quad_t quadval;
-	size_t size;
+	size_t size, len;
 	struct list *lp;
 	int mib[CTL_MAXNAME];
 	char *cp, *bufp, buf[BUFSIZ];
