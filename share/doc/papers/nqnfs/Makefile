@@ -1,4 +1,5 @@
-#	@(#)Makefile	8.1 (Berkeley) 4/20/94
+#	$OpenBSD: Makefile,v 1.2 2001/02/03 08:14:59 niklas Exp $
+
 
 DIR=	papers/nqnfs
 SRCS=	nqnfs.me

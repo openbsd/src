@@ -1,3 +1,5 @@
+.\"	$OpenBSD: mdoc.template,v 1.6 2001/02/03 08:22:44 niklas Exp $
+.\"
 .\" The following requests are required for all man pages.
 .Dd Month DD, YYYY
 .Dt NAME SECTION#

@@ -1,3 +1,5 @@
+#	$OpenBSD: systemv,v 1.4 2001/02/03 08:25:18 niklas Exp $
+
 # @(#)systemv	7.2
 
 # Old rules, should the need arise.

@@ -1,4 +1,5 @@
-#	@(#)Makefile	8.2 (Berkeley) 4/20/94
+#	$OpenBSD: Makefile,v 1.3 2001/02/03 08:15:10 niklas Exp $
+
 
 # The following modules do not build/install:
 # 08.mh

@@ -1,3 +1,5 @@
+.\"	$OpenBSD: 5.t,v 1.2 2001/02/03 08:15:07 niklas Exp $
+.\"
 .\" Copyright (c) 1980, 1986, 1988, 1993 The Regents of the University of California.
 .\" All rights reserved.
 .\"

@@ -1,3 +1,5 @@
+#	$OpenBSD: backward,v 1.8 2001/02/03 08:25:17 niklas Exp $
+
 # @(#)backward	7.17
 
 # This file provides links between current names for time zones

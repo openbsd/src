@@ -1,3 +1,5 @@
+#	$OpenBSD: iso3166.tab,v 1.4 2001/02/03 08:25:17 niklas Exp $
+
 # ISO 3166 2-letter country codes
 #
 # @(#)iso3166.tab	1.7

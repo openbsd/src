@@ -1,3 +1,5 @@
+.\"	$OpenBSD: appendix.t,v 1.2 2001/02/03 08:14:57 niklas Exp $
+.\"
 .\" Copyright (c) 1988 The Regents of the University of California.
 .\" All rights reserved.
 .\"

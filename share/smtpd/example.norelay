@@ -1,3 +1,5 @@
+#	$OpenBSD: example.norelay,v 1.2 2001/02/03 08:23:45 niklas Exp $
+
 # A simple anti-relay only example. Make sure you don't get used as a third
 # party relay to spam other unfortunate people and grind your server
 # to a halt dealing with the complaints. 

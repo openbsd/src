@@ -1,3 +1,5 @@
+#	$OpenBSD: zone.tab,v 1.6 2001/02/03 08:25:18 niklas Exp $
+
 # @(#)zone.tab	1.19
 #
 # TZ zone descriptions

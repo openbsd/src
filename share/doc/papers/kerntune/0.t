@@ -1,3 +1,5 @@
+.\"	$OpenBSD: 0.t,v 1.2 2001/02/03 08:14:58 niklas Exp $
+.\"
 .\" Copyright (c) 1984 M. K. McKusick
 .\" Copyright (c) 1984 The Regents of the University of California.
 .\" All rights reserved.

@@ -1,3 +1,5 @@
+.\"	$OpenBSD: beyond43.ms,v 1.2 2001/02/03 08:14:56 niklas Exp $
+.\"
 .\" Copyright (c) 1989 The Regents of the University of California.
 .\" All rights reserved.
 .\"

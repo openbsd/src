@@ -1,4 +1,5 @@
-#	@(#)Makefile	8.1 (Berkeley) 6/8/93
+#	$OpenBSD: Makefile,v 1.3 2001/02/03 08:15:02 niklas Exp $
+
 
 # The following modules do not build/install:
 # 10.gdb, 13.rcs

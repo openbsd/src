@@ -1,4 +1,6 @@
 #! /bin/sh
+#	$OpenBSD: yearistype.sh,v 1.6 2001/02/03 08:25:18 niklas Exp $
+
 
 : '@(#)yearistype.sh	7.6'
 
