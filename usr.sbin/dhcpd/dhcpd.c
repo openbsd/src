@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.c,v 1.7 2004/04/14 04:13:58 henning Exp $ */
+/*	$OpenBSD: dhcpd.c,v 1.8 2004/04/14 04:21:32 henning Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@cvs.openbsd.org>
@@ -87,7 +87,7 @@ main(int argc, char *argv[])
 		case 'p':
 			status = atoi(optarg);
 			if (status < 1 || status > 65535)
-				error ("%s: not a valid UDP port", optarg);
+				error("%s: not a valid UDP port", optarg);
 			local_port = htons(status);
 			break;
 		case 'q':
@@ -130,44 +130,31 @@ main(int argc, char *argv[])
 		if (!ent)
 			local_port = htons (67);
 		else
-			local_port = ent -> s_port;
-		endservent ();
+			local_port = ent->s_port;
+		endservent();
 	}
-  
+
 	remote_port = htons(ntohs(local_port) + 1);
-
-	/* Get the current time... */
 	time(&cur_time);
-
-	/* Read the dhcpd.conf file... */
 	if (!readconf ())
-		error ("Configuration file errors encountered -- exiting");
+		error("Configuration file errors encountered -- exiting");
 
-        /* test option should cause an early exit */
- 	if (cftest) 
- 		exit(0);
+	if (cftest)
+		exit(0);
 
-	/* Start up the database... */
 	db_startup();
-
-	/* Discover all the network interfaces and initialize them. */
 	discover_interfaces(DISCOVER_SERVER);
-
-	/* Initialize icmp support... */
 	icmp_startup(1, lease_pinged);
 
 	log_perror = 0;
 	if (daemonize)
 		daemon(0, 0);
 
-	/* Set up the bootp packet handler... */
 	bootp_packet_handler = do_packet;
-
-	/* Receive packets and dispatch them... */
 	dispatch();
 
-	/* Not reached */
-	return (0);
+	/* not reached */
+	exit(0);
 }
 
 void
@@ -176,35 +163,35 @@ usage(void)
 	extern char *__progname;
 
 	fprintf(stderr, "usage: %s [-df] [-p <port>] [-c config-file]",
-	   __progname);
+	    __progname);
 	fprintf(stderr, " [-l lease-file] [if0 [...ifN]]\n");
 	exit(1);
 }
 
-void lease_pinged (from, packet, length)
-	struct iaddr from;
-	u_int8_t *packet;
-	int length;
+void
+lease_pinged(struct iaddr from, u_int8_t *packet, int length)
 {
-	struct lease *lp;
+	struct lease	*lp;
 
-	/* Don't try to look up a pinged lease if we aren't trying to
-	   ping one - otherwise somebody could easily make us churn by
-	   just forging repeated ICMP EchoReply packets for us to look
-	   up. */
+	/*
+	 * Don't try to look up a pinged lease if we aren't trying to
+	 * ping one - otherwise somebody could easily make us churn by
+	 * just forging repeated ICMP EchoReply packets for us to look
+	 * up.
+	 */
 	if (!outstanding_pings)
 		return;
 
-	lp = find_lease_by_ip_addr (from);
+	lp = find_lease_by_ip_addr(from);
 
 	if (!lp) {
-		note ("unexpected ICMP Echo Reply from %s", piaddr (from));
+		note("unexpected ICMP Echo Reply from %s", piaddr(from));
 		return;
 	}
 
-	if (!lp -> state && ! lp -> releasing) {
-		warn ("ICMP Echo Reply for %s arrived late or is spurious.",
-		      piaddr (from));
+	if (!lp->state && ! lp->releasing) {
+		warn("ICMP Echo Reply for %s arrived late or is spurious.",
+		    piaddr(from));
 		return;
 	}
 
@@ -213,35 +200,33 @@ void lease_pinged (from, packet, length)
 	 * if it did it's either one of two two cases:
 	 * 1 - we pinged this lease before offering it and
 	 *     something answered, so we abandon it.
-	 * 2 - we pinged this lease before releaseing it 
+	 * 2 - we pinged this lease before releasing it 
 	 *     and something answered, so we don't release it.
 	 */
-	if (lp -> releasing) {
-		warn ("IP address %s answers a ping after sending a release",
-		      piaddr (lp -> ip_addr));
-		warn ("Possible release spoof - Not releasing address %s",
-		      piaddr (lp -> ip_addr));
-		lp -> releasing = 0;
+	if (lp->releasing) {
+		warn("IP address %s answers a ping after sending a release",
+		    piaddr(lp->ip_addr));
+		warn("Possible release spoof - Not releasing address %s",
+		    piaddr(lp->ip_addr));
+		lp->releasing = 0;
+	} else {
+		free_lease_state(lp->state, "lease_pinged");
+		lp->state = NULL;
+		abandon_lease(lp, "pinged before offer");
 	}
-	else {
-		free_lease_state (lp -> state, "lease_pinged");
-		lp -> state = (struct lease_state *)0;
-		abandon_lease (lp, "pinged before offer");
-	}
-	cancel_timeout (lease_ping_timeout, lp);
+	cancel_timeout(lease_ping_timeout, lp);
 	--outstanding_pings;
 }
 
-void lease_ping_timeout (vlp)
-	void *vlp;
+void
+lease_ping_timeout(void *vlp)
 {
-	struct lease *lp = vlp;
-	
+	struct lease	*lp = vlp;
+
 	--outstanding_pings;
 	if (lp->releasing) {
 		lp->releasing = 0;
 		release_lease(lp);
-	}
-	else 
-		dhcp_reply (lp);
+	} else
+		dhcp_reply(lp);
 }
