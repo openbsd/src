@@ -10,7 +10,7 @@ OpenBSD/sparc RELEASE does *not* run on these machines (yet):
 	- sun4d (e.g. sparc center 2000)
 
 Work on porting OpenBSD/sparc to the sun4m platform is currently in 
-progress, but was not ready in time for the 1.1 release.
+progress, but was not ready in time for the 2.0 release.
 
 The minimal configuration requires 4M of RAM and ~60M of disk space.
 To install the entire system requires much more disk space, and to run

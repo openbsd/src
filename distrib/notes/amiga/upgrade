@@ -1,5 +1,5 @@
-The upgrade to OpenBSD 1.1 is a binary upgrade; it would be prohibitive
-to make users upgrade by compiling and installing the 1.1 sources, and
+The upgrade to OpenBSD 2.0 is a binary upgrade; it would be prohibitive
+to make users upgrade by compiling and installing the 2.0 sources, and
 it would be very difficult to even compile a set of instructions that
 allowed them to do so.  Because of the various changes to the system,
 the largest being the 64-bit file size support and shared libraries,
@@ -7,9 +7,9 @@ it is impractical to upgrade by recompiling from the sources and
 installing.
 
 To do the upgrade, you must have the OpenBSD kernel on AmigaDOS and
-you must transfer the upgrade filesystem upgr-11.fs onto the swap
+you must transfer the upgrade filesystem upgr-20.fs onto the swap
 partition of the OpenBSD hard disk.  You must also have at least the
-"base11" binary distribution set available, so that you can upgrade
+"base20" binary distribution set available, so that you can upgrade
 with it, using one of the upgrade methods described above.  Finally,
 you must have sufficient disk space available to install the new
 binaries.  Since the old binaries are being overwritten in place,
@@ -29,7 +29,7 @@ To upgrade your system, follow the following instructions:
 	partition used by OpenBSD for swapping, as described in the
 	"Preparing your System for OpenBSD Installation" section above.
 
-	Now boot up OpenBSD using the 1.1 kernel using the loadbsd
+	Now boot up OpenBSD using the 2.0 kernel using the loadbsd
 	command:
 
 		loadbsd -b bsd
@@ -85,13 +85,13 @@ To upgrade your system, follow the following instructions:
 
 	After the software has been transferred to the machine (or
 	mounted, in the case of upgrading via NFS), change into the
-	directory containing the "base11" distribution set.  Once you
+	directory containing the "base20" distribution set.  Once you
 	are there, run the "Set_tmp_dir" command, and hit return at
 	the prompt to select the default answer for the temporary
 	directory's path name.  (It should be the path name of the
 	directory that you're in.)
 
-	Run the command "Extract base11" to upgrade the base
+	Run the command "Extract base20" to upgrade the base
 	distribution.
 
 	Repeat the above two steps for all of the sets you wish to
@@ -113,10 +113,10 @@ To upgrade your system, follow the following instructions:
 	You will probably also want to copy the release "bsd" kernel
 	image to your root at some point.
 	
-Your system has now been upgraded to OpenBSD 1.1.
+Your system has now been upgraded to OpenBSD 2.0.
 
 After a new kernel has been copied to your hard disk, your
-	machine is a complete OpenBSD 1.1 system.  However, that
+	machine is a complete OpenBSD 2.0 system.  However, that
 	doesn't mean that you're finished with the upgrade process.
 	There are several things that you should do, or might have to
 	do, to insure that the system works properly.
@@ -126,7 +126,7 @@ After a new kernel has been copied to your hard disk, your
 	do so now, with "fsck -c 2".  If you are unsure about the
 	process, it's suggested that you read the fsck(8) manual page.
 
-	Second, you will probably want to get the etc11 distribution,
+	Second, you will probably want to get the etc20 distribution,
 	extract it, and compare its contents with those in your /etc/
 	directory.  You will probably want to replace some of your
 	system configuration files, or incorporate some of the changes

@@ -1,12 +1,12 @@
-The pc532-specific portion of the OpenBSD 1.1 release is found in the
+The pc532-specific portion of the OpenBSD 2.0 release is found in the
 "pc532" subdirectory of the distribution.  That subdirectory contains
 the files as follows:
 
-.../OpenBSD-1.1/pc532/
+.../2.0/pc532/
 
 	INSTALL			Installation notes; this file.
 	CKSUM			output of "cksum *.gz"
-	inst-11.fs.gz		Installation file system.
+	inst-20.fs.gz		Installation file system.
 	download.c.gz		Source for a pc532 ROM compat download pgm
 	bsd.default.gz		Upgrade kernel
 	base.tar.gz		base distribution
@@ -21,7 +21,7 @@ the files as follows:
 The binary distribution consists of the following files:
 
 	base.tar.gz
-		The OpenBSD/pc532 1.1 base binary distribution.  You
+		The OpenBSD/pc532 2.0 base binary distribution.  You
 		MUST install this distribution set.  It contains the
 		base OpenBSD utilities that are necessary for the
 		system to run and be minimally functional.  It
@@ -72,13 +72,6 @@ The binary distribution consists of the following files:
 		manual pages.
 		[ 0.8M gzipped ]
 
-The pc532 distribution set does not include a security distribution.
-If you are in the US and want the security distribution you must
-get the security source distribution and recompile libcrypt.a and
-recompile the following programs:
-	ed, ftpd, makekey, rexecd, uucpd, init, lock, login, passwd,
-	skeyinit, su, tn3270, pppd
-
 
 The initial installation process on a pc532 without OpenBSD/pc532
 is supported by the following files:
@@ -86,16 +79,16 @@ is supported by the following files:
 	Initial file system used via SCSI floppy or downloaded into 
 	memory:
 
-		inst-11.fs	-- file system containing boot loader 
-				   and install kernel with 2MB
-				   ram root file system.
+	inst-20.fs	-- file system containing boot loader 
+			   and install kernel with 2MB
+			   ram root file system.
 
-	download.c		-- source for the program to download
-				   inst-11.fs into memory via the
-				   pc532 ROM monitor.
+	download.c	-- source for the program to download
+			   inst-20.fs into memory via the
+			   pc532 ROM monitor.
 
 
-The upgrade process is supported by having a copy of a 1.1 kernel
+The upgrade process is supported by having a copy of a 2.0 kernel
 available.  This file is:
 
 	bsd.default.gz		-- a kernel produced from the DEFAULT

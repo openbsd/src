@@ -51,7 +51,7 @@ The OpenBSD 2.0 release is organized in the following way:
 
 In addition to the files and directories listed above, there is one
 directory per architecture, for each of the architectures that OpenBSD
-1.1 has a binary distribution for.
+2.0 has a binary distribution for.
 
 The source distribution sets can be found in subdirectories of the
 "source" subdirectory of the distribution tree.  They contain the 

@@ -11,7 +11,7 @@ out as follows:
 The OpenBSD/sparc binary distribution sets contain the binaries which
 comprise the OpenBSD RELEASE release for the sparc.  There are seven binary
 distribution sets, and the "security" distribution set.  The binary
-distribution sets can be found in subdirectories of the "sparc/binary"
+distribution sets can be found in subdirectories of the "sparc/bins"
 subdirectory of the OpenBSD RELEASE distribution tree, and are as follows:
 
 	base20	The OpenBSD/sparc RELEASE base binary distribution.  You

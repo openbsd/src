@@ -20,7 +20,7 @@ through the procedure.  The upgrade program will:
 	* Copy a new kernel onto your root partition.
 	  NOTE: the existing kernel WILL NOT be backed up; doing
 	  so would be pointless, since a OpenBSD 1.0 kernel will
-	  not run OpenBSD 1.1 executables.
+	  not run OpenBSD 2.0 executables.
 
 	* Install a new boot block.
 
@@ -33,13 +33,13 @@ manually.  To do this, follow the following procedure:
 	* Place _at least_ the `base' binary set in a filesystem
 	  accessible to the target machine.  A local filesystem
 	  is preferred, since there may be incompatibilities
-	  between the OpenBSD 1.1 kernel and older route(8)
+	  between the OpenBSD 2.0 kernel and older route(8)
 	  binaries.
 
 	* Back up your pre-existing kernel and copy the 1.1
 	  kernel into your root partition.
 
-	* Reboot with the 1.1 kernel into single-user mode.
+	* Reboot with the 2.0 kernel into single-user mode.
 
 	* Check all filesystems:
 

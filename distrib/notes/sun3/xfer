@@ -122,4 +122,4 @@ server, you may want to keep the following information handy:
 	IP Address: 128.6.190.2
 	Login: anonymous
 	Password: <your e-mail address>
-	Server path: /pub/OpenBSD/OpenBSD-1.1/sun3/binary
+	Server path: /pub/OpenBSD/2.0/sun3/bins

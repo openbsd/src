@@ -1,5 +1,4 @@
-
-The sun3-specific portion of the OpenBSD 1.1 release is found in the
+The sun3-specific portion of the OpenBSD 2.0 release is found in the
 "sun3" subdirectory of the distribution.  That subdirectory is laid
 out as follows:
 
@@ -43,12 +42,12 @@ to support installation "over the network".  See the section "Getting
 the OpenBSD System onto Useful Media" for instructions on either method.
 
 The OpenBSD/sun3 binary distribution sets contain the binaries which
-comprise the OpenBSD 1.1 release for the sun3.  There are seven binary
+comprise the OpenBSD 2.0 release for the sun3.  There are seven binary
 distribution sets, and the "security" distribution set.  The binary
 distribution sets can be found in the "sun3/binary" subdirectory of
-the OpenBSD 1.1 distribution tree, and are as follows:
+the OpenBSD 2.0 distribution tree, and are as follows:
 
-	base11	The OpenBSD/sun3 1.1 base binary distribution.  You
+	base20	The OpenBSD/sun3 2.0 base binary distribution.  You
 		MUST install this distribution set.  It contains the
 		base OpenBSD utilities that are necessary for the
 		system to run and be minimally functional.  It
@@ -56,7 +55,7 @@ the OpenBSD 1.1 distribution tree, and are as follows:
 		everything described below.
 		[ 7.2M gzipped, 19M uncompressed ]
 
-	comp11	The OpenBSD/sun3 Compiler tools.  All of the tools
+	comp20	The OpenBSD/sun3 Compiler tools.  All of the tools
 		relating to C and C++.  This set includes the system
 		include files (/usr/include), the linker, the compiler
 		tool chain, and the various system libraries (except
@@ -66,7 +65,7 @@ the OpenBSD 1.1 distribution tree, and are as follows:
 		call and library manual pages.
 		[ 4.6M gzipped, 14.7M uncompressed ]
 
-	etc11	This distribution set contains the system configuration
+	etc20	This distribution set contains the system configuration
 		files that reside in /etc and in several other places.
 		This set MUST be installed if you are installing the
 		system from scratch, but should NOT be used if you are
@@ -75,34 +74,25 @@ the OpenBSD 1.1 distribution tree, and are as follows:
 		configuration files by hand.)
 		[ 64K gzipped, 348K uncompressed ]
 
-	games11	This set includes the games and their manual pages.
+	games20	This set includes the games and their manual pages.
 		[ 2.8M gzipped, 6.8M uncompressed ]
 
-	man11	This set includes all of the manual pages for the
+	man20	This set includes all of the manual pages for the
 		binaries and other software contained in the base set.
 		Note that it does not include any of the manual pages
 		that are included in the other sets.
 		[ 850K gzipped, 3.3M uncompressed ]
 
-	misc11	This set includes the system dictionaries (which are
+	misc20	This set includes the system dictionaries (which are
 		rather large), the typesettable document set, and
 		man pages for other architectures which happen to be
 		installed from the source tree by default.
 		[ 1.8M gzipped, 6.5M uncompressed ]
 
-	text11	This set includes OpenBSD's text processing tools,
+	text20	This set includes OpenBSD's text processing tools,
 		including groff, all related programs, and their
 		manual pages.
 		[ 770K gzipped, 2.8M uncompressed ]
-
-The sun3 security distribution set is named "secr11" and can be found
-in the "sun3/security" subdirectory of the OpenBSD 1.1 distribution
-tree.  It contains executables which are built in the "src/domestic" portion
-if the OpenBSD source tree.  It can only be found on those sites which carry
-the complete OpenBSD distribution and that can legally obtain it.  (Remember,
-because of United States law, this distribution set may not be exported to
-locations outside of the United States and Canada.)
-[ 128K gzipped, 275K uncompressed ]
 
 The sun3 binary distribution sets are distributed as gzipped tar files.
 Each sun3 binary distribution set also has its own "CKSUMS" file, just
@@ -117,4 +107,3 @@ from /.  Also note that if you upgrade or install this way, those
 programs that you are using at the time will NOT be replaced.  If you
 follow the normal installation or upgrade procedures, this will be
 taken care of for you.
-

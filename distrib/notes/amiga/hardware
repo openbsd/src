@@ -1,4 +1,4 @@
-OpenBSD/amiga 1.1 runs on any amiga that has a 68020, 68030 or 68040 CPU
+OpenBSD/amiga 2.0 runs on any amiga that has a 68020, 68030 or 68040 CPU
 with some form of FPU and MMU.  The minimal configuration requires
 4M of RAM and about 65M of disk space.  To install the entire system
 requires much more disk space, and to run X or compile the system,
