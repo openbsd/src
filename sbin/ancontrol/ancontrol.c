@@ -1,4 +1,4 @@
-/*	$OpenBSD: ancontrol.c,v 1.24 2004/07/15 22:37:41 mickey Exp $	*/
+/*	$OpenBSD: ancontrol.c,v 1.25 2004/08/05 07:54:14 mickey Exp $	*/
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  *
@@ -1087,20 +1087,12 @@ an_readcache(void)
 	pt += sizeof(int);
 	sc = (struct an_sigcache *) pt;
 
-	for (i = 0; i < *an_sigitems; i++) {
-		printf("[%d/%d]:", i+1, *an_sigitems);
-		printf(" %02x:%02x:%02x:%02x:%02x:%02x,",
-		    sc->macsrc[0]&0xff, sc->macsrc[1]&0xff,
-		    sc->macsrc[2]&0xff, sc->macsrc[3]&0xff,
-		    sc->macsrc[4]&0xff, sc->macsrc[5]&0xff);
-		printf(" %u.%u.%u.%u,",
-		    ((sc->ipsrc >> 0) & 0xff), ((sc->ipsrc >> 8) & 0xff),
-		    ((sc->ipsrc >> 16) & 0xff), ((sc->ipsrc >> 24) & 0xff));
-		printf(" sig: %d\n", sc->signal);
-		sc++;
-	}
-
-	return;
+	for (i = 0; i < *an_sigitems; i++, sc++)
+		printf("[%d/%d]: %02x:%02x:%02x:%02x:%02x:%02x, %s, sig: %d\n",
+		    i + 1, *an_sigitems,
+		    sc->macsrc[0], sc->macsrc[1], sc->macsrc[2],
+		    sc->macsrc[3], sc->macsrc[4], sc->macsrc[5],
+		    inet_ntoa(sc->ipsrc), sc->signal);
 }
 #endif /* ANCACHE */
 
