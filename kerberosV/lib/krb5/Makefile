@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.6 2001/06/23 12:44:58 hin Exp $
+# $OpenBSD: Makefile,v 1.7 2001/06/24 18:24:48 hin Exp $
 
 KRBDEPTH=../..
 .include <${.CURDIR}/../../Makefile.inc>
@@ -126,16 +126,20 @@ SRCS=	add_et_list.c \
 
 # These are files in libroken that are needed in libkrb5 to make it independant
 # from libroken.
-SRCS+=	bswap.c			\
-	strupr.c 		\
-	strlwr.c		\
-	strsep_copy.c		\
+SRCS+=	base64.c		\
+	bswap.c			\
 	issuid.c		\
+	getaddrinfo_hostspec.c	\
+	parse_time.c		\
+	parse_units.c		\
+	resolve.c		\
 	roken_gethostby.c	\
 	roken_net_write.c	\
 	roken_net_read.c	\
-	parse_time.c		\
-	parse_units.c
+	strupr.c 		\
+	strlwr.c		\
+	strsep_copy.c		\
+	warnerr.c
 
 # There is a net_write.c and net_read.c both in lib/roken and lib/krb5.
 # This stinks.
