@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.88 2004/05/29 17:54:45 jcs Exp $	*/
+/*	$OpenBSD: if.c,v 1.89 2004/06/25 18:24:23 pb Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -166,7 +166,9 @@ void
 if_attachsetup(ifp)
 	struct ifnet *ifp;
 {
+	struct ifgroup *ifg;
 	struct ifaddr *ifa;
+	int n;
 	int wrapped = 0;
 
 	if (ifindex2ifnet == 0)
@@ -236,6 +238,19 @@ if_attachsetup(ifp)
 		}
 		ifindex2ifnet = (struct ifnet **)q;
 	}
+
+	/* setup the group list */
+	TAILQ_INIT(&ifp->if_groups);
+	ifg = (struct ifgroup *)malloc(sizeof(struct ifgroup), M_TEMP,
+	    M_NOWAIT);
+	if (ifg != NULL) {
+		for (n = 0;
+		    ifp->if_xname[n] < '0' || ifp->if_xname[n] > '9';
+		    n++)
+			continue;
+		strlcpy(ifg->if_group, ifp->if_xname, n + 1);
+		TAILQ_INSERT_HEAD(&ifp->if_groups, ifg, group_list);
+ 	}
 
 	ifindex2ifnet[if_index] = ifp;
 
@@ -447,6 +462,7 @@ if_detach(ifp)
 	struct ifnet *ifp;
 {
 	struct ifaddr *ifa;
+	struct ifgroup *ifg;
 	int i, s = splimp();
 	struct radix_node_head *rnh;
 	struct domain *dp;
@@ -577,6 +593,13 @@ do { \
 
 		free(ifa, M_IFADDR);
 	}
+
+	for (ifg = TAILQ_FIRST(&ifp->if_groups); ifg;
+	    ifg = TAILQ_FIRST(&ifp->if_groups)) {
+		TAILQ_REMOVE(&ifp->if_groups, ifg, group_list);
+		free(ifg, M_TEMP);
+	}
+
 	if_free_sadl(ifp);
 
 	free(ifnet_addrs[ifp->if_index], M_IFADDR);
@@ -1250,6 +1273,25 @@ ifioctl(so, cmd, data, p)
 		}
 		break;
 
+	case SIOCAIFGROUP:
+		if ((error = suser(p, 0)) != 0)
+			return (error);
+		if ((error = if_addgroup((struct ifgroupreq *)data, ifp)))
+			return (error);
+		break;
+
+	case SIOCGIFGROUP:
+		if ((error = if_getgroup(data, ifp)))
+			return (error);
+		break;
+
+	case SIOCDIFGROUP:
+                if ((error = suser(p, 0)) != 0)
+                        return (error);
+                if ((error = if_delgroup((struct ifgroupreq *)data, ifp)))
+                        return (error);
+                break;
+
 	default:
 		if (so->so_proto == 0)
 			return (EOPNOTSUPP);
@@ -1455,6 +1497,90 @@ if_detached_watchdog(struct ifnet *ifp)
 	/* nothing */
 }
 
+/*
+ * Add a group to an interface
+ */
+int
+if_addgroup(struct ifgroupreq *ifg, struct ifnet *ifp)
+{
+	struct ifgroup	*ifgnew, *ifgp;
+
+	TAILQ_FOREACH(ifgp, &ifp->if_groups, group_list)
+		if (!strcmp(ifgp->if_group, ifg->ifg_group))
+			return (EEXIST);
+
+	ifgnew = (struct ifgroup *)malloc(sizeof(struct ifgroup), M_TEMP, 
+	    M_NOWAIT);
+	if (ifgnew == NULL)
+		return (ENOMEM);
+	strlcpy(ifgnew->if_group, ifg->ifg_group, IFNAMSIZ);
+	TAILQ_INSERT_TAIL(&ifp->if_groups, ifgnew, group_list);
+
+	return (0);
+}
+
+/*
+ * Remove a group from an interface
+ * note: the first group is the if-family - do not remove
+ */
+int
+if_delgroup(struct ifgroupreq *ifg, struct ifnet *ifp)
+{
+	struct ifgroup	*ifgp;
+
+	for (ifgp = TAILQ_FIRST(&ifp->if_groups);
+	    ifgp != TAILQ_END(&ifp->if_groups);
+	    ifgp = TAILQ_NEXT(ifgp, group_list)) {
+		if (ifgp == TAILQ_FIRST(&ifp->if_groups) &&
+		    !strcmp(ifgp->if_group, ifg->ifg_group))
+			return (EPERM);
+		if (!strcmp(ifgp->if_group, ifg->ifg_group)) {
+			TAILQ_REMOVE(&ifp->if_groups, ifgp, group_list);
+			free(ifgp, M_TEMP);
+			return (0);
+		}
+	}
+
+	return (ENOENT);
+}
+
+/*
+ * Stores all groups from an interface in memory pointed
+ * to by data
+ */
+int
+if_getgroup(caddr_t data, struct ifnet *ifp)
+{
+	int len;
+	int error;
+	struct ifgroup *ifgp, *ifgp2, ifg;
+	struct ifgroupreq *ifgr = (struct ifgroupreq *)data;
+
+	if (ifgr->ifg_len == 0) {
+		TAILQ_FOREACH(ifgp, &ifp->if_groups, group_list)
+			ifgr->ifg_len += sizeof(struct ifgroup);
+		return (0);
+	}
+
+	len = ifgr->ifg_len;
+	ifgp = ifgr->ifg_groups;
+	for (ifgp2 = TAILQ_FIRST(&ifp->if_groups); ifgp2 && 
+	    len >= sizeof(struct ifgroup);
+	    ifgp2 = TAILQ_NEXT(ifgp2, group_list)) {
+		memset(&ifg, 0, sizeof(struct ifgroup));
+		strlcpy(ifg.if_group, ifgp2->if_group, IFNAMSIZ);
+		error = copyout((caddr_t)&ifg, (caddr_t)ifgp, 
+		    sizeof(struct ifgroup));
+		if (error)
+			return (error);
+		ifgp++;
+		len -= sizeof(struct ifgroup);
+	}
+
+	return (0);
+}
+
+		
 /*
  * Set/clear promiscuous mode on interface ifp based on the truth value
  * of pswitch.  The calls are reference counted so that only the first

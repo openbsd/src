@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.54 2004/06/20 00:38:21 beck Exp $	*/
+/*	$OpenBSD: if.h,v 1.55 2004/06/25 18:24:23 pb Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -174,6 +174,7 @@ struct ifnet {				/* and the entries */
 	void	*if_softc;		/* lower-level data for this if */
 	TAILQ_ENTRY(ifnet) if_list;	/* all struct ifnets are chained */
 	TAILQ_HEAD(, ifaddr) if_addrlist; /* linked list of addresses per if */
+	TAILQ_HEAD(, ifgroup) if_groups; /* linked list of groups per if */
 	struct hook_desc_head *if_addrhooks; /* address change callbacks */
 	char	if_xname[IFNAMSIZ];	/* external name (name + unit) */
 	int	if_pcount;		/* number of promiscuous listeners */
@@ -395,6 +396,31 @@ struct if_announcemsghdr {
 
 #define IFAN_ARRIVAL	0	/* interface arrival */
 #define IFAN_DEPARTURE	1	/* interface departure */
+
+/*
+ * The groups on an interface
+ */
+struct ifgroup {
+	char if_group[IFNAMSIZ];
+	TAILQ_ENTRY(ifgroup) group_list;
+};
+
+/*
+ * Used to lookup groups for an interface
+ */
+struct ifgroupreq {
+	char if_name[IFNAMSIZ];
+	u_int ifg_len;
+
+	union {
+		char if_group[IFNAMSIZ];
+		struct ifgroup *ifg;
+	} ifg_ifgu;
+
+	TAILQ_ENTRY(ifgroupreq) next_if;
+#define ifg_group	ifg_ifgu.if_group
+#define ifg_groups	ifg_ifgu.ifg
+};
 
 /*
  * Interface request structure used for socket
@@ -619,6 +645,9 @@ int	ifconf(u_long, caddr_t);
 void	ifinit(void);
 int	ifioctl(struct socket *, u_long, caddr_t, struct proc *);
 int	ifpromisc(struct ifnet *, int);
+int	if_addgroup(struct ifgroupreq *, struct ifnet *);
+int	if_delgroup(struct ifgroupreq *, struct ifnet *);
+int	if_getgroup(caddr_t, struct ifnet *);
 struct	ifnet *ifunit(const char *);
 
 struct	ifaddr *ifa_ifwithaddr(struct sockaddr *);

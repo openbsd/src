@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.102 2004/06/24 20:44:06 henning Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.103 2004/06/25 18:24:23 pb Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.102 2004/06/24 20:44:06 henning Exp $";
+static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.103 2004/06/25 18:24:23 pb Exp $";
 #endif
 #endif /* not lint */
 
@@ -152,6 +152,8 @@ int	Lflag = 1;
 
 void	notealias(const char *, int);
 void	notrailers(const char *, int);
+void	setifgroup(const char *, int);
+void	unsetifgroup(const char *, int);
 void	setifaddr(const char *, int);
 void	setifdstaddr(const char *, int);
 void	setifflags(const char *, int);
@@ -189,6 +191,7 @@ void	setvlantag(const char *, int);
 void	setvlandev(const char *, int);
 void	unsetvlandev(const char *, int);
 void	vlan_status(void);
+void	getifgroups(void);
 void	carp_status(void);
 void	setcarp_advbase(const char *,int);
 void	setcarp_advskew(const char *, int);
@@ -247,6 +250,8 @@ const struct	cmd {
 	{ "swabips",	EN_SWABIPS,	0,		setifflags },
 	{ "-swabips",	-EN_SWABIPS,	0,		setifflags },
 #endif /* notdef */
+	{ "group",	NEXTARG,	0,		setifgroup },
+	{ "-group",	NEXTARG,	0,		unsetifgroup },
 	{ "netmask",	NEXTARG,	0,		setifnetmask },
 	{ "metric",	NEXTARG,	0,		setifmetric },
 	{ "mtu",	NEXTARG,	0,		setifmtu },
@@ -1041,6 +1046,38 @@ setifmtu(const char *val, int d)
 		warn("SIOCSIFMTU");
 }
 
+void
+setifgroup(const char *group_name, int dummy)
+{
+	struct ifgroupreq ifg;
+
+	memset(&ifg, 0, sizeof(ifg));
+
+	strlcpy(ifg.if_name, name, IFNAMSIZ);
+
+	if (strlcpy(ifg.ifg_group, group_name, IFNAMSIZ) >= IFNAMSIZ)
+		err(1, "setifgroup: group name too long");
+
+	if (ioctl(s, SIOCAIFGROUP, (caddr_t)&ifg) == -1)
+		err(1," SIOCAIFGROUP");
+}
+
+void
+unsetifgroup(const char *group_name, int dummy)
+{
+	struct ifgroupreq ifg;
+
+	memset(&ifg, 0, sizeof(ifg));
+
+	strlcpy(ifg.if_name, name, IFNAMSIZ);
+
+	if (strlcpy(ifg.ifg_group, group_name, IFNAMSIZ) >= IFNAMSIZ)
+		err(1, "unsetifgroup: group name too long");
+
+	if (ioctl(s, SIOCDIFGROUP, (caddr_t)&ifg) == -1)
+		err(1, "SIOCDIFGROUP");
+}
+
 const char *
 get_string(const char *val, const char *sep, u_int8_t *buf, int *lenp)
 {
@@ -1685,6 +1722,7 @@ status(int link, struct sockaddr_dl *sdl)
 	carp_status();
 	pfsync_status();
 	ieee80211_status();
+	getifgroups();
 
 	(void) memset(&ifmr, 0, sizeof(ifmr));
 	(void) strlcpy(ifmr.ifm_name, name, sizeof(ifmr.ifm_name));
@@ -2544,6 +2582,44 @@ unsetvlandev(const char *val, int d)
 
 
 static const char *carp_states[] = { CARP_STATES };
+
+void
+getifgroups(void)
+{
+	int len;
+	struct ifgroupreq ifg;
+	struct ifgroup *ifgp;
+
+	memset(&ifg, 0, sizeof(ifg));
+	strlcpy(ifg.if_name, name, IFNAMSIZ);
+	
+	if (ioctl(s, SIOCGIFGROUP, (caddr_t)&ifg) == -1)
+		err(1, "SIOCGIFGROUP");
+
+	len = ifg.ifg_len;
+	ifg.ifg_groups = (struct ifgroup *)calloc(len / sizeof(struct ifgroup),
+	    sizeof(struct ifgroup));
+	if (ifg.ifg_groups == NULL)
+		err(1, "getifgroups");
+	
+	if (ioctl(s, SIOCGIFGROUP, (caddr_t)&ifg) == -1)
+		err(1, "SIOCGIFGROUP");
+	
+	if (len -= sizeof(struct ifgroup)) {
+		len += sizeof(struct ifgroup);
+		printf("\tgroups: ");
+		ifgp = ifg.ifg_groups;
+		if (ifgp) {
+			len -= sizeof(struct ifgroup);
+			ifgp++;
+		}
+		for (; ifgp && len >= sizeof(struct ifgroup); ifgp++) {
+			len -= sizeof(struct ifgroup);
+			printf("%s ", ifgp->if_group);
+		}
+		printf("\n");
+	}
+}
 
 void
 carp_status()
