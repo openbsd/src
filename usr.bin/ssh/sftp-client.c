@@ -29,7 +29,7 @@
 /* XXX: copy between two remote sites */
 
 #include "includes.h"
-RCSID("$OpenBSD: sftp-client.c,v 1.4 2001/02/06 23:30:28 djm Exp $");
+RCSID("$OpenBSD: sftp-client.c,v 1.5 2001/02/07 10:55:12 djm Exp $");
 
 #include "ssh.h"
 #include "buffer.h"
@@ -556,6 +556,7 @@ do_download(int fd_in, int fd_out, char *remote_path, char *local_path,
 	char *handle;
 	Buffer msg;
 	Attrib junk, *a;
+	int status;
 
 	a = do_stat(fd_in, fd_out, remote_path);
 	if (a == NULL)
@@ -635,7 +636,7 @@ do_download(int fd_in, int fd_out, char *remote_path, char *local_path,
 		if (id != expected_id)
 			fatal("ID mismatch (%d != %d)", id, expected_id);
 		if (type == SSH2_FXP_STATUS) {
-			int status = buffer_get_int(&msg);
+			status = buffer_get_int(&msg);
 
 			if (status == SSH2_FX_EOF)
 				break;
@@ -644,10 +645,7 @@ do_download(int fd_in, int fd_out, char *remote_path, char *local_path,
 				    "file \"%s\" : %s", remote_path,
 				     fx2txt(status));
 				do_close(fd_in, fd_out, handle, handle_len);
-				xfree(handle);
-				close(local_fd);
-				buffer_free(&msg);
-				return(status);
+				goto done;
 			}
 		} else if (type != SSH2_FXP_DATA) {
 			fatal("Expected SSH2_FXP_DATA(%d) packet, got %d",
@@ -665,21 +663,21 @@ do_download(int fd_in, int fd_out, char *remote_path, char *local_path,
 			error("Couldn't write to \"%s\": %s", local_path,
 			    strerror(errno));
 			do_close(fd_in, fd_out, handle, handle_len);
-			xfree(handle);
-			close(local_fd);
+			status = -1;
 			xfree(data);
-			buffer_free(&msg);
-			return(-1);
+			goto done;
 		}
 
 		offset += len;
 		xfree(data);
 	}
-	xfree(handle);
-	buffer_free(&msg);
-	close(local_fd);
+	status = do_close(fd_in, fd_out, handle, handle_len);
 
-	return(do_close(fd_in, fd_out, handle, handle_len));
+done:
+	close(local_fd);
+	buffer_free(&msg);
+	xfree(handle);
+	return status;
 }
 
 int
@@ -693,6 +691,7 @@ do_upload(int fd_in, int fd_out, char *local_path, char *remote_path,
 	Buffer msg;
 	struct stat sb;
 	Attrib a;
+	int status;
 
 	if ((local_fd = open(local_path, O_RDONLY, 0)) == -1) {
 		error("Couldn't open local file \"%s\" for reading: %s",
@@ -743,7 +742,6 @@ do_upload(int fd_in, int fd_out, char *local_path, char *remote_path,
 	for(;;) {
 		int len;
 		char data[COPY_SIZE];
-		u_int status;
 
 		/*
 		 * Can't use atomicio here because it returns 0 on EOF, thus losing
@@ -774,24 +772,29 @@ do_upload(int fd_in, int fd_out, char *local_path, char *remote_path,
 			error("Couldn't write to remote file \"%s\": %s",
 			    remote_path, fx2txt(status));
 			do_close(fd_in, fd_out, handle, handle_len);
-			xfree(handle);
 			close(local_fd);
-			return(-1);
+			goto done;
 		}
 		debug3("In write loop, got %d offset %llu", len,
 		    (unsigned long long)offset);
 
 		offset += len;
 	}
-	xfree(handle);
-	buffer_free(&msg);
 
 	if (close(local_fd) == -1) {
 		error("Couldn't close local file \"%s\": %s", local_path,
 		    strerror(errno));
 		do_close(fd_in, fd_out, handle, handle_len);
-		return(-1);
+		status = -1;
+		goto done;
 	}
 
-	return(do_close(fd_in, fd_out, handle, handle_len));
+	status = do_close(fd_in, fd_out, handle, handle_len);
+
+done:
+	xfree(handle);
+	buffer_free(&msg);
+	return status;
 }
+
+
