@@ -82,8 +82,8 @@ Bootable installation/upgrade floppies:
   
   miniroot22.fs
 	This is a miniroot filesystem image which can be copied to the
-	swap partition of an existing OpenBSD, NetBSD, SunOS, or Solaris
-	installation to allow upgrading to OpenBSD 2.2
+	swap partition of an existing OpenBSD, NetBSD, Linux, SunOS, 
+	or Solaris installation to allow upgrading to OpenBSD 2.2
 
 
 The OpenBSD/sparc binary distribution sets contain the binaries which
