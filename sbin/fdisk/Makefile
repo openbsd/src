@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: Makefile,v 1.5 1997/10/04 00:15:48 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.6 1997/10/16 01:47:07 deraadt Exp $
 #
 # Copyright (c) 1997 Tobias Weingartner
 # All rights reserved.
@@ -35,9 +35,5 @@ SRCS=	fdisk.c user.c misc.c disk.c mbr.c part.c cmd.c
 DPADD=	${LIBUTIL}
 LDADD=	-lutil
 MAN=	fdisk.8
-
-.if ${MACHINE} == "i386"
-COPTS += -DCPU_BIOSDEV
-.endif
 
 .include <bsd.prog.mk>

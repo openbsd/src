@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.2 1997/09/29 23:33:37 mickey Exp $	*/
+/*	$OpenBSD: misc.c,v 1.3 1997/10/16 01:47:11 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -63,26 +63,35 @@ ask_cmd(cmd)
 }
 
 int
-ask_num(str, flags, dflt, low, high)
+ask_num(str, flags, dflt, low, high, help)
 	const char *str;
 	int flags;
 	int dflt;
 	int low;
 	int high;
+	void (*help) __P((void));
 {
 	char lbuf[100], *cp;
 	int num;
 
 	do {
+again:
 		num = dflt;
-		if(flags == ASK_HEX)
+		if (flags == ASK_HEX)
 			printf("%s [%X - %X]: [%X] ", str, low, high, num);
 		else
 			printf("%s [%d - %d]: [%d] ", str, low, high, num);
+		if (help)
+			printf("(? for help) ");
 
 		if (fgets(lbuf, sizeof lbuf, stdin) == NULL)
 			errx(1, "eof");
 		lbuf[strlen(lbuf)-1] = '\0';
+
+		if (lbuf[0] == '?') {
+			(*help)();
+			goto again;
+		}
 
 		/* Convert */
 		cp = lbuf;
@@ -91,13 +100,13 @@ ask_num(str, flags, dflt, low, high)
 		/* Make sure only number present */
 		if(cp == lbuf)
 			num = dflt;
-		if(*cp != '\0'){
+		if(*cp != '\0') {
 			printf("'%s' is not a valid number.\n", lbuf);
 			num = low - 1;
-		}else if(num < low || num > high){
+		} else if(num < low || num > high) {
 			printf("'%d' is out of range.\n", num);
 		}
-	} while(num < low || num > high);
+	} while (num < low || num > high);
 
 	return(num);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.3 1997/10/02 02:10:07 deraadt Exp $	*/
+/*	$OpenBSD: part.c,v 1.4 1997/10/16 01:47:12 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -46,55 +46,69 @@
 
 static struct part_type {
 	int	type;
-	char	*name;
+	char	*sname;
+	char	*lname;
 } part_types[] = {
-	{ 0x00, "unused"},
-	{ 0x01, "Primary DOS with 12 bit FAT"},
-	{ 0x02, "XENIX / filesystem"},
-	{ 0x03, "XENIX /usr filesystem"},
-	{ 0x04, "Primary DOS with 16 bit FAT"},
-	{ 0x05, "Extended DOS"},
-	{ 0x06, "Primary 'big' DOS (> 32MB)"},
-	{ 0x07, "OS/2 HPFS, QNX or Advanced UNIX"},
-	{ 0x08, "AIX filesystem"},
-	{ 0x09, "AIX boot partition or Coherent"},
-	{ 0x0A, "OS/2 Boot Manager or OPUS"},
-	{ 0x0B, "Prim Win95 w/ 32-bit FAT"},
-	{ 0x0E, "Prim DOS w/ 16-bit FAT, CHS-mapped"},
-	{ 0x10, "OPUS"},
-	{ 0x12, "Compaq Diagnostics"},
-	{ 0x40, "VENIX 286"},
-	{ 0x50, "DM"},
-	{ 0x51, "DM"},
-	{ 0x52, "CP/M or Microport SysV/AT"},
-	{ 0x54, "Ontrack"},
-	{ 0x56, "GB"},
-	{ 0x61, "Speed"},
-	{ 0x63, "ISC, System V/386, GNU HURD or Mach"},
-	{ 0x64, "Novell Netware 2.xx"},
-	{ 0x65, "Novell Netware 3.xx"},
-	{ 0x75, "PCIX"},
-	{ 0x80, "Minix 1.1 ... 1.4a"},
-	{ 0x81, "Minix 1.4b ... 1.5.10"},
-	{ 0x82, "Linux swap"},
-	{ 0x83, "Linux filesystem"},
-	{ 0x93, "Amoeba filesystem"},
-	{ 0x94, "Amoeba bad block table"},
-	{ 0xA5, "386BSD/FreeBSD/NetBSD"},
-	{ 0xA6, "OpenBSD"},
-	{ 0xA7, "NEXTSTEP"},
-	{ 0xB7, "BSDI BSD/386 filesystem"},
-	{ 0xB8, "BSDI BSD/386 swap"},
-	{ 0xDB, "Concurrent CPM or C.DOS or CTOS"},
-	{ 0xE1, "Speed"},
-	{ 0xE3, "Speed"},
-	{ 0xE4, "Speed"},
-	{ 0xF1, "Speed"},
-	{ 0xF2, "DOS 3.3+ Secondary"},
-	{ 0xF4, "Speed"},
-	{ 0xFF, "BBT (Bad Blocks Table)"},
+	{ 0x00, "unused      ", "unused"},
+	{ 0x01, "DOS FAT-12  ", "Primary DOS with 12 bit FAT"},
+	{ 0x02, "XENIX /     ", "XENIX / filesystem"},
+	{ 0x03, "XENIX /usr  ", "XENIX /usr filesystem"},
+	{ 0x04, "DOS FAT-16  ", "Primary DOS with 16 bit FAT"},
+	{ 0x05, "Extended DOS", "Extended DOS"},
+	{ 0x06, "DOS > 32MB  ", "Primary 'big' DOS (> 32MB)"},
+	{ 0x07, "HPFS/QNX/AUX", "OS/2 HPFS, QNX or Advanced UNIX"},
+	{ 0x08, "AIX fs      ", "AIX filesystem"},
+	{ 0x09, "AIX/Coherent", "AIX boot partition or Coherent"},
+	{ 0x0A, "OS/2 Bootmgr", "OS/2 Boot Manager or OPUS"},
+	{ 0x0B, "Win95 FAT-32", "Primary Win95 w/ 32-bit FAT"},
+	{ 0x0E, "DOS FAT-16  ", "Primary DOS w/ 16-bit FAT, CHS-mapped"},
+	{ 0x10, "OPUS        ", "OPUS"},
+	{ 0x12, "Compaq Diag.", "Compaq Diagnostics"},
+	{ 0x40, "VENIX 286   ", "VENIX 286"},
+	{ 0x50, "DM          ", "DM"},
+	{ 0x51, "DM          ", "DM"},
+	{ 0x52, "CP/M or SysV", "CP/M or Microport SysV/AT"},
+	{ 0x54, "Ontrack     ", "Ontrack"},
+	{ 0x56, "GB          ", "GB"},
+	{ 0x61, "Speed       ", "Speed"},
+	{ 0x63, "ISC, HURD, *", "ISC, System V/386, GNU HURD or Mach"},
+	{ 0x64, "Netware 2.xx", "Novell Netware 2.xx"},
+	{ 0x65, "Netware 3.xx", "Novell Netware 3.xx"},
+	{ 0x75, "PCIX        ", "PCIX"},
+	{ 0x80, "Minix (old) ", "Minix 1.1 ... 1.4a"},
+	{ 0x81, "Minix (new) ", "Minix 1.4b ... 1.5.10"},
+	{ 0x82, "Linux swap  ", "Linux swap"},
+	{ 0x83, "Linux files*", "Linux filesystem"},
+	{ 0x93, "Amoeba file*", "Amoeba filesystem"},
+	{ 0x94, "Amoeba BBT  ", "Amoeba bad block table"},
+	{ 0xA5, "Free/Net BSD", "386BSD/FreeBSD/NetBSD"},
+	{ 0xA6, "OpenBSD     ", "OpenBSD"},
+	{ 0xA7, "NEXTSTEP    ", "NEXTSTEP"},
+	{ 0xB7, "BSDI filesy*", "BSDI BSD/386 filesystem"},
+	{ 0xB8, "BSDI swap   ", "BSDI BSD/386 swap"},
+	{ 0xDB, "CPM/C.DOS/C*", "Concurrent CPM or C.DOS or CTOS"},
+	{ 0xE1, "Speed       ", "Speed"},
+	{ 0xE3, "Speed       ", "Speed"},
+	{ 0xE4, "Speed       ", "Speed"},
+	{ 0xF1, "Speed       ", "Speed"},
+	{ 0xF2, "DOS 3.3+ Sec", "DOS 3.3+ Secondary"},
+	{ 0xF4, "Speed       ", "Speed"},
+	{ 0xFF, "BBT         ", "BBT (Bad Blocks Table)"},
 };
 
+void
+PRT_printall()
+{
+	int i;
+
+	printf("Choose from the following types\n");
+	for(i = 0; i < sizeof(part_types)/sizeof(struct part_type); i++) {
+		printf("%02X %s%s", part_types[i].type,
+		    part_types[i].sname, (i+1) % 4 ? "   " : "\n");
+	}
+	if (i % 4)
+		printf("\n");
+}
 
 char *
 PRT_ascii_id(id)
@@ -105,7 +119,7 @@ PRT_ascii_id(id)
 
 	for(i = 0; i < sizeof(part_types)/sizeof(struct part_type); i++){
 		if(part_types[i].type == id)
-			return(part_types[i].name);
+			return(part_types[i].sname);
 	}
 
 	return(unknown);
@@ -165,7 +179,7 @@ PRT_print(num, partn)
 	if(partn == NULL){
 		printf("         Starting        Ending\n");
 		printf(" #: id  cyl  hd sec -  cyl  hd sec [     start -       size]\n");
-		printf("-------------------------------------------------------------------\n");
+		printf("-------------------------------------------------------------------------\n");
 	}else{
 		printf("%c%1d: %.2X %4d %3d %3d - %4d %3d %3d [%10d - %10d] %s\n",
 			(partn->flag == 0x80)?'*':' ',
@@ -187,8 +201,8 @@ PRT_fix_BN(disk, part)
 	int end = 0;
 
 	/* Disk metrics */
-	spt = disk->bios->sectors;
-	tpc = disk->bios->heads;
+	spt = disk->real->sectors;
+	tpc = disk->real->heads;
 	spc = spt * tpc;
 
 	start += part->scyl * spc;
@@ -217,8 +231,8 @@ PRT_fix_CHS(disk, part)
 	int cyl, head, sect;
 
 	/* Disk metrics */
-	spt = disk->bios->sectors;
-	tpc = disk->bios->heads;
+	spt = disk->real->sectors;
+	tpc = disk->real->heads;
 	spc = spt * tpc;
 
 	start = part->bs;

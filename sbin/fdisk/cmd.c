@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.5 1997/10/04 00:09:51 deraadt Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.6 1997/10/16 01:47:08 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -45,7 +45,7 @@
 
 
 int
-Xinit(cmd, disk, mbr, tt, offset)
+Xreinit(cmd, disk, mbr, tt, offset)
 	cmd_t *cmd;
 	disk_t *disk;
 	mbr_t *mbr;
@@ -54,9 +54,30 @@ Xinit(cmd, disk, mbr, tt, offset)
 {
 	char buf[DEV_BSIZE];
 
-	/* Copy MBR */
+	/* Copy template MBR */
 	MBR_make(tt, buf);
 	MBR_parse(buf, mbr);
+
+	/* Fix up given mbr for this disk */
+	mbr->part[0].flag = 0;
+	mbr->part[1].flag = 0;
+	mbr->part[2].flag = 0;
+	mbr->part[3].flag = DOSACTIVE;
+	mbr->signature = DOSMBR_SIGNATURE;
+
+	/* Use whole disk, save for first head, on first cyl. */
+	mbr->part[3].id = DOSPTYP_OPENBSD;
+	mbr->part[3].scyl = 0;
+	mbr->part[3].shead = 1;
+	mbr->part[3].ssect = 1;
+
+	/* Go right to the end */                                                  
+	mbr->part[3].ecyl = disk->real->cylinders;                                  
+	mbr->part[3].ehead = disk->real->heads;                                     
+	mbr->part[3].esect = disk->real->sectors;                                   
+
+	/* Fix up start/length fields */                                           
+	PRT_fix_BN(disk, &mbr->part[3]);                                            
 
 	/* Tell em we did something */
 	printf("In memory copy is initialized.\n");
@@ -78,13 +99,16 @@ Xdisk(cmd, disk, mbr, tt, offset)
 	DISK_printmetrics(disk);
 
 	/* Ask for new info */
-	if(ask_yn("Change geometry?")){
-		disk->bios->cylinders = ask_num("Cylinders", ASK_DEC, 1, 1, 1024);
-		disk->bios->heads = ask_num("Heads", ASK_DEC, 1, 1, 256);
-		disk->bios->sectors = ask_num("Sectors", ASK_DEC, 1, 1, 64);
+	if(ask_yn("Change disk geometry?")){
+		disk->real->cylinders = ask_num("BIOS Cylinders", ASK_DEC,
+		    disk->real->cylinders, 1, 1024, NULL);
+		disk->real->heads = ask_num("BIOS Heads", ASK_DEC,
+		    disk->real->heads, 1, 256, NULL);
+		disk->real->sectors = ask_num("BIOS Sectors", ASK_DEC,
+		    disk->real->sectors, 1, 64, NULL);
 
-		disk->bios->size = disk->bios->cylinders * disk->bios->heads
-			* disk->bios->sectors;
+		disk->real->size = disk->real->cylinders * disk->real->heads
+			* disk->real->sectors;
 	}
 
 	return(CMD_CONT);
@@ -119,13 +143,13 @@ Xedit(cmd, disk, mbr, tt, offset)
 	PRT_print(0, NULL);
 	PRT_print(pn, pp);
 
-#define	EDIT(p, f, v, n, m)				\
-	if ((num = ask_num(p, f, v, n, m)) != v)	\
+#define	EDIT(p, f, v, n, m, h)				\
+	if ((num = ask_num(p, f, v, n, m, h)) != v)	\
 		ret = CMD_DIRTY;			\
 	v = num;
 
 	/* Ask for partition type */
-	EDIT("Partition id", ASK_HEX, pp->id, 0, 0xFF);
+	EDIT("Partition id", ASK_HEX, pp->id, 0, 0xFF, PRT_printall);
 
 	/* Unused, so just zero out */
 	if(pp->id == DOSPTYP_UNUSED){
@@ -139,24 +163,25 @@ Xedit(cmd, disk, mbr, tt, offset)
 		int maxcyl, maxhead, maxsect;
 
 		/* Shorter */
-		maxcyl = disk->bios->cylinders - 1;
-		maxhead = disk->bios->heads - 1;
-		maxsect = disk->bios->sectors;
+		maxcyl = disk->real->cylinders - 1;
+		maxhead = disk->real->heads - 1;
+		maxsect = disk->real->sectors;
 
 		/* Get data */
-		EDIT("Starting cylinder", ASK_DEC, pp->scyl,  0, maxcyl);
-		EDIT("Starting head",     ASK_DEC, pp->shead, 0, maxhead);
-		EDIT("Starting sector",   ASK_DEC, pp->ssect, 1, maxsect);
-		EDIT("Ending cylinder",   ASK_DEC, pp->ecyl,  0, maxcyl);
-		EDIT("Ending head",       ASK_DEC, pp->ehead, 0, maxhead);
-		EDIT("Ending sector",     ASK_DEC, pp->esect, 1, maxsect);
+		EDIT("BIOS Starting cylinder", ASK_DEC, pp->scyl,  0, maxcyl, NULL);
+		EDIT("BIOS Starting head",     ASK_DEC, pp->shead, 0, maxhead, NULL);
+		EDIT("BIOS Starting sector",   ASK_DEC, pp->ssect, 1, maxsect, NULL);
+		EDIT("BIOS Ending cylinder",   ASK_DEC, pp->ecyl,  0, maxcyl, NULL);
+		EDIT("BIOS Ending head",       ASK_DEC, pp->ehead, 0, maxhead, NULL);
+		EDIT("BIOS Ending sector",     ASK_DEC, pp->esect, 1, maxsect, NULL);
 		/* Fix up off/size values */
 		PRT_fix_BN(disk, pp);
 	}else{
 		/* Get data */
-		EDIT("Partition offset", ASK_DEC, pp->bs, 0, disk->bios->size);
-		EDIT("Partition size",   ASK_DEC, pp->ns, 1,
-		     disk->bios->size - pp->bs);
+		EDIT("Partition offset", ASK_DEC, pp->bs, 0,
+		    disk->real->size, NULL);
+		EDIT("Partition size", ASK_DEC, pp->ns, 1,
+		     disk->real->size - pp->bs, NULL);
 
 		/* Fix up CHS values */
 		PRT_fix_CHS(disk, pp);
@@ -212,6 +237,7 @@ Xprint(cmd, disk, mbr, tt, offset)
 	int offset;
 {
 
+	printf("Offset: %d\t", offset);
 	MBR_print(mbr);
 
 	return(CMD_CONT);
@@ -247,8 +273,23 @@ Xexit(cmd, disk, r, tt, offset)
 {
 
 	/* Nothing to do here */
-	return(CMD_EXIT);
+	return(CMD_SAVE);
 }
+
+int
+Xabort(cmd, disk, mbr, tt, offset)
+	cmd_t *cmd;
+	disk_t *disk;
+	mbr_t *mbr;
+	mbr_t *tt;
+	int offset;
+{
+	exit(0);
+
+	/* NOTREACHED */
+	return(CMD_CONT);
+}
+
 
 int
 Xquit(cmd, disk, mbr, tt, offset)
@@ -258,15 +299,9 @@ Xquit(cmd, disk, mbr, tt, offset)
 	mbr_t *tt;
 	int offset;
 {
-	extern int modified;
 
-	if (modified == 0)
-		exit(0);
-
-	if(ask_yn("You really want to quit?"))
-		exit(0);
-
-	return(CMD_CONT);
+	/* Nothing to do here */
+	return(CMD_EXIT);
 }
 
 int

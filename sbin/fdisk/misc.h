@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.h,v 1.2 1997/09/29 23:33:38 mickey Exp $	*/
+/*	$OpenBSD: misc.h,v 1.3 1997/10/16 01:47:11 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -42,7 +42,7 @@
 
 /* Prototypes */
 int ask_cmd __P((cmd_t *));
-int ask_num __P((const char *, int, int, int, int));
+int ask_num __P((const char *, int, int, int, int, void (*help) __P((void))));
 int ask_yn __P((const char *));
 u_int16_t getshort __P((void *));
 u_int32_t getlong __P((void *));

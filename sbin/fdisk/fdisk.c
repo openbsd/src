@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdisk.c,v 1.24 1997/10/14 21:21:33 pefo Exp $	*/
+/*	$OpenBSD: fdisk.c,v 1.25 1997/10/16 01:47:10 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -49,7 +49,7 @@ usage()
 {
 	extern char * __progname;
 	fprintf(stderr, "usage: %s "
-		"[-ie] [-f mbrboot] [-c cyl] [-h head] [-s sect] disk\n"
+		"[-ie] [-f mbrboot] [-c cyl -h head -s sect] disk\n"
 		"\t-i: initialize disk with virgin MBR\n"
 		"\t-e: edit MBRs on disk interactively\n"
 		"\t-f: specify non-standard MBR template\n"
@@ -69,6 +69,7 @@ main(argc, argv)
 	int i_flag = 0, m_flag = 0;
 	int c_arg = 0, h_arg = 0, s_arg = 0;
 	disk_t disk;
+	DISK_metrics *usermetrics;
 	char *mbrfile = _PATH_MBR;
 	mbr_t mbr;
 	char mbr_buf[DEV_BSIZE];
@@ -89,14 +90,20 @@ main(argc, argv)
 
 			case 'c':
 				c_arg = atoi(optarg);
+				if(c_arg < 0 || c_arg > 1023)
+					errx(1, "Cylinder argument out of range.");
 				break;
 
 			case 'h':
 				h_arg = atoi(optarg);
+				if(h_arg < 0 || h_arg > 255)
+					errx(1, "Head argument out of range.");
 				break;
 
 			case 's':
 				s_arg = atoi(optarg);
+				if(s_arg < 1 || s_arg > 63)
+					errx(1, "Sector argument out of range.");
 				break;
 
 			default:
@@ -112,27 +119,24 @@ main(argc, argv)
 	else
 		disk.name = argv[0];
 
-	/* Get the geometry */
-	if(DISK_getmetrics(&disk) && !(c_arg | h_arg | s_arg))
-		errx(1, "Can't get disk geometry, please use [-c|h|s] to specify.");
-
 	/* Put in supplied geometry if there */
 	if(c_arg | h_arg | s_arg){
-		if(disk.bios != NULL){
-			if(c_arg) disk.bios->cylinders = c_arg;
-			if(h_arg) disk.bios->heads = h_arg;
-			if(s_arg) disk.bios->sectors = s_arg;
-		}else{
-			disk.bios = malloc(sizeof(DISK_metrics));
-			if(!c_arg) warn("Unknown number of cylinders per disk.");
-			if(!h_arg) warn("Unknown number of heads per cylinder.");
-			if(!s_arg) warn("Unknown number of sectors per track.");
-
-			disk.bios->cylinders = c_arg;
-			disk.bios->heads = h_arg;
-			disk.bios->sectors = s_arg;
+		usermetrics = malloc(sizeof(DISK_metrics));
+		if(usermetrics != NULL){
+			if(c_arg) usermetrics->cylinders = c_arg;
+			else errx(1, "Please specify a full geometry with [-chs].");
+			if(h_arg) usermetrics->heads = h_arg;
+			else errx(1, "Please specify a full geometry with [-chs].");
+			if(s_arg) usermetrics->sectors = s_arg;
+			else errx(1, "Please specify a full geometry with [-chs].");
 		}
-	}
+		usermetrics->size = c_arg * h_arg * s_arg;
+	}else
+		usermetrics = NULL;
+
+	/* Get the geometry */
+	if(DISK_getmetrics(&disk, usermetrics))
+		errx(1, "Can't get disk geometry, please use [-chs] to specify.");
 
 	/* Parse mbr template, to pass on later */
 	if((fd = open(mbrfile, O_RDONLY)) < 0)

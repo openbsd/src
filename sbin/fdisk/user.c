@@ -1,4 +1,4 @@
-/*	$OpenBSD: user.c,v 1.6 1997/10/02 14:58:31 deraadt Exp $	*/
+/*	$OpenBSD: user.c,v 1.7 1997/10/16 01:47:13 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -50,7 +50,7 @@
 /* Our command table */
 static cmd_table_t cmd_table[] = {
 	{"help",   Xhelp,	"Command help list"},
-	{"init",   Xinit,	"Initialize loaded MBR"},
+	{"reinit", Xreinit,	"Re-initialize loaded MBR (to defaults)"},
 	{"disk",   Xdisk,	"Edit current drive stats"},
 	{"edit",   Xedit,	"Edit given table entry"},
 	{"flag",   Xflag,	"Flag given table entry as bootable"},
@@ -58,8 +58,9 @@ static cmd_table_t cmd_table[] = {
 	{"select", Xselect,	"Select extended partition table entry MBR"},
 	{"print",  Xprint,	"Print loaded MBR partition table"},
 	{"write",  Xwrite,	"Write loaded MBR to disk"},
-	{"exit",   Xexit,	"Exit current level of fdisk edit"},
-	{"quit",   Xquit,	"Quit program without saving current changes"},
+	{"exit",   Xexit,	"Exit edit of current MBR, saving current changes"},
+	{"quit",   Xquit,	"Quit edit of current MBR, without saving changes"},
+	{"abort",  Xabort,	"Abort program without saving current changes"},
 	{NULL,     NULL,	NULL}
 };
 
@@ -86,9 +87,9 @@ USER_init(disk, tt)
 	tt->part[3].ssect = 1;
 
 	/* Go right to the end */
-	tt->part[3].ecyl = disk->bios->cylinders;
-	tt->part[3].ehead = disk->bios->heads;
-	tt->part[3].esect = disk->bios->sectors;
+	tt->part[3].ecyl = disk->real->cylinders;
+	tt->part[3].ehead = disk->real->heads;
+	tt->part[3].esect = disk->real->sectors;
 
 	/* Fix up start/length fields */
 	PRT_fix_BN(disk, &tt->part[3]);
@@ -117,11 +118,15 @@ USER_modify(disk, tt, offset)
 	mbr_t *tt;
 	int offset;
 {
+	static int editlevel;
 	char mbr_buf[DEV_BSIZE];
 	mbr_t mbr;
 	cmd_t cmd;
 	int i, st, fd;
 
+
+	/* One level deeper */
+	editlevel += 1;
 
 	/* Set up command table pointer */
 	cmd.table = cmd_table;
@@ -138,7 +143,7 @@ USER_modify(disk, tt, offset)
 
 	/* Edit cycle */
 	do {
-		printf("fdisk:%c%d> ", (modified)?'*':' ', offset);
+		printf("fdisk:%c%d> ", (modified)?'*':' ', editlevel);
 		fflush(stdout);
 		ask_cmd(&cmd);
 
@@ -162,23 +167,25 @@ USER_modify(disk, tt, offset)
 
 		/* Update status */
 		if(st == CMD_EXIT) break;
+		if(st == CMD_SAVE) break;
 		if(st == CMD_CLEAN) modified = 0;
 		if(st == CMD_DIRTY) modified = 1;
 	} while(1);
 
 	/* Write out MBR */
 	if(modified){
-		printf("\a\n"
-		   "\t-----------------------------------------------------\n"
-		   "\t--- ATTENTION - PARTITION TABLE HAS BEEN MODIFIED ---\n"
-		   "\t-----------------------------------------------------\n");
-		if(ask_yn("\nDo you wish to write before exit?")){
+		if(st == CMD_SAVE){
+			printf("Writing current MBR to disk.\n");
 			fd = DISK_open(disk->name, O_RDWR);
 			MBR_make(&mbr, mbr_buf);
 			MBR_write(fd, offset, mbr_buf);
 			close(fd);
-		}
+		}else
+			printf("Aborting changes to current MBR.\n");
 	}
+
+	/* One level less */
+	editlevel -= 1;
 
 	return(0);
 }
@@ -194,14 +201,13 @@ USER_print_disk(disk)
 	fd = DISK_open(disk->name, O_RDONLY);
 	offset = 0;
 
-	printf("Disk: %s\n", disk->name);
 	DISK_printmetrics(disk);
 
 	do {
 		MBR_read(fd, (off_t)offset, mbr_buf);
 		MBR_parse(mbr_buf, &mbr);
 
-		printf("\nDisk offset: %d\n", (int)offset);
+		printf("Offset: %d\t", (int)offset);
 		MBR_print(&mbr);
 
 		/* Print out extended partitions too */

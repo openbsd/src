@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.h,v 1.2 1997/09/29 23:33:33 mickey Exp $	*/
+/*	$OpenBSD: cmd.h,v 1.3 1997/10/16 01:47:09 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -38,11 +38,12 @@
 #include "mbr.h"
 
 
-/* Constants (returned by cmd funs */
+/* Constants (returned by cmd funs) */
 #define CMD_EXIT	0x0000
-#define CMD_CONT	0x0001
-#define CMD_CLEAN	0x0002
-#define CMD_DIRTY	0x0003
+#define CMD_SAVE	0x0001
+#define CMD_CONT	0x0002
+#define CMD_CLEAN	0x0003
+#define CMD_DIRTY	0x0004
 
 
 /* Data types */
@@ -61,7 +62,7 @@ typedef struct _cmd_table_t {
 
 
 /* Prototypes */
-int Xinit __P((cmd_t *, disk_t *, mbr_t *, mbr_t *, int));
+int Xreinit __P((cmd_t *, disk_t *, mbr_t *, mbr_t *, int));
 int Xdisk __P((cmd_t *, disk_t *, mbr_t *, mbr_t *, int));
 int Xedit __P((cmd_t *, disk_t *, mbr_t *, mbr_t *, int));
 int Xselect __P((cmd_t *, disk_t *, mbr_t *, mbr_t *, int));
@@ -69,6 +70,7 @@ int Xprint __P((cmd_t *, disk_t *, mbr_t *, mbr_t *, int));
 int Xwrite __P((cmd_t *, disk_t *, mbr_t *, mbr_t *, int));
 int Xexit __P((cmd_t *, disk_t *, mbr_t *, mbr_t *, int));
 int Xquit __P((cmd_t *, disk_t *, mbr_t *, mbr_t *, int));
+int Xabort __P((cmd_t *, disk_t *, mbr_t *, mbr_t *, int));
 int Xhelp __P((cmd_t *, disk_t *, mbr_t *, mbr_t *, int));
 int Xflag __P((cmd_t *, disk_t *, mbr_t *, mbr_t *, int));
 int Xupdate __P((cmd_t *, disk_t *, mbr_t *, mbr_t *, int));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: disk.c,v 1.3 1997/10/04 00:15:48 deraadt Exp $	*/
+/*	$OpenBSD: disk.c,v 1.4 1997/10/16 01:47:09 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -43,7 +43,7 @@
 #include <sys/param.h>
 #include <sys/sysctl.h>
 #include <machine/cpu.h>
-#ifdef CPU_BIOSDEV
+#ifdef CPU_BIOS
 #include <machine/biosvar.h>
 #endif
 #include "disk.h"
@@ -81,14 +81,14 @@ DISK_close(fd)
  * they seem.
  */
 DISK_metrics *
-DISK_getrealmetrics(name)
+DISK_getlabelmetrics(name)
 	char *name;
 {
 	DISK_metrics *lm = NULL;
 	struct disklabel dl;
 	int fd;
 
-	/* Get real metrics */
+	/* Get label metrics */
 	if((fd = DISK_open(name, O_RDONLY)) >= 0){
 		lm = malloc(sizeof(DISK_metrics));
 
@@ -108,7 +108,7 @@ DISK_getrealmetrics(name)
 	return(lm);
 }
 
-#ifdef CPU_BIOSDEV
+#ifdef CPU_BIOS
 /* Routine to go after sysctl info for BIOS
  * geometry.  This should only really work on PC
  * type machines.  There is still a problem with
@@ -152,32 +152,62 @@ DISK_getbiosmetrics(name)
 	    BIOSNSECTS(biosgeo);
 	return(bm);
 }
+#else
+/*
+ * We are not a PC, so we do not have BIOS metrics to contend
+ * with.  Return NULL to indicate so.
+ */
+DISK_metrics *
+DISK_getbiosmetrics(name)
+	char *name;
+{
+	return(NULL);
+}
 #endif
 
 /* This is ugly, and convoluted.  All the magic
  * for disk geo/size happens here.  Basically,
- * the bios size is the one we will use in the
- * rest of the program, the real size is what we
+ * the real size is the one we will use in the
+ * rest of the program, the label size is what we
  * got from the disklabel.  If the disklabel fails,
  * we assume we are working with a normal file,
  * and should request the user to specify the
  * geometry he/she wishes to use.
  */
 int
-DISK_getmetrics(disk)
+DISK_getmetrics(disk, user)
 	disk_t *disk;
+	DISK_metrics *user;
 {
 
-	disk->real = DISK_getrealmetrics(disk->name);
-#ifdef CPU_BIOSDEV
+	disk->label = DISK_getlabelmetrics(disk->name);
 	disk->bios = DISK_getbiosmetrics(disk->name);
-#else
-	disk->bios = disk->real;			/* We aint no stinkin PC */
-#endif
+
+	/* If user supplied, use that */
+	if(user){
+		disk->real = user;
+		return(0);
+	}
+
+	/* If we have a label, use that */
+	if(!disk->real && disk->label)
+		disk->real = disk->label;
 
 	/* Can not get geometry, punt */
-	if(disk->bios == NULL || disk->real == NULL)
+	if(disk->real == NULL)
 		return(1);
+
+	/* If we have a bios, use that (if label looks bogus)
+	 *
+	 * XXX - This needs to be fixed!!!!
+	 * Currently machdep.bios.biosdev is USELESS
+	 * It needs to be, at least, a BSD device.
+	 * Or we need a mapping from biosdev -> BSD universe.
+	 */
+	if(disk->bios)
+		if(disk->real->cylinders > 1024 || disk->real->heads > 255
+			|| disk->real->sectors > 63)
+			disk->real = disk->bios;
 
 	return(0);
 }
@@ -187,17 +217,12 @@ DISK_printmetrics(disk)
 	disk_t *disk;
 {
 
+	printf("Disk: %s\t", disk->name);
 	if(disk->real)
-		printf("Disk GEO: %d/%d/%d [%d sectors]\n", disk->real->cylinders,
+		printf("geometry: %d/%d/%d [%d sectors]\n", disk->real->cylinders,
 			disk->real->heads, disk->real->sectors, disk->real->size);
 	else
-		printf("Disk GEO: <none>\n");
-
-	if(disk->bios)
-		printf("Bios GEO: %d/%d/%d [%d sectors]\n", disk->bios->cylinders,
-			disk->bios->heads, disk->bios->sectors, disk->bios->size);
-	else
-		printf("Bios GEO: <none>\n");
+		printf("geometry: <none>\n");
 
 	return(0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.c,v 1.2 1997/09/29 23:33:36 mickey Exp $	*/
+/*	$OpenBSD: mbr.c,v 1.3 1997/10/16 01:47:11 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -84,10 +84,9 @@ MBR_print(mbr)
 {
 	int i;
 
-	printf("NT Serial #: %d\n", (int)mbr->nt_serial);
-	printf("Signature #: 0x%X\n\n", (int)mbr->signature);
-
 	/* Header */
+	printf("Signatures: 0x%X,0x%X\n",
+		(int)mbr->signature, (int)mbr->nt_serial);
 	PRT_print(0, NULL);
 
 	/* Entries */
