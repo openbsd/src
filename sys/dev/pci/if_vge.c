@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vge.c,v 1.6 2005/01/15 05:24:11 brad Exp $	*/
+/*	$OpenBSD: if_vge.c,v 1.7 2005/03/15 17:06:10 pvalchev Exp $	*/
 /*	$FreeBSD: if_vge.c,v 1.3 2004/09/11 22:13:25 wpaul Exp $	*/
 /*
  * Copyright (c) 2004
@@ -1441,7 +1441,7 @@ vge_start(struct ifnet *ifp)
 		pidx = VGE_TX_DESC_CNT - 1;
 
 	while (sc->vge_ldata.vge_tx_mbuf[idx] == NULL) {
-		IF_DEQUEUE(&ifp->if_snd, m_head);
+		IFQ_DEQUEUE(&ifp->if_snd, m_head);
 		if (m_head == NULL)
 			break;
 
