@@ -1,5 +1,5 @@
-/*	$OpenBSD: fpu_fscale.c,v 1.3 1996/05/29 11:29:32 niklas Exp $	*/
-/*	$NetBSD: fpu_fscale.c,v 1.4 1996/05/15 07:31:57 leo Exp $	*/
+/*	$OpenBSD: fpu_fscale.c,v 1.4 1997/01/13 11:51:05 niklas Exp $	*/
+/*	$NetBSD: fpu_fscale.c,v 1.6 1996/10/13 03:19:14 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Ken Nakata

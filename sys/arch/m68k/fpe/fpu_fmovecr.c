@@ -1,5 +1,5 @@
-/*	$OpenBSD: fpu_fmovecr.c,v 1.3 1996/05/09 22:20:45 niklas Exp $	*/
-/*	$NetBSD: fpu_fmovecr.c,v 1.4 1996/04/30 11:52:22 briggs Exp $	*/
+/*	$OpenBSD: fpu_fmovecr.c,v 1.4 1997/01/13 11:51:05 niklas Exp $	*/
+/*	$NetBSD: fpu_fmovecr.c,v 1.6 1996/10/13 03:19:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1995  Ken Nakata

@@ -1,5 +1,5 @@
-/*	$OpenBSD: db_disasm.c,v 1.4 1996/08/04 01:22:46 niklas Exp $	*/
-/*	$NetBSD: db_disasm.c,v 1.14 1996/04/29 20:50:26 leo Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.5 1997/01/13 11:51:12 niklas Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.19 1996/10/30 08:22:39 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -1384,6 +1384,7 @@ opcode_fpu(dbuf, opc)
 		}
 		if (ISBITSET(ext,15) || ISBITSET(ext,13)) {
 			opcode_fmove_ext(dbuf, opc, ext);
+			return;
 		}
 
 		switch(opmode) {
@@ -1638,12 +1639,12 @@ opcode_fmove_ext(dbuf, opc, ext)
 		addchar('l');
 		addchar('\t');
 
-		if (!ISBITSET(ext,13)) {
+		if (ISBITSET(ext,13)) {
 			print_freglist(dbuf, AR_DEC, BITFIELD(ext,12,10), 1);
 			addchar(',');
 		}
 		get_modregstr(dbuf, 5, GETMOD_BEFORE, SIZE_LONG, 1);
-		if (ISBITSET(ext,13)) {
+		if (!ISBITSET(ext,13)) {
 			addchar(',');
 			print_freglist(dbuf, AR_DEC, BITFIELD(ext,12,10), 1);
 		}
@@ -1737,6 +1738,7 @@ opcode_mmu(dbuf, opc)
 				 -1);
 			dbuf->used += 2;
 		}
+		return;
 	case 1:
 		ext = *(dbuf->val + 1);
 		dbuf->used++;
@@ -2106,19 +2108,22 @@ print_freglist(dbuf, mod, rl, cntl)
 	regs = cntl ? fpcregs : fpregs;
 	upper = cntl ? 3 : 8;
 
-	if (mod == AR_DEC) {
+	if (!cntl && mod != AR_DEC) {
 		list = rl;
 		rl = 0;
 		/* I am sure there is some trick... */
 		for (bit = 0; bit < upper; bit++)
 			if (list & (1 << bit)) 
-				rl |= (0x8000 >> bit);
+				rl |= (0x80 >> bit);
 	} 
 	for (bit = 0, list = 0; bit < upper; bit++) {
 		if (ISBITSET(rl,bit)) {
 			if (list == 0) {
-				list = 1;
 				addstr(dbuf, regs[bit]);
+				if (cntl)
+					addchar('/');
+				else
+					list = 1;
 			} else if (list == 1) {
 				list++;
 				addchar('-');
@@ -2132,6 +2137,9 @@ print_freglist(dbuf, mod, rl, cntl)
 			}
 		}
 	}
+	if (list > 1)
+		addstr(dbuf, regs[upper-1]);
+
 	if (dbuf->casm[-1] == '/' || dbuf->casm[-1] == '-')
 		dbuf->casm--;
 	*dbuf->casm = 0;
@@ -2190,7 +2198,7 @@ opcode_movec(dbuf, opc)
 		addchar(',');
 	}
 	switch (BITFIELD(ext,11,0)) {
-		/* 010/020/030/040/CPU32 */
+		/* 010/020/030/040/CPU32/060 */
 	case 0x000:
 		tmp = "sfc";
 		break;
@@ -2207,17 +2215,18 @@ opcode_movec(dbuf, opc)
 	case 0x802:
 		tmp = "caar";
 		break;
-		/* 020/030/040 */
+		/* 020/030/040/060 */
 	case 0x002:
 		tmp = "cacr";
 		break;
+		/* 020/030/040 */
 	case 0x803:
 		tmp = "msp";
 		break;
 	case 0x804:
 		tmp = "isp";
 		break;
-		/* 040 */
+		/* 040/060 */
 	case 0x003:
 		tmp = "tc";
 		break;
@@ -2233,14 +2242,23 @@ opcode_movec(dbuf, opc)
 	case 0x007:
 		tmp = "dtt1";
 		break;
+		/* 040 */
 	case 0x805:
 		tmp = "mmusr";
 		break;
+		/* 040/060 */
 	case 0x806:
 		tmp = "urp";
 		break;
 	case 0x807:
 		tmp = "srp";
+		break;
+		/* 060 */
+	case 0x008:
+		tmp = "buscr";
+		break;
+	case 0x808:
+		tmp = "pcr";
 		break;
 	default:
 		tmp = "INVALID";

@@ -1,5 +1,5 @@
-/*	$OpenBSD: copy.s,v 1.3 1996/02/27 11:06:51 niklas Exp $	*/
-/*	$NetBSD: copy.s,v 1.22 1995/12/11 02:37:55 thorpej Exp $	*/
+/*	$OpenBSD: copy.s,v 1.4 1997/01/13 11:51:11 niklas Exp $	*/
+/*	$NetBSD: copy.s,v 1.24 1996/07/20 01:53:42 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995 Charles Hannum.
@@ -462,6 +462,7 @@ Lsdone:
  *
  * Works for counts up to 128K.
  */
+ALTENTRY(memmove, _memcpy)
 ENTRY(memcpy)
 	movl	sp@(12),d0		| get count
 	jeq	Lbccpyexit		| if zero, return

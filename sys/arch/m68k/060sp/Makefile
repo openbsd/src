@@ -1,5 +1,5 @@
-# $OpenBSD: Makefile,v 1.3 1996/10/04 14:58:34 niklas Exp $
-# $NetBSD: Makefile,v 1.2 1996/05/20 13:31:40 is Exp $
+# $OpenBSD: Makefile,v 1.4 1997/01/13 11:51:03 niklas Exp $
+# $NetBSD: Makefile,v 1.3 1996/12/31 22:44:13 veego Exp $
 #
 AS		= as -m68060
 LD		= ld

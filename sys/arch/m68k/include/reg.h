@@ -1,5 +1,5 @@
-/*	$OpenBSD: reg.h,v 1.2 1996/05/29 18:38:36 niklas Exp $	*/
-/*	$NetBSD: reg.h,v 1.11 1995/03/26 17:08:38 briggs Exp $	*/
+/*	$OpenBSD: reg.h,v 1.3 1997/01/13 11:51:10 niklas Exp $	*/
+/*	$NetBSD: reg.h,v 1.12 1996/12/17 19:24:31 gwr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -98,6 +98,11 @@ struct fpreg {
  */
 #define	R0	D1
 #define	R1	A0
+
+struct proc;
+int process_read_regs   __P((struct proc *, struct reg *));
+int process_read_fpregs __P((struct proc *, struct fpreg *));
+
 #endif
 
 #endif /* !_M68K_REG_H_ */

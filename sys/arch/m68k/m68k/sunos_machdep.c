@@ -1,5 +1,5 @@
-/*	$OpenBSD: sunos_machdep.c,v 1.7 1996/08/04 01:15:16 niklas Exp $	*/
-/*	$NetBSD: sunos_machdep.c,v 1.10 1996/05/05 16:11:31 veego Exp $	*/
+/*	$OpenBSD: sunos_machdep.c,v 1.8 1997/01/13 11:51:14 niklas Exp $	*/
+/*	$NetBSD: sunos_machdep.c,v 1.12 1996/10/13 03:19:22 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.

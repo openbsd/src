@@ -1,5 +1,5 @@
-/*	$OpenBSD: fpu_emulate.c,v 1.6 1996/10/13 16:10:04 briggs Exp $	*/
-/*	$NetBSD: fpu_emulate.c,v 1.10 1996/10/13 03:19:12 christos Exp $	*/
+/*	$OpenBSD: fpu_emulate.c,v 1.7 1997/01/13 11:51:04 niklas Exp $	*/
+/*	$NetBSD: fpu_emulate.c,v 1.14 1996/12/18 05:44:31 scottr Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -51,8 +51,6 @@ static int fpu_emul_type1 __P((struct fpemu *fe, struct instruction *insn));
 static int fpu_emul_brcc __P((struct fpemu *fe, struct instruction *insn));
 static int test_cc __P((struct fpemu *fe, int pred));
 static struct fpn *fpu_cmp __P((struct fpemu *fe));
-
-int	fusword __P((void *));
 
 #if !defined(DL_DEFAULT)
 #  if defined(DEBUG_WITH_FPU)
@@ -871,6 +869,7 @@ fpu_emul_arith(fe, insn)
 	break;
 
     case 0x30:
+    case 0x31:
     case 0x32:
     case 0x33:
     case 0x34:
