@@ -1,5 +1,5 @@
 
-# $OpenBSD: Makefile,v 1.7 2002/01/01 23:00:51 art Exp $
+# $OpenBSD: Makefile,v 1.8 2002/01/03 01:03:49 art Exp $
 
 MAKEDEVARCHS+=alpha amiga hp300 hppa i386 mac68k macppc mvme68k mvme88k
 MAKEDEVARCHS+=mvmeppc sparc sparc64 sun3 vax
@@ -9,6 +9,7 @@ ETCSRCDIR?=	/usr/src/etc
 # test separate targets, all, ramdisk/raminst, std, etc
 
 REGRESSTARGETS=${MAKEDEVARCHS}
+REGRESSSLOWTARGETS=${REGRESSTARGETS}
 
 ${MAKEDEVARCHS}:
 	@echo "====> ${.TARGET}"
