@@ -1,4 +1,4 @@
-/*	$OpenBSD: footbridge_clock.c,v 1.4 2004/06/03 23:20:07 deraadt Exp $	*/
+/*	$OpenBSD: footbridge_clock.c,v 1.5 2004/08/17 19:40:45 drahn Exp $	*/
 /*	$NetBSD: footbridge_clock.c,v 1.17 2003/03/23 14:12:25 chris Exp $	*/
 
 /*
@@ -146,7 +146,7 @@ clockhandler(aframe)
 		extern int ticks;
 		debugled(ticks);
 	}
-	return(0);	/* Pass the interrupt on down the chain */
+	return(-1);	/* Pass the interrupt on down the chain */
 }
 
 /*
@@ -206,7 +206,7 @@ statclockhandler(aframe)
 		 */
 		statclock(frame);
 
-	return(0);	/* Pass the interrupt on down the chain */
+	return(-1);	/* Pass the interrupt on down the chain */
 }
 
 static int
@@ -301,7 +301,7 @@ cpu_initclocks()
 	clock_sc->sc_clock_ticks_per_256us =
 	    ((((clock_sc->sc_clock_count * hz) / 1000) * 256) / 1000);
 	clock_sc->sc_clockintr = footbridge_intr_claim(IRQ_TIMER_1, IPL_CLOCK,
-	    "tmr1 hard clk", clockhandler, 0);
+	    "tmr1_hard_clk", clockhandler, 0);
 
 	if (clock_sc->sc_clockintr == NULL)
 		panic("%s: Cannot install timer 1 interrupt handler",
@@ -312,7 +312,7 @@ cpu_initclocks()
 		/* Setup timer 2 and claim interrupt */
 		setstatclockrate(stathz);
        		clock_sc->sc_statclockintr = footbridge_intr_claim(IRQ_TIMER_2, IPL_STATCLOCK,
-       		    "tmr2 stat clk", statclockhandler, 0);
+       		    "tmr2_stat_clk", statclockhandler, 0);
 		if (clock_sc->sc_statclockintr == NULL)
 			panic("%s: Cannot install timer 2 interrupt handler",
 			    clock_sc->sc_dev.dv_xname);

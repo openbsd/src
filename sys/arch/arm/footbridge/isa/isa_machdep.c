@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa_machdep.c,v 1.3 2004/08/06 19:29:10 drahn Exp $	*/
+/*	$OpenBSD: isa_machdep.c,v 1.4 2004/08/17 19:40:45 drahn Exp $	*/
 /*	$NetBSD: isa_machdep.c,v 1.4 2003/06/16 20:00:57 thorpej Exp $	*/
 
 /*-
@@ -495,8 +495,6 @@ isa_intr_init(void)
  	for (i = 0; i < ICU_LEN; i++) {
  		iq = &isa_intrq[i];
  		TAILQ_INIT(&iq->iq_list);
-  
- 		snprintf(iq->iq_name, sizeof(iq->iq_name), "irq %d", i);
  	}
 	
 	isa_icu_init();
@@ -505,7 +503,7 @@ isa_intr_init(void)
 #ifndef ISA_FOOTBRIDGE_IRQ 
 #warning Before using isa with footbridge you must define ISA_FOOTBRIDGE_IRQ
 #endif
-	isa_ih = footbridge_intr_claim(ISA_FOOTBRIDGE_IRQ, IPL_BIO, "isabus",
+	isa_ih = footbridge_intr_claim(ISA_FOOTBRIDGE_IRQ, IPL_BIO, NULL,
 	    isa_irqdispatch, NULL);
 	
 }

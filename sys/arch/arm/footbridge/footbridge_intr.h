@@ -1,4 +1,4 @@
-/*	$OpenBSD: footbridge_intr.h,v 1.2 2004/08/06 19:29:10 drahn Exp $	*/
+/*	$OpenBSD: footbridge_intr.h,v 1.3 2004/08/17 19:40:45 drahn Exp $	*/
 /* 	$NetBSD: footbridge_intr.h,v 1.4 2003/01/03 00:56:00 thorpej Exp $	*/
 
 /*
@@ -208,7 +208,6 @@ struct intrq {
 	int iq_mask;			/* IRQs to mask while handling */
 	int iq_levels;			/* IPL_*'s this IRQ has */
 	int iq_ist;			/* share type */
-	char iq_name[IRQNAMESIZE];	/* interrupt name */
 };
 
 #endif /* _LOCORE */

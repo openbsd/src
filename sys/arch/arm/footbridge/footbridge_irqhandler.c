@@ -1,4 +1,4 @@
-/*	$OpenBSD: footbridge_irqhandler.c,v 1.3 2004/08/06 19:29:10 drahn Exp $	*/
+/*	$OpenBSD: footbridge_irqhandler.c,v 1.4 2004/08/17 19:40:45 drahn Exp $	*/
 /*	$NetBSD: footbridge_irqhandler.c,v 1.9 2003/06/16 20:00:57 thorpej Exp $	*/
 
 /*
@@ -310,8 +310,6 @@ footbridge_intr_init(void)
 	for (i = 0; i < NIRQ; i++) {
 		iq = &footbridge_intrq[i];
 		TAILQ_INIT(&iq->iq_list);
-
-		snprintf(iq->iq_name, sizeof(iq->iq_name), "irq %d", i);
 	}
 	
 	footbridge_intr_calculate_masks();
@@ -352,9 +350,9 @@ footbridge_intr_claim(int irq, int ipl, char *name, int (*func)(void *), void *a
 
 	footbridge_intr_calculate_masks();
 
-	/* detach the existing event counter and add the new name */
-        evcount_attach(&ih->ih_count, name, (void *)&ih->ih_irq,
-            &evcount_intr);
+	if (name != NULL)
+		evcount_attach(&ih->ih_count, name, (void *)&ih->ih_irq,
+		    &evcount_intr);
 	
 	restore_interrupts(oldirqstate);
 	

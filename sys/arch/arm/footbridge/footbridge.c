@@ -1,4 +1,4 @@
-/*	$OpenBSD: footbridge.c,v 1.3 2004/05/19 03:17:07 drahn Exp $	*/
+/*	$OpenBSD: footbridge.c,v 1.4 2004/08/17 19:40:45 drahn Exp $	*/
 /*	$NetBSD: footbridge.c,v 1.7 2002/05/16 01:01:33 thorpej Exp $	*/
 
 /*
@@ -194,13 +194,13 @@ footbridge_attach(parent, self, aux)
 	sc->sc_serr_ih = footbridge_intr_claim(IRQ_SERR, IPL_HIGH,
 	    "serr", footbridge_intr, sc);
 	sc->sc_sdram_par_ih = footbridge_intr_claim(IRQ_SDRAM_PARITY, IPL_HIGH,
-	    "sdram parity", footbridge_intr, sc);
+	    "sdram_parity", footbridge_intr, sc);
 	sc->sc_data_par_ih = footbridge_intr_claim(IRQ_DATA_PARITY, IPL_HIGH,
-	    "data parity", footbridge_intr, sc);
+	    "data_parity", footbridge_intr, sc);
 	sc->sc_master_abt_ih = footbridge_intr_claim(IRQ_MASTER_ABORT, IPL_HIGH,
-	    "mast abt", footbridge_intr, sc);
+	    "mast_abt", footbridge_intr, sc);
 	sc->sc_target_abt_ih = footbridge_intr_claim(IRQ_TARGET_ABORT, IPL_HIGH,
-	    "targ abt", footbridge_intr, sc);
+	    "targ_abt", footbridge_intr, sc);
 	sc->sc_parity_ih = footbridge_intr_claim(IRQ_PARITY, IPL_HIGH,
 	    "parity", footbridge_intr, sc);
 	
@@ -279,7 +279,7 @@ footbridge_intr(arg)
 		bus_space_write_4(sc->sc_iot, sc->sc_ioh,
 		    PCI_COMMAND_STATUS_REG, ctrl | intr);
 	}
-	return(0);
+	return(intr != 0);
 }
 
 /* End of footbridge.c */

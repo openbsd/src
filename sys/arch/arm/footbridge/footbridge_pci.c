@@ -1,4 +1,4 @@
-/*	$OpenBSD: footbridge_pci.c,v 1.3 2004/08/06 19:29:10 drahn Exp $	*/
+/*	$OpenBSD: footbridge_pci.c,v 1.4 2004/08/17 19:40:45 drahn Exp $	*/
 /*	$NetBSD: footbridge_pci.c,v 1.4 2001/09/05 16:17:35 matt Exp $	*/
 
 /*
@@ -328,12 +328,13 @@ footbridge_pci_intr_map(pa, ihp)
 	return(0);
 }
 
+
 const char *
 footbridge_pci_intr_string(pcv, ih)
 	void *pcv;
 	pci_intr_handle_t ih;
 {
-	static char irqstr[8];		/* 4 + 2 + NULL + sanity */
+	static char irqstr[32];
 
 #ifdef PCI_DEBUG
 	printf("footbridge_pci_intr_string(pcv=0x%p, ih=0x%lx)\n", pcv, ih);
@@ -361,18 +362,12 @@ footbridge_pci_intr_establish(pcv, ih, level, func, arg, name)
 	char *name;
 {
 	void *intr;
-	int length;
-	char *string;
 
 #ifdef PCI_DEBUG
 	printf("footbridge_pci_intr_establish(pcv=%p, ih=0x%lx, level=%d, func=%p, arg=%p)\n",
 	    pcv, ih, level, func, arg);
 #endif
 
-	/* Copy the interrupt string to a private buffer */
-	length = strlen(footbridge_pci_intr_string(pcv, ih));
-	string = malloc(length + 1, M_DEVBUF, M_WAITOK);
-	strlcpy(string, footbridge_pci_intr_string(pcv, ih), length);
 #if NISA > 0
 	/*
 	 * XXX the IDE driver will attach the interrupts in compat mode and
@@ -383,10 +378,10 @@ footbridge_pci_intr_establish(pcv, ih, level, func, arg, name)
 	 */
 	if (ih >= 0x80 && ih <= 0x8d) {
 		intr = isa_intr_establish(NULL, (ih & 0x0f), IST_EDGE,
-		    level, func, arg, string);
+		    level, func, arg, name);
 	} else
 #endif
-	intr = footbridge_intr_claim(ih, level, string, func, arg);
+	intr = footbridge_intr_claim(ih, level, name, func, arg);
 
 	return(intr);
 }
@@ -400,7 +395,6 @@ footbridge_pci_intr_disestablish(pcv, cookie)
 	printf("footbridge_pci_intr_disestablish(pcv=%p, cookie=0x%x)\n",
 	    pcv, cookie);
 #endif
-	/* XXXX Need to free the string */
 
 	footbridge_intr_disestablish(cookie);
 }
