@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.41 2001/10/15 16:22:22 dhartmei Exp $	*/
+/*	$OpenBSD: parse.y,v 1.42 2001/10/24 09:18:35 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -308,6 +308,10 @@ if_item_not	: '!' if_item			{ $$ = $2; $$->not = 1; }
 		| if_item			{ $$ = $1; }
 
 if_item		: STRING			{
+			if (ifa0_lookup($1) == NULL) {
+				yyerror("unknown interface %s", $1);
+				YYERROR;
+			}
 			$$ = malloc(sizeof(struct node_if));
 			if ($$ == NULL)
 				err(1, "if_item: malloc");
