@@ -500,6 +500,7 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/tgavar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/ubsecreg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/ubsecvar.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/usb_pci.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/vga_pcivar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/wdt50x.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/xmaciireg.ph
@@ -645,6 +646,8 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/tc/tcreg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/tc/tcvar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/usb
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/usb/ehcireg.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/usb/ehcivar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/usb/ezload.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/usb/hid.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/usb/if_auereg.ph

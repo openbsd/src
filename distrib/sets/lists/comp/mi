@@ -519,6 +519,7 @@
 ./usr/include/dev/pci/tgavar.h
 ./usr/include/dev/pci/ubsecreg.h
 ./usr/include/dev/pci/ubsecvar.h
+./usr/include/dev/pci/usb_pci.h
 ./usr/include/dev/pci/vga_pcivar.h
 ./usr/include/dev/pci/wdt50x.h
 ./usr/include/dev/pci/xmaciireg.h
@@ -664,6 +665,8 @@
 ./usr/include/dev/tc/tcreg.h
 ./usr/include/dev/tc/tcvar.h
 ./usr/include/dev/usb
+./usr/include/dev/usb/ehcireg.h
+./usr/include/dev/usb/ehcivar.h
 ./usr/include/dev/usb/ezload.h
 ./usr/include/dev/usb/hid.h
 ./usr/include/dev/usb/if_auereg.h
