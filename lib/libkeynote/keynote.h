@@ -1,4 +1,4 @@
-/* $OpenBSD: keynote.h,v 1.5 1999/08/13 22:34:26 angelos Exp $ */
+/* $OpenBSD: keynote.h,v 1.6 1999/08/16 02:33:37 angelos Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -137,7 +137,7 @@ struct keynote_binary
 #define KEYNOTE_ALGORITHM_PGP		3
 #define KEYNOTE_ALGORITHM_BINARY        4
 #define KEYNOTE_ALGORITHM_X509          5
-#define KEYNOTE_ALGORITHM_RSA          6
+#define KEYNOTE_ALGORITHM_RSA		6
 
 #define KEYNOTE_ERROR_ANY        0
 #define KEYNOTE_ERROR_SYNTAX     1

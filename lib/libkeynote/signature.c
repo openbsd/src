@@ -1,4 +1,4 @@
-/* $OpenBSD: signature.c,v 1.5 1999/08/13 22:49:54 angelos Exp $ */
+/* $OpenBSD: signature.c,v 1.6 1999/08/16 02:33:37 angelos Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -328,15 +328,15 @@ keynote_get_key_algorithm(char *key, int *encoding, int *internalencoding)
 
     if (!strncasecmp(X509_BASE64, key, X509_BASE64_LEN))
     {
-	*internalencoding=INTERNAL_ENC_ASN1;
-	*encoding=ENCODING_BASE64;
+	*internalencoding = INTERNAL_ENC_ASN1;
+	*encoding = ENCODING_BASE64;
 	return KEYNOTE_ALGORITHM_X509;
     }
 
     if (!strncasecmp(X509_HEX, key, X509_HEX_LEN))
     {
-	*internalencoding=INTERNAL_ENC_ASN1;
-	*encoding=ENCODING_HEX;
+	*internalencoding = INTERNAL_ENC_ASN1;
+	*encoding = ENCODING_HEX;
 	return KEYNOTE_ALGORITHM_X509;
     }
 
