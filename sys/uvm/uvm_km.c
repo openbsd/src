@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_km.c,v 1.36 2004/04/19 22:52:33 tedu Exp $	*/
+/*	$OpenBSD: uvm_km.c,v 1.37 2004/04/20 09:39:36 markus Exp $	*/
 /*	$NetBSD: uvm_km.c,v 1.42 2001/01/14 02:10:01 thorpej Exp $	*/
 
 /* 
@@ -917,7 +917,7 @@ uvm_km_free_poolpage1(map, addr)
 #endif /* PMAP_UNMAP_POOLPAGE */
 }
 
-int uvm_km_pages_lowat;
+int uvm_km_pages_lowat = 128;
 int uvm_km_pages_free;
 struct km_page {
 	struct km_page *next;
