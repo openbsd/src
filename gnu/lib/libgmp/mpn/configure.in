@@ -91,6 +91,7 @@ case "${target}" in
   ns32k*-*-*) path="n32k" ;;
   ppc601-*-*) path="power powerpc32" ;;
   ppc620-*-* | powerpc64*-*-*) path="powerpc64" ;;
+  powerpc*-*-openbsd*) path= ;;	# until ASM is fixed........ XXXXXX
   ppc60[234]*-*-* | powerpc*-*-*) path="powerpc32" ;;
   pyramid-*-*) path="pyr" ;;
   rs6000-*-* | power-*-* | power2-*-*)
