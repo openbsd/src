@@ -164,7 +164,7 @@ log(severity, syserr, format, va_alist)
 		strncat(fmt, format, 80);
 		vfprintf(stderr, fmt, ap);
 		if (syserr == 0)
-			fprintf(stderr, "\n");
+			fputc('\n', stderr);
 		else if (syserr < sys_nerr)
 			fprintf(stderr, ": %s\n", sys_errlist[syserr]);
 		else
@@ -379,8 +379,10 @@ main(argc, argv)
 	if ((target_addr = inet_addr(host)) != -1) {
 		hp = &bogus;
 		hp->h_length = sizeof(target_addr);
-		hp->h_addr_list = (char **)malloc(2 * sizeof(char *));
-		hp->h_addr_list[0] = malloc(hp->h_length);
+		if (!(hp->h_addr_list = (char **)malloc(2 * sizeof(char *))))
+			err(1, "can't allocate memory");
+		if (!(hp->h_addr_list[0] = malloc(hp->h_length)))
+			err(1, "can't allocate memory");
 		memcpy(hp->h_addr_list[0], &target_addr, hp->h_length);
 		hp->h_addr_list[1] = 0;
 	} else
