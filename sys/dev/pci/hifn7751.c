@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.95 2001/08/22 05:15:25 jason Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.96 2001/08/22 16:11:31 jason Exp $	*/
 
 /*
  * Invertex AEON / Hifn 7751 driver
@@ -1702,8 +1702,6 @@ hifn_process(crp)
 			if ((enccrd->crd_flags & CRD_F_ENCRYPT)
 			    != sc->sc_sessions[session].hs_prev_op)
 				sc->sc_sessions[session].hs_flags=1;
-			sc->sc_sessions[session].hs_prev_op=enccrd->crd_flags
-			    & CRD_F_ENCRYPT;
 			break;
 		case CRYPTO_DES_CBC:
 			cmd->cry_masks |= HIFN_CRYPT_CMD_ALG_DES |
@@ -1781,16 +1779,18 @@ hifn_process(crp)
 		}
 	}
 
-	if (sc->sc_sessions[session].hs_flags == 1)
-		sc->sc_sessions[session].hs_flags = 2;
-
 	cmd->crp = crp;
 	cmd->session_num = session;
 	cmd->softc = sc;
 
 	err = hifn_crypto(sc, cmd, crp);
-	if (err == 0)
-		return (err);
+	if (!err) {
+		sc->sc_sessions[session].hs_prev_op=enccrd->crd_flags
+		    & CRD_F_ENCRYPT;
+		if (sc->sc_sessions[session].hs_flags == 1)
+			sc->sc_sessions[session].hs_flags = 2;
+		return 0;
+	}
 
 errout:
 	if (cmd != NULL)
