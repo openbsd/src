@@ -1,5 +1,5 @@
 #! /usr/bin/awk -f
-#	$OpenBSD: devlist2h.awk,v 1.3 1999/08/18 22:30:04 d Exp $
+#	$OpenBSD: devlist2h.awk,v 1.4 2000/02/01 16:54:41 fgsch Exp $
 #	$NetBSD: devlist2h.awk,v 1.2 1998/07/22 11:47:13 christos Exp $
 #
 # Copyright (c) 1998, Christos Zoulas
@@ -128,11 +128,11 @@ $1 == "product" {
 	printf("#define\tPCMCIA_PRODUCT_%s_%s\t%s\n", products[nproducts, 1],
 	    products[nproducts, 2], products[nproducts, 3]) > hfile
 
-	products[nproducts, 5] = collectline(f, line)
-
-	printf("#define\tPCMCIA_STR_%s_%s\t\"%s\"\n",
-	    products[nproducts, 1], products[nproducts, 2],
-	    products[nproducts, 5]) > hfile
+#	products[nproducts, 5] = collectline(f, line)
+#
+#	printf("#define\tPCMCIA_STR_%s_%s\t\"%s\"\n",
+#	    products[nproducts, 1], products[nproducts, 2],
+#	    products[nproducts, 5]) > hfile
 
 	next
 }
