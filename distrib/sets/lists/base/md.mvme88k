@@ -16,7 +16,7 @@
 ./usr/lib/libc.so.27.2
 ./usr/lib/libc_r.so.5.2
 ./usr/lib/libgssapi.so.0.1
-./usr/lib/libkrb5.so.1.0
+./usr/lib/libkrb5.so.2.0
 ./usr/lib/perl5/m88k-openbsd
 ./usr/lib/perl5/m88k-openbsd/5.00404
 ./usr/lib/perl5/m88k-openbsd/5.00404/CORE
@@ -416,6 +416,8 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ic/cacvar.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ic/if_wivar.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ic/iha.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ic/lemacreg.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ic/lemacvar.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ic/rtl81x9reg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ic/siopreg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ic/siopvar.ph

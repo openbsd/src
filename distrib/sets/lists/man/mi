@@ -873,6 +873,7 @@
 ./usr/share/man/cat4
 ./usr/share/man/cat4/aac.0
 ./usr/share/man/cat4/ac97.0
+./usr/share/man/cat4/addcom.0
 ./usr/share/man/cat4/adv.0
 ./usr/share/man/cat4/advansys.0
 ./usr/share/man/cat4/adw.0
@@ -1056,6 +1057,7 @@
 ./usr/share/man/cat4/keynote.0
 ./usr/share/man/cat4/ksyms.0
 ./usr/share/man/cat4/kue.0
+./usr/share/man/cat4/lc.0
 ./usr/share/man/cat4/lkm.0
 ./usr/share/man/cat4/lmc.0
 ./usr/share/man/cat4/lo.0
@@ -1883,8 +1885,10 @@
 ./usr/share/man/cat8/zic.0
 ./usr/share/man/cat9
 ./usr/share/man/cat9/alpha
+./usr/share/man/cat9/altq.0
 ./usr/share/man/cat9/amiga
 ./usr/share/man/cat9/arc
+./usr/share/man/cat9/hardclock.0
 ./usr/share/man/cat9/hp300
 ./usr/share/man/cat9/hppa
 ./usr/share/man/cat9/i386

@@ -205,6 +205,8 @@
 ./usr/include/dev/ic/ispmbox.h
 ./usr/include/dev/ic/ispreg.h
 ./usr/include/dev/ic/ispvar.h
+./usr/include/dev/ic/lemacreg.h
+./usr/include/dev/ic/lemacvar.h
 ./usr/include/dev/ic/lptreg.h
 ./usr/include/dev/ic/lptvar.h
 ./usr/include/dev/ic/mb86960reg.h

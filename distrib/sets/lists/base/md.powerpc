@@ -41,10 +41,10 @@
 ./usr/lib/libgssapi.so.0.1
 ./usr/lib/libiberty.so.4.1
 ./usr/lib/libkadm.so.6.0
-./usr/lib/libkafs.so.7.0
+./usr/lib/libkafs.so.8.0
 ./usr/lib/libkdb.so.6.0
 ./usr/lib/libkrb.so.9.0
-./usr/lib/libkrb5.so.1.0
+./usr/lib/libkrb5.so.2.0
 ./usr/lib/libkvm.so.6.0
 ./usr/lib/libm.so.0.1
 ./usr/lib/libmenu.so.1.1
@@ -592,6 +592,8 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/ispmbox.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/ispreg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/ispvar.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/lemacreg.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/lemacvar.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/lptreg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/lptvar.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/mb86960reg.ph
