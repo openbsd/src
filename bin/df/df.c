@@ -1,4 +1,4 @@
-/*	$OpenBSD: df.c,v 1.41 2004/11/18 16:11:06 millert Exp $	*/
+/*	$OpenBSD: df.c,v 1.42 2005/01/28 16:44:17 mickey Exp $	*/
 /*	$NetBSD: df.c,v 1.21.2.1 1995/11/01 00:06:11 jtc Exp $	*/
 
 /*
@@ -45,7 +45,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)df.c	8.7 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: df.c,v 1.41 2004/11/18 16:11:06 millert Exp $";
+static char rcsid[] = "$OpenBSD: df.c,v 1.42 2005/01/28 16:44:17 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -302,7 +302,7 @@ prthumanval(long long bytes)
 		(void)printf(" %lld", bytes);
 		return;
 	}
-	(void)printf(" %6s", ret);
+	(void)printf(" %7s", ret);
 }
 
 void
@@ -336,7 +336,7 @@ prtstat(struct statfs *sfsp, int maxwidth, int headerlen, int blocksize)
 	if (hflag)
 		prthuman(sfsp, used);
 	else
-		(void)printf(" %*u %8u %8d", headerlen,
+		(void)printf(" %*u %9u %9d", headerlen,
 		    fsbtoblk(sfsp->f_blocks, sfsp->f_bsize, blocksize),
 		    fsbtoblk(used, sfsp->f_bsize, blocksize),
 		    fsbtoblk(sfsp->f_bavail, sfsp->f_bsize, blocksize));
@@ -365,9 +365,9 @@ bsdprint(struct statfs *mntbuf, long mntsize, int maxwidth)
 
 	/* Print the header line */
 	if (hflag) {
-		header = "  Size";
+		header = "   Size";
 		headerlen = strlen(header);
-		(void)printf("%-*.*s %s   Used  Avail Capacity",
+		(void)printf("%-*.*s %s    Used   Avail Capacity",
 			     maxwidth, maxwidth, "Filesystem", header);
 	} else {
 		if (kflag) {
@@ -376,7 +376,7 @@ bsdprint(struct statfs *mntbuf, long mntsize, int maxwidth)
 			headerlen = strlen(header);
 		} else
 			header = getbsize(&headerlen, &blocksize);
-		(void)printf("%-*.*s %s     Used    Avail Capacity",
+		(void)printf("%-*.*s %s      Used     Avail Capacity",
 			     maxwidth, maxwidth, "Filesystem", header);
 	}
 	if (iflag)
