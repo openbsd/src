@@ -1,5 +1,5 @@
-/*	$OpenBSD: cpu.h,v 1.7 1996/06/08 16:21:14 briggs Exp $	*/
-/*	$NetBSD: cpu.h,v 1.37 1996/06/07 00:15:33 briggs Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.8 1996/06/23 15:35:59 briggs Exp $	*/
+/*	$NetBSD: cpu.h,v 1.38 1996/06/11 02:52:54 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -186,6 +186,7 @@ extern unsigned char ssir;
 #define MACH_MACC660AV		60
 #define MACH_MACP460		62
 #define MACH_MACPB180C		71
+#define	MACH_MACPB500		72
 #define MACH_MACPB270		77
 #define MACH_MACQ840AV		78
 #define MACH_MACP550		80
