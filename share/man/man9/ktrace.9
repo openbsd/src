@@ -1,0 +1,177 @@
+.\"	$OpenBSD: ktrace.9,v 1.1 2003/07/24 20:15:45 mickey Exp $
+.\"
+.\" Copyright (c) 2003 Michael Shalayeff
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF MIND, USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.Dd July 21, 2003
+.Dt KTRACE 9
+.Os
+.Sh NAME
+.Nm ktrcsw ,
+.Nm ktremul ,
+.Nm ktrgenio ,
+.Nm ktrnamei ,
+.Nm ktrpsig ,
+.Nm ktrsyscall ,
+.Nm ktrsysret ,
+.Nm KTRPOINT
+.Nd "process tracing kernel interface"
+.Sh SYNOPSIS
+.In sys/ktrace.h
+.Fn KTRPOINT "struct proc *p" "int type"
+.Ft void
+.Fn ktrcsw "struct proc *p" "int out" "int user"
+.Ft void
+.Fn ktremul "struct proc *p" "char *emul"
+.Ft void
+.Fn ktrgenio "struct proc *p" "int fd" "enum uio_rw rw" "struct iovec *iov" "int len" "int error"
+.Ft void
+.Fn ktrnamei "struct proc *p" "char *path"
+.Ft void
+.Fn ktrpsig "struct proc *p" "int sig" "sig_t action" "int mask" "int code" "siginfo_t *si"
+.Ft void
+.Fn ktrsyscall "struct proc *p" "register_t code" "size_t argsize" "register_t args[]"
+.Ft void
+.Fn ktrsysret "struct proc *p" "register_t code" "int error" "register_t retval"
+.Sh DESCRIPTION
+This interface is ment for kernel subsystems and machine dependent code
+to inform the user about the events occuring to the process should
+tracing of such be enabled using the
+.Xr ktrace 2
+system call.
+Each of the functions (except for
+.Nm KTRPOINT )
+is ment for a particular type of events and is described below.
+.Pp
+.Fn KTRPOINT
+macro should be used before calling any of the other tracing functions
+to verify that tracing for that particular type of events has been enabled.
+Possible values for the
+.Fa type
+argument are a mask of the KTRFAC_ values described in
+.Xr ktrace 2 .
+.Pp
+.Fn ktrcsw
+is called during the context switching.
+The
+.Fa user
+argument is a boolean value specifing whether process has
+been put into a waiting state (true) or placed onto a running queue (false).
+Furthemore the
+.Fa user
+argument indicates whether a voluntary (false) or an involuntary (true)
+switching has happened.
+.Pp
+.Fn ktremul
+should be called every time emulation for the execution environment
+is changed and thus the name of which is given in the
+.Fa name
+argument.
+.Pp
+.Fn ktrgenio
+should be called for each generic input/output transactions that is
+described by the
+.Fa fd
+file descriptor,
+.Fa rw
+transaction type (consult
+.Pa sys/sys/uio.h
+for the
+.Nm enum uio_rw
+definition),
+.Fa iov
+input/output data vector,
+.Fa len
+size of the
+.Fa iov
+vector,
+and, at last,
+.Fa error
+status of the transaction.
+.Pp
+.Fn ktrnamei
+should be called every time a
+.Xr namei 9
+operation is performed over the
+.Fa path
+name.
+.Pp
+.Fn ktrpsig
+should be called for each signal
+.Fa sig
+posted for the traced process.
+The
+.Fa action
+taken is one of the
+.Nm SIG_DFL ,
+.Nm SIG_IGN ,
+.Nm SIG_ERR
+as described in the
+.Xr sigaction 2
+document.
+.Fa mask
+is the current traced process' signal mask.
+Signal-specific code and
+.Em siginfo_t
+structure as descibed in the
+.Aq Pa sys/siginfo.h
+are given in the
+.Fa code
+and
+.Fa si
+arguments respectively.
+.Pp
+.Fn ktrsyscall
+should be called for each system call number
+.Fa code
+executed with arguments in
+.Fa args
+of total count of
+.Fa argsize .
+.Pp
+.Fn ktrsysret
+should be called for a return from each system call number
+.Fa code
+and error number of
+.Fa error
+as described in the
+.Xr errno 2
+and a return value in
+.Fa retval that is syscall dependent.
+.Sh CODE REFERENCES
+These process tracing facility is implemented in
+.Pa sys/kern/kern_ktrace.c .
+.Sh SEE ALSO
+.Xr errno 2 ,
+.Xr ktrace 2 ,
+.Xr syscall 2 ,
+.Xr namei 9 ,
+.Xr syscall 9
+.Sh HISTORY
+The process tracing facility first appeared in
+.Bx 4.4 .
+.Pp
+The
+.Nm ktrace
+section manual page appeared in
+.Ox 3.4 .

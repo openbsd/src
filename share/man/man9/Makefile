@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.73 2003/07/21 21:00:49 mickey Exp $
+#	$OpenBSD: Makefile,v 1.74 2003/07/24 20:15:44 mickey Exp $
 #	$NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
@@ -9,17 +9,17 @@ MAN=	altq.9 audio.9 autoconf.9 boot.9 bus_dma.9 bus_space.9 \
 	extattr.9 file.9 \
 	fork1.9 extent.9 getdevvp.9 getnewvnode.9 hash.9 hashinit.9 \
 	hardclock.9 hook_establish.9 hz.9 hzto.9 intro.9 inittodr.9 log.9 \
-	kern.9 knote.9 kthread.9 lock.9 \
-	malloc.9 mbuf.9 mbuf_tags.9 md5.9 microtime.9 \
+	kern.9 knote.9 kthread.9 ktrace.9 lock.9 \
+	malloc.9 mbuf.9 mbuf_tags.9 md5.9 microtime.9 namei.9 \
 	panic.9 pfind.9 physio.9 pmap.9 \
 	pool.9 powerhook_establish.9 ppsratecheck.9 printf.9 psignal.9 \
 	radio.9 random.9 rasops.9 ratecheck.9 resettodr.9 \
 	shutdownhook_establish.9 sleep.9 spl.9 startuphook_establish.9 \
-	style.9 \
-	time.9 timeout.9 tvtohz.9 uiomove.9 uvm.9 \
+	style.9 syscall.9 systrace.9 \
+	time.9 timeout.9 tvtohz.9 uiomove.9 uvm.9 vfs.9 \
 	vaccess.9 vclean.9 vcount.9 vdevgone.9 vfinddev.9 vflush.9 vget.9 \
-	vgone.9 vhold.9 vinvalbuf.9 VOP_LOOKUP.9 vput.9 vref.9 vrele.9 \
-	vnode.9 vn_lock.9 vrecycle.9 vwaitforio.9
+	vgone.9 vhold.9 vinvalbuf.9 vput.9 vref.9 vrele.9 \
+	vnode.9 vnodeops.9 vn_lock.9 vrecycle.9 vwaitforio.9
 
 MLINKS+=autoconf.9 config_init.9 autoconf.9 config_search.9 \
 	autoconf.9 config_rootsearch.9 autoconf.9 config_found_sm.9 \
@@ -111,6 +111,9 @@ MLINKS+=hz.9 tick.9 hz.9 tickadj.9 hz.9 stathz.9 hz.9 profhz.9
 MLINKS+=knote.9 KNOTE.9
 MLINKS+=kthread.9 kthread_create.9 kthread.9 kthread_exit.9 \
 	kthread.9 kthread_create_deferred.9
+MLINKS+=ktrace.9 ktrcsw.9 ktrace.9 ktremul.9 ktrace.9 ktrgenio.9 \
+	ktrace.9 ktrnamei.9 ktrace.9 ktrpsig.9 ktrace.9 ktrsyscall.9 \
+	ktrace.9 ktrsysret.9 ktrace.9 KTRPOINT.9
 MLINKS+=lock.9 lockinit.9 lock.9 lockmgr.9 lock.9 lockstatus.9 \
 	lock.9 lockmgr_printinfo.9 \
 	lock.9 simple_lock_init.9 lock.9 simple_lock.9 \
@@ -128,6 +131,7 @@ MLINKS+=mbuf.9 m_copym2.9 mbuf.9 m_copym.9 mbuf.9 m_free.9 mbuf.9 MFREE.9 \
 	mbuf.9 MEXTALLOC.9 mbuf.9 MCLGET.9 mbuf.9 MEXTADD.9 mbuf.9 M_ALIGN.9 \
 	mbuf.9 MH_ALIGN.9 mbuf.9 M_READONLY.9 mbuf.9 M_LEADINGSPACE.9 \
 	mbuf.9 M_TRAILINGSPACE.9 mbuf.9 MCHTYPE.9
+MLINKS+=namei.9 lookup.9 namei.9 relookup.9 namei.9 NDINIT.9
 MLINKS+=random.9 add_true_randomness.9 \
 	random.9 add_timer_randomness.9 \
 	random.9 add_mouse_randomness.9 \
@@ -162,6 +166,8 @@ MLINKS+=spl.9 spl0.9 spl.9 splassert.9 spl.9 splbio.9 spl.9 splclock.9 \
 	spl.9 splsoftnet.9 spl.9 splsoftserial.9 spl.9 splsofttty.9 \
 	spl.9 splstatclock.9 spl.9 spltty.9 spl.9 splvm.9 spl.9 splx.9
 MLINKS+=startuphook_establish.9 startuphook_disestablish.9
+MLINKS+=systrace.9 systrace_redirect.9 \
+	systrace.9 systrace_fork.9 systrace.9 systrace_exit.9
 MLINKS+=time.9 boottime.9 time.9 mono_time.9 time.9 runtime.9
 MLINKS+=timeout.9 timeout_add.9 timeout.9 timeout_set.9 \
 	timeout.9 timeout_pending.9 timeout.9 timeout_del.9 \
@@ -201,15 +207,15 @@ MLINKS+=kern.9 imax.9 kern.9 imin.9 kern.9 lmax.9 kern.9 lmin.9 \
 	kern.9 srandom.9 kern.9 getsn.9
 
 # VOP functions
-MLINKS+=VOP_LOOKUP.9 VOP_CREATE.9 VOP_LOOKUP.9 VOP_FSYNC.9 \
-	VOP_LOOKUP.9 VOP_GETEXTATTR.9 VOP_LOOKUP.9 VOP_ISLOCKED.9 \
-	VOP_LOOKUP.9 VOP_LINK.9 VOP_LOOKUP.9 VOP_LOCK.9 \
-	VOP_LOOKUP.9 VOP_MKDIR.9 VOP_LOOKUP.9 VOP_PRINT.9 \
-	VOP_LOOKUP.9 VOP_READLINK.9 VOP_LOOKUP.9 VOP_REALOCBLKS.9 \
-	VOP_LOOKUP.9 VOP_RECLAIM.9 VOP_LOOKUP.9 VOP_REMOVE.9 \
-	VOP_LOOKUP.9 VOP_REVOKE.9 VOP_LOOKUP.9 VOP_RMDIR.9 \
-	VOP_LOOKUP.9 VOP_SETEXTATTR.9 VOP_LOOKUP.9 VOP_STRATEGY.9 \
-	VOP_LOOKUP.9 VOP_SYMLINK.9 VOP_LOOKUP.9 VOP_UNLOCK.9 \
-	VOP_LOOKUP.9 VOP_WHITEOUT.9
+MLINKS+=vnodeops.9 VOP_CREATE.9 vnodeops.9 VOP_FSYNC.9 \
+	vnodeops.9 VOP_GETEXTATTR.9 vnodeops.9 VOP_ISLOCKED.9 \
+	vnodeops.9 VOP_LOOKUP.9 vnodeops.9 VOP_LINK.9 vnodeops.9 VOP_LOCK.9 \
+	vnodeops.9 VOP_MKDIR.9 vnodeops.9 VOP_PRINT.9 \
+	vnodeops.9 VOP_READLINK.9 vnodeops.9 VOP_REALOCBLKS.9 \
+	vnodeops.9 VOP_RECLAIM.9 vnodeops.9 VOP_REMOVE.9 \
+	vnodeops.9 VOP_REVOKE.9 vnodeops.9 VOP_RMDIR.9 \
+	vnodeops.9 VOP_SETEXTATTR.9 vnodeops.9 VOP_STRATEGY.9 \
+	vnodeops.9 VOP_SYMLINK.9 vnodeops.9 VOP_UNLOCK.9 \
+	vnodeops.9 VOP_WHITEOUT.9
 
 .include <bsd.prog.mk>

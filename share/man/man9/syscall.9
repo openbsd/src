@@ -1,0 +1,253 @@
+.\"	$OpenBSD: syscall.9,v 1.1 2003/07/24 20:15:45 mickey Exp $
+.\"
+.\" Copyright (c) 2003 Michael Shalayeff
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF MIND, USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.Dd July 21, 2003
+.Dt SYSCALL 9
+.Os
+.Sh NAME
+.Nm syscall
+.Nd "system calls overview"
+.Sh DESCRIPTION
+System calls in the kernel are implemented through a set of
+switch tables for each emulation type.
+Each table is generated from the
+.Dq master
+file by the
+.Pa sys/kern/makesyscalls.sh
+through the appropriate rules in the
+.Pa Makefile .
+.Pp
+The
+.Dq master
+file is a text file sonsisting of a list of lines for each
+system call. Lines may be split by the means of back slashing the end
+of the line.
+Each line is a set of fields seprated by whitespaces:
+.Pp
+.Cd number type ...
+.Pp
+Where:
+.Bl -tag -width number -compact
+.It number
+is the system call number;
+.It type
+is one of:
+.Bl -tag -width COMPAT_XXX -compact
+.It STD
+always included;
+.It OBSOL
+obsolete, not included in the system;
+.It UNIMPL
+unimplemented, not included in the system;
+.It NODEF
+included, but don't define the syscall number;
+.It NOARGS
+included, but don't define the syscall args structure;
+.It INDIR
+included, but don't define the syscall args structure,
+and allow it to be "really" varargs;
+.It COMPAT_XX
+a compatibility systen call, only included if the corresponding
+option is configured for the kernel (see
+.Xr options 4 ).
+.El
+.El
+.Pp
+The rest of the line for the STD, NODEF, NOARGS, and COMPAT_XX
+types is:
+.Pp
+.Cd { pseudo-proto } [alias]
+.Pp
+The
+.Nm pseudo-proto
+is a C-like prototype used to generate the system call argument list
+and alias is an optional name alias for the call.
+The function in the prototype has to be defined somewhere in
+the kernel sources as it will be used as an entry point for
+the corresponding system call.
+.Pp
+For other types the rest of the line is a comment.
+.Pp
+To generate the header and code files from the
+.Dq master
+file a
+.Xr make 1
+command has to be ran from the directory containing the
+.Dq master
+file.
+.Pp
+.Ss Usage
+Entry from the user space for the system call is machine dependant.
+Typical code to invoke a system call from the machine dependant
+sources might look like this:
+.Bd -literal -offset indent
+
+	const struct sysent *callp;
+	register_t code, args[8], rval[2];
+	struct proc *p = curproc;
+	int code, nsys;
+
+\&...
+
+/* ``code'' is the system call number passed from the user space */
+
+\&...
+
+if (code < 0 || code >= nsys)
+	callp += p->p_emul->e_nosys;	/* illegal */
+else
+	callp += code;
+
+/* copyin the arguments from the user space */
+\&...
+
+#ifdef SYSCALL_DEBUG
+	scdebug_call(p, code, args);
+#endif
+#ifdef KTRACE
+	if (KTRPOINT(p, KTR_SYSCALL))
+		ktrsyscall(p, code, argsize, args);
+#endif
+	rval[0] = 0;
+#if NSYSTRACE > 0
+	if (ISSET(p->p_flag, P_SYSTRACE))
+		error = systrace_redirect(code, p, args, rval);
+	else
+#endif
+		error = (*callp->sy_call)(p, args, rval);
+	switch (error) {
+	case 0:
+		/* normal return */
+		\&...
+		break;
+	case ERESTART:
+		/*
+		 * adjust PC to point before the system call
+		 * in the user space in order for the return
+		 * back there we reenter the kernel to repeat
+		 * the same system call
+		 */
+		\&...
+		break;
+	case EJUSTRETURN:
+		/* just return */
+		break;
+	default:
+		/*
+		 * an error returned:
+		 *	call an optional emulation errno mapping
+		 *	routine and return back to the user.
+		 */
+		if (p->p_emul->e_errno)
+			error = p->p_emul->e_errno[error];
+		\&...
+		break;
+	}
+#ifdef SYSCALL_DEBUG
+	scdebug_ret(p, code, orig_error, rval);
+#endif  
+	userret(p, frame.tf_eip, sticks);
+#ifdef KTRACE
+	if (KTRPOINT(p, KTR_SYSRET))
+		ktrsysret(p, code, orig_error, rval[0]);
+#endif
+
+.Ed
+.Pp
+The
+.Dq SYSCALL_DEBUG
+parts of the code are explained in the section
+.Dq Debugging
+later in the document.
+For the
+.Dq KTRACE
+portitions of the code refer to the
+.Xr ktrace 9
+document for futher exlanations.
+The
+.Dq NSYSTRACE
+is a system call tracing facility and is explained in the
+.Xr systrace 9
+and
+.Xr systrcae 4
+documents.
+.Ss Debugging
+For debugging purposes a line
+.Pp
+.Cd option SYSCALL_DEBUG
+.Pp
+should be inluded into the kernel configuration file (see
+.Xr options 4 ).
+This allows tracing for calls, returns, and arguments for both
+implemented and not system calls.
+A global integer variable
+.Dr scdebug
+contains a mask for for the desired logging events:
+.Bl -tag -width SCDEBUG_SHOWARGS__ -compat
+.It SCDEBUG_CALLS
+(0x0001) show calls;
+.It SCDEBUG_RETURNS
+(0x0002) show returns;
+.It SCDEBUG_ALL
+(0x0004) show even syscalls that are implemented;
+.It SCDEBUG_SHOWARGS
+(0x0008) show arguments to calls.
+.El
+.Pp
+Use
+.Xr ddb 4
+to set the
+.Dq scdebug
+to a value desired.
+.Sh CODE REFERENCES
+.Bl -tag -width sys/kern/syscalls.master -compact
+.It Pa sys/kern/makesyscalls.sh
+a
+.Xr sh 1
+script for generating C files out of the syscall master file;
+.It Pa sys/{kern,compat/*}/syscalls.conf
+a configuration file for the shell script above;
+.It Pa sys/{kern,compat/*}/syscalls.master
+master files describing names and numbers for the system calls;
+.It Pa sys/{kern/,compat/*/*_}syscalls.c
+system call names lists;
+.It Pa sys/{kern/init,compat/*/*}_sysent.c
+system call switch tables;
+.It Pa sys/{sys/,compat/*/*_}syscallargs.h
+system call argument lists;
+.It Pa sys/{sys/,compat/*/*_}syscall.h
+system call numbers.
+.El
+.Sh SEE ALSO
+.Xr ktrace 2 ,
+.Xr syscall 2 ,
+.Xr systrace 4 ,
+.Xr ktrace 9 ,
+.Xr systrace 9
+.Sh HISTORY
+The
+.Nm
+section manual page appeared in
+.Ox 3.4 .
