@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: MAKEDEV,v 1.53 2001/06/22 14:54:04 nate Exp $
+#	$OpenBSD: MAKEDEV,v 1.54 2001/06/22 15:20:11 brad Exp $
 #	$NetBSD: MAKEDEV,v 1.8.4.1 1996/06/18 00:41:56 cgd Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -75,7 +75,7 @@
 #	bpf*	Berkeley Packet Filter
 #	fd	makes fd/* for the fdescfs.
 #	lkm	loadable kernel modules interface
-#	audio	audio device
+#	audio*	audio device
 #	tun*	network tunnel driver
 #	mmclock	memory mapped clock
 #	kbd	keyboard (provides events, for X11)
@@ -496,12 +496,11 @@ lkm)
 	;;
 
 audio*)
-	[ "$unit" = "0" ] && n= || n=$unit
-	audio=audio$n
-	sound=sound$n
-	mixer=mixer$n
-	audioctl=audioctl$n
 	major=24
+	audio=audio$unit
+	sound=sound$unit
+	mixer=mixer$unit
+	audioctl=audioctl$unit
 	rm -f $audio $sound $mixer $audioctl
 	mknod $sound    c $major $unit
 	mknod $audio    c $major $(( $unit + 128 ))
@@ -509,6 +508,10 @@ audio*)
 	mknod $audioctl c $major $(( $unit + 192 ))
 	chown root.wheel $audio $sound $mixer $audioctl
 	chmod 666 $audio $sound $mixer $audioctl
+	[ -e audio ] || ln -s $audio audio
+	[ -e mixer ] || ln -s $mixer mixer
+	[ -e sound ] || ln -s $sound sound
+	[ -e audioctl ] || ln -s $audioctl audioctl
 	;;
 
 mmclock)
