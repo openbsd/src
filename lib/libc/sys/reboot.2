@@ -1,4 +1,4 @@
-.\"   $OpenBSD: reboot.2,v 1.5 1999/06/29 14:10:15 aaron Exp $
+.\"	$OpenBSD: reboot.2,v 1.6 1999/07/06 08:21:17 downsj Exp $
 .\"	$NetBSD: reboot.2,v 1.5 1995/02/27 12:36:02 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -83,7 +83,11 @@ Dump kernel memory before rebooting; see
 for more information.
 .It Dv RB_HALT
 the processor is simply halted; no reboot takes place.
-This option should be used with caution.
+.It Dv RB_POWERDOWN
+If used in conjunction with
+.Dv RB_HALT ,
+and if the system hardware supports the function, the system will be
+powered off.
 .It Dv RB_INITNAME
 An option allowing the specification of an init program (see
 .Xr init 8 )
@@ -150,10 +154,9 @@ The caller is not the super-user.
 .Xr reboot 8 ,
 .Xr savecore 8
 .Sh BUGS
-The HP300 implementation supports neither
-.Dv RB_DFLTROOT
-nor
-.Dv RB_KDB .
+Not all platforms support all possible arguments.  For example,
+.Dv RB_POWERDOWN
+is supported only on the i386, sparc, and mac68k platforms.
 .Sh HISTORY
 The
 .Fn reboot
