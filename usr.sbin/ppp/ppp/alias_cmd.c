@@ -2,7 +2,7 @@
  * The code in this file was written by Eivind Eklund <perhaps@yes.no>,
  * who places it in the public domain without restriction.
  *
- *	$Id: alias_cmd.c,v 1.3 1999/02/06 03:22:30 brian Exp $
+ *	$Id: alias_cmd.c,v 1.4 1999/03/08 01:40:22 brian Exp $
  */
 
 #include <sys/param.h>
@@ -215,4 +215,51 @@ StrToAddrAndPort(const char *str, struct in_addr *addr, u_short *port, const cha
     return -1;
 
   return StrToPort(colon+1, port, proto);
+}
+
+int
+alias_ProxyRule(struct cmdargs const *arg)
+{
+  char cmd[LINE_LEN];
+  int f, pos;
+  size_t len;
+
+  if (arg->argn >= arg->argc)
+    return -1;
+
+  for (f = arg->argn, pos = 0; f < arg->argc; f++) {
+    len = strlen(arg->argv[f]);
+    if (sizeof cmd - pos < len + (f ? 1 : 0))
+      break;
+    if (f)
+      cmd[pos++] = ' ';
+    strcpy(cmd + pos, arg->argv[f]);
+    pos += len;
+  }
+
+  return PacketAliasProxyRule(cmd);
+}
+
+int
+alias_Pptp(struct cmdargs const *arg)
+{
+  struct in_addr addr;
+
+  if (arg->argc == arg->argn) {
+    addr.s_addr = INADDR_NONE;
+    PacketAliasPptp(addr);
+    return 0;
+  }
+
+  if (arg->argc != arg->argn + 1)
+    return -1;
+
+  addr = GetIpAddr(arg->argv[arg->argn]);
+  if (addr.s_addr == INADDR_NONE) {
+    log_Printf(LogWARN, "%s: invalid address\n", arg->argv[arg->argn]);
+    return 1;
+  }
+
+  PacketAliasPptp(addr);
+  return 0;
 }
