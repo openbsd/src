@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.745 2004/07/04 01:21:58 deraadt Exp $
+$OpenBSD: pcidevs,v 1.746 2004/07/14 18:16:23 mickey Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -1072,8 +1072,10 @@ product GEMTEK PR103		0x1001	PR103
 product HAUPPAUGE WINTV		0x13eb	WinTV
 
 /* Hewlett-Packard products */
-product HP A4977A		0x1005	A4977A Visualize EG
+product HP VISUALIZE_EG		0x1005	Visualize EG
+product HP VISUALIZE_FX6	0x1006	Visualize FX6
 product HP VISUALIZE_FX4	0x1008	Visualize FX4
+product HP VISUALIZE_FX2	0x100a	Visualize FX2
 product HP TACH_TL		0x1028	Tach TL FibreChannel
 product HP TACH_XL2		0x1029	Tach XL2 FibreChannel
 product HP J2585A		0x1030	J2585A
