@@ -78,6 +78,7 @@ config_vifs_from_kernel()
 	 * valid subnet number, or whose address is of the form {subnet,0}
 	 * or {subnet,-1}.
 	 */
+	((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr.s_addr = addr;
 	if (ioctl(udp_socket, SIOCGIFNETMASK, (char *)&ifr) < 0)
 	    log(LOG_ERR, errno, "ioctl SIOCGIFNETMASK for %s", ifr.ifr_name);
 	mask = ((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr.s_addr;
