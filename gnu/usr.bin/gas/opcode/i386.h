@@ -1,4 +1,4 @@
-/* $OpenBSD: i386.h,v 1.6 1999/08/31 17:09:14 espie Exp $ */
+/* $OpenBSD: i386.h,v 1.7 2002/07/12 21:54:20 fgsch Exp $ */
 /* i386-opcode.h -- Intel 80386 opcode table
    Copyright (C) 1989, 1991, Free Software Foundation.
 
@@ -773,6 +773,77 @@ static const template i386_optab[] = {
 {"fcomip", 2, 0xdff0, _, ShortForm, FloatReg, FloatAcc, 0},
 {"fucomip",2, 0xdfe8, _, ShortForm, FloatReg, FloatAcc, 0},
 
+/* MMX extensions */
+
+/* arithmetic */
+{"paddb",   2, 0x0ffc, _, Modrm, RegMMX|Mem, RegMMX, 0},
+{"paddw",   2, 0x0ffd, _, Modrm, RegMMX|Mem, RegMMX, 0},
+{"paddd",   2, 0x0ffe, _, Modrm, RegMMX|Mem, RegMMX, 0},
+{"paddsb",  2, 0x0fec, _, Modrm, RegMMX|Mem, RegMMX, 0},
+{"paddsw",  2, 0x0fed, _, Modrm, RegMMX|Mem, RegMMX, 0},
+{"paddusb", 2, 0x0fdc, _, Modrm, RegMMX|Mem, RegMMX, 0},
+{"paddusw", 2, 0x0fdd, _, Modrm, RegMMX|Mem, RegMMX, 0},
+{"pmaddwd", 2, 0x0ff5, _, Modrm, RegMMX|Mem, RegMMX, 0},
+{"pmulhw",  2, 0x0fe5, _, Modrm, RegMMX|Mem, RegMMX, 0},
+{"pmullw",  2, 0x0fd5, _, Modrm, RegMMX|Mem, RegMMX, 0},
+{"psllw",   2, 0x0ff1, _, Modrm, RegMMX|Mem, RegMMX, 0},
+{"psllw",   2, 0x0f71, 6, Modrm, Imm8, RegMMX, 0},
+{"pslld",   2, 0x0ff2, _, Modrm, RegMMX|Mem, RegMMX, 0},
+{"pslld",   2, 0x0f72, 6, Modrm, Imm8, RegMMX, 0},
+{"psllq",   2, 0x0ff3, _, Modrm, RegMMX|Mem, RegMMX, 0},
+{"psllq",   2, 0x0f73, 6, Modrm, Imm8, RegMMX, 0},
+{"psraw",   2, 0x0fe1, _, Modrm, RegMMX|Mem, RegMMX, 0},
+{"psraw",   2, 0x0f71, 4, Modrm, Imm8, RegMMX, 0},
+{"psrad",   2, 0x0fe2, _, Modrm, RegMMX|Mem, RegMMX, 0},
+{"psrad",   2, 0x0f72, 4, Modrm, Imm8, RegMMX, 0},
+{"psrlw",   2, 0x0fd1, _, Modrm, RegMMX|Mem, RegMMX, 0},
+{"psrlw",   2, 0x0f71, 2, Modrm, Imm8, RegMMX, 0},
+{"psrld",   2, 0x0fd2, _, Modrm, RegMMX|Mem, RegMMX, 0},
+{"psrld",   2, 0x0f72, 2, Modrm, Imm8, RegMMX, 0},
+{"psrlq",   2, 0x0fd3, _, Modrm, RegMMX|Mem, RegMMX, 0},
+{"psrlq",   2, 0x0f73, 2, Modrm, Imm8, RegMMX, 0},
+{"psubb",   2, 0x0ff8, _, Modrm, RegMMX|Mem, RegMMX, 0},
+{"psubw",   2, 0x0ff9, _, Modrm, RegMMX|Mem, RegMMX, 0},
+{"psubd",   2, 0x0ffa, _, Modrm, RegMMX|Mem, RegMMX, 0},
+{"psubsb",  2, 0x0fe8, _, Modrm, RegMMX|Mem, RegMMX, 0},
+{"psubsw",  2, 0x0fe9, _, Modrm, RegMMX|Mem, RegMMX, 0},
+{"psubusb", 2, 0x0fd8, _, Modrm, RegMMX|Mem, RegMMX, 0},
+{"psubusw", 2, 0x0fd9, _, Modrm, RegMMX|Mem, RegMMX, 0},
+
+/* compare */
+{"pcmpeqb", 2, 0x0f74, _, Modrm, RegMMX|Mem, RegMMX, 0},
+{"pcmpeqw", 2, 0x0f75, _, Modrm, RegMMX|Mem, RegMMX, 0},
+{"pcmpeqd", 2, 0x0f76, _, Modrm, RegMMX|Mem, RegMMX, 0},
+{"pcmpgtb", 2, 0x0f64, _, Modrm, RegMMX|Mem, RegMMX, 0},
+{"pcmpgtw", 2, 0x0f65, _, Modrm, RegMMX|Mem, RegMMX, 0},
+{"pcmpgtd", 2, 0x0f66, _, Modrm, RegMMX|Mem, RegMMX, 0},
+
+/* data movement */
+{"movd", 2, 0x0f6e, _, Modrm, Reg|Mem, RegMMX, 0},
+{"movd", 2, 0x0f7e, _, Modrm, RegMMX, Reg|Mem, 0},
+{"movq", 2, 0x0f6f, _, Modrm, RegMMX|Mem, RegMMX, 0},
+{"movq", 2, 0x0f7f, _, Modrm, RegMMX, RegMMX|Mem, 0},
+
+/* logical */
+{"pand",  2, 0x0fdb, _, Modrm, RegMMX|Mem, RegMMX, 0},
+{"pandn", 2, 0x0fdf, _, Modrm, RegMMX|Mem, RegMMX, 0},
+{"por",   2, 0x0feb, _, Modrm, RegMMX|Mem, RegMMX, 0},
+{"pxor",  2, 0x0fef, _, Modrm, RegMMX|Mem, RegMMX, 0},
+
+/* shuffle */
+{"packsswb",  2, 0x0f63, _, Modrm, RegMMX|Mem, RegMMX, 0},
+{"packssdw",  2, 0x0f6b, _, Modrm, RegMMX|Mem, RegMMX, 0},
+{"packuswb",  2, 0x0f67, _, Modrm, RegMMX|Mem, RegMMX, 0},
+{"punpckhbw", 2, 0x0f68, _, Modrm, RegMMX|Mem, RegMMX, 0},
+{"punpckhwd", 2, 0x0f69, _, Modrm, RegMMX|Mem, RegMMX, 0},
+{"punpckhdq", 2, 0x0f6a, _, Modrm, RegMMX|Mem, RegMMX, 0},
+{"punpcklbw", 2, 0x0f60, _, Modrm, RegMMX|Mem, RegMMX, 0},
+{"punpcklwd", 2, 0x0f61, _, Modrm, RegMMX|Mem, RegMMX, 0},
+{"punpckldq", 2, 0x0f62, _, Modrm, RegMMX|Mem, RegMMX, 0},
+
+/* state management */
+{"emms", 0, 0x0f77, _, 0, 0, 0, 0},
+
 {"", 0, 0, 0, 0, 0, 0, 0}	/* sentinal */
 };
 #undef _
@@ -811,7 +882,11 @@ static const reg_entry i386_regtab[] = {
   {"st", FloatReg|FloatAcc, 0},
   {"st(1)", FloatReg, 1}, {"st(2)", FloatReg, 2}, 
   {"st(3)", FloatReg, 3}, {"st(4)", FloatReg, 4}, {"st(5)", FloatReg, 5}, 
-  {"st(6)", FloatReg, 6}, {"st(7)", FloatReg, 7}
+  {"st(6)", FloatReg, 6}, {"st(7)", FloatReg, 7},
+  /* mmx registers */
+  {"mm0", RegMMX, 0}, {"mm1", RegMMX, 1}, {"mm2", RegMMX, 2},
+  {"mm3", RegMMX, 3}, {"mm4", RegMMX, 4}, {"mm5", RegMMX, 5},
+  {"mm6", RegMMX, 6}, {"mm7", RegMMX, 7}
 };
 
 #define MAX_REG_NAME_SIZE 8	/* for parsing register names from input */

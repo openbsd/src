@@ -1,4 +1,4 @@
-/*	$OpenBSD: tc-i386.c,v 1.9 2001/09/17 15:41:24 espie Exp $	*/
+/*	$OpenBSD: tc-i386.c,v 1.10 2002/07/12 21:54:20 fgsch Exp $	*/
 
 /* i386.c -- Assemble code for the Intel 80386
    Copyright (C) 1989, 1991, 1992 Free Software Foundation.
@@ -27,7 +27,7 @@
   */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: tc-i386.c,v 1.9 2001/09/17 15:41:24 espie Exp $";
+static char rcsid[] = "$OpenBSD: tc-i386.c,v 1.10 2002/07/12 21:54:20 fgsch Exp $";
 #endif
 
 #include "as.h"
@@ -493,6 +493,7 @@ struct type_name {
 	{ Imm1, "i1" }, { Control, "control reg" }, {Test, "test reg"},
 	{ FloatReg, "FReg"}, {FloatAcc, "FAcc"},
 	{ JumpAbsolute, "Jump Absolute"},
+	{ RegMMX, "rMMX" },
 	{ 0, "" }
 };
 
@@ -942,13 +943,13 @@ char *line;
 					   implicit registers do not count. */
 					if (i.reg_operands == 2) {
 						unsigned int source, dest;
-						source = (i.types[0] & (Reg|SReg2|SReg3|Control|Debug|Test)) ? 0 : 1;
+						source = (i.types[0] & (Reg|RegMMX|SReg2|SReg3|Control|Debug|Test)) ? 0 : 1;
 						dest = source + 1;
 						i.rm.mode = 3;
 						/* We must be careful to make sure that all segment/control/test/
 						   debug registers go into the i.rm.reg field (despite the whether
 						   they are source or destination operands). */
-						if (i.regs[dest]->reg_type & (SReg2|SReg3|Control|Debug|Test)) {
+						if (i.regs[dest]->reg_type & (RegMMX|SReg2|SReg3|Control|Debug|Test)) {
 							i.rm.reg = i.regs[dest]->reg_num;
 							i.rm.regmem = i.regs[source]->reg_num;
 						} else {
@@ -1064,8 +1065,8 @@ char *line;
 						   into the i.rm.reg field. */
 						if (i.reg_operands) {
 							unsigned int o =
-							    (i.types[0] & (Reg|SReg2|SReg3|Control|Debug|Test)) ? 0 :
-								(i.types[1] & (Reg|SReg2|SReg3|Control|Debug|Test)) ? 1 : 2;
+							    (i.types[0] & (Reg|RegMMX|SReg2|SReg3|Control|Debug|Test)) ? 0 :
+								(i.types[1] & (Reg|RegMMX|SReg2|SReg3|Control|Debug|Test)) ? 1 : 2;
 							/* If there is an extension opcode to put here, the register number
 							   must be put into the regmem field. */
 							if (t->extension_opcode != None)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tc-i386.h,v 1.2 1998/02/15 18:49:35 niklas Exp $	*/
+/*	$OpenBSD: tc-i386.h,v 1.3 2002/07/12 21:54:20 fgsch Exp $	*/
 
 /* tc-i386.h -- Header file for tc-i386.c
    Copyright (C) 1989, 1992 Free Software Foundation.
@@ -132,6 +132,7 @@
 #define Abs16 0x10000000
 #define Abs32 0x20000000
 #define Abs (Abs8|Abs16|Abs32)
+#define RegMMX 0x40000000		/* MMX register */
 
 #define Byte (Reg8|Imm8|Imm8S)
 #define Word (Reg16|Imm16)
