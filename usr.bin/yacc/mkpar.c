@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkpar.c,v 1.5 1999/08/04 18:31:26 millert Exp $	*/
+/*	$OpenBSD: mkpar.c,v 1.6 2001/07/16 06:29:44 pvalchev Exp $	*/
 
 /*	$NetBSD: mkpar.c,v 1.4 1996/03/19 03:21:39 jtc Exp $	*/
 
@@ -67,7 +67,17 @@ extern action *get_shifts();
 extern action *add_reductions();
 extern action *add_reduce();
 
+int sole_reduction __P((int));
+void free_action_row __P((action *));
 
+void find_final_state __P((void));
+void unused_rules __P((void));
+void remove_conflicts __P((void));
+void total_conflicts __P((void));
+void defreds __P((void));
+
+
+void
 make_parser()
 {
     register int i;
@@ -198,6 +208,7 @@ register int ruleno, symbol;
 }
 
 
+void
 find_final_state()
 {
     register int goal, i;
@@ -215,6 +226,7 @@ find_final_state()
 }
 
 
+void
 unused_rules()
 {
     register int i;
@@ -239,15 +251,17 @@ unused_rules()
     for (i = 3; i < nrules; ++i)
 	if (!rules_used[i]) ++nunused;
 
-    if (nunused)
+    if (nunused) {
 	if (nunused == 1)
 	    fprintf(stderr, "%s: 1 rule never reduced\n", __progname);
 	else
 	    fprintf(stderr, "%s: %d rules never reduced\n", __progname,
 		    nunused);
+    }
 }
 
 
+void
 remove_conflicts()
 {
     register int i;
@@ -323,6 +337,7 @@ remove_conflicts()
 }
 
 
+void
 total_conflicts()
 {
     /* Warn if s/r != expect or if any r/r */
@@ -372,6 +387,7 @@ int stateno;
 }
 
 
+void
 defreds()
 {
     register int i;
@@ -381,6 +397,7 @@ defreds()
 	defred[i] = sole_reduction(i);
 }
  
+void
 free_action_row(p)
 register action *p;
 {
@@ -394,6 +411,7 @@ register action *p;
     }
 }
 
+void
 free_parser()
 {
   register int i;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: closure.c,v 1.3 1996/06/26 05:44:35 deraadt Exp $	*/
+/*	$OpenBSD: closure.c,v 1.4 2001/07/16 06:29:43 pvalchev Exp $	*/
 /*	$NetBSD: closure.c,v 1.4 1996/03/19 03:21:29 jtc Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)closure.c	5.3 (Berkeley) 5/24/93";
 #else
-static char rcsid[] = "$OpenBSD: closure.c,v 1.3 1996/06/26 05:44:35 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: closure.c,v 1.4 2001/07/16 06:29:43 pvalchev Exp $";
 #endif
 #endif /* not lint */
 
@@ -55,6 +55,7 @@ static unsigned *first_derives;
 static unsigned *EFF;
 
 
+void
 set_EFF()
 {
     register unsigned *row;
@@ -91,6 +92,7 @@ set_EFF()
 }
 
 
+void
 set_first_derives()
 {
     register unsigned *rrow;
@@ -146,6 +148,7 @@ set_first_derives()
 }
 
 
+void
 closure(nucleus, n)
 short *nucleus;
 int n;
@@ -216,6 +219,7 @@ int n;
 
 
 
+void
 finalize_closure()
 {
   FREE(itemset);

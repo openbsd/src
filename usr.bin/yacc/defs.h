@@ -1,4 +1,4 @@
-/*	$OpenBSD: defs.h,v 1.6 1999/08/04 18:31:25 millert Exp $	*/
+/*	$OpenBSD: defs.h,v 1.7 2001/07/16 06:29:44 pvalchev Exp $	*/
 /*	$NetBSD: defs.h,v 1.6 1996/03/19 03:21:30 jtc Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #include <ctype.h>
 #include <stdio.h>
 #include <string.h>
-
+#include <stdlib.h>
 
 /*  machine-dependent definitions			*/
 /*  the following definitions are for the Tahoe		*/
@@ -316,18 +316,62 @@ extern short final_state;
 extern char *allocate();
 extern bucket *lookup();
 extern bucket *make_bucket();
+extern void set_first_derives __P((void));
+extern void closure __P((short *, int));
+extern void finalize_closure __P((void));
+
+extern void fatal __P((char *));
+
+extern void reflexive_transitive_closure __P((unsigned *, int));
+extern void done __P((int));
+
+extern void no_space __P((void));
+extern void open_error(char *);
+extern void unexpected_EOF __P((void));
+extern void print_pos __P((char *, char *));
+extern __dead void syntax_error __P((int, char *, char *));
+extern void unterminated_comment __P((int, char *, char *));
+extern void unterminated_string __P((int, char *, char *));
+extern void unterminated_text __P((int, char *, char *));
+extern void unterminated_union __P((int, char *, char *));
+extern void over_unionized __P((char *));
+extern void illegal_tag __P((int, char *, char *));
+extern void illegal_character __P((char *));
+extern void used_reserved __P((char *));
+extern void tokenized_start __P((char *));
+extern void retyped_warning __P((char *));
+extern void reprec_warning __P((char *));
+extern void revalued_warning __P((char *));
+extern void terminal_start __P((char *));
+extern void restarted_warning __P((void));
+extern void no_grammar __P((void));
+extern void terminal_lhs __P((int));
+extern void prec_redeclared __P((void));
+extern void unterminated_action __P((int, char *, char *));
+extern void dollar_warning __P((int, int));
+extern void dollar_error __P((int, char *, char *));
+extern void untyped_lhs __P((void));
+extern void untyped_rhs __P((int, char *));
+extern void unknown_rhs __P((int));
+extern void default_action_warning __P((void));
+extern void undefined_goal __P((char *));
+extern void undefined_symbol_warning __P((char *));
+
+extern void lalr __P((void));
+
+extern void reader __P((void));
+extern void lr0 __P((void));
+extern void make_parser __P((void));
+extern void verbose __P((void));
+extern void output __P((void));
+extern void free_parser __P((void));
+extern void write_section __P((char *[]));
+
+extern void create_symbol_table __P((void));
+extern void free_symbol_table __P((void));
+extern void free_symbols __P((void));
 
 
 /* system variables */
 
-extern int errno;
 extern char *__progname;
-
-
-/* system functions */
-
-extern void free();
-extern char *calloc();
-extern char *malloc();
-extern char *realloc();
-extern char *strcpy();

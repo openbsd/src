@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.5 2001/02/26 00:03:32 tholo Exp $	*/
+/*	$OpenBSD: output.c,v 1.6 2001/07/16 06:29:45 pvalchev Exp $	*/
 /*	$NetBSD: output.c,v 1.4 1996/03/19 03:21:41 jtc Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)output.c	5.7 (Berkeley) 5/24/93";
 #else
-static char rcsid[] = "$OpenBSD: output.c,v 1.5 2001/02/26 00:03:32 tholo Exp $";
+static char rcsid[] = "$OpenBSD: output.c,v 1.6 2001/07/16 06:29:45 pvalchev Exp $";
 #endif
 #endif /* not lint */
 
@@ -63,7 +63,33 @@ static short *check;
 static int lowzero;
 static int high;
 
+void output_prefix __P((void));
+void output_rule_data __P((void));
+void output_yydefred __P((void));
+void output_actions __P((void));
+void token_actions __P((void));
+void goto_actions __P((void));
+int default_goto __P((int));
+void save_column __P((int, int));
+void sort_actions __P((void));
+void pack_table __P((void));
+int matching_vector __P((int));
+int pack_vector __P((int));
+void output_base __P((void));
+void output_table __P((void));
+void output_check __P((void));
+int is_C_identifier __P((char *));
+void output_defines __P((void));
+void output_stored_text __P((void));
+void output_debug __P((void));
+void output_stype __P((void));
+void output_trailing_text __P((void));
+void output_semantic_actions __P((void));
+void free_itemsets __P((void));
+void free_shifts __P((void));
+void free_reductions __P((void));
 
+void
 output()
 {
     free_itemsets();
@@ -87,6 +113,7 @@ output()
 }
 
 
+void
 output_prefix()
 {
     if (symbol_prefix == NULL)
@@ -151,6 +178,7 @@ output_prefix()
 }
 
 
+void
 output_rule_data()
 {
     register int i;
@@ -198,6 +226,7 @@ output_rule_data()
 }
 
 
+void
 output_yydefred()
 {
     register int i, j;
@@ -225,6 +254,7 @@ output_yydefred()
 }
 
 
+void
 output_actions()
 {
     nvectors = 2*nstates + nvars;
@@ -253,6 +283,7 @@ output_actions()
 }
 
 
+void
 token_actions()
 {
     register int i, j;
@@ -337,6 +368,7 @@ token_actions()
     FREE(actionrow);
 }
 
+void
 goto_actions()
 {
     register int i, j, k;
@@ -406,6 +438,7 @@ int symbol;
 
 
 
+void
 save_column(symbol, default_state)
 int symbol;
 int default_state;
@@ -448,6 +481,7 @@ int default_state;
     width[symno] = sp1[-1] - sp[0] + 1;
 }
 
+void
 sort_actions()
 {
   register int i;
@@ -483,6 +517,7 @@ sort_actions()
 }
 
 
+void
 pack_table()
 {
     register int i;
@@ -664,6 +699,7 @@ int vector;
 
 
 
+void
 output_base()
 {
     register int i, j;
@@ -730,6 +766,7 @@ output_base()
 
 
 
+void
 output_table()
 {
     register int i;
@@ -762,6 +799,7 @@ output_table()
 
 
 
+void
 output_check()
 {
     register int i;
@@ -824,6 +862,7 @@ char *name;
 }
 
 
+void
 output_defines()
 {
     register int c, i;
@@ -876,6 +915,7 @@ output_defines()
 }
 
 
+void
 output_stored_text()
 {
     register int c;
@@ -903,6 +943,7 @@ output_stored_text()
 }
 
 
+void
 output_debug()
 {
     register int i, j, k, max;
@@ -940,7 +981,7 @@ output_debug()
     j = 80;
     for (i = 0; i <= max; ++i)
     {
-	if (s = symnam[i])
+	if ((s = symnam[i]) != '\0')
 	{
 	    if (s[0] == '"')
 	    {
@@ -1117,6 +1158,7 @@ output_debug()
 }
 
 
+void
 output_stype()
 {
     if (!unionized && ntags == 0)
@@ -1127,6 +1169,7 @@ output_stype()
 }
 
 
+void
 output_trailing_text()
 {
     register int c, last;
@@ -1184,6 +1227,7 @@ output_trailing_text()
 }
 
 
+void
 output_semantic_actions()
 {
     register int c, last;
@@ -1221,6 +1265,7 @@ output_semantic_actions()
 }
 
 
+void
 free_itemsets()
 {
     register core *cp, *next;
@@ -1234,6 +1279,7 @@ free_itemsets()
 }
 
 
+void
 free_shifts()
 {
     register shifts *sp, *next;
@@ -1248,6 +1294,7 @@ free_shifts()
 
 
 
+void
 free_reductions()
 {
     register reductions *rp, *next;

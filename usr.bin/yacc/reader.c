@@ -1,4 +1,4 @@
-/*	$OpenBSD: reader.c,v 1.7 2001/07/12 05:17:33 deraadt Exp $	*/
+/*	$OpenBSD: reader.c,v 1.8 2001/07/16 06:29:45 pvalchev Exp $	*/
 
 /*	$NetBSD: reader.c,v 1.5 1996/03/19 03:21:43 jtc Exp $	*/
 
@@ -79,8 +79,45 @@ bucket **plhs;
 int name_pool_size;
 char *name_pool;
 
-char line_format[] = "#line %d \"%s\"\n";
+void cachec __P((int));
+void get_line __P((void));
+char * dup_line __P((void));
+void skip_comment __P((void));
+int nextc __P((void));
+int keyword __P((void));
+void copy_ident __P((void));
+void copy_text __P((void));
+void copy_union __P((void));
+int hexval __P((int)); 
+bucket * get_literal __P((void));
+int is_reserved __P((char *));
+bucket * get_name __P((void));
+int get_number __P((void));
+char * get_tag __P((void));
+void declare_tokens __P((int));
+void declare_types __P((void));
+void declare_start __P((void));
+void handle_expect __P((void));
+void read_declarations __P((void));
+void initialize_grammar __P((void));
+void expand_items __P((void));
+void expand_rules __P((void));
+void advance_to_start __P((void));
+void start_rule __P((bucket *, int));
+void end_rule __P((void));
+void insert_empty_rule __P((void));
+void add_symbol __P((void));
+void copy_action __P((void));
+int mark_symbol __P((void));
+void read_grammar __P((void));
+void free_tags __P((void));
+void pack_names __P((void));
+void check_symbols __P((void));
+void pack_symbols __P((void));
+void pack_grammar __P((void));
+void print_grammar __P((void));
 
+char line_format[] = "#line %d \"%s\"\n";
 
 void
 cachec(c)
@@ -318,6 +355,7 @@ keyword()
     }
     syntax_error(lineno, line, t_cptr);
     /*NOTREACHED*/
+    return (0);
 }
 
 
@@ -351,6 +389,7 @@ copy_ident()
 }
 
 
+void
 copy_text()
 {
     register int c;
@@ -482,6 +521,7 @@ loop:
 }
 
 
+void
 copy_union()
 {
     register int c;
@@ -878,6 +918,7 @@ get_tag()
 }
 
 
+void
 declare_tokens(assoc)
 int assoc;
 {
@@ -945,6 +986,7 @@ int assoc;
  * as it really isn't part of the yacc
  * grammar only a flag for yacc proper.
  */
+void
 declare_expect(assoc)
 int assoc;
 {
@@ -984,6 +1026,7 @@ int assoc;
 }
 
 
+void
 declare_types()
 {
     register int c;
@@ -1012,6 +1055,7 @@ declare_types()
 }
 
 
+void
 declare_start()
 {
     register int c;
@@ -1030,6 +1074,7 @@ declare_start()
 }
 
 
+void
 read_declarations()
 {
     register int c, k;
@@ -1083,6 +1128,7 @@ read_declarations()
 }
 
 
+void
 initialize_grammar()
 {
     nitems = 4;
@@ -1114,6 +1160,7 @@ initialize_grammar()
 }
 
 
+void
 expand_items()
 {
     maxitems += 300;
@@ -1122,6 +1169,7 @@ expand_items()
 }
 
 
+void
 expand_rules()
 {
     maxrules += 100;
@@ -1134,6 +1182,7 @@ expand_rules()
 }
 
 
+void
 advance_to_start()
 {
     register int c;
@@ -1184,6 +1233,7 @@ advance_to_start()
 }
 
 
+void
 start_rule(bp, s_lineno)
 register bucket *bp;
 int s_lineno;
@@ -1199,6 +1249,7 @@ int s_lineno;
 }
 
 
+void
 end_rule()
 {
     register int i;
@@ -1218,6 +1269,7 @@ end_rule()
 }
 
 
+void
 insert_empty_rule()
 {
     register bucket *bp, **bpp;
@@ -1234,7 +1286,7 @@ insert_empty_rule()
 	expand_items();
     bpp = pitem + nitems - 1;
     *bpp-- = bp;
-    while (bpp[0] = bpp[-1]) --bpp;
+    while ((bpp[0] = bpp[-1])) --bpp;
 
     if (++nrules >= maxrules)
 	expand_rules();
@@ -1247,6 +1299,7 @@ insert_empty_rule()
 }
 
 
+void
 add_symbol()
 {
     register int c;
@@ -1278,6 +1331,7 @@ add_symbol()
 }
 
 
+void
 copy_action()
 {
     register int c;
@@ -1547,6 +1601,7 @@ mark_symbol()
 }
 
 
+void
 read_grammar()
 {
     register int c;
@@ -1580,6 +1635,7 @@ read_grammar()
 }
 
 
+void
 free_tags()
 {
     register int i;
@@ -1595,6 +1651,7 @@ free_tags()
 }
 
 
+void
 pack_names()
 {
     register bucket *bp;
@@ -1613,13 +1670,14 @@ pack_names()
     {
 	p = t;
 	s = bp->name;
-	while (*t++ = *s++) continue;
+	while ((*t++ = *s++)) continue;
 	FREE(bp->name);
 	bp->name = p;
     }
 }
 
 
+void
 check_symbols()
 {
     register bucket *bp;
@@ -1638,6 +1696,7 @@ check_symbols()
 }
 
 
+void
 pack_symbols()
 {
     register bucket *bp;
@@ -1762,6 +1821,7 @@ pack_symbols()
 }
 
 
+void
 pack_grammar()
 {
     register int i, j;
@@ -1821,6 +1881,7 @@ pack_grammar()
 }
 
 
+void
 print_grammar()
 {
     register int i, j, k;
@@ -1857,6 +1918,7 @@ print_grammar()
 }
 
 
+void
 reader()
 {
     write_section(banner);

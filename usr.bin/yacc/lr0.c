@@ -1,4 +1,4 @@
-/*	$OpenBSD: lr0.c,v 1.3 1996/06/26 05:44:37 deraadt Exp $	*/
+/*	$OpenBSD: lr0.c,v 1.4 2001/07/16 06:29:44 pvalchev Exp $	*/
 /*	$NetBSD: lr0.c,v 1.4 1996/03/19 03:21:35 jtc Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)lr0.c	5.3 (Berkeley) 1/20/91";
 #else
-static char rcsid[] = "$OpenBSD: lr0.c,v 1.3 1996/06/26 05:44:37 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: lr0.c,v 1.4 2001/07/16 06:29:44 pvalchev Exp $";
 #endif
 #endif /* not lint */
 
@@ -56,8 +56,27 @@ core *first_state;
 shifts *first_shift;
 reductions *first_reduction;
 
-int get_state();
-core *new_state();
+int get_state __P((int));
+core *new_state __P((int));
+
+void allocate_itemsets __P((void));
+void allocate_storage __P((void));
+void append_states __P((void));
+void free_storage __P((void));
+void generate_states __P((void));
+void initialize_states __P((void));
+void new_itemsets __P((void));
+void show_cores __P((void));
+void show_ritems __P((void));
+void show_rrhs __P((void));
+void show_shifts __P((void));
+void save_shifts __P((void));
+void save_reductions __P((void));
+void set_derives __P((void));
+void print_derives __P((void));
+void set_nullable __P((void));
+void free_derives __P((void));
+void free_nullable __P((void));
 
 static core **state_set;
 static core *this_state;
@@ -75,7 +94,7 @@ static short **kernel_base;
 static short **kernel_end;
 static short *kernel_items;
 
-
+void
 allocate_itemsets()
 {
     register short *itemp;
@@ -117,7 +136,7 @@ allocate_itemsets()
     kernel_end = NEW2(nsyms, short *);
 }
 
-
+void
 allocate_storage()
 {
     allocate_itemsets();
@@ -126,7 +145,7 @@ allocate_storage()
     state_set = NEW2(nitems, core *);
 }
 
-
+void
 append_states()
 {
     register int i;
@@ -155,7 +174,7 @@ append_states()
     }
 }
 
-
+void
 free_storage()
 {
     FREE(shift_symbol);
@@ -168,7 +187,7 @@ free_storage()
 }
 
 
-
+void
 generate_states()
 {
     allocate_storage();
@@ -260,7 +279,7 @@ int symbol;
 }
 
 
-
+void
 initialize_states()
 {
     register int i;
@@ -287,7 +306,7 @@ initialize_states()
     nstates = 1;
 }
 
-
+void
 new_itemsets()
 {
     register int i;
@@ -365,6 +384,7 @@ int symbol;
 
 /* show_cores is used for debugging */
 
+void
 show_cores()
 {
     core *p;
@@ -400,6 +420,7 @@ show_cores()
 
 /* show_ritems is used for debugging */
 
+void
 show_ritems()
 {
     int i;
@@ -410,6 +431,8 @@ show_ritems()
 
 
 /* show_rrhs is used for debugging */
+
+void
 show_rrhs()
 {
     int i;
@@ -421,6 +444,7 @@ show_rrhs()
 
 /* show_shifts is used for debugging */
 
+void
 show_shifts()
 {
     shifts *p;
@@ -438,7 +462,7 @@ show_shifts()
     }
 }
 
-
+void
 save_shifts()
 {
     register shifts *p;
@@ -472,7 +496,7 @@ save_shifts()
 }
 
 
-
+void
 save_reductions()
 {
     register short *isp;
@@ -521,7 +545,7 @@ save_reductions()
     }
 }
 
-
+void
 set_derives()
 {
     register int i, k;
@@ -552,6 +576,7 @@ set_derives()
 #endif
 }
 
+void
 free_derives()
 {
     FREE(derives[start_symbol]);
@@ -559,6 +584,7 @@ free_derives()
 }
 
 #ifdef	DEBUG
+void
 print_derives()
 {
     register int i;
@@ -580,7 +606,7 @@ print_derives()
 }
 #endif
 
-
+void
 set_nullable()
 {
     register int i, j;
@@ -629,13 +655,13 @@ set_nullable()
 #endif
 }
 
-
+void
 free_nullable()
 {
     FREE(nullable);
 }
 
-
+void
 lr0()
 {
     set_derives();

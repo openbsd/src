@@ -1,4 +1,4 @@
-/*	$OpenBSD: skeleton.c,v 1.16 2001/02/26 00:03:33 tholo Exp $	*/
+/*	$OpenBSD: skeleton.c,v 1.17 2001/07/16 06:29:45 pvalchev Exp $	*/
 /*	$NetBSD: skeleton.c,v 1.10 1996/03/25 00:36:18 mrg Exp $	*/
 
 /*
@@ -67,7 +67,7 @@ char *banner[] =
     "#if __GNUC__ == 2",
     "  __attribute__ ((unused))",
     "#endif /* __GNUC__ == 2 */",
-    "  = \"$OpenBSD: skeleton.c,v 1.16 2001/02/26 00:03:33 tholo Exp $\";",
+    "  = \"$OpenBSD: skeleton.c,v 1.17 2001/07/16 06:29:45 pvalchev Exp $\";",
     "#endif",
     "#include <stdlib.h>",
     "#define YYBYACC 1",
@@ -398,6 +398,7 @@ char *trailer[] =
 };
 
 
+void
 write_section(section)
 char *section[];
 {
@@ -407,7 +408,7 @@ char *section[];
     register FILE *f;
 
     f = code_file;
-    for (i = 0; s = section[i]; ++i)
+    for (i = 0; (s = section[i]); ++i)
     {
 	++outline;
 	while (c = *s)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.11 2001/01/19 17:58:22 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.12 2001/07/16 06:29:44 pvalchev Exp $	*/
 /*	$NetBSD: main.c,v 1.5 1996/03/19 03:21:38 jtc Exp $	*/
 
 /*
@@ -47,15 +47,16 @@ char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	5.5 (Berkeley) 5/24/93";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.11 2001/01/19 17:58:22 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.12 2001/07/16 06:29:44 pvalchev Exp $";
 #endif
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <fcntl.h>
 #include <paths.h>
-#include <stdlib.h>
 #include <signal.h>
+#include <stdlib.h>
+#include <unistd.h>
 #include "defs.h"
 
 char dflag;
@@ -115,6 +116,14 @@ char  *rassoc;
 short **derives;
 char *nullable;
 
+void onintr __P((int));
+void set_signals __P((void));
+void usage __P((void));
+void getargs __P((int, register char *[]));
+void create_file_names __P((void));
+void open_files __P((void));
+
+void
 done(k)
 int k;
 {
@@ -133,6 +142,7 @@ onintr(signo)
 }
 
 
+void
 set_signals()
 {
 #ifdef SIGINT
@@ -150,6 +160,7 @@ set_signals()
 }
 
 
+void
 usage()
 {
     fprintf(stderr, "usage: %s [-dlrtv] [-b file_prefix] [-o outputfile] [-p symbol_prefix] filename\n", __progname);
@@ -157,6 +168,7 @@ usage()
 }
 
 
+void
 getargs(argc, argv)
 int argc;
 char *argv[];
@@ -286,7 +298,7 @@ unsigned n;
     return (p);
 }
 
-
+void
 create_file_names()
 {
     int i, len;
@@ -420,7 +432,7 @@ fsopen(name, mode)
     return (fp);
 }
 
-
+void
 open_files()
 {
     int fd;
@@ -490,4 +502,5 @@ char *argv[];
     output();
     done(0);
     /*NOTREACHED*/
+    return (0);
 }

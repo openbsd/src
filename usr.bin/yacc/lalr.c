@@ -1,4 +1,4 @@
-/*	$OpenBSD: lalr.c,v 1.3 1996/06/26 05:44:37 deraadt Exp $	*/
+/*	$OpenBSD: lalr.c,v 1.4 2001/07/16 06:29:44 pvalchev Exp $	*/
 /*	$NetBSD: lalr.c,v 1.4 1996/03/19 03:21:33 jtc Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)lalr.c	5.3 (Berkeley) 6/1/90";
 #else
-static char rcsid[] = "$OpenBSD: lalr.c,v 1.3 1996/06/26 05:44:37 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: lalr.c,v 1.4 2001/07/16 06:29:44 pvalchev Exp $";
 #endif
 #endif /* not lint */
 
@@ -68,6 +68,21 @@ short *from_state;
 short *to_state;
 
 short **transpose();
+void set_state_table __P((void));
+void set_accessing_symbol __P((void));
+void set_shift_table __P((void));
+void set_reduction_table __P((void));
+void set_maxrhs __P((void));
+void initialize_LA __P((void));
+void set_goto_map __P((void));
+void initialize_F __P((void));
+void build_relations __P((void));
+void compute_FOLLOWS __P((void));
+void compute_lookaheads __P((void));
+int map_goto __P((int, int));
+void digraph __P((short **));
+void add_lookback_edge __P((int, int, int));
+void traverse __P((int));
 
 static int infinity;
 static int maxrhs;
@@ -80,7 +95,7 @@ static short *INDEX;
 static short *VERTICES;
 static int top;
 
-
+void
 lalr()
 {
     tokensetsize = WORDSIZE(ntokens);
@@ -99,7 +114,7 @@ lalr()
 }
 
 
-
+void
 set_state_table()
 {
     register core *sp;
@@ -110,7 +125,7 @@ set_state_table()
 }
 
 
-
+void
 set_accessing_symbol()
 {
     register core *sp;
@@ -121,7 +136,7 @@ set_accessing_symbol()
 }
 
 
-
+void
 set_shift_table()
 {
     register shifts *sp;
@@ -132,7 +147,7 @@ set_shift_table()
 }
 
 
-
+void
 set_reduction_table()
 {
     register reductions *rp;
@@ -143,7 +158,7 @@ set_reduction_table()
 }
 
 
-
+void
 set_maxrhs()
 {
   register short *itemp;
@@ -171,7 +186,7 @@ set_maxrhs()
 }
 
 
-
+void
 initialize_LA()
 {
   register int i, j, k;
@@ -208,7 +223,7 @@ initialize_LA()
     }
 }
 
-
+void
 set_goto_map()
 {
   register shifts *sp;
@@ -306,7 +321,7 @@ int symbol;
 }
 
 
-
+void
 initialize_F()
 {
   register int i;
@@ -383,7 +398,7 @@ initialize_F()
 }
 
 
-
+void
 build_relations()
 {
   register int i;
@@ -475,7 +490,7 @@ build_relations()
   FREE(states);
 }
 
-
+void
 add_lookback_edge(stateno, ruleno, gotono)
 int stateno, ruleno, gotono;
 {
@@ -560,13 +575,13 @@ int n;
 }
 
 
-
+void
 compute_FOLLOWS()
 {
   digraph(includes);
 }
 
-
+void
 compute_lookaheads()
 {
   register int i, n;
@@ -600,7 +615,7 @@ compute_lookaheads()
   FREE(F);
 }
 
-
+void
 digraph(relation)
 short **relation;
 {
@@ -627,7 +642,7 @@ short **relation;
 }
 
 
-
+void
 traverse(i)
 register int i;
 {

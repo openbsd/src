@@ -1,4 +1,4 @@
-/*	$OpenBSD: verbose.c,v 1.3 1996/06/26 05:44:40 deraadt Exp $	*/
+/*	$OpenBSD: verbose.c,v 1.4 2001/07/16 06:29:45 pvalchev Exp $	*/
 /*	$NetBSD: verbose.c,v 1.4 1996/03/19 03:21:50 jtc Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)verbose.c	5.3 (Berkeley) 1/20/91";
 #else
-static char rcsid[] = "$OpenBSD: verbose.c,v 1.3 1996/06/26 05:44:40 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: verbose.c,v 1.4 2001/07/16 06:29:45 pvalchev Exp $";
 #endif
 #endif /* not lint */
 
@@ -49,6 +49,18 @@ static char rcsid[] = "$OpenBSD: verbose.c,v 1.3 1996/06/26 05:44:40 deraadt Exp
 
 static short *null_rules;
 
+void log_unused __P((void));
+void log_conflicts __P((void));
+void print_state __P((int));
+void print_conflicts __P((int));
+void print_core __P((int));
+void print_nulls __P((int));
+void print_actions __P((int));
+void print_shifts __P((action *));
+void print_reductions __P((action *, int));
+void print_gotos __P((int));
+
+void
 verbose()
 {
     register int i;
@@ -73,6 +85,7 @@ verbose()
 }
 
 
+void
 log_unused()
 {
     register int i;
@@ -92,6 +105,7 @@ log_unused()
 }
 
 
+void
 log_conflicts()
 {
     register int i;
@@ -120,6 +134,7 @@ log_conflicts()
 }
 
 
+void
 print_state(state)
 int state;
 {
@@ -134,6 +149,7 @@ int state;
 }
 
 
+void
 print_conflicts(state)
 int state;
 {
@@ -182,6 +198,7 @@ int state;
 }
 
 
+void
 print_core(state)
 int state;
 {
@@ -218,6 +235,7 @@ int state;
 }
 
 
+void
 print_nulls(state)
 int state;
 {
@@ -262,6 +280,7 @@ int state;
 }
 
 
+void
 print_actions(stateno)
 int stateno;
 {
@@ -289,6 +308,7 @@ int stateno;
 }
 
 
+void
 print_shifts(p)
 register action *p;
 {
@@ -314,6 +334,7 @@ register action *p;
 }
 
 
+void
 print_reductions(p, defred)
 register action *p;
 register int defred;
@@ -352,6 +373,7 @@ register int defred;
 }
 
 
+void
 print_gotos(stateno)
 int stateno;
 {
