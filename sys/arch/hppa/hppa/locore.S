@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.127 2004/04/08 17:10:18 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.128 2004/04/08 17:14:50 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -1285,10 +1285,6 @@ $itlbna_t
 
 $dtlb_s
 $dtlbna_s
-	/*
-	 * from the 7100lc ers, pg.6:
-	 * pa7100 provides cr28 for dtlb traps only
-	 */
 $dtlb_t
 $dtlbna_t
 	TLB_STATS_PRE(dtlb)
