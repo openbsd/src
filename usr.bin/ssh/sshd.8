@@ -9,7 +9,7 @@
 .\"
 .\" Created: Sat Apr 22 21:55:14 1995 ylo
 .\"
-.\" $Id: sshd.8,v 1.29 2000/01/04 16:57:16 markus Exp $
+.\" $Id: sshd.8,v 1.30 2000/01/14 09:47:26 markus Exp $
 .\"
 .Dd September 25, 1999
 .Dt SSHD 8
@@ -436,17 +436,17 @@ Specifies whether
 .Xr login 1
 is used. The default is
 .Dq no .
-.It Cm X11Forwarding
-Specifies whether X11 forwarding is permitted.  The default is
-.Dq yes .
-Note that disabling X11 forwarding does not improve security in any
-way, as users can always install their own forwarders.
 .It Cm X11DisplayOffset
 Specifies the first display number available for
 .Nm sshd Ns 's
 X11 forwarding.  This prevents
 .Nm
 from interfering with real X11 servers.
+.It Cm X11Forwarding
+Specifies whether X11 forwarding is permitted.  The default is
+.Dq yes .
+Note that disabling X11 forwarding does not improve security in any
+way, as users can always install their own forwarders.
 .El
 .Sh LOGIN PROCESS
 When a user successfully logs in,
