@@ -1,4 +1,4 @@
-/*	$OpenBSD: xl.c,v 1.29 2001/08/19 01:45:55 jason Exp $	*/
+/*	$OpenBSD: xl.c,v 1.30 2001/08/19 18:07:33 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -212,8 +212,10 @@ xl_power(why, arg)
 		xl_stop(sc);
 	else {
 		ifp = &sc->arpcom.ac_if;
-		if (ifp->if_flags & IFF_UP)
+		if (ifp->if_flags & IFF_UP) {
 			xl_reset(sc, 1);
+			xl_init(sc);
+		}
 	}
 	splx(s);
 }
