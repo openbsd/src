@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr.s,v 1.9 2000/10/10 18:25:27 bjc Exp $     */
+/*	$OpenBSD: subr.s,v 1.10 2001/01/08 04:25:13 hugh Exp $     */
 /*	$NetBSD: subr.s,v 1.32 1999/03/25 00:41:48 mrg Exp $	   */
 
 /*
@@ -54,7 +54,12 @@ ASENTRY(start, 0)
 	pushl	$to				# Address to jump to
 	rei					# change to kernel stack
 to:	movw	$0xfff,_panic			# Save all regs in panic
-	addl3	_esym,$0x3ff,r0			# Round symbol table end
+	moval	_end, r0			# Get kernel end address
+	addl2	$0x3ff, r0			# Round it up
+	cmpl	_esym, r0			# Compare with symbol table end
+	bleq	eskip				# Symbol table not present
+	addl3	_esym, $0x3ff, r0		# Use symbol end and round
+eskip:
 	bicl3	$0x3ff,r0,_proc0paddr		# save proc0 uarea pointer
 	bicl3	$0x80000000,_proc0paddr,r0	# get phys proc0 uarea addr
 	mtpr	r0,$PR_PCBB			# Save in IPR PCBB
