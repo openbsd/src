@@ -1,3 +1,5 @@
+/*	$OpenBSD: bootparamd.c,v 1.8 1998/05/03 05:02:09 gene Exp $	*/
+
 /*
  * This code is not copyright, and is placed in the public domain.
  * Feel free to use and modify. Please send modifications and/or
@@ -5,8 +7,6 @@
  *
  * Various small changes by Theo de Raadt <deraadt@fsa.ca>
  * Parser rewritten (adding YP support) by Roland McGrath <roland@frob.com>
- *
- * $Id: bootparamd.c,v 1.7 1997/06/23 09:31:08 deraadt Exp $
  */
 
 #include <sys/types.h>
