@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.14 1998/11/03 21:00:09 downsj Exp $	*/
+/*	$OpenBSD: audio.c,v 1.15 1998/11/20 15:57:19 deraadt Exp $	*/
 /*	$NetBSD: audio.c,v 1.105 1998/09/27 16:43:56 christos Exp $	*/
 
 /*
@@ -1659,7 +1659,7 @@ audio_mmap(dev, off, prot)
 	cb = &sc->sc_pr;
 #endif
 
-	if (off >= cb->bufsize)
+	if ((u_int)off >= cb->bufsize)
 		return -1;
 	if (!cb->mmapped) {
 		cb->mmapped = 1;

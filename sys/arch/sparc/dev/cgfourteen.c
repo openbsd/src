@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgfourteen.c,v 1.1 1997/08/08 08:24:48 downsj Exp $	*/
+/*	$OpenBSD: cgfourteen.c,v 1.2 1998/11/20 15:57:21 deraadt Exp $	*/
 /*	$NetBSD: cgfourteen.c,v 1.7 1997/05/24 20:16:08 pk Exp $ */
 
 /*
@@ -576,6 +576,9 @@ cgfourteenmmap(dev, off, prot)
 
 	if (off & PGOFSET)
 		panic("cgfourteenmmap");
+
+	if (off < 0)
+		return (-1);
 
 #if defined(DEBUG) && defined(CG14_MAP_REGS) /* XXX: security hole */
 	/*

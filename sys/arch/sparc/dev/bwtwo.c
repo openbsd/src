@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwtwo.c,v 1.14 1997/08/08 08:24:43 downsj Exp $	*/
+/*	$OpenBSD: bwtwo.c,v 1.15 1998/11/20 15:57:21 deraadt Exp $	*/
 /*	$NetBSD: bwtwo.c,v 1.33 1997/05/24 20:16:02 pk Exp $ */
 
 /*
@@ -456,6 +456,8 @@ bwtwommap(dev, off, prot)
 
 	if (off & PGOFSET)
 		panic("bwtwommap");
+	if (off < 0)
+		return (-1);
 	if ((unsigned)off >= sc->sc_fb.fb_type.fb_size)
 		return (-1);
 	/*

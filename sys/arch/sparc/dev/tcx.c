@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcx.c,v 1.1 1997/08/08 08:25:31 downsj Exp $	*/
+/*	$OpenBSD: tcx.c,v 1.2 1998/11/20 15:57:24 deraadt Exp $	*/
 /*	$NetBSD: tcx.c,v 1.8 1997/07/29 09:58:14 fair Exp $ */
 
 /* 
@@ -469,6 +469,9 @@ tcxmmap(dev, off, prot)
 
 	if (off & PGOFSET)
 		panic("tcxmmap");
+
+	if (off < 0)
+		return (-1);
 
 	/*
 	 * Entries with size 0 map video RAM (i.e., the size in fb data).

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgfour.c,v 1.8 1997/08/08 08:24:46 downsj Exp $	*/
+/*	$OpenBSD: cgfour.c,v 1.9 1998/11/20 15:57:21 deraadt Exp $	*/
 /*	$NetBSD: cgfour.c,v 1.13 1997/05/24 20:16:06 pk Exp $	*/
 
 /*
@@ -402,6 +402,8 @@ cgfourmmap(dev, off, prot)
 	if (off & PGOFSET)
 		panic("cgfourmap");
 
+	if (off < 0)
+		return (-1);
 	if ((u_int)off >= NOOVERLAY) {
 		off -= NOOVERLAY;
 
@@ -410,7 +412,7 @@ cgfourmmap(dev, off, prot)
 		 * there really is. We compensate by double-mapping the
 		 * first page for as many other pages as it wants
 		 */
-		while (off >= COLOR_SIZE)
+		while ((u_int)off >= COLOR_SIZE)
 			off -= COLOR_SIZE;	/* XXX thorpej ??? */
 
 		poff = off + PFOUR_COLOR_OFF_COLOR;

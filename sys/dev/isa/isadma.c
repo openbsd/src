@@ -1,4 +1,4 @@
-/*	$OpenBSD: isadma.c,v 1.19 1998/03/02 07:02:08 todd Exp $	*/
+/*	$OpenBSD: isadma.c,v 1.20 1998/11/20 15:57:20 deraadt Exp $	*/
 /*	$NetBSD: isadma.c,v 1.32 1997/09/05 01:48:33 thorpej Exp $	*/
 
 /*-
@@ -583,6 +583,9 @@ isa_dmamem_free(isadev, chan, addr, size)
 		printf("%s: bogus drq %d\n", sc->sc_dev.dv_xname, chan);
 		panic("isa_dmamem_free");
 	}
+
+	if (off < 0)
+		return (-1);
 
 	seg.ds_addr = addr;
 	seg.ds_len = size;
