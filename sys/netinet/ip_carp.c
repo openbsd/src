@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.50 2004/05/13 08:21:18 mcbride Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.51 2004/05/16 00:24:45 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -513,8 +513,7 @@ carp_input_c(struct mbuf *m, struct carp_header *ch, sa_family_t af)
 
 	/* XXX Replay protection goes here */
 
-	if (sc->sc_init_counter)
-		sc->sc_init_counter = 0;
+	sc->sc_init_counter = 0;
 	sc->sc_counter = tmp_counter;
 
 
