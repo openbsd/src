@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.10 1998/06/15 17:56:02 mickey Exp $
+.\"	$OpenBSD: options.4,v 1.11 1998/06/29 06:38:15 angelos Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt 
@@ -49,8 +49,7 @@ file. See
 .Xr config 8
 for information on how to configure and build kernels.
 .Em Note:
-Options are passed to the compile process as -D flags to the C
-compiler.
+Options are passed to the compile process as -D flags to the C compiler.
 .Ss Compatibility Options
 .Bl -ohang
 .It Cd option COMPAT_SVR4
@@ -194,7 +193,7 @@ code will cause the kernel to panic if corruption of internal data
 structures is detected.
 .It Cd option KTRACE
 Add hooks for the system call tracing facility, which allows users to
-watch the system call invocation behavior of processes. See
+watch the system call invocation behavior of processes.  See
 .Xr ktrace 1
 for details.
 .El
@@ -208,14 +207,13 @@ Most machines need this if they are not running diskless.
 Includes code implementing the Second Extended File System
 .Em ( EXT2FS ) .
 This is the most commonly used file system on the Linux operating system,
-and is provided here for compatibility. Some specific features
-of
+and is provided here for compatibility.  Some specific features of
 .Em EXT2FS 
-like the "behavior on errors" are not implemented. This file system can't be
-used with uid_t or gid_t values greater than 65535. Also, the filesystem will not
-function correctly on architectures with differing byte-orders.  That is,
-a big-endian machine will not be able to read an ext2fs filesystem created
-on an i386 or other little-endian machine.  See
+like the "behavior on errors" are not implemented.  This file system
+can't be used with uid_t or gid_t values greater than 65535.  Also, the
+filesystem will not function correctly on architectures with differing
+byte-orders.  That is, a big-endian machine will not be able to read an
+ext2fs filesystem created on an i386 or other little-endian machine.  See
 .Xr mount_ext2fs 8
 for details.
 .It Cd option MFS
@@ -225,7 +223,7 @@ This file system stores files in swappable memory, and produces
 notable performance improvements when it is used as the file store
 for
 .Pa /tmp
-or similar mount points. Unfortunately, it is known to contain some bugs
+or similar mount points.  Unfortunately, it is known to contain some bugs
 render it unstable, and it is not yet recommended for production.  See
 .Xr mount_mfs 8
 for details.
@@ -236,15 +234,15 @@ Include the client side of the
 Although the bulk of the code implementing
 .Em NFS
 is kernel based, several user level daemons are needed for it to
-work. See 
+work.  See 
 .Xr mount_nfs 8
 and
 .Xr nfsiod 8
 for details on NFS.
 .It Cd option CD9660
 Includes code for the ISO 9660 + Rock Ridge file system, which is the
-standard file system used on many CD-ROMs. It is useful mostly if you have a CD
-drive. See
+standard file system used on many CD-ROMs.  It is useful mostly if you
+have a CD drive.  See
 .Xr mount_cd9660 8
 for details.
 .It Cd option MSDOSFS
@@ -263,16 +261,15 @@ for details.
 Includes code for a file system which can be mounted on
 .Pa /dev/fd .
 This filesystem permits access to the per-process file descriptor
-space via special files in the file system.
-See
+space via special files in the file system.  See
 .Xr mount_fdesc 8
 for details.
 Note that this facility is redundant, and thus unneeded on most
 .Ox
 systems, since the
 .Xr fd 4
-pseudodevice driver already provides identical functionality. On most
-systems, instances of
+pseudodevice driver already provides identical functionality.
+On most systems, instances of
 .Xr fd 4
 are mknoded under
 .Pa /dev/fd/
@@ -291,27 +288,27 @@ See
 .Xr mount_kernfs 8
 for details.
 .It Cd option NULLFS
-Includes code for a loopback file system. This permits portions of the file
-hierarchy to be re-mounted in other places. The code really exists to
-provide an example of a stackable file system layer. See
+Includes code for a loopback file system.  This permits portions of the
+file hierarchy to be re-mounted in other places.  The code really
+exists to provide an example of a stackable file system layer.  See
 .Xr mount_null 8
-for details.  Most 
+for details.
 .It Cd option PORTAL
-Includes the (experimental) portal filesystem. This permits
+Includes the (experimental) portal filesystem.  This permits
 interesting tricks like opening TCP sockets by opening files in the
-file system. The portal file system is conventionally mounted on
+file system.  The portal file system is conventionally mounted on
 .Pa /p
-and is partially implemented by a special daemon. See
+and is partially implemented by a special daemon.  See
 .Xr mount_portal 8
 for details.
 .It Cd option PROCFS
 Includes code for a special file system (conventionally mounted on
 .Pa /proc )
-in which the process space becomes visible in the file system. Among
+in which the process space becomes visible in the file system.  Among
 other things, the memory spaces of processes running on the system are
 visible as files, and signals may be sent to processes by writing to
 .Pa ctl
-files in the procfs namespace. See
+files in the procfs namespace.  See
 .Xr mount_procfs 8
 for details.
 .It Cd option UMAPFS
@@ -327,8 +324,8 @@ be mounted on top of each other in such a way that both file systems
 remain visible -- this permits tricks like allowing writing (and the
 deleting of files) on a read-only file system like a CD-ROM by
 mounting a local writable file system on top of the read-only file
-system. This filesystem is still experimental and is known to be somewhat
-unstable. See
+system.  This filesystem is still experimental and is known to be
+somewhat unstable. See
 .Xr mount_union 8
 for details.
 .El
@@ -369,7 +366,7 @@ Adds support for
 .At V
 style FIFOs (i.e.
 .Dq named pipes
-). This option is recommended in almost all cases as many programs use these.
+).  This option is recommended in almost all cases as many programs use these.
 .It Cd option NVNODE=integer
 This option sets the size of the cache used by the name-to-inode translation
 routines, (a.k.a. the
@@ -389,13 +386,22 @@ the namei cache.
 This option changes the behavior of the APPEND and IMMUTABLE flags
 for a file on an
 .Em EXT2FS 
-filesystem. Without this option, the superuser or owner of the file can
-set and clear them. With this option, only the superuser can set them, and
-they can't be cleared if the securelevel is greater than 0. See also
+filesystem. Without this option, the superuser or owner of the file
+can set and clear them.  With this option, only the superuser can set
+them, and they can't be cleared if the securelevel is greater than 0.
+See also
 .Xr chflags 1 .
 .El
 .Ss Miscellaneous Options
 .Bl -ohang
+.It Cd option PCIVERBOSE
+Makes the boot process more verbose on what peripherals are detected
+(vendor names and other information is printed etc.)
+.It Cd option APERTURE
+Provide in-kernel support for video memory mapping for user-processes.
+Very useful for running X windows.
+.It Cd option XSERVER
+Support for X windows in the console driver.
 .It Cd option LKM
 Enable support for loadable kernel modules. See
 .Xr lkm 4
@@ -403,11 +409,11 @@ for details.
 .Em NOTE:
 This option is not yet available on all architectures.
 .It Cd option INSECURE
-Hardwires the kernel security level at -1. This means that the system
-always runs in secure level 0 mode, even when running multiuser. See
+Hardwires the kernel security level at -1.  This means that the system
+always runs in secure level 0 mode, even when running multiuser.  See
 the manual page for
 .Xr init 8
-for details on the implications of this. The kernel secure level may
+for details on the implications of this.  The kernel secure level may
 manipulated by the superuser by altering the
 .Em kern.securelevel
 sysctl variable. (It should be noted that the secure level may only be
@@ -422,18 +428,19 @@ This option changes part of the VM/pmap interface, to allow for
 non-contiguous memory.  On some ports it is not an option.  These
 ports typically only use one of the interfaces.
 .It Cd option RAM_DISK_HOOKS
-This option allows for some machine dependent functions to be called when
-the ramdisk driver is configured. This can result in automatically loading
-a ramdisk from floppy on open (among other things).
+This option allows for some machine dependent functions to be called
+when the ramdisk driver is configured.  This can result in
+automatically loading a ramdisk from floppy on open (among other
+things).
 .It Cd option RAM_DISK_IS_ROOT
-Forces the ramdisk to be the root device. This can only be overridden when
-the kernel is booted in the 'ask-for-root' mode.
+Forces the ramdisk to be the root device.  This can only be overridden
+when the kernel is booted in the 'ask-for-root' mode.
 .It Cd option CCDNBUF=integer
 The
 .Xr ccd 4
-device driver uses "component buffers" to distribute I/O requests to the
-components of a concatenated disk.  It keeps a freelist of buffer headers
-in order to reduce use of the kernel memory allocator.
+device driver uses "component buffers" to distribute I/O requests to
+the components of a concatenated disk.  It keeps a freelist of buffer
+headers in order to reduce use of the kernel memory allocator.
 .Em CCDNBUF
 is the number of buffer headers allocated on the freelist for
 each component buffer.  It defaults to 8.
@@ -445,11 +452,11 @@ Unfortunately, this option therefore essentially disables
 .Fn MALLOC
 and
 .Fn FREE
-forms of the memory allocator, which are used to enhance the performance
-of certain critical sections of code in the kernel.
-This option therefore can
-lead to a significant decrease in the performance of certain code in the kernel
-if enabled.  Examples of such code include the
+forms of the memory allocator, which are used to enhance the
+performance of certain critical sections of code in the kernel.  This
+option therefore can lead to a significant decrease in the performance
+of certain code in the kernel if enabled.  Examples of such code
+include the
 .Fn namei
 routine, the
 .Xr ccd 4
@@ -466,10 +473,9 @@ and much of the networking code.
 .It Cd option GATEWAY
 Enables 
 .Em IPFORWARDING
-(which see) 
 and (on most ports) increases the size of 
 .Em NMBCLUSTERS
-(which see). In general,
+In general,
 .Em GATEWAY
 is used to indicate that a system should act as a router, and
 .Em IPFORWARDING
@@ -478,17 +484,17 @@ is not invoked directly.
 .Em GATEWAY
 has no impact on protocols other than IP, such as CLNP or XNS.)
 .It Cd option IPFORWARDING
-Enables IP routing behavior. With this option enabled, the machine
+Enables IP routing behavior.  With this option enabled, the machine
 will forward IP datagrams between its interfaces that are destined for
-other machines. Note that even without this option, the kernel will
+other machines.  Note that even without this option, the kernel will
 still forward some packets (such as source routed packets) -- removing
 .Em GATEWAY
 and
 .Em IPFORWARDING
 is insufficient to stop all routing through a bastion host on a
-firewall -- source routing is controlled independently.
-Note that IP forwarding may be turned on and off independently of the
-setting of the
+firewall -- source routing is controlled independently.  Note that IP
+forwarding may be turned on and off independently of the setting of
+the
 .Em IPFORWARDING
 option through the use of the
 .Em net.inet.ip.forwarding
@@ -500,50 +506,48 @@ and
 .Xr sysctl 3
 for details.
 .It Cd option MROUTING
-Includes support for IP multicast routers. You certainly want 
+Includes support for IP multicast routers.
 .Em INET
-with this. Multicast routing is controlled by the
+should be set along with this.
+Multicast routing is controlled by the
 .Xr mrouted 8
 daemon.
 .It Cd option INET
-Includes support for the TCP/IP protocol stack. You almost certainly
-want this. See
+Includes support for the TCP/IP protocol stack.
+This option is currently required.  See
 .Xr inet 4
 for details.
-This option is currently required.
 .It Cd option MCLSHIFT=value
-This option is the base-2 logarithm of the size of mbuf clusters.
-The BSD networking stack keeps network packets in a linked
-list, or chain, of kernel buffer objects called mbufs.  The system
-provides larger mbuf clusters as an optimization for large packets,
-instead of using long chains for large packets.
-The mbuf cluster size,
-or 
+This option is the base-2 logarithm of the size of mbuf clusters.  The
+BSD networking stack keeps network packets in a linked list, or chain,
+of kernel buffer objects called mbufs.  The system provides larger mbuf
+clusters as an optimization for large packets, instead of using long
+chains for large packets.  The mbuf cluster size, or
 .Em MCLBYTES, 
 must be a power of two, and is computed as two raised to the power
 .Em MCLSHIFT.
 On systems with Ethernet network adaptors,
 .Em	MCLSHIFT
 is often set to 11, giving 2048-byte mbuf clusters, large enough to
-hold a 1500-byte Ethernet frame in a single cluster. Systems with
+hold a 1500-byte Ethernet frame in a single cluster.  Systems with
 networks supporting larger frame sizes like ATM, FDDI, or HIPPI may
 perform better with MCLSHIFT set to 12 or 13, giving mbuf cluster
 sizes of 4096 and 8192 bytes, respectively.
 .It Cd option NS
-Include support for the Xerox XNS protocol stack. See
+Include support for the Xerox XNS protocol stack.  See
 .Xr ns 4
 for details.
 .It Cd option ISO,TPIP
-Include support for the ubiquitous OSI protocol stack. See
+Include support for the ubiquitous OSI protocol stack.  See
 .Xr iso 4
 for details.
 .It Cd option EON
 Include support for OSI tunneling over IP.
 .It Cd option CCITT,LLC,HDLC
 Include support for the X.25 protocol stack.
-The state of this code is currently unknown. It probably contains
+The state of this code is currently unknown.  It probably contains
 bugs.
-.It Cd option IPX,IPXIP
+.It Cd option IPX, IPXIP
 Include support for Internetwork Packet Exchange protocol commonly in
 use by
 .Tn Novell NetWare .
@@ -555,8 +559,9 @@ support.
 .It Cd option TCP_COMPAT_42
 Use of this option is
 .Em extremely
-discouraged.  Do not enable this.  If any other machines on your network
-require you to enable this, you're better off just disconnecting
+discouraged, so it should not be enabled.  If any other machines on
+your network require you to enable this, you're better off just
+disconnecting
 .Em them
 from the network.
 .Pp
@@ -595,6 +600,24 @@ based filtering for ppp connections. This option is used by
 which needs to be compiled with 
 .Em PPP_FILTER
 defined (the current default).
+.It Cd option IPSEC
+This option enables IP security protocol support. See
+.Xr ipsec 4
+for more details.
+.It Cd option ENCDEBUG
+This option enables debugging information to be conditionally logged
+in case IPSEC encounters errors.  The option
+.Em IPSEC
+is required along with this option.  Debug logging can be turned
+on/off through use of the
+.Em net.ipsec.encap.encdebug
+sysctl variable.  If
+.Em net.ipsec.encap.encdebug
+is 1, debug logging is no.  See
+.Xr sysctl 8
+and
+.Xr sysctl 3
+for details.
 .El
 .Ss SCSI Subsystem Options
 .Bl -ohang
@@ -633,7 +656,7 @@ Sets the maximum number of
 .At V
 style shared memory pages that are available through the
 .Xr shmget 2
-system call. Default value is 1024 on most ports. See
+system call.  Default value is 1024 on most ports.  See
 .Pa /usr/include/machine/vmparam.h
 for the default.
 .El
@@ -645,8 +668,7 @@ module responsible for handling page faults for
 .Dq anonymous 
 objects (i.e. BSS pages)).
 .Em MANDATORY
--- you cannot actually run without
-this
+-- you cannot actually run without this
 .Dq option .
 .It Cd option DEVPAGER
 Support for mmap()ing of devices.  (Specifically, this enables the
@@ -655,14 +677,12 @@ devices (
 .Dq cdev
 vnodes)).
 .Em MANDATORY
--- you cannot actually run without
-this
+-- you cannot actually run without this
 .Dq option .
 .It Cd option NMBCLUSTERS=value
 Size of kernel mbuf cluster map,
 .Em mb_map ,
-in CLBYTES-sized logical
-pages.  Default on most ports is 256 (512 with
+in CLBYTES-sized logical pages.  Default on most ports is 256 (512 with
 .Dq option GATEWAY ).
 See
 .Pa /usr/include/machine/param.h
@@ -713,6 +733,7 @@ between 5% and 10% of total available RAM.
 .Xr ddb 4 ,
 .Xr lkm 4 ,
 .Xr inet 4 ,
+.Xr ipsec 4 ,
 .Xr ns 4 ,
 .Xr iso 4 ,
 .Xr mrouted 8 ,
