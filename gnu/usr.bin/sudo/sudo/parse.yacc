@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: parse.yacc,v 1.13 1999/03/29 20:29:05 millert Exp $	*/
+/*	$OpenBSD: parse.yacc,v 1.14 1999/03/30 06:25:26 millert Exp $	*/
 
 /*
  *  CU sudo version 1.5.9
@@ -64,7 +64,7 @@
 #endif /* !HAVE_STRCASECMP */
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: parse.yacc,v 1.133 1999/03/29 04:31:15 millert Exp $";
+static const char rcsid[] = "$Sudo: parse.yacc,v 1.134 1999/03/30 06:03:38 millert Exp $";
 #endif /* lint */
 
 /*
@@ -269,7 +269,7 @@ cmndspeclist	:	cmndspec
 
 cmndspec	:	{   /* Push a new entry onto the stack if needed */
 			    if (user_matches == TRUE && host_matches == TRUE &&
-				cmnd_matches == TRUE && runas_matches == TRUE) {
+				cmnd_matches != -1 && runas_matches == TRUE) {
 				push;
 				user_matches = TRUE;
 				host_matches = TRUE;
