@@ -1,4 +1,4 @@
-/*	$OpenBSD: fmt.c,v 1.13 1998/12/14 21:50:32 millert Exp $	*/
+/*	$OpenBSD: fmt.c,v 1.14 1999/12/15 05:34:33 deraadt Exp $	*/
 
 /* Sensible version of fmt
  *
@@ -168,7 +168,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-  "$OpenBSD: fmt.c,v 1.13 1998/12/14 21:50:32 millert Exp $";
+  "$OpenBSD: fmt.c,v 1.14 1999/12/15 05:34:33 deraadt Exp $";
 static const char copyright[] =
   "Copyright (c) 1997 Gareth McCaughan. All rights reserved.\n";
 #endif /* not lint */
@@ -290,7 +290,7 @@ main(int argc, char *argv[]) {
       continue;
     case 'd':
       sentence_enders = XMALLOC(strlen(optarg)+1);
-      strcpy(sentence_enders, optarg);
+      strcpy(sentence_enders, optarg);	/* ok */
       continue;
     case 'l':
       output_tab_width
