@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.18 2003/10/01 06:01:55 cloder Exp $	*/
+/*	$OpenBSD: intr.c,v 1.19 2003/11/06 21:09:35 mickey Exp $	*/
 /*	$NetBSD: intr.c,v 1.39 2001/07/19 23:38:11 eeh Exp $ */
 
 /*
@@ -137,6 +137,8 @@ softintr(fp)
 #endif
 	return (1);
 }
+
+int netisr;
 
 int
 softnet(fp)

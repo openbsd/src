@@ -1,4 +1,4 @@
-/*	$OpenBSD: intvec.s,v 1.15 2002/04/29 19:13:24 miod Exp $   */
+/*	$OpenBSD: intvec.s,v 1.16 2003/11/06 21:09:35 mickey Exp $   */
 /*	$NetBSD: intvec.s,v 1.39 1999/06/28 08:20:48 itojun Exp $   */
 
 /*
@@ -280,6 +280,11 @@ ENTRY(sbiflt);
 	TRAPCALL(astintr, T_ASTFLT)
 
 	FASTINTR(softclock,softclock)
+
+	.data
+	.global _netisr
+_netisr:
+	.long	0	# scheduling bits for network
 
 ENTRY(netint)
 	PUSHR

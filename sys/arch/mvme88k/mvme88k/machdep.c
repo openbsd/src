@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.118 2003/10/24 17:44:51 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.119 2003/11/06 21:09:35 mickey Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -2140,6 +2140,8 @@ myetheraddr(cp)
 	bugbrdid(&brdid);
 	bcopy(&brdid.etheraddr, cp, 6);
 }
+
+int netisr;
 
 void
 dosoftint()

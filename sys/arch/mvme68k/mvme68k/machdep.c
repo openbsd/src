@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.77 2003/06/02 23:27:51 millert Exp $ */
+/*	$OpenBSD: machdep.c,v 1.78 2003/11/06 21:09:35 mickey Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -1029,6 +1029,8 @@ badvaddr(addr, size)
 	nofault = (int *)0;
 	return (0);
 }
+
+int netisr;
 
 void
 netintr(arg)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.72 2003/10/17 21:04:58 mcbride Exp $	*/
+/*	$OpenBSD: if.c,v 1.73 2003/11/06 21:09:34 mickey Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -115,7 +115,6 @@ void	if_attachdomain1(struct ifnet *);
 int	if_detach_rtdelete(struct radix_node *, void *);
 
 int	ifqmaxlen = IFQ_MAXLEN;
-int	netisr;
 
 void	if_detach_queues(struct ifnet *, struct ifqueue *);
 void	if_detached_start(struct ifnet *);

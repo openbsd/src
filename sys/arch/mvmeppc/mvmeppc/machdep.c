@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.33 2003/09/22 21:39:40 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.34 2003/11/06 21:09:35 mickey Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -820,6 +820,7 @@ dumpsys()
 
 volatile int cpl, ipending, astpending, tickspending;
 int imask[7];
+int netisr;
 
 /*
  * Soft networking interrupts.
