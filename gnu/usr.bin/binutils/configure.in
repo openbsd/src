@@ -818,6 +818,8 @@ case "${target}" in
     noconfigdirs="$noconfigdirs gprof"   # same as generic mips
     target_configdirs="${target_configdirs} target-bsp target-libstub target-cygmon"
    ;;
+  mips*-*-openbsd*)
+    ;;
   mips*-*-*)
     noconfigdirs="$noconfigdirs gprof"
     ;;
