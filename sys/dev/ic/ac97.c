@@ -1,4 +1,4 @@
-/*	$OpenBSD: ac97.c,v 1.37 2003/07/15 13:20:31 couderc Exp $	*/
+/*	$OpenBSD: ac97.c,v 1.38 2003/07/23 20:53:52 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Constantine Sapuntzakis
@@ -366,6 +366,8 @@ const struct ac97_codecid {
 	{ 0x56,	0xff, 0, 0,	"STAC9756/57" },
 	{ 0x66,	0xff, 0, 0,	"STAC9766/67" },
 	{ 0x84,	0xff, 0, 0,	"STAC9784/85" },
+}, ac97_vi[] = {
+	{ 0x61, 0xff, 0, 0,	"VT1612A" },
 }, ac97_tt[] = {
 	{ 0x02,	0xff, 0, 0,	"TR28022" },
 	{ 0x03,	0xff, 0, 0,	"TR28023" },
@@ -395,6 +397,7 @@ const struct ac97_vendorid {
 	{ 0x414B4D00, "Asahi Kasei",		cl(ac97_ak) },
 	{ 0x414c4700, "Avance Logic",		cl(ac97_av) },
 	{ 0x414c4300, "Realtek",		cl(ac97_rl) },
+	{ 0x56494100, "VIA Technologies",	cl(ac97_vi) },
 	{ 0x43525900, "Cirrus Logic",		cl(ac97_cs) },
 	{ 0x45838300, "ESS Technology",		cl(ac97_es) },
 	{ 0x48525300, "Intersil",		cl(ac97_is) },
