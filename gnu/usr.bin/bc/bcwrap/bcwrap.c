@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcwrap.c,v 1.5 1997/09/11 22:59:37 deraadt Exp $	*/
+/*	$OpenBSD: bcwrap.c,v 1.6 1998/09/06 19:48:38 kstailey Exp $	*/
 
 /*
  * Copyright (c) 1996 Theo de Raadt <deraadt@theos.com>
@@ -44,9 +44,10 @@
 
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <errno.h>
+#include <signal.h>
 #include <stdio.h>
 #include <unistd.h>
-#include <errno.h>
 
 int
 main(argc, argv)
@@ -66,6 +67,8 @@ main(argc, argv)
 		perror("pipe");
 		exit(1);
 	}
+
+	signal(SIGINT, SIG_IGN);
 
 	pid = fork();
 	switch(pid) {
