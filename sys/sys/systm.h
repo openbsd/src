@@ -1,4 +1,4 @@
-/*	$OpenBSD: systm.h,v 1.36 1999/12/02 00:23:35 deraadt Exp $	*/
+/*	$OpenBSD: systm.h,v 1.37 2000/01/02 06:31:28 assar Exp $	*/
 /*	$NetBSD: systm.h,v 1.50 1996/06/09 04:55:09 briggs Exp $	*/
 
 /*-
@@ -102,11 +102,13 @@ extern dev_t swapdev;		/* swapping device */
 extern struct vnode *swapdev_vp;/* vnode equivalent to above */
 
 struct proc;
+
+typedef int	sy_call_t __P((struct proc *, void *, register_t *));
+
 extern struct sysent {		/* system call table */
 	short	sy_narg;	/* number of args */
 	short	sy_argsize;	/* total size of arguments */
-				/* implementing function */
-	int	(*sy_call) __P((struct proc *, void *, register_t *));
+	sy_call_t *sy_call;	/* implementing function */
 } sysent[];
 #define	SCARG(p,k)	((p)->k.datum)	/* get arg from args pointer */
 
