@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.9 1996/10/01 01:54:03 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.10 1996/10/16 11:30:39 deraadt Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
@@ -79,7 +79,6 @@ readdisklabel(dev, strat, lp, osdep)
 	struct cpu_disklabel *osdep;
 {
 	struct dos_partition *dp = osdep->dosparts, *dp2;
-	struct partition *pp;
 	struct dkbad *bdp = &osdep->bad;
 	struct buf *bp;
 	struct disklabel *dlp;
