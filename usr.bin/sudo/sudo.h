@@ -254,6 +254,8 @@ extern uid_t timestamp_uid;
 
 extern void (*set_perms) __P((int));
 #endif
+#ifndef errno
 extern int errno;
+#endif
 
 #endif /* _SUDO_SUDO_H */
