@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_i386.c,v 1.20 1997/11/30 21:51:43 mickey Exp $	*/
+/*	$OpenBSD: exec_i386.c,v 1.21 1998/05/18 22:07:29 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -71,7 +71,7 @@ machdep_start(startaddr, howto, loadaddr, ssym, esym)
 	       x->a_entry, x->a_trsize, x->a_drsize);
 
 	printf("/bsd(%x,%x,%x,%x,%x,%x,%d,%p)\n",
-	       howto, bootdev, BOOT_APIVER, round_to_size(esym),
+	       howto, bootdev, BOOTARG_APIVER, round_to_size(esym),
 	       extmem, cnvmem, ac, av);
 	getchar();
 #endif
@@ -79,7 +79,7 @@ machdep_start(startaddr, howto, loadaddr, ssym, esym)
 
 	printf("entry point at %p\n", startaddr);
 	/* stack and the gung is ok at this point, so, no need for asm setup */
-	(*(startfuncp)startaddr)(howto, bootdev, BOOT_APIVER,
+	(*(startfuncp)startaddr)(howto, bootdev, BOOTARG_APIVER,
 	    round_to_size(esym), extmem, cnvmem, ac, (int)av);
 	/* not reached */
 }
