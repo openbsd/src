@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.24 1997/10/19 09:08:06 deraadt Exp $
+#	$OpenBSD: install.md,v 1.25 1997/10/25 04:35:53 deraadt Exp $
 #
 #
 # Copyright rc) 1996 The NetBSD Foundation, Inc.
@@ -175,7 +175,7 @@ md_prep_disklabel()
 	cat << \__md_prep_disklabel_1
 If this disk is shared with other operating systems, those operating systems
 should have a BIOS partition entry that spans the space they occupy completely.
-For safetyp, also make sure all OpenBSD file systems within the offset and size
+For safety, also make sure all OpenBSD file systems within the offset and size
 specified in the 'A6' BIOS partition table.  (By default, the disklabel editor
 will try to enforce this).  If you are unsure of how to use multiple partitions
 properly (ie. seperating /,  /usr, /tmp, /var, /usr/local, and other things)
