@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdb.c,v 1.2 1997/05/29 00:04:17 niklas Exp $ */
+/*	$OpenBSD: kdb.c,v 1.3 2000/06/08 12:33:10 art Exp $ */
 /*	$NetBSD: kdb.c,v 1.5 1997/01/11 11:34:39 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -198,7 +198,7 @@ kdbgo(usc, bp)
         if ((bp->b_flags & B_PHYS) == 0) {
                 pte = kvtopte(addr);
         } else {
-                pcb = bp->b_proc->p_vmspace->vm_pmap.pm_pcb;
+                pcb = bp->b_proc->p_vmspace->vm_map.pmap->pm_pcb;
                 pte = uvtopte(addr, pcb);
         }
 
