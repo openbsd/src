@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.28 1997/06/17 05:26:22 denny Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.29 1997/06/17 05:41:19 deraadt Exp $	*/
 /*	$NetBSD: inetd.c,v 1.11 1996/02/22 11:14:41 mycroft Exp $	*/
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$OpenBSD: inetd.c,v 1.28 1997/06/17 05:26:22 denny Exp $";
+static char rcsid[] = "$OpenBSD: inetd.c,v 1.29 1997/06/17 05:41:19 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -713,12 +713,6 @@ config(sig)
 					syslog(LOG_ERR,
 					    "%s: address isn't an Internet "
 					    "address",
-					    sep->se_hostaddr);
-					sep->se_checked = 0;
-					continue;
-				} else if (hp->h_length != sizeof(struct in_addr)) {
-					syslog(LOG_ERR,
-			"%s: address size wrong (under DNS corruption attack?)",
 					    sep->se_hostaddr);
 					sep->se_checked = 0;
 					continue;
