@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.11 2000/01/06 21:19:10 d Exp $
+#	$OpenBSD: Makefile,v 1.12 2000/01/06 22:23:28 d Exp $
 
 #
 # The pthread library is formed from the FreeBSD uthread sources of 
@@ -25,10 +25,12 @@ CFLAGS+=	-D_LOCK_DEBUG
 DEBUG=		-ggdb -Wall
 
 .include "${LIBC_RSRCDIR}/include/Makefile.inc"
-.include "${LIBC_RSRCDIR}/man/Makefile.inc"
 .include "${LIBC_RSRCDIR}/sys/Makefile.inc"
 .include "${LIBC_RSRCDIR}/thread/Makefile.inc"
 .include "${LIBC_RSRCDIR}/uthread/Makefile.inc"
+
+# XXX enable when libc_r is not built
+#.include "${LIBC_RSRCDIR}/man/Makefile.inc"
 
 .include <bsd.own.mk>
 .include <bsd.lib.mk>
