@@ -1,7 +1,5 @@
-/*	$OpenBSD: sshconnect.h,v 1.14 2002/05/23 19:24:30 markus Exp $	*/
-
 /*
- * Copyright (c) 2000 Markus Friedl.  All rights reserved.
+ * Copyright (c) 2002 Markus Friedl.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -23,31 +21,53 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef SSHCONNECT_H
-#define SSHCONNECT_H
+#include "includes.h"
+RCSID("$OpenBSD: msg.c,v 1.1 2002/05/23 19:24:30 markus Exp $");
 
-typedef struct Sensitive Sensitive;
-struct Sensitive {
-        Key     **keys;
-        int     nkeys;
-        int     external_keysign;
-};
-
-int
-ssh_connect(const char *, struct sockaddr_storage *, u_short, int, int,
-    int, struct passwd *, const char *);
+#include "buffer.h"
+#include "getput.h"
+#include "log.h"
+#include "atomicio.h"
+#include "msg.h"
 
 void
-ssh_login(Sensitive *, const char *, struct sockaddr *, struct passwd *);
+msg_send(int fd, u_char type, Buffer *m)
+{
+	u_char buf[5];
+	u_int mlen = buffer_len(m);
 
-int	 verify_host_key(char *, struct sockaddr *, Key *);
+	debug3("msg_send: type %d", type);
 
-void	 ssh_kex(char *, struct sockaddr *);
-void	 ssh_kex2(char *, struct sockaddr *);
+	PUT_32BIT(buf, mlen + 1);
+	buf[4] = type;         /* 1st byte of payload is mesg-type */
+	if (atomicio(write, fd, buf, sizeof(buf)) != sizeof(buf))
+		fatal("msg_send: write");
+	if (atomicio(write, fd, buffer_ptr(m), mlen) != mlen)
+		fatal("msg_send: write");
+}
 
-void	 ssh_userauth1(const char *, const char *, char *, Sensitive *);
-void	 ssh_userauth2(const char *, const char *, char *, Sensitive *);
+int
+msg_recv(int fd, Buffer *m)
+{
+	u_char buf[4];
+	ssize_t res;
+	u_int msg_len;
 
-void	 ssh_put_password(char *);
+	debug3("msg_recv entering");
 
-#endif
+	res = atomicio(read, fd, buf, sizeof(buf));
+	if (res != sizeof(buf)) {
+		if (res == 0)
+			return -1;
+		fatal("msg_recv: read: header %d", res);
+	}
+	msg_len = GET_32BIT(buf);
+	if (msg_len > 256 * 1024)
+		fatal("msg_recv: read: bad msg_len %d", msg_len);
+	buffer_clear(m);
+	buffer_append_space(m, msg_len);
+	res = atomicio(read, fd, buffer_ptr(m), msg_len);
+	if (res != msg_len)
+		fatal("msg_recv: read: %ld != msg_len", (long)res);
+	return 0;
+}
