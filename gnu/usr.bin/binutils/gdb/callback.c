@@ -266,7 +266,13 @@ os_time (p, t)
      host_callback *p;
      long *t;
 {
-  return wrap (p, time (t));
+  time_t tt;
+  int r;
+
+  r = wrap (p, time (&tt));
+  if (t)
+	*t = (long)tt;
+  return r;
 }
 
 
