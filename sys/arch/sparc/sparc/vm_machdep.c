@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.11 1999/09/03 18:02:00 art Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.12 1999/12/09 16:19:50 art Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.30 1997/03/10 23:55:40 pk Exp $ */
 
 /*
@@ -108,6 +108,10 @@ kdvma_mapin(va, len, canwait)
 	return ((caddr_t)dvma_mapin(kernel_map, (vaddr_t)va, len, canwait));
 }
 
+#if defined(SUN4M)
+extern int has_iocache;
+#endif
+
 caddr_t
 dvma_malloc(len, kaddr, flags)
 	size_t	len;
@@ -116,9 +120,6 @@ dvma_malloc(len, kaddr, flags)
 {
 	vaddr_t	kva;
 	vaddr_t	dva;
-#if defined(SUN4M)
-	extern int has_iocache;
-#endif
 
 	len = round_page(len);
 	kva = (vaddr_t)malloc(len, M_DEVBUF, flags);
@@ -128,7 +129,7 @@ dvma_malloc(len, kaddr, flags)
 #if defined(SUN4M)
 	if (!has_iocache)
 #endif
-		kvm_uncache((caddr_t)kva, len >> PGSHIFT);
+		kvm_uncache((caddr_t)kva, atop(len));
 
 	*(vaddr_t *)kaddr = kva;
 	dva = dvma_mapin(kernel_map, kva, len, (flags & M_NOWAIT) ? 0 : 1);
@@ -147,7 +148,18 @@ dvma_free(dva, len, kaddr)
 {
 	vaddr_t	kva = *(vaddr_t *)kaddr;
 
-	dvma_mapout((vaddr_t)dva, kva, round_page(len));
+	len = round_page(len);
+
+	dvma_mapout((vaddr_t)dva, kva, len);
+	/*
+	 * Even if we're freeing memory here, we can't be sure that it will
+	 * be unmapped, so we must recache the memory range to avoid impact
+	 * on other kernel subsystems.
+	 */
+#if defined(SUN4M)
+	if (!has_iocache)
+#endif
+		kvm_recache(kaddr, atop(len));
 	free((void *)kva, M_DEVBUF);
 }
 
