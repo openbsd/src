@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypxfr.c,v 1.19 1997/05/01 22:14:48 niklas Exp $ */
+/*	$OpenBSD: ypxfr.c,v 1.20 1997/05/22 08:05:30 deraadt Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -32,7 +32,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ypxfr.c,v 1.19 1997/05/01 22:14:48 niklas Exp $";
+static char rcsid[] = "$OpenBSD: ypxfr.c,v 1.20 1997/05/22 08:05:30 deraadt Exp $";
 #endif
 
 #include <sys/types.h>
@@ -420,7 +420,7 @@ char *argv[];
 	int	 cflag = 0;
 	int	 fflag = 0;
 	int	 Cflag = 0;
-	char	 ch;
+	int	 ch;
 	extern	 char *optarg;
 	char	 *domain;
 	char	 *host = NULL;
