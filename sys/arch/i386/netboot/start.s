@@ -1,3 +1,4 @@
+/*	$OpenBSD: start.s,v 1.2 1996/04/26 18:23:12 mickey Exp $	*/
 /*	$NetBSD: start.s,v 1.4 1994/10/27 04:21:25 cgd Exp $	*/
 
 #include "asm.h"
@@ -14,10 +15,11 @@
 ENTRY(start)
 1:
 	cli
-	# save the bios return address in these registers until protected
-	# mode %ds is set up
-	#	mov	(%esp), %edx
-	#	mov	2(%esp), %ebp
+	/* save the bios return address in these registers until protected
+	 * mode %ds is set up
+	 *	mov	(%esp), %edx
+	 *	mov	2(%esp), %ebp
+	 */
 	pop	%dx			/* return offset */
 	pop	%ebp			/* return segment */
 
@@ -36,25 +38,26 @@ ENTRY(start)
 	push	%dx			/* return offset */
 	push	%ds
 
-#if 0
+#if notdef
 	jmp	ret16
 #endif
 
 
 #ifdef CHECK_386
-	# check if 386 or later
-	# from Intel i486 programmer\'s reference manual, section 22.10
-	# Care must be taken with the first few instructions to ensure
-	# operations are compatible with 386 progenitors - no operand
-	# or address size overrides, all operations must be 16 bit.
-	# Real mode not well supported by gas so it looks a bit crufty
-
-	# TBD - there is little stack space, although the routine below
-	# uses only two bytes; might set up new stack first thing, then
-	# check processor type - would mean carrying sp, ss in two gp
-	# registers for a while. also make alternate provisions for saving
-	# ds: below.
-
+	/*
+	 * check if 386 or later
+	 * from Intel i486 programmer's reference manual, section 22.10
+	 * Care must be taken with the first few instructions to ensure
+	 * operations are compatible with 386 progenitors - no operand
+	 * or address size overrides, all operations must be 16 bit.
+	 * Real mode not well supported by gas so it looks a bit crufty
+	 *
+	 * TBD - there is little stack space, although the routine below
+	 * uses only two bytes; might set up new stack first thing, then
+	 * check processor type - would mean carrying sp, ss in two gp
+	 * registers for a while. also make alternate provisions for saving
+	 * ds: below.
+	 */
 	pushf
 	pop	%ebx
 	.byte	0x81, 0xe3		/* (and 0x0fff, %ebx) */
@@ -91,9 +94,9 @@ xputc:	/* print byte in %al */
 	.byte	0xbb			/* (mov $0x1, %ebx) %bh=0, %bl=1 (blue) */
 	.word	0x0001
 	movb	$0xe, %ah
-	# sti
+	/* sti */
 	int	$0x10			/* display a byte */
-	# cli
+	/* cli */
 	data32
 	popa
 	ret
@@ -120,8 +123,10 @@ xputs:	/* print string pointed to by cs:bx */
 bad_cpu_msg:	.asciz	"netboot: cpu cannot execute '386 instructions, net boot not done.\n\r"
 
 Lcpu_ok:
-	# at this point it is known this can execute 386 instructions
-	# so operand and address size prefixes are ok
+	/*
+	 * at this point it is known this can execute 386 instructions
+	 * so operand and address size prefixes are ok
+	 */
 #endif /* CHECK_386 */
 
 	/* copy rom to link addr, prepare for relocation */

@@ -1,3 +1,4 @@
+/*	$OpenBSD: packet.c,v 1.3 1996/04/26 18:23:07 mickey Exp $	*/
 /*	$NetBSD: packet.c,v 1.4 1996/02/02 18:06:21 mycroft Exp $	*/
 
 /*
@@ -11,7 +12,7 @@
 
 #include "proto.h"
 #include "assert.h"
-#include <sys/param.h>
+#include "param.h"
 #include "packet.h"
 
 static packet_t *pool = (packet_t *)0;
