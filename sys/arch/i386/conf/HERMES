@@ -3,6 +3,7 @@
 #
 # This system was a 468 but now has an Intel Pentium Overdrive Processor[tm]
 #
+# $OpenBSD: HERMES,v 1.2 1997/04/11 11:35:34 kstailey Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
