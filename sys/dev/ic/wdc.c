@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdc.c,v 1.39 2001/07/21 09:08:48 csapuntz Exp $     */
+/*      $OpenBSD: wdc.c,v 1.40 2001/07/27 04:54:06 csapuntz Exp $     */
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $ */
 
 
@@ -393,6 +393,9 @@ wdc_ata_present(chp, drive)
 	int time_to_done;
 	int retry_cnt = 0;
 
+	CHP_WRITE_REG(chp, wdr_sdh, WDSD_IBM | (drive << 4));
+	delay(10);
+
  retry:
 	/* 
 	   You're actually supposed to wait up to 10 seconds
@@ -413,11 +416,23 @@ wdc_ata_present(chp, drive)
 			retry_cnt++;
 			goto retry;
 		}
+		WDCDEBUG_PRINT(("%s:%d:%d: DRDY test timed out with status"
+		    " %02x\n", 
+		    chp->wdc ? chp->wdc->sc_dev.dv_xname : "wdcprobe", 
+		    chp->channel, drive, chp->ch_status),
+		    DEBUG_PROBE);
 		return 0;
 	}
 
-	if ((chp->ch_status & 0xfc) != (WDCS_DRDY | WDCS_DSC))
+	if ((chp->ch_status & 0xfc) != (WDCS_DRDY | WDCS_DSC)) {
+		WDCDEBUG_PRINT(("%s:%d:%d: status test for 0x50 failed with"
+		    " %02x\n", 
+		    chp->wdc ? chp->wdc->sc_dev.dv_xname : "wdcprobe", 
+		    chp->channel, drive, chp->ch_status),
+		    DEBUG_PROBE);
+
 		return 0;
+	}
 
 	WDCDEBUG_PRINT(("%s:%d:%d: waiting for ready %d msec\n",
 	    chp->wdc ? chp->wdc->sc_dev.dv_xname : "wdcprobe",
@@ -432,8 +447,12 @@ wdc_ata_present(chp, drive)
        	DELAY(10);
 
 	if (CHP_READ_REG(chp, wdr_cyl_lo) != 0xaa &&
-	    CHP_READ_REG(chp, wdr_cyl_hi) != 0x55)
+	    CHP_READ_REG(chp, wdr_cyl_hi) != 0x55) {
+		WDCDEBUG_PRINT(("%s:%d:%d: register writability failed\n",
+		  chp->wdc ? chp->wdc->sc_dev.dv_xname : "wdcprobe",
+	          chp->channel, drive), DEBUG_PROBE);
 		return 0;
+	}
 
 	return 1;
 }
