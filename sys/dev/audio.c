@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.8 1996/05/26 00:26:49 deraadt Exp $	*/
+/*	$OpenBSD: audio.c,v 1.9 1997/04/09 14:46:12 kstailey Exp $	*/
 /*	$NetBSD: audio.c,v 1.26 1996/05/13 02:26:15 mycroft Exp $	*/
 
 /*
@@ -655,7 +655,7 @@ audio_drain(sc)
 		 * we can't interrupt this sleep, so we set a 1-minute
 		 * timeout.
 		 */
-		error = audio_sleep_timo(&sc->sc_wchan, "aud dr", 60*hz);
+		error = audio_sleep_timo(&sc->sc_wchan, "aud_dr", 60*hz);
 		if (error)
 			return (error);
 	}
