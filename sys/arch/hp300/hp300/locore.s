@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.44 2004/12/30 21:26:14 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.45 2004/12/30 21:28:47 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.91 1998/11/11 06:41:25 thorpej Exp $	*/
 
 /*
@@ -434,6 +434,23 @@ Lstart3:
 	addql	#8,sp
 
 /*
+ * While still running physical, override copypage() with the 68040
+ * optimized version, copypage040(), if possible.
+ * This relies upon the fact that copypage() immediately follows
+ * copypage040() in memory.
+ */
+	RELOC(mmutype, a0)
+	cmpl	#MMU_68040,a0@
+	jgt	Lmmu_enable
+	RELOC(copypage040, a0)
+	RELOC(copypage, a1)
+	movl	a1, a2
+1:
+	movw	a0@+, a2@+
+	cmpl	a0, a1
+	jgt	1b
+
+/*
  * Prepare to enable MMU.
  * Since the kernel is not mapped logical == physical we must insure
  * that when the MMU is turned on, all prefetched addresses (including
@@ -443,6 +460,7 @@ Lstart3:
  *
  * Is this all really necessary, or am I paranoid??
  */
+Lmmu_enable:
 	RELOC(Sysseg, a0)		| system segment table addr
 	movl	a0@,d1			| read value (a KVA)
 	addl	a5,d1			| convert to PA

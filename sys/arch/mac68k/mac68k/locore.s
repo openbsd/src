@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.43 2004/12/26 22:36:34 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.44 2004/12/30 21:28:48 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.103 1998/07/09 06:02:50 scottr Exp $	*/
 
 /*
@@ -254,6 +254,25 @@ Lstart3:
 	movl	#_C_LABEL(vectab),d0	| set Vector Base Register
 	movc	d0,vbr
 
+/*
+ * We might not be running physical, but we don't have read-only mappings
+ * yet either. It's time to override copypage() with the 68040
+ * optimized version, copypage040(), if possible.
+ * This relies upon the fact that copypage() immediately follows
+ * copypage040() in memory.
+ */
+	movl	#_C_LABEL(mmutype),a0
+	cmpl	#MMU_68040,a0@
+	jgt	Lmmu_enable
+	movl	#_C_LABEL(copypage040),a0
+	movl	#_C_LABEL(copypage),a1
+	movl	a1, a2
+1:
+	movw	a0@+, a2@+
+	cmpl	a0, a1
+	jgt	1b
+
+Lmmu_enable:
 	movl	_C_LABEL(Sysseg),a1	| system segment table addr
 	addl	_C_LABEL(load_addr),a1	| Make it physical addr
 	cmpl	#MMU_68040,_C_LABEL(mmutype)

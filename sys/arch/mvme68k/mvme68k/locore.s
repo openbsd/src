@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.46 2004/12/24 22:50:30 miod Exp $ */
+/*	$OpenBSD: locore.s,v 1.47 2004/12/30 21:28:48 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -447,6 +447,23 @@ Lstart2:
 	RELOC(pmap_bootstrap,a0)
 	jbsr	a0@			| pmap_bootstrap(firstpa, nextpa)
 	addql	#8,sp
+
+/*
+ * While still running physical, override copypage() with the 68040
+ * optimized version, copypage040(), if possible.
+ * This relies upon the fact that copypage() immediately follows
+ * copypage040() in memory.
+ */
+	RELOC(mmutype, a0)
+	cmpl	#MMU_68040,a0@
+	jgt	Lmmu_enable
+	RELOC(copypage040, a0)
+	RELOC(copypage, a1)
+	movl	a1, a2
+1:
+	movw	a0@+, a2@+
+	cmpl	a0, a1
+	jgt	1b
 
 /*
  * Enable the MMU.
