@@ -650,7 +650,7 @@ in6_control(so, cmd, data, ifp, p)
 					    "from list\n");
 				}
 			}
-			IFAFREE(&ia->ia_ifa);
+			IFAFREE(&oia->ia_ifa);
 		}
 #endif
 		return error;
