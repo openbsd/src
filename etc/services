@@ -1,4 +1,4 @@
-#	$OpenBSD: services,v 1.12 1997/08/26 19:36:14 millert Exp $
+#	$OpenBSD: services,v 1.13 1997/09/16 09:33:46 provos Exp $
 #
 # Network services, Internet style
 #
@@ -118,6 +118,8 @@ ulistserv	372/tcp				# UNIX Listserv
 ulistserv	372/udp
 nnsp		433/tcp		usenet		# Network News Transfer
 https		443/tcp				# secure http (SSL)
+photuris	468/tcp				# Photuris Key Management
+photuris	468/udp
 #
 # UNIX specific services
 #
