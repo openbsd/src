@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.69 2001/07/31 08:07:52 jakob Exp $
+#	$OpenBSD: Makefile,v 1.70 2001/08/01 21:22:16 millert Exp $
 
 .include <bsd.own.mk>
 
@@ -18,7 +18,7 @@ SUBDIR= apply apropos arch asa at aucat audioctl awk banner basename bdes \
 	talk tcopy tee telnet tftp tic time tip tn3270 top touch tput tr true \
 	tset tsort tty ul uname unexpand unifdef uniq units unvis users \
 	uudecode uuencode vacation vgrind vi vis vmstat w wall wc what whatis \
-	which who whois window write xargs xinstall xlint xstr yacc yes
+	which who whois window write x99token xargs xinstall xlint xstr yacc yes
 
 .if (${YP:L} == "yes")
 SUBDIR+=ypcat ypmatch ypwhich

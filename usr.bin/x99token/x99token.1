@@ -1,0 +1,84 @@
+.TH X99TOKEN 1  "5 October 1995"
+.SH NAME
+x99token - X9.9 software token calculator
+.SH SYNOPSIS
+.PP
+.B x99token [-d] [-i] [-k keyfile] [-n count]
+.SH DESCRIPTION
+The
+.B x99token
+program is a simple X9.9 software token calculator.
+The token is initialized by using the
+.B -i
+option.
+In this mode,
+.B x99token
+requests a key.  The key consists of 8 bytes encoded in either hex
+or octal.  When encoded in hex the key must consist of 16 hex digits,
+no spaces (e.g., "0123456789abcdef").
+When encoded in octal the key must consist of 8 3 digit
+octets, each separated by exactly one space
+(e.g., "001 010 100 002 020 200 003 030").
+Once the key is entered, a PIN number is requested.  The PIN number is
+used to perturb the key before it is stored in a keyfile.  This perturbation
+is not terribly secure.  You should assume that anyone with access to your
+keyfile will also have access to your key.
+.PP
+When
+.B -i
+is not specified,
+.B x99token
+is in calculator mode.
+In this mode you must enter the same PIN as used above in the initialization
+step.  The PIN is used decode the the key read from the keyfile.
+Next you enter the challenge you have been presented.
+The
+.B x99token
+program will provide you a response to the challenge.  If the
+.B -d
+option is used, the response will fold any hex digits to decimal.
+If a
+.I count
+is specified by
+.B -n ,
+it indicates the number of challenges to predict.  The first challenge
+is always the entered challenge.  By default the value of
+.I count
+is 1, which implies only the entered challenge is resolved.
+.PP
+Future challenges are predicted by the following algorithm:
+.nf
+.sp
+* Encrypt the current challenge with the shared secret key
+
+* AND each byte of the response with 0x0f
+
+* Modulo each byte by 10 (0x0a)
+
+* ADD 0x30 (ASCII value of '0') to each byte
+.fi
+.sp
+The resulting 8 bytes are all ASCII decimal digits and are the
+predicted challenge.  This process may be repeated.
+.SH FILES
+.ta 3i
+$HOME/.keyfile.des	default keyfile under BSD
+.br
+keyfile.des	default keyfle under DOS
+.SH NOTES
+This is a very simple minded program.  It is recommended that the
+keyfile be placed on a floppy disk which you keep physically secure.
+Under DOS the keyfile is marked as both a hidden and system file.
+When used with BSD/OS 3.0 or beyond, the token authentication type
+supplies the appropriate challenges and initialization information.
+.PP
+Having not read the X9.9 standard, this may not be complete or accurate
+implementation of that standard.  This software is provided AS IS
+with no express or implied warranty.
+.SH AUTHOR
+Paul Borman <prb@krystal.com>
+.SH CREDITS
+This code uses the publicly available des library written by Phil Karn, KA9Q.
+The decryption code from Phil's library has been removed to allow
+.B x99token
+to be free of export restrictions (as it can only encrypt and not decrypt).
