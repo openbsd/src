@@ -279,7 +279,7 @@ state_expire(void)
 			continue;
 
 		LOG_DBG((LOG_MISC, 35, __FUNCTION__
-			 ": Expiring state to %s in phase %d\n",
+			 ": Expiring state to %s in phase %d",
 			 tmp->address, tmp->phase));
 
 		state_value_reset(tmp);
