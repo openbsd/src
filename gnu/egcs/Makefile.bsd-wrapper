@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.1 1999/05/26 15:47:02 espie Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.2 1999/05/28 15:08:26 espie Exp $
 
 .if (${MACHINE_ARCH} == "mips")
 MAKE+= -DNOPIC
@@ -11,5 +11,6 @@ SUBDIR+= libiberty libio libstdc++ libf2c libobjc
 # libf2c/libobjc build 
 obj: _SUBDIRUSE
 	cd $(.CURDIR) && $(MAKE) -f Makefile.bsd-wrapper1 obj
+	cd $(.CURDIR)/gcc && $(MAKE) -f Makefile.bsd-wrapper obj
 
 .include <bsd.subdir.mk>
