@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.c,v 1.1 2004/02/03 12:09:47 mickey Exp $	*/
+/*	$OpenBSD: installboot.c,v 1.2 2004/02/21 00:48:59 tom Exp $	*/
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -423,9 +423,6 @@ getbootparams(char *boot, int devfd, struct disklabel *dl)
 	ndb = howmany(ip->di_size, fs->fs_bsize);
 	if (ndb <= 0)
 		errx(1, "No blocks to load");
-	if (verbose)
-		fprintf(stderr, "%s is %d blocks x %d bytes\n",
-		    boot, ndb, fs->fs_bsize);
 
 	/*
 	 * Now set the values that will need to go into biosboot
@@ -441,6 +438,16 @@ getbootparams(char *boot, int devfd, struct disklabel *dl)
 	sym_set_value(pbr_symbols, "_inodedbl",
 	    ((((char *)ap) - buf) + INODEOFF));
 	sym_set_value(pbr_symbols, "_nblocks", ndb);
+
+	if (verbose) {
+		fprintf(stderr, "%s is %d blocks x %d bytes\n",
+		    boot, ndb, fs->fs_bsize);
+		fprintf(stderr, "fs block shift %u; part offset %u; "
+		    "inode block %u, offset %u\n",
+		    fs->fs_fsbtodb, pl->p_offset,
+		    ino_to_fsba(fs, statbuf.st_ino),
+		    (unsigned int)((((char *)ap) - buf) + INODEOFF));
+	}
 
 	return 0;
 }
@@ -528,8 +535,10 @@ pbr_set_symbols(char *fname, char *proto, struct sym_data *sym_list)
 
 		free(nl);
 
+#if 0
 		if (verbose)
 			fprintf(stderr, "%s = %u\n",
 			    sym->sym_name, sym->sym_value);
+#endif
 	}
 }
