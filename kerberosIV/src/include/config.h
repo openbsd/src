@@ -198,9 +198,6 @@
 /* Define if you have the getlogin function.  */
 #define HAVE_GETLOGIN 1
 
-/* Define if you have the getmsg function.  */
-/* #undef HAVE_GETMSG */
-
 /* Define if you have the getopt function.  */
 #define HAVE_GETOPT 1
 
@@ -387,6 +384,9 @@
 /* Define if you have the socket function.  */
 #define HAVE_SOCKET 1
 
+/* Define if you have the socklen_t function.  */
+#define HAVE_SOCKLEN_T 1
+
 /* Define if you have the strcasecmp function.  */
 #define HAVE_STRCASECMP 1
 
@@ -551,6 +551,9 @@
 
 /* Define if you have the <fnmatch.h> header file.  */
 #define HAVE_FNMATCH_H 1
+
+/* Define if you have the <gdbm/ndbm.h> header file.  */
+/* #undef HAVE_GDBM_NDBM_H */
 
 /* Define if you have the <grp.h> header file.  */
 #define HAVE_GRP_H 1
@@ -859,7 +862,7 @@
 #define PACKAGE "krb4"
 
 /* Version number of package */
-#define VERSION "1.0.4"
+#define VERSION "1.0.8"
 
 /* Define to what version of SunOS you are running. */
 /* #undef SunOS */
@@ -926,7 +929,7 @@
 /* #undef NEED_SNPRINTF_PROTO */
 
 /* define if you have a glob() that groks 
-	GLOB_BRACE, GLOB_NOCHECK, GLOB_QUOTE, and GLOB_TILDE */
+	GLOB_BRACE, GLOB_NOCHECK, GLOB_QUOTE, GLOB_TILDE, and GLOB_LIMIT */
 #define HAVE_GLOB 1
 
 /* define if the system is missing a prototype for glob() */
@@ -1082,6 +1085,9 @@
 
 /* Define this to what the type ssize_t should be. */
 /* #undef ssize_t */
+
+/* Define this to what the type sig_atomic_t should be. */
+/* #undef sig_atomic_t */
 
 /* Define if struct sockaddr has field sa_len. */
 #define HAVE_STRUCT_SOCKADDR_SA_LEN 1
