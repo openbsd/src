@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkalias.c,v 1.3 1997/07/28 22:48:01 deraadt Exp $ */
+/*	$OpenBSD: mkalias.c,v 1.4 1998/03/12 08:22:28 deraadt Exp $ */
 
 /*
  * Copyright (c) 1997 Mats O Jansson <moj@stacken.kth.se>
@@ -32,7 +32,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: mkalias.c,v 1.3 1997/07/28 22:48:01 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: mkalias.c,v 1.4 1998/03/12 08:22:28 deraadt Exp $";
 #endif
 
 #include <ctype.h>
@@ -160,7 +160,7 @@ char *argv[];
 	int	uflag = 0;
 	int	vflag = 0;
 	int	Eflag = 0;
-	int	ch;
+	int	ch, fd;
 	char	*input = NULL;
 	char	*output = NULL;
 	DBM	*db;
@@ -176,33 +176,33 @@ char *argv[];
 	char	myname[MAXHOSTNAMELEN];
 	
 	while ((ch = getopt(argc, argv, "Edensuv")) != -1)
-	  switch(ch) {
-	  case 'E':
-	    eflag++;			/* Check hostname */
-	    Eflag++;			/* .. even check MX records */
-	    break;
-	  case 'd':
-	    dflag++;			/* Don't check DNS hostname */
-	    break;
-	  case 'e':
-	    eflag++;			/* Check hostname */
-	    break;
-	  case 'n':
-	    nflag++;			/* Capitalize name parts */
-	    break;
-	  case 's':
-	    sflag++;			/* Don't know... */
-	    break;
-	  case 'u':
-	    uflag++;			/* Don't check UUCP hostname */
-	    break;
-	  case 'v':
-	    vflag++;			/* Verbose */
-	    break;
-	  default:
-	    usage++;
-	    break;
-	  }
+		switch(ch) {
+		case 'E':
+			eflag++;	/* Check hostname */
+			Eflag++;	/* .. even check MX records */
+			break;
+		case 'd':
+			dflag++;	/* Don't check DNS hostname */
+			break;
+		case 'e':
+			eflag++;	/* Check hostname */
+			break;
+		case 'n':
+			nflag++;	/* Capitalize name parts */
+			break;
+		case 's':
+			sflag++;	/* Don't know... */
+			break;
+		case 'u':
+			uflag++;	/* Don't check UUCP hostname */
+			break;
+		case 'v':
+			vflag++;	/* Verbose */
+			break;
+		default:
+			usage++;
+			break;
+		}
 
 	if (optind == argc) {
 		usage++;
@@ -255,12 +255,18 @@ char *argv[];
 	
 		snprintf(db_tempname, sizeof(db_tempname), "%s%s", output,
 			mapname);
-		mktemp(db_tempname);
+		fd = mkstemp(db_tempname);
+		if (fd == -1)
+			goto fail;
+		close(fd);
+
 		snprintf(db_mapname, sizeof(db_mapname), "%s%s", db_tempname,
 			YPDB_SUFFIX);
-	
 		new_db = ypdb_open(db_tempname, O_RDWR|O_CREAT, 0444);
 		if (new_db == NULL) {
+fail:
+			if (fd != -1)
+				unlink(db_tempname);
 			fprintf(stderr,
 				"%s: Unable to open output database %s\n",
 				__progname,

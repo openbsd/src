@@ -1,4 +1,4 @@
-/*	$OpenBSD: makedbm.c,v 1.9 1997/08/18 03:11:34 millert Exp $ */
+/*	$OpenBSD: makedbm.c,v 1.10 1998/03/12 08:22:27 deraadt Exp $ */
 
 /*
  * Copyright (c) 1994-97 Mats O Jansson <moj@stacken.kth.se>
@@ -32,7 +32,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: makedbm.c,v 1.9 1997/08/18 03:11:34 millert Exp $";
+static char rcsid[] = "$OpenBSD: makedbm.c,v 1.10 1998/03/12 08:22:27 deraadt Exp $";
 #endif
 
 #include <stdio.h>
@@ -191,7 +191,7 @@ create_database(infile,database,
 	char	data_line[4096]; /* XXX: DB bsize = 4096 in ypdb.c */
 	char	myname[MAXHOSTNAMELEN];
 	int	line_no = 0;
-	int	len;
+	int	len, fd;
 	char	*p,*k,*v;
 	char	*slash;
 	DBM	*new_db;
@@ -229,17 +229,28 @@ create_database(infile,database,
 	if (strlen(database) + strlen(mapname) 
 			+ strlen(YPDB_SUFFIX) > MAXPATHLEN) {
 		fprintf(stderr,"%s: %s: directory name too long\n",
-			__progname, database);
+		    __progname, database);
 		exit(1);
 	}
 
 	snprintf(db_tempname, sizeof(db_tempname), "%s%s", database,
 		mapname);
-	mktemp(db_tempname);
-	snprintf(db_mapname, sizeof(db_mapname), "%s%s", db_tempname,
-		YPDB_SUFFIX);
+	fd = mkstemp(db_tempname);
+	if (fd == -1)
+		goto fail;
+	close(fd);
 
+	snprintf(db_mapname, sizeof(db_mapname), "%s%s", db_tempname,
+	    YPDB_SUFFIX);
 	new_db = ypdb_open(db_tempname, O_RDWR|O_CREAT, 0444);
+	if (new_db == NULL) {
+fail:
+		if (fd != -1)
+			unlink(db_tempname);
+		fprintf(stderr, "%s: Unable to open output database %s\n",
+		    __progname, db_outfile);
+		exit(1);
+	}
 	
 	while (read_line(data_file,data_line,sizeof(data_line))) {
 		
