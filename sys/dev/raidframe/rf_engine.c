@@ -1,4 +1,4 @@
-/*	$OpenBSD: rf_engine.c,v 1.8 2002/02/16 00:56:23 tdeval Exp $	*/
+/*	$OpenBSD: rf_engine.c,v 1.9 2002/03/06 11:28:27 tdeval Exp $	*/
 /*	$NetBSD: rf_engine.c,v 1.10 2000/08/20 16:51:03 thorpej Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -71,10 +71,10 @@
 #define	RF_ENGINE_PID	10
 extern int	  numraid;
 extern pid_t	  lastpid;
-static void	**rf_startuphook_cookie;
-void DAGExecutionThread_pre(RF_ThreadArg_t arg);
+void	DAGExecutionThread_pre(RF_ThreadArg_t arg);
 #endif	/* RAID_AUTOCONFIG */
-void DAGExecutionThread(RF_ThreadArg_t arg);
+void	DAGExecutionThread(RF_ThreadArg_t arg);
+void	**rf_hook_cookies;
 
 #define DO_INIT(_l_,_r_) { \
   int _rc; \
@@ -149,17 +149,17 @@ rf_ConfigureEngine(
 	if (rf_engineDebug) {
 		printf("raid%d: Creating engine thread\n", raidPtr->raidid);
 	}
+	if (rf_hook_cookies == NULL) {
+		rf_hook_cookies =
+		    malloc(numraid * sizeof(void*),
+			   M_RAIDFRAME, M_NOWAIT);
+		if (rf_hook_cookies == NULL)
+			return (ENOMEM);
+		bzero(rf_hook_cookies, numraid * sizeof(void*));
+	}
 #ifdef RAID_AUTOCONFIG
 	if (initproc == NULL) {
-		if (rf_startuphook_cookie == NULL) {
-			rf_startuphook_cookie =
-			    malloc(numraid * sizeof(void*),
-				   M_RAIDFRAME, M_NOWAIT);
-			if (rf_startuphook_cookie == NULL)
-				return (ENOMEM);
-			bzero(rf_startuphook_cookie, numraid * sizeof(void*));
-		}
-		rf_startuphook_cookie[raidPtr->raidid] =
+		rf_hook_cookies[raidPtr->raidid] =
 			startuphook_establish(DAGExecutionThread_pre, raidPtr);
 	} else {
 #endif	/* RAID_AUTOCONFIG */
@@ -754,8 +754,10 @@ DAGExecutionThread_pre(RF_ThreadArg_t arg)
 
 	raidPtr = (RF_Raid_t *) arg;
 
-	if (rf_startuphook_cookie && rf_startuphook_cookie[raidPtr->raidid])
-		startuphook_disestablish(rf_startuphook_cookie[raidPtr->raidid]);
+	if (rf_hook_cookies && rf_hook_cookies[raidPtr->raidid] != NULL) {
+		startuphook_disestablish(rf_hook_cookies[raidPtr->raidid]);
+		rf_hook_cookies[raidPtr->raidid] = NULL;
+	}
 
 	if (rf_engineDebug) {
 		printf("raid%d: Creating engine thread\n", raidPtr->raidid);
@@ -804,6 +806,9 @@ DAGExecutionThread(RF_ThreadArg_t arg)
 	s = splbio();
 
 	RF_THREADGROUP_RUNNING(&raidPtr->engine_tg);
+
+	rf_hook_cookies[raidPtr->raidid] =
+		shutdownhook_establish(rf_shutdown_hook, (void*)raidPtr);
 
 	DO_LOCK(raidPtr);
 	while (!raidPtr->shutdown_engine) {
@@ -872,6 +877,11 @@ DAGExecutionThread(RF_ThreadArg_t arg)
 			DO_WAIT(raidPtr);
 	}
 	DO_UNLOCK(raidPtr);
+
+	if (rf_hook_cookies && rf_hook_cookies[raidPtr->raidid] != NULL) {
+		shutdownhook_disestablish(rf_hook_cookies[raidPtr->raidid]);
+		rf_hook_cookies[raidPtr->raidid] = NULL;
+	}
 
 	RF_THREADGROUP_DONE(&raidPtr->engine_tg);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rf_shutdown.h,v 1.2 1999/02/16 00:03:26 niklas Exp $	*/
+/*	$OpenBSD: rf_shutdown.h,v 1.3 2002/03/06 11:28:27 tdeval Exp $	*/
 /*	$NetBSD: rf_shutdown.h,v 1.2 1999/02/05 00:06:17 oster Exp $	*/
 /*
  * rf_shutdown.h
@@ -63,5 +63,7 @@ struct RF_ShutdownList_s {
 int     _rf_ShutdownCreate(RF_ShutdownList_t ** listp, void (*cleanup) (void *arg),
             void *arg, char *file, int line);
 int     rf_ShutdownList(RF_ShutdownList_t ** listp);
+
+void	rf_shutdown_hook(RF_ThreadArg_t);
 
 #endif				/* !_RF__RF_SHUTDOWN_H_ */

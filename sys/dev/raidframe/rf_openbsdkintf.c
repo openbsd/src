@@ -1,4 +1,4 @@
-/* $OpenBSD: rf_openbsdkintf.c,v 1.13 2002/01/23 00:39:47 art Exp $	*/
+/* $OpenBSD: rf_openbsdkintf.c,v 1.14 2002/03/06 11:28:27 tdeval Exp $	*/
 /* $NetBSD: rf_netbsdkintf.c,v 1.109 2001/07/27 03:30:07 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -278,6 +278,7 @@ struct cfattach raid_ca = {
 struct raid_softc *raid_softc;
 struct raid_softc **raid_scPtrs;
 
+void	rf_shutdown_hook(RF_ThreadArg_t);
 void	raidgetdefaultlabel
 	     __P((RF_Raid_t *, struct raid_softc *, struct disklabel *));
 void	raidgetdisklabel __P((dev_t));
@@ -287,7 +288,6 @@ int	raidlock __P((struct raid_softc *));
 void	raidunlock __P((struct raid_softc *));
 
 void	rf_markalldirty __P((RF_Raid_t *));
-void rf_mountroot_hook __P((struct device *));
 
 struct device *raidrootdev;
 
@@ -467,30 +467,27 @@ raidattach(num)
 #ifdef RAID_AUTOCONFIG
 	raidautoconfig = 1;
 
-if (raidautoconfig) {
-	/* 1. locate all RAID components on the system */
+	if (raidautoconfig) {
+		/* 1. locate all RAID components on the system */
 
 #ifdef DEBUG
-	printf("Searching for raid components...\n");
+		printf("Searching for raid components...\n");
 #endif
-	ac_list = rf_find_raid_components();
+		ac_list = rf_find_raid_components();
 
-	/* 2. sort them into their respective sets */
+		/* 2. sort them into their respective sets */
 
-	config_sets = rf_create_auto_sets(ac_list);
+		config_sets = rf_create_auto_sets(ac_list);
 
-	/* 3. evaluate each set and configure the valid ones
-	   This gets done in rf_buildroothack() */
+		/* 3. evaluate each set and configure the valid ones
+		   This gets done in rf_buildroothack() */
 
-	/* schedule the creation of the thread to do the 
-	   "/ on RAID" stuff */
+		/* schedule the creation of the thread to do the 
+		   "/ on RAID" stuff */
 
-	rf_buildroothack(config_sets);
+		rf_buildroothack(config_sets);
 
-#if 0
-	mountroothook_establish(rf_mountroot_hook, &raidrootdev[0]);
-#endif
-}
+	}
 #endif
 
 }
@@ -561,6 +558,38 @@ rf_buildroothack(arg)
 	}
 }
 #endif
+
+void
+rf_shutdown_hook(arg)
+	RF_ThreadArg_t arg;
+{
+	int unit;
+	struct raid_softc *rs;
+	RF_Raid_t *raidPtr;
+
+	/* Don't do it if we are not "safe" */
+	if (boothowto & RB_NOSYNC)
+		return;
+
+	raidPtr = (RF_Raid_t *) arg;
+	unit = raidPtr->raidid;
+	rs = &raid_softc[unit];
+
+	/* Shutdown the system */
+
+	rf_Shutdown(raidPtr);
+
+	pool_destroy(&rs->sc_cbufpool);
+
+	/* It's no longer initialized... */
+	rs->sc_flags &= ~RAIDF_INITED;
+
+	/* config_detach the device. */
+	config_detach(device_lookup(&raid_cd, unit), 0);
+
+	/* Detach the disk. */
+	disk_detach(&rs->sc_dkdev);
+}
 
 int
 raidsize(dev)
@@ -726,29 +755,9 @@ raidclose(dev, flags, fmt, p)
 	           Device shutdown has taken care of setting the
 	           clean bits if RAIDF_INITED is not set
 	           mark things as clean... */
-#if 0
-		printf("Last one on raid%d.  Updating status.\n",unit);
-#endif
+		db1_printf(("Last one on raid%d.  Updating status.\n",unit));
 		rf_update_component_labels(raidPtrs[unit],
 						 RF_FINAL_COMPONENT_UPDATE);
-#if 0
-		if (doing_shutdown) {
-/* #endif */
-			/* last one, and we're going down, so
-			   lights out for this RAID set too. */
-			error = rf_Shutdown(raidPtrs[unit]);
-			pool_destroy(&rs->sc_cbufpool);
-			
-			/* It's no longer initialized... */
-			rs->sc_flags &= ~RAIDF_INITED;
-			
-			/* config_detach the device. */
-			config_detach(device_lookup(&raid_cd, unit), 0);
-
-			disk_detach(&rs->sc_dkdev);
-/* #if 0 */
-		}
-#endif
 	}
 
 	raidunlock(rs);
@@ -1063,18 +1072,19 @@ raidioctl(dev, cmd, data, flag, p)
 			return (EBUSY);
 		}
 
-		retcode = rf_Shutdown(raidPtr);
+		if ((retcode = rf_Shutdown(raidPtr)) == 0) {
 
-		pool_destroy(&rs->sc_cbufpool);
+			pool_destroy(&rs->sc_cbufpool);
 
-		/* It's no longer initialized... */
-		rs->sc_flags &= ~RAIDF_INITED;
+			/* It's no longer initialized... */
+			rs->sc_flags &= ~RAIDF_INITED;
 
-		/* config_detach the device. */
-		config_detach(device_lookup(&raid_cd, unit), 0);
+			/* config_detach the device. */
+			config_detach(device_lookup(&raid_cd, unit), 0);
 
-		/* Detach the disk. */
-		disk_detach(&rs->sc_dkdev);
+			/* Detach the disk. */
+			disk_detach(&rs->sc_dkdev);
+		}
 
 		raidunlock(rs);
 
@@ -2755,13 +2765,6 @@ rf_ReconstructInPlaceThread(req)
 
 	/* That's all... */
 	kthread_exit(0);        /* does not return */
-}
-
-void
-rf_mountroot_hook(dev)
-	struct device *dev;
-{
-
 }
 
 
