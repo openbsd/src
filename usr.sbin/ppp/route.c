@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: route.c,v 1.18 1998/06/27 12:06:48 brian Exp $
+ * $Id: route.c,v 1.19 1998/08/17 06:45:38 brian Exp $
  *
  */
 
@@ -345,17 +345,22 @@ Index2Nam(int idx)
       dl = (struct sockaddr_dl *)(ifm + 1);
       if (ifm->ifm_index > 0) {
         if (ifm->ifm_index > have) {
+          char **newifs;
+
           had = have;
           have = ifm->ifm_index + 5;
           if (had)
-            ifs = (char **)realloc(ifs, sizeof(char *) * have);
+            newifs = (char **)realloc(ifs, sizeof(char *) * have);
           else
-            ifs = (char **)malloc(sizeof(char *) * have);
-          if (!ifs) {
+            newifs = (char **)malloc(sizeof(char *) * have);
+          if (!newifs) {
             LogPrintf(LogDEBUG, "Index2Nam: %s\n", strerror(errno));
             nifs = 0;
+            if (ifs)
+              free(ifs);
             return "???";
           }
+          ifs = newifs;
           memset(ifs + had, '\0', sizeof(char *) * (have - had));
         }
         if (ifs[ifm->ifm_index-1] == NULL) {
