@@ -1,4 +1,4 @@
-/*	$OpenBSD: w.c,v 1.7 1996/08/22 02:12:33 downsj Exp $	*/
+/*	$OpenBSD: w.c,v 1.8 1996/08/22 02:16:01 downsj Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -349,7 +349,7 @@ pr_args(kp)
 		if (strncmp(*argv, "ftpd:", 5) == 0) {
 			str = strrchr(*argv, ':');
 			if (str != (char *)NULL) {
-				if (strlen(str) > 2)
+				if ((str[0] == ':') && isspace(str[1]))
 					str += 2;
 				fmt_puts(str, &left);
 			} else
