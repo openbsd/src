@@ -1,4 +1,4 @@
-/*	$OpenBSD: netcmds.c,v 1.14 2004/09/29 21:59:28 deraadt Exp $	*/
+/*	$OpenBSD: netcmds.c,v 1.15 2005/03/13 19:00:45 cloder Exp $	*/
 /*	$NetBSD: netcmds.c,v 1.4 1995/05/21 17:14:38 mycroft Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)netcmds.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: netcmds.c,v 1.14 2004/09/29 21:59:28 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: netcmds.c,v 1.15 2005/03/13 19:00:45 cloder Exp $";
 #endif /* not lint */
 
 /*
@@ -94,7 +94,7 @@ netcmd(char *cmd, char *args)
 	if (prefix(cmd, "reset")) {
 		selectproto(0);
 		selecthost(0, 0);
-		selectport(-1, 0);
+		selectport(htons(-1), 0);
 		return (1);
 	}
 	if (prefix(cmd, "show")) {
@@ -195,7 +195,7 @@ selectport(long port, int onoff)
 {
 	struct pitem *p;
 
-	if (port == -1) {
+	if (ntohs(port) == -1) {
 		if (ports == 0)
 			return (0);
 		free((char *)ports), ports = 0;
@@ -243,7 +243,7 @@ showports(void)
 		if (sp)
 			printw("%s ", sp->s_name);
 		else
-			printw("%d ", p->port);
+			printw("%d ", ntohs(p->port));
 	}
 }
 
