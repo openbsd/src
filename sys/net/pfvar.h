@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.62 2002/02/14 15:32:11 dhartmei Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.63 2002/02/14 23:53:32 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -340,16 +340,7 @@ struct pf_tree_key {
 TAILQ_HEAD(pf_rulequeue, pf_rule);
 
 struct pf_pdesc {
-	struct pf_addr	*src;
-	struct pf_addr	*dst;
-	u_int16_t	*ip_sum;
 	u_int64_t	 tot_len; 	/* Make Mickey money */
-	u_int32_t	 p_len; 	/* total length of payload */
-
-	u_int16_t	 flags;		/* Let SCRUB trigger behavior in
-					 * state code. Easier than tags */
-	u_int8_t	 af;
-	u_int8_t	 proto;
 	union {
 		struct tcphdr		*tcp;
 		struct udphdr		*udp;
@@ -359,6 +350,14 @@ struct pf_pdesc {
 #endif /* INET6 */
 		void			*any;
 	} hdr;
+	struct pf_addr	*src;
+	struct pf_addr	*dst;
+	u_int16_t	*ip_sum;
+	u_int32_t	 p_len; 	/* total length of payload */
+	u_int16_t	 flags;		/* Let SCRUB trigger behavior in
+					 * state code. Easier than tags */
+	u_int8_t	 af;
+	u_int8_t	 proto;
 };
 
 /* flags for RDR options */
