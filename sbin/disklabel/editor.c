@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.89 2003/08/28 20:19:54 tedu Exp $	*/
+/*	$OpenBSD: editor.c,v 1.90 2003/08/29 00:17:09 tedu Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.89 2003/08/28 20:19:54 tedu Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.90 2003/08/29 00:17:09 tedu Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -514,7 +514,7 @@ editor_add(struct disklabel *lp, char **mp, u_int32_t *freep, char *p)
 	pp->p_size = *freep;
 	pp->p_offset = next_offset(lp, &pp->p_size);
 	pp->p_fstype = partno == 1 ? FS_SWAP : FS_BSDFFS;
-#ifdef __sparc__
+#if defined (__sparc__) && !defined(__sparc64__)
 	/* can't boot from > 8k boot blocks */
 	pp->p_fsize = partno == 0 ? 1024 : 2048;
 #else
