@@ -91,6 +91,8 @@ void
 pr_idle(idle)
 	time_t idle;
 {
+	int days = idle / SECSPERDAY;
+
 	/* If idle more than 36 hours, print as a number of days. */
 	if (idle >= 36 * SECSPERHOUR)
 		printf(days == 1 ? "  %dday " : " %ddays ", days);
