@@ -1,4 +1,4 @@
-/*	$OpenBSD: types.h,v 1.8 1999/07/07 23:16:41 art Exp $	*/
+/*	$OpenBSD: types.h,v 1.9 2001/08/11 01:58:34 art Exp $	*/
 /*	$NetBSD: types.h,v 1.9 1995/07/06 03:39:38 cgd Exp $	*/
 
 /*-
@@ -41,10 +41,6 @@
 #include <sys/cdefs.h>
 
 #if !defined(_ANSI_SOURCE) && !defined(_POSIX_SOURCE)
-typedef struct _physadr {
-	short r[1];
-} *physadr;
-
 typedef struct label_t {		/* consistent with HP-UX */
 	int val[15];
 } label_t;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: types.h,v 1.5 1999/04/20 19:29:13 mickey Exp $	*/
+/*	$OpenBSD: types.h,v 1.6 2001/08/11 01:58:34 art Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -39,10 +39,6 @@
 #define	_MACHINE_TYPES_H_
 
 #if !defined(_ANSI_SOURCE) && !defined(_POSIX_SOURCE)
-typedef struct _physadr {
-	int r[1];
-} *physadr;
-
 typedef struct label_t {
 	int	lbl_rp;
 	int	lbl_sp;

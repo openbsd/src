@@ -1,5 +1,5 @@
 /*	$NetBSD: types.h,v 1.7 1995/07/05 17:46:11 pk Exp $ */
-/*	$OpenBSD: types.h,v 1.8 2001/08/06 20:48:49 miod Exp $ */
+/*	$OpenBSD: types.h,v 1.9 2001/08/11 01:58:34 art Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -51,10 +51,6 @@
 #include <sys/cdefs.h>
 
 #if !defined(_ANSI_SOURCE) && !defined(_POSIX_SOURCE)
-typedef struct _physadr {
-	short r[1];
-} *physadr;
-
 typedef struct label_t {
 	int val[22];
 } label_t;
