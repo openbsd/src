@@ -1,5 +1,5 @@
-/*	$OpenBSD: ike_main_mode.c,v 1.5 1998/12/21 01:02:24 niklas Exp $	*/
-/*	$EOM: ike_main_mode.c,v 1.68 1998/12/17 07:54:20 niklas Exp $	*/
+/*	$OpenBSD: ike_main_mode.c,v 1.6 1999/02/26 03:41:46 niklas Exp $	*/
+/*	$EOM: ike_main_mode.c,v 1.70 1999/02/25 11:39:03 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -38,6 +38,8 @@
 #include <netinet/in.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include "sysdep.h"
 
 #include "attribute.h"
 #include "conf.h"
@@ -204,7 +206,7 @@ initiator_send_SA (struct message *msg)
 				      &attr);
 
 	      /* XXX Does only handle 16-bit entities!  */
-	      value = conf_get_num (life->field, "LIFE_DURATION");
+	      value = conf_get_num (life->field, "LIFE_DURATION", 0);
 	      if (value)
 		attr
 		  = attribute_set_basic (attr, IKE_ATTR_LIFE_DURATION, value);
@@ -214,15 +216,15 @@ initiator_send_SA (struct message *msg)
       attribute_set_constant (xf->field, "PRF", ike_prf_cst, IKE_ATTR_PRF,
 			      &attr);
 
-      value = conf_get_num (xf->field, "KEY_LENGTH");
+      value = conf_get_num (xf->field, "KEY_LENGTH", 0);
       if (value)
 	attr = attribute_set_basic (attr, IKE_ATTR_KEY_LENGTH, value);
 
-      value = conf_get_num (xf->field, "FIELD_SIZE");
+      value = conf_get_num (xf->field, "FIELD_SIZE", 0);
       if (value)
 	attr = attribute_set_basic (attr, IKE_ATTR_FIELD_SIZE, value);
 
-      value = conf_get_num (xf->field, "GROUP_ORDER");
+      value = conf_get_num (xf->field, "GROUP_ORDER", 0);
       if (value)
 	attr = attribute_set_basic (attr, IKE_ATTR_GROUP_ORDER, value);
 
