@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosvar.h,v 1.7 1997/08/12 19:24:47 mickey Exp $	*/
+/*	$OpenBSD: biosvar.h,v 1.8 1997/08/22 20:10:21 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -80,10 +80,6 @@
 
 #if defined(_KERNEL) || defined (_STANDALONE)
 
-/* BIOS id */
-#define APM_BIOS		0x53
-#define SYSTEM_BIOS		0x15
-
 /* APM flags */
 #define APM_16BIT_SUPPORT	0x01
 #define APM_32BIT_SUPPORT	0x02
@@ -92,23 +88,23 @@
 #define APM_DISENGAGED		0x10
 
 /* APM functions */
-#define APM_INSTCHECK		0x00
-#define APM_REALCONNECT		0x01
-#define APM_PROT16CONNECT	0x02
-#define APM_PROT32CONNECT	0x03
-#define APM_DISCONNECT		0x04
-#define APM_CPUIDLE		0x05
-#define APM_CPUBUSY		0x06
-#define APM_SETPWSTATE		0x07
-#define APM_ENABLEDISABLEPM	0x08
-#define APM_RESTOREDEFAULT	0x09
-#define	APM_GETPWSTATUS		0x0a
-#define APM_GETPMEVENT		0x0b
-#define APM_GETPWSTATE		0x0c
-#define APM_ENABLEDISABLEDPM	0x0d
-#define APM_DRVVERSION		0x0e
-#define APM_ENGAGEDISENGAGEPM	0x0f
-#define APM_OEMFUNC		0x80
+#define APM_INSTCHECK		0x5300
+#define APM_REALCONNECT		0x5301
+#define APM_PROT16CONNECT	0x5302
+#define APM_PROT32CONNECT	0x5303
+#define APM_DISCONNECTANY	0x5304
+#define APM_CPUIDLE		0x5305
+#define APM_CPUBUSY		0x5306
+#define APM_SETPWSTATE		0x5307
+#define APM_ENABLEDISABLEPM	0x5308
+#define APM_RESTOREDEFAULT	0x5309
+#define	APM_GETPWSTATUS		0x530a
+#define APM_GETPMEVENT		0x530b
+#define APM_GETPWSTATE		0x530c
+#define APM_ENABLEDISABLEDPM	0x530d
+#define APM_DRVVERSION		0x530e
+#define APM_ENGAGEDISENGAGEPM	0x530f
+#define APM_OEMFUNC		0x5380
 
 /* error code */
 #define APME_OK			0x00
@@ -197,6 +193,26 @@
 #define	DOINT(n)	int	$0x20+(n)
 #else
 #define	DOINT(n)	"int $0x20+(" #n ")"
+
+extern struct BIOS_vars {
+	/* XXX filled in assumption that last file opened is kernel */
+	int	bios_dev;
+	int	bios_geometry;
+
+	u_int	bios_extmem;
+	u_int	bios_cnvmem;
+
+	u_int	apm_detail;
+	u_int	apm_code32_base;
+	u_int	apm_code16_base;
+	u_int	apm_code_len;
+	u_int	apm_data_base;
+	u_int	apm_data_len;
+	u_int	apm_entry;
+
+	dev_t	boot_consdev;
+
+}	BIOS_vars;
 
 extern struct BIOS_regs {
 	u_int32_t	biosr_ax;
