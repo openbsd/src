@@ -230,10 +230,11 @@ enum machine_type {
   M_532_NETBSD = 137,	/* NetBSD/ns32k binary */
   M_SPARC_NETBSD = 138,	/* NetBSD/sparc binary */
   M_PMAX_NETBSD = 139,	/* NetBSD/pmax (MIPS little-endian) binary */
-  M_VAX_NETBSD = 140,	/* NetBSD/vax binary */
+  M_VAX1K_NETBSD = 140,	/* old NetBSD/vax binary */
   M_ALPHA_NETBSD = 141,	/* NetBSD/alpha binary */
   M_ARM6_NETBSD = 143,	/* NetBSD/arm32 binary */
   M_SPARCLET_1 = 147,	/* 0x93, reserved */
+  M_VAX_NETBSD = 150,	/* NetBSD/vax binary */
   M_MIPS1 = 151,        /* MIPS R2000/R3000 binary */
   M_MIPS2 = 152,        /* MIPS R4000/R6000 binary */
   M_SPARCLET_2 = 163,	/* 0xa3, reserved */
