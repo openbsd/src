@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.19 1997/07/23 16:13:26 denny Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.20 1997/07/23 20:20:10 mickey Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -525,6 +525,7 @@ decapsulate:
 		l = mtod(m, struct llc *);
 		switch (l->llc_dsap) {
 		case LLC_SNAP_LSAP:
+#ifdef NETATALK
 			/*
 			 * Some protocols (like Appletalk) need special
 			 * handling depending on if they are type II
@@ -543,7 +544,7 @@ decapsulate:
 				schednetisr(NETISR_ATALK);
 				break;
 			}
-
+#endif /* NETATALK */
 			if (l->llc_control == LLC_UI &&
 			    l->llc_ssap == LLC_SNAP_LSAP &&
 			    Bcmp(&(l->llc_snap_org_code)[0],
