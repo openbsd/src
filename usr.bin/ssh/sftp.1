@@ -1,4 +1,4 @@
-.\" $OpenBSD: sftp.1,v 1.2 2001/02/06 22:32:53 djm Exp $
+.\" $OpenBSD: sftp.1,v 1.3 2001/02/07 11:07:28 deraadt Exp $
 .\"
 .\" Copyright (c) 2001 Damien Miller. All rights reserved.
 .\"
@@ -30,7 +30,7 @@
 .Nd Secure file tranfer program
 .Sh SYNOPSIS
 .Nm sftp
-.Op Fl v Li | Fl C
+.Op Fl vC
 .Op Fl o Ar ssh_option
 .Op Ar hostname | user@hostname
 .Sh DESCRIPTION
@@ -66,91 +66,95 @@ understands a set of commands similar to those of
 .Xr ftp 1 .
 Commands are case insensitive.
 .Bl -tag -width Ds
-.It Ic CD Ar path
+.It Ic cd Ar path
 Change remote directory to 
-.Ar path
-.It Ic LCD Ar path
+.Ar path .
+.It Ic lcd Ar path
 Change local directory to 
-.Ar path
-.It Ic CHGRP Ar grp Ar path
+.Ar path .
+.It Ic chgrp Ar grp Ar path
 Change group of file 
 .Ar path to 
 .Ar grp .
 .Ar grp
 must be numeric.
-.It Ic CHMOD Ar mode Ar path
+.It Ic chmod Ar mode Ar path
 Change permissions of file 
 .Ar path to 
-.Ar mode
-.It Ic CHOWN Ar own Ar path
+.Ar mode .
+.It Ic chown Ar own Ar path
 Change owner of file 
 .Ar path to 
 .Ar own .
 .Ar own
 must be a numeric UID.
-.It Ic HELP
-Display help text
-.It Ic GET Ar remote-file Op Ar local-file
+.It Ic help
+Display help text.
+.It Ic get Ar remote-file Op Ar local-file
 Retrieve the
 .Ar remote-file
 and store it on the local machine.
 If the local
 file name is not specified, it is given the same name it has on the 
 remote machine.
-.It Ic LLS Op Ar ls-options Op Ar path
+.It Ic lls Op Ar ls-options Op Ar path
 Display local directory listing of either 
 .Ar path
 or current directory if
 .Ar path
 was not specified.
-.It Ic LMKDIR Ar path
+.It Ic lmkdir Ar path
 Create local directory specified by
-.Ar path
-.It Ic LPWD
-Print local working directory
-.It Ic LS Op Ar path
+.Ar path .
+.It Ic lpwd
+Print local working directory.
+.It Ic ls Op Ar path
 Display remote directory listing of either
 .Ar path
 or current directory, is
 .Ar path not specified.
-.It Ic LUMASK Ar umask
+.It Ic lumask Ar umask
 Set local umask to 
-.Ar umask
-.It Ic MKDIR Ar path
+.Ar umask .
+.It Ic mkdir Ar path
 Create remote directory specified by
-.Ar path
-.It Ic PUT local-file Op Ar remote-file
+.Ar path .
+.It Ic put Ar local-file Op Ar remote-file
 Upload
 .Ar local-file
 and store it on the remote machine. If the local file name is not specified, 
 it is given the same name it has on the local machine.
-.It Ic PWD
-Display remote working directory
-.It Ic EXIT
-Quit sftp
-.It Ic QUIT
-Quit sftp
-.It Ic RENAME Ar oldpath Ar newpath
+.It Ic pwd
+Display remote working directory.
+.It Ic exit
+Quit sftp.
+.It Ic quit
+Quit sftp.
+.It Ic rename Ar oldpath Ar newpath
 Rename remote file from
 .Ar oldpath
 to
-.Ar newpath
-.It Ic RMDIR Ar path
+.Ar newpath .
+.It Ic rmdir Ar path
 Remove remote directory specified by
-.Ar path
-.It Ic RM Ar path
+.Ar path .
+.It Ic rm Ar path
 Delete remote file specified by
-.Ar path
+.Ar path .
 .It Ic ! Ar command
 Execute 
 .Ar command
-in local shell
+in local shell.
 .It Ic !
-Escape to local shell
+Escape to local shell.
+.It Ic ?
+A synonym for help.
 .Sh AUTHORS
 Damien Miller <djm@mindrot.org>
 .Sh SEE ALSO
 .Xr ssh 1 ,
 .Xr ssh-add 1 ,
 .Xr ssh-keygen 1 ,
-.Xr sshd 8
+.Xr sshd 8 ,
+.Xr scp 1
+
