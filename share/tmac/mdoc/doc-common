@@ -1,4 +1,4 @@
-.\"	$OpenBSD: doc-common,v 1.32 2003/08/11 14:52:42 deraadt Exp $
+.\"	$OpenBSD: doc-common,v 1.33 2003/09/02 19:04:58 jmc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -110,6 +110,8 @@
 .nr z, 3
 .nr z: 3
 .nr z; 3
+.nr z? 3
+.nr z! 3
 .nr z( 4
 .nr z) 3
 .nr z[ 4

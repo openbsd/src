@@ -1,4 +1,4 @@
-.\"	$OpenBSD: doc-nroff,v 1.5 2003/06/28 18:15:59 jmc Exp $
+.\"	$OpenBSD: doc-nroff,v 1.6 2003/09/02 19:04:58 jmc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -59,7 +59,7 @@
 .ds nM \fB
 .ds nO \fR
 .ds pA \fI
-.ds Pu {\ .\ ,\ ;\ :\ (\ )\ [\ ]}
+.ds Pu {\ .\ ,\ ;\ :\ ?\ !\ (\ )\ [\ ]}
 .ds rA \fR
 .ds rT \fI
 .ds sH \fB
@@ -116,7 +116,6 @@
 .ds If Infinity
 .ds Na \fINaN\fP
 .ds Ba \fR\&|\fP
-
 .\"
 .de hK
 .nr % 1
