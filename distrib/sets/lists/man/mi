@@ -913,6 +913,7 @@
 ./usr/share/man/cat4/amiga/ser.0
 ./usr/share/man/cat4/amiga/wesc.0
 ./usr/share/man/cat4/amiga/zssc.0
+./usr/share/man/cat4/amphy.0
 ./usr/share/man/cat4/an.0
 ./usr/share/man/cat4/arandom.0
 ./usr/share/man/cat4/arc
@@ -1174,6 +1175,14 @@
 ./usr/share/man/cat4/stdout.0
 ./usr/share/man/cat4/ste.0
 ./usr/share/man/cat4/sun3
+./usr/share/man/cat4/sun3/bwtwo.0
+./usr/share/man/cat4/sun3/cgfour.0
+./usr/share/man/cat4/sun3/cgtwo.0
+./usr/share/man/cat4/sun3/ie.0
+./usr/share/man/cat4/sun3/kmem.0
+./usr/share/man/cat4/sun3/le.0
+./usr/share/man/cat4/sun3/leds.0
+./usr/share/man/cat4/sun3/mem.0
 ./usr/share/man/cat4/sv.0
 ./usr/share/man/cat4/svnd.0
 ./usr/share/man/cat4/tb.0
@@ -1554,7 +1563,6 @@
 ./usr/share/man/cat8/i386/memconfig.0
 ./usr/share/man/cat8/i386/moused.0
 ./usr/share/man/cat8/i386/wicontrol.0
-./usr/share/man/cat8/spppcontrol.0
 ./usr/share/man/cat8/i386/zzz.0
 ./usr/share/man/cat8/identd.0
 ./usr/share/man/cat8/ifconfig.0
@@ -1750,6 +1758,7 @@
 ./usr/share/man/cat8/sparc/eeprom.0
 ./usr/share/man/cat8/sparc/installboot.0
 ./usr/share/man/cat8/sparc/makedev.0
+./usr/share/man/cat8/spppcontrol.0
 ./usr/share/man/cat8/spray.0
 ./usr/share/man/cat8/sprayd.0
 ./usr/share/man/cat8/sshd.0
@@ -1760,8 +1769,10 @@
 ./usr/share/man/cat8/sudo.0
 ./usr/share/man/cat8/suexec.0
 ./usr/share/man/cat8/sun3
+./usr/share/man/cat8/sun3/MAKEDEV.0
 ./usr/share/man/cat8/sun3/eeprom.0
 ./usr/share/man/cat8/sun3/installboot.0
+./usr/share/man/cat8/sun3/makedev.0
 ./usr/share/man/cat8/supfilesrv.0
 ./usr/share/man/cat8/supscan.0
 ./usr/share/man/cat8/supservers.0
@@ -1914,4 +1925,3 @@
 ./usr/share/man/man8/sun3
 ./usr/share/man/man8/vax
 ./usr/share/man/man9
-./usr/share/man/cat4/amphy.0

@@ -564,6 +564,8 @@
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/ic/tcic2var.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/ic/tropicreg.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/ic/tropicvar.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/dev/ic/twereg.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/dev/ic/twevar.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/ic/uhareg.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/ic/uhavar.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/ic/vgavar.ph
@@ -626,8 +628,8 @@
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/midisynvar.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/midivar.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/mii
-./usr/libdata/perl5/site_perl/mips-openbsd/dev/mii/brgphyreg.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/mii/amphyreg.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/dev/mii/brgphyreg.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/mii/icsphyreg.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/mii/inphyreg.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/mii/iophyreg.ph
@@ -1252,6 +1254,8 @@
 ./usr/libdata/perl5/site_perl/mips-openbsd/netiso/tp_user.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/netiso/tp_var.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/netiso/tuba_table.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/netnatm
+./usr/libdata/perl5/site_perl/mips-openbsd/netnatm/natm.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/netns
 ./usr/libdata/perl5/site_perl/mips-openbsd/netns/idp.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/netns/idp_var.ph
@@ -1752,7 +1756,3 @@
 ./usr/share/info/ld.info-1
 ./usr/share/info/ld.info-2
 ./usr/share/info/ld.info-3
-./usr/libdata/perl5/site_perl/mips-openbsd/dev/ic/twereg.ph
-./usr/libdata/perl5/site_perl/mips-openbsd/dev/ic/twevar.ph
-./usr/libdata/perl5/site_perl/mips-openbsd/netnatm
-./usr/libdata/perl5/site_perl/mips-openbsd/netnatm/natm.ph

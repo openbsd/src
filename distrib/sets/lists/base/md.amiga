@@ -624,6 +624,8 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/tcic2var.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/tropicreg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/tropicvar.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/twereg.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/twevar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/uhareg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/uhavar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/vgavar.ph
@@ -686,8 +688,8 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/midisynvar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/midivar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/mii
-./usr/libdata/perl5/site_perl/m68k-openbsd/dev/mii/brgphyreg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/mii/amphyreg.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/mii/brgphyreg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/mii/icsphyreg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/mii/inphyreg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/mii/iophyreg.ph
@@ -1304,6 +1306,8 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/netiso/tp_user.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/netiso/tp_var.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/netiso/tuba_table.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/netnatm
+./usr/libdata/perl5/site_perl/m68k-openbsd/netnatm/natm.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/netns
 ./usr/libdata/perl5/site_perl/m68k-openbsd/netns/idp.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/netns/idp_var.ph
@@ -1736,7 +1740,3 @@
 ./usr/share/keymaps/amiga/fr.map
 ./usr/share/keymaps/amiga/sw.map
 ./usr/share/keymaps/amiga/us.map
-./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/twereg.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/twevar.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/netnatm
-./usr/libdata/perl5/site_perl/m68k-openbsd/netnatm/natm.ph

@@ -268,8 +268,8 @@
 ./usr/include/dev/midisynvar.h
 ./usr/include/dev/midivar.h
 ./usr/include/dev/mii
-./usr/include/dev/mii/brgphyreg.h
 ./usr/include/dev/mii/amphyreg.h
+./usr/include/dev/mii/brgphyreg.h
 ./usr/include/dev/mii/icsphyreg.h
 ./usr/include/dev/mii/inphyreg.h
 ./usr/include/dev/mii/iophyreg.h

@@ -432,8 +432,10 @@
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/ic/ramdac.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/ic/stireg.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/ic/stivar.ph
-./usr/libdata/perl5/site_perl/mips-openbsd/dev/mii/brgphyreg.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/dev/ic/twereg.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/dev/ic/twevar.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/mii/amphyreg.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/dev/mii/brgphyreg.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/mii/xmphyreg.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/auviavar.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/cmpcireg.ph
@@ -470,6 +472,8 @@
 ./usr/libdata/perl5/site_perl/mips-openbsd/netinet6/ip6_mroute.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/netinet6/ip6_var.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/netinet6/ip6protosw.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/netnatm
+./usr/libdata/perl5/site_perl/mips-openbsd/netnatm/natm.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/pcap-int.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/stdbool.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/sys/ataio.ph
@@ -485,7 +489,3 @@
 ./usr/mipsel-unknown-openbsd2.8/bin
 ./usr/mipsel-unknown-openbsd2.8/lib
 ./usr/mipsel-unknown-openbsd2.8/lib/ldscripts
-./usr/libdata/perl5/site_perl/mips-openbsd/dev/ic/twereg.ph
-./usr/libdata/perl5/site_perl/mips-openbsd/dev/ic/twevar.ph
-./usr/libdata/perl5/site_perl/mips-openbsd/netnatm
-./usr/libdata/perl5/site_perl/mips-openbsd/netnatm/natm.ph
