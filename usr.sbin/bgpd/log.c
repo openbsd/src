@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.15 2004/01/06 03:43:50 henning Exp $ */
+/*	$OpenBSD: log.c,v 1.16 2004/01/19 23:15:08 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -142,9 +142,17 @@ logit(int pri, const char *fmt, ...)
 void
 vlog(int pri, const char *fmt, va_list ap)
 {
+	char	*nfmt;
+
 	if (debug) {
-		vfprintf(stderr, fmt, ap);
-		fprintf(stderr, "\n");
+		/* best effort in out of mem situations */
+		if (asprintf(&nfmt, "%s\n", fmt) == -1) {
+			vfprintf(stderr, fmt, ap);
+			fprintf(stderr, "\n");
+		} else {
+			vfprintf(stderr, nfmt, ap);
+			free(nfmt);
+		}
 	} else
 		vsyslog(pri, fmt, ap);
 }
