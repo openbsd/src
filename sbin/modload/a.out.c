@@ -1,4 +1,4 @@
-/*	$OpenBSD: a.out.c,v 1.3 2002/06/09 08:13:07 todd Exp $	*/
+/*	$OpenBSD: a.out.c,v 1.4 2002/12/11 18:28:22 deraadt Exp $	*/
 /*	$NetBSD: a.out.c,v 1.1 1999/06/13 12:54:40 mrg Exp $	*/
 
 /*
@@ -67,19 +67,15 @@ extern struct lmc_resrv resrv;
 extern int symtab;
 
 void
-a_out_linkcmd(char *buf,
-	      size_t len,
-	      const char *kernel,
-	      const char *entry,
-	      const char *outfile,
-	      const void *address,
-	      const char *object)
+a_out_linkcmd(char *buf, size_t len, const char *kernel,
+    const char *entry, const char *outfile, const void *address,
+    const char *object)
 {
 	ssize_t n;
 
 	n = snprintf(buf, len, LINKCMD, kernel, entry,
-		     outfile, address, object);
-	if (n >= len)
+	    outfile, address, object);
+	if (n < 0 || n >= len)
 		errx(1, "link command longer than %lu bytes", (u_long)len);
 }
 
@@ -94,7 +90,7 @@ a_out_read_header(int fd, struct exec *info_buf)
 	if (n != sizeof(*info_buf)) {
 		if (debug)
 			fprintf(stderr, "failed to read %lu bytes",
-				(u_long)sizeof(*info_buf));
+			    (u_long)sizeof(*info_buf));
 		return -1;
 	}
 
@@ -107,12 +103,8 @@ a_out_read_header(int fd, struct exec *info_buf)
 }
 
 int
-a_out_mod_sizes(fd, modsize, strtablen, resrvp, sp)
-	int fd;
-	size_t *modsize;
-	int *strtablen;
-	struct lmc_resrv *resrvp;
-	struct stat *sp;
+a_out_mod_sizes(int fd, size_t *modsize, int *strtablen,
+    struct lmc_resrv *resrvp, struct stat *sp)
 {
 	struct exec info_buf;
 
@@ -137,7 +129,7 @@ a_out_mod_sizes(fd, modsize, strtablen, resrvp, sp)
 	} else
 		resrvp->sym_size = resrvp->sym_symsize = 0;
 
- 	return (0);
+	return (0);
 }
 
 void *
@@ -153,7 +145,7 @@ a_out_mod_load(int fd)
 	 */
 	if (a_out_read_header(fd, &sinfo_buf) < 0)
 		return NULL;
-	
+
 	/*
 	 * Seek to the text offset to start loading...
 	 */
@@ -171,7 +163,7 @@ a_out_mod_load(int fd)
 			err(1, "while reading from prelinked module");
 		if (n == 0)
 			errx(1, "EOF while reading from prelinked module");
-		
+
 		loadbuf(buf, n);
 		b -= n;
 	}
@@ -179,8 +171,7 @@ a_out_mod_load(int fd)
 }
 
 void
-a_out_mod_symload(strtablen)
-	int strtablen;
+a_out_mod_symload(int strtablen)
 {
 	struct lmc_loadbuf ldbuf;
 	char buf[MODIOBUF];
