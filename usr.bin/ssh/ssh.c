@@ -39,7 +39,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh.c,v 1.80 2001/01/13 18:32:50 markus Exp $");
+RCSID("$OpenBSD: ssh.c,v 1.81 2001/01/13 19:14:09 markus Exp $");
 
 #include <openssl/evp.h>
 #include <openssl/dsa.h>
@@ -59,6 +59,7 @@ RCSID("$OpenBSD: ssh.c,v 1.80 2001/01/13 18:32:50 markus Exp $");
 #include "key.h"
 #include "authfd.h"
 #include "authfile.h"
+#include "clientloop.h"
 
 extern char *__progname;
 
@@ -889,8 +890,6 @@ ssh_session(void)
 	return client_loop(have_tty, tty_flag ? options.escape_char : -1, 0);
 }
 
-extern void client_set_session_ident(int id);
-
 void
 ssh_session2_callback(int id, void *arg)
 {
@@ -957,7 +956,7 @@ ssh_session2_callback(int id, void *arg)
 done:
 	/* register different callback, etc. XXX */
 	packet_set_interactive(interactive);
-	client_set_session_ident(id);
+	clientloop_set_session_ident(id);
 }
 
 int
