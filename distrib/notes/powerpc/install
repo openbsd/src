@@ -34,9 +34,8 @@ at any time, but if you do, you'll have to begin the installation
 process again from scratch.
 
 	Determine which floppy image is appropriate for the system
-	being installed. VI vme boards should use boot.fs, MCG machines
-	should use bootmix.fs (bootmix.fs should work on VI computers too).
-	or If those do not work, try the bootofw.fs image.  Apple derived
+	being installed. VI vme boards and MCG machines should use boot.fs,
+	If those do not work, try the bootofw.fs image.  Apple derived
 	hardware, Power Macintosh machines or clones are not supported.
 
 	Boot your machine using the appropriate floppy image.

@@ -35,7 +35,7 @@ Supported devices {:-include-:}:
 		No X server avaliable
 
 	Serial ports:
-		[OPENFIRMWARE SUPPORT] (also MIX drivers)
+		[OPENFIRMWARE SUPPORT]
 		Only port 0 on the machine is supported and only as console.
 		[NATIVE SUPPORT]
 		com0 and com1 serial ports are supported.
