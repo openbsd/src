@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.285 2003/12/15 00:02:03 mcbride Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.286 2003/12/15 05:17:20 jmc Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -235,7 +235,7 @@ Interval between purging expired states and fragments.
 .It Ar frag
 Seconds before an unassembled fragment is expired.
 .It Ar src.track
-Length of time to retain a source-tracking entry after the last state 
+Length of time to retain a source-tracking entry after the last state
 expires.
 .El
 .Pp
@@ -1567,20 +1567,19 @@ from modifying the source port on TCP and UDP packets.
 Additionally, the
 .Ar sticky-address
 option can be specified to help ensure that multiple connections from the
-same source are mapped to the same redirection address. This option can be
-used with the
+same source are mapped to the same redirection address.
+This option can be used with the
 .Ar random
 and
 .Ar round-robin
 pool options.
 Note that by default these associations are destroyed as soon as there are
-no longer states which refer to them; in order to make the mappings last 
+no longer states which refer to them; in order to make the mappings last
 beyond the lifetime of the states, increase the global options with
 .Ar set timeout source-track
 See
-.Sx STATEFUL TRACKING OPTIONS 
+.Sx STATEFUL TRACKING OPTIONS
 for more ways to control the source tracking.
-
 .Sh STATEFUL INSPECTION
 .Xr pf 4
 is a stateful packet filter, which means it can track the state of
@@ -1787,7 +1786,7 @@ Changes the timeout values used for states created by this rule.
 .Pp
 When the
 .Ar source-tracking
-keyword is specified, the number of states per source ip is tracked.
+keyword is specified, the number of states per source IP is tracked.
 The following limits can be set:
 .Pp
 .Bl  -tag -width xxxx -compact
@@ -1796,7 +1795,7 @@ Limits the maximum number of source addresses which can simultaneously
 have state table entries.
 .It Ar max-src-states
 Limits the maximum number of simultaneous state entries that a single
-source address can greate with this rule.
+source address can create with this rule.
 .El
 For a list of all valid timeout names, see
 .Sx OPTIONS
@@ -1804,11 +1803,12 @@ above.
 .Pp
 Multiple options can be specified, separated by commas:
 .Bd -literal
-pass in proto tcp from any to any 
+pass in proto tcp from any to any \e
       port www flags S/SA keep state \e
       (max 100, source-track rule, max-src-nodes 75, \e
       max-src-states 3, tcp.established 60, tcp.closing 5)
 .Ed
+.El
 .Sh OPERATING SYSTEM FINGERPRINTING
 Passive OS Fingerprinting is a mechanism to inspect nuances of a TCP
 connection's initial SYN packet and guess at the host's operating system.
