@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ne.4,v 1.10 2002/09/26 07:55:40 miod Exp $
+.\"	$OpenBSD: ne.4,v 1.11 2003/03/19 00:03:02 mickey Exp $
 .\"	$NetBSD: ne.4,v 1.4 1998/02/22 05:21:20 enami Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -54,7 +54,57 @@
 The
 .Nm
 device driver supports NE2000 and compatible (including NE1000) Ethernet
-cards.
+cards, including:
+.Pp
+.Bl -tag -width -offset indent -compact
+.It Accton EN2212, EN2216
+.It Allied Telesis LA-PCM
+.It AmbiCom AMB8002T
+.It Arowana FE
+.It Belkin F5D5020
+.It Billionton Systems LNT-10TN
+.It CNet NE2000
+.It Compex Linkport ENET-B
+.It Corega PCC-T, PCC-TD, EtherII PCC-T
+.It Corega FastEther PCC-T, FastEther PCC-TX
+.It Corega FastEther PCC-TXD, FastEther PCC-TXF
+.It D-Link DE-650, DE-660, DE-660+, DFE-670TXD
+.It Dayna CommuniCard E
+.It Digital DEPCM-XX
+.It Dual NE2000
+.It Edimax NE2000
+.It Genius ME 3000II SE
+.It Grey Cell GCS2000 Gold II
+.It GVC NIC-2000p, NP0335
+.It Hawking PN650TX
+.It I-O DATA PCLA, PCLA/TE
+.It IC-Card
+.It Kingston KNE-PC2
+.It Linksys PCMPC100, EC2T Combo
+.It Linksys EthernetCard, Combo EthernetCard
+.It Linksys Trust Combo EthernetCard, Etherfast 10/100
+.It MACNICA ME1 for JEIDA
+.It Melco LPC3-TX
+.It National Semiconductor InfoMover
+.It NDC Instant-Link
+.It Netgear FA410TX, FA410TXC, FA411
+.It Network Everywhere NP10T
+.It New Media LiveWire 10/100
+.It Planet SmartCom 2000
+.It Planex FNW-3600-T, FNW-3700-T
+.It Premax PE-200
+.It RPTI EP-400, EP-401
+.It Seiko Epson EN10B
+.It SMC EZCard, 8041
+.It Socket Communications LP-CF, LP-E
+.It SVEC PN650TX, ComboCard, LANCard
+.It Synergy S21810
+.It Tamarack NE2000
+.It Telecom Device TCD-HPC100
+.It Wisecom T210CT, iPort
+.It Xircom CFE-10
+.El
+.Pp
 .Sh MEDIA SELECTION
 The RealTek 8019 (ISA, ISAPnP, some PCMCIA) and RealTek 8029 (PCI)
 NE2000-compatible Ethernet chips include support for software media
