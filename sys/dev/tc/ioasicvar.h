@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioasicvar.h,v 1.6 2002/05/02 22:56:06 miod Exp $	*/
+/*	$OpenBSD: ioasicvar.h,v 1.7 2004/06/28 02:28:43 aaron Exp $	*/
 /*	$NetBSD: ioasicvar.h,v 1.14 2000/10/17 09:45:49 nisimura Exp $	*/
 
 /*
@@ -66,7 +66,6 @@ extern struct cfdriver ioasic_cd;
  */
 extern tc_addr_t ioasic_base;
 
-const struct evcnt *ioasic_intr_evcnt(struct device *, void *);
 void    ioasic_intr_establish(struct device *, void *,
 	    int, int (*)(void *), void *);
 void    ioasic_intr_disestablish(struct device *, void *);

@@ -1,4 +1,4 @@
-/* $OpenBSD: shared_intr.c,v 1.11 2002/03/14 01:26:26 millert Exp $ */
+/* $OpenBSD: shared_intr.c,v 1.12 2004/06/28 02:28:42 aaron Exp $ */
 /* $NetBSD: shared_intr.c,v 1.13 2000/03/19 01:46:18 thorpej Exp $ */
 
 /*
@@ -106,7 +106,8 @@ alpha_shared_intr_dispatch(intr, num)
 		 *  -1: This interrupt might have been for me, but I can't say
 		 *      for sure.
 		 */
-		rv = (*ih->ih_fn)(ih->ih_arg);
+		if ((rv = (*ih->ih_fn)(ih->ih_arg)))
+			ih->ih_count.ec_count++;
 
 		handled = handled || (rv != 0);
 		ih = ih->ih_q.tqe_next;
@@ -172,6 +173,8 @@ alpha_shared_intr_establish(intr, num, type, level, fn, arg, basename)
 	ih->ih_arg = arg;
 	ih->ih_level = level;
 	ih->ih_num = num;
+	evcount_attach(&ih->ih_count, basename, (void *)&ih->ih_num,
+	    &evcount_intr);
 
 	intr[num].intr_sharetype = type;
 	TAILQ_INSERT_TAIL(&intr[num].intr_q, ih, ih_q);
@@ -192,7 +195,9 @@ alpha_shared_intr_disestablish(intr, cookie, basename)
 	 * Just remove it from the list and free the entry.  We let
 	 * the caller deal with resetting the share type, if appropriate.
 	 */
+	evcount_detach(&ih->ih_count);
 	TAILQ_REMOVE(&intr[num].intr_q, ih, ih_q);
+	free(ih, M_DEVBUF);
 }
 
 int

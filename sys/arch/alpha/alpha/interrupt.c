@@ -1,4 +1,4 @@
-/* $OpenBSD: interrupt.c,v 1.15 2003/11/06 21:09:34 mickey Exp $ */
+/* $OpenBSD: interrupt.c,v 1.16 2004/06/28 02:28:42 aaron Exp $ */
 /* $NetBSD: interrupt.c,v 1.46 2000/06/03 20:47:36 thorpej Exp $ */
 
 /*-
@@ -79,6 +79,7 @@
 #include <sys/device.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
+#include <sys/evcount.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -89,7 +90,6 @@
 #include <machine/rpb.h>
 #include <machine/frame.h>
 #include <machine/cpuconf.h>
-#include <machine/intrcnt.h>
 
 #if defined(MULTIPROCESSOR)
 #include <sys/device.h>
@@ -116,6 +116,8 @@
 #include "bridge.h"
 
 static u_int schedclk2;
+
+extern struct evcount clk_count;
 
 void netintr(void);
 
@@ -170,7 +172,7 @@ interrupt(unsigned long a0, unsigned long a1, unsigned long a2,
 			return;
 #endif
 		uvmexp.intrs++;
-		intrcnt[INTRCNT_CLOCK]++;
+		clk_count.ec_count++;
 		if (platform.clockintr) {
 			/*
 			 * Call hardclock().  This will also call

@@ -1,4 +1,4 @@
-/* $OpenBSD: tc_3000_300.c,v 1.10 2003/05/13 21:32:17 deraadt Exp $ */
+/* $OpenBSD: tc_3000_300.c,v 1.11 2004/06/28 02:28:43 aaron Exp $ */
 /* $NetBSD: tc_3000_300.c,v 1.26 2001/07/27 00:25:21 thorpej Exp $ */
 
 /*
@@ -35,7 +35,6 @@
 
 #include <machine/autoconf.h>
 #include <machine/pte.h>
-#include <machine/intrcnt.h>
 
 #include <dev/tc/tcvar.h>
 #include <dev/tc/ioasicreg.h>
@@ -85,7 +84,7 @@ int tc_3000_300_nbuiltins =
 struct tcintr {
 	int	(*tci_func)(void *);
 	void	*tci_arg;
-	struct evcnt tci_evcnt;
+	struct evcount tci_count;
 } tc_3000_300_intr[TC_3000_300_NCOOKIES];
 
 void
@@ -112,25 +111,9 @@ tc_3000_300_intr_setup()
 		if (cp == NULL)
 			panic("tc_3000_300_intr_setup");
 		snprintf(cp, 12, "slot %lu", i);
-#ifdef EVCNT_COUNTERS
-		evcnt_attach_dynamic(&tc_3000_300_intr[i].tci_evcnt,
-		    EVCNT_TYPE_INTR, NULL, "tc", cp);
-#endif
+		evcount_attach(&tc_3000_300_intr[i].tci_count, "tc", NULL,
+		    &evcount_intr);
 	}
-}
-
-const struct evcnt *
-tc_3000_300_intr_evcnt(tcadev, cookie)
-	struct device *tcadev;
-	void *cookie;
-{
-	u_long dev = (u_long)cookie;
-
-#ifdef DIAGNOSTIC
-	/* XXX bounds-check cookie. */
-#endif
-
-	return (&tc_3000_300_intr[dev].tci_evcnt);
 }
 
 void
@@ -249,16 +232,10 @@ tc_3000_300_iointr(arg, vec)
 
 		ifound = 0;
 
-#ifdef EVCNT_COUNTERS
-#define	INCRINTRCNT(slot)	tc_3000_300_intr[slot].tci_evcnt.ev_count++
-#else
-#define	INCRINTRCNT(slot)	intrcnt[INTRCNT_KN16 + slot]++
-#endif
-
 #define	CHECKINTR(slot, flag)						\
 		if (flag) {						\
 			ifound = 1;					\
-			INCRINTRCNT(slot);				\
+			tc_3000_300_intr[slot].tci_count.ec_count++;	\
 			(*tc_3000_300_intr[slot].tci_func)		\
 			    (tc_3000_300_intr[slot].tci_arg);		\
 		}

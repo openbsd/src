@@ -1,4 +1,4 @@
-/* $OpenBSD: tc_3000_500.c,v 1.11 2003/05/13 21:32:17 deraadt Exp $ */
+/* $OpenBSD: tc_3000_500.c,v 1.12 2004/06/28 02:28:43 aaron Exp $ */
 /* $NetBSD: tc_3000_500.c,v 1.24 2001/07/27 00:25:21 thorpej Exp $ */
 
 /*
@@ -36,7 +36,6 @@
 #include <machine/autoconf.h>
 #include <machine/pte.h>
 #include <machine/rpb.h>
-#include <machine/intrcnt.h>
 
 #include <dev/tc/tcvar.h>
 #include <alpha/tc/tc_conf.h>
@@ -104,7 +103,7 @@ u_int32_t tc_3000_500_intrbits[TC_3000_500_NCOOKIES] = {
 struct tcintr {
 	int	(*tci_func)(void *);
 	void	*tci_arg;
-	struct evcnt tci_evcnt;
+	struct evcount tci_count;
 } tc_3000_500_intr[TC_3000_500_NCOOKIES];
 
 u_int32_t tc_3000_500_imask;	/* intrs we want to ignore; mirrors IMR. */
@@ -136,25 +135,9 @@ tc_3000_500_intr_setup()
 		if (cp == NULL)
 			panic("tc_3000_500_intr_setup");
 		snprintf(cp, 12, "slot %lu", i);
-#ifdef EVCNT_COUNTERS
-		evcnt_attach_dynamic(&tc_3000_500_intr[i].tci_evcnt,
-		    EVCNT_TYPE_INTR, NULL, "tc", cp);
-#endif
+		evcount_attach(&tc_3000_500_intr[i].tci_count, "tc", NULL,
+		    &evcount_intr);
         }
-}
-
-const struct evcnt *
-tc_3000_500_intr_evcnt(tcadev, cookie)
-	struct device *tcadev;
-	void *cookie;
-{
-	u_long dev = (u_long)cookie;
-
-#ifdef DIAGNOSTIC
-	/* XXX bounds-check cookie. */
-#endif
-
-	return (&tc_3000_500_intr[dev].tci_evcnt);
 }
 
 void
@@ -241,16 +224,10 @@ tc_3000_500_iointr(arg, vec)
 
 		ifound = 0;
 
-#ifdef EVCNT_COUNTERS
-#define	INCRINTRCNT(slot)	tc_3000_500_intr[slot].tci_evcnt.ev_count++
-#else
-#define	INCRINTRCNT(slot)	intrcnt[INTRCNT_KN15 + slot]++
-#endif
-
 #define	CHECKINTR(slot)							\
 		if (ir & tc_3000_500_intrbits[slot]) {			\
 			ifound = 1;					\
-			INCRINTRCNT(slot);				\
+			tc_3000_500_intr[slot].tci_count.ec_count++;	\
 			(*tc_3000_500_intr[slot].tci_func)		\
 			    (tc_3000_500_intr[slot].tci_arg);		\
 		}

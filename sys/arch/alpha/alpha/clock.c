@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.13 2003/10/18 20:14:40 jmc Exp $	*/
+/*	$OpenBSD: clock.c,v 1.14 2004/06/28 02:28:42 aaron Exp $	*/
 /*	$NetBSD: clock.c,v 1.29 2000/06/05 21:47:10 thorpej Exp $	*/
 
 /*
@@ -43,6 +43,7 @@
 #include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/evcount.h>
 
 #include <dev/clock_subr.h>
 
@@ -71,6 +72,8 @@ extern int schedhz;
 struct device *clockdev;
 const struct clockfns *clockfns;
 int clockinitted;
+struct evcount clk_count;
+int clk_irq = 0;
 
 void
 clockattach(dev, fns)
@@ -87,9 +90,6 @@ clockattach(dev, fns)
 		panic("clockattach: multiple clocks");
 	clockdev = dev;
 	clockfns = fns;
-#ifdef EVCNT_COUNTERS
-	evcnt_attach(dev, "intr", &clock_intr_evcnt);
-#endif
 }
 
 /*
@@ -139,6 +139,8 @@ cpu_initclocks()
 	 */
 	platform.clockintr = hardclock;
 	schedhz = 16;
+
+	evcount_attach(&clk_count, "clock", (void *)&clk_irq, &evcount_intr);
 
 	/*
 	 * Get the clock started.

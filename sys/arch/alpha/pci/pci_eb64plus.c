@@ -1,4 +1,4 @@
-/* $OpenBSD: pci_eb64plus.c,v 1.5 2003/05/10 21:11:12 deraadt Exp $ */
+/* $OpenBSD: pci_eb64plus.c,v 1.6 2004/06/28 02:28:43 aaron Exp $ */
 /* $NetBSD: pci_eb64plus.c,v 1.10 2001/07/27 00:25:20 thorpej Exp $ */
 
 /*-
@@ -94,7 +94,6 @@
 int	dec_eb64plus_intr_map(void *, pcitag_t, int, int,
 	    pci_intr_handle_t *);
 const char *dec_eb64plus_intr_string(void *, pci_intr_handle_t);
-const struct evcnt *dec_eb64plus_intr_evcnt(void *, pci_intr_handle_t);
 void	*dec_eb64plus_intr_establish(void *, pci_intr_handle_t,
 	    int, int (*func)(void *), void *, char *);
 void	dec_eb64plus_intr_disestablish(void *, void *);

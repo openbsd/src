@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_kn20aa.c,v 1.19 2003/05/10 21:11:12 deraadt Exp $	*/
+/*	$OpenBSD: pci_kn20aa.c,v 1.20 2004/06/28 02:28:43 aaron Exp $	*/
 /*	$NetBSD: pci_kn20aa.c,v 1.21 1996/11/17 02:05:27 cgd Exp $	*/
 
 /*
@@ -49,10 +49,6 @@
 
 #include <alpha/pci/pci_kn20aa.h>
 
-#ifndef EVCNT_COUNTERS
-#include <machine/intrcnt.h>
-#endif
-
 #include "sio.h"
 #if NSIO
 #include <alpha/pci/siovar.h>
@@ -71,9 +67,7 @@ void	dec_kn20aa_intr_disestablish(void *, void *);
 #define	PCI_STRAY_MAX	5
 
 struct alpha_shared_intr *kn20aa_pci_intr;
-#ifdef EVCNT_COUNTERS
-struct evcnt kn20aa_intr_evcnt;
-#endif
+struct evcount kn20aa_intr_count;
 
 void	kn20aa_iointr(void *framep, unsigned long vec);
 void	kn20aa_enable_intr(int irq);
@@ -255,13 +249,7 @@ kn20aa_iointr(framep, vec)
 			panic("kn20aa_iointr: vec 0x%x out of range", vec);
 		irq = (vec - 0x900) >> 4;
 
-#ifdef EVCNT_COUNTERS
-		kn20aa_intr_evcnt.ev_count++;
-#else
-		if (KN20AA_MAX_IRQ != INTRCNT_KN20AA_IRQ_LEN)
-			panic("kn20aa interrupt counter sizes inconsistent");
-		intrcnt[INTRCNT_KN20AA_IRQ + irq]++;
-#endif
+		kn20aa_intr_count.ec_count++;
 
 		if (!alpha_shared_intr_dispatch(kn20aa_pci_intr, irq)) {
 			alpha_shared_intr_stray(kn20aa_pci_intr, irq,

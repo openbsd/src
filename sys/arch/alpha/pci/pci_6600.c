@@ -1,4 +1,4 @@
-/* $OpenBSD: pci_6600.c,v 1.10 2002/06/25 21:33:21 miod Exp $ */
+/* $OpenBSD: pci_6600.c,v 1.11 2004/06/28 02:28:43 aaron Exp $ */
 /* $NetBSD: pci_6600.c,v 1.5 2000/06/06 00:50:15 thorpej Exp $ */
 
 /*-
@@ -81,7 +81,6 @@ void *dec_6600_intr_establish(void *, pci_intr_handle_t, int,
     int (*func)(void *), void *, char *);
 const char *dec_6600_intr_string(void *, pci_intr_handle_t);
 int dec_6600_intr_line(void *, pci_intr_handle_t);
-const struct evcnt *dec_6600_intr_evcnt(void *, pci_intr_handle_t);
 int dec_6600_intr_map(void *, pcitag_t, int, int, pci_intr_handle_t *);
 void *dec_6600_pciide_compat_intr_establish(void *, struct device *,
     struct pci_attach_args *, int, int (*)(void *), void *);
@@ -108,9 +107,6 @@ pci_6600_pickintr(pcp)
         pc->pc_intr_map = dec_6600_intr_map;
         pc->pc_intr_string = dec_6600_intr_string;
         pc->pc_intr_line = dec_6600_intr_line;
-#if 0
-	pc->pc_intr_evcnt = dec_6600_intr_evcnt;
-#endif
         pc->pc_intr_establish = dec_6600_intr_establish;
         pc->pc_intr_disestablish = dec_6600_intr_disestablish;
 	pc->pc_pciide_compat_intr_establish = NULL;
@@ -128,14 +124,6 @@ pci_6600_pickintr(pcp)
 			    PCI_STRAY_MAX);
 			alpha_shared_intr_set_private(dec_6600_pci_intr, i,
 			    sioprimary);
-
-#if 0
-			cp = alpha_shared_intr_string(dec_6600_pci_intr);
-			sprintf(cp, "irq %d", i);
-			evcnt_attach_dynamic(alpha_shared_intr_evcnt(
-			    dec_6600_pci_intr, 1), EVCNT_TYPE_INTR, NULL,
-			    "dec_6600", cp);
-#endif
 		}
 #if NSIO
 		sio_intr_setup(pc, iot);
@@ -199,7 +187,7 @@ dec_6600_intr_string(acv, ih)
 	pci_intr_handle_t ih;
 {
 
-	static const char irqfmt[] = "dec 6600 irq %ld";
+	static const char irqfmt[] = "%lddec6600";
 	static char irqstr[sizeof irqfmt];
 
 #if NSIO
@@ -226,23 +214,6 @@ dec_6600_intr_line(acv, ih)
 
 	return (ih);
 }
-
-#if 0
-const struct evcnt *
-dec_6600_intr_evcnt(acv, ih)
-	void *acv;
-	pci_intr_handle_t ih;
-{
-
-#if NSIO
-	if (DEC_6600_LINE_IS_ISA(ih))
-		return (sio_intr_evcnt(NULL /*XXX*/,
-		    DEC_6600_LINE_ISA_IRQ(ih)));
-#endif
-
-	return (alpha_shared_intr_evcnt(dec_6600_pci_intr, ih));
-}
-#endif
 
 void *
 dec_6600_intr_establish(acv, ih, level, func, arg, name)

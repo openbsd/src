@@ -1,4 +1,4 @@
-/* $OpenBSD: intr.h,v 1.17 2004/06/13 21:49:12 niklas Exp $ */
+/* $OpenBSD: intr.h,v 1.18 2004/06/28 02:28:42 aaron Exp $ */
 /* $NetBSD: intr.h,v 1.26 2000/06/03 20:47:41 thorpej Exp $ */
 
 /*-
@@ -68,6 +68,7 @@
 #ifndef _ALPHA_INTR_H_
 #define _ALPHA_INTR_H_
 
+#include <sys/evcount.h>
 #include <sys/lock.h>
 #include <sys/queue.h>
 #include <machine/atomic.h>
@@ -173,6 +174,7 @@ struct alpha_shared_intrhand {
 	void	*ih_arg;
 	int	ih_level;
 	unsigned int ih_num;
+	struct evcount ih_count;
 };
 
 struct alpha_shared_intr {

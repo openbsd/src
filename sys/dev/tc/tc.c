@@ -1,4 +1,4 @@
-/*	$OpenBSD: tc.c,v 1.14 2003/04/27 11:22:54 ho Exp $	*/
+/*	$OpenBSD: tc.c,v 1.15 2004/06/28 02:28:43 aaron Exp $	*/
 /*	$NetBSD: tc.c,v 1.29 2001/11/13 06:26:10 lukem Exp $	*/
 
 /*
@@ -91,7 +91,6 @@ tcattach(parent, self, aux)
 	sc->sc_speed = tba->tba_speed;
 	sc->sc_nslots = tba->tba_nslots;
 	sc->sc_slots = tba->tba_slots;
-	sc->sc_intr_evcnt = tba->tba_intr_evcnt;
 	sc->sc_intr_establish = tba->tba_intr_establish;
 	sc->sc_intr_disestablish = tba->tba_intr_disestablish;
 	sc->sc_get_dma_tag = tba->tba_get_dma_tag;
@@ -260,14 +259,6 @@ tc_checkslot(slotbase, namep)
 		return (1);
 	}
 	return (0);
-}
-
-const struct evcnt *
-tc_intr_evcnt(struct device *dev, void *cookie)
-{
-	struct tc_softc *sc = tc_cd.cd_devs[0];
-
-	return ((*sc->sc_intr_evcnt)(dev, cookie));
 }
 
 void

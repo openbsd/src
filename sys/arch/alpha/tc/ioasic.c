@@ -1,4 +1,4 @@
-/* $OpenBSD: ioasic.c,v 1.10 2003/05/13 21:32:17 deraadt Exp $ */
+/* $OpenBSD: ioasic.c,v 1.11 2004/06/28 02:28:43 aaron Exp $ */
 /* $NetBSD: ioasic.c,v 1.34 2000/07/18 06:10:06 thorpej Exp $ */
 
 /*-
@@ -75,7 +75,6 @@
 #include <machine/bus.h>
 #include <machine/pte.h>
 #include <machine/rpb.h>
-#include <machine/intrcnt.h>
 
 #include <dev/tc/tcvar.h>
 #include <dev/tc/ioasicreg.h>
@@ -124,9 +123,7 @@ int ioasic_ndevs = sizeof(ioasic_devs) / sizeof(ioasic_devs[0]);
 struct ioasicintr {
 	int	(*iai_func)(void *);
 	void	*iai_arg;
-#ifdef EVCNT_COUNTERS
-	struct evcnt iai_evcnt;
-#endif
+	struct evcount iai_count;
 } ioasicintrs[IOASIC_NCOOKIES];
 
 tc_addr_t ioasic_base;		/* XXX XXX XXX */
@@ -166,7 +163,6 @@ ioasicattach(parent, self, aux)
 	u_long ssr;
 #endif
 	u_long i, imsk;
-	const struct evcnt *pevcnt;
 	char *cp;
 
 	ioasicfound = 1;
@@ -203,7 +199,6 @@ ioasicattach(parent, self, aux)
 	/*
 	 * Set up interrupt handlers.
 	 */
-	pevcnt = tc_intr_evcnt(parent, ta->ta_cookie);
 	for (i = 0; i < IOASIC_NCOOKIES; i++) {
 		ioasicintrs[i].iai_func = ioasic_intrnull;
 		ioasicintrs[i].iai_arg = (void *)i;
@@ -212,10 +207,8 @@ ioasicattach(parent, self, aux)
 		if (cp == NULL)
 			panic("ioasicattach");
 		snprintf(cp, 12, "slot %lu", i);
-#ifdef EVCNT_COUNTERS
-		evcnt_attach_dynamic(&ioasicintrs[i].iai_evcnt,
-		    EVCNT_TYPE_INTR, pevcnt, self->dv_xname, cp);
-#endif
+		evcount_attach(&ioasicintrs[i].iai_count, self->dv_xname, NULL,
+		    &evcount_intr);
 	}
 	tc_intr_establish(parent, ta->ta_cookie, TC_IPL_NONE, ioasic_intr, sc);
 
@@ -318,17 +311,11 @@ ioasic_intr(val)
 		osir = sir =
 		    bus_space_read_4(sc->sc_bst, sc->sc_bsh, IOASIC_INTR);
 
-#ifdef EVCNT_COUNTERS
-#define	INCRINTRCNT(slot)	ioasicintrs[slot].iai_evcnt.ev_count++
-#else
-#define	INCRINTRCNT(slot)	intrcnt[INTRCNT_IOASIC + slot]++
-#endif
-
 		/* XXX DUPLICATION OF INTERRUPT BIT INFORMATION... */
 #define	CHECKINTR(slot, bits, clear)					\
 		if (sir & (bits)) {					\
 			ifound = 1;					\
-			INCRINTRCNT(slot);				\
+			ioasicintrs[slot].iai_count.ec_count++;		\
 			(*ioasicintrs[slot].iai_func)			\
 			    (ioasicintrs[slot].iai_arg);		\
 			if (clear)					\

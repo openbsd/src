@@ -1,4 +1,4 @@
-/* $OpenBSD: tcasic.c,v 1.12 2002/05/03 00:04:26 millert Exp $ */
+/* $OpenBSD: tcasic.c,v 1.13 2004/06/28 02:28:43 aaron Exp $ */
 /* $NetBSD: tcasic.c,v 1.36 2001/08/23 01:16:52 nisimura Exp $ */
 
 /*
@@ -108,7 +108,6 @@ tcasicattach(parent, self, aux)
 			tba.tba_nbuiltins = tc_3000_500_nographics_nbuiltins;
 			tba.tba_builtins = tc_3000_500_nographics_builtins;
 		}
-		tba.tba_intr_evcnt = tc_3000_500_intr_evcnt;
 		tba.tba_intr_establish = tc_3000_500_intr_establish;
 		tba.tba_intr_disestablish = tc_3000_500_intr_disestablish;
 		tba.tba_get_dma_tag = tc_dma_get_tag_3000_500;
@@ -129,7 +128,6 @@ tcasicattach(parent, self, aux)
 		tba.tba_slots = tc_3000_300_slots;
 		tba.tba_nbuiltins = tc_3000_300_nbuiltins;
 		tba.tba_builtins = tc_3000_300_builtins;
-		tba.tba_intr_evcnt = tc_3000_300_intr_evcnt;
 		tba.tba_intr_establish = tc_3000_300_intr_establish;
 		tba.tba_intr_disestablish = tc_3000_300_intr_disestablish;
 		tba.tba_get_dma_tag = tc_dma_get_tag_3000_300;

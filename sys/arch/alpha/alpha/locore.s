@@ -1,4 +1,4 @@
-/* $OpenBSD: locore.s,v 1.22 2004/06/13 21:49:11 niklas Exp $ */
+/* $OpenBSD: locore.s,v 1.23 2004/06/28 02:28:42 aaron Exp $ */
 /* $NetBSD: locore.s,v 1.94 2001/04/26 03:10:44 ross Exp $ */
 
 /*-
@@ -1457,26 +1457,15 @@ END(copyerr)
 
 /**************************************************************************/
 
-/*
- * Some bogus data, to keep vmstat happy, for now.
- */
-
-#include <machine/intrcnt.h>
-
 	.data
+/* Some bogus data, to keep vmstat happy, for now. */
 EXPORT(intrnames)
 	.type intrnames,@object
-#ifndef EVCNT_COUNTERS
-	INTRNAMES_DEFINITION
-#endif
 EXPORT(eintrnames)
 	.type eintrnames,@object
 	.align 3
 EXPORT(intrcnt)
 	.type intrcnt,@object
-#ifndef EVCNT_COUNTERS
-	INTRCNT_DEFINITION
-#endif
 EXPORT(eintrcnt)
 	.type eintrcnt,@object
 	.text

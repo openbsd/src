@@ -1,4 +1,4 @@
-/* $OpenBSD: pci_eb164.c,v 1.15 2003/05/10 21:11:12 deraadt Exp $ */
+/* $OpenBSD: pci_eb164.c,v 1.16 2004/06/28 02:28:43 aaron Exp $ */
 /* $NetBSD: pci_eb164.c,v 1.27 2000/06/06 00:50:15 thorpej Exp $ */
 
 /*-
@@ -98,7 +98,6 @@ int	dec_eb164_intr_map(void *, pcitag_t, int, int,
 	    pci_intr_handle_t *);
 const char *dec_eb164_intr_string(void *, pci_intr_handle_t);
 int	dec_eb164_intr_line(void *, pci_intr_handle_t);
-const struct evcnt *dec_eb164_intr_evcnt(void *, pci_intr_handle_t);
 void	*dec_eb164_intr_establish(void *, pci_intr_handle_t,
 	    int, int (*func)(void *), void *, char *);
 void	dec_eb164_intr_disestablish(void *, void *);

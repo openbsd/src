@@ -1,4 +1,4 @@
-/* $OpenBSD: pci_1000.c,v 1.1 2002/06/30 16:24:40 miod Exp $ */
+/* $OpenBSD: pci_1000.c,v 1.2 2004/06/28 02:28:42 aaron Exp $ */
 /* $NetBSD: pci_1000.c,v 1.12 2001/07/27 00:25:20 thorpej Exp $ */
 
 /*
@@ -94,9 +94,6 @@ static bus_space_handle_t another_mystery_icu_ioh;
 int	dec_1000_intr_map(void *, pcitag_t, int, int, pci_intr_handle_t *);
 const char *dec_1000_intr_string(void *, pci_intr_handle_t);
 int	dec_1000_intr_line(void *, pci_intr_handle_t);
-#if 0
-const struct evcnt *dec_1000_intr_evcnt(void *, pci_intr_handle_t);
-#endif
 void	*dec_1000_intr_establish(void *, pci_intr_handle_t,
 	    int, int (*func)(void *), void *, char *);
 void	dec_1000_intr_disestablish(void *, void *);
@@ -132,9 +129,6 @@ pci_1000_pickintr(core, iot, memt, pc)
         pc->pc_intr_map = dec_1000_intr_map;
         pc->pc_intr_string = dec_1000_intr_string;
 	pc->pc_intr_line = dec_1000_intr_line;
-#if 0
-	pc->pc_intr_evcnt = dec_1000_intr_evcnt;
-#endif
         pc->pc_intr_establish = dec_1000_intr_establish;
         pc->pc_intr_disestablish = dec_1000_intr_disestablish;
 
@@ -146,14 +140,6 @@ pci_1000_pickintr(core, iot, memt, pc)
 	for (i = 0; i < PCI_NIRQ; i++) {
 		alpha_shared_intr_set_maxstrays(dec_1000_pci_intr, i,
 		    PCI_STRAY_MAX);
-		
-#if 0
-		cp = alpha_shared_intr_string(dec_1000_pci_intr, i);
-		sprintf(cp, "irq %d", i);
-		evcnt_attach_dynamic(alpha_shared_intr_evcnt(
-		    dec_1000_pci_intr, i), EVCNT_TYPE_INTR, NULL,
-		    "dec_1000", cp);
-#endif
 	}
 
 	pci_1000_imi();
@@ -222,20 +208,6 @@ dec_1000_intr_line(ccv, ih)
 	return (ih);
 #endif
 }
-
-#if 0
-const struct evcnt *
-dec_1000_intr_evcnt(ccv, ih)
-	void *ccv;
-	pci_intr_handle_t ih;
-{
-
-	if (ih >= PCI_NIRQ)
-		panic("dec_1000_intr_evcnt: bogus dec_1000 IRQ 0x%lx", ih);
-
-	return (alpha_shared_intr_evcnt(dec_1000_pci_intr, ih));
-}
-#endif
 
 void *
 dec_1000_intr_establish(ccv, ih, level, func, arg, name)

@@ -1,4 +1,4 @@
-/* $OpenBSD: pci_550.c,v 1.11 2003/05/11 19:41:09 deraadt Exp $ */
+/* $OpenBSD: pci_550.c,v 1.12 2004/06/28 02:28:43 aaron Exp $ */
 /* $NetBSD: pci_550.c,v 1.18 2000/06/29 08:58:48 mrg Exp $ */
 
 /*-
@@ -98,7 +98,6 @@ int	dec_550_intr_map(void *, pcitag_t, int, int,
 	    pci_intr_handle_t *);
 const char *dec_550_intr_string(void *, pci_intr_handle_t);
 int	dec_550_intr_line(void *, pci_intr_handle_t);
-const struct evcnt *dec_550_intr_evcnt(void *, pci_intr_handle_t);
 void	*dec_550_intr_establish(void *, pci_intr_handle_t,
 	    int, int (*func)(void *), void *, char *);
 void	dec_550_intr_disestablish(void *, void *);
@@ -147,9 +146,6 @@ pci_550_pickintr(ccp)
         pc->pc_intr_map = dec_550_intr_map;
         pc->pc_intr_string = dec_550_intr_string;
         pc->pc_intr_line = dec_550_intr_line;
-#if 0
-	pc->pc_intr_evcnt = dec_550_intr_evcnt;
-#endif
         pc->pc_intr_establish = dec_550_intr_establish;
         pc->pc_intr_disestablish = dec_550_intr_disestablish;
 
@@ -171,13 +167,6 @@ pci_550_pickintr(ccp)
 		alpha_shared_intr_set_maxstrays(dec_550_pci_intr, i,
 		    PCI_STRAY_MAX);
 		alpha_shared_intr_set_private(dec_550_pci_intr, i, ccp);
-#if 0		
-		cp = alpha_shared_intr_string(dec_550_pci_intr, i);
-		sprintf(cp, "irq %d", i);
-		evcnt_attach_dynamic(alpha_shared_intr_evcnt(
-		    dec_550_pci_intr, i), EVCNT_TYPE_INTR, NULL,
-		    "dec_550", cp);
-#endif
 	}
 
 #if NSIO
@@ -302,29 +291,6 @@ dec_550_intr_line(ccv, ih)
 
 	return (ih);
 }
-
-#if 0
-const struct evcnt *
-dec_550_intr_evcnt(ccv, ih)
-	void *ccv;
-	pci_intr_handle_t ih;
-{
-#if 0
-	struct cia_config *ccp = ccv;
-#endif
-
-#if NSIO
-	if (DEC_550_LINE_IS_ISA(ih))
-		return (sio_intr_evcnt(NULL /*XXX*/,
-		    DEC_550_LINE_ISA_IRQ(ih)));
-#endif
-
-	if (ih >= DEC_550_MAX_IRQ)
-		panic("dec_550_intr_evcnt: bogus 550 IRQ 0x%lx", ih);
-
-	return (alpha_shared_intr_evcnt(dec_550_pci_intr, ih));
-}
-#endif
 
 void *
 dec_550_intr_establish(ccv, ih, level, func, arg, name)

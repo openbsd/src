@@ -1,4 +1,4 @@
-/* $OpenBSD: tcds.c,v 1.3 2003/09/26 21:43:31 miod Exp $ */
+/* $OpenBSD: tcds.c,v 1.4 2004/06/28 02:28:43 aaron Exp $ */
 /* $NetBSD: tcds.c,v 1.3 2001/11/13 06:26:10 lukem Exp $ */
 
 /*-
@@ -81,10 +81,6 @@
 #include <dev/ic/ncr53c9xvar.h>
 
 #include <machine/bus.h>
-
-#ifndef EVCNT_COUNTERS
-#include <machine/intrcnt.h>
-#endif
 
 #include <dev/tc/tcvar.h>
 #include <dev/tc/tcdsreg.h>
@@ -172,7 +168,6 @@ tcdsattach(parent, self, aux)
 	struct tcds_device *td;
 	bus_space_handle_t sbsh[2];
 	int i, gpi2;
-	const struct evcnt *pevcnt;
 
 	td = tcds_lookup(ta->ta_modname);
 	if (td == NULL)
@@ -211,7 +206,6 @@ tcdsattach(parent, self, aux)
 
 	sc->sc_cookie = ta->ta_cookie;
 
-	pevcnt = tc_intr_evcnt(parent, sc->sc_cookie);
 	tc_intr_establish(parent, sc->sc_cookie, TC_IPL_BIO, tcds_intr, sc);
 
 	/*
@@ -235,17 +229,11 @@ tcdsattach(parent, self, aux)
 
 	/* fill in common information first */
 	for (i = 0; i < 2; i++) {
-		char *cp;
-
 		slotc = &sc->sc_slots[i];
 		bzero(slotc, sizeof *slotc);	/* clear everything */
 
-		cp = slotc->sc_name;
-		snprintf(cp, sizeof(slotc->sc_name), "chip %d", i);
-#ifdef EVCNT_COUNTERS
-		evcnt_attach_dynamic(&slotc->sc_evcnt, EVCNT_TYPE_INTR,
-		    pevcnt, sc->sc_dv.dv_xname, cp);
-#endif
+		evcount_attach(&slotc->sc_count, sc->sc_dv.dv_xname, NULL,
+		    &evcount_intr);
 
 		slotc->sc_slot = i;
 		slotc->sc_bst = sc->sc_bst;
@@ -502,15 +490,9 @@ tcds_intr(arg)
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, TCDS_CIR, ir0);
 	tc_syncbus();
 
-#ifdef EVCNT_COUNTERS
-#define	INCRINTRCNT(slot)	sc->sc_slots[slot].sc_evcnt.ev_count++
-#else
-#define	INCRINTRCNT(slot)	intrcnt[INTRCNT_TCDS + slot]++
-#endif
-
 #define	CHECKINTR(slot)							\
 	if (ir & sc->sc_slots[slot].sc_intrbits) {			\
-		INCRINTRCNT(slot);					\
+		sc->sc_slots[slot].sc_count.ec_count++;			\
 		(void)(*sc->sc_slots[slot].sc_intrhand)			\
 		    (sc->sc_slots[slot].sc_intrarg);			\
 	}
