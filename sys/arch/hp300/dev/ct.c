@@ -1,4 +1,4 @@
-/*	$OpenBSD: ct.c,v 1.8 2002/03/14 01:26:30 millert Exp $	*/
+/*	$OpenBSD: ct.c,v 1.9 2002/05/23 15:31:57 art Exp $	*/
 /*	$NetBSD: ct.c,v 1.21 1997/04/02 22:37:23 scottr Exp $	*/
 
 /*
@@ -448,7 +448,7 @@ ctcommand(dev, cmd, cnt)
 #endif
 		}
 		ctstrategy(bp);
-		iowait(bp);
+		biowait(bp);
 	}
 	bp->b_flags = 0;
 	sc->sc_flags &= ~CTF_CMD;

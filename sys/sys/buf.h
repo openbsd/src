@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.h,v 1.40 2002/05/23 13:47:45 art Exp $	*/
+/*	$OpenBSD: buf.h,v 1.41 2002/05/23 15:31:57 art Exp $	*/
 /*	$NetBSD: buf.h,v 1.25 1997/04/09 21:12:17 mycroft Exp $	*/
 
 /*
@@ -114,8 +114,6 @@ struct buf {
 #define	b_active b_bcount		/* Driver queue head: drive active. */
 #define	b_data	 b_un.b_addr		/* b_un.b_addr is not changeable. */
 #define	b_errcnt b_resid		/* Retry count while I/O in progress. */
-#define	iodone	 biodone		/* Old name for biodone. */
-#define	iowait	 biowait		/* Old name for biowait. */
 
 /*
  * These flags are kept in b_flags.
