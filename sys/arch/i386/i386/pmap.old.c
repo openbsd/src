@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.old.c,v 1.11 1996/06/02 10:44:21 mickey Exp $	*/
+/*	$OpenBSD: pmap.old.c,v 1.12 1996/06/16 10:24:19 deraadt Exp $	*/
 /*	$NetBSD: pmap.c,v 1.36 1996/05/03 19:42:22 christos Exp $	*/
 
 /*
@@ -1081,9 +1081,14 @@ pmap_enter(pmap, va, pa, prot, wired)
 	 * Page Directory table entry not valid, we need a new PT page
 	 */
 	pte = pmap_pte(pmap, va);
-	if (!pte)
+	if (!pte) {
+		printf("ptdi panic!\n");
+		printf("pte %p pmap %p va %p\n", pte, pmap, va);
+		printf("pmap_pde(pmap, va) %p\n", pmap_pde(pmap, va));
+		printf("pmap_pde_v(pmap_pde(pmap, va) %p\n",
+		    pmap_pde_v(pmap_pde(pmap, va)));
 		panic("ptdi %x", pmap->pm_pdir[PTDPTDI]);
-
+	}
 #ifdef DEBUG
 	if (pmapdebug & PDB_ENTER)
 		printf("enter: pte %x, *pte %x ", pte, *pte);
