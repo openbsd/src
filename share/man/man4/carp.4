@@ -1,4 +1,4 @@
-.\"	$OpenBSD: carp.4,v 1.3 2003/10/18 17:48:50 jmc Exp $
+.\"	$OpenBSD: carp.4,v 1.4 2003/10/19 03:57:25 david Exp $
 .\"
 .\" Copyright (c) 2003, Ryan McBride.  All rights reserved.
 .\"
@@ -52,7 +52,7 @@ Additional parameters can also be set on a per-interface basis:
 .Ar advbase
 and
 .Ar advskew ,
-which are used to control how frequently the host sends advertisments when it
+which are used to control how frequently the host sends advertisements when it
 is the master for a virtual host, and
 .Ar pass
 which is used to authenticate carp advertisements.
@@ -94,7 +94,7 @@ Finally, the ARP balancing feature must be enabled on both hosts:
 .Pp
 .Dl # sysctl -w net.inet.carp.arpbalance=1
 .Pp
-When the hosts recieve an ARP request for 192.168.1.10, they both select
+When the hosts receive an ARP request for 192.168.1.10, they both select
 one of the virtual hosts based on the source IP address in the request.
 The host which is master of that virtual host will reply to the request, the
 other will ignore it.
