@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $OpenBSD: lqr.c,v 1.9 2000/02/27 01:38:27 brian Exp $
+ * $OpenBSD: lqr.c,v 1.10 2000/06/20 09:13:31 brian Exp $
  *
  *	o LQR based on RFC1333
  *
@@ -85,8 +85,9 @@ lqr_RecvEcho(struct fsm *fp, struct mbuf *bp)
   struct lcp *lcp = fsm2lcp(fp);
   struct echolqr lqr;
 
-  if (m_length(bp) == sizeof lqr) {
-    bp = mbuf_Read(bp, &lqr, sizeof lqr);
+  if (m_length(bp) >= sizeof lqr) {
+    m_freem(mbuf_Read(bp, &lqr, sizeof lqr));
+    bp = NULL;
     lqr.magic = ntohl(lqr.magic);
     lqr.signature = ntohl(lqr.signature);
     lqr.sequence = ntohl(lqr.sequence);
