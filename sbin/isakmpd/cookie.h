@@ -1,4 +1,4 @@
-/*	$OpenBSD: cookie.h,v 1.3 1998/11/17 11:10:09 niklas Exp $	*/
+/*	$OpenBSD: cookie.h,v 1.4 2001/06/25 00:00:44 ho Exp $	*/
 /*	$EOM: cookie.h,v 1.5 1998/08/05 09:21:43 niklas Exp $	*/
 
 /*
@@ -45,7 +45,5 @@ struct transport;
 
 extern void cookie_gen (struct transport *, struct exchange *, u_int8_t *,
 			size_t);
-extern void cookie_init (void);
-extern void cookie_reset_event (void *);
 
 #endif /* _COOKIE_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.15 2000/04/07 22:05:08 niklas Exp $	*/
+/*	$OpenBSD: init.c,v 1.16 2001/06/25 00:00:44 ho Exp $	*/
 /*	$EOM: init.c,v 1.25 2000/03/30 14:27:24 ho Exp $	*/
 
 /*
@@ -43,7 +43,6 @@
 #include "cert.h"
 #include "conf.h"
 #include "connection.h"
-#include "cookie.h"
 #include "doi.h"
 #include "exchange.h"
 #include "init.h"
@@ -81,7 +80,6 @@ init ()
   /* The following group are depending on timer_init having run.  */
   conf_init ();
   connection_init ();
-  cookie_init ();
 
 #ifdef USE_POLICY
   /* policy_init depends on conf_init having run.  */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cookie.c,v 1.6 1999/08/05 22:40:37 niklas Exp $	*/
+/*	$OpenBSD: cookie.c,v 1.7 2001/06/25 00:00:44 ho Exp $	*/
 /*	$EOM: cookie.c,v 1.21 1999/08/05 15:00:04 niklas Exp $	*/
 
 /*
@@ -45,17 +45,10 @@
 #include "cookie.h"
 #include "exchange.h"
 #include "hash.h"
-#include "log.h"
-#include "timer.h"
 #include "transport.h"
 #include "util.h"
 
-#define COOKIE_EVENT_FREQ	360
 #define COOKIE_SECRET_SIZE	16
-
-void cookie_secret_reset (void);
-
-u_int8_t cookie_secret[COOKIE_SECRET_SIZE];
 
 /*
  * Generate an anti-clogging token (a protection against an attacker forcing
@@ -71,63 +64,18 @@ cookie_gen (struct transport *t, struct exchange *exchange, u_int8_t *buf,
   struct hash* hash = hash_get (HASH_SHA1);
   struct sockaddr *name;
   int name_len;
+  u_int8_t tmpsecret[COOKIE_SECRET_SIZE];
 
   hash->Init (hash->ctx);
   (*t->vtbl->get_dst) (t, &name, &name_len);
   hash->Update (hash->ctx, (u_int8_t *)name, name_len);
   (*t->vtbl->get_src) (t, &name, &name_len);
   hash->Update (hash->ctx, (u_int8_t *)name, name_len);
-  if (exchange->initiator)
-    {
-      u_int8_t tmpsecret[COOKIE_SECRET_SIZE];
-
-      getrandom (tmpsecret, COOKIE_SECRET_SIZE);
-      hash->Update (hash->ctx, tmpsecret, COOKIE_SECRET_SIZE);
-    }
-  else
-    {
-      hash->Update (hash->ctx, exchange->cookies + ISAKMP_HDR_ICOOKIE_OFF,
-		    ISAKMP_HDR_ICOOKIE_LEN);
-      hash->Update (hash->ctx, cookie_secret, COOKIE_SECRET_SIZE);
-    }
-
+  if (exchange->initiator == 0)
+    hash->Update (hash->ctx, exchange->cookies + ISAKMP_HDR_ICOOKIE_OFF,
+		  ISAKMP_HDR_ICOOKIE_LEN);
+  getrandom (tmpsecret, COOKIE_SECRET_SIZE);
+  hash->Update (hash->ctx, tmpsecret, COOKIE_SECRET_SIZE);
   hash->Final (hash->digest, hash->ctx);
   memcpy (buf, hash->digest, len);
-}
-
-/*
- * Reset the secret which is used for the responder cookie.
- * As responder we do not want to keep state in the cookie
- * exchange, which means when the cookie secret is reset,
- * our cookie response has timed out.
- */
-void
-cookie_secret_reset (void)
-{
-  getrandom (cookie_secret, COOKIE_SECRET_SIZE);
-}
-
-/*
- * Handle the cookie reset event, and reschedule with timer.
- */
-void
-cookie_reset_event (void *arg)
-{
-  struct timeval now;
-
-  cookie_secret_reset ();
-
-  gettimeofday (&now, 0);
-  now.tv_sec += COOKIE_EVENT_FREQ;
-  timer_add_event ("cookie_reset_event", cookie_reset_event, arg, &now);
-}
-
-void
-cookie_init (void)
-{
-  if (regrand)
-    cookie_secret_reset ();
-  else
-    /* Start responder cookie resets.  */
-    cookie_reset_event (0);
 }
