@@ -1,4 +1,4 @@
-.\"	$OpenBSD: xdr.3,v 1.5 1998/02/24 11:13:54 deraadt Exp $
+.\"	$OpenBSD: xdr.3,v 1.6 1998/02/24 12:57:52 deraadt Exp $
 .\" Mostly converted to mandoc by Theo de Raadt, Tue Feb 24 04:04:46 MST 1998
 .\"
 .Dd February 16, 1988
@@ -40,6 +40,8 @@
 .Nm xdr_wrapstring
 .Nd library routines for external data representation
 .Sh SYNOPSIS
+.Fd #include <sys/types.h>
+.Fd #include <xdr.h>
 .Ft int
 .Fn xdr_array "XDR *xdrs" "char **arrp" "u_int *sizep" "u_int maxsize" "u_int elsize" "xdrproc_t elproc"
 .Ft int
