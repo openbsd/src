@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.20 1999/10/05 22:06:24 espie Exp $	*/
+/*	$OpenBSD: parse.c,v 1.21 1999/10/05 22:08:07 espie Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: parse.c,v 1.20 1999/10/05 22:06:24 espie Exp $";
+static char rcsid[] = "$OpenBSD: parse.c,v 1.21 1999/10/05 22:08:07 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -253,7 +253,7 @@ static int ParseAddDir __P((ClientData, ClientData));
 static int ParseClearPath __P((ClientData, ClientData));
 static void ParseDoDependency __P((char *));
 static int ParseAddCmd __P((ClientData, ClientData));
-static int ParseReadc __P((void));
+static int __inline ParseReadc __P((void));
 static void ParseUnreadc __P((int));
 static void ParseHasCommands __P((ClientData));
 static void ParseDoInclude __P((char *));
@@ -2058,7 +2058,7 @@ ParseEOF (opened)
  * Side Effects:
  *---------------------------------------------------------------------
  */
-static int
+static int __inline
 ParseReadc()
 {
     if (curFILE)
