@@ -1,4 +1,4 @@
-#	$OpenBSD: DISKLESS,v 1.43 2002/06/17 23:13:02 matthieu Exp $
+#	$OpenBSD: DISKLESS,v 1.44 2002/06/18 01:00:04 nate Exp $
 #	$NetBSD: DISKLESS,v 1.26 1996/05/20 18:17:16 mrg Exp $
 #
 # DISKLESS -- Generic machine setup for diskless boot.
@@ -159,8 +159,8 @@ umodem*	at uhub? port ? configuration ?	# USB Modems/Serial
 ucom*	at umodem?
 uvisor*	at uhub? port ? configuration ?	# Handspring Visor
 ucom*	at uvisor?
-#uftdi*	at uhub? port ?
-#ucom*	at uftdi? portno ?
+uftdi*	at uhub? port ?
+ucom*	at uftdi? portno ?
 uaudio* at uhub? port ? configuration ?	# USB Audio
 ulpt*	at uhub? port ? configuration ? # USB Printers
 umass*	at uhub? port ? configuration ? # USB Mass Storage devices
