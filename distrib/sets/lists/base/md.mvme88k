@@ -439,6 +439,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/mii/mii_bitbang.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/mii/nsgphyreg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/mii/xmphyreg.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/dev/ofw/ofw_pci.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/cmpcireg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/cmpcivar.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/cs4280reg.ph

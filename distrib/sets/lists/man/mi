@@ -1118,8 +1118,13 @@
 ./usr/share/man/cat4/pmsi.0
 ./usr/share/man/cat4/pnp.0
 ./usr/share/man/cat4/powerpc
+./usr/share/man/cat4/powerpc/abtn.0
+./usr/share/man/cat4/powerpc/adb.0
+./usr/share/man/cat4/powerpc/aed.0
+./usr/share/man/cat4/powerpc/ams.0
 ./usr/share/man/cat4/powerpc/autoconf.0
-./usr/share/man/cat4/powerpc/com.0
+./usr/share/man/cat4/powerpc/bm.0
+./usr/share/man/cat4/powerpc/gm.0
 ./usr/share/man/cat4/powerpc/intro.0
 ./usr/share/man/cat4/prandom.0
 ./usr/share/man/cat4/pty.0
@@ -1401,6 +1406,7 @@
 ./usr/share/man/cat5/netgroup.0
 ./usr/share/man/cat5/netid.0
 ./usr/share/man/cat5/networks.0
+./usr/share/man/cat5/newsyslog.conf.0
 ./usr/share/man/cat5/passwd.0
 ./usr/share/man/cat5/passwd.conf.0
 ./usr/share/man/cat5/pf.conf.0
@@ -1716,6 +1722,7 @@
 ./usr/share/man/cat8/pac.0
 ./usr/share/man/cat8/pcnfsd.0
 ./usr/share/man/cat8/pfctl.0
+./usr/share/man/cat8/pflogd.0
 ./usr/share/man/cat8/photurisd.0
 ./usr/share/man/cat8/ping.0
 ./usr/share/man/cat8/ping6.0

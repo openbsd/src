@@ -742,6 +742,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/mii/xmphyreg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/mulaw.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ofw
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ofw/ofw_pci.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ofw/openfirm.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/auviavar.ph

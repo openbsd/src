@@ -125,6 +125,7 @@
 ./sbin/nfsd
 ./sbin/nologin
 ./sbin/pfctl
+./sbin/pflogd
 ./sbin/photurisd
 ./sbin/ping
 ./sbin/ping6
@@ -316,7 +317,6 @@
 ./usr/bin/midiplay
 ./usr/bin/mixerctl
 ./usr/bin/mkdep
-./usr/bin/mkfifo
 ./usr/bin/mktemp
 ./usr/bin/modstat
 ./usr/bin/more
