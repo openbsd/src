@@ -1,5 +1,5 @@
-/*	$OpenBSD: if_ae.c,v 1.11 1997/03/25 04:58:43 briggs Exp $	*/
-/*	$NetBSD: if_ae.c,v 1.60 1997/03/19 08:04:38 scottr Exp $	*/
+/*	$OpenBSD: if_ae.c,v 1.12 1997/04/17 17:46:41 gene Exp $	*/
+/*	$NetBSD: if_ae.c,v 1.61 1997/04/14 16:28:34 scottr Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -239,8 +239,8 @@ aeinit(sc)
 	struct ae_softc *sc;
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
-	int     i;
-	u_char  mcaf[8];
+	u_int8_t mcaf[8];
+	int i;
 
 	/*
 	 * Initialize the NIC in the exact order outlined in the NS manual.
@@ -460,9 +460,9 @@ static inline void
 ae_rint(sc)
 	struct ae_softc *sc;
 {
-	u_char  boundary, current;
+	u_char boundary, current;
 	u_short len;
-	u_char  nlen;
+	u_char nlen;
 	u_int8_t *lenp;
 	struct ae_ring packet_hdr;
 	int packet_ptr;
@@ -740,16 +740,17 @@ aeintr(arg, slot)
 }
 
 /*
- * Process an ioctl request.  This code needs some work - it looks pretty ugly.
+ * Process an ioctl request.
+ * XXX - This code needs some work - it looks pretty ugly.
  */
 int
 aeioctl(ifp, cmd, data)
-	register struct ifnet *ifp;
+	struct ifnet *ifp;
 	u_long cmd;
 	caddr_t data;
 {
 	struct ae_softc *sc = ifp->if_softc;
-	register struct ifaddr *ifa = (struct ifaddr *) data;
+	struct ifaddr *ifa = (struct ifaddr *) data;
 	struct ifreq *ifr = (struct ifreq *) data;
 	int     s, error = 0;
 
@@ -889,6 +890,7 @@ aeread(sc, buf, len)
 /*
  * Supporting routines.
  */
+
 /*
  * Given a source and destination address, copy 'amount' of a packet from the
  * ring buffer into a linear destination buffer.  Takes into account ring-wrap.
@@ -982,9 +984,9 @@ ae_getmcaf(ac, af)
 {
 	struct ifnet *ifp = &ac->ac_if;
 	struct ether_multi *enm;
-	register u_char *cp, c;
-	register u_long crc;
-	register int i, len;
+	u_char *cp, c;
+	u_int32_t crc;
+	int i, len;
 	struct ether_multistep step;
 
 	/*
