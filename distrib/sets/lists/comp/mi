@@ -3472,6 +3472,7 @@
 ./usr/share/man/cat3/iscntrl.0
 ./usr/share/man/cat3/isdigit.0
 ./usr/share/man/cat3/isendwin.0
+./usr/share/man/cat3/isfdtype.0
 ./usr/share/man/cat3/isgraph.0
 ./usr/share/man/cat3/isinf.0
 ./usr/share/man/cat3/isinff.0

@@ -1415,9 +1415,11 @@
 ./usr/share/man/cat5/disklabel.0
 ./usr/share/man/cat5/disktab.0
 ./usr/share/man/cat5/editrc.0
+./usr/share/man/cat5/elf.0
 ./usr/share/man/cat5/ethers.0
 ./usr/share/man/cat5/exports.0
 ./usr/share/man/cat5/fbtab.0
+./usr/share/man/cat5/files.conf.0
 ./usr/share/man/cat5/forward.0
 ./usr/share/man/cat5/fs.0
 ./usr/share/man/cat5/fstab.0
