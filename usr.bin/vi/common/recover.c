@@ -1,4 +1,4 @@
-/*	$OpenBSD: recover.c,v 1.6 2001/05/28 22:41:35 pvalchev Exp $	*/
+/*	$OpenBSD: recover.c,v 1.7 2001/06/18 21:39:26 millert Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -837,16 +837,19 @@ rcv_mktemp(sp, path, dname, perms)
 	 * !!!
 	 * We expect mkstemp(3) to set the permissions correctly.  On
 	 * historic System V systems, mkstemp didn't.  Do it here, on
-	 * GP's.
+	 * GP's.  This also protects us from users with stupid umasks.
 	 *
 	 * XXX
-	 * The variable perms should really be a mode_t, and it would
-	 * be nice to use fchmod(2) instead of chmod(2), here.
+	 * The variable perms should really be a mode_t.
 	 */
-	if ((fd = mkstemp(path)) == -1)
+	if ((fd = mkstemp(path)) == -1 || fchmod(fd, perms) == -1) {
 		msgq_str(sp, M_SYSERR, dname, "%s");
-	else
-		(void)chmod(path, perms);
+		if (fd != -1) {
+			close(fd);
+			unlink(path);
+			fd = -1;
+		}
+	}
 	return (fd);
 }
 

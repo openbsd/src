@@ -1,4 +1,4 @@
-/*	$OpenBSD: exf.c,v 1.12 2001/01/29 01:58:29 niklas Exp $	*/
+/*	$OpenBSD: exf.c,v 1.13 2001/06/18 21:39:25 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -189,9 +189,14 @@ file_init(sp, frp, rcv_name, flags)
 			goto err;
 		(void)snprintf(tname, sizeof(tname),
 		    "%s/vi.XXXXXX", O_STR(sp, O_DIRECTORY));
-		if ((fd = mkstemp(tname)) == -1) {
+		fd = mkstemp(tname);
+		if (fd == -1 || fchmod(fd, S_IRUSR | S_IWUSR) == -1) {
 			msgq(sp, M_SYSERR,
 			    "237|Unable to create temporary file");
+			if (fd != -1) {
+				close(fd);
+				(void)unlink(tname);
+			}
 			goto err;
 		}
 		(void)close(fd);
@@ -1129,7 +1134,12 @@ file_backup(sp, name, bname)
 		flags = O_TRUNC;
 	} else
 		flags = O_CREAT | O_EXCL;
-	if ((wfd = open(wfname, flags | O_WRONLY, S_IRUSR | S_IWUSR)) < 0) {
+	if ((wfd = open(wfname, flags | O_WRONLY, S_IRUSR | S_IWUSR)) < 0 ||
+	    fchmod(wfd, S_IRUSR | S_IWUSR) < 0) {
+		if (wfd != -1) {
+			close(wfd);
+			(void)unlink(wfname);
+		}
 		estr = bname;
 		goto err;
 	}
