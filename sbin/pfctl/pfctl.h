@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.h,v 1.4 2003/01/09 10:40:44 cedric Exp $ */
+/*	$OpenBSD: pfctl.h,v 1.5 2003/01/09 17:33:19 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -58,6 +58,7 @@ int	 pfr_ina_define(struct pfr_table *, struct pfr_addr *, int, int *,
 int	 pfctl_clear_tables(int);
 int	 pfctl_show_tables(int);
 int	 pfctl_command_tables(int, char *[], char *, char *, char *, int);
+int	 pfctl_show_altq(int, int);
 
 #ifndef DEFAULT_PRIORITY
 #define DEFAULT_PRIORITY	1
@@ -74,20 +75,6 @@ struct segment {
 	LIST_ENTRY(segment)	_next;
 	double			x, y, d, m;
 };
-
-struct pf_altq_node {
-	struct pf_altq		 altq;
-	struct pf_altq_node	*next;
-	struct pf_altq_node	*children;
-};
-
-void			 pfctl_insert_altq_node(struct pf_altq_node **,
-			    const struct pf_altq);
-struct pf_altq_node	*pfctl_find_altq_node(struct pf_altq_node *,
-			    const char *, const char *);
-void			 pfctl_print_altq_node(const struct pf_altq_node *,
-			    unsigned);
-void			 pfctl_free_altq_node(struct pf_altq_node *);
 
 int		 check_commit_altq(int, int);
 void		 pfaltq_store(struct pf_altq *);

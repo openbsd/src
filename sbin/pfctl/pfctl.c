@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.126 2003/01/09 10:40:44 cedric Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.127 2003/01/09 17:33:19 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -67,7 +67,6 @@ void	 pfctl_clear_pool(struct pf_pool *);
 void	 pfctl_print_rule_counters(struct pf_rule *, int);
 int	 pfctl_show_rules(int, int, int);
 int	 pfctl_show_nat(int, int);
-int	 pfctl_show_altq(int);
 int	 pfctl_show_states(int, u_int8_t, int);
 int	 pfctl_show_status(int);
 int	 pfctl_show_timeouts(int);
@@ -600,36 +599,6 @@ pfctl_show_rules(int dev, int opts, int format)
 		}
 		pfctl_clear_pool(&pr.rule.rpool);
 	}
-	return (0);
-}
-
-int
-pfctl_show_altq(int dev)
-{
-	struct pf_altq_node *root = NULL;
-
-	struct pfioc_altq pa;
-	u_int32_t mnr, nr;
-
-	if (!altqsupport)
-		return (-1);
-	memset(&pa, 0, sizeof(pa));
-	if (ioctl(dev, DIOCGETALTQS, &pa)) {
-		warn("DIOCGETALTQS");
-		return (-1);
-	}
-	mnr = pa.nr;
-	for (nr = 0; nr < mnr; ++nr) {
-		pa.nr = nr;
-		if (ioctl(dev, DIOCGETALTQ, &pa)) {
-			warn("DIOCGETALTQ");
-			return (-1);
-		}
-		pfctl_insert_altq_node(&root, pa.altq);
-	}
-	for (; root != NULL; root = root->next)
-		pfctl_print_altq_node(root, 0);
-	pfctl_free_altq_node(root);
 	return (0);
 }
 
@@ -1467,7 +1436,7 @@ main(int argc, char *argv[])
 			pfctl_show_nat(dev, opts);
 			break;
 		case 'q':
-			pfctl_show_altq(dev);
+			pfctl_show_altq(dev, opts);
 			break;
 		case 's':
 			pfctl_show_states(dev, 0, opts);
@@ -1484,7 +1453,7 @@ main(int argc, char *argv[])
 		case 'a':
 			pfctl_show_rules(dev, opts, 0);
 			pfctl_show_nat(dev, opts);
-			pfctl_show_altq(dev);
+			pfctl_show_altq(dev, opts);
 			pfctl_show_states(dev, 0, opts);
 			pfctl_show_status(dev);
 			pfctl_show_rules(dev, opts, 1);

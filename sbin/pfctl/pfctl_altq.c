@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_altq.c,v 1.30 2003/01/05 02:17:09 dhartmei Exp $	*/
+/*	$OpenBSD: pfctl_altq.c,v 1.31 2003/01/09 17:33:19 henning Exp $	*/
 
 /*
  * Copyright (C) 2002
@@ -1001,104 +1001,6 @@ sc_x2y(struct service_curve *sc, double x)
 		y = (double)sc->d * (double)sc->m1
 			+ (x - (double)sc->d) * (double)sc->m2;
 	return (y);
-}
-
-void
-pfctl_insert_altq_node(struct pf_altq_node **root,
-    const struct pf_altq altq)
-{
-	struct pf_altq_node	*node;
-
-	node = calloc(1, sizeof(struct pf_altq_node));
-	if (node == NULL)
-		err(1, "pfctl_insert_altq_node: calloc");
-	memcpy(&node->altq, &altq, sizeof(struct pf_altq));
-	node->next = node->children = NULL;
-
-	if (*root == NULL)
-		*root = node;
-	else if (!altq.parent[0]) {
-		struct pf_altq_node *prev = *root;
-
-		while (prev->next != NULL)
-			prev = prev->next;
-		prev->next = node;
-	} else {
-		struct pf_altq_node *parent;
-
-		parent = pfctl_find_altq_node(*root, altq.parent, altq.ifname);
-		if (parent == NULL)
-			errx(1, "parent %s not found", altq.parent);
-		if (parent->children == NULL)
-			parent->children = node;
-		else {
-			struct pf_altq_node *prev = parent->children;
-
-			while (prev->next != NULL)
-				prev = prev->next;
-			prev->next = node;
-		}
-	}
-}
-
-struct pf_altq_node *
-pfctl_find_altq_node(struct pf_altq_node *root, const char *qname,
-    const char *ifname)
-{
-	struct pf_altq_node	*node, *child;
-
-	for (node = root; node != NULL; node = node->next) {
-		if (!strcmp(node->altq.qname, qname) &&
-		    !(strcmp(node->altq.ifname, ifname)))
-			return (node);
-		if (node->children != NULL) {
-			child = pfctl_find_altq_node(node->children, qname,
-			    ifname);
-			if (child != NULL)
-				return (child);
-		}
-	}
-	return (NULL);
-}
-
-void
-pfctl_print_altq_node(const struct pf_altq_node *node, unsigned level)
-{
-	const struct pf_altq_node	*child;
-
-	if (node == NULL)
-		return;
-
-	print_altq(&node->altq, level);
-
-	if (node->children != NULL) {
-		printf("{");
-		for (child = node->children; child != NULL;
-		    child = child->next) {
-			printf("%s", child->altq.qname);
-			if (child->next != NULL)
-				printf(", ");
-		}
-		printf("}");
-	}
-	printf("\n");
-	for (child = node->children; child != NULL;
-	    child = child->next)
-		pfctl_print_altq_node(child, level+1);
-}
-
-void
-pfctl_free_altq_node(struct pf_altq_node *node)
-{
-	while (node != NULL) {
-		struct pf_altq_node *prev;
-
-		if (node->children != NULL)
-			pfctl_free_altq_node(node->children);
-		prev = node;
-		node = node->next;
-		free(prev);
-	}
 }
 
 /*
