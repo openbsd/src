@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypbind.c,v 1.40 2001/11/05 00:08:34 deraadt Exp $ */
+/*	$OpenBSD: ypbind.c,v 1.41 2001/12/29 00:50:29 deraadt Exp $ */
 
 /*
  * Copyright (c) 1997,1998 Theo de Raadt <deraadt@OpenBSD.org>
@@ -35,7 +35,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ypbind.c,v 1.40 2001/11/05 00:08:34 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ypbind.c,v 1.41 2001/12/29 00:50:29 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -992,6 +992,7 @@ int force;
 		strncpy(ypdb->dom_domain, dom, sizeof ypdb->dom_domain-1);
 		ypdb->dom_domain[sizeof (ypdb->dom_domain)-1] = '\0';
 		ypdb->dom_lockfd = -1;
+		ypdb->dom_xid = unique_xid(ypdb);
 		ypdb->dom_pnext = ypbindlist;
 		ypbindlist = ypdb;
 	}
