@@ -27,7 +27,7 @@ TARGETS =
 @BIND9_MAKE_RULES@
 
 distclean::
-	@if [ "X@LIBBIND@" = "X" ] ; then \
+	@if [ "X@LIBBIND@" != "X" ] ; then \
 		i=lib/bind; \
 		echo "making $@ in `pwd`/$$i"; \
 		(cd $$i; ${MAKE} ${MAKEDEFS} $@) || exit 1; \
