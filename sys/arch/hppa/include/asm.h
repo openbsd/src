@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.2 1998/07/07 21:32:37 mickey Exp $	*/
+/*	$OpenBSD: asm.h,v 1.3 1998/08/29 01:11:05 mickey Exp $	*/
 
 /* 
  * Copyright (c) 1990,1991,1994 The University of Utah and
@@ -22,8 +22,11 @@
  * 	Utah $Hdr: asm.h 1.8 94/12/14$
  */
 
+#ifndef _HPPA_ASM_H_
+#define _HPPA_ASM_H_
+
 /*
- *	hp800 assembler definitions
+ *	hppa assembler definitions
  */
 
 /* 
@@ -162,7 +165,7 @@ isr	.reg	%cr20
 ior	.reg	%cr21
 ipsw	.reg	%cr22
 eirr	.reg	%cr23
-ptov	.reg	%cr24
+hptmask	.reg	%cr24
 tr0	.reg	%cr24
 vtop	.reg	%cr25
 tr1	.reg	%cr25
@@ -172,6 +175,16 @@ tr4	.reg	%cr28
 tr5	.reg	%cr29
 tr6	.reg	%cr30
 tr7	.reg	%cr31
+
+/*
+ * CPU-secific additional control registers
+ */
+#define	dtlb_reg	8
+#define	dtlb_size_even	26
+#define	dtlb_size_odd	27
+#define	itlb_reg	9
+#define	itlb_size_even	24
+#define	itlb_size_odd	25
 
 /*
  * Calling Convention
@@ -225,7 +238,6 @@ tf4	.reg	%fr8
 
 /*
  * Frame offsets to procedure status save and return areas
- * (should use genassym to get these offsets)
  */
 #define FM_PSP  -4
 #define FM_EP   -8
@@ -265,6 +277,12 @@ tf4	.reg	%fr8
 #define VA_ARG12	-FM_SIZE-52
 #define VA_ARG13	-FM_SIZE-56
 
+#ifdef __STDC__
+#define	__CONCAT(a,b)	a ## b
+#else
+#define	__CONCAT(a,b)	a/**/b
+#endif
+
 /*
  * Standard space and subspace definitions.
  */
@@ -296,27 +314,34 @@ tf4	.reg	%fr8
 
 
 #ifdef PROF
-
-/* XXX need profiling versions */
-
+#define	_PROF_PROLOGUE !\
+	stw rp, FM_CRP(sr0,sp)	!\
+	ldil L%_mcount,r1	!\
+	ble R%_mcount(sr0,r1)	!\
+	ldo FM_SIZE(sp),sp	!\
+	ldw FM_CRP(sr0,sp),rp
 #else
-#define ENTRY(x)		\
-/**/	.space	$TEXT$		!\
-	.subspa	$CODE$		!\
+#define	_PROF_PROLOGUE
+#endif
+
+#define	ENTRY(x)		!\
+	.space	$text$		!\
+	.subspa	$code$		!\
 	.export	x,entry		!\
 	.label	x               !\
 	.proc			!\
 	.callinfo no_calls	!\
-	.entry
+	.entry			!\
+	_PROF_PROLOGUE
 
-#define ALTENTRY(x)             \
-/**/    .export x,entry         !\
+#define ALTENTRY(x)		!\
+	.export x,entry         !\
 	.label  x
 
-#define EXIT(x)                 \
-/**/    bv,n    r0(rp)          !\
+#define EXIT(x)			!\
+	bv,n    r0(rp)          !\
+	nop			!\
 	.exit                   !\
 	.procend
 
-#endif
-
+#endif /* _HPPA_ASM_H_ */
