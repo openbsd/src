@@ -1,5 +1,5 @@
-/*	$OpenBSD: queue.h,v 1.3 1996/04/21 22:31:56 deraadt Exp $	*/
-/*	$NetBSD: queue.h,v 1.10 1996/04/09 20:55:34 cgd Exp $	*/
+/*	$OpenBSD: queue.h,v 1.4 1996/05/22 12:07:15 deraadt Exp $	*/
+/*	$NetBSD: queue.h,v 1.11 1996/05/16 05:17:14 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -49,6 +49,13 @@
  * traverse the list. New elements can be added to the list before
  * or after an existing element or at the head of the list. A list
  * may only be traversed in the forward direction.
+ *
+ * A simple queue is headed by a pair of pointers, one the head of the
+ * list and the other to the tail of the list. The elements are singly
+ * linked to save space, so only elements can only be removed from the
+ * head of the list. New elements can be added to the list before or after
+ * an existing element, at the head of the list, or at the end of the
+ * list. A simple queue may only be traversed in the forward direection.
  *
  * A tail queue is headed by a pair of pointers, one to the head of the
  * list and the other to the tail of the list. The elements are doubly
@@ -116,6 +123,51 @@ struct {								\
 		(elm)->field.le_next->field.le_prev = 			\
 		    (elm)->field.le_prev;				\
 	*(elm)->field.le_prev = (elm)->field.le_next;			\
+}
+
+/*
+ * Simple queue definitions.
+ */
+#define SIMPLEQ_HEAD(name, type)						\
+struct name {								\
+	struct type *sqh_first;	/* first element */			\
+	struct type **sqh_last;	/* addr of last next element */		\
+}
+
+#define SIMPLEQ_ENTRY(type)						\
+struct {								\
+	struct type *sqe_next;	/* next element */			\
+}
+
+/*
+ * Simple queue functions.
+ */
+#define	SIMPLEQ_INIT(head) {						\
+	(head)->sqh_first = NULL;					\
+	(head)->sqh_last = &(head)->sqh_first;				\
+}
+
+#define SIMPLEQ_INSERT_HEAD(head, elm, field) {				\
+	if (((elm)->field.sqe_next = (head)->sqh_first) == NULL)	\
+		(head)->sqh_last = &(elm)->field.sqe_next;		\
+	(head)->sqh_first = (elm);					\
+}
+
+#define SIMPLEQ_INSERT_TAIL(head, elm, field) {				\
+	(elm)->field.sqe_next = NULL;					\
+	*(head)->sqh_last = (elm);					\
+	(head)->sqh_last = &(elm)->field.sqe_next;			\
+}
+
+#define SIMPLEQ_INSERT_AFTER(head, listelm, elm, field) {		\
+	if (((elm)->field.sqe_next = (listelm)->field.sqe_next) == NULL)\
+		(head)->sqh_last = &(elm)->field.sqe_next;		\
+	(listelm)->field.sqe_next = (elm);				\
+}
+
+#define SIMPLEQ_REMOVE_HEAD(head, elm, field) {				\
+	if (((head)->sqh_first = (elm)->field.sqe_next) == NULL)	\
+		(head)->sqh_last = &(head)->sqh_first;			\
 }
 
 /*
