@@ -1,4 +1,4 @@
-/*	$OpenBSD: faithd.c,v 1.25 2003/05/15 00:27:29 itojun Exp $	*/
+/*	$OpenBSD: faithd.c,v 1.26 2003/09/02 22:55:26 deraadt Exp $	*/
 /*	$KAME: faithd.c,v 1.58 2002/09/08 01:12:30 itojun Exp $	*/
 
 /*
@@ -49,6 +49,7 @@
 #include <libutil.h>
 #endif
 
+#include <poll.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -81,11 +82,13 @@ char *serverarg[MAXARGV + 1];
 static char *faithdname = NULL;
 char logname[BUFSIZ];
 char procname[BUFSIZ];
+
 struct myaddrs {
 	struct myaddrs *next;
 	struct sockaddr *addr;
 };
 struct myaddrs *myaddrs = NULL;
+
 static const char *service;
 #ifdef USE_ROUTE
 static int sockfd = 0;
@@ -359,7 +362,7 @@ play_service(int s_wld)
 	socklen_t len;
 	int s_src;
 	pid_t child_pid;
-	fd_set rfds;
+	struct pollfd pfd[2];
 	int error;
 	int maxfd;
 
@@ -369,34 +372,32 @@ play_service(int s_wld)
 again:
 	setproctitle("%s", procname);
 
-	FD_ZERO(&rfds);
-	if (s_wld >= FD_SETSIZE)
-		exit_failure("descriptor too big");
-	FD_SET(s_wld, &rfds);
-	maxfd = s_wld;
+	pfd[0].fd = s_wld;
+	pfd[0].events = POLLIN;
+	pfd[1].revents = 0;
+	maxfd = 1;
 #ifdef USE_ROUTE
 	if (sockfd) {
-		if (sockfd >= FD_SETSIZE)
-			exit_failure("descriptor too big");
-		FD_SET(sockfd, &rfds);
-		maxfd = (maxfd < sockfd) ? sockfd : maxfd;
+		pfd[1].fd = sockfd;
+		pfd[1].events = POLLIN;
+		maxfd = 2;
 	}
 #endif
 
-	error = select(maxfd + 1, &rfds, NULL, NULL, NULL);
+	error = poll(pfd, maxfd, 0);
 	if (error < 0) {
 		if (errno == EINTR)
 			goto again;
-		exit_failure("select: %s", strerror(errno));
+		exit_failure("poll: %s", strerror(errno));
 		/*NOTREACHED*/
 	}
 
 #ifdef USE_ROUTE
-	if (FD_ISSET(sockfd, &rfds)) {
+	if (pfd[1].revents & POLLIN) {
 		update_myaddrs();
 	}
 #endif
-	if (FD_ISSET(s_wld, &rfds)) {
+	if (pfd[0].revents & POLLIN) {
 		len = sizeof(srcaddr);
 		s_src = accept(s_wld, (struct sockaddr *)&srcaddr, &len);
 		if (s_src < 0) {
@@ -450,7 +451,7 @@ play_child(int s_src, struct sockaddr *srcaddr)
 	tv.tv_usec = 0;
 
 	getnameinfo(srcaddr, srcaddr->sa_len,
-		src, sizeof(src), NULL, 0, NI_NUMERICHOST);
+	    src, sizeof(src), NULL, 0, NI_NUMERICHOST);
 	syslog(LOG_INFO, "accepted a client from %s", src);
 
 	error = getsockname(s_src, (struct sockaddr *)&dstaddr6, &len);
@@ -460,7 +461,7 @@ play_child(int s_src, struct sockaddr *srcaddr)
 	}
 
 	getnameinfo((struct sockaddr *)&dstaddr6, len,
-		dst6, sizeof(dst6), NULL, 0, NI_NUMERICHOST);
+	    dst6, sizeof(dst6), NULL, 0, NI_NUMERICHOST);
 	syslog(LOG_INFO, "the client is connecting to %s", dst6);
 	
 	if (!faith_prefix((struct sockaddr *)&dstaddr6)) {
@@ -507,7 +508,7 @@ play_child(int s_src, struct sockaddr *srcaddr)
 
 	sa4 = (struct sockaddr *)&dstaddr4;
 	getnameinfo(sa4, sa4->sa_len,
-		dst4, sizeof(dst4), NULL, 0, NI_NUMERICHOST);
+	    dst4, sizeof(dst4), NULL, 0, NI_NUMERICHOST);
 
 	conf = config_match(srcaddr, sa4);
 	if (!conf || !conf->permit) {
@@ -606,7 +607,7 @@ faith_prefix(struct sockaddr *dst)
 	}
 
 	if (memcmp(dst, &faith_prefix,
-			sizeof(struct in6_addr) - sizeof(struct in_addr) == 0) {
+	    sizeof(struct in6_addr) - sizeof(struct in_addr) == 0) {
 		return 1;
 	}
 	return 0;
@@ -619,14 +620,14 @@ faith_prefix(struct sockaddr *dst)
 	struct sockaddr_in dstmap;
 
 	dst6 = (struct sockaddr_in6 *)dst;
-	if (dst->sa_family == AF_INET6
-	 && IN6_IS_ADDR_V4MAPPED(&dst6->sin6_addr)) {
+	if (dst->sa_family == AF_INET6 &&
+	    IN6_IS_ADDR_V4MAPPED(&dst6->sin6_addr)) {
 		/* ugly... */
 		memset(&dstmap, 0, sizeof(dstmap));
 		dstmap.sin_family = AF_INET;
 		dstmap.sin_len = sizeof(dstmap);
 		memcpy(&dstmap.sin_addr, &dst6->sin6_addr.s6_addr[12],
-			sizeof(dstmap.sin_addr));
+		    sizeof(dstmap.sin_addr));
 		dst = (struct sockaddr *)&dstmap;
 	}
 
@@ -637,14 +638,14 @@ faith_prefix(struct sockaddr *dst)
 		sin6 = (struct sockaddr_in6 *)p->addr;
 		sin4 = (struct sockaddr_in *)p->addr;
 
-		if (p->addr->sa_len != dst->sa_len
-		 || p->addr->sa_family != dst->sa_family)
+		if (p->addr->sa_len != dst->sa_len ||
+		    p->addr->sa_family != dst->sa_family)
 			continue;
 
 		switch (dst->sa_family) {
 		case AF_INET6:
-			if (sin6->sin6_scope_id == dst6->sin6_scope_id
-			 && IN6_ARE_ADDR_EQUAL(&sin6->sin6_addr, &dst6->sin6_addr))
+			if (sin6->sin6_scope_id == dst6->sin6_scope_id &&
+			    IN6_ARE_ADDR_EQUAL(&sin6->sin6_addr, &dst6->sin6_addr))
 				return 0;
 			break;
 		case AF_INET:
@@ -666,13 +667,12 @@ map6to4(struct sockaddr_in6 *dst6, struct sockaddr_in *dst4)
 	dst4->sin_family = AF_INET;
 	dst4->sin_port = dst6->sin6_port;
 	memcpy(&dst4->sin_addr, &dst6->sin6_addr.s6_addr[12],
-		sizeof(dst4->sin_addr));
+	    sizeof(dst4->sin_addr));
 
-	if (dst4->sin_addr.s_addr == INADDR_ANY
-	 || dst4->sin_addr.s_addr == INADDR_BROADCAST
-	 || IN_MULTICAST(ntohl(dst4->sin_addr.s_addr)))
+	if (dst4->sin_addr.s_addr == INADDR_ANY ||
+	    dst4->sin_addr.s_addr == INADDR_BROADCAST ||
+	    IN_MULTICAST(ntohl(dst4->sin_addr.s_addr)))
 		return 0;
-
 	return 1;
 }
 
@@ -805,10 +805,10 @@ grab_myaddrs()
 #ifdef __KAME__
 		if (ifa->ifa_addr->sa_family == AF_INET6) {
 			sin6 = (struct sockaddr_in6 *)p->addr;
-			if (IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr)
-			 || IN6_IS_ADDR_SITELOCAL(&sin6->sin6_addr)) {
+			if (IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr) ||
+			    IN6_IS_ADDR_SITELOCAL(&sin6->sin6_addr)) {
 				sin6->sin6_scope_id =
-					ntohs(*(u_int16_t *)&sin6->sin6_addr.s6_addr[2]);
+				    ntohs(*(u_int16_t *)&sin6->sin6_addr.s6_addr[2]);
 				sin6->sin6_addr.s6_addr[2] = 0;
 				sin6->sin6_addr.s6_addr[3] = 0;
 			}
@@ -817,9 +817,9 @@ grab_myaddrs()
 		myaddrs = p;
 		if (dflag) {
 			char hbuf[NI_MAXHOST];
+
 			getnameinfo(p->addr, p->addr->sa_len,
-				hbuf, sizeof(hbuf), NULL, 0,
-				NI_NUMERICHOST);
+			    hbuf, sizeof(hbuf), NULL, 0, NI_NUMERICHOST);
 			syslog(LOG_INFO, "my interface: %s %s", hbuf,
 			    ifa->ifa_name);
 		}
@@ -885,6 +885,6 @@ static void
 usage()
 {
 	fprintf(stderr, "usage: %s [-dp] [-f conf] service [serverpath [serverargs]]\n",
-		faithdname);
+	    faithdname);
 	exit(0);
 }
