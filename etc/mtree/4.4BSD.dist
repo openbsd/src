@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.125 2002/05/11 18:41:20 millert Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.126 2002/05/21 07:44:34 deraadt Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -31,6 +31,11 @@ afs
 # ./etc/amd
 amd
 # ./etc/amd
+..
+
+# ./etc/authpf
+authpf		uname=root mode=0700
+# ./etc/authpf
 ..
 
 # ./etc/disklabels
@@ -1829,6 +1834,11 @@ var
 # ./var/account
 account
 # ./var/account
+..
+
+# ./var/authpf
+authpf		uname=root mode=0700
+# ./var/authpf
 ..
 
 # ./var/empty
