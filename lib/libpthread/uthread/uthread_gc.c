@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  *
  *	$FreeBSD: uthread_gc.c,v 1.2 1998/09/30 19:17:51 dt Exp $
- *	$OpenBSD: uthread_gc.c,v 1.3 1998/12/23 22:49:46 d Exp $
+ *	$OpenBSD: uthread_gc.c,v 1.4 1999/02/01 08:24:42 d Exp $
  *
  * Garbage collector thread. Frees memory allocated for dead threads.
  *
@@ -58,6 +58,12 @@ _thread_gc(pthread_addr_t arg)
 	pthread_t	pthread_prv;
 	struct timespec	abstime;
 	void		*p_stack;
+	sigset_t	ss;
+
+	/* Don't handle signals in this thread */
+	sigfillset(&ss);
+	if (ret = pthread_sigmask(SIG_BLOCK, &ss, NULL))
+		PANIC("Can't block signals in GC thread");
 
 	/* Set a debug flag based on an environment variable. */
 	f_debug = (getenv("LIBC_R_DEBUG") != NULL);
