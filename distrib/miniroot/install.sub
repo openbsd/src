@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.55 1998/03/12 09:42:40 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.56 1998/03/23 05:29:21 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -1214,13 +1214,13 @@ __mount_a_disk_1
 	cat << \__mount_a_disk_2
 
 The following filesystem types are supported:
-	1) default (deduced from the disklabel)
-	2) ffs
+	default		(deduced from the disklabel)
+	ffs
 __mount_a_disk_2
 	_md_fstype=`md_native_fstype`
 	_md_fsopts=`md_native_fsopts`
 	if [ ! -z "$_md_fstype" ]; then
-		echo "	3) $_md_fstype"
+		echo "	$_md_fstype"
 	else
 		_md_fstype="_undefined_"
 	fi
