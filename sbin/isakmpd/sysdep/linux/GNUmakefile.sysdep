@@ -1,4 +1,4 @@
-#	$OpenBSD: GNUmakefile.sysdep,v 1.9 2004/08/10 09:49:51 ho Exp $
+#	$OpenBSD: GNUmakefile.sysdep,v 1.10 2005/02/10 13:07:23 ho Exp $
 
 #
 # Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
@@ -39,7 +39,7 @@ CFLAGS+=	-DUSE_OLD_SOCKADDR -DHAVE_PCAP \
 		-I/usr/include/openssl
 
 FEATURES=	debug tripledes blowfish cast ec aggressive x509 policy
-FEATURES+=	des aes
+FEATURES+=	des aes nat_traversal
 
 IPSEC_SRCS=	pf_key_v2.c
 IPSEC_CFLAGS=	-DUSE_PF_KEY_V2

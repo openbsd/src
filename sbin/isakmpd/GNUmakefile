@@ -1,4 +1,4 @@
-#    $OpenBSD: GNUmakefile,v 1.9 2004/08/08 19:11:06 deraadt Exp $
+#    $OpenBSD: GNUmakefile,v 1.10 2005/02/10 13:07:23 ho Exp $
 
 #
 # Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -173,7 +173,7 @@ CFLAGS+=        -DUSE_RAWKEY
 endif
 
 SRCS+=		${IPSEC_SRCS} ${X509} ${POLICY} ${EC} ${AGGRESSIVE} ${DNSSEC} \
-		$(ISAKMP_CFG)
+		${ISAKMP_CFG} ${NAT_TRAVERSAL}
 CFLAGS+=	${IPSEC_CFLAGS}
 LDADD+=		${DESLIB}
 DPADD+=		${DESLIBDEP}
