@@ -1,4 +1,4 @@
-/*	$OpenBSD: portmap.c,v 1.22 2002/05/30 19:09:05 deraadt Exp $	*/
+/*	$OpenBSD: portmap.c,v 1.23 2002/07/08 08:52:23 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 Theo de Raadt (OpenBSD). All rights reserved.
@@ -44,7 +44,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)portmap.c	5.4 (Berkeley) 4/19/91";
 #else
-static char rcsid[] = "$OpenBSD: portmap.c,v 1.22 2002/05/30 19:09:05 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: portmap.c,v 1.23 2002/07/08 08:52:23 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -95,6 +95,7 @@ static char sccsid[] = "@(#)portmap.c 1.32 87/08/06 Copyr 1984 Sun Micro";
 #include <syslog.h>
 #include <unistd.h>
 #include <netdb.h>
+#include <pwd.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <sys/wait.h>
@@ -115,16 +116,12 @@ extern int errno;
 SVCXPRT *ludpxprt, *ltcpxprt;
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char *argv[])
 {
-	SVCXPRT *xprt;
-	int sock, lsock, c;
+	int sock, lsock, c, on = 1, len = sizeof(struct sockaddr_in);
 	struct sockaddr_in addr, laddr;
-	int on = 1;
-	int len = sizeof(struct sockaddr_in);
 	struct pmaplist *pml;
+	SVCXPRT *xprt;
 
 	while ((c = getopt(argc, argv, "d")) != -1) {
 		switch (c) {
@@ -248,8 +245,7 @@ main(argc, argv)
 #ifndef lint
 /* need to override perror calls in rpc library */
 void
-perror(what)
-	const char *what;
+perror(const char *what)
 {
 
 	syslog(LOG_ERR, "%s: %m", what);
@@ -257,8 +253,7 @@ perror(what)
 #endif
 
 struct pmaplist *
-find_service(prog, vers, prot)
-	u_long prog, vers, prot;
+find_service(u_long prog, u_long vers, u_long prot)
 {
 	struct pmaplist *hit = NULL;
 	struct pmaplist *pml;
@@ -278,9 +273,7 @@ find_service(prog, vers, prot)
  * 1 OK, 0 not
  */
 void
-reg_service(rqstp, xprt)
-	struct svc_req *rqstp;
-	SVCXPRT *xprt;
+reg_service(struct svc_req *rqstp, SVCXPRT *xprt)
 {
 	struct pmap reg;
 	struct pmaplist *pml, *prevpml, *fnd;
@@ -484,9 +477,7 @@ struct encap_parms {
 };
 
 static bool_t
-xdr_encap_parms(xdrs, epp)
-	XDR *xdrs;
-	struct encap_parms *epp;
+xdr_encap_parms(XDR *xdrs, struct encap_parms *epp)
 {
 
 	return (xdr_bytes(xdrs, &(epp->args), &(epp->arglen), ARGSIZE));
@@ -501,9 +492,7 @@ struct rmtcallargs {
 };
 
 static bool_t
-xdr_rmtcall_args(xdrs, cap)
-	XDR *xdrs;
-	struct rmtcallargs *cap;
+xdr_rmtcall_args(XDR *xdrs, struct rmtcallargs *cap)
 {
 
 	/* does not get a port number */
@@ -516,9 +505,7 @@ xdr_rmtcall_args(xdrs, cap)
 }
 
 static bool_t
-xdr_rmtcall_result(xdrs, cap)
-	XDR *xdrs;
-	struct rmtcallargs *cap;
+xdr_rmtcall_result(XDR *xdrs, struct rmtcallargs *cap)
 {
 	if (xdr_u_long(xdrs, &(cap->rmt_port)))
 		return (xdr_encap_parms(xdrs, &(cap->rmt_args)));
@@ -530,9 +517,7 @@ xdr_rmtcall_result(xdrs, cap)
  * The arglen must already be set!!
  */
 static bool_t
-xdr_opaque_parms(xdrs, cap)
-	XDR *xdrs;
-	struct rmtcallargs *cap;
+xdr_opaque_parms(XDR *xdrs, struct rmtcallargs *cap)
 {
 
 	return (xdr_opaque(xdrs, cap->rmt_args.args, cap->rmt_args.arglen));
@@ -543,9 +528,7 @@ xdr_opaque_parms(xdrs, cap)
  * and then calls xdr_opaque_parms.
  */
 static bool_t
-xdr_len_opaque_parms(xdrs, cap)
-	XDR *xdrs;
-	struct rmtcallargs *cap;
+xdr_len_opaque_parms(XDR *xdrs, struct rmtcallargs *cap)
 {
 	u_int beginpos, lowpos, highpos, currpos, pos;
 
@@ -576,9 +559,7 @@ xdr_len_opaque_parms(xdrs, cap)
  * back to the portmapper.
  */
 void
-callit(rqstp, xprt)
-	struct svc_req *rqstp;
-	SVCXPRT *xprt;
+callit(struct svc_req *rqstp, SVCXPRT *xprt)
 {
 	struct rmtcallargs a;
 	struct pmaplist *pml;
@@ -659,11 +640,8 @@ reap()
 #define XXXPROC_NOP		((u_long) 0)
 
 int
-check_callit(addr, proc, prog, aproc)
-	struct sockaddr_in *addr;
-	u_long  proc;
-	u_long  prog;
-	u_long  aproc;
+check_callit(struct sockaddr_in *addr, u_long proc, u_long prog,
+    u_long aproc)
 {
 	if ((prog == PMAPPROG && aproc != XXXPROC_NOP) ||
 	    (prog == NFSPROG && aproc != XXXPROC_NOP) ||
