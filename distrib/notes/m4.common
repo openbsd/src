@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.14 2001/08/22 18:27:42 miod Exp $
+dnl	$OpenBSD: m4.common,v 1.15 2001/09/11 06:06:15 fgsch Exp $
 dnl
 dnl simulate an include path with a macro 'includeit'.
 define(`includeit',`sinclude('INCLUDE/`$1)sinclude('INCLUDE/../`$1)')dnl
@@ -338,9 +338,9 @@ define({:-OpenBSDCDROMInstall-:},
 {:-	To install from CD-ROM:
 		When installing from a CD-ROM, you will be asked which
 		device holds the distribution sets.  This will typically
-		be either "cd0" or "acd0".  Next you will be asked which
-		partition on the CD-ROM the distribution is to be loaded
-		from.  This is normally partition "a".
+		be "cd0".  Next you will be asked which partition on the
+		CD-ROM the distribution is to be loaded from.  This is
+		normally partition "a".
 
 		Next you will have to identify the file system type that
 		has been used to create the distribution on the CD-ROM,

@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.10 2001/03/08 03:37:17 itojun Exp $
+#	$OpenBSD: GENERIC,v 1.11 2001/09/11 06:06:15 fgsch Exp $
 #
 # Generic kernel config (all that is supportted)
 #
@@ -14,7 +14,6 @@ config	bsd swap generic
 
 #atapibus* at wdc?
 #wd*	at wdc? drive ?
-#acd*	at atapibus? drive ?
  
 sd*	at scsibus? target ? lun ?
 #cd*	at scsibus? target ? lun ?
