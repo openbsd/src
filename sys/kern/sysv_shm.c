@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_shm.c,v 1.26 2002/07/12 01:42:54 art Exp $	*/
+/*	$OpenBSD: sysv_shm.c,v 1.27 2002/07/16 23:06:05 art Exp $	*/
 /*	$NetBSD: sysv_shm.c,v 1.50 1998/10/21 22:24:29 tron Exp $	*/
 
 /*
@@ -256,7 +256,7 @@ sys_shmat(p, v, retval)
 	    shm_handle->shm_object, 0, 0, UVM_MAPFLAG(prot, prot,
 	    UVM_INH_SHARE, UVM_ADV_RANDOM, 0));
 	if (rv != KERN_SUCCESS) {
-	    return ENOMEM;
+		return ENOMEM;
 	}
 
 	shmmap_s->va = attach_va;
