@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wi.4tbl,v 1.46 2004/06/01 17:35:58 millert Exp $
+.\"	$OpenBSD: wi.4tbl,v 1.47 2004/06/04 18:10:44 millert Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -146,6 +146,7 @@ Addtron AWP-100:Prism-2:PCMCIA
 Agere Orinoco:Hermes:PCMCIA
 Apple Airport:Hermes:macobio
 Adaptec AWN-8030:Prism-2.5:PCMCIA
+Asus SpaceLink WL-100:Prism-2.5:PCMCIA
 Buffalo AirStation:Prism-2:PCMCIA
 Buffalo AirStation:Prism-2:CF
 Cabletron RoamAbout:Hermes:PCMCIA
