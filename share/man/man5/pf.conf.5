@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.141 2002/12/08 00:18:42 deraadt Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.142 2002/12/08 00:22:16 deraadt Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -362,8 +362,7 @@ the
 .Pa altq on
 declaration.
 The
-.Pa scheduler
-type is required but currently only
+scheduler type is required but currently only
 .Pa cbq
 is supported.
 The maximum rate for all queues on this interface is specified using the
@@ -388,7 +387,7 @@ In the following example, the interface
 should queue up to 5 Mbit/s in four second-level queues using CBQ.
 Those four queues will be shown in a later example.
 .Bd -literal
-    altq on dc0 scheduler cbq bandwidth 5Mb queue { std, http, mail, ssh }
+    altq on dc0 cbq bandwidth 5Mb queue { std, http, mail, ssh }
 .Ed
 .Pp
 Once interfaces are activated for queueing using the
@@ -1584,7 +1583,7 @@ queue-rule     = "queue" string queueopts-list queue-list
 queueopts-list = queueopts-list queueopts | queueopts
 queueopts      = [ "bandwidth" number ( "b" | "Kb" | "Mb" | "Gb" | " %") ] |
                  [ "qlimit" number ] | [ "tbrsize" number ] |
-                 [ "priority" number ] | [ "scheduler" schedulers ] | 
+                 [ "priority" number ] | [ schedulers ] | 
                  [ "qlimit" number ]
 schedulers     = cbq-def
 
