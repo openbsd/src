@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.388 2003/05/19 20:21:53 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.389 2003/05/25 17:07:28 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -2693,8 +2693,6 @@ binatrule	: no BINAT interface af proto FROM host TO ipspec tag
 			    $11->host, "invalid use of table <%s> as the "
 			    "redirect address of a binat rule"))
 				YYERROR;
-			if ($11 != NULL && check_netmask($11->host, binat.af))
-				YYERROR;
 
 			if ($7 != NULL) {
 				if ($7->next) {
@@ -2751,6 +2749,8 @@ binatrule	: no BINAT interface af proto FROM host TO ipspec tag
 					    "a single address");
 					YYERROR;
 				}
+				if (check_netmask($11->host, binat.af))
+					YYERROR;
 
 				if (!PF_AZERO(&binat.src.addr.v.a.mask,
 				    binat.af) &&
