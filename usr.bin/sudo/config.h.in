@@ -65,6 +65,9 @@
 /* Define if you use BSD authentication. */
 #undef HAVE_BSD_AUTH_H
 
+/* Define to 1 if you have the `closefrom' function. */
+#undef HAVE_CLOSEFROM
+
 /* Define if you use OSF DCE. */
 #undef HAVE_DCE
 

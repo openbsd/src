@@ -1660,7 +1660,7 @@ AC_CHECK_FUNCS(lsearch, , [AC_CHECK_LIB(compat, lsearch, AC_CHECK_HEADER(search.
 AC_CHECK_FUNCS(utime, [SUDO_FUNC_UTIME_POSIX], [AC_LIBOBJ(utime)])
 SUDO_FUNC_FNMATCH(AC_DEFINE(HAVE_FNMATCH, 1, [Define if you have the `fnmatch' function.]), AC_LIBOBJ(fnmatch))
 SUDO_FUNC_ISBLANK
-AC_REPLACE_FUNCS(strerror strcasecmp sigaction strlcpy strlcat)
+AC_REPLACE_FUNCS(strerror strcasecmp sigaction strlcpy strlcat closefrom)
 AC_CHECK_FUNCS(snprintf vsnprintf asprintf vasprintf, , [NEED_SNPRINTF=1])
 dnl
 dnl If NEED_SNPRINTF is set, add snprintf.c to LIBOBJS

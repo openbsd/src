@@ -113,9 +113,9 @@ SHELL = /bin/sh
 
 PROGS = @PROGS@
 
-SRCS = alloc.c alloca.c check.c def_data.c defaults.c env.c err.c fileops.c \
-       find_path.c fnmatch.c getcwd.c getprogname.c getspwuid.c goodpath.c \
-       interfaces.c lex.yy.c lsearch.c logging.c parse.c parse.lex \
+SRCS = alloc.c alloca.c check.c closefrom.c def_data.c defaults.c env.c err.c \
+       fileops.c find_path.c fnmatch.c getcwd.c getprogname.c getspwuid.c \
+       goodpath.c interfaces.c lex.yy.c lsearch.c logging.c parse.c parse.lex \
        parse.yacc set_perms.c sigaction.c snprintf.c strcasecmp.c strerror.c \
        strlcat.c strlcpy.c sudo.c sudo.tab.c testsudoers.c tgetpass.c utime.c \
        visudo.c zero_bytes.c $(AUTH_SRCS)
@@ -210,6 +210,7 @@ testsudoers: $(TESTOBJS) $(LIBOBJS)
 # Dependencies (not counting auth functions)
 alloc.o: alloc.c $(SUDODEP)
 check.o: check.c $(SUDODEP)
+closefrom.o: closefrom.c config.h
 env.o: env.c $(SUDODEP)
 err.o: err.c config.h compat.h emul/err.h
 fileops.o: fileops.c $(SUDODEP)

@@ -182,6 +182,9 @@ struct sudo_user {
  */
 #define YY_DECL int yylex __P((void))
 
+#ifndef HAVE_CLOSEFROM
+void closefrom		__P((int));
+#endif
 #ifndef HAVE_GETCWD
 char *getcwd		__P((char *, size_t size));
 #endif
