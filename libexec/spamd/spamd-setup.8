@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamd-setup.8,v 1.9 2003/03/04 11:26:04 henning Exp $
+.\"	$OpenBSD: spamd-setup.8,v 1.10 2003/03/06 03:27:53 david Exp $
 .\"
 .\" Copyright (c) 2003 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -121,8 +121,8 @@ the following example:
 .Sh BLACKLIST FILES
 Additional files given as parameters to
 .Nm
-will be read to configure blacklists. The blacklist file format is
-as follows.
+will be read to configure blacklists.
+The blacklist file format is as follows.
 .Bd -literal -offset indent
 .Ic SPAMD_SOURCE;mylist;"Sorry %A, You are probably spammer\enBye\en"
 .Ic file:/usr/local/share/spammers.txt
@@ -139,10 +139,11 @@ as follows.
 The
 .Li SPAMD_SOURCE
 line includes a tag to name the blacklist, and the message to be
-given to any connections that match this list. The message must
-be enclosed in double quotes
-and may include \en to produce a newline in the output. \e\" will produce
-a double quote in the output, and %% will produce a single % in the output.
+given to any connections that match this list.
+The message must be enclosed in double quotes
+and may include \en to produce a newline in the output.
+\e\" will produce a double quote in the output,
+and %% will produce a single % in the output.
 %A will be expanded by
 .Xr spamd 8
 to display the connecting IP address in the output.
