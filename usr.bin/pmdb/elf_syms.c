@@ -1,4 +1,4 @@
-/*	$OpenBSD: elf_syms.c,v 1.6 2002/07/22 01:20:50 art Exp $	*/
+/*	$OpenBSD: elf_syms.c,v 1.7 2002/07/31 04:42:01 art Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -311,6 +311,12 @@ sym_bkpt(struct pstate *ps, void *arg)
 	return BKPT_KEEP_CONT;
 }
 
+/* Is the ABI really so daft that it doesn't include the linking offset? */
+struct xlink_map {
+	struct link_map lm;
+	Elf_Addr a;
+};
+
 /*
  * Called after execution started so that we can load any dynamic symbols.
  */
@@ -318,7 +324,8 @@ void
 elf_update(struct pstate *ps)
 {
 #ifndef __NetBSD__
-	struct elf_object_v1 eobj;
+	struct xlink_map xlm;
+#define lm xlm.lm
 	struct r_debug rdeb;
 	reg addr;
 	Elf_Dyn dyn;
@@ -369,16 +376,16 @@ elf_update(struct pstate *ps)
 		char fname[MAXPATHLEN];
 		int i;
 
-		if (process_read(ps, addr, &eobj, sizeof(eobj)) < 0) {
+		if (process_read(ps, addr, &xlm, sizeof(xlm)) < 0) {
 			warnx("Can't read symbols...");
 			return;
 		}
 
-		addr = (Elf_Addr)eobj.next;
+		addr = (Elf_Addr)lm.l_next;
 
-		if (eobj.load_name == NULL || eobj.load_name == (char *)-1)
+		if (lm.l_name == NULL || lm.l_name == (char *)-1)
 			continue;
-		if (process_read(ps, (Elf_Addr)eobj.load_name, fname,
+		if (process_read(ps, (Elf_Addr)lm.l_name, fname,
 		    sizeof(fname)) < 0) {
 			warnx("Can't read symbols...");
 			return;
@@ -391,7 +398,7 @@ elf_update(struct pstate *ps)
 		if (i == MAXPATHLEN)
 			continue;
 
-		if (st_open(ps, fname, eobj.load_offs) == NULL)
+		if (st_open(ps, fname, xlm.a) == NULL)
 			warn("symbol loading failed");
 	}
 #endif
