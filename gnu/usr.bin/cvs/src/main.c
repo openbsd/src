@@ -879,7 +879,7 @@ parseopts()
 		(void) umask(mode);
 	    }
 	    else if (!strncmp(buf, "dlimit=", 7)) {
-#ifdef __OpenBSD__
+#ifdef BSD
 #include <sys/resource.h>
 		struct rlimit rl;
 
