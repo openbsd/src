@@ -880,16 +880,16 @@ static const struct compair comtable[] =
     {"r", "# "},			/* ratfor	 */
     {"rc", " * "},			/* Microsoft Windows resource file */
     {"red", "% "},			/* psl/rlisp	 */
-#ifdef sparc
+#ifdef __sparc__
     {"s", "! "},			/* assembler	 */
 #endif
-#ifdef mc68000
+#ifdef __mc68000__
     {"s", "| "},			/* assembler	 */
 #endif
-#ifdef pdp11
+#ifdef __pdp11__
     {"s", "/ "},			/* assembler	 */
 #endif
-#ifdef vax
+#ifdef __vax__
     {"s", "# "},			/* assembler	 */
 #endif
 #ifdef __ksr__
