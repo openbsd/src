@@ -1,4 +1,4 @@
-/* $OpenBSD: m88110_fp.S,v 1.9 2001/12/22 17:57:11 smurph Exp $	*/
+/* $OpenBSD: m88110_fp.S,v 1.10 2003/08/11 20:45:17 miod Exp $	*/
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * All rights reserved.
@@ -52,8 +52,7 @@
 #include <machine/trap.h>
 #include <machine/asm.h>
 
-	.text
-ENTRY(m88110_Xfp_precise)
+ASENTRY(m88110_Xfp_precise)
 	or	r29, r3, r0     /*  r29 is now the E.F. */
 	subu	r31, r31, 40
 	st	r1,  r31, 32

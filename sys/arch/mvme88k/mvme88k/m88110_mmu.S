@@ -1,4 +1,4 @@
-#	$OpenBSD: m88110_mmu.S,v 1.7 2001/12/22 19:17:01 smurph Exp $
+#	$OpenBSD: m88110_mmu.S,v 1.8 2003/08/11 20:45:17 miod Exp $
 /*
  * Copyright (c) 2000 Steve Murphree, Jr.
  * All rights reserved.
@@ -36,14 +36,14 @@
 ENTRY(set_icmd)
 	FLUSH_PIPELINE
 	jmp.n	r1
-	stcr	r2, ICMD
+	 stcr	r2, ICMD
 ENTRY(set_ictl)
 	FLUSH_PIPELINE
 	jmp.n	r1
-	stcr	r2, ICTL
+	 stcr	r2, ICTL
 ENTRY(set_isar)
 	jmp.n	r1
-	stcr	r2, ISAR
+	 stcr	r2, ISAR
 ENTRY(set_isap)
 	FLUSH_PIPELINE
 	NOP
@@ -56,29 +56,29 @@ ENTRY(set_iuap)
 	jmp	r1
 ENTRY(set_iir)
 	jmp.n	r1
-	stcr	r2, IIR 
+	 stcr	r2, IIR 
 ENTRY(set_ibp)
 	jmp.n	r1
-	stcr	r2, IBP 
+	 stcr	r2, IBP 
 ENTRY(set_ippu)
 	jmp.n	r1
-	stcr	r2, IPPU
+	 stcr	r2, IPPU
 ENTRY(set_ippl)
 	jmp.n	r1
-	stcr	r2, IPPL
+	 stcr	r2, IPPL
 ENTRY(set_isr)
 	jmp.n	r1
-	stcr	r2, ISR 
+	 stcr	r2, ISR 
 ENTRY(set_ilar)
 	jmp.n	r1
-	stcr	r2, ILAR
+	 stcr	r2, ILAR
 ENTRY(set_ipar)
 	jmp.n	r1
-	stcr	r2, IPAR
+	 stcr	r2, IPAR
 ENTRY(set_dcmd)
 	FLUSH_PIPELINE
 	jmp.n	r1
-	stcr	r2, DCMD
+	 stcr	r2, DCMD
 ENTRY(set_dctl)
 	FLUSH_PIPELINE
 	stcr	r2, DCTL
@@ -105,96 +105,96 @@ ENTRY(set_duap)
 	jmp	r1
 ENTRY(set_dir)
 	jmp.n	r1
-	stcr	r2, DIR 
+	 stcr	r2, DIR 
 ENTRY(set_dbp)
 	jmp.n	r1
-	stcr	r2, DBP 
+	 stcr	r2, DBP 
 ENTRY(set_dppu)
 	jmp.n	r1
-	stcr	r2, DPPU
+	 stcr	r2, DPPU
 ENTRY(set_dppl)
 	jmp.n	r1
-	stcr	r2, DPPL
+	 stcr	r2, DPPL
 ENTRY(set_dsr)
 	jmp.n	r1
-	stcr	r2, DSR 
+	 stcr	r2, DSR 
 ENTRY(set_dlar)
 	jmp.n	r1
-	stcr	r2, DLAR
+	 stcr	r2, DLAR
 ENTRY(set_dpar)
 	jmp.n	r1
-	stcr	r2, DPAR
+	 stcr	r2, DPAR
 
 /* get routines */
 ENTRY(get_icmd)
 	jmp.n	r1
-	ldcr	r2, ICMD
+	 ldcr	r2, ICMD
 ENTRY(get_ictl)
 	jmp.n	r1
-	ldcr	r2, ICTL
+	 ldcr	r2, ICTL
 ENTRY(get_isar)
 	jmp.n	r1
-	ldcr	r2, ISAR
+	 ldcr	r2, ISAR
 ENTRY(get_isap)
 	jmp.n	r1
-	ldcr	r2, ISAP
+	 ldcr	r2, ISAP
 ENTRY(get_iuap)
 	jmp.n	r1
- 	ldcr	r2, IUAP
+ 	 ldcr	r2, IUAP
 ENTRY(get_iir)
 	jmp.n	r1
-	ldcr	r2, IIR 
+	 ldcr	r2, IIR 
 ENTRY(get_ibp)
 	jmp.n	r1
-	ldcr	r2, IBP 
+	 ldcr	r2, IBP 
 ENTRY(get_ippu)
 	jmp.n	r1
-	ldcr	r2, IPPU
+	 ldcr	r2, IPPU
 ENTRY(get_ippl)
 	jmp.n	r1
-	ldcr	r2, IPPL
+	 ldcr	r2, IPPL
 ENTRY(get_isr)
 	jmp.n	r1
-	ldcr	r2, ISR 
+	 ldcr	r2, ISR 
 ENTRY(get_ilar)
 	jmp.n	r1
-	ldcr	r2, ILAR
+	 ldcr	r2, ILAR
 ENTRY(get_ipar)
 	jmp.n	r1
-	ldcr	r2, IPAR
+	 ldcr	r2, IPAR
 ENTRY(get_dcmd)
 	jmp.n	r1
-	ldcr	r2, DCMD
+	 ldcr	r2, DCMD
 ENTRY(get_dctl)
 	jmp.n	r1
-	ldcr	r2, DCTL
+	 ldcr	r2, DCTL
 ENTRY(get_dsar)
 	jmp.n	r1
-	ldcr	r2, DSAR
+	 ldcr	r2, DSAR
 ENTRY(get_dsap)
 	jmp.n	r1
-	ldcr	r2, DSAP
+	 ldcr	r2, DSAP
 ENTRY(get_duap)
 	jmp.n	r1
-	ldcr	r2, DUAP
+	 ldcr	r2, DUAP
 ENTRY(get_dir)
 	jmp.n	r1
-	ldcr	r2, DIR 
+	 ldcr	r2, DIR 
 ENTRY(get_dbp)
 	jmp.n	r1
-	ldcr	r2, DBP 
+	 ldcr	r2, DBP 
 ENTRY(get_dppu)
 	jmp.n	r1
-	ldcr	r2, DPPU
+	 ldcr	r2, DPPU
 ENTRY(get_dppl)
 	jmp.n	r1
-	ldcr	r2, DPPL
+	 ldcr	r2, DPPL
 ENTRY(get_dsr)
 	jmp.n	r1
-	ldcr	r2, DSR 
+	 ldcr	r2, DSR 
 ENTRY(get_dlar)
 	jmp.n	r1
-	ldcr	r2, DLAR
+	 ldcr	r2, DLAR
 ENTRY(get_dpar)
 	jmp.n	r1
-	ldcr	r2, DPAR
+	 ldcr	r2, DPAR

@@ -1,4 +1,4 @@
-/*   $OpenBSD: eh.S,v 1.30 2003/08/03 23:34:09 miod Exp $   */
+/*   $OpenBSD: eh.S,v 1.31 2003/08/11 20:45:17 miod Exp $   */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -31,11 +31,10 @@
 /*
  * HISTORY
  * 1. Should get rid of SR0 reference for thread stuff.
- * 2. Make up my mind what is _kstack. I think it should be p->p_addr+UPAGES.
+ * 2. Make up my mind what is kstack. I think it should be p->p_addr+UPAGES.
  *    (p_addr is pointing to user struct and swapin is making sure it is
  *    updated)
- *   Whatever is _kstack, its usage in this file should be
- *   revisited.
+ *   Whatever is kstack, its usage in this file should be revisited.
  */
 
 /*
@@ -214,7 +213,6 @@
 #include <machine/board.h>
 #include <machine/param.h>		/* CPU_ and BRD_ defines */
 #include <machine/trap.h>		/* for T_ defines */
-#include <machine/board.h>
 
 /*
  * The exception frame as defined in "machine/pcb.h" (among other places) is
@@ -239,16 +237,16 @@
 
 	data
 	align 4
-sbadcpupanic:
-	string	"eh.S: bad cpu number in FLAGS"
+ASLOCAL(sbadcpupanic)
+	string	"eh.S: bad cpu number in FLAGS\000"
 
 	text
 	align 8
 
-Lbadcpupanic:
-	or.u	r2, r0, hi16(sbadcpupanic)
-	or	r2, r2, lo16(sbadcpupanic)
-	bsr	_C_LABEL(panic)
+ASLOCAL(Lbadcpupanic)
+	or.u	r2, r0, hi16(_ASM_LABEL(sbadcpupanic))
+	bsr.n	_C_LABEL(panic)
+	 or	r2, r2, lo16(_ASM_LABEL(sbadcpupanic))
 
 	align 8
 
@@ -267,8 +265,8 @@ Lbadcpupanic:
 
 #define SAVE_CTX \
 	stcr	r31, SRX			; \
-	or.u	r31, r0,  hi16(_save_frame)	; \
-	or	r31, r31, lo16(_save_frame)	; \
+	or.u	r31, r0,  hi16(_ASM_LABEL(save_frame))	; \
+	or	r31, r31, lo16(_ASM_LABEL(save_frame))	; \
 	/* save old R31 and other R registers */; \
 	st.d	r0 , r31, GENREG_OFF(0)		; \
 	st.d	r2 , r31, GENREG_OFF(2)		; \
@@ -356,28 +354,28 @@ Lbadcpupanic:
 #define PREP(NAME, NUM, BIT, SSBR_STUFF, FLAG_PRECHECK) \
 	xcr	FLAGS, FLAGS, SR1			; \
 	FLAG_PRECHECK					; \
-	/* the bsr later clobbers r1, so save now */	; \
+	/* the bsr later clobbers r1, so save now */	  \
 	stcr	r1, SR2	/* r1 now free */		; \
-	/* set or clear the FLAG_FROM_KERNEL bit */	; \
+	/* set or clear the FLAG_FROM_KERNEL bit */	  \
 	ldcr	r1, EPSR				; \
 	bb0.n	PSR_SUPERVISOR_MODE_BIT, r1, 1f		; \
 	 clr	FLAGS, FLAGS, 1<FLAG_FROM_KERNEL>	; \
 	set	FLAGS, FLAGS, 1<FLAG_FROM_KERNEL>	; \
-	/* get a stack (exception frame) */		; \
-1:	bsr	setup_phase_one				; \
-	/* TMP2 now free -- use to set EF_VECTOR */	; \
+	/* get a stack (exception frame) */		  \
+1:	bsr	_ASM_LABEL(setup_phase_one)		; \
+	/* TMP2 now free -- use to set EF_VECTOR */	  \
 	or	TMP2, r0, NUM				; \
 	st	TMP2, r31, REG_OFF(EF_VECTOR)		; \
-	/* TMP3 also free -- use to set last_vector */	; \
-	or.u	TMP3, r0,   hi16(_last_vector)		; \
-	st	TMP2, TMP3, lo16(_last_vector)		; \
-	/* Clear any bits in the SSBR (held in TMP) */	; \
-	/* SSBR_STUFF may be empty, though.         */	; \
+	/* TMP3 also free -- use to set last_vector */	  \
+	or.u	TMP3, r0,   hi16(_C_LABEL(last_vector))	; \
+	st	TMP2, TMP3, lo16(_C_LABEL(last_vector))	; \
+	/* Clear any bits in the SSBR (held in TMP) */	  \
+	/* SSBR_STUFF may be empty, though.         */	  \
 	SSBR_STUFF					; \
-	/* call setup_phase_two to restart the FPU  */	; \
-	/* and to save all general registers.       */	; \
-	bsr	setup_phase_two				; \
-	/* All general regs free -- do any debugging */	; \
+	/* call setup_phase_two to restart the FPU  */	  \
+	/* and to save all general registers.       */	  \
+	bsr	_ASM_LABEL(setup_phase_two)		; \
+	/* All general regs free -- do any debugging */	  \
 	PREP_DEBUG(BIT, NAME)
 #endif
 
@@ -394,13 +392,13 @@ Lbadcpupanic:
 	 clr	FLAGS, FLAGS, 1<FLAG_FROM_KERNEL> 	; \
 	set	FLAGS, FLAGS, 1<FLAG_FROM_KERNEL>	; \
 	/* get a stack (exception frame) */		; \
-1:	bsr	m88110_setup_phase_one			; \
+1:	bsr	_ASM_LABEL(m88110_setup_phase_one)	; \
 	/* TMP2 now free -- use to set EF_VECTOR */	; \
 	or	TMP2, r0, NUM				; \
 	st	TMP2, r31, REG_OFF(EF_VECTOR)		; \
 	/* call setup_phase_two to restart the FPU  */	; \
 	/* and to save all general registers.       */	; \
-	bsr	m88110_setup_phase_two			; \
+	bsr	_ASM_LABEL(m88110_setup_phase_two)	; \
 	/* All general regs free -- do any debugging */	; \
 	PREP_DEBUG(BIT, NAME)
 #endif
@@ -408,12 +406,14 @@ Lbadcpupanic:
 /* Some defines for use with PREP() */
 #define	No_SSBR_Stuff		/* empty */
 #define	Clear_SSBR_Dest \
-	bsr	clear_dest_ssbr_bit
+	bsr	_ASM_LABEL(clear_dest_ssbr_bit)
 #define	No_Precheck		/* empty */
 #define	Data_Precheck \
-	bb1.n	FLAG_IGNORE_DATA_EXCEPTION, FLAGS, ignore_data_exception
+	bb1.n	FLAG_IGNORE_DATA_EXCEPTION, FLAGS, \
+		_ASM_LABEL(ignore_data_exception)
 #define	M88110_Data_Precheck \
-	bb1.n	FLAG_IGNORE_DATA_EXCEPTION, FLAGS, m88110_ignore_data_exception
+	bb1.n	FLAG_IGNORE_DATA_EXCEPTION, FLAGS, \
+		_ASM_LABEL(m88110_ignore_data_exception)
 
 #ifdef EH_DEBUG
 /*
@@ -425,7 +425,7 @@ Lbadcpupanic:
  * The bits are defined in "asm.h"
  */
 
-GLOBAL(eh_debug)
+ASGLOBAL(eh_debug)
 	word	0x00000000
 
 /*
@@ -434,24 +434,24 @@ GLOBAL(eh_debug)
  * need be.
  */
 #define PREP_DEBUG(DebugNumber, Name) \
-	or.u	r2, r0, hi16(_eh_debug)		; \
-	ld	r3, r2, lo16(_eh_debug)		; \
-	bb0	DebugNumber, r3, 4f		; \
-	/* call MY_info(ef,thread,flags,kind)*/	; \
-	or	r2, r30, r0			; \
-	ldcr	r3, SR0				; \
-	ldcr	r4, SR1				; \
-	or.u	r5, r0, hi16(2f)		; \
-	or	r5, r5, lo16(2f)		; \
-	bsr.n	_MY_info			; \
-	 subu	r31, r31, 40			; \
-	br.n	4f				; \
-	 addu	r31, r31, 40			; \
-	data					; \
-2:	string Name				; \
-	byte	0				; \
-	align	4				; \
-	text					; \
+	or.u	r2, r0, hi16(_ASM_LABEL(eh_debug))	; \
+	ld	r3, r2, lo16(_ASM_LABEL(eh_debug))	; \
+	bb0	DebugNumber, r3, 4f			; \
+	/* call MY_info(ef,thread,flags,kind)*/		  \
+	or	r2, r30, r0				; \
+	ldcr	r3, SR0					; \
+	ldcr	r4, SR1					; \
+	or.u	r5, r0, hi16(2f)			; \
+	or	r5, r5, lo16(2f)			; \
+	bsr.n	_C_LABEL(MY_info)			; \
+	 subu	r31, r31, 40				; \
+	br.n	4f					; \
+	 addu	r31, r31, 40				; \
+	data						; \
+2:	string Name					; \
+	byte	0					; \
+	align	4					; \
+	text						; \
 4:
 
 
@@ -463,12 +463,12 @@ GLOBAL(eh_debug)
  * Then, return from the interrupt handler.
  */
 #define DONE(DebugNumber) \
-	or.u	r2, r0, hi16(_eh_debug)	; \
-	ld	r3, r2, lo16(_eh_debug)	; \
-	bb0	DebugNumber, r3, 2f	; \
-	ldcr	r4, SR1			; \
-	CALL(_MY_info_done, r31, r4)	; \
-2:	br	return_from_exception_handler
+	or.u	r2, r0, hi16(_ASM_LABEL(eh_debug))	; \
+	ld	r3, r2, lo16(_ASM_LABEL(eh_debug))	; \
+	bb0	DebugNumber, r3, 2f			; \
+	ldcr	r4, SR1					; \
+	CALL(_C_LABEL(MY_info_done), r31, r4)		; \
+2:	br	_ASM_LABEL(return_from_exception_handler)
 #else
 /*
  * If not debugging, then no debug-prep to do.
@@ -476,7 +476,7 @@ GLOBAL(eh_debug)
  */
 #define	PREP_DEBUG(bit, name)
 #define	DONE(num) \
-	br	return_from_exception_handler
+	br	_ASM_LABEL(return_from_exception_handler)
 #endif	/* EH_DEBUG */
 
 #ifdef M88100
@@ -495,7 +495,6 @@ GLOBAL(interrupt_handler)
 	PREP("interrupt", 1, DEBUG_INTERRUPT_BIT, No_SSBR_Stuff, No_Precheck)
 	/* interrupt_func is set in mvme_bootstrap() */
 	CALL(_C_LABEL(m88100_trap), T_INT, r30)
-	/*CALLP(_interrupt_func, 1, r30) */
 	DONE(DEBUG_INTERRUPT_BIT)
 
 /* instruction access exception handler */
@@ -562,32 +561,32 @@ GLOBAL(overflow_handler)
 
 /* Floating-point precise handler */
 #define	FPp_SSBR_STUFF \
-	bsr	clear_FPp_ssbr_bit
+	bsr	_ASM_LABEL(clear_FPp_ssbr_bit)
 GLOBAL(fp_precise_handler)
 	PREP("FPU precise", 114, DEBUG_FPp_BIT, FPp_SSBR_STUFF, No_Precheck)
-	CALL(_m88100_Xfp_precise, r0, r30)
+	CALL(_ASM_LABEL(m88100_Xfp_precise), r0, r30)
 	DONE(DEBUG_FPp_BIT)
 
 /* Floating-point imprecise handler */
 #define	FPi_SSBR_STUFF \
-	bsr	clear_FPi_ssbr_bit
+	bsr	_ASM_LABEL(clear_FPi_ssbr_bit)
 GLOBAL(fp_imprecise_handler)
 	PREP("FPU imprecise", 115, DEBUG_FPi_BIT, FPi_SSBR_STUFF, No_Precheck)
-	CALL(_Xfp_imprecise, r0, r30)
+	CALL(_ASM_LABEL(Xfp_imprecise), r0, r30)
 	DONE(DEBUG_FPi_BIT)
 
 /* All standard system calls.  */
 GLOBAL(syscall_handler)
 	PREP("syscall", 128, DEBUG_SYSCALL_BIT, No_SSBR_Stuff, No_Precheck)
 	ld	r13, r30, GENREG_OFF(13)
-	CALL(_m88100_syscall, r13, r30)	/* system call no. is in r13 */
+	CALL(_C_LABEL(m88100_syscall), r13, r30)
 	DONE(DEBUG_SYSCALL_BIT)
 
 /* trap 496 comes here */
 GLOBAL(bugtrap)
 	PREP("bugsyscall", 496, DEBUG_BUGCALL_BIT, No_SSBR_Stuff, No_Precheck)
 	ld	r9, r30, GENREG_OFF(9)
-	CALL(_bugsyscall, r9, r30)	/* system call no. is in r9 */
+	CALL(_C_LABEL(bugsyscall), r9, r30)
 	DONE(DEBUG_BUGCALL_BIT)
 
 GLOBAL(sigsys)
@@ -656,12 +655,12 @@ GLOBAL(entry)
 GLOBAL(error_handler)
 	/* pick up the slavestack */
 	or	r26, r0,  r31	/* save old stack */
-	or.u	r31, r0,  hi16(_intstack_end)
-	or	r31, r31, lo16(_intstack_end)
+	or.u	r31, r0,  hi16(_ASM_LABEL(intstack_end))
+	or	r31, r31, lo16(_ASM_LABEL(intstack_end))
 
 	/* zero the stack, so we'll know what we're lookin' at */
-	or.u	r27, r0,  hi16(_intstack)
-	or	r27, r27, lo16(_intstack)
+	or.u	r27, r0,  hi16(_C_LABEL(intstack))
+	or	r27, r27, lo16(_C_LABEL(intstack))
 1:	cmp	r28, r27, r31
 	bb1	ge,  r28, 2f	/* branch if at the end of the stack */
 	st	r0,  r0,  r27
@@ -742,8 +741,8 @@ GLOBAL(error_handler)
 #if 0 /* MVME188 */
 #define	IST_REG		0xfff84040	/* interrupt status addr */
 	/* check if it's a mvme188 */
-	or.u	r10,  r0,   hi16(_brdtyp)
-	ld	r11,  r10,  lo16(_brdtyp)
+	or.u	r10,  r0,   hi16(_C_LABEL(brdtyp))
+	ld	r11,  r10,  lo16(_C_LABEL(brdtyp))
 	cmp	r10,  r11,  BRD_188
 	bb1	ne,   r10,  3f
 	or.u	r10,  r0,   hi16(IST_REG)	/* interrupt status register */
@@ -778,8 +777,8 @@ GLOBAL(error_handler)
 	stcr	r1, PSR
 	FLUSH_PIPELINE
 
-GLOBAL(error_loop)
-	bsr	_error_loop
+ASLOCAL(error_loop)
+	bsr	_ASM_LABEL(error_loop)
 	/* never returns*/
 
 /*
@@ -804,12 +803,12 @@ GLOBAL(error_loop)
 GLOBAL(reset_handler)
 	/* pick up the slavestack */
 	or	r26, r0, r31	/* save old stack */
-	or.u	r31, r0,  hi16(_intstack_end)
-	or	r31, r31, lo16(_intstack_end)
+	or.u	r31, r0,  hi16(_ASM_LABEL(intstack_end))
+	or	r31, r31, lo16(_ASM_LABEL(intstack_end))
 
 	/* zero the stack, so we'll know what we're lookin' at */
-	or.u	r27, r0,  hi16(_intstack)
-	or	r27, r27, lo16(_intstack)
+	or.u	r27, r0,  hi16(_C_LABEL(intstack))
+	or	r27, r27, lo16(_C_LABEL(intstack))
 1:	cmp	r28, r27, r31
 	bb1	ge,  r28, 2f	/* branch if at the end of the stack */
 	st	r0,  r0,  r27
@@ -917,14 +916,14 @@ GLOBAL(reset_handler)
 	stcr	r1, PSR
 	FLUSH_PIPELINE
 
-GLOBAL(error_loop2)
-	bsr	_error_loop2
+ASLOCAL(error_loop2)
+	bsr	_ASM_LABEL(error_loop2)
 	/* never returns*/
 
 /*
  * This is part of baddadr (below).
  */
-ASGLOBAL(ignore_data_exception)
+ASLOCAL(ignore_data_exception)
 	/*
 	 * SR0: pointer to the current thread structure
 	 * SR1: previous FLAGS reg
@@ -945,8 +944,8 @@ ASGLOBAL(ignore_data_exception)
 	 */
 
 	/* the "+2" below is to set the VALID bit. */
-	or.u	r2, r0, hi16(badaddr__return_nonzero + 2)
-	or	r2, r2, lo16(badaddr__return_nonzero + 2)
+	or.u	r2, r0, hi16(_ASM_LABEL(badaddr__return_nonzero) + 2)
+	or	r2, r2, lo16(_ASM_LABEL(badaddr__return_nonzero) + 2)
 	stcr	r2, SNIP	/* Make it the next instruction to execute */
 
 	addu	r2, r2, 4
@@ -961,7 +960,7 @@ ASGLOBAL(ignore_data_exception)
 /*
  * This is part of baddadr (below).
  */
-ASGLOBAL(m88110_ignore_data_exception)
+ASLOCAL(m88110_ignore_data_exception)
 	/*
 	 * SR0: pointer to the current thread structure
 	 * SR1: previous FLAGS reg
@@ -981,8 +980,8 @@ ASGLOBAL(m88110_ignore_data_exception)
 	 * to blast r2..r9 as we see fit.
 	 */
 
-	or.u	r2, r0, hi16(m88110_badaddr__return_nonzero)
-	or	r2, r2, lo16(m88110_badaddr__return_nonzero)
+	or.u	r2, r0, hi16(_ASM_LABEL(m88110_badaddr__return_nonzero))
+	or	r2, r2, lo16(_ASM_LABEL(m88110_badaddr__return_nonzero))
 	stcr	r2, EXIP	/* Make it the next instruction to execute */
 
 	/* the following jumps to "m88110_badaddr__return_nonzero" below */
@@ -1030,15 +1029,15 @@ GLOBAL(badaddr)
 	 * see if it's a halfword.....
 	 */
 	sub	r6,  r3, 4
-	bcnd.n	ne0, r6, badaddr__maybe_halfword
+	bcnd.n	ne0, r6, _ASM_LABEL(badaddr__maybe_halfword)
 	 stcr	r5,  SR1
 	FLUSH_PIPELINE
 
 	/*
 	 * It's a bad address if it's misaligned.
 	 */
-	bb1	0, r2, badaddr__return_nonzero
-	bb1	1, r2, badaddr__return_nonzero
+	bb1	0, r2, _ASM_LABEL(badaddr__return_nonzero)
+	bb1	1, r2, _ASM_LABEL(badaddr__return_nonzero)
 	/*
 	 * The next line will either fault or not. If it faults, execution
 	 * will go to:  data_access_handler (see above)
@@ -1050,44 +1049,41 @@ GLOBAL(badaddr)
 	 */
 	ld	r5, r2, 0
 	FLUSH_PIPELINE
-	br.n	badaddr__return
+	br.n	_ASM_LABEL(badaddr__return)
 	 or	r2, r0, r0	/* indicate a zero (address not bad) return.*/
 
-badaddr__maybe_halfword:
+ASLOCAL(badaddr__maybe_halfword)
 	/* More or less like the code for checking a word above */
 	sub	r6, r3, 2
-	bcnd	ne0, r6, badaddr__maybe_byte
+	bcnd	ne0, r6, _ASM_LABEL(badaddr__maybe_byte)
 
 	/* it's bad if it's misaligned */
-	bb1	0, r2, badaddr__return_nonzero
+	bb1	0, r2, _ASM_LABEL(badaddr__return_nonzero)
 
 	FLUSH_PIPELINE
 	ld.h	r5, r2, 0
 	FLUSH_PIPELINE
-	br.n	badaddr__return
+	br.n	_ASM_LABEL(badaddr__return)
 	 or	r2, r0, r0
 
-badaddr__maybe_byte:
+ASLOCAL(badaddr__maybe_byte)
 	/* More or less like the code for checking a word above */
 	sub	r6, r3, 1
-	bcnd	ne0, r6, badaddr__unknown_size
+	bcnd	ne0, r6, _ASM_LABEL(badaddr__unknown_size)
 	FLUSH_PIPELINE
 	ld.b	r5, r2, 0
 	FLUSH_PIPELINE
-	br.n	badaddr__return
+	br.n	_ASM_LABEL(badaddr__return)
 	 or	r2, r0, r0
-badaddr__unknown_size:
+ASLOCAL(badaddr__unknown_size)
 #ifdef	DEBUG
 	data
-1: 	string "bad length (%d) to badaddr() from 0x%x"
+1: 	string "bad length (%d) to badaddr() from 0x%x\000"
 	text
 	or.u	r2, r0, hi16(1b)
 	or	r2, r2, lo16(1b)
-	or	r4, r0, r1
-	bsr	_C_LABEL(printf)
-	or.u	r2, r0, hi16(1b)
-	or	r2, r2, lo16(1b)
-	bsr	_C_LABEL(panic)
+	bsr.n	_C_LABEL(panic)
+	 or	r4, r0, r1
 	/*NOTREACHED*/
 #endif
 
@@ -1111,7 +1107,7 @@ ASGLOBAL(badaddr__return)
 	stcr	r8, PSR
 	jmp	r1
 
-ASGLOBAL(m88110_badaddr__return_nonzero)
+ASLOCAL(m88110_badaddr__return_nonzero)
 	/*
 	 * On mc88110, we possibly took an exception
 	 * and we have to clear DSR after the rte
@@ -1120,12 +1116,12 @@ ASGLOBAL(m88110_badaddr__return_nonzero)
 	 */
 	stcr	r0, DSR	/* Clear DSR reg on mc88110 */
 	stcr	r0, DLAR	/* Clear DLAR reg on mc88110 */
-	br.n	badaddr__return_nonzero
+	br.n	_ASM_LABEL(badaddr__return_nonzero)
 	 stcr	r0, DPAR	/* Clear DPAR reg on mc88110 */
 
 #ifdef M88100
 
-ASGLOBAL(setup_phase_one)
+ASLOCAL(setup_phase_one)
 	/*
 	 * SR0: current thread (if any, null if not)
 	 * SR1: saved copy of exception-time register now holding FLAGS
@@ -1135,8 +1131,8 @@ ASGLOBAL(setup_phase_one)
 	 * FLAGS: CPU status flags
 	 *
 	 * immediate goal:
-	 *  Decide where we're going to put the exception frame.
-	 *  Might be at the end of R31, SR3, or the thread's pcb.
+	 *   Decide where we're going to put the exception frame.
+	 *   Might be at the end of R31, SR3, or the thread's pcb.
 	 */
 
 	/* Check if we are coming in from a FPU restart exception.
@@ -1147,12 +1143,11 @@ ASGLOBAL(setup_phase_one)
 	NOP
 	NOP
 
-	bb1	FLAG_ENABLING_FPU, FLAGS, use_SR3_pcb
+	bb1	FLAG_ENABLING_FPU, FLAGS, _ASM_LABEL(use_SR3_pcb)
 	/* are we coming in from user mode? If so, pick up thread pcb */
-	bb0	FLAG_FROM_KERNEL, FLAGS, pickup_stack
+	bb0	FLAG_FROM_KERNEL, FLAGS, _ASM_LABEL(pickup_stack)
 
 	/* Interrupt in kernel mode, not FPU restart */
-ASGLOBAL(already_on_kernel_stack)
 	/*
 	 * SR0: current thread (if any, null if not)
 	 * SR1: saved copy of exception-time register now holding FLAGS
@@ -1173,10 +1168,10 @@ ASGLOBAL(already_on_kernel_stack)
 	st	r1,   r31,  REG_OFF(EF_SR3)
 
 	addu	r1,   r31,  SIZEOF_EF		/* save previous r31 */
-	br.n	have_pcb
+	br.n	_ASM_LABEL(have_pcb)
 	 st 	r1,   r31,  GENREG_OFF(31)
 
-ASGLOBAL(use_SR3_pcb)
+ASLOCAL(use_SR3_pcb)
 	/*
 	 * SR0: current thread (if any, null if not)
 	 * SR1: saved copy of exception-time register now holding FLAGS
@@ -1213,15 +1208,15 @@ ASGLOBAL(use_SR3_pcb)
 	or	r31,  r0,   r30			/* make r31 our pointer. */
 	addu	r30,  r30,  SIZEOF_EF		/* r30 now has previous SR3 */
 	st	r30,  r31,  REG_OFF(EF_SR3)	/* save previous SR3 */
-	br.n	have_pcb
+	br.n	_ASM_LABEL(have_pcb)
 	 xcr	r30,  r30,  SR3			/* restore r30 */
 1:
 	/* we took an exception while restarting the FPU from user space.
 	 * Consequently, we never picked up a stack. Do so now.
 	 * R1 is currently free (saved in the exception frame pointed at by
 	 * r30) */
-	or.u	r1,   r0,   hi16(_kstack)
-	ld	r1,   r1,   lo16(_kstack)
+	or.u	r1,   r0,   hi16(_ASM_LABEL(kstack))
+	ld	r1,   r1,   lo16(_ASM_LABEL(kstack))
 	addu	r1,   r1,   USIZE-SIZEOF_EF
 	st	FLAGS,r1,   REG_OFF(EF_FLAGS)	/* store flags */
 	st	r31,  r1,   GENREG_OFF(31)	/* store r31 - now free */
@@ -1230,10 +1225,10 @@ ASGLOBAL(use_SR3_pcb)
 	ld	r1,   r30,  GENREG_OFF(0)	/* restore old r1 */
 	st	r0,   r30,  GENREG_OFF(0)	/* repair that frame */
 	st	r1,   r31,  GENREG_OFF(1)	/* store r1 */
-	br.n	have_pcb
+	br.n	_ASM_LABEL(have_pcb)
 	 xcr	r30,  r30,  SR3			/* restore r30 */
 
-ASGLOBAL(pickup_stack)
+ASLOCAL(pickup_stack)
 	/*
 	 * SR0: current thread
 	 * SR1: saved copy of exception-time register now holding FLAGS
@@ -1249,8 +1244,8 @@ ASGLOBAL(pickup_stack)
 	stcr	r31,  SR3	/* save previous r31 */
 
 	/* switch to the thread's kernel stack. */
-	or.u	r31,  r0,   hi16(_curpcb)
-	ld	r31,  r31,  lo16(_curpcb)
+	or.u	r31,  r0,   hi16(_C_LABEL(curpcb))
+	ld	r31,  r31,  lo16(_C_LABEL(curpcb))
 	addu	r31,  r31,  PCB_USER_STATE	/* point to user save area */
 	st	FLAGS,r31,  REG_OFF(EF_FLAGS)	/* save flags */
 	st	r1,   r31,  GENREG_OFF(1)	/* save prev. r1 (now free) */
@@ -1258,7 +1253,7 @@ ASGLOBAL(pickup_stack)
 	st	r1,   r31,  GENREG_OFF(31)
 	/* FALLTHROUGH */
 
-ASGLOBAL(have_pcb)
+ASLOCAL(have_pcb)
 	/*
 	 * SR0: current thread
 	 * SR1: saved copy of exception-time register now holding FLAGS
@@ -1295,8 +1290,8 @@ ASGLOBAL(have_pcb)
 	 */
 #ifdef MVME188
 	/* check if it's a mvme188 */
-	or.u	TMP,  r0,   hi16(_brdtyp)
-	ld	TMP2, TMP,  lo16(_brdtyp)
+	or.u	TMP,  r0,   hi16(_C_LABEL(brdtyp))
+	ld	TMP2, TMP,  lo16(_C_LABEL(brdtyp))
 	cmp	TMP,  TMP2, BRD_188
 	bb1	ne,   TMP,  5f
 
@@ -1310,7 +1305,7 @@ ASGLOBAL(have_pcb)
 	cmp	TMP2, TMP, 0x3				/* CPU3 ? */
 	bb1	eq,   TMP2, 4f
 	/* Arrrrg! bad cpu# */
-	br	Lbadcpupanic
+	br	_ASM_LABEL(Lbadcpupanic)
 1:
 	/* must be CPU0 */
 	or.u	TMP,  r0,   hi16(VME_CMMU_I0)
@@ -1319,7 +1314,7 @@ ASGLOBAL(have_pcb)
 	or.u	TMP,  r0,   hi16(VME_CMMU_D0)
 	ld	TMP2, TMP,  lo16(VME_CMMU_D0) + 0x108
 	st	TMP2, r31,  REG_OFF(EF_DPFSR)
-	br	pfsr_done
+	br	_ASM_LABEL(pfsr_done)
 2:
 	/* must be CPU1 */
 	or.u	TMP,  r0,   hi16(VME_CMMU_I1)
@@ -1328,7 +1323,7 @@ ASGLOBAL(have_pcb)
 	or.u	TMP,  r0,   hi16(VME_CMMU_D1)
 	ld	TMP2, TMP,  lo16(VME_CMMU_D1) + 0x108
 	st	TMP2, r31,  REG_OFF(EF_DPFSR)
-	br	pfsr_done
+	br	_ASM_LABEL(pfsr_done)
 3:
 	/* must be CPU2 */
 	or.u	TMP,  r0,   hi16(VME_CMMU_I2)
@@ -1337,7 +1332,7 @@ ASGLOBAL(have_pcb)
 	or.u	TMP,  r0,   hi16(VME_CMMU_D2)
 	ld	TMP2, TMP,  lo16(VME_CMMU_D2) + 0x108
 	st	TMP2, r31,  REG_OFF(EF_DPFSR)
-	br	pfsr_done
+	br	_ASM_LABEL(pfsr_done)
 4:
 	/* must be CPU3 */
 	or.u	TMP,  r0,   hi16(VME_CMMU_I3)
@@ -1346,7 +1341,7 @@ ASGLOBAL(have_pcb)
 	or.u	TMP,  r0,   hi16(VME_CMMU_D3)
 	ld	TMP2, TMP,  lo16(VME_CMMU_D3) + 0x108
 	st	TMP2, r31,  REG_OFF(EF_DPFSR)
-	br	pfsr_done
+	br	_ASM_LABEL(pfsr_done)
 5:
 #endif   /* MVME188 */
 	/* it's a single processor SBC */
@@ -1357,7 +1352,7 @@ ASGLOBAL(have_pcb)
 	ld	TMP2, TMP,  lo16(SBC_CMMU_D) + 0x108
 	st	TMP2, r31,  REG_OFF(EF_DPFSR)
 
-ASGLOBAL(pfsr_done)
+ASLOCAL(pfsr_done)
 	ldcr	TMP,  SSBR
 	ldcr	TMP2, SXIP
 	ldcr	TMP3, DMT0
@@ -1386,7 +1381,7 @@ ASGLOBAL(pfsr_done)
  * the appropriate SSBR bits for the destination registers of
  * loads or xmems.
  */
-	bb0.n	DMT_VALID_BIT, TMP3, DMT_check_finished
+	bb0.n	DMT_VALID_BIT, TMP3, 8f
 	 st	TMP3, r31,  REG_OFF(EF_DMT0)
 
 	ldcr	TMP2, DMT1
@@ -1415,48 +1410,41 @@ ASGLOBAL(pfsr_done)
  * we restart the FPU
  */
 
-ASGLOBAL(check_DMT0)
 	ldcr	TMP2, DMT0
-	bb0.n	DMT_VALID_BIT, TMP2, DMT_check_finished
+	bb0.n	DMT_VALID_BIT, TMP2, 8f
 	/* make sure an exception in fpu_enable will not see our DMT0 */
 	 stcr	r0,   DMT0
-	bb1	DMT_LOCK_BIT,  TMP2, do_DMT0
-	bb1	DMT_WRITE_BIT, TMP2, check_DMT1
-
-ASGLOBAL(do_DMT0)
+	bb1	DMT_LOCK_BIT,  TMP2, 1f
+	bb1	DMT_WRITE_BIT, TMP2, 2f
+1:
 	extu	TMP2, TMP2, DMT_DREG_WIDTH <DMT_DREG_OFFSET>
 	set	TMP2, TMP2, 1<5>
 	clr	TMP,  TMP,  TMP2
-
-ASGLOBAL(check_DMT1)
+2:
 	ldcr	TMP2, DMT1
-	bb0	DMT_VALID_BIT, TMP2, check_DMT2
-	bb1	DMT_LOCK_BIT,  TMP2, do_DMT1
-	bb1	DMT_WRITE_BIT, TMP2, check_DMT2
-
-ASGLOBAL(do_DMT1)
+	bb0	DMT_VALID_BIT, TMP2, 4f
+	bb1	DMT_LOCK_BIT,  TMP2, 3f
+	bb1	DMT_WRITE_BIT, TMP2, 4f
+3:
 	extu	TMP2, TMP2, DMT_DREG_WIDTH <DMT_DREG_OFFSET>
 	set	TMP2, TMP2, 1<5>
 	clr	TMP,  TMP,  TMP2
-
-ASGLOBAL(check_DMT2)
+4:
 	ldcr	TMP2, DMT2
-	bb0	DMT_VALID_BIT, TMP2, DMT_check_finished
-	bb1	DMT_LOCK_BIT,  TMP2, do_DMT2_single
-	bb1	DMT_WRITE_BIT, TMP2, DMT_check_finished
-	bb1	DMT_DOUBLE_BIT,TMP2, do_DMT2_double
-
-ASGLOBAL(do_DMT2_single)
+	bb0	DMT_VALID_BIT, TMP2, 8f
+	bb1	DMT_LOCK_BIT,  TMP2, 5f
+	bb1	DMT_WRITE_BIT, TMP2, 8f
+	bb1	DMT_DOUBLE_BIT,TMP2, 6f
+5:
 	extu	TMP2, TMP2, DMT_DREG_WIDTH <DMT_DREG_OFFSET>
-	br.n	1f
-	 set	TMP2, TMP2, 1<5>
-
-ASGLOBAL(do_DMT2_double)
+	br.n	7f
+	 set	TMP2, TMP2, 1<5>	/* single */
+6:
 	extu	TMP2, TMP2, DMT_DREG_WIDTH <DMT_DREG_OFFSET>
-	set	TMP2, TMP2, 1<6>
-1:	clr	TMP,  TMP,  TMP2
-
-ASGLOBAL(DMT_check_finished)
+	set	TMP2, TMP2, 1<6>	/* double */
+7:
+	clr	TMP,  TMP,  TMP2
+8:
 	/*
 	 * SR0: current thread
 	 * SR1: saved copy of exception-time register now holding FLAGS
@@ -1481,7 +1469,7 @@ ASGLOBAL(DMT_check_finished)
 
 #endif /* M88100 */
 
-ASGLOBAL(clear_FPi_ssbr_bit)
+ASLOCAL(clear_FPi_ssbr_bit)
 	/*
 	 * Clear floatingpont-imprecise ssbr bits.
 	 * Also, save appropriate FPU control registers to the E.F.
@@ -1511,16 +1499,15 @@ ASGLOBAL(clear_FPi_ssbr_bit)
 	 * 2nd reg of a double result [see section 6.8.5]
 	 */
 #define FPIT_SIZE_BIT   10
-	bb0	FPIT_SIZE_BIT, TMP2, not_double_fpi
+	bb0	FPIT_SIZE_BIT, TMP2, 1f
 	extu	TMP2, TMP2, 5<0>	/* get the reg. */
 	set	TMP2, TMP2, 1<6>	/* set width */
 	clr	TMP,  TMP,  TMP2
-
-ASGLOBAL(not_double_fpi)
+1:
 	jmp	r1
 
 
-ASGLOBAL(clear_FPp_ssbr_bit)
+ASLOCAL(clear_FPp_ssbr_bit)
 	/*
 	 * Clear floating pont precise ssbr bits.
 	 * Also, save appropriate FPU control registers to the E.F.
@@ -1556,12 +1543,14 @@ ASGLOBAL(clear_FPp_ssbr_bit)
 	 extu	TMP3, TMP2, 5<0>	/* get FP operation dest reg */
 	br.n	3f
 	 set	TMP3, TMP3, 1<5>	/* size=1 - clear one bit for float */
-2:	set	TMP3, TMP3, 1<6>	/* size=2 - clear two bit for double */
-3:	clr	TMP,  TMP,  TMP3	/* clear bit(s) in ssbr. */
-4:	jmp	r1
+2:
+	set	TMP3, TMP3, 1<6>	/* size=2 - clear two bit for double */
+3:
+	clr	TMP,  TMP,  TMP3	/* clear bit(s) in ssbr. */
+	jmp	r1
 
 
-ASGLOBAL(clear_dest_ssbr_bit)
+ASLOCAL(clear_dest_ssbr_bit)
 	/*
 	 * There are various cases where an exception can leave the
 	 * destination register's bit in the SB set.
@@ -1593,7 +1582,7 @@ ASGLOBAL(clear_dest_ssbr_bit)
 	bb1.n	PSR_SUPERVISOR_MODE_BIT, TMP3, 2f
 	 clr	TMP2, TMP2, 2<0>	/* get rid of valid and error bits. */
 
-1:	/* user space load here */
+	/* user space load here */
 #if ERRATA__XXX_USR
 	NOP
 	ld.usr	TMP2,TMP2, r0	/* get the instruction itself */
@@ -1632,36 +1621,36 @@ ASGLOBAL(clear_dest_ssbr_bit)
 	extu	TMP3, TMP2, 16<16>	/* get the upper 16 bits */
 	mask	TMP3, TMP3, 0xFC00	/* apply the mask */
 	cmp	TMP3, TMP3, 0x1000	/* if equal, it's a load double */
-	bb1	eq,   TMP3, misaligned_double
+	bb1	eq,   TMP3, 2f
 
 	/* still could be -- check the second pattern for ld.d */
 	/* look at the upper 16 bits first */
 	extu	TMP3, TMP2, 16<16>	/* get the upper 16 bits */
 	mask	TMP3, TMP3, 0xFC00	/* apply the mask */
 	cmp	TMP3, TMP3, 0xF400	/* if equal, might be a load double */
-	bb1	ne,   TMP3, misaligned_single	/* not equal, must be single */
+	bb1	ne,   TMP3, 1f		/* not equal, must be single */
 
 	/* now look at the lower 16 bits */
 	extu	TMP3, TMP2, 16<0>	/* get the lower 16 bits */
 	mask	TMP3, TMP3, 0xFCE0	/* apply the mask */
 	cmp	TMP3, TMP3, 0x1000	/* if equal, it's a load double */
-	bb1	eq,   TMP3, misaligned_double
+	bb1	eq,   TMP3, 2f
 
-ASGLOBAL(misaligned_single)
+1:	/* misaligned single */
 	extu	TMP2, TMP2, 5<21>	/* get the destination register */
-	br.n	1f
+	br.n	3f
 	 set	TMP2, TMP2, 1<5>	/* set size=1 */
 
-ASGLOBAL(misaligned_double)
+2:	/* misaligned double */
 	extu	TMP2, TMP2, 5<21>	/* get the destination register */
 	set	TMP2, TMP2, 1<6>	/* set size=2 -- clear two bits */
-
-1:	jmp.n	r1
+3:
+	jmp.n	r1
 	 clr	TMP,  TMP,  TMP2	/* clear bit(s) in ssbr. */
 
 #ifdef M88100
 
-ASGLOBAL(setup_phase_two)
+ASLOCAL(setup_phase_two)
 	/*
 	 * SR0: saved return address to calling exception handler
 	 * SR1: saved copy of exception-time register now holding FLAGS
@@ -1701,8 +1690,8 @@ ASGLOBAL(setup_phase_two)
 	stcr	TMP,  EPSR
 
 	/* the "+2" below is to set the VALID_BIT */
-	or.u	TMP,  r0,   hi16(fpu_enable +2)
-	or	TMP,  TMP,  lo16(fpu_enable +2)
+	or.u	TMP,  r0,   hi16(_ASM_LABEL(fpu_enable) + 2)
+	or	TMP,  TMP,  lo16(_ASM_LABEL(fpu_enable) + 2)
 	stcr	TMP,  SNIP	/* jump to here fpu_enable */
 	addu	TMP,  TMP,  4
 	stcr	TMP,  SFIP	/* and then continue after that */
@@ -1713,13 +1702,12 @@ ASGLOBAL(setup_phase_two)
 	stcr	TMP,  EPSR
 	stcr	r0,   SXIP	/* clear valid bit */
 	stcr	r0,   SNIP	/* clear valid bit */
-	or.u	TMP,  r0,   hi16(fpu_enable)
-	or	TMP,  TMP,  lo16(fpu_enable)
+	or.u	TMP,  r0,   hi16(_ASM_LABEL(fpu_enable))
+	or	TMP,  TMP,  lo16(_ASM_LABEL(fpu_enable))
 	or	TMP,  TMP,  0x2	/* set the VALID_BIT and clear Exception bit */
 	stcr	TMP,  SFIP	/* jump to here fpu_enable */
 #endif
 
-setup_phase_two_cont:
 	set	FLAGS, FLAGS, 1<FLAG_ENABLING_FPU>
 	xcr	FLAGS, FLAGS, SR1
 	st	r1,   r31,  REG_OFF(EF_RET)	/* save the return address */
@@ -1754,7 +1742,7 @@ setup_phase_two_cont:
 
 	RTE	/* jumps to "fpu_enable" on the next line to enable the FPU. */
 
-ASGLOBAL(fpu_enable)
+ASLOCAL(fpu_enable)
 	FLUSH_PIPELINE
 	xcr	TMP,  TMP,  SR3			/* get E.F. pointer */
 	st.d	r30,  TMP,  GENREG_OFF(30)	/* save previous r30, r31 */
@@ -1827,27 +1815,25 @@ ASGLOBAL(fpu_enable)
 	 * If it's not the interrupt exception, enable interrupts and
 	 * take care of any data access exceptions......
 	 */
-#ifdef INTSTACK
-	/*
-	 * If interrupt exception, switch to interrupt stack if not
-	 * already there. Else, switch to kernel stack.
-	 */
-#endif
 	or	r30,  r0,   r31		/* get a copy of the e.f. pointer */
 	ld	r2,   r31,  REG_OFF(EF_EPSR)
 	bb1	PSR_SUPERVISOR_MODE_BIT, r2, 1f	/* if in kernel mode */
 
 #ifdef INTSTACK
+	/*
+	 * If interrupt exception, switch to interrupt stack if not
+	 * already there. Else, switch to kernel stack.
+	 */
 	ld	r3,   r31,  REG_OFF(EF_VECTOR)
 	cmp	r3,   r3,   1	/* is interrupt ? */
 	bb0	eq,   r3,   2f
-	or.u	r31,  r0,   hi16(_intstack_end)	/* switch to int stack */
-	or	r31,  r31,  lo16(_intstack_end)
+	or.u	r31,  r0,   hi16(_ASM_LABEL(intstack_end))
+	or	r31,  r31,  lo16(_ASM_LABEL(intstack_end))
 	br	3f
 2:
 #endif
-	or.u	r31,  r0,   hi16(_kstack)
-	ld	r31,  r31,  lo16(_kstack)
+	or.u	r31,  r0,   hi16(_ASM_LABEL(kstack))
+	ld	r31,  r31,  lo16(_ASM_LABEL(kstack))
 	addu	r31,  r31,  USIZE	/* point at proper end */
 	br	3f
 1:
@@ -1855,13 +1841,12 @@ ASGLOBAL(fpu_enable)
 	ld	r3,   r31,  REG_OFF(EF_VECTOR)
 	cmp	r3,   r3,   1	/* is interrupt ? */
 	bb0	eq,   r3,   3f	/* no, we will stay on kern stack */
-	or.u	r31,  r0,   hi16(_intstack_end)	/* switch to int stack */
-	or	r31,  r31,  lo16(_intstack_end)
+	or.u	r31,  r0,   hi16(_ASM_LABEL(intstack_end))
+	or	r31,  r31,  lo16(_ASM_LABEL(intstack_end))
 #endif
-	/* This label is here for debugging */
-exception_handler_has_ksp:
-global exception_handler_has_ksp
-3:	/*
+
+3:
+	/*
 	 * here - r30 holds a pointer to the exception frame.
 	 * r31 is a pointer to the kernel stack/interrupt stack.
 	 */
@@ -1872,23 +1857,23 @@ global exception_handler_has_ksp
 #endif /* DDB */
 
 	ld	r2,   r30,  REG_OFF(EF_VECTOR)
-	bcnd.n	eq0,  r2,   return_to_calling_exception_handler	/* is error */
+	bcnd.n	eq0,  r2,   8f			/* is error */
 	 ld	r14,  r30,  REG_OFF(EF_RET)
-	cmp	r3,   r2,   1	/* is an interrupt? */
-	bb1.n	eq,   r3,   return_to_calling_exception_handler	/* skip if so */
+	cmp	r3,   r2,   1			/* is an interrupt? */
+	bb1.n	eq,   r3,   8f			/* skip if so */
 
 #ifdef DDB
 	 cmp	r3,   r2,   130	/* DDB break exception */
-	bb1.n	eq,   r3,   return_to_calling_exception_handler
+	bb1.n	eq,   r3,   8f
 	 cmp	r3,   r2,   132	/* DDB entry exception */
-	bb1.n	eq,   r3,   return_to_calling_exception_handler
+	bb1.n	eq,   r3,   8f
 #endif
 
 	/* enable interrupts */
 	 ldcr	r2,   PSR
 	clr	r2,   r2,   1<PSR_INTERRUPT_DISABLE_BIT>
 	stcr	r2,   PSR
-#ifdef     DDB
+#ifdef DDB
 	FLUSH_PIPELINE
 #endif
 
@@ -1896,7 +1881,7 @@ global exception_handler_has_ksp
 	   - check dmt0 anything outstanding? */
 
 	ld	r3,   r30,  REG_OFF(EF_DMT0)
-	bb0	DMT_VALID_BIT, r3, return_to_calling_exception_handler
+	bb0	DMT_VALID_BIT, r3, 8f
 
 	/*
 	 * r30 can be clobbered by calls. So stuff its value into a preserved
@@ -1905,7 +1890,7 @@ global exception_handler_has_ksp
 	or	r15,  r0,   r30
 
 	CALL(_C_LABEL(m88100_trap), T_DATAFLT, r15)
-	CALL(_data_access_emulation, r15, r0)
+	CALL(_C_LABEL(data_access_emulation), r15, r0)
 
 	/* restore it... */
 	or	r30,  r0,   r15
@@ -1913,7 +1898,7 @@ global exception_handler_has_ksp
 	/* clear the dmt0 word in the E.F */
 	st	r0,   r30,  REG_OFF(EF_DMT0)
 
-ASGLOBAL(return_to_calling_exception_handler)
+8:
 	jmp	r14	/* loaded above */
 #endif /* M88100 */
 
@@ -1936,7 +1921,6 @@ ENTRY(proc_trampoline)
 	ld	r2, r31,4	/* & proc pointer from switch frame */
 	jsr.n	r1
 	 addu	r31,r31,8
-	bsr	_C_LABEL(panic)
 
 /*
  * proc_do_uret
@@ -1950,9 +1934,9 @@ ENTRY(proc_do_uret)
 	ld	r3,r2,P_ADDR		/* p->p_addr */
 	addu	r3,r3,PCB_USER_STATE	/* p->p_addr.u_pcb.user_state */
 	st	r3,r31,0		/* put it on the stack */
-	br	return_from_exception_handler
+	br	_ASM_LABEL(return_from_exception_handler)
 
-ASGLOBAL(return_from_exception_handler)
+ASLOCAL(return_from_exception_handler)
 	/*
 	 * Regs r1-r30 are free. R31 is pointing at the word
 	 * on the kernel stack where our pointer to the exception frame
@@ -1973,13 +1957,13 @@ ASGLOBAL(return_from_exception_handler)
 	or.u	r2, r0, hi16(_C_LABEL(cputyp))
 	ld	r3, r2, lo16(_C_LABEL(cputyp))
 	cmp	r2, r3, CPU_88110
-	bb1	eq, r2, m88110_return_code
+	bb1	eq, r2, _ASM_LABEL(m88110_return_code)
 #endif
 #ifdef M88100
 #define	FPTR	r14
 	ld	FPTR, r31, 0	/* grab exception frame pointer */
 	ld	r3, FPTR, REG_OFF(EF_DMT0)
-	bb0	DMT_VALID_BIT, r3, check_ast
+	bb0	DMT_VALID_BIT, r3, _ASM_LABEL(check_ast)
 
 #if 1
 	/*
@@ -2035,7 +2019,7 @@ ASGLOBAL(return_from_exception_handler)
 	/* clear the dmt0 word in the E.F. */
 	st	r0 , FPTR, REG_OFF(EF_DMT0)
 2:
-	br	check_ast
+	br	_ASM_LABEL(check_ast)
 #endif /* M88100 */
 
 #ifdef M88110
@@ -2293,7 +2277,7 @@ GLOBAL(m88110_overflow_handler)
 /* Floating-point precise handler */
 GLOBAL(m88110_fp_precise_handler)
 	PREP2("FPU precise", 114, DEBUG_FPp_BIT, No_SSBR_Stuff, No_Precheck)
-	CALL(_m88110_Xfp_precise, r0, r30)
+	CALL(_ASM_LABEL(m88110_Xfp_precise), r0, r30)
 	DONE(DEBUG_FPp_BIT)
 
 /* MVME197 non-maskable interrupt handler (ABORT button) */
@@ -2324,14 +2308,14 @@ GLOBAL(m88110_inst_atc_miss)
 GLOBAL(m88110_syscall_handler)
 	PREP2("syscall", 128, DEBUG_SYSCALL_BIT, No_SSBR_Stuff, No_Precheck)
 	ld	r13, r30, GENREG_OFF(13)
-	CALL(_m88110_syscall, r13, r30)	/* system call no. is in r13 */
+	CALL(_C_LABEL(m88110_syscall), r13, r30)
 	DONE(DEBUG_SYSCALL_BIT)
 
 /* trap 496 comes here */
 GLOBAL(m88110_bugtrap)
 	PREP2("bugsyscall", 496, DEBUG_BUGCALL_BIT, No_SSBR_Stuff, No_Precheck)
 	ld	r9,  r30, GENREG_OFF(9)
-	CALL(_bugsyscall, r9, r30)	/* system call no. is in r9 */
+	CALL(_C_LABEL(bugsyscall), r9, r30)
 	DONE(DEBUG_BUGCALL_BIT)
 
 GLOBAL(m88110_sigsys)
@@ -2413,9 +2397,9 @@ GLOBAL(m88110_error_handler)
  * Upon a real reset, VBR is set to zero (0), so code must be at addr 0
  * to handle it!!!
  *
- * This is totaly different than _error_handler.  Shadowing might or
+ * This is totaly different than error_handler.  Shadowing might or
  * might not be on.
- * R1-R31 could tell u alot about what happend, so we'll save them.
+ * R1-R31 could tell you alot about what happened, so we'll save them.
  *
  * We'll not worry about trashing r26-29 here,
  * since they aren't generally used.
@@ -2426,12 +2410,12 @@ GLOBAL(m88110_reset_handler)
 GLOBAL(m88110_fatal)
 	/* pick up the slavestack */
 	or	r26, r0, r31	/* save old stack */
-	or.u	r31, r0,  hi16(_intstack_end)
-	or	r31, r31, lo16(_intstack_end)
+	or.u	r31, r0,  hi16(_ASM_LABEL(intstack_end))
+	or	r31, r31, lo16(_ASM_LABEL(intstack_end))
 
 	/* zero the stack, so we'll know what we're lookin' at */
-	or.u	r27, r0,  hi16(_intstack)
-	or	r27, r27, lo16(_intstack)
+	or.u	r27, r0,  hi16(_C_LABEL(intstack))
+	or	r27, r27, lo16(_C_LABEL(intstack))
 1:	cmp	r28, r27, r31
 	bb1	ge,  r28, 2f	/* branch if at the end of the stack */
 	st	r0,  r0,  r27
@@ -2493,8 +2477,8 @@ GLOBAL(m88110_fatal)
 
 1:
 	/* retrieve saved shadow registers for error_handler, though) */
-	or.u	r30, r0,  hi16(_save_frame)
-	or	r30, r30, lo16(_save_frame)
+	or.u	r30, r0,  hi16(_ASM_LABEL(save_frame))
+	or	r30, r30, lo16(_ASM_LABEL(save_frame))
 	ld	r10, r30, REG_OFF(EF_EPSR)
 	st	r10, r31, REG_OFF(EF_EPSR)
 	ld	r10, r30, REG_OFF(EF_EXIP)
@@ -2550,7 +2534,7 @@ GLOBAL(m88110_fatal)
 	st	r20, r31, 0x04
 	st	r20, r31, 0x00
 
-	CALL(_error_fatal, r30, r30)
+	CALL(_C_LABEL(error_fatal), r30, r30)
 
 	/* turn interupts back on */
 	ldcr	r1, PSR
@@ -2558,11 +2542,11 @@ GLOBAL(m88110_fatal)
 	stcr	r1, PSR
 	FLUSH_PIPELINE
 
-ASGLOBAL(m88110_error_loop)
-	bsr	m88110_error_loop
+ASLOCAL(m88110_error_loop)
+	bsr	_ASM_LABEL(m88110_error_loop)
 	/* never returns*/
 
-ASGLOBAL(m88110_setup_phase_one)
+ASLOCAL(m88110_setup_phase_one)
 	/*
 	 * SR0: current thread (if any, null if not)
 	 * SR1: saved copy of exception-time register now holding FLAGS
@@ -2584,12 +2568,11 @@ ASGLOBAL(m88110_setup_phase_one)
 	NOP
 	NOP
 
-	bb1	FLAG_ENABLING_FPU, FLAGS, m88110_use_SR3_pcb
+	bb1	FLAG_ENABLING_FPU, FLAGS, _ASM_LABEL(m88110_use_SR3_pcb)
 	/* are we coming in from user mode? If so, pick up process pcb */
-	bb0	FLAG_FROM_KERNEL, FLAGS, m88110_pickup_stack
+	bb0	FLAG_FROM_KERNEL, FLAGS, _ASM_LABEL(m88110_pickup_stack)
 
 	/* Interrupt in kernel mode, not FPU restart */
-ASGLOBAL(m88110_already_on_kernel_stack)
 	/*
 	 * SR0: current thread (if any, null if not)
 	 * SR1: saved copy of exception-time register now holding FLAGS
@@ -2610,10 +2593,10 @@ ASGLOBAL(m88110_already_on_kernel_stack)
 	st	r1,   r31,  REG_OFF(EF_SR3)
 
 	addu	r1,   r31,  SIZEOF_EF		/* save previous r31 */
-	br.n	m88110_have_pcb
+	br.n	_ASM_LABEL(m88110_have_pcb)
 	 st	r1,   r31,  GENREG_OFF(31)
 
-ASGLOBAL(m88110_use_SR3_pcb)
+ASLOCAL(m88110_use_SR3_pcb)
 	/*
 	 * SR0: current thread (if any, null if not)
 	 * SR1: saved copy of exception-time register now holding FLAGS
@@ -2655,7 +2638,7 @@ ASGLOBAL(m88110_use_SR3_pcb)
 	or	r31,  r0,   r30			/* make r31 our pointer. */
 	addu	r30,  r30,  SIZEOF_EF		/* r30 now has previous SR3 */
 	st	r30,  r31,  REG_OFF(EF_SR3)	/* save previous SR3 */
-	br.n	m88110_have_pcb
+	br.n	_ASM_LABEL(m88110_have_pcb)
 	 xcr	r30,  r30,  SR3			/* restore r30 */
 1:
 	/*
@@ -2664,8 +2647,8 @@ ASGLOBAL(m88110_use_SR3_pcb)
 	 * R1 is currently free (saved in the exception frame pointed at by
 	 * r30)
 	 */
-	or.u	r1,   r0,   hi16(_kstack)
-	ld	r1,   r1,   lo16(_kstack)
+	or.u	r1,   r0,   hi16(_ASM_LABEL(kstack))
+	ld	r1,   r1,   lo16(_ASM_LABEL(kstack))
 	addu	r1,   r1,   USIZE-SIZEOF_EF
 	st	FLAGS,r1,   REG_OFF(EF_FLAGS)	/* store flags */
 	st	r31,  r1,   GENREG_OFF(31)	/* store r31 - now free */
@@ -2674,10 +2657,10 @@ ASGLOBAL(m88110_use_SR3_pcb)
 	ld	r1,   r30,  GENREG_OFF(0)	/* restore old r1 */
 	st	r0,   r30,  GENREG_OFF(0)	/* repair that frame */
 	st	r1,   r31,  GENREG_OFF(1)	/* store r1 */
-	br.n	m88110_have_pcb
+	br.n	_ASM_LABEL(m88110_have_pcb)
 	 xcr	r30,  r30,  SR3			/* restore r30 */
 
-ASGLOBAL(m88110_pickup_stack)
+ASLOCAL(m88110_pickup_stack)
 	/*
 	 * SR0: current thread
 	 * SR1: saved copy of exception-time register now holding FLAGS
@@ -2693,8 +2676,8 @@ ASGLOBAL(m88110_pickup_stack)
 	stcr	r31,  SR3	/* save previous r31 */
 
 	/* switch to the thread's kernel stack. */
-	or.u	r31,  r0,   hi16(_curpcb)
-	ld	r31,  r31,  lo16(_curpcb)
+	or.u	r31,  r0,   hi16(_C_LABEL(curpcb))
+	ld	r31,  r31,  lo16(_C_LABEL(curpcb))
 	addu	r31,  r31,  PCB_USER_STATE	/* point to user save area */
 	st	FLAGS,r31,  REG_OFF(EF_FLAGS)	/* save flags */
 	st	r1,   r31,  GENREG_OFF(1)	/* save prev. r1 (now free)*/
@@ -2702,7 +2685,7 @@ ASGLOBAL(m88110_pickup_stack)
 	st	r1,   r31,  GENREG_OFF(31)
 	/* FALLTHROUGH */
 
-ASGLOBAL(m88110_have_pcb)
+ASLOCAL(m88110_have_pcb)
 	/*
 	 * SR0: current thread
 	 * SR1: saved copy of exception-time register now holding FLAGS
@@ -2769,7 +2752,7 @@ ASGLOBAL(m88110_have_pcb)
 	ldcr	r1,   SR2
 	jmp	r1
 
-ASGLOBAL(m88110_setup_phase_two)
+ASLOCAL(m88110_setup_phase_two)
 	/*
 	 * SR0: saved return address to calling exception handler
 	 * SR1: saved copy of exception-time register now holding FLAGS
@@ -2805,9 +2788,9 @@ ASGLOBAL(m88110_setup_phase_two)
 	clr	TMP,  TMP,  1<PSR_SHADOW_FREEZE_BIT>	/* and shadowing */
 	stcr	TMP,  EPSR
 
-	or.u	TMP,  r0,   hi16(m88110_fpu_enable)
-	or	TMP,  TMP,  lo16(m88110_fpu_enable)
-	stcr	TMP,  EXIP	/* jump to here fpu_enable */
+	or.u	TMP,  r0,   hi16(_ASM_LABEL(m88110_fpu_enable))
+	or	TMP,  TMP,  lo16(_ASM_LABEL(m88110_fpu_enable))
+	stcr	TMP,  EXIP	/* jump to here m88110_fpu_enable */
 	addu	TMP,  TMP,  4
 	stcr	TMP,  ENIP	/* and then continue after that */
 
@@ -2839,14 +2822,14 @@ ASGLOBAL(m88110_setup_phase_two)
 	 *   Return address to the calling excption handler.
 	 *
 	 * immediate goal:
-	 *   Do an RTE to restart the fpu and jump to "fpu_enable"
+	 *   Do an RTE to restart the fpu and jump to "m88110_fpu_enable"
 	 *   Another exception (or exceptions) may be raised in
 	 *   this, which is why FLAG_ENABLING_FPU is set in SR1.
 	 */
 	NOP
-	RTE	/* jumps to "fpu_enable" on the next line to enable the FPU. */
+	RTE	/* jumps to "m88110_fpu_enable" on the next line to enable the FPU. */
 
-ASGLOBAL(m88110_fpu_enable)
+ASLOCAL(m88110_fpu_enable)
 	FLUSH_PIPELINE
 	/* Now we can handle another exception!!! */
 	/* Now that EFZE is cleared, we can clear these */
@@ -2935,13 +2918,13 @@ ASGLOBAL(m88110_fpu_enable)
 	ld	r3,   r31,  REG_OFF(EF_VECTOR)
 	cmp	r3,   r3,   1	/* is interrupt ? */
 	bb0	eq,   r3,   2f
-	or.u	r31,  r0,   hi16(_intstack_end)	/* switch to int stack */
-	or	r31,  r31,  lo16(_intstack_end)
+	or.u	r31,  r0,   hi16(_ASM_LABEL(intstack_end))
+	or	r31,  r31,  lo16(_ASM_LABEL(intstack_end))
 	br	3f
 2:
 #endif
-	or.u	r31,  r0,   hi16(_kstack)
-	ld	r31,  r31,  lo16(_kstack)
+	or.u	r31,  r0,   hi16(_ASM_LABEL(kstack))
+	ld	r31,  r31,  lo16(_ASM_LABEL(kstack))
 	addu	r31,  r31,  USIZE		/* point at proper end */
 	br	3f
 1:
@@ -2949,12 +2932,10 @@ ASGLOBAL(m88110_fpu_enable)
 	ld	r3,   r31,  REG_OFF(EF_VECTOR)
 	cmp	r3,   r3,   1	/* is interrupt ? */
 	bb0	eq,   r3,   3f	/* no, we will stay on kern stack */
-	or.u	r31,  r0,   hi16(_intstack_end)	/* switch to int stack */
-	or	r31,  r31,  lo16(_intstack_end)
+	or.u	r31,  r0,   hi16(_ASM_LABEL(intstack_end))
+	or	r31,  r31,  lo16(_ASM_LABEL(intstack_end))
 #endif
-	/* This label is here for debugging */
-m88110_exception_handler_has_ksp:
-global m88110_exception_handler_has_ksp
+
 3:	/*
 	 * here - r30 holds a pointer to the exception frame.
 	 * r31 is a pointer to the kernel stack/interrupt stack.
@@ -2966,35 +2947,35 @@ global m88110_exception_handler_has_ksp
 #endif /* DDB */
 
 	ld	r2,   r30,  REG_OFF(EF_VECTOR)
-	bcnd.n	eq0,  r2,   m88110_return_to_calling_exception_handler
+	bcnd.n	eq0,  r2,   8f
 	 ld	r14,  r30,  REG_OFF(EF_RET)	/* load return value XXX!!! */
 	cmp	r3,   r2,   1	/* is an interrupt? */
-	bb1.n	eq,   r3,   m88110_return_to_calling_exception_handler
+	bb1.n	eq,   r3,   8f
 
 #ifdef DDB
 	 cmp	r3,   r2,   130	/* DDB break exception */
-	bb1.n	eq,   r3,   m88110_return_to_calling_exception_handler
+	bb1.n	eq,   r3,   8f
 
 	 cmp	r3,   r2,   132	/* DDB entry exception */
-	bb1.n	eq,   r3,   m88110_return_to_calling_exception_handler
+	bb1.n	eq,   r3,   8f
 #endif
 
 	/* enable interrupts */
 	 ldcr	r2,   PSR
 	clr	r2,   r2,   1<PSR_INTERRUPT_DISABLE_BIT>
 	stcr	r2,   PSR
-#ifdef     DDB
+#ifdef DDB
 	FLUSH_PIPELINE
 #endif
-#if 1 /* test */
-	br	m88110_return_to_calling_exception_handler
-#endif
+#if 1 /* XXX test */
+	br	8f
+#else
 	/* service any outstanding data pipeline stuff
 	   - check dsr... anything outstanding? */
 
 	ld	r3,   r30,  REG_OFF(EF_DSR)
 	cmp	r3,   r3,   0
-	bb1	eq,   r3,   m88110_return_to_calling_exception_handler
+	bb1	eq,   r3,   8f
 
 /*
  * r30 can be clobbered by calls. So stuff its value into a
@@ -3009,11 +2990,12 @@ global m88110_exception_handler_has_ksp
 	/* clear the dsr word in the E.F */
 	st	r0,   r30,  REG_OFF(EF_DSR)
 
-ASGLOBAL(m88110_return_to_calling_exception_handler)
+#endif
+8:
 	jmp	r14 /* loaded above */
 
 	data
 	.align 8
-GLOBAL(save_frame)
+ASLOCAL(save_frame)
 	space SIZEOF_EF
 #endif	/* M88110 */

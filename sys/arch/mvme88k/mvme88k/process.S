@@ -1,4 +1,4 @@
-/*	$OpenBSD: process.S,v 1.18 2003/08/11 01:09:35 miod Exp $	*/
+/*	$OpenBSD: process.S,v 1.19 2003/08/11 20:45:17 miod Exp $	*/
 /*
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -37,25 +37,26 @@
 
 	data
 	align	4
-swchanpanic:
-	string	"switch wchan %x"
+ASLOCAL(swchanpanic)
+	string	"switch wchan %x\0"
 	align	4
-swsrunpanic:
-	string	"switch SRUN %x"
+ASLOCAL(swsrunpanic)
+	string	"switch SRUN %x\0"
 
 	text
 	align	8
-Lswchanpanic:
-	or.u	r2, r0, hi16(swchanpanic)
-	or	r2, r2, lo16(swchanpanic)
-	or	r3, r0, r9
-	bsr	_panic
+ASLOCAL(Lswchanpanic)
+	or.u	r2, r0, hi16(_ASM_LABEL(swchanpanic))
+	or	r2, r2, lo16(_ASM_LABEL(swchanpanic))
+	bsr.n	_C_LABEL(panic)
+	 or	r3, r0, r9
 
-Lswsrunpanic:
-	or.u	r2, r0, hi16(swsrunpanic)
-	or	r2, r2, lo16(swsrunpanic)
-	or	r3, r0, r9
-	bsr	_panic
+ASLOCAL(Lswsrunpanic)
+	or.u	r2, r0, hi16(_ASM_LABEL(swsrunpanic))
+	or	r2, r2, lo16(_ASM_LABEL(swsrunpanic))
+	bsr.n	_C_LABEL(panic)
+	 or	r3, r0, r9
+
 /*
  * At exit of a process, do a cpu_switch for the last time.
  * The mapping of the pcb at p->p_addr has already been deleted,
@@ -69,41 +70,21 @@ ENTRY(switch_exit)
 	 * Change pcb to idle u. area, i.e., set r31 to top of stack
 	 * and set curpcb to point to _idle_u.  r2 contains proc *p.
 	 */
-	or.u	r30, r0, hi16(_idle_u)
-	or	r30, r30,lo16(_idle_u)
-	addu	r31, r30, USIZE		/* now on idle_u stack */
-	or.u	r10, r0, hi16(_curpcb)
-	st	r30, r10,lo16(_curpcb)	/* curpcb = &idle_u */
-	or.u	r10, r0, hi16(_curproc)
-	st	r0, r10, lo16(_curproc)	/* curproc = NULL */
+	or.u	r30, r0, hi16(_C_LABEL(idle_u))
+	or	r30, r30,lo16(_C_LABEL(idle_u))
+	addu	r31, r30, USIZE			/* now on idle_u stack */
+	or.u	r10, r0, hi16(_C_LABEL(curpcb))
+	st	r30, r10,lo16(_C_LABEL(curpcb))		/* curpcb = &idle_u */
+	or.u	r10, r0, hi16(_C_LABEL(curproc))
+	st	r0, r10, lo16(_C_LABEL(curproc))	/* curproc = NULL */
 
 	/* Schedule the vmspace and stack to be freed. */
-	bsr.n	_exit2			/* call exit2(p); */
-	subu	r31, r31, 48		/* allocate stack  */
+	bsr.n	_C_LABEL(exit2)
+	 subu	r31, r31, 48		/* allocate stack  */
 	addu	r31, r31, 48		/* restore stack */
-	bsr.n	_cpu_switch		/* goto final switch */
-	or	r2, r0, r10
+	bsr.n	_C_LABEL(cpu_switch)	/* goto final switch */
+	 or	r2, r0, r10
 
-#if 0
-/*
- * When no processes are on the runq, switch
- * idles here watiing for something to come ready.
- */
-ASGLOBAL(idle)
-	or.u	r10, r0, hi16(_curproc)
-	st	r0, r10, lo16(_curproc)	/* curproc = NULL */
-
-	bsr.n	_setipl			/* unblock all interrupts */
-	or	r2, r0, 0
-					/* spin reading whichqs until != 0 */
-1:
-	or.u	r10, r0, hi16(_whichqs)
-	ld	r11, r10,lo16(_whichqs)
-	bcnd	eq0, r11, 1b
-	bsr.n	_setipl
-	or	r2, r0, IPL_HIGH	/* block all ints */
-	br	Lsw1
-#endif /* 0 */
 /*
  * cpu_switch()
  * XXX - Arg 1 is a proc pointer (curproc) but this doesn't use it.
@@ -116,8 +97,8 @@ ENTRY(cpu_switch)
 	 * Save state of previous process in its pcb.
 	 */
 
-	or.u	r10, r0, hi16(_curpcb)
-	ld	r10,r10, lo16(_curpcb)
+	or.u	r10, r0, hi16(_C_LABEL(curpcb))
+	ld	r10,r10, lo16(_C_LABEL(curpcb))
 	st	r1, r10, PCB_PC		/*  save r1 in pcb */
 	st	r14,r10, PCB_R14
 	st	r15,r10, PCB_R15
@@ -138,51 +119,50 @@ ENTRY(cpu_switch)
 	st	r30,r10, PCB_R30	/* save frame pointer & stack pointer */
 	st	r31,r10, PCB_SP
 
-	or	r14,r10, 0		/* save r10 in r14 */
-
-	bsr	_getipl
+	bsr.n	_C_LABEL(getipl)
+	 or	r14,r10, 0		/* save r10 in r14 */
 
 	st	r2, r14, PCB_IPL	/* save ipl in pcb */
 
-	or.u	r11, r0, hi16(_curproc)
-	ld	r11,r11, lo16(_curproc)
+	or.u	r11, r0, hi16(_C_LABEL(curproc))
+	ld	r11,r11, lo16(_C_LABEL(curproc))
 
-	or.u	r11, r0, hi16(_curproc)
-	st	r0, r11, lo16(_curproc)	/* curproc = NULL */
+	or.u	r11, r0, hi16(_C_LABEL(curproc))
+	st	r0, r11, lo16(_C_LABEL(curproc))	/* curproc = NULL */
 
-Lidleloop:
+ASLOCAL(Lidleloop)
 
 	/*
 	 * Find the highest-priority queue that isn't empty,
 	 * then take the first proc from that queue.
 	 */
 
-	or.u	r7, r0, hi16(_whichqs)
-	ld	r7, r7, lo16(_whichqs)
+	or.u	r7, r0, hi16(_C_LABEL(whichqs))
+	ld	r7, r7, lo16(_C_LABEL(whichqs))
 
-	bcnd	ne0, r7, Ldoneloop
+	bcnd	ne0, r7, _ASM_LABEL(Ldoneloop)
 
-Lloopchk:				/* if whichqs is zero, keep checking */
-	bsr.n	_setipl			/* enable all ints */
-	or	r2, r0, 0
+ASLOCAL(Lloopchk)			/* if whichqs is zero, keep checking */
+	bsr.n	_C_LABEL(setipl)	/* enable all ints */
+	 or	r2, r0, 0
 
-	br	Lidleloop
+	br	_ASM_LABEL(Lidleloop)
 
-Ldoneloop:
+ASLOCAL(Ldoneloop)
 
-	bsr.n	_setipl			/* disable ints */
-	or	r2, r0, IPL_HIGH
+	bsr.n	_C_LABEL(setipl)	/* disable ints */
+	 or	r2, r0, IPL_HIGH
 
-	or.u	r7, r0, hi16(_whichqs)	/* reload whichqs */
-	ld	r7, r7, lo16(_whichqs)
+	or.u	r7, r0, hi16(_C_LABEL(whichqs))	/* reload whichqs */
+	ld	r7, r7, lo16(_C_LABEL(whichqs))
 
-	bcnd	eq0, r7, Lloopchk	/* keep spinning for whichqs to be !=0*/
+	bcnd	eq0, r7, _ASM_LABEL(Lloopchk)	/* keep spinning for whichqs to be != 0 */
 
 	xor	r6, r6, r6		/* set r6 to 0 */
 1:	bb1	0,  r7, 2f		/* if rightmost bit set, done */
 	extu	r7, r7, 0<1>		/* else, right shift whichqs, */
 	br.n	1b			/* increment r6, and repeat */
-	addu	r6, r6, 1
+	 addu	r6, r6, 1
 2:
 	or.u	r7, r0, hi16(_qs)
 	or	r7, r7, lo16(_qs)
@@ -204,13 +184,13 @@ Ldoneloop:
 	lda.d	r8,  r7[r6]	/* reload r8 with qs[ff1(whichqs)] */
 	ld	r12, r8, P_FORW	/* q->p_forw */
 	cmp	r12, r12, r8	/* q == q->p_forw; anyone left on queue? */
-	bb1	ne,  r12, Lsw2	/* yes, skip clearing bit in whichqs  */
+	bb1	ne,  r12, 3f	/* yes, skip clearing bit in whichqs  */
 
 	or	r12, r0, 1	/* r12 is 1 now */
 1:	bcnd	eq0, r6, 2f
 	mak	r12, r12, 0<1>	/* shift left by 1 */
 	br.n	1b
-	subu	r6,  r6, 1	/* keep doing this while r6 != 0 */
+	 subu	r6,  r6, 1	/* keep doing this while r6 != 0 */
 2:
 	/*
 	 * NOTE: we could have just used "mak r12, r12, r6" instead of the
@@ -218,55 +198,44 @@ Ldoneloop:
 	 * preprocessor to do the right thing, but that means I have to
 	 * include sys/proc.h in this file. XXX nivas
 	 */
-	or.u	r7,  r0, hi16(_whichqs)
-	ld	r8,  r7, lo16(_whichqs)
+	or.u	r7,  r0, hi16(_C_LABEL(whichqs))
+	ld	r8,  r7, lo16(_C_LABEL(whichqs))
 	and.c	r8,  r8, r12	/* whichqs &= ~the bit */
-	st	r8,  r7, lo16(_whichqs)	/* reset bit in whichqs */
-Lsw2:
+	st	r8,  r7, lo16(_C_LABEL(whichqs))
+3:
 	ld	r2, r9, P_WCHAN
-	bcnd	ne0, r2, Lswchanpanic
+	bcnd	ne0, r2, _ASM_LABEL(Lswchanpanic)
 	ld.b	r2, r9, P_STAT
 	cmp	r2, r2, SRUN
-	bb1	ne, r2, Lswsrunpanic
+	bb1	ne, r2, _ASM_LABEL(Lswsrunpanic)
 
-	or.u	r11, r0, hi16(_want_resched)
-	st	r0, r11, lo16(_want_resched)	/* clear want_resched */
+	or.u	r11, r0, hi16(_C_LABEL(want_resched))
+	st	r0, r11, lo16(_C_LABEL(want_resched))	/* clear want_resched */
 
-	or.u	r11, r0, hi16(_curproc)
-	st	r9,  r11,lo16(_curproc)		/* curproc = p */
-
-	/* huh??? */
-	or.u	r10, r0, hi16(_curpcb)
-	ld	r10,r10, lo16(_curpcb)
-
-#ifdef notyet
-	cmp	r2, r2, r9
-	bb1	eq, r2, Lswsameproc
-#endif /* notyet */
+	or.u	r11, r0, hi16(_C_LABEL(curproc))
+	st	r9,  r11,lo16(_C_LABEL(curproc))	/* curproc = p */
 
 	/*  r9 is curproc */
 	st	r0, r9, P_BACK			/* p->p_back = 0 */
 	ld	r3, r9, P_ADDR
-	or.u	r10, r0, hi16(_curpcb)
-	st	r3, r10, lo16(_curpcb)		/* curpcb = p->p_addr */
+	or.u	r10, r0, hi16(_C_LABEL(curpcb))
+	st	r3, r10, lo16(_C_LABEL(curpcb))		/* curpcb = p->p_addr */
 
-	/* see if pmap_activate needs to be called */
-	/* _pmap_activate() now has proc * as parameter 01-11-2000 smurph */
-	/* No more VM_PMAP to contend with!!!  */
+	/* pmap_activate() the process' pmap */
 	or	r2, r0, r9		/* r2 = p */
 	or	r14, r0, r9		/* save p in r14 */
-	subu	r31, r31,48
 	/* r2 = pmap, r3 = pcb, r4 = cpu number */
-	bsr	_pmap_activate		/* _pmap_activate(proc *p)*/
+	bsr.n	_C_LABEL(pmap_activate)
+	 subu	r31, r31,48
 	addu    r31, r31,48
 	or	r9, r0, r14		/* restore p saved in r14 */
 
-Lswnochg:
-	or.u	r31, r0, hi16(_intstack_end)
-	or	r31,r31, lo16(_intstack_end)/* now goto a tmp stack for NMI */
+ASLOCAL(Lswnochg)
+	or.u	r31, r0, hi16(_ASM_LABEL(intstack_end))
+	or	r31,r31, lo16(_ASM_LABEL(intstack_end))
 	subu	r31, r31,48
-	bsr.n    _load_u_area
-	or	r2, r0, r9
+	bsr.n    _C_LABEL(load_u_area)
+	 or	r2, r0, r9
 	addu	r31, r31,48
 				/* flush tlb of any user addresses */
 	or	r2, r0, 0	/* 0 = user space */
@@ -274,12 +243,12 @@ Lswnochg:
 	subu	r31, r31,48
 	/* r2 = 1 : kernel ? user, r3 = address, r4 = size */
 	/* cmmu_flush_tlb(0, 0, 0xffff) */
-	bsr.n	_md_cmmu_flush_tlb
-	or	r4, r0, 0xffff		/* cmmu_flush_tlb flushes entire tlb */
+	bsr.n	_C_LABEL(md_cmmu_flush_tlb)
+	 or	r4, r0, 0xffff		/* cmmu_flush_tlb flushes entire tlb */
 					/* for sizes > 4096		     */
 	addu	r31, r31,48
-	or.u	r10, r0,  hi16(_curpcb)
-	ld	r10, r10,  lo16(_curpcb)
+	or.u	r10, r0,  hi16(_C_LABEL(curpcb))
+	ld	r10, r10,  lo16(_C_LABEL(curpcb))
 	/* XXX Is this correct/necessary? */
 	st	r10, r14, P_ADDR	/* p->p_addr = curpcb; restore p_addr */
 
@@ -304,17 +273,18 @@ Lswnochg:
 	ld	r30,r10, PCB_R30	/* restore frame pointer & stack */
 	ld	r31,r10, PCB_SP
 
-/* XXX should we postpone restoring stack till after ipl is restored? The
-stack access could fault */
-Lswsameproc:
+/* XXX
+ * Should we postpone restoring stack till after ipl is restored?
+ * The stack access could fault
+ */
 	subu	r31,r31,48
 	st	r1, r31,36		/* save r1 on stack */
-	ld	r2, r10, PCB_IPL	/* restore interrupt mask */
-	bsr	_setipl			/* restore ipl */
+	bsr.n	_C_LABEL(setipl)
+	 ld	r2, r10, PCB_IPL	/* restore interrupt mask */
 	ld	r1, r31,36		/* restore r1 from stack */
 	addu	r31,r31,48
 	jmp.n	r1
-	or	r2, r0, 1		/* return 1 (for alternate returns) */
+	 or	r2, r0, 1		/* return 1 (for alternate returns) */
 
 /*
  * savectx(pcb)
@@ -324,8 +294,8 @@ ENTRY(savectx)
 	/* get the spl mask */
 	subu	r31,r31,48		/* allocate stack for r1 and args */
 	st	r1,r31,36		/* save return address */
-	st	r2,r31,32		/* save r2 */
-	bsr	_getipl			/* get the current interrupt mask */
+	bsr.n	_C_LABEL(getipl)	/* get the current interrupt mask */
+	 st	r2,r31,32		/* save r2 */
 	ld	r1,r31,36		/* recover return address */
 	ld	r10,r31,32		/* recover r2 into r10 */
 	addu	r31,r31,48		/* put stack pointer back */
@@ -350,5 +320,5 @@ ENTRY(savectx)
 	st	r31,r10, PCB_SP
 	st	r2, r10, PCB_IPL	/* save interrupt mask */
 	jmp.n	r1
-	or	r2,r0,r0
+	 or	r2,r0,r0
 

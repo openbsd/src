@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.104 2003/08/07 17:23:43 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.105 2003/08/11 20:45:17 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -119,8 +119,6 @@ vm_offset_t interrupt_stack[MAX_CPUS] = {0};
 struct md_p md;
 
 /* prototypes */
-void m88100_Xfp_precise(void);
-void m88110_Xfp_precise(void);
 void setupiackvectors(void);
 void regdump(struct trapframe *f);
 void dumpsys(void);
@@ -1146,7 +1144,7 @@ __dead void
 boot(howto)
 	register int howto;
 {
-	/* take a snap shot before clobbering any registers */
+	/* take a snapshot before clobbering any registers */
 	if (curproc && curproc->p_addr)
 		savectx(curpcb);
 
@@ -2333,7 +2331,7 @@ mvme_bootstrap()
 	curproc = &proc0;
 	curpcb = &proc0paddr->u_pcb;
 
-	/* zreo out the machine dependant function pointers */
+	/* zero out the machine dependant function pointers */
 	bzero(&md, sizeof(struct md_p));
 
 	buginit(); /* init the bug routines */

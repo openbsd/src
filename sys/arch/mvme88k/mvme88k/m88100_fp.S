@@ -1,4 +1,4 @@
-/* $OpenBSD: m88100_fp.S,v 1.16 2001/12/22 17:57:11 smurph Exp $	*/
+/* $OpenBSD: m88100_fp.S,v 1.17 2003/08/11 20:45:17 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1991 Carnegie Mellon University
@@ -117,10 +117,7 @@
 
 #define MARK	or	r21, r0, __LINE__
 	
-	text
-	align 8
-	global _m88100_Xfp_precise
-_m88100_Xfp_precise:
+ASENTRY(m88100_Xfp_precise)
 	or	r29, r3, r0     /*  r29 is now the E.F. */
 	subu	r31, r31, 40
 	st	r1,  r31, 32
@@ -2225,12 +2222,8 @@ S2noinfd:    clr    r10,r7,1<sign>     /* clear the sign bit */
                                        /* function */
 operation:   jmp    r1                 /* return from function */
 
-             data
-
-		text					
-		align 8
+ASENTRY(Xfp_imprecise)
 /*  input: r3 is the excepton frame */
-_Xfp_imprecise: global _Xfp_imprecise
 		or	r29, r3, r0	/*  r29 is now the E.F. */
 		subu	r31, r31, 40
 		st	r1,  r31, 32
