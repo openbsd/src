@@ -1,4 +1,4 @@
-/*      $OpenBSD: pf_key_v2.c,v 1.124 2003/04/14 10:22:13 ho Exp $  */
+/*      $OpenBSD: pf_key_v2.c,v 1.125 2003/05/11 02:16:54 markus Exp $  */
 /*	$EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	*/
 
 /*
@@ -2873,6 +2873,7 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
   struct sadb_protocol *sproto;
   char ssflow[ADDRESS_MAX], sdflow[ADDRESS_MAX];
   char sdmask[ADDRESS_MAX], ssmask[ADDRESS_MAX];
+  char *sidtype = 0, *didtype = 0;
   char lname[100], dname[100], configname[30];
   int shostflag = 0, dhostflag = 0;
   struct pf_key_v2_node *ext;
@@ -3003,6 +3004,8 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
   bzero (ssmask, sizeof ssmask);
   bzero (sdmask, sizeof sdmask);
 
+  sidtype = didtype = "IPV4_ADDR_SUBNET"; /* default */
+
   switch (sflow->sa_family)
     {
     case AF_INET:
@@ -3033,9 +3036,15 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
 	  goto fail;
 	}
       if (((struct sockaddr_in *)smask)->sin_addr.s_addr == INADDR_BROADCAST)
-	shostflag = 1;
+	{
+	  shostflag = 1;
+	  sidtype = "IPV4_ADDR";
+	}
       if (((struct sockaddr_in *)dmask)->sin_addr.s_addr == INADDR_BROADCAST)
-	dhostflag = 1;
+	{
+	  dhostflag = 1;
+	  didtype = "IPV4_ADDR";
+	}
       break;
 
     case AF_INET6:
@@ -3065,10 +3074,17 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
 	  log_print ("pf_key_v2_acquire: inet_ntop failed");
 	  goto fail;
 	}
+      sidtype = didtype = "IPV6_ADDR_SUBNET";
       if (IN6_IS_ADDR_FULL (&((struct sockaddr_in6 *)smask)->sin6_addr))
-	shostflag = 1;
+	{
+	  shostflag = 1;
+	  sidtype = "IPV6_ADDR";
+	}
       if (IN6_IS_ADDR_FULL (&((struct sockaddr_in6 *)dmask)->sin6_addr))
-	dhostflag = 1;
+	{
+	  dhostflag = 1;
+	  didtype = "IPV6_ADDR";
+	}
       break;
     }
 
@@ -3578,7 +3594,7 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
 
       if (shostflag)
         {
-	  if (conf_set (af, lname, "ID-type", "IPV4_ADDR", 0, 0)
+	  if (conf_set (af, lname, "ID-type", sidtype, 0, 0)
 	      || conf_set (af, lname, "Address", ssflow, 0, 0))
 	    {
 	      conf_end (af, 0);
@@ -3587,7 +3603,7 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
 	}
       else
         {
-	  if (conf_set (af, lname, "ID-type", "IPV4_ADDR_SUBNET", 0, 0)
+	  if (conf_set (af, lname, "ID-type", sidtype, 0, 0)
 	      || conf_set (af, lname, "Network", ssflow, 0, 0)
 	      || conf_set (af, lname, "Netmask", ssmask, 0, 0))
 	    {
@@ -3637,7 +3653,7 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
 
       if (dhostflag)
         {
-	  if (conf_set (af, dname, "ID-type", "IPV4_ADDR", 0, 0)
+	  if (conf_set (af, dname, "ID-type", didtype, 0, 0)
 	      || conf_set (af, dname, "Address", sdflow, 0, 0))
 	    {
 	      conf_end (af, 0);
@@ -3646,7 +3662,7 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
 	}
       else
         {
-	  if (conf_set (af, dname, "ID-type", "IPV4_ADDR_SUBNET", 0, 0)
+	  if (conf_set (af, dname, "ID-type", didtype, 0, 0)
 	      || conf_set (af, dname, "Network", sdflow, 0, 0)
 	      || conf_set (af, dname, "Netmask", sdmask, 0, 0))
 	    {
