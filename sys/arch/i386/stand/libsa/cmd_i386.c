@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd_i386.c,v 1.15 1997/10/22 23:34:37 mickey Exp $	*/
+/*	$OpenBSD: cmd_i386.c,v 1.16 1997/10/23 15:13:27 weingart Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff, Tobias Weingartner
@@ -61,17 +61,18 @@ Xdiskinfo()
 {
 	int i;
 
-	printf("Disk\tBIOS#\t    BSD#\tCylinders\tHeads\tSectors\n");
+	printf("Disk\tBIOS#\t    BSD#\tCylinders\tHeads\tSectors\tChecksum\n");
 	for(i = 0; bios_diskinfo[i].bios_number != -1 && i < 10; i++){
 		int d = bios_diskinfo[i].bios_number;
 
-		printf("%cd%d\t 0x%x\t0x%x\t %s%d   \t%d\t%d\n",
+		printf("%cd%d\t 0x%x\t0x%x\t %s%d   \t%d\t%d\t0x%x[%d]\n",
 			(d & 0x80)?'h':'f', (d & 0x80)?d - 128:d, d,
 			bios_diskinfo[i].bsd_dev,
 			(bios_diskinfo[i].bios_cylinders < 100)?"  ":" ",
 			bios_diskinfo[i].bios_cylinders,
 			bios_diskinfo[i].bios_heads,
-			bios_diskinfo[i].bios_sectors);
+			bios_diskinfo[i].bios_sectors,
+			bios_diskinfo[i].checksum, bios_diskinfo[i].checklen);
 	}
 
 	return 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: diskprobe.c,v 1.3 1997/10/22 23:34:38 mickey Exp $	*/
+/*	$OpenBSD: diskprobe.c,v 1.4 1997/10/23 15:13:29 weingart Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -37,37 +37,16 @@
 #include <sys/disklabel.h>
 #include <stand/boot/bootarg.h>
 #include <machine/biosvar.h>
+#include <lib/libz/zlib.h>
 #include "biosdev.h"
 #include "libsa.h"
 
+
+/* Local Prototypes */
+static void disksum __P((bios_diskinfo_t*));
+
 /* These get passed to kernel */
 bios_diskinfo_t bios_diskinfo[16];
-
-#if notyet
-/* Checksum given buffer */
-static u_int32_t
-bufsum(buf, len)
-	void *buf;
-	int len;
-{
-	u_int32_t sum = 0;
-	u_int8_t *p = buf;
-
-	while(len--){
-		sum += p[len];
-	}
-	return(sum);
-}
-
-/* Checksum given drive until different */
-void
-disksum(pos)
-	int pos;
-{
-	u_int32_t sum;
-	int len, i;
-}
-#endif
 
 /* Probe for all BIOS disks */
 void
@@ -83,16 +62,13 @@ diskprobe()
 	for(drive = 0; drive < 4; drive++) {
 		rv = bios_getinfo(drive, &bios_diskinfo[i]);
 
-		if( (rv & 0x00FF)) continue;
-		if(!(rv & 0xFF00)) continue;
+		if( (rv & 0x00FF)) break;
+		if(!(rv & 0xFF00)) break;
 
 		printf(" fd%u", drive);
 
 		/* Fill out best we can - (fd?) */
 		bios_diskinfo[i].bsd_dev = MAKEBOOTDEV(2, 0, 0, drive, 0);
-#if 0
-		disksum(&bios_diskinfo[i]);
-#endif
 		i++;
 	}
 
@@ -120,9 +96,7 @@ diskprobe()
 
 		/* Fill out best we can */
 		bios_diskinfo[i].bsd_dev = MAKEBOOTDEV(type, 0, 0, unit, 0);
-#if 0
 		disksum(&bios_diskinfo[i]);
-#endif
 		i++;
 	}
 
@@ -147,3 +121,64 @@ bios_dklookup(dev)
 
 	return(NULL);
 }
+
+/* Find given sum in diskinfo array */
+static bios_diskinfo_t *
+find_sum(sum)
+	u_int32_t sum;
+{
+	int i;
+
+	for(i = 0; bios_diskinfo[i].bios_number != -1; i++)
+		if(bios_diskinfo[i].checksum == sum)
+			return(&bios_diskinfo[i]);
+
+	return(NULL);
+}
+
+/* Checksum given drive until different
+ *
+ * Use the adler32() function from libz,
+ * as it is quick, small, and available.
+ */
+static void
+disksum(bdi)
+	bios_diskinfo_t *bdi;
+{
+	u_int32_t sum;
+	int len, st;
+	int hpc, spt, dev;
+	char *buf;
+
+	buf = alloca(DEV_BSIZE);
+	dev = bdi->bios_number;
+	hpc = bdi->bios_heads;
+	spt = bdi->bios_sectors;
+
+	/* Adler32 checksum */
+	sum = adler32(0, NULL, 0);
+	for(len = 0; len < 32; len++){
+		int cyl, head, sect;
+		bios_diskinfo_t *bd;
+
+		btochs(len, cyl, head, sect, hpc, spt);
+
+		st = biosd_io(F_READ, dev, cyl, head, sect, 1, buf);
+		if(st) break;
+
+		sum = adler32(sum, buf, DEV_BSIZE);
+
+		/* Do a minimum of 8 sectors (floppy is slow...) */
+		if((len >= 8) && ((bd = find_sum(sum)) == NULL))
+			break;
+	}
+
+	if(st) {
+		bdi->checksum = 0;
+		bdi->checklen = 0;
+	} else {
+		bdi->checksum = sum;
+		bdi->checklen = len;
+	}
+}
+

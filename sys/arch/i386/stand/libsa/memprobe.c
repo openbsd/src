@@ -1,4 +1,4 @@
-/*	$OpenBSD: memprobe.c,v 1.23 1997/10/22 23:34:40 mickey Exp $	*/
+/*	$OpenBSD: memprobe.c,v 1.24 1997/10/23 15:13:30 weingart Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner, Michael Shalayeff
@@ -256,7 +256,6 @@ memprobe()
 {
 	static bios_memmap_t bm[32];	/* This is easier */
 	bios_memmap_t *pm = bm, *im;
-	int total = 0;
 #ifdef DEBUG
 	printf("Probing memory: ");
 #endif
@@ -281,22 +280,17 @@ memprobe()
 	memory_map = bm; /* XXX for 'machine mem' command only */
 	printf("mem0:");
 
-	/* Get total free memory */
+	/* XXX - Compatibility, remove later */
+	extmem = cnvmem = 0;
 	for(im = bm; im->type != BIOS_MAP_END; im++) {
 		if (im->type == BIOS_MAP_FREE) {
-			total += im->size;
 			printf(" %luK", (u_long)im->size);
+
+			if(im->addr < 0x100000)
+				cnvmem += im->size;
+			else
+				extmem += im->size;
 		}
 	}
 	printf("\n");
-
-	/* XXX - Compatibility, remove later */
-	for(im = bm; im->type != BIOS_MAP_END; im++)
-		if ((im->addr & 0xFFFFF) == im->addr &&
-		   im->type == BIOS_MAP_FREE) {
-			cnvmem = im->size; 
-			break;		/* Take the first region */
-		}
-
-	extmem = total - cnvmem;
 }

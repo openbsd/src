@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosdev.c,v 1.39 1997/10/22 23:34:36 mickey Exp $	*/
+/*	$OpenBSD: biosdev.c,v 1.40 1997/10/23 15:13:26 weingart Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -80,8 +80,11 @@ bios_getinfo(dev, pdi)
 			    "=b" (pdi->bios_sectors)
 			  : "0" (0x0800), "1" (dev) : "cc");
 
+	/* Fix up info */
 	pdi->bios_number = dev;
-	pdi->bios_heads++;	/* make it number of heads */
+	pdi->bios_heads++;
+	pdi->bios_cylinders &= 0x3ff;
+	pdi->bios_cylinders++;
 
 	if (rv & 0xff)
 		return (rv & 0xff) >> 8;
