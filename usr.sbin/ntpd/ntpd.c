@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.c,v 1.11 2004/07/12 09:22:38 dtucker Exp $ */
+/*	$OpenBSD: ntpd.c,v 1.12 2004/07/12 09:38:57 dtucker Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -110,12 +110,12 @@ main(int argc, char *argv[])
 		exit(1);
 
 	if (geteuid()) {
-		fprintf(stderr, "ntpd: need root privileges");
+		fprintf(stderr, "ntpd: need root privileges\n");
 		exit(1);
 	}
 
 	if (getpwnam(NTPD_USER) == NULL) {
-		fprintf(stderr, "ntpd: unknown user %s", NTPD_USER);
+		fprintf(stderr, "ntpd: unknown user %s\n", NTPD_USER);
 		exit(1);
 	}
 	endpwent();
