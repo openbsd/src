@@ -1,4 +1,4 @@
-/*	$OpenBSD: bereg.h,v 1.5 1998/09/01 20:04:16 jason Exp $	*/
+/*	$OpenBSD: bereg.h,v 1.6 1998/09/04 05:59:19 jason Exp $	*/
 
 /*
  * Copyright (c) 1998 Theo de Raadt and Jason L. Wright.
@@ -294,10 +294,10 @@ struct be_bufs {
  * Basic Mode Status Register (BMSR)
  */
 #define PHY_BMSR_100BASET4	0x8000	/* 100BaseT4 capable?		*/
-#define PHY_BMSR_100BASETX_FULL	0x4000	/* 100BaseTX full duplex?	*/
-#define PHY_BMSR_100BASETX_HALF	0x2000	/* 100BaseTX half duplex?	*/
-#define PHY_BMSR_10BASET_FULL	0x1000	/* 10BaseT full duplex?		*/
-#define PHY_BMSR_10BASET_HALF	0x0800	/* 10BaseT half duplex?		*/
+#define PHY_BMSR_100BASETX_FULL	0x4000	/* 100BaseTX full duplex cap?	*/
+#define PHY_BMSR_100BASETX_HALF	0x2000	/* 100BaseTX half duplex cap?	*/
+#define PHY_BMSR_10BASET_FULL	0x1000	/* 10BaseT full duplex cap?	*/
+#define PHY_BMSR_10BASET_HALF	0x0800	/* 10BaseT half duplex cap?	*/
 #define PHY_BMSR_ANCOMPLETE	0x0020	/* auto-negotiation complete?	*/
 #define PHY_BMSR_REMOTEFAULT	0x0010	/* Fault condition seen?	*/
 #define PHY_BMSR_ANC		0x0008	/* Can auto-negotiate?		*/

@@ -1,4 +1,4 @@
-/*	$OpenBSD: be.c,v 1.8 1998/09/01 20:04:14 jason Exp $	*/
+/*	$OpenBSD: be.c,v 1.9 1998/09/04 05:59:19 jason Exp $	*/
 
 /*
  * Copyright (c) 1998 Theo de Raadt and Jason L. Wright.
@@ -42,6 +42,7 @@
 #include <net/if_dl.h>
 #include <net/if_types.h>
 #include <net/netisr.h>
+#include <net/if_media.h>
 
 #ifdef INET
 #include <netinet/in.h>
@@ -90,14 +91,13 @@ struct mbuf *	be_get __P((struct besoftc *, int, int));
 
 void	be_tcvr_idle __P((struct besoftc *sc));
 void	be_tcvr_init __P((struct besoftc *sc));
-void	be_tcvr_setspeed __P((struct besoftc *sc));
 void	be_tcvr_write __P((struct besoftc *sc, u_int8_t reg, u_int16_t val));
 void	be_tcvr_write_bit __P((struct besoftc *sc, int bit));
 int	be_tcvr_read_bit1 __P((struct besoftc *sc));
 int	be_tcvr_read_bit2 __P((struct besoftc *sc));
 int	be_tcvr_read __P((struct besoftc *sc, u_int8_t reg));
-
-void	be_negotiate_watchdog __P((void *));
+void	be_ifmedia_sts __P((struct ifnet *, struct ifmediareq *));
+int	be_ifmedia_upd __P((struct ifnet *));
 
 struct cfdriver be_cd = {
 	NULL, "be", DV_IFNET
@@ -131,7 +131,7 @@ beattach(parent, self, aux)
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	struct confargs *ca = aux;
 	extern void myetheraddr __P((u_char *));
-	int pri;
+	int pri, bmsr;
 
 	if (ca->ca_ra.ra_nintr != 1) {
 		printf(": expected 1 interrupt, got %d\n", ca->ca_ra.ra_nintr);
@@ -163,6 +163,53 @@ beattach(parent, self, aux)
 	intr_establish(pri, &sc->sc_ih);
 
 	myetheraddr(sc->sc_arpcom.ac_enaddr);
+
+	be_tcvr_init(sc);
+
+	ifmedia_init(&sc->sc_ifmedia, 0, be_ifmedia_upd, be_ifmedia_sts);
+	bmsr = be_tcvr_read(sc, PHY_BMSR);
+	if (bmsr == BE_TCVR_READ_INVALID)
+		return;
+
+	if (bmsr & PHY_BMSR_10BASET_HALF) {
+		ifmedia_add(&sc->sc_ifmedia,
+		    IFM_ETHER | IFM_10_T | IFM_HDX, 0, NULL);
+		ifmedia_add(&sc->sc_ifmedia, IFM_ETHER | IFM_10_T, 0, NULL);
+		sc->sc_ifmedia.ifm_media = IFM_ETHER | IFM_10_T | IFM_HDX;
+	}
+
+	if (bmsr & PHY_BMSR_10BASET_FULL) {
+		ifmedia_add(&sc->sc_ifmedia,
+		    IFM_ETHER | IFM_10_T | IFM_FDX, 0, NULL);
+		sc->sc_ifmedia.ifm_media = IFM_ETHER | IFM_10_T | IFM_FDX;
+	}
+
+	if (bmsr & PHY_BMSR_100BASETX_HALF) {
+		ifmedia_add(&sc->sc_ifmedia,
+		    IFM_ETHER | IFM_100_TX | IFM_HDX, 0, NULL);
+		ifmedia_add(&sc->sc_ifmedia, IFM_ETHER | IFM_100_TX, 0, NULL);
+		sc->sc_ifmedia.ifm_media = IFM_ETHER | IFM_100_TX | IFM_HDX;
+	}
+
+	if (bmsr & PHY_BMSR_100BASETX_FULL) {
+		ifmedia_add(&sc->sc_ifmedia,
+		    IFM_ETHER | IFM_100_TX | IFM_FDX, 0, NULL);
+		sc->sc_ifmedia.ifm_media = IFM_ETHER | IFM_100_TX | IFM_FDX;
+	}
+
+	if (bmsr & PHY_BMSR_100BASET4) {
+		ifmedia_add(&sc->sc_ifmedia,
+		    IFM_ETHER | IFM_100_T4, 0, NULL);
+		sc->sc_ifmedia.ifm_media = IFM_ETHER | IFM_100_T4;
+	}
+
+	if (bmsr & PHY_BMSR_ANC) {
+		ifmedia_add(&sc->sc_ifmedia,
+		    IFM_ETHER | IFM_AUTO, 0, NULL);
+		sc->sc_ifmedia.ifm_media = IFM_ETHER | IFM_AUTO;
+	}
+
+	ifmedia_set(&sc->sc_ifmedia, sc->sc_ifmedia.ifm_media);
 
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 	ifp->if_softc = sc;
@@ -621,6 +668,10 @@ beioctl(ifp, cmd, data)
 			error = 0;
 		}
 		break;
+	case SIOCGIFMEDIA:
+	case SIOCSIFMEDIA:
+		error = ifmedia_ioctl(ifp, ifr, &sc->sc_ifmedia, cmd);
+		break;
 	default:
 		if ((error = ether_ioctl(ifp, &sc->sc_arpcom, cmd, data)) > 0) {
 			splx(s);
@@ -641,7 +692,6 @@ beinit(sc)
 	int s = splimp();
 	int i;
 
-	untimeout(be_negotiate_watchdog, sc);
 	sc->sc_nticks = 0;
 
 	qec_reset(sc->sc_qec);
@@ -691,7 +741,8 @@ beinit(sc)
 	sc->sc_last_rd = 0;
 
 	be_tcvr_init(sc);
-	be_tcvr_setspeed(sc);
+
+	be_ifmedia_upd(ifp);
 
 	bestop(sc);
 
@@ -755,38 +806,6 @@ beinit(sc)
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
 	splx(s);
-}
-
-void
-be_tcvr_setspeed(sc)
-	struct besoftc *sc;
-{
-	int x, tries, i;
-
-	be_tcvr_write(sc, PHY_BMCR,
-		PHY_BMCR_LOOPBACK | PHY_BMCR_PDOWN | PHY_BMCR_ISOLATE);
-	be_tcvr_write(sc, PHY_BMCR, PHY_BMCR_RESET);
-
-	for (tries = 0; tries < 16; i++) {
-		x = be_tcvr_read(sc, PHY_BMCR);
-		if ((x & PHY_BMCR_RESET) == 0)
-			break;
-		DELAY(20);
-	}
-
-	x = be_tcvr_read(sc, PHY_BMCR);
-	be_tcvr_write(sc, PHY_BMCR, x & (~PHY_BMCR_ISOLATE));
-
-	for (tries = 0; tries < 32; i++) {
-		x = be_tcvr_read(sc, PHY_BMCR);
-		if ((x & PHY_BMCR_ISOLATE) == 0)
-			break;
-		DELAY(20);
-	}
-
-	x = be_tcvr_read(sc, PHY_BMSR);
-	if ((x & PHY_BMSR_LINKSTATUS) == 0)
-		timeout(be_negotiate_watchdog, sc, (12 * hz)/10);
 }
 
 /*
@@ -1162,29 +1181,116 @@ be_get(sc, idx, totlen)
 	return (top);
 }
 
+/*
+ * Get current media settings.
+ */
 void
-be_negotiate_watchdog(v)
-	void *v;
+be_ifmedia_sts(ifp, ifmr)
+	struct ifnet *ifp;
+	struct ifmediareq *ifmr;
 {
-	struct besoftc *sc = (struct besoftc *)v;
-	int x;
+	struct besoftc *sc = ifp->if_softc;
+	int bmcr, bmsr;
 
-	if (sc->sc_nticks == BE_NEGOTIATE_MAXTICKS) {
-		sc->sc_nticks = 0;
-		be_tcvr_setspeed(sc);
-		return;
-	}
-	sc->sc_nticks++;
+	bmcr = be_tcvr_read(sc, PHY_BMCR);
 
-	x = be_tcvr_read(sc, PHY_BMSR);
-	if ((x & PHY_BMSR_LINKSTATUS) == 0) {
-		timeout(be_negotiate_watchdog, sc, (12 * hz)/10);
+	if ((bmcr & (PHY_BMCR_SPEED | PHY_BMCR_DUPLEX)) ==
+	    (PHY_BMCR_SPEED | PHY_BMCR_DUPLEX)) {
+		ifmr->ifm_active = IFM_ETHER | IFM_100_TX | IFM_FDX;
 		return;
 	}
 
-	x = be_tcvr_read(sc, PHY_BMCR);
-	printf("%s: %d Mb/s %s duplex, link up.\n",
-			sc->sc_dev.dv_xname,
-			(x & PHY_BMCR_SPEED) ? 100 : 10,
-			(x & PHY_BMCR_DUPLEX) ? "full" : "half");
+	if (bmcr & PHY_BMCR_SPEED) {
+		ifmr->ifm_active = IFM_ETHER | IFM_100_TX | IFM_HDX;
+		return;
+	}
+
+	if (bmcr & PHY_BMCR_DUPLEX) {
+		ifmr->ifm_active = IFM_ETHER | IFM_10_T | IFM_FDX;
+		return;
+	}
+
+	ifmr->ifm_active = IFM_ETHER | IFM_10_T | IFM_HDX;
+
+	bmsr = be_tcvr_read(sc, PHY_BMSR);
+	if (bmsr & PHY_BMSR_LINKSTATUS)
+		ifmr->ifm_active |=  IFM_AVALID | IFM_ACTIVE;
+	else {
+		ifmr->ifm_active |=  IFM_AVALID;
+		ifmr->ifm_active &= ~IFM_ACTIVE;
+	}
+}
+
+/*
+ * Set media options.
+ */
+int
+be_ifmedia_upd(ifp)
+	struct ifnet *ifp;
+{
+	struct besoftc *sc = ifp->if_softc;
+	struct ifmedia *ifm = &sc->sc_ifmedia;
+	int bmcr, tries;
+
+	if (IFM_TYPE(ifm->ifm_media) != IFM_ETHER)
+		return (EINVAL);
+
+	be_tcvr_write(sc, PHY_BMCR,
+		PHY_BMCR_LOOPBACK | PHY_BMCR_PDOWN | PHY_BMCR_ISOLATE);
+	be_tcvr_write(sc, PHY_BMCR, PHY_BMCR_RESET);
+
+	for (tries = 16; tries >= 0; tries--) {
+		bmcr = be_tcvr_read(sc, PHY_BMCR);
+		if ((bmcr & PHY_BMCR_RESET) == 0)
+			break;
+		DELAY(20);
+	}
+	if (tries == 0) {
+		printf("%s: bmcr reset failed\n", sc->sc_dev.dv_xname);
+		return (EIO);
+	}
+
+	bmcr = be_tcvr_read(sc, PHY_BMCR);
+
+	if (IFM_SUBTYPE(ifm->ifm_media) == IFM_100_T4) {
+		bmcr |= PHY_BMCR_SPEED;
+		bmcr &= ~PHY_BMCR_DUPLEX;
+		printf("%s: selecting 100baseT4", sc->sc_dev.dv_xname);
+	}
+
+	if (IFM_SUBTYPE(ifm->ifm_media) == IFM_100_TX) {
+		bmcr |= PHY_BMCR_SPEED;
+		printf("%s: selecting 100baseTX", sc->sc_dev.dv_xname);
+	}
+
+	if (IFM_SUBTYPE(ifm->ifm_media) == IFM_10_T) {
+		bmcr &= ~PHY_BMCR_SPEED;
+		printf("%s: selecting 10baseT", sc->sc_dev.dv_xname);
+	}
+
+	if ((ifm->ifm_media & IFM_GMASK) == IFM_FDX) {
+		bmcr |= PHY_BMCR_DUPLEX;
+		sc->sc_br->tx_cfg |= BE_BR_TXCFG_FULLDPLX;
+		printf(" full-duplex\n");
+	}
+	else {
+		bmcr &= ~PHY_BMCR_DUPLEX;
+		sc->sc_br->tx_cfg &= ~BE_BR_TXCFG_FULLDPLX;
+		printf(" half-duplex\n");
+	}
+
+	be_tcvr_write(sc, PHY_BMCR, bmcr & (~PHY_BMCR_ISOLATE));
+
+	for (tries = 32; tries >= 0; tries--) {
+		bmcr = be_tcvr_read(sc, PHY_BMCR);
+		if ((bmcr & PHY_BMCR_ISOLATE) == 0)
+			break;
+		DELAY(20);
+	}
+	if (tries == 0) {
+		printf("%s: bmcr unisolate failed\n", sc->sc_dev.dv_xname);
+		return (EIO);
+	}
+
+	return (0);
 }

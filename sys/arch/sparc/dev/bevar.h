@@ -1,4 +1,4 @@
-/*	$OpenBSD: bevar.h,v 1.6 1998/08/28 19:06:52 jason Exp $	*/
+/*	$OpenBSD: bevar.h,v 1.7 1998/09/04 05:59:20 jason Exp $	*/
 
 /*
  * Copyright (c) 1998 Theo de Raadt and Jason L. Wright.
@@ -32,6 +32,7 @@ struct besoftc {
 	struct	sbusdev sc_sd;		/* sbus device */
 	struct	intrhand sc_ih;		/* interrupt vectoring */
 	struct	arpcom sc_arpcom;	/* ethernet common */
+	struct	ifmedia sc_ifmedia;	/* interface media */
 
 	struct	qec_softc *sc_qec;	/* QEC parent */
 	struct	qecregs *sc_qr;		/* QEC registers */
