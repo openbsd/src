@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.18 1997/06/29 21:46:01 millert Exp $	*/
+/*	$OpenBSD: inet.c,v 1.19 1997/07/01 20:32:14 provos Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-static char *rcsid = "$OpenBSD: inet.c,v 1.18 1997/06/29 21:46:01 millert Exp $";
+static char *rcsid = "$OpenBSD: inet.c,v 1.19 1997/07/01 20:32:14 provos Exp $";
 #endif
 #endif /* not lint */
 
@@ -610,7 +610,7 @@ ah_stats(off, name)
         p(ahs_badkcr, "\t%u input packet%s that failed to be processed\n");
         p(ahs_badauth, "\t%u packet%s that failed verification received\n");
         p(ahs_noxform, "\t%u packet%s for which no XFORM was set in TDB received\n");
-        p(ahs_qfull, "\t%u packet%s were dropeed due to full output queue\n");
+        p(ahs_qfull, "\t%u packet%s were dropped due to full output queue\n");
         p(ahs_wrap, "\t%u packet%s where counter wrapping was detected\n");
         p(ahs_replay, "\t%u possibly replayed packet%s received\n");
         p(ahs_badauthl, "\t%u packet%s with bad authenticator length received\n");
@@ -643,7 +643,7 @@ esp_stats(off, name)
         p(esps_badkcr, "\t%u input packet%s that failed to be processed\n");
         p(esps_badauth, "\t%u packet%s that failed verification received\n");
         p(esps_noxform, "\t%u packet%s for which no XFORM was set in TDB received\n");   
-        p(esps_qfull, "\t%u packet%s were dropeed due to full output queue\n");
+        p(esps_qfull, "\t%u packet%s were dropped due to full output queue\n");
         p(esps_wrap, "\t%u packet%s where counter wrapping was detected\n");
         p(esps_replay, "\t%u possibly replayed packet%s received\n"); 
         p(esps_badilen, "\t%u packet%s with payload not a multiple of 8 received\n");
@@ -674,7 +674,7 @@ ip4_stats(off, name)
         p(ip4s_opackets, "\t%u total output packet%s\n");
         p(ip4s_hdrops, "\t%u packet%s shorter than header shows\n");
         p(ip4s_notip4, "\t%u packet%s with internal header not IPv4 received\n");
-        p(ip4s_qfull, "\t%u packet%s were dropeed due to full output queue\n");
+        p(ip4s_qfull, "\t%u packet%s were dropped due to full output queue\n");
 
 #undef p
 }
