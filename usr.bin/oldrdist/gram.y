@@ -34,7 +34,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)gram.y	8.1 (Berkeley) 6/9/93"; */
-static char *rcsid = "$Id: gram.y,v 1.2 1996/08/22 20:33:20 millert Exp $";
+static char *rcsid = "$Id: gram.y,v 1.3 1996/09/10 23:20:21 millert Exp $";
 #endif /* not lint */
 
 #include "defs.h"
@@ -368,11 +368,11 @@ insert(label, files, hosts, subcmds)
 	struct subcmd *subcmds;
 {
 	register struct cmd *c, *prev, *nc;
-	register struct namelist *h;
+	register struct namelist *h, *nexth;
 
 	files = expand(files, E_VARS|E_SHELL);
 	hosts = expand(hosts, E_ALL);
-	for (h = hosts; h != NULL; free(h), h = h->n_next) {
+	for (h = hosts; h != NULL; nexth = h->n_next, free(h), h = nexth) {
 		/*
 		 * Search command list for an update to the same host.
 		 */
