@@ -1,4 +1,4 @@
-.\"   $OpenBSD: tftpd.8,v 1.8 2000/10/30 17:46:30 aaron Exp $
+.\"   $OpenBSD: tftpd.8,v 1.9 2001/03/08 02:24:28 deraadt Exp $
 .\"
 .\" Copyright (c) 1983, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)tftpd.8	6.7 (Berkeley) 5/13/91
-.\"	$OpenBSD: tftpd.8,v 1.8 2000/10/30 17:46:30 aaron Exp $
+.\"	$OpenBSD: tftpd.8,v 1.9 2001/03/08 02:24:28 deraadt Exp $
 .\"
 .Dd June 11, 1997
 .Dt TFTPD 8
@@ -106,6 +106,11 @@ on startup; therefore the remote host is not expected to pass the directory
 as part of the file name to transfer.
 This option is intended primarily for
 compatibility with SunOS boot ROMs which do not include a directory name.
+.Sh BUGS
+Files larger than 33488896 octets (65535 blocks) cannot be transferred
+without client and server supporting blocksize negotiation (RFC1783).
+.Pp
+Many tftp clients will not transfer files over 16744448 octets (32767 blocks).
 .Sh SEE ALSO
 .Xr tftp 1 ,
 .Xr inetd 8
