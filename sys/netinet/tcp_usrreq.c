@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.82 2004/04/12 19:05:38 tedu Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.83 2004/04/25 04:34:05 markus Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -120,7 +120,7 @@ int *tcpctl_vars[TCPCTL_MAXID] = TCPCTL_VARS;
 
 struct	inpcbtable tcbtable;
 
-int tcp_ident(void *, size_t *, void *, size_t);
+int tcp_ident(void *, size_t *, void *, size_t, int);
 
 #ifdef INET6
 int
@@ -771,25 +771,36 @@ tcp_usrclosed(tp)
 }
 
 /*
- * Look up a socket for ident..
+ * Look up a socket for ident or tcpdrop, ...
  */
 int
-tcp_ident(oldp, oldlenp, newp, newlen)
+tcp_ident(oldp, oldlenp, newp, newlen, dodrop)
 	void *oldp;
 	size_t *oldlenp;
 	void *newp;
 	size_t newlen;
+	int dodrop;
 {
 	int error = 0, s;
 	struct tcp_ident_mapping tir;
 	struct inpcb *inp;
+	struct tcpcb *tp = NULL;
 	struct sockaddr_in *fin, *lin;
 #ifdef INET6
 	struct sockaddr_in6 *fin6, *lin6;
 	struct in6_addr f6, l6;
 #endif
 
-	if (oldp == NULL || newp != NULL || newlen != 0)
+	if (oldp == NULL)
+		return (EINVAL);
+	if (dodrop) {
+		/*
+		 * XXX stupid permission hack:
+		 * only root may set newp, so we require newp for tcp_drop()
+		 */
+		if (newp == NULL)
+			return (EPERM);
+	} else if (newp != NULL || newlen != 0)
 		return (EINVAL);
 	if  (*oldlenp < sizeof(tir))
 		return (ENOMEM);
@@ -828,6 +839,16 @@ tcp_ident(oldp, oldlenp, newp, newlen)
 		inp = in_pcbhashlookup(&tcbtable,  fin->sin_addr,
 		    fin->sin_port, lin->sin_addr, lin->sin_port);
 		break;
+	}
+
+	if (dodrop) {
+		if (inp && (tp = intotcpcb(inp)) &&
+		    ((inp->inp_socket->so_options & SO_ACCEPTCONN) == 0))
+			tp = tcp_drop(tp, ECONNABORTED);
+		else
+			error = ESRCH;
+		splx(s);
+		return (error);
 	}
 
 	if (inp == NULL) {
@@ -892,7 +913,11 @@ tcp_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 		    baddynamicports.tcp, sizeof(baddynamicports.tcp)));
 
 	case TCPCTL_IDENT:
-		return (tcp_ident(oldp, oldlenp, newp, newlen));
+		return (tcp_ident(oldp, oldlenp, newp, newlen, 0));
+
+	case TCPCTL_DROP:
+		return (tcp_ident(oldp, oldlenp, newp, newlen, 1));
+
 #ifdef TCP_ECN
 	case TCPCTL_ECN:
 		return (sysctl_int(oldp, oldlenp, newp, newlen,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.62 2004/04/20 20:05:29 markus Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.63 2004/04/25 04:34:05 markus Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -465,7 +465,8 @@ struct	tcpstat {
 #define	TCPCTL_SYN_BUCKET_LIMIT	16 /* max size of hash bucket */
 #define	TCPCTL_RFC3390	       17 /* enable/disable RFC3390 increased cwnd */
 #define	TCPCTL_REASS_LIMIT     18 /* max entries for tcp reass queues */
-#define	TCPCTL_MAXID	       19
+#define	TCPCTL_DROP	       19 /* drop tcp connection */
+#define	TCPCTL_MAXID	       20
 
 #define	TCPCTL_NAMES { \
 	{ 0, 0 }, \
@@ -487,6 +488,7 @@ struct	tcpstat {
 	{ "synbucketlimit", 	CTLTYPE_INT }, \
 	{ "rfc3390", 	CTLTYPE_INT }, \
 	{ "reasslimit", 	CTLTYPE_INT }, \
+	{ "drop", 	CTLTYPE_STRUCT }, \
 }
 
 #define	TCPCTL_VARS { \
@@ -508,6 +510,7 @@ struct	tcpstat {
 	&tcp_syn_cache_limit, \
 	&tcp_syn_bucket_limit, \
 	&tcp_do_rfc3390, \
+	NULL, \
 	NULL \
 }
 
