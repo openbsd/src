@@ -27,15 +27,20 @@ extern	char	*index();
 #include <netinet/in_systm.h>
 #include <net/if.h>
 #include <netinet/ip.h>
-#include <netinet/ip_fil.h>
+#include "ip_fil.h"
 #include <netdb.h>
 #include <arpa/nameser.h>
 #include <resolv.h>
 #include "ipf.h"
 
 #ifndef	lint
-static	char	sccsid[] = "@(#)ipf.c	1.18 11/11/95 (C) 1993-1995 Darren Reed";
+static	char	sccsid[] = "@(#)ipf.c	1.21 1/14/96 (C) 1993-1995 Darren Reed";
 #endif
+
+#if	SOLARIS
+void	frsync();
+#endif
+void	zerostats();
 
 extern	char	*optarg;
 
@@ -96,7 +101,7 @@ char *argv[];
 		case 'v' :
 			opts |= OPT_VERBOSE;
 			break;
-#if defined(sun) && (defined(__SVR4) || defined(__svr4__))
+#if SOLARIS
 		case 'y' :
 			frsync();
 			break;
@@ -136,8 +141,10 @@ char	*file;
 
 	if (!strcmp(file, "-"))
 		fp = stdin;
-	else if (!(fp = fopen(file, "r")))
-		return;
+	else if (!(fp = fopen(file, "r"))) {
+		perror("fopen");
+		exit(1);;
+	}
 
 	while (fgets(line, sizeof(line)-1, fp)) {
 		/*
@@ -209,6 +216,11 @@ char	*opt;
 		if (opts & OPT_VERBOSE)
 			printf("set log flag: pass\n");
 	}
+	if (index(opt, 'm') && (*opt == 'n' || *opt == 'N')) {
+		flag |= FF_LOGNOMATCH;
+		if (opts & OPT_VERBOSE)
+			printf("set log flag: nomatch\n");
+	}
 	if (index(opt, 'b') || index(opt, 'd')) {
 		flag |= FF_LOGBLOCK;
 		if (opts & OPT_VERBOSE)
@@ -235,11 +247,11 @@ char	*arg;
 
 	if (!arg || !*arg)
 		return;
-	if (*arg == 'i' || *arg == 'I')
+	if (strchr(arg, 'i') || strchr(arg, 'I'))
 		fl = FR_INQUE;
-	else if (*arg == 'o' || *arg == 'O')
+	if (strchr(arg, 'o') || strchr(arg, 'O'))
 		fl = FR_OUTQUE;
-	else if (*arg == 'a' || *arg == 'A')
+	if (strchr(arg, 'a') || strchr(arg, 'A'))
 		fl = FR_OUTQUE|FR_INQUE;
 	fl |= (opts & FR_INACTIVE);
 	rem = fl;
@@ -267,7 +279,7 @@ static void swapactive()
 
 
 #if defined(sun) && (defined(__SVR4) || defined(__svr4__))
-frsync()
+void frsync()
 {
 	if (ioctl(fd, SIOCFRSYN, 0) == -1)
 		perror("SIOCFRSYN");
@@ -277,7 +289,7 @@ frsync()
 #endif
 
 
-zerostats()
+void zerostats()
 {
 	struct	friostat	fio;
 

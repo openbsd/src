@@ -23,7 +23,7 @@
 #include <netinet/ip.h>
 #include <netinet/tcp.h>
 #include <net/if.h>
-#include <netinet/ip_fil.h>
+#include "ip_fil.h"
 #include <netdb.h>
 #include <arpa/nameser.h>
 #include <arpa/inet.h>
@@ -32,22 +32,33 @@
 #include <ctype.h>
 
 #ifndef	lint
-static	char	sccsid[] ="@(#)parse.c	1.25 11/11/95 (C) 1993 Darren Reed";
+static	char	sccsid[] ="@(#)parse.c	1.33 1/14/96 (C) 1993 Darren Reed";
 #endif
 
 extern	struct	ipopt_names	ionames[], secclass[];
 extern	int	opts;
+extern	int	gethostname();
 
 u_long	hostnum(), optname();
 u_short	portnum();
 u_char	tcp_flags();
 struct	frentry	*parse();
 void	binprint(), printfr();
-int	addicmp(), extras(), hostmask(), ports();
+int	addicmp(), extras(), hostmask(), ports(), icmpcode(), addkeep();
 
 char	*proto = NULL;
 char	flagset[] = "FSRPAU";
 u_char	flags[] = { TH_FIN, TH_SYN, TH_RST, TH_PUSH, TH_ACK, TH_URG };
+
+static	char	thishost[64];
+
+
+void initparse()
+{
+	gethostname(thishost, sizeof(thishost));
+	thishost[sizeof(thishost) - 1] = '\0';
+}
+
 
 /* parse()
  *
@@ -86,7 +97,7 @@ char	*line;
 	 * does it start with one of the two possible first words ?
 	 */
 	if (strcasecmp("block",*cpp) && strcasecmp("pass",*cpp) &&
-	    strcasecmp("log",*cpp)) {
+	    strcasecmp("log",*cpp) && strcasecmp("count",*cpp)) {
 		(void)fprintf(stderr, "unknown keyword (%s)\n", *cpp);
 		return NULL;
 	}
@@ -95,16 +106,31 @@ char	*line;
 		if (!strncasecmp(*(cpp+1), "return-icmp", 11)) {
 			fil.fr_flags |= FR_RETICMP;
 			cpp++;
+			if (*(*cpp + 11) == '(') {
+				fil.fr_icode = icmpcode(*cpp + 12);
+				if (fil.fr_icode == -1) {
+					fprintf(stderr,
+						"uncrecognised icmp code %s\n",
+						*cpp + 12);
+					return NULL;
+				}
+			}
 		} else if (!strncasecmp(*(cpp+1), "return-rst", 10)) {
 			fil.fr_flags |= FR_RETRST;
 			cpp++;
 		}
-	} else if (**cpp == 'p')
+	} else if (**cpp == 'c')
+		fil.fr_flags = FR_ACCOUNT;
+	else if (**cpp == 'p')
 		fil.fr_flags = FR_PASS;
 	else if (**cpp == 'l') {
 		fil.fr_flags = FR_LOG;
 		if (!strcasecmp(*(cpp+1), "body")) {
 			fil.fr_flags |= FR_LOGBODY;
+			cpp++;
+		}
+		if (!strcasecmp(*(cpp+1), "first")) {
+			fil.fr_flags |= FR_LOGFIRST;
 			cpp++;
 		}
 	}
@@ -115,13 +141,13 @@ char	*line;
 	else if (!strcasecmp("out", *cpp))
 		fil.fr_flags |= FR_OUTQUE;
 	else {
-		(void)fprintf(stderr, "missing 'in'/'out' keyword (%s)\n",
-			*cpp);
+		(void)fprintf(stderr,
+			"missing 'in'/'out' keyword (%s)\n", *cpp);
 		return NULL;
 	}
-
 	if (!*++cpp)
 		return NULL;
+
 	if (!strcasecmp("log", *cpp)) {
 		cpp++;
 		if (fil.fr_flags & FR_PASS)
@@ -130,6 +156,10 @@ char	*line;
 			fil.fr_flags |= FR_LOGB;
 		if (!strcasecmp(*cpp, "body")) {
 			fil.fr_flags |= FR_LOGBODY;
+			cpp++;
+		}
+		if (!strcasecmp(*cpp, "first")) {
+			fil.fr_flags |= FR_LOGFIRST;
 			cpp++;
 		}
 	}
@@ -320,6 +350,13 @@ char	*line;
 	}
 
 	/*
+	 * Keep something...
+	 */
+	if (*cpp && !strcasecmp(*cpp, "keep"))
+		if (addkeep(&cpp, &fil))
+			return NULL;
+
+	/*
 	 * leftovers...yuck
 	 */
 	if (*cpp && **cpp) {
@@ -353,7 +390,7 @@ u_short	*pp, *tp;
 u_char	*cp;
 {
 	char	*s;
-	int	bits = -1;
+	int	bits = -1, resolved;
 
 	/*
 	 * is it possibly hostname/num ?
@@ -374,7 +411,9 @@ u_char	*cp;
 			}
 			*msk = htonl(*msk);
 		}
-		*sa = hostnum(**seg) & *msk;
+		*sa = hostnum(**seg, &resolved) & *msk;
+		if (resolved == -1)
+			return -1;
 		(*seg)++;
 		return ports(seg, pp, cp, tp);
 	}
@@ -383,17 +422,24 @@ u_char	*cp;
 	 * look for extra segments if "mask" found in right spot
 	 */
 	if (*(*seg+1) && *(*seg+2) && !strcasecmp(*(*seg+1), "mask")) {
-		*sa = hostnum(**seg);
+		*sa = hostnum(**seg, &resolved);
+		if (resolved == -1)
+			return -1;
 		(*seg)++;
 		(*seg)++;
-		*msk = inet_addr(**seg);
+		if (index(**seg, '.'))
+			*msk = inet_addr(**seg);
+		else
+			*msk = (u_long)strtol(**seg, NULL, 0);
 		(*seg)++;
 		*sa &= *msk;
 		return ports(seg, pp, cp, tp);
 	}
 
 	if (**seg) {
-		*sa = hostnum(**seg);
+		*sa = hostnum(**seg, &resolved);
+		if (resolved == -1)
+			return -1;
 		(*seg)++;
 		*msk = (*sa ? inet_addr("255.255.255.255") : 0L);
 		*sa &= *msk;
@@ -406,20 +452,27 @@ u_char	*cp;
  * returns an ip address as a long var as a result of either a DNS lookup or
  * straight inet_addr() call
  */
-u_long	hostnum(host)
+u_long	hostnum(host, resolved)
 char	*host;
+int	*resolved;
 {
 	struct	hostent	*hp;
 	struct	netent	*np;
 
+	*resolved = 0;
 	if (!strcasecmp("any",host))
 		return 0L;
 	if (isdigit(*host))
 		return inet_addr(host);
+	if (!strcasecmp("<thishost>", host))
+		host = thishost;
 
 	if (!(hp = gethostbyname(host))) {
-		if (!(np = getnetbyname(host)))
+		if (!(np = getnetbyname(host))) {
+			*resolved = -1;
+			fprintf(stderr, "can't resolve hostname: %s\n", host);
 			return 0;
+		}
 		return np->n_net;
 	}
 	return *(u_long *)hp->h_addr;
@@ -485,8 +538,10 @@ char	*name;
 	struct	servent	*sp, *sp2;
 	u_short	p1 = 0;
 
-	if (isdigit(*name) || !proto)
+	if (isdigit(*name))
 		return htons((u_short)atoi(name));
+	if (!proto)
+		proto = "tcp/udp";
 	if (strcasecmp(proto, "tcp/udp")) {
 		sp = getservbyname(name, proto);
 		if (sp)
@@ -740,6 +795,64 @@ struct	frentry	*fp;
 }
 
 
+#define	MAX_ICMPCODE	12
+
+char	*icmpcodes[] = {
+	"net-unr", "host-unr", "proto-unr", "port-unr", "needfrag", "srcfail",
+	"net-unk", "host-unk", "isolate", "net-prohib", "host-prohib",
+	"net-tos", "host-tos", NULL };
+/*
+ * Return the number for the associated ICMP unreachable code.
+ */
+int icmpcode(str)
+char *str;
+{
+	char	*s;
+	int	i, len;
+
+	if (!(s = strrchr(str, ')')))
+		return -1;
+	*s = '\0';
+	if (isdigit(*str))
+		return atoi(str);
+	len = strlen(str);
+	for (i = 0; icmpcodes[i]; i++)
+		if (!strncasecmp(str, icmpcodes[i], MIN(len,
+				 strlen(icmpcodes[i])) ))
+			return i;
+	return -1;
+}
+
+
+/*
+ * set the icmp field to the correct type if "icmp" word is found
+ */
+int	addkeep(cp, fp)
+char	***cp;
+struct	frentry	*fp;
+{
+	if (fp->fr_proto != IPPROTO_TCP && fp->fr_proto != IPPROTO_UDP &&
+	    fp->fr_proto != IPPROTO_ICMP) {
+		(void)fprintf(stderr, "Can only use keep with UDP/ICMP/TCP\n");
+		return -1;
+	}
+
+	(*cp)++;
+	if (**cp && strcasecmp(**cp, "state") && strcasecmp(**cp, "frags")) {
+		(void)fprintf(stderr, "Unrecognised state keyword \"%s\"\n",
+			**cp);
+		return -1;
+	}
+
+	if (***cp == 's')
+		fp->fr_flags |= FR_KEEPSTATE;
+	else if (***cp == 'f')
+		fp->fr_flags |= FR_KEEPFRAG;
+	(*cp)++;
+	return 0;
+}
+
+
 /*
  * count consecutive 1's in bit mask.  If the mask generated by counting
  * consecutive 1's is different to that passed, return -1, else return #
@@ -816,23 +929,35 @@ struct	frentry	*fp;
 		(void)printf("log");
 		if (fp->fr_flags & FR_LOGBODY)
 			(void)printf(" body");
+		if (fp->fr_flags & FR_LOGFIRST)
+			(void)printf(" first");
 	} else if (fp->fr_flags & FR_BLOCK) {
 		(void)printf("block");
-		if (fp->fr_flags & FR_RETICMP)
+		if (fp->fr_flags & FR_RETICMP) {
 			(void)printf(" return-icmp");
+			if (fp->fr_icode)
+				if (fp->fr_icode <= MAX_ICMPCODE)
+					printf("(%s)",icmpcodes[fp->fr_icode]);
+				else
+					printf("(%d)", fp->fr_icode);
+		}
 		if (fp->fr_flags & FR_RETRST)
 			(void)printf(" return-rst");
-	}
+	} else if (fp->fr_flags & FR_ACCOUNT)
+		(void)printf("count");
 
 	if (fp->fr_flags & FR_OUTQUE)
 		(void)printf(" out ");
 	else
 		(void)printf(" in ");
 
-	if (fp->fr_flags & (FR_LOGB|FR_LOGP)) {
+	if (((fp->fr_flags & FR_LOGB) == FR_LOGB) ||
+	    ((fp->fr_flags & FR_LOGP) == FR_LOGP)) {
 		(void)printf("log ");
 		if (fp->fr_flags & FR_LOGBODY)
-			(void)printf(" body");
+			(void)printf("body ");
+		if (fp->fr_flags & FR_LOGFIRST)
+			(void)printf("first ");
 	}
 	if (fp->fr_flags & FR_QUICK)
 		(void)printf("quick ");
@@ -936,6 +1061,9 @@ struct	frentry	*fp;
 					(void)putchar(*s);
 		}
 	}
+	if (fp->fr_flags & (FR_KEEPFRAG|FR_KEEPSTATE))
+		printf(" keep %s ",
+			(fp->fr_flags & FR_KEEPFRAG) ? "frags" : "state");
 	(void)putchar('\n');
 }
 

@@ -61,7 +61,7 @@ static struct mbuf *ip_insertoptions __P((struct mbuf *, struct mbuf *, int *));
 static void ip_mloopback
 	__P((struct ifnet *, struct mbuf *, struct sockaddr_in *));
 #if defined(IPFILTER) || defined(IPFILTER_LKM)
-extern int (*fr_checkp) __P((struct ip *, int, struct ifnet *, int));
+extern int (*fr_checkp) __P((struct ip *, int, struct ifnet *, int, struct mbuf **));
 #endif
 
 /*
@@ -283,10 +283,13 @@ ip_output(m0, opt, ro, flags, imo)
 	/*
 	 * looks like most checking has been done now...do a filter check
 	 */
-	if ((*fr_checkp)(ip, hlen, ifp, 1))
 	{
-		error = EHOSTUNREACH;
-		goto bad;
+		struct mbuf *m0 = m;
+		if (fr_checkp && (*fr_checkp)(ip, hlen, ifp, 1, &m0)) {
+			error = EHOSTUNREACH;
+			goto done;
+		} else
+			ip = mtod(m = m0, struct ip *);
 	}
 #endif
 sendit:

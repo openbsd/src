@@ -6,6 +6,7 @@
  * to the original author and the contributors.
  */
 #include <stdio.h>
+#include <ctype.h>
 #include <assert.h>
 #include <string.h>
 #if !defined(__SVR4) && !defined(__svr4__)
@@ -29,7 +30,7 @@
 #include <netinet/ip_icmp.h>
 #include <netinet/tcpip.h>
 #include <net/if.h>
-#include <netinet/ip_fil.h>
+#include "ip_fil.h"
 #include <netdb.h>
 #include <arpa/nameser.h>
 #include <resolv.h>
@@ -37,10 +38,12 @@
 #include "ipt.h"
 
 #ifndef	lint
-static	char	sccsid[] = "@(#)ipft_tx.c	1.2 10/17/95 (C) 1993 Darren Reed";
+static	char	sccsid[] = "@(#)ipft_tx.c	1.5 1/12/96 (C) 1993 Darren Reed";
 #endif
 
 extern	int	opts;
+extern	u_short	portnum();
+extern	u_long	buildopts();
 
 static	int	text_open(), text_close(), text_readip(), parseline();
 
@@ -120,7 +123,7 @@ int	*out;
 	tcphdr_t	th, *tcp = &th;
 	struct	icmp	icmp, *ic = &icmp;
 	char	*cps[20], **cpp, c, opts[68];
-	int	i;
+	int	i, r;
 
 	bzero((char *)ip, MAX(sizeof(*tcp), sizeof(*ic)) + sizeof(*ip));
 	bzero((char *)tcp, sizeof(*tcp));
@@ -184,7 +187,7 @@ int	*out;
 		*last++ = '\0';
 		tcp->th_sport = portnum(last);
 	}
-	ip->ip_src.s_addr = hostnum(*cpp);
+	ip->ip_src.s_addr = hostnum(*cpp, &r);
 	cpp++;
 	if (!*cpp)
 		return 1;
@@ -200,7 +203,7 @@ int	*out;
 		*last++ = '\0';
 		tcp->th_dport = portnum(last);
 	}
-	ip->ip_dst.s_addr = hostnum(*cpp);
+	ip->ip_dst.s_addr = hostnum(*cpp, &r);
 	cpp++;
 	if (*cpp && ip->ip_p == IPPROTO_TCP) {
 		extern	char	flagset[];

@@ -39,10 +39,10 @@
 #include <arpa/inet.h>
 
 #ifndef	lint
-static	char	sccsid[] = "@(#)ipmon.c	1.13 11/11/95 (C)1995 Darren Reed";
+static	char	sccsid[] = "@(#)ipmon.c	1.16 1/12/96 (C)1995 Darren Reed";
 #endif
 
-#include <netinet/ip_fil.h>
+#include "ip_fil.h"
 
 struct	flags {
 	int	value;
@@ -122,7 +122,7 @@ int	opts;
 			tm->tm_mday, tm->tm_mon + 1, tm->tm_year + 1900);
 		t += strlen(t);
 	}
-	(void) sprintf(t, "%02d:%02d:%02d.%-.6d %c%c%d @%d ",
+	(void) sprintf(t, "%02d:%02d:%02d.%-.6ld %c%c%ld @%hd ",
 		tm->tm_hour, tm->tm_min, tm->tm_sec, lp->usec,
 		lp->ifname[0], lp->ifname[1], lp->unit, lp->rule);
 	pr = getprotobynumber((int)p);
@@ -132,7 +132,7 @@ int	opts;
 	} else
 		proto = pr->p_name;
 
- 	if (lp->flags & (FI_SHORT << 16)) {
+ 	if (lp->flags & (FI_SHORT << 20)) {
 		c[0] = 'S';
 		lvl = LOG_ERR;
 	} else if (lp->flags & FR_PASS) {
@@ -147,6 +147,9 @@ int	opts;
 		else
 			c[0] = 'B';
 		lvl = LOG_WARNING;
+	} else if (lp->flags & FF_LOGNOMATCH) {
+		c[0] = 'n';
+		lvl = LOG_NOTICE;
 	} else {
 		c[0] = 'L';
 		lvl = LOG_INFO;
@@ -155,6 +158,10 @@ int	opts;
 	c[2] = '\0';
 	(void) strcat(line, c);
 	t = line + strlen(line);
+#if	SOLARIS
+	ip->ip_off = ntohs(ip->ip_off);
+	ip->ip_len = ntohs(ip->ip_len);
+#endif
 
 	if ((p == IPPROTO_TCP || p == IPPROTO_UDP) && !(ip->ip_off & 0x1fff)) {
 		tp = (struct tcphdr *)((char *)ip + hl);
@@ -163,21 +170,23 @@ int	opts;
 				hostname(res, ip->ip_src),
 				portname(res, proto, tp->th_sport));
 			t += strlen(t);
-			(void) sprintf(t, "%s,%s PR %s len %hu (%hu) ",
+			(void) sprintf(t, "%s,%s PR %s len %hu %hu ",
 				hostname(res, ip->ip_dst),
 				portname(res, proto, tp->th_dport),
 				proto, hl, ip->ip_len);
 			t += strlen(t);
 
-			if (p == IPPROTO_TCP)
+			if (p == IPPROTO_TCP) {
+				*t++ = '-';
 				for (i = 0; tcpfl[i].value; i++)
 					if (tp->th_flags & tcpfl[i].value)
 						*t++ = tcpfl[i].flag;
+			}
 			*t = '\0';
 		} else {
 			(void) sprintf(t, "%s -> ", hostname(res, ip->ip_src));
 			t += strlen(t);
-			(void) sprintf(t, "%s PR %s len %hu (%hu)",
+			(void) sprintf(t, "%s PR %s len %hu %hu",
 				hostname(res, ip->ip_dst), proto,
 				hl, ip->ip_len);
 		}
@@ -209,7 +218,7 @@ int	opts;
 				hostname(res, ipc->ip_src),
 				portname(res, proto, tp->th_sport));
 			t += strlen(t);
-			(void) sprintf(t, " %s,%s PR %s len %hu (%hu)",
+			(void) sprintf(t, " %s,%s PR %s len %hu %hu",
 				hostname(res, ipc->ip_dst),
 				portname(res, proto, tp->th_dport),
 				proto, ipc->ip_hl << 2, ipc->ip_len);
@@ -221,8 +230,9 @@ int	opts;
 			hostname(res, ip->ip_dst), proto, hl, ip->ip_len);
 		t += strlen(t);
 		if (ip->ip_off & 0x1fff)
-			(void) sprintf(t, " frag %s%hu@%hu",
+			(void) sprintf(t, " frag %s%s%hu@%hu",
 				ip->ip_off & IP_MF ? "+" : "",
+				ip->ip_off & IP_DF ? "-" : "",
 				ip->ip_len - hl, (ip->ip_off & 0x1fff) << 3);
 	}
 	t += strlen(t);
@@ -255,7 +265,11 @@ char *argv[];
 		switch (c)
 		{
 		case 'f' :
-			(void) ioctl(fd, SIOCIPFFB, &flushed);
+			if (ioctl(fd, SIOCIPFFB, &flushed) == 0) {
+				printf("%d bytes flushed from log buffer\n",
+					flushed);
+				fflush(stdout);
+			}
 			break;
 		case 'N' :
 			opts |= 2;

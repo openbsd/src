@@ -10,6 +10,7 @@
  * returns 0 on success, -1 on error.
  */
 
+#include <stdio.h>
 #include <sys/types.h>
 #include <sys/uio.h>
 #include <unistd.h>
@@ -19,7 +20,7 @@
 #define KMEM "/dev/kmem"
 
 #ifndef lint
-static  char    sccsid[] = "@(#)kmem.c	1.3 10/15/95 (C) 1992 Darren Reed";
+static  char    sccsid[] = "@(#)kmem.c	1.4 1/12/96 (C) 1992 Darren Reed";
 #endif
 
 static	int	kmemfd = -1;

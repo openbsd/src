@@ -21,6 +21,7 @@
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <netinet/in.h>
+#include <arpa/inet.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip_var.h>
 #include <netinet/ip.h>
@@ -29,7 +30,7 @@
 #include <netinet/ip_icmp.h>
 #include <netinet/tcpip.h>
 #include <net/if.h>
-#include <netinet/ip_fil.h>
+#include "ip_fil.h"
 #include <netdb.h>
 #include <arpa/nameser.h>
 #include <resolv.h>
@@ -37,7 +38,7 @@
 #include "ipt.h"
 
 #ifndef	lint
-static	char	sccsid[] = "@(#)misc.c	1.1 10/15/95 (C) 1995 Darren Reed";
+static	char	sccsid[] = "@(#)misc.c	1.2 1/12/96 (C) 1995 Darren Reed";
 #endif
 
 void	debug(), verbose();

@@ -183,6 +183,9 @@ netinet/tcp_usrreq.c	optional inet
 netinet/udp_usrreq.c	optional inet
 netinet/ip_fil.c	optional ipfilter requires inet
 netinet/fil.c		optional ipfilter requires inet
+netinet/ip_nat.c	optional ipfilter requires inet
+netinet/ip_frag.c	optional ipfilter requires inet
+netinet/ip_state.c	optional ipfilter requires inet
 netiso/clnp_debug.c	optional iso
 netiso/clnp_er.c	optional iso
 netiso/clnp_frag.c	optional iso

@@ -1,5 +1,5 @@
 /*
- * (C)opyright 1993,1994,1995 by Darren Reed.
+ * (C)opyright 1993-1996 by Darren Reed.
  *
  * Redistribution and use in source and binary forms are permitted
  * provided that this notice is preserved and due credit is given
@@ -29,7 +29,7 @@
 #include <netinet/ip_icmp.h>
 #include <netinet/tcpip.h>
 #include <net/if.h>
-#include <netinet/ip_fil.h>
+#include "ip_fil.h"
 #include <netdb.h>
 #include <arpa/nameser.h>
 #include <arpa/inet.h>
@@ -39,12 +39,12 @@
 #include <ctype.h>
 
 #ifndef	lint
-static	char	sccsid[] = "@(#)ipt.c	1.13 11/11/95 (C) 1993 Darren Reed";
+static	char	sccsid[] = "@(#)ipt.c	1.15 1/7/96 (C) 1993-1996 Darren Reed";
 #endif
 
 extern	int	fr_check();
 extern	char	*optarg;
-extern	struct	frentry	*filterin[], *filterout[];
+extern	struct	frentry	*ipfilter[2][2];
 extern	struct	ipread	snoop, etherf, tcpd, pcap, iptext;
 extern	void	debug(), verbose();
 
@@ -148,12 +148,12 @@ char *argv[];
 			f = (struct frentry *)malloc(sizeof(*f));
 			if (fr->fr_flags & FR_INQUE) {
 				if (!ft_in)
-					ft_in = filterin[0] = f;
+					ft_in = ipfilter[0][0] = f;
 				else
 					ft_in->fr_next = f, ft_in = f;
 			} else if (fr->fr_flags & FR_OUTQUE) {
 				if (!ft_out)
-					ft_out = filterout[0] = f;
+					ft_out = ipfilter[1][0] = f;
 				else
 					ft_out->fr_next = f, ft_out = f;
 			}

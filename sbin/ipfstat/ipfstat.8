@@ -16,20 +16,28 @@ The default behaviour of \fBipfstat\fP
 is to retrieve and display the accumulated statistics which have been
 accumulated over time as the kernel has put packets through the filter.
 .SH OPTIONS
-.IP -o
-display the filter list used for the output side of the kernel IP processing.
-.IP -i
-display the filter list used for the input side of the kernel IP processing.
-.IP -v
-turn verbose mode on.  Displays more debugging information.
+.IP -a
+display the accounting filter list and show bytes counted against each rule.
 .IP -d <device>
 use a device other than \fB/dev/ipl\fP for interfacing with the kernel.
-.IP -I
-swap between retrieving "inactive"/"active" filter list details.  For use
-in combination with \fB-i\fP.
+.IP -f
+show fragment state information (statistics) and held state information (in
+the kernel) if any is present.
 .IP -h
 show per-rule the number of times each one scores a "hit".  For use in
 combination with \fB-i\fP.
+.IP -i
+display the filter list used for the input side of the kernel IP processing.
+.IP -I
+swap between retrieving "inactive"/"active" filter list details.  For use
+in combination with \fB-i\fP.
+.IP -o
+display the filter list used for the output side of the kernel IP processing.
+.IP -s
+show packet/flow state information (statistics) and held state information (in
+the kernel) if any is present.
+.IP -v
+turn verbose mode on.  Displays more debugging information.
 .SH SYNOPSIS
 The role of \fBipfstat\fP is to display current kernel statistics gathered
 as a result of applying the filters in place (if any) to packets going in and

@@ -25,7 +25,7 @@
 #include <netinet/tcp.h>
 #include <netinet/tcpip.h>
 #include <net/if.h>
-#include <netinet/ip_fil.h>
+#include "ip_fil.h"
 #include "ipf.h"
 #include "ipt.h"
 #include "pcap.h"
@@ -122,6 +122,7 @@ struct	pcap_pkthdr *rec;
 }
 
 
+#ifdef	notyet
 /*
  * read an entire pcap packet record.  only the data part is copied into
  * the available buffer, with the number of bytes copied returned.
@@ -149,6 +150,7 @@ int	cnt;
 	bcopy(bufp, buf, n);
 	return n;
 }
+#endif
 
 
 /*

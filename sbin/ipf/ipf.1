@@ -2,8 +2,8 @@
 .SH NAME
 ipf - alters packet filtering lists for IP packet input and ouput
 .SH SYNOPSIS
-ipf [-AEDIsnovdr] [-F <i|o|a>] -f <\fIfilename\fP>
-[ -f <\fIfilename\fP> [...]]
+ipf [-AEDIsnovdr] [-l <block|pass|nomatch>] [-F <i|o|a>]
+-f <\fIfilename\fP> [ -f <\fIfilename\fP> [...]]
 .SH DESCRIPTION
 .PP
 \fBipf\fP opens the filenames listed (treating "-" as stdin) and parses the
@@ -36,6 +36,12 @@ this option specifies which files
 lists.
 .IP -I
 set the list to make changes to the inactive list.
+.IP -l
+Use of the \fB-l\fP flag toggles default logging of packets.  Valid
+arguments to this option are \fBpass\fP, \fBblock\fP and \fBnomatch\fP.
+When an option is set, any packet which exits filtering and matches the
+set category is logged.  This is most useful for causing all packets
+which don't match any of the loaded rules to be logged.
 .IP -n
 This flag (no-change) prevents \fBipf\fP from actually making any ioctl
 calls or doing anything which would alter the currently running kernel.
@@ -57,4 +63,4 @@ Needs to be run as root for the packet filtering lists to actually
 be affected inside the kernel.
 .SH BUGS
 .PP
-If you find any, please send email to me at darrenr@arbld.unimelb.edu.au
+If you find any, please send email to me at darrenr@cyber.com.au

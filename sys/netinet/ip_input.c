@@ -83,8 +83,7 @@ int	ipqmaxlen = IFQ_MAXLEN;
 struct	in_ifaddrhead in_ifaddr;
 struct	ifqueue ipintrq;
 #if defined(IPFILTER) || defined(IPFILTER_LKM)
-int	fr_nullcheck();
-int	(*fr_checkp) __P((struct ip *, int, struct ifnet *, int)) = fr_nullcheck;
+int	(*fr_checkp) __P((struct ip *, int, struct ifnet *, int, struct mbuf **));
 #endif
 
 char *
@@ -240,8 +239,13 @@ next:
 	 * Check if we want to allow this packet to be processed.
 	 * Consider it to be bad if not.
 	 */
-	if ((*fr_checkp)(ip, hlen, m->m_pkthdr.rcvif, 0))
-		goto bad;
+	{
+		struct mbuf *m0 = m;
+		if (fr_checkp && (*fr_checkp)(ip, hlen, m->m_pkthdr.rcvif, 0, &m0))
+			goto next;
+		else
+		  ip = mtod(m = m0, struct ip *);
+	}
 #endif
 	/*
 	 * Process options and, if not destined for us,
@@ -1185,10 +1189,3 @@ ip_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	}
 	/* NOTREACHED */
 }
-
-#if defined(IPFILTER) || defined(IPFILTER_LKM)
-int	fr_nullcheck()
-{
-	return 0;
-}
-#endif

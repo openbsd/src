@@ -5,6 +5,7 @@
  * provided that this notice is preserved and due credit is given
  * to the original author and the contributors.
  */
+
 #include <stdio.h>
 #include <string.h>
 #if !defined(__SVR4) && !defined(__svr4__)
@@ -21,10 +22,13 @@
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <netinet/in.h>
+#include <arpa/inet.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <net/if.h>
-#include <netinet/ip_fil.h>
+#include "ip_fil.h"
+#include "ip_frag.h"
+#include "ip_state.h"
 #include <netdb.h>
 #include <arpa/nameser.h>
 #include <resolv.h>
@@ -35,7 +39,7 @@
 #endif
 
 #ifndef	lint
-static	char	sccsid[] = "@(#)fils.c	1.15 11/11/95 (C) 1993 Darren Reed";
+static	char	sccsid[] = "@(#)fils.c	1.18 1/12/96 (C) 1993 Darren Reed";
 #endif
 #ifdef	_PATH_UNIX
 #define	VMUNIX	_PATH_UNIX
@@ -44,21 +48,27 @@ static	char	sccsid[] = "@(#)fils.c	1.15 11/11/95 (C) 1993 Darren Reed";
 #endif
 
 extern	char	*optarg;
-#define	F_ST	0
-#define	F_IN	1
-#define	F_OUT	2
-#define	F_FL	3
+
+#define	PRINTF	(void)printf
+#define	FPRINTF	(void)fprintf
+#define	F_IN	0
+#define	F_OUT	1
+#define	F_AC	2
+static	char	*filters[4] = { "ipfilter(in)", "ipfilter(out)",
+				"ipacct(in)", "ipacct(out)" };
 
 int	opts = 0;
 
-static	void	showstats();
-static	void	showlist();
+static	void	showstats(), showfrstates();
+static	void	showlist(), showipstates();
 
 int main(argc,argv)
 int argc;
 char *argv[];
 {
-	struct	friostat	fio;
+	friostat_t fio;
+	ips_stat_t ipsst;
+	ipfrstat_t ifrst;
 	char	c, *name = NULL, *device = IPL_NAME;
 	int	fd;
 
@@ -68,12 +78,18 @@ char *argv[];
 	(void)setuid(getuid());
 	(void)setgid(getgid());
 
-	while ((c = getopt(argc, argv, "hIiovd:")) != -1)
+	while ((c = getopt(argc, argv, "afhIiosvd:")) != -1)
 	{
 		switch (c)
 		{
+		case 'a' :
+			opts |= OPT_ACCNT|OPT_SHOWLIST;
+			break;
 		case 'd' :
 			device = optarg;
+			break;
+		case 'f' :
+			opts |= OPT_FRSTATES;
 			break;
 		case 'h' :
 			opts |= OPT_HITS;
@@ -87,6 +103,9 @@ char *argv[];
 		case 'o' :
 			opts |= OPT_OUTQUE|OPT_SHOWLIST;
 			break;
+		case 's' :
+			opts |= OPT_IPSTATES;
+			break;
 		case 'v' :
 			opts |= OPT_VERBOSE;
 			break;
@@ -97,23 +116,40 @@ char *argv[];
 		perror("open");
 		exit(-1);
 	}
+
 	bzero((char *)&fio, sizeof(fio));
+	bzero((char *)&ipsst, sizeof(ipsst));
+	bzero((char *)&ifrst, sizeof(ifrst));
+
 	if (ioctl(fd, SIOCGETFS, &fio) == -1) {
 		perror("ioctl(SIOCGETFS)");
 		exit(-1);
 	}
+	if ((opts & OPT_IPSTATES) && (ioctl(fd, SIOCGIPST, &ipsst) == -1)) {
+		perror("ioctl(SIOCGIPST)");
+		exit(-1);
+	}
+	if ((opts & OPT_FRSTATES) && (ioctl(fd, SIOCGFRST, &ifrst) == -1)) {
+		perror("ioctl(SIOCGFRST)");
+		exit(-1);
+	}
 
 	if (opts & OPT_VERBOSE)
-		printf("opts %#x name %s\n", opts, name ? name : "<>");
-	if (opts & OPT_SHOWLIST){
+		PRINTF("opts %#x name %s\n", opts, name ? name : "<>");
+	if (opts & OPT_SHOWLIST) {
 		showlist(&fio);
 		if((opts & OPT_OUTQUE) && (opts & OPT_INQUE)){
 			opts &= ~OPT_OUTQUE;
 			showlist(&fio);
 		}
+	} else {
+		if (opts & OPT_IPSTATES)
+			showipstates(fd, &ipsst);
+		else if (opts & OPT_FRSTATES)
+			showfrstates(fd, &ifrst);
+		else
+			showstats(fd, &fio);
 	}
-	else
-		showstats(fd, &fio);
 	return 0;
 }
 
@@ -131,36 +167,46 @@ struct	friostat	*fp;
 		perror("ioctl(SIOCGETFF)");
 
 #if SOLARIS
-	(void)printf("dropped packets:\tin %ld\tout %ld\n",
+	PRINTF("dropped packets:\tin %lu\tout %lu\n",
 			fp->f_st[0].fr_drop, fp->f_st[1].fr_drop);
-	(void)printf("non-ip packets:\t\tin %ld\tout %ld\n",
+	PRINTF("non-ip packets:\t\tin %lu\tout %lu\n",
 			fp->f_st[0].fr_notip, fp->f_st[1].fr_notip);
-	(void)printf("   bad packets:\t\tin %ld\tout %ld\n",
+	PRINTF("   bad packets:\t\tin %lu\tout %lu\n",
 			fp->f_st[0].fr_bad, fp->f_st[1].fr_bad);
 #endif
-	(void)printf(" input packets:\t\tblocked %ld passed %ld nomatch %ld\n",
+	PRINTF(" input packets:\t\tblocked %lu passed %lu nomatch %lu",
 			fp->f_st[0].fr_block, fp->f_st[0].fr_pass,
 			fp->f_st[0].fr_nom);
-	(void)printf("output packets:\t\tblocked %ld passed %ld nomatch %ld\n",
+	PRINTF(" counted %lu\n", fp->f_st[0].fr_acct);
+	PRINTF("output packets:\t\tblocked %lu passed %lu nomatch %lu",
 			fp->f_st[1].fr_block, fp->f_st[1].fr_pass,
 			fp->f_st[1].fr_nom);
-	(void)printf(" input packets logged:\tblocked %ld passed %ld\n",
+	PRINTF(" counted %lu\n", fp->f_st[0].fr_acct);
+	PRINTF(" input packets logged:\tblocked %lu passed %lu\n",
 			fp->f_st[0].fr_bpkl, fp->f_st[0].fr_ppkl);
-	(void)printf("output packets logged:\tblocked %ld passed %ld\n",
+	PRINTF("output packets logged:\tblocked %lu passed %lu\n",
 			fp->f_st[1].fr_bpkl, fp->f_st[1].fr_ppkl);
-	(void)printf(" packets logged:\tinput %ld-%ld output %ld-%ld\n",
+	PRINTF(" packets logged:\tinput %lu-%lu output %lu-%lu\n",
 			fp->f_st[0].fr_pkl, fp->f_st[0].fr_skip,
 			fp->f_st[1].fr_pkl, fp->f_st[1].fr_skip);
-	(void)printf("ICMP replies:\t%ld\tTCP RSTs sent:\t%ld\n",
+	PRINTF("fragment state(in):\tkept %lu\tlost %lu\n",
+			fp->f_st[0].fr_nfr, fp->f_st[0].fr_bnfr);
+	PRINTF("fragment state(out):\tkept %lu\tlost %lu\n",
+			fp->f_st[1].fr_nfr, fp->f_st[1].fr_bnfr);
+	PRINTF("packet state(in):\tkept %lu\tlost %lu\n",
+			fp->f_st[0].fr_ads, fp->f_st[0].fr_bads);
+	PRINTF("packet state(out):\tkept %lu\tlost %lu\n",
+			fp->f_st[1].fr_ads, fp->f_st[1].fr_bads);
+	PRINTF("ICMP replies:\t%lu\tTCP RSTs sent:\t%lu\n",
 			fp->f_st[0].fr_ret, fp->f_st[1].fr_ret);
 
-	(void)printf("Packet log flags set: (%#x)\n", frf);
+	PRINTF("Packet log flags set: (%#x)\n", frf);
 	if (frf & FF_LOGPASS)
-		printf("\tpackets passed through filter\n");
+		PRINTF("\tpackets passed through filter\n");
 	if (frf & FF_LOGBLOCK)
-		printf("\tpackets blocked by filter\n");
+		PRINTF("\tpackets blocked by filter\n");
 	if (!frf)
-		printf("\tnone\n");
+		PRINTF("\tnone\n");
 }
 
 /*
@@ -173,25 +219,33 @@ struct	friostat	*fiop;
 	struct	frentry	*fp = NULL;
 	int	i, set;
 
-	if (opts & OPT_OUTQUE)
-		i = F_OUT;
-	else if (opts & OPT_INQUE)
-		i = F_IN;
-	else
-		return;
 	set = fiop->f_active;
 	if (opts & OPT_INACTIVE)
 		set = 1 - set;
-	fp = (i == F_IN) ? (struct frentry *)fiop->f_fin[set] :
-			   (struct frentry *)fiop->f_fout[set];
+	if (opts & OPT_ACCNT) {
+		i = F_AC;
+		if (opts & OPT_INQUE)
+			fp = (struct frentry *)fiop->f_acctin[set];
+		else {
+			fp = (struct frentry *)fiop->f_acctout[set];
+			i++;
+		}
+	} else if (opts & OPT_OUTQUE) {
+		i = F_OUT;
+		fp = (struct frentry *)fiop->f_fout[set];
+	} else if (opts & OPT_INQUE) {
+		i = F_IN;
+		fp = (struct frentry *)fiop->f_fin[set];
+	} else
+		return;
 	if (opts & OPT_VERBOSE)
-		(void)fprintf(stderr, "showlist:opts %#x i %d\n", opts, i);
+		FPRINTF(stderr, "showlist:opts %#x i %d\n", opts, i);
 
 	if (opts & OPT_VERBOSE)
-		printf("fp %#x set %d\n", (u_int)fp, set);
+		PRINTF("fp %#x set %d\n", (u_int)fp, set);
 	if (!fp) {
-		(void)fprintf(stderr, "empty list for filter%s\n",
-			(i == F_IN) ? "in" : "out");
+		FPRINTF(stderr, "empty list for %s%s\n",
+			(opts & OPT_INACTIVE) ? "inactive " : "", filters[i]);
 		return;
 	}
 	while (fp) {
@@ -203,10 +257,82 @@ struct	friostat	*fiop;
 		if (opts & OPT_OUTQUE)
 			fp->fr_flags |= FR_OUTQUE;
 		if (opts & (OPT_HITS|OPT_VERBOSE))
-			printf("%d ", fp->fr_hits);
+			PRINTF("%ld ", fp->fr_hits);
+		if (opts & (OPT_ACCNT|OPT_VERBOSE))
+			PRINTF("%ld ", fp->fr_bytes);
 		printfr(fp);
 		if (opts & OPT_VERBOSE)
 			binprint(fp);
 		fp = fp->fr_next;
 	}
+}
+
+
+static void showipstates(fd, ipsp)
+int fd;
+ips_stat_t *ipsp;
+{
+	ipstate_t *istab[IPSTATE_SIZE], ips;
+	int i;
+
+	PRINTF("IP states added:\n\t%lu TCP\n\t%lu UDP\n\t%lu ICMP\n",
+		ipsp->iss_tcp, ipsp->iss_udp, ipsp->iss_icmp);
+	PRINTF("\t%lu hits\n\t%lu misses\n", ipsp->iss_hits, ipsp->iss_miss);
+	PRINTF("\t%lu maximum\n\t%lu no memory\n",
+		ipsp->iss_max, ipsp->iss_nomem);
+	PRINTF("\t%lu active\n\t%lu expired\n\t%lu closed\n",
+		ipsp->iss_active, ipsp->iss_expire, ipsp->iss_fin);
+	if (kmemcpy((char *)istab, (u_long)ipsp->iss_table, sizeof(istab)))
+		return;
+	for (i = 0; i < IPSTATE_SIZE; i++)
+		while (istab[i]) {
+			if (kmemcpy(&ips, istab[i], sizeof(ips)) == -1)
+				break;
+			PRINTF("%s -> ", inet_ntoa(ips.is_src));
+			PRINTF("%s age %d pass %d pr %d\n",
+				inet_ntoa(ips.is_dst), ips.is_age,
+				ips.is_pass, ips.is_p);
+			if (ips.is_p == IPPROTO_TCP)
+				PRINTF("\t%hu -> %hu %lu:%lu %hu\n",
+					ntohs(ips.is_sport),
+					ntohs(ips.is_dport),
+					ips.is_seq, ips.is_ack, ips.is_win);
+			else if (ips.is_p == IPPROTO_UDP)
+				PRINTF("\t%hu -> %hu\n", ntohs(ips.is_sport),
+					ntohs(ips.is_dport));
+			else if (ips.is_p == IPPROTO_ICMP)
+				PRINTF("\t%hu %hu %d\n", ips.is_icmp.ics_id,
+					ips.is_icmp.ics_seq,
+					ips.is_icmp.ics_type);
+			istab[i] = ips.is_next;
+		}
+}
+
+
+static void showfrstates(fd, ifsp)
+int fd;
+ipfrstat_t *ifsp;
+{
+	struct ipfr *ipfrtab[IPFT_SIZE], ifr;
+	int i;
+
+	PRINTF("IP fragment states:\n\t%lu new\n\t%lu expired\n\t%lu hits\n",
+		ifsp->ifs_new, ifsp->ifs_expire, ifsp->ifs_hits);
+	PRINTF("\t%lu no memory\n\t%lu already exist\n",
+		ifsp->ifs_nomem, ifsp->ifs_exists);
+	PRINTF("\t%lu inuse\n", ifsp->ifs_inuse);
+	if (kmemcpy((char *)ipfrtab, (u_long)ifsp->ifs_table, sizeof(ipfrtab)))
+		return;
+	for (i = 0; i < IPFT_SIZE; i++)
+		while (ipfrtab[i]) {
+			if (kmemcpy(&ifr, (u_long)ipfrtab[i],
+				    sizeof(ifr)) == -1)
+				break;
+			PRINTF("%s -> ", inet_ntoa(ifr.ipfr_src));
+			PRINTF("%s %d %d %d %#02x = %#x\n",
+				inet_ntoa(ifr.ipfr_dst), ifr.ipfr_id,
+				ifr.ipfr_ttl, ifr.ipfr_p, ifr.ipfr_tos,
+				ifr.ipfr_pass);
+			ipfrtab[i] = ifr.ipfr_next;
+		}
 }

@@ -6,7 +6,7 @@
  * to the original author and the contributors.
  */
 #ifndef	lint
-static	char	sccsid[] = "@(#)ip_fil.c	2.26 11/8/95 (C) 1993-1995 Darren Reed";
+static	char	sccsid[] = "@(#)ip_fil.c	2.31 1/14/96 (C) 1993-1995 Darren Reed";
 #endif
 
 #ifndef	linux
@@ -38,16 +38,23 @@ static	char	sccsid[] = "@(#)ip_fil.c	2.26 11/8/95 (C) 1993-1995 Darren Reed";
 #include <syslog.h>
 #endif
 #include "ip_fil.h"
+#include "ip_frag.h"
+#include "ip_nat.h"
+#include "ip_state.h"
 #ifndef	MIN
 #define	MIN(a,b)	(((a)<(b))?(a):(b))
 #endif
 
 extern	fr_flags, fr_active;
-extern	int	fr_check(), (*fr_checkp)();
+extern	struct	protosw	inetsw[];
+extern	int	(*fr_checkp)();
 #if	BSD < 199306
+extern	int	ipfr_slowtimer();
+static	int	(*fr_saveslowtimo)();
 extern	int	tcp_ttl;
 #else
-extern	int	ip_defttl;
+extern	void	ipfr_slowtimer();
+static	void	(*fr_saveslowtimo)();
 #endif
 
 int	ipl_inited = 0;
@@ -75,6 +82,7 @@ char *s;
 		return 1;
 	return 0;
 }
+#endif /* IPFILTER_LKM */
 
 
 int iplattach()
@@ -90,7 +98,13 @@ int iplattach()
 	ipl_inited = 1;
 	fr_savep = fr_checkp;
 	fr_checkp = fr_check;
-
+#if BSD >= 199306
+	fr_saveslowtimo = inetsw[0].pr_slowtimo;
+	inetsw[0].pr_slowtimo = ipfr_slowtimer;
+#else
+	fr_saveslowtimo = inetsw[0].pr_slowtimo;
+	inetsw[0].pr_slowtimo = ipfr_slowtimer;
+#endif
 	SPLX(s);
 	return 0;
 }
@@ -113,13 +127,17 @@ int ipldetach()
 	}
 
 	fr_checkp = fr_savep;
+	inetsw[0].pr_slowtimo = fr_saveslowtimo;
 	frflush((caddr_t)&i);
 	ipl_inited = 0;
+
+	ipfr_unload();
+	ip_natunload();
+	fr_stateunload();
 
 	SPLX(s);
 	return 0;
 }
-#endif /* IPFILTER_LKM */
 
 
 static	void	frzerostats(data)
@@ -129,10 +147,14 @@ caddr_t	data;
 
 	bcopy((char *)frstats, (char *)fio.f_st,
 		sizeof(struct filterstats) * 2);
-	fio.f_fin[0] = filterin[0];
-	fio.f_fin[1] = filterin[1];
-	fio.f_fout[0] = filterout[0];
-	fio.f_fout[1] = filterout[1];
+	fio.f_fin[0] = ipfilter[0][0];
+	fio.f_fin[1] = ipfilter[0][1];
+	fio.f_fout[0] = ipfilter[1][0];
+	fio.f_fout[1] = ipfilter[1][1];
+	fio.f_acctin[0] = ipacct[0][0];
+	fio.f_acctin[1] = ipacct[0][1];
+	fio.f_acctout[0] = ipacct[1][0];
+	fio.f_acctout[1] = ipacct[1][1];
 	fio.f_active = fr_active;
 	IWCOPY((caddr_t)&fio, data, sizeof(fio));
 	bzero((char *)frstats, sizeof(*frstats));
@@ -143,22 +165,34 @@ static void frflush(data)
 caddr_t data;
 {
 	struct frentry *f, **fp;
-	int flags = *(int *)data, flushed = 0, set = fr_active;
+	int flags = *(int *)data, flushed = 0, set = fr_active, in;
 
 	if (flags & FR_INACTIVE)
 		set = 1 - set;
-	if (flags & FR_OUTQUE)
-		for (fp = &filterout[set]; (f = *fp); ) {
+	if (flags & FR_OUTQUE) {
+		for (fp = &ipfilter[1][set]; (f = *fp); ) {
 			*fp = f->fr_next;
 			KFREE(f);
 			flushed++;
 		}
-	if (flags & FR_INQUE)
-		for (fp = &filterin[set]; (f = *fp); ) {
+		for (fp = &ipacct[1][set]; (f = *fp); ) {
 			*fp = f->fr_next;
 			KFREE(f);
 			flushed++;
 		}
+	}
+	if (flags & FR_INQUE) {
+		for (fp = &ipfilter[0][set]; (f = *fp); ) {
+			*fp = f->fr_next;
+			KFREE(f);
+			flushed++;
+		}
+		for (fp = &ipacct[0][set]; (f = *fp); ) {
+			*fp = f->fr_next;
+			KFREE(f);
+			flushed++;
+		}
+	}
 
 	*(int *)data = flushed;
 }
@@ -187,13 +221,10 @@ int mode;
 		u_int	enable;
 
 		IRCOPY(data, (caddr_t)&enable, sizeof(enable));
-		if (enable) {
-			if (fr_checkp != fr_check) {
-				fr_savep = fr_checkp;
-				fr_checkp = fr_check;
-			}
-		} else
-			fr_checkp = fr_savep;
+		if (enable)
+			error = iplattach();
+		else
+			error = ipldetach();
 		break;
 	}
 #endif
@@ -223,10 +254,14 @@ int mode;
 
 		bcopy((char *)frstats, (char *)fio.f_st,
 			sizeof(struct filterstats) * 2);
-		fio.f_fin[0] = filterin[0];
-		fio.f_fin[1] = filterin[1];
-		fio.f_fout[0] = filterout[0];
-		fio.f_fout[1] = filterout[1];
+		fio.f_fin[0] = ipfilter[0][0];
+		fio.f_fin[1] = ipfilter[0][1];
+		fio.f_fout[0] = ipfilter[1][0];
+		fio.f_fout[1] = ipfilter[1][1];
+		fio.f_acctin[0] = ipacct[0][0];
+		fio.f_acctin[1] = ipacct[0][1];
+		fio.f_acctout[0] = ipacct[1][0];
+		fio.f_acctout[1] = ipacct[1][1];
 		fio.f_active = fr_active;
 		IWCOPY((caddr_t)&fio, data, sizeof(fio));
 		break;
@@ -244,6 +279,17 @@ int mode;
 		iplused = 0;
 		break;
 #endif /* IPFILTER_LOG */
+	case SIOCADNAT :
+	case SIOCRMNAT :
+	case SIOCGNATS :
+		error = nat_ioctl(data, cmd);
+		break;
+	case SIOCGFRST :
+		IWCOPY((caddr_t)ipfr_fragstats(), data, sizeof(ipfrstat_t));
+		break;
+	case SIOCGIPST :
+		IWCOPY((caddr_t)fr_statetstats(), data, sizeof(ips_stat_t));
+		break;
 	default :
 		error = -EINVAL;
 		break;
@@ -260,12 +306,13 @@ register struct frentry *fp;
 	register struct frentry *f, **fprev;
 	register struct frentry **ftail;
 	struct frentry frd;
-	int error = 0;
+	int error = 0, in;
 
-	if (fp->fr_flags & FR_OUTQUE)
-		ftail = fprev = &filterout[set];
-	else if (fp->fr_flags & FR_INQUE)
-		ftail = fprev = &filterin[set];
+	in = (fp->fr_flags & FR_INQUE) ? 0 : 1;
+	if (fp->fr_flags & FR_ACCOUNT) {
+		ftail = fprev = &ipacct[in][set];
+	} else if (fp->fr_flags & (FR_OUTQUE|FR_INQUE))
+		ftail = fprev = &ipfilter[in][set];
 	else
 		return ESRCH;
 
@@ -411,20 +458,20 @@ register struct uio *uio;
 
 
 #ifdef	IPFILTER_LOG
-int ipllog(hlen, flags, ip, ifp, rule)
-register int hlen;
+int ipllog(flags, ip, ifp, fi, m)
 u_int flags;
 ip_t *ip;
 struct ifnet *ifp;
-u_short rule;
+register struct fr_ip *fi;
+struct mbuf *m;
 {
 	struct ipl_ci iplci;
 	register size_t tail = 0;
-	register int len, mlen;
-	register struct mbuf *m = dtom(ip);
+	register int len, mlen, hlen;
 
+	hlen = fi->fi_hlen;
 	if (ip->ip_p == IPPROTO_TCP || ip->ip_p == IPPROTO_UDP)
-		hlen += sizeof(tcphdr_t);
+		hlen += MIN(sizeof(tcphdr_t), ip->ip_len - hlen);
 	else if (ip->ip_p == IPPROTO_ICMP) {
 		struct	icmp	*icmp = (struct icmp *)((char *)ip + hlen);
 
@@ -434,9 +481,11 @@ u_short rule;
 		case ICMP_REDIRECT :
 		case ICMP_TIMXCEED :
 		case ICMP_PARAMPROB :
-			hlen += 8;
+			hlen += MIN(sizeof(struct icmp) + 8, ip->ip_len - hlen);
+			break;
 		default :
-			hlen += sizeof(struct icmp);
+			hlen += MIN(sizeof(struct icmp), ip->ip_len - hlen);
+			break;
 		}
 	}
 
@@ -455,7 +504,7 @@ u_short rule;
 	iplci.flags = flags;
 	iplci.hlen = (u_char)hlen;
 	iplci.plen = (flags & FR_LOGBODY) ? (u_char)mlen : 0 ;
-	iplci.rule = rule;
+	iplci.rule = fi->fi_rule;
 	iplci.unit = (u_char)ifp->if_unit;
 	iplci.ifname[0] = ifp->if_name[0];
 	iplci.ifname[1] = ifp->if_name[1];

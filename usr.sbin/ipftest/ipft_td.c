@@ -50,17 +50,17 @@ tcpdump -nqte
 #include <netinet/tcpip.h>
 #include <net/if.h>
 #include <netdb.h>
-#include <netinet/ip_fil.h>
+#include "ip_fil.h"
 #include "ipf.h"
 #include "ipt.h"
 
 #ifndef lint
-static char sccsid[] = "@(#)ipft_td.c	1.6 10/15/95 (C)1995 Darren Reed";
+static char sccsid[] = "@(#)ipft_td.c	1.7 1/12/96 (C)1995 Darren Reed";
 #endif
 
 static	int	tcpd_open(), tcpd_close(), tcpd_readip();
 #ifdef	NEED_INET_ATON
-static	u_long	inet_aton();
+extern	u_long	inet_aton();
 #else
 #include <arpa/inet.h>
 #endif
