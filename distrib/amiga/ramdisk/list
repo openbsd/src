@@ -1,9 +1,10 @@
-#	$OpenBSD: list,v 1.2 1997/05/18 13:17:19 niklas Exp $
+#	$OpenBSD: list,v 1.3 1997/05/19 21:39:55 niklas Exp $
 #	$NetBSD: list,v 1.2.4.2 1996/06/26 19:25:00 pk Exp $
 
 # Amiga extra's
 LINK	instbin			sbin/disklabel
 LINK	instbin			sbin/mount_ados
+LINK	instbin			sbin/mount_msdos
 
 SYMLINK	../../instbin		usr/bin/basename
 SYMLINK ../../instbin		usr/bin/cksum usr/bin/sum
@@ -21,12 +22,9 @@ SYMLINK	/tmp	var/tmp
 COPY	${DESTDIR}/dev/MAKEDEV		dev/MAKEDEV
 SPECIAL	cd dev; sh MAKEDEV ramdisk
 
-# the zoneinfo
-# COPYDIR	${DESTDIR}/usr/share/zoneinfo	usr/share/zoneinfo
-
 # and a few useful bits of the termcap file (512K and still growing 8-)
 # COPY	${CURDIR}/../../share/termcap/termcap.src usr/share/misc/termcap
-SPECIAL sed -n -e '/^dumb|/,/:[ 	]*$/p' -e '/^unknown|/,/:[ 	]*$/p' -e '/^sun.*|/,/:[ 	]*$/p' -e '/^vt.*|/,/:[ 	]*$/p' -e '/^pc3|/,/:[ 	]*$/p' -e '/^pcvt.*|/,/:[ 	]*$/p' ${CURDIR}/../../share/termcap/termcap.src > usr/share/misc/termcap
+SPECIAL sed -n -e '/^dumb|/,/:[ 	]*$/p' -e '/^unknown|/,/:[ 	]*$/p' -e '/^vt.*|/,/:[ 	]*$/p' ${CURDIR}/../../share/termcap/termcap.src > usr/share/misc/termcap
 
 # various files that we need in /etc for the install
 COPY	${DESTDIR}/etc/disktab		etc/disktab.shadow
