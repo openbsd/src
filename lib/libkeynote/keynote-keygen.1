@@ -1,4 +1,4 @@
-.\" $OpenBSD: keynote-keygen.1,v 1.1 1999/05/23 22:32:07 angelos Exp $
+.\" $OpenBSD: keynote-keygen.1,v 1.2 1999/05/24 01:50:03 angelos Exp $
 .\"
 .\" The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
 .\"
@@ -28,7 +28,7 @@
 .Nm keynote-keygen
 .Nd command line tool for generating public/private keys
 .Sh SYNOPSIS
-.Nm keynote-keygen
+.Nm keynote keygen
 .Ar AlgorithmName
 .Ar KeySize
 .Ar PublicKeyFile
@@ -85,6 +85,7 @@ the end of each line, and the doublequotes at the begining and end
 of the key encoding.  Default values are 12 and 50 respectively.
 .Pp
 .Sh SEE ALSO
+.Xr keynote 1 ,
 .Xr keynote 3 ,
 .Xr keynote 4 ,
 .Xr keynote-sign 1 ,

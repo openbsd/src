@@ -43,18 +43,28 @@ int
 #endif
 main(int argc, char *argv[])
 {
-    if (!strcmp(argv[0], "keynote-sign"))
-      keynote_sign(argc, argv);
-    else
-      if (!strcmp(argv[0], "keynote-verify"))
-	keynote_verify(argc, argv);
-      else
-	if (!strcmp(argv[0], "keynote-sigver"))
-	  keynote_sigver(argc, argv);
-	else
-	  if (!strcmp(argv[0], "keynote-keygen"))
-	    keynote_keygen(argc, argv);
+    if (argc < 2)
+    {
+	fprintf(stderr, "Insufficient number of arguments.\n");
+	exit(-1);
+    }
 
-    fprintf(stderr, "%s: invoked under unknown name.\n", argv[0]);
+    if (!strcmp(argv[1], "sign"))
+      keynote_sign(argc - 1, argv + 1);
+    else
+      if (!strcmp(argv[1], "verify"))
+	keynote_verify(argc - 1, argv + 1);
+      else
+	if (!strcmp(argv[1], "sigver"))
+	  keynote_sigver(argc - 1, argv + 1);
+	else
+	  if (!strcmp(argv[1], "keygen"))
+	    keynote_keygen(argc - 1, argv + 1);
+
+    fprintf(stderr, "Usage:\n");
+    fprintf(stderr, "\tsign ...\n");
+    fprintf(stderr, "\tsigver ...\n");
+    fprintf(stderr, "\tverify ...\n");
+    fprintf(stderr, "\tkeygen ...\n");
     exit(-1);
 }

@@ -1,4 +1,4 @@
-.\" $OpenBSD: keynote-sigver.1,v 1.1 1999/05/23 22:32:08 angelos Exp $
+.\" $OpenBSD: keynote-sigver.1,v 1.2 1999/05/24 01:50:04 angelos Exp $
 .\"
 .\" The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
 .\"
@@ -25,7 +25,7 @@
 .Os
 .\" .TH keynote-sigver 1 local
 .Sh NAME
-.Nm keynote-sigver
+.Nm keynote sigver
 .Nd command line tool for verifying signed
 .Xr KeyNote 3
 assertions
@@ -45,6 +45,7 @@ reads the assertion contained in
 .Fa AssertionFile
 and verifies the public key signature on it.
 .Sh SEE ALSO
+.Xr keynote 1 ,
 .Xr keynote 3 ,
 .Xr keynote 4 ,
 .Xr keynote-keygen 1 ,
