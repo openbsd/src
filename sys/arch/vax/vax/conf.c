@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.10 1997/01/15 23:25:06 maja Exp $ */
+/*	$OpenBSD: conf.c,v 1.11 1997/01/17 08:44:25 maja Exp $ */
 /*	$NetBSD: conf.c,v 1.27 1997/01/07 11:35:20 mrg Exp $	*/
 
 /*-
@@ -327,9 +327,11 @@ cdev_decl(qv);
 #include "qd.h"
 cdev_decl(qd);
 
-#ifdef 0
-#include "ipfilter.h"
 cdev_decl(ipl);
+#ifdef IPFILTER
+#define NIPF 1
+#else
+#define NIPF 0
 #endif
 
 #if defined(INGRES)
@@ -403,11 +405,7 @@ struct cdevsw	cdevsw[] =
 	cdev_audio_init(NNP,np),	/* 39: NP Intelligent Board */
 	cdev_graph_init(NQV,qv),	/* 40: QVSS graphic display */
 	cdev_graph_init(NQD,qd),	/* 41: QDSS graphic display */
-#ifdef 0
-	cdev_ipf_init(NIPFILTER,ipl),	/* 42: Packet filter */
-#else
-	cdev_notdef(),
-#endif
+	cdev_gen_init(NIPF,ipl),	/* 42: ip filtering */
 	cdev_ingres_init(NII,ii),	/* 43: Ingres device */
 	cdev_notdef(),			/* 44  was Datakit */
 	cdev_notdef(),			/* 45  was Datakit */
