@@ -1,4 +1,4 @@
-/*	$OpenBSD: scon.c,v 1.14 1999/09/29 23:23:58 aaron Exp $	*/
+/*	$OpenBSD: scon.c,v 1.15 1999/10/07 18:26:21 wvdputte Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch
@@ -560,9 +560,10 @@ success:
 
 void usage()
 {
-	fprintf(stderr,"usage: scon [-almvVH18] [-c n] [-d dev] [-f [on|off] [-s n]\n");
-	fprintf(stderr,"    [-p [default | list | i,r,g,b]] | [-t sec]\n");
+	fprintf(stderr,"usage: scon [-almvVH18] [-b n] [-c n] [-d dev] [-f [on|off] [-s n]\n");
+	fprintf(stderr,"            [-p [default | list | i,r,g,b]] | [-t sec]\n");
 	fprintf(stderr,"       -a              list video adaptor type (MDA,CGA,EGA or VGA)\n");
+	fprintf(stderr,"       -b <num>        set number of scrollback buffer pages to <num>\n");
 	fprintf(stderr,"       -c <screen no>  switch current virtual screen to <screen no>\n");
 	fprintf(stderr,"       -d <device>     set parameters(-V|-H|-s) for virtual device\n");
 	fprintf(stderr,"       -f <on|off>     force 24 lines in VT 25 lines and HP 28 lines mode\n");
