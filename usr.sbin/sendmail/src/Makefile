@@ -1,9 +1,10 @@
-#	@(#)Makefile	8.7 (Berkeley) 10/31/95
-
-#########################################################################
-#  This Makefile is for 4.4BSD only!!!  For all other systems, use	#
-#  the "makesendmail" script.						#
-#########################################################################
+#	$NetBSD: Makefile,v 1.25 1996/01/29 04:58:23 mrg Exp $
+#
+#  NetBSD Makefile
+#
+#	@(#)Makefile.NetBSD	8.3 (Berkeley) 9/13/95
+#	@Id: Makefile.NetBSD,v 1.3 1994/02/01 05:33:44 glass Exp $
+#
 
 PROG=	sendmail
 
@@ -15,7 +16,7 @@ PROG=	sendmail
 # databases are read, but the new format will be used on any rebuilds.  On
 # really gnarly systems, you can set this to null; it will crawl like a high
 # spiral snail, but it will work.
-DBMDEF=	-DNEWDB
+DBMDEF=	-DNEWDB -DNIS
 
 CFLAGS+=-I${.CURDIR} ${DBMDEF} -DNETISO
 
@@ -27,17 +28,18 @@ SRCS=	alias.c arpadate.c clock.c collect.c conf.c convtime.c daemon.c \
 MAN=	aliases.5 mailq.1 newaliases.1 sendmail.8
 LINKS=	/usr/sbin/sendmail /usr/bin/newaliases \
 	/usr/sbin/sendmail /usr/bin/mailq
+INSTALL=install
 BINDIR=	/usr/sbin
 BINOWN=	root
 BINGRP=	kmem
 BINMODE=6555
 
 beforeinstall:
-#	install -c -o ${BINOWN} -g ${BINGRP} -m 644 /dev/null \
+#	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 644 /dev/null \
 #	    ${DESTDIR}/etc/sendmail.fc
-	install -c -o ${BINOWN} -g ${BINGRP} -m 644 /dev/null \
+	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 644 /dev/null \
 	    ${DESTDIR}/var/log/sendmail.st
-	install -c -o ${BINOWN} -g ${BINGRP} -m 444 ${.CURDIR}/sendmail.hf \
+	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 444 ${.CURDIR}/sendmail.hf \
 	    ${DESTDIR}/usr/share/misc
 
 .include <bsd.prog.mk>
