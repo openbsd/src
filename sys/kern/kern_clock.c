@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_clock.c,v 1.26 2000/07/07 15:37:00 art Exp $	*/
+/*	$OpenBSD: kern_clock.c,v 1.27 2000/08/23 20:36:18 art Exp $	*/
 /*	$NetBSD: kern_clock.c,v 1.34 1996/06/09 04:51:03 briggs Exp $	*/
 
 /*-
@@ -353,7 +353,7 @@ hardclock(frame)
 	register struct clockframe *frame;
 {
 	register struct proc *p;
-	register int delta, needsoft;
+	register int delta;
 	extern int tickdelta;
 	extern long timedelta;
 #ifdef NTP
@@ -361,11 +361,6 @@ hardclock(frame)
 	struct timeval newtime;
 	register int ltemp;
 #endif
-
-	/*
-	 * Update real-time timeout queue.
-	 */
-	needsoft = timeout_hardclock_update();
 
 	p = curproc;
 	if (p) {
@@ -673,10 +668,11 @@ hardclock(frame)
 #endif /* NTP */
 
 	/*
+	 * Update real-time timeout queue.
 	 * Process callouts at a very low cpu priority, so we don't keep the
 	 * relatively high clock interrupt priority any longer than necessary.
 	 */
-	if (needsoft) {
+	if (timeout_hardclock_update()) {
 		if (CLKF_BASEPRI(frame)) {
 			/*
 			 * Save the overhead of a software interrupt;
