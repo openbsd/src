@@ -1,0 +1,20 @@
+$ more L0.1a
+#print
+This course will help you learn about basic file
+handling commands.  You should first understand
+the special characters ERASE and KILL: 
+  ERASE cancels the previous character typed;
+  KILL cancels the line being typed.
+ERASE and KILL are mapped to two non-text keyboard characters.
+ERASE is usually one of CTRL/H (which means hold down the CTRL or
+Control key WHILE you type the letter H) or the DEL (Delete) key.
+KILL is mapped to some character like CTRL/U.
+
+Type the stty command at the prompt. Examine its output.
+Type "ready" (without the quotes) when you've finished.
+#copyin
+#user
+#uncopyin
+#log
+#next
+0.1aa 5
