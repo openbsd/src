@@ -1,4 +1,4 @@
-.\"	$OpenBSD: symlink.7,v 1.4 1997/01/22 21:36:31 kstailey Exp $
+.\"	$OpenBSD: symlink.7,v 1.5 1997/01/26 23:34:54 downsj Exp $
 .\"	$NetBSD: symlink.7,v 1.4 1996/04/25 15:44:56 mycroft Exp $
 .\"
 .\" Copyright (c) 1992, 1993, 1994
@@ -34,9 +34,9 @@
 .\"
 .\"	@(#)symlink.7	8.3 (Berkeley) 3/31/94
 .\"
-.Dd March 31, 1994
+.Dd January 25, 1997
 .Dt SYMLINK 7
-.Os BSD 4
+.Os
 .Sh NAME
 .Nm symlink
 .Nd symbolic link handling
@@ -108,9 +108,10 @@ the system call
 would return a file descriptor to the file
 .Dq afile .
 .Pp
-There are four system calls that do not follow links, and which operate
-on the symbolic link itself.
+There are at least five system calls that do not follow links, and which
+operate on the symbolic link itself.
 They are:
+.Xr lchown 2 ,
 .Xr lstat 2 ,
 .Xr readlink 2 ,
 .Xr rename 2 ,
@@ -126,7 +127,11 @@ The
 .Bx 4.4
 system differs from historical 4BSD systems in that the system call
 .Xr chown 2
-has been changed to follow symbolic links.
+has been changed to follow symbolic links.  The
+.Xr lchown 2
+system call was added later when the limitations of the new
+.Xr chown 2
+became apparent.
 .Ss Commands not traversing a file tree.
 The second area is symbolic links, specified as command line file
 name arguments, to commands which are not traversing a file tree.
@@ -245,7 +250,9 @@ For example, the command
 .Dq Li "chown -R user slink directory"
 will ignore
 .Dq Li slink ,
-because symbolic links in this system do not have owners.
+because the
+.Fl h
+option was not given.
 Any symbolic links encountered during the tree traversal will also be
 ignored.
 The command
@@ -414,6 +421,7 @@ options.
 .Xr pax 1 ,
 .Xr rm 1 ,
 .Xr tar 1 ,
+.Xr lchown 2 ,
 .Xr lstat 2 ,
 .Xr readlink 2 ,
 .Xr rename 2 ,
