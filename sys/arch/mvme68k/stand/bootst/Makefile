@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/10/93
-#	$OpenBSD: Makefile,v 1.6 1996/05/16 02:49:07 chuck Exp $
+#	$OpenBSD: Makefile,v 1.7 1996/05/28 15:15:39 chuck Exp $
 
 RELOC=0x3F0000 
 
@@ -15,7 +15,8 @@ CLEANFILES+=stboot bootst bootst.bug
 .include "${S}/arch/${MACHINE}/stand/bugcrt/Makefile.inc"
 .include "${S}/arch/${MACHINE}/stand/wrtvid/Makefile.inc"
 
-SRCS=   bootst.c
+SRCS=   boot.c conf.c dev_tape.c rawfs.c version.c
+
 
 LIBS=	${LIBSA} ${LIBBUG}
 
