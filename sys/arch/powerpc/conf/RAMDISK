@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.14 2001/02/16 05:56:50 drahn Exp $
+#	$OpenBSD: RAMDISK,v 1.15 2001/03/03 05:50:43 drahn Exp $
 #
 # PPC GENERIC config file
 #
@@ -91,7 +91,8 @@ bm*     at obio?                        # bmac ethernet
 #nvram*  at obio?                        # nvram
 adb*    at obio?                        # Apple Desktop Bus
 #aed*    at adb?                         # ADB Event Device
-#akbd*   at adb?                         # ADB keyboard
+akbd*   at adb?                         # ADB keyboard
+wskbd*		at akbd? console ?
 #ams*    at adb?                         # ADB mouse
 #zsc*    at obio?
 #zstty*  at zsc? channel ?
@@ -136,6 +137,8 @@ ukbd*  at uhub? port ? configuration ? interface ?
 
 # USB Generic driver
 ugen*  at uhub? port ? configuration ? interface ?
+umass*	at uhub? port ? configuration ? # USB Mass Storage devices
+scsibus* at umass?
 
 
 #### Workstation Console attachments
