@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.182 2001/08/22 16:13:14 deraadt Exp $
+#	$OpenBSD: rc,v 1.183 2001/09/19 16:27:47 todd Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -366,10 +366,10 @@ fi
 if [ -f /sbin/ldconfig ]; then
 	echo 'creating runtime link editor directory cache.'
 	if [ -d /usr/local/lib ]; then
-		shlib_dirs="$shlib_dirs /usr/local/lib"
+		shlib_dirs="/usr/local/lib $shlib_dirs"
 	fi
 	if [ -d /usr/X11R6/lib ]; then
-		shlib_dirs="$shlib_dirs /usr/X11R6/lib"
+		shlib_dirs="/usr/X11R6/lib $shlib_dirs"
 	fi
 	ldconfig $shlib_dirs
 fi
