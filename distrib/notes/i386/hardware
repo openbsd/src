@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.187 2005/03/16 22:50:09 jsg Exp $
+dnl	$OpenBSD: hardware,v 1.188 2005/03/16 23:03:31 jsg Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PCs and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -488,9 +488,9 @@ Supported hardware {:-include-:}:
 		    Trendware TE100-PCIE
 		    Compex RL100-ATX 10/100baseTX
 	Wireless Ethernet Adapters
-		ADMtek ADM8211 based 802.11b CardBus/PCI adapters [G]
+		ADMtek ADM8211 based 802.11b CardBus/PCI adapters [A] [B] [C]
 		Aironet 4500/4800 802.11b ISA PnP, PCMCIA and PCI [A] [B]
-		Atheros AR521x based CardBus 802.11a/b/g adapters [G]
+		Atheros AR521x based CardBus 802.11a/b/g adapters [A] [B] [C]
 		    3Com 3CRPAG175
 		    Aztech WL830PC
 		    D-Link DWL-A650
@@ -519,7 +519,7 @@ Supported hardware {:-include-:}:
 		    Sony PCWA-C700
 		    Sony PCWA-C300S
 		    Sony PCWA-C500
-		Atheros AR521x based PCI 802.11a/b/g adapters [G]
+		Atheros AR521x based PCI 802.11a/b/g adapters [A] [B] [C]
 		    D-Link DWL-A520
 		    D-Link DWL-AG520
 		    D-Link DWL-G520
@@ -649,7 +649,7 @@ Supported hardware {:-include-:}:
 		    Z-Com XI-725/726
 		    Z-Com XI-735
 		    ZyXEL ZyAIR B-200
-		Ralink RT2500 based CardBus 802.11b/g adapters [G]
+		Ralink RT2500 based CardBus 802.11b/g adapters [A] [B] [C]
 		    A-Link WL54PC
 		    Amigo AWI-914W
 		    AMIT WL531C
@@ -683,7 +683,7 @@ Supported hardware {:-include-:}:
 		    Unex MR054g-R02
 		    Zinwell ZWX-G160
 		    Zonet ZEW1500
-		Ralink RT2500 based PCI 802.11b/g adapters [G]
+		Ralink RT2500 based PCI 802.11b/g adapters [A] [B] [C]
 		    A-Link WL54H
 		    Amigo AWI-922W mini-PCI
 		    Amigo AWI-926W
@@ -729,7 +729,7 @@ Supported hardware {:-include-:}:
 		    Zinwell ZWX-G361
 		    Zonet ZEW1600
 		Raytheon Raylink PCMCIA 802.11 FH adapters [A] [B]
-		Realtek RTL8180L based CardBus 802.11b adapters [G]
+		Realtek RTL8180L based CardBus 802.11b adapters [A] [B] [C]
 	Gigabit Ethernet Adapters
 		Alteon Tigon I/II PCI Gigabit Ethernet boards, including: [A]
 		  [B] [C]
