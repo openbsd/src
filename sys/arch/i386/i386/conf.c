@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.45 1998/07/07 06:56:03 deraadt Exp $	*/
+/*	$OpenBSD: conf.c,v 1.46 1998/07/23 08:38:24 deraadt Exp $	*/
 /*	$NetBSD: conf.c,v 1.75 1996/05/03 19:40:20 christos Exp $	*/
 
 /*
@@ -122,6 +122,14 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
         (dev_type_stop((*))) enodev, 0,  dev_init(c,n,select), \
         (dev_type_mmap((*))) enodev, 0 }
 
+/* open, close, read, ioctl, mmap */
+#define	cdev_bktr_init(c, n) { \
+        dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
+        (dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
+	(dev_type_stop((*))) enodev, 0, seltrue, \
+        dev_init(c,n,mmap) }
+
+
 #define	mmread	mmrw
 #define	mmwrite	mmrw
 cdev_decl(mm);
@@ -165,6 +173,8 @@ cdev_decl(svr4_net);
 #include "apm.h"
 #include "pctr.h"
 #include "bios.h"
+#include "bktr.h"
+cdev_decl(bktr);
 
 #ifdef IPFILTER
 #define NIPF 1
@@ -240,6 +250,7 @@ struct cdevsw	cdevsw[] =
 	cdev_ocis_init(NPCTR,pctr),	/* 46: pentium performance counters */
 	cdev_disk_init(NRD,rd),		/* 47: ram disk driver */
 	cdev_ocis_init(NBIOS,bios),	/* 48: onboard BIOS PROM */
+	cdev_bktr_init(NBKTR,bktr),     /* 49: Bt848 video capture device */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.17 1998/07/07 22:44:05 csapuntz Exp $
+#	$OpenBSD: files.pci,v 1.18 1998/07/23 08:38:28 deraadt Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config.new file and device description for machine-independent PCI code.
@@ -84,3 +84,8 @@ file	dev/pci/if_fxp.c		fxp
 device	sv: audio, auconv, mulaw
 attach	sv at pci
 file	dev/pci/sv.c			sv
+
+# Brooktree Bt848 video capture
+device	bktr: pcibus
+attach	bktr at pci
+file	dev/pci/brooktree848.c		bktr	needs-count
