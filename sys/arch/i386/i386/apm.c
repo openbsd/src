@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.32 2000/01/31 21:09:36 mickey Exp $	*/
+/*	$OpenBSD: apm.c,v 1.33 2000/02/01 01:33:45 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1998-2000 Michael Shalayeff. All rights reserved.
@@ -51,6 +51,7 @@
 #include <sys/device.h>
 #include <sys/fcntl.h>
 #include <sys/ioctl.h>
+#include <sys/mount.h>	/* for vfs_syncwait() proto */
 
 #include <machine/conf.h>
 #include <machine/cpu.h>
@@ -309,6 +310,8 @@ apm_suspend()
 {
 	dopowerhooks(PWR_SUSPEND);
 
+	vfs_syncwait(0);
+
 	(void)apm_set_powstate(APM_DEV_ALLDEVS, APM_SYS_SUSPEND);
 }
 
@@ -316,6 +319,8 @@ void
 apm_standby()
 {
 	dopowerhooks(PWR_STANDBY);
+
+	vfs_syncwait(0);
 
 	(void)apm_set_powstate(APM_DEV_ALLDEVS, APM_SYS_STANDBY);
 }
