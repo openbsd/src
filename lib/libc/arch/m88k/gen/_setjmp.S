@@ -30,7 +30,7 @@
 
 #if defined(LIBC_SCCS)
 	.text
-	.string "$OpenBSD: _setjmp.S,v 1.2 2002/09/18 05:03:54 smurph Exp $\0"
+	.string "$OpenBSD: _setjmp.S,v 1.3 2003/01/02 15:14:07 miod Exp $\0"
 #endif /* LIBC_SCCS */
 
 #include "SYS.h"
@@ -95,13 +95,13 @@ ENTRY(_setjmp)
 void _longjmp(jmp_buf env, int val);
  */
 ENTRY(_longjmp)
-	cpm	r4,r2,0x0	/* check for bad envnvironment buffer address. */
+	cmp	r4,r2,0x0	/* check for bad envnvironment buffer address. */
 	bb1	eq,r4,2f	/* if == 0, abort. */
 	ld	r4,r2,80	/* check if environment buffer has */
-	cpm	r4,r4,0x0	/* already returned. */
+	cmp	r4,r4,0x0	/* already returned. */
 	bb1	ne,r4,2f	/* if != 0, abort. */
 	ld	r4,r2,84	/* check setjmp type. */
-	cpm	r4,r4,SETJMP_TYPE2	/* should be SETJMP_TYPE2 */
+	cmp	r4,r4,SETJMP_TYPE2	/* should be SETJMP_TYPE2 */
 	bb1	ne,r4,2f	/* if != SETJMP_TYPE2, abort. */
 	
 	ld	r14,r2,8	/* restore registers from the environment buffer */

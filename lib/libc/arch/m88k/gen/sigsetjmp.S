@@ -30,7 +30,7 @@
 
 #if defined(LIBC_SCCS)
 	.text
-	.string "$OpenBSD: sigsetjmp.S,v 1.2 2002/09/18 05:03:54 smurph Exp $\0"
+	.string "$OpenBSD: sigsetjmp.S,v 1.3 2003/01/02 15:14:07 miod Exp $\0"
 #endif /* LIBC_SCCS */
 
 #include "SYS.h"
@@ -106,13 +106,13 @@ ENTRY(sigsetjmp)
 void siglongjmp(sigjmp_buf env, int val);
  */
 ENTRY(siglongjmp)
-	cpm	r4,r2,0x0	/* check for bad envnvironment buffer address. */
+	cmp	r4,r2,0x0	/* check for bad envnvironment buffer address. */
 	bb1	eq,r4,3f	/* if == 0, abort. */
 	ld	r4,r2,80	/* check if environment buffer has */
-	cpm	r4,r4,0x0	/* already returned. */
+	cmp	r4,r4,0x0	/* already returned. */
 	bb1	ne,r4,3f	/* if != 0, abort. */
 	ld	r4,r2,84	/* check setjmp type. */
-	cpm	r4,r4,SETJMP_TYPE3	/* should be SETJMP_TYPE3 */
+	cmp	r4,r4,SETJMP_TYPE3	/* should be SETJMP_TYPE3 */
 	bb1	ne,r4,3f	/* if != SETJMP_TYPE3, abort. */
 	
 	subu	r31,r31,32	/* get a temporary stack */
@@ -134,7 +134,7 @@ ENTRY(siglongjmp)
 	ld	r29,r2,68
 	
 	ld	r4,r2,4		/* get the sinal set from env */
-	cpm	r4,r4,0x0	/* if r2 == 0 then skip signal stuff */
+	cmp	r4,r4,0x0	/* if r2 == 0 then skip signal stuff */
 	bb1	eq,r4,1f
 
 	st	r2,r31,24	/* save r2 on stack (environment) */
