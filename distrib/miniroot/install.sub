@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.321 2003/09/22 01:31:39 krw Exp $
+#	$OpenBSD: install.sub,v 1.322 2003/12/04 18:43:38 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2003 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1613,13 +1613,19 @@ populateusrlocal() {
 	fi
 }
 
-set_machdep_apertureallowed() {
+questions() {
+	ask_yn "Do you wish sshd(8) to be started by default?" yes
+	if [[ $resp == n ]]; then
+		echo "sshd_flags=NO		# disabled during install" \
+		    > /mnt/etc/rc.conf.local
+	fi
+
 	[[ -n $MDXAPERTURE ]] || return
 
 	ask_yn "Do you expect to run the X Window System?" yes
 	if [[ $resp == y ]]; then
 		sed -e "/^#\(machdep\.allowaperture=${MDXAPERTURE}\)/s//\1	/" \
-			/mnt/etc/sysctl.conf > /tmp/sysctl.conf
+		    /mnt/etc/sysctl.conf > /tmp/sysctl.conf
 	fi
 }
 
