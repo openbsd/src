@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_param.h,v 1.4 1996/03/24 17:40:46 tholo Exp $	*/
+/*	$OpenBSD: vm_param.h,v 1.5 1996/03/24 18:07:59 tholo Exp $	*/
 /*	$NetBSD: vm_param.h,v 1.12 1995/03/26 20:39:16 jtc Exp $	*/
 
 /* 
@@ -74,18 +74,14 @@
 
 #include <machine/vmparam.h>
 
+#ifndef _KERNEL	/* XXX */
 /*
  * This belongs in types.h, but breaks too many existing programs.
  */
 typedef	int	boolean_t;
 #define	TRUE	1
 #define	FALSE	0
-
-#define	current_thread()	(curproc->p_thread)
-void	assert_wait __P((event_t, boolean_t));
-void	thread_block __P((void));
-void	thread_sleep __P((event_t, struct slock *, boolean_t));
-void	thread_wakeup __P((event_t));
+#endif
 
 /*
  *	The machine independent pages are refered to as PAGES.  A page

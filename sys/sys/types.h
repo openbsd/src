@@ -1,4 +1,4 @@
-/*	$OpenBSD: types.h,v 1.5 1996/03/23 19:13:11 tholo Exp $	*/
+/*	$OpenBSD: types.h,v 1.6 1996/03/24 18:07:58 tholo Exp $	*/
 /*	$NetBSD: types.h,v 1.24 1995/12/29 01:15:13 jtc Exp $	*/
 
 /*-
@@ -78,6 +78,12 @@ typedef quad_t		rlim_t;		/* resource limit */
 typedef	int32_t		segsz_t;	/* segment size */
 typedef	int32_t		swblk_t;	/* swap offset */
 typedef	u_int32_t	uid_t;		/* user id */
+
+#ifdef _KERNEL	/* XXX */
+typedef	int	boolean_t;
+#define	TRUE	1
+#define	FALSE	0
+#endif
 
 /*
  * These belong in unistd.h, but are placed here too to ensure that
