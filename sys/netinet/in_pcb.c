@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.64 2002/09/11 03:15:36 itojun Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.65 2003/05/06 20:35:14 tedu Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -128,7 +128,9 @@ in_pcbinit(table, hashsize)
 {
 
 	CIRCLEQ_INIT(&table->inpt_queue);
-	table->inpt_hashtbl = hashinit(hashsize, M_PCB, M_WAITOK, &table->inpt_hash);
+	table->inpt_hashtbl = hashinit(hashsize, M_PCB, M_NOWAIT, &table->inpt_hash);
+	if (table->inpt_hashtbl == NULL)
+		panic("in_pcbinit: hashinit failed");
 	table->inpt_lastport = 0;
 }
 
