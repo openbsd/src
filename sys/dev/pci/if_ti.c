@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ti.c,v 1.20 2001/05/17 18:41:46 provos Exp $	*/
+/*	$OpenBSD: if_ti.c,v 1.21 2001/06/18 19:19:41 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -121,8 +121,8 @@
 #include <dev/pci/pcidevs.h>
 
 #include <dev/pci/if_tireg.h>
-#include <dev/pci/ti_fw.h>
-#include <dev/pci/ti_fw2.h>
+#include <dev/microcode/tigon/ti_fw.h>
+#include <dev/microcode/tigon/ti_fw2.h>
 
 #ifdef M_HWCKSUM
 /*#define TI_CSUM_OFFLOAD*/
