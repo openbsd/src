@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.obj.mk,v 1.10 1997/06/28 05:08:28 grr Exp $
+#	$OpenBSD: bsd.obj.mk,v 1.11 1997/08/22 14:52:11 flipk Exp $
 #	$NetBSD: bsd.obj.mk,v 1.9 1996/04/10 21:08:05 thorpej Exp $
 
 .if !target(obj)
@@ -41,7 +41,7 @@ obj! _SUBDIRUSE
 		    X`readlink ${__objdir}` != X$$dest; \
 		    then \
 			if test -e ${__objdir}; then rm -rf ${__objdir}; fi; \
-			ln -s $$dest ${__objdir}; \
+			ln -sf $$dest ${__objdir}; \
 		fi; \
 		if test -d ${__usrobjdir} -a ! -d $$dest; then \
 			mkdir -p $$dest; \
