@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.5 2002/06/08 15:49:52 miod Exp $	*/
+/*	$OpenBSD: clock.c,v 1.6 2003/11/25 21:16:44 drahn Exp $	*/
 /*	$NetBSD: clock.c,v 1.1 1996/09/30 16:34:40 ws Exp $	*/
 
 /*
@@ -249,6 +249,7 @@ resettodr()
 	}
 }
 
+volatile int tickspending;
 #if 0
 static unsigned cnt = 1001;
 #endif

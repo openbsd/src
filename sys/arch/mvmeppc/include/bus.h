@@ -1,5 +1,5 @@
 /*      $NetBSD: bus.h,v 1.6 2001/06/15 15:50:05 nonaka Exp $        */
-/*      $OpenBSD: bus.h,v 1.2 2002/06/08 15:49:57 miod Exp $        */
+/*	$OpenBSD: bus.h,v 1.3 2003/11/25 21:16:44 drahn Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -19,8 +19,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by the NetBSD
- *      Foundation, Inc. and its contributors.
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
@@ -53,8 +53,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by Christopher G. Demetriou
- *      for the NetBSD Project.
+ *	This product includes software developed by Christopher G. Demetriou
+ *	for the NetBSD Project.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission
  *
@@ -84,8 +84,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by Christopher G. Demetriou
- *      for the NetBSD Project.
+ *	This product includes software developed by Christopher G. Demetriou
+ *	for the NetBSD Project.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission
  *
@@ -110,15 +110,15 @@
 /*
  * Values for the Be bus space tag, not to be used directly by MI code.
  */
-#define PREP_BUS_SPACE_IO        0x80000000        /* i/o space */
-#define PREP_BUS_SPACE_MEM      0xC0000000        /* mem space */
+#define PREP_BUS_SPACE_IO	0x80000000	/* i/o space */
+#define PREP_BUS_SPACE_MEM	0xC0000000	/* mem space */
 
 /*
  * Address conversion as seen from a PCI master.
  */
-#define MPC105_DIRECT_MAPPED_SPACE      0x80000000
-#define PHYS_TO_PCI_MEM(x)      ((x) | MPC105_DIRECT_MAPPED_SPACE)
-#define PCI_MEM_TO_PHYS(x)      ((x) & ~MPC105_DIRECT_MAPPED_SPACE)
+#define MPC105_DIRECT_MAPPED_SPACE	0x80000000
+#define PHYS_TO_PCI_MEM(x)	((x) | MPC105_DIRECT_MAPPED_SPACE)
+#define PCI_MEM_TO_PHYS(x)	((x) & ~MPC105_DIRECT_MAPPED_SPACE)
 
 extern const struct ppc_bus_space prep_io_space_tag;
 extern const struct ppc_bus_space prep_isa_io_space_tag;
