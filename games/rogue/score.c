@@ -1,4 +1,4 @@
-/*	$OpenBSD: score.c,v 1.5 2001/08/08 21:20:05 pjanzen Exp $	*/
+/*	$OpenBSD: score.c,v 1.6 2001/08/10 18:32:46 pjanzen Exp $	*/
 /*	$NetBSD: score.c,v 1.5 1995/04/22 10:28:26 cgd Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)score.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: score.c,v 1.5 2001/08/08 21:20:05 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: score.c,v 1.6 2001/08/10 18:32:46 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -334,6 +334,7 @@ insert_score(scores, n_names, n_name, rank, n, monster, other)
 	char *n_name;
 	short rank, n;
 	object *monster;
+	int other;
 {
 	short i;
 	char buf[128];

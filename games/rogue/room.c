@@ -1,4 +1,4 @@
-/*	$OpenBSD: room.c,v 1.3 1998/08/22 08:55:45 pjanzen Exp $	*/
+/*	$OpenBSD: room.c,v 1.4 2001/08/10 18:32:46 pjanzen Exp $	*/
 /*	$NetBSD: room.c,v 1.3 1995/04/22 10:28:17 cgd Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)room.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: room.c,v 1.3 1998/08/22 08:55:45 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: room.c,v 1.4 2001/08/10 18:32:46 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -72,31 +72,31 @@ struct option {
 } options[NOPTS] = {
 	{
 		"Show position only at end of run (\"jump\"): ",
-		1, (char **) 0, &jump
+		1, (char **) NULL, &jump
 	},
 	{
 		"Follow turnings in passageways (\"passgo\"): ",
-		1, (char **) 0, &passgo
+		1, (char **) NULL, &passgo
 	},
 	{
 		"Don't print skull when killed (\"noskull\" or \"notombstone\"): ",
-		1, (char **) 0, &no_skull
+		1, (char **) NULL, &no_skull
 	},
 	{
 		"Ask player before saying 'Okay, bye-bye!' (\"askquit\"): ",
-		1, (char **) 0, &ask_quit
+		1, (char **) NULL, &ask_quit
 	},
 	{
 		"Name (\"name\"): ",
-		0, &nick_name
+		0, &nick_name, (boolean *) NULL
 	},
 	{
 		"Fruit (\"fruit\"): ",
-		0, &fruit
+		0, &fruit, (boolean *) NULL
 	},
 	{
 		"Save file (\"file\"): ",
-		0, &save_file
+		0, &save_file, (boolean *) NULL
 	}
 };
 

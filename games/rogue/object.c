@@ -1,4 +1,4 @@
-/*	$OpenBSD: object.c,v 1.3 1998/08/22 08:55:36 pjanzen Exp $	*/
+/*	$OpenBSD: object.c,v 1.4 2001/08/10 18:32:46 pjanzen Exp $	*/
 /*	$NetBSD: object.c,v 1.3 1995/04/22 10:27:50 cgd Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)object.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: object.c,v 1.3 1998/08/22 08:55:36 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: object.c,v 1.4 2001/08/10 18:32:46 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -269,6 +269,7 @@ object_at(pack, row, col)
 
 object *
 get_letter_object(ch)
+	int ch;
 {
 	object *obj;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pack.c,v 1.4 2000/04/07 04:34:16 pjanzen Exp $	*/
+/*	$OpenBSD: pack.c,v 1.5 2001/08/10 18:32:46 pjanzen Exp $	*/
 /*	$NetBSD: pack.c,v 1.3 1995/04/22 10:27:54 cgd Exp $	*/
 
 /*
@@ -64,6 +64,7 @@ char *curse_message = "you can't, it appears to be cursed";
 object *
 add_to_pack(obj, pack, condense)
 	object *obj, *pack;
+	int condense;
 {
 	object *op;
 

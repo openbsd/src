@@ -1,4 +1,4 @@
-/*	$OpenBSD: rogue.h,v 1.4 2001/08/10 18:17:56 pjanzen Exp $	*/
+/*	$OpenBSD: rogue.h,v 1.5 2001/08/10 18:32:46 pjanzen Exp $	*/
 /*	$NetBSD: rogue.h,v 1.4 1995/04/24 12:25:04 cgd Exp $	*/
 
 /*
@@ -252,7 +252,7 @@ typedef struct obj object;
 #define INIT_STR	16
 #define INIT_EXPLEVEL	1
 #define INIT_EXP	0
-#define INIT_PACK	{0}
+#define INIT_PACK	{0, (char *)NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, (struct obj *)NULL}
 #define INIT_GOLD	0
 #define INIT_CHAR	'@'
 #define INIT_MOVES	1250

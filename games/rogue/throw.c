@@ -1,4 +1,4 @@
-/*	$OpenBSD: throw.c,v 1.3 1998/08/22 08:55:49 pjanzen Exp $	*/
+/*	$OpenBSD: throw.c,v 1.4 2001/08/10 18:32:46 pjanzen Exp $	*/
 /*	$NetBSD: throw.c,v 1.3 1995/04/22 10:28:32 cgd Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)throw.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: throw.c,v 1.3 1998/08/22 08:55:49 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: throw.c,v 1.4 2001/08/10 18:32:46 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -241,7 +241,7 @@ flop_weapon(weapon, row, col)
 			dch = get_dungeon_char(row, col);
 			if (mon) {
 				mch = mvinch(row, col);
-				if (monster = object_at(&level_monsters, row, col)) {
+				if ((monster = object_at(&level_monsters, row, col))) {
 					monster->trail_char = dch;
 				}
 				if ((mch < 'A') || (mch > 'Z')) {
