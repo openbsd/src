@@ -55,34 +55,6 @@
 #define	CR0_CD	0x40000000	/* Cache Disable */
 
 /*
- * The info below was gleaned from:
-   C) Copyright 1993, 1994 By Harald Feldmann Revision 04, Nov 3rd 1994.
-       Hamarsoft's 86BUGS list, (C)
-   1993/94 By Hamarsoft (R) The 86BUGS list, distributed...
-   http://powderkeg.stanford.edu/~rho/8LIST04.LST - size 106K - 23 Mar 95
-*/
-/*
- * Bits in the EDX register after doing an "cpuid" instruction with %eax == 1
- */
-#define       ID1_FPU 0x01    /* has builtin fpu */
-#define       ID1_V86 0x02    /* has v86 extensions */
-#define       ID1_IOB 0x04    /* has io breakpoints */
-#define       ID1_4MB 0x08    /* has 4Meg pages */
-#define       ID1_TSC 0x10    /* has TSC */
-#define       ID1_MSR 0x20    /* has "Model Specific Registers" */
-#define       ID1_MCE 0x80    /* has Machine Check Exceptions */
-
-/*
- * We also need bits in cr4 (??)
- */
-#define       CR4_MCE 0x40    /* enable machine check */
-#define       CR4_4MB 0x10    /* enable 4MB pages */
-#define       CR4_IOB 0x08    /* enable io breakpoints (value is 0x02 [reserved]) */
-#define       CR4_TSC 0x04    /* disable user RDTSC */
-#define       CR4_PVI 0x02    /* enable virt intr in protected mode */
-#define       CR4_VVI 0x01    /* enable virt intr in v86 mode */
-
-/*
  * Cyrix 486 DLC special registers, accessable as IO ports.
  */
 #define CCR0	0xc0		/* configuration control register 0 */
@@ -98,6 +70,42 @@
 #define CCR1	0xc1		/* configuration control register 1 */
 #define CCR1_RPL	0x01	/* enables RPLSET and RPLVAL# pins */
 /* the remaining 7 bits of this register are reserved */
+
+/*
+ * bits in the pentiums %cr4 register:
+ */
+
+#define CR4_VME	0x00000001	/* virtual 8086 mode extension enable */
+#define CR4_PVI 0x00000002	/* protected mode virtual interrupt enable */
+#define CR4_TSD 0x00000004	/* restrict RDTSC instruction to cpl 0 only */
+#define CR4_DE	0x00000008	/* debugging extension */
+#define CR4_PSE	0x00000010	/* large (4MB) page size enable */
+#define CR4_PAE 0x00000020	/* physical address extension enable */
+#define CR4_MCE	0x00000040	/* machine check enable */
+#define CR4_PGE	0x00000080	/* page global enable */
+#define CR4_PCE	0x00000100	/* enable RDPMC instruction for all cpls */
+
+/*
+ * CPUID "features" bits:
+ */
+
+#define CPUID_FPU	0x0001	/* processor has an FPU? */
+#define CPUID_VME	0x0002	/* has virtual mode (%cr4's VME/PVI) */
+#define CPUID_DE	0x0004	/* has debugging extension */
+#define CPUID_PSE	0x0008	/* has page 4MB page size extension */
+#define CPUID_TSC	0x0010	/* has time stamp counter */
+#define CPUID_MSR	0x0020	/* has mode specific registers */
+#define CPUID_PAE	0x0040	/* has phys address extension */
+#define CPUID_MCE	0x0080	/* has machine check exception */
+#define CPUID_CX8	0x0100	/* has CMPXCHG8B instruction */
+#define CPUID_APIC	0x0200	/* has enabled APIC */
+#define CPUID_B10	0x0400	/* reserved, MTRR */
+#define CPUID_B11	0x0800	/* has SYSENTER/SYSEXIT extension */
+#define CPUID_MTRR	0x1000	/* has memory type range register */
+#define CPUID_PGE	0x2000	/* has page global extension */
+#define CPUID_MCA	0x4000	/* has machine check architecture */
+#define CPUID_CMOV	0x8000	/* has CMOVcc instruction */
+/* bits 16->22: unknown, 23=MMX supported, 24-31 reserved */
 
 /*
  * the following four 3-byte registers control the non-cacheable regions.
