@@ -36,7 +36,7 @@
  * x y . c   x y l o g i c s   4 5 0 / 4 5 1   s m d   d r i v e r
  *
  * author: Chuck Cranor <chuck@ccrc.wustl.edu>
- * id: $Id: xy.c,v 1.5 1996/01/13 03:45:03 chuck Exp $
+ * id: $Id: xy.c,v 1.6 1996/02/21 03:43:18 chuck Exp $
  * started: 14-Sep-95
  * references: [1] Xylogics Model 753 User's Manual
  *                 part number: 166-753-001, Revision B, May 21, 1988.
@@ -1038,9 +1038,6 @@ xystrategy(bp)
 
 	xyc_start(xy->parent, NULL);
 
-	/* Instrumentation. */
-	disk_busy(&xy->sc_dk);
-
 	/* done! */
 
 	splx(s);
@@ -1298,6 +1295,9 @@ xyc_startbuf(xycsc, xysc, bp)
 	    bp->b_bcount / XYFM_BPS, dbuf, bp);
 
 	xyc_rqtopb(iorq, iopb, (bp->b_flags & B_READ) ? XYCMD_RD : XYCMD_WR, 0);
+
+	/* Instrumentation. */
+	disk_busy(&xysc->sc_dk);
 
 	return (XY_ERR_AOK);
 }
@@ -1810,10 +1810,10 @@ xyc_remove_iorq(xycsc)
 			dvma_mapout((vm_offset_t) iorq->dbufbase,
 				    (vm_offset_t) bp->b_un.b_addr,
 				    bp->b_bcount);
-			iorq->mode = XY_SUB_FREE;
 			iorq->xy->xyq.b_actf = bp->b_actf;
 			disk_unbusy(&iorq->xy->sc_dk,
 			    (bp->b_bcount - bp->b_resid));
+			iorq->mode = XY_SUB_FREE;
 			biodone(bp);
 			break;
 		case XY_SUB_WAIT:
