@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ral.c,v 1.7 2005/03/18 13:53:31 damien Exp $  */
+/*	$OpenBSD: if_ral.c,v 1.8 2005/03/18 13:57:42 damien Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -1822,12 +1822,12 @@ ural_set_txantenna(struct ural_softc *sc, int antenna)
 
 	ural_bbp_write(sc, RAL_BBP_TX, tx);
 
-	/* update values with PHY_CSR5 and PHY_CSR6 */
-	tmp = ural_read(sc, RAL_PHY_CSR5) & ~0xff;
-	ural_write(sc, RAL_PHY_CSR5, tmp | tx);
+	/* update flags in PHY_CSR5 and PHY_CSR6 too */
+	tmp = ural_read(sc, RAL_PHY_CSR5) & ~0x7;
+	ural_write(sc, RAL_PHY_CSR5, tmp | (tx & 0x7));
 
-	tmp = ural_read(sc, RAL_PHY_CSR6) & ~0xff;
-	ural_write(sc, RAL_PHY_CSR6, tmp | tx);
+	tmp = ural_read(sc, RAL_PHY_CSR6) & ~0x7;
+	ural_write(sc, RAL_PHY_CSR6, tmp | (tx & 0x7));
 }
 
 Static void
