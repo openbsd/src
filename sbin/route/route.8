@@ -1,4 +1,4 @@
-.\"	$OpenBSD: route.8,v 1.29 2003/06/02 20:06:16 millert Exp $
+.\"	$OpenBSD: route.8,v 1.30 2003/08/31 07:03:29 jmc Exp $
 .\"	$NetBSD: route.8,v 1.6 1995/03/18 15:00:13 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -303,6 +303,11 @@ and
 RTM_CHANGE.
 As such, only the superuser may modify
 the routing tables.
+.Sh FILES
+.Bl -tag -width "/etc/mygate" -compact
+.It Pa /etc/mygate
+Default gateway address.
+.El
 .Sh DIAGNOSTICS
 .Bl -tag -width Ds
 .It Sy "add [host \&| network ] %s: gateway %s flags %x"
@@ -341,6 +346,7 @@ to create the new entry.
 .Xr esis 4 ,
 .Xr netintro 4 ,
 .Xr route 4 ,
+.Xr mygate 5 ,
 .Xr routed 8
 .Sh HISTORY
 The
