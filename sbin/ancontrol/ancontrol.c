@@ -1,4 +1,4 @@
-/*	$OpenBSD: ancontrol.c,v 1.23 2004/05/13 16:36:38 mickey Exp $	*/
+/*	$OpenBSD: ancontrol.c,v 1.24 2004/07/15 22:37:41 mickey Exp $	*/
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  *
@@ -848,7 +848,7 @@ an_setconfig(int act, void *arg)
 			errx(1, "bad diversity setting: %u", diversity);
 			break;
 		}
-		if (atoi(arg) == ACT_SET_DIVERSITY_RX) {
+		if (act == ACT_SET_DIVERSITY_TX) {
 			cfg->an_diversity &= 0x00FF;
 			cfg->an_diversity |= (diversity << 8);
 		} else {
@@ -1343,7 +1343,7 @@ main(int argc, char *argv[])
 				an_setconfig(ACT_SET_DIVERSITY_RX, optarg);
 				break;
 			case 1:
-				an_setconfig(ACT_SET_DIVERSITY_RX, optarg);
+				an_setconfig(ACT_SET_DIVERSITY_TX, optarg);
 				break;
 			default:
 				errx(1, "must specify RX or TX diversity");
