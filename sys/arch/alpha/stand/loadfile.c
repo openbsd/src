@@ -1,4 +1,4 @@
-/*	$OpenBSD: loadfile.c,v 1.10 2001/01/16 15:34:22 art Exp $	*/
+/*	$OpenBSD: loadfile.c,v 1.11 2001/05/16 00:38:15 deraadt Exp $	*/
 /*	$NetBSD: loadfile.c,v 1.3 1997/04/06 08:40:59 cgd Exp $	*/
 
 /*
@@ -321,7 +321,8 @@ elf_exec(fd, elf, entryp)
 				printf("lseek symbols: %s\n", strerror(errno));
 				return (1);
 			}
-			if (read(fd, (void *)ffp_save, shp[i].sh_size) != shp[i].sh_size) {
+			if (read(fd, (void *)ffp_save, shp[i].sh_size) !=
+			    shp[i].sh_size) {
 				printf("read symbols: %s\n", strerror(errno));
 				return (1);
 			}

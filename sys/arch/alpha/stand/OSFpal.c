@@ -1,4 +1,4 @@
-/*	$OpenBSD: OSFpal.c,v 1.5 1996/11/27 19:54:45 niklas Exp $	*/
+/*	$OpenBSD: OSFpal.c,v 1.6 2001/05/16 00:38:15 deraadt Exp $	*/
 /*	$NetBSD: OSFpal.c,v 1.4 1996/10/13 03:00:24 christos Exp $	*/
 
 /*
@@ -46,10 +46,10 @@ OSFpal()
 	offset = r->rpb_pcs_size * cpu_number();
 	p = (struct pcs *)((u_int8_t *)r + r->rpb_pcs_off + offset);
 
-	printf("VMS PAL revision: 0x%lx\n",
-	    p->pcs_palrevisions[PALvar_OpenVMS]);
-	printf("OSF PAL rev: 0x%lx\n", p->pcs_palrevisions[PALvar_OSF1]);
+	printf("VMS PAL rev: 0x%lx, OSF PAL rev: 0x%lx\n",
+	    p->pcs_palrevisions[PALvar_OpenVMS],
+	    p->pcs_palrevisions[PALvar_OSF1]);
 	(void)switch_palcode();
-	printf("Switch to OSF PAL code succeeded.\n");
+	printf("Switched to OSF PAL.\n");
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.12 2000/11/08 16:01:25 art Exp $	*/
+/*	$OpenBSD: boot.c,v 1.13 2001/05/16 00:38:16 deraadt Exp $	*/
 /*	$NetBSD: boot.c,v 1.10 1997/01/18 01:58:33 cgd Exp $	*/
 
 /*
@@ -87,10 +87,8 @@ main()
 	init_prom_calls();
 
 	/* print a banner */
-	printf("\n");
-	printf("%s, Revision %s\n", bootprog_name, bootprog_rev);
-	printf("(%s, %s)\n", bootprog_maker, bootprog_date);
-	printf("\n");
+	printf("%s, Revision %s (%s, %s)\n", bootprog_name, bootprog_rev,
+	    bootprog_maker, bootprog_date);
 
 	/* switch to OSF pal code. */
 	OSFpal();
@@ -101,8 +99,7 @@ main()
 	prom_getenv(PROM_E_BOOTED_OSFLAGS, boot_flags, sizeof(boot_flags));
 
 	if (boot_file[0] != 0)
-		(void)printf("Boot file: %s\n", boot_file);
-	(void)printf("Boot flags: %s\n", boot_flags);
+		(void)printf("Boot file: %s %s\n", boot_file, boot_flags);
 
 	if (boot_file[0] != '\0')
 		win = (loadfile(name = boot_file, &entry) == 0);
@@ -133,8 +130,8 @@ main()
 
 	(void)printf("Entering %s at 0x%lx...\n", name, entry);
 	(*(void (*)(u_int64_t, u_int64_t, u_int64_t, void *, u_int64_t,
-		u_int64_t))entry)(ffp_save, ptbr_save, BOOTINFO_MAGIC,
-		&bootinfo_v1, 1, 0);
+	    u_int64_t))entry)(ffp_save, ptbr_save, BOOTINFO_MAGIC,
+	    &bootinfo_v1, 1, 0);
 
 fail:
 	(void)printf("Boot failed!  Halting...\n");
