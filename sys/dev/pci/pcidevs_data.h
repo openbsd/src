@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.661 2003/08/04 08:17:53 markus Exp 
+ *		OpenBSD: pcidevs,v 1.662 2003/08/07 17:39:17 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -6967,16 +6967,12 @@ static const struct pci_known_product pci_known_products[] = {
 
 static const struct pci_known_vendor pci_known_vendors[] = {
 	{
-	    PCI_VENDOR_PEAK,
-	    "Peak",
-	},
-	{
 	    PCI_VENDOR_MARTINMARIETTA,
 	    "Martin-Marietta",
 	},
 	{
 	    PCI_VENDOR_HAUPPAUGE,
-	    "Hauppauge Computer Works Inc",
+	    "Hauppauge Computer Works",
 	},
 	{
 	    PCI_VENDOR_DYNALINK,
@@ -7007,26 +7003,6 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	    "Avance Logic",
 	},
 	{
-	    PCI_VENDOR_REPLY,
-	    "Reply Group",
-	},
-	{
-	    PCI_VENDOR_NETFRAME,
-	    "NetFrame Systems",
-	},
-	{
-	    PCI_VENDOR_EPSON,
-	    "Epson",
-	},
-	{
-	    PCI_VENDOR_PHOENIX,
-	    "Phoenix Technologies",
-	},
-	{
-	    PCI_VENDOR_NS,
-	    "NS",
-	},
-	{
 	    PCI_VENDOR_TSENG,
 	    "Tseng Labs",
 	},
@@ -7039,16 +7015,8 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	    "Weitek",
 	},
 	{
-	    PCI_VENDOR_VIDEOLOGIC,
-	    "Video Logic",
-	},
-	{
 	    PCI_VENDOR_DEC,
 	    "DEC",
-	},
-	{
-	    PCI_VENDOR_MICRONICS,
-	    "Micronics",
 	},
 	{
 	    PCI_VENDOR_CIRRUS,
@@ -7059,32 +7027,12 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	    "IBM",
 	},
 	{
-	    PCI_VENDOR_LSIL,
-	    "LSI Canada",
-	},
-	{
-	    PCI_VENDOR_ICLPERSONAL,
-	    "ICL Personal Systems",
-	},
-	{
-	    PCI_VENDOR_SPEA,
-	    "SPEA Software",
-	},
-	{
 	    PCI_VENDOR_UNISYS,
 	    "Unisys Systems",
 	},
 	{
-	    PCI_VENDOR_ELITEGROUP,
-	    "Elitegroup",
-	},
-	{
 	    PCI_VENDOR_NCR,
 	    "AT&T GIS",
-	},
-	{
-	    PCI_VENDOR_VITESSE,
-	    "Vitesse Semiconductor",
 	},
 	{
 	    PCI_VENDOR_WD,
@@ -7100,7 +7048,7 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	},
 	{
 	    PCI_VENDOR_HITACHICOMP,
-	    "Hitachi Computer Products",
+	    "Hitachi Computer",
 	},
 	{
 	    PCI_VENDOR_OKI,
@@ -7129,10 +7077,6 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_SNI,
 	    "Siemens Nixdorf AG",
-	},
-	{
-	    PCI_VENDOR_LSILOGIC,
-	    "LSI Logic",
 	},
 	{
 	    PCI_VENDOR_MATROX,
@@ -7187,16 +7131,8 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	    "Hitach Microsystems",
 	},
 	{
-	    PCI_VENDOR_AMP,
-	    "AMP",
-	},
-	{
 	    PCI_VENDOR_SIS,
 	    "SIS",
-	},
-	{
-	    PCI_VENDOR_SEIKOEPSON,
-	    "Seiko Epson",
 	},
 	{
 	    PCI_VENDOR_TATUNGAMERICA,
@@ -7205,22 +7141,6 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_HP,
 	    "Hewlett-Packard",
-	},
-	{
-	    PCI_VENDOR_SOLLIDAY,
-	    "Solliday Engineering",
-	},
-	{
-	    PCI_VENDOR_LOGICMODELLING,
-	    "Logic Modeling",
-	},
-	{
-	    PCI_VENDOR_KPC,
-	    "Kubota Pacific",
-	},
-	{
-	    PCI_VENDOR_COMPUTREND,
-	    "Computrend",
 	},
 	{
 	    PCI_VENDOR_PCTECH,
@@ -7239,20 +7159,8 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	    "Opti",
 	},
 	{
-	    PCI_VENDOR_IPCCORP,
-	    "IPC Corporation",
-	},
-	{
-	    PCI_VENDOR_GENOA,
-	    "Genoa Systems",
-	},
-	{
 	    PCI_VENDOR_ELSA,
 	    "Elsa",
-	},
-	{
-	    PCI_VENDOR_FOUNTAINTECH,
-	    "Fountain Technology",
 	},
 	{
 	    PCI_VENDOR_SGSTHOMSON,
@@ -7273,10 +7181,6 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_OAKTECH,
 	    "Oak Technology",
-	},
-	{
-	    PCI_VENDOR_COTIME,
-	    "Co-time Computer",
 	},
 	{
 	    PCI_VENDOR_WINBOND,
@@ -7709,10 +7613,6 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_SURECOM,
 	    "Surecom Technology",
-	},
-	{
-	    PCI_VENDOR_TSENGLABS,
-	    "Tseng Labs International",
 	},
 	{
 	    PCI_VENDOR_MOST,
@@ -8339,18 +8239,6 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	    "Maxtor",
 	},
 	{
-	    PCI_VENDOR_MEGASOFT,
-	    "Megasoft",
-	},
-	{
-	    PCI_VENDOR_PFU,
-	    "PFU Limited",
-	},
-	{
-	    PCI_VENDOR_OALAB,
-	    "OA Laboratory",
-	},
-	{
 	    PCI_VENDOR_SYNEMA,
 	    "Synema",
 	},
@@ -8744,7 +8632,7 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	},
 	{
 	    PCI_VENDOR_O2MICRO,
-	    "O2 Micro Inc",
+	    "O2 Micro",
 	},
 	{
 	    PCI_VENDOR_3DFX,
@@ -8984,7 +8872,7 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	},
 	{
 	    PCI_VENDOR_MYSON,
-	    "Myson Century Inc",
+	    "Myson Century",
 	},
 	{
 	    PCI_VENDOR_TOPIC,
@@ -8992,7 +8880,7 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	},
 	{
 	    PCI_VENDOR_ENE,
-	    "ENE Technology Inc",
+	    "ENE Technology",
 	},
 	{
 	    PCI_VENDOR_TERRATEC,

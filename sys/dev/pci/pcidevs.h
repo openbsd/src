@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.661 2003/08/04 08:17:53 markus Exp 
+ *		OpenBSD: pcidevs,v 1.662 2003/08/07 17:39:17 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -57,9 +57,8 @@
  * List of known PCI vendors
  */
 
-#define	PCI_VENDOR_PEAK	0x001c		/* Peak */
 #define	PCI_VENDOR_MARTINMARIETTA	0x003d		/* Martin-Marietta */
-#define	PCI_VENDOR_HAUPPAUGE	0x0070		/* Hauppauge Computer Works Inc */
+#define	PCI_VENDOR_HAUPPAUGE	0x0070		/* Hauppauge Computer Works */
 #define	PCI_VENDOR_DYNALINK	0x0675		/* Dynalink */
 #define	PCI_VENDOR_COMPAQ	0x0e11		/* Compaq */
 #define	PCI_VENDOR_SYMBIOS	0x1000		/* Symbios Logic */
@@ -67,30 +66,18 @@
 #define	PCI_VENDOR_ULSI	0x1003		/* ULSI Systems */
 #define	PCI_VENDOR_VLSI	0x1004		/* VLSI Technology */
 #define	PCI_VENDOR_AVANCE	0x1005		/* Avance Logic */
-#define	PCI_VENDOR_REPLY	0x1006		/* Reply Group */
-#define	PCI_VENDOR_NETFRAME	0x1007		/* NetFrame Systems */
-#define	PCI_VENDOR_EPSON	0x1008		/* Epson */
-#define	PCI_VENDOR_PHOENIX	0x100a		/* Phoenix Technologies */
-#define	PCI_VENDOR_NS	0x100b		/* NS */
 #define	PCI_VENDOR_TSENG	0x100c		/* Tseng Labs */
 #define	PCI_VENDOR_AST	0x100d		/* AST Research */
 #define	PCI_VENDOR_WEITEK	0x100e		/* Weitek */
-#define	PCI_VENDOR_VIDEOLOGIC	0x1010		/* Video Logic */
 #define	PCI_VENDOR_DEC	0x1011		/* DEC */
-#define	PCI_VENDOR_MICRONICS	0x1012		/* Micronics */
 #define	PCI_VENDOR_CIRRUS	0x1013		/* Cirrus Logic */
 #define	PCI_VENDOR_IBM	0x1014		/* IBM */
-#define	PCI_VENDOR_LSIL	0x1015		/* LSI Canada */
-#define	PCI_VENDOR_ICLPERSONAL	0x1016		/* ICL Personal Systems */
-#define	PCI_VENDOR_SPEA	0x1017		/* SPEA Software */
 #define	PCI_VENDOR_UNISYS	0x1018		/* Unisys Systems */
-#define	PCI_VENDOR_ELITEGROUP	0x1019		/* Elitegroup */
 #define	PCI_VENDOR_NCR	0x101a		/* AT&T GIS */
-#define	PCI_VENDOR_VITESSE	0x101b		/* Vitesse Semiconductor */
 #define	PCI_VENDOR_WD	0x101c		/* Western Digital */
 #define	PCI_VENDOR_AMI	0x101e		/* AMI */
 #define	PCI_VENDOR_PICTURETEL	0x101f		/* PictureTel */
-#define	PCI_VENDOR_HITACHICOMP	0x1020		/* Hitachi Computer Products */
+#define	PCI_VENDOR_HITACHICOMP	0x1020		/* Hitachi Computer */
 #define	PCI_VENDOR_OKI	0x1021		/* OKI Electric Industry */
 #define	PCI_VENDOR_AMD	0x1022		/* AMD */
 #define	PCI_VENDOR_TRIDENT	0x1023		/* Trident */
@@ -98,7 +85,6 @@
 #define	PCI_VENDOR_ACER	0x1025		/* Acer */
 #define	PCI_VENDOR_DELL	0x1028		/* Dell */
 #define	PCI_VENDOR_SNI	0x1029		/* Siemens Nixdorf AG */
-#define	PCI_VENDOR_LSILOGIC	0x102a		/* LSI Logic */
 #define	PCI_VENDOR_MATROX	0x102b		/* Matrox */
 #define	PCI_VENDOR_CHIPS	0x102c		/* Chips and Technologies */
 #define	PCI_VENDOR_WYSE	0x102d		/* WYSE Technology */
@@ -112,29 +98,19 @@
 #define	PCI_VENDOR_COMPCOMM	0x1035		/* Comp. & Comm. Research Lab */
 #define	PCI_VENDOR_FUTUREDOMAIN	0x1036		/* Future Domain */
 #define	PCI_VENDOR_HITACHIMICRO	0x1037		/* Hitach Microsystems */
-#define	PCI_VENDOR_AMP	0x1038		/* AMP */
 #define	PCI_VENDOR_SIS	0x1039		/* SIS */
-#define	PCI_VENDOR_SEIKOEPSON	0x103a		/* Seiko Epson */
 #define	PCI_VENDOR_TATUNGAMERICA	0x103b		/* Tatung Co. of America */
 #define	PCI_VENDOR_HP	0x103c		/* Hewlett-Packard */
-#define	PCI_VENDOR_SOLLIDAY	0x103e		/* Solliday Engineering */
-#define	PCI_VENDOR_LOGICMODELLING	0x103f		/* Logic Modeling */
-#define	PCI_VENDOR_KPC	0x1040		/* Kubota Pacific */
-#define	PCI_VENDOR_COMPUTREND	0x1041		/* Computrend */
 #define	PCI_VENDOR_PCTECH	0x1042		/* PC Technology */
 #define	PCI_VENDOR_ASUSTEK	0x1043		/* Asustek Computer */
 #define	PCI_VENDOR_DPT	0x1044		/* DPT */
 #define	PCI_VENDOR_OPTI	0x1045		/* Opti */
-#define	PCI_VENDOR_IPCCORP	0x1046		/* IPC Corporation */
-#define	PCI_VENDOR_GENOA	0x1047		/* Genoa Systems */
 #define	PCI_VENDOR_ELSA	0x1048		/* Elsa */
-#define	PCI_VENDOR_FOUNTAINTECH	0x1049		/* Fountain Technology */
 #define	PCI_VENDOR_SGSTHOMSON	0x104a		/* SGS Thomson */
 #define	PCI_VENDOR_BUSLOGIC	0x104b		/* BusLogic */
 #define	PCI_VENDOR_TI	0x104c		/* Texas Instruments */
 #define	PCI_VENDOR_SONY	0x104d		/* Sony */
 #define	PCI_VENDOR_OAKTECH	0x104e		/* Oak Technology */
-#define	PCI_VENDOR_COTIME	0x104f		/* Co-time Computer */
 #define	PCI_VENDOR_WINBOND	0x1050		/* Winbond */
 #define	PCI_VENDOR_ANIGMA	0x1051		/* Anigma */
 #define	PCI_VENDOR_YOUNGMICRO	0x1052		/* Young Micro */
@@ -243,7 +219,6 @@
 #define	PCI_VENDOR_DAPHA	0x10bb		/* Dapha Electronics */
 #define	PCI_VENDOR_ALR	0x10bc		/* Advanced Logic Research */
 #define	PCI_VENDOR_SURECOM	0x10bd		/* Surecom Technology */
-#define	PCI_VENDOR_TSENGLABS	0x10be		/* Tseng Labs International */
 #define	PCI_VENDOR_MOST	0x10bf		/* Most */
 #define	PCI_VENDOR_BOCA	0x10c0		/* Boca Research */
 #define	PCI_VENDOR_ICM	0x10c1		/* ICM */
@@ -400,9 +375,6 @@
 #define	PCI_VENDOR_XIRCOM	0x115d		/* Xircom */
 #define	PCI_VENDOR_PEERPROTO	0x115e		/* Peer Protocols */
 #define	PCI_VENDOR_MAXTOR	0x115f		/* Maxtor */
-#define	PCI_VENDOR_MEGASOFT	0x1160		/* Megasoft */
-#define	PCI_VENDOR_PFU	0x1161		/* PFU Limited */
-#define	PCI_VENDOR_OALAB	0x1162		/* OA Laboratory */
 #define	PCI_VENDOR_SYNEMA	0x1163		/* Synema */
 #define	PCI_VENDOR_APT	0x1164		/* Advanced Peripherals Technologies */
 #define	PCI_VENDOR_IMAGRAPH	0x1165		/* Imagraph */
@@ -501,7 +473,7 @@
 #define	PCI_VENDOR_PMCSIERRA	0x11f8		/* PMC-Sierra */
 #define	PCI_VENDOR_CYCLADES	0x120e		/* Cyclades */
 #define	PCI_VENDOR_ESSENTIAL	0x120f		/* Essential Communications */
-#define	PCI_VENDOR_O2MICRO	0x1217		/* O2 Micro Inc */
+#define	PCI_VENDOR_O2MICRO	0x1217		/* O2 Micro */
 #define	PCI_VENDOR_3DFX	0x121a		/* 3DFX Interactive */
 #define	PCI_VENDOR_ATML	0x121b		/* Advanced Telecommunications Modules */
 #define	PCI_VENDOR_ARIEL	0x1220		/* Ariel */
@@ -561,9 +533,9 @@
 #define	PCI_VENDOR_BROADCOM	0x14e4		/* Broadcom */
 #define	PCI_VENDOR_CONEXANT	0x14f1		/* Conexant */
 #define	PCI_VENDOR_DELTA	0x1500		/* Delta */
-#define	PCI_VENDOR_MYSON	0x1516		/* Myson Century Inc */
+#define	PCI_VENDOR_MYSON	0x1516		/* Myson Century */
 #define	PCI_VENDOR_TOPIC	0x151f		/* Topic/SmartLink */
-#define	PCI_VENDOR_ENE	0x1524		/* ENE Technology Inc */
+#define	PCI_VENDOR_ENE	0x1524		/* ENE Technology */
 #define	PCI_VENDOR_TERRATEC	0x153b		/* TerraTec Electronic Gmbh */
 #define	PCI_VENDOR_SYMBOL	0x1562		/* Symbol */
 #define	PCI_VENDOR_SYBA	0x1592		/* Syba */
@@ -613,7 +585,7 @@
  * List of known products.  Grouped by vendor.
  */
 
-/* O2 Micro Inc */
+/* O2 Micro */
 #define	PCI_PRODUCT_O2MICRO_OZ6832	0x6832		/* OZ6832 and OZ6836 CardBus */
 #define	PCI_PRODUCT_O2MICRO_OZ6836	0x6836		/* OZ6836 and OZ6860 CardBus */
 #define	PCI_PRODUCT_O2MICRO_OZ6872	0x6872		/* OZ6812 and OZ6872 CardBus */
@@ -803,7 +775,7 @@
 #define	PCI_PRODUCT_ADVSYS_U2W	0x2500		/* ASP-3940U2W */
 #define	PCI_PRODUCT_ADVSYS_U3W	0x2700		/* ASP-3940U3W */
 
-/* Advanced Telecommunications Modules Ltd. */
+/* Advanced Telecommunications Modules */
 #define	PCI_PRODUCT_ATML_WAIKATO	0x3200		/* Waikato Dag3.2 */
 #define	PCI_PRODUCT_ATML_DAG35	0x3500		/* Endace Dag3.5 */
 #define	PCI_PRODUCT_ATML_DAG422GE	0x422e		/* Endace Dag4.22GE */
@@ -877,7 +849,7 @@
 #define	PCI_PRODUCT_AMI_MEGARAID428	0x9010		/* MegaRAID Series 428 */
 #define	PCI_PRODUCT_AMI_MEGARAID434	0x9060		/* MegaRAID Series 434 */
 
-/* Antares Microsystems, Inc. products */
+/* Antares Microsystems products */
 #define	PCI_PRODUCT_ANTARES_TC9021	0x1021		/* Antares Gigabit Ethernet */
 
 /* Apple products */
@@ -1312,7 +1284,7 @@
 #define	PCI_PRODUCT_ENDACE_DAG423	0x4230		/* Endace Dag4.23 */
 #define	PCI_PRODUCT_ENDACE_DAG423GE	0x423e		/* Endace Dag4.23GE */
 
-/* ENE Technology Inc products */
+/* ENE Technology products */
 #define	PCI_PRODUCT_ENE_CB1410	0x1410		/* CB-1410 PCI-CardBus */
 
 /* Ensoniq products */
@@ -1320,7 +1292,7 @@
 #define	PCI_PRODUCT_ENSONIQ_AUDIOPCI	0x5000		/* AudioPCI */
 #define	PCI_PRODUCT_ENSONIQ_CT5880	0x5880		/* CT5880 */
 
-/* ESS Technology Inc products */
+/* ESS Technology products */
 #define	PCI_PRODUCT_ESSTECH_ES336H	0x0000		/* ES366H Fax/Modem (early) */
 #define	PCI_PRODUCT_ESSTECH_MAESTROII	0x1968		/* Maestro II */
 #define	PCI_PRODUCT_ESSTECH_SOLO1	0x1969		/* SOLO-1 AudioDrive */
@@ -1361,7 +1333,7 @@
 /* Guillemot products */
 #define	PCI_PRODUCT_GEMTEK_PR103	0x1001		/* PR103 */
 
-/* Hauppauge Computer Works Inc */
+/* Hauppauge Computer Works */
 #define	PCI_PRODUCT_HAUPPAUGE_WINTV	0x13eb		/* WinTV */
 
 /* Hewlett-Packard products */
@@ -1817,7 +1789,7 @@
 #define	PCI_PRODUCT_MYLEX_960P	0x0001		/* DAC960P RAID */
 #define	PCI_PRODUCT_MYLEX_ACCELERAID	0x0050		/* AcceleRAID */
 
-/* Myson Century Inc products */
+/* Myson Century products */
 #define	PCI_PRODUCT_MYSON_MTD803	0x0803		/* MTD803 */
 
 /* Mutech products */
@@ -1874,10 +1846,10 @@
 /* NetMos */
 #define	PCI_PRODUCT_NETMOS_2S1P	0x9835		/* 2S1P */
 
-/* Network Security Technologies, Inc. */
+/* Network Security Technologies */
 #define	PCI_PRODUCT_NETSEC_7751	0x7751		/* 7751 */
 
-/* C-Media Electronics Inc */
+/* C-Media Electronics */
 #define	PCI_PRODUCT_CMI_CMI8338A	0x0100		/* CMI8338A Audio */
 #define	PCI_PRODUCT_CMI_CMI8338B	0x0101		/* CMI8338B Audio */
 #define	PCI_PRODUCT_CMI_CMI8738	0x0111		/* CMI8738/C3DX Audio */
@@ -2088,7 +2060,7 @@
 #define	PCI_PRODUCT_OXFORD_VSCOM_PCI800H_1	0xa004		/* VScom PCI 800H */
 #define	PCI_PRODUCT_OXFORD2_VSCOM_PCI011H	0x8403		/* VScom PCI 011H */
 
-/* Packet Engines Inc. products */
+/* Packet Engines products */
 #define	PCI_PRODUCT_PE_GNIC2	0x0911		/* PMC/GNIC2 */
 
 /* PC Tech products */
@@ -2242,7 +2214,7 @@
 #define	PCI_PRODUCT_S3_PROSAVAGE_DDR	0x8d04		/* ProSavage DDR */
 #define	PCI_PRODUCT_S3_SONICVIBES	0xca00		/* SonicVibes */
 
-/* SafeNet, Inc. products */
+/* SafeNet products */
 #define	PCI_PRODUCT_SAFENET_SAFEXCEL	0x1141		/* SafeXcel */
 
 /* Schneider & Koch (SysKonnect) */
@@ -2338,7 +2310,7 @@
 #define	PCI_PRODUCT_SMC_37C922	0x1001		/* FDC 37C922 */
 #define	PCI_PRODUCT_SMC_83C170	0x0005		/* 83C170 (EPIC/100) */
 
-/* Silicon Motion, Inc. products */
+/* Silicon Motion products */
 #define	PCI_PRODUCT_SMI_SM710	0x0710		/* LynxEM */
 #define	PCI_PRODUCT_SMI_SM712	0x0712		/* LynxEM+ */
 #define	PCI_PRODUCT_SMI_SM720	0x0720		/* Lynx3DM */
