@@ -1,3 +1,117 @@
+2003-04-16  Love Hörnquist Åstrand <lha@it.su.se>
+
+	* ftpd/ftpd.c: make sure argument to is* functions are unsigned
+	
+2003-04-06  Love Hörnquist Åstrand <lha@it.su.se>
+
+	* ftpd/ftpd.8: s/kerberos/Kerberos/
+	
+2003-03-23  Assar Westerlund  <assar@kth.se>
+
+	* ftpd/pathnames.h (_PATH_FTPUSERS): conditionalize
+
+2003-03-18  Love Hörnquist Åstrand <lha@it.su.se>
+
+	* ftpd/ftpd.c (krb5_verify): always do krb5_afslog, remove setpag
+	(its done in main)
+
+	* ftpd/gss_userok.c: drop setpag
+	
+	* ftpd/ftpd.c (main): set afs PAG
+
+	* ftpd/gss_userok.c: always try krb5_afslog, and while here do a
+	setpag too
+
+	* ftpd/ftpd_locl.h: always include kafs
+	
+2003-03-16  Love Hörnquist Åstrand <lha@it.su.se>
+
+	* ftp/gssapi.c (gss_adat): now that gss_export_name exports a
+	principal, bandaid with gss_display_name, and check that oid is
+	GSS_KRB5_NT_PRINCIPAL_NAME, also free memory
+	
+2003-02-25  Love Hörnquist Åstrand <lha@it.su.se>
+
+	* ftp/gssapi.c (gss_auth): print out the name we authenticated too
+	
+2003-02-25  Love Hörnquist Åstrand <lha@it.su.se>
+
+	* ftpd/ls.c: use readlink with bufsize - 1, From NetBSD
+
+	* ftp/ftp.1: s/utilizes/uses/ from NetBSD
+	
+	* ftpd/ftpd.8: s/utilize/use/ from NetBSD
+	
+2003-02-10  Assar Westerlund  <assar@kth.se>
+
+	* ftpd/ftpd.c (accept_with_timeout): use socklen_t
+
+2002-10-29  Johan Danielsson  <joda@pdc.kth.se>
+
+	* ftp/main.c: reinstate -n flag (from Torbjörn Granlund)
+
+2002-10-16  Johan Danielsson  <joda@pdc.kth.se>
+
+	* ftp/ftp.c: fix parsing of epsv ports (from Love)
+
+2002-09-05  Johan Danielsson  <joda@pdc.kth.se>
+
+	* ftp/security.c (sec_vfprintf): free encoded data
+
+	* ftp/gssapi.c (gss_decode): release buffer
+
+	* ftp/ftp.c (active_mode): no need to allocate buffer for EPRT
+
+2002-08-28  Johan Danielsson  <joda@pdc.kth.se>
+
+	* ftp/ftp.c (command): clean up va_{start,end}ing (from NetBSD)
+
+2002-08-23  Assar Westerlund  <assar@kth.se>
+
+	* ftp/main.c: start using getarg
+
+2002-08-22  Johan Danielsson  <joda@pdc.kth.se>
+
+	* ftpd/ls.c: uxp/v lacks _S_IFMT, but has S_IFMT
+
+2002-08-20  Johan Danielsson  <joda@pdc.kth.se>
+
+	* ftp/gssapi.c: remove unused variable
+
+2002-04-24  Johan Danielsson  <joda@pdc.kth.se>
+
+	* ftp/ftp.c: fix buffer overrun when receiving long replies
+
+2002-04-02  Johan Danielsson  <joda@pdc.kth.se>
+
+	* ftpd/popen.c: make sure gl_pathc != 0 before referencing
+	gl_pathv
+
+2002-03-15  Johan Danielsson  <joda@pdc.kth.se>
+
+	* ftp/gssapi.c (gss_adat): if accept_sec_context fails, syslog a
+	reason and give a temporary error message
+
+2002-02-28  Johan Danielsson  <joda@pdc.kth.se>
+
+	* ftpd/ftpd.c: if builtin_ls failes, return error
+
+	* ftpd/ls.c (builtin_ls): return status; also don't print fatal
+	error messages to the output stream, instead use syslog
+
+2001-09-14  Johan Danielsson  <joda@pdc.kth.se>
+
+	* ftpd/ls.c: make sure we don't include . in recursive listings
+
+2001-09-13  Johan Danielsson  <joda@pdc.kth.se>
+
+	* ftpd/ftpd.c (dataconn): don't wait forever on accept
+
+2001-09-04  Assar Westerlund  <assar@sics.se>
+
+	* ftp/gssapi.c (gss_adat): leak less memory and check return value
+	from asprintf
+
 2001-08-28  Jacques Vidrine <n@nectar.com>
 
 	* ftpd/ftpd.c, ftpd/ftpd.8: On systems with IP_PORTRANGE, have
@@ -16,7 +130,7 @@
 
 	* ftpd/ls.c: make -a and -A do the same as in ls(1)
 
-2001-08-05  Assar Westerlund  <assar@chicken.stacken.kth.se>
+2001-08-05  Assar Westerlund  <assar@sics.se>
 
 	* ftpd/ftpcmd.y: add some (unsigned char) casts to is*
 	* ftp/cmds.c: add some (unsigned char) casts to is*

@@ -1,4 +1,35 @@
-.\" $KTH: kerberos.8,v 1.4 2001/07/12 08:42:27 assar Exp $
+.\" Copyright (c) 2000 Kungliga Tekniska Högskolan
+.\" (Royal Institute of Technology, Stockholm, Sweden). 
+.\" All rights reserved. 
+.\"
+.\" Redistribution and use in source and binary forms, with or without 
+.\" modification, are permitted provided that the following conditions 
+.\" are met: 
+.\"
+.\" 1. Redistributions of source code must retain the above copyright 
+.\"    notice, this list of conditions and the following disclaimer. 
+.\"
+.\" 2. Redistributions in binary form must reproduce the above copyright 
+.\"    notice, this list of conditions and the following disclaimer in the 
+.\"    documentation and/or other materials provided with the distribution. 
+.\"
+.\" 3. Neither the name of the Institute nor the names of its contributors 
+.\"    may be used to endorse or promote products derived from this software 
+.\"    without specific prior written permission. 
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE INSTITUTE AND CONTRIBUTORS ``AS IS'' AND 
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE INSTITUTE OR CONTRIBUTORS BE LIABLE 
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL 
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS 
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) 
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT 
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY 
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
+.\" SUCH DAMAGE. 
+.\"
+.\" $KTH: kerberos.8,v 1.6 2003/03/10 02:19:23 lha Exp $
 .\"
 .Dd September 1, 2000
 .Dt KERBEROS 8
@@ -9,14 +40,14 @@
 .Sh DESCRIPTION
 Kerberos is a network authentication system. Its purpose is to
 securely authenticate users and services in an insecure network
-environment. 
+environment.
 .Pp
 This is done with a Kerberos server acting as a trusted third party,
 keeping a database with secret keys for all users and services
 (collectively called
 .Em principals ) .
 .Pp
-Each principal belongs to exactly one 
+Each principal belongs to exactly one
 .Em realm ,
 which is the administrative domain in Kerberos. A realm usually
 corresponds to an organisation, and the realm should normally be
@@ -25,14 +56,14 @@ or more Kerberos servers.
 .Pp
 The authentication process involves exchange of
 .Sq tickets
-and 
-.Sq authenticators 
+and
+.Sq authenticators
 which together prove the principal's identity.
 .Pp
 When you login to the Kerberos system, either through the normal
 system login or with the
 .Xr kinit 1
-program, you acquire a 
+program, you acquire a
 .Em ticket granting ticket
 which allows you to get new tickets for other services, such as
 .Ic telnet

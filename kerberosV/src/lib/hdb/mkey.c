@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000 - 2001 Kungliga Tekniska Högskolan
+ * Copyright (c) 2000 - 2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -36,7 +36,7 @@
 #define O_BINARY 0
 #endif
 
-RCSID("$KTH: mkey.c,v 1.11 2001/07/13 06:30:41 assar Exp $");
+RCSID("$KTH: mkey.c,v 1.15 2003/03/28 02:01:33 lha Exp $");
 
 struct hdb_master_key_data {
     krb5_keytab_entry keytab;
@@ -50,7 +50,8 @@ hdb_free_master_key(krb5_context context, hdb_master_key mkey)
     struct hdb_master_key_data *ptr;
     while(mkey) {
 	krb5_kt_free_entry(context, &mkey->keytab);
-	krb5_crypto_destroy(context, mkey->crypto);
+	if (mkey->crypto)
+	    krb5_crypto_destroy(context, mkey->crypto);
 	ptr = mkey;
 	mkey = mkey->next;
 	free(ptr);
@@ -198,6 +199,7 @@ read_master_encryptionkey(krb5_context context, const char *filename,
     krb5_error_code ret;
     unsigned char buf[256];
     ssize_t len;
+    size_t ret_len;
 	       
     fd = open(filename, O_RDONLY | O_BINARY);
     if(fd < 0) {
@@ -216,7 +218,7 @@ read_master_encryptionkey(krb5_context context, const char *filename,
 	return save_errno;
     }
 
-    ret = decode_EncryptionKey(buf, len, &key, &len);
+    ret = decode_EncryptionKey(buf, len, &key, &ret_len);
     memset(buf, 0, sizeof(buf));
     if(ret)
 	return ret;
@@ -375,6 +377,7 @@ hdb_unseal_keys_mkey(krb5_context context, hdb_entry *ent, hdb_master_key mkey)
     int i;
     krb5_error_code ret;
     krb5_data res;
+    size_t keysize;
     Key *k;
 
     for(i = 0; i < ent->keys.len; i++){
@@ -396,9 +399,21 @@ hdb_unseal_keys_mkey(krb5_context context, hdb_entry *ent, hdb_master_key mkey)
 	if (ret)
 	    return ret;
 
+	/* fixup keylength if the key got padded when encrypting it */
+	ret = krb5_enctype_keysize(context, k->key.keytype, &keysize);
+	if (ret) {
+	    krb5_data_free(&res);
+	    return ret;
+	}
+	if (keysize > res.length) {
+	    krb5_data_free(&res);
+	    return KRB5_BAD_KEYSIZE;
+	}
+
 	memset(k->key.keyvalue.data, 0, k->key.keyvalue.length);
 	free(k->key.keyvalue.data);
 	k->key.keyvalue = res;
+	k->key.keyvalue.length = keysize;
 	free(k->mkvno);
 	k->mkvno = NULL;
     }
@@ -490,6 +505,7 @@ hdb_set_master_keyfile (krb5_context context,
     if (ret) {
 	if (ret != ENOENT)
 	    return ret;
+	krb5_clear_error_string(context);
 	return 0;
     }
     db->master_key = key;

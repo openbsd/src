@@ -1,0 +1,606 @@
+This is heimdal.info, produced by makeinfo version 4.5 from
+heimdal.texi.
+
+INFO-DIR-SECTION Heimdal
+START-INFO-DIR-ENTRY
+* Heimdal: (heimdal).           The Kerberos 5 distribution from KTH
+END-INFO-DIR-ENTRY
+
+
+File: heimdal.info,  Node: Inter-Realm keys (trust) between Windows 2000 and a Heimdal KDC,  Next: Create account mappings,  Prev: Configuring Windows 2000 to use a Heimdal KDC,  Up: Windows 2000 compatability
+
+Inter-Realm keys (trust) between Windows 2000 and a Heimdal KDC
+===============================================================
+
+See also the Step-by-Step guide from Microsoft, referenced below.
+
+Install Windows 2000, and create a new controller (Active Directory
+Server) for the domain.
+
+By default the trust will be non-transitive. This means that only users
+directly from the trusted domain may authenticate. This can be changed
+to transitive by using the `netdom.exe' tool.
+
+You need to tell Windows 2000 on what hosts to find the KDCs for the
+non-Windows realm with `ksetup', see *Note Configuring Windows 2000 to
+use a Heimdal KDC::.
+
+This need to be done on all computers that want enable cross-realm
+login with `Mapped Names'.
+
+Then you need to add the inter-realm keys on the Windows kdc. Start the
+Domain Tree Management tool. (Found in Programs, Administrative tools,
+Active Directory Domains and Trusts).
+
+Right click on Properties of your domain, select the Trust tab.  Press
+Add on the appropriate trust windows and enter domain name and
+password. When prompted if this is a non-Windows Kerberos realm, press
+OK.
+
+Do not forget to add trusts in both directions.
+
+You also need to add the inter-realm keys to the Heimdal KDC. There are
+some tweaks that you need to do to `krb5.conf' beforehand.
+
+     [libdefaults]
+     	default_etypes = des-cbc-crc
+     	default_etypes_des = des-cbc-crc
+
+since otherwise checksum types that are not understood by Windows 2000
+will be generated (*Note Quirks of Windows 2000 KDC::.).
+
+Another issue is salting.  Since Windows 2000 does not seem to
+understand Kerberos 4 salted hashes you might need to turn off anything
+similar to the following if you have it, at least while adding the
+principals that are going to share keys with Windows 2000.
+
+     	[kadmin]default_keys = v5 v4
+
+You must also set:
+
+Once that is also done, you can add the required inter-realm keys:
+
+     kadmin add krbtgt/NT.REALM.EXAMPLE.COM@EXAMPLE.COM
+     kadmin add krbtgt/REALM.EXAMPLE.COM@NT.EXAMPLE.COM
+
+Use the same passwords for both keys.
+
+Do not forget to reboot before trying the new realm-trust (after running
+`ksetup'). It looks like it might work, but packets are never sent to
+the non-Windows KDC.
+
+
+File: heimdal.info,  Node: Create account mappings,  Next: Encryption types,  Prev: Inter-Realm keys (trust) between Windows 2000 and a Heimdal KDC,  Up: Windows 2000 compatability
+
+Create account mappings
+=======================
+
+Start the `Active Directory Users and Computers' tool. Select the View
+menu, that is in the left corner just below the real menu (or press
+Alt-V), and select Advanced Features. Right click on the user that you
+are going to do a name mapping for and choose Name mapping.
+
+Click on the Kerberos Names tab and add a new principal from the
+non-Windows domain.
+
+
+File: heimdal.info,  Node: Encryption types,  Next: Authorization data,  Prev: Create account mappings,  Up: Windows 2000 compatability
+
+Encryption types
+================
+
+Windows 2000 supports both the standard DES encryptions (des-cbc-crc and
+des-cbc-md5) and its own proprietary encryption that is based on MD4 and
+rc4 that is documented in and is supposed to be described in
+`draft-brezak-win2k-krb-rc4-hmac-03.txt'.  New users will get both MD4
+and DES keys.  Users that are converted from a NT4 database, will only
+have MD4 passwords and will need a password change to get a DES key.
+
+Heimdal implements both of these encryption types, but since DES is the
+standard and the hmac-code is somewhat newer, it is likely to work
+better.
+
+
+File: heimdal.info,  Node: Authorization data,  Next: Quirks of Windows 2000 KDC,  Prev: Encryption types,  Up: Windows 2000 compatability
+
+Authorization data
+==================
+
+The Windows 2000 KDC also adds extra authorization data in tickets.  It
+is at this point unclear what triggers it to do this.  The format of
+this data is only available under a "secret" license from Microsoft,
+which prohibits you implementing it.
+
+A simple way of getting hold of the data to be able to understand it
+better is described here.
+
+  1. Find the client example on using the SSPI in the SDK documentation.
+
+  2. Change "AuthSamp" in the source code to lowercase.
+
+  3. Build the program.
+
+  4. Add the "authsamp" principal with a known password to the
+     database.  Make sure it has a DES key.
+
+  5. Run `ktutil add' to add the key for that principal to a keytab.
+
+  6. Run `appl/test/nt_gss_server -p 2000 -s authsamp --dump-auth=file'
+     where file is an appropriate file.
+
+  7. It should authenticate and dump for you the authorization data in
+     the file.
+
+  8. The tool `lib/asn1/asn1_print' is somewhat useful for analyzing
+     the data.
+
+
+File: heimdal.info,  Node: Quirks of Windows 2000 KDC,  Next: Useful links when reading about the Windows 2000,  Prev: Authorization data,  Up: Windows 2000 compatability
+
+Quirks of Windows 2000 KDC
+==========================
+
+There are some issues with salts and Windows 2000.  Using an empty salt,
+which is the only one that Kerberos 4 supported and is therefore known
+as a Kerberos 4 compatible salt does not work, as far as we can tell
+from out experiments and users reports.  Therefore, you have to make
+sure you keep around keys with all the different types of salts that are
+required.
+
+Microsoft seems also to have forgotten to implement the checksum
+algorithms `rsa-md4-des' and `rsa-md5-des'. This can make Name mapping
+(*note Create account mappings::) fail if a `des-cbc-md5' key is used.
+To make the KDC return only `des-cbc-crc' you must delete the
+`des-cbc-md5' key from the kdc using the `kadmin del_enctype' command.
+
+     kadmin del_enctype lha des-cbc-md5
+
+You should also add the following entries to the `krb5.conf' file:
+
+     [libdefaults]
+     	default_etypes = des-cbc-crc
+     	default_etypes_des = des-cbc-crc
+
+These configuration options will make sure that no checksums of the
+unsupported types are generated.
+
+
+File: heimdal.info,  Node: Useful links when reading about the Windows 2000,  Prev: Quirks of Windows 2000 KDC,  Up: Windows 2000 compatability
+
+Useful links when reading about the Windows 2000
+================================================
+
+See also our paper presented at the 2001 usenix Annual Technical
+Conference, available in the proceedings or at
+<http://www.usenix.org/publications/library/proceedings/usenix01/freenix01/westerlund.html>.
+
+There are lots of text about Kerberos on Microsoft's web site, here is a
+short list of the interesting documents that we have managed to find.
+
+   * Step-by-Step Guide to Kerberos 5 (krb5 1.0) Interoperability -
+     <http://www.microsoft.com/windows2000/library/planning/security/kerbsteps.asp>
+     Kerberos GSS-API (in Windows-ize SSPI), Windows as a client in a
+     non-Windows KDC realm, adding unix clients to a Windows 2000 KDC,
+     and adding cross-realm trust (*Note Inter-Realm keys (trust)
+     between Windows 2000 and a Heimdal KDC::.).
+
+   * Windows 2000 Kerberos Authentication -
+     <http://www.microsoft.com/TechNet/win2000/win2ksrv/technote/kerberos.asp>
+     White paper that describes how Kerberos is used in Windows 2000.
+
+   * Overview of kerberos -
+     <http://support.microsoft.com/support/kb/articles/Q248/7/58.ASP>
+     Links to useful other links.
+
+   * Klist for windows -
+     <http://msdn.microsoft.com/library/periodic/period00/security0500.htm>
+     Describes where to get a klist for Windows 2000.
+
+   * Event logging for kerberos -
+     <http://support.microsoft.com/support/kb/articles/Q262/1/77.ASP>.
+     Basicly it say that you can add a registry key
+     `HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Lsa\Kerberos\Parameters\LogLevel'
+     with value DWORD equal to 1, and then you'll get logging in the
+     Event Logger.
+
+   * Access to the active directory through LDAP
+     <http://msdn.microsoft.com/library/techart/kerberossamp.htm>
+
+
+Other useful programs include these:
+
+   * pwdump2 <http://www.webspan.net/~tas/pwdump2/>
+
+
+File: heimdal.info,  Node: Programming with Kerberos,  Next: Migration,  Prev: Windows 2000 compatability,  Up: Top
+
+Programming with Kerberos
+*************************
+
+First you need to know how the Kerberos model works, go read the
+introduction text (*note What is Kerberos?::).
+
+* Menu:
+
+* Kerberos 5 API Overview::
+* Walkthru a sample Kerberos 5 client::
+* Validating a password in a server application::
+
+
+File: heimdal.info,  Node: Kerberos 5 API Overview,  Next: Walkthru a sample Kerberos 5 client,  Prev: Programming with Kerberos,  Up: Programming with Kerberos
+
+Kerberos 5 API Overview
+=======================
+
+Most functions are documenteded in manual pages.  This overview only
+tries to point to where to look for a specific function.
+
+Kerberos context
+----------------
+
+A kerberos context (`krb5_context') holds all per thread state. All
+global variables that are context specific are stored in this struture,
+including default encryption types, credential-cache (ticket file), and
+default realms.
+
+See the manual pages for `krb5_context(3)' and `krb5_init_context(3)'.
+
+Kerberos authenication context
+------------------------------
+
+Kerberos authentication context (`krb5_auth_context') holds all context
+related to an authenticated connection, in a similar way to the
+kerberos context that holds the context for the thread or process.
+
+The `krb5_auth_context' is used by various functions that are directly
+related to authentication between the server/client. Example of data
+that this structure contains are various flags, addresses of client and
+server, port numbers, keyblocks (and subkeys), sequence numbers, replay
+cache, and checksum types.
+
+See the manual page for `krb5_auth_context(3)'.
+
+Keytab management
+-----------------
+
+A keytab is a storage for locally stored keys. Heimdal includes keytab
+support for Kerberos 5 keytabs, Kerberos 4 srvtab, AFS-KeyFile's, and
+for storing keys in memory.
+
+See also manual page for `krb5_keytab(3)'
+
+
+File: heimdal.info,  Node: Walkthru a sample Kerberos 5 client,  Next: Validating a password in a server application,  Prev: Kerberos 5 API Overview,  Up: Programming with Kerberos
+
+Walkthru a sample Kerberos 5 client
+===================================
+
+This example contains parts of a sample TCP Kerberos 5 clients, if you
+want a real working client, please look in `appl/test' directory in the
+Heimdal distribution.
+
+All Kerberos error-codes that are returned from kerberos functions in
+this program are passed to `krb5_err', that will print a descriptive
+text of the error code and exit. Graphical programs can convert
+error-code to a humal readable error-string with the
+`krb5_get_err_text(3)' function.
+
+Note that you should not use any Kerberos function before
+`krb5_init_context()' have completed successfully. That is the reson
+`err()' is used when `krb5_init_context()' fails.
+
+First the client needs to call `krb5_init_context' to initialize the
+Kerberos 5 library. This is only needed once per thread in the program.
+If the function returns a non-zero value it indicates that either the
+Kerberos implemtation is failing or its disabled on this host.
+
+     #include <krb5.h>
+     
+     int
+     main(int argc, char **argv)
+     {
+             krb5_context context;
+     
+             if (krb5_context(&context))
+                     errx (1, "krb5_context");
+
+Now the client wants to connect to the host at the other end. The
+preferred way of doing this is using `getaddrinfo(3)' (for operating
+system that have this function implemented), since getaddrinfo is
+neutral to the address type and can use any protocol that is available.
+
+             struct addrinfo *ai, *a;
+             struct addrinfo hints;
+             int error;
+     
+             memset (&hints, 0, sizeof(hints));
+             hints.ai_socktype = SOCK_STREAM;
+             hints.ai_protocol = IPPROTO_TCP;
+     
+             error = getaddrinfo (hostname, "pop3", &hints, &ai);
+             if (error)
+                     errx (1, "%s: %s", hostname, gai_strerror(error));
+     
+             for (a = ai; a != NULL; a = a->ai_next) {
+                     int s;
+     
+                     s = socket (a->ai_family, a->ai_socktype, a->ai_protocol);
+                     if (s < 0)
+                             continue;
+                     if (connect (s, a->ai_addr, a->ai_addrlen) < 0) {
+                             warn ("connect(%s)", hostname);
+                                 close (s);
+                                 continue;
+                     }
+                     freeaddrinfo (ai);
+                     ai = NULL;
+             }
+             if (ai) {
+                         freeaddrinfo (ai);
+                         errx ("failed to contact %s", hostname);
+             }
+
+Before authenticating, an authentication context needs to be created.
+This context keeps all information for one (to be) authenticated
+connection (see `krb5_auth_context(3)').
+
+             status = krb5_auth_con_init (context, &auth_context);
+             if (status)
+                     krb5_err (context, 1, status, "krb5_auth_con_init");
+
+For setting the address in the authentication there is a help function
+`krb5_auth_con_setaddrs_from_fd' that does everthing that is needed
+when given a connected file descriptor to the socket.
+
+             status = krb5_auth_con_setaddrs_from_fd (context,
+                                                      auth_context,
+                                                      &sock);
+             if (status)
+                     krb5_err (context, 1, status,
+                               "krb5_auth_con_setaddrs_from_fd");
+
+The next step is to build a server principal for the service we want to
+connect to. (See also `krb5_sname_to_principal(3)'.)
+
+             status = krb5_sname_to_principal (context,
+                                               hostname,
+                                               service,
+                                               KRB5_NT_SRV_HST,
+                                               &server);
+             if (status)
+                     krb5_err (context, 1, status, "krb5_sname_to_principal");
+
+The client principal is not passed to `krb5_sendauth(3)' function, this
+causes the `krb5_sendauth' function to try to figure it out itself.
+
+The server program is using the function `krb5_recvauth(3)' to receive
+the Kerberos 5 authenticator.
+
+In this case, mutual authenication will be tried. That means that the
+server will authenticate to the client. Using mutual authenication is
+good since it enables the user to verify that they are talking to the
+right server (a server that knows the key).
+
+If you are using a non-blocking socket you will need to do all work of
+`krb5_sendauth' yourself. Basically you need to send over the
+authenticator from `krb5_mk_req(3)' and, in case of mutual
+authentication, verifying the result from the server with
+`krb5_rd_rep(3)'.
+
+             status = krb5_sendauth (context,
+                                     &auth_context,
+                                     &sock,
+                                     VERSION,
+                                     NULL,
+                                     server,
+                                     AP_OPTS_MUTUAL_REQUIRED,
+                                     NULL,
+                                     NULL,
+                                     NULL,
+                                     NULL,
+                                     NULL,
+                                     NULL);
+             if (status)
+                     krb5_err (context, 1, status, "krb5_sendauth");
+
+Once authentication has been performed, it is time to send some data.
+First we create a krb5_data structure, then we sign it with
+`krb5_mk_safe(3)' using the `auth_context' that contains the
+session-key that was exchanged in the
+`krb5_sendauth(3)'/`krb5_recvauth(3)' authentication sequence.
+
+             data.data   = "hej";
+             data.length = 3;
+     
+             krb5_data_zero (&packet);
+     
+             status = krb5_mk_safe (context,
+                                    auth_context,
+                                    &data,
+                                    &packet,
+                                    NULL);
+             if (status)
+                     krb5_err (context, 1, status, "krb5_mk_safe");
+
+And send it over the network.
+
+             len = packet.length;
+             net_len = htonl(len);
+     
+             if (krb5_net_write (context, &sock, &net_len, 4) != 4)
+                     err (1, "krb5_net_write");
+             if (krb5_net_write (context, &sock, packet.data, len) != len)
+                     err (1, "krb5_net_write");
+
+To send encrypted (and signed) data `krb5_mk_priv(3)' should be used
+instead. `krb5_mk_priv(3)' works the same way as `krb5_mk_safe(3)',
+with the exception that it encrypts the data in addition to signing it.
+
+             data.data   = "hemligt";
+             data.length = 7;
+     
+             krb5_data_free (&packet);
+     
+             status = krb5_mk_priv (context,
+                                    auth_context,
+                                    &data,
+                                    &packet,
+                                    NULL);
+             if (status)
+                     krb5_err (context, 1, status, "krb5_mk_priv");
+
+And send it over the network.
+
+             len = packet.length;
+             net_len = htonl(len);
+     
+             if (krb5_net_write (context, &sock, &net_len, 4) != 4)
+                     err (1, "krb5_net_write");
+             if (krb5_net_write (context, &sock, packet.data, len) != len)
+                     err (1, "krb5_net_write");
+
+The server is using `krb5_rd_safe(3)' and `krb5_rd_priv(3)' to verify
+the signature and decrypt the packet.
+
+
+File: heimdal.info,  Node: Validating a password in a server application,  Prev: Walkthru a sample Kerberos 5 client,  Up: Programming with Kerberos
+
+Validating a password in an application
+=======================================
+
+See the manual page for `krb5_verify_user(3)'.
+
+
+File: heimdal.info,  Node: Migration,  Next: Acknowledgments,  Prev: Programming with Kerberos,  Up: Top
+
+Migration
+*********
+
+General issues
+==============
+
+When migrating from a Kerberos 4 KDC.
+
+Order in what to do things:
+===========================
+
+   * Convert the database, check all principals that hprop complains
+     about.
+
+     `hprop -n --source=<NNN>| hpropd -n'
+
+     Replace <NNN> with whatever source you have, like krb4-db or
+     krb4-dump.
+
+   * Run a Kerberos 5 slave for a while.
+
+   * Figure out if it does everything you want it to.
+
+     Make sure that all things that you use works for you.
+
+   * Let a small number of controlled users use Kerberos 5 tools.
+
+     Find a sample population of your users and check what programs
+     they use, you can also check the kdc-log to check what ticket are
+     checked out.
+
+   * Burn the bridge and change the master.
+
+   * Let all users use the Kerberos 5 tools by default.
+
+   * Turn off services that do not need Kerberos 4 authentication.
+
+     Things that might be hard to get away is old programs with support
+     for Kerberos 4. Example applications are old Eudora installations
+     using KPOP, and Zephyr. Eudora can use the Kerberos 4 kerberos in
+     the Heimdal kdc.
+
+
+
+File: heimdal.info,  Node: Acknowledgments,  Prev: Migration,  Up: Top
+
+Acknowledgments
+***************
+
+Eric Young wrote "libdes".
+
+The University of California at Berkeley initially wrote `telnet', and
+`telnetd'.  The authentication and encryption code of `telnet' and
+`telnetd' was added by David Borman (then of Cray Research, Inc).  The
+encryption code was removed when this was exported and then added back
+by Juha Eskelinen, <esc@magic.fi>.
+
+The `popper' was also a Berkeley program initially.
+
+Some of the functions in `libroken' also come from Berkeley by way of
+NetBSD/FreeBSD.
+
+`editline' was written by Simmule Turner and Rich Salz.
+
+The `getifaddrs' implementation for Linux was written by Hideaki
+YOSHIFUJI for the Usagi project.
+
+Bugfixes, documentation, encouragement, and code has been contributed
+by:
+Derrick J Brashear
+     <shadow@dementia.org>
+
+Ken Hornstein
+     <kenh@cmf.nrl.navy.mil>
+
+Johan Ihrén
+     <johani@pdc.kth.se>
+
+Love Hörnquist-Åstrand
+     <lha@stacken.kth.se>
+
+Magnus Ahltorp
+     <map@stacken.kth.se>
+
+Mark Eichin
+     <eichin@cygnus.com>
+
+Marc Horowitz
+     <marc@cygnus.com>
+
+Luke Howard
+     <lukeh@xedoc.com.au>
+
+Brandon S. Allbery KF8NH
+     <allbery@kf8nh.apk.net>
+
+Jun-ichiro itojun Hagino
+     <itojun@kame.net>
+
+Daniel Kouril
+     <kouril@informatics.muni.cz>
+
+Åke Sandgren
+     <ake@cs.umu.se>
+
+Michal Vocu
+     <michal@karlin.mff.cuni.cz>
+
+Miroslav Ruda
+     <ruda@ics.muni.cz>
+
+Brian A May
+     <bmay@snoopy.apana.org.au>
+
+Chaskiel M Grundman
+     <cg2v@andrew.cmu.edu>
+
+Richard Nyberg
+     <rnyberg@it.su.se>
+
+Frank van der Linden
+     <fvdl@netbsd.org>
+
+Cizzi Storm
+     <cizzi@it.su.se>
+
+and we hope that those not mentioned here will forgive us.
+
+All bugs were introduced by ourselves.
+
+

@@ -1,8 +1,222 @@
+2003-04-22  Love  <lha@stacken.kth.se>
+
+	* resolve.c: 1.38->1.39: copy NUL too, from janj@wenf.org via
+	openbsd
+
+2003-04-16  Love  <lha@stacken.kth.se>
+
+	* parse_units.h: remove typedef for units to avoid problems with
+	shadowing
+
+	* resolve.c: use strlcpy, from openbsd
+	
+	* getcap.c: use strlcpy, from openbsd
+	
+	* getarg.3: Change .Fd #include <header.h> to .In header.h
+	from Thomas Klausner <wiz@netbsd.org>
+
+2003-04-15  Love  <lha@stacken.kth.se>
+
+	* socket.c (socket_set_tos): if setsockopt failed with EINVAL
+	failed, just ignore it, sock was probably a just a non AF_INET
+	socket
+
+2003-04-14  Love  <lha@stacken.kth.se>
+
+	* strncasecmp.c: cast argument to toupper to unsigned char, from
+	Christian Biere <christianbiere@gmx.de> via NetBSD
+	
+	* strlwr.c: cast argument to tolower to unsigned char, from
+	Christian Biere <christianbiere@gmx.de> via NetBSD
+	
+	* strcasecmp.c: cast argument to toupper to unsigned char, from
+	Christian Biere <christianbiere@gmx.de> via NetBSD
+	
+2003-03-19  Love  <lha@stacken.kth.se>
+
+	* getarg.3: spelling, from <jmc@prioris.mini.pw.edu.pl>
+	
+2003-03-07  Love  <lha@stacken.kth.se>
+
+	* parse_bytes.c: use struct units instead of units
+	
+	* parse_time.c: use struct units instead of units
+	
+2003-03-04  Love  <lha@stacken.kth.se>
+
+	* roken.awk: use full prototype for main
+	
+2002-10-15  Johan Danielsson  <joda@pdc.kth.se>
+
+	* resolve.c: check length of txt records
+
+2002-09-10  Johan Danielsson  <joda@pdc.kth.se>
+
+	* roken.awk: include config.h before stdio.h (breaks with
+	_FILE_OFFSET_BITS on solaris otherwise)
+
+2002-09-09  Johan Danielsson  <joda@pdc.kth.se>
+
+	* resolve.c: fix res_nsearch call, but don't use it for now, AIX5
+	has a broken version that trashes memory
+
+	* roken-common.h: fix typo in previous
+
+	* roken-common.h: change IRIX == 4 to IRIX4
+
+2002-09-04  Assar Westerlund  <assar@kth.se>
+
+	* getifaddrs.c: remove some warnings from the linux-portion
+
+	* getnameinfo_verified.c (getnameinfo_verified): handle the case
+	of forward but no backward DNS information, and also describe the
+	desired behaviour.  from Love <lha@stacken.kth.se>
+
+2002-09-04  Johan Danielsson  <joda@pdc.kth.se>
+
+	* rtbl.c (rtbl_destroy): free whole table
+
+	* resolve.c: use res_nsearch if we have it (from Larry Greenfield)
+
+2002-09-03  Assar Westerlund  <assar@kth.se>
+
+	* getifaddrs.c: add Linux AF_NETLINK getifaddrs from Hideaki
+	YOSHIFUJI of the Usagi project
+	
+	* parse_reply-test.c: make this build and return 77 if there is no
+	mmap
+
+	* Makefile.am (parse_reply-test): add
+	* parse_reply-test.c: add a test case for parse_reply reading past
+	the given buffer
+	* resolve.c (parse_reply): update the arguments to more reasonable
+	types.  allow parse_reply-test to call it
+
+2002-08-28  Johan Danielsson  <joda@pdc.kth.se>
+
+	* resolve.c (dns_srv_order): do alignment tricks with the random()
+	state (from NetBSD)
+
+2002-08-27  Assar Westerlund  <assar@kth.se>
+
+	* resolve.c (parse_reply): verify the lengths (both external and
+	internal) are consistent and not too long
+	(dns_lookup_int): be conservative in the length sent in to to
+	parse_reply
+
+2002-08-26  Assar Westerlund  <assar@kth.se>
+
+	* roken.h.in: add prototypes for str, unvis functions
+	* resolve.h: add fallback definition for T_AAAA
+
+2002-08-22  Johan Danielsson  <joda@pdc.kth.se>
+
+	* roken.h.in: we may need a prototype for strndup
+
+2002-08-20  Johan Danielsson  <joda@pdc.kth.se>
+
+	* roken.h.in: typedef ssize_t here
+
+	* getarg.c: don't put Ns before comma
+
+	* resolve.c: _res might not be available
+
+	* localtime_r.c: include stdio.h and roken.h
+
+	* strftime.c: only use altzone if we have it
+
+	* roken-common.h: AI_NUMERICHOST needs special handling
+
+	* strlcat.c: add some consistency checks
+
+	* strlcpy.c: make the logic simpler, and handle dst_sz == 0
+
+2002-08-19  Johan Danielsson  <joda@pdc.kth.se>
+
+	* resolve.h: prefix these functions to avoid conflicts with other
+	packages
+
+2002-08-14  Johan Danielsson  <joda@pdc.kth.se>
+
+	* strsep_copy.c: don't write to buf if len == 0
+
+2002-05-31  Assar Westerlund  <assar@pdc.kth.se>
+
+	* Makefile.am: *_LDADD: add LDADD, so that libroken is used
+
+2002-05-17  Johan Danielsson  <joda@pdc.kth.se>
+
+	* xdbm.h: remove old dbm part
+
+2002-04-30  Johan Danielsson  <joda@pdc.kth.se>
+
+	* ndbm_wrap.{c,h}: ndbm wrapper for newer db libraries
+
+2002-04-18  Johan Danielsson  <joda@pdc.kth.se>
+
+	* roken.h.in: move mini_inetd protos to after addrinfo definition
+
+	* snprintf.c (append_number): make rep const
+
+	* getarg.h: rename optind and optarg to avoid some gcc warnings
+
+	* getarg.c: rename optind and optarg to avoid some gcc warnings
+
+2002-02-18  Johan Danielsson  <joda@pdc.kth.se>
+
+	* mini_inetd.c: mini_inetd_addrinfo that takes an addrinfo instead
+	of a port number
+
+2001-11-30  Assar Westerlund  <assar@sics.se>
+
+	* getifaddrs.c: support SIOCGLIFCONF and SIOCGLIFFLAGS which are
+	used on Solaris 8 to retrieve addresses larger than `struct
+	sockaddr'.  From Magnus Ahltorp <ahltorp@nada.kth.se> (with some
+	modifications by me)
+
+2001-10-27  Assar Westerlund  <assar@sics.se>
+
+	* Makefile.am (libroken_la_LDFLAGS): set version to 15:0:6
+
+2001-10-22  Assar Westerlund  <assar@sics.se>
+
+	* localtime_r.c: add
+
+2001-10-02  Johan Danielsson  <joda@pdc.kth.se>
+
+	* resolve.c (dns_srv_order): don't try to return a value
+
+2001-09-24  Johan Danielsson  <joda@pdc.kth.se>
+
+	* snprintf.c: va_{start,end} fixes; from Thomas Klausner
+
+2001-09-20  Assar Westerlund  <assar@sics.se>
+
+	* resolve.c (dns_srv_order): make sure of not reading after the
+	array
+
+2001-09-17  Assar Westerlund  <assar@sics.se>
+
+	* Makefile.am (libroken_la_LDFLAGS): bump to 14:4:5
+	* snprintf.c: rename 'struct state' -> 'struct snprintf_test' to
+	avoid collision with resolv.h on aix
+
+2001-09-04  Assar Westerlund  <assar@sics.se>
+
+	* parse_bytes-test.c, parse_bytes.c, parse_bytes.h, parse_units.c,
+	parse_units.h: use int instead of size_t as return values to be
+	compatible with snprintf
+
+	* strftime.c (strftime): check for return values from snprintf() <
+	0
+
 2001-09-03  Johan Danielsson  <joda@pdc.kth.se>
 
 	* socket.c: restrict is a keyword
 
 2001-09-03  Assar Westerlund  <assar@sics.se>
+
+	* write_pid.c: handle atexit or on_exit
 
 	* Makefile.am (EXTRA_libroken_la_SOURCES): add vis.hin to help
 	solaris make

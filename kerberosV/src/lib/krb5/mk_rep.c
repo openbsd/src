@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,92 +33,67 @@
 
 #include <krb5_locl.h>
 
-RCSID("$KTH: mk_rep.c,v 1.19 2001/05/14 06:14:49 assar Exp $");
+RCSID("$KTH: mk_rep.c,v 1.21 2002/12/19 13:30:36 joda Exp $");
 
 krb5_error_code
 krb5_mk_rep(krb5_context context,
 	    krb5_auth_context auth_context,
 	    krb5_data *outbuf)
 {
-  krb5_error_code ret;
-  AP_REP ap;
-  EncAPRepPart body;
-  u_char *buf = NULL;
-  size_t buf_size;
-  size_t len;
-  krb5_crypto crypto;
+    krb5_error_code ret;
+    AP_REP ap;
+    EncAPRepPart body;
+    u_char *buf = NULL;
+    size_t buf_size;
+    size_t len;
+    krb5_crypto crypto;
 
-  ap.pvno = 5;
-  ap.msg_type = krb_ap_rep;
+    ap.pvno = 5;
+    ap.msg_type = krb_ap_rep;
 
-  memset (&body, 0, sizeof(body));
+    memset (&body, 0, sizeof(body));
 
-  body.ctime = auth_context->authenticator->ctime;
-  body.cusec = auth_context->authenticator->cusec;
-  body.subkey = NULL;
-  if (auth_context->flags & KRB5_AUTH_CONTEXT_DO_SEQUENCE) {
-    krb5_generate_seq_number (context,
-			      auth_context->keyblock,
-			      &auth_context->local_seqnumber);
-    body.seq_number = malloc (sizeof(*body.seq_number));
-    if (body.seq_number == NULL) {
-	krb5_set_error_string (context, "malloc: out of memory");
-	return ENOMEM;
+    body.ctime = auth_context->authenticator->ctime;
+    body.cusec = auth_context->authenticator->cusec;
+    body.subkey = NULL;
+    if (auth_context->flags & KRB5_AUTH_CONTEXT_DO_SEQUENCE) {
+	krb5_generate_seq_number (context,
+				  auth_context->keyblock,
+				  &auth_context->local_seqnumber);
+	body.seq_number = malloc (sizeof(*body.seq_number));
+	if (body.seq_number == NULL) {
+	    krb5_set_error_string (context, "malloc: out of memory");
+	    return ENOMEM;
+	}
+	*(body.seq_number) = auth_context->local_seqnumber;
+    } else
+	body.seq_number = NULL;
+
+    ap.enc_part.etype = auth_context->keyblock->keytype;
+    ap.enc_part.kvno  = NULL;
+
+    ASN1_MALLOC_ENCODE(EncAPRepPart, buf, buf_size, &body, &len, ret);
+    free_EncAPRepPart (&body);
+    if(ret)
+	return ret;
+    ret = krb5_crypto_init(context, auth_context->keyblock, 
+			   0 /* ap.enc_part.etype */, &crypto);
+    if (ret) {
+	free (buf);
+	return ret;
     }
-    *(body.seq_number) = auth_context->local_seqnumber;
-  } else
-    body.seq_number = NULL;
+    ret = krb5_encrypt (context,
+			crypto,
+			KRB5_KU_AP_REQ_ENC_PART,
+			buf + buf_size - len, 
+			len,
+			&ap.enc_part.cipher);
+    krb5_crypto_destroy(context, crypto);
+    free(buf);
+    if (ret)
+	return ret;
 
-  ap.enc_part.etype = auth_context->keyblock->keytype;
-  ap.enc_part.kvno  = NULL;
-
-  buf_size = length_EncAPRepPart(&body);
-  buf = malloc (buf_size);
-  if (buf == NULL) {
-      free_EncAPRepPart (&body);
-      krb5_set_error_string (context, "malloc: out of memory");
-      return ENOMEM;
-  }
-
-  ret = krb5_encode_EncAPRepPart (context, 
-				  buf + buf_size - 1,
-				  buf_size,
-				  &body, 
-				  &len);
-
-  free_EncAPRepPart (&body);
-  ret = krb5_crypto_init(context, auth_context->keyblock, 
-			 0 /* ap.enc_part.etype */, &crypto);
-  if (ret) {
-      free (buf);
-      return ret;
-  }
-  ret = krb5_encrypt (context,
-		      crypto,
-		      KRB5_KU_AP_REQ_ENC_PART,
-		      buf + buf_size - len, 
-		      len,
-		      &ap.enc_part.cipher);
-  krb5_crypto_destroy(context, crypto);
-  if (ret) {
-      free(buf);
-      return ret;
-  }
-
-  buf_size = length_AP_REP(&ap);
-  buf = realloc(buf, buf_size);
-  if(buf == NULL) {
-      free_AP_REP (&ap);
-      krb5_set_error_string (context, "malloc: out of memory");
-      return ENOMEM;
-  }
-  ret = encode_AP_REP (buf + buf_size - 1, buf_size, &ap, &len);
-  
-  free_AP_REP (&ap);
-
-  if(len != buf_size)
-      krb5_abortx(context, "krb5_mk_rep: encoded length != calculated length");
-  outbuf->data = buf;
-  outbuf->length = len;
-  return 0;
+    ASN1_MALLOC_ENCODE(AP_REP, outbuf->data, outbuf->length, &ap, &len, ret);
+    free_AP_REP (&ap);
+    return ret;
 }

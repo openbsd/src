@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997, 2003 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,7 +33,7 @@
 
 #include "gssapi_locl.h"
 
-RCSID("$KTH: inquire_cred.c,v 1.2 1999/12/02 17:05:04 joda Exp $");
+RCSID("$KTH: inquire_cred.c,v 1.4 2003/03/16 17:42:14 lha Exp $");
 
 OM_uint32 gss_inquire_cred
            (OM_uint32 * minor_status,
@@ -46,15 +46,34 @@ OM_uint32 gss_inquire_cred
 {
     OM_uint32 ret;
 
+    *minor_status = 0;
+
+    if (name)
+	*name = NULL;
+    if (mechanisms)
+	*mechanisms = GSS_C_NO_OID_SET;
+
     if (cred_handle == GSS_C_NO_CREDENTIAL) {
         return GSS_S_FAILURE;
     }
 
     if (name != NULL) {
-        ret = gss_duplicate_name(minor_status, cred_handle->principal, name);
-        if (ret) {
+	if (cred_handle->principal != NULL) {
+            ret = gss_duplicate_name(minor_status, cred_handle->principal,
+		name);
+            if (ret)
         	return ret;
-        }
+	} else if (cred_handle->usage == GSS_C_ACCEPT) {
+	    *minor_status = krb5_sname_to_principal(gssapi_krb5_context, NULL,
+		NULL, KRB5_NT_SRV_HST, name);
+	    if (*minor_status)
+		return GSS_S_FAILURE;
+	} else {
+	    *minor_status = krb5_get_default_principal(gssapi_krb5_context,
+		name);
+	    if (*minor_status)
+		return GSS_S_FAILURE;
+	}
     }
     if (lifetime != NULL) {
         *lifetime = cred_handle->lifetime;

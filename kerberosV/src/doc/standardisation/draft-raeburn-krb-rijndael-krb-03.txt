@@ -1,0 +1,674 @@
+
+
+
+
+
+
+
+
+
+Kerberos Working Group                                        K. Raeburn
+Document: draft-raeburn-krb-rijndael-krb-03.txt                      MIT
+                                                       February 24, 2003
+                                                 expires August 24, 2003
+
+                     AES Encryption for Kerberos 5
+
+Abstract
+
+   Recently the US National Institute of Standards and Technology chose
+   a new Advanced Encryption Standard [AES], which is significantly
+   faster and (it is believed) more secure than the old DES algorithm.
+   This document is a specification for the addition of this algorithm
+   to the Kerberos cryptosystem suite [KCRYPTO].
+
+   Comments should be sent to the author, or to the IETF Kerberos
+   working group (ietf-krb-wg@anl.gov).
+
+Status of this Memo
+
+   This document is an Internet-Draft and is in full conformance with
+   all provisions of Section 10 of RFC2026 [RFC2026]. Internet-Drafts
+   are working documents of the Internet Engineering Task Force (IETF),
+   its areas, and its working groups. Note that other groups may also
+   distribute working documents as Internet-Drafts. Internet-Drafts are
+   draft documents valid for a maximum of six months and may be updated,
+   replaced, or obsoleted by other documents at any time. It is
+   inappropriate to use Internet-Drafts as reference material or to cite
+   them other than as "work in progress."
+
+   The list of current Internet-Drafts can be accessed at
+   http://www.ietf.org/ietf/1id-abstracts.txt
+
+   The list of Internet-Draft Shadow Directories can be accessed at
+   http://www.ietf.org/shadow.html.
+
+1. Introduction
+
+   This document defines encryption key and checksum types for Kerberos
+   5 using the AES algorithm recently chosen by NIST.  These new types
+   support 128-bit block encryption, and key sizes of 128 or 256 bits.
+
+   Using the "simplified profile" of [KCRYPTO], we can define a pair of
+   encryption and checksum schemes.  AES is used with cipher text
+   stealing to avoid message expansion, and SHA-1 [SHA1] is the
+
+
+
+Raeburn                                                         [Page 1]
+
+INTERNET DRAFT                                             February 2003
+
+
+   associated checksum function.
+
+2. Conventions Used in this Document
+
+   The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
+   "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this
+   document are to be interpreted as described in RFC 2119.
+
+3. Protocol Key Representation
+
+   The profile in [KCRYPTO] treats keys and random octet strings as
+   conceptually different.  But since the AES key space is dense, we can
+   use any bit string of appropriate length as a key.  We use the byte
+   representation for the key described in [AES], where the first bit of
+   the bit string is the high bit of the first byte of the byte string
+   (octet string) representation.
+
+4. Key Generation From Pass Phrases or Random Data
+
+   Given the above format for keys, we can generate keys from the
+   appropriate amounts of random data (128 or 256 bits) by simply
+   copying the input string.
+
+   To generate an encryption key from a pass phrase and salt string, we
+   use the PBKDF2 function from PKCS #5 v2.0 ([PKCS5]), with parameters
+   indicated below, to generate an intermediate key (of the same length
+   as the desired final key), which is then passed into the DK function
+   with the 8-octet ASCII string "kerberos" as is done for des3-cbc-
+   hmac-sha1-kd in [KCRYPTO].  (In [KCRYPTO] terms, the PBKDF2 function
+   produces a "random octet string", hence the application of the
+   random-to-key function even though it's effectively a simple identity
+   operation.)  The resulting key is the user's long-term key for use
+   with the encryption algorithm in question.
+
+    tkey = random2key(PBKDF2(passphrase, salt, iter_count, keylength))
+    key = DK(tkey, "kerberos")
+
+   The pseudorandom function used by PBKDF2 will be a SHA-1 HMAC of the
+   passphrase and salt, as described in Appendix B.1 to PKCS#5.
+
+   The number of iterations is specified by the string-to-key parameters
+   supplied.  The parameter string is four octets indicating an unsigned
+   number in big-endian order.  This is the number of iterations to be
+   performed.  If the value is 00 00 00 00, the number of iterations to
+   be performed is 4294967296 (2**32).  (Thus the minimum expressable
+   iteration count is 1.)
+
+   For environments where slower hardware is the norm, implementations
+
+
+
+Raeburn                                                         [Page 2]
+
+INTERNET DRAFT                                             February 2003
+
+
+   may wish to limit the number of iterations to prevent a spoofed
+   response from consuming lots of client-side CPU time; it is
+   recommended that this bound be no less than 50000.  Even for
+   environments with fast hardware, 4 billion iterations is likely to
+   take a fairly long time; much larger bounds might still be enforced,
+   and it might be wise for implementations to permit interruption of
+   this operation by the user if the environment allows for it.
+
+   If the string-to-key parameters are not supplied, the default value
+   to be used is 00 00 b0 00 (decimal 45056, indicating 45056
+   iterations, which takes slightly under 1 second on a 300MHz Pentium
+   II in tests run by the author).
+
+   Sample test vectors are given in the appendix.
+
+5. Cipher Text Stealing
+
+   Cipher block chaining is used to encrypt messages.  Unlike previous
+   Kerberos cryptosystems, we use cipher text stealing to handle the
+   possibly partial final block of the message.
+
+   Cipher text stealing is described on pages 195-196 of [AC], and
+   section 8 of [RC5]; it has the advantage that no message expansion is
+   done during encryption of messages of arbitrary sizes as is typically
+   done in CBC mode with padding.
+
+   Cipher text stealing, as defined in [RC5], assumes that more than one
+   block of plain text is available.  If exactly one block is to be
+   encrypted, that block is simply encrypted with AES (also known as ECB
+   mode).  Input of less than one block is padded at the end to one
+   block; the values of the padding bits are unspecified.
+   (Implementations may use all-zero padding, but protocols should not
+   rely on the result being deterministic.  Implementations may use
+   random padding, but protocols should not rely on the result not being
+   deterministic.  Note that in most cases, the Kerberos encryption
+   profile will add a random confounder independent of this padding.)
+
+   For consistency, cipher text stealing is always used for the last two
+   blocks of the data to be encrypted, as in [RC5].  If the data length
+   is a multiple of the block size, this is equivalent to plain CBC mode
+   with the last two cipher text blocks swapped.
+
+   A test vector is given in the appendix.
+
+
+
+
+
+
+
+
+Raeburn                                                         [Page 3]
+
+INTERNET DRAFT                                             February 2003
+
+
+6. Kerberos Algorithm Profile Parameters
+
+   This is a summary of the parameters to be used with the simplified
+   algorithm profile described in [KCRYPTO]:
+
+   +--------------------------------------------------------------------+
+   |               protocol key format       128- or 256-bit string     |
+   |                                                                    |
+   |            string-to-key function       PBKDF2+DK with variable    |
+   |                                         iteration count (see       |
+   |                                         above)                     |
+   |                                                                    |
+   |  default string-to-key parameters       00 00 b0 00                |
+   |                                                                    |
+   |        key-generation seed length       key size                   |
+   |                                                                    |
+   |            random-to-key function       identity function          |
+   |                                                                    |
+   |                  hash function, H       SHA-1                      |
+   |                                                                    |
+   |               HMAC output size, h       12 octets (96 bits)        |
+   |                                                                    |
+   |             message block size, m       1 octet                    |
+   |                                                                    |
+   |  encryption/decryption functions,       AES in CBC-CTS mode with   |
+   |  E and D                                zero ivec (cipher block    |
+   |                                         size 16 octets)            |
+   +--------------------------------------------------------------------+
+
+   Using this profile with each key size gives us two each of encryption
+   and checksum algorithm definitions.
+
+7. Assigned Numbers
+
+   The following encryption type numbers are assigned:
+
+   +--------------------------------------------------------------------+
+   |                         encryption types                           |
+   +--------------------------------------------------------------------+
+   |         type name                  etype value          key size   |
+   +--------------------------------------------------------------------+
+   |   aes128-cts-hmac-sha1-96              17                 128      |
+   |   aes256-cts-hmac-sha1-96              18                 256      |
+   +--------------------------------------------------------------------+
+
+   The following checksum type numbers are assigned:
+
+
+
+
+
+Raeburn                                                         [Page 4]
+
+INTERNET DRAFT                                             February 2003
+
+
+   +--------------------------------------------------------------------+
+   |                          checksum types                            |
+   +--------------------------------------------------------------------+
+   |        type name                 sumtype value           length    |
+   +--------------------------------------------------------------------+
+   |    hmac-sha1-96-aes128                15                   96      |
+   |    hmac-sha1-96-aes256                16                   96      |
+   +--------------------------------------------------------------------+
+
+   These checksum types will be used with the corresponding encryption
+   types defined above.
+
+8. Security Considerations
+
+   This new algorithm has not been around long enough to receive the
+   decades of intense analysis that DES has received.  It is possible
+   that some weakness exists that has not been found by the
+   cryptographers analyzing these algorithms before and during the AES
+   selection process.
+
+   The use of the HMAC function has drawbacks for certain pass phrase
+   lengths.  For example, a pass phrase longer than the hash function
+   block size (64 bytes, for SHA-1) is hashed to a smaller size (20
+   bytes) before applying the main HMAC algorithm.  However, entropy is
+   generally sparse in pass phrases, especially in long ones, so this
+   may not be a problem in the rare cases of users with long pass
+   phrases.
+
+   Also, generating a 256-bit key from a pass phrase of any length may
+   be deceptive, since the effective entropy in pass-phrase-derived key
+   cannot be nearly that large.
+
+   The iteration count in PBKDF2 appears to be useful primarily as a
+   constant multiplier for the amount of work required for an attacker
+   using brute-force methods.  Unfortunately, it also multiplies, by the
+   same amount, the work needed by a legitimate user with a valid
+   password.  Thus the work factor imposed on an attacker (who may have
+   many powerful workstations at his disposal) must be balanced against
+   the work factor imposed on the legitimate user (who may have a PDA or
+   cell phone); the available computing power on either side increases
+   as time goes on, as well.  A better way to deal with the brute-force
+   attack is through preauthentication mechanisms that provide better
+   protection of, the user's long-term key.  Use of such mechanisms is
+   out of scope for this document.
+
+   If the PBKDF2 iteration count can be spoofed by an intruder on the
+   network, and the limit on the accepted iteration count is very high,
+   the intruder may be able to introduce a form of denial of service
+
+
+
+Raeburn                                                         [Page 5]
+
+INTERNET DRAFT                                             February 2003
+
+
+   attack against the client by sending a very high iteration count,
+   causing the client to spend a great deal of CPU time computing an
+   incorrect key.
+
+   Any benefit against other attacks specific to the HMAC or SHA-1
+   algorithms is probably achieved with a fairly small number of
+   iterations.
+
+   Cipher text stealing mode, since it requires no additional padding in
+   most cases, will reveal the exact length of each message being
+   encrypted, rather than merely bounding it to a small range of
+   possible lengths as in CBC mode.  Such obfuscation should not be
+   relied upon at higher levels in any case; if the length must be
+   obscured from an outside observer, it should be done by intentionally
+   varying the length of the message to be encrypted.
+
+   The author is not a cryptographer.  Caveat emptor.
+
+9. IANA Considerations
+
+   None.
+
+10. Acknowledgements
+
+   Thanks to John Brezak, Gerardo Diaz Cuellar and Marcus Watts for
+   feedback on earlier versions of this document.
+
+11. Normative References
+
+   [AC] Schneier, B., "Applied Cryptography", second edition, John Wiley
+   and Sons, New York, 1996.
+
+   [AES] National Institute of Standards and Technology, U.S. Department
+   of Commerce, "Advanced Encryption Standard", Federal Information
+   Processing Standards Publication 197, Washington, DC, November 2001.
+
+   [KCRYPTO] Raeburn, K., "Encryption and Checksum Specifications for
+   Kerberos 5", draft-ietf-krb-wg-crypto-01.txt, May, 2002.  Work in
+   progress.
+
+   [PKCS5] Kaliski, B., "PKCS #5: Password-Based Cryptography
+   Specification Version 2.0", RFC 2898, September 2000.
+
+   [RC5] Baldwin, R, and R. Rivest, "The RC5, RC5-CBC, RC5-CBC-Pad, and
+   RC5-CTS Algorithms", RFC 2040, October 1996.
+
+   [RFC2026] Bradner, S., "The Internet Standards Process -- Revision
+   3", RFC 2026, October 1996.
+
+
+
+Raeburn                                                         [Page 6]
+
+INTERNET DRAFT                                             February 2003
+
+
+   [SHA1] National Institute of Standards and Technology, U.S.
+   Department of Commerce, "Secure Hash Standard", Federal Information
+   Processing Standards Publication 180-1, Washington, DC, April 1995.
+
+12. Informative References
+
+   [PECMS] Gutmann, P., "Password-based Encryption for CMS", RFC 3211,
+   December 2001.
+
+13. Author's Address
+
+   Kenneth Raeburn
+   Massachusetts Institute of Technology
+   77 Massachusetts Avenue
+   Cambridge, MA 02139
+   raeburn@mit.edu
+
+14. Full Copyright Statement
+
+   Copyright (C) The Internet Society (2003).  All Rights Reserved.
+
+   This document and translations of it may be copied and furnished to
+   others, and derivative works that comment on or otherwise explain it
+   or assist in its implementation may be prepared, copied, published
+   and distributed, in whole or in part, without restriction of any
+   kind, provided that the above copyright notice and this paragraph are
+   included on all such copies and derivative works.  However, this
+   document itself may not be modified in any way, such as by removing
+   the copyright notice or references to the Internet Society or other
+   Internet organizations, except as needed for the purpose of
+   developing Internet standards in which case the procedures for
+   copyrights defined in the Internet Standards process must be
+   followed, or as required to translate it into languages other than
+   English.
+
+   The limited permissions granted above are perpetual and will not be
+   revoked by the Internet Society or its successors or assigns.
+
+   This document and the information contained herein is provided on an
+   "AS IS" basis and THE INTERNET SOCIETY AND THE INTERNET ENGINEERING
+   TASK FORCE DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING
+   BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION
+   HEREIN WILL NOT INFRINGE ANY RIGHTS OR ANY IMPLIED WARRANTIES OF
+   MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE."
+
+A. Sample test vectors
+
+   Sample values for the string-to-key function are included below.
+
+
+
+Raeburn                                                         [Page 7]
+
+INTERNET DRAFT                                             February 2003
+
+
+   Iteration count = 1
+   Pass phrase = "password"
+   Salt = "ATHENA.MIT.EDUraeburn"
+   128-bit PBKDF2 output:
+       cd ed b5 28 1b b2 f8 01 56 5a 11 22 b2 56 35 15
+   128-bit AES key:
+       42 26 3c 6e 89 f4 fc 28 b8 df 68 ee 09 79 9f 15
+   256-bit PBKDF2 output:
+       cd ed b5 28 1b b2 f8 01 56 5a 11 22 b2 56 35 15
+       0a d1 f7 a0 4b b9 f3 a3 33 ec c0 e2 e1 f7 08 37
+   256-bit AES key:
+       fe 69 7b 52 bc 0d 3c e1 44 32 ba 03 6a 92 e6 5b
+       bb 52 28 09 90 a2 fa 27 88 39 98 d7 2a f3 01 61
+
+   Iteration count = 2
+   Pass phrase = "password"
+   Salt="ATHENA.MIT.EDUraeburn"
+   128-bit PBKDF2 output:
+       01 db ee 7f 4a 9e 24 3e 98 8b 62 c7 3c da 93 5d
+   128-bit AES key:
+       c6 51 bf 29 e2 30 0a c2 7f a4 69 d6 93 bd da 13
+   256-bit PBKDF2 output:
+       01 db ee 7f 4a 9e 24 3e 98 8b 62 c7 3c da 93 5d
+       a0 53 78 b9 32 44 ec 8f 48 a9 9e 61 ad 79 9d 86
+   256-bit AES key:
+       a2 e1 6d 16 b3 60 69 c1 35 d5 e9 d2 e2 5f 89 61
+       02 68 56 18 b9 59 14 b4 67 c6 76 22 22 58 24 ff
+
+   Iteration count = 1200
+   Pass phrase = "password"
+   Salt = "ATHENA.MIT.EDUraeburn"
+   128-bit PBKDF2 output:
+       5c 08 eb 61 fd f7 1e 4e 4e c3 cf 6b a1 f5 51 2b
+   128-bit AES key:
+       4c 01 cd 46 d6 32 d0 1e 6d be 23 0a 01 ed 64 2a
+   256-bit PBKDF2 output:
+       5c 08 eb 61 fd f7 1e 4e 4e c3 cf 6b a1 f5 51 2b
+       a7 e5 2d db c5 e5 14 2f 70 8a 31 e2 e6 2b 1e 13
+   256-bit AES key:
+       55 a6 ac 74 0a d1 7b 48 46 94 10 51 e1 e8 b0 a7
+       54 8d 93 b0 ab 30 a8 bc 3f f1 62 80 38 2b 8c 2a
+
+
+
+
+
+
+
+
+
+
+Raeburn                                                         [Page 8]
+
+INTERNET DRAFT                                             February 2003
+
+
+   Iteration count = 5
+   Pass phrase = "password"
+   Salt=0x1234567878563412
+   128-bit PBKDF2 output:
+       d1 da a7 86 15 f2 87 e6 a1 c8 b1 20 d7 06 2a 49
+   128-bit AES key:
+       e9 b2 3d 52 27 37 47 dd 5c 35 cb 55 be 61 9d 8e
+   256-bit PBKDF2 output:
+       d1 da a7 86 15 f2 87 e6 a1 c8 b1 20 d7 06 2a 49
+       3f 98 d2 03 e6 be 49 a6 ad f4 fa 57 4b 6e 64 ee
+   256-bit AES key:
+       97 a4 e7 86 be 20 d8 1a 38 2d 5e bc 96 d5 90 9c
+       ab cd ad c8 7c a4 8f 57 45 04 15 9f 16 c3 6e 31
+   (This test is based on values given in [PECMS].)
+
+   Iteration count = 1200
+   Pass phrase = (64 characters)
+     "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+   Salt="pass phrase equals block size"
+   128-bit PBKDF2 output:
+       13 9c 30 c0 96 6b c3 2b a5 5f db f2 12 53 0a c9
+   128-bit AES key:
+       59 d1 bb 78 9a 82 8b 1a a5 4e f9 c2 88 3f 69 ed
+   256-bit PBKDF2 output:
+       13 9c 30 c0 96 6b c3 2b a5 5f db f2 12 53 0a c9
+       c5 ec 59 f1 a4 52 f5 cc 9a d9 40 fe a0 59 8e d1
+   256-bit AES key:
+       89 ad ee 36 08 db 8b c7 1f 1b fb fe 45 94 86 b0
+       56 18 b7 0c ba e2 20 92 53 4e 56 c5 53 ba 4b 34
+
+   Iteration count = 1200
+   Pass phrase = (65 characters)
+     "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+   Salt = "pass phrase exceeds block size"
+   128-bit PBKDF2 output:
+       9c ca d6 d4 68 77 0c d5 1b 10 e6 a6 87 21 be 61
+   128-bit AES key:
+       cb 80 05 dc 5f 90 17 9a 7f 02 10 4c 00 18 75 1d
+   256-bit PBKDF2 output:
+       9c ca d6 d4 68 77 0c d5 1b 10 e6 a6 87 21 be 61
+       1a 8b 4d 28 26 01 db 3b 36 be 92 46 91 5e c8 2a
+   256-bit AES key:
+       d7 8c 5c 9c b8 72 a8 c9 da d4 69 7f 0b b5 b2 d2
+       14 96 c8 2b eb 2c ae da 21 12 fc ee a0 57 40 1b
+
+
+
+
+
+
+
+Raeburn                                                         [Page 9]
+
+INTERNET DRAFT                                             February 2003
+
+
+   Iteration count = 50
+   Pass phrase = g-clef (0xf09d849e)
+   Salt = "EXAMPLE.COMpianist"
+   128-bit PBKDF2 output:
+       6b 9c f2 6d 45 45 5a 43 a5 b8 bb 27 6a 40 3b 39
+   128-bit AES key:
+       f1 49 c1 f2 e1 54 a7 34 52 d4 3e 7f e6 2a 56 e5
+   256-bit PBKDF2 output:
+       6b 9c f2 6d 45 45 5a 43 a5 b8 bb 27 6a 40 3b 39
+       e7 fe 37 a0 c4 1e 02 c2 81 ff 30 69 e1 e9 4f 52
+   256-bit AES key:
+       4b 6d 98 39 f8 44 06 df 1f 09 cc 16 6d b4 b8 3c
+       57 18 48 b7 84 a3 d6 bd c3 46 58 9a 3e 39 3f 9e
+
+   Some test vectors for CBC with cipher text stealing, using an initial
+   vector of all-zero.
+
+   AES 128-bit key:
+       63 68 69 63 6b 65 6e 20 74 65 72 69 79 61 6b 69
+
+   Input:
+       49 20 77 6f 75 6c 64 20 6c 69 6b 65 20 74 68 65
+       20
+   Output:
+       c6 35 35 68 f2 bf 8c b4 d8 a5 80 36 2d a7 ff 7f
+       97
+
+   Input:
+       49 20 77 6f 75 6c 64 20 6c 69 6b 65 20 74 68 65
+       20 47 65 6e 65 72 61 6c 20 47 61 75 27 73 20
+   Output:
+       fc 00 78 3e 0e fd b2 c1 d4 45 d4 c8 ef f7 ed 22
+       97 68 72 68 d6 ec cc c0 c0 7b 25 e2 5e cf e5
+
+   Input:
+       49 20 77 6f 75 6c 64 20 6c 69 6b 65 20 74 68 65
+       20 47 65 6e 65 72 61 6c 20 47 61 75 27 73 20 43
+   Output:
+       39 31 25 23 a7 86 62 d5 be 7f cb cc 98 eb f5 a8
+       97 68 72 68 d6 ec cc c0 c0 7b 25 e2 5e cf e5 84
+
+
+
+
+
+
+
+
+
+
+
+Raeburn                                                        [Page 10]
+
+INTERNET DRAFT                                             February 2003
+
+
+   Input:
+       49 20 77 6f 75 6c 64 20 6c 69 6b 65 20 74 68 65
+       20 47 65 6e 65 72 61 6c 20 47 61 75 27 73 20 43
+       68 69 63 6b 65 6e 2c 20 70 6c 65 61 73 65 2c
+   Output:
+       97 68 72 68 d6 ec cc c0 c0 7b 25 e2 5e cf e5 84
+       b3 ff fd 94 0c 16 a1 8c 1b 55 49 d2 f8 38 02 9e
+       39 31 25 23 a7 86 62 d5 be 7f cb cc 98 eb f5
+
+   Input:
+       49 20 77 6f 75 6c 64 20 6c 69 6b 65 20 74 68 65
+       20 47 65 6e 65 72 61 6c 20 47 61 75 27 73 20 43
+       68 69 63 6b 65 6e 2c 20 70 6c 65 61 73 65 2c 20
+   Output:
+       97 68 72 68 d6 ec cc c0 c0 7b 25 e2 5e cf e5 84
+       9d ad 8b bb 96 c4 cd c0 3b c1 03 e1 a1 94 bb d8
+       39 31 25 23 a7 86 62 d5 be 7f cb cc 98 eb f5 a8
+
+   Input:
+       49 20 77 6f 75 6c 64 20 6c 69 6b 65 20 74 68 65
+       20 47 65 6e 65 72 61 6c 20 47 61 75 27 73 20 43
+       68 69 63 6b 65 6e 2c 20 70 6c 65 61 73 65 2c 20
+       61 6e 64 20 77 6f 6e 74 6f 6e 20 73 6f 75 70 2e
+   Output:
+       97 68 72 68 d6 ec cc c0 c0 7b 25 e2 5e cf e5 84
+       39 31 25 23 a7 86 62 d5 be 7f cb cc 98 eb f5 a8
+       48 07 ef e8 36 ee 89 a5 26 73 0d bc 2f 7b c8 40
+       9d ad 8b bb 96 c4 cd c0 3b c1 03 e1 a1 94 bb d8
+
+Document History (delete before RFC publication)
+
+   Major changes from -02 to -03:
+
+   Describe encryption of data of one block or less.
+
+   Fix default string-to-key parameters in table to agree with text.
+
+   Remove Recommendations section; the Kerberos RFC will cover
+   recommendations and requirements.
+
+   Restore change history, added notes to RFC editor saying to remove
+   it, and update the [KCRYPTO] entry in Normative References.
+
+   Delete confounder size, since it's gone from the simplified profile
+   in crypto-03.
+
+   Change checksum numbers, since Assar Westerlund says 10 is in use.
+
+
+
+
+Raeburn                                                        [Page 11]
+
+INTERNET DRAFT                                             February 2003
+
+
+   Add Security Consideration about denial of service caused by very
+   high spoofed iteration count.
+
+   Major changes from -01 to -02:
+
+   Add test vectors.
+
+   Drop 192/384-bit variants.  Prevailing opinion seems to be that
+   128-bit keys are good for speed, and 256-bit for paranoia, and no one
+   cares about the intermediate sizes.
+
+   Update for new string-to-key params per new Kerberos crypto draft and
+   discussions during the IETF conferences at Salt Lake City, December,
+   2001, and Minneapolis, March, 2002.
+
+   Drop Serpent and Twofish; Rijndael is the only one people care about.
+   Use "AES" in preference to "Rijndael".
+
+   Use cipher text stealing mode intead of plain CBC, and add -cts to
+   the algorithm names.
+
+   Drop SHA-2, stick with SHA-1.  New test cases to exercise boundary
+   conditions in HMAC used in string-to-key.
+
+   Split References into Normative/Informative.
+
+   Major changes from -00:
+
+   Define different types based on key/hash sizes, with hash size always
+   twice key size.  Use simplified profile of revised section 6 of
+   RFC1510bis.  Drop "-kd" from the names.
+
+   Use PKCS#5 instead of simple hash.  Changed string-to-key vector to
+   use some "Appendix Z" cases also submitted for kerberos-revisions.
+
+Notes to RFC Editor
+
+   Assuming this document goes through Last Call along with the Kerberos
+   crypto framework draft, the reference entry for [KCRYPTO] will list
+   the draft name, not the RFC number.  This should be replaced with the
+   RFC info.
+
+   The "Document History" section should be deleted, as should this one.
+
+
+
+
+
+
+
+
+Raeburn                                                        [Page 12]

@@ -1,12 +1,12 @@
-# $KTH: roken.awk,v 1.7 2001/03/26 09:26:35 joda Exp $
+# $KTH: roken.awk,v 1.9 2003/03/04 10:37:26 lha Exp $
 
 BEGIN {
-	print "#include <stdio.h>"
 	print "#ifdef HAVE_CONFIG_H"
 	print "#include <config.h>"
 	print "#endif"
+	print "#include <stdio.h>"
 	print ""
-	print "int main()"
+	print "int main(int argc, char **argv)"
 	print "{"
 	    print "puts(\"/* This is an OS dependent, generated file */\");"
 	print "puts(\"\\n\");"

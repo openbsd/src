@@ -1,5 +1,35 @@
-.\" Copyright (c) 1997 Kungliga Tekniska Högskolan
-.\" $KTH: krb5_openlog.3,v 1.5 2001/01/26 22:43:22 assar Exp $
+.\" Copyright (c) 1997, 1999, 2001 - 2002 Kungliga Tekniska Högskolan
+.\" (Royal Institute of Technology, Stockholm, Sweden). 
+.\" All rights reserved. 
+.\"
+.\" Redistribution and use in source and binary forms, with or without 
+.\" modification, are permitted provided that the following conditions 
+.\" are met: 
+.\"
+.\" 1. Redistributions of source code must retain the above copyright 
+.\"    notice, this list of conditions and the following disclaimer. 
+.\"
+.\" 2. Redistributions in binary form must reproduce the above copyright 
+.\"    notice, this list of conditions and the following disclaimer in the 
+.\"    documentation and/or other materials provided with the distribution. 
+.\"
+.\" 3. Neither the name of the Institute nor the names of its contributors 
+.\"    may be used to endorse or promote products derived from this software 
+.\"    without specific prior written permission. 
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE INSTITUTE AND CONTRIBUTORS ``AS IS'' AND 
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE INSTITUTE OR CONTRIBUTORS BE LIABLE 
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL 
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS 
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) 
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT 
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY 
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
+.\" SUCH DAMAGE. 
+.\" 
+.\" $KTH: krb5_openlog.3,v 1.9 2003/04/16 13:58:12 lha Exp $
 .Dd August 6, 1997
 .Dt KRB5_OPENLOG 3
 .Os HEIMDAL
@@ -12,14 +42,16 @@
 .Nm krb5_log ,
 .Nm krb5_vlog ,
 .Nm krb5_log_msg ,
-.Nm krb5_vlog_msg 
+.Nm krb5_vlog_msg
 .Nd Heimdal logging functions
+.Sh LIBRARY
+Kerberos 5 Library (libkrb5, -lkrb5)
 .Sh SYNOPSIS
-.Fd #include <krb5.h>
+.In krb5.h
 .Ft "typedef void"
-.Fn "\*(lp*krb5_log_log_func_t\*(rp" "const char *time" "const char *message" "void *data" 
+.Fn "\*(lp*krb5_log_log_func_t\*(rp" "const char *time" "const char *message" "void *data"
 .Ft "typedef void"
-.Fn "\*(lp*krb5_log_close_func_t\*(rp" "void *data" 
+.Fn "\*(lp*krb5_log_close_func_t\*(rp" "void *data"
 .Ft krb5_error_code
 .Fn krb5_addlog_dest "krb5_context context" "krb5_log_facility *facility" "const char *destination"
 .Ft krb5_error_code
@@ -43,7 +75,7 @@ These functions logs messages to one or more destinations.
 .Pp
 The
 .Fn krb5_openlog
-function creates a logging 
+function creates a logging
 .Fa facility ,
 that is used to log messages. A facility consists of one or more
 destinations (which can be files or syslog or some other device). The
@@ -59,7 +91,7 @@ configuration file.  If no entry is found for
 the entry for
 .Li default
 is used, or if that is missing too,
-.Li SYSLOG 
+.Li SYSLOG
 will be used as destination.
 .Pp
 To close a logging facility, use the
@@ -72,7 +104,7 @@ To log a message to a facility use one of the functions
 .Fn krb5_vlog ,
 or
 .Fn krb5_vlog_msg .
-The functions ending in 
+The functions ending in
 .Li _msg
 return in
 .Fa reply
@@ -81,45 +113,45 @@ and should be freed with
 .Fn free .
 The
 .Fa format
-is a standard 
+is a standard
 .Fn printf
 style format string (but see the BUGS section).
 .Pp
-If you want better control of where things gets logged, you can instead of using 
+If you want better control of where things gets logged, you can instead of using
 .Fn krb5_openlog
-call 
+call
 .Fn krb5_initlog ,
 which just initializes a facility, but doesn't define any actual logging
 destinations. You can then add destinations with the
 .Fn krb5_addlog_dest
 and
-.Fn krb5_addlog_func 
+.Fn krb5_addlog_func
 functions.  The first of these takes a string specifying a logging
 destination, and adds this to the facility. If you want to do some
 non-standard logging you can use the
 .Fn krb5_addlog_func
 function, which takes a function to use when logging.
-The 
+The
 .Fa log
 function is called for each message with
 .Fa time
 being a string specifying the current time, and
 .Fa message
-the message to log. 
+the message to log.
 .Fa close
-is called when the facility is closed. You can pass application specific data in the 
-.Fa data 
+is called when the facility is closed. You can pass application specific data in the
+.Fa data
 parameter. The
 .Fa min
-and 
+and
 .Fa max
 parameter are the same as in a destination (defined below). To specify a
 max of infinity, pass -1.
 .Pp
 .Fn krb5_openlog
-calls 
+calls
 .Fn krb5_initlog
-and then calls 
+and then calls
 .Fn krb5_addlog_dest
 for each destination found.
 .Ss Destinations
@@ -148,9 +180,9 @@ get the name for one of these, you take the name of the macro passed
 to
 .Xr syslog 3 ,
 and remove the leading
-.Li LOG_ 
+.Li LOG_
 .No ( Li LOG_NOTICE
-becomes 
+becomes
 .Li NOTICE ) .
 The default values (as well as the values used for unrecognised
 values), are
@@ -182,8 +214,8 @@ specified value. If no range is specified, all messages gets logged.
 	default = STDERR
 .Ed
 .Pp
-This will log all messages from the 
-.Nm kdc 
+This will log all messages from the
+.Nm kdc
 program with level 0 to
 .Pa /var/log/kdc.log ,
 other messages will be logged to syslog with priority

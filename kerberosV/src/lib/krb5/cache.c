@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997-2001 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997-2003 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,7 +33,7 @@
 
 #include "krb5_locl.h"
 
-RCSID("$KTH: cache.c,v 1.47 2001/05/14 06:14:45 assar Exp $");
+RCSID("$KTH: cache.c,v 1.52 2003/03/16 18:23:59 lha Exp $");
 
 /*
  * Add a new ccache type with operations `ops', overwriting any
@@ -46,25 +46,18 @@ krb5_cc_register(krb5_context context,
 		 const krb5_cc_ops *ops, 
 		 krb5_boolean override)
 {
-    char *prefix_copy;
     int i;
 
     for(i = 0; i < context->num_cc_ops && context->cc_ops[i].prefix; i++) {
 	if(strcmp(context->cc_ops[i].prefix, ops->prefix) == 0) {
-	    if(override)
-		free(context->cc_ops[i].prefix);
-	    else {
+	    if(!override) {
 		krb5_set_error_string(context,
 				      "ccache type %s already exists",
 				      ops->prefix);
 		return KRB5_CC_TYPE_EXISTS;
 	    }
+	    break;
 	}
-    }
-    prefix_copy = strdup(ops->prefix);
-    if (prefix_copy == NULL) {
-	krb5_set_error_string(context, "malloc: out of memory");
-	return KRB5_CC_NOMEM;
     }
     if(i == context->num_cc_ops) {
 	krb5_cc_ops *o = realloc(context->cc_ops,
@@ -72,7 +65,6 @@ krb5_cc_register(krb5_context context,
 				 sizeof(*context->cc_ops));
 	if(o == NULL) {
 	    krb5_set_error_string(context, "malloc: out of memory");
-	    free(prefix_copy);
 	    return KRB5_CC_NOMEM;
 	}
 	context->num_cc_ops++;
@@ -81,7 +73,6 @@ krb5_cc_register(krb5_context context,
 	       (context->num_cc_ops - i) * sizeof(*context->cc_ops));
     }
     memcpy(&context->cc_ops[i], ops, sizeof(context->cc_ops[i]));
-    context->cc_ops[i].prefix = prefix_copy;
     return 0;
 }
 
@@ -189,24 +180,57 @@ krb5_cc_get_type(krb5_context context,
 }
 
 /*
- * Return a pointer to a static string containing the default ccache name.
+ * Return krb5_cc_ops of a the ccache `id'.
+ */
+
+const krb5_cc_ops *
+krb5_cc_get_ops(krb5_context context, krb5_ccache id)
+{
+    return id->ops;
+}
+
+/*
+ * Set the default cc name for `context' to `name'.
+ */
+
+krb5_error_code
+krb5_cc_set_default_name(krb5_context context, const char *name)
+{
+    krb5_error_code ret = 0;
+    char *p;
+
+    if (name == NULL) {
+	char *e;
+	e = getenv("KRB5CCNAME");
+	if (e)
+	    p = strdup(e);
+	else
+	    asprintf(&p,"FILE:/tmp/krb5cc_%u", (unsigned)getuid());
+    } else
+	p = strdup(name);
+
+    if (p == NULL)
+	return ENOMEM;
+
+    if (context->default_cc_name)
+	free(context->default_cc_name);
+
+    context->default_cc_name = p;
+
+    return ret;
+}
+
+/*
+ * Return a pointer to a context static string containing the default ccache name.
  */
 
 const char*
 krb5_cc_default_name(krb5_context context)
 {
-    static char name[1024];
-    char *p;
+    if (context->default_cc_name == NULL)
+	krb5_cc_set_default_name(context, NULL);
 
-    p = getenv("KRB5CCNAME");
-    if(p)
-	strlcpy (name, p, sizeof(name));
-    else
-	snprintf(name,
-		 sizeof(name),
-		 "FILE:/tmp/krb5cc_%u",
-		 (unsigned)getuid());
-    return name;
+    return context->default_cc_name;
 }
 
 /*
@@ -218,9 +242,11 @@ krb5_error_code
 krb5_cc_default(krb5_context context,
 		krb5_ccache *id)
 {
-    return krb5_cc_resolve(context, 
-			   krb5_cc_default_name(context), 
-			   id);
+    const char *p = krb5_cc_default_name(context);
+
+    if (p == NULL)
+	return ENOMEM;
+    return krb5_cc_resolve(context, p, id);
 }
 
 /*

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,7 +33,7 @@
 
 #include "krb5_locl.h"
 
-RCSID("$KTH: auth_context.c,v 1.57 2001/06/17 23:12:34 assar Exp $");
+RCSID("$KTH: auth_context.c,v 1.59 2002/09/02 17:11:02 joda Exp $");
 
 krb5_error_code
 krb5_auth_con_init(krb5_context context,
@@ -153,7 +153,8 @@ krb5_auth_con_genaddrs(krb5_context context,
 				       strerror(ret));
 		goto out;
 	    }
-	    krb5_sockaddr2address (context, local, &local_k_address);
+	    ret = krb5_sockaddr2address (context, local, &local_k_address);
+	    if(ret) goto out;
 	    if(flags & KRB5_AUTH_CONTEXT_GENERATE_LOCAL_FULL_ADDR) {
 		krb5_sockaddr2port (context, local, &auth_context->local_port);
 	    } else
@@ -168,7 +169,8 @@ krb5_auth_con_genaddrs(krb5_context context,
 	    krb5_set_error_string (context, "getpeername: %s", strerror(ret));
 	    goto out;
 	}
-	krb5_sockaddr2address (context, remote, &remote_k_address);
+	ret = krb5_sockaddr2address (context, remote, &remote_k_address);
+	if(ret) goto out;
 	if(flags & KRB5_AUTH_CONTEXT_GENERATE_REMOTE_FULL_ADDR) {
 	    krb5_sockaddr2port (context, remote, &auth_context->remote_port);
 	} else
@@ -288,6 +290,24 @@ krb5_auth_con_setlocalsubkey(krb5_context context,
 	krb5_free_keyblock(context, auth_context->local_subkey);
     return copy_key(context, keyblock, &auth_context->local_subkey);
 }
+
+krb5_error_code
+krb5_auth_con_generatelocalsubkey(krb5_context context,
+				  krb5_auth_context auth_context,
+				  krb5_keyblock *key)
+{
+    krb5_error_code ret;
+    krb5_keyblock *subkey;
+
+    ret = krb5_generate_subkey (context, key, &subkey);
+    if(ret)
+	return ret;
+    if(auth_context->local_subkey)
+	krb5_free_keyblock(context, auth_context->local_subkey);
+    auth_context->local_subkey = subkey;
+    return 0;
+}
+
 
 krb5_error_code
 krb5_auth_con_setremotesubkey(krb5_context context,

@@ -1,3 +1,13 @@
+2002-08-22  Assar Westerlund  <assar@kth.se>
+
+	* testit.c: make it use getarg so that it can handle --help and
+	--version (and thus make check can pass)
+
+2001-09-13  Assar Westerlund  <assar@sics.se>
+
+	* editline.c: rename STATUS -> el_STATUS to avoid conflict with
+	STATUS in arpa/nameser.h
+
 2000-11-15  Assar Westerlund  <assar@sics.se>
 
 	* Makefile.am: make libeditline and libel_compat into libtool

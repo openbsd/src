@@ -1,5 +1,36 @@
 .\" Copyright (c) 2001 Kungliga Tekniska Högskolan
-.\" $KTH: krb5_krbhst_init.3,v 1.2 2001/06/21 14:35:21 assar Exp $
+.\" (Royal Institute of Technology, Stockholm, Sweden). 
+.\" All rights reserved. 
+.\"
+.\" Redistribution and use in source and binary forms, with or without 
+.\" modification, are permitted provided that the following conditions 
+.\" are met: 
+.\"
+.\" 1. Redistributions of source code must retain the above copyright 
+.\"    notice, this list of conditions and the following disclaimer. 
+.\"
+.\" 2. Redistributions in binary form must reproduce the above copyright 
+.\"    notice, this list of conditions and the following disclaimer in the 
+.\"    documentation and/or other materials provided with the distribution. 
+.\"
+.\" 3. Neither the name of the Institute nor the names of its contributors 
+.\"    may be used to endorse or promote products derived from this software 
+.\"    without specific prior written permission. 
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE INSTITUTE AND CONTRIBUTORS ``AS IS'' AND 
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE INSTITUTE OR CONTRIBUTORS BE LIABLE 
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL 
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS 
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) 
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT 
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY 
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
+.\" SUCH DAMAGE. 
+.\"
+.\" $KTH: krb5_krbhst_init.3,v 1.7 2003/04/16 13:58:16 lha Exp $
+.\"
 .Dd June 17, 2001
 .Dt KRB5_KRBHST_INIT 3
 .Os HEIMDAL
@@ -12,9 +43,10 @@
 .Nm krb5_krbhst_format_string ,
 .Nm krb5_krbhst_get_addrinfo
 .Nd lookup Kerberos KDC hosts
+.Sh LIBRARY
+Kerberos 5 Library (libkrb5, -lkrb5)
 .Sh SYNOPSIS
-.Fd #include <krb5.h>
-
+.In krb5.h
 .Ft krb5_error_code
 .Fn krb5_krbhst_init "krb5_context context" "const char *realm" "unsigned int type" "krb5_krbhst_handle *handle"
 .Ft krb5_error_code
@@ -36,10 +68,10 @@ administrative servers, the password changing servers, or the servers
 for Kerberos 4 ticket conversion.
 .Pp
 First a handle to a particular service is obtained by calling
-.Fn krb5_krbhst_init 
-with the 
+.Fn krb5_krbhst_init
+with the
 .Fa realm
-of interest and the type of service to lookup. The 
+of interest and the type of service to lookup. The
 .Fa type
 can be one of:
 .Pp
@@ -55,7 +87,7 @@ The
 is returned to the caller, and should be passed to the other
 functions.
 .Pp
-For each call to 
+For each call to
 .Fn krb5_krbhst_next
 information a new host is returned. The former function returns in
 .Fa host
@@ -73,7 +105,7 @@ typedef struct krb5_krbhst_info {
 } krb5_krbhst_info;
 .Ed
 .Pp
-The related function, 
+The related function,
 .Fn krb5_krbhst_next_as_string ,
 return the same information as a url-like string.
 .Pp
@@ -82,11 +114,11 @@ When there are no more hosts, these functions return
 .Pp
 To re-iterate over all hosts, call
 .Fn krb5_krbhst_reset
-and the next call to 
+and the next call to
 .Fn krb5_krbhst_next
 will return the first host.
 .Pp
-When done with the handle, 
+When done with the handle,
 .Fn krb5_krbhst_free
 should be called.
 .Pp
@@ -101,13 +133,13 @@ that will return a
 .Va struct addrinfo
 that can then be used for communicating with the server mentioned.
 .Sh EXAMPLE
-The following code will print the KDCs of the realm 
+The following code will print the KDCs of the realm
 .Dq MY.REALM .
 .Bd -literal -offset indent
 krb5_krbhst_handle handle;
 char host[MAXHOSTNAMELEN];
 krb5_krbhst_init(context, "MY.REALM", KRB5_KRBHST_KDC, &handle);
-while(krb5_krbhst_next_as_string(context, handle, 
+while(krb5_krbhst_next_as_string(context, handle,
 				 host, sizeof(host)) == 0)
     printf("%s\\n", host);
 krb5_krbhst_free(context, handle);
@@ -116,5 +148,5 @@ krb5_krbhst_free(context, handle);
 .Sh HISTORY
 These functions first appeared in Heimdal 0.3g.
 .Sh SEE ALSO
-.Xr krb5_get_krbhst 3 ,
-.Xr getaddrinfo 3
+.Xr getaddrinfo 3 ,
+.Xr krb5_get_krbhst 3

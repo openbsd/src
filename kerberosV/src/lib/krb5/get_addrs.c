@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,7 +33,7 @@
 
 #include "krb5_locl.h"
 
-RCSID("$KTH: get_addrs.c,v 1.43 2001/07/03 18:43:57 assar Exp $");
+RCSID("$KTH: get_addrs.c,v 1.45 2003/01/25 15:19:49 lha Exp $");
 
 #ifdef __osf__
 /* hate */
@@ -144,6 +144,8 @@ find_all_addresses (krb5_context context, krb5_addresses *res, int flags)
     for (ifa = ifa0, idx = 0; ifa != NULL; ifa = ifa->ifa_next) {
 	if ((ifa->ifa_flags & IFF_UP) == 0)
 	    continue;
+	if (ifa->ifa_addr == NULL)
+	    continue;
 	if (memcmp(ifa->ifa_addr, &sa_zero, sizeof(sa_zero)) == 0)
 	    continue;
 	if (krb5_sockaddr_uninteresting(ifa->ifa_addr))
@@ -184,6 +186,8 @@ find_all_addresses (krb5_context context, krb5_addresses *res, int flags)
     if ((flags & LOOP_IF_NONE) != 0 && idx == 0) {
 	for (ifa = ifa0; ifa != NULL; ifa = ifa->ifa_next) {
 	    if ((ifa->ifa_flags & IFF_UP) == 0)
+		continue;
+	    if (ifa->ifa_addr == NULL)
 		continue;
 	    if (memcmp(ifa->ifa_addr, &sa_zero, sizeof(sa_zero)) == 0)
 		continue;
@@ -229,8 +233,11 @@ get_addrs_int (krb5_context context, krb5_addresses *res, int flags)
 	ret = find_all_addresses (context, res, flags);
 	if(ret || res->len == 0)
 	    ret = gethostname_fallback (context, res);
-    } else
+    } else {
+	res->len = 0;
+	res->val = NULL;
 	ret = 0;
+    }
 
     if(ret == 0 && (flags & EXTRA_ADDRESSES)) {
 	krb5_addresses a;

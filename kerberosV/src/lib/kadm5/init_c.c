@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2003 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -37,7 +37,7 @@
 #include <netinet/in.h>
 #include <netdb.h>
 
-RCSID("$KTH: init_c.c,v 1.41 2001/06/29 16:45:34 joda Exp $");
+RCSID("$KTH: init_c.c,v 1.45 2003/04/01 15:06:41 lha Exp $");
 
 static void
 set_funcs(kadm5_client_context *c)
@@ -240,12 +240,45 @@ get_cred_cache(krb5_context context,
 	    if(ret) {
 		krb5_cc_close(context, id);
 		id = NULL;
+	    } else {
+		const char *name, *inst;
+		krb5_principal tmp;
+		name = krb5_principal_get_comp_string(context, 
+						      default_client, 0);
+		inst = krb5_principal_get_comp_string(context, 
+						      default_client, 1);
+		if(inst == NULL || strcmp(inst, "admin") != 0) {
+		    ret = krb5_make_principal(context, &tmp, NULL, 
+					      name, "admin", NULL);
+		    if(ret != 0) {
+			krb5_free_principal(context, default_client);
+			krb5_cc_close(context, id);
+			return ret;
+		    }
+		    krb5_free_principal(context, default_client);
+		    default_client = tmp;
+		    krb5_cc_close(context, id);
+		    id = NULL;
+		}
 	    }
 	}
-	
-	if(client == NULL)
+
+	if (client != NULL) {
+	    /* A client was specified by the caller. */
+	    if (default_client != NULL) {
+		krb5_free_principal(context, default_client);
+		default_client = NULL;
+	    }
+	}
+	else if (default_client != NULL)
+	    /* No client was specified by the caller, but we have a
+	     * client from the default credentials cache.
+	     */
 	    client = default_client;
-	if(client == NULL) {
+	else {
+	    /* No client was specified by the caller and we cannot determine
+	     * the client from a credentials cache.
+	     */
 	    const char *user;
 
 	    user = get_default_username ();
@@ -256,10 +289,6 @@ get_cred_cache(krb5_context context,
 				      NULL, user, "admin", NULL);
 	    if(ret)
 		return ret;
-	}
-	if(client != default_client) {
-	    krb5_free_principal(context, default_client);
-	    default_client = NULL;
 	    if (id != NULL) {
 		krb5_cc_close(context, id);
 		id = NULL;
@@ -268,7 +297,6 @@ get_cred_cache(krb5_context context,
     } else if(ccache != NULL)
 	id = ccache;
     
-
     if(id && (default_client == NULL || 
 	      krb5_principal_compare(context, client, default_client))) {
 	ret = get_kadm_ticket(context, id, client, server_name);
@@ -307,6 +335,7 @@ kadm_connect(kadm5_client_context *ctx)
     int error;
     char portstr[NI_MAXSERV];
     char *hostname, *slash;
+    char *service_name;
     krb5_context context = ctx->context;
 
     memset (&hints, 0, sizeof(hints));
@@ -349,7 +378,20 @@ kadm_connect(kadm5_client_context *ctx)
 	close(s);
 	return ret;
     }
-    ret = krb5_parse_name(context, KADM5_ADMIN_SERVICE, &server);
+
+    if (ctx->realm)
+	asprintf(&service_name, "%s@%s", KADM5_ADMIN_SERVICE, ctx->realm);
+    else
+	asprintf(&service_name, "%s", KADM5_ADMIN_SERVICE);
+
+    if (service_name == NULL) {
+	freeaddrinfo (ai);
+	close(s);
+	return ENOMEM;
+    }
+
+    ret = krb5_parse_name(context, service_name, &server);
+    free(service_name);
     if(ret) {
 	freeaddrinfo (ai);
 	if(ctx->ccache == NULL)
@@ -365,7 +407,13 @@ kadm_connect(kadm5_client_context *ctx)
 			NULL, NULL, cc, NULL, NULL, NULL);
     if(ret == 0) {
 	krb5_data params;
-	ret = _kadm5_marshal_params(context, ctx->realm_params, &params);
+	kadm5_config_params p;
+	memset(&p, 0, sizeof(p));
+	if(ctx->realm) {
+	    p.mask |= KADM5_CONFIG_REALM;
+	    p.realm = ctx->realm;
+	}
+	ret = _kadm5_marshal_params(context, &p, &params);
 	
 	ret = krb5_write_priv_message(context, ctx->ac, &s, &params);
 	krb5_data_free(&params);
@@ -462,7 +510,7 @@ kadm5_c_init_with_context(krb5_context context,
     ctx->prompter = prompter;
     ctx->keytab = keytab;
     ctx->ccache = ccache;
-    ctx->realm_params = realm_params;
+    /* maybe we should copy the params here */
     ctx->sock = -1;
     
     *server_handle = ctx;

@@ -38,7 +38,7 @@
 
 #include "snprintf-test.h"
 
-RCSID("$KTH: snprintf-test.c,v 1.4 2001/07/17 15:27:00 assar Exp $");
+RCSID("$KTH: snprintf-test.c,v 1.5 2001/09/13 01:01:16 assar Exp $");
 
 static int
 try (const char *format, ...)
@@ -133,9 +133,9 @@ cmp_with_sprintf_long_long (void)
 {
     int tot = 0;
     long long long_long_values[] = {
-	(long long)LONG_MIN -1, LONG_MIN, -17, -1,
+	((long long)LONG_MIN) -1, LONG_MIN, -17, -1,
 	0,
-	1, 17, 4711, 65535, LONG_MAX, (long long)LONG_MAX + 1};
+	1, 17, 4711, 65535, LONG_MAX, ((long long)LONG_MAX) + 1};
     int i;
 
     for (i = 0; i < sizeof(long_long_values) / sizeof(long_long_values[0]); ++i) {

@@ -1,3 +1,89 @@
+2003-04-14  Love Hörquist Åstrand  <lha@it.su.se>
+
+	* util.c: cast argument to tolower to unsigned char, from
+	Christian Biere <christianbiere@gmx.de> via NetBSD
+	
+2003-04-06  Love Hörquist Åstrand <lha@it.su.se>
+
+	* kadmind.8: s/kerberos/Kerberos/
+	
+2003-03-31  Love Hörquist Åstrand  <lha@it.su.se>
+
+	* kadmin.8: initialises -> initializes, from Perry E. Metzger"
+	<perry@piermont.com>
+
+	* kadmin.c: principal, not pricipal. From Thomas Klausner
+	<wiz@netbsd.org>
+
+2003-02-04  Love Hörquist Åstrand  <lha@it.su.se>
+
+	* kadmind.8: spelling, from jmc <jmc@prioris.mini.pw.edu.pl>
+	
+	* kadmin.8: spelling, from jmc <jmc@prioris.mini.pw.edu.pl>
+	
+2003-01-29  Love Hörquist Åstrand  <lha@it.su.se>
+
+	* server.c (kadmind_dispatch): kadm_chpass: require the password
+	to pass the password quality check in case the user changes the
+	user's own password kadm_chpass_with_key: disallow the user to
+	change it own password to a key, since that password might violate
+	the password quality check.
+
+2002-10-23  Assar Westerlund  <assar@kth.se>
+
+	* version4.c (decode_packet): check the length of the version
+	string and that rlen has a reasonable value
+
+2002-10-21  Johan Danielsson  <joda@pdc.kth.se>
+
+	* version4.c: check size of rlen
+
+2002-09-10  Johan Danielsson  <joda@pdc.kth.se>
+
+	* server.c: constify match_appl_version()
+
+	* version4.c: change some lingering krb_err_base
+
+2002-09-09  Jacques Vidrine  <nectar@kth.se>
+
+	* server.c (kadmind_dispatch): while decoding arguments for
+	kadm_chpass_with_key, sanity check the number of keys given.
+	Potential problem pointed out by
+	Sebastian Krahmer <krahmer@suse.de>.
+
+2002-09-04  Johan Danielsson  <joda@pdc.kth.se>
+
+	* load.c (parse_generation): return if there is no generation
+	(spotted by Daniel Kouril)
+
+2002-06-07  Jacques Vidrine <n@nectar.com>
+
+	* ank.c: do not attempt to free uninitialized pointer when
+	kadm5_randkey_principal fails.
+
+2002-06-07  Johan Danielsson  <joda@pdc.kth.se>
+
+	* util.c: remove unused variable; reported by Hans Insulander
+
+2002-03-05  Johan Danielsson  <joda@pdc.kth.se>
+
+	* kadmind.8: clarify some acl wording, and add an example file
+
+2002-02-11  Johan Danielsson  <joda@pdc.kth.se>
+
+	* ext.c: no need to use the "modify" keytab anymore
+
+2001-09-20  Assar Westerlund  <assar@sics.se>
+
+	* add-random-users.c: allocate several buffers for the list of
+	words, instead of one strdup per word (running under efence does
+	not work very well otherwise)
+
+2001-09-13  Assar Westerlund  <assar@sics.se>
+
+	* add-random-users.c: allow specifying the number of users to
+	create
+
 2001-08-24  Assar Westerlund  <assar@sics.se>
 
 	* Makefile.am: rename variable name to avoid error from current

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995-2001 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995-2003 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -33,7 +33,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: snprintf.c,v 1.31 2001/07/17 15:27:00 assar Exp $");
+RCSID("$KTH: snprintf.c,v 1.35 2003/03/26 10:05:48 joda Exp $");
 #endif
 #include <stdio.h>
 #include <stdarg.h>
@@ -54,13 +54,13 @@ enum format_flags {
  * Common state
  */
 
-struct state {
+struct snprintf_state {
   unsigned char *str;
   unsigned char *s;
   unsigned char *theend;
   size_t sz;
   size_t max_sz;
-  void (*append_char)(struct state *, unsigned char);
+  void (*append_char)(struct snprintf_state *, unsigned char);
   /* XXX - methods */
 };
 
@@ -70,13 +70,13 @@ struct state {
 
 #if !defined(HAVE_VSNPRINTF) || defined(TEST_SNPRINTF)
 static int
-sn_reserve (struct state *state, size_t n)
+sn_reserve (struct snprintf_state *state, size_t n)
 {
   return state->s + n > state->theend;
 }
 
 static void
-sn_append_char (struct state *state, unsigned char c)
+sn_append_char (struct snprintf_state *state, unsigned char c)
 {
   if (!sn_reserve (state, 1))
     *state->s++ = c;
@@ -84,7 +84,7 @@ sn_append_char (struct state *state, unsigned char c)
 #endif
 
 static int
-as_reserve (struct state *state, size_t n)
+as_reserve (struct snprintf_state *state, size_t n)
 {
   if (state->s + n > state->theend) {
     int off = state->s - state->str;
@@ -107,7 +107,7 @@ as_reserve (struct state *state, size_t n)
 }
 
 static void
-as_append_char (struct state *state, unsigned char c)
+as_append_char (struct snprintf_state *state, unsigned char c)
 {
   if(!as_reserve (state, 1))
     *state->s++ = c;
@@ -134,8 +134,8 @@ use_alternative (int flags, u_longest num, unsigned base)
 }
 
 static int
-append_number(struct state *state,
-	      u_longest num, unsigned base, char *rep,
+append_number(struct snprintf_state *state,
+	      u_longest num, unsigned base, const char *rep,
 	      int width, int prec, int flags, int minusp)
 {
   int len = 0;
@@ -218,7 +218,7 @@ append_number(struct state *state,
  */
 
 static int
-append_string (struct state *state,
+append_string (struct snprintf_state *state,
 	       const unsigned char *arg,
 	       int width,
 	       int prec,
@@ -258,7 +258,7 @@ append_string (struct state *state,
 }
 
 static int
-append_char(struct state *state,
+append_char(struct snprintf_state *state,
 	    unsigned char arg,
 	    int width,
 	    int flags)
@@ -311,7 +311,7 @@ else \
  */
 
 static int
-xyzprintf (struct state *state, const char *char_format, va_list ap)
+xyzprintf (struct snprintf_state *state, const char *char_format, va_list ap)
 {
   const unsigned char *format = (const unsigned char *)char_format;
   unsigned char c;
@@ -338,6 +338,8 @@ xyzprintf (struct state *state, const char *char_format, va_list ap)
 	  flags |= alternate_flag;
 	else if(c == '0')
 	  flags |= zero_flag;
+	else if(c == '\'')
+	    ; /* just ignore */
 	else
 	  break;
       }
@@ -496,6 +498,7 @@ snprintf (char *str, size_t sz, const char *format, ...)
 
   va_start(args, format);
   ret = vsnprintf (str, sz, format, args);
+  va_end(args);
 
 #ifdef PARANOIA
   {
@@ -506,14 +509,15 @@ snprintf (char *str, size_t sz, const char *format, ...)
     if (tmp == NULL)
       abort ();
 
+    va_start(args, format);
     ret2 = vsprintf (tmp, format, args);
+    va_end(args);
     if (ret != ret2 || strcmp(str, tmp))
       abort ();
     free (tmp);
   }
 #endif
 
-  va_end(args);
   return ret;
 }
 #endif
@@ -527,6 +531,7 @@ asprintf (char **ret, const char *format, ...)
 
   va_start(args, format);
   val = vasprintf (ret, format, args);
+  va_end(args);
 
 #ifdef PARANOIA
   {
@@ -536,14 +541,15 @@ asprintf (char **ret, const char *format, ...)
     if (tmp == NULL)
       abort ();
 
+    va_start(args, format);
     ret2 = vsprintf (tmp, format, args);
+    va_end(args);
     if (val != ret2 || strcmp(*ret, tmp))
       abort ();
     free (tmp);
   }
 #endif
 
-  va_end(args);
   return val;
 }
 #endif
@@ -592,7 +598,7 @@ int
 vasnprintf (char **ret, size_t max_sz, const char *format, va_list args)
 {
   int st;
-  struct state state;
+  struct snprintf_state state;
 
   state.max_sz = max_sz;
   state.sz     = 1;
@@ -630,7 +636,7 @@ vasnprintf (char **ret, size_t max_sz, const char *format, va_list args)
 int
 vsnprintf (char *str, size_t sz, const char *format, va_list args)
 {
-  struct state state;
+  struct snprintf_state state;
   int ret;
   unsigned char *ustr = (unsigned char *)str;
 

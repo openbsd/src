@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,42 +33,41 @@
 
 #include "krb5_locl.h"
 
-RCSID("$KTH: get_in_tkt.c,v 1.102 2001/07/02 22:30:48 joda Exp $");
+RCSID("$KTH: get_in_tkt.c,v 1.107 2003/02/16 06:41:25 nectar Exp $");
 
 krb5_error_code
 krb5_init_etype (krb5_context context,
 		 unsigned *len,
-		 int **val,
+		 krb5_enctype **val,
 		 const krb5_enctype *etypes)
 {
     int i;
     krb5_error_code ret;
-    krb5_enctype *tmp;
+    krb5_enctype *tmp = NULL;
 
     ret = 0;
-    if (etypes)
-	tmp = (krb5_enctype*)etypes;
-    else {
+    if (etypes == NULL) {
 	ret = krb5_get_default_in_tkt_etypes(context,
 					     &tmp);
 	if (ret)
 	    return ret;
+	etypes = tmp;
     }
 
-    for (i = 0; tmp[i]; ++i)
+    for (i = 0; etypes[i]; ++i)
 	;
     *len = i;
-    *val = malloc(i * sizeof(int));
+    *val = malloc(i * sizeof(**val));
     if (i != 0 && *val == NULL) {
 	ret = ENOMEM;
 	krb5_set_error_string(context, "malloc: out of memory");
 	goto cleanup;
     }
     memmove (*val,
-	     tmp,
+	     etypes,
 	     i * sizeof(*tmp));
 cleanup:
-    if (etypes == NULL)
+    if (tmp != NULL)
 	free (tmp);
     return ret;
 }
@@ -159,22 +158,12 @@ _krb5_extract_ticket(krb5_context context,
     creds->client = tmp_principal;
 
     /* extract ticket */
-    {
-	unsigned char *buf;
-	size_t len;
-	len = length_Ticket(&rep->kdc_rep.ticket);
-	buf = malloc(len);
-	if(buf == NULL) {
-	    krb5_set_error_string(context, "malloc: out of memory");
-	    ret = ENOMEM;
-	    goto out;
-	}
-	encode_Ticket(buf + len - 1, len, &rep->kdc_rep.ticket, &len);
-	creds->ticket.data = buf;
-	creds->ticket.length = len;
-	creds->second_ticket.length = 0;
-	creds->second_ticket.data   = NULL;
-    }
+    ASN1_MALLOC_ENCODE(Ticket, creds->ticket.data, creds->ticket.length, 
+		       &rep->kdc_rep.ticket, &creds->ticket.length, ret);
+    if(ret)
+	goto out;
+    creds->second_ticket.length = 0;
+    creds->second_ticket.data   = NULL;
 
     /* compare server */
 
@@ -224,7 +213,8 @@ _krb5_extract_ticket(krb5_context context,
     /* set kdc-offset */
 
     krb5_timeofday (context, &sec_now);
-    if (context->kdc_sec_offset == 0
+    if (rep->enc_part.flags.initial
+	&& context->kdc_sec_offset == 0
 	&& krb5_config_get_bool (context, NULL,
 				 "libdefaults",
 				 "kdc_timesync",
@@ -315,7 +305,8 @@ make_pa_enc_timestamp(krb5_context context, PA_DATA *pa,
 		      krb5_enctype etype, krb5_keyblock *key)
 {
     PA_ENC_TS_ENC p;
-    u_char buf[1024];
+    unsigned char *buf;
+    size_t buf_size;
     size_t len;
     EncryptedData encdata;
     krb5_error_code ret;
@@ -328,39 +319,37 @@ make_pa_enc_timestamp(krb5_context context, PA_DATA *pa,
     usec2         = usec;
     p.pausec      = &usec2;
 
-    ret = encode_PA_ENC_TS_ENC(buf + sizeof(buf) - 1,
-			       sizeof(buf),
-			       &p,
-			       &len);
+    ASN1_MALLOC_ENCODE(PA_ENC_TS_ENC, buf, buf_size, &p, &len, ret);
     if (ret)
 	return ret;
-
+    if(buf_size != len)
+	krb5_abortx(context, "internal error in ASN.1 encoder");
     ret = krb5_crypto_init(context, key, 0, &crypto);
-    if (ret)
+    if (ret) {
+	free(buf);
 	return ret;
+    }
     ret = krb5_encrypt_EncryptedData(context, 
 				     crypto,
 				     KRB5_KU_PA_ENC_TIMESTAMP,
-				     buf + sizeof(buf) - len,
+				     buf,
 				     len,
 				     0,
 				     &encdata);
+    free(buf);
     krb5_crypto_destroy(context, crypto);
     if (ret)
 	return ret;
 		    
-    ret = encode_EncryptedData(buf + sizeof(buf) - 1,
-			       sizeof(buf),
-			       &encdata, 
-			       &len);
+    ASN1_MALLOC_ENCODE(EncryptedData, buf, buf_size, &encdata, &len, ret);
     free_EncryptedData(&encdata);
     if (ret)
 	return ret;
+    if(buf_size != len)
+	krb5_abortx(context, "internal error in ASN.1 encoder");
     pa->padata_type = KRB5_PADATA_ENC_TIMESTAMP;
-    pa->padata_value.length = 0;
-    krb5_data_copy(&pa->padata_value,
-		   buf + sizeof(buf) - len,
-		   len);
+    pa->padata_value.length = len;
+    pa->padata_value.data = buf;
     return 0;
 }
 
@@ -370,14 +359,14 @@ add_padata(krb5_context context,
 	   krb5_principal client,
 	   krb5_key_proc key_proc,
 	   krb5_const_pointer keyseed,
-	   int *enctypes, 
+	   krb5_enctype *enctypes,
 	   unsigned netypes,
 	   krb5_salt *salt)
 {
     krb5_error_code ret;
     PA_DATA *pa2;
     krb5_salt salt2;
-    int *ep;
+    krb5_enctype *ep;
     int i;
     
     if(salt == NULL) {
@@ -386,7 +375,7 @@ add_padata(krb5_context context,
 	salt = &salt2;
     }
     if (!enctypes) {
-	enctypes = (int *)context->etypes; /* XXX */
+	enctypes = context->etypes;
 	netypes = 0;
 	for (ep = enctypes; *ep != ETYPE_NULL; ep++)
 	    netypes++;
@@ -553,10 +542,12 @@ init_as_req (krb5_context context,
 			    sp = NULL;
 			else
 			    krb5_data_zero(&salt.saltvalue);
-		    add_padata(context, a->padata, creds->client, 
+		    ret = add_padata(context, a->padata, creds->client, 
 			       key_proc, keyseed, 
 			       &preauth->val[i].info.val[j].etype, 1,
 			       sp);
+		    if (ret == 0)
+			break;
 		}
 	    }
 	}
@@ -657,7 +648,7 @@ krb5_get_in_cred(krb5_context context,
     AS_REQ a;
     krb5_kdc_rep rep;
     krb5_data req, resp;
-    char buf[BUFSIZ];
+    size_t len;
     krb5_salt salt;
     krb5_keyblock *key;
     size_t size;
@@ -693,17 +684,15 @@ krb5_get_in_cred(krb5_context context,
 	if (ret)
 	    return ret;
 
-	ret = encode_AS_REQ ((unsigned char*)buf + sizeof(buf) - 1,
-			     sizeof(buf),
-			     &a,
-			     &req.length);
+	ASN1_MALLOC_ENCODE(AS_REQ, req.data, req.length, &a, &len, ret);
 	free_AS_REQ(&a);
 	if (ret)
 	    return ret;
-
-	req.data = buf + sizeof(buf) - req.length;
+	if(len != req.length)
+	    krb5_abortx(context, "internal error in ASN.1 encoder");
 
 	ret = krb5_sendto_kdc (context, &req, &creds->client->realm, &resp);
+	krb5_data_free(&req);
 	if (ret)
 	    return ret;
 

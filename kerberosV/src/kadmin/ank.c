@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997-2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997-2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,7 +33,7 @@
 
 #include "kadmin_locl.h"
 
-RCSID("$KTH: ank.c,v 1.22 2001/08/10 08:08:22 joda Exp $");
+RCSID("$KTH: ank.c,v 1.25 2002/12/03 14:11:24 joda Exp $");
 
 /*
  * fetch the default principal corresponding to `princ'
@@ -112,7 +112,8 @@ add_one_principal (const char *name,
     if(use_defaults) 
 	set_defaults(&princ, &mask, default_ent, default_mask);
     else
-	edit_entry(&princ, &mask, default_ent, default_mask);
+	if(edit_entry(&princ, &mask, default_ent, default_mask))
+	    goto out;
     if(rand_key || key_data) {
 	princ.attributes |= KRB5_KDB_DISALLOW_ALL_TIX;
 	mask |= KADM5_ATTRIBUTES;
@@ -136,8 +137,10 @@ add_one_principal (const char *name,
     }
     
     ret = kadm5_create_principal(kadm_handle, &princ, mask, password);
-    if(ret)
+    if(ret) {
 	krb5_warn(context, ret, "kadm5_create_principal");
+	goto out;
+    }
     if(rand_key) {
 	krb5_keyblock *new_keys;
 	int n_keys, i;
@@ -149,7 +152,8 @@ add_one_principal (const char *name,
 	}
 	for(i = 0; i < n_keys; i++)
 	    krb5_free_keyblock_contents(context, &new_keys[i]);
-	free(new_keys);
+	if (n_keys > 0)
+	    free(new_keys);
 	kadm5_get_principal(kadm_handle, princ_ent, &princ, 
 			    KADM5_PRINCIPAL | KADM5_KVNO | KADM5_ATTRIBUTES);
 	princ.attributes &= (~KRB5_KDB_DISALLOW_ALL_TIX);

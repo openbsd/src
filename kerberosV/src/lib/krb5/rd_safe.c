@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,7 +33,7 @@
 
 #include <krb5_locl.h>
 
-RCSID("$KTH: rd_safe.c,v 1.25 2001/06/18 02:47:30 assar Exp $");
+RCSID("$KTH: rd_safe.c,v 1.27 2002/09/04 16:26:05 joda Exp $");
 
 static krb5_error_code
 verify_checksum(krb5_context context,
@@ -53,19 +53,11 @@ verify_checksum(krb5_context context,
     safe->cksum.checksum.data   = NULL;
     safe->cksum.checksum.length = 0;
 
-    buf_size = length_KRB_SAFE(safe);
-    buf = malloc(buf_size);
-
-    if (buf == NULL) {
-	ret = ENOMEM;
-	krb5_set_error_string (context, "malloc: out of memory");
-	goto out;
-    }
-
-    ret = encode_KRB_SAFE (buf + buf_size - 1,
-			   buf_size,
-			   safe,
-			   &len);
+    ASN1_MALLOC_ENCODE(KRB_SAFE, buf, buf_size, safe, &len, ret);
+    if(ret)
+	return ret;
+    if(buf_size != len)
+	krb5_abortx(context, "internal error in ASN.1 encoder");
 
     if (auth_context->remote_subkey)
 	key = auth_context->remote_subkey;
@@ -74,7 +66,7 @@ verify_checksum(krb5_context context,
     else
 	key = auth_context->keyblock;
 
-    ret = krb5_crypto_init(context, auth_context->keyblock, 0, &crypto);
+    ret = krb5_crypto_init(context, key, 0, &crypto);
     if (ret)
 	goto out;
     ret = krb5_verify_checksum (context,

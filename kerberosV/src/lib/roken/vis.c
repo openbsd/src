@@ -38,7 +38,7 @@
 #if 1
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: vis.c,v 1.4 2001/07/03 19:22:01 assar Exp $");
+RCSID("$KTH: vis.c,v 1.5 2001/09/03 05:37:23 assar Exp $");
 #endif
 #include <roken.h>
 #ifndef _DIAGASSERT
@@ -164,7 +164,7 @@ do {									   \
 		if (c & 0200) {						   \
 			c &= 0177; *dst++ = 'M';			   \
 		}							   \
-		if (iscntrl(c)) {					   \
+		if (iscntrl((unsigned char)c)) {			   \
 			*dst++ = '^';					   \
 			if (c == 0177)					   \
 				*dst++ = '?';				   \

@@ -33,7 +33,7 @@
 
 #include "ktutil_locl.h"
 
-RCSID("$KTH: copy.c,v 1.7 2001/05/11 00:54:01 assar Exp $");
+RCSID("$KTH: copy.c,v 1.9 2003/01/16 18:59:03 lha Exp $");
 
 
 static krb5_boolean
@@ -144,7 +144,6 @@ kt_copy (int argc, char **argv)
     int i = 0;
 
     args[i++].value = &help_flag;
-    args[i++].value = &verbose_flag;
 
     if(getarg(args, num_args, argc, argv, &optind)) {
 	arg_printusage(args, num_args, "ktutil copy",
@@ -170,7 +169,7 @@ kt_copy (int argc, char **argv)
 }
 
 #ifndef KEYFILE
-#define KEYFILE "/etc/srvtab"
+#define KEYFILE SYSCONFDIR "/srvtab"
 #endif
 
 /* copy to from v4 srvtab, just short for copy */

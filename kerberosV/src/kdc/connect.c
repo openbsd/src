@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997-2001 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997-2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,7 +33,7 @@
 
 #include "kdc_locl.h"
 
-RCSID("$KTH: connect.c,v 1.84 2001/08/21 10:10:25 assar Exp $");
+RCSID("$KTH: connect.c,v 1.90 2003/02/18 15:39:10 lha Exp $");
 
 /*
  * a tuple describing on what to listen
@@ -131,14 +131,14 @@ add_standard_ports (int family)
     add_port_service(family, "kerberos-sec", 88, "tcp");
     if(enable_http)
 	add_port_service(family, "http", 80, "tcp");
+    if(enable_524) {
+	add_port_service(family, "krb524", 4444, "udp");
+	add_port_service(family, "krb524", 4444, "tcp");
+    }
 #ifdef KRB4
     if(enable_v4) {
 	add_port_service(family, "kerberos-iv", 750, "udp");
 	add_port_service(family, "kerberos-iv", 750, "tcp");
-    }
-    if(enable_524) {
-	add_port_service(family, "krb524", 4444, "udp");
-	add_port_service(family, "krb524", 4444, "tcp");
     }
     if (enable_kaserver)
 	add_port_service(family, "afs3-kaserver", 7004, "udp");
@@ -214,7 +214,7 @@ init_descr(struct descr *d)
 }
 
 /*
- * re-intialize all `n' ->sa in `d'.
+ * re-initialize all `n' ->sa in `d'.
  */
 
 static void
@@ -236,7 +236,7 @@ init_socket(struct descr *d, krb5_address *a, int family, int type, int port)
     krb5_error_code ret;
     struct sockaddr_storage __ss;
     struct sockaddr *sa = (struct sockaddr *)&__ss;
-    int sa_size;
+    int sa_size = sizeof(__ss);
 
     init_descr (d);
 
@@ -358,9 +358,7 @@ process_request(unsigned char *buf,
 		struct sockaddr *addr)
 {
     KDC_REQ req;
-#ifdef KRB4
     Ticket ticket;
-#endif
     krb5_error_code ret;
     size_t i;
 
@@ -373,21 +371,20 @@ process_request(unsigned char *buf,
 	ret = tgs_rep(&req, reply, from, addr);
 	free_TGS_REQ(&req);
 	return ret;
-    }
-#ifdef KRB4
-    else if(maybe_version4(buf, len)){
-	*sendlength = 0; /* elbitapmoc sdrawkcab XXX */
-	do_version4(buf, len, reply, from, (struct sockaddr_in*)addr);
-	return 0;
     }else if(decode_Ticket(buf, len, &ticket, &i) == 0){
 	ret = do_524(&ticket, reply, from, addr);
 	free_Ticket(&ticket);
 	return ret;
+#ifdef KRB4
+    } else if(maybe_version4(buf, len)){
+	*sendlength = 0; /* elbitapmoc sdrawkcab XXX */
+	do_version4(buf, len, reply, from, (struct sockaddr_in*)addr);
+	return 0;
     } else if (enable_kaserver) {
 	ret = do_kaserver (buf, len, reply, from, (struct sockaddr_in*)addr);
 	return ret;
-    }
 #endif
+    }
 			  
     return -1;
 }
@@ -396,12 +393,13 @@ static void
 addr_to_string(struct sockaddr *addr, size_t addr_len, char *str, size_t len)
 {
     krb5_address a;
-    krb5_sockaddr2address(context, addr, &a);
-    if(krb5_print_address(&a, str, len, &len) == 0) {
+    if(krb5_sockaddr2address(context, addr, &a) == 0) {
+	if(krb5_print_address(&a, str, len, &len) == 0) {
+	    krb5_free_address(context, &a);
+	    return;
+	}
 	krb5_free_address(context, &a);
-	return;
     }
-    krb5_free_address(context, &a);
     snprintf(str, len, "<family=%d>", addr->sa_family);
 }
 
@@ -492,7 +490,7 @@ de_http(char *buf)
 {
     char *p, *q;
     for(p = q = buf; *p; p++, q++) {
-	if(*p == '%') {
+	if(*p == '%' && isxdigit(p[1]) && isxdigit(p[2])) {
 	    unsigned int x;
 	    if(sscanf(p + 1, "%2x", &x) != 1)
 		return -1;
@@ -652,12 +650,14 @@ handle_http_tcp (struct descr *d)
 	const char *msg = 
 	    " 404 Not found\r\n"
 	    "Server: Heimdal/" VERSION "\r\n"
+	    "Cache-Control: no-cache\r\n"
+	    "Pragma: no-cache\r\n"
 	    "Content-type: text/html\r\n"
 	    "Content-transfer-encoding: 8bit\r\n\r\n"
 	    "<TITLE>404 Not found</TITLE>\r\n"
 	    "<H1>404 Not found</H1>\r\n"
 	    "That page doesn't exist, maybe you are looking for "
-	    "<A HREF=\"http://www.pdc.kth.se/heimdal\">Heimdal</A>?\r\n";
+	    "<A HREF=\"http://www.pdc.kth.se/heimdal/\">Heimdal</A>?\r\n";
 	write(d->s, proto, strlen(proto));
 	write(d->s, msg, strlen(msg));
 	kdc_log(0, "HTTP request from %s is non KDC request", d->addr_string);
@@ -669,6 +669,8 @@ handle_http_tcp (struct descr *d)
 	const char *msg = 
 	    " 200 OK\r\n"
 	    "Server: Heimdal/" VERSION "\r\n"
+	    "Cache-Control: no-cache\r\n"
+	    "Pragma: no-cache\r\n"
 	    "Content-type: application/octet-stream\r\n"
 	    "Content-transfer-encoding: binary\r\n\r\n";
 	write(d->s, proto, strlen(proto));

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1999 - 2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -35,7 +35,7 @@
 #endif
 #include "roken.h"
 
-RCSID("$KTH: strftime.c,v 1.11 2000/07/08 14:22:12 assar Exp $");
+RCSID("$KTH: strftime.c,v 1.13 2002/08/20 12:42:37 joda Exp $");
 
 static const char *abb_weekdays[] = {
     "Sun",
@@ -172,7 +172,7 @@ strftime (char *buf, size_t maxsize, const char *format,
 	  const struct tm *tm)
 {
     size_t n = 0;
-    size_t ret;
+    int ret;
 
     while (*format != '\0' && n < maxsize) {
 	if (*format == '%') {
@@ -348,8 +348,10 @@ strftime (char *buf, size_t maxsize, const char *format,
 #if defined(HAVE_STRUCT_TM_TM_GMTOFF)
 				(long)tm->tm_gmtoff
 #elif defined(HAVE_TIMEZONE)
+#ifdef HAVE_ALTZONE
 				tm->tm_isdst ?
 				(long)altzone :
+#endif
 				(long)timezone
 #else
 #error Where in timezone chaos are you?
@@ -381,7 +383,7 @@ strftime (char *buf, size_t maxsize, const char *format,
 				"%%%c", *format);
 		break;
 	    }
-	    if (ret >= maxsize - n)
+	    if (ret < 0 || ret >= maxsize - n)
 		return 0;
 	    n   += ret;
 	    buf += ret;

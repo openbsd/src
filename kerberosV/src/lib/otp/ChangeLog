@@ -1,3 +1,26 @@
+2003-04-16  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* roken_rename.h: rename strlcat, strlcpy
+	* Makefile.am: (ES): add strlcpy.c and strlcat.c
+	* otp_db.c: use strlcpy, from openbsd
+	* otp_md.c: use strlcat/strlcpy, from openbsd
+	* otp_challenge.c: do strdup again, we desupport ultrix
+	
+2002-09-10  Johan Danielsson  <joda@pdc.kth.se>
+
+	* otp_md.c: if we only have old hash names, we need to include
+	functions here that do the work
+
+2002-05-20  Johan Danielsson  <joda@pdc.kth.se>
+
+	* otp_db.c: fix ndbm test
+
+2002-05-17  Johan Danielsson  <joda@pdc.kth.se>
+
+	* Makefile.am: add hooks for ndbm_wrap
+
+	* otp_db.c: use ndbm_wrap
+
 2001-07-12  Assar Westerlund  <assar@sics.se>
 
 	* Makefile.am: add required library dependencies

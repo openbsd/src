@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2003 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,7 +33,7 @@
 
 #include "gssapi_locl.h"
 
-RCSID("$KTH: unwrap.c,v 1.19 2001/08/23 04:35:55 assar Exp $");
+RCSID("$KTH: unwrap.c,v 1.22 2003/03/16 17:54:43 lha Exp $");
 
 OM_uint32
 gss_krb5_get_remotekey(const gss_ctx_id_t context_handle,
@@ -53,7 +53,7 @@ gss_krb5_get_remotekey(const gss_ctx_id_t context_handle,
 			     context_handle->auth_context, 
 			     &skey);
     if(skey == NULL)
-	return GSS_S_FAILURE;
+	return GSS_KRB5_S_KG_NO_SUBKEY; /* XXX */
     *key = skey;
     return 0;
 }
@@ -86,10 +86,8 @@ unwrap_des
   ret = gssapi_krb5_verify_header (&p,
 				   input_message_buffer->length,
 				   "\x02\x01");
-  if (ret) {
-      *minor_status = 0;
+  if (ret)
       return ret;
-  }
 
   if (memcmp (p, "\x00\x00", 2) != 0)
     return GSS_S_BAD_SIG;
@@ -222,10 +220,8 @@ unwrap_des3
   ret = gssapi_krb5_verify_header (&p,
 				   input_message_buffer->length,
 				   "\x02\x01");
-  if (ret) {
-      *minor_status = 0;
+  if (ret)
       return ret;
-  }
 
   if (memcmp (p, "\x04\x00", 2) != 0) /* HMAC SHA1 DES3_KD */
     return GSS_S_BAD_SIG;
@@ -296,7 +292,7 @@ unwrap_des3
   p -= 28;
 
   ret = krb5_crypto_init(gssapi_krb5_context, key,
-			 ETYPE_DES3_CBC_NONE_IVEC, &crypto);
+			 ETYPE_DES3_CBC_NONE, &crypto);
   if (ret) {
       gssapi_krb5_set_error_string ();
       *minor_status = ret;
@@ -388,6 +384,8 @@ OM_uint32 gss_unwrap
   OM_uint32 ret;
   krb5_keytype keytype;
 
+  if (qop_state != NULL)
+      *qop_state = GSS_C_QOP_DEFAULT;
   ret = gss_krb5_get_remotekey(context_handle, &key);
   if (ret) {
       gssapi_krb5_set_error_string ();
@@ -395,6 +393,8 @@ OM_uint32 gss_unwrap
       return GSS_S_FAILURE;
   }
   krb5_enctype_to_keytype (gssapi_krb5_context, key->keytype, &keytype);
+
+  *minor_status = 0;
 
   switch (keytype) {
   case KEYTYPE_DES :

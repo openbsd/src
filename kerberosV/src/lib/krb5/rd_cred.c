@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,7 +33,7 @@
 
 #include <krb5_locl.h>
 
-RCSID("$KTH: rd_cred.c,v 1.15 2001/06/29 14:53:44 assar Exp $");
+RCSID("$KTH: rd_cred.c,v 1.18 2002/09/04 16:26:05 joda Exp $");
 
 krb5_error_code
 krb5_rd_cred(krb5_context context,
@@ -136,13 +136,37 @@ krb5_rd_cred(krb5_context context,
     /* check receiver address */
 
     if (enc_krb_cred_part.r_address
-	&& auth_context->local_address
-	&& !krb5_address_compare (context,
-				  auth_context->local_address,
-				  enc_krb_cred_part.r_address)) {
-	krb5_clear_error_string (context);
-	ret = KRB5KRB_AP_ERR_BADADDR;
-	goto out;
+	&& auth_context->local_address) {
+	if(auth_context->local_port &&
+	   enc_krb_cred_part.r_address->addr_type == KRB5_ADDRESS_ADDRPORT) {
+	    krb5_address *a;
+	    int cmp;
+	    ret = krb5_make_addrport (context, &a,
+				      auth_context->local_address,
+				      auth_context->local_port);
+	    if (ret)
+		goto out;
+	    
+	    cmp = krb5_address_compare (context,
+					a,
+					enc_krb_cred_part.r_address);
+	    krb5_free_address (context, a);
+	    free (a);
+	    
+	    if (cmp == 0) {
+		krb5_clear_error_string (context);
+		ret = KRB5KRB_AP_ERR_BADADDR;
+		goto out;
+	    }
+	} else {
+	    if(!krb5_address_compare (context,
+				      auth_context->local_address,
+				      enc_krb_cred_part.r_address)) {
+		krb5_clear_error_string (context);
+		ret = KRB5KRB_AP_ERR_BADADDR;
+		goto out;
+	    }		
+	}
     }
 
     /* check timestamp */
@@ -190,7 +214,6 @@ krb5_rd_cred(krb5_context context,
     for (i = 0; i < enc_krb_cred_part.ticket_info.len; ++i) {
 	KrbCredInfo *kci = &enc_krb_cred_part.ticket_info.val[i];
 	krb5_creds *creds;
-	u_char buf[1024];
 	size_t len;
 
 	creds = calloc(1, sizeof(*creds));
@@ -200,12 +223,12 @@ krb5_rd_cred(krb5_context context,
 	    goto out;
 	}
 
-	ret = encode_Ticket (buf + sizeof(buf) - 1, sizeof(buf),
-			     &cred.tickets.val[i],
-			     &len);
+	ASN1_MALLOC_ENCODE(Ticket, creds->ticket.data, creds->ticket.length, 
+			   &cred.tickets.val[i], &len, ret);
 	if (ret)
 	    goto out;
-	krb5_data_copy (&creds->ticket, buf + sizeof(buf) - len, len);
+	if(creds->ticket.length != len)
+	    krb5_abortx(context, "internal error in ASN.1 encoder");
 	copy_EncryptionKey (&kci->key, &creds->session);
 	if (kci->prealm && kci->pname)
 	    principalname2krb5_principal (&creds->client,
