@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.376 2003/05/13 23:02:15 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.377 2003/05/14 04:53:04 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -392,7 +392,7 @@ typedef struct {
 %type	<v.gid>			gids gid_list gid_item
 %type	<v.route>		route
 %type	<v.redirection>		redirection redirpool
-%type	<v.string>		label string
+%type	<v.string>		label string tag
 %type	<v.keep_state>		keep
 %type	<v.state_opt>		state_opt_spec state_opt_list state_opt_item
 %type	<v.logquick>		logquick
@@ -2457,7 +2457,7 @@ nataction	: no NAT {
 		}
 		;
 
-natrule		: nataction interface af proto fromto redirpool pooltype
+natrule		: nataction interface af proto fromto tag redirpool pooltype
 		  staticport
 		{
 			struct pf_rule	r;
@@ -2479,45 +2479,48 @@ natrule		: nataction interface af proto fromto redirpool pooltype
 					r.af = $5.dst.host->af;
 			}
 
+			if ($6 != NULL)
+				strlcpy(r.tagname, $6, PF_TAG_NAME_SIZE);
+
 			if (r.action == PF_NONAT || r.action == PF_NORDR) {
-				if ($6 != NULL) {
+				if ($7 != NULL) {
 					yyerror("translation rule with 'no' "
 					    "does not need '->'");
 					YYERROR;
 				}
 			} else {
-				if ($6 == NULL || $6->host == NULL) {
+				if ($7 == NULL || $7->host == NULL) {
 					yyerror("translation rule requires '-> "
 					    "address'");
 					YYERROR;
 				}
-				if (disallow_table($6->host, "invalid use of "
+				if (disallow_table($7->host, "invalid use of "
 				    "table <%s> as the redirection address "
 				    "of a translation rule"))
 					YYERROR;
-				if (!r.af && ! $6->host->ifindex)
-					r.af = $6->host->af;
+				if (!r.af && ! $7->host->ifindex)
+					r.af = $7->host->af;
 
-				remove_invalid_hosts(&$6->host, &r.af);
-				if (invalid_redirect($6->host, r.af))
+				remove_invalid_hosts(&$7->host, &r.af);
+				if (invalid_redirect($7->host, r.af))
 					YYERROR;
 
-				r.rpool.proxy_port[0] = ntohs($6->rport.a);
+				r.rpool.proxy_port[0] = ntohs($7->rport.a);
 
 				switch (r.action) {
 				case PF_RDR:
-					if (!$6->rport.b && $6->rport.t &&
+					if (!$7->rport.b && $7->rport.t &&
 					    $5.dst.port != NULL) {
 						r.rpool.proxy_port[1] =
-						    ntohs($6->rport.a) +
+						    ntohs($7->rport.a) +
 						    (ntohs($5.dst.port->port[1]) -
 						    ntohs($5.dst.port->port[0]));
 					} else
 						r.rpool.proxy_port[1] =
-						    ntohs($6->rport.b);
+						    ntohs($7->rport.b);
 					break;
 				case PF_NAT:
-					r.rpool.proxy_port[1] = ntohs($6->rport.b);
+					r.rpool.proxy_port[1] = ntohs($7->rport.b);
 					if (!r.rpool.proxy_port[0] &&
 					    !r.rpool.proxy_port[1]) {
 						r.rpool.proxy_port[0] =
@@ -2532,8 +2535,8 @@ natrule		: nataction interface af proto fromto redirpool pooltype
 					break;
 				}
 
-				if ($6->host->next) {
-					r.rpool.opts = $7.type;
+				if ($7->host->next) {
+					r.rpool.opts = $8.type;
 					if (r.rpool.opts == PF_POOL_NONE)
 						r.rpool.opts =
 						    PF_POOL_ROUNDROBIN;
@@ -2546,28 +2549,28 @@ natrule		: nataction interface af proto fromto redirpool pooltype
 					}
 				} else {
 					if ((r.af == AF_INET &&
-					    unmask(&$6->host->addr.v.a.mask,
+					    unmask(&$7->host->addr.v.a.mask,
 					    r.af) == 32) ||
 					    (r.af == AF_INET6 &&
-					    unmask(&$6->host->addr.v.a.mask,
+					    unmask(&$7->host->addr.v.a.mask,
 					    r.af) == 128)) {
 						r.rpool.opts = PF_POOL_NONE;
 					} else {
-						if ($7.type == PF_POOL_NONE)
+						if ($8.type == PF_POOL_NONE)
 							r.rpool.opts =
 							    PF_POOL_ROUNDROBIN;
 						else
 							r.rpool.opts =
-							    $7.type;
+							    $8.type;
 					}
 				}
 			}
 
-			if ($7.key != NULL)
-				memcpy(&r.rpool.key, $7.key,
+			if ($8.key != NULL)
+				memcpy(&r.rpool.key, $8.key,
 				    sizeof(struct pf_poolhashkey));
 
-			if ($8 != NULL) {
+			if ($9 != NULL) {
 				if (r.action == PF_NAT)
 					r.rpool.opts |= PF_POOL_STATICPORT;
 				else {
@@ -2577,10 +2580,10 @@ natrule		: nataction interface af proto fromto redirpool pooltype
 				}
 			}
 
-			expand_rule(&r, $2, $6 == NULL ? NULL : $6->host, $4,
+			expand_rule(&r, $2, $7 == NULL ? NULL : $7->host, $4,
 			    $5.src.host, $5.src.port, $5.dst.host, $5.dst.port,
 			    0, 0, 0);
-			free($6);
+			free($7);
 		}
 		;
 
@@ -2705,6 +2708,9 @@ binatrule	: no BINAT interface af proto FROM host TO ipspec redirection
 			pfctl_add_rule(pf, &binat);
 		}
 		;
+
+tag		: /* empty */		{ $$ = NULL; }
+		| TAG STRING		{ $$ = $2; }
 
 route_host	: STRING			{
 			struct node_host	*n;
@@ -3030,6 +3036,10 @@ rdr_consistent(struct pf_rule *r)
 				}
 			}
 		}
+	}
+	if (r->tagname[0]) {
+		yyerror("tagging on rdr rules is not supported yet");
+		problems++;
 	}
 	return (-problems);
 }
