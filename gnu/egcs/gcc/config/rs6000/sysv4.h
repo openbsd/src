@@ -1372,7 +1372,7 @@ do {									\
 #endif
 
 #ifndef LIBC_OPENBSD_SPEC
-#define LIBC_OPENBSD_SPEC "-lc%{pthread:_r}%{p:_p}%{!p:%{pg:_p}}"
+#define LIBC_OPENBSD_SPEC "%{!shared:-lc%{pthread:_r}%{p:_p}%{!p:%{pg:_p}}}"
 #endif
 
 #ifndef	STARTFILE_OPENBSD_SPEC
