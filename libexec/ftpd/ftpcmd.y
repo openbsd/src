@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpcmd.y,v 1.16 1998/05/22 06:46:09 deraadt Exp $	*/
+/*	$OpenBSD: ftpcmd.y,v 1.17 1999/10/08 14:40:35 deraadt Exp $	*/
 /*	$NetBSD: ftpcmd.y,v 1.7 1996/04/08 19:03:11 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@
 #if 0
 static char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
-static char rcsid[] = "$OpenBSD: ftpcmd.y,v 1.16 1998/05/22 06:46:09 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ftpcmd.y,v 1.17 1999/10/08 14:40:35 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -1088,7 +1088,7 @@ yylex()
 		dostr1:
 			if (cbuf[cpos] == ' ') {
 				cpos++;
-				state = state == OSTR ? STR2 : ++state;
+				state = state == OSTR ? STR2 : state+1;
 				return (SP);
 			}
 			break;
