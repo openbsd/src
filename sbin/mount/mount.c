@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.c,v 1.11 1996/12/23 07:46:53 downsj Exp $	*/
+/*	$OpenBSD: mount.c,v 1.12 1996/12/23 08:38:49 downsj Exp $	*/
 /*	$NetBSD: mount.c,v 1.24 1995/11/18 03:34:29 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount.c	8.19 (Berkeley) 4/19/94";
 #else
-static char rcsid[] = "$OpenBSD: mount.c,v 1.11 1996/12/23 07:46:53 downsj Exp $";
+static char rcsid[] = "$OpenBSD: mount.c,v 1.12 1996/12/23 08:38:49 downsj Exp $";
 #endif
 #endif /* not lint */
 
@@ -588,7 +588,7 @@ disklabelcheck(fs)
 
 	if (strcmp(fs->fs_vfstype, "nfs") != 0 ||
 	    strpbrk(fs->fs_spec, ":@") == NULL) {
-		labelfs = readlabelfs(fs->fs_spec, 1);
+		labelfs = readlabelfs(fs->fs_spec, 0);
 		if (labelfs == NULL ||
 		    strcmp(labelfs, fs->fs_vfstype) == 0)
 			return (0);
