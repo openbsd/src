@@ -1,4 +1,4 @@
-.\"	$OpenBSD: brconfig.8,v 1.48 2004/01/21 19:42:42 jmc Exp $
+.\"	$OpenBSD: brconfig.8,v 1.49 2004/02/27 12:32:05 markus Exp $
 .\"
 .\" Copyright (c) 1999-2001 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -255,6 +255,8 @@ Defaults to 55, minimum of 1, maximum of 65535.
 .El
 .Sh EXAMPLES
 .Bl -tag -width brconfig
+.It Cm # ifconfig bridge0 create
+Create a bridge pseudo network device.
 .It Cm # brconfig bridge0 add rl0 add xl0 up
 Add the Ethernet interfaces rl0 and xl0 to the bridge bridge0, and
 start the bridge forwarding packets.
@@ -344,10 +346,12 @@ interface:
 # brconfig bridge0 add gif0 add fxp1
 .Ed
 .Pp
-Configure the gif0 interface:
+Create and configure the gif0 interface:
 .Bd -literal
-(on bridge 1) # ifconfig gif0 giftunnel 1.2.3.4 4.3.2.1
-(on bridge 2) # ifconfig gif0 giftunnel 4.3.2.1 1.2.3.4
+(on bridge 1) # ifconfig gif0 create
+(on bridge 1) # ifconfig gif0 tunnel 1.2.3.4 4.3.2.1
+(on bridge 2) # ifconfig gif0 create
+(on bridge 2) # ifconfig gif0 tunnel 4.3.2.1 1.2.3.4
 .Ed
 .Pp
 Create Security Associations (SAs) between the external IP address of each
@@ -365,11 +369,9 @@ Set up ingress flows so that traffic is allowed between the two bridges
 for the above associations:
 .Bd -literal
 (on bridge1) # ipsecadm flow -dst 4.3.2.1 -out \e
-	-transport etherip -require \e
-	-addr 1.2.3.4 255.255.255.255 4.3.2.1 255.255.255.255
+	-transport etherip -require -addr 1.2.3.4/32 4.3.2.1/32
 (on bridge2) # ipsecadm flow -dst 1.2.3.4 -out \e
-	-transport etherip -require \e
-	-addr 4.3.2.1 255.255.255.255 1.2.3.4 255.255.255.255
+	-transport etherip -require -addr 4.3.2.1/32 1.2.3.4/32
 .Ed
 .Pp
 Bring up the internal interface (if not already up) and encapsulation
