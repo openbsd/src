@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.47 2002/03/14 01:27:13 millert Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.48 2002/07/14 09:19:17 mdw Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -249,8 +249,10 @@ readline(buf, n, to)
 	while (1) {
 		switch ((ch = getchar())) {
 		case CTRL('u'):
-			while (p-- > buf)
+			while (p > buf) {
 				putchar('\177');
+				p--;
+			}
 			continue;
 		case '\n':
 		case '\r':
