@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.24 2001/06/25 21:44:00 mickey Exp $
+#	$OpenBSD: RAMDISK,v 1.25 2001/06/26 22:03:04 drahn Exp $
 #
 # PPC GENERIC config file
 #
@@ -61,7 +61,7 @@ vgafb0		at pci? dev ? function ?	# PCI VGA graphics
 #ahc*		at pci? dev ? function ?	# Adaptec 294x, aic78x0 SCSI
 #bha*		at pci? dev ? function ?	# BusLogic 9xx SCSI
 #pcscp*		at pci? dev ? function ?	# AMD Am53c974 PCscsi-PCI SCSI
-#pciide*	at pci? dev ? function ?
+pciide*	at pci? dev ? function ?
 macobio0	at pci? dev ? function ?
 gm*		at pci? dev ? function ?	# GMAC ethernet
 an*		at pci? dev ? function ?	# Cisco/Aironet 802.11DS
@@ -112,10 +112,10 @@ scsibus*	at siop?
 #scsibus*	at pcscp?
 
 wdc*		at macobio? flags 0x0
-#wd*		at pciide? channel ? drive ?
-#wd*		at wdc? channel ? drive ? flags 0x0000
 wd*		at wdc? drive ? flags 0x0000
+wd*		at pciide? channel ? drive ?
 atapiscsi*	at wdc? channel ? flags 0x0000
+atapiscsi*	at pciide? channel ? flags 0x0000
 scsibus*	at atapiscsi?
 
 # PCI USB Controllers
