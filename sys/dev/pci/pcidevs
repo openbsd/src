@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.558 2002/10/24 11:43:38 mickey Exp $
+	$OpenBSD: pcidevs,v 1.559 2002/10/24 11:58:40 mickey Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -1082,7 +1082,8 @@ product COMPAQ HOST_PCI_BRIDGE2 0xae6d	Host-PCI
 product COMPAQ DP4000		0xb011	Embedded Netelligent 10/100 TX
 product COMPAQ N10T2		0xb012	Netelligent 10 T/2 PCI
 product COMPAQ N10_TX_UTP	0xb030	Netelligent 10/100 TX
-product COMPAQ CSA5iDL380	0xb178	Smart Array 5i DL380
+product COMPAQ CSA5300_2	0xb060	Smart Array 5300 rev.2
+product COMPAQ CSA5i_2		0xb178	Smart Array 5i/532 rev.2
 product COMPAQ NF3P		0xf130	NetFlex 3/P
 product COMPAQ NF3P_BNC		0xf150	NetFlex 3/PB
 
