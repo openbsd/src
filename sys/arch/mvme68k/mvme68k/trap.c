@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.38 2001/11/25 17:15:20 miod Exp $ */
+/*	$OpenBSD: trap.c,v 1.39 2001/11/28 13:47:38 art Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -580,10 +580,10 @@ copyfault:
 				vm_offset_t bva;
 
 				rv = pmap_mapmulti(map->pmap, va);
-				if (rv != KERN_SUCCESS) {
+				if (rv) {
 					bva = HPMMBASEADDR(va);
 					rv = uvm_fault(map, bva, 0, ftype);
-					if (rv == KERN_SUCCESS)
+					if (rv == 0)
 						(void) pmap_mapmulti(map->pmap, va);
 				}
 			} else
@@ -602,16 +602,16 @@ copyfault:
 			 * error.
 			 */
 			if ((caddr_t)va >= vm->vm_maxsaddr && map != kernel_map) {
-				if (rv == KERN_SUCCESS) {
+				if (rv == 0) {
 					unsigned nss;
 
 					nss = btoc(USRSTACK-(unsigned)va);
 					if (nss > vm->vm_ssize)
 						vm->vm_ssize = nss;
-				} else if (rv == KERN_PROTECTION_FAILURE)
-					rv = KERN_INVALID_ADDRESS;
+				} else if (rv == EACCES)
+					rv = EFAULT;
 			}
-			if (rv == KERN_SUCCESS) {
+			if (rv == 0) {
 				if (type == T_MMUFLT) {
 #if defined(M68040)
 					if (mmutype == MMU_68040)

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.7 2001/02/02 01:55:52 enami Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.11 2001/03/19 00:29:04 chs Exp $	*/
 
 /* 
  * Copyright (c) 1998 Chuck Silvers.
@@ -64,7 +64,7 @@ static struct ubc_map *ubc_find_mapping __P((struct uvm_object *, voff_t));
 				 (((u_long)(offset)) >> PAGE_SHIFT)) & \
 				ubc_object.hashmask)
 
-#define UBC_QUEUE(offset) (&ubc_object.inactive[((offset) / ubc_winsize) & \
+#define UBC_QUEUE(offset) (&ubc_object.inactive[((offset) >> ubc_winshift) & \
 					       (UBC_NQUEUES - 1)])
 
 struct ubc_map
@@ -103,7 +103,8 @@ struct uvm_pagerops ubc_pager =
 };
 
 int ubc_nwins = UBC_NWINS;
-int ubc_winsize = UBC_WINSIZE;
+int ubc_winshift = UBC_WINSHIFT;
+int ubc_winsize;
 #ifdef PMAP_PREFER
 int ubc_nqueues;
 boolean_t ubc_release_unmap = FALSE;
@@ -150,14 +151,15 @@ ubc_init(void)
 	va = (vaddr_t)1L;
 #ifdef PMAP_PREFER
 	PMAP_PREFER(0, &va);
-	if (va < ubc_winsize) {
-		va = ubc_winsize;
+	ubc_nqueues = va >> ubc_winshift;
+	if (ubc_nqueues == 0) {
+		ubc_nqueues = 1;
 	}
-	ubc_nqueues = va / ubc_winsize;
 	if (ubc_nqueues != 1) {
 		ubc_release_unmap = TRUE;
 	}
 #endif
+	ubc_winsize = 1 << ubc_winshift;
 	ubc_object.inactive = malloc(UBC_NQUEUES *
 				     sizeof(struct ubc_inactive_head),
 				     M_TEMP, M_NOWAIT);
@@ -179,10 +181,9 @@ ubc_init(void)
 	}
 
 	if (uvm_map(kernel_map, (vaddr_t *)&ubc_object.kva,
-		    ubc_nwins * ubc_winsize, &ubc_object.uobj, 0, (vsize_t)va,
+		    ubc_nwins << ubc_winshift, &ubc_object.uobj, 0, (vsize_t)va,
 		    UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL, UVM_INH_NONE,
-				UVM_ADV_RANDOM, UVM_FLAG_NOMERGE))
-	    != KERN_SUCCESS) {
+				UVM_ADV_RANDOM, UVM_FLAG_NOMERGE)) != 0) {
 		panic("ubc_init: failed to map ubc_object\n");
 	}
 	UVMHIST_INIT(ubchist, 300);
@@ -192,7 +193,7 @@ ubc_init(void)
 /*
  * ubc_fault: fault routine for ubc mapping
  */
-static int
+int
 ubc_fault(ufi, ign1, ign2, ign3, ign4, fault_type, access_type, flags)
 	struct uvm_faultinfo *ufi;
 	vaddr_t ign1;
@@ -207,7 +208,7 @@ ubc_fault(ufi, ign1, ign2, ign3, ign4, fault_type, access_type, flags)
 	struct ubc_map *umap;
 	vaddr_t va, eva, ubc_offset, slot_offset;
 	int i, error, rv, npages;
-	struct vm_page *pgs[ubc_winsize >> PAGE_SHIFT], *pg;
+	struct vm_page *pgs[(1 << ubc_winshift) >> PAGE_SHIFT], *pg;
 	UVMHIST_FUNC("ubc_fault");  UVMHIST_CALLED(ubchist);
 
 	/*
@@ -217,7 +218,7 @@ ubc_fault(ufi, ign1, ign2, ign3, ign4, fault_type, access_type, flags)
 	 */
 	if (flags & PGO_LOCKED) {
 #if 0
-		return VM_PAGER_UNLOCK;
+		return EBUSY;
 #else
 		uvmfault_unlockall(ufi, NULL, &ubc_object.uobj, NULL);
 		flags &= ~PGO_LOCKED;
@@ -230,7 +231,7 @@ ubc_fault(ufi, ign1, ign2, ign3, ign4, fault_type, access_type, flags)
 	UVMHIST_LOG(ubchist, "va 0x%lx ubc_offset 0x%lx at %d",
 		    va, ubc_offset, access_type,0);
 
-	umap = &ubc_object.umap[ubc_offset / ubc_winsize];
+	umap = &ubc_object.umap[ubc_offset >> ubc_winshift];
 	KASSERT(umap->refcount != 0);
 	slot_offset = trunc_page(ubc_offset & (ubc_winsize - 1));
 
@@ -287,10 +288,10 @@ again:
 		goto again;
 	}
 	if (error) {
-		return VM_PAGER_ERROR;
+		return error;
 	}
 	if (npages == 0) {
-		return VM_PAGER_OK;
+		return 0;
 	}
 
 	va = ufi->orig_rvaddr;
@@ -328,14 +329,14 @@ again:
 		UVM_PAGE_OWN(pg, NULL);
 	}
 	simple_unlock(&uobj->vmobjlock);
-	return VM_PAGER_OK;
+	return 0;
 }
 
 /*
  * local functions
  */
 
-static struct ubc_map *
+struct ubc_map *
 ubc_find_mapping(uobj, offset)
 	struct uvm_object *uobj;
 	voff_t offset;
@@ -411,7 +412,7 @@ again:
 				 umap, hash);
 
 		va = (vaddr_t)(ubc_object.kva +
-			       (umap - ubc_object.umap) * ubc_winsize);
+			       ((umap - ubc_object.umap) << ubc_winshift));
 		pmap_remove(pmap_kernel(), va, va + ubc_winsize);
 	}
 
@@ -435,10 +436,11 @@ again:
 	splx(s);
 	UVMHIST_LOG(ubchist, "umap %p refs %d va %p",
 		    umap, umap->refcount,
-		    ubc_object.kva + (umap - ubc_object.umap) * ubc_winsize,0);
+		    ubc_object.kva + ((umap - ubc_object.umap) << ubc_winshift),
+		    0);
 
 	return ubc_object.kva +
-		(umap - ubc_object.umap) * ubc_winsize + slot_offset;
+		((umap - ubc_object.umap) << ubc_winshift) + slot_offset;
 }
 
 
@@ -457,7 +459,7 @@ ubc_release(va, wlen)
 	s = splbio();
 	simple_lock(&ubc_object.uobj.vmobjlock);
 
-	umap = &ubc_object.umap[((char *)va - ubc_object.kva) / ubc_winsize];
+	umap = &ubc_object.umap[((char *)va - ubc_object.kva) >> ubc_winshift];
 	uobj = umap->uobj;
 	KASSERT(uobj != NULL);
 
@@ -481,7 +483,7 @@ ubc_release(va, wlen)
 			 */
 
 			va = (vaddr_t)(ubc_object.kva +
-			    (umap - ubc_object.umap) * ubc_winsize);
+			    ((umap - ubc_object.umap) << ubc_winshift));
 			pmap_remove(pmap_kernel(), va, va + ubc_winsize);
 			LIST_REMOVE(umap, hash);
 			umap->uobj = NULL;
@@ -534,7 +536,7 @@ ubc_flush(uobj, start, end)
 		 */
 
 		va = (vaddr_t)(ubc_object.kva +
-			       (umap - ubc_object.umap) * ubc_winsize);
+			       ((umap - ubc_object.umap) << ubc_winshift));
 		pmap_remove(pmap_kernel(), va, va + ubc_winsize);
 
 		LIST_REMOVE(umap, hash);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.24 2001/11/17 05:07:55 hugh Exp $ */
+/*	$OpenBSD: pmap.c,v 1.25 2001/11/28 13:47:39 art Exp $ */
 /*	$NetBSD: pmap.c,v 1.74 1999/11/13 21:32:25 matt Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999 Ludd, University of Lule}, Sweden.
@@ -722,7 +722,7 @@ if (startpmapdebug)
 					break;
 				if (flags & PMAP_CANFAIL) {
 					RECURSEEND;
-					return (KERN_RESOURCE_SHORTAGE);
+					return (ENOMEM);
 				}
 
 				panic("pmap_enter: no free pages");
@@ -745,13 +745,13 @@ if (startpmapdebug)
 	if (newpte == (oldpte | PG_W)) {
 		patch[i] |= PG_W; /* Just wiring change */
 		RECURSEEND;
-		return (KERN_SUCCESS);
+		return (0);
 	}
 
 	/* mapping unchanged? just return. */
 	if (newpte == oldpte) {
 		RECURSEEND;
-		return (KERN_SUCCESS);
+		return (0);
 	}
 
 	/* Changing mapping? */
@@ -814,7 +814,7 @@ if (startpmapdebug)
 		more_pventries();
 
 	mtpr(0, PR_TBIA); /* Always; safety belt */
-	return (KERN_SUCCESS);
+	return (0);
 }
 
 void *

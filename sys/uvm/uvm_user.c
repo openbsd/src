@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_user.c,v 1.6 2001/11/06 01:35:04 art Exp $	*/
-/*	$NetBSD: uvm_user.c,v 1.8 2000/06/27 17:29:37 mrg Exp $	*/
+/*	$OpenBSD: uvm_user.c,v 1.7 2001/11/28 13:47:40 art Exp $	*/
+/*	$NetBSD: uvm_user.c,v 1.9 2001/03/15 06:10:58 chs Exp $	*/
 
 /*
  *
@@ -50,19 +50,15 @@
  * uvm_deallocate: deallocate memory (unmap)
  */
 
-int
+void
 uvm_deallocate(map, start, size)
 	vm_map_t map;
 	vaddr_t start;
 	vsize_t size;
 {
 
-	if (map == NULL)
-		panic("uvm_deallocate with null map");
+	if (size == 0)
+		return;
 
-	if (size == (vaddr_t) 0)
-		return (KERN_SUCCESS);
-
-	return(uvm_unmap(map, trunc_page(start), round_page(start+size)));
-
+	uvm_unmap(map, trunc_page(start), round_page(start + size));
 }

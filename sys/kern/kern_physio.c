@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_physio.c,v 1.16 2001/11/15 23:15:15 art Exp $	*/
+/*	$OpenBSD: kern_physio.c,v 1.17 2001/11/28 13:47:39 art Exp $	*/
 /*	$NetBSD: kern_physio.c,v 1.28 1997/05/19 10:43:28 pk Exp $	*/
 
 /*-
@@ -173,11 +173,12 @@ physio(strategy, bp, dev, flags, minphys, uio)
 			 * restores it.
 			 */
 			PHOLD(p);
-			if (uvm_vslock(p, bp->b_data, todo, (flags & B_READ) ?
-			    VM_PROT_READ | VM_PROT_WRITE : VM_PROT_READ) !=
-			    KERN_SUCCESS) {
+			error = uvm_vslock(p, bp->b_data, todo,
+			    (flags & B_READ) ?
+			    VM_PROT_READ | VM_PROT_WRITE : VM_PROT_READ);
+			if (error) {
 				bp->b_flags |= B_ERROR;
-				bp->b_error = EFAULT;
+				bp->b_error = error;
 				goto after_unlock;
 			}
 			vmapbuf(bp, todo);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.25 2001/11/07 22:32:29 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.26 2001/11/28 13:47:39 art Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -404,7 +404,7 @@ trap18x(unsigned type, struct m88100_saved_state *frame)
 		if ((frame->dpfsr >> 16 & 0x7) == 0x4	     /* seg fault  */
 		    || (frame->dpfsr >> 16 & 0x7) == 0x5) {  /* page fault */
 			result = uvm_fault(map, va, 0, ftype);
-			if (result == KERN_SUCCESS) {
+			if (result == 0) {
 			/*
 			 * We could resolve the fault. Call
 			 * data_access_emulation to drain the data unit pipe
@@ -494,15 +494,15 @@ outtahere:
 		}
 
 		if ((caddr_t)va >= vm->vm_maxsaddr) {
-			if (result == KERN_SUCCESS) {
+			if (result == 0) {
 				nss = btoc(USRSTACK - va);/* XXX check this */
 				if (nss > vm->vm_ssize)
 					vm->vm_ssize = nss;
-			} else if (result == KERN_PROTECTION_FAILURE)
-				result = KERN_INVALID_ADDRESS;
+			} else if (result == EACCES)
+				result = EFAULT;
 		}
 
-		if (result == KERN_SUCCESS) {
+		if (result == 0) {
 			if (type == T_DATAFLT+T_USER) {
 			/*
 			 * We could resolve the fault. Call
@@ -519,9 +519,9 @@ outtahere:
 				frame->snip = frame->sxip & ~NIP_E;
 			}
 		} else {
-			sig = result == KERN_PROTECTION_FAILURE ? 
+			sig = result == EACCES ?
 				SIGBUS : SIGSEGV;
-			fault_type = result == KERN_PROTECTION_FAILURE ? 
+			fault_type = result == EACCES ?
 				BUS_ADRERR : SEGV_MAPERR;
 		}
 		break;
@@ -965,7 +965,7 @@ trap197(unsigned type, struct m88100_saved_state *frame)
 			if ((frame->dsr & CMMU_DSR_SI)	      /* seg fault  */
 			    || (frame->dsr & CMMU_DSR_PI)) { /* page fault */
 				result = uvm_fault(map, va, 0, ftype);
-				if (result == KERN_SUCCESS) {
+				if (result == 0) {
 					return;
 				}
 			}
@@ -973,7 +973,7 @@ trap197(unsigned type, struct m88100_saved_state *frame)
 			if ((frame->isr & CMMU_ISR_SI)	      /* seg fault  */
 			    || (frame->isr & CMMU_ISR_PI)) { /* page fault */
 				result = uvm_fault(map, va, 0, ftype);
-				if (result == KERN_SUCCESS) {
+				if (result == 0) {
 					return;
 				}
 			}
@@ -1018,7 +1018,7 @@ trap197(unsigned type, struct m88100_saved_state *frame)
 			if ((frame->dsr & CMMU_DSR_SI)	      /* seg fault  */
 			    || (frame->dsr & CMMU_DSR_PI)) { /* page fault */
 				result = uvm_fault(map, va, 0, ftype);
-				if (result == KERN_SUCCESS) {
+				if (result == 0) {
 					return;
 				}
 			}
@@ -1026,24 +1026,24 @@ trap197(unsigned type, struct m88100_saved_state *frame)
 			if ((frame->isr & CMMU_ISR_SI)	      /* seg fault  */
 			    || (frame->isr & CMMU_ISR_PI)) { /* page fault */
 				result = uvm_fault(map, va, 0, ftype);
-				if (result == KERN_SUCCESS) {
+				if (result == 0) {
 					return;
 				}
 			}
 		}
 
 		if ((caddr_t)va >= vm->vm_maxsaddr) {
-			if (result == KERN_SUCCESS) {
+			if (result == 0) {
 				nss = btoc(USRSTACK - va);/* XXX check this */
 				if (nss > vm->vm_ssize)
 					vm->vm_ssize = nss;
-			} else if (result == KERN_PROTECTION_FAILURE)
-				result = KERN_INVALID_ADDRESS;
+			} else if (result == EACCES)
+				result = EFAULT;
 		}
 
-		if (result != KERN_SUCCESS) {
-			sig = result == KERN_PROTECTION_FAILURE ? SIGBUS : SIGSEGV;
-			fault_type = result == KERN_PROTECTION_FAILURE ? BUS_ADRERR
+		if (result != 0) {
+			sig = result == EACCES ? SIGBUS : SIGSEGV;
+			fault_type = result == EACCES ? BUS_ADRERR
 				     : SEGV_MAPERR;
 		} else {
 			return;

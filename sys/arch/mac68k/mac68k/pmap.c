@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.31 2001/11/07 01:18:00 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.32 2001/11/28 13:47:38 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.55 1999/04/22 04:24:53 chs Exp $	*/
 
 /*
@@ -341,14 +341,14 @@ pmap_init()
 		    NULL, UVM_UNKNOWN_OFFSET, 0,
 		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE,
 				UVM_INH_NONE, UVM_ADV_RANDOM,
-				UVM_FLAG_FIXED)) != KERN_SUCCESS)
+				UVM_FLAG_FIXED)))
 		goto bogons;
 	addr = (vaddr_t)Sysmap;
 	if (uvm_map(kernel_map, &addr, MAC_MAX_PTSIZE,
 		    NULL, UVM_UNKNOWN_OFFSET, 0,
 		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE,
 				UVM_INH_NONE, UVM_ADV_RANDOM,
-				UVM_FLAG_FIXED)) != KERN_SUCCESS) {
+				UVM_FLAG_FIXED))) {
 		/*
 		 * If this fails, it is probably because the static
 		 * portion of the kernel page table isn't big enough
@@ -422,11 +422,9 @@ pmap_init()
 	rv = uvm_map(kernel_map, &addr, s, NULL, UVM_UNKNOWN_OFFSET, 0,
 		     UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
 				 UVM_ADV_RANDOM, UVM_FLAG_NOMERGE));
-	if (rv != KERN_SUCCESS || (addr + s) >= (vaddr_t)Sysmap)
+	if (rv || (addr + s) >= (vaddr_t)Sysmap)
 		panic("pmap_init: kernel PT too small");
-	rv = uvm_unmap(kernel_map, addr, addr + s);
-	if (rv != KERN_SUCCESS)
-		panic("pmap_init: uvm_unmap failed");
+	uvm_unmap(kernel_map, addr, addr + s);
 
 	/*
 	 * Now allocate the space and link the pages together to
@@ -1259,7 +1257,7 @@ validate:
 		pmap_check_wiring("enter", trunc_page((vaddr_t)pmap_pte(pmap, va)));
 #endif
 
-	return (KERN_SUCCESS);
+	return (0);
 }
 
 /*
@@ -2210,7 +2208,7 @@ pmap_enter_ptpage(pmap, va)
 		PMAP_DPRINTF(PDB_ENTER|PDB_PTPAGE,
 		    ("enter: about to fault UPT pg at %lx\n", va));
 		s = uvm_fault(pt_map, va, 0, VM_PROT_READ|VM_PROT_WRITE);
-		if (s != KERN_SUCCESS) {
+		if (s) {
 			printf("uvm_fault(pt_map, 0x%lx, 0, RW) -> %d\n",
 			    va, s);
 			panic("pmap_enter: uvm_fault failed");

@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_aobj.c,v 1.21 2001/11/27 05:27:12 art Exp $	*/
-/*	$NetBSD: uvm_aobj.c,v 1.39 2001/02/18 21:19:08 chs Exp $	*/
+/*	$OpenBSD: uvm_aobj.c,v 1.22 2001/11/28 13:47:39 art Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.40 2001/03/10 22:46:47 chs Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -935,7 +935,7 @@ uao_flush(uobj, start, stop, flags)
  *
  * cases 1 and 2 can be handled with PGO_LOCKED, case 3 cannot.
  * so, if the "center" page hits case 3 (or any page, with PGO_ALLPAGES),
- * then we will need to return VM_PAGER_UNLOCK.
+ * then we will need to return EBUSY.
  *
  * => prefer map unlocked (not required)
  * => object must be locked!  we will _unlock_ it before starting any I/O.
@@ -1040,10 +1040,10 @@ uao_get(uobj, offset, pps, npagesp, centeridx, access_type, advice, flags)
 		*npagesp = gotpages;
 		if (done)
 			/* bingo! */
-			return(VM_PAGER_OK);	
+			return(0);	
 		else
 			/* EEK!   Need to unlock and I/O */
-			return(VM_PAGER_UNLOCK);
+			return(EBUSY);
 	}
 
 	/*
@@ -1177,7 +1177,7 @@ uao_get(uobj, offset, pps, npagesp, centeridx, access_type, advice, flags)
 			/*
 			 * I/O done.  check for errors.
 			 */
-			if (rv != VM_PAGER_OK)
+			if (rv != 0)
 			{
 				UVMHIST_LOG(pdhist, "<- done (error=%d)",
 				    rv,0,0,0);
@@ -1228,7 +1228,7 @@ uao_get(uobj, offset, pps, npagesp, centeridx, access_type, advice, flags)
 
 	simple_unlock(&uobj->vmobjlock);
 	UVMHIST_LOG(pdhist, "<- done (OK)",0,0,0,0);
-	return(VM_PAGER_OK);
+	return(0);
 }
 
 /*
@@ -1488,14 +1488,14 @@ uao_pagein_page(aobj, pageidx)
 	simple_lock(&aobj->u_obj.vmobjlock);
 
 	switch (rv) {
-	case VM_PAGER_OK:
+	case 0:
 		break;
 
-	case VM_PAGER_ERROR:
-	case VM_PAGER_REFAULT:
+	case EIO:
+	case ERESTART:
 		/*
 		 * nothing more to do on errors.
-		 * VM_PAGER_REFAULT can only mean that the anon was freed,
+		 * ERESTART can only mean that the anon was freed,
 		 * so again there's nothing to do.
 		 */
 		return FALSE;

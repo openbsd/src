@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.26 2001/11/25 17:21:32 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.27 2001/11/28 13:47:37 art Exp $	*/
 /*	$NetBSD: trap.c,v 1.56 1997/07/16 00:01:47 is Exp $	*/
 
 /*
@@ -380,7 +380,7 @@ trapmmufault(type, code, v, fp, p, sticks)
 	if (map != kernel_map && (caddr_t)va >= vm->vm_maxsaddr) {
 		nss = btoc(USRSTACK - (unsigned)va);
 		if (nss > btoc(p->p_rlimit[RLIMIT_STACK].rlim_cur)) {
-			rv = KERN_FAILURE;
+			rv = EFAULT;
 			goto nogo;
 		}
 	}
@@ -403,7 +403,7 @@ trapmmufault(type, code, v, fp, p, sticks)
 #else
 	if (mmutype == MMU_68040) {
 #endif
-		if(rv != KERN_SUCCESS) {
+		if (rv) {
 			goto nogo;
 		}
 
@@ -435,8 +435,7 @@ trapmmufault(type, code, v, fp, p, sticks)
 		if (fp->f_fmt7.f_wb2s & WBS_VALID &&
 		   ((fp->f_fmt7.f_wb2s & WBS_TTMASK)==WBS_TT_MOVE16) == 0) {
 			if (_write_back(2, fp->f_fmt7.f_wb2s, 
-			    fp->f_fmt7.f_wb2d, fp->f_fmt7.f_wb2a, map)
-			    != KERN_SUCCESS)
+			    fp->f_fmt7.f_wb2d, fp->f_fmt7.f_wb2a, map))
 				goto nogo;
 			if ((fp->f_fmt7.f_wb2s & WBS_TMMASK) 
 			    != (code & SSW_TMMASK))
@@ -452,8 +451,7 @@ trapmmufault(type, code, v, fp, p, sticks)
 			else
 				wb3_map = &vm->vm_map;
 			if (_write_back(3, fp->f_fmt7.f_wb3s, 
-			    fp->f_fmt7.f_wb3d, fp->f_fmt7.f_wb3a, wb3_map)
-			    != KERN_SUCCESS)
+			    fp->f_fmt7.f_wb3d, fp->f_fmt7.f_wb3a, wb3_map))
 				goto nogo;
 		}
 	}
@@ -467,22 +465,22 @@ trapmmufault(type, code, v, fp, p, sticks)
 	 * error.
 	 */
 	if (map != kernel_map && (caddr_t)va >= vm->vm_maxsaddr) {
-		if (rv == KERN_SUCCESS) {
+		if (rv == 0) {
 			nss = btoc(USRSTACK-(unsigned)va);
 			if (nss > vm->vm_ssize)
 				vm->vm_ssize = nss;
-		} else if (rv == KERN_PROTECTION_FAILURE)
-			rv = KERN_INVALID_ADDRESS;
+		} else if (rv == EACCES)
+			rv = EFAULT;
 	}
 
-	if (rv == KERN_SUCCESS) {
+	if (rv == 0) {
 		if (type == T_MMUFLT)
 			return;
 		userret(p, fp, sticks, 0, 0); 
 		return;
 	}
 #else /* use hacky 386bsd_code */
-	if (rv == KERN_SUCCESS) {
+	if (rv == 0) {
 		/*
 		 * XXX: continuation of rude stack hack
 		 */
@@ -994,7 +992,7 @@ _write_back (wb, wb_sts, wb_data, wb_addr, wb_map)
 			    trunc_page((vm_offset_t)wb_addr), 
 			    0, VM_PROT_READ | VM_PROT_WRITE);
 
-			if (wb_rc != KERN_SUCCESS)
+			if (wb_rc)
 				return (wb_rc);
 #ifdef DEBUG
 			if (mmudebug)
@@ -1026,8 +1024,7 @@ _write_back (wb, wb_sts, wb_data, wb_addr, wb_map)
 			wb_rc = uvm_fault(wb_map,
 			    trunc_page((vm_offset_t)wb_addr + wb_extra_page),
 			    0, VM_PROT_READ | VM_PROT_WRITE);
-
-			if (wb_rc != KERN_SUCCESS)
+			if (wb_rc)
 				return (wb_rc);
 		}
 #ifdef DEBUG
@@ -1061,7 +1058,7 @@ _write_back (wb, wb_sts, wb_data, wb_addr, wb_map)
 		curpcb->pcb_onfault = NULL;
 	if ((wb_sts & WBS_TMMASK) != FC_USERD)
 		__asm volatile("movec %0,dfc\n" : : "d" (FC_USERD));
-	return (KERN_SUCCESS);
+	return (0);
 }
 
 /*

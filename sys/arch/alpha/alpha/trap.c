@@ -1,4 +1,4 @@
-/* $OpenBSD: trap.c,v 1.27 2001/11/06 19:53:13 miod Exp $ */
+/* $OpenBSD: trap.c,v 1.28 2001/11/28 13:47:37 art Exp $ */
 /* $NetBSD: trap.c,v 1.52 2000/05/24 16:48:33 thorpej Exp $ */
 
 /*-
@@ -501,17 +501,17 @@ trap(a0, a1, a2, entry, framep)
 			if (map != kernel_map &&
 			    (caddr_t)va >= vm->vm_maxsaddr &&
 			    va < USRSTACK) {
-				if (rv == KERN_SUCCESS) {
+				if (rv == 0) {
 					unsigned nss;
 	
 					nss = btoc(USRSTACK -
 					    (unsigned long)va);
 					if (nss > vm->vm_ssize)
 						vm->vm_ssize = nss;
-				} else if (rv == KERN_PROTECTION_FAILURE)
-					rv = KERN_INVALID_ADDRESS;
+				} else if (rv == EACCES)
+					rv = EFAULT;
 			}
-			if (rv == KERN_SUCCESS) {
+			if (rv == 0) {
 				goto out;
 			}
 
@@ -529,7 +529,7 @@ trap(a0, a1, a2, entry, framep)
 			ucode = ftype;
 			v = (caddr_t)a0;
 			typ = SEGV_MAPERR;
-			if (rv == KERN_RESOURCE_SHORTAGE) {
+			if (rv == ENOMEM) {
 				printf("UVM: pid %d (%s), uid %d killed: "
 				       "out of swap\n", p->p_pid, p->p_comm,
 				       p->p_cred && p->p_ucred ?

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.30 2001/11/07 01:18:00 art Exp $ */
+/*	$OpenBSD: pmap.c,v 1.31 2001/11/28 13:47:38 art Exp $ */
 
 /* 
  * Copyright (c) 1995 Theo de Raadt
@@ -349,14 +349,14 @@ pmap_init()
 		    NULL, UVM_UNKNOWN_OFFSET, 0,
 		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE,
 				UVM_INH_NONE, UVM_ADV_RANDOM,
-				UVM_FLAG_FIXED)) != KERN_SUCCESS)
+				UVM_FLAG_FIXED)))
 		goto bogons;
 	addr = (vaddr_t) Sysmap;
 	if (uvm_map(kernel_map, &addr, M68K_MAX_PTSIZE,
 	    NULL, UVM_UNKNOWN_OFFSET, 0,
 	    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE,
 				UVM_INH_NONE, UVM_ADV_RANDOM,
-				UVM_FLAG_FIXED)) != KERN_SUCCESS) {
+				UVM_FLAG_FIXED))) {
 		/*
 		 * If this fails, it is probably because the static
 		 * portion of the kernel page table isn't big enough
@@ -446,11 +446,9 @@ pmap_init()
 	rv = uvm_map(kernel_map, &addr, s, NULL, UVM_UNKNOWN_OFFSET, 0,
 		     UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
 				 UVM_ADV_RANDOM, UVM_FLAG_NOMERGE));
-	if (rv != KERN_SUCCESS || (addr + s) >= (vaddr_t)Sysmap)
+	if (rv || (addr + s) >= (vaddr_t)Sysmap)
 		panic("pmap_init: kernel PT too small");
-	rv = uvm_unmap(kernel_map, addr, addr + s);
-	if (rv != KERN_SUCCESS)
-		panic("pmap_init: uvm_unmap failed");
+	uvm_unmap(kernel_map, addr, addr + s);
 
 	/*
 	 * Now allocate the space and link the pages together to
@@ -1232,7 +1230,7 @@ validate:
 		pmap_check_wiring("enter", trunc_page(pmap_pte(pmap, va)));
 #endif
 
-	return (KERN_SUCCESS);
+	return (0);
 }
 
 /*
@@ -1689,9 +1687,9 @@ pmap_mapmulti(pmap, va)
 	if (*ste == SG_NV && (*bste & SG_V)) {
 		*ste = *bste;
 		TBIAU();
-		return (KERN_SUCCESS);
+		return (0);
 	}
-	return (KERN_INVALID_ADDRESS);
+	return (EFAULT);
 }
 #endif
 
@@ -2225,8 +2223,7 @@ pmap_enter_ptpage(pmap, va)
 			printf("enter: about to fault UPT pg at %x\n", va);
 #endif
 		if (uvm_fault_wire(pt_map, va, va + PAGE_SIZE,
-		    VM_PROT_READ|VM_PROT_WRITE)
-		    != KERN_SUCCESS)
+		    VM_PROT_READ|VM_PROT_WRITE))
 			panic("pmap_enter: uvm_fault failed");
 		pmap_extract(pmap_kernel(), va, &ptpa);
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_misc.c,v 1.37 2001/11/07 01:18:01 art Exp $	 */
+/*	$OpenBSD: svr4_misc.c,v 1.38 2001/11/28 13:47:39 art Exp $	 */
 /*	$NetBSD: svr4_misc.c,v 1.42 1996/12/06 03:22:34 christos Exp $	 */
 
 /*
@@ -654,7 +654,7 @@ svr4_sys_break(p, v, retval)
 	struct svr4_sys_break_args *uap = v;
 	register struct vmspace *vm = p->p_vmspace;
 	vaddr_t		new, old;
-	int             rv;
+	int             error;
 	register int    diff;
 
 	old = (vaddr_t) vm->vm_daddr;
@@ -674,23 +674,19 @@ svr4_sys_break(p, v, retval)
 	DPRINTF(("break(3): old %lx new %lx diff %x\n", old, new, diff));
 
 	if (diff > 0) {
-		rv = uvm_map(&vm->vm_map, &old, diff, NULL, UVM_UNKNOWN_OFFSET,
+		error = uvm_map(&vm->vm_map, &old, diff, NULL, UVM_UNKNOWN_OFFSET,
 			0, UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL, UVM_INH_COPY,
 				    UVM_ADV_NORMAL,
 				    UVM_FLAG_AMAPPAD|UVM_FLAG_FIXED|
 				    UVM_FLAG_OVERLAY|UVM_FLAG_COPYONW));
-		if (rv != KERN_SUCCESS) {
-			uprintf("sbrk: grow failed, return = %d\n", rv);
-			return ENOMEM;
+		if (error) {
+			uprintf("sbrk: grow failed, return = %d\n", error);
+			return error;
 		}
 		vm->vm_dsize += btoc(diff);
 	} else if (diff < 0) {
 		diff = -diff;
-		rv = uvm_deallocate(&vm->vm_map, new, diff);
-		if (rv != KERN_SUCCESS) {
-			uprintf("sbrk: shrink failed, return = %d\n", rv);
-			return ENOMEM;
-		}
+		uvm_deallocate(&vm->vm_map, new, diff);
 		vm->vm_dsize -= btoc(diff);
 	}
 	return 0;

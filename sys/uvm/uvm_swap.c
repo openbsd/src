@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_swap.c,v 1.42 2001/11/27 05:27:12 art Exp $	*/
-/*	$NetBSD: uvm_swap.c,v 1.46 2001/02/18 21:19:08 chs Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.43 2001/11/28 13:47:40 art Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.47 2001/03/10 22:46:51 chs Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -1754,12 +1754,13 @@ uvm_swap_get(page, swslot, flags)
 	uvmexp.nswget++;
 	KASSERT(flags & PGO_SYNCIO);
 	if (swslot == SWSLOT_BAD) {
-		return VM_PAGER_ERROR;
+		return EIO;
 	}
 
 	/*
 	 * this page is (about to be) no longer only in swap.
 	 */
+
 	simple_lock(&uvm.swap_data_lock);
 	uvmexp.swpgonly--;
 	simple_unlock(&uvm.swap_data_lock);
@@ -1767,10 +1768,12 @@ uvm_swap_get(page, swslot, flags)
 	result = uvm_swap_io(&page, swslot, 1, B_READ | 
 	    ((flags & PGO_SYNCIO) ? 0 : B_ASYNC));
 
-	if (result != VM_PAGER_OK && result != VM_PAGER_PEND) {
+	if (result != 0) {
+
 		/*
 		 * oops, the read failed so it really is still only in swap.
 		 */
+
 		simple_lock(&uvm.swap_data_lock);
 		uvmexp.swpgonly++;
 		simple_unlock(&uvm.swap_data_lock);
@@ -1791,7 +1794,7 @@ uvm_swap_io(pps, startslot, npages, flags)
 	daddr_t startblk;
 	struct	buf *bp;
 	vaddr_t kva;
-	int	result, s, mapinflags, pflag;
+	int	error, s, mapinflags, pflag;
 	boolean_t write, async;
 #ifdef UVM_SWAP_ENCRYPT
 	vaddr_t dstkva;
@@ -1821,7 +1824,7 @@ uvm_swap_io(pps, startslot, npages, flags)
 		mapinflags |= UVMPAGER_MAPIN_WAITOK;
 	kva = uvm_pagermapin(pps, npages, mapinflags);
 	if (kva == 0)
-		return (VM_PAGER_AGAIN);
+		return (EAGAIN);
 
 #ifdef UVM_SWAP_ENCRYPT
 	if (write) {
@@ -1867,14 +1870,14 @@ uvm_swap_io(pps, startslot, npages, flags)
 
 		if (!uvm_swap_allocpages(tpps, npages)) {
 			uvm_pagermapout(kva, npages);
-			return (VM_PAGER_AGAIN);
+			return (EAGAIN);
 		}
 		
 		dstkva = uvm_pagermapin(tpps, npages, swmapflags);
 		if (dstkva == NULL) {
 			uvm_pagermapout(kva, npages);
 			uvm_swap_freepages(tpps, npages);
-			return (VM_PAGER_AGAIN);
+			return (EAGAIN);
 		}
 
 		src = (caddr_t) kva;
@@ -1928,7 +1931,7 @@ uvm_swap_io(pps, startslot, npages, flags)
 			uvm_swap_freepages(tpps, npages);
 		}
 #endif
-		return (VM_PAGER_AGAIN);
+		return (EAGAIN);
 	}
 	
 #ifdef UVM_SWAP_ENCRYPT
@@ -1992,13 +1995,12 @@ uvm_swap_io(pps, startslot, npages, flags)
 	 */
 	VOP_STRATEGY(bp);
 	if (async)
-		return (VM_PAGER_PEND);
+		return 0;
 
 	/*
 	 * must be sync i/o.   wait for it to finish
 	 */
-	(void) biowait(bp);
-	result = (bp->b_flags & B_ERROR) ? VM_PAGER_ERROR : VM_PAGER_OK;
+	error = biowait(bp);
 
 #ifdef UVM_SWAP_ENCRYPT
 	/* 
@@ -2050,8 +2052,8 @@ uvm_swap_io(pps, startslot, npages, flags)
 	/*
 	 * finally return.
 	 */
-	UVMHIST_LOG(pdhist, "<- done (sync)  result=%d", result, 0, 0, 0);
-	return (result);
+	UVMHIST_LOG(pdhist, "<- done (sync)  error=%d", error, 0, 0, 0);
+	return (error);
 }
 
 static void

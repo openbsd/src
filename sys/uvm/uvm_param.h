@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_param.h,v 1.3 2001/11/27 05:27:12 art Exp $	*/
-/*	$NetBSD: uvm_param.h,v 1.5 2001/03/09 01:02:12 chs Exp $	*/
+/*	$OpenBSD: uvm_param.h,v 1.4 2001/11/28 13:47:40 art Exp $	*/
+/*	$NetBSD: uvm_param.h,v 1.7 2001/03/21 03:16:06 chs Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -135,20 +135,6 @@ struct _ps_strings {
 
 #define SWAPSKIPBYTES	8192	/* never use at the start of a swap space */
 
-/* 
- *	Return values from the VM routines.
- */
-#define	KERN_SUCCESS		0
-#define	KERN_INVALID_ADDRESS	1
-#define	KERN_PROTECTION_FAILURE	2
-#define	KERN_NO_SPACE		3
-#define	KERN_INVALID_ARGUMENT	4
-#define	KERN_FAILURE		5
-#define	KERN_RESOURCE_SHORTAGE	6
-#define	KERN_NOT_RECEIVER	7
-#define	KERN_NO_ACCESS		8
-#define	KERN_PAGES_LOCKED	9
-
 #ifndef ASSEMBLER
 /*
  *	Convert addresses to pages and vice versa.
@@ -167,7 +153,7 @@ struct _ps_strings {
 
 extern psize_t		mem_size;	/* size of physical memory (bytes) */
 extern int		ubc_nwins;	/* number of UBC mapping windows */
-extern int		ubc_winsize;	/* size of a UBC mapping window */
+extern int		ubc_winshift;	/* shift for a UBC mapping window */
 
 #else
 /* out-of-kernel versions of round_page and trunc_page */

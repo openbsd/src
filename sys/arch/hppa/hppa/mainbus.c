@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.16 2001/11/07 01:18:00 art Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.17 2001/11/28 13:47:38 art Exp $	*/
 
 /*
  * Copyright (c) 1998-2000 Michael Shalayeff
@@ -727,7 +727,7 @@ mbus_dmamem_alloc(void *v, bus_size_t size, bus_size_t alignment,
 
 	if (uvm_map(kernel_map, &va, size, NULL, UVM_UNKNOWN_OFFSET, 0,
 	    UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL, UVM_INH_NONE,
-	      UVM_ADV_RANDOM, 0)) != KERN_SUCCESS) {
+	      UVM_ADV_RANDOM, 0))) {
 		uvm_pglistfree(&pglist);
 		return ENOMEM;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.44 2001/11/06 18:41:09 art Exp $	*/
+/*	$OpenBSD: trap.c,v 1.45 2001/11/28 13:47:38 art Exp $	*/
 /*	$NetBSD: trap.c,v 1.95 1996/05/05 06:50:02 mycroft Exp $	*/
 
 /*-
@@ -469,7 +469,7 @@ trap(frame)
 		p->p_addr->u_pcb.pcb_onfault = NULL;
 		rv = uvm_fault(map, va, 0, ftype);
 		p->p_addr->u_pcb.pcb_onfault = onfault;
-		if (rv == KERN_SUCCESS) {
+		if (rv == 0) {
 			if (nss > vm->vm_ssize)
 				vm->vm_ssize = nss;
 			if (type == T_PAGEFLT)
@@ -565,8 +565,7 @@ trapwrite(addr)
 			nss = 0;
 	}
 
-	if (uvm_fault(&vm->vm_map, va, 0, VM_PROT_READ | VM_PROT_WRITE)
-	    != KERN_SUCCESS)
+	if (uvm_fault(&vm->vm_map, va, 0, VM_PROT_READ | VM_PROT_WRITE))
 		return 1;
 
 	if (nss > vm->vm_ssize)

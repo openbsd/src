@@ -1,4 +1,4 @@
-/*	$OpenBSD: cross.c,v 1.18 2001/11/06 19:53:14 miod Exp $	*/
+/*	$OpenBSD: cross.c,v 1.19 2001/11/28 13:47:38 art Exp $	*/
 
 /*
  * Copyright (c) 1994, 1996 Niklas Hallqvist, Carsten Hammer
@@ -282,7 +282,7 @@ cross_mem_map(bst, addr, sz, cacheable, handle)
 	vm_map_lock(kernel_map);
 	error = vm_map_insert(kernel_map, object, 0, kva, kva + banked_size);
 	vm_map_unlock(kernel_map);
-	if (error != KERN_SUCCESS)
+	if (error)
 		goto fail_insert;
 
 	/* Tell caller where to find his data.  */

@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_map_i.h,v 1.9 2001/11/09 03:32:23 art Exp $	*/
-/*	$NetBSD: uvm_map_i.h,v 1.18 2000/11/27 08:40:04 chs Exp $	*/
+/*	$OpenBSD: uvm_map_i.h,v 1.10 2001/11/28 13:47:40 art Exp $	*/
+/*	$NetBSD: uvm_map_i.h,v 1.19 2001/03/15 06:10:57 chs Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -159,12 +159,11 @@ uvm_map_setup(map, min, max, flags)
  * => map must be unlocked (we will lock it)
  */
 
-MAP_INLINE int
+MAP_INLINE void
 uvm_unmap(map, start, end)
 	vm_map_t map;
 	vaddr_t start,end;
 {
-	int result;
 	vm_map_entry_t dead_entries;
 	UVMHIST_FUNC("uvm_unmap"); UVMHIST_CALLED(maphist);
 
@@ -175,14 +174,13 @@ uvm_unmap(map, start, end)
 	 * detach from the dead entries...
 	 */
 	vm_map_lock(map);
-	result = uvm_unmap_remove(map, start, end, &dead_entries);
+	uvm_unmap_remove(map, start, end, &dead_entries);
 	vm_map_unlock(map);
 
 	if (dead_entries != NULL)
 		uvm_unmap_detach(dead_entries, 0);
 
 	UVMHIST_LOG(maphist, "<- done", 0,0,0,0);
-	return(result);
 }
 
 

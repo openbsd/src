@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_anon.c,v 1.16 2001/11/27 05:27:12 art Exp $	*/
-/*	$NetBSD: uvm_anon.c,v 1.15 2001/02/18 21:19:08 chs Exp $	*/
+/*	$OpenBSD: uvm_anon.c,v 1.17 2001/11/28 13:47:39 art Exp $	*/
+/*	$NetBSD: uvm_anon.c,v 1.16 2001/03/10 22:46:47 chs Exp $	*/
 
 /*
  *
@@ -482,20 +482,20 @@ anon_pagein(anon)
 	rv = uvmfault_anonget(NULL, NULL, anon);
 
 	/*
-	 * if rv == VM_PAGER_OK, anon is still locked, else anon
+	 * if rv == 0, anon is still locked, else anon
 	 * is unlocked
 	 */
 
 	switch (rv) {
-	case VM_PAGER_OK:
+	case 0:
 		break;
 
-	case VM_PAGER_ERROR:
-	case VM_PAGER_REFAULT:
+	case EIO:
+	case ERESTART:
 
 		/*
 		 * nothing more to do on errors.
-		 * VM_PAGER_REFAULT can only mean that the anon was freed,
+		 * ERESTART can only mean that the anon was freed,
 		 * so again there's nothing to do.
 		 */
 

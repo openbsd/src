@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.38 2001/11/13 14:31:52 drahn Exp $	*/
+/*	$OpenBSD: trap.c,v 1.39 2001/11/28 13:47:39 art Exp $	*/
 /*	$NetBSD: trap.c,v 1.3 1996/10/13 03:31:37 christos Exp $	*/
 
 /*
@@ -290,9 +290,7 @@ trap(frame)
 				ftype = VM_PROT_READ | VM_PROT_WRITE;
 			else
 				ftype = VM_PROT_READ;
-			if (uvm_fault(map, trunc_page(va), 0, ftype)
-			    == KERN_SUCCESS)
-			{
+			if (uvm_fault(map, trunc_page(va), 0, ftype) == 0) {
 				return;
 			}
 			if ((fb = p->p_addr->u_pcb.pcb_onfault)) {
@@ -318,8 +316,7 @@ printf("kern dsi on addr %x iar %x\n", frame->dar, frame->srr0);
 			} else
 				vftype = ftype = VM_PROT_READ;
 			if (uvm_fault(&p->p_vmspace->vm_map,
-				     trunc_page(frame->dar), 0, ftype)
-			    == KERN_SUCCESS) {
+				     trunc_page(frame->dar), 0, ftype) == 0) {
 				break;
 			}
 #if 0
@@ -338,8 +335,7 @@ printf("dsi on addr %x iar %x lr %x\n", frame->dar, frame->srr0,frame->lr);
 			
 			ftype = VM_PROT_READ | VM_PROT_EXECUTE;
 			if (uvm_fault(&p->p_vmspace->vm_map,
-				     trunc_page(frame->srr0), 0, ftype)
-			    == KERN_SUCCESS) {
+				     trunc_page(frame->srr0), 0, ftype)) {
 				break;
 			}
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.34 2001/11/06 21:33:53 mickey Exp $	*/
+/*	$OpenBSD: trap.c,v 1.35 2001/11/28 13:47:39 art Exp $	*/
 /*	$NetBSD: trap.c,v 1.58 1997/09/12 08:55:01 pk Exp $ */
 
 /*
@@ -695,7 +695,7 @@ mem_access_fault(type, ser, v, pc, psr, tf)
 		if (cold)
 			goto kfault;
 		if (va >= KERNBASE) {
-			if (uvm_fault(kernel_map, va, 0, ftype) == KERN_SUCCESS)
+			if (uvm_fault(kernel_map, va, 0, ftype) == 0)
 				return;
 			goto kfault;
 		}
@@ -726,14 +726,14 @@ mem_access_fault(type, ser, v, pc, psr, tf)
 	 * error.
 	 */
 	if ((caddr_t)va >= vm->vm_maxsaddr) {
-		if (rv == KERN_SUCCESS) {
+		if (rv == 0) {
 			unsigned nss = btoc(USRSTACK - va);
 			if (nss > vm->vm_ssize)
 				vm->vm_ssize = nss;
-		} else if (rv == KERN_PROTECTION_FAILURE)
-			rv = KERN_INVALID_ADDRESS;
+		} else if (rv == EACCES)
+			rv = EFAULT;
 	}
-	if (rv == KERN_SUCCESS) {
+	if (rv == 0) {
 		/*
 		 * pmap_enter() does not enter all requests made from
 		 * vm_fault into the MMU (as that causes unnecessary
@@ -899,7 +899,7 @@ mem_access_fault4m(type, sfsr, sfva, tf)
 		 */
 		if (mmumod == SUN4M_MMU_HS) { /* On HS, we have va for both */
 			if (vm_fault(kernel_map, trunc_page(pc),
-				     VM_PROT_READ, 0) != KERN_SUCCESS)
+				     VM_PROT_READ, 0))
 #ifdef DEBUG
 				printf("mem_access_fault: "
 					"can't pagein 1st text fault.\n")
@@ -935,7 +935,7 @@ mem_access_fault4m(type, sfsr, sfva, tf)
 		if (cold)
 			goto kfault;
 		if (va >= KERNBASE) {
-			if (uvm_fault(kernel_map, va, 0, ftype) == KERN_SUCCESS)
+			if (uvm_fault(kernel_map, va, 0, ftype) == 0)
 				return;
 			goto kfault;
 		}
@@ -954,14 +954,14 @@ mem_access_fault4m(type, sfsr, sfva, tf)
 	 * error.
 	 */
 	if ((caddr_t)va >= vm->vm_maxsaddr) {
-		if (rv == KERN_SUCCESS) {
+		if (rv == 0) {
 			unsigned nss = btoc(USRSTACK - va);
 			if (nss > vm->vm_ssize)
 				vm->vm_ssize = nss;
-		} else if (rv == KERN_PROTECTION_FAILURE)
-			rv = KERN_INVALID_ADDRESS;
+		} else if (rv == EACCES)
+			rv = EFAULT;
 	}
-	if (rv != KERN_SUCCESS) {
+	if (rv != 0) {
 		/*
 		 * Pagein failed.  If doing copyin/out, return to onfault
 		 * address.  Any other page fault in kernel, die; if user

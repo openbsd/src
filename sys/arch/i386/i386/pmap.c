@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.47 2001/11/07 02:55:50 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.48 2001/11/28 13:47:38 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -2744,9 +2744,6 @@ pmap_change_attrs(pg, setbits, clearbits)
 
 	for (pve = pvh->pvh_list; pve != NULL; pve = pve->pv_next) {
 #ifdef DIAGNOSTIC
-		if (pve->pv_va >= uvm.pager_sva && pve->pv_va < uvm.pager_eva) {
-			printf("pmap_change_attrs: found pager VA on pv_list\n");
-		}
 		if (!pmap_valid_entry(pve->pv_pmap->pm_pdir[pdei(pve->pv_va)]))
 			panic("pmap_change_attrs: mapping without PTP "
 			      "detected");
@@ -3498,7 +3495,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 		ptp = pmap_get_ptp(pmap, pdei(va), FALSE);
 		if (ptp == NULL) {
 			if (flags & PMAP_CANFAIL) {
-				return (KERN_RESOURCE_SHORTAGE);
+				return (ENOMEM);
 			}
 			panic("pmap_enter: get ptp failed");
 		}
@@ -3598,7 +3595,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 			pve = pmap_alloc_pv(pmap, ALLOCPV_NEED);
 			if (pve == NULL) {
 				if (flags & PMAP_CANFAIL) {
-					error = KERN_RESOURCE_SHORTAGE;
+					error = ENOMEM;
 					goto out;
 				}
 				panic("pmap_enter: no pv entries available");
@@ -3636,7 +3633,7 @@ enter_now:
 	if ((opte & ~(PG_M|PG_U)) != npte && pmap_is_curpmap(pmap))
 		pmap_update_pg(va);
 
-	error = KERN_SUCCESS;
+	error = 0;
 
 out:
 	pmap_unmap_ptes(pmap);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.28 2001/11/07 01:18:00 art Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.29 2001/11/28 13:47:38 art Exp $	*/
 
 /*
  * Copyright (c) 1999-2000 Michael Shalayeff
@@ -316,7 +316,7 @@ vmapbuf(bp, len)
 		kva = vm_map_min(phys_map);
 		if (uvm_map(phys_map, &kva, size, NULL, addr, 0,
 		    UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL,
-		    UVM_INH_NONE, UVM_ADV_RANDOM, 0)) == KERN_SUCCESS)
+		    UVM_INH_NONE, UVM_ADV_RANDOM, 0)) == 0)
 			break;
 		tsleep(phys_map, PVM, "vallocwait", 0);
 	}

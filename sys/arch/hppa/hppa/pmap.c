@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.47 2001/11/06 20:57:21 mickey Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.48 2001/11/28 13:47:38 art Exp $	*/
 
 /*
  * Copyright (c) 1998-2001 Michael Shalayeff
@@ -1076,7 +1076,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 		printf("pmap_enter: leaving\n");
 #endif
 
-	return (KERN_SUCCESS);
+	return (0);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_shm.c,v 1.22 2001/11/07 01:18:01 art Exp $	*/
+/*	$OpenBSD: sysv_shm.c,v 1.23 2001/11/28 13:47:39 art Exp $	*/
 /*	$NetBSD: sysv_shm.c,v 1.50 1998/10/21 22:24:29 tron Exp $	*/
 
 /*
@@ -144,15 +144,13 @@ shm_delete_mapping(vm, shmmap_s)
 	struct shmmap_state *shmmap_s;
 {
 	struct shmid_ds *shmseg;
-	int segnum, result;
+	int segnum;
 	size_t size;
 	
 	segnum = IPCID_TO_IX(shmmap_s->shmid);
 	shmseg = &shmsegs[segnum];
 	size = round_page(shmseg->shm_segsz);
-	result = uvm_deallocate(&vm->vm_map, shmmap_s->va, size);
-	if (result != KERN_SUCCESS)
-		return EINVAL;
+	uvm_deallocate(&vm->vm_map, shmmap_s->va, size);
 	shmmap_s->shmid = -1;
 	shmseg->shm_dtime = time.tv_sec;
 	if ((--shmseg->shm_nattch <= 0) &&
@@ -207,7 +205,6 @@ sys_shmat(p, v, retval)
 	vaddr_t attach_va;
 	vm_prot_t prot;
 	vsize_t size;
-	int rv;
 
 	shmmap_s = (struct shmmap_state *)p->p_vmspace->vm_shm;
 	if (shmmap_s == NULL) {
@@ -252,11 +249,11 @@ sys_shmat(p, v, retval)
 	}
 	shm_handle = shmseg->shm_internal;
 	uao_reference(shm_handle->shm_object);
-	rv = uvm_map(&p->p_vmspace->vm_map, &attach_va, size,
+	error = uvm_map(&p->p_vmspace->vm_map, &attach_va, size,
 	    shm_handle->shm_object, 0, 0, UVM_MAPFLAG(prot, prot,
 	    UVM_INH_SHARE, UVM_ADV_RANDOM, 0));
-	if (rv != KERN_SUCCESS) {
-	    return ENOMEM;
+	if (error) {
+		return error;
 	}
 
 	shmmap_s->va = attach_va;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.32 2001/11/25 17:15:19 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.33 2001/11/28 13:47:38 art Exp $	*/
 /*	$NetBSD: trap.c,v 1.57 1998/02/16 20:58:31 thorpej Exp $	*/
 
 /*
@@ -646,10 +646,10 @@ dopanic:
 			vaddr_t bva;
 
 			rv = pmap_mapmulti(map->pmap, va);
-			if (rv != KERN_SUCCESS) {
+			if (rv) {
 				bva = HPMMBASEADDR(va);
 				rv = uvm_fault(map, bva, 0, ftype);
-				if (rv == KERN_SUCCESS)
+				if (rv == 0)
 					(void) pmap_mapmulti(map->pmap, va);
 			}
 		} else
@@ -669,16 +669,16 @@ dopanic:
 		 */
 		if ((vm != NULL && (caddr_t)va >= vm->vm_maxsaddr)
 		    && map != kernel_map) {
-			if (rv == KERN_SUCCESS) {
+			if (rv == 0) {
 				unsigned nss;
 
 				nss = btoc(USRSTACK-(unsigned)va);
 				if (nss > vm->vm_ssize)
 					vm->vm_ssize = nss;
-			} else if (rv == KERN_PROTECTION_FAILURE)
-				rv = KERN_INVALID_ADDRESS;
+			} else if (rv == EACCES)
+				rv = EFAULT;
 		}
-		if (rv == KERN_SUCCESS) {
+		if (rv == 0) {
 			if (type == T_MMUFLT) {
 #ifdef M68040
 				if (cputype == CPU_68040)

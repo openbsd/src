@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.47 2001/11/06 19:53:16 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.48 2001/11/28 13:47:39 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.1 1996/09/30 16:34:52 ws Exp $	*/
 
 /*
@@ -1275,7 +1275,7 @@ pmap_enter_c_pv(pm, va, pa, prot, flags, cacheable, pv)
 	 */
 	if (pte_insert(idx, &pte)) {
 		splx(s);
-		return (KERN_SUCCESS);
+		return (0);
 	}
 	
 	/*
@@ -1288,7 +1288,7 @@ pmap_enter_c_pv(pm, va, pa, prot, flags, cacheable, pv)
 	LIST_INSERT_HEAD(potable + idx, po, po_list);
 	splx(s);
 
-	return (KERN_SUCCESS);
+	return (0);
 }
 
 #define KERN_MAP_PV TRUE

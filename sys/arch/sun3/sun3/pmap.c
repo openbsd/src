@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.31 2001/11/07 01:18:00 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.32 2001/11/28 13:47:39 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.64 1996/11/20 18:57:35 gwr Exp $	*/
 
 /*-
@@ -2507,7 +2507,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 	}
 	PMAP_UNLOCK();
 
-	return (KERN_SUCCESS);
+	return (0);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.c,v 1.32 2001/11/27 05:27:12 art Exp $	*/
+/*	$OpenBSD: uvm_page.c,v 1.33 2001/11/28 13:47:40 art Exp $	*/
 /*	$NetBSD: uvm_page.c,v 1.51 2001/03/09 01:02:12 chs Exp $	*/
 
 /* 
@@ -1071,7 +1071,7 @@ uvm_pagealloc_contig(size, low, high, alignment)
 	addr = vm_map_min(kernel_map);
 	if (uvm_map(kernel_map, &addr, size, NULL, UVM_UNKNOWN_OFFSET, 0,
 		    UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL, UVM_INH_NONE,
-				UVM_ADV_RANDOM, 0)) != KERN_SUCCESS) {
+				UVM_ADV_RANDOM, 0))) {
 		uvm_pglistfree(&pglist);
 		return 0;
 	}

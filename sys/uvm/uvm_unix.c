@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_unix.c,v 1.17 2001/11/07 02:55:51 art Exp $	*/
-/*	$NetBSD: uvm_unix.c,v 1.18 2000/09/13 15:00:25 thorpej Exp $	*/
+/*	$OpenBSD: uvm_unix.c,v 1.18 2001/11/28 13:47:40 art Exp $	*/
+/*	$NetBSD: uvm_unix.c,v 1.20 2001/03/19 02:25:33 simonb Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -78,7 +78,7 @@ sys_obreak(p, v, retval)
 	struct vmspace *vm = p->p_vmspace;
 	vaddr_t new, old;
 	ssize_t diff;
-	int rv;
+	int error;
 
 	old = (vaddr_t)vm->vm_daddr;
 	new = round_page((vaddr_t)SCARG(uap, nsize));
@@ -95,26 +95,23 @@ sys_obreak(p, v, retval)
 	 * grow or shrink?
 	 */
 	if (diff > 0) {
-		rv = uvm_map(&vm->vm_map, &old, diff, NULL, UVM_UNKNOWN_OFFSET,
-		    0, UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL, UVM_INH_COPY,
+		error = uvm_map(&vm->vm_map, &old, diff, NULL,
+		    UVM_UNKNOWN_OFFSET, 0,
+		    UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL, UVM_INH_COPY,
 		    UVM_ADV_NORMAL, UVM_FLAG_AMAPPAD|UVM_FLAG_FIXED|
 		    UVM_FLAG_OVERLAY|UVM_FLAG_COPYONW));
-		if (rv == KERN_SUCCESS) {
-			vm->vm_dsize += atop(diff);
-			return (0);
+		if (error) {
+			uprintf("sbrk: grow %ld failed, error = %d\n",
+				(long)diff, error);
+			return error;
 		}
+		vm->vm_dsize += atop(diff);
 	} else {
-		rv = uvm_deallocate(&vm->vm_map, new, -diff);
-		if (rv == KERN_SUCCESS) {
-			vm->vm_dsize -= atop(-diff);
-			return (0);
-		}
+		uvm_deallocate(&vm->vm_map, new, -diff);
+		vm->vm_dsize -= atop(-diff);
 	}
 
-	uprintf("sbrk: %s %ld failed, return = %d\n",
-	    diff > 0 ? "grow" : "shrink",
-	    (long)(diff > 0 ? diff : -diff), rv);
-	return (ENOMEM);
+	return (0);
 }
 
 /*

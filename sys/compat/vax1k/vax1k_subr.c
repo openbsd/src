@@ -1,4 +1,4 @@
-/*	$OpenBSD: vax1k_subr.c,v 1.1 2001/11/14 14:37:22 hugh Exp $	*/
+/*	$OpenBSD: vax1k_subr.c,v 1.2 2001/11/28 13:47:39 art Exp $	*/
 /*	$NetBSD: vax1k_subr.c,v 1.2 1999/03/24 05:51:20 mrg Exp $	*/
 
 /*
@@ -59,7 +59,7 @@ vax1k_map_readvn(p, cmd)
 	int error;
 
 	if (cmd->ev_len == 0)
-		return(KERN_SUCCESS); /* XXXCDC: should it happen? */
+		return (0);
 	
 	oaddr = cmd->ev_addr;
 	cmd->ev_addr = trunc_page(cmd->ev_addr); /* required by uvm_map */
@@ -90,7 +90,7 @@ vax1k_map_readvn(p, cmd)
 				trunc_page(cmd->ev_addr),
 				round_page(cmd->ev_addr + cmd->ev_len),
 				cmd->ev_prot, FALSE));
-	} else {
-		return(KERN_SUCCESS);
 	}
+
+	return (0);
 }

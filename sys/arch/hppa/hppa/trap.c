@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.32 2001/11/06 20:58:48 mickey Exp $	*/
+/*	$OpenBSD: trap.c,v 1.33 2001/11/28 13:47:38 art Exp $	*/
 
 /*
  * Copyright (c) 1998-2001 Michael Shalayeff
@@ -335,15 +335,15 @@ trap(type, frame)
 		 * error.
 		 */
 		if (va >= (vaddr_t)vm->vm_maxsaddr + vm->vm_ssize) {
-			if (ret == KERN_SUCCESS) {
+			if (ret == 0) {
 				vsize_t nss = btoc(va - USRSTACK + NBPG);
 				if (nss > vm->vm_ssize)
 					vm->vm_ssize = nss;
-			} else if (ret == KERN_PROTECTION_FAILURE)
-				ret = KERN_INVALID_ADDRESS;
+			} else if (ret == EACCES)
+				ret = EFAULT;
 		}
 
-		if (ret != KERN_SUCCESS) {
+		if (ret != 0) {
 			if (type & T_USER) {
 printf("trapsignal: uvm_fault\n");
 				sv.sival_int = frame->tf_ior;

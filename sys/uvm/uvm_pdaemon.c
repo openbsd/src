@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_pdaemon.c,v 1.18 2001/11/12 01:26:10 art Exp $	*/
-/*	$NetBSD: uvm_pdaemon.c,v 1.30 2001/03/09 01:02:12 chs Exp $	*/
+/*	$OpenBSD: uvm_pdaemon.c,v 1.19 2001/11/28 13:47:40 art Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.31 2001/03/10 22:46:50 chs Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -767,18 +767,14 @@ uvmpd_scan_inactive(pglst)
 		 *
 		 * note locking semantics of uvm_pager_put with PGO_PDFREECLUST:
 		 *  IN: locked: uobj (if !swap_backed), page queues
-		 * OUT: locked: uobj (if !swap_backed && result !=VM_PAGER_PEND)
-		 *     !locked: pageqs, uobj (if swap_backed || VM_PAGER_PEND)
-		 *
-		 * [the bit about VM_PAGER_PEND saves us one lock-unlock pair]
+		 * OUT:!locked: pageqs, uobj
 		 */
 
 		/* locked: uobj (if !swap_backed), page queues */
 		uvmexp.pdpageouts++;
 		result = uvm_pager_put(swap_backed ? NULL : uobj, p,
 		    &ppsp, &npages, PGO_ALLPAGES|PGO_PDFREECLUST, start, 0);
-		/* locked: uobj (if !swap_backed && result != PEND) */
-		/* unlocked: pageqs, object (if swap_backed ||result == PEND) */
+		/* unlocked: pageqs, uobj */
 
 		/*
 		 * if we did i/o to swap, zero swslot to indicate that we are
@@ -789,35 +785,10 @@ uvmpd_scan_inactive(pglst)
 			swslot = 0;		/* done with this cluster */
 
 		/*
-		 * first, we check for VM_PAGER_PEND which means that the
-		 * async I/O is in progress and the async I/O done routine
-		 * will clean up after us.   in this case we move on to the
-		 * next page.
-		 *
-		 * there is a very remote chance that the pending async i/o can
-		 * finish _before_ we get here.   if that happens, our page "p"
-		 * may no longer be on the inactive queue.   so we verify this
-		 * when determining the next page (starting over at the head if
-		 * we've lost our inactive page).
+		 * if the pageout failed, reactivate the page and continue.
 		 */
 
-		if (result == VM_PAGER_PEND) {
-			uvmexp.paging += npages;
-			uvm_lock_pageq();
-			uvmexp.pdpending++;
-			if (p) {
-				if (p->pqflags & PQ_INACTIVE)
-					nextpg = TAILQ_NEXT(p, pageq);
-				else
-					nextpg = TAILQ_FIRST(pglst);
-			} else {
-				nextpg = NULL;
-			}
-			continue;
-		}
-
-		if (result == VM_PAGER_ERROR &&
-		    curproc == uvm.pagedaemon_proc) {
+		if (result == EIO && curproc == uvm.pagedaemon_proc) {
 			uvm_lock_pageq();
 			nextpg = TAILQ_NEXT(p, pageq);
 			uvm_pageactivate(p);
@@ -825,134 +796,20 @@ uvmpd_scan_inactive(pglst)
 		}
 
 		/*
-		 * clean up "p" if we have one
+		 * the pageout is in progress.  bump counters and set up
+		 * for the next loop.
 		 */
 
+		uvm_lock_pageq();
+		uvmexp.paging += npages;
+		uvmexp.pdpending++;
 		if (p) {
-			/*
-			 * the I/O request to "p" is done and uvm_pager_put
-			 * has freed any cluster pages it may have allocated
-			 * during I/O.  all that is left for us to do is
-			 * clean up page "p" (which is still PG_BUSY).
-			 *
-			 * our result could be one of the following:
-			 *   VM_PAGER_OK: successful pageout
-			 *
-			 *   VM_PAGER_AGAIN: tmp resource shortage, we skip
-			 *     to next page
-			 *   VM_PAGER_{FAIL,ERROR,BAD}: an error.   we
-			 *     "reactivate" page to get it out of the way (it
-			 *     will eventually drift back into the inactive
-			 *     queue for a retry).
-			 *   VM_PAGER_UNLOCK: should never see this as it is
-			 *     only valid for "get" operations
-			 */
-
-			/* relock p's object: page queues not lock yet, so
-			 * no need for "try" */
-
-			/* !swap_backed case: already locked... */
-			if (swap_backed) {
-				if (anon)
-					simple_lock(&anon->an_lock);
-				else
-					simple_lock(&uobj->vmobjlock);
-			}
-
-			/* handle PG_WANTED now */
-			if (p->flags & PG_WANTED)
-				/* still holding object lock */
-				wakeup(p);
-
-			p->flags &= ~(PG_BUSY|PG_WANTED);
-			UVM_PAGE_OWN(p, NULL);
-
-			/* released during I/O? */
-			if (p->flags & PG_RELEASED) {
-				if (anon) {
-					/* remove page so we can get nextpg */
-					anon->u.an_page = NULL;
-
-					simple_unlock(&anon->an_lock);
-					uvm_anfree(anon);	/* kills anon */
-					pmap_page_protect(p, VM_PROT_NONE);
-					anon = NULL;
-					uvm_lock_pageq();
-					nextpg = TAILQ_NEXT(p, pageq);
-					/* free released page */
-					uvm_pagefree(p);
-
-				} else {
-
-					/*
-					 * pgo_releasepg nukes the page and
-					 * gets "nextpg" for us.  it returns
-					 * with the page queues locked (when
-					 * given nextpg ptr).
-					 */
-
-					if (!uobj->pgops->pgo_releasepg(p,
-					    &nextpg))
-						/* uobj died after release */
-						uobj = NULL;
-
-					/*
-					 * lock page queues here so that they're
-					 * always locked at the end of the loop.
-					 */
-
-					uvm_lock_pageq();
-				}
-			} else {	/* page was not released during I/O */
-				uvm_lock_pageq();
+			if (p->pqflags & PQ_INACTIVE)
 				nextpg = TAILQ_NEXT(p, pageq);
-				if (result != VM_PAGER_OK) {
-					/* pageout was a failure... */
-					if (result != VM_PAGER_AGAIN)
-						uvm_pageactivate(p);
-					pmap_clear_reference(p);
-					/* XXXCDC: if (swap_backed) FREE p's
-					 * swap block? */
-				} else {
-					/* pageout was a success... */
-					pmap_clear_reference(p);
-					pmap_clear_modify(p);
-					p->flags |= PG_CLEAN;
-				}
-			}
-
-			/*
-			 * drop object lock (if there is an object left).   do
-			 * a safety check of nextpg to make sure it is on the
-			 * inactive queue (it should be since PG_BUSY pages on
-			 * the inactive queue can't be re-queued [note: not
-			 * true for active queue]).
-			 */
-
-			if (anon)
-				simple_unlock(&anon->an_lock);
-			else if (uobj)
-				simple_unlock(&uobj->vmobjlock);
-
+			else
+				nextpg = TAILQ_FIRST(pglst);
 		} else {
-
-			/*
-			 * if p is null in this loop, make sure it stays null
-			 * in the next loop.
-			 */
-
 			nextpg = NULL;
-
-			/*
-			 * lock page queues here just so they're always locked
-			 * at the end of the loop.
-			 */
-
-			uvm_lock_pageq();
-		}
-
-		if (nextpg && (nextpg->pqflags & PQ_INACTIVE) == 0) {
-			nextpg = TAILQ_FIRST(pglst);	/* reload! */
 		}
 	}
 	return (retval);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.97 2001/11/22 09:54:04 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.98 2001/11/28 13:47:39 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -4883,7 +4883,7 @@ pmap_enter4_4c(pm, va, pa, prot, flags)
 		printf("pmap_enter: pm %p, va 0x%lx, pa 0x%lx: in MMU hole\n",
 			pm, va, pa);
 #endif
-		return (KERN_FAILURE);
+		return (EINVAL);
 	}
 
 #ifdef DEBUG
@@ -4914,7 +4914,7 @@ pmap_enter4_4c(pm, va, pa, prot, flags)
 	else
 		ret = pmap_enu4_4c(pm, va, prot, flags, pv, pteproto);
 #ifdef DIAGNOSTIC
-	if ((flags & PMAP_CANFAIL) == 0 && ret != KERN_SUCCESS)
+	if ((flags & PMAP_CANFAIL) == 0 && ret)
 		panic("pmap_enter4_4c: can't fail, but did");
 #endif
 	setcontext4(ctx);
@@ -4968,7 +4968,7 @@ pmap_enk4_4c(pm, va, prot, flags, pv, pteproto)
 			/* just changing protection and/or wiring */
 			splx(s);
 			pmap_changeprot4_4c(pm, va, prot, wired);
-			return (KERN_SUCCESS);
+			return (0);
 		}
 
 		if ((tpte & PG_TYPE) == PG_OBMEM) {
@@ -5042,7 +5042,7 @@ pmap_enk4_4c(pm, va, prot, flags, pv, pteproto)
 	setpte4(va, pteproto);
 	splx(s);
 
-	return (KERN_SUCCESS);
+	return (0);
 }
 
 /* enter new (or change existing) user mapping */
@@ -5092,7 +5092,7 @@ pmap_enu4_4c(pm, va, prot, flags, pv, pteproto)
 
 		sp = malloc((u_long)size, M_VMPMAP, M_NOWAIT);
 		if (sp == NULL)
-			return (KERN_RESOURCE_SHORTAGE);
+			return (ENOMEM);
 		qzero((caddr_t)sp, size);
 		rp->rg_segmap = sp;
 		rp->rg_nsegmap = 0;
@@ -5107,7 +5107,7 @@ pmap_enu4_4c(pm, va, prot, flags, pv, pteproto)
 
 		pte = malloc((u_long)size, M_VMPMAP, M_NOWAIT);
 		if (pte == NULL)
-			return (KERN_RESOURCE_SHORTAGE);
+			return (ENOMEM);
 #ifdef DEBUG
 		if (sp->sg_pmeg != seginval)
 			panic("pmap_enter: new ptes, but not seginval");
@@ -5149,7 +5149,7 @@ pmap_enu4_4c(pm, va, prot, flags, pv, pteproto)
 					pm->pm_stats.wired_count++;
 				else
 					pm->pm_stats.wired_count--;
-				return (KERN_SUCCESS);
+				return (0);
 			}
 			/*
 			 * Switcheroo: changing pa for this va.
@@ -5203,7 +5203,7 @@ pmap_enu4_4c(pm, va, prot, flags, pv, pteproto)
 
 	splx(s);
 
-	return (KERN_SUCCESS);
+	return (0);
 }
 
 void
@@ -5309,7 +5309,7 @@ pmap_enter4m(pm, va, pa, prot, flags)
 	else
 		ret = pmap_enu4m(pm, va, prot, flags, pv, pteproto);
 #ifdef DIAGNOSTIC
-	if ((flags & PMAP_CANFAIL) == 0 && ret != KERN_SUCCESS)
+	if ((flags & PMAP_CANFAIL) == 0 && ret != 0)
 		panic("pmap_enter4_4c: can't fail, but did");
 #endif
 	if (pv) {
@@ -5362,7 +5362,7 @@ pmap_enk4m(pm, va, prot, flags, pv, pteproto)
 			/* just changing protection and/or wiring */
 			splx(s);
 			pmap_changeprot4m(pm, va, prot, wired);
-			return (KERN_SUCCESS);
+			return (0);
 		}
 
 		if ((tpte & SRMMU_PGTYPE) == PG_SUN4M_OBMEM) {
@@ -5399,7 +5399,7 @@ pmap_enk4m(pm, va, prot, flags, pv, pteproto)
 
 	splx(s);
 
-	return (KERN_SUCCESS);
+	return (0);
 }
 
 /* enter new (or change existing) user mapping */
@@ -5433,7 +5433,7 @@ pmap_enu4m(pm, va, prot, flags, pv, pteproto)
 
 		sp = malloc((u_long)size, M_VMPMAP, M_NOWAIT);
 		if (sp == NULL)
-			return (KERN_RESOURCE_SHORTAGE);
+			return (ENOMEM);
 		qzero((caddr_t)sp, size);
 		rp->rg_segmap = sp;
 		rp->rg_nsegmap = 0;
@@ -5446,7 +5446,7 @@ pmap_enu4m(pm, va, prot, flags, pv, pteproto)
 
 		ptd = pool_get(&L23_pool, PR_NOWAIT);
 		if (ptd == NULL)
-			return (KERN_RESOURCE_SHORTAGE);
+			return (ENOMEM);
 
 		rp->rg_seg_ptps = ptd;
 		for (i = 0; i < SRMMU_L2SIZE; i++)
@@ -5462,7 +5462,7 @@ pmap_enu4m(pm, va, prot, flags, pv, pteproto)
 
 		pte = pool_get(&L23_pool, PR_NOWAIT);
 		if (pte == NULL)
-			return (KERN_RESOURCE_SHORTAGE);
+			return (ENOMEM);
 
 		sp->sg_pte = pte;
 		sp->sg_npte = 1;
@@ -5491,7 +5491,7 @@ pmap_enu4m(pm, va, prot, flags, pv, pteproto)
 					pm->pm_stats.wired_count++;
 				else
 					pm->pm_stats.wired_count--;
-				return (KERN_SUCCESS);
+				return (0);
 			}
 			/*
 			 * Switcheroo: changing pa for this va.
@@ -5533,7 +5533,7 @@ pmap_enu4m(pm, va, prot, flags, pv, pteproto)
 
 	splx(s);
 
-	return (KERN_SUCCESS);
+	return (0);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.13 2001/11/06 19:53:16 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.14 2001/11/28 13:47:39 art Exp $	*/
 /*	$NetBSD: trap.c,v 1.73 2001/08/09 01:03:01 eeh Exp $ */
 
 /*
@@ -856,8 +856,8 @@ data_access_fault(tf, type, pc, addr, sfva, sfsr)
 			segsz_t nss = btoc(USRSTACK - va);
 			if (nss > vm->vm_ssize)
 				vm->vm_ssize = nss;
-		} else if (rv == KERN_PROTECTION_FAILURE)
-			rv = KERN_INVALID_ADDRESS;
+		} else if (rv == EACCES)
+			rv = EFAULT;
 	}
 	if (rv != 0) {
 		/*
@@ -882,7 +882,7 @@ kfault:
 			tf->tf_npc = onfault + 4;
 			return;
 		}
-		if (rv == KERN_RESOURCE_SHORTAGE) {
+		if (rv == ENOMEM) {
 			printf("UVM: pid %d (%s), uid %d killed: out of swap\n",
 			       p->p_pid, p->p_comm,
 			       p->p_cred && p->p_ucred ?
@@ -1035,8 +1035,8 @@ text_access_fault(tf, type, pc, sfsr)
 			segsz_t nss = btoc(USRSTACK - va);
 			if (nss > vm->vm_ssize)
 				vm->vm_ssize = nss;
-		} else if (rv == KERN_PROTECTION_FAILURE)
-			rv = KERN_INVALID_ADDRESS;
+		} else if (rv == EACCES)
+			rv = EFAULT;
 	}
 	if (rv != 0) {
 		/*
@@ -1129,7 +1129,7 @@ text_access_error(tf, type, pc, sfsr, afva, afsr)
 
 	vm = p->p_vmspace;
 	/* alas! must call the horrible vm code */
-	rv = uvm_fault(&vm->vm_map, (vaddr_t)va, 0, access_type);
+	rv = uvm_fault(&vm->vm_map, va, 0, access_type);
 
 	/*
 	 * If this was a stack access we keep track of the maximum
@@ -1143,8 +1143,8 @@ text_access_error(tf, type, pc, sfsr, afva, afsr)
 			segsz_t nss = btoc(USRSTACK - va);
 			if (nss > vm->vm_ssize)
 				vm->vm_ssize = nss;
-		} else if (rv == KERN_PROTECTION_FAILURE)
-			rv = KERN_INVALID_ADDRESS;
+		} else if (rv == EACCES)
+			rv = EFAULT;
 	}
 	if (rv != 0) {
 		/*
