@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.115 2002/12/18 19:40:41 dhartmei Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.116 2002/12/22 02:33:14 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -40,9 +40,8 @@
 enum	{ PF_IN=1, PF_OUT=2 };
 enum	{ PF_PASS=0, PF_DROP=1, PF_SCRUB=2, PF_NAT=3, PF_NONAT=4,
 	  PF_BINAT=5, PF_NOBINAT=6, PF_RDR=7, PF_NORDR=8 };
-enum	{ PF_RULESET_RULE=0, PF_RULESET_NAT=1,
-	  PF_RULESET_BINAT=2, PF_RULESET_RDR=3 };
-#define PF_RULESET_MAX		PF_RULESET_RDR + 1
+enum	{ PF_RULESET_RULE=0, PF_RULESET_NAT=1, PF_RULESET_BINAT=2,
+	  PF_RULESET_RDR=3, PF_RULESET_MAX=4 };
 enum	{ PF_OP_IRG=1, PF_OP_EQ=2, PF_OP_NE=3, PF_OP_LT=4,
 	  PF_OP_LE=5, PF_OP_GT=6, PF_OP_GE=7, PF_OP_XRG=8, PF_OP_RRG=9 };
 enum	{ PF_DEBUG_NONE=0, PF_DEBUG_URGENT=1, PF_DEBUG_MISC=2 };
