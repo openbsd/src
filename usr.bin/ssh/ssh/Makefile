@@ -15,17 +15,9 @@ MAN=	ssh.1
 LINKS=	${BINDIR}/ssh ${BINDIR}/slogin
 MLINKS=	ssh.1 slogin.1
 
-SRCS=	ssh.c sshconnect.c log-client.c readconf.c hostfile.c readpass.c \
-	tildexpand.c uidswap.c clientloop.c canohost.c rsa.c buffer.c \
-	packet.c xmalloc.c ttymodes.c channels.c bufaux.c authfd.c \
-	authfile.c crc32.c match.c mpaux.c cipher.c compress.c deattack.c\
-	nchan.c compat.c
+SRCS=	ssh.c sshconnect.c log-client.c readconf.c clientloop.c
 
 .include <bsd.own.mk> # for AFS
-
-.if (${AFS} == "yes")
-SRCS+=	radix.c
-.endif
 
 .if (${KERBEROS} == "yes")
 CFLAGS+= -DKRB4 -I/usr/include/kerberosIV

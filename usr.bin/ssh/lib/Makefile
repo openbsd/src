@@ -1,0 +1,26 @@
+.PATH:		${.CURDIR}/..
+
+LIB=	ssh
+SRCS=   authfd.c authfile.c bufaux.c buffer.c canohost.c channels.c \
+	cipher.c compat.c compress.c crc32.c deattack.c hostfile.c \
+	match.c mpaux.c nchan.c packet.c readpass.c rsa.c tildexpand.c \
+	ttymodes.c uidswap.c xmalloc.c
+
+CFLAGS+= ${DEBUG}
+NOPROFILE= yes
+NOPIC=	yes
+
+install:
+	@echo -n
+
+.include <bsd.own.mk>
+
+.if (${KERBEROS} == "yes")
+CFLAGS+= -DKRB4 -I/usr/include/kerberosIV
+.if (${AFS} == "yes")
+CFLAGS+= -DAFS
+SRCS+=  radix.c
+.endif # AFS
+.endif # KERBEROS
+
+.include <bsd.lib.mk>
