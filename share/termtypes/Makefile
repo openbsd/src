@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.9 1999/03/11 07:05:20 millert Exp $
+#	$OpenBSD: Makefile,v 1.10 1999/03/22 18:53:11 millert Exp $
 #
 # Take termcap/terminfo master file and generate termcap/terminfo .db files
 # master: http://www.tuxedo.org/~esr/terminfo/termtypes.master.gz
@@ -21,11 +21,13 @@ terminfo.src: termtypes.master
 terminfo.db: terminfo.src
 	cap_mkdb -i -f terminfo terminfo.src
 
+# Note the disgusting ed hack to remove three lines from xterm
 termcap.src: termtypes.master
 	tic -C ${.ALLSRC} | sed \
 	    -e 's,/usr/share/lib/tabset,/usr/share/tabset,g' \
 	    -e 's,/usr/lib/tabset,/usr/share/tabset,g' \
 	    > ${.TARGET}
+	echo "1\n/^xterm|\n\nd\nd\nd\n.\nw\nq\n" | ed - ${.OBJDIR}/termcap.src >/dev/null 2>&1
 	@if [ ! -s ${.TARGET} ]; then \
 	    echo ${.TARGET} is zero length!  You need to update /usr/bin/tic ;\
 	    exit 1 ;\
