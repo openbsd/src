@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwd_mkdb.c,v 1.11 1997/09/15 10:15:27 deraadt Exp $	*/
+/*	$OpenBSD: pwd_mkdb.c,v 1.12 1997/12/08 07:34:29 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)pwd_mkdb.c	8.5 (Berkeley) 4/20/94";
 #else
-static char *rcsid = "$OpenBSD: pwd_mkdb.c,v 1.11 1997/09/15 10:15:27 deraadt Exp $";
+static char *rcsid = "$OpenBSD: pwd_mkdb.c,v 1.12 1997/12/08 07:34:29 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -98,6 +98,7 @@ main(argc, argv)
 	DB *dp, *edp;
 	DBT data, key;
 	FILE *fp, *oldfp;
+	struct stat st;
 	sigset_t set;
 	int ch, cnt, len, makeold, tfd, flags;
 	char *p, *t;
@@ -154,8 +155,21 @@ main(argc, argv)
 
 	/* check only if password database is valid */
 	if (cflag) {
-		for (cnt = 1; scan(fp, &pwd, &flags); ++cnt);
+		for (cnt = 1; scan(fp, &pwd, &flags); ++cnt)
+			;
 		exit(0);
+	}
+
+	if (fstat(fileno(fp), &st) == -1)
+		error(pname);
+
+	if (st.st_size > (off_t)100*1024) {
+		/*
+		 * It is a large file. We are going to crank db's cache size.
+		 */
+		openinfo.cachesize = st.st_size * 20;
+		if (openinfo.cachesize > 12*1024*1024)
+			openinfo.cachesize = 12*1024*1024;
 	}
 
 	/* Open the temporary insecure password database. */
