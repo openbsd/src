@@ -1,3 +1,5 @@
+#	$Id: Makefile,v 1.4 2001/04/07 20:02:09 ho Exp $
+#
 #	@(#)Makefile	5.4 (Berkeley) 5/11/93
 
 PROG=	timedc

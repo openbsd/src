@@ -1,3 +1,5 @@
+/*	$Id: cmds.c,v 1.10 2001/04/07 20:02:09 ho Exp $	*/
+
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
  * All rights reserved.
@@ -36,7 +38,7 @@ static char sccsid[] = "@(#)cmds.c	5.1 (Berkeley) 5/11/93";
 #endif /* not lint */
 
 #ifdef sgi
-#ident "$Revision: 1.9 $"
+#ident "$Revision: 1.10 $"
 #endif
 
 #include "timedc.h"
