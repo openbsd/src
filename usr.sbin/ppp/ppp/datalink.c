@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: datalink.c,v 1.35 2001/06/04 16:09:28 brian Exp $
+ *	$OpenBSD: datalink.c,v 1.36 2001/07/03 22:23:56 brian Exp $
  */
 
 #include <sys/param.h>
@@ -570,7 +570,8 @@ datalink_LayerUp(void *v, struct fsm *fp)
         auth_StartReq(&dl->chap.auth);
     } else
       datalink_AuthOk(dl);
-  }
+  } else if (fp->proto == PROTO_CCP)
+    (*dl->parent->LayerUp)(dl->parent->object, &dl->physical->link.ccp.fsm);
 }
 
 static void

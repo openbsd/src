@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: deflate.c,v 1.12 2001/06/19 10:24:51 brian Exp $
+ *	$OpenBSD: deflate.c,v 1.13 2001/07/03 22:23:56 brian Exp $
  */
 
 #include <sys/types.h>
@@ -567,6 +567,7 @@ const struct ccp_algorithm PppdDeflateAlgorithm = {
     DeflateDictSetup
   },
   {
+    0,
     DeflateInitOptsOutput,
     DeflateSetOptsOutput,
     DeflateInitOutput,
@@ -591,6 +592,7 @@ const struct ccp_algorithm DeflateAlgorithm = {
     DeflateDictSetup
   },
   {
+    0,
     DeflateInitOptsOutput,
     DeflateSetOptsOutput,
     DeflateInitOutput,
