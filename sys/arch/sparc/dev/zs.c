@@ -279,13 +279,14 @@ zsattach(parent, dev, aux)
 	cs->cs_unit = unit;
 	cs->cs_speed = zs_getspeed(&addr->zs_chan[ZS_CHAN_A]);
 	cs->cs_zc = &addr->zs_chan[ZS_CHAN_A];
-	tp->t_dev = makedev(ZSMAJOR, unit);
-	tp->t_oproc = zsstart;
-	tp->t_param = zsparam;
 	if ((ctp = zs_checkcons(sc, unit, cs)) != NULL)
 		tp = ctp;
-	else
+	else {
 		tp = ttymalloc();
+		tp->t_dev = makedev(ZSMAJOR, unit);
+		tp->t_oproc = zsstart;
+		tp->t_param = zsparam;
+	}
 	cs->cs_ttyp = tp;
 #ifdef KGDB
 	if (ctp == NULL)
@@ -311,13 +312,14 @@ zsattach(parent, dev, aux)
 	cs->cs_unit = unit;
 	cs->cs_speed = zs_getspeed(&addr->zs_chan[ZS_CHAN_B]);
 	cs->cs_zc = &addr->zs_chan[ZS_CHAN_B];
-	tp->t_dev = makedev(ZSMAJOR, unit);
-	tp->t_oproc = zsstart;
-	tp->t_param = zsparam;
 	if ((ctp = zs_checkcons(sc, unit, cs)) != NULL)
 		tp = ctp;
-	else
+	else {
 		tp = ttymalloc();
+		tp->t_dev = makedev(ZSMAJOR, unit);
+		tp->t_oproc = zsstart;
+		tp->t_param = zsparam;
+	}
 	cs->cs_ttyp = tp;
 
 #ifdef KGDB
@@ -329,7 +331,7 @@ zsattach(parent, dev, aux)
 		/*
 		 * Mouse: tell /dev/mouse driver how to talk to us.
 		 */
-		tp->t_ispeed = tp->t_ospeed = 1200;
+		tp->t_ispeed = tp->t_ospeed = B1200;
 		tp->t_cflag = CS8;
 		ms_serial(tp, zsiopen, zsiclose);
 		ringsize = 128;
