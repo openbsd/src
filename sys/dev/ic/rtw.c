@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtw.c,v 1.11 2005/01/22 11:22:17 jsg Exp $	*/
+/*	$OpenBSD: rtw.c,v 1.12 2005/02/06 07:08:24 jsg Exp $	*/
 /* $NetBSD: rtw.c,v 1.29 2004/12/27 19:49:16 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
@@ -2543,7 +2543,7 @@ rtw_dequeue(struct ifnet *ifp, struct rtw_txsoft_blk **tsbp,
 		DPRINTF(sc, RTW_DEBUG_XMIT,
 		    ("%s: dequeue pwrsave frame\n", __func__));
 	} else {
-		IFQ_POLL(&ifp->if_snd, m0);
+		IFQ_DEQUEUE(&ifp->if_snd, m0);
 		if (m0 == NULL) {
 			DPRINTF(sc, RTW_DEBUG_XMIT,
 			    ("%s: no frame\n", __func__));
