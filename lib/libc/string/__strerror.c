@@ -28,114 +28,19 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: __strerror.c,v 1.12 2004/05/01 10:52:59 espie Exp $";
+static char *rcsid = "$OpenBSD: __strerror.c,v 1.13 2004/05/03 05:07:34 espie Exp $";
 #endif /* LIBC_SCCS and not lint */
 
-#ifdef NLS
-#define catclose	_catclose
-#define catgets		_catgets
-#define catopen		_catopen
-#include <nl_types.h>
-#endif
-
-#define sys_errlist	_sys_errlist
-#define sys_nerr	_sys_nerr
-
-#include <errno.h>
 #include <limits.h>
-#include <stdio.h>
 #include <string.h>
 
-static size_t
-__digits10(unsigned int num)
-{
-	size_t i = 0;
-
-	do {
-		num /= 10;
-		i++;
-	} while (num != 0);
-
-	return i;
-}
-
-void
-__itoa(int num, char *buffer, size_t start, size_t end)
-{
-	size_t pos;
-	unsigned int a;
-	int neg;
-
-	if (num < 0) {
-		a = -num;
-		neg = 1;
-	}
-	else {
-		a = num;
-		neg = 0;
-	}
-
-	pos = start + __digits10(a);
-	if (neg)
-	    pos++;
-
-	if (pos < end)
-		buffer[pos] = '\0';
-	else 
-		buffer[end-1] = '\0';
-	pos--;
-	do {
-		
-		if (pos < end)
-			buffer[pos] = (a % 10) + '0';
-		pos--;
-		a /= 10;
-	} while (a != 0);
-	if (neg)
-	    if (pos < end)
-		    buffer[pos] = '-';
-}
-
 /*
- * Since perror() is not allowed to change the contents of strerror()'s
- * static buffer, both functions supply their own buffers to the
- * internal function __strerror().
+ * __strerror() has been deprecated in favor of strerror_r()
+ * and is provided for source compatibility only.
  */
-
 char *
 __strerror(int num, char *buf)
 {
-#define	UPREFIX	"Unknown error: "
-	int len;
-#ifdef NLS
-	int save_errno;
-	nl_catd catd;
-
-	catd = catopen("libc", 0);
-#endif
-
-	if (num >= 0 && num < sys_nerr) {
-#ifdef NLS
-		strlcpy(buf, catgets(catd, 1, num,
-		    (char *)sys_errlist[num]), NL_TEXTMAX);
-#else
-		return(sys_errlist[num]);
-#endif
-	} else {
-#ifdef NLS
-		len = strlcpy(buf, catgets(catd, 1, 0xffff, UPREFIX), NL_TEXTMAX);
-#else
-		len = strlcpy(buf, UPREFIX, NL_TEXTMAX);
-#endif
-		__itoa(num, buf, len, NL_TEXTMAX);
-		errno = EINVAL;
-	}
-
-#ifdef NLS
-	save_errno = errno;
-	catclose(catd);
-	errno = save_errno;
-#endif
-
-	return buf;
+	(void)strerror_r(num, buf, NL_TEXTMAX);
+	return (buf);
 }

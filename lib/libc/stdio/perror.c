@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: perror.c,v 1.5 2003/06/02 20:18:37 millert Exp $";
+static char rcsid[] = "$OpenBSD: perror.c,v 1.6 2004/05/03 05:07:34 espie Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -38,13 +38,6 @@ static char rcsid[] = "$OpenBSD: perror.c,v 1.5 2003/06/02 20:18:37 millert Exp 
 #include <stdio.h>
 #include <string.h>
 #include <limits.h>
-/*
- * Since perror() is not allowed to change the contents of strerror()'s
- * static buffer, both functions supply their own buffers to the
- * internal function __strerror().
- */
-
-extern char *__strerror(int , char *);
 
 void
 perror(s)
@@ -63,7 +56,8 @@ perror(s)
 		v->iov_len = 2;
 		v++;
 	}
-	v->iov_base = __strerror(errno, buf);
+	(void)strerror_r(errno, buf, sizeof(buf));
+	v->iov_base = buf;
 	v->iov_len = strlen(v->iov_base);
 	v++;
 	v->iov_base = "\n";

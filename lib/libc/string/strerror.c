@@ -28,23 +28,17 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: strerror.c,v 1.5 2003/06/11 21:08:16 deraadt Exp $";
+static char *rcsid = "$OpenBSD: strerror.c,v 1.6 2004/05/03 05:07:34 espie Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <string.h>
 #include <limits.h>
 
-/*
- * Since perror() is not allowed to change the contents of strerror()'s
- * static buffer, both functions supply their own buffers to the
- * internal function __strerror().
- */
-
-extern char *__strerror(int, char *);
-
 char *
 strerror(int num)
 {
 	static char buf[NL_TEXTMAX];
-	return __strerror(num, buf);
+
+	(void)strerror_r(num, buf, sizeof(buf));
+	return (buf);
 }
