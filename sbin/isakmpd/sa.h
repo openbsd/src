@@ -1,5 +1,5 @@
-/*	$OpenBSD: sa.h,v 1.8 1999/03/31 00:52:27 niklas Exp $	*/
-/*	$EOM: sa.h,v 1.43 1999/03/30 21:46:19 niklas Exp $	*/
+/*	$OpenBSD: sa.h,v 1.9 1999/03/31 20:31:17 niklas Exp $	*/
+/*	$EOM: sa.h,v 1.44 1999/03/31 20:19:57 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -119,6 +119,9 @@ struct sa {
   /* Phase is 1 for ISAKMP SAs, and 2 for application ones.  */
   u_int8_t phase;
 
+  /* A reference counter for this structure.  */
+  u_int8_t refcnt;
+
   /* Save last message from setup, which can be retransmitted for dups */
   struct message *last_sent_in_setup;
   
@@ -146,16 +149,19 @@ struct sa {
 };
 
 /* This SA is alive.  */
-#define SA_FLAG_READY		1
+#define SA_FLAG_READY		0x01
 
 /* Renegotiate the SA at each expiry.  */
-#define SA_FLAG_STAYALIVE	2
+#define SA_FLAG_STAYALIVE	0x02
 
 /* Establish the SA when it is needed.  */
-#define SA_FLAG_ONDEMAND	4
+#define SA_FLAG_ONDEMAND	0x04
 
 /* This SA has been replaced by another newer one.  */
-#define SA_FLAG_REPLACED	8
+#define SA_FLAG_REPLACED	0x08
+
+/* This SA has seen a soft timeout and wants to be renegotiated on use.  */
+#define SA_FLAG_FADING		0x10
 
 extern void proto_free (struct proto *proto);
 extern int sa_add_transform (struct sa *, struct payload *, int,
@@ -174,6 +180,8 @@ extern struct sa *sa_lookup_by_header (u_int8_t *, int);
 extern struct sa *sa_lookup_by_name (char *, int);
 extern struct sa *sa_lookup_from_icookie (u_int8_t *);
 extern void sa_mark_replaced (struct sa *);
+extern void sa_reference (struct sa *);
+extern void sa_release (struct sa *);
 extern void sa_soft_expire (struct sa *);
 extern void sa_hard_expire (struct sa *);
 extern void sa_report (void);
