@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 1997/04/16 01:53:44 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.5 1997/04/16 02:45:30 deraadt Exp $
 #	$NetBSD: Makefile,v 1.1 1995/07/18 04:13:06 briggs Exp $
 
 TOP=		${.CURDIR}/..
@@ -9,9 +9,6 @@ CRUNCHCONF?=    ${.CURDIR}/${CBIN}.conf
 BASE=mr
 
 MOUNT_POINT=	/mnt
-BDEV=		/dev/rd0a
-CDEV=		/dev/rrd0a
-RDEV=		/dev/rd0c
 
 FS=		floppy-${REV}.fs
 VND?=		vnd0
@@ -58,13 +55,13 @@ ${FS}:	bsd.gz
 
 DISKTYPE=       rdroot
 NBLKS=          4046
-# old format, minfree, opt, b/i  trks, sects, cpg
-NEWFSARGS= -t ffs -m 0 -o space -c 16 -i 4096
+# minfree, opt, b/i  trks, sects, cpg
+NEWFSARGS= -m 0 -o space -c 16 -i 4096
 
 bsd.gz: bsd.rd
 	gzip -c9 bsd.rd > bsd.gz
 
-bsd.rd: ${IMAGE} bsd rdsetroot
+bsd.rd:	${IMAGE} bsd rdsetroot
 	cp bsd bsd.rd
 	${.CURDIR}/${__objdir}/rdsetroot bsd.rd < ${IMAGE}
 
@@ -74,45 +71,28 @@ bsd:
 	    make clean && make depend && make
 	cp ${.CURDIR}/../../../../sys/arch/i386/compile/RAMDISK/bsd bsd
 
-${IMAGE}:	do_prep do_mount do_files do_umount_copy do_unconfig ${CBIN}
-	mv -f ${IMAGE}.tmp ${IMAGE}
-	-if [ -e ${.CURDIR}/${__objdir}/rd.pid ] ; then \
-	kill `cat ${.CURDIR}/${__objdir}/rd.pid`; \
-	rm ${.CURDIR}/${__objdir}/rd.pid;\
-	fi
+${IMAGE}: ${CBIN} rd_setup do_files rd_teardown
+
+rd_setup: ${CBIN}
+	dd if=/dev/zero of=${REALIMAGE} bs=512 count=${NBLKS}
+	vnconfig -v -c ${VND} ${REALIMAGE}
+	disklabel -w -r ${VND} ${DISKTYPE}
+	newfs ${NEWFSARGS} ${VND_RDEV} ${DISKTYPE}
+	fsck ${VND_RDEV}
+	mount ${VND_DEV} ${MOUNT_POINT}
+
+rd_teardown:
+	@df -i ${MOUNT_POINT}
+	sync
+	cat /*bin/* > /dev/null
+	sync
+	-umount ${MOUNT_POINT}
+	-vnconfig -u ${VND}
+	cp ${REALIMAGE} ${IMAGE}
+	rm ${REALIMAGE}
 
 rdsetroot:	${TOP}/common/rdsetroot.c
 	${HOSTCC} -DDEBUG -o rdsetroot ${TOP}/common/rdsetroot.c
-
-writetape:
-	echo rewinding tape < /dev/rst0
-	buffer -i /usr/mdec/stboot -o /dev/nrst0
-	buffer -i /usr/mdec/bootst -o /dev/nrst0
-	buffer -B -p75 -i bsd -o /dev/nrst0
-	echo rewinding tape < /dev/rst0
-
-
-do_prep: ${CBIN} do_unconfig
-	sh ${.CURDIR}/start_rdconfig.sh ${RDEV} ${NBLKS}
-	disklabel -w -r ${RDEV} ${DISKTYPE}
-	
-do_mount:
-	-newfs ${NEWFSARGS} -s ${NBLKS} ${CDEV} ${DISKTYPE}
-	mount ${BDEV} ${MOUNT_POINT}
- 
-do_umount_copy:
-	@echo ""
-	@df -i ${MOUNT_POINT}
-	@echo ""
-	-umount ${MOUNT_POINT}
-	dd if=${CDEV} of=${IMAGE}.tmp bs=4b count=`expr ${NBLKS} / 4 `
-
-do_unconfig:
-	-umount ${MOUNT_POINT}
-	-if [ -e ${.CURDIR}/${__objdir}/rd.pid ] ; then \
-	kill `cat ${.CURDIR}/${__objdir}/rd.pid`; \
-	rm ${.CURDIR}/${__objdir}/rd.pid; \
-	fi
 
 unconfig:
 	-umount -f ${MOUNT_POINT}
