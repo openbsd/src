@@ -1,4 +1,4 @@
-/*	$OpenBSD: herror.c,v 1.5 2003/06/02 20:18:35 millert Exp $	*/
+/*	$OpenBSD: herror.c,v 1.6 2005/03/02 12:26:24 millert Exp $	*/
 
 /*
  * ++Copyright++ 1987, 1993
@@ -56,7 +56,7 @@
 static char sccsid[] = "@(#)herror.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "$From: herror.c,v 8.3 1996/08/05 08:31:35 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: herror.c,v 1.5 2003/06/02 20:18:35 millert Exp $";
+static char rcsid[] = "$OpenBSD: herror.c,v 1.6 2005/03/02 12:26:24 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -67,14 +67,14 @@ static char rcsid[] = "$OpenBSD: herror.c,v 1.5 2003/06/02 20:18:35 millert Exp 
 #include <unistd.h>
 #include <string.h>
 
-const char *h_errlist[] = {
+const char * const h_errlist[] = {
 	"Resolver Error 0 (no error)",
 	"Unknown host",				/* 1 HOST_NOT_FOUND */
 	"Host name lookup failure",		/* 2 TRY_AGAIN */
 	"Unknown server error",			/* 3 NO_RECOVERY */
 	"No address associated with name",	/* 4 NO_ADDRESS */
 };
-int	h_nerr = { sizeof h_errlist / sizeof h_errlist[0] };
+const int	h_nerr = { sizeof h_errlist / sizeof h_errlist[0] };
 
 extern int	h_errno;
 
