@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.121 2002/06/09 16:26:10 itojun Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.122 2003/05/06 07:28:39 deraadt Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -659,7 +659,7 @@ extern struct m_tag *ipsp_parse_headers(struct mbuf *, int, u_int8_t);
 extern int ipsp_ref_match(struct ipsec_ref *, struct ipsec_ref *);
 extern ssize_t ipsec_hdrsz(struct tdb *);
 extern void ipsec_adjust_mtu(struct mbuf *, u_int32_t);
-extern int ipsp_print_tdb(struct tdb *, char *);
+extern int ipsp_print_tdb(struct tdb *, char *, size_t);
 extern struct ipsec_acquire *ipsec_get_acquire(u_int32_t);
 extern int ipsp_aux_match(struct ipsec_ref *, struct ipsec_ref *,
     struct ipsec_ref *, struct ipsec_ref *, struct ipsec_ref *,

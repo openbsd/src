@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.150 2002/11/19 18:34:41 jason Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.151 2003/05/06 07:28:39 deraadt Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -848,9 +848,8 @@ tdb_init(struct tdb *tdbp, u_int16_t alg, struct ipsecinit *ii)
  * Print TDB information on a buffer.
  */
 int
-ipsp_print_tdb(struct tdb *tdb, char *buffer)
+ipsp_print_tdb(struct tdb *tdb, char *buffer, size_t buflen)
 {
-	int l, i, k;
 	struct ctlname ipspflags[] = {
 		{ "unique", TDBF_UNIQUE },
 		{ "invalid", TDBF_INVALID },
@@ -862,53 +861,59 @@ ipsp_print_tdb(struct tdb *tdb, char *buffer)
 		{ "skipcrypto", TDBF_SKIPCRYPTO },
 		{ "usedtunnel", TDBF_USEDTUNNEL },
 	};
+	int l, i, k;
 
-	l = sprintf(buffer,  "SPI = %08x, Destination = %s, Sproto = %u\n",
-	    ntohl(tdb->tdb_spi), ipsp_address(tdb->tdb_dst), tdb->tdb_sproto);
-
-	l += sprintf(buffer + l, "\tEstablished %d seconds ago\n",
-	    time.tv_sec - tdb->tdb_established);
-
-	l += sprintf(buffer + l, "\tSource = %s", ipsp_address(tdb->tdb_src));
+	l = snprintf(buffer, buflen,
+	    "SPI = %08x, Destination = %s, Sproto = %u\n"
+	    "\tEstablished %d seconds ago\n"
+	    "\tSource = %s",
+	    ntohl(tdb->tdb_spi), ipsp_address(tdb->tdb_dst), tdb->tdb_sproto,
+	    time.tv_sec - tdb->tdb_established,
+	    ipsp_address(tdb->tdb_src));
 
 	if (tdb->tdb_proxy.sa.sa_family)
-		l += sprintf(buffer + l, ", Proxy = %s\n",
-		    ipsp_address(tdb->tdb_proxy));
-	else
-		l += sprintf(buffer + l, "\n");
+		l += snprintf(buffer + l, buflen - l,
+		    ", Proxy = %s", ipsp_address(tdb->tdb_proxy));
+	l += snprintf(buffer + l, buflen - l, "\n");
 
 	if (tdb->tdb_mtu && tdb->tdb_mtutimeout > time.tv_sec)
-		l += sprintf(buffer + l, "\tMTU: %d, expires in %llu seconds\n",
+		l += snprintf(buffer + l, buflen - l,
+		    "\tMTU: %d, expires in %llu seconds\n",
 		    tdb->tdb_mtu, tdb->tdb_mtutimeout - time.tv_sec);
 
 	if (tdb->tdb_local_cred)
-		l += sprintf(buffer + l, "\tLocal credential type %d\n",
+		l += snprintf(buffer + l, buflen - l,
+		    "\tLocal credential type %d\n",
 		    ((struct ipsec_ref *) tdb->tdb_local_cred)->ref_type);
 
 	if (tdb->tdb_remote_cred)
-		l += sprintf(buffer + l, "\tRemote credential type %d\n",
+		l += snprintf(buffer + l, buflen - l,
+		    "\tRemote credential type %d\n",
 		    ((struct ipsec_ref *) tdb->tdb_remote_cred)->ref_type);
 
 	if (tdb->tdb_local_auth)
-		l += sprintf(buffer + l, "\tLocal auth type %d\n",
+		l += snprintf(buffer + l, buflen - l,
+		    "\tLocal auth type %d\n",
 		    ((struct ipsec_ref *) tdb->tdb_local_auth)->ref_type);
 
 	if (tdb->tdb_remote_auth)
-		l += sprintf(buffer + l, "\tRemote auth type %d\n",
+		l += snprintf(buffer + l, buflen - l,
+		    "\tRemote auth type %d\n",
 		    ((struct ipsec_ref *) tdb->tdb_remote_auth)->ref_type);
 
-	l += sprintf(buffer + l, "\tFlags (%08x) = <", tdb->tdb_flags);
+	l += snprintf(buffer + l, buflen - l,
+	    "\tFlags (%08x) = <", tdb->tdb_flags);
 
 	if ((tdb->tdb_flags & ~(TDBF_TIMER | TDBF_BYTES | TDBF_ALLOCATIONS |
 	    TDBF_FIRSTUSE | TDBF_SOFT_TIMER | TDBF_SOFT_BYTES |
 	    TDBF_SOFT_FIRSTUSE | TDBF_SOFT_ALLOCATIONS)) == 0)
-		l += sprintf(buffer + l, "none>\n");
+		l += snprintf(buffer + l, buflen - l, "none>\n");
 	else {
 		for (k = 0, i = 0;
 		    k < sizeof(ipspflags) / sizeof(struct ctlname); k++) {
 			if (tdb->tdb_flags & ipspflags[k].ctl_type) {
-				l += sprintf(buffer + l, "%s,",
-				    ipspflags[k].ctl_name);
+				l += snprintf(buffer + l, buflen - l,
+				    "%s,", ipspflags[k].ctl_name);
 				i = 1;
 			}
 		}
@@ -916,94 +921,103 @@ ipsp_print_tdb(struct tdb *tdb, char *buffer)
 		/* If we added flags, remove trailing comma. */
 		if (i)
 			l--;
-		l += sprintf(buffer + l, ">\n");
+		l += snprintf(buffer + l, buflen - l, ">\n");
 	}
 
-	l += sprintf(buffer + l, "\tCrypto ID: %llu\n", tdb->tdb_cryptoid);
+	l += snprintf(buffer + l, buflen - l,
+	    "\tCrypto ID: %llu\n", tdb->tdb_cryptoid);
 
 	if (tdb->tdb_xform)
-		l += sprintf(buffer + l, "\txform = <%s>\n",
+		l += snprintf(buffer + l, buflen - l,
+		    "\txform = <%s>\n",
 		    tdb->tdb_xform->xf_name);
 
 	if (tdb->tdb_encalgxform)
-		l += sprintf(buffer + l, "\t\tEncryption = <%s>\n",
+		l += snprintf(buffer + l, buflen - l,
+		    "\t\tEncryption = <%s>\n",
 		    tdb->tdb_encalgxform->name);
 
 	if (tdb->tdb_authalgxform)
-		l += sprintf(buffer + l, "\t\tAuthentication = <%s>\n",
+		l += snprintf(buffer + l, buflen - l,
+		    "\t\tAuthentication = <%s>\n",
 		    tdb->tdb_authalgxform->name);
 
 	if (tdb->tdb_compalgxform)
-		l += sprintf(buffer + l, "\t\tCompression = <%s>\n",
+		l += snprintf(buffer + l, buflen - l,
+		    "\t\tCompression = <%s>\n",
 		    tdb->tdb_compalgxform->name);
 
 	if (tdb->tdb_onext)
-		l += sprintf(buffer + l,
+		l += snprintf(buffer + l, buflen - l,
 		    "\tNext SA: SPI = %08x, Destination = %s, Sproto = %u\n",
 		    ntohl(tdb->tdb_onext->tdb_spi),
 		    ipsp_address(tdb->tdb_onext->tdb_dst),
 		    tdb->tdb_onext->tdb_sproto);
 
 	if (tdb->tdb_inext)
-		l += sprintf(buffer + l, "\tPrevious SA: SPI = %08x, "
+		l += snprintf(buffer + l, buflen - l,
+		    "\tPrevious SA: SPI = %08x, "
 		    "Destination = %s, Sproto = %u\n",
 		    ntohl(tdb->tdb_inext->tdb_spi),
 		    ipsp_address(tdb->tdb_inext->tdb_dst),
 		    tdb->tdb_inext->tdb_sproto);
 
-	l += sprintf(buffer + l, "\t%llu bytes processed by this SA\n",
+	l += snprintf(buffer + l, buflen - l,
+	    "\t%llu bytes processed by this SA\n",
 	    tdb->tdb_cur_bytes);
 
 	if (tdb->tdb_last_used)
-		l += sprintf(buffer + l, "\tLast used %llu seconds ago\n",
+		l += snprintf(buffer + l, buflen - l,
+		    "\tLast used %llu seconds ago\n",
 		    time.tv_sec - tdb->tdb_last_used);
 
 	if (tdb->tdb_last_marked)
-		l += sprintf(buffer + l,
+		l += snprintf(buffer + l, buflen - l,
 		    "\tLast marked/unmarked %llu seconds ago\n",
 		    time.tv_sec - tdb->tdb_last_marked);
 
-	l += sprintf(buffer + l, "\tExpirations:\n");
+	l += snprintf(buffer + l, buflen - l,
+	    "\tExpirations:\n");
 
 	if (tdb->tdb_flags & TDBF_TIMER)
-		l += sprintf(buffer + l,
+		l += snprintf(buffer + l, buflen -l,
 		    "\t\tHard expiration(1) in %llu seconds\n",
 		    tdb->tdb_established + tdb->tdb_exp_timeout - time.tv_sec);
 
 	if (tdb->tdb_flags & TDBF_SOFT_TIMER)
-		l += sprintf(buffer + l,
+		l += snprintf(buffer + l, buflen -l,
 		    "\t\tSoft expiration(1) in %llu seconds\n",
 		    tdb->tdb_established + tdb->tdb_soft_timeout -
 		    time.tv_sec);
 
 	if (tdb->tdb_flags & TDBF_BYTES)
-		l += sprintf(buffer + l,
+		l += snprintf(buffer + l, buflen -l,
 		    "\t\tHard expiration after %llu bytes\n",
 		    tdb->tdb_exp_bytes);
 
 	if (tdb->tdb_flags & TDBF_SOFT_BYTES)
-		l += sprintf(buffer + l,
+		l += snprintf(buffer + l, buflen -l,
 		    "\t\tSoft expiration after %llu bytes\n",
 		    tdb->tdb_soft_bytes);
 
 	if (tdb->tdb_flags & TDBF_ALLOCATIONS)
-		l += sprintf(buffer + l,
+		l += snprintf(buffer + l, buflen -l,
 		    "\t\tHard expiration after %u flows\n",
 		    tdb->tdb_exp_allocations);
 
 	if (tdb->tdb_flags & TDBF_SOFT_ALLOCATIONS)
-		l += sprintf(buffer + l,
+		l += snprintf(buffer + l, buflen -l,
 		    "\t\tSoft expiration after %u flows\n",
 		    tdb->tdb_soft_allocations);
 
 	if (tdb->tdb_flags & TDBF_FIRSTUSE) {
 		if (tdb->tdb_first_use)
-			l += sprintf(buffer + l,
+			l += snprintf(buffer + l, buflen -l,
 			    "\t\tHard expiration(2) in %llu seconds\n",
 			    (tdb->tdb_first_use + tdb->tdb_exp_first_use) -
 			    time.tv_sec);
 		else
-			l += sprintf(buffer + l,
+			l += snprintf(buffer + l, buflen -l,
 			    "\t\tHard expiration in %llu seconds "
 			    "after first use\n",
 			    tdb->tdb_exp_first_use);
@@ -1011,12 +1025,12 @@ ipsp_print_tdb(struct tdb *tdb, char *buffer)
 
 	if (tdb->tdb_flags & TDBF_SOFT_FIRSTUSE) {
 		if (tdb->tdb_first_use)
-			l += sprintf(buffer + l,
+			l += snprintf(buffer + l, buflen -l,
 			    "\t\tSoft expiration(2) in %llu seconds\n",
 			    (tdb->tdb_first_use + tdb->tdb_soft_first_use) -
 			    time.tv_sec);
 		else
-			l += sprintf(buffer + l,
+			l += snprintf(buffer + l, buflen -l,
 			    "\t\tSoft expiration in %llu seconds "
 			    "after first use\n", tdb->tdb_soft_first_use);
 	}
@@ -1025,9 +1039,9 @@ ipsp_print_tdb(struct tdb *tdb, char *buffer)
 	    (TDBF_TIMER | TDBF_SOFT_TIMER | TDBF_BYTES |
 		TDBF_SOFT_ALLOCATIONS | TDBF_ALLOCATIONS |
 		TDBF_SOFT_BYTES | TDBF_FIRSTUSE | TDBF_SOFT_FIRSTUSE)))
-		l += sprintf(buffer + l, "\t\t(none)\n");
+		l += snprintf(buffer + l, buflen -l, "\t\t(none)\n");
 
-	l += sprintf(buffer + l, "\n");
+	l += snprintf(buffer + l, buflen -l, "\n");
 
 	return l;
 }
@@ -1050,7 +1064,8 @@ ipsp_kern(int off, char **bufp, int len)
 
 	if (off == 0) {
 		kernfs_epoch++;
-		l = sprintf(buffer, "Hashmask: %d, policy entries: %d\n",
+		l = snprintf(buffer, sizeof buffer,
+		    "Hashmask: %d, policy entries: %d\n",
 		    tdb_hashmask, ipsec_in_use);
 		return l;
 	}
@@ -1063,7 +1078,7 @@ ipsp_kern(int off, char **bufp, int len)
 		for (tdb = tdbh[i]; tdb; tdb = tdb->tdb_hnext) {
 			if (tdb->tdb_epoch != kernfs_epoch) {
 				tdb->tdb_epoch = kernfs_epoch;
-				l = ipsp_print_tdb(tdb, buffer);
+				l = ipsp_print_tdb(tdb, buffer, sizeof buffer);
 				splx(s);
 				return l;
 			}
@@ -1141,7 +1156,8 @@ inet_ntoa4(struct in_addr ina)
 	static int i = 3;
 
 	i = (i + 1) % 4;
-	sprintf(buf[i], "%d.%d.%d.%d", ucp[0] & 0xff, ucp[1] & 0xff,
+	snprintf(buf[i], sizeof buf[0], "%d.%d.%d.%d",
+	    ucp[0] & 0xff, ucp[1] & 0xff,
 	    ucp[2] & 0xff, ucp[3] & 0xff);
 	return (buf[i]);
 }
