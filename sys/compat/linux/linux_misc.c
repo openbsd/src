@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_misc.c,v 1.17 1998/07/04 08:59:08 deraadt Exp $	*/
+/*	$OpenBSD: linux_misc.c,v 1.18 1998/07/05 20:49:12 downsj Exp $	*/
 /*	$NetBSD: linux_misc.c,v 1.27 1996/05/20 01:59:21 fvdl Exp $	*/
 
 /*
@@ -542,8 +542,7 @@ linux_sys_mremap(p, v, retval)
 	 * Shrinking mapped region.
 	 */
 	if (new_size < old_size) {
-		SCARG(&mua, addr) = (caddr_t)SCARG(uap, old_address) +
-		    SCARG(uap, new_size);
+		SCARG(&mua, addr) = (caddr_t)SCARG(uap, old_address) + new_size;
 		SCARG(&mua, len) = old_size - new_size;
 		error = sys_munmap(p, &mua, retval);
 		*retval = error ? 0 : (register_t)SCARG(uap, old_address);
