@@ -1,6 +1,6 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
-#	$OpenBSD: bsd.port.mk,v 1.77 1999/03/10 23:22:19 marc Exp $
+#	$OpenBSD: bsd.port.mk,v 1.78 1999/03/14 15:19:05 rohee Exp $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
 #	This file is in the public domain.
@@ -28,7 +28,7 @@ OpenBSD_MAINTAINER=	marc@OpenBSD.ORG
 # NEED_VERSION: we need at least this version of bsd.port.mk for this 
 # port  to build
 
-FULL_REVISION=$$OpenBSD: bsd.port.mk,v 1.77 1999/03/10 23:22:19 marc Exp $$
+FULL_REVISION=$$OpenBSD: bsd.port.mk,v 1.78 1999/03/14 15:19:05 rohee Exp $$
 .if defined(NEED_VERSION)
 _VERSION_REVISION=${FULL_REVISION:M[0-9]*.*}
 
@@ -798,18 +798,31 @@ MASTER_SITE_PERL_CPAN+=	\
 	ftp://ftp.digital.com/pub/plan/perl/CPAN/modules/by-module/%SUBDIR%/ \
 	ftp://ftp.cdrom.com/pub/perl/CPAN/modules/by-module/%SUBDIR%/
 
-MASTER_SITE_TEX_CTAN+=  \
-        ftp://ftp.cdrom.com/pub/tex/ctan/%SUBDIR%/  \
-        ftp://wuarchive.wustl.edu/packages/TeX/%SUBDIR%/  \
-        ftp://ftp.funet.fi/pub/TeX/CTAN/%SUBDIR%/  \
-        ftp://ftp.tex.ac.uk/public/ctan/tex-archive/%SUBDIR%/  \
-        ftp://ftp.dante.de/tex-archive/%SUBDIR%/
+MASTER_SITE_TEX_CTAN+=	\
+	ftp://ftp.cdrom.com/pub/tex/ctan/%SUBDIR%/ \
+	ftp://wuarchive.wustl.edu/packages/TeX/%SUBDIR%/ \
+	ftp://ftp.funet.fi/pub/TeX/CTAN/%SUBDIR%/ \
+	ftp://ftp.tex.ac.uk/public/ctan/tex-archive/%SUBDIR%/ \
+	ftp://ftp.dante.de/tex-archive/%SUBDIR%/
 
 MASTER_SITE_SUNSITE+=	\
 	ftp://metalab.unc.edu/pub/Linux/%SUBDIR%/ \
 	ftp://ftp.infomagic.com/pub/mirrors/linux/sunsite/%SUBDIR%/ \
 	ftp://ftp.funet.fi/pub/mirrors/sunsite.unc.edu/pub/Linux/%SUBDIR%/ \
 	ftp://ftp.lip6.fr/pub/linux/sunsite/%SUBDIR%
+
+MASTER_SITE_KDE+=	\
+	ftp://ftp.us.kde.org/pub/kde/%SUBDIR%/ \
+	ftp://ftp.kde.org/pub/kde/%SUBDIR%/ \
+	ftp://ftp.tuniv.szczecin.pl/pub/kde/%SUBDIR%/ \
+	ftp://ftp.fu-berlin.de/pub/unix/X11/gui/kde/%SUBDIR%/ \
+	ftp://ftp.dataplus.se/pub/linux/kde/%SUBDIR%/
+
+MASTER_SITE_GNOME+=	\
+	ftp://ftp.jimpick.com/pub/mirrors/gnome/%SUBDIR%/ \
+	ftp://ftp.geo.net/pub/gnome/%SUBDIR%/ \
+	ftp://gnomeftp.wgn.net/pub/gnome/%SUBDIR%/ \
+	ftp://ftp.gnome.org/pub/GNOME/%SUBDIR%/
 
 # Empty declaration to avoid "variable MASTER_SITES recursive" error
 MASTER_SITES?=
