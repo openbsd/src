@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fxp_pci.c,v 1.28 2004/08/04 19:42:30 mickey Exp $	*/
+/*	$OpenBSD: if_fxp_pci.c,v 1.29 2004/09/16 02:56:22 brad Exp $	*/
 
 /*
  * Copyright (c) 1995, David Greenman
@@ -168,33 +168,44 @@ fxp_pci_attach(parent, self, aux)
 	}
 
 	switch (PCI_PRODUCT(pa->pa_id)) {
-	case PCI_PRODUCT_INTEL_82562:
-		sc->sc_flags |= FXPF_HAS_RESUME_BUG;
-		/* FALLTHROUGH */
+	case PCI_PRODUCT_INTEL_82557:
 	case PCI_PRODUCT_INTEL_82559:
 	case PCI_PRODUCT_INTEL_82559ER:
-		sc->not_82557 = 1;
+	{
+		const char *chipname = NULL;
+
+		if (rev >= FXP_REV_82558_A4)
+			chipname = "i82558";
+		if (rev >= FXP_REV_82559_A0)
+			chipname = "i82559";
+		if (rev >= FXP_REV_82559S_A)
+			chipname = "i82559S";
+		if (rev >= FXP_REV_82550)
+			chipname = "i82550";
+
+		if (chipname != NULL)
+			printf(", %s", chipname);
+
 		break;
-	case PCI_PRODUCT_INTEL_82557:
-		/*
-		 * revisions
-		 * 2 = 82557
-		 * 4-6 = 82558
-		 * 8 = 82559
-		 */
-		sc->not_82557 = (rev >= 4) ? 1 : 0;
+	}
+		sc->not_82557 = (rev >= FXP_REV_82558_A4) ? 1 : 0;
+		break;
+	case PCI_PRODUCT_INTEL_82562:
+		sc->not_82557 = 1;
 		break;
 	case PCI_PRODUCT_INTEL_PRO_100_VE_0:
 	case PCI_PRODUCT_INTEL_PRO_100_VE_1:
-	case PCI_PRODUCT_INTEL_PRO_100_VE_2:
-	case PCI_PRODUCT_INTEL_PRO_100_VE_3:
-	case PCI_PRODUCT_INTEL_PRO_100_VE_4:
 	case PCI_PRODUCT_INTEL_PRO_100_VM_0:
 	case PCI_PRODUCT_INTEL_PRO_100_VM_1:
 	case PCI_PRODUCT_INTEL_PRO_100_VM_2:
-	case PCI_PRODUCT_INTEL_PRO_100_VM_3:
-	case PCI_PRODUCT_INTEL_PRO_100_VM_4:
-		sc->sc_flags |= FXPF_HAS_RESUME_BUG;
+	case PCI_PRODUCT_INTEL_82562EH_HPNA_0:
+	case PCI_PRODUCT_INTEL_82562EH_HPNA_1:
+	case PCI_PRODUCT_INTEL_82562EH_HPNA_2:
+		/*
+		 * ICH3 chips apparently have problems with the enhanced
+		 * features, so just treat them as an i82557.
+		 */
+		sc->sc_revision = 1;
 		sc->not_82557 = 0;
 		break;
 	default:
