@@ -1,4 +1,4 @@
-/*	$OpenBSD: sshdma.c,v 1.8 2004/01/14 20:50:48 miod Exp $ */
+/*	$OpenBSD: sshdma.c,v 1.9 2004/07/02 17:57:29 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -154,24 +154,16 @@ void *auxp;
 
 	switch (ca->ca_bustype) {
 #if NMC > 0
-		case BUS_MC:
-			{
-				struct mcreg *mc = (struct mcreg *)ca->ca_master;
-
-				mcintr_establish(MCV_NCR, &sc->sc_ih);
-				mc->mc_ncrirq = ca->ca_ipl | MC_IRQ_IEN;
-				break;
-			}
+	case BUS_MC:
+		mcintr_establish(MCV_NCR, &sc->sc_ih);
+		sys_mc->mc_ncrirq = ca->ca_ipl | MC_IRQ_IEN;
+		break;
 #endif
 #if NPCCTWO > 0
-		case BUS_PCCTWO:
-			{
-				struct pcctworeg *pcc2 = (struct pcctworeg *)ca->ca_master;
-
-				pcctwointr_establish(PCC2V_NCR, &sc->sc_ih);
-				pcc2->pcc2_ncrirq = ca->ca_ipl | PCC2_IRQ_IEN;
-				break;
-			}
+	case BUS_PCCTWO:
+		pcctwointr_establish(PCC2V_NCR, &sc->sc_ih);
+		sys_pcc2->pcc2_ncrirq = ca->ca_ipl | PCC2_IRQ_IEN;
+		break;
 #endif
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.26 2004/04/29 06:23:44 miod Exp $ */
+/*	$OpenBSD: if_le.c,v 1.27 2004/07/02 17:57:29 miod Exp $ */
 
 /*-
  * Copyright (c) 1982, 1992, 1993
@@ -416,7 +416,7 @@ leattach(parent, self, aux)
 		lesc->sc_ih.ih_arg = sc;
 		lesc->sc_ih.ih_ipl = pri;
 		pccintr_establish(PCCV_LE, &lesc->sc_ih);
-		((struct pccreg *)ca->ca_master)->pcc_leirq = pri | PCC_IRQ_IEN;
+		sys_pcc->pcc_leirq = pri | PCC_IRQ_IEN;
 		break;
 #endif
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.15 2004/01/14 20:50:48 miod Exp $ */
+/*	$OpenBSD: zs.c,v 1.16 2004/07/02 17:57:29 miod Exp $ */
 
 /*
  * Copyright (c) 2000 Steve Murphree, Jr.
@@ -109,12 +109,6 @@ struct zssoftc {
 	struct zs   sc_zs[2];
 	struct evcnt   sc_intrcnt;
 	struct intrhand   sc_ih;
-#if NPCC > 0
-	struct pccreg  *sc_pcc;
-#endif
-#if NMC > 0
-	struct mcreg   *sc_mc;
-#endif
 	int      sc_flags;
 };
 #define ZSSF_85230	1
@@ -217,23 +211,21 @@ zsattach(parent, self, args)
 	sc->sc_ih.ih_ipl = zs_level;
 	switch (ca->ca_bustype) {
 #if NPCC > 0
-		case BUS_PCC:
-			pccintr_establish(PCCV_ZS, &sc->sc_ih);
-			sc->sc_pcc = (struct pccreg *)ca->ca_master;
-			break;
+	case BUS_PCC:
+		pccintr_establish(PCCV_ZS, &sc->sc_ih);
+		break;
 #endif
 #if NMC > 0
-		case BUS_MC:
-			if (sys_mc->mc_chiprev == 0x01)
-				/* 
-				 * MC rev 0x01 has a bug and can not access scc regs directly. 
-				 * Macros will do the right thing based on the value of 
-				 * mc_rev1_bug - XXX smurph 
-				 */
-				mc_rev1_bug = 1; /* defined in scc.h */
-			mcintr_establish(MCV_ZS, &sc->sc_ih);
-			sc->sc_mc = (struct mcreg *)ca->ca_master;
-			break;
+	case BUS_MC:
+		if (sys_mc->mc_chiprev == 0x01)
+			/* 
+			 * MC rev 0x01 has a bug and can not access scc regs directly. 
+			 * Macros will do the right thing based on the value of 
+			 * mc_rev1_bug - XXX smurph 
+			 */
+			mc_rev1_bug = 1; /* defined in scc.h */
+		mcintr_establish(MCV_ZS, &sc->sc_ih);
+		break;
 #endif
 	}
 
@@ -287,22 +279,22 @@ zsattach(parent, self, args)
 	switch (ca->ca_bustype) {
 #if NPCC > 0
 		case BUS_PCC:
-			ir = sc->sc_pcc->pcc_zsirq;
+			ir = sys_pcc->pcc_zsirq;
 			if ((ir & PCC_IRQ_IPL) != 0 && (ir & PCC_IRQ_IPL) != zs_level)
 				panic("zs configured at different IPLs");
 			if (initirq)
 				break;
-			sc->sc_pcc->pcc_zsirq = zs_level | PCC_IRQ_IEN | PCC_ZS_PCCVEC;
+			sys_pcc->pcc_zsirq = zs_level | PCC_IRQ_IEN | PCC_ZS_PCCVEC;
 			break;
 #endif
 #if NMC > 0
 		case BUS_MC:
-			ir = sc->sc_mc->mc_zsirq;
+			ir = sys_mc->mc_zsirq;
 			if ((ir & MC_IRQ_IPL) != 0 && (ir & MC_IRQ_IPL) != zs_level)
 				panic("zs configured at different IPLs");
 			if (initirq)
 				break;
-			sc->sc_mc->mc_zsirq = zs_level | MC_IRQ_IEN;
+			sys_mc->mc_zsirq = zs_level | MC_IRQ_IEN;
 			break;
 #endif
 	}

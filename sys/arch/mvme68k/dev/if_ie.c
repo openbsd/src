@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ie.c,v 1.24 2004/01/14 20:50:48 miod Exp $ */
+/*	$OpenBSD: if_ie.c,v 1.25 2004/07/02 17:57:29 miod Exp $ */
 
 /*-
  * Copyright (c) 1999 Steve Murphree, Jr. 
@@ -229,12 +229,6 @@ struct ie_softc {
 
 #ifdef IEDEBUG
 	int sc_debug;
-#endif
-#if NMC > 0
-	struct mcreg *sc_mc;
-#endif
-#if NPCCTWO > 0
-	struct pcctworeg *sc_pcc2;
 #endif
 };
 
@@ -487,36 +481,34 @@ ieattach(parent, self, aux)
 #if NMC > 0
 	case BUS_MC:
 		mcintr_establish(MCV_IE, &sc->sc_ih);
-		sc->sc_mc = (struct mcreg *)ca->ca_master;
-		sc->sc_mc->mc_ieirq = pri | MC_SC_SNOOP | MC_IRQ_IEN |
+		sys_mc->mc_ieirq = pri | MC_SC_SNOOP | MC_IRQ_IEN |
 		    MC_IRQ_ICLR;
 		mcintr_establish(MCV_IEFAIL, &sc->sc_failih);
-		sc->sc_mc->mc_iefailirq = pri | MC_IRQ_IEN | MC_IRQ_ICLR;
+		sys_mc->mc_iefailirq = pri | MC_IRQ_IEN | MC_IRQ_ICLR;
 		break;
 #endif
 #if NPCCTWO > 0
 	case BUS_PCCTWO:
 		pcctwointr_establish(PCC2V_IE, &sc->sc_ih);
-		sc->sc_pcc2 = (struct pcctworeg *)ca->ca_master;
-      switch (cputyp) {
+		switch (cputyp) {
 #ifdef MVME172
-      case CPU_172:
+		case CPU_172:
 #endif 
 #ifdef MVME177
-      case CPU_177:
+		case CPU_177:
 #endif 
 #if defined(MVME172) || defined(MVME177)
-         /* no snooping on 68060 */
-         sc->sc_pcc2->pcc2_ieirq = pri | PCC2_SC_SNOOP |
-             PCC2_IRQ_IEN | PCC2_IRQ_ICLR;
-         break;
+			/* no snooping on 68060 */
+			sys_pcc2->pcc2_ieirq = pri | PCC2_SC_INHIBIT |
+			    PCC2_IRQ_IEN | PCC2_IRQ_ICLR;
+			break;
 #endif 
-      default:
-         sc->sc_pcc2->pcc2_ieirq = pri | PCC2_SC_SNOOP |
-             PCC2_IRQ_IEN | PCC2_IRQ_ICLR;
-      }
+		default:
+			sys_pcc2->pcc2_ieirq = pri | PCC2_SC_SNOOP |
+			    PCC2_IRQ_IEN | PCC2_IRQ_ICLR;
+		}
 		pcctwointr_establish(PCC2V_IEFAIL, &sc->sc_failih);
-		sc->sc_pcc2->pcc2_iefailirq = pri | PCC2_IRQ_IEN |
+		sys_pcc2->pcc2_iefailirq = pri | PCC2_IRQ_IEN |
 		    PCC2_IRQ_ICLR;
 		break;
 #endif
@@ -550,16 +542,16 @@ void *v;
 	switch (sc->sc_bustype) {
 #if NMC > 0
 	case BUS_MC:
-		sc->sc_mc->mc_ieirq |= MC_IRQ_ICLR;		/* safe: clear irq */
-		sc->sc_mc->mc_iefailirq |= MC_IRQ_ICLR;		/* clear failure */
-		sc->sc_mc->mc_ieerr = MC_IEERR_SCLR;		/* reset error */
+		sys_mc->mc_ieirq |= MC_IRQ_ICLR;		/* safe: clear irq */
+		sys_mc->mc_iefailirq |= MC_IRQ_ICLR;		/* clear failure */
+		sys_mc->mc_ieerr = MC_IEERR_SCLR;		/* reset error */
 		break;
 #endif
 #if NPCCTWO > 0
 	case BUS_PCCTWO:
-		sc->sc_pcc2->pcc2_ieirq |= PCC2_IRQ_ICLR;	/* safe: clear irq */
-		sc->sc_pcc2->pcc2_iefailirq |= PCC2_IRQ_ICLR;	/* clear failure */
-		sc->sc_pcc2->pcc2_ieerr = PCC2_IEERR_SCLR;	/* reset error */
+		sys_pcc2->pcc2_ieirq |= PCC2_IRQ_ICLR;		/* safe: clear irq */
+		sys_pcc2->pcc2_iefailirq |= PCC2_IRQ_ICLR;	/* clear failure */
+		sys_pcc2->pcc2_ieerr = PCC2_IEERR_SCLR;		/* reset error */
 		break;
 #endif
 	}
@@ -587,12 +579,12 @@ loop:
 	switch (sc->sc_bustype) {
 #if NMC > 0
 	case BUS_MC:
-		sc->sc_mc->mc_ieirq |= MC_IRQ_ICLR;		/* clear irq */
+		sys_mc->mc_ieirq |= MC_IRQ_ICLR;		/* clear irq */
 		break;
 #endif
 #if NPCCTWO > 0
 	case BUS_PCCTWO:
-		sc->sc_pcc2->pcc2_ieirq |= PCC2_IRQ_ICLR;	/* clear irq */
+		sys_pcc2->pcc2_ieirq |= PCC2_IRQ_ICLR;		/* clear irq */
 		break;
 #endif
 	}

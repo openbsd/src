@@ -1,4 +1,4 @@
-/*	$OpenBSD: wl.c,v 1.14 2004/01/14 20:50:48 miod Exp $ */
+/*	$OpenBSD: wl.c,v 1.15 2004/07/02 17:57:29 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Dale Rahn. All rights reserved.
@@ -131,7 +131,6 @@ struct wlsoftc {
 	struct intrhand	sc_ih_m;
 	struct intrhand	sc_ih_t;
 	struct intrhand	sc_ih_r;
-	struct vme2reg	*sc_vme2;
 	u_char		sc_vec;
 	int		sc_flags;
 };
@@ -250,7 +249,6 @@ wlattach(parent, self, aux)
 	int i, j, s;
 
 	sc->cl_reg = (struct clreg *)&clb->chips[0].clreg;
-	sc->sc_vme2 = ca->ca_master;
 	sc->sc_vec = ca->ca_vec;
 
 	sc->sc_memv = 0xa5 + 0;

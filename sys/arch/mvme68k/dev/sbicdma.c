@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbicdma.c,v 1.9 2003/11/03 06:54:25 david Exp $ */
+/*	$OpenBSD: sbicdma.c,v 1.10 2004/07/02 17:57:29 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -101,10 +101,8 @@ sbicdmaattach(parent, self, args)
 	void *args;
 {
 	struct	sbic_softc *sc = (struct sbic_softc *)self;
-	struct	pccreg *pcc;
 	struct	confargs *ca = args;
 
-	sc->sc_cregs = (struct pccreg *)ca->ca_master;
 	sc->sc_dmafree = sbicdma_dmafree;
 	sc->sc_dmago = sbicdma_dmago;
 	sc->sc_dmanext = sbicdma_dmanext;
@@ -135,9 +133,8 @@ sbicdmaattach(parent, self, args)
 	sc->sc_dmaih.ih_ipl = ca->ca_ipl;
 	pccintr_establish(PCCV_DMA, &sc->sc_dmaih);
 
-	pcc = (struct pccreg *)sc->sc_cregs;
-	pcc->pcc_dmairq = sc->sc_dmaih.ih_ipl | PCC_IRQ_INT;
-	pcc->pcc_sbicirq = sc->sc_ih.ih_ipl | PCC_SBIC_RESETIRQ;
+	sys_pcc->pcc_dmairq = sc->sc_dmaih.ih_ipl | PCC_IRQ_INT;
+	sys_pcc->pcc_sbicirq = sc->sc_ih.ih_ipl | PCC_SBIC_RESETIRQ;
 
 	sbicreset(sc);
 
@@ -166,7 +163,6 @@ sbicdma_dmago(sc, va, count, flags)
 	char	*va;
 	int	count, flags;
 {
-	struct	pccreg *pcc = (struct pccreg *)sc->sc_cregs;
 	u_char	csr;
 	u_long	pa;
 
@@ -178,20 +174,20 @@ sbicdma_dmago(sc, va, count, flags)
 #endif
 
 	sc->sc_flags |= SBICF_INTR;
-	pcc->pcc_dmadaddr = (u_long)pa;
+	sys_pcc->pcc_dmadaddr = (u_long)pa;
 	if (count & PCC_DMABCNT_CNTMASK) {
 		printf("%s: dma count 0x%x too large\n",
 		    sc->sc_dev.dv_xname, count);
 		return (0);
 	}
-	pcc->pcc_dmabcnt = (PCC_DMABCNT_MAKEFC(FC_USERD)) |
+	sys_pcc->pcc_dmabcnt = (PCC_DMABCNT_MAKEFC(FC_USERD)) |
 	    (count & PCC_DMABCNT_CNTMASK);
 
 	/* make certain interrupts are disabled first, and reset */
-	pcc->pcc_dmairq = sc->sc_dmaih.ih_ipl | PCC_IRQ_IEN | PCC_IRQ_INT;
-	pcc->pcc_sbicirq = sc->sc_ih.ih_ipl | PCC_SBIC_RESETIRQ | PCC_IRQ_IEN;
-	pcc->pcc_dmacsr = 0;
-	pcc->pcc_dmacsr = PCC_DMACSR_DEN |
+	sys_pcc->pcc_dmairq = sc->sc_dmaih.ih_ipl | PCC_IRQ_IEN | PCC_IRQ_INT;
+	sys_pcc->pcc_sbicirq = sc->sc_ih.ih_ipl | PCC_SBIC_RESETIRQ | PCC_IRQ_IEN;
+	sys_pcc->pcc_dmacsr = 0;
+	sys_pcc->pcc_dmacsr = PCC_DMACSR_DEN |
 	    ((flags & DMAGO_READ) == 0) ? PCC_DMACSR_TOSCSI : 0;
 
 	return (sc->sc_tcnt);
@@ -201,16 +197,17 @@ int
 sbicdma_dmaintr(sc)
 	struct sbic_softc *sc;
 {
-	struct	pccreg *pcc = (struct pccreg *)sc->sc_cregs;
 	u_char	stat;
 	int	ret = 0;
 
 	/* DMA done */
-	stat = pcc->pcc_dmacsr;
+	stat = sys_pcc->pcc_dmacsr;
+#ifdef DEBUG
 printf("dmaintr%d ", stat);
+#endif
 	if (stat & PCC_DMACSR_DONE) {
-		pcc->pcc_dmacsr = 0;
-		pcc->pcc_dmairq = 0;	/* ack and remove intr */
+		sys_pcc->pcc_dmacsr = 0;
+		sys_pcc->pcc_dmairq = 0;	/* ack and remove intr */
 		if (stat & PCC_DMACSR_ERR8BIT) {
 			printf("%s: 8 bit error\n", sc->sc_dev.dv_xname);
 		}
@@ -227,18 +224,19 @@ int
 sbicdma_scintr(sc)
 	struct sbic_softc *sc;
 {
-	struct	pccreg *pcc = (struct pccreg *)sc->sc_cregs;
 	u_char	stat;
 	int	ret = 0;
 
+#ifdef DEBUG
 printf("scintr%d ", stat);
-	stat = pcc->pcc_sbicirq;
+#endif
+	stat = sys_pcc->pcc_sbicirq;
 	if (stat & PCC_SBIC_RESETIRQ) {
 		printf("%s: scintr: a scsi device pulled reset\n",
 		    sc->sc_dev.dv_xname);
-		pcc->pcc_sbicirq = pcc->pcc_sbicirq | PCC_SBIC_RESETIRQ;
+		sys_pcc->pcc_sbicirq = sys_pcc->pcc_sbicirq | PCC_SBIC_RESETIRQ;
 	} else if (stat & PCC_IRQ_INT) {
-		pcc->pcc_sbicirq = 0;
+		sys_pcc->pcc_sbicirq = 0;
 		sbicintr(sc);
 		ret = 1;
 		sc->sc_intrcnt.ev_count++;
@@ -250,7 +248,9 @@ void
 sbicdma_dmastop(sc)
 	struct sbic_softc *sc;
 {
+#ifdef DEBUG
 	printf("sbicdma_dmastop called\n");
+#endif
 	/* XXX do nothing */
 }
 
@@ -258,16 +258,18 @@ int
 sbicdma_dmanext(sc)
 	struct sbic_softc *sc;
 {
+#ifdef DEBUG
 	printf("sbicdma_dmanext called\n");
+#endif
 }
 
 void
 sbicdma_dmafree(sc)
 	struct sbic_softc *sc;
 {
-	struct pccreg *pcc = (struct pccreg *)sc->sc_cregs;
-
+#ifdef DEBUG
 	printf("sbicdma_dmafree called\n");
+#endif
 	/* make certain interrupts are disabled first, reset */
-	pcc->pcc_dmairq = 0;
+	sys_pcc->pcc_dmairq = 0;
 }

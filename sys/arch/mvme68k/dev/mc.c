@@ -1,4 +1,4 @@
-/*	$OpenBSD: mc.c,v 1.14 2004/01/14 20:52:49 miod Exp $ */
+/*	$OpenBSD: mc.c,v 1.15 2004/07/02 17:57:29 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -118,7 +118,6 @@ mc_scan(parent, child, args)
 		oca.ca_vaddr = (void *)-1;
 	}
 	oca.ca_bustype = BUS_MC;
-	oca.ca_master = (void *)sc->sc_mc;
 	oca.ca_name = cf->cf_driver->cd_name;
 	if ((*cf->cf_attach->ca_match)(parent, cf, &oca) == 0)
 		return (0);

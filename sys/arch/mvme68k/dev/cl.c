@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl.c,v 1.34 2004/01/14 20:50:48 miod Exp $ */
+/*	$OpenBSD: cl.c,v 1.35 2004/07/02 17:57:29 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Dale Rahn. All rights reserved.
@@ -127,11 +127,11 @@ struct clsoftc {
 	struct intrhand		sc_ih_m;
 	struct intrhand		sc_ih_t;
 	struct intrhand		sc_ih_r;
-	struct pcctworeg	*sc_pcctwo;
 	int			sc_flags;
 	int			ssir;
 };
-struct {
+
+const struct {
 	u_int speed;
 	u_char divisor;
 	u_char clock;
@@ -264,7 +264,6 @@ clattach(parent, self, aux)
 	int i;
 
 	sc->cl_reg = (struct clreg *)ca->ca_vaddr;
-	sc->sc_pcctwo = ca->ca_master;
 
 	if (ca->ca_paddr == cl_cons.cl_paddr) {
 		/* if this device is configured as console,
@@ -366,18 +365,16 @@ clattach(parent, self, aux)
 	sc->sc_ih_r.ih_wantframe = 0;
 	switch (ca->ca_bustype) {
 	case BUS_PCCTWO:
-		dopoll = 0;
 		pcctwointr_establish(PCC2V_SCC_RXE,&sc->sc_ih_e);
 		pcctwointr_establish(PCC2V_SCC_M,&sc->sc_ih_m);
 		pcctwointr_establish(PCC2V_SCC_TX,&sc->sc_ih_t);
 		pcctwointr_establish(PCC2V_SCC_RX,&sc->sc_ih_r);
-		sc->sc_pcctwo = (void *)ca->ca_master;
-		sc->sc_pcctwo->pcc2_sccerr = 0x01; /* clear errors */
+		sys_pcc2->pcc2_sccerr = 0x01; /* clear errors */
 
 		/* enable all interrupts at ca_ipl */
-		sc->sc_pcctwo->pcc2_sccirq = PCC2_IRQ_IEN | (ca->ca_ipl & 0x7);
-		sc->sc_pcctwo->pcc2_scctx  = PCC2_IRQ_IEN | (ca->ca_ipl & 0x7);
-		sc->sc_pcctwo->pcc2_sccrx  = PCC2_IRQ_IEN | (ca->ca_ipl & 0x7);
+		sys_pcc2->pcc2_sccirq = PCC2_IRQ_IEN | (ca->ca_ipl & 0x7);
+		sys_pcc2->pcc2_scctx  = PCC2_IRQ_IEN | (ca->ca_ipl & 0x7);
+		sys_pcc2->pcc2_sccrx  = PCC2_IRQ_IEN | (ca->ca_ipl & 0x7);
 		break;
 	}
 
@@ -1201,12 +1198,12 @@ clgetc(sc, channel)
 	struct clreg *cl_reg;
 	volatile struct pcctworeg *pcc2_base;
 	u_char val, reoir, licr, isrl, fifo_cnt, data;
-	if (0 == sc) {
+	if (sc == NULL) {
 		cl_reg = cl_cons.cl_vaddr;
 		pcc2_base = cl_cons.pcctwoaddr;
 	} else {
 		cl_reg = sc->cl_reg;
-		pcc2_base = sc->sc_pcctwo;
+		pcc2_base = sys_pcc2;
 	}
 	val = cl_reg->cl_rir;
 	/* if no receive interrupt pending wait */

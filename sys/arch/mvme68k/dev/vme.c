@@ -1,4 +1,4 @@
-/*	$OpenBSD: vme.c,v 1.19 2004/01/14 20:52:49 miod Exp $ */
+/*	$OpenBSD: vme.c,v 1.20 2004/07/02 17:57:29 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -89,9 +89,7 @@ vmematch(parent, cf, args)
 	struct confargs *ca = args;
 
 	if (ca->ca_bustype == BUS_MC) {
-		struct mcreg *mc = (struct mcreg *)ca->ca_master;
-
-		if (mc->mc_ver & MC_VER_NOVME)
+		if (sys_mc->mc_ver & MC_VER_NOVME)
 			return (0);
 	}
 #endif
@@ -323,7 +321,6 @@ vmescan(parent, child, args, bustype)
 	oca.ca_vaddr = vmemap(sc, oca.ca_paddr, oca.ca_len, oca.ca_bustype);
 	if (!oca.ca_vaddr)
 		oca.ca_vaddr = (void *)-1;
-	oca.ca_master = (void *)sc;
 	oca.ca_name = cf->cf_driver->cd_name;
 	if ((*cf->cf_attach->ca_match)(parent, cf, &oca) == 0) {
 		if (oca.ca_vaddr != (void *)-1)

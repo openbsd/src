@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbicvar.h,v 1.6 2003/06/02 23:27:50 millert Exp $ */
+/*	$OpenBSD: sbicvar.h,v 1.7 2004/07/02 17:57:29 miod Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -99,7 +99,6 @@ struct  sbic_softc {
     u_char                  lun;
     struct  scsi_link       sc_link;    /* proto for sub devices */
     sbic_regmap_p           sc_sbicp;   /* the SBIC */
-    void                    *sc_cregs;  /* driver specific regs */
     int                     sc_ipl;
 
     /* Lists of command blocks */

@@ -1,5 +1,5 @@
 
-/*	$OpenBSD: pcctwo.c,v 1.12 2004/01/14 20:52:49 miod Exp $ */
+/*	$OpenBSD: pcctwo.c,v 1.13 2004/07/02 17:57:29 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -120,7 +120,6 @@ pcctwo_scan(parent, child, args)
 		oca.ca_paddr = (void *)-1;
 	}
 	oca.ca_bustype = BUS_PCCTWO;
-	oca.ca_master = (void *)sc->sc_pcc2;
 	oca.ca_name = cf->cf_driver->cd_name;
 	if ((*cf->cf_attach->ca_match)(parent, cf, &oca) == 0)
 		return (0);
