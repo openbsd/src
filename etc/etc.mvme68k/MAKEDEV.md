@@ -1,5 +1,5 @@
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.5 2002/05/16 21:11:20 miod Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.6 2002/08/21 22:07:43 miod Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2002, Miodrag Vallat.
@@ -55,13 +55,12 @@ _mkdev(mvme_czs, cua[a-z], {-u=${i#cua*}
 		M cua$u c major_mvme_czs_c Add($n, 128) 660 dialer uucp
 		;;
 	esac-})dnl
-dnl tty00 not tty0 to prevent description conflict
-__devitem(tty00, tty0*, CL-CD2400 serial ports)dnl
-_mkdev(tty00, {-tty0*-}, {-u=${i#tty0*}
+__devitem(cl, tty0*, CL-CD2400 serial ports)dnl
+_mkdev(cl, {-tty0*-}, {-u=${i#tty0*}
 	case $u in
 	0|1|2|3)
-		M tty0$u c major_tty0_c $u 660 dialer uucp
-		M cua0$u c major_tty0_c Add($u, 128) 660 dialer uucp
+		M tty0$u c major_cl_c $u 660 dialer uucp
+		M cua0$u c major_cl_c Add($u, 128) 660 dialer uucp
 		;;
 	*) echo unknown tty device $i ;;
 	esac-})dnl
@@ -118,7 +117,7 @@ target(all, vnd, 0, 1, 2, 3)dnl
 target(all, ccd, 0, 1, 2, 3)dnl
 twrget(all, mvme_tzs, tty, a, b, c, d)dnl
 twrget(all, mvme_czs, cua, a, b, c, d)dnl
-target(all, tty00, 0, 1, 2, 3)dnl
+twrget(all, cl, tty0, 0, 1, 2, 3)dnl
 target(all, ttyw, 0, 1, 2, 3)dnl
 dnl target(all, lp, 0)dnl
 _DEV(all)
@@ -147,7 +146,7 @@ _DEV(rd, 18, 9)
 _TITLE(term)
 _DEV(mvme_tzs, 12)
 _DEV(mvme_czs, 12)
-_DEV(tty00, 13)
+_DEV(cl, 13)
 _DEV(ttyw, 30)
 _TITLE(pty)
 _DEV(tty, 4)

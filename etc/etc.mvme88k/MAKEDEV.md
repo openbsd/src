@@ -1,5 +1,5 @@
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.4 2002/05/16 21:11:20 miod Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.5 2002/08/21 22:07:44 miod Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2002, Miodrag Vallat.
@@ -103,7 +103,7 @@ target(ramd, st, 0, 1)dnl
 target(ramd, cd, 0, 1)dnl)dnl
 target(ramd, rd, 0)dnl
 twrget(ramd, dart, tty, a)dnl
-twrget(camd, cl, tty0, 0)dnl
+twrget(ramd, cl, tty0, 0)dnl
 target(ramd, pty, 0)dnl
 _DEV(ramd)
 dnl
