@@ -1850,7 +1850,6 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/rpcsvc/yppasswd.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sched.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/scsi
-./usr/libdata/perl5/site_perl/i386-openbsd/scsi.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/scsi/atapi_all.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/scsi/atapi_cd.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/scsi/atapi_disk.ph

@@ -1309,7 +1309,6 @@
 ./usr/include/rpcsvc/yppasswd.x
 ./usr/include/sched.h
 ./usr/include/scsi
-./usr/include/scsi.h
 ./usr/include/scsi/atapi_all.h
 ./usr/include/scsi/atapi_cd.h
 ./usr/include/scsi/atapi_disk.h
@@ -2400,7 +2399,6 @@
 ./usr/share/man/cat3/RSA_size.0
 ./usr/share/man/cat3/RSA_verify.0
 ./usr/share/man/cat3/RSA_verify_ASN1_OCTET_STRING.0
-./usr/share/man/cat3/SCSIREQ_ERROR.0
 ./usr/share/man/cat3/SHA1.0
 ./usr/share/man/cat3/SHA1Data.0
 ./usr/share/man/cat3/SHA1End.0
@@ -4190,17 +4188,6 @@
 ./usr/share/man/cat3/scrl.0
 ./usr/share/man/cat3/scroll.0
 ./usr/share/man/cat3/scrollok.0
-./usr/share/man/cat3/scsi.0
-./usr/share/man/cat3/scsi_debug.0
-./usr/share/man/cat3/scsi_debug_output.0
-./usr/share/man/cat3/scsi_open.0
-./usr/share/man/cat3/scsireq_buff_decode.0
-./usr/share/man/cat3/scsireq_build.0
-./usr/share/man/cat3/scsireq_decode.0
-./usr/share/man/cat3/scsireq_encode.0
-./usr/share/man/cat3/scsireq_enter.0
-./usr/share/man/cat3/scsireq_new.0
-./usr/share/man/cat3/scsireq_reset.0
 ./usr/share/man/cat3/sectok.0
 ./usr/share/man/cat3/sectok_apdu.0
 ./usr/share/man/cat3/sectok_cardpresent.0

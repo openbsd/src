@@ -1224,7 +1224,6 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/rpcsvc/yppasswd.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sched.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/scsi
-./usr/libdata/perl5/site_perl/vax-openbsd/scsi.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/scsi/atapi_all.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/scsi/atapi_cd.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/scsi/atapi_disk.ph

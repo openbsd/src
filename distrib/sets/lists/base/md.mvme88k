@@ -1638,7 +1638,6 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/rpcsvc/yppasswd.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sched.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/scsi
-./usr/libdata/perl5/site_perl/m88k-openbsd/scsi.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/scsi/atapi_all.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/scsi/atapi_cd.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/scsi/atapi_disk.ph
