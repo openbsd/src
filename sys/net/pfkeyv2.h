@@ -200,8 +200,8 @@ struct sadb_cred {
 #define SADB_X_EXT_SA2                23
 #define SADB_X_EXT_DST2               24
 #define SADB_X_EXT_POLICY             25
-#define SADB_X_EXT_SRC_CREDENTIALS    26
-#define SADB_X_EXT_DST_CREDENTIALS    27
+#define SADB_X_EXT_LOCAL_CREDENTIALS  26
+#define SADB_X_EXT_REMOTE_CREDENTIALS 27
 #define SADB_EXT_MAX                  27
 
 /* Fix pfkeyv2.c struct pfkeyv2_socket if SATYPE_MAX > 31 */
