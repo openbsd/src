@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.105 2001/06/24 18:22:47 provos Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.106 2001/06/24 21:52:28 mickey Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -163,11 +163,11 @@ struct ipsec_ref
 struct ipsec_acquire
 {
     union sockaddr_union       ipa_addr;
-    u_int64_t                  ipa_expire;
     u_int32_t                  ipa_seq;
     struct sockaddr_encap      ipa_info;
     struct sockaddr_encap      ipa_mask;
     struct mbuf               *ipa_packet;
+    struct timeout	       ipa_timeout;
     TAILQ_ENTRY(ipsec_acquire) ipa_next;
 };
 
@@ -609,10 +609,9 @@ extern struct ipsec_policy *ipsec_add_policy(struct sockaddr_encap *,
 					     struct sockaddr_encap *,
 					     union sockaddr_union *, int, int);
 extern int ipsec_delete_policy(struct ipsec_policy *);
-extern void ipsp_acquire_expirations(void *);
 extern struct ipsec_acquire *ipsp_pending_acquire(union sockaddr_union *);
 extern struct ipsec_acquire *ipsec_get_acquire(u_int32_t);
-extern void ipsp_delete_acquire(struct ipsec_acquire *);
+extern void ipsp_delete_acquire(void *);
 extern void ipsp_clear_acquire(struct tdb *);
 extern int ipsp_is_unspecified(union sockaddr_union);
 extern void ipsp_reffree(struct ipsec_ref *);
