@@ -1,4 +1,4 @@
-/*	$OpenBSD: libkern.h,v 1.20 2004/05/06 01:12:05 deraadt Exp $	*/
+/*	$OpenBSD: libkern.h,v 1.21 2004/06/21 22:55:04 itojun Exp $	*/
 /*	$NetBSD: libkern.h,v 1.7 1996/03/14 18:52:08 christos Exp $	*/
 
 /*-
@@ -160,9 +160,12 @@ void	 srandom(u_long);
 int	 scanc(u_int, const u_char *, const u_char *, int);
 int	 skpc(int, size_t, u_char *);
 size_t	 strlen(const char *);
-char	*strncpy(char *, const char *, size_t);
-size_t	 strlcpy(char *, const char *, size_t);
-size_t	 strlcat(char *, const char *, size_t);
+char	*strncpy(char *, const char *, size_t)
+		__attribute__ ((__bounded__(__string__,1,3)));
+size_t	 strlcpy(char *, const char *, size_t)
+		__attribute__ ((__bounded__(__string__,1,3)));
+size_t	 strlcat(char *, const char *, size_t)
+		__attribute__ ((__bounded__(__string__,1,3)));
 int	 strcmp(const char *, const char *);
 int	 strncmp(const char *, const char *, size_t);
 int	 strncasecmp(const char *, const char *, size_t);
