@@ -884,7 +884,8 @@ chtype	blank  = newscr->_line[total-1].text[last-1]; /* lower right char */
 		}
 	}
 #if NO_LEAKS
-	FreeAndNull(tstLine);
+	if (tstLine != 0)
+	    FreeAndNull(tstLine);
 #endif
 	return total;
 }

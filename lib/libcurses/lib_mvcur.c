@@ -1196,6 +1196,8 @@ static int roll(int n)
 
 int main(int argc, char *argv[])
 {
+    char *p;
+
     (void) strncpy(tname, getenv("TERM"), sizeof(tname) - 1);
     tname[sizeof(tname) - 1] = '\0';
     load_term();
@@ -1208,10 +1210,15 @@ int main(int argc, char *argv[])
      * Undo the effects of our optimization hack, otherwise our interactive
      * prompts don't flush properly.
      */
+    if ((p = malloc(BUFSIZ)) == NULL) {
+	fprintf(stderr, "Can't allocate memory\n");
+	exit(1);
+    }
+
 #if HAVE_SETVBUF
-    (void) setvbuf(SP->_ofp, malloc(BUFSIZ), _IOLBF, BUFSIZ);
+    (void) setvbuf(SP->_ofp, p, _IOLBF, BUFSIZ);
 #elif HAVE_SETBUFFER
-    (void) setbuffer(SP->_ofp, malloc(BUFSIZ), BUFSIZ);
+    (void) setbuffer(SP->_ofp, p, BUFSIZ);
 #endif
 #endif /* HAVE_SETVBUF || HAVE_SETBUFFER */
 
@@ -1442,7 +1449,7 @@ int main(int argc, char *argv[])
     _nc_mvcur_wrap();
     putchar('\n');
 
-    return(0);
+    exit(0);
 }
 
 #endif /* MAIN */

@@ -98,7 +98,10 @@ int start_color(void)
 		returnCode(ERR);
 	SP->_coloron = 1;
 
-	SP->_color_table = malloc(sizeof(color_t) * COLORS);
+	if ((SP->_color_table = malloc(sizeof(color_t) * COLORS)) == NULL) {
+		errno = ENOMEM;
+		returnCode(ERR);
+	}
 #ifdef hue_lightness_saturation
 	if (hue_lightness_saturation)
 	    memcpy(SP->_color_table, hls_palette, sizeof(color_t) * COLORS);

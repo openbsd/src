@@ -51,6 +51,10 @@ char * _nc_trace_buf(int bufnum, size_t want)
 		size_t need = (bufnum + 1) * 2;
 		size_t used = sizeof(*list) * need;
 		list = (list == 0) ? malloc(used) : realloc(list, used);
+		if (list == 0) {
+			errno = ENOMEM;
+			return(NULL);
+		}
 		while (need > have)
 			list[have++].text = 0;
 	}
@@ -64,7 +68,10 @@ char * _nc_trace_buf(int bufnum, size_t want)
 		list[bufnum].text = realloc(list[bufnum].text, want);
 		list[bufnum].size = want;
 	}
-	*(list[bufnum].text) = '\0';
+	if (list[bufnum].text != 0)
+		*(list[bufnum].text) = '\0';
+	else
+		errno = ENOMEM;
 	return list[bufnum].text;
 }
 

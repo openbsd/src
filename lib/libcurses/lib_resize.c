@@ -57,8 +57,10 @@ int wresize(WINDOW *win, int new_lines, int new_cols)
         tp->text = &(win->_parent->_line[win->_pary+i].text[win->_parx]);
       else				/* allocate new lines if needed */
       {
-	if (!(tp->text = (chtype *)malloc(sizeof(chtype) * new_cols)))
+	if (!(tp->text = (chtype *)malloc(sizeof(chtype) * new_cols))) {
+	  errno = ENOMEM;
 	  return(ERR);
+	}
 	for (j = 0; j < new_cols; j++)
 	  tp->text[j] = blank;
       }

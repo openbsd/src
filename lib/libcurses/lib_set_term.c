@@ -72,7 +72,8 @@ void _nc_set_buffer(FILE *ofp, bool buffered)
 
 	if (buffered) {
 		buf_len = min(LINES * (COLS + 6), 2800);
-		buf_ptr = malloc(buf_len);
+		if ((buf_ptr = malloc(buf_len)) == NULL)
+			return;
 	} else {
 		buf_len = 0;
 		buf_ptr = 0;

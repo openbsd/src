@@ -35,6 +35,8 @@ static void *doalloc(void *p, size_t n)
 		p = malloc(n);
 	else
 		p = realloc(p, n);
+	if (p == 0)
+		errno = ENOMEM;
 	return p;
 }
 
