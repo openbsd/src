@@ -1,3 +1,4 @@
+/*	$OpenBSD: ukbd.c,v 1.5 2001/03/07 20:42:38 maja Exp $	*/
 /*      $NetBSD: ukbd.c,v 1.60 2000/06/01 14:29:00 augustss Exp $        */
 
 /*
@@ -282,7 +283,11 @@ extern const struct wscons_keydesc ukbd_keydesctab[];
 
 const struct wskbd_mapdata ukbd_keymapdata = {
 	ukbd_keydesctab,
+#ifdef UKBD_LAYOUT
+	UKBD_LAYOUT,
+#else
 	KB_US,
+#endif
 };
 #endif
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukbdmap.c,v 1.5 2001/03/01 03:43:12 aaron Exp $ */
+/*	$OpenBSD: ukbdmap.c,v 1.6 2001/03/07 20:42:38 maja Exp $ */
 /*	$NetBSD: ukbdmap.c,v 1.5 2000/04/27 15:26:49 augustss Exp $	*/
 
 /*
@@ -163,12 +163,228 @@ Static const keysym_t ukbd_keydesc_swapctrlcaps[] = {
     KC(224), KS_Cmd1,		KS_Caps_Lock,
 };
 
+Static const keysym_t ukbd_keydesc_de[] = {
+/*  pos      normal		shifted		altgr		shift-altgr */
+    KC(16),  KS_m,		KS_M,		KS_mu,
+    KC(20),  KS_q,		KS_Q,		KS_at,
+    KC(28),  KS_z,
+    KC(29),  KS_y,
+    KC(31),  KS_2,		KS_quotedbl,	KS_twosuperior,
+    KC(32),  KS_3,		KS_section,	KS_threesuperior,
+    KC(35),  KS_6,		KS_ampersand,
+    KC(36),  KS_7,		KS_slash,	KS_braceleft,
+    KC(37),  KS_8,		KS_parenleft,	KS_bracketleft,
+    KC(38),  KS_9,		KS_parenright,	KS_bracketright,
+    KC(39),  KS_0,		KS_equal,	KS_braceright,
+    KC(45),  KS_ssharp,		KS_question,	KS_backslash,
+    KC(46),  KS_dead_acute,	KS_dead_grave,
+    KC(47),  KS_udiaeresis,
+    KC(48),  KS_plus,		KS_asterisk,	KS_dead_tilde,
+    KC(50),  KS_numbersign,	KS_apostrophe,
+    KC(51),  KS_odiaeresis,
+    KC(52),  KS_adiaeresis,
+    KC(53),  KS_dead_circumflex,KS_dead_abovering,
+    KC(54),  KS_comma,		KS_semicolon,
+    KC(55),  KS_period,		KS_colon,
+    KC(56),  KS_minus,		KS_underscore,
+    KC(100), KS_less,		KS_greater,	KS_bar,		KS_brokenbar,
+    KC(230), KS_Mode_switch,	KS_Multi_key,
+};
+
+Static const keysym_t ukbd_keydesc_de_nodead[] = {
+/*  pos      normal		shifted		altgr		shift-altgr */
+    KC(46),  KS_apostrophe,	KS_grave,
+    KC(48),  KS_plus,		KS_asterisk,	KS_asciitilde,
+    KC(53),  KS_asciicircum,	KS_degree,
+};
+
+Static const keysym_t ukbd_keydesc_dk[] = {
+/*  pos      normal		shifted		altgr		shift-altgr */
+    KC(31),  KS_2,		KS_quotedbl,	KS_at,
+    KC(32),  KS_3,		KS_numbersign,	KS_sterling,
+    KC(33),  KS_4,		KS_currency,	KS_dollar,
+    KC(35),  KS_6,		KS_ampersand,
+    KC(36),  KS_7,		KS_slash,	KS_braceleft,
+    KC(37),  KS_8,		KS_parenleft,	KS_bracketleft,
+    KC(38),  KS_9,		KS_parenright,	KS_bracketright,
+    KC(39),  KS_0,		KS_equal,	KS_braceright,
+    KC(45),  KS_plus,		KS_question,
+    KC(46),  KS_dead_acute,	KS_dead_grave,	KS_bar,
+    KC(47),  KS_aring,
+    KC(48),  KS_dead_diaeresis,	KS_dead_circumflex, KS_dead_tilde,
+    KC(50),  KS_apostrophe,	KS_asterisk,
+    KC(51),  KS_ae,
+    KC(52),  KS_oslash,
+    KC(53),  KS_onehalf,	KS_paragraph,
+    KC(54),  KS_comma,		KS_semicolon,
+    KC(55),  KS_period,		KS_colon,
+    KC(56),  KS_minus,		KS_underscore,
+    KC(100), KS_less,		KS_greater,	KS_backslash,
+    KC(230), KS_Mode_switch,	KS_Multi_key,
+};
+
+Static const keysym_t ukbd_keydesc_dk_nodead[] = {
+/*  pos      normal		shifted		altgr		shift-altgr */
+    KC(46),  KS_apostrophe,	KS_grave,	KS_bar,
+    KC(48),  KS_diaeresis,	KS_asciicircum,	KS_asciitilde,
+};
+
+Static const keysym_t ukbd_keydesc_sv[] = {
+/*  pos      normal		shifted		altgr		shift-altgr */
+    KC(45),  KS_plus,		KS_question,	KS_backslash,
+    KC(48),  KS_dead_diaeresis,	KS_dead_circumflex, KS_dead_tilde,
+    KC(51),  KS_odiaeresis,
+    KC(52),  KS_adiaeresis,
+    KC(53),  KS_paragraph,	KS_onehalf,
+    KC(100), KS_less,		KS_greater,	KS_bar,
+    KC(230), KS_Mode_switch,	KS_Multi_key,
+};
+
+Static const keysym_t ukbd_keydesc_sv_nodead[] = {
+/*  pos      normal		shifted		altgr		shift-altgr */
+    KC(46),  KS_apostrophe,	KS_grave,	KS_bar,
+    KC(48),  KS_diaeresis,	KS_asciicircum,	KS_asciitilde,
+};
+
+Static const keysym_t ukbd_keydesc_no[] = {
+/*  pos      normal		shifted		altgr		shift-altgr */
+    KC(46),  KS_backslash,	KS_dead_grave,	KS_dead_acute,
+    KC(48),  KS_dead_diaeresis,	KS_dead_circumflex, KS_dead_tilde,
+    KC(51),  KS_oslash,
+    KC(52),  KS_ae,
+    KC(53),  KS_bar,		KS_paragraph,
+    KC(100), KS_less,		KS_greater,
+};
+
+Static const keysym_t ukbd_keydesc_no_nodead[] = {
+/*  pos      normal		shifted		altgr		shift-altgr */
+    KC(46),  KS_backslash,	KS_grave,	KS_acute,
+    KC(48),  KS_diaeresis,	KS_asciicircum,	KS_asciitilde,
+};
+
+Static const keysym_t ukbd_keydesc_fr[] = {
+/*  pos	     normal		shifted		altgr		shift-altgr */
+    KC(4),   KS_q,
+    KC(16),  KS_comma,		KS_question,
+    KC(20),  KS_a,
+    KC(26),  KS_z,
+    KC(29),  KS_w,
+    KC(30),  KS_ampersand,	KS_1,
+    KC(31),  KS_eacute,		KS_2,		KS_asciitilde,
+    KC(32),  KS_quotedbl,	KS_3,		KS_numbersign,
+    KC(33),  KS_apostrophe,	KS_4,		KS_braceleft,
+    KC(34),  KS_parenleft,	KS_5,		KS_bracketleft,
+    KC(35),  KS_minus,		KS_6,		KS_bar,
+    KC(36),  KS_egrave,		KS_7,		KS_grave,
+    KC(37),  KS_underscore,	KS_8,		KS_backslash,
+    KC(38),  KS_ccedilla,	KS_9,		KS_asciicircum,
+    KC(39),  KS_agrave,		KS_0,		KS_at,
+    KC(45),  KS_parenright,	KS_degree,	KS_bracketright,
+    KC(46),  KS_equal,		KS_plus,	KS_braceright,
+    KC(47),  KS_dead_circumflex, KS_dead_diaeresis, 
+    KC(48),  KS_dollar,		KS_sterling,	KS_currency,
+    KC(50),  KS_asterisk,	KS_mu,
+    KC(51),  KS_m,
+    KC(52),  KS_ugrave,		KS_percent,
+    KC(53),  KS_twosuperior,
+    KC(54),  KS_semicolon,	KS_period,
+    KC(55),  KS_colon,		KS_slash,
+    KC(56),  KS_exclam,		KS_section,
+    KC(100), KS_less,		KS_greater,
+    KC(230), KS_Mode_switch,	KS_Multi_key,
+};
+
+Static const keysym_t ukbd_keydesc_it[] = {
+/*  pos      normal		shifted		altgr		shift-altgr */
+    KC(31),  KS_2,	    	KS_quotedbl,	KS_twosuperior,
+    KC(32),  KS_3,	    	KS_sterling,	KS_threesuperior,
+    KC(33),  KS_4,	    	KS_dollar,
+    KC(34),  KS_5,	    	KS_percent,
+    KC(35),  KS_6,	    	KS_ampersand,
+    KC(36),  KS_7,	    	KS_slash,
+    KC(37),  KS_8,	    	KS_parenleft,
+    KC(38),  KS_9,	    	KS_parenright,
+    KC(39),  KS_0,	    	KS_equal,
+    KC(45),  KS_apostrophe,	KS_question,
+    KC(46),  KS_igrave,	    	KS_asciicircum,
+    KC(47),  KS_egrave,		KS_eacute,	KS_braceleft,	KS_bracketleft,
+    KC(48),  KS_plus,		KS_asterisk,	KS_braceright,	KS_bracketright,
+    KC(49),  KS_ugrave,		KS_section,
+    KC(51),  KS_ograve,		KS_Ccedilla,	KS_at,
+    KC(52),  KS_agrave,		KS_degree,	KS_numbersign,
+    KC(53),  KS_backslash,	KS_bar,
+    KC(54),  KS_comma,		KS_semicolon,
+    KC(55),  KS_period,		KS_colon,
+    KC(56),  KS_minus,		KS_underscore,
+    KC(100), KS_less,		KS_greater,
+    KC(230), KS_Mode_switch,	KS_Multi_key,
+};
+
+Static const keysym_t ukbd_keydesc_uk[] = {
+/*  pos      normal             shifted         altgr           shift-altgr */
+    KC(30),  KS_1,              KS_exclam,      KS_plusminus,   KS_exclamdown,
+    KC(31),  KS_2,              KS_quotedbl,    KS_twosuperior, KS_cent,
+    KC(32),  KS_3,              KS_sterling,    KS_threesuperior,
+    KC(33),  KS_4,              KS_dollar,      KS_acute,       KS_currency,
+    KC(34),  KS_5,              KS_percent,     KS_mu,          KS_yen,
+    KC(35),  KS_6,              KS_asciicircum, KS_paragraph,
+    KC(36),  KS_7,              KS_ampersand,   KS_periodcentered, KS_brokenbar,
+    KC(37),  KS_8,              KS_asterisk,    KS_cedilla,     KS_ordfeminine,
+    KC(38),  KS_9,              KS_parenleft,   KS_onesuperior, KS_diaeresis,
+    KC(39),  KS_0,              KS_parenright,  KS_masculine,   KS_copyright,
+    KC(45),  KS_minus,          KS_underscore,  KS_hyphen,      KS_ssharp,
+    KC(46),  KS_equal,          KS_plus,        KS_onehalf,    KS_guillemotleft,
+    KC(49),  KS_numbersign,     KS_asciitilde,  KS_sterling,    KS_thorn,
+    KC(52),  KS_apostrophe,     KS_at,          KS_section,     KS_Agrave,
+    KC(53),  KS_grave,          KS_grave,       KS_agrave,      KS_agrave,
+    KC(100), KS_backslash,      KS_bar,         KS_Udiaeresis,
+};
+
+Static const keysym_t ukbd_keydesc_es[] = {
+/*  pos      normal		shifted		altgr		shift-altgr */
+    KC(30),  KS_1,		KS_exclam,	KS_bar,
+    KC(31),  KS_2,		KS_quotedbl,	KS_at,
+    KC(32),  KS_3,		KS_periodcentered, KS_numbersign,
+    KC(33),  KS_4,		KS_dollar,	KS_asciitilde,
+    KC(35),  KS_6,		KS_ampersand,
+    KC(36),  KS_7,		KS_slash,
+    KC(37),  KS_8,		KS_parenleft,
+    KC(38),  KS_9,		KS_parenright,
+    KC(39),  KS_0,		KS_equal,
+    KC(45),  KS_grave,		KS_question,
+    KC(46),  KS_exclamdown,	KS_questiondown,
+    KC(47),  KS_dead_grave,	KS_dead_circumflex, KS_bracketleft,
+    KC(48),  KS_plus,		KS_asterisk,	KS_bracketright,
+    KC(49),  KS_ccedilla,	KS_Ccedilla,	KS_braceright,
+    KC(51),  KS_ntilde,
+    KC(52),  KS_dead_acute,	KS_dead_diaeresis, KS_braceleft,
+    KC(53),  KS_degree,		KS_ordfeminine,	KS_backslash,
+    KC(54),  KS_comma,		KS_semicolon,
+    KC(55),  KS_period,		KS_colon,
+    KC(56),  KS_minus,		KS_underscore,
+    KC(100), KS_less,		KS_greater,
+    KC(230), KS_Mode_switch,	KS_Multi_key,
+};
+
 #define KBD_MAP(name, base, map) \
 			{ name, base, sizeof(map)/sizeof(keysym_t), map }
 
 const struct wscons_keydesc ukbd_keydesctab[] = {
 	KBD_MAP(KB_US,			0,	ukbd_keydesc_us),
+	KBD_MAP(KB_DE,			KB_US,	ukbd_keydesc_de),
+	KBD_MAP(KB_DE | KB_NODEAD,	KB_DE,	ukbd_keydesc_de_nodead),
+	KBD_MAP(KB_FR,                  KB_US,  ukbd_keydesc_fr),
+	KBD_MAP(KB_DK,			KB_US,	ukbd_keydesc_dk),
+	KBD_MAP(KB_DK | KB_NODEAD,	KB_DK,	ukbd_keydesc_dk_nodead),
+	KBD_MAP(KB_IT,			KB_US,	ukbd_keydesc_it),
+	KBD_MAP(KB_UK,			KB_US,	ukbd_keydesc_uk),
+	KBD_MAP(KB_SV,			KB_DK,	ukbd_keydesc_sv),
+	KBD_MAP(KB_SV | KB_NODEAD,	KB_SV,	ukbd_keydesc_sv_nodead),
+	KBD_MAP(KB_NO,			KB_DK,	ukbd_keydesc_no),
+	KBD_MAP(KB_NO | KB_NODEAD,	KB_NO,	ukbd_keydesc_no_nodead),
 	KBD_MAP(KB_US | KB_SWAPCTRLCAPS, KB_US,	ukbd_keydesc_swapctrlcaps),
+	KBD_MAP(KB_FR | KB_SWAPCTRLCAPS, KB_FR, ukbd_keydesc_swapctrlcaps),
+	KBD_MAP(KB_ES ,			KB_US,	ukbd_keydesc_es),
 	{0, 0, 0, 0}
 };
 
