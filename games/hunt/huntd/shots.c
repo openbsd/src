@@ -1,4 +1,4 @@
-/*	$OpenBSD: shots.c,v 1.4 1999/02/01 06:53:56 d Exp $	*/
+/*	$OpenBSD: shots.c,v 1.5 2001/09/19 15:19:45 pjanzen Exp $	*/
 /*	$NetBSD: shots.c,v 1.3 1997/10/11 08:13:50 lukem Exp $	*/
 /*
  *  Hunt
@@ -433,19 +433,19 @@ move_drone(bp)
 	PLAYER	*pp;
 
 	/* See if we can give someone a blast: */
-	if (isplayer(Maze[bp->b_y][bp->b_x - 1])) {
+	if (is_player(Maze[bp->b_y][bp->b_x - 1])) {
 		dir = WEST;
 		goto drone_move;
 	}
-	if (isplayer(Maze[bp->b_y - 1][bp->b_x])) {
+	if (is_player(Maze[bp->b_y - 1][bp->b_x])) {
 		dir = NORTH;
 		goto drone_move;
 	}
-	if (isplayer(Maze[bp->b_y + 1][bp->b_x])) {
+	if (is_player(Maze[bp->b_y + 1][bp->b_x])) {
 		dir = SOUTH;
 		goto drone_move;
 	}
-	if (isplayer(Maze[bp->b_y][bp->b_x + 1])) {
+	if (is_player(Maze[bp->b_y][bp->b_x + 1])) {
 		dir = EAST;
 		goto drone_move;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: draw.c,v 1.4 2001/02/13 11:55:10 pjanzen Exp $	*/
+/*	$OpenBSD: draw.c,v 1.5 2001/09/19 15:19:45 pjanzen Exp $	*/
 /*	$NetBSD: draw.c,v 1.2 1997/10/10 16:33:04 lukem Exp $	*/
 /*
  *  Hunt
@@ -43,7 +43,7 @@ drawmaze(pp)
 				if (pp->p_x == x && pp->p_y == y)
 					outch(pp, translate(*sp));
 				/* Possibly draw other players as team nrs */
-				else if (isplayer(*sp))
+				else if (is_player(*sp))
 					outch(pp, player_sym(pp, y, x));
 				else
 					outch(pp, *sp);
@@ -224,7 +224,7 @@ check(pp, y, x)
 		cgoto(rpp, y, x);
 		if (x == rpp->p_x && y == rpp->p_y)
 			outch(rpp, translate(ch));
-		else if (isplayer(ch))
+		else if (is_player(ch))
 			outch(rpp, player_sym(rpp, y, x));
 		else
 			outch(rpp, ch);
