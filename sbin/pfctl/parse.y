@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.135 2002/07/30 09:31:05 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.136 2002/07/30 14:53:48 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -1882,8 +1882,7 @@ expand_rule(struct pf_rule *r,
 		r->type = icmp_type->type;
 		r->code = icmp_type->code;
 
-		if (r->proto && r->proto != IPPROTO_TCP &&
-		    (r->flags || r->flagset)) {
+		if (r->proto && r->proto != IPPROTO_TCP) {
 			r->flags = 0;
 			r->flagset = 0;
 		} else {
