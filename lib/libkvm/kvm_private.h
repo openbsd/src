@@ -1,5 +1,5 @@
-/*	$OpenBSD: kvm_private.h,v 1.3 1996/05/05 14:57:38 deraadt Exp $ */
-/*	$NetBSD: kvm_private.h,v 1.6 1996/03/18 22:33:54 thorpej Exp $	*/
+/*	$OpenBSD: kvm_private.h,v 1.4 1996/05/10 12:58:33 deraadt Exp $ */
+/*	$NetBSD: kvm_private.h,v 1.7 1996/05/05 04:32:15 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -68,7 +68,8 @@ struct __kvm {
 	 * dead kernels.
 	 */
 	struct kcore_hdr	*kcore_hdr;
-	struct cpu_kcore_hdr	*cpu_hdr;
+	size_t	cpu_dsize;
+	void	*cpu_data;
 	off_t	dump_off;	/* Where the actual dump starts	*/
 
 	/*

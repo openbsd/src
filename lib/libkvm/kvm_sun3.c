@@ -1,5 +1,5 @@
-/*	$OpenBSD: kvm_sun3.c,v 1.2 1996/05/05 14:57:53 deraadt Exp $ */
-/*	$NetBSD: kvm_sun3.c,v 1.3 1996/03/18 22:34:04 thorpej Exp $	*/
+/*	$OpenBSD: kvm_sun3.c,v 1.3 1996/05/10 12:58:33 deraadt Exp $ */
+/*	$NetBSD: kvm_sun3.c,v 1.4 1996/05/05 04:32:18 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,72 +38,73 @@
  * SUCH DAMAGE.
  */
 
+#if defined(LIBC_SCCS) && !defined(lint)
+#if 0
+static char sccsid[] = "@(#)kvm_sparc.c	8.1 (Berkeley) 6/4/93";
+#else
+static char *rcsid = "$NetBSD: kvm_sun3.c,v 1.4 1996/05/05 04:32:18 gwr Exp $";
+#endif
+#endif /* LIBC_SCCS and not lint */
+
 /*
- * Sun3 machine dependent routines for kvm.  Hopefully, the forthcoming
- * vm code will one day obsolete this module.  Furthermore, I hope it
- * gets here soon, because this basically is an error stub! (sorry)
+ * Sun3 machine dependent routines for kvm.
  */
 
 #include <sys/param.h>
 #include <sys/user.h>
 #include <sys/proc.h>
 #include <sys/stat.h>
+
+#include <sys/core.h>
+#include <sys/exec_aout.h>
+#include <sys/kcore.h>
+
 #include <unistd.h>
+#include <limits.h>
 #include <nlist.h>
 #include <kvm.h>
+#include <db.h>
 
 #include <vm/vm.h>
 #include <vm/vm_param.h>
 
-#include <limits.h>
-#include <db.h>
+#include <machine/kcore.h>
+#include <machine/pte.h>
 
 #include "kvm_private.h"
 
+#define NKSEG (NSEGMAP/8)	/* kernel segmap entries */
 struct vmstate {
-	u_long end;
+	/* Page Map Entry Group (PMEG) */
+	int   pmeg[NKSEG][NPAGSEG];
 };
+
+/*
+ * Prepare for translation of kernel virtual addresses into offsets
+ * into crash dump files. We use the MMU specific goop written at the
+ * beginning of a crash dump by dumpsys()
+ * Note: sun3 MMU specific!
+ */
+int
+_kvm_initvtop(kd)
+	kvm_t *kd;
+{
+	register char *p;
+
+	p = kd->cpu_data;
+	p += (NBPG - sizeof(kcore_seg_t));
+	kd->vmst = (struct vmstate *)p;
+
+	return (0);
+}
 
 void
 _kvm_freevtop(kd)
 	kvm_t *kd;
 {
-	if (kd->vmst != 0)
-		free(kd->vmst);
+	/* This was set by pointer arithmetic, not allocation. */
+	kd->vmst = (void*)0;
 }
-
-int
-_kvm_initvtop(kd)
-	kvm_t *kd;
-{
-	register int i;
-	register int off;
-	register struct vmstate *vm;
-	struct stat st;
-	struct nlist nlist[2];
-
-	vm = (struct vmstate *)_kvm_malloc(kd, sizeof(*vm));
-	if (vm == 0)
-		return (-1);
-
-	kd->vmst = vm;
-
-	if (fstat(kd->pmfd, &st) < 0)
-		return (-1);
-
-	/* Get end of kernel address */
-	nlist[0].n_name = "_end";
-	nlist[1].n_name = 0;
-	if (kvm_nlist(kd, nlist) != 0) {
-		_kvm_err(kd, kd->program, "pmap_stod: no such symbol");
-		return (-1);
-	}
-	vm->end = (u_long)nlist[0].n_value;
-
-	return (0);
-}
-
-#define VA_OFF(va) (va & (NBPG - 1))
 
 /*
  * Translate a kernel virtual address to a physical address using the
@@ -112,24 +113,56 @@ _kvm_initvtop(kd)
  * physical address.  This routine is used only for crashdumps.
  */
 int
-_kvm_kvatop(kd, va, pa)
+_kvm_kvatop(kd, va, pap)
 	kvm_t *kd;
 	u_long va;
-	u_long *pa;
+	u_long *pap;
 {
-	register int end;
+	register cpu_kcore_hdr_t *ckh;
+	u_int segnum, sme, ptenum;
+	int pte, offset;
+	u_long pa;
+
+	if (ISALIVE(kd)) {
+		_kvm_err(kd, 0, "vatop called in live kernel!");
+		return((off_t)0);
+	}
+	ckh = kd->cpu_data;
 
 	if (va < KERNBASE) {
-		_kvm_err(kd, 0, "invalid address (%x<%x)", va, KERNBASE);
-		return (0);
+		_kvm_err(kd, 0, "not a kernel address");
+		return((off_t)0);
 	}
 
-	end = kd->vmst->end;
-	if (va >= end) {
-		_kvm_err(kd, 0, "invalid address (%x>=%x)", va, end);
+	/*
+	 * Get the segmap entry (sme) from the kernel segmap.
+	 * Note: only have segmap entries from KERNBASE to end.
+	 */
+	segnum = VA_SEGNUM(va - KERNBASE);
+	ptenum = VA_PTE_NUM(va);
+	offset = va & PGOFSET;
+
+	/* The segmap entry selects a PMEG. */
+	sme = ckh->ksegmap[segnum];
+	pte = kd->vmst->pmeg[sme][ptenum];
+
+	if ((pte & PG_VALID) == 0) {
+		_kvm_err(kd, 0, "page not valid (VA=0x%x)", va);
 		return (0);
 	}
+	pa = PG_PA(pte) + offset;
 
-	*pa = (va - KERNBASE);
-	return (end - va);
+	*pap = pa;
+	return (NBPG - offset);
+}
+
+/*
+ * Translate a physical address to a file-offset in the crash-dump.
+ */
+off_t
+_kvm_pa2off(kd, pa)
+	kvm_t	*kd;
+	u_long	pa;
+{
+	return(kd->dump_off + pa);
 }
