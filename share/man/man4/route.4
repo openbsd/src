@@ -1,4 +1,4 @@
-.\"	$OpenBSD: route.4,v 1.15 2003/08/31 19:53:42 jmc Exp $
+.\"	$OpenBSD: route.4,v 1.16 2004/01/21 19:35:39 jmc Exp $
 .\"	$NetBSD: route.4,v 1.3 1994/11/30 16:22:31 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
@@ -130,7 +130,7 @@ to most significant bit within the vector.
 .Pp
 Any messages sent to the kernel are returned, and copies are sent
 to all interested listeners.
-The kernel will provide the process id.
+The kernel will provide the process ID
 for the sender, and the sender may use an additional sequence
 field to distinguish between outstanding messages.
 However, message replies may be lost when kernel buffers are exhausted.
@@ -150,7 +150,7 @@ or
 .Dv ENOBUFS
 if insufficient resources were available
 to install a new route.
-In the current implementation, all routing process run locally,
+In the current implementation, all routing processes run locally,
 and the values for
 .Ar rtm_errno
 are available through the normal
@@ -178,50 +178,112 @@ be reclaimed until all references to it are released.
 User processes can obtain information about the routing
 entry to a specific destination by using a
 .Dv RTM_GET
-message.
+message, or via the
+.Dv PF_ROUTE
+.Xr sysctl 3 .
 .Pp
 Messages include:
 .Bd -literal
-#define	RTM_ADD		0x1    /* Add Route */
-#define	RTM_DELETE	0x2    /* Delete Route */
-#define	RTM_CHANGE	0x3    /* Change Metrics, Flags, or Gateway */
-#define	RTM_GET		0x4    /* Report Information */
-#define	RTM_LOOSING	0x5    /* Kernel Suspects Partitioning */
-#define	RTM_REDIRECT	0x6    /* Told to use different route */
-#define	RTM_MISS	0x7    /* Lookup failed on this address */
-#define	RTM_RESOLVE	0xb    /* request to resolve dst to LL addr */
+#define RTM_ADD		0x1	/* Add Route */
+#define RTM_DELETE	0x2	/* Delete Route */
+#define RTM_CHANGE	0x3	/* Change Metrics or flags */
+#define RTM_GET		0x4	/* Report Metrics */
+#define RTM_LOSING	0x5	/* Kernel Suspects Partitioning */
+#define RTM_REDIRECT	0x6	/* Told to use different route */
+#define RTM_MISS	0x7	/* Lookup failed on this address */
+#define RTM_LOCK	0x8	/* fix specified metrics */
+#define RTM_OLDADD	0x9	/* caused by SIOCADDRT */
+#define RTM_OLDDEL	0xa	/* caused by SIOCDELRT */
+#define RTM_RESOLVE	0xb	/* req to resolve dst to LL addr */
+#define RTM_NEWADDR	0xc	/* address being added to iface */
+#define RTM_DELADDR	0xd	/* address being removed from iface */
+#define RTM_IFINFO	0xe	/* iface going up/down etc. */
+#define RTM_IFANNOUNCE	0xf	/* iface arrival/departure */
 .Ed
 .Pp
-A message header consists of:
+A message header consists of one of the following:
 .Bd -literal
 struct rt_msghdr {
-    u_short rtm_msglen;  /* to skip over non-understood messages */
-    u_char  rtm_version; /* future binary compatibility */
-    u_char  rtm_type;    /* message type */
-    u_short rtm_index;   /* index for associated ifp */
-    pid_t   rtm_pid;     /* identify sender */
-    int     rtm_addrs;   /* bitmask identifying sockaddrs in msg */
-    int     rtm_seq;     /* for sender to identify action */
-    int     rtm_errno;   /* why failed */
-    int     rtm_flags;   /* flags, incl kern & message, e.g. DONE */
-    int     rtm_use;     /* from rtentry */
-    u_long  rtm_inits;   /* which values we are initializing */
-    struct  rt_metrics rtm_rmx;	/* metrics themselves */
+	u_short	rtm_msglen;	/* to skip over non-understood messages */
+	u_char	rtm_version;	/* future binary compatibility */
+	u_char	rtm_type;	/* message type */
+	u_short	rtm_index;	/* index for associated ifp */
+	int	rtm_flags;	/* flags, incl. kern & message, eg DONE */
+	int	rtm_addrs;	/* bitmask identifying sockaddrs in msg */
+	pid_t	rtm_pid;	/* identify sender */
+	int	rtm_seq;	/* for sender to identify action */
+	int	rtm_errno;	/* why failed */
+	int	rtm_use;	/* from rtentry */
+	u_long	rtm_inits;	/* which metrics we are initializing */
+	struct	rt_metrics rtm_rmx; /* metrics themselves */
+};
+.Ed
+.Bd -literal
+struct if_msghdr {
+	u_short	ifm_msglen;	/* to skip over non-understood messages */
+	u_char	ifm_version;	/* future binary compatibility */
+	u_char	ifm_type;	/* message type */
+	int	ifm_addrs;	/* like rtm_addrs */
+	int	ifm_flags;	/* value of if_flags */
+	u_short	ifm_index;	/* index for associated ifp */
+	struct	if_data ifm_data;/* statistics and other data about if */
+};
+.Ed
+.Bd -literal
+struct ifa_msghdr {
+	u_short	ifam_msglen;	/* to skip over non-understood messages */
+	u_char	ifam_version;	/* future binary compatibility */
+	u_char	ifam_type;	/* message type */
+	int	ifam_addrs;	/* like rtm_addrs */
+	int	ifam_flags;	/* value of ifa_flags */
+	u_short	ifam_index;	/* index for associated ifp */
+	int	ifam_metric;	/* value of ifa_metric */
+};
+.Ed
+.Bd -literal
+struct if_announcemsghdr {
+	u_short	ifan_msglen;	/* to skip over non-understood messages */
+	u_char	ifan_version;	/* future binary compatibility */
+	u_char	ifan_type;	/* message type */
+	u_short	ifan_index;	/* index for associated ifp */
+	char	ifan_name[IFNAMSIZ];	/* if name, e.g. "en0" */
+	u_short	ifan_what;	/* what type of announcement */
 };
 .Ed
 .Pp
-where
+The
+.Dv RTM_IFINFO
+message uses a
+.Ar if_msghdr
+header, the
+.Dv RTM_NEWADDR
+and
+.Dv RTM_DELADDR
+messages use a
+.Ar ifa_msghdr
+header,
+the
+.Dv RTM_IFANNOUNCE
+message uses a
+.Ar if_announcemsghdr
+header,
+and all other messages use the
+.Ar rt_msghdr
+header.
+.Pp
+The metrics structure is:
 .Bd -literal
 struct rt_metrics {
-    u_long rmx_locks;     /* Kernel must leave these values alone */
-    u_long rmx_mtu;       /* MTU for this path */
-    u_long rmx_hopcount;  /* max hops expected */
-    u_long rmx_expire;    /* lifetime for route, e.g. redirect */
-    u_long rmx_recvpipe;  /* inbound delay-bandwidth product */
-    u_long rmx_sendpipe;  /* outbound delay-bandwidth product */
-    u_long rmx_ssthresh;  /* outbound gateway buffer limit */
-    u_long rmx_rtt;       /* estimated round trip time */
-    u_long rmx_rttvar;    /* estimated rtt variance */
+	u_long	rmx_locks;	/* Kernel must leave these values alone */
+	u_long	rmx_mtu;	/* MTU for this path */
+	u_long	rmx_hopcount;	/* max hops expected */
+	u_long	rmx_expire;	/* lifetime for route, e.g. redirect */
+	u_long	rmx_recvpipe;	/* inbound delay-bandwidth product */
+	u_long	rmx_sendpipe;	/* outbound delay-bandwidth product */
+	u_long	rmx_ssthresh;	/* outbound gateway buffer limit */
+	u_long	rmx_rtt;	/* estimated round trip time */
+	u_long	rmx_rttvar;	/* estimated rtt variance */
+	u_long	rmx_pksent;	/* packets sent using this route */
 };
 .Ed
 .Pp
@@ -240,29 +302,35 @@ Flags include the values:
 #define	RTF_LLINFO    0x400     /* generated by ARP or ESIS */
 #define	RTF_STATIC    0x800     /* manually added */
 #define	RTF_BLACKHOLE 0x1000    /* just discard pkts (during updates) */
-#define	RTF_PROTO2    0x4000    /* protocol specific routing flag #1 */
-#define	RTF_PROTO1    0x8000    /* protocol specific routing flag #2 */
+#define	RTF_PROTO3    0x2000    /* protocol specific routing flag */
+#define	RTF_PROTO2    0x4000    /* protocol specific routing flag */
+#define	RTF_PROTO1    0x8000    /* protocol specific routing flag */
 #define	RTF_CLONED    0x10000   /* this is a cloned route */
 .Ed
 .Pp
 Specifiers for metric values in rmx_locks and rtm_inits are:
 .Bd -literal
-#define	RTV_SSTHRESH  0x1    /* init or lock _ssthresh */
-#define	RTV_RPIPE     0x2    /* init or lock _recvpipe */
-#define	RTV_SPIPE     0x4    /* init or lock _sendpipe */
-#define	RTV_HOPCOUNT  0x8    /* init or lock _hopcount */
-#define	RTV_RTT       0x10   /* init or lock _rtt */
-#define	RTV_RTTVAR    0x20   /* init or lock _rttvar */
-#define	RTV_MTU       0x40   /* init or lock _mtu */
+#define RTV_MTU		0x1	/* init or lock _mtu */
+#define RTV_HOPCOUNT	0x2	/* init or lock _hopcount */
+#define RTV_EXPIRE	0x4	/* init or lock _hopcount */
+#define RTV_RPIPE	0x8	/* init or lock _recvpipe */
+#define RTV_SPIPE	0x10	/* init or lock _sendpipe */
+#define RTV_SSTHRESH	0x20	/* init or lock _ssthresh */
+#define RTV_RTT		0x40	/* init or lock _rtt */
+#define RTV_RTTVAR	0x80	/* init or lock _rttvar */
 .Ed
 .Pp
 Specifiers for which addresses are present in the messages are:
 .Bd -literal
-#define RTA_DST       0x1    /* destination sockaddr present */
-#define RTA_GATEWAY   0x2    /* gateway sockaddr present */
-#define RTA_NETMASK   0x4    /* netmask sockaddr present */
-#define RTA_GENMASK   0x8    /* cloning mask sockaddr present */
-#define RTA_IFP       0x10   /* interface name sockaddr present */
-#define RTA_IFA       0x20   /* interface addr sockaddr present */
-#define RTA_AUTHOR    0x40   /* sockaddr for author of redirect */
+#define RTA_DST		0x1	/* destination sockaddr present */
+#define RTA_GATEWAY	0x2	/* gateway sockaddr present */
+#define RTA_NETMASK	0x4	/* netmask sockaddr present */
+#define RTA_GENMASK	0x8	/* cloning mask sockaddr present */
+#define RTA_IFP		0x10	/* interface name sockaddr present */
+#define RTA_IFA		0x20	/* interface addr sockaddr present */
+#define RTA_AUTHOR	0x40	/* sockaddr for author of redirect */
+#define RTA_BRD		0x80  /* for NEWADDR, broadcast or p-p dest addr */
 .Ed
+.Sh SEE ALSO
+.Xr socket 2 ,
+.Xr sysctl 3
