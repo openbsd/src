@@ -1,4 +1,4 @@
-/*	$OpenBSD: qv.c,v 1.8 2003/11/10 21:05:06 miod Exp $	*/
+/*	$OpenBSD: qv.c,v 1.9 2004/01/01 01:11:12 miod Exp $	*/
 /*	$NetBSD: qv.c,v 1.2 1996/09/02 06:44:28 mycroft Exp $	*/
 
 /*-
@@ -299,7 +299,7 @@ qvprobe(reg, ctlr)
 	/*
 	 * Turn on the keyboard and vertical interrupt vectors.
 	 */
-	qvaddr->qv_intcsr = 0;		/* init the interrupt controler */
+	qvaddr->qv_intcsr = 0;		/* init the interrupt controller */
 	qvaddr->qv_intcsr = 0x40;	/* reset irr			*/
 	qvaddr->qv_intcsr = 0x80;	/* specify individual vectors	*/
 	qvaddr->qv_intcsr = 0xc0;	/* preset autoclear data	*/

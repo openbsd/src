@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.34 2003/11/03 06:54:26 david Exp $	*/
+/*	$OpenBSD: locore.S,v 1.35 2004/01/01 01:11:10 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -133,7 +133,7 @@ GLOBAL(start_text)
 	/*
 	 * Args passed by boot loader
 	 * 	r2 howto
-	 *	r3 boot controler address
+	 *	r3 boot controller address
 	 *	r4 esym
 	 *	r5 start of mini
 	 *	r6 end miniroot
