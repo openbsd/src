@@ -1,4 +1,4 @@
-/*	$OpenBSD: grep.c,v 1.21 2003/07/14 23:22:35 millert Exp $	*/
+/*	$OpenBSD: grep.c,v 1.22 2003/07/16 19:08:21 millert Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -167,7 +167,7 @@ add_pattern(char *pat, size_t len)
 	}
 	if (patterns == pattern_sz) {
 		pattern_sz *= 2;
-		pattern = grep_realloc(pattern, ++pattern_sz * sizeof(int));
+		pattern = grep_realloc(pattern, ++pattern_sz * sizeof(*pattern));
 	}
 	if (pat[len - 1] == '\n')
 		--len;
@@ -432,7 +432,7 @@ main(int argc, char *argv[])
 	else if (Fflag)
 		cflags |= REG_NOSPEC;
 	fg_pattern = grep_malloc(patterns * sizeof(*fg_pattern));
-	r_pattern = grep_malloc(patterns * sizeof(regex_t));
+	r_pattern = grep_malloc(patterns * sizeof(*r_pattern));
 	for (i = 0; i < patterns; ++i) {
 		/* Check if cheating is allowed */
 		if (fastcomp(&fg_pattern[i], pattern[i])) {
