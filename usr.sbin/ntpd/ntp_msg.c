@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp_msg.c,v 1.10 2004/10/22 21:17:37 henning Exp $ */
+/*	$OpenBSD: ntp_msg.c,v 1.11 2004/10/22 21:24:20 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -30,8 +30,7 @@ int
 ntp_getmsg(char *p, ssize_t len, struct ntp_msg *msg)
 {
 	if (len != NTP_MSGSIZE_NOAUTH && len != NTP_MSGSIZE) {
-		log_warnx("malformed packet received: len is %d should be %d "
-		    "or with auth %d", len, NTP_MSGSIZE_NOAUTH, NTP_MSGSIZE);
+		log_warnx("malformed packet received");
 		return (-1);
 	}
 
