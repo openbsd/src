@@ -1,4 +1,4 @@
-/*	$OpenBSD: busswreg.h,v 1.4 2003/10/11 22:08:57 miod Exp $ */
+/*	$OpenBSD: busswreg.h,v 1.5 2004/04/14 20:17:21 miod Exp $ */
 
 /*
  * Memory map for BusSwitch chip found in mvme197 boards.
@@ -62,7 +62,7 @@ struct bussw_reg {
 	volatile u_long		bs_gpr3;
 	volatile u_long		bs_gpr4;
 	volatile u_long		bs_xctags;
-	volatile u_long		bs_res3;
+	volatile u_int8_t	bs_res[(0x100 - 0x94)];
 	volatile u_long		bs_xccr;
 	volatile u_long		bs_vec1;
 	volatile u_long		bs_vec2;
