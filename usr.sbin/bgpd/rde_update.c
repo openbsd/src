@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.26 2004/08/05 18:44:19 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.27 2004/08/06 12:04:08 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -25,7 +25,7 @@
 #include "rde.h"
 
 int	up_generate_attr(struct rde_peer *, struct update_attr *,
-	    struct attr_flags *, struct nexthop *);
+	    struct rde_aspath *);
 int	up_set_prefix(u_char *, int, struct bgpd_addr *, u_int8_t);
 
 
@@ -47,6 +47,7 @@ struct update_attr {
 	RB_ENTRY(update_attr)		 entry;
 };
 
+void	up_clear(struct uplist_attr *, struct uplist_prefix *);
 int	up_prefix_cmp(struct update_prefix *, struct update_prefix *);
 int	up_attr_cmp(struct update_attr *, struct update_attr *);
 int	up_add(struct rde_peer *, struct update_prefix *, struct update_attr *);
@@ -62,6 +63,8 @@ up_init(struct rde_peer *peer)
 {
 	TAILQ_INIT(&peer->updates);
 	TAILQ_INIT(&peer->withdraws);
+	TAILQ_INIT(&peer->updates6);
+	TAILQ_INIT(&peer->withdraws6);
 	RB_INIT(&peer->up_prefix);
 	RB_INIT(&peer->up_attrs);
 	peer->up_pcnt = 0;
@@ -71,13 +74,13 @@ up_init(struct rde_peer *peer)
 }
 
 void
-up_down(struct rde_peer *peer)
+up_clear(struct uplist_attr *updates, struct uplist_prefix *withdraws)
 {
 	struct update_attr	*ua;
 	struct update_prefix	*up;
 
-	while ((ua = TAILQ_FIRST(&peer->updates)) != NULL) {
-		TAILQ_REMOVE(&peer->updates, ua, attr_l);
+	while ((ua = TAILQ_FIRST(updates)) != NULL) {
+		TAILQ_REMOVE(updates, ua, attr_l);
 		while ((up = TAILQ_FIRST(&ua->prefix_h)) != NULL) {
 			TAILQ_REMOVE(&ua->prefix_h, up, prefix_l);
 			free(up);
@@ -86,13 +89,18 @@ up_down(struct rde_peer *peer)
 		free(ua);
 	}
 
-	while ((up = TAILQ_FIRST(&peer->withdraws)) != NULL) {
-		TAILQ_REMOVE(&peer->withdraws, up, prefix_l);
+	while ((up = TAILQ_FIRST(withdraws)) != NULL) {
+		TAILQ_REMOVE(withdraws, up, prefix_l);
 		free(up);
 	}
+}
 
-	TAILQ_INIT(&peer->updates);
-	TAILQ_INIT(&peer->withdraws);
+void
+up_down(struct rde_peer *peer)
+{
+	up_clear(&peer->updates, &peer->withdraws);
+	up_clear(&peer->updates6, &peer->withdraws6);
+
 	RB_INIT(&peer->up_prefix);
 	RB_INIT(&peer->up_attrs);
 
@@ -148,7 +156,7 @@ up_attr_cmp(struct update_attr *a, struct update_attr *b)
 		return (-1);
 	if (a->attr_len > b->attr_len)
 		return (1);
-	return memcmp(a->attr, b->attr, a->attr_len);
+	return (memcmp(a->attr, b->attr, a->attr_len));
 }
 
 int
@@ -156,6 +164,21 @@ up_add(struct rde_peer *peer, struct update_prefix *p, struct update_attr *a)
 {
 	struct update_attr	*na = NULL;
 	struct update_prefix	*np;
+	struct uplist_attr	*upl = NULL;
+	struct uplist_prefix	*wdl = NULL;
+
+	switch (p->prefix.af) {
+	case AF_INET:
+		upl = &peer->updates;
+		wdl = &peer->withdraws;
+		break;
+	case AF_INET6:
+		upl = &peer->updates6;
+		wdl = &peer->withdraws6;
+		break;
+	default:
+		fatalx("up_add: unknown AF");
+	}
 
 	/* 1. search for attr */
 	if (a != NULL && (na = RB_FIND(uptree_attr, &peer->up_attrs, a)) ==
@@ -170,7 +193,7 @@ up_add(struct rde_peer *peer, struct update_prefix *p, struct update_attr *a)
 			free(p);
 			return (-1);
 		}
-		TAILQ_INSERT_TAIL(&peer->updates, a, attr_l);
+		TAILQ_INSERT_TAIL(upl, a, attr_l);
 		peer->up_acnt++;
 	} else {
 		/* 1.2 if found -> use that, free a */
@@ -179,8 +202,8 @@ up_add(struct rde_peer *peer, struct update_prefix *p, struct update_attr *a)
 			free(a);
 			a = na;
 			/* move to end of update queue */
-			TAILQ_REMOVE(&peer->updates, a, attr_l);
-			TAILQ_INSERT_TAIL(&peer->updates, a, attr_l);
+			TAILQ_REMOVE(upl, a, attr_l);
+			TAILQ_INSERT_TAIL(upl, a, attr_l);
 		}
 	}
 
@@ -203,15 +226,15 @@ up_add(struct rde_peer *peer, struct update_prefix *p, struct update_attr *a)
 		TAILQ_REMOVE(np->prefix_h, np, prefix_l);
 		free(p);
 		p = np;
-		if (p->prefix_h == &peer->withdraws)
+		if (p->prefix_h == wdl)
 			peer->up_wcnt--;
 		else
 			peer->up_nlricnt--;
 	}
 	/* 3. link prefix to attr */
 	if (a == NULL) {
-		TAILQ_INSERT_TAIL(&peer->withdraws, p, prefix_l);
-		p->prefix_h = &peer->withdraws;
+		TAILQ_INSERT_TAIL(wdl, p, prefix_l);
+		p->prefix_h = wdl;
 		peer->up_wcnt++;
 	} else {
 		TAILQ_INSERT_TAIL(&a->prefix_h, p, prefix_l);
@@ -227,17 +250,17 @@ up_generate_updates(struct rde_peer *peer,
 {
 	struct update_attr		*a;
 	struct update_prefix		*p;
-	struct attr			*atr;
-	struct attr_flags		 attrs;
+	struct attr			*attr;
+	struct rde_aspath		*fasp;
 	struct bgpd_addr		 addr;
 
 	if (peer->state != PEER_UP)
 		return;
 
-	if (new == NULL || new->aspath->nexthop == NULL ||
-	    new->aspath->nexthop->state != NEXTHOP_REACH) {
+	if (new == NULL || (new->aspath->nexthop != NULL &&
+	    new->aspath->nexthop->state != NEXTHOP_REACH)) {
 		if (old == NULL)
-			/* new prefix got filtered and no old prefex avail */
+			/* new prefix got filtered and no old prefix avail */
 			return;
 
 		if (peer == old->peer)
@@ -245,7 +268,7 @@ up_generate_updates(struct rde_peer *peer,
 			return;
 
 		if (peer->conf.ebgp &&
-		    !aspath_loopfree(old->aspath->flags.aspath,
+		    !aspath_loopfree(old->aspath->aspath,
 		    peer->conf.remote_as))
 			/*
 			 * Do not send routes back to sender which would
@@ -264,8 +287,7 @@ up_generate_updates(struct rde_peer *peer,
 			 */
 			if (old->peer->conf.reflector_client == 0 &&
 			    peer->conf.reflector_client == 0 &&
-			    (old->aspath->nexthop->flags &
-			    NEXTHOP_ANNOUNCE) == 0)
+			    (old->aspath->flags & F_PREFIX_ANNOUNCED) == 0)
 				/* Do not redistribute updates to ibgp peers */
 				return;
 		}
@@ -283,44 +305,44 @@ up_generate_updates(struct rde_peer *peer,
 			 * pass only prefix that have a aspath count
 			 * of zero this is equal to the ^$ regex.
 			 */
-			if (old->aspath->flags.aspath->ascnt != 0)
+			if (old->aspath->aspath->ascnt != 0)
 				return;
 			break;
 		}
 
 		/* well known communities */
-		if (rde_filter_community(&old->aspath->flags,
+		if (rde_filter_community(old->aspath,
 		    COMMUNITY_WELLKNOWN, COMMUNITY_NO_ADVERTISE))
 			return;
-		if (peer->conf.ebgp && rde_filter_community(&old->aspath->flags,
+		if (peer->conf.ebgp && rde_filter_community(old->aspath,
 		    COMMUNITY_WELLKNOWN, COMMUNITY_NO_EXPORT))
 			return;
-		if (peer->conf.ebgp && rde_filter_community(&old->aspath->flags,
+		if (peer->conf.ebgp && rde_filter_community(old->aspath,
 		    COMMUNITY_WELLKNOWN, COMMUNITY_NO_EXPSUBCONFED))
 			return;
 
 		/*
-		 * don't send messages back to originator 
-		 * NOTE this is not specified in the RFC but seems logical.
+		 * Don't send messages back to originator 
+		 * this is not specified in the RFC but seems logical.
 		 */
-		if ((atr = attr_optget(&old->aspath->flags,
+		if ((attr = attr_optget(old->aspath,
 		    ATTR_ORIGINATOR_ID)) != NULL) {
-			if (memcmp(atr->data, &peer->remote_bgpid,
+			if (memcmp(attr->data, &peer->remote_bgpid,
 			    sizeof(peer->remote_bgpid)) == 0)
 				/* would cause loop don't send */
 				return;
 		}
 
 		/* copy attributes for output filter */
-		attr_copy(&attrs, &old->aspath->flags);
+		fasp = path_copy(old->aspath);
 
 		pt_getaddr(old->prefix, &addr);
-		if (rde_filter(peer, &attrs, &addr,
+		if (rde_filter(peer, fasp, &addr,
 		    old->prefix->prefixlen, DIR_OUT) == ACTION_DENY) {
-			attr_free(&attrs);
+			path_put(fasp);
 			return;
 		}
-		attr_free(&attrs);
+		path_put(fasp);
 
 		/* withdraw prefix */
 		p = calloc(1, sizeof(struct update_prefix));
@@ -339,7 +361,7 @@ up_generate_updates(struct rde_peer *peer,
 		}
 
 		if (peer->conf.ebgp &&
-		    !aspath_loopfree(new->aspath->flags.aspath,
+		    !aspath_loopfree(new->aspath->aspath,
 		    peer->conf.remote_as)) {
 			/*
 			 * Do not send routes back to sender which would
@@ -360,8 +382,7 @@ up_generate_updates(struct rde_peer *peer,
 			 */
 			if (new->peer->conf.reflector_client == 0 &&
 			    peer->conf.reflector_client == 0 &&
-			    (new->aspath->nexthop->flags &
-			    NEXTHOP_ANNOUNCE) == 0) {
+			    (new->aspath->flags & F_PREFIX_ANNOUNCED) == 0) {
 				/* Do not redistribute updates to ibgp peers */
 				up_generate_updates(peer, NULL, old);
 				return;
@@ -385,7 +406,7 @@ up_generate_updates(struct rde_peer *peer,
 			 * pass only prefix that have a aspath count
 			 * of zero this is equal to the ^$ regex.
 			 */
-			if (new->aspath->flags.aspath->ascnt != 0) {
+			if (new->aspath->aspath->ascnt != 0) {
 				up_generate_updates(peer, NULL, old);
 				return;
 			}
@@ -393,43 +414,43 @@ up_generate_updates(struct rde_peer *peer,
 		}
 
 		/* well known communities */
-		if (rde_filter_community(&new->aspath->flags,
+		if (rde_filter_community(new->aspath,
 		    COMMUNITY_WELLKNOWN, COMMUNITY_NO_ADVERTISE)) {
 			up_generate_updates(peer, NULL, old);
 			return;
 		}
-		if (peer->conf.ebgp && rde_filter_community(&new->aspath->flags,
+		if (peer->conf.ebgp && rde_filter_community(new->aspath,
 		    COMMUNITY_WELLKNOWN, COMMUNITY_NO_EXPORT)) {
 			up_generate_updates(peer, NULL, old);
 			return;
 		}
-		if (peer->conf.ebgp && rde_filter_community(&new->aspath->flags,
+		if (peer->conf.ebgp && rde_filter_community(new->aspath,
 		    COMMUNITY_WELLKNOWN, COMMUNITY_NO_EXPSUBCONFED)) {
 			up_generate_updates(peer, NULL, old);
 			return;
 		}
 
 		/* copy attributes for output filter */
-		attr_copy(&attrs, &new->aspath->flags);
+		fasp = path_copy(new->aspath);
 
 		pt_getaddr(new->prefix, &addr);
-		if (rde_filter(peer, &attrs, &addr,
+		if (rde_filter(peer, fasp, &addr,
 		    new->prefix->prefixlen, DIR_OUT) == ACTION_DENY) {
-			attr_free(&attrs);
+			path_put(fasp);
 			up_generate_updates(peer, NULL, old);
 			return;
 		}
 
 		/*
-		 * don't send messages back to originator 
-		 * NOTE this is not specified in the RFC but seems logical.
+		 * Don't send messages back to originator 
+		 * this is not specified in the RFC but seems logical.
 		 */
-		if ((atr = attr_optget(&new->aspath->flags,
+		if ((attr = attr_optget(new->aspath,
 		    ATTR_ORIGINATOR_ID)) != NULL) {
-			if (memcmp(atr->data, &peer->remote_bgpid,
+			if (memcmp(attr->data, &peer->remote_bgpid,
 			    sizeof(peer->remote_bgpid)) == 0) {
 				/* would cause loop don't send */
-				attr_free(&attrs);
+				path_put(fasp);
 				return;
 			}
 		}
@@ -443,8 +464,7 @@ up_generate_updates(struct rde_peer *peer,
 		if (a == NULL)
 			fatal("up_generate_updates");
 
-		if (up_generate_attr(peer, a, &attrs,
-		    new->aspath->nexthop) == -1) {
+		if (up_generate_attr(peer, a, fasp) == -1) {
 			log_warnx("generation of bgp path attributes failed");
 			free(a);
 			free(p);
@@ -455,13 +475,13 @@ up_generate_updates(struct rde_peer *peer,
 		 * use aspath_hash as attr_hash, this may be unoptimal
 		 * but currently I don't care.
 		 */
-		a->attr_hash = aspath_hash(attrs.aspath->data,
-		    attrs.aspath->len);
+		a->attr_hash = aspath_hash(fasp->aspath->data,
+		    fasp->aspath->len);
 		p->prefix = addr;
 		p->prefixlen = new->prefix->prefixlen;
 
 		/* no longer needed */
-		attr_free(&attrs);
+		path_put(fasp);
 
 		if (up_add(peer, p, a) == -1)
 			log_warnx("queuing update failed.");
@@ -473,32 +493,21 @@ up_generate_default(struct rde_peer *peer, sa_family_t af)
 {
 	struct update_attr	*a;
 	struct update_prefix	*p;
-	struct attr_flags	 attrs;
+	struct rde_aspath	*asp;
 	struct bgpd_addr	 addr;
-	struct nexthop		 nexthop;
 
-	bzero(&attrs, sizeof(attrs));
-	bzero(&addr, sizeof(addr));
-	bzero(&nexthop, sizeof(nexthop));
+	asp = path_get();
+	asp->aspath = aspath_get(NULL, 0);
+	asp->origin = ORIGIN_IGP;
+	/* the other default values are OK, nexthop is once again NULL */
 
-	attrs.aspath = aspath_get(NULL, 0);
-	attrs.nexthop.s_addr = INADDR_ANY;
-	/* med = 0 */
-	attrs.lpref = DEFAULT_LPREF;
-	attrs.origin = ORIGIN_IGP;
-	TAILQ_INIT(&attrs.others);
-
-	nexthop.state = NEXTHOP_REACH;
-	nexthop.flags = NEXTHOP_ANNOUNCE;
-	nexthop.exit_nexthop.af = af;
-	nexthop.true_nexthop.af = af;
-
-	/* apply default overrides. Not yet possible */
+	/* XXX apply default overrides. Not yet possible */
 
 	/* filter as usual */
-	addr.af = AF_INET;
-	if (rde_filter(peer, &attrs, &addr, 0, DIR_OUT) == ACTION_DENY) {
-		attr_free(&attrs);
+	bzero(&addr, sizeof(addr));
+	addr.af = af;
+	if (rde_filter(peer, asp, &addr, 0, DIR_OUT) == ACTION_DENY) {
+		path_put(asp);
 		return;
 	}
 
@@ -511,7 +520,7 @@ up_generate_default(struct rde_peer *peer, sa_family_t af)
 	if (a == NULL)
 		fatal("up_generate_default");
 
-	if (up_generate_attr(peer, a, &attrs, &nexthop) == -1) {
+	if (up_generate_attr(peer, a, asp) == -1) {
 		log_warnx("generation of bgp path attributes failed");
 		free(a);
 		free(p);
@@ -522,23 +531,33 @@ up_generate_default(struct rde_peer *peer, sa_family_t af)
 	 * use aspath_hash as attr_hash, this may be unoptimal
 	 * but currently I don't care.
 	 */
-	a->attr_hash = aspath_hash(attrs.aspath->data, attrs.aspath->len);
+	a->attr_hash = aspath_hash(asp->aspath->data, asp->aspath->len);
 	p->prefix = addr;
 	p->prefixlen = 0; /* default route */
 
 	/* no longer needed */
-	attr_free(&attrs);
+	path_put(asp);
 
 	if (up_add(peer, p, a) == -1)
 		log_warnx("queuing update failed.");
 
 }
 
+void
+up_dump_upcall(struct pt_entry *pt, void *ptr)
+{
+	struct rde_peer	*peer = ptr;
+
+	if (pt->active == NULL)
+		return;
+	up_generate_updates(peer, pt->active, NULL);
+}
+
 u_char	up_attr_buf[4096];
 
 int
 up_generate_attr(struct rde_peer *peer, struct update_attr *upa,
-    struct attr_flags *a, struct nexthop *nh)
+    struct rde_aspath *a)
 {
 	struct aspath	*path;
 	struct attr	*oa;
@@ -564,11 +583,13 @@ up_generate_attr(struct rde_peer *peer, struct update_attr *upa,
 	/* nexthop, already network byte order */
 	if (peer->conf.ebgp == 0) {
 		/*
-		 * if directly connected use peer->local_addr
+		 * If directly connected use peer->local_addr
+		 * this is only true for announced networks.
 		 */
-		if (nh->flags & NEXTHOP_ANNOUNCE)
+		if (a->nexthop == NULL)
 			nexthop = peer->local_addr.v4.s_addr;
-		else if (a->nexthop.s_addr == peer->remote_addr.v4.s_addr)
+		else if (a->nexthop->exit_nexthop.v4.s_addr ==
+		    peer->remote_addr.v4.s_addr)
 			/*
 			 * per rfc: if remote peer address is equal to
 			 * the nexthop set the nexthop to our local address.
@@ -576,16 +597,17 @@ up_generate_attr(struct rde_peer *peer, struct update_attr *upa,
 			 */
 			nexthop = peer->local_addr.v4.s_addr;
 		else
-			nexthop = nh->exit_nexthop.v4.s_addr;
+			nexthop = a->nexthop->exit_nexthop.v4.s_addr;
 	} else if (peer->conf.distance == 1) {
 		/* ebgp directly connected */
-		if (nh->flags & NEXTHOP_CONNECTED) {
-			mask = 0xffffffff << (32 - nh->nexthop_netlen);
+		if (a->nexthop != NULL &&
+		    a->nexthop->flags & NEXTHOP_CONNECTED) {
+			mask = 0xffffffff << (32 - a->nexthop->nexthop_netlen);
 			mask = htonl(mask);
 			if ((peer->remote_addr.v4.s_addr & mask) ==
-			    (nh->nexthop_net.v4.s_addr & mask))
+			    (a->nexthop->nexthop_net.v4.s_addr & mask))
 				/* nexthop and peer are in the same net */
-				nexthop = nh->exit_nexthop.v4.s_addr;
+				nexthop = a->nexthop->exit_nexthop.v4.s_addr;
 			else
 				nexthop = peer->local_addr.v4.s_addr;
 		} else
@@ -593,9 +615,9 @@ up_generate_attr(struct rde_peer *peer, struct update_attr *upa,
 	} else
 		/* ebgp multihop */
 		/*
-		 * XXX for ebgp multihop nh->flags should never have
+		 * For ebgp multihop nh->flags should never have
 		 * NEXTHOP_CONNECTED set so it should be possible to unify the
-		 * two ebgp cases.
+		 * two ebgp cases. But this is save and RFC compliant.
 		 */
 		nexthop = peer->local_addr.v4.s_addr;
 
@@ -781,12 +803,3 @@ up_dump_attrnlri(u_char *buf, int len, struct rde_peer *peer)
 	return (wpos);
 }
 
-void
-up_dump_upcall(struct pt_entry *pt, void *ptr)
-{
-	struct rde_peer	*peer = ptr;
-
-	if (pt->active == NULL)
-		return;
-	up_generate_updates(peer, pt->active, NULL);
-}

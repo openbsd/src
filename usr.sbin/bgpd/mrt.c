@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.c,v 1.38 2004/08/05 16:26:56 claudio Exp $ */
+/*	$OpenBSD: mrt.c,v 1.39 2004/08/06 12:04:08 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -32,8 +32,9 @@
 
 #include "mrt.h"
 
-static u_int16_t	mrt_attr_length(struct attr_flags *);
-static int		mrt_attr_dump(void *, u_int16_t, struct attr_flags *);
+static u_int16_t	mrt_attr_length(struct rde_aspath *);
+static int		mrt_attr_dump(void *, u_int16_t, struct rde_aspath *,
+			    struct bgpd_addr *);
 static int		mrt_dump_entry(struct mrt *, struct prefix *,
 			    u_int16_t, struct peer_config *);
 static int		mrt_dump_header(struct buf *, u_int16_t, u_int16_t,
@@ -153,7 +154,7 @@ mrt_dump_state(struct mrt *mrt, u_int16_t old_state, u_int16_t new_state,
 }
 
 static u_int16_t
-mrt_attr_length(struct attr_flags *a)
+mrt_attr_length(struct rde_aspath *a)
 {
 	struct attr	*oa;
 	u_int16_t	 alen, plen;
@@ -171,7 +172,8 @@ mrt_attr_length(struct attr_flags *a)
 }
 
 static int
-mrt_attr_dump(void *p, u_int16_t len, struct attr_flags *a)
+mrt_attr_dump(void *p, u_int16_t len, struct rde_aspath *a,
+    struct bgpd_addr *nexthop)
 {
 	struct attr	*oa;
 	u_char		*buf = p;
@@ -194,7 +196,7 @@ mrt_attr_dump(void *p, u_int16_t len, struct attr_flags *a)
 
 	/* nexthop, already network byte order */
 	if ((r = attr_write(buf + wlen, len, ATTR_WELL_KNOWN, ATTR_NEXTHOP,
-	    &a->nexthop, 4)) ==	-1)
+	    &nexthop->v4.s_addr, 4)) ==	-1)
 		return (-1);
 	wlen += r; len -= r;
 
@@ -231,10 +233,10 @@ mrt_dump_entry(struct mrt *mrt, struct prefix *p, u_int16_t snum,
 {
 	struct buf	*buf;
 	void		*bptr;
-	struct bgpd_addr addr;
+	struct bgpd_addr addr, *nh;
 	u_int16_t	 len, attr_len;
 
-	attr_len = mrt_attr_length(&p->aspath->flags);
+	attr_len = mrt_attr_length(p->aspath);
 	len = MRT_DUMP_HEADER_SIZE + attr_len;
 	pt_getaddr(p->prefix, &addr);
 
@@ -264,7 +266,13 @@ mrt_dump_entry(struct mrt *mrt, struct prefix *p, u_int16_t snum,
 		return (-1);
 	}
 
-	if (mrt_attr_dump(bptr, attr_len, &p->aspath->flags) == -1) {
+	if (p->aspath->nexthop == NULL) {
+		bzero(&addr, sizeof(struct bgpd_addr));
+		addr.af = AF_INET;
+		nh = &addr;
+	} else
+		nh = &p->aspath->nexthop->exit_nexthop;
+	if (mrt_attr_dump(bptr, attr_len, p->aspath, nh) == -1) {
 		log_warnx("mrt_dump_entry: mrt_attr_dump error");
 		buf_free(buf);
 		return (-1);

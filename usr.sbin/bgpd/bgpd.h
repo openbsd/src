@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.138 2004/08/05 15:58:21 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.139 2004/08/06 12:04:08 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -160,6 +160,7 @@ struct filter_set {
 	u_int16_t	flags;
 	u_int32_t	localpref;
 	u_int32_t	med;
+	/*XXX this nexthop thing should be changed to one bgpd_addr */
 	struct in_addr	nexthop;
 	struct in6_addr	nexthop6;
 	u_int8_t	prepend;
