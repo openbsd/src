@@ -1,4 +1,4 @@
-/*	$Id: if_ipw.c,v 1.4 2004/10/27 21:14:03 damien Exp $  */
+/*	$Id: if_ipw.c,v 1.5 2004/10/27 21:14:48 damien Exp $  */
 
 /*-
  * Copyright (c) 2004
@@ -72,6 +72,9 @@
 
 #include <dev/pci/if_ipwreg.h>
 #include <dev/pci/if_ipwvar.h>
+
+static const struct ieee80211_rateset ipw_rateset_11b =
+	{ 4, { 2, 4, 11, 22 } };
 
 int ipw_match(struct device *, void *, void *);
 void ipw_attach(struct device *, struct device *, void *);
@@ -159,7 +162,6 @@ ipw_attach(struct device *parent, struct device *self, void *aux)
 	struct ipw_softc *sc = (struct ipw_softc *)self;
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &ic->ic_if;
-	struct ieee80211_rateset *rs;
 	struct pci_attach_args *pa = aux;
 	const char *intrstr;
 	bus_space_tag_t memt;
@@ -217,12 +219,7 @@ ipw_attach(struct device *parent, struct device *self, void *aux)
 	    IEEE80211_C_PMGT | IEEE80211_C_TXPMGT | IEEE80211_C_WEP;
 
 	/* set supported .11b rates */
-	rs = &ic->ic_sup_rates[IEEE80211_MODE_11B];
-	rs->rs_nrates = 4;
-	rs->rs_rates[0] = 2;	/* 1Mbps */
-	rs->rs_rates[1] = 4;	/* 2Mbps */
-	rs->rs_rates[2] = 11;	/* 5.5Mbps */
-	rs->rs_rates[3] = 22; 	/* 11Mbps */
+	ic->ic_sup_rates[IEEE80211_MODE_11B] = ipw_rateset_11b;
 
 	/* set supported .11b channels (1 through 14) */
 	for (i = 1; i <= 14; i++) {
