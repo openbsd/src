@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.34 2004/03/28 17:39:12 deraadt Exp $	*/
+/*	$OpenBSD: in.c,v 1.35 2004/05/31 10:48:48 mpf Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -526,7 +526,7 @@ in_lifaddr_ioctl(so, cmd, data, ifp)
 		if (iflr->flags & IFLR_PREFIX)
 			return EINVAL;
 
-		/* copy args to in_aliasreq, perform ioctl(SIOCAIFADDR_IN6). */
+		/* copy args to in_aliasreq, perform ioctl(SIOCAIFADDR). */
 		bzero(&ifra, sizeof(ifra));
 		bcopy(iflr->iflr_name, ifra.ifra_name,
 			sizeof(ifra.ifra_name));
@@ -582,7 +582,7 @@ in_lifaddr_ioctl(so, cmd, data, ifp)
 		}
 
 		for (ifa = ifp->if_addrlist.tqh_first; ifa; ifa = ifa->ifa_list.tqe_next) {
-			if (ifa->ifa_addr->sa_family != AF_INET6)
+			if (ifa->ifa_addr->sa_family != AF_INET)
 				continue;
 			if (!cmp)
 				break;
@@ -614,7 +614,7 @@ in_lifaddr_ioctl(so, cmd, data, ifp)
 		} else {
 			struct in_aliasreq ifra;
 
-			/* fill in_aliasreq and do ioctl(SIOCDIFADDR_IN6) */
+			/* fill in_aliasreq and do ioctl(SIOCDIFADDR) */
 			bzero(&ifra, sizeof(ifra));
 			bcopy(iflr->iflr_name, ifra.ifra_name,
 				sizeof(ifra.ifra_name));
