@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_re.c,v 1.2 2004/06/05 07:39:55 pvalchev Exp $	*/
+/*	$OpenBSD: if_re.c,v 1.3 2004/06/05 17:26:12 deraadt Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
  *	Bill Paul <wpaul@windriver.com>.  All rights reserved.
@@ -902,7 +902,7 @@ re_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Allocate interrupt */
 	if (pci_intr_map(pa, &ih)) {
-		printf("%s: couldn't map interrupt\n", sc->sc_dev.dv_xname);
+		printf(": couldn't map interrupt\n");
 		error = ENXIO;
 		goto fail;
 	}
@@ -910,8 +910,7 @@ re_attach(struct device *parent, struct device *self, void *aux)
 	psc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, re_intr, sc,
 	    sc->sc_dev.dv_xname);
 	if (psc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt",
-		    sc->sc_dev.dv_xname);
+		printf(": couldn't establish interrupt");
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		goto fail;
