@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.181 2001/12/22 18:53:45 krw Exp $
+#	$OpenBSD: install.sub,v 1.182 2001/12/23 16:54:04 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -439,7 +439,7 @@ boot program (especially on a PC with multiple disk controllers).
 Available disks are:
 
 __EOT
-	local _defdsk;
+	local _defdsk
 
 	_DKDEVS=`md_get_diskdevs`
 	_defdsk=`echo $_DKDEVS | cutlast`
@@ -862,7 +862,6 @@ enable_network() {
 	return 0
 }
 
-
 # Print the selector and get a response
 # The list of sets is passed in as $1, sets $resp
 get_selection() {
@@ -946,17 +945,17 @@ OOF
 }
 
 encode_for_url() {
-    # Encode $1 as specified for usercodes and passwords in RFC 1738
-    # section 3.1, and now supported by our in-tree ftp:
-    #
-    #    ':' -> '%3a'
-    #    '@' -> '%40'
-    #    '/' -> '%2f'
-    #
-    # *NOTE* quotes around $1 are required to preserve trailing or
-    # embeddded blanks in usercodes and passwords!
-
-    echo "$1" | sed -e 's/:/%3a/g' -e 's/@/%40/g' -e 's/\//%2f/g'
+	# Encode $1 as specified for usercodes and passwords in RFC 1738
+	# section 3.1, and now supported by our in-tree ftp:
+	#
+	#    ':' -> '%3a'
+	#    '@' -> '%40'
+	#    '/' -> '%2f'
+	#
+	# *NOTE* quotes around $1 are required to preserve trailing or
+	# embeddded blanks in usercodes and passwords!
+    
+	echo "$1" | sed -e 's/:/%3a/g' -e 's/@/%40/g' -e 's/\//%2f/g'
 }
 
 install_url() {
@@ -1928,7 +1927,7 @@ while : ; do
 	"")
 		echo "Timezone defaults to GMT"
 		TZ="GMT"
-		break;
+		break
 		;;
 	"?")
 		ls -F ${_zonepath}/usr/share/zoneinfo
@@ -1944,7 +1943,7 @@ while : ; do
 			"?") ls -F ${_zonepath}/usr/share/zoneinfo/$_a ;;
 			*)	_a=${_a}/${resp}
 				if [ -f ${_zonepath}/usr/share/zoneinfo/$_a ]; then
-					break;
+					break
 				fi
 				;;
 			esac
@@ -1982,7 +1981,7 @@ Something needed to complete the installation seems to be missing, did you
 forget to extract a required set?
 __EOT
 	else
-		return 0;
+		return 0
 	fi
 
 	cat << __EOT
@@ -2335,7 +2334,7 @@ donetconfig() {
 		if [ -f /tmp/mygate ]; then
 			resp=`cat /etc/mygate`
 			if [ "X${resp}" = "X" ]; then
-				resp="none";
+				resp=none
 			fi
 		fi
 	fi
@@ -2348,7 +2347,7 @@ donetconfig() {
 		fi
 	fi
 
-	resp="none"
+	resp=none
 	if [ -f /tmp/resolv.conf ]; then
 		resp=
 		for n in `grep '^nameserver ' /tmp/resolv.conf | \

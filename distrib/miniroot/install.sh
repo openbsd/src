@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.81 2001/11/25 19:40:51 krw Exp $
+#	$OpenBSD: install.sh,v 1.82 2001/12/23 16:54:04 krw Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2001 Todd Miller, Theo de Raadt, Ken Westerback
@@ -127,7 +127,6 @@ else
 	esac
 fi
 
-
 echo "You can run a shell command at any prompt via '!foo'"
 echo "or escape to a shell by simply typing '!'."
 echo
@@ -208,7 +207,7 @@ __get_filesystems_1
 		# Now prompt the user for the mount points.  Loop until "done"
 		echo
 		_i=0
-		resp="X"
+		resp=X
 		while [ $_npartitions -gt 0 -a X${resp} != X"done" ]; do
 			_pp=${_partitions[${_i}]}
 			_ps=$(( ${_psizes[${_i}]} / 2 ))
