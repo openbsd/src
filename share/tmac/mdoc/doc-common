@@ -1,4 +1,4 @@
-.\"	$OpenBSD: doc-common,v 1.41 2005/01/04 16:38:30 miod Exp $
+.\"	$OpenBSD: doc-common,v 1.42 2005/01/06 00:08:28 jmc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -171,8 +171,6 @@
 .	if "\\$3"amd64" .as vT \ (AMD64)
 .	if "\\$3"amiga" .as vT \ (Amiga)
 .	if "\\$3"arc" .as vT \ (ARC)
-.	if "\\$3"arm32" .as vT \ (Arm32)
-.	if "\\$3"atari" .as vT \ (Atari)
 .	if "\\$3"cats" .as vT \ (Cats)
 .	if "\\$3"hp300" .as vT \ (HP300)
 .	if "\\$3"hppa" .as vT \ (HPPA)
@@ -183,16 +181,12 @@
 .	if "\\$3"mvme68k" .as vT \ (MVME68K)
 .	if "\\$3"mvme88k" .as vT \ (MVME88K)
 .	if "\\$3"mvmeppc" .as vT \ (MVMEPPC)
-.	if "\\$3"pc532" .as vT \ (PC532)
-.	if "\\$3"pegasos" .as vT \ (Pegasos)
 .	if "\\$3"pmax"  .as vT \ (PMAX)
 .	if "\\$3"sgi"  .as vT \ (SGI)
 .	if "\\$3"sparc" .as vT \ (SPARC)
 .	if "\\$3"sparc64" .as vT \ (SPARC64)
 .	if "\\$3"sun3"  .as vT \ (Sun3)
-.	if "\\$3"tahoe" .as vT \ (Tahoe)
 .	if "\\$3"vax"   .as vT \ (VAX)
-.	if "\\$3"x68k"  .as vT \ (X68K)
 .	if "\\$3"zaurus"  .as vT \ (Zaurus)
 .	if "\\*(vT"LOCAL" .ds vT \\$3
 .\}
