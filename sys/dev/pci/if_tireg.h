@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tireg.h,v 1.2 1999/09/26 03:22:40 jason Exp $	*/
+/*	$OpenBSD: if_tireg.h,v 1.3 1999/10/03 13:06:30 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1030,12 +1030,11 @@ struct ti_event_desc {
 #define TI_MSLOTS	256
 #define TI_JSLOTS	256
 
-#define TI_JRAWLEN (TI_JUMBO_FRAMELEN + ETHER_ALIGN + sizeof(u_int64_t))
-#define TI_JLEN (TI_JRAWLEN + (sizeof(u_int64_t) - \
-	(TI_JRAWLEN % sizeof(u_int64_t))))
-#define TI_JPAGESZ PAGE_SIZE
-#define TI_RESID (TI_JPAGESZ - (TI_JLEN * TI_JSLOTS) % TI_JPAGESZ)
-#define TI_JMEM ((TI_JLEN * TI_JSLOTS) + TI_RESID)
+#define TI_JRAWLEN	(TI_JUMBO_FRAMELEN + ETHER_ALIGN)
+#define TI_JLEN		TI_JRAWLEN
+#define TI_JPAGESZ	PAGE_SIZE
+#define TI_RESID	(TI_JPAGESZ - (TI_JLEN * TI_JSLOTS) % TI_JPAGESZ)
+#define TI_JMEM		((TI_JLEN * TI_JSLOTS) + TI_RESID)
 
 struct ti_jslot {
 	caddr_t			ti_buf;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_skreg.h,v 1.2 1999/10/01 02:54:15 jason Exp $	*/
+/*	$OpenBSD: if_skreg.h,v 1.3 1999/10/03 13:06:30 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1076,13 +1076,12 @@ struct sk_tx_desc {
 #define SK_JUMBO_MTU		(SK_JUMBO_FRAMELEN-ETHER_HDR_LEN-ETHER_CRC_LEN)
 #define SK_JSLOTS		384
 
-#define SK_JRAWLEN (SK_JUMBO_FRAMELEN + ETHER_ALIGN + sizeof(u_int64_t))
-#define SK_JLEN (SK_JRAWLEN + (sizeof(u_int64_t) - \
-	(SK_JRAWLEN % sizeof(u_int64_t))))
-#define SK_MCLBYTES (SK_JLEN - sizeof(u_int64_t))
-#define SK_JPAGESZ PAGE_SIZE
-#define SK_RESID (SK_JPAGESZ - (SK_JLEN * SK_JSLOTS) % SK_JPAGESZ)
-#define SK_JMEM ((SK_JLEN * SK_JSLOTS) + SK_RESID)
+#define SK_JRAWLEN	(SK_JUMBO_FRAMELEN + ETHER_ALIGN)
+#define SK_JLEN		SK_JRAWLEN
+#define SK_MCLBYTES	SK_JLEN
+#define SK_JPAGESZ	PAGE_SIZE
+#define SK_RESID	(SK_JPAGESZ - (SK_JLEN * SK_JSLOTS) % SK_JPAGESZ)
+#define SK_JMEM		((SK_JLEN * SK_JSLOTS) + SK_RESID)
 
 struct sk_jslot {
 	caddr_t			sk_buf;

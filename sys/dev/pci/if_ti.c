@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ti.c,v 1.4 1999/10/01 02:02:20 jason Exp $	*/
+/*	$OpenBSD: if_ti.c,v 1.5 1999/10/03 13:06:30 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -584,21 +584,13 @@ int ti_alloc_jumbo_mem(sc)
 
 	/*
 	 * Now divide it up into 9K pieces and save the addresses
-	 * in an array. Note that we play an evil trick here by using
-	 * the first few bytes in the buffer to hold the the address
-	 * of the softc structure for this interface. This is because
-	 * ti_jfree() needs it, but it is called by the mbuf management
-	 * code which will not pass it to us explicitly.
+	 * in an array.
 	 */
 	ptr = sc->ti_cdata.ti_jumbo_buf;
 	for (i = 0; i < TI_JSLOTS; i++) {
-		u_int64_t		**aptr;
-		aptr = (u_int64_t **)ptr;
-		aptr[0] = (u_int64_t *)sc;
-		ptr += sizeof(u_int64_t);
 		sc->ti_cdata.ti_jslots[i].ti_buf = ptr;
 		sc->ti_cdata.ti_jslots[i].ti_inuse = 0;
-		ptr += (TI_JLEN - sizeof(u_int64_t));
+		ptr += TI_JLEN;
 		entry = malloc(sizeof(struct ti_jpool_entry), 
 			       M_DEVBUF, M_NOWAIT);
 		if (entry == NULL) {
@@ -648,12 +640,10 @@ ti_jref(m)
 	caddr_t buf = m->m_ext.ext_buf;
 	u_int size = m->m_ext.ext_size;
 	struct ti_softc *sc;
-	u_int64_t **aptr;
 	register int i;
 
 	/* Extract the softc struct pointer. */
-	aptr = (u_int64_t **)(buf - sizeof(u_int64_t));
-	sc = (struct ti_softc *)(aptr[0]);
+	sc = (struct ti_softc *)m->m_ext.ext_handle;
 
 	if (sc == NULL)
 		panic("ti_jref: can't find softc pointer!");
@@ -662,9 +652,7 @@ ti_jref(m)
 		panic("ti_jref: adjusting refcount of buf of wrong size!");
 
 	/* calculate the slot this buffer belongs to */
-
-	i = ((vm_offset_t)aptr 
-	     - (vm_offset_t)sc->ti_cdata.ti_jumbo_buf) / TI_JLEN;
+	i = ((vaddr_t)buf - (vaddr_t)sc->ti_cdata.ti_jumbo_buf) / TI_JLEN;
 
 	if ((i < 0) || (i >= TI_JSLOTS))
 		panic("ti_jref: asked to reference buffer "
@@ -673,8 +661,6 @@ ti_jref(m)
 		panic("ti_jref: buffer already free!");
 	else
 		sc->ti_cdata.ti_jslots[i].ti_inuse++;
-
-	return;
 }
 
 /*
@@ -687,13 +673,11 @@ ti_jfree(m)
 	caddr_t buf = m->m_ext.ext_buf;
 	u_int size = m->m_ext.ext_size;
 	struct ti_softc *sc;
-	u_int64_t **aptr;
 	int i;
 	struct ti_jpool_entry *entry;
 
 	/* Extract the softc struct pointer. */
-	aptr = (u_int64_t **)(buf - sizeof(u_int64_t));
-	sc = (struct ti_softc *)(aptr[0]);
+	sc = (struct ti_softc *)m->m_ext.ext_handle;
 
 	if (sc == NULL)
 		panic("ti_jfree: can't find softc pointer!");
@@ -702,9 +686,7 @@ ti_jfree(m)
 		panic("ti_jfree: freeing buffer of wrong size!");
 
 	/* calculate the slot this buffer belongs to */
-
-	i = ((vm_offset_t)aptr 
-	     - (vm_offset_t)sc->ti_cdata.ti_jumbo_buf) / TI_JLEN;
+	i = ((vaddr_t)buf - (vaddr_t)sc->ti_cdata.ti_jumbo_buf) / TI_JLEN;
 
 	if ((i < 0) || (i >= TI_JSLOTS))
 		panic("ti_jfree: asked to free buffer that we don't manage!");
@@ -722,8 +704,6 @@ ti_jfree(m)
 					  entry, jpool_entries);
 		}
 	}
-
-	return;
 }
 
 /*
@@ -860,6 +840,8 @@ int ti_newbuf_jumbo(sc, i, m)
 		m_new->m_data = m_new->m_ext.ext_buf;
 		m_new->m_ext.ext_size = TI_JUMBO_FRAMELEN;
 	}
+
+	m->m_ext.ext_handle = sc;
 
 	m_adj(m_new, ETHER_ALIGN);
 	/* Set up the descriptor. */
