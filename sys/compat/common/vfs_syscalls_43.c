@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls_43.c,v 1.8 1997/11/06 05:58:02 csapuntz Exp $	*/
+/*	$OpenBSD: vfs_syscalls_43.c,v 1.9 1997/11/06 22:15:52 millert Exp $	*/
 /*	$NetBSD: vfs_syscalls_43.c,v 1.4 1996/03/14 19:31:52 christos Exp $	*/
 
 /*
@@ -393,7 +393,7 @@ unionread:
 #	if (BYTE_ORDER != LITTLE_ENDIAN)
 		if (vp->v_mount->mnt_maxsymlinklen <= 0) {
 			error = VOP_READDIR(vp, &auio, fp->f_cred, &eofflag,
-			    (u_long *)0, 0);
+			    (int *)0, (u_long **)0);
 			fp->f_offset = auio.uio_offset;
 		} else
 #	endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sunos_misc.c,v 1.14 1997/11/06 05:58:05 csapuntz Exp $	*/
+/*	$OpenBSD: sunos_misc.c,v 1.15 1997/11/06 22:15:51 millert Exp $	*/
 /*	$NetBSD: sunos_misc.c,v 1.65 1996/04/22 01:44:31 christos Exp $	*/
 
 /*
@@ -428,7 +428,7 @@ sunos_sys_getdents(p, v, retval)
 
 	buflen = min(MAXBSIZE, SCARG(uap, nbytes));
 	buf = malloc(buflen, M_TEMP, M_WAITOK);
-	VOP_LOCK(vp);
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
 	off = fp->f_offset;
 again:
 	aiov.iov_base = buf;
@@ -503,7 +503,7 @@ again:
 eof:
 	*retval = SCARG(uap, nbytes) - resid;
 out:
-	VOP_UNLOCK(vp);
+	VOP_UNLOCK(vp, 0, p);
 	if (cookiebuf)
 		free(cookiebuf, M_TEMP);
 	free(buf, M_TEMP);
@@ -664,12 +664,12 @@ sunos_sys_fchroot(p, v, retval)
 	if ((error = getvnode(fdp, SCARG(uap, fd), &fp)) != 0)
 		return (error);
 	vp = (struct vnode *)fp->f_data;
-	VOP_LOCK(vp);
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
 	if (vp->v_type != VDIR)
 		error = ENOTDIR;
 	else
 		error = VOP_ACCESS(vp, VEXEC, p->p_ucred, p);
-	VOP_UNLOCK(vp);
+	VOP_UNLOCK(vp, 0, p);
 	if (error)
 		return (error);
 	VREF(vp);
@@ -854,7 +854,7 @@ sunos_sys_vhangup(p, v, retval)
 
 	(void) ttywait(sp->s_ttyp);
 	if (sp->s_ttyvp)
-		vgoneall(sp->s_ttyvp);
+		VOP_REVOKE(sp->s_ttyvp, REVOKEALL);
 	if (sp->s_ttyvp)
 		vrele(sp->s_ttyvp);
 	sp->s_ttyvp = NULL;
