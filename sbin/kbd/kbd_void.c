@@ -1,4 +1,4 @@
-/*	$OpenBSD: kbd_void.c,v 1.2 1996/06/30 05:16:27 deraadt Exp $	*/
+/*	$OpenBSD: kbd_void.c,v 1.3 1996/09/28 08:49:08 pefo Exp $	*/
 
 /*
  * Copyright (c) 1996 Juergen Hannken-Illjes
@@ -34,7 +34,7 @@
 
 #include <stdio.h>
 
-extern char __progname;
+extern char *__progname;
 
 void
 kbd_list()
