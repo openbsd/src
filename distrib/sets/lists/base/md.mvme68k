@@ -3,9 +3,6 @@
 ./usr/bin/ldd
 ./usr/include/m68k
 ./usr/lib/gcc-lib/m68k-unknown-openbsd2.3
-./usr/lib/gcc-lib/m68k-unknown-openbsd2.3/2.7.2.1
-./usr/lib/gcc-lib/m68k-unknown-openbsd2.3/2.7.2.1/include
-./usr/lib/gcc-lib/m68k-unknown-openbsd2.3/2.7.2.1/include/objc
 ./usr/lib/libacl.so.4.1
 ./usr/lib/libc.so.18.0
 ./usr/lib/libcurses.so.4.2
@@ -25,6 +22,7 @@
 ./usr/lib/libpanel.so.1.1
 ./usr/lib/libpcap.so.0.2
 ./usr/lib/libresolv.so.2.0
+./usr/lib/librx.so.0.1
 ./usr/lib/libskey.so.1.0
 ./usr/lib/libss.so.4.0
 ./usr/lib/libstdc++.so.28.0
