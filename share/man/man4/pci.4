@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pci.4,v 1.21 2000/11/15 21:06:53 aaron Exp $
+.\"	$OpenBSD: pci.4,v 1.22 2000/12/20 21:38:44 deraadt Exp $
 .\"	$NetBSD: pci.4,v 1.29 2000/04/01 00:32:23 tsarna Exp $
 .\"
 .\" Copyright (c) 2000 Theo de Raadt.  All rights reserved.
@@ -107,6 +107,10 @@ interfaces.
 .Bl -tag -width speaker -offset ind
 .It Xr aac 4
 Adaptec "FSA" family (Adaptec AAC, Dell PERC, HP NetRaid)
+.Tn RAID
+controllers.
+.It Xr cac 4
+Compaq Smart ARRAY
 .Tn RAID
 controllers.
 .It Xr dpt 4
