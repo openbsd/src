@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: mppe.c,v 1.8 2001/07/07 03:08:49 brian Exp $
+ * $OpenBSD: mppe.c,v 1.9 2001/08/27 17:54:35 brian Exp $
  */
 
 #include <sys/types.h>
@@ -296,6 +296,8 @@ MPPEInput(void *v, struct ccp *ccp, u_short *proto, struct mbuf *mp)
        * The spec says that we shouldn't be though....
        */
       log_Printf(LogDEBUG, "MPPE: Not flushed - discarded\n");
+      fsm_Output(&ccp->fsm, CODE_RESETREQ, ccp->fsm.reqid++, NULL, 0,
+                 MB_CCPOUT);
       m_freem(mp);
       return NULL;
     }
