@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.15 1999/12/09 18:20:06 espie Exp $	*/
+/*	$OpenBSD: extern.h,v 1.16 1999/12/16 17:07:20 espie Exp $	*/
 /*	$NetBSD: nonints.h,v 1.12 1996/11/06 17:59:19 christos Exp $	*/
 
 /*-
@@ -63,8 +63,10 @@ void Cond_End __P((void));
 #include "error.h"
 
 /* for.c */
-int For_Eval __P((char *));
-void For_Run  __P((void));
+typedef struct For_ For;
+For *For_Eval __P((char *));
+Boolean For_Accumulate __P((For *, const char *));
+void For_Run  __P((For *));
 
 /* main.c */
 void Main_ParseArgLine __P((char *));

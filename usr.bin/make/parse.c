@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.29 1999/12/16 17:02:45 espie Exp $	*/
+/*	$OpenBSD: parse.c,v 1.30 1999/12/16 17:07:21 espie Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: parse.c,v 1.29 1999/12/16 17:02:45 espie Exp $";
+static char rcsid[] = "$OpenBSD: parse.c,v 1.30 1999/12/16 17:07:21 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -2375,28 +2375,30 @@ test_char:
 		line = ParseReadLine();
 		break;
 	    case COND_INVALID:
-		if (For_Eval(line)) {
-		    int ok;
+	    	{
+		For *loop;
+
+		loop = For_Eval(line);
+		if (loop != NULL) {
+		    Boolean ok;
+
 		    free(line);
 		    do {
-			/*
-			 * Skip after the matching end
-			 */
+			/* Find the matching endfor.  */
 			line = ParseSkipLine(0);
 			if (line == NULL) {
-			    Parse_Error (PARSE_FATAL,
+			    Parse_Error(PARSE_FATAL,
 				     "Unexpected end of file in for loop.\n");
-			    break;
+			    return line;
 			}
-			ok = For_Eval(line);
+			ok = For_Accumulate(loop, line);
 			free(line);
-		    }
-		    while (ok);
-		    if (line != NULL)
-			For_Run();
+		    } while (ok);
+		    For_Run(loop);
 		    line = ParseReadLine();
 		}
 		break;
+		}
 	    }
 	}
 	return (line);
