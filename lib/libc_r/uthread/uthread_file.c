@@ -29,8 +29,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: uthread_file.c,v 1.1 1998/08/27 09:01:02 d Exp $
- * $OpenBSD: uthread_file.c,v 1.1 1998/08/27 09:01:02 d Exp $
+ * $Id: uthread_file.c,v 1.2 1998/11/09 03:13:19 d Exp $
+ * $OpenBSD: uthread_file.c,v 1.2 1998/11/09 03:13:19 d Exp $
  *
  * POSIX stdio FILE locking functions. These assume that the locking
  * is only required at FILE structure level, not at file descriptor
@@ -44,13 +44,6 @@
 #ifdef _THREAD_SAFE
 #include <pthread.h>
 #include "pthread_private.h"
-
-/*
- * Weak symbols for externally visible functions in this file:
- */
-#pragma	weak	flockfile=_flockfile
-#pragma	weak	ftrylockfile=_ftrylockfile
-#pragma	weak	funlockfile=_funlockfile
 
 /*
  * The FILE lock structure. The FILE *fp is locked if the owner is
@@ -83,7 +76,7 @@ struct	file_lock {
  * structures. If there is a collision, a linear search of the
  * dynamic list of locks linked to each static lock is perfomed.
  */
-#define file_idx(_p)	((((long) _p) >> sizeof(void *)) % NUM_HEADS)
+#define file_idx(_p)	((((u_long) _p) >> sizeof(void *)) % NUM_HEADS)
 
 /*
  * Global array of file locks. The first lock for each hash bucket is
@@ -123,7 +116,7 @@ find_lock(int idx, FILE *fp)
 		 * Loop through the dynamic locks looking for the
 		 * target file:
 		 */
-		while (p != NULL && p->fp != fp && p->owner != NULL)
+		while (p != NULL && (p->fp != fp || p->owner == NULL))
 			/* Not this file, try the next: */
 			p = p->entry.le_next;
 	}
@@ -180,10 +173,8 @@ do_lock(int idx, FILE *fp)
 }
 
 void
-_flockfile_debug(FILE * fp, char *fname, int lineno)
+_flockfile_debug(FILE * fp, const char *fname, int lineno)
 {
-	int	fd, flags;
-	int	status;
 	int	idx = file_idx(fp);
 	struct	file_lock	*p;
 
@@ -246,17 +237,16 @@ _flockfile_debug(FILE * fp, char *fname, int lineno)
 }
 
 void
-_flockfile(FILE * fp)
+flockfile(FILE * fp)
 {
-	_flockfile_debug(fp, __FILE__, __LINE__);
+	_flockfile_debug(fp, "?", 1);
 	return;
 }
 
 int
-_ftrylockfile(FILE * fp)
+ftrylockfile(FILE * fp)
 {
 	int	ret = -1;
-	int	status;
 	int	idx = file_idx(fp);
 	struct	file_lock	*p;
 
@@ -306,9 +296,8 @@ _ftrylockfile(FILE * fp)
 }
 
 void 
-_funlockfile(FILE * fp)
+funlockfile(FILE * fp)
 {
-	int	status;
 	int	idx = file_idx(fp);
 	struct	file_lock	*p;
 

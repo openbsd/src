@@ -35,10 +35,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <fcntl.h>
+#include <paths.h>
 #include <unistd.h>
 #include <sys/time.h>
-#include <paths.h>
+#include <sys/ttycom.h>
 #include <sys/param.h>
+#include <sys/ioctl.h>
 #include <signal.h>
 #ifdef _THREAD_SAFE
 #include <machine/reg.h>
@@ -78,6 +80,8 @@ struct pthread_cond_attr pthread_condattr_default = {
 int			  _pthread_stdio_flags[3];
 struct fd_table_entry **  _thread_fd_table = NULL;
 int    			  _thread_dtablesize = NOFILE_MAX;
+pthread_mutex_t		  _gc_mutex = NULL;
+pthread_cond_t		  _gc_cond = NULL;
 struct  sigaction 	  _thread_sigact[NSIG];
 
 #ifdef GCC_2_8_MADE_THREAD_AWARE
@@ -112,6 +116,7 @@ static void ***dynamic_allocator_handler_fn()
 void
 _thread_init(void)
 {
+	int		fd;
 	int             flags;
 	int             i;
 	struct sigaction act;
@@ -121,13 +126,11 @@ _thread_init(void)
 		/* Only initialise the threaded application once. */
 		return;
 
-#ifdef __FreeBSD__
 	/*
 	 * Check for the special case of this process running as
 	 * or in place of init as pid = 1:
 	 */
 	if (getpid() == 1) {
-		int		fd;
 		/*
 		 * Setup a new session for this process which is
 		 * assumed to be running as root.
@@ -147,7 +150,6 @@ _thread_init(void)
 		    _thread_sys_dup2(fd,2) == -1)
 			PANIC("Can't dup2");
 	}
-#endif __FreeBSD__
 
 	/* Get the standard I/O flags before messing with them : */
 	for (i = 0; i < 3; i++)
@@ -287,22 +289,29 @@ _thread_init(void)
 	__set_dynamic_handler_allocator( dynamic_allocator_handler_fn );
 #endif /* GCC_2_8_MADE_THREAD_AWARE */
 
+	/* Initialise the garbage collector mutex and condition variable. */
+	if (pthread_mutex_init(&_gc_mutex,NULL) != 0 ||
+	    pthread_cond_init(&_gc_cond,NULL) != 0)
+		PANIC("Failed to initialise garbage collector mutex or condvar");
+
 	return;
 }
 
-#if 0
 /*
- * Special start up code for NetBSD/Alpha 
+ * Use the a.out .init symbol to start the thread package going
  */
-int 
-main(int argc, char *argv[], char *env);
-
-int
-_thread_main(int argc, char *argv[], char *env)
-{
+extern void __init_threads __P((void)) asm(".init");
+void __init_threads() {
 	_thread_init();
-	return (main(argc, argv, env));
 }
-#endif alpha_special_code
+
+/*
+ * Use elf's ld.so _init symbol to start the thread package going
+ */
+extern int _init __P((void));
+int _init() {
+	_thread_init();
+	return 0;
+}
 
 #endif _THREAD_SAFE

@@ -1,5 +1,5 @@
-# $Id: Makefile.inc,v 1.1 1998/08/27 09:00:33 d Exp $
-# $OpenBSD: Makefile.inc,v 1.1 1998/08/27 09:00:33 d Exp $
+# $Id: Makefile.inc,v 1.2 1998/11/09 03:13:14 d Exp $
+# $OpenBSD: Makefile.inc,v 1.2 1998/11/09 03:13:14 d Exp $
 
 # POSIX thread man files
 
@@ -27,6 +27,15 @@ MAN+=	pthread_cleanup_pop.3 \
 	pthread_mutex_trylock.3 \
 	pthread_mutex_unlock.3 \
 	pthread_once.3 \
+	pthread_rwlock_destroy.3 \
+	pthread_rwlock_init.3 \
+	pthread_rwlock_rdlock.3 \
+	pthread_rwlock_unlock.3 \
+	pthread_rwlock_wrlock.3 \
+	pthread_rwlockattr_destroy.3 \
+	pthread_rwlockattr_getpshared.3 \
+	pthread_rwlockattr_init.3 \
+	pthread_rwlockattr_setpshared.3 \
 	pthread_self.3 \
 	pthread_setspecific.3
 

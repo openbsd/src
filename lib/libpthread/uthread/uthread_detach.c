@@ -39,7 +39,6 @@ int
 pthread_detach(pthread_t pthread)
 {
 	int             rval = 0;
-	int             status;
 	pthread_t       next_thread;
 
 	/* Check for invalid calling parameters: */

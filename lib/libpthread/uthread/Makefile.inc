@@ -1,5 +1,5 @@
-#	$Id: Makefile.inc,v 1.1 1998/08/27 09:00:49 d Exp $
-#	$OpenBSD: Makefile.inc,v 1.1 1998/08/27 09:00:49 d Exp $
+#	$Id: Makefile.inc,v 1.2 1998/11/09 03:13:18 d Exp $
+#	$OpenBSD: Makefile.inc,v 1.2 1998/11/09 03:13:18 d Exp $
 
 # uthread sources
 .PATH: ${.CURDIR}/uthread
@@ -42,6 +42,7 @@ SRCS+= \
 	uthread_fstat.c \
 	uthread_fstatfs.c \
 	uthread_fsync.c \
+	uthread_gc.c \
 	uthread_getdirentries.c \
 	uthread_getpeername.c \
 	uthread_getprio.c \
@@ -69,6 +70,8 @@ SRCS+= \
 	uthread_recvfrom.c \
 	uthread_recvmsg.c \
 	uthread_resume_np.c \
+	uthread_rwlock.c \
+	uthread_rwlockattr.c \
 	uthread_select.c \
 	uthread_self.c \
 	uthread_sendmsg.c \
@@ -79,6 +82,7 @@ SRCS+= \
 	uthread_shutdown.c \
 	uthread_sig.c \
 	uthread_sigaction.c \
+	uthread_sigaltstack.c \
 	uthread_sigblock.c \
 	uthread_sigmask.c \
 	uthread_sigprocmask.c \
@@ -91,6 +95,7 @@ SRCS+= \
 	uthread_spec.c \
 	uthread_spinlock.c \
 	uthread_suspend_np.c \
+	uthread_vfork.c \
 	uthread_wait4.c \
 	uthread_write.c \
 	uthread_writev.c \

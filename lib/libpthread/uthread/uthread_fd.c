@@ -29,8 +29,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: uthread_fd.c,v 1.1 1998/08/27 09:01:01 d Exp $
- * $OpenBSD: uthread_fd.c,v 1.1 1998/08/27 09:01:01 d Exp $
+ * $Id: uthread_fd.c,v 1.2 1998/11/09 03:13:19 d Exp $
+ * $OpenBSD: uthread_fd.c,v 1.2 1998/11/09 03:13:19 d Exp $
  *
  */
 #include <errno.h>
@@ -56,6 +56,7 @@ _thread_fd_table_init(int fd)
 {
 	int	ret = 0;
 	struct fd_table_entry *entry;
+	int	saved_errno;
 
 	/* Check if the file descriptor is out of range: */
 	if (fd < 0 || fd >= _thread_dtablesize) {
@@ -117,8 +118,10 @@ _thread_fd_table_init(int fd)
 			 * not support non-blocking calls, or if the
 			 * driver is naturally non-blocking.
 			 */
+			saved_errno = errno;
 			_thread_sys_fcntl(fd, F_SETFL,
 			    entry->flags | O_NONBLOCK);
+			errno = saved_errno;
 
 			/* Lock the file descriptor table: */
 			_SPINLOCK(&fd_table_lock);
@@ -531,7 +534,7 @@ _thread_fd_unlock_debug(int fd, int lock_type, char *fname, int lineno)
 
 int
 _thread_fd_lock_debug(int fd, int lock_type, struct timespec * timeout,
-		char *fname, int lineno)
+		const char *fname, int lineno)
 {
 	int	ret;
 

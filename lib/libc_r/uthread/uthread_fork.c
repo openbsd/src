@@ -33,8 +33,8 @@
 #include <errno.h>
 #include <string.h>
 #include <unistd.h>
-#include <stdlib.h>
 #include <fcntl.h>
+#include <stdlib.h>
 #ifdef _THREAD_SAFE
 #include <pthread.h>
 #include "pthread_private.h"
@@ -43,7 +43,6 @@ pid_t
 fork(void)
 {
 	int             flags;
-	int             status;
 	pid_t           ret;
 	pthread_t	pthread;
 	pthread_t	pthread_next;
@@ -105,15 +104,16 @@ fork(void)
 					pthread->nxt = NULL;
 				} else {
 					if (pthread->attr.stackaddr_attr ==
-					    NULL && pthread->stack != NULL) {
+					    NULL && pthread->stack != NULL)
 						/*
 						 * Free the stack of the
 						 * dead thread:
 						 */
 						free(pthread->stack);
-					}
+
 					if (pthread->specific_data != NULL)
 						free(pthread->specific_data);
+
 					free(pthread);
 				}
 

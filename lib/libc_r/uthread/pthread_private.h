@@ -56,8 +56,8 @@
 #define PANIC(string)   _thread_exit(__FILE__,__LINE__,string)
 
 /* Output debug messages like this: */
-#define	stdout_debug(_x)	_write(1,_x,strlen(_x));
-#define	stderr_debug(_x)	_write(2,_x,strlen(_x));
+#define	stdout_debug(_x)	_thread_sys_write(1,_x,strlen(_x));
+#define	stderr_debug(_x)	_thread_sys_write(2,_x,strlen(_x));
 
 /*
  * State change macro:
@@ -218,6 +218,18 @@ struct pthread_key {
 	void            (*destructor) ();
 };
 
+struct pthread_rwlockattr {
+	int		pshared;
+};
+
+struct pthread_rwlock {
+	pthread_mutex_t	lock;	/* monitor lock */
+	int		state;	/* 0 = idle  >0 = # of readers  -1 = writer */
+	pthread_cond_t	read_signal;
+	pthread_cond_t	write_signal;
+	int		blocked_writers;
+};
+
 /*
  * Thread states.
  */
@@ -234,6 +246,7 @@ enum pthread_state {
 	PS_SELECT_WAIT,
 	PS_SLEEP_WAIT,
 	PS_WAIT_WAIT,
+	PS_SIGSUSPEND,
 	PS_SIGWAIT,
 	PS_JOIN,
 	PS_SUSPENDED,
@@ -264,9 +277,9 @@ struct fd_table_entry {
 	struct pthread_queue	w_queue;	/* Write queue.                       */
 	struct pthread		*r_owner;	/* Ptr to thread owning read lock.    */
 	struct pthread		*w_owner;	/* Ptr to thread owning write lock.   */
-	char			*r_fname;	/* Ptr to read lock source file name  */
+	const char		*r_fname;	/* Ptr to read lock source file name  */
 	int			r_lineno;	/* Read lock source line number.      */
-	char			*w_fname;	/* Ptr to write lock source file name */
+	const char		*w_fname;	/* Ptr to write lock source file name */
 	int			w_lineno;	/* Write lock source line number.     */
 	int			r_lockcount;	/* Count for FILE read locks.         */
 	int			w_lockcount;	/* Count for FILE write locks.        */
@@ -287,7 +300,7 @@ union pthread_wait_data {
 	struct {
 		short	fd;		/* Used when thread waiting on fd */
 		short	branch;		/* Line number, for debugging.    */
-		char	*fname;		/* Source file name for debugging.*/
+		const char *fname;	/* Source file name for debugging.*/
 	} fd;
 	struct pthread_select_data * select_data;
 };
@@ -313,6 +326,11 @@ struct pthread {
 	 * Pointer to the next thread in the thread linked list.
 	 */
 	struct pthread	*nxt;
+
+	/*
+	 * Pointer to the next thread in the dead thread linked list.
+	 */
+	struct pthread	*nxt_dead;
 
 	/*
 	 * Thread start routine, argument, stack pointer and thread
@@ -426,7 +444,7 @@ struct pthread {
 
 	/* Cleanup handlers Link List */
 	struct pthread_cleanup *cleanup;
-	char			*fname;	/* Ptr to source file name  */
+	const char		*fname;	/* Ptr to source file name  */
 	int			lineno;	/* Source line number.      */
 };
 
@@ -486,6 +504,10 @@ extern int	_pthread_stdio_flags[3];
 extern struct fd_table_entry **_thread_fd_table;
 extern int    _thread_dtablesize;
 
+/* Garbage collector mutex and condition variable. */
+extern pthread_mutex_t _gc_mutex;
+extern pthread_cond_t _gc_cond;
+
 /*
  * Array of signal actions for this process.
  */
@@ -514,24 +536,23 @@ int     _find_dead_thread(pthread_t);
 int     _find_thread(pthread_t);
 int     _thread_create(pthread_t *,const pthread_attr_t *,void *(*start_routine)(void *),void *,pthread_t);
 int     _thread_fd_lock(int, int, struct timespec *);
-int     _thread_fd_lock_debug(int, int, struct timespec *,char *fname,int lineno);
+int     _thread_fd_lock_debug(int, int, struct timespec *,const char *fname,int lineno);
 void    _dispatch_signals(void);
 void    _thread_signal(pthread_t, int);
-void    _lock_dead_thread_list(void);
 void    _lock_thread(void);
 void    _lock_thread_list(void);
-void    _unlock_dead_thread_list(void);
 void    _unlock_thread(void);
 void    _unlock_thread_list(void);
-void    _thread_exit(char *, int, char *);
+void    _thread_exit(char *, int, char *)
+		__attribute__((noreturn));
 void    _thread_fd_unlock(int, int);
 void    _thread_fd_unlock_debug(int, int, char *, int);
 void    *_thread_cleanup(pthread_t);
 void    _thread_cleanupspecific(void);
 void    _thread_dump_info(void);
-void    _thread_init(void) __attribute__((constructor));
+void    _thread_init(void) /* __attribute__((constructor)) */;
 void    _thread_kern_sched(struct sigcontext *);
-void    _thread_kern_sched_state(enum pthread_state,char *fname,int lineno);
+void    _thread_kern_sched_state(enum pthread_state,const char *fname,int lineno);
 void    _thread_kern_set_timeout(struct timespec *);
 void    _thread_sig_handler(int, int, struct sigcontext *);
 void    _thread_start(void);
@@ -543,6 +564,8 @@ int     _thread_queue_remove(struct pthread_queue *, struct pthread *);
 int     _thread_fd_table_init(int fd);
 struct pthread *_thread_queue_get(struct pthread_queue *);
 struct pthread *_thread_queue_deq(struct pthread_queue *);
+pthread_addr_t	_thread_gc(pthread_addr_t);
+
 
 /* #include <signal.h> */
 #ifdef _USER_SIGNAL_H
@@ -553,7 +576,7 @@ int     _thread_sys_sigsuspend(const sigset_t *);
 int     _thread_sys_siginterrupt(int, int);
 int     _thread_sys_sigpause(int);
 int     _thread_sys_sigreturn(struct sigcontext *);
-int     _thread_sys_sigstack(const struct sigstack *, struct sigstack *);
+int     _thread_sys_sigaltstack(const struct sigaltstack *, struct sigaltstack *);
 int     _thread_sys_sigvec(int, struct sigvec *, struct sigvec *);
 void    _thread_sys_psignal(unsigned int, const char *);
 void    (*_thread_sys_signal(int, void (*)(int)))(int);
@@ -675,7 +698,8 @@ pid_t   _thread_sys_fork(void);
 pid_t   _thread_sys_tcgetpgrp(int);
 ssize_t _thread_sys_read(int, void *, size_t);
 ssize_t _thread_sys_write(int, const void *, size_t);
-void	_thread_sys__exit(int);
+void	_thread_sys__exit(int)
+		__attribute__((noreturn));
 #endif
 
 /* #include <fcntl.h> */

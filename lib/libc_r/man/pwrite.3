@@ -1,0 +1,36 @@
+.\" $OpenBSD: pwrite.3,v 1.1 1998/11/09 03:13:16 d Exp $
+.Dd September 7, 1998
+.Os Ox
+.Dt PWRITE 3
+.Sh NAME
+.Nm pwrite
+.Nd atomic seek and write
+.Sh SYNOPSIS
+.Fd #include <pthread.h>
+.Ft ssize_t
+.Fn pwrite "int filedes" "void *buf" "size_t nbytes" "off_t offset"
+.Sh DESCRIPTION
+The
+.Fn pwrite
+function writes
+.Fa nbyte
+bytes from offset
+.Fa offset
+in the file opened on file descriptor
+.Fa filedes.
+.Pp
+This function is provided for use in a threaded, parallel I/O
+environment, where race conditions may exist between two threads 
+non-atomically seeking and writing to the same file descriptor.
+.Sh RETURN VALUES
+The
+.Fn pread
+function returns values identical to
+.Xr write 3 .
+.Sh SEE ALSO
+.Xr pthreads 3 ,
+.Xr write 3 ,
+.Xr pread 3
+.Sh STANDARDS
+.Fn pread
+conforms to TOG SUSv2 .

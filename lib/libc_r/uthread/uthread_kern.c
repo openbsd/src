@@ -29,8 +29,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: uthread_kern.c,v 1.1 1998/08/27 09:01:08 d Exp $
- * $OpenBSD: uthread_kern.c,v 1.1 1998/08/27 09:01:08 d Exp $
+ * $Id: uthread_kern.c,v 1.2 1998/11/09 03:13:20 d Exp $
+ * $OpenBSD: uthread_kern.c,v 1.2 1998/11/09 03:13:20 d Exp $
  *
  */
 #include <errno.h>
@@ -60,8 +60,6 @@ _thread_kern_sched(struct sigcontext * scp)
 	int             prio = -1;
 	pthread_t       pthread;
 	pthread_t       pthread_h = NULL;
-	pthread_t       pthread_nxt = NULL;
-	pthread_t       pthread_prv = NULL;
 	pthread_t       pthread_s = NULL;
 	struct itimerval itimer;
 	struct timespec ts;
@@ -91,7 +89,7 @@ _thread_kern_sched(struct sigcontext * scp)
 		_thread_run->sig_saved = 1;
 	}
 	/* Save the state of the current thread: */
-	else if (setjmp(_thread_run->saved_jmp_buf) != 0) {
+	else if (_thread_machdep_setjmp(_thread_run->saved_jmp_buf) != 0) {
 		/*
 		 * This point is reached when a longjmp() is called to
 		 * restore the state of a thread. 
@@ -106,88 +104,12 @@ _thread_kern_sched(struct sigcontext * scp)
 		 */
 		_dispatch_signals();
 		return;
-	} else {
+	} else
 		/* Flag the jump buffer was the last state saved: */
 		_thread_run->sig_saved = 0;
-	}
 
 	/* Save errno. */
 	_thread_run->error = errno;
-
-	/* Point to the first dead thread (if there are any): */
-	pthread = _thread_dead;
-
-	/* There is no previous dead thread: */
-	pthread_prv = NULL;
-
-	/* Enter a loop to cleanup after dead threads: */
-	while (pthread != NULL) {
-		/* Save a pointer to the next thread: */
-		pthread_nxt = pthread->nxt;
-
-		/* Check if this thread is one which is running: */
-		if (pthread == _thread_run || pthread == _thread_initial) {
-			/*
-			 * Don't destroy the running thread or the initial
-			 * thread. 
-			 */
-			pthread_prv = pthread;
-		}
-		/*
-		 * Check if this thread has detached:
-		 */
-		else if ((pthread->attr.flags & PTHREAD_DETACHED) != 0) {
-			/* Check if there is no previous dead thread: */
-			if (pthread_prv == NULL) {
-				/*
-				 * The dead thread is at the head of the
-				 * list: 
-				 */
-				_thread_dead = pthread_nxt;
-			} else {
-				/*
-				 * The dead thread is not at the head of the
-				 * list: 
-				 */
-				pthread_prv->nxt = pthread->nxt;
-			}
-
-			/*
-			 * Check if the stack was not specified by the caller
-			 * to pthread_create and has not been destroyed yet: 
-			 */
-			if (pthread->attr.stackaddr_attr == NULL && pthread->stack != NULL) {
-				/* Free the stack of the dead thread: */
-				free(pthread->stack);
-			}
-			/* Free the memory allocated to the thread structure: */
-			free(pthread);
-		} else {
-			/*
-			 * This thread has not detached, so do not destroy
-			 * it: 
-			 */
-			pthread_prv = pthread;
-
-			/*
-			 * Check if the stack was not specified by the caller
-			 * to pthread_create and has not been destroyed yet: 
-			 */
-			if (pthread->attr.stackaddr_attr == NULL && pthread->stack != NULL) {
-				/* Free the stack of the dead thread: */
-				free(pthread->stack);
-
-				/*
-				 * NULL the stack pointer now that the memory
-				 * has been freed: 
-				 */
-				pthread->stack = NULL;
-			}
-		}
-
-		/* Point to the next thread: */
-		pthread = pthread_nxt;
-	}
 
 	/*
 	 * Enter a the scheduling loop that finds the next thread that is
@@ -280,10 +202,12 @@ _thread_kern_sched(struct sigcontext * scp)
 			 * Accumulate the number of microseconds that this
 			 * thread has run for: 
 			 */
-			_thread_run->slice_usec += (_thread_run->last_inactive.tv_sec -
-				_thread_run->last_active.tv_sec) * 1000000 +
-				_thread_run->last_inactive.tv_usec -
-				_thread_run->last_active.tv_usec;
+			if (_thread_run->slice_usec != -1) {
+ 			        _thread_run->slice_usec += (_thread_run->last_inactive.tv_sec -
+				        _thread_run->last_active.tv_sec) * 1000000 +
+				        _thread_run->last_inactive.tv_usec -
+				        _thread_run->last_active.tv_usec;
+                        }
 
 			/*
 			 * Check if this thread has reached its allocated
@@ -316,7 +240,7 @@ _thread_kern_sched(struct sigcontext * scp)
 				 * the last incremental priority check was
 				 * made: 
 				 */
-				else if (timercmp(&_thread_run->last_inactive, &kern_inc_prio_time, <)) {
+				else if (timercmp(&pthread->last_inactive, &kern_inc_prio_time, <)) {
 					/*
 					 * Increment the incremental priority
 					 * for this thread in the hope that
@@ -657,7 +581,7 @@ _thread_kern_sched(struct sigcontext * scp)
 				 * was context switched out (by a longjmp to
 				 * a different thread): 
 				 */
-				longjmp(_thread_run->saved_jmp_buf, 1);
+				_thread_machdep_longjmp(_thread_run->saved_jmp_buf, 1);
 
 			/* This point should not be reached. */
 			PANIC("Thread has returned from sigreturn or longjmp");
@@ -669,7 +593,7 @@ _thread_kern_sched(struct sigcontext * scp)
 }
 
 void
-_thread_kern_sched_state(enum pthread_state state, char *fname, int lineno)
+_thread_kern_sched_state(enum pthread_state state, const char *fname, int lineno)
 {
 	/* Change the state of the current thread: */
 	_thread_run->state = state;
@@ -750,6 +674,7 @@ _thread_kern_select(int wait_reqd)
 		case PS_STATE_MAX:
 		case PS_WAIT_WAIT:
 		case PS_SUSPENDED:
+		case PS_SIGSUSPEND:
 			/* Nothing to do here. */
 			break;
 
@@ -1080,6 +1005,7 @@ _thread_kern_select(int wait_reqd)
 			case PS_SIGTHREAD:
 			case PS_STATE_MAX:
 			case PS_SUSPENDED:
+			case PS_SIGSUSPEND:
 				/* Nothing to do here. */
 				break;
 

@@ -1,7 +1,7 @@
 /*
  * OpenBSD/i386 machine-dependent thread macros
  *
- * $OpenBSD: uthread_machdep.h,v 1.1 1998/08/28 01:54:58 d Exp $
+ * $OpenBSD: uthread_machdep.h,v 1.2 1998/11/09 03:13:13 d Exp $
  */
 
 /* save the floating point state of a thread */
@@ -28,6 +28,9 @@
 				+ (pattr)->stacksize_attr \
 				- sizeof(double);	\
 	}
+
+#define	_thread_machdep_longjmp(a,v)	longjmp(a,v)
+#define	_thread_machdep_setjmp(a)	setjmp(a)
 
 struct _machdep_struct {
         char            saved_fp[108];

@@ -126,7 +126,6 @@ int
 pthread_cond_wait(pthread_cond_t * cond, pthread_mutex_t * mutex)
 {
 	int             rval = 0;
-	int             status;
 
 	if (cond == NULL)
 		rval = EINVAL;
@@ -190,7 +189,6 @@ pthread_cond_timedwait(pthread_cond_t * cond, pthread_mutex_t * mutex,
 		       const struct timespec * abstime)
 {
 	int             rval = 0;
-	int             status;
 
 	if (cond == NULL)
 		rval = EINVAL;
@@ -270,7 +268,6 @@ int
 pthread_cond_signal(pthread_cond_t * cond)
 {
 	int             rval = 0;
-	int             status;
 	pthread_t       pthread;
 
 	if (cond == NULL || *cond == NULL)
@@ -309,7 +306,6 @@ int
 pthread_cond_broadcast(pthread_cond_t * cond)
 {
 	int             rval = 0;
-	int             status;
 	pthread_t       pthread;
 
 	if (cond == NULL || *cond == NULL)

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 1998/08/27 09:00:32 d Exp $
+#	$OpenBSD: Makefile,v 1.2 1998/11/09 03:12:53 d Exp $
 #
 # All library objects contain sccsid strings by default; they may be
 # excluded as a space-saving measure.  To produce a library that does
@@ -14,8 +14,6 @@
 # actually call the YP functions, put -DYP on the CFLAGS line below.
 
 .include <bsd.own.mk>
-
-NOPIC=		pic seems to be busted at the moment
 
 LIB=		c_r
 LINTFLAGS=	-z
@@ -40,7 +38,7 @@ HIDDEN_SYSCALLS= accept.o bind.o close.o connect.o dup.o dup2.o \
 	recvmsg.o sched_yield.o select.o sendmsg.o sendto.o \
 	setsockopt.o shutdown.o sigaction.o sigaltstack.o \
 	signanosleep.o socket.o socketpair.o wait4.o write.o writev.o \
-	_exit.o
+	_exit.o getlogin.o
 
 .include "${.CURDIR}/../libc/Makefile.inc"
 # let manual pages be built/installed from libc

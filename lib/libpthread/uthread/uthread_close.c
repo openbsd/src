@@ -43,7 +43,6 @@ close(int fd)
 {
 	int		flags;
 	int		ret;
-	int		status;
 	struct stat	sb;
 
 	/* Lock the file descriptor while the file is closed: */
