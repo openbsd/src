@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nologin.8,v 1.2 1996/06/23 14:31:58 deraadt Exp $
+.\"	$OpenBSD: nologin.8,v 1.3 1997/02/16 04:15:32 downsj Exp $
 .\"	$NetBSD: nologin.8,v 1.3 1995/03/18 14:59:09 cgd Exp $
 .\"
 .\" Copyright (c) 1993
@@ -34,9 +34,9 @@
 .\"
 .\"     @(#)nologin.8	8.1 (Berkeley) 6/19/93
 .\"
-.Dd June 19, 1993
+.Dd Febuary 15, 1997
 .Dt NOLOGIN 8
-.Os BSD 4.4
+.Os
 .Sh NAME
 .Nm nologin
 .Nd politely refuse a login 
@@ -48,6 +48,12 @@ displays a message that an account is not available and
 exits non-zero.
 It is intended as a replacement shell field for accounts that
 have been disabled.
+.Pp
+If the file
+.Pa /etc/nologin.txt
+exists,
+.Nm nologin
+displays its contents to the user instead of the default message.
 .Sh SEE ALSO
 .Xr login 1
 .Sh HISTORY
