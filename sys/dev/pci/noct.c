@@ -1,4 +1,4 @@
-/*	$OpenBSD: noct.c,v 1.9 2002/07/16 19:39:17 jason Exp $	*/
+/*	$OpenBSD: noct.c,v 1.10 2002/07/17 03:32:16 jason Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -939,9 +939,10 @@ noct_ea_thread(vsc)
 			bus_dmamem_free(sc->sc_dmat, &q->q_dmaseg, rseg);
 			crp->crp_etype = 0;
 			free(q, M_DEVBUF);
-			crypto_done(crp);
 			s = splnet();
+			crypto_done(crp);
 		}
+		splx(s);
 
 		/* Handle input queue */
 		s = splnet();
