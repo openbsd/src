@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.15 1997/02/14 18:15:28 deraadt Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.16 1997/07/23 20:50:14 mickey Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -62,6 +62,11 @@
 #ifdef IPX
 #include <netipx/ipx.h>
 #include <netipx/ipx_if.h>
+#endif
+
+#ifdef NETATALK
+#include <netatalk/at.h>
+#include <netatalk/at_var.h>
 #endif
 
 #ifdef ISO
@@ -615,6 +620,12 @@ tunwrite(dev, uio, ioflag)
 	case AF_IPX:
 		ifq = &ipxintrq;
 		isr = NETISR_IPX;
+		break;
+#endif
+#ifdef NETATALK
+	case AF_APPLETALK:
+		ifq = &atintrq2;
+		isr = NETISR_ATALK;
 		break;
 #endif
 #ifdef ISO
