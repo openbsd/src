@@ -705,6 +705,8 @@ check_keynote_assertions(request_rec *r)
 
 	    /* Add username as a principal too. */
 	    if (r->connection->user != NULL) {
+		int n;
+
 		authLen = strlen(r->connection->user) + 1 + strlen("username:");
 		pwauth = calloc(authLen, sizeof(char));
 		if (pwauth == NULL) {
@@ -712,7 +714,7 @@ check_keynote_assertions(request_rec *r)
 		    goto done;
 		}
 
-		int n = snprintf(pwauth, authLen, "username:%s",
+		n = snprintf(pwauth, authLen, "username:%s",
 		    r->connection->user);
 		if (n == -1 || n >= authLen) {
 		    rval = FORBIDDEN;
