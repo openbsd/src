@@ -1645,7 +1645,8 @@ region_free(pm, smeg)
 int
 mmu_pagein(pm, va, prot)
 	register struct pmap *pm;
-	register int va, prot;
+	register int va;
+	vm_prot_t prot;
 {
 	register int *pte;
 	register int vr, vs, pmeg, i, s, bits;
@@ -4722,7 +4723,13 @@ pmap_changeprot4_4c(pm, va, prot, wired)
 				setcontext(ctx);
 				goto useless;
 			}
-			if (vactype == VAC_WRITEBACK &&
+
+			/*
+			 * the latter check deals with a writethrough cache
+			 * problem on the 4/300
+			 */
+			if ((vactype==VAC_WRITEBACK ||
+			    (vactype==VAC_WRITETHROUGH && cputyp==CPU_SUN4)) &&
 			    (tpte & (PG_U|PG_NC|PG_TYPE)) == (PG_U|PG_OBMEM))
 				cache_flush_page((int)va);
 		} else {
