@@ -1,10 +1,9 @@
 #
-# $OpenBSD: COYOTE,v 1.8 1997/06/23 19:05:42 kstailey Exp $
+# $OpenBSD: COYOTE,v 1.9 1997/07/25 04:40:48 kstailey Exp $
 #
 
 #
-# diskless Sun3 3/60M
-# Root and swap on NFS (no choice)
+# Sun3 3/60M
 #
 
 include "arch/sun3/conf/std.sun3"
@@ -53,6 +52,9 @@ option	 	COMPAT_10	# NetBSD 1.0,
 option	 	COMPAT_11	# NetBSD 1.1,
 option	 	COMPAT_43	# and 4.3BSD
 #option 	TCP_COMPAT_42	# TCP bug compatibility with 4.2BSD
+option		SYSVSHM		# SysV shared mem compatibility
+#option		SYSVMSG		# SysV message queue compatibility
+#option		SYSVSEM		# SysV semaphore compatibility
 
 # Sun3-specific debugging options
 #option 	PMAP_DEBUG
