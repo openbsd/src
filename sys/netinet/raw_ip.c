@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip.c,v 1.32 2003/12/21 14:57:19 markus Exp $	*/
+/*	$OpenBSD: raw_ip.c,v 1.33 2004/11/24 01:25:42 mcbride Exp $	*/
 /*	$NetBSD: raw_ip.c,v 1.25 1996/02/18 18:58:33 christos Exp $	*/
 
 /*
@@ -297,10 +297,10 @@ rip_ctloutput(op, so, level, optname, m)
 #ifdef MROUTING
 		switch (op) {
 		case PRCO_SETOPT:
-			error = ip_mrouter_set(optname, so, m);
+			error = ip_mrouter_set(so, optname, m);
 			break;
 		case PRCO_GETOPT:
-			error = ip_mrouter_get(optname, so, m);
+			error = ip_mrouter_get(so, optname, m);
 			break;
 		default:
 			error = EINVAL;

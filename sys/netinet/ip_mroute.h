@@ -1,5 +1,5 @@
-/*	$OpenBSD: ip_mroute.h,v 1.10 2004/08/24 20:31:16 brad Exp $	*/
-/*	$NetBSD: ip_mroute.h,v 1.10 1996/02/13 23:42:55 christos Exp $	*/
+/*	$OpenBSD: ip_mroute.h,v 1.11 2004/11/24 01:25:42 mcbride Exp $	*/
+/*	$NetBSD: ip_mroute.h,v 1.23 2004/04/21 17:49:46 itojun Exp $	*/
 
 #ifndef _NETINET_IP_MROUTE_H_
 #define _NETINET_IP_MROUTE_H_
@@ -16,6 +16,7 @@
  */
 
 #include <sys/queue.h>
+#include <sys/timeout.h>
 
 /*
  * Multicast Routing set/getsockopt commands.
@@ -27,7 +28,7 @@
 #define	MRT_ADD_MFC		104	/* insert forwarding cache entry */
 #define	MRT_DEL_MFC		105	/* delete forwarding cache entry */
 #define	MRT_VERSION		106	/* get kernel version number */
-#define	MRT_ASSERT		107	/* enable PIM assert processing */
+#define	MRT_ASSERT		107	/* enable assert processing */
 
 
 /*
@@ -63,7 +64,6 @@ struct vifctl {
 
 /*
  * Argument structure for MRT_ADD_MFC and MRT_DEL_MFC.
- * (mfcc_tos to be added at a future point)
  */
 struct mfcctl {
 	struct	 in_addr mfcc_origin;	/* ip origin of mcasts */
@@ -118,22 +118,18 @@ struct mrtstat {
 #ifdef _KERNEL
 
 /*
- * Token bucket filter at each vif
- */
-struct tbf {
-	u_int32_t last_pkt_t;		/* arr. time of last pkt */
-	u_int32_t n_tok;		/* no of tokens in bucket */
-	u_int32_t q_len;		/* length of queue at this vif */
-};
-
-/*
  * The kernel's virtual-interface structure.
  */
 struct vif {
+	struct	  mbuf *tbf_q, **tbf_t;	/* packet queue */
+	struct	  timeval tbf_last_pkt_t; /* arr. time of last pkt */
+	u_int32_t tbf_n_tok;		/* no of tokens in bucket */
+	u_int32_t tbf_q_len;		/* length of queue at this vif */
+	u_int32_t tbf_max_q_len;	/* max. queue length */
+
 	u_int8_t  v_flags;		/* VIFF_ flags defined above */
 	u_int8_t  v_threshold;		/* min ttl required to forward on vif */
 	u_int32_t v_rate_limit;		/* max rate */
-	struct	  tbf v_tbf;		/* token bucket structure at intf. */
 	struct	  in_addr v_lcl_addr;	/* local interface address */
 	struct	  in_addr v_rmt_addr;	/* remote address (tunnels only) */
 	struct	  ifnet *v_ifp;		/* pointer to interface */
@@ -142,6 +138,7 @@ struct vif {
 	u_long	  v_bytes_in;		/* # bytes in on interface */
 	u_long	  v_bytes_out;		/* # bytes out on interface */
 	struct	  route v_route;	/* cached route if this is a tunnel */
+	struct	  timeout v_repq_ch;	/* for tbf_reprocess_q() */
 #ifdef RSVP_ISI
 	int	  v_rsvp_on;		/* # RSVP listening on this vif */
 	struct	  socket *v_rsvpd;	/* # RSVPD daemon */
@@ -175,8 +172,8 @@ struct igmpmsg {
 	u_int32_t unused1;
 	u_int32_t unused2;
 	u_int8_t  im_msgtype;		/* what type of message */
-#define IGMPMSG_NOCACHE		1
-#define IGMPMSG_WRONGVIF	2
+#define IGMPMSG_NOCACHE		1	/* no MFC in the kernel		    */
+#define IGMPMSG_WRONGVIF	2	/* packet came from wrong interface */
 	u_int8_t  im_mbz;		/* must be zero */
 	u_int8_t  im_vif;		/* vif rec'd on */
 	u_int8_t  unused3;
@@ -204,19 +201,11 @@ struct rtdetq {
 #define	MAX_BKT_SIZE    10000		/* 10K bytes size */
 #define	MAXQSIZE        10		/* max. no of pkts in token queue */
 
-/*
- * Queue structure at each vif
- */
-struct pkt_queue {
-	u_int32_t pkt_len;		/* length of packet in queue */
-	struct	  mbuf *pkt_m;		/* pointer to packet mbuf */
-	struct	  ip *pkt_ip;		/* pointer to ip header */
-};
-
-int	ip_mrouter_set(int, struct socket *, struct mbuf **);
-int	ip_mrouter_get(int, struct socket *, struct mbuf **);
+int	ip_mrouter_set(struct socket *, int, struct mbuf **);
+int	ip_mrouter_get(struct socket *, int, struct mbuf **);
 int	mrt_ioctl(struct socket *, u_long, caddr_t);
 int	ip_mrouter_done(void);
+void	ip_mrouter_detach(struct ifnet *);
 void	reset_vif(struct vif *);
 void	vif_delete(struct ifnet *);
 #ifdef RSVP_ISI
@@ -225,7 +214,7 @@ int	legal_vif_num(int);
 int	ip_rsvp_vif_init(struct socket *, struct mbuf *);
 int	ip_rsvp_vif_done(struct socket *, struct mbuf *);
 void	ip_rsvp_force_done(struct socket *);
-void rsvp_input(struct mbuf *, int, int);
+void	rsvp_input(struct mbuf *, int, int);
 #else
 int	ip_mforward(struct mbuf *, struct ifnet *);
 #endif /* RSVP_ISI */
