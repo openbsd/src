@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_expire.c,v 1.2 2001/08/16 18:34:40 millert Exp $	*/
+/*	$OpenBSD: check_expire.c,v 1.3 2001/08/16 18:39:20 millert Exp $	*/
 
 /*
  * Copyright (c) 1997 Berkeley Software Design, Inc. All rights reserved.
@@ -182,7 +182,7 @@ pwd_update(pwd)
 	}
 
 	pw_copy(pfd, tfd, pwd);
-	if (pw_mkdb(pwd->pw_name) < 0) {
+	if (pw_mkdb(pwd->pw_name, 0) < 0) {
 		pw_abort();
 		return("unable to update password database");
 	}
