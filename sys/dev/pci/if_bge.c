@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.11 2002/04/26 18:45:17 nate Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.12 2002/04/29 15:25:38 nate Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -2137,7 +2137,6 @@ bge_encap(sc, m_head, txidx)
 	u_int32_t *txidx;
 {
 	struct bge_tx_bd	*f = NULL;
-	struct mbuf		*m;
 	u_int32_t		frag, cur, cnt = 0;
 	u_int16_t		csum_flags = 0;
 	bus_dmamap_t		txmap;
@@ -2150,7 +2149,6 @@ bge_encap(sc, m_head, txidx)
 		ifv = m_head->m_pkthdr.rcvif->if_softc;
 #endif
 
-	m = m_head;
 	cur = frag = *txidx;
 
 #ifdef BGE_CHECKSUM
@@ -2175,41 +2173,35 @@ bge_encap(sc, m_head, txidx)
 	 * of fragments or hit the end of the mbuf chain.
 	 */
 	txmap = sc->bge_cdata.bge_tx_map[frag];
-	if (bus_dmamap_load_mbuf(sc->bge_dmatag, txmap, m,
-				 BUS_DMA_NOWAIT))
+	if (bus_dmamap_load_mbuf(sc->bge_dmatag, txmap, m_head,
+	    BUS_DMA_NOWAIT))
 		return(ENOBUFS);
 
-	for (m = m_head; m != NULL; m = m->m_next) {
-		if (m->m_len != 0) {
-			f = &sc->bge_rdata->bge_tx_ring[frag];
-			if (sc->bge_cdata.bge_tx_chain[frag] != NULL)
-				break;
-			BGE_HOSTADDR(f->bge_addr) =
-				txmap->dm_segs[i++].ds_addr;
-			f->bge_len = m->m_len;
-			f->bge_flags = csum_flags;
+	for (i = 0; i < txmap->dm_nsegs; i++) {
+		f = &sc->bge_rdata->bge_tx_ring[frag];
+		if (sc->bge_cdata.bge_tx_chain[frag] != NULL)
+			break;
+		BGE_HOSTADDR(f->bge_addr) = txmap->dm_segs[i].ds_addr;
+		f->bge_len = txmap->dm_segs[i].ds_len;
+		f->bge_flags = csum_flags;
 #if NVLAN > 0
-			if (ifv != NULL) {
-				f->bge_flags |= BGE_TXBDFLAG_VLAN_TAG;
-				f->bge_vlan_tag = ifv->ifv_tag;
-			} else {
-				f->bge_vlan_tag = 0;
-			}
-#endif
-			/*
-			 * Sanity check: avoid coming within 16 descriptors
-			 * of the end of the ring.
-			 */
-			if ((BGE_TX_RING_CNT - (sc->bge_txcnt + cnt)) < 16)
-				return(ENOBUFS);
-			cur = frag;
-			BGE_INC(frag, BGE_TX_RING_CNT);
-			cnt++;
+		if (ifv != NULL) {
+			f->bge_flags |= BGE_TXBDFLAG_VLAN_TAG;
+			f->bge_vlan_tag = ifv->ifv_tag;
+		} else {
+			f->bge_vlan_tag = 0;
 		}
+#endif
+		/*
+		 * Sanity check: avoid coming within 16 descriptors
+		 * of the end of the ring.
+		 */
+		if ((BGE_TX_RING_CNT - (sc->bge_txcnt + cnt)) < 16)
+			return(ENOBUFS);
+		cur = frag;
+		BGE_INC(frag, BGE_TX_RING_CNT);
+		cnt++;
 	}
-
-	if (m != NULL)
-		return(ENOBUFS);
 
 	if (frag == sc->bge_tx_saved_considx)
 		return(ENOBUFS);
