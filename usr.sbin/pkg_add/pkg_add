@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.8 2003/11/06 18:12:07 espie Exp $
+# $OpenBSD: pkg_add,v 1.9 2003/11/06 18:13:12 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -262,6 +262,42 @@ sub borked_installation
 	exit 1;
 }
 
+sub check_lib_specs
+{
+	my $base = shift;
+	my $dir;
+	for my $spec (split(/,/, shift)) {
+		print "checking libspec $spec " if $opt_v;
+		if ($spec =~ m|.*/|) {
+			$dir = "$base/$&";
+			$spec = $';
+		} else {
+			$dir = "$base/lib";
+		}
+		if ($spec =~ m/^(.*)\.(\d+)\.(\d+)$/) {
+			my ($libname, $major, $minor) = ($1, $2, $3);
+			unless (opendir(DIRECTORY, $dir)) {
+				print "base directory not found\n" if $opt_v;
+				return undef;
+			}
+			my @candidates = 
+			    grep { /^lib\Q$libname\E\.so\.$major\.(\d+)$/ 
+			    	&& $1 >= $minor } 
+			    readdir(DIRECTORY);
+			close(DIRECTORY);
+			if (@candidates == 0) {
+				print "not found\n" if $opt_v;
+				return undef;
+			} else {
+			    print "found ", $candidates[0], "\n" if $opt_v;
+			}
+		} else {
+			print "bad spec\n" if $opt_v;
+			return undef;
+		}
+	}
+	return 1;
+}
 
 sub really_add($)
 {
@@ -361,6 +397,14 @@ while (my $pkg = shift @todo) {
 		next if is_installed($dep);
 		print "Can't install $pkg: can't resolve $dep\n";
 		next MAINLOOP;
+	}
+	for my $dep (@{$plist->{libdepend}}) {
+		next if $dep->{name} ne $plist->pkgname();
+		if (!check_lib_specs($plist->prefix(), $dep->{libspec})) {
+			print "Can't install $pkg: incorrect libspec: ",
+			    $dep->{libspec}, "\n";
+			next MAINLOOP;
+		}
 	}
 	for my $dep (@{$handle->{solved_dependencies}}) {
 		OpenBSD::PackingElement::PkgDep->add($plist, $dep);
