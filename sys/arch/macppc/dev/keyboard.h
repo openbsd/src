@@ -1,4 +1,4 @@
-/*	$OpenBSD: keyboard.h,v 1.4 2002/03/28 13:55:58 drahn Exp $	*/
+/*	$OpenBSD: keyboard.h,v 1.5 2002/03/29 15:16:44 drahn Exp $	*/
 /*	$NetBSD: keyboard.h,v 1.1 1998/05/15 10:15:54 tsubai Exp $	*/
 
 /*-
@@ -129,7 +129,7 @@ unsigned char keyboard[128][4] = {
 	{ /*   0x31, */       ' ',       ' ',         0x00,	 57 },
 	{ /*   0x32, */       '`',       '~',         0x00,	 41 },
 	{ /*   0x33, */      0x7F,      0x7F,         0x7F,	 14 }, /* Delete */
-	{ /*   0x34, */      0x00,      0x00,         0x00,	108 }, /* MODE/KP_Enter */
+	{ /*   0x34, */      0x00,      0x00,         0x00,	105 }, /* MODE/KP_Enter */
 	{ /*   0x35, */      0x1B,      0x1B,         0x1B,	  1 },
 	{ /*   0x36, */      0x00,      0x00,         0x00,	 29 },
 	{ /*   0x37, */      0x00,      0x00,         0x00,	219 },
@@ -204,6 +204,6 @@ unsigned char keyboard[128][4] = {
 	{ /*   0x7C, */      0x00,      0x00,         0x00,	  0 },
 	{ /*   0x7D, */      0x00,      0x00,         0x00,	  0 },
 	{ /*   0x7E, */      0x00,      0x00,         0x00,	  0 },
-	{ /*   0x7F, */      0x00,      0x00,         0x00,	  0 }
+	{ /*   0x7F, */      0x00,      0x00,         0x00,	  0 } /* pwr */
 };
 #endif /* KEYBOARD_ARRAY */
