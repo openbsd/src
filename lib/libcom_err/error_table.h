@@ -1,4 +1,4 @@
-/*	$OpenBSD: error_table.h,v 1.1 1996/11/11 04:55:04 downsj Exp $	*/
+/*	$OpenBSD: error_table.h,v 1.2 2003/07/03 02:23:19 deraadt Exp $	*/
 
 /*-
  * Copyright 1987, 1988 by the Student Information Processing Board
@@ -36,6 +36,6 @@ extern struct et_list * _et_list;
 #define	ERRCODE_RANGE	8	/* # of bits to shift table number */
 #define	BITS_PER_CHAR	6	/* # bits to shift per character in name */
 
-extern const char *error_table_name();
+extern const char *error_table_name(int);
 
 #endif
