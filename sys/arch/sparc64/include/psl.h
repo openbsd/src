@@ -1,4 +1,4 @@
-/*	$OpenBSD: psl.h,v 1.6 2002/05/21 16:15:53 art Exp $	*/
+/*	$OpenBSD: psl.h,v 1.7 2002/06/11 05:01:17 art Exp $	*/
 /*	$NetBSD: psl.h,v 1.20 2001/04/13 23:30:05 thorpej Exp $ */
 
 /*
@@ -91,6 +91,7 @@
 #define PIL_FD		11
 #define PIL_SER		12
 #define	PIL_AUD		13
+#define PIL_STATCLOCK	14
 #define PIL_HIGH	15
 #define PIL_SCHED	PIL_CLOCK
 #define PIL_LOCK	PIL_HIGH
@@ -420,7 +421,7 @@ SPLHOLD(splserial, PIL_SER)
 SPLHOLD(splaudio, PIL_AUD)
 
 /* second sparc timer interrupts at level 14 */
-SPLHOLD(splstatclock, 14)
+SPLHOLD(splstatclock, PIL_STATCLOCK)
 
 SPLHOLD(splsched, PIL_SCHED)
 SPLHOLD(spllock, PIL_LOCK)

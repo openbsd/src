@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.4 2002/05/21 16:15:53 art Exp $	*/
+/*	$OpenBSD: intr.h,v 1.5 2002/06/11 05:01:17 art Exp $	*/
 /*	$NetBSD: intr.h,v 1.8 2001/01/14 23:50:30 thorpej Exp $ */
 
 /*-
@@ -52,6 +52,7 @@
 #define	IPL_SERIAL	PIL_SER		/* serial */
 #define	IPL_SCHED	PIL_SCHED	/* scheduler */
 #define	IPL_LOCK	PIL_LOCK	/* locks */
+#define IPL_STATCLOCK	PIL_STATCLOCK	/* statclock */
 #define	IPL_HIGH	PIL_HIGH	/* everything */
 
 void *
