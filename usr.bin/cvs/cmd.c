@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.3 2005/03/29 03:10:27 joris Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.4 2005/03/31 15:47:17 joris Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -52,7 +52,7 @@ cvs_startcmd(struct cvs_cmd *cmd, int argc, char **argv)
 	struct cvs_cmd_info *c = cmd->cmd_info;
 
 	if (c->cmd_options != NULL) {
-		if ((ret = c->cmd_options(cmd->cmd_opts, argc, argv, &i)) < 0)
+		if ((ret = c->cmd_options(cmd->cmd_opts, argc, argv, &i)))
 			return (ret);
 
 		argc -= i;
@@ -67,7 +67,7 @@ cvs_startcmd(struct cvs_cmd *cmd, int argc, char **argv)
 	if (cvs_files == NULL)
 		return (EX_DATAERR);
 
-	if ((c->cmd_helper != NULL) && ((ret = c->cmd_helper()) < 0))
+	if ((c->cmd_helper != NULL) && ((ret = c->cmd_helper())))
 		return (ret);
 
 	root = CVS_DIR_ROOT(cvs_files);
@@ -90,8 +90,10 @@ cvs_startcmd(struct cvs_cmd *cmd, int argc, char **argv)
 			}
 		}
 
-		if (c->cmd_sendflags != NULL)
-			c->cmd_sendflags(root);
+		if (c->cmd_sendflags != NULL) {
+			if ((ret = c->cmd_sendflags(root)))
+				return (ret);
+		}
 
 		if (c->cmd_flags & CVS_CMD_NEEDLOG) {
 			if (cvs_logmsg_send(root, cvs_msg) < 0)
