@@ -1,4 +1,4 @@
-vers(a, {-$OpenBSD: MAKEDEV.common,v 1.6 2004/04/11 18:05:22 millert Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.common,v 1.7 2004/04/11 18:14:59 millert Exp $-})dnl
 divert(1)dnl
 dnl
 dnl Common device definitions.
@@ -343,7 +343,8 @@ _mkdev(wsmouse, wsmouse*, {-M wsmouse$U c major_wsmouse_c $U 600-})dnl
 __devtitle(pty, Pseudo terminals)dnl
 __devitem(ptm, ptm, pty master device)dnl
 _mkdev(ptm, ptm, {-M ptm c major_ptm_c 0 666-})dnl
-__devitem(pty, pty*, Set of 62 pseudo terminals)dnl
+__devitem(tty, tty*, Set of 62 slave pseudo terminals)dnl
+__devitem(pty, pty*, Set of 62 master pseudo terminals)dnl
 _mkdev(pty, pty*, {-if [ $U -gt 15 ]; then
 		echo bad unit for pty in: $i
 		continue
