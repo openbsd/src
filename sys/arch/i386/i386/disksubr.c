@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.28 1997/10/18 10:35:00 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.29 1997/10/24 00:15:05 mickey Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
@@ -47,9 +47,6 @@
 
 #define	b_cylin	b_resid
 
-#define BOOT_MAGIC 0xAA55
-#define BOOT_MAGIC_OFF (DOSPARTOFF+NDOSPART*sizeof(struct dos_partition))
-
 void
 dk_establish(dk, dev)
 	struct disk *dk;
@@ -70,7 +67,7 @@ dk_establish(dk, dev)
  * table needed, attempt to extract it as well. Return buffer
  * for use in signalling errors if requested.
  *
- * We would like to check if each MBR has a valid BOOT_MAGIC, but
+ * We would like to check if each MBR has a valid DOSMBR_SIGNATURE, but
  * we cannot because it doesn't always exist. So.. we assume the
  * MBR is valid.
  *
