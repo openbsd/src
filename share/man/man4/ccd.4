@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ccd.4,v 1.8 1998/02/06 22:17:20 deraadt Exp $
+.\"	$OpenBSD: ccd.4,v 1.9 1998/07/23 10:51:28 deraadt Exp $
 .\"	$NetBSD: ccd.4,v 1.5 1995/10/09 06:09:09 thorpej Exp $
 .\"
 .\" Copyright (c) 1994 Jason Downs.
@@ -77,7 +77,10 @@ may be configured.
 .Pp
 A
 .Nm ccd
-may be either serially concatenated or interleaved.  If a
+may be either serially concatenated or interleaved.
+To serially concatenate partitions specify an interleave factor of 0.
+.Pp
+If a
 .Nm ccd
 is interleaved correctly, a
 .Dq striping
