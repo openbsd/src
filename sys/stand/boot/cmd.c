@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.56 2004/06/25 01:32:54 tom Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.57 2004/06/26 17:50:47 tom Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -168,7 +168,7 @@ docmd(void)
 	if (cmd.cmd == NULL) {
 
 		/* command */
-		for (p = cmd_buf; *p && (*p == ' ' || *p == '\t'); p++)
+		for (p = cmd_buf; *p == ' ' || *p == '\t'; p++)
 			;
 		if (*p == '#' || *p == '\0') { /* comment or empty string */
 #ifdef DEBUG
