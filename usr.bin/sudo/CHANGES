@@ -1764,3 +1764,15 @@ Sudo 1.6.8p4 released.
 556) Invalid values for a tuple are now handled correctly.
 
 Sudo 1.6.8p5 released.
+
+557) Added a set of missing braces needed for MacOS X / Darwin.
+
+558) Define LDAP_OPT_SUCCESS for those without it.
+
+Sudo 1.6.8p6 released.
+
+559) Warn if the user tries to use the -u option when not running a command.
+
+560) Better PAM error handling and messages.
+
+Sudo 1.6.8p7 released.
