@@ -1,4 +1,4 @@
-/*	$OpenBSD: driver.c,v 1.8 2000/06/30 18:28:07 pjanzen Exp $	*/
+/*	$OpenBSD: driver.c,v 1.9 2000/07/03 05:50:21 pjanzen Exp $	*/
 /*	$NetBSD: driver.c,v 1.5 1997/10/20 00:37:16 lukem Exp $	*/
 /*
  *  Hunt
@@ -263,6 +263,7 @@ again:
 			log(LOG_WARNING, "select");
 			break;
 		}
+		read_fds = Fds_mask;
 		linger.tv_sec = conf_linger;
 		linger.tv_usec = 0;
 	}
