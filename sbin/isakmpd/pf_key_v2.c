@@ -1,4 +1,4 @@
-/*      $OpenBSD: pf_key_v2.c,v 1.109 2002/06/11 18:04:28 ho Exp $  */
+/*      $OpenBSD: pf_key_v2.c,v 1.110 2002/06/11 18:28:01 ho Exp $  */
 /*	$EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	*/
 
 /*
@@ -1253,39 +1253,42 @@ pf_key_v2_set_spi (struct sa *sa, struct proto *proto, int incoming,
     }
 #endif
 
-  /* Setup the KEY extensions.  */
-  len = sizeof *key + PF_KEY_V2_ROUND (hashlen);
-  key = malloc (len);
-  if (!key)
-    goto cleanup;
-  key->sadb_key_exttype = SADB_EXT_KEY_AUTH;
-  key->sadb_key_len = len / PF_KEY_V2_CHUNK;
-  key->sadb_key_bits = hashlen * 8;
-  key->sadb_key_reserved = 0;
-  memcpy (key + 1,
-	  iproto->keymat[incoming]
-	  + (proto->proto == IPSEC_PROTO_IPSEC_ESP ? keylen : 0),
-	  hashlen);
-  if (pf_key_v2_msg_add (update, (struct sadb_ext *)key,
-			 PF_KEY_V2_NODE_MALLOCED) == -1)
-    goto cleanup;
-  key = 0;
-
-  if (keylen)
+  if (proto->proto != IPSEC_PROTO_IPCOMP)
     {
-      len = sizeof *key + PF_KEY_V2_ROUND (keylen);
+      /* Setup the KEY extensions.  */
+      len = sizeof *key + PF_KEY_V2_ROUND (hashlen);
       key = malloc (len);
       if (!key)
 	goto cleanup;
-      key->sadb_key_exttype = SADB_EXT_KEY_ENCRYPT;
+      key->sadb_key_exttype = SADB_EXT_KEY_AUTH;
       key->sadb_key_len = len / PF_KEY_V2_CHUNK;
-      key->sadb_key_bits = keylen * 8;
+      key->sadb_key_bits = hashlen * 8;
       key->sadb_key_reserved = 0;
-      memcpy (key + 1, iproto->keymat[incoming], keylen);
+      memcpy (key + 1,
+	      iproto->keymat[incoming]
+	      + (proto->proto == IPSEC_PROTO_IPSEC_ESP ? keylen : 0),
+	      hashlen);
       if (pf_key_v2_msg_add (update, (struct sadb_ext *)key,
 			     PF_KEY_V2_NODE_MALLOCED) == -1)
 	goto cleanup;
       key = 0;
+
+      if (keylen)
+	{
+	  len = sizeof *key + PF_KEY_V2_ROUND (keylen);
+	  key = malloc (len);
+	  if (!key)
+	    goto cleanup;
+	  key->sadb_key_exttype = SADB_EXT_KEY_ENCRYPT;
+	  key->sadb_key_len = len / PF_KEY_V2_CHUNK;
+	  key->sadb_key_bits = keylen * 8;
+	  key->sadb_key_reserved = 0;
+	  memcpy (key + 1, iproto->keymat[incoming], keylen);
+	  if (pf_key_v2_msg_add (update, (struct sadb_ext *)key,
+				 PF_KEY_V2_NODE_MALLOCED) == -1)
+	    goto cleanup;
+	  key = 0;
+	}
     }
 
 #ifndef KAME
