@@ -4027,6 +4027,7 @@ simplify_rtx (x, op0_mode, last, in_dest)
 				 GET_MODE_BITSIZE (mode) - 1),
 	   GET_MODE_BITSIZE (mode) - 1);
 
+#ifndef OPENBSD_NATIVE
       /* If we are adding two things that have no bits in common, convert
 	 the addition into an IOR.  This will often be further simplified,
 	 for example in cases like ((a & 1) + (a & 2)), which can
@@ -4036,6 +4037,7 @@ simplify_rtx (x, op0_mode, last, in_dest)
 	  && (nonzero_bits (XEXP (x, 0), mode)
 	      & nonzero_bits (XEXP (x, 1), mode)) == 0)
 	return gen_binary (IOR, mode, XEXP (x, 0), XEXP (x, 1));
+#endif
       break;
 
     case MINUS:
