@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdc.h,v 1.21 2002/12/15 17:52:02 mickey Exp $	*/
+/*	$OpenBSD: pdc.h,v 1.22 2002/12/15 21:07:26 mickey Exp $	*/
 
 /*
  * Copyright (c) 1990 mt Xinu, Inc.  All rights reserved.
@@ -68,7 +68,7 @@
  *			|                    |
  *              	|    Console IODC    |
  *			|                    |
- *	MEM_FREE+16k	+--------------------+
+ *	MEM_FREE+64k	+--------------------+
  *			|                    |
  *              	|  Boot Device IODC  |
  *			|                    |
@@ -87,7 +87,7 @@
  * "../stand/Makefile") to make way for the Kernel.
  */
 
-#define	IODC_MAXSIZE	(16 * 1024)	/* maximum size of IODC */
+#define	IODC_MAXSIZE	(16 * 4 * 1024)	/* maximum size of IODC */
 #define	IODC_MINIOSIZ	64		/* minimum buffer size for IODC call */
 #define	IODC_MAXIOSIZ	(64 * 1024)	/* maximum buffer size for IODC call */
 
@@ -226,7 +226,12 @@
 #define	PDC_PSW_DEFAULTS	1	/* get default bits values */
 #define	PDC_PSW_SETDEFAULTS	2	/* set default bits values */
 
-#define	PDC_SOFT_POWER		23	/* support for soft power switch */
+#define	PDC_SYSMAP	22	/* map system modules */
+#define	PDC_SYSMAP_FIND		0	/* find module by index */
+#define	PDC_SYSMAP_ADDR		1
+#define	PDC_SYSMAP_HPA		2	/* same as PDC_MEMMAP_HPA */
+
+#define	PDC_SOFT_POWER	23	/* support for soft power switch */
 #define	PDC_SOFT_POWER_INFO	0	/* get info about soft power switch */
 #define	PDC_SOFT_POWER_ENABLE	1	/* enable/disable soft power switch */
 
@@ -447,6 +452,19 @@ struct pdc_btlb {	/* PDC_BLOCK_TLB */
 struct pdc_hwtlb {	/* PDC_TLB */
 	u_int	min_size;	/* What do these mean? */
 	u_int	max_size;
+	u_int	filler[30];
+};
+
+struct pdc_sysmap_find {	/* PDC_SYSMAP_FIND */
+	u_int	hpa;
+	u_int	size;		/* pages */
+	u_int	naddrs;
+	u_int	filler[29];
+};
+
+struct pdc_sysmap_addrs {	/* PDC_SYSMAP_ADDR */
+	u_int	hpa;
+	u_int	size;		/* pages */
 	u_int	filler[30];
 };
 
