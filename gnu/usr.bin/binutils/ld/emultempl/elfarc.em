@@ -76,7 +76,9 @@ gld${EMULATION_NAME}_before_parse()
 
 /* Try to open a dynamic archive.  This is where we know that ELF
    dynamic libraries have an extension of .so.  */
-
+/* Library not found as plain .so. Scan version numbers. Note that so.1 is
+   prefered before so.1.n because the first form is assumed to be a symlink
+   created by ldconfig to the configured version */
 static char *
 findshlib(arch, search, entry)
      const char *arch;
@@ -87,7 +89,8 @@ findshlib(arch, search, entry)
   struct dirent *dp;
   char *string;
   int len;
-  int version = 0;
+  int version = -1;
+  int subversion = -1;
 
 
   if(dd == NULL)
@@ -106,23 +109,30 @@ findshlib(arch, search, entry)
       continue;
     if(strncmp(string, dp->d_name, len) == 0) {
       char *cp = &dp->d_name[len];
-      int v = 0;
+      int v;
       if(!isdigit(*cp))
         continue;
       v = strtol(cp, &cp, 10);
-      if(*cp != 0)
-        continue;
-      if(v > version)
+      if(*cp == 0 && v >= version) {
         version = v;
+        subversion = -1;
+      }
+      if(*cp++ == '.' && v > version) {
+        version = v;
+        subversion = strtol(cp, &cp, 10);
+      }
     }
   }
   closedir(dd);
 
-  if(version == 0) {
+  if(version < 0) {
     free(string);
     return(NULL);
   }
-  sprintf (string, "%s/lib%s%s.so.%d", search->name, entry->filename, arch, version);
+  if(subversion < 0) 
+    sprintf (string, "%s/lib%s%s.so.%d", search->name, entry->filename, arch, version);
+  else
+    sprintf (string, "%s/lib%s%s.so.%d.%d", search->name, entry->filename, arch, version, subversion);
   return(string);
 }
 
