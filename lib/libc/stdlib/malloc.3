@@ -34,7 +34,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: malloc.3,v 1.26 2003/05/14 04:48:06 krw Exp $
+.\"	$OpenBSD: malloc.3,v 1.27 2003/06/01 19:27:27 jmc Exp $
 .\"
 .Dd August 27, 1996
 .Dt MALLOC 3
@@ -261,8 +261,6 @@ If a program changes behavior if either of these options are used,
 it is buggy.
 .Pp
 The default cache size is 16 pages.
-.Sh ENVIRONMENT
-See above.
 .Sh RETURN VALUES
 The
 .Fn malloc
@@ -287,6 +285,13 @@ if successful; otherwise, a null pointer is returned and
 .Va errno
 is set to
 .Er ENOMEM .
+.Sh ENVIRONMENT
+See above.
+.Sh FILES
+.Bl -tag -width "/etc/malloc.conf"
+.It Pa /etc/malloc.conf
+symbolic link to filename containing option flags
+.El
 .Sh DIAGNOSTICS
 If
 .Fn malloc ,
@@ -376,11 +381,6 @@ functions nor utilize any other functions which may call
 routines).
 .It Dq unknown char in MALLOC_OPTIONS
 We found something we didn't understand.
-.El
-.Sh FILES
-.Bl -tag -width "/etc/malloc.conf"
-.It Pa /etc/malloc.conf
-symbolic link to filename containing option flags
 .El
 .Sh SEE ALSO
 .Xr brk 2 ,

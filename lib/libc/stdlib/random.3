@@ -29,7 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: random.3,v 1.15 2003/05/10 06:48:30 jmc Exp $
+.\"	$OpenBSD: random.3,v 1.16 2003/06/01 19:27:27 jmc Exp $
 .\"
 .Dd April 19, 1991
 .Dt RANDOM 3
@@ -154,8 +154,6 @@ it is initialized.
 With 256 bytes of state information, the period of the random number
 generator is greater than 2**69
 which should be sufficient for most purposes.
-.Sh AUTHORS
-.An Earl T. Cohen
 .Sh DIAGNOSTICS
 If
 .Fn initstate
@@ -185,6 +183,8 @@ function is an extension.
 These
 functions appeared in
 .Bx 4.2 .
+.Sh AUTHORS
+.An Earl T. Cohen
 .Sh BUGS
 About 2/3 the speed of
 .Xr rand 3 .

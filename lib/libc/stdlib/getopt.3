@@ -29,7 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: getopt.3,v 1.22 2003/05/10 06:48:30 jmc Exp $
+.\"	$OpenBSD: getopt.3,v 1.23 2003/06/01 19:27:27 jmc Exp $
 .\"
 .Dd December 8, 2002
 .Dt GETOPT 3
@@ -174,10 +174,6 @@ while ((ch = getopt(argc, argv, "bf:")) != -1) {
 argc -= optind;
 argv += optind;
 .Ed
-.Sh SEE ALSO
-.Xr getopt 1 ,
-.Xr getopt_long 3 ,
-.Xr getsubopt 3
 .Sh DIAGNOSTICS
 If the
 .Fn getopt
@@ -202,6 +198,10 @@ to be returned in addition to suppressing any error messages.
 Option arguments are allowed to begin with
 .Ql - ;
 this is reasonable but reduces the amount of error checking possible.
+.Sh SEE ALSO
+.Xr getopt 1 ,
+.Xr getopt_long 3 ,
+.Xr getsubopt 3
 .Sh EXTENSIONS
 The
 .Va optreset

@@ -33,7 +33,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: qsort.3,v 1.10 2003/05/10 06:48:30 jmc Exp $
+.\"	$OpenBSD: qsort.3,v 1.11 2003/06/01 19:27:27 jmc Exp $
 .\"
 .Dd June 4, 1993
 .Dt QSORT 3
@@ -181,12 +181,6 @@ or
 .Fn mergesort
 were unable to allocate memory.
 .El
-.Sh COMPATIBILITY
-Previous versions of
-.Fn qsort
-did not permit the comparison routine itself to call
-.Fn qsort .
-This is no longer true.
 .Sh SEE ALSO
 .Xr sort 1 ,
 .Xr radixsort 3
@@ -227,6 +221,12 @@ This is no longer true.
 .%V January 1992
 .Re
 .Sh STANDARDS
+Previous versions of
+.Fn qsort
+did not permit the comparison routine itself to call
+.Fn qsort .
+This is no longer true.
+.Pp
 The
 .Fn qsort
 function conforms to
