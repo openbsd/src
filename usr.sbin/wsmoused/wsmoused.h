@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmoused.h,v 1.1 2001/04/14 04:47:41 aaron Exp $ */
+/* $OpenBSD: wsmoused.h,v 1.2 2001/12/11 21:10:50 miod Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Baptiste Marchand, Julien Montagne and Jerome Verdon
@@ -60,7 +60,7 @@
 
 #define logerr(e, fmt, args...) {				\
 	if (background) {					\
-	    syslog(LOG_DAEMON | LOG_ERR, fmt, ##args);		\
+	    syslog(LOG_ERR, fmt, ##args);		\
 	    exit(e);						\
 	} else							\
 	    errx(e, fmt, ##args);				\
@@ -68,7 +68,7 @@
 
 #define logwarn(fmt, args...) {				\
 	if (background)						\
-	    syslog(LOG_DAEMON | LOG_WARNING, fmt, ##args);	\
+	    syslog(LOG_WARNING, fmt, ##args);	\
 	else							\
 	    warnx(fmt, ##args);					\
 }
