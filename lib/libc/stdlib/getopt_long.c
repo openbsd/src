@@ -1,4 +1,4 @@
-/*	$OpenBSD: getopt_long.c,v 1.9 2002/12/08 17:07:46 millert Exp $	*/
+/*	$OpenBSD: getopt_long.c,v 1.10 2002/12/08 17:52:26 millert Exp $	*/
 /*	$NetBSD: getopt_long.c,v 1.15 2002/01/31 22:43:40 tv Exp $	*/
 
 /*
@@ -64,7 +64,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: getopt_long.c,v 1.9 2002/12/08 17:07:46 millert Exp $";
+static char *rcsid = "$OpenBSD: getopt_long.c,v 1.10 2002/12/08 17:52:26 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <err.h>
@@ -301,7 +301,8 @@ getopt_internal(int nargc, char * const *nargv, const char *options,
 	int optchar, short_too;
 	static int posixly_correct = -1;
 
-	optarg = NULL;
+	if (options == NULL)
+		return (-1);
 
 	/*
 	 * Disable GNU extensions if POSIXLY_CORRECT is set or options
@@ -323,6 +324,7 @@ getopt_internal(int nargc, char * const *nargv, const char *options,
 	if (optind == 0)
 		optind = optreset = 1;
 
+	optarg = NULL;
 	if (optreset)
 		nonopt_start = nonopt_end = -1;
 start:
