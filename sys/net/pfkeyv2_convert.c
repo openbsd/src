@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkeyv2_convert.c,v 1.4 2001/06/26 06:10:20 angelos Exp $	*/
+/*	$OpenBSD: pfkeyv2_convert.c,v 1.5 2001/07/05 16:48:04 jjbg Exp $	*/
 /*
  * The author of this code is Angelos D. Keromytis (angelos@keromytis.org)
  *
@@ -115,6 +115,7 @@ import_sa(struct tdb *tdb, struct sadb_sa *sadb_sa, struct ipsecinit *ii)
 	if (ii) {
 		ii->ii_encalg = sadb_sa->sadb_sa_encrypt;
 		ii->ii_authalg = sadb_sa->sadb_sa_auth;
+		ii->ii_compalg = sadb_sa->sadb_sa_encrypt; /* Yeurk! */
 
 		tdb->tdb_spi = sadb_sa->sadb_sa_spi;
 		tdb->tdb_wnd = sadb_sa->sadb_sa_replay;
@@ -154,6 +155,15 @@ export_sa(void **p, struct tdb *tdb)
 
 	if (tdb->tdb_flags & TDBF_INVALID)
 		sadb_sa->sadb_sa_state = SADB_SASTATE_LARVAL;
+
+	if (tdb->tdb_sproto == IPPROTO_IPCOMP) {
+		switch (tdb->tdb_compalgxform->type)
+		{
+		case CRYPTO_DEFLATE_COMP:
+			sadb_sa->sadb_sa_encrypt = SADB_X_CALG_DEFLATE;
+			break;
+		}
+	}
 
 	if (tdb->tdb_authalgxform) {
 		switch (tdb->tdb_authalgxform->type) {

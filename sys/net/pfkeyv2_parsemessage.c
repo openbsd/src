@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkeyv2_parsemessage.c,v 1.30 2001/07/03 05:16:09 angelos Exp $	*/
+/*	$OpenBSD: pfkeyv2_parsemessage.c,v 1.31 2001/07/05 16:48:04 jjbg Exp $	*/
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -120,6 +120,7 @@ extern int encdebug;
 #define BITMAP_X_REMOTE_AUTH           (1 << SADB_X_EXT_REMOTE_AUTH)
 #define BITMAP_X_CREDENTIALS           (BITMAP_X_LOCAL_CREDENTIALS | BITMAP_X_REMOTE_CREDENTIALS | BITMAP_X_LOCAL_AUTH | BITMAP_X_REMOTE_AUTH)
 #define BITMAP_X_FLOW                  (BITMAP_X_SRC_MASK | BITMAP_X_DST_MASK | BITMAP_X_PROTOCOL | BITMAP_X_SRC_FLOW | BITMAP_X_DST_FLOW)
+#define BITMAP_X_SUPPORTED_COMP        (1 << SADB_X_EXT_SUPPORTED_COMP)
 
 uint32_t sadb_exts_allowed_in[SADB_MAX+1] =
 {
@@ -210,7 +211,7 @@ uint32_t sadb_exts_allowed_out[SADB_MAX+1] =
   /* ACQUIRE */
   BITMAP_ADDRESS_SRC | BITMAP_ADDRESS_DST | BITMAP_IDENTITY | BITMAP_PROPOSAL,
   /* REGISTER */
-  BITMAP_SUPPORTED_AUTH | BITMAP_SUPPORTED_ENCRYPT,
+  BITMAP_SUPPORTED_AUTH | BITMAP_SUPPORTED_ENCRYPT | BITMAP_X_SUPPORTED_COMP,
   /* EXPIRE */
   BITMAP_SA | BITMAP_LIFETIME | BITMAP_ADDRESS,
   /* FLUSH */
@@ -246,7 +247,7 @@ uint32_t sadb_exts_required_out[SADB_MAX+1] =
   /* ACQUIRE */
   0,
   /* REGISTER */
-  BITMAP_SUPPORTED_AUTH | BITMAP_SUPPORTED_ENCRYPT,
+  BITMAP_SUPPORTED_AUTH | BITMAP_SUPPORTED_ENCRYPT | BITMAP_X_SUPPORTED_COMP,
   /* EXPIRE */
   BITMAP_SA | BITMAP_ADDRESS_SRC | BITMAP_ADDRESS_DST,
   /* FLUSH */
@@ -839,6 +840,7 @@ pfkeyv2_parsemessage(void *p, int len, void **headers)
 		break;
 		case SADB_EXT_SUPPORTED_AUTH:
 		case SADB_EXT_SUPPORTED_ENCRYPT:
+		case SADB_X_EXT_SUPPORTED_COMP:
 		{
 			struct sadb_supported *sadb_supported =
 			    (struct sadb_supported *)p;
@@ -865,7 +867,8 @@ pfkeyv2_parsemessage(void *p, int len, void **headers)
 				int max_alg;
 
 				max_alg = sadb_ext->sadb_ext_type == SADB_EXT_SUPPORTED_AUTH ?
-				    SADB_AALG_MAX : SADB_EALG_MAX;
+				    SADB_AALG_MAX : SADB_EXT_SUPPORTED_ENCRYPT ?
+					SADB_EALG_MAX : SADB_X_CALG_MAX;
 
 				for (j = 0; j < sadb_supported->sadb_supported_len - 1; j++) {
 					if (sadb_alg->sadb_alg_id > max_alg) {

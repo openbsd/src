@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.73 2001/06/27 05:29:10 angelos Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.74 2001/07/05 16:48:03 jjbg Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -80,6 +80,7 @@
 #include <net/pfkeyv2.h>
 #include <netinet/ip_ah.h>
 #include <netinet/ip_esp.h>
+#include <netinet/ip_ipcomp.h>
 #include <crypto/blf.h>
 
 #define PFKEYV2_PROTOCOL 2
@@ -107,6 +108,11 @@ static struct sadb_alg aalgs[] =
     { SADB_AALG_SHA1HMAC, 0, 160, 160 },
     { SADB_AALG_MD5HMAC, 0, 128, 128 },
     { SADB_AALG_RIPEMD160HMAC, 0, 160, 160 }
+};
+
+static struct sadb_alg calgs[] =
+{
+    { SADB_X_CALG_DEFLATE, 0, 0, 0},
 };
 
 extern uint32_t sadb_exts_allowed_out[SADB_MAX+1];
@@ -743,6 +749,17 @@ pfkeyv2_get_proto_alg(u_int8_t satype, u_int8_t *sproto, int *alg)
 
 	    break;
 
+	    case SADB_X_SATYPE_IPCOMP:
+		if (!ipcomp_enable)
+		    return EOPNOTSUPP;
+
+		*sproto = IPPROTO_IPCOMP;
+
+		if(alg != NULL)
+		    *alg = satype = XF_IPCOMP;
+
+		break;
+
 #ifdef TCP_SIGNATURE
 	case SADB_X_SATYPE_TCPSIGNATURE:
 	    *sproto = IPPROTO_TCP;
@@ -1214,6 +1231,27 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 
 	    headers[SADB_EXT_SUPPORTED_AUTH] = freeme;
 
+	    i = sizeof(struct sadb_supported) + sizeof(calgs);
+
+	    if (!(freeme = malloc(i, M_PFKEY, M_DONTWAIT)))
+	    {
+		rval = ENOMEM;
+		goto ret;
+	    }
+
+	    bzero(freeme, i);
+
+	    ssup = (struct sadb_supported *) freeme;
+	    ssup->sadb_supported_len = i / sizeof(uint64_t);
+
+	    {
+		void *p = freeme + sizeof(struct sadb_supported);
+
+		bcopy(&calgs[0], p, sizeof(calgs));
+	    }
+
+	    headers[SADB_X_EXT_SUPPORTED_COMP] = freeme;
+
 	    break;
 
 	case SADB_ACQUIRE:
@@ -1236,6 +1274,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 		case SADB_SATYPE_AH:
 		case SADB_SATYPE_ESP:
 		case SADB_X_SATYPE_IPIP:
+	    case SADB_X_SATYPE_IPCOMP:
 #ifdef TCP_SIGNATURE
 		case SADB_X_SATYPE_TCPSIGNATURE:
 #endif /* TCP_SIGNATURE */
@@ -1851,8 +1890,10 @@ pfkeyv2_acquire(struct ipsec_policy *ipo, union sockaddr_union *gw,
 
     if (ipo->ipo_sproto == IPPROTO_ESP)
       smsg->sadb_msg_satype = SADB_SATYPE_ESP;
-    else
+    else if (ipo->ipo_sproto == IPPROTO_AH)
       smsg->sadb_msg_satype = SADB_SATYPE_AH;
+    else if (ipo->ipo_sproto == IPPROTO_IPCOMP)
+      smsg->sadb_msg_satype = SADB_X_SATYPE_IPCOMP;
 
     if (laddr)
     {
@@ -1969,6 +2010,17 @@ pfkeyv2_acquire(struct ipsec_policy *ipo, union sockaddr_union *gw,
 		      }
 	}
 
+	else if (ipo->ipo_sproto == IPPROTO_IPCOMP)
+	{
+	    /* Set the compression algorithm */
+            if (!strncasecmp(ipsec_def_comp, "deflate", sizeof("deflate")))
+            {
+                sadb_comb->sadb_comb_encrypt = SADB_X_CALG_DEFLATE;
+                sadb_comb->sadb_comb_encrypt = 0;
+                sadb_comb->sadb_comb_encrypt = 0;
+            }
+        }
+
 	/* Set the authentication algorithm */
 	if (!strncasecmp(ipsec_def_auth, "hmac-sha1", sizeof("hmac-sha1")))
 	{
@@ -2039,6 +2091,7 @@ pfkeyv2_expire(struct tdb *sa, u_int16_t type)
 	case IPPROTO_AH:
 	case IPPROTO_ESP:
 	case IPPROTO_IPIP:
+    case IPPROTO_IPCOMP:
 #ifdef TCP_SIGNATURE
 	case IPPROTO_TCP:
 #endif /* TCP_SIGNATURE */
