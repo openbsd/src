@@ -1,4 +1,4 @@
-/*	$OpenBSD: screen.c,v 1.4 1997/09/16 19:25:00 weingart Exp $	*/
+/*	$OpenBSD: screen.c,v 1.5 1997/12/02 17:56:30 bitblt Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -168,7 +168,8 @@ int interactive;
     PC = (PCptr = tgetstr("pc", &bufptr)) ? *PCptr : 0;
 
     /* set convenience strings */
-    (void) strcpy(home, tgoto(cursor_motion, 0, 0));
+    (void) strncpy(home, tgoto(cursor_motion, 0, 0), sizeof (home) -1);
+    home[sizeof (home) -1] = 0;
     /* (lower_left is set in get_screensize) */
 
     /* get the actual screen size with an ioctl, if needed */
@@ -269,7 +270,9 @@ void get_screensize()
 	}
     }
 
-    (void) strcpy(lower_left, tgoto(cursor_motion, 0, screen_length - 1));
+    (void) strncpy(lower_left, tgoto(cursor_motion, 0, screen_length - 1),
+		   sizeof (lower_left) -1);
+    lower_left[sizeof(lower_left) -1] = 0;
 }
 
 void standout(msg)
