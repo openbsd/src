@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.18 2002/03/18 22:40:04 miod Exp $
+dnl	$OpenBSD: install,v 1.19 2002/03/30 22:52:57 miod Exp $
 OpenBSDInstallPrelude
 dnl No extra line, this has to stick to the geometry notes paragraph.
 The file `HP-IB.geometry' has geometry information for several HP-IB
@@ -110,33 +110,13 @@ OpenBSDBootMsgs
 	or vt100 compatible terminal; nothing else is supported.  (If
 	your terminal type is xterm, just use vt100).
 	
-	After entering the terminal type you will be asked whether you
-	wish to do an "(I)nstall" or an "(U)pgrade".  Enter 'I' for a
-	fresh install or 'U' to upgrade an existing installation.
-
-	You will be presented with a welcome message and asked if
-	you really wish to install (or upgrade).  Assuming you
-	answered yes, the install program will then tell you which
-	disks of that type it can install on, and ask you which it
-	should use.  The name of the disk is typically "hd0" for
-	HPIB/CS80 drives or "sd0" for SCSI drives.  Reply with the
-	name of your disk.
+OpenBDSInstallPart3({:- or "hd0" for HPIB/CS80 drives-:})
 
 	Please note that, if you choose to have your root (/) filesystem
 	on a SCSI drive, that only device ID 4, 5 and 6 (that is, sd4,
 	sd5 and sd6 from OpenBSD's point of view) are bootable.
 
-	Next the disk label which defines the layout of the OpenBSD
-	file systems must be set up.  The installation script will
-	invoke an interactive editor allowing you to do this.  Note
-	that partition 'c' inside this disk label should ALWAYS
-	reflect the entire disk, including any non-OpenBSD portions.
-	The root file system should be in partition 'a', and swap
-	is usually in partition 'b'.  It is recommended that you
-	create separate partitions for /usr and /var, and if you
-	have room for it, one for /home.  For help in the disk
-	label editor, enter '?' or 'M' to view the manual page (see
-	the info on the ``-E'' flag).
+OpenBSDInstallPart4
 
 	Since the target disk will become the boot disk for your new
 	OpenBSD/MACHINE installation, the disklabel program will restrict
@@ -145,57 +125,11 @@ OpenBSDBootMsgs
 	plan to install a bootblock on this disk, you can reclaim this
 	space with the 'b' command.
 
-	The swap partition (usually 'b') should have a type of "swap", all
-	other native OpenBSD partitions should have a type of "4.2BSD".
-	Block and fragment sizes are usually 8192 and 1024 bytes, but can
-	also be 4096 and 512 or even 16384 and 2048 bytes.
+OpenBSDDInstallPart5(sd0)
 
-	The install program will now label your disk and ask which file
-	systems should be created on which partitions.  It will
-	automatically select the 'a' partition to be the root file system.
-	Next it will ask for which disk and partition you want a file system
-	created on.  This will be the same as the disk name (e.g. "hd0")
-	with the letter identifying the partition (e.g. "d") appended (e.g.
-	"hd0d").  Then it will ask where this partition is to be mounted,
-	e.g. /usr.  This process will be repeated until you enter "done".
+OpenBSDInstallNet
 
-	At this point you will be asked to confirm that the file system
-	information you have entered is correct, and given an opportunity
-	to change the file system table.  Next it will create the new file
-	systems as specified, OVERWRITING ANY EXISTING DATA.  This is the
-	point of no return.
-
-	After all your file systems have been created, the install program
-	will give you an opportunity to configure the network.  The network
-	configuration you enter (if any) can then be used to do the install
-	from another system using NFS, HTTP or FTP, and will also be the
-	configuration used by the system after the installation is complete.
-
-	If you select to configure the network, the install program will
-	ask you for a name of your system and the DNS domain name to use.
-	Note that the host name should be without the domain part, and that
-	the domain name should NOT {:-include-:} the host name part.
-
-	Next the system will give you a list of network interfaces you can
-	configure.  For each network interface you select to configure, it
-	will ask for the IP address to use, the symbolic host name to use,
-	the netmask to use and any interface-specific flags to set.  No
-	interface-specific flags should be required.
-
-	After all network interfaces have been configured the install
-	program will ask for a default route and IP address of the primary
-	name server to use.  You will also be presented with an opportunity
-	to edit the host table.
-
-	At this point you will be allowed to edit the file system table
-	that will be used for the remainder of the installation and that
-	will be used by the finished system, following which the new file
-	systems will be mounted to complete the installation.
-
-	After these preparatory steps have been completed, you will be
-	able to extract the distribution sets onto your system.  There
-	are several install methods supported; FTP, HTTP, tape, CD-ROM, NFS
-	or a local disk partition.
+OpenBSDInstallNet2({:-CD-ROM, NFS, -:})
 
 OpenBSDFTPInstall
 

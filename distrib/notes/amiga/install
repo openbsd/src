@@ -1,3 +1,4 @@
+dnl	$OpenBSD: install,v 1.22 2002/03/30 22:52:57 miod Exp $
 OpenBSDInstallPrelude
 
 OpenBSDInstallPart2
@@ -83,44 +84,15 @@ OpenBSDBootMsgs
 	does not write disklabels currently.  You should expect
 	this error whenever using newfs.
 
-	After all your file systems have been created, the install program
-	will give you an opportunity to configure the network.  The network
-	configuration you enter (if any) can then be used to do the install
-	from another system using NFS, HTTP or FTP, and will also be the
-	configuration used by the system after the installation is complete.
-
-	If you select to configure the network, the install program will
-	ask you for a name of your system and the DNS domain name to use.
-	Note that the host name should be without the domain part, and that
-	the domain name should NOT {:-include-:} the host name part.
-
-	Next the system will give you a list of network interfaces you can
-	configure.  For each network interface you select to configure, it
-	will ask for the IP address to use, the symbolic host name to use,
-	the netmask to use and any interface-specific flags to set.  The
-	interface-specific flags are usually used to determine which media
-	the network card is to use.  The flags usually carry the following
+OpenBSDInstallNet(linkflags)dnl
+ The flags usually carry the following
 	meaning:
 
 		-link0 -link1	Use BNC (coaxial) port [default]
 		link0 -link1	Use AUI port
 		link0 link1	Use UTP (twisted pair) port
 
-	After all network interfaces have been configured the install pro-
-	gram will ask for a default route and IP address of the primary
-	name server to use.  You will also be presented with an opportunity
-	to edit the host table.
-
-	At this point you will be allowed to edit the file system table
-	that will be used for the remainder of the installation and that
-	will be used by the finished system, following which the new file
-	systems will be mounted to complete the installation.
-
-	After these preparatory steps have been completed, you will be
-	able to extract the distribution sets onto your system.  There
-	are several install methods supported; FTP, HTTP, tape, CD-ROM, NFS
-	or a local disk partition.  Note that installation from floppies
-	is not currently supported.
+OpenBSDInstallNet2({:-CD-ROM, NFS, -:},nofloppy)
 
 OpenBSDFTPInstall
 

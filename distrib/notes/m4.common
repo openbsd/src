@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.31 2002/03/30 19:33:17 miod Exp $
+dnl	$OpenBSD: m4.common,v 1.32 2002/03/30 22:52:55 miod Exp $
 dnl
 dnl simulate an include path with a macro 'includeit'.
 define(`includeit',`sinclude('INCLUDE/`$1)sinclude('INCLUDE/../`$1)')dnl
@@ -266,6 +266,108 @@ define({:-OpenBSDBootMsgs-:},
 	you cannot read the messages as they scroll by, do not
 	worry -- you can get at this information later inside the
 	install program.-:})dnl
+dnl
+dnl OpenBSDInstallPart3(alternate common disk type description)
+dnl Describes the beginning of the bsd.rd operation
+dnl
+define({:-OpenBSDInstallPart3-:},
+{:-	After entering the terminal type you will be asked whether you
+	wish to do an "(I)nstall" or an "(U)pgrade".  Enter 'I' for a
+	fresh install or 'U' to upgrade an existing installation.
+
+	You will be presented with a welcome message and asked if
+	you really wish to install (or upgrade).  Assuming you
+	answered yes, the install program will then tell you which
+	disks of that type it can install on, and ask you which it
+	should use.  The name of the disk is typically "sd0" for
+	SCSI drives$2.
+	Reply with the name of your disk.-:})dnl
+dnl
+dnl OpenBSDInstallPart4(mention about other OS partitions)
+dnl Describes the disklabel operation
+dnl
+define({:-OpenBSDInstallPart4-:},
+{:-	Next the disk label which defines the layout of the OpenBSD
+	file systems must be set up.  The installation script will
+	invoke an interactive editor allowing you to do this.  Note
+	that partition 'c' inside this disk label should ALWAYS
+	reflect the entire disk, including any non-OpenBSD portions.
+	If you are labeling a new disk, you will probably start
+	out with an 'a' partition that spans the disk.  In this
+	case you should delete 'a' before adding new partitions.
+	The root file system should be in partition 'a', and swap
+	is usually in partition 'b'.$4
+
+	It is recommended that you create separate partitions for /usr,
+	/tmp and /var, and if you have room for it, one for /home.  In
+	doing this, remember to skip 'c', leaving it as type "unused".
+	For help in the disk label editor, enter '?' or 'M' to view the
+	manual page (see the info on the ``-E'' flag).-:})dnl
+dnl
+dnl OpenBSDInstallPart5
+dnl More disklabel notes(disk)
+define({:-OpenBSDInstallPart5-:},
+{:-	The swap partition (usually 'b') should have a type of "swap", all
+	other native OpenBSD partitions should have a type of "4.2BSD".
+	Block and fragment sizes are usually 8192 and 1024 bytes, but can
+	also be 4096 and 512 or even 16384 and 2048 bytes.
+
+	The install program will now label your disk and ask which file
+	systems should be created on which partitions.  It will auto-
+	matically select the 'a' partition to be the root file system.
+	Next it will ask for which disk and partition you want a file
+	system created on.  This will be the same as the disk name (e.g.
+	"$1") with the letter identifying the partition (e.g. "d")
+	appended (e.g. "$1d").  Then it will ask where this partition is
+	to be mounted, e.g. /usr.  This process will be repeated until
+	you enter "done".
+
+	At this point you will be asked to confirm that the file system
+	information you have entered is correct, and given an opportunity
+	to change the file system table.  Next it will create the new file
+	systems as specified, OVERWRITING ANY EXISTING DATA.  This is the
+	point of no return.-:})dnl
+dnl
+dnl OpenBSDInstallNet(has media settings information following)
+dnl Setting up the network, part 1
+define({:-OpenBSDInstallNet-:},
+{:-	After all your file systems have been created, the install program
+	will give you an opportunity to configure the network.  The network
+	configuration you enter (if any) can then be used to do the install
+	from another system using HTTP or FTP, and will also be the
+	configuration used by the system after the installation is complete.
+
+	If you select to configure the network, the install program will
+	ask you for a name of your system and the DNS domain name to use.
+	Note that the host name should be without the domain part, and that
+	the domain name should NOT {:-include-:} the host name part.
+
+	Next the system will give you a list of network interfaces you can
+	configure.  For each network interface you select to configure, it
+	will ask for the IP address to use, the symbolic host name to use,
+	the netmask to use and any interface-specific flags to set. The
+	interface-specific flags are usually used to determine which media
+	the network card is to use.ifelse(X$1,X,{:- Typically no media flags are required as
+	autodetect normally works.-:})-:})dnl
+dnl
+dnl OpenBSDInstallNet2(other installation sources,hasfloppy)
+dnl Setting up the network, part 2 (after the media flags)
+define({:-OpenBSDInstallNet2-:},
+{:-	After all network interfaces has been configured the install pro-
+	gram will ask for a default route and IP address of the primary
+	name server to use.  You will also be presented with an opportunity
+	to edit the host table.
+
+	At this point you will be allowed to edit the file system table
+	that will be used for the remainder of the installation and that
+	will be used by the finished system, following which the new file
+	systems will be mounted to complete the installation.
+
+        After these preparatory steps have been completed, you will be
+        able to extract the distribution sets onto your system.  There
+        are several install methods supported; FTP, HTTP, tape,
+	$1or a local disk partition.
+	ifelse(X$2,X,,{:-Note that installation from floppies is not currently supported.-:})-:})dnl
 dnl
 dnl Notes for various installation methods.
 dnl
