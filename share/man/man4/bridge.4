@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bridge.4,v 1.45 2002/09/18 07:35:13 deraadt Exp $
+.\"	$OpenBSD: bridge.4,v 1.46 2003/02/25 22:34:12 jason Exp $
 .\"
 .\" Copyright (c) 1999-2001 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -328,8 +328,59 @@ to flush only the dynamically learned addresses from the cache.
 .It Dv SIOCBRDGARL
 .Pq Li "struct ifbrlreq"
 Add a Ethernet address filtering rule to the bridge on a specific interface.
+.Fa ifbr_name
+contains the name of the bridge device, and
+.Fa ifbr_ifsname
+contains the name of the bridge member interface.
+The
+.Fa ifbr_action
+field is one of
+.Fa BRL_ACTION_PASS
+or
+.Fa BRL_ACTION_BLOCK ,
+to pass or block matching frames respectively.
+The
+.Fa ifbr_flags
+specifies whether the rule should match on input, output, or both
+be using the flags
+.Fa BRL_FLAG_IN
+and
+.Fa BRL_FLAG_OUT .
+It also specifies whether either (or both) of the source and destination
+addresses should be matched by using the
+.Fa BRL_FLAG_SRCVALID
+and
+.Fa BRL_FLAG_DSTVALID
+flags.
+The
+.Fa ifbr_src
+field is the source address that triggers the rule (only considered if
+.Fa ifbr_flags
+has the
+.Fa BRL_FLAG_SRCVALID
+bit set).
+The
+.Fa ifbr_src
+field is the destination address that triggers the rule (only considered if
+.Fa ifbr_flags
+has the
+.Fa BRL_FLAG_DSTVALID
+bit set).
+.Pp
 The argument structure is as follows:
 .Bd -literal -offset indent
+struct ifbrlreq {
+        char ifbr_name[IFNAMSIZ];
+        char ifbr_ifsname[IFNAMSIZ];
+        u_int8_t ifbr_action;
+        u_int8_t ifbr_flags;
+        struct ether_addr ifbr_src;
+        struct ether_addr ifbr_dst;
+};
+#define BRL_ACTION_BLOCK 0x01
+#define BRL_ACTION_PASS  0x02
+#define BRL_FLAG_IN      0x08
+#define BRL_FLAG_OUT     0x04
 .Ed
 .It Dv SIOCBRDGFRL
 .Pq Li "struct ifbrlreq"
