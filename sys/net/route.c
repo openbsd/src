@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.48 2004/08/08 19:09:33 otto Exp $	*/
+/*	$OpenBSD: route.c,v 1.49 2004/08/09 12:01:26 otto Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -129,6 +129,7 @@
 #include <netinet/ip_ipsp.h>
 
 extern struct ifnet encif; 
+struct ifaddr * encap_findgwifa(struct sockaddr *);
 #endif
 
 #define	SA(p) ((struct sockaddr *)(p))
@@ -143,10 +144,10 @@ struct	sockaddr wildcard;	/* zero valued cookie for wildcard searches */
 struct	pool rtentry_pool;	/* pool for rtentry structures */
 struct	pool rttimer_pool;	/* pool for rttimer structures */
 
-static int okaytoclone(u_int, int);
-static int rtdeletemsg(struct rtentry *);
-static int rtflushclone1(struct radix_node *, void *);
-static void rtflushclone(struct radix_node_head *, struct rtentry *);
+int okaytoclone(u_int, int);
+int rtdeletemsg(struct rtentry *);
+int rtflushclone1(struct radix_node *, void *);
+void rtflushclone(struct radix_node_head *, struct rtentry *);
 
 #define	LABELID_MAX	50000
 
@@ -159,12 +160,12 @@ struct rt_label {
 
 TAILQ_HEAD(rt_labels, rt_label)	rt_labels = TAILQ_HEAD_INITIALIZER(rt_labels);
 
-static u_int16_t	 rtlabel_name2id(char *);
-static void		 rtlabel_unref(u_int16_t);
+u_int16_t	 rtlabel_name2id(char *);
+void		 rtlabel_unref(u_int16_t);
 
 #ifdef IPSEC
 
-static struct ifaddr *
+struct ifaddr *
 encap_findgwifa(struct sockaddr *gw)
 {
 	return (TAILQ_FIRST(&encif.if_addrlist));
@@ -202,7 +203,7 @@ rtalloc_noclone(ro, howstrict)
 	ro->ro_rt = rtalloc2(&ro->ro_dst, 1, howstrict);
 }
 
-static int
+int
 okaytoclone(flags, howstrict)
 	u_int flags;
 	int howstrict;
@@ -477,7 +478,7 @@ out:
 /*
  * Delete a route and generate a message
  */
-static int
+int
 rtdeletemsg(rt)
 	struct rtentry *rt;
 {
@@ -506,7 +507,7 @@ rtdeletemsg(rt)
 	return (error);
 }
 
-static int
+int
 rtflushclone1(rn, arg)
 	struct radix_node *rn;
 	void *arg;
@@ -520,7 +521,7 @@ rtflushclone1(rn, arg)
 	return 0;
 }
 
-static void
+void
 rtflushclone(rnh, parent)
 	struct radix_node_head *rnh;
 	struct rtentry *parent;
@@ -1198,7 +1199,7 @@ rt_timer_timer(arg)
 	timeout_add(to, hz);		/* every second */
 }
 
-static u_int16_t
+u_int16_t
 rtlabel_name2id(char *name)
 {
 	struct rt_label		*label, *p = NULL;
@@ -1253,7 +1254,7 @@ rtlabel_id2name(u_int16_t id)
 	return (NULL);
 }
 
-static void
+void
 rtlabel_unref(u_int16_t id)
 {
 	struct rt_label	*p, *next;
