@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.21 2001/07/03 23:39:01 angelos Exp $	*/
+/*	$OpenBSD: util.c,v 1.22 2001/10/26 12:03:07 ho Exp $	*/
 /*	$EOM: util.c,v 1.23 2000/11/23 12:22:08 niklas Exp $	*/
 
 /*
@@ -284,7 +284,7 @@ text2sockaddr (char *address, char *port, struct sockaddr **sa)
 
   (*sa)->sa_len = sz;
   (*sa)->sa_family = af;
-  if (inet_pton (af, address, sockaddr_data (*sa)) != 1)
+  if (inet_pton (af, address, sockaddr_addrdata (*sa)) != 1)
     {
       free (*sa);
       return -1;
@@ -410,11 +410,11 @@ sockaddr2text (struct sockaddr *sa, char **address, int zflag)
 }
 
 /*
- * sockaddr_len and sockaddr_data return the relevant sockaddr info depending
- * on address family.  Useful to keep other code shorter(/clearer?).
+ * sockaddr_addrlen and sockaddr_addrdata return the relevant sockaddr info
+ * depending on address family.  Useful to keep other code shorter(/clearer?).
  */
 int
-sockaddr_len (struct sockaddr *sa)
+sockaddr_addrlen (struct sockaddr *sa)
 {
   switch (sa->sa_family)
     {
@@ -423,14 +423,14 @@ sockaddr_len (struct sockaddr *sa)
     case AF_INET:
       return sizeof ((struct sockaddr_in *)sa)->sin_addr.s_addr;
     default:
-      log_print ("sockaddr_len: unsupported protocol family %d",
+      log_print ("sockaddr_addrlen: unsupported protocol family %d",
 		 sa->sa_family);
       return 0;
     }
 }
 
 u_int8_t *
-sockaddr_data (struct sockaddr *sa)
+sockaddr_addrdata (struct sockaddr *sa)
 {
   switch (sa->sa_family)
     {
@@ -439,6 +439,8 @@ sockaddr_data (struct sockaddr *sa)
     case AF_INET:
       return (u_int8_t *)&((struct sockaddr_in *)sa)->sin_addr.s_addr;
     default:
+      log_print ("sockaddr_addrdata: unsupported protocol family %d",
+		 sa->sa_family);
       return 0;
     }
 }
@@ -467,7 +469,7 @@ util_ntoa (char **buf, int af, u_int8_t *addr)
 
     case AF_INET6:
       sfrom->sa_len = sizeof (struct sockaddr_in6);
-      memcpy (sockaddr_data (sfrom), addr, sizeof (struct in6_addr));
+      memcpy (sockaddr_addrdata (sfrom), addr, sizeof (struct in6_addr));
       break;
     }
 

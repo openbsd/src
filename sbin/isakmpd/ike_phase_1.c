@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike_phase_1.c,v 1.30 2001/07/01 20:11:53 niklas Exp $	*/
+/*	$OpenBSD: ike_phase_1.c,v 1.31 2001/10/26 12:03:07 ho Exp $	*/
 /*	$EOM: ike_phase_1.c,v 1.31 2000/12/11 23:47:56 niklas Exp $	*/
 
 /*
@@ -802,7 +802,7 @@ ike_phase_1_send_ID (struct message *msg)
     my_id = conf_get_str ("General", "Default-phase-1-ID");
 
   msg->transport->vtbl->get_src (msg->transport, &src);
-  sz = my_id ? ipsec_id_size (my_id, &id_type) : sockaddr_len (src);
+  sz = my_id ? ipsec_id_size (my_id, &id_type) : sockaddr_addrlen (src);
   if (sz == -1)
     return -1;
 
@@ -824,8 +824,8 @@ ike_phase_1_send_ID (struct message *msg)
 	case IPSEC_ID_IPV4_ADDR:
 	case IPSEC_ID_IPV6_ADDR:
       	  /* Already in network byteorder.  */
-      	  memcpy (buf + ISAKMP_ID_DATA_OFF, sockaddr_data (src),
-		  sockaddr_len (src));
+      	  memcpy (buf + ISAKMP_ID_DATA_OFF, sockaddr_addrdata (src),
+		  sockaddr_addrlen (src));
 	  break;
 
 	case IPSEC_ID_FQDN:
@@ -853,8 +853,8 @@ ike_phase_1_send_ID (struct message *msg)
 	  break;
 	}
       /* Already in network byteorder.  */
-      memcpy (buf + ISAKMP_ID_DATA_OFF, sockaddr_data (src),
-	      sockaddr_len (src));
+      memcpy (buf + ISAKMP_ID_DATA_OFF, sockaddr_addrdata (src),
+	      sockaddr_addrlen (src));
     }
 
   if (message_add_payload (msg, ISAKMP_PAYLOAD_ID, buf, sz, 1))
@@ -976,7 +976,7 @@ ike_phase_1_recv_ID (struct message *msg)
 	      return -1;
 	    }
 
-	  memcpy (rid, sockaddr_data (sa), sockaddr_len (sa));
+	  memcpy (rid, sockaddr_addrdata (sa), sockaddr_addrlen (sa));
 	  free (sa);
 	  break;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike_quick_mode.c,v 1.55 2001/10/05 05:57:06 ho Exp $	*/
+/*	$OpenBSD: ike_quick_mode.c,v 1.56 2001/10/26 12:03:07 ho Exp $	*/
 /*	$EOM: ike_quick_mode.c,v 1.139 2001/01/26 10:43:17 niklas Exp $	*/
 
 /*
@@ -891,7 +891,7 @@ initiator_send_HASH_SA_NONCE (struct message *msg)
       /* If we're here, then we are the initiator, so use initiator
 	address for local ID */
       msg->transport->vtbl->get_src (msg->transport, &src);
-      sz = ISAKMP_ID_SZ + sockaddr_len (src);
+      sz = ISAKMP_ID_SZ + sockaddr_addrlen (src);
 
       id = calloc (sz, sizeof (char));
       if (!id)
@@ -914,8 +914,8 @@ initiator_send_HASH_SA_NONCE (struct message *msg)
 	  free (id);
 	  return -1;
 	}
-      memcpy (id + ISAKMP_ID_DATA_OFF, sockaddr_data (src),
-	      sockaddr_len (src));
+      memcpy (id + ISAKMP_ID_DATA_OFF, sockaddr_addrdata (src),
+	      sockaddr_addrlen (src));
 
       LOG_DBG_BUF ((LOG_NEGOTIATION, 90, "initiator_send_HASH_SA_NONCE: IDic",
 		    id, sz));
@@ -1125,8 +1125,8 @@ initiator_recv_HASH_SA_NONCE (struct message *msg)
       /* Get initiator and responder addresses.  */
       msg->transport->vtbl->get_src (msg->transport, &src);
       msg->transport->vtbl->get_dst (msg->transport, &dst);
-      ie->id_ci_sz = ISAKMP_ID_DATA_OFF + sockaddr_len (src);
-      ie->id_cr_sz = ISAKMP_ID_DATA_OFF + sockaddr_len (dst);
+      ie->id_ci_sz = ISAKMP_ID_DATA_OFF + sockaddr_addrlen (src);
+      ie->id_cr_sz = ISAKMP_ID_DATA_OFF + sockaddr_addrlen (dst);
       ie->id_ci = calloc (ie->id_ci_sz, sizeof (char));
       ie->id_cr = calloc (ie->id_cr_sz, sizeof (char));
 
@@ -1168,10 +1168,10 @@ initiator_recv_HASH_SA_NONCE (struct message *msg)
 	  free (ie->id_cr);
 	  return -1;
 	}
-      memcpy (ie->id_ci + ISAKMP_ID_DATA_OFF, sockaddr_data (src),
-	      sockaddr_len (src));
-      memcpy (ie->id_cr + ISAKMP_ID_DATA_OFF, sockaddr_data (dst),
-	      sockaddr_len (dst));
+      memcpy (ie->id_ci + ISAKMP_ID_DATA_OFF, sockaddr_addrdata (src),
+	      sockaddr_addrlen (src));
+      memcpy (ie->id_cr + ISAKMP_ID_DATA_OFF, sockaddr_addrdata (dst),
+	      sockaddr_addrlen (dst));
     }
 
   /* Build the protection suite in our SA.  */
@@ -1539,8 +1539,8 @@ responder_recv_HASH_SA_NONCE (struct message *msg)
       /* Get initiator and responder addresses.  */
       msg->transport->vtbl->get_src (msg->transport, &src);
       msg->transport->vtbl->get_dst (msg->transport, &dst);
-      ie->id_ci_sz = ISAKMP_ID_DATA_OFF + sockaddr_len (src);
-      ie->id_cr_sz = ISAKMP_ID_DATA_OFF + sockaddr_len (dst);
+      ie->id_ci_sz = ISAKMP_ID_DATA_OFF + sockaddr_addrlen (src);
+      ie->id_cr_sz = ISAKMP_ID_DATA_OFF + sockaddr_addrlen (dst);
       ie->id_ci = calloc (ie->id_ci_sz, sizeof (char));
       ie->id_cr = calloc (ie->id_cr_sz, sizeof (char));
 
@@ -1575,10 +1575,10 @@ responder_recv_HASH_SA_NONCE (struct message *msg)
 	  goto cleanup;
 	}
 
-      memcpy (ie->id_cr + ISAKMP_ID_DATA_OFF, sockaddr_data (src),
-	      sockaddr_len (src));
-      memcpy (ie->id_ci + ISAKMP_ID_DATA_OFF, sockaddr_data (dst),
-	      sockaddr_len (dst));
+      memcpy (ie->id_cr + ISAKMP_ID_DATA_OFF, sockaddr_addrdata (src),
+	      sockaddr_addrlen (src));
+      memcpy (ie->id_ci + ISAKMP_ID_DATA_OFF, sockaddr_addrdata (dst),
+	      sockaddr_addrlen (dst));
     }
 
 #ifdef USE_POLICY

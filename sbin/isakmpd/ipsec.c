@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec.c,v 1.58 2001/08/25 22:22:11 niklas Exp $	*/
+/*	$OpenBSD: ipsec.c,v 1.59 2001/10/26 12:03:07 ho Exp $	*/
 /*	$EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	*/
 
 /*
@@ -211,14 +211,14 @@ ipsec_sa_check (struct sa *sa, void *v_arg)
     return 0;
 
   sa->transport->vtbl->get_dst (sa->transport, &dst);
-  if (memcmp (sockaddr_data (dst), sockaddr_data (arg->dst), 
-	      sockaddr_len (dst)) == 0)
+  if (memcmp (sockaddr_addrdata (dst), sockaddr_addrdata (arg->dst), 
+	      sockaddr_addrlen (dst)) == 0)
     incoming = 0;
   else
     {
       sa->transport->vtbl->get_src (sa->transport, &src);
-      if (memcmp (sockaddr_data (src), sockaddr_data (arg->dst), 
-		  sockaddr_len (src)) == 0)
+      if (memcmp (sockaddr_addrdata (src), sockaddr_addrdata (arg->dst), 
+		  sockaddr_addrlen (src)) == 0)
 	incoming = 1;
       else
 	return 0;
@@ -261,14 +261,18 @@ ipsec_sa_check_flow (struct sa *sa, void *v_arg)
     return 0;
 
   return isa->src_net->sa_family == isa2->src_net->sa_family
-    && memcmp (sockaddr_data (isa->src_net), sockaddr_data (isa2->src_net),
-		 sockaddr_len (isa->src_net)) == 0
-    && memcmp (sockaddr_data (isa->src_mask), sockaddr_data (isa2->src_mask),
-	       sockaddr_len (isa->src_mask)) == 0
-    && memcmp (sockaddr_data (isa->dst_net), sockaddr_data (isa2->dst_net),
-	       sockaddr_len (isa->dst_net)) == 0
-    && memcmp (sockaddr_data (isa->dst_mask), sockaddr_data (isa2->dst_mask),
-	       sockaddr_len (isa->dst_mask)) == 0;
+    && memcmp (sockaddr_addrdata (isa->src_net),
+	       sockaddr_addrdata (isa2->src_net),
+	       sockaddr_addrlen (isa->src_net)) == 0
+    && memcmp (sockaddr_addrdata (isa->src_mask),
+	       sockaddr_addrdata (isa2->src_mask),
+	       sockaddr_addrlen (isa->src_mask)) == 0
+    && memcmp (sockaddr_addrdata (isa->dst_net),
+	       sockaddr_addrdata (isa2->dst_net),
+	       sockaddr_addrlen (isa->dst_net)) == 0
+    && memcmp (sockaddr_addrdata (isa->dst_mask), 
+	       sockaddr_addrdata (isa2->dst_mask),
+	       sockaddr_addrlen (isa->dst_mask)) == 0;
 }
 
 /*
@@ -452,21 +456,22 @@ ipsec_set_network (u_int8_t *src_id, u_int8_t *dst_id, struct ipsec_sa *isa)
     }
 
   /* Net */
-  memcpy (sockaddr_data (isa->src_net), src_id + ISAKMP_ID_DATA_OFF,
-	  sockaddr_len (isa->src_net));
+  memcpy (sockaddr_addrdata (isa->src_net), src_id + ISAKMP_ID_DATA_OFF,
+	  sockaddr_addrlen (isa->src_net));
 
   /* Mask */
   switch (id)
     {
     case IPSEC_ID_IPV4_ADDR:
     case IPSEC_ID_IPV6_ADDR:
-      memset (sockaddr_data (isa->src_mask), 0xff, 
-	      sockaddr_len (isa->src_mask));
+      memset (sockaddr_addrdata (isa->src_mask), 0xff, 
+	      sockaddr_addrlen (isa->src_mask));
       break;
     case IPSEC_ID_IPV4_ADDR_SUBNET:
     case IPSEC_ID_IPV6_ADDR_SUBNET:
-      memcpy (sockaddr_data (isa->src_mask), src_id + ISAKMP_ID_DATA_OFF +
-	      sockaddr_len (isa->src_net), sockaddr_len (isa->src_mask));
+      memcpy (sockaddr_addrdata (isa->src_mask), src_id + ISAKMP_ID_DATA_OFF +
+	      sockaddr_addrlen (isa->src_net),
+	      sockaddr_addrlen (isa->src_mask));
       break;
     }
 
@@ -515,21 +520,22 @@ ipsec_set_network (u_int8_t *src_id, u_int8_t *dst_id, struct ipsec_sa *isa)
     }
 
   /* Net */
-  memcpy (sockaddr_data (isa->dst_net), dst_id + ISAKMP_ID_DATA_OFF,
-	  sockaddr_len (isa->dst_net));
+  memcpy (sockaddr_addrdata (isa->dst_net), dst_id + ISAKMP_ID_DATA_OFF,
+	  sockaddr_addrlen (isa->dst_net));
 
   /* Mask */
   switch (id)
     {
     case IPSEC_ID_IPV4_ADDR:
     case IPSEC_ID_IPV6_ADDR:
-      memset (sockaddr_data (isa->dst_mask), 0xff, 
-	      sockaddr_len (isa->dst_mask));
+      memset (sockaddr_addrdata (isa->dst_mask), 0xff, 
+	      sockaddr_addrlen (isa->dst_mask));
       break;
     case IPSEC_ID_IPV4_ADDR_SUBNET:
     case IPSEC_ID_IPV6_ADDR_SUBNET:
-      memcpy (sockaddr_data (isa->dst_mask), dst_id + ISAKMP_ID_DATA_OFF +
-	      sockaddr_len (isa->dst_net), sockaddr_len (isa->dst_mask));
+      memcpy (sockaddr_addrdata (isa->dst_mask), dst_id + ISAKMP_ID_DATA_OFF +
+	      sockaddr_addrlen (isa->dst_net),
+	      sockaddr_addrlen (isa->dst_mask));
       break;
     }
 
@@ -1969,9 +1975,9 @@ ipsec_build_id (char *section, size_t *sz)
   if (id == IPSEC_ID_IPV4_ADDR_SUBNET || id == IPSEC_ID_IPV6_ADDR_SUBNET)
     subnet = 1;
 
-  *sz = ISAKMP_ID_SZ + sockaddr_len (addr);
+  *sz = ISAKMP_ID_SZ + sockaddr_addrlen (addr);
   if (subnet)
-    *sz += sockaddr_len (mask);
+    *sz += sockaddr_addrlen (mask);
 
   p = malloc (*sz);
   if (!p)
@@ -1983,10 +1989,11 @@ ipsec_build_id (char *section, size_t *sz)
   SET_ISAKMP_ID_TYPE (p, id);
   SET_ISAKMP_ID_DOI_DATA (p, "\000\000\000");
 
-  memcpy (p + ISAKMP_ID_DATA_OFF, sockaddr_data (addr), sockaddr_len (addr));
+  memcpy (p + ISAKMP_ID_DATA_OFF, sockaddr_addrdata (addr),
+	  sockaddr_addrlen (addr));
   if (subnet)
-    memcpy (p + ISAKMP_ID_DATA_OFF + sockaddr_len (addr), 
-	    sockaddr_data (mask), sockaddr_len (mask));
+    memcpy (p + ISAKMP_ID_DATA_OFF + sockaddr_addrlen (addr), 
+	    sockaddr_addrdata (mask), sockaddr_addrlen (mask));
 
   SET_IPSEC_ID_PROTO (p + ISAKMP_ID_DOI_DATA_OFF, tproto);
   SET_IPSEC_ID_PORT (p + ISAKMP_ID_DOI_DATA_OFF, port);

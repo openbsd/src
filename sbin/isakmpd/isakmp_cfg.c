@@ -1,4 +1,4 @@
-/*	$OpenBSD: isakmp_cfg.c,v 1.6 2001/08/27 03:10:55 deraadt Exp $	*/
+/*	$OpenBSD: isakmp_cfg.c,v 1.7 2001/10/26 12:03:07 ho Exp $	*/
 
 /*
  * Copyright (c) 2001 Niklas Hallqvist.  All rights reserved.
@@ -387,7 +387,7 @@ responder_send_ATTR (struct message *msg)
 	      break;
 	    }
 
-	  memcpy (attrp + off + ISAKMP_ATTR_VALUE_OFF, sockaddr_data (sa),
+	  memcpy (attrp + off + ISAKMP_ATTR_VALUE_OFF, sockaddr_addrdata (sa),
 		  attr->length);
 	  free (sa);
 	  break;
@@ -424,7 +424,7 @@ responder_send_ATTR (struct message *msg)
 	      break;
 	    }
 
-	  memcpy (attrp + off + ISAKMP_ATTR_VALUE_OFF, sockaddr_data (sa),
+	  memcpy (attrp + off + ISAKMP_ATTR_VALUE_OFF, sockaddr_addrdata (sa),
 		  attr->length);
 	  free (sa);
 	  break;
@@ -449,7 +449,7 @@ responder_send_ATTR (struct message *msg)
 	      break;
 	    }
 
-	  memcpy (attrp + off + ISAKMP_ATTR_VALUE_OFF, sockaddr_data (sa),
+	  memcpy (attrp + off + ISAKMP_ATTR_VALUE_OFF, sockaddr_addrdata (sa),
 		  attr->length);
 	  free (sa);
 	  break;
