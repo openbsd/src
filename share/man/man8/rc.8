@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rc.8,v 1.7 1999/07/20 06:20:03 deraadt Exp $
+.\"	$OpenBSD: rc.8,v 1.8 1999/07/26 00:55:00 deraadt Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -38,9 +38,10 @@
 .Os
 .Sh NAME
 .Nm rc
-.Nd command script for auto\-reboot and daemons
+.Nd command scripts for system startup
 .Sh SYNOPSIS
 .Nm /etc/rc
+.Nm /etc/rc.conf
 .Nm /etc/rc.local
 .Nm /etc/rc.securelevel
 .Nm /etc/netstart
@@ -64,7 +65,7 @@ scripts hold commands which are pertinent only to a specific site.
 .Pp
 All four of these startup scripts are (or can be) controlled to some
 extent by variables defined in
-.Xr rc.conf 8 , Ns
+.Nm rc.conf ,
 which specifies which daemons and services are to be run.
 .Pp
 When an automatic reboot is in progress,
@@ -91,7 +92,7 @@ which is run after an auto-reboot succeeds and also if
 is invoked when a single user shell terminates (see
 .Xr init 8 ) ,
 then asks
-.Xr rc.conf 8
+.Nm rc.conf
 for configuration variables,
 mounts filesystems, starts system daemons,
 preserves editor files,
@@ -118,7 +119,7 @@ to start daemons that must run before the security level changes.
 Following this,
 .Nm rc
 then sets the security level to the values specified in
-.Xr rc.conf 8 .
+.Nm rc.conf .
 .Pp
 .Nm rc.local
 is executed towards the end of
@@ -130,10 +131,47 @@ Normally,
 contains commands and daemons that are not part of the
 stock installation.
 .Pp
+.Sh CONFIGURATION EXAMPLES
+The
+.Nm rc.conf
+file contains a series of Bourne-shell syntax assignments that
+are used to configure kernel configurations, network configuration,
+and various other system daemons.
+As described above, this file is sourced (using
+.Xr sh 1
+of course) by
+.Pa /etc/rc .
+Various comments in
+.Nm rc.conf
+make it clear what each variable does.  Refer to the specific man pages
+for each daemon to determine what that subsystem does.
+.Pp
+For example, the 
+.Xr sendmail 8
+daemon is controlled by the line
+.Bd -literal
+    sendmail_flags=NO       # for normal use: sendmail_flags="-bd -q30m"
+.Ed
+.Pp
+This does not start
+.Xr sendmail 8
+at system startup.  But
+.Xr sendmail 8
+is started with the specified flags if the specification is modified to be
+.Bd -literal
+    sendmail_flags="-bd -q30m"      # for 'normal' use: sendmail_flags="-bd -q30m"
+.Ed
+.Pp
+.Sh SEE ALSO
+.Xr init 8 ,
+.Xr rc 8 .
+.Pp
+.. and the detailed documentation given for each server that is
+configurable in this fashion.
+.Pp
 .Sh SEE ALSO
 .Xr sysctl.conf 5 ,
 .Xr init 8 ,
-.Xr rc.conf 8 ,
 .Xr reboot 8 ,
 .Xr savecore 8
 .Sh HISTORY
