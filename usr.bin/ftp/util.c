@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.7 1997/04/23 20:33:24 deraadt Exp $	*/
+/*	$OpenBSD: util.c,v 1.8 1997/05/05 20:49:51 jkatz Exp $	*/
 /*	$NetBSD: util.c,v 1.7 1997/04/14 09:09:24 lukem Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: util.c,v 1.7 1997/04/23 20:33:24 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: util.c,v 1.8 1997/05/05 20:49:51 jkatz Exp $";
 #endif /* not lint */
 
 /*
@@ -183,7 +183,7 @@ login(host, user, pass)
 	char *acct;
 	char anonpass[MAXLOGNAME + 1 + MAXHOSTNAMELEN];	/* "user@hostname" */
 	char hostname[MAXHOSTNAMELEN];
-	int n, aflag = 0;
+	int n, aflag, retry = 0;
 
 	acct = NULL;
 	if (user == NULL) {
@@ -220,8 +220,15 @@ login(host, user, pass)
 		    user, hp->h_name);
 #endif
 		pass = anonpass;
+		user = "ftp";
+	}
+
+tryagain:
+
+	if (retry) {
 		user = "anonymous";
 	}
+
 
 	while (user == NULL) {
 		char *myname = getlogin();
@@ -258,7 +265,12 @@ login(host, user, pass)
 	if ((n != COMPLETE) ||
 	    (!aflag && acct != NULL && command("ACCT %s", acct) != COMPLETE)) {
 		warnx("Login failed.");
-		return (0);
+		if (retry){
+			return (0);
+		} else
+		retry = 1;
+		goto tryagain;
+
 	}
 	if (proxy)
 		return (1);
