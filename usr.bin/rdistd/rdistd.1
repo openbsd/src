@@ -1,4 +1,4 @@
-.\" $OpenBSD: rdistd.1,v 1.5 1999/06/05 01:21:38 aaron Exp $
+.\"	$OpenBSD: rdistd.1,v 1.6 2003/04/21 01:12:02 millert Exp $
 .\"
 .\" Copyright (c) 1983 Regents of the University of California.
 .\" All rights reserved.
@@ -31,54 +31,52 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$From: rdistd.man,v 6.2 1994/02/08 22:17:17 mcooper Exp mcooper $
+.\"	$From: rdistd.man,v 6.2 1994/02/08 22:17:17 mcooper Exp $
 .\"	@(#)rdistd.8 	6.6 (Berkeley) 5/13/86
 .\"
-.TH RDISTD 8 "June 21, 1992"
-.UC 6
-.SH NAME
-rdistd \- remote file distribution server program
-.SH SYNOPSIS
-.B rdistd
-.B \-S
-[
-.B \-D
-]
-.PP
-.B rdistd
-.B \-V
-.SH DESCRIPTION
-.I Rdistd
+.Dd June 21, 1992
+.Dt RDIST 1
+.Os
+.Sh NAME
+.Nm rdistd
+.Nd remote file distribution server program
+.Sh SYNOPSIS
+.Nm rdistd
+.Bk -words
+.Fl S
+.Op Fl D
+.Ek
+.Pp
+.Nm rdistd
+.Fl V
+.Sh DESCRIPTION
+.Nm
 is the server program for the
-.I rdist
+.Xr rdist 1
 command.
 It is normally run by
-.I rdist
+.Em rdist
 via
-.I rsh(1).
-.PP
-The
-.B \-S
-argument must be specified.
-The option is required so that
-.I rdistd
-is not accidentally started
-since
-it
-normally resides somewhere in a normal user's
-.B $PATH.
-.SH OPTIONS
-.TP
-.B \-D
+.Xr rsh 1
+or
+.Xr ssh 1 .
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl D
 Enable debugging messages.
 Messages are logged via
-.I syslog(3).
-.TP
-.B \-V
+.Xr syslog 3 .
+.It Fl S
+This argument must be specified for normal usage.
+It exists to prevent the accidental execution of
+.Nm
+since it usually resides somewhere in a normal user's
+.Ev PATH .
+.It Fl V
 Print version information and exit.
-.SH FILES
-.SH "SEE ALSO"
-rdist(1), rsh(1)
-.SH BUGS
-
-
+.El
+.Sh SEE ALSO
+.Xr rdist 1 ,
+.Xr rsh 1 ,
+.Xr ssh 1
