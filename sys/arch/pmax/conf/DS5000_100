@@ -9,9 +9,6 @@ option		CPU_R3000		# R2000/R3000 support
 option		MIPS1			# R2000/R3000 support
 # support for specific models of decstation
 option	 	DS5000_100		# 3MIN (kn02ba/kmin)
-# pmax specific
-option		"HZ=256"		# rtc rate required
-option		"NKMEMCLUSTERS=1024"	# 4k pages in kernel malloc pool
 # timezone stuff
 option		TIMEZONE=0
 option		DST=0			# use daylight savings rules
@@ -84,11 +81,11 @@ sfb0		at tc?
 le*		at tc?			# other lance network interfaces
 # ioasic standard baseboard options (5000/2x, 5000/1xx, 5000/2[46]0)
 ioasic0         at tc?
-clock0          at ioasic?		# rtc
-asc0            at ioasic?		# system scsi subslot
-scc0		at ioasic?
-le0		at ioasic?		# tc onboard lance
-scc1		at ioasic?		# not present on maxine
+clock0          at ioasic? offset?	# rtc
+asc0            at ioasic? offset?	# system scsi subslot
+scc0		at ioasic? offset?
+le0		at ioasic? offset?	# tc onboard lance
+scc1		at ioasic? offset?	# not present on maxine
 # the scsi busses
 oldscsibus*	at asc?
 # scsi configuration for old 4.4bsd/pmax decstation scsi driver

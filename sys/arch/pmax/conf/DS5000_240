@@ -9,9 +9,6 @@ option		CPU_R3000		# R2000/R3000 support
 option		MIPS1			# R2000/R3000 support
 # support for specific models of decstation
 option	 	DS5000_240		# 3MAXPLUS (kn03)
-# pmax specific
-option		"HZ=256"		# rtc rate required
-option		"NKMEMCLUSTERS=1024"	# 4k pages in kernel malloc pool
 # timezone stuff
 option		TIMEZONE=0
 option		DST=0			# use daylight savings rules
@@ -89,7 +86,7 @@ dc0		at mainbus0
 le0		at tc?			# tc ether "option" on baseboard
 asc0		at tc?			# tc scsi  "option" on baseboard
 # for now, pretend this machine has an ioasic
-dc0		at ioasic?		# dc7083 four-port dz device
+dc0		at ioasic? offset?	# dc7083 four-port dz device
 # the scsi busses
 oldscsibus*	at asc?
 # scsi configuration for old 4.4bsd/pmax decstation scsi driver

@@ -9,9 +9,6 @@ option		CPU_R3000		# R2000/R3000 support
 option		MIPS1			# R2000/R3000 support
 # support for specific models of decstation
 option	 	DS5000_200		# 3MAX (kn02)
-# pmax specific
-option		"HZ=256"		# rtc rate required
-option		"NKMEMCLUSTERS=1024"	# 4k pages in kernel malloc pool
 # timezone stuff
 option		TIMEZONE=0
 option		DST=0			# use daylight savings rules

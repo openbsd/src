@@ -7,8 +7,6 @@ machine		pmax
 option		CPU_R3000
 option		MIPS1
 option		DS3100
-option		HZ=256
-option		NKMEMCLUSTERS=1024
 option		TIMEZONE=0
 option		DST=0
 
