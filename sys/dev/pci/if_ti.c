@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ti.c,v 1.35 2002/03/14 01:26:59 millert Exp $	*/
+/*	$OpenBSD: if_ti.c,v 1.36 2002/05/01 16:15:49 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -155,7 +155,7 @@ void ti_add_mcast(struct ti_softc *, struct ether_addr *);
 void ti_del_mcast(struct ti_softc *, struct ether_addr *);
 void ti_setmulti(struct ti_softc *);
 
-void ti_mem(struct ti_softc *, u_int32_t, u_int32_t, caddr_t);
+void ti_mem(struct ti_softc *, u_int32_t, u_int32_t, const void *);
 void ti_loadfw(struct ti_softc *);
 void ti_cmd(struct ti_softc *, struct ti_cmd_desc *);
 void ti_cmd_ext(struct ti_softc *, struct ti_cmd_desc *,
@@ -326,13 +326,15 @@ int ti_read_eeprom(sc, dest, off, cnt)
  * NIC memory access function. Can be used to either clear a section
  * of NIC local memory or (if buf is non-NULL) copy data into it.
  */
-void ti_mem(sc, addr, len, buf)
+void
+ti_mem(sc, addr, len, buf)
 	struct ti_softc		*sc;
 	u_int32_t		addr, len;
-	caddr_t			buf;
+	const void *		buf;
 {
 	int			segptr, segsize, cnt;
-	caddr_t			ti_winbase, ptr;
+	caddr_t			ti_winbase;
+	const void *		ptr;
 
 	segptr = addr;
 	cnt = len;
@@ -346,10 +348,10 @@ void ti_mem(sc, addr, len, buf)
 			segsize = TI_WINLEN - (segptr % TI_WINLEN);
 		CSR_WRITE_4(sc, TI_WINBASE, (segptr & ~(TI_WINLEN - 1)));
 		if (buf == NULL)
-			bzero((char *)ti_winbase + (segptr &
+			bzero(ti_winbase + (segptr &
 			    (TI_WINLEN - 1)), segsize);
 		else {
-			bcopy((char *)ptr, (char *)ti_winbase +
+			bcopy(ptr, (char *)ti_winbase +
 			    (segptr & (TI_WINLEN - 1)), segsize);
 			ptr += segsize;
 		}
@@ -381,11 +383,11 @@ void ti_loadfw(sc)
 			return;
 		}
 		ti_mem(sc, tigonFwTextAddr, tigonFwTextLen,
-		    (caddr_t)tigonFwText);
+		    tigonFwText);
 		ti_mem(sc, tigonFwDataAddr, tigonFwDataLen,
-		    (caddr_t)tigonFwData);
+		    tigonFwData);
 		ti_mem(sc, tigonFwRodataAddr, tigonFwRodataLen,
-		    (caddr_t)tigonFwRodata);
+		    tigonFwRodata);
 		ti_mem(sc, tigonFwBssAddr, tigonFwBssLen, NULL);
 		ti_mem(sc, tigonFwSbssAddr, tigonFwSbssLen, NULL);
 		CSR_WRITE_4(sc, TI_CPU_PROGRAM_COUNTER, tigonFwStartAddr);
@@ -402,11 +404,11 @@ void ti_loadfw(sc)
 			return;
 		}
 		ti_mem(sc, tigon2FwTextAddr, tigon2FwTextLen,
-		    (caddr_t)tigon2FwText);
+		    tigon2FwText);
 		ti_mem(sc, tigon2FwDataAddr, tigon2FwDataLen,
-		    (caddr_t)tigon2FwData);
+		    tigon2FwData);
 		ti_mem(sc, tigon2FwRodataAddr, tigon2FwRodataLen,
-		    (caddr_t)tigon2FwRodata);
+		    tigon2FwRodata);
 		ti_mem(sc, tigon2FwBssAddr, tigon2FwBssLen, NULL);
 		ti_mem(sc, tigon2FwSbssAddr, tigon2FwSbssLen, NULL);
 		CSR_WRITE_4(sc, TI_CPU_PROGRAM_COUNTER, tigon2FwStartAddr);

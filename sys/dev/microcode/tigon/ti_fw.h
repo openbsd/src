@@ -1,4 +1,4 @@
-/*	$OpenBSD: ti_fw.h,v 1.1 2001/06/18 19:19:43 deraadt Exp $	*/
+/*	$OpenBSD: ti_fw.h,v 1.2 2002/05/01 16:15:49 mickey Exp $	*/
 
 /*
  * Firmware for Alteon Tigon 1 chip.
@@ -6,21 +6,21 @@
  *
  * $FreeBSD: /c/ncvs/src/sys/pci/ti_fw.h,v 1.9 2000/07/20 22:24:42 wpaul Exp $
  */
-static int tigonFwReleaseMajor = 0xc;
-static int tigonFwReleaseMinor = 0x4;
-static int tigonFwReleaseFix = 0xd;
-static u_int32_t tigonFwStartAddr = 0x00004000;
-static u_int32_t tigonFwTextAddr = 0x00004000;
-static int tigonFwTextLen = 0x11160;
-static u_int32_t tigonFwRodataAddr = 0x00015160;
-static int tigonFwRodataLen = 0xae0;
-static u_int32_t tigonFwDataAddr = 0x00015c60;
-static int tigonFwDataLen = 0x180;
-static u_int32_t tigonFwSbssAddr = 0x00015de0;
-static int tigonFwSbssLen = 0x38;
-static u_int32_t tigonFwBssAddr = 0x00015e20;
-static int tigonFwBssLen = 0x2080;
-static u_int32_t tigonFwText[] = {
+static const int tigonFwReleaseMajor = 0xc;
+static const int tigonFwReleaseMinor = 0x4;
+static const int tigonFwReleaseFix = 0xd;
+static const u_int32_t tigonFwStartAddr = 0x00004000;
+static const u_int32_t tigonFwTextAddr = 0x00004000;
+static const int tigonFwTextLen = 0x11160;
+static const u_int32_t tigonFwRodataAddr = 0x00015160;
+static const int tigonFwRodataLen = 0xae0;
+static const u_int32_t tigonFwDataAddr = 0x00015c60;
+static const int tigonFwDataLen = 0x180;
+static const u_int32_t tigonFwSbssAddr = 0x00015de0;
+static const int tigonFwSbssLen = 0x38;
+static const u_int32_t tigonFwBssAddr = 0x00015e20;
+static const int tigonFwBssLen = 0x2080;
+static const u_int32_t tigonFwText[] = {
 0x10000003, 
 0x0, 0xd, 0xd, 0x3c1d0001, 
 0x8fbd5c94, 0x3a0f021, 0x3c100000, 0x26104000, 
@@ -4396,7 +4396,7 @@ static u_int32_t tigonFwText[] = {
 0x8fbf0024, 0x8fb40020, 0x8fb3001c, 0x8fb20018, 
 0x8fb10014, 0x8fb00010, 0x3e00008, 0x27bd0028, 
 0x0, 0x0, 0x0, 0x0 };
-static u_int32_t tigonFwRodata[] = {
+static const u_int32_t tigonFwRodata[] = {
 0x24486561, 0x6465723a, 0x202f7072, 
 0x6f6a6563, 0x74732f72, 0x63732f73, 0x772f6765, 
 0x2f2e2f6e, 0x69632f66, 0x772f636f, 0x6d6d6f6e, 
@@ -4572,7 +4572,7 @@ static u_int32_t tigonFwRodata[] = {
 0x0, 0x14c4c, 0x14c4c, 0x14b94, 
 0x14bd8, 0x14c4c, 0x14c4c, 0x14b94, 
 0x0, 0x0 };
-static u_int32_t tigonFwData[] = {
+static const u_int32_t tigonFwData[] = {
 0x416c7465, 
 0x6f6e2041, 0x63654e49, 0x43205600, 0x416c7465, 
 0x6f6e2041, 0x63654e49, 0x43205600, 0x42424242, 
