@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.35 1997/01/19 22:26:19 graichen Exp $
+#	$OpenBSD: Makefile,v 1.36 1997/01/21 12:02:41 graichen Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	US/Pacific
@@ -167,46 +167,47 @@ snap_pre:
 	/bin/rm -rf ${DESTDIR}/snapshot
 	install -d -o root -g wheel -m 755 ${DESTDIR}/snapshot
 
-# check if SNAP_GZIP_CMD is set - else set it to "gzip -9"
+# check if GZIP is set - else set it to "gzip"
 # you may set it to "cat" alternatively for architectures
 # where the gzip'ing would take too much time (pmax or slower :-)
 # this way you get only tar'ed snap files and you can gzip
 # them on a faster machine
 
-.ifndef SNAP_GZIP_CMD
-SNAP_GZIP_CMD=	gzip -9
-SNAP_GZIP_EXT=	.gz
+.ifndef GZIP
+GZIP=		gzip
+GZIPFLAGS=	-9
+GZIPEXT=	.gz
 .endif
 
 snap_tar:
 	cd ${DESTDIR} && tar cf - bin \
-	    | ${SNAP_GZIP_CMD} > snapshot/bin.tar${SNAP_GZIP_EXT}
+	    | ${GZIP} ${GZIPFLAGS} > snapshot/bin.tar${GZIPEXT}
 	cd ${DESTDIR} && tar cf - dev \
-	    | ${SNAP_GZIP_CMD} > snapshot/dev.tar${SNAP_GZIP_EXT}
+	    | ${GZIP} ${GZIPFLAGS} > snapshot/dev.tar${GZIPEXT}
 	cd ${DESTDIR} && tar cf - .profile .cshrc altroot etc home mnt \
-	    root stand sys tmp | ${SNAP_GZIP_CMD} \
-	    > snapshot/etc.tar${SNAP_GZIP_EXT}
+	    root stand sys tmp | ${GZIP} ${GZIPFLAGS} \
+	    > snapshot/etc.tar${GZIPEXT}
 	cd ${DESTDIR} && tar cf - sbin \
-	    | ${SNAP_GZIP_CMD} > snapshot/sbin.tar${SNAP_GZIP_EXT}
+	    | ${GZIP} ${GZIPFLAGS} > snapshot/sbin.tar${GZIPEXT}
 	cd ${DESTDIR} && tar cf - usr/bin \
-	    | ${SNAP_GZIP_CMD} > snapshot/usr.bin.tar${SNAP_GZIP_EXT}
+	    | ${GZIP} ${GZIPFLAGS} > snapshot/usr.bin.tar${GZIPEXT}
 	cd ${DESTDIR} && tar cf - usr/games \
-	    | ${SNAP_GZIP_CMD} > snapshot/usr.games.tar${SNAP_GZIP_EXT}
+	    | ${GZIP} ${GZIPFLAGS} > snapshot/usr.games.tar${GZIPEXT}
 	cd ${DESTDIR} && tar cf - usr/include \
-	    | ${SNAP_GZIP_CMD} > snapshot/usr.include.tar${SNAP_GZIP_EXT}
+	    | ${GZIP} ${GZIPFLAGS} > snapshot/usr.include.tar${GZIPEXT}
 	cd ${DESTDIR} && tar cf - usr/lib \
-	    | ${SNAP_GZIP_CMD} > snapshot/usr.lib.tar${SNAP_GZIP_EXT}
+	    | ${GZIP} ${GZIPFLAGS} > snapshot/usr.lib.tar${GZIPEXT}
 	cd ${DESTDIR} && tar cf - usr/libexec \
-	    | ${SNAP_GZIP_CMD} > snapshot/usr.libexec.tar${SNAP_GZIP_EXT}
+	    | ${GZIP} ${GZIPFLAGS} > snapshot/usr.libexec.tar${GZIPEXT}
 	cd ${DESTDIR} && tar cf - usr/mdec usr/libdata usr/local usr/src \
-	    usr/obj | ${SNAP_GZIP_CMD} \
-	    > snapshot/usr.misc.tar${SNAP_GZIP_EXT}
+	    usr/obj | ${GZIP} ${GZIPFLAGS} \
+	    > snapshot/usr.misc.tar${GZIPEXT}
 	cd ${DESTDIR} && tar cf - usr/sbin \
-	    | ${SNAP_GZIP_CMD} > snapshot/usr.sbin.tar${SNAP_GZIP_EXT}
+	    | ${GZIP} ${GZIPFLAGS} > snapshot/usr.sbin.tar${GZIPEXT}
 	cd ${DESTDIR} && tar cf - usr/share \
-	    | ${SNAP_GZIP_CMD} > snapshot/usr.share.tar${SNAP_GZIP_EXT}
+	    | ${GZIP} ${GZIPFLAGS} > snapshot/usr.share.tar${GZIPEXT}
 	cd ${DESTDIR} && tar cf - var \
-	    | ${SNAP_GZIP_CMD} > snapshot/var.tar${SNAP_GZIP_EXT}
+	    | ${GZIP} ${GZIPFLAGS} > snapshot/var.tar${GZIPEXT}
 
 snap_md:
 # nothing here -- look in the machine-dependent Makefile.inc
