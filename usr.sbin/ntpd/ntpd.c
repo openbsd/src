@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.c,v 1.30 2005/03/08 14:28:55 henning Exp $ */
+/*	$OpenBSD: ntpd.c,v 1.31 2005/03/09 20:31:11 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -25,6 +25,7 @@
 #include <fcntl.h>
 #include <poll.h>
 #include <pwd.h>
+#include <resolv.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -90,6 +91,7 @@ main(int argc, char *argv[])
 	bzero(&conf, sizeof(conf));
 
 	log_init(1);		/* log to stderr until daemonized */
+	res_init();		/* XXX */
 
 	while ((ch = getopt(argc, argv, "df:sS")) != -1) {
 		switch (ch) {

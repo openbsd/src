@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.16 2005/03/08 14:59:36 henning Exp $ */
+/*	$OpenBSD: config.c,v 1.17 2005/03/09 20:31:11 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -121,7 +121,6 @@ host_dns(const char *s, struct ntp_addr **hn)
 	bzero(&hints, sizeof(hints));
 	hints.ai_family = PF_UNSPEC;
 	hints.ai_socktype = SOCK_DGRAM; /* DUMMY */
-	res_init();	/* XXX */
 	error = getaddrinfo(s, NULL, &hints, &res0);
 	if (error == EAI_AGAIN || error == EAI_NODATA || error == EAI_NONAME)
 			return (0);
