@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.21 1998/09/22 04:42:49 deraadt Exp $	*/
+/*	$OpenBSD: util.c,v 1.22 1999/12/08 12:57:06 itojun Exp $	*/
 /*	$NetBSD: util.c,v 1.12 1997/08/18 10:20:27 lukem Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: util.c,v 1.21 1998/09/22 04:42:49 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: util.c,v 1.22 1999/12/08 12:57:06 itojun Exp $";
 #endif /* not lint */
 
 /*
@@ -75,7 +75,7 @@ setpeer(argc, argv)
 	char *argv[];
 {
 	char *host;
-	in_port_t port;
+	char *port;
 
 	if (connected) {
 		fprintf(ttyout, "Already connected to %s, use close first.\n",
@@ -94,6 +94,7 @@ setpeer(argc, argv)
 		port = gateport;
 	else
 		port = ftpport;
+#if 0
 	if (argc > 2) {
 		char *ep;
 		long nport;
@@ -109,6 +110,10 @@ setpeer(argc, argv)
 		}
 		port = htons((in_port_t)nport);
 	}
+#else
+	if (argc > 2)
+		port = argv[2];
+#endif
 
 	if (gatemode) {
 		if (gateserver == NULL || *gateserver == '\0')

@@ -1,5 +1,34 @@
-/*	$OpenBSD: main.c,v 1.43 1998/11/21 02:58:37 d Exp $	*/
+/*	$OpenBSD: main.c,v 1.44 1999/12/08 12:57:06 itojun Exp $	*/
 /*	$NetBSD: main.c,v 1.24 1997/08/18 10:20:26 lukem Exp $	*/
+
+/*
+ * Copyright (C) 1997 and 1998 WIDE Project.
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the project nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE PROJECT OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -44,7 +73,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.43 1998/11/21 02:58:37 d Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.44 1999/12/08 12:57:06 itojun Exp $";
 #endif
 #endif /* not lint */
 
@@ -73,41 +102,17 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	struct servent *sp;
 	int ch, top, rval;
-	long port;
 	struct passwd *pw = NULL;
-	char *cp, *ep, homedir[MAXPATHLEN];
+	char *cp, homedir[MAXPATHLEN];
 	char *outfile = NULL;
 	int dumb_terminal = 0;
 
-	sp = getservbyname("ftp", "tcp");
-	if (sp == 0)
-		ftpport = htons(FTP_PORT);	/* good fallback */
-	else
-		ftpport = sp->s_port;
-	sp = getservbyname("http", "tcp");
-	if (sp == 0)
-		httpport = htons(HTTP_PORT);	/* good fallback */
-	else
-		httpport = sp->s_port;
-	gateport = 0;
-	cp = getenv("FTPSERVERPORT");
-	if (cp != NULL) {
-		port = strtol(cp, &ep, 10);
-		if (port < 1 || port > USHRT_MAX || *ep != '\0')
-			warnx("bad FTPSERVERPORT port number: %s (ignored)",
-			    cp);
-		else
-			gateport = htons(port);
-	}
-	if (gateport == 0) {
-		sp = getservbyname("ftpgate", "tcp");
-		if (sp == 0)
-			gateport = htons(GATE_PORT);
-		else
-			gateport = sp->s_port;
-	}
+	ftpport = "ftp";
+	httpport = "http";
+	gateport = getenv("FTPSERVERPORT");
+	if (gateport == NULL)
+		gateport = "ftpgate";
 	doglob = 1;
 	interactive = 1;
 	autologin = 1;
@@ -221,11 +226,7 @@ main(argc, argv)
 			break;
 
 		case 'P':
-			port = strtol(optarg, &ep, 10);
-			if (port < 1 || port > USHRT_MAX || *ep != '\0')
-				warnx("bad port number: %s (ignored)", optarg);
-			else
-				ftpport = htons((in_port_t)port);
+			ftpport = optarg;
 			break;
 
 		case 'r':
@@ -281,7 +282,7 @@ main(argc, argv)
 #endif
 
 	if (argc > 0) {
-		if (strchr(argv[0], ':') != NULL) {
+		if (isurl(argv[0])) {
 			anonftp = 1;	/* Handle "automatic" transfers. */
 			rval = auto_fetch(argc, argv, outfile);
 			if (rval >= 0)		/* -1 == connected and cd-ed */
