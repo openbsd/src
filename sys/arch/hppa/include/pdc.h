@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdc.h,v 1.25 2003/07/15 17:15:32 mickey Exp $	*/
+/*	$OpenBSD: pdc.h,v 1.26 2003/08/20 22:51:07 mickey Exp $	*/
 
 /*
  * Copyright (c) 1990 mt Xinu, Inc.  All rights reserved.
@@ -454,6 +454,11 @@ struct pdc_btlb {	/* PDC_BLOCK_TLB */
 struct pdc_hwtlb {	/* PDC_TLB */
 	u_int	min_size;	/* What do these mean? */
 	u_int	max_size;
+	u_int	filler[30];
+};
+
+struct pdc_power_info {		/* PDC_SOFT_POWER_INFO */
+	u_int	addr;		/* power register address */
 	u_int	filler[30];
 };
 

@@ -1,7 +1,7 @@
-/*	$OpenBSD: lasi.c,v 1.15 2003/08/05 21:09:10 mickey Exp $	*/
+/*	$OpenBSD: lasi.c,v 1.16 2003/08/20 22:51:07 mickey Exp $	*/
 
 /*
- * Copyright (c) 1998-2002 Michael Shalayeff
+ * Copyright (c) 1998-2003 Michael Shalayeff
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -232,7 +232,9 @@ lasiattach(parent, self, aux)
 		extern void (*cold_hook)(int);
 
 		lasi_gsc_attach(self);
-		cold_hook = lasi_cold_hook;
+		/* could be already set by power(4) */
+		if (!cold_hook)
+			cold_hook = lasi_cold_hook;
 	}
 }
 
