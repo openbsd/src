@@ -1,4 +1,4 @@
-/*	$Id: join.c,v 1.4 1996/08/12 02:31:53 michaels Exp $                                                                  */   
+/* $Id: join.c,v 1.5 1996/08/12 16:37:00 michaels Exp $
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -45,7 +45,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "@(#)join.c	8.6 (Berkeley) 5/4/95"; */
-static char rcsid[] = "$Id: join.c,v 1.4 1996/08/12 02:31:53 michaels Exp $";
+static char rcsid[] = "$Id: join.c,v 1.5 1996/08/12 16:37:00 michaels Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -76,7 +76,6 @@ typedef struct {
 
 typedef struct {
 	FILE *fp;				/* file descriptor */
-	char *fname;			/* file name */
 	u_long joinf;			/* join field (-1, -2, -j) */
 	int unpair;				/* output unpairable lines (-a) */
 	int number;				/* 1 for file 1, 2 for file 2 */
@@ -88,8 +87,8 @@ typedef struct {
 	u_long setalloc;		/* set allocated count */
 	u_long setusedc;		/* sets used  */
 } INPUT;
-INPUT input1 = { NULL, NULL, 0, 0, 1, NULL, 0, 0, 0, },
-      input2 = { NULL, NULL, 0, 0, 2, NULL, 0, 0, 0, };
+INPUT input1 = { NULL, 0, 0, 1, NULL, 0, 0, 0, },
+      input2 = { NULL, 0, 0, 2, NULL, 0, 0, 0, };
 
 typedef struct {
 	u_long	filenum;	/* file number */
@@ -221,13 +220,11 @@ main(argc, argv)
 		F1->fp = stdin;
 	else if ((F1->fp = fopen(*argv, "r")) == NULL)
 		err(1, "%s", *argv);
-	F1->fname = *argv;
 	++argv;
 	if (!strcmp(*argv, "-"))
 		F2->fp = stdin;
 	else if ((F2->fp = fopen(*argv, "r")) == NULL)
 		err(1, "%s", *argv);
-	F2->fname = *argv;
 	if (F1->fp == stdin && F2->fp == stdin)
 		errx(1, "only one input file may be stdin");
 
@@ -235,30 +232,37 @@ main(argc, argv)
 	F2->setusedc = 0;
 	slurp(F1);
 	slurp(F2);
-	F1->set->cfieldc = F2->set->cfieldc = 0;
+	F1->set->cfieldc = 0;
+	F2->set->cfieldc = 0;
 
+	/*
+	 * We try to let the files have the same field value, advancing
+	 * whoever falls behind and always advancing the file(s) we output
+	 * from.
+	*/
 	while (F1->setcnt && F2->setcnt) {
 		cval = cmp(F1->set, F1->joinf, F2->set, F2->joinf);
 		if (cval == 0) {
 			/* Oh joy, oh rapture, oh beauty divine! */
 			if (joinout)
 				joinlines(F1, F2);
-			if (F2->set->cfieldc < F2->setusedc -1)
-				slurp(F1);
+			slurp(F1);
 			slurp(F2);
 		}
 		else {
-			if (F1->unpair && (cval < 0 || F2->set->cfieldc >= F2->setusedc -1)) {
+			if (F1->unpair && (cval < 0 || F2->set->cfieldc == F2->setusedc -1)) {
 				joinlines(F1, NULL);
 				slurp(F1);
 			}
 			else if (cval < 0)	
+				/* File 1 takes the lead... */
 				slurp(F1);
-			if (F2->unpair && (cval >= 0 || F1->set->cfieldc >= F1->setusedc -1)) {
+			if (F2->unpair && (cval > 0 || F1->set->cfieldc == F1->setusedc -1)) {
 				joinlines(F2, NULL);
 				slurp(F2);
 			}
-			else if (cval >= 0)
+			else if (cval > 0)
+				/* File 2 takes the lead... */
 				slurp(F2);
 		}
 	}
@@ -277,17 +281,17 @@ main(argc, argv)
 			joinlines(F2, NULL);
 			slurp(F2);
 		}
+
 	return 0;
 }
 
-/* wrapper around slurp() to keep track of what field we are on */
+/* wrapper around slurpit() to keep track of what field we are on */
 void slurp(F)
 	INPUT *F;
 {
 	long fpos;
 	u_long cfieldc;
 
-	/* if fpos changes, new field */
 	if (F->set == NULL) {
 		fpos = 0;
 		cfieldc = 0;	
@@ -355,8 +359,8 @@ slurpit(F)
 			return;
 		/*
 		 * we depend on knowing on what field we are, one safe way is the 
-		 *	file position, thoug we should perhaps find another way so we
-		 *	won't have to call ftell() after each line read from file.
+		 *	file position, though we should perhaps find another way so we
+		 *	won't have to call ftell() after each line read from file. 
 		*/
 		fpos = ftell(F->fp) - len;
 		if (lp->linealloc <= len + 1) {
