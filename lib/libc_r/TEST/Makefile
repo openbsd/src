@@ -9,14 +9,20 @@
 #
 
 LIBC_R?=	/usr/lib/libc_r.a
+LIBPTHREAD?=	/usr/lib/libpthread.a
 
+.if ${MACHINE_ARCH} != "i386"
 PTHREAD=	-pthread
+DPADD +=	${LIBC_R}
+.else
+PTHREAD=	-lpthread
+DPADD +=	${LIBPTHREAD}
+.endif
 
 CFLAGS +=	-Wall # -Werror
 DEBUG =		-ggdb
 CFLAGS +=	-DSRCDIR='"${.CURDIR}"'
 LDLIBS +=	${PTHREAD} -lm  ${LDSTATIC}
-DPADD +=	${LIBC_R}
 MKDEP =		-p ${PTHREAD}
 
 # This list used to include test_select, but that test doesn't terminate.
