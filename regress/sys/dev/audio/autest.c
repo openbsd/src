@@ -1,4 +1,4 @@
-/*	$OpenBSD: autest.c,v 1.9 2003/06/04 02:41:57 jason Exp $	*/
+/*	$OpenBSD: autest.c,v 1.10 2003/08/06 16:15:44 jason Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -57,6 +57,7 @@ void enc_slinear_16(int, audio_encoding_t *, int, int);
 void enc_adpcm_8(int, audio_encoding_t *, int);
 void audio_wait(int);
 
+#define	PLAYFREQ	440.0
 #define	PLAYSECS	2
 
 #define	DEFAULT_DEV	"/dev/sound"
@@ -264,7 +265,7 @@ enc_ulinear_8(int fd, audio_encoding_t *enc, int chans)
 		u_int8_t v;
 
 		d = 127.0 * sinf(((float)i / (float)inf.play.sample_rate) *
-		    (2 * M_PI * 440.0));
+		    (2 * M_PI * PLAYFREQ));
 		d = rintf(d + 127.0);
 		v = d;
 
@@ -316,7 +317,7 @@ enc_slinear_8(int fd, audio_encoding_t *enc, int chans)
 		int8_t v;
 
 		d = 127.0 * sinf(((float)i / (float)inf.play.sample_rate) *
-		    (2 * M_PI * 440.0));
+		    (2 * M_PI * PLAYFREQ));
 		d = rintf(d);
 		v = d;
 
@@ -368,7 +369,7 @@ enc_slinear_16(int fd, audio_encoding_t *enc, int chans, int order)
 		int16_t v;
 
 		d = 32767.0 * sinf(((float)i / (float)inf.play.sample_rate) *
-		    (2 * M_PI * 440.0));
+		    (2 * M_PI * PLAYFREQ));
 		d = rintf(d);
 		v = d;
 
@@ -429,7 +430,7 @@ enc_ulinear_16(int fd, audio_encoding_t *enc, int chans, int order)
 		u_int16_t v;
 
 		d = 32767.0 * sinf(((float)i / (float)inf.play.sample_rate) *
-		    (2 * M_PI * 440.0));
+		    (2 * M_PI * PLAYFREQ));
 		d = rintf(d + 32767.0);
 		v = d;
 
@@ -499,7 +500,7 @@ enc_adpcm_8(int fd, audio_encoding_t *enc, int chans)
 		float d;
 
 		d = 32767.0 * sinf(((float)i / (float)inf.play.sample_rate) *
-		    (2 * M_PI * 440.0));
+		    (2 * M_PI * PLAYFREQ));
 		samples[i] = rintf(d);
 	}
 
@@ -570,7 +571,7 @@ enc_ulaw_8(int fd, audio_encoding_t *enc, int chans)
 		float x;
 
 		x = 32765.0 * sinf(((float)i / (float)inf.play.sample_rate) *
-		    (2 * M_PI * 440.0));
+		    (2 * M_PI * PLAYFREQ));
 		samples[i] = x;
 	}
 
@@ -632,7 +633,7 @@ enc_alaw_8(int fd, audio_encoding_t *enc, int chans)
 		float x;
 
 		x = 32767.0 * sinf(((float)i / (float)inf.play.sample_rate) *
-		    (2 * M_PI * 440.0));
+		    (2 * M_PI * PLAYFREQ));
 		samples[i] = x;
 	}
 
