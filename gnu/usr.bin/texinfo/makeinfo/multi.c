@@ -1,5 +1,5 @@
 /* multi.c -- multitable stuff for makeinfo.
-   $Id: multi.c,v 1.4 2002/06/10 13:51:03 espie Exp $
+   $Id: multi.c,v 1.5 2003/05/05 22:19:16 avsm Exp $
 
    Copyright (C) 1996, 97, 98, 99, 2000, 01, 02 Free Software Foundation, Inc.
 
@@ -263,7 +263,7 @@ setup_multitable_parameters ()
       params++;
 
     if (*params == '@') {
-      sscanf (params, "%200s", command);
+      sscanf (params, "%199s", command);
       nchars = strlen (command);
       params += nchars;
       if (strcmp (command, "@hsep") == 0)
