@@ -1,11 +1,9 @@
-#       $OpenBSD: Makefile,v 1.1 2003/06/15 16:40:27 mickey Exp $
-
-NOMAN=	# defined
+#       $OpenBSD: Makefile,v 1.2 2003/06/16 13:35:33 mickey Exp $
 
 PROG=	skeytest
 CFLAGS+=-Wall
-DPADD+=	${LIBSKEY}
 LDADD+=	-lskey
+DPADD+=	${LIBSKEY}
 
 skey-regress: skeytest
 	./${PROG}
