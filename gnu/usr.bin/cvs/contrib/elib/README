@@ -1,8 +1,0 @@
-        Elib is included in the CVS distribution as a convenience
-only, because pcl-cvs needs elib to run (see tools/pcl-cvs/).  The
-maintainers of CVS do not maintain elib, so please do not send them
-bug reports about elib.
-
-        As of 14 April 1996, the latest release of elib can be found
-at "ftp://ftp.lysator.liu.se/pub/emacs/elib-1.0.tar.gz".
-

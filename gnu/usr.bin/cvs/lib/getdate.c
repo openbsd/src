@@ -633,6 +633,10 @@ ToSeconds(Hours, Minutes, Seconds, Meridian)
 }
 
 
+/* Year is either
+   * A negative number, which means to use its absolute value (why?)
+   * A number from 0 to 99, which means a year from 1900 to 1999, or
+   * The actual year (>=100).  */
 static time_t
 Convert(Month, Day, Year, Hours, Minutes, Seconds, Meridian, DSTmode)
     time_t	Month;
@@ -724,7 +728,7 @@ RelativeMonth(Start, RelMonth)
     if (RelMonth == 0)
 	return 0;
     tm = localtime(&Start);
-    Month = 12 * tm->tm_year + tm->tm_mon + RelMonth;
+    Month = 12 * (tm->tm_year + 1900) + tm->tm_mon + RelMonth;
     Year = Month / 12;
     Month = Month % 12 + 1;
     return DSTcorrect(Start,
@@ -1040,7 +1044,7 @@ main(ac, av)
     /* NOTREACHED */
 }
 #endif	/* defined(TEST) */
-#line 1044 "y.tab.c"
+#line 1048 "y.tab.c"
 #define YYABORT goto yyabort
 #define YYREJECT goto yyabort
 #define YYACCEPT goto yyaccept
@@ -1465,7 +1469,7 @@ case 41:
 	    yyval.Meridian = yyvsp[0].Meridian;
 	}
 break;
-#line 1469 "y.tab.c"
+#line 1473 "y.tab.c"
     }
     yyssp -= yym;
     yystate = *yyssp;

@@ -370,10 +370,15 @@ extern char *RCS_citag;
 /* Access method specified in CVSroot. */
 typedef enum {
   local_method, server_method, pserver_method, kserver_method, gserver_method,
-  ext_method
+  ext_method, fork_method
 } CVSmethod;
 extern char *method_names[];	/* change this in root.c if you change
 				   the enum above */
+
+/* This global variable holds the global -d option.  It is NULL if -d
+   was not used, which means that we must get the CVSroot information
+   from the CVSROOT environment variable or from a CVS/Root file.  */
+extern char *CVSroot_cmdline;
 
 extern char *CVSroot_original;	/* the active, complete CVSroot string */
 extern int client_active;	/* nonzero if we are doing remote access */
@@ -381,6 +386,11 @@ extern CVSmethod CVSroot_method; /* one of the enum values above */
 extern char *CVSroot_username;	/* the username or NULL if method == local */
 extern char *CVSroot_hostname;	/* the hostname or NULL if method == local */
 extern char *CVSroot_directory;	/* the directory name */
+
+/* These variables keep track of all of the CVSROOT directories that
+   have been seen by the client and the current one of those selected.  */
+extern List *root_directories;
+extern char *current_root;
 
 extern char *emptydir_name PROTO ((void));
 
@@ -391,11 +401,11 @@ extern int logoff;		/* Don't write history entry */
 
 extern int top_level_admin;
 
-#ifdef AUTH_SERVER_SUPPORT
-extern char *Pserver_Repos;     /* used to check that same repos is
-                                   transmitted in pserver auth and in
-                                   CVS protocol. */
-#endif /* AUTH_SERVER_SUPPORT */
+#ifdef CLIENT_SUPPORT
+extern List *dirs_sent_to_server; /* used to decide which "Argument
+				     xxx" commands to send to each
+				     server in multiroot mode. */
+#endif
 
 extern char hostname[];
 
@@ -436,6 +446,7 @@ void Subdir_Deregister PROTO((List *, const char *, const char *));
 
 char *Make_Date PROTO((char *rawdate));
 char *date_from_time_t PROTO ((time_t));
+void date_to_internet PROTO ((char *, char *));
 
 char *Name_Repository PROTO((char *dir, char *update_dir));
 char *Short_Repository PROTO((char *repository));
@@ -506,6 +517,9 @@ void lock_tree_for_write PROTO ((int argc, char **argv, int local, int aflag));
 
 /* See lock.c for description.  */
 extern void lock_dir_for_write PROTO ((char *));
+
+/* LockDir setting from CVSROOT/config.  */
+extern char *lock_dir;
 
 void Scratch_Entry PROTO((List * list, char *fname));
 void ParseTag PROTO((char **tagp, char **datep, int *nonbranchp));
@@ -632,6 +646,7 @@ char *make_message_rcslegal PROTO((char *message));
 extern int file_has_markers PROTO ((const struct file_info *));
 extern void get_file PROTO ((const char *, const char *, const char *,
 			     char **, size_t *, size_t *));
+extern void resolve_symlink PROTO ((char **filename));
 
 /* flags for run_exec(), the fast system() for CVS */
 #define	RUN_NORMAL		0x0000	/* no special behaviour */
@@ -652,7 +667,6 @@ int run_exec PROTO((const char *stin, const char *stout, const char *sterr,
 FILE *run_popen PROTO((const char *, const char *));
 int piped_child PROTO((char **, int *, int *));
 void close_on_exec PROTO((int));
-int filter_stream_through_program PROTO((int, int, char **, pid_t *));
 
 pid_t waitpid PROTO((pid_t, int *, int));
 
