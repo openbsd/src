@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.16 2005/01/16 18:12:46 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.17 2005/01/16 18:13:28 deraadt Exp $
 #
 # GENERIC machine description file
 #
@@ -71,29 +71,8 @@ usb*		at ohci?	flags 0x1
 uhub*		at usb?
 uhub*		at uhub?
 
-uhidev*		at uhub?
-uhid*		at uhidev?		# USB Generic HID devices
-ukbd*		at uhidev?		# USB HID Keyboard devices
-wskbd*		at ukbd? mux 1
-#ums*		at uhub?		# USB Mice
-#wsmouse*	at ums? mux 0
-#ulpt*		at uhub?		# USB Printer
-aue*		at uhub?		# ADMtek AN986 Pegasus Ethernet
-axe*		at uhub?		# ASIX Electronics AX88172 USB Ethernet
-cue*		at uhub?		# CATC USB-EL1201A based Ethernet
-kue*		at uhub?		# Kawasaki KL5KUSB101B based Ethernet
-cdce*		at uhub?		# CDC Ethernet
-upl*		at uhub?		# Prolific PL2301/PL2302 host-to-host
-udav*		at uhub?		# Davicom DM9601 based Ethernet
-url*		at uhub?		# Realtek RTL8150L based adapters
-wi*		at uhub?		# WaveLAN IEEE 802.11DS
-#uscanner*	at uhub?		# USB Scanner driver
-#usscanner*	at uhub?		# USB SCSI scanners
-#scsibus*	at usscanner?
-#uyap*		at uhub?		# Y@P firmware loader
-#ugen*		at uhub?		# USB Generic driver
-umass*		at uhub?		# USB Mass Storage devices
-scsibus*	at umass?
+uhub*		at usb?			# USB Hubs
+uhub*		at uhub?		# USB Hubs
 umodem*		at uhub?		# USB Modems/Serial
 ucom*		at umodem?
 uvisor*		at uhub?		# Handspring Visor
@@ -104,11 +83,42 @@ ubsa*		at uhub?		# Belkin serial adapter
 ucom*		at ubsa?
 uftdi*		at uhub?		# FTDI FT8U100AX serial adapter
 ucom*		at uftdi?
-uplcom*	 at uhub?		# I/O DATA USB-RSAQ2 serial adapter
+uplcom* 	at uhub?		# I/O DATA USB-RSAQ2 serial adapter
 ucom*		at uplcom?
 umct*		at uhub?		# MCT USB-RS232 serial adapter
 ucom*		at umct?
+uaudio* 	at uhub?		# USB Audio
+audio*		at uaudio?
+umidi*		at uhub?		# USB MIDI
+midi*		at umidi?
+ulpt*		at uhub?		# USB Printers
+umass*		at uhub?		# USB Mass Storage devices
+scsibus*	at umass?
+uhidev*		at uhub?		# Human Interface Devices
+ums*		at uhidev?		# USB mouse
+wsmouse*	at ums? mux 0
+ukbd*		at uhidev?		# USB keyboard
+wskbd*		at ukbd? mux 1
+uhid*		at uhidev?		# USB generic HID support
+aue*		at uhub?		# ADMtek AN986 Pegasus Ethernet
+atu*		at uhub?		# Atmel AT76c50x based 802.11b
+axe*		at uhub?		# ASIX Electronics AX88172 USB Ethernet
+cue*		at uhub?		# CATC USB-EL1201A based Ethernet
+kue*		at uhub?		# Kawasaki KL5KUSB101B based Ethernet
+cdce*		at uhub?		# CDC Ethernet
+upl*		at uhub?		# Prolific PL2301/PL2302 host-to-host `network'
+udav*		at uhub?		# Davicom DM9601 based Ethernet
+url*		at uhub?		# Realtek RTL8150L based adapters
+wi*		at uhub?		# WaveLAN IEEE 802.11DS
+urio*		at uhub?		# Diamond Multimedia Rio 500
+uscanner*	at uhub?		# USB Scanners
+usscanner*	at uhub?		# USB SCSI scanners, e.g., HP5300
+scsibus*	at usscanner?
+#uyap*		at uhub?		# Y@P firmware loader
+udsbr*		at uhub?		# D-Link DSB-R100 radio
+radio*		at udsbr?		# USB radio
 #ubt*		at uhub?		# USB Bluetooth
+ugen*		at uhub?		# USB Generic driver
 
 sd*		at scsibus?
 #st*		at scsibus?
