@@ -38,3 +38,5 @@ atu-rfmd2958-ext
 atu-rfmd2958-int
 atu-rfmd2958smc-ext
 atu-rfmd2958smc-int
+
+These files are needed by various models of atu(4) devices.

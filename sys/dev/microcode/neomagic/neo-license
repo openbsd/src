@@ -24,4 +24,5 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THEPOSSIBILITY OF
  * SUCH DAMAGE.
 
-This license applies to the neo-coefficient file.
+This license applies to the neo-coefficient file, used by the neo(4)
+audio driver.

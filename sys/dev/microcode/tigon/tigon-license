@@ -3,4 +3,6 @@
  *
  * $FreeBSD: /c/ncvs/src/sys/pci/ti_fw.h,v 1.9 2000/07/20 22:24:42 wpaul Exp $
 
-This is the license that applies to the tigon1 and tigon2 firmware files.
+This is the license that applies to the tigon1 and tigon2 firmware files
+used by the ti(4) driver.
+

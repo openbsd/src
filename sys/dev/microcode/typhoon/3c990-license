@@ -28,4 +28,5 @@
  * 3COM HARDWARE OR SOFTWARE EITHER SOLELY OR IN COMBINATION WITH THE 3CR990img.h
  * microcode SOFTWARE
 
-This license applies to the 3c990 firmware for the Typhoon adapters.
+This license applies to the 3c990 firmware for the Typhoon adapters
+supported by the txp(4) driver.

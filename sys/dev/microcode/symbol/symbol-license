@@ -24,4 +24,5 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 This license applies to the symbol-eprimand symbol-esec firmwares for
-Symbol Spectrum wireless cards without firmware on board.
+Symbol Spectrum wireless cards without firmware on board, used by the
+wi(4) driver.
