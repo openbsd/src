@@ -1,4 +1,4 @@
-/*	$OpenBSD: npx.c,v 1.20 2001/11/06 19:53:14 miod Exp $	*/
+/*	$OpenBSD: npx.c,v 1.21 2001/11/12 20:28:20 niklas Exp $	*/
 /*	$NetBSD: npx.c,v 1.57 1996/05/12 23:12:24 mycroft Exp $	*/
 
 #if 0
@@ -537,7 +537,7 @@ npxdna(p)
 	}
 
 #ifdef DIAGNOSTIC
-	if (cpl != 0 || npx_nointr != 0)
+	if (cpl != IPL_NONE || npx_nointr != 0)
 		panic("npxdna: masked");
 #endif
 
@@ -612,7 +612,7 @@ npxsave()
 {
 
 #ifdef DIAGNOSTIC
-	if (cpl != 0 || npx_nointr != 0)
+	if (cpl != IPL_NONE || npx_nointr != 0)
 		panic("npxsave: masked");
 #endif
 	iprintf(("Fork"));

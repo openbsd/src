@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.7 2001/06/24 17:05:36 miod Exp $	*/
+/*	$OpenBSD: intr.h,v 1.8 2001/11/12 20:28:20 niklas Exp $	*/
 /*	$NetBSD: intr.h,v 1.5 1996/05/13 06:11:28 mycroft Exp $	*/
 
 /*
@@ -33,19 +33,54 @@
 #ifndef _I386_INTR_H_
 #define _I386_INTR_H_
 
-/* Interrupt priority `levels'; not mutually exclusive. */
-#define	IPL_NONE	0	/* nothing */
-#define	IPL_BIO		1	/* block I/O */
-#define	IPL_NET		2	/* network */
-#define	IPL_TTY		3	/* terminal */
-#define	IPL_IMP		4	/* memory allocation */
-#define	IPL_AUDIO	5	/* audio */
-#define	IPL_CLOCK	6	/* clock */
-#define	IPL_HIGH	7	/* everything */
+/*
+ * Intel APICs (advanced programmable interrupt controllers) have
+ * bytesized priority registers where the upper nibble is the actual
+ * interrupt priority level (a.k.a. IPL).  Interrupt vectors are
+ * closely tied to these levels as interrupts whose vectors' upper
+ * nibble is lower than or equal to the current level are blocked.
+ * Not all 256 possible vectors are available for interrupts in
+ * APIC systems, only
+ *
+ * For systems where instead the older ICU (interrupt controlling
+ * unit, a.k.a. PIC or 82C59) is used, the IPL is not directly useful,
+ * since the interrupt blocking is handled via interrupt masks instead
+ * of levels.  However the IPL is easily used as an offset into arrays
+ * of masks.
+ */
+#define IPLSHIFT 4	/* The upper nibble of vectors is the IPL.	*/
+#define NIPL 16		/* Four bits of information gives as much.	*/
+#define IPL(level) ((level) >> IPLSHIFT)	/* Extract the IPL.	*/
+/* XXX Maybe this IDTVECOFF definition should be elsewhere? */
+#define IDTVECOFF 0x20	/* The lower 32 IDT vectors are reserved.	*/
 
-#ifndef _LOCORE
-int imask[IPL_HIGH+1];
-#endif
+/*
+ * This macro is only defined for 0 <= x < 14, i.e. there are fourteen
+ * distinct priority levels available for interrupts.
+ */
+#define MAKEIPL(priority) (IDTVECOFF + ((priority) << IPLSHIFT))
+
+/*
+ * Interrupt priority levels.
+ * XXX We are somewhat sloppy about what we mean by IPLs, sometimes
+ * XXX we refer to the eight-bit value suitable for storing into APICs'
+ * XXX priority registers, other times about the four-bit entity found
+ * XXX in the former values' upper nibble, which can be used as offsets
+ * XXX in various arrays of our implementation.  We are hoping that
+ * XXX the context will provide enough information to not make this
+ * XXX sloppy naming a real problem.
+ */
+#define	IPL_NONE	0		/* nothing */
+#define	IPL_SOFTCLOCK	MAKEIPL(0)	/* timeouts */
+#define	IPL_SOFTNET	MAKEIPL(1)	/* protocol stacks */
+#define	IPL_BIO		MAKEIPL(2)	/* block I/O */
+#define	IPL_NET		MAKEIPL(3)	/* network */
+#define	IPL_SOFTTTY	MAKEIPL(4)	/* delayed terminal handling */
+#define	IPL_TTY		MAKEIPL(5)	/* terminal */
+#define	IPL_IMP		MAKEIPL(6)	/* memory allocation */
+#define	IPL_AUDIO	MAKEIPL(7)	/* audio */
+#define	IPL_CLOCK	MAKEIPL(8)	/* clock */
+#define	IPL_HIGH	MAKEIPL(9)	/* everything */
 
 /* Interrupt sharing types. */
 #define	IST_NONE	0	/* none */
@@ -55,16 +90,19 @@ int imask[IPL_HIGH+1];
 
 /* Soft interrupt masks. */
 #define	SIR_CLOCK	31
-#define	SIR_CLOCKMASK	((1 << SIR_CLOCK))
 #define	SIR_NET		30
-#define	SIR_NETMASK	((1 << SIR_NET) | SIR_CLOCKMASK)
 #define	SIR_TTY		29
-#define	SIR_TTYMASK	((1 << SIR_TTY) | SIR_CLOCKMASK)
-#define	SIR_ALLMASK	(SIR_CLOCKMASK | SIR_NETMASK | SIR_TTYMASK)
 
 #ifndef _LOCORE
 
-volatile int cpl, ipending, astpending;
+volatile int cpl;	/* Current interrupt priority level.		*/
+volatile int ipending;	/* Interrupts pending.				*/
+volatile int astpending;/* Asynchronous software traps (softints) pending. */
+int imask[NIPL];	/* Bitmasks telling what interrupts are blocked. */
+int iunmask[NIPL];	/* Bitmasks telling what interrupts are accepted. */
+
+#define IMASK(level) imask[IPL(level)]
+#define IUNMASK(level) iunmask[IPL(level)]
 
 extern void Xspllower __P((void));
 
@@ -74,7 +112,7 @@ static __inline void splx __P((int));
 static __inline void softintr __P((int));
 
 /*
- * Add a mask to cpl, and return the old value of cpl.
+ * Raise current interrupt priority level, and return the old one.
  */
 static __inline int
 splraise(ncpl)
@@ -82,21 +120,21 @@ splraise(ncpl)
 {
 	register int ocpl = cpl;
 
-	cpl = ocpl | ncpl;
+	if (ncpl > ocpl)
+		cpl = ncpl;
 	return (ocpl);
 }
 
 /*
- * Restore a value to cpl (unmasking interrupts).  If any unmasked
+ * Restore an old interrupt priority level.  If any thereby unmasked
  * interrupts are pending, call Xspllower() to process them.
  */
 static __inline void
 splx(ncpl)
 	register int ncpl;
 {
-
 	cpl = ncpl;
-	if (ipending & ~ncpl)
+	if (ipending & IUNMASK(ncpl))
 		Xspllower();
 }
 
@@ -110,20 +148,18 @@ spllower(ncpl)
 {
 	register int ocpl = cpl;
 
-	cpl = ncpl;
-	if (ipending & ~ncpl)
-		Xspllower();
+	splx(ncpl);
 	return (ocpl);
 }
 
 /*
  * Hardware interrupt masks
  */
-#define	splbio()	splraise(imask[IPL_BIO])
-#define	splnet()	splraise(imask[IPL_NET])
-#define	spltty()	splraise(imask[IPL_TTY])
-#define	splaudio()	splraise(imask[IPL_AUDIO])
-#define	splclock()	splraise(imask[IPL_CLOCK])
+#define	splbio()	splraise(IPL_BIO)
+#define	splnet()	splraise(IPL_NET)
+#define	spltty()	splraise(IPL_TTY)
+#define	splaudio()	splraise(IPL_AUDIO)
+#define	splclock()	splraise(IPL_CLOCK)
 #define	splstatclock()	splhigh()
 
 /*
@@ -132,18 +168,18 @@ spllower(ncpl)
  * NOTE: spllowersoftclock() is used by hardclock() to lower the priority from
  * clock to softclock before it calls softclock().
  */
-#define	spllowersoftclock()	spllower(SIR_CLOCKMASK)
-#define	splsoftclock()		splraise(SIR_CLOCKMASK)
-#define	splsoftnet()		splraise(SIR_NETMASK)
-#define	splsofttty()		splraise(SIR_TTYMASK)
+#define	spllowersoftclock()	spllower(IPL_SOFTCLOCK)
+#define	splsoftclock()		splraise(IPL_SOFTCLOCK)
+#define	splsoftnet()		splraise(IPL_SOFTNET)
+#define	splsofttty()		splraise(IPL_SOFTTTY)
 
 /*
  * Miscellaneous
  */
-#define	splimp()	splraise(imask[IPL_IMP])
-#define	splvm()		splraise(imask[IPL_IMP])
-#define	splhigh()	splraise(imask[IPL_HIGH])
-#define	spl0()		spllower(0)
+#define	splimp()	splraise(IPL_IMP)
+#define	splvm()		splraise(IPL_IMP)
+#define	splhigh()	splraise(IPL_HIGH)
+#define	spl0()		spllower(IPL_NONE)
 
 /*
  * Software interrupt registration
@@ -154,7 +190,6 @@ static __inline void
 softintr(mask)
 	register int mask;
 {
-
 	__asm __volatile("orl %0,_ipending" : : "ir" (mask));
 }
 
