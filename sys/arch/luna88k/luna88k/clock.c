@@ -1,4 +1,4 @@
-/* $OpenBSD: clock.c,v 1.3 2004/12/24 22:50:30 miod Exp $ */
+/* $OpenBSD: clock.c,v 1.4 2004/12/28 12:06:49 miod Exp $ */
 /* $NetBSD: clock.c,v 1.2 2000/01/11 10:29:35 nisimura Exp $ */
 
 /*
@@ -91,8 +91,6 @@ clockattach(dev, fns, evc)
  * Resettodr restores the time of day hardware after a time change.
  */
 
-int clock_enable;		/* XXX to be removed XXX */
-
 /*
  * Start the real-time and statistics clocks. Leave stathz 0 since there
  * are no other timers available.
@@ -100,10 +98,11 @@ int clock_enable;		/* XXX to be removed XXX */
 void
 cpu_initclocks()
 {
-	int s;
 
+#ifdef DIAGNOSTIC
 	if (clockfns == NULL)
 		panic("cpu_initclocks: no clock attached");
+#endif
 
 	tick = 1000000 / hz;	/* number of microseconds between interrupts */
 	tickfix = 1000000 - (hz * tick);
@@ -114,18 +113,6 @@ cpu_initclocks()
 		tickfix >>= (ftp - 1);
 		tickfixinterval = hz >> (ftp - 1);
         }
-	/*
-	 * Get the clock started.
-	 */
-	s = splhigh();
-	/*
-	 * XXX 
-	 * I guess it's necessary to program clock source with 
-	 * approprivate mode/value.
-	 * XXX
-	 */
-	clock_enable = 1;
-	splx(s);
 }
 
 /*
