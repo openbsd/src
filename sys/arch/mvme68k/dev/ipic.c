@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipic.c,v 1.3 1996/04/28 11:06:06 deraadt Exp $ */
+/*	$OpenBSD: ipic.c,v 1.4 1996/06/11 10:12:58 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -138,7 +138,7 @@ ipicscan(parent, child, args)
 		oca.ca_ipl = cf->cf_loc[2];
 		oca.ca_vec = cf->cf_loc[3];
 		if (oca.ca_ipl > 0 && oca.ca_vec == -1)
-			oca.ca_vec = intr_freevec();
+			oca.ca_vec = intr_findvec(255, 0);
 
 		oca.ca_master = (void *)sc;
 		oca.ca_name = cf->cf_driver->cd_name;
