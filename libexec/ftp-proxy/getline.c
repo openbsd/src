@@ -1,4 +1,4 @@
-/*	$OpenBSD: getline.c,v 1.8 2002/05/23 10:22:14 deraadt Exp $ */
+/*	$OpenBSD: getline.c,v 1.9 2002/06/09 01:03:12 beck Exp $ */
 
 /*
  * Copyright (c) 1985, 1988 Regents of the University of California.
@@ -89,7 +89,7 @@ refill_buffer(struct csiob *iobp)
 	} else if (iobp->next_byte == iobp->io_buffer_len)
 		iobp->io_buffer_len = 0;
 	else {
-		syslog(LOG_ERR, "next_byte(%d) > io_buffer_len(%d)\n",
+		syslog(LOG_ERR, "next_byte(%d) > io_buffer_len(%d)",
 		    iobp->next_byte, iobp->io_buffer_len);
 		exit(EX_OSERR);
 	}
@@ -213,7 +213,7 @@ telnet_getline(struct csiob *iobp, struct csiob *telnet_passthrough)
 				break;
 			if (iobp->io_buffer[ix] == '\0') {
 				syslog(LOG_INFO,
-				    "got null byte from %s - bye!\n",
+				    "got null byte from %s - bye!",
 				    iobp->who);
 				exit(EX_DATAERR);
 			}
