@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.42 2005/02/25 23:00:23 claudio Exp $ */
+/*	$OpenBSD: control.c,v 1.43 2005/03/11 15:48:58 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -50,7 +50,6 @@ control_init(void)
 		return (-1);
 	}
 
-	old_umask = umask(S_IXUSR|S_IXGRP|S_IWOTH|S_IROTH|S_IXOTH);
 	bzero(&sun, sizeof(sun));
 	sun.sun_family = AF_UNIX;
 	strlcpy(sun.sun_path, SOCKET_NAME, sizeof(sun.sun_path));
@@ -62,11 +61,15 @@ control_init(void)
 			return (-1);
 		}
 
+	old_umask = umask(S_IXUSR|S_IXGRP|S_IWOTH|S_IROTH|S_IXOTH);
 	if (bind(fd, (struct sockaddr *)&sun, sizeof(sun)) == -1) {
 		log_warn("control_init: bind: %s", SOCKET_NAME);
 		close(fd);
+		umask(old_umask);
 		return (-1);
 	}
+
+	umask(old_umask);
 
 	if (chmod(SOCKET_NAME, S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP) == -1) {
 		log_warn("control_init chmod");
@@ -74,8 +77,6 @@ control_init(void)
 		(void)unlink(SOCKET_NAME);
 		return (-1);
 	}
-
-	umask(old_umask);
 
 	session_socket_blockmode(fd, BM_NONBLOCK);
 	control_state.fd = fd;
