@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.2 1996/06/26 05:32:44 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.3 1998/07/10 14:09:55 mickey Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1995/09/02 06:15:37 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: main.c,v 1.2 1996/06/26 05:32:44 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.3 1998/07/10 14:09:55 mickey Exp $";
 #endif /* not lint */
 
 #include <signal.h>
@@ -65,7 +65,6 @@ Eptr	**files;	/* array of pointers into errors*/
 int	language = INCC;
 
 char	*currentfilename = "????";
-char	*processname;
 char	im_on[] = _PATH_TTY;	/* my tty name */
 
 boolean	query = FALSE;		/* query the operator if touch files */
@@ -133,14 +132,11 @@ main(argc, argv)
 	boolean	pr_summary = FALSE;
 	boolean	edit_files = FALSE;
 
-	processname = argv[0];
-
 	errorfile = stdin;
 	if (argc > 1) for(; (argc > 1) && (argv[1][0] == '-'); argc--, argv++){
 		for (cp = argv[1] + 1; *cp; cp++) switch(*cp){
 		default:
-			fprintf(stderr, "%s: -%c: Unknown flag\n",
-				processname, *cp);
+			errx(1, "-%c: Unknown flag", *cp);
 			break;
 
 		case 'n':	notouch = TRUE;	break;
@@ -165,22 +161,14 @@ main(argc, argv)
 	if (notouch)
 		suffixlist = 0;
 	if (argc > 1){
-		if (argc > 3){
-			fprintf(stderr, "%s: Only takes 0 or 1 arguments\n",
-				processname);
-			exit(3);
-		}
-		if ( (errorfile = fopen(argv[1], "r")) == NULL){
-			fprintf(stderr, "%s: %s: No such file or directory for reading errors.\n",
-				processname, argv[1]);
-			exit(4);
-		}
+		if (argc > 3)
+			errx(3, "Only takes 0 or 1 arguments\n");
+		if ( (errorfile = fopen(argv[1], "r")) == NULL)
+			err(4, argv[1]);
 	}
 	if ( (queryfile = fopen(im_on, "r")) == NULL){
 		if (query){
-			fprintf(stderr,
-				"%s: Can't open \"%s\" to query the user.\n",
-				processname, im_on);
+			errx(9, "Can't open \"%s\" to query the user.", im_on);
 			exit(9);
 		}
 	}

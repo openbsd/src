@@ -1,4 +1,4 @@
-/*	$OpenBSD: error.h,v 1.2 1996/06/26 05:32:42 deraadt Exp $	*/
+/*	$OpenBSD: error.h,v 1.3 1998/07/10 14:09:53 mickey Exp $	*/
 /*	$NetBSD: error.h,v 1.3 1995/09/02 06:15:25 jtc Exp $	*/
 
 /*
@@ -116,7 +116,6 @@ FILE	*errorfile;	/* where error file comes from */
 FILE	*queryfile;	/* where the query responses from the user come from*/
 
 extern	char	*currentfilename;
-extern	char	*processname;
 extern	char	*scriptname;
 
 extern	boolean	query;

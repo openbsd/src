@@ -1,4 +1,4 @@
-/*	$OpenBSD: filter.c,v 1.2 1996/06/26 05:32:42 deraadt Exp $	*/
+/*	$OpenBSD: filter.c,v 1.3 1998/07/10 14:09:54 mickey Exp $	*/
 /*	$NetBSD: filter.c,v 1.3 1995/09/02 06:15:28 jtc Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)filter.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: filter.c,v 1.2 1996/06/26 05:32:42 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: filter.c,v 1.3 1998/07/10 14:09:54 mickey Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -58,7 +58,6 @@ char	*lint_libs[] = {
 	IG_FILE4,
 	0
 };
-extern	char*	processname;
 int	lexsort();
 /*
  *	Read the file ERRORNAME of the names of functions in lint
@@ -97,8 +96,7 @@ getignored(auxname)
 #endif
 	if ( (fyle = fopen(filename, "r")) == NULL){
 #ifdef FULLDEBUG
-		fprintf(stderr, "%s: Can't open file \"%s\"\n",
-			processname, filename);
+		warn("Can't open file \"%s\"", filename);
 #endif
 		return;
 	}
@@ -111,8 +109,7 @@ getignored(auxname)
 	fclose(fyle);
 	if (freopen(filename, "r", fyle) == NULL){
 #ifdef FULLDEBUG
-		fprintf(stderr, "%s: Failure to open \"%s\" for second read.\n",
-			processname, filename);
+		warn("Failure to open \"%s\" for second read.", filename);
 #endif
 		nignored = 0;
 		return;
