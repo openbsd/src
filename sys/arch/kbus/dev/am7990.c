@@ -1,4 +1,4 @@
-/*	$OpenBSD: am7990.c,v 1.2 1999/01/11 05:11:27 millert Exp $	*/
+/*	$OpenBSD: am7990.c,v 1.3 1999/02/28 05:02:17 jason Exp $	*/
 /*	$NetBSD: am7990.c,v 1.22 1996/10/13 01:37:19 christos Exp $	*/
 
 /*-
@@ -456,23 +456,8 @@ am7990_read(sc, boff, len)
 	 * Check if there's a BPF listener on this interface.
 	 * If so, hand off the raw packet to BPF.
 	 */
-	if (ifp->if_bpf) {
+	if (ifp->if_bpf)
 		bpf_mtap(ifp->if_bpf, m);
-
-#ifndef LANCE_REVC_BUG
-		/*
-		 * Note that the interface cannot be in promiscuous mode if
-		 * there are no BPF listeners.  And if we are in promiscuous
-		 * mode, we have to check if this packet is really ours.
-		 */
-		if ((ifp->if_flags & IFF_PROMISC) != 0 &&
-		    (eh->ether_dhost[0] & 1) == 0 && /* !mcast and !bcast */
-		    ETHER_CMP(eh->ether_dhost, sc->sc_arpcom.ac_enaddr)) {
-			m_freem(m);
-			return;
-		}
-#endif
-	}
 #endif
 
 #ifdef LANCE_REVC_BUG
