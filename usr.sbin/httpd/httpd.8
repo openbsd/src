@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.8,v 1.10 2002/12/15 13:32:41 henning Exp $
+.\"	$OpenBSD: httpd.8,v 1.11 2002/12/22 22:29:18 henning Exp $
 .\" Copyright (c) 1995-1997 David Robinson. All rights reserved.
 .\" Copyright (c) 1997-1999 The Apache Group. All rights reserved.
 .\" Copyright (c) 1998-1999 Bob Beck. All rights reserved.
@@ -68,12 +68,14 @@
 .Nm
 is the Apache HyperText Transfer Protocol (HTTP) server program. It is
 designed to be run as a standalone daemon process. When used like this
-is will create a pool of child processes to handle requests. To stop
+it will create a pool of child processes to handle requests. To stop
 it, send a TERM signal to the initial (parent) process. The PID of
 this process is written to a file as given in the configuration file.
 Alternatively
 .Nm
-may be invoked by the Internet daemon inetd(8) each
+may be invoked by the Internet daemon
+.Xr inetd 8
+each
 time a connection to the HTTP service is made.
 .Pp
 Normally this service can be enabled for startup on OpenBSD
@@ -84,13 +86,17 @@ The
 option is of particular importance.
 .Pp
 This manual page only lists the command line arguments. For details
-of the directives necessary to configure httpd see the Apache manual,
+of the directives necessary to configure
+.Nm
+see the Apache manual,
 which is part of the Apache distribution or can be found at
 .Pa http://www.apache.org/ ,
 or in
 .Pa /var/www/htdocs/manual .
 Paths in this manual page reflect those
-compiled into httpd by default with OpenBSD.
+compiled into
+.Nm
+by default with OpenBSD.
 .Sh OPTIONS
 .Bl -tag -width Ds
 .It Fl u
@@ -103,7 +109,7 @@ to the
 path.
 The
 .Fl u
-option disabled this behaviour, and returns
+option disables this behaviour, and returns
 .Nm
 to the expanded "unsecure" behaviour.
 .Pp
@@ -187,11 +193,11 @@ Show the settings as parsed from the config file (currently only shows the
 virtualhost settings).
 .It Fl t
 Run syntax tests for configuration files only, including DocumentRoot checks.
-The program immediately exits after these syntax parsing with either a return 
+The program immediately exits after this syntax parsing with either a return 
 code of 0 (Syntax OK) or return code not equal to 0 (Syntax Error).
 .It Fl T
 Run syntax tests for configuration files only, without DocumentRoot checks.
-The program immediately exits after these syntax parsing with either a return 
+The program immediately exits after this syntax parsing with either a return 
 code of 0 (Syntax OK) or return code not equal to 0 (Syntax Error).
 .It Fl X
 Run in single-process mode, for internal debugging purposes only; the daemon
