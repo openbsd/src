@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci.c,v 1.22 2001/10/31 04:24:44 nate Exp $	*/
+/*	$OpenBSD: uhci.c,v 1.23 2002/01/10 00:46:36 nordin Exp $	*/
 /*	$NetBSD: uhci.c,v 1.142 2001/10/25 02:08:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -595,6 +595,8 @@ uhci_allocm(struct usbd_bus *bus, usb_dma_t *dma, u_int32_t size)
 		uhci_soft_td_t **stds;
 		DPRINTF(("uhci_allocm: get %d TDs\n", n));
 		stds = malloc(sizeof(uhci_soft_td_t *) * n, M_TEMP, M_NOWAIT);
+		if (stds == NULL)
+			panic("uhci_allocm");
 		memset(stds, 0, sizeof(uhci_soft_td_t *) * n);
 		for(i=0; i < n; i++)
 			stds[i] = uhci_alloc_std(sc);
