@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.24 1997/06/29 19:23:07 millert Exp $	*/
+/*	$OpenBSD: ping.c,v 1.25 1997/08/06 01:45:24 deraadt Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: ping.c,v 1.24 1997/06/29 19:23:07 millert Exp $";
+static char rcsid[] = "$OpenBSD: ping.c,v 1.25 1997/08/06 01:45:24 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -512,6 +512,7 @@ void
 catcher()
 {
 	int waittime;
+	int save_errno = errno;
 
 	pinger();
 	(void)signal(SIGALRM, catcher);
@@ -527,6 +528,7 @@ catcher()
 		(void)signal(SIGALRM, finish);
 		(void)alarm((u_int)waittime);
 	}
+	errno = save_errno;
 }
 
 /*
@@ -535,7 +537,10 @@ catcher()
 void
 prtsig()
 {
+	int save_errno = errno;
+
 	summary(0);
+	errno = save_errno;
 }
 
 /*

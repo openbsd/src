@@ -1,4 +1,4 @@
-/*	$OpenBSD: mountd.c,v 1.17 1997/06/24 20:59:10 deraadt Exp $	*/
+/*	$OpenBSD: mountd.c,v 1.18 1997/08/06 01:45:21 deraadt Exp $	*/
 /*	$NetBSD: mountd.c,v 1.31 1996/02/18 11:57:53 fvdl Exp $	*/
 
 /*
@@ -176,6 +176,7 @@ void	free_dir __P((struct dirlist *));
 void	free_exp __P((struct exportlist *));
 void	free_grp __P((struct grouplist *));
 void	free_host __P((struct hostlist *));
+void	new_exportlist __P((void));
 void	get_exportlist __P((void));
 int	get_host __P((char *, struct grouplist *, struct grouplist *));
 int	get_num __P((char *));
@@ -301,7 +302,7 @@ main(argc, argv)
 	    fprintf(pidfile, "%d\n", getpid());
 	    fclose(pidfile);
 	}
-	signal(SIGHUP, (void (*) __P((int))) get_exportlist);
+	signal(SIGHUP, (void (*) __P((int))) new_exportlist);
 	signal(SIGTERM, (void (*) __P((int))) send_umntall);
 	if ((udptransp = svcudp_create(RPC_ANYSOCK)) == NULL ||
 	    (tcptransp = svctcp_create(RPC_ANYSOCK, 0, 0)) == NULL) {
@@ -650,6 +651,15 @@ put_exlist(dp, xdrsp, adp, putdefp)
 #define LINESIZ	10240
 char line[LINESIZ];
 FILE *exp_file;
+
+void
+new_exportlist()
+{
+	int save_errno = errno;
+
+	get_exportlist();
+	errno = save_errno;
+}
 
 /*
  * Get the export list
