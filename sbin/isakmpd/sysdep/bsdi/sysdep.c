@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysdep.c,v 1.8 2001/08/12 12:03:02 heko Exp $	*/
+/*	$OpenBSD: sysdep.c,v 1.9 2001/08/23 14:59:10 markus Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -124,6 +124,8 @@ sysdep_cleartext (int fd, int af)
   char *policy[] = { "in bypass", "out bypass", NULL };
   char **p;
   int ipp;
+  int opt;
+  char *msgstr;
 
   if (app_none)
     return 0;
@@ -132,9 +134,13 @@ sysdep_cleartext (int fd, int af)
     {
     case AF_INET:
       ipp = IPPROTO_IP;
+      opt = IP_IPSEC_POLICY;
+      msgstr = "";
       break;
     case AF_INET6:
       ipp = IPPROTO_IPV6;
+      opt = IPV6_IPSEC_POLICY;
+      msgstr = "V6";
       break;
     default:
       log_print ("sysdep_cleartext: unsupported protocol family %d", af);
@@ -155,12 +161,11 @@ sysdep_cleartext (int fd, int af)
 	  return -1;
 	}
 
-      if (setsockopt(fd, ipp, IP_IPSEC_POLICY, buf,
-		     ipsec_get_policylen(buf)) < 0)
+      if (setsockopt(fd, ipp, opt, buf, ipsec_get_policylen(buf)) < 0)
 	{
 	  log_error ("sysdep_cleartext: "
-		     "setsockopt (%d, IPPROTO_IP, IP_IPSEC_POLICY, ...) failed",
-		     fd);
+		     "setsockopt (%d, IPPROTO_IP%s, IP%s_IPSEC_POLICY, ...) "
+		     "failed", fd, msgstr, msgstr);
 	  return -1;
 	}
       free(buf);
