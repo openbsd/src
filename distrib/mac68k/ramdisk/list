@@ -1,9 +1,8 @@
-#	$OpenBSD: list,v 1.2 2000/06/09 17:42:53 mickey Exp $
+#	$OpenBSD: list,v 1.3 2000/07/15 02:21:00 deraadt Exp $
 
 COPY	${OBJDIR}/raminst		raminst
 LINK	raminst			bin/cat
-LINK	raminst			bin/chmod
-LINK	raminst			bin/chgrp
+LINK	raminst			bin/chmod bin/chgrp sbin/chown
 LINK	raminst			bin/cp
 LINK	raminst			bin/df
 LINK	raminst			bin/dd
@@ -24,7 +23,6 @@ LINK	raminst			bin/stty
 LINK	raminst			bin/sync
 LINK	raminst			bin/test
 LINK	raminst			bin/[
-LINK	raminst			sbin/chown
 LINK	raminst			sbin/disklabel
 LINK	raminst			sbin/fsck
 LINK	raminst			sbin/halt
