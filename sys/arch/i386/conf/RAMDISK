@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.79 2000/03/22 08:28:18 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.80 2000/03/27 23:19:23 deraadt Exp $
 #	from: OpenBSD: INST,v 1.19 1996/11/05 03:49:13 tholo Exp 
 #
 #	Install kernels no longer support X.
@@ -182,8 +182,8 @@ ne*	at isapnp?				# NE[12]000 PnP ethernet cards
 ep0	at isa? port ? irq ?			# 3C509 ethernet cards
 ep*	at isa? port ? irq ?			# 3C509 ethernet cards
 ef*	at isapnp?				# 3C515 PnP ethernet
-ie0	at isa? port 0x360 iomem 0xd0000 irq 7	# StarLAN and 3C507
-ie1	at isa? port 0x300 irq 10		# EtherExpress
+#ie0	at isa? port 0x360 iomem 0xd0000 irq 7	# StarLAN and 3C507
+#ie1	at isa? port 0x300 irq 10		# EtherExpress
 le0	at isa? port 0x360 irq 15 drq 6		# IsoLan, NE2100, and DEPCA
 ex0	at isa? port 0x320 irq 5		# Intel EtherExpress PRO/10
 ep0	at eisa? slot ?
@@ -200,7 +200,7 @@ ne*	at pci? dev ? function ?		# NE2000-compat ethernet cards
 ne*	at pcmcia? function ?			# PCMCIA based NE2000 cards
 ep*	at pcmcia? function ?			# PCMCIA based 3c5xx cards
 sm*	at pcmcia? function ?			# PCMCIA based sm cards
-#xe*	at pcmcia? function ?			# Xircom ethernet
+xe*	at pcmcia? function ?			# Xircom ethernet
 wi*	at pcmcia? function ?			# WaveLAN IEEE 802.11
 #fpa*	at pci? dev ? function ?		# DEC DEFPA FDDI cards
 xl*	at pci? dev ? function ?		# 3C9xx ethernet cards
