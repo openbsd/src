@@ -1,4 +1,4 @@
-#	$OpenBSD: BABY,v 1.31 1998/01/06 02:42:30 deraadt Exp $
+#	$OpenBSD: BABY,v 1.32 1998/01/22 19:05:57 deraadt Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -18,7 +18,7 @@ option		BUFCACHEPERCENT=20
 #option		XSERVER
 #option		INSECURE	# insecure; allow /dev/mem writing for X
 
-maxusers	32		# estimated number of users
+maxusers	64		# estimated number of users
 option		TIMEZONE=0	# time zone to adjust RTC time by
 option		DST=0		# daylight savings time used by RTC
 
