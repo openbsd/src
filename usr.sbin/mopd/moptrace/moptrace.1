@@ -1,4 +1,4 @@
-.\"	$OpenBSD: moptrace.1,v 1.2 1996/09/21 19:12:38 maja Exp $
+.\"	$OpenBSD: moptrace.1,v 1.3 1999/05/15 02:17:59 aaron Exp $
 .\"
 .\" Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
 .\"
@@ -27,7 +27,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" @(#) $OpenBSD: moptrace.1,v 1.2 1996/09/21 19:12:38 maja Exp $
+.\" @(#) $OpenBSD: moptrace.1,v 1.3 1999/05/15 02:17:59 aaron Exp $
 .\"
 .Dd October 2, 1995
 .Dt MOPTRACE 1
@@ -45,18 +45,18 @@
 .Op Fl 3 | 4
 .Op Ar interface
 .Sh DESCRIPTION
-.Nm Moptrace
-prints the contence of MOP packages on the Ethernet connected to
+.Nm moptrace
+prints the contents of MOP packages on the Ethernet connected to
 .Ar interface
 or all known interfaces if 
-.Sq Fl a
+.Fl a
 is given.
 .Sh OPTIONS
 .Bl -tag -width indent
 .It Fl a
 Listen on all the Ethernets attached to the system.
 If 
-.Sq Fl a 
+.Fl a 
 is omitted, an interface must be specified.
 .It Fl d
 Run in debug mode, with all the output to stderr.
@@ -68,8 +68,8 @@ Ignore MOP V4 messages (Ethernet 802.3).
 .Sh SEE ALSO
 .Xr mopa.out 1 ,
 .Xr mopchk 1 ,
-.Xr mopd 8 ,
-.Xr mopprobe 1
+.Xr mopprobe 1 ,
+.Xr mopd 8
 .Rs 
 DECnet Digital Network Architecture Phase IV, 
 .%R Maintenance Operations Functional Specification V3.0.0

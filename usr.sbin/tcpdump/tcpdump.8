@@ -1,4 +1,4 @@
-.\" @(#) $Header: /home/cvs/src/usr.sbin/tcpdump/tcpdump.8,v 1.12 1999/05/01 09:01:46 deraadt Exp $ (LBL)
+.\" @(#) $Header: /home/cvs/src/usr.sbin/tcpdump/tcpdump.8,v 1.13 1999/05/15 02:17:54 aaron Exp $ (LBL)
 .\"
 .\" Copyright (c) 1987, 1988, 1989, 1990, 1991, 1992, 1994, 1995, 1996
 .\"	The Regents of the University of California.  All rights reserved.
@@ -324,16 +324,16 @@ which is equivalent to:
 If \fIhost\fR is a name with multiple IP addresses, each address will
 be checked for a match.
 .IP "\fBether dst \fIehost\fP
-True if the ethernet destination address is \fIehost\fP.  \fIEhost\fP
+True if the Ethernet destination address is \fIehost\fP.  \fIEhost\fP
 may be either a name from /etc/ethers or a number (see
 .IR ethers (3N)
 for numeric format).
 .IP "\fBether src \fIehost\fP
-True if the ethernet source address is \fIehost\fP.
+True if the Ethernet source address is \fIehost\fP.
 .IP "\fBether host \fIehost\fP
-True if either the ethernet source or destination address is \fIehost\fP.
+True if either the Ethernet source or destination address is \fIehost\fP.
 .IP "\fBgateway\fP \fIhost\fP
-True if the packet used \fIhost\fP as a gateway.  I.e., the ethernet
+True if the packet used \fIhost\fP as a gateway.  I.e., the Ethernet
 source or destination address was \fIhost\fP but neither the IP source
 nor the IP destination was \fIhost\fP.  \fIHost\fP must be a name and
 must be found in both /etc/hosts and /etc/ethers.  (An equivalent
@@ -403,14 +403,14 @@ of protocol type \fIprotocol\fP.
 Note that the identifiers \fItcp\fP, \fIudp\fP, and \fIicmp\fP are also
 keywords and must be escaped via backslash (\\), which is \\\\ in the C-shell.
 .IP "\fBether broadcast\fR"
-True if the packet is an ethernet broadcast packet.  The \fIether\fP
+True if the packet is an Ethernet broadcast packet.  The \fIether\fP
 keyword is optional.
 .IP "\fBip broadcast\fR"
 True if the packet is an IP broadcast packet.  It checks for both
 the all-zeroes and all-ones broadcast conventions, and looks up
 the local subnet mask.
 .IP "\fBether multicast\fR"
-True if the packet is an ethernet multicast packet.  The \fIether\fP
+True if the packet is an Ethernet multicast packet.  The \fIether\fP
 keyword is optional.
 This is shorthand for `\fBether[0] & 1 != 0\fP'.
 .IP "\fBip multicast\fR"
@@ -610,7 +610,7 @@ tcpdump 'gateway snup and ip[2:2] > 576'
 .LP
 To print IP broadcast or multicast packets that were
 .I not
-sent via ethernet broadcast or multicast:
+sent via Ethernet broadcast or multicast:
 .RS
 .nf
 .B
@@ -638,7 +638,7 @@ gives a brief description and examples of most of the formats.
 Link Level Headers
 .LP
 If the '-e' option is given, the link level header is printed out.
-On ethernets, the source and destination addresses, protocol,
+On Ethernets, the source and destination addresses, protocol,
 and packet length are printed.
 .LP
 On FDDI networks, the  '-e' option causes \fItcpdump\fP to print
@@ -697,8 +697,8 @@ arp reply csam is-at CSAM\fP
 .fi
 .RE
 The first line says that rtsg sent an arp packet asking
-for the ethernet address of internet host csam.  Csam
-replies with its ethernet address (in this example, ethernet addresses
+for the Ethernet address of internet host csam.  Csam
+replies with its Ethernet address (in this example, Ethernet addresses
 are in caps and internet addresses in lower case).
 .LP
 This would look less redundant if we had done \fBtcpdump \-n\fP:
@@ -720,8 +720,8 @@ CSAM RTSG 0806  64: arp reply csam is-at CSAM\fP
 .sp .5
 .fi
 .RE
-For the first packet this says the ethernet source address is RTSG, the
-destination is the ethernet broadcast address, the type field
+For the first packet this says the Ethernet source address is RTSG, the
+destination is the Ethernet broadcast address, the type field
 contained hex 0806 (type ETHER_ARP) and the total length was 64 bytes.
 .HD
 TCP Packets
@@ -1154,7 +1154,7 @@ is the current clock time in the form
 and is as accurate as the kernel's clock.
 The timestamp reflects the time the kernel first saw the packet.  No attempt
 is made to account for the time lag between when the
-ethernet interface removed the packet from the wire and when the kernel
+Ethernet interface removed the packet from the wire and when the kernel
 serviced the `new packet' interrupt.
 .SH "SEE ALSO"
 .\" traffic(1C), nit(4P),

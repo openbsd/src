@@ -85,9 +85,9 @@ even if no addresses will be dynamically allocated on that subnet.
 Some installations have physical networks on which more than one IP
 subnet operates.   For example, if there is a site-wide requirement
 that 8-bit subnet masks be used, but a department with a single
-physical ethernet network expands to the point where it has more than
+physical Ethernet network expands to the point where it has more than
 254 nodes, it may be necessary to run two 8-bit subnets on the same
-ethernet until such time as a new physical network can be added.   In
+Ethernet until such time as a new physical network can be added.   In
 this case, the \fIsubnet\fR declarations for these two networks may be
 enclosed in a \fIshared-network\fR declaration.
 .PP
@@ -176,7 +176,7 @@ Figure 2
 As you can see in Figure 2, it's legal to specify host addresses in
 parameters as domain names rather than as numeric IP addresses.  If a
 given hostname resolves to more than one IP address (for example, if
-that host has two ethernet interfaces), both addresses are supplied to
+that host has two Ethernet interfaces), both addresses are supplied to
 the client.
 .PP
 In Figure 1, you can see that both the shared-network statement and
@@ -506,7 +506,7 @@ statement.
 .I hardware-type
 must be the name of a physical hardware interface type.   Currently,
 only the
-.B ethernet
+.B Ethernet
 type is recognized, although support for
 .B token-ring
 and
