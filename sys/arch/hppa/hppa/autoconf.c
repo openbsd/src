@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.38 2003/12/20 21:49:06 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.39 2003/12/23 23:07:47 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -371,10 +371,11 @@ print_devpath(const char *label, struct pz_device *pz)
 
 	printf("%s: ", label);
 
-	for (i = 0; i < 6 && pz->pz_bc[i] >= 0; i++)
-		printf("%s%d", i? "/" : "", pz->pz_bc[i]);
+	for (i = 0; i < 6; i++)
+		if (pz->pz_bc[i] >= 0)
+			printf("%d/", pz->pz_bc[i]);
 
-	printf("%s%d.%d", i? "." : "", pz->pz_mod, pz->pz_layers[0]);
+	printf("%d.%d", pz->pz_mod, pz->pz_layers[0]);
 	for (i = 1; i < 6 && pz->pz_layers[i]; i++)
 		printf(".%d", pz->pz_layers[i]);
 
