@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dc_pci.c,v 1.26 2002/03/04 22:39:35 nate Exp $	*/
+/*	$OpenBSD: if_dc_pci.c,v 1.27 2002/03/06 23:14:17 nate Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -64,8 +64,6 @@
 #if NBPFILTER > 0
 #include <net/bpf.h>
 #endif
-
-#include <uvm/uvm_extern.h>              /* for vtophys */
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
