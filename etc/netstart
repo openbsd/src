@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.17 1997/04/09 03:00:05 kstailey Exp $
+#	$OpenBSD: netstart,v 1.18 1997/04/15 09:42:33 deraadt Exp $
 
 # set these to "NO" to turn them off.  otherwise, they're used as flags
 routed_flags=-q
@@ -42,8 +42,6 @@ hostname $hostname
 if [ -f /etc/defaultdomain ]; then
 	domainname `cat /etc/defaultdomain`
 fi
-
-route flush
 
 # Configure the IP filter before configuring network interfaces
 #
