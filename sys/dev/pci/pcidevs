@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.762 2004/09/20 20:45:54 mickey Exp $
+$OpenBSD: pcidevs,v 1.763 2004/09/21 11:31:24 grange Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -225,6 +225,7 @@ vendor	DELTA		0x1500	Delta
 vendor	MYSON		0x1516	Myson Century
 vendor	TOPIC		0x151f	Topic/SmartLink
 vendor	ENE		0x1524	ENE
+vendor	ARALION		0x1538	Aralion Inc.
 vendor	TERRATEC	0x153b	TerraTec Electronic Gmbh
 vendor	SYMBOL		0x1562	Symbol
 vendor	SYBA		0x1592	Syba
@@ -600,6 +601,9 @@ product APPLE INTREPID_ATA	0x003b	Intrepid ATA
 product APPLE INTREPID		0x003e	Intrepid
 product APPLE INTREPID_OHCI	0x003f	Intrepid USB
 
+/* Aralion Inc. products */
+product ARALION ARS106S		0x0301	ARS106S
+
 /* ARC Logic products */
 product ARC USB			0x0003	USB
 product ARC 1000PV		0xa091	1000PV
@@ -818,6 +822,7 @@ product CIRRUS CS4280		0x6003	CS4280/46xx CrystalClear Audio
 product CIRRUS CS4281		0x6005	CS4281 CrystalClear Audio
 
 /* CMD Technology products -- info gleaned from www.cmd.com */
+product CMDTECH 1210SA		0x0240	SiI1210SA
 product CMDTECH 640		0x0640	PCI0640
 product CMDTECH 642		0x0642	PCI0642
 product CMDTECH 643		0x0643	PCI0643
