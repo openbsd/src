@@ -1,4 +1,4 @@
-$OpenBSD: cpudevs,v 1.33 2004/04/21 08:30:26 mickey Exp $
+$OpenBSD: cpudevs,v 1.34 2004/04/21 08:56:08 mickey Exp $
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -151,7 +151,7 @@ board	HP809		0x580	809/K100 (KittyHawk DC2-100)
 board	HP839		0x581	839/K210 (KittyHawk DC3-120)
 board	HP829		0x582	829/K400 (KittyHawk DC3-100)
 board	HP849		0x583	849/K410 (KittyHawk DC3-120)
-board	HP770_210XC	0x584	770/J210XC (LighteningHawk)
+board	HP770_J210XC	0x584	770/J210XC (LighteningHawk)
 board	HP770_J200	0x585   770/J200 (SkyHawk 100)
 board	HP770_J210	0x586   770/J210 (SkyHawk 120)
 board	HP841		0x587	841/D210/D410 (UltraLight Proc 1-way T'120)
