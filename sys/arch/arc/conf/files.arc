@@ -1,4 +1,4 @@
-#	$OpenBSD: files.arc,v 1.18 1998/03/16 09:38:38 pefo Exp $
+#	$OpenBSD: files.arc,v 1.19 1998/05/05 05:44:41 imp Exp $
 #
 # maxpartitions must be first item in files.${ARCH}
 #
@@ -121,6 +121,10 @@ attach	com at pica with com_pica
 attach	com at algor with com_algor
 file	arch/arc/dev/com_lbus.c		com & (com_pica | com_algor)
 
+# Game adapter (joystick)
+device  joy
+attach  joy at isa
+file    arch/arc/isa/joy.c             joy needs-flag
 
 # National Semiconductor DS8390/WD83C690-based boards
 # (WD/SMC 80x3 family, SMC Ultra [8216], 3Com 3C503, NE[12]000, and clones)
