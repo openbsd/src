@@ -1,4 +1,4 @@
-/*	$OpenBSD: kqueue.c,v 1.4 2002/06/25 15:50:15 mickey Exp $	*/
+/*	$OpenBSD: kqueue.c,v 1.5 2002/07/10 14:41:31 art Exp $	*/
 
 /*
  * Copyright 2000-2002 Niels Provos <provos@citi.umich.edu>
@@ -295,7 +295,9 @@ kq_add(void *arg, struct event *ev)
  		memset(&kev, 0, sizeof(kev));
 		kev.ident = ev->ev_fd;
 		kev.filter = EVFILT_READ;
-		kev.flags = EV_ADD | EV_ONESHOT;
+		kev.flags = EV_ADD;
+		if (!(ev->ev_events & EV_PERSIST))
+			kev.filter |= EV_ONESHOT;
 		kev.udata = ev;
 		
 		if (kq_insert(kqop, &kev) == -1)
@@ -308,7 +310,9 @@ kq_add(void *arg, struct event *ev)
  		memset(&kev, 0, sizeof(kev));
 		kev.ident = ev->ev_fd;
 		kev.filter = EVFILT_WRITE;
-		kev.flags = EV_ADD | EV_ONESHOT;
+		kev.flags = EV_ADD;
+		if (!(ev->ev_events & EV_PERSIST))
+			kev.filter |= EV_ONESHOT;
 		kev.udata = ev;
 		
 		if (kq_insert(kqop, &kev) == -1)
