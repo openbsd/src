@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppp_tty.c,v 1.17 2003/08/15 20:32:19 tedu Exp $	*/
+/*	$OpenBSD: ppp_tty.c,v 1.18 2003/09/18 19:32:20 tedu Exp $	*/
 /*	$NetBSD: ppp_tty.c,v 1.12 1997/03/24 21:23:10 christos Exp $	*/
 
 /*
@@ -170,7 +170,7 @@ void	ppplogchar(struct ppp_softc *, int);
 #define CCOUNT(q)	((q)->c_cc)
 
 #define PPP_LOWAT	100	/* Process more output when < LOWAT on queue */
-#define	PPP_HIWAT	400	/* Don't start a new packet if HIWAT on que */
+#define	PPP_HIWAT	400	/* Don't start a new packet if HIWAT on queue */
 
 /*
  * Line specific open routine for async tty devices.
