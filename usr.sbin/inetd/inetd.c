@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.52 1998/11/19 06:34:03 deraadt Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.53 1998/11/21 00:15:58 deraadt Exp $	*/
 /*	$NetBSD: inetd.c,v 1.11 1996/02/22 11:14:41 mycroft Exp $	*/
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$OpenBSD: inetd.c,v 1.52 1998/11/19 06:34:03 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: inetd.c,v 1.53 1998/11/21 00:15:58 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -337,7 +337,7 @@ main(argc, argv, envp)
 		}
 		case '?':
 		default:
-			fprintf(stderr, "usage: %s [-R rate] [-d] [conf]",
+			fprintf(stderr, "usage: %s [-R rate] [-d] [conf]\n",
 			    progname);
 			exit(1);
 		}
