@@ -1,4 +1,4 @@
-.\"	$OpenBSD: init.8,v 1.3 1996/08/28 07:21:29 deraadt Exp $
+.\"	$OpenBSD: init.8,v 1.4 1996/08/28 10:53:15 deraadt Exp $
 .\"	$NetBSD: init.8,v 1.6 1995/03/18 14:56:31 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -121,11 +121,8 @@ it can be set in the startup script
 using
 .Xr sysctl 8 .
 If it is desired to run the system in level 0 mode while multiuser,
-the administrator must build a kernel with the variable
-.Nm securelevel
-defined in the file
-.Pa /sys/arch/compile/MACHINE/param.c
-and initialize it to -1.
+the administrator must build a kernel with the `option INSECURE'
+in the config file.
 .Pp
 In multi-user operation, 
 .Nm init
