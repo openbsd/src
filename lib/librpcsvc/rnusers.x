@@ -35,7 +35,7 @@
 %#ifndef lint
 %/*static char sccsid[] = "from: @(#)rnusers.x 1.2 87/09/20 Copyr 1987 Sun Micro";*/
 %/*static char sccsid[] = "from: @(#)rnusers.x	2.1 88/08/01 4.0 RPCSRC";*/
-%static char rcsid[] = "$Id: rnusers.x,v 1.1.1.1 1995/10/18 08:43:10 deraadt Exp $";
+%static char rcsid[] = "$Id: rnusers.x,v 1.2 1996/09/22 07:59:07 tholo Exp $";
 %#endif /* not lint */
 #endif
 
@@ -54,10 +54,15 @@
 % * This is the structure used in version 2 of the rusersd RPC service.
 % * It corresponds to the utmp structure for BSD sytems.
 % */
+%
+%#define RUSERS_MAXUSERLEN 8
+%#define RUSERS_MAXLINELEN 8
+%#define RUSERS_MAXHOSTLEN 16
+%
 %struct ru_utmp {
-%	char	ut_line[8];		/* tty name */
-%	char	ut_name[8];		/* user id */
-%	char	ut_host[16];		/* host name, if remote */
+%	char	*ut_line;		/* tty name */
+%	char	*ut_name;		/* user id */
+%	char	*ut_host;		/* host name, if remote */
 %	long	ut_time;		/* time on */
 %};
 %typedef struct ru_utmp rutmp;
@@ -104,22 +109,18 @@
 %	XDR *xdrs;
 %	struct ru_utmp *objp;
 %{
-%	char *ptr;
 %	int size;
 %
-%	ptr  = objp->ut_line;
-%	size = sizeof(objp->ut_line);
-%	if (!xdr_bytes(xdrs, &ptr, &size, size)) {
+%	size = RUSERS_MAXLINELEN;
+%	if (!xdr_bytes(xdrs, &objp->ut_line, &size, RUSERS_MAXLINELEN)) {
 %		return (FALSE);
 %	}
-%	ptr  = objp->ut_name;
-%	size = sizeof(objp->ut_line);
-%	if (!xdr_bytes(xdrs, &ptr, &size, size)) {
+%	size = RUSERS_MAXUSERLEN;
+%	if (!xdr_bytes(xdrs, &objp->ut_name, &size, RUSERS_MAXUSERLEN)) {
 %		return (FALSE);
 %	}
-%	ptr  = objp->ut_host;
-%	size = sizeof(objp->ut_host);
-%	if (!xdr_bytes(xdrs, &ptr, &size, size)) {
+%	size = RUSERS_MAXHOSTLEN;
+%	if (!xdr_bytes(xdrs, &objp->ut_host, &size, RUSERS_MAXHOSTLEN)) {
 %		return (FALSE);
 %	}
 %	if (!xdr_long(xdrs, &objp->ut_time)) {
