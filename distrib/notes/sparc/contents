@@ -3,11 +3,56 @@ The sparc-specific portion of the OpenBSD 2.1 release is found in the
 out as follows:
 
 .../2.1/sparc/
-		INSTALL.sparc	this document
-		bins/		sparc binary distribution sets;
+		INSTALL.sparc	Installation notes; this file
+
+		floppy.fs	The sparc boot and installation
+				floppy; see below.
+
+                kc21.fs		The sparc boot floppy; see below.
+		inst21.fs	The sparc installation floppy; see below.
+		upgr21.fs	The sparc upgrade floppy; see below.
+		miniroot21.fs	The sparc miniroot filesystem; see below.
+
+		*.gz		sparc binary distribution sets;
 				see below.
-		inst/		Base GENERIC kernels, tools,
-				and installation script.
+
+		bsd		A stock GENERIC kernel
+                bsd.rd		A ramdisk kernel
+		bsd.scsi3	A kernel with SCSI target 3 remapped as 0
+				and 0 mapped as 3.
+
+		bootxx		The OpenBSD/sparc boot block
+		boot		The OpenBSD/sparc secondary boot loader
+
+		X11		The X Windows distribution for OpenBSD/sparc
+
+
+In summary, there is one bootable sparc floppy image called "kc21.fs".
+This is a bootable install floppy which can be used in conjunction with
+the "inst21.fs" or "upgr21.fs" floppy images to install or upgrade OpenBSD 
+to the current version.  It is also useful for maintenance and disaster 
+recovery.  The miniroot.fs may be loaded onto the swap partition of an
+existing installation of OpenBSD, NetBSD, SunOS, or Solaris to allow
+installation or upgrade over the existing system.
+
+Bootable installation/upgrade floppies:
+  
+  kc21.fs
+ 	This disk is bootable, and only contains the boot loader and
+        kernel.
+
+  inst21.fs
+	This disk contains an installation file system, and has enough 
+	utilities on board to prepare your hard disk drive for OpenBSD.
+
+  upgr21.fs
+	This disk contains a file system, and has holds the utilities 
+	needed in order to upgrade a system to the current version of OpenBSD.
+  
+  miniroot21.fs
+	This is a miniroot filesystem image which can be copied to the
+	swap partition of an existing OpenBSD, NetBSD, or SunOS
+	installation to allow upgrading to OpenBSD 2.1
 
 The OpenBSD/sparc binary distribution sets contain the binaries which
 comprise the OpenBSD 2.1 release for the sparc.  There are seven binary
@@ -63,7 +108,3 @@ subdirectory of the OpenBSD 2.1 distribution tree, and are as follows:
 		manual pages.
 		[ 1.0M gzipped, 3.9M uncompressed ]
 
-The "sparc/install" directory contains an install script, and two
-GENERIC kernels.  As well, the distribution cannot be extracted using
-the SunOS "tar" program so SunOS statically-linked versions of gzip
-(GNU gzip) and gtar (GNU tar) are provided.
