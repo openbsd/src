@@ -27,7 +27,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: tar.1,v 1.1 1996/06/11 18:07:13 tholo Exp $
+.\"	$OpenBSD: tar.1,v 1.2 1996/08/10 03:08:00 tholo Exp $
 .\"
 .Dd June 11, 1996
 .Dt TAR 1
@@ -37,7 +37,7 @@
 .Nd tape archiver
 .Sh SYNOPSIS
 .Nm tar
-.No [-]{crtux}[befmopvwzHLPXZ014578]
+.No [-]{crtux}[befhmopvwzHLPXZ014578]
 .Op Ar archive
 .Op Ar blocksize
 .Ar file1
@@ -84,6 +84,9 @@ Stop after first error.
 .It Fl f Ar archive
 Filename where the archive is stored.  Defaults to
 .Pa /dev/rmt8
+.It Fl h
+Follow symbolic links as if they were normal files
+or directories.
 .It Fl m
 Do not preserve modification time.
 .It Fl o

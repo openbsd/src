@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.7 1996/08/02 12:41:01 deraadt Exp $	*/
+/*	$OpenBSD: options.c,v 1.8 1996/08/10 03:08:00 tholo Exp $	*/
 /*	$NetBSD: options.c,v 1.6 1996/03/26 23:54:18 mrg Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: options.c,v 1.7 1996/08/02 12:41:01 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: options.c,v 1.8 1996/08/10 03:08:00 tholo Exp $";
 #endif
 #endif /* not lint */
 
@@ -603,7 +603,7 @@ tar_options(argc, argv)
 	/*
 	 * process option flags
 	 */
-	while ((c = getoldopt(argc, argv, "b:cef:moprutvwxzBHLPXZ014578")) 
+	while ((c = getoldopt(argc, argv, "b:cef:hmoprutvwxzBHLPXZ014578")) 
 	    != EOF)  {
 		switch(c) {
 		case 'b':
@@ -641,6 +641,12 @@ tar_options(argc, argv)
 			}
 			fstdin = 0;
 			arcname = optarg;
+			break;
+		case 'h':
+			/*
+			 * follow symlinks
+			 */
+			Lflag = 1;
 			break;
 		case 'm':
 			/*
