@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.17 1997/10/30 05:23:44 millert Exp $
+#	$OpenBSD: install.sh,v 1.18 1997/11/10 20:56:32 deraadt Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -319,6 +319,7 @@ case "$resp" in
 			echo "domain $FQDN" > /tmp/resolv.conf
 			echo "nameserver $resp" >> /tmp/resolv.conf
 			echo "search $FQDN" >> /tmp/resolv.conf
+			echo "lookup file bind" >> /tmp/resolv.conf
 
 			echo -n "Would you like to use the nameserver now? [y] "
 			getresp "y"
