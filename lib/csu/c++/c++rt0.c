@@ -1,3 +1,6 @@
+/*	$OpenBSD: c++rt0.c,v 1.3 1998/02/08 04:42:46 niklas Exp $	*/
+/*	$NetBSD: c++rt0.c,v 1.6 1997/12/29 15:36:50 pk Exp $	*/
+
 /*
  * Copyright (c) 1993 Paul Kranenburg
  * All rights reserved.
@@ -26,8 +29,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *	$Id: c++rt0.c,v 1.2 1998/02/03 21:51:52 marc Exp $
  */
 
 /*
@@ -40,8 +41,20 @@
  */
 #include <stdlib.h>
 
-extern void (*__CTOR_LIST__[]) __P((void));
-extern void (*__DTOR_LIST__[]) __P((void));
+
+/*
+ * We make the __{C,D}TOR_LIST__ symbols appear as type `SETD' and
+ * include a dummy local function in the set. This keeps references
+ * to these symbols local to the shared object this module is linked to.
+ */
+static void dummy __P((void)) { return; }
+
+/* Note: this is "a.out" dependent. */
+__asm(".stabs \"___CTOR_LIST__\",22,0,0,_dummy");
+__asm(".stabs \"___DTOR_LIST__\",22,0,0,_dummy");
+
+void (*__CTOR_LIST__[0]) __P((void));
+void (*__DTOR_LIST__[0]) __P((void));
 
 static void	__dtors __P((void));
 static void	__ctors __P((void));
