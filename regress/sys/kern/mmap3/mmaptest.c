@@ -1,8 +1,6 @@
-/* $OpenBSD: mmaptest.c,v 1.1.1.1 2002/08/21 12:53:35 espie Exp $ */
+/* $OpenBSD: mmaptest.c,v 1.2 2002/08/21 14:45:17 espie Exp $ */
 /*
  * Copyright (c) 2002 Marc Espie.
- *
- * Extensive code modifications for the OpenBSD project.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
