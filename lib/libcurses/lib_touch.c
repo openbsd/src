@@ -29,36 +29,42 @@
 **
 */
 
-#include "curses.priv.h"
+#include <curses.priv.h>
+
+MODULE_ID("Id: lib_touch.c,v 1.3 1997/02/02 00:26:15 tom Exp $")
 
 int is_linetouched(WINDOW *win, int line)
 {
+	T((T_CALLED("is_linetouched(%p,%d)"), win, line));
+
+	/* XSI doesn't define any error */
 	if (line > win->_maxy || line < 0)
-		return ERR;
-	if (win->_line[line].firstchar != _NOCHANGE) return TRUE;
-	return FALSE;
+		returnCode(ERR);
+
+	returnCode(win->_line[line].firstchar != _NOCHANGE ? TRUE : FALSE);
 }
 
 int is_wintouched(WINDOW *win)
 {
 int i;
 
+	T((T_CALLED("is_wintouched(%p)"), win));
+
 	for (i = 0; i <= win->_maxy; i++)
 		if (win->_line[i].firstchar != _NOCHANGE)
-			return TRUE;
-	return FALSE;
+			returnCode(TRUE);
+	returnCode(FALSE);
 }
 
 int wtouchln(WINDOW *win, int y, int n, int changed)
 {
 int i;
 
-	T(("wtouchln(%p,%d,%d,%d)", win, y, n, changed));
+	T((T_CALLED("wtouchln(%p,%d,%d,%d)"), win, y, n, changed));
 
 	for (i = y; i < y+n; i++) {
 		win->_line[i].firstchar = changed ? 0 : _NOCHANGE;
 		win->_line[i].lastchar = changed ? win->_maxx : _NOCHANGE;
 	}
-	return OK;
+	returnCode(OK);
 }
-

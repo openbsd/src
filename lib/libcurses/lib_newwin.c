@@ -28,63 +28,94 @@
 **
 */
 
-#include "curses.priv.h"
-#include <stdlib.h>
+#include <curses.priv.h>
+
+MODULE_ID("Id: lib_newwin.c,v 1.17 1997/02/15 21:46:05 tom Exp $")
+
+void _nc_freewin(WINDOW *win)
+{
+WINDOWLIST *p, *q;
+int	i;
+
+	if (win != 0) {
+		for (p = _nc_windows, q = 0; p != 0; q = p, p = p->next) {
+			if (p->win == win) {
+				if (q == 0)
+					_nc_windows = p->next;
+				else
+					q->next = p->next;
+				free(p);
+
+				if (! (win->_flags & _SUBWIN)) {
+					for (i = 0; i <= win->_maxy && win->_line[i].text; i++)
+						free(win->_line[i].text);
+				}
+				free(win->_line);
+				free(win);
+
+				if (win == curscr) curscr = 0;
+				if (win == stdscr) stdscr = 0;
+				if (win == newscr) newscr = 0;
+
+				T(("...deleted win=%p", win));
+				break;
+			}
+		}
+	}
+}
 
 WINDOW * newwin(int num_lines, int num_columns, int begy, int begx)
 {
 WINDOW	*win;
 chtype	*ptr;
-int	i, j;
+int	i;
 
-	T(("newwin(%d,%d,%d,%d) called", num_lines, num_columns, begy, begx));
+	T((T_CALLED("newwin(%d,%d,%d,%d)"), num_lines, num_columns, begy, begx));
+
+	if (begy < 0 || begx < 0 || num_lines < 0 || num_columns < 0)
+		returnWin(0);
 
 	if (num_lines == 0)
-	    num_lines = screen_lines - begy;
+	    num_lines = SP->_lines_avail - begy;
 	if (num_columns == 0)
 	    num_columns = screen_columns - begx;
 
-	if (num_columns + begx > SP->_columns || num_lines + begy > SP->_lines)
-		return NULL;
+	if (num_columns + begx > SP->_columns || num_lines + begy > SP->_lines_avail)
+		returnWin(0);
 
-	if ((win = _nc_makenew(num_lines, num_columns, begy, begx)) == NULL)
-		return NULL;
+	if ((win = _nc_makenew(num_lines, num_columns, begy, begx, 0)) == 0)
+		returnWin(0);
 
 	for (i = 0; i < num_lines; i++) {
-	    if ((win->_line[i].text = (chtype *) calloc((unsigned)num_columns, sizeof(chtype))) == NULL) {
-			for (j = 0; j < i; j++)
-			    free(win->_line[j].text);
-
-			free(win->_line);
-			free(win);
-
-			return NULL;
+	    if ((win->_line[i].text = typeCalloc(chtype, (unsigned)num_columns)) == 0) {
+		_nc_freewin(win);
+		returnWin(0);
 	    }
-	    else
-		for (ptr = win->_line[i].text; ptr < win->_line[i].text + num_columns; )
-		    *ptr++ = ' ';
+	    for (ptr = win->_line[i].text; ptr < win->_line[i].text + num_columns; )
+		*ptr++ = ' ';
 	}
 
 	T(("newwin: returned window is %p", win));
 
-	return(win);
+	returnWin(win);
 }
 
 WINDOW * derwin(WINDOW *orig, int num_lines, int num_columns, int begy, int begx)
 {
 WINDOW	*win;
 int	i;
+int     flags = _SUBWIN;
 
-	T(("derwin(%p, %d,%d,%d,%d) called", orig, num_lines, num_columns, begy, begx));
+	T((T_CALLED("derwin(%p,%d,%d,%d,%d)"), orig, num_lines, num_columns, begy, begx));
 
 	/*
 	** make sure window fits inside the original one
 	*/
-	if ( begy < 0 || begx < 0) 
-		return NULL;
+	if ( begy < 0 || begx < 0 || orig == 0 || num_lines < 0 || num_columns < 0)
+	    returnWin(0);
 	if ( begy + num_lines > orig->_maxy + 1
 		|| begx + num_columns > orig->_maxx + 1)
-	    return NULL;
+	    returnWin(0);
 
 	if (num_lines == 0)
 	    num_lines = orig->_maxy - begy;
@@ -92,8 +123,11 @@ int	i;
 	if (num_columns == 0)
 	    num_columns = orig->_maxx - begx;
 
-	if ((win = _nc_makenew(num_lines, num_columns, orig->_begy + begy, orig->_begx + begx)) == NULL)
-	    return NULL;
+	if (orig->_flags & _ISPAD)
+	  flags |= _ISPAD;
+
+	if ((win = _nc_makenew(num_lines, num_columns, orig->_begy + begy, orig->_begx + begx, flags)) == 0)
+	    returnWin(0);
 
 	win->_pary = begy;
 	win->_parx = begx;
@@ -103,40 +137,44 @@ int	i;
 	for (i = 0; i < num_lines; i++)
 	    win->_line[i].text = &orig->_line[begy++].text[begx];
 
-	win->_flags = _SUBWIN;
 	win->_parent = orig;
 
 	T(("derwin: returned window is %p", win));
 
-	return(win);
+	returnWin(win);
 }
 
 
 WINDOW *subwin(WINDOW *w, int l, int c, int y, int x)
 {
-	T(("subwin(%p, %d, %d, %d, %d) called", w, l, c, y, x));
+	T((T_CALLED("subwin(%p, %d, %d, %d, %d)"), w, l, c, y, x));
 	T(("parent has begy = %d, begx = %d", w->_begy, w->_begx));
 
-	return derwin(w, l, c, y - w->_begy, x - w->_begx); 
+	returnWin(derwin(w, l, c, y - w->_begy, x - w->_begx));
 }
 
 WINDOW *
-_nc_makenew(int num_lines, int num_columns, int begy, int begx)
+_nc_makenew(int num_lines, int num_columns, int begy, int begx, int flags)
 {
 int	i;
+WINDOWLIST *wp;
 WINDOW	*win;
+bool    is_pad = (flags & _ISPAD);
 
 	T(("_nc_makenew(%d,%d,%d,%d)", num_lines, num_columns, begy, begx));
 
 	if (num_lines <= 0 || num_columns <= 0)
-	 	return NULL;
+		return 0;
 
-	if ((win = (WINDOW *) calloc(1, sizeof(WINDOW))) == NULL)
-		return NULL;            
+	if ((wp = typeCalloc(WINDOWLIST, 1)) == 0)
+		return 0;
 
-	if ((win->_line = (struct ldat *) calloc((unsigned)num_lines, sizeof (struct ldat))) == NULL) {
+	if ((win = typeCalloc(WINDOW, 1)) == 0)
+		return 0;
+
+	if ((win->_line = typeCalloc(struct ldat, ((unsigned)num_lines))) == 0) {
 		free(win);
-		return NULL;               
+		return 0;
 	}
 
 	win->_curx       = 0;
@@ -145,23 +183,24 @@ WINDOW	*win;
 	win->_maxx       = num_columns - 1;
 	win->_begy       = begy;
 	win->_begx       = begx;
+	win->_yoffset    = SP->_topstolen;
 
-	win->_flags      = 0;
+	win->_flags      = flags;
 	win->_attrs      = A_NORMAL;
-	win->_bkgd	 = A_NORMAL;
+	win->_bkgd       = BLANK;
 
-	win->_clear      = (num_lines == screen_lines  &&  num_columns == screen_columns);
+	win->_clear      = is_pad ? FALSE : (num_lines == screen_lines  &&  num_columns == screen_columns);
 	win->_idlok      = FALSE;
 	win->_idcok      = TRUE;
 	win->_scroll     = FALSE;
 	win->_leaveok    = FALSE;
 	win->_use_keypad = FALSE;
-	win->_delay    	 = -1;   
-	win->_immed	 = FALSE;
-	win->_sync	 = 0;
-	win->_parx	 = -1;
-	win->_pary	 = -1;
-	win->_parent	 = (WINDOW *)NULL;
+	win->_delay      = -1;
+	win->_immed      = FALSE;
+	win->_sync       = 0;
+	win->_parx       = -1;
+	win->_pary       = -1;
+	win->_parent     = 0;
 
 	win->_regtop     = 0;
 	win->_regbottom  = num_lines - 1;
@@ -175,11 +214,32 @@ WINDOW	*win;
 
 	for (i = 0; i < num_lines; i++)
 	{
-	    win->_line[i].firstchar = win->_line[i].lastchar = _NOCHANGE;
+	    /*
+	     * This used to do
+	     *
+	     * win->_line[i].firstchar = win->_line[i].lastchar = _NOCHANGE;
+	     *
+	     * which marks the whole window unchanged.  That's how
+	     * SVr1 curses did it, but SVr4 curses marks the whole new
+	     * window changed.
+	     *
+	     * With the old SVr1-like code, say you have stdscr full of
+	     * characters, then create a new window with newwin(),
+	     * then do a printw(win, "foo        ");, the trailing spaces are
+	     * completely ignored by the following refreshes.  So, you
+	     * get "foojunkjunk" on the screen instead of "foo        " as
+	     * you actually intended.
+	     *
+	     * SVr4 doesn't do this.  Instead the spaces are actually written.
+	     * So that's how we want ncurses to behave.
+	     */
+	    win->_line[i].firstchar = 0;
+	    win->_line[i].lastchar = num_columns-1;
+
 	    win->_line[i].oldindex = i;
 	}
 
-	if (begx + num_columns == screen_columns) {
+	if (!is_pad && (begx + num_columns == screen_columns)) {
 		win->_flags |= _ENDLINE;
 
 		if (begx == 0  &&  num_lines == screen_lines  &&  begy == 0)
@@ -188,6 +248,12 @@ WINDOW	*win;
 		if (begy + num_lines == screen_lines)
 			win->_flags |= _SCROLLWIN;
 	}
+
+	wp->next = _nc_windows;
+	wp->win  = win;
+	_nc_windows = wp;
+
+	T((T_CREATE("window %p"), win));
 
 	return(win);
 }

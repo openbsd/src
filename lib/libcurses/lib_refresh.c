@@ -28,25 +28,40 @@
  *
  */
 
-#include "curses.priv.h"
+#include <curses.priv.h>
+
+MODULE_ID("Id: lib_refresh.c,v 1.14 1997/02/02 01:05:26 tom Exp $")
 
 int wredrawln(WINDOW *win, int beg, int num)
 {
-	T(("wredrawln(%p,%d,%d) called", win, beg, num));
+	T((T_CALLED("wredrawln(%p,%d,%d)"), win, beg, num));
 	touchline(win, beg, num);
 	wrefresh(win);
-	return OK;
+	returnCode(OK);
 }
 
 int wrefresh(WINDOW *win)
 {
-	T(("wrefresh(%p) called", win));
+int code;
 
-	if (win == curscr)
-	    	curscr->_clear = TRUE;
-	else
-	    	wnoutrefresh(win);
-	return(doupdate());
+	T((T_CALLED("wrefresh(%p)"), win));
+
+	if (win == curscr) {
+		curscr->_clear = TRUE;
+		code = doupdate();
+	} else if ((code = wnoutrefresh(win)) == OK) {
+		if (win->_clear)
+			newscr->_clear = TRUE;
+		code = doupdate();
+		/*
+		 * Reset the clearok() flag in case it was set for the special
+		 * case in hardscroll.c (if we don't reset it here, we'll get 2
+		 * refreshes because the flag is copied from stdscr to newscr).
+		 * Resetting the flag shouldn't do any harm, anyway.
+		 */
+		win->_clear = FALSE;
+	}
+	returnCode(code);
 }
 
 int wnoutrefresh(WINDOW *win)
@@ -57,7 +72,18 @@ short	begy = win->_begy;
 short	m, n;
 bool	wide;
 
-	T(("wnoutrefresh(%p) called", win));
+	T((T_CALLED("wnoutrefresh(%p)"), win));
+#ifdef TRACE
+	if (_nc_tracing & TRACE_UPDATE)
+	    _tracedump("...win", win);
+#endif /* TRACE */
+
+	/*
+	 * This function will break badly if we try to refresh a pad.
+	 */
+	if ((win == 0)
+	 || (win->_flags & _ISPAD))
+		returnCode(ERR);
 
 	/*
 	 * If 'newscr' has a different background than the window that we're
@@ -67,6 +93,7 @@ bool	wide;
 		touchwin(win);
 		newscr->_bkgd = win->_bkgd;
 	}
+	newscr->_attrs = win->_attrs;
 
 	/* merge in change information from all subwindows of this window */
 	wsyncdown(win);
@@ -95,23 +122,33 @@ bool	wide;
 	 * common-subexpression chunking to make it really tense,
 	 * so we'll force the issue.
 	 */
-	for (i = 0, m = begy; i <= win->_maxy && m <= newscr->_maxy; i++, m++) {
+	for (i = 0, m = begy + win->_yoffset;
+	     i <= win->_maxy && m <= newscr->_maxy;
+	     i++, m++) {
 		register struct ldat	*nline = &newscr->_line[m];
 		register struct ldat	*oline = &win->_line[i];
 
 		if (oline->firstchar != _NOCHANGE) {
+			int last = oline->lastchar;
 
-			for (j = oline->firstchar, n = j + begx; j <= oline->lastchar; j++, n++) {
-		    		if (oline->text[j] != nline->text[n]) {
+			/* limit(j) */
+			if (last > win->_maxx)
+				last = win->_maxx;
+			/* limit(n) */
+			if (last > newscr->_maxx - begx)
+				last = newscr->_maxx - begx;
+
+			for (j = oline->firstchar, n = j + begx; j <= last; j++, n++) {
+				if (oline->text[j] != nline->text[n]) {
 					nline->text[n] = oline->text[j];
 
 					if (nline->firstchar == _NOCHANGE)
-			   			nline->firstchar = nline->lastchar = n;
+						nline->firstchar = nline->lastchar = n;
 					else if (n < nline->firstchar)
-			   			nline->firstchar = n;
+						nline->firstchar = n;
 					else if (n > nline->lastchar)
-			   			nline->lastchar = n;
-		    		}
+						nline->lastchar = n;
+				}
 			}
 
 		}
@@ -119,7 +156,7 @@ bool	wide;
 		if (wide) {
 		    int	oind = oline->oldindex;
 
-		    nline->oldindex = (oind == _NEWINDEX) ? _NEWINDEX : begy + oind;
+		    nline->oldindex = (oind == _NEWINDEX) ? _NEWINDEX : begy + oind + win->_yoffset;
 		}
 
 		oline->firstchar = oline->lastchar = _NOCHANGE;
@@ -127,15 +164,17 @@ bool	wide;
 	}
 
 	if (win->_clear) {
-	   	win->_clear = FALSE;
-#if 0
-	   	newscr->_clear = TRUE;
-#endif
+		win->_clear = FALSE;
+		newscr->_clear = TRUE;
 	}
 
 	if (! win->_leaveok) {
-	   	newscr->_cury = win->_cury + win->_begy;
-	   	newscr->_curx = win->_curx + win->_begx;
+		newscr->_cury = win->_cury + win->_begy + win->_yoffset;
+		newscr->_curx = win->_curx + win->_begx;
 	}
-	return(OK);
+#ifdef TRACE
+	if (_nc_tracing & TRACE_UPDATE)
+	    _tracedump("newscr", newscr);
+#endif /* TRACE */
+	returnCode(OK);
 }

@@ -26,18 +26,20 @@
 **
 */
 
-#include "curses.priv.h"
-#include <string.h>
+#include <curses.priv.h>
+
+MODULE_ID("Id: lib_addstr.c,v 1.11 1997/03/08 21:38:52 tom Exp $")
 
 int
 waddnstr(WINDOW *win, const char *const astr, int n)
 {
-unsigned char *str = (unsigned char *)astr;
+unsigned const char *str = (unsigned const char *)astr;
 int code = ERR;
 
-	T(("waddnstr(%p,\"%s\",%d) called %s", win, _nc_visbuf(astr), n, _traceattr(win->_attrs)));
+	T((T_CALLED("waddnstr(%p,%s,%d)"), win, _nc_visbuf(astr), n));
+	T(("... current %s", _traceattr(win->_attrs)));
 
-	if (str != NULL) {
+	if (str != 0) {
 
 		TR(TRACE_VIRTPUT, ("str is not null"));
 		code = OK;
@@ -45,7 +47,7 @@ int code = ERR;
 			n = (int)strlen(astr);
 
 		while((n-- > 0) && (*str != '\0')) {
-			TR(TRACE_VIRTPUT, ("*str = %x", *str));
+			TR(TRACE_VIRTPUT, ("*str = %#x", *str));
 			if (_nc_waddch_nosync(win, (chtype)*str++) == ERR) {
 				code = ERR;
 				break;
@@ -54,7 +56,7 @@ int code = ERR;
 	}
 	_nc_synchook(win);
 	TR(TRACE_VIRTPUT, ("waddnstr returns %d", code));
-	return code;
+	returnCode(code);
 }
 
 int
@@ -62,16 +64,16 @@ waddchnstr(WINDOW *win, const chtype *const astr, int n)
 {
 short oy = win->_cury;
 short ox = win->_curx;
-chtype *str = (chtype *)astr;
+const chtype *str = (const chtype *)astr;
 int code = OK;
 
-	T(("waddchnstr(%p,%p,%d) called", win, str, n));
+	T((T_CALLED("waddchnstr(%p,%p,%d)"), win, str, n));
 
 	if (n < 0) {
 		n = 0;
 		while (*str++ != 0)
 			n++;
-		str = (chtype *)astr;
+		str = (const chtype *)astr;
 	}
 
 	while(n-- > 0) {
@@ -84,5 +86,5 @@ int code = OK;
 	win->_curx = ox;
 	win->_cury = oy;
 	_nc_synchook(win);
-	return code;
+	returnCode(code);
 }

@@ -1,3 +1,4 @@
+.\" Id: curs_inch.3x,v 1.7 1997/01/05 01:29:23 tom Exp $
 .TH curs_inch 3X ""
 .SH NAME
 \fBinch\fR, \fBwinch\fR, \fBmvinch\fR, \fBmvwinch\fR
@@ -16,18 +17,19 @@
 .SH DESCRIPTION
 These routines return the character, of type \fBchtype\fR, at the current
 position in the named window.  If any attributes are set for that position,
-their values are OR-ed into the value returned.  Constants defined in
+their values are OR'ed into the value returned.  Constants defined in
 \fB<curses.h>\fR can be used with the \fB&\fR (logical AND) operator to
 extract the character or attributes alone.
 
 .SS Attributes
 The following bit-masks may be AND-ed with characters returned by \fBwinch\fR.
 
-.nf
-\fBA_CHARTEXT\fR     Bit-mask to extract character
-\fBA_ATTRIBUTES\fR   Bit-mask to extract attributes
-\fBA_COLOR\fR        Bit-mask to extract color-pair field information
-.fi
+.TS
+l l .
+\fBA_CHARTEXT\fR	Bit-mask to extract character
+\fBA_ATTRIBUTES\fR	Bit-mask to extract attributes
+\fBA_COLOR\fR   	Bit-mask to extract color-pair field information
+.TE
 .SH NOTES
 Note that all of these routines may be macros.
 .SH PORTABILITY

@@ -23,7 +23,7 @@
  *	vidputs(newmode, outc)
  *
  *	newmode is taken to be the logical 'or' of the symbols in curses.h
- *	representing graphic renditions.  The teminal is set to be in all of
+ *	representing graphic renditions.  The terminal is set to be in all of
  *	the given modes, if possible.
  *
  *	if the new attribute is normal
@@ -43,49 +43,71 @@
  *	NOTE that this algorithm won't achieve the desired mix of attributes
  *	in some cases, but those are probably just those cases in which it is
  *	actually impossible, anyway, so...
+ *
+ * 	NOTE that we cannot assume that there's no interaction between color
+ *	and other attribute resets.  So each time we reset color (or other
+ *	attributes) we'll have to be prepared to restore the other.
  */
 
-#include "curses.priv.h"
-#include <string.h>
-#include "term.h"
+#include <curses.priv.h>
+#include <term.h>
+
+MODULE_ID("Id: lib_vidattr.c,v 1.14 1997/05/06 16:02:43 tom Exp $")
+
+#define doPut(mode) TPUTS_TRACE(#mode); tputs(mode, 1, outc)
+
+#define TurnOn(mask,mode) \
+	if ((turn_on & mask) && mode) { doPut(mode); }
+
+#define TurnOff(mask,mode) \
+	if ((turn_off & mask) && mode) { doPut(mode); turn_off &= ~mask; }
 
 int vidputs(attr_t newmode, int  (*outc)(int))
 {
-static attr_t previous_attr;
+static attr_t previous_attr = A_NORMAL;
 attr_t turn_on, turn_off;
+int pair, current_pair;
 
-	T(("vidputs(%lx) called %s", newmode, _traceattr(newmode)));
+	T((T_CALLED("vidputs(%s)"), _traceattr(newmode)));
 
-	/* this allows us to go on whether or not newterm() has been called */ 
+	/* this allows us to go on whether or not newterm() has been called */
 	if (SP)
 		previous_attr = SP->_current_attr;
 
 	T(("previous attribute was %s", _traceattr(previous_attr)));
 
-	turn_off = (~newmode & previous_attr) & (chtype)(~A_COLOR);
-	turn_on  = (newmode & ~previous_attr) & (chtype)(~A_COLOR);
-
 	if (newmode == previous_attr)
-		return OK;
+		returnCode(OK);
+
+	turn_off = (~newmode & previous_attr) & ALL_BUT_COLOR;
+	turn_on  = (newmode & ~previous_attr) & ALL_BUT_COLOR;
+
+	pair = PAIR_NUMBER(newmode);
+	current_pair = PAIR_NUMBER(previous_attr);
+
+	/* if there is no current screen, assume we *can* do color */
+	if ((!SP || SP->_coloron) && pair == 0) {
+		T(("old pair = %d -- new pair = %d", current_pair, pair));
+		if (pair != current_pair) {
+			_nc_do_color(pair, outc);
+			previous_attr &= ~A_COLOR;
+		}
+	}
+
 	if (newmode == A_NORMAL) {
 		if((previous_attr & A_ALTCHARSET) && exit_alt_charset_mode) {
-			TPUTS_TRACE("exit_alt_charset_mode");
- 			tputs(exit_alt_charset_mode, 1, outc);
- 			previous_attr &= ~A_ALTCHARSET;
- 		}
-		if (previous_attr & A_COLOR) {
-			TPUTS_TRACE("orig_pair");
- 			tputs(orig_pair, 1, outc);
+			doPut(exit_alt_charset_mode);
+			previous_attr &= ~A_ALTCHARSET;
 		}
- 		if (previous_attr) {
-			TPUTS_TRACE("exit_attribute_mode");
- 			tputs(exit_attribute_mode, 1, outc);
+		if (previous_attr) {
+			doPut(exit_attribute_mode);
+			previous_attr &= ~A_COLOR;
 		}
- 	
+
 	} else if (set_attributes) {
 		if (turn_on || turn_off) {
 			TPUTS_TRACE("set_attributes");
-	    		tputs(tparm(set_attributes,
+			tputs(tparm(set_attributes,
 				(newmode & A_STANDOUT) != 0,
 				(newmode & A_UNDERLINE) != 0,
 				(newmode & A_REVERSE) != 0,
@@ -95,145 +117,67 @@ attr_t turn_on, turn_off;
 				(newmode & A_INVIS) != 0,
 				(newmode & A_PROTECT) != 0,
 				(newmode & A_ALTCHARSET) != 0), 1, outc);
-			/*
-			 * Setting attributes in this way tends to unset the
-			 * ones (such as color) that weren't specified.
-			 */
-			turn_off |= A_COLOR;
+			previous_attr &= ~A_COLOR;
 		}
 	} else {
 
 		T(("turning %s off", _traceattr(turn_off)));
 
-		if ((turn_off & A_ALTCHARSET) && exit_alt_charset_mode) {
-			TPUTS_TRACE("exit_alt_charset_mode");
-			tputs(exit_alt_charset_mode, 1, outc);
-			turn_off &= ~A_ALTCHARSET;
-		}
-
-		if ((turn_off & A_UNDERLINE)  &&  exit_underline_mode) {
-			TPUTS_TRACE("exit_underline_mode");
-			tputs(exit_underline_mode, 1, outc);
-			turn_off &= ~A_UNDERLINE;
-		}
-
-		if ((turn_off & A_STANDOUT)  &&  exit_standout_mode) {
-			TPUTS_TRACE("exit_standout_mode");
-			tputs(exit_standout_mode, 1, outc);
-			turn_off &= ~A_STANDOUT;
-		}
+		TurnOff(A_ALTCHARSET,  exit_alt_charset_mode);
+		TurnOff(A_UNDERLINE,   exit_underline_mode);
+		TurnOff(A_STANDOUT,    exit_standout_mode);
 
 		if (turn_off && exit_attribute_mode) {
-			TPUTS_TRACE("exit_attribute_mode");
-			tputs(exit_attribute_mode, 1, outc);
+			doPut(exit_attribute_mode);
 			turn_on  |= (newmode & (chtype)(~A_COLOR));
-			turn_off |= A_COLOR;
+			previous_attr &= ~A_COLOR;
 		}
 
 		T(("turning %s on", _traceattr(turn_on)));
 
-		if ((turn_on & A_ALTCHARSET) && enter_alt_charset_mode) {
-			TPUTS_TRACE("enter_alt_charset_mode");
-			tputs(enter_alt_charset_mode, 1, outc);
-		}
+		TurnOn (A_ALTCHARSET, enter_alt_charset_mode);
+		TurnOn (A_BLINK,      enter_blink_mode);
+		TurnOn (A_BOLD,       enter_bold_mode);
+		TurnOn (A_DIM,        enter_dim_mode);
+		TurnOn (A_REVERSE,    enter_reverse_mode);
+		TurnOn (A_STANDOUT,   enter_standout_mode);
+		TurnOn (A_PROTECT,    enter_protected_mode);
+		TurnOn (A_INVIS,      enter_secure_mode);
+		TurnOn (A_UNDERLINE,  enter_underline_mode);
+		TurnOn (A_HORIZONTAL, enter_horizontal_hl_mode);
+		TurnOn (A_LEFT,       enter_left_hl_mode);
+		TurnOn (A_LOW,        enter_low_hl_mode);
+		TurnOn (A_RIGHT,      enter_right_hl_mode);
+		TurnOn (A_TOP,        enter_top_hl_mode);
+		TurnOn (A_VERTICAL,   enter_vertical_hl_mode);
+	}
 
-		if ((turn_on & A_BLINK)  &&  enter_blink_mode) {
-			TPUTS_TRACE("enter_blink_mode");
-			tputs(enter_blink_mode, 1, outc);
-		}
-
-		if ((turn_on & A_BOLD)  &&  enter_bold_mode) {
-			TPUTS_TRACE("enter_bold_mode");
-			tputs(enter_bold_mode, 1, outc);
-		}
-
-		if ((turn_on & A_DIM)  &&  enter_dim_mode) {
-			TPUTS_TRACE("enter_dim_mode");
-			tputs(enter_dim_mode, 1, outc);
-		}
-
-		if ((turn_on & A_REVERSE)  &&  enter_reverse_mode) {
-			TPUTS_TRACE("enter_reverse_mode");
-			tputs(enter_reverse_mode, 1, outc);
-		}
-
-		if ((turn_on & A_STANDOUT)  &&  enter_standout_mode) {
-			TPUTS_TRACE("enter_standout_mode");
-			tputs(enter_standout_mode, 1, outc);
-		}
-
-		if ((turn_on & A_PROTECT)  &&  enter_protected_mode) {
-			TPUTS_TRACE("enter_protected_mode");
-			tputs(enter_protected_mode, 1, outc);
-		}
-
-		if ((turn_on & A_INVIS)  &&  enter_secure_mode) {
-			TPUTS_TRACE("enter_secure_mode");
-			tputs(enter_secure_mode, 1, outc);
-		}
-
-		if ((turn_on & A_UNDERLINE)  &&  enter_underline_mode) {
-			TPUTS_TRACE("enter_underline_mode");
-			tputs(enter_underline_mode, 1, outc);
-		}
-
-		if ((turn_on & A_HORIZONTAL)  &&  enter_horizontal_hl_mode) {
-			TPUTS_TRACE("enter_horizontal_hl_mode");
-			tputs(enter_horizontal_hl_mode, 1, outc);
-		}
-
-		if ((turn_on & A_LEFT)  &&  enter_left_hl_mode) {
-			TPUTS_TRACE("enter_left_hl_mode");
-			tputs(enter_left_hl_mode, 1, outc);
-		}
-
-		if ((turn_on & A_LOW)  &&  enter_low_hl_mode) {
-			TPUTS_TRACE("enter_low_hl_mode");
-			tputs(enter_low_hl_mode, 1, outc);
-		}
-
-		if ((turn_on & A_RIGHT)  &&  enter_right_hl_mode) {
-			TPUTS_TRACE("enter_right_hl_mode");
-			tputs(enter_right_hl_mode, 1, outc);
-		}
-
-		if ((turn_on & A_TOP)  &&  enter_top_hl_mode) {
-			TPUTS_TRACE("enter_top_hl_mode");
-			tputs(enter_top_hl_mode, 1, outc);
-		}
-
-		if ((turn_on & A_VERTICAL)  &&  enter_vertical_hl_mode) {
-			TPUTS_TRACE("enter_vertical_hl_mode");
-			tputs(enter_vertical_hl_mode, 1, outc);
+	/* if there is no current screen, assume we *can* do color */
+	if ((!SP || SP->_coloron) && pair != 0) {
+		current_pair = PAIR_NUMBER(previous_attr);
+		T(("old pair = %d -- new pair = %d", current_pair, pair));
+		if (pair != current_pair) {
+			_nc_do_color(pair, outc);
 		}
 	}
 
-	/* if there is no crrent screen, assume we *can* do color */
-	if (!SP || SP->_coloron) {
-	int pair = PAIR_NUMBER(newmode);
-	int current_pair = PAIR_NUMBER(previous_attr);
-
-   		T(("old pair = %d -- new pair = %d", current_pair, pair));
-   		if (pair != current_pair || (turn_off && pair)) {
-			_nc_do_color(pair, outc);
-		}
-   	}
-
 	if (SP)
 		SP->_current_attr = newmode;
+	else
+		previous_attr = newmode;
 
-	T(("vidputs finished"));
-	return OK;
+	returnCode(OK);
 }
 
+#ifdef EXTERN_TERMINFO
 #undef vidattr
+#endif
 
 int vidattr(attr_t newmode)
 {
+	T((T_CALLED("vidattr(%s)"), _traceattr(newmode)));
 
-	T(("vidattr(%lx) called", newmode));
-
-	return(vidputs(newmode, _nc_outch));
+	returnCode(vidputs(newmode, _nc_outch));
 }
 
 attr_t termattrs(void)

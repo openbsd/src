@@ -21,9 +21,10 @@
 
 
 
-#include "curses.priv.h"
-#include "term.h"	/* ena_acs, acs_chars */
-#include <string.h>
+#include <curses.priv.h>
+#include <term.h>	/* ena_acs, acs_chars */
+
+MODULE_ID("Id: lib_acs.c,v 1.8 1997/04/24 11:04:07 tom Exp $")
 
 chtype acs_map[128];
 
@@ -61,7 +62,7 @@ void init_acs(void)
 	ACS_LANTERN  = '#';	/* should be lantern symbol */
 	ACS_BLOCK    = '#';	/* should be solid square block */
 	/* these defaults were invented for ncurses */
-	ACS_S3       = '-';	/* should be scan line 3 */  
+	ACS_S3       = '-';	/* should be scan line 3 */
 	ACS_S7       = '-';	/* should be scan line 7 */
 	ACS_LEQUAL   = '<';	/* should be less-than-or-equal-to */
 	ACS_GEQUAL   = '>';	/* should be greater-than-or-equal-to */
@@ -78,13 +79,13 @@ void init_acs(void)
 #endif /* ena_acs */
 
 #ifdef acs_chars
-#define ALTCHAR(c)	((chtype)(c) & A_CHARTEXT) | A_ALTCHARSET
+#define ALTCHAR(c)	(TextOf(c) | A_ALTCHARSET)
 
 	if (acs_chars != NULL) {
 	    size_t i = 0;
 	    size_t length = strlen(acs_chars);
-	    
-		while (i < length) 
+
+		while (i < length)
 			switch (acs_chars[i]) {
 			case 'l':case 'm':case 'k':case 'j':
 			case 'u':case 't':case 'v':case 'w':
@@ -94,7 +95,7 @@ void init_acs(void)
 			case '.':case '-':case 'h':case 'I':
 			case '0':case 'p':case 'r':case 'y':
 			case 'z':case '{':case '|':case '}':
-				acs_map[(unsigned int)acs_chars[i]] = 
+				acs_map[(unsigned int)acs_chars[i]] =
 					ALTCHAR(acs_chars[i+1]);
 				i++;
 				/* FALLTHRU */
@@ -104,8 +105,27 @@ void init_acs(void)
 			}
 	}
 #ifdef TRACE
-	else {
-		T(("acsc not defined, using default mapping"));
+#define SIZEOF(v) (sizeof(v)/sizeof(v[0]))
+	/* Show the equivalent mapping, noting if it does not match the
+	 * given attribute, whether by re-ordering or duplication.
+	 */
+	if (_nc_tracing & TRACE_CALLS) {
+		size_t n, m;
+		char show[SIZEOF(acs_map) + 1];
+		for (n = 1, m = 0; n < SIZEOF(acs_map); n++) {
+			if (acs_map[n] != 0) {
+				show[m++] = (char)n;
+				show[m++] = TextOf(acs_map[n]);
+			}
+		}
+		show[m] = 0;
+		_tracef("%s acs_chars %s",
+			(acs_chars == NULL)
+			? "NULL"
+			: (strcmp(acs_chars, show)
+				? "DIFF"
+				: "SAME"),
+			_nc_visbuf(show));
 	}
 #endif /* TRACE */
 #endif /* acs_char */

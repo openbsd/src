@@ -30,14 +30,15 @@
 **
 */
 
-#include "curses.priv.h"
-#include <stdlib.h>
-#include <string.h>
+#include <curses.priv.h>
+
+MODULE_ID("Id: lib_scroll.c,v 1.11 1997/02/01 23:22:54 tom Exp $")
 
 void _nc_scroll_window(WINDOW *win, int const n, short const top, short const bottom)
 {
 int	line, j;
-chtype	blank = _nc_render(win, ' ', BLANK);
+chtype	blank = _nc_background(win);
+size_t	to_copy = (size_t)(sizeof(chtype) * (win->_maxx + 1));
 
 	TR(TRACE_MOVE, ("_nc_scroll_window(%p, %d, %d, %d)", win, n, top,bottom)); 
 
@@ -57,7 +58,7 @@ chtype	blank = _nc_render(win, ' ', BLANK);
 		for (line = bottom; line >= top-n; line--) {
 		    	memcpy(win->_line[line].text,
 			       win->_line[line+n].text,
-			       (size_t)(sizeof(chtype) * (win->_maxx+1)));
+			       to_copy);
 			win->_line[line].oldindex = win->_line[line+n].oldindex;
 		}
 		for (line = top; line < top-n; line++) {
@@ -74,7 +75,7 @@ chtype	blank = _nc_render(win, ' ', BLANK);
 		for (line = top; line <= bottom-n; line++) {
 		    	memcpy(win->_line[line].text,
 			       win->_line[line+n].text,
-			       (size_t)(sizeof(chtype) * (win->_maxx+1)));
+			       to_copy);
 			win->_line[line].oldindex = win->_line[line+n].oldindex;
 		}
 		for (line = bottom; line > bottom-n; line--) {
@@ -90,21 +91,21 @@ chtype	blank = _nc_render(win, ' ', BLANK);
 int
 wscrl(WINDOW *win, int n)
 {
-	T(("wscrl(%p,%d) called", win, n));
+	T((T_CALLED("wscrl(%p,%d)"), win, n));
 
 	if (! win->_scroll)
-		return ERR;
+		returnCode(ERR);
 
 	if (n == 0)
-		return OK;
+		returnCode(OK);
 
 	if ((n > (win->_regbottom - win->_regtop)) || 
 	    (-n > (win->_regbottom - win->_regtop)))
-	    return ERR;
+	    returnCode(ERR);
 
 	_nc_scroll_window(win, n, win->_regtop, win->_regbottom);
 	touchline(win, win->_regtop, (int)(win->_regbottom - win->_regtop + 1));
 
 	_nc_synchook(win);
-    	return OK;
+    	returnCode(OK);
 }

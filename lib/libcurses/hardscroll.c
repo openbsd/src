@@ -74,14 +74,14 @@ becomes new.  For example, scrolling down the region from 12 to 16 will produce
 0..11 -1 12..15 17..23.
 
 Now, an obvious property of all these operations is that they preserve the
-order of old lines, though not their position in the sequence.  
+order of old lines, though not their position in the sequence.
 
 The key trick of this algorithm is that the original line indices described
 above are actually maintained as _line[].oldindex fields in the window
 structure, and stick to each line through scroll and insert/delete operations.
 
 Thus, it is possible at update time to look at the oldnum fields and compute
-an optimal set of il/dl/scroll operations that will take the real screen 
+an optimal set of il/dl/scroll operations that will take the real screen
 lines to the virtual screen lines.  Once these vertical moves have been done,
 we can hand off to the second stage of the update algorithm, which does line
 transformations.
@@ -125,7 +125,7 @@ Here is pseudo-code for the remainder of the algorithm:
 7:        ofirst = (first line's oldnum, where it was on real screen)
 8:        olast = (last line's oldnum, where it was on real screen)
 
-          # figure the hunk's displacement 
+          # figure the hunk's displacement
 9:        disp = first - (first virtual line's oldnum field)
 
           # does the hunk want to move?
@@ -141,7 +141,7 @@ Here is pseudo-code for the remainder of the algorithm:
 16:               no_hunk_moved = FALSE
 
           # done trying to move this hunk
-17:       first = last + 1; 
+17:       first = last + 1;
        end while
     until
 18:    no_hunk_moved;    # quit when a complete pass finds no movable hunks
@@ -151,9 +151,9 @@ HOW TO TEST THIS:
 Use the following production:
 
 hardscroll: hardscroll.c
-	$(CC) -g -DMAINDEBUG hardscroll.c -o hardscroll
+	$(CC) -g -DSCROLLDEBUG hardscroll.c -o hardscroll
 
-Then just type scramble vectors and watch.  The following test loads are 
+Then just type scramble vectors and watch.  The following test loads are
 a representative sample of cases:
 
 -----------------------------  CUT HERE ------------------------------------
@@ -181,21 +181,20 @@ AUTHOR
 
 *****************************************************************************/
 
-#include "curses.priv.h"
+#include <curses.priv.h>
 
-#include <stdlib.h>
-#include <string.h>
+MODULE_ID("Id: hardscroll.c,v 1.17 1997/02/15 22:33:12 tom Exp $")
 
-#if defined(TRACE) || defined(MAINDEBUG)
-static void linedump(void);
-#endif /* defined(TRACE) || defined(MAINDEBUG) */
+#if defined(TRACE) || defined(SCROLLDEBUG)
+void _nc_linedump(void);
+#endif /* defined(TRACE) || defined(SCROLLDEBUG) */
 
 /* if only this number of lines is carried over, nuke the screen and redraw */
 #define CLEAR_THRESHOLD		3
 
-#ifdef MAINDEBUG
+#if defined(SCROLLDEBUG) || defined(HASHDEBUG)
 #define LINES	24
-static int oldnums[LINES], reallines[LINES];
+int oldnums[LINES], reallines[LINES];
 #define OLDNUM(n)	oldnums[n]
 #define REAL(m)		reallines[m]
 #undef T
@@ -207,7 +206,7 @@ static int oldnums[LINES], reallines[LINES];
 #ifndef _NEWINDEX
 #define _NEWINDEX	-1
 #endif /* _NEWINDEX */
-#endif /* MAINDEBUG */
+#endif /* defined(SCROLLDEBUG) || defined(HASHDEBUG) */
 
 static bool all_discarded(int const top, int const bottom, int const disp)
 /* has the given range of real lines been marked discarded? */
@@ -226,11 +225,11 @@ void _nc_scroll_optimize(void)
 {
     bool no_hunk_moved;		/* no hunk moved on this pass? */
     int	n, new_lines;
-#if defined(TRACE) || defined(MAINDEBUG)
+#if defined(TRACE) || defined(SCROLLDEBUG)
     int	pass = 0;
-#endif /* defined(TRACE) || defined(MAINDEBUG) */
+#endif /* defined(TRACE) || defined(SCROLLDEBUG) */
 
-    TR(TRACE_CALLS, ("_nc_scroll_optimize() begins"));
+    TR(TRACE_ICALLS, ("_nc_scroll_optimize() begins"));
 
     /* mark any line not carried over with _NEWINDEX */
     for (n = 0; n < LINES; n++)
@@ -246,7 +245,7 @@ void _nc_scroll_optimize(void)
 	    new_lines++;
 	}
 
-    /* 
+    /*
      * ^F in vi (which scrolls forward by LINES-2 in the file) exposes
      * a weakness in this design.  Ideally, vertical motion
      * optimization should cost its actions and then force a
@@ -256,22 +255,22 @@ void _nc_scroll_optimize(void)
      * carried over, don't bother with the scrolling, we just nuke the
      * screen and redraw the whole thing.  Keith Bostic argues that
      * this will be a win on strictly visual grounds even if the
-     * resulting update is theoretically sub-optimal.  Experience 
+     * resulting update is theoretically sub-optimal.  Experience
      * with vi says he's probably right.
      */
     if (LINES - new_lines <= CLEAR_THRESHOLD)
     {
 	T(("too few lines carried over, nuking screen"));
-#ifndef MAINDEBUG
+#if !defined(SCROLLDEBUG) && !defined(HASHDEBUG)
 	clearok(stdscr, TRUE);
-#endif /* MAINDEBUG */
+#endif /* !defined(SCROLLDEBUG) && !defined(HASHDEBUG) */
 	return;
     }
 
 #ifdef TRACE
     TR(TRACE_UPDATE | TRACE_MOVE, ("After real line marking:"));
     if (_nc_tracing & (TRACE_UPDATE | TRACE_MOVE))
-	linedump();
+	_nc_linedump();
 #endif /* TRACE */
 
     /* time to shuffle lines to do scroll optimization */
@@ -284,7 +283,7 @@ void _nc_scroll_optimize(void)
 
 	TR(TRACE_UPDATE | TRACE_MOVE, ("Pass %d:", pass++));
 
-	first = 0;	       	/* start scan at top line */
+	first = 0;		/* start scan at top line */
 	no_hunk_moved = TRUE;
 
 	while (first < LINES)
@@ -322,15 +321,16 @@ void _nc_scroll_optimize(void)
 			ofirst += disp;
 
 		    TR(TRACE_UPDATE | TRACE_MOVE, ("scroll [%d, %d] by %d", ofirst, olast, -disp));
-#ifndef MAINDEBUG
-		    (void) _nc_mvcur_scrolln(-disp, ofirst, olast, LINES - 1);
+#if !defined(SCROLLDEBUG) && !defined(HASHDEBUG)
+		    if (_nc_mvcur_scrolln(-disp, ofirst, olast, LINES - 1) == ERR)
+		    	break;
 		    _nc_scroll_window(curscr, -disp, ofirst, olast);
-#endif /* MAINDEBUG */		    
+#endif /* !defined(SCROLLDEBUG) && !defined(HASHDEBUG) */
 
 		    for (m = ofirst; m <= olast; m++)
 		    {
 			REAL(m) = _NEWINDEX;
-#ifndef MAINDEBUG
+#if !defined(SCROLLDEBUG) && !defined(HASHDEBUG)
 			/*
 			 * This will tell the second stage of the optimizer
 			 * that every line in the hunk on the real screen has
@@ -338,7 +338,7 @@ void _nc_scroll_optimize(void)
 			 */
 			curscr->_line[m].firstchar = 0;
 			curscr->_line[m].lastchar = curscr->_maxx;
-#endif /* MAINDEBUG */		    
+#endif /* !defined(SCROLLDEBUG) && !defined(HASHDEBUG) */
 		    }
 		    for (m = first; m <= last; m++)
 			OLDNUM(m) = _NEWINDEX;
@@ -353,8 +353,8 @@ void _nc_scroll_optimize(void)
 	(!no_hunk_moved);
 }
 
-#if defined(TRACE) || defined(MAINDEBUG)
-static void linedump(void)
+#if defined(TRACE) || defined(SCROLLDEBUG)
+void _nc_linedump(void)
 /* dump the state of the real and virtual oldnum fields */
 {
     int	n;
@@ -362,7 +362,7 @@ static void linedump(void)
 
     (void) strcpy(buf, "real");
     for (n = 0; n < LINES; n++)
-	(void) sprintf(buf + strlen(buf), " %02d", REAL(n)); 
+	(void) sprintf(buf + strlen(buf), " %02d", REAL(n));
     TR(TRACE_UPDATE | TRACE_MOVE, (buf));
 
     (void) strcpy(buf, "virt");
@@ -370,11 +370,12 @@ static void linedump(void)
 	(void) sprintf(buf + strlen(buf), " %02d", OLDNUM(n));
     TR(TRACE_UPDATE | TRACE_MOVE, (buf));
 }
-#endif /* defined(TRACE) || defined(MAINDEBUG) */
+#endif /* defined(TRACE) || defined(SCROLLDEBUG) */
 
-#ifdef MAINDEBUG
+#ifdef SCROLLDEBUG
 
-main()
+int
+main(int argc GCC_UNUSED, char *argv[] GCC_UNUSED)
 {
     char	line[BUFSIZ], *st;
 
@@ -391,7 +392,7 @@ main()
 
 	/* grab the test vector */
 	if (fgets(line, sizeof(line), stdin) == (char *)NULL)
-	    exit(0);
+	    exit(EXIT_SUCCESS);
 
 	/* parse it */
 	n = 0;
@@ -404,17 +405,16 @@ main()
 	do {
 	    oldnums[n++] = atoi(st);
 	} while
-	    (st = strtok((char *)NULL, " "));
+	    ((st = strtok((char *)NULL, " ")) != 0);
 
 	/* display it */
 	(void) fputs("Initial input:\n", stderr);
-	linedump();
+	_nc_linedump();
 
-	_nc_scroll_optimize();	
+	_nc_scroll_optimize();
     }
 }
 
-#endif /* MAINDEBUG */
+#endif /* SCROLLDEBUG */
 
 /* hardscroll.c ends here */
-

@@ -27,14 +27,16 @@
 **
 */
 
-#include "curses.priv.h"
+#include <curses.priv.h>
 
-static void overlap(const WINDOW *const s, WINDOW *const d, int const flag)
-{ 
+MODULE_ID("Id: lib_overlay.c,v 1.8 1997/04/24 10:34:38 tom Exp $")
+
+static int overlap(const WINDOW *const s, WINDOW *const d, int const flag)
+{
 int sminrow, smincol, dminrow, dmincol, dmaxrow, dmaxcol;
 
 	T(("overlap : sby %d, sbx %d, smy %d, smx %d, dby %d, dbx %d, dmy %d, dmx %d",
-		s->_begy, s->_begx, s->_maxy, s->_maxx, 
+		s->_begy, s->_begx, s->_maxy, s->_maxx,
 		d->_begy, d->_begx, d->_maxy, d->_maxx));
 	sminrow = max(s->_begy, d->_begy) - s->_begy;
 	smincol = max(s->_begx, d->_begx) - s->_begx;
@@ -43,7 +45,9 @@ int sminrow, smincol, dminrow, dmincol, dmaxrow, dmaxcol;
 	dmaxrow = min(s->_maxy+s->_begy, d->_maxy+d->_begy) - d->_begy;
 	dmaxcol = min(s->_maxx+s->_begx, d->_maxx+d->_begx) - d->_begx;
 
-	copywin(s, d, sminrow, smincol, dminrow, dmincol, dmaxrow, dmaxcol, flag);
+	return(copywin(s, d,
+		       sminrow, smincol, dminrow, dmincol, dmaxrow, dmaxcol,
+		       flag));
 }
 
 /*
@@ -58,8 +62,8 @@ int sminrow, smincol, dminrow, dmincol, dmaxrow, dmaxcol;
 
 int overlay(const WINDOW *win1, WINDOW *win2)
 {
-	overlap(win1, win2, TRUE);
-	return OK;
+	T((T_CALLED("overlay(%p,%p)"), win1, win2));
+	returnCode(overlap(win1, win2, TRUE));
 }
 
 /*
@@ -74,54 +78,54 @@ int overlay(const WINDOW *win1, WINDOW *win2)
 
 int overwrite(const WINDOW *win1, WINDOW *win2)
 {
-	overlap(win1, win2, FALSE);
-	return OK;
+	T((T_CALLED("overwrite(%p,%p)"), win1, win2));
+	returnCode(overlap(win1, win2, FALSE));
 }
 
-int copywin(const WINDOW *src, WINDOW *dst, 
+int copywin(const WINDOW *src, WINDOW *dst,
 	int sminrow, int smincol,
-	int dminrow, int dmincol, int dmaxrow, int dmaxcol, 
+	int dminrow, int dmincol, int dmaxrow, int dmaxcol,
 	int over)
 {
 int sx, sy, dx, dy;
-int touched;
+bool touched;
 
-	T(("copywin(%p, %p, %d, %d, %d, %d, %d, %d, %d)",
-	    	src, dst, sminrow, smincol, dminrow, dmincol, dmaxrow, dmaxcol, over));
-	
+	T((T_CALLED("copywin(%p, %p, %d, %d, %d, %d, %d, %d, %d)"),
+		src, dst, sminrow, smincol, dminrow, dmincol, dmaxrow, dmaxcol, over));
+
 	/* make sure rectangle exists in source */
 	if ((sminrow + dmaxrow - dminrow) > (src->_maxy + 1) ||
 	    (smincol + dmaxcol - dmincol) > (src->_maxx + 1)) {
-		return ERR;
+		returnCode(ERR);
 	}
 
 	T(("rectangle exists in source"));
 
 	/* make sure rectangle fits in destination */
 	if (dmaxrow > dst->_maxy || dmaxcol > dst->_maxx) {
-		return ERR;
+		returnCode(ERR);
 	}
 
 	T(("rectangle fits in destination"));
 
 	for (dy = dminrow, sy = sminrow; dy <= dmaxrow; sy++, dy++) {
-	   touched=0;
+	   touched = FALSE;
 	   for(dx=dmincol, sx=smincol; dx <= dmaxcol; sx++, dx++)
 	   {
 		if (over)
 		{
-		   if (((src->_line[sy].text[sx] & A_CHARTEXT)!=' ') &&
+		   if ((TextOf(src->_line[sy].text[sx]) != ' ') &&
                        (dst->_line[dy].text[dx]!=src->_line[sy].text[sx]))
 		   {
 			dst->_line[dy].text[dx] = src->_line[sy].text[sx];
-			touched=1;
+			touched = TRUE;
 		   }
 	        }
 		else {
 		   if (dst->_line[dy].text[dx] != src->_line[sy].text[sx])
 		   {
 			dst->_line[dy].text[dx] = src->_line[sy].text[sx];
-			touched=1;
+			touched = TRUE;
                    }
                 }
            }
@@ -131,5 +135,5 @@ int touched;
 	   }
 	}
 	T(("finished copywin"));
-	return OK;
+	returnCode(OK);
 }

@@ -27,18 +27,30 @@
 **
 */
 
-#include "curses.priv.h"
+#include <curses.priv.h>
+
+MODULE_ID("Id: lib_instr.c,v 1.6 1997/05/03 10:51:07 juergen Exp $")
 
 int winnstr(WINDOW *win, char *str, int n)
 {
-	int	i;
+	int	i, row, col;
 
-	T(("winnstr(%p,'%p',%d) called", win, str, n));
+	T((T_CALLED("winnstr(%p,%p,%d)"), win, str, n));
 
-	for (i = 0; (n < 0 || (i < n)) && (win->_curx + i <= win->_maxx); i++)
-	    str[i] = win->_line[win->_cury].text[win->_curx + i] & A_CHARTEXT;
-	str[i] = '\0';
+	getyx(win, row, col);
 
-	return(i);
+	if (n < 0)
+		n = win->_maxx - win->_curx + 1;
+
+	for (i = 0; i < n;) {
+		str[i++] = TextOf(win->_line[row].text[col]);
+		if (++col > win->_maxx) {
+			col = 0;
+			if (++row > win->_maxy)
+				break;
+		}
+	}
+	str[i] = '\0';	/* SVr4 does not seem to count the null */
+
+	returnCode(i);
 }
-

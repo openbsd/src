@@ -27,22 +27,25 @@
 **
 */
 
-#include "curses.priv.h"
+#include <curses.priv.h>
 
 #include <signal.h>
-#include <stdlib.h>
 
 #if HAVE_SIGACTION
 #if !HAVE_TYPE_SIGACTION
 typedef struct sigaction sigaction_t;
 #endif
-#else
-#include "SigAction.h"
+#else	/* !HAVE_SIGACTION */
+#if HAVE_SIGVEC
+#include <SigAction.h>
+#endif
 #endif
 
 #ifdef SVR4_ACTION
 #define _POSIX_SOURCE
 #endif
+
+MODULE_ID("Id: lib_tstp.c,v 1.8 1996/11/17 00:11:41 tom Exp $")
 
 /*
  * Note: This code is fragile!  Its problem is that different OSs
@@ -88,7 +91,7 @@ typedef struct sigaction sigaction_t;
  */
 
 #ifdef SIGTSTP
-static void tstp(int dummy)
+static void tstp(int dummy GCC_UNUSED)
 {
 	sigset_t mask, omask;
 	sigaction_t act, oact;
@@ -123,7 +126,7 @@ static void tstp(int dummy)
 	(void)sigaddset(&mask, SIGTSTP);
 	(void)sigprocmask(SIG_UNBLOCK, &mask, NULL);
 
-	/* Now we want to resend SIGSTP to this process and suspend it */ 
+	/* Now we want to resend SIGSTP to this process and suspend it */
 	act.sa_handler = SIG_DFL;
 	sigemptyset(&act.sa_mask);
 	act.sa_flags = 0;
@@ -146,7 +149,7 @@ static void tstp(int dummy)
 	def_shell_mode();
 
 	/*
-	 * This relies on the fact that doupdate() will restore the 
+	 * This relies on the fact that doupdate() will restore the
 	 * program-mode tty state, and issue enter_ca_mode if need be.
 	 */
 	doupdate();
@@ -165,6 +168,7 @@ static void cleanup(int sig)
 	 */
 	if (sig == SIGINT
 	 || sig == SIGQUIT) {
+#if HAVE_SIGACTION || HAVE_SIGVEC
 		sigaction_t act;
 		sigemptyset(&act.sa_mask);
 		act.sa_flags = 0;
@@ -172,14 +176,20 @@ static void cleanup(int sig)
 		if (sigaction(sig, &act, (sigaction_t *)0) == 0) {
 			endwin();
 		}
+#else
+		if (signal(sig, SIG_IGN) != SIG_ERR) {
+			endwin();
+		}
+#endif
 	}
-	exit(1);
+	exit(EXIT_FAILURE);
 }
 
 /*
  * If the given signal is still in its default state, set it to the given
  * handler.
  */
+#if HAVE_SIGACTION || HAVE_SIGVEC
 static int CatchIfDefault(int sig, sigaction_t *act)
 {
 	sigaction_t old_act;
@@ -194,6 +204,21 @@ static int CatchIfDefault(int sig, sigaction_t *act)
 	}
 	return FALSE;
 }
+#else
+static int CatchIfDefault(int sig, RETSIGTYPE (*handler)())
+{
+	void	(*ohandler)();
+
+	ohandler = signal(sig, SIG_IGN);
+	if (ohandler == SIG_DFL) {
+		signal(sig, handler);
+		return TRUE;
+	} else {
+		signal(sig, ohandler);
+		return FALSE;
+	}
+}
+#endif
 
 /*
  * This is invoked once at the beginning (e.g., from 'initscr()'), to
@@ -243,10 +268,15 @@ static int ignore;
 #else
 	if (enable)
 	{
+#if HAVE_SIGACTION || HAVE_SIGVEC
 		static sigaction_t act;
 		act.sa_handler = cleanup;
 		CatchIfDefault(SIGINT,  &act);
 		CatchIfDefault(SIGTERM, &act);
+#else
+		CatchIfDefault(SIGINT,  cleanup);
+		CatchIfDefault(SIGTERM, cleanup);
+#endif
 	}
 #endif
 }

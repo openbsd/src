@@ -27,17 +27,19 @@
 **
 */
 
-#include "curses.priv.h"
+#include <curses.priv.h>
+
+MODULE_ID("Id: lib_inchstr.c,v 1.5 1997/02/02 01:06:03 tom Exp $")
 
 int winchnstr(WINDOW *win, chtype *str, int n)
 {
 	int	i;
 
-	T(("winchnstr(%p,'%p',%d) called", win, str, n));
+	T((T_CALLED("winchnstr(%p,%p,%d)"), win, str, n));
 
 	for (i = 0; (n < 0 || (i < n)) && (win->_curx + i <= win->_maxx); i++)
 	    str[i] = win->_line[win->_cury].text[win->_curx + i];
 	str[i] = (chtype)0;
 
-	return(i);
+	returnCode(i);
 }

@@ -23,7 +23,7 @@
  * Note: This code is not part of the SVr4/XSI Curses API!
  */
 
-#include "curses.priv.h"
+#include <curses.priv.h>
 #include <stdlib.h>
 
 int wresize(WINDOW *win, int new_lines, int new_cols)

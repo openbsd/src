@@ -26,11 +26,26 @@
 **
 */
 
-#include "curses.priv.h"
+#include <curses.priv.h>
 
-#include <stdlib.h>
+MODULE_ID("Id: lib_data.c,v 1.8 1997/01/18 23:02:54 tom Exp $")
 
 WINDOW *stdscr, *curscr, *newscr;
+
+/*
+ * Linked-list of all windows, to support '_nc_resizeall()' and '_nc_freeall()'
+ */
+WINDOWLIST *_nc_windows;
+
+/*
+ * These data correspond to the state of the idcok() and idlok() functions.  A
+ * caveat is in order here:  the XSI and SVr4 documentation specify that these
+ * functions apply to the window which is given as an argument.  However,
+ * ncurses implements this logic only for the newscr/curscr update process,
+ * _not_ per-window.
+ */
+bool _nc_idcok = TRUE;
+bool _nc_idlok = FALSE;
 
 /*
  * The variable 'SP' will be defined as a function on systems that cannot link
@@ -52,7 +67,7 @@ SCREEN *_nc_screen(void)
 
 int _nc_alloc_screen(void)
 {
-	return ((my_screen = (SCREEN *) calloc(sizeof(*SP), 1)) != NULL);
+	return ((my_screen = typeCalloc(SCREEN, 1)) != 0);
 }
 
 void _nc_set_screen(SCREEN *sp)

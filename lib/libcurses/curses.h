@@ -1,4 +1,3 @@
-
 /***************************************************************************
 *                            COPYRIGHT NOTICE                              *
 ****************************************************************************
@@ -19,21 +18,48 @@
 *                                                                          *
 ***************************************************************************/
 
+/* Id: curses.h.in,v 1.44 1997/04/20 01:32:08 tom Exp $ */
 
 #ifndef __NCURSES_H
 #define __NCURSES_H
 #define CURSES 1
 #define CURSES_H 1
-#define NCURSES_VERSION "1.9.9e"
 
-#ifndef _CHTYPE_T_
-#define	_CHTYPE_T_	unsigned long
-typedef _CHTYPE_T_	chtype;
+/* These are defined only in curses.h, and are used for conditional compiles */
+#define NCURSES_VERSION_MAJOR 4
+#define NCURSES_VERSION_MINOR 1
+#define NCURSES_VERSION_PATCH 970515
+
+/* This is defined in more than one ncurses header, for identification */
+#undef  NCURSES_VERSION
+#define NCURSES_VERSION "4.1"
+
+#ifdef NCURSES_NOMACROS
+#define NCURSES_ATTR_T attr_t
 #endif
 
-#include <stdio.h>   
+#ifndef NCURSES_ATTR_T
+#define NCURSES_ATTR_T int
+#endif
+
+#ifndef NCURSES_CONST
+#define NCURSES_CONST /* nothing */
+#endif
+
+#ifdef EXTERN_TERMINFO
+#ifndef _CHTYPE_T_
+#define _CHTYPE_T_	unsigned long
+typedef _CHTYPE_T_	chtype;
+#endif
+#else
+#ifndef _UNCTRL_H
+typedef unsigned long  chtype;
+#endif
+#endif
+
+#include <stdio.h>
 #include <unctrl.h>
-#include <stdarg.h>
+#include <stdarg.h>	/* we need va_list */
 #ifdef _XOPEN_SOURCE_EXTENDED
 #include <stddef.h>	/* we want wchar_t */
 #endif /* _XOPEN_SOURCE_EXTENDED */
@@ -59,6 +85,10 @@ typedef _CHTYPE_T_	chtype;
 typedef CXX_TYPE_OF_BOOL bool;
 #define TRUE    ((bool)1)
 #define FALSE   ((bool)0)
+#endif
+
+#ifdef __cplusplus
+extern "C" {
 #endif
 
 /*
@@ -87,7 +117,6 @@ typedef CXX_TYPE_OF_BOOL bool;
 /* colors */
 extern int COLORS;
 extern int COLOR_PAIRS;
-extern unsigned char *color_pairs;
 
 #define COLOR_BLACK	0
 #define COLOR_RED	1
@@ -100,7 +129,7 @@ extern unsigned char *color_pairs;
 
 /* line graphics */
 
-extern 	chtype acs_map[];
+extern	chtype acs_map[];
 
 /* VT100 symbols begin here */
 #define ACS_ULCORNER	(acs_map['l'])	/* upper left corner */
@@ -147,7 +176,7 @@ extern 	chtype acs_map[];
  * is the right, b is the bottom, and l is the left.  t, r, b, and l might
  * be B (blank), S (single), D (double), or T (thick).  The subset defined
  * here only uses B and S.
- */ 
+ */
 #define ACS_BSSB	ACS_ULCORNER
 #define ACS_SSBB	ACS_LLCORNER
 #define ACS_BBSS	ACS_URCORNER
@@ -175,10 +204,10 @@ extern 	chtype acs_map[];
 #define _SCROLLWIN      0x08	/* bottom edge is at screen bottom? */
 #define _ISPAD	        0x10	/* is this window a pad? */
 #define _HASMOVED       0x20	/* has cursor moved since last refresh? */
-#define _NEED_WRAP	0x40	/* cursor wrap pending */
+#define _WRAPPED        0x40	/* cursor was just wrappped */
 
 /*
- * this value is used in the firstchar and lastchar fields to mark 
+ * this value is used in the firstchar and lastchar fields to mark
  * unchanged lines
  */
 #define _NOCHANGE       -1
@@ -262,6 +291,8 @@ struct _win_st {
 	    short _pad_top,    _pad_left;
 	    short _pad_bottom, _pad_right;
 	} _pad;
+
+	short   _yoffset;	/* real begy is _begy + _yoffset */
 };
 
 extern WINDOW   *stdscr, *curscr, *newscr;
@@ -273,9 +304,10 @@ extern int	LINES, COLS, TABSIZE;
  */
 extern int ESCDELAY;	/* ESC expire time in milliseconds */
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+/* non-XSI extensions (dickey@clark.net) */
+extern int resizeterm (int, int);
+extern int wresize (WINDOW *, int, int);
+extern int use_default_colors (void);
 
 extern char ttytype[];		/* needed for backward compatibility */
 
@@ -286,6 +318,30 @@ extern char ttytype[];		/* needed for backward compatibility */
  */
 #if !defined(__GNUC__) && !defined(__attribute__)
 #define __attribute__(p) /* nothing */
+#endif
+
+/*
+ * We cannot define these in ncurses_cfg.h, since they require parameters to be
+ * passed (that's non-portable).
+ */
+#if	GCC_PRINTF
+#define GCC_PRINTFLIKE(fmt,var) __attribute__((format(printf,fmt,var)))
+#else
+#define GCC_PRINTFLIKE(fmt,var) /*nothing*/
+#endif
+
+#if	GCC_SCANF
+#define GCC_SCANFLIKE(fmt,var)  __attribute__((format(scanf,fmt,var)))
+#else
+#define GCC_SCANFLIKE(fmt,var)  /*nothing*/
+#endif
+
+#ifndef	GCC_NORETURN
+#define	GCC_NORETURN /* nothing */
+#endif
+
+#ifndef	GCC_UNUSED
+#define	GCC_UNUSED /* nothing */
 #endif
 
 /*
@@ -307,13 +363,13 @@ extern int add_wch(const cchar_t *);			/* missing */
 extern int add_wchnstr(const cchar_t *, int);		/* missing */
 extern int add_wchstr(const cchar_t *);			/* missing */
 #endif /* _XOPEN_SOURCE_EXTENDED */
-extern int attroff(int);				/* generated */
-extern int attron(int);					/* generated */
-extern int attrset(int);				/* generated */
+extern int attroff(NCURSES_ATTR_T);			/* generated */
+extern int attron(NCURSES_ATTR_T);			/* generated */
+extern int attrset(NCURSES_ATTR_T);			/* generated */
 extern int attr_get(void);				/* generated */
-extern int attr_off(int);				/* implemented */
-extern int attr_on(int);				/* implemented */
-extern int attr_set(int);				/* generated */
+extern int attr_off(NCURSES_ATTR_T);			/* generated */
+extern int attr_on(NCURSES_ATTR_T);			/* generated */
+extern int attr_set(NCURSES_ATTR_T);			/* generated */
 extern int baudrate(void);				/* implemented */
 extern int beep(void);					/* implemented */
 extern int bkgd(chtype);				/* generated */
@@ -343,7 +399,7 @@ extern int copywin(const WINDOW*,WINDOW*,int,int,int,int,int,int,int);	/* implem
 extern int curs_set(int);				/* implemented */
 extern int def_prog_mode(void);				/* implemented */
 extern int def_shell_mode(void);			/* implemented */
-extern int delay_output(float);				/* implemented */
+extern int delay_output(int);				/* implemented */
 extern int delch(void);					/* generated */
 extern void delscreen(SCREEN *);			/* implemented */
 extern int delwin(WINDOW *);				/* implemented */
@@ -364,15 +420,15 @@ extern int erase_wchar(wchar_t *);			/* missing */
 extern void filter(void);				/* implemented */
 extern int flash(void);					/* implemented */
 extern int flushinp(void);				/* implemented */
+extern chtype getbkgd(WINDOW *);			/* generated */
 #ifdef _XOPEN_SOURCE_EXTENDED
-extern chtype getbkgd(WINDOW *);			/* missing */
 extern int getbkgrnd(cchar_t *);			/* missing */
 extern int getcchar(const cchar_t *, wchar_t*, attr_t*, short*, void*);	/* missing */
 #endif /* _XOPEN_SOURCE_EXTENDED */
 extern int getch(void);					/* generated */
 extern int getnstr(char *, int);			/* generated */
 #ifdef _XOPEN_SOURCE_EXTENDED
-extern int getn_wstr(wint_t *, int n);			/* missing */
+extern int getn_wstr(wint_t *, int);			/* missing */
 #endif /* _XOPEN_SOURCE_EXTENDED */
 extern int getstr(char *);				/* generated */
 #ifdef _XOPEN_SOURCE_EXTENDED
@@ -383,16 +439,16 @@ extern WINDOW *getwin(FILE *);				/* not in XPG4 */
 extern int get_wstr(wint_t *);				/* missing */
 #endif /* _XOPEN_SOURCE_EXTENDED */
 extern int halfdelay(int);				/* implemented */
-extern int has_colors(void);				/* implemented */
+extern bool has_colors(void);				/* implemented */
 extern int has_ic(void);				/* implemented */
 extern int has_il(void);				/* implemented */
 extern int hline(chtype, int);				/* generated */
 #ifdef _XOPEN_SOURCE_EXTENDED
 extern int hline_set(const cchar_t *, int);		/* missing */
 #endif /* _XOPEN_SOURCE_EXTENDED */
-extern int idcok(WINDOW *, bool);			/* implemented */
+extern void idcok(WINDOW *, bool);			/* implemented */
 extern int idlok(WINDOW *, bool);			/* implemented */
-extern int immedok(WINDOW *, bool);			/* implemented */
+extern void immedok(WINDOW *, bool);			/* implemented */
 extern chtype inch(void);				/* generated */
 extern int inchnstr(chtype *, int);			/* generated */
 extern int inchstr(chtype *);				/* generated */
@@ -432,7 +488,7 @@ extern int keypad(WINDOW *,bool);			/* implemented */
 extern char killchar(void);				/* implemented */
 #ifdef _XOPEN_SOURCE_EXTENDED
 extern int killwchar(wchar_t *);			/* missing */
-#endif /* _XOPEN_SOURCE_EXTENDED */	
+#endif /* _XOPEN_SOURCE_EXTENDED */
 extern int leaveok(WINDOW *,bool);			/* implemented */
 extern char *longname(void);				/* implemented */
 extern int meta(WINDOW *,bool);				/* implemented */
@@ -456,7 +512,7 @@ extern int mvderwin(WINDOW *, int, int);		/* implemented */
 extern int mvgetch(int, int);				/* generated */
 extern int mvgetnstr(int, int, char *, int);		/* generated */
 #ifdef _XOPEN_SOURCE_EXTENDED
-extern int mvgetn_wstr(int, int, wint_t *, int n);	/* missing */
+extern int mvgetn_wstr(int, int, wint_t *, int);	/* missing */
 #endif /* _XOPEN_SOURCE_EXTENDED */
 extern int mvgetstr(int, int, char *);			/* generated */
 #ifdef _XOPEN_SOURCE_EXTENDED
@@ -489,8 +545,10 @@ extern int mvin_wch(int, int, const cchar_t *);		/* missing */
 extern int mvin_wchstr(int, int, const cchar_t *);	/* missing */
 extern int mvin_wchntr(int, int, const cchar_t *, int);	/* missing */
 #endif /* _XOPEN_SOURCE_EXTENDED */
-extern int mvprintw(int,int,const char *,...);		/* implemented */
-extern int mvscanw(int,int,const char *,...);		/* implemented */
+extern int mvprintw(int,int,const char *,...)		/* implemented */
+		GCC_PRINTFLIKE(3,4);
+extern int mvscanw(int,int,const char *,...)		/* implemented */
+		GCC_SCANFLIKE(3,4);
 extern int mvvline(int, int, chtype, int);		/* generated */
 #ifdef _XOPEN_SOURCE_EXTENDED
 extern int mvvline_set(int, int, const cchar_t *, int);	/* missing */
@@ -512,7 +570,7 @@ extern int mvwdelch(WINDOW *, int, int);		/* generated */
 extern int mvwgetch(WINDOW *, int, int);		/* generated */
 extern int mvwgetnstr(WINDOW *, int, int, char *, int);	/* generated */
 #ifdef _XOPEN_SOURCE_EXTENDED
-extern int mvwgetn_wstr(WINDOW *, int, int, wint_t *, int n);/* missing */
+extern int mvwgetn_wstr(WINDOW *, int, int, wint_t *, int);/* missing */
 #endif /* _XOPEN_SOURCE_EXTENDED */
 extern int mvwgetstr(WINDOW *, int, int, char *);	/* generated */
 #ifdef _XOPEN_SOURCE_EXTENDED
@@ -546,8 +604,10 @@ extern int mvwin_wch(WINDOW *, int, int, const cchar_t *);	/* missing */
 extern int mvwin_wchnstr(WINDOW *, int,int,const cchar_t *,int); /* missing */
 extern int mvwin_wchstr(WINDOW *, int, int, const cchar_t *);	/* missing */
 #endif /* _XOPEN_SOURCE_EXTENDED */
-extern int mvwprintw(WINDOW*,int,int,const char *,...);	/* implemented */
-extern int mvwscanw(WINDOW *,int,int,const char *,...);	/* implemented */
+extern int mvwprintw(WINDOW*,int,int,const char *,...)	/* implemented */
+		GCC_PRINTFLIKE(4,5);
+extern int mvwscanw(WINDOW *,int,int,const char *,...)	/* implemented */
+		GCC_SCANFLIKE(4,5);
 extern int mvwvline(WINDOW *,int, int, chtype, int);	/* generated */
 #ifdef _XOPEN_SOURCE_EXTENDED
 extern int mvwvline_set(WINDOW *, int,int, const cchar_t *,int); /* missing */
@@ -567,15 +627,18 @@ extern int notimeout(WINDOW *,bool);			/* implemented */
 extern int overlay(const WINDOW*,WINDOW *);		/* implemented */
 extern int overwrite(const WINDOW*,WINDOW *);		/* implemented */
 extern int pair_content(short,short*,short*);		/* implemented */
-extern int PAIR_NUMBER(int);				/* generated */	
+extern int PAIR_NUMBER(int);				/* generated */
 extern int pechochar(WINDOW *, chtype);			/* implemented */
 #ifdef _XOPEN_SOURCE_EXTENDED
 extern int pecho_wchar(WINDOW *, const cchar_t *);	/* missing */
 #endif /* _XOPEN_SOURCE_EXTENDED */
 extern int pnoutrefresh(WINDOW*,int,int,int,int,int,int);/* implemented */
 extern int prefresh(WINDOW *,int,int,int,int,int,int);	/* implemented */
-extern int printw(const char *,...);			/* implemented */
+extern int printw(const char *,...)			/* implemented */
+		GCC_PRINTFLIKE(1,2);
+#ifndef EXTERN_TERMINFO
 extern int putp(const char *);				/* implemented */
+#endif
 extern int putwin(WINDOW *, FILE *);			/* implemented */
 extern int qiflush(void);				/* implemented */
 extern int raw(void);					/* implemented */
@@ -584,9 +647,10 @@ extern int refresh(void);				/* generated */
 extern int resetty(void);				/* implemented */
 extern int reset_prog_mode(void);			/* implemented */
 extern int reset_shell_mode(void);			/* implemented */
-extern int ripoffline(int line, int (*init)(WINDOW *, int));/* implemented */
+extern int ripoffline(int, int (*init)(WINDOW *, int));	/* implemented */
 extern int savetty(void);				/* implemented */
-extern int scanw(const char *,...);			/* implemented */
+extern int scanw(const char *,...)			/* implemented */
+		GCC_SCANFLIKE(1,2);
 extern int scr_dump(const char *);			/* implemented */
 extern int scr_init(const char *);			/* implemented */
 extern int scrl(int);					/* generated */
@@ -599,15 +663,16 @@ extern int setcchar(cchar_t *, wchar_t *, attr_t, short, const void *);	/* missi
 #endif /* _XOPEN_SOURCE_EXTENDED */
 extern int setscrreg(int,int);				/* generated */
 extern SCREEN *set_term(SCREEN *);			/* implemented */
-extern int slk_attroff(chtype);				/* implemented */
+extern int slk_attroff(const attr_t);			/* implemented */
 #ifdef _XOPEN_SOURCE_EXTENDED
 extern int slk_attr_off(attr_t);			/* missing */
 #endif /* _XOPEN_SOURCE_EXTENDED */
-extern int slk_attron(chtype);				/* implemented */
+extern int slk_attron(const attr_t);			/* implemented */
 #ifdef _XOPEN_SOURCE_EXTENDED
 extern int slk_attr_on(attr_t);				/* missing */
 #endif /* _XOPEN_SOURCE_EXTENDED */
-extern int slk_attrset(chtype);				/* implemented */
+extern int slk_attrset(const attr_t);			/* implemented */
+extern attr_t slk_attr(void);                           /* implemented */
 #ifdef _XOPEN_SOURCE_EXTENDED
 extern int slk_attr_set(attr_t);			/* missing */
 #endif /* _XOPEN_SOURCE_EXTENDED */
@@ -627,20 +692,22 @@ extern int standend(void);				/* generated */
 extern int start_color(void);				/* implemented */
 extern WINDOW *subpad(WINDOW *, int, int, int, int);	/* implemented */
 extern WINDOW *subwin(WINDOW *,int,int,int,int);	/* implemented */
-extern int syncok(WINDOW *win, bool);			/* implemented */
+extern int syncok(WINDOW *, bool);			/* implemented */
 extern attr_t termattrs(void);				/* implemented */
 extern char *termname(void);				/* implemented */
 extern int tigetflag(const char *);			/* implemented */
 extern int tigetnum(const char *);			/* implemented */
 extern char *tigetstr(const char *);			/* implemented */
-extern int timeout(int);				/* implemented */
+extern int timeout(int);				/* generated */
 extern int typeahead(int);				/* implemented */
 extern int ungetch(int);				/* implemented */
 #ifdef _XOPEN_SOURCE_EXTENDED
 extern int unget_wch(const wchar_t *);			/* missing */
 #endif /* _XOPEN_SOURCE_EXTENDED */
 extern int untouchwin(WINDOW *);			/* generated */
+#ifndef EXTERN_TERMINFO
 extern int vidattr(chtype);				/* implemented */
+#endif
 #ifdef _XOPEN_SOURCE_EXTENDED
 extern int vid_attr(attr_t);				/* missing */
 #endif /* _XOPEN_SOURCE_EXTENDED */
@@ -653,9 +720,9 @@ extern int vline(chtype, int);				/* generated */
 extern int vline_set(const cchar_t *, int);		/* missing */
 #endif /* _XOPEN_SOURCE_EXTENDED */
 extern int vwprintw(WINDOW *,const char *,va_list);	/* implemented */
-extern int vw_printw(WINDOW *,const char *,va_list);	/* implemented */
+extern int vw_printw(WINDOW *,const char *,va_list);	/* generated */
 extern int vwscanw(WINDOW *,const char *,va_list);	/* implemented */
-extern int vw_scanw(WINDOW *,const char *,va_list);	/* implemented */
+extern int vw_scanw(WINDOW *,const char *,va_list);	/* generated */
 extern int waddch(WINDOW *, const chtype);		/* implemented */
 extern int waddchnstr(WINDOW *,const chtype *const,int); /* implemented */
 extern int waddchstr(WINDOW *,const chtype *);		/* generated */
@@ -673,7 +740,7 @@ extern int wattrset(WINDOW *, int);			/* generated */
 extern attr_t wattr_get(WINDOW *);			/* generated */
 extern int wattr_on(WINDOW *, const attr_t);		/* implemented */
 extern int wattr_off(WINDOW *, const attr_t);		/* implemented */
-extern int wattr_set(WINDOW *, attr_t);			/* implemented */
+extern int wattr_set(WINDOW *, attr_t);			/* generated */
 extern int wbkgd(WINDOW *,const chtype);		/* implemented */
 extern void wbkgdset(WINDOW *,chtype);			/* generated */
 #ifdef _XOPEN_SOURCE_EXTENDED
@@ -737,11 +804,12 @@ extern int win_wchstr(WINDOW *, const cchar_t *);	/* missing */
 #endif /* _XOPEN_SOURCE_EXTENDED */
 extern int wmove(WINDOW *,int,int);			/* implemented */
 extern int wnoutrefresh(WINDOW *);			/* implemented */
-extern int wprintw(WINDOW *,const char *,...);		/* implemented */
+extern int wprintw(WINDOW *,const char *,...)		/* implemented */
+		GCC_PRINTFLIKE(2,3);
 extern int wredrawln(WINDOW *,int,int);			/* implemented */
 extern int wrefresh(WINDOW *);				/* implemented */
-extern int wresize(WINDOW *, int, int);			/* implemented */
-extern int wscanw(WINDOW *,const char *,...);		/* implemented */
+extern int wscanw(WINDOW *,const char *,...)		/* implemented */
+		GCC_SCANFLIKE(2,3);
 extern int wscrl(WINDOW *,int);				/* implemented */
 extern int wsetscrreg(WINDOW *,int,int);		/* implemented */
 extern int wstandout(WINDOW *);				/* generated */
@@ -757,10 +825,6 @@ extern int wvline(WINDOW *,chtype,int);			/* implemented */
 #ifdef _XOPEN_SOURCE_EXTENDED
 extern int wvline_set(WINDOW *, const cchar_t *, int);	/* missing */
 #endif /* _XOPEN_SOURCE_EXTENDED */
-
-#ifdef __cplusplus
-}
-#endif
 
 /* attributes */
 #define A_ATTRIBUTES	0xffffff00
@@ -782,8 +846,8 @@ extern int wvline_set(WINDOW *, const cchar_t *, int);	/* missing */
 #define A_VERTICAL	0x40000000	/* XSI Curses attr -- not yet used */
 #define A_CHARTEXT	0x000000ff
 #define A_COLOR		0x0000ff00
-#define COLOR_PAIR(n)	(n << 8) 
-#define PAIR_NUMBER(a)	((a & A_COLOR) >> 8)
+#define COLOR_PAIR(n)	((n) << 8)
+#define PAIR_NUMBER(a)	(((a) & A_COLOR) >> 8)
 
 /*
  * pseudo functions
@@ -798,7 +862,7 @@ extern int wvline_set(WINDOW *, const cchar_t *, int);	/* missing */
 #define saveterm()		def_prog_mode()
 #define crmode()		cbreak()
 #define nocrmode()		nocbreak()
-#define gettmode()		
+#define gettmode()
 
 #define getyx(win,y,x)   	(y = (win)->_cury, x = (win)->_curx)
 #define getbegyx(win,y,x)	(y = (win)->_begy, x = (win)->_begx)
@@ -807,7 +871,10 @@ extern int wvline_set(WINDOW *, const cchar_t *, int);	/* missing */
 #define getsyx(y,x)		getyx(stdscr, y, x)
 #define setsyx(y,x)		(stdscr->_cury = y, stdscr->_curx = x)
 
-#define wbkgdset(win,ch)	((win)->_bkgd = (ch))
+#define	wbkgdset(win, ch) \
+	(((win)->_attrs = (((win)->_attrs & ~((win)->_bkgd & A_ATTRIBUTES)) | \
+	    ((ch) & A_ATTRIBUTES))), \
+	    ((win)->_bkgd = (ch)))
 
 /* It seems older SYSV curses versions define these */
 #define getattrs(win)		((win)->_attrs)
@@ -846,160 +913,164 @@ extern int wvline_set(WINDOW *, const cchar_t *, int);	/* missing */
  * pseudo functions for standard screen
  */
 
-#define bkgdset(ch)		wbkgdset(stdscr,ch)
-#define bkgd(ch)		wbkgd(stdscr,ch)
-#define inch()       		winch(stdscr)
-#define standout()     		wstandout(stdscr)
-#define standend()     		wstandend(stdscr)
-#define attron(at)     		wattron(stdscr,at)
-#define attroff(at)    		wattroff(stdscr,at)
-#define attrset(at)    		wattrset(stdscr,at)
 #define addch(ch)      		waddch(stdscr,ch)
-#define echochar(c)		wechochar(stdscr, c)
-#define getch()        		wgetch(stdscr)
+#define addchnstr(str,n)	waddchnstr(stdscr,str,n)
+#define addchstr(str)		waddchstr(stdscr,str)
+#define addnstr(str,n)		waddnstr(stdscr,str,n)
 #define addstr(str)    		waddnstr(stdscr,str,-1)
-#define getstr(str)    		wgetstr(stdscr,str)
-#define move(y, x)     		wmove(stdscr,y,x)
+#define attroff(at)    		wattroff(stdscr,at)
+#define attron(at)     		wattron(stdscr,at)
+#define attrset(at)    		wattrset(stdscr,at)
+#define bkgd(ch)		wbkgd(stdscr,ch)
+#define bkgdset(ch)		wbkgdset(stdscr,ch)
 #define clear()        		wclear(stdscr)
-#define erase()        		werase(stdscr)
 #define clrtobot()     		wclrtobot(stdscr)
 #define clrtoeol()     		wclrtoeol(stdscr)
-#define insertln()     		winsdelln(stdscr, 1)
-#define winsertln(w)     	winsdelln(w, 1)
-#define deleteln()     		winsdelln(stdscr, -1)
-#define wdeleteln(w)     	winsdelln(w, -1)
-#define refresh()      		wrefresh(stdscr)
-#define insch(c)       		winsch(stdscr,c)
 #define delch()        		wdelch(stdscr)
-#define setscrreg(t,b) 		wsetscrreg(stdscr,t,b)
+#define deleteln()     		winsdelln(stdscr,-1)
+#define echochar(c)		wechochar(stdscr,c)
+#define erase()        		werase(stdscr)
+#define getch()        		wgetch(stdscr)
+#define getstr(str)    		wgetstr(stdscr,str)
+#define inch()       		winch(stdscr)
+#define inchnstr(s,n)		winchnstr(stdscr,s,n)
+#define inchstr(s)		winchstr(stdscr,s)
+#define innstr(s,n)		winnstr(stdscr,s,n)
+#define insch(c)       		winsch(stdscr,c)
+#define insdelln(n)		winsdelln(stdscr,n)
+#define insertln()     		winsdelln(stdscr,1)
+#define insnstr(s,n)		winsnstr(stdscr,s,n)
+#define insstr(s)		winsstr(stdscr,s)
+#define instr(s)		winstr(stdscr,s)
+#define move(y,x)     		wmove(stdscr,y,x)
+#define refresh()      		wrefresh(stdscr)
 #define scrl(n)			wscrl(stdscr,n)
-#define timeout(delay)		wtimeout(stdscr, delay)
-#define addnstr(str,n)		waddnstr(stdscr,str,n)
-#define addchstr(str)		waddchstr(stdscr,str)
-#define addchnstr(str,n)	waddchnstr(stdscr,str, n)
-#define insdelln(n)		winsdelln(stdscr, n)
-#define insstr(s)		winsstr(stdscr, s)
-#define insnstr(s,n)		winsnstr(stdscr, s, n)
-#define instr(s)		winstr(stdscr, s)
-#define innstr(s,n)		winnstr(stdscr, s, n)
-#define inchstr(s)		winchstr(stdscr, s)
-#define inchnstr(s,n)		winchnstr(stdscr, s, n)
+#define setscrreg(t,b) 		wsetscrreg(stdscr,t,b)
+#define standend()     		wstandend(stdscr)
+#define standout()     		wstandout(stdscr)
+#define timeout(delay)		wtimeout(stdscr,delay)
+#define wdeleteln(win)     	winsdelln(win,-1)
+#define winsertln(win)     	winsdelln(win,1)
 
 /*
  * mv functions
  */
 
 #define mvwaddch(win,y,x,ch)    	(wmove(win,y,x) == ERR ? ERR : waddch(win,ch))
-#define mvwgetch(win,y,x)       	(wmove(win,y,x) == ERR ? ERR : wgetch(win))
 #define mvwaddchnstr(win,y,x,str,n)	(wmove(win,y,x) == ERR ? ERR : waddchnstr(win,str,n))
 #define mvwaddchstr(win,y,x,str)  	(wmove(win,y,x) == ERR ? ERR : waddchnstr(win,str,-1))
 #define mvwaddnstr(win,y,x,str,n)	(wmove(win,y,x) == ERR ? ERR : waddnstr(win,str,n))
 #define mvwaddstr(win,y,x,str)  	(wmove(win,y,x) == ERR ? ERR : waddnstr(win,str,-1))
-#define mvwgetstr(win,y,x,str)      	(wmove(win,y,x) == ERR ? ERR : wgetstr(win,str))
-#define mvgetnstr(y,x,str,n)    	(move(y,x) == ERR ? ERR : wgetnstr(stdscr,str,n))
-#define mvwgetnstr(win,y,x,str,n)    	(wmove(win,y,x) == ERR ? ERR : wgetnstr(win,str,n))
-#define mvwinch(win,y,x)        	(wmove(win,y,x) == ERR ? ERR : winch(win))
 #define mvwdelch(win,y,x)       	(wmove(win,y,x) == ERR ? ERR : wdelch(win))
-#define mvwinsch(win,y,x,c)     	(wmove(win,y,x) == ERR ? ERR : winsch(win,c))
+#define mvwgetch(win,y,x)       	(wmove(win,y,x) == ERR ? ERR : wgetch(win))
+#define mvwgetnstr(win,y,x,str,n)    	(wmove(win,y,x) == ERR ? ERR : wgetnstr(win,str,n))
+#define mvwgetstr(win,y,x,str)      	(wmove(win,y,x) == ERR ? ERR : wgetstr(win,str))
 #define mvwhline(win,y,x,c,n)     	(wmove(win,y,x) == ERR ? ERR : whline(win,c,n))
+#define mvwinch(win,y,x)        	(wmove(win,y,x) == ERR ? (chtype)ERR : winch(win))
+#define mvwinchnstr(win,y,x,s,n)	(wmove(win,y,x) == ERR ? ERR : winchnstr(win,s,n))
+#define mvwinchstr(win,y,x,s)		(wmove(win,y,x) == ERR ? ERR : winchstr(win,s))
+#define mvwinnstr(win,y,x,s,n)		(wmove(win,y,x) == ERR ? ERR : winnstr(win,s,n))
+#define mvwinsch(win,y,x,c)     	(wmove(win,y,x) == ERR ? ERR : winsch(win,c))
+#define mvwinsnstr(win,y,x,s,n)		(wmove(win,y,x) == ERR ? ERR : winsnstr(win,s,n))
+#define mvwinsstr(win,y,x,s)		(wmove(win,y,x) == ERR ? ERR : winsstr(win,s))
+#define mvwinstr(win,y,x,s)		(wmove(win,y,x) == ERR ? ERR : winstr(win,s))
 #define mvwvline(win,y,x,c,n)     	(wmove(win,y,x) == ERR ? ERR : wvline(win,c,n))
+
 #define mvaddch(y,x,ch)         	mvwaddch(stdscr,y,x,ch)
 #define mvaddchnstr(y,x,str,n)		mvwaddchnstr(stdscr,y,x,str,n)
 #define mvaddchstr(y,x,str)		mvwaddchstr(stdscr,y,x,str)
-#define mvgetch(y,x)            	mvwgetch(stdscr,y,x)
 #define mvaddnstr(y,x,str,n)		mvwaddnstr(stdscr,y,x,str,n)
 #define mvaddstr(y,x,str)       	mvwaddstr(stdscr,y,x,str)
-#define mvgetstr(y,x,str)           	mvwgetstr(stdscr,y,x,str)
-#define mvinch(y,x)             	mvwinch(stdscr,y,x)
 #define mvdelch(y,x)            	mvwdelch(stdscr,y,x)
-#define mvinsch(y,x,c)          	mvwinsch(stdscr,y,x,c)
+#define mvgetch(y,x)            	mvwgetch(stdscr,y,x)
+#define mvgetnstr(y,x,str,n)		mvwgetnstr(stdscr,y,x,str,n)
+#define mvgetstr(y,x,str)           	mvwgetstr(stdscr,y,x,str)
 #define mvhline(y,x,c,n)		mvwhline(stdscr,y,x,c,n)
-#define mvvline(y,x,c,n)		mvwvline(stdscr,y,x,c,n)
-#define mvwinsstr(w, y, x, s)		(wmove(w,y,x) == ERR ? ERR : winsstr(w,s))
-#define mvwinsnstr(w, y, x, s, n)	(wmove(w,y,x) == ERR ? ERR : winsnstr(w,s,n))
-#define mvinsstr(y,x,s)			mvwinsstr(stdscr,y,x,s)
-#define mvinsnstr(y,x,s,n)		mvwinsnstr(stdscr,y,x,s,n)
-#define mvwinstr(w, y, x, s)		(wmove(w,y,x) == ERR ? ERR : winstr(w,s))
-#define mvwinnstr(w, y, x, s, n)	(wmove(w,y,x) == ERR ? ERR : winnstr(w,s,n))
-#define mvinstr(y,x,s)			mvwinstr(stdscr,y,x,s)
-#define mvinnstr(y,x,s,n)		mvwinnstr(stdscr,y,x,s,n)
-#define mvwinchstr(w, y, x, s)		(wmove(w,y,x) == ERR ? ERR : winchstr(w,s))
-#define mvwinchnstr(w, y, x, s, n)	(wmove(w,y,x) == ERR ? ERR : winchnstr(w,s,n))
-#define mvinchstr(y,x,s)		mvwinchstr(stdscr,y,x,s)
+#define mvinch(y,x)             	mvwinch(stdscr,y,x)
 #define mvinchnstr(y,x,s,n)		mvwinchnstr(stdscr,y,x,s,n)
+#define mvinchstr(y,x,s)		mvwinchstr(stdscr,y,x,s)
+#define mvinnstr(y,x,s,n)		mvwinnstr(stdscr,y,x,s,n)
+#define mvinsch(y,x,c)          	mvwinsch(stdscr,y,x,c)
+#define mvinsnstr(y,x,s,n)		mvwinsnstr(stdscr,y,x,s,n)
+#define mvinsstr(y,x,s)			mvwinsstr(stdscr,y,x,s)
+#define mvinstr(y,x,s)			mvwinstr(stdscr,y,x,s)
+#define mvvline(y,x,c,n)		mvwvline(stdscr,y,x,c,n)
 
 /*
  * XSI curses macros for XPG4 conformance.
- * The underling functions needed to make these work are:
+ * The underlying functions needed to make these work are:
  * waddnwstr(), waddchnwstr(), wadd_wch(), wborder_set(), wchgat(),
  * wecho_wchar(), wgetn_wstr(), wget_wch(), whline_set(), vhline_set(),
  * winnwstr(), wins_nwstr(), wins_wch(), win_wch(), win_wchnstr().
  * Except for wchgat(), these are not yet implemented.  They will be someday.
  */
-#define addnwstr(wstr, n)	waddnwstr(stdscr, wstr, n)
-#define addwstr(wstr, n)	waddnwstr(stdscr, wstr, -1)
-#define mvaddnwstr(y,x,wstr, n)	(wmove(stdscr,y,x) == ERR ? ERR : waddnwstr(stdscr, wstr, n))
-#define mvaddwstr(y,x,wstr, n)	(wmove(stdscr,y,x) == ERR ? ERR : waddnwstr(stdscr, wstr, -1))
-#define mvwaddnwstr(y,x,win,wstr,n)	(wmove(win,y,x) == ERR ? ERR : waddnwstr(stdscr, wstr, n))
-#define mvwaddwstr(y,x,win,wstr,n)	(wmove(win,y,x) == ERR ? ERR : waddnwstr(stdscr, wstr, -1))
-#define waddwstr(win, wstr, n)	waddnwstr(win, wstr, -1)
-#define add_wch(c)		wadd_wch(stsdscr, c)
-#define mvadd_wch(y,x,c)	(wmove(stdscr,y,x) == ERR ? ERR : wadd_wch(stsdscr, c))
-#define mvwadd_wch(y,x,win,c)	(wmove(win,y,x) == ERR ? ERR : wadd_wch(stsdscr, c))
-#define wattr_get(win)		((win)->_attrs)
-#define attr_get()		wattr_get(stdscr)
-#define attr_off(a)		wattr_off(stdscr, a)
-#define attr_on(a)		wattr_on(stdscr, a)
-#define attr_set(a)		wattr_set(stdscr, a)
-#define wgetbkgd(win)		((win)->_bkgd)
-#define box_set(w,v,h)		wborder_set(w,v,v,h,h,0,0,0,9)
-#define chgat(n, a, c, o)	wchgat(stdscr, n, a, c, o)
-#define mvchgat(y,x, n,a,c, o)	(move(y,x)==ERR ? ERR : wchgat(stdscr,n,a,c,o))
-#define mvwchgat(w,y,x,n,a,c,o)	(wmove(w,y,x) == ERR ? ERR : wchgat(w,n,a,c,o))
-#define echo_wchar(c)		wecho_wchar(stdscr, c)
-#define getn_wstr(t, n)		wgetn_wstr(stdscr, t, n)
-#define get_wstr(t)		wgetn_wstr(stdscr, t, -1)
-#define mvgetn_wstr(y, x, t, n)	(move(y,x)==ERR ? ERR:wgetn_wstr(stdscr,t,n))
-#define mvget_wstr(y, x, t)	(move(y,x)==ERR ? ERR:wgetn_wstr(stdscr,t,-1))
-#define mvwgetn_wstr(w,y,x,t,n)	(wmove(w,y,x)==ERR ? ERR : wgetn_wstr(w,t,n))
-#define mvwget_wstr(w, y, x, t)	(wmove(w,y,x)==ERR ? ERR : wgetn_wstr(w,t,-1))
-#define wget_wstr(w, t)		wgetn_wstr(w, t, -1)
-#define get_wch(c)		wget_wch(stdscr, c)
-#define mvget_wch(y, x, c)	(move(y,x) == ERR ? ERR : wget_wch(stdscr, c))
-#define mvwget_wch(y, x, c)	(wmove(w,y,x) == ERR ? ERR : wget_wch(w, n))
-#define hline_set(c, n)		whline_set(stdscr, c, n)
-#define mvhline_set(y,x,c,n)	(move(y,x)==ERR ? ERR : whline_set(stdscr,c,n))
-#define mvvline_set(y,x,c,n)	(move(y,x)==ERR ? ERR : wvline_set(stdscr,c,n))
-#define mvwhline_set(w,y,x,c,n)	(wmove(w,y,x)==ERR ? ERR : whline_set(w,c,n))
-#define mvwvline_set(w,y,x,c,n)	(wmove(w,y,x)==ERR ? ERR : wvline_set(w,c,n))
-#define vline_set(c, n)		vhline_set(stdscr, c, n)
-#define innwstr(c, n)		winnwstr(stdscr, c, n)
-#define inwstr(c)		winnwstr(stdscr, c, -1)
-#define mvinnwstr(y, x, c, n)	(move(y,x)==ERR ? ERR : winnwstr(stdscr, c, n))
-#define mvinwstr(y, x, c)	(move(y,x)==ERR ? ERR : winnwstr(stdscr, c,-1))
-#define mvwinnwstr(w,y,x,c,n)	(wmove(w,y,x)==ERR ? ERR:winnwstr(stdscr,c,n))
-#define mvwinwstr(w,y,x,c)	(wmove(w,y,x)==ERR ? ERR:winnwstr(stdscr,c,-1))
-#define winwstr(w, c)		winnwstr(w, c, -1)
-#define ins_nwstr(t, n)		wins_nwstr(stdscr, t, n)
-#define ins_wstr(t)		wins_nwstr(stdscr, t, -1)
-#define mvins_nwstr(y,x,t,n)	(move(y,x)==ERR ? ERR: wins_nwstr(stdscr,t,n))
-#define mvins_wstr(y,x,t)	(move(y,x)==ERR ? ERR: wins_nwstr(stdscr,t,-1))
-#define mvwins_nwstr(w,y,x,t,n)	(wmove(w,y,x)==ERR?ERR:wins_nwstr(stdscr,t,n))
-#define mvwins_wstr(w,y,x,t)	(wmove(w,y,x)==ERR?ERR:wins_nwstr(stdscr,t,-1))
-#define wins_wstr(w, t)		wins_nwstr(w, t, -1)
-#define ins_wch(c)		wins_wch(stdscr, c)
-#define mvins_wch(y,x,c)	(move(y,x) == ERR ? ERR : wins_wch(c))
-#define mwvins_wch(w,y,x,c)	(wmove(w,y,x) == ERR ? ERR : wins_wch(c))
-#define in_wch(c)		win_wch(stdscr, c)
-#define mvin_wch(y,x,c)		(move(y,x) == ERR ? ERR : win_wch(stdscr, c))
-#define mvwin_wch(w,y,x,c)	(wmove(w, y,x) == ERR ? ERR : win_wch(w, c))
-#define in_wchnstr(c, n)	win_wchnstr(stdscr, c, n)
-#define in_wchstr(c)		win_wchnstr(stdscr, c, -1)
-#define mvin_wchnstr(y,x,c,n)	(move(y,x)==ERR ? ERR:win_wchnstr(stdscr,c,n))
-#define mvin_wchstr(y, x, c)	(move(y,x)==ERR ? ERR:win_wchnstr(stdscr,c,-1))
-#define mvwin_wchnstr(w,y,x,c,n)	(wmove(w,y,x)==ERR ? ERR:win_wchnstr(stdscr,c,n))
-#define mvwin_wchstr(w,y,x,c)	(wmove(w,y,x)==ERR ? ERR:win_wchnstr(stdscr,c,-1))
-#define win_wchstr(w, c)	win_wchnstr(w, c, -1)
+#define add_wch(c)			wadd_wch(stsdscr,c)
+#define addnwstr(wstr,n)		waddnwstr(stdscr,wstr,n)
+#define addwstr(wstr,n)			waddnwstr(stdscr,wstr,-1)
+#define attr_get()			wattr_get(stdscr)
+#define attr_off(a)			wattr_off(stdscr,a)
+#define attr_on(a)			wattr_on(stdscr,a)
+#define attr_set(a)			wattr_set(stdscr,a)
+#define box_set(w,v,h)			wborder_set(w,v,v,h,h,0,0,0,9)
+#define chgat(n,a,c,o)			wchgat(stdscr,n,a,c,o)
+#define echo_wchar(c)			wecho_wchar(stdscr,c)
+#define getbkgd(win)			((win)->_bkgd)
+#define get_wch(c)			wget_wch(stdscr,c)
+#define get_wstr(t)			wgetn_wstr(stdscr,t,-1)
+#define getn_wstr(t,n)			wgetn_wstr(stdscr,t,n)
+#define hline_set(c,n)			whline_set(stdscr,c,n)
+#define in_wch(c)			win_wch(stdscr,c)
+#define in_wchnstr(c,n)			win_wchnstr(stdscr,c,n)
+#define in_wchstr(c)			win_wchnstr(stdscr,c,-1)
+#define innwstr(c,n)			winnwstr(stdscr,c,n)
+#define ins_nwstr(t,n)			wins_nwstr(stdscr,t,n)
+#define ins_wch(c)			wins_wch(stdscr,c)
+#define ins_wstr(t)			wins_nwstr(stdscr,t,-1)
+#define inwstr(c)			winnwstr(stdscr,c,-1)
+
+#define mvadd_wch(y,x,c)		mvwadd_wch(stdscr,y,x,c)
+#define mvaddnwstr(y,x,wstr,n)		mvwaddnwstr(stdscr,y,x,wstr,n)
+#define mvaddwstr(y,x,wstr,n)		mvwaddnwstr(stdscr,y,x,wstr,-1)
+#define mvchgat(y,x,n,a,c,o)		mvwchgat(stdscr,y,x,n,a,c,o)
+#define mvget_wch(y,x,c)		mvwget_wch(stdscr,y,x,c)
+#define mvget_wstr(y,x,t)		mvwgetn_wstr(stdscr,y,x,t,-1)
+#define mvgetn_wstr(y,x,t,n)		mvwgetn_wstr(stdscr,y,x,t,n)
+#define mvhline_set(y,x,c,n)		mvwhline_set(stdscr,y,x,c,n)
+#define mvin_wch(y,x,c)			mvwin_wch(stdscr,y,x,c)
+#define mvin_wchnstr(y,x,c,n)		mvwin_wchnstr(stdscr,y,x,c,n)
+#define mvin_wchstr(y,x,c)		mvwin_wchnstr(stdscr,y,x,c,-1)
+#define mvinnwstr(y,x,c,n)		mvwinnwstr(stdscr,y,x,c,n)
+#define mvins_nwstr(y,x,t,n)		mvwins_nwstr(stdscr,y,x,t,n)
+#define mvins_wch(y,x,c)		mvwins_wch(stdscr,y,x,c)
+#define mvins_wstr(y,x,t)		mvwins_nwstr(stdscr,y,x,t,-1)
+#define mvinwstr(y,x,c)			mvwinnwstr(stdscr,y,x,c,-1)
+#define mvvline_set(y,x,c,n)		mvwvline_set(stdscr,y,x,c,n)
+
+#define mvwadd_wch(y,x,win,c)		(wmove(win,y,x) == ERR ? ERR : wadd_wch(stsdscr,c))
+#define mvwaddnwstr(y,x,win,wstr,n)	(wmove(win,y,x) == ERR ? ERR : waddnwstr(stdscr,wstr,n))
+#define mvwaddwstr(y,x,win,wstr,n)	(wmove(win,y,x) == ERR ? ERR : waddnwstr(stdscr,wstr,-1))
+#define mvwchgat(win,y,x,n,a,c,o)	(wmove(win,y,x) == ERR ? ERR : wchgat(win,n,a,c,o))
+#define mvwget_wch(win,y,x,c)		(wmove(win,y,x) == ERR ? ERR : wget_wch(win,n))
+#define mvwget_wstr(win,y,x,t)		(wmove(win,y,x) == ERR ? ERR : wgetn_wstr(win,t,-1))
+#define mvwgetn_wstr(win,y,x,t,n)	(wmove(win,y,x) == ERR ? ERR : wgetn_wstr(win,t,n))
+#define mvwhline_set(win,y,x,c,n)	(wmove(win,y,x) == ERR ? ERR : whline_set(win,c,n))
+#define mvwin_wch(win,y,x,c)		(wmove(win,y,x) == ERR ? ERR : win_wch(win,c))
+#define mvwin_wchnstr(win,y,x,c,n)	(wmove(win,y,x) == ERR ? ERR : win_wchnstr(stdscr,c,n))
+#define mvwin_wchstr(win,y,x,c)		(wmove(win,y,x) == ERR ? ERR : win_wchnstr(stdscr,c,-1))
+#define mvwinnwstr(win,y,x,c,n)		(wmove(win,y,x) == ERR ? ERR : winnwstr(stdscr,c,n))
+#define mvwins_nwstr(win,y,x,t,n)	(wmove(win,y,x) == ERR ? ERR : wins_nwstr(stdscr,t,n))
+#define mvwins_wch(win,y,x,c)		(wmove(win,y,x) == ERR ? ERR : wins_wch(c))
+#define mvwins_wstr(win,y,x,t)		(wmove(win,y,x) == ERR ? ERR : wins_nwstr(stdscr,t,-1))
+#define mvwinwstr(win,y,x,c)		(wmove(win,y,x) == ERR ? ERR : winnwstr(stdscr,c,-1))
+#define mvwvline_set(win,y,x,c,n)	(wmove(win,y,x) == ERR ? ERR : wvline_set(win,c,n))
+
+#define vline_set(c,n)			vhline_set(stdscr,c,n)
+#define waddwstr(win,wstr,n)		waddnwstr(win,wstr,-1)
+#define wattr_get(win)			((win)->_attrs)
+#define wget_wstr(w,t)			wgetn_wstr(w,t,-1)
+#define win_wchstr(w,c)			win_wchnstr(w,c,-1)
+#define wins_wstr(w,t)			wins_nwstr(w,t,-1)
+#define winwstr(w,c)			winnwstr(w,c,-1)
 
 
 /*
@@ -1169,34 +1240,56 @@ typedef struct
 }
 MEVENT;
 
-int getmouse(MEVENT *event);
-int ungetmouse(MEVENT *event);
-mmask_t mousemask(mmask_t newmask, mmask_t *oldmask);
-bool wenclose(WINDOW *win, int y, int x);
-int mouseinterval(int);
+extern int getmouse(MEVENT *);
+extern int ungetmouse(MEVENT *);
+extern mmask_t mousemask(mmask_t, mmask_t *);
+extern bool wenclose(WINDOW *, int, int);
+extern int mouseinterval(int);
+
+/* other non-XSI functions */
+
+extern int mcprint(char *, int);	/* direct data to printer */
+extern int has_key(int);		/* do we have given key? */
 
 /* Debugging : use with libncurses_g.a */
 
-extern void _tracef(const char *, ...) __attribute__((format(printf,1,2)));
-extern void _tracedump(char *, WINDOW *);
-extern char *_traceattr(attr_t mode);
+extern void _tracef(const char *, ...) GCC_PRINTFLIKE(1,2);
+extern void _tracedump(const char *, WINDOW *);
+extern char *_traceattr(attr_t);
+extern char *_traceattr2(int, chtype);
+extern char *_tracebits(void);
 extern char *_tracechar(const unsigned char);
+extern char *_tracechtype(chtype);
+extern char *_tracechtype2(int, chtype);
 extern char *_tracemouse(const MEVENT *);
-extern void trace(const unsigned int tracelevel);
+extern void trace(const unsigned int);
 
 /* trace masks */
-#define TRACE_DISABLE	0x00	/* turn off tracing */
-#define TRACE_UPDATE	0x01	/* trace update actions, old & new screens */
-#define TRACE_MOVE	0x02	/* trace cursor moves and scrolls */
-#define TRACE_CHARPUT	0x04	/* trace all character outputs */
-#define TRACE_ORDINARY	0x07	/* trace all update actions */
-#define TRACE_CALLS	0x08	/* trace all curses calls */
-#define TRACE_VIRTPUT	0x10	/* trace virtual character puts */
-#define TRACE_FIFO	0x20	/* also fifo actions by getch() */
-#define TRACE_MAXIMUM	0xff	/* maximum trace level */
+#define TRACE_DISABLE	0x0000	/* turn off tracing */
+#define TRACE_TIMES	0x0001	/* trace user and system times of updates */
+#define TRACE_TPUTS	0x0002	/* trace tputs calls */
+#define TRACE_UPDATE	0x0004	/* trace update actions, old & new screens */
+#define TRACE_MOVE	0x0008	/* trace cursor moves and scrolls */
+#define TRACE_CHARPUT	0x0010	/* trace all character outputs */
+#define TRACE_ORDINARY	0x001F	/* trace all update actions */
+#define TRACE_CALLS	0x0020	/* trace all curses calls */
+#define TRACE_VIRTPUT	0x0040	/* trace virtual character puts */
+#define TRACE_IEVENT	0x0080	/* trace low-level input processing */
+#define TRACE_BITS	0x0100	/* trace state of TTY control bits */
+#define TRACE_ICALLS	0x0200	/* trace internal/nested calls */
+#define TRACE_CCALLS	0x0400	/* trace per-character calls */
+#define TRACE_MAXIMUM	0xffff	/* maximum trace level */
 
-#ifdef TRACE
-extern bool no_optimize;	/* suppress optimization */
-#endif /* TRACE */
+#if defined(TRACE) || defined(NCURSES_TEST)
+extern int _nc_optimize_enable;		/* enable optimizations */
+#define OPTIMIZE_MVCUR		0x01	/* cursor movement optimization */
+#define OPTIMIZE_HASHMAP	0x02	/* diff hashing to detect scrolls */
+#define OPTIMIZE_SCROLL		0x04	/* scroll optimization */
+#define OPTIMIZE_ALL		0xff	/* enable all optimizations (dflt) */
+#endif
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __NCURSES_H */

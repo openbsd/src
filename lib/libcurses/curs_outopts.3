@@ -39,24 +39,25 @@ the \fIwin\fR argument to \fBclearok\fR is the global variable \fBcurscr\fR,
 the next call to \fBwrefresh\fR with any window causes the screen to be cleared
 and repainted from scratch.
 
-If \fBidlok\fR is called with \fBTRUE\fR as argument,
-\fBcurses\fR considers using the hardware insert/delete line feature of
-terminals so equipped.  If disabled (\fIbf\fR is \fBFALSE\fR), \fBcurses\fR
-very seldom uses this feature.  (The insert/delete character feature is always
-considered.)  This option should be enabled only if the application needs
-insert/delete line, for example, for a screen editor.  It is disabled by
-default because insert/delete line tends to be visually annoying when used in
-applications where it isn't really needed.  If insert/delete line cannot be
-used, \fBcurses\fR redraws the changed portions of all lines.
+If \fBidlok\fR is called with \fBTRUE\fR as second argument, \fBcurses\fR
+considers using the hardware insert/delete line feature of terminals so
+equipped.  Calling \fBidlok\fR with \fBFALSE\fR as second argument disables use
+of line insertion and deletion.  This option should be enabled only if the
+application needs insert/delete line, for example, for a screen editor.  It is
+disabled by default because insert/delete line tends to be visually annoying
+when used in applications where it isn't really needed.  If insert/delete line
+cannot be used, \fBcurses\fR redraws the changed portions of all lines.
 
-If \fBidcok\fR is called with \fBTRUE\fR as argument,
-\fBcurses\fR considers using the hardware insert/delete character feature of
-terminals so equipped.  This is enabled by default.
+If \fBidcok\fR is called with \fBFALSE\fR as second argument, \fBcurses\fR
+no longer considers using the hardware insert/delete character feature of
+terminals so equipped.  Use of character insert/delete is enabled by default.
+Calling \fBidcok\fR with \fBTRUE\fR as second argument re-enables use
+of character insertion and deletion.
 
 If \fBimmedok\fR is called with \fBTRUE as argument\fR, any change
 in the window image, such as the ones caused by \fBwaddch, wclrtobot, wscrl\fR,
 \fIetc\fR., automatically cause a call to \fBwrefresh\fR.  However, it may
-degrade the performance considerably, due to repeated calls to \fBwrefresh\fR.
+degrade performance considerably, due to repeated calls to \fBwrefresh\fR.
 It is disabled by default.
 
 Normally, the hardware cursor is left at the location of the window cursor

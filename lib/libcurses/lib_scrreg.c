@@ -28,20 +28,22 @@
 **
 */
 
-#include "curses.priv.h"
+#include <curses.priv.h>
+
+MODULE_ID("Id: lib_scrreg.c,v 1.5 1997/02/01 23:22:54 tom Exp $")
 
 int wsetscrreg(WINDOW *win, int top, int bottom)
 {
-	T(("wsetscrreg(%p,%d,%d) called", win, top, bottom));
+	T((T_CALLED("wsetscrreg(%p,%d,%d)"), win, top, bottom));
 
-    	if (top >= 0  && top <= win->_maxy &&
+	if (top >= 0  && top <= win->_maxy &&
 		bottom >= 0  &&  bottom <= win->_maxy &&
 		bottom > top)
 	{
-	    	win->_regtop    = (short)top;
-	    	win->_regbottom = (short)bottom;
+		win->_regtop	= (short)top;
+		win->_regbottom = (short)bottom;
 
-	    	return(OK);
+		returnCode(OK);
 	} else
-	    	return(ERR);
+		returnCode(ERR);
 }

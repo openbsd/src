@@ -27,11 +27,12 @@
 **
 */
 
-#include "curses.priv.h"
+#include <curses.priv.h>
 #ifdef EXTERN_TERMINFO
-#include <term.h>
+#include <term.h>                                                           
 #endif
-#include <string.h>
+
+MODULE_ID("Id: lib_longname.c,v 1.5 1996/12/21 14:24:06 tom Exp $")
 
 char *
 longname(void)
@@ -41,7 +42,7 @@ char	*ptr;
 	T(("longname() called"));
 
 	for (ptr = ttytype + strlen(ttytype); ptr > ttytype; ptr--)
-	   	if (*ptr == '|')
+		if (*ptr == '|')
 			return(ptr + 1);
 
     return(ttytype);

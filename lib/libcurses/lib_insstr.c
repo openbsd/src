@@ -28,18 +28,20 @@
 **
 */
 
-#include "curses.priv.h"
+#include <curses.priv.h>
 #include <ctype.h>
+
+MODULE_ID("Id: lib_insstr.c,v 1.9 1997/02/15 16:09:53 tom Exp $")
 
 int winsnstr(WINDOW *win, const char *str, int n)
 {
 short	oy = win->_cury;
 short	ox = win->_curx;
-char	*cp;
+const char *cp;
 
-	T(("winsstr(%p,'%s',%d) called", win, str, n));
+	T((T_CALLED("winsstr(%p,%s,%d)"), win, _nc_visbuf(str), n));
 
-	for (cp = (char *)str; *cp && (n <= 0 || (cp - str) < n); cp++) {
+	for (cp = str; *cp && (n <= 0 || (cp - str) < n); cp++) {
 		if (*cp == '\n' || *cp == '\r' || *cp == '\t' || *cp == '\b')
 			_nc_waddch_nosync(win, (chtype)(*cp));
 		else if (is7bits(*cp) && iscntrl(*cp)) {
@@ -53,9 +55,9 @@ char	*cp;
 		if (win->_curx > win->_maxx)
 			win->_curx = win->_maxx;
 	}
-	
+
 	win->_curx = ox;
 	win->_cury = oy;
 	_nc_synchook(win);
-	return OK;
+	returnCode(OK);
 }

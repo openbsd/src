@@ -1,4 +1,3 @@
-
 /***************************************************************************
 *                            COPYRIGHT NOTICE                              *
 ****************************************************************************
@@ -31,15 +30,25 @@
  * before calling unctrl() again.
  *
  */
+
+/* Id: unctrl.h.in,v 1.5 1997/04/26 23:04:09 tom Exp $ */
+
 #ifndef _UNCTRL_H
 #define _UNCTRL_H	1
-#define NCURSES_VERSION "1.9.9e"
 
-#ifndef _CHTYPE_T_
-#define	_CHTYPE_T_	unsigned long
-typedef _CHTYPE_T_	chtype;
+#undef  NCURSES_VERSION
+#define NCURSES_VERSION "4.1"
+
+#ifdef __cplusplus
+extern "C" {
 #endif
 
-extern char *unctrl(chtype);
+#include <curses.h>
+
+extern NCURSES_CONST char *unctrl(chtype);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _UNCTRL_H */

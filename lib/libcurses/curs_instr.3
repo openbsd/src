@@ -1,3 +1,4 @@
+.\" Id: curs_instr.3x,v 1.7 1997/03/15 23:25:24 tom Exp $
 .TH curs_instr 3X ""
 .SH NAME
 \fBinstr\fR, \fBinnstr\fR, \fBwinstr\fR, \fBwinnstr\fR,
@@ -24,24 +25,26 @@ of characters from a \fBcurses\fR window
 .br
 .SH DESCRIPTION
 These routines return a string of characters in \fIstr\fR, extracted starting
-at the current cursor position in the named window and ending at the right
-margin of the window.  Attributes are stripped from the characters.  The four
+at the current cursor position in the named window.
+Attributes are stripped from the characters.  The four
 functions with \fIn\fR as the last argument return a leading substring at most
 \fIn\fR characters long (exclusive of the trailing NUL).
 .SH RETURN VALUE
-All routines that return an integer return \fBERR\fR upon failure and OK (SVr4
-specifies only "an integer value other than \fBERR\fR") upon successful
-completion, unless otherwise noted in the preceding routine descriptions.
+All of the functions return \fBERR\fR upon failure,
+or the number of characters actually read into the string.
 .SH NOTES
-Note that all routines except \fBwinnstr\fR may be macros.  SVr4 does not
-document whether a length limit includes or excludes the trailing NUL, and
-does not document the meaning of the return values.
+Note that all routines except \fBwinnstr\fR may be macros.
 .SH PORTABILITY
-These functions are described in the XSI Curses standard, Issue 4.  The
-standard specifies that they always return \fBOK\fR on success.  The XSI Curses
+The XSI Curses
 error conditions \fBEILSEQ\fR and \fBEILOVERFLOW\fR associated with
-extebded-level conformance are not yet detected (this implementation does not
-yet support XPG4 multibyte characters).
+extended-level conformance are not yet detected (this implementation does not
+yet support XPG4 multi-byte characters).
+SVr4 does not
+document whether a length limit includes or excludes the trailing NUL.
+.PP
+The curses library extends the XSI description by allowing a negative
+value for \fIn\fR.
+In this case, the functions return the string ending at the right margin.
 .SH SEE ALSO
 \fBcurses\fR(3X).
 .\"#

@@ -26,18 +26,18 @@
 **
 */
 
-#include "curses.priv.h"
+#include <curses.priv.h>
+
+MODULE_ID("Id: lib_clrbot.c,v 1.9 1997/02/01 23:18:18 tom Exp $")
 
 int wclrtobot(WINDOW *win)
 {
 chtype	*ptr, *end, *maxx = NULL;
 short	y, startx, minx;
 
-	T(("wclrtobot(%p) called", win));
+	T((T_CALLED("wclrtobot(%p)"), win));
 
 	startx = win->_curx;
-	if (win->_flags & _NEED_WRAP)
-		startx++;
 
 	T(("clearing from y = %d to y = %d with maxx =  %d", win->_cury, win->_maxy, win->_maxx));
 
@@ -46,7 +46,7 @@ short	y, startx, minx;
 		end = &win->_line[y].text[win->_maxx];
 
 		for (ptr = &win->_line[y].text[startx]; ptr <= end; ptr++) {
-			int blank = _nc_render(win, *ptr, BLANK);
+			chtype blank = _nc_background(win);
 
 			if (*ptr != blank) {
 				maxx = ptr;
@@ -68,5 +68,5 @@ short	y, startx, minx;
 		startx = 0;
 	}
 	_nc_synchook(win);
-	return OK;
+	returnCode(OK);
 }

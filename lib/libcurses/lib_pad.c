@@ -27,78 +27,58 @@
  * pechochar	-- add a char to a pad and refresh
  */
 
-#include "curses.priv.h"
+#include <curses.priv.h>
 
-#include <stdlib.h>
-#include <errno.h>
-
-#if !HAVE_EXTERN_ERRNO
-extern int errno;
-#endif
+MODULE_ID("Id: lib_pad.c,v 1.18 1997/04/12 17:42:52 tom Exp $")
 
 WINDOW *newpad(int l, int c)
 {
 WINDOW *win;
 chtype *ptr;
-int i, j;
+int i;
 
-	T(("newpad(%d, %d) called", l, c));
+	T((T_CALLED("newpad(%d, %d)"), l, c));
 
 	if (l <= 0 || c <= 0)
-		return NULL;
+		returnWin(0);
 
-	if ((win = _nc_makenew(l,c,0,0)) == NULL)
-		return NULL;
-
-	win->_flags |= _ISPAD;
+	if ((win = _nc_makenew(l,c,0,0,_ISPAD)) == NULL)
+		returnWin(0);
 
 	for (i = 0; i < l; i++) {
 	    win->_line[i].oldindex = _NEWINDEX;
-	    if ((win->_line[i].text = (chtype *) calloc((size_t)c, sizeof(chtype))) == NULL) {
-			for (j = 0; j < i; j++)
-			    free(win->_line[j].text);
-
-			free(win->_line);
-			free(win);
-
-			errno = ENOMEM;
-			return NULL;
+	    if ((win->_line[i].text = typeCalloc(chtype, ((size_t)c))) == 0) {
+		_nc_freewin(win);
+		returnWin(0);
 	    }
-	    else
-		for (ptr = win->_line[i].text; ptr < win->_line[i].text + c; )
-		    *ptr++ = ' ';
+	    for (ptr = win->_line[i].text; ptr < win->_line[i].text + c; )
+		*ptr++ = ' ';
 	}
 
-	T(("newpad: returned window is %p", win));
-
-	return(win);
+	returnWin(win);
 }
 
 WINDOW *subpad(WINDOW *orig, int l, int c, int begy, int begx)
 {
 WINDOW	*win;
 
-	T(("subpad(%d, %d) called", l, c));
+	T((T_CALLED("subpad(%d, %d)"), l, c));
 
-	if ((win = derwin(orig, l, c, begy, begx)) == NULL)
-	    return NULL;
+	if (!(orig->_flags & _ISPAD) || ((win = derwin(orig, l, c, begy, begx)) == NULL))
+	    returnWin(0);
 
-	win->_flags |= _ISPAD;
-
-	T(("subpad: returned window is %p", win));
-
-	return(win);
+	returnWin(win);
 }
 
 int prefresh(WINDOW *win, int pminrow, int pmincol,
 	int sminrow, int smincol, int smaxrow, int smaxcol)
 {
-	T(("prefresh() called"));
+	T((T_CALLED("prefresh()")));
 	if (pnoutrefresh(win, pminrow, pmincol, sminrow, smincol, smaxrow, smaxcol) != ERR
 	 && doupdate() != ERR) {
-		return OK;
+		returnCode(OK);
 	}
-	return ERR;
+	returnCode(ERR);
 }
 
 int pnoutrefresh(WINDOW *win, int pminrow, int pmincol,
@@ -111,14 +91,14 @@ short	pmaxcol;
 short	displaced;
 bool	wide;
 
-	T(("pnoutrefresh(%p, %d, %d, %d, %d, %d, %d) called", 
+	T((T_CALLED("pnoutrefresh(%p, %d, %d, %d, %d, %d, %d)"),
 		win, pminrow, pmincol, sminrow, smincol, smaxrow, smaxcol));
 
 	if (win == 0)
-		return ERR;
+		returnCode(ERR);
 
 	if (!(win->_flags & _ISPAD))
-		return ERR;
+		returnCode(ERR);
 
 	/* negative values are interpreted as zero */
 	if (pminrow < 0) pminrow = 0;
@@ -126,20 +106,29 @@ bool	wide;
 	if (sminrow < 0) sminrow = 0;
 	if (smincol < 0) smincol = 0;
 
-	if (smaxrow > screen_lines
-	 || smaxcol > screen_columns
-	 || sminrow > smaxrow
-	 || smincol > smaxcol)
-		return ERR;
-
 	pmaxrow = pminrow + smaxrow - sminrow;
 	pmaxcol = pmincol + smaxcol - smincol;
 
 	T((" pminrow + smaxrow - sminrow %d, win->_maxy %d", pmaxrow, win->_maxy));
 	T((" pmincol + smaxcol - smincol %d, win->_maxx %d", pmaxcol, win->_maxx));
-	if ((pmaxrow > win->_maxy)
-	 || (pmaxcol > win->_maxx))
-		return ERR;
+
+	/*
+	 * Trim the caller's screen size back to the actual limits.
+	 */
+	if (pmaxrow > win->_maxy) {
+		smaxrow -= (pmaxrow - win->_maxy);
+		pmaxrow = pminrow + smaxrow - sminrow;
+	}
+	if (pmaxcol > win->_maxx) {
+		smaxcol -= (pmaxcol - win->_maxx);
+		pmaxcol = pmincol + smaxcol - smincol;
+	}
+
+	if (smaxrow > screen_lines
+	 || smaxcol > screen_columns
+	 || sminrow > smaxrow
+	 || smincol > smaxcol)
+		returnCode(ERR);
 
 	T(("pad being refreshed"));
 
@@ -166,47 +155,49 @@ bool	wide;
 	 */
 	wide = (sminrow <= 1 && win->_maxx >= (newscr->_maxx - 1));
 
-	for (i = pminrow, m = sminrow; i <= pmaxrow; i++, m++) {
+	for (i = pminrow, m = sminrow + win->_yoffset;
+		i <= pmaxrow && m <= newscr->_maxy;
+			i++, m++) {
 		register struct ldat	*nline = &newscr->_line[m];
 		register struct ldat	*oline = &win->_line[i];
 
 		for (j = pmincol, n = smincol; j <= pmaxcol; j++, n++) {
-	    		if (oline->text[j] != nline->text[n]) {
+			if (oline->text[j] != nline->text[n]) {
 				nline->text[n] = oline->text[j];
 
 				if (nline->firstchar == _NOCHANGE)
-		   			nline->firstchar = nline->lastchar = n;
+					nline->firstchar = nline->lastchar = n;
 				else if (n < nline->firstchar)
-		   			nline->firstchar = n;
+					nline->firstchar = n;
 				else if (n > nline->lastchar)
-		   			nline->lastchar = n;
+					nline->lastchar = n;
 			}
 		}
 
-  		if (wide) {
- 		    int nind = m + displaced;
- 		    if (oline->oldindex < 0
- 		     || nind < sminrow
- 		     || nind > smaxrow)
- 		    	nind = _NEWINDEX;
-  
- 		    nline->oldindex = nind;
-  		}
+		if (wide) {
+		    int nind = m + displaced;
+		    if (oline->oldindex < 0
+		     || nind < sminrow
+		     || nind > smaxrow)
+			nind = _NEWINDEX;
+
+		    nline->oldindex = nind;
+		}
 		oline->firstchar = oline->lastchar = _NOCHANGE;
 		oline->oldindex = i;
 	}
 
- 	/*
- 	 * Clean up debris from scrolling or resizing the pad, so we do not
- 	 * accidentally pick up the index value during the next call to this
- 	 * procedure.  The only rows that should have an index value are those
- 	 * that are displayed during this cycle.
- 	 */
- 	for (i = pminrow-1; (i >= 0) && (win->_line[i].oldindex >= 0); i--)
- 		win->_line[i].oldindex = _NEWINDEX;
- 	for (i = pmaxrow+1; (i <= win->_maxy) && (win->_line[i].oldindex >= 0); i++)
- 		win->_line[i].oldindex = _NEWINDEX;
- 
+	/*
+	 * Clean up debris from scrolling or resizing the pad, so we do not
+	 * accidentally pick up the index value during the next call to this
+	 * procedure.  The only rows that should have an index value are those
+	 * that are displayed during this cycle.
+	 */
+	for (i = pminrow-1; (i >= 0) && (win->_line[i].oldindex >= 0); i--)
+		win->_line[i].oldindex = _NEWINDEX;
+	for (i = pmaxrow+1; (i <= win->_maxy) && (win->_line[i].oldindex >= 0); i++)
+		win->_line[i].oldindex = _NEWINDEX;
+
 	win->_begx = smincol;
 	win->_begy = sminrow;
 
@@ -224,13 +215,13 @@ bool	wide;
 	 && win->_curx  >= pmincol
 	 && win->_cury  <= pmaxrow
 	 && win->_curx  <= pmaxcol) {
-		newscr->_cury = win->_cury - pminrow + win->_begy;
+		newscr->_cury = win->_cury - pminrow + win->_begy + win->_yoffset;
 		newscr->_curx = win->_curx - pmincol + win->_begx;
 	}
 	win->_flags &= ~_HASMOVED;
 
 	/*
-	 * Update our cache of the line-numbers that we displayed from the pad. 
+	 * Update our cache of the line-numbers that we displayed from the pad.
 	 * We will use this on subsequent calls to this function to derive
 	 * values to stuff into 'oldindex[]' -- for scrolling optimization.
 	 */
@@ -241,18 +232,17 @@ bool	wide;
 	win->_pad._pad_bottom = smaxrow;
 	win->_pad._pad_right  = smaxcol;
 
-	return OK;
+	returnCode(OK);
 }
 
 int pechochar(WINDOW *pad, chtype ch)
 {
-	T(("echochar(%p, %lx)", pad, ch));
+	T((T_CALLED("pechochar(%p, %s)"), pad, _tracechtype(ch)));
 
 	if (pad->_flags & _ISPAD)
-		return ERR;
+		returnCode(ERR);
 
 	waddch(curscr, ch);
 	doupdate();
-	return OK;
+	returnCode(OK);
 }
-

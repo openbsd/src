@@ -20,37 +20,65 @@
 ***************************************************************************/
 
 
-
-/*
-**	lib_insch.c
-**
-**	The routine winsch().
-**
-*/
-
 #include <curses.priv.h>
 
-MODULE_ID("Id: lib_insch.c,v 1.7 1997/04/12 17:43:02 tom Exp $")
+#include <term.h>
 
-int  winsch(WINDOW *win, chtype c)
+MODULE_ID("Id: lib_print.c,v 1.8 1996/12/21 14:24:06 tom Exp $")
+
+int mcprint(char *data, int len)
+/* ship binary character data to the printer via mc4/mc5/mc5p */
 {
-chtype	*temp1, *temp2;
-chtype	*end;
+    char	*mybuf, *switchon;
+    size_t	onsize,	offsize, res;
 
-	T((T_CALLED("winsch(%p, %s)"), win, _tracechtype(c)));
+    errno = 0;
+    if (!prtr_non && (!prtr_on || !prtr_off))
+    {
+	errno = ENODEV;
+	return(ERR);
+    }
 
-	end = &win->_line[win->_cury].text[win->_curx];
-	temp1 = &win->_line[win->_cury].text[win->_maxx];
-	temp2 = temp1 - 1;
+    if (prtr_non)
+    {
+	switchon = tparm(prtr_non, len);
+	onsize = strlen(switchon);
+	offsize = 0;
+    }
+    else
+    {
+	switchon = prtr_on;
+	onsize = strlen(prtr_on);
+	offsize = strlen(prtr_off);
+    }
 
-	while (temp1 > end)
-	    *temp1-- = *temp2--;
+    if ((mybuf = malloc(onsize + len + offsize + 1)) == (char *)NULL)
+    {
+	errno = ENOMEM;
+	return(ERR);
+    }
 
-	*temp1 = _nc_render(win, c);
+    (void) strcpy(mybuf, switchon);
+    memcpy(mybuf + onsize, data, len);
+    if (offsize)
+      (void) strcpy(mybuf + onsize + len, prtr_off);
 
-	win->_line[win->_cury].lastchar = win->_maxx;
-	if (win->_line[win->_cury].firstchar == _NOCHANGE
-	    			||  win->_line[win->_cury].firstchar > win->_curx)
-	    win->_line[win->_cury].firstchar = win->_curx;
-	returnCode(OK);
+    /*
+     * We're relying on the atomicity of UNIX writes here.  The
+     * danger is that output from a refresh() might get interspersed
+     * with the printer data after the write call returns but before the
+     * data has actually been shipped to the terminal.  If the write(2)
+     * operation is truly atomic we're protected from this.
+     */
+    res = write(cur_term->Filedes, mybuf, onsize + len + offsize);
+
+    /*
+     * By giving up our scheduler slot here we increase the odds that the
+     * kernel will ship the contiguous clist items from the last write
+     * immediately.
+     */
+    (void) sleep(0);
+
+    free(mybuf);
+    return(res);
 }

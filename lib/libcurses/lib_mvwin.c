@@ -28,20 +28,22 @@
 **
 */
 
-#include "curses.priv.h"
+#include <curses.priv.h>
+
+MODULE_ID("Id: lib_mvwin.c,v 1.3 1997/02/02 00:20:41 tom Exp $")
 
 int mvwin(WINDOW *win, int by, int bx)
 {
-	T(("mvwin(%p,%d,%d) called", win, by, bx));
+	T((T_CALLED("mvwin(%p,%d,%d)"), win, by, bx));
 
 	if (win->_flags & _SUBWIN)
-	    return(ERR);
+	    returnCode(ERR);
 
 	if (by + win->_maxy > screen_lines - 1
 	||  bx + win->_maxx > screen_columns - 1
 	||  by < 0
 	||  bx < 0)
-	    return(ERR);
+	    returnCode(ERR);
 
 	/*
 	 * Whether or not the window is moved, touch the window's contents so
@@ -51,5 +53,5 @@ int mvwin(WINDOW *win, int by, int bx)
 	 */
 	win->_begy = by;
 	win->_begx = bx;
-	return touchwin(win);
+	returnCode(touchwin(win));
 }

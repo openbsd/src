@@ -27,52 +27,46 @@
  *		napms()
  *		reset_prog_mode()
  *		reset_shell_mode()
- *		baudrate()
- *		delay_output()
  *		erasechar()
  *		killchar()
  *		flushinp()
  *		savetty()
  *		resetty()
  *
- *
+ * The baudrate() and delay_output() functions could logically live here,
+ * but are in other modules to reduce the static-link size of programs
+ * that use only these facilities.
  */
 
-#include "curses.priv.h"
-#include "term.h"	/* cur_term, pad_char */
-#include <errno.h>
-#if !HAVE_EXTERN_ERRNO
-extern int errno;
-#endif
+#include <curses.priv.h>
+#include <term.h>	/* cur_term */
+
+MODULE_ID("Id: lib_kernel.c,v 1.13 1997/02/02 00:33:14 tom Exp $")
 
 int napms(int ms)
 {
-	T(("napms(%d) called", ms));
+	T((T_CALLED("napms(%d)"), ms));
 
 	usleep(1000*(unsigned)ms);
-	return OK;
+	returnCode(OK);
 }
 
 #ifndef EXTERN_TERMINFO
 int reset_prog_mode(void)
 {
-	T(("reset_prog_mode() called"));
+	T((T_CALLED("reset_prog_mode()")));
 
-#ifdef TERMIOS
-	tcsetattr(cur_term->Filedes, TCSANOW, &cur_term->Nttyb);
-#else
-	stty(cur_term->Filedes, &cur_term->Nttyb);
-#endif
+	SET_TTY(cur_term->Filedes, &cur_term->Nttyb);
 	if (SP && stdscr && stdscr->_use_keypad)
 		_nc_keypad(TRUE);
 
-	return OK; 
+	returnCode(OK);
 }
 
 
 int reset_shell_mode(void)
 {
-	T(("reset_shell_mode() called"));
+	T((T_CALLED("reset_shell_mode()")));
 
 	if (SP)
 	{
@@ -80,42 +74,11 @@ int reset_shell_mode(void)
 		_nc_keypad(FALSE);
 	}
 
-#ifdef TERMIOS
-	tcsetattr(cur_term->Filedes, TCSANOW, &cur_term->Ottyb);
-#else
-	stty(cur_term->Filedes, &cur_term->Ottyb);
-#endif
-	return OK; 
+	SET_TTY(cur_term->Filedes, &cur_term->Ottyb);
+	returnCode(OK);
 }
 #endif /* EXTERN_TERMINFO */
 
-int delay_output(float ms)
-{
-	T(("delay_output(%f) called", ms));
-
-    	if (SP == 0 || SP->_baudrate == ERR)
-		return(ERR);
-#ifdef no_pad_char
-    	else if (no_pad_char)
-		_nc_timed_wait(0, (int)ms, (int *)NULL);
-#endif /* no_pad_char */
-	else {
-		register int	nullcount;
-		char	null = '\0';
-
-#ifdef pad_char
-		if (pad_char)
-	    		null = pad_char[0];
-#endif /* pad_char */
-
-		for (nullcount = ms * 1000 / SP->_baudrate; nullcount > 0; nullcount--)
-		    	putc(null, SP->_ofp);
-		(void) fflush(SP->_ofp);
-    	}
-
-    	return OK;
-}
-  
 /*
  *	erasechar()
  *
@@ -126,12 +89,12 @@ int delay_output(float ms)
 char
 erasechar(void)
 {
-	T(("erasechar() called"));
+	T((T_CALLED("erasechar()")));
 
 #ifdef TERMIOS
-    	return(cur_term->Ottyb.c_cc[VERASE]);
+	returnCode(cur_term->Ottyb.c_cc[VERASE]);
 #else
-    	return(cur_term->Ottyb.sg_erase);
+	returnCode(cur_term->Ottyb.sg_erase);
 #endif
 
 }
@@ -148,12 +111,12 @@ erasechar(void)
 char
 killchar(void)
 {
-	T(("killchar() called"));
+	T((T_CALLED("killchar()")));
 
 #ifdef TERMIOS
-    	return(cur_term->Ottyb.c_cc[VKILL]);
+	returnCode(cur_term->Ottyb.c_cc[VKILL]);
 #else
-    	return(cur_term->Ottyb.sg_kill);
+	returnCode(cur_term->Ottyb.sg_kill);
 #endif
 }
 
@@ -168,7 +131,7 @@ killchar(void)
 
 int flushinp(void)
 {
-	T(("flushinp() called"));
+	T((T_CALLED("flushinp()")));
 
 #ifdef TERMIOS
 	tcflush(cur_term->Filedes, TCIFLUSH);
@@ -178,103 +141,15 @@ int flushinp(void)
 	    ioctl(cur_term->Filedes, TIOCFLUSH, 0);
 	} while
 	    (errno == EINTR);
-#endif    
-    	if (SP) {
-	  	SP->_fifohead = -1;
-	  	SP->_fifotail = 0;
-	  	SP->_fifopeek = 0;
+#endif
+	if (SP) {
+		SP->_fifohead = -1;
+		SP->_fifotail = 0;
+		SP->_fifopeek = 0;
 	}
-	return OK;
+	returnCode(OK);
 
 }
-
-
-
-/*
- *	int
- *	baudrate()
- *
- *	Returns the current terminal's baud rate.
- *
- */
-
-struct speed {
-	speed_t s;
-	int sp;
-};
-
-static struct speed const speeds[] = {
-	{B0, 0},
-	{B50, 50},
-	{B75, 75},
-	{B110, 110},
-	{B134, 134},
-	{B150, 150},
-	{B200, 200},
-	{B300, 300},
-	{B600, 600},
-	{B1200, 1200},
-	{B1800, 1800},
-	{B2400, 2400},
-	{B4800, 4800},
-	{B9600, 9600},
-#define MAX_BAUD	B9600
-#ifdef B19200
-#undef MAX_BAUD
-#define MAX_BAUD	B19200
-	{B19200, 19200},
-#else 
-#ifdef EXTA
-#define MAX_BAUD	EXTA
-	{EXTA, 19200},
-#endif
-#endif
-#ifdef B38400
-#undef MAX_BAUD
-#define MAX_BAUD	B38400
-	{B38400, 38400},
-#else 
-#ifdef EXTB
-#define MAX_BAUD	EXTB
-	{EXTB, 38400},
-#endif
-#endif
-#ifdef B57600
-#undef MAX_BAUD
-#define MAX_BAUD        B57600
-	{B57600, 57600},
-#endif
-#ifdef B115200
-#undef MAX_BAUD
-#define MAX_BAUD        B115200
-	{B115200, 115200},
-#endif
-};
-
-int
-baudrate(void)
-{
-int i, ret;
-
-	T(("baudrate() called"));
-
-#ifdef TERMIOS
-	ret = cfgetospeed(&cur_term->Nttyb);
-#else
-	ret = cur_term->Nttyb.sg_ospeed;
-#endif
-	if(ret < 0 || ret > MAX_BAUD)
-		return ERR;
-	SP->_baudrate = ERR;
-	for (i = 0; i < (sizeof(speeds) / sizeof(struct speed)); i++)
-		if (speeds[i].s == ret)
-		{
-			SP->_baudrate = speeds[i].sp;
-			break;
-		}
-	return(SP->_baudrate);
-}
-
 
 /*
 **	savetty()  and  resetty()
@@ -285,25 +160,16 @@ static TTY   buf;
 
 int savetty(void)
 {
-	T(("savetty() called"));
+	T((T_CALLED("savetty()")));
 
-#ifdef TERMIOS
-	tcgetattr(cur_term->Filedes, &buf);
-#else
-	gtty(cur_term->Filedes, &buf);
-#endif
-	return OK;
+	GET_TTY(cur_term->Filedes, &buf);
+	returnCode(OK);
 }
 
 int resetty(void)
 {
-	T(("resetty() called"));
+	T((T_CALLED("resetty()")));
 
-#ifdef TERMIOS
-	tcsetattr(cur_term->Filedes, TCSANOW, &buf);
-#else
-        stty(cur_term->Filedes, &buf);
-#endif
-	return OK;
+	SET_TTY(cur_term->Filedes, &buf);
+	returnCode(OK);
 }
-

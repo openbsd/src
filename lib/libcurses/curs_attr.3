@@ -1,3 +1,4 @@
+.\" Id: curs_attr.3x,v 1.12 1997/01/05 01:14:33 tom Exp $
 .TH curs_attr 3X ""
 .SH NAME
 \fBattroff\fR, \fBwattroff\fR, \fBattron\fR, \fBwattron\fR,
@@ -74,7 +75,7 @@ The routine \fBwattr_get\fR returns the current attribute for the given
 window; \fBattr_get\fR returns the current attribute for \fBstdscr\fR.
 The remaining \fBattr_\fR* functions operate exactly like the corresponding
 \fBattr\fR* functions, except that they take arguments of type \fBattr_t\fR
-rather than \fBint\fR. 
+rather than \fBint\fR.
 
 The routine \fBchgat\fR changes the attributes of a given number of characters
 starting at the current cursor location of \fBstdscr\fR.  It does not update
@@ -87,33 +88,35 @@ of \fIinit_pair\fR, see \fBcurs_color\fR(3x)).  The \fBopts\fR argument is not
 presently used, but is reserved for the future (leave it \fBNULL\fR).
 .SS Attributes
 The following video attributes, defined in \fB<curses.h>\fR, can be passed to
-the routines \fBattron\fR, \fBattroff\fR, and \fBattrset\fR, or OR-ed with the
+the routines \fBattron\fR, \fBattroff\fR, and \fBattrset\fR, or OR'ed with the
 characters passed to \fBaddch\fR.
 
-.nf
-\fBA_NORMAL\fR       Normal display (no highlight)
-\fBA_STANDOUT\fR     Best highlighting mode of the terminal.
-\fBA_UNDERLINE\fR    Underlining
-\fBA_REVERSE\fR      Reverse video
-\fBA_BLINK\fR        Blinking
-\fBA_DIM\fR          Half bright
-\fBA_BOLD\fR         Extra bright or bold
-\fBA_PROTECT\fR      Protected mode
-\fBA_INVIS\fR        Invisible or blank mode
-\fBA_ALTCHARSET\fR   Alternate character set
-\fBA_CHARTEXT\fR     Bit-mask to extract a character
-\fBCOLOR_PAIR(\fR\fIn\fR\fB)\fR  Color-pair number \fIn\fR
-.fi
+.TS
+center ;
+l l .
+\fBA_NORMAL\fR	Normal display (no highlight)
+\fBA_STANDOUT\fR	Best highlighting mode of the terminal.
+\fBA_UNDERLINE\fR	Underlining
+\fBA_REVERSE\fR	Reverse video
+\fBA_BLINK\fR	Blinking
+\fBA_DIM\fR	Half bright
+\fBA_BOLD\fR	Extra bright or bold
+\fBA_PROTECT\fR	Protected mode
+\fBA_INVIS\fR	Invisible or blank mode
+\fBA_ALTCHARSET\fR	Alternate character set
+\fBA_CHARTEXT\fR	Bit-mask to extract a character
+\fBCOLOR_PAIR(\fR\fIn\fR\fB)\fR	Color-pair number \fIn\fR
+.TE
 
 The following macro is the reverse of \fBCOLOR_PAIR(\fR\fIn\fR\fB)\fR:
 
 .DS C
-\fBPAIR_NUMBER(\fIattrs\fR) Returns the pair number associated 
+\fBPAIR_NUMBER(\fIattrs\fR) Returns the pair number associated
                    with the \fBCOLOR_PAIR(\fR\fIn\fR\fB)\fR attribute.
 .DE
 
-The return values of many of these routines are not meaningful (they are 
-implemented as macro-expanded assignments and simply return their argument).  
+The return values of many of these routines are not meaningful (they are
+implemented as macro-expanded assignments and simply return their argument).
 The SVr4 manual page claims (falsely) that these routines always return \fB1\fR.
 
 .SH NOTES
@@ -128,8 +131,8 @@ not supported under SVr4.
 The XSI Curses standard states that whether the traditional functions
 \fBattron\fR/\fBattroff\fR/\fBattrset\fR can manipulate attributes other than
 \fBA_BLINK\fR, \fBA_BOLD\fR, \fBA_DIM\fR, \fBA_REVERSE\fR, \fBA_STANDOUT\fR, or
-\fBA_UNDERLINE\fR is "unspecified".  Under this implementation as well as 
-SVr4 curses, these functions correctly manipulate all other highlights 
+\fBA_UNDERLINE\fR is "unspecified".  Under this implementation as well as
+SVr4 curses, these functions correctly manipulate all other highlights
 (specifically, \fBA_ALTCHARSET\fR, \fBA_PROTECT\fR, and \fBA_INVIS\fR).
 
 XSI Curses added the new entry points, \fBattr_get\fR, \fBattr_on\fR,
@@ -137,20 +140,22 @@ XSI Curses added the new entry points, \fBattr_get\fR, \fBattr_on\fR,
 \fBwattr_get\fR, \fBwattr_set\fR.  These are intended to work with
 a new series of highlight macros prefixed with \fBWA_\fR.
 
-.nf
-\fBWA_NORMAL\fR       Normal display (no highlight)
-\fBWA_STANDOUT\fR     Best highlighting mode of the terminal.
-\fBWA_UNDERLINE\fR    Underlining
-\fBWA_REVERSE\fR      Reverse video
-\fBWA_BLINK\fR        Blinking
-\fBWA_DIM\fR          Half bright
-\fBWA_BOLD\fR         Extra bright or bold
-\fBWA_ALTCHARSET\fR   Alternate character set
-.fi
+.TS
+center ;
+l l .
+\fBWA_NORMAL\fR	Normal display (no highlight)
+\fBWA_STANDOUT\fR	Best highlighting mode of the terminal.
+\fBWA_UNDERLINE\fR	Underlining
+\fBWA_REVERSE\fR	Reverse video
+\fBWA_BLINK\fR	Blinking
+\fBWA_DIM\fR	Half bright
+\fBWA_BOLD\fR	Extra bright or bold
+\fBWA_ALTCHARSET\fR	Alternate character set
+.TE
 
 The XSI curses standard specifies that each pair of corresponding \fBA_\fR
 and \fBWA_\fR-using functions operates on the same current-highlight
-information.  
+information.
 
 The XSI standard extended conformance level adds new highlights
 \fBA_HORIZONTAL\fR, \fBA_LEFT\fR, \fBA_LOW\fR, \fBA_RIGHT\fR, \fBA_TOP\fR,

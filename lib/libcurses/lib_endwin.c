@@ -27,31 +27,42 @@
 **
 */
 
-#include "curses.priv.h"
-#include "term.h"
+#include <curses.priv.h>
+#include <term.h>
+
+MODULE_ID("Id: lib_endwin.c,v 1.10 1997/02/02 00:36:41 tom Exp $")
 
 int
 endwin(void)
 {
-	T(("endwin() called"));
+	T((T_CALLED("endwin()")));
 
 	SP->_endwin = TRUE;
 
 	_nc_mouse_wrap(SP);
 
-	mvcur(-1, -1, screen_lines - 1, 0);
+	/* SP->_curs{row,col} may be used later in _nc_mvcur_wrap,save_curs */
+	mvcur(-1, -1, SP->_cursrow = screen_lines - 1, SP->_curscol = 0);
 
 	curs_set(1);	/* set cursor to normal mode */
 
 	if (SP->_coloron == TRUE && orig_pair)
 		putp(orig_pair);
 
- 	_nc_mvcur_wrap();	/* wrap up cursor addressing */
+	_nc_mvcur_wrap();	/* wrap up cursor addressing */
 
-	if (curscr  &&  (curscr->_attrs != A_NORMAL)) 
-	    vidattr(curscr->_attrs = A_NORMAL);
+	if (SP  &&  (SP->_current_attr != A_NORMAL))
+	    vidattr(A_NORMAL);
 
-	fflush(SP->_ofp);
+	/*
+	 * Reset terminal's tab counter.  There's a long-time bug that
+	 * if you exit a "curses" program such as vi or more, tab
+	 * forward, and then backspace, the cursor doesn't go to the
+	 * right place.  The problem is that the kernel counts the
+	 * escape sequences that reset things as column positions.
+	 * Utter a \r to reset this invisibly.
+	 */
+	_nc_outch('\r');
 
-	return(reset_shell_mode());
+	returnCode(reset_shell_mode());
 }

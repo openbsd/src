@@ -26,15 +26,17 @@
 **
 */
 
-#include "curses.priv.h"
+#include <curses.priv.h>
+
+MODULE_ID("Id: lib_clear.c,v 1.3 1997/02/01 23:18:18 tom Exp $")
 
 int wclear(WINDOW *win)
 {
-	T(("wclear(%p) called", win));
+	T((T_CALLED("wclear(%p)"), win));
 
 	werase(win);
 
 	win->_clear = TRUE;
 
-	return OK;
+	returnCode(OK);
 }

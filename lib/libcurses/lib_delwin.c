@@ -26,28 +26,35 @@
 **
 */
 
-#include "curses.priv.h"
-#include <stdlib.h>
+#include <curses.priv.h>
+
+MODULE_ID("Id: lib_delwin.c,v 1.8 1997/02/01 23:22:54 tom Exp $")
+
+static bool have_children(WINDOW *win)
+{
+	WINDOWLIST *p;
+	for (p = _nc_windows; p != 0; p = p->next) {
+		if (p->win->_flags & _SUBWIN
+		 && p->win->_parent == win)
+			return TRUE;
+	}
+	return FALSE;
+}
 
 int delwin(WINDOW *win)
 {
-int	i;
+	T((T_CALLED("delwin(%p)"), win));
 
-	T(("delwin(%p) called", win));
+	if (win == 0
+	 || have_children(win))
+		returnCode(ERR);
 
-	if (win == NULL)
-	    return(ERR);
+	if (win->_flags & _SUBWIN)
+		touchwin(win->_parent);
+	else if (curscr != 0)
+		touchwin(curscr);
 
-	if (! (win->_flags & _SUBWIN)) {
-	    for (i = 0; i <= win->_maxy  &&  win->_line[i].text; i++)
-			free(win->_line[i].text);
-	}
+	_nc_freewin(win);
 
-	free(win->_line);
-
-	touchwin((win->_flags & _SUBWIN) ? win->_parent : curscr);
-
-	free(win);
-
-	return(OK);
+	returnCode(OK);
 }

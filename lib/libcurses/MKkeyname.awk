@@ -1,12 +1,13 @@
-
+# Id: MKkeyname.awk,v 1.6 1997/04/05 23:38:17 tom Exp $
 BEGIN {
 	print ""
+	print "#include <ncurses_cfg.h>"
 	print "#include <stdlib.h>"
-	print "#include \"curses.h\""
-	print "#include \"term.h\""
+	print "#include <term.h>"
+	print "#include <curses.h>"
 	print ""
 	print "struct kn {"
-	print "\tchar *name;"
+	print "\tconst char *name;"
 	print "\tint code;"
 	print "};"
 	print ""

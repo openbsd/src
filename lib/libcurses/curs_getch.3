@@ -1,3 +1,4 @@
+.\" Id: curs_getch.3x,v 1.10 1997/01/05 11:57:54 Jesse.Thilo Exp $
 .TH curs_getch 3X ""
 .SH NAME
 \fBgetch\fR, \fBwgetch\fR, \fBmvgetch\fR,
@@ -16,6 +17,8 @@
 .br
 \fBint ungetch(int ch);\fR
 .br
+\fBint has_key(int ch);\fR
+.br
 .SH DESCRIPTION
 The \fBgetch\fR, \fBwgetch\fR, \fBmvgetch\fR and \fBmvwgetch\fR, routines read
 a character from the window.  In no-delay mode, if no input is waiting, the
@@ -23,10 +26,10 @@ value \fBERR\fR is returned.  In delay mode, the program waits until the system
 passes text through to the program.  Depending on the setting of \fBcbreak\fR,
 this is after one character (cbreak mode), or after the first newline (nocbreak
 mode).  In half-delay mode, the program waits until a character is typed or the
-specified timeout has been reached. 
+specified timeout has been reached.
 
 If \fBnoecho\fR has been set, then the character will also be echoed into the
-designated window according to the following rules: 
+designated window according to the following rules:
 If the character is the current erase character, left arrow, or backspace,
 the cursor is moved one space to the left and that screen position is erased
 as if \fBdelch\fR had been called.
@@ -60,109 +63,126 @@ just one input queue for all windows.
 The following function keys, defined in \fB<curses.h>\fR, might be returned by
 \fBgetch\fR if \fBkeypad\fR has been enabled.  Note that not all of these are
 necessarily supported on any particular terminal.
-.nf
-__________________________________________________________________
-\fIName\fR                 \fIKey\fR \fIname\fR
-__________________________________________________________________
-KEY_BREAK            Break key
-KEY_DOWN             The four arrow keys ...
+.sp
+.TS
+center tab(/) ;
+l l
+l l .
+\fIName\fR/\fIKey\fR \fIname\fR
+
+KEY_BREAK/Break key
+KEY_DOWN/The four arrow keys ...
 KEY_UP
 KEY_LEFT
 KEY_RIGHT
-KEY_HOME             Home key (upward+left arrow)
-KEY_BACKSPACE        Backspace
-KEY_F0               Function keys; space for 64 keys is reserved.
-KEY_F(\fIn\fR)             For 0 \fI<\fR \fIn\fR \fI<\fR 63
-KEY_DL               Delete line
-KEY_IL               Insert line
-KEY_DC               Delete character
-KEY_IC               Insert char or enter insert mode
-KEY_EIC              Exit insert char mode
-KEY_CLEAR            Clear screen
-KEY_EOS              Clear to end of screen
-KEY_EOL              Clear to end of line
-KEY_SF               Scroll 1 line forward
-KEY_SR               Scroll 1 line backward (reverse)
-KEY_NPAGE            Next page
-KEY_PPAGE            Previous page
-KEY_STAB             Set tab
-KEY_CTAB             Clear tab
-KEY_CATAB            Clear all tabs
-KEY_ENTER            Enter or send
-KEY_SRESET           Soft (partial) reset
-KEY_RESET            Reset or hard reset
-KEY_PRINT            Print or copy
-KEY_LL               Home down or bottom (lower left).  Keypad is
-                     arranged like this:
-                          \fBA1\fR    \fBup\fR    \fBA3\fR
-                         \fBleft\fR   \fBB2\fR   \fBright\fR
-                          \fBC1\fR   \fBdown\fR   \fBC3\fR
-KEY_A1               Upper left of keypad
-KEY_A3               Upper right of keypad
-KEY_B2               Center of keypad
-KEY_C1               Lower left of keypad
-KEY_C3               Lower right of keypad
-KEY_BTAB             Back tab key
-KEY_BEG              Beg(inning) key
-KEY_CANCEL           Cancel key
-KEY_CLOSE            Close key
-KEY_COMMAND          Cmd (command) key
-KEY_COPY             Copy key
-KEY_CREATE           Create key
-KEY_END              End key
-KEY_EXIT             Exit key
-KEY_FIND             Find key
-KEY_HELP             Help key
-KEY_MARK             Mark key
-KEY_MESSAGE          Message key
-KEY_MOVE             Move key
-KEY_NEXT             Next object key
-KEY_OPEN             Open key
-KEY_OPTIONS          Options key
-KEY_PREVIOUS         Previous object key
-KEY_REDO             Redo key
-KEY_REFERENCE        Ref(erence) key
-KEY_REFRESH          Refresh key
-KEY_REPLACE          Replace key
-KEY_RESTART          Restart key
-KEY_RESUME           Resume key
-KEY_SAVE             Save key
-KEY_SBEG             Shifted beginning key
-KEY_SCANCEL          Shifted cancel key
-KEY_SCOMMAND         Shifted command key
-KEY_SCOPY            Shifted copy key
-KEY_SCREATE          Shifted create key
-KEY_SDC              Shifted delete char key
-KEY_SDL              Shifted delete line key
-KEY_SELECT           Select key
-KEY_SEND             Shifted end key
-KEY_SEOL             Shifted clear line key
-KEY_SEXIT            Shifted exit key
-KEY_SFIND            Shifted find key
-KEY_SHELP            Shifted help key
-KEY_SHOME            Shifted home key
-KEY_SIC              Shifted input key
-KEY_SLEFT            Shifted left arrow key
-KEY_SMESSAGE         Shifted message key
-KEY_SMOVE            Shifted move key
-KEY_SNEXT            Shifted next key
-KEY_SOPTIONS         Shifted options key
-KEY_SPREVIOUS        Shifted prev key
-KEY_SPRINT           Shifted print key
-KEY_SREDO            Shifted redo key
-KEY_SREPLACE         Shifted replace key
-KEY_SRIGHT           Shifted right arrow
-KEY_SRSUME           Shifted resume key
-KEY_SSAVE            Shifted save key
-KEY_SSUSPEND         Shifted suspend key
-KEY_SUNDO            Shifted undo key
-KEY_SUSPEND          Suspend key
-KEY_UNDO             Undo key
-.fi
+KEY_HOME/Home key (upward+left arrow)
+KEY_BACKSPACE/Backspace
+KEY_F0/T{
+Function keys; space for 64 keys is reserved.
+T}
+KEY_F(\fIn\fR)/T{
+For 0 \(<= \fIn\fR \(<= 63
+T}
+KEY_DL/Delete line
+KEY_IL/Insert line
+KEY_DC/Delete character
+KEY_IC/Insert char or enter insert mode
+KEY_EIC/Exit insert char mode
+KEY_CLEAR/Clear screen
+KEY_EOS/Clear to end of screen
+KEY_EOL/Clear to end of line
+KEY_SF/Scroll 1 line forward
+KEY_SR/Scroll 1 line backward (reverse)
+KEY_NPAGE/Next page
+KEY_PPAGE/Previous page
+KEY_STAB/Set tab
+KEY_CTAB/Clear tab
+KEY_CATAB/Clear all tabs
+KEY_ENTER/Enter or send
+KEY_SRESET/Soft (partial) reset
+KEY_RESET/Reset or hard reset
+KEY_PRINT/Print or copy
+KEY_LL/Home down or bottom (lower left).
+KEY_A1/Upper left of keypad
+KEY_A3/Upper right of keypad
+KEY_B2/Center of keypad
+KEY_C1/Lower left of keypad
+KEY_C3/Lower right of keypad
+KEY_BTAB/Back tab key
+KEY_BEG/Beg(inning) key
+KEY_CANCEL/Cancel key
+KEY_CLOSE/Close key
+KEY_COMMAND/Cmd (command) key
+KEY_COPY/Copy key
+KEY_CREATE/Create key
+KEY_END/End key
+KEY_EXIT/Exit key
+KEY_FIND/Find key
+KEY_HELP/Help key
+KEY_MARK/Mark key
+KEY_MESSAGE/Message key
+KEY_MOVE/Move key
+KEY_NEXT/Next object key
+KEY_OPEN/Open key
+KEY_OPTIONS/Options key
+KEY_PREVIOUS/Previous object key
+KEY_REDO/Redo key
+KEY_REFERENCE/Ref(erence) key
+KEY_REFRESH/Refresh key
+KEY_REPLACE/Replace key
+KEY_RESTART/Restart key
+KEY_RESUME/Resume key
+KEY_SAVE/Save key
+KEY_SBEG/Shifted beginning key
+KEY_SCANCEL/Shifted cancel key
+KEY_SCOMMAND/Shifted command key
+KEY_SCOPY/Shifted copy key
+KEY_SCREATE/Shifted create key
+KEY_SDC/Shifted delete char key
+KEY_SDL/Shifted delete line key
+KEY_SELECT/Select key
+KEY_SEND/Shifted end key
+KEY_SEOL/Shifted clear line key
+KEY_SEXIT/Shifted exit key
+KEY_SFIND/Shifted find key
+KEY_SHELP/Shifted help key
+KEY_SHOME/Shifted home key
+KEY_SIC/Shifted input key
+KEY_SLEFT/Shifted left arrow key
+KEY_SMESSAGE/Shifted message key
+KEY_SMOVE/Shifted move key
+KEY_SNEXT/Shifted next key
+KEY_SOPTIONS/Shifted options key
+KEY_SPREVIOUS/Shifted prev key
+KEY_SPRINT/Shifted print key
+KEY_SREDO/Shifted redo key
+KEY_SREPLACE/Shifted replace key
+KEY_SRIGHT/Shifted right arrow
+KEY_SRSUME/Shifted resume key
+KEY_SSAVE/Shifted save key
+KEY_SSUSPEND/Shifted suspend key
+KEY_SUNDO/Shifted undo key
+KEY_SUSPEND/Suspend key
+KEY_UNDO/Undo key
+.TE
+
+Keypad is arranged like this:
+.sp
+.TS
+center allbox tab(/) ;
+c c c .
+\fBA1\fR/\fBup\fR/\fBA3\fR
+\fBleft\fR/\fBB2\fR/\fBright\fR
+\fBC1\fR/\fBdown\fR/\fBC3\fR
+.TE
+.sp
+The \fBhas_key\fR routine takes a key value from the above list, and
+returns TRUE or FALSE according as the current terminal type recognizes
+a key with that value.
 
 .SH RETURN VALUE
-All routines return the integer \fBERR\fR upon failure and an integer value 
-other than \fBERR\fR" (\fBOK\fR in the case of ungetch()) upon successful
+All routines return the integer \fBERR\fR upon failure and an integer value
+other than \fBERR\fR (\fBOK\fR in the case of ungetch()) upon successful
 completion.
 .SH NOTES
 Use of the escape key by a programmer for a single character function is
@@ -185,13 +205,29 @@ consoles typically support little more than \fBKEY_UP\fR, \fBKEY_DOWN\fR,
 \fBKEY_NPAGE\fR, \fBKEY_PPAGE\fR, and function keys 1 through 12.  The Ins key
 is usually mapped to \fBKEY_IC\fR.
 .SH PORTABILITY
-These functions are described in the XSI Curses standard, Issue 4.  They read
-single-byte characters only.  The standard specifies that they return \fBERR\fR
-on failure, but specifies no error conditions.
+The *get* functions are described in the XSI Curses standard, Issue 4.  They
+read single-byte characters only.  The standard specifies that they return
+\fBERR\fR on failure, but specifies no error conditions.
 
 The echo behavior of these functions on input of \fBKEY_\fR or backspace
-characters was not specified.  This description is adopted from the XSI
-Curses standard.
+characters was not specified in the SVr4 documentation.  This description is
+adopted from the XSI Curses standard.
+
+The behavior of \fBgetch\fR and friends in the presence of handled signals is
+unspecified in the SVr4 and XSI Curses documentation.  Under historical curses
+implementations, it varied depending on whether the operating system's
+implementation of handled signal receipt interrupts a \fBread\fR(2) call in
+progress or not, and also (in some implementations) depending on whether an
+input timeout or non-blocking mode hsd been set.
+
+Programmers concerned about portability should be prepared for either of two
+cases: (a) signal receipt does not interrupt \fBgetch\fR; (b) signal receipt
+interrupts \fBgetch\fR and causes it to return ERR with \fBerrno\fR set to
+\fBEINTR\fR.  Under the \fBcurses\fR implementation, handled signals never
+interrupt \fBgetch\fR.
+
+The \fBhas_key\fR function is unique to \fBcurses\fR.  We recommend that
+any code using it be conditionalized on the NCURSES feature macro.
 .SH SEE ALSO
 \fBcurses\fR(3X), \fBcurs_inopts\fR(3X), \fBcurs_move\fR(3X),
 \fBcurs_refresh\fR(3X).

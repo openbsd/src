@@ -19,33 +19,30 @@
 *                                                                          *
 ***************************************************************************/
 
-
-
 /*
 **	lib_insdel.c
 **
 **	The routine winsdelln(win, n).
 **  positive n insert n lines above current line
-**  negative n delete n lines starting from current line 
+**  negative n delete n lines starting from current line
 **
 */
 
-#include "curses.priv.h"
-#include <stdlib.h>
+#include <curses.priv.h>
+
+MODULE_ID("$Id")
 
 int
 winsdelln(WINDOW *win, int n)
 {
-	T(("winsdel(%p,%d) called", win, n));
+	T((T_CALLED("winsdel(%p,%d)"), win, n));
 
 	if (n == 0)
-		return OK;
+		returnCode(OK);
 
 	_nc_scroll_window(win, -n, win->_cury, win->_maxy);
 	touchline(win, win->_cury, win->_maxy - win->_cury + 1);
 
 	_nc_synchook(win);
-    	return OK;
+	returnCode(OK);
 }
-
-

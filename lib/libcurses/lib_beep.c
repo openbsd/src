@@ -27,8 +27,10 @@
  *
  */
 
-#include "curses.priv.h"
-#include "term.h"	/* beep, flash */
+#include <curses.priv.h>
+#include <term.h>	/* beep, flash */
+
+MODULE_ID("Id: lib_beep.c,v 1.3 1997/02/02 00:27:01 tom Exp $")
 
 /*
  *	beep()
@@ -40,9 +42,9 @@
 
 int beep(void)
 {
-	T(("beep() called"));
+	T((T_CALLED("beep()")));
 
-	/* should make sure that we are not in altchar mode */
+	/* FIXME: should make sure that we are not in altchar mode */
 	if (bell) {
 		TPUTS_TRACE("bell");
 		return(putp(bell));
@@ -51,7 +53,7 @@ int beep(void)
 		return(putp(flash_screen));
 	}
 	else
-		return(ERR);
+		returnCode(ERR);
 }
 
 /*
@@ -64,16 +66,16 @@ int beep(void)
 
 int flash(void)
 {
-	T(("flash() called"));
+	T((T_CALLED("flash()")));
 
-	/* should make sure that we are not in altchar mode */
+	/* FIXME: should make sure that we are not in altchar mode */
 	if (flash_screen) {
 		TPUTS_TRACE("flash_screen");
-		return(putp(flash_screen));
+		returnCode(putp(flash_screen));
 	} else if (bell) {
 		TPUTS_TRACE("bell");
-		return(putp(bell));
+		returnCode(putp(bell));
 	}
 	else
-		return(ERR);
+		returnCode(ERR);
 }

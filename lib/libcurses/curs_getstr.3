@@ -8,11 +8,17 @@
 
 \fBint getstr(char *str);\fR
 .br
+\fBint getnstr(char *str, int n);\fR
+.br
 \fBint wgetstr(WINDOW *win, char *str);\fR
 .br
 \fBint mvgetstr(int y, int x, char *str);\fR
 .br
 \fBint mvwgetstr(WINDOW *win, int y, int x, char *str);\fR
+.br
+\fBint mvgetnstr(int y, int x, char *str, int n);\fR
+.br
+\fBint mvwgetnstr(WINDOW *, int y, int x, char *str, int n);\fR
 .br
 \fBint wgetnstr(WINDOW *win, char *str, int n);\fR
 .br
@@ -25,7 +31,8 @@ area pointed to by the character pointer \fIstr\fR.
 \fBwgetnstr\fR reads at most \fIn\fR characters, thus preventing a possible
 overflow of the input buffer.  Any attempt to enter more characters (other
 than the terminating newline or carriage return) causes a beep.  Function
-keys also cause a beep and are ignored.
+keys also cause a beep and are ignored.  The \fBgetnstr\fR function reads
+from the \fIstdscr\fR default window.
 
 The user's erase and kill characters are interpreted.  If keypad
 mode is on for the window, \fBKEY_LEFT\fR and \fBKEY_BACKSPACE\fR

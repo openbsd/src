@@ -43,7 +43,7 @@ Video attributes can be combined with a character argument passed to
 \fBaddch\fR or related functions by logical-ORing them into the character.
 (Thus, text, including attributes, can be copied from one place to another
 using \fBinch\fR and \fBaddch\fR.).  See the \fBcurs_attr\fR(3X) page for
-values of predefined video attribute constants that can be usefully ORed
+values of predefined video attribute constants that can be usefully OR'ed
 into characters.
 
 The \fBechochar\fR and \fBwechochar\fR routines are equivalent to a call to
@@ -115,7 +115,7 @@ The attribute A_ALTCHARSET actually forces literal display of PC ROM characters
 including the high-half graphics.  Your console driver may still capture or
 translate a few (such as ESC) but this feature should give you access to the
 card-suit characters, up and down-arrow, and most others in the range 0-32.
-(In a terminfo entry designed for use with \fBncurses\fR, the high-half 
+(In a terminfo entry designed for use with \fBcurses\fR, the high-half 
 characters are obtained using this attribute with an \fBacsc\fR string in
 which the second of each pair is a high-half character.)
 
@@ -133,7 +133,7 @@ The seven ACS symbols starting with \fBACS_S3\fR were not documented in
 any publicly released System V.  However, many publicly available terminfos
 include \fBacsc\fR strings in which their key characters (pryz{|}) are 
 embedded, and a second-hand list of their character descriptions has come
-to light.  The ACS-prefixed names for them were invented for \fBncurses\fR(3X).
+to light.  The ACS-prefixed names for them were invented for \fBcurses\fR(3X).
 .SH SEE ALSO
 \fBcurses\fR(3X), \fBcurs_attr\fR(3X), \fBcurs_clear\fR(3X),
 \fBcurs_inch\fR(3X), \fBcurs_outopts\fR(3X), \fBcurs_refresh\fR(3X),
