@@ -1,7 +1,7 @@
-/*	$OpenBSD: fwohci_cardbus.c,v 1.1 2002/06/26 15:55:33 tdeval Exp $	*/
+/*	$OpenBSD: fwohci_cardbus.c,v 1.2 2002/12/13 02:13:39 tdeval Exp $	*/
 /*	$NetBSD: fwohci_cardbus.c,v 1.5 2002/01/26 16:34:28 ichiro Exp $	*/
 
-/*-
+/*
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
@@ -18,8 +18,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-#ifdef __KERNEL_RCSID
+#ifdef	__KERNEL_RCSID
 __KERNEL_RCSID(0, "$NetBSD: fwohci_cardbus.c,v 1.5 2002/01/26 16:34:28 ichiro Exp $");
 #endif
 
@@ -55,8 +55,8 @@ __KERNEL_RCSID(0, "$NetBSD: fwohci_cardbus.c,v 1.5 2002/01/26 16:34:28 ichiro Ex
 
 #include <machine/bus.h>
 
-#include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
+#include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 
 #include <dev/cardbus/cardbusvar.h>
@@ -68,11 +68,11 @@ __KERNEL_RCSID(0, "$NetBSD: fwohci_cardbus.c,v 1.5 2002/01/26 16:34:28 ichiro Ex
 #include <dev/ieee1394/fwohcivar.h>
 
 struct fwohci_cardbus_softc {
-	struct fwohci_softc	sc_sc;
-	cardbus_chipset_tag_t	sc_cc;
-	cardbus_function_tag_t	sc_cf;
-	cardbus_devfunc_t	sc_ct;
-	void		       *sc_ih;
+	struct fwohci_softc	 sc_sc;
+	cardbus_chipset_tag_t	 sc_cc;
+	cardbus_function_tag_t	 sc_cf;
+	cardbus_devfunc_t	 sc_ct;
+	void			*sc_ih;
 };
 
 #ifdef	__NetBSD__
@@ -88,35 +88,30 @@ struct cfattach fwohci_cardbus_ca = {
 	fwohci_cardbus_attach, fwohci_cardbus_detach, fwohci_activate
 };
 
-#define CARDBUS_OHCI_MAP_REGISTER PCI_OHCI_MAP_REGISTER
-#define CARDBUS_INTERFACE_OHCI PCI_INTERFACE_OHCI
-#define cardbus_devinfo pci_devinfo
+#define	CARDBUS_OHCI_MAP_REGISTER	PCI_OHCI_MAP_REGISTER
+#define	CARDBUS_INTERFACE_OHCI		PCI_INTERFACE_OHCI
+#define	cardbus_devinfo			pci_devinfo
 
 int
-fwohci_cardbus_match(parent, match, aux)
-	struct device *parent;
 #ifdef	__NetBSD__
-	struct cfdata *match;
-	void *aux;
+fwohci_cardbus_match(struct device *parent, struct cfdata *match, void *aux)
 #else
-	void *match, *aux;
+fwohci_cardbus_match(struct device *parent, void *match, void *aux)
 #endif
 {
 	struct cardbus_attach_args *ca = (struct cardbus_attach_args *)aux;
 
 	if (CARDBUS_CLASS(ca->ca_class) == CARDBUS_CLASS_SERIALBUS &&
-	    CARDBUS_SUBCLASS(ca->ca_class) == 
-	        CARDBUS_SUBCLASS_SERIALBUS_FIREWIRE &&
+	    CARDBUS_SUBCLASS(ca->ca_class) ==
+	    CARDBUS_SUBCLASS_SERIALBUS_FIREWIRE &&
 	    CARDBUS_INTERFACE(ca->ca_class) == CARDBUS_INTERFACE_OHCI)
-		return 1;
- 
-	return 0;
+		return (1);
+
+	return (0);
 }
 
 void
-fwohci_cardbus_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+fwohci_cardbus_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct cardbus_attach_args *ca = aux;
 	struct fwohci_cardbus_softc *sc = (struct fwohci_cardbus_softc *)self;
@@ -128,14 +123,14 @@ fwohci_cardbus_attach(parent, self, aux)
 	const char *devname = self->dv_xname;
 
 	cardbus_devinfo(ca->ca_id, ca->ca_class, 0, devinfo);
-	printf(": %s (rev. 0x%02x)\n", devinfo, 
-	       CARDBUS_REVISION(ca->ca_class));
+	printf(": %s (rev. 0x%02x)\n", devinfo,
+	    CARDBUS_REVISION(ca->ca_class));
 
 	/* Map I/O registers */
 	if (Cardbus_mapreg_map(ct, CARDBUS_OHCI_MAP_REGISTER,
-	      CARDBUS_MAPREG_TYPE_MEM, 0,
-	      &sc->sc_sc.sc_memt, &sc->sc_sc.sc_memh,
-	      NULL, &sc->sc_sc.sc_memsize)) {
+	    CARDBUS_MAPREG_TYPE_MEM, 0,
+	    &sc->sc_sc.sc_memt, &sc->sc_sc.sc_memh,
+	    NULL, &sc->sc_sc.sc_memsize)) {
 		printf("%s: can't map OHCI register space\n", devname);
 		return;
 	}
@@ -145,7 +140,7 @@ fwohci_cardbus_attach(parent, self, aux)
 	sc->sc_ct = ct;
 	sc->sc_sc.sc_dmat = ca->ca_dmat;
 
-#if rbus
+#if	rbus
 #else
 XXX	(ct->ct_cf->cardbus_mem_open)(cc, 0, iob, iob + 0x40);
 #endif
@@ -157,27 +152,26 @@ XXX	(ct->ct_cf->cardbus_mem_open)(cc, 0, iob, iob + 0x40);
 	    OHCI_Int_MasterEnable);
 
 	/* Enable the device. */
-	csr = cardbus_conf_read(cc, cf, ca->ca_tag,
-	      CARDBUS_COMMAND_STATUS_REG);
+	csr = cardbus_conf_read(cc, cf, ca->ca_tag, CARDBUS_COMMAND_STATUS_REG);
 	cardbus_conf_write(cc, cf, ca->ca_tag, CARDBUS_COMMAND_STATUS_REG,
 	    csr | CARDBUS_COMMAND_MASTER_ENABLE | CARDBUS_COMMAND_MEM_ENABLE);
 
-#if BYTE_ORDER == BIG_ENDIAN
+#if	BYTE_ORDER == BIG_ENDIAN
 	csr = cardbus_conf_read(cc, cf, ca->ca_tag,
-	      CARDBUS_OHCI_CONTROL_REGISTER);
+	    CARDBUS_OHCI_CONTROL_REGISTER);
 	cardbus_conf_write(cc, cf, ca->ca_tag, CARDBUS_OHCI_CONTROL_REGISTER,
 	    csr | CARDBUS_GLOBAL_SWAP_BE);
 #endif
 
 	sc->sc_ih = cardbus_intr_establish(cc, cf, ca->ca_intrline,
-					   IPL_BIO, fwohci_intr, sc);
+	    IPL_BIO, fwohci_intr, sc);
 	if (sc->sc_ih == NULL) {
 		printf("%s: couldn't establish interrupt\n", devname);
 		return;
 	}
 	printf("%s: interrupting at %d\n", devname, ca->ca_intrline);
 
-	/* XXX NULL should be replaced by some call to Cardbus code */
+	/* XXX NULL should be replaced by some call to Cardbus code. */
 	if (fwohci_init(&sc->sc_sc, NULL) != 0) {
 		cardbus_intr_disestablish(cc, cf, sc->sc_ih);
 		bus_space_unmap(sc->sc_sc.sc_memt, sc->sc_sc.sc_memh,
@@ -186,9 +180,7 @@ XXX	(ct->ct_cf->cardbus_mem_open)(cc, 0, iob, iob + 0x40);
 }
 
 int
-fwohci_cardbus_detach(self, flags)
-	struct device *self;
-	int flags;
+fwohci_cardbus_detach(struct device *self, int flags)
 {
 	struct fwohci_cardbus_softc *sc = (struct fwohci_cardbus_softc *)self;
 	cardbus_devfunc_t ct = sc->sc_ct;
@@ -198,14 +190,15 @@ fwohci_cardbus_detach(self, flags)
 
 	if (rv)
 		return (rv);
+
 	if (sc->sc_ih != NULL) {
 		cardbus_intr_disestablish(ct->ct_cc, ct->ct_cf, sc->sc_ih);
 		sc->sc_ih = NULL;
-	} 
+	}
 	if (sc->sc_sc.sc_memsize) {
 		Cardbus_mapreg_unmap(ct, CARDBUS_OHCI_MAP_REGISTER,
-			sc->sc_sc.sc_memt, sc->sc_sc.sc_memh,
-			sc->sc_sc.sc_memsize);
+		    sc->sc_sc.sc_memt, sc->sc_sc.sc_memh,
+		    sc->sc_sc.sc_memsize);
 		sc->sc_sc.sc_memsize = 0;
 	}
 	return (0);

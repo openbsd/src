@@ -63,11 +63,11 @@ struct fwohci_pci_softc {
 };
 
 #ifdef __NetBSD__
-static int fwohci_pci_match(struct device *, struct cfdata *, void *);
+int fwohci_pci_match(struct device *, struct cfdata *, void *);
 #else
-static int fwohci_pci_match(struct device *, void *, void *);
+int fwohci_pci_match(struct device *, void *, void *);
 #endif
-static void fwohci_pci_attach(struct device *, struct device *, void *);
+void fwohci_pci_attach(struct device *, struct device *, void *);
 
 struct cfattach fwohci_pci_ca = {
 	sizeof(struct fwohci_pci_softc), fwohci_pci_match, fwohci_pci_attach,
@@ -77,10 +77,10 @@ struct cfattach fwohci_pci_ca = {
 };
 
 #ifdef __NetBSD__
-static int
+int
 fwohci_pci_match(struct device *parent, struct cfdata *match, void *aux)
 #else
-static int
+int
 fwohci_pci_match(struct device *parent, void *match, void *aux)
 #endif
 {
@@ -89,12 +89,12 @@ fwohci_pci_match(struct device *parent, void *match, void *aux)
 	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_SERIALBUS &&
 	    PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_SERIALBUS_FIREWIRE &&
 	    PCI_INTERFACE(pa->pa_class) == PCI_INTERFACE_OHCI)
-		return 1;
+		return (1);
  
-	return 0;
+	return (0);
 }
 
-static void
+void
 fwohci_pci_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *) aux;
