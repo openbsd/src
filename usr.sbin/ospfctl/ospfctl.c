@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfctl.c,v 1.8 2005/03/15 22:09:43 claudio Exp $ */
+/*	$OpenBSD: ospfctl.c,v 1.9 2005/03/23 20:18:19 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -50,7 +50,6 @@ const char	*fmt_timeframe(time_t t);
 const char	*fmt_timeframe_core(time_t t);
 const char	*log_id(u_int32_t );
 const char	*log_adv_rtr(u_int32_t);
-u_int8_t	 mask2prefixlen(struct in_addr);
 void		 show_database_head(struct in_addr, u_int8_t);
 int		 show_database_msg(struct imsg *);
 int		 show_nbr_msg(struct imsg *);
@@ -284,7 +283,7 @@ show_interface_msg(struct imsg *imsg)
 		    iface->name, iface->linkstate, print_link(iface->flags));
 		printf("  Internet address %s/%d, ",
 		    inet_ntoa(iface->addr),
-		    mask2prefixlen(iface->mask));
+		    mask2prefixlen(iface->mask.s_addr));
 		printf("Area %s\n", inet_ntoa(iface->area));
 		printf("  Router ID %s, network type %s, cost: %d\n",
 		    inet_ntoa(iface->rtr_id),
@@ -474,13 +473,14 @@ log_adv_rtr(u_int32_t adv_rtr)
 		return (buf);
 }
 
+/* prototype defined in ospfd.h and shared with the kroute.c version */
 u_int8_t
-mask2prefixlen(struct in_addr ina)
+mask2prefixlen(in_addr_t ina)
 {
-	if (ina.s_addr == 0)
+	if (ina == 0)
 		return (0);
 	else
-		return (33 - ffs(ntohl(ina.s_addr)));
+		return (33 - ffs(ntohl(ina)));
 }
 
 void
