@@ -57,8 +57,8 @@ All environment variables which affect CVS
 `$EDITOR'
 `$CVSEDITOR'
      Specifies the program to use for recording log messages during
-     commit.  If not set, the default is `/usr/ucb/vi'.  `$CVSEDITOR'
-     overrides `$EDITOR'.
+     commit.  `$CVSEDITOR' overrides `$EDITOR'.  See *Note Committing
+     your changes::.
 
 `$PATH'
      If `$RCSBIN' is not set, and no path is compiled into CVS, it will
@@ -161,37 +161,113 @@ Troubleshooting
 
 * Menu:
 
-* Magic branch numbers::        Magic branch numbers
+* Error messages::              Partial list of CVS errors
 
 
-File: cvs.info,  Node: Magic branch numbers,  Up: Troubleshooting
+File: cvs.info,  Node: Error messages,  Up: Troubleshooting
 
-Magic branch numbers
-====================
+Partial list of error messages
+==============================
 
-   Externally, branch numbers consist of an odd number of dot-separated
-decimal integers.  *Note Revision numbers::.  That is not the whole
-truth, however.  For efficiency reasons CVS sometimes inserts an extra 0
-in the second rightmost position (1.2.3 becomes 1.2.0.3, 8.9.10.11.12
-becomes 8.9.10.11.0.12 and so on).
+   Here is a partial list of error messages that you may see from CVS.
+It is not a complete list--CVS is capable of printing many, many error
+messages, often with parts of them supplied by the operating system,
+but the intention is to list the common and/or potentially confusing
+error messages.
 
-   CVS does a pretty good job at hiding these so called magic branches,
-but in a few places the hiding is incomplete:
+   The messages are alphabetical, but introductory text such as `cvs
+update: ' is not considered in ordering them.
 
-   * The magic branch number appears in the output from `cvs log'.
+   In some cases the list includes messages printed by old versions of
+CVS (partly because users may not be sure which version of CVS they are
+using at any particular moment).
 
-   * You cannot specify a symbolic branch name to `cvs admin'.
+`cvs [server aborted]: received broken pipe signal'
+     This message seems to be caused by a hard-to-track-down bug in CVS
+     or the systems it runs on (we don't know--we haven't tracked it
+     down yet!).  It seems to happen only after a CVS command has
+     completed, and you should be able to just ignore the message.
+     However, if you have discovered information concerning its cause,
+     please let us know as described in *Note BUGS::.
 
-   You can use the `admin' command to reassign a symbolic name to a
-branch the way RCS expects it to be.  If `R4patches' is assigned to the
-branch 1.4.2 (magic branch number 1.4.0.2) in file `numbers.c' you can
-do this:
+`cannot open CVS/Entries for reading: No such file or directory'
+     This generally indicates a CVS internal error, and can be handled
+     as with other CVS bugs (*note BUGS::.).  Usually there is a
+     workaround--the exact nature of which would depend on the
+     situation but which hopefully could be figured out.
 
-     $ cvs admin -NR4patches:1.4.2 numbers.c
+`cvs [update aborted]: could not patch FILE: No such file or directory'
+     This means that there was a problem finding the `patch' program.
+     Make sure that it is in your `PATH'.  Note that despite
+     appearances the message is *not* referring to whether it can find
+     FILE.
 
-   It only works if at least one revision is already committed on the
-branch.  Be very careful so that you do not assign the tag to the wrong
-number.  (There is no way to see how the tag was assigned yesterday).
+`cvs update: could not patch FILE; will refetch'
+     This means that for whatever reason the client was unable to apply
+     a patch that the server sent.  The message is nothing to be
+     concerned about, because inability to apply the patch only slows
+     things down and has no effect on what CVS does.
+
+`dying gasps from SERVER unexpected'
+     This message seems to be caused by a hard-to-track-down bug in CVS
+     or the systems it runs on (we don't know--we haven't tracked it
+     down yet!).  If you see it, you probably can just retry the
+     operation which failed, or if you have discovered information
+     concerning its cause, please let us know as described in *Note
+     BUGS::.
+
+`end of file from server (consult above messages if any)'
+     The most common cause for this message is if you are using an
+     external `rsh' program and it exited with an error.  In this case
+     the `rsh' program should have printed a message, which will appear
+     before the above message.  For more information on setting up a
+     CVS client and server, see *Note Remote repositories::.
+
+`cvs commit: Executing 'mkmodules''
+     This means that your repository is set up for a version of CVS
+     prior to CVS 1.8.  When using CVS 1.8 or later, the above message
+     will be preceded by
+
+          cvs commit: Rebuilding administrative file database
+
+     If you see both messages, the database is being rebuilt twice,
+     which is unnecessary but harmless.  If you wish to avoid the
+     duplication, and you have no versions of CVS 1.7 or earlier in
+     use, remove `-i mkmodules' every place it appears in your `modules'
+     file.  For more information on the `modules' file, see *Note
+     modules::.
+
+`cvs commit: Up-to-date check failed for `FILE''
+     This means that someone else has committed a change to that file
+     since the last time that you did a `cvs update'.  So before
+     proceeding with your `cvs commit' you need to `cvs update'.  CVS
+     will merge the changes that you made and the changes that the
+     other person made.  If it does not detect any conflicts it will
+     report `M cacErrCodes.h' and you are ready to `cvs commit'.  If it
+     detects conflicts it will print a message saying so, will report
+     `C cacErrCodes.h', and you need to manually resolve the conflict.
+     For more details on this process see *Note Conflicts example::.
+
+`Usage:	diff3 [-exEX3 [-i | -m] [-L label1 -L label3]] file1 file2 file3'
+          Only one of [exEX3] allowed
+     This indicates a problem with the installation of `diff3' and
+     `rcsmerge'.  Specifically `rcsmerge' was compiled to look for GNU
+     diff3, but it is finding unix diff3 instead.  The exact text of
+     the message will vary depending on the system.  The solution is to
+     make sure `rcsmerge' finds GNU diff3.  Depending on how `rcsmerge'
+     was compiled, it might be sufficient to place GNU diff3 in your
+     `PATH', or it might be necessary to recompile `rcsmerge' or find a
+     binary distribution of `rcsmerge' which looks in the `PATH'.
+
+`cvs commit: warning: editor session failed'
+     This means that the editor which CVS is using exits with a nonzero
+     exit status.  Some versions of vi will do this even when there was
+     not a problem editing the file.  If so, point the CVSEDITOR
+     environment variable to a small script such as:
+
+          #!/bin/sh
+          vi $*
+          exit 0
 
 
 File: cvs.info,  Node: Copying,  Next: Index,  Prev: Troubleshooting,  Up: Top

@@ -22,6 +22,226 @@ and this permission notice may be included in translations approved by
 the Free Software Foundation instead of in the original English.
 
 
+File: cvs.info,  Node: diff,  Next: export,  Prev: commit,  Up: CVS commands
+
+diff--Run diffs between revisions
+=================================
+
+   * Synopsis: diff [-l] [rcsdiff_options] [[-r rev1 | -D date1] [-r
+     rev2 |  -D date2]] [files...]
+
+   * Requires: working directory, repository.
+
+   * Changes: nothing.
+
+   The `diff' command is used to compare different revisions of files.
+The default action is to compare your working files with the revisions
+they were based on, and report any differences that are found.
+
+   If any file names are given, only those files are compared.  If any
+directories are given, all files under them will be compared.
+
+   The exit status will be 0 if no differences were found, 1 if some
+differences were found, and 2 if any error occurred.
+
+* Menu:
+
+* diff options::                diff options
+* diff examples::               diff examples
+
+
+File: cvs.info,  Node: diff options,  Next: diff examples,  Up: diff
+
+diff options
+------------
+
+   These standard options are supported by `diff' (*note Common
+options::., for a complete description of them):
+
+`-D DATE'
+     Use the most recent revision no later than DATE.  See `-r' for how
+     this affects the comparison.
+
+`-k KFLAG'
+     Process RCS keywords according to KFLAG.  See co(1).
+
+`-l'
+     Local; run only in current working directory.
+
+`-R'
+     Examine directories recursively.  This option is on by default.
+
+`-r TAG'
+     Compare with revision TAG.  Zero, one or two `-r' options can be
+     present.  With no `-r' option, the working file will be compared
+     with the revision it was based on.  With one `-r', that revision
+     will be compared to your current working file.  With two `-r'
+     options those two revisions will be compared (and your working
+     file will not affect the outcome in any way).
+
+     One or both `-r' options can be replaced by a `-D DATE' option,
+     described above.
+
+`--ifdef=ARG'
+     Output in ifdef format.  Consult the documentation of your
+     underlying diff program concerning the `-D' option to diff, for
+     more information on this format.
+
+   The following options are passed through to `rcsdiff', which in turn
+passes them to `diff'.  The exact meaning of the options depends on
+which `diff' you are using.  See the documentation for your `diff' for
+details.
+
+   `-a' `-b' `-B' `-c' `-C' NLINES `-d' `-e' `-f' `-h' `-H' `-i' `-n'
+`-N' `-p' `-s' `-t' `-u' `-U' NLINES `-F' REGEXP `-I' REGEXP `-L' LABEL
+`-T' `-V' ARG `-W' COLUMNS `-w' `-y' `-0' `-1' `-2' `-3' `-4' `-5' `-6'
+`-7' `-8' `-9' `--binary' `--brief' `--changed-group-format=ARG'
+`--context[=LINES]' `--ed' `--expand-tabs' `--forward-ed'
+`--horizon-lines=ARG' `--ignore-all-space' `--ignore-blank-lines'
+`--ignore-case' `--ignore-matching-lines=REGEXP'
+`--ignore-space-change' `--initial-tab' `--label=LABEL' `--left-column'
+`--minimal' `--new-file' `--new-line-format=ARG'
+`--old-line-format=ARG' `--paginate' `--rcs' `--report-identical-files'
+`--code-c-function' `--side-by-side' `--show-function-line=REGEXP'
+`--speed-large-files' `--suppress-common-lines' `--text'
+`--unchanged-group-format=ARG' `--unified[=LINES]' `--width=COLUMNS'
+
+
+File: cvs.info,  Node: diff examples,  Prev: diff options,  Up: diff
+
+diff examples
+-------------
+
+   The following line produces a Unidiff (`-u' flag) between revision
+1.14 and 1.19 of `backend.c'.  Due to the `-kk' flag no keywords are
+substituted, so differences that only depend on keyword substitution
+are ignored.
+
+     $ cvs diff -kk -u -r 1.14 -r 1.19 backend.c
+
+   Suppose the experimental branch EXPR1 was based on a set of files
+tagged RELEASE_1_0.  To see what has happened on that branch, the
+following can be used:
+
+     $ cvs diff -r RELEASE_1_0 -r EXPR1
+
+   A command like this can be used to produce a context diff between
+two releases:
+
+     $ cvs diff -c -r RELEASE_1_0 -r RELEASE_1_1 > diffs
+
+   If you are maintaining ChangeLogs, a command like the following just
+before you commit your changes may help you write the ChangeLog entry.
+All local modifications that have not yet been committed will be
+printed.
+
+     $ cvs diff -u | less
+
+
+File: cvs.info,  Node: export,  Next: history,  Prev: diff,  Up: CVS commands
+
+export--Export sources from CVS, similar to checkout
+====================================================
+
+   * Synopsis: export [-flNn] [-r rev|-D date] [-k subst] [-d dir]
+     module...
+
+   * Requires: repository.
+
+   * Changes: current directory.
+
+   This command is a variant of `checkout'; use it when you want a copy
+of the source for module without the CVS administrative directories.
+For example, you might use `export' to prepare source for shipment
+off-site.  This command requires that you specify a date or tag (with
+`-D' or `-r'), so that you can count on reproducing the source you ship
+to others.
+
+   One often would like to use `-kv' with `cvs export'.  This causes
+any RCS keywords to be expanded such that an import done at some other
+site will not lose the keyword revision information.  But be aware that
+doesn't handle an export containing binary files correctly.  Also be
+aware that after having used `-kv', one can no longer use the `ident'
+command (which is part of the RCS suite--see ident(1)) which looks for
+RCS keyword strings.  If you want to be able to use `ident' you must not
+use `-kv'.
+
+* Menu:
+
+* export options::              export options
+
+
+File: cvs.info,  Node: export options,  Up: export
+
+export options
+--------------
+
+   These standard options are supported by `export' (*note Common
+options::., for a complete description of them):
+
+`-D DATE'
+     Use the most recent revision no later than DATE.
+
+`-f'
+     If no matching revision is found, retrieve the most recent
+     revision (instead of ignoring the file).
+
+`-l'
+     Local; run only in current working directory.
+
+`-n'
+     Do not run any checkout program.
+
+`-R'
+     Export directories recursively.  This is on by default.
+
+`-r TAG'
+     Use revision TAG.
+
+   In addition, these options (that are common to `checkout' and
+`export') are also supported:
+
+`-d DIR'
+     Create a directory called DIR for the working files, instead of
+     using the module name.  Unless you also use `-N', the paths
+     created under DIR will be as short as possible.
+
+`-k SUBST'
+     Set keyword expansion mode (*note Substitution modes::.).
+
+`-N'
+     Only useful together with `-d DIR'.  With this option, CVS will
+     not shorten module paths in your working directory.  (Normally,
+     CVS shortens paths as much as possible when you specify an
+     explicit target directory.)
+
+
+File: cvs.info,  Node: history,  Next: import,  Prev: export,  Up: CVS commands
+
+history--Show status of files and users
+=======================================
+
+   * Synopsis:     history [-report] [-flags] [-options args] [files...]
+
+   * Requires: the file `$CVSROOT/CVSROOT/history'
+
+   * Changes: nothing.
+
+   CVS can keep a history file that tracks each use of the `checkout',
+`commit', `rtag', `update', and `release' commands.  You can use
+`history' to display this information in various formats.
+
+   Logging must be enabled by creating the file
+`$CVSROOT/CVSROOT/history'.
+
+   *Warning:* `history' uses `-f', `-l', `-n', and `-p' in ways that
+conflict with the normal use inside CVS (*note Common options::.).
+
+* Menu:
+
+* history options::             history options
+
+
 File: cvs.info,  Node: history options,  Up: history
 
 history options
@@ -710,10 +930,10 @@ options::., for a complete description of them):
 
 `-a'
      Use the `-a' option to have `rtag' look in the `Attic' (*note
-     Removing files::.) for removed files that contain the specified
-     tag.  The tag is removed from these files, which makes it
-     convenient to re-use a symbolic tag as development continues (and
-     files get removed from the up-coming distribution).
+     Attic::.) for removed files that contain the specified tag.  The
+     tag is removed from these files, which makes it convenient to
+     re-use a symbolic tag as development continues (and files get
+     removed from the up-coming distribution).
 
 `-b'
      Make the tag a branch tag.  *Note Revisions and branches::.

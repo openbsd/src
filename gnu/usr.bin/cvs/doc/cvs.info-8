@@ -60,11 +60,13 @@ Index
 * ALL in commitinfo:                    commitinfo.
 * annotate (subcommand):                annotate.
 * Atomic transactions, lack of:         Concurrency.
+* attic:                                Attic.
 * authenticated client, using:          Password authentication client.
 * authenticating server, setting up:    Password authentication server.
 * Author keyword:                       Keyword list.
 * Automatically ignored files:          cvsignore.
 * Avoiding editor invocation:           Common options.
+* Base directory, in CVS directory:     Working directory storage.
 * bill of materials:                    Builds.
 * Binary files:                         Binary files.
 * Branch merge example:                 Merging a branch.
@@ -85,6 +87,7 @@ Index
 * Changing a log message:               admin options.
 * checked out copy, keeping:            Keeping a checked out copy.
 * Checkin program:                      modules.
+* Checkin.prog file, in CVS directory:  Working directory storage.
 * Checking commits:                     commitinfo.
 * Checking out source:                  Getting the source.
 * Checkout (subcommand):                checkout.
@@ -125,6 +128,19 @@ Index
 * CVS, history of:                      What is CVS?.
 * CVS, introduction to:                 What is CVS?.
 * CVS, versions of:                     Compatibility.
+* CVS/Base directory:                   Working directory storage.
+* CVS/Checkin.prog file:                Working directory storage.
+* CVS/Entries file:                     Working directory storage.
+* CVS/Entries.Backup file:              Working directory storage.
+* CVS/Entries.Log file:                 Working directory storage.
+* CVS/Entries.Static file:              Working directory storage.
+* CVS/Notify file:                      Working directory storage.
+* CVS/Notify.tmp file:                  Working directory storage.
+* CVS/Repository file:                  Working directory storage.
+* CVS/Root file:                        Specifying a repository.
+* CVS/Tag file:                         Working directory storage.
+* CVS/Template file:                    Working directory storage.
+* CVS/Update.prog file:                 Working directory storage.
 * CVS_CLIENT_LOG:                       Environment variables.
 * CVS_CLIENT_PORT:                      Kerberos authenticated.
 * CVS_IGNORE_REMOTE_ROOT:               Environment variables.
@@ -152,6 +168,7 @@ Index
 * CVSWRAPPERS, environment variable:    Wrappers.
 * Date keyword:                         Keyword list.
 * Dates:                                Common options.
+* dead state:                           Attic.
 * Decimal revision number:              Revision numbers.
 * DEFAULT in commitinfo:                commitinfo.
 * DEFAULT in editinfo:                  editinfo.
@@ -183,6 +200,10 @@ Index
 * Editor, specifying per module:        editinfo.
 * editors (subcommand):                 Watch information.
 * emerge:                               Conflicts example.
+* Entries file, in CVS directory:       Working directory storage.
+* Entries.Backup file, in CVS directory: Working directory storage.
+* Entries.Log file, in CVS directory:   Working directory storage.
+* Entries.Static file, in CVS directory: Working directory storage.
 * Environment variables:                Environment variables.
 * Errors, reporting (CVS):              What is CVS?.
 * Errors, reporting (manual):           BUGS.
@@ -267,7 +288,6 @@ Index
 * Mail, automatic mail on commit:       Informing others.
 * Mailing list:                         What is CVS?.
 * Mailing log messages:                 loginfo.
-* Main trunk (intro):                   Revision numbers.
 * Main trunk and branches:              Revisions and branches.
 * make:                                 Builds.
 * Many repositories:                    Multiple repositories.
@@ -278,6 +298,7 @@ Index
 * Merging a branch:                     Merging a branch.
 * Merging a file:                       Updating a file.
 * Merging two revisions:                Merging two revisions.
+* mkmodules:                            Error messages.
 * Modifications, copying between branches: Merging.
 * Module status:                        modules.
 * Module, defining:                     Defining the module.
@@ -296,6 +317,8 @@ Index
 * Needs Patch:                          File status.
 * Newsgroups:                           What is CVS?.
 * notify (admin file):                  Getting Notified.
+* Notify file, in CVS directory:        Working directory storage.
+* Notify.tmp file, in CVS directory:    Working directory storage.
 * Nroff (selecting comment leader):     admin examples.
 * Number, branch:                       Revision numbers.
 * Number, revision-:                    Revision numbers.
@@ -313,6 +336,7 @@ Index
 * password client, using:               Password authentication client.
 * password server, setting up:          Password authentication server.
 * PATH:                                 Environment variables.
+* Per-directory sticky tags/dates:      Working directory storage.
 * Per-module editor:                    editinfo.
 * Policy:                               When to commit.
 * Precommit checking:                   commitinfo.
@@ -358,6 +382,7 @@ Index
 * Repositories, multiple:               Multiple repositories.
 * Repositories, remote:                 Remote repositories.
 * Repository (intro):                   Repository.
+* Repository file, in CVS directory:    Working directory storage.
 * Repository, example:                  Repository.
 * Repository, how data is stored:       Repository storage.
 * Repository, setting up:               Creating a repository.
@@ -376,6 +401,7 @@ Index
 * Revisions, merging differences between: Merging two revisions.
 * Revisions, versions and releases:     Versions revisions releases.
 * Right-hand options:                   Common options.
+* Root file, in CVS directory:          Specifying a repository.
 * rsh:                                  Connecting via rsh.
 * Rtag (subcommand):                    rtag.
 * rtag, creating a branch using:        Creating a branch.
@@ -400,6 +426,7 @@ Index
 * sticky date:                          Sticky tags.
 * Sticky tags:                          Sticky tags.
 * Sticky tags, resetting:               Sticky tags.
+* Sticky tags/dates, per-directory:     Working directory storage.
 * Storing log messages:                 loginfo.
 * Structure:                            Structure.
 * Subdirectories:                       Recursive behavior.
@@ -408,6 +435,7 @@ Index
 * Symbolic name (tag):                  Tags.
 * Syntax of info files:                 syntax.
 * Tag (subcommand):                     tag.
+* Tag file, in CVS directory:           Working directory storage.
 * Tag program:                          modules.
 * tag, command, introduction:           Tags.
 * tag, example:                         Tags.
@@ -419,6 +447,7 @@ Index
 * tc, Trivial Compiler (example):       A sample session.
 * Team of developers:                   Multiple developers.
 * TEMP:                                 Environment variables.
+* Template file, in CVS directory:      Working directory storage.
 * Template for log message:             rcsinfo.
 * temporary files, location of:         Environment variables.
 * Third-party sources:                  Tracking sources.
@@ -443,6 +472,7 @@ Index
 * Update (subcommand):                  update.
 * Update program:                       modules.
 * update, introduction:                 Updating a file.
+* Update.prog file, in CVS directory:   Working directory storage.
 * Updating a file:                      Updating a file.
 * USER:                                 Environment variables.
 * user aliases:                         Password authentication server.

@@ -27,7 +27,7 @@ File: cvs.info,  Node: Top,  Next: Preface,  Up: (dir)
 
 
    This info manual describes how to use and administer CVS version
-1.9.6.
+1.9.8.
 
 * Menu:
 
@@ -193,7 +193,8 @@ of known deficiencies:
 
    * This list is not complete.  If you notice any error, omission, or
      something that is unclear, please send mail to
-     bug-cvs@prep.ai.mit.edu.
+     bug-cvs@prep.ai.mit.edu.  This is also the address for reporting
+     bugs in CVS.
 
    I hope that you will find this manual useful, despite the
 above-mentioned shortcomings.
@@ -435,7 +436,9 @@ Committing your changes
 =======================
 
    When you have checked that the compiler is still compilable you
-decide to make a new version of `backend.c'.
+decide to make a new version of `backend.c'.  This will store your new
+`backend.c' in the repository and make it available to anyone else who
+is using that same repository.
 
      $ cvs commit backend.c
 
@@ -446,9 +449,23 @@ editor.
    The environment variable `$CVSEDITOR' determines which editor is
 started.  If `$CVSEDITOR' is not set, then if the environment variable
 `$EDITOR' is set, it will be used. If both `$CVSEDITOR' and `$EDITOR'
-are not set then the editor defaults to `vi'.  If you want to avoid the
-overhead of starting an editor you can specify the log message on the
-command line using the `-m' flag instead, like this:
+are not set then there is a default which will vary with your operating
+system, for example `vi' for unix or `notepad' for Windows NT/95.
+
+   When CVS starts the editor, it includes a list of files which are
+modified.  For the CVS client, this list is based on comparing the
+modification time of the file against the modification time that the
+file had when it was last gotten or updated.  Therefore, if a file's
+modification time has changed but its contents have not, it will show
+up as modified.  The simplest way to handle this is simply not to worry
+about it--if you proceed with the commit CVS will detect that the
+contents are not modified and treat it as an unmodified file.  The next
+`update' will clue CVS in to the fact that the file is unmodified, and
+it will reset its stored timestamp so that the file will not show up in
+future editor sessions.
+
+   If you want to avoid starting an editor you can specify the log
+message on the command line using the `-m' flag instead, like this:
 
      $ cvs commit -m "Added an optimization pass" backend.c
 
@@ -570,6 +587,7 @@ user-defined modules.
 
 * Specifying a repository::     Telling CVS where your repository is
 * Repository storage::          The structure of the repository
+* Working directory storage::   The structure of working directories
 * Intro administrative files::  Defining modules
 * Multiple repositories::       Multiple repositories
 * Creating a repository::       Creating a repository
@@ -613,7 +631,7 @@ updated).  Of course, for proper operation they should be two ways of
 referring to the same repository.
 
 
-File: cvs.info,  Node: Repository storage,  Next: Intro administrative files,  Prev: Specifying a repository,  Up: Repository
+File: cvs.info,  Node: Repository storage,  Next: Working directory storage,  Prev: Specifying a repository,  Up: Repository
 
 How data is stored in the repository
 ====================================
@@ -632,6 +650,7 @@ file permissions appropriate for the repository.
 
 * Repository files::            What files are stored in the repository
 * File permissions::            File permissions
+* Attic::                       Some files are stored in the Attic
 
 
 File: cvs.info,  Node: Repository files,  Next: File permissions,  Up: Repository storage
@@ -678,7 +697,6 @@ possible directory tree (showing only the directories):
 control.  The name of the history file is the name of the corresponding
 file with `,v' appended to the end.  Here is what the repository for
 the `yoyodyne/tc' directory might look like:
-
        `$CVSROOT'
          |
          +--yoyodyne
@@ -715,7 +733,7 @@ see *Note Magic branch numbers::.  Also in CVS the valid tag names are
 a subset of what RCS accepts; for CVS's rules see *Note Tags::.
 
 
-File: cvs.info,  Node: File permissions,  Prev: Repository files,  Up: Repository storage
+File: cvs.info,  Node: File permissions,  Next: Attic,  Prev: Repository files,  Up: Repository storage
 
 File permissions
 ----------------
@@ -764,7 +782,184 @@ run it setuid.  You cannot use the setuid features of RCS together with
 CVS.
 
 
-File: cvs.info,  Node: Intro administrative files,  Next: Multiple repositories,  Prev: Repository storage,  Up: Repository
+File: cvs.info,  Node: Attic,  Prev: File permissions,  Up: Repository storage
+
+The attic
+---------
+
+   You will notice that sometimes CVS stores an RCS file in the
+`Attic'.  For example, if the CVSROOT is `/usr/local/cvsroot' and we are
+talking about the file `backend.c' in the directory `yoyodyne/tc', then
+the file normally would be in
+
+     /usr/local/cvsroot/yoyodyne/tc/backend.c,v
+
+   but if it goes in the attic, it would be in
+
+     /usr/local/cvsroot/yoyodyne/tc/Attic/backend.c,v
+
+   instead.  It should not matter from a user point of view whether a
+file is in the attic; CVS keeps track of this and looks in the attic
+when it needs to.  But in case you want to know, the rule is that the
+RCS file is stored in the attic if and only if the head revision on the
+trunk has state `dead'.  A `dead' state means that file has been
+removed, or never added, for that revision.  For example, if you add a
+file on a branch, it will have a trunk revision in `dead' state, and a
+branch revision in a non-`dead' state.
+
+
+File: cvs.info,  Node: Working directory storage,  Next: Intro administrative files,  Prev: Repository storage,  Up: Repository
+
+How data is stored in the working directory
+===========================================
+
+   While we are discussing CVS internals which may become visible from
+time to time, we might as well talk about what CVS puts in the `CVS'
+directories in the working directories.  As with the repository, CVS
+handles this information and one can usually access it via CVS
+commands.  But in some cases it may be useful to look at it, and other
+programs, such as the `jCVS' graphical user interface or the `VC'
+package for emacs, may need to look at it.  Such programs should follow
+the recommendations in this section if they hope to be able to work
+with other programs which use those files, including future versions of
+the programs just mentioned and the command-line CVS client.
+
+   The `CVS' directory contains several files.  Programs which are
+reading this directory should silently ignore files which are in the
+directory but which are not documented here, to allow for future
+expansion.
+
+`Root'
+     This file contains the current CVS root, as described in *Note
+     Specifying a repository::.
+
+`Repository'
+     This file contains the directory within the repository which the
+     current directory corresponds with.  For historical reasons it is
+     an absolute pathname, although it would make more sense for it to
+     be relative to the root.  For example, after the command
+
+          cvs -d :local:/usr/local/cvsroot checkout yoyodyne/tc
+
+     `Root' will contain
+
+          :local:/usr/local/cvsroot
+
+     and `Repository' will contain
+
+          /usr/local/cvsroot/yoydyne/tc
+
+`Entries'
+     This file lists the files and directories in the working
+     directory.  It is a text file according to the conventions
+     appropriate for the operating system in question.  The first
+     character of each line indicates what sort of line it is.  If the
+     character is unrecognized, programs reading the file should
+     silently skip that line, to allow for future expansion.
+
+     If the first character is `/', then the format is:
+
+          /NAME/REVISION/TIMESTAMP[+CONFLICT]/OPTIONS/TAGDATE
+
+     where `[' and `]' are not part of the entry, but instead indicate
+     that the `+' and conflict marker are optional.  NAME is the name
+     of the file within the directory.  REVISION is the revision that
+     the file in the working derives from, or `0' for an added file, or
+     `-' followed by a revision for a removed file.  TIMESTAMP is the
+     timestamp of the file at the time that CVS created it; if the
+     timestamp differs with the actual modification time of the file it
+     means the file has been modified.  CONFLICT indicates that there
+     was a conflict; if it is the same as the actual modification time
+     of the file it means that the user has obviously not resolved the
+     conflict.  OPTIONS contains sticky options (for example `-kb' for a
+     binary file).  TAGDATE contains `T' followed by a tag name, or `D'
+     for a date, followed by a sticky tag or date.  Note that if
+     TIMESTAMP contains a pair of timestamps separated by a space,
+     rather than a single timestamp, you are dealing with a version of
+     CVS earlier than CVS 1.5 (not documented here).
+
+     If the first character of a line in `Entries' is `D', then it
+     indicates a subdirectory.  `D' on a line all by itself indicates
+     that the program which wrote the `Entries' file does record
+     subdirectories (therefore, if there is such a line and no other
+     lines beginning with `D', one knows there are no subdirectories).
+     Otherwise, the line looks like:
+
+          D/NAME/FILLER1/FILLER2/FILLER3/FILLER4
+
+     where NAME is the name of the subdirectory, and all the FILLER
+     fields should be silently ignored, for future expansion.  Programs
+     which modify `Entries' files should preserve these fields.
+
+`Entries.Log'
+     This file does not record any information beyond that in
+     `Entries', but it does provide a way to update the information
+     without having to rewrite the entire `Entries' file, including the
+     ability to preserve the information even if the program writing
+     `Entries' and `Entries.Log' abruptly aborts.  The format of a line
+     in `Entries.Log' is a single character command followed by a space
+     followed by a line in the format specified for a line in
+     `Entries'.  The single character command is `A' to indicate that
+     the entry is being added, `R' to indicate that the entry is being
+     removed, or any other character to indicate that the entire line
+     in `Entries.Log' should be silently ignored (for future
+     expansion).  If the second character of the line in `Entries.Log'
+     is not a space, then it was written by an older version of CVS
+     (not documented here).
+
+`Entries.Backup'
+     This is a temporary file.  Recommended usage is to write a new
+     entries file to `Entries.Backup', and then to rename it
+     (atomically, where possible) to `Entries'.
+
+`Entries.Static'
+     The only relevant thing about this file is whether it exists or
+     not.  If it exists, then it means that only part of a directory
+     was gotten and CVS will not create additional files in that
+     directory.  To clear it, use the `update' command with the `-d'
+     option, which will get the additional files and remove
+     `Entries.Static'.
+
+`Tag'
+     This file contains per-directory sticky tags or dates.  The first
+     character is `T' for a branch tag, `N' for a non-branch tag, or
+     `D' for a date, or another character to mean the file should be
+     silently ignored, for future expansion.  This character is
+     followed by the tag or date.  Note that per-directory sticky tags
+     or dates are used for things like applying to files which are
+     newly added; they might not be the same as the sticky tags or
+     dates on individual files.  For general information on sticky tags
+     and dates, see *Note Sticky tags::.
+
+`Checkin.prog'
+`Update.prog'
+     These files store the programs specified by the `-i' and `-u'
+     options in the modules file, respectively.
+
+`Notify'
+     This file stores notifications (for example, for `edit' or
+     `unedit') which have not yet been sent to the server.  Its format
+     is not yet documented here.
+
+`Notify.tmp'
+     This file is to `Notify' as `Entries.Backup' is to `Entries'.
+     That is, to write `Notify', first write the new contents to
+     `Notify.tmp' and then (atomically where possible), rename it to
+     `Notify'.
+
+`Base'
+     If watches are in use, then an `edit' command stores the original
+     copy of the file in the `Base' directory.  This allows the
+     `unedit' command to operate even if it is unable to communicate
+     with the server.
+
+`Template'
+     This file contains the template specified by the `rcsinfo' file
+     (*note rcsinfo::.).  It is only used by the client; the
+     non-client/server CVS consults `rcsinfo' directly.
+
+
+File: cvs.info,  Node: Intro administrative files,  Next: Multiple repositories,  Prev: Working directory storage,  Up: Repository
 
 The administrative files
 ========================
@@ -985,191 +1180,4 @@ the documentation for your rsh replacement.
 
    (The `bach@' can be omitted if the username is the same on both the
 local and remote hosts.)
-
-
-File: cvs.info,  Node: Password authenticated,  Next: Kerberos authenticated,  Prev: Connecting via rsh,  Up: Remote repositories
-
-Direct connection with password authentication
-----------------------------------------------
-
-   The CVS client can also connect to the server using a password
-protocol.  This is particularly useful if using `rsh' is not feasible
-(for example, the server is behind a firewall), and Kerberos also is
-not available.
-
-   To use this method, it is necessary to make some adjustments on both
-the server and client sides.
-
-* Menu:
-
-* Password authentication server::     Setting up the server
-* Password authentication client::     Using the client
-* Password authentication security::   What this method does and does not do
-
-
-File: cvs.info,  Node: Password authentication server,  Next: Password authentication client,  Up: Password authenticated
-
-Setting up the server for password authentication
-.................................................
-
-   On the server side, the file `/etc/inetd.conf' needs to be edited so
-`inetd' knows to run the command `cvs pserver' when it receives a
-connection on the right port.  By default, the port number is 2401; it
-would be different if your client were compiled with `CVS_AUTH_PORT'
-defined to something else, though.
-
-   If your `inetd' allows raw port numbers in `/etc/inetd.conf', then
-the following (all on a single line in `inetd.conf') should be
-sufficient:
-
-     2401  stream  tcp  nowait  root  /usr/local/bin/cvs
-     cvs -b /usr/local/bin pserver
-
-   The `-b' option specifies the directory which contains the RCS
-binaries on the server.  You could also use the `-T' option to specify
-a temporary directory.
-
-   If your `inetd' wants a symbolic service name instead of a raw port
-number, then put this in `/etc/services':
-
-     cvspserver      2401/tcp
-
-   and put `cvspserver' instead of `2401' in `inetd.conf'.
-
-   Once the above is taken care of, restart your `inetd', or do
-whatever is necessary to force it to reread its initialization files.
-
-   Because the client stores and transmits passwords in cleartext
-(almost--see *Note Password authentication security::, for details), a
-separate CVS password file may be used, so people don't compromise their
-regular passwords when they access the repository.  This file is
-`$CVSROOT/CVSROOT/passwd' (*note Intro administrative files::.).  Its
-format is similar to `/etc/passwd', except that it only has two fields,
-username and password.  For example:
-
-     bach:ULtgRLXo7NRxs
-     cwang:1sOp854gDF3DY
-
-   The password is encrypted according to the standard Unix `crypt()'
-function, so it is possible to paste in passwords directly from regular
-Unix `passwd' files.
-
-   When authenticating a password, the server first checks for the user
-in the CVS `passwd' file.  If it finds the user, it compares against
-that password.  If it does not find the user, or if the CVS `passwd'
-file does not exist, then the server tries to match the password using
-the system's user-lookup routine.  When using the CVS `passwd' file,
-the server runs under as the username specified in the the third
-argument in the entry, or as the first argument if there is no third
-argument (in this way CVS allows imaginary usernames provided the CVS
-`passwd' file indicates corresponding valid system usernames).  In any
-case, CVS will have no privileges which the (valid) user would not have.
-
-   It is possible to "map" cvs-specific usernames onto system usernames
-(i.e., onto system login names) in the `$CVSROOT/CVSROOT/passwd' file
-by appending a colon and the system username after the password.  For
-example:
-
-     cvs:ULtgRLXo7NRxs:kfogel
-     generic:1sOp854gDF3DY:spwang
-     anyone:1sOp854gDF3DY:spwang
-
-   Thus, someone remotely accessing the repository on
-`chainsaw.brickyard.com' with the following command:
-
-     cvs -d :pserver:cvs@chainsaw.brickyard.com:/usr/local/cvsroot checkout foo
-
-   would end up running the server under the system identity kfogel,
-assuming successful authentication.  However, the remote user would not
-necessarily need to know kfogel's system password, as the
-`$CVSROOT/CVSROOT/passwd' file might contain a different password, used
-only for CVS.  And as the example above indicates, it is permissible to
-map multiple cvs usernames onto a single system username.
-
-   This feature is designed to allow people repository access without
-full system access (in particular, see *Note Read-only access::);
-however, also *Note Password authentication security::.  Any sort of
-repository access very likely implies a degree of general system access
-as well.
-
-   Right now, the only way to put a password in the CVS `passwd' file
-is to paste it there from somewhere else.  Someday, there may be a `cvs
-passwd' command.
-
-
-File: cvs.info,  Node: Password authentication client,  Next: Password authentication security,  Prev: Password authentication server,  Up: Password authenticated
-
-Using the client with password authentication
-.............................................
-
-   Before connecting to the server, the client must "log in" with the
-command `cvs login'.  Logging in verifies a password with the server,
-and also records the password for later transactions with the server.
-The `cvs login' command needs to know the username, server hostname,
-and full repository path, and it gets this information from the
-repository argument or the `CVSROOT' environment variable.
-
-   `cvs login' is interactive -- it prompts for a password:
-
-     cvs -d :pserver:bach@chainsaw.brickyard.com:/usr/local/cvsroot login
-     CVS password:
-
-   The password is checked with the server; if it is correct, the
-`login' succeeds, else it fails, complaining that the password was
-incorrect.
-
-   Once you have logged in, you can force CVS to connect directly to
-the server and authenticate with the stored password:
-
-     cvs -d :pserver:bach@chainsaw.brickyard.com:/usr/local/cvsroot checkout foo
-
-   The `:pserver:' is necessary because without it, CVS will assume it
-should use `rsh' to connect with the server (*note Connecting via
-rsh::.).  (Once you have a working copy checked out and are running CVS
-commands from within it, there is no longer any need to specify the
-repository explicitly, because CVS records it in the working copy's
-`CVS' subdirectory.)
-
-   Passwords are stored by default in the file `$HOME/.cvspass'.  Its
-format is human-readable, but don't edit it unless you know what you
-are doing.  The passwords are not stored in cleartext, but are
-trivially encoded to protect them from "innocent" compromise (i.e.,
-inadvertently being seen by a system administrator who happens to look
-at that file).
-
-   The password for the currently choosen remote repository can be
-removed from the CVS_PASSFILE by using the `cvs logout' command.
-
-   The `CVS_PASSFILE' environment variable overrides this default.  If
-you use this variable, make sure you set it *before* `cvs login' is
-run.  If you were to set it after running `cvs login', then later CVS
-commands would be unable to look up the password for transmission to
-the server.
-
-
-File: cvs.info,  Node: Password authentication security,  Prev: Password authentication client,  Up: Password authenticated
-
-Security considerations with password authentication
-....................................................
-
-   The passwords are stored on the client side in a trivial encoding of
-the cleartext, and transmitted in the same encoding.  The encoding is
-done only to prevent inadvertent password compromises (i.e., a system
-administrator accidentally looking at the file), and will not prevent
-even a naive attacker from gaining the password.
-
-   The separate CVS password file (*note Password authentication
-server::.) allows people to use a different password for repository
-access than for login access.  On the other hand, once a user has
-access to the repository, she can execute programs on the server system
-through a variety of means.  Thus, repository access implies fairly
-broad system access as well.  It might be possible to modify CVS to
-prevent that, but no one has done so as of this writing.  Furthermore,
-there may be other ways in which having access to CVS allows people to
-gain more general access to the system; noone has done a careful audit.
-
-   In summary, anyone who gets the password gets repository access, and
-some measure of general system access as well.  The password is
-available to anyone who can sniff network packets or read a protected
-(i.e., user read-only) file.  If you want real security, get Kerberos.
 

@@ -1021,8 +1021,8 @@ contains the required fields.
    If no matching line is found in the `editinfo' file, the editor
 specified in the environment variable `$CVSEDITOR' is used instead.  If
 that variable is not set, then the environment variable `$EDITOR' is
-used instead.  If that variable is not set a precompiled default,
-normally `vi', will be used.
+used instead.  If that variable is not set a default will be used.  See
+*Note Committing your changes::.
 
    The `editinfo' file is often most useful together with the `rcsinfo'
 file, which can be used to specify a log message template.

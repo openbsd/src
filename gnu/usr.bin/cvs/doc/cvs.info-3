@@ -22,6 +22,187 @@ and this permission notice may be included in translations approved by
 the Free Software Foundation instead of in the original English.
 
 
+File: cvs.info,  Node: Assigning revisions,  Next: Tags,  Prev: Versions revisions releases,  Up: Revisions and branches
+
+Assigning revisions
+===================
+
+   By default, CVS will assign numeric revisions by leaving the first
+number the same and incrementing the second number.  For example,
+`1.1', `1.2', `1.3', etc.
+
+   When adding a new file, the second number will always be one and the
+first number will equal the highest first number of any file in that
+directory.  For example, the current directory contains files whose
+highest numbered revisions are `1.7', `3.1', and `4.12', then an added
+file will be given the numeric revision `4.1'.
+
+   Normally there is no reason to care about the revision numbers--it
+is easier to treat them as internal numbers that CVS maintains, and tags
+provide a better way to distinguish between things like release 1
+versus release 2 of your product (*note Tags::.).  However, if you want
+to set the numeric revisions, the `-r' option to `cvs commit' can do
+that.  The `-r' option implies the `-f' option, in the sense that it
+causes the files to be committed even if they are not modified.
+
+   For example, to bring all your files up to revision 3.0 (including
+those that haven't changed), you might invoke:
+
+     $ cvs commit -r 3.0
+
+   Note that the number you specify with `-r' must be larger than any
+existing revision number.  That is, if revision 3.0 exists, you cannot
+`cvs commit -r 1.3'.  If you want to maintain several releases in
+parallel, you need to use a branch (*note Revisions and branches::.).
+
+
+File: cvs.info,  Node: Tags,  Next: Branches motivation,  Prev: Assigning revisions,  Up: Revisions and branches
+
+Tags-Symbolic revisions
+=======================
+
+   The revision numbers live a life of their own.  They need not have
+anything at all to do with the release numbers of your software
+product.  Depending on how you use CVS the revision numbers might
+change several times between two releases.  As an example, some of the
+source files that make up RCS 5.6 have the following revision numbers:
+
+     ci.c            5.21
+     co.c            5.9
+     ident.c         5.3
+     rcs.c           5.12
+     rcsbase.h       5.11
+     rcsdiff.c       5.10
+     rcsedit.c       5.11
+     rcsfcmp.c       5.9
+     rcsgen.c        5.10
+     rcslex.c        5.11
+     rcsmap.c        5.2
+     rcsutil.c       5.10
+
+   You can use the `tag' command to give a symbolic name to a certain
+revision of a file.  You can use the `-v' flag to the `status' command
+to see all tags that a file has, and which revision numbers they
+represent.  Tag names must start with an uppercase or lowercase letter
+and can contain uppercase and lowercase letters, digits, `-', and `_'.
+The two tag names `BASE' and `HEAD' are reserved for use by CVS.  It is
+expected that future names which are special to CVS will be specially
+named, for example by starting with `.', rather than being named
+analogously to `BASE' and `HEAD', to avoid conflicts with actual tag
+names.
+
+   You'll want to choose some convention for naming tags, based on
+information such as the name of the program and the version number of
+the release.  For example, one might take the name of the program,
+immediately followed by the version number with `.' changed to `-', so
+that CVS 1.9 would be tagged with the name `cvs1-9'.  If you choose a
+consistent convention, then you won't constantly be guessing whether a
+tag is `cvs-1-9' or `cvs1_9' or what.  You might even want to consider
+enforcing your convention in the taginfo file (*note user-defined
+logging::.).
+
+   The following example shows how you can add a tag to a file.  The
+commands must be issued inside your working copy of the module.  That
+is, you should issue the command in the directory where `backend.c'
+resides.
+
+     $ cvs tag release-0-4 backend.c
+     T backend.c
+     $ cvs status -v backend.c
+     ===================================================================
+     File: backend.c         Status: Up-to-date
+     
+         Version:            1.4     Tue Dec  1 14:39:01 1992
+         RCS Version:        1.4     /usr/local/cvsroot/yoyodyne/tc/backend.c,v
+         Sticky Tag:         (none)
+         Sticky Date:        (none)
+         Sticky Options:     (none)
+     
+         Existing Tags:
+             release-0-4                     (revision: 1.4)
+
+   There is seldom reason to tag a file in isolation.  A more common
+use is to tag all the files that constitute a module with the same tag
+at strategic points in the development life-cycle, such as when a
+release is made.
+
+     $ cvs tag release-1-0 .
+     cvs tag: Tagging .
+     T Makefile
+     T backend.c
+     T driver.c
+     T frontend.c
+     T parser.c
+
+   (When you give CVS a directory as argument, it generally applies the
+operation to all the files in that directory, and (recursively), to any
+subdirectories that it may contain.  *Note Recursive behavior::.)
+
+   The `checkout' command has a flag, `-r', that lets you check out a
+certain revision of a module.  This flag makes it easy to retrieve the
+sources that make up release 1.0 of the module `tc' at any time in the
+future:
+
+     $ cvs checkout -r release-1-0 tc
+
+This is useful, for instance, if someone claims that there is a bug in
+that release, but you cannot find the bug in the current working copy.
+
+   You can also check out a module as it was at any given date.  *Note
+checkout options::.
+
+   When you tag more than one file with the same tag you can think
+about the tag as "a curve drawn through a matrix of filename vs.
+revision number."  Say we have 5 files with the following revisions:
+
+             file1   file2   file3   file4   file5
+     
+             1.1     1.1     1.1     1.1  /--1.1*      <-*-  TAG
+             1.2*-   1.2     1.2    -1.2*-
+             1.3  \- 1.3*-   1.3   / 1.3
+             1.4          \  1.4  /  1.4
+                           \-1.5*-   1.5
+                             1.6
+
+   At some time in the past, the `*' versions were tagged.  You can
+think of the tag as a handle attached to the curve drawn through the
+tagged revisions.  When you pull on the handle, you get all the tagged
+revisions.  Another way to look at it is that you "sight" through a set
+of revisions that is "flat" along the tagged revisions, like this:
+
+             file1   file2   file3   file4   file5
+     
+                             1.1
+                             1.2
+                     1.1     1.3                       _
+             1.1     1.2     1.4     1.1              /
+             1.2*----1.3*----1.5*----1.2*----1.1     (--- <--- Look here
+             1.3             1.6     1.3              \_
+             1.4                     1.4
+                                     1.5
+
+
+File: cvs.info,  Node: Branches motivation,  Next: Creating a branch,  Prev: Tags,  Up: Revisions and branches
+
+What branches are good for
+==========================
+
+   Suppose that release 1.0 of tc has been made.  You are continuing to
+develop tc, planning to create release 1.1 in a couple of months.
+After a while your customers start to complain about a fatal bug.  You
+check out release 1.0 (*note Tags::.) and find the bug (which turns out
+to have a trivial fix).  However, the current revision of the sources
+are in a state of flux and are not expected to be stable for at least
+another month.  There is no way to make a bugfix release based on the
+newest sources.
+
+   The thing to do in a situation like this is to create a "branch" on
+the revision trees for all the files that make up release 1.0 of tc.
+You can then make modifications to the branch without disturbing the
+main trunk.  When the modifications are finished you can select to
+either incorporate them on the main trunk, or leave them on the branch.
+
+
 File: cvs.info,  Node: Creating a branch,  Next: Sticky tags,  Prev: Branches motivation,  Up: Revisions and branches
 
 Creating a branch
@@ -81,7 +262,7 @@ revision number will be 1.4.2.  For obscure reasons CVS always gives
 branches even numbers, starting at 2.  *Note Revision numbers::.).
 
 
-File: cvs.info,  Node: Sticky tags,  Prev: Creating a branch,  Up: Revisions and branches
+File: cvs.info,  Node: Sticky tags,  Next: Magic branch numbers,  Prev: Creating a branch,  Up: Revisions and branches
 
 Sticky tags
 ===========
@@ -154,6 +335,41 @@ contents it had previously.  Here is how to do it:
      new revision: 1.3; previous revision: 1.2
      done
      $
+
+
+File: cvs.info,  Node: Magic branch numbers,  Prev: Sticky tags,  Up: Revisions and branches
+
+Magic branch numbers
+====================
+
+   This section describes a CVS feature called "magic branches".  For
+most purposes, you need not worry about magic branches; CVS handles
+them for you.  However, they are visible to you in certain
+circumstances, so it may be useful to have some idea of how it works.
+
+   Externally, branch numbers consist of an odd number of dot-separated
+decimal integers.  *Note Revision numbers::.  That is not the whole
+truth, however.  For efficiency reasons CVS sometimes inserts an extra 0
+in the second rightmost position (1.2.3 becomes 1.2.0.3, 8.9.10.11.12
+becomes 8.9.10.11.0.12 and so on).
+
+   CVS does a pretty good job at hiding these so called magic branches,
+but in a few places the hiding is incomplete:
+
+   * The magic branch number appears in the output from `cvs log'.
+
+   * You cannot specify a symbolic branch name to `cvs admin'.
+
+   You can use the `admin' command to reassign a symbolic name to a
+branch the way RCS expects it to be.  If `R4patches' is assigned to the
+branch 1.4.2 (magic branch number 1.4.0.2) in file `numbers.c' you can
+do this:
+
+     $ cvs admin -NR4patches:1.4.2 numbers.c
+
+   It only works if at least one revision is already committed on the
+branch.  Be very careful so that you do not assign the tag to the wrong
+number.  (There is no way to see how the tag was assigned yesterday).
 
 
 File: cvs.info,  Node: Merging,  Next: Recursive behavior,  Prev: Revisions and branches,  Up: Top
@@ -695,8 +911,7 @@ The Normal way to Rename
 
    The normal way to move a file is to copy OLD to NEW, and then issue
 the normal CVS commands to remove OLD from the repository, and add NEW
-to it.  (Both OLD and NEW could contain relative paths, for example
-`foo/bar.c').
+to it.
 
      $ mv OLD NEW
      $ cvs remove OLD
@@ -709,9 +924,9 @@ history of the file you must specify the old or the new name, depending
 on what portion of the history you are accessing.  For example, `cvs
 log OLD' will give the log up until the time of the rename.
 
-   When NEW is committed its revision numbers will start at 1.0 again,
-so if that bothers you, use the `-r rev' option to commit (*note commit
-options::.)
+   When NEW is committed its revision numbers will start again, usually
+at 1.1, so if that bothers you, use the `-r rev' option to commit.  For
+more information see *Note Assigning revisions::.
 
 
 File: cvs.info,  Node: Inside,  Next: Rename by copying,  Prev: Outside,  Up: Moving files
@@ -782,9 +997,6 @@ Advantages:
 Disadvantages:
 
    * You cannot easily see the history of the file across the rename.
-
-   * Unless you use the `-r rev' (*note commit options::.) flag when
-     NEW is committed its revision numbers will start at 1.0 again.
 
 
 File: cvs.info,  Node: Moving directories,  Next: History browsing,  Prev: Moving files,  Up: Top
@@ -946,8 +1158,8 @@ file.
 * Avoiding substitution::       Avoiding substitution
 * Substitution modes::          Substitution modes
 * Log keyword::                 Problems with the $Log: cvs.info-3,v $
-* Log keyword::                 Problems with the Revision 1.1.1.8  1997/03/29 04:46:01  tholo
-* Log keyword::                 Problems with the Latest release from Cyclic Software
+* Log keyword::                 Problems with the Revision 1.1.1.9  1997/04/21 04:34:12  tholo
+* Log keyword::                 Problems with the Missing files from import
 * Log keyword::                 Problems with the keyword.
 
 
@@ -962,17 +1174,17 @@ RCS Keywords
 `$Author: tholo $'
      The login name of the user who checked in the revision.
 
-`$Date: 1997/03/29 04:46:01 $'
+`$Date: 1997/04/21 04:34:12 $'
      The date and time (UTC) the revision was checked in.
 
-`$Header: /home/cvs/src/gnu/usr.bin/cvs/doc/cvs.info-3,v 1.1.1.8 1997/03/29 04:46:01 tholo Exp $'
+`$Header: /home/cvs/src/gnu/usr.bin/cvs/doc/cvs.info-3,v 1.1.1.9 1997/04/21 04:34:12 tholo Exp $'
      A standard header containing the full pathname of the RCS file,
      the revision number, the date (UTC), the author, the state, and
      the locker (if locked).  Files will normally never be locked when
      you use CVS.
 
-`$Id: cvs.info-3,v 1.1.1.8 1997/03/29 04:46:01 tholo Exp $'
-     Same as `$Header: /home/cvs/src/gnu/usr.bin/cvs/doc/cvs.info-3,v 1.1.1.8 1997/03/29 04:46:01 tholo Exp $', except that the RCS filename is without a path.
+`$Id: cvs.info-3,v 1.1.1.9 1997/04/21 04:34:12 tholo Exp $'
+     Same as `$Header: /home/cvs/src/gnu/usr.bin/cvs/doc/cvs.info-3,v 1.1.1.9 1997/04/21 04:34:12 tholo Exp $', except that the RCS filename is without a path.
 
 `$Name:  $'
      Tag name used to check out this file.
@@ -982,15 +1194,15 @@ RCS Keywords
      locked, and thus almost always useless when you are using CVS).
 
 `$Log: cvs.info-3,v $
-`Revision 1.1.1.8  1997/03/29 04:46:01  tholo
-`Latest release from Cyclic Software
+`Revision 1.1.1.9  1997/04/21 04:34:12  tholo
+`Missing files from import
 `'
      The log message supplied during commit, preceded by a header
      containing the RCS filename, the revision number, the author, and
      the date (UTC).  Existing log messages are *not* replaced.
      Instead, the new log message is inserted after `$Log: cvs.info-3,v $
-     Instead, the new log message is inserted after `Revision 1.1.1.8  1997/03/29 04:46:01  tholo
-     Instead, the new log message is inserted after `Latest release from Cyclic Software
+     Instead, the new log message is inserted after `Revision 1.1.1.9  1997/04/21 04:34:12  tholo
+     Instead, the new log message is inserted after `Missing files from import
      Instead, the new log message is inserted after `'.  Each
      new line is prefixed with a "comment leader" which RCS guesses
      from the file name extension.  It can be changed with `cvs admin
@@ -1001,7 +1213,7 @@ RCS Keywords
 `$RCSfile: cvs.info-3,v $'
      The name of the RCS file without a path.
 
-`$Revision: 1.1.1.8 $'
+`$Revision: 1.1.1.9 $'
      The revision number assigned to the revision.
 
 `$Source: /home/cvs/src/gnu/usr.bin/cvs/doc/cvs.info-3,v $'
@@ -1018,14 +1230,14 @@ Using keywords
 ==============
 
    To include a keyword string you simply include the relevant text
-string, such as `$Id: cvs.info-3,v 1.1.1.8 1997/03/29 04:46:01 tholo Exp $', inside the file, and commit the file.  CVS will
+string, such as `$Id: cvs.info-3,v 1.1.1.9 1997/04/21 04:34:12 tholo Exp $', inside the file, and commit the file.  CVS will
 automatically expand the string as part of the commit operation.
 
-   It is common to embed `$Id: cvs.info-3,v 1.1.1.8 1997/03/29 04:46:01 tholo Exp $' string in the C source code.  This
+   It is common to embed `$Id: cvs.info-3,v 1.1.1.9 1997/04/21 04:34:12 tholo Exp $' string in the C source code.  This
 example shows the first few lines of a typical file, after keyword
 substitution has been performed:
 
-     static char *rcsid="$Id: cvs.info-3,v 1.1.1.8 1997/03/29 04:46:01 tholo Exp $";
+     static char *rcsid="$Id: cvs.info-3,v 1.1.1.9 1997/04/21 04:34:12 tholo Exp $";
      /* The following lines will prevent `gcc' version 2.X
         from issuing an "unused variable" warning. */
      #if __GNUC__ == 2
@@ -1045,11 +1257,11 @@ binary files.
 
      $ ident samp.c
      samp.c:
-          $Id: cvs.info-3,v 1.1.1.8 1997/03/29 04:46:01 tholo Exp $
+          $Id: cvs.info-3,v 1.1.1.9 1997/04/21 04:34:12 tholo Exp $
      $ gcc samp.c
      $ ident a.out
      a.out:
-          $Id: cvs.info-3,v 1.1.1.8 1997/03/29 04:46:01 tholo Exp $
+          $Id: cvs.info-3,v 1.1.1.9 1997/04/21 04:34:12 tholo Exp $
 
    SCCS is another popular revision control system.  It has a command,
 `what', which is very similar to `ident' and used for the same purpose.
@@ -1058,7 +1270,7 @@ character sequence `@(#)' it is easy to include keywords that are
 detected by either command.  Simply prefix the RCS keyword with the
 magic SCCS phrase, like this:
 
-     static char *id="@(#) $Id: cvs.info-3,v 1.1.1.8 1997/03/29 04:46:01 tholo Exp $";
+     static char *id="@(#) $Id: cvs.info-3,v 1.1.1.9 1997/04/21 04:34:12 tholo Exp $";
 
 
 File: cvs.info,  Node: Avoiding substitution,  Next: Substitution modes,  Prev: Using keywords,  Up: Keyword substitution
@@ -1080,213 +1292,4 @@ though they appear in the final product.  For example, the source for
 this manual contains `$@asis{}Author$' whenever the text `$Author: tholo $'
 should appear.  In `nroff' and `troff' you can embed the null-character
 `\&' inside the keyword for a similar effect.
-
-
-File: cvs.info,  Node: Substitution modes,  Next: Log keyword,  Prev: Avoiding substitution,  Up: Keyword substitution
-
-Substitution modes
-==================
-
-   Each file has a stored default substitution mode, and each working
-directory copy of a file also has a substitution mode.  The former is
-set by the `-k' option to `cvs add' and `cvs admin'; the latter is set
-by the -k or -A options to `cvs checkout' or `cvs update'.  `cvs diff'
-also has a `-k' option.  For some examples, *Note Binary files::.
-
-   The modes available are:
-
-`-kkv'
-     Generate keyword strings using the default form, e.g.  `$Revision:
-     5.7 $' for the `Revision' keyword.
-
-`-kkvl'
-     Like `-kkv', except that a locker's name is always inserted if the
-     given revision is currently locked.  This option is normally not
-     useful when CVS is used.
-
-`-kk'
-     Generate only keyword names in keyword strings; omit their values.
-     For example, for the `Revision' keyword, generate the string
-     `$Revision: 1.1.1.8 $' instead of `$Revision: 1.1.1.8 $'.  This option is useful
-     to ignore differences due to keyword substitution when comparing
-     different revisions of a file.
-
-`-ko'
-     Generate the old keyword string, present in the working file just
-     before it was checked in.  For example, for the `Revision'
-     keyword, generate the string `$Revision: 1.1.1.8 $' instead of
-     `$Revision: 1.1.1.8 $' if that is how the string appeared when the
-     file was checked in.
-
-`-kb'
-     Like `-ko', but also inhibit conversion of line endings between
-     the canonical form in which they are stored in the repository
-     (linefeed only), and the form appropriate to the operating system
-     in use on the client.  For systems, like unix, which use linefeed
-     only to terminate lines, this is the same as `-ko'.  For more
-     information on binary files, see *Note Binary files::.
-
-`-kv'
-     Generate only keyword values for keyword strings.  For example,
-     for the `Revision' keyword, generate the string `5.7' instead of
-     `$Revision: 1.1.1.8 $'.  This can help generate files in programming
-     languages where it is hard to strip keyword delimiters like
-     `$Revision: 1.1.1.8 $' from a string.  However, further keyword
-     substitution cannot be performed once the keyword names are
-     removed, so this option should be used with care.
-
-     One often would like to use `-kv' with `cvs export'--*note
-     export::..  But be aware that doesn't handle an export containing
-     binary files correctly.
-
-
-File: cvs.info,  Node: Log keyword,  Prev: Substitution modes,  Up: Keyword substitution
-
-Problems with the $Log: cvs.info-3,v $
-Problems with the Revision 1.1.1.8  1997/03/29 04:46:01  tholo
-Problems with the Latest release from Cyclic Software
-Problems with the keyword.
-================================
-
-   The `$Log: cvs.info-3,v $
-   The `Revision 1.1.1.8  1997/03/29 04:46:01  tholo
-   The `Latest release from Cyclic Software
-   The `' keyword is somewhat controversial.  As long as you are
-working on your development system the information is easily accessible
-even if you do not use the `$Log: cvs.info-3,v $
-even if you do not use the `Revision 1.1.1.8  1997/03/29 04:46:01  tholo
-even if you do not use the `Latest release from Cyclic Software
-even if you do not use the `' keyword--just do a `cvs log'.  Once
-you export the file the history information might be useless anyhow.
-
-   A more serious concern is that RCS is not good at handling `$Log: cvs.info-3,v $
-   A more serious concern is that RCS is not good at handling `Revision 1.1.1.8  1997/03/29 04:46:01  tholo
-   A more serious concern is that RCS is not good at handling `Latest release from Cyclic Software
-   A more serious concern is that RCS is not good at handling `'
-entries when a branch is merged onto the main trunk.  Conflicts often
-result from the merging operation.
-
-   People also tend to "fix" the log entries in the file (correcting
-spelling mistakes and maybe even factual errors).  If that is done the
-information from `cvs log' will not be consistent with the information
-inside the file.  This may or may not be a problem in real life.
-
-   It has been suggested that the `$Log: cvs.info-3,v $
-   It has been suggested that the `Revision 1.1.1.8  1997/03/29 04:46:01  tholo
-   It has been suggested that the `Latest release from Cyclic Software
-   It has been suggested that the `' keyword should be inserted
-*last* in the file, and not in the files header, if it is to be used at
-all.  That way the long list of change messages will not interfere with
-everyday source file browsing.
-
-
-File: cvs.info,  Node: Binary files,  Next: Builds,  Prev: Keyword substitution,  Up: Top
-
-Handling binary files
-*********************
-
-   There are two issues with using CVS to store binary files.  The
-first is that CVS by default convert line endings between the canonical
-form in which they are stored in the repository (linefeed only), and
-the form appropriate to the operating system in use on the client (for
-example, carriage return followed by line feed for Windows NT).
-
-   The second is that a binary file might happen to contain data which
-looks like a keyword (*note Keyword substitution::.), so keyword
-expansion must be turned off.
-
-   The `-kb' option available with some CVS commands insures that
-neither line ending conversion nor keyword expansion will be done.  If
-you are using an old version of RCS without this option, and you are
-using an operating system, such as unix, which terminates lines with
-linefeeds only, you can use `-ko' instead; if you are on another
-operating system, upgrade to a version of RCS, such as 5.7 or later,
-which supports `-kb'.
-
-   Here is an example of how you can create a new file using the `-kb'
-flag:
-
-     $ echo '$Id: cvs.info-3,v 1.1.1.8 1997/03/29 04:46:01 tholo Exp $' > kotest
-     $ cvs add -kb -m"A test file" kotest
-     $ cvs ci -m"First checkin; contains a keyword" kotest
-
-   If a file accidentally gets added without `-kb', one can use the
-`cvs admin' command to recover.  For example:
-
-     $ echo '$Id: cvs.info-3,v 1.1.1.8 1997/03/29 04:46:01 tholo Exp $' > kotest
-     $ cvs add -m"A test file" kotest
-     $ cvs ci -m"First checkin; contains a keyword" kotest
-     $ cvs admin -kb kotest
-     $ cvs update -A kotest
-     $ cvs commit -m "make it binary" kotest  # For non-unix systems
-
-   When you check in the file `kotest' the keywords are expanded.  (Try
-the above example, and do a `cat kotest' after every command).  The `cvs
-admin -kb' command sets the default keyword substitution method for
-this file, but it does not alter the working copy of the file that you
-have.  The easiest way to get the unexpanded version of `kotest' is
-`cvs update -A'.  If you need to cope with line endings (that is, you
-are using a CVS client on a non-unix system), then you need to check in
-a new copy of the file, as shown by the `cvs commit' command above.
-
-   However, in using `cvs admin -k' to change the keyword expansion, be
-aware that the keyword expansion mode is not version controlled.  This
-means that, for example, that if you have a text file in old releases,
-and a binary file with the same name in new releases, CVS provides no
-way to check out the file in text or binary mode depending on what
-version you are checking out.  There is no good workaround for this
-problem.
-
-   You can also set a default for whether `cvs add' and `cvs import'
-treat a file as binary based on its name; for example you could say
-that files who names end in `.exe' are binary.  *Note Wrappers::.
-
-
-File: cvs.info,  Node: Builds,  Next: Compatibility,  Prev: Binary files,  Up: Top
-
-How your build system interacts with CVS
-****************************************
-
-   As mentioned in the introduction, CVS does not contain software for
-building your software from source code.  This section describes how
-various aspects of your build system might interact with CVS.
-
-   One common question, especially from people who are accustomed to
-RCS, is how to make their build get an up to date copy of the sources.
-The answer to this with CVS is two-fold.  First of all, since CVS
-itself can recurse through directories, there is no need to modify your
-`Makefile' (or whatever configuration file your build tool uses) to
-make sure each file is up to date.  Instead, just use two commands,
-first `cvs -q update' and then `make' or whatever the command is to
-invoke your build tool.  Secondly, you do not necessarily *want* to get
-a copy of a change someone else made until you have finished your own
-work.  One suggested approach is to first update your sources, then
-implement, build and test the change you were thinking of, and then
-commit your sources (updating first if necessary).  By periodically (in
-between changes, using the approach just described) updating your
-entire tree, you ensure that your sources are sufficiently up to date.
-
-   One common need is to record which versions of which source files
-went into a particular build.  This kind of functionality is sometimes
-called "bill of materials" or something similar.  The best way to do
-this with CVS is to use the `tag' command to record which versions went
-into a given build (*note Tags::.).
-
-   Using CVS in the most straightforward manner possible, each
-developer will have a copy of the entire source tree which is used in a
-particular build.  If the source tree is small, or if developers are
-geographically dispersed, this is the preferred solution.  In fact one
-approach for larger projects is to break a project down into smaller
-separately-compiled subsystems, and arrange a way of releasing them
-internally so that each developer need check out only those subsystems
-which are they are actively working on.
-
-   Another approach is to set up a structure which allows developers to
-have their own copies of some files, and for other files to access
-source files from a central location.  Many people have come up with
-some such a system using features such as the symbolic link feature
-found in many operating systems, or the `VPATH' feature found in many
-versions of `make'.  One build tool which is designed to help with this
-kind of thing is Odin (see
-`ftp://ftp.cs.colorado.edu/pub/distribs/odin').
 

@@ -22,6 +22,193 @@ and this permission notice may be included in translations approved by
 the Free Software Foundation instead of in the original English.
 
 
+File: cvs.info,  Node: Password authenticated,  Next: Kerberos authenticated,  Prev: Connecting via rsh,  Up: Remote repositories
+
+Direct connection with password authentication
+----------------------------------------------
+
+   The CVS client can also connect to the server using a password
+protocol.  This is particularly useful if using `rsh' is not feasible
+(for example, the server is behind a firewall), and Kerberos also is
+not available.
+
+   To use this method, it is necessary to make some adjustments on both
+the server and client sides.
+
+* Menu:
+
+* Password authentication server::     Setting up the server
+* Password authentication client::     Using the client
+* Password authentication security::   What this method does and does not do
+
+
+File: cvs.info,  Node: Password authentication server,  Next: Password authentication client,  Up: Password authenticated
+
+Setting up the server for password authentication
+.................................................
+
+   On the server side, the file `/etc/inetd.conf' needs to be edited so
+`inetd' knows to run the command `cvs pserver' when it receives a
+connection on the right port.  By default, the port number is 2401; it
+would be different if your client were compiled with `CVS_AUTH_PORT'
+defined to something else, though.
+
+   If your `inetd' allows raw port numbers in `/etc/inetd.conf', then
+the following (all on a single line in `inetd.conf') should be
+sufficient:
+
+     2401  stream  tcp  nowait  root  /usr/local/bin/cvs
+     cvs -b /usr/local/bin pserver
+
+   The `-b' option specifies the directory which contains the RCS
+binaries on the server.  You could also use the `-T' option to specify
+a temporary directory.
+
+   If your `inetd' wants a symbolic service name instead of a raw port
+number, then put this in `/etc/services':
+
+     cvspserver      2401/tcp
+
+   and put `cvspserver' instead of `2401' in `inetd.conf'.
+
+   Once the above is taken care of, restart your `inetd', or do
+whatever is necessary to force it to reread its initialization files.
+
+   Because the client stores and transmits passwords in cleartext
+(almost--see *Note Password authentication security::, for details), a
+separate CVS password file may be used, so people don't compromise their
+regular passwords when they access the repository.  This file is
+`$CVSROOT/CVSROOT/passwd' (*note Intro administrative files::.).  Its
+format is similar to `/etc/passwd', except that it only has two fields,
+username and password.  For example:
+
+     bach:ULtgRLXo7NRxs
+     cwang:1sOp854gDF3DY
+
+   The password is encrypted according to the standard Unix `crypt()'
+function, so it is possible to paste in passwords directly from regular
+Unix `passwd' files.
+
+   When authenticating a password, the server first checks for the user
+in the CVS `passwd' file.  If it finds the user, it compares against
+that password.  If it does not find the user, or if the CVS `passwd'
+file does not exist, then the server tries to match the password using
+the system's user-lookup routine.  When using the CVS `passwd' file,
+the server runs under as the username specified in the the third
+argument in the entry, or as the first argument if there is no third
+argument (in this way CVS allows imaginary usernames provided the CVS
+`passwd' file indicates corresponding valid system usernames).  In any
+case, CVS will have no privileges which the (valid) user would not have.
+
+   It is possible to "map" cvs-specific usernames onto system usernames
+(i.e., onto system login names) in the `$CVSROOT/CVSROOT/passwd' file
+by appending a colon and the system username after the password.  For
+example:
+
+     cvs:ULtgRLXo7NRxs:kfogel
+     generic:1sOp854gDF3DY:spwang
+     anyone:1sOp854gDF3DY:spwang
+
+   Thus, someone remotely accessing the repository on
+`chainsaw.brickyard.com' with the following command:
+
+     cvs -d :pserver:cvs@chainsaw.brickyard.com:/usr/local/cvsroot checkout foo
+
+   would end up running the server under the system identity kfogel,
+assuming successful authentication.  However, the remote user would not
+necessarily need to know kfogel's system password, as the
+`$CVSROOT/CVSROOT/passwd' file might contain a different password, used
+only for CVS.  And as the example above indicates, it is permissible to
+map multiple cvs usernames onto a single system username.
+
+   This feature is designed to allow people repository access without
+full system access (in particular, see *Note Read-only access::);
+however, also *Note Password authentication security::.  Any sort of
+repository access very likely implies a degree of general system access
+as well.
+
+   Right now, the only way to put a password in the CVS `passwd' file
+is to paste it there from somewhere else.  Someday, there may be a `cvs
+passwd' command.
+
+
+File: cvs.info,  Node: Password authentication client,  Next: Password authentication security,  Prev: Password authentication server,  Up: Password authenticated
+
+Using the client with password authentication
+.............................................
+
+   Before connecting to the server, the client must "log in" with the
+command `cvs login'.  Logging in verifies a password with the server,
+and also records the password for later transactions with the server.
+The `cvs login' command needs to know the username, server hostname,
+and full repository path, and it gets this information from the
+repository argument or the `CVSROOT' environment variable.
+
+   `cvs login' is interactive -- it prompts for a password:
+
+     cvs -d :pserver:bach@chainsaw.brickyard.com:/usr/local/cvsroot login
+     CVS password:
+
+   The password is checked with the server; if it is correct, the
+`login' succeeds, else it fails, complaining that the password was
+incorrect.
+
+   Once you have logged in, you can force CVS to connect directly to
+the server and authenticate with the stored password:
+
+     cvs -d :pserver:bach@chainsaw.brickyard.com:/usr/local/cvsroot checkout foo
+
+   The `:pserver:' is necessary because without it, CVS will assume it
+should use `rsh' to connect with the server (*note Connecting via
+rsh::.).  (Once you have a working copy checked out and are running CVS
+commands from within it, there is no longer any need to specify the
+repository explicitly, because CVS records it in the working copy's
+`CVS' subdirectory.)
+
+   Passwords are stored by default in the file `$HOME/.cvspass'.  Its
+format is human-readable, but don't edit it unless you know what you
+are doing.  The passwords are not stored in cleartext, but are
+trivially encoded to protect them from "innocent" compromise (i.e.,
+inadvertently being seen by a system administrator who happens to look
+at that file).
+
+   The password for the currently choosen remote repository can be
+removed from the CVS_PASSFILE by using the `cvs logout' command.
+
+   The `CVS_PASSFILE' environment variable overrides this default.  If
+you use this variable, make sure you set it *before* `cvs login' is
+run.  If you were to set it after running `cvs login', then later CVS
+commands would be unable to look up the password for transmission to
+the server.
+
+
+File: cvs.info,  Node: Password authentication security,  Prev: Password authentication client,  Up: Password authenticated
+
+Security considerations with password authentication
+....................................................
+
+   The passwords are stored on the client side in a trivial encoding of
+the cleartext, and transmitted in the same encoding.  The encoding is
+done only to prevent inadvertent password compromises (i.e., a system
+administrator accidentally looking at the file), and will not prevent
+even a naive attacker from gaining the password.
+
+   The separate CVS password file (*note Password authentication
+server::.) allows people to use a different password for repository
+access than for login access.  On the other hand, once a user has
+access to the repository, she can execute programs on the server system
+through a variety of means.  Thus, repository access implies fairly
+broad system access as well.  It might be possible to modify CVS to
+prevent that, but no one has done so as of this writing.  Furthermore,
+there may be other ways in which having access to CVS allows people to
+gain more general access to the system; noone has done a careful audit.
+
+   In summary, anyone who gets the password gets repository access, and
+some measure of general system access as well.  The password is
+available to anyone who can sniff network packets or read a protected
+(i.e., user read-only) file.  If you want real security, get Kerberos.
+
+
 File: cvs.info,  Node: Kerberos authenticated,  Prev: Password authenticated,  Up: Remote repositories
 
 Direct connection with kerberos
@@ -956,6 +1143,7 @@ revision tree.
 * Branches motivation::         What branches are good for
 * Creating a branch::           Creating a branch
 * Sticky tags::                 Sticky tags
+* Magic branch numbers::        Magic branch numbers
 
 
 File: cvs.info,  Node: Revision numbers,  Next: Versions revisions releases,  Up: Revisions and branches
@@ -1031,184 +1219,4 @@ often given a version number such as `4.1.1'.
    Versions in the first sense are called "revisions" in this document,
 and versions in the second sense are called "releases".  To avoid
 confusion, the word "version" is almost never used in this document.
-
-
-File: cvs.info,  Node: Assigning revisions,  Next: Tags,  Prev: Versions revisions releases,  Up: Revisions and branches
-
-Assigning revisions
-===================
-
-   By default, CVS will assign numeric revisions by leaving the first
-number the same and incrementing the second number.  For example,
-`1.1', `1.2', `1.3', etc.
-
-   When adding a new file, the second number will always be one and the
-first number will equal the highest first number of any file in that
-directory.  For example, the current directory contains files whose
-highest numbered revisions are `1.7', `3.1', and `4.12', then an added
-file will be given the numeric revision `4.1'.
-
-   Normally there is no reason to care about the revision numbers--it
-is easier to treat them as internal numbers that CVS maintains, and tags
-provide a better way to distinguish between things like release 1
-versus release 2 of your product (*note Tags::.).  However, if you want
-to set the numeric revisions, the `-r' option to `cvs commit' can do
-that.
-
-   For example, to bring all your files up to the RCS revision 3.0
-(including those that haven't changed), you might invoke:
-
-     $ cvs commit -r 3.0
-
-   Note that the number you specify with `-r' must be larger than any
-existing revision number.  That is, if revision 3.0 exists, you cannot
-`cvs commit -r 1.3'.  If you want to maintain several releases in
-parallel, you need to use a branch (*note Revisions and branches::.).
-
-
-File: cvs.info,  Node: Tags,  Next: Branches motivation,  Prev: Assigning revisions,  Up: Revisions and branches
-
-Tags-Symbolic revisions
-=======================
-
-   The revision numbers live a life of their own.  They need not have
-anything at all to do with the release numbers of your software
-product.  Depending on how you use CVS the revision numbers might
-change several times between two releases.  As an example, some of the
-source files that make up RCS 5.6 have the following revision numbers:
-
-     ci.c            5.21
-     co.c            5.9
-     ident.c         5.3
-     rcs.c           5.12
-     rcsbase.h       5.11
-     rcsdiff.c       5.10
-     rcsedit.c       5.11
-     rcsfcmp.c       5.9
-     rcsgen.c        5.10
-     rcslex.c        5.11
-     rcsmap.c        5.2
-     rcsutil.c       5.10
-
-   You can use the `tag' command to give a symbolic name to a certain
-revision of a file.  You can use the `-v' flag to the `status' command
-to see all tags that a file has, and which revision numbers they
-represent.  Tag names must start with an uppercase or lowercase letter
-and can contain uppercase and lowercase letters, digits, `-', and `_'.
-The two tag names `BASE' and `HEAD' are reserved for use by CVS.  It is
-expected that future names which are special to CVS will be specially
-named, for example by starting with `.', rather than being named
-analogously to `BASE' and `HEAD', to avoid conflicts with actual tag
-names.
-
-   You'll want to choose some convention for naming tags, based on
-information such as the name of the program and the version number of
-the release.  For example, one might take the name of the program,
-immediately followed by the version number with `.' changed to `-', so
-that CVS 1.9 would be tagged with the name `cvs1-9'.  If you choose a
-consistent convention, then you won't constantly be guessing whether a
-tag is `cvs-1-9' or `cvs1_9' or what.  You might even want to consider
-enforcing your convention in the taginfo file (*note user-defined
-logging::.).
-
-   The following example shows how you can add a tag to a file.  The
-commands must be issued inside your working copy of the module.  That
-is, you should issue the command in the directory where `backend.c'
-resides.
-
-     $ cvs tag release-0-4 backend.c
-     T backend.c
-     $ cvs status -v backend.c
-     ===================================================================
-     File: backend.c         Status: Up-to-date
-     
-         Version:            1.4     Tue Dec  1 14:39:01 1992
-         RCS Version:        1.4     /usr/local/cvsroot/yoyodyne/tc/backend.c,v
-         Sticky Tag:         (none)
-         Sticky Date:        (none)
-         Sticky Options:     (none)
-     
-         Existing Tags:
-             release-0-4                     (revision: 1.4)
-
-   There is seldom reason to tag a file in isolation.  A more common
-use is to tag all the files that constitute a module with the same tag
-at strategic points in the development life-cycle, such as when a
-release is made.
-
-     $ cvs tag release-1-0 .
-     cvs tag: Tagging .
-     T Makefile
-     T backend.c
-     T driver.c
-     T frontend.c
-     T parser.c
-
-   (When you give CVS a directory as argument, it generally applies the
-operation to all the files in that directory, and (recursively), to any
-subdirectories that it may contain.  *Note Recursive behavior::.)
-
-   The `checkout' command has a flag, `-r', that lets you check out a
-certain revision of a module.  This flag makes it easy to retrieve the
-sources that make up release 1.0 of the module `tc' at any time in the
-future:
-
-     $ cvs checkout -r release-1-0 tc
-
-This is useful, for instance, if someone claims that there is a bug in
-that release, but you cannot find the bug in the current working copy.
-
-   You can also check out a module as it was at any given date.  *Note
-checkout options::.
-
-   When you tag more than one file with the same tag you can think
-about the tag as "a curve drawn through a matrix of filename vs.
-revision number."  Say we have 5 files with the following revisions:
-
-             file1   file2   file3   file4   file5
-     
-             1.1     1.1     1.1     1.1  /--1.1*      <-*-  TAG
-             1.2*-   1.2     1.2    -1.2*-
-             1.3  \- 1.3*-   1.3   / 1.3
-             1.4          \  1.4  /  1.4
-                           \-1.5*-   1.5
-                             1.6
-
-   At some time in the past, the `*' versions were tagged.  You can
-think of the tag as a handle attached to the curve drawn through the
-tagged revisions.  When you pull on the handle, you get all the tagged
-revisions.  Another way to look at it is that you "sight" through a set
-of revisions that is "flat" along the tagged revisions, like this:
-
-             file1   file2   file3   file4   file5
-     
-                             1.1
-                             1.2
-                     1.1     1.3                       _
-             1.1     1.2     1.4     1.1              /
-             1.2*----1.3*----1.5*----1.2*----1.1     (--- <--- Look here
-             1.3             1.6     1.3              \_
-             1.4                     1.4
-                                     1.5
-
-
-File: cvs.info,  Node: Branches motivation,  Next: Creating a branch,  Prev: Tags,  Up: Revisions and branches
-
-What branches are good for
-==========================
-
-   Suppose that release 1.0 of tc has been made.  You are continuing to
-develop tc, planning to create release 1.1 in a couple of months.
-After a while your customers start to complain about a fatal bug.  You
-check out release 1.0 (*note Tags::.) and find the bug (which turns out
-to have a trivial fix).  However, the current revision of the sources
-are in a state of flux and are not expected to be stable for at least
-another month.  There is no way to make a bugfix release based on the
-newest sources.
-
-   The thing to do in a situation like this is to create a "branch" on
-the revision trees for all the files that make up release 1.0 of tc.
-You can then make modifications to the branch without disturbing the
-main trunk.  When the modifications are finished you can select to
-either incorporate them on the main trunk, or leave them on the branch.
 
