@@ -1,4 +1,4 @@
-.\" $OpenBSD: vpn.8,v 1.58 2001/11/14 06:09:05 deraadt Exp $
+.\" $OpenBSD: vpn.8,v 1.59 2001/12/10 03:17:02 ho Exp $
 .\"
 .\" Copyright 1998 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -86,8 +86,9 @@ option    IPSEC           # IPSEC VPN
 pseudo-device enc 4       # Encapsulation device used by IPSEC
 .Ed
 .Pp
+To use IPSec,
 .Xr ipsec 4
-operations must be first enabled using
+operations must be enabled using
 .Xr sysctl 8 .
 Before doing either manual or automated keying, or performing
 encryption (ESP) or authentication (AH) operations, ensure the appropriate
@@ -97,13 +98,19 @@ kernel operation has been enabled:
 	# sysctl -w net.inet.ah.enable=1
 .Ed
 .Pp
-For security gateways, enabling packet forwarding is often
-required:
+The ESP and AH protocols default to 'on'.
+.Pp
+For security gateways, proper operation often also requires packet
+forwarding to be enabled:
 .Bd -literal
 	# sysctl -w net.inet.ip.forwarding=1
+	# sysctl -w net.inet6.ip6.forwarding=1
 .Ed
 .Pp
-For more permanent operation, these options should be enabled in your
+Packet forwarding defaults to 'off'.
+.Pp
+For more permanent operation,
+the appropriate option(s) should be enabled in your
 .Xr sysctl.conf 5 .
 .Ss Generating Manual Keys [manual keying]
 The shared secret symmetric keys used to create a VPN can
@@ -598,14 +605,14 @@ Suites=			QM-ESP-3DES-SHA-SUITE
 .Pp
 .It
 Read through the configuration one more time.
-The only real differences between the two files in this example is
+The only real differences between the two files in this example are
 the IP-addresses, and ordering of Local- and Remote-ID for the VPN
 itself.
 Note that the shared secret (the
 .Em Authentication
 tag) must match between machineA and machineB.
 .Pp
-Do to the shared secret information in the configuration file, it must
+Due to the shared secret information in the configuration file, it must
 be installed without any permissions for "group" or "other".
 .Bd -literal
 # chmod og-rwx /etc/isakmpd/isakmpd.conf
@@ -670,7 +677,7 @@ On both machines, run:
 # /sbin/isakmpd
 .Ed
 .Pp
-For run with verbose debugging enabled, instead start with:
+To run with verbose debugging enabled, instead start with:
 .Bd -literal
 # /sbin/isakmpd -d -DA=99
 .Ed
@@ -683,16 +690,17 @@ Sample VPN configuration file
 .Xr isakmpd 8
 configuration file
 .It Pa /etc/photuris/photuris.conf
-Photuris configuration file
+.Xr photuris 8
+configuration file
 .It Pa /etc/pf.conf
 Firewall configuration file
 .El
 .Sh BUGS
 .Xr photurisd 8
 can not be used in VPN mode unless both of the security gateway IP addresses
-lie within the network ranges being tunnelled to.
-In situations where the gateway IP is outside the desired netrange, such
-as with private (RFC 1918) networks,
+lie within the network ranges being tunnelled.
+In situations where the gateway IPs are outside the tunnelled network
+range, such as when tunnelling private (RFC 1918) networks over the Internet,
 .Xr isakmpd 8
 or manual keying must be used.
 .Sh SEE ALSO
