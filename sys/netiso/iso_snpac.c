@@ -1,4 +1,4 @@
-/*	$OpenBSD: iso_snpac.c,v 1.4 1996/05/10 12:31:22 deraadt Exp $	*/
+/*	$OpenBSD: iso_snpac.c,v 1.5 1998/04/04 02:55:55 don Exp $	*/
 /*	$NetBSD: iso_snpac.c,v 1.13 1996/05/07 02:45:16 thorpej Exp $	*/
 
 /*-
@@ -260,11 +260,12 @@ iso_setmcasts(ifp, req)
 	bzero((caddr_t) & ifr, sizeof(ifr));
 	for (cpp = (caddr_t *) addrlist; *cpp; cpp++) {
 		bcopy(*cpp, (caddr_t) ifr.ifr_addr.sa_data, 6);
-		if (req == RTM_ADD)
+		if (req == RTM_ADD) {
 			if (ether_addmulti(&ifr, (struct arpcom *) ifp) == ENETRESET)
 				doreset++;
 			else if (ether_delmulti(&ifr, (struct arpcom *) ifp) == ENETRESET)
 				doreset++;
+		}
 	}
 	if (doreset) {
 		if (ifp->if_reset)

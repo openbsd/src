@@ -1,4 +1,4 @@
-/*	$OpenBSD: tp_driver.c,v 1.3 1996/04/21 22:29:40 deraadt Exp $	*/
+/*	$OpenBSD: tp_driver.c,v 1.4 1998/04/04 02:55:57 don Exp $	*/
 /*	$NetBSD: tp_driver.c,v 1.8 1996/03/16 23:13:45 christos Exp $	*/
 
 #include "tp_states.h"
@@ -38,7 +38,7 @@ static struct act_ent {
 #define sbwakeup(sb)	sowakeup(p->tp_sock, sb);
 #define MCPY(d, w) (d ? m_copym(d, 0, (int)M_COPYALL, w): 0)
 
-static          trick_hc = 1;
+static int trick_hc = 1;
 
 #include "tp_events.h"
 static int _Xebec_action __P((int, struct tp_event *, struct tp_pcb *));

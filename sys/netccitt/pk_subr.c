@@ -1,4 +1,4 @@
-/*	$OpenBSD: pk_subr.c,v 1.3 1996/04/21 22:28:53 deraadt Exp $	*/
+/*	$OpenBSD: pk_subr.c,v 1.4 1998/04/04 02:55:54 don Exp $	*/
 /*	$NetBSD: pk_subr.c,v 1.12 1996/03/30 21:54:33 christos Exp $	*/
 
 /*
@@ -1154,12 +1154,12 @@ pk_message(lcn, xcp, fmt, va_alist)
 {
 	va_list         ap;
 
-	if (lcn)
+	if (lcn) {
 		if (!PQEMPTY)
 			printf("X.25(%s): lcn %d: ", format_ntn(xcp), lcn);
 		else
 			printf("X.25: lcn %d: ", lcn);
-	else if (!PQEMPTY)
+	} else if (!PQEMPTY)
 		printf("X.25(%s): ", format_ntn(xcp));
 	else
 		printf("X.25: ");
