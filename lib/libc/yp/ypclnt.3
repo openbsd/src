@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ypclnt.3,v 1.13 2001/08/06 10:42:26 mpech Exp $
+.\"	$OpenBSD: ypclnt.3,v 1.14 2002/09/04 10:14:38 deraadt Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -200,7 +200,7 @@ returns YPERR_NOMORE, are that all key-value pairs in that map will be accessed
 exactly once, and if the entire procedure is repeated, the order will be
 the same.
 .Pp
-If the server is heaviliy loaded or the server fails for some reason, the
+If the server is heavily loaded or the server fails for some reason, the
 domain being used may become unbound.
 If this happens, and the client process
 re-binds, the retrieval rules will break: some entries may be seen twice, and
