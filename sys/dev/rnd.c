@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.49 2001/09/23 10:16:27 mickey Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.50 2001/09/24 02:23:44 mickey Exp $	*/
 
 /*
  * random.c -- A strong random number generator
@@ -861,38 +861,34 @@ extract_entropy(buf, nbytes)
 		rs->entropy_count = 0;
 
 	while (nbytes) {
-		register u_char *p = buf;
-		register int i = sizeof(buffer)/2;
-
-		if (i > nbytes) {
-			i = nbytes;
-			p = buffer;
-		}
+		int i;
 
 		/* Hash the pool to get the output */
 		MD5Init(&tmp);
 		MD5Update(&tmp, (u_int8_t*)rs->pool, sizeof(rs->pool));
-		MD5Final(p, &tmp);
+		MD5Final(buffer, &tmp);
 
 		/*
 		 * In case the hash function has some recognizable
 		 * output pattern, we fold it in half.
 		 */
-		p[0] ^= p[15];
-		p[1] ^= p[14];
-		p[2] ^= p[13];
-		p[3] ^= p[12];
-		p[4] ^= p[11];
-		p[5] ^= p[10];
-		p[6] ^= p[ 9];
-		p[7] ^= p[ 8];
+		buffer[0] ^= buffer[15];
+		buffer[1] ^= buffer[14];
+		buffer[2] ^= buffer[13];
+		buffer[3] ^= buffer[12];
+		buffer[4] ^= buffer[11];
+		buffer[5] ^= buffer[10];
+		buffer[6] ^= buffer[ 9];
+		buffer[7] ^= buffer[ 8];
 
 		/* Modify pool so next hash will produce different results */
-		add_entropy_words((u_int32_t*)p, sizeof(buffer)/8);
+		add_entropy_words((u_int32_t*)buffer, sizeof(buffer)/8);
 
 		/* Copy data to destination buffer */
-		if (i < sizeof(buffer)/2)
-			bcopy(buffer, buf, i);
+		if (nbytes < sizeof(buffer) / 2)
+			bcopy(buffer, buf, i = nbytes);
+		else
+			bcopy(buffer, buf, i = sizeof(buffer) / 2);
 		nbytes -= i;
 		buf += i;
 		add_timer_randomness(nbytes);
