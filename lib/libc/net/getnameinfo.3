@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getnameinfo.3,v 1.35 2004/12/21 03:40:31 jaredy Exp $
+.\"	$OpenBSD: getnameinfo.3,v 1.36 2004/12/21 09:48:20 jmc Exp $
 .\"
 .\" Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
 .\" Copyright (C) 2000, 2001  Internet Software Consortium.
@@ -156,11 +156,11 @@ if (getnameinfo(sa, sa->sa_len, hbuf, sizeof(hbuf), NULL, 0,
 printf("host=%s\en", hbuf);
 .Ed
 .Sh SEE ALSO
-.Xr inet_ntop 3 ,
 .Xr gai_strerror 3 ,
 .Xr getaddrinfo 3 ,
 .Xr gethostbyaddr 3 ,
 .Xr getservbyport 3 ,
+.Xr inet_ntop 3 ,
 .Xr resolver 3 ,
 .Xr hosts 5 ,
 .Xr resolv.conf 5 ,
