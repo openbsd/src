@@ -2287,8 +2287,8 @@ tulip_srom_decode(
 {
     int idx1, idx2, idx3;
 
-    const tulip_srom_header_t *shp = (tulip_srom_header_t *) &sc->tulip_rombuf[0];
-    const tulip_srom_adapter_info_t *saip = (tulip_srom_adapter_info_t *) (shp + 1);
+    /* const */ tulip_srom_header_t *shp = (tulip_srom_header_t *) &sc->tulip_rombuf[0];
+    tulip_srom_adapter_info_t *saip = (tulip_srom_adapter_info_t *) (shp + 1);
     tulip_srom_media_t srom_media;
     tulip_media_info_t *mi = sc->tulip_mediainfo;
     const u_int8_t *dp;
@@ -2636,7 +2636,7 @@ tulip_srom_decode(
 }
 
 
-static const struct {
+static /* const */ struct {
     void (*vendor_identify_nic)(tulip_softc_t * const sc);
     unsigned char vendor_oui[3];
 } tulip_vendors[] = {
