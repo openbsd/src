@@ -1,4 +1,4 @@
-/*	$OpenBSD: dma.c,v 1.1 1999/05/05 03:06:07 mickey Exp $	*/
+/*	$OpenBSD: dma.c,v 1.2 1999/05/05 17:55:13 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -225,5 +225,7 @@ dma_cachectl(p, size)
 	caddr_t p;
 	int size;
 {
+	fdcache(HPPA_SID_KERNEL, (vaddr_t)p, size);
+	sync_caches();
 	return 0;
 }
