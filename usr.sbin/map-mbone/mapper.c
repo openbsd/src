@@ -181,7 +181,7 @@ log(int severity, int syserr, char *format, ...)
 	    va_start(ap, format);
 	    fmt[0] = '\0';
 	    if (severity == LOG_WARNING)
-		strcat(fmt, "warning - ");
+		strlcat(fmt, "warning - ", sizeof(fmt));
 	    strncat(fmt, format, 80);
 	    vfprintf(stderr, fmt, ap);
 	    va_end(ap);
