@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spl.9,v 1.14 2002/07/28 20:55:00 nordin Exp $
+.\"	$OpenBSD: spl.9,v 1.15 2003/04/20 20:04:17 jmc Exp $
 .\"	$NetBSD: spl.9,v 1.1 1997/03/11 06:15:05 mikel Exp $
 .\"
 .\" Copyright (c) 1997 Michael Long.
@@ -193,7 +193,7 @@ The
 .Fn splassert
 function is optional and is not necessarily implemented on
 all architectures nor enabled in all kernel configurations.
-It checks the current system priority level too see if it's 
+It checks the current system priority level to see if it's
 at least at the level specified in the argument
 .Fa s .
 If possible, it also checks if it hasn't been called from an

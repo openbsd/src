@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ppsratecheck.9,v 1.1 2000/10/10 13:40:46 itojun Exp $
+.\"	$OpenBSD: ppsratecheck.9,v 1.2 2003/04/20 20:04:17 jmc Exp $
 .\"	$NetBSD: ppsratecheck.9,v 1.1 2000/08/03 00:09:39 itojun Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -26,7 +26,7 @@
 .\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
 .\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
 .\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS 
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
 .\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
 .\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
 .\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
@@ -48,7 +48,7 @@
 .Sh DESCRIPTION
 The
 .Fn ppsratecheck
-function provides easy way to perform packet-per-sec,
+function provides an easy way to perform packet-per-sec,
 or event-per-sec, rate limitation.
 The motivation for implementing
 .Fn ppsratecheck
@@ -73,7 +73,7 @@ is set to 0, the function will always return 0
 Negative
 .Fa maxpps
 indicates that rate limitation is disabled, and
-.Fa ppsratecheck
+.Fn ppsratecheck
 will always return 1.
 .Pp
 .Fa curpps

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rasops.9,v 1.3 2003/01/05 20:07:44 deraadt Exp $
+.\"	$OpenBSD: rasops.9,v 1.4 2003/04/20 20:04:17 jmc Exp $
 .\"     $NetBSD: rasops.9,v 1.4 2002/02/13 08:18:50 ross Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -132,21 +132,21 @@ Valid values for the
 member are:
 .Pp
 .Bl -tag -offset indent -width RI_CURSORCLIP -compact
-.It  RI_FULLCLEAR
+.It RI_FULLCLEAR
 eraserows() hack to clear full screen
-.It  RI_FORCEMONO
+.It RI_FORCEMONO
 monochrome output even if we can do color
-.It  RI_BSWAP
+.It RI_BSWAP
 framebuffer endianness doesn't match CPU
-.It  RI_CURSOR
+.It RI_CURSOR
 cursor is switched on
-.It  RI_CLEAR
+.It RI_CLEAR
 clear display on startup
-.It  RI_CENTER
+.It RI_CENTER
 center onscreen output
-.It  RI_CURSORCLIP
+.It RI_CURSORCLIP
 cursor is currently clipped
-.It  RI_CFGDONE
+.It RI_CFGDONE
 .Fn rasops_reconfig
 completed successfully
 .El
@@ -191,7 +191,7 @@ The rasops subsystem is implemented within the directory
 .Pa sys/dev/rasops .
 The
 .Nm
-module itself is implement within the file
+module itself is implemented within the file
 .Pa sys/dev/rasops/rasops.c .
 .Sh SEE ALSO
 .Xr intro 9
