@@ -1,4 +1,4 @@
-/*	$OpenBSD: wax.c,v 1.8 2004/09/15 20:11:28 mickey Exp $	*/
+/*	$OpenBSD: wax.c,v 1.9 2004/10/28 18:47:13 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -97,8 +97,7 @@ waxattach(parent, self, aux)
 	bus_space_handle_t ioh;
 	int s, in;
 
-	if (bus_space_map(ca->ca_iot, ca->ca_hpa + 0xc000,
-	    IOMOD_HPASIZE, 0, &ioh)) {
+	if (bus_space_map(ca->ca_iot, ca->ca_hpa, IOMOD_HPASIZE, 0, &ioh)) {
 		printf(": can't map IO space\n");
 		return;
 	}
