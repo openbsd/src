@@ -1,4 +1,4 @@
-/*	$OpenBSD: pflogd.c,v 1.6 2001/08/24 19:48:37 deraadt Exp $	*/
+/*	$OpenBSD: pflogd.c,v 1.7 2001/08/29 17:42:28 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -117,7 +117,7 @@ logmsg(int pri, const char *message, ...)
 void
 usage(void)
 {
-	fprintf(stderr, "usage: pflogd [-D] [-d delay] [-f filename] [-i interface] ");
+	fprintf(stderr, "usage: pflogd [-D] [-d delay] [-f filename] ");
 	fprintf(stderr, "[-s snaplen] [expression]\n");
 	exit(1);
 }
@@ -277,7 +277,7 @@ main(int argc, char **argv)
 	int ch, np;
 	FILE *fp;
 
-	while ((ch = getopt(argc, argv, "Dd:i:s:f:")) != -1) {
+	while ((ch = getopt(argc, argv, "Dd:s:f:")) != -1) {
 		switch (ch) {
 		case 'D':
 			Debug = 1;
@@ -286,9 +286,6 @@ main(int argc, char **argv)
 			delay = atoi(optarg);
 			if (delay < 5 || delay > 60*60)
 				usage();
-			break;
-		case 'i':
-			interface = optarg;
 			break;
 		case 'f':
 			filename = optarg;

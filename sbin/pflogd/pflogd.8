@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pflogd.8,v 1.4 2001/08/27 17:36:53 deraadt Exp $
+.\"	$OpenBSD: pflogd.8,v 1.5 2001/08/29 17:42:28 deraadt Exp $
 .\"
 .\" Copyright (c) 2001 Can Erkin Acar.  All rights reserved.
 .\"
@@ -35,15 +35,14 @@
 .Op Fl D
 .Op Fl d Ar delay
 .Op Fl f Ar filename
-.Op Fl i Ar interface
 .Op Fl s Ar snaplen
 .Op Ar expression
 .Sh DESCRIPTION
 .Nm
 is a background daemon which reads packets logged by
 .Xr pf 4
-to a logging interface (normally
-.Pa pflog0 )
+to the packet logging interface
+.Pa pflog0
 and writes the packets to a logfile (normally
 .Pa /var/log/pflog )
 in
@@ -88,11 +87,6 @@ If not specified, the default is 60 seconds.
 Debugging mode.
 .Nm
 does not disassociate from the controlling terminal.
-.It Fl i Ar interface
-Specify the interface from which
-.Xr pf 4
-logs are read; the default is
-.Ar pflog0 .
 .It Fl f Ar filename
 Log output filename. Default is
 .Pa /var/log/pflog .
