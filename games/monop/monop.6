@@ -1,4 +1,4 @@
-.\"	$OpenBSD: monop.6,v 1.9 2002/07/28 08:44:14 pjanzen Exp $
+.\"	$OpenBSD: monop.6,v 1.10 2003/04/23 07:48:50 jmc Exp $
 .\"
 .\" Copyright (c) 1980 The Regents of the University of California.
 .\" All rights reserved.
@@ -56,8 +56,7 @@ so it is possible to buy something which you cannot afford.
 However, as soon as a person goes into debt,
 he must
 .Dq fix the problem ,
-.Em i.e. ,
-make himself solvent, before play can continue.
+i.e., make himself solvent, before play can continue.
 If this is not possible, the player's property reverts to his debtee,
 either a player or the bank.
 A player can resign at any time to any person or the bank,
@@ -79,24 +78,24 @@ It asks you if you're sure.
 print current board.
 The columns have the following meanings (column headings are the same for the
 .Ic where ,
-.Ic own holdings  ,
+.Ic own holdings ,
 and
 .Ic holdings
 commands):
 .Pp
 .Bl -tag -width indent -compact
 .It Name
-The first ten characters of the name of the square
+The first ten characters of the name of the square.
 .It Own
 The
 .Em number
 of the owner of the property.
 .It Price
-The cost of the property (if any)
+The cost of the property (if any).
 .It Mg
 This field has a
 .Sq *
-in it if the property is mortgaged
+in it if the property is mortgaged.
 .It \&#
 If the property is a Utility or Railroad, this is the number
 of such owned by the owner.
@@ -110,8 +109,7 @@ tell where players are.
 A `*' indicates the current player.
 .It Ic own holdings
 list your own holdings,
-.Em i.e. ,
-money, get-out-of-jail-free cards, and property.
+i.e., money, get-out-of-jail-free cards, and property.
 .It Ic holdings
 show holdings list: look at anyone's holdings.
 It will ask you whose holdings you wish to look at.
@@ -136,7 +134,7 @@ it asks you to re-input.
 sell houses:
 sets up a list of monopolies from which you can sell houses.
 It operates in an analogous manner to
-.Ic buy.
+.Ic buy .
 .It Ic card
 use a get-out-of-jail-free card to get out of jail.
 If you're not in jail, or you don't have one, it tells you so.
@@ -152,7 +150,7 @@ it asks for confirmation of the trade before doing it.
 .It Ic resign
 resign to another player or the bank.
 If you resign to the bank, all property reverts to its virgin state,
-and get-out-of-jail free cards revert to the deck.
+and get-out-of-jail-free cards revert to the deck.
 .It Ic save
 save the current game in a file for later play.
 You can continue play after saving,

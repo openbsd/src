@@ -1,4 +1,4 @@
-.\"	$OpenBSD: atc.6,v 1.10 2002/12/06 21:48:50 millert Exp $
+.\"	$OpenBSD: atc.6,v 1.11 2003/04/23 07:48:50 jmc Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -137,7 +137,7 @@ Depending on the terminal used, the
 screen will be divided into 4 areas.
 It should be stressed that the terminal driver portion of the
 game was designed to be reconfigurable, so the display format can vary
-depending the version you are playing.
+depending on the version you are playing.
 The descriptions here are based on the ASCII version of the game.
 The game rules and input format, however, should remain consistent.
 Control-L redraws the screen, should it become muddled.
@@ -179,7 +179,7 @@ The planes will also take off in this direction.
 Beacons are represented as circles or asterisks and a number.
 Their purpose is to offer a place of easy reference to the plane pilots.
 See
-.Dq The Delay Command
+.Sx The Delay Command
 under the input section of this manual.
 .Pp
 Entry/exit points are displayed as numbers along the border of the
@@ -237,7 +237,9 @@ It is just now executing a turn to 225 degrees
 .Ss "INPUT AREA"
 The third area of the display is the input area.
 It is here that your input is reflected.
-See the INPUT heading of this manual for more details.
+See the
+.Sx INPUT
+heading of this manual for more details.
 .Ss "AUTHOR AREA"
 This area is used simply to give credit where credit is due. :-)
 .Sh INPUT
@@ -315,7 +317,7 @@ Climb:
 Relative altitude change
 .Pq thousands of feet .
 .It Sy d [0\-9]
-Descend
+Descend:
 Relative altitude change
 .Pq thousands of feet .
 .El
@@ -473,7 +475,7 @@ Plane X: ignore
 .It
 Jets move every update; prop planes move every other update.
 .It
-All planes turn a most 90 degrees per movement.
+All planes turn at most 90 degrees per movement.
 .It
 Planes enter at 7000 feet and leave at 9000 feet.
 .It
@@ -532,7 +534,7 @@ Airports and exits require a third value, a direction, which is one
 of
 .Dq wedcxzaq .
 For airports, this is the direction that planes must be going to take
-off and land, and for exits, this is the direction that planes will going
+off and land, and for exits, this is the direction that planes will be going
 when they enter
 the arena.
 This may not seem intuitive, but as there is no restriction on
@@ -588,7 +590,7 @@ flag.
 .Pp
 .Bl -tag -width "/usr/share/games/atc/Game_List" -compact
 .It Pa /var/games/atc_score
-Score file
+Score file.
 .It Pa /usr/share/games/atc/Game_List
 The list of playable games.
 .El
