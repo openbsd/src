@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.128 2001/06/05 11:31:31 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.129 2001/06/07 16:19:47 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -315,11 +315,7 @@ gettdbbyaddr(union sockaddr_union *dst, struct ipsec_policy *ipo,
 	  {
 	      if (ipo->ipo_srcid != NULL)
 	      {
-		  if ((tdbp->tdb_srcid->ref_type !=
-		       ipo->ipo_srcid->ref_type) ||
-		      (tdbp->tdb_srcid->ref_len != ipo->ipo_srcid->ref_len) ||
-		      (bcmp(tdbp->tdb_srcid + 1, ipo->ipo_srcid + 1,
-			    ipo->ipo_srcid->ref_len)))
+		  if (!ipsp_ref_match(ipo->ipo_srcid, tdbp->tdb_srcid))
 		    continue;
 	      }
 
@@ -333,11 +329,7 @@ gettdbbyaddr(union sockaddr_union *dst, struct ipsec_policy *ipo,
 	  {
 	      if (ipo->ipo_dstid != NULL)
 	      {
-		  if ((tdbp->tdb_dstid->ref_type !=
-		       ipo->ipo_dstid->ref_type) ||
-		      (tdbp->tdb_dstid->ref_len != ipo->ipo_dstid->ref_len) ||
-		      (bcmp(tdbp->tdb_dstid + 1, ipo->ipo_dstid + 1,
-			    ipo->ipo_dstid->ref_len)))
+		  if (!ipsp_ref_match(ipo->ipo_dstid, tdbp->tdb_dstid))
 		    continue;
 	      }
 
@@ -352,12 +344,8 @@ gettdbbyaddr(union sockaddr_union *dst, struct ipsec_policy *ipo,
 	  {
 	      if (ipo->ipo_local_cred != NULL)
 	      {
-		  if ((tdbp->tdb_local_cred->ref_type !=
-		       ipo->ipo_local_cred->ref_type) ||
-		      (tdbp->tdb_local_cred->ref_len !=
-		       ipo->ipo_local_cred->ref_len) ||
-		      (bcmp(tdbp->tdb_local_cred + 1, ipo->ipo_local_cred + 1,
-			    ipo->ipo_local_cred->ref_len)))
+		  if (!ipsp_ref_match(ipo->ipo_local_cred,
+				      tdbp->tdb_local_cred))
 		    continue;
 	      }
 	  }
@@ -404,31 +392,9 @@ gettdbbysrc(union sockaddr_union *src, struct ipsec_policy *ipo,
 	   */
 	  if (tdbp->tdb_srcid != NULL)
 	  {
-	      if (ipo->ipo_srcid != NULL)
-	      {
-		  if ((tdbp->tdb_srcid->ref_type !=
-		       ipo->ipo_srcid->ref_type) ||
-		      (tdbp->tdb_srcid->ref_len != ipo->ipo_srcid->ref_len) ||
-		      (bcmp(tdbp->tdb_srcid + 1, ipo->ipo_srcid + 1,
-			    ipo->ipo_srcid->ref_len)))
-		    continue;
-	      }
-
-	      /* Otherwise, this is fine */
-	  }
-	  else
-	    if (ipo->ipo_srcid != NULL)
-	      continue;
-
-	  if (tdbp->tdb_dstid != NULL)
-	  {
 	      if (ipo->ipo_dstid != NULL)
 	      {
-		  if ((tdbp->tdb_dstid->ref_type !=
-		       ipo->ipo_dstid->ref_type) ||
-		      (tdbp->tdb_dstid->ref_len != ipo->ipo_dstid->ref_len) ||
-		      (bcmp(tdbp->tdb_dstid + 1, ipo->ipo_dstid + 1,
-			    ipo->ipo_dstid->ref_len)))
+		  if (!ipsp_ref_match(ipo->ipo_dstid, tdbp->tdb_srcid))
 		    continue;
 	      }
 
@@ -438,28 +404,19 @@ gettdbbysrc(union sockaddr_union *src, struct ipsec_policy *ipo,
 	    if (ipo->ipo_dstid != NULL)
 	      continue;
 
-	  /* Check for credential matches */
-	  if (tdbp->tdb_local_cred != NULL)
+	  if (tdbp->tdb_dstid != NULL)
 	  {
-	      if (ipo->ipo_local_cred != NULL)
+	      if (ipo->ipo_srcid != NULL)
 	      {
-		  if ((tdbp->tdb_local_cred->ref_type !=
-		       ipo->ipo_local_cred->ref_type) ||
-		      (tdbp->tdb_local_cred->ref_len !=
-		       ipo->ipo_local_cred->ref_len) ||
-		      (bcmp(tdbp->tdb_local_cred, ipo->ipo_local_cred + 1,
-			    ipo->ipo_local_cred->ref_len)))
+		  if (!ipsp_ref_match(ipo->ipo_srcid, tdbp->tdb_dstid))
 		    continue;
 	      }
+
+	      /* Otherwise, this is fine */
 	  }
 	  else
-	    if (ipo->ipo_local_cred != NULL)
-	      continue; /* If no credential was used in the TDB, try
-			 * to establish a new SA with the given
-			 * credential, since some type of access control
-			 * may be done on the other side based on that
-			 * credential.
-			 */
+	    if (ipo->ipo_srcid != NULL)
+	      continue;
 
 	  /* XXX Check for filter matches */
 	  break;
@@ -1533,3 +1490,16 @@ ipsp_parse_headers(struct mbuf *m, int off, u_int8_t proto)
 	}
     }
 }
+
+/* Return true if the two structures match. */
+int
+ipsp_ref_match(struct ipsec_ref *ref1, struct ipsec_ref *ref2)
+{
+    if (ref1->ref_type != ref2->ref_type ||
+	ref1->ref_len != ref2->ref_len ||
+	bcmp(ref1 + 1, ref2 + 1, ref1->ref_len))
+      return 0;
+
+    return 1;
+}
+

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.101 2001/06/01 07:56:46 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.102 2001/06/07 16:19:47 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -601,8 +601,6 @@ extern int ipsp_acquire_sa(struct ipsec_policy *, union sockaddr_union *,
 extern struct ipsec_policy *ipsec_add_policy(struct sockaddr_encap *,
 					     struct sockaddr_encap *,
 					     union sockaddr_union *, int, int);
-extern int ipsp_match_policy(struct tdb *, struct ipsec_policy *,
-			     struct mbuf *, int);
 extern int ipsec_delete_policy(struct ipsec_policy *);
 extern void ipsp_acquire_expirations(void *);
 extern struct ipsec_acquire *ipsp_pending_acquire(union sockaddr_union *);
@@ -614,5 +612,6 @@ extern void ipsp_reffree(struct ipsec_ref *);
 extern void ipsp_skipcrypto_unmark(struct tdb_ident *);
 extern void ipsp_skipcrypto_mark(struct tdb_ident *);
 extern struct m_tag *ipsp_parse_headers(struct mbuf *, int, u_int8_t);
+extern int ipsp_ref_match(struct ipsec_ref *, struct ipsec_ref *);
 #endif /* _KERNEL */
 #endif /* _NETINET_IPSP_H_ */
