@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_extern.h,v 1.19 2001/08/11 10:57:22 art Exp $	*/
+/*	$OpenBSD: uvm_extern.h,v 1.20 2001/08/12 05:18:41 mickey Exp $	*/
 /*	$NetBSD: uvm_extern.h,v 1.42 2000/06/08 05:52:34 thorpej Exp $	*/
 
 /*
@@ -88,6 +88,35 @@
 /* bits 0x700: max protection, 0x800: not used */
 
 /* bits 0x7000: advice, 0x8000: not used */
+
+typedef int		vm_prot_t;
+
+/*
+ *	Protection values, defined as bits within the vm_prot_t type
+ *
+ *   These are funky definitions from old CMU VM and are kept
+ *   for compatibility reasons, one day they are going to die,
+ *   just like everybody else.
+ */
+
+#define	VM_PROT_NONE	((vm_prot_t) 0x00)
+
+#define VM_PROT_READ	((vm_prot_t) 0x01)	/* read permission */
+#define VM_PROT_WRITE	((vm_prot_t) 0x02)	/* write permission */
+#define VM_PROT_EXECUTE	((vm_prot_t) 0x04)	/* execute permission */
+
+/*
+ *	The default protection for newly-created virtual memory
+ */
+
+#define VM_PROT_DEFAULT	(VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE)
+
+/*
+ *	The maximum privileges possible, for parameter checking.
+ */
+
+#define VM_PROT_ALL	(VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE)
+
 /* advice: matches MADV_* from sys/mman.h */
 #define UVM_ADV_NORMAL	0x0	/* 'normal' */
 #define UVM_ADV_RANDOM	0x1	/* 'random' */

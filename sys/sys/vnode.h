@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnode.h,v 1.37 2001/08/06 14:03:04 art Exp $	*/
+/*	$OpenBSD: vnode.h,v 1.38 2001/08/12 05:18:42 mickey Exp $	*/
 /*	$NetBSD: vnode.h,v 1.38 1996/02/29 20:59:05 cgd Exp $	*/
 
 /*
@@ -36,15 +36,17 @@
  *	@(#)vnode.h	8.11 (Berkeley) 11/21/94
  */
 
+#include <sys/types.h>
 #include <sys/queue.h>
 #include <sys/lock.h>
 #include <sys/select.h>
 
 /* XXX: clean up includes later */
 #include <vm/pglist.h>		/* XXX */
-#include <vm/vm_param.h>	/* XXX */
-#include <vm/vm.h>		/* XXX */
 #include <sys/lock.h>		/* XXX */
+#include <vm/vm.h>		/* XXX */
+#include <uvm/uvm.h>		/* XXX */
+#include <uvm/uvm_extern.h>	/* XXX */
 #include <uvm/uvm_object.h>	/* XXX */
 #include <uvm/uvm_vnode.h>	/* XXX */
 
