@@ -1,4 +1,4 @@
-/*	$OpenBSD: ne2000.c,v 1.3 1998/10/05 07:24:13 fgsch Exp $	*/
+/*	$OpenBSD: ne2000.c,v 1.4 1998/10/05 10:06:16 niklas Exp $	*/
 /*	$NetBSD: ne2000.c,v 1.12 1998/06/10 01:15:50 thorpej Exp $	*/
 
 /*-
@@ -502,9 +502,15 @@ ne2000_write_mbuf(sc, m, buf)
 					 */
 					savebyte[1] = *data++;
 					l--;
+#ifdef __NetBSD__
 					bus_space_write_stream_2(asict, asich,
 					    NE2000_ASIC_DATA,
 					    *(u_int16_t *)savebyte);
+#else
+					bus_space_write_raw_multi_2(asict,
+					    asich, NE2000_ASIC_DATA,
+					    savebyte, 2);
+#endif
 					leftover = 0;
 #ifdef i386
 #define ALIGNED_POINTER(p,t)	1
@@ -529,9 +535,14 @@ ne2000_write_mbuf(sc, m, buf)
 					 */
 					leftover = l & 1;
 					l &= ~1;
+#ifdef __NetBSD__
 					bus_space_write_multi_stream_2(asict,
 					    asich, NE2000_ASIC_DATA,
 					    (u_int16_t *)data, l >> 1);
+#else
+					bus_space_write_raw_multi_2(asict,
+					    asich, NE2000_ASIC_DATA, data, l);
+#endif
 					data += l;
 					if (leftover)
 						savebyte[0] = *data++;
@@ -547,8 +558,13 @@ ne2000_write_mbuf(sc, m, buf)
 		}
 		if (leftover) {
 			savebyte[1] = 0;
+#ifdef __NetBSD__
 			bus_space_write_stream_2(asict, asich, NE2000_ASIC_DATA,
 			    *(u_int16_t *)savebyte);
+#else
+			bus_space_write_raw_multi_2(asict, asich,
+			    NE2000_ASIC_DATA, savebyte, 2);
+#endif
 		}
 	}
 
@@ -673,8 +689,13 @@ ne2000_readmem(nict, nich, asict, asich, src, dst, amount, useword)
 	    ED_CR_RD0 | ED_CR_PAGE_0 | ED_CR_STA);
 
 	if (useword)
+#ifdef __NetBSD__
 		bus_space_read_multi_stream_2(asict, asich, NE2000_ASIC_DATA,
 		    (u_int16_t *)dst, amount >> 1);
+#else
+		bus_space_read_raw_multi_2(asict, asich, NE2000_ASIC_DATA,
+		    dst, amount);
+#endif
 	else
 		bus_space_read_multi_1(asict, asich, NE2000_ASIC_DATA,
 		    dst, amount);
@@ -717,8 +738,13 @@ ne2000_writemem(nict, nich, asict, asich, src, dst, len, useword)
 	    ED_CR_RD1 | ED_CR_PAGE_0 | ED_CR_STA);
 
 	if (useword)
+#ifdef __NetBSD__
 		bus_space_write_multi_stream_2(asict, asich, NE2000_ASIC_DATA,
 		    (u_int16_t *)src, len >> 1);
+#else
+		bus_space_write_raw_multi_2(asict, asich, NE2000_ASIC_DATA,
+		    src, len);
+#endif
 	else
 		bus_space_write_multi_1(asict, asich, NE2000_ASIC_DATA,
 		    src, len);
