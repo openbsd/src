@@ -51,7 +51,7 @@ error_message (long code)
     const char *p = com_right(_et_list, code);
     if (p == NULL) {
 	if (code < 0)
-	    sprintf(msg, "Unknown error %ld", code);
+	    snprintf(msg, sizeof (msg), "Unknown error %ld", code);
 	else
 	    p = strerror(code);
     }
@@ -59,7 +59,7 @@ error_message (long code)
 	strncpy(msg, p, sizeof(msg) - 1);
 	msg[sizeof(msg) - 1] = 0;
     } else 
-	sprintf(msg, "Unknown error %ld", code);
+	snprintf(msg, sizeof (msg), "Unknown error %ld", code);
     return msg;
 }
 
