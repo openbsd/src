@@ -5056,6 +5056,7 @@ for machine in $build $host $target; do
 		;;
 	powerpc-*-openbsd*)
 		tmake_file="${tmake_file} rs6000/t-rs6000 rs6000/t-openbsd"
+		tmake_file="${tmake_file} t-openbsd-libgcc"
 		;;
 	powerpc-*-beos*)
 		cpu_type=rs6000
