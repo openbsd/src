@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_fcntl.c,v 1.17 2000/08/23 19:31:34 fgsch Exp $	 */
+/*	$OpenBSD: svr4_fcntl.c,v 1.18 2001/03/25 05:20:01 csapuntz Exp $	 */
 /*	$NetBSD: svr4_fcntl.c,v 1.14 1995/10/14 20:24:24 christos Exp $	 */
 
 /*
@@ -539,10 +539,9 @@ svr4_sys_fcntl(p, v, retval)
 		}
 
 	case F_GETLK:
-		if (SCARG(uap, cmd) == SVR4_F_GETLK_SVR3)
-		{
+		if (SCARG(uap, cmd) == SVR4_F_GETLK_SVR3)		{
 			struct svr4_flock_svr3	ifl;
-			struct flock		*flp;
+			struct flock		*flp, fl;
 			caddr_t			sg = stackgap_init(p->p_emul);
 
 			flp = stackgap_alloc(&sg, sizeof(*flp));
@@ -550,14 +549,25 @@ svr4_sys_fcntl(p, v, retval)
 			    sizeof ifl);
 			if (error)
 				return error;
-			svr3_to_bsd_flock(&ifl, flp);
+			svr3_to_bsd_flock(&ifl, &fl);
+
+			error = copyout(&fl, flp, sizeof fl);
+			if (error)
+				return error;
+
 			SCARG(&fa, fd) = SCARG(uap, fd);
 			SCARG(&fa, cmd) = F_GETLK;
 			SCARG(&fa, arg) = (void *)flp;
 			error = sys_fcntl(p, &fa, retval);
 			if (error)
 				return error;
-			bsd_to_svr3_flock(flp, &ifl);
+
+			error = copyin(flp, &fl, sizeof fl);
+			if (error)
+				return error;
+
+			bsd_to_svr3_flock(&fl, &ifl);
+
 			return copyout((caddr_t)&ifl, (caddr_t)SCARG(uap, arg),
 			    sizeof ifl);
 		}
