@@ -1,4 +1,4 @@
-/*	$OpenBSD: sa.c,v 1.41 2001/04/24 07:27:37 niklas Exp $	*/
+/*	$OpenBSD: sa.c,v 1.42 2001/05/31 20:25:37 angelos Exp $	*/
 /*	$EOM: sa.c,v 1.112 2000/12/12 00:22:52 niklas Exp $	*/
 
 /*
@@ -58,6 +58,7 @@
 #include "util.h"
 #include "cert.h"
 #include "policy.h"
+#include "key.h"
 
 #ifndef SA_LEN
 #define SA_LEN(x)		(x)->sa_len
@@ -556,11 +557,19 @@ sa_release (struct sa *sa)
 	handler = cert_get (sa->recv_certtype);
 	if (handler)
 	  handler->cert_free (sa->recv_cert);
-	else if (sa->recv_certtype == ISAKMP_CERTENC_NONE)
-	  free (sa->recv_cert);
+    }
+  if (sa->sent_cert)
+    {
+	handler = cert_get (sa->sent_certtype);
+	if (handler)
+	  handler->cert_free (sa->sent_cert);
     }
   if (sa->recv_key)
-    free (sa->recv_key);
+    key_free (sa->recv_keytype, ISAKMP_KEYTYPE_PUBLIC, sa->recv_key);
+  if (sa->sent_key)
+    key_free (sa->sent_keytype, ISAKMP_KEYTYPE_PRIVATE, sa->sent_key);
+  if (sa->keynote_key)
+    free (sa->keynote_key); /* This is just a string */
 #if defined(USE_POLICY) || defined(USE_KEYNOTE)
   if (sa->policy_id != -1)
     LK (kn_close, (sa->policy_id));
