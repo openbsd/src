@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.22 1999/12/21 14:09:48 provos Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.23 1999/12/29 20:27:55 mickey Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -835,18 +835,20 @@ tcp_signature_tdb_zeroize(tdbp)
 }
 
 struct mbuf *
-tcp_signature_tdb_input(m, tdbp)
+tcp_signature_tdb_input(m, tdbp, skip, protoff)
 	struct mbuf *m;
 	struct tdb *tdbp;
+	int skip, protoff;
 {
 	return (0);
 }
 
 int
-tcp_signature_tdb_output(m, tdbp, mp)
+tcp_signature_tdb_output(m, tdbp, mp, skip, protoff)
 	struct mbuf *m;
 	struct tdb *tdbp;
 	struct mbuf **mp;
+	int skip, protoff;
 {
 	return (EINVAL);
 }
