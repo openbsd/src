@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtadvd.c,v 1.16 2002/05/21 23:29:46 itojun Exp $	*/
+/*	$OpenBSD: rtadvd.c,v 1.17 2002/05/21 23:33:56 itojun Exp $	*/
 /*	$KAME: rtadvd.c,v 1.50 2001/02/04 06:15:15 itojun Exp $	*/
 
 /*
@@ -143,8 +143,6 @@ static void free_ndopts(union nd_opts *);
 static void ra_output(struct rainfo *);
 static void rtmsg_input(void);
 static void rtadvd_set_dump_file(void);
-
-struct prefix *find_prefix(struct rainfo *, struct in6_addr *, int);
 
 int
 main(argc, argv)
