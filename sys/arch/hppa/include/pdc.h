@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdc.h,v 1.24 2003/04/30 23:03:55 mickey Exp $	*/
+/*	$OpenBSD: pdc.h,v 1.25 2003/07/15 17:15:32 mickey Exp $	*/
 
 /*
  * Copyright (c) 1990 mt Xinu, Inc.  All rights reserved.
@@ -405,8 +405,8 @@ struct pdc_coproc {	/* PDC_COPROC */
 	u_int	ccr_enable;	/* same format as CCR (CR 10) */
 	u_int	ccr_present;	/* which co-proc's are present (bitset) */
 	u_int	pad[15];
-	u_int	fpu_model;
 	u_int	fpu_revision;
+	u_int	fpu_model;
 	u_int	filler2[13];
 };
 
