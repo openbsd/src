@@ -1,4 +1,4 @@
-/*	$OpenBSD: netbsd_signal.c,v 1.3 1999/09/15 18:36:38 kstailey Exp $	*/
+/*	$OpenBSD: netbsd_signal.c,v 1.4 1999/09/16 13:20:06 kstailey Exp $	*/
 
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
@@ -70,7 +70,7 @@ openbsd_to_netbsd_sigaction(obsa, nbsa)
 	struct sigaction	*obsa;
 	struct netbsd_sigaction	*nbsa;
 {
-	memset(nbsa, 0, sizeof(struct netbsd_sigaction));
+	bzero(nbsa, sizeof(struct netbsd_sigaction));
 	nbsa->netbsd_sa_handler = obsa->sa_handler;
 	bcopy(&obsa->sa_mask, &nbsa->netbsd_sa_mask.__bits[0],
 		sizeof(sigset_t));
@@ -93,7 +93,6 @@ netbsd_to_openbsd_sigaltstack(nbss, obss)
 	struct netbsd_sigaltstack *nbss;
 	struct sigaltstack *obss;
 {
-	memset(&obss, 0, sizeof(struct sigaltstack));
 	obss->ss_sp = nbss->netbsd_ss_sp;
 	obss->ss_size = nbss->netbsd_ss_size; /* XXX may cause truncation */
 	obss->ss_flags = nbss->netbsd_ss_flags;
@@ -104,9 +103,9 @@ openbsd_to_netbsd_sigaltstack(obss, nbss)
 	struct sigaltstack *obss;
 	struct netbsd_sigaltstack *nbss;
 {
-	memset(&nbss, 0, sizeof(netbsd_stack_t));
+	bzero(nbss, sizeof(nbss));
 	nbss->netbsd_ss_sp = obss->ss_sp;
-	nbss->netbsd_ss_size = obss->ss_size;
+	nbss->netbsd_ss_size = (size_t)obss->ss_size;
 	nbss->netbsd_ss_flags = obss->ss_flags;
 }
 
@@ -263,23 +262,25 @@ netbsd_sys___sigprocmask14(p, v, retval)
 		if (error)
 			return (error);
 	}
-	bcopy(&nss.__bits[0], &obnss, sizeof(sigset_t));
-	(void)splhigh();
-	switch (SCARG(uap, how)) {
-	case SIG_BLOCK:
-		p->p_sigmask |= obnss &~ sigcantmask;
-		break;
-	case SIG_UNBLOCK:
-		p->p_sigmask &= ~obnss;
-		break;
-	case SIG_SETMASK:
-		p->p_sigmask = obnss &~ sigcantmask;
-		break;
-	default:
-		error = EINVAL;
-		break;
+	if (SCARG(uap, set)) {
+		bcopy(&nss.__bits[0], &obnss, sizeof(sigset_t));
+		(void)splhigh();
+		switch (SCARG(uap, how)) {
+		case SIG_BLOCK:
+			p->p_sigmask |= obnss &~ sigcantmask;
+			break;
+		case SIG_UNBLOCK:
+			p->p_sigmask &= ~obnss;
+			break;
+		case SIG_SETMASK:
+			p->p_sigmask = obnss &~ sigcantmask;
+			break;
+		default:
+			error = EINVAL;
+			break;
+		}
+		(void) spl0();
 	}
-	(void) spl0();
 	return (error);
 }
 

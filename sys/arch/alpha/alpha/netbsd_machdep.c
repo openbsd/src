@@ -1,4 +1,4 @@
-/*	$OpenBSD: netbsd_machdep.c,v 1.1 1999/09/14 01:05:24 kstailey Exp $	*/
+/*	$OpenBSD: netbsd_machdep.c,v 1.2 1999/09/16 13:20:06 kstailey Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -61,14 +61,14 @@ netbsd_to_openbsd_sigcontext(nbsc, obsc)
 	struct netbsd_sigcontext *nbsc;
 	struct sigcontext *obsc;
 {
-	memset(obsc, 0, sizeof(obsc));
+	bzero(obsc, sizeof(obsc));
 	obsc->sc_onstack = nbsc->sc_onstack;
-	memcpy(&obsc->sc_mask, &nbsc->sc_mask.__bits[0], sizeof(sigset_t));
+	bcopy(&nbsc->sc_mask.__bits[0], &obsc->sc_mask, sizeof(sigset_t));
 	obsc->sc_pc = nbsc->sc_pc;
 	obsc->sc_ps = nbsc->sc_ps;
-	memcpy(obsc->sc_regs, nbsc->sc_regs, sizeof(obsc->sc_regs));
+	bcopy(nbsc->sc_regs, obsc->sc_regs, sizeof(obsc->sc_regs));
 	obsc->sc_ownedfp = nbsc->sc_ownedfp;
-	memcpy(obsc->sc_fpregs, nbsc->sc_fpregs, sizeof(obsc->sc_fpregs));
+	bcopy(nbsc->sc_fpregs, obsc->sc_fpregs, sizeof(obsc->sc_fpregs));
 	obsc->sc_fpcr = nbsc->sc_fpcr;
 	obsc->sc_fp_control = nbsc->sc_fp_control;
 }
@@ -83,27 +83,28 @@ netbsd_sys___sigreturn14(p, v, retval)
 	struct netbsd_sys___sigreturn14_args /* {
 		syscallarg(struct netbsd_sigcontext *) sigcntxp;
 	} */ *uap = v;
-	struct netbsd_sigcontext *nbscp;
 	struct sigcontext *scp, ksc;
 	extern struct proc *fpcurproc;
+	struct netbsd_sigcontext *nbscp, nbsc;
 
 	nbscp = SCARG(uap, sigcntxp);
-	netbsd_to_openbsd_sigcontext(nbscp, scp);
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)
 	    printf("sigreturn: pid %d, scp %p\n", p->p_pid, scp);
 #endif
 
-	if (ALIGN(scp) != (u_int64_t)scp)
+	if (ALIGN(nbscp) != (u_int64_t)nbscp)
 		return (EINVAL);
 
 	/*
 	 * Test and fetch the context structure.
 	 * We grab it all at once for speed.
 	 */
-	if (useracc((caddr_t)scp, sizeof (*scp), B_WRITE) == 0 ||
-	    copyin((caddr_t)scp, (caddr_t)&ksc, sizeof ksc))
+	if (useracc((caddr_t)nbscp, sizeof (*nbscp), B_WRITE) == 0 ||
+	    copyin((caddr_t)nbscp, (caddr_t)&nbsc, sizeof (nbsc)))
 		return (EINVAL);
+
+	netbsd_to_openbsd_sigcontext(&nbsc, &ksc);
 
 	if (ksc.sc_regs[R_ZERO] != 0xACEDBADE)		/* magic number */
 		return (EINVAL);

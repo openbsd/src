@@ -1,4 +1,4 @@
-/*	$OpenBSD: netbsd_misc.c,v 1.2 1999/09/15 21:00:10 kstailey Exp $	*/
+/*	$OpenBSD: netbsd_misc.c,v 1.3 1999/09/16 13:20:06 kstailey Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -48,6 +48,7 @@
 #include <compat/netbsd/netbsd_syscallargs.h>
 
 /* XXX doesn't do shared address space */
+/*ARGSUSED*/
 int
 netbsd_sys___vfork14(p, v, retval)
 	struct proc *p;
