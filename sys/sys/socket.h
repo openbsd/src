@@ -1,4 +1,4 @@
-/*	$OpenBSD: socket.h,v 1.19 1997/11/30 18:50:17 millert Exp $	*/
+/*	$OpenBSD: socket.h,v 1.20 1999/01/10 02:44:33 deraadt Exp $	*/
 /*	$NetBSD: socket.h,v 1.14 1996/02/09 18:25:36 christos Exp $	*/
 
 /*
@@ -69,14 +69,15 @@
 /*
  * Additional options, not kept in so_options.
  */
-#define SO_SNDBUF	0x1001		/* send buffer size */
-#define SO_RCVBUF	0x1002		/* receive buffer size */
-#define SO_SNDLOWAT	0x1003		/* send low-water mark */
-#define SO_RCVLOWAT	0x1004		/* receive low-water mark */
-#define SO_SNDTIMEO	0x1005		/* send timeout */
-#define SO_RCVTIMEO	0x1006		/* receive timeout */
+#define	SO_SNDBUF	0x1001		/* send buffer size */
+#define	SO_RCVBUF	0x1002		/* receive buffer size */
+#define	SO_SNDLOWAT	0x1003		/* send low-water mark */
+#define	SO_RCVLOWAT	0x1004		/* receive low-water mark */
+#define	SO_SNDTIMEO	0x1005		/* send timeout */
+#define	SO_RCVTIMEO	0x1006		/* receive timeout */
 #define	SO_ERROR	0x1007		/* get error status and clear */
 #define	SO_TYPE		0x1008		/* get socket type */
+#define	SO_NETPROC	0x1020		/* multiplex; network processing */
 
 /*
  * Structure used for manipulating linger option.
@@ -310,6 +311,15 @@ struct cmsghdr {
 	    (struct cmsghdr *)((caddr_t)(cmsg) + ALIGN((cmsg)->cmsg_len)))
 
 #define	CMSG_FIRSTHDR(mhdr)	((struct cmsghdr *)(mhdr)->msg_control)
+
+/* Round len up to next alignment boundary */
+#define	CMSG_ALIGN(len)	(((len)+sizeof(long)-1) & ~(sizeof(long)-1))
+
+/* Length of the contents of a control message of length len */
+#define	CMSG_LEN(len)	(CMSG_ALIGN(sizeof(struct cmsghdr)) + (len))
+
+/* Length of the space taken up by a padded control message of length len */
+#define	CMSG_SPACE(len)	(CMSG_ALIGN(sizeof(struct cmsghdr)) + CMSG_ALIGN(len))
 
 /* "Socket"-level control message types: */
 #define	SCM_RIGHTS	0x01		/* access rights (array of int) */
