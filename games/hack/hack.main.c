@@ -83,7 +83,7 @@ char *argv[];
 
 	/*
 	 * Who am i? Algorithm: 1. Use name as specified in HACKOPTIONS
-	 *			2. Use $USER or $LOGNAME	(if 1. fails)
+	 *			2. Use $LOGNAME or $USER	(if 1. fails)
 	 *			3. Use getlogin()		(if 2. fails)
 	 * The resulting name is overridden by command line options.
 	 * If everything fails, or if the resulting name is some generic
@@ -95,12 +95,14 @@ char *argv[];
 	{ register char *s;
 
 	  initoptions();
-	  if(!*plname && (s = getenv("USER")))
-		(void) strncpy(plname, s, sizeof(plname)-1);
 	  if(!*plname && (s = getenv("LOGNAME")))
+		(void) strncpy(plname, s, sizeof(plname)-1);
+	  if(!*plname && (s = getenv("USER")))
 		(void) strncpy(plname, s, sizeof(plname)-1);
 	  if(!*plname && (s = getlogin()))
 		(void) strncpy(plname, s, sizeof(plname)-1);
+	  if(*plname)
+		plname[sizeof(plname)-1] = '\0';
 	}
 
 	/*
@@ -162,12 +164,14 @@ char *argv[];
 			break;
 #endif
 		case 'u':
-			if(argv[0][2])
+			if(argv[0][2]) {
 			  (void) strncpy(plname, argv[0]+2, sizeof(plname)-1);
-			else if(argc > 1) {
+			  plname[sizeof(plname)-1] = '\0';
+			} else if(argc > 1) {
 			  argc--;
 			  argv++;
 			  (void) strncpy(plname, argv[0], sizeof(plname)-1);
+			  plname[sizeof(plname)-1] = '\0';
 			} else
 				printf("Player name expected after -u\n");
 			break;
@@ -175,6 +179,7 @@ char *argv[];
 			/* allow -T for Tourist, etc. */
 			(void) strncpy(pl_character, argv[0]+1,
 				sizeof(pl_character)-1);
+			plname[sizeof(pl_character)-1] = '\0';
 
 			/* printf("Unknown option: %s\n", *argv); */
 		}

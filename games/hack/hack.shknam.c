@@ -140,6 +140,6 @@ register int i;
 		else (void) strcpy(nampt, "Dirk");
 		return;
 	}
-	(void) strncpy(nampt, q[i], PL_NSIZ);
+	(void) strncpy(nampt, q[i], PL_NSIZ-1);
 	nampt[PL_NSIZ-1] = 0;
 }

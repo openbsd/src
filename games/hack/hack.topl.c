@@ -160,7 +160,7 @@ register char *line,*arg1,*arg2,*arg3,*arg4,*arg5,*arg6;
 			if(!n0) n0 = CO-2;
 		}
 		(void) strncpy((tl = eos(toplines)), bp, n0);
-		tl[n0] = 0;
+		tl[n0] = '\0';
 		bp += n0;
 
 		/* remove trailing spaces, but leave one */

@@ -203,7 +203,8 @@ register roomno = inroom(u.ux,u.uy);
 		    /* He seems to be new here */
 		    ESHK(shopkeeper)->visitct = 0;
 		    ESHK(shopkeeper)->following = 0;
-		    (void) strncpy(ESHK(shopkeeper)->customer,plname,PL_NSIZ);
+		    (void) strncpy(ESHK(shopkeeper)->customer,plname,PL_NSIZ-1);
+		    ESHK(shopkeeper)->customer[PL_NSIZ-1] = '\0';
 		    NOTANGRY(shopkeeper) = 1;
 		}
 		if(!ESHK(shopkeeper)->following) {

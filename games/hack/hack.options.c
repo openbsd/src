@@ -109,6 +109,7 @@ boolean from_env;
 		op = index(opts,':');
 		if(!op) goto bad;
 		(void) strncpy(plname, op+1, sizeof(plname)-1);
+		plname[sizeof(plname)-1] = '\0';
 		return;
 	}
 
