@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.200 2002/11/23 09:15:25 mcbride Exp $	*/
+/*	$OpenBSD: parse.y,v 1.201 2002/11/23 09:30:39 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -1031,7 +1031,6 @@ address		: '(' STRING ')'		{
 			if ($$ == NULL)
 				err(1, "address: calloc");
 			$$->af = 0;
-			$$->ifname[0] = 0;
 			set_ipmask($$, 128);
 			$$->addr.addr_dyn = (struct pf_addr_dyn *)1;
 			strncpy($$->addr.addr.pfa.ifname, $2,
