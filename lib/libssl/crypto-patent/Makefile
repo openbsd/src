@@ -149,12 +149,13 @@ HDRS= 	asn1/asn1.h asn1/asn1_mac.h bf/blowfish.h bio/bio.h \
 	${LCRYPTO_SRC}/rc4 ${LCRYPTO_SRC}/rc5 ${LCRYPTO_SRC}/idea ${LCRYPTO_SRC}/bf    \
 	${LCRYPTO_SRC}/cast ${LCRYPTO_SRC}/bn  ${LCRYPTO_SRC}/rsa ${LCRYPTO_SRC}/dsa   \
 	${LCRYPTO_SRC}/dh ${LCRYPTO_SRC}/buffer ${LCRYPTO_SRC}/bio ${LCRYPTO_SRC}/stack \
-   	${LCRYPTO_SRC}/lhash ${LCRYPTO_SRC}/rand ${LCRYPTO_SRC}/err ${LCRYPTO_SRC}/objects \
+	${LCRYPTO_SRC}/lhash ${LCRYPTO_SRC}/rand ${LCRYPTO_SRC}/err ${LCRYPTO_SRC}/objects \
 	${LCRYPTO_SRC}/evp ${LCRYPTO_SRC}/pem ${LCRYPTO_SRC}/asn1  ${LCRYPTO_SRC}/asn1 \
 	${LCRYPTO_SRC}/x509 ${LCRYPTO_SRC}/conf txt_db/txt_db.c ${LCRYPTO_SRC}/pkcs7 \
 	${LCRYPTO_SRC}/txt_db ${LCRYPTO_SRC}
 
 includes:
+	@install -d -o ${BINOWN} -g ${BINGRP} -m 755 ${DESTDIR}/usr/include/ssl
 	@cd ${LCRYPTO_SRC}; for i in $(HDRS); do \
 		j="cmp -s ${LCRYPTO_SRC}/$$i \
 		${DESTDIR}/usr/include/ssl/`basename $$i` || \

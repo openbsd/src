@@ -64,6 +64,7 @@ HDRS=	ssl.h ssl2.h ssl3.h ssl23.h tls1.h
 .PATH:	${LSSL_SRC}
 
 includes:
+	@install -d -o ${BINOWN} -g ${BINGRP} -m 755 ${DESTDIR}/usr/include/ssl
 	@cd ${LSSL_SRC}; for i in $(HDRS); do \
 		j="cmp -s $$i ${DESTDIR}/usr/include/ssl/`basename $$i` || \
 		${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} -m 444 \
