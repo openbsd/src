@@ -1,4 +1,4 @@
-/*	$OpenBSD: crontab.c,v 1.31 2002/07/08 18:11:02 millert Exp $	*/
+/*	$OpenBSD: crontab.c,v 1.32 2002/07/09 18:58:25 millert Exp $	*/
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
  */
@@ -21,7 +21,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char const rcsid[] = "$OpenBSD: crontab.c,v 1.31 2002/07/08 18:11:02 millert Exp $";
+static char const rcsid[] = "$OpenBSD: crontab.c,v 1.32 2002/07/09 18:58:25 millert Exp $";
 #endif
 
 /* crontab - install and manage per-user crontab files
@@ -58,9 +58,9 @@ static	void		list_cmd(void),
 			edit_cmd(void),
 			poke_daemon(void),
 			check_error(const char *),
-			parse_args(int c, char *v[]);
+			parse_args(int c, char *v[]),
+			die(int);
 static	int		replace_cmd(void);
-static	void		clean_turds(int);
 
 static void
 usage(const char *msg) {
@@ -409,7 +409,7 @@ edit_cmd(void) {
 			    ProgramName);
 			exit(ERROR_EXIT);
 		}
-		execlp(_PATH_BSHELL, _PATH_BSHELL, "-c", q, (char *)NULL);
+		execlp(_PATH_BSHELL, _PATH_BSHELL, "-c", q, (char *)0);
 		perror(editor);
 		exit(ERROR_EXIT);
 		/*NOTREACHED*/
@@ -430,7 +430,7 @@ edit_cmd(void) {
 				ProgramName, (long)xpid, (long)pid, editor);
 			goto fatal;
 		} else if (WIFSTOPPED(waiter)) {
-			raise(WSTOPSIG(waiter));
+			kill(getpid(), WSTOPSIG(waiter));
 		} else if (WIFEXITED(waiter) && WEXITSTATUS(waiter)) {
 			fprintf(stderr, "%s: \"%s\" exited with status %d\n",
 				ProgramName, editor, WEXITSTATUS(waiter));
@@ -529,9 +529,9 @@ replace_cmd(void) {
 		return (-2);
 	}
 
-	(void) signal(SIGHUP, clean_turds);
-	(void) signal(SIGINT, clean_turds);
-	(void) signal(SIGQUIT, clean_turds);
+	(void) signal(SIGHUP, die);
+	(void) signal(SIGINT, die);
+	(void) signal(SIGQUIT, die);
 
 	/* write a signature at the top of the file.
 	 *
@@ -668,16 +668,8 @@ poke_daemon() {
 }
 
 static void
-clean_turds(signo)
-	int signo;
-{
-	int save_errno = errno;
-
+die(int x) {
 	if (TempFilename[0])
 		(void) unlink(TempFilename);
-	if (signo) {
-		(void) signal(signo, SIG_DFL);
-		(void) raise(signo);
-	}
-	errno = save_errno;
+	_exit(ERROR_EXIT);
 }
