@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.21 2000/03/29 08:50:38 angelos Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.22 2000/03/29 09:37:02 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -453,15 +453,23 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff)
 
 #ifdef INET
 	if (af == AF_INET)
-	  m_copydata(m, offsetof(struct ip, ip_src), sizeof(struct in_addr),
-		     (caddr_t) &(src_address.sin.sin_addr));
+        {
+	    m_copydata(m, offsetof(struct ip, ip_src), sizeof(struct in_addr),
+		       (caddr_t) &(src_address.sin.sin_addr));
+	    sport = (caddr_t) &src_address.sin.sin_port;
+	    dport = (caddr_t) &dst_address.sin.sin_port;
+	}
 #endif /* INET */
 
 #ifdef INET6
 	if (af == AF_INET6)
-	  m_copydata(m, offsetof(struct ip6_hdr, ip6_src),
-		     sizeof(struct in6_addr),
-		     (caddr_t) &(src_address.sin6.sin6_addr));
+        {
+	    m_copydata(m, offsetof(struct ip6_hdr, ip6_src),
+		       sizeof(struct in6_addr),
+		       (caddr_t) &(src_address.sin6.sin6_addr));
+	    sport = (caddr_t) &src_address.sin6.sin6_port;
+	    dport = (caddr_t) &dst_address.sin6.sin6_port;
+        }
 #endif /* INET6 */
 
 	/* Save transport layer source/destination ports, if any */
