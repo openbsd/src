@@ -1,3 +1,4 @@
+#	$OpenBSD: files.ossaudio,v 1.2 1998/04/26 22:15:40 provos Exp $
 #	$NetBSD: files.ossaudio,v 1.2 1997/07/20 20:35:44 pk Exp $
 #
 # Config file description for OSS (Voxware) audio driver
