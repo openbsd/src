@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751var.h,v 1.5 2000/03/22 03:57:57 jason Exp $	*/
+/*	$OpenBSD: hifn7751var.h,v 1.6 2000/03/22 15:49:51 jason Exp $	*/
 
 /*
  *  Invertex AEON / Hi/fn 7751 driver
@@ -234,7 +234,7 @@ typedef struct hifn_command {
 #define HIFN_USING_MAC(f)	((f) & (HIFN_MAC_MD5|HIFN_MAC_SHA1))
 
 /*
- *  Defines for the "result_status" parameter of hifn_command_t.
+ *  Defines for the "result_flags" parameter of hifn_command_t.
  */
 #define HIFN_MAC_BAD		1
 #define HIFN_MAC_OK(r)		(!((r) & HIFN_MAC_BAD))
