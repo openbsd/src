@@ -10,7 +10,7 @@
  *
  * S/Key verification check, lookups, and authentication.
  *
- * $OpenBSD: skeylogin.c,v 1.42 2002/05/16 03:50:42 millert Exp $
+ * $OpenBSD: skeylogin.c,v 1.43 2002/05/16 17:09:01 millert Exp $
  */
 
 #include <sys/param.h>
@@ -92,8 +92,16 @@ skeylookup(mp, name)
 	FILE *keyfile;
 	int fd;
 
+	/* Check to see that /etc/skey has not been disabled. */
+	if (stat(_PATH_SKEYDIR, &statbuf) != 0)
+		return (-1);
+	if ((statbuf.st_mode & ALLPERMS) == 0) {
+		errno = EPERM;
+		return (-1);
+	}
+
 	/* Open the user's databse entry, creating it as needed. */
-	/* XXX - really want "/etc/skeys/L/USER" where L is 1st char of USER */
+	/* XXX - really want "/etc/skey/L/USER" where L is 1st char of USER */
 	mp->keyfile = NULL;
 	if (snprintf(filename, sizeof(filename), "%s/%s", _PATH_SKEYDIR,
 	    name) >= sizeof(filename)) {
@@ -276,7 +284,7 @@ skeyverify(mp, response)
 	btoa8(mp->val,key);
 	mp->n--;
 	(void)fseek(mp->keyfile, 0L, SEEK_SET);
-	(void)fprintf(mp->keyfile, "%s\n%s\n%04d\n%s\n%s\n", mp->logname,
+	(void)fprintf(mp->keyfile, "%s\n%s\n%d\n%s\n%s\n", mp->logname,
 	    skey_get_algorithm(), mp->n, mp->seed, mp->val);
 	(void)fflush(mp->keyfile);
 	(void)ftruncate(fileno(mp->keyfile), ftello(mp->keyfile));
