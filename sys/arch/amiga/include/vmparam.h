@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.8 2000/05/27 20:25:04 art Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.9 2000/12/15 15:18:36 art Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.16 1997/07/12 16:18:36 perry Exp $	*/
 
 /*
@@ -192,7 +192,7 @@ struct pmap_physseg {
 /*
  * number of kernel PT pages (initial only, can grow dynamically)
  */
-#define VM_KERNEL_PT_PAGES	((vm_size_t)2)		/* XXX: SYSPTSIZE */
+#define VM_KERNEL_PT_PAGES	((vm_size_t)8)
 
 /*
  * XXX Override MI values for number of kernel maps and entries to statically
