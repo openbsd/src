@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.211 2005/01/05 18:09:54 mcbride Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.212 2005/01/30 00:02:30 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -934,7 +934,15 @@ struct pf_pdesc {
 #define PFRES_NORM	4		/* Dropping by normalizer */
 #define PFRES_MEMORY	5		/* Dropped due to lacking mem */
 #define PFRES_TS	6		/* Bad TCP Timestamp (RFC1323) */
-#define PFRES_MAX	7		/* total+1 */
+#define PFRES_CONGEST	7		/* Congestion (of ipintrq) */
+#define PFRES_IPOPTIONS 8		/* IP option */
+#define PFRES_PROTCKSUM 9		/* Protocol checksum invalid */
+#define PFRES_BADSTATE	10		/* State mismatch */
+#define PFRES_STATEINS	11		/* State insertion failure */
+#define PFRES_MAXSTATES	12		/* State limit */
+#define PFRES_SRCLIMIT	13		/* Source node/conn limit */
+#define PFRES_SYNPROXY	14		/* SYN proxy */
+#define PFRES_MAX	15		/* total+1 */
 
 #define PFRES_NAMES { \
 	"match", \
@@ -944,6 +952,14 @@ struct pf_pdesc {
 	"normalize", \
 	"memory", \
 	"bad-timestamp", \
+	"congestion", \
+	"ip-option", \
+	"proto-cksum", \
+	"state-mismatch", \
+	"state-insert", \
+	"state-limit", \
+	"src-limit", \
+	"synproxy", \
 	NULL \
 }
 
