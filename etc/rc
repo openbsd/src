@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.57 1997/12/12 23:02:26 niklas Exp $
+#	$OpenBSD: rc,v 1.58 1997/12/21 06:40:50 deraadt Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -83,10 +83,14 @@ rm -f /var/spool/lock/LCK.*
 rm -f /var/spool/uucp/STST/*
 (cd /var/run && { rm -rf -- *; install -c -m 664 -g utmp /dev/null utmp; })
 
+echo 'starting system logger'
+rm -f /dev/log
+syslogd
+
 # $named_flags is imported from /etc/rc.conf;
 # if $named_flags != NO, named is run.
 if [ "X${named_flags}" != X"NO" ]; then
-	echo -n ' named';		named $named_flags
+	echo 'starting named';		named $named_flags
 fi
 
 # /etc/ifaliases, if it exists, contains the names of additional IP
@@ -182,19 +186,14 @@ if [ X${amd} = X"YES" -a -d ${amd_dir} -a -r ${amd_master} ]; then
 	    -a ${amd_dir} `cat ${amd_master}` > /var/run/amd.pid
 fi
 
-echo '.'
-mount -a -t nfs
-
-echo -n 'starting system logger'
-rm -f /dev/log
-syslogd
-
 # $timed_flags is imported from /etc/rc.conf;
 # if $timed_flags == NO, timed isn't run.
 if [ "X${timed_flags}" != X"NO" ]; then
-	echo -n ', time daemon'; timed $timed_flags
+	echo -n ' timed'; timed $timed_flags
 fi
 echo '.'
+
+mount -a -t nfs
 
 # /var/crash should be a directory or a symbolic link
 # to the crash directory if core dumps are to be saved.
