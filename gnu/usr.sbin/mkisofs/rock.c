@@ -1,4 +1,4 @@
-/*	$OpenBSD: rock.c,v 1.1.1.1 1997/09/15 06:01:53 downsj Exp $	*/
+/*	$OpenBSD: rock.c,v 1.2 1998/04/05 00:39:40 deraadt Exp $	*/
 /*
  * File rock.c - generate RRIP  records for iso9660 filesystems.
 
@@ -226,7 +226,7 @@ int deep_opt;
     Rock[ipnt++] = PN_SIZE;
     Rock[ipnt++] = SU_VERSION;  
     flagval |= (1<<1);
-#if MAJOR_IN_SYSMACROS == 0 && MAJOR_IN_MKDEV == 0
+#if !defined(MAJOR_IN_SYSMACROS) && !defined(MAJOR_IN_MKDEV)
     set_733((char*)Rock + ipnt, major(lstatbuf->st_rdev ));
     ipnt += 8;
     set_733((char*)Rock + ipnt, minor(lstatbuf->st_rdev));

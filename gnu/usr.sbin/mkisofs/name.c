@@ -1,4 +1,4 @@
-/*	$OpenBSD: name.c,v 1.1.1.1 1997/09/15 06:01:53 downsj Exp $	*/
+/*	$OpenBSD: name.c,v 1.2 1998/04/05 00:39:39 deraadt Exp $	*/
 /*
  * File name.c - map full Unix file names to unique 8.3 names that
  * would be valid on DOS.
@@ -208,7 +208,14 @@ int FDECL3(iso9660_file_length,
 	    }
 	  if(current_length < 30) 
 	    {
-	      *result++ = (islower(*pnt) ? toupper(*pnt) : *pnt);
+	      if( *pnt < 0 )
+		{
+		  *result++ = '_';
+		}
+	      else
+		{
+		  *result++ = (islower(*pnt) ? toupper(*pnt) : *pnt);
+		}
 	    }
 	}
       else
@@ -262,14 +269,21 @@ int FDECL3(iso9660_file_length,
 	  else 
 	    {
 	      if(    (seen_dot && (chars_after_dot < 3) && ++chars_after_dot)
-		  || ((chars_before_dot < 8) && ++chars_before_dot) ) 
+		     || (!seen_dot && (chars_before_dot < 8) && ++chars_before_dot) )
 		{
 		  if(result) 
 		    {
 		      switch (*pnt) 
 			{
 			default:
-			  *result++ = islower(*pnt) ? toupper(*pnt) : *pnt;
+			  if( *pnt < 0 )
+			    {
+			      *result++ = '_';
+			    }
+			  else
+			    {
+			      *result++ = islower(*pnt) ? toupper(*pnt) : *pnt;
+			    }
 			  break;
 
 			/* 
@@ -283,6 +297,7 @@ int FDECL3(iso9660_file_length,
 			/* separators */
 			case '+':
 			case '=':
+			case '%': /* not legal DOS filename */
 			case ':':
 			case ';': /* already handled */
 			case '.': /* already handled */

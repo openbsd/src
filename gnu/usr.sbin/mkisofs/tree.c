@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.c,v 1.1.1.1 1997/09/15 06:01:53 downsj Exp $	*/
+/*	$OpenBSD: tree.c,v 1.2 1998/04/05 00:39:41 deraadt Exp $	*/
 /*
  * File tree.c - scan directory  tree and build memory structures for iso9660
  * filesystem
@@ -143,6 +143,9 @@ void FDECL1(sort_n_finish, struct directory *, this_dir)
   time_t		    current_time;
   struct directory_entry  * table;
   int			    count;
+  int			    d1;
+  int			    d2;
+  int			    d3;
   int			    new_reclen;
   char			 *  c;
   int			    tablesize = 0;
@@ -208,34 +211,43 @@ void FDECL1(sort_n_finish, struct directory *, this_dir)
 	  c  = strchr(rootname, ';');
 	  if (c) *c = 0;
 	}
-      count = 0;
-      while(count < 0x1000)
+      for(d1 = 0; d1 < 36; d1++)
 	{
-	  sprintf(newname,"%s.%3.3X%s", rootname,  count,
-		  (s_entry->isorec.flags[0] == 2 || 
-		   omit_version_number ? "" : ";1"));
-	  
+	  for(d2 = 0; d2 < 36; d2++)
+	    {
+	      for(d3 = 0; d3 < 36; d3++)
+		{
+		  sprintf(newname,"%s.%c%c%c%s", rootname,  
+			  (d1 <= 9 ? '0' + d1 : 'A' + d1 - 10),
+			  (d2 <= 9 ? '0' + d2 : 'A' + d2 - 10),
+			  (d3 <= 9 ? '0' + d3 : 'A' + d3 - 10),
+			  (s_entry->isorec.flags[0] == 2 || 
+			   omit_version_number ? "" : ";1"));
+		  
 #ifdef VMS
-	  /* Sigh.  VAXCRTL seems to be broken here */
-	  {
-	    int ijk = 0;
-	    while(newname[ijk]) 
-	      {
-		if(newname[ijk] == ' ') newname[ijk] = '0';
-		ijk++;
-	      }
-	  }
+		  /* Sigh.  VAXCRTL seems to be broken here */
+		  {
+		    int ijk = 0;
+		    while(newname[ijk]) 
+		      {
+			if(newname[ijk] == ' ') newname[ijk] = '0';
+			ijk++;
+		      }
+		  }
 #endif
-	  
-	  if(!find_file_hash(newname)) break;
-	  count++;
+		  
+		  if(!find_file_hash(newname)) goto got_valid_name;
+		}
+	    }
 	}
-      if(count >= 0x1000)
-	{
-	  fprintf(stderr,"Unable to  generate unique  name for file %s\n", s_entry->name);
-	  exit(1);
-	}
-      
+
+      /*
+       * If we fell off the bottom here, we were in real trouble.
+       */
+      fprintf(stderr,"Unable to  generate unique  name for file %s\n", s_entry->name);
+      exit(1);
+
+got_valid_name:            
       /* 
        * OK, now we have a good replacement name.  Now decide which one
        * of these two beasts should get the name changed 
@@ -316,7 +328,7 @@ void FDECL1(sort_n_finish, struct directory *, this_dir)
       table->name = strdup("<translation table>");
       table->table = (char *) e_malloc(ROUND_UP(tablesize));
       memset(table->table, 0, ROUND_UP(tablesize));
-      iso9660_file_length  ("TRANS.TBL", table, 1);
+      iso9660_file_length  ("TRANS.TBL", table, 0);
       
       if(use_RockRidge)
 	{
@@ -373,7 +385,6 @@ void FDECL1(sort_n_finish, struct directory *, this_dir)
 
   if(table)
     {
-      char buffer[1024];
       count = 0;
       for (s_entry = this_dir->contents; s_entry; s_entry = s_entry->next){
 	if(s_entry == table) continue;
@@ -381,10 +392,9 @@ void FDECL1(sort_n_finish, struct directory *, this_dir)
 	if(strcmp(s_entry->name, ".") == 0  ||
 	   strcmp(s_entry->name, "..") == 0) continue;
 	
-	sprintf(buffer,"%c %-34s%s",s_entry->table[0],  
-		s_entry->isorec.name, s_entry->table+1);
-	memcpy(table->table + count, buffer, strlen(buffer));
-	count +=  strlen(buffer);
+	count += sprintf(table->table + count, "%c %-34s%s",
+			 s_entry->table[0],
+			 s_entry->isorec.name, s_entry->table+1);
 	free(s_entry->table);
 	s_entry->table = NULL;
       }
@@ -1147,6 +1157,13 @@ FDECL3(scan_directory_tree,char *, path, struct directory_entry *, de,
       free_mdinfo(orig_contents, n_orig);
     }
 
+  if( this_dir->contents == NULL )
+    {
+      /*
+       * This directory must have been inaccessible.
+       */
+      return 0;
+    }
   sort_n_finish(this_dir);
 
   return 1;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkisofs.h,v 1.1.1.1 1997/09/15 06:01:53 downsj Exp $	*/
+/*	$OpenBSD: mkisofs.h,v 1.2 1998/04/05 00:39:36 deraadt Exp $	*/
 /*
  * Header file mkisofs.h - assorted structure definitions and typecasts.
 
@@ -262,6 +262,12 @@ extern int    DECL(check_prev_session, (struct directory_entry **, int len,
 				     struct stat *,
 				     struct stat *,
 				     struct directory_entry **));
+
+#ifdef	USE_SCG
+/* scsi.c */
+extern	int	readsecs(int startsecno, void *buffer, int sectorcount);
+extern	int	scsidev_open(char *path);
+#endif
 
 extern char * extension_record;
 extern int extension_record_extent;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: multi.c,v 1.1.1.1 1997/09/15 06:01:53 downsj Exp $	*/
+/*	$OpenBSD: multi.c,v 1.2 1998/04/05 00:39:38 deraadt Exp $	*/
 /*
  * File multi.c - scan existing iso9660 image and merge into 
  * iso9660 filesystem.  Used for multisession support.
@@ -26,6 +26,7 @@ static char rcsid[] ="$From: multi.c,v 1.4 1997/03/08 17:08:53 eric Rel $";
 #include <string.h>
 #include <time.h>
 #include <errno.h>
+#include <sys/types.h>
 #include <sys/stat.h>
 
 #include "config.h"
@@ -279,11 +280,11 @@ FDECL2(read_merging_directory, struct iso_directory_record *, mrootp,
    * First, allocate a buffer large enough to read in the entire
    * directory.
    */
-  dirbuff = (char *) e_malloc(isonum_733(mrootp->size));
+  dirbuff = (char *) e_malloc(isonum_733((unsigned char *)mrootp->size));
 
-  readsecs(isonum_733(mrootp->extent), dirbuff,
-	   isonum_733(mrootp->size)/SECTOR_SIZE);
-
+  readsecs(isonum_733((unsigned char *)mrootp->extent), dirbuff,
+	   isonum_733((unsigned char *)mrootp->size)/SECTOR_SIZE);
+ 
   /*
    * Next look over the directory, and count up how many entries we
    * have.
@@ -330,8 +331,8 @@ FDECL2(read_merging_directory, struct iso_directory_record *, mrootp,
       *pnt = (struct directory_entry *) e_malloc(sizeof(**rtn));
       (*pnt)->next = NULL;
       (*pnt)->isorec = *idr;
-      (*pnt)->starting_block = isonum_733(idr->extent);
-      (*pnt)->size = isonum_733(idr->size);
+      (*pnt)->starting_block = isonum_733((unsigned char *)idr->extent);
+      (*pnt)->size = isonum_733((unsigned char *)idr->size);
       (*pnt)->priority = 0;
       (*pnt)->name = NULL;
       (*pnt)->table = NULL;
@@ -396,6 +397,10 @@ FDECL2(read_merging_directory, struct iso_directory_record *, mrootp,
 	    {
 	      free((*pnt)->name);
 	    }
+	  if( (*pnt)->whole_name != NULL )
+	    {
+	      free((*pnt)->whole_name);
+	    }
 	  if( (*pnt)->isorec.name[0] == 0 )
 	    {
 	      (*pnt)->name = strdup(".");
@@ -412,9 +417,13 @@ FDECL2(read_merging_directory, struct iso_directory_record *, mrootp,
 	    {
 	      free((*pnt)->name);
 	    }
+	  if( (*pnt)->whole_name != NULL )
+	    {
+	      free((*pnt)->whole_name);
+	    }
 	  (*pnt)->name = strdup("<translation table>");
-	  tt_extent = isonum_733(idr->extent);
-	  tt_size = isonum_733(idr->size);
+	  tt_extent = isonum_733((unsigned char *)idr->extent);
+	  tt_size = isonum_733((unsigned char *)idr->size);
 	}
       
       pnt++;
@@ -449,7 +458,9 @@ FDECL2(read_merging_directory, struct iso_directory_record *, mrootp,
 			  rlen) == 0 
 		  && cpnt[2+rlen] == ' ')
 		{
-		  (*pnt)->table = strdup((char *) cpnt);
+		  (*pnt)->table = e_malloc(strlen((char*)cpnt) - 34);
+		  sprintf((*pnt)->table, "%c\t%s\n",
+			  *cpnt, cpnt+37);
 		  if( (*pnt)->name == NULL )
 		    {
 		      (*pnt)->name = strdup((char *) cpnt+37);
@@ -512,6 +523,12 @@ FDECL2(free_mdinfo, struct directory_entry **  , ptr, int, len )
 	{
 	  free((*p)->name);
 	}
+
+      if( (*p)->whole_name != NULL )
+	{
+	  free((*p)->whole_name);
+	}
+
 
       if( (*p)->rr_attributes != NULL )
 	{
@@ -661,11 +678,23 @@ struct iso_directory_record * FDECL1(merge_isofs, char *, path)
    * FIXME(eric).
    */
 
+#ifndef	USE_SCG
   in_image = fopen(path, "rb");
   if( in_image == NULL )
     {
       return NULL;
     }
+#else
+  if (strchr(path, '/')) {
+	in_image = fopen(path, "rb");
+	if( in_image == NULL ) {
+		return NULL;
+	}
+  } else {
+	if (scsidev_open(path) < 0)
+		return NULL;
+  }
+#endif
 
   get_session_start(&file_addr);
 
@@ -681,7 +710,7 @@ struct iso_directory_record * FDECL1(merge_isofs, char *, path)
       vdp = (struct iso_volume_descriptor *)buffer;
 
       if(    (strncmp(vdp->id, ISO_STANDARD_ID, sizeof vdp->id) == 0)
-	  && (isonum_711(vdp->type) == ISO_VD_PRIMARY) )
+	  && (isonum_711((unsigned char *) vdp->type) == ISO_VD_PRIMARY) )
 	{
 	  break;
 	}
@@ -698,8 +727,8 @@ struct iso_directory_record * FDECL1(merge_isofs, char *, path)
   /*
    * Check the blocksize of the image to make sure it is compatible.
    */
-  if(    (isonum_723 (pri->logical_block_size) != SECTOR_SIZE)
-      || (isonum_723 (pri->volume_set_size) != 1) )
+  if(    (isonum_723 ((unsigned char *) pri->logical_block_size) != SECTOR_SIZE)
+      || (isonum_723 ((unsigned char *) pri->volume_set_size) != 1) )
     {
       return NULL;
     }
@@ -738,7 +767,7 @@ void FDECL3(merge_remaining_entries, struct directory *, this_dir,
       if( pnt[i]->name != NULL
 	  && strcmp(pnt[i]->name, "<translation table>") == 0 )
 	{
-	  ttbl_extent = isonum_733(pnt[i]->isorec.extent);
+	  ttbl_extent = isonum_733((unsigned char *) pnt[i]->isorec.extent);
 	  ttbl_index = i;
 	  continue;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: write.c,v 1.1.1.1 1997/09/15 06:01:53 downsj Exp $	*/
+/*	$OpenBSD: write.c,v 1.2 1998/04/05 00:39:42 deraadt Exp $	*/
 /*
  * Program write.c - dump memory  structures to  file for iso9660 filesystem.
 
@@ -58,8 +58,9 @@ static struct directory ** pathlist;
 static next_path_index = 1;
 
 /* Used to fill in some  of the information in the volume descriptor. */
-static struct tm *local;
-
+static struct tm local;
+static struct tm gmt;
+ 
 /* Routines to actually write the disc.  We write sequentially so that
    we could write a tape, or write the disc directly */
 
@@ -327,8 +328,8 @@ int FDECL2(compare_dirs, const void *, rr, const void *, ll)
 	  if(*rpnt == '.' && *lpnt != '.') return -1;
 	  if(*rpnt != '.' && *lpnt == '.') return 1;
 	  
-	  if(*rpnt < *lpnt) return -1;
-	  if(*rpnt > *lpnt) return 1;
+	  if((unsigned char)*rpnt < (unsigned char)*lpnt) return -1;
+	  if((unsigned char)*rpnt > (unsigned char)*lpnt) return 1;
 	  rpnt++;  lpnt++;
      }
      if(*rpnt) return 1;
@@ -390,7 +391,9 @@ void generate_root_record()
      time_t ctime;
      
      time (&ctime);
-     local = localtime(&ctime);
+
+     local = *localtime(&ctime);
+     gmt   = *gmtime(&ctime);
      
      root_record.length[0] = 1 + sizeof(struct iso_directory_record)
 	  - sizeof(root_record.name);
@@ -426,7 +429,7 @@ static void FDECL1(assign_file_addresses, struct directory *, dpnt)
 		* we don't end up scheduling the thing for writing
 		* either.
 		*/
-	       if( isonum_733(s_entry->isorec.extent) != 0 )
+	       if( isonum_733((unsigned char *) s_entry->isorec.extent) )
 	       {
 		    continue;
 	       }
@@ -742,7 +745,14 @@ void FDECL2(generate_one_directory, struct directory *, dpnt, FILE *, outfile)
 	  s_entry = s_entry->next;
 	  
 	  if (s_entry_d->rr_attributes) free(s_entry_d->rr_attributes);
-	  free (s_entry_d->name);
+	  if( s_entry_d->name != NULL )
+	    {
+	      free (s_entry_d->name);
+	    }
+	  if( s_entry_d->whole_name != NULL )
+	    {
+	      free (s_entry_d->whole_name);
+	    }
 	  free (s_entry_d);
      }
      sort_dir = NULL;
@@ -947,9 +957,14 @@ int FDECL1(iso_write, FILE *, outfile)
    * This will break  in the year  2000, I supose, but there is no good way
    * to get the top two digits of the year. 
    */
-  sprintf(iso_time, "%4.4d%2.2d%2.2d%2.2d%2.2d%2.2d00", 1900 + local->tm_year,
-	  local->tm_mon+1, local->tm_mday,
-	  local->tm_hour, local->tm_min, local->tm_sec);
+  sprintf(iso_time, "%4.4d%2.2d%2.2d%2.2d%2.2d%2.2d00", 1900 + local.tm_year,
+	  local.tm_mon+1, local.tm_mday,
+	  local.tm_hour, local.tm_min, local.tm_sec);
+
+  local.tm_min -= gmt.tm_min;
+  local.tm_hour -= gmt.tm_hour;
+  local.tm_yday -= gmt.tm_yday;
+  iso_time[16] = (local.tm_min + 60*(local.tm_hour + 24*local.tm_yday));
 
   /*
    * First, we output 16 sectors of all zero 
@@ -1043,28 +1058,17 @@ int FDECL1(iso_write, FILE *, outfile)
    * if not a bootable cd do it the old way 
    */
   xfwrite(&vol_desc, 1, 2048, outfile);
-  if (!use_eltorito) 
-    {
-      /*
-       * For some reason, Young Minds writes this twice.  Aw, what the heck 
-       */
-      xfwrite(&vol_desc, 1, 2048, outfile);
-    }
-  else
+  last_extent_written++;
+  if (use_eltorito) 
     {
       /*
        * Next we write out the boot volume descriptor for the disc 
        */
       get_torito_desc(&boot_desc);
       xfwrite(&boot_desc, 1, 2048, outfile);
+      last_extent_written ++;
     }
   
-  /* 
-   * either way, we've written two more 
-   */
-
-  last_extent_written += 2;
-
   /*
    * Now write the end volume descriptor.  Much simpler than the other one 
    */
@@ -1073,8 +1077,7 @@ int FDECL1(iso_write, FILE *, outfile)
   memcpy(vol_desc.id, ISO_STANDARD_ID, sizeof(ISO_STANDARD_ID));
   vol_desc.version[0] = 1;
   xfwrite(&vol_desc, 1, 2048, outfile);
-  xfwrite(&vol_desc, 1, 2048, outfile);
-  last_extent_written += 2;
+  last_extent_written += 1;
 
   /*
    * Next we write the path tables 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkisofs.c,v 1.1.1.1 1997/09/15 06:01:53 downsj Exp $	*/
+/*	$OpenBSD: mkisofs.c,v 1.2 1998/04/05 00:39:35 deraadt Exp $	*/
 /*
  * Program mkisofs.c - generate iso9660 filesystem  based upon directory
  * tree on hard disk.
@@ -61,7 +61,7 @@ static char rcsid[] ="$From: mkisofs.c,v 1.9 1997/04/10 02:45:09 eric Rel $";
 
 struct directory * root = NULL;
 
-static char version_string[] = "mkisofs v1.11";
+static char version_string[] = "mkisofs v1.11.2";
 
 FILE * discimage;
 unsigned int next_extent = 0;
@@ -594,7 +594,7 @@ int FDECL2(main, int, argc, char **, argv){
   path_blocks = (path_table_size + (SECTOR_SIZE - 1)) >> 11;
   if (path_blocks & 1) path_blocks++;
 
-  path_table[0] = session_start + 0x14;
+  path_table[0] = session_start + 0x10 + 2 + (use_eltorito ? 1 : 0);
   path_table[1] = 0;
   path_table[2] = path_table[0] + path_blocks;
   path_table[3] = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: isovfy.c,v 1.1.1.1 1997/09/15 06:01:53 downsj Exp $	*/
+/*	$OpenBSD: isovfy.c,v 1.2 1998/04/05 00:39:44 deraadt Exp $	*/
 /*
  * File isovfy.c - verify consistency of iso9660 filesystem.
  *
@@ -348,7 +348,7 @@ check_tree(int file_addr, int file_size, int parent_addr){
 		  } else {
 		          if(i1 < 2) iline += sprintf(&lbuffer[iline]," Improper sorting.", rr_goof++);
 			  for(j=0; j<idr->name_len[0]; j++) iline += sprintf(&lbuffer[iline],"%c", idr->name[j]);
-			  for(j=0; j<14 -idr->name_len[0]; j++) iline += sprintf(&lbuffer[iline]," ");
+			  for(j=0; j<14 - (int) idr->name_len[0]; j++) iline += sprintf(&lbuffer[iline]," ");
 			  rflag = 1;
 		  };
 

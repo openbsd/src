@@ -1,4 +1,4 @@
-/*	$OpenBSD: eltorito.c,v 1.1.1.1 1997/09/15 06:01:52 downsj Exp $	*/
+/*	$OpenBSD: eltorito.c,v 1.2 1998/04/05 00:39:31 deraadt Exp $	*/
 /*
  * Program eltorito.c - Handle El Torito specific extensions to iso9660.
  * 
@@ -29,9 +29,13 @@ static char rcsid[] ="$From: eltorito.c,v 1.5 1997/03/08 17:27:01 eric Rel $";
 #include <sys/stat.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <stdlib.h>
 
 #include "mkisofs.h"
 #include "iso9660.h"
+
+#undef MIN
+#define MIN(a, b) (((a) < (b))? (a): (b))
 
 static struct eltorito_validation_entry valid_desc;
 static struct eltorito_defaultboot_entry default_desc;
@@ -158,8 +162,8 @@ void FDECL1(get_torito_desc, struct eltorito_boot_descriptor *, boot_desc)
      * but who really reads this stuff!
      */
     if (publisher)
-	memcpy_max(valid_desc.id,  publisher, strlen(publisher));
-    
+        memcpy_max(valid_desc.id,  publisher, MIN(23, strlen(publisher)));    
+
     valid_desc.key1[0] = 0x55;
     valid_desc.key2[0] = 0xAA;
     
