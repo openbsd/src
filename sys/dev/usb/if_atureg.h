@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atureg.h,v 1.4 2004/11/15 12:50:08 dlg Exp $ */
+/*	$OpenBSD: if_atureg.h,v 1.5 2004/11/16 08:57:29 dlg Exp $ */
 /*
  * Copyright (c) 2003
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -32,7 +32,7 @@
  *
  */
 
-/* $ATUWI: $Id: if_atureg.h,v 1.4 2004/11/15 12:50:08 dlg Exp $ */
+/* $ATUWI: $Id: if_atureg.h,v 1.5 2004/11/16 08:57:29 dlg Exp $ */
 
 /************ 		driver options 		************/
 
@@ -89,18 +89,6 @@
 
 /* number of simultaniously MGMT TX transfers (always 1, don't change) */
 #define ATU_MGMT_LIST_CNT	1
-
-/*
- * save a memcpy on TX by directly constructing packets into a self-allocated
- * DMA buffer. (normally usbd allocates them and memcpy's data in on transfer)
- *
- * measurements :
- * off		507.50 KB/sec
- * on		530.14 KB/sec
- * (+/- 4.5% increase)
- */
-#define ATU_NO_COPY_TX
-
 
 /*
  * Normally, when a packet arrives at the driver (with a call to atu_start)
@@ -166,7 +154,6 @@
 #ifdef ATU_NO_OPTIMIZATIONS
 #undef ATU_LAZY_TX_NETISR
 #undef ATU_TX_PADDING
-#undef ATU_NO_COPY_TX
 #undef ATU_TX_LIST_CNT
 #define ATU_TX_LIST_CNT		1
 #undef ATU_RX_LIST_CNT

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.15 2004/11/15 12:50:08 dlg Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.16 2004/11/16 08:57:29 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -770,14 +770,9 @@ atu_send_packet(struct atu_softc *sc, struct atu_chain *c)
 
 	pkt = (struct atu_txpkt *)c->atu_buf;
 
-#ifdef ATU_NO_COPY_TX
 	usbd_setup_xfer(c->atu_xfer, sc->atu_ep[ATU_ENDPT_TX],
 	    c, c->atu_buf, c->atu_length, USBD_NO_COPY, ATU_TX_TIMEOUT,
 	    atu_txeof);
-#else /* ATU_NO_COPY_TX */
-	usbd_setup_xfer(c->atu_xfer, sc->atu_ep[ATU_ENDPT_TX],
-	    c, c->atu_buf, c->atu_length, 0, ATU_TX_TIMEOUT, atu_txeof);
-#endif /* ATU_NO_COPY_TX */
 
 	/* Let's get this thing into the air! */
 	c->atu_in_xfer = 1;
@@ -1948,17 +1943,10 @@ atu_xfer_list_init(struct atu_softc *sc, struct atu_chain *ch,
 		}
 
 		if ((bufsize > 0) && (ch->atu_buf == NULL)) {
-#ifdef ATU_NO_COPY_TX
 			ch->atu_buf = usbd_alloc_buffer(ch->atu_xfer,
 			    bufsize);
 			if (ch->atu_buf == NULL)
 				return(ENOBUFS);
-#else /* ATU_NO_COPY_TX */
-			ch->atu_buf = malloc(bufsize, M_USBDEV,
-			    M_NOWAIT);
-			if (ch->atu_buf == NULL)
-				return(ENOBUFS);
-#endif /* ATU_NO_COPY_TX */
 		}
 
 		if (list != NULL) {
@@ -1978,16 +1966,8 @@ atu_xfer_list_free(struct atu_softc *sc, struct atu_chain *ch,
 
 	/* Free resources. */
 	for (i = 0; i < listlen; i++) {
-		if (ch[i].atu_buf != NULL) {
-#ifdef ATU_NO_COPY_TX
-			/*
-			 * usbdi.c cleans up for us
-			 */
-#else /* ATU_NO_COPY_TX */
-			free(ch[i].atu_buf, M_USBDEV);
-#endif /* ATU_NO_COPY_TX */
+		if (ch[i].atu_buf != NULL)
 			ch[i].atu_buf = NULL;
-		}
 		if (ch[i].atu_mbuf != NULL) {
 			m_freem(ch[i].atu_mbuf);
 			ch[i].atu_mbuf = NULL;
