@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.4 1996/08/23 18:38:48 niklas Exp $	*/
+/*	$OpenBSD: conf.h,v 1.5 1996/09/04 22:44:22 niklas Exp $	*/
 /*	$NetBSD: conf.h,v 1.1 1996/04/21 21:13:16 veego Exp $	*/
 
 /*
@@ -65,7 +65,7 @@ cdev_decl(par);
 bdev_decl(rd);
 /* no cdev for rd */
 
-cdev_decl(rnd);
+cdev_decl(random);
 
 cdev_decl(ser);
 
