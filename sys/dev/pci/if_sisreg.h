@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sisreg.h,v 1.7 2001/09/23 22:41:25 aaron Exp $ */
+/*	$OpenBSD: if_sisreg.h,v 1.8 2002/02/08 04:43:24 chris Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -187,6 +187,7 @@
 #define SIS_INTRS	\
 	(SIS_IMR_RX_OFLOW|SIS_IMR_TX_UFLOW|SIS_IMR_TX_OK|\
 	 SIS_IMR_TX_IDLE|SIS_IMR_RX_OK|SIS_IMR_RX_ERR|\
+	 SIS_IMR_RX_IDLE|\
 	 SIS_IMR_SYSERR)
 
 #define SIS_IER_INTRENB		0x00000001
@@ -307,7 +308,7 @@ struct sis_desc {
 
 #define SIS_LASTDESC(x)		(!((x)->sis_ctl & SIS_CMDSTS_MORE)))
 #define SIS_OWNDESC(x)		((x)->sis_ctl & SIS_CMDSTS_OWN)
-#define SIS_INC(x, y)		(x) = (x + 1) % y
+#define SIS_INC(x, y)		{ if (++(x) == y) x=0 ; }
 #define SIS_RXBYTES(x)		((x)->sis_ctl & SIS_CMDSTS_BUFLEN)
 
 #define SIS_RXSTAT_COLL		0x00010000

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sis.c,v 1.19 2001/11/06 19:53:19 miod Exp $ */
+/*	$OpenBSD: if_sis.c,v 1.20 2002/02/08 04:43:24 chris Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -59,6 +59,7 @@
  */
 
 #include "bpfilter.h"
+#include "vlan.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -852,6 +853,10 @@ void sis_attach(parent, self, aux)
 	IFQ_SET_READY(&ifp->if_snd);
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 
+#if NVLAN > 0
+	ifp->if_capabilities |= IFCAP_VLAN_MTU;
+#endif
+
 	sc->sc_mii.mii_ifp = ifp;
 	sc->sc_mii.mii_readreg = sis_miibus_readreg;
 	sc->sc_mii.mii_writereg = sis_miibus_writereg;
@@ -886,23 +891,17 @@ int sis_list_tx_init(sc)
 {
 	struct sis_list_data	*ld;
 	struct sis_ring_data	*cd;
-	int			i;
+	int			i, nexti;
 
 	cd = &sc->sis_cdata;
 	ld = sc->sis_ldata;
 
 	for (i = 0; i < SIS_TX_LIST_CNT; i++) {
-		if (i == (SIS_TX_LIST_CNT - 1)) {
-			ld->sis_tx_list[i].sis_nextdesc =
-			    &ld->sis_tx_list[0];
-			ld->sis_tx_list[i].sis_next =
-			    vtophys(&ld->sis_tx_list[0]);
-		} else {
-			ld->sis_tx_list[i].sis_nextdesc =
-			    &ld->sis_tx_list[i + 1];
-			ld->sis_tx_list[i].sis_next =
-			    vtophys(&ld->sis_tx_list[i + 1]);
-		}
+		nexti = (i == (SIS_TX_LIST_CNT - 1)) ? 0 : i+1;
+		ld->sis_tx_list[i].sis_nextdesc =
+		    &ld->sis_tx_list[nexti];
+		ld->sis_tx_list[i].sis_next =
+		    vtophys(&ld->sis_tx_list[nexti]);
 		ld->sis_tx_list[i].sis_mbuf = NULL;
 		ld->sis_tx_list[i].sis_ptr = 0;
 		ld->sis_tx_list[i].sis_ctl = 0;
@@ -924,7 +923,7 @@ int sis_list_rx_init(sc)
 {
 	struct sis_list_data	*ld;
 	struct sis_ring_data	*cd;
-	int			i;
+	int			i, nexti;
 
 	ld = sc->sis_ldata;
 	cd = &sc->sis_cdata;
@@ -932,17 +931,11 @@ int sis_list_rx_init(sc)
 	for (i = 0; i < SIS_RX_LIST_CNT; i++) {
 		if (sis_newbuf(sc, &ld->sis_rx_list[i], NULL) == ENOBUFS)
 			return(ENOBUFS);
-		if (i == (SIS_RX_LIST_CNT - 1)) {
-			ld->sis_rx_list[i].sis_nextdesc =
-			    &ld->sis_rx_list[0];
-			ld->sis_rx_list[i].sis_next =
-			    vtophys(&ld->sis_rx_list[0]);
-		} else {
-			ld->sis_rx_list[i].sis_nextdesc =
-			    &ld->sis_rx_list[i + 1];
-			ld->sis_rx_list[i].sis_next =
-			    vtophys(&ld->sis_rx_list[i + 1]);
-		}
+		nexti = (i == (SIS_RX_LIST_CNT - 1)) ? 0 : i+1;
+		ld->sis_rx_list[i].sis_nextdesc =
+		    &ld->sis_rx_list[nexti];
+		ld->sis_rx_list[i].sis_next =
+		    vtophys(&ld->sis_rx_list[nexti]);
 	}
 
 	cd->sis_rx_prod = 0;
@@ -1008,7 +1001,6 @@ void sis_rxeof(sc)
 	i = sc->sis_cdata.sis_rx_prod;
 
 	while(SIS_OWNDESC(&sc->sis_ldata->sis_rx_list[i])) {
-		struct mbuf		*m0 = NULL;
 
 		cur_rx = &sc->sis_ldata->sis_rx_list[i];
 		rxstat = cur_rx->sis_rxstat;
@@ -1032,15 +1024,33 @@ void sis_rxeof(sc)
 		}
 
 		/* No errors; receive the packet. */	
-		m0 = m_devget(mtod(m, char *) - ETHER_ALIGN,
-		    total_len + ETHER_ALIGN, 0, ifp, NULL);
-		sis_newbuf(sc, cur_rx, m);
-		if (m0 == NULL) {
-			ifp->if_ierrors++;
-			continue;
+#ifndef __STRICT_ALIGNMENT
+		/*
+		 * On some architectures, we do not have alignment problems,
+		 * so try to allocate a new buffer for the receive ring, and
+		 * pass up the one where the packet is already, saving the
+		 * expensive copy done in m_devget().
+		 * If we are on an architecture with alignment problems, or
+		 * if the allocation fails, then use m_devget and leave the
+		 * existing buffer in the receive ring.
+		 */
+		if (sis_newbuf(sc, cur_rx, NULL) == 0) {
+			m->m_pkthdr.rcvif = ifp;
+			m->m_pkthdr.len = m->m_len = total_len;
+		} else
+#endif
+		{
+			struct mbuf *m0;
+			m0 = m_devget(mtod(m, char *) - ETHER_ALIGN,
+			    total_len + ETHER_ALIGN, 0, ifp, NULL);
+			sis_newbuf(sc, cur_rx, m);
+			if (m0 == NULL) {
+				ifp->if_ierrors++;
+				continue;
+			}
+			m_adj(m0, ETHER_ALIGN);
+			m = m0;
 		}
-		m_adj(m0, ETHER_ALIGN);
-		m = m0;
 
 		ifp->if_ipackets++;
 
@@ -1189,20 +1199,21 @@ int sis_intr(arg)
 
 		claimed = 1;
 
-		if ((status & SIS_ISR_TX_DESC_OK) ||
-		    (status & SIS_ISR_TX_ERR) ||
-		    (status & SIS_ISR_TX_OK) ||
-		    (status & SIS_ISR_TX_IDLE))
+		if (status &
+		    (SIS_ISR_TX_DESC_OK | SIS_ISR_TX_ERR |
+		     SIS_ISR_TX_OK | SIS_ISR_TX_IDLE))
 			sis_txeof(sc);
 
-		if ((status & SIS_ISR_RX_DESC_OK) ||
-		    (status & SIS_ISR_RX_OK))
+		if (status &
+		    (SIS_ISR_RX_DESC_OK | SIS_ISR_RX_OK |
+		     SIS_ISR_RX_IDLE))
 			sis_rxeof(sc);
 
-		if ((status & SIS_ISR_RX_ERR) ||
-		    (status & SIS_ISR_RX_OFLOW)) {
+		if (status & (SIS_ISR_RX_ERR | SIS_ISR_RX_OFLOW))
 			sis_rxeoc(sc);
-		}
+
+		if (status & (SIS_ISR_RX_IDLE))
+			SIS_SETBIT(sc, SIS_CSR, SIS_CSR_RX_ENABLE);
 
 		if (status & SIS_ISR_SYSERR) {
 			sis_reset(sc);
@@ -1431,6 +1442,9 @@ void sis_init(xsc)
 
 	/* Set RX configuration */
 	CSR_WRITE_4(sc, SIS_RX_CFG, SIS_RXCFG);
+
+	/* Accept Long Packets for VLAN support */
+	SIS_SETBIT(sc, SIS_RX_CFG, SIS_RXCFG_RX_JABBER);
 
 	/* Set TX configuration */
 	if (IFM_SUBTYPE(mii->mii_media_active) == IFM_10_T)
