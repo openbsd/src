@@ -58,6 +58,12 @@ static	int disklabel_bsd_to_sun __P((struct disklabel *, char *));
 
 extern struct device *bootdv;
 
+void
+dk_establish(struct disk *dk, struct device *dev)
+{
+	/* fix later */
+}
+
 /*
  * Attempt to read a disk label from a device
  * using the indicated stategy routine.
