@@ -1,4 +1,4 @@
-/*	$OpenBSD: stp4020reg.h,v 1.3 2003/06/25 21:20:54 mickey Exp $	*/
+/*	$OpenBSD: stp4020reg.h,v 1.4 2003/06/25 22:39:35 miod Exp $	*/
 /*	$NetBSD: stp4020reg.h,v 1.1 1998/11/22 22:14:35 pk Exp $	*/
 
 /*-
@@ -49,7 +49,7 @@
  */
 
 /*
- * General chip attibutes.
+ * General chip attributes.
  */
 #define	STP4020_NSOCK	2	/* number of PCCARD sockets per STP4020 */
 #define	STP4020_NWIN	3	/* number of windows per socket */
