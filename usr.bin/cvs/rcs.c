@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.33 2005/03/05 18:25:30 jfb Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.34 2005/03/13 21:47:04 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -277,7 +277,6 @@ rcs_open(const char *path, int flags, ...)
 	return (rfp);
 }
 
-
 /*
  * rcs_close()
  *
@@ -334,7 +333,6 @@ rcs_close(RCSFILE *rfp)
 		free(rfp->rf_desc);
 	free(rfp);
 }
-
 
 /*
  * rcs_write()
@@ -437,7 +435,6 @@ rcs_write(RCSFILE *rfp)
 	return (0);
 }
 
-
 /*
  * rcs_access_add()
  *
@@ -475,10 +472,7 @@ rcs_access_add(RCSFILE *file, const char *login)
 	/* not synced anymore */
 	file->rf_flags &= ~RCS_SYNCED;
 	return (0);
-
-
 }
-
 
 /*
  * rcs_access_remove()
@@ -509,7 +503,6 @@ rcs_access_remove(RCSFILE *file, const char *login)
 	file->rf_flags &= ~RCS_SYNCED;
 	return (0);
 }
-
 
 /*
  * rcs_sym_add()
@@ -556,10 +549,8 @@ rcs_sym_add(RCSFILE *rfp, const char *sym, RCSNUM *snum)
 
 	/* not synced anymore */
 	rfp->rf_flags &= ~RCS_SYNCED;
-
 	return (0);
 }
-
 
 /*
  * rcs_sym_remove()
@@ -590,10 +581,8 @@ rcs_sym_remove(RCSFILE *file, const char *sym)
 
 	/* not synced anymore */
 	file->rf_flags &= ~RCS_SYNCED;
-
 	return (0);
 }
-
 
 /*
  * rcs_sym_getrev()
@@ -626,7 +615,6 @@ rcs_sym_getrev(RCSFILE *file, const char *sym)
 	return (num);
 }
 
-
 /*
  * rcs_lock_getmode()
  *
@@ -637,7 +625,6 @@ rcs_lock_getmode(RCSFILE *file)
 {
 	return (file->rf_flags & RCS_SLOCK) ? RCS_LOCK_STRICT : RCS_LOCK_LOOSE;
 }
-
 
 /*
  * rcs_lock_setmode()
@@ -664,7 +651,6 @@ rcs_lock_setmode(RCSFILE *file, int mode)
 	return (pmode);
 }
 
-
 /*
  * rcs_desc_get()
  *
@@ -675,7 +661,6 @@ rcs_desc_get(RCSFILE *file)
 {
 	return (file->rf_desc);
 }
-
 
 /*
  * rcs_desc_set()
@@ -878,7 +863,6 @@ rcs_patch_lines(struct rcs_foo *dlines, struct rcs_foo *plines)
 	return (0);
 }
 
-
 /*
  * rcs_getrev()
  *
@@ -952,7 +936,6 @@ rcs_getrev(RCSFILE *rfp, RCSNUM *rev)
 	return (rbuf);
 }
 
-
 /*
  * rcs_gethead()
  *
@@ -964,7 +947,6 @@ rcs_gethead(RCSFILE *rf)
 	return rcs_getrev(rf, rf->rf_head);
 }
 
-
 /*
  * rcs_getrevbydate()
  *
@@ -975,7 +957,6 @@ rcs_getrevbydate(RCSFILE *rfp, struct tm *date)
 {
 	return (NULL);
 }
-
 
 /*
  * rcs_findrev()
@@ -1012,7 +993,6 @@ rcs_findrev(RCSFILE *rfp, RCSNUM *rev)
 
 	return (NULL);
 }
-
 
 /*
  * rcs_kwexp_set()
@@ -1131,7 +1111,6 @@ rcs_kflag_usage(void)
 	    "\t-kb\tGenerate binary file unmodified (merges not allowed).\n");
 }
 
-
 /*
  * rcs_parse()
  *
@@ -1234,7 +1213,6 @@ rcs_parse(RCSFILE *rfp)
 
 	return (0);
 }
-
 
 /*
  * rcs_parse_admin()
@@ -1350,7 +1328,6 @@ rcs_parse_admin(RCSFILE *rfp)
 
 	return (0);
 }
-
 
 /*
  * rcs_parse_delta()
@@ -1526,7 +1503,6 @@ rcs_parse_delta(RCSFILE *rfp)
 	return (ret);
 }
 
-
 /*
  * rcs_parse_deltatext()
  *
@@ -1612,7 +1588,6 @@ rcs_parse_deltatext(RCSFILE *rfp)
 	return (1);
 }
 
-
 /*
  * rcs_parse_access()
  *
@@ -1637,7 +1612,6 @@ rcs_parse_access(RCSFILE *rfp)
 
 	return (0);
 }
-
 
 /*
  * rcs_parse_symbols()
@@ -1715,7 +1689,6 @@ rcs_parse_symbols(RCSFILE *rfp)
 
 	return (0);
 }
-
 
 /*
  * rcs_parse_locks()
@@ -1838,7 +1811,6 @@ rcs_parse_branches(RCSFILE *rfp, struct rcs_delta *rdp)
 	return (0);
 }
 
-
 /*
  * rcs_freedelta()
  *
@@ -1878,7 +1850,6 @@ rcs_freedelta(struct rcs_delta *rdp)
 	free(rdp);
 }
 
-
 /*
  * rcs_freepdata()
  *
@@ -1893,7 +1864,6 @@ rcs_freepdata(struct rcs_pdata *pd)
 		free(pd->rp_buf);
 	free(pd);
 }
-
 
 /*
  * rcs_gettok()
@@ -2017,7 +1987,6 @@ rcs_gettok(RCSFILE *rfp)
 	return (type);
 }
 
-
 /*
  * rcs_pushtok()
  *
@@ -2035,7 +2004,6 @@ rcs_pushtok(RCSFILE *rfp, const char *tok, int type)
 	strlcpy(pdp->rp_ptok, tok, sizeof(pdp->rp_ptok));
 	return (0);
 }
-
 
 /*
  * rcs_stresc()
@@ -2084,7 +2052,6 @@ rcs_stresc(int esc, const char *str, char *buf, size_t *blen)
 	*blen = (bp - buf);
 	return (sp - str);
 }
-
 
 /*
  * rcs_splitlines()
