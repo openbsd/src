@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.2 2003/12/17 19:26:26 henning Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.3 2003/12/20 14:33:09 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -308,7 +308,7 @@ dispatch_imsg(int fd, int idx, struct mrt_config *conf,
 	struct buf		*wbuf;
 	struct mrtdump_config	*m;
 	struct imsg		 imsg;
-	size_t			 len;
+	ssize_t			 len;
 	int			 n;
 
 	if (get_imsg(fd, &imsg) > 0) {

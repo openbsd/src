@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.1 2003/12/17 11:46:54 henning Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.2 2003/12/20 14:33:09 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -83,7 +83,7 @@ struct bgpd_config {
 
 struct peer_buf_read {
 	u_char			 buf[MAX_PKTSIZE];
-	size_t			 read_len;
+	ssize_t			 read_len;
 	u_int16_t		 pkt_len;
 	u_int8_t		 type;
 	u_char			*wptr;
@@ -162,9 +162,9 @@ struct buf {
 	struct peer		*peer;
 	int			 sock;
 	u_char			*buf;
-	size_t			 size;
-	size_t			 wpos;
-	size_t			 rpos;
+	ssize_t			 size;
+	ssize_t			 wpos;
+	ssize_t			 rpos;
 };
 
 /* ipc messages */
@@ -174,7 +174,7 @@ struct buf {
 
 struct imsg_buf_read {
 	u_char			 buf[MAX_IMSGSIZE];
-	size_t			 read_len;
+	ssize_t			 read_len;
 	u_int32_t		 peerid;
 	u_int16_t		 pkt_len;
 	u_int8_t		 type;
@@ -227,9 +227,9 @@ enum suberr_update {
 int		 session_main(struct bgpd_config *, int[2], int[2]);
 
 /* buffer.c */
-struct buf	*buf_open(struct peer *, int, size_t);
-int		 buf_add(struct buf *, u_char *, size_t);
-u_char		*buf_reserve(struct buf *, size_t);
+struct buf	*buf_open(struct peer *, int, ssize_t);
+int		 buf_add(struct buf *, u_char *, ssize_t);
+u_char		*buf_reserve(struct buf *, ssize_t);
 int		 buf_close(struct buf *);
 int		 buf_write(struct buf *);
 void		 buf_free(struct buf *buf);

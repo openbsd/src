@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.1 2003/12/17 11:46:54 henning Exp $ */
+/*	$OpenBSD: buffer.c,v 1.2 2003/12/20 14:33:09 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -33,7 +33,7 @@ void	buf_enqueue(struct buf *);
 void	buf_dequeue(struct buf *);
 
 struct buf *
-buf_open(struct peer *peer, int sock, size_t len)
+buf_open(struct peer *peer, int sock, ssize_t len)
 {
 	struct buf	*buf;
 
@@ -52,7 +52,7 @@ buf_open(struct peer *peer, int sock, size_t len)
 }
 
 int
-buf_add(struct buf *buf, u_char *data, size_t len)
+buf_add(struct buf *buf, u_char *data, ssize_t len)
 {
 	if (buf->wpos + len > buf->size)
 		return (-1);
@@ -63,7 +63,7 @@ buf_add(struct buf *buf, u_char *data, size_t len)
 }
 
 u_char *
-buf_reserve(struct buf *buf, size_t len)
+buf_reserve(struct buf *buf, ssize_t len)
 {
 	u_char	*b;
 
@@ -101,7 +101,7 @@ buf_close(struct buf *buf)
 int
 buf_write(struct buf *buf)
 {
-	size_t	n;
+	ssize_t	n;
 
 	if ((n = write(buf->sock, buf->buf + buf->rpos,
 	    buf->size-buf->rpos)) == -1) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.13 2003/12/19 21:41:04 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.14 2003/12/20 14:33:09 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -65,7 +65,7 @@ void	session_open(struct peer *);
 void	session_keepalive(struct peer *);
 void	session_update(struct peer *);
 void	session_notification(struct peer *, u_int8_t, u_int8_t, u_char *,
-	    size_t);
+	    ssize_t);
 int	session_dispatch_msg(struct pollfd *, struct peer *);
 int	parse_header(struct peer *, u_char *, u_int16_t *, u_int8_t *);
 int	parse_open(struct peer *);
@@ -790,8 +790,8 @@ session_keepalive(struct peer *peer)
 {
 	struct msg_header	 msg;
 	struct buf		*buf;
-	size_t		 len;
-	int		 errs = 0;
+	ssize_t			 len;
+	int			 errs = 0;
 
 	len = MSGSIZE_KEEPALIVE;
 
@@ -829,12 +829,12 @@ session_update(struct peer *peer)
 
 void
 session_notification(struct peer *peer, u_int8_t errcode, u_int8_t subcode,
-    u_char *data, size_t datalen)
+    u_char *data, ssize_t datalen)
 {
 	struct msg_header	 msg;
 	struct buf		*buf;
-	size_t		 len;
-	int		 errs = 0;
+	ssize_t			 len;
+	int			 errs = 0;
 
 	len = MSGSIZE_NOTIFICATION_MIN + datalen;
 
@@ -870,7 +870,7 @@ session_notification(struct peer *peer, u_int8_t errcode, u_int8_t subcode,
 int
 session_dispatch_msg(struct pollfd *pfd, struct peer *peer)
 {
-	size_t		n, read_total;
+	ssize_t		n, read_total;
 	socklen_t	len;
 	int		error;
 
