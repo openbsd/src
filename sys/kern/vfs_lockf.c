@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_lockf.c,v 1.9 2004/04/13 00:15:28 tedu Exp $	*/
+/*	$OpenBSD: vfs_lockf.c,v 1.10 2005/03/10 17:26:10 tedu Exp $	*/
 /*	$NetBSD: vfs_lockf.c,v 1.7 1996/02/04 02:18:21 christos Exp $	*/
 
 /*
@@ -79,6 +79,41 @@ lf_init(void)
 	    "lockfpl", &pool_allocator_nointr);
 }
 
+struct lockf *lf_alloc(uid_t, int);
+void lf_free(struct lockf *);
+
+/*
+ * We enforce a limit on locks by uid, so that a single user cannot
+ * run the kernel out of memory.  For now, the limit is pretty coarse.
+ * There is no limit on root.
+ */
+int maxlocksperuid = 1024;
+
+struct lockf *
+lf_alloc(uid_t uid, int allowfail)
+{
+	struct uidinfo *uip;
+	struct lockf *lock;
+
+	uip = uid_find(uid);
+	if (uid && allowfail && uip->ui_lockcnt > maxlocksperuid)
+		return (NULL);
+	uip->ui_lockcnt++;
+	lock = pool_get(&lockfpool, PR_WAITOK);
+	lock->lf_uid = uid;
+	return (lock);
+}
+void
+lf_free(struct lockf *lock)
+{
+	struct uidinfo *uip;
+
+	uip = uid_find(lock->lf_uid);
+	uip->ui_lockcnt--;
+	pool_put(&lockfpool, lock);
+}
+
+
 /*
  * Do an advisory lock operation.
  */
@@ -91,6 +126,7 @@ lf_advlock(head, size, id, op, fl, flags)
 	register struct flock *fl;
 	int flags;
 {
+	struct proc *p = curproc;
 	register struct lockf *lock;
 	off_t start, end;
 	int error;
@@ -139,7 +175,9 @@ lf_advlock(head, size, id, op, fl, flags)
 	/*
 	 * Create the lockf structure.
 	 */
-	lock = pool_get(&lockfpool, PR_WAITOK);
+	lock = lf_alloc(p->p_ucred->cr_uid, op != F_UNLCK);
+	if (!lock)
+		return (ENOMEM);
 	lock->lf_start = start;
 	lock->lf_end = end;
 	lock->lf_id = id;
@@ -158,16 +196,16 @@ lf_advlock(head, size, id, op, fl, flags)
 
 	case F_UNLCK:
 		error = lf_clearlock(lock);
-		pool_put(&lockfpool, lock);
+		lf_free(lock);
 		return (error);
 
 	case F_GETLK:
 		error = lf_getlock(lock, fl);
-		pool_put(&lockfpool, lock);
+		lf_free(lock);
 		return (error);
 
 	default:
-		pool_put(&lockfpool, lock);
+		lf_free(lock);
 		return (EINVAL);
 	}
 	/* NOTREACHED */
@@ -206,7 +244,7 @@ lf_setlock(lock)
 		 * Free the structure and return if nonblocking.
 		 */
 		if ((lock->lf_flags & F_WAIT) == 0) {
-			pool_put(&lockfpool, lock);
+			lf_free(lock);
 			return (EAGAIN);
 		}
 		/*
@@ -237,7 +275,7 @@ lf_setlock(lock)
 					break;
 				wproc = (struct proc *)waitblock->lf_id;
 				if (wproc == (struct proc *)lock->lf_id) {
-					pool_put(&lockfpool, lock);
+					lf_free(lock);
 					return (EDEADLK);
 				}
 			}
@@ -272,7 +310,7 @@ lf_setlock(lock)
 			 * Delete ourselves from the waiting to lock list.
 			 */
 			TAILQ_REMOVE(&lock->lf_next->lf_blkhd, lock, lf_block);
-			pool_put(&lockfpool, lock);
+			lf_free(lock);
 			return (error);
 		}
 #else
@@ -281,7 +319,7 @@ lf_setlock(lock)
 			lock->lf_next = NULL;
 		}
 		if (error) {
-			pool_put(&lockfpool, lock);
+			lf_free(lock);
 			return (error);
 		}
 #endif
@@ -327,7 +365,7 @@ lf_setlock(lock)
 			    overlap->lf_type == F_WRLCK)
 				lf_wakelock(overlap);
 			overlap->lf_type = lock->lf_type;
-			pool_put(&lockfpool, lock);
+			lf_free(lock);
 			lock = overlap; /* for debug output below */
 			break;
 
@@ -336,7 +374,7 @@ lf_setlock(lock)
 			 * Check for common starting point and different types.
 			 */
 			if (overlap->lf_type == lock->lf_type) {
-				pool_put(&lockfpool, lock);
+				lf_free(lock);
 				lock = overlap; /* for debug output below */
 				break;
 			}
@@ -377,7 +415,7 @@ lf_setlock(lock)
 				needtolink = 0;
 			} else
 				*prev = overlap->lf_next;
-			pool_put(&lockfpool, overlap);
+			lf_free(overlap);
 			continue;
 
 		case 4: /* overlap starts before lock */
@@ -447,7 +485,7 @@ lf_clearlock(lock)
 
 		case 1: /* overlap == lock */
 			*prev = overlap->lf_next;
-			pool_put(&lockfpool, overlap);
+			lf_free(overlap);
 			break;
 
 		case 2: /* overlap contains lock: split it */
@@ -462,7 +500,7 @@ lf_clearlock(lock)
 		case 3: /* lock contains overlap */
 			*prev = overlap->lf_next;
 			lf = overlap->lf_next;
-			pool_put(&lockfpool, overlap);			
+			lf_free(overlap);			
 			continue;
 
 		case 4: /* overlap starts before lock */
@@ -672,7 +710,7 @@ lf_split(lock1, lock2)
 	 * Make a new lock consisting of the last part of
 	 * the encompassing lock
 	 */
-	splitlock = pool_get(&lockfpool, PR_WAITOK);
+	splitlock = lf_alloc(lock1->lf_uid, 0);
 	memcpy(splitlock, lock1, sizeof(*splitlock));
 	splitlock->lf_start = lock2->lf_end + 1;
 	splitlock->lf_block.tqe_next = NULL;

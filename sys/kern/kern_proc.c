@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_proc.c,v 1.24 2004/12/26 21:22:13 miod Exp $	*/
+/*	$OpenBSD: kern_proc.c,v 1.25 2005/03/10 17:26:10 tedu Exp $	*/
 /*	$NetBSD: kern_proc.c,v 1.14 1996/02/09 18:59:41 christos Exp $	*/
 
 /*
@@ -49,14 +49,6 @@
 #include <sys/signalvar.h>
 #include <sys/pool.h>
 
-/*
- * Structure associated with user caching.
- */
-struct uidinfo {
-	LIST_ENTRY(uidinfo) ui_hash;
-	uid_t	ui_uid;
-	long	ui_proccnt;
-};
 #define	UIHASH(uid)	(&uihashtbl[(uid) & uihash])
 LIST_HEAD(uihashhead, uidinfo) *uihashtbl;
 u_long uihash;		/* size of hash table - 1 */
@@ -115,38 +107,36 @@ procinit()
  * Change the count associated with number of processes
  * a given user is using.
  */
-int
-chgproccnt(uid, diff)
-	uid_t	uid;
-	int	diff;
+struct uidinfo *
+uid_find(uid_t uid)
 {
-	register struct uidinfo *uip;
-	register struct uihashhead *uipp;
+	struct uidinfo *uip;
+	struct uihashhead *uipp;
 
 	uipp = UIHASH(uid);
 	LIST_FOREACH(uip, uipp, ui_hash)
 		if (uip->ui_uid == uid)
 			break;
-	if (uip) {
-		uip->ui_proccnt += diff;
-		if (uip->ui_proccnt > 0)
-			return (uip->ui_proccnt);
-		if (uip->ui_proccnt < 0)
-			panic("chgproccnt: procs < 0");
-		LIST_REMOVE(uip, ui_hash);
-		FREE(uip, M_PROC);
-		return (0);
-	}
-	if (diff <= 0) {
-		if (diff == 0)
-			return(0);
-		panic("chgproccnt: lost user");
-	}
+	if (uip)
+		return (uip);
 	MALLOC(uip, struct uidinfo *, sizeof(*uip), M_PROC, M_WAITOK);
+	bzero(uip, sizeof(*uip));
 	LIST_INSERT_HEAD(uipp, uip, ui_hash);
 	uip->ui_uid = uid;
-	uip->ui_proccnt = diff;
-	return (diff);
+
+	return (uip);
+}
+
+int
+chgproccnt(uid_t uid, int diff)
+{
+	struct uidinfo *uip;
+
+	uip = uid_find(uid);
+	uip->ui_proccnt += diff;
+	if (uip->ui_proccnt < 0)
+		panic("chgproccnt: procs < 0");
+	return (uip->ui_proccnt);
 }
 
 /*

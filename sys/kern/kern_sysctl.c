@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.123 2004/12/24 17:28:13 miod Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.124 2005/03/10 17:26:10 tedu Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -266,6 +266,7 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	extern int userasymcrypto;
 	extern int cryptodevallowsoft;
 #endif
+	extern int maxlocksperuid;
 
 	/* all sysctl names at this level are terminal except a ton of them */
 	if (namelen != 1) {
@@ -537,6 +538,8 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		return (sysctl_tc(name + 1, namelen - 1, oldp, oldlenp,
 		    newp, newlen));
 #endif
+	case KERN_MAXLOCKSPERUID:
+		return (sysctl_int(oldp, oldlenp, newp, newlen, &maxlocksperuid));
 	default:
 		return (EOPNOTSUPP);
 	}
