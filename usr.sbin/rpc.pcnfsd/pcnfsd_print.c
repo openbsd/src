@@ -176,7 +176,7 @@ char**sp;
 	 * Just do the mkdir call and ignore EEXIST.
 	 * Mode of client directory should be 777.
 	 */
-	(void)sprintf(pathname,"%s/%s",sp_name, sys);
+	(void)snprintf(pathname, sizeof pathname, "%s/%s",sp_name, sys);
 	oldmask = umask(0);
 	rc = mkdir(pathname, dir_mode);	/* DON'T ignore this return code */
 	umask(oldmask);
@@ -184,7 +184,7 @@ char**sp;
 	if((rc < 0 && errno != EEXIST) ||
 	   (stat(pathname, &statbuf) != 0) ||
 	   !(statbuf.st_mode & S_IFDIR)) {
-		(void)sprintf(tempstr,
+		(void)snprintf(tempstr, sizeof tempstr,
 		    "rpc.pcnfsd: unable to set up spool directory %s\n",
 		 	  pathname);
 		msg_out(tempstr);
@@ -231,7 +231,7 @@ char            scratch[512];
 		suspicious(fname))
 		return(PS_RES_FAIL);
 
-	(void)sprintf(pathname,"%s/%s/%s",sp_name,
+	(void)snprintf(pathname, sizeof pathname, "%s/%s/%s",sp_name,
 	                         system,
 	                         fname);	
 
@@ -287,8 +287,14 @@ char            scratch[512];
 	 ** actual work.
          **-------------------------------------------------------------
 	 */
-	(void)strcpy(new_pathname, pathname);
-	(void)strcat(new_pathname, ".spl");
+	if (snprintf(new_pathname, sizeof new_pathname, "%s.spl",
+	    pathname) >= sizeof new_pathname) {
+		snprintf(tempstr, sizeof tempstr,
+		    "rpc.pcnfsd: spool file rename (%s->%s) failed.\n",
+		    pathname, new_pathname);
+		msg_out(tempstr);
+		return(PS_RES_FAIL);
+	}
 
 	/*
         **-------------------------------------------------------------
@@ -297,13 +303,16 @@ char            scratch[512];
 	*/
 
 
-	if (!stat(new_pathname, &statbuf)) 
-	   {
-	   (void)strcpy(new_pathname, pathname);  /* rebuild a new name */
-	   (void)sprintf(snum, "%d", rand());	  /* get some number */
-	   (void)strncat(new_pathname, snum, 3);
-	   (void)strcat(new_pathname, ".spl");	  /* new spool file */
-	    }
+	if (!stat(new_pathname, &statbuf)) {
+		if (snprintf(new_pathname, sizeof new_pathname, "%s%d.spl",
+		    rand(), pathname) >= sizeof new_pathname) {
+			snprintf(tempstr, sizeof tempstr,
+			    "rpc.pcnfsd: spool file rename (%s->%s) failed.\n",
+			    pathname, new_pathname);
+			msg_out(tempstr);
+			return(PS_RES_FAIL);
+		}
+	}
 	if (rename(pathname, new_pathname)) 
 	   {
 	   /*
@@ -311,7 +320,8 @@ char            scratch[512];
 	   ** Should never happen.
            **---------------------------------------------------------------
            */
-	   (void)sprintf(tempstr, "rpc.pcnfsd: spool file rename (%s->%s) failed.\n",
+	   (void)snprintf(tempstr, sizeof tempstr,
+		"rpc.pcnfsd: spool file rename (%s->%s) failed.\n",
 			pathname, new_pathname);
                 msg_out(tempstr);
 		return(PS_RES_FAIL);
@@ -325,7 +335,7 @@ char            scratch[512];
 		   ** filter with the appropriate arguments.
                    **------------------------------------------------------
 		   */
-		   (void)sprintf(tempstr,
+		   (void)snprintf(tempstr, sizeof tempstr,
 			"rpc.pcnfsd: ps630 filter disabled for %s\n", pathname);
 			msg_out(tempstr);
 			return(PS_RES_FAIL);
@@ -340,11 +350,11 @@ char            scratch[512];
 			 * Use the copy option so we can remove the orignal
 			 * spooled nfs file from the spool directory.
 			 */
-			sprintf(cmdbuf, "/usr/bin/lp -c -d%s %s",
+			snprintf(cmdbuf, sizeof cmdbuf, "/usr/bin/lp -c -d%s %s",
 				pr, new_pathname);
 #else	/* SVR4 */
 			/* BSD way: lpr */
-			sprintf(cmdbuf, "%s/lpr -P%s %s",
+			snprintf(cmdbuf, sizeof cmdbuf, "%s/lpr -P%s %s",
 				LPRDIR, pr, new_pathname);
 #endif	/* SVR4 */
 			xcmd = cmdbuf;
@@ -543,7 +553,7 @@ build_pr_list()
 	char *cp;
 	int saw_system;
 
-	sprintf(buff, "%s/lpc status", LPCDIR);
+	snprintf(buff, sizeof buff, "%s/lpc status", LPCDIR);
 	p = popen(buff, "r");
 	if(p == NULL) {
 		msg_out("rpc.pcnfsd: unable to popen lpc stat");
@@ -677,7 +687,7 @@ char *totsize;
 	if(pn == NULL || !valid_pr(pn) || suspicious(pn))
 		return(PI_RES_NO_SUCH_PRINTER);
 
-	sprintf(buff, "/usr/bin/lpstat %s", pn);
+	snprintf(buff, sizeof buff, "/usr/bin/lpstat %s", pn);
 	p = su_popen(user, buff, MAXTIME_FOR_QUEUE);
 	if(p == NULL) {
 		msg_out("rpc.pcnfsd: unable to popen() lpstat queue query");
@@ -763,7 +773,7 @@ char *totsize;
 	if(pn == NULL || suspicious(pn))
 		return(PI_RES_NO_SUCH_PRINTER);
 
-	sprintf(buff, "%s/lpq -P%s", LPRDIR, pn);
+	snprintf(buff, sizeof buff, "%s/lpq -P%s", LPRDIR, pn);
 
 	p = su_popen(user, buff, MAXTIME_FOR_QUEUE);
 	if(p == NULL) {
@@ -937,7 +947,7 @@ pirstat stat = PI_RES_NO_SUCH_PRINTER;
 		return(PI_RES_NO_SUCH_PRINTER);
 	n = strlen(pn);
 
-	sprintf(cmd, "/usr/bin/lpstat -a %s -p %s", pn, pn);
+	snprintf(cmd, sizeof cmd, "/usr/bin/lpstat -a %s -p %s", pn, pn);
 
 	p = popen(cmd, "r");
 	if(p == NULL) {
@@ -1006,10 +1016,10 @@ char         *status;
 	if(pn == NULL || suspicious(pn))
 		return(PI_RES_NO_SUCH_PRINTER);
 
-	sprintf(pname, "%s:", pn);
+	snprintf(pname, sizeof pname, "%s:", pn);
 	n = strlen(pname);
 
-	sprintf(cmd, "%s/lpc status %s", LPCDIR, pn);
+	snprintf(cmd, sizeof cmd, "%s/lpc status %s", LPCDIR, pn);
 	p = popen(cmd, "r");
 	if(p == NULL) {
 		msg_out("rpc.pcnfsd: unable to popen() lp status");
@@ -1129,7 +1139,7 @@ pcrstat stat = PC_RES_NO_SUCH_JOB;
 	if(suspicious(id))
 		return(PC_RES_NO_SUCH_JOB);
 
-	sprintf(cmdbuf, "/usr/bin/cancel %s", id);
+	snprintf(cmdbuf, sizeof cmdbuf, "/usr/bin/cancel %s", id);
 	if ((fd = su_popen(user, cmdbuf, MAXTIME_FOR_CANCEL)) == NULL) {
 		msg_out("rpc.pcnfsd: su_popen failed");
 		return(PC_RES_FAIL);
@@ -1174,7 +1184,7 @@ char *id;
 	if(suspicious(id))
 		return(PC_RES_NO_SUCH_JOB);
 
-		sprintf(cmdbuf, "%s/lprm -P%s %s", LPRDIR, pr, id);
+		snprintf(cmdbuf, sizeof cmdbuf, "%s/lprm -P%s %s", LPRDIR, pr, id);
 		if ((fd = su_popen(user, cmdbuf, MAXTIME_FOR_CANCEL)) == NULL) {
 			msg_out("rpc.pcnfsd: su_popen failed");
 			return(PC_RES_FAIL);

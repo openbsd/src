@@ -249,7 +249,7 @@ FILE *fp;
 		return(1);
 	}
 
-	sprintf(filenamebuff, "%s/%s", spooldirbuff, tag1);
+	snprintf(filenamebuff, sizeof filenamebuff, "%s/%s", spooldirbuff, tag1);
 
 	fp = fopen(filenamebuff, "w");
 	if(fp == NULL) {

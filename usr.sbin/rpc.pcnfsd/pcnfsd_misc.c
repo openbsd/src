@@ -245,7 +245,7 @@ run_ps630(f, opts)
 	(void)strcat(temp_file, "X");	/* intermediate file name */
 
 #ifndef PS630_IS_BROKEN
-	(void)sprintf(commbuf, "ps630 -s %c%c -p %s -f ",
+	(void)snprintf(commbuf, sizeof commbuf, "ps630 -s %c%c -p %s -f ",
 		opts[2], opts[3], temp_file);
 	(void)strcat(commbuf, mapfont(opts[4], opts[5], opts[6]));
 	(void)strcat(commbuf, " -F ");
@@ -257,7 +257,7 @@ run_ps630(f, opts)
 	 * The pitch and font features of ps630 appear to be broken at
 	 * this time.
 	 */
-	(void)sprintf(commbuf, "ps630 -p %s %s", temp_file, f);
+	(void)snprintf(commbuf, sizeof commbuf, "ps630 -p %s %s", temp_file, f);
 #endif	/* PS630_IS_BROKEN */
 
 
