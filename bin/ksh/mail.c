@@ -1,4 +1,4 @@
-/*	$OpenBSD: mail.c,v 1.12 2004/12/18 21:25:44 millert Exp $	*/
+/*	$OpenBSD: mail.c,v 1.13 2004/12/20 11:34:26 otto Exp $	*/
 
 /*
  * Mailbox checking code by Robert J. Gibson, adapted for PD ksh by
@@ -31,12 +31,12 @@ static mbox_t	mbox;
 static time_t	mlastchkd;	/* when mail was last checked */
 static time_t	mailcheck_interval;
 
-static void     munset(mbox_t *mlist); /* free mlist and mval */
-static mbox_t * mballoc(char *p, char *m); /* allocate a new mbox */
-static void     mprintit(mbox_t *mbp);
+static void     munset(mbox_t *); /* free mlist and mval */
+static mbox_t * mballoc(char *, char *); /* allocate a new mbox */
+static void     mprintit(mbox_t *);
 
 void
-mcheck()
+mcheck(void)
 {
 	mbox_t		*mbp;
 	time_t		 now;
@@ -80,15 +80,13 @@ mcheck()
 }
 
 void
-mcset(interval)
-	long interval;
+mcset(long int interval)
 {
 	mailcheck_interval = interval;
 }
 
 void
-mbset(p)
-	char	*p;
+mbset(char *p)
 {
 	struct stat	stbuf;
 
@@ -106,8 +104,7 @@ mbset(p)
 }
 
 void
-mpset(mptoparse)
-	char	*mptoparse;
+mpset(char *mptoparse)
 {
 	mbox_t	*mbp;
 	char	*mpath, *mmsg, *mval;
@@ -146,8 +143,7 @@ mpset(mptoparse)
 }
 
 static void
-munset(mlist)
-mbox_t	*mlist;
+munset(mbox_t *mlist)
 {
 	mbox_t	*mbp;
 
@@ -161,9 +157,7 @@ mbox_t	*mlist;
 }
 
 static mbox_t *
-mballoc(p, m)
-	char	*p;
-	char	*m;
+mballoc(char *p, char *m)
 {
 	struct stat	stbuf;
 	mbox_t	*mbp;
@@ -180,8 +174,7 @@ mballoc(p, m)
 }
 
 static void
-mprintit( mbp )
-mbox_t	*mbp;
+mprintit(mbox_t *mbp)
 {
 	struct tbl	*vp;
 

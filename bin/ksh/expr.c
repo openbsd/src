@@ -1,4 +1,4 @@
-/*	$OpenBSD: expr.c,v 1.13 2004/12/18 22:42:26 millert Exp $	*/
+/*	$OpenBSD: expr.c,v 1.14 2004/12/20 11:34:26 otto Exp $	*/
 
 /*
  * Korn expression evaluation
@@ -128,25 +128,20 @@ struct expr_state {
 enum error_type { ET_UNEXPECTED, ET_BADLIT, ET_RECURSIVE,
 		  ET_LVALUE, ET_RDONLY, ET_STR };
 
-static void        evalerr(Expr_state *es, enum error_type type,
-		    const char *str) __attribute__((__noreturn__));
-static struct tbl *evalexpr(Expr_state *es, enum prec prec);
-static void        token(Expr_state *es);
-static struct tbl *do_ppmm(Expr_state *es, enum token op,
-				  struct tbl *vasn, bool_t is_prefix);
-static void	   assign_check(Expr_state *es, enum token op,
-				      struct tbl *vasn);
+static void        evalerr(Expr_state *, enum error_type, const char *)
+		       __attribute__((__noreturn__));
+static struct tbl *evalexpr(Expr_state *, enum prec);
+static void        token(Expr_state *);
+static struct tbl *do_ppmm(Expr_state *, enum token, struct tbl *, bool_t);
+static void	   assign_check(Expr_state *, enum token, struct tbl *);
 static struct tbl *tempvar(void);
-static struct tbl *intvar(Expr_state *es, struct tbl *vp);
+static struct tbl *intvar(Expr_state *, struct tbl *);
 
 /*
  * parse and evaluate expression
  */
 int
-evaluate(expr, rval, error_ok)
-	const char *expr;
-	long *rval;
-	int error_ok;
+evaluate(const char *expr, long int *rval, int error_ok)
 {
 	struct tbl v;
 	int ret;
@@ -162,10 +157,7 @@ evaluate(expr, rval, error_ok)
  * parse and evaluate expression, storing result in vp.
  */
 int
-v_evaluate(vp, expr, error_ok)
-	struct tbl *vp;
-	const char *expr;
-	volatile int error_ok;
+v_evaluate(struct tbl *vp, const char *expr, volatile int error_ok)
 {
 	struct tbl *v;
 	Expr_state curstate;
@@ -217,10 +209,7 @@ v_evaluate(vp, expr, error_ok)
 }
 
 static void
-evalerr(es, type, str)
-	Expr_state *es;
-	enum error_type type;
-	const char *str;
+evalerr(Expr_state *es, enum error_type type, const char *str)
 {
 	char tbuf[2];
 	const char *s;
@@ -276,9 +265,7 @@ evalerr(es, type, str)
 }
 
 static struct tbl *
-evalexpr(es, prec)
-	Expr_state *es;
-	enum prec prec;
+evalexpr(Expr_state *es, enum prec prec)
 {
 	struct tbl *vl, *vr = NULL, *vasn;
 	enum token op;
@@ -457,8 +444,7 @@ evalexpr(es, prec)
 }
 
 static void
-token(es)
-	Expr_state *es;
+token(Expr_state *es)
 {
 	const char *cp;
 	int c;
@@ -528,11 +514,7 @@ token(es)
 
 /* Do a ++ or -- operation */
 static struct tbl *
-do_ppmm(es, op, vasn, is_prefix)
-	Expr_state *es;
-	enum token op;
-	struct tbl *vasn;
-	bool_t is_prefix;
+do_ppmm(Expr_state *es, enum token op, struct tbl *vasn, bool_t is_prefix)
 {
 	struct tbl *vl;
 	int oval;
@@ -552,10 +534,7 @@ do_ppmm(es, op, vasn, is_prefix)
 }
 
 static void
-assign_check(es, op, vasn)
-	Expr_state *es;
-	enum token op;
-	struct tbl *vasn;
+assign_check(Expr_state *es, enum token op, struct tbl *vasn)
 {
 	if (vasn->name[0] == '\0' && !(vasn->flag & EXPRLVALUE))
 		evalerr(es, ET_LVALUE, opinfo[(int) op].name);
@@ -564,7 +543,7 @@ assign_check(es, op, vasn)
 }
 
 static struct tbl *
-tempvar()
+tempvar(void)
 {
 	struct tbl *vp;
 
@@ -579,9 +558,7 @@ tempvar()
 
 /* cast (string) variable to temporary integer variable */
 static struct tbl *
-intvar(es, vp)
-	Expr_state *es;
-	struct tbl *vp;
+intvar(Expr_state *es, struct tbl *vp)
 {
 	struct tbl *vq;
 

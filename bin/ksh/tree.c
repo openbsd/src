@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.c,v 1.14 2004/12/19 04:14:20 deraadt Exp $	*/
+/*	$OpenBSD: tree.c,v 1.15 2004/12/20 11:34:26 otto Exp $	*/
 
 /*
  * command tree climbing
@@ -9,23 +9,20 @@
 #define INDENT	4
 
 #define tputc(c, shf)	shf_putchar(c, shf);
-static void 	ptree(struct op *t, int indent, struct shf *f);
-static void 	pioact(struct shf *f, int indent, struct ioword *iop);
-static void	tputC(int c, struct shf *shf);
-static void	tputS(char *wp, struct shf *shf);
-static void	vfptreef(struct shf *shf, int indent, const char *fmt, va_list va);
-static struct ioword **iocopy(struct ioword **iow, Area *ap);
-static void     iofree(struct ioword **iow, Area *ap);
+static void 	ptree(struct op *, int, struct shf *);
+static void 	pioact(struct shf *, int, struct ioword *);
+static void	tputC(int, struct shf *);
+static void	tputS(char *, struct shf *);
+static void	vfptreef(struct shf *, int, const char *, va_list);
+static struct ioword **iocopy(struct ioword **, Area *);
+static void     iofree(struct ioword **, Area *);
 
 /*
  * print a command tree
  */
 
 static void
-ptree(t, indent, shf)
-	struct op *t;
-	int indent;
-	struct shf *shf;
+ptree(struct op *t, int indent, struct shf *shf)
 {
 	char **w;
 	struct ioword **ioact;
@@ -207,10 +204,7 @@ ptree(t, indent, shf)
 }
 
 static void
-pioact(shf, indent, iop)
-	struct shf *shf;
-	int indent;
-	struct ioword *iop;
+pioact(struct shf *shf, int indent, struct ioword *iop)
 {
 	int flag = iop->flag;
 	int type = flag & IOTYPE;
@@ -268,9 +262,7 @@ pioact(shf, indent, iop)
  */
 
 static void
-tputC(c, shf)
-	int c;
-	struct shf *shf;
+tputC(int c, struct shf *shf)
 {
 	if ((c&0x60) == 0) {		/* C0|C1 */
 		tputc((c&0x80) ? '$' : '^', shf);
@@ -283,9 +275,7 @@ tputC(c, shf)
 }
 
 static void
-tputS(wp, shf)
-	char *wp;
-	struct shf *shf;
+tputS(char *wp, struct shf *shf)
 {
 	int c, quoted=0;
 
@@ -393,11 +383,7 @@ snptreef(char *s, int n, const char *fmt, ...)
 }
 
 static void
-vfptreef(shf, indent, fmt, va)
-	struct shf *shf;
-	int indent;
-	const char *fmt;
-	va_list va;
+vfptreef(struct shf *shf, int indent, const char *fmt, va_list va)
 {
 	int c;
 
@@ -465,9 +451,7 @@ vfptreef(shf, indent, fmt, va)
  */
 
 struct op *
-tcopy(t, ap)
-	struct op *t;
-	Area *ap;
+tcopy(struct op *t, Area *ap)
 {
 	struct op *r;
 	char **tw, **rw;
@@ -516,9 +500,7 @@ tcopy(t, ap)
 }
 
 char *
-wdcopy(wp, ap)
-	const char *wp;
-	Area *ap;
+wdcopy(const char *wp, Area *ap)
 {
 	size_t len = wdscan(wp, EOS) - wp;
 	return memcpy(alloc(len, ap), wp, len);
@@ -526,9 +508,7 @@ wdcopy(wp, ap)
 
 /* return the position of prefix c in wp plus 1 */
 char *
-wdscan(wp, c)
-	const char *wp;
-	int c;
+wdscan(const char *wp, int c)
 {
 	int nest = 0;
 
@@ -582,8 +562,7 @@ wdscan(wp, c)
  * (string is allocated from ATEMP)
  */
 char *
-wdstrip(wp)
-	const char *wp;
+wdstrip(const char *wp)
 {
 	struct shf shf;
 	int c;
@@ -648,9 +627,7 @@ wdstrip(wp)
 }
 
 static	struct ioword **
-iocopy(iow, ap)
-	struct ioword **iow;
-	Area *ap;
+iocopy(struct ioword **iow, Area *ap)
 {
 	struct ioword **ior;
 	int i;
@@ -683,9 +660,7 @@ iocopy(iow, ap)
  */
 
 void
-tfree(t, ap)
-	struct op *t;
-	Area *ap;
+tfree(struct op *t, Area *ap)
 {
 	char **w;
 
@@ -717,9 +692,7 @@ tfree(t, ap)
 }
 
 static	void
-iofree(iow, ap)
-	struct ioword **iow;
-	Area *ap;
+iofree(struct ioword **iow, Area *ap)
 {
 	struct ioword **iop;
 	struct ioword *p;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.5 2004/12/18 22:35:41 millert Exp $	*/
+/*	$OpenBSD: tty.c,v 1.6 2004/12/20 11:34:26 otto Exp $	*/
 
 #include "sh.h"
 #include <sys/stat.h>
@@ -10,8 +10,7 @@
  * foreground job completion and for setting up tty process group.
  */
 void
-tty_init(init_ttystate)
-	int init_ttystate;
+tty_init(int init_ttystate)
 {
 	int	do_close = 1;
 	int	tfd;
@@ -58,7 +57,7 @@ tty_init(init_ttystate)
 }
 
 void
-tty_close()
+tty_close(void)
 {
 	if (tty_fd >= 0) {
 		close(tty_fd);

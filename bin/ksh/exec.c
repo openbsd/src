@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.36 2004/12/19 04:14:20 deraadt Exp $	*/
+/*	$OpenBSD: exec.c,v 1.37 2004/12/20 11:34:26 otto Exp $	*/
 
 /*
  * execute command tree
@@ -12,28 +12,26 @@
 /* Does ps4 get parameter substitutions done? */
 # define PS4_SUBSTITUTE(s)	substitute((s), 0)
 
-static int	comexec(struct op *t, struct tbl *volatile tp, char **ap,
-			      int volatile flags);
-static void	scriptexec(struct op *tp, char **ap);
-static int	call_builtin(struct tbl *tp, char **wp);
-static int	iosetup(struct ioword *iop, struct tbl *tp);
-static int	herein(const char *content, int sub);
-static char 	*do_selectargs(char **ap, bool_t print_menu);
-static int	dbteste_isa(Test_env *te, Test_meta meta);
-static const char *dbteste_getopnd(Test_env *te, Test_op op,
-					 int do_eval);
-static int	dbteste_eval(Test_env *te, Test_op op, const char *opnd1,
-				const char *opnd2, int do_eval);
-static void	dbteste_error(Test_env *te, int offset, const char *msg);
+static int	comexec(struct op *, struct tbl *volatile, char **,
+		    int volatile);
+static void	scriptexec(struct op *, char **);
+static int	call_builtin(struct tbl *, char **);
+static int	iosetup(struct ioword *, struct tbl *);
+static int	herein(const char *, int);
+static char 	*do_selectargs(char **, bool_t);
+static int	dbteste_isa(Test_env *, Test_meta);
+static const char *dbteste_getopnd(Test_env *, Test_op, int);
+static int	dbteste_eval(Test_env *, Test_op, const char *, const char *,
+		    int);
+static void	dbteste_error(Test_env *, int, const char *);
 
 
 /*
  * execute command tree
  */
 int
-execute(t, flags)
-	struct op * volatile t;
-	volatile int flags;	/* if XEXEC don't fork */
+execute(struct op *volatile t,
+    volatile int flags)		/* if XEXEC don't fork */
 {
 	int i;
 	volatile int rv = 0;
@@ -381,11 +379,7 @@ execute(t, flags)
  */
 
 static int
-comexec(t, tp, ap, flags)
-	struct op *t;
-	struct tbl *volatile tp;
-	char **ap;
-	int volatile flags;
+comexec(struct op *t, struct tbl *volatile tp, char **ap, volatile int flags)
 {
 	int i;
 	volatile int rv = 0;
@@ -683,9 +677,7 @@ comexec(t, tp, ap, flags)
 }
 
 static void
-scriptexec(tp, ap)
-	struct op *tp;
-	char **ap;
+scriptexec(struct op *tp, char **ap)
 {
 	char *shell;
 
@@ -705,8 +697,7 @@ scriptexec(tp, ap)
 }
 
 int
-shcomexec(wp)
-	char **wp;
+shcomexec(char **wp)
 {
 	struct tbl *tp;
 
@@ -721,10 +712,7 @@ shcomexec(wp)
  * is created if none is found.
  */
 struct tbl *
-findfunc(name, h, create)
-	const char *name;
-	unsigned int h;
-	int create;
+findfunc(const char *name, unsigned int h, int create)
 {
 	struct block *l;
 	struct tbl *tp = (struct tbl *) 0;
@@ -749,9 +737,7 @@ findfunc(name, h, create)
  * function did not exist, returns 0 otherwise.
  */
 int
-define(name, t)
-	const char *name;
-	struct op *t;
+define(const char *name, struct op *t)
 {
 	struct tbl *tp;
 	int was_set = 0;
@@ -794,9 +780,7 @@ define(name, t)
  * add builtin
  */
 void
-builtin(name, func)
-	const char *name;
-	int (*func)(char **);
+builtin(const char *name, int (*func) (char **))
 {
 	struct tbl *tp;
 	Tflag flag;
@@ -824,9 +808,9 @@ builtin(name, func)
  * either function, hashed command, or built-in (in that order)
  */
 struct tbl *
-findcom(name, flags)
-	const char *name;
-	int	flags;		/* FC_* */
+findcom(const char *name, int flags)
+	                 
+	   	      		/* FC_* */
 {
 	static struct tbl temp;
 	unsigned int h = hash(name);
@@ -923,8 +907,8 @@ findcom(name, flags)
  * flush executable commands with relative paths
  */
 void
-flushcom(all)
-	int all;		/* just relative or all */
+flushcom(int all)
+	        		/* just relative or all */
 {
 	struct tbl *tp;
 	struct tstate ts;
@@ -941,10 +925,8 @@ flushcom(all)
 
 /* Check if path is something we want to find.  Returns -1 for failure. */
 int
-search_access(path, mode, errnop)
-	const char *path;
-	int mode;
-	int *errnop;		/* set if candidate found, but not suitable */
+search_access(const char *path, int mode,
+    int *errnop)	/* set if candidate found, but not suitable */
 {
 	int ret, err = 0;
 	struct stat statb;
@@ -971,11 +953,9 @@ search_access(path, mode, errnop)
  * search for command with PATH
  */
 char *
-search(name, path, mode, errnop)
-	const char *name;
-	const char *path;
-	int mode;		/* R_OK or X_OK */
-	int *errnop;		/* set if candidate found, but not suitable */
+search(const char *name, const char *path,
+    int mode,		/* R_OK or X_OK */
+    int *errnop)	/* set if candidate found, but not suitable */
 {
 	const char *sp, *p;
 	char *xp;
@@ -1017,9 +997,7 @@ search(name, path, mode, errnop)
 }
 
 static int
-call_builtin(tp, wp)
-	struct tbl *tp;
-	char **wp;
+call_builtin(struct tbl *tp, char **wp)
 {
 	int rv;
 
@@ -1040,9 +1018,7 @@ call_builtin(tp, wp)
  * set up redirection, saving old fd's in e->savefd
  */
 static int
-iosetup(iop, tp)
-	struct ioword *iop;
-	struct tbl *tp;
+iosetup(struct ioword *iop, struct tbl *tp)
 {
 	int u = -1;
 	char *cp = iop->name;
@@ -1180,9 +1156,7 @@ iosetup(iop, tp)
  * if unquoted here, expand here temp file into second temp file.
  */
 static int
-herein(content, sub)
-	const char *content;
-	int sub;
+herein(const char *content, int sub)
 {
 	volatile int fd = -1;
 	struct source *s, *volatile osource;
@@ -1249,9 +1223,7 @@ herein(content, sub)
  *	print the args in column form - assuming that we can
  */
 static char *
-do_selectargs(ap, print_menu)
-	char **ap;
-	bool_t print_menu;
+do_selectargs(char **ap, bool_t print_menu)
 {
 	static const char *const read_args[] = {
 					"read", "-r", "REPLY", (char *) 0
@@ -1291,11 +1263,7 @@ static char *select_fmt_entry(void *arg, int i, char *buf, int buflen);
 
 /* format a single select menu item */
 static char *
-select_fmt_entry(arg, i, buf, buflen)
-	void *arg;
-	int i;
-	char *buf;
-	int buflen;
+select_fmt_entry(void *arg, int i, char *buf, int buflen)
 {
 	struct select_menu_info *smi = (struct select_menu_info *) arg;
 
@@ -1308,8 +1276,7 @@ select_fmt_entry(arg, i, buf, buflen)
  *	print a select style menu
  */
 int
-pr_menu(ap)
-	char *const *ap;
+pr_menu(char *const *ap)
 {
 	struct select_menu_info smi;
 	char *const *pp;
@@ -1352,19 +1319,14 @@ pr_menu(ap)
 static char *plain_fmt_entry(void *arg, int i, char *buf, int buflen);
 
 static char *
-plain_fmt_entry(arg, i, buf, buflen)
-	void *arg;
-	int i;
-	char *buf;
-	int buflen;
+plain_fmt_entry(void *arg, int i, char *buf, int buflen)
 {
 	shf_snprintf(buf, buflen, "%s", ((char *const *)arg)[i]);
 	return buf;
 }
 
 int
-pr_list(ap)
-	char *const *ap;
+pr_list(char *const *ap)
 {
 	char *const *pp;
 	int nwidth;
@@ -1392,9 +1354,7 @@ extern const char db_close[];
  * TM_UNOP and TM_BINOP, the returned value is a Test_op).
  */
 static int
-dbteste_isa(te, meta)
-	Test_env *te;
-	Test_meta meta;
+dbteste_isa(Test_env *te, Test_meta meta)
 {
 	int ret = 0;
 	int uqword;
@@ -1433,10 +1393,7 @@ dbteste_isa(te, meta)
 }
 
 static const char *
-dbteste_getopnd(te, op, do_eval)
-	Test_env *te;
-	Test_op op;
-	int do_eval;
+dbteste_getopnd(Test_env *te, Test_op op, int do_eval)
 {
 	char *s = *te->pos.wp;
 
@@ -1457,21 +1414,14 @@ dbteste_getopnd(te, op, do_eval)
 }
 
 static int
-dbteste_eval(te, op, opnd1, opnd2, do_eval)
-	Test_env *te;
-	Test_op op;
-	const char *opnd1;
-	const char *opnd2;
-	int do_eval;
+dbteste_eval(Test_env *te, Test_op op, const char *opnd1, const char *opnd2,
+    int do_eval)
 {
 	return test_eval(te, op, opnd1, opnd2, do_eval);
 }
 
 static void
-dbteste_error(te, offset, msg)
-	Test_env *te;
-	int offset;
-	const char *msg;
+dbteste_error(Test_env *te, int offset, const char *msg)
 {
 	te->flags |= TEF_ERROR;
 	internal_errorf(0, "dbteste_error: %s (offset %d)", msg, offset);

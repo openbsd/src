@@ -1,4 +1,4 @@
-/*	$OpenBSD: shf.h,v 1.3 2004/12/18 20:55:52 millert Exp $	*/
+/*	$OpenBSD: shf.h,v 1.4 2004/12/20 11:34:26 otto Exp $	*/
 
 #ifndef SHF_H
 # define SHF_H
@@ -59,26 +59,26 @@ struct shf {
 
 extern struct shf shf_iob[];
 
-struct shf *shf_open(const char *name, int oflags, int mode, int sflags);
-struct shf *shf_fdopen(int fd, int sflags, struct shf *shf);
-struct shf *shf_reopen(int fd, int sflags, struct shf *shf);
-struct shf *shf_sopen(char *buf, int bsize, int sflags, struct shf *shf);
-int	    shf_close(struct shf *shf);
-int	    shf_fdclose(struct shf *shf);
-char	   *shf_sclose(struct shf *shf);
-int	    shf_finish(struct shf *shf);
-int	    shf_flush(struct shf *shf);
-int	    shf_seek(struct shf *shf, off_t where, int from);
-int	    shf_read(char *buf, int bsize, struct shf *shf);
-char	   *shf_getse(char *buf, int bsize, struct shf *shf);
-int	    shf_getchar(struct shf *shf);
-int	    shf_ungetc(int c, struct shf *shf);
-int	    shf_putchar(int c, struct shf *shf);
-int	    shf_puts(const char *s, struct shf *shf);
-int	    shf_write(const char *buf, int nbytes, struct shf *shf);
-int	    shf_fprintf(struct shf *shf, const char *fmt, ...);
-int	    shf_snprintf(char *buf, int bsize, const char *fmt, ...);
-char	    *shf_smprintf(const char *fmt, ...);
-int	    shf_vfprintf(struct shf *, const char *fmt, va_list args);
+struct shf *shf_open(const char *, int, int, int);
+struct shf *shf_fdopen(int, int, struct shf *);
+struct shf *shf_reopen(int, int, struct shf *);
+struct shf *shf_sopen(char *, int, int, struct shf *);
+int	    shf_close(struct shf *);
+int	    shf_fdclose(struct shf *);
+char	   *shf_sclose(struct shf *);
+int	    shf_finish(struct shf *);
+int	    shf_flush(struct shf *);
+int	    shf_seek(struct shf *, off_t, int);
+int	    shf_read(char *, int, struct shf *);
+char	   *shf_getse(char *, int, struct shf *);
+int	    shf_getchar(struct shf *s);
+int	    shf_ungetc(int, struct shf *);
+int	    shf_putchar(int, struct shf *);
+int	    shf_puts(const char *, struct shf *);
+int	    shf_write(const char *, int, struct shf *);
+int	    shf_fprintf(struct shf *, const char *, ...);
+int	    shf_snprintf(char *, int, const char *, ...);
+char	    *shf_smprintf(const char *, ...);
+int	    shf_vfprintf(struct shf *, const char *, va_list);
 
 #endif /* SHF_H */

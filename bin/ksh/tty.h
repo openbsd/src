@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.h,v 1.4 2004/12/18 22:12:23 millert Exp $	*/
+/*	$OpenBSD: tty.h,v 1.5 2004/12/20 11:34:26 otto Exp $	*/
 
 /*
 	tty.h -- centralized definitions for a variety of terminal interfaces
@@ -26,7 +26,7 @@ EXTERN int		tty_fd I__(-1);	/* dup'd tty file descriptor */
 EXTERN int		tty_devtty;	/* true if tty_fd is from /dev/tty */
 EXTERN struct termios	tty_state;	/* saved tty state */
 
-extern void	tty_init(int init_ttystate);
+extern void	tty_init(int);
 extern void	tty_close(void);
 
 /* be sure not to interfere with anyone else's idea about EXTERN */

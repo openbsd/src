@@ -1,4 +1,4 @@
-/*	$OpenBSD: path.c,v 1.10 2004/12/18 20:55:52 millert Exp $	*/
+/*	$OpenBSD: path.c,v 1.11 2004/12/20 11:34:26 otto Exp $	*/
 
 #include "sh.h"
 #include <sys/stat.h>
@@ -12,7 +12,7 @@
  *	Larry Bouzane (larry@cs.mun.ca)
  */
 
-static char	*do_phys_path(XString *xsp, char *xp, const char *path);
+static char	*do_phys_path(XString *, char *, const char *);
 
 /*
  *	Makes a filename into result using the following algorithm.
@@ -30,12 +30,10 @@ static char	*do_phys_path(XString *xsp, char *xp, const char *path);
  *	was appended to result.
  */
 int
-make_path(cwd, file, cdpathp, xsp, phys_pathp)
-	const char *cwd;
-	const char *file;
-	char	**cdpathp;	/* & of : separated list */
-	XString	*xsp;
-	int	*phys_pathp;
+make_path(const char *cwd, const char *file,
+    char **cdpathp,		/* & of : separated list */
+    XString *xsp,
+    int *phys_pathp)
 {
 	int	rval = 0;
 	int	use_cdpath = 1;
@@ -108,8 +106,7 @@ make_path(cwd, file, cdpathp, xsp, phys_pathp)
  * ie, simplify_path("/a/b/c/./../d/..") returns "/a/b"
  */
 void
-simplify_path(path)
-	char	*path;
+simplify_path(char *path)
 {
 	char	*cur;
 	char	*t;
@@ -176,8 +173,7 @@ simplify_path(path)
 
 
 void
-set_current_wd(path)
-	char *path;
+set_current_wd(char *path)
 {
 	int len;
 	char *p = path;
@@ -195,8 +191,7 @@ set_current_wd(path)
 }
 
 char *
-get_phys_path(path)
-	const char *path;
+get_phys_path(const char *path)
 {
 	XString xs;
 	char *xp;
@@ -216,10 +211,7 @@ get_phys_path(path)
 }
 
 static char *
-do_phys_path(xsp, xp, path)
-	XString *xsp;
-	char *xp;
-	const char *path;
+do_phys_path(XString *xsp, char *xp, const char *path)
 {
 	const char *p, *q;
 	int len, llen;
@@ -271,7 +263,8 @@ do_phys_path(xsp, xp, path)
 
 #ifdef	TEST
 
-main(argc, argv)
+int
+main(void)
 {
 	int	rv;
 	char	*cp, cdpath[256], pwd[256], file[256], result[256];
