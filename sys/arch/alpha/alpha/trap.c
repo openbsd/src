@@ -1,4 +1,4 @@
-/* $OpenBSD: trap.c,v 1.31 2002/03/14 01:26:26 millert Exp $ */
+/* $OpenBSD: trap.c,v 1.32 2002/03/16 03:21:28 art Exp $ */
 /* $NetBSD: trap.c,v 1.52 2000/05/24 16:48:33 thorpej Exp $ */
 
 /*-
@@ -385,10 +385,12 @@ trap(a0, a1, a2, entry, framep)
 			/* FALLTHROUTH */
 		case ALPHA_IF_CODE_BPT:
 		case ALPHA_IF_CODE_BUGCHK:
+#ifdef PTRACE
 			if (p->p_md.md_flags & (MDP_STEP1|MDP_STEP2)) {
 				process_sstep(p, 0);
 				p->p_md.md_tf->tf_regs[FRAME_PC] -= 4;
 			}
+#endif
 			ucode = a0;		/* trap type */
 			i = SIGTRAP;
 			break;
