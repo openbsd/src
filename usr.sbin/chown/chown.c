@@ -1,4 +1,4 @@
-/*	$OpenBSD: chown.c,v 1.9 1997/06/30 06:21:31 millert Exp $	*/
+/*	$OpenBSD: chown.c,v 1.10 1997/09/20 12:44:29 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)chown.c	8.8 (Berkeley) 4/4/94"; */
-static char *rcsid = "$Id: chown.c,v 1.9 1997/06/30 06:21:31 millert Exp $";
+static char *rcsid = "$Id: chown.c,v 1.10 1997/09/20 12:44:29 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -132,16 +132,16 @@ main(argc, argv)
 
 	uid = gid = -1;
 	if (ischown) {
-#ifdef SUPPORT_DOT
-		if ((cp = strchr(*argv, '.')) != NULL) {
-			*cp++ = '\0';
-			a_gid(cp);
-		} else
-#endif
 		if ((cp = strchr(*argv, ':')) != NULL) {
 			*cp++ = '\0';
 			a_gid(cp);
 		} 
+#ifdef SUPPORT_DOT
+		else if ((cp = strchr(*argv, '.')) != NULL) {
+			*cp++ = '\0';
+			a_gid(cp);
+		}
+#endif
 		a_uid(*argv);
 	} else 
 		a_gid(*argv);
