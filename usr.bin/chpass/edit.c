@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.9 1996/08/31 13:35:23 deraadt Exp $	*/
+/*	$OpenBSD: edit.c,v 1.10 1996/09/01 13:06:51 deraadt Exp $	*/
 /*	$NetBSD: edit.c,v 1.6 1996/05/15 21:50:45 jtc Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)edit.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: edit.c,v 1.9 1996/08/31 13:35:23 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: edit.c,v 1.10 1996/09/01 13:06:51 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -215,8 +215,8 @@ bad:					(void)fclose(fp);
 	    "%s:%s:%d:%d:%s:%ld:%ld:%s:%s:%s",
 	    pw->pw_name, pw->pw_passwd, pw->pw_uid, pw->pw_gid, pw->pw_class,
 	    pw->pw_change, pw->pw_expire, pw->pw_gecos, pw->pw_dir,
-	    pw->pw_shell) >= sizeof(buf) ||
-	    strlen(buf) + alen >= sizeof(buf) -1) {
+	    pw->pw_shell) >= 1023 ||
+	    strlen(buf) + alen >= 1023) {
 		warnx("entries too long");
 		free(p);
 		return (0);
