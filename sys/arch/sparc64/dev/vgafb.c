@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.21 2002/06/11 22:56:37 jason Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.22 2002/07/24 15:36:38 jason Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -67,11 +67,10 @@ struct vgafb_softc {
 	bus_space_tag_t sc_mem_t;
 	bus_space_tag_t sc_io_t;
 	pcitag_t sc_pcitag;
-	bus_space_handle_t sc_mem_h, sc_io_h, sc_mmio_h;
-	bus_addr_t sc_io_addr, sc_mem_addr, sc_mmio_addr, sc_rom_addr;
-	bus_size_t sc_io_size, sc_mem_size, sc_mmio_size, sc_rom_size;
+	bus_space_handle_t sc_mem_h;
+	bus_addr_t sc_io_addr, sc_mem_addr, sc_mmio_addr;
+	bus_size_t sc_io_size, sc_mem_size, sc_mmio_size;
 	pci_chipset_tag_t sc_pci_chip;
-	u_int8_t *sc_rom_ptr;
 	int sc_has_rom;
 	int sc_console;
 	u_int sc_mode;
@@ -434,8 +433,6 @@ vgafb_mmap(v, off, prot)
 	int prot;
 {
 	struct vgafb_softc *sc = v;
-	paddr_t pa;
-	vaddr_t va;
 
 	if (off & PGOFSET)
 		return (-1);
@@ -454,15 +451,6 @@ vgafb_mmap(v, off, prot)
 			    sc->sc_mmio_addr, off - sc->sc_mmio_addr,
 			    prot, BUS_SPACE_MAP_LINEAR));
 
-		if (sc->sc_rom_ptr != NULL &&
-		    off >= sc->sc_rom_addr &&
-		    off < sc->sc_rom_addr + sc->sc_rom_size) {
-			off -= sc->sc_rom_addr;
-			va = ((vaddr_t)sc->sc_rom_ptr) + off;
-			if (pmap_extract(pmap_kernel(), va, &pa) == FALSE)
-				return (-1);
-			return (pa);
-		}
 		return (-1);
 
 	case WSDISPLAYIO_MODE_DUMBFB:
@@ -499,87 +487,6 @@ vgafb_is_console(node)
 	return (fbnode == node);
 }
 
-#define	PCI_ROMBAR_REG		0x30
-#define	PCI_ROMBAR_ADDR(mr)						\
-	    ((mr) & PCI_ROMBAR_ADDR_MASK)
-#define	PCI_ROMBAR_SIZE(mr)						\
-	    (PCI_ROMBAR_ADDR(mr) & -PCI_ROMBAR_ADDR(mr))
-#define	PCI_ROMBAR_ADDR_ENABLE	0x00000001
-#define	PCI_ROMBAR_ADDR_MASK	0xfffff800
-
-/* offsets into the rom space */
-#define	PCI_ROM_OFF_MAGIC0	0x0
-#define	PCI_ROM_OFF_MAGIC1	0x1
-
-/* rom header magic numbers */
-#define	PCI_ROM_MAGIC0		0x55
-#define	PCI_ROM_MAGIC1		0xaa
-
-int
-vgafb_rommap(sc, pa)
-	struct vgafb_softc *sc;
-	struct pci_attach_args *pa;
-{
-	bus_space_handle_t bh;
-	u_int32_t origaddr, address, mask, size, i;
-	u_int8_t *romptr, *p;
-	int s;
-
-	s = splhigh();
-	origaddr = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_ROMBAR_REG);
-	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_ROMBAR_REG,
-	    PCI_ROMBAR_ADDR_MASK);
-	mask = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_ROMBAR_REG);
-	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_ROMBAR_REG, origaddr);
-	address = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_ROMBAR_REG);
-	splx(s);
-
-	/* No ROM supported? */
-	if (mask == 0)
-		return (0);
-
-	address &= PCI_ROMBAR_ADDR_MASK;
-
-	/* Turn on the address decoder please... */
-	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_ROMBAR_REG,
-	    address | PCI_ROMBAR_ADDR_ENABLE);
-
-	size = PCI_ROMBAR_SIZE(mask);
-
-	if (bus_space_map(pa->pa_memt, address, size, 0, &bh)) {
-		pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_ROMBAR_REG, origaddr);
-		return (0);
-	}
-
-	if ((bus_space_read_1(pa->pa_memt, bh, PCI_ROM_OFF_MAGIC0) !=
-	    PCI_ROM_MAGIC0) ||
-	    (bus_space_read_1(pa->pa_memt, bh, PCI_ROM_OFF_MAGIC1) !=
-	    PCI_ROM_MAGIC1)) {
-		/* ROM is supported but not present */
-		bus_space_unmap(pa->pa_memt, bh, size);
-		pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_ROMBAR_REG, origaddr);
-		return (0);
-	}
-
-	romptr = (u_int8_t *)malloc(size, M_DEVBUF, M_NOWAIT);
-	if (romptr == NULL) {
-		bus_space_unmap(pa->pa_memt, bh, size);
-		pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_ROMBAR_REG, origaddr);
-		return (0);
-	}
-
-	for (p = romptr, i = 0; i < size; i++)
-		*p++ = bus_space_read_1(pa->pa_memt, bh, i);
-
-	sc->sc_rom_ptr = romptr;
-	sc->sc_rom_addr = address;
-	sc->sc_rom_size = size;
-
-	bus_space_unmap(pa->pa_memt, bh, size);
-	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_ROMBAR_REG, origaddr);
-	return (0);
-}
-
 int
 vgafb_mapregs(sc, pa)
 	struct vgafb_softc *sc;
@@ -590,9 +497,7 @@ vgafb_mapregs(sc, pa)
 	int hasio = 0, hasmem = 0, hasmmio = 0; 
 	u_int32_t i, cf;
 
-	vgafb_rommap(sc, pa);
-
-	for (i = 0x10; i <= 0x18; i += 4) {
+	for (i = PCI_MAPREG_START; i < PCI_MAPREG_END; i += 4) {
 		cf = pci_conf_read(pa->pa_pc, pa->pa_tag, i);
 		if (PCI_MAPREG_TYPE(cf) == PCI_MAPREG_TYPE_IO) {
 			if (hasio)
@@ -600,11 +505,6 @@ vgafb_mapregs(sc, pa)
 			if (pci_io_find(pa->pa_pc, pa->pa_tag, i,
 			    &sc->sc_io_addr, &sc->sc_io_size)) {
 				printf(": failed to find io at 0x%x\n", i);
-				continue;
-			}
-			if (bus_space_map(pa->pa_iot, sc->sc_io_addr,
-			    sc->sc_io_size, 0, &sc->sc_io_h)) {
-				printf(": can't map io space\n");
 				continue;
 			}
 			hasio = 1;
@@ -619,11 +519,6 @@ vgafb_mapregs(sc, pa)
 			if (bs <= 0x10000) {	/* mmio */
 				if (hasmmio)
 					continue;
-				if (bus_space_map(pa->pa_memt, ba, bs, 0,
-				    &sc->sc_mmio_h)) {
-					printf(": can't map mmio space\n");
-					continue;
-				}
 				sc->sc_mmio_addr = ba;
 				sc->sc_mmio_size = bs;
 				hasmmio = 1;
@@ -650,10 +545,6 @@ vgafb_mapregs(sc, pa)
 	return (0);
 
 fail:
-	if (hasio)
-		bus_space_unmap(pa->pa_iot, sc->sc_io_h, sc->sc_io_size);
-	if (hasmmio)
-		bus_space_unmap(pa->pa_memt, sc->sc_mmio_h, sc->sc_mmio_size);
 	if (hasmem)
 		bus_space_unmap(pa->pa_memt, sc->sc_mem_h, sc->sc_mem_size);
 	return (1);
