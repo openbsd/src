@@ -37,6 +37,8 @@
 
 #include <sys/types.h>
 
+#include <lib/libkern/libkern.h>
+
 /*
  * Pseudo-random number generator for randomizing the profiling clock,
  * and whatever else we might use it for.  The result is uniform on

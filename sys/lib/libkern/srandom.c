@@ -1,4 +1,4 @@
-/*	$OpenBSD: srandom.c,v 1.1 1996/08/10 21:41:16 deraadt Exp $	*/
+/*	$OpenBSD: srandom.c,v 1.2 1996/08/11 21:05:47 niklas Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -36,6 +36,8 @@
  */
 
 #include <sys/types.h>
+
+#include <lib/libkern/libkern.h>
 
 extern u_long _randseed;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: md5.c,v 1.2 1996/04/24 05:28:26 mickey Exp $	*/
+/*	$OpenBSD: md5.c,v 1.3 1996/08/11 21:05:46 niklas Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff.
@@ -44,7 +44,8 @@
 
 #include <sys/param.h>
 #include <sys/types.h>
-#include <sys/kernel.h>
+
+#include <lib/libkern/libkern.h>
 
 /*
  * MD5 transform algorithm, taken from code written by Colin Plumb,
