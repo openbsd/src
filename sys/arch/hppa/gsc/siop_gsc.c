@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr53c7xx_gsc.c,v 1.1 1998/10/01 05:07:32 mickey Exp $	*/
+/*	$OpenBSD: siop_gsc.c,v 1.1 1998/11/04 17:01:35 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -80,6 +80,7 @@ ncr53c7xx_gsc_probe(parent, match, aux)
 	void *match, *aux;
 {
 	register struct confargs *ca = aux;
+	register bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 	int rv = 1;
 
@@ -90,6 +91,7 @@ ncr53c7xx_gsc_probe(parent, match, aux)
 		    ca->ca_type.iodc_sv_model != HPPA_ADMA_FWSCSI)
 			return 0;
 
+	iot = HPPA_BUS_TAG_SET_BYTE(ca->ca_iot);
 	if (bus_space_map(ca->ca_iot, ca->ca_hpa, IOMOD_HPASIZE, 0, &ioh))
 		return 0;
 	ioh |= IOMOD_DEVOFFSET;
@@ -109,7 +111,7 @@ ncr53c7xx_gsc_attach(parent, self, aux)
 	register struct ncr53c7xx_softc *sc = (void *)self;
 	register struct confargs *ca = aux;
 
-	sc->sc_iot = ca->ca_iot;
+	sc->sc_iot = HPPA_BUS_TAG_SET_BYTE(ca->ca_iot);
 	if (bus_space_map(sc->sc_iot, ca->ca_hpa, IOMOD_HPASIZE,
 			  0, &sc->sc_ioh))
 		panic("ncr53c7xx_gsc_attach: couldn't map I/O ports");
