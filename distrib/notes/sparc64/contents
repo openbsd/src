@@ -34,9 +34,9 @@ Bootable installation images:
   
 DistributionDescription(six)
 
-OpenBSDbase(58.0M,149.0M)
+OpenBSDbase(58.0M,149.0M,shared)
 
-OpenBSDcomp(13.9M,50.4M)
+OpenBSDcomp(13.9M,50.4M,shared)
 
 OpenBSDetc(1.0M,3.5M)
 
