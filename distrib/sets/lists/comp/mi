@@ -3118,6 +3118,7 @@
 ./usr/share/man/cat3/editline.0
 ./usr/share/man/cat3/el_deletestr.0
 ./usr/share/man/cat3/el_end.0
+./usr/share/man/cat3/el_get.0
 ./usr/share/man/cat3/el_getc.0
 ./usr/share/man/cat3/el_gets.0
 ./usr/share/man/cat3/el_init.0
