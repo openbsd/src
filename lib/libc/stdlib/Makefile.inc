@@ -5,11 +5,11 @@
 
 SRCS+=	a64l.c abort.c atexit.c atoi.c atof.c atol.c atoll.c bsearch.c \
 	calloc.c cfree.c exit.c ecvt.c gcvt.c getenv.c getopt.c getopt_long.c \
-	getsubopt.c heapsort.c insque.c l64a.c lsearch.c malloc.c merge.c \
+	getsubopt.c heapsort.c l64a.c lsearch.c malloc.c merge.c \
 	multibyte.c putenv.c qsort.c radixsort.c rand.c random.c realpath.c \
 	setenv.c strtod.c strtol.c strtoll.c strtoul.c strtoull.c system.c \
 	tfind.c tsearch.c _rand48.c drand48.c erand48.c jrand48.c lcong48.c \
-	lrand48.c mrand48.c nrand48.c remque.c seed48.c srand48.c qabs.c qdiv.c
+	lrand48.c mrand48.c nrand48.c seed48.c srand48.c qabs.c qdiv.c
 
 .if   (${MACHINE_ARCH} == "m68k")
 SRCS+=	abs.S div.c labs.c ldiv.c
@@ -30,6 +30,12 @@ SRCS+=	abs.c div.c labs.c ldiv.c
 SRCS+=	abs.c div.c labs.c ldiv.c
 .else
 SRCS+=	abs.c div.c labs.c ldiv.c
+.endif
+
+.if (${MACHINE_ARCH} == "vax")
+SRCS+=	insque.S remque.S
+.else
+SRCS+=	insque.c remque.c
 .endif
 
 MAN+=	a64l.3 abort.3 abs.3 alloca.3 atexit.3 atof.3 atoi.3 atol.3 atoll.3 \
