@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.27 2004/04/05 00:21:39 mcbride Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.28 2004/04/25 17:52:37 pb Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -516,7 +516,11 @@ pfsync_input(struct mbuf *m, ...)
 			st = pf_find_state_byid(&key);
 			if (st == NULL) {
 				/* We don't have this state. Ask for it. */
-				pfsync_request_update(up, &src);
+				error = pfsync_request_update(up, &src);
+				if (error == ENOMEM) {
+					splx(s);
+					goto done;
+				}
 				update_requested = 1;
 				pfsyncstats.pfsyncs_badstate++;
 				continue;
@@ -806,7 +810,11 @@ pfsyncioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			if (pf_status.debug >= PF_DEBUG_MISC)
 				printf("pfsync: requesting bulk update\n");
 			timeout_add(&sc->sc_bulkfail_tmo, 5 * hz);
-			pfsync_request_update(NULL, NULL);
+			error = pfsync_request_update(NULL, NULL);
+			if (error == ENOMEM) {
+				splx(s);
+				return(ENOMEM);
+			}
 			pfsync_sendout(sc);
 		}
 		splx(s);
@@ -1105,24 +1113,20 @@ pfsync_request_update(struct pfsync_state_upd *up, struct in_addr *src)
 	struct pfsync_header *h;
 	struct pfsync_softc *sc = ifp->if_softc;
 	struct pfsync_state_upd_req *rup;
-	int s, ret;
+	int ret;
 
 	if (sc->sc_mbuf == NULL) {
 		if ((sc->sc_mbuf = pfsync_get_mbuf(sc, PFSYNC_ACT_UREQ,
-		    (void *)&sc->sc_statep.s)) == NULL) {
-			splx(s);
+		    (void *)&sc->sc_statep.s)) == NULL)
 			return (ENOMEM);
-		}
 		h = mtod(sc->sc_mbuf, struct pfsync_header *);
 	} else {
 		h = mtod(sc->sc_mbuf, struct pfsync_header *);
 		if (h->action != PFSYNC_ACT_UREQ) {
 			pfsync_sendout(sc);
 			if ((sc->sc_mbuf = pfsync_get_mbuf(sc, PFSYNC_ACT_UREQ,
-			    (void *)&sc->sc_statep.s)) == NULL) {
-				splx(s);
+			    (void *)&sc->sc_statep.s)) == NULL)
 				return (ENOMEM);
-			}
 			h = mtod(sc->sc_mbuf, struct pfsync_header *);
 		}
 	}
@@ -1249,12 +1253,20 @@ void
 pfsync_bulkfail(void *v)
 {
 	struct pfsync_softc *sc = v;
+	int s, error;
 
 	if (sc->sc_bulk_tries++ < PFSYNC_MAX_BULKTRIES) {
 		/* Try again in a bit */
 		timeout_add(&sc->sc_bulkfail_tmo, 5 * hz);
-		pfsync_request_update(NULL, NULL);
-		pfsync_sendout(sc);
+		s = splnet();
+		error = pfsync_request_update(NULL, NULL);
+		if (error == ENOMEM) {
+			if (pf_status.debug >= PF_DEBUG_MISC)
+				printf("pfsync: cannot allocate mbufs for "
+				    "bulk update\n");
+		} else 
+			pfsync_sendout(sc);
+		splx(s);
 	} else {
 		/* Pretend like the transfer was ok */
 		sc->sc_ureq_sent = 0;
