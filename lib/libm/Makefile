@@ -1,5 +1,5 @@
 #  $NetBSD: Makefile,v 1.28 1995/11/20 22:06:19 jtc Exp $
-#  $OpenBSD: Makefile,v 1.21 1999/07/01 00:06:39 deraadt Exp $
+#  $OpenBSD: Makefile,v 1.22 1999/07/18 19:12:59 deraadt Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24 
 # 
@@ -212,17 +212,17 @@ MLINKS+=sqrt.3 sqrtf.3
 MLINKS+=tan.3 tanf.3
 MLINKS+=tanh.3 tanhf.3
 
-.if (${MACHINE_ARCH} == "i386")
-LINKS=	${LIBDIR}/libm.a ${LIBDIR}/libm_i387.a
-.if !defined(NOPROFILE)
-LINKS+=	${LIBDIR}/libm_p.a ${LIBDIR}/libm_i387_p.a
-.endif
-.if !defined(NOPIC)
-LINKS+= ${LIBDIR}/libm.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
-	${LIBDIR}/libm_i387.so.${SHLIB_MAJOR}.${SHLIB_MINOR}
-LINKS+= ${LIBDIR}/libm_pic.a ${LIBDIR}/libm_i387_pic.a
-.endif
-.endif
+#.if (${MACHINE_ARCH} == "i386")
+#LINKS=	${LIBDIR}/libm.a ${LIBDIR}/libm_i387.a
+#.if !defined(NOPROFILE)
+#LINKS+=	${LIBDIR}/libm_p.a ${LIBDIR}/libm_i387_p.a
+#.endif
+#.if !defined(NOPIC)
+#LINKS+= ${LIBDIR}/libm.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
+#	${LIBDIR}/libm_i387.so.${SHLIB_MAJOR}.${SHLIB_MINOR}
+#LINKS+= ${LIBDIR}/libm_pic.a ${LIBDIR}/libm_i387_pic.a
+#.endif
+#.endif
 
 #e_acos.o: 
 #	cpp  -D__LIBM_PRIVATE -D_USE_WRITE -D_MULTI_LIBM -D_POSIX_MODE \
