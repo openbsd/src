@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.23 2001/09/19 20:50:57 mickey Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.24 2001/09/21 17:33:15 miod Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.1 1996/09/30 16:34:57 ws Exp $	*/
 
 /*
@@ -82,8 +82,10 @@ cpu_fork(p1, p2, stack, stacksize)
 	/*
 	 * If specified, give the child a different stack.
 	 */
-	if (stack != NULL)
+	if (stack != NULL) {
+		tf = trapframe(p2);
 		tf->fixreg[1] = (register_t)stack + stacksize;
+	}
 
 	stktop2 = (caddr_t)((u_long)stktop2 & ~15);	/* Align stack pointer */
 	
