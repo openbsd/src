@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.26 1997/07/24 16:51:23 kstailey Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.27 1997/07/24 20:04:11 kstailey Exp $
 
 .include <bsd.own.mk>
 
@@ -15,12 +15,6 @@ KRB=--with-krb4=/usr
 KRB=--without-krb4
 .endif
 
-.if defined (INSTALL_STRIP) && ${INSTALL_STRIP} == "-s"
-INST_PROG='/usr/bin/install -cs'
-.else
-INST_PROG='/usr/bin/install -c'
-.endif
-
 all:	config.status
 	${MAKE} ${GNUCFLAGS} LDFLAGS=${LDSTATIC}
 
@@ -28,12 +22,12 @@ all:	config.status
 
 config: .FORCE
 	-rm -f config.cache
-	INSTALL_PROGRAM=$(INST_PROG) sh ${.CURDIR}/configure \
-		--prefix=/usr ${KRB}
+	INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \
+		sh ${.CURDIR}/configure --prefix=/usr ${KRB}
 
 config.status:
-	INSTALL_PROGRAM=$(INST_PROG) sh ${.CURDIR}/configure \
-		--prefix=/usr ${KRB}
+	INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \
+		sh ${.CURDIR}/configure --prefix=/usr ${KRB}
 
 .ifdef NOMAN
 maninstall:
