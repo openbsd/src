@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.91 2002/06/08 23:35:19 art Exp $
+.\"	$OpenBSD: sysctl.3,v 1.92 2002/06/09 04:32:18 angelos Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -285,6 +285,7 @@ information.
 .It Dv KERN_MAXPARTITIONS No "	integer	no"
 .It Dv KERN_MAXPROC No "	integer	yes"
 .It Dv KERN_MAXVNODES No "	integer	yes"
+.It Dv KERN_MBSTAT No "	struct mbstat	no"
 .It Dv KERN_MSGBUFSIZE No "	integer	no"
 .It Dv KERN_NCHSTATS No "	struct nchstats	no"
 .It Dv KERN_NFILES No "	integer	no"
@@ -387,6 +388,12 @@ The maximum number of partitions allowed per disk.
 The maximum number of simultaneous processes the system will allow.
 .It Dv KERN_MAXVNODES
 The maximum number of vnodes available on the system.
+.It Dv KERN_MBSTAT
+A
+.Li struct mbstat
+structure is returned, containing statistics on
+.Xr mbuf 9
+usage.
 .It Dv KERN_MSGBUFSIZE
 The size of the kernel message buffer.
 .It Dv KERN_NCHSTATS
