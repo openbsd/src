@@ -95,3 +95,7 @@
 ./var/at/at.deny
 ./var/cron/tabs/root
 ./var/msgs/bounds
+./etc/photuris/attributes.conf
+./etc/photuris/photuris.conf
+./etc/photuris/photuris.startup
+./etc/photuris/secrets.conf
