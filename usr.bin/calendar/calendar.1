@@ -1,4 +1,4 @@
-.\"	$OpenBSD: calendar.1,v 1.7 1998/11/03 03:52:50 millert Exp $
+.\"	$OpenBSD: calendar.1,v 1.8 1998/11/08 04:37:51 pjanzen Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"     The Regents of the University of California.  All rights reserved.
@@ -115,7 +115,7 @@ from year to year.
 Day descriptions start after the first <tab> character in the line;
 if the line does not contain a <tab> character, it isn't printed out.
 If the first character in the line is a <tab> character, it is treated as
-continue of previous description.
+the continuation of the previous description.
 .Pp
 The ``calendar'' file is preprocessed by
 .Xr cpp 1 ,
@@ -170,7 +170,7 @@ will not send mail if this file exists
 .It Pa calendar.birthday
 births and deaths of famous (and not-so-famous) people
 .It Pa calendar.christian
-christian holidays (should be updated yearly by the local system administrator
+Christian holidays (should be updated yearly by the local system administrator
 so that roving holidays are set correctly for the current year)
 .It Pa calendar.computer
 days of special significance to computer people
@@ -203,7 +203,7 @@ The
 .Nm calendar
 program previously selected lines which had the correct date anywhere
 in the line.
-This is no longer true, the date is only recognized when it occurs
+This is no longer true:  the date is only recognized when it occurs
 at the beginning of a line.
 .Sh HISTORY
 A
