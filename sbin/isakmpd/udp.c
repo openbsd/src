@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp.c,v 1.35 2001/06/29 20:45:39 angelos Exp $	*/
+/*	$OpenBSD: udp.c,v 1.36 2001/06/29 22:01:27 ho Exp $	*/
 /*	$EOM: udp.c,v 1.57 2001/01/26 10:09:57 niklas Exp $	*/
 
 /*
@@ -150,10 +150,8 @@ udp_make (struct sockaddr *laddr)
     }
 
   /* Make sure we don't get our traffic encrypted.  */
-  if (sysdep_cleartext (s) == -1)
-    {
-      goto err;
-    }
+  if (sysdep_cleartext (s, laddr->sa_family) == -1)
+    goto err;
 
   /*
    * In order to have several bound specific address-port combinations
@@ -307,18 +305,18 @@ udp_bind_if (struct ifreq *ifrp, void *arg)
    * These special addresses are not useable as they have special meaning
    * in the IP stack.
    */
-#if 0
-  if (((struct sockaddr_in *)&ifrp->ifr_addr)->sin_addr.s_addr == INADDR_ANY
-      || (((struct sockaddr_in *)&ifrp->ifr_addr)->sin_addr.s_addr
-	  == INADDR_NONE))
+  if (if_addr->sa_family == AF_INET && 
+      (((struct sockaddr_in *)&ifrp->ifr_addr)->sin_addr.s_addr == INADDR_ANY
+       || (((struct sockaddr_in *)&ifrp->ifr_addr)->sin_addr.s_addr
+	   == INADDR_NONE)) )
     return;
-#endif
 
   /* Don't bother with interfaces that are down.  */
-  s = socket (AF_INET, SOCK_DGRAM, 0);
+  s = socket (if_addr->sa_family, SOCK_DGRAM, 0);
   if (s == -1)
     {
-      log_error ("udp_bind_if: socket (AF_INET, SOCK_DGRAM, 0) failed");
+      log_error ("udp_bind_if: socket (%d, SOCK_DGRAM, 0) failed",
+		 if_addr->sa_family);
       return;
     }
   strncpy (flags_ifr.ifr_name, ifrp->ifr_name, sizeof flags_ifr.ifr_name - 1);
@@ -452,6 +450,7 @@ udp_create (char *name)
 	}
     }
 
+  log_print ("udp_create: addr_str = [%s]", addr_str);
   if (text2sockaddr (addr_str, port_str, &addr))
     {
       log_print ("udp_create: address \"%s\" not understood", addr_str);
@@ -525,6 +524,9 @@ udp_init ()
   /* Bind the ISAKMP UDP port on all network interfaces we have.  */
   /* XXX need to check errors */
   if_map (udp_bind_if, port);
+
+  if (conf_get_str("General", "Listen-on"))
+    return;
 
   /*
    * If we don't bind to specific addresses via the Listen-on configuration

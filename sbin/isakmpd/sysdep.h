@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysdep.h,v 1.11 2001/06/29 19:08:11 ho Exp $	*/
+/*	$OpenBSD: sysdep.h,v 1.12 2001/06/29 22:01:26 ho Exp $	*/
 /*	$EOM: sysdep.h,v 1.17 2000/12/04 04:46:35 angelos Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ struct sockaddr;
 
 extern void sysdep_app_handler (int);
 extern int sysdep_app_open (void);
-extern int sysdep_cleartext (int);
+extern int sysdep_cleartext (int, int);
 extern void sysdep_connection_check (char *);
 extern int sysdep_ipsec_delete_spi (struct sa *, struct proto *, int);
 extern int sysdep_ipsec_enable_sa (struct sa *, struct sa *);
