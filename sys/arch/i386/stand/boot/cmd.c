@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.29 1997/08/22 00:41:27 mickey Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.30 1997/09/02 20:48:17 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -58,15 +58,10 @@ static int Xhowto __P((void));
 static int Xtty __P((void));
 static int Xtime __P((void));
 static int Xecho __P((void));
-
-struct cmd_table {
-	char *cmd_name;
-	char cmd_type;
-#define CMDT_CMD 0
-#define CMDT_VAR 1
-#define CMDT_SET 2
-	int (*cmd_exec) __P((void));
-};
+#ifdef MACHINE_CMD
+static int Xmachine __P((void));
+extern const struct cmd_table MACHINE_CMD[];
+#endif
 
 static const struct cmd_table cmd_set[] = {
 	{"addr",   CMDT_VAR, Xaddr},
@@ -85,8 +80,11 @@ static const struct cmd_table cmd_table[] = {
 	{"echo",   CMDT_CMD, Xecho},
 	{"help",   CMDT_CMD, Xhelp},
 	{"ls",     CMDT_CMD, Xls},
+#ifdef MACHINE_CMD
+	{"machine",CMDT_MDC, Xmachine},
+#endif
 	{"reboot", CMDT_CMD, Xreboot},
-#ifdef DEBUG
+#ifdef DUMP_REGS
 	{"regs",   CMDT_CMD, Xregs},
 #endif
 	{"set",    CMDT_SET, Xset},
@@ -165,8 +163,8 @@ read_conf()
 static int
 docmd()
 {
-	const struct cmd_table *ct;
 	register char *p = NULL;
+	const struct cmd_table *ct, *cs;
 
 	cmd.argc = 1;
 	if (cmd.cmd == NULL) {
@@ -181,13 +179,21 @@ docmd()
 			return 0;
 		}
 		ct = cmd_table;
+		cs = NULL;
 		cmd.argv[cmd.argc] = p; /* in case it's shortcut boot */
 		p = whatcmd(&ct, p);
 		if (ct == NULL) {
 			cmd.argc++;
 			ct = cmd_table;
 		} else if (ct->cmd_type == CMDT_SET && p != NULL) {
-			const struct cmd_table *cs = cmd_set;
+			cs = cmd_set;
+#ifdef MACHINE_CMD
+		} else if (ct->cmd_type == CMDT_MDC && p != NULL) {
+			cs = MACHINE_CMD;
+#endif
+		}
+
+		if (cs != NULL) {
 			p = whatcmd(&cs, p);
 			if (cs == NULL) {
 				printf("%s: syntax error\n", ct->cmd_name);
@@ -310,18 +316,35 @@ Xdebug()
 }
 #endif
 
+static void
+print_help(register const struct cmd_table *ct)
+{
+	for (; ct->cmd_name != NULL; ct++)
+		printf(" %s", ct->cmd_name);
+	putchar('\n');
+}
+
 static int
 Xhelp()
 {
-	register const struct cmd_table *ct;
-
 	printf("commands:");
-	for (ct = cmd_table; ct->cmd_name != NULL; ct++)
-		printf(" %s", ct->cmd_name);
-	putchar('\n');
+	print_help(cmd_table);
+#ifdef MACHINE_CMD
+	return Xmachine();
+#else
+	return 0;
+#endif
+}
 
+#ifdef MACHINE_CMD
+static int
+Xmachine()
+{
+	printf("machine:");
+	print_help(MACHINE_CMD);
 	return 0;
 }
+#endif
 
 static int
 Xecho()
@@ -584,7 +607,7 @@ Xreboot()
 	return 0; /* just in case */
 }
 
-#ifdef DEBUG
+#ifdef DUMP_REGS
 static int
 Xregs()
 {
