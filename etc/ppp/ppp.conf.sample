@@ -4,7 +4,7 @@
 #
 #	  Originally written by Toshiharu OHNO
 #
-# $Id: ppp.conf.sample,v 1.2 1997/12/06 12:10:27 brian Exp $
+# $Id: ppp.conf.sample,v 1.3 1997/12/27 07:22:15 brian Exp $
 #
 #################################################################
 
@@ -124,6 +124,10 @@ examples:
 # connections from other machines:
 #
     set server 6670
+#
+# If you don't like ppp's builtin chat, use an external one:
+#
+    set login "\"!chat \\\\-f /etc/ppp/ppp.dev.chat\""
 #
 # If we have a ``strange'' modem that must be re-initialized when we
 # hangup:
