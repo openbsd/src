@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_apm.c,v 1.5 2005/02/23 02:08:01 uwe Exp $	*/
+/*	$OpenBSD: pxa2x0_apm.c,v 1.6 2005/02/24 21:06:02 drahn Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexander Guy.  All rights reserved.
@@ -209,9 +209,9 @@ void	pxa2x0_pi2c_printregs(bus_space_tag_t, bus_space_handle_t);
 void	pxa2x0_pi2c_print(struct pxa2x0_apm_softc *);
 
 /* XXX used in pxa2x0_apm_asm.S */
-bus_space_handle_t pxa2x0_gpio_ioh = 0;
-bus_space_handle_t pxa2x0_clkman_ioh = 0;
-bus_space_handle_t pxa2x0_memctl_ioh = 0;
+bus_space_handle_t pxa2x0_gpio_ioh;
+bus_space_handle_t pxa2x0_clkman_ioh;
+bus_space_handle_t pxa2x0_memctl_ioh;
 
 /* pxa2x0_apm_asm.S */
 void	pxa27x_run_mode(void);
