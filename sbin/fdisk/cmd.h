@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.h,v 1.4 1997/10/16 10:35:06 deraadt Exp $	*/
+/*	$OpenBSD: cmd.h,v 1.5 2001/01/01 21:05:33 angelos Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -66,6 +66,7 @@ int Xreinit __P((cmd_t *, disk_t *, mbr_t *, mbr_t *, int));
 int Xdisk __P((cmd_t *, disk_t *, mbr_t *, mbr_t *, int));
 int Xmanual __P((cmd_t *, disk_t *, mbr_t *, mbr_t *, int));
 int Xedit __P((cmd_t *, disk_t *, mbr_t *, mbr_t *, int));
+int Xsetpid __P((cmd_t *, disk_t *, mbr_t *, mbr_t *, int));
 int Xselect __P((cmd_t *, disk_t *, mbr_t *, mbr_t *, int));
 int Xprint __P((cmd_t *, disk_t *, mbr_t *, mbr_t *, int));
 int Xwrite __P((cmd_t *, disk_t *, mbr_t *, mbr_t *, int));

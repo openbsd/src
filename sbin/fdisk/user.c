@@ -1,4 +1,4 @@
-/*	$OpenBSD: user.c,v 1.15 2000/09/12 00:17:47 deraadt Exp $	*/
+/*	$OpenBSD: user.c,v 1.16 2001/01/01 21:05:34 angelos Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -52,6 +52,7 @@ static cmd_table_t cmd_table[] = {
 	{"help",   Xhelp,	"Command help list"},
 	{"manual", Xmanual,	"Show entire OpenBSD man page for fdisk"},
 	{"reinit", Xreinit,	"Re-initialize loaded MBR (to defaults)"},
+	{"setpid", Xsetpid,	"Set the identifier of a given table entry"},
 	{"disk",   Xdisk,	"Edit current drive stats"},
 	{"edit",   Xedit,	"Edit given table entry"},
 	{"flag",   Xflag,	"Flag given table entry as bootable"},

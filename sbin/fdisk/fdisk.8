@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fdisk.8,v 1.33 2000/11/09 17:52:54 aaron Exp $
+.\"	$OpenBSD: fdisk.8,v 1.34 2001/01/01 21:05:34 angelos Exp $
 .\"
 .\" Copyright (c) 1997 Tobias Weingartner
 .\" All rights reserved.
@@ -207,6 +207,11 @@ Edit a given table entry in the memory copy of
 the current boot block.
 You may edit either in BIOS geometry mode,
 or in sector offsets and sizes.
+.It Em setpid
+Change the partition
+identifier of the given partition table entry.
+This command is particularly useful for reassigning
+an existing partition to OpenBSD.
 .It Em flag
 Make the given partition table entry bootable.
 Only one entry can be marked bootable.
