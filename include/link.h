@@ -1,4 +1,4 @@
-/*	$OpenBSD: link.h,v 1.12 2002/06/07 03:00:01 art Exp $	*/
+/*	$OpenBSD: link.h,v 1.13 2002/09/07 20:35:03 deraadt Exp $	*/
 /*	$NetBSD: link.h,v 1.10 1996/01/09 00:00:11 pk Exp $	*/
 
 /*
@@ -99,7 +99,7 @@ struct r_debug {
 		 */
 		RT_CONSISTENT,		/* Mapping change is complete.  */
 		RT_ADD,			/* Adding a new object.  */
-		RT_DELETE,		/* Removing an object mapping.  */
+		RT_DELETE		/* Removing an object mapping.  */
 	} r_state;
 
 	unsigned long r_ldbase;		/* Base address the linker is loaded at.  */
