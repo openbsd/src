@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.h,v 1.17 1997/04/12 20:20:08 graichen Exp $	*/
+/*	$OpenBSD: mount.h,v 1.18 1997/04/16 09:49:00 downsj Exp $	*/
 /*	$NetBSD: mount.h,v 1.48 1996/02/18 11:55:47 fvdl Exp $	*/
 
 /*
@@ -35,6 +35,9 @@
  *
  *	@(#)mount.h	8.15 (Berkeley) 7/14/94
  */
+
+#ifndef _SYS_MOUNT_H_
+#define _SYS_MOUNT_H_
 
 #ifndef _KERNEL
 #include <sys/ucred.h>
@@ -479,3 +482,4 @@ int	unmount __P((const char *, int));
 __END_DECLS
 
 #endif /* _KERNEL */
+#endif /* !_SYS_MOUNT_H_ */
