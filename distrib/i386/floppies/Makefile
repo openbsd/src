@@ -1,5 +1,5 @@
-#	$OpenBSD: Makefile,v 1.3 1996/04/25 21:27:57 niklas Exp $
+#	$OpenBSD: Makefile,v 1.4 1996/05/31 22:52:28 mickey Exp $
 
-SUBDIR= inst kcadp kcoth upgr
+SUBDIR= inst kc upgr
 
 .include <bsd.subdir.mk>
