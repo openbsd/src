@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.2 1996/06/11 12:53:36 deraadt Exp $	*/
+/*	$OpenBSD: def.h,v 1.3 1997/02/03 00:25:18 deraadt Exp $	*/
 /*	$NetBSD: def.h,v 1.8 1996/06/08 19:48:18 christos Exp $	*/
 /*
  * Copyright (c) 1980, 1993
@@ -74,7 +74,7 @@ struct message {
 	short	m_block;		/* block number of this message */
 	short	m_offset;		/* offset in block of message */
 	long	m_size;			/* Bytes in the message */
-	short	m_lines;		/* Lines in the message */
+	long	m_lines;		/* Lines in the message */
 };
 
 /*
