@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1994, 1995, 1996
+ * Copyright (c) 1994, 1995, 1996, 1997
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -20,7 +20,7 @@
  */
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-atm.c,v 1.3 1997/07/25 20:12:28 mickey Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-atm.c,v 1.4 1999/09/16 20:58:45 brad Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -46,9 +46,9 @@ struct rtentry;
 #include <stdio.h>
 #include <pcap.h>
 
+#include "interface.h"
 #include "addrtoname.h"
 #include "ethertype.h"
-#include "interface.h"
 
 /*
  * This is the top level routine of the printer.  'p' is the points

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996
+ * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996, 1997
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-tftp.c,v 1.5 1996/12/12 16:22:25 bitblt Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-tftp.c,v 1.6 1999/09/16 20:58:47 brad Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -31,6 +31,9 @@ static const char rcsid[] =
 
 #include <netinet/in.h>
 
+#ifdef SEGSIZE
+#undef SEGSIZE					/* SINIX sucks */
+#endif
 #include <arpa/tftp.h>
 
 #include <ctype.h>

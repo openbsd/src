@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996
+ * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -21,7 +21,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-domain.c,v 1.7 1999/07/28 20:41:36 jakob Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-domain.c,v 1.8 1999/09/16 20:58:46 brad Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -50,7 +50,6 @@ struct rtentry;
 #ifdef NOERROR
 #undef T_UNSPEC					/* SINIX does too */
 #endif
-
 #include <arpa/nameser.h>
 
 #include <stdio.h>
@@ -103,22 +102,9 @@ struct rtentry;
 #define T_LOC		29		/* Location Information */
 #endif
 
-#ifndef T_UINFO
-#define T_UINFO		100
-#endif
-
-#ifndef T_UID
-#define T_UID		101
-#endif
-
-#ifndef T_GID
-#define T_GID		102
-#endif
-
 #ifndef T_UNSPEC
 #define T_UNSPEC	103		/* Unspecified format (binary data) */
 #endif
-
 #ifndef T_UNSPECA
 #define T_UNSPECA	104		/* "unspecified ascii". Ugly MIT hack */
 #endif
@@ -234,8 +220,17 @@ static struct tok type2str[] = {
 	{ T_GPOS,	"GPOS" },
 	{ T_AAAA,	"AAAA" },
 	{ T_LOC ,	"LOC " },
+#ifndef T_UINFO
+#define T_UINFO 100
+#endif
 	{ T_UINFO,	"UINFO" },
+#ifndef T_UID
+#define T_UID 101
+#endif
 	{ T_UID,	"UID" },
+#ifndef T_GID
+#define T_GID 102
+#endif
 	{ T_GID,	"GID" },
 	{ T_UNSPEC,	"UNSPEC" },
 	{ T_UNSPECA,	"UNSPECA" },

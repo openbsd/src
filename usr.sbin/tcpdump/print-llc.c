@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1992, 1993, 1994, 1995, 1996
+ * Copyright (c) 1992, 1993, 1994, 1995, 1996, 1997
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -24,7 +24,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-llc.c,v 1.7 1999/02/12 05:34:53 deraadt Exp $";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-llc.c,v 1.8 1999/09/16 20:58:47 brad Exp $";
 #endif
 
 #include <sys/param.h>

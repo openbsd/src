@@ -39,6 +39,7 @@
 #define OSPF_AUTH_MD5		2	/* MD5 authentication */
 #define     OSPF_AUTH_MD5_LEN	16	/* length of MD5 authentication */
 
+
 /* db_flags	*/
 #define	OSPF_DB_INIT		0x04	    /*	*/
 #define	OSPF_DB_MORE		0x02

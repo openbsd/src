@@ -21,7 +21,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-udp.c,v 1.9 1999/07/28 20:41:36 jakob Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-udp.c,v 1.10 1999/09/16 20:58:48 brad Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -35,9 +35,16 @@ static const char rcsid[] =
 #include <netinet/udp.h>
 #include <netinet/udp_var.h>
 
+#ifdef NOERROR
 #undef NOERROR					/* Solaris sucks */
+#endif
+#ifdef T_UNSPEC
 #undef T_UNSPEC					/* SINIX does too */
+#endif
 #include <arpa/nameser.h>
+#ifdef SEGSIZE
+#undef SEGSIZE
+#endif
 #include <arpa/tftp.h>
 
 #include <rpc/rpc.h>

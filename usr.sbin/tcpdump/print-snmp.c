@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996
+ * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996, 1997
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms are permitted
@@ -26,7 +26,7 @@
  *
  #			Los Alamos National Laboratory
  #
- #	Copyright, 1990.  The Regents of the University of California.
+ #	Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996, 1997
  #	This software was produced under a U.S. Government contract
  #	(W-7405-ENG-36) by Los Alamos National Laboratory, which is
  #	operated by the	University of California for the U.S. Department
@@ -42,14 +42,14 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-snmp.c,v 1.5 1996/12/12 16:22:27 bitblt Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-snmp.c,v 1.6 1999/09/16 20:58:47 brad Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
 #include <sys/time.h>
 
-#include <stdio.h>
 #include <ctype.h>
+#include <stdio.h>
 #include <string.h>
 
 #include "interface.h"

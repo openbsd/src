@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996
+ * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -21,10 +21,10 @@
 
 #ifndef lint
 static const char copyright[] =
-    "@(#) Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996\n\
+    "@(#) Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997\n\
 The Regents of the University of California.  All rights reserved.\n";
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/tcpdump.c,v 1.13 1999/07/28 20:41:37 jakob Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/tcpdump.c,v 1.14 1999/09/16 20:58:48 brad Exp $ (LBL)";
 #endif
 
 /*
@@ -70,6 +70,7 @@ int Xflag;			/* print packet in emacs-hexl style */
 
 int packettype;
 
+
 char *program_name;
 
 int32_t thiszone;		/* seconds offset from gmt to local time */
@@ -98,9 +99,11 @@ static struct printer printers[] = {
 	{ ether_if_print,	DLT_EN10MB },
 	{ ether_if_print,	DLT_IEEE802 },
 	{ sl_if_print,		DLT_SLIP },
+	{ sl_bsdos_if_print,	DLT_SLIP_BSDOS },
 	{ ppp_if_print,		DLT_PPP },
 	{ fddi_if_print,	DLT_FDDI },
 	{ null_if_print,	DLT_NULL },
+	{ raw_if_print,		DLT_RAW },
 	{ atm_if_print,		DLT_ATM_RFC1483 },
 	{ null_if_print, 	DLT_LOOP },
 	{ enc_if_print, 	DLT_ENC },
