@@ -1,4 +1,4 @@
-/*	$OpenBSD: adw.c,v 1.8 2000/07/22 15:10:13 krw Exp $ */
+/*	$OpenBSD: adw.c,v 1.9 2000/09/06 00:48:01 krw Exp $ */
 /* $NetBSD: adw.c,v 1.23 2000/05/27 18:24:50 dante Exp $	 */
 
 /*
@@ -1110,7 +1110,6 @@ adw_print_info(sc, tid)
 	ADW_SOFTC	*sc;
 	int		 tid;
 {
-#ifdef ADW_DEBUG
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	u_int16_t wdtr_able, wdtr_done, wdtr;
@@ -1120,11 +1119,9 @@ adw_print_info(sc, tid)
 	if (tid == 0){
 		wdtr_reneg = sdtr_reneg = 0;
 	}
-#endif
 
 	printf("%s: target %d ", sc->sc_dev.dv_xname, tid);
 
-#ifdef ADW_DEBUG
 	ADW_READ_WORD_LRAM(iot, ioh, ADW_MC_SDTR_ABLE, wdtr_able);
 	if(wdtr_able & ADW_TID_TO_TIDMASK(tid)) {
 		ADW_READ_WORD_LRAM(iot, ioh, ADW_MC_SDTR_DONE, wdtr_done);
@@ -1175,7 +1172,6 @@ adw_print_info(sc, tid)
 			((sdtr_reneg)? "sync" : "") );
 		printf(" renegotiation pending before next command.\n");
 	}
-#endif	
 }	
 
 
