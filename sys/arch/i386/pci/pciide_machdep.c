@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide_machdep.c,v 1.1 1999/07/18 21:25:21 csapuntz Exp $	*/
+/*	$OpenBSD: pciide_machdep.c,v 1.2 1999/07/22 04:39:51 deraadt Exp $	*/
 /*	$NetBSD: pciide_machdep.c,v 1.2 1999/02/19 18:01:27 mycroft Exp $	*/
 
 /*
@@ -52,7 +52,7 @@
 
 #include <dev/isa/isavar.h>
 
-#define	PCIIDE_CHANNEL_NAME(chan)	((chan) == 0 ? "primary" : "secondary")
+#define	PCIIDE_CHANNEL_NAME(chan)	((chan) == 0 ? "channel 0" : "channel 1")
 
 void *
 pciide_machdep_compat_intr_establish(dev, pa, chan, func, arg)
@@ -69,7 +69,7 @@ pciide_machdep_compat_intr_establish(dev, pa, chan, func, arg)
 	cookie = isa_intr_establish(NULL, irq, IST_EDGE, IPL_BIO, func, arg, dev->dv_xname);
 	if (cookie == NULL)
 		return (NULL);
-	printf("%s: %s channel interrupting at irq %d\n", dev->dv_xname,
+	printf("%s: %s interrupting at irq %d\n", dev->dv_xname,
 	    PCIIDE_CHANNEL_NAME(chan), irq);
 	return (cookie);
 }
