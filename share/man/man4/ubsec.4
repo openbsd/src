@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ubsec.4,v 1.1 2000/06/11 00:36:09 jason Exp $
+.\"	$OpenBSD: ubsec.4,v 1.2 2000/06/12 20:03:03 deraadt Exp $
 .\"
 .\" Copyright (c) 2000 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -34,13 +34,13 @@
 .Os
 .Sh NAME
 .Nm usbec
-.Nd Broadcom (BlueSteel) 5501/5601 encryption accelerator
+.Nd Broadcom (BlueSteel) uBsec 5x0x encryption accelerator
 .Sh SYNOPSIS
 .Cd "ubsec* at pci? dev ? function ?"
 .Sh DESCRIPTION
 The
 .Nm
-driver supports cards containing the Broadcom 5501 or 5601 chipset.
+driver supports cards containing the Broadcom 5501, 5601, or 5805.
 .Pp
 The
 .Nm
