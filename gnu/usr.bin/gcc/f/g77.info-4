@@ -1,0 +1,1230 @@
+This is Info file g77.info, produced by Makeinfo-1.64 from the input
+file g77.texi.
+
+   This file explains how to use the GNU Fortran system.
+
+   Published by the Free Software Foundation 59 Temple Place - Suite 330
+Boston, MA 02111-1307 USA
+
+   Copyright (C) 1995, 1996 Free Software Foundation, Inc.
+
+   Permission is granted to make and distribute verbatim copies of this
+manual provided the copyright notice and this permission notice are
+preserved on all copies.
+
+   Permission is granted to copy and distribute modified versions of
+this manual under the conditions for verbatim copying, provided also
+that the sections entitled "GNU General Public License," "Funding for
+Free Software," and "Protect Your Freedom--Fight `Look And Feel'" are
+included exactly as in the original, and provided that the entire
+resulting derived work is distributed under the terms of a permission
+notice identical to this one.
+
+   Permission is granted to copy and distribute translations of this
+manual into another language, under the above conditions for modified
+versions, except that the sections entitled "GNU General Public
+License," "Funding for Free Software," and "Protect Your Freedom--Fight
+`Look And Feel'", and this permission notice, may be included in
+translations approved by the Free Software Foundation instead of in the
+original English.
+
+   Contributed by James Craig Burley (`burley@gnu.ai.mit.edu').
+Inspired by a first pass at translating `g77-0.5.16/f/DOC' that was
+contributed to Craig by David Ronis (`ronis@onsager.chem.mcgill.ca').
+
+
+File: g77.info,  Node: Pedantic Compilation,  Next: Case Sensitivity,  Prev: Source Form,  Up: Language
+
+Pedantic Compilation
+====================
+
+   The `-fpedantic' command-line option specifies that `g77' is to warn
+about certain non-standard constructs.  This is useful for finding some
+extensions `g77' accepts that other compilers might not accept.  (Note
+that the `-pedantic' and `-pedantic-errors' options always imply
+`-fpedantic'.)
+
+   With `-ff90' in force along with `-fpedantic', some constructs are
+accepted that result in diagnostics when `-fno-f90' and `-fpedantic'
+are both in force.  *Note GNU Fortran Extensions: Extensions, for
+information on those constructs.
+
+   The constructs for which `g77' issues diagnostics when `-fpedantic'
+and `-fno-f90' are in force are:
+
+   * Automatic arrays, as in `REAL A(N)', where `A' is not a dummy
+     argument.
+
+   * `READ (5), I' and `WRITE (10), J'--the standard disallows the
+     comma in each case, while allowing it in `READ 10, I', but many
+     compilers (including `f2c') allow the superfluous comma.
+
+   * `DOUBLE COMPLEX', either explicitly (via explicit or `IMPLICIT'
+     statement) or implicitly (as in `C*D', where `C' is `COMPLEX' and
+     `D' is `DOUBLE PRECISION', which is prohibited by the standard
+     because it should produce a non-standard `DOUBLE COMPLEX' result).
+
+   * Automatic conversion of numeric expressions to `INTEGER' in
+     contexts such as:
+        - Array-reference indexes.
+
+        - Alternate-return values.
+
+        - Computed `GOTO'.
+
+        - `FORMAT' run-time expressions (not yet supported).
+
+        - Dimension lists in specification statements.
+
+        - Numbers for I/O statements (such as `READ (UNIT=3.2), I')
+
+        - Sizes of `CHARACTER' entities in specification statements.
+
+        - Kind types in specification entities (a Fortran 90 feature).
+
+        - Initial, terminal, and incrementation parameters for
+          implied-`DO' constructs in `DATA' statements.
+
+   * Automatic conversion of `LOGICAL' expressions to `INTEGER' in
+     contexts such as arithmetic `IF' (where `COMPLEX' expressions are
+     disallowed anyway).
+
+   * Substring operators applied to character constants and named
+     constants (such as `PRINT *,'hello'(3:5)', which would print
+     `llo').
+
+   * Null argument passed to statement function (as in `PRINT
+     *,FOO(,3)').
+
+   * Differences between program units regarding whether a given
+     `COMMON' area is `SAVE'd (for targets where program units in a
+     single source file are "glued" together as they typically are for
+     UNIX development environments).
+
+   * Differences between named-`COMMON'-block sizes between program
+     units.
+
+   * Specification statements following first `DATA' statement (normally
+     `DATA I/1/' may be followed by `INTEGER J', though not `INTEGER
+     I', but `-fpedantic' disables use of both cases.
+
+   * Semicolon as statement separator (as in `CALL FOO; CALL BAR').
+
+   * Use of `&' in column 1 of fixed-form source (indicates
+     continuation).
+
+   * Use of `CHARACTER' constants to initialize numeric entities, and
+     vice versa.
+
+   * Expressions having two arithmetic operators in a row, such as
+     `X*-Y'.
+
+   If `-fpedantic' is specified along with `-ff90', the following
+constructs result in diagnostics:
+
+   * Use of semicolons on line with INCLUDE statement.
+
+
+File: g77.info,  Node: Case Sensitivity,  Next: Intrinsics,  Prev: Pedantic Compilation,  Up: Language
+
+Case Sensitivity
+================
+
+   GNU Fortran offers the programmer way too much flexibility in
+deciding how source files are to be treated vis-a-vis uppercase and
+lowercase characters.  There are 66 useful settings that affect case
+sensitivity, plus 10 settings that are nearly useless, with the
+remaining 116 settings being either redundant or useless.
+
+   None of these settings have any effect on the contents of comments
+(the text after a `c' or `C' in Column 1, for example) or of character
+or Hollerith constants.  Note that things like the `E' in the statement
+`CALL FOO(3.2E10)' and the `TO' in `ASSIGN 10 TO LAB' are considered
+built-in keywords.
+
+   Low-level switches are identified in this discussion thusly:
+
+     A Source Case Conversion
+          0 Preserve (see Note 1)
+
+          1 Convert to Upper Case
+
+          2 Convert to Lower Case
+
+     B Built-in Keyword Matching:
+          0 Match Any Case (per-character basis)
+
+          1 Match Upper Case Only
+
+          2 Match Lower Case Only
+
+          3 Match InitialCaps Only (see tables for spellings)
+
+     C Built-in Intrinsic Matching:
+          0 Match Any Case (per-character basis)
+
+          1 Match Upper Case Only
+
+          2 Match Lower Case Only
+
+          3 Match InitialCaps Only (see tables for spellings)
+
+     D User-defined Symbol Possibilities (warnings only)
+          0 Allow Any Case (per-character basis)
+
+          1 Allow Upper Case Only
+
+          2 Allow Lower Case Only
+
+          3 Allow InitialCaps Only (see Note 2)
+
+   Note 1: `g77' eventually will support `NAMELIST' in a manner that is
+consistent with these source switches--in the sense that input will be
+expected to meet the same requirements as source code in terms of
+matching symbol names and keywords (for the exponent letters).
+
+   Currently, however, `NAMELIST' is supported `libf2c', which
+uppercases `NAMELIST' input and symbol names for matching.  This means
+not only that `NAMELIST' output currently shows symbol (and keyword)
+names in uppercase even if lower-case source conversion (option A2) is
+selected, but that `NAMELIST' cannot be adequately supported when
+source case preservation (option A0) is selected.
+
+   If A0 is selected, a warning message will be output for each
+`NAMELIST' statement to this effect.  The behavior of the program is
+undefined at run time if two or more symbol names appear in a given
+`NAMELIST' such that the names are identical when converted to upper
+case (e.g. `NAMELIST /X/ VAR, Var, var').  For complete and total
+elegance, perhaps there should be a warning when option A2 is selected,
+since the output of NAMELIST is currently in uppercase but will someday
+be lowercase (when a `libg77' is written), but that seems to be
+overkill for a product in beta test.
+
+   Note 2: Rules for InitialCaps names are:
+   - Must be a single uppercase letter, *or*
+
+   - Must start with an uppercase letter and contain at least one
+     lowercase letter.
+
+   So `A', `Ab', `ABc', `AbC', and `Abc' are valid InitialCaps names,
+but `AB', `A2', and `ABC' are not.  Note that most, but not all,
+built-in names meet these requirements--the exceptions are some of the
+two-letter format specifiers, such as `BN' and `BZ'.
+
+   Here are the names of the corresponding command-line options:
+
+     A0: -fsource-case-preserve
+     A1: -fsource-case-upper
+     A2: -fsource-case-lower
+     
+     B0: -fmatch-case-any
+     B1: -fmatch-case-upper
+     B2: -fmatch-case-lower
+     B3: -fmatch-case-initcap
+     
+     C0: -fintrin-case-any
+     C1: -fintrin-case-upper
+     C2: -fintrin-case-lower
+     C3: -fintrin-case-initcap
+     
+     D0: -fsymbol-case-any
+     D1: -fsymbol-case-upper
+     D2: -fsymbol-case-lower
+     D3: -fsymbol-case-initcap
+
+   Useful combinations of the above settings, along with abbreviated
+option names that set some of these combinations all at once:
+
+      1: A0--  B0---  C0---  D0---    -fcase-preserve
+      2: A0--  B0---  C0---  D-1--
+      3: A0--  B0---  C0---  D--2-
+      4: A0--  B0---  C0---  D---3
+      5: A0--  B0---  C-1--  D0---
+      6: A0--  B0---  C-1--  D-1--
+      7: A0--  B0---  C-1--  D--2-
+      8: A0--  B0---  C-1--  D---3
+      9: A0--  B0---  C--2-  D0---
+     10: A0--  B0---  C--2-  D-1--
+     11: A0--  B0---  C--2-  D--2-
+     12: A0--  B0---  C--2-  D---3
+     13: A0--  B0---  C---3  D0---
+     14: A0--  B0---  C---3  D-1--
+     15: A0--  B0---  C---3  D--2-
+     16: A0--  B0---  C---3  D---3
+     17: A0--  B-1--  C0---  D0---
+     18: A0--  B-1--  C0---  D-1--
+     19: A0--  B-1--  C0---  D--2-
+     20: A0--  B-1--  C0---  D---3
+     21: A0--  B-1--  C-1--  D0---
+     22: A0--  B-1--  C-1--  D-1--    -fcase-strict-upper
+     23: A0--  B-1--  C-1--  D--2-
+     24: A0--  B-1--  C-1--  D---3
+     25: A0--  B-1--  C--2-  D0---
+     26: A0--  B-1--  C--2-  D-1--
+     27: A0--  B-1--  C--2-  D--2-
+     28: A0--  B-1--  C--2-  D---3
+     29: A0--  B-1--  C---3  D0---
+     30: A0--  B-1--  C---3  D-1--
+     31: A0--  B-1--  C---3  D--2-
+     32: A0--  B-1--  C---3  D---3
+     33: A0--  B--2-  C0---  D0---
+     34: A0--  B--2-  C0---  D-1--
+     35: A0--  B--2-  C0---  D--2-
+     36: A0--  B--2-  C0---  D---3
+     37: A0--  B--2-  C-1--  D0---
+     38: A0--  B--2-  C-1--  D-1--
+     39: A0--  B--2-  C-1--  D--2-
+     40: A0--  B--2-  C-1--  D---3
+     41: A0--  B--2-  C--2-  D0---
+     42: A0--  B--2-  C--2-  D-1--
+     43: A0--  B--2-  C--2-  D--2-    -fcase-strict-lower
+     44: A0--  B--2-  C--2-  D---3
+     45: A0--  B--2-  C---3  D0---
+     46: A0--  B--2-  C---3  D-1--
+     47: A0--  B--2-  C---3  D--2-
+     48: A0--  B--2-  C---3  D---3
+     49: A0--  B---3  C0---  D0---
+     50: A0--  B---3  C0---  D-1--
+     51: A0--  B---3  C0---  D--2-
+     52: A0--  B---3  C0---  D---3
+     53: A0--  B---3  C-1--  D0---
+     54: A0--  B---3  C-1--  D-1--
+     55: A0--  B---3  C-1--  D--2-
+     56: A0--  B---3  C-1--  D---3
+     57: A0--  B---3  C--2-  D0---
+     58: A0--  B---3  C--2-  D-1--
+     59: A0--  B---3  C--2-  D--2-
+     60: A0--  B---3  C--2-  D---3
+     61: A0--  B---3  C---3  D0---
+     62: A0--  B---3  C---3  D-1--
+     63: A0--  B---3  C---3  D--2-
+     64: A0--  B---3  C---3  D---3    -fcase-initcap
+     65: A-1-  B01--  C01--  D01--    -fcase-upper
+     66: A--2  B0-2-  C0-2-  D0-2-    -fcase-lower
+
+   Number 22 is the "strict" ANSI FORTRAN 77 model wherein all input
+(except comments, character constants, and Hollerith strings) must be
+entered in uppercase.  Use `-fcase-strict-upper' to specify this
+combination.
+
+   Number 43 is like Number 22 except all input must be lowercase.  Use
+`-fcase-strict-lower' to specify this combination.
+
+   Number 65 is the "classic" ANSI FORTRAN 77 model as implemented on
+many non-UNIX machines whereby all the source is translated to
+uppercase.  Use `-fcase-upper' to specify this combination.
+
+   Number 66 is the "canonical" UNIX model whereby all the source is
+translated to lowercase.  Use `-fcase-lower' to specify this
+combination.
+
+   There are a few nearly useless combinations:
+
+     67: A-1-  B01--  C01--  D--2-
+     68: A-1-  B01--  C01--  D---3
+     69: A-1-  B01--  C--23  D01--
+     70: A-1-  B01--  C--23  D--2-
+     71: A-1-  B01--  C--23  D---3
+     72: A--2  B01--  C0-2-  D-1--
+     73: A--2  B01--  C0-2-  D---3
+     74: A--2  B01--  C-1-3  D0-2-
+     75: A--2  B01--  C-1-3  D-1--
+     76: A--2  B01--  C-1-3  D---3
+
+   The above allow some programs to be compiled but with restrictions
+that make most useful programs impossible: Numbers 67 and 72 warn about
+*any* user-defined symbol names (such as `SUBROUTINE FOO'); Numbers 68
+and 73 warn about any user-defined symbol names longer than one
+character that don't have at least one non-alphabetic character after
+the first; Numbers 69 and 74 disallow any references to intrinsics; and
+Numbers 70, 71, 75, and 76 are combinations of the restrictions in
+67+69, 68+69, 72+74, and 73+74, respectively.
+
+   All redundant combinations are shown in the above tables anyplace
+where more than one setting is shown for a low-level switch.  For
+example, `B0-2-' means either setting 0 or 2 is valid for switch B.
+The "proper" setting in such a case is the one that copies the setting
+of switch A--any other setting might slightly reduce the speed of the
+compiler, though possibly to an unmeasurable extent.
+
+   All remaining combinations are useless in that they prevent
+successful compilation of non-null source files (source files with
+something other than comments).
+
+
+File: g77.info,  Node: Intrinsics,  Next: Dialects,  Prev: Case Sensitivity,  Up: Language
+
+Intrinsics
+==========
+
+   A given specific intrinsic belongs in one or more groups.  Each group
+is deleted, disabled, hidden, or enabled by default or a command-line
+option.  The meaning of each term follows.
+
+Deleted
+     No intrinsics are recognized as belonging to that group.
+
+Disabled
+     Intrinsics are recognized as belonging to the group, but
+     references to them (other than via the `INTRINSIC' statement) are
+     disallowed through that group.
+
+Hidden
+     Intrinsics in that group are recognized and enabled (if
+     implemented) *only* if the first mention of the actual name of an
+     intrinsic in a program unit is in an `INTRINSIC' statement.
+
+Enabled
+     Intrinsics in that group are recognized and enabled (if
+     implemented).
+
+   The distinction between deleting and disabling a group is illustrated
+by the following example.  Assume intrinsic `FOO' belongs only to group
+`FGR'.  If group `FGR' is deleted, the following program unit will
+successfully compile, because `FOO()' will be seen as a reference to an
+external function named `FOO':
+
+     PRINT *, FOO()
+     END
+
+If group `FGR' is disabled, compiling the above program will produce
+diagnostics, either because the `FOO' intrinsic is improperly invoked
+or, if properly invoked, it is not enabled.  To change the above
+program so it references an external function `FOO' instead of the
+disabled `FOO' intrinsic, add the following line to the top:
+
+     EXTERNAL FOO
+
+So, deleting a group tells `g77' to pretend as though the intrinsics in
+that group do not exist at all, whereas disabling it tells `g77' to
+recognize them as (disabled) intrinsics in intrinsic-like contexts.
+
+   Hiding a group is like enabling it, but the intrinsic must be first
+named in an `INTRINSIC' statement to be considered a reference to the
+intrinsic rather than to an external procedure.  This might be the
+"safest" way to treat a new group of intrinsics when compiling old
+code, because it allows the old code to be generally written as if
+those new intrinsics never existed, but to be changed to use them by
+inserting `INTRINSIC' statements in the appropriate places.  However,
+it should be the goal of development to use `EXTERNAL' for all names of
+external procedures that might be intrinsic names.
+
+   If an intrinsic is in more than one group, it is enabled if any of
+its containing groups are enabled; if not so enabled, it is hidden if
+any of its containing groups are hidden; if not so hidden, it is
+disabled if any of its containing groups are disabled; if not so
+disabled, it is deleted.  This extra complication is necessary because
+some intrinsics, such as `IBITS', belong to more than one group, and
+hence should be enabled if any of the groups to which they belong are
+enabled, and so on.
+
+   The groups are:
+
+`dcp'
+     `DOUBLE COMPLEX' intrinsics from the standards (F77, F90).
+
+`f2c'
+     Intrinsics supported by AT&T's `f2c' converter and/or `libf2c'.
+
+`f90'
+     Fortran 90 intrinsics.
+
+`mil'
+     MIL-STD 1753 intrinsics (`MVBITS', `IAND', `BTEST', and so on).
+
+`unix'
+     UNIX intrinsics (`IARGC', `EXIT', `ERF', and so on).
+
+`vxt'
+     VAX/VMS FORTRAN (current as of v4) intrinsics.
+
+
+File: g77.info,  Node: Dialects,  Next: Object Compatibility,  Prev: Intrinsics,  Up: Language
+
+GNU Fortran Dialects
+====================
+
+   The `-fvxt-not-f90' and `-ff90-not-vxt' command-line options control
+how `g77' interprets certain tokens and constructs that have different
+meanings in VAX FORTRAN (circa v4) and Fortran 90.  (Generally, this
+manual uses the invented acronym VXT to refer to many popular VAX
+FORTRAN extensions, though not necessarily those that are specific to
+the VAX processor architecture or the VMS operating system.  An
+extension offered by a Digital Fortran product that also is offered by
+several other Fortran products for different kinds of systems is
+probably going to be considered for inclusion in `g77' someday, and is
+considered a VXT extension.)
+
+   When `-ff90-not-vxt' is specified, the following interpretations are
+made (and, when `-fvxt-not-f90' is in effect, the opposite
+interpretations are made):
+
+   * Double-quote character (`"') delimits character constant just as
+     does apostrophe (`''), rather than beginning an octal constant of
+     `INTEGER' type.
+
+   * An exclamation point (`!') in column 5 of fixed-form source file
+     treated as a continuation character rather than the beginning of a
+     comment (as it does in any other column).
+
+   * `TYPE FOO' and `TYPE (FOO), BAR' statements are recognized as the
+     Fortran 90 variety, not I/O statements.  (However, the F90 variety
+     is *not* supported, so this really just ensures that `g77' will
+     produce a diagnostic instead of trying to implement the VXT `TYPE'
+     statement--which currently is not supported either.)
+
+
+File: g77.info,  Node: Object Compatibility,  Next: Distensions,  Prev: Dialects,  Up: Language
+
+Object Compatibility
+====================
+
+   An individual Fortran source file can be compiled to an object
+(`*.o') file instead of to the final program executable.  This allows
+several portions of a program to be compiled at different times and
+linked together whenever a new version of the program is needed.
+However, it introduces the issue of "object compatibility" across the
+various object files (and libraries, or `*.a' files) that are linked
+together to produce any particular exectable file.
+
+   Object compatibility is an issue when combining, in one program,
+Fortran code compiled by more than one compiler (or more than one
+configuration of a compiler).  If the compilers disagree on how to
+transform the names of procedures, there will normally be errors when
+linking such programs.  Worse, if the compilers agree on naming, but
+disagree on issues like how to pass parameters, return arguments, and
+lay out `COMMON' areas, the earliest detected errors might be the
+incorrect results produced by the program (and that assumes these
+errors are detected, which is not always the case).
+
+   Normally, `g77' generates code that is object-compatible with code
+generated by a version of `f2c' configured (with, for example, `f2c.h'
+definitions) to be generally compatible with `g77' as built by `gcc'.
+(Normally, `f2c' will, by default, conform to the appropriate
+configuration, but it is possible that older or perhaps even newer
+versions of `f2c', or versions having certain configuration changes to
+`f2c' internals, will produce object files that are incompatible with
+`g77'.)
+
+   For example, a Fortran string subroutine argument will become two
+arguments on the C side: a `char *' and an `int' length.
+
+   Much of this compatibility results from the fact that `g77' uses the
+same run-time library, `libf2c', used by `f2c'.
+
+   Other compilers might or might not generate code that is
+object-compatible with `libf2c' and current `g77', and some might offer
+such compatibility only when explicitly selected via a command-line
+option to the compiler.
+
+* Menu:
+
+* Dropping f2c Compatibility::  When speed is more important.
+* Other Compilers::             Interoperation with code from other compilers.
+
+
+File: g77.info,  Node: Dropping f2c Compatibility,  Next: Other Compilers,  Up: Object Compatibility
+
+Dropping f2c Compatibility
+--------------------------
+
+   Specifying `-fno-f2c' allows `g77' to generate, in some cases,
+faster code, by not needing to allow to the possibility of linking with
+code compiled by `f2c'.
+
+   For example, this affects how `REAL', `COMPLEX', and `DOUBLE
+COMPLEX' functions are called.  With `-fno-f2c', they are compiled as
+returning the appropriate `gcc' type (`float', `__complex__ float',
+`__complex__ double', in many configurations).
+
+   With `-ff2c' in force, they are compiled differently (with perhaps
+slower run-time performance) to accommodate the restrictions inherent
+in `f2c''s use of K&R C as an intermediate language--`REAL' functions
+return double, while `COMPLEX' functions return `void' and use an extra
+argument pointing to a place for the functions to return their values.
+
+   It is possible that, in some cases, leaving `-ff2c' in force might
+produce faster code than using `-fno-f2c'.  Feel free to experiment,
+but remember to experiment with changing the way *entire programs and
+their Fortran libraries are compiled* at a time, since this sort of
+experimentation affects the interface of code generated for a Fortran
+source file--that is, it affects object compatibility.
+
+   Note that `f2c' compatibility is a fairly static target to achieve,
+though not necessarily perfectly so, since, like `g77', it is still
+being improved.  However, specifying `-fno-f2c' causes `g77' to
+generate code that will probably be incompatible with code generated by
+future versions of `g77' when the same option is in force.  You should
+make sure you are always able to recompile complete programs from
+source code when upgrading to new versions of `g77' or `f2c',
+especially when using options such as `-fno-f2c'.
+
+   Therefore, if you are using `g77' to compile libraries and other
+object files for possible future use and you don't want to require
+recompilation for future use with subsequent versions of `g77', you
+might want to stick with `f2c' compatibility for now, and carefully
+watch for any announcements about changes to the `f2c'/`libf2c'
+interface that might affect existing programs (thus requiring
+recompilation).
+
+   It is probable that a future version of `g77' will not, by default,
+generate object files compatible with `f2c' and not use `libf2c'.  If
+you expect to depend on this compatibility in the long term, use the
+options `-ff2c -ff2c-library' when compiling all of the applicable code.
+This should either cause `g77' to produce compatible code (at the
+expense of the availability of some features and performance), or at
+the very least trigger compiler warning messages, in future versions of
+`g77'.
+
+
+File: g77.info,  Node: Other Compilers,  Prev: Dropping f2c Compatibility,  Up: Object Compatibility
+
+Other Compilers
+---------------
+
+   On systems with Fortran compilers other than `f2c' and `g77', code
+compiled by `g77' is not expected to work well with code compiled by
+the native compiler.  (This is true for `f2c'-compiled objects as well.)
+Libraries compiled with the native compiler probably will have to be
+recompiled with `g77' to be used with `g77'-compiled code.
+
+   Reasons for such incompatibilities include:
+
+   * There might be differences in the way names of Fortran procedures
+     are translated for use in the system's object-file format.  For
+     example, the statement `CALL FOO' might be compiled by `g77' to
+     call a procedure the linker `ld' sees given the name `_foo_',
+     while the apparently corresponding statement `SUBROUTINE FOO'
+     might be compiled by the native compiler to define the
+     linker-visible name `_foo', or `_FOO_', and so on.
+
+   * There might be subtle type mismatches which cause subroutine
+     arguments and function return values to get corrupted.
+
+     This is why simply getting `g77' to transform procedure names the
+     same way a native compiler does is not usually a good idea--unless
+     some effort has been made to ensure that, aside from the way the
+     two compilers transform procedure names, everything else about the
+     way they generate code for procedure interfaces is identical.
+
+   * Native compilers use libraries of private I/O routines which will
+     not be available at link time unless you have the native
+     compiler--and you would have to explicitly ask for them.
+
+     For example, on the Sun you would have to add `-L/usr/lang/SCx.x
+     -lF77 -lV77' to the link command.
+
+
+File: g77.info,  Node: Distensions,  Prev: Object Compatibility,  Up: Language
+
+Distensions
+===========
+
+   The `-fugly' command-line options determine whether certain features
+supported by VAX FORTRAN and other such compilers, but considered too
+ugly to be in code that can be changed to use safer and/or more
+portable constructs, are accepted.  These are humorously referred to as
+"distensions", extensions that just plain look ugly in the harsh light
+of day.
+
+   The constructs enabled via `-fugly' include:
+
+   * Automatic conversion between `INTEGER' and `LOGICAL' as dictated by
+     context (typically implies nonportable dependencies on how a
+     particular implementation encodes `.TRUE.' and `.FALSE.').
+
+   * Use of typeless and Hollerith constants in non-standard places
+     (the "standard" here being the appendix in ANSI FORTRAN 77 and the
+     descriptions in MIL-STD 1753), plus in places controlled by
+     `-fugly-args' and `-fugly-init'.
+
+   * Use of a `LOGICAL' variable in `ASSIGN' and assigned-`GOTO'
+     statements.
+
+   * Use of a single trailing comma to mean "pass an extra trailing null
+     argument" in a list of actual arguments to a procedure other than a
+     statement function.
+
+     For example, `CALL FOO(,)' means "pass two null arguments" when
+     `-fugly' is used, rather than "pass one null argument".
+
+   The construct disabled via `-fno-ugly-args' is:
+
+   * Passing of typeless and Hollerith constants as actual arguments in
+     procedure invocations.
+
+     For example, `CALL FOO(4HABCD)'.
+
+   The constructs disabled by `-fno-ugly-init' are:
+
+   * Use of Hollerith and typeless constants in contexts where they set
+     initial (compile-time) values for variables, arrays, and named
+     constants--that is, `DATA' and `PARAMETER' statements, plus
+     type-declaration statements specifying initial values.
+
+   * In the same contexts as above, use of character constants to
+     initialize numeric items and vice versa (one constant per item).
+
+   * Use of Hollerith and typeless constants on the right-hand side of
+     assignment statements to numeric types, and in other contexts
+     (such as passing arguments to in invocations of intrinsic
+     procedures and statement functions) that are treated as
+     assignments to known types (the dummy arguments, in these cases).
+
+
+File: g77.info,  Node: Installation,  Next: Debugging and Interfacing,  Prev: Language,  Up: Top
+
+Installing GNU Fortran
+**********************
+
+* Menu:
+
+* Prerequisites::          Make sure your system is ready for `g77'.
+* Problems Installing::    Known trouble areas.
+* Quick Start::            The easier procedure for non-experts.
+* Complete Installation::  For experts, or those who want to be: the details.
+* Distributing Binaries::  If you plan on distributing your `g77'.
+* Settings::               Some notes on `g77' internals.
+
+   The following information describes how to install `g77'.
+
+   The information in this file generally pertains to dealing with
+*source* distributions of `g77' and `gcc'.  It is possible that some of
+this information will be applicable to some *binary* distributions of
+these products--however, since these distributions are not made by the
+maintainers of `g77', responsibility for binary distributions rests with
+whoever built and first distributed them.
+
+   Nevertheless, efforts to make `g77' easier to both build and install
+from source and package up as a binary distribution are ongoing.
+
+
+File: g77.info,  Node: Prerequisites,  Next: Problems Installing,  Up: Installation
+
+Prerequisites
+=============
+
+   The procedures described to unpack, configure, build, and install
+`g77' assume your system has certain programs already installed.
+
+   The following prerequisites should be met by your system before you
+follow the `g77' installation instructions:
+
+`gzip'
+     To unpack the `gcc' and `g77' distributions, you'll need the
+     `gunzip' utility in the `gzip' distribution.  Most UNIX systems
+     already have `gzip' installed.  If yours doesn't, you can get it
+     from the FSF.
+
+     Note that you'll need `tar' and other utilities as well, but all
+     UNIX systems have these.  There are GNU versions of all these
+     available--in fact, a complete GNU UNIX system can be put together
+     on most systems, if desired.
+
+`gcc-2.7.2.tar.gz'
+     You need to have this, or some other applicable, version of `gcc'
+     on your system.  The version should be an exact copy of a
+     distribution from the FSF.  It is approximately 7MB large.
+
+     If you've already unpacked `gcc-2.7.2.tar.gz' into a directory
+     (named `gcc-2.7.2') called the "source tree" for `gcc', you can
+     delete the distribution itself, but you'll need to remember to
+     skip any instructions to unpack this distribution.
+
+     Without an applicable `gcc' source tree, you cannot build `g77'.
+     You can obtain an FSF distribution of `gcc' from the FSF.
+
+`g77-0.5.18.tar.gz'
+     You probably have already unpacked this distribution, or you are
+     reading an advanced copy of this manual, which is contained in
+     this distribution.  This distribution approximately 1MB large.
+
+     You can obtain an FSF distribution of `g77' from the FSF, the same
+     way you obtained `gcc'.
+
+100MB disk space
+     For a complete "bootstrap" build, about 100MB of disk space is
+     required for `g77' by the author's current Linux system.
+
+     Some juggling can reduce the amount of space needed; during the
+     bootstrap process, once Stage 3 starts, during which the version
+     of `gcc' that has been copied into the `stage2/' directory is used
+     to rebuild the system, you can delete the `stage1/' directory to
+     free up some space.
+
+     It is likely that many systems don't require the complete
+     bootstrap build, as they already have a recent version of `gcc'
+     installed.  Such systems might be able to build `g77' with only
+     about 75MB of free space.
+
+`patch'
+     Although you can do everything `patch' does yourself, by hand,
+     without much trouble, having `patch' installed makes installation
+     of new versions of GNU utilities such as `g77' so much easier that
+     it is worth getting.  You can obtain `patch' the same way you
+     obtained `gcc' and `g77'.
+
+     In any case, you can apply patches by hand--patch files are
+     designed for humans to read them.
+
+`make'
+     Your system must have `make', and you will probably save yourself
+     a lot of trouble if it is GNU `make' (sometimes referred to as
+     `gmake').
+
+`cc'
+     Your system must have a working C compiler.
+
+     *Note Installing GNU CC: (gcc)Installation, for more information
+     on prerequisites for installing `gcc'.
+
+`bison'
+     If you do not have `bison' installed, you can usually work around
+     any need for it, since `g77' itself does not use it, and `gcc'
+     normally includes all files generated by running it in its
+     distribution.  You can obtain `bison' the same way you obtained
+     `gcc' and `g77'.
+
+     *Note Missing bison?::, for information on how to work around not
+     having `bison'.
+
+`makeinfo'
+     If you are missing `makeinfo', you can usually work around any
+     need for it.  You can obtain `makeinfo' the same way you obtained
+     `gcc' and `g77'.
+
+     *Note Missing makeinfo?::, for information on getting around the
+     lack of `makeinfo'.
+
+`root' access
+     To perform the complete installation procedures on a system, you
+     need to have `root' access to that system, or equivalent access.
+
+     Portions of the procedure (such as configuring and building `g77')
+     can be performed by any user with enough disk space and virtual
+     memory.
+
+     However, these instructions are oriented towards less-experienced
+     users who want to install `g77' on their own personal systems.
+
+     System administrators with more experience will want to determine
+     for themselves how they want to modify the procedures described
+     below to suit the needs of their installation.
+
+
+File: g77.info,  Node: Problems Installing,  Next: Quick Start,  Prev: Prerequisites,  Up: Installation
+
+Problems Installing
+===================
+
+   This is a list of problems (and some apparent problems which don't
+really mean anything is wrong) that show up when configuring, building,
+installing, or porting GNU Fortran.
+
+   *Note Installation Problems: (gcc)Installation Problems, for more
+information on installation problems that can afflict either `gcc' or
+`g77'.
+
+* Menu:
+
+* General Problems::         Problems afflicting most or all systems.
+* Cross-compiler Problems::  Problems afflicting cross-compilation setups.
+
+
+File: g77.info,  Node: General Problems,  Next: Cross-compiler Problems,  Up: Problems Installing
+
+General Problems
+----------------
+
+   * On SunOS systems, linking the `f771' program produces an error
+     message concerning an undefined symbol named `_strtoul'.
+
+     This is not a `g77' bug.  *Note Patching GNU Fortran::, for
+     information on a workaround provided by `g77'.
+
+     The proper fix is either to upgrade your system to one that
+     provides a complete ANSI C environment, or improve `gcc' so that
+     it provides one for all the languages and configurations it
+     supports.
+
+     *Note:* In earlier versions of `g77', an automated workaround for
+     this problem was attempted.  It worked for systems without
+     `_strtoul', substituting the incomplete-yet-sufficient version
+     supplied with `g77' for those systems.  However, the automated
+     workaround failed mysteriously for systems that appeared to have
+     conforming ANSI C environments, and it was decided that, lacking
+     resources to more fully investigate the problem, it was better to
+     not punish users of those systems either by requiring them to work
+     around the problem by hand or by always substituting an incomplete
+     `strtoul()' implementation when their systems had a complete,
+     working one.  Unfortunately, this meant inconveniencing users of
+     systems not having `strtoul()', but they're using obsolete (and
+     generally unsupported) systems anyway.
+
+   * It'd be helpful if `g77''s `Makefile.in' or `Make-lang.in' would
+     create the various `stageN' directories and their subdirectories,
+     so expert installers wouldn't have to reconfigure after cleaning
+     up.
+
+   * Improvements to the way `libf2c' is built could make building
+     `g77' as a cross-compiler easier--for example, passing and using
+     `LD' and `AR' in the appropriate ways.
+
+   * `g77' currently requires application of a patch file to the gcc
+     compiler tree (at least up through gcc version 2.7.0).  The
+     necessary patches should be folded in to the mainline gcc
+     distribution.
+
+     (Some combinations of versions of `g77' and `gcc' might actually
+     *require* no patches, but the patch files will be provided anyway
+     as long as there are more changes expected in subsequent releases.
+     These patch files might contain unnecessary, but possibly helpful,
+     patches.  As a result, it is possible this issue might never be
+     resolved, except by eliminating the need for the person
+     configuring `g77' to apply a patch by hand, by going to a more
+     automated approach (such as configure-time patching).
+
+   * It should be possible to build the runtime without building `cc1'
+     and other non-Fortran items, but, for now, an easy way to do that
+     is not yet established.
+
+   * Compiling `g77' requires GNU C, not just ANSI C.  Fixing this
+     wouldn't be very hard (just tedious), but the code using GNU
+     extensions to the C language is expected to be rewritten for 0.6
+     anyway, so there are no plans for an interim fix.
+
+
+File: g77.info,  Node: Cross-compiler Problems,  Prev: General Problems,  Up: Problems Installing
+
+Cross-compiler Problems
+-----------------------
+
+   `g77' has been in alpha testing since September of 1992, and in
+public beta testing since February of 1995.  Alpha testing was done by
+a small number of people worldwide on a fairly wide variety of
+machines, involving self-compilation in most or all cases.  Beta
+testing has been done primarily via self-compilation, but in more and
+more cases, cross-compilation (and "criss-cross compilation", where a
+version of a compiler is built on one machine to run on a second and
+generate code that runs on a third) has been tried and has succeeded,
+to varying extents.
+
+   Generally, `g77' can be ported to any configuration to which `gcc',
+`f2c', and `libf2c' can be ported and made to work together, aside from
+the known problems described in this manual.  If you want to port `g77'
+to a particular configuration, you should first make sure `gcc' and
+`libf2c' can be ported to that configuration before focusing on `g77',
+because `g77' is so dependent on them.
+
+   Even for cases where `gcc' and `libf2c' work, you might run into
+problems with cross-compilation on certain machines, for several
+reasons.
+
+   * There is one known bug (a design bug to be fixed in 0.6) that
+     prevents configuration of `g77' as a cross-compiler in some cases,
+     though there are assumptions made during configuration that
+     probably make doing non-self-hosting builds a hassle, requiring
+     manual intervention.
+
+   * `gcc' might still have some trouble being configured for certain
+     combinations of machines.  For example, it might not know how to
+     handle floating-point constants.
+
+   * There are still some challenges putting together the right
+     run-time libraries (needed by `libf2c') for a target system,
+     depending on the systems involved in the configuration.  (This is
+     a general problem with cross-compilation, and with `gcc' in
+     particular.)
+
+
+File: g77.info,  Node: Quick Start,  Next: Complete Installation,  Prev: Problems Installing,  Up: Installation
+
+Quick Start
+===========
+
+   This procedure configures, builds, and installs `g77' "out of the
+box" and works on most UNIX systems.  Each command is identified by a
+unique number, used in the explanatory text that follows.  For the most
+part, the output of each command is not shown, though indications of
+the types of responses are given in a few cases.
+
+   To perform this procedure, the installer must be logged in as user
+`root'.  Much of it can be done while not logged in as `root', and
+users experienced with UNIX administration should be able to modify the
+procedure properly to do so.
+
+   Following traditional UNIX conventions, it is assumed that the
+source trees for `g77' and `gcc' will be placed in `/usr/src'.  It also
+is assumed that the source distributions themselves already reside in
+`/usr/FSF', a naming convention used by the author of `g77' on his own
+system:
+
+     /usr/FSF/gcc-2.7.2.tar.gz
+     /usr/FSF/g77-0.5.18.tar.gz
+
+   Users of the following systems should not blindly follow these
+quick-start instructions, because of problems their systems have coping
+with straightforward installation of `g77':
+
+   * SunOS
+
+   * Alpha
+
+   Instead, see *Note Complete Installation::, for detailed information
+on how to configure, build, and install `g77' for your particular
+system.  Also, see *Note Known Causes of Trouble with GNU Fortran:
+Trouble, for information on bugs and other problems known to afflict the
+installation process, and how to report newly discovered ones.
+
+   If your system is *not* on the above list, and *is* a UNIX system or
+one of its variants, you should be able to follow the instructions
+below.  If you vary *any* of the steps below, you might run into
+trouble, including possibly breaking existing programs for other users
+of your system.  Before doing so, it is wise to review the explanations
+of some of the steps.  These explanations follow this list of steps.
+
+     sh[ 1]# `cd /usr/src'
+     
+     sh[ 2]# `gunzip -c < /usr/FSF/gcc-2.7.2.tar.gz | tar xf -'
+     
+     [Might say "Broken pipe"...that is normal on some systems.]
+     sh[ 3]# `gunzip -c < /usr/FSF/g77-0.5.18.tar.gz | tar xf -'
+     
+     ["Broken pipe" again possible.]
+     sh[ 4]# `ln -s gcc-2.7.2 gcc'
+     
+     sh[ 5]# `ln -s g77-0.5.18 g77'
+     
+     sh[ 6]# `mv -i g77/* gcc'
+     
+     [No questions should be asked by mv here; or, you made a mistake.]
+     sh[ 7]# `patch -p1 -V t -d gcc-2.7.2 < gcc-2.7.2/f/gbe/2.7.2.diff'
+     
+     [Unless patch complains about rejected patches, this step worked.]
+     sh[ 8]# `cd gcc'
+     sh[ 9]# `touch f77-install-ok'
+     
+     [Do not do the above if your system already has an f77
+     command, unless you've checked that overwriting it
+     is okay.]
+     sh[10]# `touch f2c-install-ok'
+     
+     [Do not do the above if your system already has an f2c
+     command, unless you've checked that overwriting it
+     is okay.  Else, `touch f2c-exists-ok'.]
+     sh[11]# `./configure --prefix=/usr'
+     
+     [Do not do the above if gcc is not installed in /usr/bin.
+     You might need a different `--prefix=...', as
+     described below.]
+     sh[12]# `make bootstrap'
+     
+     [This takes a long time, and is where most problems occur.]
+     sh[13]# `rm -fr stage1'
+     
+     sh[14]# `make -k install'
+     
+     [The actual installation.]
+     sh[15]# `g77 -v'
+     
+     [Verify that g77 is installed, obtain version info.]
+     sh[16]#
+
+   *Note Updating Your Info Directory: Updating Documentation, for
+information on how to update your system's top-level `info' directory
+to contain a reference to this manual, so that users of `g77' can
+easily find documentation instead of having to ask you for it.
+
+   Elaborations of many of the above steps follows:
+
+Step 1: `cd /usr/src'
+     You can build `g77' pretty much anyplace.  By convention, this
+     manual assumes `/usr/src'.  It might be helpful if other users on
+     your system knew where to look for the source code for the
+     installed version of `g77' and `gcc' in any case.
+
+Step 4: `ln -s gcc-2.7.2 gcc'
+Step 5: `ln -s g77-0.5.18 g77'
+     These commands mainly help reduce typing, and help reduce visual
+     clutter in examples in this manual showing what to type to install
+     `g77'.
+
+     *Note Unpacking::, for information on using distributions of `g77'
+     made by organizations other than the FSF.
+
+Step 6: `mv -i g77/* gcc'
+     After doing this, you can, if you like, type `rm g77' and `rmdir
+     g77-0.5.18' to remove the empty directory and the symbol link to
+     it.  But, it might be helpful to leave them around as quick
+     reminders of which version(s) of `g77' are installed on your
+     system.
+
+     *Note Unpacking::, for information on the contents of the `g77'
+     directory (as merged into the `gcc' directory).
+
+Step 7: `patch -p1 ...'
+     This can produce a wide variety of printed output, from `Hmm, I
+     can't seem to find a patch in there anywhere...' to long lists of
+     messages indicated that patches are being found, applied
+     successfully, and so on.
+
+     If messages about "fuzz", "offset", or especially "reject files"
+     are printed, it might mean you applied the wrong patch file.  If
+     you believe this is the case, it is best to restart the sequence
+     after deleting (or at least renaming to unused names) the
+     top-level directories for `g77' and `gcc' and their symbolic links.
+
+     After this command finishes, the `gcc' directory might have old
+     versions of several files as saved by `patch'.  To remove these,
+     after `cd gcc', type `rm -i *.~*~'.
+
+     *Note Merging Distributions::, for more information.
+
+Step 9: `touch f77-install-ok'
+     Don't do this if you don't want to overwrite an existing version
+     of `f77' (such as a native compiler, or a script that invokes
+     `f2c').  Otherwise, installation will overwrite the `f77' command
+     and the `f77' man pages with copies of the corresponding `g77'
+     material.
+
+     *Note Installing `f77': Installing f77, for more information.
+
+Step 10: `touch f2c-install-ok'
+     Don't do this if you don't want to overwrite an existing
+     installation of `libf2c' (though, chances are, you do).  Instead,
+     `touch f2c-exists-ok' to allow the installation to continue
+     without any error messages about `/usr/lib/libf2c.a' already
+     existing.
+
+     *Note Installing `f2c': Installing f2c, for more information.
+
+Step 11: `./configure --prefix=/usr'
+     This is where you specify that the `g77' executable is to be
+     installed in `/usr/bin/', the `libf2c.a' library is to be
+     installed in `/usr/lib/', and so on.
+
+     You should ensure that any existing installation of the `gcc'
+     executable is in `/usr/bin/'.  Otherwise, installing `g77' so that
+     it does not fully replace the existing installation of `gcc' is
+     likely to result in the inability to compile Fortran programs.
+
+     *Note Where in the World Does Fortran (and GNU C) Go?: Where to
+     Install, for more information on determining where to install
+     `g77'.  *Note Configuring gcc::, for more information on the
+     configuration process triggered by invoking the `./configure'
+     script.
+
+Step 12: `make bootstrap'
+     *Note Installing GNU CC: (gcc)Installation, for information on the
+     kinds of diagnostics you should expect during this procedure.
+
+     *Note Building gcc::, for complete `g77'-specific information on
+     this step.
+
+Step 13: `rm -fr stage1'
+     You don't need to do this, but it frees up disk space.
+
+Step 14: `make -k install'
+     If this doesn't seem to work, try:
+
+          make -k install install-libf77 install-f2c-all
+
+     *Note Installation of Binaries::, for more information.
+
+     *Note Updating Your Info Directory: Updating Documentation, for
+     information on entering this manual into your system's list of
+     texinfo manuals.
+
+
+File: g77.info,  Node: Complete Installation,  Next: Distributing Binaries,  Prev: Quick Start,  Up: Installation
+
+Complete Installation
+=====================
+
+   Here is the complete `g77'-specific information on how to configure,
+build, and install `g77'.
+
+* Menu:
+
+* Unpacking::
+* Merging Distributions::
+* f77: Installing f77.
+* f2c: Installing f2c.
+* Patching GNU Fortran::
+* Where to Install::
+* Configuring gcc::
+* Building gcc::
+* Pre-installation Checks::
+* Installation of Binaries::
+* Updating Documentation::
+* bison: Missing bison?.
+* makeinfo: Missing makeinfo?.
+
+
+File: g77.info,  Node: Unpacking,  Next: Merging Distributions,  Up: Complete Installation
+
+Unpacking
+---------
+
+   The `gcc' source distribution is a stand-alone distribution.  It is
+designed to be unpacked (producing the `gcc' source tree) and built as
+is, assuming certain prerequisites are met (including the availability
+of compatible UNIX programs such as `make', `cc', and so on).
+
+   However, before building `gcc', you will want to unpack and merge
+the `g77' distribution in with it, so that you build a Fortran-capable
+version of `gcc', which includes the `g77' command, the necessary
+run-time libraries, and this manual.
+
+   Unlike `gcc', the `g77' source distribution is *not* a stand-alone
+distribution.  It is designed to be unpacked and, afterwards,
+immediately merged into an applicable `gcc' source tree.  That is, the
+`g77' distribution *augments* a `gcc' distribution--without `gcc',
+generally only the documentation is immediately usable.
+
+   A sequence of commands typically used to unpack `gcc' and `g77' is:
+
+     sh# `cd /usr/src'
+     sh# `gunzip -d < /usr/FSF/gcc-2.7.2.tar.gz | tar xf -'
+     sh# `gunzip -d < /usr/FSF/g77-0.5.18.tar.gz | tar xf -'
+     sh# `ln -s gcc-2.7.2 gcc'
+     sh# `ln -s g77-0.5.18 g77'
+     sh# `mv -i g77/* gcc'
+
+   *Notes:* The commands beginning with `gunzip...' might print `Broken
+pipe...' as they complete.  That is nothing to worry about, unless you
+actually *hear* a pipe breaking.  The `ln' commands are helpful in
+reducing typing and clutter in installation examples in this manual.
+Hereafter, the top level of `gcc' source tree is referred to as `gcc',
+and the top level of just the `g77' source tree (prior to issuing the
+`mv' command, above) is referred to as `g77'.
+
+   There are three top-level names in a `g77' distribution:
+
+     g77/COPYING.g77
+     g77/README.g77
+     g77/f
+
+   All three entries should be moved (or copied) into a `gcc' source
+tree (typically named after its version number and as it appears in the
+FSF distributions--e.g. `gcc-2.7.2').
+
+   `g77/f' is the subdirectory containing all of the code,
+documentation, and other information that is specific to `g77'.  The
+other two files exist to provide information on `g77' to someone
+encountering a `gcc' source tree with `g77' already present, who has
+not yet read these installation instructions and thus needs help
+understanding that the source tree they are looking at does not come
+from a single FSF distribution.  They also help people encountering an
+unmerged `g77' source tree for the first time.
+
+   *Note:* Please use *only* `gcc' and `g77' source trees as
+distributed by the FSF.  Use of modified versions, such as the
+Pentium-specific-optimization port of `gcc', is likely to result in
+problems that appear to be in the `g77' code but, in fact, are not.  Do
+not use such modified versions unless you understand all the
+differences between them and the versions the FSF distributes--in which
+case you should be able to modify the `g77' (or `gcc') source trees
+appropriately so `g77' and `gcc' can coexist as they do in the stock
+FSF distributions.
+

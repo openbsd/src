@@ -148,6 +148,7 @@ original English.
 @center Richard M. Stallman
 @sp 3
 @center Last updated 26 November 1995
+@center (Revised for GNU Fortran 1996-03-06)
 @sp 1
 @c The version number appears twice more in this file.  
 

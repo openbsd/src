@@ -1628,6 +1628,7 @@ move_movables (movables, threshold, insn_count, loop_start, end, nregs)
 	     extra cost because something else was already moved.  */
 
 	  if (already_moved[regno]
+	      || flag_move_all_movables
 	      || (threshold * savings * m->lifetime) >= insn_count
 	      || (m->forces && m->forces->done
 		  && n_times_used[m->forces->regno] == 1))
@@ -3820,8 +3821,8 @@ strength_reduce (scan_start, end, loop_top, insn_count,
 	     of such giv's whether or not we know they are used after the loop
 	     exit.  */
 
-	  if (v->lifetime * threshold * benefit < insn_count
-	      && ! bl->reversed)
+	  if ( ! flag_reduce_all_givs && v->lifetime * threshold * benefit < insn_count
+	      && ! bl->reversed )
 	    {
 	      if (loop_dump_stream)
 		fprintf (loop_dump_stream,

@@ -148,6 +148,7 @@ in the following sections.
 -frerun-cse-after-loop  -fschedule-insns  
 -fschedule-insns2  -fstrength-reduce  -fthread-jumps 
 -funroll-all-loops  -funroll-loops
+-fmove-all-movables  -freduce-all-givs  -frerun-loop-opt
 -O  -O0  -O1  -O2  -O3
 @end smallexample
 
@@ -1939,6 +1940,47 @@ whose number of iterations can be determined at compile time or run time.
 Perform the optimization of loop unrolling.  This is done for all loops
 and usually makes programs run more slowly.  @samp{-funroll-all-loops}
 implies @samp{-fstrength-reduce} as well as @samp{-frerun-cse-after-loop}.
+
+@item -fmove-all-movables
+Forces all invariant computations in loops to be moved
+outside the loop.
+This option is provided primarily to improve performance
+for some Fortran code, though it might improve code written
+in other languages.
+
+@emph{Note:} When compiling programs written in Fortran,
+this option is enabled by default.
+
+Analysis of Fortran code optimization and the resulting
+optimizations triggered by this option, and the
+@samp{-freduce-all-givs} and @samp{-frerun-loop-opt}
+options as well, were
+contributed by Toon Moene (@code{toon@@moene.indiv.nluug.nl}).
+
+Please let us (@code{fortran@@gnu.ai.mit.edu})
+know how use of these options affects
+the performance of your production code.
+We're very interested in code that runs @emph{slower}
+when these options are @emph{enabled}.
+
+@item -freduce-all-givs
+Forces all general-induction variables in loops to be
+strength-reduced.
+This option is provided primarily to improve performance
+for some Fortran code, though it might improve code written
+in other languages.
+
+@emph{Note:} When compiling programs written in Fortran,
+this option is enabled by default.
+
+@item -frerun-loop-opt
+Runs loop optimizations a second time.
+This option is provided primarily to improve performance
+for some Fortran code, though it might improve code written
+in other languages.
+
+@emph{Note:} When compiling programs written in Fortran,
+this option is enabled by default.
 
 @item -fno-peephole
 Disable any machine-specific peephole optimizations.

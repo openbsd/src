@@ -1,0 +1,1098 @@
+This is Info file g77.info, produced by Makeinfo-1.64 from the input
+file g77.texi.
+
+   This file explains how to use the GNU Fortran system.
+
+   Published by the Free Software Foundation 59 Temple Place - Suite 330
+Boston, MA 02111-1307 USA
+
+   Copyright (C) 1995, 1996 Free Software Foundation, Inc.
+
+   Permission is granted to make and distribute verbatim copies of this
+manual provided the copyright notice and this permission notice are
+preserved on all copies.
+
+   Permission is granted to copy and distribute modified versions of
+this manual under the conditions for verbatim copying, provided also
+that the sections entitled "GNU General Public License," "Funding for
+Free Software," and "Protect Your Freedom--Fight `Look And Feel'" are
+included exactly as in the original, and provided that the entire
+resulting derived work is distributed under the terms of a permission
+notice identical to this one.
+
+   Permission is granted to copy and distribute translations of this
+manual into another language, under the above conditions for modified
+versions, except that the sections entitled "GNU General Public
+License," "Funding for Free Software," and "Protect Your Freedom--Fight
+`Look And Feel'", and this permission notice, may be included in
+translations approved by the Free Software Foundation instead of in the
+original English.
+
+   Contributed by James Craig Burley (`burley@gnu.ai.mit.edu').
+Inspired by a first pass at translating `g77-0.5.16/f/DOC' that was
+contributed to Craig by David Ronis (`ronis@onsager.chem.mcgill.ca').
+
+
+File: g77.info,  Node: Arrays,  Next: Procedures,  Prev: Main Program Unit,  Up: Debugging and Interfacing
+
+Arrays (DIMENSION)
+==================
+
+   Fortran uses "column-major ordering" in its arrays.  This differs
+from other languages, such as C, which use "row-major ordering".  The
+difference is that, with Fortran, array elements adjacent to each other
+in memory differ in the *first* subscript instead of the last;
+`A(5,10,20)' immediately follows `A(4,10,20)', whereas with row-major
+ordering it would follow `A(5,10,19)'.
+
+   This consideration affects not only interfacing with and debugging
+Fortran code, it can greatly affect how code is designed and written,
+especially when code speed and size is a concern.
+
+   Fortran also differs from C, a popular language for interfacing and
+to support directly in debuggers, in the way arrays are treated.  In C,
+arrays are single-dimensional and have interesting relationships to
+pointers, neither of which is true for Fortran.  As a result, dealing
+with Fortran arrays from within an environment limited to C concepts
+can be challenging.
+
+   For example, accessing the array element `A(5,10,20)' is easy enough
+in Fortran (use `A(5,10,20)'), but in C some difficult machinations are
+needed.  First, C would treat the A array as a single-dimension array.
+Second, C does not understand low bounds for arrays as does Fortran.
+Third, C assumes a low bound of zero (0), while Fortran defaults to a
+low bound of one (1) and can supports an arbitrary low bound.
+Therefore, calculations must be done to determine what the C equivalent
+of `A(5,10,20)' would be, and these calculations require knowing the
+dimensions of `A'.
+
+   For `DIMENSION A(2:11,21,0:29)', the calculation of the offset of
+`A(5,10,20)' would be:
+
+       (5-2)
+     + (10-1)*(11-2+1)
+     + (20-0)*(11-2+1)*(21-1+1)
+     = 4293
+
+So the C equivalent in this case would be `a[4293]'.
+
+   When using a debugger directly on Fortran code, the C equivalent
+might not work, because some debuggers cannot understand the notion of
+low bounds other than zero.  However, unlike `f2c', `g77' does inform
+the GBE that a multi-dimensional array (like `A' in the above example)
+is really multi-dimensional, rather than a single-dimensional array, so
+at least the dimensionality of the array is preserved.
+
+   Debuggers that understand Fortran should have no trouble with
+non-zero low bounds, but for non-Fortran debuggers, especially C
+debuggers, the above example might have a C equivalent of `a[4305]'.
+This calculation is arrived at by eliminating the subtraction of the
+lower bound in the first parenthesized expression on each line--that
+is, for `(5-2)' substitute `(5)', for `(10-1)' substitute `(10)', and
+for `(20-0)' substitute `(20)'.  Actually, the implication of this can
+be that the expression `*(&a[2][1][0] + 4293)' works fine, but that
+`a[20][10][5]' produces the equivalent of `*(&a[0][0][0] + 4305)'
+because of the missing lower bounds.
+
+   Come to think of it, perhaps the behavior is due to the debugger
+internally compensating for the lower bounds by offsetting the base
+address of `a', leaving `&a' set lower, in this case, than
+`&a[2][1][0]' (the address of its first element as identified by
+subscripts equal to the corresponding lower bounds).
+
+   You know, maybe nobody really needs to use arrays.
+
+
+File: g77.info,  Node: Procedures,  Next: Adjustable Arrays,  Prev: Arrays,  Up: Debugging and Interfacing
+
+Procedures (SUBROUTINE and FUNCTION)
+====================================
+
+   Procedures that accept `CHARACTER' arguments are implemented by
+`g77' so that each `CHARACTER' argument has two actual arguments.
+
+   The first argument occupies the expected position in the argument
+list and has the user-specified name.  This argument is a pointer to an
+array of characters, passed by the caller.
+
+   The second argument is appended to the end of the user-specified
+calling sequence and is named `__g77_length_X', where X is the
+user-specified name.  This argument is of the C type `ftnlen' (see
+`gcc/f/runtime/f2c.h.in' for information on that type) and is the
+number of characters the caller has allocated in the array pointed to
+by the first argument.
+
+   A procedure will ignore the length argument if `X' is not declared
+`CHARACTER*(*)', because for other declarations, it knows the length.
+Not all callers necessarily "know" this, however, which is why they all
+pass the extra argument.
+
+   The contents of the `CHARACTER' argument are specified by the
+address passed in the first argument (named after it).  The procedure
+can read or write these contents as appropriate.
+
+   When more than one `CHARACTER' argument is present in the argument
+list, the length arguments are appended in the order the orginal
+arguments appear.  So `CALL FOO('HI','THERE')' is implemented in C as
+`foo("hi","there",2,5);', ignoring the fact that `g77' does not provide
+the trailing null bytes on the constant strings (`f2c' does provide
+them, but they are unnecessary in a Fortran environment, and you should
+not expect them to be there).
+
+   Note that the above information applies to `CHARACTER' variables and
+arrays *only*.  It does *not* apply to external `CHARACTER' functions
+or to intrinsic `CHARACTER' functions.  That is, no second length
+argument is passed to `FOO' in this case:
+
+     CHARACTER X
+     EXTERNAL X
+     CALL FOO(X)
+
+Nor does `FOO' expect such an argument in this case:
+
+     SUBROUTINE FOO(X)
+     CHARACTER X
+     EXTERNAL X
+
+   Because of this implementation detail, if a program has a bug such
+that there is disagreement as to whether an argument is a procedure,
+and the type of the argument is `CHARACTER', subtle symptoms might
+appear.
+
+
+File: g77.info,  Node: Adjustable Arrays,  Next: Alternate Returns,  Prev: Procedures,  Up: Debugging and Interfacing
+
+Adjustable Arrays (DIMENSION)
+=============================
+
+   Adjustable and automatic arrays in Fortran require the implementation
+(in this case, the `g77' compiler) to "memorize" the expressions that
+dimension the arrays each time the procedure is invoked.  This is so
+that subsequent changes to variables used in those expressions, made
+during execution of the procedure, do not have any effect on the
+dimensions of those arrays.
+
+   For example:
+
+     REAL ARRAY(5)
+     DATA ARRAY/5*2/
+     CALL X(ARRAY, 5)
+     END
+     SUBROUTINE X(A, N)
+     DIMENSION A(N)
+     N = 20
+     PRINT *, N, A
+     END
+
+Here, the implementation should, when running the program, print
+something like:
+
+     20   2.  2.  2.  2.  2.
+
+Note that this shows that while the value of `N' was successfully
+changed, the size of the `A' array remained at 5 elements.
+
+   To support this, `g77' generates code that executes before any user
+code (and before the internally generated computed `GOTO' to handle
+alternate entry points, as described below) that evaluates each
+(nonconstant) expression in the list of subscripts for an array, and
+saves the result of each such evaluation to be used when determining
+the size of the array (instead of re-evaluating the expressions).
+
+   So, in the above example, when `X' is first invoked, code is
+executed that copies the value of `N' to a temporary.  And that same
+temporary serves as the actual high bound for the single dimension of
+the `A' array (the low bound being the constant 1).  Since the user
+program cannot (legitimately) change the value of the temporary during
+execution of the procedure, the size of the array remains constant
+during each invocation.
+
+   For alternate entry points, the code `g77' generates takes into
+account the possibility that a dummy adjustable array is not actually
+passed to the actual entry point being invoked at that time.  In that
+case, the public procedure implementing the entry point passes to the
+master private procedure implementing all the code for the entry points
+a `NULL' pointer where a pointer to that adjustable array would be
+expected.  The `g77'-generated code doesn't attempt to evaluate any of
+the expressions in the subscripts for an array if the pointer to that
+array is `NULL' at run time in such cases.  (Don't depend on this
+particular implementation by writing code that purposely passes `NULL'
+pointers where the callee expects adjustable arrays, even if you know
+the callee won't reference the arrays--nor should you pass `NULL'
+pointers for any dummy arguments used in calculating the bounds of such
+arrays or leave undefined any values used for that purpose in
+COMMON--because the way `g77' implements these things might change in
+the future!)
+
+
+File: g77.info,  Node: Alternate Returns,  Next: Functions,  Prev: Adjustable Arrays,  Up: Debugging and Interfacing
+
+Alternate Returns (SUBROUTINE and RETURN)
+=========================================
+
+   Subroutines with alternate returns (e.g. `SUBROUTINE X(*)' and `CALL
+X(*50)') are implemented by `g77' as functions returning the C `int'
+type.  The actual alternate-return arguments are omitted from the
+calling sequence.  Instead, the caller uses the return value to do a
+rough equivalent of the Fortran computed-`GOTO' statement, as in `GOTO
+(50), X()' in the example above (where `X' is quietly declared as an
+`INTEGER' function), and the callee just returns whatever integer is
+specified in the `RETURN' statement for the subroutine For example,
+`RETURN 1' is implemented as `X = 1' followed by `RETURN' in C, and
+`RETURN' by itself is `X = 0' and `RETURN').
+
+
+File: g77.info,  Node: Functions,  Next: Common Blocks,  Prev: Alternate Returns,  Up: Debugging and Interfacing
+
+Functions (FUNCTION and RETURN)
+===============================
+
+   `g77' handles in a special way functions that return the following
+types:
+
+   * `CHARACTER'
+
+   * `COMPLEX' (and `DOUBLE COMPLEX')
+
+   * `REAL'
+
+   For `CHARACTER', `g77' implements a subroutine (a C function
+returning `void') with two arguments prepended: `__g77_result', which
+the caller passes as a pointer to a `char' array expected to hold the
+return value, and `__g77_length', which the caller passes as an
+`ftnlen' value specifying the length of the return value as declared in
+the calling program.  For `CHARACTER'*(*), the called function uses
+`__g77_length' to determine the size of the array that `__g77_result'
+points to; otherwise, it ignores that argument.
+
+   For `COMPLEX' and `DOUBLE COMPLEX', when `-ff2c' is in force, `g77'
+implements a subroutine with one argument prepended: `__g77_result',
+which the caller passes as a pointer to a variable of the type of the
+function.  The called function writes the return value into this
+variable instead of returning it as a function value.  When `-fno-f2c'
+is in force, `g77' implements a `COMPLEX' function as `gcc''s
+`__complex__ float' function, returning the result of the function in
+the same way as `gcc' would, and implements a `DOUBLE COMPLEX' function
+similarly.
+
+   For `REAL', when `-ff2c' is in force, `g77' implements a function
+that actually returns `DOUBLE PRECISION' (usually C's `double' type).
+When `-fno-f2c' is in force, `REAL' functions return `float'.
+
+
+File: g77.info,  Node: Common Blocks,  Next: Local Equivalence Areas,  Prev: Functions,  Up: Debugging and Interfacing
+
+Common Blocks (COMMON)
+======================
+
+   `g77' names and lays out `COMMON' areas the same way f2c does, for
+compatibility with f2c.
+
+   Currently, `g77' does not emit any debugging information for items
+in a `COMMON' area, due to an apparent bug in the GBE.
+
+   Moreover, `g77' currently implements a `COMMON' area such that its
+type is an array of the C `char' data type.
+
+   So, when debugging, you must know the offset into a `COMMON' area
+for a particular item in that area, and you have to take into account
+the appropriate multiplier for the respective sizes of the types (as
+declared in your code) for the items preceding the item in question as
+compared to the size of the `char' type.
+
+   For example, using default implicit typing, the statement
+
+     COMMON I(15), R(20), T
+
+results in a public 144-byte `char' array named `_BLNK__' with `I'
+placed at `_BLNK__[0]', `R' at `_BLNK__[60]', and `T' at `_BLNK__[140]'.
+(This is assuming that the target machine for the compilation has
+4-byte `INTEGER' and `REAL' types.)
+
+
+File: g77.info,  Node: Local Equivalence Areas,  Next: Alternate Entry Points,  Prev: Common Blocks,  Up: Debugging and Interfacing
+
+Local Equivalence Areas (EQUIVALENCE)
+=====================================
+
+   `g77' treats storage-associated areas involving a `COMMON' block as
+explained in the section on common blocks.
+
+   A local `EQUIVALENCE' area is a collection of variables and arrays
+connected to each other in any way via `EQUIVALENCE', none of which are
+listed in a `COMMON' statement.
+
+   Currently, `g77' does not emit any debugging information for items
+in a local `EQUIVALENCE' area, due to an apparent bug in the GBE.
+
+   Moreover, `g77' implements a local `EQUIVALENCE' area such that its
+type is an array of the C `char' data type.
+
+   The name `g77' gives this array of `char' type is `__g77_equiv_X',
+where X is the name of the first item listed in the `EQUIVALENCE'
+statements for that area that is placed at the beginning (offset 0) of
+this array.
+
+   When debugging, you must therefore access members of `EQUIVALENCE'
+areas by specifying the appropriate `__g77_equiv_X' array section with
+the appropriate offset.  See the explanation of debugging `COMMON'
+blocks for info applicable to debugging local `EQUIVALENCE' areas.
+
+   (Note: `g77' version 0.5.16 fixed a bug in how certain `EQUIVALENCE'
+cases were handled.  The bug caused the debugger to not know the size
+of the array if any variable or array in the `EQUIVALENCE' was given an
+initial value via `DATA' or similar.)
+
+
+File: g77.info,  Node: Alternate Entry Points,  Next: Assigned Statement Labels,  Prev: Local Equivalence Areas,  Up: Debugging and Interfacing
+
+Alternate Entry Points (ENTRY)
+==============================
+
+   The GBE does not understand the general concept of alternate entry
+points as Fortran provides via the ENTRY statement.  `g77' gets around
+this by using an approach to compiling procedures having at least one
+`ENTRY' statement that is almost identical to the approach used by
+`f2c'.  (An alternate approach could be used that would probably
+generate faster, but larger, code that would also be a bit easier to
+debug.)
+
+   Information on how `g77' implements `ENTRY' is provided for those
+trying to debug such code.  The choice of implementation seems unlikely
+to affect code (compiled in other languages) that interfaces to such
+code.
+
+   `g77' compiles exactly one public procedure for the primary entry
+point of a procedure plus each `ENTRY' point it specifies, as usual.
+That is, in terms of the public interface, there is no difference
+between
+
+     SUBROUTINE X
+     END
+     SUBROUTINE Y
+     END
+
+and:
+
+     SUBROUTINE X
+     ENTRY Y
+     END
+
+   The difference between the above two cases lies in the code compiled
+for the `X' and `Y' procedures themselves, plus the fact that, for the
+second case, an extra internal procedure is compiled.
+
+   For every Fortran procedure with at least one `ENTRY' statement,
+`g77' compiles an extra procedure named `__g77_masterfun_X', where X is
+the name of the primary entry point (which, in the above case, using
+the standard compiler options, would be `x_' in C).
+
+   This extra procedure is compiled as a private procedure--that is, a
+procedure not accessible by name to separately compiled modules.  It
+contains all the code in the program unit, including the code for the
+primary entry point plus for every entry point.  (The code for each
+public procedure is quite short, and explained later.)
+
+   The extra procedure has some other interesting characteristics.
+
+   The argument list for this procedure is invented by `g77'.  It
+contains a single integer argument named `__g77_which_entrypoint',
+passed by value (as in Fortran's `%VAL()' intrinsic), specifying the
+entry point index--0 for the primary entry point, 1 for the first entry
+point (the first `ENTRY' statement encountered), 2 for the second entry
+point, and so on.
+
+   It also contains, for functions returning `CHARACTER' and (when
+`-ff2c' is in effect) `COMPLEX' functions, and for functions returning
+different types among the `ENTRY' statements (e.g. `REAL FUNCTION R()'
+containing `ENTRY I()'), an argument named `__g77_result' that is
+expected at run time to contain a pointer to where to store the result
+of the entry point.  For `CHARACTER' functions, this storage area is an
+array of the appropriate number of characters; for `COMPLEX' functions,
+it is the appropriate area for the return type (currently either
+`COMPLEX' or `DOUBLE COMPLEX'); for multiple- return-type functions, it
+is a union of all the supported return types (which cannot include
+`CHARACTER', since combining `CHARACTER' and non-`CHARACTER' return
+types via `ENTRY' in a single function is not supported by `g77').
+
+   For `CHARACTER' functions, the `__g77_result' argument is followed
+by yet another argument named `__g77_length' that, at run time,
+specifies the caller's expected length of the returned value.  Note
+that only `CHARACTER*(*)' functions and entry points actually make use
+of this argument, even though it is always passed by all callers of
+public `CHARACTER' functions (since the caller does not generally know
+whether such a function is `CHARACTER*(*)' or whether there are any
+other callers that don't have that information).
+
+   The rest of the argument list is the union of all the arguments
+specified for all the entry points (in their usual forms, e.g.
+`CHARACTER' arguments have extra length arguments, all appended at the
+end of this list).  This is considered the "master list" of arguments.
+
+   The code for this procedure has, before the code for the first
+executable statement, code much like that for the following Fortran
+statement:
+
+            GOTO (100000,100001,100002), __g77_which_entrypoint
+     100000 ...code for primary entry point...
+     100001 ...code immediately following first ENTRY statement...
+     100002 ...code immediately following second ENTRY statement...
+
+(Note that invalid Fortran statement labels and variable names are used
+in the above example to highlight the fact that it represents code
+generated by the `g77' internals, not code to be written by the user.)
+
+   It is this code that, when the procedure is called, picks which
+entry point to start executing.
+
+   Getting back to the public procedures (`x' and `Y' in the original
+example), those procedures are fairly simple.  Their interfaces are
+just like they would be if they were self-contained procedures (without
+`ENTRY'), of course, since that is what the callers expect.  Their code
+consists of simply calling the private procedure, described above, with
+the appropriate extra arguments (the entry point index, and perhaps a
+pointer to a multiple-type- return variable, local to the public
+procedure, that contains all the supported returnable non-character
+types).  For arguments that are not listed for a given entry point that
+are listed for other entry points, and therefore that are in the
+"master list" for the private procedure, null pointers (in C, the
+`NULL' macro) are passed.  Also, for entry points that are part of a
+multiple-type- returning function, code is compiled after the call of
+the private procedure to extract from the multi-type union the
+appropriate result, depending on the type of the entry point in
+question, returning that result to the original caller.
+
+   When debugging a procedure containing alternate entry points, you
+can either set a break point on the public procedure itself (e.g.  a
+break point on `X' or `Y') or on the private procedure that contains
+most of the pertinent code (e.g. `__g77_masterfun_X').  If you do the
+former, you should use the debugger's command to "step into" the called
+procedure to get to the actual code; with the latter approach, the
+break point leaves you right at the actual code, skipping over the
+public entry point and its call to the private procedure (unless you
+have set a break point there as well, of course).
+
+   Further, the list of dummy arguments that is visible when the
+private procedure is active is going to be the expanded version of the
+list for whichever particular entry point is active, as explained
+above, and the way in which return values are handled might well be
+different from how they would be handled for an equivalent single-entry
+function.
+
+
+File: g77.info,  Node: Assigned Statement Labels,  Prev: Alternate Entry Points,  Up: Debugging and Interfacing
+
+Assigned Statement Labels (ASSIGN and GOTO)
+===========================================
+
+   For portability to machines where a pointer (such as to a label,
+which is how `g77' implements `ASSIGN' and its cousin, the assigned
+`GOTO') is wider (bitwise) than an `INTEGER', `g77' does not
+necessarily use the same memory location to hold the `ASSIGN'ed value
+of a variable as it does the numerical value in that variable, unless
+the variable is wide enough (can hold enough bits).
+
+   In particular, while `g77' implements
+
+     I = 10
+
+as, in C notation, `i = 10;', it might implement
+
+     ASSIGN 10 TO I
+
+as, in GNU's extended C notation (for the label syntax),
+`__g77_ASSIGN_I = &&L10;' (where `L10' is just a massaging of the
+Fortran label `10' to make the syntax C-like; `g77' doesn't actually
+generate the name `L10' or any other name like that, since debuggers
+cannot access labels anyway).
+
+   While this currently means that an `ASSIGN' statement might not
+overwrite the numeric contents of its target variable, *do not* write
+any code depending on this feature.  `g77' has already changed this
+implementation across versions and might do so in the future.  This
+information is provided only to make debugging Fortran programs
+compiled with the current version of `g77' somewhat easier.  If there's
+no debugger-visible variable named `__g77_ASSIGN_I' in a program unit
+that does `ASSIGN 10 TO I', that probably means `g77' has decided it
+can store the pointer to the label directly into `I' itself.
+
+   (Currently, `g77' always chooses to make the separate variable, to
+improve the likelihood that `-O -Wuninitialized' will diagnose failures
+to do things like `GOTO I' without `ASSIGN 10 TO I' despite doing
+`I=5'.)
+
+
+File: g77.info,  Node: Collected Fortran Wisdom,  Next: Trouble,  Prev: Debugging and Interfacing,  Up: Top
+
+Collected Fortran Wisdom
+************************
+
+   Most users of `g77' can be divided into two camps:
+
+   * Those writing new Fortran code to be compiled by `g77'.
+
+   * Those using `g77' to compile existing, "legacy" code.
+
+   Users writing new code generally understand most of the necessary
+aspects of Fortran to write "mainstream" code, but often need help
+deciding how to handle problems, such as the construction of libraries
+containing `BLOCK DATA'.
+
+   Users dealing with "legacy" code sometimes don't have much
+experience with Fortran, but believe that the code they're compiling
+already works when compiled by other compilers (and might not
+understand why, as is sometimes the case, it doesn't work when compiled
+by `g77').
+
+   The following information is designed to help users do a better job
+coping with existing, "legacy" Fortran code, and with writing new code
+as well.
+
+* Menu:
+
+* Overly Convenient Options::  Temptations to avoid, habits to not form.
+* Block Data and Libraries::   How `g77' solves a common problem.
+* Faster Programs::            Everybody wants these, but at what cost?
+* Working Programs::           Getting programs to work should be done first.
+* Loops::                      Fortran `DO' loops surprise many people.
+* Advantages Over f2c::        If `f2c' is so great, why `g77'?
+
+
+File: g77.info,  Node: Overly Convenient Options,  Next: Block Data and Libraries,  Up: Collected Fortran Wisdom
+
+Overly Convenient Command-line Options
+======================================
+
+   These options should be used only as a quick-and-dirty way to
+determine how well your program will run under different compilation
+models without having to change the source.  Some are more problematic
+than others, depending on how portable and maintainable you want the
+program to be (and, of course, whether you are allowed to change it at
+all is crucial).
+
+   You should not continue to use these command-line options to compile
+a given program, but rather should make changes to the source code:
+
+`-finit-local-zero'
+     (This option specifies that any uninitialized local variables and
+     arrays have default initialization to binary zeros.)
+
+     Many other compilers do this automatically, which means lots of
+     Fortran code developed with those compilers depends on it.
+
+     It is safer (and probably would produce a faster program) to find
+     the variables and arrays that need such initialization and provide
+     it explicitly via `DATA', so that `-finit-local-zero' is not
+     needed.
+
+     Consider using `-Wuninitialized' (which requires `-O') to find
+     likely candidates, but do not specify `-finit-local-zero' or
+     `-fno-automatic', or this technique won't work.
+
+`-fno-automatic'
+     (This option specifies that all local variables and arrays are to
+     be treated as if they were named in `SAVE' statements.)
+
+     Many other compilers do this automatically, which means lots of
+     Fortran code developed with those compilers depends on it.
+
+     The effect of this is that all variables and arrays are made
+     static, that is, not placed on the stack or in heap storage.  This
+     might cause a buggy program to appear to work better.  If so,
+     rather than relying on this command-line option (and hoping all
+     compilers provide the equivalent one), add `SAVE' statements to
+     some or all program unit sources, as appropriate.  Consider using
+     `-Wuninitialized' (which requires `-O') to find likely candidates,
+     but do not specify `-finit-local-zero' or `-fno-automatic', or
+     this technique won't work.
+
+     The default is `-fautomatic', which tells `g77' to try and put
+     variables and arrays on the stack (or in fast registers) where
+     possible and reasonable.  This tends to make programs faster.
+
+`-fugly'
+     Fix the source code so that `-fno-ugly' will work.  Note that, for
+     many programs, it is difficult to practically avoid using the
+     features enabled via `-fugly-init', and these features pose the
+     lowest risk of writing nonportable code, among the various "ugly"
+     features.
+
+`-fGROUP-intrinsics-hide'
+     Change the source code to use `EXTERNAL' for any external procedure
+     that might be the name of an intrinsic.  It is easy to find these
+     using `-fGROUP-intrinsics-disable'.
+
+
+File: g77.info,  Node: Block Data and Libraries,  Next: Faster Programs,  Prev: Overly Convenient Options,  Up: Collected Fortran Wisdom
+
+Block Data and Libraries
+========================
+
+   To ensure that block data program units are linked, especially a
+concern when they are put into libraries, give each one a name (as in
+`BLOCK DATA FOO') and make sure there is an `EXTERNAL FOO' statement in
+every program unit that uses any common block initialized by the
+corresponding `BLOCK DATA'.  `g77' currently compiles a `BLOCK DATA' as
+if it were a `SUBROUTINE', that is, it generates an actual procedure
+having the appropriate name.  The procedure does nothing but return
+immediately if it happens to be called.  For `EXTERNAL FOO', where
+`FOO' is not otherwise referenced in the same program unit, `g77'
+assumes there exists a `BLOCK DATA FOO' in the program and ensures that
+by generating a reference to it so the linker will make sure it is
+present.  (Specifically, `g77' outputs in the data section a static
+pointer to the external name `FOO'.)
+
+   The implementation `g77' currently uses to make this work is one of
+the few things not compatible with `f2c' as currently shipped.  `f2c'
+currently does nothing with `EXTERNAL FOO' except issue a warning that
+`FOO' is not otherwise referenced, and for `BLOCK DATA FOO', f2c
+doesn't generate a dummy procedure with the name `FOO'.  The upshot is
+that you shouldn't mix `f2c' and `g77' in this particular case.  If you
+use f2c to compile `BLOCK DATA FOO', then any `g77'-compiled program
+unit that says `EXTERNAL FOO' will result in an unresolved reference
+when linked.  If you do the opposite, then `FOO' might not be linked in
+under various circumstances (such as when `FOO' is in a library, or
+you're using a "clever" linker--so clever, it produces a broken program
+with little or no warning by omitting initializations of global data
+because they are contained in unreferenced procedures).
+
+   The changes you make to your code to make `g77' handle this
+situation, however, appear to be a widely portable way to handle it.
+That is, many systems permit it (as they should, since the FORTRAN 77
+standard permits `EXTERNAL FOO' when `FOO' is a block data program
+unit), and of the ones that might not link `BLOCK DATA FOO' under some
+circumstances, most of them appear to do so once `EXTERNAL FOO' is
+present in the appropriate program units.
+
+
+File: g77.info,  Node: Faster Programs,  Next: Working Programs,  Prev: Block Data and Libraries,  Up: Collected Fortran Wisdom
+
+Faster Programs
+===============
+
+   Aside from the usual `gcc' options, such as `-O', `-ffast-math', and
+so on, consider trying:
+
+`-fno-f2c'
+     Use this if you aren't linking with any code compiled using `f2c'.
+     (Note that `libf2c' is *not* an example of code that is compiled
+     using `f2c'--it is compiled by a C compiler, usually `gcc'.)
+
+   If you're using `-fno-automatic' already, you probably should change
+your code to allow compilation with `-fautomatic' (the default), to
+allow the program to run faster.
+
+   Similarly, you should be able to use `-fno-init-local-zero' (the
+default) instead of `-finit-local-zero'.  This is because it is rare
+that every variable affected by these options in a given program
+actually needs to be so affected.
+
+   For example, `-fno-automatic', which effectively `SAVE's every local
+variable and array, affects even things like `DO' iteration variables,
+which rarely need to be `SAVE'd, and this often reduces run-time
+performances.  Similarly, `-fno-init-local-zero' forces such variables
+to be initialized to zero--when `SAVE'd (such as when
+`-fno-automatic'), this by itself generally affects only startup time
+for a program, but when not `SAVE'd, it can slow down the procedure
+every time it is called.
+
+   *Note Overly Convenient Command-Line Options: Overly Convenient
+Options, for information on the `-fno-automatic' and
+`-finit-local-zero' options and how to convert their use into selective
+changes in your own code.
+
+
+File: g77.info,  Node: Working Programs,  Next: Loops,  Prev: Faster Programs,  Up: Collected Fortran Wisdom
+
+Working Programs
+================
+
+   Getting Fortran programs to work in the first place can be quite a
+challenge--even when the programs already work on other systems, or
+when using other compilers.
+
+   `g77' offers some options that might be useful for tracking down
+bugs in such programs.  *Note Option Summary::, for a summary of these
+and other options, and cross-references for each such option to the
+pertinent material in this manual.
+
+`-finit-local-zero'
+     A program that works better when compiled with this option is
+     depending on a particular system's, or compiler's, tendency to
+     initialize some variables to zero.  It might be worthwhile finding
+     such cases and fixing them.
+
+`-fno-automatic'
+     A program that works better when compiled with this option is
+     depending on not having to use the `SAVE' statement as required by
+     the Fortran standard.  It might be worthwhile finding such cases
+     and fixing them.
+
+`-Wimplicit'
+     This might catch failures to properly specify the types of
+     variables, arrays, and functions in the code.  However, in code
+     that makes heavy use of Fortran's implicit-typing facility, this
+     option might produce so many warnings about cases that are
+     working, it would be hard to find the one or two that represent
+     bugs.
+
+`-Wunused'
+     This can find bugs involving implicitly typing, sometimes more
+     easily than using -Wimplicit in code that makes heavy use of
+     implicit typing.  An unused variable or array might indicate that
+     the spelling for its declaration is different from that of its
+     intended uses.
+
+`-Wuninitialized'
+     This can find bugs involving uninitialized variables, which can in
+     turn result from misspellings in declaration statements.
+
+`-Wsurprising'
+     This can find bugs involving expression evaluation or in the way
+     `DO' loops with non-integral iteration variables are handled.
+     Cases found by this option might indicate a difference of
+     interpretation between the author of the code involved, and a
+     standard-conforming compiler such as `g77'.  Such a difference
+     might produce actual bugs.
+
+     In any case, changing the code to explicitly do what the
+     programmer might have expected it to do, so `g77' and other
+     compilers are more likely to follow the programmer's expectations,
+     might be worthwhile, especially if such changes make the program
+     work better.
+
+`-W'
+     It is possible that the "extra" warnings enabled by this option
+     could expose bugs in the code.
+
+
+File: g77.info,  Node: Loops,  Next: Advantages Over f2c,  Prev: Working Programs,  Up: Collected Fortran Wisdom
+
+Loops
+=====
+
+   The meaning of a `DO' loop in Fortran is precisely specified in the
+Fortran standard...and is quite different from what many programmers
+might expect.
+
+   In particular, Fortran `DO' loops are implemented as if the number
+of trips through the loop is calculated *before* the loop is entered.
+
+   The number of trips for a loop is calculated from the START, END,
+and INCREMENT values specified in a statement such as:
+
+     DO ITER = START, END, INCREMENT
+
+   The trip count is evaluated using a fairly simple formula based on
+the three values following the `=' in the statement, and it is that
+trip count that is effectively decremented during each iteration of the
+loop.  If, at the beginning of an iteration of the loop, the trip count
+is zero or negative, the loop terminates.  The per-loop-iteration
+modifications to ITER are not related to determining whether to
+terminate the loop.
+
+   There are two important things to remember about the trip count:
+
+   * It can be *negative*, in which case it is treated as if it was
+     zero--meaning the loop is not executed at all.
+
+   * The type used to *calculate* the trip count the same type as ITER,
+     but the final calculation, and thus the type of the trip count
+     itself, always is `INTEGER'.
+
+   These two items mean that there are loops that cannot be written in
+straightforward fashion using the Fortran `DO'.
+
+   For example, on a system with the canonical 32-bit two's-complement
+implementation of `INTEGER', the following loop will not work:
+
+     DO I = -2000000000, 2000000000
+
+Although the START and END values are well within the range of
+`INTEGER', the *trip count* is not.  The expected trip count is
+40000000001, which is outside the range of `INTEGER' on many systems.
+
+   Instead, the above loop should be constructed this way:
+
+     I = -2000000000
+     DO
+       IF (I .GT. 2000000000) EXIT
+       ...
+       I = I + 1
+     END DO
+
+The simple `DO' construct and the `EXIT' statement (used to leave the
+innermost loop) are F90 features that `g77' supports.
+
+   Some Fortran compilers have buggy implementations of `DO', in that
+they don't follow the standard.  They implement `DO' as a
+straightforward translation to what, in C, would be a `for' statement.
+Instead of creating a temporary variable to hold the trip count as
+calculated at run time, these compilers use the iteration variable ITER
+to control whether the loop continues at each iteration.
+
+   The bug in such an implementation shows up when the trip count is
+within the range of the type of ITER, but the magnitude of `ABS(END) +
+ABS(INCR)' exceeds that range.  For example:
+
+     DO I = 2147483600, 2147483647
+
+A loop started by the above statement will work as implemented by
+`g77', but the use, by some compilers, of a more C-like implementation
+akin to
+
+     for (i = 2147483600; i <= 2147483647; ++i)
+
+produces a loop that does not terminate, because `i' can never be
+greater than 2147483647, since incrementing it beyond that value
+overflows `i', setting it to -2147483648.  This is a large, negative
+number that still is less than 2147483647.
+
+   Another example of unexpected behavior of `DO' involves using a
+nonintegral iteration variable ITER, such as a `REAL' or `DOUBLE
+PRECISION' variable.  Consider the following program:
+
+           DATA BEGIN, END, STEP /.1, .31, .007/
+           DO 10 R = BEGIN, END, STEP
+              IF (R .GT. END) PRINT *, R, ' .GT. ', END, '!!'
+              PRINT *,R
+     10    CONTINUE
+           PRINT *,'LAST = ',R
+           IF (R .LE. END) PRINT *, R, ' .LE. ', END, '!!'
+           END
+
+A C-like view of `DO' would hold that the two "exclamatory" `PRINT' are
+never executed.  However, this is the output of running the above
+program as compiled by `g77' on a Linux ix86 system:
+
+      .100000001
+      .107000001
+      .114
+      .120999999
+      ...
+      .289000005
+      .296000004
+      .303000003
+     LAST =   .310000002
+      .310000002 .LE.   .310000002!!
+
+   Note that one of the two checks in the program turned up an apparent
+violation of the programmer's expectation--yet, the loop is correctly
+implemented by `g77', in that it has 30 iterations.  This trip count of
+30 is correct when evaluated using the floating-point representations
+for the BEGIN, END, and INCR values (.1, .31, .007) on Linux ix86 are
+used.  On other systems, an apparently more accurate trip count of 31
+might result, but, nevertheless, `g77' is faithfully following the
+Fortran standard, and the result is not what the author of the sample
+program above apparently expected.  (Such other systems might, for
+different values in the `DATA' statement, violate the other
+programmer's expectation, for example.)
+
+   Due to this combination of imprecise representation of
+floating-point values and the often-misunderstood interpretation of
+`DO' by standard-conforming compilers such as `g77', use of `DO' loops
+with `REAL' or `DOUBLE PRECISION' iteration variables is not
+recommended.  Such use can be caught by specifying `-Wsurprising'.
+*Note Warning Options::, for more information on this option.
+
+
+File: g77.info,  Node: Advantages Over f2c,  Prev: Loops,  Up: Collected Fortran Wisdom
+
+Advantages Over f2c
+===================
+
+   Without `f2c', `g77' would have taken much longer to do and probably
+not been as good for quite a while.  Sometimes people who notice how
+much `g77' depends on, and documents encouragement to use, `f2c' ask
+why `g77' was created if `f2c' already existed.
+
+   This section gives some basic answers to these questions, though it
+is not intended to be comprehensive.
+
+* Menu:
+
+* Language Extensions::  Features used by Fortran code.
+* Compiler Options::     Features helpful during development.
+* Compiler Speed::       Speed of the compilation process.
+* Program Speed::        Speed of the generated, optimized code.
+* Ease of Debugging::    Debugging ease-of-use at the source level.
+* Character and Hollerith Constants::  A byte saved is a byte earned.
+
+
+File: g77.info,  Node: Language Extensions,  Next: Compiler Options,  Up: Advantages Over f2c
+
+Language Extensions
+-------------------
+
+   `g77' offers several extensions to the Fortran language that `f2c'
+doesn't.
+
+   However, `f2c' offers a few that `g77' doesn't, like fairly complete
+support for `INTEGER*2'.  It is expected that `g77' will offer some or
+all of these missing features at some time in the future.  (Version
+0.5.18 of `g77' offers some rudimentary support for some of these
+features.)
+
+
+File: g77.info,  Node: Compiler Options,  Next: Compiler Speed,  Prev: Language Extensions,  Up: Advantages Over f2c
+
+Compiler Options
+----------------
+
+   `g77' offers a whole bunch of compiler options that `f2c' doesn't.
+
+   However, `f2c' offers a few that `g77' doesn't, like an option to
+generate code to check array subscripts at run time.  It is expected
+that `g77' will offer some or all of these missing options at some time
+in the future.
+
+
+File: g77.info,  Node: Compiler Speed,  Next: Program Speed,  Prev: Compiler Options,  Up: Advantages Over f2c
+
+Compiler Speed
+--------------
+
+   Saving the steps of writing and then rereading C code is a big reason
+why `g77' should be able to compile code much faster than using `f2c'
+in conjunction with the equivalent invocation of `gcc'.
+
+   However, due to `g77''s youth, lots of self-checking is still being
+performed.  As a result, this improvement is as yet unrealized (though
+the potential seems to be there for quite a big speedup in the future).
+It is possible that, as of version 0.5.18, `g77' is noticably faster
+compiling many Fortran source files than using `f2c' in conjunction
+with `gcc'.
+
+
+File: g77.info,  Node: Program Speed,  Next: Ease of Debugging,  Prev: Compiler Speed,  Up: Advantages Over f2c
+
+Program Speed
+-------------
+
+   `g77' has the potential to better optimize code than `f2c', even
+when `gcc' is used to compile the output of `f2c', because `f2c' must
+necessarily translate Fortran into a somewhat lower-level language (C)
+that cannot preserve all the information that is potentially useful for
+optimization, while `g77' can gather, preserve, and transmit that
+information directly to the GBE.
+
+   For example, `g77' implements `ASSIGN' and assigned `GOTO' using
+direct assignment of pointers to labels and direct jumps to labels,
+whereas `f2c' maps the assigned labels to integer values and then uses
+a C `switch' statement to encode the assigned `GOTO' statements.
+
+   However, as is typical, theory and reality don't quite match, at
+least not in all cases, so it is still the case that `f2c' plus `gcc'
+can generate code that is faster than `g77'.
+
+   It is hoped that version 0.5.18 of `g77' will offer default settings
+and options that allow for better program speed, though it is not yet
+known whether these same options, when applied to a `gcc' compilation
+of `f2c' output, will improve the speed of programs compiled using that
+method as well.
+
+
+File: g77.info,  Node: Ease of Debugging,  Next: Character and Hollerith Constants,  Prev: Program Speed,  Up: Advantages Over f2c
+
+Ease of Debugging
+-----------------
+
+   Because `g77' compiles directly to assembler code like `gcc',
+instead of translating to an intermediate language (C) as does `f2c',
+support for debugging can be better for `g77' than `f2c'.
+
+   However, although `g77' might be somewhat more "native" in terms of
+debugging support than `f2c' plus `gcc', there still are a lot of
+things "not quite right".  Many of the important ones should be
+resolved in the near future.
+
+   For example, `g77' doesn't have to worry about reserved names like
+`f2c' does.  Given `FOR = WHILE', `f2c' must necessarily translate this
+to something *other* than `for = while;', because C reserves those
+words.
+
+   However, `g77' does still uses things like an extra level of
+indirection for `ENTRY'-laden procedures--in this case, because the
+back end doesn't yet support multiple entry points.
+
+   Another example is that, given
+
+     COMMON A, B
+     EQUIVALENCE (B, C)
+
+the `g77' user should be able to access the variables directly, by name,
+without having to traverse C-like structures and unions, while `f2c' is
+unlikely to ever offer this ability (due to limitations in the C
+language).
+
+   However, due to apparent bugs in the back end, `g77' currently
+doesn't take advantage of this facility at all--it doesn't emit any
+debugging information for `COMMON' and `EQUIVALENCE' areas, other than
+information on the array of `char' it creates (and, in the case of
+local `EQUIVALENCE', names) for each such area.
+
+   Yet another example is arrays.  `g77' represents them to the debugger
+using the same "dimensionality" as in the source code, while `f2c' must
+necessarily convert them all to one-dimensional arrays to fit into the
+confines of the C language.  However, the level of support offered by
+debuggers for interactive Fortran-style access to arrays as compiled by
+`g77' can vary widely.  In some cases, it can actually be an advantage
+that `f2c' converts everything to widely supported C semantics.
+
+   In fairness, `g77' could do many of the things `f2c' does to get
+things working at least as well as `f2c'--for now, the maintainers have
+tended to prefer making `g77' work the way they think it is supposed
+to, and find help improving the other products (the GBE of `gcc';
+`gdb'; and so on) to get things working properly.
+
+
+File: g77.info,  Node: Character and Hollerith Constants,  Prev: Ease of Debugging,  Up: Advantages Over f2c
+
+Character and Hollerith Constants
+---------------------------------
+
+   To avoid the extensive hassle that would be needed to avoid this,
+`f2c' uses C character constants to encode character and Hollerith
+constants.  That means a constant like `'HELLO'' is translated to
+`"hello"' in C, which further means that an extra null byte is present
+at the end of the constant.  This null byte is superfluous.
+
+   `g77' does not generate such null bytes.  This represents significant
+savings of resources, such as on systems where `/dev/null' or
+`/dev/zero' represent bottlenecks in the systems' performance, because
+`g77' simply asks for fewer zeros from the operating system than `f2c'.
+
+
+File: g77.info,  Node: Trouble,  Next: Open Questions,  Prev: Collected Fortran Wisdom,  Up: Top
+
+Known Causes of Trouble with GNU Fortran
+****************************************
+
+   This section describes known problems that affect users of GNU
+Fortran.  Most of these are not GNU Fortran bugs per se--if they were,
+we would fix them.  But the result for a user may be like the result of
+a bug.
+
+   Some of these problems are due to bugs in other software, some are
+missing features that are too much work to add, and some are places
+where people's opinions differ as to what is best.
+
+   Information on bugs that show up when configuring, porting, building,
+or installing `g77' is not provided here.  *Note Problems Installing::.
+
+   (Note that some of this portion of the manual is lifted directly
+from the `gcc' manual, with minor modifications to tailor it to users
+of `g77'.  Anytime a bug seems to have more to do with the `gcc'
+portion of `g77', *Note Known Causes of Trouble with GNU CC:
+(gcc)Trouble.)
+
+* Menu:
+
+* But-bugs::         Bugs really in other programs.
+* Actual Bugs::      Bugs and misfeatures we will fix later.
+* Missing Features:: Features we already know we want to add later.
+* Disappointments::  Regrettable things we can't change.
+* Non-bugs::         Things we think are right, but some others disagree.
+* Warnings and Errors::  Which problems in your code get warnings,
+                         and which get errors.
+

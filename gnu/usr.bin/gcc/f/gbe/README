@@ -1,0 +1,33 @@
+951118
+
+This directory contains .diff files for various GNU CC distributions.
+The name of a file tells which version to which it applies.  Prior to
+gcc version 2.7.1, g77 will not build without the appropriate .diff
+file applied to the GNU CC distribution via patch.  That is because
+g77 needs certain changes to be made to the GNU CC back end, which
+it shares with not only the C front end, but with other GNU front
+ends (C++, Objective-C, Pascal, ADA, Chill, ...) as well.  Version
+2.7.1 of gcc includes the changes needed by g77 versions through 0.5.17.
+Future versions of g77 might again require changes to versions 2.7.1,
+and later versions, of gcc.
+
+This distribution of g77 is not supported for versions of gcc prior
+to 2.6.2.  The 2.6.3 patch file should work for version 2.6.2, but
+you should probably use gcc-2.6.3 in any case if that is possible.
+
+To apply a .diff file to, say, gcc 2.7.0, one might use the following
+command:
+
+    patch -p1 -d gcc-2.7.0 < gcc-2.7.0/f/gbe/2.7.0.diff
+
+If you are using a version of gcc more recent than the most
+recent .diff file's version, try the most recent .diff ONLY
+if the difference is in the third field.  E.g. the above
+patch might work on gcc-2.6.4 or gcc-2.6.5 if these were
+released.  On the other hand, it probably wouldn't work for
+a more major release like gcc-2.7.0 or gcc-3.0.0, and you
+shouldn't try it.  If the .diff file is missing, don't bother
+asking `fortran@gnu.ai.mit.edu' for it -- it is certainly
+being worked on.  In the meantime, watch the usual channels
+(see gcc/f/DOC *TROUBLE (BUGS, ETC.)*) for information on
+support for the new version of gcc.

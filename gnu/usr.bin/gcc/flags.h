@@ -203,6 +203,20 @@ extern int flag_unroll_loops;
 
 extern int flag_unroll_all_loops;
 
+/* Nonzero forces all invariant computations in loops to be moved
+   outside the loop. */
+
+extern int flag_move_all_movables;
+
+/* Nonzero forces all general induction variables in loops to be
+   strength reduced. */
+
+extern int flag_reduce_all_givs;
+
+/* Nonzero gets another run of loop_optimize performed. */
+
+extern int flag_rerun_loop_opt;
+
 /* Nonzero for -fcse-follow-jumps:
    have cse follow jumps to do a more extensive job.  */
 

@@ -1,0 +1,938 @@
+This is Info file g77.info, produced by Makeinfo-1.64 from the input
+file g77.texi.
+
+   This file explains how to use the GNU Fortran system.
+
+   Published by the Free Software Foundation 59 Temple Place - Suite 330
+Boston, MA 02111-1307 USA
+
+   Copyright (C) 1995, 1996 Free Software Foundation, Inc.
+
+   Permission is granted to make and distribute verbatim copies of this
+manual provided the copyright notice and this permission notice are
+preserved on all copies.
+
+   Permission is granted to copy and distribute modified versions of
+this manual under the conditions for verbatim copying, provided also
+that the sections entitled "GNU General Public License," "Funding for
+Free Software," and "Protect Your Freedom--Fight `Look And Feel'" are
+included exactly as in the original, and provided that the entire
+resulting derived work is distributed under the terms of a permission
+notice identical to this one.
+
+   Permission is granted to copy and distribute translations of this
+manual into another language, under the above conditions for modified
+versions, except that the sections entitled "GNU General Public
+License," "Funding for Free Software," and "Protect Your Freedom--Fight
+`Look And Feel'", and this permission notice, may be included in
+translations approved by the Free Software Foundation instead of in the
+original English.
+
+   Contributed by James Craig Burley (`burley@gnu.ai.mit.edu').
+Inspired by a first pass at translating `g77-0.5.16/f/DOC' that was
+contributed to Craig by David Ronis (`ronis@onsager.chem.mcgill.ca').
+
+
+File: g77.info,  Node: Index,  Prev: Projects,  Up: Top
+
+Index
+*****
+
+* Menu:
+
+* #define:                              Overall Options.
+* #if:                                  Overall Options.
+* #include:                             Overall Options.
+* %DESCR() intrinsic <1>:               Extensions.
+* %DESCR() intrinsic:                   Changes.
+* %LOC() intrinsic:                     Extensions.
+* %REF() intrinsic:                     Extensions.
+* %VAL() intrinsic:                     Extensions.
+* *N notation:                          Types.
+* --driver option <1>:                  Invoking G77.
+* --driver option:                      G77 and GCC.
+* -fGROUP-intrinsics-hide option:       Overly Convenient Options.
+* -fcaller-saves option:                Optimize Options.
+* -fcase-initcap option:                Fortran Dialect Options.
+* -fcase-lower option:                  Fortran Dialect Options.
+* -fcase-preserve option:               Fortran Dialect Options.
+* -fcase-strict-lower option:           Fortran Dialect Options.
+* -fcase-strict-upper option:           Fortran Dialect Options.
+* -fcase-upper option:                  Fortran Dialect Options.
+* -fdcp-intrinsics-delete option:       Fortran Dialect Options.
+* -fdcp-intrinsics-disable option:      Fortran Dialect Options.
+* -fdcp-intrinsics-enable option:       Fortran Dialect Options.
+* -fdcp-intrinsics-hide option:         Fortran Dialect Options.
+* -fdelayed-branch option:              Optimize Options.
+* -fdollar-ok option:                   Fortran Dialect Options.
+* -fexpensive-optimizations option:     Optimize Options.
+* -ff2c-intrinsics-delete option:       Fortran Dialect Options.
+* -ff2c-intrinsics-disable option:      Fortran Dialect Options.
+* -ff2c-intrinsics-enable option:       Fortran Dialect Options.
+* -ff2c-intrinsics-hide option:         Fortran Dialect Options.
+* -ff2c-library option:                 Code Gen Options.
+* -ff90 option:                         Fortran Dialect Options.
+* -ff90-intrinsics-delete option:       Fortran Dialect Options.
+* -ff90-intrinsics-disable option:      Fortran Dialect Options.
+* -ff90-intrinsics-enable option:       Fortran Dialect Options.
+* -ff90-intrinsics-hide option:         Fortran Dialect Options.
+* -ff90-not-vxt option:                 Fortran Dialect Options.
+* -ffast-math option:                   Optimize Options.
+* -ffixed-line-length-N option:         Fortran Dialect Options.
+* -ffloat-store option:                 Optimize Options.
+* -fforce-addr option:                  Optimize Options.
+* -fforce-mem option:                   Optimize Options.
+* -ffree-form option:                   Fortran Dialect Options.
+* -finit-local-zero option <1>:         Overly Convenient Options.
+* -finit-local-zero option:             Code Gen Options.
+* -fintrin-case-any option:             Fortran Dialect Options.
+* -fintrin-case-initcap option:         Fortran Dialect Options.
+* -fintrin-case-lower option:           Fortran Dialect Options.
+* -fintrin-case-upper option:           Fortran Dialect Options.
+* -fmatch-case-any option:              Fortran Dialect Options.
+* -fmatch-case-initcap option:          Fortran Dialect Options.
+* -fmatch-case-lower option:            Fortran Dialect Options.
+* -fmatch-case-upper option:            Fortran Dialect Options.
+* -fmil-intrinsics-delete option:       Fortran Dialect Options.
+* -fmil-intrinsics-disable option:      Fortran Dialect Options.
+* -fmil-intrinsics-enable option:       Fortran Dialect Options.
+* -fmil-intrinsics-hide option:         Fortran Dialect Options.
+* -fno-automatic option <1>:            Overly Convenient Options.
+* -fno-automatic option:                Code Gen Options.
+* -fno-backslash option:                Fortran Dialect Options.
+* -fno-common option:                   Code Gen Options.
+* -fno-f2c option <1>:                  Faster Programs.
+* -fno-f2c option:                      Code Gen Options.
+* -fno-fixed-form option:               Fortran Dialect Options.
+* -fno-ident option:                    Code Gen Options.
+* -fno-inline option:                   Optimize Options.
+* -fno-second-underscore option:        Code Gen Options.
+* -fno-ugly-args option:                Warning Options.
+* -fno-ugly-init option:                Warning Options.
+* -fno-underscoring option:             Code Gen Options.
+* -fpack-struct option:                 Code Gen Options.
+* -fpcc-struct-return option:           Code Gen Options.
+* -fpedantic option:                    Warning Options.
+* -fPIC option:                         Actual Bugs.
+* -freg-struct-return option:           Code Gen Options.
+* -frerun-cse-after-loop option:        Optimize Options.
+* -fschedule-insns option:              Optimize Options.
+* -fschedule-insns2 option:             Optimize Options.
+* -fset-g77-defaults option:            Overall Options.
+* -fshort-double option:                Code Gen Options.
+* -fsource-case-lower option:           Fortran Dialect Options.
+* -fsource-case-preserve option:        Fortran Dialect Options.
+* -fsource-case-upper option:           Fortran Dialect Options.
+* -fstrength-reduce option:             Optimize Options.
+* -fsymbol-case-any option:             Fortran Dialect Options.
+* -fsymbol-case-initcap option:         Fortran Dialect Options.
+* -fsymbol-case-lower option:           Fortran Dialect Options.
+* -fsymbol-case-upper option:           Fortran Dialect Options.
+* -fsyntax-only option:                 Warning Options.
+* -fugly option <1>:                    Actual Bugs.
+* -fugly option <2>:                    Overly Convenient Options.
+* -fugly option:                        Warning Options.
+* -funix-intrinsics-delete option:      Fortran Dialect Options.
+* -funix-intrinsics-disable option:     Fortran Dialect Options.
+* -funix-intrinsics-enable option:      Fortran Dialect Options.
+* -funix-intrinsics-hide option:        Fortran Dialect Options.
+* -funroll-all-loops option:            Optimize Options.
+* -funroll-loops option:                Optimize Options.
+* -fversion option:                     Overall Options.
+* -fvxt-intrinsics-delete option:       Fortran Dialect Options.
+* -fvxt-intrinsics-disable option:      Fortran Dialect Options.
+* -fvxt-intrinsics-enable option:       Fortran Dialect Options.
+* -fvxt-intrinsics-hide option:         Fortran Dialect Options.
+* -fvxt-not-f90 option:                 Fortran Dialect Options.
+* -fzeros option:                       Code Gen Options.
+* -g option:                            Debugging Options.
+* -I- option:                           Directory Options.
+* -Idir option:                         Directory Options.
+* -pedantic option:                     Warning Options.
+* -pedantic-errors option:              Warning Options.
+* -u option:                            Warning Options.
+* -v option:                            G77 and GCC.
+* -w option:                            Warning Options.
+* -Waggregate-return option:            Warning Options.
+* -Wall option:                         Warning Options.
+* -Wcomment option:                     Warning Options.
+* -Wconversion option:                  Warning Options.
+* -Werror option:                       Warning Options.
+* -Wformat option:                      Warning Options.
+* -Wid-clash-LEN option:                Warning Options.
+* -Wimplicit option:                    Warning Options.
+* -Wlarger-than-LEN option:             Warning Options.
+* -Wparentheses option:                 Warning Options.
+* -Wredundant-decls option:             Warning Options.
+* -Wshadow option:                      Warning Options.
+* -Wsurprising option:                  Warning Options.
+* -Wswitch option:                      Warning Options.
+* -Wtraditional option:                 Warning Options.
+* -Wuninitialized option:               Warning Options.
+* -Wunused option:                      Warning Options.
+* .F:                                   Overall Options.
+* .fpp:                                 Overall Options.
+* /WARNINGS=DECLARATIONS switch:        Warning Options.
+* 64-bit systems:                       Alpha Problems.
+* bison:                                Missing bison?.
+* g77, installation of:                 Installation of Binaries.
+* gcc versions supported by g77:        Merging Distributions.
+* gcc, installation of:                 Installation of Binaries.
+* gdb support:                          But-bugs.
+* makeinfo:                             Missing makeinfo?.
+* _strtoul:                             General Problems.
+* ABORT() intrinsic:                    Fortran Dialect Options.
+* ACCEPT statement:                     Missing Features.
+* adding options:                       Adding Options.
+* adjustable arrays:                    Adjustable Arrays.
+* aggregate initialization:             Large Initialization.
+* all warnings:                         Warning Options.
+* Alpha support:                        Actual Bugs.
+* Alpha, bugs:                          Alpha Problems.
+* alternate entry points:               Alternate Entry Points.
+* alternate returns:                    Alternate Returns.
+* AND intrinsic:                        Missing Features.
+* ANSI FORTRAN 77 support:              Standard Support.
+* arguments, unused:                    Warning Options.
+* array ordering:                       Arrays.
+* arrays:                               Arrays.
+* arrays, adjustable:                   Adjustable Arrays.
+* arrays, automatic:                    Adjustable Arrays.
+* arrays, dimensioning:                 Adjustable Arrays.
+* as command:                           What is GNU Fortran?.
+* assembler:                            What is GNU Fortran?.
+* assembly code:                        What is GNU Fortran?.
+* assembly code, invalid:               Bug Criteria.
+* ASSIGN statement:                     Assigned Statement Labels.
+* assigned statement labels:            Assigned Statement Labels.
+* automatic arrays:                     Adjustable Arrays.
+* back end, gcc:                        What is GNU Fortran?.
+* backslash <1>:                        Non-bugs.
+* backslash:                            Fortran Dialect Options.
+* backtrace for bug reports:            Bug Reporting.
+* basic concepts:                       What is GNU Fortran?.
+* beginners:                            Getting Started.
+* binaries, distributing:               Distributing Binaries.
+* bit patterns:                         Floating-point Bit Patterns.
+* block data:                           Disappointments.
+* block data and libraries:             Block Data and Libraries.
+* BLOCK DATA statement <1>:             Disappointments.
+* BLOCK DATA statement:                 Block Data and Libraries.
+* bootstrap build:                      Bootstrap Build.
+* bug criteria:                         Bug Criteria.
+* bug report mailing lists:             Bug Lists.
+* bugs <1>:                             Bugs.
+* bugs:                                 What is GNU Fortran?.
+* bugs, known:                          Trouble.
+* build, bootstrap:                     Bootstrap Build.
+* build, straight:                      Straight Build.
+* building g77:                         Building gcc.
+* building gcc:                         Building gcc.
+* but-bugs:                             But-bugs.
+* C preprocessor:                       Overall Options.
+* C routines calling Fortran:           Debugging and Interfacing.
+* calling C routines:                   Debugging and Interfacing.
+* card image:                           Fortran Dialect Options.
+* carriage returns:                     Source Form.
+* case sensitivity:                     Case Sensitivity.
+* cc1 program:                          What is GNU Fortran?.
+* cc1plus program:                      What is GNU Fortran?.
+* changes, user-visible:                Changes.
+* character constants <1>:              Character and Hollerith Constants.
+* character constants <2>:              Distensions.
+* character constants <3>:              Dialects.
+* character constants:                  Fortran Dialect Options.
+* character set:                        Fortran Dialect Options.
+* characters, comment:                  Dialects.
+* characters, continuation:             Dialects.
+* CLOSE statement:                      Missing Features.
+* code generation conventions:          Code Gen Options.
+* code generation, improving:           Better Optimization.
+* code generator:                       What is GNU Fortran?.
+* code, assembly:                       What is GNU Fortran?.
+* code, displaying main source:         Actual Bugs.
+* code, distributing:                   Distributing Binaries.
+* code, in-line:                        What is GNU Fortran?.
+* code, legacy:                         Collected Fortran Wisdom.
+* code, machine:                        What is GNU Fortran?.
+* code, modifying:                      Unpacking.
+* code, object:                         Object Compatibility.
+* code, source <1>:                     Unpacking.
+* code, source <2>:                     Case Sensitivity.
+* code, source <3>:                     Source Form.
+* code, source:                         What is GNU Fortran?.
+* code, stack variables:                Maximum Stackable Size.
+* code, user:                           But-bugs.
+* code, writing:                        Collected Fortran Wisdom.
+* column-major ordering:                Arrays.
+* command options:                      Invoking G77.
+* commands, as:                         What is GNU Fortran?.
+* commands, f77:                        Installing f77.
+* commands, g77 <1>:                    G77 and GCC.
+* commands, g77:                        What is GNU Fortran?.
+* commands, gcc <1>:                    G77 and GCC.
+* commands, gcc:                        What is GNU Fortran?.
+* commands, gdb:                        What is GNU Fortran?.
+* commands, ld:                         What is GNU Fortran?.
+* comment character:                    Dialects.
+* common blocks <1>:                    Actual Bugs.
+* common blocks:                        Common Blocks.
+* COMMON blocks:                        Debugging Options.
+* common blocks, large:                 But-bugs.
+* COMMON statement <1>:                 Disappointments.
+* COMMON statement:                     Common Blocks.
+* compatibility <1>:                    Faster Programs.
+* compatibility <2>:                    Block Data and Libraries.
+* compatibility:                        Object Compatibility.
+* compatibility, f2c:                   Code Gen Options.
+* compilation, in-line:                 Optimize Options.
+* compilation, pedantic:                Pedantic Compilation.
+* compiler bugs, reporting:             Bug Reporting.
+* compiler memory usage:                Actual Bugs.
+* compiler speed:                       Actual Bugs.
+* compilers:                            What is GNU Fortran?.
+* compilers, compatibility:             Object Compatibility.
+* compiling programs:                   G77 and GCC.
+* COMPLEX intrinsics:                   Fortran Dialect Options.
+* COMPLEX support:                      Actual Bugs.
+* COMPLEX type:                         Types.
+* components of g77:                    What is GNU Fortran?.
+* concepts, basic:                      What is GNU Fortran?.
+* conformance, IEEE:                    Optimize Options.
+* constants:                            Constants.
+* constants, character <1>:             Character and Hollerith Constants.
+* constants, character <2>:             Distensions.
+* constants, character:                 Dialects.
+* constants, Hollerith <1>:             Character and Hollerith Constants.
+* constants, Hollerith <2>:             Distensions.
+* constants, Hollerith:                 Changes.
+* constants, integer:                   Actual Bugs.
+* constants, octal:                     Dialects.
+* constants, typeless:                  Changes.
+* continuation character:               Dialects.
+* contributors:                         Contributors.
+* core dump:                            Bug Criteria.
+* cpp preprocessor:                     Overall Options.
+* cpp program <1>:                      Bug Reporting.
+* cpp program <2>:                      Preprocessor Options.
+* cpp program <3>:                      Overall Options.
+* cpp program:                          What is GNU Fortran?.
+* Cray pointers:                        Missing Features.
+* creating patch files:                 Merging Distributions.
+* credits:                              Contributors.
+* cross-compilation:                    Cross-compiler Problems.
+* cross-compiler, building:             Floating-point Bit Patterns.
+* DATA statement <1>:                   Actual Bugs.
+* DATA statement:                       Code Gen Options.
+* data types:                           Types.
+* debug_rtx:                            Bug Reporting.
+* debugger:                             What is GNU Fortran?.
+* debugging <1>:                        Actual Bugs.
+* debugging <2>:                        Main Program Unit.
+* debugging:                            Debugging and Interfacing.
+* debugging information options:        Debugging Options.
+* debugging main source code:           Actual Bugs.
+* deleted intrinsics:                   Intrinsics.
+* diagnostics, incorrect:               What is GNU Fortran?.
+* dialect options:                      Fortran Dialect Options.
+* dialects of language:                 Dialects.
+* Digital Fortran features:             Fortran Dialect Options.
+* DIMENSION statement <1>:              Adjustable Arrays.
+* DIMENSION statement:                  Arrays.
+* dimensioning arrays:                  Adjustable Arrays.
+* directory options:                    Directory Options.
+* directory search paths for inclusion: Directory Options.
+* directory, updating info:             Updating Documentation.
+* disabled intrinsics:                  Intrinsics.
+* displaying main source code:          Actual Bugs.
+* disposition of files:                 Missing Features.
+* distensions:                          Distensions.
+* distributions, unpacking:             Unpacking.
+* distributions, why separate:          Merging Distributions.
+* DO statement <1>:                     Loops.
+* DO statement:                         Warning Options.
+* documentation:                        Updating Documentation.
+* dollar sign:                          Fortran Dialect Options.
+* DOUBLE COMPLEX type:                  Types.
+* DOUBLE PRECISION type:                Types.
+* double quotes:                        Dialects.
+* driver, gcc command as:               What is GNU Fortran?.
+* dummies, unused:                      Warning Options.
+* effecting IMPLICIT NONE:              Warning Options.
+* efficiency:                           Efficiency.
+* ELF support:                          Actual Bugs.
+* enabled intrinsics:                   Intrinsics.
+* entry points:                         Alternate Entry Points.
+* ENTRY statement:                      Alternate Entry Points.
+* environment variables:                Environment Variables.
+* equivalence areas <1>:                Actual Bugs.
+* equivalence areas:                    Local Equivalence Areas.
+* EQUIVALENCE areas:                    Debugging Options.
+* EQUIVALENCE statement:                Local Equivalence Areas.
+* error messages:                       Warnings and Errors.
+* error messages, incorrect:            What is GNU Fortran?.
+* errors, linker:                       But-bugs.
+* exclamation points:                   Dialects.
+* executable file:                      What is GNU Fortran?.
+* EXIT() intrinsic:                     Fortran Dialect Options.
+* extended-source option:               Fortran Dialect Options.
+* extensions:                           Extensions.
+* extensions, file name:                Overall Options.
+* extensions, more:                     More Extensions.
+* extensions, VXT:                      Dialects.
+* extra warnings:                       Warning Options.
+* f2c compatibility <1>:                Faster Programs.
+* f2c compatibility <2>:                Block Data and Libraries.
+* f2c compatibility <3>:                Debugging and Interfacing.
+* f2c compatibility <4>:                Object Compatibility.
+* f2c compatibility:                    Code Gen Options.
+* f2c intrinsics:                       Fortran Dialect Options.
+* F2C_INSTALL_FLAG:                     Installing f2c.
+* F2CLIBOK:                             Installing f2c.
+* f77 command:                          Installing f77.
+* f77 support:                          Non-bugs.
+* f771 program:                         What is GNU Fortran?.
+* f771, linking error for:              General Problems.
+* F77_INSTALL_FLAG:                     Installing f77.
+* fatal signal:                         Bug Criteria.
+* features, ugly <1>:                   Distensions.
+* features, ugly:                       Warning Options.
+* FFE:                                  What is GNU Fortran?.
+* FFECOM_sizeMAXSTACKITEM:              Maximum Stackable Size.
+* file format not recognized:           What is GNU Fortran?.
+* file name extension:                  Overall Options.
+* file name suffix:                     Overall Options.
+* file type:                            Overall Options.
+* file, source:                         What is GNU Fortran?.
+* files, executable:                    What is GNU Fortran?.
+* files, source:                        Source Form.
+* fixed form <1>:                       Source Form.
+* fixed form:                           Fortran Dialect Options.
+* fixed-form line length:               Fortran Dialect Options.
+* floating-point bit patterns:          Floating-point Bit Patterns.
+* FLUSH() intrinsic:                    Fortran Dialect Options.
+* FORMAT statement:                     Missing Features.
+* Fortran 90 features <1>:              Dialects.
+* Fortran 90 features:                  Fortran Dialect Options.
+* Fortran 90 intrinsics:                Fortran Dialect Options.
+* Fortran 90 support:                   Missing Features.
+* Fortran preprocessor:                 Overall Options.
+* free form <1>:                        Source Form.
+* free form:                            Fortran Dialect Options.
+* front end, g77:                       What is GNU Fortran?.
+* FSF, funding the:                     Funding GNU Fortran.
+* FUNCTION statement <1>:               Functions.
+* FUNCTION statement:                   Procedures.
+* functions:                            Functions.
+* functions, intrinsic:                 Fortran Dialect Options.
+* funding improvements:                 Funding GNU Fortran.
+* funding the FSF:                      Funding GNU Fortran.
+* g77 command <1>:                      G77 and GCC.
+* g77 command:                          What is GNU Fortran?.
+* g77 front end:                        What is GNU Fortran?.
+* g77 options, -driver:                 G77 and GCC.
+* g77 options, -v:                      G77 and GCC.
+* g77 options, driver:                  Invoking G77.
+* g77, components of:                   What is GNU Fortran?.
+* GBE <1>:                              General Problems.
+* GBE:                                  What is GNU Fortran?.
+* gcc back end:                         What is GNU Fortran?.
+* gcc command <1>:                      G77 and GCC.
+* gcc command:                          What is GNU Fortran?.
+* gcc command as driver:                What is GNU Fortran?.
+* gcc not recognizing Fortran source:   What is GNU Fortran?.
+* gdb command:                          What is GNU Fortran?.
+* GETARG() intrinsic:                   Main Program Unit.
+* getting started:                      Getting Started.
+* GNU Back End (GBE):                   What is GNU Fortran?.
+* GNU C required:                       General Problems.
+* GNU Fortran command options:          Invoking G77.
+* GNU Fortran Front End (FFE):          What is GNU Fortran?.
+* GOTO statement:                       Assigned Statement Labels.
+* groups of intrinsics:                 Intrinsics.
+* hidden intrinsics:                    Intrinsics.
+* Hollerith constants <1>:              Character and Hollerith Constants.
+* Hollerith constants <2>:              Distensions.
+* Hollerith constants <3>:              Changes.
+* Hollerith constants:                  Fortran Dialect Options.
+* IARGC() intrinsic:                    Main Program Unit.
+* IEEE conformance:                     Optimize Options.
+* IMPLICIT CHARACTER*(*) statement:     Disappointments.
+* implicit declaration, warning:        Warning Options.
+* IMPLICIT NONE, similar effect:        Warning Options.
+* improvements, funding:                Funding GNU Fortran.
+* in-line code:                         What is GNU Fortran?.
+* in-line compilation:                  Optimize Options.
+* INCLUDE statement <1>:                Bug Reporting.
+* INCLUDE statement <2>:                Directory Options.
+* INCLUDE statement:                    Preprocessor Options.
+* included files:                       Bug Reporting.
+* inclusion, directory search paths for: Directory Options.
+* incorrect diagnostics:                What is GNU Fortran?.
+* incorrect error messages:             What is GNU Fortran?.
+* incorrect use of language:            What is GNU Fortran?.
+* info, updating directory:             Updating Documentation.
+* initialization:                       Actual Bugs.
+* initialization of local variables:    Code Gen Options.
+* INQUIRE statement:                    Missing Features.
+* installation of binaries:             Installation of Binaries.
+* installation problems:                Problems Installing.
+* installation trouble:                 Trouble.
+* installing GNU Fortran:               Installation.
+* installing, checking before:          Pre-installation Checks.
+* integer constants:                    Actual Bugs.
+* INTEGER type:                         Types.
+* INTEGER*2 support:                    Missing Features.
+* interfacing:                          Debugging and Interfacing.
+* intrinsic functions:                  Fortran Dialect Options.
+* intrinsic subroutines:                Fortran Dialect Options.
+* intrinsics, %DESCR() <1>:             Extensions.
+* intrinsics, %DESCR():                 Changes.
+* intrinsics, %LOC():                   Extensions.
+* intrinsics, %REF():                   Extensions.
+* intrinsics, %VAL():                   Extensions.
+* intrinsics, ABORT():                  Fortran Dialect Options.
+* intrinsics, AND:                      Missing Features.
+* intrinsics, COMPLEX:                  Fortran Dialect Options.
+* intrinsics, deleted:                  Intrinsics.
+* intrinsics, disabled:                 Intrinsics.
+* intrinsics, enabled:                  Intrinsics.
+* intrinsics, EXIT():                   Fortran Dialect Options.
+* intrinsics, f2c:                      Fortran Dialect Options.
+* intrinsics, FLUSH():                  Fortran Dialect Options.
+* intrinsics, Fortran 90:               Fortran Dialect Options.
+* intrinsics, GETARG():                 Main Program Unit.
+* intrinsics, groups:                   Intrinsics.
+* intrinsics, groups of:                Intrinsics.
+* intrinsics, hidden:                   Intrinsics.
+* intrinsics, IARGC():                  Main Program Unit.
+* intrinsics, LOC():                    Extensions.
+* intrinsics, MIL-STD 1753:             Fortran Dialect Options.
+* intrinsics, OR:                       Missing Features.
+* intrinsics, SHIFT:                    Missing Features.
+* intrinsics, side effects of:          Fortran Dialect Options.
+* intrinsics, SIGNAL():                 Fortran Dialect Options.
+* intrinsics, SYSTEM():                 Fortran Dialect Options.
+* intrinsics, UNIX:                     Fortran Dialect Options.
+* intrinsics, VXT:                      Fortran Dialect Options.
+* Introduction:                         Top.
+* invalid assembly code:                Bug Criteria.
+* invalid input:                        Bug Criteria.
+* KIND= notation:                       Types.
+* known causes of trouble:              Trouble.
+* language dialect options:             Fortran Dialect Options.
+* language dialects:                    Dialects.
+* language extensions:                  Extensions.
+* language, incorrect use of:           What is GNU Fortran?.
+* LANGUAGES:                            Building gcc.
+* large aggregate areas:                Actual Bugs.
+* large common blocks:                  But-bugs.
+* large initialization:                 Large Initialization.
+* ld can't find _main:                  But-bugs.
+* ld can't find _strtoul:               General Problems.
+* ld can't find strange names:          But-bugs.
+* ld command:                           What is GNU Fortran?.
+* ld error for f771:                    General Problems.
+* ld error for user code:               But-bugs.
+* ld errors:                            But-bugs.
+* legacy code:                          Collected Fortran Wisdom.
+* length of source lines:               Fortran Dialect Options.
+* letters, lowercase:                   Case Sensitivity.
+* letters, uppercase:                   Case Sensitivity.
+* libf2c library:                       What is GNU Fortran?.
+* libraries:                            What is GNU Fortran?.
+* libraries, containing BLOCK DATA:     Block Data and Libraries.
+* libraries, libf2c:                    What is GNU Fortran?.
+* line length:                          Fortran Dialect Options.
+* linker errors:                        But-bugs.
+* linking:                              What is GNU Fortran?.
+* linking error for f771:               General Problems.
+* linking error for user code:          But-bugs.
+* LOC() intrinsic:                      Extensions.
+* local equivalence areas <1>:          Actual Bugs.
+* local equivalence areas:              Local Equivalence Areas.
+* LOGICAL type:                         Types.
+* LOGICAL*1 support:                    Missing Features.
+* loops, speeding up:                   Optimize Options.
+* loops, unrolling:                     Optimize Options.
+* lowercase letters:                    Case Sensitivity.
+* machine code:                         What is GNU Fortran?.
+* main program unit, debugging:         Main Program Unit.
+* main():                               Main Program Unit.
+* MAIN__():                             Main Program Unit.
+* MAP statement:                        Missing Features.
+* maximum stackable size:               Maximum Stackable Size.
+* memory usage, of compiler:            Actual Bugs.
+* memory utilization:                   Large Initialization.
+* merging distributions:                Merging Distributions.
+* messages, warning:                    Warning Options.
+* messages, warning and error:          Warnings and Errors.
+* MIL-STD 1753:                         Fortran Dialect Options.
+* missing bison:                        Missing bison?.
+* missing makeinfo:                     Missing makeinfo?.
+* missing debug features:               Debugging Options.
+* mistakes:                             What is GNU Fortran?.
+* modifying g77:                        Unpacking.
+* NAMELIST statement:                   Extensions.
+* naming conflicts:                     Disappointments.
+* native compiler:                      Installing f77.
+* negative forms of options:            Invoking G77.
+* new users:                            Getting Started.
+* newbies:                              Getting Started.
+* null byte, trailing:                  Character and Hollerith Constants.
+* number of trips:                      Loops.
+* object code:                          Object Compatibility.
+* octal constants:                      Dialects.
+* OPEN statement:                       Missing Features.
+* optimization, better:                 Better Optimization.
+* optimizations, Pentium:               Unpacking.
+* optimize options:                     Optimize Options.
+* options to control warnings:          Warning Options.
+* options, -driver <1>:                 Invoking G77.
+* options, -driver:                     G77 and GCC.
+* options, -fGROUP-intrinsics-hide:     Overly Convenient Options.
+* options, -fcaller-saves:              Optimize Options.
+* options, -fcase-initcap:              Fortran Dialect Options.
+* options, -fcase-lower:                Fortran Dialect Options.
+* options, -fcase-preserve:             Fortran Dialect Options.
+* options, -fcase-strict-lower:         Fortran Dialect Options.
+* options, -fcase-strict-upper:         Fortran Dialect Options.
+* options, -fcase-upper:                Fortran Dialect Options.
+* options, -fdcp-intrinsics-delete:     Fortran Dialect Options.
+* options, -fdcp-intrinsics-disable:    Fortran Dialect Options.
+* options, -fdcp-intrinsics-enable:     Fortran Dialect Options.
+* options, -fdcp-intrinsics-hide:       Fortran Dialect Options.
+* options, -fdelayed-branch:            Optimize Options.
+* options, -fdollar-ok:                 Fortran Dialect Options.
+* options, -fexpensive-optimizations:   Optimize Options.
+* options, -ff2c-intrinsics-delete:     Fortran Dialect Options.
+* options, -ff2c-intrinsics-disable:    Fortran Dialect Options.
+* options, -ff2c-intrinsics-enable:     Fortran Dialect Options.
+* options, -ff2c-intrinsics-hide:       Fortran Dialect Options.
+* options, -ff2c-library:               Code Gen Options.
+* options, -ff90:                       Fortran Dialect Options.
+* options, -ff90-intrinsics-delete:     Fortran Dialect Options.
+* options, -ff90-intrinsics-disable:    Fortran Dialect Options.
+* options, -ff90-intrinsics-enable:     Fortran Dialect Options.
+* options, -ff90-intrinsics-hide:       Fortran Dialect Options.
+* options, -ff90-not-vxt:               Fortran Dialect Options.
+* options, -ffast-math:                 Optimize Options.
+* options, -ffixed-line-length-N:       Fortran Dialect Options.
+* options, -ffloat-store:               Optimize Options.
+* options, -fforce-addr:                Optimize Options.
+* options, -fforce-mem:                 Optimize Options.
+* options, -ffree-form:                 Fortran Dialect Options.
+* options, -finit-local-zero <1>:       Overly Convenient Options.
+* options, -finit-local-zero:           Code Gen Options.
+* options, -fintrin-case-any:           Fortran Dialect Options.
+* options, -fintrin-case-initcap:       Fortran Dialect Options.
+* options, -fintrin-case-lower:         Fortran Dialect Options.
+* options, -fintrin-case-upper:         Fortran Dialect Options.
+* options, -fmatch-case-any:            Fortran Dialect Options.
+* options, -fmatch-case-initcap:        Fortran Dialect Options.
+* options, -fmatch-case-lower:          Fortran Dialect Options.
+* options, -fmatch-case-upper:          Fortran Dialect Options.
+* options, -fmil-intrinsics-delete:     Fortran Dialect Options.
+* options, -fmil-intrinsics-disable:    Fortran Dialect Options.
+* options, -fmil-intrinsics-enable:     Fortran Dialect Options.
+* options, -fmil-intrinsics-hide:       Fortran Dialect Options.
+* options, -fno-automatic <1>:          Overly Convenient Options.
+* options, -fno-automatic:              Code Gen Options.
+* options, -fno-backslash:              Fortran Dialect Options.
+* options, -fno-common:                 Code Gen Options.
+* options, -fno-f2c <1>:                Faster Programs.
+* options, -fno-f2c:                    Code Gen Options.
+* options, -fno-fixed-form:             Fortran Dialect Options.
+* options, -fno-ident:                  Code Gen Options.
+* options, -fno-inline:                 Optimize Options.
+* options, -fno-second-underscore:      Code Gen Options.
+* options, -fno-ugly-args:              Warning Options.
+* options, -fno-ugly-init:              Warning Options.
+* options, -fno-underscoring:           Code Gen Options.
+* options, -fpack-struct:               Code Gen Options.
+* options, -fpcc-struct-return:         Code Gen Options.
+* options, -fpedantic:                  Warning Options.
+* options, -fPIC:                       Actual Bugs.
+* options, -freg-struct-return:         Code Gen Options.
+* options, -frerun-cse-after-loop:      Optimize Options.
+* options, -fschedule-insns:            Optimize Options.
+* options, -fschedule-insns2:           Optimize Options.
+* options, -fset-g77-defaults:          Overall Options.
+* options, -fshort-double:              Code Gen Options.
+* options, -fsource-case-lower:         Fortran Dialect Options.
+* options, -fsource-case-preserve:      Fortran Dialect Options.
+* options, -fsource-case-upper:         Fortran Dialect Options.
+* options, -fstrength-reduce:           Optimize Options.
+* options, -fsymbol-case-any:           Fortran Dialect Options.
+* options, -fsymbol-case-initcap:       Fortran Dialect Options.
+* options, -fsymbol-case-lower:         Fortran Dialect Options.
+* options, -fsymbol-case-upper:         Fortran Dialect Options.
+* options, -fsyntax-only:               Warning Options.
+* options, -fugly <1>:                  Actual Bugs.
+* options, -fugly <2>:                  Overly Convenient Options.
+* options, -fugly:                      Warning Options.
+* options, -funix-intrinsics-delete:    Fortran Dialect Options.
+* options, -funix-intrinsics-disable:   Fortran Dialect Options.
+* options, -funix-intrinsics-enable:    Fortran Dialect Options.
+* options, -funix-intrinsics-hide:      Fortran Dialect Options.
+* options, -funroll-all-loops:          Optimize Options.
+* options, -funroll-loops:              Optimize Options.
+* options, -fversion:                   Overall Options.
+* options, -fvxt-intrinsics-delete:     Fortran Dialect Options.
+* options, -fvxt-intrinsics-disable:    Fortran Dialect Options.
+* options, -fvxt-intrinsics-enable:     Fortran Dialect Options.
+* options, -fvxt-intrinsics-hide:       Fortran Dialect Options.
+* options, -fvxt-not-f90:               Fortran Dialect Options.
+* options, -fzeros:                     Code Gen Options.
+* options, -g:                          Debugging Options.
+* options, -I-:                         Directory Options.
+* options, -Idir:                       Directory Options.
+* options, -pedantic:                   Warning Options.
+* options, -pedantic-errors:            Warning Options.
+* options, -v:                          G77 and GCC.
+* options, -w:                          Warning Options.
+* options, -Waggregate-return:          Warning Options.
+* options, -Wall:                       Warning Options.
+* options, -Wcomment:                   Warning Options.
+* options, -Wconversion:                Warning Options.
+* options, -Werror:                     Warning Options.
+* options, -Wformat:                    Warning Options.
+* options, -Wid-clash-LEN:              Warning Options.
+* options, -Wimplicit:                  Warning Options.
+* options, -Wlarger-than-LEN:           Warning Options.
+* options, -Wparentheses:               Warning Options.
+* options, -Wredundant-decls:           Warning Options.
+* options, -Wshadow:                    Warning Options.
+* options, -Wsurprising:                Warning Options.
+* options, -Wswitch:                    Warning Options.
+* options, -Wtraditional:               Warning Options.
+* options, -Wuninitialized:             Warning Options.
+* options, -Wunused:                    Warning Options.
+* options, adding:                      Adding Options.
+* options, code generation:             Code Gen Options.
+* options, debugging:                   Debugging Options.
+* options, dialect:                     Fortran Dialect Options.
+* options, directory search:            Directory Options.
+* options, GNU Fortran command:         Invoking G77.
+* options, negative forms:              Invoking G77.
+* options, optimization:                Optimize Options.
+* options, overall:                     Overall Options.
+* options, overly convenient:           Overly Convenient Options.
+* options, preprocessor:                Preprocessor Options.
+* OR intrinsic:                         Missing Features.
+* order of evaluation, side effects:    Non-bugs.
+* ordering, array:                      Arrays.
+* overall options:                      Overall Options.
+* overflow:                             Warning Options.
+* overly convenient options:            Overly Convenient Options.
+* packages:                             Unpacking.
+* padding:                              Actual Bugs.
+* PARAMETER statement:                  Missing Features.
+* parameters, unused:                   Warning Options.
+* patch files:                          General Problems.
+* patch files, creating:                Merging Distributions.
+* pedantic compilation:                 Pedantic Compilation.
+* Pentium optimizations:                Unpacking.
+* POINTER statement:                    Missing Features.
+* porting, simplify:                    Simplify Porting.
+* pre-installation checks:              Pre-installation Checks.
+* preprocessor <1>:                     Bug Reporting.
+* preprocessor <2>:                     Overall Options.
+* preprocessor:                         What is GNU Fortran?.
+* preprocessor options:                 Preprocessor Options.
+* prerequisites:                        Prerequisites.
+* printing main source:                 Actual Bugs.
+* printing version information <1>:     Overall Options.
+* printing version information:         What is GNU Fortran?.
+* problems installing:                  Problems Installing.
+* procedures:                           Procedures.
+* PROGRAM statement:                    Main Program Unit.
+* programs, cc1:                        What is GNU Fortran?.
+* programs, cc1plus:                    What is GNU Fortran?.
+* programs, compiling:                  G77 and GCC.
+* programs, cpp <1>:                    Bug Reporting.
+* programs, cpp <2>:                    Preprocessor Options.
+* programs, cpp <3>:                    Overall Options.
+* programs, cpp:                        What is GNU Fortran?.
+* programs, f771:                       What is GNU Fortran?.
+* programs, speeding up:                Faster Programs.
+* projects:                             Projects.
+* questionable instructions:            What is GNU Fortran?.
+* quick start:                          Quick Start.
+* REAL type:                            Types.
+* recent versions <1>:                  Changes.
+* recent versions:                      News.
+* RECORD statement:                     Missing Features.
+* reporting bugs:                       Bugs.
+* requirements, GNU C:                  General Problems.
+* RETURN statement <1>:                 Functions.
+* RETURN statement:                     Alternate Returns.
+* return type of functions:             Functions.
+* row-major ordering:                   Arrays.
+* RS/6000 support:                      Actual Bugs.
+* run-time library:                     What is GNU Fortran?.
+* run-time options:                     Code Gen Options.
+* SAVE statement:                       Code Gen Options.
+* search path:                          Directory Options.
+* searching for included files:         Directory Options.
+* semicolons:                           Extensions.
+* separate distributions:               Merging Distributions.
+* SGI support:                          Actual Bugs.
+* SHIFT intrinsic:                      Missing Features.
+* side effects:                         Fortran Dialect Options.
+* side effects, order of evaluation:    Non-bugs.
+* SIGNAL() intrinsic:                   Fortran Dialect Options.
+* signature of procedures:              Procedures.
+* simplify porting:                     Simplify Porting.
+* slow compiler:                        Large Initialization.
+* source code <1>:                      Unpacking.
+* source code <2>:                      Case Sensitivity.
+* source code <3>:                      Source Form.
+* source code:                          What is GNU Fortran?.
+* source file:                          What is GNU Fortran?.
+* source file form:                     Fortran Dialect Options.
+* source file format <1>:               Case Sensitivity.
+* source file format <2>:               Source Form.
+* source file format:                   Fortran Dialect Options.
+* source form:                          Source Form.
+* source tree:                          Unpacking.
+* speed, compiler:                      Large Initialization.
+* speed, of compiler:                   Actual Bugs.
+* speeding up loops:                    Optimize Options.
+* speeding up programs:                 Faster Programs.
+* standard support:                     Standard Support.
+* statement labels, assigned:           Assigned Statement Labels.
+* statements, ACCEPT:                   Missing Features.
+* statements, ASSIGN:                   Assigned Statement Labels.
+* statements, BLOCK DATA <1>:           Disappointments.
+* statements, BLOCK DATA:               Block Data and Libraries.
+* statements, CLOSE:                    Missing Features.
+* statements, COMMON <1>:               Disappointments.
+* statements, COMMON:                   Common Blocks.
+* statements, DATA <1>:                 Actual Bugs.
+* statements, DATA:                     Code Gen Options.
+* statements, DIMENSION <1>:            Adjustable Arrays.
+* statements, DIMENSION:                Arrays.
+* statements, DO <1>:                   Loops.
+* statements, DO:                       Warning Options.
+* statements, ENTRY:                    Alternate Entry Points.
+* statements, EQUIVALENCE:              Local Equivalence Areas.
+* statements, FORMAT:                   Missing Features.
+* statements, FUNCTION <1>:             Functions.
+* statements, FUNCTION:                 Procedures.
+* statements, GOTO:                     Assigned Statement Labels.
+* statements, IMPLICIT CHARACTER*(*):   Disappointments.
+* statements, INCLUDE <1>:              Bug Reporting.
+* statements, INCLUDE <2>:              Directory Options.
+* statements, INCLUDE:                  Preprocessor Options.
+* statements, INQUIRE:                  Missing Features.
+* statements, MAP:                      Missing Features.
+* statements, NAMELIST:                 Extensions.
+* statements, OPEN:                     Missing Features.
+* statements, PARAMETER:                Missing Features.
+* statements, POINTER:                  Missing Features.
+* statements, PROGRAM:                  Main Program Unit.
+* statements, RECORD:                   Missing Features.
+* statements, RETURN <1>:               Functions.
+* statements, RETURN:                   Alternate Returns.
+* statements, SAVE:                     Code Gen Options.
+* statements, separated by semicolon:   Extensions.
+* statements, STRUCTURE:                Missing Features.
+* statements, SUBROUTINE <1>:           Alternate Returns.
+* statements, SUBROUTINE:               Procedures.
+* statements, TYPE <1>:                 Missing Features.
+* statements, TYPE:                     Dialects.
+* statements, UNION:                    Missing Features.
+* straight build:                       Straight Build.
+* STRUCTURE statement:                  Missing Features.
+* structures:                           Actual Bugs.
+* SUBROUTINE statement <1>:             Alternate Returns.
+* SUBROUTINE statement:                 Procedures.
+* subroutines:                          Alternate Returns.
+* subroutines, intrinsic:               Fortran Dialect Options.
+* suffixes, file name:                  Overall Options.
+* support for gcc versions:             Merging Distributions.
+* support for ANSI FORTRAN 77:          Standard Support.
+* support, gdb:                         But-bugs.
+* support, Alpha:                       Actual Bugs.
+* support, COMPLEX:                     Actual Bugs.
+* support, ELF:                         Actual Bugs.
+* support, f77:                         Non-bugs.
+* support, Fortran 90:                  Missing Features.
+* support, RS/6000:                     Actual Bugs.
+* support, SGI:                         Actual Bugs.
+* suppressing warnings:                 Warning Options.
+* symbol names <1>:                     Names.
+* symbol names:                         Fortran Dialect Options.
+* symbol names, transforming:           Code Gen Options.
+* symbol names, underscores:            Code Gen Options.
+* syntax checking:                      Warning Options.
+* SYSTEM() intrinsic:                   Fortran Dialect Options.
+* tab characters:                       Source Form.
+* texinfo:                              Updating Documentation.
+* trailing null byte:                   Character and Hollerith Constants.
+* transformation of symbol names:       Names.
+* transforming symbol names:            Code Gen Options.
+* translation of user programs:         What is GNU Fortran?.
+* trips, number of:                     Loops.
+* TYPE statement <1>:                   Missing Features.
+* TYPE statement:                       Dialects.
+* typeless constants:                   Changes.
+* types, COMPLEX:                       Types.
+* types, constants:                     Constants.
+* types, DOUBLE COMPLEX:                Types.
+* types, DOUBLE PRECISION:              Types.
+* types, file:                          Overall Options.
+* types, INTEGER:                       Types.
+* types, LOGICAL:                       Types.
+* types, of data:                       Types.
+* types, REAL:                          Types.
+* ugly features <1>:                    Distensions.
+* ugly features:                        Warning Options.
+* undefined behavior:                   Bug Criteria.
+* undefined function value:             Bug Criteria.
+* undefined reference (_main):          But-bugs.
+* undefined reference (_strtoul):       General Problems.
+* underscores:                          Code Gen Options.
+* uninitialized variables <1>:          Code Gen Options.
+* uninitialized variables:              Warning Options.
+* UNION statement:                      Missing Features.
+* UNIX intrinsics:                      Fortran Dialect Options.
+* unpacking distributions:              Unpacking.
+* unrecognized file format:             What is GNU Fortran?.
+* unresolved reference (various):       But-bugs.
+* unrolling loops:                      Optimize Options.
+* unsupported warnings:                 Warning Options.
+* unused arguments:                     Warning Options.
+* unused dummies:                       Warning Options.
+* unused parameters:                    Warning Options.
+* unused variables:                     Warning Options.
+* updating info directory:              Updating Documentation.
+* uppercase letters:                    Case Sensitivity.
+* user-visible changes:                 Changes.
+* variables, initialization of:         Code Gen Options.
+* variables, uninitialized <1>:         Code Gen Options.
+* variables, uninitialized:             Warning Options.
+* variables, unused:                    Warning Options.
+* version information, printing <1>:    Overall Options.
+* version information, printing:        What is GNU Fortran?.
+* versions of gcc:                      Merging Distributions.
+* versions, recent <1>:                 Changes.
+* versions, recent:                     News.
+* VXT extensions:                       Dialects.
+* VXT features <1>:                     Dialects.
+* VXT features:                         Fortran Dialect Options.
+* VXT intrinsics:                       Fortran Dialect Options.
+* warning messages:                     Warning Options.
+* warnings:                             What is GNU Fortran?.
+* warnings vs errors:                   Warnings and Errors.
+* warnings, all:                        Warning Options.
+* warnings, extra:                      Warning Options.
+* warnings, implicit declaration:       Warning Options.
+* warnings, unsupported:                Warning Options.
+* why separate distributions:           Merging Distributions.
+* wisdom:                               Collected Fortran Wisdom.
+* writing code:                         Collected Fortran Wisdom.
+* zero byte, trailing:                  Character and Hollerith Constants.
+
+

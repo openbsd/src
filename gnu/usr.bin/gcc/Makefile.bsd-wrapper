@@ -1,4 +1,4 @@
-#	$Id: Makefile.bsd-wrapper,v 1.11 1996/04/20 21:59:44 deraadt Exp $
+#	$Id: Makefile.bsd-wrapper,v 1.12 1996/07/27 02:50:15 downsj Exp $
 
 MAN=		cccp.1 gcc.1 cp/g++.1
 MLINKS+=	gcc.1 cc.1
@@ -31,6 +31,13 @@ install:	maninstall
 		tooldir=/tmp assertdir=/tmp INSTALL_MAN= NO_TARGET_GCC=true \
 		bindir=${DESTDIR}/usr/bin install
 	ln -f ${DESTDIR}/usr/bin/gcc ${DESTDIR}/usr/bin/cc
+	chown -R bin.bin /usr/lib/gcc-lib
+	chmod -R a+rX /usr/lib/gcc-lib
+	if [ -e /usr/lib/libf2c.a ]; then \
+		chown bin.bin /usr/lib/libf2c.a; \
+		chmod 444 /usr/lib/libf2c.a; \
+	fi
+
 
 clean cleandir:
 	rm -f ${CLEANFILES}
