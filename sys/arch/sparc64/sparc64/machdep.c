@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.32 2002/02/01 19:38:23 jason Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.33 2002/02/01 21:48:23 jason Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -82,6 +82,8 @@
  *	@(#)machdep.c	8.6 (Berkeley) 1/14/94
  */
 
+#include "auxio.h"
+
 #include <sys/param.h>
 #include <sys/extent.h>
 #include <sys/signal.h>
@@ -151,6 +153,11 @@ extern vaddr_t avail_end;
 int	physmem;
 u_long	_randseed;
 extern	caddr_t msgbufaddr;
+
+#if NAUXIO > 0
+#include <sparc64/dev/auxiovar.h>
+int sparc_led_blink;
+#endif
 
 /*
  * Maximum number of DMA segments we'll allow in dmamem_load()
@@ -507,6 +514,9 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	size_t newlen;
 	struct proc *p;
 {
+#if NAUXIO > 0
+	int oldval, ret;
+#endif
 	u_int chosen;
 	char bootargs[256];
 	char *cp = NULL;
@@ -542,6 +552,22 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		if (cp == NULL || cp[0] == '\0')
 			return (ENOENT);
 		return (sysctl_rdstring(oldp, oldlenp, newp, cp));
+	case CPU_LED_BLINK:
+#if NAUXIO > 0
+		oldval = sparc_led_blink;
+		ret = sysctl_int(oldp, oldlenp, newp, newlen,
+		    &sparc_led_blink);
+
+		/*
+		 * If we were false and are now true, call auxio_led_blink().
+		 * auxio_led_blink() will catch the other case itself.
+		 */
+		if (!oldval && sparc_led_blink > oldval)
+			auxio_led_blink(NULL);
+		return (ret);
+#else
+		return (EOPNOTSUPP);
+#endif
 	default:
 		return (EOPNOTSUPP);
 	}

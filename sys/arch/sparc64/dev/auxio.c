@@ -1,4 +1,4 @@
-/*	$OpenBSD: auxio.c,v 1.2 2001/08/29 02:47:58 jason Exp $	*/
+/*	$OpenBSD: auxio.c,v 1.3 2002/02/01 21:48:23 jason Exp $	*/
 /*	$NetBSD: auxio.c,v 1.1 2000/04/15 03:08:13 mrg Exp $	*/
 
 /*
@@ -37,7 +37,8 @@
 #include <sys/systm.h>
 #include <sys/errno.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
+#include <sys/timeout.h>
+#include <sys/kernel.h>
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
@@ -57,6 +58,7 @@ int	auxio_ebus_match __P((struct device *, void *, void *));
 void	auxio_ebus_attach __P((struct device *, struct device *, void *));
 int	auxio_sbus_match __P((struct device *, void *, void *));
 void	auxio_sbus_attach __P((struct device *, struct device *, void *));
+void	auxio_attach_common __P((struct auxio_softc *));
 
 struct cfattach auxio_ebus_ca = {
 	sizeof(struct auxio_softc), auxio_ebus_match, auxio_ebus_attach
@@ -69,6 +71,8 @@ struct cfattach auxio_sbus_ca = {
 struct cfdriver auxio_cd = {
 	NULL, "auxio", DV_DULL
 };
+
+extern int sparc_led_blink;
 
 int
 auxio_ebus_match(parent, cf, aux)
@@ -89,6 +93,8 @@ auxio_ebus_attach(parent, self, aux)
 	struct auxio_softc *sc = (struct auxio_softc *)self;
 	struct ebus_attach_args *ea = aux;
 
+	timeout_set(&sc->sc_to, auxio_led_blink, sc);
+
 	if (ea->ea_nregs < 1 || ea->ea_nvaddrs < 1) {
 		printf(": no registers??\n");
 		return;
@@ -100,17 +106,15 @@ auxio_ebus_attach(parent, self, aux)
 		sc->sc_flags = AUXIO_LEDONLY|AUXIO_EBUS;
 	} else {
 		sc->sc_flags = AUXIO_EBUS;
-		sc->sc_registers.auxio_pci = (u_int32_t *)(u_long)ea->ea_vaddrs[1];
-		sc->sc_registers.auxio_freq = (u_int32_t *)(u_long)ea->ea_vaddrs[2];
-		sc->sc_registers.auxio_scsi = (u_int32_t *)(u_long)ea->ea_vaddrs[3];
-		sc->sc_registers.auxio_temp = (u_int32_t *)(u_long)ea->ea_vaddrs[4];
+		sc->sc_pci = (bus_space_handle_t)(u_long)ea->ea_vaddrs[1];
+		sc->sc_freq = (bus_space_handle_t)(u_long)ea->ea_vaddrs[1];
+		sc->sc_scsi = (bus_space_handle_t)(u_long)ea->ea_vaddrs[1];
+		sc->sc_temp = (bus_space_handle_t)(u_long)ea->ea_vaddrs[1];
 	}
-	sc->sc_registers.auxio_led = (u_int32_t *)(u_long)ea->ea_vaddrs[0];
-	
-	if (!auxio_reg)
-		auxio_reg = (u_char *)(u_long)ea->ea_vaddrs[0];
+	sc->sc_led = (bus_space_handle_t)(u_long)ea->ea_vaddrs[0];
+	sc->sc_tag = ea->ea_bustag;
 
-	printf("\n");
+	auxio_attach_common(sc);
 }
 
 int
@@ -132,6 +136,8 @@ auxio_sbus_attach(parent, self, aux)
 	struct auxio_softc *sc = (struct auxio_softc *)self;
 	struct sbus_attach_args *sa = aux;
 
+	timeout_set(&sc->sc_to, auxio_led_blink, sc);
+
 	if (sa->sa_nreg < 1 || sa->sa_npromvaddrs < 1) {
 		printf(": no registers??\n");
 		return;
@@ -144,25 +150,67 @@ auxio_sbus_attach(parent, self, aux)
 
 	/* sbus auxio only has one set of registers */
 	sc->sc_flags = AUXIO_LEDONLY|AUXIO_SBUS;
-	sc->sc_registers.auxio_led = (u_int32_t *)(u_long)sa->sa_promvaddr;
+	sc->sc_led = (bus_space_handle_t)(u_long)sa->sa_promvaddr;
+	sc->sc_tag = sa->sa_bustag;
 
-	if (!auxio_reg)
-		auxio_reg = (u_char *)(u_long)sa->sa_promvaddr;
+	auxio_attach_common(sc);
+}
 
+void
+auxio_attach_common(sc)
+	struct auxio_softc *sc;
+{
+	if (sparc_led_blink)
+		auxio_led_blink(sc);
 	printf("\n");
 }
 
-/*
- * old interface; used by fd driver for now
- */
-unsigned int
-auxregbisc(bis, bic)
-	int bis, bic;
+void
+auxio_led_blink(vsc)
+	void *vsc;
 {
-	register int v, s = splhigh();
+	struct auxio_softc *sc = vsc;
+	u_int32_t led;
+	int i, s;
 
-	v = *auxio_reg;
-	*auxio_reg = ((v | bis) & ~bic) | AUXIO_LED_MB1;
+	if (sc == NULL) {
+		for (i = 0; i < auxio_cd.cd_ndevs; i++) {
+			sc = auxio_cd.cd_devs[i];
+			if (sc != NULL)
+				auxio_led_blink(sc);
+		}
+		return;
+	}
+
+	s = splhigh();
+
+	if (sc->sc_flags & AUXIO_EBUS)
+		led = letoh32(bus_space_read_4(sc->sc_tag, sc->sc_led, 0));
+	else
+		led = bus_space_read_1(sc->sc_tag, sc->sc_led, 0);
+
+	if (!sparc_led_blink)
+		led |= AUXIO_LED_LED;
+	else
+		led ^= AUXIO_LED_LED;
+
+	if (sc->sc_flags & AUXIO_EBUS)
+		bus_space_write_4(sc->sc_tag, sc->sc_led, 0, htole32(led));
+	else
+		bus_space_write_1(sc->sc_tag, sc->sc_led, 0, led);
+
 	splx(s);
-	return v;
+
+	if (!sparc_led_blink)
+		return;
+
+	/*
+	 * Blink rate is:
+	 *      full cycle every second if completely idle (loadav = 0)
+	 *      full cycle every 2 seconds if loadav = 1
+	 *      full cycle every 3 seconds if loadav = 2
+	 * etc.
+	 */
+	s = (((averunnable.ldavg[0] + FSCALE) * hz) >> (FSHIFT + 1));
+	timeout_add(&sc->sc_to, s);
 }

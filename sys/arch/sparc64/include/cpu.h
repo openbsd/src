@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.6 2001/11/06 18:41:10 art Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.7 2002/02/01 21:48:23 jason Exp $	*/
 /*	$NetBSD: cpu.h,v 1.28 2001/06/14 22:56:58 thorpej Exp $ */
 
 /*
@@ -52,11 +52,13 @@
  * CTL_MACHDEP definitions.
  */
 #define	CPU_BOOTED_KERNEL	1	/* string: booted kernel name */
-#define	CPU_MAXID		2	/* number of valid machdep ids */
+#define	CPU_LED_BLINK		2	/* int: blink leds? */
+#define	CPU_MAXID		3	/* number of valid machdep ids */
 
 #define	CTL_MACHDEP_NAMES {			\
 	{ 0, 0 },				\
 	{ "booted_kernel", CTLTYPE_STRING },	\
+	{ "led_blink", CTLTYPE_INT },		\
 }
 
 #ifdef _KERNEL
