@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.61 2002/05/31 03:20:01 itojun Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.62 2002/06/07 04:13:10 itojun Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -964,7 +964,7 @@ freehdrs:
 	m_freem(exthdrs.ip6e_dest1);
 	m_freem(exthdrs.ip6e_rthdr);
 	m_freem(exthdrs.ip6e_dest2);
-	/* fall through */
+	/* FALLTHROUGH */
 bad:
 	m_freem(m);
 	goto done;
@@ -1247,7 +1247,7 @@ ip6_ctloutput(op, so, level, optname, mp)
 					error = EPERM;
 					break;
 				}
-				/* fall through */
+				/* FALLTHROUGH */
 			case IPV6_UNICAST_HOPS:
 			case IPV6_RECVOPTS:
 			case IPV6_RECVRETOPTS:
@@ -1484,7 +1484,7 @@ ip6_ctloutput(op, so, level, optname, mp)
 					error = EPERM;
 					break;
 				}
-				/* fall through */
+				/* FALLTHROUGH */
 			case IPV6_UNICAST_HOPS:
 			case IPV6_RECVOPTS:
 			case IPV6_RECVRETOPTS:

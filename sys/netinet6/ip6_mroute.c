@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_mroute.c,v 1.22 2002/05/30 04:40:02 itojun Exp $	*/
+/*	$OpenBSD: ip6_mroute.c,v 1.23 2002/06/07 04:13:10 itojun Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.45 2001/03/25 08:38:51 itojun Exp $	*/
 
 /*
@@ -188,7 +188,7 @@ static int pim6;
 	       switch (xxs) { \
 		      case 2: \
 			  delta += 1000000; \
-			      /* fall through */ \
+			      /* FALLTHROUGH */ \
 		      case 1: \
 			  delta += 1000000; \
 			  break; \
