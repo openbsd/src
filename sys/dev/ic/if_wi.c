@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.23 2002/03/26 18:59:11 millert Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.24 2002/03/28 17:41:02 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -122,7 +122,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.23 2002/03/26 18:59:11 millert Exp $";
+	"$OpenBSD: if_wi.c,v 1.24 2002/03/28 17:41:02 mickey Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -1662,6 +1662,10 @@ wi_get_id(sc, print_cis)
 			break;
 		case WI_NIC_3874A:
 			p = "PRISM 2.5 ISL3874A(PCI)";
+			sc->sc_prism2 = 1;
+			break;
+		case WI_NIC_37300P:
+			p = "PRISM 2.5 ISL37300P";
 			sc->sc_prism2 = 1;
 			break;
 		default:
