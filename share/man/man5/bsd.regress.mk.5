@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.regress.mk.5,v 1.2 2002/08/30 11:59:39 mpech Exp $
+.\" $OpenBSD: bsd.regress.mk.5,v 1.3 2002/09/02 19:56:55 avsm Exp $
 .\"
 .\" Copyright (c) 2002 Anil Madhavapeddy
 .\" Copyright (c) 2000 Marc Espie
@@ -58,33 +58,33 @@ If the exit status of the program indicates an error or timeout,
 then a failure is logged, otherwise the test is marked as a success.
 .El 
 .Sh VARIABLES
-.Bl -tag -width REGRESSLOG
-.It Ev REGRESSLOG
+.Bl -tag -width REGRESS_LOG
+.It Ev REGRESS_LOG
 Points to the fully-qualified path of a file to which regression
 results are appended.
 Defaults to
 .Pa /dev/null .
-.It Ev REGRESSMAXTIME
+.It Ev REGRESS_MAXTIME
 Maximum limit of CPU seconds to spend on the regression test.
 Exceeding this time will result in a failure being logged.
-.It Ev REGRESSROOTTARGETS
+.It Ev REGRESS_ROOT_TARGETS
 Targets for which root access is required to run the test.
 The
 .Ev SUDO
 variable is invoked for these targets.
 See also
 .Ev SUDO .
-.It Ev REGRESSSKIPSLOW
-Skip over all the regression tests which have been marked as
-being 'slow' using the
-.Ev REGRESSSLOWTARGETS
+.It Ev REGRESS_SKIP_SLOW
+If this variable is not empty, skip over all the regression 
+tests which have been marked as being 'slow' using the
+.Ev REGRESS_SLOW_TARGETS
 variable.
-.It Ev REGRESSSLOWTARGETS
+.It Ev REGRESS_SLOW_TARGETS
 Targets which are defined as 'slow'.
 All of these tests can be skipped by setting the 
-.Ev REGRESSSKIPSLOW 
+.Ev REGRESS_SKIP_SLOW 
 variable.
-.It Ev REGRESSTARGETS
+.It Ev REGRESS_TARGETS
 Targets which are invoked to run the set of regression tests
 for this Makefile.
 Defaults to 
@@ -95,7 +95,7 @@ test targets which require it.
 .El
 .Sh BUGS AND LIMITATIONS
 The build system is unable to distinguish between timeouts due to 
-.Ev REGRESSMAXTIME
+.Ev REGRESS_MAXTIME
 being exceeded, or a genuine failure occurring.
 .Sh HISTORY
 The regression system originally came from
