@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxpreg.h,v 1.7 2004/12/08 22:35:13 pascoe Exp $	*/
+/*	$OpenBSD: fxpreg.h,v 1.8 2005/01/14 18:14:12 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1995, David Greenman
@@ -129,7 +129,7 @@ struct fxp_cb_config {
         volatile u_int8_t       byte_count;
         volatile u_int8_t       fifo_limit;
         volatile u_int8_t       adaptive_ifs;
-        volatile u_int8_t       void1;
+        volatile u_int8_t       ctrl0;
         volatile u_int8_t       rx_dma_bytecount;
         volatile u_int8_t       tx_dma_bytecount;
         volatile u_int8_t       ctrl1;

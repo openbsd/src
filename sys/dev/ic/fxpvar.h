@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxpvar.h,v 1.20 2004/12/23 19:40:21 deraadt Exp $	*/
+/*	$OpenBSD: fxpvar.h,v 1.21 2005/01/14 18:14:12 deraadt Exp $	*/
 /*	$NetBSD: if_fxpvar.h,v 1.1 1997/06/05 02:01:58 thorpej Exp $	*/
 
 /*                  
@@ -104,6 +104,7 @@ struct fxp_softc {
 	struct mbuf *rfa_headm;		/* first mbuf in receive frame area */
 	struct mbuf *rfa_tailm;		/* last mbuf in receive frame area */
 	int sc_flags;			/* misc. flags */
+#define	FXPF_MWI_ENABLE		0x10	/* enable use of PCI MWI command */
 #define	FXPF_DISABLE_STANDBY	0x20	/* currently need to work-around */
 #define	FXPF_UCODE		0x40	/* ucode load already attempted */
 	struct timeout stats_update_to; /* Pointer to timeout structure */

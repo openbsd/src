@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fxp_pci.c,v 1.31 2004/09/20 04:24:00 brad Exp $	*/
+/*	$OpenBSD: if_fxp_pci.c,v 1.32 2005/01/14 18:14:14 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1995, David Greenman
@@ -236,6 +236,20 @@ fxp_pci_attach(parent, self, aux)
 	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
 	    PCI_COMMAND_MASTER_ENABLE |
 	    pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG));
+
+	/*
+	 * enable PCI Memory Write and Invalidate command
+	 */
+	if (rev >= FXP_REV_82558_A4)
+		if (PCI_CACHELINE(pci_conf_read(pa->pa_pc, pa->pa_tag,
+		    PCI_BHLC_REG))) {
+			pci_conf_write(pa->pa_pc, pa->pa_tag,
+			    PCI_COMMAND_STATUS_REG,
+			    PCI_COMMAND_INVALIDATE_ENABLE |
+			    pci_conf_read(pa->pa_pc, pa->pa_tag,
+			    PCI_COMMAND_STATUS_REG));
+			sc->sc_flags |= FXPF_MWI_ENABLE;
+		}
 
 	/* Do generic parts of attach. */
 	if (fxp_attach_common(sc, intrstr)) {

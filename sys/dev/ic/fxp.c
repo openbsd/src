@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxp.c,v 1.63 2004/12/23 19:40:21 deraadt Exp $	*/
+/*	$OpenBSD: fxp.c,v 1.64 2005/01/14 18:14:12 deraadt Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -129,7 +129,7 @@ static u_char fxp_cb_config_template[] = {
 	0x16,	/*  0 Byte count. */
 	0x08,	/*  1 Fifo limit */
 	0x00,	/*  2 Adaptive ifs */
-	0x00,	/*  3 void1 */
+	0x00,	/*  3 ctrl0 */
 	0x00,	/*  4 rx_dma_bytecount */
 	0x80,	/*  5 tx_dma_bytecount */
 	0xb2,	/*  6 ctrl 1*/
@@ -1311,6 +1311,9 @@ fxp_init(xsc)
 		cbp->ctrl2 |= 0x01;		/* discard short packets */
 		cbp->stripping |= 0x01;		/* truncate rx packets */
 	}
+
+	if (sc->sc_flags & FXPF_MWI_ENABLE)
+		cbp->ctrl0 |= 0x01;		/* enable PCI MWI command */
 
 	if(!sc->phy_10Mbps_only)			/* interface mode */
 		cbp->mediatype |= 0x01;
