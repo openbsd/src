@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: MAKEDEV.md,v 1.9 2002/12/05 04:30:21 kjc Exp $
+#	$OpenBSD: MAKEDEV.md,v 1.10 2003/04/10 16:14:28 millert Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -171,7 +171,7 @@ vnd*)
 		mknod r${name}${unit}n	c $chr $(( $unit * 16 + $off + 13 ))
 		mknod r${name}${unit}o	c $chr $(( $unit * 16 + $off + 14 ))
 		mknod r${name}${unit}p	c $chr $(( $unit * 16 + $off + 15 ))
-		chown root.operator ${name}${unit}[a-p] r${name}${unit}[a-p]
+		chown root:operator ${name}${unit}[a-p] r${name}${unit}[a-p]
 		chmod 640 ${name}${unit}[a-p] r${name}${unit}[a-p]
 	done
 	umask 77
@@ -182,7 +182,7 @@ tty0*)
 	rm -f tty0$unit cua0$unit
 	mknod tty0$unit c 7 $unit
 	mknod cua0$unit c 7 `expr $unit + 128`
-	chown uucp.dialer tty0$unit cua0$unit
+	chown uucp:dialer tty0$unit cua0$unit
 	chmod 660 tty0$unit cua0$unit
 	;;
 
@@ -241,7 +241,7 @@ st*)
 		mknod nr${name}${unit}	c $chr $(( $unit * 16 + 1 ))
 		mknod er${name}${unit}	c $chr $(( $unit * 16 + 2 ))
 		mknod enr${name}${unit}	c $chr $(( $unit * 16 + 3 ))
-		chown root.operator ${name}${unit} n${name}${unit} \
+		chown root:operator ${name}${unit} n${name}${unit} \
 			e$name$unit en$name$unit \
 			r${name}${unit} nr${name}${unit} \
 			er${name}${unit} enr${name}${unit}
@@ -266,7 +266,7 @@ ch*)
 	case $unit in
 	0|1|2|3|4|5|6)
 		mknod ${name}${unit}	c $chr $unit
-		chown root.operator ${name}${unit}
+		chown root:operator ${name}${unit}
 		chmod 660 ${name}${unit}
 		;;
 	*)
@@ -309,7 +309,7 @@ audio*)
 	mknod $audio    c $major $(( $unit + 128 ))
 	mknod $mixer    c $major $(( $unit + 16 ))
 	mknod $audioctl c $major $(( $unit + 192 ))
-	chown root.wheel $audio $sound $mixer $audioctl
+	chown root:wheel $audio $sound $mixer $audioctl
 	chmod 666 $audio $sound $mixer $audioctl
 	[ -e audio ] || ln -s $audio audio
 	[ -e mixer ] || ln -s $mixer mixer
@@ -320,14 +320,14 @@ audio*)
 usb*)
 	rm -f usb$unit
 	mknod usb$unit c 61 $unit
-	chown root.wheel usb$unit
+	chown root:wheel usb$unit
 	chmod 660 usb$unit
 	;;
 
 uhid*)
 	rm -f uhid$unit
 	mknod uhid$unit c 62 $unit
-	chown root.wheel uhid$unit
+	chown root:wheel uhid$unit
 	chmod 660 uhid$unit
 	;;
 
@@ -336,7 +336,7 @@ ugen*)
 	do
 		rm -f ugen$unit.$j
 		mknod ugen$unit.$j c 63 $(( $unit * 16 + $j ))
-		chown root.wheel ugen$unit.$j
+		chown root:wheel ugen$unit.$j
 		chmod 660 ugen$unit.$j
 	done
 	;;
@@ -344,21 +344,21 @@ ugen*)
 ulpt*)
 	rm -f ulpt$unit
 	mknod ulpt$unit c 64 $unit
-	chown root.wheel ulpt$unit
+	chown root:wheel ulpt$unit
 	chmod 660 ulpt$unit
 	;;
 
 urio*)
 	rm -f urio$unit
 	mknod urio$unit c 65 $unit
-	chown root.wheel urio$unit
+	chown root:wheel urio$unit
 	chmod 660 urio$unit
 	;;
 
 utty*)
 	rm -f utty$unit
 	mknod utty$unit c 66 $unit
-	chown root.wheel utty$unit
+	chown root:wheel utty$unit
 	chmod 660 utty$unit
 	;;
 
@@ -368,7 +368,7 @@ ttyCcfg)
 	minor=255
 	rm -f ttyCcfg
 	mknod ttyCcfg c $major $minor
-	chown root.wheel ttyCcfg
+	chown root:wheel ttyCcfg
         ;;
 
 ttyC*)
@@ -378,20 +378,20 @@ ttyC*)
 	minor=$unit
         rm -f tty$type$unit
         mknod tty$type$unit c $major $minor
-        chown root.wheel tty$type$unit
+        chown root:wheel tty$type$unit
         ;;
 
 bpf*)
 	unit=${i##*[a-z]}
 	rm -f bpf${unit}
 	mknod bpf${unit} c 22 ${unit}
-	chown root.wheel bpf${unit}
+	chown root:wheel bpf${unit}
 	;;
 
 pf)
 	rm -f pf
 	mknod pf c 39 0
-	chown root.wheel pf
+	chown root:wheel pf
 	chmod 600 pf
 	;;
 
@@ -400,7 +400,7 @@ tun*)
 	rm -f tun$unit
 	mknod tun$unit c 23 $unit
 	chmod 600 tun$unit
-	chown root.wheel tun$unit
+	chown root:wheel tun$unit
 	;;
 
 rd*)
@@ -411,7 +411,7 @@ rd*)
 	mknod rd${unit}c b ${blk} $(( $unit * 16 + 2 ))
 	mknod rrd${unit}a c ${chr} $(( $unit * 16 + 0 ))
 	mknod rrd${unit}c c ${chr} $(( $unit * 16 + 2 ))
-	chown root.operator rd${unit}[ac] rrd${unit}[ac]
+	chown root:operator rd${unit}[ac] rrd${unit}[ac]
 	chmod 640 rd${unit}[ac] rrd${unit}[ac]
 	umask 77
 	;;
@@ -419,14 +419,14 @@ rd*)
 lkm)
 	rm -f lkm
 	mknod lkm c 24 0
-	chown root.kmem lkm
+	chown root:kmem lkm
 	chmod 640 lkm
 	;;
 
 pci*)
 	rm -f pci
 	mknod pci c 71 0
-	chown root.kmem pci
+	chown root:kmem pci
 	chmod 600 pci
 	;;
 
@@ -437,14 +437,14 @@ random|srandom|urandom|prandom|arandom)
 	mknod urandom c 40 2
 	mknod prandom c 40 3
 	mknod arandom c 40 4
-	chown root.wheel random srandom urandom prandom arandom
+	chown root:wheel random srandom urandom prandom arandom
 	chmod 644 random srandom urandom prandom arandom
 	;;
 uk*)
 	unit=${i##*[a-z]}
 	rm -f uk$unit
 	mknod uk$unit c 41 $unit
-	chown root.operator uk$unit
+	chown root:operator uk$unit
 	chmod 640 uk$unit
 	;;
 
@@ -452,7 +452,7 @@ ss*)
 	unit=${i##*[a-z]}
 	rm -f ss$unit
 	mknod ss$unit c 42 $unit
-	chown root.operator ss$unit
+	chown root:operator ss$unit
 	chmod 440 ss$unit
 #	backwards compatibility with older PINTs
 	rm -f scan$unit
@@ -468,7 +468,7 @@ wsmux|wsmouse|wskbd)
 	rm -f wsmouse wskbd
 	mknod wsmouse c 70 0
 	mknod wskbd c 70 1
-	chown root.wheel wsmouse wskbd
+	chown root:wheel wsmouse wskbd
 	chmod 600 wsmouse wskbd
 	;;
 
@@ -478,7 +478,7 @@ wskbd*)
 	mknod wskbd${unit} c 68 ${unit}
 	# XXX
 	chmod 660 wskbd${unit}
-	chown root.wheel wskbd${unit}
+	chown root:wheel wskbd${unit}
 	;;
 wsmouse*)
 	unit=${i##*[a-z]}
@@ -486,14 +486,14 @@ wsmouse*)
 	mknod wsmouse${unit} c 69 ${unit}
 	# XXX
 	chmod 660 wsmouse${unit}
-	chown root.wheel wsmouse${unit}
+	chown root:wheel wsmouse${unit}
 	;;
 
 xfs*)
 	rm -f xfs$unit
 	mknod xfs$unit c 51 $unit
 	chmod 600 xfs$unit
-	chown root.wheel xfs$unit
+	chown root:wheel xfs$unit
 	;;
 
 altq)
