@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingList.pm,v 1.37 2004/11/13 11:48:46 espie Exp $
+# $OpenBSD: PackingList.pm,v 1.38 2004/11/13 12:49:58 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -353,16 +353,21 @@ sub from_installation
 	return $plist_cache->{$code}->{$pkgname};
 }
 
+sub to_cache
+{
+	my ($self) = @_;
+
+	$plist_cache->{\&defaultCode}->{$self->pkgname()} = $self;
+}
+
 sub to_installation
 {
 	my ($self) = @_;
 
 	require OpenBSD::PackageInfo;
 
-	my $pkgname = $self->pkgname();
-
-	$self->tofile(OpenBSD::PackageInfo::installed_contents($pkgname));
-	$plist_cache->{\&defaultCode}->{$pkgname} = $self;
+	$self->tofile(OpenBSD::PackageInfo::installed_contents($self->pkgname()));
+	$self->to_cache();
 }
 
 

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.28 2004/11/13 11:54:30 espie Exp $
+# $OpenBSD: Update.pm,v 1.29 2004/11/13 12:49:58 espie Exp $
 #
 # Copyright (c) 2004 Marc Espie <espie@openbsd.org>
 #
@@ -331,7 +331,10 @@ sub save_old_libraries
 		my $stub_name = $stub_list->pkgname();
 		my $dest = installed_info($stub_name);
 		print "Keeping them in $stub_name\n" if $state->{beverbose};
-		unless ($state->{not}) {
+		if ($state->{not}) {
+			$stub_list->to_cache();
+			$old_plist->to_cache();
+		} else {
 			mkdir($dest);
 			my $oldname = $old_plist->pkgname();
 			open my $comment, '>', $dest.COMMENT;
@@ -341,6 +344,7 @@ sub save_old_libraries
 			$stub_list->to_installation();
 			$old_plist->to_installation();
 		}
+		add_installed($stubname);
 
 		walk_depends_closure($old_plist->pkgname(), $stub_name, $state);
 	}
