@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sf.c,v 1.19 2003/01/15 06:31:24 art Exp $ */
+/*	$OpenBSD: if_sf.c,v 1.20 2003/06/29 13:23:12 avsm Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -717,7 +717,7 @@ void sf_attach(parent, self, aux)
 	sc->sf_ldata_ptr = malloc(sizeof(struct sf_list_data) + 8,
 				M_DEVBUF, M_NOWAIT);
 	if (sc->sf_ldata_ptr == NULL) {
-		printf("%s: no memory for list buffers!\n", sc->sf_unit);
+		printf("sf%d: no memory for list buffers!\n", sc->sf_unit);
 		goto fail;
 	}
 
