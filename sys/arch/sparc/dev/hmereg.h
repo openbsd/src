@@ -1,4 +1,4 @@
-/*	$OpenBSD: hmereg.h,v 1.1 1998/07/10 19:09:12 jason Exp $	*/
+/*	$OpenBSD: hmereg.h,v 1.2 1998/07/10 19:59:44 jason Exp $	*/
 
 /*
  * Copyright (c) 1998 Jason L. Wright (jason@thought.net)
@@ -334,7 +334,7 @@ struct hme_txd {
 #define TX_RING_SIZE	32	/* Must be 16<=x<=255, and divisible by 16 */
 #define RX_RING_MAX	256	/* maximum ring size: rx */
 #define TX_RING_MAX	256	/* maximum ring size: tx */
-#define RX_PKT_BUF_SZ	1600	/* size of a rx buffer */
+#define RX_PKT_BUF_SZ	2048	/* size of a rx buffer */
 #define RX_OFFSET	2	/* packet offset */
 #define RX_CSUMLOC	0x00	/* checksum location */
 #define TX_PKT_BUF_SZ	1546	/* size of a tx buffer */
