@@ -1,4 +1,4 @@
-/*	$OpenBSD: history.c,v 1.22 2003/05/18 01:02:42 jsyn Exp $	*/
+/*	$OpenBSD: history.c,v 1.23 2004/07/16 14:47:31 miod Exp $	*/
 
 /*
  * command history
@@ -85,6 +85,11 @@ c_fc(wp)
 	int optc;
 	char *first = (char *) 0, *last = (char *) 0;
 	char **hfirst, **hlast, **hp;
+
+	if (!Flag(FTALKING)) {
+		bi_errorf("history functions not available");
+		return 1;
+	}
 
 	while ((optc = ksh_getopt(wp, &builtin_opt, "e:glnrs0,1,2,3,4,5,6,7,8,9,")) != EOF)
 		switch (optc) {
