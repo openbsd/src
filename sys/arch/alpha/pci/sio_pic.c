@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio_pic.c,v 1.22 2003/05/11 19:41:09 deraadt Exp $	*/
+/*	$OpenBSD: sio_pic.c,v 1.23 2004/06/18 21:33:42 miod Exp $	*/
 /* $NetBSD: sio_pic.c,v 1.28 2000/06/06 03:10:13 thorpej Exp $ */
 
 /*-
@@ -548,7 +548,7 @@ sio_iointr(framep, vec)
 
 	irq = (vec - 0x800) >> 4;
 #ifdef DIAGNOSTIC
-	if (irq > ICU_LEN || irq < 0)
+	if (irq >= ICU_LEN || irq < 0)
 		panic("sio_iointr: irq out of range (%d)", irq);
 #endif
 
