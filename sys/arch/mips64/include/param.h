@@ -1,4 +1,4 @@
-/*      $OpenBSD: param.h,v 1.3 2004/08/10 20:28:13 deraadt Exp $ */
+/*      $OpenBSD: param.h,v 1.4 2004/09/09 22:21:41 pefo Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -75,7 +75,7 @@
 #define	SEGOFSET	(NBSEG-1)	/* byte offset into segment */
 #define	SEGSHIFT	22		/* LOG2(NBSEG) */
 
-#if (_MIPS_SZPTR == 64)
+#ifdef __LP64__
 #define	KERNBASE	0xffffffff80000000L	/* start of kernel virtual */
 #else
 #define	KERNBASE	0x80000000	/* start of kernel virtual */
@@ -91,23 +91,14 @@
 #define	SSIZE		1		/* initial stack size/NBPG */
 #define	SINCR		1		/* increment of stack/NBPG */
 
-#if (_MIPS_SZPTR == 64)
-#define	UPAGES		4			/* pages of u-area */
+#ifdef __LP64__
+#define	UPAGES		4		/* pages of u-area */
 #else
 #define	UPAGES		2		/* pages of u-area */
 #endif
 
-#if 0
-#define	UVPN		(UADDR>>PGSHIFT)/* virtual page number of u */
-#define	KERNELSTACK	(UADDR+UPAGES*NBPG)	/* top of kernel stack */
-#define	UADDR		0xffffc000	/* address of u */
-#define	UADDR		0xffffffffffffa000	/* address of u */
-#endif
-
 #define USPACE		(UPAGES*NBPG)	/* size of u-area in bytes */
 #define	USPACE_ALIGN	(2*NBPG)	/* u-area alignment 0-none */
-
-#define PMAP_NEW
 
 /*
  * Constants related to network buffer management.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.3 2004/08/10 21:10:56 pefo Exp $ */
+/*	$OpenBSD: asm.h,v 1.4 2004/09/09 22:21:41 pefo Exp $ */
 
 /*
  * Copyright (c) 2001-2002 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -97,6 +97,8 @@
 #define	SAVE_GP(x)		\
 	.cprestore x
 
+#define	SETUP_GP64(gpoff, name)
+#define	RESTORE_GP64
 #endif
 
 #if (_MIPS_SIM == _ABI64) || (_MIPS_SIM == _ABIN32)
@@ -104,7 +106,13 @@
 
 #define	SETUP_GP
 #define	SAVE_GP(x)
+#define	SETUP_GP64(gpoff, name)	\
+	.cpsetup t9, gpoff, name
+#define	RESTORE_GP64		\
+	.cpreturn
 #endif
+
+#define	MKFSIZ(narg,locals) (((narg+locals)*REGSZ+31)&(~31))
 
 #else /* defined(ABICALLS) && !defined(_KERNEL) */
 
@@ -112,11 +120,10 @@
 #define	SETUP_GP
 #define	SAVE_GP(x)
 
-#endif
-
 #define	ALIGNSZ		16	/* Stack layout alignment */
-
 #define	FRAMESZ(sz)	(((sz) + (ALIGNSZ-1)) & ~(ALIGNSZ-1))
+
+#endif
 
 /*
  *  Basic register operations based on selected ISA
@@ -129,7 +136,6 @@
 #define	CF_SZ		24	/* Call frame size */
 #define	CF_ARGSZ	16	/* Call frame arg size */
 #define	CF_RA_OFFS	20	/* Call ra save offset */
-#define	_MIPS_SZPTR	32
 #endif
 
 #if (_MIPS_ISA == _MIPS_ISA_MIPS3 || _MIPS_ISA == _MIPS_ISA_MIPS4)
@@ -140,10 +146,9 @@
 #define	CF_SZ		48	/* Call frame size (multiple of ALIGNSZ) */
 #define	CF_ARGSZ	32	/* Call frame arg size */
 #define	CF_RA_OFFS	40	/* Call ra save offset */
-#define	_MIPS_SZPTR	64
 #endif
 
-#if (_MIPS_SZPTR == 32)
+#ifndef __LP64__
 #define	PTR_L		lw
 #define	PTR_S		sw
 #define	PTR_SUB		sub
@@ -155,9 +160,7 @@
 #define	PTR_SLL		sll
 #define	PTR_SRL		srl
 #define	PTR_VAL		.word
-#endif
-
-#if (_MIPS_SZPTR == 64)
+#else
 #define	PTR_L		ld
 #define	PTR_S		sd
 #define	PTR_ADD		dadd
@@ -194,16 +197,16 @@
 #endif
 
 /*
- * LEAF(x)
+ * LEAF(x, fsize)
  *
  *	Declare a leaf routine.
  */
-#define LEAF(x)			\
+#define LEAF(x, fsize)		\
 	.align	3;		\
 	.globl x;		\
 	.ent x, 0;		\
 x: ;				\
-	.frame sp, 0, ra;	\
+	.frame sp, fsize, ra;	\
 	SETUP_GP		\
 	MCOUNT
 
@@ -216,12 +219,12 @@ x:
  *
  *	Declare a non-profiled leaf routine.
  */
-#define NLEAF(x)		\
+#define NLEAF(x, fsize)		\
 	.align	3;		\
 	.globl x;		\
 	.ent x, 0;		\
 x: ;				\
-	.frame sp, 0, ra;	\
+	.frame sp, fsize, ra;	\
 	SETUP_GP
 
 /*
@@ -264,7 +267,7 @@ x: ;				\
  * Macros to panic and printf from assembly language.
  */
 #define PANIC(msg) \
-	la	a0, 9f; \
+	LA	a0, 9f; \
 	jal	panic;	\
 	nop	;	\
 	MSG(msg)

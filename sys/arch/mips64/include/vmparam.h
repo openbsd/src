@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.3 2004/09/09 10:25:50 miod Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.4 2004/09/09 22:21:41 pefo Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.5 1994/10/26 21:10:10 cgd Exp $	*/
 
 /*
@@ -107,7 +107,7 @@
 
 
 /* user/kernel map constants */
-#if (_MIPS_SZPTR == 64)
+#ifdef __LP64__
 #define VM_MIN_ADDRESS		((vaddr_t)0x0000000000000000L)
 #define VM_MAXUSER_ADDRESS	((vaddr_t)0x0000000080000000L)
 #define VM_MAX_ADDRESS		((vaddr_t)0x0000000080000000L)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.3 2004/08/10 20:28:13 deraadt Exp $ */
+/*	$OpenBSD: db_machdep.h,v 1.4 2004/09/09 22:21:41 pefo Exp $ */
 
 /*
  * Copyright (c) 1998-2003 Opsycon AB (www.opsycon.se)
@@ -36,7 +36,6 @@
 #define DB_MACHINE_COMMANDS	/* We have machine specific commands */
 #define	DB_ELF_SYMBOLS		/* Elf style symbol table support */
 #define	DB_NO_AOUT		/* For crying out loud! */
-#define	DB_ELFSIZE	32	/* This is the size of symtab stuff */
 
 typedef struct trap_frame db_regs_t;
 db_regs_t		ddb_regs;

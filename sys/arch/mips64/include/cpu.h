@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.4 2004/08/15 12:07:28 pefo Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.5 2004/09/09 22:21:41 pefo Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -51,10 +51,17 @@
 
 #include <machine/psl.h>
 
+#ifdef __LP64__
 #define KSEG0_BASE	0xffffffff80000000
 #define KSEG1_BASE	0xffffffffa0000000
 #define KSSEG_BASE	0xffffffffc0000000
 #define KSEG3_BASE	0xffffffffe0000000
+#else
+#define KSEG0_BASE	0x80000000
+#define KSEG1_BASE	0xa0000000
+#define KSSEG_BASE	0xc0000000
+#define KSEG3_BASE	0xe0000000
+#endif
 #define KSEG_SIZE	0x20000000
 
 #define	KSEG0_TO_PHYS(x)	((u_long)(x) & 0x1fffffff)
@@ -157,11 +164,11 @@
 /*
  * Location of exception vectors.
  */
-#define RESET_EXC_VEC		0xffffffffbfc00000
-#define TLB_MISS_EXC_VEC	0xffffffff80000000
-#define XTLB_MISS_EXC_VEC	0xffffffff80000080
-#define CACHE_ERR_EXC_VEC	0xffffffff80000100
-#define GEN_EXC_VEC		0xffffffff80000180
+#define RESET_EXC_VEC		(KSEG0_BASE + 0x3fc00000)
+#define TLB_MISS_EXC_VEC	(KSEG0_BASE + 0x00000000)
+#define XTLB_MISS_EXC_VEC	(KSEG0_BASE + 0x00000080)
+#define CACHE_ERR_EXC_VEC	(KSEG0_BASE + 0x00000100)
+#define GEN_EXC_VEC		(KSEG0_BASE + 0x00000180)
 
 /*
  * Coprocessor 0 registers:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: arcbios.h,v 1.4 2004/08/15 10:36:17 pefo Exp $	*/
+/*	$OpenBSD: arcbios.h,v 1.5 2004/09/09 22:21:41 pefo Exp $	*/
 /*-
  * Copyright (c) 1996 M. Warner Losh.  All rights reserved.
  *
@@ -108,7 +108,7 @@ typedef struct arc_config
 	u_int32_t		affinity_mask;
 	u_int32_t		config_data_len;
 	u_int32_t		id_len;
-	char			*id;
+	int32_t			id;
 } arc_config_t;
 
 typedef enum arc_status
@@ -340,7 +340,11 @@ typedef struct arc_param_blk
 /**/	caddr_t		adapter0_vect;	/* ?? */
 } arc_param_blk_t;
 
+#ifdef _LP64
+#define ArcBiosBase ((arc_param_blk_t *) 0xffffffff80001000)
+#else
 #define ArcBiosBase ((arc_param_blk_t *) 0x80001000)
+#endif
 #define ArcBios (ArcBiosBase->firmware_vect)
 
 

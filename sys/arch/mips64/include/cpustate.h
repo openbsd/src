@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpustate.h,v 1.3 2004/08/10 21:10:56 pefo Exp $ */
+/*	$OpenBSD: cpustate.h,v 1.4 2004/09/09 22:21:41 pefo Exp $ */
 
 /*
  * Copyright (c) 2002-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -42,6 +42,8 @@
  *  a1 will have saved STATUS_REG on return.
  *  a3 will have the exception pc on 'return'.
  *  No traps, no interrupts if frame = k1 or k0!
+ *  Temp regs are saved with their register number so
+ *  branch emulation etc works properly.
  */
 #define	SAVE_CPU(frame, bo)			 \
 	SAVE_REG(AT, AST, frame, bo)		;\
@@ -51,14 +53,14 @@
 	SAVE_REG(a1, A1, frame, bo)		;\
 	SAVE_REG(a2, A2, frame, bo)		;\
 	SAVE_REG(a3, A3, frame, bo)		;\
-	SAVE_REG(t0, T0, frame, bo)		;\
-	SAVE_REG(t1, T1, frame, bo)		;\
-	SAVE_REG(t2, T2, frame, bo)		;\
-	SAVE_REG(t3, T3, frame, bo)		;\
-	SAVE_REG(t4, T4, frame, bo)		;\
-	SAVE_REG(t5, T5, frame, bo)		;\
-	SAVE_REG(t6, T6, frame, bo)		;\
-	SAVE_REG(t7, T7, frame, bo)		;\
+	SAVE_REG($8, T0, frame, bo)		;\
+	SAVE_REG($9, T1, frame, bo)		;\
+	SAVE_REG($10, T2, frame, bo)		;\
+	SAVE_REG($11, T3, frame, bo)		;\
+	SAVE_REG($12, T4, frame, bo)		;\
+	SAVE_REG($13, T5, frame, bo)		;\
+	SAVE_REG($14, T6, frame, bo)		;\
+	SAVE_REG($15 T7, frame, bo)		;\
 	SAVE_REG(t8, T8, frame, bo)		;\
 	SAVE_REG(t9, T9, frame, bo)		;\
 	SAVE_REG(gp, GP, frame, bo)		;\
@@ -112,14 +114,14 @@
 	RESTORE_REG(a1, A1, frame, bo)		;\
 	RESTORE_REG(a2, A2, frame, bo)		;\
 	RESTORE_REG(a3, A3, frame, bo)		;\
-	RESTORE_REG(t0, T0, frame, bo)		;\
-	RESTORE_REG(t1, T1, frame, bo)		;\
-	RESTORE_REG(t2, T2, frame, bo)		;\
-	RESTORE_REG(t3, T3, frame, bo)		;\
-	RESTORE_REG(t4, T4, frame, bo)		;\
-	RESTORE_REG(t5, T5, frame, bo)		;\
-	RESTORE_REG(t6, T6, frame, bo)		;\
-	RESTORE_REG(t7, T7, frame, bo)		;\
+	RESTORE_REG($8, T0, frame, bo)		;\
+	RESTORE_REG($9, T1, frame, bo)		;\
+	RESTORE_REG($10, T2, frame, bo)		;\
+	RESTORE_REG($11, T3, frame, bo)		;\
+	RESTORE_REG($12, T4, frame, bo)		;\
+	RESTORE_REG($13, T5, frame, bo)		;\
+	RESTORE_REG($14, T6, frame, bo)		;\
+	RESTORE_REG($15, T7, frame, bo)		;\
 	RESTORE_REG(t8, T8, frame, bo)		;\
 	RESTORE_REG(t9, T9, frame, bo)		;\
 	RESTORE_REG(gp, GP, frame, bo)		;\
