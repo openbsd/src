@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.5 2001/06/23 23:50:03 pjanzen Exp $	*/
+/*	$OpenBSD: init.c,v 1.6 2002/07/30 05:27:49 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)init.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: init.c,v 1.5 2001/06/23 23:50:03 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: init.c,v 1.6 2002/07/30 05:27:49 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -49,6 +49,7 @@ static char rcsid[] = "$OpenBSD: init.c,v 1.5 2001/06/23 23:50:03 pjanzen Exp $"
 #include <stdio.h>
 FILE	*trace;
 #endif
+#include <back.h>
 
 /* name of executable object programs */
 const char    EXEC[] = "/usr/games/backgammon";
@@ -82,7 +83,7 @@ char	args[100];
 int	bar;
 int	begscr;
 int	board[26];
-char	cin[100];
+char	cin[CIN_SIZE];
 int	colen;
 int	cturn;
 int	d0;

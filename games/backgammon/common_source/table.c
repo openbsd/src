@@ -1,4 +1,4 @@
-/*	$OpenBSD: table.c,v 1.4 2001/06/23 23:50:04 pjanzen Exp $	*/
+/*	$OpenBSD: table.c,v 1.5 2002/07/30 05:27:49 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)table.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: table.c,v 1.4 2001/06/23 23:50:04 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: table.c,v 1.5 2002/07/30 05:27:49 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -118,16 +118,19 @@ dochar:
 		}
 		if ((ist = n) > 0)
 			goto dochar;
-		goto domove;
-	}
-	if (c == KEY_DL && ncin > 0) {
-		refresh();
 		getyx(stdscr, curr, curc);
 		move(curr, 39);
+		clrtoeol();
+		goto domove;
+	} else if (c == KEY_DL && ncin > 0) {
+		getyx(stdscr, curr, curc);
+		move(curr, 39);
+		clrtoeol();
 		ist = -1;
+		refresh();
 		goto domove;
 	}
-	if (!isascii(c)) {
+	if (!isascii(c) || (ncin >= CIN_SIZE - 1)) {
 		beep();
 		goto domove;
 	}
@@ -135,8 +138,8 @@ dochar:
 	if (n >= 0) {
 		cin[ncin++] = c;
 		if (n > 2)
-		if (c != '\n')
-			addch(c);
+			if (c != '\n')
+				addch(c);
 		ist = n;
 		if (n)
 			goto dochar;

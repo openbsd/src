@@ -1,4 +1,4 @@
-/*	$OpenBSD: back.h,v 1.7 2002/02/16 21:27:08 millert Exp $	*/
+/*	$OpenBSD: back.h,v 1.8 2002/07/30 05:27:49 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -51,6 +51,8 @@
 #define D0	dice[0]
 #define D1	dice[1]
 #define swap	{D0 ^= D1; D1 ^= D0; D0 ^= D1; d0 = 1-d0;}
+ 
+#define CIN_SIZE 40
 
 #ifdef DEBUG
 extern FILE	*trace;
@@ -118,7 +120,7 @@ extern	int	*inptr;		/* pointer to in for current player */
 extern	int	*inopp;		/* pointer to in for opponent */
 
 extern	int	ncin;		/* number of characters in cin */
-extern	char	cin[100];	/* input line of current move
+extern	char	cin[CIN_SIZE];	/* input line of current move
 				   (used for reconstructing input after
 				   a backspace) */
 
