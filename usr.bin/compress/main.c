@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.47 2003/09/05 21:03:36 henning Exp $	*/
+/*	$OpenBSD: main.c,v 1.48 2003/12/09 07:34:55 millert Exp $	*/
 
 static const char copyright[] =
 "@(#) Copyright (c) 1992, 1993\n\
@@ -37,7 +37,7 @@ static const char license[] =
 #if 0
 static char sccsid[] = "@(#)compress.c	8.2 (Berkeley) 1/7/94";
 #else
-static const char main_rcsid[] = "$OpenBSD: main.c,v 1.47 2003/09/05 21:03:36 henning Exp $";
+static const char main_rcsid[] = "$OpenBSD: main.c,v 1.48 2003/12/09 07:34:55 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -148,7 +148,7 @@ main(int argc, char *argv[])
 	char *nargv[512];	/* some estimate based on ARG_MAX */
 	int bits, exists, oreg, ch, error, i, rc, oflag;
 
-	bits = cat = oflag = decomp = 0;
+	bits = oflag = 0;
 	nosave = -1;
 	p = __progname;
 	if (p[0] == 'g') {
@@ -277,11 +277,10 @@ main(int argc, char *argv[])
 			decomp++;
 			break;
 		case 'V':
-			printf("%s\n%s\n%s\n", main_rcsid,
+			printf("%s\n%s\n", main_rcsid, gz_rcsid);
 #ifndef SMALL
-			    z_rcsid,
+			printf("%s\n%s\n", z_rcsid, null_rcsid);
 #endif
-			    gz_rcsid);
 			exit (0);
 		case 'v':
 			verbose++;
@@ -786,25 +785,27 @@ list_stats(const char *name, const struct compressor *method,
 	static u_int nruns;
 	char *timestr;
 
-	if (name != NULL && strcmp(name, "/dev/stdout") == 0)
-		name += 5;
-
 	if (nruns == 0) {
 		if (verbose >= 0) {
 			if (verbose > 0)
-				fputs("method  crc     date  time  ", stdout);
-			puts("compressed  uncompr. ratio uncompressed_name");
+				fputs("method  crc      date   time  ", stdout);
+			puts("compressed  uncompressed  ratio  uncompressed_name");
 		}
 	}
 	nruns++;
 
 	if (name != NULL) {
+		if (strcmp(name, "/dev/stdout") == 0)
+			name += 5;
 		if (verbose > 0) {
 			timestr = ctime(&info->mtime) + 4;
 			timestr[12] = '\0';
-			printf("%.5s %08x %s ", method->name, info->crc, timestr);
+			if (timestr[4] == ' ')
+				timestr[4] = '0';
+			printf("%-7.7s %08x %s ", method->name, info->crc,
+				timestr);
 		}
-		printf("%9lld %9lld  %4.1f%% %s\n",
+		printf("%10lld    %10lld  %4.1f%%  %s\n",
 		    (long long)(info->total_in + info->hlen),
 		    (long long)info->total_out,
 		    (info->total_out - info->total_in) *
@@ -816,8 +817,8 @@ list_stats(const char *name, const struct compressor *method,
 		if (nruns < 3)		/* only do totals for > 1 files */
 			return;
 		if (verbose > 0)
-			fputs("                            ", stdout);
-		printf("%9lld %9lld  %4.1f%% (totals)\n",
+			fputs("                              ", stdout);
+		printf("%10lld    %10lld  %4.1f%%  (totals)\n",
 		    (long long)(compressed_total + header_total),
 		    (long long)uncompressed_total,
 		    (uncompressed_total - compressed_total) *

@@ -1,4 +1,4 @@
-/*	$OpenBSD: gzopen.c,v 1.16 2003/11/21 21:54:46 millert Exp $	*/
+/*	$OpenBSD: gzopen.c,v 1.17 2003/12/09 07:34:55 millert Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -59,7 +59,7 @@
 */
 
 const char gz_rcsid[] =
-    "$OpenBSD: gzopen.c,v 1.16 2003/11/21 21:54:46 millert Exp $";
+    "$OpenBSD: gzopen.c,v 1.17 2003/12/09 07:34:55 millert Exp $";
 
 #include <sys/param.h>
 #include <sys/stat.h>
@@ -407,11 +407,12 @@ gz_read(void *cookie, char *buf, int len)
 {
 	gz_stream *s = (gz_stream*)cookie;
 	u_char *start = buf; /* starting point for crc computation */
+	int error = Z_OK;
 
 	s->z_stream.next_out = buf;
 	s->z_stream.avail_out = len;
 
-	while (s->z_stream.avail_out != 0 && !s->z_eof) {
+	while (error == Z_OK && !s->z_eof && s->z_stream.avail_out != 0) {
 
 		if (s->z_stream.avail_in == 0) {
 
@@ -422,7 +423,8 @@ gz_read(void *cookie, char *buf, int len)
 			s->z_stream.next_in = s->z_buf;
 		}
 
-		if (inflate(&(s->z_stream), Z_NO_FLUSH) == Z_STREAM_END) {
+		error = inflate(&(s->z_stream), Z_NO_FLUSH);
+		if (error == Z_STREAM_END) {
 			/* Check CRC and original size */
 			s->z_crc = crc32(s->z_crc, start,
 			    (uInt)(s->z_stream.next_out - start));
@@ -444,6 +446,7 @@ gz_read(void *cookie, char *buf, int len)
 			}
 			inflateReset(&(s->z_stream));
 			s->z_crc = crc32(0L, Z_NULL, 0);
+			error = Z_OK;
 		}
 	}
 	s->z_crc = crc32(s->z_crc, start,
