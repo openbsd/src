@@ -1,4 +1,4 @@
-/*	$OpenBSD: mixerctl.c,v 1.12 2003/05/15 09:30:06 todd Exp $	*/
+/*	$OpenBSD: mixerctl.c,v 1.13 2003/11/21 10:20:06 jmc Exp $	*/
 /*	$NetBSD: mixerctl.c,v 1.11 1998/04/27 16:55:23 augustss Exp $	*/
 
 /*
@@ -396,9 +396,9 @@ usage(void)
 	extern char *__progname;	/* from crt0.o */
 
 	fprintf(stderr,
-	    "usage: %s [-f file] [-n] [-v] -a\n"
-	    "	    %s [-f file] [-n] [-v] name ...\n"
-	    "       %s [-f file] [-n] [-q] -w name=value ...\n",
+	    "usage: %s [-nv] [-f file] -a\n"
+	    "       %s [-nv] [-f file] name [...]\n"
+	    "       %s [-q]  [-f file] -w name=value [...]\n",
 	    __progname, __progname, __progname);
 
 	exit(1);

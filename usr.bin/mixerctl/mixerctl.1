@@ -1,4 +1,4 @@
-.\" $OpenBSD: mixerctl.1,v 1.18 2003/06/10 09:12:11 jmc Exp $
+.\" $OpenBSD: mixerctl.1,v 1.19 2003/11/21 10:20:06 jmc Exp $
 .\" $NetBSD: mixerctl.1,v 1.8 1998/05/09 12:41:16 augustss Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -42,21 +42,21 @@
 .Nd control audio mixing
 .Sh SYNOPSIS
 .Nm mixerctl
+.Op Fl nv
 .Op Fl f Ar file
-.Op Fl n
-.Op Fl v
 .Fl a
 .Nm mixerctl
+.Op Fl nv
 .Op Fl f Ar file
-.Op Fl n
-.Op Fl v
 .Ar name Op Ar ...
 .Nm mixerctl
-.Op Fl f Ar file
-.Op Fl n
 .Op Fl q
+.Pf \ \& Op Fl f Ar file
 .Fl w
-.Ar name=value Op Ar ...
+.Xo
+.Ar name Ns = Ns Ar value
+.Op Ar ...
+.Xc
 .Sh DESCRIPTION
 The
 .Nm
@@ -71,11 +71,9 @@ operates on the
 device.
 .Pp
 The options are as follows:
-.Bl -tag -width Ds
+.Bl -tag -width "-f file"
 .It Fl a
 Print all device variables and their current values.
-.It Fl w Ar name=value
-Attempt to set the specified variable.
 .It Fl f Ar file
 Specify an alternative audio mixing device.
 .It Fl n
@@ -88,6 +86,8 @@ Enumerated values are shown in
 .Dq []
 and set values are shown in
 .Dq {} .
+.It Fl w Ar name Ns = Ns Ar value
+Attempt to set the specified variable
 .Ar name
 to
 .Ar value .
@@ -104,22 +104,24 @@ The exact set of controls that can be manipulated depends on
 the mixer.
 The general format (in both getting and setting a value) is
 .Pp
-.Va class.name = value
+.D1 class.name=value
 .Pp
 The
-.Va class
+.Ar class
 can have values like
 .Li inputs
 or
 .Li outputs
-indicating that the control affects the input resp. output to the
-mixer.
+indicating that the control affects the input or output, respectively,
+to the mixer.
 The
-.Va name
+.Ar name
 indicates what part of the mixer the control affects.
 Continuous mixer values, e.g., volume, have numeric values
 in the range 0-255.
-If value can be set for each channel independently
+If
+.Ar value
+can be set for each channel independently,
 the values are printed separated by commas.
 Discrete mixer values, e.g.,
 the recording source, have symbolic names.
@@ -141,7 +143,7 @@ The command
 .Dl "$ mixerctl -a -v"
 .Pp
 can produce
-.Bd -literal
+.Bd -literal -offset indent
 inputs.mic=0,0 volume
 inputs.mic.mute=off  [ off on ]
 inputs.cd=220,220 volume
