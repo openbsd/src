@@ -1,4 +1,4 @@
-/*	$OpenBSD: man.c,v 1.12 1998/11/16 06:28:32 deraadt Exp $	*/
+/*	$OpenBSD: man.c,v 1.13 1999/06/10 22:38:02 pjanzen Exp $	*/
 /*	$NetBSD: man.c,v 1.7 1995/09/28 06:05:34 tls Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)man.c	8.17 (Berkeley) 1/31/95";
 #else
-static char rcsid[] = "$OpenBSD: man.c,v 1.12 1998/11/16 06:28:32 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: man.c,v 1.13 1999/06/10 22:38:02 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -163,7 +163,7 @@ main(argc, argv)
 	if (!f_cat && !f_how && !f_where)
 		if (!isatty(1))
 			f_cat = 1;
-		else if ((pager = getenv("PAGER")) != NULL)
+		else if ((pager = getenv("PAGER")) != NULL && (*pager != '\0'))
 			pager = check_pager(pager);
 		else
 			pager = _PATH_PAGER;

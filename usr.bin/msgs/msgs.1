@@ -1,4 +1,4 @@
-.\"	$OpenBSD: msgs.1,v 1.6 1999/06/05 01:21:34 aaron Exp $
+.\"	$OpenBSD: msgs.1,v 1.7 1999/06/10 22:38:03 pjanzen Exp $
 .\"	$NetBSD: msgs.1,v 1.5 1995/09/28 06:57:39 tls Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -61,7 +61,7 @@ of the system.
 The options available are as follows:
 .Bl -tag -width Fl
 .It Fl f
-Do not say ``No new messages.''.
+Do not say ``No new messages.''
 This is useful in a
 .Pa .login
 file since this is often the case here.
@@ -102,7 +102,7 @@ Pipe long messages through the program specified by the
 .Ev PAGER
 environment variable. If
 .Ev PAGER
-is not defined,
+is null or not defined,
 .Xr more 1
 is used.
 .El
@@ -218,7 +218,7 @@ uses the
 and
 .Ev TERM
 environment variables for the default home directory and
-terminal type. If defined, the program specified by the
+terminal type. If defined and non-null, the
 .Ev PAGER
 variable is invoked as the pagination program.
 .Sh FILES

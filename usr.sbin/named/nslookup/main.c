@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.6 1998/11/23 18:00:58 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.7 1999/06/10 22:38:03 pjanzen Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1989
@@ -66,7 +66,7 @@ char copyright[] =
 static char sccsid[] = "@(#)main.c	5.42 (Berkeley) 3/3/91";
 static char rcsid[] = "$From: main.c,v 8.4 1996/11/11 06:36:54 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.6 1998/11/23 18:00:58 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.7 1999/06/10 22:38:03 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -325,7 +325,7 @@ main(argc, argv)
 	PrintHostInfo(stdout, "Default Server:", defaultPtr);
 
 	pager = getenv("PAGER");
-	if (pager == NULL) {
+	if (pager == NULL || *pager == '\0') {
 	    pager = _PATH_PAGERCMD;
 	}
 

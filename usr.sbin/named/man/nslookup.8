@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nslookup.8,v 1.4 1999/06/05 22:17:45 aaron Exp $
+.\"	$OpenBSD: nslookup.8,v 1.5 1999/06/10 22:38:03 pjanzen Exp $
 .\"
 .\" ++Copyright++ 1985, 1989
 .\" -
@@ -178,7 +178,8 @@ When output is directed to a file, hash marks are printed for every
 .sp 1
 .IP "\fBview\fP \fIfilename\fP"
 Sorts and lists the output of previous \fBls\fP command(s) with
-\fImore\fP(1).
+PAGER if it is defined and non-null, or with
+\fImore\fP(1) otherwise.
 .sp 1
 .ne 4
 .IP "\fBhelp\fP"
