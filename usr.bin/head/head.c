@@ -1,4 +1,4 @@
-/*	$OpenBSD: head.c,v 1.3 1997/01/15 23:42:33 millert Exp $	*/
+/*	$OpenBSD: head.c,v 1.4 1999/07/23 13:14:32 aaron Exp $	*/
 
 /*
  * Copyright (c) 1980, 1987 Regents of the University of California.
@@ -41,12 +41,14 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)head.c	5.5 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$OpenBSD: head.c,v 1.3 1997/01/15 23:42:33 millert Exp $";
+static char rcsid[] = "$OpenBSD: head.c,v 1.4 1999/07/23 13:14:32 aaron Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include <limits.h>
+#include <errno.h>
 #include <unistd.h>
 
 static void usage ();
@@ -62,28 +64,35 @@ main(argc, argv)
 	int	argc;
 	char	**argv;
 {
-	register int	ch, cnt;
-	int	firsttime, linecnt = 10;
+	register long cnt;
+	int	ch, firsttime;
+	long	linecnt = 10;
+	char	*inval = NULL, *p = NULL;
+	size_t	len;
 
 	/* handle obsolete -number syntax */
 	if (argc > 1 && argv[1][0] == '-' && isdigit(argv[1][1])) {
-		if ((linecnt = atoi(argv[1] + 1)) < 0) {
-			usage ();
-		}
+		linecnt = strtol((p = argv[1] + 1), &inval, 10);
 		argc--; argv++;
 	}
 
 	while ((ch = getopt (argc, argv, "n:")) != -1)
 		switch (ch) {
 		case 'n':
-			if ((linecnt = atoi(optarg)) < 0)
-				usage ();
+			linecnt = strtol((p = optarg), &inval, 10);
 			break;
-
 		default:
 			usage();	
 		}
 	argc -= optind, argv += optind;
+
+	if (p) {
+		if ((linecnt == LONG_MIN || linecnt == LONG_MAX) &&
+		    errno == ERANGE)
+			err(1, "invalid line count: %s", p);
+		else if (linecnt <= 0 || *inval)
+			errx(1, "invalid line count: %s", p);
+	}
 
 	/* setlinebuf(stdout); */
 	for (firsttime = 1; ; firsttime = 0) {
@@ -93,8 +102,8 @@ main(argc, argv)
 		}
 		else {
 			if (!freopen(*argv, "r", stdin)) {
-				fprintf(stderr, "head: can't read %s.\n", *argv);
-				exit(1);
+				fprintf(stderr, "head: can't read %s.\n", *argv++);
+				continue;
 			}
 			if (argc > 1) {
 				if (!firsttime)
@@ -103,7 +112,7 @@ main(argc, argv)
 			}
 			++argv;
 		}
-		for (cnt = linecnt; cnt; --cnt)
+		for (cnt = linecnt; cnt && !feof(stdin); --cnt)
 			while ((ch = getchar()) != EOF)
 				if (putchar(ch) == '\n')
 					break;
