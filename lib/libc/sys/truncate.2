@@ -1,4 +1,4 @@
-.\"	$OpenBSD: truncate.2,v 1.9 2000/10/18 05:12:12 aaron Exp $
+.\"	$OpenBSD: truncate.2,v 1.10 2001/03/11 05:28:02 aaron Exp $
 .\"	$NetBSD: truncate.2,v 1.7 1995/02/27 12:39:00 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -121,13 +121,6 @@ is not open for writing.
 .El
 .Sh SEE ALSO
 .Xr open 2
-.Sh BUGS
-These calls should be generalized to allow ranges of bytes in a file
-to be discarded.
-.Pp
-Use of
-.Fn truncate
-to extend a file is not portable.
 .Sh HISTORY
 The
 .Fn truncate
@@ -135,3 +128,10 @@ and
 .Fn ftruncate
 function calls appeared in
 .Bx 4.2 .
+.Sh BUGS
+These calls should be generalized to allow ranges of bytes in a file
+to be discarded.
+.Pp
+Use of
+.Fn truncate
+to extend a file is not portable.
