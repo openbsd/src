@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.82 2002/06/08 21:09:59 dhartmei Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.83 2002/06/09 05:31:25 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -560,7 +560,7 @@ print_rule(struct pf_rule *r)
 		if (r->rule_flag & PFRULE_RETURNRST) {
 			if (!r->return_ttl)
 				printf("return-rst ");
-			else 
+			else
 				printf("return-rst(ttl %d) ", r->return_ttl);
 		} else if (r->return_icmp) {
 			const struct icmpcodeent *ic;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.88 2002/06/09 02:47:10 kjell Exp $	*/
+/*	$OpenBSD: parse.y,v 1.89 2002/06/09 05:31:25 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -104,12 +104,12 @@ struct node_icmp {
 };
 
 struct node_state_opt {
-        enum	{ PF_STATE_OPT_MAX=0, PF_STATE_OPT_TIMEOUT=1 };
+	enum	{ PF_STATE_OPT_MAX=0, PF_STATE_OPT_TIMEOUT=1 };
 	int			 type;
 	union {
 		u_int32_t	 max_states;
 		struct {
-			int	 	number;
+			int		number;
 			u_int32_t	seconds;
 		}		 timeout;
 	}			 data;
@@ -1040,7 +1040,7 @@ state_opt_list	: state_opt_item		{ $$ = $1; }
 		}
 		;
 
-state_opt_item	: MAXIMUM NUMBER 		{
+state_opt_item	: MAXIMUM NUMBER		{
 			if ($2 <= 0) {
 				yyerror("illegal states max value %d", $2);
 				YYERROR;
@@ -1776,7 +1776,7 @@ expand_label_proto(const char *name, char *label, u_int8_t proto)
 	struct protoent *pe;
 
 	while ((p = strstr(label, name)) != NULL) {
-		tmp[0] = 0; 
+		tmp[0] = 0;
 		strlcat(tmp, label, p-label+1);
 		pe = getprotobynumber(proto);
 		if (pe != NULL)
@@ -1947,7 +1947,7 @@ expand_nat(struct pf_nat *n, struct node_host *src_hosts,
 	LOOP_THROUGH(struct node_host, dst_host, dst_hosts,
 
 		n->af = af;
-	    	if ((n->af && src_host->af && n->af != src_host->af) ||
+		if ((n->af && src_host->af && n->af != src_host->af) ||
 		    (n->af && dst_host->af && n->af != dst_host->af) ||
 		    (src_host->af && dst_host->af &&
 		    src_host->af != dst_host->af))
@@ -1956,10 +1956,10 @@ expand_nat(struct pf_nat *n, struct node_host *src_hosts,
 			n->af = src_host->af;
 		else if (!n->af && dst_host->af)
 			n->af = dst_host->af;
-		    
- 	        n->saddr = src_host->addr;
+
+		n->saddr = src_host->addr;
 		n->smask = src_host->mask;
- 	        n->daddr = dst_host->addr;
+		n->daddr = dst_host->addr;
 		n->dmask = dst_host->mask;
 
 		pfctl_add_nat(pf, n);
@@ -1990,7 +1990,7 @@ expand_rdr(struct pf_rdr *r, struct node_if *interfaces,
 	LOOP_THROUGH(struct node_host, dst_host, dst_hosts,
 
 		r->af = af;
-	    	if ((r->af && src_host->af && r->af != src_host->af) ||
+		if ((r->af && src_host->af && r->af != src_host->af) ||
 		    (r->af && dst_host->af && r->af != dst_host->af) ||
 		    (src_host->af && dst_host->af &&
 		    src_host->af != dst_host->af) ||
@@ -1999,10 +1999,10 @@ expand_rdr(struct pf_rdr *r, struct node_if *interfaces,
 		    (src_host->ifindex && if_nametoindex(interface->ifname) &&
 		    src_host->ifindex != if_nametoindex(interface->ifname)) ||
 		    (dst_host->ifindex && if_nametoindex(interface->ifname) &&
-  		    dst_host->ifindex != if_nametoindex(interface->ifname)))
+		    dst_host->ifindex != if_nametoindex(interface->ifname)))
 			continue;
 
- 	        if (!r->af && src_host->af)
+		if (!r->af && src_host->af)
 			r->af = src_host->af;
 		else if (!r->af && dst_host->af)
 			r->af = dst_host->af;
@@ -2014,9 +2014,9 @@ expand_rdr(struct pf_rdr *r, struct node_if *interfaces,
 		else
 			memcpy(r->ifname, interface->ifname, sizeof(r->ifname));
 
- 	        r->saddr = src_host->addr;
+		r->saddr = src_host->addr;
 		r->smask = src_host->mask;
- 	        r->daddr = dst_host->addr;
+		r->daddr = dst_host->addr;
 		r->dmask = dst_host->mask;
 
 		pfctl_add_rdr(pf, r);
