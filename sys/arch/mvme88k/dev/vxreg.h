@@ -1,4 +1,4 @@
-/*	$OpenBSD: vxreg.h,v 1.7 2004/05/25 21:21:24 miod Exp $ */
+/*	$OpenBSD: vxreg.h,v 1.8 2004/05/26 21:15:31 miod Exp $ */
 
 /*
  * Copyright (c) 1999 Steve Murphree, Jr. All rights reserved.
@@ -396,8 +396,8 @@ struct init_info {      /* 88 bytes */
 
 #define  NENVELOPES           30
 #define  NPACKETS             NENVELOPES
-#define  USER_AREA            (sc->board_addr + 0x0100)
-#define  CHANNEL_H            (sc->board_addr + 0x0100)
+#define  USER_AREA            (0x0100)
+#define  CHANNEL_H            (0x0100)
 #define  ENVELOPE_AREA        (CHANNEL_H + sizeof(struct channel))
 #define  ENVELOPE_AREA_SIZE   (NENVELOPES * sizeof(struct envelope))
 #define  PACKET_AREA          (ENVELOPE_AREA + ENVELOPE_AREA_SIZE)
@@ -410,5 +410,5 @@ struct init_info {      /* 88 bytes */
 #define  RRING_AREA_SIZE      (NVXPORTS * sizeof(struct rring))
 #define  USER_AREA_SIZE       (RRING_AREA + RRING_AREA_SIZE - USER_AREA)
 
-#define  LO(x) (u_short)((unsigned long)x & 0x0000FFFF)
-#define  HI(x) (u_short)((unsigned long)x >> 16)
+/* Hardware's view of the dual ported memory */
+#define	LOCAL_DPMEM_ADDRESS	0x00f30000

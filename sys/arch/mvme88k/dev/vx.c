@@ -1,4 +1,4 @@
-/*	$OpenBSD: vx.c,v 1.31 2004/05/25 21:22:49 miod Exp $ */
+/*	$OpenBSD: vx.c,v 1.32 2004/05/26 21:15:31 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * All rights reserved.
@@ -68,7 +68,6 @@ struct vxsoftc {
 	struct evcnt      sc_intrcnt;
 	struct vx_info  sc_info[NVXPORTS];
 	struct vxreg    *vx_reg;
-	paddr_t		board_addr;
 	vaddr_t		board_vaddr;
 	struct channel    *channel;
 	char              channel_number;
@@ -140,8 +139,16 @@ void	vx_unblock(struct tty *);
  * opposite.
  */
 #define	VIRTUAL(addr)	(((addr) & 0xffff) + sc->board_vaddr)
-#define	PHYSICAL(addr)	(((addr - sc->board_vaddr) & 0xffff) + sc->board_addr)
-/* #define	PHYSICAL(addr)	(((addr - sc->board_vaddr) & 0xffff) | 0xf30000) */
+#define	PHYSICAL(addr) \
+	(((addr - sc->board_vaddr) & 0xffff) | LOCAL_DPMEM_ADDRESS)
+
+#if 0
+#define  LO(x) (u_short)((unsigned long)x & 0x0000FFFF)
+#define  HI(x) (u_short)((unsigned long)x >> 16)
+#else
+#define	LO(x)	(u_short)(x)
+#define	HI(x)	(LOCAL_DPMEM_ADDRESS >> 16)
+#endif
 
 struct tty *
 vxtty(dev_t dev)
@@ -190,8 +197,6 @@ vxattach(struct device *parent, struct device *self, void *aux)
 	}
 	if (ca->ca_ipl < 0)
 		ca->ca_ipl = IPL_TTY;
-
-	sc->board_addr = ca->ca_paddr;
 
 	if (bus_space_map(iot, ca->ca_paddr, 0x10000, 0, &ioh) != 0) {
 		printf(": can't map registers!\n");
