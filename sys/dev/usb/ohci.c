@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci.c,v 1.55 2005/03/06 06:51:53 pascoe Exp $ */
+/*	$OpenBSD: ohci.c,v 1.56 2005/03/30 03:01:55 pascoe Exp $ */
 /*	$NetBSD: ohci.c,v 1.139 2003/02/22 05:24:16 tsutsui Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
@@ -835,7 +835,7 @@ ohci_init(ohci_softc_t *sc)
 	 * registers that should be set earlier, but that the
 	 * controller ignores when in the SUSPEND state.
 	 */
-	fm = (OREAD4(sc, OHCI_FM_INTERVAL) & OHCI_FIT) ^ OHCI_FIT;
+	fm = (OREAD4(sc, OHCI_FM_REMAINING) & OHCI_FIT) ^ OHCI_FIT;
 	fm |= OHCI_FSMPS(ival) | ival;
 	OWRITE4(sc, OHCI_FM_INTERVAL, fm);
 	per = OHCI_PERIODIC(ival); /* 90% periodic */
