@@ -30,7 +30,7 @@ divert(-1)
 #
 
 include(`../m4/cf.m4')dnl
-VERSIONID(`$OpenBSD: elbereth.mc,v 1.1 1997/06/20 13:44:38 kstailey Exp $')dnl
+VERSIONID(`$OpenBSD: elbereth.mc,v 1.2 1997/06/20 18:25:25 kstailey Exp $')dnl
 OSTYPE(bsd4.4)dnl
 MASQUERADE_AS(disclosure.com)dnl
 FEATURE(allmasquerade)dnl
@@ -38,5 +38,4 @@ define(`SMART_HOST', `disclosure.com')
 MAILER(local)dnl
 MAILER(smtp)dnl
 
-Cw disclosure.com
 Cw elbereth.disclosure.com
