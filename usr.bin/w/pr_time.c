@@ -59,7 +59,9 @@ pr_attime(started, now)
 	struct tm *tp;
 	time_t diff;
 	char fmt[20];
+	int  today;
 
+	today = localtime(now)->tm_yday;
 	tp = localtime(started);
 	diff = *now - *started;
 
@@ -68,7 +70,7 @@ pr_attime(started, now)
 		(void)strcpy(fmt, "%d%b%y");
 
 	/* If not today, use day-hour-am/pm. */
-	else if (*now / SECSPERDAY != *started / SECSPERDAY) {
+	else if (tp->tm_yday  != today ) {
 		(void)strcpy(fmt, __CONCAT("%a%", "I%p"));
 	}
 
@@ -91,8 +93,7 @@ pr_idle(idle)
 {
 	/* If idle more than 36 hours, print as a number of days. */
 	if (idle >= 36 * SECSPERHOUR)
-		(void)printf(" %dday%c ", idle / SECSPERDAY,
-		    idle >= 24 * SECSPERHOUR ? 's' : ' ');
+		printf(days == 1 ? "  %dday " : " %ddays ", days);
 
 	/* If idle more than an hour, print as HH:MM. */
 	else if (idle >= SECSPERHOUR)
