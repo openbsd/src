@@ -13,6 +13,7 @@ alias	cd	'set old="$cwd"; chdir \!*'
 alias	h	history
 alias	j	jobs -l
 alias	ll	ls -l
+alias	l	ls -alF
 alias	back	'set back="$old"; set old="$cwd"; cd "$back"; unset back; dirs'
 
 alias	z	suspend
