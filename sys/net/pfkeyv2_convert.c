@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkeyv2_convert.c,v 1.7 2001/12/12 04:46:42 angelos Exp $	*/
+/*	$OpenBSD: pfkeyv2_convert.c,v 1.8 2002/05/31 01:38:04 angelos Exp $	*/
 /*
  * The author of this code is Angelos D. Keromytis (angelos@keromytis.org)
  *
@@ -97,6 +97,7 @@
 #include <sys/mbuf.h>
 #include <sys/kernel.h>
 #include <sys/socket.h>
+#include <net/route.h>
 #include <netinet/ip_ipsp.h>
 #include <net/pfkeyv2.h>
 #include <crypto/cryptodev.h>
@@ -378,6 +379,97 @@ export_lifetime(void **p, struct tdb *tdb, int type)
 	}
 
 	*p += sizeof(struct sadb_lifetime);
+}
+
+/*
+ * Import flow information to two struct sockaddr_encap's. Either
+ * all or none of the address arguments are NULL.
+ */
+void
+import_flow(struct sockaddr_encap *flow, struct sockaddr_encap *flowmask,
+    struct sadb_address *ssrc, struct sadb_address *ssrcmask,
+    struct sadb_address *ddst, struct sadb_address *ddstmask,
+    struct sadb_protocol *sab)
+{
+	u_int8_t transproto = 0;
+	union sockaddr_union *src = (union sockaddr_union *)(ssrc + 1);
+	union sockaddr_union *dst = (union sockaddr_union *)(ddst + 1);
+	union sockaddr_union *srcmask = (union sockaddr_union *)(ssrcmask + 1);
+	union sockaddr_union *dstmask = (union sockaddr_union *)(ddstmask + 1);
+
+	if (src == NULL)
+		return; /* There wasn't any information to begin with. */
+
+	bzero(flow, sizeof(*flow));
+	bzero(flowmask, sizeof(*flowmask));
+
+	if (sab != NULL)
+		transproto = sab->sadb_protocol_proto;
+
+	/*
+	 * Check that all the address families match. We know they are
+	 * valid and supported because pfkeyv2_parsemessage() checked that.
+	 */
+	if ((src->sa.sa_family != dst->sa.sa_family) ||
+	    (src->sa.sa_family != srcmask->sa.sa_family) ||
+	    (src->sa.sa_family != dstmask->sa.sa_family))
+		return;
+
+	/* Generic netmask handling, works for IPv4 and IPv6. */
+	rt_maskedcopy(&src->sa, &src->sa, &srcmask->sa);
+	rt_maskedcopy(&dst->sa, &dst->sa, &dstmask->sa);
+
+	/*
+	 * We set these as an indication that tdb_filter/tdb_filtermask are
+	 * in fact initialized.
+	 */
+	flow->sen_family = flowmask->sen_family = PF_KEY;
+	flow->sen_len = flowmask->sen_len = SENT_LEN;
+
+	switch (src->sa.sa_family)
+	{
+#ifdef INET
+	case AF_INET:
+		flow->sen_type = SENT_IP4;
+		flow->sen_direction = sab->sadb_protocol_direction;
+		flow->sen_ip_src = src->sin.sin_addr;
+		flow->sen_ip_dst = dst->sin.sin_addr;
+		flow->sen_proto = transproto;
+		flow->sen_sport = src->sin.sin_port;
+		flow->sen_dport = dst->sin.sin_port;
+
+		flowmask->sen_type = SENT_IP4;
+		flowmask->sen_direction = 0xff;
+		flowmask->sen_ip_src = srcmask->sin.sin_addr;
+		flowmask->sen_ip_dst = dstmask->sin.sin_addr;
+		flowmask->sen_sport = srcmask->sin.sin_port;
+		flowmask->sen_dport = dstmask->sin.sin_port;
+		if (transproto)
+			flowmask->sen_proto = 0xff;
+		break;
+#endif /* INET */
+
+#ifdef INET6
+	case AF_INET6:
+		flow->sen_type = SENT_IP6;
+		flow->sen_ip6_direction = sab->sadb_protocol_direction;
+		flow->sen_ip6_src = src->sin6.sin6_addr;
+		flow->sen_ip6_dst = dst->sin6.sin6_addr;
+		flow->sen_ip6_proto = transproto;
+		flow->sen_ip6_sport = src->sin6.sin6_port;
+		flow->sen_ip6_dport = dst->sin6.sin6_port;
+
+		flowmask->sen_type = SENT_IP6;
+		flowmask->sen_ip6_direction = 0xff;
+		flowmask->sen_ip6_src = srcmask->sin6.sin6_addr;
+		flowmask->sen_ip6_dst = dstmask->sin6.sin6_addr;
+		flowmask->sen_ip6_sport = srcmask->sin6.sin6_port;
+		flowmask->sen_ip6_dport = dstmask->sin6.sin6_port;
+		if (transproto)
+			flowmask->sen_ip6_proto = 0xff;
+		break;
+#endif /* INET6 */
+	}
 }
 
 /*
