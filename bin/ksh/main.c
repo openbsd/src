@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.27 2004/06/07 23:20:46 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.28 2004/08/23 14:56:32 millert Exp $	*/
 
 /*
  * startup, main loop, environments and error handling
@@ -731,7 +731,8 @@ quitenv()
 				 * Don't do it for SIGQUIT, since we'd
 				 * dump a core..
 				 */
-				if (sig == SIGINT || sig == SIGTERM) {
+				if ((sig == SIGINT || sig == SIGTERM) &&
+				    getpgrp() == kshpid) {
 					setsig(&sigtraps[sig], SIG_DFL,
 						SS_RESTORE_CURR|SS_FORCE);
 					kill(0, sig);
