@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.6 1998/06/26 21:21:01 millert Exp $	*/
+/*	$OpenBSD: common.c,v 1.7 1998/06/26 21:29:13 millert Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -39,7 +39,7 @@ static char RCSid[] =
 "$From: common.c,v 6.82 1998/03/23 23:27:33 michaelc Exp $";
 #else
 static char RCSid[] = 
-"$OpenBSD: common.c,v 1.6 1998/06/26 21:21:01 millert Exp $";
+"$OpenBSD: common.c,v 1.7 1998/06/26 21:29:13 millert Exp $";
 #endif
 
 static char sccsid[] = "@(#)common.c";
@@ -249,6 +249,8 @@ extern void coredump()
 extern void sighandler(sig)
 	int sig;
 {
+	int save_errno = errno;
+
 	debugmsg(DM_CALL, "sighandler() received signal %d\n", sig);
 
 	switch (sig) {
@@ -281,6 +283,7 @@ extern void sighandler(sig)
 	default:
 		fatalerr("No signal handler defined for signal %d.", sig);
 	}
+	errno = save_errno;
 }
 
 /*
