@@ -1,3 +1,5 @@
+/*	$OpenBSD: print-ike.c,v 1.4 2000/10/03 14:25:47 ho Exp $	*/
+
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999
  *	The Regents of the University of California.  All rights reserved.
@@ -29,7 +31,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ike.c,v 1.3 1999/09/30 07:22:55 ho Exp $ (XXX)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ike.c,v 1.4 2000/10/03 14:25:47 ho Exp $ (XXX)";
 #endif
 
 #include <sys/param.h>
@@ -40,8 +42,8 @@ static const char rcsid[] =
 struct mbuf;
 struct rtentry;
 #endif
-#include <net/if.h>
 
+#include <net/if.h>
 #include <netinet/in.h>
 
 #include <ctype.h>
@@ -50,9 +52,7 @@ struct rtentry;
 
 #include "interface.h"
 #include "addrtoname.h"
-#ifdef MODEMASK
-#undef MODEMASK					/* Solaris sucks */
-#endif
+#include "ike.h"
 
 struct isakmp_header {
 	u_char  init_cookie[8];
@@ -66,177 +66,18 @@ struct isakmp_header {
 	u_char  payloads[0];  
 };
 
+struct notification_payload {
+	u_char    next_payload;
+	u_char    reserved;
+	u_int16_t payload_length;
+	u_int32_t doi;
+	u_char    protocol_id;
+  	u_char    spi_size;
+  	u_int16_t type;
+	u_char    data[0];
+};
+
 static int isakmp_doi;
-
-/* XXX Perhaps move these to an <ike.h> file? */
-
-#define IPSEC_DOI		1
-
-#define PROTO_ISAKMP            1
-
-#define PAYLOAD_NONE		0
-#define PAYLOAD_SA		1
-#define PAYLOAD_PROPOSAL	2
-#define PAYLOAD_TRANSFORM	3
-#define PAYLOAD_KE		4
-#define PAYLOAD_ID		5
-#define PAYLOAD_CERT		6
-#define PAYLOAD_CERTREQUEST	7
-#define PAYLOAD_HASH		8
-#define PAYLOAD_SIG		9
-#define PAYLOAD_NONCE		10
-#define PAYLOAD_NOTIFICATION	11
-#define PAYLOAD_DELETE		12
-#define PAYLOAD_VENDOR          13
-
-#define IKE_ATTR_ENCRYPTION_ALGORITHM	1
-#define IKE_ATTR_HASH_ALGORITHM		2
-#define IKE_ATTR_AUTHENTICATION_METHOD	3
-#define IKE_ATTR_GROUP_DESC		4
-#define IKE_ATTR_GROUP_TYPE		5
-#define IKE_ATTR_LIFE_TYPE		11
-
-#define IKE_ATTR_ENCRYPT_INITIALIZER					\
-	{ "NONE", "DES_CBS", "IDEA_CBC", "BLOWFISH_CBC",		\
-	  "RC5_R16_B64_CBC", "3DES_CBC", "CAST_CBC",			\
-	}
-#define IKE_ATTR_HASH_INITIALIZER					\
-	{ "NONE", "MD5", "SHA", "TIGER",				\
-	}
-#define IKE_ATTR_AUTH_INITIALIZER					\
-	{ "NONE", "PRE_SHARED", "DSS", "RSA_SIG",			\
-	  "RSA_ENC", "RSA_ENC_REV",					\
-	}
-#define IKE_ATTR_GROUP_DESC_INITIALIZER					\
-	{ "NONE", "MODP_768", "MODP_1024",				\
-	  "E2CN_155", "E2CN_185", "MODP_1536",				\
-	}
-#define IKE_ATTR_GROUP_INITIALIZER					\
-	{ "NONE", "MODP", "ECP", "E2CN",				\
-	}
-#define IKE_ATTR_SA_DURATION_INITIALIZER				\
-	{ "NONE", "SECONDS", "KILOBYTES",				\
-	}
-
-#define IKE_ATTR_INITIALIZER						\
-	{ "NONE", 			/* 0 (not in RFC) */		\
-	  "ENCRYPTION_ALGORITHM", 	/* 1 */				\
-	  "HASH_ALGORITHM",		/* 2 */				\
-	  "AUTHENTICATION_METHOD",	/* 3 */				\
-	  "GROUP_DESCRIPTION",		/* 4 */				\
-	  "GROUP_TYPE",			/* 5 */				\
-	  "GROUP_PRIME",		/* 6 */				\
-	  "GROUP_GENERATOR_1",		/* 7 */				\
-	  "GROUP_GENERATOR_2",		/* 8 */				\
-	  "GROUP_CURVE_1",		/* 9 */				\
-	  "GROUP_CURVE_2",		/* 10 */			\
-	  "LIFE_TYPE",			/* 11 */			\
-	  "LIFE_DURATION",		/* 12 */			\
-	  "PRF",			/* 13 */			\
-	  "KEY_LENGTH",			/* 14 */			\
-	  "FIELD_SIZE",			/* 15 */			\
-	  "GROUP_ORDER",		/* 16 */			\
-	}
-
-#define IKE_SITUATION_IDENTITY_ONLY	1
-#define IKE_SITUATION_SECRECY		2
-#define IKE_SITUATION_INTEGRITY		4
-/* Mask is all the above, i.e 1+2+4 = 7 */
-#define IKE_SITUATION_MASK		7
-
-#define IKE_PAYLOAD_TYPES_INITIALIZER			\
-	{ "NONE",		/*  0 */		\
-	  "SA",			/*  1 */		\
-	  "PROPOSAL",		/*  2 */		\
-	  "TRANSFORM",		/*  3 */		\
-	  "KEY_EXCH",		/*  4 */		\
-	  "ID",			/*  5 */		\
-	  "CERT",		/*  6 */		\
-	  "CERTREQUEST",	/*  7 */		\
-	  "HASH",		/*  8 */		\
-	  "SIG",		/*  9 */		\
-	  "NONCE",		/* 10 */		\
-	  "NOTIFICATION",	/* 11 */		\
-	  "DELETE",		/* 12 */		\
-	  "VENDOR",		/* 13 */		\
-	}
-
-/* Exchange types */
-#define EXCHANGE_NONE           0
-#define EXCHANGE_BASE           1
-#define EXCHANGE_ID_PROT        2
-#define EXCHANGE_AUTH_ONLY      3
-#define EXCHANGE_AGGRESSIVE     4
-#define EXCHANGE_INFO           5
-#define EXCHANGE_QUICK_MODE	32
-#define EXCHANGE_NEW_GROUP_MODE	33
-
-/* Exchange types */
-#define IKE_EXCHANGE_TYPES_INITIALIZER			\
-	{ "NONE",		/* 0 */			\
-	  "BASE",		/* 1 */			\
-	  "ID_PROT",		/* 2 */			\
-	  "AUTH_ONLY",		/* 3 */			\
-	  "AGGRESSIVE",		/* 4 */			\
-	  "INFO",		/* 5 */			\
-	  /* step up to type 32 with unknowns */	\
-	  "unknown", "unknown", "unknown", "unknown",	\
-	  "unknown", "unknown", "unknown", "unknown",	\
-	  "unknown", "unknown", "unknown", "unknown",	\
-	  "unknown", "unknown", "unknown", "unknown",	\
-	  "unknown", "unknown", "unknown", "unknown",	\
-	  "unknown", "unknown", "unknown", "unknown",	\
-	  "unknown", "unknown",				\
-	  "QUICK_MODE",		/* 32 */		\
-	  "NEW_GROUP_MODE",	/* 33 */		\
-	}
-
-#define FLAGS_ENCRYPTION	1
-#define FLAGS_COMMIT		2
-#define FLAGS_AUTH_ONLY		4
-
-#define CERT_NONE               0
-#define CERT_PKCS               1
-#define CERT_PGP                2
-#define CERT_DNS                3
-#define CERT_X509_SIG           4
-#define CERT_X509_KE            5
-#define CERT_KERBEROS           6
-#define CERT_CRL                7
-#define CERT_ARL                8
-#define CERT_SPKI               9
-#define CERT_X509_ATTR         10
-
-#define NOTIFY_INVALID_PAYLOAD_TYPE          1
-#define NOTIFY_DOI_NOT_SUPPORTED             2
-#define NOTIFY_SITUATION_NOT_SUPPORTED       3
-#define NOTIFY_INVALID_COOKIE                4
-#define NOTIFY_INVALID_MAJOR_VERSION         5
-#define NOTIFY_INVALID_MINOR_VERSION         6
-#define NOTIFY_INVALID_EXCHANGE_TYPE         7
-#define NOTIFY_INVALID_FLAGS                 8
-#define NOTIFY_INVALID_MESSAGE_ID            9
-#define NOTIFY_INVALID_PROTOCOL_ID           10
-#define NOTIFY_INVALID_SPI                   11
-#define NOTIFY_INVALID_TRANSFORM_ID          12
-#define NOTIFY_ATTRIBUTES_NOT_SUPPORTED      13
-#define NOTIFY_NO_PROPOSAL_CHOSEN            14
-#define NOTIFY_BAD_PROPOSAL_SYNTAX           15
-#define NOTIFY_PAYLOAD_MALFORMED             16
-#define NOTIFY_INVALID_KEY_INFORMATION       17
-#define NOTIFY_INVALID_ID_INFORMATION        18
-#define NOTIFY_INVALID_CERT_ENCODING         19
-#define NOTIFY_INVALID_CERTIFICATE           20
-#define NOTIFY_CERT_TYPE_UNSUPPORTED         21
-#define NOTIFY_INVALID_CERT_AUTHORITY        22
-#define NOTIFY_INVALID_HASH_INFORMATION      23
-#define NOTIFY_AUTHENTICATION_FAILED         24
-#define NOTIFY_INVALID_SIGNATURE             25
-#define NOTIFY_ADDRESS_NOTIFICATION          26
-#define NOTIFY_NOTIFY_SA_LIFETIME            27
-#define NOTIFY_CERTIFICATE_UNAVAILABLE       28
-#define NOTIFY_UNSUPPORTED_EXCHANGE_TYPE     29
-#define NOTIFY_UNEQUAL_PAYLOAD_LENGTHS       30
 
 static void isakmp_pl_print(register u_char type, register u_char *payload);
 
@@ -244,7 +85,8 @@ int ike_tab_level = 0;
 
 #define SMALL_TABS 4
 #define SPACES "                                                   "
-const char *ike_tab_offset(void)
+const char *
+ike_tab_offset (void)
 {
   const char *p, *endline;
   static const char line[] = SPACES;
@@ -258,13 +100,13 @@ const char *ike_tab_offset(void)
 /*
  * Print isakmp requests
  */
-void isakmp_print(register const u_char *cp, register int length)
+void
+isakmp_print (register const u_char *cp, register u_int length)
 {
 	struct isakmp_header *ih;
 	register const u_char *ep;
 	u_char *payload;
-	u_char  nextpayload, np1;
-	u_int   paylen;
+	u_char  nextpayload;
 	int encrypted;
 	static const char *exgtypes[] = IKE_EXCHANGE_TYPES_INITIALIZER;
 
@@ -346,7 +188,8 @@ trunc:
 	fputs(" [|isakmp]", stdout);
 }
 
-void isakmp_sa_print(register u_char *buf, register int len)
+void
+isakmp_sa_print (register u_char *buf, register int len)
 {
 	u_int32_t situation = ntohl(*(u_int32_t *)(buf + 4));
 	isakmp_doi = ntohl((*(u_int32_t *)buf));
@@ -367,7 +210,8 @@ void isakmp_sa_print(register u_char *buf, register int len)
 	        printf(" situation: (unknown)");
 }
 
-int isakmp_attribute_print(register u_char *buf)
+int
+isakmp_attribute_print (register u_char *buf)
 {
 	static char *attrs[] = IKE_ATTR_INITIALIZER;
 	static char *attr_enc[] = IKE_ATTR_ENCRYPT_INITIALIZER;
@@ -413,7 +257,8 @@ int isakmp_attribute_print(register u_char *buf)
 	return length + 4;
 }
 
-void isakmp_transform_print(register u_char *buf, register int len)
+void
+isakmp_transform_print (register u_char *buf, register int len)
 {
 	u_char *attr = buf + 4;
 
@@ -426,7 +271,8 @@ void isakmp_transform_print(register u_char *buf, register int len)
 	ike_tab_level--;
 }
 
-void isakmp_proposal_print(register u_char *buf, register int len)
+void
+isakmp_proposal_print (register u_char *buf, register int len)
 {
 	printf(" proposal: %d proto: %d(%s) spisz: %d xforms: %d", 
 	       buf[0], buf[1], (buf[1] == PROTO_ISAKMP ? "ISAKMP" : "unknown"),
@@ -436,7 +282,8 @@ void isakmp_proposal_print(register u_char *buf, register int len)
 	       isakmp_pl_print(PAYLOAD_TRANSFORM, buf+4);
 }
 
-void isakmp_ke_print(register u_char *buf, register int len)
+void
+isakmp_ke_print (register u_char *buf, register int len)
 {
 	if (isakmp_doi != IPSEC_DOI)
 		return;
@@ -444,15 +291,46 @@ void isakmp_ke_print(register u_char *buf, register int len)
 	printf(" <KE payload data (not shown)> len: %d", len);
 }
 	
-void isakmp_id_print(register u_char *buf, register int len)
+void
+isakmp_id_print (register u_char *buf, register int len)
 {
 	if (isakmp_doi != IPSEC_DOI) 
 		return;
 
 	printf(" <ID payload data (not shown)> len: %d", len);
 }
+
+void
+isakmp_notification_print (register u_char *buf, register int len)
+{
+  	static const char *nftypes[] = IKE_NOTIFY_TYPES_INITIALIZER;
+  	struct notification_payload *np = (struct notification_payload *)buf;
+
+	if (len < sizeof (struct notification_payload)) {
+		printf (" (|len)");
+		return;
+	}
+
+	np->doi  = ntohl (np->doi);
+	np->type = ntohs (np->type);
+
+	if (np->doi != ISAKMP_DOI && np->doi != IPSEC_DOI) {
+		printf (" (unknown DOI)");
+		return;
+	}
+
+	printf ("\n\t%snotification: ", ike_tab_offset());
+
+	if (np->type > 0 && np->type < (sizeof nftypes / sizeof nftypes[0]))
+		printf("%s", nftypes[np->type]);
+	else
+	  	printf("%d (unknown)", np->type);
 	
-void isakmp_vendor_print(register u_char *buf, register int len)
+  	return;
+}
+	
+void
+isakmp_vendor_print (register u_char *buf, register int len)
 {
 	u_char *p = buf;
 
@@ -465,7 +343,8 @@ void isakmp_vendor_print(register u_char *buf, register int len)
 	printf("\"");
 }
 
-void isakmp_pl_print(register u_char type, register u_char *buf)
+void
+isakmp_pl_print (register u_char type, register u_char *buf)
 {
 	static const char *pltypes[] = IKE_PAYLOAD_TYPES_INITIALIZER;
 	int next_type = buf[0];
@@ -507,16 +386,12 @@ void isakmp_pl_print(register u_char type, register u_char *buf)
 	case PAYLOAD_CERTREQUEST:
 	case PAYLOAD_HASH:
 	case PAYLOAD_SIG:
-		break;
-	    
 	case PAYLOAD_NONCE:
-#if 0
-		isakmp_nonce_print(buf+4, this_len);
-#endif
+	case PAYLOAD_DELETE:
 		break;
 	    
 	case PAYLOAD_NOTIFICATION:
-	case PAYLOAD_DELETE:
+	  	isakmp_notification_print(buf, this_len);
 		break;
 
 	case PAYLOAD_VENDOR:
