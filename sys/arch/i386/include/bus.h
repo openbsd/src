@@ -1,7 +1,9 @@
-/*	$OpenBSD: bus.h,v 1.5 1996/07/31 01:45:53 niklas Exp $	*/
-/*	$NetBSD: bus.h,v 1.3 1996/05/03 19:22:18 christos Exp $	*/
+/*	$OpenBSD: bus.h,v 1.6 1996/11/12 22:46:27 niklas Exp $	*/
+/*	$NetBSD: bus.h,v 1.5 1996/10/21 22:26:19 thorpej Exp $	*/
 
 /*
+ * Copyright (c) 1996 Charles M. Hannum.  All rights reserved.
+ * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -37,99 +39,416 @@
 #include <machine/pio.h>
 
 /*
- * I/O addresses (in bus space)
+ * Values for the i386 bus space tag, not to be used directly by MI code.
  */
-typedef u_long bus_io_addr_t;
-typedef u_long bus_io_size_t;
+#define	I386_BUS_SPACE_IO	0	/* space is i/o space */
+#define I386_BUS_SPACE_MEM	1	/* space is mem space */
 
 /*
- * Memory addresses (in bus space)
+ * Bus address and size types
  */
-typedef u_long bus_mem_addr_t;
-typedef u_long bus_mem_size_t;
+typedef u_long bus_addr_t;
+typedef u_long bus_size_t;
 
 /*
- * Access methods for bus resources, I/O space, and memory space.
+ * Access methods for bus resources and address space.
  */
-typedef void *bus_chipset_tag_t;
-typedef u_long bus_io_handle_t;
-typedef caddr_t bus_mem_handle_t;
+typedef	int bus_space_tag_t;
+typedef	u_long bus_space_handle_t;
 
-#define bus_io_map(t, port, size, iohp)					\
-    ((void) t, *iohp = port, 0)
-#define bus_io_unmap(t, ioh, size)
+int	bus_space_map __P((bus_space_tag_t t, bus_addr_t addr,
+	    bus_size_t size, int cacheable, bus_space_handle_t *bshp));
+void	bus_space_unmap __P((bus_space_tag_t t, bus_space_handle_t bsh,
+	    bus_size_t size));
+int	bus_space_subregion __P((bus_space_tag_t t, bus_space_handle_t bsh,
+	    bus_size_t offset, bus_size_t size, bus_space_handle_t *nbshp));
 
-#define	bus_io_read_1(t, h, o)		((void) t, inb((h) + (o)))
-#define	bus_io_read_2(t, h, o)		((void) t, inw((h) + (o)))
-#define	bus_io_read_4(t, h, o)		((void) t, inl((h) + (o)))
-#if 0 /* Cause a link error for bus_io_read_8 */
-#define	bus_io_read_8(t, h, o)		!!! bus_io_read_8 unimplemented !!!
+int	bus_space_alloc __P((bus_space_tag_t t, bus_addr_t rstart,
+	    bus_addr_t rend, bus_size_t size, bus_size_t align,
+	    bus_addr_t boundary, int cacheable, bus_addr_t *addrp,
+	    bus_space_handle_t *bshp));
+void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
+	    bus_size_t size));
+
+/*
+ *	u_intN_t bus_space_read_N __P((bus_space_tag_t tag,
+ *	    bus_space_handle_t bsh, bus_size_t offset));
+ *
+ * Read a 1, 2, 4, or 8 byte quantity from bus space
+ * described by tag/handle/offset.
+ */
+
+#define	bus_space_read_1(t, h, o)					\
+	((t) == I386_BUS_SPACE_IO ? (inb((h) + (o))) :			\
+	    (*(volatile u_int8_t *)((h) + (o))))
+
+#define	bus_space_read_2(t, h, o)					\
+	((t) == I386_BUS_SPACE_IO ? (inw((h) + (o))) :			\
+	    (*(volatile u_int16_t *)((h) + (o))))
+
+#define	bus_space_read_4(t, h, o)					\
+	((t) == I386_BUS_SPACE_IO ? (inl((h) + (o))) :			\
+	    (*(volatile u_int32_t *)((h) + (o))))
+
+#if 0	/* Cause a link error for bus_space_read_8 */
+#define	bus_space_read_8(t, h, o)	!!! bus_space_read_8 unimplemented !!!
 #endif
 
-#define	bus_io_read_multi_1(t, h, o, a, c)	\
-					((void) t, insb((h) + (o), (a), (c)))
-#define	bus_io_read_multi_2(t, h, o, a, c)	\
-					((void) t, insw((h) + (o), (a), (c)))
-#define	bus_io_read_multi_4(t, h, o, a, c)	\
-					((void) t, insl((h) + (o), (a), (c)))
-#if 0 /* Cause a link error for bus_io_read_multi_8 */
-#define	bus_io_read_multi_8(t, h, o, a, c)	\
-				!!! bus_io_read_multi_8 unimplemented !!!
+/*
+ *	void bus_space_read_multi_N __P((bus_space_tag_t tag,
+ *	    bus_space_handle_t bsh, bus_size_t offset,
+ *	    u_intN_t *addr, size_t count));
+ *
+ * Read `count' 1, 2, 4, or 8 byte quantities from bus space
+ * described by tag/handle/offset and copy into buffer provided.
+ */
+
+#define	bus_space_read_multi_1(t, h, o, a, c) do {			\
+	if ((t) == I386_BUS_SPACE_IO) {					\
+		insb((h) + (o), (a), (c));				\
+	} else {							\
+		__asm __volatile("					\
+			cld					;	\
+		1:	movb (%0),%%al				;	\
+			stosb					;	\
+			loop 1b"				: 	\
+								:	\
+		    "r" ((h) + (o)), "D" ((a)), "c" ((c))	:	\
+		    "%edi", "%ecx", "%eax", "memory");			\
+	}								\
+} while (0)
+
+#define	bus_space_read_multi_2(t, h, o, a, c) do {			\
+	if ((t) == I386_BUS_SPACE_IO) {					\
+		insw((h) + (o), (a), (c));				\
+	} else {							\
+		__asm __volatile("					\
+			cld					;	\
+		1:	movw (%0),%%ax				;	\
+			stosw					;	\
+			loop 1b"				:	\
+								:	\
+		    "r" ((h) + (o)), "D" ((a)), "c" ((c))	:	\
+		    "%edi", "%ecx", "%eax", "memory");			\
+	}								\
+} while (0)
+
+#define	bus_space_read_multi_4(t, h, o, a, c) do {			\
+	if ((t) == I386_BUS_SPACE_IO) {					\
+		insl((h) + (o), (a), (c));				\
+	} else {							\
+		__asm __volatile("					\
+			cld					;	\
+		1:	movl (%0),%%eax				;	\
+			stosl					;	\
+			loop 1b"				:	\
+								:	\
+		    "r" ((h) + (o)), "D" ((a)), "c" ((c))	:	\
+		    "%edi", "%ecx", "%eax", "memory");			\
+	}								\
+} while (0)
+
+#if 0	/* Cause a link error for bus_space_read_multi_8 */
+#define	bus_space_read_multi_8	!!! bus_space_read_multi_8 unimplemented !!!
 #endif
 
-#define	bus_io_write_1(t, h, o, v)	((void) t, outb((h) + (o), (v)))
-#define	bus_io_write_2(t, h, o, v)	((void) t, outw((h) + (o), (v)))
-#define	bus_io_write_4(t, h, o, v)	((void) t, outl((h) + (o), (v)))
-#if 0 /* Cause a link error for bus_io_write_8 */
-#define	bus_io_write_8(t, h, o, v)	!!! bus_io_write_8 unimplemented !!!
+/*
+ *	void bus_space_read_region_N __P((bus_space_tag_t tag,
+ *	    bus_space_handle_t bsh, bus_size_t offset,
+ *	    u_intN_t *addr, size_t count));
+ *
+ * Read `count' 1, 2, 4, or 8 byte quantities from bus space
+ * described by tag/handle and starting at `offset' and copy into
+ * buffer provided.
+ */
+
+#define	bus_space_read_region_1(t, h, o, a, c) do {			\
+	if ((t) == I386_BUS_SPACE_IO) {					\
+		__asm __volatile("					\
+			cld					;	\
+		1:	inb %w0,%%al				;	\
+			stosb					;	\
+			incl %0					;	\
+			loop 1b"				: 	\
+								:	\
+		    "d" ((h) + (o)), "D" ((a)), "c" ((c))	:	\
+		    "%edx", "%edi", "%ecx", "%eax", "memory");		\
+	} else {							\
+		__asm __volatile("					\
+			cld					;	\
+			repne					;	\
+			movsb"					:	\
+								:	\
+		    "S" ((h) + (o)), "D" ((a)), "c" ((c))	:	\
+		    "%esi", "%edi", "%ecx", "memory");			\
+	}								\
+} while (0)
+
+#define	bus_space_read_region_2(t, h, o, a, c) do {			\
+	if ((t) == I386_BUS_SPACE_IO) {					\
+		__asm __volatile("					\
+			cld					;	\
+		1:	inw %w0,%%ax				;	\
+			stosw					;	\
+			addl $2,%0				;	\
+			loop 1b"				: 	\
+								:	\
+		    "d" ((h) + (o)), "D" ((a)), "c" ((c))	:	\
+		    "%edx", "%edi", "%ecx", "%eax", "memory");		\
+	} else {							\
+		__asm __volatile("					\
+			cld					;	\
+			repne					;	\
+			movsw"					:	\
+								:	\
+		    "S" ((h) + (o)), "D" ((a)), "c" ((c))	:	\
+		    "%esi", "%edi", "%ecx", "memory");			\
+	}								\
+} while (0)
+
+#define	bus_space_read_region_4(t, h, o, a, c) do {			\
+	if ((t) == I386_BUS_SPACE_IO) {					\
+		__asm __volatile("					\
+			cld					;	\
+		1:	inl %w0,%%eax				;	\
+			stosl					;	\
+			addl $4,%0				;	\
+			loop 1b"				: 	\
+								:	\
+		    "d" ((h) + (o)), "D" ((a)), "c" ((c))	:	\
+		    "%edx", "%edi", "%ecx", "%eax", "memory");		\
+	} else {							\
+		__asm __volatile("					\
+			cld					;	\
+			repne					;	\
+			movsl"					:	\
+								:	\
+		    "S" ((h) + (o)), "D" ((a)), "c" ((c))	:	\
+		    "%esi", "%edi", "%ecx", "memory");			\
+	}								\
+} while (0)
+
+#if 0	/* Cause a link error for bus_space_read_region_8 */
+#define	bus_space_read_region_8	!!! bus_space_read_region_8 unimplemented !!!
 #endif
 
-#define	bus_io_write_multi_1(t, h, o, a, c)	\
-					((void) t, outsb((h) + (o), (a), (c)))
-#define	bus_io_write_multi_2(t, h, o, a, c)	\
-					((void) t, outsw((h) + (o), (a), (c)))
-#define	bus_io_write_multi_4(t, h, o, a, c)	\
-					((void) t, outsl((h) + (o), (a), (c)))
-#if 0 /* Cause a link error for bus_io_write_multi_8 */
-#define	bus_io_write_multi_8(t, h, o, a, c)	\
-				!!! bus_io_write_multi_8 unimplimented !!!
+/*
+ *	void bus_space_write_N __P((bus_space_tag_t tag,
+ *	    bus_space_handle_t bsh, bus_size_t offset,
+ *	    u_intN_t value));
+ *
+ * Write the 1, 2, 4, or 8 byte value `value' to bus space
+ * described by tag/handle/offset.
+ */
+
+#define	bus_space_write_1(t, h, o, v)	do {				\
+	if ((t) == I386_BUS_SPACE_IO)					\
+		outb((h) + (o), (v));					\
+	else								\
+		((void)(*(volatile u_int8_t *)((h) + (o)) = (v)));	\
+} while (0)
+
+#define	bus_space_write_2(t, h, o, v)	do {				\
+	if ((t) == I386_BUS_SPACE_IO)					\
+		outw((h) + (o), (v));					\
+	else								\
+		((void)(*(volatile u_int16_t *)((h) + (o)) = (v)));	\
+} while (0)
+
+#define	bus_space_write_4(t, h, o, v)	do {				\
+	if ((t) == I386_BUS_SPACE_IO)					\
+		outl((h) + (o), (v));					\
+	else								\
+		((void)(*(volatile u_int32_t *)((h) + (o)) = (v)));	\
+} while (0)
+
+#if 0	/* Cause a link error for bus_space_write_8 */
+#define	bus_space_write_8	!!! bus_space_write_8 not implemented !!!
 #endif
 
-int	bus_mem_map __P((bus_chipset_tag_t t, bus_mem_addr_t bpa,
-	    bus_mem_size_t size, int cacheable, bus_mem_handle_t *mhp));
-void	bus_mem_unmap __P((bus_chipset_tag_t t, bus_mem_handle_t memh,
-	    bus_mem_size_t size));
+/*
+ *	void bus_space_write_multi_N __P((bus_space_tag_t tag,
+ *	    bus_space_handle_t bsh, bus_size_t offset,
+ *	    u_intN_t *addr, size_t count));
+ *
+ * Write `count' 1, 2, 4, or 8 byte quantities from the buffer
+ * provided to bus space described by tag/handle/offset.
+ */
 
-#define	bus_mem_read_1(t, h, o)	((void) t, (*(volatile u_int8_t *)((h) + (o))))
-#define	bus_mem_read_2(t, h, o)	((void) t, (*(volatile u_int16_t *)((h) + (o))))
-#define	bus_mem_read_4(t, h, o)	((void) t, (*(volatile u_int32_t *)((h) + (o))))
-#define	bus_mem_read_8(t, h, o)	((void) t, (*(volatile u_int64_t *)((h) + (o))))
+#define	bus_space_write_multi_1(t, h, o, a, c) do {			\
+	if ((t) == I386_BUS_SPACE_IO) {					\
+		outsb((h) + (o), (a), (c));				\
+	} else {							\
+		__asm __volatile("					\
+			cld					;	\
+		1:	lodsb					;	\
+			movb %%al,(%0)				;	\
+			loop 1b"				: 	\
+								:	\
+		    "r" ((h) + (o)), "S" ((a)), "c" ((c))	:	\
+		    "%esi", "%ecx", "%eax");				\
+	}								\
+} while (0)
 
-#define	bus_mem_write_1(t, h, o, v)					\
-    ((void) t, ((void)(*(volatile u_int8_t *)((h) + (o)) = (v))))
-#define	bus_mem_write_2(t, h, o, v)					\
-    ((void) t, ((void)(*(volatile u_int16_t *)((h) + (o)) = (v))))
-#define	bus_mem_write_4(t, h, o, v)					\
-    ((void) t, ((void)(*(volatile u_int32_t *)((h) + (o)) = (v))))
-#define	bus_mem_write_8(t, h, o, v)					\
-    ((void) t, ((void)(*(volatile u_int64_t *)((h) + (o)) = (v))))
+#define bus_space_write_multi_2(t, h, o, a, c) do {			\
+	if ((t) == I386_BUS_SPACE_IO) {					\
+		outsw((h) + (o), (a), (c));				\
+	} else {							\
+		__asm __volatile("					\
+			cld					;	\
+		1:	lodsw					;	\
+			movw %%ax,(%0)				;	\
+			loop 1b"				: 	\
+								:	\
+		    "r" ((h) + (o)), "S" ((a)), "c" ((c))	:	\
+		    "%esi", "%ecx", "%eax");				\
+	}								\
+} while (0)
 
-#define	bus_io_read_raw_multi_2(t, h, o, a, c)	\
-    ((void) t, insw((h) + (o), (a), (c) >> 1))
-#define	bus_io_read_raw_multi_4(t, h, o, a, c)	\
-    ((void) t, insl((h) + (o), (a), (c) >> 2))
-#if 0 /* Cause a link error for bus_io_read_raw_multi_8 */
-#define	bus_io_read_raw_multi_8(t, h, o, a, c)	\
-				!!! bus_io_read_multi_8 unimplemented !!!
+#define bus_space_write_multi_4(t, h, o, a, c) do {			\
+	if ((t) == I386_BUS_SPACE_IO) {					\
+		outsl((h) + (o), (a), (c));				\
+	} else {							\
+		__asm __volatile("					\
+			cld					;	\
+		1:	lodsl					;	\
+			movl %%eax,(%0)				;	\
+			loop 1b"				: 	\
+								:	\
+		    "r" ((h) + (o)), "S" ((a)), "c" ((c))	:	\
+		    "%esi", "%ecx", "%eax");				\
+	}								\
+} while (0)
+
+#if 0	/* Cause a link error for bus_space_write_multi_8 */
+#define	bus_space_write_multi_8(t, h, o, a, c)				\
+			!!! bus_space_write_multi_8 unimplimented !!!
 #endif
 
-#define	bus_io_write_raw_multi_2(t, h, o, a, c)	\
-    ((void) t, outsw((h) + (o), (a), (c) >> 1))
-#define	bus_io_write_raw_multi_4(t, h, o, a, c)	\
-    ((void) t, outsl((h) + (o), (a), (c) >> 2))
-#if 0 /* Cause a link error for bus_io_write_raw_multi_8 */
-#define	bus_io_write_raw_multi_8(t, h, o, a, c)	\
-				!!! bus_io_write_multi_8 unimplimented !!!
+/*
+ *	void bus_space_write_region_N __P((bus_space_tag_t tag,
+ *	    bus_space_handle_t bsh, bus_size_t offset,
+ *	    u_intN_t *addr, size_t count));
+ *
+ * Write `count' 1, 2, 4, or 8 byte quantities from the buffer provided
+ * to bus space described by tag/handle starting at `offset'.
+ */
+
+#define	bus_space_write_region_1(t, h, o, a, c) do {			\
+	if ((t) == I386_BUS_SPACE_IO) {					\
+		__asm __volatile("					\
+			cld					;	\
+		1:	lodsb					;	\
+			outb %%al,%w0				;	\
+			incl %0					;	\
+			loop 1b"				: 	\
+								:	\
+		    "d" ((h) + (o)), "S" ((a)), "c" ((c))	:	\
+		    "%edx", "%esi", "%ecx", "%eax", "memory");		\
+	} else {							\
+		__asm __volatile("					\
+			cld					;	\
+			repne					;	\
+			movsb"					:	\
+								:	\
+		    "D" ((h) + (o)), "S" ((a)), "c" ((c))	:	\
+		    "%edi", "%esi", "%ecx", "memory");			\
+	}								\
+} while (0)
+
+#define	bus_space_write_region_2(t, h, o, a, c) do {			\
+	if ((t) == I386_BUS_SPACE_IO) {					\
+		__asm __volatile("					\
+			cld					;	\
+		1:	lodsw					;	\
+			outw %%ax,%w0				;	\
+			addl $2,%0				;	\
+			loop 1b"				: 	\
+								:	\
+		    "d" ((h) + (o)), "S" ((a)), "c" ((c))	:	\
+		    "%edx", "%esi", "%ecx", "%eax", "memory");		\
+	} else {							\
+		__asm __volatile("					\
+			cld					;	\
+			repne					;	\
+			movsw"					:	\
+								:	\
+		    "D" ((h) + (o)), "S" ((a)), "c" ((c))	:	\
+		    "%edi", "%esi", "%ecx", "memory");			\
+	}								\
+} while (0)
+
+#define	bus_space_write_region_4(t, h, o, a, c) do {			\
+	if ((t) == I386_BUS_SPACE_IO) {					\
+		__asm __volatile("					\
+			cld					;	\
+		1:	lodsl					;	\
+			outl %%eax,%w0				;	\
+			addl $4,%0				;	\
+			loop 1b"				: 	\
+								:	\
+		    "d" ((h) + (o)), "S" ((a)), "c" ((c))	:	\
+		    "%edx", "%esi", "%ecx", "%eax", "memory");		\
+	} else {							\
+		__asm __volatile("					\
+			cld					;	\
+			repne					;	\
+			movsl"					:	\
+								:	\
+		    "D" ((h) + (o)), "S" ((a)), "c" ((c))	:	\
+		    "%edi", "%esi", "%ecx", "memory");			\
+	}								\
+} while (0)
+
+#if 0	/* Cause a link error for bus_space_write_region_8 */
+#define	bus_space_write_region_8					\
+			!!! bus_space_write_region_8 unimplemented !!!
 #endif
+
+/*
+ *	void bus_space_set_multi_N __P((bus_space_tag_t tag,
+ *	    bus_space_handle_t bsh, u_intN_t val, size_t count));
+ *
+ * Write the 1, 2, 4, or 8 byte value `val' to bus space described
+ * by tag/handle/offset `count' times.
+ */
+
+	/* XXX IMPLEMENT bus_space_set_multi_N() XXX */
+
+/*
+ *	void bus_space_set_region_N __P((bus_space_tag_t tag,
+ *	    bus_space_handle_t bsh, u_intN_t val, size_t count));
+ *
+ * Write `count' 1, 2, 4, or 8 byte value `val' to bus space described
+ * by tag/handle starting at `offset'.
+ */
+
+	/* XXX IMPLEMENT bus_space_set_region_N() XXX */
+
+/*
+ *	void bus_space_copy_N __P((bus_space_tag_t tag,
+ *	    bus_space_handle_t bsh1, bus_size_t off1,
+ *	    bus_space_handle_t bsh2, bus_size_t off2,
+ *	    size_t count));
+ *
+ * Copy `count' 1, 2, 4, or 8 byte values from bus space starting
+ * at tag/bsh1/off1 to bus space starting at tag/bsh2/off2.
+ */
+
+	/* XXX IMPLEMENT bus_space_copy_N() XXX */
+
+/*
+ * Bus read/write barrier methods.
+ *
+ *	void bus_space_barrier __P((bus_space_tag_t tag,
+ *	    bus_space_handle_t bsh, bus_size_t offset,
+ *	    bus_size_t len, int flags));
+ *
+ * Note: the i386 does not currently require barriers, but we must
+ * provide the flags to MI code.
+ */
+#define	bus_space_barrier(t, h, o, l, f)
+#define	BUS_BARRIER_READ	0x01		/* force read barrier */
+#define	BUS_BARRIER_WRITE	0x02		/* force write barrier */
 
 #endif /* _I386_BUS_H_ */

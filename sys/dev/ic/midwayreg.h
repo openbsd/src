@@ -1,4 +1,4 @@
-/*	$OpenBSD: midwayreg.h,v 1.5 1996/11/12 20:30:21 niklas Exp $	*/
+/*	$OpenBSD: midwayreg.h,v 1.6 1996/11/12 22:46:25 niklas Exp $	*/
 
 /*
  * m i d w a y r e g . h
@@ -9,7 +9,7 @@
  */
 
 #if defined(sparc) || defined(__FreeBSD__)
-/* XXX: gross.   netbsd/sparc doesn't have machine/bus.old.h yet. */
+/* XXX: gross.   netbsd/sparc doesn't have machine/bus.h yet. */
 typedef void * bus_chipset_tag_t;
 typedef u_int32_t pci_chipset_tag_t;
 typedef caddr_t bus_mem_handle_t;

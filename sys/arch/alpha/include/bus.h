@@ -1,5 +1,5 @@
-/*	$OpenBSD: bus.h,v 1.3 1996/10/30 22:38:55 niklas Exp $	*/
-/*	$NetBSD: bus.h,v 1.4 1996/06/11 21:16:21 cgd Exp $	*/
+/*	$OpenBSD: bus.h,v 1.4 1996/11/12 22:46:26 niklas Exp $	*/
+/*	$NetBSD: bus.h,v 1.6 1996/10/22 21:23:49 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -29,191 +29,244 @@
  */
 
 #ifndef _ALPHA_BUS_H_
-#define _ALPHA_BUS_H_
+#define	_ALPHA_BUS_H_
 
 /*
- * I/O addresses (in bus space)
+ * Addresses (in bus space).
  */
-typedef u_long bus_io_addr_t;
-typedef u_long bus_io_size_t;
+typedef u_long bus_addr_t;
+typedef u_long bus_size_t;
 
 /*
- * Memory addresses (in bus space)
+ * Access methods for bus space.
  */
-typedef u_long bus_mem_addr_t;
-typedef u_long bus_mem_size_t;
+typedef struct alpha_bus_space *bus_space_tag_t;
+typedef u_long bus_space_handle_t;
 
-/*
- * Access methods for bus resources, I/O space, and memory space.
- */
-typedef struct alpha_bus_chipset *bus_chipset_tag_t;
-typedef u_long bus_io_handle_t;
-typedef u_long bus_mem_handle_t;
+struct alpha_bus_space {
+	/* cookie */
+	void		*abs_cookie;
 
-struct alpha_bus_chipset {
-	/* I/O-space cookie */
-	void		*bc_i_v;
+	/* mapping/unmapping */
+	int		(*abs_map) __P((void *, bus_addr_t, bus_size_t,
+			    int, bus_space_handle_t *));
+	void		(*abs_unmap) __P((void *, bus_space_handle_t,
+			    bus_size_t));
+	int		(*abs_subregion) __P((void *, bus_space_handle_t,
+			    bus_size_t, bus_size_t, bus_space_handle_t *));
 
-	/* I/O-space control functions */
-	int		(*bc_i_map) __P((void *v, bus_io_addr_t port,
-			    bus_io_size_t size, bus_io_handle_t *iohp));
-	void		(*bc_i_unmap) __P((void *v, bus_io_handle_t ioh,
-			    bus_io_size_t size));
-	int		(*bc_i_subregion) __P((void *v, bus_io_handle_t ioh,
-			    bus_io_size_t offset, bus_io_size_t size,
-			    bus_io_handle_t *nioh));
+	/* allocation/deallocation */
+	int		(*abs_alloc) __P((void *, bus_addr_t, bus_addr_t,
+			    bus_size_t, bus_size_t, bus_size_t, int,
+			    bus_addr_t *, bus_space_handle_t *));
+	void		(*abs_free) __P((void *, bus_space_handle_t,
+			    bus_size_t));
 
-	/* I/O-space read functions */
-	u_int8_t	(*bc_ir1) __P((void *v, bus_io_handle_t ioh,
-			    bus_io_size_t off));
-	u_int16_t	(*bc_ir2) __P((void *v, bus_io_handle_t ioh,
-			    bus_io_size_t off));
-	u_int32_t	(*bc_ir4) __P((void *v, bus_io_handle_t ioh,
-			    bus_io_size_t off));
-	u_int64_t	(*bc_ir8) __P((void *v, bus_io_handle_t ioh,
-			    bus_io_size_t off));
+	/* read (single) */
+	u_int8_t	(*abs_r_1) __P((void *, bus_space_handle_t,
+			    bus_size_t));
+	u_int16_t	(*abs_r_2) __P((void *, bus_space_handle_t,
+			    bus_size_t));
+	u_int32_t	(*abs_r_4) __P((void *, bus_space_handle_t,
+			    bus_size_t));
+	u_int64_t	(*abs_r_8) __P((void *, bus_space_handle_t,
+			    bus_size_t));
 
-	/* I/O-space read-multiple functions */
-	void		(*bc_irm1) __P((void *v, bus_io_handle_t ioh,
-			    bus_io_size_t off, u_int8_t *addr,
-			    bus_io_size_t count));
-	void		(*bc_irm2) __P((void *v, bus_io_handle_t ioh,
-			    bus_io_size_t off, u_int16_t *addr,
-			    bus_io_size_t count));
-	void		(*bc_irm4) __P((void *v, bus_io_handle_t ioh,
-			    bus_io_size_t off, u_int32_t *addr,
-			    bus_io_size_t count));
-	void		(*bc_irm8) __P((void *v, bus_io_handle_t ioh,
-			    bus_io_size_t off, u_int64_t *addr,
-			    bus_io_size_t count));
+	/* read multi */
+	void		(*abs_rm_1) __P((void *, bus_space_handle_t,
+			    bus_size_t, u_int8_t *, bus_size_t));
+	void		(*abs_rm_2) __P((void *, bus_space_handle_t,
+			    bus_size_t, u_int16_t *, bus_size_t));
+	void		(*abs_rm_4) __P((void *, bus_space_handle_t,
+			    bus_size_t, u_int32_t *, bus_size_t));
+	void		(*abs_rm_8) __P((void *, bus_space_handle_t,
+			    bus_size_t, u_int64_t *, bus_size_t));
+					
+	/* read region */
+	void		(*abs_rr_1) __P((void *, bus_space_handle_t,
+			    bus_size_t, u_int8_t *, bus_size_t));
+	void		(*abs_rr_2) __P((void *, bus_space_handle_t,
+			    bus_size_t, u_int16_t *, bus_size_t));
+	void		(*abs_rr_4) __P((void *, bus_space_handle_t,
+			    bus_size_t, u_int32_t *, bus_size_t));
+	void		(*abs_rr_8) __P((void *, bus_space_handle_t,
+			    bus_size_t, u_int64_t *, bus_size_t));
+					
+	/* write (single) */
+	void		(*abs_w_1) __P((void *, bus_space_handle_t,
+			    bus_size_t, u_int8_t));
+	void		(*abs_w_2) __P((void *, bus_space_handle_t,
+			    bus_size_t, u_int16_t));
+	void		(*abs_w_4) __P((void *, bus_space_handle_t,
+			    bus_size_t, u_int32_t));
+	void		(*abs_w_8) __P((void *, bus_space_handle_t,
+			    bus_size_t, u_int64_t));
 
-	/* I/O-space write functions */
-	void		(*bc_iw1) __P((void *v, bus_io_handle_t ioh,
-			    bus_io_size_t off, u_int8_t val));
-	void		(*bc_iw2) __P((void *v, bus_io_handle_t ioh,
-			    bus_io_size_t off, u_int16_t val));
-	void		(*bc_iw4) __P((void *v, bus_io_handle_t ioh,
-			    bus_io_size_t off, u_int32_t val));
-	void		(*bc_iw8) __P((void *v, bus_io_handle_t ioh,
-			    bus_io_size_t off, u_int64_t val));
+	/* write multi */
+	void		(*abs_wm_1) __P((void *, bus_space_handle_t,
+			    bus_size_t, const u_int8_t *, bus_size_t));
+	void		(*abs_wm_2) __P((void *, bus_space_handle_t,
+			    bus_size_t, const u_int16_t *, bus_size_t));
+	void		(*abs_wm_4) __P((void *, bus_space_handle_t,
+			    bus_size_t, const u_int32_t *, bus_size_t));
+	void		(*abs_wm_8) __P((void *, bus_space_handle_t,
+			    bus_size_t, const u_int64_t *, bus_size_t));
+					
+	/* write region */
+	void		(*abs_wr_1) __P((void *, bus_space_handle_t,
+			    bus_size_t, const u_int8_t *, bus_size_t));
+	void		(*abs_wr_2) __P((void *, bus_space_handle_t,
+			    bus_size_t, const u_int16_t *, bus_size_t));
+	void		(*abs_wr_4) __P((void *, bus_space_handle_t,
+			    bus_size_t, const u_int32_t *, bus_size_t));
+	void		(*abs_wr_8) __P((void *, bus_space_handle_t,
+			    bus_size_t, const u_int64_t *, bus_size_t));
 
-	/* I/O-space write-multiple functions */
-	void		(*bc_iwm1) __P((void *v, bus_io_handle_t ioh,
-			    bus_io_size_t off, const u_int8_t *addr,
-			    bus_io_size_t count));
-	void		(*bc_iwm2) __P((void *v, bus_io_handle_t ioh,
-			    bus_io_size_t off, const u_int16_t *addr,
-			    bus_io_size_t count));
-	void		(*bc_iwm4) __P((void *v, bus_io_handle_t ioh,
-			    bus_io_size_t off, const u_int32_t *addr,
-			    bus_io_size_t count));
-	void		(*bc_iwm8) __P((void *v, bus_io_handle_t ioh,
-			    bus_io_size_t off, const u_int64_t *addr,
-			    bus_io_size_t count));
+	/* set multi */
+	/* XXX IMPLEMENT */
 
-	/* Mem-space cookie */
-	void		*bc_m_v;
+	/* set region */
+	/* XXX IMPLEMENT */
 
-	/* Mem-space control functions */
-	int		(*bc_m_map) __P((void *v, bus_mem_addr_t buspa,
-			    bus_mem_size_t size, int cacheable,
-			    bus_mem_handle_t *mhp));
-	void		(*bc_m_unmap) __P((void *v, bus_mem_handle_t mh,
-			    bus_mem_size_t size));
-	int		(*bc_m_subregion) __P((void *v, bus_mem_handle_t memh,
-			    bus_mem_size_t offset, bus_mem_size_t size,
-			    bus_mem_handle_t *nmemh));
+	/* copy */
+	/* XXX IMPLEMENT */
 
-	/* Mem-space read functions */
-	u_int8_t	(*bc_mr1) __P((void *v, bus_mem_handle_t memh,
-			    bus_mem_size_t off));
-	u_int16_t	(*bc_mr2) __P((void *v, bus_mem_handle_t memh,
-			    bus_mem_size_t off));
-	u_int32_t	(*bc_mr4) __P((void *v, bus_mem_handle_t memh,
-			    bus_mem_size_t off));
-	u_int64_t	(*bc_mr8) __P((void *v, bus_mem_handle_t memh,
-			    bus_mem_size_t off));
-
-	/* Mem-space write functions */
-	void		(*bc_mw1) __P((void *v, bus_mem_handle_t memh,
-			    bus_mem_size_t off, u_int8_t val));
-	void		(*bc_mw2) __P((void *v, bus_mem_handle_t memh,
-			    bus_mem_size_t off, u_int16_t val));
-	void		(*bc_mw4) __P((void *v, bus_mem_handle_t memh,
-			    bus_mem_size_t off, u_int32_t val));
-	void		(*bc_mw8) __P((void *v, bus_mem_handle_t memh,
-			    bus_mem_size_t off, u_int64_t val));
-
-	/* XXX THIS DOES NOT YET BELONG HERE */
-	vm_offset_t	(*bc_XXX_dmamap) __P((void *addr));
+	/* barrier */
+	void		(*abs_barrier) __P((void *, bus_space_handle_t,
+			    bus_size_t, bus_size_t, int));
 };
 
-#define __bc_CONCAT(A,B)	__CONCAT(A,B)
-#define __bc_ABC(A,B,C)		__bc_CONCAT(A,__bc_CONCAT(B,C))
-#define __bc_ABCD(A,B,C,D)	__bc_CONCAT(__bc_ABC(A,B,C),D)
 
-#define __bc_rd(t, h, o, sz, sp)					\
-    (*(t)->__bc_ABCD(bc_,sp,r,sz))((t)->__bc_ABC(bc_,sp,_v), h, o)
+/*
+ * Utility macros; INTERNAL USE ONLY.
+ */
+#define	__abs_c(a,b)		__CONCAT(a,b)
+#define	__abs_opname(op,size)	__abs_c(__abs_c(__abs_c(abs_,op),_),size)
 
-#define __bc_wr(t, h, o, v, sz, sp)					\
-    (*(t)->__bc_ABCD(bc_,sp,w,sz))((t)->__bc_ABC(bc_,sp,_v), h, o, v)
+#define	__abs_rs(sz, t, h, o)						\
+	(*(t)->__abs_opname(r,sz))((t)->abs_cookie, h, o)
+#define	__abs_ws(sz, t, h, o, v)					\
+	(*(t)->__abs_opname(w,sz))((t)->abs_cookie, h, o, v)
+#define	__abs_nonsingle(type, sz, t, h, o, a, c)			\
+	(*(t)->__abs_opname(type,sz))((t)->abs_cookie, h, o, a, c)
 
-#define bus_io_map(t, port, size, iohp)					\
-    (*(t)->bc_i_map)((t)->bc_i_v, (port), (size), (iohp))
-#define bus_io_unmap(t, ioh, size)					\
-    (*(t)->bc_i_unmap)((t)->bc_i_v, (ioh), (size))
-#define bus_io_subregion(t, ioh, offset, size, nioh)			\
-    (*(t)->bc_i_unmap)((t)->bc_i_v, (ioh), (offset), (size), (nioh))
 
-#define	__bc_io_multi(t, h, o, a, s, dir, sz)				\
-    (*(t)->__bc_ABCD(bc_i,dir,m,sz))((t)->bc_i_v, h, o, a, s)
+/*
+ * Mapping and unmapping operations.
+ */
+#define	bus_space_map(t, a, s, c, hp)					\
+	(*(t)->abs_map)((t)->abs_cookie, (a), (s), (c), (hp))
+#define	bus_space_unmap(t, h, s)					\
+	(*(t)->abs_unmap)((t)->abs_cookie, (h), (s))
+#define	bus_space_subregion(t, h, o, s, hp)				\
+	(*(t)->abs_subregion)((t)->abs_cookie, (h), (o), (s), (hp))
 
-#define	bus_io_read_1(t, h, o)		__bc_rd((t),(h),(o),1,i)
-#define	bus_io_read_2(t, h, o)		__bc_rd((t),(h),(o),2,i)
-#define	bus_io_read_4(t, h, o)		__bc_rd((t),(h),(o),4,i)
-#define	bus_io_read_8(t, h, o)		__bc_rd((t),(h),(o),8,i)
 
-#define	bus_io_read_multi_1(t, h, o, a, s)				\
-    __bc_io_multi((t),(h),(o),(a),(s),r,1)
-#define	bus_io_read_multi_2(t, h, o, a, s)				\
-    __bc_io_multi((t),(h),(o),(a),(s),r,2)
-#define	bus_io_read_multi_4(t, h, o, a, s)				\
-    __bc_io_multi((t),(h),(o),(a),(s),r,4)
-#define	bus_io_read_multi_8(t, h, o, a, s)				\
-    __bc_io_multi((t),(h),(o),(a),(s),r,8)
+/*
+ * Allocation and deallocation operations.
+ */
+#define	bus_space_alloc(t, rs, re, s, a, b, c, ap, hp)			\
+	(*(t)->abs_alloc)((t)->abs_cookie, (rs), (re), (s), (a), (b),	\
+	    (c), (ap), (hp))
+#define	bus_space_free(t, h, s)						\
+	(*(t)->abs_free)((t)->abs_cookie, (h), (s))
 
-#define	bus_io_write_1(t, h, o, v)	__bc_wr((t),(h),(o),(v),1,i)
-#define	bus_io_write_2(t, h, o, v)	__bc_wr((t),(h),(o),(v),2,i)
-#define	bus_io_write_4(t, h, o, v)	__bc_wr((t),(h),(o),(v),4,i)
-#define	bus_io_write_8(t, h, o, v)	__bc_wr((t),(h),(o),(v),8,i)
 
-#define	bus_io_write_multi_1(t, h, o, a, s)				\
-    __bc_io_multi((t),(h),(o),(a),(s),w,1)
-#define	bus_io_write_multi_2(t, h, o, a, s)				\
-    __bc_io_multi((t),(h),(o),(a),(s),w,2)
-#define	bus_io_write_multi_4(t, h, o, a, s)				\
-    __bc_io_multi((t),(h),(o),(a),(s),w,4)
-#define	bus_io_write_multi_8(t, h, o, a, s)				\
-    __bc_io_multi((t),(h),(o),(a),(s),w,8)
+/*
+ * Bus read (single) operations.
+ */
+#define	bus_space_read_1(t, h, o)	__abs_rs(1,(t),(h),(o))
+#define	bus_space_read_2(t, h, o)	__abs_rs(2,(t),(h),(o))
+#define	bus_space_read_4(t, h, o)	__abs_rs(4,(t),(h),(o))
+#define	bus_space_read_8(t, h, o)	__abs_rs(8,(t),(h),(o))
 
-#define bus_mem_map(t, bpa, size, cacheable, mhp)			\
-    (*(t)->bc_m_map)((t)->bc_m_v, (bpa), (size), (cacheable), (mhp))
-#define bus_mem_unmap(t, memh, size)					\
-    (*(t)->bc_m_unmap)((t)->bc_m_v, (memh), (size))
-#define bus_mem_subregion(t, memh, offset, size, nmemh)			\
-    (*(t)->bc_m_unmap)((t)->bc_i_v, (memh), (offset), (size), (nmemh))
 
-#define	bus_mem_read_1(t, h, o)		__bc_rd((t),(h),(o),1,m)
-#define	bus_mem_read_2(t, h, o)		__bc_rd((t),(h),(o),2,m)
-#define	bus_mem_read_4(t, h, o)		__bc_rd((t),(h),(o),4,m)
-#define	bus_mem_read_8(t, h, o)		__bc_rd((t),(h),(o),8,m)
+/*
+ * Bus read multiple operations.
+ */
+#define	bus_space_read_multi_1(t, h, o, a, c)				\
+	__abs_nonsingle(rm,1,(t),(h),(o),(a),(c))
+#define	bus_space_read_multi_2(t, h, o, a, c)				\
+	__abs_nonsingle(rm,2,(t),(h),(o),(a),(c))
+#define	bus_space_read_multi_4(t, h, o, a, c)				\
+	__abs_nonsingle(rm,4,(t),(h),(o),(a),(c))
+#define	bus_space_read_multi_8(t, h, o, a, c)				\
+	__abs_nonsingle(rm,8,(t),(h),(o),(a),(c))
 
-#define	bus_mem_write_1(t, h, o, v)	__bc_wr((t),(h),(o),(v),1,m)
-#define	bus_mem_write_2(t, h, o, v)	__bc_wr((t),(h),(o),(v),2,m)
-#define	bus_mem_write_4(t, h, o, v)	__bc_wr((t),(h),(o),(v),4,m)
-#define	bus_mem_write_8(t, h, o, v)	__bc_wr((t),(h),(o),(v),8,m)
 
-/* XXX THIS DOES NOT BELONG HERE YET. */
-#define	__alpha_bus_XXX_dmamap(t, va) (*(t)->bc_XXX_dmamap)((va))
+/*
+ * Bus read region operations.
+ */
+#define	bus_space_read_region_1(t, h, o, a, c)				\
+	__abs_nonsingle(rr,1,(t),(h),(o),(a),(c))
+#define	bus_space_read_region_2(t, h, o, a, c)				\
+	__abs_nonsingle(rr,2,(t),(h),(o),(a),(c))
+#define	bus_space_read_region_4(t, h, o, a, c)				\
+	__abs_nonsingle(rr,4,(t),(h),(o),(a),(c))
+#define	bus_space_read_region_8(t, h, o, a, c)				\
+	__abs_nonsingle(rr,8,(t),(h),(o),(a),(c))
+
+
+/*
+ * Bus write (single) operations.
+ */
+#define	bus_space_write_1(t, h, o, v)	__abs_ws(1,(t),(h),(o),(v))
+#define	bus_space_write_2(t, h, o, v)	__abs_ws(2,(t),(h),(o),(v))
+#define	bus_space_write_4(t, h, o, v)	__abs_ws(4,(t),(h),(o),(v))
+#define	bus_space_write_8(t, h, o, v)	__abs_ws(8,(t),(h),(o),(v))
+
+
+/*
+ * Bus write multiple operations.
+ */
+#define	bus_space_write_multi_1(t, h, o, a, c)				\
+	__abs_nonsingle(wm,1,(t),(h),(o),(a),(c))
+#define	bus_space_write_multi_2(t, h, o, a, c)				\
+	__abs_nonsingle(wm,2,(t),(h),(o),(a),(c))
+#define	bus_space_write_multi_4(t, h, o, a, c)				\
+	__abs_nonsingle(wm,4,(t),(h),(o),(a),(c))
+#define	bus_space_write_multi_8(t, h, o, a, c)				\
+	__abs_nonsingle(wm,8,(t),(h),(o),(a),(c))
+
+
+/*
+ * Bus write region operations.
+ */
+#define	bus_space_write_region_1(t, h, o, a, c)				\
+	__abs_nonsingle(wr,1,(t),(h),(o),(a),(c))
+#define	bus_space_write_region_2(t, h, o, a, c)				\
+	__abs_nonsingle(wr,2,(t),(h),(o),(a),(c))
+#define	bus_space_write_region_4(t, h, o, a, c)				\
+	__abs_nonsingle(wr,4,(t),(h),(o),(a),(c))
+#define	bus_space_write_region_8(t, h, o, a, c)				\
+	__abs_nonsingle(wr,8,(t),(h),(o),(a),(c))
+
+
+/*
+ * Set multiple operations.
+ */
+/* XXX IMPLEMENT */
+
+
+/*
+ * Set region operations.
+ */
+/* XXX IMPLEMENT */
+
+
+/*
+ * Copy operations.
+ */
+/* XXX IMPLEMENT */
+
+
+/*
+ * Bus barrier operations.
+ */
+#define	bus_space_barrier(t, h, o, l, f)				\
+	(*(t)->abs_barrier)((t)->abs_cookie, (h), (o), (l), (f))
+
+#define	BUS_BARRIER_READ	0x01
+#define	BUS_BARRIER_WRITE	0x02
 
 #endif /* _ALPHA_BUS_H_ */
