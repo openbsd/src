@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.153 2004/12/20 12:16:09 espie Exp $
+# $OpenBSD: pkg_add,v 1.154 2004/12/20 12:32:01 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -558,6 +558,7 @@ sub install_package
 
 	my $handle = $cache->{$pkg};
 	if ($errors > 0) {
+		$state->set_pkgname($pkg);
 		$state->fatal("Fatal error") unless defined $handle;
 	} else {
 		return () unless defined $handle;
