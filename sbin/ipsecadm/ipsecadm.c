@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsecadm.c,v 1.30 2000/01/13 04:46:18 angelos Exp $ */
+/* $OpenBSD: ipsecadm.c,v 1.31 2000/01/27 08:04:02 angelos Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -206,7 +206,7 @@ usage()
 	    "\t  -sport\t\t\t source port for flow\n"
 	    "\t  -dport\t\t\t destination port for flow\n"
 	    "\t  -ingress\t\t\t flow is ingress access control entry\n"
-	    "\t  -[ah|esp|oldah|oldesp|ip4]\t to flush a particular protocol\n"
+	    "\t  -[ah|esp|ip4]\t to flush a particular protocol\n"
 	    "\talso: dst2, spi2, proto2\n"
 	);
 }
@@ -338,14 +338,17 @@ main(int argc, char **argv)
 	  {
 	      mode = ESP_OLD;
 	      smsg.sadb_msg_type = SADB_ADD;
-	      smsg.sadb_msg_satype = SADB_X_SATYPE_ESP_OLD;
+	      smsg.sadb_msg_satype = SADB_SATYPE_ESP;
+	      sa.sadb_sa_flags |= SADB_X_SAFLAGS_RANDOMPADDING;
+	      sa.sadb_sa_flags |= SADB_X_SAFLAGS_NOREPLAY;
 	  }
 	  else
 	    if (!strcmp(argv[2], "ah"))
 	    {
 		mode = AH_OLD;
 		smsg.sadb_msg_type = SADB_ADD;
-		smsg.sadb_msg_satype = SADB_X_SATYPE_AH_OLD;
+		smsg.sadb_msg_satype = SADB_SATYPE_AH;
+		sa.sadb_sa_flags |= SADB_X_SAFLAGS_NOREPLAY;
 	    }
 	    else
 	    {
@@ -510,12 +513,6 @@ main(int argc, char **argv)
 	      if(!strcmp(argv[i] + 1, "ah"))
 	          smsg.sadb_msg_satype = SADB_SATYPE_AH;
 	      else 
-		if(!strcmp(argv[i] + 1, "oldesp"))
-		    smsg.sadb_msg_satype = SADB_X_SATYPE_ESP_OLD;
-		else 
-		  if(!strcmp(argv[i] + 1, "oldah"))
-		      smsg.sadb_msg_satype = SADB_X_SATYPE_AH_OLD;
-		  else 
 		    if(!strcmp(argv[i] + 1, "ip4"))
 		        smsg.sadb_msg_satype = SADB_X_SATYPE_IPIP;
 		    else
@@ -1150,7 +1147,8 @@ main(int argc, char **argv)
 
     if (spi == SPI_RESERVED_MIN && !iscmd(mode, FLUSH) && !bypass &&
 	(!iscmd(mode, FLOW) || (iscmd(mode, FLOW) &&
-			        smsg.sadb_msg_type != SADB_X_DELFLOW)))
+			        (smsg.sadb_msg_type != SADB_X_DELFLOW ||
+				 ingress))))
     {
 	fprintf(stderr, "%s: no SPI specified\n", argv[0]);
 	exit(1);
@@ -1190,7 +1188,8 @@ main(int argc, char **argv)
 
     if (!dstset && !iscmd(mode, FLUSH) &&
 	(!iscmd(mode, FLOW) || (iscmd(mode, FLOW) &&
-			        smsg.sadb_msg_type != SADB_X_DELFLOW)))
+			        (smsg.sadb_msg_type != SADB_X_DELFLOW ||
+				 ingress))))
     {
 	fprintf(stderr, "%s: no destination address for the SA specified\n", 
 		argv[0]);
@@ -1389,7 +1388,7 @@ main(int argc, char **argv)
 		break;
 
 	     case FLOW:
-		 if (smsg.sadb_msg_type != SADB_X_DELFLOW)
+		 if ((smsg.sadb_msg_type != SADB_X_DELFLOW) || ingress)
 		 {
 		     /* Destination address header */
 		     iov[cnt].iov_base = &sad2;
