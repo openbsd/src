@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.35 1998/04/15 16:10:34 deraadt Exp $
+#	$OpenBSD: install.md,v 1.36 1998/06/08 08:48:58 deraadt Exp $
 #
 #
 # Copyright rc) 1996 The NetBSD Foundation, Inc.
@@ -87,7 +87,7 @@ md_installboot() {
 	/usr/mdec/installboot -v /mnt/boot /usr/mdec/biosboot ${1}
 
 	echo
-	echo -n "Do you expect to run any accelerated X servers on this machine? [n] "
+	echo -n "Do you expect to run accelerated X servers on this machine? [y or n] "
 	getresp "n"
 	case "$resp" in
 		y*|Y*)
