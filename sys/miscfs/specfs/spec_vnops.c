@@ -1,4 +1,4 @@
-/*	$OpenBSD: spec_vnops.c,v 1.13 1997/11/06 20:04:35 csapuntz Exp $	*/
+/*	$OpenBSD: spec_vnops.c,v 1.14 1997/12/28 19:34:49 csapuntz Exp $	*/
 /*	$NetBSD: spec_vnops.c,v 1.29 1996/04/22 01:42:38 christos Exp $	*/
 
 /*
@@ -146,10 +146,8 @@ spec_open(v)
 	} */ *ap = v;
 	struct proc *p = ap->a_p;
 	struct vnode *vp = ap->a_vp;
-#if 0
 	struct vnode *bvp;
 	dev_t bdev;
-#endif
 	dev_t dev = (dev_t)vp->v_rdev;
 	register int maj = major(dev);
 	int error;
@@ -178,7 +176,6 @@ spec_open(v)
 			 * devices whose corresponding block devices are
 			 * currently mounted.
 			 */
-#if 0
 			if (securelevel >= 1) {
 				if ((bdev = chrtoblk(dev)) != NODEV &&
 				    vfinddev(bdev, VBLK, &bvp) &&
@@ -188,7 +185,6 @@ spec_open(v)
 				if (iskmemdev(dev))
 					return (EPERM);
 			}
-#endif
 		}
 		if (cdevsw[maj].d_type == D_TTY)
 			vp->v_flag |= VISTTY;
