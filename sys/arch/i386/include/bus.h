@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.27 2001/02/06 23:13:31 mickey Exp $	*/
+/*	$OpenBSD: bus.h,v 1.28 2001/05/08 18:19:44 jason Exp $	*/
 /*	$NetBSD: bus.h,v 1.6 1996/11/10 03:19:25 thorpej Exp $	*/
 
 /*-
@@ -891,6 +891,7 @@ struct i386_bus_dmamap {
 	/*
 	 * PUBLIC MEMBERS: these are used by machine-independent code.
 	 */
+	bus_size_t	dm_mapsize;	/* size of the mapping */
 	int		dm_nsegs;	/* # valid segments in mapping */
 	bus_dma_segment_t dm_segs[1];	/* segments; variable length */
 };
