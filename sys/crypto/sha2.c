@@ -1,4 +1,4 @@
-/*	$OpenBSD: sha2.c,v 1.3 2004/04/28 23:11:57 millert Exp $	*/
+/*	$OpenBSD: sha2.c,v 1.4 2004/04/29 14:13:18 millert Exp $	*/
 
 /*
  * FILE:	sha2.c
@@ -684,15 +684,13 @@ SHA512_Transform(SHA512_CTX *context, const u_int64_t *data) {
 
 	j = 0;
 	do {
-#if BYTE_ORDER == LITTLE_ENDIAN
-		/* Convert TO host byte order */
-		REVERSE64(*data++, W512[j]);
+		W512[j] = (u_int64_t)data[7] | ((u_int64_t)data[6] << 8) |
+		    ((u_int64_t)data[5] << 16) | ((u_int64_t)data[4] << 24) |
+		    ((u_int64_t)data[3] << 32) | ((u_int64_t)data[2] << 40) |
+		    ((u_int64_t)data[1] << 48) | ((u_int64_t)data[0] << 56);
+		data++;
 		/* Apply the SHA-512 compression function to update a..h */
 		T1 = h + Sigma1_512(e) + Ch(e, f, g) + K512[j] + W512[j];
-#else /* BYTE_ORDER == LITTLE_ENDIAN */
-		/* Apply the SHA-512 compression function to update a..h with copy */
-		T1 = h + Sigma1_512(e) + Ch(e, f, g) + K512[j] + (W512[j] = *data++);
-#endif /* BYTE_ORDER == LITTLE_ENDIAN */
 		T2 = Sigma0_512(a) + Maj(a, b, c);
 		h = g;
 		g = f;
