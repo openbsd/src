@@ -34,7 +34,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: SYS.h,v 1.13 2002/11/05 22:19:55 marc Exp $
+ *	$OpenBSD: SYS.h,v 1.14 2002/11/06 20:47:45 millert Exp $
  */
 
 #include <sys/syscall.h>
@@ -60,6 +60,7 @@
 
 #define		__SYSCALL_NOERROR(p,x,y)			\
 			__ENTRY(p,x);				\
+			__ALIAS(p,x);				\
 				__DO_SYSCALL(y)
 
 /* perform a syscall, set errno */
@@ -92,19 +93,16 @@
 #endif
 
 /*
- * For the thread_safe versions, we prepend _thread_sys_ to the function
- * name so that the 'C' wrapper can go around the real name.
+ * System calls entry points are really named _thread_sys_{syscall},
+ * and weakly aliased to the name {syscall}. This allows the thread
+ * library to replace system calls at link time.
  */
-# define SYSCALL(x)     	__ALIAS(_thread_sys_,x)		\
-				__SYSCALL(_thread_sys_,x,x)
-# define RSYSCALL(x)    	__ALIAS(_thread_sys_,x)		\
-				__PSEUDO(_thread_sys_,x,x)
-# define PSEUDO(x,y)    	__ALIAS(_thread_sys_,x)		\
-				__PSEUDO(_thread_sys_,x,y)
-# define PSEUDO_NOERROR(x,y)	__ALIAS(_thread_sys_,x)		\
-				__PSEUDO_NOERROR(_thread_sys_,x,y)
-# define SYSENTRY(x)    	__ALIAS(_thread_sys_,x)		\
-				__ENTRY(_thread_sys_,x)
+# define SYSCALL(x)     	__SYSCALL(_thread_sys_,x,x)
+# define RSYSCALL(x)    	__PSEUDO(_thread_sys_,x,x)
+# define PSEUDO(x,y)    	__PSEUDO(_thread_sys_,x,y)
+# define PSEUDO_NOERROR(x,y)	__PSEUDO_NOERROR(_thread_sys_,x,y)
+# define SYSENTRY(x)    	__ENTRY(_thread_sys_,x)			\
+				__ALIAS(_thread_sys_,x)
 
 #define	ASMSTR		.asciz
 
