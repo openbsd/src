@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.43 1998/09/18 18:42:10 deraadt Exp $
+#	$OpenBSD: netstart,v 1.44 1998/10/06 23:25:21 deraadt Exp $
 
 # /etc/myname contains my symbolic name
 #
@@ -14,21 +14,11 @@ fi
 . /etc/rc.conf
 
 # Configure the IP filter before configuring network interfaces
-#
 if [ X"${ipfilter}" = X"YES" -a -f "${ipfilter_rules}" ]; then
 	echo 'configuring IP filter'
 	ipf -Fa -f ${ipfilter_rules} -E
 else
 	ipfilter=NO
-fi
-
-# Configure NAT before configuring network interfaces
-#
-if [ "${ipnat}" = "YES" -a "${ipfilter}" = "YES" -a -f "${ipnat_rules}" ]; then
-	echo 'configuring NAT'
-	ipnat -CF -f ${ipnat_rules}
-else
-	ipnat=NO
 fi
 
 # set the address for the loopback interface
@@ -118,3 +108,12 @@ else
 	# default multicast route
 	route -n add -net 224.0.0.0 -interface $hostname
 fi
+
+# Configure NAT after configuring network interfaces
+if [ "${ipnat}" = "YES" -a "${ipfilter}" = "YES" -a -f "${ipnat_rules}" ]; then
+	echo 'configuring NAT'
+	ipnat -CF -f ${ipnat_rules}
+else
+	ipnat=NO
+fi
+
