@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tmpnam.3,v 1.9 2001/09/22 17:53:59 heko Exp $
+.\"	$OpenBSD: tmpnam.3,v 1.10 2003/03/06 19:54:52 jmc Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -221,7 +221,7 @@ This implementation does not have these flaws, but portable software
 cannot depend on that.
 .Pp
 For these reasons,
-.Xr ld 8
+.Xr ld 1
 will output a warning message whenever it links code that uses the functions
 .Fn tmpnam
 or

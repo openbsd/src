@@ -1,4 +1,4 @@
-.\"	$OpenBSD: setjmp.3,v 1.14 2002/04/30 16:31:42 mpech Exp $
+.\"	$OpenBSD: setjmp.3,v 1.15 2003/03/06 19:54:52 jmc Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -124,7 +124,7 @@ The
 function pairs save and restore the signal mask while
 .Fn _setjmp Ns / Ns Fn _longjmp
 function pairs save and restore only the register set and the stack (see
-.Xr sigmask 2 ) .
+.Xr sigmask 3 ) .
 .Pp
 The
 .Fn sigsetjmp Ns / Ns Fn siglongjmp

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.98 2003/02/24 02:56:55 deraadt Exp $
+.\"	$OpenBSD: sysctl.3,v 1.99 2003/03/06 19:54:52 jmc Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -327,7 +327,7 @@ information.
 .Bl -tag -width "123456"
 .It Dv KERN_ARGMAX
 The maximum bytes of argument to
-.Xr exec 2 .
+.Xr exec 3 .
 .It Dv KERN_ARND
 Returns a random integer from the kernel
 .Fn arc4random
@@ -999,7 +999,7 @@ management daemons to negotiate when establishing security
 associations on behalf of the kernel.
 Such security associations can occur as a result of a process having
 requested some security level through
-.Xr setsockopt 3 ,
+.Xr setsockopt 2 ,
 or as a result of dynamic
 .Xr vpn 8
 entries.
@@ -1013,7 +1013,7 @@ key management daemons to negotiate when establishing security
 associations on behalf of the kernel.
 Such security associations can occur as a result of a process having
 requested some security level through
-.Xr setsockopt 3 ,
+.Xr setsockopt 2 ,
 or as a result of dynamic
 .Xr vpn 8
 entries.
