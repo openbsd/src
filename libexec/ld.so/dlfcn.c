@@ -1,4 +1,4 @@
-/*	$OpenBSD: dlfcn.c,v 1.41 2004/10/14 10:02:28 kettenis Exp $ */
+/*	$OpenBSD: dlfcn.c,v 1.42 2004/12/01 22:27:35 kurt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -143,8 +143,13 @@ dlsym(void *handle, const char *name)
 			return(0);
 		}
 
-		if (handle == RTLD_NEXT)
+		if (handle == RTLD_NEXT) {
 			object = object->next;
+			if (object == NULL) {
+				_dl_errno = DL_NO_SYMBOL;
+				return(0);
+			}
+		}
 
 		if (handle == NULL)
 			flags = SYM_SEARCH_SELF|SYM_PLT;
