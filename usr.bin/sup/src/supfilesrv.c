@@ -1,4 +1,4 @@
-/*	$OpenBSD: supfilesrv.c,v 1.8 1997/07/25 21:05:42 mickey Exp $	*/
+/*	$OpenBSD: supfilesrv.c,v 1.9 1997/09/08 23:59:43 millert Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -1610,6 +1610,8 @@ int fileuid,filegid;
 		logerr ("setegid: %%m");
 	if (setgid (pwd->pw_gid) < 0)
 		logerr ("setgid: %%m");
+	if (setlogin (pwd->pw_name) < 0)
+		logerr ("setlogin: %%m");
 	if (seteuid (pwd->pw_uid) < 0)
 		logerr ("seteuid: %%m");
 	if (setuid (pwd->pw_uid) < 0)
