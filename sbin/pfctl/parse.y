@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.137 2002/07/31 20:19:14 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.138 2002/08/06 11:25:05 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -1448,7 +1448,10 @@ route		: /* empty */			{
 			$$.addr = NULL;
 		}
 		| ROUTETO '(' STRING address ')' {
-			$$.string = strdup($3);
+			if (($$.string = strdup($3)) == NULL) {
+				yyerror("routeto: strdup");
+				YYERROR;
+			}
 			$$.rt = PF_ROUTETO;
 			if ($4->addr.addr_dyn != NULL) {
 				yyerror("route-to does not support"
@@ -1463,12 +1466,18 @@ route		: /* empty */			{
 			$$.af = $4->af;
 		}
 		| ROUTETO STRING {
-			$$.string = strdup($2);
+			if (($$.string = strdup($2)) == NULL) {
+				yyerror("routeto: strdup");
+				YYERROR;
+			}
 			$$.rt = PF_ROUTETO;
 			$$.addr = NULL;
 		}
 		| DUPTO '(' STRING address ')' {
-			$$.string = strdup($3);
+			if (($$.string = strdup($3)) == NULL) {
+				yyerror("dupto: strdup");
+				YYERROR;
+			}
 			$$.rt = PF_DUPTO;
 			if ($4->addr.addr_dyn != NULL) {
 				yyerror("dup-to does not support"
@@ -1483,7 +1492,10 @@ route		: /* empty */			{
 			$$.af = $4->af;
 		}
 		| DUPTO STRING {
-			$$.string = strdup($2);
+			if (($$.string = strdup($2)) == NULL) {
+				yyerror("dupto: strdup");
+				YYERROR;
+			}
 			$$.rt = PF_DUPTO;
 			$$.addr = NULL;
 		}
