@@ -1,14 +1,9 @@
-#	$OpenBSD: Makefile,v 1.4 2003/11/10 20:32:17 otto Exp $
+#	$OpenBSD: Makefile,v 1.5 2004/02/10 07:28:36 jmc Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/10/93
 
-# The following modules do not build/install:
-# 10.named, 13.amd
-
-# Missing:
-# 02.config
-
-# Missing from 4.4BSD-Lite:
-# 14.uucpimpl 15.uucpnet 16.security
+# Missing or not installed:
+# 02.config 14.uucpimpl
+# 15.uucpnet 16.security 18.net
 
 DOCDIR=	/usr/share/doc/smm
 FILES=	00.contents Makefile Title

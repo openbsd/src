@@ -1,15 +1,9 @@
-#	$OpenBSD: Makefile,v 1.3 2001/02/03 08:15:02 niklas Exp $
+#	$OpenBSD: Makefile,v 1.4 2004/02/10 07:28:36 jmc Exp $
 
-
-# The following modules do not build/install:
-# 10.gdb, 13.rcs
-
-# Missing:
-# 07.pascal 14.sccs 17.m4
-
-# Missing from 4.4BSD-Lite:
-# 01.cacm 02.implement 03.iosys 04.uprog 06.Clang 08.f77 09.f77io
-# 11.adb 15.yacc 16.lex
+# Missing or not installed:
+# 01.cacm 02.implement 03.iosys 04.uprog 06.Clang
+# 07.pascal 08.f77 09.f77io 11.adb
+# 12.make 13.rcs 14.sccs 15.yacc 17.m4
 
 DOCDIR=	/usr/share/doc/psd
 FILES=	00.contents Makefile Title
