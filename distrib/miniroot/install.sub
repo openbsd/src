@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.26 1997/05/15 06:29:01 millert Exp $
+#	$OpenBSD: install.sub,v 1.27 1997/05/16 00:51:09 millert Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -198,22 +198,20 @@ dir_has_sets() {
 list_has_sets() {
 	# return true when the list $1 contains a set, given dir $2 for $3...$n
 	local _list
-	local _dir
 	local _file
 
 	_list=$1; shift
-	_dir=$1; shift
 	for _file in $*
 	do
-		if isin $_dir/${_file}${VERSION}.tar.gz $_list; then
+		if isin ${_file}${VERSION}.tar.gz $_list; then
 			return 0
 		fi
 		# Try for stupid msdos convention
-		if isin $_dir/${_file}${VERSION}.tgz $_list; then
+		if isin ${_file}${VERSION}.tgz $_list; then
 			return 0
 		fi
 		# Special check for kernel
-		if test $_file = "kernel" && isin $_dir/bsd $_list; then
+		if test $_file = "kernel" && isin bsd $_list; then
 			return 0
 		fi
 	done
@@ -235,7 +233,8 @@ ftp_list_files() {
 
 	ftp -V -n $_host  <<__ptf
 user $_user $_pass
-ls $_dir
+cd $_dir
+ls
 quit
 __ptf
 }
@@ -599,7 +598,6 @@ install_url() {
 
 	local _sets
 	local _f
-	local _filename
 	local _file_list
 	local _get_files
 	local _failed_files
@@ -697,19 +695,20 @@ install_url() {
 		_file_list=`ftp_list_files "$_ftp_server_ip" "$_ftp_server_login" "$_ftp_server_password" "$_ftp_server_dir"`
 	else
 		# Assumes index file is "index.txt" for http
+		# We can't use index.html since the format is server-dependent
 		_file_list="`eval ftp -V ${_url_type}://\\$_${_url_type}_server_ip/\\$_${_url_type}_server_dir/index.txt | cat`"
 	fi
 
 	_sets=""
-	if eval list_has_sets \"$_file_list\" \$_${_url_type}_server_dir $THESETS; then
+	if list_has_sets "$_file_list" $THESETS; then
 		for _f in $THESETS ; do
 			if [ "X${_f}" = "Xkernel" ]; then
-				if eval isin \$_${_url_type}_server_dir/bsd $_file_list; then
+				if isin bsd $_file_list; then
 					_kernel=bsd
 				fi
-			elif eval isin \$_${_url_type}_server_dir/${_f}${VERSION}.tar.gz $_file_list; then
+			elif isin ${_f}${VERSION}.tar.gz $_file_list; then
 				_sets="$_sets ${_f}${VERSION}.tar.gz"
-			elif eval isin \$_${_url_type}_server_dir/${_f}${VERSION}.tgz $_file_list; then
+			elif isin ${_f}${VERSION}.tgz $_file_list; then
 				_sets="$_sets ${_f}${VERSION}.tgz"
 			fi
 		done
@@ -724,7 +723,7 @@ install_url() {
 		# *.tar.gz and *.tgz are possible sets
 		_sets=""
 		_kernel=""
-		for _f in `echo "${_file_list}" | sed 's/^.*\///'` ; do
+		for _f in ${_file_list} ; do
 			case "$_f" in
 			    *.tar.gz|*.tgz)	_sets="$_sets ${_f}"
 			esac
@@ -786,6 +785,7 @@ install_url() {
 			break
 		elif [ "X${resp}" = X"list" ]; then
 			echo ""
+			eval echo "\$_${_url_type}_server_dir:"
 			echo "${_file_list}"
 			continue
 		elif [ "X${resp}" = X"all" ]; then
@@ -796,11 +796,10 @@ install_url() {
 			break
 		fi
 		_f=$resp
-		eval _filename="\$_${_url_type}_server_dir/$_f"
 
 		# Ensure file exists
-		if ! isin $_filename $_file_list ; then
-			echo "File $_filename does not exist.  Check to make"
+		if ! isin $_f $_file_list ; then
+			eval echo "File \$_${_url_type}_server_dir/$_f does not exist.  Check to make"
 			echo "sure you entered the information properly."
 			continue
 		fi
@@ -884,16 +883,16 @@ install_url() {
 				break
 			elif [ "X${resp}" = X"list" ]; then
 				echo ""
+				eval echo "\$_${_url_type}_server_dir:"
 				echo "${_file_list}"
 				echo ""
 				continue
 			fi
 			_f=$resp
-			eval _filename="\$_${_url_type}_server_dir/$_f"
 
 			# Ensure file exists
-			if ! isin $_filename $_file_list ; then
-				echo "File $_filename does not exist.  Check to make"
+			if ! isin $_f $_file_list ; then
+				eval echo "File \$_${_url_type}_server_dir/$_f does not exist.  Check to make"
 				echo "sure you entered the information properly."				continue
 			fi
 			# Add file to extraction list
