@@ -1,4 +1,4 @@
-/*	$OpenBSD: regex.c,v 1.5 2003/06/02 20:18:40 millert Exp $	*/
+/*	$OpenBSD: regex.c,v 1.6 2003/06/26 23:19:32 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1992 The Regents of the University of California.
@@ -41,7 +41,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char sccsid[] = "from: @(#)regex.c	5.1 (Berkeley) 3/29/92";*/
-static char rcsid[] = "$OpenBSD: regex.c,v 1.5 2003/06/02 20:18:40 millert Exp $";
+static char rcsid[] = "$OpenBSD: regex.c,v 1.6 2003/06/26 23:19:32 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -57,8 +57,7 @@ static char *re_errstr;
 static void re_error(const char *);
 
 char *
-re_comp(s)
-	const char *s;
+re_comp(const char *s)
 {
 	if (s == NULL)
 		return (NULL);
@@ -78,8 +77,7 @@ re_comp(s)
 }
 
 int
-re_exec(s)
-	const char *s;
+re_exec(const char *s)
 {
 	int rc;
 

@@ -47,11 +47,7 @@ int	rexecoptions;
 void ruserpass(const char *, char **, char **);
 
 int
-rexec(ahost, rport, name, pass, cmd, fd2p)
-	char **ahost;
-	int rport;
-	char *name, *pass, *cmd;
-	int *fd2p;
+rexec(char **ahost, int rport, char *name, char *pass, char *cmd, int *fd2p)
 {
 	struct sockaddr_in sin, sin2, from;
 	struct hostent *hp;
