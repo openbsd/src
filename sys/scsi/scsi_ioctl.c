@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_ioctl.c,v 1.3 1996/06/16 23:53:16 downsj Exp $	*/
+/*	$OpenBSD: scsi_ioctl.c,v 1.4 1996/06/17 05:16:44 downsj Exp $	*/
 /*	$NetBSD: scsi_ioctl.c,v 1.20 1996/02/14 21:47:22 christos Exp $	*/
 
 /*
@@ -41,6 +41,7 @@
 #include <sys/errno.h>
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/file.h>
 #include <sys/malloc.h>
 #include <sys/buf.h>
 #include <sys/proc.h>
@@ -293,6 +294,9 @@ scsi_do_ioctl(sc_link, dev, cmd, addr, flag, p)
 		scsireq_t *screq = (scsireq_t *)addr;
 		struct scsi_ioctl *si;
 		int len;
+
+		if ((flag & FWRITE) == 0)
+			return EBADF;
 
 		si = si_get();
 		si->si_screq = *screq;
