@@ -1,4 +1,4 @@
-.\"	$OpenBSD: logger.1,v 1.10 2003/06/03 02:56:10 millert Exp $
+.\"	$OpenBSD: logger.1,v 1.11 2004/02/14 18:55:31 jmc Exp $
 .\"	$NetBSD: logger.1,v 1.4 1994/12/22 06:26:59 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
@@ -51,12 +51,10 @@ utility provides a shell command interface to the
 system log module.
 .Pp
 The options are as follows:
-.Bl -tag -width Ds
+.Bl -tag -width "-f file"
 .It Fl i
 Log the process ID of the logger process
 with each line.
-.It Fl s
-Log the message to standard error, as well as the system log.
 .It Fl f Ar file
 Log the specified file.
 .It Fl p Ar pri
@@ -73,6 +71,8 @@ level in the
 facility.
 The default is
 .Dq user.notice .
+.It Fl s
+Log the message to standard error, as well as the system log.
 .It Fl t Ar tag
 Mark every line in the log with the specified
 .Ar tag .
@@ -87,7 +87,7 @@ The
 .Nm logger
 utility exits 0 on success or >0 if an error occurred.
 .Sh EXAMPLES
-.Bd -literal -offset indent -compact
+.Bd -literal -offset indent
 $ logger System rebooted
 
 $ logger \-p local0.notice \-t HOSTIDM \-f /dev/idmc
