@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.3 2000/09/17 17:50:57 deraadt Exp $ */
+/*	$OpenBSD: loader.c,v 1.4 2000/10/13 05:21:10 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -235,7 +235,14 @@ _dl_boot(const char **argv, const char **envp, const int loff,
 	 */
 
 	_dl_rtld(_dl_objects);
-	_dl_call_init(_dl_objects);
+	/* the first object is the executable itself, 
+	 * it is responsible for running it's ctors/dtors
+	 * thus do NOT run the ctors for the executable, all of
+	 * the shared libraries which follow.
+	 */
+	if (_dl_objects->next) {
+		_dl_call_init(_dl_objects->next);
+	}
 
 	/*
 	 *  Finally make something to help gdb when poking around in the code.
@@ -556,74 +563,10 @@ _dl_call_init(elf_object_t *object)
 		return;
 	}
 
-#if 0
-	ooff = _dl_find_symbol("_GLOBAL_.I.__1A", object, &sym, 1, 0);
-	if (sym) {
-		if(_dl_debug)
-			_dl_printf("ctor func %x of %x\n", sym->st_value, ooff);
-		(*(void (*)(void))(sym->st_value + ooff))();
-	}
-	ooff = _dl_find_symbol("_GLOBAL_.D.__1A", object, &sym, 1, 1);
-	if (sym) {
-		Elf32_Addr dtor_func = sym->st_value + ooff;
-
-		/* cannot call atexit directly from ld.so ?? */
-		ooff = _dl_find_symbol("atexit", _dl_objects, &sym, 0, 0);
-		(*(void (*)(Elf32_Addr))(sym->st_value + ooff))(dtor_func);
-	}
-#endif
 
 #ifdef __powerpc__
-/* For powerpc, the ctors/dtors section is a list of function pointers
- * to be called at the appropriate time. These have been relocated
- * by the dynamic relocations before as necessary. At this time,
- * it is just necessary to call all of the ctors functions
- * and set up the dtors functions to be called at exit (using atexit).
- * Is requiring libc for atexit a problem?
- */
-	sym = 0;
-	ooff = _dl_find_symbol("__CTOR_LIST__", object, &sym, 1, 1);
-	if(sym) {
-		int i = 1;
-		typedef void *voidfunc(void) ; 
-		voidfunc **func;
-		func = (voidfunc **)(sym->st_value + ooff);
-		for (i=1; func[i] != NULL; i++) {
-			if(_dl_debug) {
-				_dl_printf("ctor func %x\n", func[i]);
-			}
-			(func[i])();
-		}
-	}
-	/* Once atexit() is found, do not bother to look it up again.
-	 * the same atexit() should be used for all libraries.
-	 */
-	if (_dl_atexit == NULL) {
-		ooff = _dl_find_symbol("atexit", _dl_objects, &sym, 0, 0);
-		if (sym) {
-			_dl_atexit = (void (*)(Elf32_Addr))
-				(sym->st_value + ooff);
-			if(_dl_debug) {
-				_dl_printf("_dl_atexit at %x\n", _dl_atexit);
-			}
-		}
-	}
-	/* if atexit() is not found, dtors cannot be run */
-	if (_dl_atexit != NULL) {
-		sym = 0;
-		ooff = _dl_find_symbol("__DTOR_LIST__", object, &sym, 1, 1);
-		if(sym) {
-			int i = 1;
-			typedef void *voidfunc(void) ; 
-			voidfunc **func;
-			func = (voidfunc **)(sym->st_value + ooff);
-			for (i=1; func[i] != NULL; i++) {
-				if(_dl_debug) {
-					_dl_printf("dtor func %x\n", func[i]);
-				}
-				(*_dl_atexit)((Elf32_Addr)func[i]);
-			}
-		}
+	if(object->dyn.init) {
+		(*object->dyn.init)();
 	}
 #endif
 #ifndef __powerpc__
