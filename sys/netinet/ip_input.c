@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.20 1997/01/26 01:23:43 tholo Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.21 1997/02/11 18:04:03 deraadt Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -824,7 +824,7 @@ ip_dooptions(m)
 		case IPOPT_TS:
 			code = cp - (u_char *)ip;
 			ipt = (struct ip_timestamp *)cp;
-			if (ipt->ipt_len < 5)
+			if (ipt->ipt_ptr < 5 || ipt->ipt_len < 5)
 				goto bad;
 			if (ipt->ipt_ptr > ipt->ipt_len - sizeof (int32_t)) {
 				if (++ipt->ipt_oflw == 0)
