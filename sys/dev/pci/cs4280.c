@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4280.c,v 1.3 2000/07/12 22:10:33 fgsch Exp $	*/
+/*	$OpenBSD: cs4280.c,v 1.4 2000/07/19 16:06:12 deraadt Exp $	*/
 /*	$NetBSD: cs4280.c,v 1.5 2000/06/26 04:56:23 simonb Exp $	*/
 
 /*
@@ -302,12 +302,10 @@ cs4280_match(parent, ma, aux)
 
 	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_CIRRUS)
 		return (0);
-	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_CIRRUS_CS4280
-#if 0  /* I can't confirm */
-	    || PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_CIRRUS_CS4610
-#endif
-	   
-	   ) {
+	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_CIRRUS_CS4280 ||
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_CIRRUS_CS4610 ||
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_CIRRUS_CS4614 ||
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_CIRRUS_CS4615) {
 		return (1);
 	}
 	return (0);
