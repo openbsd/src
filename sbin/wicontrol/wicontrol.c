@@ -1,4 +1,4 @@
-/*	$OpenBSD: wicontrol.c,v 1.34 2002/04/30 08:13:49 deraadt Exp $	*/
+/*	$OpenBSD: wicontrol.c,v 1.35 2002/05/30 07:09:23 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -69,7 +69,7 @@
 static const char copyright[] = "@(#) Copyright (c) 1997, 1998, 1999\
 	Bill Paul. All rights reserved.";
 static const char rcsid[] =
-	"@(#) $OpenBSD: wicontrol.c,v 1.34 2002/04/30 08:13:49 deraadt Exp $";
+	"@(#) $OpenBSD: wicontrol.c,v 1.35 2002/05/30 07:09:23 deraadt Exp $";
 #endif
 
 void wi_getval(char *, struct wi_req *);
@@ -215,10 +215,10 @@ void
 wi_setword(iface, code, word)
 	char			*iface;
 	int			code;
-	char                    *word;
+	char			*word;
 {
 	struct wi_req		wreq;
-	int                     value = strtol(word, NULL, 10);
+	int			value = strtol(word, NULL, 10);
 
 	bzero((char *)&wreq, sizeof(wreq));
 
@@ -250,120 +250,120 @@ wi_sethex(iface, code, str)
 
 int
 wi_hex2int(c)
-        char                    c;
+	char			c;
 {
-        if (c >= '0' && c <= '9')
-                return (c - '0');
+	if (c >= '0' && c <= '9')
+		return (c - '0');
 	if (c >= 'A' && c <= 'F')
-	        return (c - 'A' + 10);
+		return (c - 'A' + 10);
 	if (c >= 'a' && c <= 'f')
-                return (c - 'a' + 10);
+		return (c - 'a' + 10);
 
-	return (0); 
+	return (0);
 }
 
 void
 wi_str2key(s, k)
-        char                    *s;
-        struct wi_key           *k;
+	char			*s;
+	struct wi_key		*k;
 {
-        int                     n, i;
-        char                    *p;
+	int			n, i;
+	char			*p;
 
-        /* Is this a hex string? */
-        if (s[0] == '0' && (s[1] == 'x' || s[1] == 'X')) {
-                /* Yes, convert to int. */
-                n = 0;
-                p = (char *)&k->wi_keydat[0];
-                for (i = 2; i < strlen(s); i+= 2) {
-                        *p++ = (wi_hex2int(s[i]) << 4) + wi_hex2int(s[i + 1]);
-                        n++;
-                }
-                k->wi_keylen = htole16(n);
-        } else {
-                /* No, just copy it in. */
-                bcopy(s, k->wi_keydat, strlen(s));
-                k->wi_keylen = htole16(strlen(s));
-        }
+	/* Is this a hex string? */
+	if (s[0] == '0' && (s[1] == 'x' || s[1] == 'X')) {
+		/* Yes, convert to int. */
+		n = 0;
+		p = (char *)&k->wi_keydat[0];
+		for (i = 2; i < strlen(s); i+= 2) {
+			*p++ = (wi_hex2int(s[i]) << 4) + wi_hex2int(s[i + 1]);
+			n++;
+		}
+		k->wi_keylen = htole16(n);
+	} else {
+		/* No, just copy it in. */
+		bcopy(s, k->wi_keydat, strlen(s));
+		k->wi_keylen = htole16(strlen(s));
+	}
 }
 
 void
 wi_setkeys(iface, idx, key)
-        char                    *iface;
-        int                     idx;
-        char                    *key;
+	char			*iface;
+	int			 idx;
+	char			*key;
 {
-        struct wi_req           wreq;
-        struct wi_ltv_keys      *keys;
-        struct wi_key           *k;
+	struct wi_req		wreq;
+	struct wi_ltv_keys	*keys;
+	struct wi_key		*k;
 
-        bzero((char *)&wreq, sizeof(wreq));
-        wreq.wi_len = WI_MAX_DATALEN;
-        wreq.wi_type = WI_RID_WEP_AVAIL;
+	bzero((char *)&wreq, sizeof(wreq));
+	wreq.wi_len = WI_MAX_DATALEN;
+	wreq.wi_type = WI_RID_WEP_AVAIL;
 
-        wi_getval(iface, &wreq);
-        if (letoh16(wreq.wi_val[0]) == 0)
-                err(1, "no WEP option available on this card");
+	wi_getval(iface, &wreq);
+	if (letoh16(wreq.wi_val[0]) == 0)
+		err(1, "no WEP option available on this card");
 
-        bzero((char *)&wreq, sizeof(wreq));
-        wreq.wi_len = WI_MAX_DATALEN;
-        wreq.wi_type = WI_RID_DEFLT_CRYPT_KEYS;
+	bzero((char *)&wreq, sizeof(wreq));
+	wreq.wi_len = WI_MAX_DATALEN;
+	wreq.wi_type = WI_RID_DEFLT_CRYPT_KEYS;
 
-        wi_getval(iface, &wreq);
-        keys = (struct wi_ltv_keys *)&wreq;
+	wi_getval(iface, &wreq);
+	keys = (struct wi_ltv_keys *)&wreq;
 
-        if (key[0] == '0' && (key[1] == 'x' || key[1] == 'X')) {
-	        if (strlen(key) > 28)
-		        err(1, "encryption key must be no "
+	if (key[0] == '0' && (key[1] == 'x' || key[1] == 'X')) {
+		if (strlen(key) > 28)
+			err(1, "encryption key must be no "
 			    "more than 26 hex digits long");
 	} else {
-	        if (strlen(key) > 13)
-		        err(1, "encryption key must be no "
+		if (strlen(key) > 13)
+			err(1, "encryption key must be no "
 			    "more than 13 characters long");
 	}
 
-        if (idx > 3)
-                err(1, "only 4 encryption keys available");
+	if (idx > 3)
+		err(1, "only 4 encryption keys available");
 
-        k = &keys->wi_keys[idx];
-        wi_str2key(key, k);
+	k = &keys->wi_keys[idx];
+	wi_str2key(key, k);
 
-        wreq.wi_len = (sizeof(struct wi_ltv_keys) / 2) + 1;
-        wreq.wi_type = WI_RID_DEFLT_CRYPT_KEYS;
-        wi_setval(iface, &wreq);
+	wreq.wi_len = (sizeof(struct wi_ltv_keys) / 2) + 1;
+	wreq.wi_type = WI_RID_DEFLT_CRYPT_KEYS;
+	wi_setval(iface, &wreq);
 }
 
 void
 wi_printkeys(wreq)
-        struct wi_req           *wreq;
+	struct wi_req		*wreq;
 {
-        int                     i, j, bn;
-        struct wi_key           *k;
-        struct wi_ltv_keys      *keys;
-        char                    *ptr;
+	int			 i, j, bn;
+	struct wi_key		*k;
+	struct wi_ltv_keys	*keys;
+	char			*ptr;
 
 	keys = (struct wi_ltv_keys *)wreq;
 
 	for (i = 0, bn = 0; i < 4; i++, bn = 0) {
-                k = &keys->wi_keys[i];
-                ptr = (char *)k->wi_keydat;
+		k = &keys->wi_keys[i];
+		ptr = (char *)k->wi_keydat;
 		for (j = 0; j < letoh16(k->wi_keylen); j++) {
-		        if (!isprint((unsigned char)ptr[j])) {
-			        bn = 1;
+			if (!isprint((unsigned char)ptr[j])) {
+				bn = 1;
 				break;
 			}
 		}
 
 		if (bn)	{
-		        printf("[ 0x");
-		        for (j = 0; j < letoh16(k->wi_keylen); j++)
-			      printf("%02x", ((unsigned char *) ptr)[j]);
+			printf("[ 0x");
+			for (j = 0; j < letoh16(k->wi_keylen); j++)
+				printf("%02x", ((unsigned char *) ptr)[j]);
 			printf(" ]");
 		} else {
-		        ptr[j] = '\0';
+			ptr[j] = '\0';
 			printf("[ %s ]", ptr);
 		}
-        }
+	}
 }
 
 void
@@ -475,8 +475,8 @@ wi_printhex(wreq)
 #define WI_BOOL			0x02
 #define WI_WORDS		0x03
 #define WI_HEXBYTES		0x04
-#define WI_KEYSTRUCT            0x05
-#define WI_CARDINFO             0x06
+#define WI_KEYSTRUCT		0x05
+#define WI_CARDINFO		0x06
 
 struct wi_table {
 	int			wi_code;
@@ -514,12 +514,12 @@ struct wi_table wi_table[] = {
 };
 
 struct wi_table wi_crypt_table[] = {
-        { WI_RID_ENCRYPTION, WI_BOOL, "WEP encryption:\t\t\t\t" },
-        { WI_RID_CNFAUTHMODE, WI_WORDS,
+	{ WI_RID_ENCRYPTION, WI_BOOL, "WEP encryption:\t\t\t\t" },
+	{ WI_RID_CNFAUTHMODE, WI_WORDS,
 	  "Authentication type \n(1=OpenSys, 2=Shared Key):\t\t" },
-        { WI_RID_TX_CRYPT_KEY, WI_WORDS, "TX encryption key:\t\t\t" },
-        { WI_RID_DEFLT_CRYPT_KEYS, WI_KEYSTRUCT, "Encryption keys:\t\t\t" },
-        { 0, NULL }
+	{ WI_RID_TX_CRYPT_KEY, WI_WORDS, "TX encryption key:\t\t\t" },
+	{ WI_RID_DEFLT_CRYPT_KEYS, WI_KEYSTRUCT, "Encryption keys:\t\t\t" },
+	{ 0, NULL }
 };
 
 void
@@ -554,7 +554,7 @@ wi_dumpinfo(iface)
 
 		wi_getval(iface, &wreq);
 		printf("%s", w[i].wi_str);
-		switch(w[i].wi_type) {
+		switch (w[i].wi_type) {
 		case WI_STRING:
 			wi_printstr(&wreq);
 			break;
@@ -586,7 +586,7 @@ wi_dumpinfo(iface)
 
 			wi_getval(iface, &wreq);
 			printf("%s", w[i].wi_str);
-			switch(w[i].wi_type) {
+			switch (w[i].wi_type) {
 			case WI_STRING:
 				wi_printstr(&wreq);
 				break;
@@ -676,7 +676,7 @@ wi_dumpstations(iface)
 	char			*iface;
 {
 	struct hostap_getall    reqall;
-	struct hostap_sta       stas[WIHAP_MAX_STATIONS];
+	struct hostap_sta	stas[WIHAP_MAX_STATIONS];
 	struct ifreq		ifr;
 	int i, s;
 
@@ -699,7 +699,7 @@ wi_dumpstations(iface)
 	for (i = 0; i < reqall.nstations; i++) {
 		struct hostap_sta *info = &stas[i];
 
-	        printf("%02x:%02x:%02x:%02x:%02x:%02x  asid=%04x",
+		printf("%02x:%02x:%02x:%02x:%02x:%02x  asid=%04x",
 			info->addr[0], info->addr[1], info->addr[2],
 			info->addr[3], info->addr[4], info->addr[5],
 			info->asid - 0xc001);
@@ -730,10 +730,10 @@ usage()
 }
 
 struct wi_func {
-        int   key;
-        void (*function) (char *, int, char *);
-        int   wi_code;
-        char  *optarg;
+	int   key;
+	void (*function) (char *, int, char *);
+	int   wi_code;
+	char  *optarg;
 };
 
 struct wi_func wi_opt[] = {
@@ -783,24 +783,24 @@ main(argc, argv)
 		ifspecified = 1;
 	}
 
-	while((ch = getopt(argc, argv,
+	while ((ch = getopt(argc, argv,
 	    "a:c:d:e:f:hi:k:lm:n:op:q:r:s:t:v:A:D:M:S:P:R:T:")) != -1) {
-	        for (p = 0; ch && wi_opt[p].key; p++)
-		        if (ch == wi_opt[p].key) {
+		for (p = 0; ch && wi_opt[p].key; p++)
+			if (ch == wi_opt[p].key) {
 				if (ch == 'p' && !isdigit(*optarg))
 					wi_opt[p].optarg = portid(optarg);
 				else
 					wi_opt[p].optarg = optarg;
 				if (ch == 'T')	/* key 1-4/0-3 kludge */
-				        (*optarg)--;
+					(*optarg)--;
 				dumpinfo = ch = 0;
 			}
-		switch(ch) {
+		switch (ch) {
 		case 0:
-		        break;
+			break;
 		case 'i':
-		        if (!ifspecified)
-			        iface = optarg;
+			if (!ifspecified)
+				iface = optarg;
 			break;
 		case 'o':
 			dumpstats++;
@@ -809,36 +809,36 @@ main(argc, argv)
 			dumpstations++;
 			break;
 		case 'v':
- 		        for (p = 0; wi_opt[p].key; p++)
-				if (wi_opt[p].key == 
-                                    strtol(optarg, NULL, 10)) {
+			for (p = 0; wi_opt[p].key; p++)
+				if (wi_opt[p].key ==
+				    strtol(optarg, NULL, 10)) {
 					wi_opt[p].optarg = wi_opt[0].optarg;
-                                        /* prevent multiple -v without
-                                           multiple -k */
-                                        wi_opt[0].optarg = NULL; 
+					/* prevent multiple -v without
+					   multiple -k */
+					wi_opt[0].optarg = NULL;
 					break;
 				}
-		       	break;
+			break;
 		case 'h':
 		default:
-		        usage();
+			usage();
 			break;
 		}
 	}
 
 	for (p = 0; wi_opt[p].key; p++)
-	        if (wi_opt[p].optarg != NULL)
-		        wi_opt[p].function(iface, wi_opt[p].wi_code, 
+		if (wi_opt[p].optarg != NULL)
+			wi_opt[p].function(iface, wi_opt[p].wi_code,
 					   wi_opt[p].optarg);
 
 	if (dumpstations)
 		wi_dumpstations(iface);
 
 	if (dumpstats && !dumpstations)
-	        wi_dumpstats(iface);
+		wi_dumpstats(iface);
 
 	if (dumpinfo && !dumpstats && !dumpstations)
-	        wi_dumpinfo(iface);
+		wi_dumpinfo(iface);
 
 	exit(0);
 }
