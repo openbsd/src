@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sh.1tbl,v 1.18 2000/03/17 18:48:43 aaron Exp $
+.\"	$OpenBSD: sh.1tbl,v 1.19 2000/03/21 14:06:55 aaron Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"     The Regents of the University of California.  All rights reserved.
@@ -1725,8 +1725,9 @@ A list of functions can be obtained using
 .Ic typeset \&+f
 and the function definitions can be listed using
 .Ic typeset \&-f .
+The
 .Ic autoload
-(which is an alias for
+command (which is an alias for
 .Ic typeset \&-fu )
 may be used to create undefined functions; when an undefined function is
 executed, the shell searches the path specified in the
