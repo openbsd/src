@@ -30,7 +30,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$Id: yppasswdd_mkpw.c,v 1.7 1996/08/30 15:10:02 deraadt Exp $";
+static char rcsid[] = "$Id: yppasswdd_mkpw.c,v 1.8 1996/08/31 13:54:13 deraadt Exp $";
 #endif
 
 #include <sys/types.h>
@@ -75,6 +75,8 @@ make_passwd(argp)
 {
 	struct passwd *pw;
 	int     pfd, tfd;
+	char	buf[10], *p;
+	int	alen;
 
 	pw = getpwnam(argp->newpw.pw_name);
 	if (!pw)
@@ -90,9 +92,6 @@ make_passwd(argp)
 	if (!nogecos && badchars(argp->newpw.pw_shell))
 		return (1);
 
-	pw_init();
-	tfd = pw_lock(0);
-
 	/*
 	 * Get the new password.  Reset passwd change time to zero; when
 	 * classes are implemented, go and get the "offset" value for this
@@ -106,6 +105,20 @@ make_passwd(argp)
 		pw->pw_gecos = argp->newpw.pw_gecos;
 	if (!noshell)
 		pw->pw_shell = argp->newpw.pw_shell;
+
+	for (alen = 0, p = pw->pw_gecos; *p; p++)
+		if (*p == '&')
+			alen = alen + strlen(pw->pw_name) - 1;
+	if (strlen(pw->pw_name) + 1 + strlen(pw->pw_passwd) + 1 +
+	    strlen((sprintf(buf, "%d", pw->pw_uid), buf)) + 1 +
+	    strlen((sprintf(buf, "%d", pw->pw_gid), buf)) + 1 +
+	    strlen(pw->pw_gecos) + alen + 1 + strlen(pw->pw_dir) + 1 +
+	    strlen(pw->pw_shell) >= 1023) {
+		return (1);
+	}
+
+	pw_init();
+	tfd = pw_lock(0);
 
 	pw_copy(pfd, tfd, pw);
 	pw_mkdb();
