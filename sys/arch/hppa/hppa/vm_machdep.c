@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.15 2000/01/24 20:44:14 mickey Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.16 2000/01/25 12:55:04 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2000 Michael Shalayeff
@@ -197,7 +197,7 @@ cpu_fork(p1, p2, stack, stacksize)
 #endif
 
 	pcbp = &p2->p_addr->u_pcb;
-	*pcbp = p1->p_addr->u_pcb;
+	bcopy(&p1->p_addr->u_pcb, pcbp, sizeof(*pcbp));
 	/* space is cached for the copy{in,out}'s pleasure */
 	pcbp->pcb_space = p2->p_vmspace->vm_map.pmap->pmap_space;
 	pcbp->pcb_uva = (vaddr_t)p2->p_addr;
@@ -205,7 +205,7 @@ cpu_fork(p1, p2, stack, stacksize)
 	sp = (register_t)p2->p_addr + NBPG;
 	p2->p_md.md_regs = tf = (struct trapframe *)sp;
 	sp += sizeof(struct trapframe);
-	*tf = *p1->p_md.md_regs;
+	bcopy(p1->p_md.md_regs, tf, sizeof(*tf));
 
 	/*
 	 * cpu_swapin() is supposed to fill out all the PAs
@@ -224,12 +224,10 @@ cpu_fork(p1, p2, stack, stacksize)
 	 * theoretically these could be inherited from the father,
 	 * but just in case.
 	 */
-#ifdef DIAGNOSTIC
 	tf->tf_sr7 = HPPA_SID_KERNEL;
 	tf->tf_eiem = ~0;
 	tf->tf_ipsw = PSW_C | PSW_Q | PSW_P | PSW_D | PSW_I /* | PSW_L */;
 	pcbp->pcb_fpregs[32] = 0;
-#endif
 
 	/*
 	 * Set up return value registers as libc:fork() expects
@@ -271,6 +269,7 @@ cpu_set_kpc(p, pc, arg)
 	 */
 	*HPPA_FRAME_CARG(1, tf->tf_sp) = (register_t)pc;
 	*HPPA_FRAME_CARG(2, tf->tf_sp) = (register_t)arg;
+	fdcache(HPPA_SID_KERNEL, (vaddr_t)tf->tf_sp, HPPA_FRAME_SIZE);
 }
 
 void
@@ -283,13 +282,19 @@ cpu_exit(p)
 
 	splhigh();
 	curproc = NULL;
-	fpu_curpcb = 0;
+	if (fpu_curpcb == (paddr_t)&p->p_addr->u_pcb)
+		fpu_curpcb = 0;
+
 	uvmspace_free(p->p_vmspace);
 
-	/* XXX should be in the locore? */
-	uvm_km_free(kernel_map, (vaddr_t)p->p_addr, USPACE);
-
 	switch_exit(p);
+}
+
+void
+cpu_wait(p)
+	struct proc *p;
+{
+	uvm_km_free(kernel_map, (vaddr_t)p->p_addr, USPACE);
 }
 
 /*
