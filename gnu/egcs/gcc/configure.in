@@ -3268,6 +3268,8 @@ changequote([,])dnl
 		;;
 	vax-*-openbsd*)
 		tmake_file="${tmake_file} vax/t-openbsd"
+		float_format=vax
+		use_collect2=yes
 		;;
 	vax-*-ultrix*)			# vaxen running ultrix
 		tm_file="${tm_file} vax/ultrix.h"
