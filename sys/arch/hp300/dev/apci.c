@@ -1,4 +1,4 @@
-/*	$OpenBSD: apci.c,v 1.5 2001/05/10 01:43:31 millert Exp $	*/
+/*	$OpenBSD: apci.c,v 1.6 2001/05/10 01:57:19 millert Exp $	*/
 /*	$NetBSD: apci.c,v 1.1 1997/05/12 08:12:36 thorpej Exp $	*/
 
 /*      
@@ -965,6 +965,13 @@ apcicnprobe(cp)
 #else
 		cp->cn_pri = CN_NORMAL;
 #endif
+		/*
+		 * If our priority is higher than the currently-remembered
+		 * console, install ourselves.
+		 */
+		if (((cn_tab == NULL) || (cp->cn_pri > cn_tab->cn_pri)) ||
+		    conforced)
+			cn_tab = cp;
 	}
 }
 
