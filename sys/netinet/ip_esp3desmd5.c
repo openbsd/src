@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp3desmd5.c,v 1.6 1997/06/20 19:43:06 provos Exp $	*/
+/*	$OpenBSD: ip_esp3desmd5.c,v 1.7 1997/06/21 00:09:17 deraadt Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -277,7 +277,7 @@ esp3desmd5_input(struct mbuf *m, struct tdb *tdb)
     ipo = *ip;
     esp = (struct esp *)(ip + 1);
 
-    plen = m->m_pkthdr.len - sizeof (struct ip) - sizeof (u_long) - 
+    plen = m->m_pkthdr.len - sizeof (struct ip) - sizeof (u_int32_t) - 
 	   xd->edx_ivlen;
     if (plen & 07)
     {
@@ -291,8 +291,8 @@ esp3desmd5_input(struct mbuf *m, struct tdb *tdb)
     }
 
     oplen = plen;
-    ilen = m->m_len - sizeof (struct ip) - ESP3DESMD5_IVS - sizeof(u_long);
-    idat = mtod(m, unsigned char *) + sizeof (struct ip) + sizeof(u_long) +
+    ilen = m->m_len - sizeof (struct ip) - ESP3DESMD5_IVS - sizeof(u_int32_t);
+    idat = mtod(m, unsigned char *) + sizeof (struct ip) + sizeof(u_int32_t) +
 	   ESP3DESMD5_IVS;
 
     if (xd->edx_ivlen == 0)		/* KeyIV in use */
@@ -518,7 +518,7 @@ esp3desmd5_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb, st
     struct ip *ip, ipo;
     int i, ilen, olen, ohlen, nh, rlen, plen, padding;
     u_int32_t rplc;
-    u_long spi;
+    u_int32_t spi;
     struct mbuf *mi, *mo, *ms;
     u_char *pad, *idat, *odat;
     u_char iv[ESP3DESMD5_IVS], blk[8], auth[ESP3DESMD5_ALEN];
@@ -577,7 +577,7 @@ esp3desmd5_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb, st
 
     bcopy(xd->edx_iv, iv, ESP3DESMD5_IVS);
 
-    MD5Update(&ctx, (u_char *)&spi, sizeof(u_long));
+    MD5Update(&ctx, (u_char *)&spi, sizeof(u_int32_t));
     MD5Update(&ctx, iv, ESP3DESMD5_IVS);
     rplc = htonl(xd->edx_rpl);
     MD5Update(&ctx, (unsigned char *)&rplc, ESP3DESMD5_RPLENGTH);

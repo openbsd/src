@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_espdes.c,v 1.4 1997/06/20 05:41:51 provos Exp $	*/
+/*	$OpenBSD: ip_espdes.c,v 1.5 1997/06/21 00:09:18 deraadt Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -82,7 +82,7 @@ espdes_init(struct tdb *tdbp, struct xformsw *xsp, struct mbuf *m)
 {
     struct espdes_xdata *xd;
     struct encap_msghdr *em;
-    u_long rk[2];
+    u_int32_t rk[2];
 
     tdbp->tdb_xform = xsp;
 
@@ -159,7 +159,7 @@ espdes_input(struct mbuf *m, struct tdb *tdb)
     ipo = *ip;
     esp = (struct esp *)(ip + 1);
 
-    plen = m->m_pkthdr.len - sizeof (struct ip) - sizeof (u_long) - xd->edx_ivlen;
+    plen = m->m_pkthdr.len - sizeof (struct ip) - sizeof (u_int32_t) - xd->edx_ivlen;
     if (plen & 07)
     {
 #ifdef ENCDEBUG
@@ -295,7 +295,7 @@ espdes_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb, struct
     struct espdes_xdata *xd;
     struct ip *ip, ipo;
     int i, ilen, olen, ohlen, nh, rlen, plen, padding;
-    u_long spi;
+    u_int32_t spi;
     struct mbuf *mi, *mo;
     u_char *pad, *idat, *odat;
     u_char iv[8], blk[8];
@@ -310,7 +310,7 @@ espdes_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb, struct
 	
     xd = (struct espdes_xdata *)tdb->tdb_xdata;
     ilen = ntohs(ip->ip_len);
-    ohlen = sizeof (u_long) + xd->edx_ivlen;
+    ohlen = sizeof (u_int32_t) + xd->edx_ivlen;
 
     ipo = *ip;
     nh = ipo.ip_p;
@@ -404,7 +404,7 @@ espdes_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb, struct
     if (m == NULL)
       return ENOBUFS;
 
-    m = m_pullup(m, sizeof(struct ip) + xd->edx_ivlen + sizeof(u_long));
+    m = m_pullup(m, sizeof(struct ip) + xd->edx_ivlen + sizeof(u_int32_t));
     if (m == NULL)
       return ENOBUFS;
 
@@ -424,8 +424,9 @@ espdes_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb, struct
     }
 
     bcopy((caddr_t)&ipo, mtod(m, caddr_t), sizeof (struct ip));
-    bcopy((caddr_t)&spi, mtod(m, caddr_t) + sizeof (struct ip), sizeof (u_long));
-    bcopy((caddr_t)iv,  mtod(m, caddr_t) + sizeof (struct ip) + sizeof (u_long), xd->edx_ivlen);
+    bcopy((caddr_t)&spi, mtod(m, caddr_t) + sizeof (struct ip), sizeof (u_int32_t));
+    bcopy((caddr_t)iv,  mtod(m, caddr_t) + sizeof (struct ip) +
+	sizeof (u_int32_t), xd->edx_ivlen);
 	
     *mp = m;
     return 0;

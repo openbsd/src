@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.4 1997/06/20 05:41:49 provos Exp $	*/
+/*	$OpenBSD: ip_esp.c,v 1.5 1997/06/21 00:09:16 deraadt Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -71,7 +71,7 @@ esp_input(register struct mbuf *m, int iphlen)
     struct ip *ipo;
     struct ifqueue *ifq = NULL;
     int s;
-    u_long spi;
+    u_int32_t spi;
     struct tdb *tdbp;
 	
     espstat.esps_input++;
@@ -100,7 +100,7 @@ esp_input(register struct mbuf *m, int iphlen)
 	}
 	ipo = mtod(m, struct ip *);
     }
-    spi = *((u_long *)((caddr_t)ipo + iphlen));
+    spi = *((u_int32_t *)((caddr_t)ipo + iphlen));
 
     /*
      * Find tunnel control block and (indirectly) call the appropriate

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_sha1.c,v 1.5 1997/06/20 20:11:30 provos Exp $	*/
+/*	$OpenBSD: ip_sha1.c,v 1.6 1997/06/21 00:09:20 deraadt Exp $	*/
 
 /*
 SHA-1 in C
@@ -47,12 +47,12 @@ A million repetitions of "a"
 
 /* Hash a single 512-bit block. This is the core of the algorithm. */
 
-void SHA1Transform(unsigned long state[5], unsigned char buffer[64])
+void SHA1Transform(u_int32_t state[5], unsigned char buffer[64])
 {
-unsigned long a, b, c, d, e;
+u_int32_t a, b, c, d, e;
 typedef union {
     unsigned char c[64];
-    unsigned long l[16];
+    unsigned int l[16];
 } CHAR64LONG16;
 CHAR64LONG16* block;
 #ifdef SHA1HANDSOFF
@@ -119,7 +119,7 @@ void SHA1Init(SHA1_CTX* context)
 void SHA1Update(SHA1_CTX* context, unsigned char* data, unsigned int len)
 {
 unsigned int i;
-unsigned long j;
+unsigned int j;
 
     j = context->count[0];
     if ((context->count[0] += len << 3) < j) context->count[1] += (len>>29)+1;
@@ -141,7 +141,7 @@ unsigned long j;
 
 void SHA1Final(unsigned char digest[20], SHA1_CTX* context)
 {
-unsigned long i;
+unsigned int i;
 unsigned char finalcount[8];
 
     for (i = 0; i < 8; i++) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.7 1997/06/20 05:41:53 provos Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.8 1997/06/21 00:09:19 deraadt Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -114,7 +114,7 @@ int ipspkernfs_dirty = 1;
  */
 
 struct tdb *
-gettdb(u_long spi, struct in_addr dst)
+gettdb(u_int32_t spi, struct in_addr dst)
 {
     int hashval;
     struct tdb *tdbp;
