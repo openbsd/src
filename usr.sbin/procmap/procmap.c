@@ -1,4 +1,4 @@
-/*	$OpenBSD: procmap.c,v 1.13 2004/02/23 20:53:21 tedu Exp $ */
+/*	$OpenBSD: procmap.c,v 1.14 2004/02/23 21:01:22 tedu Exp $ */
 /*	$NetBSD: pmap.c,v 1.1 2002/09/01 20:32:44 atatat Exp $ */
 
 /*
@@ -780,6 +780,8 @@ findname(kvm_t *kd, struct kbit *vmspace,
 			l = strlen(D(vfs, mount)->mnt_stat.f_mntonname);
 			switch (search_cache(kd, vp, &name, buf, sizeof(buf))) {
 			case 0: /* found something */
+				if (name - (1 + 11 + l) < buf)
+					break;
 				name--;
 				*name = '/';
 				/*FALLTHROUGH*/
@@ -791,6 +793,8 @@ findname(kvm_t *kd, struct kbit *vmspace,
 				    D(vfs, mount)->mnt_stat.f_mntonname, l);
 				break;
 			case 1: /* all is well */
+				if (name - (1 + l) < buf)
+					break;
 				name--;
 				*name = '/';
 				if (l != 1) {
