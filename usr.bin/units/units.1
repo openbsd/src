@@ -1,4 +1,4 @@
-.\" $OpenBSD: units.1,v 1.10 2000/03/14 14:58:24 aaron Exp $
+.\" $OpenBSD: units.1,v 1.11 2000/04/20 23:49:27 pjanzen Exp $
 .\" converted to new format by deraadt@openbsd.org
 .Dd July 14, 1993
 .Dt UNITS 1
@@ -16,13 +16,14 @@
 .Sh DESCRIPTION
 The
 .Nm
-program converts quantities expression in various scales to
+program converts quantities expressed in various scales to
 their equivalents in other scales.
 The
 .Nm
 program can only handle multiplicative scale changes.
 It cannot convert Celsius
 to Fahrenheit, for example.
+It also does not handle logarithmic units such as bels.
 It works interactively by prompting the user for input:
 .Pp
 .nf
