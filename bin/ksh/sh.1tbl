@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sh.1tbl,v 1.60 2005/01/21 15:15:55 otto Exp $
+.\"	$OpenBSD: sh.1tbl,v 1.61 2005/02/02 07:53:01 otto Exp $
 .\"
 .\"	Public Domain
 .\"
@@ -1690,6 +1690,19 @@ where
 is a decimal integer specifying the base, and
 .Ar number
 is a number in the specified base.
+Additionally,
+integers may be prefixed with
+.Sq 0X
+or
+.Sq 0x
+(specifying base 16)
+or
+.Sq 0
+(base 8)
+in all forms of arithmetic expressions,
+except as numeric arguments to the
+.Ic test
+command.
 .Pp
 The operators are evaluated as follows:
 .Bl -tag -width Ds -offset indent

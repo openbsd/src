@@ -1,4 +1,4 @@
-/*	$OpenBSD: eval.c,v 1.24 2004/12/22 18:52:37 millert Exp $	*/
+/*	$OpenBSD: eval.c,v 1.25 2005/02/02 07:53:01 otto Exp $	*/
 
 /*
  * Expansion - quoting, separation, substitution, globbing
@@ -248,7 +248,7 @@ expand(char *cp,	/* input word */
 					v.type = 10; /* not default */
 					v.name[0] = '\0';
 					v_evaluate(&v, substitute(sp, 0),
-						KSH_UNWIND_ERROR);
+						KSH_UNWIND_ERROR, true);
 					sp = strchr(sp, 0) + 1;
 					for (p = str_val(&v); *p; ) {
 						Xcheck(ds, dp);

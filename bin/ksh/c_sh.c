@@ -1,4 +1,4 @@
-/*	$OpenBSD: c_sh.c,v 1.27 2004/12/28 21:11:21 jsg Exp $	*/
+/*	$OpenBSD: c_sh.c,v 1.28 2005/02/02 07:53:01 otto Exp $	*/
 
 /*
  * built-in Bourne commands
@@ -31,7 +31,7 @@ c_shift(char **wp)
 	arg = wp[builtin_opt.optind];
 
 	if (arg) {
-		evaluate(arg, &val, KSH_UNWIND_ERROR);
+		evaluate(arg, &val, KSH_UNWIND_ERROR, false);
 		n = val;
 	} else
 		n = 1;

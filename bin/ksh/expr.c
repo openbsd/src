@@ -1,4 +1,4 @@
-/*	$OpenBSD: expr.c,v 1.16 2004/12/22 18:57:28 otto Exp $	*/
+/*	$OpenBSD: expr.c,v 1.17 2005/02/02 07:53:01 otto Exp $	*/
 
 /*
  * Korn expression evaluation
@@ -119,6 +119,9 @@ struct expr_state {
 	const char *tokp;		/* lexical position */
 	enum token  tok;		/* token from token() */
 	int	    noassign;		/* don't do assigns (for ?:,&&,||) */
+	bool	    arith;		/* true if evaluating an $(())
+					 * expression
+					 */
 	struct tbl *val;		/* value from token() */
 	struct tbl *evaling;		/* variable that is being recursively
 					 * expanded (EXPRINEVAL flag set)
@@ -141,14 +144,14 @@ static struct tbl *intvar(Expr_state *, struct tbl *);
  * parse and evaluate expression
  */
 int
-evaluate(const char *expr, long int *rval, int error_ok)
+evaluate(const char *expr, long int *rval, int error_ok, bool arith)
 {
 	struct tbl v;
 	int ret;
 
 	v.flag = DEFINED|INTEGER;
 	v.type = 0;
-	ret = v_evaluate(&v, expr, error_ok);
+	ret = v_evaluate(&v, expr, error_ok, arith);
 	*rval = v.val.i;
 	return ret;
 }
@@ -157,7 +160,8 @@ evaluate(const char *expr, long int *rval, int error_ok)
  * parse and evaluate expression, storing result in vp.
  */
 int
-v_evaluate(struct tbl *vp, const char *expr, volatile int error_ok)
+v_evaluate(struct tbl *vp, const char *expr, volatile int error_ok,
+    bool arith)
 {
 	struct tbl *v;
 	Expr_state curstate;
@@ -167,6 +171,7 @@ v_evaluate(struct tbl *vp, const char *expr, volatile int error_ok)
 	/* save state to allow recursive calls */
 	curstate.expression = curstate.tokp = expr;
 	curstate.noassign = 0;
+	curstate.arith = arith;
 	curstate.evaling = (struct tbl *) 0;
 
 	newenv(E_ERRH);
@@ -198,7 +203,7 @@ v_evaluate(struct tbl *vp, const char *expr, volatile int error_ok)
 		evalerr(es, ET_UNEXPECTED, (char *) 0);
 
 	if (vp->flag & INTEGER)
-		setint_v(vp, v);
+		setint_v(vp, v, es->arith);
 	else
 		/* can fail if readonly */
 		setstr(vp, str_val(v), error_ok);
@@ -214,6 +219,7 @@ evalerr(Expr_state *es, enum error_type type, const char *str)
 	char tbuf[2];
 	const char *s;
 
+	es->arith = false;
 	switch (type) {
 	case ET_UNEXPECTED:
 		switch (es->tok) {
@@ -433,7 +439,7 @@ evalexpr(Expr_state *es, enum prec prec)
 		if (IS_ASSIGNOP(op)) {
 			vr->val.i = res;
 			if (vasn->flag & INTEGER)
-				setint_v(vasn, vr);
+				setint_v(vasn, vr, es->arith);
 			else
 				setint(vasn, res);
 			vl = vr;
@@ -491,7 +497,7 @@ token(Expr_state *es)
 		es->val->flag &= ~INTEGER;
 		es->val->type = 0;
 		es->val->val.s = tvar;
-		if (setint_v(es->val, es->val) == NULL)
+		if (setint_v(es->val, es->val, es->arith) == NULL)
 			evalerr(es, ET_BADLIT, tvar);
 		afree(tvar, ATEMP);
 		es->tok = LIT;
@@ -524,7 +530,7 @@ do_ppmm(Expr_state *es, enum token op, struct tbl *vasn, bool is_prefix)
 	vl = intvar(es, vasn);
 	oval = op == O_PLUSPLUS ? vl->val.i++ : vl->val.i--;
 	if (vasn->flag & INTEGER)
-		setint_v(vasn, vl);
+		setint_v(vasn, vl, es->arith);
 	else
 		setint(vasn, vl->val.i);
 	if (!is_prefix)		/* undo the inc/dec */
@@ -568,12 +574,12 @@ intvar(Expr_state *es, struct tbl *vp)
 		return vp;
 
 	vq = tempvar();
-	if (setint_v(vq, vp) == NULL) {
+	if (setint_v(vq, vp, es->arith) == NULL) {
 		if (vp->flag & EXPRINEVAL)
 			evalerr(es, ET_RECURSIVE, vp->name);
 		es->evaling = vp;
 		vp->flag |= EXPRINEVAL;
-		v_evaluate(vq, str_val(vp), KSH_UNWIND_ERROR);
+		v_evaluate(vq, str_val(vp), KSH_UNWIND_ERROR, es->arith);
 		vp->flag &= ~EXPRINEVAL;
 		es->evaling = (struct tbl *) 0;
 	}

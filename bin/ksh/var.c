@@ -1,4 +1,4 @@
-/*	$OpenBSD: var.c,v 1.22 2004/12/22 17:14:34 millert Exp $	*/
+/*	$OpenBSD: var.c,v 1.23 2005/02/02 07:53:01 otto Exp $	*/
 
 #include "sh.h"
 #include <time.h>
@@ -123,9 +123,7 @@ initvar(void)
  * non-zero if this is an array, sets *valp to the array index, returns
  * the basename of the array.
  */
-const char *array_index_calc(const char *n, bool *arrayp, int *valp);
-
-const char *
+static const char *
 array_index_calc(const char *n, bool *arrayp, int *valp)
 {
 	const char *p;
@@ -143,7 +141,7 @@ array_index_calc(const char *n, bool *arrayp, int *valp)
 		sub = substitute(tmp, 0);
 		afree(tmp, ATEMP);
 		n = str_nsave(n, p - n, ATEMP);
-		evaluate(sub, &rval, KSH_UNWIND_ERROR);
+		evaluate(sub, &rval, KSH_UNWIND_ERROR, true);
 		if (rval < 0 || rval > ARRAYMAX)
 			errorf("%s: subscript out of range", n);
 		*valp = rval;
@@ -335,7 +333,7 @@ intval(struct tbl *vp)
 	long num;
 	int base;
 
-	base = getint(vp, &num);
+	base = getint(vp, &num, false);
 	if (base == -1)
 		/* XXX check calls - is error here ok by POSIX? */
 		errorf("%s: bad number", str_val(vp));
@@ -374,9 +372,10 @@ setstr(struct tbl *vq, const char *s, int error_ok)
 			vq->val.s = str_save(s, vq->areap);
 			vq->flag |= ALLOC;
 		}
-	} else			/* integer dest */
-		if (!v_evaluate(vq, s, error_ok))
+	} else {		/* integer dest */
+		if (!v_evaluate(vq, s, error_ok, true))
 			return 0;
+	}
 	vq->flag |= ISSET;
 	if ((vq->flag&SPECIAL))
 		setspec(vq);
@@ -403,7 +402,7 @@ setint(struct tbl *vq, long int n)
 }
 
 int
-getint(struct tbl *vp, long int *nump)
+getint(struct tbl *vp, long int *nump, bool arith)
 {
 	char *s;
 	int c;
@@ -426,6 +425,15 @@ getint(struct tbl *vp, long int *nump)
 	base = 10;
 	num = 0;
 	neg = 0;
+	if (arith && *s == '0' && *(s+1)) {
+	    	s++;
+		if (*s == 'x' || *s == 'X') {
+		    	s++;
+			base = 16;
+		} else
+		    	base = 8;
+		have_base++;
+	}
 	for (c = *s++; c ; c = *s++) {
 		if (c == '-') {
 			neg++;
@@ -460,12 +468,12 @@ getint(struct tbl *vp, long int *nump)
  * (vq and vp may be the same)
  */
 struct tbl *
-setint_v(struct tbl *vq, struct tbl *vp)
+setint_v(struct tbl *vq, struct tbl *vp, bool arith)
 {
 	int base;
 	long num;
 
-	if ((base = getint(vp, &num)) == -1)
+	if ((base = getint(vp, &num, arith)) == -1)
 		return NULL;
 	if (!(vq->flag & INTEGER) && (vq->flag & ALLOC)) {
 		vq->flag &= ~ALLOC;

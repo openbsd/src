@@ -1,4 +1,4 @@
-/*	$OpenBSD: c_ulimit.c,v 1.12 2004/12/20 11:34:26 otto Exp $	*/
+/*	$OpenBSD: c_ulimit.c,v 1.13 2005/02/02 07:53:01 otto Exp $	*/
 
 /*
 	ulimit -- handle "ulimit" builtin
@@ -104,7 +104,7 @@ c_ulimit(char **wp)
 		else {
 			long rval;
 
-			if (!evaluate(wp[0], &rval, KSH_RETURN_ERROR))
+			if (!evaluate(wp[0], &rval, KSH_RETURN_ERROR, false))
 				return 1;
 			/* Avoid problems caused by typos that
 			 * evaluate misses due to evaluating unset

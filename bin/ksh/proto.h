@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.h,v 1.24 2004/12/22 19:02:13 millert Exp $	*/
+/*	$OpenBSD: proto.h,v 1.25 2005/02/02 07:53:01 otto Exp $	*/
 
 /*
  * prototypes for PD-KSH
@@ -77,8 +77,8 @@ int	search_access(const char *, int, int *);
 int	pr_menu(char *const *);
 int	pr_list(char *const *);
 /* expr.c */
-int 	evaluate(const char *, long *, int);
-int	v_evaluate(struct tbl *, const char *, volatile int);
+int 	evaluate(const char *, long *, int, bool);
+int	v_evaluate(struct tbl *, const char *, volatile int, bool);
 /* history.c */
 void	init_histvec(void);
 void 	hist_init(Source *);
@@ -247,9 +247,9 @@ struct tbl *	local(const char *, bool);
 char *	str_val(struct tbl *);
 long 	intval(struct tbl *);
 int 	setstr(struct tbl *, const char *, int);
-struct tbl *setint_v(struct tbl *, struct tbl *);
+struct tbl *setint_v(struct tbl *, struct tbl *, bool);
 void 	setint(struct tbl *, long);
-int	getint(struct tbl *, long *);
+int	getint(struct tbl *, long *, bool);
 struct tbl *	typeset(const char *, Tflag, Tflag, int, int);
 void 	unset(struct tbl *, int);
 char  * skip_varname(const char *, int);

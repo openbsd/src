@@ -1,4 +1,4 @@
-/*	$OpenBSD: c_test.c,v 1.14 2004/12/22 17:14:34 millert Exp $	*/
+/*	$OpenBSD: c_test.c,v 1.15 2005/02/02 07:53:01 otto Exp $	*/
 
 /*
  * test(1); version 7-like  --  author Erik Baalbergen
@@ -308,8 +308,8 @@ test_eval(Test_env *te, Test_op op, const char *opnd1, const char *opnd2,
 		{
 			long v1, v2;
 
-			if (!evaluate(opnd1, &v1, KSH_RETURN_ERROR)
-			    || !evaluate(opnd2, &v2, KSH_RETURN_ERROR))
+			if (!evaluate(opnd1, &v1, KSH_RETURN_ERROR, false)
+			    || !evaluate(opnd2, &v2, KSH_RETURN_ERROR, false))
 			{
 				/* error already printed.. */
 				te->flags |= TEF_ERROR;
