@@ -1,4 +1,4 @@
-/*	$OpenBSD: adb.c,v 1.10 1998/03/03 04:29:44 ryker Exp $	*/
+/*	$OpenBSD: adb.c,v 1.11 2001/08/15 22:06:37 miod Exp $	*/
 /*	$NetBSD: adb.c,v 1.13 1996/12/16 16:17:02 scottr Exp $	*/
 
 /*-
@@ -40,6 +40,7 @@ e*    notice, this list of conditions and the following disclaimer in the
 #include <sys/signalvar.h>
 #include <sys/systm.h>
 #include <sys/time.h>
+#include <sys/timeout.h>
 
 #include <machine/autoconf.h>
 #include <machine/keyboard.h>
@@ -94,6 +95,8 @@ struct cfattach adb_ca = {
 struct cfdriver adb_cd = {
 	NULL, "adb", DV_DULL
 };
+
+struct timeout repeat_timeout;
 
 static int
 adbmatch(parent, vcf, aux)
@@ -169,7 +172,8 @@ adb_autorepeat(keyp)
 	adb_handoff(&adb_rptevent);	/* do key down */
 
 	if (adb_repeating == key) {
-		timeout(adb_autorepeat, keyp, adb_rptinterval);
+		timeout_set(&repeat_timeout, adb_autorepeat, keyp);
+		timeout_add(&repeat_timeout, adb_rptinterval);
 	}
 }
 
@@ -186,18 +190,17 @@ adb_dokeyupdown(event)
 		    keyboard[event->u.k.key & 0x7f][0] != 0) {
 			/* ignore shift & control */
 			if (adb_repeating != -1) {
-				untimeout(adb_autorepeat,
-				    (void *) adb_rptevent.u.k.key);
+				timeout_del(&repeat_timeout);
 			}
 			adb_rptevent = *event;
 			adb_repeating = adb_key;
-			timeout(adb_autorepeat,
-			    (void *) adb_key, adb_rptdelay);
+			timeout_set(&repeat_timeout, adb_autorepeat,
+			    (caddr_t)adb_key);
+			timeout_add(&repeat_timeout, adb_rptdelay);
 		} else {
 			if (adb_repeating != -1) {
 				adb_repeating = -1;
-				untimeout(adb_autorepeat,
-				    (void *) adb_rptevent.u.k.key);
+				timeout_del(&repeat_timeout);
 			}
 			adb_rptevent = *event;
 		}
