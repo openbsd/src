@@ -1,4 +1,4 @@
-/*	$OpenBSD: vacation.c,v 1.10 1998/07/08 21:39:08 deraadt Exp $	*/
+/*	$OpenBSD: vacation.c,v 1.11 1999/02/12 01:21:07 marc Exp $	*/
 /*	$NetBSD: vacation.c,v 1.7 1995/04/29 05:58:27 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)vacation.c	8.2 (Berkeley) 1/26/94";
 #endif
-static char rcsid[] = "$OpenBSD: vacation.c,v 1.10 1998/07/08 21:39:08 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: vacation.c,v 1.11 1999/02/12 01:21:07 marc Exp $";
 #endif /* not lint */
 
 /*
@@ -147,17 +147,17 @@ main(argc, argv)
 			usage();
 		if (!(pw = getpwuid(getuid()))) {
 			syslog(LOG_ERR,
-			    "vacation: no such user uid %u.", getuid());
+			    "no such user uid %u.", getuid());
 			exit(1);
 		}
 	}
 	else if (!(pw = getpwnam(*argv))) {
-		syslog(LOG_ERR, "vacation: no such user %s.", *argv);
+		syslog(LOG_ERR, "no such user %s.", *argv);
 		exit(1);
 	}
 	if (chdir(pw->pw_dir)) {
 		syslog(LOG_NOTICE,
-		    "vacation: no such directory %s.", pw->pw_dir);
+		    "no such directory %s.", pw->pw_dir);
 		exit(1);
 	}
 
@@ -171,7 +171,7 @@ main(argc, argv)
 		
 	db = dbopen(VDB, flags, S_IRUSR|S_IWUSR, DB_HASH, NULL);
 	if (!db) {
-		syslog(LOG_NOTICE, "vacation: %s: %m", VDB);
+		syslog(LOG_NOTICE, "%s: %m", VDB);
 		exit(1);
 	}
 
@@ -228,6 +228,23 @@ readheaders()
 					exit(0);
 			}
 			break;
+		case 'R':		/* "Return-Path:" */
+			cont = 0;
+			if (strncasecmp(buf, "Return-Path:",
+					sizeof("Return-Path:")-1) ||
+			    buf[12] != ' ' && buf[12] != '\t')
+				break;
+			for (p = buf + 12; *p && isspace(*p); ++p);
+			if (strlcpy(from, p, sizeof from ) > sizeof from) {
+				syslog(LOG_NOTICE,
+				       "Return-Path %s exceeds limits", p);
+				exit(1);
+			}
+			if (p = strchr(from, '\n'))
+				*p = '\0';
+			if (junkmail())
+				exit(0);
+			break;
 		case 'P':		/* "Precedence:" */
 			cont = 0;
 			if (strncasecmp(buf, "Precedence", 10) ||
@@ -264,7 +281,7 @@ findme:			for (cur = names; !tome && cur; cur = cur->next)
 	if (!tome)
 		exit(0);
 	if (!*from) {
-		syslog(LOG_NOTICE, "vacation: no initial \"From\" line.");
+		syslog(LOG_NOTICE, "no initial \"From\" or \"Return-Path\"line.");
 		exit(1);
 	}
 }
@@ -410,16 +427,16 @@ sendmessage(myname)
 
 	mfp = fopen(VMSG, "r");
 	if (mfp == NULL) {
-		syslog(LOG_NOTICE, "vacation: no ~%s/%s file.", myname, VMSG);
+		syslog(LOG_NOTICE, "no ~%s/%s file.", myname, VMSG);
 		exit(1);
 	}
 	if (pipe(pvect) < 0) {
-		syslog(LOG_ERR, "vacation: pipe: %m");
+		syslog(LOG_ERR, "pipe: %m");
 		exit(1);
 	}
 	i = vfork();
 	if (i < 0) {
-		syslog(LOG_ERR, "vacation: fork: %m");
+		syslog(LOG_ERR, "fork: %m");
 		exit(1);
 	}
 	if (i == 0) {
@@ -429,7 +446,7 @@ sendmessage(myname)
 		close(fileno(mfp));
 		execl(_PATH_SENDMAIL, "sendmail", "-f", myname, "--",
 		    from, NULL);
-		syslog(LOG_ERR, "vacation: can't exec %s: %m", _PATH_SENDMAIL);
+		syslog(LOG_ERR, "can't exec %s: %m", _PATH_SENDMAIL);
 		_exit(1);
 	}
 	close(pvect[0]);
