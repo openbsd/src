@@ -1,4 +1,4 @@
-/*	$OpenBSD: handles.c,v 1.2 1997/08/10 21:06:39 millert Exp $	*/
+/*	$OpenBSD: handles.c,v 1.3 1997/09/17 23:09:35 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -48,13 +48,12 @@
 
 */
 
-typedef struct fdinfo
-{
-  int fd;	/* The file descriptor itself			*/
-  int ref_count;	/* Count of hosts using the fd - fd is 	*/
-			/* closed when this reaches zero	*/
-  ino_t inode_no;	/* The inode number of this file.	*/
-  dev_t device;		/* device on which the file lives.	*/
-  struct fdinfo *next;	/* Chain of FdInfo structures		*/
-  struct fdinfo *prev;
-} FdInfo;
+typedef struct fdinfo {
+	int     fd;		/* The file descriptor itself			 */
+	int     ref_count;	/* Count of hosts using the fd - fd is 	 */
+	/* closed when this reaches zero	 */
+	ino_t   inode_no;	/* The inode number of this file.	 */
+	dev_t   device;		/* device on which the file lives.	 */
+	struct fdinfo *next;	/* Chain of FdInfo structures		 */
+	struct fdinfo *prev;
+}       FdInfo;
