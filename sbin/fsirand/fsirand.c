@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsirand.c,v 1.3 1997/01/28 04:14:55 millert Exp $	*/
+/*	$OpenBSD: fsirand.c,v 1.4 1997/01/28 04:21:25 millert Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint                                                              
-static char rcsid[] = "$OpenBSD: fsirand.c,v 1.3 1997/01/28 04:14:55 millert Exp $";
+static char rcsid[] = "$OpenBSD: fsirand.c,v 1.4 1997/01/28 04:21:25 millert Exp $";
 #endif /* not lint */                                                        
 
 #include <sys/param.h>
@@ -79,6 +79,8 @@ main(argc, argv)
 		usage(1);
 
 	for (n = optind; n < argc; n++) {
+		if (argc - optind != 1)
+			(void)puts(argv[n]);
 		fsirand(argv[n]);
 		if (n < argc - 1)
 			putchar('\n');
@@ -105,7 +107,6 @@ fsirand(device)
 	if ((devfd = opendev(device, printonly ? O_RDONLY : O_RDWR,
 	     OPENDEV_PART, &devpath)) < 0)
 		err(1, "Can't open %s", devpath);
-	(void)puts(devpath);
 
 	(void)memset(&sbuf, 0, sizeof(sbuf));
 	sblock = (struct fs *)&sbuf;
