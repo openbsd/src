@@ -1,5 +1,4 @@
-#	from: @(#)Makefile	5.3 (Berkeley) 6/25/90
-#	$Id: Makefile,v 1.4 1998/07/05 18:48:56 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.5 2001/01/28 19:34:35 niklas Exp $
 
 CFLAGS+= -DBSDINETD
 PROG=	uucpd

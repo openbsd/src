@@ -1,10 +1,11 @@
+/* $OpenBSD: smtpfwdd.c,v 1.6 2001/01/28 19:34:34 niklas Exp $*/
+
 /*
  * smtpfwdd, Obtuse SMTP forward daemon, master process watches spool
  * directory for files spooled by smtpd. On seeing one, spawns a child
  * to pick it up and invokes sendmail (or sendmail-like agent) to
  * deliver it.
  *
- * $Id: smtpfwdd.c,v 1.5 2000/10/19 03:06:40 beck Exp $
  * 
  * Copyright (c) 1996, 1997 Obtuse Systems Corporation. All rights
  * reserved.
@@ -41,7 +42,7 @@
  */
 char *obtuse_copyright =
 "Copyright 1996 - Obtuse Systems Corporation - All rights reserved.";
-char *obtuse_rcsid = "$Id: smtpfwdd.c,v 1.5 2000/10/19 03:06:40 beck Exp $";
+char *obtuse_rcsid = "$OpenBSD: smtpfwdd.c,v 1.6 2001/01/28 19:34:34 niklas Exp $";
 
 #include <stdio.h>
 #include <signal.h>

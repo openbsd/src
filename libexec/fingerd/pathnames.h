@@ -1,3 +1,5 @@
+/*	$OpenBSD: pathnames.h,v 1.3 2001/01/28 19:34:27 niklas Exp $*/
+
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -31,7 +33,6 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pathnames.h	8.1 (Berkeley) 6/4/93
- *	$Id: pathnames.h,v 1.2 1996/07/16 17:55:43 millert Exp $
  */
 
 #define	_PATH_FINGER	"/usr/bin/finger"

@@ -1,3 +1,5 @@
+/*	$OpenBSD: subr.c,v 1.11 2001/01/28 19:34:28 niklas Exp $	*/
+
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)subr.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$Id: subr.c,v 1.10 2000/10/06 22:51:42 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: subr.c,v 1.11 2001/01/28 19:34:28 niklas Exp $";
 #endif /* not lint */
 
 /*

@@ -1,3 +1,5 @@
+#	$OpenBSD: antirelay_check_rules_example,v 1.2 2001/01/28 19:34:34 niklas Exp $
+
 # A simple anti-relay only example. Make sure you don't get used as a third
 # party relay to spam other unfortunate people and grind your server
 # to a halt dealing with the complaints. 

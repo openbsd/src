@@ -1,3 +1,5 @@
+/*	$OpenBSD: parse.c,v 1.20 2001/01/28 19:34:29 niklas Exp $	*/
+
 /*
  * This program is in the public domain and may be used freely by anyone
  * who wants to.

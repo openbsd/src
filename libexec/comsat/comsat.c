@@ -1,3 +1,5 @@
+/*	$OpenBSD: comsat.c,v 1.15 2001/01/28 19:34:27 niklas Exp $	*/
+
 /*
  * Copyright (c) 1980, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -39,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)comsat.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$Id: comsat.c,v 1.14 2001/01/17 19:21:48 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: comsat.c,v 1.15 2001/01/28 19:34:27 niklas Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>

@@ -1,5 +1,6 @@
+/*	$OpenBSD: identd.h,v 1.6 2001/01/28 19:34:29 niklas Exp $*/
+
 /*
-**	$Id: identd.h,v 1.5 2000/06/18 04:43:28 beck Exp $
 **
 ** identd.h		    Common variables for the Pidentd daemon
 **

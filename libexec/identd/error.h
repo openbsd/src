@@ -1,5 +1,6 @@
+/*	$OpenBSD: error.h,v 1.3 2001/01/28 19:34:28 niklas Exp $*/
+
 /*
-**	$Id: error.h,v 1.2 1997/07/23 20:36:27 kstailey Exp $
 **
 ** error.h						 Error handling macros
 **

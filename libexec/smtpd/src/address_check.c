@@ -1,5 +1,6 @@
+/* $OpenBSD: address_check.c,v 1.4 2001/01/28 19:34:34 niklas Exp $ */
+
 /*
- * $Id: address_check.c,v 1.3 1998/06/03 08:57:05 beck Exp $ 
  * 
  * Copyright (c) 1996, 1997 Obtuse Systems Corporation. All rights
  * reserved.

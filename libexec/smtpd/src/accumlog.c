@@ -1,5 +1,6 @@
+/* $OpenBSD: accumlog.c,v 1.2 2001/01/28 19:34:34 niklas Exp $*/
+
 /*
- * $Id: accumlog.c,v 1.1 1998/06/03 08:57:05 beck Exp $
  * 
  * Copyright (c) 1998 Obtuse Systems Corporation <info@obtuse.com> 
  *  Copyright (c) 1998 Simon J. Gerraty <sjg@quick.com.au>

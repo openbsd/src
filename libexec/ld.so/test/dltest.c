@@ -1,3 +1,5 @@
+/*	$OpenBSD: dltest.c,v 1.2 2001/01/28 19:34:29 niklas Exp $	*/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>

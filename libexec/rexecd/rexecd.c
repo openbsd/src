@@ -1,3 +1,5 @@
+/*	$OpenBSD: rexecd.c,v 1.16 2001/01/28 19:34:30 niklas Exp $	*/
+
 /*
  * Copyright (c) 1983 The Regents of the University of California.
  * All rights reserved.
@@ -39,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rexecd.c	5.12 (Berkeley) 2/25/91";*/
-static char rcsid[] = "$Id: rexecd.c,v 1.15 2001/01/25 19:22:16 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rexecd.c,v 1.16 2001/01/28 19:34:30 niklas Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
