@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.11 2004/11/12 02:55:02 deraadt Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.12 2004/11/12 11:56:34 deraadt Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -153,60 +153,56 @@ struct atu_type atu_devs[] = {
 	{ 0, 0, 0, 0 }
 };
 
-int atu_newbuf(struct atu_softc *, struct atu_chain *, struct mbuf *);
-int atu_encap(struct atu_softc *sc, struct mbuf *m, struct atu_chain *c);
-void atu_rxeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
-void atu_txeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
-void atu_start(struct ifnet *);
-// void atu_rxstart(struct ifnet *);
-void atu_mgmt_loop(void *arg);
-int atu_ioctl(struct ifnet *, u_long, caddr_t);
-void atu_init(void *);
-void atu_stop(struct atu_softc *);
-void atu_watchdog(struct ifnet *);
-void atu_msleep(struct atu_softc *, int);
+int	atu_newbuf(struct atu_softc *, struct atu_chain *, struct mbuf *);
+int	atu_encap(struct atu_softc *sc, struct mbuf *m, struct atu_chain *c);
+void	atu_rxeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
+void	atu_txeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
+void	atu_start(struct ifnet *);
+void	atu_mgmt_loop(void *arg);
+int	atu_ioctl(struct ifnet *, u_long, caddr_t);
+void	atu_init(void *);
+void	atu_stop(struct atu_softc *);
+void	atu_watchdog(struct ifnet *);
+void	atu_msleep(struct atu_softc *, int);
 usbd_status atu_usb_request(struct atu_softc *sc, u_int8_t type,
-	 u_int8_t request, u_int16_t value, u_int16_t index, u_int16_t length,
-	 u_int8_t *data);
-int atu_send_command(struct atu_softc *sc, u_int8_t *command,
-	int size);
-int atu_get_cmd_status(struct atu_softc *sc, u_int8_t cmd,
-	 u_int8_t *status);
-int atu_wait_completion(struct atu_softc *sc, u_int8_t cmd,
-	u_int8_t *status);
-int atu_send_mib(struct atu_softc *sc, u_int8_t type,
-	u_int8_t size, u_int8_t index, void *data);
-int atu_get_mib(struct atu_softc *sc, u_int8_t type,
-	u_int8_t size, u_int8_t index, u_int8_t *buf);
-int atu_start_ibss(struct atu_softc *sc);
-int atu_start_scan(struct atu_softc *sc);
-int atu_switch_radio(struct atu_softc *sc, int state);
-int atu_initial_config(struct atu_softc *sc);
-int atu_join(struct atu_softc *sc);
-int
-atu_send_packet(struct atu_softc *sc, struct atu_chain *c);
-int atu_send_mgmt_packet(struct atu_softc *sc,
-    struct atu_chain *c, u_int16_t length);
-int atu_authenticate(struct atu_softc *sc);
-int atu_associate(struct atu_softc *sc);
-int8_t atu_get_dfu_state(struct atu_softc *sc);
+	    u_int8_t request, u_int16_t value, u_int16_t index,
+	    u_int16_t length, u_int8_t *data);
+int	atu_send_command(struct atu_softc *sc, u_int8_t *command, int size);
+int	atu_get_cmd_status(struct atu_softc *sc, u_int8_t cmd,
+	    u_int8_t *status);
+int	atu_wait_completion(struct atu_softc *sc, u_int8_t cmd,
+	    u_int8_t *status);
+int	atu_send_mib(struct atu_softc *sc, u_int8_t type,
+	    u_int8_t size, u_int8_t index, void *data);
+int	atu_get_mib(struct atu_softc *sc, u_int8_t type,
+	    u_int8_t size, u_int8_t index, u_int8_t *buf);
+int	atu_start_ibss(struct atu_softc *sc);
+int	atu_start_scan(struct atu_softc *sc);
+int	atu_switch_radio(struct atu_softc *sc, int state);
+int	atu_initial_config(struct atu_softc *sc);
+int	atu_join(struct atu_softc *sc);
+int	atu_send_packet(struct atu_softc *sc, struct atu_chain *c);
+int	atu_send_mgmt_packet(struct atu_softc *sc,
+	    struct atu_chain *c, u_int16_t length);
+int	atu_authenticate(struct atu_softc *sc);
+int	atu_associate(struct atu_softc *sc);
+int8_t	atu_get_dfu_state(struct atu_softc *sc);
 u_int8_t atu_get_opmode(struct atu_softc *sc, u_int8_t *mode);
-int atu_upload_internal_firmware(struct atu_softc *sc);
-int atu_upload_external_firmware(struct atu_softc *sc);
-int atu_get_card_config(struct atu_softc *sc);
-int atu_mgmt_state_machine(struct atu_softc *sc);
-int atu_media_change(struct ifnet *ifp);
-void atu_media_status(struct ifnet *ifp, struct ifmediareq *req);
-int atu_xfer_list_init(struct atu_softc *sc, struct atu_chain *ch,
-    int listlen, int need_mbuf, int bufsize, struct atu_list_head *list);
-int atu_rx_list_init(struct atu_softc *);
-void atu_xfer_list_free(struct atu_softc *sc, struct atu_chain *ch,
-    int listlen);
-void atu_print_beacon(struct atu_softc *sc, struct atu_rxpkt *pkt);
-void atu_handle_mgmt_packet(struct atu_softc *sc, struct atu_rxpkt *pkt);
-void atu_print_a_bunch_of_debug_things(struct atu_softc *sc);
-int atu_set_wepkey(struct atu_softc *sc, int nr, u_int8_t *key, int len);
-
+int	atu_upload_internal_firmware(struct atu_softc *sc);
+int	atu_upload_external_firmware(struct atu_softc *sc);
+int	atu_get_card_config(struct atu_softc *sc);
+int	atu_mgmt_state_machine(struct atu_softc *sc);
+int	atu_media_change(struct ifnet *ifp);
+void	atu_media_status(struct ifnet *ifp, struct ifmediareq *req);
+int	atu_xfer_list_init(struct atu_softc *sc, struct atu_chain *ch,
+	    int listlen, int need_mbuf, int bufsize, struct atu_list_head *list);
+int	atu_rx_list_init(struct atu_softc *);
+void	atu_xfer_list_free(struct atu_softc *sc, struct atu_chain *ch,
+	    int listlen);
+void	atu_print_beacon(struct atu_softc *sc, struct atu_rxpkt *pkt);
+void	atu_handle_mgmt_packet(struct atu_softc *sc, struct atu_rxpkt *pkt);
+void	atu_print_a_bunch_of_debug_things(struct atu_softc *sc);
+int	atu_set_wepkey(struct atu_softc *sc, int nr, u_int8_t *key, int len);
 
 void
 atu_msleep(struct atu_softc *sc, int ms)
