@@ -50,7 +50,7 @@
 #define	offsetof(type, member)	((size_t)(&((type *)0)->member))
 
 /*
- * Can't directly use "assert", because apparenltly cpp won't expand it
+ * Can't directly use "assert", because apparently cpp won't expand it
  * unless it has an argument, which loses.
  */
 #ifdef PDQ_NDEBUG
