@@ -1,4 +1,4 @@
-/*	$OpenBSD: crontab.c,v 1.38 2003/02/18 02:25:39 millert Exp $	*/
+/*	$OpenBSD: crontab.c,v 1.39 2003/02/20 19:12:16 millert Exp $	*/
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
  */
@@ -21,7 +21,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char const rcsid[] = "$OpenBSD: crontab.c,v 1.38 2003/02/18 02:25:39 millert Exp $";
+static char const rcsid[] = "$OpenBSD: crontab.c,v 1.39 2003/02/20 19:12:16 millert Exp $";
 #endif
 
 /* crontab - install and manage per-user crontab files
@@ -88,7 +88,7 @@ main(int argc, char *argv[]) {
 #endif
 	parse_args(argc, argv);		/* sets many globals, opens a file */
 	set_cron_cwd();
-	if (!allowed(User)) {
+	if (!allowed(RealUser, ALLOW_FILE, DENY_FILE)) {
 		fprintf(stderr,
 			"You (%s) are not allowed to use this program (%s)\n",
 			User, ProgramName);

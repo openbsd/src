@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.24 2003/02/18 02:25:39 millert Exp $	*/
+/*	$OpenBSD: misc.c,v 1.25 2003/02/20 19:12:16 millert Exp $	*/
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
  */
@@ -21,7 +21,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char const rcsid[] = "$OpenBSD: misc.c,v 1.24 2003/02/18 02:25:39 millert Exp $";
+static char const rcsid[] = "$OpenBSD: misc.c,v 1.25 2003/02/20 19:12:16 millert Exp $";
 #endif
 
 /* vix 26jan87 [RCS has the rest of the log]
@@ -432,49 +432,26 @@ in_file(const char *string, FILE *file, int error)
 	return (FALSE);
 }
 
-/* int allowed(const char *username)
- *	returns TRUE if (ALLOW_FILE exists and user is listed)
- *	or (DENY_FILE exists and user is NOT listed)
- *	or (neither file exists but user=="root" so it's okay)
+/* int allowed(const char *username, const char *allow_file, const char *deny_file)
+ *	returns TRUE if (allow_file exists and user is listed)
+ *	or (deny_file exists and user is NOT listed).
+ *	root is always allowed.
  */
 int
-allowed(const char *username) {
-	FILE	*allow = NULL;
-	FILE	*deny = NULL;
+allowed(const char *username, const char *allow_file, const char *deny_file) {
+	FILE	*fp;
 	int	isallowed;
 
-#if defined(ALLOW_FILE) && defined(DENY_FILE)
+	if (strcmp(username, ROOT_USER) == 0)
+		return (TRUE);
 	isallowed = FALSE;
-	allow = fopen(ALLOW_FILE, "r");
-	if (allow == NULL && errno != ENOENT)
-		goto out;
-	deny = fopen(DENY_FILE, "r");
-	if (deny == NULL && errno != ENOENT)
-		goto out;
-	Debug(DMISC, ("allow/deny enabled, %d/%d\n", !!allow, !!deny))
-
-	if (allow) {
-		isallowed = in_file(username, allow, FALSE);
-		goto out;
+	if ((fp = fopen(allow_file, "r")) != NULL) {
+		isallowed = in_file(username, fp, FALSE);
+		fclose(fp);
+	} else if ((fp = fopen(deny_file, "r")) != NULL) {
+		isallowed = !in_file(username, fp, FALSE);
+		fclose(fp);
 	}
-	if (deny) {
-		isallowed = !in_file(username, deny, TRUE);
-		goto out;
-	}
-#endif
-
-#if defined(ALLOW_ONLY_ROOT)
-	isallowed = strcmp(username, ROOT_USER) == 0;
-#else
-	isallowed = TRUE;
-#endif
-
-out:
-	if (allow)
-		fclose(allow);
-	if (deny)
-		fclose(deny);
-
 	return (isallowed);
 }
 

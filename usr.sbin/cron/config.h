@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.h,v 1.13 2002/07/15 19:13:29 millert Exp $	*/
+/*	$OpenBSD: config.h,v 1.14 2003/02/20 19:12:16 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -64,12 +64,6 @@
 			 * as the mailer, it is better to let sendmail
 			 * generate the Date: header.
 			 */
-
-			/* if ALLOW_FILE and DENY_FILE are not defined or are
-			 * defined but neither exists, should crontab(1) be
-			 * usable only by root?
-			 */
-/*#define ALLOW_ONLY_ROOT			-*/
 
 			/* if you want to use syslog(3) instead of appending
 			 * to CRONDIR/LOG_FILE (/var/cron/log, e.g.), define

@@ -15,7 +15,7 @@
 .\" ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 .\" SOFTWARE.
 .\"
-.\" $OpenBSD: crontab.1,v 1.17 2003/02/20 17:28:29 millert Exp $
+.\" $OpenBSD: crontab.1,v 1.18 2003/02/20 19:12:16 millert Exp $
 .\"
 .Dd June 8, 1999
 .Dt CRONTAB 1
@@ -65,11 +65,9 @@ be listed in the
 .Pa /var/cron/cron.deny
 file in order to use
 .Nm crontab .
-If neither of these files exists, then
-depending on site-dependent configuration parameters, only the super user
+If neither of these files exists then only the super user
 will be allowed to use
-.Nm crontab ,
-or all users will be able to use it.
+.Nm crontab .
 .Em NOTE :
 if they exist,
 .Pa /var/cron/cron.allow
