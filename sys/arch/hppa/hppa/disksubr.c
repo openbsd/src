@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.16 2004/08/01 07:34:17 mickey Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.17 2004/10/07 15:51:21 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -62,7 +62,7 @@
 #define DISKLABEL_I386
 #elif defined(amiga) && !defined(DISKLABEL_AMIGA)
 #define DISKLABEL_AMIGA
-#elif defined(hppa) && !defined(DISKLABEL_HPPA)
+#elif (defined(hppa) || defined(hppa64)) && !defined(DISKLABEL_HPPA)
 #define DISKLABEL_HPPA
 #endif
 
