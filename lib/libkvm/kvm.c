@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm.c,v 1.34 2003/06/02 20:18:40 millert Exp $ */
+/*	$OpenBSD: kvm.c,v 1.35 2004/01/09 16:51:07 millert Exp $ */
 /*	$NetBSD: kvm.c,v 1.43 1996/05/05 04:31:59 gwr Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm.c	8.2 (Berkeley) 2/13/94";
 #else
-static char *rcsid = "$OpenBSD: kvm.c,v 1.34 2003/06/02 20:18:40 millert Exp $";
+static char *rcsid = "$OpenBSD: kvm.c,v 1.35 2004/01/09 16:51:07 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -190,6 +190,7 @@ _kvm_open(kd, uf, mf, sf, flag, errout)
 	kd->nlfd = -1;
 	kd->alive = 0;
 	kd->procbase = 0;
+	kd->procbase2 = 0;
 	kd->nbpg = getpagesize();
 	kd->swapspc = 0;
 	kd->argspc = 0;
