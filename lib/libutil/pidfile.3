@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pidfile.3,v 1.1 2001/09/28 20:16:42 jakob Exp $
+.\"	$OpenBSD: pidfile.3,v 1.2 2001/09/28 20:27:56 jakob Exp $
 .\"	$NetBSD: pidfile.3,v 1.2 2001/04/12 22:34:31 sommerfeld Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -61,10 +61,6 @@ The pid file can be used as a quick reference if
 the process needs to be sent a signal.  When the program exits,
 the pid file will be removed automatically, unless the program
 receives a fatal signal.
-.Pp
-Note that only the first invocation of
-.Nm
-causes a pid file to be written; subsequent invocations have no effect.
 .Sh RETURN VALUES
 .Fn pidfile
 returns 0 on success and -1 on failure.
@@ -75,3 +71,9 @@ The
 .Nm
 function call appeared in
 .Ox 3.0 .
+.Sh CAVEATS
+If
+.Fn pidfile
+is called multiple times with different
+.Ar basename ,
+only the last pidfile will be removed upon exit.
