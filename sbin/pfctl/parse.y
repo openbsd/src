@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.118 2002/07/15 13:36:02 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.119 2002/07/15 15:44:15 pb Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -633,14 +633,14 @@ host		: address			{
 				if ($1->af == AF_INET) {
 					if ($3 < 0 || $3 > 32) {
 						yyerror(
-						    "illegal netmask value %d",
+						    "illegal netmask value /%d",
 						    $3);
 						YYERROR;
 					}
 				} else {
 					if ($3 < 0 || $3 > 128) {
 						yyerror(
-						    "illegal netmask value %d",
+						    "illegal netmask value /%d",
 						    $3);
 						YYERROR;
 					}
@@ -978,7 +978,7 @@ icmp_item	: icmptype		{
 			if ($$ == NULL)
 				err(1, "icmp_item: malloc");
 			if ($3 < 0 || $3 > 255) {
-				yyerror("illegal icmp code %d", $3);
+				yyerror("illegal icmp-code %d", $3);
 				YYERROR;
 			}
 			$$->type = $1;
@@ -1018,7 +1018,7 @@ icmp6_item	: icmp6type		{
 			if ($$ == NULL)
 				err(1, "icmp_item: malloc");
 			if ($3 < 0 || $3 > 255) {
-				yyerror("illegal icmp6 code %d", $3);
+				yyerror("illegal icmp6-code %d", $3);
 				YYERROR;
 			}
 			$$->type = $1;
@@ -1055,7 +1055,7 @@ icmptype	: STRING			{
 		}
 		| NUMBER			{
 			if ($1 < 0 || $1 > 255) {
-				yyerror("illegal icmp type %d", $1);
+				yyerror("illegal icmp-type %d", $1);
 				YYERROR;
 			}
 			$$ = $1 + 1;
@@ -1073,7 +1073,7 @@ icmp6type	: STRING			{
 		}
 		| NUMBER			{
 			if ($1 < 0 || $1 > 255) {
-				yyerror("illegal icmp6 type %d", $1);
+				yyerror("illegal icmp6-type %d", $1);
 				YYERROR;
 			}
 			$$ = $1 + 1;
@@ -1484,7 +1484,7 @@ route		: /* empty */			{
 				YYERROR;
 			}
 			if ($4->next) {
-				yyerror("multiple routeto ip addresses");
+				yyerror("multiple route-to ip addresses");
 				YYERROR;
 			}
 			$$.addr = &$4->addr.addr;
@@ -1504,7 +1504,7 @@ route		: /* empty */			{
 				YYERROR;
 			}
 			if ($4->next) {
-				yyerror("multiple dupto ip addresses");
+				yyerror("multiple dup-to ip addresses");
 				YYERROR;
 			}
 			$$.addr = &$4->addr.addr;
@@ -2077,7 +2077,8 @@ int
 check_rulestate(int desired_state)
 {
 	if (rulestate > desired_state) {
-		yyerror("Rules must be in order: options, scrub, nat, filter");
+		yyerror("Rules must be in order: options, normalization, "
+		    "translation, filter");
 		return (1);
 	}
 	rulestate = desired_state;
@@ -2668,7 +2669,7 @@ ifa_pick_ip(struct node_host *nh, u_int8_t af)
 
 	if (af == 0 && nh->next) {
 		yyerror("address family not given and interface has multiple "
-		    "ips");
+		    "IPs");
 		return(NULL);
 	}
 	for(h = nh; h; h = h->next) {
