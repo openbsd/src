@@ -1,4 +1,4 @@
-/*	$OpenBSD: tc-m88k.h,v 1.2 1998/02/15 18:49:39 niklas Exp $	*/
+/*	$OpenBSD: tc-m88k.h,v 1.3 2001/12/27 00:23:27 miod Exp $	*/
 
 /* m88k.h -- Assembler for the Motorola 88000
    Contributed by Devon Bowen of Buffalo University
@@ -23,10 +23,18 @@
 
 #define TC_M88K 1
 
+#define	MID_M88K	153
+
+#define	AOUT_MACHTYPE	MID_M88K
+
 #define NO_LISTING
 #define NO_DOT_PSEUDOS
-#define ALLOW_ATSIGN
 
+#define ALLOW_ATSIGN
+#define	AT 3
+
+#define	LOCAL_LABELS_FB
+/* m88k assembler allows @ as the first char in a local label */
 #define LOCAL_LABEL(name) (name[0] == '@' \
 			   && ( name[1] == 'L' || name[1] == '.' ))
 
@@ -34,4 +42,3 @@
 #define tc_headers_hook(a)		{;} /* not used */
 #define tc_aout_pre_write_hook(x)	{;} /* not used */
 
- /* end of tc-m88k.h */
