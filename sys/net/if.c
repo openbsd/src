@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.92 2004/10/11 10:13:49 henning Exp $	*/
+/*	$OpenBSD: if.c,v 1.93 2004/10/14 21:28:15 mickey Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -132,6 +132,7 @@ struct if_clone	*if_clone_lookup(const char *, int *);
 
 void	if_congestion_clear(void *);
 
+TAILQ_HEAD(, ifg_group) ifg_head;
 LIST_HEAD(, if_clone) if_cloners = LIST_HEAD_INITIALIZER(if_cloners);
 int if_cloners_count;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.57 2004/10/11 10:13:49 henning Exp $	*/
+/*	$OpenBSD: if.h,v 1.58 2004/10/14 21:28:15 mickey Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -400,8 +400,6 @@ struct if_announcemsghdr {
 /*
  * interface groups
  */
-TAILQ_HEAD(ifg_head, ifg_group)	ifg_head;
-
 struct ifg_group {
 	char			 ifg_group[IFNAMSIZ];
 	u_int			 ifg_refcnt;
