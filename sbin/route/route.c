@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.80 2004/10/13 22:54:35 jaredy Exp $	*/
+/*	$OpenBSD: route.c,v 1.81 2004/10/14 15:20:56 jaredy Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)route.c	8.3 (Berkeley) 3/19/94";
 #else
-static const char rcsid[] = "$OpenBSD: route.c,v 1.80 2004/10/13 22:54:35 jaredy Exp $";
+static const char rcsid[] = "$OpenBSD: route.c,v 1.81 2004/10/14 15:20:56 jaredy Exp $";
 #endif
 #endif /* not lint */
 
@@ -341,7 +341,7 @@ set_metric(char *value, int key)
 int
 newroute(int argc, char **argv)
 {
-	char *cmd, *dest = "", *gateway = "", *err;
+	char *cmd, *dest = "", *gateway = "", *error;
 	int ishost = 0, ret = 0, attempts, oerrno, flags = RTF_STATIC;
 	int key;
 	struct hostent *hp = 0;
@@ -554,19 +554,19 @@ newroute(int argc, char **argv)
 		if (ret != 0) {
 			switch (oerrno) {
 			case ESRCH:
-				err = "not in table";
+				error = "not in table";
 				break;
 			case EBUSY:
-				err = "entry in use";
+				error = "entry in use";
 				break;
 			case ENOBUFS:
-				err = "routing table overflow";
+				error = "routing table overflow";
 				break;
 			default:
-				err = strerror(oerrno);
+				error = strerror(oerrno);
 				break;
 			}
-			(void) printf(": %s\n", err);
+			(void) printf(": %s\n", error);
 		}
 	}
 	return (ret != 0);
@@ -1420,6 +1420,6 @@ getlabel(char *name)
 	if (strlcpy(so_label.rtlabel.sr_label, name,
 	    sizeof(so_label.rtlabel.sr_label)) >=
 	    sizeof(so_label.rtlabel.sr_label))
-		err(1, "label too long");
+		errx(1, "label too long");
 	rtm_addrs |= RTA_LABEL;
 }
