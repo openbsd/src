@@ -1,4 +1,4 @@
-.\"     $OpenBSD: intro.4,v 1.7 2001/10/05 14:45:53 mpech Exp $
+.\"     $OpenBSD: intro.4,v 1.8 2001/10/06 22:11:58 miod Exp $
 .\"
 .\" Copyright (c) 1998 The OpenBSD Project
 .\" All Rights Reserved.
@@ -64,13 +64,139 @@ the system will have to be rebooted.
 .Pp
 The autoconfiguration system is described in
 .Xr autoconf 4 .
-.\" A list of the supported devices is given below.
-.\" .Sh LIST OF DEVICES
-.\" The devices listed below are supported in this incarnation of
-.\" the system.  Pseudo-devices are not listed.
-.\" Devices are indicated by their functional interface.
-.\" Not all supported devices are listed.
-.\" .Pp
+A list of the supported devices is given below.
+.Sh LIST OF DEVICES
+The devices listed below are supported in this incarnation of
+the system.  Pseudo-devices are not listed.
+Devices are indicated by their functional interface.
+Not all supported devices are listed.
+.Pp
+.Bl -tag -width speaker -compact -offset indent
+.It adv
+AdvanSys PCI narrow SCSI Host Adapters.
+.It adw
+AdvanSys PCI wide SCSI Host Adapters.
+.It ahc
+Adaptec 2xxx and 3xxx series PCI/VLB/EISA SCSI adapter boards.
+.It aic
+Adaptec AIC-6260, Adaptec AIC-6360, Adaptec 152x, and SoundBlaster SCSI boards.
+.It ami
+American Megatrends Inc.
+MegaRAID Controllers.
+.It an
+Aironet Communications 4500/4800 IEEE 802.11DS wireless network adapter.
+.It aue
+ADMtek AN986-based USB Ethernet adapters.
+.It auvia
+VIA VT82C686A integrated AC'97 audio device.
+.It cmpci
+C-Media CMI8x38 audio.
+.It com
+NS8250-, NS16450-, NS16550-, ST16550- and TI16750-based asynchronous
+serial communications.
+.It cue
+CATC USB-EL1201A based USB Ethernet adapters.
+.It cy
+Cyclades Cyclom-4Y, -8Y, and -16Y asynchronous serial adapters.
+.It dc
+DEC tulip clone ethernet cards (Macronix, Lite-On, Davicom, ADMtek).
+.It de
+DEC tulip-based ethernet cards.
+.It dpt
+DPT SmartCache/SmartRAID III and IV SCSI controllers.
+.It eap
+Ensoniq AudioPCI (ES137x) audio.
+.It ec
+3Com Etherlink II Ethernet (3C503).
+.It ep
+3Com Etherlink III Ethernet (3C5x9, 3C59x).
+.It eso
+ESS Technology Solo-1 PCI AudioDrive (ES1938/ES1946) audio.
+.It fea
+.Tn DEC
+DEFEA PCI FDDI controller.
+.It fms
+Forte Media FM801 audio.
+.It fpa
+.Tn DEC
+DEFPA PCI FDDI controller.
+.It fxp
+.Tn Intel
+EtherExpress PRO/100 Ethernet.
+.It gdt
+ICP-Vortex GDT RAID controllers.
+.It hifn
+Hi/Fn 7751 Encryption Accelerator.
+.It ises
+Securealink PCC-ISES hardware crypto accelerator.
+.It isp
+QLogic PCI SCSI controllers.
+.It le
+AMD Lance Ethernet.
+.It lmc
+Lan Media Corporation SS1/DS1/HSSI/DS3 PCI WAN adapters.
+.It lpt
+Parallel port.
+.It ne
+Novell NE1000 and 2000 Ethernet interface.
+.It pckbc
+Traditional PC (ISA) keyboard.
+.It pms
+PS/2 auxiliary port mouse, for generic mice.
+.It rl
+RealTek 8129/8139 Ethernet.
+.It sf
+Adaptec AIC-6915 Starfire PCI Fast Ethernet.
+.It siop
+LSI/Symbios Logic/NCR 53c8xx SCSI adapter boards.
+.It sis
+SiS 900, Sis 7016 and NS DP83815 Fast Ethernet.
+.It sk
+SysKonnect 984x Gigabit Ethernet (9841/9842/9843/9844).
+.It speaker
+Console speaker.
+.It ti
+Alteon Tigon I & II Gigabit ethernet (3COM 3C985, Netgear GA620, etc).
+.It tl
+Texas Instruments ThunderLAN ethernet.
+.It twe
+3ware Escalade RAID controller.
+.It tx
+SMC 9432 10/100 Mbps Ethernet cards.
+.It txp
+3Com 3XP Typhoon/Sidewinder (3CR990) Ethernet.
+.It ubsec
+Broadcom Bluesteelnet uBsec 5501, 5601, 5805, and 5820.
+.It uftdi
+FTDI FT8U100AX-based USB serial adapters.
+.It upl
+Prolific PL2301/PL2302-based host-to-host USB connectors.
+.It uplcom
+I/O Data USB-RSAQ2 USB serial adapters.
+.It urio
+Diamond Multimedia Rio MP3 device interface.
+.It uvisor
+Handspring Visor device interface.
+.It uyap
+YAP phone firmware interface.
+.It vga
+PC display adapter driver for VGA compatible adapters.
+.It vr
+VIA Rhine Ethernet.
+.It wb
+Winbond W89C840F fast ethernet.
+.It wdc
+Standard ISA Western Digital type hard drive controllers.
+MFM, RLL, ESDI, and IDE.
+.It we
+Western Digital/SMC WD 80x3, SMC Elite Ultra and SMC EtherEZ Ethernet cards.
+.It wss
+Windows Sound System audio.
+.It wx
+Intel 82452 Pro/1000 Gigabit Ethernet.
+.It xl
+3COM Etherlink XL and Fast Etherlink XL (3c9xx).
+.El
 .Sh SEE ALSO
 .Xr autoconf 4 ,
 .Xr config 8
