@@ -1,3 +1,5 @@
+/*	$OpenBSD	*/
+
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@bsdx.de>
  *
