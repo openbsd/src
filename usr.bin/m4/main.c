@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.12 1999/09/06 13:20:40 espie Exp $	*/
+/*	$OpenBSD: main.c,v 1.13 1999/09/06 13:24:59 espie Exp $	*/
 /*	$NetBSD: main.c,v 1.12 1997/02/08 23:54:49 cgd Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.12 1999/09/06 13:20:40 espie Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.13 1999/09/06 13:24:59 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -64,6 +64,7 @@ static char rcsid[] = "$OpenBSD: main.c,v 1.12 1999/09/06 13:20:40 espie Exp $";
 #include <stdio.h>
 #include <ctype.h>
 #include <string.h>
+#include <stddef.h>
 #include <err.h>
 #include "mdef.h"
 #include "stdd.h"
@@ -196,7 +197,7 @@ main(argc,argv)
 	} else
 		for (; argc--; ++argv) {
 			p = *argv;
-			if (p[0] == '-' && p[1] == '\0')
+			if (p[0] == '-' && p[1] == EOS)
 				ifp = stdin;
 			else if ((ifp = fopen(p, "r")) == NULL)
 				err(1, "%s", p);
@@ -338,7 +339,7 @@ macro() {
 					errx(1, "missing right quote");
 				else {
 					chars[0] = l;
-					chars[1] = '\0';
+					chars[1] = EOS;
 					s = chars;
 				}
 				if (nlpar > 0) {
