@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.14 2004/08/07 13:10:02 mickey Exp $
+dnl	$OpenBSD: hardware,v 1.15 2004/08/17 20:35:32 mickey Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of HP9000 machines:
 dnl - PA7000-based
 dnl	705, 710, 720, 730, 750
@@ -38,6 +38,24 @@ Supported devices {:-include-:}:
 	built-in 53C700 SCSI (oosiop)
 	built-in 53C710 SCSI (osiop)
 	53C8xx-based SCSI (siop)
+	Adaptec AIC-7770, AIC-7850, AIC-7860, AIC-7870, AIC-7880,
+	AIC-7890, AIC-7891, AIC-7892, AIC-7895, AIC-7896, AIC-7897
+	and AIC-7899 based host adapters (ahc) (not bootable), including:
+		AHA-274X[W,T]
+		AHA-284X
+		AHA-2910, AHA-2915 
+		AHA-2920
+		AHA-2930[C,U2]
+		AHA-2940[J,N,U,AU,UW,UW Dual,UW Pro,U2W,U2B]
+		AHA-2950[U2W,U2B]
+		AHA-3940[U,AU,UW,AUW,U2W]
+		AHA-3950U2
+		AHA-3960
+		AHA-3985
+		AHA-4944UW
+		AHA-19160B
+		AHA-29160[B,N]
+		AHA-39160
 - SGC/GSC graphics:
 	Artist (as found on 712) (sti)
 	CRX-8, CRX-24, HCRX-8, HCRX-24 (sti)
