@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmes.c,v 1.14 2003/12/25 21:01:39 miod Exp $ */
+/*	$OpenBSD: vmes.c,v 1.15 2003/12/27 23:57:06 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -190,18 +190,24 @@ d16_bcopy(const void *src, void *dst, size_t len)
 {
 	const u_int16_t *s = (const u_int16_t *)src;
 	u_int16_t *d = (u_int16_t *)dst;
+	size_t l = len;
 
-	len >>= 1;
-	while (len-- != 0)
+	l >>= 1;
+	while (l-- != 0)
 		*d++ = *s++;
+	if (len & 1)
+		*(u_int8_t *)d = *(u_int8_t *)s;
 }
 
 void
 d16_bzero(void *dst, size_t len)
 {
 	u_int16_t *d = (u_int16_t *)dst;
+	size_t l = len;
 
-	len >>= 1;
-	while (len-- != 0)
+	l >>= 1;
+	while (l-- != 0)
 		*d++ = 0;
+	if (len & 1)
+		*(u_int8_t *)d = 0;
 }
