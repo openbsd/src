@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_motorola.c,v 1.28 2003/10/09 22:12:24 miod Exp $ */
+/*	$OpenBSD: pmap_motorola.c,v 1.29 2003/10/13 18:41:11 miod Exp $ */
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -838,43 +838,24 @@ pmap_page_protect(pg, prot)
 		printf("pmap_page_protect(%lx, %x)\n", pg, prot);
 #endif
 
-	switch (prot) {
-	case VM_PROT_READ|VM_PROT_WRITE:
-	case VM_PROT_ALL:
-		return;
-	/* copy_on_write */
-	case VM_PROT_READ:
-	case VM_PROT_READ|VM_PROT_EXECUTE:
-		pmap_changebit(pg, PG_RO, ~0);
-		return;
-	/* remove_all */
-	default:
-		break;
-	}
-	pv = pg_to_pvh(pg);
-	s = splvm();
-	while (pv->pv_pmap != NULL) {
-		pt_entry_t *pte;
+	if ((prot & VM_PROT_READ) == VM_PROT_NONE) {
+		pv = pg_to_pvh(pg);
+		s = splvm();
+		while (pv->pv_pmap != NULL) {
+			pt_entry_t *pte;
 
-		pte = pmap_pte(pv->pv_pmap, pv->pv_va);
+			pte = pmap_pte(pv->pv_pmap, pv->pv_va);
 #ifdef DEBUG
-		if (!pmap_ste_v(pv->pv_pmap, pv->pv_va) ||
-		    pmap_pte_pa(pte) != VM_PAGE_TO_PHYS(pg))
-			panic("pmap_page_protect: bad mapping");
+			if (!pmap_ste_v(pv->pv_pmap, pv->pv_va) ||
+			    pmap_pte_pa(pte) != VM_PAGE_TO_PHYS(pg))
+				panic("pmap_page_protect: bad mapping");
 #endif
-		if (!pmap_pte_w(pte))
 			pmap_remove_mapping(pv->pv_pmap, pv->pv_va,
-					    pte, PRM_TFLUSH|PRM_CFLUSH);
-		else {
-			pv = pv->pv_next;
-			PMAP_DPRINTF(PDB_PARANOIA,
-			    ("%s wired mapping for %lx not removed\n",
-			     "pmap_page_protect:", pg));
-			if (pv == NULL)
-				break;
+			    pte, PRM_TFLUSH|PRM_CFLUSH);
 		}
-	}
-	splx(s);
+		splx(s);
+	} else if ((prot & VM_PROT_WRITE) == VM_PROT_NONE)
+		pmap_changebit(pg, PG_RO, ~0);
 }
 
 /*
@@ -2102,11 +2083,11 @@ pmap_remove_mapping(pmap, va, pte, flags)
 #endif
 
 		/*
-		 * If reference count drops to 1, and we're not instructed
+		 * If reference count drops to zero, and we're not instructed
 		 * to keep it around, free the PT page.
 		 */
 
-		if (refs == 1 && (flags & PRM_KEEPPTPAGE) == 0) {
+		if (refs == 0 && (flags & PRM_KEEPPTPAGE) == 0) {
 #ifdef DIAGNOSTIC
 			struct pv_entry *pv;
 #endif
@@ -2611,7 +2592,6 @@ pmap_enter_ptpage(pmap, va)
 		    UVM_PGA_ZERO)) == NULL) {
 			uvm_wait("ptpage");
 		}
-		pg->wire_count = 1;
 		pg->flags &= ~(PG_BUSY|PG_FAKE);
 		UVM_PAGE_OWN(pg, NULL);
 		ptpa = VM_PAGE_TO_PHYS(pg);
@@ -2793,7 +2773,7 @@ pmap_check_wiring(str, va)
 
 	pa = pmap_pte_pa(pmap_pte(pmap_kernel(), va));
 	pg = PHYS_TO_VM_PAGE(pa);
-	if (pg->wire_count < 1) {
+	if (pg->wire_count >= PAGE_SIZE / sizeof(struct pt_entry_t)) {
 		printf("*%s*: 0x%lx: wire count %d\n", str, va, pg->wire_count);
 		return;
 	}
@@ -2803,9 +2783,9 @@ pmap_check_wiring(str, va)
 	    pte++)
 		if (*pte)
 			count++;
-	if ((pg->wire_count - 1) != count)
+	if (pg->wire_count != count)
 		printf("*%s*: 0x%lx: w%d/a%d\n",
-		       str, va, (pg->wire_count - 1), count);
+		       str, va, pg->wire_count, count);
 }
 #endif /* DEBUG */
 
