@@ -1387,6 +1387,7 @@
 ./usr/share/zoneinfo/America/Yellowknife
 ./usr/share/zoneinfo/Antarctica
 ./usr/share/zoneinfo/Antarctica/Casey
+./usr/share/zoneinfo/Antarctica/DumontDUrville
 ./usr/share/zoneinfo/Antarctica/Mawson
 ./usr/share/zoneinfo/Antarctica/McMurdo
 ./usr/share/zoneinfo/Antarctica/Palmer
@@ -1628,6 +1629,7 @@
 ./usr/share/zoneinfo/Indian/Christmas
 ./usr/share/zoneinfo/Indian/Cocos
 ./usr/share/zoneinfo/Indian/Comoro
+./usr/share/zoneinfo/Indian/Kerguelen
 ./usr/share/zoneinfo/Indian/Mahe
 ./usr/share/zoneinfo/Indian/Maldives
 ./usr/share/zoneinfo/Indian/Mauritius

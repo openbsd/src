@@ -65,6 +65,7 @@
 ./usr/share/info/iostream.info
 ./usr/share/info/iostream.info-1
 ./usr/share/info/iostream.info-2
+./usr/share/info/kth-krb.info
 ./usr/share/info/libg++.info
 ./usr/share/info/libg++.info-1
 ./usr/share/info/libg++.info-2
@@ -779,6 +780,7 @@
 ./usr/share/man/cat8/rarpd.0
 ./usr/share/man/cat8/rbootd.0
 ./usr/share/man/cat8/rc.0
+./usr/share/man/cat8/rc.conf.0
 ./usr/share/man/cat8/rdate.0
 ./usr/share/man/cat8/rdconfig.0
 ./usr/share/man/cat8/rdump.0
