@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.23 2003/06/02 23:28:21 millert Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.24 2004/01/23 19:36:25 millert Exp $	*/
 /*	$NetBSD: disklabel.h,v 1.41 1996/05/10 23:07:37 mark Exp $	*/
 
 /*
@@ -243,6 +243,7 @@ static char *dktypenames[] = {
 #define FS_EXT2FS	17		/* ext2fs */
 #define FS_CCD		18		/* ccd component */
 #define FS_RAID		19		/* RAIDframe */
+#define FS_NTFS		20		/* Windows/NT file system */
 
 #ifdef DKTYPENAMES
 static char *fstypenames[] = {
@@ -266,6 +267,7 @@ static char *fstypenames[] = {
 	"ext2fs",
 	"ccd",
 	"RAID",
+	"NTFS",
 	NULL
 };
 
@@ -291,6 +293,7 @@ static char *fstypesnames[] = {
 	"ext2fs",	/* 17 */
 	"",		/* 18 */
 	"",		/* 19 */
+	"ntfs",		/* 20 */
 	NULL
 };
 
