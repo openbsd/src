@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkswap.c,v 1.6 1996/11/10 07:57:25 downsj Exp $	*/
+/*	$OpenBSD: mkswap.c,v 1.7 1996/11/12 08:37:58 niklas Exp $	*/
 /*	$NetBSD: mkswap.c,v 1.5 1996/08/31 20:58:27 mycroft Exp $	*/
 
 /*
@@ -99,7 +99,8 @@ mkoneswap(cf)
 	}
 	if (fputs("\
 #include <sys/param.h>\n\
-#include <sys/conf.h>\n\n", fp) < 0)
+#include <sys/conf.h>\n\
+#include <sys/systm.h>\n\n", fp) < 0)
 		goto wrerror;
 	nv = cf->cf_root;
 	if (fprintf(fp, "dev_t\trootdev = %s;\t/* %s */\n",
@@ -119,8 +120,6 @@ mkoneswap(cf)
 		goto wrerror;
 	mountroot =
 	    cf->cf_root->nv_str == s_nfs ? "nfs_mountroot" : "dk_mountroot";
-	if (fprintf(fp, "extern int %s __P((void));\n", mountroot) < 0)
-		goto wrerror;
 	if (fprintf(fp, "int (*mountroot) __P((void)) = %s;\n", mountroot) < 0)
 		goto wrerror;
 
