@@ -207,3 +207,6 @@
 ./var/games/phantasia/scoreboard
 ./var/games/phantasia/void
 ./var/games/robots_roll
+./usr/games/hide/hunt
+./usr/games/hunt
+./usr/games/huntd

@@ -416,3 +416,9 @@
 ./usr/lib/perl5/site_perl/mips-openbsd/cast.ph
 ./usr/lib/perl5/site_perl/mips-openbsd/ncurses.ph
 ./usr/lib/perl5/site_perl/mips-openbsd/sys/midiio.ph
+./usr/lib/perl5/site_perl/mips-openbsd/machine/spinlock.ph
+./usr/lib/perl5/site_perl/mips-openbsd/pthread.ph
+./usr/lib/perl5/site_perl/mips-openbsd/pthread_np.ph
+./usr/lib/perl5/site_perl/mips-openbsd/sched.ph
+./usr/lib/perl5/site_perl/mips-openbsd/spinlock.ph
+./usr/lib/perl5/site_perl/mips-openbsd/sys/kthread.ph

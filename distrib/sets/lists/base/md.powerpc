@@ -372,3 +372,9 @@
 ./usr/lib/perl5/site_perl/powerpc-openbsd/cast.ph
 ./usr/lib/perl5/site_perl/powerpc-openbsd/ncurses.ph
 ./usr/lib/perl5/site_perl/powerpc-openbsd/sys/midiio.ph
+./usr/lib/perl5/site_perl/powerpc-openbsd/machine/spinlock.ph
+./usr/lib/perl5/site_perl/powerpc-openbsd/pthread.ph
+./usr/lib/perl5/site_perl/powerpc-openbsd/pthread_np.ph
+./usr/lib/perl5/site_perl/powerpc-openbsd/sched.ph
+./usr/lib/perl5/site_perl/powerpc-openbsd/spinlock.ph
+./usr/lib/perl5/site_perl/powerpc-openbsd/sys/kthread.ph

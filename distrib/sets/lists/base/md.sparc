@@ -1,3 +1,4 @@
+./usr/lib/libc_r.so.0.0
 ./usr/lib/libcrypto.so.1.0
 ./usr/lib/libssl.so.1.0
 ./dev/scan0
@@ -10,7 +11,7 @@
 ./usr/lib/gcc-lib/sparc-unknown-openbsd2.4
 ./usr/lib/libacl.so.4.1
 ./usr/lib/libc.so.21.0
-./usr/lib/libcurses.so.5.0
+./usr/lib/libcurses.so.5.1
 ./usr/lib/libdes.so.6.0
 ./usr/lib/libedit.so.0.0
 ./usr/lib/libform.so.1.1
@@ -32,8 +33,8 @@
 ./usr/lib/libskey.so.1.0
 ./usr/lib/libstdc++.so.28.0
 ./usr/lib/libotermcap.so.3.0
-./usr/lib/libtermcap.so.5.0
-./usr/lib/libtermlib.so.5.0
+./usr/lib/libtermcap.so.5.1
+./usr/lib/libtermlib.so.5.1
 ./usr/lib/libutil.so.4.2
 ./usr/lib/libwrap.so.1.0
 ./usr/lib/libz.so.1.3
@@ -604,3 +605,9 @@
 ./usr/lib/perl5/site_perl/sparc-openbsd/cast.ph
 ./usr/lib/perl5/site_perl/sparc-openbsd/ncurses.ph
 ./usr/lib/perl5/site_perl/sparc-openbsd/sys/midiio.ph
+./usr/lib/perl5/site_perl/sparc-openbsd/machine/spinlock.ph
+./usr/lib/perl5/site_perl/sparc-openbsd/pthread.ph
+./usr/lib/perl5/site_perl/sparc-openbsd/pthread_np.ph
+./usr/lib/perl5/site_perl/sparc-openbsd/sched.ph
+./usr/lib/perl5/site_perl/sparc-openbsd/spinlock.ph
+./usr/lib/perl5/site_perl/sparc-openbsd/sys/kthread.ph

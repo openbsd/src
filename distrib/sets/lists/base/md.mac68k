@@ -586,3 +586,9 @@
 ./usr/lib/perl5/site_perl/m68k-openbsd/zconf.ph
 ./usr/lib/perl5/site_perl/m68k-openbsd/zlib.ph
 ./usr/libexec/ld.so
+./usr/lib/perl5/site_perl/m68k-openbsd/machine/spinlock.ph
+./usr/lib/perl5/site_perl/m68k-openbsd/pthread.ph
+./usr/lib/perl5/site_perl/m68k-openbsd/pthread_np.ph
+./usr/lib/perl5/site_perl/m68k-openbsd/sched.ph
+./usr/lib/perl5/site_perl/m68k-openbsd/spinlock.ph
+./usr/lib/perl5/site_perl/m68k-openbsd/sys/kthread.ph
