@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.22 2001/10/02 17:01:31 deraadt Exp $
+#	$OpenBSD: list,v 1.23 2001/12/13 01:40:15 krw Exp $
 #	$NetBSD: list,v 1.4.4.1 1996/06/20 20:30:26 pk Exp $
 
 SRCDIRS distrib/special
@@ -59,9 +59,7 @@ ARGVLINK ksh		-sh
 COPY	${DESTDIR}/etc/group		etc/group
 COPY	${DESTDIR}/etc/master.passwd	etc/master.passwd
 COPY	${DESTDIR}/etc/passwd		etc/passwd
-COPY	${DESTDIR}/etc/protocols	etc/protocols
 COPY	${DESTDIR}/etc/pwd.db		etc/pwd.db
-COPY	${DESTDIR}/etc/services		etc/services
 COPY	${DESTDIR}/etc/spwd.db		etc/spwd.db
 
 # and the installation scripts

@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.1 2001/10/10 04:21:02 deraadt Exp $
+#	$OpenBSD: list,v 1.2 2001/12/13 01:40:15 krw Exp $
 
 SRCDIRS distrib/special
 SRCDIRS gnu/usr.bin usr.bin bin sbin usr.sbin
@@ -64,8 +64,6 @@ SPECIAL cd dev; sh MAKEDEV ramdisk; rm MAKEDEV
 
 # various files that we need in /etc for the install
 COPY	${DESTDIR}/etc/group		etc/group
-COPY	${DESTDIR}/etc/protocols	etc/protocols
-COPY	${DESTDIR}/etc/services		etc/services
 COPY	${DESTDIR}/etc/spwd.db		etc/spwd.db
 COPY	${DESTDIR}/etc/disktab		etc/disktab
 SYMLINK	/tmp/disktab.shadow		etc/disktab      

@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.5 2001/11/19 01:23:26 drahn Exp $
+#	$OpenBSD: list,v 1.6 2001/12/13 01:40:15 krw Exp $
 
 SRCDIRS distrib/special
 SRCDIRS gnu/usr.bin usr.bin bin sbin usr.sbin
@@ -77,8 +77,6 @@ COPY	${DESTDIR}/usr/mdec/msdos1mb.gz	usr/mdec/msdos1mb.gz
 
 # various files that we need in /etc for the install
 COPY	${DESTDIR}/etc/group		etc/group
-COPY	${DESTDIR}/etc/protocols	etc/protocols
-COPY	${DESTDIR}/etc/services		etc/services
 COPY	${DESTDIR}/etc/spwd.db		etc/spwd.db
 COPY	${DESTDIR}/etc/disktab		etc/disktab
 SYMLINK	/tmp/disktab.shadow		etc/disktab      

@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.178 2001/11/25 21:43:08 krw Exp $
+#	$OpenBSD: install.sub,v 1.179 2001/12/13 01:40:15 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -722,7 +722,7 @@ enable_network() {
 	done
 
 	# Copy any required or optional files found
-	for _netfile in hosts myname dhclient.conf resolv.conf resolv.conf.tail; do
+	for _netfile in hosts myname dhclient.conf resolv.conf resolv.conf.tail protocols services; do
 		if [ -f /mnt/etc/${_netfile} ]; then
 			cp /mnt/etc/${_netfile} /etc/${_netfile}
 		fi
@@ -2291,6 +2291,26 @@ donetconfig() {
 	done
 	hostname $resp
 	echo $resp > /tmp/myname
+
+	# Create minimal protocols and services for use during install
+	cat > /etc/protocols <<EOF
+ip	0	IP
+icmp	1	ICMP
+tcp	6	TCP
+udp	17	UDP
+EOF
+
+	cat > /etc/services <<EOF
+ftp-data	20/tcp
+ftp		21/tcp
+domain		53/tcp		nameserver
+domain		53/udp		nameserver
+www		80/tcp		http
+www		80/udp
+nfsd		2049/udp	nfs
+nfsd		2049/tcp	nfs
+shell		514/tcp		cmd
+EOF
 
 	# Always create new hosts file. If install.sh has been
 	# restarted, an existing one may contain information which

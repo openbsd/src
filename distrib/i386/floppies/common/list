@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.21 2001/08/23 02:37:02 krw Exp $
+#	$OpenBSD: list,v 1.22 2001/12/13 01:40:15 krw Exp $
 
 # copy the crunched binary, link to it, and kill it
 COPY	${OBJDIR}/instbin	instbin
@@ -65,8 +65,6 @@ COPY	${DESTDIR}/usr/mdec/boot	usr/mdec/boot
 
 # various files that we need in /etc for the install
 COPY	${DESTDIR}/etc/group		etc/group
-COPY	${DESTDIR}/etc/protocols	etc/protocols
-COPY	${DESTDIR}/etc/services		etc/services
 COPY	${DESTDIR}/etc/spwd.db		etc/spwd.db
 COPY	${DESTDIR}/etc/disktab		etc/disktab.shadow
 SYMLINK	/tmp/disktab.shadow		etc/disktab
