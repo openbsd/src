@@ -1,5 +1,5 @@
-/*	$OpenBSD: doi.h,v 1.8 2000/02/25 17:23:39 niklas Exp $	*/
-/*	$EOM: doi.h,v 1.28 2000/02/20 19:58:37 niklas Exp $	*/
+/*	$OpenBSD: doi.h,v 1.9 2000/08/03 07:23:00 niklas Exp $	*/
+/*	$EOM: doi.h,v 1.29 2000/07/02 18:47:15 provos Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -92,6 +92,7 @@ struct doi {
   int (*validate_transform_id) (u_int8_t, u_int8_t);
   int (*initiator) (struct message *msg);
   int (*responder) (struct message *msg);
+  char *(*decode_ids) (char *, u_int8_t *, size_t, u_int8_t *, size_t, int);
 };
 
 extern void doi_init (void);
