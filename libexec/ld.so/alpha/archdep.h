@@ -1,4 +1,4 @@
-/*	$OpenBSD: archdep.h,v 1.1 2001/05/14 22:18:20 niklas Exp $ */
+/*	$OpenBSD: archdep.h,v 1.2 2001/05/31 13:26:09 art Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -51,11 +51,6 @@ int	_dl_write __P((int, const char *, int));
  *	The following functions are declared inline so they can
  *	be used before bootstrap linking has been finished.
  */
-static inline void
-_dl_dcbf(Elf64_Addr *addr)
-{
-}
-
 static inline void
 _dl_wrstderr(const char *s)
 {
@@ -131,34 +126,23 @@ _dl_strchr(const char *p, const int c)
 }
 
 static inline void
-RELOC_RELA(Elf64_Rela *r,
-	const Elf64_Sym *s, Elf64_Addr *p, int v)
+RELOC_RELA(Elf64_Rela *r, const Elf64_Sym *s, Elf64_Addr *p, unsigned long v)
 {
-	if(ELF64_R_TYPE((r)->r_info) == RELOC_RELATIVE) {
-		if((ELF64_ST_BIND((s)->st_info) == STB_LOCAL) &&
-		   ((ELF64_ST_TYPE((s)->st_info) == STT_SECTION) ||
-		   (ELF64_ST_TYPE((s)->st_info) == STT_NOTYPE)) ) {
-			*(p) = (v) + (r)->r_addend;
-		} else {
-			*(p) = (v) + (s)->st_value + (r)->r_addend;
-		}
-	} else if(ELF64_R_TYPE((r)->r_info) == RELOC_JMP_SLOT) {
-		Elf64_Addr val = (v) + (s)->st_value + (r)->r_addend -
-			(Elf64_Addr)(p); 			
-		if (((val & 0xfe000000) != 0) &&	
-			((val & 0xfe000000) != 0xfe000000))
-		{					
-			/* invalid offset */	
-			_dl_exit(20);			
-		} 				
-		val &= ~0xfc000000;	
-		val |=  0x48000000;
-		*(p) = val;	
-		_dl_dcbf(p);
-	} else if(ELF64_R_TYPE((r)->r_info) == RELOC_GLOB_DAT) {
-		*(p) = (v) + (s)->st_value + (r)->r_addend;
-	} else {					
-		/* error */
+	extern Elf_Addr  _GLOBAL_OFFSET_TABLE_[];
+
+	if(ELF64_R_TYPE(r->r_info) == RELOC_RELATIVE) {
+		if ((caddr_t)p < (caddr_t)_GLOBAL_OFFSET_TABLE_ ||
+		    (caddr_t)p >= (caddr_t)&_DYNAMIC)
+			*p += (Elf_Addr)v;
+	} else if(ELF64_R_TYPE(r->r_info) == RELOC_JMP_SLOT) {
+		Elf64_Addr val = v + s->st_value + r->r_addend -
+			(Elf64_Addr)(p);
+		*p = val;
+		__asm __volatile("imb" : : : "memory");
+	} else if(ELF64_R_TYPE(r->r_info) == RELOC_GLOB_DAT) {
+		*p = v + s->st_value + r->r_addend;
+	} else {
+		_dl_printf("unknown bootstrap relocation\n");
 	}
 }
 
