@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.358 2001/01/22 22:36:30 deraadt Exp $
+	$OpenBSD: pcidevs,v 1.359 2001/01/22 23:05:48 aaron Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -1642,6 +1642,7 @@ product TEKRAM2	DC690C		0x690c	DC-690C
 product TI TLAN			0x0500	TLAN
 product TI PERMEDIA		0x3d04	3DLabs Permedia
 product TI PERMEDIA2		0x3d07	3DLabs Permedia 2
+product TI TSB12LV22		0x8009	TSB12LV22 FireWire
 product TI TSB12LV23		0x8019	TSB12LV23 FireWire
 product TI PCI1130		0xac12	PCI1130 PCI-CardBus
 product TI PCI1031		0xac13	PCI1031 PCI-pcmcia
