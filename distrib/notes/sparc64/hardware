@@ -1,10 +1,11 @@
+dnl	$OpenBSD: hardware,v 1.15 2002/02/06 00:46:05 miod Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of machines:
 	- SBUS based workstations:
 		Ultra 1
 		Ultra 1E (Creator)
 		Ultra 2
 	- PCI based workstations:
-		Blade 100 (onboard ethernet has issues)
+		SUNBlade 100 (onboard ethernet has issues)
 		Enterprise 250
 		Netra X1
 		Ultra 5
@@ -14,6 +15,8 @@ dnl XXX uncomment machine entries as they become supported
 dnl		Ultra 60 / Enterprise 220R
 dnl		Ultra 80 / Enterprise 420R
 dnl		Ultra 450 / Enterprise 450
+dnl		Enterprise 3000
+dnl		SUNBlade 1000
 		SPARCengineUltra AX
 		SPARCengineUltra AXi
 	- faithful clones of the above Sun systems.
@@ -71,17 +74,23 @@ Supported devices {:-include-:}:
 		Hifn 7751/7811/7951 (hifn)
 		Bluesteelnet 5501/5601, Broadcom 5805/5820/5821 (ubsec)
 
+	Keyboard and mices:
+		Type 4, 5 and 6 keyboards on Zilog serial ports (zskbd)
+		Type 4, 5 and 6 keyboards on NS16550 serial ports (comkbd)
+		Type 6 keyboards on USB (ukbd)
+
+	Framebuffers:
+		SBUS framebuffers:
+			cgthree (8 bit color, unaccelerated)
+			cgsix (8 bit color, unaccelerated)
+		PCI video boards:
+			ATI Rage (vgafb) (8 bit color, unaccelerated)
+
 	Miscellaneous devices:
 		EBus beeper (beeper)
 		performance counters/system controller (uperf)
 
 Hardware the we do NOT currently support, but get many questions about:
-
-	Framebuffers (these will work as PROM console output and raster
-	  console, but X Window support yet).
-	Keyboards (these will work as PROM console input, but no X Window
-	  support yet).
-	Mice (no X Window support yet).
 	Multiprocessor machines.
 	Floppy driver (except for booting).
 	SBUS and PCI cards other than those listed above.

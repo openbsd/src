@@ -1,8 +1,9 @@
+dnl	$OpenBSD: contents,v 1.17 2002/02/06 00:46:05 miod Exp $
 TopPart
 
 OpenBSDminiroot
 				It can be copied to the swap partition of
-				an existing OpenBSD, NetBSD, Linux or Solaris
+				an existing OpenBSD, Solaris, NetBSD or Linux
 				installation to allow installing or upgrading
 				to OpenBSD OSREV.
 
@@ -45,7 +46,7 @@ requiring a pre-existing working operating system.
 
 The kernel and boot images are provided for net booting installations.
 
-OpenBSDfloppydesc(two,Each,s)
+OpenBSDfloppydesc(single,The)
 
 DistributionDescription(ten)
 
