@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.28 2000/01/04 02:53:49 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.29 2000/10/09 23:19:26 mickey Exp $	*/
 /*	$NetBSD: main.c,v 1.14 1997/06/05 11:13:24 lukem Exp $	*/
 
 /*-
@@ -350,6 +350,11 @@ main(argc, argv)
 	if (!statfs(disk, &fsbuf) && !strcmp(fsbuf.f_mntonname, disk)) {
 		/* mounted disk? */
 		disk = rawname(fsbuf.f_mntfromname);
+		if (!disk) {
+			(void)fprintf(stderr, "cannot get raw name for %s\n",
+			    fsbuf.f_mntfromname);
+			exit(X_STARTUP);
+		}
 		mount_point = fsbuf.f_mntonname;
 		(void)strlcpy(spcl.c_dev, fsbuf.f_mntfromname,
 		    sizeof(spcl.c_dev));
