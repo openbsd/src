@@ -183,7 +183,7 @@ Supported hardware:
     Untested Peripherals:
                
    The following peripherals are compiled into the system, but are not
-   known to work. It's out best guess that they do, but any feedback is
+   known to work. It's our best guess that they do, but any feedback is
    appreciated.
     SCSI Host Adapters
           AdvanSys ABP940UW, ASB3940UW-00, ASB3940U2W-00 and
