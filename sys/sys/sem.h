@@ -1,4 +1,4 @@
-/*	$OpenBSD: sem.h,v 1.10 2001/08/12 23:58:34 millert Exp $	*/
+/*	$OpenBSD: sem.h,v 1.11 2001/09/28 01:42:54 millert Exp $	*/
 /*	$NetBSD: sem.h,v 1.8 1996/02/09 18:25:29 christos Exp $	*/
 
 /*
@@ -122,6 +122,12 @@ struct seminfo {
 		semvmx,		/* semaphore maximum value */
 		semaem;		/* adjust on exit max value */
 };
+
+struct sem_sysctl_info {
+	struct	seminfo seminfo;
+	struct	semid_ds semids[1];
+};
+
 extern struct seminfo	seminfo;
 
 /* internal "mode" bits */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: shm.h,v 1.10 2001/08/12 22:50:12 millert Exp $	*/
+/*	$OpenBSD: shm.h,v 1.11 2001/09/28 01:42:54 millert Exp $	*/
 /*	$NetBSD: shm.h,v 1.20 1996/04/09 20:55:35 cgd Exp $	*/
 
 /*
@@ -93,6 +93,12 @@ struct shminfo {
 	int	shmseg;		/* max shared memory segments per process */
 	int	shmall;		/* max amount of shared memory (pages) */
 };
+
+struct shm_sysctl_info {
+	struct	shminfo shminfo;
+	struct	shmid_ds shmids[1];
+};
+
 extern struct shminfo shminfo;
 extern struct shmid_ds *shmsegs;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.42 2001/08/18 03:32:16 art Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.43 2001/09/28 01:42:54 millert Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -163,8 +163,9 @@ struct ctlname {
 #define	KERN_NPROCS		47	/* int: number of processes */
 #define	KERN_MSGBUF		48	/* message buffer, KERN_MSGBUFSIZE */
 #define	KERN_POOL		49	/* struct: pool information */
-#define KERN_STACKGAPRANDOM	50	/* int: stackgap_random */
-#define	KERN_MAXID		51	/* number of valid kern ids */
+#define	KERN_STACKGAPRANDOM	50	/* int: stackgap_random */
+#define	KERN_SYSVIPC_INFO	51	/* struct: SysV sem/shm/msg info */
+#define	KERN_MAXID		52	/* number of valid kern ids */
 
 #define	CTL_KERN_NAMES { \
 	{ 0, 0 }, \
@@ -218,6 +219,7 @@ struct ctlname {
 	{ "msgbuf", CTLTYPE_STRUCT }, \
 	{ "pool", CTLTYPE_NODE }, \
 	{ "stackgap_random", CTLTYPE_INT }, \
+	{ "sysvipc_info", CTLTYPE_INT }, \
 }
 
 /*
@@ -231,6 +233,13 @@ struct ctlname {
 #define	KERN_PROC_UID		5	/* by effective uid */
 #define	KERN_PROC_RUID		6	/* by real uid */
 #define	KERN_PROC_KTHREAD	7	/* also return kernel threads */
+
+/*
+ * KERN_SYSVIPC_INFO subtypes
+ */
+#define KERN_SYSVIPC_MSG_INFO	1	/* msginfo and msqid_ds */
+#define KERN_SYSVIPC_SEM_INFO	2	/* seminfo and semid_ds */
+#define KERN_SYSVIPC_SHM_INFO	3	/* shminfo and shmid_ds */
 
 /*
  * KERN_PROC subtype ops return arrays of augmented proc structures:
@@ -460,6 +469,7 @@ int cpu_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
 		    struct proc *));
 int vfs_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
 		    struct proc *));
+int sysctl_sysvipc __P((int *, u_int, void *, size_t *));
 
 void sysctl_init __P((void));
 
