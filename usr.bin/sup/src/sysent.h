@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysent.h,v 1.7 2002/02/19 19:39:39 millert Exp $	*/
+/*	$OpenBSD: sysent.h,v 1.8 2003/05/10 17:52:17 miod Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
@@ -109,7 +109,6 @@ extern int setpgrp(int, int);
 extern int setquota(const char *, const char *);
 extern int setregid(gid_t, gid_t);
 extern int setreuid(uid_t, uid_t);
-extern int swapon(const char *);
 extern int symlink(const char *, const char *);
 extern void sync(void);
 extern int syscall(int, ...);

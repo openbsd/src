@@ -1,4 +1,4 @@
-/*	$OpenBSD: unistd.h,v 1.45 2002/12/03 20:24:29 millert Exp $ */
+/*	$OpenBSD: unistd.h,v 1.46 2003/05/10 17:51:39 miod Exp $ */
 /*	$NetBSD: unistd.h,v 1.26.4.1 1996/05/28 02:31:51 mrg Exp $	*/
 
 /*-
@@ -205,7 +205,6 @@ int	 setruid(uid_t);
 void	 setusershell(void);
 int	 strtofflags(char **, u_int32_t *, u_int32_t *);
 void	 swab(const void *, void *, size_t);
-int	 swapon(const char *);
 int	 swapctl(int cmd, const void *arg, int misc);
 int	 symlink(const char *, const char *);
 void	 sync(void);
