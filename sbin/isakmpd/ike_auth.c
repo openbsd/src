@@ -1,5 +1,5 @@
-/*	$OpenBSD: ike_auth.c,v 1.18 1999/09/29 04:45:01 deraadt Exp $	*/
-/*	$EOM: ike_auth.c,v 1.38 1999/08/21 22:20:41 angelos Exp $	*/
+/*	$OpenBSD: ike_auth.c,v 1.19 1999/10/01 14:10:54 niklas Exp $	*/
+/*	$EOM: ike_auth.c,v 1.40 1999/09/28 16:35:48 angelos Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -35,17 +35,11 @@
  * This code was written under funding by Ericsson Radio Systems.
  */
 
-/* #define OBTAIN_KEY 1 */
-
 #include <sys/types.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <stdlib.h>
 #include <string.h>
-
-#if defined(OBTAIN_KEY)
-#include <unistd.h>
-#endif /* OBTAIN_KEY */
 
 #include "sysdep.h"
 
@@ -217,19 +211,11 @@ pre_shared_gen_skeyid (struct exchange *exchange, size_t *sz)
   u_int8_t *key;
   u_int8_t *buf = 0;
   size_t keylen;
-
-#if defined (OBTAIN_KEY)
-  struct sockaddr_in sin;
-  u_int32_t idlen;
-  int sock;
-#else /* OBTAIN_KEY */
   in_addr_t addr;
-#endif /* OBTAIN_KEY */
 
   /* Get the pre-shared key for our peer.  */
   key = ike_auth_get_key (IKE_AUTH_PRE_SHARED, exchange->name, &keylen);
 
-#if !defined (OBTAIN_KEY)
   if (!key)
   {
       /* If we're the responder and have the initiator's ID (which is the
@@ -274,82 +260,12 @@ pre_shared_gen_skeyid (struct exchange *exchange, size_t *sz)
       else
 	return 0;
   }
-#else /* OBTAIN_KEY */
-  /* If we didn't find the key in the config file, we can try to
-   * find it based on ID, or (if that fails) we can try to fetch it
-   * from a remote server.
-   */
-  /* XXX Experimental */
-
-  if (!key)
-    {
-	sock = socket (PF_INET, SOCK_STREAM, IPPROTO_TCP);
-	if (sock == -1)
-	  return 0;
-
-	sin.sin_addr.s_addr = inet_addr ("158.130.6.141"); /* XXX */
-	sin.sin_port = ntohs (3456); /* XXX */
-	sin.sin_family = AF_INET;
-	sin.sin_len = sizeof (sin);
-
-	if (connect (sock, (struct sockaddr *) &sin, sizeof (sin)) == -1)
-	  {
-	      close (sock);
-	      return 0;
-	  }
-
-	idlen = htonl (exchange->id_i_len - ISAKMP_ID_DATA_OFF +
-		       ISAKMP_GEN_SZ);
-
-	printf ("%d [%s]\n", exchange->id_i[0],
-		exchange->id_i + ISAKMP_ID_DATA_OFF - ISAKMP_GEN_SZ);
-
-	/* Simple protocol; write type (1 byte), size (4 bytes, big endian),
-	   id data */
-	if ((write (sock, exchange->id_i, 1) == -1) ||
-	    (write (sock, &idlen, sizeof (idlen)) == -1) ||
-	    (write (sock, exchange->id_i + ISAKMP_ID_DATA_OFF - ISAKMP_GEN_SZ,
-		    exchange->id_i_len - ISAKMP_ID_DATA_OFF + ISAKMP_GEN_SZ) ==
-	     -1))
-	  {
-	      close (sock);
-	      return 0;
-	  }
-
-	/* Read response; size (4 bytes, big endian), passphrase */
-	/* XXX This should really be some sort of asynchronous operation... */
-	/* XXXXXX This should be protected XXXXXXX */
-	if (read (sock, &keylen, sizeof (idlen)) == -1)
-	  {
-	      close (sock);
-	      return 0;
-	  }
-
-	keylen = ntohl (keylen);
-	key = malloc (keylen);
-	if (!key)
-	  {
-	      log_error ("pre_shared_gen_skeyid: malloc (%d) failed", keylen);
-	      close (sock);
-	      return 0;
-	  }
-
-	if (read (sock, key, keylen) == -1)
-	  {
-	      free (key);
-	      close (sock);
-	      return 0;
-	  }
-	
-	close (sock);
-    }
-#endif /* OBTAIN_KEY */
 
   /* Store the secret key for later policy processing */
   exchange->recv_cert = malloc (keylen);
   if (!exchange->recv_cert)
     {
-      log_error ("pre_shared_gen_skeyid: malloc (%d) failed", keylen);
+      log_error ("pre_shared_gen_skeyid: malloc (%d) failed", keylen + 1);
       return 0;
     }
   memcpy (exchange->recv_cert, key, keylen);
