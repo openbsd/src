@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_aout.c,v 1.19 1997/07/08 10:48:32 niklas Exp $	*/
+/*	$OpenBSD: db_aout.c,v 1.20 1997/07/08 20:20:31 niklas Exp $	*/
 /*	$NetBSD: db_aout.c,v 1.14 1996/02/27 20:54:43 gwr Exp $	*/
 
 /* 
@@ -74,11 +74,12 @@ X_db_sym_init(symtab, esymtab, name)
 				   boundary */
 	char *name;
 {
-	register struct nlist	*sym_start, *sym_end;
-	register struct nlist	*sp;
-	register char *strtab;
-	register int slen;
-	char *estrtab;
+	struct nlist	*sym_start, *sym_end;
+	struct nlist	*sp;
+	char		*strtab;
+	int		slen;
+	char		*estrtab;
+	long		strx;
 
 #ifdef SYMTAB_SPACE
 	if (*symtab < sizeof(int)) {
@@ -119,7 +120,6 @@ X_db_sym_init(symtab, esymtab, name)
 #endif
 
 	for (sp = sym_start; sp < sym_end; sp++) {
-	    register int strx;
 	    strx = sp->n_un.n_strx;
 	    if (strx != 0) {
 		if (strx > slen) {
