@@ -1,4 +1,4 @@
-/*	$OpenBSD: chpass.c,v 1.16 2000/11/26 01:29:43 millert Exp $	*/
+/*	$OpenBSD: chpass.c,v 1.17 2001/08/15 20:47:53 millert Exp $	*/
 /*	$NetBSD: chpass.c,v 1.8 1996/05/15 21:50:43 jtc Exp $	*/
 
 /*-
@@ -44,20 +44,22 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)chpass.c	8.4 (Berkeley) 4/2/94";
 #else 
-static char rcsid[] = "$OpenBSD: chpass.c,v 1.16 2000/11/26 01:29:43 millert Exp $";
+static char rcsid[] = "$OpenBSD: chpass.c,v 1.17 2001/08/15 20:47:53 millert Exp $";
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
+#include <sys/resource.h>
 #include <sys/stat.h>
 #include <sys/time.h>
-#include <sys/resource.h>
+#include <sys/uio.h>
 
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <pwd.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -68,6 +70,7 @@ static char rcsid[] = "$OpenBSD: chpass.c,v 1.16 2000/11/26 01:29:43 millert Exp
 #include "pathnames.h"
 
 char tempname[] = __CONCAT(_PATH_VARTMP,"pw.XXXXXXXX");
+enum { NEWSH, LOADENTRY, EDITENTRY } op;
 uid_t uid;
 
 extern char *__progname;
@@ -82,6 +85,7 @@ int pw_yp __P((struct passwd *, uid_t));
 
 void	baduser __P((void));
 void	tempcleanup __P((void));
+void	kbintr __P((int));
 void	usage __P((void));
 
 int
@@ -89,10 +93,11 @@ main(argc, argv)
 	int argc;
 	char **argv;
 {
-	enum { NEWSH, LOADENTRY, EDITENTRY } op;
 	struct passwd *pw, lpw;
 	int ch, pfd, tfd, dfd;
 	char *arg;
+	char *s = NULL;
+	sigset_t fullset;
 
 #ifdef	YP
 	use_yp = _yp_check(NULL);
@@ -180,19 +185,6 @@ main(argc, argv)
 			exit(1);
 	}
 
-	/* Get the passwd lock file and open the passwd file for reading. */
-	pw_init();
-	tfd = pw_lock(0);
-	if (tfd == -1 || fcntl(tfd, F_SETFD, 1) == -1) {
-		if (errno == EEXIST)
-			errx(1, "the passwd file is busy.");
-		else
-			err(1, "can't open passwd temp file");
-	}
-	pfd = open(_PATH_MASTERPASSWD, O_RDONLY, 0);
-	if (pfd == -1 || fcntl(pfd, F_SETFD, 1) == -1)
-		pw_error(_PATH_MASTERPASSWD, 1, 1);
-
 	/* Edit the user passwd information if requested. */
 	if (op == EDITENTRY) {
 		dfd = mkstemp(tempname);
@@ -203,12 +195,56 @@ main(argc, argv)
 		edit(tempname, pw);
 	}
 
+	/* Drop user's real uid and block all signals to avoid a DoS. */
+	setuid(0);
+	sigfillset(&fullset);
+	sigdelset(&fullset, SIGINT);
+	sigprocmask(SIG_BLOCK, &fullset, NULL);
+
+	/* Get the passwd lock file and open the passwd file for reading. */
+	pw_init();
+	for (;;) {
+		int i, c, d;
+
+		(void)fputs("Please wait", stderr);
+		for (i = 0; i < (s ? 64 : 8) && (tfd = pw_lock(0)) == -1; i++) {
+			(void)signal(SIGINT, kbintr);
+			fputc('.', stderr);
+			usleep(250000);
+			(void)signal(SIGINT, SIG_IGN);
+		}
+		fputc('\n', stderr);
+		if (tfd != -1)
+			break;
+
+		/* Unable to lock passwd file, let the user decide. */
+		if (errno == EEXIST) {
+			if (s == NULL)
+				s = "The passwd file is busy,";
+			else
+				s = "The passwd file is still busy,";
+		} else
+			s = "Unable to open passwd temp file,";
+		(void)fprintf(stderr,
+		    "%s do you want to wait until it is available? [y/n] ", s);
+		(void)signal(SIGINT, kbintr);
+		c = getchar();
+		(void)signal(SIGINT, SIG_IGN);
+		if (c != '\n')
+			while ((d = getchar()) != '\n' && d != EOF)
+				;
+		if (tolower(c) != 'y')
+			pw_error(NULL, 0, 1);
+	}
+	pfd = open(_PATH_MASTERPASSWD, O_RDONLY, 0);
+	if (pfd == -1 || fcntl(pfd, F_SETFD, 1) == -1)
+		pw_error(_PATH_MASTERPASSWD, 1, 1);
+
 #ifdef	YP
 	if (use_yp) {
-		if (pw_yp(pw, uid)) {
+		if (pw_yp(pw, uid))
 			pw_error(NULL, 0, 1);
-			exit(1);
-		} else {
+		else {
 			pw_abort();
 			exit(0);
 		}
@@ -238,6 +274,30 @@ tempcleanup()
 {
 
 	unlink(tempname);
+}
+
+void
+kbintr(signo)
+	int signo;
+{
+	struct iovec iv[5];
+
+	iv[0].iov_base = "\n";
+	iv[0].iov_len = 1;
+	iv[1].iov_base = __progname;
+	iv[1].iov_len = strlen(__progname);
+	iv[2].iov_base = ": ";
+	iv[2].iov_len = 2;
+	iv[3].iov_base = _PATH_MASTERPASSWD;
+	iv[3].iov_len = sizeof(_PATH_MASTERPASSWD) - 1;
+	iv[4].iov_base = " unchanged\n";
+	iv[4].iov_len = 11;
+	writev(STDERR_FILENO, iv, 5);
+
+	if (op == EDITENTRY)
+		unlink(tempname);
+
+	_exit(1);
 }
 
 void

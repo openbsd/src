@@ -1,4 +1,4 @@
-.\"	$OpenBSD: chpass.1,v 1.22 2001/06/23 05:57:07 deraadt Exp $
+.\"	$OpenBSD: chpass.1,v 1.23 2001/08/15 20:47:53 millert Exp $
 .\"	$NetBSD: chpass.1,v 1.7 1996/05/15 21:50:40 jtc Exp $
 .\"
 .\" Copyright (c) 1988, 1990, 1993
@@ -215,10 +215,16 @@ uses
 to update the user database.
 .Sh DIAGNOSTICS
 .Bl -diag
-.It "the passwd file is busy"
+.It "The passwd file is busy..."
 The password file is currently locked by another process, or a
 process previously holding the lock was prematurely terminated.
-In the latter case, it is safe to remove the
+To determine whether another process is holding the lock, the
+admin may run the following:
+.Bd -literal -offset indent
+fstat /etc/ptmp
+.Ed
+.Pp
+If no process is listed, it is safe to remove the
 .Pa /etc/ptmp
 file to get rid of this error.
 .El
