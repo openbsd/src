@@ -1,4 +1,4 @@
-/*	$OpenBSD: newsyslog.c,v 1.64 2003/04/25 20:07:09 pvalchev Exp $	*/
+/*	$OpenBSD: newsyslog.c,v 1.65 2003/05/15 03:25:02 millert Exp $	*/
 
 /*
  * Copyright (c) 1999, 2002, 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -81,12 +81,12 @@
 
 /*
  *      newsyslog - roll over selected logs at the appropriate time,
- *              keeping the a specified number of backup files around.
+ *              keeping the specified number of backup files around.
  *
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: newsyslog.c,v 1.64 2003/04/25 20:07:09 pvalchev Exp $";
+static const char rcsid[] = "$OpenBSD: newsyslog.c,v 1.65 2003/05/15 03:25:02 millert Exp $";
 #endif /* not lint */
 
 #ifndef CONF
@@ -127,12 +127,12 @@ static const char rcsid[] = "$OpenBSD: newsyslog.c,v 1.64 2003/04/25 20:07:09 pv
 #include <unistd.h>
 
 #define CE_ROTATED	0x01		/* Log file has been rotated */
-#define CE_COMPACT	0x02		/* Compact the achived log files */
+#define CE_COMPACT	0x02		/* Compact the archived log files */
 #define CE_BINARY	0x04		/* Logfile is in binary, don't add */
 					/* status messages */
-#define CE_MONITOR	0x08		/* Monitory for changes */
+#define CE_MONITOR	0x08		/* Monitor for changes */
 #define CE_FOLLOW	0x10		/* Follow symbolic links */
-#define CE_TRIMAT	0x20		/* trim at a specific time */
+#define CE_TRIMAT	0x20		/* Trim at a specific time */
 
 #define	MIN_PID		4		/* Don't touch pids lower than this */
 #define	MIN_SIZE	256		/* Don't rotate if smaller (in bytes) */
@@ -153,7 +153,7 @@ struct conf_entry {
 	int	signal;		/* Signal to send (defaults to SIGHUP) */
 	int     flags;		/* Flags (CE_COMPACT & CE_BINARY)  */
 	char	*whom;		/* Whom to notify if logfile changes */
-	char	*pidfile;	/* Path to file containg pid to signal */
+	char	*pidfile;	/* Path to file containing pid to signal */
 	char	*runcmd;	/* Command to run instead of sending a signal */
 	struct conf_entry *next; /* Linked list pointer */
 };
@@ -170,9 +170,9 @@ int	monitormode = 0;	/* Don't do monitoring by default */
 int	force = 0;		/* Force the logs to be rotated */
 char	*conf = CONF;		/* Configuration file to use */
 time_t	timenow;
-char	hostname[MAXHOSTNAMELEN]; /* hostname */
+char	hostname[MAXHOSTNAMELEN]; /* Hostname */
 char	*daytime;		/* timenow in human readable form */
-char	*arcdir;		/* dir to put archives in (if it exists) */
+char	*arcdir;		/* Dir to put archives in (if it exists) */
 
 void do_entry(struct conf_entry *);
 void parse_args(int, char **);
@@ -334,7 +334,7 @@ do_entry(struct conf_entry *ent)
 				DPRINTF(("--> will trim at %s",
 				    ctime(&ent->trim_at)));
 				return;
-			} else if (verbose && ent->hours <= 0) {
+			} else if (ent->hours <= 0) {
 				DPRINTF(("--> time is up\n"));
 			}
 		}
@@ -783,8 +783,8 @@ dotrim(struct conf_entry *ent)
 	/* Move down log files */
 	while (numdays--) {
 		/*
-		 * If both the compressed archive or the non-compressed archive
-		 * exist, we one or the other based on the CE_COMPACT flag.
+		 * If both the compressed archive and the non-compressed archive
+		 * exist, we decide which to rotate based on the CE_COMPACT flag.
 		 */
 		(void)snprintf(file1, sizeof(file1), "%s.%d", oldlog, numdays);
 		suffix = lstat_log(file1, sizeof(file1), ent->flags);
@@ -1111,7 +1111,7 @@ stat_suffix(char *file, size_t size, char *suffix, struct stat *sp, int (*func)(
 }
 
 /*
- * lstat() a log, possibily appending a suffix; order is based on flags.
+ * lstat() a log, possibly appending a suffix; order is based on flags.
  * Returns the suffix appended (may be empty string) or NULL if no file.
  */
 char *
