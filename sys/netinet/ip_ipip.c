@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipip.c,v 1.20 2001/07/04 23:14:55 espie Exp $ */
+/*	$OpenBSD: ip_ipip.c,v 1.21 2001/08/19 06:31:56 angelos Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -48,6 +48,7 @@
 #include <net/if.h>
 #include <net/route.h>
 #include <net/netisr.h>
+#include <net/bpf.h>
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
@@ -63,6 +64,8 @@
 
 #include <netinet/ip_ipsp.h>
 #include <netinet/ip_ipip.h>
+
+#include "bpfilter.h"
 
 #ifdef ENCDEBUG
 #define DPRINTF(x)	if (encdebug) printf x
@@ -93,7 +96,7 @@ ip4_input6(struct mbuf **m, int *offp, int proto)
 		return IPPROTO_DONE;
 	}
 
-	ipip_input(*m, *offp);
+	ipip_input(*m, *offp, NULL);
 	return IPPROTO_DONE;
 }
 #endif /* INET6 */
@@ -120,7 +123,7 @@ ip4_input(struct mbuf *m, ...)
 	iphlen = va_arg(ap, int);
 	va_end(ap);
 
-	ipip_input(m, iphlen);
+	ipip_input(m, iphlen, NULL);
 }
 #endif /* INET */
 
@@ -132,7 +135,7 @@ ip4_input(struct mbuf *m, ...)
  */
 
 void
-ipip_input(struct mbuf *m, int iphlen)
+ipip_input(struct mbuf *m, int iphlen, struct ifnet *gifp)
 {
 	register struct sockaddr_in *sin;
 	register struct ifnet *ifp;
@@ -219,10 +222,6 @@ ipip_input(struct mbuf *m, int iphlen)
 		hlen = sizeof(struct ip6_hdr);
 		break;
 #endif
-
-        default:
-		m_freem(m);
-		return /* EAFNOSUPPORT */;
 	}
 
 	/*
@@ -333,6 +332,24 @@ ipip_input(struct mbuf *m, int iphlen)
 		isr = NETISR_IPV6;
 	}
 #endif /* INET6 */
+
+#if NBPFILTER > 0
+	if (gifp && gifp->if_bpf) {
+		struct mbuf m0;
+		u_int af;
+
+		if (ipo)
+			af = AF_INET;
+		else
+			af = AF_INET6;
+
+		m0.m_next = m;
+		m0.m_len = 4;
+		m0.m_data = (char *)&af;
+
+		bpf_mtap(gifp->if_bpf, &m0);
+	}
+#endif
 
 	s = splimp();			/* isn't it already? */
 	if (IF_QFULL(ifq)) {

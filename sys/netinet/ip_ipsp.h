@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.117 2001/07/05 08:42:57 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.118 2001/08/19 06:31:56 angelos Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -529,7 +529,7 @@ extern int ipe4_init(struct tdb *, struct xformsw *, struct ipsecinit *);
 extern int ipe4_zeroize(struct tdb *);
 extern int ipip_output(struct mbuf *, struct tdb *, struct mbuf **, int, int);
 extern void ipe4_input __P((struct mbuf *, ...));
-extern void ipip_input __P((struct mbuf *, int));
+extern void ipip_input __P((struct mbuf *, int, struct ifnet *));
 
 #ifdef INET
 extern void ip4_input __P((struct mbuf *, ...));
