@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 1996/08/16 17:58:13 michaels Exp $
+#	$OpenBSD: Makefile,v 1.6 1996/09/22 01:03:19 downsj Exp $
 #
 # From	@(#)Makefile.in	8.63 (Berkeley) 6/19/96
 
@@ -6,7 +6,7 @@ CFLAGS+=-I${.CURDIR} -I${.CURDIR}/../include
 
 LDADD+= -lcurses -ltermlib
 DPADD+=	${LIBCURSES} ${LIBTERMLIB}
-PROG=	vi
+PROG=	nvi
 SRCS=	cl_bsd.c cl_funcs.c cl_main.c cl_read.c cl_screen.c cl_term.c \
 	cut.c delete.c ex.c ex_abbrev.c ex_append.c ex_args.c ex_argv.c \
 	ex_at.c ex_bang.c ex_cd.c ex_cmd.c ex_cscope.c ex_delete.c \
@@ -26,8 +26,8 @@ SRCS=	cl_bsd.c cl_funcs.c cl_main.c cl_read.c cl_screen.c cl_term.c \
 	v_zexit.c vi.c vs_line.c vs_msg.c vs_refresh.c vs_relative.c \
 	vs_smap.c vs_split.c
 
-LINKS=  ${BINDIR}/vi ${BINDIR}/ex ${BINDIR}/vi ${BINDIR}/view
-MLINKS= vi.1 ex.1 vi.1 view.1
+LINKS=  ${BINDIR}/nvi ${BINDIR}/nex
+MLINKS= nvi.1 nex.1
 
 .PATH: ${.CURDIR}/../vi ${.CURDIR}/../ex ${.CURDIR}/../cl ${.CURDIR}/../common ${.CURDIR}/../docs/USD.doc/vi.man \
 #${.CURDIR}/../svi ${.CURDIR}/../sex 
