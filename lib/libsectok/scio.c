@@ -1,4 +1,4 @@
-/* $Id: scio.c,v 1.6 2001/07/16 22:01:22 rees Exp $ */
+/* $Id: scio.c,v 1.7 2001/07/16 22:03:38 rees Exp $ */
 
 /*
 copyright 1997
@@ -395,15 +395,20 @@ scgetc(int ttyn, unsigned char *cp, int ms)
 	tvp = &tv;
     }
 
-    if (select(fd + 1, fdset, NULL, NULL, tvp) != 1)
+    if (select(fd + 1, fdset, NULL, NULL, tvp) != 1) {
+	free(fdset);
 	return SCTIMEO;
+    }
 
-    if (read(fd, cp, 1) != 1)
+    if (read(fd, cp, 1) != 1) {
+	free(fdset);
 	return SCTIMEO;
+    }
 
     if (sc[ttyn].flags & SCOINVRT)
 	*cp = todos_scinvert[*cp];
 
+    free(fdset);
     return SCEOK; /* 0 */
 }
 
