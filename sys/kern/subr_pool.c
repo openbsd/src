@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.34 2002/10/13 18:26:12 krw Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.35 2002/10/14 20:09:41 art Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -1947,6 +1947,7 @@ pool_allocator_alloc(struct pool *org, int flags)
 				if ((res = (*pa->pa_alloc)(org, flags)) != NULL)
 					return (res);
 			}
+			break;
 		}
 		s = splvm();
 		simple_lock(&pa->pa_slock);
@@ -1961,12 +1962,15 @@ void
 pool_allocator_free(struct pool *pp, void *v)
 {
 	struct pool_allocator *pa = pp->pr_alloc;
+	int s;
 
 	(*pa->pa_free)(pp, v);
 
+	s = splvm();
 	simple_lock(&pa->pa_slock);
 	if ((pa->pa_flags & PA_WANT) == 0) {
 		simple_unlock(&pa->pa_slock);
+		splx(s);
 		return;
 	}
 
@@ -1978,9 +1982,9 @@ pool_allocator_free(struct pool *pp, void *v)
 		}
 		simple_unlock(&pp->pr_slock);
 	}
-	wakeup(pa);
 	pa->pa_flags &= ~PA_WANT;
 	simple_unlock(&pa->pa_slock);
+	splx(s);
 }
 
 /*
