@@ -1,4 +1,4 @@
-/*	$OpenBSD: alloc.c,v 1.2 1998/06/25 19:01:43 millert Exp $	*/
+/*	$OpenBSD: alloc.c,v 1.3 1998/06/29 20:06:19 deraadt Exp $	*/
 
 /*
  * area-based allocation built on malloc/free
@@ -390,7 +390,7 @@ aresize(ptr, size, ap)
 		size_t s = (dp-1)->size * sizeof(Cell);
 		if (s > size)
 			s = size;
-		memcpy(ptr, dp, size);
+		memcpy(ptr, dp, s);
 		afree((void *) dp, ap);
 	}
 	/* ACHECK() done in alloc()/afree() */
