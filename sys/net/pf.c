@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.103 2001/07/06 22:22:45 chris Exp $ */
+/*	$OpenBSD: pf.c,v 1.104 2001/07/06 22:45:32 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -478,7 +478,6 @@ pf_tree_first(struct pf_tree_node *n)
 {
 	if (n == NULL)
 		return (NULL);
-	/* go up to root, so the caller can pass any node. useful? */
 	while (n->parent)
 		n = n->parent;
 	while (n->left)
@@ -513,7 +512,10 @@ pf_tree_search(struct pf_tree_node *n, struct pf_tree_key *key)
 	int c;
 
 	while (n && (c = pf_tree_key_compare(&n->key, key)))
-		n = (c > 0) ? n->left : n->right;
+		if (c > 0)
+			n = n->left;
+		else
+			n = n->right;
 	pf_status.fcounters[FCNT_STATE_SEARCH]++;
 	return (n);
 }
@@ -522,7 +524,10 @@ struct pf_state *
 pf_find_state(struct pf_tree_node *n, struct pf_tree_key *key)
 {
 	n = pf_tree_search(n, key);
-	return (n ? n->state : NULL);
+	if (n)
+		return (n->state);
+	else
+		return (NULL);
 }
 
 void
@@ -780,7 +785,10 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		}
 		bcopy(&pr->rule, rule, sizeof(struct pf_rule));
 		tail = TAILQ_LAST(pf_rules_inactive, pf_rulequeue);
-		rule->nr = tail ? tail->nr + 1 : 0;
+		if (tail)
+			rule->nr = tail->nr + 1;
+		else
+			rule->nr = 0;
 		rule->ifp = NULL;
 		if (rule->ifname[0]) {
 			rule->ifp = ifunit(rule->ifname);
@@ -833,7 +841,10 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 
 		s = splsoftnet();
 		tail = TAILQ_LAST(pf_rules_active, pf_rulequeue);
-		pr->nr = tail ? tail->nr + 1 : 0;
+		if (tail)
+			pr->nr = tail->nr + 1;
+		else
+			pr->nr = 0;
 		pr->ticket = ticket_rules_active;
 		splx(s);
 		break;
@@ -1152,8 +1163,10 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			error = EINVAL;
 		else {
 			s = splsoftnet();
-			st = pf_find_state((direction == PF_IN) ? 
-			    tree_ext_gwy : tree_lan_ext, &key);
+			if (direction == PF_IN)
+				st = pf_find_state(tree_ext_gwy, &key);
+			else
+				st = pf_find_state(tree_lan_ext, &key);
 			if (st != NULL) {
 				if (direction  == PF_IN) {
 					pnl->rsaddr = st->lan.addr;
@@ -1187,7 +1200,10 @@ pf_cksum_fixup(u_int16_t cksum, u_int16_t old, u_int16_t new)
 
 	l = (l >> 16) + (l & 65535);
 	l = l & 65535;
-	return (l ? l : 65535);
+	if (l)
+		return (l);
+	else
+		return (65535);
 }
 
 void
@@ -1288,9 +1304,11 @@ pf_send_reset(struct ip *h, int off, struct tcphdr *th)
 		th2->th_seq = th->th_ack;
 		th2->th_flags = TH_RST;
 	} else {
-		int tlen = h->ip_len - off - (th->th_off << 2) +
-		    ((th->th_flags & TH_SYN) ? 1 : 0) +
-		    ((th->th_flags & TH_FIN) ? 1 : 0);
+		int tlen = h->ip_len - off - (th->th_off << 2);
+		if (th->th_flags & TH_SYN)
+			tlen++;
+		if (th->th_flags & TH_FIN)
+			tlen++;
 		th2->th_ack = htonl(ntohl(th->th_seq) + tlen);
 		th2->th_flags = TH_RST | TH_ACK;
 	}
@@ -1547,9 +1565,11 @@ pf_test_tcp(int direction, struct ifnet *ifp, struct mbuf *m,
 				s->gwy.port = s->lan.port;
 			}
 		}
-		s->src.seqlo = ntohl(th->th_seq) + len +
-		    ((th->th_flags & TH_SYN) ? 1 : 0) +
-		    ((th->th_flags & TH_FIN) ? 1 : 0);
+		s->src.seqlo = ntohl(th->th_seq) + len;
+		if (th->th_flags & TH_SYN)
+			s->src.seqlo++;
+		if (th->th_flags & TH_FIN)
+			s->src.seqlo++;
 		s->src.seqhi = s->src.seqlo + 1;
 		s->src.max_win = MAX(ntohs(th->th_win), 1);
 
@@ -1780,7 +1800,10 @@ pf_test_icmp(int direction, struct ifnet *ifp, struct mbuf *m,
 			s->gwy.port = id;
 			s->ext.addr = h->ip_dst.s_addr;
 			s->ext.port = id;
-			s->lan.addr = nat ? baddr : s->gwy.addr;
+			if (nat != NULL)
+				s->lan.addr = baddr;
+			else
+				s->lan.addr = s->gwy.addr;
 			s->lan.port = id;
 		} else {
 			s->lan.addr = h->ip_dst.s_addr;
@@ -1844,10 +1867,15 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct ifnet *ifp,
 	u_int16_t len = h->ip_len - off - (th->th_off << 2);
 	u_int16_t win = ntohs(th->th_win);
 	u_int32_t seq = ntohl(th->th_seq), ack = ntohl(th->th_ack);
-	u_int32_t end = seq + len + ((th->th_flags & TH_SYN) ? 1 : 0) +
-	    ((th->th_flags & TH_FIN) ? 1 : 0);
+	u_int32_t end;
 	int ackskew;
 	struct pf_state_peer *src, *dst;
+
+	end = seq + len;
+	if (th->th_flags & TH_SYN)
+		end++;
+	if (th->th_flags & TH_FIN)
+		end++;
 
 	key.proto   = IPPROTO_TCP;
 	key.addr[0] = h->ip_src;
@@ -1855,8 +1883,10 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct ifnet *ifp,
 	key.addr[1] = h->ip_dst;
 	key.port[1] = th->th_dport;
 
-	*state = pf_find_state((direction == PF_IN) ? tree_ext_gwy :
-	    tree_lan_ext, &key);
+	if (direction == PF_IN)
+		*state = pf_find_state(tree_ext_gwy, &key);
+	else
+		*state = pf_find_state(tree_lan_ext, &key);
 	if (*state == NULL)
 		return (PF_DROP);
 
@@ -2002,8 +2032,10 @@ pf_test_state_udp(struct pf_state **state, int direction, struct ifnet *ifp,
 	key.addr[1] = h->ip_dst;
 	key.port[1] = uh->uh_dport;
 
-	(*state) = pf_find_state((direction == PF_IN) ? tree_ext_gwy :
-	    tree_lan_ext, &key);
+	if (direction == PF_IN)
+		*state = pf_find_state(tree_ext_gwy, &key);
+	else
+		*state = pf_find_state(tree_lan_ext, &key);
 	if (*state == NULL)
 		return (PF_DROP);
 
@@ -2071,8 +2103,10 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct ifnet *ifp,
 		key.addr[1] = h->ip_dst;
 		key.port[1] = ih->icmp_id;
 
-		*state = pf_find_state((direction == PF_IN) ? tree_ext_gwy :
-		    tree_lan_ext, &key);
+		if (direction == PF_IN)
+			*state = pf_find_state(tree_ext_gwy, &key);
+		else
+			*state = pf_find_state(tree_lan_ext, &key);
 		if (*state == NULL)
 			return (PF_DROP);
 
@@ -2139,15 +2173,20 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct ifnet *ifp,
 			key.addr[1] = h2.ip_src;
 			key.port[1] = th.th_sport;
 
-			*state = pf_find_state((direction == PF_IN) ?
-			    tree_ext_gwy : tree_lan_ext, &key);
+			if (direction == PF_IN)
+				*state = pf_find_state(tree_ext_gwy, &key);
+			else
+				*state = pf_find_state(tree_lan_ext, &key);
 			if (*state == NULL)
 				return (PF_DROP);
 
-			src = (direction == (*state)->direction) ?
-			    &(*state)->dst : &(*state)->src;
-			dst = (direction == (*state)->direction) ?
-			    &(*state)->src : &(*state)->dst;
+			if (direction == (*state)->direction) {
+				src = &(*state)->dst;
+				dst = &(*state)->src;
+			} else {
+				src = &(*state)->src;
+				dst = &(*state)->dst;
+			}
 
 			if (!SEQ_GEQ(src->seqhi, seq) ||
 			    !SEQ_GEQ(seq, src->seqlo - dst->max_win)) {
@@ -2201,8 +2240,10 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct ifnet *ifp,
 			key.addr[1] = h2.ip_src;
 			key.port[1] = uh.uh_sport;
 
-			*state = pf_find_state(direction == PF_IN ?
-			    tree_ext_gwy : tree_lan_ext, &key);
+			if (direction == PF_IN)
+				*state = pf_find_state(tree_ext_gwy, &key);
+			else
+				*state = pf_find_state(tree_lan_ext, &key);
 			if (*state == NULL)
 				return (PF_DROP);
 
