@@ -1,5 +1,25 @@
-/*	$OpenBSD: pmap.h,v 1.1 1998/07/07 21:32:44 mickey Exp $	*/
+/* $OpenBSD: pmap.h,v 1.2 1998/08/20 15:50:59 mickey Exp $ */
 
+/*
+ * Copyright 1996 1995 by Open Software Foundation, Inc.   
+ *              All Rights Reserved 
+ *  
+ * Permission to use, copy, modify, and distribute this software and 
+ * its documentation for any purpose and without fee is hereby granted, 
+ * provided that the above copyright notice appears in all copies and 
+ * that both the copyright notice and this permission notice appear in 
+ * supporting documentation. 
+ *  
+ * OSF DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE 
+ * INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS 
+ * FOR A PARTICULAR PURPOSE. 
+ *  
+ * IN NO EVENT SHALL OSF BE LIABLE FOR ANY SPECIAL, INDIRECT, OR 
+ * CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM 
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN ACTION OF CONTRACT, 
+ * NEGLIGENCE, OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION 
+ * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE. 
+ */
 /* 
  * Copyright (c) 1990,1993,1994 The University of Utah and
  * the Computer Systems Laboratory at the University of Utah (CSL).
@@ -31,113 +51,78 @@
 #ifndef	_HPPA_PMAP_H_
 #define	_HPPA_PMAP_H_
 
-#include <sys/queue.h>
-
 #define EQUIV_HACK	/* no multiple mapping of kernel equiv space allowed */
 
-#ifdef hp700
 #define BTLB		/* Use block TLBs: PA 1.1 and above */
-#define HPT		/* Hashed (Hardware) Page Table */
-#define USEALIGNMENT	/* Take advantage of cache alignment for optimization */
-#endif
-
-/*
- * Virtual to physical mapping macros/structures.
- * IMPORTANT NOTE: there is one mapping per HW page, not per MACH page.
- */
-
-#define HPPA_HASHSIZE		4096	/* size of hash table */
-#define HPPA_HASHSIZE_LOG2	12
-#define HPPA_MIN_MPP		2	/* min # of mappings per phys page */
+#define USEALIGNMENT	/* Take advantage of cache alignment for optimization*/
 
 /*
  * This hash function is the one used by the hardware TLB walker on the 7100.
  */
-#define pmap_hash(space, offset) \
-	(((u_int)(space) << 5 ^ (u_int)(offset) >> PGSHIFT) & (HPPA_HASHSIZE-1))
+#define pmap_hash(space, va) \
+	((((u_int)(space) << 5) ^ btop(va)) & (hpt_hashsize-1))
 
-/*
- * Do not change these structures unless you change the assembly code in
- * locore.s
- */
-struct mapping {
-	TAILQ_ENTRY(mapping) hash_link;	/* hash table links */
-	TAILQ_ENTRY(mapping) phys_link;	/* for mappings of a given PA */
-	pa_space_t	map_space;	/* virtual space */
-	vm_offset_t	map_offset;	/* virtual page number */
-	u_int		map_tlbpage;	/* physical page (for TLB load) */
-	u_int		map_tlbprot;	/* prot/access rights (for TLB load) */
-	u_int		map_tlbsw;	/* */
-};
-
-/* XXX could be in vm_param.h */
-
-#define HPPA_QUADBYTES		0x40000000
-#define	hppa_round_quad(x)	((((unsigned)(x)) + HPPA_QUADBYTES-1) & \
-					~(HPPA_QUADBYTES-1))
-#define hppa_trunc_quad(x)	(((unsigned)(x)) & ~(HPPA_QUADBYTES-1))
-
+typedef
 struct pmap {
-	simple_lock_data_t	lock;	     /* lock on pmap */
-	int			ref_count;   /* reference count */
-	pa_space_t		space;	     /* space for this pmap */
-	int			pid;	     /* protection id for pmap */
-	struct pmap		*next;	     /* linked list of free pmaps */
-	struct pmap_statistics	stats;	     /* statistics */
-	TAILQ_ENTRY(pmap)	pmap_link;   /* hashed list of pmaps */
-};
+	TAILQ_ENTRY(pmap)	pmap_list;	/* pmap free list */
+	struct simplelock	pmap_lock;	/* lock on map */
+	int			pmap_refcnt;	/* reference count */
+	pa_space_t		pmap_space;	/* space for this pmap */
+	u_int			pmap_pid;	/* protection id for pmap */
+	struct pmap_statistics	pmap_stats;	/* statistics */
+} *pmap_t;
+extern pmap_t	kernel_pmap;			/* The kernel's map */
 
-typedef struct pmap *pmap_t;
-
-extern struct pmap	kernel_pmap_store;
-
-
-struct vtop_entry {
-	TAILQ_HEAD(, mapping)	hash_link;	/* head of vtop chain */
-};
-#define vtop_next	hash_link.tqe_next
-#define vtop_prev	hash_link.tqe_prev
-
-struct phys_entry {
-	TAILQ_HEAD(, mapping) phys_link; /* head of mappings of a given PA */
-	struct mapping	*writer;	/* mapping with R/W access */
-	unsigned	tlbprot;	/* TLB format protection */
-};
-
-
-#ifdef 	HPT
 /*
  * If HPT is defined, we cache the last miss for each bucket using a
  * structure defined for the 7100 hardware TLB walker. On non-7100s, this
  * acts as a software cache that cuts down on the number of times we have
- * to search the vtop chain. (thereby reducing the number of instructions
+ * to search the hash chain. (thereby reducing the number of instructions
  * and cache misses incurred during the TLB miss).
  *
- * The vtop_entry pointer is the address of the associated vtop table entry.
- * This avoids having to reform the address into the new table on a cache
- * miss.
+ * The pv_entry pointer is the address of the associated hash bucket
+ * list for fast tlbmiss search.
  */
 struct hpt_entry {
-	unsigned	valid:1,	/* Valid bit */
-			vpn:15,		/* Virtual Page Number */
-			space:16;	/* Space ID */
-	unsigned	tlbprot;	/* prot/access rights (for TLB load) */
-	unsigned	tlbpage;	/* physical page (for TLB load) */
-	unsigned	vtop_entry;	/* Pointer to associated VTOP entry */
+	u_int	hpt_valid:1,	/* Valid bit */
+		hpt_vpn:15,	/* Virtual Page Number */
+		hpt_space:16;	/* Space ID */
+	u_int	hpt_tlbprot;	/* prot/access rights (for TLB load) */
+	u_int	hpt_tlbpage;	/* physical page (for TLB load) */
+	void	*hpt_entry;	/* Pointer to associated hash list */
 };
-#endif
+#ifdef _KERNEL
+extern struct hpt_entry *hpt_table;
+extern u_int hpt_hashsize;
+#endif /* _KERNEL */
 
-#define HPT_SHIFT	27		/* 16 byte entry (31-4) */
-#define VTOP_SHIFT	28		/* 8  byte entry (31-3) */
-#define HPT_LEN		HPPA_HASHSIZE_LOG2
-#define VTOP_LEN	HPPA_HASHSIZE_LOG2
+/* keep it under 32 bytes for the cache sake */
+struct pv_entry {
+	struct pv_entry	*pv_next;	/* list of mappings of a given PA */
+	struct pv_entry *pv_hash;	/* VTOP hash bucket list */
+	struct pv_entry	*pv_writer;	/* mapping with R/W access XXX */
+	pmap_t		pv_pmap;	/* back link to pmap */
+#define pv_space pv_pmap->pmap_space
+	u_int		pv_va;		/* virtual page number */
+	u_int		pv_tlbprot;	/* TLB format protection */
+	u_int		pv_tlbpage;	/* physical page (for TLB load) */
+	u_int		pv_tlbsw;
+};
+
+#define NPVPPG 127
+struct pv_page {
+	TAILQ_ENTRY(pv_page) pvp_list;	/* Chain of pages */
+	u_int		pvp_nfree;
+	struct pv_entry *pvp_freelist;
+	u_int		pvp_pad[4];	/* align to 32 */
+	struct pv_entry pvp_pv[NPVPPG];
+};
 
 #define MAX_PID		0xfffa
-#define	HPPA_SID_KERNEL  0
-#define	HPPA_PID_KERNEL  2
+#define	HPPA_SID_KERNEL	0
+#define	HPPA_PID_KERNEL	2
 
 #define KERNEL_ACCESS_ID 1
-
 
 #define KERNEL_TEXT_PROT (TLB_AR_KRX | (KERNEL_ACCESS_ID << 1))
 #define KERNEL_DATA_PROT (TLB_AR_KRW | (KERNEL_ACCESS_ID << 1))
@@ -148,15 +133,41 @@ struct hpt_entry {
 #define BLK_COMBINED	2
 #define BLK_LCOMBINED	3
 
-#define pmap_kernel()			(&kernel_pmap_store)
-#define	pmap_resident_count(pmap)	((pmap)->stats.resident_count)
-#define pmap_remove_attributes(pmap,start,end)
+#define cache_align(x)		(((x) + 64) & ~(64 - 1))
+
+#ifdef _KERNEL
+#define pmap_kernel_va(VA)	\
+	(((VA) >= VM_MIN_KERNEL_ADDRESS) && ((VA) <= VM_MAX_KERNEL_ADDRESS))
+
+#define pmap_kernel()			(kernel_pmap)
+#define	pmap_resident_count(pmap)	((pmap)->pmap_stats.resident_count)
+#define pmap_reference(pmap) \
+do { if (pmap) { \
+	simple_lock(&pmap->pmap_lock); \
+	pmap->pmap_refcnt++; \
+	simple_unlock(&pmap->pmap_lock); \
+} } while (0)
+#define pmap_collect(pmap)
+#define pmap_release(pmap)
+#define pmap_pageable(pmap, start, end, pageable)
 #define pmap_copy(dpmap,spmap,da,len,sa)
 #define	pmap_update()
+#define	pmap_activate(pmap, pcb)
+#define	pmap_deactivate(pmap, pcb)
 
 #define pmap_phys_address(x)	((x) << PGSHIFT)
 #define pmap_phys_to_frame(x)	((x) >> PGSHIFT)
 
-#define cache_align(x)		(((x) + 64) & ~(64 - 1))
+/* 
+ * prototypes.
+ */
+vm_offset_t kvtophys __P((vm_offset_t addr));
+vm_offset_t pmap_map __P((vm_offset_t va, vm_offset_t spa,
+				 vm_offset_t epa, vm_prot_t prot));
+void pmap_bootstrap __P((vm_offset_t *avail_start,
+				vm_offset_t *avail_end));
+void pmap_block_map __P((vm_offset_t pa, vm_size_t size, vm_prot_t prot,
+				int entry, int dtlb));
+#endif /* _KERNEL */
 
-#endif	/* _HPPA_PMAP_H_ */
+#endif /* _HPPA_PMAP_H_ */
