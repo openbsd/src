@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.mvmeppc,v 1.4 2001/07/15 13:10:49 assar Exp $
+#	$OpenBSD: Makefile.mvmeppc,v 1.5 2001/08/21 08:49:45 miod Exp $
 #
 # Makefile for OpenBSD PowerPC
 #
@@ -34,11 +34,10 @@ STRIP?=	strip
 SIZE?=	size
 
 # source tree is located via $S relative to the compilation directory
-#.ifndef	S
-#S!=	cd ../../../..; pwd
-#.endif
-S=	../../../..
-PPC=	../..
+.ifndef	S
+S!=	cd ../../../..; pwd
+.endif
+PPC=	$S/arch/mvmeppc
 
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc -L${DESTDIR}/usr/include
 CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL \
