@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: ip.c,v 1.16 1999/07/27 23:47:21 brian Exp $
+ * $Id: ip.c,v 1.17 1999/08/02 15:28:47 brian Exp $
  *
  *	TODO:
  *		o Return ICMP message for filterd packet
@@ -179,6 +179,15 @@ FilterCheck(const struct ip *pip, const struct filter *filter)
 	    estab = syn = finrst = -1;
 	    sport = ntohs(0);
 	    break;
+#ifdef IPPROTO_OSPFIGP
+	  case IPPROTO_OSPFIGP:
+	    cproto = P_OSPF;
+	    if (datalen < 8)	/* IGMP uses 8-octet messages */
+	      return (1);
+	    estab = syn = finrst = -1;
+	    sport = ntohs(0);
+	    break;
+#endif
 	  case IPPROTO_UDP:
 	  case IPPROTO_IPIP:
 	    cproto = P_UDP;
@@ -350,6 +359,18 @@ PacketCheck(struct bundle *bundle, char *cp, int nb, struct filter *filter)
       loglen += strlen(logbuf + loglen);
     }
     break;
+#ifdef IPPROTO_OSPFIGP
+  case IPPROTO_OSPFIGP:
+    if (logit && loglen < sizeof logbuf) {
+      snprintf(logbuf + loglen, sizeof logbuf - loglen,
+	   "OSPF: %s ---> ", inet_ntoa(pip->ip_src));
+      loglen += strlen(logbuf + loglen);
+      snprintf(logbuf + loglen, sizeof logbuf - loglen,
+	       "%s", inet_ntoa(pip->ip_dst));
+      loglen += strlen(logbuf + loglen);
+    }
+    break;
+#endif
   case IPPROTO_IPIP:
     if (logit && loglen < sizeof logbuf) {
       uh = (struct udphdr *) ptop;

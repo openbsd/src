@@ -15,7 +15,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: filter.h,v 1.6 1999/07/27 23:47:21 brian Exp $
+ * $Id: filter.h,v 1.7 1999/08/02 15:28:47 brian Exp $
  *
  *	TODO:
  */
@@ -25,7 +25,10 @@
 #define	P_TCP	1
 #define	P_UDP	2
 #define	P_ICMP	3
-#define P_IGMP	4
+#ifdef IPPROTO_OSPFIGP
+#define	P_OSPF	4
+#endif
+#define	P_IGMP	5
 
 /* Operations - f_srcop, f_dstop */
 #define	OP_NONE	0
