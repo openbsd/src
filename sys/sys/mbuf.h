@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.10 1999/03/27 21:04:21 provos Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.11 1999/07/02 01:02:52 cmetz Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -407,6 +407,8 @@ void	m_cat __P((struct mbuf *, struct mbuf *));
 struct mbuf *m_devget __P((char *, int, int, struct ifnet *,
 			   void (*) __P((const void *, void *, size_t))));
 void	m_zero __P((struct mbuf *));
+int	m_apply __P((struct mbuf *, int, int,
+			int (*)(caddr_t, caddr_t, unsigned int), caddr_t));
 
 #ifdef MBTYPES
 int mbtypes[] = {				/* XXX */

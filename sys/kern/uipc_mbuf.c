@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.12 1999/05/14 02:12:29 cmetz Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.13 1999/07/02 01:02:53 cmetz Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -866,3 +866,47 @@ m_zero(m)
 		m = m->m_next;
 	}
 }
+
+/*
+ * Apply function f to the data in an mbuf chain starting "off" bytes from the
+ * beginning, continuing for "len" bytes.
+ */
+int
+m_apply(m, off, len, f, fstate)
+	struct mbuf *m;
+	int off;
+	int len;
+	/* fstate, data, len */
+	int (*f)(caddr_t, caddr_t, unsigned int);
+	caddr_t fstate;
+{
+	int rval;
+	unsigned int count;
+
+	if (off < 0 || len < 0)
+		panic("m_apply");
+	while (off > 0) {
+		if (m == 0)
+			panic("m_apply");
+		if (off < m->m_len)
+			break;
+		off -= m->m_len;
+		m = m->m_next;
+	}
+	while (len > 0) {
+		if (m == 0)
+			panic("m_apply");
+		count = min(m->m_len - off, len);
+
+		rval = f(fstate, mtod(m, caddr_t) + off, count);
+		if (rval)
+			return (rval);
+
+		len -= count;
+		off = 0;
+		m = m->m_next;
+	}
+
+	return (0);
+}
+
