@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsecadm.c,v 1.8 1999/02/25 10:21:25 angelos Exp $ */
+/* $OpenBSD: ipsecadm.c,v 1.9 1999/02/25 22:32:05 angelos Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -97,10 +97,10 @@ transform xf[] = {
     {"rmd160", SADB_AALG_X_RIPEMD160HMAC96, XF_AUTH|AH_NEW|ESP_NEW},
 };
 
-/* XXX Depending on message type, we should listen for message replies */
 void
 xf_set(struct iovec *iov, int cnt, int len)
 {
+    struct sadb_msg sm;
     int sd;
     
     sd = socket(PF_KEY, SOCK_RAW, PF_KEY_V2);
@@ -113,6 +113,20 @@ xf_set(struct iovec *iov, int cnt, int len)
     if (writev(sd, iov, cnt) != len)
     {
 	perror("write");
+	exit(1);
+    }
+
+    if (read(sd, &sm, sizeof(sm)) != sizeof(sm))
+    {
+	perror("read");
+	exit(1);
+    }
+
+    if (sm.sadb_msg_errno != 0)
+    {
+	/* XXX We need better error reporting than this */
+	errno = sm.sadb_msg_errno;
+	perror("pfkey");
 	exit(1);
     }
 
@@ -312,6 +326,7 @@ main(int argc, char **argv)
 	if (!strcmp(argv[1], "delspi"))
 	{
 	    smsg.sadb_msg_type = SADB_DELETE;
+	    smsg.sadb_msg_satype = SADB_SATYPE_ESP;
 	    mode = DEL_SPI;
 	    i++;
 	}
@@ -327,6 +342,7 @@ main(int argc, char **argv)
 	    {
 		/* It may not be ADDFLOW, but never mind that for now */
 		smsg.sadb_msg_type = SADB_X_ADDFLOW;
+	    	smsg.sadb_msg_satype = SADB_SATYPE_ESP;
 		mode = FLOW;
 		i++;
 	    }
@@ -340,7 +356,7 @@ main(int argc, char **argv)
 	      }
 	      else
 	      {
-		  fprintf(stderr, "%s: Unknown command: %s", argv[0], argv[i]);
+		  fprintf(stderr, "%s: unknown command: %s", argv[0], argv[1]);
 		  exit(1);
 	      }
 
@@ -348,7 +364,7 @@ main(int argc, char **argv)
     {
 	if (argv[i][0] != '-')
 	{
-	    fprintf(stderr, "%s: Expected option, got %s\n", 
+	    fprintf(stderr, "%s: expected option, got %s\n", 
 		    argv[0], argv[i]);
 	    exit(1);
 	}
@@ -357,7 +373,7 @@ main(int argc, char **argv)
 	{
 	    if ((enc = isvalid(argv[i + 1], XF_ENC, mode)) == 0)
 	    {
-		fprintf(stderr, "%s: Invalid encryption algorithm %s\n",
+		fprintf(stderr, "%s: invalid encryption algorithm %s\n",
 			argv[0], argv[i + 1]);
 		exit(1);
 	    }
@@ -372,7 +388,7 @@ main(int argc, char **argv)
 	{
 	    if ((auth = isvalid(argv[i + 1], XF_AUTH, mode)) == 0)
 	    {
-		fprintf(stderr, "%s: Invalid auth algorithm %s\n",
+		fprintf(stderr, "%s: invalid auth algorithm %s\n",
 			argv[0], argv[i + 1]);
 		exit(1);
 	    }
@@ -404,7 +420,7 @@ main(int argc, char **argv)
 	{
 	    if (!(mode & ESP_NEW))
 	    {
-		fprintf(stderr,	"%s: Invalid option %s for selected mode\n",
+		fprintf(stderr,	"%s: invalid option %s for selected mode\n",
 			argv[0], argv[i]);
 		exit(1);
 	    }
@@ -418,7 +434,7 @@ main(int argc, char **argv)
 	{
 	    if (mode & (AH_OLD | AH_NEW))
 	    {
-		fprintf(stderr, "%s: Invalid option %s with auth\n",
+		fprintf(stderr, "%s: invalid option %s with auth\n",
 			argv[0], argv[i]);
 		exit(1);
 	    }
@@ -438,7 +454,7 @@ main(int argc, char **argv)
 	{
 	    if ((spi = htonl(strtoul(argv[i + 1], NULL, 16))) == 0)
 	    {
-		fprintf(stderr, "%s: Invalid spi %s\n", argv[0], argv[i + 1]);
+		fprintf(stderr, "%s: invalid spi %s\n", argv[0], argv[i + 1]);
 		exit(1);
 	    }
 
@@ -450,8 +466,9 @@ main(int argc, char **argv)
 	if (!strcmp(argv[i] + 1, "spi2") && spi2 == 0 && 
 	    iscmd(mode, GRP_SPI) && (i + 1 < argc))
 	{
-	    if ((spi2 = htonl(strtoul(argv[i + 1], NULL, 16))) == 0) {
-		fprintf(stderr, "%s: Invalid spi2 %s\n", argv[0], argv[i + 1]);
+	    if ((spi2 = htonl(strtoul(argv[i + 1], NULL, 16))) == 0)
+	    {
+		fprintf(stderr, "%s: invalid spi2 %s\n", argv[0], argv[i + 1]);
 		exit(1);
 	    }
 
@@ -780,60 +797,60 @@ main(int argc, char **argv)
 	}
 
 	/* No match */
-	fprintf(stderr,
-		"%s: Unknown or invalid option: %s\n", argv[0], argv[i]);
+	fprintf(stderr, "%s: Unknown or invalid option: %s\n",
+		argv[0], argv[i]);
 	exit(1);
     }
     
     /* Sanity checks */
     if ((mode & (ESP_NEW | ESP_OLD)) && enc == 0)
     {
-	fprintf(stderr, "%s: No encryption algorithm specified\n",  argv[0]);
+	fprintf(stderr, "%s: no encryption algorithm specified\n",  argv[0]);
 	exit(1);
     }
 
     if ((mode & (AH_NEW | AH_OLD)) && auth == 0)
     {
-	fprintf(stderr, "%s: No authentication algorithm specified\n", 
+	fprintf(stderr, "%s: no authentication algorithm specified\n", 
 		argv[0]);
 	exit(1);
     }
 
     if (isencauth(mode) && keyp == NULL)
     {
-	fprintf(stderr, "%s: No key material specified\n", argv[0]);
+	fprintf(stderr, "%s: no key material specified\n", argv[0]);
 	exit(1);
     }
 
     if ((mode & ESP_NEW) && auth && authp == NULL)
     {
-	fprintf(stderr, "%s: No auth key material specified\n", argv[0]);
+	fprintf(stderr, "%s: no auth key material specified\n", argv[0]);
 	exit(1);
     }
 
     if (spi == 0)
     {
-	fprintf(stderr, "%s: No SPI specified\n", argv[0]);
+	fprintf(stderr, "%s: no SPI specified\n", argv[0]);
 	exit(1);
     }
 
     if (iscmd(mode, GRP_SPI) && spi2 == 0)
     {
-	fprintf(stderr, "%s: No SPI2 specified\n", argv[0]);
+	fprintf(stderr, "%s: no SPI2 specified\n", argv[0]);
 	exit(1);
     }
 
     if ((isencauth(mode) || iscmd(mode, ENC_IP)) && 
 	src.sin.sin_addr.s_addr == 0)
     {
-	fprintf(stderr, "%s: No source address specified\n", argv[0]);
+	fprintf(stderr, "%s: no source address specified\n", argv[0]);
 	exit(1);
     } 
 
     if ((iscmd(mode, DEL_SPI) || iscmd(mode, GRP_SPI) || iscmd(mode, FLOW)) && 
 	proto != IPPROTO_ESP && proto != IPPROTO_AH && proto != IPPROTO_IPIP)
     {
-	fprintf(stderr, "%s: Security protocol is none of AH, ESP or IPIP\n",
+	fprintf(stderr, "%s: security protocol is none of AH, ESP or IPIP\n",
 		argv[0]);
 	exit(1);
     }
@@ -841,14 +858,14 @@ main(int argc, char **argv)
     if (iscmd(mode, GRP_SPI) && proto2 != IPPROTO_ESP &&
 	proto2 != IPPROTO_AH && proto2 != IPPROTO_IPIP)
     {
-	fprintf(stderr, "%s: Security protocol2 is none of AH, ESP or IPIP\n",
+	fprintf(stderr, "%s: security protocol2 is none of AH, ESP or IPIP\n",
 		argv[0]);
 	exit(1);
     }
 
     if (dst.sin.sin_addr.s_addr == 0)
     {
-	fprintf(stderr, "%s: No destination address for the SA specified\n", 
+	fprintf(stderr, "%s: no destination address for the SA specified\n", 
 		argv[0]);
 	exit(1);
     } 
@@ -858,20 +875,20 @@ main(int argc, char **argv)
 			      osrc.sin.sin_addr.s_addr == 0 &&
 			      osmask.sin.sin_addr.s_addr == 0))
     {
-	fprintf(stderr,	"%s: No subnets for flow specified\n", argv[0]);
+	fprintf(stderr,	"%s: no subnets for flow specified\n", argv[0]);
 	exit(1);
     }
 
     if (iscmd(mode, FLOW) && (sprotocol.sadb_protocol_proto == 0) &&
 	(odst.sin.sin_port || osrc.sin.sin_port))
     {
-	fprintf(stderr, "%s: No transport protocol supplied with source/destination ports\n", argv[0]);
+	fprintf(stderr, "%s: no transport protocol supplied with source/destination ports\n", argv[0]);
 	exit(1);
     }
     
     if (iscmd(mode, GRP_SPI) && dst2.sin.sin_addr.s_addr == 0)
     {
-	fprintf(stderr, "%s: No destination address2 specified\n", argv[0]);
+	fprintf(stderr, "%s: no destination address2 specified\n", argv[0]);
 	exit(1);
     }
 
