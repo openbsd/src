@@ -35,8 +35,6 @@ usr/lib/libm.so.?.?
 usr/lib/libutil.so.?.?
 usr/libexec/ld.so
 usr/mdec
-usr/sbin/chgrp
-usr/sbin/chown
 usr/sbin/chroot
 usr/sbin/rdate
 usr/share/misc/termcap

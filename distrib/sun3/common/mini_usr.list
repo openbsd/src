@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: mini_usr.list,v 1.4 2000/03/01 22:10:10 todd Exp $
+#	$OpenBSD: mini_usr.list,v 1.5 2000/06/09 17:42:55 mickey Exp $
 #	$NetBSD: mini_usr.list,v 1.2.6.1 1996/08/29 03:12:45 gwr Exp $
 #
 
@@ -14,7 +14,6 @@ LINK	mini_usr	bin/rcp
 # usr/sbin:
 
 LINK		mini_usr		usr/sbin/bad144
-LINK		mini_usr		usr/sbin/chown
 LINK		mini_usr		usr/sbin/chroot
 LINK		mini_usr		usr/sbin/eeprom
 LINK		mini_usr		usr/sbin/rdate
@@ -24,7 +23,6 @@ LINK		mini_usr		usr/sbin/update
 
 LINK		mini_usr		usr/bin/basename
 LINK		mini_usr		usr/bin/chflags
-LINK		mini_usr		usr/bin/chgrp
 LINK		mini_usr		usr/bin/cksum
 LINK		mini_usr		usr/bin/cmp
 LINK		mini_usr		usr/bin/cut

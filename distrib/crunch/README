@@ -33,7 +33,7 @@ As an example, I have created an 980K crunched "fixit" binary containing
 the following programs in their entirety:
 
 	cat chmod cp date dd df echo ed expr hostname kill ln ls mkdir
-	mt mv pwd rcp rm rmdir sh sleep stty sync test [ badsect chown
+	mt mv pwd rcp rm rmdir sh sleep stty sync test [ badsect
 	clri disklabel dump rdump dmesg fdisk fsck halt ifconfig init
 	mknod mount newfs ping reboot restore rrestore swapon umount
 	ftp rsh sed telnet rlogin vi cpio gzip gunzip gzcat

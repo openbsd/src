@@ -1,11 +1,12 @@
 #
-#	$OpenBSD: list,v 1.12 1999/04/04 22:25:37 millert Exp $
+#	$OpenBSD: list,v 1.13 2000/06/09 17:42:49 mickey Exp $
 #
 
 # copy the crunched binary, link to it, and kill it
 COPY	${OBJDIR}/raminst		raminst
 LINK	raminst			bin/cat
 LINK	raminst			bin/chmod
+LINK	raminst			bin/chgrp
 LINK	raminst			bin/cp
 LINK	raminst			bin/cpio
 LINK	raminst			bin/dd
@@ -22,6 +23,7 @@ LINK	raminst			bin/rm
 LINK	raminst			bin/stty
 LINK	raminst			bin/sleep
 LINK	raminst			bin/tar
+LINK	raminst			sbin/chown
 LINK	raminst			sbin/disklabel
 LINK	raminst			sbin/fsck
 LINK	raminst			sbin/halt
@@ -38,7 +40,6 @@ LINK	raminst			sbin/newfs
 LINK	raminst			sbin/reboot
 LINK	raminst			sbin/route
 LINK	raminst			sbin/umount
-LINK	raminst			usr/bin/chgrp
 LINK	raminst			usr/bin/ftp
 LINK	raminst			usr/bin/egrep
 LINK	raminst			usr/bin/fgrep
@@ -48,7 +49,6 @@ LINK	raminst			usr/bin/less
 LINK	raminst			usr/bin/more
 LINK	raminst			usr/bin/sed
 LINK	raminst			usr/bin/pax
-LINK	raminst			usr/sbin/chown
 LINK	raminst			usr/mdec/installboot
 SPECIAL	/bin/rm raminst
 

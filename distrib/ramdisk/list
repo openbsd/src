@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.9 2000/04/25 22:01:59 millert Exp $
+#	$OpenBSD: list,v 1.10 2000/06/09 17:42:55 mickey Exp $
 #	$NetBSD: list,v 1.4.4.1 1996/06/20 20:30:26 pk Exp $
 
 SRCDIRS distrib/special
@@ -9,6 +9,7 @@ SRCDIRS	usr.bin/vi
 COPY	${OBJDIR}/instbin	instbin
 LINK	instbin			bin/cat
 LINK	instbin			bin/chmod
+LINK	instbin			bin/chgrp
 LINK	instbin			bin/cp
 LINK	instbin			bin/dd
 LINK	instbin			bin/df
@@ -29,6 +30,7 @@ LINK	instbin			bin/sync
 LINK	instbin			sbin/fsck_ffs sbin/fsck
 LINK	instbin			sbin/reboot sbin/halt
 LINK	instbin			sbin/ifconfig
+LINK	instbin			sbin/chown
 LINK	instbin			sbin/dhclient
 LINK	instbin			sbin/init
 LINK	instbin			sbin/mknod
@@ -41,7 +43,6 @@ LINK	instbin			sbin/newfs sbin/mount_mfs
 LINK	instbin			sbin/ping
 LINK	instbin			sbin/route
 LINK	instbin			sbin/umount
-SYMLINK	../../instbin		usr/sbin/chown usr/bin/chgrp
 SYMLINK	../../instbin		usr/bin/ftp
 SYMLINK	../../instbin		usr/bin/gzip usr/bin/gunzip usr/bin/gzcat
 SYMLINK	../../instbin		usr/bin/sed
