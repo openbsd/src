@@ -328,7 +328,6 @@
 ./usr/lib/perl5/site_perl/m88k-openbsd/sys/time.ph
 ./usr/lib/perl5/site_perl/m88k-openbsd/sys/timeb.ph
 ./usr/lib/perl5/site_perl/m88k-openbsd/sys/times.ph
-./usr/lib/perl5/site_perl/m88k-openbsd/sys/timex.ph
 ./usr/lib/perl5/site_perl/m88k-openbsd/sys/tprintf.ph
 ./usr/lib/perl5/site_perl/m88k-openbsd/sys/tty.ph
 ./usr/lib/perl5/site_perl/m88k-openbsd/sys/ttychars.ph
