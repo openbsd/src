@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee1212var.h,v 1.1 2002/06/25 17:11:49 itojun Exp $	*/
+/*	$OpenBSD: ieee1212var.h,v 1.2 2002/12/13 02:52:11 tdeval Exp $	*/
 /*	$NetBSD: ieee1212var.h,v 1.1 2002/02/27 04:58:51 jmc Exp $	*/
 
 /*
@@ -37,47 +37,46 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _DEV_STD_IEEE1212VAR_H
-#define _DEV_STD_IEEE1212VAR_H
+#ifndef	_DEV_STD_IEEE1212VAR_H
+#define	_DEV_STD_IEEE1212VAR_H
 
 struct p1212_dir;
 
-struct p1212_key {
+typedef struct p1212_key {
 	u_int8_t key_type;
 	u_int8_t key_value;
 	u_int8_t key;
 	u_int32_t val;
-};
+} p1212_key;
 
-struct p1212_leafdata {
+typedef struct p1212_leafdata {
 	u_int32_t len;
 	u_int32_t *data;
-};
+} p1212_leafdata;
 
-struct p1212_textdata {
+typedef struct p1212_textdata {
 	u_int8_t spec_type;
 	u_int32_t spec_id;
 	u_int32_t lang_id;
 	char *text;
-};
+} p1212_textdata;
 
-struct p1212_com {
+typedef struct p1212_com {
 	struct p1212_key key;
 	u_int32_t textcnt;
 	struct p1212_textdata **text;
-};
+} p1212_com;
 
-struct p1212_data {
+typedef struct p1212_data {
 	struct p1212_com com;
-	
+
 	u_int32_t val;
 	struct p1212_leafdata *leafdata;
 	void (*print)(struct p1212_data *);
 	TAILQ_ENTRY(p1212_data) data;
-};
+} p1212_data;
 
-
-struct p1212_dir {
+typedef struct p1212_dir {
 	struct p1212_com com;
 
 	int match;
@@ -86,17 +85,17 @@ struct p1212_dir {
 	TAILQ_HEAD(, p1212_data) data_root;
 	TAILQ_HEAD(, p1212_dir) subdir_root;
 	TAILQ_ENTRY(p1212_dir) dir;
-};
+} p1212_dir;
 
-struct p1212_rom {
+typedef struct p1212_rom {
 	char name[5];
 	u_int32_t len;
 	u_int32_t *data;
 	struct p1212_dir *root;
-};
+} p1212_rom;
 
 int p1212_iscomplete(u_int32_t *, u_int32_t *);
-struct p1212_rom *p1212_parse (u_int32_t *, u_int32_t, u_int32_t);
+struct p1212_rom *p1212_parse(u_int32_t *, u_int32_t, u_int32_t);
 void p1212_walk(struct p1212_dir *, void *,
     void (*)(struct p1212_key *, void *));
 struct p1212_key **p1212_find(struct p1212_dir *, int, int, int);
@@ -105,4 +104,4 @@ void p1212_free(struct p1212_rom *);
 struct device **p1212_match_units(struct device *, struct p1212_dir *,
     int (*)(void *, const char *));
 
-#endif /* _DEV_STD_IEEE1212VAR_H */
+#endif	/* _DEV_STD_IEEE1212VAR_H */

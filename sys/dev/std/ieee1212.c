@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee1212.c,v 1.2 2002/06/26 13:50:56 tdeval Exp $	*/
+/*	$OpenBSD: ieee1212.c,v 1.3 2002/12/13 02:52:11 tdeval Exp $	*/
 /*	$NetBSD: ieee1212.c,v 1.3 2002/05/23 00:10:46 jmc Exp $	*/
 
 /*
@@ -45,9 +45,11 @@
 
 #include <dev/std/ieee1212reg.h>
 #include <dev/std/ieee1212var.h>
+#include <dev/std/sbp2reg.h>
+#include <dev/std/sbp2var.h>
 
-static const char * const p1212_keytype_strings[] = P1212_KEYTYPE_STRINGS ;
-static const char * const p1212_keyvalue_strings[] = P1212_KEYVALUE_STRINGS ;   
+static const char * const p1212_keytype_strings[] = P1212_KEYTYPE_STRINGS;
+static const char * const p1212_keyvalue_strings[] = P1212_KEYVALUE_STRINGS;
 
 u_int16_t p1212_calc_crc(u_int32_t, u_int32_t *, int, int);
 int p1212_parse_directory(struct p1212_dir *, u_int32_t *, u_int32_t);
@@ -60,14 +62,27 @@ int p1212_validate_immed(u_int16_t, u_int32_t);
 int p1212_validate_leaf(u_int16_t, u_int32_t);
 int p1212_validate_dir(u_int16_t, u_int32_t);
 
-#ifdef P1212_DEBUG
-#define DPRINTF(x)      if (p1212debug) printf x
-#define DPRINTFN(n,x)   if (p1212debug>(n)) printf x
-int     p1212debug = 1;
-#else
-#define DPRINTF(x)
-#define DPRINTFN(n,x)
-#endif
+#ifdef	P1212_DEBUG
+#include <sys/syslog.h>
+extern int log_open;
+int p1212_oldlog;
+#define	DPRINTF(x)	if (p1212debug) do {				\
+	p1212_oldlog = log_open; log_open = 1;				\
+	addlog x; log_open = p1212_oldlog;				\
+} while (0)
+#define	DPRINTFN(n,x)	if (p1212debug>(n)) do {			\
+	p1212_oldlog = log_open; log_open = 1;				\
+	addlog x; log_open = p1212_oldlog;				\
+} while (0)
+#define	MPRINTF(x,y)	DPRINTF(("%s[%d]: %s 0x%08x\n",			\
+			    __func__, __LINE__, (x), (u_int32_t)(y)))
+
+int	p1212debug = 0;
+#else	/* P1212_DEBUG */
+#define	DPRINTF(x)
+#define	DPRINTFN(n,x)
+#define	MPRINTF(x,y)
+#endif	/* ! P1212_DEBUG */
 
 /*
  * Routines to parse the ROM into a tree that's usable. Also verify integrity
@@ -89,12 +104,12 @@ int     p1212debug = 1;
 int
 p1212_iscomplete(u_int32_t *t, u_int32_t *size)
 {
-	u_int16_t infolen, crclen, len;	
+	u_int16_t infolen, crclen, len;
 	u_int32_t newlen, offset, test;
 	int complete, i, numdirs, type, val, *dirs;
-#ifdef __OpenBSD__
+#ifdef	__OpenBSD__
 	int *p;
-#endif
+#endif	/* __OpenBSD__ */
 
 	dirs = NULL;
 
@@ -115,12 +130,12 @@ p1212_iscomplete(u_int32_t *t, u_int32_t *size)
 		    "Info len: %d\n", crclen, infolen));
 		return -1;
 	}
-	
+
 	/*
 	 * Now loop through it to check if all the offsets referenced are
 	 * within the image stored so far. If not, get those as well.
 	 */
-	
+
 	offset = P1212_ROMFMT_GET_INFOLEN((ntohl(t[0]))) + 1;
 
 	/*
@@ -130,7 +145,7 @@ p1212_iscomplete(u_int32_t *t, u_int32_t *size)
 	 * then add another since infolen doesn't end on the root dir entry but
 	 * right before it.
 	 */
-	
+
 	if ((*size == 1) || (*size < (offset + 1))) {
 		*size = (crclen > infolen) ? crclen : infolen;
 		if (crclen == infolen)
@@ -142,9 +157,9 @@ p1212_iscomplete(u_int32_t *t, u_int32_t *size)
 	complete = 0;
 	numdirs = 0;
 	newlen = 0;
-	
+
 	while (!complete) {
-		
+
 		/*
 		 * Make sure the whole directory is in memory. If not, bail now
 		 * and read it in.
@@ -155,7 +170,7 @@ p1212_iscomplete(u_int32_t *t, u_int32_t *size)
 			newlen += offset + 1;
 			break;
 		}
-		
+
 		if (newlen == 0) {
 			DPRINTF(("Impossible directory length of 0!\n"));
 			return -1;
@@ -179,20 +194,20 @@ p1212_iscomplete(u_int32_t *t, u_int32_t *size)
 			case P1212_KEYTYPE_Offset:
 				break;
 			case P1212_KEYTYPE_Leaf:
-				
+
 				/*
 				 * If a leaf is found, and it's beyond the
 				 * current rom length and it's beyond the
 				 * current newlen setting,
 				 * then set newlen accordingly.
 				 */
-				
+
 				test = offset + i + val + 1;
 				if ((test > *size) && (test > newlen)) {
 					newlen = test;
 					break;
 				}
-				
+
 				/*
 				 * For leaf nodes just make sure the whole leaf
 				 * length is in the buffer. There's no data
@@ -202,7 +217,7 @@ p1212_iscomplete(u_int32_t *t, u_int32_t *size)
 				 */
 
 				test--;
-				infolen = 
+				infolen =
 				    P1212_DIRENT_GET_LEN((ntohl(t[test])));
 				test++;
 				test += infolen;
@@ -210,40 +225,43 @@ p1212_iscomplete(u_int32_t *t, u_int32_t *size)
 					newlen = test;
 				}
 				break;
-				
+
 			case P1212_KEYTYPE_Directory:
-				
+
 				/* Make sure the first quad is in memory. */
-				
+
 				test = offset + i + val + 1;
 				if ((test > *size) && (test > newlen)) {
 					newlen = test;
 					break;
 				}
-				
+
 				/*
-				 * Can't just walk the ROM looking at type 
-				 * codes since these are only valid on 
+				 * Can't just walk the ROM looking at type
+				 * codes since these are only valid on
 				 * directory entries. So save any directories
 				 * we find into a queue and the bottom of the
-				 * while loop will pop the last one off and 
+				 * while loop will pop the last one off and
 				 * walk that directory.
 				 */
-                
+
 				test--;
 #ifdef	__NetBSD__
 				dirs = realloc(dirs,
 				    sizeof(int) * (numdirs + 1), M_DEVBUF,
 				    M_WAITOK);
-#else
+#else	/* __NetBSD__ */
 				p = malloc(sizeof(int) * (numdirs + 1),
 				    M_DEVBUF, M_WAITOK);
+				//MPRINTF_OLD("malloc(DEVBUF)", p);
 				if (dirs != NULL) {
 					bcopy(dirs, p, sizeof(int) * numdirs);
 					free(dirs, M_DEVBUF);
+					//MPRINTF_OLD("free(DEVBUF)", dirs);
+					dirs = NULL;	/* XXX */
 				}
 				dirs = p;
-#endif
+#endif	/* ! __NetBSD__ */
 				dirs[numdirs++] = test;
 				break;
 			default:
@@ -252,11 +270,14 @@ p1212_iscomplete(u_int32_t *t, u_int32_t *size)
 				break;
 			}
 		}
-		
+
 		if (newlen) {
 			/* Cleanup. */
-			if (dirs) 
+			if (dirs) {
 				free(dirs, M_DEVBUF);
+				//MPRINTF_OLD("free(DEVBUF)", dirs);
+				dirs = NULL;	/* XXX */
+			}
 			break;
 		}
 		if (dirs != NULL) {
@@ -265,36 +286,39 @@ p1212_iscomplete(u_int32_t *t, u_int32_t *size)
 #ifdef	__NetBSD__
 				dirs = realloc(dirs, sizeof(int) * numdirs,
 				    M_DEVBUF, M_WAITOK);
-#else
+#else	/* __NetBSD__ */
 				p = malloc(sizeof(int) * numdirs,
 				    M_DEVBUF, M_WAITOK);
+				//MPRINTF_OLD("malloc(DEVBUF)", p);
 				bcopy(dirs, p, sizeof(int) * numdirs);
 				free(dirs, M_DEVBUF);
+				//MPRINTF_OLD("free(DEVBUF)", dirs);
 				dirs = p;
-#endif
+#endif	/* ! __NetBSD__ */
 			} else {
 				free(dirs, M_DEVBUF);
+				//MPRINTF_OLD("free(DEVBUF)", dirs);
 				dirs = NULL;
 			}
 		} else
 			complete = 1;
 	}
-	
+
 	if (newlen)
 		*size = newlen;
 	return 0;
-		
+
 }
 
 struct p1212_rom *
 p1212_parse(u_int32_t *t, u_int32_t size, u_int32_t mask)
 {
 
-	u_int16_t crc, romcrc, crc1;
+	u_int16_t crc, romcrc, crc1, crc2;
 	u_int32_t next, check;
 	struct p1212_rom *rom;
 	int i;
-	
+
 	check = size;
 
 	if (p1212_iscomplete(t, &check) == -1) {
@@ -307,45 +331,53 @@ p1212_parse(u_int32_t *t, u_int32_t size, u_int32_t mask)
 	}
 
 	/* Calculate both a good and known bad crc. */
-	
+
 	/* CRC's are calculated from everything except the first quad. */
-	
-	crc = p1212_calc_crc(0, &t[1], P1212_ROMFMT_GET_CRCLEN((ntohl(t[0]))), 
+
+	crc = p1212_calc_crc(0, &t[1], P1212_ROMFMT_GET_CRCLEN((ntohl(t[0]))),
 		0);
-	
+
 	romcrc = P1212_ROMFMT_GET_CRC((ntohl(t[0])));
 	if (crc != romcrc) {
 		crc1 = p1212_calc_crc(0, &t[1],
 		    P1212_ROMFMT_GET_CRCLEN((ntohl(t[0]))), 1);
-		if (crc1 != romcrc) {
+		crc2 = p1212_calc_crc(0, &t[1],
+		    P1212_ROMFMT_GET_CRCLEN((ntohl(t[0]))), 2);
+		if ((crc1 != romcrc) && (crc2 != romcrc)) {
 			DPRINTF(("Invalid ROM: CRC: 0x%04hx, Calculated "
-			    "CRC: 0x%04hx, CRC1: 0x%04hx\n",
+			    "CRC: 0x%04hx, CRC1: 0x%04hx, CRC2: 0x%04hx\n",
 			    (unsigned short)romcrc, (unsigned short)crc,
-			    (unsigned short)crc1));
+			    (unsigned short)crc1, (unsigned short)crc2));
 			return NULL;
 		}
 	}
+	if (romcrc == crc2)
+		DPRINTF(("%s: warning byte-swapping rom problems\n", __func__));
 
 	/* Now, walk the ROM. */
-	
+
 	/* Get the initial offset for the root dir. */
-	
-	rom = malloc(sizeof(struct p1212_rom), M_DEVBUF, M_WAITOK);    
+
+	MALLOC(rom, struct p1212_rom *, sizeof(*rom), M_DEVBUF, M_WAITOK);
+	//MPRINTF_OLD("MALLOC(DEVBUF)", rom);
 	rom->len = P1212_ROMFMT_GET_INFOLEN((ntohl(t[0])));
 	next = rom->len + 1;
 
 	if ((rom->len < 1) || (rom->len > size)) {
 		DPRINTF(("Invalid ROM info length: %d\n", rom->len));
-		free(rom, M_DEVBUF);
+		FREE(rom, M_DEVBUF);
+		//MPRINTF_OLD("FREE(DEVBUF)", rom);
+		rom = NULL;	/* XXX */
 		return NULL;
 	}
-	
+
 	/* Exclude the quad which covers the bus name. */
 	rom->len--;
 
 	if (rom->len) {
 		rom->data = malloc(sizeof(u_int32_t) * rom->len, M_DEVBUF,
 		    M_WAITOK);
+		//MPRINTF_OLD("malloc(DEVBUF)", rom->data);
 		/* Add 2 to account for info/crc and bus name skipped. */
 		for (i = 0; i < rom->len; i++)
 			rom->data[i] = t[i + 2];
@@ -354,25 +386,29 @@ p1212_parse(u_int32_t *t, u_int32_t size, u_int32_t mask)
 	/* The name field is always 4 bytes and always the 2nd field. */
 	strncpy(rom->name, (char *)&t[1], 4);
 	rom->name[4] = 0;
-	
+
 	/*
 	 * Fill out the root directory. All these values are hardcoded so the
 	 * parse/print/match routines have a standard layout to work against.
 	 */
-	
-#ifdef M_ZERO
-	rom->root = malloc(sizeof(*rom->root), M_DEVBUF, M_WAITOK|M_ZERO);
-#else
-	rom->root = malloc(sizeof(*rom->root), M_DEVBUF, M_WAITOK);
+
+#ifdef	M_ZERO
+	MALLOC(rom->root, struct p1212_dir *, sizeof(*rom->root),
+	    M_DEVBUF, M_WAITOK|M_ZERO);
+	//MPRINTF_OLD("MALLOC(DEVBUF)", rom->root);
+#else	/* M_ZERO */
+	MALLOC(rom->root, struct p1212_dir *, sizeof(*rom->root),
+	    M_DEVBUF, M_WAITOK);
+	//MPRINTF_OLD("MALLOC(DEVBUF)", rom->root);
 	bzero(rom->root, sizeof(*rom->root));
-#endif
+#endif	/* ! M_ZERO */
 	rom->root->com.key.key_type = P1212_KEYTYPE_Directory;
 	rom->root->com.key.key_value = 0;
 	rom->root->com.key.key = (u_int8_t)P1212_KEYTYPE_Directory;
 	rom->root->com.key.val = 0;
 	TAILQ_INIT(&rom->root->data_root);
 	TAILQ_INIT(&rom->root->subdir_root);
-	
+
 	if (p1212_parse_directory(rom->root, &t[next], mask)) {
 		DPRINTF(("Parse error in ROM. Bailing\n"));
 		p1212_free(rom);
@@ -388,17 +424,18 @@ p1212_parse_directory(struct p1212_dir *root, u_int32_t *addr, u_int32_t mask)
 	struct p1212_data *data;
 	struct p1212_com *com;
 	u_int32_t *t, desc;
-	u_int16_t crclen, crc, crc1, romcrc;
+	u_int16_t crclen, crc, crc1, crc2, romcrc;
 	u_int8_t type, val;
 	unsigned long size;
 	int i, module_vendor_flag, module_sw_flag, node_sw_flag, unit_sw_flag;
 	int node_capabilities_flag, offset, unit_location_flag, unitdir_cnt;
 	int leafoff;
 	int textcnt;
+	int draft;
 #ifdef	__OpenBSD__
 	struct p1212_textdata **p;
-#endif
-	
+#endif	/* __OpenBSD__ */
+
 	t = addr;
 	dir = root;
 
@@ -409,30 +446,39 @@ p1212_parse_directory(struct p1212_dir *root, u_int32_t *addr, u_int32_t mask)
 	unitdir_cnt = 0;
 	offset = 0;
 	textcnt = 0;
+	draft = 0;
 
-	while (dir) {	    
+	while (dir) {
 		dir->match = 0;
 		crclen = P1212_DIRENT_GET_LEN((ntohl(t[offset])));
 		romcrc = P1212_DIRENT_GET_CRC((ntohl(t[offset])));
-		
+
 		crc = p1212_calc_crc(0, &t[offset + 1], crclen, 0);
 		if (crc != romcrc) {
 			crc1 = p1212_calc_crc(0, &t[offset + 1], crclen, 1);
-			if (crc1 != romcrc) {
+			crc2 = p1212_calc_crc(0, &t[offset + 1], crclen, 2);
+			if ((crc1 != romcrc) && (crc2 != romcrc)) {
 				DPRINTF(("Invalid ROM: CRC: 0x%04hx, "
 					    "Calculated CRC: "
-					    "0x%04hx, CRC1: 0x%04hx\n",
+					    "0x%04hx, CRC1: 0x%04hx",
+					    ", CRC2: 0x%04hx\n",
 					    (unsigned short)romcrc,
 					    (unsigned short)crc,
-					    (unsigned short)crc1));
+					    (unsigned short)crc1,
+					    (unsigned short)crc2));
 				return 1;
 			}
+		}
+		if (romcrc == crc2) {
+			draft = 1;
+			DPRINTF(("%s: warning byte-swapping rom problems"
+			    " (off: 0x%04hx)\n", __func__, (u_int16_t)offset));
 		}
 		com = NULL;
 		unit_sw_flag = 0;
 		unit_location_flag = 0;
 		offset++;
-		
+
 		if ((dir->parent == NULL) && dir->com.key.val) {
 			DPRINTF(("Invalid root dir. key.val is 0x%0x and not"
 			    " 0x0\n", dir->com.key.val));
@@ -443,7 +489,7 @@ p1212_parse_directory(struct p1212_dir *root, u_int32_t *addr, u_int32_t mask)
 			desc = ntohl(t[i]);
 			type = P1212_DIRENT_GET_KEYTYPE(desc);
 			val = P1212_DIRENT_GET_KEYVALUE(desc);
-			
+
 			/*
 			 * Sanity check for valid types/locations/etc.
 			 *
@@ -451,7 +497,7 @@ p1212_parse_directory(struct p1212_dir *root, u_int32_t *addr, u_int32_t mask)
 			 * ISO/IEC 13213:1194(ANSI/IEEE Std 1212, 1994 edition)
 			 * for specifics.
 			 *
-			 * XXX: These all really should be broken out into 
+			 * XXX: These all really should be broken out into
 			 * subroutines as it's grown large and complicated
 			 * in certain cases.
 			 */
@@ -479,7 +525,7 @@ p1212_parse_directory(struct p1212_dir *root, u_int32_t *addr, u_int32_t mask)
 				}
 				break;
 			}
-				
+
 			switch (type) {
 			case P1212_KEYTYPE_Immediate:
 				if (p1212_validate_immed(val, mask)) {
@@ -492,9 +538,11 @@ p1212_parse_directory(struct p1212_dir *root, u_int32_t *addr, u_int32_t mask)
 				}
 				break;
 			case P1212_KEYTYPE_Offset:
+				if (draft && val == 0)
+					break;
 				if (p1212_validate_offset(val, mask)) {
 					DPRINTF(("Invalid ROM: Can't have "
-				            "an offset type with key %s."
+					    "an offset type with key %s."
 					    " Used at location 0x%0x in ROM\n",
 					    p1212_keyvalue_strings[val],
 					    (unsigned int)(&t[i]-&addr[0])));
@@ -526,7 +574,7 @@ p1212_parse_directory(struct p1212_dir *root, u_int32_t *addr, u_int32_t mask)
 				    (unsigned short)type);
 				break;
 			}
-					
+
 			/* Note flags for required fields. */
 
 			if (val == P1212_KEYVALUE_Module_Vendor_Id) {
@@ -536,13 +584,13 @@ p1212_parse_directory(struct p1212_dir *root, u_int32_t *addr, u_int32_t mask)
 			if (val == P1212_KEYVALUE_Node_Capabilities) {
 				node_capabilities_flag = 1;
 			}
-			
+
 			if (val == P1212_KEYVALUE_Unit_Sw_Version)
 				unit_sw_flag = 1;
 
 			if (val == P1212_KEYVALUE_Unit_Location)
 				unit_location_flag = 1;
-			
+
 			/*
 			 * This is just easier to spell out. You can't have
 			 * a module sw version if you include a node sw version
@@ -553,11 +601,11 @@ p1212_parse_directory(struct p1212_dir *root, u_int32_t *addr, u_int32_t mask)
 			if (val == P1212_KEYVALUE_Module_Sw_Version) {
 				if (node_sw_flag) {
 					DPRINTF(("Can't have a module software"
-				            " version along with a node "
+					    " version along with a node "
 					    "software version entry\n"));
 					return 1;
 				}
-				if (unitdir_cnt) {
+				if (!draft && unitdir_cnt) {
 					DPRINTF(("Can't have unit directories "
 					    "with module software version "
 					    "defined.\n"));
@@ -569,11 +617,11 @@ p1212_parse_directory(struct p1212_dir *root, u_int32_t *addr, u_int32_t mask)
 			if (val == P1212_KEYVALUE_Node_Sw_Version) {
 				if (module_sw_flag) {
 					DPRINTF(("Can't have a node software "
-				            "version along with a module "
+					    "version along with a module "
 					    "software version entry\n"));
 					return 1;
 				}
-				if (unitdir_cnt) {
+				if (!draft && unitdir_cnt) {
 					DPRINTF(("Can't have unit directories "
 					    "with node software version "
 					    "defined.\n"));
@@ -581,9 +629,10 @@ p1212_parse_directory(struct p1212_dir *root, u_int32_t *addr, u_int32_t mask)
 				}
 				node_sw_flag = 1;
 			}
-			
+
 			if (val == P1212_KEYVALUE_Unit_Directory) {
-				if (module_sw_flag || node_sw_flag) {
+				if (!draft &&
+				    (module_sw_flag || node_sw_flag)) {
 					DPRINTF(("Can't have unit directories "
 					    "with either module or node "
 					    "software version defined.\n"));
@@ -591,7 +640,7 @@ p1212_parse_directory(struct p1212_dir *root, u_int32_t *addr, u_int32_t mask)
 				}
 				unitdir_cnt++;
 			}
-			
+
 			/*
 			 * Text descriptors are special. They describe the
 			 * last entry they follow. So they need to be included
@@ -599,14 +648,14 @@ p1212_parse_directory(struct p1212_dir *root, u_int32_t *addr, u_int32_t mask)
 			 * preventing one from putting text descriptors after
 			 * directory descriptors. Also they can be a single
 			 * value or a list of them in a directory format so
-			 * account for either. Finally if they're in a 
-			 * directory those can be the only types in a 
+			 * account for either. Finally if they're in a
+			 * directory those can be the only types in a
 			 * directory.
 			 */
 
 			if (val == P1212_KEYVALUE_Textual_Descriptor) {
 
-				size = sizeof(struct p1212_textdata *);
+				size = sizeof(*p);
 				leafoff = P1212_DIRENT_GET_VALUE(desc);
 				leafoff += i;
 
@@ -629,16 +678,19 @@ p1212_parse_directory(struct p1212_dir *root, u_int32_t *addr, u_int32_t mask)
 					com->text = realloc(com->text,
 					    size * (com->textcnt + 1),
 					    M_DEVBUF, M_WAITOK);
-#else
+#else	/* __NetBSD__ */
 					p = malloc(size * (com->textcnt + 1),
 					    M_DEVBUF, M_WAITOK);
+					//MPRINTF_OLD("malloc(DEVBUF)", p);
 					if (com->text != NULL) {
 						bcopy(com->text, p,
 						    size * com->textcnt);
 						free(com->text, M_DEVBUF);
+						//MPRINTF_OLD("free(DEVBUF)", com->text);
+						com->text = NULL;	/* XXX */
 					}
 					com->text = p;
-#endif
+#endif	/* ! __NetBSD__ */
 					com->text[com->textcnt] =
 					    p1212_parse_text_desc(&t[leafoff]);
 					if (com->text[com->textcnt] == NULL) {
@@ -647,11 +699,13 @@ p1212_parse_directory(struct p1212_dir *root, u_int32_t *addr, u_int32_t mask)
 						    "offset 0x%0x\n",
 						    &t[leafoff]-&addr[0]));
 						free(com->text, M_DEVBUF);
+						//MPRINTF_OLD("free(DEVBUF)", com->text);
+						com->text = NULL;	/* XXX */
 						return 1;
 					}
 					com->textcnt++;
 				} else {
-					i = p1212_parse_textdir(com, 
+					i = p1212_parse_textdir(com,
 						&t[leafoff]);
 					if (i)
 						return 1;
@@ -662,14 +716,16 @@ p1212_parse_directory(struct p1212_dir *root, u_int32_t *addr, u_int32_t mask)
 
 			if ((type != P1212_KEYTYPE_Directory) &&
 			    (val != P1212_KEYVALUE_Textual_Descriptor)) {
-#ifdef M_ZERO
-				data = malloc(sizeof(struct p1212_data),
+#ifdef	M_ZERO
+				MALLOC(data, struct p1212_data *, sizeof(*data),
 				    M_DEVBUF, M_WAITOK|M_ZERO);
-#else
-				data = malloc(sizeof(struct p1212_data),
+				//MPRINTF_OLD("MALLOC(DEVBUF)", data);
+#else	/* M_ZERO */
+				MALLOC(data, struct p1212_data *, sizeof(*data),
 				    M_DEVBUF, M_WAITOK);
+				//MPRINTF_OLD("MALLOC(DEVBUF)", data);
 				bzero(data, sizeof(struct p1212_data));
-#endif
+#endif	/* ! M_ZERO */
 				data->com.key.key_type = type;
 				data->com.key.key_value = val;
 				data->com.key.key =
@@ -678,7 +734,7 @@ p1212_parse_directory(struct p1212_dir *root, u_int32_t *addr, u_int32_t mask)
 				    P1212_DIRENT_GET_VALUE((ntohl(t[i])));
 				com = &data->com;
 
-				/* 
+				/*
 				 * Don't try and read the offset. It may be
 				 * a register or something special. Generally
 				 * these are node specific so let the upper
@@ -686,12 +742,12 @@ p1212_parse_directory(struct p1212_dir *root, u_int32_t *addr, u_int32_t mask)
 				 */
 
 				if ((type == P1212_KEYTYPE_Immediate) ||
-				    (type == P1212_KEYTYPE_Offset)) 
+				    (type == P1212_KEYTYPE_Offset))
 					data->val = data->com.key.val;
-				
+
 				data->leafdata = NULL;
 				TAILQ_INSERT_TAIL(&dir->data_root, data, data);
-				
+
 				if (type == P1212_KEYTYPE_Leaf) {
 					leafoff = i + data->com.key.val;
 					data->leafdata =
@@ -701,17 +757,19 @@ p1212_parse_directory(struct p1212_dir *root, u_int32_t *addr, u_int32_t mask)
 						return 1;
 					}
 				}
-			} 
+			}
 			if (type == P1212_KEYTYPE_Directory) {
-			
-#ifdef M_ZERO
-				sdir = malloc(sizeof(struct p1212_dir), 
+
+#ifdef	M_ZERO
+				MALLOC(sdir, struct p1212_dir *, sizeof(*sdir),
 					M_DEVBUF, M_WAITOK|M_ZERO);
-#else
-				sdir = malloc(sizeof(struct p1212_dir), 
+				//MPRINTF_OLD("MALLOC(DEVBUF)", sdir);
+#else	/* M_ZERO */
+				MALLOC(sdir, struct p1212_dir *, sizeof(*sdir),
 					M_DEVBUF, M_WAITOK);
+				//MPRINTF_OLD("MALLOC(DEVBUF)", sdir);
 				bzero(sdir, sizeof(struct p1212_dir));
-#endif
+#endif	/* ! M_ZERO */
 				sdir->parent = dir;
 				sdir->com.key.key_type = type;
 				sdir->com.key.key_value = val;
@@ -735,11 +793,13 @@ p1212_parse_directory(struct p1212_dir *root, u_int32_t *addr, u_int32_t mask)
 				    "directory.\n"));
 				return 1;
 			}
+#if 0			/* XXX : Not Mandatory */
 			if (node_capabilities_flag == 0) {
 				DPRINTF(("Missing node capabilities entry in "
 				    "root directory.\n"));
 				return 1;
 			}
+#endif
 		} else {
 			if ((unitdir_cnt > 1) && (unit_location_flag == 0)) {
 				DPRINTF(("Must have a unit location in each "
@@ -780,7 +840,7 @@ p1212_parse_directory(struct p1212_dir *root, u_int32_t *addr, u_int32_t mask)
 struct p1212_leafdata *
 p1212_parse_leaf(u_int32_t *t)
 {
-	u_int16_t crclen, crc, crc1, romcrc;
+	u_int16_t crclen, crc, crc1, crc2, romcrc;
 	struct p1212_leafdata *leafdata;
 	int i;
 
@@ -788,22 +848,29 @@ p1212_parse_leaf(u_int32_t *t)
 	romcrc = P1212_DIRENT_GET_CRC((ntohl(t[0])));
 	crc = p1212_calc_crc(0, &t[1], crclen, 0);
 	crc1 = p1212_calc_crc(0,&t[1], crclen, 1);
-	if ((crc != romcrc) && (crc1 != romcrc)) {
+	crc2 = p1212_calc_crc(0,&t[1], crclen, 2);
+	if ((crc != romcrc) && (crc1 != romcrc) && (crc2 != romcrc)) {
 		DPRINTF(("Invalid ROM: CRC: 0x%04hx, Calculated CRC: "
-		    "0x%04hx, CRC1: 0x%04hx\n", (unsigned short)romcrc,
-		    (unsigned short)crc, (unsigned short)crc1));
+		    "0x%04hx, CRC1: 0x%04hx, CRC2: 0x%04hx\n",
+		    (unsigned short)romcrc, (unsigned short)crc,
+		    (unsigned short)crc1, (unsigned short)crc2));
 		return NULL;
 	}
+	if (romcrc == crc2)
+		DPRINTF(("%s: warning byte-swapping rom problems\n", __func__));
 	t++;
-	
+
 	/*
 	 * Most of these are vendor specific so don't bother trying to map them
 	 * out. Anything which needs them later on can extract them.
 	 */
 
-	leafdata = malloc(sizeof(struct p1212_leafdata), M_DEVBUF, M_WAITOK);
+	MALLOC(leafdata, struct p1212_leafdata *, sizeof(*leafdata),
+	    M_DEVBUF, M_WAITOK);
+	//MPRINTF_OLD("MALLOC(DEVBUF)", leafdata);
 	leafdata->data = malloc((sizeof(u_int32_t) * crclen), M_DEVBUF,
 	    M_WAITOK);
+	//MPRINTF_OLD("malloc(DEVBUF)", leafdata->data);
 	leafdata->len = crclen;
 	for (i = 0; i < crclen; i++)
 		leafdata->data[i] = ntohl(t[i]);
@@ -814,11 +881,11 @@ int
 p1212_parse_textdir(struct p1212_com *com, u_int32_t *addr)
 {
 	u_int32_t *t, entry, new;
-	u_int16_t crclen, crc, crc1, romcrc;
+	u_int16_t crclen, crc, crc1, crc2, romcrc;
 	u_int8_t type, val;
-#ifdef __OpenBSD__
+#ifdef	__OpenBSD__
 	struct p1212_textdata **p;
-#endif
+#endif	/* __OpenBSD__ */
 
 	int i, size;
 
@@ -826,24 +893,28 @@ p1212_parse_textdir(struct p1212_com *com, u_int32_t *addr)
 	 * A bit more complicated. A directory for a text descriptor can
 	 * contain text descriptor leaf nodes only.
 	 */
-	
+
 	com->text = NULL;
-	size = sizeof(struct p1212_text *);
-	
+	size = sizeof(*p);
+
 	crclen = P1212_DIRENT_GET_LEN((ntohl(t[0])));
 	romcrc = P1212_DIRENT_GET_CRC((ntohl(t[0])));
 	crc = p1212_calc_crc(0, &t[1], crclen, 0);
 	crc1 = p1212_calc_crc(0,&t[1], crclen, 1);
-	if ((crc != romcrc) && (crc1 != romcrc)) {
+	crc2 = p1212_calc_crc(0,&t[1], crclen, 2);
+	if ((crc != romcrc) && (crc1 != romcrc) && (crc2 != romcrc)) {
 		DPRINTF(("Invalid ROM: CRC: 0x%04hx, Calculated CRC: "
-			    "0x%04hx, CRC1: 0x%04hx\n", (unsigned short)romcrc,
-			    (unsigned short)crc, (unsigned short)crc1));
+			    "0x%04hx, CRC1: 0x%04hx, CRC2: 0x%04hx\n",
+			    (unsigned short)romcrc, (unsigned short)crc,
+			    (unsigned short)crc1, (unsigned short)crc2));
 		return 1;
 	}
+	if (romcrc == crc2)
+		DPRINTF(("%s: warning byte-swapping rom problems\n", __func__));
 	t++;
 	for (i = 0; i < crclen; i++) {
 		entry = ntohl(t[i]);
-		
+
 		type = P1212_DIRENT_GET_KEYTYPE(entry);
 		val = P1212_DIRENT_GET_KEYVALUE(entry);
 		if ((type != P1212_KEYTYPE_Leaf) ||
@@ -857,22 +928,28 @@ p1212_parse_textdir(struct p1212_com *com, u_int32_t *addr)
 		}
 
 		new = P1212_DIRENT_GET_VALUE(entry);
-#ifdef __NetBSD__
+#ifdef	__NetBSD__
 		com->text = realloc(com->text, size * (com->textcnt + 1),
 		    M_DEVBUF, M_WAITOK);
-#else
+#else	/* __NetBSD__ */
 		p = malloc(size * (com->textcnt + 1), M_DEVBUF, M_WAITOK);
+		//MPRINTF_OLD("malloc(DEVBUF)", p);
 		bzero(&p[com->textcnt], size);
 		if (com->text != NULL) {
 			bcopy(com->text, p, size * (com->textcnt));
 			free(com->text, M_DEVBUF);
+			//MPRINTF_OLD("free(DEVBUF)", com->text);
+			com->text = NULL;	/* XXX */
 		}
 		com->text = p;
-#endif
+#endif	/* ! __NetBSD__ */
 		if ((com->text[i] = p1212_parse_text_desc(&t[i+new])) == NULL) {
 			DPRINTF(("Got an error parsing text descriptor.\n"));
-			if (com->textcnt == 0)
+			if (com->textcnt == 0) {
 				free(com->text, M_DEVBUF);
+				//MPRINTF_OLD("free(DEVBUF)", com->text);
+				com->text = NULL;	/* XXX */
+			}
 			return 1;
 		}
 		com->textcnt++;
@@ -884,15 +961,15 @@ struct p1212_textdata *
 p1212_parse_text_desc(u_int32_t *addr)
 {
 	u_int32_t *t;
-	u_int16_t crclen, crc, crc1, romcrc;
+	u_int16_t crclen, crc, crc1, crc2, romcrc;
 	struct p1212_textdata *text;
 	int size;
-	
+
 	t = addr;
-	
+
 	crclen = P1212_DIRENT_GET_LEN((ntohl(t[0])));
 	romcrc = P1212_DIRENT_GET_CRC((ntohl(t[0])));
-		
+
 	if (crclen < P1212_TEXT_Min_Leaf_Length) {
 		DPRINTF(("Invalid ROM: text descriptor too short\n"));
 		return NULL;
@@ -901,16 +978,22 @@ p1212_parse_text_desc(u_int32_t *addr)
 	crc = p1212_calc_crc(0, &t[1], crclen, 0);
 	if (crc != romcrc) {
 		crc1 = p1212_calc_crc(0, &t[1], crclen, 1);
-		if (crc1 != romcrc) {
+		crc2 = p1212_calc_crc(0, &t[1], crclen, 2);
+		if ((crc1 != romcrc) && (crc2 != romcrc)) {
 			DPRINTF(("Invalid ROM: CRC: 0x%04hx, Calculated CRC: "
-		            "0x%04hx, CRC1: 0x%04hx\n", (unsigned short)romcrc,
-			    (unsigned short)crc, (unsigned short)crc1));
+			    "0x%04hx, CRC1: 0x%04hx, CRC1: 0x%04hx\n",
+			    (unsigned short)romcrc, (unsigned short)crc,
+			    (unsigned short)crc1, (unsigned short)crc2));
 			return NULL;
 		}
 	}
+	if (romcrc == crc2)
+		DPRINTF(("%s: warning byte-swapping rom problems\n", __func__));
 
 	t++;
-	text = malloc(sizeof(struct p1212_textdata), M_DEVBUF, M_WAITOK);
+	MALLOC(text, struct p1212_textdata *, sizeof(*text), M_DEVBUF,
+	    M_WAITOK);
+	//MPRINTF_OLD("MALLOC(DEVBUF)", text);
 	text->spec_type = P1212_TEXT_GET_Spec_Type((ntohl(t[0])));
 	text->spec_id = P1212_TEXT_GET_Spec_Id((ntohl(t[0])));
 	text->lang_id = ntohl(t[1]);
@@ -920,14 +1003,16 @@ p1212_parse_text_desc(u_int32_t *addr)
 	crclen -= 2;
 	size = (crclen * sizeof(u_int32_t));
 
-#ifdef M_ZERO
+#ifdef	M_ZERO
 	text->text = malloc(size + 1, M_DEVBUF, M_WAITOK|M_ZERO);
-#else
+	//MPRINTF_OLD("malloc(DEVBUF)", text->text);
+#else	/* M_ZERO */
 	text->text = malloc(size + 1, M_DEVBUF, M_WAITOK);
+	//MPRINTF_OLD("malloc(DEVBUF)", text->text);
 	bzero(text->text, size + 1);
-#endif
+#endif	/* ! M_ZERO */
 
-	memcpy(text->text, &t[0], size);
+	bcopy(&t[0], text->text, size);
 
 	return text;
 }
@@ -939,33 +1024,27 @@ p1212_find(struct p1212_dir *root, int type, int value, int flags)
 	struct p1212_dir *dir, *sdir, *parent;
 	struct p1212_data *data;
 	int numkeys;
-#ifdef __OpenBSD__
+#ifdef	__OpenBSD__
 	struct p1212_key **p;
-#endif
+#endif	/* __OpenBSD__ */
 
 	numkeys = 0;
 	retkeys = NULL;
-	
+
 	if ((type < P1212_KEYTYPE_Immediate) ||
 	    (type > P1212_KEYTYPE_Directory)) {
-#ifdef DIAGNOSTIC
-		printf("p1212_find: invalid type - %d\n", type);
-#endif
+		DPRINTF(("p1212_find: invalid type - %d\n", type));
 		return NULL;
 	}
 
 	if ((value < -1) ||
 	    (value > (sizeof(p1212_keyvalue_strings) / sizeof(char *)))) {
-#ifdef DIAGNOSTIC
-		printf("p1212_find: invalid value - %d\n", value);
-#endif
+		DPRINTF(("p1212_find: invalid value - %d\n", value));
 		return NULL;
 	}
-	
+
 	if (flags & ~(P1212_FIND_SEARCHALL | P1212_FIND_RETURNALL)) {
-#ifdef DIAGNOSTIC
-		printf("p1212_find: invalid flags - %d\n", flags);
-#endif
+		DPRINTF(("p1212_find: invalid flags - %d\n", flags));
 		return NULL;
 	}
 
@@ -974,7 +1053,7 @@ p1212_find(struct p1212_dir *root, int type, int value, int flags)
 	 * without using recursion. Using the walk API would have made things
 	 * more complicated in trying to build up the return struct otherwise.
 	 */
-	
+
 	dir = root;
 	sdir = NULL;
 
@@ -991,16 +1070,19 @@ p1212_find(struct p1212_dir *root, int type, int value, int flags)
 					retkeys = realloc(retkeys,
 					    sizeof(struct p1212_key *) *
 					    (numkeys + 1), M_DEVBUF, M_WAITOK);
-#else
+#else	/* __NetBSD__ */
 					p = malloc(sizeof(struct p1212_key *) *
 					    (numkeys + 1), M_DEVBUF, M_WAITOK);
+					//MPRINTF_OLD("malloc(DEVBUF)", p);
 					if (retkeys != NULL) {
 						bcopy(retkeys, p, numkeys *
 						    sizeof(struct p1212_key *));
 						free(retkeys, M_DEVBUF);
+						//MPRINTF_OLD("free(DEVBUF)", retkeys);
+						retkeys = NULL;	/* XXX */
 					}
 					retkeys = p;
-#endif
+#endif	/* ! __NetBSD__ */
 					retkeys[numkeys - 1] = &sdir->com.key;
 					retkeys[numkeys] = NULL;
 					if ((flags & P1212_FIND_RETURNALL)
@@ -1021,16 +1103,19 @@ p1212_find(struct p1212_dir *root, int type, int value, int flags)
 					retkeys = realloc(retkeys,
 					    sizeof(struct p1212_key *) *
 					    (numkeys + 1), M_DEVBUF, M_WAITOK);
-#else
+#else	/* __NetBSD__ */
 					p = malloc(sizeof(struct p1212_key *) *
 					    (numkeys + 1), M_DEVBUF, M_WAITOK);
+					//MPRINTF_OLD("malloc(DEVBUF)", p);
 					if (retkeys != NULL) {
 						bcopy(retkeys, p, numkeys *
 						    sizeof(struct p1212_key *));
 						free(retkeys, M_DEVBUF);
+						//MPRINTF_OLD("free(DEVBUF)", retkeys);
+						retkeys = NULL;	/* XXX */
 					}
 					retkeys = p;
-#endif
+#endif	/* ! __NetBSD__ */
 					retkeys[numkeys - 1] = &data->com.key;
 					retkeys[numkeys] = NULL;
 					if ((flags & P1212_FIND_RETURNALL)
@@ -1056,7 +1141,7 @@ p1212_find(struct p1212_dir *root, int type, int value, int flags)
 	return retkeys;
 }
 
-void 
+void
 p1212_walk(struct p1212_dir *root, void *arg,
     void (*func)(struct p1212_key *, void *))
 {
@@ -1067,22 +1152,18 @@ p1212_walk(struct p1212_dir *root, void *arg,
 	sdir = NULL;
 
 	if (func == NULL) {
-#ifdef DIAGNOSTIC
-		printf("p1212_walk: Passed in NULL function\n");
-#endif
+		DPRINTF(("p1212_walk: Passed in NULL function\n"));
 		return;
 	}
 	if (root == NULL) {
-#ifdef DIAGNOSTIC
-		printf("p1212_walk: Called with NULL root\n");
-#endif
+		DPRINTF(("p1212_walk: Called with NULL root\n"));
 		return;
 	}
-	
+
 	/* Allow walking from any point. Just mark the starting point. */
 	parent = root->parent;
 	root->parent = NULL;
-	
+
 	/*
 	 * Depth first traversal that doesn't use recursion.
 	 *
@@ -1095,7 +1176,7 @@ p1212_walk(struct p1212_dir *root, void *arg,
 
 	while (dir) {
 		func((struct p1212_key *) dir, arg);
-		TAILQ_FOREACH(data, &dir->data_root, data) 
+		TAILQ_FOREACH(data, &dir->data_root, data)
 			func((struct p1212_key *) data, arg);
 		if (!TAILQ_EMPTY(&dir->subdir_root)) {
 			sdir = TAILQ_FIRST(&dir->subdir_root);
@@ -1108,7 +1189,7 @@ p1212_walk(struct p1212_dir *root, void *arg,
 			} while ((sdir == NULL) && dir);
 		}
 		dir = sdir;
-	} 
+	}
 
 	root->parent = parent;
 }
@@ -1117,17 +1198,17 @@ void
 p1212_print(struct p1212_dir *dir)
 {
 	int indent;
-	
+
 	indent = 0;
-	
+
 	p1212_walk(dir, &indent, p1212_print_node);
 	printf("\n");
 }
-	
+
 void
 p1212_print_node(struct p1212_key *key, void *arg)
 {
-	
+
 	struct p1212_data *data;
 	struct p1212_dir *sdir, *dir;
 	int i, j, *indent;
@@ -1158,14 +1239,14 @@ p1212_print_node(struct p1212_key *key, void *arg)
 	/* Set the indent string up. 4 spaces per level. */
 	for (i = 0; i < (*indent * 4); i++)
 		printf(" ");
-	
+
 	if (dir) {
 		printf("Directory: ");
 		if (dir->print)
 			dir->print(dir);
 		else {
 			if (key->key_value >=
-			    (sizeof(p1212_keyvalue_strings) / sizeof(char *))) 
+			    (sizeof(p1212_keyvalue_strings) / sizeof(char *)))
 				printf("Unknown type 0x%04hx\n",
 				    (unsigned short)key->key_value);
 			else
@@ -1186,7 +1267,7 @@ p1212_print_node(struct p1212_key *key, void *arg)
 			data->print(data);
 		else {
 			if (key->key_value >=
-			    (sizeof(p1212_keyvalue_strings) / sizeof(char *))) 
+			    (sizeof(p1212_keyvalue_strings) / sizeof(char *)))
 				printf("Unknown type 0x%04hx: ",
 				    (unsigned short)key->key_value);
 			else
@@ -1194,12 +1275,12 @@ p1212_print_node(struct p1212_key *key, void *arg)
 				    p1212_keyvalue_strings[key->key_value]);
 
 			printf("0x%08x\n", key->val);
-#ifdef DIAGNOSTIC
+#ifdef	DIAGNOSTIC
 			if ((data->com.key.key_type == P1212_KEYTYPE_Leaf) &&
-			    (data->leafdata == NULL)) 
+			    (data->leafdata == NULL))
 				panic("Invalid data node in configrom tree");
-#endif
-				
+#endif	/* DIAGNOSTIC */
+
 			if (data->leafdata) {
 				for (i = 0; i < data->leafdata->len; i++) {
 					for (j = 0; j < (*indent * 4); j++)
@@ -1208,14 +1289,14 @@ p1212_print_node(struct p1212_key *key, void *arg)
 					    data->leafdata->data[i]);
 				}
 			}
-			if (data->com.textcnt) 
+			if (data->com.textcnt)
 				for (i = 0; i < data->com.textcnt; i++) {
 					for (j = 0; j < (*indent * 4); j++)
 						printf(" ");
 					printf("Text descriptor: %s\n",
 					    data->com.text[i]->text);
 				}
-			
+
 		}
 	}
 }
@@ -1229,7 +1310,7 @@ p1212_free(struct p1212_rom *rom)
 	int i;
 
 	dir = rom->root;
-	
+
 	/* Avoid recursing. Find the bottom most node and work back. */
 	while (dir) {
 		if (!TAILQ_EMPTY(&dir->subdir_root)) {
@@ -1247,36 +1328,63 @@ p1212_free(struct p1212_rom *rom)
 				TAILQ_REMOVE(&dir->parent->subdir_root, dir,
 				    dir);
 		}
-		
+
 		while ((data = TAILQ_FIRST(&dir->data_root))) {
 			if (data->leafdata) {
-				if (data->leafdata->data)
+				if (data->leafdata->data) {
 					free(data->leafdata->data, M_DEVBUF);
-				free(data->leafdata, M_DEVBUF);
+					//MPRINTF_OLD("free(DEVBUF)", data->leafdata->data);
+					data->leafdata->data = NULL;	/* XXX */
+				}
+				FREE(data->leafdata, M_DEVBUF);
+				//MPRINTF_OLD("FREE(DEVBUF)", data->leafdata);
+				data->leafdata = NULL;	/* XXX */
 			}
 			TAILQ_REMOVE(&dir->data_root, data, data);
 			if (data->com.textcnt) {
-				for (i = 0; i < data->com.textcnt; i++)
-					free(data->com.text[i], M_DEVBUF);
+				for (i = 0; i < data->com.textcnt; i++) {
+					free(data->com.text[i]->text, M_DEVBUF);
+					//MPRINTF_OLD("free(DEVBUF)", data->com.text[i]->text);
+					data->com.text[i]->text = NULL;	/* XXX */
+					FREE(data->com.text[i], M_DEVBUF);
+					//MPRINTF_OLD("FREE(DEVBUF)", data->com.text[i]);
+					data->com.text[i] = NULL;	/* XXX */
+				}
 				free(data->com.text, M_DEVBUF);
+				//MPRINTF_OLD("free(DEVBUF)", data->com.text);
+				data->com.text = NULL;	/* XXX */
 			}
-			free(data, M_DEVBUF);
+			FREE(data, M_DEVBUF);
+			//MPRINTF_OLD("FREE(DEVBUF)", data);
+			data = NULL;	/* XXX */
 		}
 		sdir = dir;
-		if (dir->parent) 
+		if (dir->parent)
 			dir = dir->parent;
 		else
 			dir = NULL;
 		if (sdir->com.textcnt) {
-			for (i = 0; i < sdir->com.textcnt; i++)
-				free(sdir->com.text[i], M_DEVBUF);
+			for (i = 0; i < sdir->com.textcnt; i++) {
+				FREE(sdir->com.text[i], M_DEVBUF);
+				//MPRINTF_OLD("FREE(DEVBUF)", sdir->com.text[i]);
+				sdir->com.text[i] = NULL;	/* XXX */
+			}
 			free(sdir->com.text, M_DEVBUF);
+			//MPRINTF_OLD("free(DEVBUF)", sdir->com.text);
+			sdir->com.text = NULL;	/* XXX */
 		}
-		free(sdir, M_DEVBUF);
+		FREE(sdir, M_DEVBUF);
+		//MPRINTF_OLD("FREE(DEVBUF)", sdir);
+		sdir = NULL;	/* XXX */
 	}
-	if (rom->len)
+	if (rom->len) {
 		free(rom->data, M_DEVBUF);
-	free(rom, M_DEVBUF);
+		//MPRINTF_OLD("free(DEVBUF)", rom->data);
+		rom->data = NULL;	/* XXX */
+	}
+	FREE(rom, M_DEVBUF);
+	//MPRINTF_OLD("FREE(DEVBUF)", rom);
+	rom = NULL;	/* XXX */
 }
 
 /*
@@ -1294,22 +1402,38 @@ p1212_calc_crc(u_int32_t crc, u_int32_t *data, int len, int broke)
 	int shift;
 	u_int32_t sum;
 	int i;
-	
+
 	for (i = 0; i < len; i++) {
 		for (shift = 28; shift > 0; shift -= 4) {
-			sum = ((crc >> 12) ^ (ntohl(data[i]) >> shift)) &
-			    0x0000000f;
+			if (broke == 2)
+				sum = ((crc >> 12) ^
+				    (letoh32(data[i]) >> shift)) & 0x0000000f;
+			else
+				sum = ((crc >> 12) ^ (ntohl(data[i]) >> shift))
+				    & 0x0000000f;
 			crc = (crc << 4) ^ (sum << 12) ^ (sum << 5) ^ sum;
 		}
-		
-		
+
+
 		/* The broken implementation doesn't do the last shift. */
-		if (!broke) {
+		switch (broke) {
+		case 0:
 			sum = ((crc >> 12) ^ ntohl(data[i])) & 0x0000000f;
 			crc = (crc << 4) ^ (sum << 12) ^ (sum << 5) ^ sum;
+			break;
+		case 2:
+			sum = ((crc >> 12) ^ letoh32(data[i])) & 0x0000000f;
+			crc = (crc << 4) ^ (sum << 12) ^ (sum << 5) ^ sum;
+			break;
+		default:
+			break;
 		}
 	}
-	return (u_int16_t)crc;
+
+	if (broke == 2)
+		return swap16((u_int16_t)crc);
+	else
+		return (u_int16_t)crc;
 }
 
 /*
@@ -1323,82 +1447,91 @@ p1212_match_units(struct device *sc, struct p1212_dir *dir,
 {
 	struct p1212_dir **udirs;
 	struct device **devret, *dev;
-	int numdev;
-#ifdef __OpenBSD__
+	int numdev, i;
+#ifdef	__OpenBSD__
 	struct device **p;
-#endif
-	
+#endif	/* __OpenBSD__ */
+
 	/*
-	 * Setup typical return val. Always allocate one extra pointer for a
+	 * Setup typically return val. Always allocate one extra pointer for a
 	 * NULL guard end pointer.
 	 */
 
 	numdev = 0;
 	devret = malloc(sizeof(struct device *) * 2, M_DEVBUF, M_WAITOK);
+	//MPRINTF_OLD("malloc(DEVBUF)", devret);
 	devret[0] = devret[1] = NULL;
 
 	udirs = (struct p1212_dir **)p1212_find(dir, P1212_KEYTYPE_Directory,
-	    P1212_KEYVALUE_Unit_Directory, 
+	    P1212_KEYVALUE_Unit_Directory,
 	    P1212_FIND_SEARCHALL|P1212_FIND_RETURNALL);
-	
+
 	if (udirs) {
+		i = 0;
 		do {
-			dev = config_found_sm(sc, udirs, print, NULL);
+			dev = config_found_sm(sc, &udirs[i], print, NULL);
 			if (dev && numdev) {
 #ifdef	__NetBSD__
 				devret = realloc(devret,
 				    sizeof(struct device *) *
 				    (numdev + 2), M_DEVBUF, M_WAITOK);
-#else
+#else	/* __NetBSD__ */
 				p = malloc(sizeof(struct device *) *
 				    (numdev + 2), M_DEVBUF, M_WAITOK);
+				//MPRINTF_OLD("malloc(DEVBUF)", p);
 				bcopy(devret, p,
 				    numdev * sizeof(struct device *));
 				free(devret, M_DEVBUF);
+				//MPRINTF_OLD("free(DEVBUF)", devret);
 				devret = p;
-#endif
+#endif	/* ! __NetBSD__ */
 				devret[numdev++] = dev;
 				devret[numdev] = NULL;
 			} else if (dev) {
 				devret[0] = dev;
 				numdev++;
 			}
-			udirs++;
-		} while (*udirs);
+		} while (udirs[++i]);
+
+		free(udirs, M_DEVBUF);
+		//MPRINTF_OLD("free(DEVBUF)", udirs);
+		udirs = NULL;	/* XXX */
 	}
 	if (numdev == 0) {
 		free(devret, M_DEVBUF);
+		//MPRINTF_OLD("free(DEVBUF)", devret);
+		devret = NULL;	/* XXX */
 		return NULL;
 	}
 	return devret;
 }
 
-/* 
+/*
  * Make these their own functions as they have slightly complicated rules.
  *
  * For example:
  *
  * Under normal circumstances only the 2 extent types can be offset
  * types. However some spec's which use p1212 like SBP2 for
- * firewire/1394 will define a dependent info type as an offset value.  
- * Allow the upper level code to flag this and pass it down during 
+ * firewire/1394 will define a dependent info type as an offset value.
+ * Allow the upper level code to flag this and pass it down during
  * parsing. The same thing applies to immediate types.
  */
 
 int
 p1212_validate_offset(u_int16_t val, u_int32_t mask)
 {
-        if ((val == P1212_KEYVALUE_Node_Units_Extent) ||
-            (val == P1212_KEYVALUE_Node_Memory_Extent) ||
-            ((mask & P1212_ALLOW_DEPENDENT_INFO_OFFSET_TYPE) &&
-             ((val == P1212_KEYVALUE_Unit_Dependent_Info) || 
-              (val == P1212_KEYVALUE_Node_Dependent_Info) || 
-              (val == P1212_KEYVALUE_Module_Dependent_Info))))
-                return 0;
-        return 1;
+	if ((val == P1212_KEYVALUE_Node_Units_Extent) ||
+	    (val == P1212_KEYVALUE_Node_Memory_Extent) ||
+	    ((mask & P1212_ALLOW_DEPENDENT_INFO_OFFSET_TYPE) &&
+	     ((val == P1212_KEYVALUE_Unit_Dependent_Info) ||
+	      (val == P1212_KEYVALUE_Node_Dependent_Info) ||
+	      (val == P1212_KEYVALUE_Module_Dependent_Info))))
+		return 0;
+	return 1;
 }
 
-int      
+int
 p1212_validate_immed(u_int16_t val, u_int32_t mask)
 {
 	switch (val) {

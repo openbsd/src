@@ -1,12 +1,12 @@
-/*	$OpenBSD: ieee1394reg.h,v 1.1 2002/06/25 17:11:49 itojun Exp $	*/
+/*	$OpenBSD: ieee1394reg.h,v 1.2 2002/12/13 02:52:04 tdeval Exp $	*/
 /*	$NetBSD: ieee1394reg.h,v 1.12 2002/02/27 05:07:25 jmc Exp $	*/
 
-/*-
+/*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by 
+ * by
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -18,8 +18,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
@@ -37,12 +37,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _DEV_IEEE1394_IEEE1394REG_H_
+#ifndef	_DEV_IEEE1394_IEEE1394REG_H_
 #define	_DEV_IEEE1394_IEEE1394REG_H_
 
 #include <dev/std/ieee1212reg.h>
 
-/* Transaction Codes (Table 6-9)
+/*
+ * Transaction Codes (Table 6-9)
  */
 #define	IEEE1394_TCODE_WRITE_REQUEST_QUADLET	0
 #define	IEEE1394_TCODE_WRITE_REQUEST_DATABLOCK	1
@@ -52,16 +53,17 @@
 #define	IEEE1394_TCODE_READ_REQUEST_DATABLOCK	5
 #define	IEEE1394_TCODE_READ_RESPONSE_QUADLET	6
 #define	IEEE1394_TCODE_READ_RESPONSE_DATABLOCK	7
-#define	IEEE1394_TCODE_CYCLE_START		0x8
+#define	IEEE1394_TCODE_CYCLE_START		8
 #define	IEEE1394_TCODE_LOCK_REQUEST		9
-#define	IEEE1394_TCODE_ISOCHRONOUS_DATA_BLOCK	10
+#define	IEEE1394_TCODE_ISOCHRONOUS_DATABLOCK	10
 #define	IEEE1394_TCODE_LOCK_RESPONSE		11
 #define	IEEE1394_TCODE_RESERVED_12		12
 #define	IEEE1394_TCODE_RESERVED_13		13
 #define	IEEE1394_TCODE_RESERVED_14		14
 #define	IEEE1394_TCODE_RESERVED_15		15
 
-/* Extended transaction codes (Table 6-10)
+/*
+ * Extended transaction codes (Table 6-10)
  */
 #define	IEEE1394_XTCODE_RESERVED_0		P1212_LOCK_RESERVED_0
 #define	IEEE1394_XTCODE_MASK_SWAP		P1212_LOCK_MASK_SWAP
@@ -71,19 +73,21 @@
 #define	IEEE1394_XTCODE_BOUNDED_ADD		P1212_LOCK_BOUNDED_ADD
 #define	IEEE1394_XTCODE_WRAP_ADD		P1212_LOCK_WRAP_ADD
 #define	IEEE1394_XTCODE_VENDOR_DEPENDENT	P1212_LOCK_VENDOR_DEPENDENT
-/* 0x0008 .. 0xFFFF are reserved.
+/*
+ * 0x0008 .. 0xFFFF are reserved.
  */
 
-/* Response codes (Table 6-11)
+/*
+ * Response codes (Table 6-11)
  */
-#define	IEEE1394_RCODE_RESP_COMPLETE		0
+#define	IEEE1394_RCODE_COMPLETE			0
 #define	IEEE1394_RCODE_RESERVED_1		1
 #define	IEEE1394_RCODE_RESERVED_2		2
 #define	IEEE1394_RCODE_RESERVED_3		3
-#define	IEEE1394_RCODE_RESP_CONFLICT_ERROR	4
-#define	IEEE1394_RCODE_RESP_DATA_ERROR		5
-#define	IEEE1394_RCODE_RESP_TYPE_ERROR		6
-#define	IEEE1394_RCODE_RESP_ADDRESS_ERROR	7
+#define	IEEE1394_RCODE_CONFLICT_ERROR		4
+#define	IEEE1394_RCODE_DATA_ERROR		5
+#define	IEEE1394_RCODE_TYPE_ERROR		6
+#define	IEEE1394_RCODE_ADDRESS_ERROR		7
 #define	IEEE1394_RCODE_RESERVED_8		8
 #define	IEEE1394_RCODE_RESERVED_9		9
 #define	IEEE1394_RCODE_RESERVED_10		10
@@ -115,127 +119,106 @@
 #define	IEEE1394_ACK_TYPE_ERROR			14
 #define	IEEE1394_ACK_RESERVED_15		15
 
-/* Defined IEEE 1394 speeds.
+/*
+ * Defined IEEE 1394 speeds.
  */
-#define	IEEE1394_SPD_S100	0	/* 1394-1995 */
-#define	IEEE1394_SPD_S200	1	/* 1394-1995 */
-#define	IEEE1394_SPD_S400	2	/* 1394-1995 */
-#define	IEEE1394_SPD_S800	3	/* 1394b */
-#define	IEEE1394_SPD_S1600	4	/* 1394b */
-#define	IEEE1394_SPD_S3200	5	/* 1394b */
-#define	IEEE1394_SPD_MAX	6
+#define	IEEE1394_SPD_S100			0	/* 1394-1995 */
+#define	IEEE1394_SPD_S200			1	/* 1394-1995 */
+#define	IEEE1394_SPD_S400			2	/* 1394-1995 */
+#define	IEEE1394_SPD_S800			3	/* 1394b */
+#define	IEEE1394_SPD_S1600			4	/* 1394b */
+#define	IEEE1394_SPD_S3200			5	/* 1394b */
+#define	IEEE1394_SPD_MAX			6
 
 #define	IEEE1394_SPD_STRINGS	"100Mb/s", "200Mb/s", "400Mb/s", "800Mb/s", \
-		"1.6Gb/s", "3.2Gb/s"
+				"1.6Gb/s", "3.2Gb/s"
 
 #if 0
-struct ieee1394_async_nodata {
-	u_int32_t an_header_crc;
-} __attribute((__packed__));
+typedef struct ieee1394_async_nodata {
+	u_int32_t	an_header_crc;
+} ieee1394_async_nodata __attribute((__packed__));
 #endif
 
-#define	IEEE1394_BCAST_PHY_ID	0x3f
-#define IEEE1394_ISOCH_MASK	0x3f
-
-/*
- * Transaction code
- */
-#define	IEEE1394_TCODE_WRITE_REQ_QUAD	0x0
-#define	IEEE1394_TCODE_WRITE_REQ_BLOCK	0x1
-#define	IEEE1394_TCODE_WRITE_RESP	0x2
-#define	IEEE1394_TCODE_READ_REQ_QUAD	0x4
-#define	IEEE1394_TCODE_READ_REQ_BLOCK	0x5
-#define	IEEE1394_TCODE_READ_RESP_QUAD	0x6
-#define	IEEE1394_TCODE_READ_RESP_BLOCK	0x7
-#define	IEEE1394_TCODE_CYCLE_START	0x8
-#define	IEEE1394_TCODE_LOCK_REQ		0x9
-#define	IEEE1394_TCODE_STREAM_DATA	0xa
-#define	IEEE1394_TCODE_LOCK_RESP	0xb
-
-/*
- * Response code
- */
-#define	IEEE1394_RCODE_COMPLETE		0x0
-#define	IEEE1394_RCODE_CONFLICT_ERROR	0x4
-#define	IEEE1394_RCODE_DATA_ERROR	0x5
-#define	IEEE1394_RCODE_TYPE_ERROR	0x6
-#define	IEEE1394_RCODE_ADDRESS_ERROR	0x7
+#define	IEEE1394_BCAST_PHY_ID			0x3f
+#define	IEEE1394_ISOCH_MASK			0x3f
 
 /*
  * Signature
  */
-#define	IEEE1394_SIGNATURE              0x31333934
+#define	IEEE1394_SIGNATURE			0x31333934
 
 /*
  * Tag value
  */
-#define	IEEE1394_TAG_GASP		0x3
+#define	IEEE1394_TAG_GASP			0x3
 
 /*
  * Control and Status Registers (IEEE1212 & IEEE1394)
  */
-#define	CSR_BASE_HI			0x0000ffff
-#define	CSR_BASE_LO			0xf0000000
-#define	CSR_BASE			0x0000fffff0000000
+#define	CSR_BASE_HI				0x0000ffff
+#define	CSR_BASE_LO				0xf0000000
+#define	CSR_BASE				0x0000fffff0000000UL
 
-#define	CSR_STATE_CLEAR			0x0000
-#define	CSR_STATE_SET			0x0004
-#define	CSR_NODE_IDS			0x0008
-#define	CSR_RESET_START			0x000c
-#define	CSR_INDIRECT_ADDRESS		0x0010
-#define	CSR_INDIRECT_DATA		0x0014
-#define	CSR_SPLIT_TIMEOUT_HI		0x0018
-#define	CSR_SPLIT_TIMEOUT_LO		0x001c
-#define	CSR_ARGUMENT_HI			0x0020
-#define	CSR_ARGUMENT_LO			0x0024
-#define	CSR_TEST_START			0x0028
-#define	CSR_TEST_STATUS			0x002c
-#define	CSR_INTERRUPT_TARGET		0x0050
-#define	CSR_INTERRUPT_MASK		0x0054
-#define	CSR_CLOCK_VALUE			0x0058
-#define	CSR_CLOCK_PERIOD		0x005c
-#define	CSR_CLOCK_STROBE_ARRIVED	0x0060
-#define	CSR_CLOCK_INFO			0x0064
-#define	CSR_MESSAGE_REQUEST		0x0080
-#define	CSR_MESSAGE_RESPONSE		0x00c0
+#define	CSR_STATE_CLEAR				0x0000
+#define	CSR_STATE_SET				0x0004
+#define	CSR_NODE_IDS				0x0008
+#define	CSR_RESET_START				0x000c
+#define	CSR_INDIRECT_ADDRESS			0x0010
+#define	CSR_INDIRECT_DATA			0x0014
+#define	CSR_SPLIT_TIMEOUT_HI			0x0018
+#define	CSR_SPLIT_TIMEOUT_LO			0x001c
+#define	CSR_ARGUMENT_HI				0x0020
+#define	CSR_ARGUMENT_LO				0x0024
+#define	CSR_TEST_START				0x0028
+#define	CSR_TEST_STATUS				0x002c
+#define	CSR_INTERRUPT_TARGET			0x0050
+#define	CSR_INTERRUPT_MASK			0x0054
+#define	CSR_CLOCK_VALUE				0x0058
+#define	CSR_CLOCK_PERIOD			0x005c
+#define	CSR_CLOCK_STROBE_ARRIVED		0x0060
+#define	CSR_CLOCK_INFO				0x0064
+#define	CSR_MESSAGE_REQUEST			0x0080
+#define	CSR_MESSAGE_RESPONSE			0x00c0
 
-#define	CSR_SB_CYCLE_TIME		0x0200
-#define	CSR_SB_BUS_TIME			0x0204
-#define	CSR_SB_POWER_FAIL_IMMINENT	0x0208
-#define	CSR_SB_POWER_SOURCE		0x020c
-#define	CSR_SB_BUSY_TIMEOUT		0x0210
-#define	CSR_SB_PRIORITY_BUDGET_HI	0x0214
-#define	CSR_SB_PRIORITY_BUDGET_LO	0x0218
-#define	CSR_SB_BUS_MANAGER_ID		0x021c
-#define	CSR_SB_BANDWIDTH_AVAILABLE	0x0220
-#define	CSR_SB_CHANNEL_AVAILABLE_HI	0x0224
-#define	CSR_SB_CHANNEL_AVAILABLE_LO	0x0228
-#define	CSR_SB_MAINT_CONTROL		0x022c
-#define	CSR_SB_MAINT_UTILITY		0x0230
-#define	CSR_SB_BROADCAST_CHANNEL	0x0234
+#define	CSR_SB_CYCLE_TIME			0x0200
+#define	CSR_SB_BUS_TIME				0x0204
+#define	CSR_SB_POWER_FAIL_IMMINENT		0x0208
+#define	CSR_SB_POWER_SOURCE			0x020c
+#define	CSR_SB_BUSY_TIMEOUT			0x0210
+#define	CSR_SB_PRIORITY_BUDGET_HI		0x0214
+#define	CSR_SB_PRIORITY_BUDGET_LO		0x0218
+#define	CSR_SB_BUS_MANAGER_ID			0x021c
+#define	CSR_SB_BANDWIDTH_AVAILABLE		0x0220
+#define	CSR_SB_CHANNEL_AVAILABLE_HI		0x0224
+#define	CSR_SB_CHANNEL_AVAILABLE_LO		0x0228
+#define	CSR_SB_MAINT_CONTROL			0x022c
+#define	CSR_SB_MAINT_UTILITY			0x0230
+#define	CSR_SB_BROADCAST_CHANNEL		0x0234
 
-#define	CSR_CONFIG_ROM			0x0400
+#define	CSR_CONFIG_ROM				0x0400
 
-#define	CSR_SB_OUTPUT_MASTER_PLUG	0x0900
-#define	CSR_SB_OUTPUT_PLUG		0x0904
-#define	CSR_SB_INPUT_MASTER_PLUG	0x0980
-#define	CSR_SB_INPUT_PLUG		0x0984
-#define	CSR_SB_FCP_COMMAND_FRAME	0x0b00
-#define	CSR_SB_FCP_RESPONSE_FRAME	0x0d00
-#define	CSR_SB_TOPOLOGY_MAP		0x1000
-#define	CSR_SB_END			0x1400
+#define	CSR_SB_OUTPUT_MASTER_PLUG		0x0900
+#define	CSR_SB_OUTPUT_PLUG			0x0904
+#define	CSR_SB_INPUT_MASTER_PLUG		0x0980
+#define	CSR_SB_INPUT_PLUG			0x0984
+#define	CSR_SB_FCP_COMMAND_FRAME		0x0b00
+#define	CSR_SB_FCP_RESPONSE_FRAME		0x0d00
+#define	CSR_SB_TOPOLOGY_MAP			0x1000
+#define	CSR_SB_END				0x1400
 
-#define IEEE1394_MAX_REC(i)     ((0x1 << (i + 1)))
-#define IEEE1394_BUSINFO_LEN	3
+#define	IEEE1394_MAX_REC(i)			((0x1 << (i + 1)))
+#define	IEEE1394_BUSINFO_LEN			3
 
-#define IEEE1394_GET_MAX_REC(i) ((i & 0x0000f000) >> 12)
-#define IEEE1394_GET_LINK_SPD(i) (i & 0x00000007)
+#define	IEEE1394_GET_MAX_REC(i)			((i & 0x0000f000) >> 12)
+#define	IEEE1394_GET_LINK_SPD(i)		(i & 0x00000007)
 
-/* XXX. Should be at if_fw level but needed here for constructing the config
-   rom. An interface for if_fw to send up a config rom should be done (probably
-   in the p1212 routines. */
+/*
+ * XXX. Should be at if_fw level but needed here for constructing the config
+ * rom. An interface for if_fw to send up a config rom should be done (probably
+ * in the p1212 routines.
+ */
 
-#define FW_FIFO_HI      0x2000
-#define FW_FIFO_LO      0x00000000
+#define	FW_FIFO_HI				0x2000
+#define	FW_FIFO_LO				0x00000000
 
 #endif	/* _DEV_IEEE1394_IEEE1394REG_H_ */

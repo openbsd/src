@@ -1,7 +1,7 @@
-/*	$OpenBSD: fwohcireg.h,v 1.1 2002/06/25 17:11:49 itojun Exp $	*/
+/*	$OpenBSD: fwohcireg.h,v 1.2 2002/12/13 02:52:04 tdeval Exp $	*/
 /*	$NetBSD: fwohcireg.h,v 1.11 2002/01/26 16:34:27 ichiro Exp $	*/
 
-/*-
+/*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
@@ -18,8 +18,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
@@ -37,7 +37,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _DEV_IEEE1394_FWOHCIREG_H_
+#ifndef	_DEV_IEEE1394_FWOHCIREG_H_
 #define	_DEV_IEEE1394_FWOHCIREG_H_
 
 /* PCI/CardBus-Specific definitions
@@ -45,25 +45,25 @@
 
 /* In the PCI Class Code Register ...
  */
-#define	PCI_INTERFACE_OHCI		0x10
+#define	PCI_INTERFACE_OHCI			0x10
 
 /* The OHCI Regisers are in PCI BAR0.
  */
-#define	PCI_OHCI_MAP_REGISTER		0x10
+#define	PCI_OHCI_MAP_REGISTER			0x10
 
 /* HCI Control Register (in PCI config space)
  */
-#define	PCI_OHCI_CONTROL_REGISTER	0x40
+#define	PCI_OHCI_CONTROL_REGISTER		0x40
 
 /* If the following bit, all OHCI register access
  * and DMA transactions are byte swapped.
  */
-#define	PCI_GLOBAL_SWAP_BE		0x00000001
+#define	PCI_GLOBAL_SWAP_BE			0x00000001
 
 /* Bus Independent Definitions */
 
-#define	OHCI_CONFIG_SIZE		1024
-#define	OHCI_CONFIG_ALIGNMENT		1024
+#define	OHCI_CONFIG_SIZE			1024
+#define	OHCI_CONFIG_ALIGNMENT			1024
 
 /* OHCI Registers
  * OHCI Registers are divided into four spaces:
@@ -140,9 +140,9 @@
 #define	OHCI_REG_reserved_0f8			0x0f8
 #define	OHCI_REG_reserved_0fc			0x0fc
 #define	OHCI_REG_AsynchronousRequestFilterHiSet	0x100
-#define	OHCI_REG_AsynchronousRequestFilterHiClear	0x104
+#define	OHCI_REG_AsynchronousRequestFilterHiClear 0x104
 #define	OHCI_REG_AsynchronousRequestFilterLoSet	0x108
-#define	OHCI_REG_AsynchronousRequestFilterLoClear	0x10c
+#define	OHCI_REG_AsynchronousRequestFilterLoClear 0x10c
 #define	OHCI_REG_PhysicalRequestFilterHiSet	0x110
 #define	OHCI_REG_PhysicalRequestFilterHiClear	0x114
 #define	OHCI_REG_PhysicalRequestFilterLoSet	0x118
@@ -197,7 +197,7 @@
 #define	OHCI_SYNC_TX_DMA_READ(sc, ctx, reg) \
 	OHCI_CSR_READ(sc, OHCI_REG_SYNC_TX_DMA_BASE + 16*(ctx) + (reg))
 
-#define	OHCI_REG_SYNC_RX_DMA_BASE	0x400
+#define	OHCI_REG_SYNC_RX_DMA_BASE		0x400
 #define	OHCI_SYNC_RX_DMA_WRITE(sc, ctx, reg, val) \
 	OHCI_CSR_WRITE(sc, OHCI_REG_SYNC_RX_DMA_BASE + 32*(ctx) + (reg), val)
 #define	OHCI_SYNC_RX_DMA_READ(sc, ctx, reg) \
@@ -208,7 +208,7 @@
 
 /* OHCI_REG_Version
  */
-#define	OHCI_Version_GUID_ROM		0x01000000
+#define	OHCI_Version_GUID_ROM			0x01000000
 #define	OHCI_Version_GET_Version(x) \
 	((((x) >> 16) & 0xf) + (((x) >> 20) & 0xf) * 10)
 #define	OHCI_Version_GET_Revision(x) \
@@ -216,20 +216,20 @@
 
 /* OHCI_REG_Guid_Rom
  */
-#define	OHCI_Guid_AddrReset		0x80000000
-#define	OHCI_Guid_RdStart		0x02000000
-#define	OHCI_Guid_RdData_MASK		0x00ff0000
-#define	OHCI_Guid_RdData_BITPOS		16
-#define	OHCI_Guid_MiniROM_MASK		0x000000ff
-#define	OHCI_Guid_MiniROM_BITPOS	0
+#define	OHCI_Guid_AddrReset			0x80000000
+#define	OHCI_Guid_RdStart			0x02000000
+#define	OHCI_Guid_RdData_MASK			0x00ff0000
+#define	OHCI_Guid_RdData_BITPOS			16
+#define	OHCI_Guid_MiniROM_MASK			0x000000ff
+#define	OHCI_Guid_MiniROM_BITPOS		0
 
 /* OHCI_REG_GUIDxx
  */
 
 /* OHCI_REG_CsrControl
  */
-#define	OHCI_CsrControl_Done		0x80000000
-#define	OHCI_CsrControl_SelMASK		0x00000003
+#define	OHCI_CsrControl_Done			0x80000000
+#define	OHCI_CsrControl_SelMASK			0x00000003
 #define	OHCI_CsrControl_BusManId		0
 #define	OHCI_CsrControl_BWAvail			1
 #define	OHCI_CsrControl_ChanAvailHi		2
@@ -237,120 +237,120 @@
 
 /* OHCI_REG_BusOptions
  */
-#define	OHCI_BusOptions_LinkSpd_MASK	0x00000007
-#define	OHCI_BusOptions_LinkSpd_BITPOS	0
-#define	OHCI_BusOptions_G_MASK		0x000000c0
-#define	OHCI_BusOptions_G_BITPOS	6
-#define	OHCI_BusOptions_MaxRec_MASK	0x0000f000
-#define	OHCI_BusOptions_MaxRec_BITPOS	12
-#define	OHCI_BusOptions_CycClkAcc_MASK	0x00ff0000
-#define	OHCI_BusOptions_CycClkAcc_BITPOS 16
-#define	OHCI_BusOptions_PMC		0x08000000
-#define	OHCI_BusOptions_BMC		0x10000000
-#define	OHCI_BusOptions_ISC		0x20000000
-#define	OHCI_BusOptions_CMC		0x40000000
-#define	OHCI_BusOptions_IRMC		0x80000000
-#define	OHCI_BusOptions_reserved	0x07000f38
+#define	OHCI_BusOptions_LinkSpd_MASK		0x00000007
+#define	OHCI_BusOptions_LinkSpd_BITPOS		0
+#define	OHCI_BusOptions_G_MASK			0x000000c0
+#define	OHCI_BusOptions_G_BITPOS		6
+#define	OHCI_BusOptions_MaxRec_MASK		0x0000f000
+#define	OHCI_BusOptions_MaxRec_BITPOS		12
+#define	OHCI_BusOptions_CycClkAcc_MASK		0x00ff0000
+#define	OHCI_BusOptions_CycClkAcc_BITPOS	16
+#define	OHCI_BusOptions_PMC			0x08000000
+#define	OHCI_BusOptions_BMC			0x10000000
+#define	OHCI_BusOptions_ISC			0x20000000
+#define	OHCI_BusOptions_CMC			0x40000000
+#define	OHCI_BusOptions_IRMC			0x80000000
+#define	OHCI_BusOptions_reserved		0x07000f38
 
 /* OHCI_REG_HCControl
  */
 
-#define	OHCI_HCControl_SoftReset	0x00010000
-#define	OHCI_HCControl_LinkEnable	0x00020000
-#define	OHCI_HCControl_PostedWriteEnable 0x00040000
-#define	OHCI_HCControl_LPS		0x00080000
-#define	OHCI_HCControl_APhyEnhanceEnable 0x00400000
-#define	OHCI_HCControl_ProgramPhyEnable	0x00800000
-#define	OHCI_HCControl_NoByteSwapData	0x40000000
-#define	OHCI_HCControl_BIBImageValid	0x80000000
+#define	OHCI_HCControl_SoftReset		0x00010000
+#define	OHCI_HCControl_LinkEnable		0x00020000
+#define	OHCI_HCControl_PostedWriteEnable	0x00040000
+#define	OHCI_HCControl_LPS			0x00080000
+#define	OHCI_HCControl_APhyEnhanceEnable	0x00400000
+#define	OHCI_HCControl_ProgramPhyEnable		0x00800000
+#define	OHCI_HCControl_NoByteSwapData		0x40000000
+#define	OHCI_HCControl_BIBImageValid		0x80000000
 
 /* OHCI_REG_SelfID
  */
-#define	OHCI_SelfID_Error		0x80000000
-#define	OHCI_SelfID_Gen_MASK		0x00ff0000
-#define	OHCI_SelfID_Gen_BITPOS		16
-#define	OHCI_SelfID_Size_MASK		0x000007fc
-#define	OHCI_SelfID_Size_BITPOS		2
+#define	OHCI_SelfID_Error			0x80000000
+#define	OHCI_SelfID_Gen_MASK			0x00ff0000
+#define	OHCI_SelfID_Gen_BITPOS			16
+#define	OHCI_SelfID_Size_MASK			0x000007fc
+#define	OHCI_SelfID_Size_BITPOS			2
 
 /* OHCI_REG_Int{Event|Mask}*
  */
-#define	OHCI_Int_MasterEnable		0x80000000
-#define	OHCI_Int_VendorSpecific		0x40000000
-#define	OHCI_Int_SoftInterrupt		0x20000000
-#define	OHCI_Int_Ack_Tardy		0x08000000
-#define	OHCI_Int_PhyRegRcvd		0x04000000
-#define	OHCI_Int_CycleTooLong		0x02000000
-#define	OHCI_Int_UnrecoverableError	0x01000000
-#define	OHCI_Int_CycleInconsistent	0x00800000
-#define	OHCI_Int_CycleLost		0x00400000
-#define	OHCI_Int_Cycle64Seconds		0x00200000
-#define	OHCI_Int_CycleSynch		0x00100000
-#define	OHCI_Int_Phy			0x00080000
-#define	OHCI_Int_RegAccessFail		0x00040000
-#define	OHCI_Int_BusReset		0x00020000
-#define	OHCI_Int_SelfIDComplete		0x00010000
-#define	OHCI_Int_SelfIDCOmplete2	0x00008000
-#define	OHCI_Int_LockRespErr		0x00000200
-#define	OHCI_Int_PostedWriteErr		0x00000100
-#define	OHCI_Int_IsochRx		0x00000080
-#define	OHCI_Int_IsochTx		0x00000040
-#define	OHCI_Int_RSPkt			0x00000020
-#define	OHCI_Int_RQPkt			0x00000010
-#define	OHCI_Int_ARRS			0x00000008
-#define	OHCI_Int_ARRQ			0x00000004
-#define	OHCI_Int_RespTxComplete		0x00000002
-#define	OHCI_Int_ReqTxComplete		0x00000001
+#define	OHCI_Int_MasterEnable			0x80000000
+#define	OHCI_Int_VendorSpecific			0x40000000
+#define	OHCI_Int_SoftInterrupt			0x20000000
+#define	OHCI_Int_Ack_Tardy			0x08000000
+#define	OHCI_Int_PhyRegRcvd			0x04000000
+#define	OHCI_Int_CycleTooLong			0x02000000
+#define	OHCI_Int_UnrecoverableError		0x01000000
+#define	OHCI_Int_CycleInconsistent		0x00800000
+#define	OHCI_Int_CycleLost			0x00400000
+#define	OHCI_Int_Cycle64Seconds			0x00200000
+#define	OHCI_Int_CycleSynch			0x00100000
+#define	OHCI_Int_Phy				0x00080000
+#define	OHCI_Int_RegAccessFail			0x00040000
+#define	OHCI_Int_BusReset			0x00020000
+#define	OHCI_Int_SelfIDComplete			0x00010000
+#define	OHCI_Int_SelfIDCOmplete2		0x00008000
+#define	OHCI_Int_LockRespErr			0x00000200
+#define	OHCI_Int_PostedWriteErr			0x00000100
+#define	OHCI_Int_IsochRx			0x00000080
+#define	OHCI_Int_IsochTx			0x00000040
+#define	OHCI_Int_RSPkt				0x00000020
+#define	OHCI_Int_RQPkt				0x00000010
+#define	OHCI_Int_ARRS				0x00000008
+#define	OHCI_Int_ARRQ				0x00000004
+#define	OHCI_Int_RespTxComplete			0x00000002
+#define	OHCI_Int_ReqTxComplete			0x00000001
 
 /* OHCI_REG_LinkControl
  */
-#define	OHCI_LinkControl_CycleSource	0x00400000
-#define	OHCI_LinkControl_CycleMaster	0x00200000
-#define	OHCI_LinkControl_CycleTimerEnable 0x00100000
-#define	OHCI_LinkControl_RcvPhyPkt	0x00000400
-#define	OHCI_LinkControl_RcvSelfID	0x00000200
-#define	OHCI_LinkControl_Tag1SyncFilterLock 0x00000040
+#define	OHCI_LinkControl_CycleSource		0x00400000
+#define	OHCI_LinkControl_CycleMaster		0x00200000
+#define	OHCI_LinkControl_CycleTimerEnable	0x00100000
+#define	OHCI_LinkControl_RcvPhyPkt		0x00000400
+#define	OHCI_LinkControl_RcvSelfID		0x00000200
+#define	OHCI_LinkControl_Tag1SyncFilterLock	0x00000040
 
 /* OHCI_REG_NodeId
  */
-#define	OHCI_NodeId_IDValid		0x80000000
-#define	OHCI_NodeId_ROOT		0x40000000
-#define	OHCI_NodeId_CPS			0x08000000
-#define	OHCI_NodeId_BusNumber		0x0000ffc0
-#define	OHCI_NodeId_NodeNumber		0x0000003f
+#define	OHCI_NodeId_IDValid			0x80000000
+#define	OHCI_NodeId_ROOT			0x40000000
+#define	OHCI_NodeId_CPS				0x08000000
+#define	OHCI_NodeId_BusNumber			0x0000ffc0
+#define	OHCI_NodeId_NodeNumber			0x0000003f
 
 /* OHCI_REG_PhyControl
  */
-#define	OHCI_PhyControl_RdDone		0x80000000
-#define	OHCI_PhyControl_RdAddr		0x0f000000
-#define	OHCI_PhyControl_RdAddr_BITPOS	24
-#define	OHCI_PhyControl_RdData		0x00ff0000
-#define	OHCI_PhyControl_RdData_BITPOS	16
-#define	OHCI_PhyControl_RdReg		0x00008000
-#define	OHCI_PhyControl_WrReg		0x00004000
-#define	OHCI_PhyControl_RegAddr		0x00000f00
-#define	OHCI_PhyControl_RegAddr_BITPOS	8
-#define	OHCI_PhyControl_WrData		0x000000ff
-#define	OHCI_PhyControl_WrData_BITPOS	0
+#define	OHCI_PhyControl_RdDone			0x80000000
+#define	OHCI_PhyControl_RdAddr			0x0f000000
+#define	OHCI_PhyControl_RdAddr_BITPOS		24
+#define	OHCI_PhyControl_RdData			0x00ff0000
+#define	OHCI_PhyControl_RdData_BITPOS		16
+#define	OHCI_PhyControl_RdReg			0x00008000
+#define	OHCI_PhyControl_WrReg			0x00004000
+#define	OHCI_PhyControl_RegAddr			0x00000f00
+#define	OHCI_PhyControl_RegAddr_BITPOS		8
+#define	OHCI_PhyControl_WrData			0x000000ff
+#define	OHCI_PhyControl_WrData_BITPOS		0
 
 /*
  * Section 3.1.1: ContextControl register
  *
  *
  */
-#define	OHCI_CTXCTL_RUN			0x00008000
-#define	OHCI_CTXCTL_WAKE		0x00001000
-#define	OHCI_CTXCTL_DEAD		0x00000800
-#define	OHCI_CTXCTL_ACTIVE		0x00000400
+#define	OHCI_CTXCTL_RUN				0x00008000
+#define	OHCI_CTXCTL_WAKE			0x00001000
+#define	OHCI_CTXCTL_DEAD			0x00000800
+#define	OHCI_CTXCTL_ACTIVE			0x00000400
 
-#define	OHCI_CTXCTL_SPD_BITLEN		3
-#define	OHCI_CTXCTL_SPD_BITPOS		5
+#define	OHCI_CTXCTL_SPD_BITLEN			3
+#define	OHCI_CTXCTL_SPD_BITPOS			5
 
-#define	OHCI_CTXCTL_SPD_100		0
-#define	OHCI_CTXCTL_SPD_200		1
-#define	OHCI_CTXCTL_SPD_400		2
+#define	OHCI_CTXCTL_SPD_100			0
+#define	OHCI_CTXCTL_SPD_200			1
+#define	OHCI_CTXCTL_SPD_400			2
 
-#define	OHCI_CTXCTL_EVENT_BITLEN	5
-#define	OHCI_CTXCTL_EVENT_BITPOS	0
+#define	OHCI_CTXCTL_EVENT_BITLEN		5
+#define	OHCI_CTXCTL_EVENT_BITPOS		0
 
 /* Events from 0 to 15 are generated by the OpenHCI controller.
  * Events from 16 to 31 are four-bit IEEE 1394 ack codes or'ed with bit 4 set.
@@ -512,41 +512,47 @@
 #define	OHCI_TCODE_PHY				0xe
 
 #if BYTE_ORDER == BIG_ENDIAN
-struct fwohci_desc {
+typedef struct fwohci_desc {
 	u_int16_t	fd_flags;
 	u_int16_t	fd_reqcount;
 	u_int32_t	fd_data;
 	u_int32_t	fd_branch;
 	u_int16_t	fd_status;
 	u_int16_t	fd_rescount;
-};
+#if 0	/* XXX */
+	u_int32_t	fd_immed[4];
+#endif
+} fwohci_desc;
 #endif
 #if BYTE_ORDER == LITTLE_ENDIAN
-struct fwohci_desc {
+typedef struct fwohci_desc {
 	u_int16_t	fd_reqcount;
 	u_int16_t	fd_flags;
 	u_int32_t	fd_data;
 	u_int32_t	fd_branch;
 	u_int16_t	fd_rescount;
 	u_int16_t	fd_status;
-};
+#if 0	/* XXX */
+	u_int32_t	fd_immed[4];
+#endif
+} fwohci_desc;
 #endif
 #define	fd_timestamp	fd_rescount
 
-#define	OHCI_DESC_INPUT		0x2000
-#define	OHCI_DESC_LAST		0x1000
-#define	OHCI_DESC_STATUS	0x0800
-#define	OHCI_DESC_IMMED		0x0200
-#define	OHCI_DESC_PING		0x0080
-#define	OHCI_DESC_INTR_ALWAYS	0x0030
-#define	OHCI_DESC_INTR_ERR	0x0010
-#define	OHCI_DESC_BRANCH	0x000c
-#define	OHCI_DESC_WAIT		0x0003
+#define	OHCI_DESC_INPUT				0x2000
+#define	OHCI_DESC_LAST				0x1000
+#define	OHCI_DESC_STATUS			0x0800
+#define	OHCI_DESC_IMMED				0x0200
+#define	OHCI_DESC_PING				0x0080
+#define	OHCI_DESC_INTR_ALWAYS			0x0030
+#define	OHCI_DESC_INTR_ERR			0x0010
+#define	OHCI_DESC_BRANCH			0x000c
+#define	OHCI_DESC_WAIT				0x0003
 
-#define	OHCI_DESC_MAX		8
+#define	OHCI_DESC_MAX				8
 
 /* Some constants for passing ACK values around with from status reg's */
 
-#define OHCI_DESC_STATUS_ACK_MASK 0x1f
+#define	OHCI_DESC_STATUS_ACK_MASK		0x1f
 
 #endif	/* _DEV_IEEE1394_FWOHCIREG_ */

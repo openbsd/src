@@ -1,4 +1,4 @@
-/*	$OpenBSD: fwnodevar.h,v 1.1 2002/06/25 17:11:49 itojun Exp $	*/
+/*	$OpenBSD: fwnodevar.h,v 1.2 2002/12/13 02:52:04 tdeval Exp $	*/
 /*	$NetBSD: fwnodevar.h,v 1.4 2002/02/27 05:02:25 jmc Exp $	*/
 
 /*
@@ -37,22 +37,18 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _DEV_IEEE1394_FWNODEVAR_H
-#define _DEV_IEEE1394_FWNODEVAR_H
+#ifndef	_DEV_IEEE1394_FWNODEVAR_H
+#define	_DEV_IEEE1394_FWNODEVAR_H
 
-struct fwnode_softc {
-	struct ieee1394_softc sc_sc1394;
-	
-	int sc_flags;
-	
-	int (*sc1394_read)(struct ieee1394_abuf *);
-	int (*sc1394_write)(struct ieee1394_abuf *);
-	int (*sc1394_inreg)(struct ieee1394_abuf *, int);
-	int (*sc1394_unreg)(struct ieee1394_abuf *, int);
-	
-	struct device **sc_children;
+typedef struct fwnode_softc {
+	struct ieee1394_softc	  sc_sc1394;
+	int			  sc_flags;
+	int	(*sc1394_read) (struct ieee1394_abuf *);
+	int	(*sc1394_write)(struct ieee1394_abuf *);
+	int	(*sc1394_inreg)(struct ieee1394_abuf *, int);
+	int	(*sc1394_unreg)(struct ieee1394_abuf *, int);
+	struct device		**sc_children;
+	struct p1212_rom	 *sc_configrom;
+} fwnode_softc;
 
-	struct p1212_rom *sc_configrom;
-};
-
-#endif /* _DEV_IEEE1394_FWNODEVAR_H */
+#endif	/* _DEV_IEEE1394_FWNODEVAR_H */
