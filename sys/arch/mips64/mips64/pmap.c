@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.4 2004/08/10 20:28:13 deraadt Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.5 2004/08/11 10:21:08 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -70,8 +70,8 @@ struct pool pmap_pv_pool;
 void    *pmap_pv_page_alloc(u_long, int, int);
 void    pmap_pv_page_free(void *, u_long, int);
 
-#define pmap_pv_alloc()         (pv_entry_t)pool_get(&pmap_pv_pool, PR_NOWAIT)
-#define pmap_pv_free(pv)        pool_put(&pmap_pv_pool, (pv))
+#define pmap_pv_alloc()		(pv_entry_t)pool_get(&pmap_pv_pool, PR_NOWAIT)
+#define pmap_pv_free(pv)	pool_put(&pmap_pv_pool, (pv))
 
 #ifndef PMAP_PV_LOWAT
 #define PMAP_PV_LOWAT   16
@@ -214,8 +214,8 @@ pmap_bootstrap()
  */
 vaddr_t
 pmap_steal_memory(size, vstartp, vendp)
-        vsize_t size;
-        vaddr_t *vstartp, *vendp;
+	vsize_t size;
+	vaddr_t *vstartp, *vendp;
 {
 	int i, j, x;
 	int npgs;
@@ -232,7 +232,7 @@ pmap_steal_memory(size, vstartp, vendp)
 
 	for(i = 0; i < vm_nphysseg && va == 0; i++) {
 		if (vm_physmem[i].avail_start != vm_physmem[i].start ||
-                    vm_physmem[i].avail_start >= vm_physmem[i].avail_end) {
+		    vm_physmem[i].avail_start >= vm_physmem[i].avail_end) {
 			continue;
 		}
 
@@ -500,9 +500,9 @@ pmap_reference(pmap)
  */
 void
 pmap_activate(p)
-        struct proc *p;
+	struct proc *p;
 {
-        pmap_t pmap = p->p_vmspace->vm_map.pmap;
+	pmap_t pmap = p->p_vmspace->vm_map.pmap;
 
 	p->p_addr->u_pcb.pcb_segtab = pmap->pm_segtab;
 
@@ -514,9 +514,9 @@ pmap_activate(p)
  */
 void
 pmap_deactivate(p)
-        struct proc *p;
+	struct proc *p;
 {
-        /* Empty */
+	/* Empty */
 }
 
 /*
@@ -773,7 +773,7 @@ int
 pmap_is_page_ro(pmap, va, entry)
 	pmap_t	    pmap;
 	vaddr_t va;
-	int         entry;
+	int	entry;
 {
 	return(entry & PG_RO);
 }
@@ -1101,87 +1101,87 @@ pmap_enter(pmap, va, pa, prot, stat)
 
 void
 pmap_kenter_pa(va, pa, prot)
-        vaddr_t va;
-        paddr_t pa;
-        vm_prot_t prot;
+	vaddr_t va;
+	paddr_t pa;
+	vm_prot_t prot;
 {
-        pt_entry_t *pte;
-        u_int npte;
+	pt_entry_t *pte;
+	u_int npte;
 
-        if (pmapdebug & (PDB_FOLLOW|PDB_ENTER)) {
-                printf("pmap_kenter_pa(%lx, %lx, %x)\n", va, pa, prot);
+	if (pmapdebug & (PDB_FOLLOW|PDB_ENTER)) {
+		printf("pmap_kenter_pa(%lx, %lx, %x)\n", va, pa, prot);
 	}
 
 
-        npte = vad_to_pfn(pa) | PG_G;
-        if (prot & VM_PROT_WRITE) {
-                npte |= PG_RWPAGE;
-        }
+	npte = vad_to_pfn(pa) | PG_G;
+	if (prot & VM_PROT_WRITE) {
+		npte |= PG_RWPAGE;
+	}
 	else {
-                npte |= PG_ROPAGE;
-        }
-        pte = kvtopte(va);
-        pte->pt_entry = npte;
-        tlb_update(va, npte);
+		npte |= PG_ROPAGE;
+	}
+	pte = kvtopte(va);
+	pte->pt_entry = npte;
+	tlb_update(va, npte);
 }
 
 void
 pmap_kenter_cache(va, pa, prot, cache)
-        vaddr_t va;
-        paddr_t pa;
-        vm_prot_t prot;
+	vaddr_t va;
+	paddr_t pa;
+	vm_prot_t prot;
 	int cache;
 {
-        pt_entry_t *pte;
-        u_int npte;
+	pt_entry_t *pte;
+	u_int npte;
 
-        if (pmapdebug & (PDB_FOLLOW|PDB_ENTER)) {
-                printf("pmap_kenter_cache(%lx, %lx, %x)\n", va, pa, prot);
+	if (pmapdebug & (PDB_FOLLOW|PDB_ENTER)) {
+		printf("pmap_kenter_cache(%lx, %lx, %x)\n", va, pa, prot);
 	}
 
 
-        npte = vad_to_pfn(pa) | PG_G;
-        if (prot & VM_PROT_WRITE) {
-                npte |= PG_M | cache;
-        }
+	npte = vad_to_pfn(pa) | PG_G;
+	if (prot & VM_PROT_WRITE) {
+		npte |= PG_M | cache;
+	}
 	else {
-                npte |= PG_RO | cache;
-        }
-        pte = kvtopte(va);
-        pte->pt_entry = npte;
-        tlb_update(va, npte);
+		npte |= PG_RO | cache;
+	}
+	pte = kvtopte(va);
+	pte->pt_entry = npte;
+	tlb_update(va, npte);
 }
 
 void
 pmap_kremove(va, len)
-        vaddr_t va;
-        vsize_t len;
+	vaddr_t va;
+	vsize_t len;
 {
-        pt_entry_t *pte;
-        vaddr_t eva;
-        u_int entry;
+	pt_entry_t *pte;
+	vaddr_t eva;
+	u_int entry;
 
-        if (pmapdebug & (PDB_FOLLOW|PDB_REMOVE)) {
-                printf("pmap_kremove(%lx, %lx)\n", va, len);
+	if (pmapdebug & (PDB_FOLLOW|PDB_REMOVE)) {
+		printf("pmap_kremove(%lx, %lx)\n", va, len);
 	}
 
-        pte = kvtopte(va);
-        eva = va + len;
-        for (; va < eva; va += PAGE_SIZE, pte++) {
-                entry = pte->pt_entry;
-                if (entry & PG_V) {
-                        continue;
-                }
+	pte = kvtopte(va);
+	eva = va + len;
+	for (; va < eva; va += PAGE_SIZE, pte++) {
+		entry = pte->pt_entry;
+		if (entry & PG_V) {
+			continue;
+		}
 		Mips_SyncDCachePage(va);
 		pte->pt_entry = PG_NV | PG_G;
 		tlb_flush_addr(va);
-        }
+	}
 }
 
 void
 pmap_unwire(pmap, va)
-        pmap_t pmap;
-        vaddr_t va;
+	pmap_t pmap;
+	vaddr_t va;
 {
 }
 
@@ -1250,7 +1250,7 @@ pmap_prefer(foff, vap)
 	long d, m;
 
 	m = CpuCacheAliasMask;
-	if (m == 0)             /* m=0 => no cache aliasing */
+	if (m == 0)		/* m=0 => no cache aliasing */
 		return;
 
 	m = (m | (m - 1)) + 1;	/* Value from mask */
@@ -1585,11 +1585,11 @@ pmap_remove_pv(pmap, va, pa)
 void *
 pmap_pv_page_alloc(u_long size, int flags, int mtype)
 {
-        paddr_t pg;
+	paddr_t pg;
 
-        if (pmap_physpage_alloc(&pg))
-                return ((void *) PHYS_TO_KSEG0(pg));
-        return (NULL);
+	if (pmap_physpage_alloc(&pg))
+		return ((void *) PHYS_TO_KSEG0(pg));
+	return (NULL);
 }
 
 /*
@@ -1600,7 +1600,7 @@ pmap_pv_page_alloc(u_long size, int flags, int mtype)
 void
 pmap_pv_page_free(void *v, u_long size, int mtype)
 {
-        pmap_physpage_free(KSEG0_TO_PHYS((vaddr_t)v));
+	pmap_physpage_free(KSEG0_TO_PHYS((vaddr_t)v));
 }
 
 /*
@@ -1645,34 +1645,34 @@ pmap_physpage_free(paddr_t pa)
 
 int
 bus_mem_add_mapping(bus_addr_t bpa, bus_size_t size, int cacheable,
-                        bus_space_handle_t *bshp)
+			bus_space_handle_t *bshp)
 {
-        bus_addr_t vaddr;
-        bus_addr_t spa, epa;
-        bus_size_t off;
-        int len;
+	bus_addr_t vaddr;
+	bus_addr_t spa, epa;
+	bus_size_t off;
+	int len;
 
-        spa = trunc_page(bpa);
-        epa = bpa + size;
-        off = bpa - spa;
-        len = size+off;
+	spa = trunc_page(bpa);
+	epa = bpa + size;
+	off = bpa - spa;
+	len = size+off;
 
-        if (phys_map == NULL) {
-                printf("ouch, add mapping when phys map not ready!\n");
-        } else {
-                vaddr = uvm_km_valloc_wait(kernel_map, len);
-        }
-        *bshp = vaddr + off;
+	if (phys_map == NULL) {
+		printf("ouch, add mapping when phys map not ready!\n");
+	} else {
+		vaddr = uvm_km_valloc_wait(kernel_map, len);
+	}
+	*bshp = vaddr + off;
 #ifdef DEBUG_BUS_MEM_ADD_MAPPING
-        printf("map bus %x size %x to %x vbase %x\n", bpa, size, *bshp, spa);
+	printf("map bus %x size %x to %x vbase %x\n", bpa, size, *bshp, spa);
 #endif
-        for (; len > 0; len -= NBPG) {
-                pmap_kenter_cache(vaddr, spa,
-                        VM_PROT_READ | VM_PROT_WRITE,
-                        cacheable ? PG_IOPAGE : PG_IOPAGE); /* XXX */
-                spa += NBPG;
-                vaddr += NBPG;
-        }
-        return 0;
+	for (; len > 0; len -= NBPG) {
+		pmap_kenter_cache(vaddr, spa,
+			VM_PROT_READ | VM_PROT_WRITE,
+			cacheable ? PG_IOPAGE : PG_IOPAGE); /* XXX */
+		spa += NBPG;
+		vaddr += NBPG;
+	}
+	return 0;
 }
 

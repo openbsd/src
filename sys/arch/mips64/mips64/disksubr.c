@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.3 2004/08/10 20:28:13 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.4 2004/08/11 10:21:08 deraadt Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
@@ -119,7 +119,7 @@ readdisklabel(dev, strat, lp, osdep, spoofonly)
 	dospartoff = 0;
 	cyl = LABELSECTOR / lp->d_secpercyl;
 	if (dp) {
-	        daddr_t part_blkno = DOSBBSECTOR;
+		daddr_t part_blkno = DOSBBSECTOR;
 		unsigned long extoff = 0;
 		int wander = 1, n = 0, loop = 0;
 
@@ -128,7 +128,7 @@ readdisklabel(dev, strat, lp, osdep, spoofonly)
 		 * Map the partitions to disklabel entries i-p
 		 */
 		while (wander && n < 8 && loop < 8) {
-		        loop++;
+			loop++;
 			wander = 0;
 
 			/* read boot record */
