@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.238 2000/04/10 13:45:16 millert Exp 
+ *		OpenBSD: pcidevs,v 1.239 2000/04/10 16:17:10 mickey Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -4597,6 +4597,18 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Motorola",
 	    "MPC106 PPC PCI bridge",
+	},
+	{
+	    PCI_VENDOR_XIRCOM, PCI_PRODUCT_XIRCOM_X3201_3,
+	    0,
+	    "Xircom",
+	    "X3201-3 Fast Ethernet Controller",
+	},
+	{
+	    PCI_VENDOR_XIRCOM, PCI_PRODUCT_XIRCOM_X3201_3_21143,
+	    0,
+	    "Xircom",
+	    "X3201-3 Fast Ethernet Controller (21143)",
 	},
 	{
 	    PCI_VENDOR_YAMAHA, PCI_PRODUCT_YAMAHA_YMF724E_V,

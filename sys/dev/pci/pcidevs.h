@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.238 2000/04/10 13:45:16 millert Exp 
+ *		OpenBSD: pcidevs,v 1.239 2000/04/10 16:17:10 mickey Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -1604,6 +1604,10 @@
 /* Motorola products */
 #define	PCI_PRODUCT_MOT_MPC105	0x0001		/* MPC105 PPC PCI bridge */
 #define	PCI_PRODUCT_MOT_MPC106	0x0002		/* MPC106 PPC PCI bridge */
+
+/* Xircom products */
+#define	PCI_PRODUCT_XIRCOM_X3201_3	0x0002		/* X3201-3 Fast Ethernet Controller */
+#define	PCI_PRODUCT_XIRCOM_X3201_3_21143	0x0003		/* X3201-3 Fast Ethernet Controller (21143) */
 
 /* Yamaha products */
 #define	PCI_PRODUCT_YAMAHA_YMF724E_V	0x0004		/* 724 Audio */
