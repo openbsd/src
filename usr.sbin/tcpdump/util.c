@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.11 2001/03/05 22:34:01 jakob Exp $	*/
+/*	$OpenBSD: util.c,v 1.12 2001/09/03 13:25:53 jakob Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996, 1997
@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/util.c,v 1.11 2001/03/05 22:34:01 jakob Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/util.c,v 1.12 2001/09/03 13:25:53 jakob Exp $ (LBL)";
 #endif
 
 #include <sys/types.h>
@@ -124,16 +124,29 @@ void
 ts_print(register const struct timeval *tvp)
 {
 	register int s;
+#define TSBUFLEN 32
+	static char buf[TSBUFLEN];
+	time_t t;
 
-	if (tflag > 0) {
+	switch(tflag){
+	case 0:
+		break;
+	case -1:
+		/* Unix timeval style */
+		(void)printf("%u.%06u ",
+		(u_int32_t)tvp->tv_sec, (u_int32_t)tvp->tv_usec);
+		break;
+	case -2:
+		t=tvp->tv_sec;
+		strftime(buf, TSBUFLEN, "%b %d %T", localtime(&t));
+		printf("%s.%06u ", buf, (u_int32_t)tvp->tv_usec);
+		break;
+	default:
 		/* Default */
 		s = (tvp->tv_sec + thiszone) % 86400;
 		(void)printf("%02d:%02d:%02d.%06u ",
 		    s / 3600, (s % 3600) / 60, s % 60, (u_int32_t)tvp->tv_usec);
-	} else if (tflag < 0) {
-		/* Unix timeval style */
-		(void)printf("%u.%06u ",
-		    (u_int32_t)tvp->tv_sec, (u_int32_t)tvp->tv_usec);
+		break;
 	}
 }
 
