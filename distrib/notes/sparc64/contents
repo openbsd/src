@@ -8,9 +8,9 @@ OpenBSDrd
 
 		installboot	The OpenBSD/sparc64 boot loader installation
 				program
-		bootxx		The OpenBSD/sparc64 boot block
-		boot		The OpenBSD/sparc64 secondary boot loader
-		boot.net	The OpenBSD/sparc64 network boot loader
+		bootblk		The OpenBSD/sparc64 boot block
+		ofwboot		The OpenBSD/sparc64 secondary boot loader
+		ofwboot.net	The OpenBSD/sparc64 network boot loader
 
 
 Please note that there are multiple bootable images and kernels, intended
@@ -21,8 +21,8 @@ The "miniroot{:--:}OSrev.fs" is a small bootable root filesystem that can be use
 for installation or upgrade where there is some means to copy the miniroot
 image into a swap or unused partition on the system, and also for diskless
 or net booting.  This can be convenient if you have a existing installation
-of OpenBSD, NetBSD, SunOS, or Solaris and wish to test or upgrade the
-existing system to OpenBSD.
+of OpenBSD, NetBSD, or Solaris and wish to test or upgrade the existing
+system to OpenBSD.
 
 These bootable images are also useful as "failsafe" boots for system
 maintenance and disaster recovery.
@@ -34,25 +34,17 @@ Sun bootblocks require a separate kernel image and root filesystem.
 
 Bootable installation images:
   
-DistributionDescription(ten)
+DistributionDescription(six)
 
-OpenBSDbase(18.4M,56.4M)
+OpenBSDbase(58.0M,149.0M)
 
-OpenBSDcomp(12.1M,39.7M)
+OpenBSDcomp(13.9M,50.4M)
 
-OpenBSDetc(165.2K,740.0K)
+OpenBSDetc(1.0M,3.5M)
 
-OpenBSDgame(2.7M,6.7M)
+OpenBSDgame(6.7M,15.8M)
 
-OpenBSDman(3.4M,13.1M)
+OpenBSDman(5.3M,20.7M)
 
-OpenBSDmisc(1.6M,5.4M)
-
-OpenBSDxbase(4.6M,12.9M)
-
-OpenBSDxshare(1.4M,8.3M)
-
-OpenBSDxfont(6.0M,7.3M)
-
-OpenBSDxserv(5.4M,14.6M)
+OpenBSDmisc(1.6M,5.5M)
 
