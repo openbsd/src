@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.dep.mk,v 1.3 1996/03/05 11:12:37 mickey Exp $
+#	$OpenBSD: bsd.dep.mk,v 1.4 1998/06/09 19:29:45 downsj Exp $
 #	$NetBSD: bsd.dep.mk,v 1.12 1995/09/27 01:15:09 christos Exp $
 
 # some of the rules involve .h sources, so remove them from mkdep line
@@ -36,7 +36,7 @@ afterdepend:
 .if !target(tags)
 .if defined(SRCS)
 tags: ${SRCS} _SUBDIRUSE
-	-cd ${.CURDIR}; ctags -f /dev/stdout ${.ALLSRC:N*.h} | \
+	-cd ${.CURDIR}; ${CTAGS} -f /dev/stdout ${.ALLSRC:N*.h} | \
 	    sed "s;\${.CURDIR}/;;" > tags
 .else
 tags:

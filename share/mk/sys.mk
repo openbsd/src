@@ -1,4 +1,4 @@
-#	$OpenBSD: sys.mk,v 1.15 1998/05/14 16:31:39 millert Exp $
+#	$OpenBSD: sys.mk,v 1.16 1998/06/09 19:29:46 downsj Exp $
 #	$NetBSD: sys.mk,v 1.27 1996/04/10 05:47:19 mycroft Exp $
 #	@(#)sys.mk	5.11 (Berkeley) 3/13/91
 
@@ -79,6 +79,8 @@ YFLAGS?=	-d
 YACC.y?=	${YACC} ${YFLAGS}
 
 INSTALL?=	install
+
+CTAGS?=		/usr/bin/ctags
 
 # C
 .c:
