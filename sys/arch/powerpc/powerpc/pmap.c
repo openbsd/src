@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.16 2000/03/23 03:52:55 rahnds Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.17 2000/06/15 03:20:53 rahnds Exp $	*/
 /*	$NetBSD: pmap.c,v 1.1 1996/09/30 16:34:52 ws Exp $	*/
 
 /*
@@ -1015,13 +1015,6 @@ pmap_remove_pv(pm, pteidx, va, pind, pte)
 		} else {
 			pv->pv_idx = -1;
 		}
-		if (pm != NULL) {
-			/* if called from pmap_page_protect,
-			 * we don't know what pmap it was removed from.
-			 * BAD DESIGN.
-			 */
-			pm->pm_stats.resident_count--;
-		}
 	} else {
 		for (; npv = pv->pv_next; pv = npv)
 			if (pteidx == npv->pv_idx && va == npv->pv_va)
@@ -1029,9 +1022,6 @@ pmap_remove_pv(pm, pteidx, va, pind, pte)
 		if (npv) {
 			pv->pv_next = npv->pv_next;
 			pmap_free_pv(npv);
-			if (pm != NULL) {
-				pm->pm_stats.resident_count--;
-			}
 		}
 #if 0
 #ifdef	DIAGNOSTIC
@@ -1144,6 +1134,7 @@ pmap_remove(pm, va, endva)
 				asm volatile ("sync");
 				tlbie(va);
 				tlbsync();
+				pm->pm_stats.resident_count--;
 			}
 		for (ptp = ptable + (idx ^ ptab_mask) * 8, i = 8; --i >= 0; ptp++)
 			if (ptematch(ptp, sr, va, PTE_VALID | PTE_HID)) {
@@ -1153,6 +1144,7 @@ pmap_remove(pm, va, endva)
 				asm volatile ("sync");
 				tlbie(va);
 				tlbsync();
+				pm->pm_stats.resident_count--;
 			}
 		for (po = potable[idx].lh_first; po; po = npo) {
 			npo = po->po_list.le_next;
@@ -1162,6 +1154,7 @@ pmap_remove(pm, va, endva)
 					       &po->po_pte);
 				LIST_REMOVE(po, po_list);
 				pofree(po, 1);
+				pm->pm_stats.resident_count--;
 			}
 		}
 		va += NBPG;
