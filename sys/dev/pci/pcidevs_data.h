@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.817 2005/01/15 10:14:17 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.818 2005/01/16 20:10:35 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -2845,6 +2845,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_HAUPPAUGE, PCI_PRODUCT_HAUPPAUGE_WINTV,
 	    "WinTV",
+	},
+	{
+	    PCI_VENDOR_HAWKING, PCI_PRODUCT_HAWKING_PN672TX,
+	    "PN672TX 10/100",
 	},
 	{
 	    PCI_VENDOR_HP, PCI_PRODUCT_HP_VISUALIZE_EG,
@@ -9125,6 +9129,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_BELKIN2,
 	    "Belkin",
+	},
+	{
+	    PCI_VENDOR_HAWKING,
+	    "Hawking Technology",
 	},
 	{
 	    PCI_VENDOR_LANERGY,

@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.817 2005/01/15 10:14:17 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.818 2005/01/16 20:10:35 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -254,6 +254,7 @@
 #define	PCI_VENDOR_ANTARES	0x1754		/* Antares Microsystems */
 #define	PCI_VENDOR_CAVIUM	0x177d		/* Cavium */
 #define	PCI_VENDOR_BELKIN2	0x1799		/* Belkin */
+#define	PCI_VENDOR_HAWKING	0x17b3		/* Hawking Technology */
 #define	PCI_VENDOR_LANERGY	0x1812		/* Lanergy */
 #define	PCI_VENDOR_RALINK	0x1814		/* Ralink */
 #define	PCI_VENDOR_SYMPHONY2	0x1c1c		/* Symphony Labs */
@@ -1167,6 +1168,9 @@
 
 /* Hauppauge Computer Works */
 #define	PCI_PRODUCT_HAUPPAUGE_WINTV	0x13eb		/* WinTV */
+
+/* Hawking products */
+#define	PCI_PRODUCT_HAWKING_PN672TX	0xab08		/* PN672TX 10/100 */
 
 /* Hewlett-Packard products */
 #define	PCI_PRODUCT_HP_VISUALIZE_EG	0x1005		/* Visualize EG */
