@@ -1,4 +1,4 @@
-/*	$OpenBSD: rlogin.c,v 1.20 1998/06/03 16:20:33 deraadt Exp $	*/
+/*	$OpenBSD: rlogin.c,v 1.21 1998/07/12 08:07:12 deraadt Exp $	*/
 /*	$NetBSD: rlogin.c,v 1.8 1995/10/05 09:07:22 mycroft Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)rlogin.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: rlogin.c,v 1.20 1998/06/03 16:20:33 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rlogin.c,v 1.21 1998/07/12 08:07:12 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -212,8 +212,10 @@ main(argc, argv)
 			break;
 #ifdef KERBEROS
 		case 'k':
+			(void)strncpy(dst_realm_buf, optarg,
+			    sizeof dst_realm_buf-1);
+			dst_realm_buf[sizeof dst_realm_buf-1] = '\0';
 			dest_realm = dst_realm_buf;
-			(void)strncpy(dest_realm, optarg, REALM_SZ);
 			break;
 #endif
 		case 'l':
@@ -754,11 +756,7 @@ reader(omask)
 	int n, remaining;
 	char *bufp;
 
-#if BSD >= 43 || defined(SUNOS4)
 	pid = getpid();		/* modern systems use positives for pid */
-#else
-	pid = -getpid();	/* old broken systems use negatives */
-#endif
 	(void)signal(SIGTTOU, SIG_IGN);
 	(void)signal(SIGURG, oob);
 	ppid = getppid();
