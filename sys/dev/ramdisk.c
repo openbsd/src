@@ -1,4 +1,4 @@
-/*	$NetBSD: ramdisk.c,v 1.1 1995/10/08 23:30:57 gwr Exp $	*/
+/*	$NetBSD: ramdisk.c,v 1.1.2.1 1995/11/17 23:34:25 gwr Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross, Leo Weppelman.
@@ -103,7 +103,7 @@ static void rd_attach(struct device *, struct device *self, void *);
 
 struct cfdriver rdcd = {
 	NULL, "rd", rd_match, rd_attach,
-	DV_DISK, sizeof(struct device), NULL, 0 };
+	DV_DULL, sizeof(struct rd_softc), NULL, 0 };
 
 static int
 rd_match(parent, self, aux)
@@ -391,7 +391,7 @@ rd_ioctl_kalloc(sc, urd, proc)
 #if RAMDISK_SERVER
 
 /*
- * Handle ioctl RD_SETCONF for (sc_type == RD_KMEM_ALLOCATED)
+ * Handle ioctl RD_SETCONF for (sc_type == RD_UMEM_SERVER)
  * Set config, then become the I/O server for this unit.
  */
 int
