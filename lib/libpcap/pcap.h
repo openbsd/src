@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcap.h,v 1.10 2001/12/17 22:29:47 dugsong Exp $	*/
+/*	$OpenBSD: pcap.h,v 1.11 2002/01/17 23:29:12 ericj Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * @(#) $Header: /home/cvs/src/lib/libpcap/pcap.h,v 1.10 2001/12/17 22:29:47 dugsong Exp $ (LBL)
+ * @(#) $Header: /home/cvs/src/lib/libpcap/pcap.h,v 1.11 2002/01/17 23:29:12 ericj Exp $ (LBL)
  */
 
 #ifndef lib_pcap_h
@@ -111,6 +111,7 @@ int	pcap_dispatch(pcap_t *, int, pcap_handler, u_char *);
 const u_char*
 	pcap_next(pcap_t *, struct pcap_pkthdr *);
 int	pcap_stats(pcap_t *, struct pcap_stat *);
+int	pcap_inject(pcap_t *, const void *, size_t);
 int	pcap_setfilter(pcap_t *, struct bpf_program *);
 void	pcap_perror(pcap_t *, char *);
 char	*pcap_strerror(int);
