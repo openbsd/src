@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.19 1997/02/23 21:42:55 downsj Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.20 1997/02/24 01:16:09 downsj Exp $	*/
 /*	$NetBSD: machdep.c,v 1.80 1997/02/02 07:58:49 thorpej Exp $	*/
 
 /*
@@ -151,6 +151,9 @@ extern	short exframesize[];
 
 #ifdef COMPAT_HPUX
 extern struct emul emul_hpux;
+#endif
+#ifdef COMPAT_SUNOS
+extern struct emul emul_sunos;
 #endif
 
 /* prototypes for local functions */
@@ -466,6 +469,17 @@ setregs(p, pack, stack, retval)
 	/* restore a null state frame */
 	p->p_addr->u_pcb.pcb_fpregs.fpf_null = 0;
 	m68881_restore(&p->p_addr->u_pcb.pcb_fpregs);
+#endif
+#ifdef COMPAT_SUNOS
+	/*
+	 * SunOS' ld.so does self-modifying code without knowing
+	 * about the 040's cache purging needs.  So we need to uncache
+	 * writeable executable pages.
+	 */
+	if (p->p_emul == &emul_sunos)
+		p->p_md.md_flags |= MDP_UNCACHE_WX;
+	else
+		p->p_md.md_flags &= ~MDP_UNCACHE_WX;
 #endif
 #ifdef COMPAT_HPUX
 	p->p_md.md_flags &= ~MDP_HPUXMMAP;
@@ -1697,11 +1711,15 @@ cpu_exec_aout_makecmds(p, epp)
 	struct proc *p;
 	struct exec_package *epp;
 {
-#if defined(COMPAT_NOMID) || defined(COMPAT_44)
+#if defined(COMPAT_NOMID) || defined(COMPAT_44) || defined(COMPAT_SUNOS)
 	u_long midmag, magic;
 	u_short mid;
 	int error;
 	struct exec *execp = epp->ep_hdr;
+#ifdef COMPAT_SUNOS
+	extern sunos_exec_aout_makecmds
+		__P((struct proc *, struct exec_package *));
+#endif
 
 	midmag = ntohl(execp->a_midmag);
 	mid = (midmag >> 16) & 0xffff;
@@ -1721,7 +1739,12 @@ cpu_exec_aout_makecmds(p, epp)
 		break;
 #endif
 	default:
+#ifdef COMPAT_SUNOS
+		/* Hand it over to the SunOS emulation package. */
+		error = sunos_exec_aout_makecmds(p, epp);
+#else
 		error = ENOEXEC;
+#endif
 	}
 
 	return error;

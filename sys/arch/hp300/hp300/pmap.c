@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.4 1997/02/10 11:13:32 downsj Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.5 1997/02/24 01:16:09 downsj Exp $	*/
 /*	$NetBSD: pmap.c,v 1.28 1997/02/02 08:01:32 thorpej Exp $	*/
 
 /* 
@@ -1376,6 +1376,15 @@ validate:
 	npte = pa | pte_prot(pmap, prot) | (*pte & (PG_M|PG_U)) | PG_V;
 	if (wired)
 		npte |= PG_W;
+
+#if defined(M68040)
+	/* Don't cache if process can't take it, like SunOS ones.  */
+	if (mmutype == MMU_68040 && pmap != pmap_kernel() &&
+	    (curproc->p_md.md_flags & MDP_UNCACHE_WX) &&
+	    (prot & VM_PROT_EXECUTE) && (prot & VM_PROT_WRITE))
+		checkpv = cacheable = FALSE;
+#endif
+
 	if (!checkpv && !cacheable)
 		npte |= PG_CI;
 #if defined(M68040)
