@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpt_pci.c,v 1.2 2004/03/06 03:59:29 krw Exp $	*/
+/*	$OpenBSD: mpt_pci.c,v 1.3 2004/04/07 00:40:04 marco Exp $	*/
 /*	$NetBSD: mpt_pci.c,v 1.2 2003/07/14 15:47:26 lukem Exp $	*/
 
 /*
@@ -167,8 +167,8 @@ mpt_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	mpp = mpt_pci_lookup(pa);
 	if (mpp == NULL) {
-		printf("\n");
-		panic("mpt_pci_attach");
+		printf(": mpt_pci_lookup failed\n");
+		return;
 	}
 
 	psc->sc_pc = pa->pa_pc;
@@ -196,8 +196,7 @@ mpt_pci_attach(struct device *parent, struct device *self, void *aux)
 		mpt->sc_st = memt;
 		mpt->sc_sh = memh;
 	} else {
-		printf("%s: unable to map device registers\n",
-		    mpt->mpt_dev.dv_xname);
+		printf(": unable to map device registers\n");
 		return;
 	}
 
@@ -222,8 +221,7 @@ mpt_pci_attach(struct device *parent, struct device *self, void *aux)
 	 * Map and establish our interrupt.
 	 */
 	if (pci_intr_map(pa, &ih) != 0) {
-		printf("%s: unable to map interrupt\n",
-		    mpt->mpt_dev.dv_xname);
+		printf(": unable to map interrupt\n");
 		return;
 	}
 	intrstr = pci_intr_string(pa->pa_pc, ih);
@@ -243,8 +241,7 @@ mpt_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Allocate DMA memory. */
 	if (mpt_dma_mem_alloc(mpt) != 0) {
-		printf("%s: unable to allocate DMA memory\n",
-		    mpt->mpt_dev.dv_xname);
+		printf(": unable to allocate DMA memory\n");
 		return;
 	}
 
