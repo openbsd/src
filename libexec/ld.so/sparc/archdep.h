@@ -1,4 +1,4 @@
-/*	$OpenBSD: archdep.h,v 1.2 2002/07/27 15:36:53 art Exp $ */
+/*	$OpenBSD: archdep.h,v 1.3 2002/08/12 01:05:23 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -55,6 +55,13 @@ _dl_mmap(void *addr, unsigned int len, unsigned int prot,
 {
 	return((void *)_dl__syscall((quad_t)SYS_mmap, addr, len, prot,
 		flags, fd, 0, offset));
+}
+
+static inline void
+RELOC_REL(Elf_Rel *r, const Elf_Sym *s, Elf_Addr *p, unsigned long v)
+{
+	/* SPARC does not use REL type relocations */
+	_dl_exit(20);
 }
 
 static inline void

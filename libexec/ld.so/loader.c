@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.46 2002/08/11 18:41:17 drahn Exp $ */
+/*	$OpenBSD: loader.c,v 1.47 2002/08/12 01:05:23 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -440,9 +440,7 @@ _dl_boot_bind(const long sp, long loff, Elf_Dyn *dynamicp, long *dl_data)
 			}
 
 			ra = (Elf_Addr *)(rp->r_offset + loff);
-			/*
 			RELOC_REL(rp, sp, ra, loff);
-			*/
 			rp++;
 		}
 
