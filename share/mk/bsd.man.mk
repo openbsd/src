@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.man.mk,v 1.26 2003/08/07 10:54:39 espie Exp $
+#	$OpenBSD: bsd.man.mk,v 1.27 2003/08/18 22:39:15 espie Exp $
 #	$NetBSD: bsd.man.mk,v 1.23 1996/02/10 07:49:33 jtc Exp $
 #	@(#)bsd.man.mk	5.2 (Berkeley) 5/11/90
 
@@ -82,12 +82,12 @@ install_manpage_fragment= \
 .endif
 
 maninstall:
-.for v s t in MANALL .cat .0 PSALL .ps .ps
+.for v d s t in MANALL ${MANDIR} .cat .0 PSALL ${PSDIR} .ps .ps
 .  if defined($v)
 	@for page in ${$v}; do \
 		set -- ${MANSUBDIR}; \
 		subdir=$$1; \
-		dir=${DESTDIR}${MANDIR}$${page##*$s}; \
+		dir=${DESTDIR}$d$${page##*$s}; \
 		base=$${page##*/}; \
 		instpage=$${dir}$${subdir}/$${base%.*}$t${MCOMPRESSSUFFIX}; \
 		${install_manpage_fragment}; \
