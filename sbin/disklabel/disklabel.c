@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.87 2004/04/07 14:09:35 aaron Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.88 2004/05/20 23:23:46 marco Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -39,7 +39,7 @@ static const char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.87 2004/04/07 14:09:35 aaron Exp $";
+static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.88 2004/05/20 23:23:46 marco Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -981,7 +981,7 @@ width_partition(struct disklabel *lp, int unit)
 }
 
 /*
- * Display a particular partion.
+ * Display a particular partition.
  */
 void
 display_partition(FILE *f, struct disklabel *lp, char **mp, int i,
