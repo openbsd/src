@@ -1,5 +1,5 @@
-#	$OpenBSD: GENERIC,v 1.11 1996/05/29 10:14:43 niklas Exp $
-#	$NetBSD: GENERIC,v 1.57 1996/05/19 21:04:48 veego Exp $
+#	$OpenBSD: GENERIC,v 1.12 1996/08/19 00:16:57 niklas Exp $
+#	$NetBSD: GENERIC,v 1.57.4.3 1996/06/04 10:32:59 is Exp $
 
 #
 # GENERIC AMIGA
@@ -8,142 +8,95 @@
 #
 
 include "std.amiga"
+include "../../../conf/GENERIC"
 
 maxusers	8
-options		TIMEZONE=300, DST=1
+
+#
+# mainboards to support (in addition to Amiga)
+#
+option		DRACO
 
 #
 # processors this kernel should support
 #
-options		"M68040"	# support for 040
-options		FPSP		# MC68040 floating point support
-options		"M68030"	# support for 030
-options		"M68020"	# support for 020/851
-options		FPCOPROC	# Support for MC6888[12] (Required)
-
-options		SWAPPAGER	# Pager for processes (Required)
-options		VNODEPAGER	# Pager for vnodes (Required)
-options		DEVPAGER	# Pager for devices (Required)
-
-#
-# Networking options
-#
-options		INET		# IP networking support (Required)
-#options	GATEWAY		# Packet forwarding
-#options	DIRECTED_BROADCAST	# Broadcast across subnets
-#options	MROUTING	# Multicast routing
-#options	NS		# XNS
-#options	ISO,TPIP	# OSI
-#options	EON		# OSI tunneling over IP
-#options	CCITT,LLC,HDLC	# X.25
-#options	PPP_BSDCOMP,PPP_DEFLATE	# BSD compression for PPP
+option		"M68060"	# support for 060
+option		"M060SP"	# ...and MC68060 support package
+option		"M68040"	# support for 040
+option		FPSP		# MC68040 floating point support
+option		"M68030"	# support for 030
+option		"M68020"	# support for 020/851
+option		FPCOPROC	# Support for MC6888[12] (Required)
 
 #
 # File systems
 #
-options		FFS		# Berkeley fast file system
-options		QUOTA		# UFS quotas
-#options	LFS		# log-structured filesystem
-options		MFS		# Memory based filesystem
-
-options		NFSSERVER	# Network File System server side code
-options		NFSCLIENT	# Network File System client side code
-
-options		ADOSFS		# AmigaDOS file system
-options		CD9660		# ISO 9660 + Rock Ridge file system
-options		MSDOSFS		# MS-DOS file system
-options		FDESC		# /dev/fd
-options		FIFO		# FIFOs; RECOMMENDED
-options		KERNFS		# /kern
-options		NULLFS		# loopback file system
-#options	PORTAL		# Portal Filesystem
-options		PROCFS		# /proc
-options		UMAPFS		# NULLFS + uid and gid remapping
-options		UNION		# union file system
-
+option		ADOSFS		# AmigaDOS file system
 
 #
 # Compatability options for various existing systems
 #
-options		"COMPAT_10"	# compatability with older NetBSD release
-options		"COMPAT_09"	# compatability with older NetBSD release
-options		"COMPAT_43"	# 4.3 BSD compatible system calls
-options		COMPAT_SUNOS	# Support to run Sun (m68k) executables
-options		"TCP_COMPAT_42"	# Use 4.2 BSD style TCP
-options		"COMPAT_NOMID"	# allow nonvalid machine id executables
-#options	COMPAT_HPUX	# HP300 compatability
-
-#
-# Support for System V IPC facilities.
-#
-options		SYSVSHM		# System V-like shared memory
-options		SYSVMSG		# System V-like messages
-options		SYSVSEM		# System V-like semaphores
+option		COMPAT_SUNOS	# Support to run Sun (m68k) executables
+#option		COMPAT_HPUX	# HP300 compatability
 
 #
 # Support for various kernel options
 #
 
-options		UCONSOLE	# anyone can redirect a virtual console
-#options	INSECURE	# allow, among other insecure stuff, LKM 
-				# loading in multi-user mode.
-
-options		GENERIC		# Mini-root boot support
-options		LKM		# Loadable kernel modules
-options		"NKMEMCLUSTERS=256"	# Size of kernel malloc area
+option		GENERIC		# Mini-root boot support
+option		"NKMEMCLUSTERS=256"	# Size of kernel malloc area
 
 #
 # Misc. debuging options
 #
-options		DDB		# Kernel debugger
-options		DIAGNOSTIC	# Add additional error checking code
-options		KTRACE		# Add kernel tracing system call
-#options	DEBUG		# Add debugging statements
-#options	SYSCALL_DEBUG	# debug all syscalls.
-#options	SCSIDEBUG	# Add SCSI debugging statements
-#options	KGDB		# Kernel debugger (KGDB) support
-#options	PANICBUTTON	# Forced crash via keypress (???)
+#option		DEBUG		# Add debugging statements
+#option		SYSCALL_DEBUG	# debug all syscalls.
+#option		SCSIDEBUG	# Add SCSI debugging statements
+#option		KGDB		# Kernel debugger (KGDB) support
+#option		PANICBUTTON	# Forced crash via keypress (???)
 
 #
 # Amiga specific options
 #
-options		MACHINE_NONCONTIG # Non-contiguous memory support
-#options	KBDRESET	# sync on Ctrl-Amiga-Amiga
+option		MACHINE_NONCONTIG # Non-contiguous memory support
+#option		KBDRESET	# sync on Ctrl-Amiga-Amiga
 
 # These options improve performance with the built-in serial port
 # on slower Amigas.  Try the larger buffers first then lev6_defer.
-#options	"SERIBUF_SIZE=4096"
-#options	"SEROBUF_SIZE=32"
-#options	LEV6_DEFER	# defers l6 to l4 (below serial l5)
+#option		"SERIBUF_SIZE=4096"
+#option		"SEROBUF_SIZE=32"
+#option		LEV6_DEFER	# defers l6 to l4 (below serial l5)
+option		IPL_REMAP_1	# use remapping interruptsystem version 1
+#option		IPL_REMAP_2	# and version 2 (not yet done)
 
-options		RETINACONSOLE	# enable code to allow retina to be console
-options		ULOWELLCONSOLE	# enable code to allow a2410 to be console
-options		CL5426CONSOLE	# Cirrus console
-options		CV64CONSOLE	# CyberVision console
-options		TSENGCONSOLE	# Tseng console
+option		RETINACONSOLE	# enable code to allow retina to be console
+option		ULOWELLCONSOLE	# enable code to allow a2410 to be console
+option		CL5426CONSOLE	# Cirrus console
+option		CV64CONSOLE	# CyberVision console
+option		TSENGCONSOLE	# Tseng console
 
-options		GRF_ECS		# Enhanced Chip Set
-options		GRF_NTSC	# NTSC
-options		GRF_PAL		# PAL
-options		"GRF_A2024"	# Support for the A2024
-options		GRF_AGA		# AGA Chip Set
-#options	"KFONT_8X11"	# 8x11 font
+option		GRF_ECS		# Enhanced Chip Set
+option		GRF_NTSC	# NTSC
+option		GRF_PAL		# PAL
+option		"GRF_A2024"	# Support for the A2024
+option		GRF_AGA		# AGA Chip Set
+#option		"KFONT_8X11"	# 8x11 font
 
 # This is how you would tell the kernel the A2410 oscillator frequencies:
 # The used frequencies are the defaults, and don't need option setting
-#options	"ULOWELL_OSC1=36000000"
-#options	"ULOWELL_OSC2=66667000"
+#option		"ULOWELL_OSC1=36000000"
+#option		"ULOWELL_OSC2=66667000"
 
 # This is how you specify the blitting speed, higher values may speed up blits
 # a littel bit.  If you raise this value too much some trash may appear.
 # the commented version is the default.
-#options	RH_MEMCLK 61000000
+#option		RH_MEMCLK 61000000
 # this option enables the 64 bit sprite which doesn't seems to be work
 # for quite a few people.  E.g. The cursor sprite will turn to a block
 # when moved to the top of the screen in X.
-#options	RH_64BIT_SPRITE
+#option		RH_64BIT_SPRITE
 # enables fast scroll code appears to now work on 040 systems.
-#options	RETINA_SPEED_HACK
+#option		RETINA_SPEED_HACK
 
 grfcc0		at mainbus0		# custom chips
 grfrt0		at zbus0		# retina II
@@ -205,6 +158,7 @@ aftsc0		at mainbus0		# A4000T scsi
 flsc0		at zbus0		# FastlaneZ3 scsi
 bzsc0		at zbus0		# Blizzard 1230 scsi
 empsc0		at zbus0		# Emplant
+drsc0		at mainbus0		# DraCo scsi
 
 scsibus*	at gtsc0
 scsibus*	at ahsc0
@@ -222,6 +176,7 @@ scsibus*	at aftsc0
 scsibus*	at flsc0
 scsibus*	at bzsc0
 scsibus*	at empsc0
+scsibus*	at drsc0
 
 # each hard drive from low target to high
 # will configure to the next available sd unit number
@@ -232,16 +187,49 @@ ch*	at scsibus? target ? lun ?	# scsi cd changers
 ss*	at scsibus? target ? lun ?	# scsi scanners
 uk*	at scsibus? target ? lun ?	# unknown scsi
 
-pseudo-device	loop	1		# network loopback
-pseudo-device	sl	1		# slip
-pseudo-device	ppp	1		# ppp
-#pseudo-device	tun	1		# network tunnel line discipline
-pseudo-device	bpfilter	4	# berkeley packet filters
+ggbus*	at zbus0			# Goldengate bridge
+isa*	at ggbus?
+
+cross*	at zbus0			# CrossLink bridge
+isa*	at cross?
+
+isapnp0	at isa?
+
+com0	at isa? port 0x3f8 irq 4	# Standard PC serial ports
+com1	at isa? port 0x2f8 irq 3
+com2	at isa? port 0x3e8 irq 5
+#com3	at isa? port 0x2e8 irq 9	# (conflicts with some video cards)
+com4	at isa? port 0x0f0 irq 11	# Crosslink builtin ports
+com5	at isa? port 0x0f8 irq 10
+ast0	at isa? port 0x1a0 irq 3	# AST 4-port serial cards
+com*	at ast? slave ?
+boca0	at isa? port 0x100 irq 5	# BOCA 8-port serial cards
+com*	at boca? slave ?
+rtfps0	at isa? port 0x1230 irq 10	# RT 4-port serial cards
+com*	at rtfps? slave ?
+# option for using CD1400 handshaking for incoming data
+# requires a special cable that exchanges the RTS and DTR lines
+# options CY_HW_RTS
+cy0	at isa? iomem 0xd4000 irq 12	# ISA cyclom card
+
+lpt0	at isa? port 0x378 irq 7	# Standard PC parallel ports
+lpt1	at isa? port 0x278
+lpt2	at isa? port 0x3bc
+
+wdc0	at isa? port 0x1f0 irq 14	# ST506, ESDI, and IDE controllers
+#wdc1	at isa? port 0x170 irq ?
+wd*	at wdc? drive ?
+
+atapibus* at wdc?
+acd*	at atapibus? drive ?
+
+# XXX should be ed but clashes with Zorro ed device
+isaed0	at isa? port 0x280 iomem 0xd0000 irq 9	# WD/SMC, 3C503, and NE[12]000
+isaed1	at isa? port 0x250 iomem 0xd8000 irq 9	#   ethernet cards
+isaed2	at isa? port 0x300 iomem 0xcc000 irq 10
+
+fd*	at fdc0 unit ?
 
 pseudo-device	view	10		# views
-pseudo-device	pty	16		# pseudo terminals
-
-pseudo-device	vnd	4		# paging to files
-#pseudo-device	ccd	4		# concatenated disk devices
 
 config	bsd swap on generic
