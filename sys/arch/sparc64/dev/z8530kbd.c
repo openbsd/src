@@ -1,4 +1,4 @@
-/*	$OpenBSD: z8530kbd.c,v 1.7 2002/01/31 16:39:17 jason Exp $	*/
+/*	$OpenBSD: z8530kbd.c,v 1.8 2002/02/12 04:37:47 jason Exp $	*/
 /*	$NetBSD: z8530tty.c,v 1.77 2001/05/30 15:24:24 lukem Exp $	*/
 
 /*-
@@ -152,7 +152,7 @@ struct zskbd_softc {
 	struct	device zst_dev;		/* required first: base device */
 	struct	zs_chanstate *zst_cs;
 
-	struct timeout zst_diag_ch;
+	struct timeout zst_diag_ch, zst_bellto;
 
 	u_int zst_overflows,
 	      zst_floods,
@@ -204,6 +204,7 @@ struct zskbd_softc {
 	int zst_leds;				/* LED status */
 	u_int8_t zst_kbdstate;			/* keyboard state */
 	int zst_layout;				/* current layout */
+	int zst_bellactive, zst_belltimeout;
 };
 
 /* Definition of the driver for autoconfig. */
@@ -236,13 +237,15 @@ void zskbd_raw __P((struct zskbd_softc *, u_int8_t));
 /* wskbd glue */
 int zskbd_enable __P((void *, int));
 void zskbd_set_leds __P((void *, int));
-int zskbd_get_leds __P((void *));
+int zskbd_get_leds __P((struct zskbd_softc *));
 int zskbd_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
 void zskbd_cngetc __P((void *, u_int *, int *));
 void zskbd_cnpollc __P((void *, int));
 
 void zsstart_tx __P((struct zskbd_softc *));
 int zsenqueue_tx __P((struct zskbd_softc *, u_char *, int));
+void zskbd_bell __P((struct zskbd_softc *, u_int, u_int, u_int));
+void zskbd_bellstop __P((void *));
 
 struct wskbd_accessops zskbd_accessops = {
 	zskbd_enable,
@@ -311,6 +314,7 @@ zskbd_attach(parent, self, aux)
 	dev_t dev;
 
 	timeout_set(&zst->zst_diag_ch, zskbd_diag, zst);
+	timeout_set(&zst->zst_bellto, zskbd_bellstop, zst);
 
 	zst->zst_tbp = zst->zst_tba = zst->zst_tbeg = zst->zst_tbuf;
 	zst->zst_tend = zst->zst_tbeg + ZSKBD_RING_SIZE;
@@ -1127,11 +1131,9 @@ zskbd_set_leds(v, wled)
 }
 
 int
-zskbd_get_leds(v)
-	void *v;
+zskbd_get_leds(zst)
+	struct zskbd_softc *zst;
 {
-	struct zskbd_softc *zst = v;
-
 	return (zst->zst_leds);
 }
 
@@ -1143,18 +1145,73 @@ zskbd_ioctl(v, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
+	struct zskbd_softc *zst = v;
+	int *d_int = (int *)data;
+	struct wskbd_bell_data *d_bell = (struct wskbd_bell_data *)data;
+
 	switch (cmd) {
 	case WSKBDIO_GTYPE:
-		*(int *)data = WSKBD_TYPE_SUN;
+		*d_int = WSKBD_TYPE_SUN;
 		return (0);
 	case WSKBDIO_SETLEDS:
-		zskbd_set_leds(v, *(int *)data);
+		zskbd_set_leds(zst, *d_int);
 		return (0);
 	case WSKBDIO_GETLEDS:
-		*(int *)data = zskbd_get_leds(v);
+		*d_int = zskbd_get_leds(zst);
+		return (0);
+	case WSKBDIO_COMPLEXBELL:
+		zskbd_bell(zst, d_bell->period,
+		    d_bell->pitch, d_bell->volume);
 		return (0);
 	}
 	return (-1);
+}
+
+void
+zskbd_bell(zst, period, pitch, volume)
+	struct zskbd_softc *zst;
+	u_int period, pitch, volume;
+{
+	int ticks, s;
+	u_int8_t c = SKBD_CMD_BELLON;
+
+	ticks = (period * hz)/1000;
+	if (ticks <= 0)
+		ticks = 1;
+
+	s = splzs();
+	if (zst->zst_bellactive) {
+		if (zst->zst_belltimeout == 0)
+			timeout_del(&zst->zst_bellto);
+	}
+	if (pitch == 0 || period == 0) {
+		zskbd_bellstop(zst);
+		splx(s);
+		return;
+	}
+	if (!zst->zst_bellactive) {
+		zst->zst_bellactive = 1;
+		zst->zst_belltimeout = 1;
+		zsenqueue_tx(zst, &c, 1);
+		timeout_add(&zst->zst_bellto, ticks);
+	}
+	splx(s);
+}
+
+void
+zskbd_bellstop(v)
+	void *v;
+{
+	struct zskbd_softc *zst = v;
+	int s;
+	u_int8_t c;
+
+	s = splzs();
+	zst->zst_belltimeout = 0;
+	c = SKBD_CMD_BELLOFF;
+	zsenqueue_tx(zst, &c, 1);
+	zst->zst_bellactive = 0;
+	splx(s);
 }
 
 void
