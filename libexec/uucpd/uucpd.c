@@ -42,7 +42,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)uucpd.c	5.10 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$Id: uucpd.c,v 1.12 1998/04/22 14:19:51 deraadt Exp $";
+static char rcsid[] = "$Id: uucpd.c,v 1.13 1998/05/22 04:33:08 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -180,10 +180,11 @@ struct sockaddr_in *sinp;
 	user[8] = '\0';
 	pw = getpwnam(user);
 	if (pw == NULL) {
-		fprintf(stderr, "user unknown\n");
-		return;
-	}
-	if (strcmp(pw->pw_shell, _PATH_UUCICO)) {
+		printf("Password: "); fflush(stdout);
+		if (readline(passwd, sizeof passwd) < 0) {
+			fprintf(stderr, "passwd read\n");
+			return;
+		}
 		fprintf(stderr, "Login incorrect.");
 		return;
 	}
@@ -198,6 +199,10 @@ struct sockaddr_in *sinp;
 			fprintf(stderr, "Login incorrect.");
 			return;
 		}
+	}
+	if (strcmp(pw->pw_shell, _PATH_UUCICO)) {
+		fprintf(stderr, "Login incorrect.");
+		return;
 	}
 	alarm(0);
 	(void) snprintf(Username, sizeof(Username), "USER=%s", user);
@@ -304,9 +309,7 @@ struct sockaddr_in *sin;
 
 		time(&ll.ll_time);
 		lseek(f, pw->pw_uid * sizeof(struct lastlog), 0);
-		strncpy(line, remotehost, sizeof line-1);
-		line[sizeof line-1] = '\0';
-		SCPYN(ll.ll_line, line);
+		SCPYN(ll.ll_line, remotehost);
 		SCPYN(ll.ll_host, remotehost);
 		(void) write(f, (char *) &ll, sizeof ll);
 		(void) close(f);
