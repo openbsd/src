@@ -1,4 +1,4 @@
-.\" $OpenBSD: vpn.8,v 1.47 2000/11/20 08:00:04 deraadt Exp $
+.\" $OpenBSD: vpn.8,v 1.48 2000/12/15 02:54:08 provos Exp $
 .\" Copyright 1998 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
 .\"
@@ -75,14 +75,6 @@ manual (symmetric shared secret)
 .It
 .Xr photurisd 8
 .El
-.Pp
-At present,
-.Xr photurisd 8
-has a limitation in that the IP adress of the security gateway must
-fall within the range of adresses being tunnelled to, making VPNs
-between (non-routable) private (RFC 1918) networks difficult.
-This does not apply to
-.Xr isakmpd 8 .
 .Ss Enabling the Appropriate Kernel Operations
 Make sure that the following options and devices are enabled in the kernel:
 .Bd -literal
