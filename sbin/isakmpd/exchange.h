@@ -1,4 +1,4 @@
-/* $OpenBSD: exchange.h,v 1.28 2004/08/23 11:13:14 ho Exp $	 */
+/* $OpenBSD: exchange.h,v 1.29 2005/01/31 10:07:59 hshoexer Exp $	 */
 /* $EOM: exchange.h,v 1.28 2000/09/28 12:54:28 niklas Exp $	 */
 
 /*
@@ -192,12 +192,10 @@ struct exchange {
 	void           *recv_key;	/* Key peer used to authenticate,
 					 * native format */
 
-	/* Likewise, for certificates/keys we use. */
+	/* Likewise, for certificates we use. */
 	int             sent_certtype, sent_keytype;
 	void           *sent_cert;	/* Certificate (to be) sent to peer,
 					 * native format */
-	void           *sent_key;	/* Key we'll use to authenticate to
-					 * peer, native format */
 
 	/* ACQUIRE sequence number.  */
 	u_int32_t       seq;

@@ -1,4 +1,4 @@
-/* $OpenBSD: crypto.h,v 1.14 2004/05/14 08:42:56 hshoexer Exp $	 */
+/* $OpenBSD: crypto.h,v 1.15 2005/01/31 10:07:59 hshoexer Exp $	 */
 /* $EOM: crypto.h,v 1.12 2000/10/15 21:56:41 niklas Exp $	 */
 
 /*
@@ -101,9 +101,6 @@
 
 struct keystate {
 	struct crypto_xf *xf;	/* Back pointer */
-	u_int16_t       ebytes;	/* Number of encrypted bytes */
-	u_int16_t       dbytes;	/* Number of decrypted bytes */
-	time_t          life;	/* Creation time */
 	u_int8_t        iv[MAXBLK];	/* Next IV to use */
 	u_int8_t        iv2[MAXBLK];
 	u_int8_t       *riv, *liv;
