@@ -1,4 +1,4 @@
-/*	$OpenBSD: df.c,v 1.38 2004/09/14 22:47:18 deraadt Exp $	*/
+/*	$OpenBSD: df.c,v 1.39 2004/09/14 22:51:47 deraadt Exp $	*/
 /*	$NetBSD: df.c,v 1.21.2.1 1995/11/01 00:06:11 jtc Exp $	*/
 
 /*
@@ -45,7 +45,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)df.c	8.7 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: df.c,v 1.38 2004/09/14 22:47:18 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: df.c,v 1.39 2004/09/14 22:51:47 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -434,7 +434,7 @@ posixprint(struct statfs *mntbuf, long mntsize, int maxwidth)
 int
 raw_df(char *file, struct statfs *sfsp)
 {
-	int rfd;
+	int rfd, ret = -1;
 
 	if ((rfd = open(file, O_RDONLY)) < 0) {
 		warn("%s", file);
@@ -442,19 +442,17 @@ raw_df(char *file, struct statfs *sfsp)
 	}
 
 	if (ffs_df(rfd, file, sfsp) == 0) {
-		return (0);
+		ret = 0;
 #if 0
 	} else if (lfs_df(rfd, file, sfsp) == 0) {
-		return (0);
+		ret = 0;
 #endif
 	} else if (e2fs_df(rfd, file, sfsp) == 0) {
-		return (0);
-	} else {
-		return (-1);
+		ret = 0;
 	}
 
 	close (rfd);
-
+	return (ret);
 }
 
 int
