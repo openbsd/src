@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.7 1999/04/20 19:26:42 mickey Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.8 1999/05/02 03:41:08 mickey Exp $	*/
 
 /* 
  * Copyright (c) 1988-1994, The University of Utah and
@@ -71,7 +71,7 @@ int	spcopy __P((pa_space_t ssp, const void *src,
 int	spstrcpy __P((pa_space_t ssp, const void *src,
 		      pa_space_t dsp, void *dst, size_t size, size_t *rsize));
 int	copy_on_fault __P((void));
-void	child_return __P((void));
+void child_return __P((struct proc *));
 void	switch_trampoline __P((void));
 void	switch_exit __P((struct proc *));
 #define	cpu_wait(p)	/* so, nobody uses it nomore */
