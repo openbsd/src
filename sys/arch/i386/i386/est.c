@@ -1,4 +1,4 @@
-/*	$OpenBSD: est.c,v 1.8 2004/06/06 17:34:37 grange Exp $ */
+/*	$OpenBSD: est.c,v 1.9 2004/07/16 18:14:23 deraadt Exp $ */
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -146,6 +146,58 @@ static const struct fq_info pentium_m_1700[] = {
 };
 
 
+/* Intel Pentium M processor 715 1.5 GHz */
+static const struct fq_info pentium_m_n715[] = {
+	{ 1500, 1340 },
+	{ 1200, 1228 },
+	{ 1000, 1148 },
+	{  800, 1068 },
+	{  600,  988 }
+};
+
+/* Intel Pentium M processor 725 1.6 GHz */
+static const struct fq_info pentium_m_n725[] = {
+	{ 1600, 1340 },
+	{ 1400, 1276 },
+	{ 1200, 1212 },
+	{ 1000, 1132 },
+	{  800, 1068 },
+	{  600,  988 }
+};
+
+/* Intel Pentium M processor 735 1.7 GHz */
+static const struct fq_info pentium_m_n735[] = {
+	{ 1700, 1340 },
+	{ 1400, 1244 },
+	{ 1200, 1180 },
+	{ 1000, 1116 },
+	{  800, 1052 },
+	{  600,  988 }
+};
+
+/* Intel Pentium M processor 745 1.8 GHz */
+static const struct fq_info pentium_m_n745[] = {
+	{ 1800, 1340 },
+	{ 1600, 1292 },
+	{ 1400, 1228 },
+	{ 1200, 1164 },
+	{ 1000, 1116 },
+	{  800, 1052 },
+	{  600,  988 }
+};
+
+/* Intel Pentium M processor 755 2.0 GHz */
+static const struct fq_info pentium_m_n755[] = {
+	{ 2000, 1340 },
+	{ 1800, 1292 },
+	{ 1600, 1244 },
+	{ 1400, 1196 },
+	{ 1200, 1148 },
+	{ 1000, 1100 },
+	{  800, 1052 },
+	{  600,  988 }
+};
+
 struct fqlist {
 	const char *brand_tag;
 	const struct fq_info *table;
@@ -166,6 +218,15 @@ static const struct fqlist pentium_m[] = {
 #undef ENTRY
 };
 
+static const struct fqlist pentium_m_dothan[] = {
+#define ENTRY(s, v)	{ s, v, sizeof(v) / sizeof((v)[0]) }
+	ENTRY("1.50", pentium_m_n715),
+	ENTRY("1.60", pentium_m_n725),
+	ENTRY("1.70", pentium_m_n735),
+	ENTRY("1.80", pentium_m_n745),
+	ENTRY("2.00", pentium_m_n755),
+#undef ENTRY
+};
 
 struct est_cpu {
 	const char *brand_prefix;
@@ -178,7 +239,12 @@ static const struct est_cpu est_cpus[] = {
 	{
 		"Intel(R) Pentium(R) M processor ", "MHz",
 		pentium_m,
-		(sizeof(pentium_m) / sizeof(pentium_m[0])),
+		(sizeof(pentium_m) / sizeof(pentium_m[0]))
+	},
+	{
+		"Intel(R) Pentium(R) M processor ", "GHz",
+		pentium_m_dothan,
+		(sizeof(pentium_m_dothan) / sizeof(pentium_m_dothan[0]))
 	},
 };
 
