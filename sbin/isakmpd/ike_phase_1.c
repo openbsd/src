@@ -1,4 +1,4 @@
-/* $OpenBSD: ike_phase_1.c,v 1.53 2004/06/23 00:56:45 ho Exp $	 */
+/* $OpenBSD: ike_phase_1.c,v 1.54 2004/07/05 17:33:35 pvalchev Exp $	 */
 /* $EOM: ike_phase_1.c,v 1.31 2000/12/11 23:47:56 niklas Exp $	 */
 
 /*
@@ -97,15 +97,15 @@ ike_phase_1_initiator_send_SA(struct message *msg)
 
 	transform = calloc(conf->cnt, sizeof *transform);
 	if (!transform) {
-		log_error("ike_phase_1_initiator_send_SA: calloc (%d, %lu) "
-		    "failed", conf->cnt, (unsigned long) sizeof *transform);
+		log_error("ike_phase_1_initiator_send_SA: calloc (%lu, %lu) "
+		    "failed", (u_long)conf->cnt, (u_long) sizeof *transform);
 		goto bail_out;
 	}
 	transform_len = calloc(conf->cnt, sizeof *transform_len);
 	if (!transform_len) {
-		log_error("ike_phase_1_initiator_send_SA: calloc (%d, %lu) "
-		    "failed", conf->cnt,
-		    (unsigned long) sizeof *transform_len);
+		log_error("ike_phase_1_initiator_send_SA: calloc (%lu, %lu) "
+		    "failed", (u_long)conf->cnt,
+		    (u_long) sizeof *transform_len);
 		goto bail_out;
 	}
 	for (xf = TAILQ_FIRST(&conf->fields), i = 0; i < conf->cnt;
