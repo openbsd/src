@@ -1,4 +1,4 @@
-/*	$OpenBSD: ansi.h,v 1.1.1.1 2001/08/18 04:16:40 jason Exp $	*/
+/*	$OpenBSD: ansi.h,v 1.2 2002/03/19 15:30:27 kevlo Exp $	*/
 /*	$NetBSD: ansi.h,v 1.7 2001/01/03 10:09:04 takemura Exp $ */
 
 /*-
@@ -58,8 +58,6 @@
 #define	_BSD_VA_LIST_		char *		/* va_list */
 #define	_BSD_CLOCKID_T_		int		/* clockid_t */
 #define	_BSD_TIMER_T_		int		/* timer_t */
-#define	_BSD_SUSECONDS_T_	int		/* suseconds_t */
-#define	_BSD_USECONDS_T_	unsigned int	/* useconds_t */
 
 /*
  * NOTE: rune_t is not covered by ANSI nor other standards, and should not
@@ -83,15 +81,9 @@
 #define	_BSD_RUNE_T_		int		/* rune_t */
 
 /*
- * mbstate_t is an opaque object to keep conversion state, during multibyte
- * stream conversions.  The content must not be referenced by user programs.
+ * We describe off_t here so its declaration can be visible to
+ * stdio without pulling in all of <sys/type.h>, thus appeasing ANSI.
  */
-typedef union {
-	char __mbstate8[128];
-	int64_t __mbstateL;	/* for alignment */
-} __mbstate_t;
-#define	_BSD_MBSTATE_T_		__mbstate_t	/* mbstate_t */
-
 #define	_BSD_OFF_T_	long long
 
 #endif	/* _ANSI_H_ */
