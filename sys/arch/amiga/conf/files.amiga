@@ -1,4 +1,4 @@
-#	$OpenBSD: files.amiga,v 1.15 1996/05/29 10:14:45 niklas Exp $
+#	$OpenBSD: files.amiga,v 1.16 1996/06/11 22:28:18 niklas Exp $
 #	$NetBSD: files.amiga,v 1.48 1996/05/19 21:04:50 veego Exp $
 
 # maxpartitions must be first item in files.${ARCH}
@@ -261,6 +261,12 @@ file	arch/amiga/dev/bzsc.c		bzsc needs-flag
 device	idesc: scsi
 attach	idesc at mainbus
 file	arch/amiga/dev/idesc.c		idesc needs-flag
+
+#
+# Machine-independent ATAPI drivers
+#
+
+include "../../../dev/atapi/files.atapi"
 
 #
 # ISA devices
