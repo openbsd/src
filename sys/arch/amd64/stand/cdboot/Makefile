@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2004/08/21 18:53:38 tom Exp $
+#	$OpenBSD: Makefile,v 1.2 2004/08/24 15:34:59 tom Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -9,7 +9,7 @@ S	=${.CURDIR}/../../../..
 SADIR=	${.CURDIR}/..
 
 PROG=	cdboot
-SRCS=	srt0.S conf.c
+SRCS=	srt0.S cdboot.c conf.c
 LD?=	ld
 SIZE?=	size
 LDFLAGS+=-melf_i386 -nostdlib -Bstatic -Ttext $(LINKADDR) -N -x -noinhibit-exec
@@ -63,4 +63,5 @@ CPPFLAGS+=-DBOOTMAGIC=$(BOOTMAGIC) ${DEBUGFLAGS}
 CPPFLAGS+=-DSLOW -DSMALL -DNOBYFOUR -DNO_GZIP -DDYNAMIC_CRC_TABLE
 CPPFLAGS+=-DLINKADDR=${LINKADDR} -I${S}/stand/boot
 CFLAGS+=-m32 ${SACFLAGS} -D__INTERNAL_LIBSA_CREAD
+CFLAGS+=-DOSREV=\"${OSREV}\" -DMACHINE=\"${MACHINE}\"
 AFLAGS+=-m32
