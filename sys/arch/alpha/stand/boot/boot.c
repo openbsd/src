@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.4 1996/07/29 23:01:33 niklas Exp $	*/
+/*	$OpenBSD: boot.c,v 1.5 1996/07/31 16:24:11 niklas Exp $	*/
 /*	$NetBSD: boot.c,v 1.6 1996/05/10 00:15:08 cgd Exp $	*/
 
 /*
@@ -55,7 +55,7 @@ static int aout_exec __P((int, struct exec *, u_int64_t *));
 static int coff_exec __P((int, struct ecoff_exechdr *, u_int64_t *));
 static int loadfile __P((char *, u_int64_t *));
 
-char line[64] = "/netbsd";
+char line[64] = "/bsd";
 
 char boot_file[128];
 char boot_dev[128];
