@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.72 2003/12/03 13:28:36 markus Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.73 2003/12/06 23:10:19 deraadt Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -65,6 +65,12 @@
 .Fl m
 .Ar interface
 .Op Ar address_family
+.Nm ifconfig
+.Ar interface
+.Cm create
+.Nm ifconfig
+.Ar interface
+.Cm destroy
 .Nm ifconfig
 .Op Fl a | am
 .Op Ar address_family
@@ -217,6 +223,17 @@ Removes the source and destination tunnel addresses,
 configured onto a tunnel interface.
 .It Cm create
 Create the specified network pseudo-device.
+At least the following devices can be created on demand:
+.Pp
+.Xr bridge 4 ,
+.Xr carp 4 ,
+.Xr gif 4 ,
+.Xr gre 4 ,
+.Xr lo 4 ,
+.Xr ppp 4 ,
+.Xr sl 4 ,
+.Xr tun 4 ,
+.Xr vlan 4
 .It Cm destroy
 Destroy the specified network pseudo-device.
 .It Cm ipdst
@@ -616,9 +633,17 @@ requested address is unknown, or the user is not privileged and
 tried to alter an interface's configuration.
 .Sh SEE ALSO
 .Xr netstat 1 ,
+.Xr bridge 4 ,
 .Xr carp 4 ,
+.Xr gif 4 ,
+.Xr gre 4 ,
 .Xr ifmedia 4 ,
+.Xr lo 4 ,
 .Xr netintro 4 ,
+.Xr ppp 4 ,
+.Xr sl 4 ,
+.Xr tun 4 ,
+.Xr vlan 4 ,
 .Xr hostname.if 5 ,
 .Xr brconfig 8 ,
 .Xr rc 8 ,
