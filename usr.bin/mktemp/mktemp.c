@@ -1,4 +1,4 @@
-/*	$OpenBSD: mktemp.c,v 1.8 2002/02/16 21:27:49 millert Exp $	*/
+/*	$OpenBSD: mktemp.c,v 1.9 2003/04/07 19:25:43 millert Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 2001 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -28,7 +28,7 @@
  */
 
 #ifndef lint                                                              
-static const char rcsid[] = "$OpenBSD: mktemp.c,v 1.8 2002/02/16 21:27:49 millert Exp $";
+static const char rcsid[] = "$OpenBSD: mktemp.c,v 1.9 2003/04/07 19:25:43 millert Exp $";
 #endif /* not lint */                                                        
 
 #include <paths.h>
@@ -47,7 +47,7 @@ main(argc, argv)
 {
 	int ch, fd, uflag = 0, quiet = 0, tflag = 0, makedir = 0;
 	char *cp, *template, *tempfile, *prefix = _PATH_TMP;
-	size_t plen;
+	int plen;
 
 	while ((ch = getopt(argc, argv, "dp:qtu")) != -1)
 		switch(ch) {
@@ -87,7 +87,8 @@ main(argc, argv)
 	if (tflag) {
 		if (strchr(template, '/')) {
 			if (!quiet)
-				warnx("template must not contain directory separators in -t mode");
+				warnx("template must not contain directory "
+				    "separators in -t mode");
 			exit(1);
 		}
 
@@ -98,21 +99,14 @@ main(argc, argv)
 		while (plen != 0 && prefix[plen - 1] == '/')
 			plen--;
 
-		tempfile = (char *)malloc(plen + 1 + strlen(template) + 1);
-		if (tempfile == NULL) {
-			if (!quiet)
-				warnx("cannot allocate memory");
-			exit(1);
-		}
-		(void)memcpy(tempfile, prefix, plen);
-		tempfile[plen] = '/';
-		(void)strcpy(tempfile + plen + 1, template);	/* SAFE */
-	} else {
-		if ((tempfile = strdup(template)) == NULL) {
-			if (!quiet)
-				warnx("cannot allocate memory");
-			exit(1);
-		}
+		tempfile = NULL;
+		asprintf(&tempfile, "%.*s/%s", plen, prefix, template);
+	} else
+		tempfile = strdup(template);
+	if (tempfile == NULL) {
+		if (!quiet)
+			warnx("cannot allocate memory");
+		exit(1);
 	}
 
 	if (makedir) {
