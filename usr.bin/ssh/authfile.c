@@ -15,7 +15,7 @@
  */
 
 #include "includes.h"
-RCSID("$Id: authfile.c,v 1.15 2000/04/26 20:56:29 markus Exp $");
+RCSID("$Id: authfile.c,v 1.16 2000/04/26 21:28:32 markus Exp $");
 
 #include <openssl/bn.h>
 #include <openssl/dsa.h>
