@@ -661,3 +661,4 @@
 ./usr/lib/gcc-lib/m68k-unknown-openbsd2.6/2.95.1
 ./usr/lib/gcc-lib/m68k-unknown-openbsd2.6/2.95.1/include
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sys/sched.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/stdbool.ph

@@ -620,3 +620,4 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/pcap-int.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sys/ataio.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sys/sched.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/stdbool.ph

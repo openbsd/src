@@ -385,3 +385,4 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/pcap-int.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/ataio.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/sched.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/stdbool.ph

@@ -421,3 +421,4 @@
 ./usr/libdata/perl5/site_perl/mips-openbsd/pcap-int.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/sys/ataio.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/sys/sched.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/stdbool.ph

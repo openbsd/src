@@ -2626,3 +2626,4 @@
 ./var/yp/Makefile.yp.dist
 ./var/yp/README
 ./sbin/atactl
+./usr/include/stdbool.h
