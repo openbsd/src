@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5xxx.c,v 1.8 2005/01/09 18:18:15 reyk Exp $	*/
+/*	$OpenBSD: ar5xxx.c,v 1.9 2005/02/03 03:21:37 kevlo Exp $	*/
 
 /*
  * Copyright (c) 2004 Reyk Floeter <reyk@vantronix.net>.
@@ -93,7 +93,7 @@ int		 ar5k_eeprom_read_modes(struct ath_hal *, u_int32_t *, u_int);
 u_int16_t	 ar5k_eeprom_bin2freq(struct ath_hal *, u_int16_t, u_int);
 
 HAL_BOOL 	 ar5k_ar5110_channel(struct ath_hal *, HAL_CHANNEL *);
-HAL_BOOL	 ar5k_ar5110_chan2athchan(HAL_CHANNEL *);
+u_int32_t	 ar5k_ar5110_chan2athchan(HAL_CHANNEL *);
 HAL_BOOL 	 ar5k_ar5111_channel(struct ath_hal *, HAL_CHANNEL *);
 HAL_BOOL	 ar5k_ar5111_chan2athchan(u_int, struct ar5k_athchan_2ghz *);
 HAL_BOOL 	 ar5k_ar5112_channel(struct ath_hal *, HAL_CHANNEL *);
