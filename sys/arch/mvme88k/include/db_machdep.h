@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.15 2001/11/09 00:12:19 miod Exp $ */
+/*	$OpenBSD: db_machdep.h,v 1.16 2001/11/27 05:35:36 miod Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -36,6 +36,13 @@
 #ifndef  _M88K_DB_MACHDEP_H_
 #define  _M88K_DB_MACHDEP_H_
 
+/* trap numbers used by ddb */
+#define	DDB_ENTRY_BKPT_NO	130
+#define	DDB_ENTRY_TRACE_NO	131
+#define DDB_ENTRY_TRAP_NO	132
+
+#ifndef	_LOCORE
+
 #include <machine/pcb.h>	/* m88100_saved_state */
 #include <machine/psl.h>
 #include <machine/trap.h>
@@ -43,12 +50,11 @@
 #include <uvm/uvm_param.h>
 
 #define BKPT_SIZE	(4)		/* number of bytes in bkpt inst. */
-#define BKPT_INST	(0xF000D082U)	/* tb0, 0,r0, vector 132 */
+#define BKPT_INST	(0xF000D000 | DDB_ENTRY_BKPT_NO)	/* tb0, 0,r0, vector 130 */
 #define BKPT_SET(inst)	(BKPT_INST)
 
 /* Entry trap for the debugger - used for inline assembly breaks*/
 #define ENTRY_ASM       	"tb0 0, r0, 132"
-#define DDB_ENTRY_TRAP_NO	132
 
 typedef	vm_offset_t		db_addr_t;
 typedef	int			db_expr_t;
@@ -176,5 +182,7 @@ int ddb_entry_trap __P((int level, db_regs_t *eframe));
 #define	db_printf_enter	db_printing
 
 int m88k_print_instruction __P((unsigned iadr, long inst));
+
+#endif	/* _LOCORE */
 
 #endif	/* _M88K_DB_MACHDEP_H_ */
