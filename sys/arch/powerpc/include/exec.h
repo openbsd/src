@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.h,v 1.3 1996/12/28 06:25:06 rahnds Exp $	*/
+/*	$OpenBSD: exec.h,v 1.4 1997/01/09 03:03:44 rahnds Exp $	*/
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
  * All rights reserved.
@@ -25,7 +25,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: exec.h,v 1.3 1996/12/28 06:25:06 rahnds Exp $
+ *	$Id: exec.h,v 1.4 1997/01/09 03:03:44 rahnds Exp $
  */
 
 #ifndef _PPC_EXEC_H_
@@ -34,14 +34,23 @@
 #define __LDPGSZ	4096	/* linker page size */
 
 enum reloc_type {
-  reloc_type_rubbish
+	rubbish
 };
 
 /* Relocation format (from PMAX?) */
 struct relocation_info_powerpc {
-  int utter_rubbish;
+	/* Rubbish for "a.out" compatibility, not used for ELF */
+	int r_address;			/* offset in text or data segment */
+	unsigned int r_symbolnum : 24,	/* ordinal number of add symbol */
+			 r_pcrel :  1,	/* 1 if value should be pc-relative */
+			r_length :  2,	/* log base 2 of value's width */
+			r_extern :  1,	/* 1 if need to add symbol to value */
+		       r_baserel :  1,	/* linkage table relative */
+		      r_jmptable :  1,	/* relocate to jump table */
+		      r_relative :  1,	/* load address relative */
+			  r_copy :  1;	/* run time copy */
 };
-#define relocation_info	relocation_info_ppc
+#define relocation_info	relocation_info_powerpc
 
 /*
  *  Define what exec "formats" we should handle.
