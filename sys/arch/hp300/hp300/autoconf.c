@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.30 2005/01/14 22:39:27 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.31 2005/01/16 17:43:04 millert Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.45 1999/04/10 17:31:02 kleink Exp $	*/
 
 /*
@@ -1120,7 +1120,7 @@ console_scan(func, arg, bus)
 	void *arg;
 	int bus;
 {
-	int rv, size, scode, sctop;
+	int size, scode, sctop;
 	caddr_t pa, va;
 
 	switch (bus) {
@@ -1189,6 +1189,8 @@ console_scan(func, arg, bus)
 		 * hardware.  If there's something there, call (*func)().
 		 */
 		for (scode = 0; scode < SGC_NSLOTS; ++scode) {
+			int rv;
+
 			/*
 			 * Abort mission if console has been forced.
 			 */
