@@ -1,4 +1,4 @@
-/*	$OpenBSD: test_close.c,v 1.2 2000/10/04 05:50:58 d Exp $	*/
+/*	$OpenBSD: test_close.c,v 1.3 2000/10/04 06:03:10 d Exp $	*/
 
 /*
  * Test the semantics of close() while a select() is happening.
@@ -40,6 +40,7 @@ main()
 	pthread_t thread;
 	pthread_attr_t attr;
 	struct sockaddr_in addr;
+	int ret;
 
 	/* Open up a TCP connection to the local discard port */
 	addr.sin_family = AF_INET;
