@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.28 2003/06/23 19:35:31 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.29 2003/06/27 17:33:26 millert Exp $	*/
 
 static const char copyright[] =
 "@(#) Copyright (c) 1992, 1993\n\
@@ -35,7 +35,7 @@ static const char license[] =
 #if 0
 static char sccsid[] = "@(#)compress.c	8.2 (Berkeley) 1/7/94";
 #else
-static const char main_rcsid[] = "$OpenBSD: main.c,v 1.28 2003/06/23 19:35:31 millert Exp $";
+static const char main_rcsid[] = "$OpenBSD: main.c,v 1.29 2003/06/27 17:33:26 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -248,6 +248,7 @@ main(int argc, char *argv[])
 			break;
 		case 't':
 			testmode = 1;
+			decomp++;
 			break;
 		case 'V':
 			printf("%s\n%s\n%s\n", main_rcsid,
