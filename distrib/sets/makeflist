@@ -1,6 +1,6 @@
 #!/bin/csh -f
 
-set arch=`uname -m`
+set arch=`machine`
 set listsdir=`pwd`/lists
 
 set TMPFILE=/tmp/_LIST.$$
