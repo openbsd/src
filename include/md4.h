@@ -1,5 +1,5 @@
 /* MD4.H - header file for MD4C.C
- * $OpenBSD: md4.h,v 1.10 2003/08/01 17:38:33 avsm Exp $
+ * $OpenBSD: md4.h,v 1.11 2003/10/07 22:17:27 avsm Exp $
  */
 
 /* Copyright (C) 1991-2, RSA Data Security, Inc. Created 1991. All
@@ -37,13 +37,20 @@ typedef struct MD4Context {
 
 __BEGIN_DECLS
 void   MD4Init(MD4_CTX *);
-void   MD4Update(MD4_CTX *, const unsigned char *, size_t);
-void   MD4Final(unsigned char [16], MD4_CTX *);
-void   MD4Transform(u_int32_t [4], const unsigned char [64]);
-char * MD4End(MD4_CTX *, char *);
-char * MD4File(char *, char *);
+void   MD4Update(MD4_CTX *, const unsigned char *, size_t)
+		__attribute__((__bounded__(__string__,2,3)));
+void   MD4Final(unsigned char [16], MD4_CTX *)
+		__attribute__((__bounded__(__minbytes__,1,16)));
+void   MD4Transform(u_int32_t [4], const unsigned char [64])
+		__attribute__((__bounded__(__minbytes__,1,4)))
+		__attribute__((__bounded__(__minbytes__,2,64)));
+char * MD4End(MD4_CTX *, char *)
+                __attribute__((__bounded__(__minbytes__,2,33)));
+char * MD4File(char *, char *)
+		__attribute__((__bounded__(__minbytes__,2,33)));
 char * MD4Data(const unsigned char *, size_t, char *)
-		__attribute__((__bounded__(__string__,3,2)));
+		__attribute__((__bounded__(__string__,1,2)))
+		__attribute__((__bounded__(__minbytes__,3,33)));
 __END_DECLS
 
 #endif /* _MD4_H_ */

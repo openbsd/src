@@ -1,5 +1,5 @@
 /* MD5.H - header file for MD5C.C
- * $OpenBSD: md5.h,v 1.10 2003/08/01 17:38:33 avsm Exp $
+ * $OpenBSD: md5.h,v 1.11 2003/10/07 22:17:27 avsm Exp $
  */
 
 /* Copyright (C) 1991-2, RSA Data Security, Inc. Created 1991. All
@@ -38,13 +38,20 @@ typedef struct MD5Context {
 
 __BEGIN_DECLS
 void   MD5Init(MD5_CTX *);
-void   MD5Update(MD5_CTX *, const unsigned char *, size_t);
-void   MD5Final(unsigned char [16], MD5_CTX *);
-void   MD5Transform(u_int32_t [4], const unsigned char [64]);
-char * MD5End(MD5_CTX *, char *);
-char * MD5File(char *, char *);
+void   MD5Update(MD5_CTX *, const unsigned char *, size_t)
+		__attribute__((__bounded__(__string__,2,3)));
+void   MD5Final(unsigned char [16], MD5_CTX *)
+		__attribute__((__bounded__(__minbytes__,1,16)));
+void   MD5Transform(u_int32_t [4], const unsigned char [64])
+		__attribute__((__bounded__(__minbytes__,1,4)))
+		__attribute__((__bounded__(__minbytes__,2,64)));
+char * MD5End(MD5_CTX *, char *)
+		__attribute__((__bounded__(__minbytes__,2,33)));
+char * MD5File(char *, char *)
+		__attribute__((__bounded__(__minbytes__,2,33)));
 char * MD5Data(const unsigned char *, size_t, char *)
-		__attribute__ ((__bounded__(__string__,3,2)));
+		__attribute__((__bounded__(__string__,1,2)))
+		__attribute__((__bounded__(__minbytes__,3,33)));
 __END_DECLS
 
 #endif /* _MD5_H_ */
