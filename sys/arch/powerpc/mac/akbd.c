@@ -1,4 +1,4 @@
-/*	$OpenBSD: akbd.c,v 1.8 2001/07/09 03:30:19 mickey Exp $	*/
+/*	$OpenBSD: akbd.c,v 1.9 2001/07/17 23:34:14 drahn Exp $	*/
 /*	$NetBSD: akbd.c,v 1.13 2001/01/25 14:08:55 tsubai Exp $	*/
 
 /*
@@ -490,12 +490,15 @@ akbd_intr(event)
 		wskbd_input(sc->sc_wskbddev, type, val);
 		type = WSCONS_EVENT_KEY_UP;
 		break;
+#if 0
+	/* not supported... */
 	case 245:
 		pm_eject_pcmcia(0);
 		break;
 	case 244:
 		pm_eject_pcmcia(1);
 		break;
+#endif
 	}
 
 	if (adb_polling)
