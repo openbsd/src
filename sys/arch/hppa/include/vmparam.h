@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.6 1999/04/20 19:29:13 mickey Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.7 1999/05/12 15:52:28 mickey Exp $	*/
 
 /* 
  * Copyright (c) 1988-1994, The University of Utah and
@@ -43,8 +43,6 @@
 #define	LOWPAGES	0
 #define	HIGHPAGES	UPAGES
 #define	SYSCALLGATE	0xC0000000		/* syscall gateway page */
-
-#define	INTSTACK_SIZE	(5 * NBPG)		/* interrupt stack size */
 
 /*
  * Virtual memory related constants, all in bytes
@@ -124,7 +122,7 @@
 #define	VM_MAXUSER_ADDRESS	((vaddr_t)0xc0000000)
 #define	VM_MAX_ADDRESS		VM_MAXUSER_ADDRESS
 #define	VM_MIN_KERNEL_ADDRESS	((vaddr_t)0)
-#define	VM_MAX_KERNEL_ADDRESS	((vaddr_t)0xc0000000)
+#define	VM_MAX_KERNEL_ADDRESS	((vaddr_t)0xf0000000)
 
 /* virtual sizes (bytes) for various kernel submaps */
 #define VM_MBUF_SIZE		(NMBCLUSTERS*MCLBYTES)
@@ -133,6 +131,8 @@
 
 #define	VM_PHYSSEG_MAX	8	/* this many physmem segments */
 #define	VM_PHYSSEG_STRAT	VM_PSTRAT_BIGFIRST
+
+#define	VM_PHYSSEG_NOADD	/* XXX until uvm code is fixed */
 
 #define	VM_NFREELIST		2
 #define	VM_FREELIST_DEFAULT	0
