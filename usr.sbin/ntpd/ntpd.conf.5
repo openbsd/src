@@ -1,4 +1,4 @@
-.\" $OpenBSD: ntpd.conf.5,v 1.3 2004/07/07 05:54:16 henning Exp $
+.\" $OpenBSD: ntpd.conf.5,v 1.4 2004/07/07 08:36:26 jmc Exp $
 .\"
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
 .\"
@@ -22,29 +22,37 @@
 .Nd Network Time Protocol daemon configuration file
 .Sh DESCRIPTION
 The
-.Ar ntpd
-daemon implements the Network Time Protocol version 4.
+.Xr ntpd 8
+daemon implements the Network Time Protocol
+.Pq NTP
+version 4.
+This manual page describes the format of its configuration file,
+.Nm .
 The settings are as follows:
-.Bl -tag -width xxxxxxxx
+.Bl -tag -width "listenonXX"
 .It Ar listen on
 Specify a local IP address the
-.Ar ntpd
+.Xr ntpd 8
 daemon should listen on.
+For example:
 .Bd -literal -offset indent
 listen on 127.0.0.1
 .Ed
 .Pp
-Can appear multiple times,
-.Ar ntpd
+It can appear multiple times:
+.Xr ntpd 8
 will listen on each given address.
 If
-.Em *
-is given as address, ntpd will listen on all local addresses.
-ntpd does not listen on any address by default.
+.Sq *
+is given as an address,
+.Xr ntpd 8
+will listen on all local addresses.
+.Xr ntpd 8
+does not listen on any address by default.
 .It Ar server
-Specify the IP address or the hostname of a
-.Ar ntp
+Specify the IP address or the hostname of an NTP
 server to syncronize to.
+For example:
 .Bd -literal -offset indent
 server 10.0.0.2
 server pool.ntp.org
@@ -54,7 +62,7 @@ server pool.ntp.org
 .Bl -tag -width "/etc/ntpd.conf" -compact
 .It Pa /etc/ntpd.conf
 .Nm
-configuration file.
+configuration file
 .El
 .Sh SEE ALSO
 .Xr ntpd 8 ,
