@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.160 2000/03/17 02:53:39 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.161 2000/03/22 18:35:50 mickey Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -240,6 +240,7 @@ sm*	at pcmcia? function ?			# PCMCIA based sm ethernet
 xe*	at pcmcia? function ?			# Xircom ethernet
 wi*	at pcmcia? function ?			# WaveLAN IEEE 802.11
 #cnw*	at pcmcia? function ?			# Xircom Netwave
+#ray*	at pcmcia? function ?			# Raylink Aviator2.4/Pro 802.11
 fpa*	at pci? dev ? function ?		# DEC DEFPA FDDI
 xl*	at pci? dev ? function ?		# 3c9xx ethernet
 rl*	at pci? dev ? function ?		# RealTek 81[23]9 ethernet
