@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.c,v 1.26 1997/10/28 10:06:34 deraadt Exp $	*/
+/*	$OpenBSD: installboot.c,v 1.27 1998/03/01 21:58:12 weingart Exp $	*/
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -343,7 +343,7 @@ devread(fd, buf, blk, size, msg)
 	size_t	size;
 	char	*msg;
 {
-	if (lseek(fd, dbtob(blk), SEEK_SET) != dbtob(blk))
+	if (lseek(fd, dbtob((off_t)blk), SEEK_SET) != dbtob((off_t)blk))
 		err(1, "%s: devread: lseek", msg);
 
 	if (read(fd, buf, size) != size)
