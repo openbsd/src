@@ -1,4 +1,4 @@
-/*	$OpenBSD: stp4020.c,v 1.9 2003/06/25 22:38:37 miod Exp $	*/
+/*	$OpenBSD: stp4020.c,v 1.10 2003/06/25 22:49:06 mickey Exp $	*/
 /*	$NetBSD: stp4020.c,v 1.23 2002/06/01 23:51:03 lukem Exp $	*/
 
 /*-
@@ -69,8 +69,7 @@
 #define	STP_WIN_MEM	1	/* index of the common memory space window */
 #define	STP_WIN_IO	2	/* index of the io space window */
 
-
-#if defined(STP4020_DEBUG)
+#ifdef STP4020_DEBUG
 int stp4020_debug = 0;
 #define DPRINTF(x)	do { if (stp4020_debug) printf x; } while(0)
 #else
@@ -103,10 +102,10 @@ struct	cfdriver stp_cd = {
 static void	stp4020_dump_regs(struct stp4020_socket *);
 #endif
 
-static int	stp4020_rd_sockctl(struct stp4020_socket *, int);
-static void	stp4020_wr_sockctl(struct stp4020_socket *, int, int);
-static int	stp4020_rd_winctl(struct stp4020_socket *, int, int);
-static void	stp4020_wr_winctl(struct stp4020_socket *, int, int, int);
+static u_int16_t stp4020_rd_sockctl(struct stp4020_socket *, int);
+static void	stp4020_wr_sockctl(struct stp4020_socket *, int, u_int16_t);
+static u_int16_t stp4020_rd_winctl(struct stp4020_socket *, int, int);
+static void	stp4020_wr_winctl(struct stp4020_socket *, int, int, u_int16_t);
 
 void	stp4020_delay(unsigned int);
 void	stp4020_attach_socket(struct stp4020_socket *, int);
@@ -156,7 +155,7 @@ static struct pcmcia_chip_functions stp4020_functions = {
 };
 
 
-static __inline__ int
+static __inline__ u_int16_t
 stp4020_rd_sockctl(h, idx)
 	struct stp4020_socket *h;
 	int idx;
@@ -169,13 +168,13 @@ static __inline__ void
 stp4020_wr_sockctl(h, idx, v)
 	struct stp4020_socket *h;
 	int idx;
-	int v;
+	u_int16_t v;
 {
 	int o = (STP4020_SOCKREGS_SIZE * (h->sock)) + idx;
 	bus_space_write_2(h->tag, h->regs, o, v);
 }
 
-static __inline__ int
+static __inline__ u_int16_t
 stp4020_rd_winctl(h, win, idx)
 	struct stp4020_socket *h;
 	int win;
@@ -191,7 +190,7 @@ stp4020_wr_winctl(h, win, idx, v)
 	struct stp4020_socket *h;
 	int win;
 	int idx;
-	int v;
+	u_int16_t v;
 {
 	int o = (STP4020_SOCKREGS_SIZE * (h->sock)) +
 	    (STP4020_WINREGS_SIZE * win) + idx;
