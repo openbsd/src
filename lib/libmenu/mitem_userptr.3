@@ -1,31 +1,27 @@
+.\" $OpenBSD: mitem_userptr.3,v 1.1 1997/12/14 23:19:40 millert Exp $
 '\" t
-.\" $OpenBSD: menu_cursor.3,v 1.3 1997/12/14 23:19:32 millert Exp $
-.TH menu_cursor 3 ""
+.TH mitem_userptr 3 ""
 .SH NAME
-\fBmenu_cursor\fR - position a menu's cursor
+\fBmitem_userptr\fR - associate application data with a menu item
 .SH SYNOPSIS
 \fB#include <menu.h>\fR
 .br
-int pos_menu_cursor(const MENU *menu);
+int set_item_userptr(ITEM *item, void *userptr);
+.br
+void *item_userptr(const ITEM *item);
 .br
 .SH DESCRIPTION
-The function \fBpos_menu_cursor\fR restores the cursor to the current position
-associated with the menu's selected item.  This is useful after \fBcurses\fR
-routines have been called to do screen-painting in response to a menu select.
+Every menu item has a field that can be used to hold application-specific data
+(that is, the menu-driver code leaves it alone).  These functions get and set
+that field.
 .SH RETURN VALUE
-This routine returns one of the following:
+Except for \fBitem_userptr\fR (which returns \fBNULL\fR on error), each function returns one of the following:
 .TP 5
 \fBE_OK\fR
 The routine succeeded.
 .TP 5
 \fBE_SYSTEM_ERROR\fR
 System error occurred (see \fBerrno\fR).
-.TP 5
-\fBE_BAD_ARGUMENT\fR
-Routine detected an incorrect or out-of-range argument.
-.TP 5
-\fBE_NOT_POSTED\fR
-The menu has not been posted.
 .SH SEE ALSO
 \fBcurses\fR(3), \fBmenu\fR(3).
 .SH NOTES
@@ -34,6 +30,9 @@ The header file \fB<menu.h>\fR automatically includes the header file
 .SH PORTABILITY
 These routines emulate the System V menu library.  They were not supported on
 Version 7 or BSD versions.
+
+The user pointer should be a void pointer.  We leave it as a char pointer for
+SVr4 compatibility.
 .SH AUTHORS
 Juergen Pfeifer.  Manual pages and adaptation for new curses by Eric
 S. Raymond.

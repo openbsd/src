@@ -1,0 +1,31 @@
+.\" $OpenBSD: mitem_visible.3,v 1.1 1997/12/14 23:19:41 millert Exp $
+'\" t
+.TH mitem_visible 3 ""
+.SH NAME
+\fBmitem_visible\fR - check visibility of a menu item
+.SH SYNOPSIS
+\fB#include <menu.h>\fR
+.br
+bool item_visible(const ITEM *item);
+.br
+.SH DESCRIPTION
+A menu item is visible when it is in the portion of a posted menu that
+is mapped onto the screen (if the menu is scrollable, in particular, this
+portion will be smaller than the whole menu).
+.SH SEE ALSO
+\fBcurses\fR(3), \fBmenu\fR(3).
+.SH NOTES
+The header file \fB<menu.h>\fR automatically includes the header file
+\fB<curses.h>\fR.
+.SH PORTABILITY
+These routines emulate the System V menu library.  They were not supported on
+Version 7 or BSD versions.
+.SH AUTHORS
+Juergen Pfeifer.  Manual pages and adaptation for new curses by Eric
+S. Raymond.
+.\"#
+.\"# The following sets edit modes for GNU EMACS
+.\"# Local Variables:
+.\"# mode:nroff
+.\"# fill-column:79
+.\"# End:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_addch.c,v 1.3 1997/12/03 05:21:10 millert Exp $	*/
+/*	$OpenBSD: lib_addch.c,v 1.4 1997/12/14 23:15:46 millert Exp $	*/
 
 
 /***************************************************************************
@@ -31,7 +31,7 @@
 #include <curses.priv.h>
 #include <ctype.h>
 
-MODULE_ID("Id: lib_addch.c,v 1.36 1997/10/08 09:38:17 jtc Exp $")
+MODULE_ID("Id: lib_addch.c,v 1.37 1997/12/02 20:17:46 Alexander.V.Lukyanov Exp $")
 
 int wchgat(WINDOW *win, int n, attr_t attr, short color, const void *opts GCC_UNUSED)
 {
@@ -186,14 +186,11 @@ int waddch_nosync(WINDOW *win, const chtype ch)
 	int	t;
 	const char *s;
 
-	if (ch & A_ALTCHARSET)
+	if ((ch & A_ALTCHARSET)
+	    || ((t = TextOf(ch)) > 127)
+	    || ((s = unctrl(t))[1] == 0))
 		return waddch_literal(win, ch);
 
-	t = TextOf(ch);
-	s = unctrl(t);
-	if (s[1] == 0)	/* not a control char */
-		return waddch_literal(win, ch);
-	
 	x = win->_curx;
 	y = win->_cury;
 
@@ -249,7 +246,10 @@ int waddch_nosync(WINDOW *win, const chtype ch)
 		win->_flags &= ~_WRAPPED;
 		break;
 	default:
-		return(waddstr(win, s));
+		while (*s)
+			if (waddch_literal(win, (*s++)|AttrOf(ch)) == ERR)
+				return ERR;
+		return(OK);
 	}
 
 	win->_curx = x;

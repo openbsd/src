@@ -1,0 +1,73 @@
+.\" $OpenBSD: mitem_current.3,v 1.1 1997/12/14 23:19:38 millert Exp $
+'\" t
+.TH mitem_current 3 ""
+.SH NAME
+\fBmitem_current\fR - set and get current_menu_item
+.SH SYNOPSIS
+\fB#include <menu.h>\fR
+.br
+int set_current_item(MENU *menu, const ITEM *item);
+.br
+ITEM *current_item(const MENU *menu);
+.br
+int set_top_row(MENU *menu, int row);
+.br
+int top_row(const MENU *menu);
+.br
+int item_index(const ITEM *item);
+.br
+.SH DESCRIPTION
+The function \fBset_current_item\fR sets the current item (the item on which
+the menu cursor is positioned).  \fBcurrent_item\fR returns a pointer to the
+current item in the given menu.
+
+The function \fBset_top_row\fR sets the top row of the menu to show the given
+row (the top row is initially 0, and is reset to this value whenever the
+\fBO_ROWMAJOR\fR option is toggled).  The item leftmost on the given row
+becomes current.  The function \fBtop_row\fR returns the number of the top menu
+row being displayed.
+
+The function \fBitem_index\fR returns the (zero-origin) index of \fIitem\fR in
+the menu's item pointer list.
+.SH RETURN VALUE
+\fBcurrent_item\fR returns \fBNULL\fR on error.
+
+\fBtop_row\fR and \fBitem_index\fR return \fBERR\fR (the general \fBcurses\fB 
+error value) on error.
+
+\fBset_current_item\fR and \fBset_top_row\fR return one of the following:
+.TP 5
+\fBE_OK\fR
+The routine succeeded.
+.TP 5
+\fBE_SYSTEM_ERROR\fR
+System error occurred (see \fBerrno\fR).
+.TP 5
+\fBE_BAD_ARGUMENT\fR
+Routine detected an incorrect or out-of-range argument.
+.TP 5
+\fBE_BAD_STATE\fR
+Routine was called from an initialization or termination function.
+.TP 5
+\fBE_NOT_CONNECTED\fR
+No items are connected to the menu.
+.SH SEE ALSO
+\fBcurses\fR(3), \fBmenu\fR(3).
+.SH NOTES
+The header file \fB<menu.h>\fR automatically includes the header file
+\fB<curses.h>\fR.
+.SH PORTABILITY
+These routines emulate the System V menu library.  They were not supported on
+Version 7 or BSD versions.
+
+The SVr4 menu library documentation specifies the \fBtop_row\fR and
+\fBindex_item\fR error value as -1 (which is the value of \fBERR\fR).
+.SH AUTHORS
+Juergen Pfeifer.  Manual pages and adaptation for new curses by Eric
+S. Raymond.
+.\"#
+.\"# The following sets edit modes for GNU EMACS
+.\"# Local Variables:
+.\"# mode:nroff
+.\"# fill-column:79
+.\"# End:

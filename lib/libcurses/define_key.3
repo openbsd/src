@@ -1,6 +1,6 @@
-.\" $OpenBSD: wresize.3,v 1.4 1997/12/14 23:15:48 millert Exp $
+.\" $OpenBSD: define_key.3,v 1.1 1997/12/14 23:15:44 millert Exp $
 .\"*****************************************************************************
-.\" Copyright 1996 by Thomas E. Dickey <dickey@clark.net>                      *
+.\" Copyright 1997 by Thomas E. Dickey <dickey@clark.net>                      *
 .\" All Rights Reserved.                                                       *
 .\"                                                                            *
 .\" Permission to use, copy, modify, and distribute this software and its      *
@@ -18,41 +18,39 @@
 .\" CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN        *
 .\" CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.                   *
 .\"*****************************************************************************
-.\" Id: wresize.3x,v 1.3 1997/12/06 22:06:00 tom Exp $
-.TH wresize 3 ""
+.\" Id: define_key.3x,v 1.3 1997/12/14 01:41:00 tom Exp $
+.TH define_key 3 ""
 .
 .SH NAME
-\fBwresize\fR - resize a curses window
+\fBdefine_key\fP \- define a keycode
 .
 .SH SYNOPSIS
-\fB#include <curses.h>\fR
+\fB#include <curses.h>\fP
 
-\fBint wresize(WINDOW *win, int lines, int columns);\fR
+\fBint define_key(char *definition, int keycode);\fP
 .
 .SH DESCRIPTION
-The \fBwresize\fR function reallocates storage for an \fBcurses\fR
-window to adjust its dimensions to the specified values.
-If either dimension is larger than the current values, the
-window's data is filled with blanks that have the current background rendition
-(as set by \fBwbkgndset\fR) merged into them.
+This is an extension to the curses library.
+It permits an application to define keycodes with their corresponding control
+strings, so that the curses library will interpret them just as it would
+the predefined codes in the terminfo database.
+.PP
+If the given string is null, any existing definition for the keycode is
+removed.
 .
 .SH RETURN VALUE
-The function returns the integer \fBERR\fR upon failure and \fBOK\fR on success.
-It will fail if either of the dimensions less than or equal to zero,
-or if an error occurs while (re)allocating memory for the window.
+The keycode must be greater than zero, else ERR is returned.
 .
-.SH NOTES
-The only restriction placed on the dimensions is that they be greater than zero.
-The dimensions are not compared to \fBcurses\fR screen dimensions to
-simplify the logic of \fBresizeterm\fR.
-The caller must ensure that the window's dimensions fit within the
-actual screen dimensions.
+.SH PORTABILITY
+These routines are specific to ncurses.  They were not supported on
+Version 7, BSD or System V implementations.  It is recommended that
+any code depending on them be conditioned using NCURSES_VERSION.
 .
 .SH SEE ALSO
-\fBresizeterm\fR(3).
+\fBkeyok\fR(3).
 .
 .SH AUTHOR
-Thomas Dickey (from an equivalent function written in 1988 for BSD curses).
+Thomas Dickey.
 .\"#
 .\"# The following sets edit modes for GNU EMACS
 .\"# Local Variables:

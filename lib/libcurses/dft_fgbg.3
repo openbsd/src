@@ -1,0 +1,75 @@
+.\" $OpenBSD: dft_fgbg.3,v 1.1 1997/12/14 23:15:45 millert Exp $
+.\"*****************************************************************************
+.\" Copyright 1997 by Thomas E. Dickey <dickey@clark.net>                      *
+.\" All Rights Reserved.                                                       *
+.\"                                                                            *
+.\" Permission to use, copy, modify, and distribute this software and its      *
+.\" documentation for any purpose and without fee is hereby granted, provided  *
+.\" that the above copyright notice appear in all copies and that both that    *
+.\" copyright notice and this permission notice appear in supporting           *
+.\" documentation, and that the name of the above listed copyright holder(s)   *
+.\" not be used in advertising or publicity pertaining to distribution of the  *
+.\" software without specific, written prior permission. THE ABOVE LISTED      *
+.\" COPYRIGHT HOLDER(S) DISCLAIM ALL WARRANTIES WITH REGARD TO THIS SOFTWARE,  *
+.\" INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO     *
+.\" EVENT SHALL THE ABOVE LISTED COPYRIGHT HOLDER(S) BE LIABLE FOR ANY         *
+.\" SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER       *
+.\" RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF       *
+.\" CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN        *
+.\" CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.                   *
+.\"*****************************************************************************
+.\" Id: dft_fgbg.3x,v 1.4 1997/12/14 01:42:01 tom Exp $
+.TH use_default_colors 3 ""
+.
+.SH NAME
+\fBdft_fgbg\fR \- use terminal's default colors
+.
+.SH SYNOPSIS
+\fB#include <curses.h>\fP
+
+\fBint use_default_colors(void);\fP
+.
+.SH DESCRIPTION
+This is an extension to the curses library.
+It is used with terminals that support ISO 6429 color, or equivalent.
+These terminals allow the application to reset color to an unspecified
+default value (e.g., with SGR 39 or SGR 49).
+Because they are designed to support this, their design usually includes
+features to change the default foreground or background colors so that
+they do not match the assumption in XSI curses of white on black.
+.PP
+Applications that paint a colored background over the whole screen
+are not adversely impacted by this type of terminal design.
+However, there are applications that are designed to work with
+the default background.
+.
+.SH RETURN VALUE
+The function returns the integer \fBERR\fP upon failure and \fBOK\fP on success.
+It will fail if either the terminal does not support
+the \fIorig_pair\fP or \fIorig_colors\fP capability.
+If the \fIinitialize_pair\fP capability is found, this causes an
+error as well.
+.
+.SH NOTES
+Associated with this extension, the \fBinit_pair\fR(3) function accepts
+negative arguments to specify default foreground or background
+colors.
+.
+.SH PORTABILITY
+These routines are specific to ncurses.  They were not supported on
+Version 7, BSD or System V implementations.  It is recommended that
+any code depending on them be conditioned using NCURSES_VERSION.
+.
+.SH SEE ALSO
+\fBcurs_color\fR(3),
+\fBded\fP(1).
+.
+.SH AUTHOR
+Thomas Dickey (from an analysis of the requirements for color xterm
+for XFree86 3.1.2C, February 1996).
+.\"#
+.\"# The following sets edit modes for GNU EMACS
+.\"# Local Variables:
+.\"# mode:nroff
+.\"# fill-column:79
+.\"# End:

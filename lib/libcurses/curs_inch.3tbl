@@ -1,5 +1,6 @@
-.\" $OpenBSD: curs_inch.3tbl,v 1.3 1997/12/03 05:45:09 millert Exp $
-.\" Id: curs_inch.3x,v 1.7 1997/01/05 01:29:23 tom Exp $
+'\" t
+.\" $OpenBSD: curs_inch.3tbl,v 1.4 1997/12/14 23:15:38 millert Exp $
+.\" Id: curs_inch.3x,v 1.8 1997/12/13 22:36:42 tom Exp $
 .TH curs_inch 3 ""
 .SH NAME
 \fBinch\fR, \fBwinch\fR, \fBmvinch\fR, \fBmvwinch\fR
@@ -29,7 +30,7 @@ The following bit-masks may be AND-ed with characters returned by \fBwinch\fR.
 l l .
 \fBA_CHARTEXT\fR	Bit-mask to extract character
 \fBA_ATTRIBUTES\fR	Bit-mask to extract attributes
-\fBA_COLOR\fR   	Bit-mask to extract color-pair field information
+\fBA_COLOR\fR	Bit-mask to extract color-pair field information
 .TE
 .SH NOTES
 Note that all of these routines may be macros.
