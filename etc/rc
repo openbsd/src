@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.87 1998/08/25 18:19:40 marc Exp $
+#	$OpenBSD: rc,v 1.88 1998/08/28 04:42:38 millert Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -229,7 +229,7 @@ fi
 
 # build ps databases
 echo 'building databases...'
-kvm_mkdb /bsd
+kvm_mkdb
 dev_mkdb
 
 chmod 666 /dev/tty[pqrs]*
