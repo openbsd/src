@@ -1,4 +1,4 @@
-/*	$NetBSD: ntohl.c,v 1.6 1995/10/07 09:26:38 mycroft Exp $	*/
+/*	$NetBSD: ntohl.c,v 1.6.6.1 1996/05/29 23:48:07 cgd Exp $	*/
 
 /*
  * Written by J.T. Conklin <jtc@netbsd.org>.
@@ -6,7 +6,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$NetBSD: ntohl.c,v 1.6 1995/10/07 09:26:38 mycroft Exp $";
+static char *rcsid = "$NetBSD: ntohl.c,v 1.6.6.1 1996/05/29 23:48:07 cgd Exp $";
 #endif
 
 #include <sys/types.h>
@@ -22,7 +22,7 @@ ntohl(x)
 
 #if BYTE_ORDER == LITTLE_ENDIAN
 	u_char *s = (u_char *)&y;
-	return s[0] << 24 | s[1] << 16 | s[2] << 8 | s[3];
+	return (u_int32_t)(s[0] << 24 | s[1] << 16 | s[2] << 8 | s[3]);
 #else
 	return y;
 #endif
