@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.112 2003/02/21 21:49:37 jason Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.113 2003/03/11 16:06:25 markus Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -39,6 +39,7 @@
 #include "bpfilter.h"
 #include "gif.h"
 #include "pf.h"
+#include "vlan.h"
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -88,6 +89,10 @@
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
+#endif
+
+#if NVLAN > 0
+#include <net/if_vlan_var.h>
 #endif
 
 #include <net/if_bridge.h>
@@ -2517,6 +2522,17 @@ bridge_fragment(sc, ifp, eh, m)
 	goto dropit;
 #else
 	etype = ntohs(eh->ether_type);
+#if NVLAN > 0
+	if (etype == ETHERTYPE_8021Q &&
+	    (ifp->if_capabilities & IFCAP_VLAN_MTU) &&
+	    ((m->m_pkthdr.len - sizeof(struct ether_vlan_header)) <=
+	    ifp->if_mtu)) {
+		s = splimp();
+		bridge_ifenqueue(sc, ifp, m);
+		splx(s);
+		return;
+	}
+#endif
 	if (etype != ETHERTYPE_IP) {
 		if (etype > ETHERMTU ||
 		    m->m_pkthdr.len < (LLC_SNAPFRAMELEN +
