@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.16 2001/05/20 05:53:09 miod Exp $	*/
+/*	$OpenBSD: locore.S,v 1.17 2001/06/14 21:30:45 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -59,10 +59,12 @@
 
 #include "assym.h"
 #include "ksyms.h"
+
 #include <machine/asm.h>
 #include <machine/trap.h>
 #include <machine/m88100.h>
 #include <machine/psl.h>
+#include <machine/param.h>
 #include <machine/vmparam.h>      /* INTSTACK_SIZE */
 
 /***********************************************************************/
@@ -138,7 +140,7 @@ LABEL(_start_text)	/* This is the *real* start upon poweron or reset */
 	 *	r5 start of mini
 	 *	r6 end miniroot
 	 *	r7 ((Clun << 8) ; Dlun & FF) -> bootdev
-	 *	r8 cpu type (0x187, 0x188, 1x197)
+	 *	r8 cpu type (0x187, 0x188, 0x197)
 	 */
 /*
  *	(*entry)(flag, bugargs.ctrl_addr, cp, kernel.smini, 

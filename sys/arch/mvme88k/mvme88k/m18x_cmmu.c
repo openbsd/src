@@ -1,4 +1,4 @@
-/*	$OpenBSD: m18x_cmmu.c,v 1.8 2001/03/18 01:49:39 miod Exp $	*/
+/*	$OpenBSD: m18x_cmmu.c,v 1.9 2001/06/14 21:30:45 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -1243,7 +1243,7 @@ m18x_cmmu_flush_remote_tlb(cpu, kernel, vaddr, size)
 		cpu = cpu_number();
 	}
 
-	if ((unsigned)size > M88K_PGBYTES) {
+	if ((unsigned)size > PAGE_SIZE) {
 		/*
 		REGS(cpu, INST_CMMU).scr =
 		REGS(cpu, DATA_CMMU).scr =
@@ -2000,7 +2000,7 @@ m18x_cmmu_show_translation(address, supervisor_flag, verbose_flag, cmmu_num)
 				  thread->task->map, thread->task->map->pmap);
 		}
 		apr_data.bits = 0;
-		apr_data.field.st_base = M88K_BTOP(thread->task->map->pmap->sdt_paddr);
+		apr_data.field.st_base = atop(thread->task->map->pmap->sdt_paddr);
 		apr_data.field.wt = 0;
 		apr_data.field.g  = 1;
 		apr_data.field.ci = 0;

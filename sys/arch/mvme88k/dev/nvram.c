@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvram.c,v 1.9 2001/03/09 05:44:39 smurph Exp $ */
+/*	$OpenBSD: nvram.c,v 1.10 2001/06/14 21:30:34 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -43,12 +43,15 @@
 #include <sys/systm.h>
 #include <sys/uio.h>
 #include <sys/malloc.h>
+
 #include <machine/psl.h>
 #include <machine/autoconf.h>
 #include <machine/bugio.h>
 #include <machine/cpu.h>
 #include <machine/mioctl.h>
 #include <machine/vmparam.h>
+
+#include <vm/vm_param.h>
 
 #include <mvme88k/dev/memdevs.h>
 #include <mvme88k/dev/nvramreg.h>
@@ -496,5 +499,5 @@ nvrammmap(dev, off, prot)
 	/* allow access only in RAM */
 	if (off > sc->sc_len)
 		return (-1);
-	return (m88k_btop(sc->sc_paddr + off));
+	return (atop(sc->sc_paddr + off));
 }

@@ -36,12 +36,9 @@
 
 #define R VM_PROT_READ
 #define RW VM_PROT_READ|VM_PROT_WRITE
-#define C CACHE_DFL
 #define CW CACHE_WT
 #define CI CACHE_INH
 #define CG CACHE_GLOBAL
-#define PAGE M88K_PGBYTES
-#define SEG M88K_SGBYTES
 
 #undef VEQR_ADDR
 #define VEQR_ADDR 0
@@ -103,7 +100,7 @@ pmap_table_build(endoftext)
 	pbt = bt;
 	for (i = 0; pbt->size != 0xffffffff; i++) {
 		if (pbt->size>0)
-			pbt->size = (pbt->size + M88K_PGBYTES-1) & ~(M88K_PGBYTES-1);
+			pbt->size = (pbt->size + PAGE_MASK) & ~PAGE_MASK;
 		pbt++;
 	}
 	return bt;

@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.39 2001/06/13 21:24:52 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.40 2001/06/14 21:30:45 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -508,9 +508,9 @@ cpu_startup()
 	sz = (int)allocsys((caddr_t)0);
 
 #if defined(UVM)
-	if ((v = (caddr_t)uvm_km_zalloc(kernel_map, m88k_round_page(sz))) == 0)
+	if ((v = (caddr_t)uvm_km_zalloc(kernel_map, round_page(sz))) == 0)
 #else
-	if ((v = (caddr_t)kmem_alloc(kernel_map, m88k_round_page(sz))) == 0)
+	if ((v = (caddr_t)kmem_alloc(kernel_map, round_page(sz))) == 0)
 #endif
 		panic("startup: no room for tables");
 	if (allocsys(v) - v != sz)
@@ -639,7 +639,7 @@ cpu_startup()
 	 */
 	size = MAXBSIZE * nbuf;
 #if defined(UVM)
-	if (uvm_map(kernel_map, (vaddr_t *) &buffers, m88k_round_page(size),
+	if (uvm_map(kernel_map, (vaddr_t *) &buffers, round_page(size),
 		    NULL, UVM_UNKNOWN_OFFSET,
 		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
 				UVM_ADV_NORMAL, 0)) != KERN_SUCCESS)
@@ -2277,7 +2277,7 @@ mvme_bootstrap(void)
 #else 
 	vm_set_page_size();
 #endif 
-	first_addr = m88k_round_page(first_addr);
+	first_addr = round_page(first_addr);
 
 	if (!no_symbols) boothowto |= RB_KDB;
 
@@ -2305,11 +2305,11 @@ mvme_bootstrap(void)
 	/*
 	 * Steal MSGBUFSIZE at the top of physical memory for msgbuf
 	 */
-	avail_end -= m88k_round_page(MSGBUFSIZE);
+	avail_end -= round_page(MSGBUFSIZE);
 #ifdef DEBUG
 	printf("MVME%x boot: memory from 0x%x to 0x%x\n", cputyp, avail_start, avail_end);
 #endif 
-	pmap_bootstrap((vm_offset_t)M88K_TRUNC_PAGE((unsigned)&kernelstart) /* = loadpt */, 
+	pmap_bootstrap((vm_offset_t)trunc_page((unsigned)&kernelstart) /* = loadpt */, 
 		       &avail_start, &avail_end, &virtual_avail,
 		       &virtual_end);
 
