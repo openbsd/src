@@ -52,11 +52,15 @@ void playback_stacktrace __P((int *, int));
  * Locks provide shared/exclusive sychronization.
  */
 
+#if 0
 #ifdef DEBUG
 #define COUNT(p, x) if (p) (p)->p_locks += (x)
 #else
 #define COUNT(p, x)
 #endif
+#endif
+
+#define COUNT(p, x)
 
 #if NCPUS > 1
 
@@ -470,7 +474,7 @@ _simple_lock(alp, id, l)
 	const char *id;
 	int l;
 {
-
+#if 0
 	if (simplelockrecurse)
 		return;
 	if (alp->lock_data == 1) {
@@ -486,10 +490,14 @@ _simple_lock(alp, id, l)
 			printf(" continuing\n");
 		}
 	}
+
 	alp->lock_data = 1;
+
 	if (curproc)
 		curproc->p_simple_locks++;
+#endif
 }
+
 
 int
 _simple_lock_try(alp, id, l)
@@ -497,6 +505,7 @@ _simple_lock_try(alp, id, l)
 	const char *id;
 	int l;
 {
+#if 0
 
 	if (alp->lock_data)
 		return (0);
@@ -505,6 +514,7 @@ _simple_lock_try(alp, id, l)
 	alp->lock_data = 1;
 	if (curproc)
 		curproc->p_simple_locks++;
+#endif
 	return (1);
 }
 
@@ -514,7 +524,7 @@ _simple_unlock(alp, id, l)
 	const char *id;
 	int l;
 {
-
+#if 0
 	if (simplelockrecurse)
 		return;
 	if (alp->lock_data == 0) {
@@ -533,5 +543,6 @@ _simple_unlock(alp, id, l)
 	alp->lock_data = 0;
 	if (curproc)
 		curproc->p_simple_locks--;
+#endif
 }
 #endif /* DEBUG && NCPUS == 1 */
