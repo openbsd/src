@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.8,v 1.40 2000/01/10 06:49:51 angelos Exp $
+.\"	$OpenBSD: sysctl.8,v 1.41 2000/01/10 06:57:44 angelos Exp $
 .\"	$NetBSD: sysctl.8,v 1.4 1995/09/30 07:12:49 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
@@ -168,9 +168,9 @@ privilege can change the value.
 .It net.inet.ip.ipsec-soft-timeout	integer	yes
 .It net.inet.ip.ipsec-soft-firstuse	integer	yes
 .It net.inet.ip.ipsec-firstuse	integer	yes
-.It net.inet.ip.ipsec-enc-alg	integer	yes
+.It net.inet.ip.ipsec-enc-alg	string	yes
 .It net.inet.ip.ipsec-auth-alg	string	yes
-.It net.inet.ip.ipsec-invalid-life	string	yes
+.It net.inet.ip.ipsec-invalid-life	integer	yes
 .It net.inet.icmp.maskrepl	integer	yes
 .It net.inet.icmp.bmcastecho	integer	yes
 .It net.inet.ip4.allow	integer	yes
