@@ -1,4 +1,4 @@
-.\"	$OpenBSD: xl.4,v 1.30 2003/12/23 14:04:18 mickey Exp $
+.\"	$OpenBSD: xl.4,v 1.31 2004/07/16 06:08:05 deraadt Exp $
 .\"
 .\" Copyright (c) 1997, 1998
 .\"     Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -55,7 +55,7 @@ and
 bus master EtherLink XL chips.
 This includes, among others, the following models:
 .Pp
-.Bl -tag -width 3CXXXX -offset indent -compact
+.Bl -tag -width 3CXXXXX -offset indent -compact
 .It 3C555
 EtherLink XL MiniPCI
 .It 3C556
@@ -82,6 +82,8 @@ Fast EtherLink Server NIC
 OfficeConnect Fast Ethernet NIC
 .It 9201
 NVIDIA nForce2 integrated 3Com 9201 (nForce2-ST, nForce2-GT)
+.It 920BEMB
+3c920B-EMB-WNM Integrated Fast Ethernet.
 .El
 .Pp
 It also supports embedded 3C905-TX and 3C905B-TX Ethernet hardware found
