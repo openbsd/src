@@ -1,4 +1,4 @@
-.\"	$OpenBSD: installboot.8,v 1.5 1997/09/04 22:44:12 deraadt Exp $
+.\"	$OpenBSD: installboot.8,v 1.6 1997/09/04 23:20:51 deraadt Exp $
 .\"
 .\"
 .\" Copyright (c) 1997 Michael Shalayeff
@@ -65,12 +65,16 @@ triples that are stored in
 along with lots of other information.
 .It Fl s Ar spt
 Used to specify the sectors-per-track value if the drive has
-sector translation activated.  If not specified, this defaults
-to d_nsectors from the disklabel.
+sector translation activated, and
+.Nm
+is unable to determine the translated geometry.
+If not specified, this defaults to d_nsectors from the disklabel.
 .It Fl h Ar tpc
 Used to specify the tracks-per-cylinder value if the drive has
-sector translation activated.  If not specified, this defaults
-to d_ntracks from the disklabel.
+sector translation activated, and
+.Nm
+is unable to determine the translated geometry.
+If not specified, this defaults to d_ntracks from the disklabel.
 .El
 .Pp
 The arguments are:
