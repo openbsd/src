@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.7 2004/01/27 00:13:04 espie Exp $
+# $OpenBSD: pkg_create,v 1.8 2004/01/31 17:56:13 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -129,8 +129,9 @@ package main;
 our $errors = 0;
 
 our ($opt_p, $opt_f, $opt_c, $opt_d, $opt_v, $opt_i, $opt_k, $opt_r, $opt_D,
-	$opt_S, $opt_m, $opt_h, $opt_s, $opt_O, $opt_P, $opt_C, $opt_A);
-getopts('p:f:c:d:vi:k:r:D:S:m:hs:OP:C:A:');
+	$opt_S, $opt_m, $opt_h, $opt_s, $opt_O, $opt_P, $opt_C, $opt_A, $opt_L,
+	$opt_B);
+getopts('p:f:c:d:vi:k:r:D:S:m:hs:OP:C:A:L:B:');
 
 if (@ARGV != 1) {
 	die "Exactly one single package name is required";
@@ -209,10 +210,22 @@ if (defined $opt_A) {
 	OpenBSD::PackingElement::Arch->add($plist, $opt_A);
 }
 
+if (defined $opt_L) {
+	OpenBSD::PackingElement::LocalBase->add($plist, $opt_L);
+}
+
 $plist->fromfile($dir.CONTENTS) or die "Can't open packing list";
 
 
-my $base = $opt_S || '/';
+my $base = '/';
+if (defined $opt_B) {
+	$base = $opt_B;
+} elsif (defined $opt_S) {
+	$base = $opt_S;
+} elsif (defined $ENV{'PKG_PREFIX'}) {
+	$base = $ENV{'PKG_PREFIX'};
+}
+
 $plist->makesum($base);
 $plist->avert_duplicates();
 if ($errors) {

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_create.1,v 1.4 2004/01/28 22:12:01 espie Exp $
+.\"	$OpenBSD: pkg_create.1,v 1.5 2004/01/31 17:56:13 espie Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -35,13 +35,14 @@
 .Bk -words
 .Op Fl hv
 .Op Fl A Ar arches
+.Op Fl B Ar pkg-destdir
 .Op Fl P Ar dpkgs
 .Op Fl C Ar cpkgs
 .Op Fl p Ar prefix
 .Op Fl i Ar iscript
 .Op Fl k Ar dscript
 .Op Fl r Ar rscript
-.Op Fl S Ar fake-base
+.Op Fl S Ar pkg-destdir
 .Op Fl D Ar displayfile
 .Op Fl L Ar localbase
 .Fl c Ar comment
@@ -127,10 +128,13 @@ as the initial directory
 .Dq base
 to start from in selecting files for
 the package, and to record as the base for installing the package.
-.It Fl S Ar fake-base
+.It Fl S Ar pkg-destdir
+.It Fl B Ar pkg-destdir
 Set
-.Ar fake-base
+.Ar pkg-destdir
 as the prefix to prepend to any file to select for the package.
+Prefer
+.Fl B .
 .It Fl L Ar localbase
 Record
 .Ar localbase
@@ -365,6 +369,17 @@ By default, a package conflicts with other versions of the same package.
 With this option, the older package version will still be noticed, but the
 installation will proceed anyway.
 .El
+.El
+.Sh ENVIRONMENT
+.Bl -tag -width PKG_DESTDIR
+.It Ev PKG_DESTDIR
+Default value for
+.Ar pkg-destdir ,
+if no
+.Fl B
+or
+.Fl S
+option is specified.
 .El
 .Sh SEE ALSO
 .Xr pkg_add 1 ,
