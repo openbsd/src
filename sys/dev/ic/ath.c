@@ -1,4 +1,4 @@
-/*      $OpenBSD: ath.c,v 1.16 2005/03/19 17:27:46 reyk Exp $  */
+/*      $OpenBSD: ath.c,v 1.17 2005/04/02 22:09:31 uwe Exp $  */
 /*	$NetBSD: ath.c,v 1.37 2004/08/18 21:59:39 dyoung Exp $	*/
 
 /*-
@@ -1034,6 +1034,8 @@ ath_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	s = splnet();
 	switch (cmd) {
 	case SIOCSIFADDR:
+		if ((error = suser(curproc, 0)) != 0)
+			break;
 		ifp->if_flags |= IFF_UP;
 #ifdef INET
 		if (ifa->ifa_addr->sa_family == AF_INET) {
@@ -1042,6 +1044,8 @@ ath_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 #endif  /* INET */
 		/* FALLTHROUGH */
 	case SIOCSIFFLAGS:
+		if ((error = suser(curproc, 0)) != 0)
+			break;
 		if (ifp->if_flags & IFF_UP) {
 			if (ifp->if_flags & IFF_RUNNING) {
 				/*
@@ -1068,6 +1072,8 @@ ath_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
+		if ((error = suser(curproc, 0)) != 0)
+			break;
 #ifdef __FreeBSD__
 		/*
 		 * The upper layer has already installed/removed
