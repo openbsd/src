@@ -1,4 +1,4 @@
-.\" $Id: iwi.4,v 1.1 2004/10/20 12:50:48 deraadt Exp $
+.\" $OpenBSD: iwi.4,v 1.2 2004/10/20 15:34:18 miod Exp $
 .\"
 .\" Copyright (c) 2004
 .\"	Damien Bergamini <damien.bergamini@free.fr>. All rights reserved.
@@ -30,13 +30,17 @@
 .Dt IWI 4
 .Sh NAME
 .Nm iwi
-.Nd Intel PRO/Wireless 2200BG/2915ABG IEEE 802.11 driver
+.Nd
+.Tn Intel
+PRO/Wireless 2200BG/2915ABG IEEE 802.11 driver
 .Sh SYNOPSIS
-.Cd "iwi* at pci? dev ? function ?"
+.Cd "iwi* at pci?"
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for Intel(R) PRO/Wireless 2200BG and 2915ABG MiniPCI
+driver provides support for
+.Tn Intel
+PRO/Wireless 2200BG and 2915ABG MiniPCI
 network adapters.
 .Pp
 By default, the
@@ -75,10 +79,15 @@ This should not happen.
 .El
 .Sh SEE ALSO
 .Xr an 4 ,
+.Xr arp 4 ,
 .Xr awi 4 ,
+.Xr ifmedia 4 ,
+.Xr intro 4 ,
 .Xr ipw 4 ,
+.Xr netintro 4 ,
 .Xr pci 4 ,
 .Xr wi 4 ,
+.Xr hostname.if 5 ,
 .Xr ifconfig 8 ,
 .Xr iwictl 8
 .Rs

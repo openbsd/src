@@ -1,4 +1,4 @@
-.\" $Id: ipw.4,v 1.1 2004/10/20 12:50:48 deraadt Exp $
+.\" $OpenBSD: ipw.4,v 1.2 2004/10/20 15:34:18 miod Exp $
 .\"
 .\" Copyright (c) 2004
 .\"	Damien Bergamini <damien.bergamini@free.fr>. All rights reserved.
@@ -30,13 +30,17 @@
 .Dt IPW 4
 .Sh NAME
 .Nm ipw
-.Nd Intel(R) PRO/Wireless 2100 IEEE 802.11 driver
+.Nd
+.Tn Intel
+PRO/Wireless 2100 IEEE 802.11 driver
 .Sh SYNOPSIS
-.Cd "ipw* at pci? dev ? function ?"
+.Cd "ipw* at pci?"
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for the Intel(R) PRO/Wireless 2100 MiniPCI network 
+driver provides support for the
+.Tn Intel
+PRO/Wireless 2100 MiniPCI network 
 adapter.
 .Pp
 By default, the
@@ -74,9 +78,15 @@ The driver will reset the hardware. This should not happen.
 .El
 .Sh SEE ALSO
 .Xr an 4 ,
+.Xr arp 4 ,
 .Xr awi 4 ,
+.Xr ifmedia 4 ,
+.Xr intro 4 ,
+.Xr iwi 4 ,
+.Xr netintro 4 ,
 .Xr pci 4 ,
 .Xr wi 4 ,
+.Xr hostname.if 5 ,
 .Xr ifconfig 8 ,
 .Xr ipwcontrol 8
 .Rs
