@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf.h,v 1.2 2005/01/28 17:53:33 norby Exp $ */
+/*	$OpenBSD: ospf.h,v 1.3 2005/02/01 21:15:40 norby Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -57,6 +57,8 @@
 #define MAX_TRANSIT_DELAY	3600
 
 #define DEFAULT_ADJ_TMOUT	60	/* XXX sane value? */
+
+#define DEFAULT_NBR_TMOUT	86400	/* 24 hours */
 
 /* OSPF compatibility flags */
 #define OSPF_OPTION_E		0x02

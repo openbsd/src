@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.2 2005/01/28 17:53:33 norby Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.3 2005/02/01 21:15:40 norby Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -355,7 +355,10 @@ nbr_itimer(int fd, short event, void *arg)
 
 	log_debug("nbr_itimer: %s", inet_ntoa(nbr->id));
 
-	nbr_fsm(nbr, NBR_EVT_ITIMER);
+	if (nbr->state == NBR_STA_DOWN) {
+		nbr_del(nbr);
+	} else
+		nbr_fsm(nbr, NBR_EVT_ITIMER);
 }
 
 int
@@ -553,6 +556,8 @@ nbr_act_restart_dd(struct nbr *nbr)
 int
 nbr_act_delete(struct nbr *nbr)
 {
+	struct timeval	tv;
+
 	log_debug("nbr_act_delete: neighbor ID %s", inet_ntoa(nbr->id));
 
 	/* stop timers */
@@ -565,6 +570,15 @@ nbr_act_delete(struct nbr *nbr)
 	/* clear dr and bdr */
 	nbr->dr.s_addr = 0;
 	nbr->bdr.s_addr = 0;
+
+	/* schedule kill timer */
+	timerclear(&tv);
+	tv.tv_sec = DEFAULT_NBR_TMOUT;
+
+	if (evtimer_add(&nbr->inactivity_timer, &tv)) {
+		log_warnx("nbr_act_delete: error scheduling neighbor ID %s "
+		    "for removal", inet_ntoa(nbr->id));
+	}
 
 	return (nbr_act_clear_lists(nbr));
 }
