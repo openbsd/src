@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.5 1999/12/09 18:10:24 espie Exp $	*/
+/*	$OpenBSD: common.c,v 1.6 2001/05/11 15:22:37 art Exp $	*/
 /*	$NetBSD: common.c,v 1.4 1995/09/23 22:34:20 pk Exp $	*/
 /*
  * Copyright (c) 1993,1995 Paul Kranenburg
@@ -92,7 +92,7 @@ __load_rtld(dp)
 	/* Map in ld.so */
 	crt.crt_ba = mmap(0, hdr.a_text+hdr.a_data+hdr.a_bss,
 			PROT_READ|PROT_EXEC,
-			MAP_COPY,
+			MAP_PRIVATE,
 			crt.crt_ldfd, N_TXTOFF(hdr));
 	if (crt.crt_ba == -1) {
 		_FATAL("Cannot map ld.so\n");
@@ -112,7 +112,7 @@ __load_rtld(dp)
 	/* Map in data segment of ld.so writable */
 	if (mmap(crt.crt_ba+N_DATADDR(hdr), hdr.a_data,
 			PROT_READ|PROT_WRITE,
-			MAP_FIXED|MAP_COPY,
+			MAP_FIXED|MAP_PRIVATE,
 			crt.crt_ldfd, N_DATOFF(hdr)) == -1) {
 		_FATAL("Cannot map ld.so\n");
 	}
@@ -120,7 +120,7 @@ __load_rtld(dp)
 	/* Map bss segment of ld.so zero */
 	if (hdr.a_bss && mmap(crt.crt_ba+N_BSSADDR(hdr), hdr.a_bss,
 			PROT_READ|PROT_WRITE,
-			MAP_FIXED|MAP_ANON|MAP_COPY,
+			MAP_FIXED|MAP_ANON|MAP_PRIVATE,
 			crt.crt_dzfd, 0) == -1) {
 		_FATAL("Cannot map ld.so\n");
 	}
