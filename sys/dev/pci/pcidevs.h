@@ -557,6 +557,9 @@
 #define	PCI_PRODUCT_ADP_3940U	0x8278		/* AHA-3940 Ultra */
 #define	PCI_PRODUCT_ADP_2944U	0x8478		/* AHA-2944 Ultra */
 
+/* Alliance products */
+#define	PCI_PRODUCT_ALLIANCE_AT24	0x6424		/* AT24 */
+
 /* AMD products */
 #define	PCI_PRODUCT_AMD_PCNET_PCI	0x2000		/* 79c970 PCnet-PCI LANCE Ethernet */
 #define	PCI_PRODUCT_AMD_PCSCSI_PCI	0x2020		/* 53c974 PCscsi-PCI SCSI */

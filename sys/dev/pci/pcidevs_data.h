@@ -224,6 +224,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "AHA-2944 Ultra",
 	},
 	{
+	    PCI_VENDOR_ALLIANCE, PCI_PRODUCT_ALLIANCE_AT24,
+	    0,
+	    "Alliance Semiconductor",
+	    "AT24",
+	},
+	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PCNET_PCI,
 	    0,
 	    "Advanced Micro Devices",
