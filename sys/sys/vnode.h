@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnode.h,v 1.58 2004/01/09 03:01:03 tedu Exp $	*/
+/*	$OpenBSD: vnode.h,v 1.59 2004/07/13 21:04:29 millert Exp $	*/
 /*	$NetBSD: vnode.h,v 1.38 1996/02/29 20:59:05 cgd Exp $	*/
 
 /*
@@ -149,8 +149,8 @@ struct vnode {
  */
 struct vattr {
 	enum vtype	va_type;	/* vnode type (for create) */
-	u_short		va_mode;	/* files access mode and type */
-	short		va_nlink;	/* number of references to file */
+	mode_t		va_mode;	/* files access mode and type */
+	nlink_t		va_nlink;	/* number of references to file */
 	uid_t		va_uid;		/* owner user id */
 	gid_t		va_gid;		/* owner group id */
 	long		va_fsid;	/* file system id (dev for now) */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_softdep.c,v 1.51 2004/06/24 19:35:26 tholo Exp $	*/
+/*	$OpenBSD: ffs_softdep.c,v 1.52 2004/07/13 21:04:29 millert Exp $	*/
 /*
  * Copyright 1998, 2000 Marshall Kirk McKusick. All Rights Reserved.
  *
@@ -2211,7 +2211,7 @@ void
 softdep_freefile(pvp, ino, mode)
 		struct vnode *pvp;
 		ino_t ino;
-		int mode;
+		mode_t mode;
 {
 	struct inode *ip = VTOI(pvp);
 	struct inodedep *inodedep;

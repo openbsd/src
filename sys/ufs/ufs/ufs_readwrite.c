@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_readwrite.c,v 1.25 2003/06/02 23:28:23 millert Exp $	*/
+/*	$OpenBSD: ufs_readwrite.c,v 1.26 2004/07/13 21:04:29 millert Exp $	*/
 /*	$NetBSD: ufs_readwrite.c,v 1.9 1996/05/11 18:27:57 mycroft Exp $	*/
 
 /*-
@@ -80,8 +80,8 @@ READ(v)
 	daddr_t lbn, nextlbn;
 	off_t bytesinfile;
 	long size, xfersize, blkoffset;
+	mode_t mode;
 	int error;
-	u_short mode;
 
 	vp = ap->a_vp;
 	ip = VTOI(vp);

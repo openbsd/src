@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.113 2004/07/03 18:14:02 pedro Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.114 2004/07/13 21:04:29 millert Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -888,7 +888,7 @@ sys_open(p, v, retval)
 	struct sys_open_args /* {
 		syscallarg(const char *) path;
 		syscallarg(int) flags;
-		syscallarg(int) mode;
+		syscallarg(mode_t) mode;
 	} */ *uap = v;
 	struct filedesc *fdp = p->p_fd;
 	struct file *fp;
@@ -1249,7 +1249,7 @@ sys_mknod(p, v, retval)
 {
 	register struct sys_mknod_args /* {
 		syscallarg(const char *) path;
-		syscallarg(int) mode;
+		syscallarg(mode_t) mode;
 		syscallarg(int) dev;
 	} */ *uap = v;
 	register struct vnode *vp;
@@ -1330,7 +1330,7 @@ sys_mkfifo(p, v, retval)
 #else
 	register struct sys_mkfifo_args /* {
 		syscallarg(const char *) path;
-		syscallarg(int) mode;
+		syscallarg(mode_t) mode;
 	} */ *uap = v;
 	struct vattr vattr;
 	int error;
@@ -1890,7 +1890,7 @@ sys_chmod(p, v, retval)
 {
 	register struct sys_chmod_args /* {
 		syscallarg(const char *) path;
-		syscallarg(int) mode;
+		syscallarg(mode_t) mode;
 	} */ *uap = v;
 	register struct vnode *vp;
 	struct vattr vattr;
@@ -1929,7 +1929,7 @@ sys_fchmod(p, v, retval)
 {
 	struct sys_fchmod_args /* {
 		syscallarg(int) fd;
-		syscallarg(int) mode;
+		syscallarg(mode_t) mode;
 	} */ *uap = v;
 	struct vattr vattr;
 	struct vnode *vp;
@@ -1975,7 +1975,7 @@ sys_chown(p, v, retval)
 	struct vattr vattr;
 	int error;
 	struct nameidata nd;
-	u_short mode;
+	mode_t mode;
 
 	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
 	if ((error = namei(&nd)) != 0)
@@ -2027,7 +2027,7 @@ sys_lchown(p, v, retval)
 	struct vattr vattr;
 	int error;
 	struct nameidata nd;
-	u_short mode;
+	mode_t mode;
 
 	NDINIT(&nd, LOOKUP, NOFOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
 	if ((error = namei(&nd)) != 0)
@@ -2079,7 +2079,7 @@ sys_fchown(p, v, retval)
 	struct vattr vattr;
 	int error;
 	struct file *fp;
-	u_short mode;
+	mode_t mode;
 
 	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
 		return (error);
@@ -2440,7 +2440,7 @@ sys_mkdir(p, v, retval)
 {
 	register struct sys_mkdir_args /* {
 		syscallarg(const char *) path;
-		syscallarg(int) mode;
+		syscallarg(mode_t) mode;
 	} */ *uap = v;
 	register struct vnode *vp;
 	struct vattr vattr;
@@ -2612,7 +2612,7 @@ sys_umask(p, v, retval)
 	register_t *retval;
 {
 	struct sys_umask_args /* {
-		syscallarg(int) newmask;
+		syscallarg(mode_t) newmask;
 	} */ *uap = v;
 	register struct filedesc *fdp;
 

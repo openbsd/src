@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_alloc.c,v 1.15 2004/06/21 23:50:38 tholo Exp $	*/
+/*	$OpenBSD: ext2fs_alloc.c,v 1.16 2004/07/13 21:04:29 millert Exp $	*/
 /*	$NetBSD: ext2fs_alloc.c,v 1.10 2001/07/05 08:38:27 toshii Exp $	*/
 
 /*
@@ -136,7 +136,7 @@ nospace:
  *	  available inode is located.
  */
 int
-ext2fs_inode_alloc(struct inode *pip, int mode, struct ucred *cred,
+ext2fs_inode_alloc(struct inode *pip, mode_t mode, struct ucred *cred,
     struct vnode **vpp)
 {
 	struct vnode *pvp;
@@ -529,7 +529,7 @@ ext2fs_blkfree(ip, bno)
  * The specified inode is placed back in the free map.
  */
 int
-ext2fs_inode_free(struct inode *pip, ino_t ino, int mode)
+ext2fs_inode_free(struct inode *pip, ino_t ino, mode_t mode)
 {
 	register struct m_ext2fs *fs;
 	register char *ibp;

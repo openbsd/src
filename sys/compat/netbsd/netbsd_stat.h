@@ -1,4 +1,4 @@
-/*	$OpenBSD: netbsd_stat.h,v 1.4 2003/06/02 23:28:00 millert Exp $	*/
+/*	$OpenBSD: netbsd_stat.h,v 1.5 2004/07/13 21:04:29 millert Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -35,26 +35,6 @@
  *
  *	@(#)stat.h	8.12 (Berkeley) 8/17/94
  */
-
-struct netbsd_stat12 {			/* NetBSD-1.2 stat struct */
-	dev_t	  st_dev;		/* inode's device */
-	ino_t	  st_ino;		/* inode's number */
-	u_int16_t st_mode;		/* inode protection mode */
-	u_int16_t st_nlink;		/* number of hard links */
-	uid_t	  st_uid;		/* user ID of the file's owner */
-	gid_t	  st_gid;		/* group ID of the file's group */
-	dev_t	  st_rdev;		/* device type */
-	struct	  timespec st_atimespec;/* time of last access */
-	struct	  timespec st_mtimespec;/* time of last data modification */
-	struct	  timespec st_ctimespec;/* time of last file status change */
-	off_t	  st_size;		/* file size, in bytes */
-	int64_t	  st_blocks;		/* blocks allocated for file */
-	u_int32_t st_blksize;		/* optimal blocksize for I/O */
-	u_int32_t st_flags;		/* user defined flags for file */
-	u_int32_t st_gen;		/* file generation number */
-	int32_t	  st_lspare;
-	int64_t	  st_qspare[2];
-};
 
 /*
  * On systems with 8 byte longs and 4 byte time_ts, padding the time_ts

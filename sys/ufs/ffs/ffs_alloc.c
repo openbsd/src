@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_alloc.c,v 1.48 2004/07/02 13:03:36 mickey Exp $	*/
+/*	$OpenBSD: ffs_alloc.c,v 1.49 2004/07/13 21:04:29 millert Exp $	*/
 /*	$NetBSD: ffs_alloc.c,v 1.11 1996/05/11 18:27:09 mycroft Exp $	*/
 
 /*
@@ -128,8 +128,7 @@ ffs_alloc(ip, lbn, bpref, size, cred, bnp)
 		cg = ino_to_cg(fs, ip->i_number);
 	else
 		cg = dtog(fs, bpref);
-	bno = (daddr_t)ffs_hashalloc(ip, cg, (long)bpref, size,
-	    			     ffs_alloccg);
+	bno = (daddr_t)ffs_hashalloc(ip, cg, (long)bpref, size, ffs_alloccg);
 	if (bno > 0) {
 		ip->i_ffs_blocks += btodb(size);
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
@@ -566,7 +565,7 @@ fail:
  *      available inode is located.
  */
 int
-ffs_inode_alloc(struct inode *pip, int mode, struct ucred *cred,
+ffs_inode_alloc(struct inode *pip, mode_t mode, struct ucred *cred,
     struct vnode **vpp)
 {
 	struct vnode *pvp = ITOV(pip);
@@ -1498,7 +1497,7 @@ ffs_blkfree(ip, bno, size)
 }
 
 int
-ffs_inode_free(struct inode *pip, ino_t ino, int mode)
+ffs_inode_free(struct inode *pip, ino_t ino, mode_t mode)
 {
 	struct vnode *pvp = ITOV(pip);
 
@@ -1515,7 +1514,7 @@ ffs_inode_free(struct inode *pip, ino_t ino, int mode)
  * The specified inode is placed back in the free map.
  */
 int
-ffs_freefile(struct inode *pip, ino_t ino, int mode)
+ffs_freefile(struct inode *pip, ino_t ino, mode_t mode)
 {
 	struct fs *fs;
 	struct cg *cgp;

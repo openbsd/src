@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_vnops.c,v 1.44 2003/09/23 16:51:12 millert Exp $	*/
+/*	$OpenBSD: vfs_vnops.c,v 1.45 2004/07/13 21:04:29 millert Exp $	*/
 /*	$NetBSD: vfs_vnops.c,v 1.20 1996/02/04 02:18:41 christos Exp $	*/
 
 /*
@@ -366,7 +366,7 @@ vn_stat(vp, sb, p)
 {
 	struct vattr va;
 	int error;
-	u_short mode;
+	mode_t mode;
 
 	error = VOP_GETATTR(vp, &va, p->p_ucred, p);
 	if (error)

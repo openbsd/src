@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_subs.c,v 1.45 2004/06/21 23:50:38 tholo Exp $	*/
+/*	$OpenBSD: nfs_subs.c,v 1.46 2004/07/13 21:04:29 millert Exp $	*/
 /*	$NetBSD: nfs_subs.c,v 1.27.4.3 1996/07/08 20:34:24 jtc Exp $	*/
 
 /*
@@ -1124,7 +1124,7 @@ nfs_loadattrcache(vpp, mdp, dposp, vaper)
 	int32_t rdev;
 	struct mbuf *md;
 	enum vtype vtyp;
-	u_short vmode;
+	mode_t vmode;
 	struct timespec mtime;
 	struct vnode *nvp;
 	int v3 = NFS_ISV3(vp);
@@ -1137,13 +1137,13 @@ nfs_loadattrcache(vpp, mdp, dposp, vaper)
 	fp = (struct nfs_fattr *)cp2;
 	if (v3) {
 		vtyp = nfsv3tov_type(fp->fa_type);
-		vmode = fxdr_unsigned(u_short, fp->fa_mode);
+		vmode = fxdr_unsigned(mode_t, fp->fa_mode);
 		rdev = makedev(fxdr_unsigned(u_char, fp->fa3_rdev.specdata1),
 			fxdr_unsigned(u_char, fp->fa3_rdev.specdata2));
 		fxdr_nfsv3time(&fp->fa3_mtime, &mtime);
 	} else {
 		vtyp = nfsv2tov_type(fp->fa_type);
-		vmode = fxdr_unsigned(u_short, fp->fa_mode);
+		vmode = fxdr_unsigned(mode_t, fp->fa_mode);
 		if (vtyp == VNON || vtyp == VREG)
 			vtyp = IFTOVT(vmode);
 		rdev = fxdr_unsigned(int32_t, fp->fa2_rdev);
@@ -1207,7 +1207,7 @@ nfs_loadattrcache(vpp, mdp, dposp, vaper)
 	vap->va_mtime = mtime;
 	vap->va_fsid = vp->v_mount->mnt_stat.f_fsid.val[0];
 	if (v3) {
-		vap->va_nlink = fxdr_unsigned(u_short, fp->fa_nlink);
+		vap->va_nlink = fxdr_unsigned(nlink_t, fp->fa_nlink);
 		vap->va_uid = fxdr_unsigned(uid_t, fp->fa_uid);
 		vap->va_gid = fxdr_unsigned(gid_t, fp->fa_gid);
 		vap->va_size = fxdr_hyper(&fp->fa3_size);
@@ -1220,7 +1220,7 @@ nfs_loadattrcache(vpp, mdp, dposp, vaper)
 		vap->va_flags = 0;
 		vap->va_filerev = 0;
 	} else {
-		vap->va_nlink = fxdr_unsigned(u_short, fp->fa_nlink);
+		vap->va_nlink = fxdr_unsigned(nlink_t, fp->fa_nlink);
 		vap->va_uid = fxdr_unsigned(uid_t, fp->fa_uid);
 		vap->va_gid = fxdr_unsigned(gid_t, fp->fa_gid);
 		vap->va_size = fxdr_unsigned(u_int32_t, fp->fa2_size);

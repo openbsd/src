@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls_43.c,v 1.23 2004/07/09 23:52:02 millert Exp $	*/
+/*	$OpenBSD: vfs_syscalls_43.c,v 1.24 2004/07/13 21:04:29 millert Exp $	*/
 /*	$NetBSD: vfs_syscalls_43.c,v 1.4 1996/03/14 19:31:52 christos Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ extern int (*union_check_p)(struct proc *, struct vnode **,
 				   struct file *, struct uio, int *);
 
 /*
- * Convert from an old to a new stat structure.
+ * Convert from a new to an old stat structure.
  */
 static void
 cvtstat(st, ost)
@@ -299,12 +299,12 @@ compat_43_sys_creat(p, v, retval)
 {
 	register struct compat_43_sys_creat_args /* {
 		syscallarg(char *) path;
-		syscallarg(int) mode;
+		syscallarg(mode_t) mode;
 	} */ *uap = v;
 	struct sys_open_args /* {
 		syscallarg(char *) path;
 		syscallarg(int) flags;
-		syscallarg(int) mode;
+		syscallarg(mode_t) mode;
 	} */ nuap;
 
 	SCARG(&nuap, path) = SCARG(uap, path);
