@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 1997/05/11 20:01:54 millert Exp $
+#	$OpenBSD: Makefile,v 1.5 1997/05/14 18:38:57 niklas Exp $
 #	$NetBSD: Makefile,v 1.1 1995/07/18 04:13:06 briggs Exp $
 
 TOP=		${.CURDIR}/..
@@ -10,7 +10,7 @@ BASE=miniroot
 
 MOUNT_POINT=	/mnt
 
-VND?=		vnd0
+VND?=		svnd0
 VND_DEV=	/dev/${VND}a
 VND_RDEV=	/dev/r${VND}a
 VND_CRDEV=	/dev/r${VND}c
@@ -52,9 +52,6 @@ rd_setup: ${CBIN}
 
 rd_teardown:
 	@df -i ${MOUNT_POINT}
-	sync
-	cat /*bin/* > /dev/null
-	sync
 	-umount ${MOUNT_POINT}
 	-vnconfig -u ${VND}
 	cp ${REALIMAGE} ${IMAGE}

@@ -1,3 +1,5 @@
+#	$OpenBSD: Makefile,v 1.7 1997/05/14 18:39:05 niklas Exp $
+
 # Revision is 2.1
 REV=		21
 
@@ -8,7 +10,7 @@ ARCHDIR=	${.CURDIR}/../${MACHINE}/simpleroot
 .endif
 
 MOUNT_POINT?=	/mnt
-VND?=		vnd0
+VND?=		svnd0
 VND_DEV=	/dev/${VND}a
 VND_RDEV=	/dev/r${VND}a
 DISKTYPE=	simpleroot
@@ -56,7 +58,6 @@ all:
 	@echo ""
 	umount ${MOUNT_POINT}
 	vnconfig -u ${VND}
-	cat /*bin/* > /dev/null
 	cp ${REALIMAGE} ${IMAGE}
 .if (${GZIP} == "gzip")
 	${GZIP} ${IMAGE}

@@ -1,4 +1,4 @@
-#	$Id: Makefile.inc,v 1.3 1996/12/22 01:52:52 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.4 1997/05/14 18:39:08 niklas Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -6,7 +6,7 @@ CBIN=		instbin
 COMMONDIR=	${TOP}/inst-common
 
 MOUNT_POINT?=	/mnt
-VND?=		vnd0
+VND?=		svnd0
 VND_DEV=	/dev/${VND}a
 VND_RDEV=	/dev/r${VND}a
 IMAGE?=		miniroot-${REV}.fs

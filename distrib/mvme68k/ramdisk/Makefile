@@ -1,3 +1,4 @@
+#	$OpenBSDBSD: Makefile,v 1.1 1995/07/18 04:13:06 briggs Exp $
 #	$NetBSD: Makefile,v 1.1 1995/07/18 04:13:06 briggs Exp $
 
 TOP=		${.CURDIR}/..
@@ -10,7 +11,7 @@ BASE=mr
 MOUNT_POINT=	/mnt
 
 #FS=		ramdisk.fs
-VND?=		vnd0
+VND?=		svnd0
 VND_DEV=	/dev/${VND}a
 VND_RDEV=	/dev/r${VND}a
 VND_CRDEV=	/dev/r${VND}c
@@ -30,16 +31,10 @@ all:	bsd.rd
 #	mount ${VND_DEV} ${MOUNT_POINT}
 #	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
 #	    TARGDIR=${MOUNT_POINT} sh ${TOP}/runlist.sh ${LISTFLOPPY}
-#	sync
-#	cat /*bin/* > /dev/null
-#	sync
 #	/usr/mdec/installboot -v /mnt/boot ${DESTDIR}/usr/mdec/biosboot ${VND_CRDEV}
 #	@echo ""
 #	@df -i ${MOUNT_POINT}
 #	@echo ""
-#	sync
-#	cat /*bin/* > /dev/null
-#	sync
 #	umount ${MOUNT_POINT}
 #	vnconfig -u ${VND}
 #	cp ${REALIMAGE} ${FS}
@@ -74,9 +69,6 @@ rd_setup: ${CBIN}
 
 rd_teardown:
 	@df -i ${MOUNT_POINT}
-	sync
-	cat /*bin/* > /dev/null
-	sync
 	-umount ${MOUNT_POINT}
 	-vnconfig -u ${VND}
 	cp ${REALIMAGE} ${IMAGE}

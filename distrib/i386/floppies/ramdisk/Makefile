@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.18 1997/05/11 20:01:57 millert Exp $
+#	$OpenBSD: Makefile,v 1.19 1997/05/14 18:39:00 niklas Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -12,7 +12,7 @@ MOUNT_POINT=	/mnt
 MTREE=		${.CURDIR}/mtree.conf
 
 FS=		floppy.fs
-VND?=		vnd0
+VND?=		svnd0
 VND_DEV=	/dev/${VND}a
 VND_RDEV=	/dev/r${VND}a
 VND_CRDEV=	/dev/r${VND}c
@@ -31,15 +31,9 @@ ${FS}:	bsd.gz
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
 	    TARGDIR=${MOUNT_POINT} sh ${TOP}/runlist.sh ${LISTFLOPPY}
 	/usr/mdec/installboot -v ${MOUNT_POINT}/boot ${DESTDIR}/usr/mdec/biosboot ${VND_CRDEV}
-	sync
-	cat /*bin/* > /dev/null
-	sync
 	@echo ""
 	@df -i ${MOUNT_POINT}
 	@echo ""
-	sync
-	cat /*bin/* > /dev/null
-	sync
 	umount ${MOUNT_POINT}
 	vnconfig -u ${VND}
 	cp ${REALIMAGE} ${FS}
@@ -77,9 +71,6 @@ rd_setup: ${CBIN}
 
 rd_teardown:
 	@df -i ${MOUNT_POINT}
-	sync
-	cat /*bin/* > /dev/null
-	sync
 	-umount ${MOUNT_POINT}
 	-vnconfig -u ${VND}
 	cp ${REALIMAGE} ${IMAGE}

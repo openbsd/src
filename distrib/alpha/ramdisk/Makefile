@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.9 1997/05/14 11:32:22 graichen Exp $
+#	$OpenBSD: Makefile,v 1.10 1997/05/14 18:38:50 niklas Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -10,7 +10,7 @@ KERNEL=		${TOP}/../../sys/arch/${MACHINE}/compile/RAMDISK/bsd
 
 MOUNT_POINT=	/mnt
 
-VND?=		vnd0
+VND?=		svnd0
 VND_DEV=	/dev/${VND}a
 VND_RDEV=	/dev/r${VND}a
 VND_CRDEV=	/dev/r${VND}c
@@ -47,16 +47,13 @@ ${FLOPPY}:	bsd.gz
 	disklabel -w -r ${VND} ${FLOPPYTYPE}
 	newfs ${NEWFSARGS} ${NEWFSARGS_FD} -s ${FLOPPYBLKS} ${VND_RDEV} \
 	    ${FLOPPYTYPE}
-	cat /*bin/* > /dev/null
 	mount ${VND_DEV} ${MOUNT_POINT}
 	cp ${BOOT} ${MOUNT_POINT}
 	cp bsd.gz ${MOUNT_POINT}/bsd
-	cat /*bin/* > /dev/null
 	${INSTALLBOOT} ${MOUNT_POINT}/boot ${BOOTXX} ${VND_CRDEV}
 	@echo ""
 	@df -i ${MOUNT_POINT}
 	@echo ""
-	cat /*bin/* > /dev/null
 	@cmp ${BOOT} ${MOUNT_POINT}/boot || echo "Warning! /boot corrupted!!!"
 	@cmp bsd.gz ${MOUNT_POINT}/bsd || echo "Warning! /bsd corrupted!!!"
 	umount ${MOUNT_POINT}
@@ -96,15 +93,12 @@ do_umount:
 	@echo ""
 	@df -i ${MOUNT_POINT}
 	@echo ""
-	cat /*bin/* > /dev/null
 	umount ${MOUNT_POINT}
 	vnconfig -u ${VND}
-	cat /*bin/* > /dev/null
 
 unconfig:
-	-cat /*bin/* > /dev/null
 	-umount ${MOUNT_POINT}
-	-vnconfig -u ${VND} && cat /*bin/* > /dev/null
+	-vnconfig -u ${VND}
 
 beforeinstall:
 	cp ${FLOPPY} ${DESTDIR}/snapshot

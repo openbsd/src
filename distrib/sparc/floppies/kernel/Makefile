@@ -1,9 +1,9 @@
-#	$OpenBSD: Makefile,v 1.9 1997/05/11 20:01:59 millert Exp $
+#	$OpenBSD: Makefile,v 1.10 1997/05/14 18:39:07 niklas Exp $
 
 .include "../Makefile.inc"
 
 MOUNT_POINT?=	/mnt
-VND?=		vnd0
+VND?=		svnd0
 VND_DEV=	/dev/${VND}a
 VND_RDEV=	/dev/r${VND}a
 IMAGE=		kc${REV}.fs
@@ -32,7 +32,6 @@ all:	bsd
 	df -i ${MOUNT_POINT}
 	umount ${MOUNT_POINT}
 	vnconfig -u ${VND}
-	cat /bin/* > /dev/null		# flush buffer cache (yuck)
 	cp ${REALIMAGE} ${IMAGE}
 	rm ${REALIMAGE}
 

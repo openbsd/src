@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.14 1997/05/11 20:01:55 millert Exp $
+#	$OpenBSD: Makefile,v 1.15 1997/05/14 18:38:59 niklas Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -6,7 +6,7 @@ TOP=		${.CURDIR}/..
 IMAGE=		kc${REV}.fs
 CBIN=		kcbin
 MOUNT_POINT?=	/mnt
-VND?=		vnd0
+VND?=		svnd0
 VND_DEV=	/dev/${VND}a
 VND_RDEV=	/dev/r${VND}a
 IMAGE?=		xxx-${REV}.fs
@@ -49,7 +49,6 @@ all: bsd ${CBIN}
 	@echo ""
 	umount ${MOUNT_POINT}
 	vnconfig -u ${VND}
-	cat /*bin/* > /dev/null
 	cp ${REALIMAGE} ${IMAGE}
 	rm ${REALIMAGE}
 

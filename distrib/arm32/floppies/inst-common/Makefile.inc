@@ -1,3 +1,4 @@
+# $OpenBSD: Makefile.inc,v 1.2 1997/05/14 18:38:54 niklas Exp $
 # $NetBSD: Makefile.inc,v 1.1 1996/05/16 19:59:03 mark Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
@@ -6,7 +7,7 @@ CBIN=		instbin
 COMMONDIR=	${TOP}/inst-common
 
 MOUNT_POINT?=	/mnt
-VND?=		vnd0
+VND?=		svnd0
 VND_DEV=	/dev/${VND}a
 VND_RDEV=	/dev/r${VND}a
 IMAGE?=		xxx-${REV}.fs
@@ -29,7 +30,6 @@ all: ${CBIN}
 	@echo ""
 	umount ${MOUNT_POINT}
 	vnconfig -u ${VND_DEV}
-	cat /*bin/* > /dev/null
 
 unconfig:
 	-umount -f ${MOUNT_POINT}

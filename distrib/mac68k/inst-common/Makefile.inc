@@ -1,4 +1,5 @@
 #
+#	$OpenBSD: Makefile.inc,v 1.3 1997/05/14 18:39:01 niklas Exp $
 #	$NetBSD: Makefile.inc,v 1.1 1995/07/18 04:13:14 briggs Exp $
 #
 
@@ -8,7 +9,7 @@ CBIN=		raminst
 COMMONDIR=	${TOP}/inst-common
 
 MOUNT_POINT?=	/mnt
-VND?=		vnd0
+VND?=		svnd0
 VND_DEV=	/dev/${VND}a
 VND_RDEV=	/dev/r${VND}a
 IMAGE?=		xxx-${REV}.fs

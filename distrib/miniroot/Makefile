@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.13 1997/05/11 20:01:58 millert Exp $
+#	$OpenBSD: Makefile,v 1.14 1997/05/14 18:39:02 niklas Exp $
 #	$NetBSD: Makefile,v 1.2.4.3 1996/07/04 07:05:32 leo Exp $
 
 # Revision is 2.1
@@ -12,7 +12,7 @@ ARCHDIR=	${.CURDIR}/../${MACHINE}/miniroot
 .endif
 
 MOUNT_POINT?=	/mnt
-VND?=		vnd0
+VND?=		svnd0
 VND_DEV=	/dev/${VND}a
 VND_RDEV=	/dev/r${VND}a
 DISKTYPE=	miniroot
@@ -55,7 +55,6 @@ all: ${CBIN} bsd
 	@echo ""
 	umount ${MOUNT_POINT}
 	vnconfig -u ${VND_DEV}
-	cat /*bin/* > /dev/null
 	cp ${REALIMAGE} ${IMAGE}
 	rm ${REALIMAGE}
 

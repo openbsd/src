@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.9 1997/05/11 20:01:58 millert Exp $
+#	$OpenBSD: Makefile.inc,v 1.10 1997/05/14 18:39:06 niklas Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -6,7 +6,7 @@ CBIN=		instbin
 COMMONDIR=	${TOP}/inst-common
 
 MOUNT_POINT?=	/mnt
-VND?=		vnd0
+VND?=		svnd0
 VND_DEV=	/dev/${VND}a
 VND_RDEV=	/dev/r${VND}a
 PID!=		echo $$$$
@@ -34,7 +34,6 @@ all: ${CBIN}
 	df -i ${MOUNT_POINT}
 	umount ${MOUNT_POINT}
 	vnconfig -u ${VND}
-	cat /bin/* > /dev/null          # flush buffer cache (yuck)
 	cp ${REALIMAGE} ${IMAGE}
 	rm ${REALIMAGE}
 
