@@ -52,6 +52,8 @@ D  10.11.12.13
 # fail test 10.1.1.1 11.1.1.1
 1/2 addresses match.
 # kill
-1 table deleted.
-ktable: 12 allocated, 12 released, 0 leaked.
+1 tables deleted.
+rules cleared
+nat cleared
+ktable: 13 allocated, 13 released, 0 leaked.
 kentry: 30 allocated, 30 released, 0 leaked.
