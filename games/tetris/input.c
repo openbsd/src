@@ -1,4 +1,4 @@
-/*	$OpenBSD: input.c,v 1.8 2002/05/31 04:21:30 pjanzen Exp $	*/
+/*	$OpenBSD: input.c,v 1.9 2002/07/26 21:30:20 mickey Exp $	*/
 /*    $NetBSD: input.c,v 1.3 1996/02/06 22:47:33 jtc Exp $    */
 
 /*-
@@ -80,7 +80,6 @@ int
 rwait(tvp)
 	struct timeval *tvp;
 {
-	int i;
 	struct timeval starttv, endtv, *s;
 	fd_set fds;
 
