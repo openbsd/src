@@ -1429,15 +1429,6 @@
 ./usr/libdata/perl5/site_perl/hppa-openbsd/miscfs/procfs/procfs.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/miscfs/specfs
 ./usr/libdata/perl5/site_perl/hppa-openbsd/miscfs/specfs/specdev.ph
-./usr/libdata/perl5/site_perl/hppa-openbsd/miscfs/tcfs
-./usr/libdata/perl5/site_perl/hppa-openbsd/miscfs/tcfs/tcfs.ph
-./usr/libdata/perl5/site_perl/hppa-openbsd/miscfs/tcfs/tcfs_cipher.ph
-./usr/libdata/perl5/site_perl/hppa-openbsd/miscfs/tcfs/tcfs_cmd.ph
-./usr/libdata/perl5/site_perl/hppa-openbsd/miscfs/tcfs/tcfs_fileinfo.ph
-./usr/libdata/perl5/site_perl/hppa-openbsd/miscfs/tcfs/tcfs_keytab.ph
-./usr/libdata/perl5/site_perl/hppa-openbsd/miscfs/tcfs/tcfs_mount.ph
-./usr/libdata/perl5/site_perl/hppa-openbsd/miscfs/tcfs/tcfs_rw.ph
-./usr/libdata/perl5/site_perl/hppa-openbsd/miscfs/tcfs/tcfs_version.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/miscfs/umapfs
 ./usr/libdata/perl5/site_perl/hppa-openbsd/miscfs/umapfs/umap.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/miscfs/union

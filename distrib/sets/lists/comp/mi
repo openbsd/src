@@ -955,15 +955,6 @@
 ./usr/include/miscfs/procfs/procfs.h
 ./usr/include/miscfs/specfs
 ./usr/include/miscfs/specfs/specdev.h
-./usr/include/miscfs/tcfs
-./usr/include/miscfs/tcfs/tcfs.h
-./usr/include/miscfs/tcfs/tcfs_cipher.h
-./usr/include/miscfs/tcfs/tcfs_cmd.h
-./usr/include/miscfs/tcfs/tcfs_fileinfo.h
-./usr/include/miscfs/tcfs/tcfs_keytab.h
-./usr/include/miscfs/tcfs/tcfs_mount.h
-./usr/include/miscfs/tcfs/tcfs_rw.h
-./usr/include/miscfs/tcfs/tcfs_version.h
 ./usr/include/miscfs/umapfs
 ./usr/include/miscfs/umapfs/umap.h
 ./usr/include/miscfs/union

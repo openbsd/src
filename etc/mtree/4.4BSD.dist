@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.144 2003/02/19 22:11:42 millert Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.145 2003/02/24 01:17:38 deraadt Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -128,11 +128,6 @@ lib
 # ./etc/systrace
 systrace
 # ./etc/systrace
-..
-
-# ./etc/tcfs
-tcfs
-# ./etc/tcfs
 ..
 
 # ./etc

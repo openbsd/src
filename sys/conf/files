@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.268 2003/02/17 23:07:43 miod Exp $
+#	$OpenBSD: files,v 1.269 2003/02/24 01:17:36 deraadt Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -580,21 +580,6 @@ file miscfs/kernfs/kernfs_vnops.c	kernfs
 file miscfs/nullfs/null_subr.c		nullfs
 file miscfs/nullfs/null_vfsops.c	nullfs
 file miscfs/nullfs/null_vnops.c		nullfs
-file miscfs/tcfs/tcfs_subr.c		tcfs
-file miscfs/tcfs/tcfs_vfsops.c		tcfs
-file miscfs/tcfs/tcfs_vnops.c		tcfs
-file miscfs/tcfs/tcfs_attr.c		tcfs
-file miscfs/tcfs/tcfs_cipher_TDES.c	tcfs
-file miscfs/tcfs/tcfs_cipher_BLOWFISH.c	tcfs
-file miscfs/tcfs/tcfs_cipher_conf.c	tcfs
-file miscfs/tcfs/tcfs_cipher_none.c	tcfs
-file miscfs/tcfs/tcfs_cmd.c		tcfs
-file miscfs/tcfs/tcfs_crypto.c		tcfs
-file miscfs/tcfs/tcfs_dir.c		tcfs
-file miscfs/tcfs/tcfs_fileinfo.c	tcfs
-file miscfs/tcfs/tcfs_interp.c		tcfs
-file miscfs/tcfs/tcfs_keytab.c		tcfs
-file miscfs/tcfs/tcfs_rw.c		tcfs
 file miscfs/portal/portal_vfsops.c	portal
 file miscfs/portal/portal_vnops.c	portal
 file miscfs/procfs/procfs_cmdline.c	procfs
@@ -705,12 +690,12 @@ file netinet/ip_ipcomp.c		inet & ipsec
 file crypto/rijndael.c			(inet & ipsec) | crypto | uvm_swap_encrypt
 file crypto/rmd160.c			(inet & ipsec) | crypto
 file crypto/sha1.c			(inet & ipsec) | crypto
-file crypto/blf.c			(inet & ipsec) | crypto | tcfs | vnd
+file crypto/blf.c			(inet & ipsec) | crypto | vnd
 file crypto/cast.c			(inet & ipsec) | crypto
 file crypto/skipjack.c			(inet & ipsec) | crypto
-file crypto/ecb_enc.c			(inet & ipsec) | crypto | tcfs
-file crypto/set_key.c			(inet & ipsec) | crypto | tcfs
-file crypto/ecb3_enc.c			(inet & ipsec) | crypto | tcfs
+file crypto/ecb_enc.c			(inet & ipsec) | crypto
+file crypto/set_key.c			(inet & ipsec) | crypto
+file crypto/ecb3_enc.c			(inet & ipsec) | crypto
 file crypto/crypto.c			(inet & ipsec) | crypto
 file crypto/cryptodev.c			((inet & ipsec) | crypto)	needs-flag
 file crypto/criov.c			(inet & ipsec) | crypto
