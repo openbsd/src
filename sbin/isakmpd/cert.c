@@ -1,5 +1,5 @@
-/*	$OpenBSD: cert.c,v 1.13 2000/03/08 08:42:48 niklas Exp $	*/
-/*	$EOM: cert.c,v 1.15 2000/03/07 23:37:54 ho Exp $	*/
+/*	$OpenBSD: cert.c,v 1.14 2000/04/07 22:07:07 niklas Exp $	*/
+/*	$EOM: cert.c,v 1.16 2000/03/14 19:43:31 ho Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niels Provos.  All rights reserved.
@@ -42,16 +42,18 @@
 
 #include "sysdep.h"
 
+#include "isakmp_num.h"
+#include "log.h"
+#include "cert.h"
+
+#ifdef USE_X509
+#include "x509.h"
 #ifdef KAME
 #  include <openssl/ssl.h>
 #else
 #  include <ssl/ssl.h>
 #endif
-
-#include "cert.h"
-#include "isakmp_num.h"
-#include "log.h"
-#include "x509.h"
+#endif
 
 struct cert_handler cert_handler[] = {
 #ifdef USE_X509
