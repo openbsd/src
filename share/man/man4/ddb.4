@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ddb.4,v 1.38 2005/01/03 22:44:43 jmc Exp $
+.\"	$OpenBSD: ddb.4,v 1.39 2005/01/03 22:55:03 jmc Exp $
 .\"	$NetBSD: ddb.4,v 1.5 1994/11/30 16:22:09 jtc Exp $
 .\"
 .\" Mach Operating System
@@ -61,7 +61,7 @@ is set to 1.
 .Nm
 prompts for commands on the console with:
 .Pp
-.Dl ddb>
+.Dl ddb\*(Gt
 .Pp
 The general syntax of a
 .Nm
@@ -142,9 +142,9 @@ and waits for a response.
 The valid responses are:
 .Pp
 .Bl -tag -width 10n -offset indent -compact
-.It Ic <space>
+.It Aq Ic space
 One more page.
-.It Ic <return>
+.It Aq Ic return
 One more line.
 .It Ic q
 Abort the current command, and return to the command input mode.
@@ -163,7 +163,7 @@ beginning of line
 end of line
 .It Ic ^w
 erase word back
-.It Ic ^h | <del>
+.It Ic ^h | Aq Ic del
 erase previous character
 .It Ic ^d
 erase next character
@@ -192,7 +192,7 @@ redraw line
 .\" .El
 .Sh COMMANDS
 The following commands may be typed at the
-.Ql ddb>
+.Ql ddb\*(Gt
 prompt.
 Some commands consist of more than one word, and if only the first word
 or words are entered, the possible alternatives to complete the command
@@ -834,7 +834,7 @@ if supported by an object format dependent routine:
 .Sm on
 .El
 The symbol may be prefixed with
-.Sq Ar symboltablename Ns \&::
+.Sq Ar symboltablename Ns ::
 (e.g.,
 .Ql emulator::mach_msg_trap )
 to specify other than kernel symbols.
@@ -854,7 +854,7 @@ the current address.
 .It Li +
 .Va next :
 the next address.
-.It Li \..
+.It Li ..
 The address of the start of the last line examined.
 Unlike
 .Va dot
