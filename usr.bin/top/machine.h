@@ -1,4 +1,4 @@
-/* $OpenBSD: machine.h,v 1.7 2003/06/13 21:52:25 deraadt Exp $	 */
+/* $OpenBSD: machine.h,v 1.8 2003/06/15 16:24:44 millert Exp $	 */
 
 /*
  *  Top users/processes display for Unix
@@ -72,7 +72,7 @@ struct system_info {
 struct process_select {
 	int             idle;	/* show idle processes */
 	int             system;	/* show system processes */
-	int             uid;	/* only this uid (unless uid == -1) */
+	uid_t           uid;	/* only this uid (unless uid == -1) */
 	char           *command;/* only this command (unless == NULL) */
 };
 
@@ -88,4 +88,4 @@ get_process_info(struct system_info *, struct process_select *,
 		 int (*) (const void *, const void *));
 extern char    *format_next_process(caddr_t, char *(*) ());
 extern int      proc_compate(const void *, const void *);
-extern int      proc_owner(pid_t);
+extern uid_t    proc_owner(pid_t);

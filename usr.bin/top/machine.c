@@ -1,4 +1,4 @@
-/* $OpenBSD: machine.c,v 1.32 2003/06/14 20:23:41 avsm Exp $	 */
+/* $OpenBSD: machine.c,v 1.33 2003/06/15 16:24:44 millert Exp $	 */
 
 /*-
  * Copyright (c) 1994 Thorsten Lockert <tholo@sigmasoft.com>
@@ -144,7 +144,7 @@ static int      pageshift;	/* log base 2 of the pagesize */
 /* define pagetok in terms of pageshift */
 #define pagetok(size) ((size) << pageshift)
 
-int             maxslp;
+unsigned int	maxslp;
 
 int
 getstathz(void)
@@ -311,7 +311,7 @@ caddr_t
 get_process_info(struct system_info *si, struct process_select *sel,
     int (*compare) (const void *, const void *))
 {
-	int show_idle, show_system, show_uid, show_command;
+	int show_idle, show_system, show_uid;
 	int total_procs, active_procs, i;
 	struct kinfo_proc **prefp, *pp;
 
@@ -332,7 +332,7 @@ get_process_info(struct system_info *si, struct process_select *sel,
 	/* set up flags which define what we are going to select */
 	show_idle = sel->idle;
 	show_system = sel->system;
-	show_uid = sel->uid != -1;
+	show_uid = sel->uid != (uid_t)-1;
 
 	/* count up process states and get pointers to interesting procs */
 	total_procs = 0;
@@ -353,7 +353,7 @@ get_process_info(struct system_info *si, struct process_select *sel,
 			if ((PP(pp, p_stat) != SZOMB) &&
 			    (show_idle || (PP(pp, p_pctcpu) != 0) ||
 			    (PP(pp, p_stat) == SRUN)) &&
-			    (!show_uid || EP(pp, e_pcred.p_ruid) == (uid_t) sel->uid)) {
+			    (!show_uid || EP(pp, e_pcred.p_ruid) == sel->uid)) {
 				*prefp++ = pp;
 				active_procs++;
 			}
@@ -610,7 +610,7 @@ int (*proc_compares[])(const void *, const void *) = {
  *		security problem.  It validates requests for the "kill"
  *		and "renice" commands.
  */
-int
+uid_t
 proc_owner(pid_t pid)
 {
 	struct kinfo_proc **prefp, *pp;

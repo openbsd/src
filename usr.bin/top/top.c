@@ -1,4 +1,4 @@
-/*	$OpenBSD: top.c,v 1.20 2003/06/13 21:52:25 deraadt Exp $	*/
+/*	$OpenBSD: top.c,v 1.21 2003/06/15 16:24:44 millert Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -155,7 +155,7 @@ parseargs(int ac, char **av)
 			break;
 
 		case 'U':	/* display only username's processes */
-			if ((ps.uid = userid(optarg)) == -1) {
+			if ((ps.uid = userid(optarg)) == (uid_t)-1) {
 				fprintf(stderr, "%s: unknown user\n", optarg);
 				exit(1);
 			}
@@ -266,7 +266,7 @@ main(int argc, char *argv[])
 	/* initialize some selection options */
 	ps.idle = Yes;
 	ps.system = No;
-	ps.uid = -1;
+	ps.uid = (uid_t)-1;
 	ps.command = NULL;
 
 	/* get preset options from the environment */
@@ -512,6 +512,7 @@ rundisplay(void)
 	sigset_t mask;
 	char ch, *iptr;
 	int change, i;
+	uid_t uid;
 	static char command_chars[] = "\f qh?en#sdkriIuSo";
 
 	/*
@@ -757,13 +758,13 @@ rundisplay(void)
 			if (readline(tempbuf2, sizeof(tempbuf2), No) > 0) {
 				if (tempbuf2[0] == '+' &&
 				    tempbuf2[1] == '\0') {
-					ps.uid = -1;
-				} else if ((i = userid(tempbuf2)) == -1) {
+					ps.uid = (uid_t)-1;
+				} else if ((uid = userid(tempbuf2)) == (uid_t)-1) {
 					new_message(MT_standout,
 					    " %s: unknown user", tempbuf2);
 					no_command = Yes;
 				} else
-					ps.uid = i;
+					ps.uid = uid;
 				if (putchar('\r') == EOF)
 					exit(1);
 			} else
