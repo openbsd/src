@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.27 1999/01/27 10:04:57 niklas Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.28 1999/01/27 16:47:29 provos Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -2912,17 +2912,20 @@ tcp_newreno(tp, th)
 	struct tcphdr *th;
 {
 	if (SEQ_LT(th->th_ack, tp->snd_last)) {
+		/*
+		 * snd_una has not been updated and the socket send buffer
+		 * not yet drained of the acked data, so we have to leave
+		 * snd_una as it was to get the correct data offset in
+		 * tcp_output().
+		 */
 		tcp_seq onxt = tp->snd_nxt;
-		tcp_seq ouna = tp->snd_una;	/* snd_una not yet updated */
 		u_long  ocwnd = tp->snd_cwnd;
 		tp->t_timer[TCPT_REXMT] = 0;
 		tp->t_rtt = 0;
 		tp->snd_nxt = th->th_ack;
 		tp->snd_cwnd = tp->t_maxseg;
-		tp->snd_una = th->th_ack;
 		(void) tcp_output(tp);
 		tp->snd_cwnd = ocwnd;
-		tp->snd_una = ouna;
 		if (SEQ_GT(onxt, tp->snd_nxt))
 			tp->snd_nxt = onxt;
 		/* 

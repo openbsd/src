@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_timer.c,v 1.10 1998/11/25 05:44:37 millert Exp $	*/
+/*	$OpenBSD: tcp_timer.c,v 1.11 1999/01/27 16:47:29 provos Exp $	*/
 /*	$NetBSD: tcp_timer.c,v 1.14 1996/02/13 23:44:09 christos Exp $	*/
 
 /*
@@ -247,9 +247,6 @@ tcp_timers(tp, timer)
 			tp->t_srtt = 0;
 		}
 		tp->snd_nxt = tp->snd_una;
-#if defined (TCP_NEWRENO) || defined (TCP_SACK)
-		tp->snd_last = tp->snd_una;
-#endif
 		/*
 		 * If timing a segment in this window, stop the timer.
 		 */
