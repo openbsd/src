@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.bsd-wrapper,v 1.52 2003/03/02 19:17:53 beck Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.53 2003/03/08 18:28:55 beck Exp $
 #
 # Build wrapper for Perl 5.8.0
 #
@@ -320,7 +320,6 @@ MANALL=
     Net::FTP 3p			lib/Net/FTP.pm \
     Net::NNTP 3p		lib/Net/NNTP.pm \
     Net::Netrc 3p		lib/Net/Netrc.pm \
-    Net::Netmask 3p		lib/Net/Netmask.pod \
     Net::POP3 3p		lib/Net/POP3.pm \
     Net::Ping 3p		lib/Net/Ping.pm \
     Net::SMTP 3p		lib/Net/SMTP.pm \
