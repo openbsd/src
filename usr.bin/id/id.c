@@ -1,4 +1,4 @@
-/*	$OpenBSD: id.c,v 1.16 2004/07/19 09:22:17 pvalchev Exp $	*/
+/*	$OpenBSD: id.c,v 1.17 2004/11/16 13:51:35 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "@(#)id.c	8.3 (Berkeley) 4/28/95";*/
-static char rcsid[] = "$OpenBSD: id.c,v 1.16 2004/07/19 09:22:17 pvalchev Exp $";
+static char rcsid[] = "$OpenBSD: id.c,v 1.17 2004/11/16 13:51:35 jmc Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -316,7 +316,7 @@ usage(void)
 	(void)fprintf(stderr, "usage: id [user]\n"
 			      "       id -G [-n] [user]\n"
 			      "       id -g [-nr] [user]\n"
-			      "       id -p\n"
+			      "       id -p [user]\n"
 			      "       id -u [-nr] [user]\n");
 	exit(1);
 }
