@@ -15,7 +15,7 @@ This is a stripped down version of log-server.c.
 */
 
 #include "includes.h"
-RCSID("$Id: log-client.c,v 1.3 1999/11/10 23:36:44 markus Exp $");
+RCSID("$Id: log-client.c,v 1.4 1999/11/22 21:02:38 markus Exp $");
 
 #include "xmalloc.h"
 #include "ssh.h"
@@ -36,7 +36,7 @@ log_init(char *av0, LogLevel level, SyslogFacility ignored1, int ignored2)
     case SYSLOG_LEVEL_ERROR:
     case SYSLOG_LEVEL_FATAL:
     case SYSLOG_LEVEL_INFO:
-    case SYSLOG_LEVEL_CHAT:
+    case SYSLOG_LEVEL_VERBOSE:
     case SYSLOG_LEVEL_DEBUG:
       log_level = level;
       break;

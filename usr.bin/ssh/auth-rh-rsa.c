@@ -15,7 +15,7 @@ authentication.
 */
 
 #include "includes.h"
-RCSID("$Id: auth-rh-rsa.c,v 1.6 1999/11/15 20:53:24 markus Exp $");
+RCSID("$Id: auth-rh-rsa.c,v 1.7 1999/11/22 21:02:38 markus Exp $");
 
 #include "packet.h"
 #include "ssh.h"
@@ -96,7 +96,7 @@ int auth_rhosts_rsa(struct passwd *pw, const char *client_user,
   /* We have authenticated the user using .rhosts or /etc/hosts.equiv, and
      the host using RSA.  We accept the authentication. */
   
-  log("Rhosts with RSA host authentication accepted for %.100s, %.100s on %.700s.",
+  verbose("Rhosts with RSA host authentication accepted for %.100s, %.100s on %.700s.",
       pw->pw_name, client_user, canonical_hostname);
   packet_send_debug("Rhosts with RSA host authentication accepted.");
   return 1;

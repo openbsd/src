@@ -18,7 +18,7 @@ agent connections.
 */
 
 #include "includes.h"
-RCSID("$Id: sshd.c,v 1.61 1999/11/22 20:02:45 markus Exp $");
+RCSID("$Id: sshd.c,v 1.62 1999/11/22 21:02:39 markus Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
@@ -190,7 +190,29 @@ void grace_alarm_handler(int sig)
   packet_close();
   
   /* Log error and exit. */
-  fatal("Timeout before authentication.");
+  fatal("Timeout before authentication for %s.", get_remote_ipaddr());
+}
+
+/* convert ssh auth msg type into description */
+char *
+get_authname(int type)
+{
+  switch (type) {
+  case SSH_CMSG_AUTH_PASSWORD:
+    return "password";
+  case SSH_CMSG_AUTH_RSA:
+    return "rsa";
+  case SSH_CMSG_AUTH_RHOSTS_RSA:
+    return "rhosts-rsa";
+  case SSH_CMSG_AUTH_RHOSTS:
+    return "rhosts";
+#ifdef KRB4
+  case SSH_CMSG_AUTH_KERBEROS:
+    return "kerberos";
+#endif
+  }
+  fatal("get_authname: unknown auth %d: internal error", type);
+  return NULL;
 }
 
 /* Signal handler for the key regeneration alarm.  Note that this
@@ -242,6 +264,7 @@ main(int ac, char **av)
   struct sockaddr_in sin;
   char buf[100]; /* Must not be larger than remote_version. */
   char remote_version[100]; /* Must be at least as big as buf. */
+  const char *remote_ip;
   int remote_port;
   char *comment;
   FILE *f;
@@ -610,6 +633,7 @@ main(int ac, char **av)
   packet_set_connection(sock_in, sock_out);
 
   remote_port = get_remote_port();
+  remote_ip = get_remote_ipaddr();
 
   /* Check whether logins are denied from this host. */
 #ifdef LIBWRAP
@@ -624,11 +648,11 @@ main(int ac, char **av)
       close(sock_out);
       refuse(&req);
     }
-    log("Connection from %.500s port %d", eval_client(&req), remote_port);
+    verbose("Connection from %.500s port %d", eval_client(&req), remote_port);
   }
 #else
   /* Log the connection. */
-  log("Connection from %.100s port %d", get_remote_ipaddr(), remote_port);
+  verbose("Connection from %.500s port %d", remote_ip, remote_port);
 #endif /* LIBWRAP */
 
   /* We don\'t want to listen forever unless the other side successfully
@@ -648,13 +672,13 @@ main(int ac, char **av)
     snprintf(buf, sizeof buf, "SSH-%d.%d-%.100s\n", 
       	  PROTOCOL_MAJOR, PROTOCOL_MINOR, SSH_VERSION);
     if (write(sock_out, buf, strlen(buf)) != strlen(buf))
-      fatal("Could not write ident string.");
+      fatal("Could not write ident string to %s.", get_remote_ipaddr());
  
     /* Read other side\'s version identification. */
     for (i = 0; i < sizeof(buf) - 1; i++)
       {
         if (read(sock_in, &buf[i], 1) != 1)
-      	fatal("Did not receive ident string.");
+      	fatal("Did not receive ident string from %s.", get_remote_ipaddr());
         if (buf[i] == '\r')
       	{
       	  buf[i] = '\n';
@@ -680,7 +704,8 @@ main(int ac, char **av)
       (void) write(sock_out, s, strlen(s));
       close(sock_in);
       close(sock_out);
-      fatal("Bad protocol version identification: %.100s", buf);
+      fatal("Bad protocol version identification '%.100s' from %s",
+	     buf, get_remote_ipaddr());
     }
   debug("Client protocol version %d.%d; client software version %.100s",
 	remote_major, remote_minor, remote_version);
@@ -690,7 +715,8 @@ main(int ac, char **av)
       (void) write(sock_out, s, strlen(s));
       close(sock_in);
       close(sock_out);
-      fatal("Protocol major versions differ: %d vs. %d", 
+      fatal("Protocol major versions differ for %s: %d vs. %d", 
+	    get_remote_ipaddr(),
 	    PROTOCOL_MAJOR, remote_major);
     }
 
@@ -734,7 +760,7 @@ main(int ac, char **av)
   if (xauthfile) unlink(xauthfile);
 
   /* The connection has been terminated. */
-  log("Closing connection to %.100s", inet_ntoa(sin.sin_addr));
+  verbose("Closing connection to %.100s", remote_ip);
   packet_close();
   exit(0);
 }
@@ -851,7 +877,8 @@ do_connection()
       /* Private key has bigger modulus. */
       if (BN_num_bits(sensitive_data.private_key->n) < 
 	  BN_num_bits(sensitive_data.host_key->n) + SSH_KEY_BITS_RESERVED) {
-        fatal("do_connection: private_key %d < host_key %d + SSH_KEY_BITS_RESERVED %d",
+        fatal("do_connection: %s: private_key %d < host_key %d + SSH_KEY_BITS_RESERVED %d",
+	      get_remote_ipaddr(),
 	      BN_num_bits(sensitive_data.private_key->n),
               BN_num_bits(sensitive_data.host_key->n),
 	      SSH_KEY_BITS_RESERVED);
@@ -867,7 +894,8 @@ do_connection()
       /* Host key has bigger modulus (or they are equal). */
       if (BN_num_bits(sensitive_data.host_key->n) < 
 	  BN_num_bits(sensitive_data.private_key->n) + SSH_KEY_BITS_RESERVED) {
-        fatal("do_connection: host_key %d < private_key %d + SSH_KEY_BITS_RESERVED %d",
+        fatal("do_connection: %s: host_key %d < private_key %d + SSH_KEY_BITS_RESERVED %d",
+	      get_remote_ipaddr(),
 	      BN_num_bits(sensitive_data.host_key->n),
               BN_num_bits(sensitive_data.private_key->n),
 	      SSH_KEY_BITS_RESERVED);
@@ -889,7 +917,8 @@ do_connection()
   BN_mask_bits(session_key_int, sizeof(session_key) * 8);
   len = BN_num_bytes(session_key_int);
   if (len < 0 || len > sizeof(session_key))
-    fatal("do_connection: bad len: session_key_int %d > sizeof(session_key) %d",
+    fatal("do_connection: bad len from %s: session_key_int %d > sizeof(session_key) %d",
+	  get_remote_ipaddr(), 
 	  len, sizeof(session_key));
   memset(session_key, 0, sizeof(session_key));
   BN_bn2bin(session_key_int, session_key + sizeof(session_key) - len);
@@ -1061,14 +1090,13 @@ do_authentication(char *user)
       auth_password(pw, ""))
     {
       /* Authentication with empty password succeeded. */
-      debug("Login for user %.100s accepted without authentication.", user);
+      log("Login for user %s from %.100s, accepted without authentication.",
+	  pw->pw_name, get_remote_ipaddr());
     } else {
       /* Loop until the user has been authenticated or the connection is closed,
          do_authloop() returns only if authentication is successfull */
       do_authloop(pw);
     }
-
-  /* XXX log unified auth message */
 
   /* Check if the user is logging in as root and root logins are disallowed. */
   if (pw->pw_uid == 0 && !options.permit_root_login)
@@ -1089,30 +1117,36 @@ do_authentication(char *user)
   do_authenticated(pw);
 }
 
-#define MAX_AUTH_FAILURES 5
+#define AUTH_FAIL_MAX 6
+#define AUTH_FAIL_LOG (AUTH_FAIL_MAX/2)
+#define AUTH_FAIL_MSG "Too many authentication failures for %.100s"
 
 /* read packets and try to authenticate local user *pw.
    return if authentication is successfull */
 void
 do_authloop(struct passwd *pw)
 {
-  int authentication_failures = 0;
+  int attempt = 0;
   unsigned int bits;
   BIGNUM *client_host_key_e, *client_host_key_n;
   BIGNUM *n;
   char *client_user, *password;
+  char user[1024];
   int plen, dlen, nlen, ulen, elen;
+  int type = 0;
+  void (*authlog)(const char *fmt, ...) = verbose;
 
   /* Indicate that authentication is needed. */
   packet_start(SSH_SMSG_FAILURE);
   packet_send();
   packet_write_wait();
 
-  for (;;) {
+  for (attempt = 1; ; attempt++) {
     int authenticated = 0;
+    strlcpy(user, "", sizeof user);
 
     /* Get a packet from the client. */
-    int type = packet_read(&plen);
+    type = packet_read(&plen);
   
     /* Process the packet. */
     switch (type)
@@ -1122,7 +1156,7 @@ do_authloop(struct passwd *pw)
 	if (!options.kerberos_tgt_passing)
 	  {
 	    /* packet_get_all(); */
-	    log("Kerberos tgt passing disabled.");
+	    verbose("Kerberos tgt passing disabled.");
 	    break;
 	  }
 	else {
@@ -1130,7 +1164,7 @@ do_authloop(struct passwd *pw)
 	  char *tgt = packet_get_string(&dlen);
 	  packet_integrity_check(plen, 4 + dlen, type);
 	  if (!auth_kerberos_tgt(pw, tgt))
-	    debug("Kerberos tgt REFUSED for %s", pw->pw_name);
+	    verbose("Kerberos tgt REFUSED for %s", pw->pw_name);
 	  xfree(tgt);
 	}
 	continue;
@@ -1138,7 +1172,7 @@ do_authloop(struct passwd *pw)
       case SSH_CMSG_HAVE_AFS_TOKEN:
 	if (!options.afs_token_passing || !k_hasafs()) {
 	  /* packet_get_all(); */
-	  log("AFS token passing disabled.");
+	  verbose("AFS token passing disabled.");
 	  break;
 	}
 	else {
@@ -1146,7 +1180,7 @@ do_authloop(struct passwd *pw)
 	  char *token_string = packet_get_string(&dlen);
 	  packet_integrity_check(plen, 4 + dlen, type);
 	  if (!auth_afs_token(pw, token_string))
-	    debug("AFS token REFUSED for %s", pw->pw_name);
+	    verbose("AFS token REFUSED for %s", pw->pw_name);
 	  xfree(token_string);
 	}
 	continue;
@@ -1157,7 +1191,7 @@ do_authloop(struct passwd *pw)
 	if (!options.kerberos_authentication)
 	  {
 	    /* packet_get_all(); */
-	    log("Kerberos authentication disabled.");
+	    verbose("Kerberos authentication disabled.");
 	    break;
 	  }
 	else {
@@ -1173,12 +1207,10 @@ do_authloop(struct passwd *pw)
 	  
 	  authenticated = auth_krb4(pw->pw_name, &auth, &tkt_user);
 
-	  log("Kerberos authentication %s%s for account %s from %s", 
-	      authenticated ? "accepted " : "failed",
-	      tkt_user != NULL ? tkt_user : "",
-	      pw->pw_name, get_canonical_hostname());
-          if (authenticated)
+	  if (authenticated) {
+	    snprintf(user, sizeof user, " tktuser %s", tkt_user);
 	    xfree(tkt_user);
+	  }
 	}
 	break;
 #endif /* KRB4 */
@@ -1186,29 +1218,27 @@ do_authloop(struct passwd *pw)
       case SSH_CMSG_AUTH_RHOSTS:
 	if (!options.rhosts_authentication)
 	  {
-	    log("Rhosts authentication disabled.");
+	    verbose("Rhosts authentication disabled.");
 	    break;
 	  }
   
 	/* Get client user name.  Note that we just have to trust the client;
 	   this is one reason why rhosts authentication is insecure. 
 	   (Another is IP-spoofing on a local network.) */
-	client_user = packet_get_string(&dlen);
-	packet_integrity_check(plen, 4 + dlen, type);
+	client_user = packet_get_string(&ulen);
+	packet_integrity_check(plen, 4 + ulen, type);
   
 	/* Try to authenticate using /etc/hosts.equiv and .rhosts. */
 	authenticated = auth_rhosts(pw, client_user);
 
-	log("Rhosts authentication %s for %.100s, remote %.100s on %.700s.",
-	     authenticated ? "accepted" : "failed",
-	     pw->pw_name, client_user, get_canonical_hostname());
+	snprintf(user, sizeof user, " ruser %s", client_user);
 	xfree(client_user);
 	break;
   
       case SSH_CMSG_AUTH_RHOSTS_RSA:
 	if (!options.rhosts_rsa_authentication)
 	  {
-	    log("Rhosts with RSA authentication disabled.");
+	    verbose("Rhosts with RSA authentication disabled.");
 	    break;
 	  }
   
@@ -1231,18 +1261,17 @@ do_authloop(struct passwd *pw)
   
 	authenticated = auth_rhosts_rsa(pw, client_user,
 					client_host_key_e, client_host_key_n);
-	log("Rhosts authentication %s for %.100s, remote %.100s.",
-	     authenticated ? "accepted" : "failed",
-	     pw->pw_name, client_user);
-	xfree(client_user);
 	BN_clear_free(client_host_key_e);
 	BN_clear_free(client_host_key_n);
+
+	snprintf(user, sizeof user, " ruser %s", client_user);
+	xfree(client_user);
 	break;
 	
       case SSH_CMSG_AUTH_RSA:
 	if (!options.rsa_authentication)
 	  {
-	    log("RSA authentication disabled.");
+	    verbose("RSA authentication disabled.");
 	    break;
 	  }
   
@@ -1250,18 +1279,14 @@ do_authloop(struct passwd *pw)
 	n = BN_new();
 	packet_get_bignum(n, &nlen);
 	packet_integrity_check(plen, nlen, type);
-
 	authenticated = auth_rsa(pw, n);
-	log("RSA authentication %s for %.100s.",
-	    authenticated ? "accepted" : "failed",
-	    pw->pw_name);
 	BN_clear_free(n);
 	break;
   
       case SSH_CMSG_AUTH_PASSWORD:
 	if (!options.password_authentication)
 	  {
-	    log("Password authentication disabled.");
+	    verbose("Password authentication disabled.");
 	    break;
 	  }
   
@@ -1273,9 +1298,6 @@ do_authloop(struct passwd *pw)
   
 	/* Try authentication with the password. */
 	authenticated = auth_password(pw, password);
-	log("Password authentication %s for %.100s.",
-	    authenticated ? "accepted" : "failed",
-	    pw->pw_name);
 
 	memset(password, 0, strlen(password));
 	xfree(password);
@@ -1290,14 +1312,29 @@ do_authloop(struct passwd *pw)
 	/* Any unknown messages will be ignored (and failure returned)
 	   during authentication. */
 	log("Unknown message during authentication: type %d", type);
-	break; /* Respond with a failure message. */
+	break;
       }
 
+    /* Raise logging level */
+    if (authenticated ||
+	attempt == AUTH_FAIL_LOG ||
+	type == SSH_CMSG_AUTH_PASSWORD)
+      authlog = log;
+
+    authlog("%s %s for %.200s from %.200s port %d%s",
+       authenticated ? "Accepted" : "Failed",
+       get_authname(type),
+       pw->pw_uid == 0 ? "ROOT" : pw->pw_name,
+       get_remote_ipaddr(),
+       get_remote_port(),
+       user);
+
     if (authenticated)
-      break;
-    if (++authentication_failures >= MAX_AUTH_FAILURES)
-      packet_disconnect("Too many authentication failures for %.100s from %.200s", 
-			 pw->pw_name, get_canonical_hostname());
+      return;
+
+    if (attempt > AUTH_FAIL_MAX)
+      packet_disconnect(AUTH_FAIL_MSG, pw->pw_name);
+
     /* Send a message indicating that the authentication attempt failed. */
     packet_start(SSH_SMSG_FAILURE);
     packet_send();
@@ -1310,7 +1347,12 @@ do_authloop(struct passwd *pw)
 void
 do_fake_authloop(char *user)
 {
-  int authentication_failures = 0;
+  int attempt = 0;
+
+  log("Faking authloop for illegal user %.200s from %.200s port %d", 
+       user,
+       get_remote_ipaddr(),
+       get_remote_port());
 
   /* Indicate that authentication is needed. */
   packet_start(SSH_SMSG_FAILURE);
@@ -1319,28 +1361,28 @@ do_fake_authloop(char *user)
 
   /* Keep reading packets, and always respond with a failure.  This is to
      avoid disclosing whether such a user really exists. */
-  for (;;)
+  for (attempt = 1; ; attempt++)
     {
       /* Read a packet.  This will not return if the client disconnects. */
       int plen;
       int type = packet_read(&plen);
 #ifdef SKEY
-      int passw_len;
+      int dlen;
       char *password, *skeyinfo;
       if (options.password_authentication &&
          options.skey_authentication == 1 &&
          type == SSH_CMSG_AUTH_PASSWORD &&
-         (password = packet_get_string(&passw_len)) != NULL &&
-         passw_len == 5 &&
+         (password = packet_get_string(&dlen)) != NULL &&
+         dlen == 5 &&
          strncasecmp(password, "s/key", 5) == 0 &&
          (skeyinfo = skey_fake_keyinfo(user)) != NULL ){
         /* Send a fake s/key challenge. */
         packet_send_debug(skeyinfo);
       }
 #endif
-      if (++authentication_failures >= MAX_AUTH_FAILURES)
-        packet_disconnect("Too many authentication failures for %.100s from %.200s", 
-                          user, get_canonical_hostname());
+      if (attempt > AUTH_FAIL_MAX)
+        packet_disconnect(AUTH_FAIL_MSG, user);
+
       /* Send failure.  This should be indistinguishable from a failed
          authentication. */
       packet_start(SSH_SMSG_FAILURE);

@@ -12,7 +12,7 @@ Created: Wed Apr 19 17:41:39 1995 ylo
 */
 
 #include "includes.h"
-RCSID("$Id: cipher.c,v 1.14 1999/11/15 21:38:53 markus Exp $");
+RCSID("$Id: cipher.c,v 1.15 1999/11/22 21:02:38 markus Exp $");
 
 #include "ssh.h"
 #include "cipher.h"
@@ -264,7 +264,7 @@ void cipher_encrypt(CipherContext *context, unsigned char *dest,
       break;
 
     default:
-      fatal("cipher_encrypt: unknown cipher: %d", context->type);
+      fatal("cipher_encrypt: unknown cipher: %s", cipher_name(context->type));
     }
 }
   
@@ -299,6 +299,6 @@ void cipher_decrypt(CipherContext *context, unsigned char *dest,
       break;
 
     default:
-      fatal("cipher_decrypt: unknown cipher: %d", context->type);
+      fatal("cipher_decrypt: unknown cipher: %s", cipher_name(context->type));
     }
 }

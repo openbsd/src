@@ -5,7 +5,7 @@ Shared versions of debug(), log(), etc.
 */
 
 #include "includes.h"
-RCSID("$OpenBSD: log.c,v 1.2 1999/11/19 16:04:17 markus Exp $");
+RCSID("$OpenBSD: log.c,v 1.3 1999/11/22 21:02:38 markus Exp $");
 
 #include "ssh.h"
 #include "xmalloc.h"
@@ -47,11 +47,11 @@ log(const char *fmt, ...)
 /* More detailed messages (information that does not need to go to the log). */
 
 void
-chat(const char *fmt, ...)
+verbose(const char *fmt, ...)
 {
   va_list args;
   va_start(args, fmt);
-  do_log(SYSLOG_LEVEL_CHAT, fmt, args);
+  do_log(SYSLOG_LEVEL_VERBOSE, fmt, args);
   va_end(args);
 }
 
@@ -167,7 +167,7 @@ static struct
   { "FATAL",   SYSLOG_LEVEL_FATAL },
   { "ERROR",   SYSLOG_LEVEL_ERROR },
   { "INFO",    SYSLOG_LEVEL_INFO },
-  { "CHAT",	SYSLOG_LEVEL_CHAT },
+  { "VERBOSE", SYSLOG_LEVEL_VERBOSE },
   { "DEBUG",   SYSLOG_LEVEL_DEBUG },
   { NULL, 0 }
 };

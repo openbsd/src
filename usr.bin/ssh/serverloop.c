@@ -308,16 +308,20 @@ void process_input(fd_set *readset)
   if (FD_ISSET(connection_in, readset))
     {
       len = read(connection_in, buf, sizeof(buf));
-      if (len == 0)
-	fatal("Connection closed by remote host.");
+      if (len == 0) {
+	verbose("Connection closed by remote host.");
+	fatal_cleanup();
+      }
 
       /* There is a kernel bug on Solaris that causes select to sometimes
 	 wake up even though there is no data available. */
       if (len < 0 && errno == EAGAIN)
 	len = 0;
 
-      if (len < 0)
-	fatal("Read error from remote host: %.100s", strerror(errno));
+      if (len < 0) {
+	verbose("Read error from remote host: %.100s", strerror(errno));
+	fatal_cleanup();
+      }
 
       /* Buffer any received data. */
       packet_process_incoming(buf, len);

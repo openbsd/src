@@ -42,11 +42,11 @@ and ssh has the necessary privileges.)
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: scp.c,v 1.16 1999/11/17 09:20:17 deraadt Exp $
+ *	$Id: scp.c,v 1.17 1999/11/22 21:02:38 markus Exp $
  */
 
 #include "includes.h"
-RCSID("$Id: scp.c,v 1.16 1999/11/17 09:20:17 deraadt Exp $");
+RCSID("$Id: scp.c,v 1.17 1999/11/22 21:02:38 markus Exp $");
 
 #include "ssh.h"
 #include "xmalloc.h"
@@ -76,7 +76,7 @@ off_t totalbytes = 0;
 char *curfile;
 
 /* This is set to non-zero to enable verbose mode. */
-int verbose = 0;
+int verbose_mode = 0;
 
 /* This is set to non-zero if compression is desired. */
 int compress = 0;
@@ -106,7 +106,7 @@ int do_cmd(char *host, char *remuser, char *cmd, int *fdin, int *fdout)
 {
   int pin[2], pout[2], reserved[2];
 
-  if (verbose)
+  if (verbose_mode)
     fprintf(stderr, "Executing: host %s, user %s, command %s\n",
 	    host, remuser ? remuser : "(unspecified)", cmd);
 
@@ -142,7 +142,7 @@ int do_cmd(char *host, char *remuser, char *cmd, int *fdin, int *fdout)
       args[i++] = SSH_PROGRAM;
       args[i++] = "-x";
       args[i++] = "-oFallBackToRsh no";
-      if (verbose)
+      if (verbose_mode)
 	args[i++] = "-v";
       if (compress)
 	args[i++] = "-C";
@@ -272,7 +272,7 @@ main(argc, argv)
 		  	identity = optarg;
 			break;
 		case 'v':
-			verbose = 1;
+			verbose_mode = 1;
 		  	break;
 		case 'B':
 		  	batchmode = 1;
@@ -317,7 +317,7 @@ main(argc, argv)
 
 	remin = remout = -1;
 	/* Command to be executed on remote system using "ssh". */
-  	(void)sprintf(cmd, "scp%s%s%s%s", verbose ? " -v" : "",
+  	(void)sprintf(cmd, "scp%s%s%s%s", verbose_mode ? " -v" : "",
 	    iamrecursive ? " -r" : "", pflag ? " -p" : "",
 	    targetshouldbedirectory ? " -d" : "");
 
@@ -378,18 +378,18 @@ toremote(targ, argc, argv)
 					continue;
 				(void)sprintf(bp, 
 				    "%s%s -x -o'FallBackToRsh no' -n -l %s %s %s %s '%s%s%s:%s'",
-				    SSH_PROGRAM, verbose ? " -v" : "",
+				    SSH_PROGRAM, verbose_mode ? " -v" : "",
 				    suser, host, cmd, src,
 				    tuser ? tuser : "", tuser ? "@" : "",
 				    thost, targ);
 			} else
 				(void)sprintf(bp,
 				    "exec %s%s -x -o'FallBackToRsh no' -n %s %s %s '%s%s%s:%s'",
-				    SSH_PROGRAM, verbose ? " -v" : "",
+				    SSH_PROGRAM, verbose_mode ? " -v" : "",
 				    argv[i], cmd, src,
 				    tuser ? tuser : "", tuser ? "@" : "",
 				    thost, targ);
-		        if (verbose)
+		        if (verbose_mode)
 			  fprintf(stderr, "Executing: %s\n", bp);
 			(void)system(bp);
 			(void)xfree(bp);
@@ -427,7 +427,7 @@ tolocal(argc, argv)
 			(void)sprintf(bp, "exec %s%s%s %s %s", _PATH_CP,
 			    iamrecursive ? " -r" : "", pflag ? " -p" : "",
 			    argv[i], argv[argc - 1]);
-	  		if (verbose)
+	  		if (verbose_mode)
 			  fprintf(stderr, "Executing: %s\n", bp);
 			if (system(bp))
 				++errs;
@@ -519,7 +519,7 @@ syserr:			run_err("%s: %s", name, strerror(errno));
 			      (unsigned int)(stb.st_mode & FILEMODEMASK), 
 			      (unsigned long)stb.st_size, 
 			      last);
-	        if (verbose)
+	        if (verbose_mode)
 		  {
 		    fprintf(stderr, "Sending file modes: %s", buf);
 		    fflush(stderr);
@@ -600,7 +600,7 @@ rsource(name, statp)
 	(void)sprintf(path, 
 	    "D%04o %d %.1024s\n", (unsigned int)(statp->st_mode & FILEMODEMASK),
 		      0, last);
-  	if (verbose)
+  	if (verbose_mode)
 	  fprintf(stderr, "Entering directory: %s", path);
 	(void)write(remout, path, strlen(path));
 	if (response() < 0) {
@@ -976,7 +976,7 @@ run_err(const char *fmt, ...)
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: scp.c,v 1.16 1999/11/17 09:20:17 deraadt Exp $
+ *	$Id: scp.c,v 1.17 1999/11/22 21:02:38 markus Exp $
  */
 
 char *

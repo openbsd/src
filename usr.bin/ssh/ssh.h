@@ -13,7 +13,7 @@ Generic header file for ssh.
 
 */
 
-/* RCSID("$Id: ssh.h,v 1.22 1999/11/19 16:04:17 markus Exp $"); */
+/* RCSID("$Id: ssh.h,v 1.23 1999/11/22 21:02:38 markus Exp $"); */
 
 #ifndef SSH_H
 #define SSH_H
@@ -365,7 +365,7 @@ typedef enum
   SYSLOG_LEVEL_FATAL,
   SYSLOG_LEVEL_ERROR,
   SYSLOG_LEVEL_INFO,
-  SYSLOG_LEVEL_CHAT,
+  SYSLOG_LEVEL_VERBOSE,
   SYSLOG_LEVEL_DEBUG
 } LogLevel;
 
@@ -380,12 +380,12 @@ SyslogFacility log_facility_number(char *name);
 LogLevel log_level_number(char *name);
 
 /* Output a message to syslog or stderr */
-void fatal(const char *fmt, ...);
-void error(const char *fmt, ...);
-void log(const char *fmt, ...);
-void chat(const char *fmt, ...);
-void debug(const char *fmt, ...);
-
+void fatal(const char *fmt, ...)	__attribute__ ((format (printf, 1, 2)));
+void error(const char *fmt, ...)	__attribute__ ((format (printf, 1, 2)));
+void log(const char *fmt, ...)		__attribute__ ((format (printf, 1, 2)));
+void verbose(const char *fmt, ...)	__attribute__ ((format (printf, 1, 2)));
+void debug(const char *fmt, ...)	__attribute__ ((format (printf, 1, 2)));
+ 
 /* same as fatal() but w/o logging */
 void fatal_cleanup(void);
 

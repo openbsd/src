@@ -16,7 +16,7 @@ validity of the host key.
 */
 
 #include "includes.h"
-RCSID("$Id: auth-rsa.c,v 1.10 1999/11/18 14:00:48 markus Exp $");
+RCSID("$Id: auth-rsa.c,v 1.11 1999/11/22 21:02:38 markus Exp $");
 
 #include "rsa.h"
 #include "packet.h"
@@ -274,7 +274,7 @@ auth_rsa(struct passwd *pw, BIGNUM *client_n)
       if (!auth_rsa_challenge_dialog(e, n))
 	{
 	  /* Wrong response. */
-	  log("Wrong response to RSA authentication challenge.");
+	  verbose("Wrong response to RSA authentication challenge.");
 	  packet_send_debug("Wrong response to RSA authentication challenge.");
 	  continue;
 	}
