@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.118 2002/04/30 16:03:19 jason Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.119 2002/05/07 20:37:24 jason Exp $	*/
 
 /*
  * Invertex AEON / Hifn 7751 driver
@@ -715,6 +715,8 @@ hifn_init_pci_registers(sc)
 	    offsetof(struct hifn_dma, dstr[0]));
 	WRITE_REG_1(sc, HIFN_1_DMA_RRAR, sc->sc_dmamap->dm_segs[0].ds_addr +
 	    offsetof(struct hifn_dma, resr[0]));
+
+	DELAY(2000);
 
 	/* write status register */
 	WRITE_REG_1(sc, HIFN_1_DMA_CSR,
