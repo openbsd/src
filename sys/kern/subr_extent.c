@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_extent.c,v 1.4 1998/02/25 19:53:49 weingart Exp $	*/
+/*	$OpenBSD: subr_extent.c,v 1.5 1998/10/01 18:00:04 fgsch Exp $	*/
 /*	$NetBSD: subr_extent.c,v 1.7 1996/11/21 18:46:34 cgd Exp $	*/
 
 /*-
@@ -617,8 +617,27 @@ extent_alloc_subregion(ex, substart, subend, size, alignment, boundary,
 #endif
 	}
 
+	/* 
+	 * Find the first allocated region that begins on or after
+	 * the subregion start, advancing the "last" pointer along
+	 * the way.
+	 */
 	for (rp = ex->ex_regions.lh_first; rp != NULL;
 	    rp = rp->er_link.le_next) {
+		if (rp->er_start >= newstart)
+			break;
+		last = rp;
+	}
+
+	/*
+	 * If there are no allocated regions beyond where we want to be,
+	 * relocate the start of our candidate region to the end of
+	 * the last allocated region (if there was one).
+	 */
+	if (rp == NULL && last != NULL)
+		newstart = EXTENT_ALIGN((last->er_end + 1), alignment);
+
+	for (; rp != NULL; rp = rp->er_link.le_next) {
 		/*
 		 * Check the chunk before "rp".  Note that our
 		 * comparison is safe from overflow conditions.
