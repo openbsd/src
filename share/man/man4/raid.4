@@ -1,4 +1,4 @@
-.\"	$OpenBSD: raid.4,v 1.22 2002/11/08 08:08:47 mpech Exp $
+.\"	$OpenBSD: raid.4,v 1.23 2002/12/06 19:04:24 avsm Exp $
 .\"     $NetBSD: raid.4,v 1.20 2001/09/22 16:03:58 wiz Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -122,7 +122,7 @@ the RAID set, and whether the data (and parity) on the component is
 .Sq clean .
 If the driver determines that the labels are very inconsistent with
 respect to each other (e.g. two or more serial numbers do not match)
-or that the component label is not consistent with it's assigned place
+or that the component label is not consistent with its assigned place
 in the set (e.g., the component label claims the component should be
 the 3rd one a 6-disk set, but the RAID set has it as the 3rd component
 in a 5-disk set) then the device will fail to configure.
