@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_hostap.c,v 1.16 2002/06/09 03:14:18 todd Exp $	*/
+/*	$OpenBSD: if_wi_hostap.c,v 1.17 2002/06/21 06:56:24 millert Exp $	*/
 
 /*
  * Copyright (c) 2002
@@ -219,10 +219,10 @@ wihap_sta_disassoc(struct wi_softc *sc,
 		printf("Sending disassoc to sta %s\n", ether_sprintf(sta->addr));
 
 	/* Send disassoc packet. */
-	resp_hdr = (struct wi_80211_hdr *) sc->wi_txbuf;
+	resp_hdr = (struct wi_80211_hdr *)sc->wi_txbuf;
 	bzero(resp_hdr, sizeof(struct wi_80211_hdr));
 	resp_hdr->frame_ctl = WI_FTYPE_MGMT | WI_STYPE_MGMT_DISAS;
-	pkt = sc->wi_txbuf + sizeof(struct wi_80211_hdr);
+	pkt = (caddr_t)&sc->wi_txbuf + sizeof(struct wi_80211_hdr);
 
 	bcopy(sta->addr, resp_hdr->addr1, ETHER_ADDR_LEN);
 	bcopy(sc->sc_arpcom.ac_enaddr, resp_hdr->addr2, ETHER_ADDR_LEN);
@@ -230,7 +230,8 @@ wihap_sta_disassoc(struct wi_softc *sc,
 
 	put_hword(&pkt, reason);
 
-	wi_mgmt_xmit(sc, sc->wi_txbuf, 2 + sizeof(struct wi_80211_hdr));
+	wi_mgmt_xmit(sc, (caddr_t)&sc->wi_txbuf,
+	    2 + sizeof(struct wi_80211_hdr));
 }
 
 /* wihap_sta_deauth()
@@ -248,10 +249,10 @@ wihap_sta_deauth(struct wi_softc *sc, u_int8_t sta_addr[],
 		printf("Sending deauth to sta %s\n", ether_sprintf(sta_addr));
 
 	/* Send deauth packet. */
-	resp_hdr = (struct wi_80211_hdr *) sc->wi_txbuf;
+	resp_hdr = (struct wi_80211_hdr *)sc->wi_txbuf;
 	bzero(resp_hdr, sizeof(struct wi_80211_hdr));
 	resp_hdr->frame_ctl = htole16(WI_FTYPE_MGMT | WI_STYPE_MGMT_DEAUTH);
-	pkt = sc->wi_txbuf + sizeof(struct wi_80211_hdr);
+	pkt = (caddr_t)&sc->wi_txbuf + sizeof(struct wi_80211_hdr);
 
 	bcopy(sta_addr, resp_hdr->addr1, ETHER_ADDR_LEN);
 	bcopy(sc->sc_arpcom.ac_enaddr, resp_hdr->addr2, ETHER_ADDR_LEN);
@@ -259,7 +260,8 @@ wihap_sta_deauth(struct wi_softc *sc, u_int8_t sta_addr[],
 
 	put_hword(&pkt, reason);
 
-	wi_mgmt_xmit(sc, sc->wi_txbuf, 2 + sizeof(struct wi_80211_hdr));
+	wi_mgmt_xmit(sc, (caddr_t)&sc->wi_txbuf,
+	    2 + sizeof(struct wi_80211_hdr));
 }
 
 /* wihap_shutdown()
@@ -635,14 +637,14 @@ fail:
 		printf("wihap_auth_req: returns status=0x%x\n", status);
 
 	/* Send response. */
-	resp_hdr = (struct wi_80211_hdr *) sc->wi_txbuf;
+	resp_hdr = (struct wi_80211_hdr *)&sc->wi_txbuf;
 	bzero(resp_hdr, sizeof(struct wi_80211_hdr));
 	resp_hdr->frame_ctl = htole16(WI_FTYPE_MGMT | WI_STYPE_MGMT_AUTH);
 	bcopy(rxfrm->wi_addr2, resp_hdr->addr1, ETHER_ADDR_LEN);
 	bcopy(sc->sc_arpcom.ac_enaddr, resp_hdr->addr2, ETHER_ADDR_LEN);
 	bcopy(sc->sc_arpcom.ac_enaddr, resp_hdr->addr3, ETHER_ADDR_LEN);
 
-	pkt = &sc->wi_txbuf[sizeof(struct wi_80211_hdr)];
+	pkt = (caddr_t)&sc->wi_txbuf + sizeof(struct wi_80211_hdr);
 	put_hword(&pkt, algo);
 	put_hword(&pkt, seq);
 	put_hword(&pkt, status);
@@ -650,7 +652,8 @@ fail:
 		put_tlv(&pkt, IEEE80211_ELEMID_CHALLENGE,
 			challenge, challenge_len);
 
-	wi_mgmt_xmit(sc, sc->wi_txbuf, 6 + sizeof(struct wi_80211_hdr) +
+	wi_mgmt_xmit(sc, (caddr_t)&sc->wi_txbuf,
+	    6 + sizeof(struct wi_80211_hdr) +
 	    (challenge_len > 0 ? challenge_len + 2 : 0));
 }
 
@@ -773,10 +776,10 @@ fail:
 		printf("wihap_assoc_req: returns status=0x%x\n", status);
 
 	/* Send response. */
-	resp_hdr = (struct wi_80211_hdr *) sc->wi_txbuf;
+	resp_hdr = (struct wi_80211_hdr *)&sc->wi_txbuf;
 	bzero(resp_hdr, sizeof(struct wi_80211_hdr));
 	resp_hdr->frame_ctl = htole16(WI_FTYPE_MGMT | WI_STYPE_MGMT_ASRESP);
-	pkt = sc->wi_txbuf + sizeof(struct wi_80211_hdr);
+	pkt = (caddr_t)&sc->wi_txbuf + sizeof(struct wi_80211_hdr);
 
 	bcopy(rxfrm->wi_addr2, resp_hdr->addr1, ETHER_ADDR_LEN);
 	bcopy(sc->sc_arpcom.ac_enaddr, resp_hdr->addr2, ETHER_ADDR_LEN);
@@ -787,7 +790,7 @@ fail:
 	put_hword(&pkt, asid);
 	rates_len = put_rates(&pkt, sc->wi_supprates);
 
-	wi_mgmt_xmit(sc, sc->wi_txbuf,
+	wi_mgmt_xmit(sc, (caddr_t)&sc->wi_txbuf,
 	    8 + rates_len + sizeof(struct wi_80211_hdr));
 }
 

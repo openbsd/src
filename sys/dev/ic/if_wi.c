@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.69 2002/06/21 06:50:37 millert Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.70 2002/06/21 06:56:24 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -124,7 +124,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.69 2002/06/21 06:50:37 millert Exp $";
+	"$OpenBSD: if_wi.c,v 1.70 2002/06/21 06:56:24 millert Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -791,7 +791,7 @@ wi_update_stats(sc)
 
 	if (gen.wi_type == htole16(WI_INFO_SCAN_RESULTS)) {
 		sc->wi_scanbuf_len = letoh16(gen.wi_len);
-		wi_read_data(sc, id, 4, (char *)sc->wi_scanbuf,
+		wi_read_data(sc, id, 4, (caddr_t)sc->wi_scanbuf,
 		    sc->wi_scanbuf_len * 2);
 		return;
 	} else if (gen.wi_type != htole16(WI_INFO_COUNTERS))
@@ -2069,7 +2069,7 @@ nextpkt:
 			    m0->m_pkthdr.len - sizeof(struct ether_header),
 			    (caddr_t)&sc->wi_txbuf[12]);
 
-			wi_do_hostencrypt(sc, &sc->wi_txbuf[0],
+			wi_do_hostencrypt(sc, (caddr_t)&sc->wi_txbuf,
 			    tx_frame.wi_dat_len);
 
 			tx_frame.wi_dat_len += IEEE80211_WEP_IVLEN +
