@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcibios.c,v 1.15 2000/10/16 03:22:06 mickey Exp $	*/
+/*	$OpenBSD: pcibios.c,v 1.16 2000/10/16 03:35:19 mickey Exp $	*/
 /*	$NetBSD: pcibios.c,v 1.5 2000/08/01 05:23:59 uch Exp $	*/
 
 /*
@@ -451,7 +451,7 @@ pcibios_get_intr_routing(sc, table, nentries, exclirq)
 		    "1:\n"
 		: "=a" (ax), "=b" (bx)
 		: "0" (0xb10e), "1" (0), "D" (&args), "S" (&pcibios_entry)
-		: "%ecx", "cc", "memory");
+		: "%ecx", "%edx", "cc", "memory");
 
 	rv = pcibios_return_code(sc, ax, "pcibios_get_intr_routing");
 	if (rv != PCIBIOS_SUCCESS)
