@@ -1,4 +1,4 @@
-/*	$OpenBSD: size.c,v 1.8 1997/09/11 11:21:52 deraadt Exp $	*/
+/*	$OpenBSD: size.c,v 1.9 1998/05/11 07:40:31 niklas Exp $	*/
 /*	$NetBSD: size.c,v 1.7 1996/01/14 23:07:12 pk Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)size.c	8.2 (Berkeley) 12/9/93";
 #endif
-static char rcsid[] = "$OpenBSD: size.c,v 1.8 1997/09/11 11:21:52 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: size.c,v 1.9 1998/05/11 07:40:31 niklas Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -58,6 +58,11 @@ static char rcsid[] = "$OpenBSD: size.c,v 1.8 1997/09/11 11:21:52 deraadt Exp $"
 #include <string.h>
 #include <ctype.h>
 #include <err.h>
+
+#ifdef MID_MACHINE_OVERRIDE
+#undef MID_MACHINE
+#define MID_MACHINE MID_MACHINE_OVERRIDE
+#endif
 
 unsigned long total_text, total_data, total_bss, total_total;
 int ignore_bad_archive_entries = 1;

@@ -1,7 +1,25 @@
-#	$OpenBSD: Makefile,v 1.6 1997/04/27 20:56:54 millert Exp $
+#	$OpenBSD: Makefile,v 1.7 1998/05/11 07:41:23 niklas Exp $
+
+TARGET_MACHINE_ARCH?=	${MACHINE_ARCH}
 
 PROG=	strip
-.if ${HOSTCC} != ${CC}
+
+.if ${TARGET_MACHINE_ARCH} != ${MACHINE_ARCH}
+# XXX should make this automatic
+.if ${TARGET_MACHINE_ARCH} == "i386"
+CFLAGS+=	-DMID_MACHINE_OVERRIDE=MID_I386
+.elif ${TARGET_MACHINE_ARCH} == "m68k"
+CFLAGS+=	-DMID_MACHINE_OVERRIDE=MID_M68K
+.elif ${TARGET_MACHINE_ARCH} == "ns32k"
+CFLAGS+=	-DMID_MACHINE_OVERRIDE=MID_NS32K
+.elif ${TARGET_MACHINE_ARCH} == "sparc"
+CFLAGS+=	-DMID_MACHINE_OVERRIDE=MID_SPARC
+.elif ${TARGET_MACHINE_ARCH} == "vax"
+CFLAGS+=	-DMID_MACHINE_OVERRIDE=MID_VAX
+.endif
+STRIP=	/usr/bin/strip
+
+.elif ${HOSTCC} != ${CC}
 STRIP=./hoststrip
 
 realinstall: hoststrip

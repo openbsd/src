@@ -1,4 +1,4 @@
-/*	$OpenBSD: strip.c,v 1.9 1997/09/11 11:21:54 deraadt Exp $	*/
+/*	$OpenBSD: strip.c,v 1.10 1998/05/11 07:41:25 niklas Exp $	*/
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)strip.c	5.8 (Berkeley) 11/6/91";*/
-static char rcsid[] = "$OpenBSD: strip.c,v 1.9 1997/09/11 11:21:54 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: strip.c,v 1.10 1998/05/11 07:41:25 niklas Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -56,6 +56,11 @@ static char rcsid[] = "$OpenBSD: strip.c,v 1.9 1997/09/11 11:21:54 deraadt Exp $
 #include <stdlib.h>
 #include <string.h>
 #include <err.h>
+
+#ifdef MID_MACHINE_OVERRIDE
+#undef MID_MACHINE
+#define MID_MACHINE MID_MACHINE_OVERRIDE
+#endif
 
 typedef struct exec EXEC;
 typedef struct nlist NLIST;
