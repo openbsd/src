@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_exit.c,v 1.11 1999/11/30 04:53:24 d Exp $	*/
+/*	$OpenBSD: uthread_exit.c,v 1.12 2000/01/06 07:16:40 d Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -36,6 +36,8 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <string.h>
+#include <signal.h>
+#include <sys/types.h>
 #ifdef _THREAD_SAFE
 #include <pthread.h>
 #include "pthread_private.h"
@@ -99,7 +101,10 @@ _thread_exit(const char *fname, int lineno, const char *string)
 	char            s[256];
 
 	/* Prepare an error message string: */
-	strlcpy(s, "Fatal error '", sizeof s);
+	s[0] = '\0';
+	strlcat(s, "pid ", sizeof s);
+	numlcat(s, (int)_thread_sys_getpid(), sizeof s);
+	strlcat(s, ": Fatal error '", sizeof s);
 	strlcat(s, string, sizeof s);
 	strlcat(s, "' at line ", sizeof s);
 	numlcat(s, lineno, sizeof s);
@@ -115,7 +120,23 @@ _thread_exit(const char *fname, int lineno, const char *string)
 	/* Force this process to exit: */
 	/* XXX - Do we want abort to be conditional on _PTHREADS_INVARIANTS? */
 #if defined(_PTHREADS_INVARIANTS)
-	abort();
+	{
+		struct sigaction sa;
+		sigset_t s;
+
+		/* Ignore everything except ABORT */
+		sigfillset(&s);
+		sigdelset(&s, SIGABRT);
+		_thread_sys_sigprocmask(SIG_SETMASK, &s, NULL);
+
+		/* Set the abort handler to default (dump core) */
+		sa.sa_handler = SIG_DFL;
+		sigemptyset(&sa.sa_mask);
+		sa.sa_flags = 0;
+		(void)_thread_sys_sigaction(SIGABRT, &sa, NULL);
+		(void)_thread_sys_kill(_thread_sys_getpid(), SIGABRT);
+		for (;;) ;
+	}
 #else
 	_exit(1);
 #endif
@@ -124,8 +145,6 @@ _thread_exit(const char *fname, int lineno, const char *string)
 void
 pthread_exit(void *status)
 {
-	int             sig;
-	long            l;
 	pthread_t       pthread;
 
 	/* Check if this thread is already in the process of exiting: */
