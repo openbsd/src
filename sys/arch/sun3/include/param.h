@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.11 1997/02/14 18:15:27 kstailey Exp $	*/
+/*	$OpenBSD: param.h,v 1.12 1997/02/14 19:24:05 kstailey Exp $	*/
 /*	$NetBSD: param.h,v 1.34 1996/03/04 05:04:40 cgd Exp $	*/
 
 /*
@@ -205,6 +205,8 @@
 /* Block out all interrupts (except NMI of course). */
 #define splhigh()       spl7()
 #define splsched()      spl7()
+
+void spl0 __P((void));		/* XXX where should this go? */
 
 /* watch out for side effects */
 #define	splx(s)		(s & PSL_IPL ? _spl(s) : spl0())
