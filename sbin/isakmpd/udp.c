@@ -1,5 +1,5 @@
-/*	$OpenBSD: udp.c,v 1.11 1999/04/19 20:55:09 niklas Exp $	*/
-/*	$EOM: udp.c,v 1.38 1999/04/13 20:00:42 ho Exp $	*/
+/*	$OpenBSD: udp.c,v 1.12 1999/04/27 21:09:01 niklas Exp $	*/
+/*	$EOM: udp.c,v 1.39 1999/04/25 22:01:58 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -178,9 +178,10 @@ udp_make (struct sockaddr_in *laddr)
 
   memset (&t->dst, 0, sizeof t->dst);
   t->s = s;
-  transport_add ((struct transport *)t);
+  transport_add (&t->transport);
+  transport_reference (&t->transport);
   t->transport.flags |= TRANSPORT_LISTEN;
-  return (struct transport *)t;
+  return &t->transport;
 
 err:
   if (s != -1)
@@ -457,8 +458,6 @@ udp_fd_isset (struct transport *t, fd_set *fds)
  * clone it into a double-ended transport which we will use from now on.
  * Package the message as we want it and continue processing in the message
  * module.
- * XXX We will be leaking transports unless we kill them after last
- * probable use, i.e. when ISAKMP SA's gets torn down.
  */
 static void
 udp_handle_message (struct transport *t)
