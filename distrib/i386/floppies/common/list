@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.5 1997/04/23 11:24:27 deraadt Exp $
+#	$OpenBSD: list,v 1.6 1997/04/25 18:51:28 deraadt Exp $
 
 # copy the crunched binary, link to it, and kill it
 COPY	${OBJDIR}/instbin	instbin
@@ -85,3 +85,4 @@ COPYDIR	${DESTDIR}/etc/ppp		etc/ppp
 # and the common installation tools
 COPY	${TOPDIR}/common/dot.commonutils	.commonutils
 COPY	${TOPDIR}/common/termcap.pc3	usr/share/misc/termcap
+COPY	${DESTDIR}/usr/share/misc/scsi_modes	usr/share/misc/scsi_modes
