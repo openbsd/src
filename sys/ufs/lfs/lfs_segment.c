@@ -1,4 +1,4 @@
-/*	$OpenBSD: lfs_segment.c,v 1.4 1996/07/01 07:41:52 downsj Exp $	*/
+/*	$OpenBSD: lfs_segment.c,v 1.5 1996/10/18 14:46:24 mickey Exp $	*/
 /*	$NetBSD: lfs_segment.c,v 1.4 1996/02/09 22:28:54 christos Exp $	*/
 
 /*
@@ -223,7 +223,9 @@ lfs_segwrite(mp, flags)
 	struct mount *mp;
 	int flags;			/* Do a checkpoint. */
 {
+#if 0
 	struct proc *p = curproc;	/* XXX */
+#endif
 	struct buf *bp;
 	struct inode *ip;
 	struct lfs *fs;

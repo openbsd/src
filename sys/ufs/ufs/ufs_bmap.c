@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_bmap.c,v 1.2 1996/02/27 07:21:24 niklas Exp $	*/
+/*	$OpenBSD: ufs_bmap.c,v 1.3 1996/10/18 14:51:15 mickey Exp $	*/
 /*	$NetBSD: ufs_bmap.c,v 1.3 1996/02/09 22:36:00 christos Exp $	*/
 
 /*
@@ -117,6 +117,9 @@ ufs_bmaparray(vp, bn, bnp, ap, nump, runp)
 	struct indir a[NIADDR], *xap;
 	daddr_t daddr;
 	long metalbn;
+#ifdef	TRACE
+	long size;
+#endif
 	int error, maxrun = 0, num;
 
 	ip = VTOI(vp);

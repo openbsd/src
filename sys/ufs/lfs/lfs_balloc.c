@@ -1,4 +1,4 @@
-/*	$OpenBSD: lfs_balloc.c,v 1.3 1996/07/01 07:41:48 downsj Exp $	*/
+/*	$OpenBSD: lfs_balloc.c,v 1.4 1996/10/18 14:46:23 mickey Exp $	*/
 /*	$NetBSD: lfs_balloc.c,v 1.3 1996/02/09 22:28:48 christos Exp $	*/
 
 /*
@@ -54,6 +54,13 @@
 #include <ufs/lfs/lfs.h>
 #include <ufs/lfs/lfs_extern.h>
 
+#include <vm/vm.h>
+#include <vm/vm_extern.h>	/* for vnode_pager_setsize() */
+
+int lfs_fragextend __P((struct vnode *vp, int osize, int nsize, daddr_t lbn,
+	struct buf **bpp));
+
+
 int
 lfs_balloc(vp, offset, iosize, lbn, bpp)
 	struct vnode *vp;
@@ -96,8 +103,9 @@ lfs_balloc(vp, offset, iosize, lbn, bpp)
 	if (lastblock < NDADDR && lastblock < lbn) {
 		osize = blksize(fs, ip, lastblock);
 		if (osize < fs->lfs_bsize && osize > 0) {
-			if (error = lfs_fragextend(vp, osize, fs->lfs_bsize,
-			    lastblock, &bp))
+			error = lfs_fragextend(vp, osize, fs->lfs_bsize,
+				lastblock, &bp);
+			if (error != 0)
 				return(error);
 			ip->i_size = (lastblock + 1) * fs->lfs_bsize;
 			vnode_pager_setsize(vp, (u_long)ip->i_size);
@@ -124,7 +132,7 @@ lfs_balloc(vp, offset, iosize, lbn, bpp)
 					ip->i_blocks += bb;
 					ip->i_lfs->lfs_bfree -= bb;
 					clrbuf(ibp);
-					if(error = VOP_BWRITE(ibp))
+					if((error = VOP_BWRITE(ibp)) != 0)
 						return(error);
 				}
                         }
@@ -146,8 +154,9 @@ lfs_balloc(vp, offset, iosize, lbn, bpp)
 			*bpp = bp = getblk(vp, lbn, nsize, 0, 0);
 		else {
 			/* Extend existing block */
-			if (error = lfs_fragextend(vp, (int)blksize(fs, ip, lbn), 
-			    nsize, lbn, &bp))
+			error = lfs_fragextend(vp, (int)blksize(fs, ip, lbn), 
+			    nsize, lbn, &bp);
+			if (error != 0)
 				return(error);
 			*bpp = bp;
 		}
@@ -195,6 +204,7 @@ lfs_balloc(vp, offset, iosize, lbn, bpp)
 	return (0);
 }
 
+int
 lfs_fragextend(vp, osize, nsize, lbn, bpp)
 	struct vnode *vp;
 	int osize;
