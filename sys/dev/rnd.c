@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.72 2004/07/06 21:24:36 mickey Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.73 2004/07/21 01:02:07 mickey Exp $	*/
 
 /*
  * rnd.c -- A strong random number generator
@@ -471,10 +471,10 @@ rnd_qlen(void)
 
 void dequeue_randomness(void *);
 
-static __inline void add_entropy_words(const u_int32_t *, u_int n);
+static void add_entropy_words(const u_int32_t *, u_int n);
 static __inline void extract_entropy(register u_int8_t *, int);
 
-static __inline u_int8_t arc4_getbyte(void);
+static u_int8_t arc4_getbyte(void);
 static __inline void arc4_stir(void);
 void arc4_reinit(void *v);
 void arc4maybeinit(void);
@@ -497,7 +497,7 @@ void arc4maybeinit(void);
  * RC4 is a registered trademark of RSA Laboratories.
  */
 
-static __inline u_int8_t
+static u_int8_t
 arc4_getbyte(void)
 {
 	register u_int8_t si, sj, ret;
@@ -669,7 +669,7 @@ randomclose(dev, flag, mode, p)
  * scancodes, for example), the upper bits of the entropy pool don't
  * get affected. --- TYT, 10/11/95
  */
-static __inline void
+static void
 add_entropy_words(buf, n)
 	const u_int32_t *buf;
 	u_int n;
