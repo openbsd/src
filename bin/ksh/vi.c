@@ -1,4 +1,4 @@
-/*	$OpenBSD: vi.c,v 1.18 2004/12/22 17:14:34 millert Exp $	*/
+/*	$OpenBSD: vi.c,v 1.19 2005/01/27 16:25:06 danh Exp $	*/
 
 /*
  *	vi command editing
@@ -855,7 +855,7 @@ vi_cmd(int argcnt, const char *cmd)
 
 		case 'g':
 			if (!argcnt)
-				argcnt = hlast + 1;
+				argcnt = hlast;
 			/* fall through */
 		case 'G':
 			if (!argcnt)
@@ -909,8 +909,15 @@ vi_cmd(int argcnt, const char *cmd)
 			modified = 1; hnum = hlast;
 			if (cmd[1] == 0)
 				vi_error();
-			else
-				es->cbuf[es->cursor] = cmd[1];
+			else {
+				int	n;
+
+				if (es->cursor + argcnt > es->linelen)
+					return -1;
+				for (n = 0; n < argcnt; ++n)
+					es->cbuf[es->cursor + n] = cmd[1];
+				es->cursor += n - 1;
+			}
 			break;
 
 		case 'R':
@@ -929,7 +936,7 @@ vi_cmd(int argcnt, const char *cmd)
 			break;
 
 		case 'v':
-			if (es->linelen == 0)
+			if (es->linelen == 0 && argcnt == 0)
 				return -1;
 			if (!argcnt) {
 				if (modified) {
