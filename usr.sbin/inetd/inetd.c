@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.93 2002/05/30 19:09:05 deraadt Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.94 2002/05/31 20:20:53 itojun Exp $	*/
 /*	$NetBSD: inetd.c,v 1.11 1996/02/22 11:14:41 mycroft Exp $	*/
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$OpenBSD: inetd.c,v 1.93 2002/05/30 19:09:05 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: inetd.c,v 1.94 2002/05/31 20:20:53 itojun Exp $";
 #endif /* not lint */
 
 /*
@@ -294,8 +294,6 @@ volatile sig_atomic_t wantdie;
 
 #define NUMINT	(sizeof(intab) / sizeof(struct inent))
 char	*CONFIG = _PATH_INETDCONF;
-char	**Argv;
-char	*LastArg;
 char	*progname;
 
 void logpid(void);
@@ -321,9 +319,9 @@ fd_grow(fd_set **fdsp, int *bytes, int fd)
 }
 
 int
-main(argc, argv, envp)
+main(argc, argv)
 	int argc;
-	char *argv[], *envp[];
+	char *argv[];
 {
 	extern char *optarg;
 	extern int optind;
@@ -337,13 +335,6 @@ main(argc, argv, envp)
 	char buf[50];
 	fd_set *readablep = NULL;
 	int readablen = 0;
-
-	Argv = argv;
-	if (envp == 0 || *envp == 0)
-		envp = argv;
-	while (*envp)
-		envp++;
-	LastArg = envp[-1] + strlen(envp[-1]);
 
 	progname = strrchr(argv[0], '/');
 	progname = progname ? progname + 1 : argv[0];
@@ -517,10 +508,12 @@ main(argc, argv, envp)
 				    sep->se_service);
 				continue;
 			}
-			if (sep->se_family == AF_INET &&
+			if ((sep->se_family == AF_INET ||
+			     sep->se_family == AF_INET6) &&
 			    sep->se_socktype == SOCK_STREAM) {
-				struct sockaddr_in peer;
+				struct sockaddr_storage peer;
 				int plen = sizeof(peer);
+				char sbuf[NI_MAXSERV];
 
 				if (getpeername(ctrl, (struct sockaddr *)&peer,
 				    &plen) < 0) {
@@ -528,8 +521,13 @@ main(argc, argv, envp)
 					close(ctrl);
 					continue;
 				}
-				if (ntohs(peer.sin_port) == 20) {
-					/* ignore things that look like ftp bounce */
+				if (getnameinfo((struct sockaddr *)&peer, plen,
+				    NULL, 0, sbuf, sizeof(sbuf),
+				    NI_NUMERICSERV) == 0 && atoi(sbuf) == 20) {
+					/*
+					 * ignore things that look like
+					 * ftp bounce
+					 */
 					close(ctrl);
 					continue;
 				}
@@ -1713,26 +1711,19 @@ inetd_setproctitle(a, s)
 	char *a;
 	int s;
 {
-	int size;
-	char *cp;
-	struct sockaddr_in sin;
-	char buf[80];
+	socklen_t size;
+	struct sockaddr_storage ss;
+	char hbuf[NI_MAXHOST];
 
-	cp = Argv[0];
-	size = sizeof(sin);
-	(void) snprintf(buf, sizeof buf, "-%s", a);
-	if (getpeername(s, (struct sockaddr *)&sin, &size) == 0) {
-		char *s = inet_ntoa(sin.sin_addr);
-
-		buf[sizeof(buf) - 1 - strlen(s) - 3] = '\0';
-		strlcat(buf, " [", sizeof buf);
-		strlcat(buf, s, sizeof buf);
-		strlcat(buf, "]", sizeof buf);
-	}
-	strncpy(cp, buf, LastArg - cp);
-	cp += strlen(cp);
-	while (cp < LastArg)
-		*cp++ = ' ';
+	size = sizeof(ss);
+	if (getpeername(s, (struct sockaddr *)&ss, &size) == 0) {
+		if (getnameinfo((struct sockaddr *)&ss, size, hbuf,
+		    sizeof(hbuf), NULL, 0, NI_NUMERICHOST) == 0)
+			setproctitle("-%s [%s]", a, hbuf);
+		else
+			setproctitle("-%s [?]", a);
+	} else
+		setproctitle("-%s", a);
 }
 
 void
