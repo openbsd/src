@@ -196,8 +196,8 @@ Ok - now let's see what to do to set up the server:
 
 * create a /etc/bootparams file - for example:
   --- snip ---
-  summer  root=prospero:/amd/prospero/0/home/rzpd/export/root \
-          swap=prospero:/amd/prospero/0/home/rzpd/export/swap
+  summer  root=prospero:/export/root \
+          swap=prospero:/export/swap
   --- snip ---
   prospero is the hostname of the server in this example
 
@@ -380,7 +380,8 @@ for those 2 partitions.
 Note: if you have finished the disklabeling and exited the editor for
 editing the label in the process of the installation and if you then
 get a message like: "no disklabel on disk - use the -r option to write
-one" you should ignore it - this is due to a problem with the pmax
+one" you should ignore it and answer no to the question if you want to
+reedit the disklabel - this is due to a problem with the pmax
 disklabel code and it should be worked around by the install script.
 
 So what does the install script explicitely do ?
