@@ -1,4 +1,4 @@
-/*	$OpenBSD: swap_pager.c,v 1.5 1996/08/02 00:05:57 niklas Exp $	*/
+/*	$OpenBSD: swap_pager.c,v 1.6 1996/08/05 07:37:46 niklas Exp $	*/
 /*	$NetBSD: swap_pager.c,v 1.27 1996/03/16 23:15:20 christos Exp $	*/
 
 /*
@@ -1098,7 +1098,7 @@ swap_pager_remove(pager, from, to)
 	 */
 	if (to) {
 		to_blk = to / bsize;
-		if (to_blk > swp->sw_nblocks) {
+		if (to_blk >= swp->sw_nblocks) {
 			to_blk = swp->sw_nblocks;
 			to_bit = 0;
 		} else
