@@ -1,5 +1,5 @@
-/*	$OpenBSD: config.c,v 1.12 2001/02/05 06:05:08 itojun Exp $	*/
-/*	$KAME: config.c,v 1.33 2001/02/05 05:52:13 k-sugyou Exp $	*/
+/*	$OpenBSD: config.c,v 1.13 2001/06/03 09:27:31 itojun Exp $	*/
+/*	$KAME: config.c,v 1.47 2001/06/02 18:50:46 jinmei Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -93,7 +93,7 @@ getconfig(intface)
 
 #define MUSTHAVE(var, cap)	\
     do {								\
-	int t;								\
+	long long t;							\
 	if ((t = agetnum(cap)) < 0) {					\
 		fprintf(stderr, "rtadvd: need %s for interface %s\n",	\
 			cap, intface);					\
