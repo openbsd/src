@@ -1,4 +1,4 @@
-/*	$OpenBSD: pch.c,v 1.30 2003/08/15 08:00:51 otto Exp $	*/
+/*	$OpenBSD: pch.c,v 1.31 2003/09/28 07:55:19 otto Exp $	*/
 
 /*
  * patch - a program to apply diffs to original files
@@ -27,7 +27,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: pch.c,v 1.30 2003/08/15 08:00:51 otto Exp $";
+static const char rcsid[] = "$OpenBSD: pch.c,v 1.31 2003/09/28 07:55:19 otto Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -138,17 +138,37 @@ set_hunkmax(void)
 static void
 grow_hunkmax(void)
 {
-	hunkmax *= 2;
+	int		new_hunkmax;
+	char 		**new_p_line;
+	short		*new_p_len;
+	char		*new_p_char;
+
+	new_hunkmax = hunkmax * 2;
 
 	if (p_line == NULL || p_len == NULL || p_char == NULL)
 		fatal("Internal memory allocation error\n");
 
-	p_line = realloc(p_line, hunkmax * sizeof(char *));
-	p_len = realloc(p_len, hunkmax * sizeof(short));
-	p_char = realloc(p_char, hunkmax * sizeof(char));
+	new_p_line = realloc(p_line, new_hunkmax * sizeof(char *));
+	if (new_p_line == NULL)
+		free(p_line);
 
-	if (p_line != NULL && p_len != NULL && p_char != NULL)
+	new_p_len = realloc(p_len, new_hunkmax * sizeof(short));
+	if (new_p_len == NULL)
+		free(p_len);
+
+	new_p_char = realloc(p_char, new_hunkmax * sizeof(char));
+	if (new_p_char == NULL)
+		free(p_char);
+
+	p_char = new_p_char;
+	p_len = new_p_len;
+	p_line = new_p_line;
+
+	if (p_line != NULL && p_len != NULL && p_char != NULL) {
+		hunkmax = new_hunkmax;
 		return;
+	}
+
 	if (!using_plan_a)
 		fatal("out of memory\n");
 	out_of_mem = true;	/* whatever is null will be allocated again */

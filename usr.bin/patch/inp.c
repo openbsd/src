@@ -1,4 +1,4 @@
-/*	$OpenBSD: inp.c,v 1.28 2003/08/15 08:00:51 otto Exp $	*/
+/*	$OpenBSD: inp.c,v 1.29 2003/09/28 07:55:19 otto Exp $	*/
 
 /*
  * patch - a program to apply diffs to original files
@@ -27,7 +27,7 @@
  */
 
 #ifndef lint
-static const char     rcsid[] = "$OpenBSD: inp.c,v 1.28 2003/08/15 08:00:51 otto Exp $";
+static const char     rcsid[] = "$OpenBSD: inp.c,v 1.29 2003/09/28 07:55:19 otto Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -111,17 +111,20 @@ scan_input(const char *filename)
 static bool
 reallocate_lines(size_t *lines_allocated)
 {
-	char **p;
+	char	**p;
+	size_t	new_size;
 
-	*lines_allocated = *lines_allocated * 3 / 2;
-	p = realloc(i_ptr, (*lines_allocated + 2) * sizeof(char *));
+	new_size = *lines_allocated * 3 / 2;
+	p = realloc(i_ptr, (new_size + 2) * sizeof(char *));
 	if (p == NULL) {	/* shucks, it was a near thing */
 		munmap(i_womp, i_size);
 		i_womp = NULL;
 		free(i_ptr);
 		i_ptr = NULL;
+		*lines_allocated = 0;
 		return false;
 	}
+	*lines_allocated = new_size;
 	i_ptr = p;
 	return true;
 }
