@@ -1,8 +1,8 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.83 2002/03/03 00:43:37 krw Exp $
+#	$OpenBSD: install.sh,v 1.84 2002/03/04 13:59:52 krw Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
-# Copyright (c) 1997-2001 Todd Miller, Theo de Raadt, Ken Westerback
+# Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without

@@ -1,8 +1,8 @@
 #!/bin/sh
-#	$OpenBSD: upgrade.sh,v 1.21 2002/03/03 00:43:37 krw Exp $
+#	$OpenBSD: upgrade.sh,v 1.22 2002/03/04 13:59:52 krw Exp $
 #	$NetBSD: upgrade.sh,v 1.2.4.5 1996/08/27 18:15:08 gwr Exp $
 #
-# Copyright (c) 1997-2001 Todd Miller, Theo de Raadt, Ken Westerback
+# Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
 # All rights reserved.
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
