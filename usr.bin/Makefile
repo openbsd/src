@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.27 1996/10/02 21:52:31 pefo Exp $
+#	$OpenBSD: Makefile,v 1.28 1996/10/04 19:16:51 deraadt Exp $
 #	$NetBSD: Makefile,v 1.62 1996/03/10 05:45:43 thorpej Exp $
 #	from: @(#)Makefile	5.8.1.1 (Berkeley) 5/8/91
 
@@ -22,7 +22,8 @@ SUBDIR=	apply apropos arch asa at awk banner basename bdes biff cal calendar \
 	unifdef uniq units unvis users uudecode uuencode \
 	vacation vgrind vi vim vis vmstat w wall wc what whatis whereis \
 	which who whois window write \
-	xargs xinstall xlint xstr yacc yes
+	xargs xinstall xlint xstr yacc yes \
+	gprof
 
 .if defined(YP)
 SUBDIR+=ypcat ypmatch ypwhich
@@ -30,7 +31,7 @@ SUBDIR+=ypcat ypmatch ypwhich
 
 # Don't use the standard tool chain on the alpha or mips.
 .if (${MACHINE_ARCH} != "alpha" && ${MACHINE_ARCH} != "mips")
-SUBDIR+= ar gprof nm ranlib size strip strings
+SUBDIR+= ar nm ranlib size strip strings
 .endif
 
 .if   make(clean) || make(cleandir) || make(obj)
