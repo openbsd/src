@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd-setup.c,v 1.17 2004/02/26 08:18:56 deraadt Exp $ */
+/*	$OpenBSD: spamd-setup.c,v 1.18 2004/04/28 07:32:57 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003 Bob Beck.  All rights reserved.
@@ -612,8 +612,10 @@ configure_spamd(u_short dport, char *name, char *message,
 	if (connect(s, (struct sockaddr *)&sin, sizeof sin) == -1)
 		return(-1);
 	sdc = fdopen(s, "w");
-	if (sdc == NULL)
+	if (sdc == NULL) {
+		close(s);
 		return(-1);
+	}
 	fprintf(sdc, "%s", name);
 	do_message(sdc, message);
 	while (*blacklists != NULL) {
