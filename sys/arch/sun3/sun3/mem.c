@@ -217,6 +217,11 @@ mmrw(dev, uio, flags)
 			error = uiomove(zeropage, c, uio);
 			continue;
 
+/* minor device 13 (/dev/leds) accesses the blinkenlights */
+		case 13:
+			error = ledrw(uio);
+			return(error);
+
 		default:
 			return (ENXIO);
 		}

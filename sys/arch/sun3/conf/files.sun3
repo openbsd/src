@@ -1,3 +1,4 @@
+#	$OpenBSD: files.sun3,v 1.9 1997/01/13 00:29:26 kstailey Exp $
 #	$NetBSD: files.sun3,v 1.26 1996/10/29 19:58:14 gwr Exp $
 
 #
@@ -22,6 +23,7 @@ file arch/sun3/sun3/disksubr.c
 file arch/sun3/sun3/fpu.c
 file arch/sun3/sun3/isr.c
 file arch/sun3/sun3/kgdb_stub.c 		kgdb
+file arch/sun3/sun3/leds.c
 file arch/sun3/sun3/machdep.c	
 file arch/sun3/sun3/mem.c		
 file arch/sun3/sun3/pmap.c		

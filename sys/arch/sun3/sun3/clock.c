@@ -1,3 +1,4 @@
+/*	$OpenBSD: clock.c,v 1.6 1997/01/13 00:29:23 kstailey Exp $	*/
 /*	$NetBSD: clock.c,v 1.31 1996/10/30 00:24:42 gwr Exp $	*/
 
 /*
@@ -64,6 +65,7 @@
 
 #include "intersil7170.h"
 #include "interreg.h"
+#include "ledsvar.h"
 
 #define	CLOCK_PRI	5
 
@@ -255,11 +257,10 @@ setstatclockrate(newhz)
  * This is is called by the "custom" interrupt handler
  * after it has reset the pending bit in the clock.
  */
-int clock_count = 0;
 void clock_intr(frame)
 	struct clockframe *frame;
 {
-	static unsigned char led_pattern = 0xFE;
+	unsigned int i;
 
 #ifdef	DIAGNOSTIC
 	if (!clk_intr_ready)
@@ -267,13 +268,16 @@ void clock_intr(frame)
 #endif
 
 	/* XXX - Move this LED frobbing to the idle loop? */
-	clock_count++;
-	if ((clock_count & 7) == 0) {
-		led_pattern = (led_pattern << 1) | 1;
-		if (led_pattern == 0xFF)
-			led_pattern = 0xFE;
-		set_control_byte((char *) DIAG_REG, led_pattern);
-	}
+	i = led_countdown;
+	if (i == 0) {
+		led_countdown = led_countmax;
+		i = led_px;
+		set_control_byte((char *) DIAG_REG, led_patterns[i]);
+		if (i == 0)
+			i = led_n_patterns;
+		led_px = i - 1;
+	} else
+		led_countdown = i - 1;
 	hardclock(frame);
 }
 
