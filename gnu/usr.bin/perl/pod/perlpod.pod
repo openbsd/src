@@ -269,6 +269,23 @@ to signal that the text is not raw data, but instead I<is> Pod text
 normal formatting (e.g., may not be a normal-use paragraph, but might
 be for formatting as a footnote).
 
+=item C<=encoding I<encodingname>>
+
+This command is used for declaring the encoding of a document.  Most
+users won't need this; but if your encoding isn't US-ASCII or Latin-1,
+then put a C<=encoding I<encodingname>> command early in the document so
+that pod formatters will know how to decode the document.  For
+I<encodingname>, use a name recognized by the L<Encode::Supported>
+module.  Examples:
+
+  =encoding utf8
+
+  =encoding koi8-r
+  
+  =encoding ShiftJIS
+  
+  =encoding big5
+
 =back
 
 And don't forget, when using any command, that the command lasts up
@@ -552,7 +569,7 @@ you could do it like so:
 which is presumably easier to read than the old way:
 
     C<open(X, "E<gt>E<gt>thing.dat") || die $!>
-    C<$foo-E<gt>bar(); >>
+    C<$foo-E<gt>bar();>
 
 This is currently supported by pod2text (Pod::Text), pod2man (Pod::Man),
 and any other pod2xxx or Pod::Xxxx translators that use

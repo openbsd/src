@@ -31,6 +31,8 @@ http://www.gnu.org/order/ftp.html.
 
 The available functions and the gdbm/perl interface need to be documented.
 
+The GDBM error number and error message interface needs to be added.
+
 =head1 SEE ALSO
 
 L<perl(1)>, L<DB_File(3)>, L<perldbmfilter>. 
@@ -50,17 +52,23 @@ use XSLoader ();
 @ISA = qw(Tie::Hash Exporter);
 @EXPORT = qw(
 	GDBM_CACHESIZE
+	GDBM_CENTFREE
+	GDBM_COALESCEBLKS
 	GDBM_FAST
+	GDBM_FASTMODE
 	GDBM_INSERT
 	GDBM_NEWDB
 	GDBM_NOLOCK
+	GDBM_OPENMASK
 	GDBM_READER
 	GDBM_REPLACE
+	GDBM_SYNC
+	GDBM_SYNCMODE
 	GDBM_WRCREAT
 	GDBM_WRITER
 );
 
-$VERSION = "1.06";
+$VERSION = "1.07";
 
 sub AUTOLOAD {
     my($constname);

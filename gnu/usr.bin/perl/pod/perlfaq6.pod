@@ -1,6 +1,6 @@
 =head1 NAME
 
-perlfaq6 - Regular Expressions ($Revision: 1.12 $, $Date: 2002/06/01 22:31:09 $)
+perlfaq6 - Regular Expressions ($Revision: 1.20 $, $Date: 2003/01/03 20:05:28 $)
 
 =head1 DESCRIPTION
 
@@ -8,7 +8,7 @@ This section is surprisingly small because the rest of the FAQ is
 littered with answers involving regular expressions.  For example,
 decoding a URL and checking whether something is a number are handled
 with regular expressions, but those answers are found elsewhere in
-this document (in L<perlfaq9>: ``How do I decode or create those %-encodings 
+this document (in L<perlfaq9>: ``How do I decode or create those %-encodings
 on the web'' and L<perlfaq4>: ``How do I determine whether a scalar is
 a number/whole/integer/float'', to be precise).
 
@@ -143,38 +143,38 @@ Here's another example of using C<..>:
 	# now choose between them
     } continue {
 	reset if eof();		# fix $.
-    } 
+    }
 
 =head2 I put a regular expression into $/ but it didn't work. What's wrong?
 
-$/ must be a string, not a regular expression.  Awk has to be better
-for something. :-)
+Up to Perl 5.8.0, $/ has to be a string.  This may change in 5.10,
+but don't get your hopes up. Until then, you can use these examples
+if you really need to do this.
 
-Actually, you could do this if you don't mind reading the whole file
-into memory:
+Use the four argument form of sysread to continually add to
+a buffer.  After you add to the buffer, you check if you have a
+complete line (using your regular expression).
 
-    undef $/;
-    @records = split /your_pattern/, <FH>;
+       local $_ = "";
+       while( sysread FH, $_, 8192, length ) {
+          while( s/^((?s).*?)your_pattern/ ) {
+             my $record = $1;
+             # do stuff here.
+          }
+       }
 
-The Net::Telnet module (available from CPAN) has the capability to
-wait for a pattern in the input stream, or timeout if it doesn't
-appear within a certain time.
+ You can do the same thing with foreach and a match using the
+ c flag and the \G anchor, if you do not mind your entire file
+ being in memory at the end.
 
-    ## Create a file with three lines.
-    open FH, ">file";
-    print FH "The first line\nThe second line\nThe third line\n";
-    close FH;
+       local $_ = "";
+       while( sysread FH, $_, 8192, length ) {
+          foreach my $record ( m/\G((?s).*?)your_pattern/gc ) {
+             # do stuff here.
+          }
+          substr( $_, 0, pos ) = "" if pos;
+       }
 
-    ## Get a read/write filehandle to it.
-    $fh = new IO::File "+<file";
-
-    ## Attach it to a "stream" object.
-    use Net::Telnet;
-    $file = new Net::Telnet (-fhopen => $fh);
-
-    ## Search for the second line and print out the third.
-    $file->waitfor('/second line\n/');
-    print $file->getline;
 
 =head2 How do I substitute case insensitively on the LHS while preserving case on the RHS?
 
@@ -201,7 +201,7 @@ And here it is as a subroutine, modeled after the above:
 	my $mask = uc $old ^ $old;
 
 	uc $new | $mask .
-	    substr($mask, -1) x (length($new) - length($old))        
+	    substr($mask, -1) x (length($new) - length($old))
     }
 
     $a = "this is a TEsT case";
@@ -267,13 +267,21 @@ the case of the last character is used for the rest of the substitution.
 
 =head2 How can I make C<\w> match national character sets?
 
-See L<perllocale>.
+Put C<use locale;> in your script.  The \w character class is taken
+from the current locale.
+
+See L<perllocale> for details.
 
 =head2 How can I match a locale-smart version of C</[a-zA-Z]/>?
 
-One alphabetic character would be C</[^\W\d_]/>, no matter what locale
-you're in.  Non-alphabetics would be C</[\W\d_]/> (assuming you don't
-consider an underscore a letter).
+You can use the POSIX character class syntax C</[[:alpha:]]/>
+documented in L<perlre>.
+
+No matter which locale you are in, the alphabetic characters are
+the characters in \w without the digits and the underscore.
+As a regex, that looks like C</[^\W\d_]/>.  Its complement,
+the non-alphabetics, is then everything in \W along with
+the digits and the underscore, or C</[\W\d_]/>.
 
 =head2 How can I quote a variable to use in a regex?
 
@@ -284,14 +292,26 @@ a double-quoted string (see L<perlop> for more details).  Remember
 also that any regex special characters will be acted on unless you
 precede the substitution with \Q.  Here's an example:
 
-    $string = "to die?";
-    $lhs = "die?";
-    $rhs = "sleep, no more";
+    $string = "Placido P. Octopus";
+    $regex  = "P.";
 
-    $string =~ s/\Q$lhs/$rhs/;
-    # $string is now "to sleep no more"
+    $string =~ s/$regex/Polyp/;
+    # $string is now "Polypacido P. Octopus"
 
-Without the \Q, the regex would also spuriously match "di".
+Because C<.> is special in regular expressions, and can match any
+single character, the regex C<P.> here has matched the <Pl> in the
+original string.
+
+To escape the special meaning of C<.>, we use C<\Q>:
+
+    $string = "Placido P. Octopus";
+    $regex  = "P.";
+
+    $string =~ s/\Q$regex/Polyp/;
+    # $string is now "Placido Polyp Octopus"
+
+The use of C<\Q> causes the <.> in the regex to be treated as a
+regular character, so that C<P.> matches a C<P> followed by a dot.
 
 =head2 What is C</o> really for?
 
@@ -434,9 +454,9 @@ playing hot potato.
 Use the split function:
 
     while (<>) {
-	foreach $word ( split ) { 
+	foreach $word ( split ) {
 	    # do something with $word here
-	} 
+	}
     }
 
 Note that this isn't really a word in the English sense; it's just
@@ -470,7 +490,7 @@ in the previous question:
 If you wanted to do the same thing for lines, you wouldn't need a
 regular expression:
 
-    while (<>) { 
+    while (<>) {
 	$seen{$_}++;
     }
     while ( ($line, $count) = each %seen ) {
@@ -492,12 +512,12 @@ The following is extremely inefficient:
     @popstates = qw(CO ON MI WI MN);
     while (defined($line = <>)) {
 	for $state (@popstates) {
-	    if ($line =~ /\b$state\b/i) {  
+	    if ($line =~ /\b$state\b/i) {
 		print $line;
 		last;
 	    }
 	}
-    }                                        
+    }
 
 That's because Perl has to recompile all those patterns for each of
 the lines of the file.  As of the 5.005 release, there's a much better
@@ -555,69 +575,96 @@ variable is no longer "expensive" the way the other two are.
 
 =head2 What good is C<\G> in a regular expression?
 
-The notation C<\G> is used in a match or substitution in conjunction with
-the C</g> modifier to anchor the regular expression to the point just past
-where the last match occurred, i.e. the pos() point.  A failed match resets
-the position of C<\G> unless the C</c> modifier is in effect. C<\G> can be
-used in a match without the C</g> modifier; it acts the same (i.e. still
-anchors at the pos() point) but of course only matches once and does not
-update pos(), as non-C</g> expressions never do. C<\G> in an expression
-applied to a target string that has never been matched against a C</g>
-expression before or has had its pos() reset is functionally equivalent to
-C<\A>, which matches at the beginning of the string.
+You use the C<\G> anchor to start the next match on the same
+string where the last match left off.  The regular
+expression engine cannot skip over any characters to find
+the next match with this anchor, so C<\G> is similar to the
+beginning of string anchor, C<^>.  The C<\G> anchor is typically
+used with the C<g> flag.  It uses the value of pos()
+as the position to start the next match.  As the match
+operator makes successive matches, it updates pos() with the
+position of the next character past the last match (or the
+first character of the next match, depending on how you like
+to look at it). Each string has its own pos() value.
 
-For example, suppose you had a line of text quoted in standard mail
-and Usenet notation, (that is, with leading C<< > >> characters), and
-you want change each leading C<< > >> into a corresponding C<:>.  You
-could do so in this way:
+Suppose you want to match all of consective pairs of digits
+in a string like "1122a44" and stop matching when you
+encounter non-digits.  You want to match C<11> and C<22> but
+the letter <a> shows up between C<22> and C<44> and you want
+to stop at C<a>. Simply matching pairs of digits skips over
+the C<a> and still matches C<44>.
 
-     s/^(>+)/':' x length($1)/gem;
+	$_ = "1122a44";
+	my @pairs = m/(\d\d)/g;   # qw( 11 22 44 )
 
-Or, using C<\G>, the much simpler (and faster):
+If you use the \G anchor, you force the match after C<22> to
+start with the C<a>.  The regular expression cannot match
+there since it does not find a digit, so the next match
+fails and the match operator returns the pairs it already
+found.
 
-    s/\G>/:/g;
+	$_ = "1122a44";
+	my @pairs = m/\G(\d\d)/g; # qw( 11 22 )
 
-A more sophisticated use might involve a tokenizer.  The following
-lex-like example is courtesy of Jeffrey Friedl.  It did not work in
-5.003 due to bugs in that release, but does work in 5.004 or better.
-(Note the use of C</c>, which prevents a failed match with C</g> from
-resetting the search position back to the beginning of the string.)
+You can also use the C<\G> anchor in scalar context. You
+still need the C<g> flag.
+
+	$_ = "1122a44";
+	while( m/\G(\d\d)/g )
+		{
+		print "Found $1\n";
+		}
+
+After the match fails at the letter C<a>, perl resets pos()
+and the next match on the same string starts at the beginning.
+
+	$_ = "1122a44";
+	while( m/\G(\d\d)/g )
+		{
+		print "Found $1\n";
+		}
+
+	print "Found $1 after while" if m/(\d\d)/g; # finds "11"
+
+You can disable pos() resets on fail with the C<c> flag.
+Subsequent matches start where the last successful match
+ended (the value of pos()) even if a match on the same
+string as failed in the meantime. In this case, the match
+after the while() loop starts at the C<a> (where the last
+match stopped), and since it does not use any anchor it can
+skip over the C<a> to find "44".
+
+	$_ = "1122a44";
+	while( m/\G(\d\d)/gc )
+		{
+		print "Found $1\n";
+		}
+
+	print "Found $1 after while" if m/(\d\d)/g; # finds "44"
+
+Typically you use the C<\G> anchor with the C<c> flag
+when you want to try a different match if one fails,
+such as in a tokenizer. Jeffrey Friedl offers this example
+which works in 5.004 or later.
 
     while (<>) {
       chomp;
       PARSER: {
-           m/ \G( \d+\b    )/gcx    && do { print "number: $1\n";  redo; };
-           m/ \G( \w+      )/gcx    && do { print "word:   $1\n";  redo; };
-           m/ \G( \s+      )/gcx    && do { print "space:  $1\n";  redo; };
-           m/ \G( [^\w\d]+ )/gcx    && do { print "other:  $1\n";  redo; };
+           m/ \G( \d+\b    )/gcx   && do { print "number: $1\n";  redo; };
+           m/ \G( \w+      )/gcx   && do { print "word:   $1\n";  redo; };
+           m/ \G( \s+      )/gcx   && do { print "space:  $1\n";  redo; };
+           m/ \G( [^\w\d]+ )/gcx   && do { print "other:  $1\n";  redo; };
       }
     }
 
-Of course, that could have been written as
-
-    while (<>) {
-      chomp;
-      PARSER: {
-	   if ( /\G( \d+\b    )/gcx  {
-		print "number: $1\n";
-		redo PARSER;
-	   }
-	   if ( /\G( \w+      )/gcx  {
-		print "word: $1\n";
-		redo PARSER;
-	   }
-	   if ( /\G( \s+      )/gcx  {
-		print "space: $1\n";
-		redo PARSER;
-	   }
-	   if ( /\G( [^\w\d]+ )/gcx  {
-		print "other: $1\n";
-		redo PARSER;
-	   }
-      }
-    }
-
-but then you lose the vertical alignment of the regular expressions.
+For each line, the PARSER loop first tries to match a series
+of digits followed by a word boundary.  This match has to
+start at the place the last match left off (or the beginning
+of the string on the first match). Since C<m/ \G( \d+\b
+)/gcx> uses the C<c> flag, if the string does not match that
+regular expression, perl does not reset pos() and the next
+match starts at the same position to try a different
+pattern.
 
 =head2 Are Perl regexes DFAs or NFAs?  Are they POSIX compliant?
 
@@ -632,14 +679,17 @@ guaranteed is slowness.)  See the book "Mastering Regular Expressions"
 hope to know on these matters (a full citation appears in
 L<perlfaq2>).
 
-=head2 What's wrong with using grep or map in a void context?
+=head2 What's wrong with using grep in a void context?
 
-The problem is that both grep and map build a return list,
-regardless of the context.  This means you're making Perl go
-to the trouble of building a list that you then just throw away.
-If the list is large, you waste both time and space.  If your
-intent is to iterate over the list then use a for loop for this
+The problem is that grep builds a return list, regardless of the context.
+This means you're making Perl go to the trouble of building a list that
+you then just throw away. If the list is large, you waste both time and space.
+If your intent is to iterate over the list, then use a for loop for this
 purpose.
+
+In perls older than 5.8.1, map suffers from this problem as well.
+But since 5.8.1, this has been fixed, and map is context aware - in void
+context, no lists are constructed.
 
 =head2 How can I match strings with multibyte characters?
 
@@ -675,8 +725,8 @@ looks like it is because "SG" is next to "XX", but there's no real
 
 Here are a few ways, all painful, to deal with it:
 
-   $martian =~ s/([A-Z][A-Z])/ $1 /g; # Make sure adjacent ``martian'' bytes
-                                      # are no longer adjacent.
+   $martian =~ s/([A-Z][A-Z])/ $1 /g; # Make sure adjacent ``martian''
+                                      # bytes are no longer adjacent.
    print "found GX!\n" if $martian =~ /GX/;
 
 Or like this:
@@ -694,13 +744,21 @@ Or like this:
        print "found GX!\n", last if $1 eq 'GX';
    }
 
-Or like this:
+Here's another, slightly less painful, way to do it from Benjamin
+Goldberg:
 
-    die "sorry, Perl doesn't (yet) have Martian support )-:\n";
+	$martian =~ m/
+	   (?!<[A-Z])
+	   (?:[A-Z][A-Z])*?
+	   GX
+	/x;
 
-There are many double- (and multi-) byte encodings commonly used these
-days.  Some versions of these have 1-, 2-, 3-, and 4-byte characters,
-all mixed.
+This succeeds if the "martian" character GX is in the string, and fails
+otherwise.  If you don't like using (?!<), you can replace (?!<[A-Z])
+with (?:^|[^A-Z]).
+
+It does have the drawback of putting the wrong thing in $-[0] and $+[0],
+but this usually can be worked around.
 
 =head2 How do I match a pattern that is supplied by the user?
 

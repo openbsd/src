@@ -1,6 +1,7 @@
 /*    gv.c
  *
- *    Copyright (c) 1991-2002, Larry Wall
+ *    Copyright (C) 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
+ *    2000, 2001, 2002, 2003, by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -261,8 +262,8 @@ Perl_gv_fetchmeth(pTHX_ HV *stash, const char *name, STRLEN len, I32 level)
 	    HV* basestash = gv_stashsv(sv, FALSE);
 	    if (!basestash) {
 		if (ckWARN(WARN_MISC))
-		    Perl_warner(aTHX_ packWARN(WARN_MISC), "Can't locate package %s for @%s::ISA",
-			SvPVX(sv), HvNAME(stash));
+		    Perl_warner(aTHX_ packWARN(WARN_MISC), "Can't locate package %"SVf" for @%s::ISA",
+			sv, HvNAME(stash));
 		continue;
 	    }
 	    gv = gv_fetchmeth(basestash, name, len,
@@ -401,6 +402,10 @@ Perl_gv_fetchmethod_autoload(pTHX_ HV *stash, const char *name, I32 autoload)
     register const char *nend;
     const char *nsplit = 0;
     GV* gv;
+    HV* ostash = stash;
+
+    if (stash && SvTYPE(stash) < SVt_PVHV)
+	stash = Nullhv;
 
     for (nend = name; *nend; nend++) {
 	if (*nend == '\'')
@@ -433,6 +438,7 @@ Perl_gv_fetchmethod_autoload(pTHX_ HV *stash, const char *name, I32 autoload)
 		gv_stashpvn(origname, nsplit - origname - 7, FALSE))
 	      stash = gv_stashpvn(origname, nsplit - origname, TRUE);
 	}
+	ostash = stash;
     }
 
     gv = gv_fetchmeth(stash, name, nend - name, 0);
@@ -440,7 +446,7 @@ Perl_gv_fetchmethod_autoload(pTHX_ HV *stash, const char *name, I32 autoload)
 	if (strEQ(name,"import") || strEQ(name,"unimport"))
 	    gv = (GV*)&PL_sv_yes;
 	else if (autoload)
-	    gv = gv_autoload4(stash, name, nend - name, TRUE);
+	    gv = gv_autoload4(ostash, name, nend - name, TRUE);
     }
     else if (autoload) {
 	CV* cv = GvCV(gv);
@@ -475,11 +481,19 @@ Perl_gv_autoload4(pTHX_ HV *stash, const char *name, STRLEN len, I32 method)
     HV* varstash;
     GV* vargv;
     SV* varsv;
+    char *packname = "";
 
-    if (!stash)
-	return Nullgv;	/* UNIVERSAL::AUTOLOAD could cause trouble */
     if (len == autolen && strnEQ(name, autoload, autolen))
 	return Nullgv;
+    if (stash) {
+	if (SvTYPE(stash) < SVt_PVHV) {
+	    packname = SvPV_nolen((SV*)stash);
+	    stash = Nullhv;
+	}
+	else {
+	    packname = HvNAME(stash);
+	}
+    }
     if (!(gv = gv_fetchmeth(stash, autoload, autolen, FALSE)))
 	return Nullgv;
     cv = GvCV(gv);
@@ -494,7 +508,7 @@ Perl_gv_autoload4(pTHX_ HV *stash, const char *name, STRLEN len, I32 method)
 	(GvCVGEN(gv) || GvSTASH(gv) != stash))
 	Perl_warner(aTHX_ packWARN2(WARN_DEPRECATED, WARN_SYNTAX),
 	  "Use of inherited AUTOLOAD for non-method %s::%.*s() is deprecated",
-	     HvNAME(stash), (int)len, name);
+	     packname, (int)len, name);
 
 #ifndef USE_5005THREADS
     if (CvXSUB(cv)) {
@@ -530,7 +544,7 @@ Perl_gv_autoload4(pTHX_ HV *stash, const char *name, STRLEN len, I32 method)
 #ifdef USE_5005THREADS
     sv_lock(varsv);
 #endif
-    sv_setpv(varsv, HvNAME(stash));
+    sv_setpv(varsv, packname);
     sv_catpvn(varsv, "::", 2);
     sv_catpvn(varsv, name, len);
     SvTAINTED_off(varsv);
@@ -689,8 +703,6 @@ Perl_gv_fetchpv(pTHX_ const char *nambeg, I32 add, I32 sv_type)
 	}
     }
     len = namend - name;
-    if (!len)
-	len = 1;
 
     /* No stash in name, so see how we can default */
 
@@ -719,7 +731,7 @@ Perl_gv_fetchpv(pTHX_ const char *nambeg, I32 add, I32 sv_type)
 
 	    if (global)
 		stash = PL_defstash;
-	    else if ((COP*)PL_curcop == &PL_compiling) {
+	    else if (IN_PERL_COMPILETIME) {
 		stash = PL_curstash;
 		if (add && (PL_hints & HINT_STRICT_VARS) &&
 		    sv_type != SVt_PVCV &&
@@ -760,12 +772,15 @@ Perl_gv_fetchpv(pTHX_ const char *nambeg, I32 add, I32 sv_type)
 
     if (!stash) {
 	if (add) {
-	    qerror(Perl_mess(aTHX_
+	    register SV *err = Perl_mess(aTHX_
 		 "Global symbol \"%s%s\" requires explicit package name",
 		 (sv_type == SVt_PV ? "$"
 		  : sv_type == SVt_PVAV ? "@"
 		  : sv_type == SVt_PVHV ? "%"
-		  : ""), name));
+		  : ""), name);
+	    if (USE_UTF8_IN_NAMES)
+		SvUTF8_on(err);
+	    qerror(err);
 	    stash = PL_nullstash;
 	}
 	else
@@ -978,9 +993,15 @@ Perl_gv_fetchpv(pTHX_ const char *nambeg, I32 add, I32 sv_type)
             goto ro_magicalize;
         else
             break;
+    case '\025':
+        if (len > 1 && strNE(name, "\025NICODE")) 
+	    break;
+	goto ro_magicalize;
+
     case '\027':	/* $^W & $^WARNING_BITS */
-	if (len > 1 && strNE(name, "\027ARNING_BITS")
-	    && strNE(name, "\027IDE_SYSTEM_CALLS"))
+	if (len > 1
+	    && strNE(name, "\027ARNING_BITS")
+	    )
 	    break;
 	goto magicalize;
 
@@ -1077,15 +1098,7 @@ Perl_gv_fullname4(pTHX_ SV *sv, GV *gv, const char *prefix, bool keepmain)
 void
 Perl_gv_fullname3(pTHX_ SV *sv, GV *gv, const char *prefix)
 {
-    HV *hv = GvSTASH(gv);
-    if (!hv) {
-	(void)SvOK_off(sv);
-	return;
-    }
-    sv_setpv(sv, prefix ? prefix : "");
-    sv_catpv(sv,HvNAME(hv));
-    sv_catpvn(sv,"::", 2);
-    sv_catpvn(sv,GvNAME(gv),GvNAMELEN(gv));
+    gv_fullname4(sv, gv, prefix, TRUE);
 }
 
 void
@@ -1100,10 +1113,7 @@ Perl_gv_efullname4(pTHX_ SV *sv, GV *gv, const char *prefix, bool keepmain)
 void
 Perl_gv_efullname3(pTHX_ SV *sv, GV *gv, const char *prefix)
 {
-    GV *egv = GvEGV(gv);
-    if (!egv)
-	egv = gv;
-    gv_fullname3(sv, egv, prefix);
+    gv_efullname4(sv, gv, prefix, TRUE);
 }
 
 /* XXX compatibility with versions <= 5.003. */
@@ -1130,6 +1140,9 @@ Perl_newIO(pTHX)
     sv_upgrade((SV *)io,SVt_PVIO);
     SvREFCNT(io) = 1;
     SvOBJECT_on(io);
+    /* Clear the stashcache because a new IO could overrule a 
+       package name */
+    hv_clear(PL_stashcache);
     iogv = gv_fetchpv("FileHandle::", FALSE, SVt_PVHV);
     /* unless exists($main::{FileHandle}) and defined(%main::FileHandle::) */
     if (!(iogv && GvHV(iogv) && HvARRAY(GvHV(iogv))))
@@ -1151,7 +1164,7 @@ Perl_gv_check(pTHX_ HV *stash)
     for (i = 0; i <= (I32) HvMAX(stash); i++) {
 	for (entry = HvARRAY(stash)[i]; entry; entry = HeNEXT(entry)) {
 	    if (HeKEY(entry)[HeKLEN(entry)-1] == ':' &&
-		(gv = (GV*)HeVAL(entry)) && (hv = GvHV(gv)))
+		(gv = (GV*)HeVAL(entry)) && isGV(gv) && (hv = GvHV(gv)))
 	    {
 		if (hv != PL_defstash && hv != stash)
 		     gv_check(hv);              /* nested package */
@@ -1242,12 +1255,18 @@ Perl_gp_free(pTHX_ GV *gv)
         return;
     }
 
-    SvREFCNT_dec(gp->gp_sv);
-    SvREFCNT_dec(gp->gp_av);
-    SvREFCNT_dec(gp->gp_hv);
-    SvREFCNT_dec(gp->gp_io);
-    SvREFCNT_dec(gp->gp_cv);
-    SvREFCNT_dec(gp->gp_form);
+    if (gp->gp_sv) SvREFCNT_dec(gp->gp_sv);
+    if (gp->gp_sv) SvREFCNT_dec(gp->gp_av);
+    if (gp->gp_hv) {
+	 if (PL_stashcache && HvNAME(gp->gp_hv))
+	      hv_delete(PL_stashcache,
+			HvNAME(gp->gp_hv), strlen(HvNAME(gp->gp_hv)),
+			G_DISCARD);
+	 SvREFCNT_dec(gp->gp_hv);
+    }
+    if (gp->gp_io)   SvREFCNT_dec(gp->gp_io);
+    if (gp->gp_cv)   SvREFCNT_dec(gp->gp_cv);
+    if (gp->gp_form) SvREFCNT_dec(gp->gp_form);
 
     Safefree(gp);
     GvGP(gv) = 0;
@@ -1343,21 +1362,21 @@ Perl_Gv_AMupdate(pTHX_ HV *stash)
 		/* GvSV contains the name of the method. */
 		GV *ngv = Nullgv;
 		
-		DEBUG_o( Perl_deb(aTHX_ "Resolving method `%.256s' for overloaded `%s' in package `%.256s'\n",
-			     SvPV_nolen(GvSV(gv)), cp, HvNAME(stash)) );
+		DEBUG_o( Perl_deb(aTHX_ "Resolving method `%"SVf256\
+			"' for overloaded `%s' in package `%.256s'\n",
+			     GvSV(gv), cp, HvNAME(stash)) );
 		if (!SvPOK(GvSV(gv))
 		    || !(ngv = gv_fetchmethod_autoload(stash, SvPVX(GvSV(gv)),
 						       FALSE)))
 		{
 		    /* Can be an import stub (created by `can'). */
-		    if (GvCVGEN(gv)) {
-			Perl_croak(aTHX_ "Stub found while resolving method `%.256s' overloading `%s' in package `%.256s'",
-			      (SvPOK(GvSV(gv)) ?  SvPVX(GvSV(gv)) : "???" ),
-			      cp, HvNAME(stash));
-		    } else
-			Perl_croak(aTHX_ "Can't resolve method `%.256s' overloading `%s' in package `%.256s'",
-			      (SvPOK(GvSV(gv)) ?  SvPVX(GvSV(gv)) : "???" ),
-			      cp, HvNAME(stash));
+		    SV *gvsv = GvSV(gv);
+		    const char *name = SvPOK(gvsv) ?  SvPVX(gvsv) : "???";
+		    Perl_croak(aTHX_ "%s method `%.256s' overloading `%s' "\
+				"in package `%.256s'",
+			       (GvCVGEN(gv) ? "Stub found while resolving"
+				: "Can't resolve"),
+			       name, cp, HvNAME(stash));
 		}
 		cv = GvCV(gv = ngv);
 	    }
@@ -1810,10 +1829,13 @@ Perl_is_gv_magical(pTHX_ char *name, STRLEN len, U32 flags)
 	    goto yes;
 	}
 	break;
+    case '\025':
+        if (len > 1 && strEQ(name, "\025NICODE"))
+	    goto yes;
     case '\027':   /* $^W & $^WARNING_BITS */
 	if (len == 1
 	    || (len == 12 && strEQ(name, "\027ARNING_BITS"))
-	    || (len == 17 && strEQ(name, "\027IDE_SYSTEM_CALLS")))
+	    )
 	{
 	    goto yes;
 	}

@@ -1,5 +1,5 @@
 # Pod::PlainText -- Convert POD data to formatted ASCII text.
-# $Id: PlainText.pm,v 1.1.1.1 2003/12/03 02:44:08 millert Exp $
+# $Id: PlainText.pm,v 1.2 2003/12/03 03:02:40 millert Exp $
 #
 # Copyright 1999-2000 by Russ Allbery <rra@stanford.edu>
 #
@@ -29,7 +29,7 @@ use vars qw(@ISA %ESCAPES $VERSION);
 # by Pod::Usage.
 @ISA = qw(Pod::Select);
 
-($VERSION = (split (' ', q$Revision: 1.1.1.1 $ ))[1]) =~ s/\.(\d)$/.0$1/;
+($VERSION = (split (' ', q$Revision: 1.2 $ ))[1]) =~ s/\.(\d)$/.0$1/;
 
 
 ############################################################################

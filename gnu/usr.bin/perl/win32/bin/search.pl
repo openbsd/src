@@ -634,8 +634,8 @@ sub read_rc
 	## no RC file -- use this default.
 	@default = split(/\n/,<<'--------INLINE_LITERAL_TEXT');
             magic: 32 : $H =~ m/[\x00-\x06\x10-\x1a\x1c-\x1f\x80\xff]{2}/
-	    option: -skip '.a .COM .elc .EXE .gz .o .pbm .xbm .dvi'
-	    option: -iskip '.tarz .zip .z .lzh .jpg .jpeg .gif .uu'
+	    option: -skip '.a .elc .gz .o .pbm .xbm .dvi'
+	    option: -iskip '.com .exe .lib .pdb .tarz .zip .z .lzh .jpg .jpeg .gif .uu'
 	    <!~> option: -skip '~ #'
 --------INLINE_LITERAL_TEXT
     }

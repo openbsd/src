@@ -1,6 +1,11 @@
 #!./perl
 
-print "1..46\n";
+BEGIN {
+    chdir 't' if -d 't';
+    @INC = '../lib';
+}
+
+print "1..91\n";
 
 eval 'print "ok 1\n";';
 
@@ -118,19 +123,20 @@ EOT
 
 # calls outside eval'' should NOT clone lexicals from called context
 
-$main::x = 'ok';
+$main::ok = 'not ok';
+my $ok = 'ok';
 eval <<'EOT'; die if $@;
   # $x unbound here
   sub do_eval3 {
      eval $_[0]; die if $@;
   }
 EOT
-do_eval3('print "$x ' . $x . '\n"');
-$x++;
-do_eval3('eval q[print "$x ' . $x . '\n"]');
-$x++;
-do_eval3('sub { eval q[print "$x ' . $x . '\n"] }->()');
-$x++;
+{
+    my $ok = 'not ok';
+    do_eval3('print "$ok ' . $x++ . '\n"');
+    do_eval3('eval q[print "$ok ' . $x++ . '\n"]');
+    do_eval3('sub { eval q[print "$ok ' . $x++ . '\n"] }->()');
+}
 
 # can recursive subroutine-call inside eval'' see its own lexicals?
 sub recurse {
@@ -240,4 +246,195 @@ print $@;
     $@ = 5;
     eval q{};
     print length($@) ? "not ok 46\t# \$\@ = '$@'\n" : "ok 46\n";
+}
+
+# DAPM Nov-2002. Perl should now capture the full lexical context during
+# evals.
+
+$::zzz = $::zzz = 0;
+my $zzz = 1;
+
+eval q{
+    sub fred1 {
+	eval q{ print eval '$zzz' == 1 ? 'ok' : 'not ok', " $_[0]\n"}
+    }
+    fred1(47);
+    { my $zzz = 2; fred1(48) }
+};
+
+eval q{
+    sub fred2 {
+	print eval('$zzz') == 1 ? 'ok' : 'not ok', " $_[0]\n";
+    }
+};
+fred2(49);
+{ my $zzz = 2; fred2(50) }
+
+# sort() starts a new context stack. Make sure we can still find
+# the lexically enclosing sub
+
+sub do_sort {
+    my $zzz = 2;
+    my @a = sort
+	    { print eval('$zzz') == 2 ? 'ok' : 'not ok', " 51\n"; $a <=> $b }
+	    2, 1;
+}
+do_sort();
+
+# more recursion and lexical scope leak tests
+
+eval q{
+    my $r = -1;
+    my $yyy = 9;
+    sub fred3 {
+	my $l = shift;
+	my $r = -2;
+	return 1 if $l < 1;
+	return 0 if eval '$zzz' != 1;
+	return 0 if       $yyy  != 9;
+	return 0 if eval '$yyy' != 9;
+	return 0 if eval '$l' != $l;
+	return $l * fred3($l-1);
+    }
+    my $r = fred3(5);
+    print $r == 120 ? 'ok' : 'not ok', " 52\n";
+    $r = eval'fred3(5)';
+    print $r == 120 ? 'ok' : 'not ok', " 53\n";
+    $r = 0;
+    eval '$r = fred3(5)';
+    print $r == 120 ? 'ok' : 'not ok', " 54\n";
+    $r = 0;
+    { my $yyy = 4; my $zzz = 5; my $l = 6; $r = eval 'fred3(5)' };
+    print $r == 120 ? 'ok' : 'not ok', " 55\n";
+};
+my $r = fred3(5);
+print $r == 120 ? 'ok' : 'not ok', " 56\n";
+$r = eval'fred3(5)';
+print $r == 120 ? 'ok' : 'not ok', " 57\n";
+$r = 0;
+eval'$r = fred3(5)';
+print $r == 120 ? 'ok' : 'not ok', " 58\n";
+$r = 0;
+{ my $yyy = 4; my $zzz = 5; my $l = 6; $r = eval 'fred3(5)' };
+print $r == 120 ? 'ok' : 'not ok', " 59\n";
+
+# check that goto &sub within evals doesn't leak lexical scope
+
+my $yyy = 2;
+
+my $test = 60;
+sub fred4 { 
+    my $zzz = 3;
+    print +($zzz == 3  && eval '$zzz' == 3) ? 'ok' : 'not ok', " $test\n";
+    $test++;
+    print eval '$yyy' == 2 ? 'ok' : 'not ok', " $test\n";
+    $test++;
+}
+
+eval q{
+    fred4();
+    sub fred5 {
+	my $zzz = 4;
+	print +($zzz == 4  && eval '$zzz' == 4) ? 'ok' : 'not ok', " $test\n";
+	$test++;
+	print eval '$yyy' == 2 ? 'ok' : 'not ok', " $test\n";
+	$test++;
+	goto &fred4;
+    }
+    fred5();
+};
+fred5();
+{ my $yyy = 88; my $zzz = 99; fred5(); }
+eval q{ my $yyy = 888; my $zzz = 999; fred5(); };
+
+# [perl #9728] used to dump core
+{
+   $eval = eval 'sub { eval "sub { %S }" }';
+   $eval->({});
+   print "ok $test\n";
+   $test++;
+}
+
+# evals that appear in the DB package should see the lexical scope of the
+# thing outside DB that called them (usually the debugged code), rather
+# than the usual surrounding scope
+
+$test=79;
+our $x = 1;
+{
+    my $x=2;
+    sub db1	{ $x; eval '$x' }
+    sub DB::db2	{ $x; eval '$x' }
+    package DB;
+    sub db3	{ eval '$x' }
+    sub DB::db4	{ eval '$x' }
+    sub db5	{ my $x=4; eval '$x' }
+    package main;
+    sub db6	{ my $x=4; eval '$x' }
+}
+{
+    my $x = 3;
+    print db1()     == 2 ? 'ok' : 'not ok', " $test\n"; $test++;
+    print DB::db2() == 2 ? 'ok' : 'not ok', " $test\n"; $test++;
+    print DB::db3() == 3 ? 'ok' : 'not ok', " $test\n"; $test++;
+    print DB::db4() == 3 ? 'ok' : 'not ok', " $test\n"; $test++;
+    print DB::db5() == 3 ? 'ok' : 'not ok', " $test\n"; $test++;
+    print db6()     == 4 ? 'ok' : 'not ok', " $test\n"; $test++;
+}
+require './test.pl';
+$NO_ENDING = 1;
+# [perl #19022] used to end up with shared hash warnings
+# The program should generate no output, so anything we see is on stderr
+my $got = runperl (prog => '$h{a}=1; foreach my $k (keys %h) {eval qq{\$k}}',
+		   stderr => 1);
+
+if ($got eq '') {
+  print "ok $test\n";
+} else {
+  print "not ok $test\n";
+  _diag ("# Got '$got'\n");
+}
+$test++;
+
+# And a buggy way of fixing #19022 made this fail - $k became undef after the
+# eval for a build with copy on write
+{
+  my %h;
+  $h{a}=1;
+  foreach my $k (keys %h) {
+    if (defined $k and $k eq 'a') {
+      print "ok $test\n";
+    } else {
+      print "not $test # got ", _q ($k), "\n";
+    }
+    $test++;
+
+    eval "\$k";
+
+    if (defined $k and $k eq 'a') {
+      print "ok $test\n";
+    } else {
+      print "not $test # got ", _q ($k), "\n";
+    }
+    $test++;
+  }
+}
+
+sub Foo {} print Foo(eval {});
+print "ok ",$test++," - #20798 (used to dump core)\n";
+
+# check for context in string eval
+{
+  my(@r,$r,$c);
+  sub context { defined(wantarray) ? (wantarray ? ($c='A') : ($c='S')) : ($c='V') }
+
+  my $code = q{ context() };
+  @r = qw( a b );
+  $r = 'ab';
+  @r = eval $code;
+  print "@r$c" eq 'AA' ? "ok " : "# '@r$c' ne 'AA'\nnot ok ", $test++, "\n";
+  $r = eval $code;
+  print "$r$c" eq 'SS' ? "ok " : "# '$r$c' ne 'SS'\nnot ok ", $test++, "\n";
+  eval $code;
+  print   $c   eq 'V'  ? "ok " : "# '$c' ne 'V'\nnot ok ", $test++, "\n";
 }

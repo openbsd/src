@@ -9,6 +9,7 @@
 BEGIN {
     chdir 't' if -d 't';
     @INC = '../lib';
+    require './test.pl';
 }
 
 use strict;
@@ -17,57 +18,76 @@ use warnings;
 my $warn = "";
 $SIG{q(__WARN__)} = sub { print $warn; $warn .= join("",@_) };
 
-sub ok { print $_[1] ? "ok " : "not ok ", $_[0], "\n"; }
-
 sub uninitialized { $warn =~ s/Use of uninitialized value[^\n]+\n//s; }
-    
-print "1..32\n";
+sub tiex { tie $_[0], 'main' }
+sub TIESCALAR { my $x; bless \$x }
+sub FETCH { ${$_[0]} }
+sub STORE { ${$_[0]} = $_[1] }
+our $TODO;
 
-{ my $x; $x ++;     ok  1, ! uninitialized; }
-{ my $x; $x --;     ok  2, ! uninitialized; }
-{ my $x; ++ $x;     ok  3, ! uninitialized; }
-{ my $x; -- $x;	    ok  4, ! uninitialized; }
+print "1..63\n";
 
-{ my $x; $x **= 1;  ok  5,  uninitialized; }
+# go through all tests once normally and once with tied $x
+for my $tie ("", ", tied") {
 
-{ my $x; $x += 1;   ok  6, ! uninitialized; }
-{ my $x; $x -= 1;   ok  7, ! uninitialized; }
+{ my $x; tiex $x if $tie; $x ++;     ok ! uninitialized, "postinc$tie"; }
+{ my $x; tiex $x if $tie; $x --;     ok ! uninitialized, "postdec$tie"; }
+{ my $x; tiex $x if $tie; ++ $x;     ok ! uninitialized, "preinc$tie"; }
+{ my $x; tiex $x if $tie; -- $x;     ok ! uninitialized, "predec$tie"; }
 
-{ my $x; $x .= 1;   ok  8, ! uninitialized; }
+{ my $x; tiex $x if $tie; $x **= 1;  ok uninitialized,   "**=$tie"; }
 
-{ my $x; $x *= 1;   ok  9,  uninitialized; }
-{ my $x; $x /= 1;   ok 10,  uninitialized; }
-{ my $x; $x %= 1;   ok 11,  uninitialized; }
+{ local $TODO = $tie && '[perl #17809] pp_add & pp_subtract';
+    { my $x; tiex $x if $tie; $x += 1;   ok ! uninitialized, "+=$tie"; }
+    { my $x; tiex $x if $tie; $x -= 1;   ok ! uninitialized, "-=$tie"; }
+}
 
-{ my $x; $x x= 1;   ok 12,  uninitialized; }
+{ my $x; tiex $x if $tie; $x .= 1;   ok ! uninitialized, ".=$tie"; }
 
-{ my $x; $x &= 1;   ok 13,  uninitialized; }
-{ my $x; $x |= 1;   ok 14, ! uninitialized; }
-{ my $x; $x ^= 1;   ok 15, ! uninitialized; }
+{ my $x; tiex $x if $tie; $x *= 1;   ok uninitialized,   "*=$tie"; }
+{ my $x; tiex $x if $tie; $x /= 1;   ok uninitialized,   "/=$tie"; }
+{ my $x; tiex $x if $tie; $x %= 1;   ok uninitialized,   "\%=$tie"; }
 
-{ my $x; $x &&= 1;  ok 16, ! uninitialized; }
-{ my $x; $x ||= 1;  ok 17, ! uninitialized; }
+{ my $x; tiex $x if $tie; $x x= 1;   ok uninitialized, "x=$tie"; }
 
-{ my $x; $x <<= 1;  ok 18,  uninitialized; }
-{ my $x; $x >>= 1;  ok 19,  uninitialized; }
+{ my $x; tiex $x if $tie; $x &= 1;   ok uninitialized, "&=$tie"; }
 
-{ my $x; $x &= "x"; ok 20,  uninitialized; }
-{ my $x; $x |= "x"; ok 21, ! uninitialized; }
-{ my $x; $x ^= "x"; ok 22, ! uninitialized; }
+{ local $TODO = $tie && '[perl #17809] pp_bit_or & pp_bit_xor';
+    { my $x; tiex $x if $tie; $x |= 1;   ok ! uninitialized, "|=$tie"; }
+    { my $x; tiex $x if $tie; $x ^= 1;   ok ! uninitialized, "^=$tie"; }
+}
 
-{ use integer; my $x; $x += 1; ok 23, ! uninitialized; }
-{ use integer; my $x; $x -= 1; ok 24, ! uninitialized; }
+{ my $x; tiex $x if $tie; $x &&= 1;  ok ! uninitialized, "&&=$tie"; }
+{ my $x; tiex $x if $tie; $x ||= 1;  ok ! uninitialized, "||=$tie"; }
 
-{ use integer; my $x; $x *= 1; ok 25,  uninitialized; }
-{ use integer; my $x; $x /= 1; ok 26,  uninitialized; }
-{ use integer; my $x; $x %= 1; ok 27,  uninitialized; }
+{ my $x; tiex $x if $tie; $x <<= 1;  ok uninitialized, "<<=$tie"; }
+{ my $x; tiex $x if $tie; $x >>= 1;  ok uninitialized, ">>=$tie"; }
 
-{ use integer; my $x; $x ++;   ok 28, ! uninitialized; }
-{ use integer; my $x; $x --;   ok 29, ! uninitialized; }
-{ use integer; my $x; ++ $x;   ok 30, ! uninitialized; }
-{ use integer; my $x; -- $x;   ok 31, ! uninitialized; }
+{ my $x; tiex $x if $tie; $x &= "x"; ok uninitialized, "&=$tie, string"; }
 
-ok 32, $warn eq '';
+{ local $TODO = $tie && '[perl #17809] pp_bit_or & pp_bit_xor';
+    { my $x; tiex $x if $tie; $x |= "x"; ok ! uninitialized, "|=$tie, string"; }
+    { my $x; tiex $x if $tie; $x ^= "x"; ok ! uninitialized, "^=$tie, string"; }
+}
 
-# If we got any errors that we were not expecting, then print them
-print map "#$_\n", split /\n/, $warn if length $warn;
+{ use integer;
+
+{ local $TODO = $tie && '[perl #17809] pp_i_add & pp_i_subtract';
+    { my $x; tiex $x if $tie; $x += 1; ok ! uninitialized, "+=$tie, int"; }
+    { my $x; tiex $x if $tie; $x -= 1; ok ! uninitialized, "-=$tie, int"; }
+}
+
+{ my $x; tiex $x if $tie; $x *= 1; ok uninitialized, "*=$tie, int"; }
+{ my $x; tiex $x if $tie; $x /= 1; ok uninitialized, "/=$tie, int"; }
+{ my $x; tiex $x if $tie; $x %= 1; ok uninitialized, "\%=$tie, int"; }
+
+{ my $x; tiex $x if $tie; $x ++;   ok ! uninitialized, "postinc$tie, int"; }
+{ my $x; tiex $x if $tie; $x --;   ok ! uninitialized, "postdec$tie, int"; }
+{ my $x; tiex $x if $tie; ++ $x;   ok ! uninitialized, "preinc$tie, int"; }
+{ my $x; tiex $x if $tie; -- $x;   ok ! uninitialized, "predec$tie, int"; }
+
+} # end of use integer;
+
+} # end of for $tie
+
+is $warn, '', "no spurious warnings";

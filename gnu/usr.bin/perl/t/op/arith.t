@@ -283,6 +283,9 @@ if ($^O eq 'vos') {
 elsif (($^O eq 'VMS') && !defined($Config{useieee})) {
   print "ok 134 # SKIP -- the IEEE infinity model is unavailable in this configuration.\n";
 } 
+elsif ($^O eq 'ultrix') {
+  print "not ok 134 # TODO Ultrix enters deep nirvana instead of producing infinity.\n";
+} 
 else {
   # The computation of $v should overflow and produce "infinity"
   # on any system whose max exponent is less than 10**1506.

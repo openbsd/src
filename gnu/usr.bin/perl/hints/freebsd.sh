@@ -20,7 +20,7 @@
 #
 # Modified to ensure we replace -lc with -lc_r, and
 # to put in place-holders for various specific hints.
-# Andy Dougherty <doughera@lafcol.lafayette.edu>
+# Andy Dougherty <doughera@lafayette.edu>
 # Date: Tue Mar 10 16:07:00 EST 1998
 #
 # Support for FreeBSD/ELF
@@ -87,10 +87,14 @@ case "$osvers" in
 	        ;;
 	esac
 	libswanted=`echo $libswanted | sed 's/ malloc / /'`
+	libswanted=`echo $libswanted | sed 's/ bind / /'`
+	# iconv gone in Perl 5.8.1, but if someone compiles 5.8.0 or earlier.
+	libswanted=`echo $libswanted | sed 's/ iconv / /'`
 	d_setregid='define'
 	d_setreuid='define'
-	d_setegid='undef'
-	d_seteuid='undef'
+	d_setegid='define'
+	d_seteuid='define'
+	# d_dosuid='define' # Obsolete.
 	;;
 *)	usevfork='true'
 	case "$usemymalloc" in
@@ -124,7 +128,7 @@ case "$osvers" in
             fi
             lddlflags='-Bshareable'
         fi
-        cccdlflags='-DPIC -fpic'
+        cccdlflags='-DPIC -fPIC'
         ;;
 esac
 
@@ -218,14 +222,24 @@ Consider using the latest STABLE release.
 EOM
 		 exit 1
 	      fi
-	      ldflags="-pthread $ldflags"
 	      case "$osvers" in
-	      4.*)	# 4.x has gethostbyaddr_r but it is
-			# "Temporary function, not threadsafe"...
-			d_gethostbyaddr_r="undef"
-			d_gethostbyaddr_r_proto="undef"
+	      # 500016 is the first osreldate in which one could
+	      # just link against libc_r without disposing of libc
+	      # at the same time.  500016 ... up to whatever it was
+	      # on the 31st of August 2003 can still be used with -pthread,
+	      # but it is not necessary.
+	      5.*)	if [ `/sbin/sysctl -n kern.osreldate` -lt 500016 ]; then
+                                ldflags="-pthread $ldflags"
+                        fi
+			;;
+	      *)	ldflags="-pthread $ldflags"
 			;;
 	      esac
+	      # Both in 4.x and 5.x gethostbyaddr_r exists but
+	      # it is "Temporary function, not threadsafe"...
+	      # Presumably earlier it didn't even exist.
+	      d_gethostbyaddr_r="undef"
+	      d_gethostbyaddr_r_proto="0"
 	      ;;
 
 	esac
@@ -249,8 +263,9 @@ EOM
 
 	# Even with the malloc mutexes the Perl malloc does not
 	# seem to be threadsafe in FreeBSD?
-	usemymalloc=n
-
+	case "$usemymalloc" in
+	'') usemymalloc=n ;;
+	esac
 esac
 EOCBU
 

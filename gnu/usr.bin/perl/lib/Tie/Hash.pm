@@ -24,7 +24,7 @@ Tie::Hash, Tie::StdHash, Tie::ExtraHash - base class definitions for tied hashes
 
     # All methods provided by default, define only those needing overrides
     # Accessors access the storage in %{$_[0]};
-    # TIEHANDLE should return a reference to the actual storage
+    # TIEHASH should return a reference to the actual storage
     sub DELETE { ... }
 
     package NewExtraHash;
@@ -34,11 +34,12 @@ Tie::Hash, Tie::StdHash, Tie::ExtraHash - base class definitions for tied hashes
 
     # All methods provided by default, define only those needing overrides
     # Accessors access the storage in %{$_[0][0]};
-    # TIEHANDLE should return an array reference with the first element being
+    # TIEHASH should return an array reference with the first element being
     # the reference to the actual storage 
     sub DELETE { 
       $_[0][1]->('del', $_[0][0], $_[1]); # Call the report writer
-      delete $_[0][0]->{$_[1]};		  #  $_[0]->SUPER::DELETE($_[1]) }
+      delete $_[0][0]->{$_[1]};		  #  $_[0]->SUPER::DELETE($_[1])
+    }
 
 
     package main;
@@ -110,7 +111,7 @@ Clear all values from the tied hash I<this>.
 
 The accessor methods assume that the actual storage for the data in the tied
 hash is in the hash referenced by C<tied(%tiedhash)>.  Thus overwritten
-C<TIEHANDLE> method should return a hash reference, and the remaining methods
+C<TIEHASH> method should return a hash reference, and the remaining methods
 should operate on the hash referenced by the first argument:
 
   package ReportHash;
@@ -131,24 +132,25 @@ should operate on the hash referenced by the first argument:
 
 The accessor methods assume that the actual storage for the data in the tied
 hash is in the hash referenced by C<(tied(%tiedhash))[0]>.  Thus overwritten
-C<TIEHANDLE> method should return an array reference with the first
+C<TIEHASH> method should return an array reference with the first
 element being a hash reference, and the remaining methods should operate on the
 hash C<< %{ $_[0]->[0] } >>:
 
   package ReportHash;
-  our @ISA = 'Tie::StdHash';
+  our @ISA = 'Tie::ExtraHash';
 
   sub TIEHASH  {
-    my $storage = bless {}, shift;
+    my $class = shift;
+    my $storage = bless [{}, @_], $class;
     warn "New ReportHash created, stored in $storage.\n";
-    [$storage, @_]
+    $storage;
   }
   sub STORE    {
     warn "Storing data with key $_[1] at $_[0].\n";
     $_[0][0]{$_[1]} = $_[2]
   }
 
-The default C<TIEHANDLE> method stores "extra" arguments to tie() starting
+The default C<TIEHASH> method stores "extra" arguments to tie() starting
 from offset 1 in the array referenced by C<tied(%tiedhash)>; this is the
 same storage algorithm as in TIEHASH subroutine above.  Hence, a typical
 package inheriting from B<Tie::ExtraHash> does not need to overwrite this

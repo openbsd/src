@@ -23,7 +23,7 @@ require IO::Socket::UNIX if ($^O ne 'epoc');
 
 @ISA = qw(IO::Handle);
 
-$VERSION = "1.27";
+$VERSION = "1.28";
 
 @EXPORT_OK = qw(sockatmark);
 
@@ -273,9 +273,9 @@ sub atmark {
 sub timeout {
     @_ == 1 || @_ == 2 or croak 'usage: $sock->timeout([VALUE])';
     my($sock,$val) = @_;
-    my $r = ${*$sock}{'io_socket_timeout'} || undef;
+    my $r = ${*$sock}{'io_socket_timeout'};
 
-    ${*$sock}{'io_socket_timeout'} = 0 + $val
+    ${*$sock}{'io_socket_timeout'} = defined $val ? 0 + $val : $val
 	if(@_ == 2);
 
     $r;

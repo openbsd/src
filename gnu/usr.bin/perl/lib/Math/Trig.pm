@@ -16,11 +16,11 @@ our($VERSION, $PACKAGE, @ISA, @EXPORT, @EXPORT_OK, %EXPORT_TAGS);
 
 @ISA = qw(Exporter);
 
-$VERSION = 1.01;
+$VERSION = 1.02;
 
 my @angcnv = qw(rad2deg rad2grad
-	     deg2rad deg2grad
-	     grad2rad grad2deg);
+		deg2rad deg2grad
+		grad2rad grad2deg);
 
 @EXPORT = (@{$Math::Complex::EXPORT_TAGS{'trig'}},
 	   @angcnv);
@@ -133,17 +133,24 @@ sub great_circle_distance {
 sub great_circle_direction {
     my ( $theta0, $phi0, $theta1, $phi1 ) = @_;
 
+    my $distance = &great_circle_distance;
+
     my $lat0 = pip2 - $phi0;
     my $lat1 = pip2 - $phi1;
 
     my $direction =
-	atan2(sin($theta0 - $theta1) * cos($lat1),
-	      cos($lat0) * sin($lat1) -
-	      sin($lat0) * cos($lat1) * cos($theta0 - $theta1));
+	acos((sin($lat1) - sin($lat0) * cos($distance)) /
+	     (cos($lat0) * sin($distance)));
+
+    $direction = pi2 - $direction
+	if sin($theta1 - $theta0) < 0;
 
     return rad2rad($direction);
 }
 
+1;
+
+__END__
 =pod
 
 =head1 NAME

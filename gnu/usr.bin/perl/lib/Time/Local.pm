@@ -1,15 +1,16 @@
 package Time::Local;
-use 5.006;
+
 require Exporter;
 use Carp;
 use Config;
 use strict;
 use integer;
 
-our $VERSION    = '1.04';
-our @ISA	= qw( Exporter );
-our @EXPORT	= qw( timegm timelocal );
-our @EXPORT_OK	= qw( timegm_nocheck timelocal_nocheck );
+use vars qw( $VERSION @ISA @EXPORT @EXPORT_OK );
+$VERSION    = '1.07';
+@ISA	= qw( Exporter );
+@EXPORT	= qw( timegm timelocal );
+@EXPORT_OK	= qw( timegm_nocheck timelocal_nocheck );
 
 my @MonthDays = (31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31);
 
@@ -132,7 +133,18 @@ sub timelocal {
 	or return $loc_t;
 
     # Adjust for DST change
-    $loc_t + $dst_off;
+    $loc_t += $dst_off;
+
+    # for a negative offset from GMT, and if the original date
+    # was a non-extent gap in a forward DST jump, we should
+    # now have the wrong answer - undo the DST adjust;
+
+    return $loc_t if $zone_off <= 0;
+
+    my ($s,$m,$h) = localtime($loc_t);
+    $loc_t -= $dst_off if $s != $_[0] || $m != $_[1] || $h != $_[2];
+
+    $loc_t;
 }
 
 
@@ -158,8 +170,11 @@ Time::Local - efficiently compute time from local and GMT time
 
 These routines are the inverse of built-in perl functions localtime()
 and gmtime().  They accept a date as a six-element array, and return
-the corresponding time(2) value in seconds since the Epoch (Midnight,
-January 1, 1970).  This value can be positive or negative.
+the corresponding time(2) value in seconds since the system epoch
+(Midnight, January 1, 1970 UTC on Unix, for example).  This value can
+be positive or negative, though POSIX only requires support for
+positive values, so dates before the system's epoch may not work on
+all operating systems.
 
 It is worth drawing particular attention to the expected ranges for
 the values provided.  The value for the day of the month is the actual day
@@ -250,6 +265,25 @@ also be correct.
 The whole scheme for interpreting two-digit years can be considered a bug.
 
 The proclivity to croak() is probably a bug.
+
+=head1 SUPPORT
+
+Support for this module is provided via the perl5-porters@perl.org
+email list.  See http://lists.perl.org/ for more details.
+
+Please submit bugs using the RT system at bugs.perl.org, the perlbug
+script, or as a last resort, to the perl5-porters@perl.org list.
+
+=head1 AUTHOR
+
+This module is based on a Perl 4 library, timelocal.pl, that was
+included with Perl 4.036, and was most likely written by Tom
+Christiansen.
+
+The current version was written by Graham Barr.
+
+It is now being maintained separately from the Perl core by Dave
+Rolsky, <autarch@urth.org>.
 
 =cut
 

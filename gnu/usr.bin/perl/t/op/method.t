@@ -10,7 +10,7 @@ BEGIN {
     require "test.pl";
 }
 
-print "1..75\n";
+print "1..78\n";
 
 @A::ISA = 'B';
 @B::ISA = 'C';
@@ -231,7 +231,7 @@ is( Foo->boogie(), "yes, sir!");
 # This is actually testing parsing of indirect objects and undefined subs
 #   print foo("bar") where foo does not exist is not an indirect object.
 #   print foo "bar"  where foo does not exist is an indirect object.
-eval { sub AUTOLOAD { "ok ", shift, "\n"; } };
+eval 'sub AUTOLOAD { "ok ", shift, "\n"; }';
 ok(1);
 
 # Bug ID 20010902.002
@@ -277,3 +277,19 @@ sub Bminor::test {
 Bminor->test('y', 'z');
 is("@X", "Amajor Bminor x y Bminor Bminor y z");
 
+package main;
+for my $meth (['Bar', 'Foo::Bar'],
+	      ['SUPER::Bar', 'main::SUPER::Bar'],
+	      ['Xyz::SUPER::Bar', 'Xyz::SUPER::Bar'])
+{
+    fresh_perl_is(<<EOT,
+package UNIVERSAL; sub AUTOLOAD { my \$c = shift; print "\$c \$AUTOLOAD\\n" }
+sub DESTROY {} # IO object destructor called in MacOS, because of Mac::err
+package Xyz;
+package main; Foo->$meth->[0]();
+EOT
+	"Foo $meth->[1]",
+	{ switches => [ '-w' ] },
+	"check if UNIVERSAL::AUTOLOAD works",
+    );
+}

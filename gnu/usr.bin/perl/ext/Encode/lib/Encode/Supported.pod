@@ -87,10 +87,14 @@ Encode::Unicode, which will be autoloaded on demand.
   UTF-32                                                      [UC]
   UTF-32BE	UCS-4                                         [UC]
   UTF-32LE                                                    [UC]
+  UTF-7                                                  [RFC2152]
   ----------------------------------------------------------------
 
 To find how (UCS-2|UTF-(16|32))(LE|BE)? differ from one another,
 see L<Encode::Unicode>. 
+
+UTF-7 is a special encoding which "re-encodes" UTF-16BE into a 7-bit
+encoding.  It is implemeneted seperately by Encode::Unicode::UTF7.
 
 =head2 Encode::Byte -- Extended ASCII
 
@@ -120,8 +124,8 @@ L<http://czyborra.com/charsets/iso8859.html> for details.
                                                 MacCroatian
                                                 MacRomanian
                                                 MacRumanian
-  Latin3 [1]    iso-8859-3      
-  Latin4 [2]    iso-8859-4              
+  Latin3[1]     iso-8859-3      
+  Latin4[2]     iso-8859-4              
   Cyrillics     iso-8859-5      cp855   cp1251  MacCyrillic
     (See also next section)     cp866           MacUkrainian
   Arabic        iso-8859-6      cp864   cp1256  MacArabic
@@ -133,7 +137,7 @@ L<http://czyborra.com/charsets/iso8859.html> for details.
   Nordics       iso-8859-10     cp865
                                 cp861           MacIcelandic
                                                 MacSami
-  Thai          iso-8859-11 [3] cp874           MacThai
+  Thai          iso-8859-11[3]  cp874           MacThai
   (iso-8859-12 is nonexistent. Reserved for Indics?)
   Baltics       iso-8859-13     cp775           cp1257
   Celtics       iso-8859-14
@@ -144,7 +148,7 @@ L<http://czyborra.com/charsets/iso8859.html> for details.
 
   [1] Esperanto, Maltese, and Turkish. Turkish is now on 8859-9.
   [2] Baltics.  Now on 8859-10, except for Latvian.
-  [3] Also know as TIS 620. 
+  [3] TIS 620 +  Non-Breaking Space (0xA0 / U+00A0)
   [4] Nicknamed Latin0; the Euro sign as well as French and Finnish
       letters that are missing from 8859-1 were added.
 
@@ -172,9 +176,23 @@ For gory details, see L<http://czyborra.com/charsets/cyrillic.html>
 
 GSM0338 is for GSM handsets. Though it shares alphanumerals with
 ASCII, control character ranges and other parts are mapped very
-differently, presumably to store Greek and Cyrillic alphabets.
-This is also covered in Encode::Byte even though it is not an
-"extended ASCII" encoding.
+differently, mainly to store Greek characters.  There are also escape
+sequences (starting with 0x1B) to cover e.g. the Euro sign.  Some
+special cases like a trailing 0x00 byte or a lone 0x1B byte are not
+well-defined and decode() will return an empty string for them.
+One possible workaround is
+
+   $gsm =~ s/\x00\z/\x00\x00/;
+   $uni = decode("gsm0338", $gsm);
+   $uni .= "\xA0" if $gsm =~ /\x1B\z/;
+
+Note that the Encode implementation of GSM0338 does not implement the
+reuse of Latin capital letters as Greek capital letters (for example,
+the 0x5A is U+005A (LATIN CAPITAL LETTER Z), not U+0396 (GREEK CAPITAL
+LETTER ZETA).
+
+The GSM0338 is also covered in Encode::Byte even though it is not
+an "extended ASCII" encoding.
 
 =back
 
@@ -182,9 +200,9 @@ This is also covered in Encode::Byte even though it is not an
 
 Note that Vietnamese is listed above.  Also read "Encoding vs Charset"
 below.  Also note that these are implemented in distinct modules by
-countries, due the size concerns (simplified Chinese is mapped
+countries, due to the size concerns (simplified Chinese is mapped
 to 'CN', continental China, while traditional Chinese is mapped to
-'TW', Taiwan).  Please refer to their respective documentataion pages.
+'TW', Taiwan).  Please refer to their respective documentation pages.
 
 =over 4
 
@@ -241,7 +259,7 @@ to 'CN', continental China, while traditional Chinese is mapped to
 
 =item Encode::HanExtra -- More Chinese via CPAN
 
-Due to size concerns, additional Chinese encodings below are
+Due to the size concerns, additional Chinese encodings below are
 distributed separately on CPAN, under the name Encode::HanExtra.
 
   Standard      DOS/Win Macintosh                Comment/Reference
@@ -301,7 +319,8 @@ For symbols  and dingbats.
 =item Encode::MIME::Header
 
 Strictly speaking, MIME header encoding documented in RFC 2047 is more
-of encapsulation than encoding.  But included anyway.
+of encapsulation than encoding.  However, their support in modern
+world is imperative so they are supported.
 
   ----------------------------------------------------------------
   MIME-Header                                            [RFC2047]
@@ -686,7 +705,7 @@ retained it. This is how [RFC 2277] and [RFC 2278] bless C<charset>:
  scheme; this is also what is used as an identifier in MIME "charset="
  parameters, and registered in the IANA charset registry ...  (Note
  that this is NOT a term used by other standards bodies, such as ISO).
-                                               [RFC 2277]
+ [RFC 2277]
 
 =item EUC
 

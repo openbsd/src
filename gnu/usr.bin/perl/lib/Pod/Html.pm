@@ -2,10 +2,11 @@ package Pod::Html;
 use strict;
 require Exporter;
 
-use vars qw($VERSION @ISA @EXPORT);
-$VERSION = 1.04;
+use vars qw($VERSION @ISA @EXPORT @EXPORT_OK);
+$VERSION = 1.0501;
 @ISA = qw(Exporter);
 @EXPORT = qw(pod2html htmlify);
+@EXPORT_OK = qw(anchorify);
 
 use Carp;
 use Config;
@@ -201,105 +202,97 @@ This program is distributed under the Artistic License.
 
 =cut
 
-my $cachedir = ".";		# The directory to which item and directory
+
+my($Cachedir);
+my($Dircache, $Itemcache);
+my @Begin_Stack;
+my @Libpods;
+my($Htmlroot, $Htmldir, $Htmlfile, $Htmlfileurl);
+my($Podfile, @Podpath, $Podroot);
+my $Css;
+
+my $Recurse;
+my $Quiet;
+my $Verbose;
+my $Doindex;
+
+my $Backlink;
+my($Listlevel, @Listend);
+my $After_Lpar;
+use vars qw($Ignore);  # need to localize it later.
+
+my(%Items_Named, @Items_Seen);
+my($Title, $Header);
+
+my $Top;
+my $Paragraph;
+
+my %Sections;
+
+# Caches
+my %Pages = ();			# associative array used to find the location
+				#   of pages referenced by L<> links.
+my %Items = ();			# associative array used to find the location
+				#   of =item directives referenced by C<> links
+
+my %Local_Items;
+my $Is83;
+my $PTQuote;
+
+my $Curdir = File::Spec->curdir;
+
+init_globals();
+
+sub init_globals {
+    $Cachedir = ".";		# The directory to which item and directory
 				# caches will be written.
-my $cache_ext = $^O eq 'VMS' ? ".tmp" : ".x~~";
-my $dircache = "pod2htmd$cache_ext";
-my $itemcache = "pod2htmi$cache_ext";
 
-my @begin_stack = ();		# begin/end stack
+    $Dircache = "pod2htmd.tmp";
+    $Itemcache = "pod2htmi.tmp";
 
-my @libpods = ();	    	# files to search for links from C<> directives
-my $htmlroot = "/";	    	# http-server base directory from which all
+    @Begin_Stack = ();		# begin/end stack
+
+    @Libpods = ();	    	# files to search for links from C<> directives
+    $Htmlroot = "/";	    	# http-server base directory from which all
 				#   relative paths in $podpath stem.
-my $htmldir = "";		# The directory to which the html pages
+    $Htmldir = "";	    	# The directory to which the html pages
 				# will (eventually) be written.
-my $htmlfile = "";		# write to stdout by default
-my $htmlfileurl = "" ;		# The url that other files would use to
+    $Htmlfile = "";		# write to stdout by default
+    $Htmlfileurl = "" ;		# The url that other files would use to
 				# refer to this file.  This is only used
 				# to make relative urls that point to
 				# other files.
-my $podfile = "";		# read from stdin by default
-my @podpath = ();		# list of directories containing library pods.
-my $podroot = File::Spec->curdir;		# filesystem base directory from which all
+
+    $Podfile = "";		# read from stdin by default
+    @Podpath = ();		# list of directories containing library pods.
+    $Podroot = $Curdir;	        # filesystem base directory from which all
 				#   relative paths in $podpath stem.
-my $css = '';                   # Cascading style sheet
-my $recurse = 1;		# recurse on subdirectories in $podpath.
-my $quiet = 0;			# not quiet by default
-my $verbose = 0;		# not verbose by default
-my $doindex = 1;   	    	# non-zero if we should generate an index
-my $backlink = '';              # text for "back to top" links
-my $listlevel = 0;		# current list depth
-my @listend = ();		# the text to use to end the list.
-my $after_lpar = 0;             # set to true after a par in an =item
-my $ignore = 1;			# whether or not to format text.  we don't
+    $Css = '';                  # Cascading style sheet
+    $Recurse = 1;		# recurse on subdirectories in $podpath.
+    $Quiet = 0;		        # not quiet by default
+    $Verbose = 0;		# not verbose by default
+    $Doindex = 1;   	    	# non-zero if we should generate an index
+    $Backlink = '';		# text for "back to top" links
+    $Listlevel = 0;		# current list depth
+    @Listend = ();		# the text to use to end the list.
+    $After_Lpar = 0;            # set to true after a par in an =item
+    $Ignore = 1;		# whether or not to format text.  we don't
 				#   format text until we hit our first pod
 				#   directive.
 
-my %items_named = ();		# for the multiples of the same item in perlfunc
-my @items_seen = ();
-my $title;			# title to give the pod(s)
-my $header = 0;			# produce block header/footer
-my $top = 1;			# true if we are at the top of the doc.  used
+    @Items_Seen = ();	        # for multiples of the same item in perlfunc
+    %Items_Named = ();
+    $Header = 0;		# produce block header/footer
+    $Title = '';		# title to give the pod(s)
+    $Top = 1;			# true if we are at the top of the doc.  used
 				#   to prevent the first <hr /> directive.
-my $paragraph;			# which paragraph we're processing (used
+    $Paragraph = '';		# which paragraph we're processing (used
 				#   for error messages)
-my $ptQuote = 0;                # status of double-quote conversion
-my %pages = ();			# associative array used to find the location
-				#   of pages referenced by L<> links.
-my %sections = ();		# sections within this page
-my %items = ();			# associative array used to find the location
-				#   of =item directives referenced by C<> links
-my %local_items = ();           # local items - avoid destruction of %items
-my $Is83;                       # is dos with short filenames (8.3)
+    $PTQuote = 0;               # status of double-quote conversion
+    %Sections = ();		# sections within this page
 
-sub init_globals {
-$dircache = "pod2htmd$cache_ext";
-$itemcache = "pod2htmi$cache_ext";
-
-@begin_stack = ();		# begin/end stack
-
-@libpods = ();	    	# files to search for links from C<> directives
-$htmlroot = "/";	    	# http-server base directory from which all
-				#   relative paths in $podpath stem.
-$htmldir = "";	    	# The directory to which the html pages
-				# will (eventually) be written.
-$htmlfile = "";		# write to stdout by default
-$podfile = "";		# read from stdin by default
-@podpath = ();		# list of directories containing library pods.
-$podroot = File::Spec->curdir;		# filesystem base directory from which all
-				#   relative paths in $podpath stem.
-$css = '';                   # Cascading style sheet
-$recurse = 1;		# recurse on subdirectories in $podpath.
-$quiet = 0;		# not quiet by default
-$verbose = 0;		# not verbose by default
-$doindex = 1;   	    	# non-zero if we should generate an index
-$backlink = '';		# text for "back to top" links
-$listlevel = 0;		# current list depth
-@listend = ();		# the text to use to end the list.
-$after_lpar = 0;        # set to true after a par in an =item
-$ignore = 1;			# whether or not to format text.  we don't
-				#   format text until we hit our first pod
-				#   directive.
-
-@items_seen = ();
-%items_named = ();
-$header = 0;			# produce block header/footer
-$title = '';			# title to give the pod(s)
-$top = 1;			# true if we are at the top of the doc.  used
-				#   to prevent the first <hr /> directive.
-$paragraph = '';			# which paragraph we're processing (used
-				#   for error messages)
-%sections = ();		# sections within this page
-
-# These are not reinitialised here but are kept as a cache.
-# See get_cache and related cache management code.
-#%pages = ();			# associative array used to find the location
-				#   of pages referenced by L<> links.
-#%items = ();			# associative array used to find the location
-				#   of =item directives referenced by C<> links
-%local_items = ();
-$Is83=$^O eq 'dos';
+    %Local_Items = ();
+    $Is83 = $^O eq 'dos';       # Is it an 8.3 filesystem?
 }
 
 #
@@ -328,7 +321,7 @@ sub pod2html {
 
     $Is83 = 0 if (defined (&Dos::UseLFN) && Dos::UseLFN());
 
-    # cache of %pages and %items from last time we ran pod2html
+    # cache of %Pages and %Items from last time we ran pod2html
 
     #undef $opt_help if defined $opt_help;
 
@@ -336,36 +329,36 @@ sub pod2html {
     parse_command_line();
 
     # escape the backlink argument (same goes for title but is done later...)
-    $backlink = html_escape($backlink) if defined $backlink;
+    $Backlink = html_escape($Backlink) if defined $Backlink;
 
     # set some variables to their default values if necessary
     local *POD;
     unless (@ARGV && $ARGV[0]) {
-	$podfile  = "-" unless $podfile;	# stdin
-	open(POD, "<$podfile")
-		|| die "$0: cannot open $podfile file for input: $!\n";
+	$Podfile  = "-" unless $Podfile;	# stdin
+	open(POD, "<$Podfile")
+		|| die "$0: cannot open $Podfile file for input: $!\n";
     } else {
-	$podfile = $ARGV[0];  # XXX: might be more filenames
+	$Podfile = $ARGV[0];  # XXX: might be more filenames
 	*POD = *ARGV;
     }
-    $htmlfile = "-" unless $htmlfile;	# stdout
-    $htmlroot = "" if $htmlroot eq "/";	# so we don't get a //
-    $htmldir =~ s#/\z## ;               # so we don't get a //
-    if (  $htmlroot eq ''
-       && defined( $htmldir )
-       && $htmldir ne ''
-       && substr( $htmlfile, 0, length( $htmldir ) ) eq $htmldir
+    $Htmlfile = "-" unless $Htmlfile;	# stdout
+    $Htmlroot = "" if $Htmlroot eq "/";	# so we don't get a //
+    $Htmldir =~ s#/\z## ;               # so we don't get a //
+    if (  $Htmlroot eq ''
+       && defined( $Htmldir )
+       && $Htmldir ne ''
+       && substr( $Htmlfile, 0, length( $Htmldir ) ) eq $Htmldir
        )
     {
 	# Set the 'base' url for this file, so that we can use it
 	# as the location from which to calculate relative links
 	# to other files. If this is '', then absolute links will
 	# be used throughout.
-        $htmlfileurl= "$htmldir/" . substr( $htmlfile, length( $htmldir ) + 1);
+        $Htmlfileurl= "$Htmldir/" . substr( $Htmlfile, length( $Htmldir ) + 1);
     }
 
     # read the pod a paragraph at a time
-    warn "Scanning for sections in input file(s)\n" if $verbose;
+    warn "Scanning for sections in input file(s)\n" if $Verbose;
     $/ = "";
     my @poddata  = <POD>;
     close(POD);
@@ -391,64 +384,64 @@ sub pod2html {
     clean_data( \@poddata );
 
     # scan the pod for =head[1-6] directives and build an index
-    my $index = scan_headings(\%sections, @poddata);
+    my $index = scan_headings(\%Sections, @poddata);
 
     unless($index) {
-	warn "No headings in $podfile\n" if $verbose;
+	warn "No headings in $Podfile\n" if $Verbose;
     }
 
     # open the output file
-    open(HTML, ">$htmlfile")
-	    || die "$0: cannot open $htmlfile file for output: $!\n";
+    open(HTML, ">$Htmlfile")
+	    || die "$0: cannot open $Htmlfile file for output: $!\n";
 
     # put a title in the HTML file if one wasn't specified
-    if ($title eq '') {
+    if ($Title eq '') {
 	TITLE_SEARCH: {
  	    for (my $i = 0; $i < @poddata; $i++) {
 		if ($poddata[$i] =~ /^=head1\s*NAME\b/m) {
  		    for my $para ( @poddata[$i, $i+1] ) {
 			last TITLE_SEARCH
-			    if ($title) = $para =~ /(\S+\s+-+.*\S)/s;
+			    if ($Title) = $para =~ /(\S+\s+-+.*\S)/s;
 		    }
 		}
 
 	    }
 	}
     }
-    if (!$title and $podfile =~ /\.pod\z/) {
+    if (!$Title and $Podfile =~ /\.pod\z/) {
 	# probably a split pod so take first =head[12] as title
  	for (my $i = 0; $i < @poddata; $i++) {
-	    last if ($title) = $poddata[$i] =~ /^=head[12]\s*(.*)/;
+	    last if ($Title) = $poddata[$i] =~ /^=head[12]\s*(.*)/;
 	}
-	warn "adopted '$title' as title for $podfile\n"
-	    if $verbose and $title;
+	warn "adopted '$Title' as title for $Podfile\n"
+	    if $Verbose and $Title;
     }
-    if ($title) {
-	$title =~ s/\s*\(.*\)//;
+    if ($Title) {
+	$Title =~ s/\s*\(.*\)//;
     } else {
-	warn "$0: no title for $podfile.\n" unless $quiet;
-	$podfile =~ /^(.*)(\.[^.\/]+)?\z/s;
-	$title = ($podfile eq "-" ? 'No Title' : $1);
-	warn "using $title" if $verbose;
+	warn "$0: no title for $Podfile.\n" unless $Quiet;
+	$Podfile =~ /^(.*)(\.[^.\/]+)?\z/s;
+	$Title = ($Podfile eq "-" ? 'No Title' : $1);
+	warn "using $Title" if $Verbose;
     }
-    $title = html_escape($title);
+    $Title = html_escape($Title);
 
     my $csslink = '';
     my $bodystyle = ' style="background-color: white"';
     my $tdstyle = ' style="background-color: #cccccc"';
 
-    if ($css) {
-      $csslink = qq(\n<link rel="stylesheet" href="$css" type="text/css" />);
+    if ($Css) {
+      $csslink = qq(\n<link rel="stylesheet" href="$Css" type="text/css" />);
       $csslink =~ s,\\,/,g;
       $csslink =~ s,(/.):,$1|,;
       $bodystyle = '';
       $tdstyle = '';
     }
 
-      my $block = $header ? <<END_OF_BLOCK : '';
+      my $block = $Header ? <<END_OF_BLOCK : '';
 <table border="0" width="100%" cellspacing="0" cellpadding="3">
 <tr><td class="block"$tdstyle valign="middle">
-<big><strong><span class="block">&nbsp;$title</span></strong></big>
+<big><strong><span class="block">&nbsp;$Title</span></strong></big>
 </td></tr>
 </table>
 END_OF_BLOCK
@@ -457,7 +450,7 @@ END_OF_BLOCK
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-<title>$title</title>$csslink
+<title>$Title</title>$csslink
 <link rev="made" href="mailto:$Config{perladmin}" />
 </head>
 
@@ -465,35 +458,35 @@ END_OF_BLOCK
 $block
 END_OF_HEAD
 
-    # load/reload/validate/cache %pages and %items
-    get_cache($dircache, $itemcache, \@podpath, $podroot, $recurse);
+    # load/reload/validate/cache %Pages and %Items
+    get_cache($Dircache, $Itemcache, \@Podpath, $Podroot, $Recurse);
 
     # scan the pod for =item directives
-    scan_items( \%local_items, "", @poddata);
+    scan_items( \%Local_Items, "", @poddata);
 
-    # put an index at the top of the file.  note, if $doindex is 0 we
+    # put an index at the top of the file.  note, if $Doindex is 0 we
     # still generate an index, but surround it with an html comment.
     # that way some other program can extract it if desired.
     $index =~ s/--+/-/g;
     print HTML "<p><a name=\"__index__\"></a></p>\n";
     print HTML "<!-- INDEX BEGIN -->\n";
-    print HTML "<!--\n" unless $doindex;
+    print HTML "<!--\n" unless $Doindex;
     print HTML $index;
-    print HTML "-->\n" unless $doindex;
+    print HTML "-->\n" unless $Doindex;
     print HTML "<!-- INDEX END -->\n\n";
-    print HTML "<hr />\n" if $doindex and $index;
+    print HTML "<hr />\n" if $Doindex and $index;
 
     # now convert this file
     my $after_item;             # set to true after an =item
     my $need_dd = 0;
-    warn "Converting input file $podfile\n" if $verbose;
+    warn "Converting input file $Podfile\n" if $Verbose;
     foreach my $i (0..$#poddata){
-        $ptQuote = 0; # status of quote conversion
+        $PTQuote = 0; # status of quote conversion
 
 	$_ = $poddata[$i];
-	$paragraph = $i+1;
+	$Paragraph = $i+1;
 	if (/^(=.*)/s) {	# is it a pod directive?
-	    $ignore = 0;
+	    $Ignore = 0;
 	    $after_item = 0;
 	    $need_dd = 0;
 	    $_ = $1;
@@ -506,10 +499,10 @@ END_OF_HEAD
 	    } elsif (/^=pod/) {			# =pod
 		process_pod();
 	    } else {
-		next if @begin_stack && $begin_stack[-1] ne 'html';
+		next if @Begin_Stack && $Begin_Stack[-1] ne 'html';
 
 		if (/^=(head[1-6])\s+(.*\S)/s) {	# =head[1-6] heading
-		    process_head( $1, $2, $doindex && $index );
+		    process_head( $1, $2, $Doindex && $index );
 		} elsif (/^=item\s*(.*\S)?/sm) {	# =item text
 		    $need_dd = process_item( $1 );
 		    $after_item = 1;
@@ -521,16 +514,16 @@ END_OF_HEAD
 		    process_for($1,$2);
 		} else {
 		    /^=(\S*)\s*/;
-		    warn "$0: $podfile: unknown pod directive '$1' in "
-		       . "paragraph $paragraph.  ignoring.\n";
+		    warn "$0: $Podfile: unknown pod directive '$1' in "
+		       . "paragraph $Paragraph.  ignoring.\n";
 		}
 	    }
-	    $top = 0;
+	    $Top = 0;
 	}
 	else {
-	    next if $ignore;
-	    next if @begin_stack && $begin_stack[-1] ne 'html';
-	    print HTML and next if @begin_stack && $begin_stack[-1] eq 'html';
+	    next if $Ignore;
+	    next if @Begin_Stack && $Begin_Stack[-1] ne 'html';
+	    print HTML and next if @Begin_Stack && $Begin_Stack[-1] eq 'html';
 	    print HTML "<dd>\n" if $need_dd;
 	    my $text = $_;
 	    if( $text =~ /\A\s+/ ){
@@ -564,7 +557,7 @@ END_OF_HEAD
 
 		if( $after_item ){
 		    print HTML "$text\n";
-		    $after_lpar = 1;
+		    $After_Lpar = 1;
 		} else {
 		    print HTML "<p>$text</p>\n";
 		}
@@ -578,8 +571,8 @@ END_OF_HEAD
     finish_list();
 
     # link to page index
-    print HTML "<p><a href=\"#__index__\"><small>$backlink</small></a></p>\n"
-	if $doindex and $index and $backlink;
+    print HTML "<p><a href=\"#__index__\"><small>$Backlink</small></a></p>\n"
+	if $Doindex and $index and $Backlink;
 
     print HTML <<END_OF_TAIL;
 $block
@@ -591,19 +584,15 @@ END_OF_TAIL
     # close the html file
     close(HTML);
 
-    warn "Finished\n" if $verbose;
+    warn "Finished\n" if $Verbose;
 }
 
 ##############################################################################
 
-my $usage;			# see below
 sub usage {
     my $podfile = shift;
     warn "$0: $podfile: @_\n" if @_;
-    die $usage;
-}
-
-$usage =<<END_OF_USAGE;
+    die <<END_OF_USAGE;
 Usage:  $0 --help --htmlroot=<name> --infile=<name> --outfile=<name>
            --podpath=<name>:...:<name> --podroot=<name>
            --libpods=<name>:...:<name> --recurse --verbose --index
@@ -641,6 +630,8 @@ Usage:  $0 --help --htmlroot=<name> --infile=<name> --outfile=<name>
 
 END_OF_USAGE
 
+}
+
 sub parse_command_line {
     my ($opt_backlink,$opt_cachedir,$opt_css,$opt_flush,$opt_header,$opt_help,
 	$opt_htmldir,$opt_htmlroot,$opt_index,$opt_infile,$opt_libpods,
@@ -674,33 +665,35 @@ sub parse_command_line {
     usage("-") if defined $opt_help;	# see if the user asked for help
     $opt_help = "";			# just to make -w shut-up.
 
-    @podpath  = split(":", $opt_podpath) if defined $opt_podpath;
-    @libpods  = split(":", $opt_libpods) if defined $opt_libpods;
+    @Podpath  = split(":", $opt_podpath) if defined $opt_podpath;
+    @Libpods  = split(":", $opt_libpods) if defined $opt_libpods;
 
-    $backlink = $opt_backlink if defined $opt_backlink;
-    $cachedir = $opt_cachedir if defined $opt_cachedir;
-    $css      = $opt_css      if defined $opt_css;
-    $header   = $opt_header   if defined $opt_header;
-    $htmldir  = $opt_htmldir  if defined $opt_htmldir;
-    $htmlroot = $opt_htmlroot if defined $opt_htmlroot;
-    $doindex  = $opt_index    if defined $opt_index;
-    $podfile  = $opt_infile   if defined $opt_infile;
-    $htmlfile = $opt_outfile  if defined $opt_outfile;
-    $podroot  = $opt_podroot  if defined $opt_podroot;
-    $quiet    = $opt_quiet    if defined $opt_quiet;
-    $recurse  = $opt_recurse  if defined $opt_recurse;
-    $title    = $opt_title    if defined $opt_title;
-    $verbose  = $opt_verbose  if defined $opt_verbose;
+    $Backlink = $opt_backlink if defined $opt_backlink;
+    $Cachedir = $opt_cachedir if defined $opt_cachedir;
+    $Css      = $opt_css      if defined $opt_css;
+    $Header   = $opt_header   if defined $opt_header;
+    $Htmldir  = $opt_htmldir  if defined $opt_htmldir;
+    $Htmlroot = $opt_htmlroot if defined $opt_htmlroot;
+    $Doindex  = $opt_index    if defined $opt_index;
+    $Podfile  = $opt_infile   if defined $opt_infile;
+    $Htmlfile = $opt_outfile  if defined $opt_outfile;
+    $Podroot  = $opt_podroot  if defined $opt_podroot;
+    $Quiet    = $opt_quiet    if defined $opt_quiet;
+    $Recurse  = $opt_recurse  if defined $opt_recurse;
+    $Title    = $opt_title    if defined $opt_title;
+    $Verbose  = $opt_verbose  if defined $opt_verbose;
 
     warn "Flushing item and directory caches\n"
 	if $opt_verbose && defined $opt_flush;
-    $dircache = "$cachedir/pod2htmd$cache_ext";
-    $itemcache = "$cachedir/pod2htmi$cache_ext";
-    unlink($dircache, $itemcache) if defined $opt_flush;
+    $Dircache = "$Cachedir/pod2htmd.tmp";
+    $Itemcache = "$Cachedir/pod2htmi.tmp";
+    if (defined $opt_flush) {
+	1 while unlink($Dircache, $Itemcache);
+    }
 }
 
 
-my $saved_cache_key;
+my $Saved_Cache_Key;
 
 sub get_cache {
     my($dircache, $itemcache, $podpath, $podroot, $recurse) = @_;
@@ -712,23 +705,23 @@ sub get_cache {
 
     my $this_cache_key = cache_key(@cache_key_args);
 
-    return if $saved_cache_key and $this_cache_key eq $saved_cache_key;
+    return if $Saved_Cache_Key and $this_cache_key eq $Saved_Cache_Key;
 
-    # load the cache of %pages and %items if possible.  $tests will be
+    # load the cache of %Pages and %Items if possible.  $tests will be
     # non-zero if successful.
     my $tests = 0;
     if (-f $dircache && -f $itemcache) {
-	warn "scanning for item cache\n" if $verbose;
+	warn "scanning for item cache\n" if $Verbose;
 	$tests = load_cache($dircache, $itemcache, $podpath, $podroot);
     }
 
     # if we didn't succeed in loading the cache then we must (re)build
-    #  %pages and %items.
+    #  %Pages and %Items.
     if (!$tests) {
-	warn "scanning directories in pod-path\n" if $verbose;
+	warn "scanning directories in pod-path\n" if $Verbose;
 	scan_podpath($podroot, $recurse, 0);
     }
-    $saved_cache_key = cache_key(@cache_key_args);
+    $Saved_Cache_Key = cache_key(@cache_key_args);
 }
 
 sub cache_key {
@@ -739,7 +732,7 @@ sub cache_key {
 
 #
 # load_cache - tries to find if the caches stored in $dircache and $itemcache
-#  are valid caches of %pages and %items.  if they are valid then it loads
+#  are valid caches of %Pages and %Items.  if they are valid then it loads
 #  them and returns a non-zero value.
 #
 sub load_cache {
@@ -769,14 +762,14 @@ sub load_cache {
 	return 0;
     }
 
-    warn "loading item cache\n" if $verbose;
+    warn "loading item cache\n" if $Verbose;
     while (<CACHE>) {
 	/(.*?) (.*)$/;
-	$items{$1} = $2;
+	$Items{$1} = $2;
     }
     close(CACHE);
 
-    warn "scanning for directory cache\n" if $verbose;
+    warn "scanning for directory cache\n" if $Verbose;
     open(CACHE, "<$dircache") ||
 	die "$0: error opening $dircache for reading: $!\n";
     $/ = "\n";
@@ -798,10 +791,10 @@ sub load_cache {
 	return 0;
     }
 
-    warn "loading directory cache\n" if $verbose;
+    warn "loading directory cache\n" if $Verbose;
     while (<CACHE>) {
 	/(.*?) (.*)$/;
-	$pages{$1} = $2;
+	$Pages{$1} = $2;
     }
 
     close(CACHE);
@@ -812,7 +805,7 @@ sub load_cache {
 #
 # scan_podpath - scans the directories specified in @podpath for directories,
 #  .pod files, and .pm files.  it also scans the pod files specified in
-#  @libpods for =item directives.
+#  @Libpods for =item directives.
 #
 sub scan_podpath {
     my($podroot, $recurse, $append) = @_;
@@ -820,28 +813,28 @@ sub scan_podpath {
     my($libpod, $dirname, $pod, @files, @poddata);
 
     unless($append) {
-	%items = ();
-	%pages = ();
+	%Items = ();
+	%Pages = ();
     }
 
-    # scan each directory listed in @podpath
+    # scan each directory listed in @Podpath
     $pwd = getcwd();
     chdir($podroot)
 	|| die "$0: error changing to directory $podroot: $!\n";
-    foreach $dir (@podpath) {
+    foreach $dir (@Podpath) {
 	scan_dir($dir, $recurse);
     }
 
-    # scan the pods listed in @libpods for =item directives
-    foreach $libpod (@libpods) {
+    # scan the pods listed in @Libpods for =item directives
+    foreach $libpod (@Libpods) {
 	# if the page isn't defined then we won't know where to find it
 	# on the system.
-	next unless defined $pages{$libpod} && $pages{$libpod};
+	next unless defined $Pages{$libpod} && $Pages{$libpod};
 
 	# if there is a directory then use the .pod and .pm files within it.
 	# NOTE: Only finds the first so-named directory in the tree.
-#	if ($pages{$libpod} =~ /([^:]*[^(\.pod|\.pm)]):/) {
-	if ($pages{$libpod} =~ /([^:]*(?<!\.pod)(?<!\.pm)):/) {
+#	if ($Pages{$libpod} =~ /([^:]*[^(\.pod|\.pm)]):/) {
+	if ($Pages{$libpod} =~ /([^:]*(?<!\.pod)(?<!\.pm)):/) {
 	    #  find all the .pod and .pm files within the directory
 	    $dirname = $1;
 	    opendir(DIR, $dirname) ||
@@ -857,17 +850,17 @@ sub scan_podpath {
 		close(POD);
 		clean_data( \@poddata );
 
-		scan_items( \%items, "$dirname/$pod", @poddata);
+		scan_items( \%Items, "$dirname/$pod", @poddata);
 	    }
 
 	    # use the names of files as =item directives too.
 ### Don't think this should be done this way - confuses issues.(WL)
 ###	    foreach $pod (@files) {
 ###		$pod =~ /^(.*)(\.pod|\.pm)$/;
-###		$items{$1} = "$dirname/$1.html" if $1;
+###		$Items{$1} = "$dirname/$1.html" if $1;
 ###	    }
-	} elsif ($pages{$libpod} =~ /([^:]*\.pod):/ ||
-		 $pages{$libpod} =~ /([^:]*\.pm):/) {
+	} elsif ($Pages{$libpod} =~ /([^:]*\.pod):/ ||
+		 $Pages{$libpod} =~ /([^:]*\.pm):/) {
 	    # scan the .pod or .pm file for =item directives
 	    $pod = $1;
 	    open(POD, "<$pod") ||
@@ -876,7 +869,7 @@ sub scan_podpath {
 	    close(POD);
 	    clean_data( \@poddata );
 
-	    scan_items( \%items, "$pod", @poddata);
+	    scan_items( \%Items, "$pod", @poddata);
 	} else {
 	    warn "$0: shouldn't be here (line ".__LINE__."\n";
 	}
@@ -887,25 +880,25 @@ sub scan_podpath {
 	|| die "$0: error changing to directory $pwd: $!\n";
 
     # cache the item list for later use
-    warn "caching items for later use\n" if $verbose;
-    open(CACHE, ">$itemcache") ||
-	die "$0: error open $itemcache for writing: $!\n";
+    warn "caching items for later use\n" if $Verbose;
+    open(CACHE, ">$Itemcache") ||
+	die "$0: error open $Itemcache for writing: $!\n";
 
-    print CACHE join(":", @podpath) . "\n$podroot\n";
-    foreach my $key (keys %items) {
-	print CACHE "$key $items{$key}\n";
+    print CACHE join(":", @Podpath) . "\n$podroot\n";
+    foreach my $key (keys %Items) {
+	print CACHE "$key $Items{$key}\n";
     }
 
     close(CACHE);
 
     # cache the directory list for later use
-    warn "caching directories for later use\n" if $verbose;
-    open(CACHE, ">$dircache") ||
-	die "$0: error open $dircache for writing: $!\n";
+    warn "caching directories for later use\n" if $Verbose;
+    open(CACHE, ">$Dircache") ||
+	die "$0: error open $Dircache for writing: $!\n";
 
-    print CACHE join(":", @podpath) . "\n$podroot\n";
-    foreach my $key (keys %pages) {
-	print CACHE "$key $pages{$key}\n";
+    print CACHE join(":", @Podpath) . "\n$podroot\n";
+    foreach my $key (keys %Pages) {
+	print CACHE "$key $Pages{$key}\n";
     }
 
     close(CACHE);
@@ -929,22 +922,22 @@ sub scan_dir {
 	die "$0: error opening directory $dir: $!\n";
     while (defined($_ = readdir(DIR))) {
 	if (-d "$dir/$_" && $_ ne "." && $_ ne "..") {	    # directory
-	    $pages{$_}  = "" unless defined $pages{$_};
-	    $pages{$_} .= "$dir/$_:";
+	    $Pages{$_}  = "" unless defined $Pages{$_};
+	    $Pages{$_} .= "$dir/$_:";
 	    push(@subdirs, $_);
 	} elsif (/\.pod\z/) {	    	    	    	    # .pod
 	    s/\.pod\z//;
-	    $pages{$_}  = "" unless defined $pages{$_};
-	    $pages{$_} .= "$dir/$_.pod:";
+	    $Pages{$_}  = "" unless defined $Pages{$_};
+	    $Pages{$_} .= "$dir/$_.pod:";
 	    push(@pods, "$dir/$_.pod");
 	} elsif (/\.html\z/) { 	    	    	    	    # .html
 	    s/\.html\z//;
-	    $pages{$_}  = "" unless defined $pages{$_};
-	    $pages{$_} .= "$dir/$_.pod:";
+	    $Pages{$_}  = "" unless defined $Pages{$_};
+	    $Pages{$_} .= "$dir/$_.pod:";
 	} elsif (/\.pm\z/) { 	    	    	    	    # .pm
 	    s/\.pm\z//;
-	    $pages{$_}  = "" unless defined $pages{$_};
-	    $pages{$_} .= "$dir/$_.pm:";
+	    $Pages{$_}  = "" unless defined $Pages{$_};
+	    $Pages{$_} .= "$dir/$_.pm:";
 	    push(@pods, "$dir/$_.pm");
 	}
     }
@@ -966,9 +959,7 @@ sub scan_headings {
     my($sections, @data) = @_;
     my($tag, $which_head, $otitle, $listdepth, $index);
 
-    # here we need	local $ignore = 0;
-    #  unfortunately, we can't have it, because $ignore is lexical
-    $ignore = 0;
+    local $Ignore = 0;
 
     $listdepth = 0;
     $index = "";
@@ -1007,8 +998,6 @@ sub scan_headings {
 
     # get rid of bogus lists
     $index =~ s,\t*<ul>\s*</ul>\n,,g;
-
-    $ignore = 1;	# restore old value;
 
     return $index;
 }
@@ -1055,17 +1044,17 @@ sub process_head {
     $tag =~ /head([1-6])/;
     my $level = $1;
 
-    if( $listlevel ){
-	warn "$0: $podfile: unterminated list at =head in paragraph $paragraph.  ignoring.\n";
-        while( $listlevel ){
+    if( $Listlevel ){
+	warn "$0: $Podfile: unterminated list at =head in paragraph $Paragraph.  ignoring.\n";
+        while( $Listlevel ){
             process_back();
         }
     }
 
     print HTML "<p>\n";
-    if( $level == 1 && ! $top ){
-      print HTML "<a href=\"#__index__\"><small>$backlink</small></a>\n"
-        if $hasindex and $backlink;
+    if( $level == 1 && ! $Top ){
+      print HTML "<a href=\"#__index__\"><small>$Backlink</small></a>\n"
+        if $hasindex and $Backlink;
       print HTML "</p>\n<hr />\n"
     } else {
       print HTML "</p>\n";
@@ -1091,7 +1080,7 @@ sub emit_item_tag($$$){
     ### print STDERR "emit_item_tag=$item ($text)\n";
 
     print HTML '<strong>';
-    if ($items_named{$item}++) {
+    if ($Items_Named{$item}++) {
 	print HTML process_text( \$otext );
     } else {
         my $name = 'item_' . $item;
@@ -1104,8 +1093,8 @@ sub emit_item_tag($$$){
 
 sub emit_li {
     my( $tag ) = @_;
-    if( $items_seen[$listlevel]++ == 0 ){
-	push( @listend, "</$tag>" );
+    if( $Items_Seen[$Listlevel]++ == 0 ){
+	push( @Listend, "</$tag>" );
 	print HTML "<$tag>\n";
     }
     my $emitted = $tag eq 'dl' ? 'dt' : 'li';
@@ -1123,15 +1112,15 @@ sub process_item {
     # lots of documents start a list without doing an =over.  this is
     # bad!  but, the proper thing to do seems to be to just assume
     # they did do an =over.  so warn them once and then continue.
-    if( $listlevel == 0 ){
-	warn "$0: $podfile: unexpected =item directive in paragraph $paragraph.  ignoring.\n";
+    if( $Listlevel == 0 ){
+	warn "$0: $Podfile: unexpected =item directive in paragraph $Paragraph.  ignoring.\n";
 	process_over();
     }
 
     # formatting: insert a paragraph if preceding item has >1 paragraph
-    if( $after_lpar ){
+    if( $After_Lpar ){
 	print HTML "<p></p>\n";
-	$after_lpar = 0;
+	$After_Lpar = 0;
     }
 
     # remove formatting instructions from the text
@@ -1173,41 +1162,41 @@ sub process_item {
 #
 sub process_over {
     # start a new list
-    $listlevel++;
-    push( @items_seen, 0 );
-    $after_lpar = 0;
+    $Listlevel++;
+    push( @Items_Seen, 0 );
+    $After_Lpar = 0;
 }
 
 #
 # process_back - process a pod back tag and convert it to HTML format.
 #
 sub process_back {
-    if( $listlevel == 0 ){
-	warn "$0: $podfile: unexpected =back directive in paragraph $paragraph.  ignoring.\n";
+    if( $Listlevel == 0 ){
+	warn "$0: $Podfile: unexpected =back directive in paragraph $Paragraph.  ignoring.\n";
 	return;
     }
 
-    # close off the list.  note, I check to see if $listend[$listlevel] is
+    # close off the list.  note, I check to see if $Listend[$Listlevel] is
     # defined because an =item directive may have never appeared and thus
-    # $listend[$listlevel] may have never been initialized.
-    $listlevel--;
-    if( defined $listend[$listlevel] ){
-	print HTML '<p></p>' if $after_lpar;
-	print HTML $listend[$listlevel];
+    # $Listend[$Listlevel] may have never been initialized.
+    $Listlevel--;
+    if( defined $Listend[$Listlevel] ){
+	print HTML '<p></p>' if $After_Lpar;
+	print HTML $Listend[$Listlevel];
         print HTML "\n";
-        pop( @listend );
+        pop( @Listend );
     }
-    $after_lpar = 0;
+    $After_Lpar = 0;
 
     # clean up item count
-    pop( @items_seen );
+    pop( @Items_Seen );
 }
 
 #
 # process_cut - process a pod cut tag, thus start ignoring pod directives.
 #
 sub process_cut {
-    $ignore = 1;
+    $Ignore = 1;
 }
 
 #
@@ -1215,7 +1204,7 @@ sub process_cut {
 # until we see a corresponding cut.
 #
 sub process_pod {
-    # no need to set $ignore to 0 cause the main loop did it
+    # no need to set $Ignore to 0 cause the main loop did it
 }
 
 #
@@ -1243,7 +1232,7 @@ sub process_for {
 sub process_begin {
     my($whom, $text) = @_;
     $whom = lc($whom);
-    push (@begin_stack, $whom);
+    push (@Begin_Stack, $whom);
     if ( $whom =~ /^(pod2)?html$/) {
 	print HTML $text if $text;
     }
@@ -1256,10 +1245,10 @@ sub process_begin {
 sub process_end {
     my($whom, $text) = @_;
     $whom = lc($whom);
-    if ($begin_stack[-1] ne $whom ) {
-	die "Unmatched begin/end at chunk $paragraph\n"
+    if ($Begin_Stack[-1] ne $whom ) {
+	die "Unmatched begin/end at chunk $Paragraph\n"
     }
-    pop( @begin_stack );
+    pop( @Begin_Stack );
 }
 
 #
@@ -1268,7 +1257,7 @@ sub process_end {
 sub process_pre {
     my( $text ) = @_;
     my( $rest );
-    return if $ignore;
+    return if $Ignore;
 
     $rest = $$text;
 
@@ -1287,10 +1276,10 @@ sub process_pre {
     $rest =~ s{
 	         (\s*)(perl\w+)
 	      }{
-		 if ( defined $pages{$2} ){	# is a link
-		     qq($1<a href="$htmlroot/$pages{$2}">$2</a>);
-		 } elsif (defined $pages{dosify($2)}) {	# is a link
-		     qq($1<a href="$htmlroot/$pages{dosify($2)}">$2</a>);
+		 if ( defined $Pages{$2} ){	# is a link
+		     qq($1<a href="$Htmlroot/$Pages{$2}">$2</a>);
+		 } elsif (defined $Pages{dosify($2)}) {	# is a link
+		     qq($1<a href="$Htmlroot/$Pages{dosify($2)}">$2</a>);
 		 } else {
 		     "$1$2";
 		 }
@@ -1299,16 +1288,16 @@ sub process_pre {
 		 (<a\ href="?) ([^>:]*:)? ([^>:]*) \.pod: ([^>:]*:)?
                }{
                   my $url ;
-                  if ( $htmlfileurl ne '' ){
+                  if ( $Htmlfileurl ne '' ){
 		     # Here, we take advantage of the knowledge
-		     # that $htmlfileurl ne '' implies $htmlroot eq ''.
-		     # Since $htmlroot eq '', we need to prepend $htmldir
+		     # that $Htmlfileurl ne '' implies $Htmlroot eq ''.
+		     # Since $Htmlroot eq '', we need to prepend $Htmldir
 		     # on the fron of the link to get the absolute path
 		     # of the link's target. We check for a leading '/'
 		     # to avoid corrupting links that are #, file:, etc.
 		     my $old_url = $3 ;
-		     $old_url = "$htmldir$old_url" if $old_url =~ m{^\/};
- 		     $url = relativize_url( "$old_url.html", $htmlfileurl );
+		     $old_url = "$Htmldir$old_url" if $old_url =~ m{^\/};
+ 		     $url = relativize_url( "$old_url.html", $Htmlfileurl );
 	          } else {
 		     $url = "$3.html" ;
 		  }
@@ -1336,23 +1325,25 @@ sub process_pre {
     my $any  = "${ltrs}${gunk}${punc}";
 
     $rest =~ s{
-        \b                          # start at word boundary
-        (                           # begin $1  {
-          $urls     :               # need resource and a colon
-	  (?!:)                     # Ignore File::, among others.
-          [$any] +?                 # followed by one or more of any valid
-                                    #   character, but be conservative and
-                                    #   take only what you need to....
-        )                           # end   $1  }
-        (?=                         # look-ahead non-consumptive assertion
-                [$punc]*            # either 0 or more punctuation
-                (?:                 #   followed
-                    [^$any]         #   by a non-url char
-                    |               #   or
-                    $               #   end of the string
-                )                   #
-            |                       # or else
-                $                   #   then end of the string
+	\b			# start at word boundary
+	(			# begin $1  {
+	    $urls :		# need resource and a colon
+	    (?!:)		# Ignore File::, among others.
+	    [$any] +?		# followed by one or more of any valid
+				#   character, but be conservative and
+				#   take only what you need to....
+	)			# end   $1  }
+	(?=
+	    &quot; &gt;		# maybe pre-quoted '<a href="...">'
+	|			# or:
+	    [$punc]*		# 0 or more punctuation
+	    (?:			#   followed
+		[^$any]		#   by a non-url char
+	    |			#   or
+		$		#   end of the string
+	    )			#
+	|			# or else
+	    $			#   then end of the string
         )
       }{<a href="$1">$1</a>}igox;
 
@@ -1369,12 +1360,12 @@ sub process_pre {
 #
 sub pure_text($){
     my $text = shift();
-    process_puretext( $text, \$ptQuote, 1 );
+    process_puretext( $text, \$PTQuote, 1 );
 }
 
 sub inIS_text($){
     my $text = shift();
-    process_puretext( $text, \$ptQuote, 0 );
+    process_puretext( $text, \$PTQuote, 0 );
 }
 
 #
@@ -1459,7 +1450,7 @@ sub pattern ($) { $_[0] ? '[^\S\n]+'.('>' x ($_[0] + 1)) : '>' }
 sub closing ($) { local($_) = shift; (defined && s/\s+$//) ? length : 0 }
 
 sub process_text {
-    return if $ignore;
+    return if $Ignore;
     my( $tref ) = @_;
     my $res = process_text1( 0, $tref );
     $$tref = $res;
@@ -1610,7 +1601,7 @@ sub process_text1($$;$$){
 
             # warning; show some text.
             $linktext = $opar unless defined $linktext;
-            warn "$0: $podfile: cannot resolve L<$opar> in paragraph $paragraph.\n";
+            warn "$0: $Podfile: cannot resolve L<$opar> in paragraph $Paragraph.\n";
         }
 
         # now we have a URL or just plain code
@@ -1632,7 +1623,7 @@ sub process_text1($$;$$){
 
     } elsif( $func eq 'Z' ){
 	# Z<> - empty
-	warn "$0: $podfile: invalid X<> in paragraph $paragraph.\n"
+	warn "$0: $Podfile: invalid X<> in paragraph $Paragraph.\n"
 	    unless $$rstr =~ s/^>//;
 
     } else {
@@ -1651,7 +1642,7 @@ sub process_text1($$;$$){
 	if( $lev == 1 ){
 	    $res .= pure_text( $$rstr );
 	} else {
-	    warn "$0: $podfile: undelimited $func<> in paragraph $paragraph.\n";
+	    warn "$0: $Podfile: undelimited $func<> in paragraph $Paragraph.\n";
 	}
     }
     return $res;
@@ -1675,7 +1666,7 @@ sub go_ahead($$$){
 	}
 	$res .= $2;
     }
-    warn "$0: $podfile: undelimited $func<> in paragraph $paragraph.\n";
+    warn "$0: $Podfile: undelimited $func<> in paragraph $Paragraph.\n";
     return $res;
 }
 
@@ -1740,14 +1731,14 @@ sub page_sect($$) {
     my( $linktext, $page83, $link);	# work strings
 
     # check if we know that this is a section in this page
-    if (!defined $pages{$page} && defined $sections{$page}) {
+    if (!defined $Pages{$page} && defined $Sections{$page}) {
 	$section = $page;
 	$page = "";
         ### print STDERR "reset page='', section=$section\n";
     }
 
     $page83=dosify($page);
-    $page=$page83 if (defined $pages{$page83});
+    $page=$page83 if (defined $Pages{$page83});
     if ($page eq "") {
         $link = "#" . anchorify( $section );
     } elsif ( $page =~ /::/ ) {
@@ -1758,16 +1749,16 @@ sub page_sect($$) {
 	# an intermediate page that is an index to all such pages.
 	my $page_name = $page ;
 	$page_name =~ s,^.*/,,s ;
-	if ( defined( $pages{ $page_name } ) &&
-	     $pages{ $page_name } =~ /([^:]*$page)\.(?:pod|pm):/
+	if ( defined( $Pages{ $page_name } ) &&
+	     $Pages{ $page_name } =~ /([^:]*$page)\.(?:pod|pm):/
 	   ) {
 	    $page = $1 ;
 	}
 	else {
 	    # NOTE: This branch assumes that all A::B pages are located in
-	    # $htmlroot/A/B.html . This is often incorrect, since they are
-	    # often in $htmlroot/lib/A/B.html or such like. Perhaps we could
-	    # analyze the contents of %pages and figure out where any
+	    # $Htmlroot/A/B.html . This is often incorrect, since they are
+	    # often in $Htmlroot/lib/A/B.html or such like. Perhaps we could
+	    # analyze the contents of %Pages and figure out where any
 	    # cousins of A::B are, then assume that.  So, if A::B isn't found,
 	    # but A::C is found in lib/A/C.pm, then A::B is assumed to be in
 	    # lib/A/B.pm. This is also limited, but it's an improvement.
@@ -1775,9 +1766,9 @@ sub page_sect($$) {
 	    # nonetheless?
 
 	}
-	$link = "$htmlroot/$page.html";
+	$link = "$Htmlroot/$page.html";
 	$link .= "#" . anchorify( $section ) if ($section);
-    } elsif (!defined $pages{$page}) {
+    } elsif (!defined $Pages{$page}) {
 	$link = "";
     } else {
 	$section = anchorify( $section ) if $section ne "";
@@ -1785,9 +1776,9 @@ sub page_sect($$) {
 
 	# if there is a directory by the name of the page, then assume that an
 	# appropriate section will exist in the subdirectory
-#	if ($section ne "" && $pages{$page} =~ /([^:]*[^(\.pod|\.pm)]):/) {
-	if ($section ne "" && $pages{$page} =~ /([^:]*(?<!\.pod)(?<!\.pm)):/) {
-	    $link = "$htmlroot/$1/$section.html";
+#	if ($section ne "" && $Pages{$page} =~ /([^:]*[^(\.pod|\.pm)]):/) {
+	if ($section ne "" && $Pages{$page} =~ /([^:]*(?<!\.pod)(?<!\.pm)):/) {
+	    $link = "$Htmlroot/$1/$section.html";
             ### print STDERR "...link=$link\n";
 
 	# since there is no directory by the name of the page, the section will
@@ -1798,10 +1789,10 @@ sub page_sect($$) {
             ### print STDERR "...section=$section\n";
 
 	    # check if there is a .pod with the page name
-	    if ($pages{$page} =~ /([^:]*)\.pod:/) {
-		$link = "$htmlroot/$1.html$section";
-	    } elsif ($pages{$page} =~ /([^:]*)\.pm:/) {
-		$link = "$htmlroot/$1.html$section";
+	    if ($Pages{$page} =~ /([^:]*)\.pod:/) {
+		$link = "$Htmlroot/$1.html$section";
+	    } elsif ($Pages{$page} =~ /([^:]*)\.pm:/) {
+		$link = "$Htmlroot/$1.html$section";
 	    } else {
 		$link = "";
 	    }
@@ -1809,16 +1800,16 @@ sub page_sect($$) {
     }
 
     if ($link) {
-	# Here, we take advantage of the knowledge that $htmlfileurl ne ''
-	# implies $htmlroot eq ''. This means that the link in question
-	# needs a prefix of $htmldir if it begins with '/'. The test for
+	# Here, we take advantage of the knowledge that $Htmlfileurl ne ''
+	# implies $Htmlroot eq ''. This means that the link in question
+	# needs a prefix of $Htmldir if it begins with '/'. The test for
 	# the initial '/' is done to avoid '#'-only links, and to allow
 	# for other kinds of links, like file:, ftp:, etc.
         my $url ;
-        if (  $htmlfileurl ne '' ) {
-            $link = "$htmldir$link" if $link =~ m{^/}s;
-            $url = relativize_url( $link, $htmlfileurl );
-# print( "  b: [$link,$htmlfileurl,$url]\n" );
+        if (  $Htmlfileurl ne '' ) {
+            $link = "$Htmldir$link" if $link =~ m{^/}s;
+            $url = relativize_url( $link, $Htmlfileurl );
+# print( "  b: [$link,$Htmlfileurl,$url]\n" );
 	}
 	else {
             $url = $link ;
@@ -1877,20 +1868,20 @@ sub coderef($$){
 	$page =~ s{::}{/}g;
 
 	# Do we take it? Item could be a section!
-	my $base = $items{$fid} || "";
+	my $base = $Items{$fid} || "";
 	$base =~ s{[^/]*/}{};
 	if( $base ne "$page.html" ){
-            ###   print STDERR "coderef( $page, $item ): items{$fid} = $items{$fid} = $base => discard page!\n";
+            ###   print STDERR "coderef( $page, $item ): items{$fid} = $Items{$fid} = $base => discard page!\n";
 	    $page = undef();
 	}
 
     } else {
         # no page - local items precede cached items
 	if( defined( $fid ) ){
-	    if(  exists $local_items{$fid} ){
-		$page = $local_items{$fid};
+	    if(  exists $Local_Items{$fid} ){
+		$page = $Local_Items{$fid};
 	    } else {
-		$page = $items{$fid};
+		$page = $Items{$fid};
 	    }
 	}
     }
@@ -1899,16 +1890,16 @@ sub coderef($$){
     # =item directive, then create a link to that page.
     if( defined $page ){
 	if( $page ){
-            if( exists $pages{$page} and $pages{$page} =~ /([^:.]*)\.[^:]*:/){
+            if( exists $Pages{$page} and $Pages{$page} =~ /([^:.]*)\.[^:]*:/){
 		$page = $1 . '.html';
 	    }
-	    my $link = "$htmlroot/$page#item_" . anchorify($fid);
+	    my $link = "$Htmlroot/$page#item_" . anchorify($fid);
 
-	    # Here, we take advantage of the knowledge that $htmlfileurl
-	    # ne '' implies $htmlroot eq ''.
-	    if (  $htmlfileurl ne '' ) {
-		$link = "$htmldir$link" ;
-		$url = relativize_url( $link, $htmlfileurl ) ;
+	    # Here, we take advantage of the knowledge that $Htmlfileurl
+	    # ne '' implies $Htmlroot eq ''.
+	    if (  $Htmlfileurl ne '' ) {
+		$link = "$Htmldir$link" ;
+		$url = relativize_url( $link, $Htmlfileurl ) ;
 	    } else {
 		$url = $link ;
 	    }
@@ -1940,9 +1931,9 @@ sub relative_url {
 # after the entire pod file has been read and converted.
 #
 sub finish_list {
-    while ($listlevel > 0) {
+    while ($Listlevel > 0) {
 	print HTML "</dl>\n";
-	$listlevel--;
+	$Listlevel--;
     }
 }
 
@@ -1963,12 +1954,12 @@ sub htmlify {
 }
 
 #
-# similar to htmlify, but turns spaces into underscores
+# similar to htmlify, but turns non-alphanumerics into underscores
 #
 sub anchorify {
     my ($anchor) = @_;
     $anchor = htmlify($anchor);
-    $anchor =~ s/\s/_/g; # fixup spaces left by htmlify
+    $anchor =~ s/\W/_/g;
     return $anchor;
 }
 
@@ -2038,7 +2029,7 @@ sub depod1($;$$){
 #   a) =item text
 #   b) contents of C<...>
 #
-my @hc;
+my @HC;
 sub fragment_id {
     my $text = shift();
     $text =~ s/\s+\Z//s;
@@ -2064,8 +2055,8 @@ sub fragment_id {
 	# text? normalize!
 	$text =~ s/\s+/_/sg;
 	$text =~ s{(\W)}{
-         defined( $hc[ord($1)] ) ? $hc[ord($1)]
-                 : ( $hc[ord($1)] = sprintf( "%%%02X", ord($1) ) ) }gxe;
+         defined( $HC[ord($1)] ) ? $HC[ord($1)]
+                 : ( $HC[ord($1)] = sprintf( "%%%02X", ord($1) ) ) }gxe;
         $text = substr( $text, 0, 50 );
     } else {
 	return undef();

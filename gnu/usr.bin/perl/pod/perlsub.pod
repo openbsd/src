@@ -230,7 +230,7 @@ loop (C<for/foreach/while/until/continue>), subroutine, C<eval>,
 or C<do/require/use>'d file.  If more than one value is listed, the
 list must be placed in parentheses.  All listed elements must be
 legal lvalues.  Only alphanumeric identifiers may be lexically
-scoped--magical built-ins like C<$/> must currently be C<local>ize
+scoped--magical built-ins like C<$/> must currently be C<local>ized
 with C<local> instead.
 
 Unlike dynamic variables created by the C<local> operator, lexical
@@ -325,14 +325,8 @@ it.  Similarly, in the conditional
 
 the scope of $answer extends from its declaration through the rest
 of that conditional, including any C<elsif> and C<else> clauses, 
-but not beyond it.
-
-B<NOTE:> The behaviour of a C<my> statement modified with a statement
-modifier conditional or loop construct (e.g. C<my $x if ...>) is
-B<undefined>.  The value of the C<my> variable may be C<undef>, any
-previously assigned value, or possibly anything else.  Don't rely on
-it.  Future versions of perl might do something different from the
-version of perl you try it out on.  Here be dragons.
+but not beyond it.  See L<perlsyn/"Simple statements"> for information
+on the scope of variables in statements with modifiers.
 
 The C<foreach> loop defaults to scoping its index variable dynamically
 in the manner of C<local>.  However, if the index variable is
@@ -469,17 +463,24 @@ to create private variables that the whole module can see.
 
 B<WARNING>: In general, you should be using C<my> instead of C<local>, because
 it's faster and safer.  Exceptions to this include the global punctuation
-variables, filehandles and formats, and direct manipulation of the Perl
-symbol table itself.  Format variables often use C<local> though, as do
-other variables whose current value must be visible to called
-subroutines.
+variables, global filehandles and formats, and direct manipulation of the
+Perl symbol table itself.  C<local> is mostly used when the current value
+of a variable must be visible to called subroutines.
 
 Synopsis:
 
-    local $foo;	    		# declare $foo dynamically local
-    local (@wid, %get); 	# declare list of variables local
-    local $foo = "flurp";	# declare $foo dynamic, and init it
-    local @oof = @bar;		# declare @oof dynamic, and init it
+    # localization of values
+
+    local $foo;			# make $foo dynamically local
+    local (@wid, %get);		# make list of variables local
+    local $foo = "flurp";	# make $foo dynamic, and init it
+    local @oof = @bar;		# make @oof dynamic, and init it
+
+    local $hash{key} = "val";	# sets a local value for this hash entry
+    local ($cond ? $v1 : $v2);	# several types of lvalues support
+				# localization
+
+    # localization of symbols
 
     local *FH;			# localize $FH, @FH, %FH, &FH  ...
     local *merlyn = *randal;	# now $merlyn is really $randal, plus
@@ -494,36 +495,26 @@ values to global (meaning package) variables.  It does I<not> create
 a local variable.  This is known as dynamic scoping.  Lexical scoping
 is done with C<my>, which works more like C's auto declarations.
 
-If more than one variable is given to C<local>, they must be placed in
-parentheses.  All listed elements must be legal lvalues.  This operator works
+Some types of lvalues can be localized as well : hash and array elements
+and slices, conditionals (provided that their result is always
+localizable), and symbolic references.  As for simple variables, this
+creates new, dynamically scoped values.
+
+If more than one variable or expression is given to C<local>, they must be
+placed in parentheses.  This operator works
 by saving the current values of those variables in its argument list on a
 hidden stack and restoring them upon exiting the block, subroutine, or
 eval.  This means that called subroutines can also reference the local
 variable, but not the global one.  The argument list may be assigned to if
 desired, which allows you to initialize your local variables.  (If no
 initializer is given for a particular variable, it is created with an
-undefined value.)  Commonly this is used to name the parameters to a
-subroutine.  Examples:
-
-    for $i ( 0 .. 9 ) {
-	$digits{$i} = $i;
-    }
-    # assume this function uses global %digits hash
-    parse_num();
-
-    # now temporarily add to %digits hash
-    if ($base12) {
-	# (NOTE: not claiming this is efficient!)
-	local %digits  = (%digits, 't' => 10, 'e' => 11);
-	parse_num();  # parse_num gets this new %digits!
-    }
-    # old %digits restored here
+undefined value.)
 
 Because C<local> is a run-time operator, it gets executed each time
-through a loop.  In releases of Perl previous to 5.0, this used more stack
-storage each time until the loop was exited.  Perl now reclaims the space
-each time through, but it's still more efficient to declare your variables
-outside the loop.
+through a loop.  Consequently, it's more efficient to localize your
+variables outside the loop.
+
+=head3 Grammatical note on local()
 
 A C<local> is simply a modifier on an lvalue expression.  When you assign to
 a C<local>ized variable, the C<local> doesn't change whether its list is viewed
@@ -538,47 +529,63 @@ both supply a list context to the right-hand side, while
 
 supplies a scalar context.
 
-A note about C<local()> and composite types is in order.  Something
-like C<local(%foo)> works by temporarily placing a brand new hash in
-the symbol table.  The old hash is left alone, but is hidden "behind"
-the new one.
+=head3 Localization of special variables
 
-This means the old variable is completely invisible via the symbol
-table (i.e. the hash entry in the C<*foo> typeglob) for the duration
-of the dynamic scope within which the C<local()> was seen.  This
-has the effect of allowing one to temporarily occlude any magic on
-composite types.  For instance, this will briefly alter a tied
-hash to some other implementation:
+If you localize a special variable, you'll be giving a new value to it,
+but its magic won't go away.  That means that all side-effects related
+to this magic still work with the localized value.
 
-    tie %ahash, 'APackage';
-    [...]
-    {
-       local %ahash;
-       tie %ahash, 'BPackage';
-       [..called code will see %ahash tied to 'BPackage'..]
-       {
-          local %ahash;
-          [..%ahash is a normal (untied) hash here..]
-       }
+This feature allows code like this to work :
+
+    # Read the whole contents of FILE in $slurp
+    { local $/ = undef; $slurp = <FILE>; }
+
+Note, however, that this restricts localization of some values ; for
+example, the following statement dies, as of perl 5.9.0, with an error
+I<Modification of a read-only value attempted>, because the $1 variable is
+magical and read-only :
+
+    local $1 = 2;
+
+Similarly, but in a way more difficult to spot, the following snippet will
+die in perl 5.9.0 :
+
+    sub f { local $_ = "foo"; print }
+    for ($1) {
+	# now $_ is aliased to $1, thus is magic and readonly
+	f();
     }
-    [..%ahash back to its initial tied self again..]
 
-B<WARNING> The code example above does not currently work as described.
+See next section for an alternative to this situation.
+
+B<WARNING>: Localization of tied arrays and hashes does not currently
+work as described.
 This will be fixed in a future release of Perl; in the meantime, avoid
 code that relies on any particular behaviour of localising tied arrays
 or hashes (localising individual elements is still okay).
-See L<perldelta/"Localising Tied Arrays and Hashes Is Broken"> for more
+See L<perl58delta/"Localising Tied Arrays and Hashes Is Broken"> for more
 details.
 
-As another example, a custom implementation of C<%ENV> might look
-like this:
+=head3 Localization of globs
 
-    {
-        local %ENV;
-        tie %ENV, 'MyOwnEnv';
-        [..do your own fancy %ENV manipulation here..]
-    }
-    [..normal %ENV behavior here..]
+The construct
+
+    local *name;
+
+creates a whole new symbol table entry for the glob C<name> in the
+current package.  That means that all variables in its glob slot ($name,
+@name, %name, &name, and the C<name> filehandle) are dynamically reset.
+
+This implies, among other things, that any magic eventually carried by
+those variables is locally lost.  In other words, saying C<local */>
+will not have any effect on the internal value of the input record
+separator.
+
+Notably, if you want to work with a brand new value of the default scalar
+$_, and avoid the potential problem listed above about $_ previously
+carrying a magic value, you should use C<local *_> instead of C<local $_>.
+
+=head3 Localization of elements of composite types
 
 It's also worth taking a moment to explain what happens when you
 C<local>ize a member of a composite type (i.e. an array or hash element).
@@ -1157,8 +1164,8 @@ only occasionally and for good reason.  Typically this might be
 done by a package attempting to emulate missing built-in functionality
 on a non-Unix system.
 
-Overriding may be done only by importing the name from a
-module--ordinary predeclaration isn't good enough.  However, the
+Overriding may be done only by importing the name from a module at
+compile time--ordinary predeclaration isn't good enough.  However, the
 C<use subs> pragma lets you, in effect, predeclare subs
 via the import syntax, and these names may then override built-in ones:
 

@@ -71,6 +71,8 @@ Otherwise, it is returned to the caller.
 
 =item open( FILENAME [,MODE [,PERMS]] )
 
+=item open( FILENAME, IOLAYERS )
+
 C<open> accepts one, two or three parameters.  With one parameter,
 it is just a front end for the built-in C<open> function.  With two or three
 parameters, the first parameter is a filename that may include
@@ -84,6 +86,9 @@ Perl C<open> operator (but protects any special characters).
 If C<IO::File::open> is given a numeric mode, it passes that mode
 and the optional permissions value to the Perl C<sysopen> operator.
 The permissions default to 0666.
+
+If C<IO::File::open> is given a mode that includes the C<:> character,
+it passes all the three arguments to the three-argument C<open> operator.
 
 For convenience, C<IO::File> exports the O_XXX constants from the
 Fcntl module, if this module is available.
@@ -116,7 +121,7 @@ require Exporter;
 
 @ISA = qw(IO::Handle IO::Seekable Exporter);
 
-$VERSION = "1.09";
+$VERSION = "1.10";
 
 @EXPORT = @IO::Seekable::EXPORT;
 
@@ -157,10 +162,15 @@ sub open {
 	if ($mode =~ /^\d+$/) {
 	    defined $perms or $perms = 0666;
 	    return sysopen($fh, $file, $mode, $perms);
+	} elsif ($mode =~ /:/) {
+	    return open($fh, $mode, $file) if @_ == 3;
+	    croak 'usage: $fh->open(FILENAME, IOLAYERS)';
 	}
-	if (! File::Spec->file_name_is_absolute($file)) {
-            $file = File::Spec->catfile(File::Spec->curdir(),$file);
-        }
+	if (defined($file) && length($file)
+	    && ! File::Spec->file_name_is_absolute($file))
+	{
+	    $file = File::Spec->catfile(File::Spec->curdir(),$file);
+	}
 	$file = IO::Handle::_open_mode_string($mode) . " $file\0";
     }
     open($fh, $file);

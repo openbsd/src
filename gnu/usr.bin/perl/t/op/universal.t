@@ -9,7 +9,7 @@ BEGIN {
     $| = 1;
 }
 
-print "1..94\n";
+print "1..100\n";
 
 $a = {};
 bless $a, "Bob";
@@ -174,3 +174,24 @@ test ! UNIVERSAL::isa("\xff\xff\xff\0", 'HASH');
     main::test can( "Pickup", "can" ) == \&UNIVERSAL::can;
     main::test VERSION "UNIVERSAL" ;
 }
+
+{
+    # test isa() and can() on magic variables
+    "Human" =~ /(.*)/;
+    test $1->isa("Human");
+    test $1->can("eat");
+    package HumanTie;
+    sub TIESCALAR { bless {} }
+    sub FETCH { "Human" }
+    tie my($x), "HumanTie";
+    ::test $x->isa("Human");
+    ::test $x->can("eat");
+}
+
+# bugid 3284
+# a second call to isa('UNIVERSAL') when @ISA is null failed due to caching
+
+@X::ISA=();
+my $x = {}; bless $x, 'X';
+test $x->isa('UNIVERSAL');
+test $x->isa('UNIVERSAL');

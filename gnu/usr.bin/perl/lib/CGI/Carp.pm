@@ -440,13 +440,13 @@ and the time and date of the error.
 END
   ;
   my $mod_perl = exists $ENV{MOD_PERL};
-  print STDOUT "Content-type: text/html\n\n" 
-    unless $mod_perl;
 
   warningsToBrowser(1);    # emit warnings before dying
 
   if ($CUSTOM_MSG) {
     if (ref($CUSTOM_MSG) eq 'CODE') {
+      print STDOUT "Content-type: text/html\n\n" 
+        unless $mod_perl;
       &$CUSTOM_MSG($msg); # nicer to perl 5.003 users
       return;
     } else {
@@ -490,7 +490,13 @@ END
       $r->custom_response(500,$mess);
     }
   } else {
-    print STDOUT $mess;
+    if (eval{tell STDOUT}) {
+        print STDOUT $mess;
+    }
+    else {
+        print STDOUT "Content-type: text/html\n\n";
+        print STDOUT $mess;
+    }
   }
 }
 

@@ -138,15 +138,26 @@ The nmake that comes with the Platform SDK will suffice for building
 Perl.  Make sure you are building within one of the "Build Environment"
 shells available after you install the Platform SDK from the Start Menu.
 
-=item Mingw32 with GCC
+=item MinGW32 with gcc
 
-GCC-2.95.2 binaries can be downloaded from:
+The latest release of MinGW (at the time of writing) is 2.0.0, which comes 
+with gcc-3.2, and can be downloaded here:
 
-    ftp://ftp.xraylith.wisc.edu/pub/khan/gnu-win32/mingw32/
+    http://sourceforge.net/projects/mingw
+
+Perl compiles with earlier releases of gcc (2.95 and up) that can be
+downloaded from the same place. If you use gcc-3.2, comment out the
+line:
+
+    USE_GCC_V3_2	*= define
+
+in win32\makefile.mk
 
 You also need dmake.  See L</"Make"> above on how to get it.
 
-The GCC-2.95.2 bundle comes with Mingw32 libraries and headers.
+=item MinGW release 1
+
+The MinGW-1.1 bundle comes with gcc-2.95.3.
 
 Make sure you install the binaries that work with MSVCRT.DLL as indicated
 in the README for the GCC bundle.  You may need to set up a few environment
@@ -209,27 +220,12 @@ may not be correct for some versions.  Make sure the default exists
 and is valid.
 
 If you have either the source or a library that contains des_fcrypt(),
-enable the appropriate option in the makefile.  des_fcrypt() is not
-bundled with the distribution due to US Government restrictions
-on the export of cryptographic software.  Nevertheless, this routine
-is part of the "libdes" library (written by Eric Young) which is widely
-available worldwide, usually along with SSLeay ( for example, 
-ftp://ftp.funet.fi/pub/crypt/mirrors/dsi/libdes/ ).  Set CRYPT_SRC to the
-name of the file that implements des_fcrypt().  Alternatively, if
-you have built a library that contains des_fcrypt(), you can set
-CRYPT_LIB to point to the library name.  The location above contains
-many versions of the "libdes" library, all with slightly different
-implementations of des_fcrypt().  Older versions have a single,
-self-contained file (fcrypt.c) that implements crypt(), so they may be
-easier to use.  A patch against the fcrypt.c found in libdes-3.06 is
-in des_fcrypt.patch.
-
-An easier alternative may be to get the pre-patched and ready-to-use
-fcrypt.c that can be found here:
-
-    http://downloads.ActiveState.com/pub/staff/gsar/fcrypt.c
-    ftp://ftp.ActiveState.com/pub/staff/gsar/fcrypt.c
-
+enable the appropriate option in the makefile.  A ready-to-use version
+of fcrypt.c, based on the version originally written by Eric Young at
+ftp://ftp.funet.fi/pub/crypt/mirrors/dsi/libdes/, is bundled with the
+distribution. Set CRYPT_SRC to fcrypt.c to use this version.
+Alternatively, if you have built a library that contains des_fcrypt(),
+you can set CRYPT_LIB to point to the library name.
 Perl will also build without des_fcrypt(), but the crypt() builtin will
 fail at run time.
 
@@ -276,8 +272,20 @@ option -VI- for backward (bugward) compatibility for using the old Borland
 search algorithm  to locate header files.
 
 If you run the tests on a FAT partition, you may see some failures for
-C<link()> related tests (I<op/write.t>, I<op/stat.t> ...). Testing on
-NTFS avoids these errors.
+C<link()> related tests:
+
+    Failed Test                     Stat Wstat Total Fail  Failed  List
+
+    ../ext/IO/lib/IO/t/io_dup.t                    6    4  66.67%  2-5
+    ../lib/File/Temp/t/mktemp.t                    9    1  11.11%  2
+    ../lib/File/Temp/t/posix.t                     7    1  14.29%  3
+    ../lib/File/Temp/t/security.t                 13    1   7.69%  2
+    ../lib/File/Temp/t/tempfile.t                 20    2  10.00%  2 4
+    comp/multiline.t                               6    2  33.33%  5-6
+    io/dup.t                                       8    6  75.00%  2-7
+    op/write.t                                    47    7  14.89%  1-3 6 9-11
+
+Testing on NTFS avoids these errors.
 
 Furthermore, you should make sure that during C<make test> you do not
 have any GNU tool packages in your path: some toolkits like Unixutils
@@ -694,6 +702,14 @@ like C<less> (recent versions of which have Win32 support).  You may
 have to set the PAGER environment variable to use a specific pager.
 "perldoc -f foo" will print information about the perl operator
 "foo".
+
+One common mistake when using this port with a GUI library like C<Tk>
+is assuming that Perl's normal behavior of opening a command-line
+window will go away.  This isn't the case.  If you want to start a copy
+of C<perl> without opening a command-line window, use the C<wperl>
+executable built during the installation process.  Usage is exactly
+the same as normal C<perl> on Win32, except that options like C<-h>
+don't work (since they need a command-line window to print to).
 
 If you find bugs in perl, you can run C<perlbug> to create a
 bug report (you may have to send it manually if C<perlbug> cannot

@@ -10,14 +10,14 @@ while (<>) {
 
     next unless /^=(?!cut)/ .. /^=cut/;
 
-    if (s/=item (\S+)/$1/) {
-	#$cur = "POSIX::" . $1;
-	$next{$cur} = $1;
-	$cur = $1;
+    if (/=item (\S+)/ and $1 ne '*') {
+	my $item = $1;
+	s/=item //; 
+	$next{$cur} = $item;
+	$cur = $item;
 	$syn{$cur} .= $_;
 	next;
     } else { 
-	#s,L</,L<POSIX/,g;
 	s,L</,L<perlfunc/,g;
 	push @{$pod{$cur}}, $_ if $cur;
     }

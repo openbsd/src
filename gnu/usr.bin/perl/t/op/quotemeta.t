@@ -2,46 +2,54 @@
 
 BEGIN {
     chdir 't' if -d 't';
-    @INC = '../lib';
+    @INC = qw(../lib .);
     require Config; import Config;
+    require "test.pl";
 }
 
-print "1..17\n";
+plan tests => 22;
 
 if ($Config{ebcdic} eq 'define') {
-    $_=join "", map chr($_), 129..233;
+    $_ = join "", map chr($_), 129..233;
 
     # 105 characters - 52 letters = 53 backslashes
     # 105 characters + 53 backslashes = 158 characters
-    $_= quotemeta $_;
-    if ( length == 158 ){print "ok 1\n"} else {print "not ok 1\n"}
+    $_ = quotemeta $_;
+    is(length($_), 158, "quotemeta string");
     # 104 non-backslash characters
-    if (tr/\\//cd == 104){print "ok 2\n"} else {print "not ok 2\n"}
+    is(tr/\\//cd, 104, "tr count non-backslashed");
 } else { # some ASCII descendant, then.
-    $_=join "", map chr($_), 32..127;
+    $_ = join "", map chr($_), 32..127;
 
     # 96 characters - 52 letters - 10 digits - 1 underscore = 33 backslashes
     # 96 characters + 33 backslashes = 129 characters
-    $_= quotemeta $_;
-    if ( length == 129 ){print "ok 1\n"} else {print "not ok 1\n"}
+    $_ = quotemeta $_;
+    is(length($_), 129, "quotemeta string");
     # 95 non-backslash characters
-    if (tr/\\//cd == 95){print "ok 2\n"} else {print "not ok 2\n"}
+    is(tr/\\//cd, 95, "tr count non-backslashed");
 }
 
-if (length quotemeta "" == 0){print "ok 3\n"} else {print "not ok 3\n"}
+is(length(quotemeta ""), 0, "quotemeta empty string");
 
-print "aA\UbB\LcC\EdD" eq "aABBccdD" ? "ok 4\n" : "not ok 4 \n";
-print "aA\LbB\UcC\EdD" eq "aAbbCCdD" ? "ok 5\n" : "not ok 5 \n";
-print "\L\upERL" eq "Perl" ? "ok 6\n" : "not ok 6 \n";
-print "\u\LpERL" eq "Perl" ? "ok 7\n" : "not ok 7 \n";
-print "\U\lPerl" eq "pERL" ? "ok 8\n" : "not ok 8 \n";
-print "\l\UPerl" eq "pERL" ? "ok 9\n" : "not ok 9 \n";
-print "\u\LpE\Q#X#\ER\EL" eq "Pe\\#x\\#rL" ? "ok 10\n" : "not ok 10 \n";
-print "\l\UPe\Q!x!\Er\El" eq "pE\\!X\\!Rl" ? "ok 11\n" : "not ok 11 \n";
-print "\Q\u\LpE.X.R\EL\E." eq "Pe\\.x\\.rL." ? "ok 12\n" : "not ok 12 \n";
-print "\Q\l\UPe*x*r\El\E*" eq "pE\\*X\\*Rl*" ? "ok 13\n" : "not ok 13 \n";
-print "\U\lPerl\E\E\E\E" eq "pERL" ? "ok 14\n" : "not ok 14 \n";
-print "\l\UPerl\E\E\E\E" eq "pERL" ? "ok 15\n" : "not ok 15 \n";
+is("aA\UbB\LcC\EdD", "aABBccdD", 'aA\UbB\LcC\EdD');
+is("aA\LbB\UcC\EdD", "aAbbCCdD", 'aA\LbB\UcC\EdD');
+is("\L\upERL", "Perl", '\L\upERL');
+is("\u\LpERL", "Perl", '\u\LpERL');
+is("\U\lPerl", "pERL", '\U\lPerl');
+is("\l\UPerl", "pERL", '\l\UPerl');
+is("\u\LpE\Q#X#\ER\EL", "Pe\\#x\\#rL", '\u\LpE\Q#X#\ER\EL');
+is("\l\UPe\Q!x!\Er\El", "pE\\!X\\!Rl", '\l\UPe\Q!x!\Er\El');
+is("\Q\u\LpE.X.R\EL\E.", "Pe\\.x\\.rL.", '\Q\u\LpE.X.R\EL\E.');
+is("\Q\l\UPe*x*r\El\E*", "pE\\*X\\*Rl*", '\Q\l\UPe*x*r\El\E*');
+is("\U\lPerl\E\E\E\E", "pERL", '\U\lPerl\E\E\E\E');
+is("\l\UPerl\E\E\E\E", "pERL", '\l\UPerl\E\E\E\E');
 
-print length(quotemeta("\x{263a}")) == 1 ? "ok 16\n" : "not ok 16\n";
-print quotemeta("\x{263a}") eq "\x{263a}" ? "ok 17\n" : "not ok 17\n";
+is(quotemeta("\x{263a}"), "\x{263a}", "quotemeta Unicode");
+is(length(quotemeta("\x{263a}")), 1, "quotemeta Unicode length");
+
+$a = "foo|bar";
+is("a\Q\Ec$a", "acfoo|bar", '\Q\E');
+is("a\L\Ec$a", "acfoo|bar", '\L\E');
+is("a\l\Ec$a", "acfoo|bar", '\l\E');
+is("a\U\Ec$a", "acfoo|bar", '\U\E');
+is("a\u\Ec$a", "acfoo|bar", '\u\E');

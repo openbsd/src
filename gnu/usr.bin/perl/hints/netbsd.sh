@@ -37,16 +37,21 @@ case "$osvers" in
 		cccdlflags="-DPIC -fPIC $cccdlflags"
 		lddlflags="--whole-archive -shared $lddlflags"
 		rpathflag="-Wl,-rpath,"
-		#
-		# Include the whole libgcc.a into the perl executable so
-		# that certain symbols needed by loadable modules built as
-		# C++ objects (__eh_alloc, __pure_virtual, etc.) will always
-		# be defined.
-		#
-		# XXX This should be obsoleted by gcc-3.0.
-		#
-		ccdlflags="-Wl,-whole-archive -lgcc -Wl,-no-whole-archive \
-			-Wl,-E $ccdlflags"
+		case "$osvers" in
+		1.[0-5]*)
+			#
+			# Include the whole libgcc.a into the perl executable
+			# so that certain symbols needed by loadable modules
+			# built as C++ objects (__eh_alloc, __pure_virtual,
+			# etc.) will always be defined.
+			#
+			ccdlflags="-Wl,-whole-archive -lgcc \
+				-Wl,-no-whole-archive -Wl,-E $ccdlflags"
+			;;
+		*)
+			ccdlflags="-Wl,-E $ccdlflags"
+			;;
+		esac
 	elif test -f /usr/libexec/ld.so; then
 		# a.out
 		d_dlopen=$define
@@ -144,3 +149,33 @@ case "$rpathflag" in
 	done
 	;;
 esac
+
+case `uname -m` in
+alpha)
+    echo 'int main() {}' > try.c
+    gcc=`${cc:-cc} -v -c try.c 2>&1|grep 'gcc version egcs-2'`
+    case "$gcc" in
+    '' | "gcc version egcs-2.95."[3-9]*) ;; # 2.95.3 or better okay
+    *)	cat >&4 <<EOF
+***
+*** Your gcc ($gcc) is known to be
+*** too buggy on netbsd/alpha to compile Perl with optimization.
+*** It is suggested you install the lang/gcc package which should
+*** have at least gcc 2.95.3 which should work okay: use for example
+*** Configure -Dcc=/usr/pkg/gcc-2.95.3/bin/cc.  You could also
+*** Configure -Doptimize=-O0 to compile Perl without any optimization
+*** but that is not recommended.
+***
+EOF
+	exit 1
+	;;
+    esac
+    rm -f try.*
+    ;;
+esac
+
+# NetBSD/sparc 1.5.3/1.6.1 dumps core in the semid_ds test of Configure.
+case `uname -m` in
+sparc) d_semctl_semid_ds=undef ;;
+esac
+

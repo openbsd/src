@@ -61,7 +61,9 @@
 #ifdef I_STDLIB
 #include <stdlib.h>
 #endif
+#ifndef __ultrix__
 #include <string.h>
+#endif
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <time.h>
@@ -74,11 +76,11 @@
 #include <fcntl.h>
 
 #ifdef HAS_TZNAME
-#  if !defined(WIN32) && !defined(__CYGWIN__) && !defined(NETWARE)
+#  if !defined(WIN32) && !defined(__CYGWIN__) && !defined(NETWARE) && !defined(__UWIN__)
 extern char *tzname[];
 #  endif
 #else
-#if !defined(WIN32) || (defined(__MINGW32__) && !defined(tzname))
+#if !defined(WIN32) && !defined(__UWIN__) || (defined(__MINGW32__) && !defined(tzname))
 char *tzname[] = { "" , "" };
 #endif
 #endif
@@ -1212,10 +1214,26 @@ sigaction(sig, optaction, oldaction = 0)
 	    sigset_t osset;
 	    POSIX__SigSet sigset;
 	    SV** svp;
-	    SV** sigsvp = hv_fetch(GvHVn(siggv),
-				 PL_sig_name[sig],
-				 strlen(PL_sig_name[sig]),
-				 TRUE);
+	    SV** sigsvp;
+	    if (sig == 0 && SvPOK(ST(0))) {
+	        char *s = SvPVX(ST(0));
+		int i = whichsig(s);
+
+	        if (i < 0 && memEQ(s, "SIG", 3))
+		    i = whichsig(s + 3);
+	        if (i < 0) {
+	            if (ckWARN(WARN_SIGNAL))
+		        Perl_warner(aTHX_ packWARN(WARN_SIGNAL),
+                                    "No such signal: SIG%s", s);
+	            XSRETURN_UNDEF;
+		}
+	        else
+		    sig = i;
+            }
+	    sigsvp = hv_fetch(GvHVn(siggv),
+			      PL_sig_name[sig],
+			      strlen(PL_sig_name[sig]),
+			      TRUE);
 
 	    /* Check optaction and set action */
 	    if(SvTRUE(optaction)) {
@@ -1274,16 +1292,34 @@ sigaction(sig, optaction, oldaction = 0)
 		/* Get back the flags. */
 		svp = hv_fetch(oldaction, "FLAGS", 5, TRUE);
 		sv_setiv(*svp, oact.sa_flags);
+
+		/* Get back whether the old handler used safe signals. */
+		svp = hv_fetch(oldaction, "SAFE", 4, TRUE);
+		sv_setiv(*svp, oact.sa_handler == PL_csighandlerp);
 	    }
 
 	    if (action) {
-		/* Vector new handler through %SIG.  (We always use sighandler
-		   for the C signal handler, which reads %SIG to dispatch.) */
+		/* Safe signals use "csighandler", which vectors through the
+		   PL_sighandlerp pointer when it's safe to do so.
+		   (BTW, "csighandler" is very different from "sighandler".) */
+		svp = hv_fetch(action, "SAFE", 4, FALSE);
+		act.sa_handler = (*svp && SvTRUE(*svp))
+				 ? PL_csighandlerp : PL_sighandlerp;
+
+		/* Vector new Perl handler through %SIG.
+		   (The core signal handlers read %SIG to dispatch.) */
 		svp = hv_fetch(action, "HANDLER", 7, FALSE);
 		if (!svp)
 		    croak("Can't supply an action without a HANDLER");
 		sv_setsv(*sigsvp, *svp);
-		mg_set(*sigsvp);	/* handles DEFAULT and IGNORE */
+
+		/* This call actually calls sigaction() with almost the
+		   right settings, including appropriate interpretation
+		   of DEFAULT and IGNORE.  However, why are we doing
+		   this when we're about to do it again just below?  XXX */
+		mg_set(*sigsvp);
+
+		/* And here again we duplicate -- DEFAULT/IGNORE checking. */
 		if(SvPOK(*svp)) {
 			char *s=SvPVX(*svp);
 			if(strEQ(s,"IGNORE")) {
@@ -1292,12 +1328,6 @@ sigaction(sig, optaction, oldaction = 0)
 			else if(strEQ(s,"DEFAULT")) {
 				act.sa_handler = SIG_DFL;
 			}
-			else {
-				act.sa_handler = PL_sighandlerp;
-			}
-		}
-		else {
-			act.sa_handler = PL_sighandlerp;
 		}
 
 		/* Set up any desired mask. */
@@ -1374,15 +1404,29 @@ dup2(fd1, fd2)
 	int		fd1
 	int		fd2
 
-SysRetLong
+SV *
 lseek(fd, offset, whence)
 	int		fd
 	Off_t		offset
 	int		whence
+    CODE:
+	Off_t pos = PerlLIO_lseek(fd, offset, whence);
+	RETVAL = sizeof(Off_t) > sizeof(IV)
+		 ? newSVnv((NV)pos) : newSViv((IV)pos);
+    OUTPUT:
+	RETVAL
 
-SysRet
+void
 nice(incr)
 	int		incr
+    PPCODE:
+	errno = 0;
+	if ((incr = nice(incr)) != -1 || errno == 0) {
+	    if (incr == 0)
+		XPUSHs(sv_2mortal(newSVpvn("0 but true", 10)));
+	    else
+		XPUSHs(sv_2mortal(newSViv(incr)));
+	}
 
 void
 pipe()
@@ -1549,10 +1593,12 @@ strtoul(str, base = 0)
 	char *unparsed;
     PPCODE:
 	num = strtoul(str, &unparsed, base);
-	if (num <= IV_MAX)
-	    PUSHs(sv_2mortal(newSViv((IV)num)));
-	else
+#if IVSIZE <= LONGSIZE
+	if (num > IV_MAX)
 	    PUSHs(sv_2mortal(newSVnv((double)num)));
+	else
+#endif
+	    PUSHs(sv_2mortal(newSViv((IV)num)));
 	if (GIMME == G_ARRAY) {
 	    EXTEND(SP, 1);
 	    if (unparsed)

@@ -291,7 +291,7 @@ win32_select(int nfds, Perl_fd_set* rd, Perl_fd_set* wr, Perl_fd_set* ex, const 
     int r;
 #ifdef USE_SOCKETS_AS_HANDLES
     Perl_fd_set dummy;
-    int i, fd;
+    int i, fd, save_errno = errno;
     FD_SET nrd, nwr, nex, *prd, *pwr, *pex;
 
     /* winsock seems incapable of dealing with all three null fd_sets,
@@ -333,7 +333,9 @@ win32_select(int nfds, Perl_fd_set* rd, Perl_fd_set* wr, Perl_fd_set* ex, const 
 	    FD_SET(fd, &nex);
     }
 
+    errno = save_errno;
     SOCKET_TEST_ERROR(r = select(nfds, prd, pwr, pex, timeout));
+    save_errno = errno;
 
     for (i = 0; i < nfds; i++) {
 	fd = TO_SOCKET(i);
@@ -344,6 +346,7 @@ win32_select(int nfds, Perl_fd_set* rd, Perl_fd_set* wr, Perl_fd_set* ex, const 
 	if (PERL_FD_ISSET(i,ex) && !FD_ISSET(fd, &nex))
 	    PERL_FD_CLR(i,ex);
     }
+    errno = save_errno;
 #else
     SOCKET_TEST_ERROR(r = select(nfds, rd, wr, ex, timeout));
 #endif

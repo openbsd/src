@@ -189,10 +189,9 @@ test.  Outside a C<while> test, this will not happen.
 
 Special package variables when using sort(), see L<perlfunc/sort>.
 Because of this specialness $a and $b don't need to be declared
-(using local(), use vars, or our()) even when using the strict
-vars pragma.  Don't lexicalize them with C<my $a> or C<my $b>
-if you want to be able to use them in the sort() comparison block
-or function.
+(using use vars, or our()) even when using the C<strict 'vars'> pragma.
+Don't lexicalize them with C<my $a> or C<my $b> if you want to be
+able to use them in the sort() comparison block or function.
 
 =back
 
@@ -293,8 +292,6 @@ C<$+[1]> is the offset past where $1 ends, C<$+[2]> the offset
 past where $2 ends, and so on.  You can use C<$#+> to determine
 how many subgroups were in the last successful match.  See the
 examples given for the C<@-> variable.
-
-=item $MULTILINE_MATCHING
 
 =item $*
 
@@ -490,8 +487,6 @@ taken for something more important.)
 
 Consider using "real" multidimensional arrays as described
 in L<perllol>.
-
-=item $OFMT
 
 =item $#
 
@@ -695,7 +690,7 @@ In the above I<meaningless> stands for anything: zero, non-zero,
 C<undef>.  A successful system or library call does B<not> set
 the variable to zero.
 
-If used an a string, yields the corresponding system error string.
+If used as a string, yields the corresponding system error string.
 You can assign a number to C<$!> to set I<errno> if, for instance,
 you want C<"$!"> to return the string for error I<n>, or you want
 to set the exit value for the die() operator.  (Mnemonic: What just
@@ -768,6 +763,12 @@ Also see L<Error Indicators>.
 The process number of the Perl running this script.  You should
 consider this variable read-only, although it will be altered
 across fork() calls.  (Mnemonic: same as shells.)
+
+Note for Linux users: on Linux, the C functions C<getpid()> and
+C<getppid()> return different values from different threads. In order to
+be portable, this behavior is not reflected by C<$$>, whose value remains
+consistent across threads. If you want to call the underlying C<getpid()>,
+you may use the CPAN module C<Linux::Pid>.
 
 =item $REAL_USER_ID
 
@@ -852,16 +853,36 @@ and C<$)> can be swapped only on machines supporting setregid().
 
 =item $0
 
-Contains the name of the program being executed.  On some operating
-systems assigning to C<$0> modifies the argument area that the B<ps>
-program sees.  This is more useful as a way of indicating the current
-program state than it is for hiding the program you're running.
-(Mnemonic: same as B<sh> and B<ksh>.)
+Contains the name of the program being executed.
+
+On some (read: not all) operating systems assigning to C<$0> modifies
+the argument area that the C<ps> program sees.  On some platforms you
+may have to use special C<ps> options or a different C<ps> to see the
+changes.  Modifying the $0 is more useful as a way of indicating the
+current program state than it is for hiding the program you're
+running.  (Mnemonic: same as B<sh> and B<ksh>.)
+
+Note that there are platform specific limitations on the maximum
+length of C<$0>.  In the most extreme case it may be limited to the
+space occupied by the original C<$0>.
+
+In some platforms there may be arbitrary amount of padding, for
+example space characters, after the modified name as shown by C<ps>.
+In some platforms this padding may extend all the way to the original
+length of the argument area, no matter what you do (this is the case
+for example with Linux 2.2).
 
 Note for BSD users: setting C<$0> does not completely remove "perl"
-from the ps(1) output.  For example, setting C<$0> to C<"foobar"> will
-result in C<"perl: foobar (perl)">.  This is an operating system
-feature.
+from the ps(1) output.  For example, setting C<$0> to C<"foobar"> may
+result in C<"perl: foobar (perl)"> (whether both the C<"perl: "> prefix
+and the " (perl)" suffix are shown depends on your exact BSD variant
+and version).  This is an operating system feature, Perl cannot help it.
+
+In multithreaded scripts Perl coordinates the threads so that any
+thread may modify its copy of the C<$0> and the change becomes visible
+to ps(1) (assuming the operating system plays along).  Note that the
+the view of C<$0> the other threads have will not change since they
+have their own copies of it.
 
 =item $[
 
@@ -873,7 +894,13 @@ subscripting and when evaluating the index() and substr() functions.
 
 As of release 5 of Perl, assignment to C<$[> is treated as a compiler
 directive, and cannot influence the behavior of any other file.
+(That's why you can only assign compile-time constants to it.)
 Its use is highly discouraged.
+
+Note that, unlike other compile-time directives (such as L<strict>),
+assignment to $[ can be seen from outer lexical scopes in the same file.
+However, you can use local() on it to strictly bound its value to a
+lexical block.
 
 =item $]
 
@@ -886,6 +913,11 @@ of perl in the right bracket?)  Example:
 
 See also the documentation of C<use VERSION> and C<require VERSION>
 for a convenient way to fail if the running Perl interpreter is too old.
+
+When testing the variable, to steer clear of floating point
+inaccuracies you might want to prefer the inequality tests C<< < >>
+and C<< > >> to the tests containing equivalence: C<< <= >>, C<< == >>,
+and C<< >= >>.
 
 The floating point representation can sometimes lead to inaccurate
 numeric comparisons.  See C<$^V> for a more modern representation of
@@ -906,7 +938,8 @@ C<$^C = 1> is similar to calling C<B::minus_c>.
 =item $^D
 
 The current value of the debugging flags.  (Mnemonic: value of B<-D>
-switch.)
+switch.) May be read or set. Like its command-line equivalent, you can use
+numeric or symbolic values, eg C<$^D = 10> or C<$^D = "st">.
 
 =item $SYSTEM_FD_MAX
 
@@ -1065,6 +1098,10 @@ Provide informative "file" names for evals based on the place they were compiled
 Provide informative names to anonymous subroutines based on the place they
 were compiled.
 
+=item 0x400
+
+Debug assertion subroutines enter/exit.
+
 =back
 
 Some bits may be relevant at compile-time only, some at
@@ -1081,9 +1118,15 @@ regular expression assertion (see L<perlre>).  May be written to.
 
 =item $^S
 
-Current state of the interpreter.  Undefined if parsing of the current
-module/eval is not finished (may happen in $SIG{__DIE__} and
-$SIG{__WARN__} handlers).  True if inside an eval(), otherwise false.
+Current state of the interpreter.
+
+    $^S         State
+    ---------   -------------------
+    undef       Parsing module/eval
+    true (1)    Executing an eval
+    false (0)   Otherwise
+
+The first state may happen in $SIG{__DIE__} and $SIG{__WARN__} handlers.
 
 =item $BASETIME
 
@@ -1095,8 +1138,16 @@ and B<-C> filetests are based on this value.
 
 =item ${^TAINT}
 
-Reflects if taint mode is on or off (i.e. if the program was run with
-B<-T> or not).  True for on, false for off.
+Reflects if taint mode is on or off.  1 for on (the program was run with
+B<-T>), 0 for off, -1 when only taint warnings are enabled (i.e. with
+B<-t> or B<-TU>).
+
+=item ${^UNICODE}
+
+Reflects certain Unicode settings of Perl.  See L<perlrun>
+documentation for the C<-C> switch for more information about
+the possible values. This variable is set during Perl startup
+and is thereafter read-only.
 
 =item $PERL_VERSION
 
@@ -1136,21 +1187,6 @@ related to the B<-w> switch.)  See also L<warnings>.
 
 The current set of warning checks enabled by the C<use warnings> pragma.
 See the documentation of C<warnings> for more details.
-
-=item ${^WIDE_SYSTEM_CALLS}
-
-Global flag that enables system calls made by Perl to use wide character
-APIs native to the system, if available.  This is currently only implemented
-on the Windows platform.
-
-This can also be enabled from the command line using the C<-C> switch.
-
-The initial value is typically C<0> for compatibility with Perl versions
-earlier than 5.6, but may be automatically set to C<1> by Perl if the system
-provides a user-settable default (e.g., C<$ENV{LC_CTYPE}>).
-
-The C<bytes> pragma always overrides the effect of this flag in the current
-lexical scope.  See L<bytes>.
 
 =item $EXECUTABLE_NAME
 
@@ -1320,20 +1356,11 @@ Be sure not to use a bareword as the name of a signal handler,
 lest you inadvertently call it. 
 
 If your system has the sigaction() function then signal handlers are
-installed using it.  This means you get reliable signal handling.  If
-your system has the SA_RESTART flag it is used when signals handlers are
-installed.  This means that system calls for which restarting is supported
-continue rather than returning when a signal arrives.  If you want your
-system calls to be interrupted by signal delivery then do something like
-this:
+installed using it.  This means you get reliable signal handling.
 
-    use POSIX ':signal_h';
-
-    my $alarm = 0;
-    sigaction SIGALRM, new POSIX::SigAction sub { $alarm = 1 }
-    	or die "Error setting SIGALRM handler: $!\n";
-
-See L<POSIX>.
+The default delivery policy of signals changed in Perl 5.8.0 from 
+immediate (also known as "unsafe") to deferred, also known as 
+"safe signals".  See L<perlipc> for more information.
 
 Certain internal hooks can be also set using the %SIG hash.  The
 routine indicated by C<$SIG{__WARN__}> is called when a warning message is
@@ -1467,18 +1494,19 @@ used safely in programs.  C<$^_> itself, however, I<is> reserved.
 
 Perl identifiers that begin with digits, control characters, or
 punctuation characters are exempt from the effects of the C<package>
-declaration and are always forced to be in package C<main>.  A few
-other names are also exempt:
+declaration and are always forced to be in package C<main>; they are
+also exempt from C<strict 'vars'> errors.  A few other names are also
+exempt in these ways:
 
 	ENV		STDIN
 	INC		STDOUT
 	ARGV		STDERR
-	ARGVOUT
+	ARGVOUT		_
 	SIG
 
 In particular, the new special C<${^_XYZ}> variables are always taken
 to be in package C<main>, regardless of any C<package> declarations
-presently in scope.
+presently in scope.  
 
 =head1 BUGS
 

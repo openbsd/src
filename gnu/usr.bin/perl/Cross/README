@@ -47,7 +47,7 @@ Other Targets (For Developers)
 ------------------------------
 
 It is possible to extend the cross-compilation to other targets.
-We have sucessfully compiled for the target solaris2.8/x86
+We have successfully compiled for the target solaris2.8/x86
 on linux/x86 build system.
 
 To attempt a cross-compile for another target using the methods

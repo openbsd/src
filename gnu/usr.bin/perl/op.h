@@ -1,6 +1,7 @@
 /*    op.h
  *
- *    Copyright (c) 1991-2002, Larry Wall
+ *    Copyright (C) 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
+ *    2000, 2001, 2002, 2003, by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -22,15 +23,6 @@
  *			the operation is privatized by a check routine,
  *			which may or may not check number of children).
  */
-
-#if PTRSIZE == 4
-typedef U32TYPE PADOFFSET;
-#else
-#   if PTRSIZE == 8
-typedef U64TYPE PADOFFSET;
-#   endif
-#endif
-#define NOT_IN_PAD ((PADOFFSET) -1)
 
 #ifdef DEBUGGING_OPS
 #define OPCODE opcode
@@ -106,6 +98,8 @@ Deprecated.  Use C<GIMME_V> instead.
 				/*  On regcomp, "use re 'eval'" was in scope */
 				/*  On OP_READLINE, was <$filehandle> */
 				/*  On RV2[SG]V, don't create GV--in defined()*/
+				/*  On OP_DBSTATE, indicates breakpoint
+				 *    (runtime property) */
 
 /* old names; don't use in new code, but don't break them, either */
 #define OPf_LIST	OPf_WANT_LIST
@@ -166,7 +160,7 @@ Deprecated.  Use C<GIMME_V> instead.
 #define OPpEARLY_CV		32	/* foo() called before sub foo was parsed */
   /* OP_?ELEM only */
 #define OPpLVAL_DEFER		16	/* Defer creation of array/hash elem */
-  /* OP_RV2?V, OP_GVSV only */
+  /* OP_RV2?V, OP_GVSV, OP_ENTERITER only */
 #define OPpOUR_INTRO		16	/* Variable was in an our() */
   /* OP_RV2[AH]V, OP_PAD[AH]V, OP_[AH]ELEM */
 #define OPpMAYBE_LVSUB		8	/* We might be an lvalue to return */
@@ -211,6 +205,16 @@ Deprecated.  Use C<GIMME_V> instead.
 /* Private for OP_EXIT, HUSH also for OP_DIE */
 #define OPpHUSH_VMSISH		64	/* hush DCL exit msg vmsish mode*/
 #define OPpEXIT_VMSISH		128	/* exit(0) vs. exit(1) vmsish mode*/
+
+/* Private of OP_FTXXX */
+#define OPpFT_ACCESS		2	/* use filetest 'access' */
+#define OP_IS_FILETEST_ACCESS(op) 		\
+	(((op)->op_type) == OP_FTRREAD  ||	\
+	 ((op)->op_type) == OP_FTRWRITE ||	\
+	 ((op)->op_type) == OP_FTREXEC  ||	\
+	 ((op)->op_type) == OP_FTEREAD  ||	\
+	 ((op)->op_type) == OP_FTEWRITE ||	\
+	 ((op)->op_type) == OP_FTEEXEC)
 
 struct op {
     BASEOP
@@ -388,13 +392,13 @@ struct loop {
 
 
 #ifdef USE_ITHREADS
-#  define	cGVOPx_gv(o)	((GV*)PL_curpad[cPADOPx(o)->op_padix])
+#  define	cGVOPx_gv(o)	((GV*)PAD_SVl(cPADOPx(o)->op_padix))
 #  define	IS_PADGV(v)	(v && SvTYPE(v) == SVt_PVGV && GvIN_PAD(v))
 #  define	IS_PADCONST(v)	(v && SvREADONLY(v))
 #  define	cSVOPx_sv(v)	(cSVOPx(v)->op_sv \
-				 ? cSVOPx(v)->op_sv : PL_curpad[(v)->op_targ])
+				 ? cSVOPx(v)->op_sv : PAD_SVl((v)->op_targ))
 #  define	cSVOPx_svp(v)	(cSVOPx(v)->op_sv \
-				 ? &cSVOPx(v)->op_sv : &PL_curpad[(v)->op_targ])
+				 ? &cSVOPx(v)->op_sv : &PAD_SVl((v)->op_targ))
 #else
 #  define	cGVOPx_gv(o)	((GV*)cSVOPx(o)->op_sv)
 #  define	IS_PADGV(v)	FALSE
@@ -480,3 +484,15 @@ struct loop {
 #include "reentr.h"
 #endif
 
+#if defined(PL_OP_SLAB_ALLOC)
+#define NewOp(m,var,c,type)	\
+	(var = (type *) Perl_Slab_Alloc(aTHX_ m,c*sizeof(type)))
+#define NewOpSz(m,var,size)	\
+	(var = (OP *) Perl_Slab_Alloc(aTHX_ m,size))
+#define FreeOp(p) Perl_Slab_Free(aTHX_ p)
+#else
+#define NewOp(m, var, c, type) Newz(m, var, c, type)
+#define NewOpSz(m, var, size)	\
+	(var = (OP*)safemalloc(size), memzero(var, size))
+#define FreeOp(p) Safefree(p)
+#endif

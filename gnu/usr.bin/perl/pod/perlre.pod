@@ -6,7 +6,7 @@ perlre - Perl regular expressions
 
 This page describes the syntax of regular expressions in Perl.  
 
-if you haven't used regular expressions before, a quick-start
+If you haven't used regular expressions before, a quick-start
 introduction is available in L<perlrequick>, and a longer tutorial
 introduction is available in L<perlretut>.
 
@@ -121,7 +121,8 @@ The following standard quantifiers are recognized:
     {n,m}  Match at least n but not more than m times
 
 (If a curly bracket occurs in any other context, it is treated
-as a regular character.)  The "*" modifier is equivalent to C<{0,}>, the "+"
+as a regular character.  In particular, the lower bound
+is not optional.)  The "*" modifier is equivalent to C<{0,}>, the "+"
 modifier to C<{1,}>, and the "?" modifier to C<{0,1}>.  n and m are limited
 to integral values less than a preset limit defined when perl is built.
 This is usually 32766 on the most common platforms.  The actual limit can
@@ -187,6 +188,7 @@ In addition, Perl defines the following:
     \C	Match a single C char (octet) even under Unicode.
 	NOTE: breaks up characters into their UTF-8 bytes,
 	so you may end up with malformed pieces of UTF-8.
+	Unsupported in lookbehind.
 
 A C<\w> matches a single alphanumeric character (an alphabetic
 character, or a decimal digit) or C<_>, not a whole word.  Use C<\w+>
@@ -398,10 +400,14 @@ the most-recently closed group (submatch). C<$^N> can be used in
 extended patterns (see below), for example to assign a submatch to a
 variable. 
 
-The numbered variables ($1, $2, $3, etc.) and the related punctuation
+The numbered match variables ($1, $2, $3, etc.) and the related punctuation
 set (C<$+>, C<$&>, C<$`>, C<$'>, and C<$^N>) are all dynamically scoped
 until the end of the enclosing block or until the next successful
 match, whichever comes first.  (See L<perlsyn/"Compound Statements">.)
+
+B<NOTE>: failed matches in Perl do not reset the match variables,
+which makes easier to write code that tests for a series of more
+specific cases and remembers the best match.
 
 B<WARNING>: Once Perl sees that you need one of C<$&>, C<$`>, or
 C<$'> anywhere in the program, it has to provide them for every
@@ -562,7 +568,7 @@ only for fixed-width look-behind.
 B<WARNING>: This extended regular expression feature is considered
 highly experimental, and may be changed or deleted without notice.
 
-This zero-width assertion evaluate any embedded Perl code.  It
+This zero-width assertion evaluates any embedded Perl code.  It
 always succeeds, and its C<code> is not interpolated.  Currently,
 the rules to determine where the C<code> ends are somewhat convoluted.
 
@@ -625,7 +631,7 @@ although it could raise an exception from an illegal pattern.  If
 you turn on the C<use re 'eval'>, though, it is no longer secure,
 so you should only do so if you are also using taint checking.
 Better yet, use the carefully constrained evaluation within a Safe
-module.  See L<perlsec> for details about both these mechanisms.
+compartment.  See L<perlsec> for details about both these mechanisms.
 
 =item C<(??{ code })>
 

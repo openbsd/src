@@ -13,7 +13,7 @@
 # tsx-11.mit.edu:/pub/linux/sources/libs/dld-3.2.7.tar.gz
 #
 #  Original version was for MachTen 2.1.1.
-#  Last modified by Andy Dougherty   <doughera@lafcol.lafayette.edu>
+#  Last modified by Andy Dougherty   <doughera@lafayette.edu>
 #  Tue Aug 13 12:31:01 EDT 1996
 #
 #  Warning about tests which no longer fail

@@ -2,21 +2,20 @@ package ExtUtils::MakeMaker;
 
 BEGIN {require 5.005_03;}
 
-$VERSION = "6.03";
-$Version_OK = "5.49";   # Makefiles older than $Version_OK will die
-                        # (Will be checked from MakeMaker version 4.13 onwards)
-($Revision = substr(q$Revision: 1.6 $, 10)) =~ s/\s+$//;
+$VERSION = '6.17';
+($Revision) = q$Revision: 1.7 $ =~ /Revision:\s+(\S+)/;
 
 require Exporter;
 use Config;
 use Carp ();
+use File::Path;
 
 use vars qw(
             @ISA @EXPORT @EXPORT_OK
-            $ISA_TTY $Revision $VERSION $Verbose $Version_OK %Config 
-            %Keep_after_flush %MM_Sections @Prepend_parent
+            $Revision $VERSION $Verbose %Config 
+            @Prepend_parent @Parent
             %Recognized_Att_Keys @Get_from_Config @MM_Sections @Overridable 
-            @Parent $PACKNAME
+            $Filename
            );
 use strict;
 
@@ -28,6 +27,10 @@ use strict;
 # purged.
 my $Is_VMS     = $^O eq 'VMS';
 my $Is_Win32   = $^O eq 'MSWin32';
+
+# Our filename for diagnostic and debugging purposes.  More reliable
+# than %INC (think caseless filesystems)
+$Filename = __FILE__;
 
 full_setup();
 
@@ -57,109 +60,31 @@ sub WriteMakefile {
 # Basic signatures of the attributes WriteMakefile takes.  Each is the
 # reference type.  Empty value indicate it takes a non-reference
 # scalar.
-my %Att_Sigs =
-(
- ABSTRACT           => '',
- ABSTRACT_FROM      => '',
- AUTHOR             => '',
- BINARY_LOCATION    => '',
+my %Att_Sigs;
+my %Special_Sigs = (
  C                  => 'array',
- CCFLAGS            => '',
  CONFIG             => 'array',
  CONFIGURE          => 'code',
- DEFINE             => '',
  DIR                => 'array',
- DISTNAME           => '',
  DL_FUNCS           => 'hash',
  DL_VARS            => 'array',
  EXCLUDE_EXT        => 'array',
  EXE_FILES          => 'array',
- FIRST_MAKEFILE     => '',
- FULLPERL           => '',
- FULLPERLRUN        => '',
- FULLPERLRUNINST    => '',
  FUNCLIST           => 'array',
  H                  => 'array',
  IMPORTS            => 'hash',
- INC                => '',
  INCLUDE_EXT        => 'array',
- INSTALLARCHLIB     => '',
- INSTALLBIN         => '',
- INSTALLDIRS        => '',
- INSTALLMAN1DIR     => '',
- INSTALLMAN3DIR     => '',
- INSTALLPRIVLIB     => '',
- INSTALLSCRIPT      => '',
- INSTALLSITEARCH    => '',
- INSTALLSITEBIN     => '',
- INSTALLSITELIB     => '',
- INSTALLSITEMAN1DIR => '',
- INSTALLSITEMAN3DIR => '',
- INSTALLVENDORARCH  => '',
- INSTALLVENDORBIN   => '',
- INSTALLVENDORLIB   => '',
- INSTALLVENDORMAN1DIR   => '',
- INSTALLVENDORMAN3DIR   => '',
- INST_ARCHLIB       => '',
- INST_BIN           => '',
- INST_LIB           => '',
- INST_MAN1DIR       => '',
- INST_MAN3DIR       => '',
- INST_SCRIPT        => '',
- _KEEP_AFTER_FLUSH  => '',
- LDDLFLAGS          => '',
- LDFROM             => '',
- LIB                => '',
- LIBPERL_A          => '',
  LIBS               => ['array',''],
- LINKTYPE           => '',
- MAKEAPERL          => '',
- MAKEFILE           => '',
  MAN1PODS           => 'hash',
  MAN3PODS           => 'hash',
- MAP_TARGET         => '',
- MYEXTLIB           => '',
- NAME               => '',
- NEEDS_LINKING      => '',
- NOECHO             => '',
- NORECURS           => '',
- NO_VC              => '',
- OBJECT             => '',
- OPTIMIZE           => '',
- PERL               => '',
- PERL_CORE          => '',
- PERLMAINCC         => '',
- PERL_ARCHLIB       => '',
- PERL_LIB           => '',
- PERL_MALLOC_OK     => '',
- PERLRUN            => '',
- PERLRUNINST        => '',
- PERL_SRC           => '',
- PERM_RW            => '',
- PERM_RWX           => '',
  PL_FILES           => 'hash',
  PM                 => 'hash',
  PMLIBDIRS          => 'array',
- PM_FILTER          => '',
- POLLUTE            => '',
- PPM_INSTALL_EXEC   => '',
- PPM_INSTALL_SCRIPT => '',
- PREFIX             => '',
- PREREQ_FATAL       => '',
  PREREQ_PM          => 'hash',
- PREREQ_PRINT       => '',
- PRINT_PREREQ       => '',
- SITEPREFIX         => '',
  SKIP               => 'array',
  TYPEMAPS           => 'array',
- VENDORPREFIX       => '',
- VERBINST           => '',
- VERSION            => '',
- VERSION_FROM       => '',
  XS                 => 'hash',
- XSOPT              => '',
- XSPROTOARG         => '',
- XS_VERSION         => '',
+ _KEEP_AFTER_FLUSH  => '',
 
  clean      => 'hash',
  depend     => 'hash',
@@ -167,10 +92,14 @@ my %Att_Sigs =
  dynamic_lib=> 'hash',
  linkext    => 'hash',
  macro      => 'hash',
+ postamble  => 'hash',
  realclean  => 'hash',
  test       => 'hash',
  tool_autosplit => 'hash',
 );
+
+@Att_Sigs{keys %Recognized_Att_Keys} = ('') x keys %Recognized_Att_Keys;
+@Att_Sigs{keys %Special_Sigs} = values %Special_Sigs;
 
 
 sub _verify_att {
@@ -198,17 +127,24 @@ sub _verify_att {
 }
 
 sub prompt ($;$) {
-    my($mess,$def)=@_;
-    $ISA_TTY = -t STDIN && (-t STDOUT || !(-f STDOUT || -c STDOUT)) ;   # Pipe?
+    my($mess, $def) = @_;
     Carp::confess("prompt function called without an argument") 
         unless defined $mess;
+
+    my $isa_tty = -t STDIN && (-t STDOUT || !(-f STDOUT || -c STDOUT)) ;
+
     my $dispdef = defined $def ? "[$def] " : " ";
     $def = defined $def ? $def : "";
-    my $ans;
+
     local $|=1;
     local $\;
     print "$mess $dispdef";
-    if ($ISA_TTY && !$ENV{PERL_MM_USE_DEFAULT}) {
+
+    my $ans;
+    if ($ENV{PERL_MM_USE_DEFAULT} || (!$isa_tty && eof STDIN)) {
+        print "$def\n";
+    }
+    else {
         $ans = <STDIN>;
         if( defined $ans ) {
             chomp $ans;
@@ -217,9 +153,7 @@ sub prompt ($;$) {
             print "\n";
         }
     }
-    else {
-        print "$def\n";
-    }
+
     return (!defined $ans || $ans eq '') ? $def : $ans;
 }
 
@@ -256,22 +190,25 @@ sub eval_in_x {
     }
 }
 
+
+# package name for the classes into which the first object will be blessed
+my $PACKNAME = 'PACK000';
+
 sub full_setup {
     $Verbose ||= 0;
-
-    # package name for the classes into which the first object will be blessed
-    $PACKNAME = "PACK000";
 
     my @attrib_help = qw/
 
     AUTHOR ABSTRACT ABSTRACT_FROM BINARY_LOCATION
     C CAPI CCFLAGS CONFIG CONFIGURE DEFINE DIR DISTNAME DL_FUNCS DL_VARS
-    EXCLUDE_EXT EXE_FILES FIRST_MAKEFILE 
+    EXCLUDE_EXT EXE_FILES FIRST_MAKEFILE
     FULLPERL FULLPERLRUN FULLPERLRUNINST
     FUNCLIST H IMPORTS
+
     INST_ARCHLIB INST_SCRIPT INST_BIN INST_LIB INST_MAN1DIR INST_MAN3DIR
     INSTALLDIRS
-    PREFIX          SITEPREFIX      VENDORPREFIX
+    DESTDIR PREFIX
+    PERLPREFIX      SITEPREFIX      VENDORPREFIX
     INSTALLPRIVLIB  INSTALLSITELIB  INSTALLVENDORLIB
     INSTALLARCHLIB  INSTALLSITEARCH INSTALLVENDORARCH
     INSTALLBIN      INSTALLSITEBIN  INSTALLVENDORBIN
@@ -281,17 +218,18 @@ sub full_setup {
     INSTALLSCRIPT 
     PERL_LIB        PERL_ARCHLIB 
     SITELIBEXP      SITEARCHEXP 
+
     INC INCLUDE_EXT LDFROM LIB LIBPERL_A LIBS
-    LINKTYPE MAKEAPERL MAKEFILE MAN1PODS MAN3PODS MAP_TARGET MYEXTLIB
-    PERL_MALLOC_OK
-    NAME NEEDS_LINKING NOECHO NORECURS NO_VC OBJECT OPTIMIZE PERL PERLMAINCC
-    PERLRUN PERLRUNINST PERL_CORE
+    LINKTYPE MAKEAPERL MAKEFILE MAKEFILE_OLD MAN1PODS MAN3PODS MAP_TARGET 
+    MYEXTLIB NAME NEEDS_LINKING NOECHO NO_META NORECURS NO_VC OBJECT OPTIMIZE 
+    PERL_MALLOC_OK PERL PERLMAINCC PERLRUN PERLRUNINST PERL_CORE
     PERL_SRC PERM_RW PERM_RWX
     PL_FILES PM PM_FILTER PMLIBDIRS POLLUTE PPM_INSTALL_EXEC
     PPM_INSTALL_SCRIPT PREREQ_FATAL PREREQ_PM PREREQ_PRINT PRINT_PREREQ
     SKIP TYPEMAPS VERSION VERSION_FROM XS XSOPT XSPROTOARG
     XS_VERSION clean depend dist dynamic_lib linkext macro realclean
     tool_autosplit
+
     MACPERL_SRC MACPERL_LIB MACLIBS_68K MACLIBS_PPC MACLIBS_SC MACLIBS_MRC
     MACLIBS_ALL_68K MACLIBS_ALL_PPC MACLIBS_SHARED
         /;
@@ -310,16 +248,24 @@ sub full_setup {
     @MM_Sections = 
         qw(
 
- post_initialize const_config constants tool_autosplit tool_xsubpp
- tools_other dist macro depend cflags const_loadlibs const_cccmd
+ post_initialize const_config constants platform_constants 
+ tool_autosplit tool_xsubpp tools_other 
+
+ makemakerdflt
+
+ dist macro depend cflags const_loadlibs const_cccmd
  post_constants
 
  pasthru
 
- c_o xs_c xs_o top_targets linkext dlsyms dynamic dynamic_bs
+ special_targets
+ c_o xs_c xs_o
+ top_targets linkext dlsyms dynamic dynamic_bs
  dynamic_lib static static_lib manifypods processPL
  installbin subdirs
- clean realclean dist_basics dist_core dist_dir dist_test dist_ci
+ clean_subdirs clean realclean_subdirs realclean 
+ metafile metafile_addtomanifest
+ dist_basics dist_core distdir dist_test dist_ci
  install force perldepend makefile staticmake test ppd
 
           ); # loses section ordering
@@ -352,6 +298,9 @@ sub full_setup {
            exe_ext full_ar
           );
 
+    # 5.5.3 doesn't have any concept of vendor libs
+    push @Get_from_Config, qw( vendorarchexp vendorlibexp ) if $] >= 5.006;
+
     foreach my $item (@attrib_help){
         $Recognized_Att_Keys{$item} = 1;
     }
@@ -371,11 +320,6 @@ sub full_setup {
            MAP_TARGET INST_MAN1DIR INST_MAN3DIR PERL_SRC
            PERL FULLPERL
     );
-
-    my @keep = qw/
-        NEEDS_LINKING HAS_LINK_CODE
-        /;
-    @Keep_after_flush{@keep} = (1) x @keep;
 }
 
 sub writeMakefile {
@@ -402,14 +346,21 @@ sub new {
     my($class,$self) = @_;
     my($key);
 
+    # Store the original args passed to WriteMakefile()
+    foreach my $k (keys %$self) {
+        $self->{ARGS}{$k} = $self->{$k};
+    }
+
     if ("@ARGV" =~ /\bPREREQ_PRINT\b/) {
         require Data::Dumper;
         print Data::Dumper->Dump([$self->{PREREQ_PM}], [qw(PREREQ_PM)]);
+        exit 0;
     }
 
     # PRINT_PREREQ is RedHatism.
     if ("@ARGV" =~ /\bPRINT_PREREQ\b/) {
-        print join(" ", map { "perl($_)>=$self->{PREREQ_PM}->{$_} " } sort keys %{$self->{PREREQ_PM}}), "\n";
+        print join(" ", map { "perl($_)>=$self->{PREREQ_PM}->{$_} " } 
+                        sort keys %{$self->{PREREQ_PM}}), "\n";
         exit 0;
    }
 
@@ -427,9 +378,14 @@ sub new {
 
     my(%unsatisfied) = ();
     foreach my $prereq (sort keys %{$self->{PREREQ_PM}}) {
-        eval "require $prereq";
+        # 5.8.0 has a bug with require Foo::Bar alone in an eval, so an
+        # extra statement is a workaround.
+        eval "require $prereq; 0";
 
         my $pr_version = $prereq->VERSION || 0;
+
+        # convert X.Y_Z alpha version #s to X.YZ for easier comparisons
+        $pr_version =~ s/(\d+)\.(\d+)_(\d+)/$1.$2$3/;
 
         if ($@) {
             warn sprintf "Warning: prerequisite %s %s not found.\n", 
@@ -483,8 +439,14 @@ sub new {
         my $key;
         for $key (@Prepend_parent) {
             next unless defined $self->{PARENT}{$key};
+
+            # Don't stomp on WriteMakefile() args.
+            next if defined $self->{ARGS}{$key} and
+                    $self->{ARGS}{$key} eq $self->{$key};
+
             $self->{$key} = $self->{PARENT}{$key};
-            unless ($^O eq 'VMS' && $key =~ /PERL$/) {
+
+            unless ($Is_VMS && $key =~ /PERL$/) {
                 $self->{$key} = $self->catdir("..",$self->{$key})
                   unless $self->file_name_is_absolute($self->{$key});
             } else {
@@ -520,7 +482,17 @@ sub new {
 
     ($self->{NAME_SYM} = $self->{NAME}) =~ s/\W+/_/g;
 
-    $self->init_main();
+    $self->init_main;
+    $self->init_VERSION;
+    $self->init_dist;
+    $self->init_INST;
+    $self->init_INSTALL;
+    $self->init_DEST;
+    $self->init_dirscan;
+    $self->init_xs;
+    $self->init_PERL;
+    $self->init_DIRFILESEP;
+    $self->init_linker;
 
     if (! $self->{PERL_SRC} ) {
         require VMS::Filespec if $Is_VMS;
@@ -547,8 +519,8 @@ END
         }
     }
 
-    $self->init_dirscan();
     $self->init_others();
+    $self->init_platform();
     $self->init_PERM();
     my($argv) = neatvalue(\@ARGV);
     $argv =~ s/^\[/(/;
@@ -569,6 +541,8 @@ END
 END
 
     foreach my $key (sort keys %initial_att){
+        next if $key eq 'ARGS';
+
         my($v) = neatvalue($initial_att{$key});
         $v =~ s/(CODE|HASH|ARRAY|SCALAR)\([\dxa-f]+\)/$1\(...\)/;
         $v =~ tr/\n/ /s;
@@ -583,6 +557,7 @@ END
 END
         if (scalar(keys %configure_att) > 0) {
             foreach my $key (sort keys %configure_att){
+               next if $key eq 'ARGS';
                my($v) = neatvalue($configure_att{$key});
                $v =~ s/(CODE|HASH|ARRAY|SCALAR)\([\dxa-f]+\)/$1\(...\)/;
                $v =~ tr/\n/ /s;
@@ -604,7 +579,7 @@ END
     delete $self->{SKIP}; # free memory
 
     if ($self->{PARENT}) {
-        for (qw/install dist dist_basics dist_core dist_dir dist_test dist_ci/) {
+        for (qw/install dist dist_basics dist_core distdir dist_test dist_ci/) {
             $self->{SKIPHASH}{$_} = 1;
         }
     }
@@ -616,6 +591,10 @@ END
     }
 
     foreach my $section ( @MM_Sections ){
+        # Support for new foo_target() methods.
+        my $method = $section;
+        $method .= '_target' unless $self->can($method);
+
         print "Processing Makefile '$section' section\n" if ($Verbose >= 2);
         my($skipit) = $self->skipcheck($section);
         if ($skipit){
@@ -624,7 +603,7 @@ END
             my(%a) = %{$self->{$section} || {}};
             push @{$self->{RESULT}}, "\n# --- MakeMaker $section section:";
             push @{$self->{RESULT}}, "# " . join ", ", %a if $Verbose && %a;
-            push @{$self->{RESULT}}, $self->nicetext($self->$section( %a ));
+            push @{$self->{RESULT}}, $self->nicetext($self->$method( %a ));
         }
     }
 
@@ -638,13 +617,14 @@ sub WriteEmptyMakefile {
 
     my %att = @_;
     my $self = MM->new(\%att);
-    if (-f "$self->{MAKEFILE}.old") {
-      chmod 0666, "$self->{MAKEFILE}.old";
-      unlink "$self->{MAKEFILE}.old" or warn "unlink $self->{MAKEFILE}.old: $!";
+    if (-f $self->{MAKEFILE_OLD}) {
+      _unlink($self->{MAKEFILE_OLD}) or 
+        warn "unlink $self->{MAKEFILE_OLD}: $!";
     }
-    rename $self->{MAKEFILE}, "$self->{MAKEFILE}.old"
-      or warn "rename $self->{MAKEFILE} $self->{MAKEFILE}.old: $!"
-        if -f $self->{MAKEFILE};
+    if ( -f $self->{MAKEFILE} ) {
+        _rename($self->{MAKEFILE}, $self->{MAKEFILE_OLD}) or
+          warn "rename $self->{MAKEFILE} => $self->{MAKEFILE_OLD}: $!"
+    }
     open MF, '>'.$self->{MAKEFILE} or die "open $self->{MAKEFILE} for write: $!";
     print MF <<'EOP';
 all:
@@ -681,7 +661,6 @@ sub parse_args{
     my($self, @args) = @_;
     foreach (@args) {
         unless (m/(.*?)=(.*)/) {
-            help(),exit 1 if m/^help$/;
             ++$Verbose if m/^verb/;
             next;
         }
@@ -693,7 +672,9 @@ sub parse_args{
                  (getpwuid($>))[7]
                  ]ex;
         }
-        $self->{uc($name)} = $value;
+
+        # Remember the original args passed it.  It will be useful later.
+        $self->{ARGS}{uc $name} = $self->{uc $name} = $value;
     }
 
     # catch old-style 'potential_libs' and inform user how to 'upgrade'
@@ -738,6 +719,7 @@ sub parse_args{
     }
 
     foreach my $mmkey (sort keys %$self){
+        next if $mmkey eq 'ARGS';
         print STDOUT "  $mmkey => ", neatvalue($self->{$mmkey}), "\n" if $Verbose;
         print STDOUT "'$mmkey' is not a known MakeMaker parameter name.\n"
             unless exists $Recognized_Att_Keys{$mmkey};
@@ -749,7 +731,11 @@ sub check_hints {
     my($self) = @_;
     # We allow extension-specific hints files.
 
-    return unless -d "hints";
+    require File::Spec;
+    my $curdir = File::Spec->curdir;
+
+    my $hint_dir = File::Spec->catdir($curdir, "hints");
+    return unless -d $hint_dir;
 
     # First we look for the best hintsfile we have
     my($hint)="${^O}_$Config{osvers}";
@@ -759,11 +745,11 @@ sub check_hints {
 
     # Also try without trailing minor version numbers.
     while (1) {
-        last if -f "hints/$hint.pl";      # found
+        last if -f File::Spec->catfile($hint_dir, "$hint.pl");  # found
     } continue {
         last unless $hint =~ s/_[^_]*$//; # nothing to cut off
     }
-    my $hint_file = "hints/$hint.pl";
+    my $hint_file = File::Spec->catfile($hint_dir, "$hint.pl");
 
     return unless -f $hint_file;    # really there
 
@@ -775,11 +761,16 @@ sub _run_hintfile {
     local($self) = shift;       # make $self available to the hint file.
     my($hint_file) = shift;
 
-    local $@;
+    local($@, $!);
     print STDERR "Processing hints file $hint_file\n";
-    my $ret = do "./$hint_file";
-    unless( defined $ret ) {
-        print STDERR $@ if $@;
+
+    # Just in case the ./ isn't on the hint file, which File::Spec can
+    # often strip off, we bung the curdir into @INC
+    local @INC = (File::Spec->curdir, @INC);
+    my $ret = do $hint_file;
+    if( !defined $ret ) {
+        my $error = $@ || $!;
+        print STDERR $error;
     }
 }
 
@@ -883,17 +874,37 @@ sub flush {
 
     close FH;
     my($finalname) = $self->{MAKEFILE};
-    rename("MakeMaker.tmp", $finalname);
+    _rename("MakeMaker.tmp", $finalname) or
+      warn "rename MakeMaker.tmp => $finalname: $!";
     chmod 0644, $finalname unless $Is_VMS;
+
+    my %keep = map { ($_ => 1) } qw(NEEDS_LINKING HAS_LINK_CODE);
 
     if ($self->{PARENT} && !$self->{_KEEP_AFTER_FLUSH}) {
         foreach (keys %$self) { # safe memory
-            delete $self->{$_} unless $Keep_after_flush{$_};
+            delete $self->{$_} unless $keep{$_};
         }
     }
 
     system("$Config::Config{eunicefix} $finalname") unless $Config::Config{eunicefix} eq ":";
 }
+
+
+# This is a rename for OS's where the target must be unlinked first.
+sub _rename {
+    my($src, $dest) = @_;
+    chmod 0666, $dest;
+    unlink $dest;
+    return rename $src, $dest;
+}
+
+# This is an unlink for OS's where the target must be writable first.
+sub _unlink {
+    my @files = @_;
+    chmod 0666, @files;
+    return unlink @files;
+}
+
 
 # The following mkbootstrap() is only for installations that are calling
 # the pre-4.1 mkbootstrap() from their old Makefiles. This MakeMaker
@@ -961,7 +972,7 @@ __END__
 
 =head1 NAME
 
-ExtUtils::MakeMaker - create an extension Makefile
+ExtUtils::MakeMaker - Create a module Makefile
 
 =head1 SYNOPSIS
 
@@ -986,24 +997,7 @@ Makefiles with a single invocation of WriteMakefile().
 
 =head2 How To Write A Makefile.PL
 
-The short answer is: Don't.
-
-        Always begin with h2xs.
-        Always begin with h2xs!
-        ALWAYS BEGIN WITH H2XS!
-
-even if you're not building around a header file, and even if you
-don't have an XS component.
-
-Run h2xs(1) before you start thinking about writing a module. For so
-called pm-only modules that consist of C<*.pm> files only, h2xs has
-the C<-X> switch. This will generate dummy files of all kinds that are
-useful for the module developer.
-
-The medium answer is:
-
-    use ExtUtils::MakeMaker;
-    WriteMakefile( NAME => "Foo::Bar" );
+See ExtUtils::MakeMaker::Tutorial.
 
 The long answer is the rest of the manpage :-)
 
@@ -1077,7 +1071,7 @@ INSTALLDIRS according to the following table:
                                  INSTALLDIRS set to
                            perl        site          vendor
 
-                 PREFIX          SITEPREFIX          VENDORPREFIX
+                 PERLPREFIX      SITEPREFIX          VENDORPREFIX
   INST_ARCHLIB   INSTALLARCHLIB  INSTALLSITEARCH     INSTALLVENDORARCH
   INST_LIB       INSTALLPRIVLIB  INSTALLSITELIB      INSTALLVENDORLIB
   INST_BIN       INSTALLBIN      INSTALLSITEBIN      INSTALLVENDORBIN
@@ -1357,6 +1351,18 @@ be determined by some evaluation method.
 
 Something like C<"-DHAVE_UNISTD_H">
 
+=item DESTDIR
+
+This is the root directory into which the code will be installed.  It
+I<prepends itself to the normal prefix>.  For example, if your code
+would normally go into /usr/local/lib/perl you could set DESTDIR=/tmp/
+and installation would go into /tmp/usr/local/lib/perl.
+
+This is primarily of use for people who repackage Perl modules.
+
+NOTE: Due to the nature of make, it is important that you put the trailing
+slash on your DESTDIR.  "/tmp/" not "/tmp".
+
 =item DIR
 
 Ref to array of subdirectories containing Makefile.PLs e.g. [ 'sdbm'
@@ -1364,8 +1370,24 @@ Ref to array of subdirectories containing Makefile.PLs e.g. [ 'sdbm'
 
 =item DISTNAME
 
-Your name for distributing the package (by tar file). This defaults to
-NAME above.
+A safe filename for the package. 
+
+Defaults to NAME above but with :: replaced with -.
+
+For example, Foo::Bar becomes Foo-Bar.
+
+=item DISTVNAME
+
+Your name for distributing the package with the version number
+included.  This is used by 'make dist' to name the resulting archive
+file.
+
+Defaults to DISTNAME-VERSION.
+
+For example, version 1.04 of Foo::Bar becomes Foo-Bar-1.04.
+
+On some OS's where . has special meaning VERSION_SYM may be used in
+place of VERSION.
 
 =item DL_FUNCS
 
@@ -1407,11 +1429,20 @@ Ref to array of executable files. The files will be copied to the
 INST_SCRIPT directory. Make realclean will delete them from there
 again.
 
+If your executables start with something like #!perl or
+#!/usr/bin/perl MakeMaker will change this to the path of the perl
+'Makefile.PL' was invoked with so the programs will be sure to run
+properly even if perl is not in /usr/bin/perl.
+
 =item FIRST_MAKEFILE
 
-The name of the Makefile to be produced. Defaults to the contents of
-MAKEFILE, but can be overridden. This is used for the second Makefile
-that will be produced for the MAP_TARGET.
+The name of the Makefile to be produced.  This is used for the second
+Makefile that will be produced for the MAP_TARGET.
+
+Defaults to 'Makefile' or 'Descrip.MMS' on VMS.
+
+(Note: we couldn't use MAKEFILE because dmake uses this for something
+else).
 
 =item FULLPERL
 
@@ -1576,6 +1607,12 @@ Directory, where executable files should be installed during
 testing. make install will copy the files in INST_SCRIPT to
 INSTALLSCRIPT.
 
+=item LD
+
+Program to be used to link libraries for dynamic loading.
+
+Defaults to $Config{ld}.
+
 =item LDDLFLAGS
 
 Any special flags that might need to be passed to ld to create a
@@ -1636,9 +1673,12 @@ Boolean which tells MakeMaker, that it should include the rules to
 make a perl. This is handled automatically as a switch by
 MakeMaker. The user normally does not need it.
 
-=item MAKEFILE
+=item MAKEFILE_OLD
 
-The name of the Makefile to be produced.
+When 'make clean' or similar is run, the $(FIRST_MAKEFILE) will be
+backed up at this location.
+
+Defaults to $(FIRST_MAKEFILE).old or $(FIRST_MAKEFILE)_old on VMS.
 
 =item MAN1PODS
 
@@ -1680,13 +1720,23 @@ this boolean variable yourself.
 
 =item NOECHO
 
-Defaults to C<@>. By setting it to an empty string you can generate a
-Makefile that echos all commands. Mainly used in debugging MakeMaker
-itself.
+Command so make does not print the literal commands its running.
+
+By setting it to an empty string you can generate a Makefile that
+prints all commands. Mainly used in debugging MakeMaker itself.
+
+Defaults to C<@>.
 
 =item NORECURS
 
 Boolean.  Attribute to inhibit descending into subdirectories.
+
+=item NO_META
+
+When true, suppresses the generation and addition to the MANIFEST of
+the META.yml module meta-data file during 'make distdir'.
+
+Defaults to false.
 
 =item NO_VC
 
@@ -1765,6 +1815,16 @@ B<NOTE.>  Negligence to set this flag in I<any one> of loaded extension
 nullifies many advantages of Perl's malloc(), such as better usage of
 system resources, error detection, memory usage reporting, catchable failure
 of memory allocations, etc.
+
+=item PERLPREFIX
+
+Directory under which core modules are to be installed.
+
+Defaults to $Config{installprefixexp} falling back to
+$Config{installprefix}, $Config{prefixexp} or $Config{prefix} should
+$Config{installprefixexp} not exist.
+
+Overridden by PREFIX.
 
 =item PERLRUN
 
@@ -1882,8 +1942,6 @@ which should be sensible for your platform.
 If you specify LIB or any INSTALL* variables they will not be effected
 by the PREFIX.
 
-Defaults to $Config{installprefixexp}.
-
 =item PREREQ_FATAL
 
 Bool. If this parameter is true, failing to have the required modules
@@ -1908,7 +1966,8 @@ only check if any version is installed already.
 =item PREREQ_PRINT
 
 Bool.  If this parameter is true, the prerequisites will be printed to
-stdout and MakeMaker will exit.  The output format is
+stdout and MakeMaker will exit.  The output format is an evalable hash
+ref.
 
 $PREREQ_PM = {
                'A::B' => Vers1,
@@ -1924,11 +1983,13 @@ RedHatism for C<PREREQ_PRINT>.  The output format is different, though:
 
 =item SITEPREFIX
 
-Like PREFIX, but only for the site install locations.
+Like PERLPREFIX, but only for the site install locations.
 
-Defaults to PREFIX (if set) or $Config{siteprefixexp}.  Perls prior to
-5.6.0 didn't have an explicit siteprefix in the Config.  In those
-cases $Config{installprefix} will be used.
+Defaults to $Config{siteprefixexp}.  Perls prior to 5.6.0 didn't have
+an explicit siteprefix in the Config.  In those cases
+$Config{installprefix} will be used.
+
+Overridable by PREFIX
 
 =item SKIP
 
@@ -1948,9 +2009,11 @@ typemap has lowest precedence.
 
 =item VENDORPREFIX
 
-Like PREFIX, but only for the vendor install locations.
+Like PERLPREFIX, but only for the vendor install locations.
 
-Defaults to PREFIX (if set) or $Config{vendorprefixexp}
+Defaults to $Config{vendorprefixexp}.
+
+Overridable by PREFIX
 
 =item VERBINST
 
@@ -1977,7 +2040,7 @@ MakeMaker object. The following lines will be parsed o.k.:
 
     $VERSION = '1.00';
     *VERSION = \'1.01';
-    ( $VERSION ) = '$Revision: 1.6 $ ' =~ /\$Revision:\s+([^\s]+)/;
+    $VERSION = sprintf "%d.%03d", q$Revision: 1.7 $ =~ /(\d+)/g;
     $FOO::VERSION = '1.10';
     *FOO::VERSION = \'1.11';
     our $VERSION = 1.2.3;       # new for perl5.6.0 
@@ -2000,6 +2063,11 @@ would have to do something like
     depend => { Makefile => '$(VERSION_FROM)' }
 
 See attribute C<depend> below.
+
+=item VERSION_SYM
+
+A sanitized VERSION with . replaced by _.  For places where . has
+special meaning (some filesystems, RCS labels, etc...)
 
 =item XS
 
@@ -2032,7 +2100,8 @@ to the value of the VERSION attribute.
 =head2 Additional lowercase attributes
 
 can be used to pass parameters to the methods which implement that
-part of the Makefile.
+part of the Makefile.  Parameters are specified as a hash ref but are
+passed to the method as a hash.
 
 =over 2
 
@@ -2078,6 +2147,10 @@ be linked.
 =item macro
 
   {ANY_MACRO => ANY_VALUE, ...}
+
+=item postamble
+
+Anything put here will be passed to MY::postamble() if you have one.
 
 =item realclean
 
@@ -2212,6 +2285,10 @@ Copies all the files that are in the MANIFEST file to a newly created
 directory with the name C<$(DISTNAME)-$(VERSION)>. If that directory
 exists, it will be removed first.
 
+Additionally, it will create a META.yml module meta-data file and add
+this to your MANFIEST.  You can shut this behavior off with the NO_META
+flag.
+
 =item   make disttest
 
 Makes a distdir first, and runs a C<perl Makefile.PL>, a make, and
@@ -2276,6 +2353,28 @@ An example:
 
     WriteMakefile( 'dist' => { COMPRESS=>"bzip2", SUFFIX=>".bz2" })
 
+
+=head2 Module Meta-Data
+
+Long plaguing users of MakeMaker based modules has been the problem of
+getting basic information about the module out of the sources
+I<without> running the F<Makefile.PL> and doing a bunch of messy
+heuristics on the resulting F<Makefile>.  To this end a simple module
+meta-data file has been introduced, F<META.yml>.
+
+F<META.yml> is a YAML document (see http://www.yaml.org) containing
+basic information about the module (name, version, prerequisites...)
+in an easy to read format.  The format is developed and defined by the
+Module::Build developers (see 
+http://module-build.sourceforge.net/META-spec.html)
+
+MakeMaker will automatically generate a F<META.yml> file for you and
+add it to your F<MANIFEST> as part of the 'distdir' target (and thus
+the 'dist' target).  This is intended to seamlessly and rapidly
+populate CPAN with module meta-data.  If you wish to shut this feature
+off, set the C<NO_META> C<WriteMakefile()> flag to true.
+
+
 =head2 Disabling an extension
 
 If some events detected in F<Makefile.PL> imply that there is no way
@@ -2293,9 +2392,33 @@ in a subdirectory of some other distribution, or is listed as a
 dependency in a CPAN::Bundle, but the functionality is supported by
 different means on the current architecture).
 
+=head2 Other Handy Functions
+
+=over 4
+
+=item prompt
+
+    my $value = prompt($message);
+    my $value = prompt($message, $default);
+
+The C<prompt()> function provides an easy way to request user input
+used to write a makefile.  It displays the $message as a prompt for
+input.  If a $default is provided it will be used as a default.  The
+function returns the $value selected by the user.
+
+If C<prompt()> detects that it is not running interactively and there
+is nothing on STDIN or if the PERL_MM_USE_DEFAULT environment variable
+is set to true, the $default will be used without prompting.  This
+prevents automated processes from blocking on user input. 
+
+If no $default is provided an empty string will be used instead.
+
+=back
+
+
 =head1 ENVIRONMENT
 
-=over 8
+=over 4
 
 =item PERL_MM_OPT
 
@@ -2330,5 +2453,13 @@ Send bug reports via http://rt.cpan.org/.  Please send your
 generated Makefile along with your report.
 
 For more up-to-date information, see http://www.makemaker.org.
+
+=head1 LICENSE
+
+This program is free software; you can redistribute it and/or 
+modify it under the same terms as Perl itself.
+
+See F<http://www.perl.com/perl/misc/Artistic.html>
+
 
 =cut

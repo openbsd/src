@@ -1,6 +1,7 @@
 /*    scope.c
  *
- *    Copyright (c) 1991-2002, Larry Wall
+ *    Copyright (C) 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
+ *    2000, 2001, 2002, 2003, by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -154,6 +155,13 @@ Perl_savestack_grow(pTHX)
     Renew(PL_savestack, PL_savestack_max, ANY);
 }
 
+void
+Perl_savestack_grow_cnt(pTHX_ I32 need)
+{
+    PL_savestack_max = PL_savestack_ix + need;
+    Renew(PL_savestack, PL_savestack_max, ANY);
+}
+
 #undef GROW
 
 void
@@ -276,7 +284,7 @@ Perl_save_shared_pvref(pTHX_ char **str)
 void
 Perl_save_gp(pTHX_ GV *gv, I32 empty)
 {
-    SSCHECK(6);
+    SSGROW(6);
     SSPUSHIV((IV)SvLEN(gv));
     SvLEN(gv) = 0; /* forget that anything was allocated here */
     SSPUSHIV((IV)SvCUR(gv));
@@ -391,6 +399,15 @@ Perl_save_long(pTHX_ long int *longp)
 }
 
 void
+Perl_save_bool(pTHX_ bool *boolp)
+{
+    SSCHECK(3);
+    SSPUSHBOOL(*boolp);
+    SSPUSHPTR(boolp);
+    SSPUSHINT(SAVEt_BOOL);
+}
+
+void
 Perl_save_I32(pTHX_ I32 *intp)
 {
     SSCHECK(3);
@@ -460,8 +477,9 @@ void
 Perl_save_padsv(pTHX_ PADOFFSET off)
 {
     SSCHECK(4);
+    ASSERT_CURPAD_ACTIVE("save_padsv");
     SSPUSHPTR(PL_curpad[off]);
-    SSPUSHPTR(PL_curpad);
+    SSPUSHPTR(PL_comppad);
     SSPUSHLONG((long)off);
     SSPUSHINT(SAVEt_PADSV);
 }
@@ -542,6 +560,7 @@ Perl_save_freepv(pTHX_ char *pv)
 void
 Perl_save_clearsv(pTHX_ SV **svp)
 {
+    ASSERT_CURPAD_ACTIVE("save_clearsv");
     SSCHECK(2);
     SSPUSHLONG((long)(svp-PL_curpad));
     SSPUSHINT(SAVEt_CLEARSV);
@@ -795,6 +814,10 @@ Perl_leave_scope(pTHX_ I32 base)
 	    ptr = SSPOPPTR;
 	    *(long*)ptr = (long)SSPOPLONG;
 	    break;
+	case SAVEt_BOOL:			/* bool reference */
+	    ptr = SSPOPPTR;
+	    *(bool*)ptr = (bool)SSPOPBOOL;
+	    break;
 	case SAVEt_I32:				/* I32 reference */
 	    ptr = SSPOPPTR;
 	    *(I32*)ptr = (I32)SSPOPINT;
@@ -857,8 +880,7 @@ Perl_leave_scope(pTHX_ I32 base)
 	    break;
 	case SAVEt_FREEOP:
 	    ptr = SSPOPPTR;
-	    if (PL_comppad)
-		PL_curpad = AvARRAY(PL_comppad);
+	    ASSERT_CURPAD_LEGAL("SAVEt_FREEOP"); /* XXX DAPM tmp */
 	    op_free((OP*)ptr);
 	    break;
 	case SAVEt_FREEPV:
@@ -868,6 +890,14 @@ Perl_leave_scope(pTHX_ I32 base)
 	case SAVEt_CLEARSV:
 	    ptr = (void*)&PL_curpad[SSPOPLONG];
 	    sv = *(SV**)ptr;
+
+	    DEBUG_Xv(PerlIO_printf(Perl_debug_log,
+	     "Pad 0x%"UVxf"[0x%"UVxf"] clearsv: %ld sv=0x%"UVxf"<%"IVdf"> %s\n",
+		PTR2UV(PL_comppad), PTR2UV(PL_curpad),
+		(long)((SV **)ptr-PL_curpad), PTR2UV(sv), (IV)SvREFCNT(sv),
+		(SvREFCNT(sv) <= 1 && !SvOBJECT(sv)) ? "clear" : "abandon"
+	    ));
+
 	    /* Can clear pad variable in place? */
 	    if (SvREFCNT(sv) <= 1 && !SvOBJECT(sv)) {
 		/*
@@ -989,7 +1019,7 @@ Perl_leave_scope(pTHX_ I32 base)
 	    *(I32*)&PL_hints = (I32)SSPOPINT;
 	    break;
 	case SAVEt_COMPPAD:
-	    PL_comppad = (AV*)SSPOPPTR;
+	    PL_comppad = (PAD*)SSPOPPTR;
 	    if (PL_comppad)
 		PL_curpad = AvARRAY(PL_comppad);
 	    else
@@ -1000,7 +1030,7 @@ Perl_leave_scope(pTHX_ I32 base)
 		PADOFFSET off = (PADOFFSET)SSPOPLONG;
 		ptr = SSPOPPTR;
 		if (ptr)
-		    ((SV**)ptr)[off] = (SV*)SSPOPPTR;
+		    AvARRAY((PAD*)ptr)[off] = (SV*)SSPOPPTR;
 	    }
 	    break;
 	default:

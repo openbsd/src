@@ -41,15 +41,15 @@ my $usage =
 my %opts;
 GetOptions( \%opts,
             qw( man1dir=s man1ext=s man3dir=s man3ext=s batchlimit=i
-                notify n help silent S verbose V)) 
+                destdir:s notify n help silent S verbose V)) 
 	|| die $usage;
 die $usage if $opts{help};
 
-$opts{man1dir} = $Config{'installman1dir'}
+$opts{man1dir} = "$opts{destdir}$Config{'installman1dir'}"
     unless defined($opts{man1dir}); 
 $opts{man1ext} = $Config{'man1ext'}
     unless defined($opts{man1ext}); 
-$opts{man3dir} = $Config{'installman3dir'}
+$opts{man3dir} = "$opts{destdir}$Config{'installman3dir'}"
     unless defined($opts{man3dir}); 
 $opts{man3ext} = $Config{'man3ext'}
     unless defined($opts{man3ext}); 
@@ -61,13 +61,13 @@ $opts{verbose} ||= $opts{V} || $opts{notify};
 
 -x  "./perl$Config{exe_ext}" 
   or warn "./perl$Config{exe_ext} not found!  Have you run make?\n";
--d  $Config{'installprivlib'}
+-d  "$opts{destdir}$Config{'installprivlib'}"
 	|| warn "Perl library directory $Config{'installprivlib'} not found.
 		Have you run make install?.  (Installing anyway.)\n";
 -x "t/perl$Config{exe_ext}"		|| warn "WARNING: You've never run 'make test'!!!",
 	"  (Installing anyway.)\n";
 
-$packlist = ExtUtils::Packlist->new("$Config{installarchlib}/.packlist");
+$packlist = ExtUtils::Packlist->new("$opts{destdir}$Config{installarchlib}/.packlist");
 
 
 # Install the main pod pages.
@@ -142,6 +142,25 @@ sub pod2man {
 	next if $mod =~ m:/t/:; # no pods from test directories 
 	next if ($manpage eq 'Pod/Functions.pm'); #### Used only by pod itself
 
+	# Skip files without pod docs
+	my $has_pod;
+	if (open T, $mod)
+	{
+	    local $_;
+	    while (<T>)
+	    {
+		++$has_pod and last if /^=(?:head\d+|item|pod)\b/;
+	    }
+
+	    close T;
+	}
+
+	unless ($has_pod)
+	{
+	    warn "no documentation in $mod\n";
+	    next;
+	}
+
 	# Convert name from  File/Basename.pm to File::Basename.3 format,
 	# if necessary.
 	$manpage =~ s#\.p(m|od)$##;
@@ -163,11 +182,13 @@ sub pod2man {
     foreach my $page (@to_process) {
 	my($pod, $tmp, $manpage) = @$page;
 
-        print "  $manpage\n";
+	my $xmanpage = $manpage;
+	$xmanpage =~ s/^\Q$opts{'destdir'}\E// if $opts{'destdir'};
+        print "  $xmanpage\n";
 	if (!$opts{notify} && $parser->parse_from_file($pod, $tmp)) {
             if (-s $tmp) {
                 if (rename($tmp, $manpage)) {
-                    $packlist->{$manpage} = { type => 'file' };
+                    $packlist->{$xmanpage} = { type => 'file' };
                     next;
                 }
             }

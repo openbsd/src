@@ -146,6 +146,7 @@
 #define my_getpwuid		Perl_my_getpwuid
 #define my_flush		Perl_my_flush
 #define readdir			Perl_readdir
+#define readdir_r		Perl_readdir_r
 #else
 #define my_getenv_len(a,b,c)	Perl_my_getenv_len(aTHX_ a,b,c)
 #define vmssetenv(a,b,c)	Perl_vmssetenv(aTHX_ a,b,c)
@@ -191,6 +192,7 @@
 #define my_getpwuid(a)		Perl_my_getpwuid(aTHX_ a)
 #define my_flush(a)		Perl_my_flush(aTHX_ a)
 #define readdir(a)		Perl_readdir(aTHX_ a)
+#define readdir_r(a,b,c)	Perl_readdir_r(aTHX_ a,b,c)
 #endif
 #define my_gconvert		Perl_my_gconvert
 #define telldir		Perl_telldir
@@ -305,6 +307,7 @@ struct interp_intern {
 
 /* Flags for vmstrnenv() */
 #define PERL__TRNENV_SECURE 0x01
+#define PERL__TRNENV_JOIN_SEARCHLIST 0x02
 
 /* Handy way to vet calls to VMS system services and RTL routines. */
 #define _ckvmssts(call) STMT_START { register unsigned long int __ckvms_sts; \
@@ -328,7 +331,7 @@ struct interp_intern {
 #endif
 
 #define BIT_BUCKET "_NLA0:"
-#define PERL_SYS_INIT(c,v)	vms_image_init((c),(v)); MALLOC_INIT
+#define PERL_SYS_INIT(c,v)	MALLOC_CHECK_TAINT2(*c,*v) vms_image_init((c),(v)); MALLOC_INIT
 #define PERL_SYS_TERM()		OP_REFCNT_TERM; MALLOC_TERM
 #define dXSUB_SYS
 #define HAS_KILL
@@ -352,7 +355,11 @@ struct interp_intern {
  *	This symbol, if defined, indicates that the ioctl() routine is
  *	available to set I/O characteristics
  */
+#if defined(__CRTL_VER) && __CRTL_VER >= 70000000
+#define	HAS_IOCTL		/**/
+#else
 #undef	HAS_IOCTL		/**/
+#endif
  
 /* HAS_UTIME:
  *	This symbol, if defined, indicates that the routine utime() is
@@ -563,6 +570,7 @@ typedef struct _dirdesc {
     char			*pattern;
     struct dirent		entry;
     struct dsc$descriptor_s	pat;
+    void			*mutex;
 } DIR;
 
 #define rewinddir(dirp)		seekdir((dirp), 0)
@@ -778,6 +786,7 @@ void	Perl_csighandler_init (void);
 int	Perl_my_utime (pTHX_ char *, struct utimbuf *);
 void	Perl_vms_image_init (int *, char ***);
 struct dirent *	Perl_readdir (pTHX_ DIR *);
+int	Perl_readdir_r(pTHX_ DIR *, struct dirent *, struct dirent **);
 long	telldir (DIR *);
 void	Perl_seekdir (pTHX_ DIR *, long);
 void	closedir (DIR *);

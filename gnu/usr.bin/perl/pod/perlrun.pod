@@ -4,16 +4,17 @@ perlrun - how to execute the Perl interpreter
 
 =head1 SYNOPSIS
 
-B<perl>	S<[ B<-CsTtuUWX> ]>
+B<perl>	S<[ B<-sTtuUWX> ]>
 	S<[ B<-hv> ] [ B<-V>[:I<configvar>] ]>
 	S<[ B<-cw> ] [ B<-d>[:I<debugger>] ] [ B<-D>[I<number/list>] ]>
-	S<[ B<-pna> ] [ B<-F>I<pattern> ] [ B<-l>[I<octal>] ] [ B<-0>[I<octal>] ]>
+	S<[ B<-pna> ] [ B<-F>I<pattern> ] [ B<-l>[I<octal>] ] [ B<-0>[I<octal/hexadecimal>] ]>
 	S<[ B<-I>I<dir> ] [ B<-m>[B<->]I<module> ] [ B<-M>[B<->]I<'module...'> ]>
 	S<[ B<-P> ]>
 	S<[ B<-S> ]>
 	S<[ B<-x>[I<dir>] ]>
 	S<[ B<-i>[I<extension>] ]>
 	S<[ B<-e> I<'command'> ] [ B<--> ] [ I<programfile> ] [ I<argument> ]...>
+	S<[ B<-C [I<number/list>] >]> ]>
 
 =head1 DESCRIPTION
 
@@ -125,7 +126,7 @@ as the first line in C<*.cmd> file (B<-S> due to a bug in cmd.exe's
 =item MS-DOS
 
 Create a batch file to run your program, and codify it in
-C<ALTERNATIVE_SHEBANG> (see the F<dosish.h> file in the source
+C<ALTERNATE_SHEBANG> (see the F<dosish.h> file in the source
 distribution for more information).
 
 =item Win95/NT
@@ -233,19 +234,24 @@ Switches include:
 
 =over 5
 
-=item B<-0>[I<digits>]
+=item B<-0>[I<octal/hexadecimal>]
 
-specifies the input record separator (C<$/>) as an octal number.  If there are
-no digits, the null character is the separator.  Other switches may
-precede or follow the digits.  For example, if you have a version of
-B<find> which can print filenames terminated by the null character, you
-can say this:
+specifies the input record separator (C<$/>) as an octal or
+hexadecimal number.  If there are no digits, the null character is the
+separator.  Other switches may precede or follow the digits.  For
+example, if you have a version of B<find> which can print filenames
+terminated by the null character, you can say this:
 
     find . -name '*.orig' -print0 | perl -n0e unlink
 
 The special value 00 will cause Perl to slurp files in paragraph mode.
 The value 0777 will cause Perl to slurp files whole because there is no
-legal character with that value.
+legal byte with that value.
+
+If you want to specify any Unicode character, use the hexadecimal
+format: C<-0xHHH...>, where the C<H> are valid hexadecimal digits.
+(This means that you cannot use the C<-x> with a directory name that
+consists of hexadecimal digits.)
 
 =item B<-a>
 
@@ -264,13 +270,59 @@ is equivalent to
 
 An alternate delimiter may be specified using B<-F>.
 
-=item B<-C>
+=item B<-C [I<number/list>]>
 
-enables Perl to use the native wide character APIs on the target system.
-The magic variable C<${^WIDE_SYSTEM_CALLS}> reflects the state of
-this switch.  See L<perlvar/"${^WIDE_SYSTEM_CALLS}">.
+The C<-C> flag controls some Unicode of the Perl Unicode features.
 
-This feature is currently only implemented on the Win32 platform.
+As of 5.8.1, the C<-C> can be followed either by a number or a list
+of option letters.  The letters, their numeric values, and effects
+are as follows; listing the letters is equal to summing the numbers.
+
+    I     1    STDIN is assumed to be in UTF-8
+    O     2    STDOUT will be in UTF-8
+    E     4    STDERR will be in UTF-8
+    S     7    I + O + E
+    i     8    UTF-8 is the default PerlIO layer for input streams
+    o    16    UTF-8 is the default PerlIO layer for output streams
+    D    24    i + o
+    A    32    the @ARGV elements are expected to be strings encoded in UTF-8
+    L    64    normally the "IOEioA" are unconditional,
+               the L makes them conditional on the locale environment
+               variables (the LC_ALL, LC_TYPE, and LANG, in the order
+               of decreasing precedence) -- if the variables indicate
+               UTF-8, then the selected "IOEioA" are in effect
+
+For example, C<-COE> and C<-C6> will both turn on UTF-8-ness on both
+STDOUT and STDERR.  Repeating letters is just redundant, not cumulative
+nor toggling.
+
+The C<io> options mean that any subsequent open() (or similar I/O
+operations) will have the C<:utf8> PerlIO layer implicitly applied
+to them, in other words, UTF-8 is expected from any input stream,
+and UTF-8 is produced to any output stream.  This is just the default,
+with explicit layers in open() and with binmode() one can manipulate
+streams as usual.
+
+C<-C> on its own (not followed by any number or option list), or the
+empty string C<""> for the C<PERL_UNICODE> environment variable, has the
+same effect as C<-CSDL>.  In other words, the standard I/O handles and
+the default C<open()> layer are UTF-8-fied B<but> only if the locale
+environment variables indicate a UTF-8 locale.  This behaviour follows
+the I<implicit> (and problematic) UTF-8 behaviour of Perl 5.8.0.
+
+You can use C<-C0> (or C<"0"> for C<PERL_UNICODE>) to explicitly
+disable all the above Unicode features.
+
+The read-only magic variable C<${^UNICODE}> reflects the numeric value
+of this setting.  This is variable is set during Perl startup and is
+thereafter read-only.  If you want runtime effects, use the three-arg
+open() (see L<perlfunc/open>), the two-arg binmode() (see L<perlfunc/binmode>),
+and the C<open> pragma (see L<open>).
+
+(In Perls earlier than 5.8.1 the C<-C> switch was a Win32-only switch
+that enabled the use of Unicode-aware "wide system call" Win32 APIs.
+This feature was practically unused, however, and the command line
+switch was therefore "recycled".)
 
 =item B<-c>
 
@@ -309,6 +361,7 @@ B<-D14> is equivalent to B<-Dtls>):
 
         1  p  Tokenizing and parsing
         2  s  Stack snapshots
+                with v, displays all stacks
         4  l  Context (loop) stack processing
         8  t  Trace execution
        16  o  Method and overloading resolution
@@ -319,7 +372,7 @@ B<-D14> is equivalent to B<-Dtls>):
       512  r  Regular expression parsing and execution
      1024  x  Syntax tree dump
      2048  u  Tainting checks
-     4096  L  Memory leaks (needs -DLEAKTEST when compiling Perl)
+     4096     (Obsolete, previously used for LEAKTEST)
      8192  H  Hash dump -- usurps values()
     16384  X  Scratchpad allocation
     32768  D  Cleaning up
@@ -327,6 +380,8 @@ B<-D14> is equivalent to B<-Dtls>):
    131072  T  Tokenising
    262144  R  Include reference counts of dumped variables (eg when using -Ds)
    524288  J  Do not s,t,P-debug (Jump over) opcodes within package DB
+  1048576  v  Verbose: use in conjunction with other flags
+  2097152  C  Copy On Write
 
 All these flags require B<-DDEBUGGING> when you compile the Perl
 executable (but see L<Devel::Peek>, L<re> which may change this).
@@ -389,20 +444,20 @@ as:
 This allows you to add a prefix to the backup file, instead of (or in
 addition to) a suffix:
 
-    $ perl -pi 'orig_*' -e 's/bar/baz/' fileA	# backup to 'orig_fileA'
+    $ perl -pi'orig_*' -e 's/bar/baz/' fileA	# backup to 'orig_fileA'
 
 Or even to place backup copies of the original files into another
 directory (provided the directory already exists):
 
-    $ perl -pi 'old/*.orig' -e 's/bar/baz/' fileA # backup to 'old/fileA.orig'
+    $ perl -pi'old/*.orig' -e 's/bar/baz/' fileA # backup to 'old/fileA.orig'
 
 These sets of one-liners are equivalent:
 
     $ perl -pi -e 's/bar/baz/' fileA		# overwrite current file
-    $ perl -pi '*' -e 's/bar/baz/' fileA	# overwrite current file
+    $ perl -pi'*' -e 's/bar/baz/' fileA		# overwrite current file
 
-    $ perl -pi '.orig' -e 's/bar/baz/' fileA	# backup to 'fileA.orig'
-    $ perl -pi '*.orig' -e 's/bar/baz/' fileA	# backup to 'fileA.orig'
+    $ perl -pi'.orig' -e 's/bar/baz/' fileA	# backup to 'fileA.orig'
+    $ perl -pi'*.orig' -e 's/bar/baz/' fileA	# backup to 'fileA.orig'
 
 From the shell, saying
 
@@ -445,9 +500,9 @@ output filehandle after the loop.
 As shown above, Perl creates the backup file whether or not any output
 is actually changed.  So this is just a fancy way to copy files:
 
-    $ perl -p -i '/some/file/path/*' -e 1 file1 file2 file3...
+    $ perl -p -i'/some/file/path/*' -e 1 file1 file2 file3...
 or
-    $ perl -p -i '.orig' -e 1 file1 file2 file3...
+    $ perl -p -i'.orig' -e 1 file1 file2 file3...
 
 You can use C<eof> without parentheses to locate the end of each input
 file, in case you want to append to each file, or reset line numbering
@@ -781,7 +836,7 @@ to write on, values used as a number that doesn't look like numbers,
 using an array as though it were a scalar, if your subroutines
 recurse more than 100 deep, and innumerable other things.
 
-This switch really just enables the internal C<^$W> variable.  You
+This switch really just enables the internal C<$^W> variable.  You
 can disable or promote into fatal errors specific warnings using
 C<__WARN__> hooks, as described in L<perlvar> and L<perlfunc/warn>.
 See also L<perldiag> and L<perltrap>.  A new, fine-grained warning
@@ -832,11 +887,13 @@ used.
 
 =item PERL5LIB
 
-A colon-separated list of directories in which to look for Perl library
+A list of directories in which to look for Perl library
 files before looking in the standard library and the current
 directory.  Any architecture-specific directories under the specified
 locations are automatically included if they exist.  If PERL5LIB is not
-defined, PERLLIB is used.
+defined, PERLLIB is used.  Directories are separated (like in PATH) by
+a colon on unixish platforms and by a semicolon on Windows (the proper
+path separator being given by the command C<perl -V:path_sep>).
 
 When running taint checks (either because the program was running setuid
 or setgid, or the B<-T> switch was used), neither variable is used.
@@ -863,6 +920,8 @@ emphasise their similarity to variable "attributes". But the code that parses
 layer specification strings (which is also used to decode the PERLIO
 environment variable) treats the colon as a separator.
 
+An unset or empty PERLIO is equivalent to C<:stdio>.
+
 The list becomes the default for I<all> perl's IO. Consequently only built-in
 layers can appear in this list, as external layers (such as :encoding()) need
 IO in  order to load them!. See L<"open pragma"|open> for how to add external
@@ -875,14 +934,29 @@ variable are summarised below. For more details see L<PerlIO>.
 
 =item :bytes
 
-Turns I<off> the C<:utf8> flag for the layer below.
-Unlikely to be useful in global PERLIO environment variable.
+A pseudolayer that turns I<off> the C<:utf8> flag for the layer below.
+Unlikely to be useful on its own in the global PERLIO environment variable.
+You perhaps were thinking of C<:crlf:bytes> or C<:perlio:bytes>.
 
 =item :crlf
 
-A layer that implements DOS/Windows like CRLF line endings.
-On read converts pairs of CR,LF to a single "\n" newline character.
-On write converts each "\n" to a CR,LF pair.
+A layer that implements DOS/Windows like CRLF line endings.  On read
+converts pairs of CR,LF to a single "\n" newline character.  On write
+converts each "\n" to a CR,LF pair.  Note that this layer likes to be
+one of its kind: it silently ignores attempts to be pushed into the
+layer stack more than once.
+
+(Gory details follow) To be more exact what happens is this: after
+pushing itself to the stack, the C<:crlf> layer checks all the layers
+below itself to find the first layer that is capable of being a CRLF
+layer but is not yet enabled to be a CRLF layer.  If it finds such a
+layer, it enables the CRLFness of that other deeper layer, and then
+pops itself off the stack.  If not, fine, use the one we just pushed.
+
+The end result is that a C<:crlf> means "please enable the first CRLF
+layer you can find, and if you can't find one, here would be a good
+spot to place a new one."
+
 Based on the C<:perlio> layer.
 
 =item :mmap
@@ -907,12 +981,17 @@ and in general attempts to minimize data copying.
 
 C<:perlio> will insert a C<:unix> layer below itself to do low level IO.
 
+=item :pop
+
+An experimental pseudolayer that removes the topmost layer.
+Use with the same care as is reserved for nitroglyserin.
+
 =item :raw
 
-Applying the <:raw> layer is equivalent to calling C<binmode($fh)>.
-It makes the stream pass each byte as-is without any translation.
-In particular CRLF translation, and/or :utf8 inuited from locale
-are disabled.
+A pseudolayer that manipulates other layers.  Applying the <:raw>
+layer is equivalent to calling C<binmode($fh)>.  It makes the stream
+pass each byte as-is without any translation.  In particular CRLF
+translation, and/or :utf8 intuited from locale are disabled.
 
 Arranges for all accesses go straight to the lowest buffered layer provided
 by the configration. That is it strips off any layers above that layer.
@@ -941,12 +1020,13 @@ C<open(), read(), write(), lseek(), close()>
 
 =item :utf8
 
-Turns on a flag on the layer below to tell perl that data sent to the
-stream should be converted to perl internal "utf8" form and that data from the
-stream should be considered as so encoded. On ASCII based platforms the
-encoding is UTF-8 and on EBCDIC platforms UTF-EBCDIC.
-May be useful in PERLIO environment variable to make UTF-8 the
-default. (To turn off that behaviour use C<:bytes> layer.)
+A pseudolayer that turns on a flag on the layer below to tell perl
+that data sent to the stream should be converted to perl internal
+"utf8" form and that data from the stream should be considered as so
+encoded. On ASCII based platforms the encoding is UTF-8 and on EBCDIC
+platforms UTF-EBCDIC.  May be useful in PERLIO environment variable to
+make UTF-8 the default. (To turn off that behaviour use C<:bytes>
+layer.)
 
 =item :win32
 
@@ -991,7 +1071,7 @@ and Win32 approximate equivalent:
 
 =item PERLLIB
 
-A colon-separated list of directories in which to look for Perl library
+A list of directories in which to look for Perl library
 files before looking in the standard library and the current directory.
 If PERL5LIB is defined, PERLLIB is not used.
 
@@ -1004,7 +1084,7 @@ The command used to load the debugger code.  The default is:
 =item PERL5SHELL (specific to the Win32 port)
 
 May be set to an alternative shell that perl must use internally for
-executing "backtick" commands or system().  Default is C<cmd.exe /x/c>
+executing "backtick" commands or system().  Default is C<cmd.exe /x/d/c>
 on WindowsNT and C<command.com /c> on Windows95.  The value is considered
 to be space-separated.  Precede any character that needs to be protected
 (like a space or backslash) with a backslash.
@@ -1030,10 +1110,56 @@ Relevant only if your perl executable was built with B<-DDEBUGGING>,
 this controls the behavior of global destruction of objects and other
 references.  See L<perlhack/PERL_DESTRUCT_LEVEL> for more information.
 
+=item PERL_DL_NONLAZY
+
+Set to one to have perl resolve B<all> undefined symbols when it loads
+a dynamic library.  The default behaviour is to resolve symbols when
+they are used.  Setting this variable is useful during testing of
+extensions as it ensures that you get an error on misspelled function
+names even if the test suite doesn't call it.
+
 =item PERL_ENCODING
 
 If using the C<encoding> pragma without an explicit encoding name, the
 PERL_ENCODING environment variable is consulted for an encoding name.
+
+=item PERL_HASH_SEED
+
+(Since Perl 5.8.1.)  Used to randomise Perl's internal hash function.
+To emulate the pre-5.8.1 behaviour, set to an integer (zero means
+exactly the same order as 5.8.0).  "Pre-5.8.1" means, among other
+things, that hash keys will be ordered the same between different runs
+of Perl.
+
+The default behaviour is to randomise unless the PERL_HASH_SEED is set.
+If Perl has been compiled with C<-DUSE_HASH_SEED_EXPLICIT>, the default
+behaviour is B<not> to randomise unless the PERL_HASH_SEED is set.
+
+If PERL_HASH_SEED is unset or set to a non-numeric string, Perl uses
+the pseudorandom seed supplied by the operating system and libraries.
+This means that each different run of Perl will have a different
+ordering of the results of keys(), values(), and each().
+
+B<Please note that the hash seed is sensitive information>. Hashes are
+randomized to protect against local and remote attacks against Perl
+code. By manually setting a seed this protection may be partially or
+completely lost.
+
+See L<perlsec/"Algorithmic Complexity Attacks"> and
+L</PERL_HASH_SEED_DEBUG> for more information.
+
+=item PERL_HASH_SEED_DEBUG
+
+(Since Perl 5.8.1.)  Set to one to display (to STDERR) the value of
+the hash seed at the beginning of execution.  This, combined with
+L</PERL_HASH_SEED> is intended to aid in debugging nondeterministic
+behavior caused by hash randomization.
+
+B<Note that the hash seed is sensitive information>: by knowing it one
+can craft a denial-of-service attack against Perl code, even remotely,
+see L<perlsec/"Algorithmic Complexity Attacks"> for more information.
+B<Do not disclose the hash seed> to people who don't need to know it.
+See also hash_seed() of L<Hash::Util>.
 
 =item PERL_ROOT (specific to the VMS port)
 
@@ -1042,6 +1168,22 @@ logical device for the @INC path on VMS only.  Other logical names that
 affect perl on VMS include PERLSHR, PERL_ENV_TABLES, and
 SYS$TIMEZONE_DIFFERENTIAL but are optional and discussed further in
 L<perlvms> and in F<README.vms> in the Perl source distribution.
+
+=item PERL_SIGNALS
+
+In Perls 5.8.1 and later.  If set to C<unsafe> the pre-Perl-5.8.0
+signals behaviour (immediate but unsafe) is restored.  If set to
+C<safe> the safe (or deferred) signals are used.
+See L<perlipc/"Deferred Signals (Safe signals)">.
+
+=item PERL_UNICODE
+
+Equivalent to the B<-C> command-line switch.  Note that this is not
+a boolean variable-- setting this to C<"1"> is not the right way to
+"enable Unicode" (whatever that would mean).  You can use C<"0"> to
+"disable Unicode", though (or alternatively unset PERL_UNICODE in
+your shell before starting Perl).  See the description of the C<-C>
+switch for more information.
 
 =item SYS$LOGIN (specific to the VMS port)
 

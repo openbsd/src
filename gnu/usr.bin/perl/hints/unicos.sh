@@ -40,6 +40,9 @@ d_setregid='undef'
 d_setreuid='undef'
 # No shared libraries.
 so='none'
+# No dynaloading.
+d_dlopen='undef'
+i_dlfcn='undef'
 # Threads call-back unit.
 cat > UU/usethreads.cbu <<'EOCBU'
 # This script UU/usethreads.cbu will get 'called-back' by Configure

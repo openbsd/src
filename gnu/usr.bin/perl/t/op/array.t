@@ -1,6 +1,12 @@
 #!./perl
 
-print "1..72\n";
+
+BEGIN {
+    chdir 't' if -d 't';
+    @INC = '../lib';
+}
+
+print "1..73\n";
 
 #
 # @foo, @bar, and @ary are also used from tie-stdarray after tie-ing them
@@ -247,3 +253,22 @@ sub tary {
 
 @tary = (0..50);
 tary();
+
+
+require './test.pl';
+
+# bugid #15439 - clearing an array calls destructors which may try
+# to modify the array - caused 'Attempt to free unreferenced scalar'
+
+my $got = runperl (
+	prog => q{
+		    sub X::DESTROY { @a = () }
+		    @a = (bless {}, 'X');
+		    @a = ();
+		},
+	stderr => 1
+    );
+
+$got =~ s/\n/ /g;
+print "# $got\nnot " unless $got eq '';
+print "ok 73\n";

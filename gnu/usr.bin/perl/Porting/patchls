@@ -1,4 +1,4 @@
-#!/bin/perl -w
+#!/usr/bin/perl -w
 # 
 #	patchls - patch listing utility
 #

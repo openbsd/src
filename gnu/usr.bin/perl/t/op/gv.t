@@ -11,7 +11,7 @@ BEGIN {
 
 use warnings;
 
-print "1..47\n";
+print "1..48\n";
 
 # type coersion on assignment
 $foo = 'foo';
@@ -208,5 +208,15 @@ print $j[0] == 1 ? "ok 43\n" : "not ok 43\n";
     print $w =~ /Prototype mismatch/ ? "ok 47\n" : "not ok 47\n# $w";
 }
 
+{
+    # [17375] rcatline to formerly-defined undef was broken. Fixed in
+    # do_readline by checking SvOK. AMS, 20020918
+    my $x = "not ";
+    $x  = undef;
+    $x .= <DATA>;
+    print $x;
+}
+
 __END__
 ok 44
+ok 48

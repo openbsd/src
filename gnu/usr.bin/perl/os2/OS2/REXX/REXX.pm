@@ -1,18 +1,17 @@
 package OS2::REXX;
 
-use Carp;
 require Exporter;
-require DynaLoader;
+use XSLoader;
 require OS2::DLL;
 
-@ISA = qw(Exporter DynaLoader);
+@ISA = qw(Exporter);
 # Items to export into callers namespace by default
 # (move infrequently used names to @EXPORT_OK below)
 @EXPORT = qw(REXX_call REXX_eval REXX_eval_with);
 # Other items we are prepared to export if requested
 @EXPORT_OK = qw(drop register);
 
-$VERSION = '1.01';
+$VERSION = '1.02';
 
 # We cannot just put OS2::DLL in @ISA, since some scripts would use
 # function interface, not method interface...
@@ -21,7 +20,7 @@ $VERSION = '1.01';
 *load = \&OS2::DLL::load;
 *find = \&OS2::DLL::find;
 
-bootstrap OS2::REXX;
+XSLoader::load 'OS2::REXX';
 
 # Preloaded methods go here.  Autoload methods go after __END__, and are
 # processed by the autosplit program.

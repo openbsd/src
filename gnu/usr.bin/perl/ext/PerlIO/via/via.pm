@@ -1,5 +1,5 @@
 package PerlIO::via;
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 use XSLoader ();
 XSLoader::load 'PerlIO::via';
 1;
@@ -57,7 +57,7 @@ a reference to a glob which can be treated as a perl file handle.
 It refers to the layer below. I<$fh> is not passed if the layer
 is at the bottom of the stack, for this reason and to maintain
 some level of "compatibility" with TIEHANDLE classes it is passed last.
-  
+
 =over 4
 
 =item $class->PUSHED([$mode[,$fh]])
@@ -66,19 +66,33 @@ Should return an object or the class, or -1 on failure.  (Compare
 TIEHANDLE.)  The arguments are an optional mode string ("r", "w",
 "w+", ...) and a filehandle for the PerlIO layer below.  Mandatory.
 
-When layer is pushed as part of an C<open> call, C<PUSHED> will be called 
+When layer is pushed as part of an C<open> call, C<PUSHED> will be called
 I<before> the actual open occurs whether than be via C<OPEN>, C<SYSOPEN>,
-C<FDOPEN> or by letting lower layer do the open. 
+C<FDOPEN> or by letting lower layer do the open.
 
 =item $obj->POPPED([$fh])
 
 Optional - layer is about to be removed.
 
+=item $obj->UTF8($bellowFlag,[$fh])
+
+Optional - if present it will be called immediately after PUSHED has
+returned. It should return true value if the layer expects data to be
+UTF-8 encoded. If it returns true result is as if caller had done
+
+   ":via(YourClass):utf8"
+
+If not present of it it returns false, then stream is left with
+flag clear.
+The I<$bellowFlag> argument will be true if there is a layer below
+and that layer was expecting UTF-8.
+
+
 =item $obj->OPEN($path,$mode[,$fh])
 
 Optional - if not present lower layer does open.
 If present called for normal opens after layer is pushed.
-This function is subject to change as there is no easy way 
+This function is subject to change as there is no easy way
 to get lower layer to do open and then regain control.
 
 =item $obj->BINMODE([,$fh])
@@ -90,17 +104,17 @@ to pop the layer.
 =item $obj->FDOPEN($fd[,$fh])
 
 Optional - if not present lower layer does open.
-If present called for opens which pass a numeric file 
-descriptor after layer is pushed. 
-This function is subject to change as there is no easy way 
+If present called for opens which pass a numeric file
+descriptor after layer is pushed.
+This function is subject to change as there is no easy way
 to get lower layer to do open and then regain control.
 
 =item $obj->SYSOPEN($path,$imode,$perm,[,$fh])
 
 Optional - if not present lower layer does open.
-If present called for sysopen style opens which pass a numeric mode 
+If present called for sysopen style opens which pass a numeric mode
 and permissions after layer is pushed.
-This function is subject to change as there is no easy way 
+This function is subject to change as there is no easy way
 to get lower layer to do open and then regain control.
 
 =item $obj->FILENO($fh)

@@ -137,6 +137,36 @@ static int no_translate_barewords;
 static int tz_updated = 1;
 #endif
 
+/* my_maxidx
+ * Routine to retrieve the maximum equivalence index for an input
+ * logical name.  Some calls to this routine have no knowledge if
+ * the variable is a logical or not.  So on error we return a max
+ * index of zero.
+ */
+/*{{{int my_maxidx(char *lnm) */
+static int
+my_maxidx(char *lnm)
+{
+    int status;
+    int midx;
+    int attr = LNM$M_CASE_BLIND;
+    struct dsc$descriptor lnmdsc;
+    struct itmlst_3 itlst[2] = {{sizeof(midx), LNM$_MAX_INDEX, &midx, 0},
+                                {0, 0, 0, 0}};
+
+    lnmdsc.dsc$w_length = strlen(lnm);
+    lnmdsc.dsc$b_dtype = DSC$K_DTYPE_T;
+    lnmdsc.dsc$b_class = DSC$K_CLASS_S;
+    lnmdsc.dsc$a_pointer = lnm;
+
+    status = sys$trnlnm(&attr, &fildevdsc, &lnmdsc, 0, itlst);
+    if ((status & 1) == 0)
+       midx = 0;
+
+    return (midx);
+}
+/*}}}*/
+
 /*{{{int vmstrnenv(const char *lnm, char *eqv, unsigned long int idx, struct dsc$descriptor_s **tabvec, unsigned long int flags) */
 int
 Perl_vmstrnenv(const char *lnm, char *eqv, unsigned long int idx,
@@ -145,6 +175,7 @@ Perl_vmstrnenv(const char *lnm, char *eqv, unsigned long int idx,
     char uplnm[LNM$C_NAMLENGTH+1], *cp1, *cp2;
     unsigned short int eqvlen, curtab, ivlnm = 0, ivsym = 0, ivenv = 0, secure;
     unsigned long int retsts, attr = LNM$M_CASE_BLIND;
+    int midx;
     unsigned char acmode;
     struct dsc$descriptor_s lnmdsc = {0,DSC$K_DTYPE_T,DSC$K_CLASS_S,0},
                             tmpdsc = {6,DSC$K_DTYPE_T,DSC$K_CLASS_S,0};
@@ -174,7 +205,7 @@ Perl_vmstrnenv(const char *lnm, char *eqv, unsigned long int idx,
 #  endif
 #endif
 
-    if (!lnm || !eqv || idx > PERL_LNM_MAX_ALLOWED_INDEX) {
+    if (!lnm || !eqv || ((idx != 0) && ((idx-1) > PERL_LNM_MAX_ALLOWED_INDEX))) {
       set_errno(EINVAL); set_vaxc_errno(SS$_BADPARAM); return 0;
     }
     for (cp1 = (char *)lnm, cp2 = uplnm; *cp1; cp1++, cp2++) {
@@ -253,22 +284,40 @@ Perl_vmstrnenv(const char *lnm, char *eqv, unsigned long int idx,
         }
       }
       else if (!ivlnm) {
-        retsts = sys$trnlnm(&attr,tabvec[curtab],&lnmdsc,&acmode,lnmlst);
-        if (retsts == SS$_IVLOGNAM) { ivlnm = 1; continue; }
-        if (retsts == SS$_NOLOGNAM) continue;
-        /* PPFs have a prefix */
-        if (
+        if ( (idx == 0) && (flags & PERL__TRNENV_JOIN_SEARCHLIST) ) {
+          midx = my_maxidx((char *) lnm);
+          for (idx = 0, cp1 = eqv; idx <= midx; idx++) {
+            lnmlst[1].bufadr = cp1;
+            eqvlen = 0;
+            retsts = sys$trnlnm(&attr,tabvec[curtab],&lnmdsc,&acmode,lnmlst);
+            if (retsts == SS$_IVLOGNAM) { ivlnm = 1; break; }
+            if (retsts == SS$_NOLOGNAM) break;
+            /* PPFs have a prefix */
+            if (
 #if INTSIZE == 4
-             *((int *)uplnm) == *((int *)"SYS$")                    &&
+                 *((int *)uplnm) == *((int *)"SYS$")                    &&
 #endif
-             eqvlen >= 4 && eqv[0] == 0x1b && eqv[1] == 0x00        &&
-             ( (uplnm[4] == 'O' && !strcmp(uplnm,"SYS$OUTPUT"))  ||
-               (uplnm[4] == 'I' && !strcmp(uplnm,"SYS$INPUT"))   ||
-               (uplnm[4] == 'E' && !strcmp(uplnm,"SYS$ERROR"))   ||
-               (uplnm[4] == 'C' && !strcmp(uplnm,"SYS$COMMAND")) )  ) {
-          memcpy(eqv,eqv+4,eqvlen-4);
-          eqvlen -= 4;
+                 eqvlen >= 4 && eqv[0] == 0x1b && eqv[1] == 0x00        &&
+                 ( (uplnm[4] == 'O' && !strcmp(uplnm,"SYS$OUTPUT"))  ||
+                   (uplnm[4] == 'I' && !strcmp(uplnm,"SYS$INPUT"))   ||
+                   (uplnm[4] == 'E' && !strcmp(uplnm,"SYS$ERROR"))   ||
+                   (uplnm[4] == 'C' && !strcmp(uplnm,"SYS$COMMAND")) )  ) {
+              memcpy(eqv,eqv+4,eqvlen-4);
+              eqvlen -= 4;
+            }
+            cp1 += eqvlen;
+            *cp1 = '\0';
+          }
+          if ((retsts == SS$_IVLOGNAM) ||
+              (retsts == SS$_NOLOGNAM)) { continue; }
         }
+        else {
+          retsts = sys$trnlnm(&attr,tabvec[curtab],&lnmdsc,&acmode,lnmlst);
+          if (retsts == SS$_IVLOGNAM) { ivlnm = 1; continue; }
+          if (retsts == SS$_NOLOGNAM) continue;
+          eqv[eqvlen] = '\0';
+        }
+        eqvlen = strlen(eqv);
         break;
       }
     }
@@ -309,47 +358,76 @@ int Perl_my_trnlnm(pTHX_ const char *lnm, char *eqv, unsigned long int idx)
 char *
 Perl_my_getenv(pTHX_ const char *lnm, bool sys)
 {
-    static char __my_getenv_eqv[LNM$C_NAMLENGTH+1];
+    static char *__my_getenv_eqv = NULL;
     char uplnm[LNM$C_NAMLENGTH+1], *cp1, *cp2, *eqv;
     unsigned long int idx = 0;
     int trnsuccess, success, secure, saverr, savvmserr;
+    int midx, flags;
     SV *tmpsv;
+
+    midx = my_maxidx((char *) lnm) + 1;
 
     if (PL_curinterp) {  /* Perl interpreter running -- may be threaded */
       /* Set up a temporary buffer for the return value; Perl will
        * clean it up at the next statement transition */
-      tmpsv = sv_2mortal(newSVpv("",LNM$C_NAMLENGTH+1));
+      tmpsv = sv_2mortal(newSVpv("",(LNM$C_NAMLENGTH*midx)+1));
       if (!tmpsv) return NULL;
       eqv = SvPVX(tmpsv);
     }
-    else eqv = __my_getenv_eqv;  /* Assume no interpreter ==> single thread */
+    else {
+      /* Assume no interpreter ==> single thread */
+      if (__my_getenv_eqv != NULL) {
+        Renew(__my_getenv_eqv,LNM$C_NAMLENGTH*midx+1,char);
+      }
+      else {
+        New(1380,__my_getenv_eqv,LNM$C_NAMLENGTH*midx+1,char);
+      }
+      eqv = __my_getenv_eqv;  
+    }
+
     for (cp1 = (char *) lnm, cp2 = eqv; *cp1; cp1++,cp2++) *cp2 = _toupper(*cp1);
     if (cp1 - lnm == 7 && !strncmp(eqv,"DEFAULT",7)) {
       getcwd(eqv,LNM$C_NAMLENGTH);
       return eqv;
     }
     else {
-      if ((cp2 = strchr(lnm,';')) != NULL) {
-        strcpy(uplnm,lnm);
-        uplnm[cp2-lnm] = '\0';
-        idx = strtoul(cp2+1,NULL,0);
-        lnm = uplnm;
-      }
       /* Impose security constraints only if tainting */
       if (sys) {
         /* Impose security constraints only if tainting */
         secure = PL_curinterp ? PL_tainting : will_taint;
         saverr = errno;  savvmserr = vaxc$errno;
       }
-      else secure = 0;
-      success = vmstrnenv(lnm,eqv,idx,
-                          secure ? fildev : NULL,
+      else {
+        secure = 0;
+      }
+
+      flags = 
 #ifdef SECURE_INTERNAL_GETENV
-                          secure ? PERL__TRNENV_SECURE : 0
+              secure ? PERL__TRNENV_SECURE : 0
 #else
-			  0
+              0
 #endif
-			                                     );
+      ;
+
+      /* For the getenv interface we combine all the equivalence names
+       * of a search list logical into one value to acquire a maximum
+       * value length of 255*128 (assuming %ENV is using logicals).
+       */
+      flags |= PERL__TRNENV_JOIN_SEARCHLIST;
+
+      /* If the name contains a semicolon-delimited index, parse it
+       * off and make sure we only retrieve the equivalence name for 
+       * that index.  */
+      if ((cp2 = strchr(lnm,';')) != NULL) {
+        strcpy(uplnm,lnm);
+        uplnm[cp2-lnm] = '\0';
+        idx = strtoul(cp2+1,NULL,0);
+        lnm = uplnm;
+        flags &= ~PERL__TRNENV_JOIN_SEARCHLIST;
+      }
+
+      success = vmstrnenv(lnm,eqv,idx,secure ? fildev : NULL,flags);
+
       /* Discard NOLOGNAM on internal calls since we're often looking
        * for an optional name, and this "error" often shows up as the
        * (bogus) exit status for a die() call later on.  */
@@ -367,18 +445,31 @@ Perl_my_getenv_len(pTHX_ const char *lnm, unsigned long *len, bool sys)
 {
     char *buf, *cp1, *cp2;
     unsigned long idx = 0;
-    static char __my_getenv_len_eqv[LNM$C_NAMLENGTH+1];
+    int midx, flags;
+    static char *__my_getenv_len_eqv = NULL;
     int secure, saverr, savvmserr;
     SV *tmpsv;
     
+    midx = my_maxidx((char *) lnm) + 1;
+
     if (PL_curinterp) {  /* Perl interpreter running -- may be threaded */
       /* Set up a temporary buffer for the return value; Perl will
        * clean it up at the next statement transition */
-      tmpsv = sv_2mortal(newSVpv("",LNM$C_NAMLENGTH+1));
+      tmpsv = sv_2mortal(newSVpv("",(LNM$C_NAMLENGTH*midx)+1));
       if (!tmpsv) return NULL;
       buf = SvPVX(tmpsv);
     }
-    else buf = __my_getenv_len_eqv;  /* Assume no interpreter ==> single thread */
+    else {
+      /* Assume no interpreter ==> single thread */
+      if (__my_getenv_len_eqv != NULL) {
+        Renew(__my_getenv_len_eqv,LNM$C_NAMLENGTH*midx+1,char);
+      }
+      else {
+        New(1381,__my_getenv_len_eqv,LNM$C_NAMLENGTH*midx+1,char);
+      }
+      buf = __my_getenv_len_eqv;  
+    }
+
     for (cp1 = (char *)lnm, cp2 = buf; *cp1; cp1++,cp2++) *cp2 = _toupper(*cp1);
     if (cp1 - lnm == 7 && !strncmp(buf,"DEFAULT",7)) {
       getcwd(buf,LNM$C_NAMLENGTH);
@@ -386,26 +477,35 @@ Perl_my_getenv_len(pTHX_ const char *lnm, unsigned long *len, bool sys)
       return buf;
     }
     else {
-      if ((cp2 = strchr(lnm,';')) != NULL) {
-        strcpy(buf,lnm);
-        buf[cp2-lnm] = '\0';
-        idx = strtoul(cp2+1,NULL,0);
-        lnm = buf;
-      }
       if (sys) {
         /* Impose security constraints only if tainting */
         secure = PL_curinterp ? PL_tainting : will_taint;
         saverr = errno;  savvmserr = vaxc$errno;
       }
-      else secure = 0;
-      *len = vmstrnenv(lnm,buf,idx,
-                       secure ? fildev : NULL,
+      else {
+        secure = 0;
+      }
+
+      flags = 
 #ifdef SECURE_INTERNAL_GETENV
-                       secure ? PERL__TRNENV_SECURE : 0
+              secure ? PERL__TRNENV_SECURE : 0
 #else
-                                                      0
+              0
 #endif
-		                                       );
+      ;
+
+      flags |= PERL__TRNENV_JOIN_SEARCHLIST;
+
+      if ((cp2 = strchr(lnm,';')) != NULL) {
+        strcpy(buf,lnm);
+        buf[cp2-lnm] = '\0';
+        idx = strtoul(cp2+1,NULL,0);
+        lnm = buf;
+        flags &= ~PERL__TRNENV_JOIN_SEARCHLIST;
+      }
+
+      *len = vmstrnenv(lnm,buf,idx,secure ? fildev : NULL,flags);
+
       /* Discard NOLOGNAM on internal calls since we're often looking
        * for an optional name, and this "error" often shows up as the
        * (bogus) exit status for a die() call later on.  */
@@ -633,9 +733,11 @@ prime_env_iter(void)
 int
 Perl_vmssetenv(pTHX_ char *lnm, char *eqv, struct dsc$descriptor_s **tabvec)
 {
-    char uplnm[LNM$C_NAMLENGTH], *cp1, *cp2;
+    char uplnm[LNM$C_NAMLENGTH], *cp1, *cp2, *c;
     unsigned short int curtab, ivlnm = 0, ivsym = 0, ivenv = 0;
+    int nseg = 0, j;
     unsigned long int retsts, usermode = PSL$C_USER;
+    struct itmlst_3 *ile, *ilist;
     struct dsc$descriptor_s lnmdsc = {0,DSC$K_DTYPE_T,DSC$K_CLASS_S,uplnm},
                             eqvdsc = {0,DSC$K_DTYPE_T,DSC$K_CLASS_S,0},
                             tmpdsc = {6,DSC$K_DTYPE_T,DSC$K_CLASS_S,0};
@@ -721,12 +823,42 @@ Perl_vmssetenv(pTHX_ char *lnm, char *eqv, struct dsc$descriptor_s **tabvec)
         else {
           if (!*eqv) eqvdsc.dsc$w_length = 1;
 	  if (eqvdsc.dsc$w_length > LNM$C_NAMLENGTH) {
-	    eqvdsc.dsc$w_length = LNM$C_NAMLENGTH;
-	    if (ckWARN(WARN_MISC)) {
-	      Perl_warner(aTHX_ packWARN(WARN_MISC),"Value of logical \"%s\" too long. Truncating to %i bytes",lnm, LNM$C_NAMLENGTH);
+
+            nseg = (eqvdsc.dsc$w_length + LNM$C_NAMLENGTH - 1) / LNM$C_NAMLENGTH;
+            if (nseg > PERL_LNM_MAX_ALLOWED_INDEX + 1) {
+	      Perl_warner(aTHX_ packWARN(WARN_MISC),"Value of logical \"%s\" too long. Truncating to %i bytes",
+                          lnm, LNM$C_NAMLENGTH * (PERL_LNM_MAX_ALLOWED_INDEX+1));
+              eqvdsc.dsc$w_length = LNM$C_NAMLENGTH * (PERL_LNM_MAX_ALLOWED_INDEX+1);
+              nseg = PERL_LNM_MAX_ALLOWED_INDEX + 1;
 	    }
+
+            New(1382,ilist,nseg+1,struct itmlst_3);
+            ile = ilist;
+            if (!ile) {
+	      set_errno(ENOMEM); set_vaxc_errno(SS$_INSFMEM);
+              return SS$_INSFMEM;
+	    }
+            memset(ilist, 0, (sizeof(struct itmlst_3) * (nseg+1)));
+
+            for (j = 0, c = eqvdsc.dsc$a_pointer; j < nseg; j++, ile++, c += LNM$C_NAMLENGTH) {
+              ile->itmcode = LNM$_STRING;
+              ile->bufadr = c;
+              if ((j+1) == nseg) {
+                ile->buflen = strlen(c);
+                /* in case we are truncating one that's too long */
+                if (ile->buflen > LNM$C_NAMLENGTH) ile->buflen = LNM$C_NAMLENGTH;
+              }
+              else {
+                ile->buflen = LNM$C_NAMLENGTH;
+              }
+            }
+
+            retsts = lib$set_logical(&lnmdsc,0,tabvec[0],0,ilist);
+            Safefree (ilist);
 	  }
-          retsts = lib$set_logical(&lnmdsc,&eqvdsc,tabvec[0],0,0);
+          else {
+            retsts = lib$set_logical(&lnmdsc,&eqvdsc,tabvec[0],0,0);
+	  }
         }
       }
     }
@@ -2167,7 +2299,7 @@ vmspipe_tempfile(pTHX)
     }
     if (!fp) return 0;  /* we're hosed */
 
-    fprintf(fp,"$! 'f$verify(0)\n");
+    fprintf(fp,"$! 'f$verify(0)'\n");
     fprintf(fp,"$!  ---  protect against nonstandard definitions ---\n");
     fprintf(fp,"$ perl_cfile  = f$environment(\"procedure\")\n");
     fprintf(fp,"$ perl_define = \"define/nolog\"\n");
@@ -2185,16 +2317,8 @@ vmspipe_tempfile(pTHX)
     fprintf(fp,"$c=c+perl_popen_cmd2\n"); 
     fprintf(fp,"$x=perl_popen_cmd3\n"); 
     fprintf(fp,"$c=c+x\n"); 
-    fprintf(fp,"$!  --- get rid of global symbols\n");
-    fprintf(fp,"$ perl_del/symbol/global perl_popen_in\n");
-    fprintf(fp,"$ perl_del/symbol/global perl_popen_err\n");
-    fprintf(fp,"$ perl_del/symbol/global perl_popen_out\n");
-    fprintf(fp,"$ perl_del/symbol/global perl_popen_cmd0\n");
-    fprintf(fp,"$ perl_del/symbol/global perl_popen_cmd1\n");
-    fprintf(fp,"$ perl_del/symbol/global perl_popen_cmd2\n");
-    fprintf(fp,"$ perl_del/symbol/global perl_popen_cmd3\n");
     fprintf(fp,"$ perl_on\n");
-    fprintf(fp,"$ 'c\n");
+    fprintf(fp,"$ 'c'\n");
     fprintf(fp,"$ perl_status = $STATUS\n");
     fprintf(fp,"$ perl_del  'perl_cfile'\n");
     fprintf(fp,"$ perl_exit 'perl_status'\n");
@@ -2226,7 +2350,11 @@ safe_popen(pTHX_ char *cmd, char *in_mode, int *psts)
 {
     static int handler_set_up = FALSE;
     unsigned long int sts, flags = CLI$M_NOWAIT;
-    unsigned int table = LIB$K_CLI_GLOBAL_SYM;
+    /* The use of a GLOBAL table (as was done previously) rendered
+     * Perl's qx() or `` unusable from a C<$ SET SYMBOL/SCOPE=NOGLOBAL> DCL
+     * environment.  Hence we've switched to LOCAL symbol table.
+     */
+    unsigned int table = LIB$K_CLI_LOCAL_SYM;
     int j, wait = 0;
     char *p, mode[10], symbol[MAX_DCL_SYMBOL+1], *vmspipe;
     char in[512], out[512], err[512], mbx[512];
@@ -2650,7 +2778,7 @@ I32 Perl_my_pclose(pTHX_ PerlIO *fp)
 
 }  /* end of my_pclose() */
 
-#if defined(__CRTL_VER) && __CRTL_VER >= 70100322
+#if defined(__CRTL_VER) && __CRTL_VER >= 70200000
   /* Roll our own prototype because we want this regardless of whether
    * _VMS_WAIT is defined.
    */
@@ -2699,7 +2827,7 @@ Perl_my_waitpid(pTHX_ Pid_t pid, int *statusp, int flags)
 
     /* fall through if this child is not one of our own pipe children */
 
-#if defined(__CRTL_VER) && __CRTL_VER >= 70100322
+#if defined(__CRTL_VER) && __CRTL_VER >= 70200000
 
       /* waitpid() became available in the CRTL as of VMS 7.0, but only
        * in 7.2 did we get a version that fills in the VMS completion
@@ -2718,7 +2846,7 @@ Perl_my_waitpid(pTHX_ Pid_t pid, int *statusp, int flags)
        * of the current process.
        */
 
-#endif /* defined(__CRTL_VER) && __CRTL_VER >= 70100322 */
+#endif /* defined(__CRTL_VER) && __CRTL_VER >= 70200000 */
 
     {
       $DESCRIPTOR(intdsc,"0 00:00:01");
@@ -4174,6 +4302,7 @@ static void mp_expand_wild_cards(pTHX_ char *item,
 int expcount = 0;
 unsigned long int context = 0;
 int isunix = 0;
+int item_len = 0;
 char *had_version;
 char *had_device;
 int had_directory;
@@ -4193,6 +4322,20 @@ unsigned long int zero = 0, sts;
 	add_item(head, tail, item, count);
 	return;
 	}
+    else
+        {
+     /* "double quoted" wild card expressions pass as is */
+     /* From DCL that means using e.g.:                  */
+     /* perl program """perl.*"""                        */
+     item_len = strlen(item);
+     if ( '"' == *item && '"' == item[item_len-1] )
+       {
+       item++;
+       item[item_len-2] = '\0';
+       add_item(head, tail, item, count);
+       return;
+       }
+     }
     resultspec.dsc$b_dtype = DSC$K_DTYPE_T;
     resultspec.dsc$b_class = DSC$K_CLASS_D;
     resultspec.dsc$a_pointer = NULL;
@@ -4479,15 +4622,19 @@ vms_image_init(int *argcp, char ***argvp)
    * hasn't been allocated when vms_image_init() is called.
    */
   if (will_taint) {
-    char ***newap;
-    New(1320,newap,*argcp+2,char **);
-    newap[0] = argvp[0];
-    *newap[1] = "-T";
-    Copy(argvp[1],newap[2],*argcp-1,char **);
+    char **newargv, **oldargv;
+    oldargv = *argvp;
+    New(1320,newargv,(*argcp)+2,char *);
+    newargv[0] = oldargv[0];
+    New(1320,newargv[1],3,char);
+    strcpy(newargv[1], "-T");
+    Copy(&oldargv[1],&newargv[2],(*argcp)-1,char **);
+    (*argcp)++;
+    newargv[*argcp] = NULL;
     /* We orphan the old argv, since we don't know where it's come from,
      * so we don't know how to free it.
      */
-    *argcp++; argvp = newap;
+    *argvp = newargv;
   }
   else {  /* Did user explicitly request tainting? */
     int i;
@@ -4521,7 +4668,7 @@ vms_image_init(int *argcp, char ***argvp)
   if (tabidx) { tabvec[tabidx] = NULL; env_tables = tabvec; }
 
   getredirection(argcp,argvp);
-#if defined(USE_5005THREADS) && ( defined(__DECC) || defined(__DECCXX) )
+#if ( defined(USE_5005THREADS) || defined(USE_ITHREADS) ) && ( defined(__DECC) || defined(__DECCXX) )
   {
 # include <reentrancy.h>
   (void) decc$set_reentrancy(C$C_MULTITHREAD);
@@ -4700,6 +4847,18 @@ Perl_trim_unixpath(pTHX_ char *fspec, char *wildspec, int opts)
  *  Minor modifications to original routines.
  */
 
+/* readdir may have been redefined by reentr.h, so make sure we get
+ * the local version for what we do here.
+ */
+#ifdef readdir
+# undef readdir
+#endif
+#if !defined(PERL_IMPLICIT_CONTEXT)
+# define readdir Perl_readdir
+#else
+# define readdir(a) Perl_readdir(aTHX_ a)
+#endif
+
     /* Number of elements in vms_versions array */
 #define VERSIZE(e)	(sizeof e->vms_versions / sizeof e->vms_versions[0])
 
@@ -4742,6 +4901,12 @@ Perl_opendir(pTHX_ char *name)
     dd->pat.dsc$w_length = strlen(dd->pattern);
     dd->pat.dsc$b_dtype = DSC$K_DTYPE_T;
     dd->pat.dsc$b_class = DSC$K_CLASS_S;
+#if defined(USE_5005THREADS) || defined(USE_ITHREADS)
+    New(1308,dd->mutex,1,perl_mutex);
+    MUTEX_INIT( (perl_mutex *) dd->mutex );
+#else
+    dd->mutex = NULL;
+#endif
 
     return dd;
 }  /* end of opendir() */
@@ -4767,6 +4932,10 @@ closedir(DIR *dd)
 {
     (void)lib$find_file_end(&dd->context);
     Safefree(dd->pattern);
+#if defined(USE_5005THREADS) || defined(USE_ITHREADS)
+    MUTEX_DESTROY( (perl_mutex *) dd->mutex );
+    Safefree(dd->mutex);
+#endif
     Safefree((char *)dd);
 }
 /*}}}*/
@@ -4881,6 +5050,28 @@ Perl_readdir(pTHX_ DIR *dd)
 /*}}}*/
 
 /*
+ *  Read the next entry from the directory -- thread-safe version.
+ */
+/*{{{ int readdir_r(DIR *dd, struct dirent *entry, struct dirent **result)*/
+int
+Perl_readdir_r(pTHX_ DIR *dd, struct dirent *entry, struct dirent **result)
+{
+    int retval;
+
+    MUTEX_LOCK( (perl_mutex *) dd->mutex );
+
+    entry = readdir(dd);
+    *result = entry;
+    retval = ( *result == NULL ? errno : 0 );
+
+    MUTEX_UNLOCK( (perl_mutex *) dd->mutex );
+
+    return retval;
+
+}  /* end of readdir_r() */
+/*}}}*/
+
+/*
  *  Return something that can be used in a seekdir later.
  */
 /*{{{ long telldir(DIR *dd)*/
@@ -4926,7 +5117,7 @@ Perl_seekdir(pTHX_ DIR *dd, long count)
  *
  * vms_do_aexec() and vms_do_exec() are called in response to the
  * perl 'exec' function.  If this follows a vfork call, then they
- * call out the the regular perl routines in doio.c which do an
+ * call out the regular perl routines in doio.c which do an
  * execvp (for those who really want to try this under VMS).
  * Otherwise, they do exactly what the perl docs say exec should
  * do - terminate the current script and invoke a new command
@@ -4939,7 +5130,7 @@ Perl_seekdir(pTHX_ DIR *dd, long count)
  * in 'VMSish fashion' (i.e. not after a call to vfork) The args
  * are concatenated to form a DCL command string.  If the first arg
  * begins with '$' (i.e. the perl script had "\$ Type" or some such),
- * the the command string is handed off to DCL directly.  Otherwise,
+ * the command string is handed off to DCL directly.  Otherwise,
  * the first token of the command is taken as the filespec of an image
  * to run.  The filespec is expanded using a default type of '.EXE' and
  * the process defaults for device, directory, etc., and if found, the resultant

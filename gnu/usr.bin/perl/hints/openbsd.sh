@@ -2,7 +2,7 @@
 #
 # hints file for OpenBSD; Todd Miller <millert@openbsd.org>
 # Edited to allow Configure command-line overrides by
-#  Andy Dougherty <doughera@lafcol.lafayette.edu>
+#  Andy Dougherty <doughera@lafayette.edu>
 #
 # To build with distribution paths, use:
 #	./Configure -des -Dopenbsd_distribution=defined
@@ -13,9 +13,6 @@ test "$usemymalloc" || usemymalloc='n'
 
 # Currently, vfork(2) is not a real win over fork(2).
 usevfork="$undef"
-
-# getservbyname_r() on OpenBSD is broken.
-d_getservbyname_r=$undef
 
 # In OpenBSD < 3.3, the setre?[ug]id() are emulated using the
 # _POSIX_SAVED_IDS functionality which does not have the same
@@ -107,6 +104,19 @@ $define|true|[yY]*)
 	# any openbsd version dependencies with pthreads?
 	ccflags="-pthread $ccflags"
 	ldflags="-pthread $ldflags"
+	case "$osvers" in
+	[0-2].*|3.[0-2])
+		# Change from -lc to -lc_r
+		set `echo "X $libswanted " | sed 's/ c / c_r /'`
+		shift
+		libswanted="$*"
+	;;
+	esac
+	case "$osvers" in
+	[012].*|3.[0-3])
+        	# Broken at least up to OpenBSD 3.2, we'll see about 3.3.
+		d_getservbyname_r=$undef ;;
+	esac
 esac
 EOCBU
 

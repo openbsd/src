@@ -410,6 +410,58 @@ case "$ccisgcc" in
 #	;;
 #    esac
 
+# Once we have the compiler flags defined, Configure will
+# execute the following call-back script. See hints/README.hints
+# for details.
+cat > UU/cc.cbu <<'EOCBU'
+# This script UU/cc.cbu will get 'called-back' by Configure after it
+# has prompted the user for the C compiler to use.
+
+# Compile and run the a test case to see if a certain gcc bug is
+# present. If so, lower the optimization level when compiling
+# pp_pack.c.  This works around a bug in unpack.
+
+if test -z "$ccisgcc" -a -z "$gccversion"; then
+    : no tests needed for HPc
+else
+    echo " "
+    echo "Testing for a certain gcc bug is fixed in your compiler..."
+
+    # Try compiling the test case.
+    if $cc -o t001 -O $ccflags $ldflags -lm ../hints/t001.c; then
+       gccbug=`$run ./t001`
+       case "$gccbug" in
+           *fails*)
+               cat >&4 <<EOF
+This C compiler ($gccversion) is known to have optimizer
+problems when compiling pp_pack.c.
+
+Disabling optimization for pp_pack.c.
+EOF
+               case "$pp_pack_cflags" in
+                   '') pp_pack_cflags='optimize='
+                       echo "pp_pack_cflags='optimize=\"\"'" >> config.sh ;;
+                   *)  echo "You specified pp_pack_cflags yourself, so we'll go with your value." >&4 ;;
+                   esac
+               ;;
+           *)  echo "Your compiler is ok." >&4
+               ;;
+           esac
+    else
+       echo " "
+       echo "*** WHOA THERE!!! ***" >&4
+       echo "    Your C compiler \"$cc\" doesn't seem to be working!" >&4
+       case "$knowitall" in
+           '') echo "    You'd better start hunting for one and let me know about it." >&4
+               exit 1
+               ;;
+           esac
+       fi
+
+    rm -f t001$_o t001$_exe
+    fi
+EOCBU
+
 cat >UU/uselargefiles.cbu <<'EOCBU'
 # This script UU/uselargefiles.cbu will get 'called-back' by Configure 
 # after it has prompted the user for whether to use large files.

@@ -11,8 +11,8 @@ Fcntl - load the C Fcntl.h defines
 
 =head1 DESCRIPTION
 
-This module is just a translation of the C F<fnctl.h> file.
-Unlike the old mechanism of requiring a translated F<fnctl.ph>
+This module is just a translation of the C F<fcntl.h> file.
+Unlike the old mechanism of requiring a translated F<fcntl.ph>
 file, this uses the B<h2xs> program (see the Perl source distribution)
 and your native C compiler.  This means that it has a 
 far more likely chance of getting the numbers right.
@@ -60,7 +60,7 @@ our($VERSION, @ISA, @EXPORT, @EXPORT_OK, %EXPORT_TAGS, $AUTOLOAD);
 require Exporter;
 use XSLoader ();
 @ISA = qw(Exporter);
-$VERSION = "1.04";
+$VERSION = "1.05";
 # Items to export into callers namespace by default
 # (move infrequently used names to @EXPORT_OK below)
 @EXPORT =
@@ -137,6 +137,13 @@ $VERSION = "1.04";
 
 # Other items we are prepared to export if requested
 @EXPORT_OK = qw(
+	DN_ACCESS
+	DN_ATTRIB
+	DN_CREATE
+	DN_DELETE
+	DN_MODIFY
+	DN_MULTISHOT
+	DN_RENAME
 	FAPPEND
 	FASYNC
 	FCREAT
@@ -149,22 +156,35 @@ $VERSION = "1.04";
 	FRSYNC
 	FSYNC
 	FTRUNC
+	F_GETLEASE
+	F_GETSIG
+	F_NOTIFY
+	F_SETLEASE
+	F_SETSIG
 	LOCK_EX
+	LOCK_MAND
 	LOCK_NB
+	LOCK_READ
+	LOCK_RW
 	LOCK_SH
 	LOCK_UN
-	S_ISUID S_ISGID S_ISVTX S_ISTXT
-	_S_IFMT S_IFREG S_IFDIR S_IFLNK
-	S_IFSOCK S_IFBLK S_IFCHR S_IFIFO S_IFWHT S_ENFMT
-	S_IRUSR S_IWUSR S_IXUSR S_IRWXU
-	S_IRGRP S_IWGRP S_IXGRP S_IRWXG
-	S_IROTH S_IWOTH S_IXOTH S_IRWXO
-	S_IREAD S_IWRITE S_IEXEC
-	&S_ISREG &S_ISDIR &S_ISLNK &S_ISSOCK &S_ISBLK &S_ISCHR &S_ISFIFO
-	&S_ISWHT &S_ISENFMT &S_IFMT &S_IMODE
-	SEEK_SET
+	LOCK_WRITE
+	O_IGNORE_CTTY
+	O_NOATIME
+	O_NOLINK
+	O_NOTRANS
 	SEEK_CUR
 	SEEK_END
+	SEEK_SET
+	S_IFSOCK S_IFBLK S_IFCHR S_IFIFO S_IFWHT S_ENFMT
+	S_IREAD S_IWRITE S_IEXEC
+	S_IRGRP S_IWGRP S_IXGRP S_IRWXG
+	S_IROTH S_IWOTH S_IXOTH S_IRWXO
+	S_IRUSR S_IWUSR S_IXUSR S_IRWXU
+	S_ISUID S_ISGID S_ISVTX S_ISTXT
+	_S_IFMT S_IFREG S_IFDIR S_IFLNK
+	&S_ISREG &S_ISDIR &S_ISLNK &S_ISSOCK &S_ISBLK &S_ISCHR &S_ISFIFO
+	&S_ISWHT &S_ISENFMT &S_IFMT &S_IMODE
 );
 # Named groups of exports
 %EXPORT_TAGS = (

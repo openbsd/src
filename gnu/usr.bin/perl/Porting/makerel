@@ -1,4 +1,4 @@
-#!/bin/env perl -w
+#!/usr/bin/perl -w
 
 # A first attempt at some automated support for making a perl release.
 # Very basic but functional - if you're on a unix system.
@@ -72,7 +72,8 @@ print "\n";
 print "Copying files to release directory...\n";
 # ExtUtils::Manifest maniread does not preserve the order
 $cmd = "awk '{print \$1}' MANIFEST | cpio -pdm $relroot/$reldir";
-system($cmd) == 0 or die "$cmd failed";
+system($cmd) == 0
+    or die "$cmd failed";
 print "\n";
 
 chdir "$relroot/$reldir" or die $!;
@@ -105,8 +106,11 @@ my @exe = qw(
     Porting/*.pl
     mpeix/nm
     mpeix/relink
+    Cross/generate_config_sh
+    Cross/warp
 );
-system("chmod +x @exe");
+system("chmod +x @exe") == 0
+    or die "system: $!";
 
 my @writables = qw(
     NetWare/config_H.wc
@@ -143,7 +147,8 @@ my @writables = qw(
     wince/config_H.ce
     wince/Makefile.ce
 );
-system("chmod +w @writables");
+system("chmod +w @writables") == 0
+    or die "system: $!";
 
 print "Adding CRs to DOSish files...\n";
 my @crlf = qw(
@@ -154,11 +159,12 @@ my @crlf = qw(
     win32/Makefile
     win32/makefile.mk
     wince/Makefile.ce
-    wince/README.compile
+    wince/compile-all.bat
     wince/README.perlce
     wince/registry.bat
 );
-system("perl -pi -e 's/\015*\012/\015\012/' @crlf");
+system("perl -pi -e 's/\\015*\\012/\\015\\012/' @crlf") == 0
+    or die "system: $!";
 print "\n";
 
 chdir ".." or die $!;
@@ -166,7 +172,8 @@ chdir ".." or die $!;
 print "Creating and compressing the tar file...\n";
 my $src = (-e $perl) ? $perl : 'perl'; # 'perl' in maint branch
 $cmd = "tar cf - $reldir | gzip --best > $reldir.tar.gz";
-system($cmd) == 0 or die "$cmd failed";
+system($cmd) == 0
+    or die "$cmd failed";
 print "\n";
 
 system("ls -ld $perl*");

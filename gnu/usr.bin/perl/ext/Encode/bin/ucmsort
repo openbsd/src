@@ -1,6 +1,6 @@
 #!/usr/local/bin/perl
 #
-# $Id: ucmsort,v 1.1.1.1 2003/12/03 02:43:43 millert Exp $
+# $Id: ucmsort,v 1.2 2003/12/03 03:02:28 millert Exp $
 #
 use strict;
 my @lines;

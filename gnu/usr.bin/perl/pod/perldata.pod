@@ -7,10 +7,12 @@ perldata - Perl data types
 =head2 Variable names
 
 Perl has three built-in data types: scalars, arrays of scalars, and
-associative arrays of scalars, known as "hashes".  Normal arrays
-are ordered lists of scalars indexed by number, starting with 0 and with
-negative subscripts counting from the end.  Hashes are unordered
-collections of scalar values indexed by their associated string key.
+associative arrays of scalars, known as "hashes".  A scalar is a 
+single string (of any size, limited only by the available memory),
+number, or a reference to something (which will be discussed
+in L<perlref>).  Normal arrays are ordered lists of scalars indexed
+by number, starting with 0.  Hashes are unordered collections of scalar 
+values indexed by their associated string key.
 
 Values are usually referred to by name, or through a named reference.
 The first character of the name tells you to what sort of data
@@ -187,8 +189,8 @@ operator to produce an undefined value.
 
 To find out whether a given string is a valid non-zero number, it's
 sometimes enough to test it against both numeric 0 and also lexical
-"0" (although this will cause B<-w> noises).  That's because strings
-that aren't numbers count as 0, just as they do in B<awk>:
+"0" (although this will cause noises if warnings are on).  That's 
+because strings that aren't numbers count as 0, just as they do in B<awk>:
 
     if ($str == 0 && $str ne "0")  {
 	warn "That doesn't look like a number";
@@ -307,8 +309,10 @@ names beginning with $ or @, followed by an optional bracketed
 expression as a subscript.)  The following code segment prints out "The
 price is $Z<>100."
 
-    $Price = '$100';	# not interpreted
-    print "The price is $Price.\n";	# interpreted
+    $Price = '$100';	# not interpolated
+    print "The price is $Price.\n";	# interpolated
+
+There is no double interpolation in Perl, so the C<$100> is left as is.
 
 As in some shells, you can enclose the variable name in braces to
 disambiguate it from following alphanumerics (and underscores).
@@ -333,6 +337,12 @@ C<$days{Feb}> and the quotes will be assumed automatically.  But
 anything more complicated in the subscript will be interpreted as
 an expression.
 
+=head3 Version Strings
+
+B<Note:> Version Strings (v-strings) have been deprecated.  They will
+not be available after Perl 5.8.  The marginal benefits of v-strings
+were greatly outweighed by the potential for Surprise and Confusion.
+
 A literal of the form C<v1.20.300.4000> is parsed as a string composed
 of characters with the specified ordinals.  This form, known as
 v-strings, provides an alternative, more readable way to construct
@@ -351,6 +361,16 @@ doing a version check.  The C<$^V> special variable also contains the
 running Perl interpreter's version in this form.  See L<perlvar/$^V>.
 Note that using the v-strings for IPv4 addresses is not portable unless
 you also use the inet_aton()/inet_ntoa() routines of the Socket package.
+
+Note that since Perl 5.8.1 the single-number v-strings (like C<v65>)
+are not v-strings before the C<< => >> operator (which is usually used
+to separate a hash key from a hash value), instead they are interpreted
+as literal strings ('v65').  They were v-strings from Perl 5.6.0 to
+Perl 5.8.0, but that caused more confusion and breakage than good.
+Multi-number v-strings like C<v65.66> and C<65.66.67> continue to
+be v-strings always.
+
+=head3 Special Literals
 
 The special literals __FILE__, __LINE__, and __PACKAGE__
 represent the current filename, line number, and package name at that
@@ -379,6 +399,8 @@ filehandle in a BEGIN block: the BEGIN block is executed as soon
 as it is seen (during compilation), at which point the corresponding
 __DATA__ (or __END__) token has not yet been seen.
 
+=head3 Barewords
+
 A word that has no other interpretation in the grammar will
 be treated as if it were a quoted string.  These are known as
 "barewords".  As with filehandles and labels, a bareword that consists
@@ -395,10 +417,12 @@ produces a compile-time error instead.  The restriction lasts to the
 end of the enclosing block.  An inner block may countermand this
 by saying C<no strict 'subs'>.
 
+=head3 Array Joining Delimiter
+
 Arrays and slices are interpolated into double-quoted strings
 by joining the elements with the delimiter specified in the C<$">
-variable (C<$LIST_SEPARATOR> in English), space by default.  The
-following are equivalent:
+variable (C<$LIST_SEPARATOR> if "use English;" is specified), 
+space by default.  The following are equivalent:
 
     $temp = join($", @ARGV);
     system "echo $temp";
@@ -573,8 +597,9 @@ key/value pairs.  That's why it's good to use references sometimes.
 It is often more readable to use the C<< => >> operator between key/value
 pairs.  The C<< => >> operator is mostly just a more visually distinctive
 synonym for a comma, but it also arranges for its left-hand operand to be
-interpreted as a string--if it's a bareword that would be a legal identifier.
-This makes it nice for initializing hashes:
+interpreted as a string -- if it's a bareword that would be a legal simple
+identifier (C<< => >> doesn't quote compound identifiers, that contain
+double colons). This makes it nice for initializing hashes:
 
     %map = (
                  red   => 0x00f,
@@ -603,6 +628,32 @@ or for using call-by-named-parameter to complicated functions:
 Note that just because a hash is initialized in that order doesn't
 mean that it comes out in that order.  See L<perlfunc/sort> for examples
 of how to arrange for an output ordering.
+
+=head2 Subscripts
+
+An array is subscripted by specifying a dollary sign (C<$>), then the
+name of the array (without the leading C<@>), then the subscript inside
+square brackets.  For example:
+
+    @myarray = (5, 50, 500, 5000);
+    print "Element Number 2 is", $myarray[2], "\n";
+
+The array indices start with 0. A negative subscript retrieves its 
+value from the end.  In our example, C<$myarray[-1]> would have been 
+5000, and C<$myarray[-2]> would have been 500.
+
+Hash subscripts are similar, only instead of square brackets curly brackets
+are used. For example:
+
+    %scientists = 
+    (
+        "Newton" => "Isaac",
+        "Einstein" => "Albert",
+        "Darwin" => "Charles",
+        "Feynman" => "Richard",
+    );
+
+    print "Darwin's First Name is ", $scientists{"Darwin"}, "\n";
 
 =head2 Slices
 
@@ -644,7 +695,7 @@ values of the array or hash.
 
     foreach (@array[ 4 .. 10 ]) { s/peter/paul/ } 
 
-    foreach (@hash{keys %hash}) {
+    foreach (@hash{qw[key1 key2]}) {
         s/^\s+//;           # trim leading whitespace
         s/\s+$//;           # trim trailing whitespace
         s/(\w+)/\u\L$1/g;   # "titlecase" words

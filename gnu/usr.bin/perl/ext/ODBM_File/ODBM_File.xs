@@ -3,11 +3,6 @@
 #include "XSUB.h"
 
 #ifdef I_DBM
-/* If using the DB3 emulation, ENTER is defined both
- * by DB3 and Perl.  We drop the Perl definition now.
- * See also INSTALL section on DB3.
- * -- Stanislav Brabec <utx@penguin.cz> */
-#  undef ENTER
 #  include <dbm.h>
 #else
 #  ifdef I_RPCSVC_DBM
@@ -55,25 +50,6 @@ typedef ODBM_File_type * ODBM_File ;
 typedef datum datum_key ;
 typedef datum datum_key_copy ;
 typedef datum datum_value ;
-
-#define ckFilter(arg,type,name)					\
-	if (db->type) {						\
-	    SV * save_defsv ;					\
-            /* printf("filtering %s\n", name) ;*/		\
-	    if (db->filtering)					\
-	        croak("recursion detected in %s", name) ;	\
-	    db->filtering = TRUE ;				\
-	    save_defsv = newSVsv(DEFSV) ;			\
-	    sv_setsv(DEFSV, arg) ;				\
-	    PUSHMARK(sp) ;					\
-	    (void) perl_call_sv(db->type, G_DISCARD|G_NOARGS); 	\
-	    sv_setsv(arg, DEFSV) ;				\
-	    sv_setsv(DEFSV, save_defsv) ;			\
-	    SvREFCNT_dec(save_defsv) ;				\
-	    db->filtering = FALSE ;				\
-	    /*printf("end of filtering %s\n", name) ;*/		\
-	}
-
 
 #define odbm_FETCH(db,key)			fetch(key)
 #define odbm_STORE(db,key,value,flags)		store(key,value)
@@ -207,7 +183,7 @@ filter_fetch_key(db, code)
 	SV *		code
 	SV *		RETVAL = &PL_sv_undef ;
 	CODE:
-	    setFilter(filter_fetch_key) ;
+	    DBM_setFilter(db->filter_fetch_key, code) ;
 
 SV *
 filter_store_key(db, code)
@@ -215,7 +191,7 @@ filter_store_key(db, code)
 	SV *		code
 	SV *		RETVAL =  &PL_sv_undef ;
 	CODE:
-	    setFilter(filter_store_key) ;
+	    DBM_setFilter(db->filter_store_key, code) ;
 
 SV *
 filter_fetch_value(db, code)
@@ -223,7 +199,7 @@ filter_fetch_value(db, code)
 	SV *		code
 	SV *		RETVAL =  &PL_sv_undef ;
 	CODE:
-	    setFilter(filter_fetch_value) ;
+	    DBM_setFilter(db->filter_fetch_value, code) ;
 
 SV *
 filter_store_value(db, code)
@@ -231,5 +207,5 @@ filter_store_value(db, code)
 	SV *		code
 	SV *		RETVAL =  &PL_sv_undef ;
 	CODE:
-	    setFilter(filter_store_value) ;
+	    DBM_setFilter(db->filter_store_value, code) ;
 

@@ -1,6 +1,6 @@
 =head1 NAME
 
-perlfaq5 - Files and Formats ($Revision: 1.18 $, $Date: 2002/05/30 07:04:25 $)
+perlfaq5 - Files and Formats ($Revision: 1.28 $, $Date: 2003/01/26 17:45:46 $)
 
 =head1 DESCRIPTION
 
@@ -30,7 +30,7 @@ value, Perl will flush the handle's buffer after each
 print() or write(). Setting $| affects buffering only for
 the currently selected default file handle. You choose this
 handle with the one argument select() call (see
-L<perlvar/$|> and L<perlfunc/select>).
+L<perlvar/$E<verbar>> and L<perlfunc/select>).
 
 Use select() to choose the desired handle, then set its
 per-filehandle variables.
@@ -81,11 +81,36 @@ proper text file, so this may report one fewer line than you expect.
 
 This assumes no funny games with newline translations.
 
+=head2 How can I use Perl's C<-i> option from within a program?
+
+C<-i> sets the value of Perl's C<$^I> variable, which in turn affects
+the behavior of C<< <> >>; see L<perlrun> for more details.  By
+modifying the appropriate variables directly, you can get the same
+behavior within a larger program.  For example:
+
+     # ...
+     {
+        local($^I, @ARGV) = ('.orig', glob("*.c"));
+        while (<>) {
+           if ($. == 1) {
+               print "This line should appear at the top of each file\n";
+           }
+           s/\b(p)earl\b/${1}erl/i;        # Correct typos, preserving case
+           print;
+           close ARGV if eof;              # Reset $.
+        }
+     }
+     # $^I and @ARGV return to their old values here
+
+This block modifies all the C<.c> files in the current directory,
+leaving a backup of the original data from each file in a new
+C<.c.orig> file.
+
 =head2 How do I make a temporary file name?
 
 Use the File::Temp module, see L<File::Temp> for more information.
 
-  use File::Temp qw/ tempfile tempdir /; 
+  use File::Temp qw/ tempfile tempdir /;
 
   $dir = tempdir( CLEANUP => 1 );
   ($fh, $filename) = tempfile( DIR => $dir );
@@ -139,7 +164,7 @@ Berkeley-style ps:
     #   15158 p5  T      0:00 perl /home/tchrist/scripts/now-what
     $PS_T = 'A6 A4 A7 A5 A*';
     open(PS, "ps|");
-    print scalar <PS>; 
+    print scalar <PS>;
     while (<PS>) {
 	($pid, $tt, $stat, $time, $command) = unpack($PS_T, $_);
 	for $var (qw!pid tt stat time command!) {
@@ -257,9 +282,9 @@ an expression where you would place the filehandle:
 That block is a proper block like any other, so you can put more
 complicated code there.  This sends the message out to one of two places:
 
-    $ok = -x "/bin/cat";                
+    $ok = -x "/bin/cat";
     print { $ok ? $fd[1] : $fd[2] } "cat stat $ok\n";
-    print { $fd[ 1+ ($ok || 0) ]  } "cat stat $ok\n";           
+    print { $fd[ 1+ ($ok || 0) ]  } "cat stat $ok\n";
 
 This approach of treating C<print> and C<printf> like object methods
 calls doesn't work for the diamond operator.  That's because it's a
@@ -288,11 +313,19 @@ See L<perlform/"Accessing Formatting Internals"> for an swrite() function.
 
 =head2 How can I output my numbers with commas added?
 
-This one from Benjamin Goldberg will do it for you:
+This subroutine will add commas to your number:
+
+	sub commify {
+	   local $_  = shift;
+	   1 while s/^([-+]?\d+)(\d{3})/$1,$2/;
+	   return $_;
+	   }
+
+This regex from Benjamin Goldberg will add commas to numbers:
 
    s/(^[-+]?\d+?(?=(?>(?:\d{3})+)(?!\d))|\G\d{3}(?=\d))/$1,/g;
 
-or written verbosely:
+It is easier to see with comments:
 
    s/(
        ^[-+]?            # beginning of number.
@@ -336,7 +369,7 @@ I<then> gives you read-write access:
     open(FH, "+> /path/name");		# WRONG (almost always)
 
 Whoops.  You should instead use this, which will fail if the file
-doesn't exist.  
+doesn't exist.
 
     open(FH, "+< /path/name");  	# open for update
 
@@ -401,7 +434,7 @@ isn't as exclusive as you might wish.
 
 See also the new L<perlopentut> if you have it (new for 5.6).
 
-=head2 Why do I sometimes get an "Argument list too long" when I use <*>?
+=head2 Why do I sometimes get an "Argument list too long" when I use E<lt>*E<gt>?
 
 The C<< <> >> operator performs a globbing operation (see above).
 In Perl versions earlier than v5.6.0, the internal glob() operator forks
@@ -425,11 +458,11 @@ best therefore to use glob() only in list context.
 
 Normally perl ignores trailing blanks in filenames, and interprets
 certain leading characters (or a trailing "|") to mean something
-special. 
+special.
 
 The three argument form of open() lets you specify the mode
 separately from the filename.  The open() function treats
-special mode characters and whitespace in the filename as 
+special mode characters and whitespace in the filename as
 literals
 
 	open FILE, "<", "  file  ";  # filename is "   file   "
@@ -444,8 +477,8 @@ It may be a lot clearer to use sysopen(), though:
 
 =head2 How can I reliably rename a file?
 
-If your operating system supports a proper mv(1) utility or its functional
-equivalent, this works:
+If your operating system supports a proper mv(1) utility or its
+functional equivalent, this works:
 
     rename($old, $new) or system("mv", $old, $new);
 
@@ -499,12 +532,12 @@ for your own system's idiosyncrasies (sometimes called "features").
 Slavish adherence to portability concerns shouldn't get in the way of
 your getting your job done.)
 
-For more information on file locking, see also 
+For more information on file locking, see also
 L<perlopentut/"File Locking"> if you have it (new for 5.6).
 
 =back
 
-=head2 Why can't I just open(FH, ">file.lock")?
+=head2 Why can't I just open(FH, "E<gt>file.lock")?
 
 A common bit of code B<NOT TO USE> is this:
 
@@ -516,7 +549,7 @@ which must be done in one.  That's why computer hardware provides an
 atomic test-and-set instruction.   In theory, this "ought" to work:
 
     sysopen(FH, "file.lock", O_WRONLY|O_EXCL|O_CREAT)
-		or die "can't open  file.lock: $!":
+		or die "can't open  file.lock: $!";
 
 except that lamentably, file creation (and deletion) is not atomic
 over NFS, so this won't work (at least, not every time) over the net.
@@ -653,30 +686,22 @@ utime() on those platforms.
 
 =head2 How do I print to more than one file at once?
 
-If you only have to do this once, you can do this:
+To connect one filehandle to several output filehandles,
+you can use the IO::Tee or Tie::FileHandle::Multiplex modules.
+
+If you only have to do this once, you can print individually
+to each filehandle.
 
     for $fh (FH1, FH2, FH3) { print $fh "whatever\n" }
 
-To connect up to one filehandle to several output filehandles, it's
-easiest to use the tee(1) program if you have it, and let it take care
-of the multiplexing:
-
-    open (FH, "| tee file1 file2 file3");
-
-Or even:
-
-    # make STDOUT go to three files, plus original STDOUT
-    open (STDOUT, "| tee file1 file2 file3") or die "Teeing off: $!\n";
-    print "whatever\n"                       or die "Writing: $!\n";
-    close(STDOUT)                            or die "Closing: $!\n";
-
-Otherwise you'll have to write your own multiplexing print
-function--or your own tee program--or use Tom Christiansen's,
-at http://www.cpan.org/authors/id/TOMC/scripts/tct.gz , which is
-written in Perl and offers much greater functionality
-than the stock version.
-
 =head2 How can I read in an entire file all at once?
+
+You can use the File::Slurp module to do it in one step.
+
+	use File::Slurp;
+
+	$all_of_it = read_file($filename); # entire file in scalar
+    @all_lines = read_file($filename); # one line perl element
 
 The customary Perl approach for processing all the lines in a file is to
 do so one line at a time:
@@ -685,7 +710,7 @@ do so one line at a time:
     while (<INPUT>) {
 	chomp;
 	# do something with $_
-    } 
+    }
     close(INPUT)	    	|| die "can't close $file: $!";
 
 This is tremendously more efficient than reading the entire file into
@@ -710,7 +735,7 @@ You can read the entire filehandle contents into a scalar.
 	$var = <INPUT>;
     }
 
-That temporarily undefs your record separator, and will automatically 
+That temporarily undefs your record separator, and will automatically
 close the file at block exit.  If the file is already open, just use this:
 
     $var = do { local $/; <INPUT> };
@@ -729,7 +754,7 @@ set it to C<""> to eliminate empty paragraphs (C<"abc\n\n\n\ndef">,
 for instance, gets treated as two paragraphs and not three), or
 C<"\n\n"> to accept empty paragraphs.
 
-Note that a blank line must have no blanks in it.  Thus 
+Note that a blank line must have no blanks in it.  Thus
 S<C<"fred\n \nstuff\n\n">> is one paragraph, but C<"fred\n\nstuff\n\n"> is two.
 
 =head2 How can I read a single character from a file?  From the keyboard?
@@ -906,7 +931,7 @@ Or even with a literal numeric descriptor:
 
 Note that "<&STDIN" makes a copy, but "<&=STDIN" make
 an alias.  That means if you close an aliased handle, all
-aliases become inaccessible.  This is not true with 
+aliases become inaccessible.  This is not true with
 a copied one.
 
 Error checking, as always, has been left as an exercise for the reader.
@@ -924,8 +949,8 @@ to, you may be able to do this:
 
 Or, just use the fdopen(3S) feature of open():
 
-    { 
-	local *F; 
+    {
+	local *F;
 	open F, "<&=$fd" or die "Cannot reopen fd=$fd: $!";
 	close F;
     }
@@ -958,7 +983,7 @@ documentation for details.
 
 This is elaborately and painstakingly described in the
 F<file-dir-perms> article in the "Far More Than You Ever Wanted To
-Know" collection in http://www.cpan.org/olddoc/FMTEYEWTK.tgz .
+Know" collection in http://www.cpan.org/misc/olddoc/FMTEYEWTK.tgz .
 
 The executive summary: learn how your filesystem works.  The
 permissions on a file say what can happen to the data in that file.
@@ -975,9 +1000,18 @@ Here's an algorithm from the Camel Book:
     srand;
     rand($.) < 1 && ($line = $_) while <>;
 
-This has a significant advantage in space over reading the whole
-file in.  A simple proof by induction is available upon 
-request if you doubt the algorithm's correctness.
+This has a significant advantage in space over reading the whole file
+in.  You can find a proof of this method in I<The Art of Computer
+Programming>, Volume 2, Section 3.4.2, by Donald E. Knuth.
+
+You can use the File::Random module which provides a function
+for that algorithm:
+
+	use File::Random qw/random_line/;
+	my $line = random_line($filename);
+
+Another way is to use the Tie::File module, which treats the entire
+file as an array.  Simply access a random array element.
 
 =head2 Why do I get weird spaces when I print an array of lines?
 

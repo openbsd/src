@@ -3,7 +3,27 @@ package Safe;
 use 5.003_11;
 use strict;
 
-$Safe::VERSION = "2.09";
+$Safe::VERSION = "2.10";
+
+# *** Don't declare any lexicals above this point ***
+#
+# This function should return a closure which contains an eval that can't
+# see any lexicals in scope (apart from __ExPr__ which is unavoidable)
+
+sub lexless_anon_sub {
+		 # $_[0] is package;
+		 # $_[1] is strict flag;
+    my $__ExPr__ = $_[2];   # must be a lexical to create the closure that
+			    # can be used to pass the value into the safe
+			    # world
+
+    # Create anon sub ref in root of compartment.
+    # Uses a closure (on $__ExPr__) to pass in the code to be executed.
+    # (eval on one line to keep line numbers as expected by caller)
+    eval sprintf
+    'package %s; %s strict; sub { @_=(); eval q[my $__ExPr__;] . $__ExPr__; }',
+		$_[0], $_[1] ? 'use' : 'no';
+}
 
 use Carp;
 
@@ -211,15 +231,7 @@ sub reval {
     my ($obj, $expr, $strict) = @_;
     my $root = $obj->{Root};
 
-    # Create anon sub ref in root of compartment.
-    # Uses a closure (on $expr) to pass in the code to be executed.
-    # (eval on one line to keep line numbers as expected by caller)
-    my $evalcode = sprintf('package %s; sub { @_ = (); eval $expr; }', $root);
-    my $evalsub;
-
-    if ($strict) { use strict; $evalsub = eval $evalcode; }
-    else         {  no strict; $evalsub = eval $evalcode; }
-
+    my $evalsub = lexless_anon_sub($root,$strict, $expr);
     return Opcode::_safe_call_sv($root, $obj->{Mask}, $evalsub);
 }
 

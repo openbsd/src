@@ -1,5 +1,42 @@
 package strict;
 
+$strict::VERSION = "1.03";
+
+my %bitmask = (
+refs => 0x00000002,
+subs => 0x00000200,
+vars => 0x00000400
+);
+
+sub bits {
+    my $bits = 0;
+    my @wrong;
+    foreach my $s (@_) {
+	push @wrong, $s unless exists $bitmask{$s};
+        $bits |= $bitmask{$s} || 0;
+    }
+    if (@wrong) {
+        require Carp;
+        Carp::croak("Unknown 'strict' tag(s) '@wrong'");
+    }
+    $bits;
+}
+
+my $default_bits = bits(qw(refs subs vars));
+
+sub import {
+    shift;
+    $^H |= @_ ? bits(@_) : $default_bits;
+}
+
+sub unimport {
+    shift;
+    $^H &= ~ (@_ ? bits(@_) : $default_bits);
+}
+
+1;
+__END__
+
 =head1 NAME
 
 strict - Perl pragma to restrict unsafe constructs
@@ -48,7 +85,7 @@ is allowed so that C<goto &$AUTOLOAD> would not break under stricture.
 =item C<strict vars>
 
 This generates a compile-time error if you access a variable that wasn't
-declared via "our" or C<use vars>,
+declared via C<our> or C<use vars>,
 localized via C<my()>, or wasn't fully qualified.  Because this is to avoid
 variable suicide problems and subtle dynamic scoping issues, a merely
 local() variable isn't good enough.  See L<perlfunc/my> and
@@ -73,45 +110,27 @@ exempted from this check.
 
 This disables the poetry optimization, generating a compile-time error if
 you try to use a bareword identifier that's not a subroutine, unless it
-appears in curly braces or on the left hand side of the "=E<gt>" symbol.
-
+is a simple identifier (no colons) and that it appears in curly braces or
+on the left hand side of the C<< => >> symbol.
 
     use strict 'subs';
     $SIG{PIPE} = Plumber;   	# blows up
-    $SIG{PIPE} = "Plumber"; 	# just fine: bareword in curlies always ok
+    $SIG{PIPE} = "Plumber"; 	# just fine: quoted string is always ok
     $SIG{PIPE} = \&Plumber; 	# preferred form
-
-
 
 =back
 
 See L<perlmodlib/Pragmatic Modules>.
 
+=head1 HISTORY
+
+C<strict 'subs'>, with Perl 5.6.1, erroneously permitted to use an unquoted
+compound identifier (e.g. C<Foo::Bar>) as a hash key (before C<< => >> or
+inside curlies), but without forcing it always to a literal string.
+
+Starting with Perl 5.8.1 strict is strict about its restrictions:
+if unknown restrictions are used, the strict pragma will abort with
+
+    Unknown 'strict' tag(s) '...'
 
 =cut
-
-$strict::VERSION = "1.02";
-
-my %bitmask = (
-refs => 0x00000002,
-subs => 0x00000200,
-vars => 0x00000400
-);
-
-sub bits {
-    my $bits = 0;
-    foreach my $s (@_){ $bits |= $bitmask{$s} || 0; };
-    $bits;
-}
-
-sub import {
-    shift;
-    $^H |= bits(@_ ? @_ : qw(refs subs vars));
-}
-
-sub unimport {
-    shift;
-    $^H &= ~ bits(@_ ? @_ : qw(refs subs vars));
-}
-
-1;

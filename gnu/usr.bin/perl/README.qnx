@@ -14,10 +14,13 @@ As of perl5.7.2 all tests pass under:
   Watcom 10.6 with Beta/970211.wcc.update.tar.F
   socket3r.lib Nov21 1996.
 
-Some tests may complain under known circumstances. See
-below and hints/qnx.sh for more information.
+As of perl5.8.1 there is at least one test still failing.
 
-Under QNX 6.1.0 there are still a few tests which fail.
+Some tests may complain under known circumstances.
+
+See below and hints/qnx.sh for more information.
+
+Under QNX 6.2.0 there are still a few tests which fail.
 See below and hints/qnx.sh for more information.
 
 =head2 Required Software for Compiling Perl on QNX4
@@ -92,11 +95,13 @@ lib/File/Find/taint.t will complain if '.' is in your
 PATH. The PATH test is triggered because cwd calls
 `fullpath -t`.
 
-ext/IO/lib/IO/t/io_sock.t: Subtest 14 is skipped due to
+ext/IO/lib/IO/t/io_sock.t: Subtests 14 and 22 are skipped due to
 the fact that the functionality to read back the non-blocking
-status of a socket is not implemented in QNX's TCP/IP. This
-has been reported to QNX and it may work with later versions
-of TCP/IP.
+status of a socket is not implemented in QNX's TCP/IP. This has
+been reported to QNX and it may work with later versions of
+TCP/IP.
+
+t/io/tell.t: Subtest 27 is failing. We are still investigating.
 
 =head2 QNX auxiliary files
 
@@ -123,15 +128,14 @@ options that perl throws at it. This might be reasonably placed in
 
 =head2 Outstanding issues with perl under QNX6
 
-The following tests are still failing for Perl 5.7.3 under QNX 6.1.0:
+The following tests are still failing for Perl 5.8.1 under QNX 6.2.0:
 
   op/sprintf.........................FAILED at test 91
   lib/Benchmark......................FAILED at test 26
 
 This is due to a bug in the C library's printf routine.
 printf("'%e'", 0. ) produces '0.000000e+0', but ANSI requires
-'0.000000e+00'. QNX has acknowledged the bug and it should be
-fixed in 6.2.0.
+'0.000000e+00'. QNX has acknowledged the bug.
 
 =head1 AUTHOR
 

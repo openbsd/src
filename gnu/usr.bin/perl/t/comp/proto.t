@@ -16,7 +16,7 @@ BEGIN {
 
 use strict;
 
-print "1..140\n";
+print "1..141\n";
 
 my $i = 1;
 
@@ -629,3 +629,7 @@ print "ok ", $i++, "\n";
 eval "sub good (\$\t\$\n\$) { 1; }";
 print "not " if $@;
 print "ok ", $i++, "\n";
+
+eval 'sub bug (\[%@]) {  } my $array = [0 .. 1]; bug %$array;';
+print "not " unless $@ =~ /Not a HASH reference/;
+print "ok ", $i++, " # TODO Ought to fail, doesn't in 5.8.2\n";

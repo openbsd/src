@@ -18,8 +18,8 @@ use Carp 'croak';
 # The most recent version and complete docs are available at:
 #   http://stein.cshl.org/WWW/software/CGI/
 
-$CGI::revision = '$Id: CGI.pm,v 1.6 2003/07/23 01:42:49 millert Exp $';
-$CGI::VERSION='2.98';
+$CGI::revision = '$Id: CGI.pm,v 1.7 2003/12/03 03:02:35 millert Exp $ + patches by merlyn';
+$CGI::VERSION='3.00';
 
 # HARD-CODED LOCATION FOR FILE UPLOAD TEMPORARY FILES.
 # UNCOMMENT THIS ONLY IF YOU KNOW WHAT YOU'RE DOING.
@@ -1639,12 +1639,11 @@ sub startform {
     $method = lc($method) || 'post';
     $enctype = $enctype || &URL_ENCODED;
     unless (defined $action) {
-       $action = $self->url(-absolute=>1,-path=>1);
+       $action = $self->escapeHTML($self->url(-absolute=>1,-path=>1));
        if (length($ENV{QUERY_STRING})>0) {
-           $action .= "?$ENV{QUERY_STRING}";
+           $action .= "?".$self->escapeHTML($ENV{QUERY_STRING},1);
        }
     }
-    $action =~ s/\"/%22/g;  # fix cross-site scripting bug reported by obscure
     $action = qq(action="$action");
     my($other) = @other ? " @other" : '';
     $self->{'.parametersToAdd'}={};
@@ -3584,10 +3583,12 @@ END_OF_AUTOLOAD
 ####################################################################################
 package CGITempFile;
 
-$SL = $CGI::SL;
-$MAC = $CGI::OS eq 'MACINTOSH';
-my ($vol) = $MAC ? MacPerl::Volumes() =~ /:(.*)/ : "";
-unless ($TMPDIRECTORY) {
+sub find_tempdir {
+  undef $TMPDIRECTORY;
+  $SL = $CGI::SL;
+  $MAC = $CGI::OS eq 'MACINTOSH';
+  my ($vol) = $MAC ? MacPerl::Volumes() =~ /:(.*)/ : "";
+  unless ($TMPDIRECTORY) {
     @TEMP=("${SL}usr${SL}tmp","${SL}var${SL}tmp",
 	   "C:${SL}temp","${SL}tmp","${SL}temp",
 	   "${vol}${SL}Temporary Items",
@@ -3605,11 +3606,14 @@ unless ($TMPDIRECTORY) {
     # unshift(@TEMP,(eval {(getpwuid($>))[7]}).'/tmp') if $CGI::OS eq 'UNIX' and $> != 0;
 
     foreach (@TEMP) {
-	do {$TMPDIRECTORY = $_; last} if -d $_ && -w _;
+      do {$TMPDIRECTORY = $_; last} if -d $_ && -w _;
     }
+  }
+  $TMPDIRECTORY  = $MAC ? "" : "." unless $TMPDIRECTORY;
 }
 
-$TMPDIRECTORY  = $MAC ? "" : "." unless $TMPDIRECTORY;
+find_tempdir();
+
 $MAXTRIES = 5000;
 
 # cute feature, but overload implementation broke it
@@ -3634,6 +3638,7 @@ $AUTOLOADED_ROUTINES=<<'END_OF_AUTOLOAD';
 sub new {
     my($package,$sequence) = @_;
     my $filename;
+    find_tempdir() unless -w $TMPDIRECTORY;
     for (my $i = 0; $i < $MAXTRIES; $i++) {
 	last if ! -f ($filename = sprintf("${TMPDIRECTORY}${SL}CGItemp%d",$sequence++));
     }
@@ -4941,7 +4946,7 @@ Generate just the protocol and net location, as in http://www.foo.com:8000
 
 =head2 MIXING POST AND URL PARAMETERS
 
-   $color = $query-&gt;url_param('color');
+   $color = $query->url_param('color');
 
 It is possible for a script to receive CGI parameters in the URL as
 well as in the fill-out form by creating a form that POSTs to a URL
@@ -5695,6 +5700,8 @@ any of the common HTML attributes to an individual menu item. It's
 a pointer to an associative array relating menu values to another
 associative array with the attribute's name as the key and the
 attribute's value as the value.
+
+=back
 
 =head2 CREATING A SCROLLING LIST
 

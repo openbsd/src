@@ -37,7 +37,7 @@ no utf8; # Ironic, no?
 #
 #
 
-plan tests => 94;
+plan tests => 143;
 
 {
     # bug id 20001009.001
@@ -264,4 +264,148 @@ BANG
         my $result = eval $prog;
         like ($result, $expect, $why);
     }
+}
+
+#
+# bug fixed by change #17928
+# separate perl used because we rely on 'strict' not yet loaded;
+# before the patch, the eval died with an error like:
+#   "my" variable $strict::VERSION can't be in a package
+#
+SKIP: {
+    skip("Embedded UTF-8 does not work in EBCDIC", 1) if ord("A") == 193;
+    ok('' eq runperl(prog => <<'CODE'), "change #17928");
+	my $code = qq{ my \$\xe3\x83\x95\xe3\x83\xbc = 5; };
+    {
+	use utf8;
+	eval $code;
+	print $@ if $@;
+    }
+CODE
+}
+
+{
+    use utf8;
+    $a = <<'END';
+0 ....... 1 ....... 2 ....... 3 ....... 4 ....... 5 ....... 6 ....... 7 ....... 
+END
+    my (@i, $s);
+
+    @i = ();
+    push @i, $s = index($a, '6');     # 60
+    push @i, $s = index($a, '.', $s); # next . after 60 is 62
+    push @i, $s = index($a, '5');     # 50
+    push @i, $s = index($a, '.', $s); # next . after 52 is 52
+    push @i, $s = index($a, '7');     # 70 
+    push @i, $s = index($a, '.', $s); # next . after 70 is 72
+    push @i, $s = index($a, '4');     # 40
+    push @i, $s = index($a, '.', $s); # next . after 40 is 42
+    is("@i", "60 62 50 52 70 72 40 42", "utf8 heredoc index");
+
+    @i = ();
+    push @i, $s = rindex($a, '6');     # 60
+    push @i, $s = rindex($a, '.', $s); # previous . before 60 is 58
+    push @i, $s = rindex($a, '5');     # 50
+    push @i, $s = rindex($a, '.', $s); # previous . before 52 is 48
+    push @i, $s = rindex($a, '7');     # 70 
+    push @i, $s = rindex($a, '.', $s); # previous . before 70 is 68
+    push @i, $s = rindex($a, '4');     # 40
+    push @i, $s = rindex($a, '.', $s); # previous . before 40 is 38
+    is("@i", "60 58 50 48 70 68 40 38", "utf8 heredoc rindex");
+
+    @i = ();
+    push @i, $s =  index($a, '6');     # 60
+    push @i,  index($a, '.', $s);      # next     . after  60 is 62
+    push @i, rindex($a, '.', $s);      # previous . before 60 is 58
+    push @i, $s = rindex($a, '5');     # 60
+    push @i,  index($a, '.', $s);      # next     . after  50 is 52
+    push @i, rindex($a, '.', $s);      # previous . before 50 is 48
+    push @i, $s =  index($a, '7', $s); # 70
+    push @i,  index($a, '.', $s);      # next     . after  70 is 72
+    push @i, rindex($a, '.', $s);      # previous . before 70 is 68
+    is("@i", "60 62 58 50 52 48 70 72 68", "utf8 heredoc index and rindex");
+}
+
+SKIP: {
+    skip("Embedded UTF-8 does not work in EBCDIC", 1) if ord("A") == 193;
+    use utf8;
+    eval qq{is(q \xc3\xbc test \xc3\xbc, qq\xc2\xb7 test \xc2\xb7,
+	       "utf8 quote delimiters [perl #16823]");};
+}
+
+# Test the "internals".
+
+{
+    my $a = "A";
+    my $b = chr(0x0FF);
+    my $c = chr(0x100);
+
+    ok( utf8::valid($a), "utf8::valid basic");
+    ok( utf8::valid($b), "utf8::valid beyond");
+    ok( utf8::valid($c), "utf8::valid unicode");
+
+    ok(!utf8::is_utf8($a), "!utf8::is_utf8 basic");
+    ok(!utf8::is_utf8($b), "!utf8::is_utf8 beyond");
+    ok( utf8::is_utf8($c), "utf8::is_utf8 unicode");
+
+    is(utf8::upgrade($a), 1, "utf8::upgrade basic");
+    is(utf8::upgrade($b), 2, "utf8::upgrade beyond");
+    is(utf8::upgrade($c), 2, "utf8::upgrade unicode");
+
+    is($a, "A",       "basic");
+    is($b, "\xFF",    "beyond");
+    is($c, "\x{100}", "unicode");
+
+    ok( utf8::valid($a), "utf8::valid basic");
+    ok( utf8::valid($b), "utf8::valid beyond");
+    ok( utf8::valid($c), "utf8::valid unicode");
+
+    ok( utf8::is_utf8($a), "utf8::is_utf8 basic");
+    ok( utf8::is_utf8($b), "utf8::is_utf8 beyond");
+    ok( utf8::is_utf8($c), "utf8::is_utf8 unicode");
+
+    is(utf8::downgrade($a), 1, "utf8::downgrade basic");
+    is(utf8::downgrade($b), 1, "utf8::downgrade beyond");
+
+    is($a, "A",       "basic");
+    is($b, "\xFF",    "beyond");
+
+    ok( utf8::valid($a), "utf8::valid basic");
+    ok( utf8::valid($b), "utf8::valid beyond");
+
+    ok(!utf8::is_utf8($a), "!utf8::is_utf8 basic");
+    ok(!utf8::is_utf8($b), "!utf8::is_utf8 beyond");
+
+    utf8::encode($a);
+    utf8::encode($b);
+    utf8::encode($c);
+
+    is($a, "A",       "basic");
+    is(length($b), 2, "beyond length");
+    is(length($c), 2, "unicode length");
+
+    ok(utf8::valid($a), "utf8::valid basic");
+    ok(utf8::valid($b), "utf8::valid beyond");
+    ok(utf8::valid($c), "utf8::valid unicode");
+
+    # encode() clears the UTF-8 flag (unlike upgrade()).
+    ok(!utf8::is_utf8($a), "!utf8::is_utf8 basic");
+    ok(!utf8::is_utf8($b), "!utf8::is_utf8 beyond");
+    ok(!utf8::is_utf8($c), "!utf8::is_utf8 unicode");
+
+    utf8::decode($a);
+    utf8::decode($b);
+    utf8::decode($c);
+
+    is($a, "A",       "basic");
+    is($b, "\xFF",    "beyond");
+    is($c, "\x{100}", "unicode");
+
+    ok(utf8::valid($a), "!utf8::valid basic");
+    ok(utf8::valid($b), "!utf8::valid beyond");
+    ok(utf8::valid($c), " utf8::valid unicode");
+
+    ok(!utf8::is_utf8($a), "!utf8::is_utf8 basic");
+    ok( utf8::is_utf8($b), " utf8::is_utf8 beyond"); # $b stays in UTF-8.
+    ok( utf8::is_utf8($c), " utf8::is_utf8 unicode");
 }

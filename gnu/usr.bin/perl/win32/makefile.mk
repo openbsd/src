@@ -34,7 +34,7 @@ INST_TOP	*= $(INST_DRV)\perl
 # versioned installation can be obtained by setting INST_TOP above to a
 # path that includes an arbitrary version string.
 #
-INST_VER	*= \5.8.0
+INST_VER	*= \5.8.2
 
 #
 # Comment this out if you DON'T want your perl installation to have
@@ -73,7 +73,13 @@ USE_IMP_SYS	*= define
 # then get a number of fails from make test i.e. bugs - complain to them not us ;-). 
 # You will also be unable to take full advantage of perl5.8's support for multiple 
 # encodings and may see lower IO performance. You have been warned.
-USE_PERLIO	= define
+USE_PERLIO	*= define
+
+#
+# Comment this out if you don't want to enable large file support for
+# some reason.  Should normally only be changed to maintain compatibility
+# with an older release of perl.
+USE_LARGE_FILES *= define
 
 #
 # WARNING! This option is deprecated and will eventually go away (enable
@@ -98,6 +104,9 @@ CCTYPE		*= MSVC60
 #CCTYPE		*= BORLAND
 # mingw32+gcc-2.95.2 or better
 #CCTYPE		*= GCC
+# Uncomment this if you are using the latest MinGW release (2.0.0)
+# with gcc3.2
+#USE_GCC_V3_2	*= define
 
 #
 # uncomment this if your Borland compiler is older than v5.4.
@@ -139,11 +148,11 @@ CCTYPE		*= MSVC60
 #USE_SETARGV	*= define
 
 #
-# if you have the source for des_fcrypt(), uncomment this and make sure the
-# file exists (see README.win32).  File should be located in the same
-# directory as this file.
+# if you want to have the crypt() builtin function implemented, leave this or
+# CRYPT_LIB uncommented.  The fcrypt.c file named here contains a suitable
+# version of des_fcrypt().
 #
-#CRYPT_SRC	*= fcrypt.c
+CRYPT_SRC	*= fcrypt.c
 
 #
 # if you didn't set CRYPT_SRC and if you have des_fcrypt() available in a
@@ -246,6 +255,7 @@ USE_MULTI	*= undef
 USE_ITHREADS	*= undef
 USE_IMP_SYS	*= undef
 USE_PERLIO	*= undef
+USE_LARGE_FILES	*= undef
 USE_PERLCRT	*= undef
 
 .IF "$(USE_IMP_SYS)$(USE_MULTI)$(USE_5005THREADS)" == "defineundefundef"
@@ -388,6 +398,9 @@ LINK_FLAGS	+= -L"$(CCLIBDIR)\Release"
 
 CC		= gcc
 LINK32		= gcc
+.IF "$(USE_GCC_V3_2)" == "define"
+LINK32		= g++
+.END
 LIB32		= ar rc
 IMPLIB		= dlltool
 RSC		= rc
@@ -597,6 +610,7 @@ UTILS		=			\
 		..\utils\libnetcfg	\
 		..\utils\enc2xs		\
 		..\utils\piconv		\
+		..\utils\cpan		\
 		..\pod\checkpods	\
 		..\pod\pod2html		\
 		..\pod\pod2latex	\
@@ -666,6 +680,7 @@ MICROCORE_SRC	=		\
 		..\mg.c		\
 		..\numeric.c	\
 		..\op.c		\
+		..\pad.c	\
 		..\perl.c	\
 		..\perlapi.c	\
 		..\perly.c	\
@@ -822,12 +837,14 @@ CFG_VARS	=					\
 		_a=$(a)				~	\
 		lib_ext=$(a)			~	\
 		static_ext=$(STATIC_EXT)	~	\
+		usethreads=$(USE_ITHREADS)	~	\
 		use5005threads=$(USE_5005THREADS)	~	\
 		useithreads=$(USE_ITHREADS)	~	\
 		usethreads=$(USE_5005THREADS)	~	\
 		usemultiplicity=$(USE_MULTI)	~	\
 		useperlio=$(USE_PERLIO)		~	\
-		LINK_FLAGS=$(LINK_FLAGS:s/\/\\/)		~	\
+		uselargefiles=$(USE_LARGE_FILES)	~	\
+		LINK_FLAGS=$(LINK_FLAGS:s/\/\\/)	~	\
 		optimize=$(OPTIMIZE)
 
 #
@@ -944,6 +961,7 @@ $(CONFIGPM) : $(MINIPERL) ..\config.sh config_h.PL ..\minimod.pl
 	cd .. && miniperl configpm
 	if exist lib\* $(RCOPY) lib\*.* ..\lib\$(NULL)
 	$(XCOPY) ..\*.h $(COREDIR)\*.*
+	$(XCOPY) ..\*.inc $(COREDIR)\*.*
 	$(XCOPY) *.h $(COREDIR)\*.*
 	$(XCOPY) ..\ext\re\re.pm $(LIBDIR)\*.*
 	$(RCOPY) include $(COREDIR)\*.*
@@ -1107,36 +1125,43 @@ doc: $(PERLEXE)
 
 utils: $(PERLEXE) $(X2P)
 	cd ..\utils && $(MAKE) PERL=$(MINIPERL)
-	copy ..\README.aix	..\pod\perlaix.pod
-	copy ..\README.amiga	..\pod\perlamiga.pod
-	copy ..\README.apollo	..\pod\perlapollo.pod
-	copy ..\README.beos	..\pod\perlbeos.pod
-	copy ..\README.bs2000	..\pod\perlbs2000.pod
-	copy ..\README.ce	..\pod\perlce.pod
-	copy ..\README.cygwin	..\pod\perlcygwin.pod
-	copy ..\README.dgux	..\pod\perldgux.pod
-	copy ..\README.dos	..\pod\perldos.pod
-	copy ..\README.epoc	..\pod\perlepoc.pod
-	copy ..\README.freebsd	..\pod\perlfreebsd.pod
-	copy ..\README.hpux	..\pod\perlhpux.pod
-	copy ..\README.hurd	..\pod\perlhurd.pod
-	copy ..\README.irix	..\pod\perlirix.pod
-	copy ..\README.machten	..\pod\perlmachten.pod
-	copy ..\README.macos	..\pod\perlmacos.pod
-	copy ..\README.mint	..\pod\perlmint.pod
-	copy ..\README.mpeix	..\pod\perlmpeix.pod
-	copy ..\README.netware	..\pod\perlnetware.pod
-	copy ..\README.os2	..\pod\perlos2.pod
-	copy ..\README.os390	..\pod\perlos390.pod
-	copy ..\README.plan9	..\pod\perlplan9.pod
-	copy ..\README.qnx	..\pod\perlqnx.pod
-	copy ..\README.solaris	..\pod\perlsolaris.pod
-	copy ..\README.tru64	..\pod\perltru64.pod
-	copy ..\README.uts	..\pod\perluts.pod
-	copy ..\README.vmesa	..\pod\perlvmesa.pod
+	copy ..\README.aix      .\perlaix.pod
+	copy ..\README.amiga    .\perlamiga.pod
+	copy ..\README.apollo   .\perlapollo.pod
+	copy ..\README.beos     .\perlbeos.pod
+	copy ..\README.bs2000   .\perlbs2000.pod
+	copy ..\README.ce       .\perlce.pod
+	copy ..\README.cn       .\perlcn.pod
+	copy ..\README.cygwin   .\perlcygwin.pod
+	copy ..\README.dgux     .\perldgux.pod
+	copy ..\README.dos      .\perldos.pod
+	copy ..\README.epoc     .\perlepoc.pod
+	copy ..\README.freebsd  .\perlfreebsd.pod
+	copy ..\README.hpux     .\perlhpux.pod
+	copy ..\README.hurd     .\perlhurd.pod
+	copy ..\README.irix     .\perlirix.pod
+	copy ..\README.jp       .\perljp.pod
+	copy ..\README.ko       .\perlko.pod
+	copy ..\README.machten  .\perlmachten.pod
+	copy ..\README.macos    .\perlmacos.pod
+	copy ..\README.macosx   .\perlmacosx.pod
+	copy ..\README.mint     .\perlmint.pod
+	copy ..\README.mpeix    .\perlmpeix.pod
+	copy ..\README.netware  .\perlnetware.pod
+	copy ..\README.os2      .\perlos2.pod
+	copy ..\README.os390    .\perlos390.pod
+	copy ..\README.os400    .\perlos400.pod
+	copy ..\README.plan9    .\perlplan9.pod
+	copy ..\README.qnx      .\perlqnx.pod
+	copy ..\README.solaris  .\perlsolaris.pod
+	copy ..\README.tru64    .\perltru64.pod
+	copy ..\README.tw       .\perltw.pod
+	copy ..\README.uts      .\perluts.pod
+	copy ..\README.vmesa    .\perlvmesa.pod
+	copy ..\README.vms      .\perlvms.pod
+	copy ..\README.vos      .\perlvos.pod
+	copy ..\README.win32    .\perlwin32.pod
 	copy ..\vms\perlvms.pod	..\pod\perlvms.pod
-	copy ..\README.vos	..\pod\perlvos.pod
-	copy ..\README.win32	..\pod\perlwin32.pod
 	cd ..\pod && $(MAKE) -f ..\win32\pod.mak converters
 	cd ..\lib && $(PERLEXE) lib_pm.PL
 	$(PERLEXE) $(PL2BAT) $(UTILS)
@@ -1165,37 +1190,48 @@ distclean: clean
 	-del /f $(LIBDIR)\List\Util.pm
 	-del /f $(LIBDIR)\Scalar\Util.pm
 	-del /f $(LIBDIR)\Unicode\Normalize.pm
-	-if exist $(LIBDIR)\IO rmdir /s /q $(LIBDIR)\IO || rmdir /s $(LIBDIR)\IO
-	-if exist $(LIBDIR)\B rmdir /s /q $(LIBDIR)\B || rmdir /s $(LIBDIR)\B
-	-if exist $(LIBDIR)\Data rmdir /s /q $(LIBDIR)\Data || rmdir /s $(LIBDIR)\Data
-	-if exist $(LIBDIR)\Filter\Util\Call rmdir /s /q $(LIBDIR)\Filter\Util\Call || rmdir /s $(LIBDIR)\Filter
-	-if exist $(LIBDIR)\Filter\Util rmdir /s /q $(LIBDIR)\Filter\Util || rmdir /s $(LIBDIR)\Filter
-	-if exist $(LIBDIR)\Digest rmdir /s /q $(LIBDIR)\Digest || rmdir /s $(LIBDIR)\Digest
-	-if exist $(LIBDIR)\MIME rmdir /s /q $(LIBDIR)\MIME || rmdir /s $(LIBDIR)\MIME
-	-if exist $(LIBDIR)\List rmdir /s /q $(LIBDIR)\List || rmdir /s $(LIBDIR)\List
-	-if exist $(LIBDIR)\Scalar rmdir /s /q $(LIBDIR)\Scalar || rmdir /s $(LIBDIR)\Scalar
+	-if exist $(LIBDIR)\IO rmdir /s /q $(LIBDIR)\IO
+	-if exist $(LIBDIR)\IO rmdir /s $(LIBDIR)\IO
+	-if exist $(LIBDIR)\B rmdir /s /q $(LIBDIR)\B
+	-if exist $(LIBDIR)\B rmdir /s $(LIBDIR)\B
+	-if exist $(LIBDIR)\Data rmdir /s /q $(LIBDIR)\Data
+	-if exist $(LIBDIR)\Data rmdir /s $(LIBDIR)\Data
+	-if exist $(LIBDIR)\Filter\Util rmdir /s /q $(LIBDIR)\Filter\Util
+	-if exist $(LIBDIR)\Filter\Util rmdir /s $(LIBDIR)\Filter\Util
+	-if exist $(LIBDIR)\Digest rmdir /s /q $(LIBDIR)\Digest
+	-if exist $(LIBDIR)\Digest rmdir /s $(LIBDIR)\Digest
+	-if exist $(LIBDIR)\MIME rmdir /s /q $(LIBDIR)\MIME
+	-if exist $(LIBDIR)\MIME rmdir /s $(LIBDIR)\MIME
+	-if exist $(LIBDIR)\List rmdir /s /q $(LIBDIR)\List
+	-if exist $(LIBDIR)\List rmdir /s $(LIBDIR)\List
+	-if exist $(LIBDIR)\Scalar rmdir /s /q $(LIBDIR)\Scalar
+	-if exist $(LIBDIR)\Scalar rmdir /s $(LIBDIR)\Scalar
+	-if exist $(LIBDIR)\XS rmdir /s /q $(LIBDIR)\XS
+	-if exist $(LIBDIR)\XS rmdir /s $(LIBDIR)\XS
 	-cd $(PODDIR) && del /f *.html *.bat checkpods \
-	    perlaix.pod perlamiga.pod perlapollo.pod \
-	    perlbeos.pod perlbs2000.pod perlce.pod perlcygwin.pod perldgux.pod \
-	    perldos.pod perlepoc.pod perlfreebsd.pod perlhpux.pod perlhurd.pod \
-	    perlirix.pod perlmachten.pod perlmint.pod \
-	    perlmacos.pod perlmpeix.pod perlnetware.pod \
-	    perlos2.pod perlos390.pod \
-	    perlplan9.pod perlqnx.pod \
-	    perlsolaris.pod perltru64.pod perluts.pod \
-	    perlvmesa.pod perlvms.pod perlvos.pod \
-	    perlwin32.pod pod2html pod2latex pod2man pod2text pod2usage \
+	    perlaix.pod perlamiga.pod perlapollo.pod perlbeos.pod \
+	    perlbs2000.pod perlce.pod perlcn.pod perlcygwin.pod \
+	    perldgux.pod perldos.pod perlepoc.pod perlfreebsd.pod \
+	    perlhpux.pod perlhurd.pod perlirix.pod perljp.pod perlko.pod \
+	    perlmachten.pod perlmacos.pod perlmacosx.pod perlmint.pod \
+	    perlmpeix.pod perlnetware.pod perlos2.pod perlos390.pod \
+	    perlos400.pod perlplan9.pod perlqnx.pod perlsolaris.pod \
+	    perltru64.pod perltw.pod perluts.pod perlvmesa.pod perlvms.pod \
+	    perlvms.pod perlvos.pod perlwin32.pod \
+	    pod2html pod2latex pod2man pod2text pod2usage \
 	    podchecker podselect
 	-cd ..\utils && del /f h2ph splain perlbug pl2pm c2ph pstruct h2xs \
-	    perldoc perlivp dprofpp perlcc libnetcfg enc2xs piconv *.bat
+	    perldoc perlivp dprofpp perlcc libnetcfg enc2xs piconv cpan *.bat
 	-cd ..\x2p && del /f find2perl s2p psed *.bat
 	-del /f ..\config.sh ..\splittree.pl perlmain.c dlutils.c config.h.new
 	-del /f $(CONFIGPM)
 	-del /f bin\*.bat
 	-cd .. && del /s *$(a) *.map *.pdb *.ilk *.bs *$(o) .exists pm_to_blib
 	-cd $(EXTDIR) && del /s *.def Makefile Makefile.old
-	-if exist $(AUTODIR) rmdir /s /q $(AUTODIR) || rmdir /s $(AUTODIR)
-	-if exist $(COREDIR) rmdir /s /q $(COREDIR) || rmdir /s $(COREDIR)
+	-if exist $(AUTODIR) rmdir /s /q $(AUTODIR)
+	-if exist $(AUTODIR) rmdir /s $(AUTODIR)
+	-if exist $(COREDIR) rmdir /s /q $(COREDIR)
+	-if exist $(COREDIR) rmdir /s $(COREDIR)
 
 install : all installbare installhtml
 
@@ -1241,15 +1277,6 @@ test-notty : test-prep
 	set PERL_SKIP_TTY_TEST=1 && \
 	    cd ..\t && $(PERLEXE) -I.\lib harness
 
-test-wide : test-prep
-	set HARNESS_PERL_SWITCHES=-C && \
-	    cd ..\t && $(PERLEXE) -I..\lib harness
-
-test-wide-notty : test-prep
-	set PERL_SKIP_TTY_TEST=1 && \
-	    set HARNESS_PERL_SWITCHES=-C && \
-	    cd ..\t && $(PERLEXE) -I..\lib harness
-
 _test : $(RIGHTMAKE)
 	$(XCOPY) $(PERLEXE) ..\t\$(NULL)
 	$(XCOPY) $(PERLDLL) ..\t\$(NULL)
@@ -1272,7 +1299,8 @@ clean : Extensions_clean
 	-@erase $(WPERLEXE)
 	-@erase $(PERLDLL)
 	-@erase $(CORE_OBJ)
-	-if exist $(MINIDIR) rmdir /s /q $(MINIDIR) || rmdir /s $(MINIDIR)
+	-if exist $(MINIDIR) rmdir /s /q $(MINIDIR)
+	-if exist $(MINIDIR) rmdir /s $(MINIDIR)
 	-@erase $(WIN32_OBJ)
 	-@erase $(DLL_OBJ)
 	-@erase $(X2P_OBJ)

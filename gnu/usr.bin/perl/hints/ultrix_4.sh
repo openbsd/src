@@ -1,5 +1,5 @@
 # hints/ultrix_4.sh
-# Last updated by Andy Dougherty  <doughera@lafcol.lafayette.edu>
+# Last updated by Andy Dougherty  <doughera@lafayette.edu>
 # Fri Feb 10 10:04:51 EST 1995
 #
 # Use   Configure -Dcc=gcc   to use gcc.
@@ -68,3 +68,7 @@ d_dirnamlen='define'
 # Ultrix can mmap only character devices, not regular files,
 # which is rather useless state of things for Perl.
 d_mmap='undef'
+
+# There simply isn't dynaloading in Ultrix.
+usedl='undef'
+

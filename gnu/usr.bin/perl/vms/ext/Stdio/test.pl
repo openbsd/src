@@ -28,7 +28,7 @@ chop($line = <$fh>);
 print +($line eq localtime($time) ? '' : 'not '), "ok 9\n";
 
 ($gotname) = (getname($fh) =~/\](.*);/);
-print +($gotname eq "\U$name.tmp" ? '' : 'not '), "ok 10\n";
+print +("\U$gotname" eq "\U$name.tmp" ? '' : 'not '), "ok 10\n";
 
 $sfh = VMS::Stdio::vmssysopen($name, O_RDONLY, 0,
                               'ctx=rec', 'shr=put', 'dna=.tmp');

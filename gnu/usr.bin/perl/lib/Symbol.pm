@@ -34,7 +34,6 @@ Symbol - manipulate Perl symbols and their names
     delete_package('Foo::Bar');
     print "deleted\n" unless exists $Foo::{'Bar::'};
 
-
 =head1 DESCRIPTION
 
 C<Symbol::gensym> creates an anonymous glob and returns a reference
@@ -68,6 +67,16 @@ C<Symbol::delete_package> wipes out a whole package namespace.  Note
 this routine is not exported by default--you may want to import it
 explicitly.
 
+=head1 BUGS
+
+C<Symbol::delete_package> is a bit too powerful. It undefines every symbol
+that lives in the specified package and in its sub-packages. Since perl,
+for performance reasons, does not perform a symbol table lookup each time
+a function is called or a global variable is accessed, some code that has
+already been loaded and that makes use of symbols in package C<Foo> may
+stop working after you delete C<Foo>, even if you reload the C<Foo> module
+afterwards.
+
 =cut
 
 BEGIN { require 5.005; }
@@ -77,7 +86,7 @@ require Exporter;
 @EXPORT = qw(gensym ungensym qualify qualify_to_ref);
 @EXPORT_OK = qw(delete_package geniosym);
 
-$VERSION = 1.04;
+$VERSION = '1.05';
 
 my $genpkg = "Symbol::";
 my $genseq = 0;

@@ -1,6 +1,6 @@
 /*    perlsfio.h
  *
- *    Copyright (c) 1987-2002, Larry Wall
+ *    Copyright (C) 1996, 1999, 2000, 2001, 2002, by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.

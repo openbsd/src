@@ -1,10 +1,16 @@
 /*    cop.h
  *
- *    Copyright (c) 1991-2002, Larry Wall
+ *    Copyright (C) 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
+ *    2000, 2001, 2002, 2003, by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
  *
+ * Control ops (cops) are one of the three ops OP_NEXTSTATE, OP_DBSTATE,
+ * and OP_SETSTATE that (loosely speaking) are separate statements.
+ * They hold information important for lexical state and error reporting.
+ * At run time, PL_curcop is set to point to the most recently executed cop,
+ * and thus can be used to determine our current state.
  */
 
 struct cop {
@@ -31,11 +37,11 @@ struct cop {
 #  define CopFILEGV(c)		(CopFILE(c) \
 				 ? gv_fetchfile(CopFILE(c)) : Nullgv)
 				 
- #ifdef NETWARE
-  #define CopFILE_set(c,pv)	((c)->cop_file = savepv(pv))
- #else
-  #define CopFILE_set(c,pv)	((c)->cop_file = savesharedpv(pv))
- #endif
+#  ifdef NETWARE
+#    define CopFILE_set(c,pv)	((c)->cop_file = savepv(pv))
+#  else
+#    define CopFILE_set(c,pv)	((c)->cop_file = savesharedpv(pv))
+#  endif
 
 #  define CopFILESV(c)		(CopFILE(c) \
 				 ? GvSV(gv_fetchfile(CopFILE(c))) : Nullsv)
@@ -43,11 +49,11 @@ struct cop {
 				 ? GvAV(gv_fetchfile(CopFILE(c))) : Nullav)
 #  define CopSTASHPV(c)		((c)->cop_stashpv)
 
-  #ifdef NETWARE
-    #define CopSTASHPV_set(c,pv)	((c)->cop_stashpv = ((pv) ? savepv(pv) : Nullch))
-  #else
-    #define CopSTASHPV_set(c,pv)	((c)->cop_stashpv = savesharedpv(pv))
-  #endif
+#  ifdef NETWARE
+#    define CopSTASHPV_set(c,pv)	((c)->cop_stashpv = ((pv) ? savepv(pv) : Nullch))
+#  else
+#    define CopSTASHPV_set(c,pv)	((c)->cop_stashpv = savesharedpv(pv))
+#  endif
 
 #  define CopSTASH(c)		(CopSTASHPV(c) \
 				 ? gv_stashpv(CopSTASHPV(c),GV_ADD) : Nullhv)
@@ -56,17 +62,17 @@ struct cop {
 				 && (CopSTASHPV(c) == HvNAME(hv)	\
 				     || (CopSTASHPV(c) && HvNAME(hv)	\
 					 && strEQ(CopSTASHPV(c), HvNAME(hv)))))
-  #ifdef NETWARE
-    #define CopSTASH_free(c) SAVECOPSTASH_FREE(c)
-  #else
-    #define CopSTASH_free(c)	PerlMemShared_free(CopSTASHPV(c))      
-  #endif
+#  ifdef NETWARE
+#    define CopSTASH_free(c) SAVECOPSTASH_FREE(c)
+#  else
+#    define CopSTASH_free(c)	PerlMemShared_free(CopSTASHPV(c))      
+#  endif
 
-  #ifdef NETWARE
-    #define CopFILE_free(c) SAVECOPFILE_FREE(c)
-  #else
-    #define CopFILE_free(c)	(PerlMemShared_free(CopFILE(c)),(CopFILE(c) = Nullch))      
-  #endif
+#  ifdef NETWARE
+#    define CopFILE_free(c) SAVECOPFILE_FREE(c)
+#  else
+#    define CopFILE_free(c)	(PerlMemShared_free(CopFILE(c)),(CopFILE(c) = Nullch))      
+#  endif
 #else
 #  define CopFILEGV(c)		((c)->cop_filegv)
 #  define CopFILEGV_set(c,gv)	((c)->cop_filegv = (GV*)SvREFCNT_inc(gv))
@@ -111,18 +117,28 @@ struct block_sub {
     AV *	savearray;
 #endif /* USE_5005THREADS */
     AV *	argarray;
-    U16		olddepth;
+    long	olddepth;
     U8		hasargs;
     U8		lval;		/* XXX merge lval and hasargs? */
-    SV **	oldcurpad;
+    PAD		*oldcomppad;
 };
 
-#define PUSHSUB(cx)							\
+/* base for the next two macros. Don't use directly */
+#define PUSHSUB_BASE(cx)						\
 	cx->blk_sub.cv = cv;						\
-	cx->blk_sub.olddepth = (U16)CvDEPTH(cv);			\
-	cx->blk_sub.hasargs = hasargs;					\
+	cx->blk_sub.olddepth = CvDEPTH(cv);				\
+	cx->blk_sub.hasargs = hasargs;
+
+#define PUSHSUB(cx)							\
+	PUSHSUB_BASE(cx)						\
 	cx->blk_sub.lval = PL_op->op_private &                          \
 	                      (OPpLVAL_INTRO|OPpENTERSUB_INARGS);
+
+/* variant for use by OP_DBSTATE, where op_private holds hint bits */
+#define PUSHSUB_DB(cx)							\
+	PUSHSUB_BASE(cx)						\
+	cx->blk_sub.lval = 0;
+
 
 #define PUSHFORMAT(cx)							\
 	cx->blk_sub.cv = cv;						\
@@ -161,7 +177,7 @@ struct block_sub {
 		cx->blk_sub.argarray = newAV();				\
 		av_extend(cx->blk_sub.argarray, fill);			\
 		AvFLAGS(cx->blk_sub.argarray) = AVf_REIFY;		\
-		cx->blk_sub.oldcurpad[0] = (SV*)cx->blk_sub.argarray;	\
+		CX_CURPAD_SV(cx->blk_sub, 0) = (SV*)cx->blk_sub.argarray;	\
 	    }								\
 	    else {							\
 		CLEAR_ARGARRAY(cx->blk_sub.argarray);			\
@@ -220,7 +236,7 @@ struct block_loop {
     OP *	last_op;
 #ifdef USE_ITHREADS
     void *	iterdata;
-    SV **	oldcurpad;
+    PAD		*oldcomppad;
 #else
     SV **	itervar;
 #endif
@@ -235,11 +251,12 @@ struct block_loop {
 #  define CxITERVAR(c)							\
 	((c)->blk_loop.iterdata						\
 	 ? (CxPADLOOP(cx) 						\
-	    ? &((c)->blk_loop.oldcurpad)[INT2PTR(PADOFFSET, (c)->blk_loop.iterdata)] \
+	    ? &CX_CURPAD_SV( (c)->blk_loop, 				\
+		    INT2PTR(PADOFFSET, (c)->blk_loop.iterdata))		\
 	    : &GvSV((GV*)(c)->blk_loop.iterdata))			\
 	 : (SV**)NULL)
 #  define CX_ITERDATA_SET(cx,idata)					\
-	cx->blk_loop.oldcurpad = PL_curpad;				\
+	CX_CURPAD_SAVE(cx->blk_loop);					\
 	if ((cx->blk_loop.iterdata = (idata)))				\
 	    cx->blk_loop.itersave = SvREFCNT_inc(*CxITERVAR(cx));	\
 	else								\
@@ -323,6 +340,7 @@ struct block {
 	PL_retstack_ix	 = cx->blk_oldretsp,				\
 	pm		 = cx->blk_oldpm,				\
 	gimme		 = cx->blk_gimme;				\
+	DEBUG_SCOPE("POPBLOCK");					\
 	DEBUG_l( PerlIO_printf(Perl_debug_log, "Leaving block %ld, type %s\n",		\
 		    (long)cxstack_ix+1,PL_block_type[CxTYPE(cx)]); )
 
@@ -332,7 +350,8 @@ struct block {
 	PL_markstack_ptr = PL_markstack + cx->blk_oldmarksp,		\
 	PL_scopestack_ix = cx->blk_oldscopesp,				\
 	PL_retstack_ix	 = cx->blk_oldretsp,				\
-	PL_curpm         = cx->blk_oldpm
+	PL_curpm         = cx->blk_oldpm;				\
+	DEBUG_SCOPE("TOPBLOCK");
 
 /* substitution context */
 struct subst {
@@ -559,3 +578,7 @@ typedef struct stackinfo PERL_SI;
 	    POPSTACK;							\
 	}								\
     } STMT_END
+
+#define IN_PERL_COMPILETIME	(PL_curcop == &PL_compiling)
+#define IN_PERL_RUNTIME		(PL_curcop != &PL_compiling)
+

@@ -44,7 +44,7 @@ BEGIN {
       eval { require IPC::SysV };
       unless ($@) {
 	  $ipcsysv++;
-	  IPC::SysV->import(qw(IPC_PRIVATE IPC_RMID IPC_CREAT S_IRWXU));
+	  IPC::SysV->import(qw(IPC_PRIVATE IPC_RMID IPC_CREAT S_IRWXU IPC_NOWAIT));
       }
   }
 }
@@ -124,7 +124,7 @@ my $echo = "$Invoke_Perl $ECHO";
 
 my $TEST = catfile(curdir(), 'TEST');
 
-print "1..205\n";
+print "1..206\n";
 
 # First, let's make sure that Perl is checking the dangerous
 # environment variables. Maybe they aren't set yet, so we'll
@@ -700,14 +700,14 @@ else {
 	my $type_rcvd;
 
 	if (defined $id) {
-	    if (msgsnd($id, pack("l! a*", $type_sent, $sent), 0)) {
-		if (msgrcv($id, $rcvd, 60, 0, 0)) {
+	    if (msgsnd($id, pack("l! a*", $type_sent, $sent), IPC_NOWAIT)) {
+		if (msgrcv($id, $rcvd, 60, 0, IPC_NOWAIT)) {
 		    ($type_rcvd, $rcvd) = unpack("l! a*", $rcvd);
 		} else {
-		    warn "# msgrcv failed\n";
+		    warn "# msgrcv failed: $!\n";
 		}
 	    } else {
-		warn "# msgsnd failed\n";
+		warn "# msgsnd failed: $!\n";
 	    }
 	    msgctl($id, IPC_RMID, 0) or warn "# msgctl failed: $!\n";
 	} else {
@@ -894,8 +894,8 @@ else {
     my @untainted;
     while (my ($k, $v) = each %ENV) {
 	if (!tainted($v) &&
-	    # These we have untainted explicitly earlier.
-	    $k !~ /^(BASH_ENV|CDPATH|ENV|IFS|PATH|TEMP|TERM|TMP)$/) {
+	    # These we have explicitly untainted or set earlier.
+	    $k !~ /^(BASH_ENV|CDPATH|ENV|IFS|PATH|PERL_CORE|TEMP|TERM|TMP)$/) {
 	    push @untainted, "# '$k' = '$v'\n";
 	}
     }
@@ -904,7 +904,7 @@ else {
 }
 
 
-ok( ${^TAINT},  '$^TAINT is on' );
+ok( ${^TAINT} == 1, '$^TAINT is on' );
 
 eval { ${^TAINT} = 0 };
 ok( ${^TAINT},  '$^TAINT is not assignable' );
@@ -941,9 +941,7 @@ else
 {
     # bug 20020208.005 plus some extras
     # single arg exec/system are tests 80-83
-    use if $] lt '5.009', warnings => FATAL => 'taint';
-    my $err = $] ge '5.009' ? qr/^Insecure dependency/ 
-                            : qr/^Use of tainted arguments/;
+    my $err = qr/^Insecure dependency/ ;
     test 184, eval { exec $TAINT, $TAINT } eq '', 'exec';
     test 185, $@ =~ $err, $@;
     test 186, eval { exec $TAINT $TAINT } eq '', 'exec';
@@ -968,8 +966,19 @@ else
 
     eval { system("lskdfj does not exist","with","args"); };
     test 204, $@ eq '';
-    eval { exec("lskdfj does not exist","with","args"); };
-    test 205, $@ eq '';
+    if ($Is_MacOS) {
+	print "ok 205 # no exec()\n";
+    } else {
+	eval { exec("lskdfj does not exist","with","args"); };
+	test 205, $@ eq '';
+    }
 
     # If you add tests here update also the above skip block for VMS.
+}
+
+{
+    # [ID 20020704.001] taint propagation failure
+    use re 'taint';
+    $TAINT =~ /(.*)/;
+    test 206, tainted(my $foo = $1);
 }

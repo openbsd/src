@@ -1,6 +1,7 @@
 /*    handy.h
  *
- *    Copyright (c) 1991-2002, Larry Wall
+ *    Copyright (C) 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1999,
+ *    2000, 2001, 2002, by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -25,6 +26,7 @@
 
 =for apidoc AmU||Nullch 
 Null character pointer.
+
 =for apidoc AmU||Nullsv
 Null SV pointer.
 
@@ -500,32 +502,24 @@ Converts the specified character to lowercase.
 #define isBLANK_LC_utf8(c)	isBLANK(c) /* could be wrong */
 
 #ifdef EBCDIC
-#  define toCTRL(c)	Perl_ebcdic_control(c)
+#  ifdef PERL_IMPLICIT_CONTEXT
+#    define toCTRL(c)     Perl_ebcdic_control(aTHX_ c)
+#  else
+#    define toCTRL        Perl_ebcdic_control
+#  endif
 #else
   /* This conversion works both ways, strangely enough. */
 #  define toCTRL(c)    (toUPPER(c) ^ 64)
 #endif
 
-/* Line numbers are unsigned, 16 bits. */
-typedef U16 line_t;
+/* Line numbers are unsigned, 32 bits. */
+typedef U32 line_t;
 #ifdef lint
 #define NOLINE ((line_t)0)
 #else
-#define NOLINE ((line_t) 65535)
+#define NOLINE ((line_t) 4294967295UL)
 #endif
 
-
-/*
-   XXX LEAKTEST doesn't really work in perl5.  There are direct calls to
-   safemalloc() in the source, so LEAKTEST won't pick them up.
-   (The main "offenders" are extensions.)
-   Further, if you try LEAKTEST, you'll also end up calling
-   Safefree, which might call safexfree() on some things that weren't
-   malloced with safexmalloc.  The correct "fix" to this, if anyone
-   is interested, is to ensure that all calls go through the New and
-   Renew macros.
-	--Andy Dougherty		August 1996
-*/
 
 /*
 =head1 SV Manipulation Functions
@@ -589,8 +583,6 @@ hopefully catches attempts to access uninitialized memory.
 
 #define NEWSV(x,len)	newSV(len)
 
-#ifndef LEAKTEST
-
 #define New(x,v,n,t)	(v = (t*)safemalloc((MEM_SIZE)((n)*sizeof(t))))
 #define Newc(x,v,n,t,c)	(v = (c*)safemalloc((MEM_SIZE)((n)*sizeof(t))))
 #define Newz(x,v,n,t)	(v = (t*)safemalloc((MEM_SIZE)((n)*sizeof(t)))), \
@@ -600,28 +592,6 @@ hopefully catches attempts to access uninitialized memory.
 #define Renewc(v,n,t,c) \
 	  (v = (c*)saferealloc((Malloc_t)(v),(MEM_SIZE)((n)*sizeof(t))))
 #define Safefree(d)	safefree((Malloc_t)(d))
-
-#else /* LEAKTEST */
-
-#define New(x,v,n,t)	(v = (t*)safexmalloc((x),(MEM_SIZE)((n)*sizeof(t))))
-#define Newc(x,v,n,t,c)	(v = (c*)safexmalloc((x),(MEM_SIZE)((n)*sizeof(t))))
-#define Newz(x,v,n,t)	(v = (t*)safexmalloc((x),(MEM_SIZE)((n)*sizeof(t)))), \
-			 memzero((char*)(v), (n)*sizeof(t))
-#define Renew(v,n,t) \
-	  (v = (t*)safexrealloc((Malloc_t)(v),(MEM_SIZE)((n)*sizeof(t))))
-#define Renewc(v,n,t,c) \
-	  (v = (c*)safexrealloc((Malloc_t)(v),(MEM_SIZE)((n)*sizeof(t))))
-#define Safefree(d)	safexfree((Malloc_t)(d))
-
-#define MAXXCOUNT 1400
-#define MAXY_SIZE 80
-#define MAXYCOUNT 16			/* (MAXY_SIZE/4 + 1) */
-extern long xcount[MAXXCOUNT];
-extern long lastxcount[MAXXCOUNT];
-extern long xycount[MAXXCOUNT][MAXYCOUNT];
-extern long lastxycount[MAXXCOUNT][MAXYCOUNT];
-
-#endif /* LEAKTEST */
 
 #define Move(s,d,n,t)	(void)memmove((char*)(d),(char*)(s), (n) * sizeof(t))
 #define Copy(s,d,n,t)	(void)memcpy((char*)(d),(char*)(s), (n) * sizeof(t))
@@ -648,6 +618,8 @@ extern long lastxycount[MAXXCOUNT][MAXYCOUNT];
 #else
 #define StructCopy(s,d,t) Copy(s,d,1,t)
 #endif
+
+#define C_ARRAY_LENGTH(a)	(sizeof(a)/sizeof((a)[0]))
 
 #ifdef NEED_VA_COPY
 # ifdef va_copy

@@ -34,7 +34,7 @@ ok($now > $beg && $now - $beg < 10,             'very basic time test');
 
 for ($i = 0; $i < 100000; $i++) {
     ($nowuser, $nowsys) = times;
-    $i = 200000 if $nowuser > $beguser && ( $nowsys > $begsys || 
+    $i = 200000 if $nowuser > $beguser && ( $nowsys >= $begsys || 
                                             (!$nowsys && !$begsys));
     last if time - $beg > 20;
 }

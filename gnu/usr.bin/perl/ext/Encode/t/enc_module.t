@@ -1,4 +1,4 @@
-# $Id: enc_module.t,v 1.1.1.1 2003/12/03 02:43:44 millert Exp $
+# $Id: enc_module.t,v 1.2 2003/12/03 03:02:29 millert Exp $
 # This file is in euc-jp
 BEGIN {
     require Config; import Config;

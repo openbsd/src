@@ -7,12 +7,13 @@ BEGIN {
     @INC = '../lib';
 }
 
-print "1..23\n";
+print "1..28\n";
 
 $TST = 'tst';
 
 $Is_Dosish = ($^O eq 'MSWin32' or $^O eq 'NetWare' or $^O eq 'dos' or
-	      $^O eq 'os2' or $^O eq 'mint' or $^O eq 'cygwin');
+              $^O eq 'os2' or $^O eq 'mint' or $^O eq 'cygwin' or
+              $^O =~ /^uwin/);
 
 open($TST, 'harness') || (die "Can't open harness");
 binmode $TST if $Is_Dosish;
@@ -96,4 +97,58 @@ if (tell(ether) == -1)  { print "ok 23\n"; } else { print "not ok 23\n"; }
 # ftell(STDIN) (or any std streams) is undefined, it can return -1 or
 # something else.  ftell() on pipes, fifos, and sockets is defined to
 # return -1.
+
+my $written = "tell_write.txt";
+
+END { unlink($written) }
+
+close($tst);
+open($tst,">$written")  || die "Cannot open $written:$!";
+binmode $tst if $Is_Dosish;
+
+if (tell($tst) == 0) { print "ok 24\n"; } else { print "not ok 24\n"; }
+
+print $tst "fred\n";
+
+if (tell($tst) == 5) { print "ok 25\n"; } else { print "not ok 25\n"; }
+
+print $tst "more\n";
+
+if (tell($tst) == 10) { print "ok 26\n"; } else { print "not ok 26\n"; }
+
+close($tst);
+
+open($tst,"+>>$written")  || die "Cannot open $written:$!";
+binmode $tst if $Is_Dosish;
+
+if (0) 
+{
+ # :stdio does not pass these so ignore them for now 
+
+if (tell($tst) == 0) { print "ok 27\n"; } else { print "not ok 27\n"; }
+
+$line = <$tst>;
+
+if ($line eq "fred\n") { print "ok 29\n"; } else { print "not ok 29\n"; }
+
+if (tell($tst) == 5) { print "ok 30\n"; } else { print "not ok 30\n"; }
+
+}
+
+print $tst "xxxx\n";
+
+if (tell($tst) == 15 ||
+    tell($tst) == 5) # unset PERLIO or PERLIO=stdio (e.g. HP-UX, Solaris)
+{ print "ok 27\n"; } else { print "not ok 27\n"; }
+
+close($tst);
+
+open($tst,">$written")  || die "Cannot open $written:$!";
+print $tst "foobar";
+close $tst;
+open($tst,">>$written")  || die "Cannot open $written:$!";
+
+if (tell($tst) == 6)
+{ print "ok 28\n"; } else { print "not ok 28\n"; }
+close $tst;
 

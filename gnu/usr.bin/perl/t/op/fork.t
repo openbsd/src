@@ -426,3 +426,21 @@ waitpid() returned ok
 forked second kid
 second child
 wait() returned ok
+########
+pipe(RDR,WTR) or die $!;
+my $pid = fork;
+die "fork: $!" if !defined $pid;
+if ($pid == 0) {
+    my $rand_child = rand;
+    close RDR;
+    print WTR $rand_child, "\n";
+    close WTR;
+} else {
+    my $rand_parent = rand;
+    close WTR;
+    chomp(my $rand_child  = <RDR>);
+    close RDR;
+    print $rand_child ne $rand_parent, "\n";
+}
+EXPECT
+1

@@ -2,7 +2,7 @@ package Net::servent;
 use strict;
 
 use 5.006_001;
-our $VERSION = '1.00';
+our $VERSION = '1.01';
 our(@EXPORT, @EXPORT_OK, %EXPORT_TAGS);
 BEGIN {
     use Exporter   ();
@@ -74,10 +74,10 @@ method returns an array reference, the rest scalars.
 You may also import all the structure fields directly into your namespace
 as regular variables using the :FIELDS import tag.  (Note that this still
 overrides your core functions.)  Access these fields as variables named
-with a preceding C<n_>.  Thus, C<$serv_obj-E<gt>name()> corresponds to
+with a preceding C<s_>.  Thus, C<$serv_obj-E<gt>name()> corresponds to
 $s_name if you import the fields.  Array references are available as
-regular array variables, so for example C<@{ $serv_obj-E<gt>aliases()
-}> would be simply @s_aliases.
+regular array variables, so for example C<@{ $serv_obj-E<gt>aliases()}>
+would be simply @s_aliases.
 
 The getserv() function is a simple front-end that forwards a numeric
 argument to getservbyport(), and the rest to getservbyname().

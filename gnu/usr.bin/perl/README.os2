@@ -907,7 +907,7 @@ of the current maintainer.
 Quick cycle of developers release may break the OS/2 build time to
 time, looking into 
 
-  http://www.cpan.org/ports/os2/ilyaz/
+  http://www.cpan.org/ports/os2/
 
 may indicate the latest release which was publicly released by the
 maintainer. Note that the release may include some additional patches

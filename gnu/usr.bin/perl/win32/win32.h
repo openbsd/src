@@ -140,6 +140,8 @@ struct utsname {
 #endif
 #define ENV_IS_CASELESS
 
+#define PIPESOCK_MODE	"b"		/* pipes, sockets default to binmode */
+
 #ifndef VER_PLATFORM_WIN32_WINDOWS	/* VC-2.0 headers don't have this */
 #define VER_PLATFORM_WIN32_WINDOWS	1
 #endif
@@ -273,6 +275,7 @@ extern  int	mkstemp(const char *path);
 #define  init_os_extras Perl_init_os_extras
 
 DllExport void		Perl_win32_init(int *argcp, char ***argvp);
+DllExport void		Perl_win32_term(void);
 DllExport void		Perl_init_os_extras(void);
 DllExport void		win32_str_os_error(void *sv, DWORD err);
 DllExport int		RunPerl(int argc, char **argv, char **env);
@@ -460,7 +463,7 @@ DllExport int win32_async_check(pTHX);
 				       lpw, wlen, (LPSTR)lpa, nChars,NULL,NULL))
 #define W2AHELPER(lpw, lpa, nChars)	W2AHELPER_LEN(lpw, -1, lpa, nChars)
 
-#define USING_WIDE() (PL_widesyscalls && PerlEnv_os_id() == VER_PLATFORM_WIN32_NT)
+#define USING_WIDE() (0)
 
 #ifdef USE_ITHREADS
 #  define PERL_WAIT_FOR_CHILDREN \
@@ -480,6 +483,9 @@ DllExport int win32_async_check(pTHX);
 #ifdef PERL_CORE
 
 /* C doesn't like repeat struct definitions */
+#if defined(__MINGW32__) && (__MINGW32_MAJOR_VERSION>=3)
+#undef _CRTIMP
+#endif
 #ifndef _CRTIMP
 #define _CRTIMP __declspec(dllimport)
 #endif
@@ -545,9 +551,13 @@ EXTERN_C _CRTIMP ioinfo* __pioinfo[];
 #if !defined(ECONNABORTED) && defined(WSAECONNABORTED)
 #define ECONNABORTED WSAECONNABORTED
 #endif
+#if !defined(ECONNRESET) && defined(WSAECONNRESET)
+#define ECONNRESET WSAECONNRESET
+#endif
 #if !defined(EAFNOSUPPORT) && defined(WSAEAFNOSUPPORT)
 #define EAFNOSUPPORT WSAEAFNOSUPPORT
 #endif
+/* Why not needed for ECONNREFUSED? --abe */
 
 DllExport void *win32_signal_context(void);
 #define PERL_GET_SIG_CONTEXT win32_signal_context()

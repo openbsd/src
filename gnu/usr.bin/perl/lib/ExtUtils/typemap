@@ -14,6 +14,7 @@ const char *		T_PV
 caddr_t			T_PV
 wchar_t *		T_PV
 wchar_t			T_IV
+# bool_t is defined in <rpc/rpc.h>
 bool_t			T_IV
 size_t			T_UV
 ssize_t			T_IV

@@ -51,6 +51,19 @@ The C<_can_do_level> method should be modified accordingly.
 
   $fh = tempfile();
 
+Object interface:
+
+  require File::Temp;
+  use File::Temp ();
+
+  $fh = new File::Temp($template);
+  $fname = $fh->filename;
+
+  $tmp = new File::Temp( UNLINK => 0, SUFFIX => '.dat' );
+  print $tmp "Some data\n";
+  print "Filename is $tmp\n";
+
+
 MkTemp family:
 
   use File::Temp qw/ :mktemp  /;
@@ -70,30 +83,21 @@ POSIX functions:
   $fh = tmpfile();
 
   ($fh, $file) = tmpnam();
-  ($fh, $file) = tmpfile();
+  $fh = tmpfile();
 
 
 Compatibility functions:
 
   $unopened_file = File::Temp::tempnam( $dir, $pfx );
 
-=begin later
-
-Objects (NOT YET IMPLEMENTED):
-
-  require File::Temp;
-
-  $fh = new File::Temp($template);
-  $fname = $fh->filename;
-
-=end later
-
 =head1 DESCRIPTION
 
-C<File::Temp> can be used to create and open temporary files in a safe way.
-The tempfile() function can be used to return the name and the open
-filehandle of a temporary file.  The tempdir() function can
-be used to create a temporary directory.
+C<File::Temp> can be used to create and open temporary files in a safe
+way.  There is both a function interface and an object-oriented
+interface.  The File::Temp constructor or the tempfile() function can
+be used to return the name and the open filehandle of a temporary
+file.  The tempdir() function can be used to create a temporary
+directory.
 
 The security aspect of temporary file creation is emphasized such that
 a filehandle and filename are returned together.  This helps guarantee
@@ -131,6 +135,10 @@ require VMS::Stdio if $^O eq 'VMS';
 # Need the Symbol package if we are running older perl
 require Symbol if $] < 5.006;
 
+### For the OO interface
+use base qw/ IO::Handle /;
+use overload '""' => "STRINGIFY";
+
 
 # use 'our' on v5.6.0
 use vars qw($VERSION @EXPORT_OK %EXPORT_TAGS $DEBUG);
@@ -167,7 +175,7 @@ Exporter::export_tags('POSIX','mktemp');
 
 # Version number
 
-$VERSION = '0.13';
+$VERSION = '0.14';
 
 # This is a list of characters that can be used in random filenames
 
@@ -798,7 +806,7 @@ sub _can_do_level {
   return 1 if $level == STANDARD;
 
   # Currently, the systems that can do HIGH or MEDIUM are identical
-  if ( $^O eq 'MSWin32' || $^O eq 'os2' || $^O eq 'cygwin' || $^O eq 'dos' || $^O eq 'MacOS') {
+  if ( $^O eq 'MSWin32' || $^O eq 'os2' || $^O eq 'cygwin' || $^O eq 'dos' || $^O eq 'MacOS' || $^O eq 'mpeix') {
     return 0;
   } else {
     return 1;
@@ -847,7 +855,7 @@ sub _can_do_level {
     # Dirs
     foreach my $dir (@dirs_to_unlink) {
       if (-d $dir) {
-	rmtree($dir, $DEBUG, 1);
+	rmtree($dir, $DEBUG, 0);
       }
     }
 
@@ -900,6 +908,131 @@ sub _can_do_level {
 
 }
 
+=head1 OO INTERFACE
+
+This is the primary interface for interacting with
+C<File::Temp>. Using the OO interface a temporary file can be created
+when the object is constructed and the file can be removed when the
+object is no longer required.
+
+Note that there is no method to obtain the filehandle from the
+C<File::Temp> object. The object itself acts as a filehandle. Also,
+the object is configured such that it stringifies to the name of the
+temporary file.
+
+=over 4
+
+=item B<new>
+
+Create a temporary file object.
+
+  my $tmp = new File::Temp();
+
+by default the object is constructed as if C<tempfile>
+was called without options, but with the additional behaviour
+that the temporary file is removed by the object destructor
+if UNLINK is set to true (the default).
+
+Supported arguments are the same as for C<tempfile>: UNLINK
+(defaulting to true), DIR and SUFFIX. Additionally, the filename
+template is specified using the TEMPLATE option. The OPEN option
+is not supported (the file is always opened).
+
+ $tmp = new File::Temp( TEMPLATE => 'tempXXXXX',
+                        DIR => 'mydir',
+                        SUFFIX => '.dat');
+
+Arguments are case insensitive.
+
+=cut
+
+sub new {
+  my $proto = shift;
+  my $class = ref($proto) || $proto;
+
+  # read arguments and convert keys to upper case
+  my %args = @_;
+  %args = map { uc($_), $args{$_} } keys %args;
+
+  # see if they are unlinking (defaulting to yes)
+  my $unlink = (exists $args{UNLINK} ? $args{UNLINK} : 1 );
+  delete $args{UNLINK};
+
+  # template (store it in an error so that it will
+  # disappear from the arg list of tempfile
+  my @template = ( exists $args{TEMPLATE} ? $args{TEMPLATE} : () );
+  delete $args{TEMPLATE};
+
+  # Protect OPEN
+  delete $args{OPEN};
+
+  # Open the file and retain file handle and file name
+  my ($fh, $path) = tempfile( @template, %args );
+
+  print "Tmp: $fh - $path\n" if $DEBUG;
+
+  # Store the filename in the scalar slot
+  ${*$fh} = $path;
+
+  # Store unlink information in hash slot (plus other constructor info)
+  %{*$fh} = %args;
+  ${*$fh}{UNLINK} = $unlink;
+
+  bless $fh, $class;
+
+  return $fh;
+}
+
+=item B<filename>
+
+Return the name of the temporary file associated with this object.
+
+  $filename = $tmp->filename;
+
+This method is called automatically when the object is used as
+a string.
+
+=cut
+
+sub filename {
+  my $self = shift;
+  return ${*$self};
+}
+
+sub STRINGIFY {
+  my $self = shift;
+  return $self->filename;
+}
+
+=item B<DESTROY>
+
+When the object goes out of scope, the destructor is called. This
+destructor will attempt to unlink the file (using C<unlink1>)
+if the constructor was called with UNLINK set to 1 (the default state
+if UNLINK is not specified).
+
+No error is given if the unlink fails.
+
+=cut
+
+sub DESTROY {
+  my $self = shift;
+  if (${*$self}{UNLINK}) {
+    print "# --------->   Unlinking $self\n" if $DEBUG;
+
+    # The unlink1 may fail if the file has been closed
+    # by the caller. This leaves us with the decision
+    # of whether to refuse to remove the file or simply
+    # do an unlink without test. Seems to be silly
+    # to do this when we are trying to be careful
+    # about security
+    unlink1( $self, $self->filename )
+      or unlink($self->filename);
+  }
+}
+
+=back
+
 =head1 FUNCTIONS
 
 This section describes the recommended interface for generating
@@ -922,7 +1055,7 @@ files, as specified by the tmpdir() function in L<File::Spec>.
 Create a temporary file in the current directory using the supplied
 template.  Trailing `X' characters are replaced with random letters to
 generate the filename.  At least four `X' characters must be present
-in the template.
+at the end of the template.
 
   ($fh, $filename) = tempfile($template, SUFFIX => $suffix)
 
@@ -958,7 +1091,7 @@ This is the preferred mode of operation, as if you only
 have a filehandle, you can never create a race condition
 by fumbling with the filename. On systems that can not unlink
 an open file or can not mark a file as temporary when it is opened
-(for example, Windows NT uses the C<O_TEMPORARY> flag))
+(for example, Windows NT uses the C<O_TEMPORARY> flag)
 the file is marked for deletion when the program ends (equivalent
 to setting UNLINK to 1). The C<UNLINK> flag is ignored if present.
 
@@ -1471,7 +1604,7 @@ sub tmpnam {
 
 =item B<tmpfile>
 
-In scalar context, returns the filehandle of a temporary file.
+Returns the filehandle of a temporary file.
 
   $fh = tmpfile();
 
@@ -1597,11 +1730,78 @@ sub unlink0 {
   # Read args
   my ($fh, $path) = @_;
 
-  warn "Unlinking $path using unlink0\n"
+  cmpstat($fh, $path) or return 0;
+
+  # attempt remove the file (does not work on some platforms)
+  if (_can_unlink_opened_file()) {
+    # XXX: do *not* call this on a directory; possible race
+    #      resulting in recursive removal
+    croak "unlink0: $path has become a directory!" if -d $path;
+    unlink($path) or return 0;
+
+    # Stat the filehandle
+    my @fh = stat $fh;
+
+    print "Link count = $fh[3] \n" if $DEBUG;
+
+    # Make sure that the link count is zero
+    # - Cygwin provides deferred unlinking, however,
+    #   on Win9x the link count remains 1
+    # On NFS the link count may still be 1 but we cant know that
+    # we are on NFS
+    return ( $fh[3] == 0 or $^O eq 'cygwin' ? 1 : 0);
+
+  } else {
+    _deferred_unlink($fh, $path, 0);
+    return 1;
+  }
+
+}
+
+=item B<cmpstat>
+
+Compare C<stat> of filehandle with C<stat> of provided filename.  This
+can be used to check that the filename and filehandle initially point
+to the same file and that the number of links to the file is 1 (all
+fields returned by stat() are compared).
+
+  cmpstat($fh, $path) or die "Error comparing handle with file";
+
+Returns false if the stat information differs or if the link count is
+greater than 1.
+
+On certain platofms, eg Windows, not all the fields returned by stat()
+can be compared. For example, the C<dev> and C<rdev> fields seem to be
+different in Windows.  Also, it seems that the size of the file
+returned by stat() does not always agree, with C<stat(FH)> being more
+accurate than C<stat(filename)>, presumably because of caching issues
+even when using autoflush (this is usually overcome by waiting a while
+after writing to the tempfile before attempting to C<unlink0> it).
+
+Not exported by default.
+
+=cut
+
+sub cmpstat {
+
+  croak 'Usage: cmpstat(filehandle, filename)'
+    unless scalar(@_) == 2;
+
+  # Read args
+  my ($fh, $path) = @_;
+
+  warn "Comparing stat\n"
     if $DEBUG;
 
-  # Stat the filehandle
-  my @fh = stat $fh;
+  # Stat the filehandle - which may be closed if someone has manually
+  # closed the file. Can not turn off warnings without using $^W
+  # unless we upgrade to 5.006 minimum requirement
+  my @fh;
+  {
+    local ($^W) = 0;
+    @fh = stat $fh;
+  }
+  return unless @fh;
 
   if ($fh[3] > 1 && $^W) {
     carp "unlink0: fstat found too many links; SB=@fh" if $^W;
@@ -1633,7 +1833,9 @@ sub unlink0 {
   } elsif ($^O eq 'VMS') { # device and file ID are sufficient
     @okstat = (0, 1);
   } elsif ($^O eq 'dos') {
-     @okstat = (0,2..7,11..$#fh);
+    @okstat = (0,2..7,11..$#fh);
+  } elsif ($^O eq 'mpeix') {
+    @okstat = (0..4,8..10);
   }
 
   # Now compare each entry explicitly by number
@@ -1648,30 +1850,39 @@ sub unlink0 {
     }
   }
 
-  # attempt remove the file (does not work on some platforms)
-  if (_can_unlink_opened_file()) {
-    # XXX: do *not* call this on a directory; possible race
-    #      resulting in recursive removal
-    croak "unlink0: $path has become a directory!" if -d $path;
-    unlink($path) or return 0;
+  return 1;
+}
 
-    # Stat the filehandle
-    @fh = stat $fh;
+=item B<unlink1>
 
-    print "Link count = $fh[3] \n" if $DEBUG;
+Similar to C<unlink0> except after file comparison using cmpstat, the
+filehandle is closed prior to attempting to unlink the file. This
+allows the file to be removed without using an END block, but does
+mean that the post-unlink comparison of the filehandle state provided
+by C<unlink0> is not available.
 
-    # Make sure that the link count is zero
-    # - Cygwin provides deferred unlinking, however,
-    #   on Win9x the link count remains 1
-    # On NFS the link count may still be 1 but we cant know that
-    # we are on NFS
-    return ( $fh[3] == 0 or $^O eq 'cygwin' ? 1 : 0);
+  unlink1($fh, $path) or die "Error closing and unlinking file";
 
-  } else {
-    _deferred_unlink($fh, $path, 0);
-    return 1;
-  }
+Usually called from the object destructor when using the OO interface.
 
+Not exported by default.
+
+=cut
+
+sub unlink1 {
+  croak 'Usage: unlink1(filehandle, filename)'
+    unless scalar(@_) == 2;
+
+  # Read args
+  my ($fh, $path) = @_;
+
+  cmpstat($fh, $path) or return 0;
+
+  # Close the file
+  close( $fh ) or return 0;
+
+  # remove the file
+  return unlink($path);
 }
 
 =back
@@ -1858,9 +2069,9 @@ temporary file handling.
 
 =head1 AUTHOR
 
-Tim Jenness E<lt>t.jenness@jach.hawaii.eduE<gt>
+Tim Jenness E<lt>tjenness@cpan.orgE<gt>
 
-Copyright (C) 1999-2001 Tim Jenness and the UK Particle Physics and
+Copyright (C) 1999-2003 Tim Jenness and the UK Particle Physics and
 Astronomy Research Council. All Rights Reserved.  This program is free
 software; you can redistribute it and/or modify it under the same
 terms as Perl itself.
@@ -1871,6 +2082,5 @@ should be written and providing ideas for code improvements and
 security enhancements.
 
 =cut
-
 
 1;

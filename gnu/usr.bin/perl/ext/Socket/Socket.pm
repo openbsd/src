@@ -1,7 +1,7 @@
 package Socket;
 
 our($VERSION, @ISA, @EXPORT, @EXPORT_OK, %EXPORT_TAGS);
-$VERSION = "1.75";
+$VERSION = "1.76";
 
 =head1 NAME
 

@@ -1,6 +1,6 @@
 #!./perl
 
-print "1..30\n";
+print "1..31\n";
 
 my $Is_EBCDIC = (ord('A') == 193) ? 1 : 0;
 
@@ -86,3 +86,14 @@ print "ok 29\n";
 vec(substr($foo, 1,3), 5, 4) = 3;
 print "not " if $foo ne "\x61\x62\x63\x34\x65\x66";
 print "ok 30\n";
+
+# A variation of [perl #20933]
+{
+    my $s = "";
+    vec($s, 0, 1) = 0;
+    vec($s, 1, 1) = 1;
+    my @r;
+    $r[$_] = \ vec $s, $_, 1 for (0, 1);
+    print "not " if (${ $r[0] } != 0 || ${ $r[1] } != 1);
+    print "ok 31\n";
+}

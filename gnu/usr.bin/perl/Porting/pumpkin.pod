@@ -43,7 +43,7 @@ to perl5-porters-request@perl.org .
 
 Archives of the list are held at:
 
-    http://www.rosat.mpe-garching.mpg.de/mailing-lists/perl-porters/
+    http://www.xray.mpe.mpg.de/mailing-lists/perl5-porters/
 
 =head1 How are Perl Releases Numbered?
 
@@ -103,7 +103,7 @@ always match the regular expression:
 C<$1> in the pattern is always an even number for maintenance
 versions, and odd for developer releases.
 
-In the past it has been observed that pumkings tend to invent new
+In the past it has been observed that pumpkings tend to invent new
 naming conventions on the fly. If you are a pumpking, before you
 invent a new name for any of the three types of perl distributions,
 please inform the guys from the CPAN who are doing indexing and
@@ -159,6 +159,8 @@ settled elsewhere.
 If feasible, try to keep filenames 8.3-compliant to humor those poor
 souls that get joy from running Perl under such dire limitations.
 There's a script, check83.pl, for keeping your nose 8.3-clean.
+In a similar vein, do not create files or directories which differ only
+in case (upper versus lower).
 
 =head2 Seek consensus on major changes
 
@@ -478,8 +480,9 @@ directories.
 
 =head2 make run_byacc
 
-If you have byacc-1.8.2 (available from CPAN), and if there have been
-changes to F<perly.y>, you can regenerate the F<perly.c> file.  The
+If you have byacc-1.8.2 (available from CPAN as
+http://www.cpan.org/src/misc/perl-byacc1.8.2.tar.gz), and if there have
+been changes to F<perly.y>, you can regenerate the F<perly.c> file.  The
 run_byacc makefile target does this by running byacc and then applying
 some patches so that byacc dynamically allocates space, rather than
 having fixed limits.  This patch is handled by the F<perly.fixer>
@@ -590,19 +593,19 @@ to change the version number near the top of the F<Changes> file.
 
 =head2 Todo
 
-The F<Todo> file contains a roughly-catgorized unordered list of
-aspects of Perl that could use enhancement, features that could be
-added, areas that could be cleaned up, and so on.  During your term as
-pumpkin-holder, you will probably address some of these issues, and
-perhaps identify others which, while you decide not to address them
-this time around, may be tackled in the future.  Update the file
-reflect the situation as it stands when you hand over the pumpkin.
+The F<pod/perltodo.pod> file contains a roughly-categorized unordered
+list of aspects of Perl that could use enhancement, features that could
+be added, areas that could be cleaned up, and so on.  During your term
+as pumpkin-holder, you will probably address some of these issues, and
+perhaps identify others which, while you decide not to address them this
+time around, may be tackled in the future.  Update the file to reflect
+the situation as it stands when you hand over the pumpkin.
 
 You might like, early in your pumpkin-holding career, to see if you
 can find champions for partiticular issues on the to-do list: an issue
 owned is an issue more likely to be resolved.
 
-There are also some more porting-specific L<Todo> items later in this
+There are also some more porting-specific L</Todo> items later in this
 file.
 
 =head2 OS/2-specific updates
@@ -662,9 +665,9 @@ Here's how I generate a new patch.  I'll use the hypothetical
 5.004_07 to 5.004_08 patch as an example.
 
 	# unpack perl5.004_07/
-	gzip -d -c perl5.004_07.tar.gz | tar -xof -
+	gzip -d -c perl5.004_07.tar.gz | tar -xf -
 	# unpack perl5.004_08/
-	gzip -d -c perl5.004_08.tar.gz | tar -xof -
+	gzip -d -c perl5.004_08.tar.gz | tar -xf -
 	makepatch perl5.004_07 perl5.004_08 > perl5.004_08.pat
 
 Makepatch will automatically generate appropriate B<rm> commands to remove
@@ -731,11 +734,13 @@ branches.
 
 =item CHECK_FORMAT
 
-To test the correct use of printf-style arguments, C<Configure> with
-S<-Dccflags='-DCHECK_FORMAT -Wformat'> and run C<make>.  The compiler
-will produce warning of incorrect use of format arguments.  CHECK_FORMAT
-changes perl-defined formats to common formats, so DO NOT USE the executable
-produced by this process. 
+If you have gcc, you can test the correct use of printf-style
+arguments.  Run C<Configure> with S<-Dccflags='-DCHECK_FORMAT
+-Wformat'> (and S<-Dcc=gcc>, if you are not on a system where C<cc>
+is C<gcc>) and run C<make>.  The compiler will produce warnings of
+incorrect use of format arguments.  CHECK_FORMAT changes perl-defined
+formats to common formats, so DO NOT USE the executable produced by
+this process.
 
 A more accurate approach is the following commands:
 
@@ -768,6 +773,48 @@ clean up, and print warnings from the log files
 =back
 
 (-Wformat support by Robin Barker.)
+
+=item gcc -ansi -pedantic
+
+Configure -Dgccansipedantic [ -Dcc=gcc ] will enable (via the cflags script,
+not $Config{ccflags}) the gcc strict ANSI C flags -ansi and -pedantic for
+the compilation of the core files on platforms where it knows it can
+do so (like Linux, see cflags.SH for the full list), and on some
+platforms only one (Solaris can do only -pedantic, not -ansi).
+The flag -DPERL_GCC_PEDANTIC also gets added, since gcc does not add
+any internal cpp flag to signify that -pedantic is being used, as it
+does for -ansi (__STRICT_ANSI__).
+
+Note that the -ansi and -pedantic are enabled only for version 3 (and
+later) of gcc, since even gcc version 2.95.4 finds lots of seemingly
+false "value computed not used" errors from Perl.
+
+The -ansi and -pedantic are useful in catching at least the following
+nonportable practices:
+
+=over 4
+
+=item *
+
+gcc-specific extensions
+
+=item *
+
+lvalue casts
+
+=item *
+
+// C++ comments
+
+=item *
+
+enum trailing commas
+
+=back
+
+The -Dgccansipedantic should be used only when cleaning up the code,
+not for production builds, since otherwise gcc cannot inline certain
+things.
 
 =back
 
@@ -1216,12 +1263,18 @@ a mail message from Larry:
     probably have been named something to do with overriding though.  Since
     it's undocumented we could still change it...  :-)
 
-Given that it's already there, you can use it to override
-distribution modules.  If you do
+Given that it's already there, you can use it to override distribution modules.
+One way to do that is to add
 
-	sh Configure -Dccflags='-DAPPLLIB_EXP=/my/override'
+	ccflags="$ccflags -DAPPLLIB_EXP=\"/my/override\""
+	
+to your config.over file.  (You have to be particularly careful to get the
+double quotes in.  APPLLIB_EXP must be a valid C string.  It might
+actually be easier to just #define it yourself in perl.c.)
 
-then perl.c will put /my/override ahead of ARCHLIB and PRIVLIB.
+Then perl.c will put /my/override ahead of ARCHLIB and PRIVLIB.  Perl will
+also search architecture-specific and version-specific subdirectories of
+APPLLIB_EXP.
 
 =head2 Shared libperl.so location
 
@@ -1277,9 +1330,11 @@ Anyway, all this leads to quite obscure failures that are sure to drive
 casual users crazy.  Even experienced users will get confused :-).  Upon
 reflection, I'd say leave libperl.so in $archlib.
 
-=item 4.
+=back
 
-Indentation style: over the years Perl has become a mishmash of
+=head2 Indentation style
+
+Over the years Perl has become a mishmash of
 various indentation styles, but the original "Larry style" can
 probably be restored with (GNU) indent somewhat like this:
 
@@ -1291,8 +1346,6 @@ be quite ungainly.  Also note that GNU indent also doesn't do aligning
 of consecutive assignments, which would truly wreck the layout in
 places like sv.c:Perl_sv_upgrade() or sv.c:Perl_clone_using().
 Similarly nicely aligned &&s, ||s and ==s would not be respected.
-
-=back
 
 =head1 Upload Your Work to CPAN
 
@@ -1506,9 +1559,80 @@ in recent config.sh files though.
 
 =back
 
+=head2 Copyright Issues
+
+The following is based on the consensus of a couple of IPR lawyers,
+but it is of course not a legally binding statement, just a common
+sense summary.
+
+=over 4
+
+=item *
+
+Tacking on copyright statements is unnecessary to begin with because
+of the Berne convention.  But assuming you want to go ahead...
+
+=item *
+
+The right form of a copyright statement is
+
+	Copyright (C) Year, Year, ... by Someone
+
+The (C) is not required everywhere but it doesn't hurt and in certain
+jurisdictions it is required, so let's leave it in.  (Yes, it's true
+that in some jurisdictions the "(C)" is not legally binding, one should
+use the true ringed-C.  But we don't have that character available for
+Perl's source code.)
+
+The years must be listed out separately.  Year-Year is not correct.
+Only the years when the piece has changed 'significantly' may be added.
+
+=item *
+
+One cannot give away one's copyright trivially.  One can give one's
+copyright away by using public domain, but even that requires a little
+bit more than just saying 'this is in public domain'.  (What it
+exactly requires depends on your jurisdiction.)  But barring public
+domain, one cannot "transfer" one's copyright to another person or
+entity.  In the context of software, it means that contributors cannot
+give away their copyright or "transfer" it to the "owner" of the software.
+
+Also remember that in many cases if you are employed by someone,
+your work may be copyrighted to your employer, even when you are
+contributing on your own time (this all depends on too many things
+to list here).  But the bottom line is that you definitely can't give
+away a copyright you may not even have.
+
+What is possible, however, is that the software can simply state
+
+	Copyright (C) Year, Year, ... by Someone and others
+
+and then list the "others" somewhere in the distribution.
+And this is exactly what Perl does.  (The "somewhere" is
+AUTHORS and the Changes* files.)
+
+=item *
+
+Split files, merged files, and generated files are problematic.
+The rule of thumb: in split files, copy the copyright years of
+the original file to all the new files; in merged files make
+an union of the copyright years of all the old files; in generated
+files propagate the copyright years of the generating file(s).
+
+=item *
+
+The files of Perl source code distribution do carry a lot of
+copyrights, by various people.  (There are many copyrights embedded in
+perl.c, for example.)  The most straightforward thing for pumpkings to
+do is to simply update Larry's copyrights at the beginning of the
+*.[hcy], x2p/*.[hcy], *.pl, and README files, and leave all other
+copyrights alone.  Doing more than that requires quite a bit of tracking. 
+
+=back
+
 =head1 AUTHORS
 
-Original author:  Andy Dougherty doughera@lafcol.lafayette.edu .
+Original author:  Andy Dougherty doughera@lafayette.edu .
 Additions by Chip Salzenberg chip@perl.com and 
 Tim Bunce Tim.Bunce@ig.co.uk .
 

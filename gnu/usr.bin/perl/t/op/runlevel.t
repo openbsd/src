@@ -374,3 +374,36 @@ sub d {
 }
 EXPECT
 0
+########
+sub TIEHANDLE { bless {} }
+sub PRINT { next }
+
+tie *STDERR, '';
+{ map ++$_, 1 }
+
+EXPECT
+Can't "next" outside a loop block at - line 2.
+########
+sub TIEHANDLE { bless {} }
+sub PRINT { print "[TIE] $_[1]" }
+
+tie *STDERR, '';
+die "DIE\n";
+
+EXPECT
+[TIE] DIE
+########
+sub TIEHANDLE { bless {} }
+sub PRINT { 
+    (split(/./, 'x'x10000))[0];
+    eval('die("test\n")');
+    warn "[TIE] $_[1]";
+}
+open OLDERR, '>&STDERR';
+tie *STDERR, '';
+
+use warnings FATAL => qw(uninitialized);
+print undef;
+
+EXPECT
+[TIE] Use of uninitialized value in print at - line 11.

@@ -1,6 +1,7 @@
 /*    util.h
  *
- *    Copyright (c) 1991-2002, Larry Wall
+ *    Copyright (C) 1991, 1992, 1993, 1999, 2001, 2002,
+ *    by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -17,9 +18,8 @@
 #else		/* !VMS */
 #  ifdef WIN32
 #    define PERL_FILE_IS_ABSOLUTE(f) \
-	(*(f) == '/'							\
-	 || ((f)[0] && (f)[1] == ':')		/* drive name */	\
-	 || ((f)[0] == '\\' && (f)[1] == '\\'))	/* UNC path */
+	(*(f) == '/' || *(f) == '\\'		/* UNC/rooted path */	\
+	 || ((f)[0] && (f)[1] == ':'))		/* drive name */
 #  else		/* !WIN32 */
 #  ifdef NETWARE
 #    define PERL_FILE_IS_ABSOLUTE(f) \

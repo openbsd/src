@@ -5,7 +5,7 @@ require Exporter;
 use strict;
 our @ISA = qw(Exporter);
 our @EXPORT = qw(Complete);
-our $VERSION = '1.4';
+our $VERSION = '1.401';
 
 #      @(#)complete.pl,v1.2            (me@anywhere.EBay.Sun.COM) 09/23/91
 
@@ -66,7 +66,7 @@ Wayne Thompson
 
 =cut
 
-our($complete, $kill, $erase1, $erase2, $tty_raw_noecho, $tty_restore, $stty);
+our($complete, $kill, $erase1, $erase2, $tty_raw_noecho, $tty_restore, $stty, $tty_safe_restore);
 our($tty_saved_state) = '';
 CONFIG: {
     $complete = "\004";
@@ -77,6 +77,7 @@ CONFIG: {
 	if (-x $s) {
 	    $tty_raw_noecho = "$s raw -echo";
 	    $tty_restore    = "$s -raw echo";
+	    $tty_safe_restore = $tty_restore;
 	    $stty = $s;
 	    last;
 	}
@@ -106,7 +107,8 @@ sub Complete {
 	    $tty_saved_state = undef;
 	}
 	else {
-	    $tty_restore = qq($stty "$tty_saved_state");
+	    $tty_saved_state =~ s/\s+$//g;
+	    $tty_restore = qq($stty "$tty_saved_state" 2>/dev/null);
 	}
     }
     system $tty_raw_noecho if defined $tty_raw_noecho;
@@ -168,10 +170,18 @@ sub Complete {
             }
         }
     }
-    system $tty_restore if defined $tty_restore;
+
+    # system $tty_restore if defined $tty_restore;
+    if (defined $tty_saved_state && defined $tty_restore && defined $tty_safe_restore)
+    {
+	system $tty_restore;
+	if ($?) {
+	    # tty_restore caused error
+	    system $tty_safe_restore;
+	}
+    }
     print("\n");
     $return;
 }
 
 1;
-

@@ -33,7 +33,7 @@ use Carp;
 
 use vars qw/ $VERSION %HTML_Escapes @LatexSections /;
 
-$VERSION = '0.54';
+$VERSION = '0.55';
 
 # Definitions of =headN -> latex mapping
 @LatexSections = (qw/
@@ -45,175 +45,315 @@ $VERSION = '0.54';
 		  subparagraph
 		  /);
 
-# Standard escape sequences converted to Latex
-# Up to "yuml" these are taken from the original pod2latex
-# command written by Taro Kawagish (kawagish@imslab.co.jp)
-
+# Standard escape sequences converted to Latex.
+# The Unicode name of each character is given in the comments.
+# Complete LaTeX set added by Peter Acklam.
 
 %HTML_Escapes = (
-    # lt, gt and verbar are inserted without math mode
-    # since the $$ will be added during general correction
-    # for those escape characters
-    'amp'       =>      '\&',      #   ampersand
-    'lt'        =>      '<',    #   ' left chevron, less-than
-    'gt'        =>      '>',    #   ' right chevron, greater-than
-    'quot'      =>      '"',      #   double quote
-    'sol'       =>      '/',
-    'verbar'    =>      '|',
+     'sol'    => '\textfractionsolidus{}',  # xxx - or should it be just '/'
+     'verbar' => '|',
 
-    "Aacute"    =>      "\\'{A}",       #   capital A, acute accent
-    "aacute"    =>      "\\'{a}",       #   small a, acute accent
-    "Acirc"     =>      "\\^{A}",       #   capital A, circumflex accent
-    "acirc"     =>      "\\^{a}",       #   small a, circumflex accent
-    "AElig"     =>      '\\AE',         #   capital AE diphthong (ligature)
-    "aelig"     =>      '\\ae',         #   small ae diphthong (ligature)
-    "Agrave"    =>      "\\`{A}",       #   capital A, grave accent
-    "agrave"    =>      "\\`{a}",       #   small a, grave accent
-    "Aring"     =>      '\\u{A}',       #   capital A, ring
-    "aring"     =>      '\\u{a}',       #   small a, ring
-    "Atilde"    =>      '\\~{A}',       #   capital A, tilde
-    "atilde"    =>      '\\~{a}',       #   small a, tilde
-    "Auml"      =>      '\\"{A}',       #   capital A, dieresis or umlaut mark
-    "auml"      =>      '\\"{a}',       #   small a, dieresis or umlaut mark
-    "Ccedil"    =>      '\\c{C}',       #   capital C, cedilla
-    "ccedil"    =>      '\\c{c}',       #   small c, cedilla
-    "Eacute"    =>      "\\'{E}",       #   capital E, acute accent
-    "eacute"    =>      "\\'{e}",       #   small e, acute accent
-    "Ecirc"     =>      "\\^{E}",       #   capital E, circumflex accent
-    "ecirc"     =>      "\\^{e}",       #   small e, circumflex accent
-    "Egrave"    =>      "\\`{E}",       #   capital E, grave accent
-    "egrave"    =>      "\\`{e}",       #   small e, grave accent
-    "ETH"       =>      '\\OE',         #   capital Eth, Icelandic
-    "eth"       =>      '\\oe',         #   small eth, Icelandic
-    "Euml"      =>      '\\"{E}',       #   capital E, dieresis or umlaut mark
-    "euml"      =>      '\\"{e}',       #   small e, dieresis or umlaut mark
-    "Iacute"    =>      "\\'{I}",       #   capital I, acute accent
-    "iacute"    =>      "\\'{i}",       #   small i, acute accent
-    "Icirc"     =>      "\\^{I}",       #   capital I, circumflex accent
-    "icirc"     =>      "\\^{i}",       #   small i, circumflex accent
-    "Igrave"    =>      "\\`{I}",       #   capital I, grave accent
-    "igrave"    =>      "\\`{i}",       #   small i, grave accent
-    "Iuml"      =>      '\\"{I}',       #   capital I, dieresis or umlaut mark
-    "iuml"      =>      '\\"{i}',       #   small i, dieresis or umlaut mark
-    "Ntilde"    =>      '\\~{N}',       #   capital N, tilde
-    "ntilde"    =>      '\\~{n}',       #   small n, tilde
-    "Oacute"    =>      "\\'{O}",       #   capital O, acute accent
-    "oacute"    =>      "\\'{o}",       #   small o, acute accent
-    "Ocirc"     =>      "\\^{O}",       #   capital O, circumflex accent
-    "ocirc"     =>      "\\^{o}",       #   small o, circumflex accent
-    "Ograve"    =>      "\\`{O}",       #   capital O, grave accent
-    "ograve"    =>      "\\`{o}",       #   small o, grave accent
-    "Oslash"    =>      "\\O",          #   capital O, slash
-    "oslash"    =>      "\\o",          #   small o, slash
-    "Otilde"    =>      "\\~{O}",       #   capital O, tilde
-    "otilde"    =>      "\\~{o}",       #   small o, tilde
-    "Ouml"      =>      '\\"{O}',       #   capital O, dieresis or umlaut mark
-    "ouml"      =>      '\\"{o}',       #   small o, dieresis or umlaut mark
-    "szlig"     =>      '\\ss{}',       #   small sharp s, German (sz ligature)
-    "THORN"     =>      '\\L',          #   capital THORN, Icelandic
-    "thorn"     =>      '\\l',,         #   small thorn, Icelandic
-    "Uacute"    =>      "\\'{U}",       #   capital U, acute accent
-    "uacute"    =>      "\\'{u}",       #   small u, acute accent
-    "Ucirc"     =>      "\\^{U}",       #   capital U, circumflex accent
-    "ucirc"     =>      "\\^{u}",       #   small u, circumflex accent
-    "Ugrave"    =>      "\\`{U}",       #   capital U, grave accent
-    "ugrave"    =>      "\\`{u}",       #   small u, grave accent
-    "Uuml"      =>      '\\"{U}',       #   capital U, dieresis or umlaut mark
-    "uuml"      =>      '\\"{u}',       #   small u, dieresis or umlaut mark
-    "Yacute"    =>      "\\'{Y}",       #   capital Y, acute accent
-    "yacute"    =>      "\\'{y}",       #   small y, acute accent
-    "yuml"      =>      '\\"{y}',       #   small y, dieresis or umlaut mark
+     # The stuff below is based on the information available at
+     # http://www.w3.org/TR/html401/sgml/entities.html
 
-    # Added by TimJ
+     # All characters in the range 0xA0-0xFF of the ISO 8859-1 character set.
+     # Several of these characters require the `textcomp' LaTeX package.
+     'nbsp'   => q|~|,                     # 0xA0 - no-break space = non-breaking space
+     'iexcl'  => q|\textexclamdown{}|,     # 0xA1 - inverted exclamation mark
+     'cent'   => q|\textcent{}|,           # 0xA2 - cent sign
+     'pound'  => q|\textsterling{}|,       # 0xA3 - pound sign
+     'curren' => q|\textcurrency{}|,       # 0xA4 - currency sign
+     'yen'    => q|\textyen{}|,            # 0xA5 - yen sign = yuan sign
+     'brvbar' => q|\textbrokenbar{}|,      # 0xA6 - broken bar = broken vertical bar
+     'sect'   => q|\textsection{}|,        # 0xA7 - section sign
+     'uml'    => q|\textasciidieresis{}|,  # 0xA8 - diaeresis = spacing diaeresis
+     'copy'   => q|\textcopyright{}|,      # 0xA9 - copyright sign
+     'ordf'   => q|\textordfeminine{}|,    # 0xAA - feminine ordinal indicator
+     'laquo'  => q|\guillemotleft{}|,      # 0xAB - left-pointing double angle quotation mark = left pointing guillemet
+     'not'    => q|\textlnot{}|,           # 0xAC - not sign
+     'shy'    => q|\-|,                    # 0xAD - soft hyphen = discretionary hyphen
+     'reg'    => q|\textregistered{}|,     # 0xAE - registered sign = registered trade mark sign
+     'macr'   => q|\textasciimacron{}|,    # 0xAF - macron = spacing macron = overline = APL overbar
+     'deg'    => q|\textdegree{}|,         # 0xB0 - degree sign
+     'plusmn' => q|\textpm{}|,             # 0xB1 - plus-minus sign = plus-or-minus sign
+     'sup2'   => q|\texttwosuperior{}|,    # 0xB2 - superscript two = superscript digit two = squared
+     'sup3'   => q|\textthreesuperior{}|,  # 0xB3 - superscript three = superscript digit three = cubed
+     'acute'  => q|\textasciiacute{}|,     # 0xB4 - acute accent = spacing acute
+     'micro'  => q|\textmu{}|,             # 0xB5 - micro sign
+     'para'   => q|\textparagraph{}|,      # 0xB6 - pilcrow sign = paragraph sign
+     'middot' => q|\textperiodcentered{}|, # 0xB7 - middle dot = Georgian comma = Greek middle dot
+     'cedil'  => q|\c{}|,                  # 0xB8 - cedilla = spacing cedilla
+     'sup1'   => q|\textonesuperior{}|,    # 0xB9 - superscript one = superscript digit one
+     'ordm'   => q|\textordmasculine{}|,   # 0xBA - masculine ordinal indicator
+     'raquo'  => q|\guillemotright{}|,     # 0xBB - right-pointing double angle quotation mark = right pointing guillemet
+     'frac14' => q|\textonequarter{}|,     # 0xBC - vulgar fraction one quarter = fraction one quarter
+     'frac12' => q|\textonehalf{}|,        # 0xBD - vulgar fraction one half = fraction one half
+     'frac34' => q|\textthreequarters{}|,  # 0xBE - vulgar fraction three quarters = fraction three quarters
+     'iquest' => q|\textquestiondown{}|,   # 0xBF - inverted question mark = turned question mark
+     'Agrave' => q|\`A|,                   # 0xC0 - latin capital letter A with grave = latin capital letter A grave
+     'Aacute' => q|\'A|,             # 0xC1 - latin capital letter A with acute
+     'Acirc'  => q|\^A|,             # 0xC2 - latin capital letter A with circumflex
+     'Atilde' => q|\~A|,             # 0xC3 - latin capital letter A with tilde
+     'Auml'   => q|\"A|,             # 0xC4 - latin capital letter A with diaeresis
+     'Aring'  => q|\AA{}|,           # 0xC5 - latin capital letter A with ring above = latin capital letter A ring
+     'AElig'  => q|\AE{}|,           # 0xC6 - latin capital letter AE = latin capital ligature AE
+     'Ccedil' => q|\c{C}|,           # 0xC7 - latin capital letter C with cedilla
+     'Egrave' => q|\`E|,             # 0xC8 - latin capital letter E with grave
+     'Eacute' => q|\'E|,             # 0xC9 - latin capital letter E with acute
+     'Ecirc'  => q|\^E|,             # 0xCA - latin capital letter E with circumflex
+     'Euml'   => q|\"E|,             # 0xCB - latin capital letter E with diaeresis
+     'Igrave' => q|\`I|,             # 0xCC - latin capital letter I with grave
+     'Iacute' => q|\'I|,             # 0xCD - latin capital letter I with acute
+     'Icirc'  => q|\^I|,             # 0xCE - latin capital letter I with circumflex
+     'Iuml'   => q|\"I|,             # 0xCF - latin capital letter I with diaeresis
+     'ETH'    => q|\DH{}|,           # 0xD0 - latin capital letter ETH
+     'Ntilde' => q|\~N|,             # 0xD1 - latin capital letter N with tilde
+     'Ograve' => q|\`O|,             # 0xD2 - latin capital letter O with grave
+     'Oacute' => q|\'O|,             # 0xD3 - latin capital letter O with acute
+     'Ocirc'  => q|\^O|,             # 0xD4 - latin capital letter O with circumflex
+     'Otilde' => q|\~O|,             # 0xD5 - latin capital letter O with tilde
+     'Ouml'   => q|\"O|,             # 0xD6 - latin capital letter O with diaeresis
+     'times'  => q|\texttimes{}|,    # 0xD7 - multiplication sign
+     'Oslash' => q|\O{}|,            # 0xD8 - latin capital letter O with stroke = latin capital letter O slash
+     'Ugrave' => q|\`U|,             # 0xD9 - latin capital letter U with grave
+     'Uacute' => q|\'U|,             # 0xDA - latin capital letter U with acute
+     'Ucirc'  => q|\^U|,             # 0xDB - latin capital letter U with circumflex
+     'Uuml'   => q|\"U|,             # 0xDC - latin capital letter U with diaeresis
+     'Yacute' => q|\'Y|,             # 0xDD - latin capital letter Y with acute
+     'THORN'  => q|\TH{}|,           # 0xDE - latin capital letter THORN
+     'szlig'  => q|\ss{}|,           # 0xDF - latin small letter sharp s = ess-zed
+     'agrave' => q|\`a|,             # 0xE0 - latin small letter a with grave = latin small letter a grave
+     'aacute' => q|\'a|,             # 0xE1 - latin small letter a with acute
+     'acirc'  => q|\^a|,             # 0xE2 - latin small letter a with circumflex
+     'atilde' => q|\~a|,             # 0xE3 - latin small letter a with tilde
+     'auml'   => q|\"a|,             # 0xE4 - latin small letter a with diaeresis
+     'aring'  => q|\aa{}|,           # 0xE5 - latin small letter a with ring above = latin small letter a ring
+     'aelig'  => q|\ae{}|,           # 0xE6 - latin small letter ae = latin small ligature ae
+     'ccedil' => q|\c{c}|,           # 0xE7 - latin small letter c with cedilla
+     'egrave' => q|\`e|,             # 0xE8 - latin small letter e with grave
+     'eacute' => q|\'e|,             # 0xE9 - latin small letter e with acute
+     'ecirc'  => q|\^e|,             # 0xEA - latin small letter e with circumflex
+     'euml'   => q|\"e|,             # 0xEB - latin small letter e with diaeresis
+     'igrave' => q|\`i|,             # 0xEC - latin small letter i with grave
+     'iacute' => q|\'i|,             # 0xED - latin small letter i with acute
+     'icirc'  => q|\^i|,             # 0xEE - latin small letter i with circumflex
+     'iuml'   => q|\"i|,             # 0xEF - latin small letter i with diaeresis
+     'eth'    => q|\dh{}|,           # 0xF0 - latin small letter eth
+     'ntilde' => q|\~n|,             # 0xF1 - latin small letter n with tilde
+     'ograve' => q|\`o|,             # 0xF2 - latin small letter o with grave
+     'oacute' => q|\'o|,             # 0xF3 - latin small letter o with acute
+     'ocirc'  => q|\^o|,             # 0xF4 - latin small letter o with circumflex
+     'otilde' => q|\~o|,             # 0xF5 - latin small letter o with tilde
+     'ouml'   => q|\"o|,             # 0xF6 - latin small letter o with diaeresis
+     'divide' => q|\textdiv{}|,      # 0xF7 - division sign
+     'oslash' => q|\o{}|,            # 0xF8 - latin small letter o with stroke, = latin small letter o slash
+     'ugrave' => q|\`u|,             # 0xF9 - latin small letter u with grave
+     'uacute' => q|\'u|,             # 0xFA - latin small letter u with acute
+     'ucirc'  => q|\^u|,             # 0xFB - latin small letter u with circumflex
+     'uuml'   => q|\"u|,             # 0xFC - latin small letter u with diaeresis
+     'yacute' => q|\'y|,             # 0xFD - latin small letter y with acute
+     'thorn'  => q|\th{}|,           # 0xFE - latin small letter thorn
+     'yuml'   => q|\"y|,             # 0xFF - latin small letter y with diaeresis
 
-    "iexcl"  =>   '!`',           # inverted exclamation mark
-#    "cent"   =>   ' ',        # cent sign
-    "pound"  =>   '\pounds',      # (UK) pound sign
-#    "curren" =>   ' ',        # currency sign
-#    "yen"    =>   ' ',        # yen sign
-#    "brvbar" =>   ' ',        # broken vertical bar
-    "sect"   =>   '\S',           # section sign
-    "uml"    =>   '\"{}',        # diaresis
-    "copy"   =>   '\copyright',   # Copyright symbol
-#    "ordf"   =>   ' ',        # feminine ordinal indicator
-    "laquo"  =>   '$\ll$',      # ' # left pointing double angle quotation mark
-    "not"    =>   '$\neg$',       # '  # not sign
-    "shy"    =>   '-',            # soft hyphen
-#    "reg"    =>   ' ',        # registered trademark
-    "macr"   =>   '$^-$',         # ' # macron, overline
-    "deg"    =>   '$^\circ$',     # '  # degree sign
-    "plusmn" =>   '$\pm$',        # ' # plus-minus sign
-    "sup2"   =>   '$^2$',         # ' # superscript 2
-    "sup3"   =>   '$^3$',         # ' # superscript 3
-    "acute"  =>   "\\'{}",        # acute accent
-    "micro"  =>   '$\mu$',        # micro sign
-    "para"   =>   '\P',           # pilcrow sign = paragraph sign
-    "middot" =>   '$\cdot$',      # middle dot = Georgian comma
-    "cedil"  =>   '\c{}',        # cedilla
-    "sup1"   =>   '$^1$',         # ' # superscript 1
-#    "ordm"   =>   ' ',        # masculine ordinal indicator
-    "raquo"  =>   '$\gg$',     # ' # right pointing double angle quotation mark
-    "frac14" =>   '$\frac{1}{4}$',   # ' # vulgar fraction one quarter
-    "frac12" =>   '$\frac{1}{2}$',   # ' # vulgar fraction one half
-    "frac34" =>   '$\frac{3}{4}$',   # ' # vulgar fraction three quarters
-    "iquest" =>   "?'",              # inverted question mark
-    "times"  =>   '$\times$',        # ' # multiplication sign
-    "divide" =>   '$\div$',          # division sign
+     # Latin Extended-B
+     'fnof'   => q|\textflorin{}|,   # latin small f with hook = function = florin
 
-    # Greek letters using HTML codes
-    "alpha"  =>   '$\alpha$',   # '
-    "beta"   =>   '$\beta$',    # '
-    "gamma"  =>   '$\gamma$',   # '
-    "delta"  =>   '$\delta$',   # '
-    "epsilon"=>   '$\epsilon$', # '
-    "zeta"   =>   '$\zeta$',    # '
-    "eta"    =>   '$\eta$',     # '
-    "theta"  =>   '$\theta$',   # '
-    "iota"   =>   '$\iota$',    # '
-    "kappa"  =>   '$\kappa$',   # '
-    "lambda" =>   '$\lambda$',  # '
-    "mu"     =>   '$\mu$',      # '
-    "nu"     =>   '$\nu$',      # '
-    "xi"     =>   '$\xi$',      # '
-    "omicron"=>   '$o$',        # '
-    "pi"     =>   '$\pi$',      # '
-    "rho"    =>   '$\rho$',     # '
-    "sigma"  =>   '$\sigma$',   # '
-    "tau"    =>   '$\tau$',     # '
-    "upsilon"=>   '$\upsilon$', # '
-    "phi"    =>   '$\phi$',     # '
-    "chi"    =>   '$\chi$',     # '
-    "psi"    =>   '$\psi$',     # '
-    "omega"  =>   '$\omega$',   # '
+     # Greek
+     'Alpha'    => q|$\mathrm{A}$|,      # greek capital letter alpha
+     'Beta'     => q|$\mathrm{B}$|,      # greek capital letter beta
+     'Gamma'    => q|$\Gamma$|,          # greek capital letter gamma
+     'Delta'    => q|$\Delta$|,          # greek capital letter delta
+     'Epsilon'  => q|$\mathrm{E}$|,      # greek capital letter epsilon
+     'Zeta'     => q|$\mathrm{Z}$|,      # greek capital letter zeta
+     'Eta'      => q|$\mathrm{H}$|,      # greek capital letter eta
+     'Theta'    => q|$\Theta$|,          # greek capital letter theta
+     'Iota'     => q|$\mathrm{I}$|,      # greek capital letter iota
+     'Kappa'    => q|$\mathrm{K}$|,      # greek capital letter kappa
+     'Lambda'   => q|$\Lambda$|,         # greek capital letter lambda
+     'Mu'       => q|$\mathrm{M}$|,      # greek capital letter mu
+     'Nu'       => q|$\mathrm{N}$|,      # greek capital letter nu
+     'Xi'       => q|$\Xi$|,             # greek capital letter xi
+     'Omicron'  => q|$\mathrm{O}$|,      # greek capital letter omicron
+     'Pi'       => q|$\Pi$|,             # greek capital letter pi
+     'Rho'      => q|$\mathrm{R}$|,      # greek capital letter rho
+     'Sigma'    => q|$\Sigma$|,          # greek capital letter sigma
+     'Tau'      => q|$\mathrm{T}$|,      # greek capital letter tau
+     'Upsilon'  => q|$\Upsilon$|,        # greek capital letter upsilon
+     'Phi'      => q|$\Phi$|,            # greek capital letter phi
+     'Chi'      => q|$\mathrm{X}$|,      # greek capital letter chi
+     'Psi'      => q|$\Psi$|,            # greek capital letter psi
+     'Omega'    => q|$\Omega$|,          # greek capital letter omega
 
-    "Alpha"  =>   '$A$',   # '
-    "Beta"   =>   '$B$',    # '
-    "Gamma"  =>   '$\Gamma$',   # '
-    "Delta"  =>   '$\Delta$',   # '
-    "Epsilon"=>   '$E$', # '
-    "Zeta"   =>   '$Z$',    # '
-    "Eta"    =>   '$H$',     # '
-    "Theta"  =>   '$\Theta$',   # '
-    "Iota"   =>   '$I$',    # '
-    "Kappa"  =>   '$K$',   # '
-    "Lambda" =>   '$\Lambda$',  # '
-    "Mu"     =>   '$M$',      # '
-    "Nu"     =>   '$N$',      # '
-    "Xi"     =>   '$\Xi$',      # '
-    "Omicron"=>   '$O$',        # '
-    "Pi"     =>   '$\Pi$',      # '
-    "Rho"    =>   '$R$',     # '
-    "Sigma"  =>   '$\Sigma$',   # '
-    "Tau"    =>   '$T$',     # '
-    "Upsilon"=>   '$\Upsilon$', # '
-    "Phi"    =>   '$\Phi$',     # '
-    "Chi"    =>   '$X$',     # '
-    "Psi"    =>   '$\Psi$',     # '
-    "Omega"  =>   '$\Omega$',   # '
+     'alpha'    => q|$\alpha$|,          # greek small letter alpha
+     'beta'     => q|$\beta$|,           # greek small letter beta
+     'gamma'    => q|$\gamma$|,          # greek small letter gamma
+     'delta'    => q|$\delta$|,          # greek small letter delta
+     'epsilon'  => q|$\epsilon$|,        # greek small letter epsilon
+     'zeta'     => q|$\zeta$|,           # greek small letter zeta
+     'eta'      => q|$\eta$|,            # greek small letter eta
+     'theta'    => q|$\theta$|,          # greek small letter theta
+     'iota'     => q|$\iota$|,           # greek small letter iota
+     'kappa'    => q|$\kappa$|,          # greek small letter kappa
+     'lambda'   => q|$\lambda$|,         # greek small letter lambda
+     'mu'       => q|$\mu$|,             # greek small letter mu
+     'nu'       => q|$\nu$|,             # greek small letter nu
+     'xi'       => q|$\xi$|,             # greek small letter xi
+     'omicron'  => q|$o$|,               # greek small letter omicron
+     'pi'       => q|$\pi$|,             # greek small letter pi
+     'rho'      => q|$\rho$|,            # greek small letter rho
+#    'sigmaf'   => q||,                  # greek small letter final sigma
+     'sigma'    => q|$\sigma$|,          # greek small letter sigma
+     'tau'      => q|$\tau$|,            # greek small letter tau
+     'upsilon'  => q|$\upsilon$|,        # greek small letter upsilon
+     'phi'      => q|$\phi$|,            # greek small letter phi
+     'chi'      => q|$\chi$|,            # greek small letter chi
+     'psi'      => q|$\psi$|,            # greek small letter psi
+     'omega'    => q|$\omega$|,          # greek small letter omega
+#    'thetasym' => q||,                  # greek small letter theta symbol
+#    'upsih'    => q||,                  # greek upsilon with hook symbol
+#    'piv'      => q||,                  # greek pi symbol
 
+     # General Punctuation
+     'bull'     => q|\textbullet{}|,     # bullet = black small circle
+     # bullet is NOT the same as bullet operator
+     'hellip'   => q|\textellipsis{}|,           # horizontal ellipsis = three dot leader
+     'prime'    => q|\textquotesingle{}|,        # prime = minutes = feet
+     'Prime'    => q|\textquotedbl{}|,           # double prime = seconds = inches
+     'oline'    => q|\textasciimacron{}|,        # overline = spacing overscore
+     'frasl'    => q|\textfractionsolidus{}|,    # fraction slash
 
+     # Letterlike Symbols
+     'weierp'   => q|$\wp$|,                     # script capital P = power set = Weierstrass p
+     'image'    => q|$\Re$|,                     # blackletter capital I = imaginary part
+     'real'     => q|$\Im$|,                     # blackletter capital R = real part symbol
+     'trade'    => q|\texttrademark{}|,          # trade mark sign
+#    'alefsym'  => q||,                          # alef symbol = first transfinite cardinal
+     # alef symbol is NOT the same as hebrew letter alef, although the same
+     # glyph could be used to depict both characters
+
+     # Arrows
+     'larr'     => q|\textleftarrow{}|,          # leftwards arrow
+     'uarr'     => q|\textuparrow{}|,            # upwards arrow
+     'rarr'     => q|\textrightarrow{}|,         # rightwards arrow
+     'darr'     => q|\textdownarrow{}|,          # downwards arrow
+     'harr'     => q|$\leftrightarrow$|,         # left right arrow
+#    'crarr'    => q||,                          # downwards arrow with corner leftwards = carriage return
+     'lArr'     => q|$\Leftarrow$|,              # leftwards double arrow
+     # ISO 10646 does not say that lArr is the same as the 'is implied by'
+     # arrow but also does not have any other character for that function. So
+     # lArr can be used for 'is implied by' as ISOtech suggests
+     'uArr'     => q|$\Uparrow$|,                # upwards double arrow
+     'rArr'     => q|$\Rightarrow$|,             # rightwards double arrow
+     # ISO 10646 does not say this is the 'implies' character but does not
+     # have another character with this function so ? rArr can be used for
+     # 'implies' as ISOtech suggests
+     'dArr'     => q|$\Downarrow$|,              # downwards double arrow
+     'hArr'     => q|$\Leftrightarrow$|,         # left right double arrow
+
+     # Mathematical Operators.
+     # Some of these require the `amssymb' package.
+     'forall'   => q|$\forall$|,                 # for all
+     'part'     => q|$\partial$|,                # partial differential
+     'exist'    => q|$\exists$|,                 # there exists
+     'empty'    => q|$\emptyset$|,               # empty set = null set = diameter
+     'nabla'    => q|$\nabla$|,                  # nabla = backward difference
+     'isin'     => q|$\in$|,                     # element of
+     'notin'    => q|$\notin$|,                  # not an element of
+     'ni'       => q|$\ni$|,                     # contains as member
+     'prod'     => q|$\prod$|,                   # n-ary product = product sign
+     # prod is NOT the same character as 'greek capital letter pi' though the
+     # same glyph might be used for both
+     'sum'      => q|$\sum$|,                    # n-ary sumation
+     # sum is NOT the same character as 'greek capital letter sigma' though
+     # the same glyph might be used for both
+     'minus'    => q|$-$|,                       # minus sign
+     'lowast'   => q|$\ast$|,                    # asterisk operator
+     'radic'    => q|$\surd$|,                   # square root = radical sign
+     'prop'     => q|$\propto$|,                 # proportional to
+     'infin'    => q|$\infty$|,                  # infinity
+     'ang'      => q|$\angle$|,                  # angle
+     'and'      => q|$\wedge$|,                  # logical and = wedge
+     'or'       => q|$\vee$|,                    # logical or = vee
+     'cap'      => q|$\cap$|,                    # intersection = cap
+     'cup'      => q|$\cup$|,                    # union = cup
+     'int'      => q|$\int$|,                    # integral
+     'there4'   => q|$\therefore$|,              # therefore
+     'sim'      => q|$\sim$|,                    # tilde operator = varies with = similar to
+     # tilde operator is NOT the same character as the tilde
+     'cong'     => q|$\cong$|,                   # approximately equal to
+     'asymp'    => q|$\asymp$|,                  # almost equal to = asymptotic to
+     'ne'       => q|$\neq$|,                    # not equal to
+     'equiv'    => q|$\equiv$|,                  # identical to
+     'le'       => q|$\leq$|,                    # less-than or equal to
+     'ge'       => q|$\geq$|,                    # greater-than or equal to
+     'sub'      => q|$\subset$|,                 # subset of
+     'sup'      => q|$\supset$|,                 # superset of
+     # note that nsup, 'not a superset of' is not covered by the Symbol font
+     # encoding and is not included.
+     'nsub'     => q|$\not\subset$|,             # not a subset of
+     'sube'     => q|$\subseteq$|,               # subset of or equal to
+     'supe'     => q|$\supseteq$|,               # superset of or equal to
+     'oplus'    => q|$\oplus$|,                  # circled plus = direct sum
+     'otimes'   => q|$\otimes$|,                 # circled times = vector product
+     'perp'     => q|$\perp$|,                   # up tack = orthogonal to = perpendicular
+     'sdot'     => q|$\cdot$|,                   # dot operator
+     # dot operator is NOT the same character as middle dot
+
+     # Miscellaneous Technical
+     'lceil'    => q|$\lceil$|,                  # left ceiling = apl upstile
+     'rceil'    => q|$\rceil$|,                  # right ceiling
+     'lfloor'   => q|$\lfloor$|,                 # left floor = apl downstile
+     'rfloor'   => q|$\rfloor$|,                 # right floor
+     'lang'     => q|$\langle$|,                 # left-pointing angle bracket = bra
+     # lang is NOT the same character as 'less than' or 'single left-pointing
+     # angle quotation mark'
+     'rang'     => q|$\rangle$|,                 # right-pointing angle bracket = ket
+     # rang is NOT the same character as 'greater than' or 'single
+     # right-pointing angle quotation mark'
+
+     # Geometric Shapes
+     'loz'      => q|$\lozenge$|,                # lozenge
+
+     # Miscellaneous Symbols
+     'spades'   => q|$\spadesuit$|,              # black spade suit
+     'clubs'    => q|$\clubsuit$|,               # black club suit = shamrock
+     'hearts'   => q|$\heartsuit$|,              # black heart suit = valentine
+     'diams'    => q|$\diamondsuit$|,            # black diamond suit
+
+     # C0 Controls and Basic Latin
+     'quot'     => q|"|,                         # quotation mark = APL quote ["]
+     'amp'      => q|\&|,                        # ampersand
+     'lt'       => q|<|,                         # less-than sign
+     'gt'       => q|>|,                         # greater-than sign
+     'OElig'    => q|\OE{}|,                     # latin capital ligature OE
+     'oelig'    => q|\oe{}|,                     # latin small ligature oe
+     'Scaron'   => q|\v{S}|,                     # latin capital letter S with caron
+     'scaron'   => q|\v{s}|,                     # latin small letter s with caron
+     'Yuml'     => q|\"Y|,                       # latin capital letter Y with diaeresis
+     'circ'     => q|\textasciicircum{}|,        # modifier letter circumflex accent
+     'tilde'    => q|\textasciitilde{}|,         # small tilde
+     'ensp'     => q|\phantom{n}|,               # en space
+     'emsp'     => q|\hspace{1em}|,              # em space
+     'thinsp'   => q|\,|,                        # thin space
+     'zwnj'     => q|{}|,                        # zero width non-joiner
+#    'zwj'      => q||,                          # zero width joiner
+#    'lrm'      => q||,                          # left-to-right mark
+#    'rlm'      => q||,                          # right-to-left mark
+     'ndash'    => q|--|,                        # en dash
+     'mdash'    => q|---|,                       # em dash
+     'lsquo'    => q|\textquoteleft{}|,          # left single quotation mark
+     'rsquo'    => q|\textquoteright{}|,         # right single quotation mark
+     'sbquo'    => q|\quotesinglbase{}|,         # single low-9 quotation mark
+     'ldquo'    => q|\textquotedblleft{}|,       # left double quotation mark
+     'rdquo'    => q|\textquotedblright{}|,      # right double quotation mark
+     'bdquo'    => q|\quotedblbase{}|,           # double low-9 quotation mark
+     'dagger'   => q|\textdagger{}|,             # dagger
+     'Dagger'   => q|\textdaggerdbl{}|,          # double dagger
+     'permil'   => q|\textperthousand{}|,        # per mille sign
+     'lsaquo'   => q|\guilsinglleft{}|,          # single left-pointing angle quotation mark
+     'rsaquo'   => q|\guilsinglright{}|,         # single right-pointing angle quotation mark
+     'euro'     => q|\texteuro{}|,               # euro sign
 );
-
 
 =head1 OBJECT METHODS
 
@@ -336,10 +476,12 @@ of arguments when using the C<new()> constructor.
 =item B<AddPreamble>
 
 Logical to control whether a C<latex> preamble is to be written.
-If true, a valid C<latex> preamble is written before the pod data
-is written.  This is similar to:
+If true, a valid C<latex> preamble is written before the pod data is written.
+This is similar to:
 
   \documentclass{article}
+  \usepackage[T1]{fontenc}
+  \usepackage{textcomp}
   \begin{document}
 
 but will be more complicated if table of contents and indexing are required.
@@ -350,6 +492,9 @@ Can be used to set or retrieve the current value.
 
 If used in conjunction with C<AddPostamble> a full latex document will
 be written that could be immediately processed by C<latex>.
+
+For some pod escapes it may be necessary to include the amsmath
+package. This is not yet added to the preamble automaatically.
 
 =cut
 
@@ -363,13 +508,13 @@ sub AddPreamble {
 
 =item B<AddPostamble>
 
-Logical to control whether a standard C<latex> ending is written to
-the output file after the document has been processed.  In its
-simplest form this is simply:
+Logical to control whether a standard C<latex> ending is written to the output
+file after the document has been processed.
+In its simplest form this is simply:
 
   \end{document}
 
-but can be more complicated if an index is required.
+but can be more complicated if a index is required.
 Can be used to set or retrieve the current value.
 
   $add = $parser->AddPostamble();
@@ -408,10 +553,10 @@ Can be used to set or retrieve the current value:
   $parser->Head1Level(2);
   $sect = $parser->Head1Level;
 
-Setting this number too high can result in sections that may not be
-reproducible in the expected way. For example, setting this to 4 would
-imply that C<=head3> do not have a corresponding C<latex> section
-(C<=head1> would correspond to a C<paragraph>).
+Setting this number too high can result in sections that may not be reproducible
+in the expected way. For example, setting this to 4 would imply that C<=head3>
+do not have a corresponding C<latex> section (C<=head1> would correspond to
+a C<paragraph>).
 
 A check is made to ensure that the supplied value is an integer in the
 range 0 to 5.
@@ -502,8 +647,8 @@ into the preamble and postamble
   $makeindex = $parser->MakeIndex;
   $parser->MakeIndex(0);
 
-Irrelevant if both C<AddPreamble> and C<AddPostamble> are false
-(or equivalently, C<UserPreamble> and C<UserPostamble> are set).
+Irrelevant if both C<AddPreamble> and C<AddPostamble> are false (or equivalently,
+C<UserPreamble> and C<UserPostamble> are set).
 
 Default is for an index to be created.
 
@@ -632,8 +777,8 @@ sub UniqueLabels {
 User supplied C<latex> preamble. Added before the pod translation
 data. 
 
-If set, the contents will be prepended to the output file before
-the translated data regardless of the value of C<AddPreamble>.
+If set, the contents will be prepended to the output file before the translated 
+data regardless of the value of C<AddPreamble>.
 C<MakeIndex> and C<TableOfContents> will also be ignored.
 
 =cut
@@ -651,8 +796,8 @@ sub UserPreamble {
 User supplied C<latex> postamble. Added after the pod translation
 data. 
 
-If set, the contents will be prepended to the output file after
-the translated data regardless of the value of C<AddPostamble>.
+If set, the contents will be prepended to the output file after the translated 
+data regardless of the value of C<AddPostamble>.
 C<MakeIndex> will also be ignored.
 
 =cut
@@ -764,13 +909,15 @@ __TEX_COMMENT__
 
     # Table of contents
     my $tableofcontents = '\tableofcontents';
-    
+
     $tableofcontents = '%% ' . $tableofcontents
       unless $self->TableOfContents;
 
     # Roll our own
     $preamble = << "__TEX_HEADER__";
 \\documentclass{article}
+\\usepackage[T1]{fontenc}
+\\usepackage{textcomp}
 
 $comment
 
@@ -1096,7 +1243,7 @@ sub interior_sequence {
   } elsif ($seq_command eq 'Z') {
 
     # Zero width space
-    return '$\!$'; # '
+    return '{}';
 
   } elsif ($seq_command eq 'C') {
     return "\\texttt{$seq_argument}";
@@ -1106,13 +1253,12 @@ sub interior_sequence {
 
   } elsif ($seq_command eq 'S') {
     # non breakable spaces
-    my $nbsp = '$\:$'; #'
+    my $nbsp = '~';
 
     $seq_argument =~ s/\s/$nbsp/g;
     return $seq_argument;
 
   } elsif ($seq_command eq 'L') {
-
     my $link = new Pod::Hyperlink($seq_argument);
 
     # undef on failure
@@ -1138,7 +1284,6 @@ sub interior_sequence {
       # Use default markup for external references
       # (although Starlink would use \xlabel)
       my $markup = $link->markup;
-
       my ($file, $line) = $pod_seq->file_line();
 
       return $self->interpolate($link->markup, $line);
@@ -1151,7 +1296,7 @@ sub interior_sequence {
     # Replace :: with / - but not sure if I want to do this
     # any more.
     my $link = $seq_argument;
-    $link =~ s/::/\//g;
+    $link =~ s|::|/|g;
 
     my $ref = "\\emph{$seq_argument}";
     return $ref;
@@ -1314,10 +1459,10 @@ sub add_item {
     }
 
   } else {
-    # If the item was '* Something' we still need to write
-    # out the something
+    # If the item was '* Something' or '\d+ something' we still need to write
+    # out the something. Also allow 1) and 1.
     my $extra_info = $paragraph;
-    $extra_info =~ s/^\*\s*//;
+    $extra_info =~ s/^(\*|\d+[\.\)]?)\s*//;
     $self->_output("\n\\item $extra_info");
   }
 
@@ -1444,6 +1589,7 @@ Special characters and the C<latex> equivalents are:
   \     $\backslash$
   ^     \^{}
   ~     \~{}
+  #     \#
 
 =cut
 
@@ -1693,15 +1839,18 @@ L<Pod::Parser>, L<Pod::Select>, L<pod2latex>
 
 Tim Jenness E<lt>t.jenness@jach.hawaii.eduE<gt>
 
-Bug fixes have been received from: Simon Cozens
+Bug fixes and improvements have been received from: Simon Cozens
 E<lt>simon@cozens.netE<gt>, Mark A. Hershberger
 E<lt>mah@everybody.orgE<gt>, Marcel Grunauer
-E<lt>marcel@codewerk.comE<gt> and Hugh S Myers
-E<lt>hsmyers@sdragons.comE<gt>.
+E<lt>marcel@codewerk.comE<gt>, Hugh S Myers
+E<lt>hsmyers@sdragons.comE<gt>, Peter J Acklam
+E<lt>jacklam@math.uio.noE<gt>, Sudhi Herle E<lt>sudhi@herle.netE<gt>
+and Ariel Scolnicov E<lt>ariels@compugen.co.ilE<gt>.
+
 
 =head1 COPYRIGHT
 
-Copyright (C) 2000-2001 Tim Jenness. All Rights Reserved.
+Copyright (C) 2000-2003 Tim Jenness. All Rights Reserved.
 
 This program is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
@@ -1710,8 +1859,10 @@ it under the same terms as Perl itself.
 
 =head1 REVISION
 
-$Id: LaTeX.pm,v 1.3 2002/10/27 22:25:27 millert Exp $
+$Id: LaTeX.pm,v 1.4 2003/12/03 03:02:40 millert Exp $
 
 =end __PRIVATE__
 
 =cut
+
+1;

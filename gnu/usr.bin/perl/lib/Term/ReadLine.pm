@@ -1,7 +1,7 @@
 =head1 NAME
 
-Term::ReadLine - Perl interface to various C<readline> packages. If
-no real package is found, substitutes stubs instead of basic functions.
+Term::ReadLine - Perl interface to various C<readline> packages.
+If no real package is found, substitutes stubs instead of basic functions.
 
 =head1 SYNOPSIS
 
@@ -10,7 +10,7 @@ no real package is found, substitutes stubs instead of basic functions.
   my $prompt = "Enter your arithmetic expression: ";
   my $OUT = $term->OUT || \*STDOUT;
   while ( defined ($_ = $term->readline($prompt)) ) {
-    my $res = eval($_), "\n";
+    my $res = eval($_);
     warn $@ if $@;
     print $OUT $res, "\n" unless $@;
     $term->addhistory($_) if /\S/;
@@ -33,7 +33,7 @@ or as
 
   $term->addhistory('row');
 
-where $term is a return value of Term::ReadLine-E<gt>Init.
+where $term is a return value of Term::ReadLine-E<gt>new().
 
 =over 12
 
@@ -60,7 +60,7 @@ support. Trailing newline is removed. Returns C<undef> on C<EOF>.
 adds the line to the history of input, from where it can be used if
 the actual C<readline> is present.
 
-=item C<IN>, $C<OUT>
+=item C<IN>, C<OUT>
 
 return the filehandles for input and output or C<undef> if C<readline>
 input and output cannot be used for Perl.
@@ -184,6 +184,8 @@ $DB::emacs = $DB::emacs;	# To peacify -w
 our @rl_term_set;
 *rl_term_set = \@Term::ReadLine::TermCap::rl_term_set;
 
+sub PERL_UNICODE_STDIN () { 0x0001 }
+
 sub ReadLine {'Term::ReadLine::Stub'}
 sub readline {
   my $self = shift;
@@ -196,6 +198,9 @@ sub readline {
   #$str = scalar <$in>;
   $str = $self->get_line;
   $str =~ s/^\s*\Q$prompt\E// if ($^O eq 'MacOS');
+  utf8::upgrade($str)
+      if (${^UNICODE} & PERL_UNICODE_STDIN || defined ${^ENCODING}) &&
+         utf8::valid($str);
   print $out $rl_term_set[3]; 
   # bug in 5.000: chomping empty string creats length -1:
   chomp $str if defined $str;
@@ -285,7 +290,7 @@ sub Features { \%features }
 
 package Term::ReadLine;		# So late to allow the above code be defined?
 
-our $VERSION = '1.00';
+our $VERSION = '1.01';
 
 my ($which) = exists $ENV{PERL_RL} ? split /\s+/, $ENV{PERL_RL} : undef;
 if ($which) {

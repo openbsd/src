@@ -1,6 +1,6 @@
 #!./perl
 
-print "1..54\n";
+print "1..55\n";
 
 $x = 'x';
 
@@ -260,3 +260,6 @@ my $test = 52;
 print ((exists $str{foo}      ? "" : "not ")."ok $test\n"); ++$test;
 print ((exists $str{bar}      ? "" : "not ")."ok $test\n"); ++$test;
 print ((exists $str{xyz::bar} ? "" : "not ")."ok $test\n"); ++$test;
+
+sub foo::::::bar { print "ok $test\n"; $test++ }
+foo::::::bar;

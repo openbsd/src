@@ -16,14 +16,25 @@ EOU
 $idir = $Config{installbin};
 $indir =~ s|\\|/|g ;
 
+my %seen;
+
 foreach $file (<$idir/*>) {
-  next if $file =~ /\.exe/i;
+  next if $file =~ /\.(exe|bak)/i;
   $base = $file;
   $base =~ s/\.$//;		# just in case...
   $base =~ s|.*/||;
-  $file =~ s|/|\\|g ;
+  $base =~ s|\.pl$||;
+  #$file =~ s|/|\\|g ;
+  warn "Clashing output name for $file, skipping" if $seen{$base}++;
   print "Processing $file => $dir\\$base.cmd\n";
-  system 'cmd.exe', '/c', "echo extproc perl -S>$dir\\$base.cmd";
-  system 'cmd.exe', '/c', "type $file >> $dir\\$base.cmd";
+  open IN, '<', $file or warn, next;
+  open OUT, '>', "$dir/$base.cmd" or warn, next;
+  my $firstline = <IN>;
+  my $flags = '';
+  $flags = $2 if $firstline =~ /^#!\s*(\S+)\s+-([^#]+?)\s*(#|$)/;
+  print OUT "extproc perl -S$flags\n$firstline";
+  print OUT $_ while <IN>;
+  close IN or warn, next;
+  close OUT or warn, next;
 }
 

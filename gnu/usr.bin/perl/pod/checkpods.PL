@@ -48,7 +48,7 @@ print OUT <<'!NO!SUBS!';
 # problem currently exists.
 #
 #  Version 1.00  Original.
-#  Version 1.01  Andy Dougherty <doughera@lafcol.lafayette.edu>
+#  Version 1.01  Andy Dougherty <doughera@lafayette.edu>
 #    Trivial modifications to output format for easier auto-parsing
 #    Broke it out as a separate function to avoid nasty
 #	Make/Shell/Perl quoting problems, and also to make it easier

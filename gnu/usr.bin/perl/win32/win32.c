@@ -15,7 +15,8 @@
 #define Win32_Winsock
 #endif
 #include <windows.h>
-#ifndef __MINGW32__	/* GCC/Mingw32-2.95.2 forgot the WINAPI on CommandLineToArgvW() */
+/* GCC-2.95.2/Mingw32-1.1 forgot the WINAPI on CommandLineToArgvW() */
+#if defined(__MINGW32__) && (__MINGW32_MAJOR_VERSION==1)	
 #  include <shellapi.h>
 #else
    LPWSTR* WINAPI CommandLineToArgvW(LPCWSTR lpCommandLine, int * pNumArgs);
@@ -60,8 +61,8 @@
 int _CRT_glob = 0;
 #endif
 
-#if defined(__MINGW32__)
-/* Mingw32 is missing some prototypes */
+#if defined(__MINGW32__) && (__MINGW32_MAJOR_VERSION==1)	
+/* Mingw32-1.1 is missing some prototypes */
 FILE * _wfopen(LPCWSTR wszFileName, LPCWSTR wszMode);
 FILE * _wfdopen(int nFd, LPCWSTR wszMode);
 FILE * _freopen(LPCWSTR wszFileName, LPCWSTR wszMode, FILE * pOldStream);
@@ -505,7 +506,7 @@ get_shell(void)
 	 *     for).
 	 */
 	const char* defaultshell = (IsWinNT()
-				    ? "cmd.exe /x/c" : "command.com /c");
+				    ? "cmd.exe /x/d/c" : "command.com /c");
 	const char *usershell = PerlEnv_getenv("PERL5SHELL");
 	w32_perlshell_items = tokenize(usershell ? usershell : defaultshell,
 				       &w32_perlshell_tokens,
@@ -1066,6 +1067,7 @@ win32_kill(int pid, int sig)
     dTHX;
     HANDLE hProcess;
     long child;
+    int retval;
 #ifdef USE_ITHREADS
     if (pid < 0) {
 	/* it is a pseudo-forked child */
@@ -1113,6 +1115,11 @@ win32_kill(int pid, int sig)
 		if (GenerateConsoleCtrlEvent(CTRL_C_EVENT,pid))
 		    return 0;
 		break;
+            case SIGBREAK:
+            case SIGTERM:
+                if (GenerateConsoleCtrlEvent(CTRL_BREAK_EVENT,pid))
+                    return 0;
+                break;
 	    default: /* For now be backwards compatible with perl5.6 */
 	    case 9:
 	        if (TerminateProcess(hProcess, sig)) {
@@ -1124,25 +1131,34 @@ win32_kill(int pid, int sig)
 	}
 	else {
 alien_process:
+            retval = -1;
 	    hProcess = OpenProcess(PROCESS_ALL_ACCESS, TRUE,
 				   (IsWin95() ? -pid : pid));
 	    if (hProcess) {
 		switch(sig) {
 		case 0:
 		    /* "Does process exist?" use of kill */
-		    return 0;
+		    retval = 0;
+                    break;
 		case 2:
 		    if (GenerateConsoleCtrlEvent(CTRL_C_EVENT,pid))
-			return 0;
+			retval = 0;
 		    break;
+                case SIGBREAK:
+                case SIGTERM:
+                    if (GenerateConsoleCtrlEvent(CTRL_BREAK_EVENT,pid))
+                       retval = 0;
+                    break;
 		default: /* For now be backwards compatible with perl5.6 */
                 case 9:
-		    if (TerminateProcess(hProcess, sig)) {
-			CloseHandle(hProcess);
-			return 0;
-		    }
+		    if (TerminateProcess(hProcess, sig))
+			retval = 0;
+                    break;
 		}
 	    }
+            CloseHandle(hProcess);
+            if (retval == 0)
+                return 0;
 	}
     }
     errno = EINVAL;
@@ -1883,10 +1899,12 @@ win32_async_check(pTHX)
 
 	case WM_TIMER: {
 	    /* alarm() is a one-shot but SetTimer() repeats so kill it */
-	    if (w32_timerid) {
+	    if (w32_timerid && w32_timerid==msg.wParam) {
 	    	KillTimer(NULL,w32_timerid);
 	    	w32_timerid=0;
 	    }
+            else
+		goto FallThrough;
 	    /* Now fake a call to signal handler */
 	    if (do_raise(aTHX_ 14)) {
 	    	sig_terminate(aTHX_ 14);
@@ -1896,6 +1914,7 @@ win32_async_check(pTHX)
 
 	/* Otherwise do normal Win32 thing - in case it is useful */
 	default:
+	FallThrough:
 	    TranslateMessage(&msg);
 	    DispatchMessage(&msg);
 	    ours = 0;
@@ -1911,6 +1930,8 @@ win32_async_check(pTHX)
     return ours;
 }
 
+/* This function will not return until the timeout has elapsed, or until
+ * one of the handles is ready. */
 DllExport DWORD
 win32_msgwait(pTHX_ DWORD count, LPHANDLE handles, DWORD timeout, LPDWORD resultp)
 {
@@ -1935,10 +1956,7 @@ win32_msgwait(pTHX_ DWORD count, LPHANDLE handles, DWORD timeout, LPDWORD result
         }
 	if (result == WAIT_OBJECT_0 + count) {
 	    /* Message has arrived - check it */
-	    if (win32_async_check(aTHX)) {
-		/* was one of ours */
-		break;
-	    }
+	    (void)win32_async_check(aTHX);
 	}
 	else {
 	   /* Not timeout or message - one of handles is ready */
@@ -2079,6 +2097,7 @@ alien_process:
 	    if (hProcess) {
 		win32_msgwait(aTHX_ 1, &hProcess, timeout, &waitcode);
 		if (waitcode == WAIT_TIMEOUT) {
+                    CloseHandle(hProcess);
 		    return 0;
 		}
 		else if (waitcode == WAIT_OBJECT_0) {
@@ -2615,8 +2634,8 @@ win32_rewind(FILE *pf)
     return;
 }
 
-DllExport FILE*
-win32_tmpfile(void)
+DllExport int
+win32_tmpfd(void)
 {
     dTHX;
     char prefix[MAX_PATH+1];
@@ -2640,11 +2659,20 @@ win32_tmpfile(void)
 #endif
 		    DEBUG_p(PerlIO_printf(Perl_debug_log,
 					  "Created tmpfile=%s\n",filename));
-		    return fdopen(fd, "w+b");
+		    return fd;
 		}
 	    }
 	}
     }
+    return -1;
+}
+
+DllExport FILE*
+win32_tmpfile(void)
+{
+    int fd = win32_tmpfd();
+    if (fd >= 0)
+	return win32_fdopen(fd, "w+b");
     return NULL;
 }
 
@@ -2749,6 +2777,12 @@ win32_popen(const char *command, const char *mode)
     if ((oldfd = win32_dup(stdfd)) == -1)
         goto cleanup;
 
+    /* save the old std handle (this needs to happen before the
+     * dup2(), since that might call SetStdHandle() too) */
+    OP_REFCNT_LOCK;
+    lock_held = 1;
+    old_h = GetStdHandle(nhandle);
+
     /* make stdfd go to child end of pipe (implicitly closes stdfd) */
     /* stdfd will be inherited by the child */
     if (win32_dup2(p[child], stdfd) == -1)
@@ -2757,10 +2791,7 @@ win32_popen(const char *command, const char *mode)
     /* close the child end in parent */
     win32_close(p[child]);
 
-    /* save the old std handle, and set the std handle */
-    OP_REFCNT_LOCK;
-    lock_held = 1;
-    old_h = GetStdHandle(nhandle);
+    /* set the new std handle (in case dup2() above didn't) */
     SetStdHandle(nhandle, (HANDLE)_get_osfhandle(stdfd));
 
     /* start the child */
@@ -2769,16 +2800,17 @@ win32_popen(const char *command, const char *mode)
 	if ((childpid = do_spawn_nowait((char*)command)) == -1)
 	    goto cleanup;
 
-	/* restore the old std handle */
+	/* revert stdfd to whatever it was before */
+	if (win32_dup2(oldfd, stdfd) == -1)
+	    goto cleanup;
+
+	/* restore the old std handle (this needs to happen after the
+	 * dup2(), since that might call SetStdHandle() too */
 	if (lock_held) {
 	    SetStdHandle(nhandle, old_h);
 	    OP_REFCNT_UNLOCK;
 	    lock_held = 0;
 	}
-
-	/* revert stdfd to whatever it was before */
-	if (win32_dup2(oldfd, stdfd) == -1)
-	    goto cleanup;
 
 	/* close saved handle */
 	win32_close(oldfd);
@@ -3070,6 +3102,55 @@ DllExport int
 win32_setmode(int fd, int mode)
 {
     return setmode(fd, mode);
+}
+
+DllExport int
+win32_chsize(int fd, Off_t size)
+{
+#if defined(WIN64) || defined(USE_LARGE_FILES)
+    int retval = 0;
+    Off_t cur, end, extend;
+
+    cur = win32_tell(fd);
+    if (cur < 0)
+	return -1;
+    end = win32_lseek(fd, 0, SEEK_END);
+    if (end < 0)
+	return -1;
+    extend = size - end;
+    if (extend == 0) {
+	/* do nothing */
+    }
+    else if (extend > 0) {
+	/* must grow the file, padding with nulls */
+	char b[4096];
+	int oldmode = win32_setmode(fd, O_BINARY);
+	size_t count;
+	memset(b, '\0', sizeof(b));
+	do {
+	    count = extend >= sizeof(b) ? sizeof(b) : (size_t)extend;
+	    count = win32_write(fd, b, count);
+	    if (count < 0) {
+		retval = -1;
+		break;
+	    }
+	} while ((extend -= count) > 0);
+	win32_setmode(fd, oldmode);
+    }
+    else {
+	/* shrink the file */
+	win32_lseek(fd, size, SEEK_SET);
+	if (!SetEndOfFile((HANDLE)_get_osfhandle(fd))) {
+	    errno = EACCES;
+	    retval = -1;
+	}
+    }
+finish:
+    win32_lseek(fd, cur, SEEK_SET);
+    return retval;
+#else
+    return chsize(fd, size);
+#endif
 }
 
 DllExport Off_t
@@ -3546,7 +3627,9 @@ create_command_line(char *cname, STRLEN clen, const char * const *args)
 
     	if (!extra_quotes
 	    && cmd_shell
-	    && (stricmp(arg, "/x/c") == 0 || stricmp(arg, "/c") == 0))
+	    && curlen >= 2
+	    && *arg  == '/'     /* see if arg is "/c", "/x/c", "/x/d/c" etc. */
+	    && stricmp(arg+curlen-2, "/c") == 0)
 	{
 	    /* is there a next argument? */
 	    if (args[index+1]) {
@@ -3918,7 +4001,7 @@ win32_execvp(const char *cmdname, const char *const *argv)
     /* if this is a pseudo-forked child, we just want to spawn
      * the new program, and return */
     if (w32_pseudo_id) {
-	int status = win32_spawnvp(P_WAIT, cmdname, (char *const *)argv);
+	int status = win32_spawnvp(P_WAIT, cmdname, (const char *const *)argv);
 	if (status != -1) {
 	    my_exit(status);
 	    return 0;
@@ -4376,11 +4459,11 @@ XS(w32_DomainName)
 	/* NERR_Success *is* 0*/
 	if (0 == pfnNetWkstaGetInfo(NULL, 100, &pwi)) {
 	    if (pwi->wki100_langroup && *(pwi->wki100_langroup)) {
-		WideCharToMultiByte(CP_ACP, NULL, pwi->wki100_langroup,
+		WideCharToMultiByte(CP_ACP, 0, pwi->wki100_langroup,
 				    -1, (LPSTR)dname, dnamelen, NULL, NULL);
 	    }
 	    else {
-		WideCharToMultiByte(CP_ACP, NULL, pwi->wki100_computername,
+		WideCharToMultiByte(CP_ACP, 0, pwi->wki100_computername,
 				    -1, (LPSTR)dname, dnamelen, NULL, NULL);
 	    }
 	    pfnNetApiBufferFree(pwi);
@@ -4435,26 +4518,68 @@ static
 XS(w32_GetOSVersion)
 {
     dXSARGS;
-    OSVERSIONINFOA osver;
+    /* Use explicit struct definition because wSuiteMask and
+     * wProductType are not defined in the VC++ 6.0 headers.
+     * WORD type has been replaced by unsigned short because
+     * WORD is already used by Perl itself.
+     */
+    struct {
+        DWORD dwOSVersionInfoSize;
+        DWORD dwMajorVersion;
+        DWORD dwMinorVersion;
+        DWORD dwBuildNumber;
+        DWORD dwPlatformId;
+        CHAR  szCSDVersion[128];
+        unsigned short wServicePackMajor;
+        unsigned short wServicePackMinor;
+        unsigned short wSuiteMask;
+        BYTE  wProductType;
+        BYTE  wReserved;
+    }   osver;
+    BOOL bEx = TRUE;
 
     if (USING_WIDE()) {
-	OSVERSIONINFOW osverw;
+        struct {
+            DWORD dwOSVersionInfoSize;
+            DWORD dwMajorVersion;
+            DWORD dwMinorVersion;
+            DWORD dwBuildNumber;
+            DWORD dwPlatformId;
+            WCHAR szCSDVersion[128];
+            unsigned short wServicePackMajor;
+            unsigned short wServicePackMinor;
+            unsigned short wSuiteMask;
+            BYTE  wProductType;
+            BYTE  wReserved;
+        } osverw;
 	char szCSDVersion[sizeof(osverw.szCSDVersion)];
-	osverw.dwOSVersionInfoSize = sizeof(OSVERSIONINFOW);
-	if (!GetVersionExW(&osverw)) {
-	    XSRETURN_EMPTY;
+	osverw.dwOSVersionInfoSize = sizeof(osverw);
+	if (!GetVersionExW((OSVERSIONINFOW*)&osverw)) {
+            bEx = FALSE;
+            osverw.dwOSVersionInfoSize = sizeof(OSVERSIONINFOW);
+            if (!GetVersionExW((OSVERSIONINFOW*)&osverw)) {
+                XSRETURN_EMPTY;
+            }
 	}
 	W2AHELPER(osverw.szCSDVersion, szCSDVersion, sizeof(szCSDVersion));
 	XPUSHs(newSVpvn(szCSDVersion, strlen(szCSDVersion)));
-	osver.dwMajorVersion = osverw.dwMajorVersion;
-	osver.dwMinorVersion = osverw.dwMinorVersion;
-	osver.dwBuildNumber = osverw.dwBuildNumber;
-	osver.dwPlatformId = osverw.dwPlatformId;
+        osver.dwMajorVersion    = osverw.dwMajorVersion;
+        osver.dwMinorVersion    = osverw.dwMinorVersion;
+        osver.dwBuildNumber     = osverw.dwBuildNumber;
+        osver.dwPlatformId      = osverw.dwPlatformId;
+        osver.wServicePackMajor = osverw.wServicePackMajor;
+        osver.wServicePackMinor = osverw.wServicePackMinor;
+        osver.wSuiteMask        = osverw.wSuiteMask;
+        osver.wProductType      = osverw.wProductType;
     }
     else {
-	osver.dwOSVersionInfoSize = sizeof(OSVERSIONINFOA);
-	if (!GetVersionExA(&osver)) {
-	    XSRETURN_EMPTY;
+	osver.dwOSVersionInfoSize = sizeof(osver);
+	if (!GetVersionExA((OSVERSIONINFOA*)&osver)) {
+            bEx = FALSE;
+            osver.dwOSVersionInfoSize = sizeof(OSVERSIONINFOA);
+            if (!GetVersionExA((OSVERSIONINFOA*)&osver)) {
+                XSRETURN_EMPTY;
+            }
 	}
 	XPUSHs(newSVpvn(osver.szCSDVersion, strlen(osver.szCSDVersion)));
     }
@@ -4462,6 +4587,12 @@ XS(w32_GetOSVersion)
     XPUSHs(newSViv(osver.dwMinorVersion));
     XPUSHs(newSViv(osver.dwBuildNumber));
     XPUSHs(newSViv(osver.dwPlatformId));
+    if (bEx) {
+        XPUSHs(newSViv(osver.wServicePackMajor));
+        XPUSHs(newSViv(osver.wServicePackMinor));
+        XPUSHs(newSViv(osver.wSuiteMask));
+        XPUSHs(newSViv(osver.wProductType));
+    }
     PUTBACK;
 }
 
@@ -4594,6 +4725,7 @@ XS(w32_GetShortPathName)
     } while (len >= SvLEN(shortpath) && sv_grow(shortpath,len+1));
     if (len) {
 	SvCUR_set(shortpath,len);
+	*SvEND(shortpath) = '\0';
 	ST(0) = shortpath;
 	XSRETURN(1);
     }
@@ -4627,11 +4759,17 @@ XS(w32_GetFullPathName)
     if (len) {
 	if (GIMME_V == G_ARRAY) {
 	    EXTEND(SP,1);
-	    XST_mPV(1,filepart);
-	    len = filepart - SvPVX(fullpath);
+	    if (filepart) {
+		XST_mPV(1,filepart);
+		len = filepart - SvPVX(fullpath);
+	    }
+	    else {
+		XST_mPVN(1,"",0);
+	    }
 	    items = 2;
 	}
 	SvCUR_set(fullpath,len);
+	*SvEND(fullpath) = '\0';
 	ST(0) = fullpath;
 	XSRETURN(items);
     }
@@ -4829,6 +4967,13 @@ Perl_win32_init(int *argcp, char ***argvp)
     _control87(MCW_EM, MCW_EM);
 #endif
     MALLOC_INIT;
+}
+
+void
+Perl_win32_term(void)
+{
+    OP_REFCNT_TERM;
+    MALLOC_TERM;
 }
 
 void

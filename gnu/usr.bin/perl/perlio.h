@@ -1,6 +1,7 @@
 /*    perlio.h
  *
- *    Copyright (c) 1997-2002, Larry Wall
+ *    Copyright (C) 1996, 1997, 1999, 2000, 2001, 2002, 2003,
+ *    by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -107,6 +108,7 @@ extern PerlIO_funcs *PerlIO_find_layer(pTHX_ const char *name, STRLEN len,
 extern PerlIO *PerlIO_push(pTHX_ PerlIO *f, PerlIO_funcs *tab,
 			   const char *mode, SV *arg);
 extern void PerlIO_pop(pTHX_ PerlIO *f);
+extern AV* PerlIO_get_layers(pTHX_ PerlIO *f);
 extern void PerlIO_clone(pTHX_ PerlInterpreter *proto, CLONE_PARAMS *param);
 
 #endif				/* PerlIO */
@@ -193,6 +195,13 @@ extern void PerlIO_clone(pTHX_ PerlInterpreter *proto, CLONE_PARAMS *param);
 /* --------------------- Now prototypes for functions --------------- */
 
 START_EXTERN_C
+#ifndef __attribute__format__
+#ifdef CHECK_FORMAT
+#define __attribute__format__(x,y,z) __attribute__((__format__(x,y,z)))
+#else
+#define __attribute__format__(x,y,z)
+#endif
+#endif
 #ifndef NEXT30_NO_ATTRIBUTE
 #ifndef HASATTRIBUTE		/* disable GNU-cc attribute checking? */
 #ifdef  __attribute__		/* Avoid possible redefinition errors */
@@ -206,7 +215,7 @@ extern void PerlIO_init(pTHX);
 #endif
 #ifndef PerlIO_stdoutf
 extern int PerlIO_stdoutf(const char *, ...)
-    __attribute__ ((__format__(__printf__, 1, 2)));
+    __attribute__format__(__printf__, 1, 2);
 #endif
 #ifndef PerlIO_puts
 extern int PerlIO_puts(PerlIO *, const char *);
@@ -266,11 +275,11 @@ extern void PerlIO_setlinebuf(PerlIO *);
 #endif
 #ifndef PerlIO_printf
 extern int PerlIO_printf(PerlIO *, const char *, ...)
-    __attribute__ ((__format__(__printf__, 2, 3)));
+    __attribute__format__(__printf__, 2, 3);
 #endif
 #ifndef PerlIO_sprintf
 extern int PerlIO_sprintf(char *, int, const char *, ...)
-    __attribute__ ((__format__(__printf__, 3, 4)));
+    __attribute__format__(__printf__, 3, 4);
 #endif
 #ifndef PerlIO_vprintf
 extern int PerlIO_vprintf(PerlIO *, const char *, va_list);

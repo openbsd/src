@@ -47,7 +47,7 @@ $needs_fh_reopen = 1 if (defined &Win32::IsWin95 && Win32::IsWin95());
 my $skip_mode_checks =
     $^O eq 'cygwin' && $ENV{CYGWIN} !~ /ntsec/;
 
-plan tests => 32;
+plan tests => 34;
 
 
 if (($^O eq 'MSWin32') || ($^O eq 'NetWare')) {
@@ -271,7 +271,7 @@ SKIP: {
 # Check truncating a closed file.
     eval { truncate "Iofs.tmp", 5; };
 
-    skip("no truncate - $@", 6) if $@;
+    skip("no truncate - $@", 8) if $@;
 
     is(-s "Iofs.tmp", 5, "truncation to five bytes");
 
@@ -303,21 +303,44 @@ SKIP: {
 	close (FH); open (FH, ">>Iofs.tmp") or die "Can't reopen Iofs.tmp";
     }
 
-    if ($^O eq 'vos') {
-        skip ("# TODO - hit VOS bug posix-973 - cannot resize an open file below the current file pos.", 3);
+    SKIP: {
+        if ($^O eq 'vos') {
+	    skip ("# TODO - hit VOS bug posix-973 - cannot resize an open file below the current file pos.", 5);
+	}
+
+	is(-s "Iofs.tmp", 200, "fh resize to 200 working (filename check)");
+
+	ok(truncate(FH, 0), "fh resize to zero");
+
+	if ($needs_fh_reopen) {
+	    close (FH); open (FH, ">>Iofs.tmp") or die "Can't reopen Iofs.tmp";
+	}
+
+	ok(-z "Iofs.tmp", "fh resize to zero working (filename check)");
+
+	close FH;
+
+	open(FH, ">>Iofs.tmp") or die "Can't open Iofs.tmp for appending";
+
+	binmode FH;
+	select FH;
+	$| = 1;
+	select STDOUT;
+
+	{
+	    use strict;
+	    print FH "x\n" x 200;
+	    ok(truncate(*FH{IO}, 100), "fh resize by IO slot");
+	}
+
+	if ($needs_fh_reopen) {
+	    close (FH); open (FH, ">>Iofs.tmp") or die "Can't reopen Iofs.tmp";
+	}
+
+	is(-s "Iofs.tmp", 100, "fh resize by IO slot working");
+
+	close FH;
     }
-
-    is(-s "Iofs.tmp", 200, "fh resize to 200 working (filename check)");
-
-    ok(truncate(FH, 0), "fh resize to zero");
-
-    if ($needs_fh_reopen) {
-	close (FH); open (FH, ">>Iofs.tmp") or die "Can't reopen Iofs.tmp";
-    }
-
-    ok(-z "Iofs.tmp", "fh resize to zero working (filename check)");
-
-    close FH;
 }
 
 # check if rename() can be used to just change case of filename

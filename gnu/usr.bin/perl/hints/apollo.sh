@@ -1,5 +1,5 @@
 # Info from Johann Klasek <jk@auto.tuwien.ac.at>
-# Merged by Andy Dougherty  <doughera@lafcol.lafayette.edu>
+# Merged by Andy Dougherty  <doughera@lafayette.edu>
 # Last revised	Tue Mar 16 19:12:22 EET 1999 by
 # Jarkko Hietaniemi <jhi@iki.fi>
 

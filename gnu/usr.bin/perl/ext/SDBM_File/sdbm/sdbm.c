@@ -24,7 +24,9 @@
 #endif
 
 #ifdef I_STRING
-# include <string.h>
+# ifndef __ultrix__
+#  include <string.h>
+# endif
 #else
 # include <strings.h>
 #endif

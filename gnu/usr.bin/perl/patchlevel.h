@@ -1,6 +1,7 @@
 /*    patchlevel.h
  *
- *    Copyright (c) 1997-2002, Larry Wall
+ *    Copyright (C) 1993, 1995, 1996, 1997, 1998, 1999,
+ *    2000, 2001, 2002, 2003, by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -14,7 +15,7 @@
 
 #define PERL_REVISION	5		/* age */
 #define PERL_VERSION	8		/* epoch */
-#define PERL_SUBVERSION	0		/* generation */
+#define PERL_SUBVERSION	2		/* generation */
 
 /* The following numbers describe the earliest compatible version of
    Perl ("compatibility" here being defined as sufficient binary/API
@@ -50,9 +51,11 @@
 	please place your applied patch line after its dependencies. This
 	will help tracking of patch dependencies.
 
-	Please edit the hunk of diff which adds your patch to this list,
-	to remove context lines which would give patch problems.  For instance,
-	if the original context diff is
+	Please either use 'diff --unified=0' if your diff supports
+	that or edit the hunk of the diff output which adds your patch
+	to this list, to remove context lines which would give patch
+	problems. For instance, if the original context diff is
+
 	   *** patchlevel.h.orig	<date here>
 	   --- patchlevel.h	<date here>
 	   *** 38,43 ***
@@ -70,17 +73,57 @@
 	   *** 41,43 ***
 	   --- 41,44 ---
 	   + 	,"MINE001 - my new patch"
+	     	,NULL
 	     };
 	
 	(Note changes to line numbers as well as removal of context lines.)
 	This will prevent patch from choking if someone has previously
 	applied different patches than you.
+
+        History has shown that nobody distributes patches that also
+        modify patchlevel.h. Do it yourself. The following perl
+        program can be used to add a comment to patchlevel.h:
+
+#!perl
+die "Usage: perl -x patchlevel.h comment ..." unless @ARGV;
+open PLIN, "patchlevel.h" or die "Couldn't open patchlevel.h : $!";
+open PLOUT, ">patchlevel.new" or die "Couldn't write on patchlevel.new : $!";
+my $seen=0;
+while (<PLIN>) {
+    if (/\t,NULL/ and $seen) {
+       while (my $c = shift @ARGV){
+            print PLOUT qq{\t,"$c"\n};
+       }
+    }
+    $seen++ if /local_patches\[\]/;
+    print PLOUT;
+}
+close PLOUT or die "Couldn't close filehandle writing to patchlevel.new : $!";
+close PLIN or die "Couldn't close filehandle reading from patchlevel.h : $!";
+unlink "patchlevel.bak" or warn "Couldn't unlink patchlevel.bak : $!"
+  if -e "patchlevel.bak";
+rename "patchlevel.h", "patchlevel.bak" or
+  die "Couldn't rename patchlevel.h to patchlevel.bak : $!";
+rename "patchlevel.new", "patchlevel.h" or
+  die "Couldn't rename patchlevel.new to patchlevel.h : $!";
+__END__
+
+Please keep empty lines below so that context diffs of this file do
+not ever collect the lines belonging to local_patches() into the same
+hunk.
+
  */
+
+
+
+
 #if !defined(PERL_PATCHLEVEL_H_IMPLICIT) && !defined(LOCAL_PATCH_COUNT)
 static	char	*local_patches[] = {
         NULL
 	,NULL
 };
+
+
 
 /* Initial space prevents this variable from being inserted in config.sh  */
 #  define	LOCAL_PATCH_COUNT	\

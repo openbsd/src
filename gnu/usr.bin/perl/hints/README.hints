@@ -297,7 +297,11 @@ be circumvented by the use of "call-back units".  That is, the hints
 file can tuck this information away into a file UU/cc.cbu.  Then,
 after Configure prompts the user for the C compiler, it will load in
 and run the UU/cc.cbu "call-back" unit.  See hints/solaris_2.sh for an
-example.
+example. Some callbacks exist for other variables than cc, such as for
+uselongdouble. At the present time, these callbacks are only called if the
+variable in question is defined; however, this may change, so the scheme in
+hints/solaris_2.sh of checking to see if uselongdouble is defined is a good
+idea.
 
 =item Future status
 

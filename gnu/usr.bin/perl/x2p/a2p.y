@@ -1,7 +1,8 @@
 %{
 /* $RCSfile: a2p.y,v $$Revision: 4.1 $$Date: 92/08/07 18:29:12 $
  *
- *    Copyright (c) 1991-2002, Larry Wall
+ *    Copyright (C) 1991, 1992, 1993, 1994, 1996, 1997, 1999, 2000,
+ *    by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.

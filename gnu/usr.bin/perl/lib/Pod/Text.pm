@@ -1,5 +1,5 @@
 # Pod::Text -- Convert POD data to formatted ASCII text.
-# $Id: Text.pm,v 1.6 2002/10/27 22:25:27 millert Exp $
+# $Id: Text.pm,v 1.7 2003/12/03 03:02:40 millert Exp $
 #
 # Copyright 1999, 2000, 2001, 2002 by Russ Allbery <rra@stanford.edu>
 #
@@ -43,7 +43,7 @@ use vars qw(@ISA @EXPORT %ESCAPES $VERSION);
 # Don't use the CVS revision as the version, since this module is also in Perl
 # core and too many things could munge CVS magic revision strings.  This
 # number should ideally be the same as the CVS revision in podlators, however.
-$VERSION = 2.20;
+$VERSION = 2.21;
 
 
 ##############################################################################
@@ -177,6 +177,7 @@ sub initialize {
 
     $$self{alt}      = 0  unless defined $$self{alt};
     $$self{indent}   = 4  unless defined $$self{indent};
+    $$self{margin}   = 0  unless defined $$self{margin};
     $$self{loose}    = 0  unless defined $$self{loose};
     $$self{sentence} = 0  unless defined $$self{sentence};
     $$self{width}    = 76 unless defined $$self{width};
@@ -195,8 +196,11 @@ sub initialize {
         croak qq(Invalid quote specification "$$self{quotes}");
     }
 
-    $$self{INDENTS}  = [];              # Stack of indentations.
-    $$self{MARGIN}   = $$self{indent};  # Current left margin in spaces.
+    # Stack of indentations.
+    $$self{INDENTS}  = [];
+
+    # Current left margin.
+    $$self{MARGIN} = $$self{indent} + $$self{margin};
 
     $self->SUPER::initialize;
 
@@ -496,10 +500,12 @@ sub heading {
     $text = $self->interpolate ($text, $line);
     if ($$self{alt}) {
         my $closemark = reverse (split (//, $marker));
-        $self->output ("\n" . "$marker $text $closemark" . "\n\n");
+        my $margin = ' ' x $$self{margin};
+        $self->output ("\n" . "$margin$marker $text $closemark" . "\n\n");
     } else {
         $text .= "\n" if $$self{loose};
-        $self->output (' ' x $indent . $text . "\n");
+        my $margin = ' ' x ($$self{margin} + $indent);
+        $self->output ($margin . $text . "\n");
     }
 }
 
@@ -526,12 +532,12 @@ sub item {
     undef $$self{ITEM};
     my $indent = $$self{INDENTS}[-1];
     unless (defined $indent) { $indent = $$self{indent} }
-    my $space = ' ' x $indent;
-    $space =~ s/^ /:/ if $$self{alt};
+    my $margin = ' ' x $$self{margin};
     if (!$_ || /^\s+$/ || ($$self{MARGIN} - $indent < length ($tag) + 1)) {
-        my $margin = $$self{MARGIN};
+        my $realindent = $$self{MARGIN};
         $$self{MARGIN} = $indent;
         my $output = $self->reformat ($tag);
+        $output =~ s/^$margin /$margin:/ if ($$self{alt} && $indent > 0);
         $output =~ s/\n*$/\n/;
 
         # If the text is just whitespace, we have an empty item paragraph;
@@ -541,11 +547,13 @@ sub item {
         $output .= "\n" if $_ && $_ =~ /^\s*$/;
 
         $self->output ($output);
-        $$self{MARGIN} = $margin;
+        $$self{MARGIN} = $realindent;
         $self->output ($self->reformat ($_)) if $_ && /\S/;
     } else {
+        my $space = ' ' x $indent;
+        $space =~ s/^$margin /$margin:/ if $$self{alt};
         $_ = $self->reformat ($_);
-        s/^ /:/ if ($$self{alt} && $indent > 0);
+        s/^$margin /$margin:/ if ($$self{alt} && $indent > 0);
         my $tagspace = ' ' x length $tag;
         s/^($space)$tagspace/$1$tag/ or warn "Bizarre space in item";
         $self->output ($_);
@@ -715,6 +723,13 @@ although one is still printed after C<=head2>.  This is the default because
 it's the expected formatting for manual pages; if you're formatting
 arbitrary text documents, setting this to true may result in more pleasing
 output.
+
+=item margin
+
+The width of the left margin in spaces.  Defaults to 0.  This is the margin
+for all text, including headings, not the amount by which regular text is
+indented; for the latter, see the I<indent> option.  To set the right
+margin, see the I<width> option.
 
 =item quotes
 

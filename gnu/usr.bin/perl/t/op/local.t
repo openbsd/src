@@ -45,10 +45,10 @@ print $a,@b,@c,%d,$x,$y;
 eval 'local($$e)';
 print +($@ =~ /Can't localize through a reference/) ? "" : "not ", "ok 21\n";
 
-eval 'local(@$e)';
+eval '$e = []; local(@$e)';
 print +($@ =~ /Can't localize through a reference/) ? "" : "not ", "ok 22\n";
 
-eval 'local(%$e)';
+eval '$e = {}; local(%$e)';
 print +($@ =~ /Can't localize through a reference/) ? "" : "not ", "ok 23\n";
 
 # Array and hash elements

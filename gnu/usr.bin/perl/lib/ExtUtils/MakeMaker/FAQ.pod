@@ -1,6 +1,6 @@
 package ExtUtils::MakeMaker::FAQ;
 
-(our $VERSION) = sprintf "%03d", q$Revision: 1.1.1.1 $ =~ /Revision:\s+(\S+)/;
+(our $VERSION) = sprintf "%03d", q$Revision: 1.2 $ =~ /Revision:\s+(\S+)/;
 
 1;
 __END__
@@ -75,7 +75,7 @@ system's revision number (you are using version control, right?).
 
 In CVS and RCS you use $Z<>Revision$ writing it like so:
 
-    $VERSION = sprintf "%d.%03d", q$Revision: 1.1.1.1 $ =~ /(\d+)/g;
+    $VERSION = sprintf "%d.%03d", q$Revision: 1.2 $ =~ /(\d+)/g;
 
 Every time the file is checked in the $Z<>Revision$ will be updated,
 updating your $VERSION.
@@ -88,7 +88,7 @@ If branches are involved (ie. $Z<>Revision: 1.5.3.4) its a little more
 complicated.
 
     # must be all on one line or MakeMaker will get confused.
-    $VERSION = do { my @r = (q$Revision: 1.1.1.1 $ =~ /\d+/g); sprintf "%d."."%03d" x $#r, @r };
+    $VERSION = do { my @r = (q$Revision: 1.2 $ =~ /\d+/g); sprintf "%d."."%03d" x $#r, @r };
 
 =item What's this F<META.yml> thing and how did it get in my F<MANIFEST>?!
 

@@ -19,10 +19,14 @@ POSIX - Perl interface to IEEE Std 1003.1
 
 The POSIX module permits you to access all (or nearly all) the standard
 POSIX 1003.1 identifiers.  Many of these identifiers have been given Perl-ish
-interfaces.  Things which are C<#defines> in C, like EINTR or O_NDELAY, are
-automatically exported into your namespace.  All functions are only exported
-if you ask for them explicitly.  Most likely people will prefer to use the
-fully-qualified function names.
+interfaces.
+
+I<Everything is exported by default> with the exception of any POSIX
+functions with the same name as a built-in Perl function, such as
+C<abs>, C<alarm>, C<rmdir>, C<write>, etc.., which will be exported
+only if you ask for them explicitly.  This is an unfortunate backwards
+compatibility feature.  You can stop the exporting by saying C<use
+POSIX ()> and then use the fully qualified names (ie. C<POSIX::SEEK_END>).
 
 This document gives a condensed list of the features available in the POSIX
 module.  Consult your operating system's manpages for general information on
@@ -67,6 +71,12 @@ all.  This could be construed to be a bug.
 
 This is identical to the C function C<_exit()>.  It exits the program
 immediately which means among other things buffered I/O is B<not> flushed.
+
+Note that when using threads and in Linux this is B<not> a good way to
+exit a thread because in Linux processes and threads are kind of the
+same thing (Note: while this is the situation in early 2003 there are
+projects under way to have threads with more POSIXly semantics in Linux).
+If you want not to return from a thread, detach the thread.
 
 =item abort
 
@@ -465,6 +475,10 @@ Perl's builtin C<stat> function.
 	$fd = POSIX::open( "foo", &POSIX::O_RDONLY );
 	@stats = POSIX::fstat( $fd );
 
+=item fsync
+
+Use method C<IO::Handle::sync()> instead.
+
 =item ftell
 
 Use method C<IO::Seekable::tell()> instead, or see L<perlfunc/tell>.
@@ -580,15 +594,20 @@ see L<perlfunc/gmtime>.
 
 =item isalnum
 
-This is identical to the C function, except that it can apply to a single
-character or to a whole string.  Consider using regular expressions and the
-C</[[:alnum:]]/> construct instead, or possibly the C</\w/> construct.
+This is identical to the C function, except that it can apply to a
+single character or to a whole string.  Note that locale settings may
+affect what characters are considered C<isalnum>.  Does not work on
+Unicode characters code point 256 or higher.  Consider using regular
+expressions and the C</[[:alnum:]]/> construct instead, or possibly
+the C</\w/> construct.
 
 =item isalpha
 
-This is identical to the C function, except that it can apply to a single
-character or to a whole string.  Consider using regular expressions and the
-C</[[:alpha:]]/> construct instead.
+This is identical to the C function, except that it can apply to
+a single character or to a whole string.  Note that locale settings
+may affect what characters are considered C<isalpha>.  Does not work
+on Unicode characters code point 256 or higher.  Consider using regular
+expressions and the C</[[:alpha:]]/> construct instead.
 
 =item isatty
 
@@ -597,60 +616,82 @@ to a tty.  Similar to the C<-t> operator, see L<perlfunc/-X>.
 
 =item iscntrl
 
-This is identical to the C function, except that it can apply to a single
-character or to a whole string.  Consider using regular expressions and the
-C</[[:cntrl:]]/> construct instead.
+This is identical to the C function, except that it can apply to
+a single character or to a whole string.  Note that locale settings
+may affect what characters are considered C<iscntrl>.  Does not work
+on Unicode characters code point 256 or higher.  Consider using regular
+expressions and the C</[[:cntrl:]]/> construct instead.
 
 =item isdigit
 
-This is identical to the C function, except that it can apply to a single
-character or to a whole string.  Consider using regular expressions and the
-C</[[:digit:]]/> construct instead, or the C</\d/> construct.
+This is identical to the C function, except that it can apply to
+a single character or to a whole string.  Note that locale settings
+may affect what characters are considered C<isdigit> (unlikely, but
+still possible). Does not work on Unicode characters code point 256
+or higher.  Consider using regular expressions and the C</[[:digit:]]/>
+construct instead, or the C</\d/> construct.
 
 =item isgraph
 
-This is identical to the C function, except that it can apply to a single
-character or to a whole string.  Consider using regular expressions and the
-C</[[:graph:]]/> construct instead.
+This is identical to the C function, except that it can apply to
+a single character or to a whole string.  Note that locale settings
+may affect what characters are considered C<isgraph>.  Does not work
+on Unicode characters code point 256 or higher.  Consider using regular
+expressions and the C</[[:graph:]]/> construct instead.
 
 =item islower
 
-This is identical to the C function, except that it can apply to a single
-character or to a whole string.  Consider using regular expressions and the
-C</[[:lower:]]/> construct instead.  Do B<not> use C</[a-z]/>.
+This is identical to the C function, except that it can apply to
+a single character or to a whole string.  Note that locale settings
+may affect what characters are considered C<islower>.  Does not work
+on Unicode characters code point 256 or higher.  Consider using regular
+expressions and the C</[[:lower:]]/> construct instead.  Do B<not> use
+C</[a-z]/>.
 
 =item isprint
 
-This is identical to the C function, except that it can apply to a single
-character or to a whole string.  Consider using regular expressions and the
-C</[[:print:]]/> construct instead.
+This is identical to the C function, except that it can apply to
+a single character or to a whole string.  Note that locale settings
+may affect what characters are considered C<isprint>.  Does not work
+on Unicode characters code point 256 or higher.  Consider using regular
+expressions and the C</[[:print:]]/> construct instead.
 
 =item ispunct
 
-This is identical to the C function, except that it can apply to a single
-character or to a whole string.  Consider using regular expressions and the
-C</[[:punct:]]/> construct instead.
+This is identical to the C function, except that it can apply to
+a single character or to a whole string.  Note that locale settings
+may affect what characters are considered C<ispunct>.  Does not work
+on Unicode characters code point 256 or higher.  Consider using regular
+expressions and the C</[[:punct:]]/> construct instead.
 
 =item isspace
 
-This is identical to the C function, except that it can apply to a single
-character or to a whole string.  Consider using regular expressions and the
-C</[[:space:]]/> construct instead, or the C</\s/> construct.
-(Note that C</\s/> and C</[[:space:]]/> are slightly different in that
-C</[[:space:]]/> can normally match a vertical tab, while C</\s/> does
-not.)
+This is identical to the C function, except that it can apply to
+a single character or to a whole string.  Note that locale settings
+may affect what characters are considered C<isspace>.  Does not work
+on Unicode characters code point 256 or higher.  Consider using regular
+expressions and the C</[[:space:]]/> construct instead, or the C</\s/>
+construct.  (Note that C</\s/> and C</[[:space:]]/> are slightly
+different in that C</[[:space:]]/> can normally match a vertical tab,
+while C</\s/> does not.)
 
 =item isupper
 
-This is identical to the C function, except that it can apply to a single
-character or to a whole string.  Consider using regular expressions and the
-C</[[:upper:]]/> construct instead.  Do B<not> use C</[A-Z]/>.
+This is identical to the C function, except that it can apply to
+a single character or to a whole string.  Note that locale settings
+may affect what characters are considered C<isupper>.  Does not work
+on Unicode characters code point 256 or higher.  Consider using regular
+expressions and the C</[[:upper:]]/> construct instead.  Do B<not> use
+C</[A-Z]/>.
 
 =item isxdigit
 
 This is identical to the C function, except that it can apply to a single
-character or to a whole string.  Consider using regular expressions and the
-C</[[:xdigit:]]/> construct instead, or simply C</[0-9a-f]/i>.
+character or to a whole string.  Note that locale settings may affect what
+characters are considered C<isxdigit> (unlikely, but still possible).
+Does not work on Unicode characters code point 256 or higher.
+Consider using regular expressions and the C</[[:xdigit:]]/>
+construct instead, or simply C</[0-9a-f]/i>.
 
 =item kill
 
@@ -1082,9 +1123,11 @@ manpage for details.
 
 Synopsis:
 
-	sigaction(sig, action, oldaction = 0)
+	sigaction(signal, action, oldaction = 0)
 
-Returns C<undef> on failure.
+Returns C<undef> on failure.  The C<signal> must be a number (like
+SIGHUP), not a string (like "SIGHUP"), though Perl does try hard
+to understand you.
 
 =item siglongjmp
 
@@ -1224,12 +1267,23 @@ I.e. January is 0, not 1; Sunday is 0, not 1; January 1st is 0, not 1.  The
 year (C<year>) is given in years since 1900.  I.e., the year 1995 is 95; the
 year 2001 is 101.  Consult your system's C<strftime()> manpage for details
 about these and the other arguments.
+
 If you want your code to be portable, your format (C<fmt>) argument
 should use only the conversion specifiers defined by the ANSI C
-standard.  These are C<aAbBcdHIjmMpSUwWxXyYZ%>.
-The given arguments are made consistent
-as though by calling C<mktime()> before calling your system's
-C<strftime()> function, except that the C<isdst> value is not affected.
+standard (C89, to play safe).  These are C<aAbBcdHIjmMpSUwWxXyYZ%>.
+But even then, the B<results> of some of the conversion specifiers are
+non-portable.  For example, the specifiers C<aAbBcpZ> change according
+to the locale settings of the user, and both how to set locales (the
+locale names) and what output to expect are non-standard.
+The specifier C<c> changes according to the timezone settings of the
+user and the timezone computation rules of the operating system.
+The C<Z> specifier is notoriously unportable since the names of
+timezones are non-standard. Sticking to the numeric specifiers is the
+safest route.
+
+The given arguments are made consistent as though by calling
+C<mktime()> before calling your system's C<strftime()> function,
+except that the C<isdst> value is not affected.
 
 The string for Tuesday, December 12, 1995.
 
@@ -1391,7 +1445,7 @@ Returns C<undef> on failure.
 =item tcflush
 
 This is similar to the C function C<tcflush()> for flushing
-the I/O buffers of its argumeny stream.
+the I/O buffers of its argument stream.
 
 Returns C<undef> on failure.
 
@@ -1587,10 +1641,42 @@ object, it defaults to the empty set.  The third parameter contains the
 C<sa_flags>, it defaults to 0.
 
 	$sigset = POSIX::SigSet->new(SIGINT, SIGQUIT);
-	$sigaction = POSIX::SigAction->new( 'main::handler', $sigset, &POSIX::SA_NOCLDSTOP );
+	$sigaction = POSIX::SigAction->new( \&main::handler, $sigset, &POSIX::SA_NOCLDSTOP );
 
-This C<POSIX::SigAction> object should be used with the C<POSIX::sigaction()>
+This C<POSIX::SigAction> object is intended for use with the C<POSIX::sigaction()>
 function.
+
+=back
+
+=over 8
+
+=item handler
+
+=item mask
+
+=item flags
+
+accessor functions to get/set the values of a SigAction object.
+
+	$sigset = $sigaction->mask;
+	$sigaction->flags(&POSIX::SA_RESTART);
+
+=item safe
+
+accessor function for the "safe signals" flag of a SigAction object; see
+L<perlipc> for general information on safe (a.k.a. "deferred") signals.  If
+you wish to handle a signal safely, use this accessor to set the "safe" flag
+in the C<POSIX::SigAction> object:
+
+	$sigaction->safe(1);
+
+You may also examine the "safe" flag on the output action object which is
+filled in when given as the third parameter to C<POSIX::sigaction()>:
+
+	sigaction(SIGINT, $new_action, $old_action);
+	if ($old_action->safe) {
+	    # previous SIGINT handler used safe signals
+	}
 
 =back
 

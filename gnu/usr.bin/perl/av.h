@@ -1,6 +1,7 @@
 /*    av.h
  *
- *    Copyright (c) 1991-2002, Larry Wall
+ *    Copyright (C) 1991, 1992, 1993, 1995, 1996, 1997, 1998, 1999,
+ *    2000, 2001, 2002, by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -83,3 +84,4 @@ Same as C<av_len()>.  Deprecated, use C<av_len()> instead.
 #define AvFILL(av)	((SvRMAGICAL((SV *) (av))) \
 			  ? mg_size((SV *) av) : AvFILLp(av))
 
+#define NEGATIVE_INDICES_VAR "NEGATIVE_INDICES"

@@ -288,6 +288,7 @@ _safe_call_sv(Package, mask, codesv)
 PPCODE:
     char op_mask_buf[OP_MASK_BUF_SIZE];
     GV *gv;
+    HV *dummy_hv;
 
     ENTER;
 
@@ -311,12 +312,12 @@ PPCODE:
     GvHV(gv) = (HV*)SvREFCNT_inc(PL_defstash);
 
     /* %INC must be clean for use/require in compartment */
-    save_hash(PL_incgv);
-    sv_free((SV*)GvHV(PL_incgv));  /* get rid of what save_hash gave us*/
+    dummy_hv = save_hash(PL_incgv);
     GvHV(PL_incgv) = (HV*)SvREFCNT_inc(GvHV(gv_HVadd(gv_fetchpv("INC",TRUE,SVt_PVHV))));
 
     PUSHMARK(SP);
     perl_call_sv(codesv, GIMME|G_EVAL|G_KEEPERR); /* use callers context */
+    sv_free( (SV *) dummy_hv);  /* get rid of what save_hash gave us*/
     SPAGAIN; /* for the PUTBACK added by xsubpp */
     LEAVE;
 

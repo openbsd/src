@@ -351,7 +351,7 @@ Tim Jenness E<lt>t.jenness@jach.hawaii.eduE<gt>
 This program is free software; you can redistribute it
 and/or modify it under the same terms as Perl itself.
 
-Copyright (C) 2000 Tim Jenness.
+Copyright (C) 2000, 2003 Tim Jenness. All Rights Reserved.
 
 =cut
 

@@ -102,81 +102,6 @@ another thread.  Prime and Fibonacci generators both map well to this
 form of the pipeline model. (A version of a prime number generator is
 presented later on.)
 
-=head1 Native threads
-
-There are several different ways to implement threads on a system.  How
-threads are implemented depends both on the vendor and, in some cases,
-the version of the operating system.  Often the first implementation
-will be relatively simple, but later versions of the OS will be more
-sophisticated.
-
-While the information in this section is useful, it's not necessary,
-so you can skip it if you don't feel up to it.
-
-There are three basic categories of threads: user-mode threads, kernel
-threads, and multiprocessor kernel threads.
-
-User-mode threads are threads that live entirely within a program and
-its libraries.  In this model, the OS knows nothing about threads.  As
-far as it's concerned, your process is just a process.
-
-This is the easiest way to implement threads, and the way most OSes
-start.  The big disadvantage is that, since the OS knows nothing about
-threads, if one thread blocks they all do.  Typical blocking activities
-include most system calls, most I/O, and things like sleep().
-
-Kernel threads are the next step in thread evolution.  The OS knows
-about kernel threads, and makes allowances for them.  The main
-difference between a kernel thread and a user-mode thread is
-blocking.  With kernel threads, things that block a single thread don't
-block other threads.  This is not the case with user-mode threads,
-where the kernel blocks at the process level and not the thread level.
-
-This is a big step forward, and can give a threaded program quite a
-performance boost over non-threaded programs.  Threads that block
-performing I/O, for example, won't block threads that are doing other
-things.  Each process still has only one thread running at once,
-though, regardless of how many CPUs a system might have.
-
-Since kernel threading can interrupt a thread at any time, they will
-uncover some of the implicit locking assumptions you may make in your
-program.  For example, something as simple as C<$a = $a + 2> can behave
-unpredictably with kernel threads if $a is visible to other
-threads, as another thread may have changed $a between the time it
-was fetched on the right hand side and the time the new value is
-stored.
-
-Multiprocessor kernel threads are the final step in thread
-support.  With multiprocessor kernel threads on a machine with multiple
-CPUs, the OS may schedule two or more threads to run simultaneously on
-different CPUs.
-
-This can give a serious performance boost to your threaded program,
-since more than one thread will be executing at the same time.  As a
-tradeoff, though, any of those nagging synchronization issues that
-might not have shown with basic kernel threads will appear with a
-vengeance.
-
-In addition to the different levels of OS involvement in threads,
-different OSes (and different thread implementations for a particular
-OS) allocate CPU cycles to threads in different ways.
-
-Cooperative multitasking systems have running threads give up control
-if one of two things happen.  If a thread calls a yield function, it
-gives up control.  It also gives up control if the thread does
-something that would cause it to block, such as perform I/O.  In a
-cooperative multitasking implementation, one thread can starve all the
-others for CPU time if it so chooses.
-
-Preemptive multitasking systems interrupt threads at regular intervals
-while the system decides which thread should run next.  In a preemptive
-multitasking system, one thread usually won't monopolize the CPU.
-
-On some systems, there can be cooperative and preemptive threads
-running simultaneously. (Threads running with realtime priorities
-often behave cooperatively, for example, while threads running at
-normal priorities behave preemptively.)
-
 =head1 What kind of threads are Perl threads?
 
 If you have experience with other thread implementations, you might
@@ -330,39 +255,6 @@ the same subroutine, but in a separate thread with a separate
 environment and potentially separate arguments.
 
 C<create()> is a synonym for C<new()>.
-
-=head2 Giving up control
-
-There are times when you may find it useful to have a thread
-explicitly give up the CPU to another thread.  Your threading package
-might not support preemptive multitasking for threads, for example, or
-you may be doing something processor-intensive and want to make sure
-that the user-interface thread gets called frequently.  Regardless,
-there are times that you might want a thread to give up the processor.
-
-Perl's threading package provides the yield() function that does
-this. yield() is pretty straightforward, and works like this:
-
-    use threads; 
-
-    sub loop {
-	    my $thread = shift;
-	    my $foo = 50;
-	    while($foo--) { print "in thread $thread\n" }
-	    threads->yield;
-	    $foo = 50;
-	    while($foo--) { print "in thread $thread\n" }
-    }
-
-    my $thread1 = threads->new(\&loop, 'first');
-    my $thread2 = threads->new(\&loop, 'second');
-    my $thread3 = threads->new(\&loop, 'third');
-
-It is important to remember that yield() is only a hint to give up the CPU,
-it depends on your hardware, OS and threading libraries what actually happens.
-Therefore it is important to note that one should not build the scheduling of 
-the threads around yield() calls. It might work on your platform but it won't
-work on another platform.
 
 =head2 Waiting For A Thread To Exit
 
@@ -639,13 +531,11 @@ Consider the following code:
     my $b : shared = "foo"; 
     my $thr1 = threads->new(sub { 
         lock($a); 
-        threads->yield; 
         sleep 20; 
         lock($b); 
     }); 
     my $thr2 = threads->new(sub { 
         lock($b); 
-        threads->yield; 
         sleep 20; 
         lock($a); 
     });
@@ -724,7 +614,7 @@ count, while up increments it. Calls to down() will block if the
 semaphore's current count would decrement below zero.  This program
 gives a quick demonstration:
 
-    use threads qw(yield); 
+    use threads;
     use Thread::Semaphore; 
 
     my $semaphore = new Thread::Semaphore; 
@@ -743,7 +633,6 @@ gives a quick demonstration:
             $semaphore->down; 
             $LocalCopy = $GlobalVariable; 
             print "$TryCount tries left for sub $SubNumber (\$GlobalVariable is $GlobalVariable)\n"; 
-            yield; 
             sleep 2; 
             $LocalCopy++; 
             $GlobalVariable = $LocalCopy; 
@@ -824,6 +713,39 @@ co-operating threads that a resource has become available. They are
 very similar in use to the functions found in C<pthreads>. However
 for most purposes, queues are simpler to use and more intuitive. See
 L<threads::shared> for more details.
+
+=head2 Giving up control
+
+There are times when you may find it useful to have a thread
+explicitly give up the CPU to another thread.  You may be doing something
+processor-intensive and want to make sure that the user-interface thread
+gets called frequently.  Regardless, there are times that you might want
+a thread to give up the processor.
+
+Perl's threading package provides the yield() function that does
+this. yield() is pretty straightforward, and works like this:
+
+    use threads; 
+
+    sub loop {
+	    my $thread = shift;
+	    my $foo = 50;
+	    while($foo--) { print "in thread $thread\n" }
+	    threads->yield;
+	    $foo = 50;
+	    while($foo--) { print "in thread $thread\n" }
+    }
+
+    my $thread1 = threads->new(\&loop, 'first');
+    my $thread2 = threads->new(\&loop, 'second');
+    my $thread3 = threads->new(\&loop, 'third');
+
+It is important to remember that yield() is only a hint to give up the CPU,
+it depends on your hardware, OS and threading libraries what actually happens.
+B<On many operating systems, yield() is a no-op.>  Therefore it is important
+to note that one should not build the scheduling of the threads around
+yield() calls. It might work on your platform but it won't work on another
+platform.
 
 =head1 General Thread Utility Routines
 
@@ -960,6 +882,75 @@ child has died, we know that we're done once we return from the join.
 That's how it works.  It's pretty simple; as with many Perl programs,
 the explanation is much longer than the program.
 
+=head1 Different implementations of threads
+
+Some background on thread implementations from the operating system
+viewpoint.  There are three basic categories of threads: user-mode threads,
+kernel threads, and multiprocessor kernel threads.
+
+User-mode threads are threads that live entirely within a program and
+its libraries.  In this model, the OS knows nothing about threads.  As
+far as it's concerned, your process is just a process.
+
+This is the easiest way to implement threads, and the way most OSes
+start.  The big disadvantage is that, since the OS knows nothing about
+threads, if one thread blocks they all do.  Typical blocking activities
+include most system calls, most I/O, and things like sleep().
+
+Kernel threads are the next step in thread evolution.  The OS knows
+about kernel threads, and makes allowances for them.  The main
+difference between a kernel thread and a user-mode thread is
+blocking.  With kernel threads, things that block a single thread don't
+block other threads.  This is not the case with user-mode threads,
+where the kernel blocks at the process level and not the thread level.
+
+This is a big step forward, and can give a threaded program quite a
+performance boost over non-threaded programs.  Threads that block
+performing I/O, for example, won't block threads that are doing other
+things.  Each process still has only one thread running at once,
+though, regardless of how many CPUs a system might have.
+
+Since kernel threading can interrupt a thread at any time, they will
+uncover some of the implicit locking assumptions you may make in your
+program.  For example, something as simple as C<$a = $a + 2> can behave
+unpredictably with kernel threads if $a is visible to other
+threads, as another thread may have changed $a between the time it
+was fetched on the right hand side and the time the new value is
+stored.
+
+Multiprocessor kernel threads are the final step in thread
+support.  With multiprocessor kernel threads on a machine with multiple
+CPUs, the OS may schedule two or more threads to run simultaneously on
+different CPUs.
+
+This can give a serious performance boost to your threaded program,
+since more than one thread will be executing at the same time.  As a
+tradeoff, though, any of those nagging synchronization issues that
+might not have shown with basic kernel threads will appear with a
+vengeance.
+
+In addition to the different levels of OS involvement in threads,
+different OSes (and different thread implementations for a particular
+OS) allocate CPU cycles to threads in different ways.
+
+Cooperative multitasking systems have running threads give up control
+if one of two things happen.  If a thread calls a yield function, it
+gives up control.  It also gives up control if the thread does
+something that would cause it to block, such as perform I/O.  In a
+cooperative multitasking implementation, one thread can starve all the
+others for CPU time if it so chooses.
+
+Preemptive multitasking systems interrupt threads at regular intervals
+while the system decides which thread should run next.  In a preemptive
+multitasking system, one thread usually won't monopolize the CPU.
+
+On some systems, there can be cooperative and preemptive threads
+running simultaneously. (Threads running with realtime priorities
+often behave cooperatively, for example, while threads running at
+normal priorities behave preemptively.)
+
+Most modern operating systems support preemptive multitasking nowadays.
+
 =head1 Performance considerations
 
 The main thing to bear in mind when comparing ithreads to other threading
@@ -1016,10 +1007,15 @@ calls, they will be used.  Beyond that, Perl is at the mercy of
 the thread-safety or -unsafety of the calls.  Please consult your
 C library call documentation.
 
-In some platforms the thread-safe interfaces may fail if the result
-buffer is too small (for example getgrent() may return quite large
-group member lists).  Perl will retry growing the result buffer
-a few times, but only up to 64k (for safety reasons).
+On some platforms the thread-safe library interfaces may fail if the
+result buffer is too small (for example the user group databases may
+be rather large, and the reentrant interfaces may have to carry around
+a full snapshot of those databases).  Perl will start with a small
+buffer, but keep retrying and growing the result buffer
+until the result fits.  If this limitless growing sounds bad for
+security or memory consumption reasons you can recompile Perl with
+PERL_REENTRANT_MAXSIZE defined to the maximum number of bytes you will
+allow.
 
 =head1 Conclusion
 
@@ -1100,6 +1096,9 @@ Slightly modified by Arthur Bergman to fit the new thread model/module.
 Reworked slightly by Jörg Walter E<lt>jwalt@cpan.org<gt> to be more concise
 about thread-safety of perl code.
 
+Rearranged slightly by Elizabeth Mattijsen E<lt>liz@dijkmat.nl<gt> to put
+less emphasis on yield().
+
 =head1 Copyrights
 
 The original version of this article originally appeared in The Perl
@@ -1108,4 +1107,3 @@ of Jon Orwant and The Perl Journal.  This document may be distributed
 under the same terms as Perl itself.
 
 For more information please see L<threads> and L<threads::shared>.
-

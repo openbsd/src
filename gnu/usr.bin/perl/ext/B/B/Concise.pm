@@ -1,19 +1,27 @@
 package B::Concise;
-# Copyright (C) 2000, 2001 Stephen McCamant. All rights reserved.
+# Copyright (C) 2000-2003 Stephen McCamant. All rights reserved.
 # This program is free software; you can redistribute and/or modify it
 # under the same terms as Perl itself.
 
-use strict;
-use warnings;
+# Note: we need to keep track of how many use declarations/BEGIN
+# blocks this module uses, so we can avoid printing them when user
+# asks for the BEGIN blocks in her program. Update the comments and
+# the count in concise_specials if you add or delete one. The
+# -MO=Concise counts as use #1.
 
-use Exporter ();
+use strict; # use #2
+use warnings; # uses #3 and #4, since warnings uses Carp
 
-our $VERSION   = "0.52";
+use Exporter (); # use #5
+
+our $VERSION   = "0.56";
 our @ISA       = qw(Exporter);
-our @EXPORT_OK = qw(set_style add_callback);
+our @EXPORT_OK = qw(set_style set_style_standard add_callback
+		    concise_subref concise_cv concise_main);
 
+# use #6
 use B qw(class ppname main_start main_root main_cv cstring svref_2object
-	 SVf_IOK SVf_NOK SVf_POK OPf_KIDS);
+	 SVf_IOK SVf_NOK SVf_POK SVf_IVisUV SVf_FAKE OPf_KIDS CVf_ANON);
 
 my %style = 
   ("terse" =>
@@ -44,27 +52,73 @@ my %style =
 
 my($format, $gotofmt, $treefmt);
 my $curcv;
-my($seq_base, $cop_seq_base);
+my $cop_seq_base;
 my @callbacks;
 
 sub set_style {
     ($format, $gotofmt, $treefmt) = @_;
 }
 
+sub set_style_standard {
+    my($name) = @_;
+    set_style(@{$style{$name}});
+}
+
 sub add_callback {
     push @callbacks, @_;
 }
 
-sub concise_cv {
-    my ($order, $cvref) = @_;
-    my $cv = svref_2object($cvref);
+sub concise_subref {
+    my($order, $subref) = @_;
+    concise_cv_obj($order, svref_2object($subref));
+}
+
+# This should have been called concise_subref, but it was exported
+# under this name in versions before 0.56
+sub concise_cv { concise_subref(@_); }
+
+sub concise_cv_obj {
+    my ($order, $cv) = @_;
     $curcv = $cv;
+    sequence($cv->START);
     if ($order eq "exec") {
 	walk_exec($cv->START);
     } elsif ($order eq "basic") {
 	walk_topdown($cv->ROOT, sub { $_[0]->concise($_[1]) }, 0);
     } else {
 	print tree($cv->ROOT, 0)
+    }
+}
+
+sub concise_main {
+    my($order) = @_;
+    sequence(main_start);
+    $curcv = main_cv;
+    if ($order eq "exec") {
+	return if class(main_start) eq "NULL";
+	walk_exec(main_start);
+    } elsif ($order eq "tree") {
+	return if class(main_root) eq "NULL";
+	print tree(main_root, 0);
+    } elsif ($order eq "basic") {
+	return if class(main_root) eq "NULL";
+	walk_topdown(main_root,
+		     sub { $_[0]->concise($_[1]) }, 0);
+    }
+}
+
+sub concise_specials {
+    my($name, $order, @cv_s) = @_;
+    my $i = 1;
+    if ($name eq "BEGIN") {
+	splice(@cv_s, 0, 7); # skip 7 BEGIN blocks in this file
+    } elsif ($name eq "CHECK") {
+	pop @cv_s; # skip the CHECK block that calls us
+    }
+    for my $cv (@cv_s) {	
+	print "$name $i:\n";
+	$i++;
+	concise_cv_obj($order, $cv);
     }
 }
 
@@ -84,7 +138,7 @@ my $big_endian = 1;
 
 my $order = "basic";
 
-set_style(@{$style{concise}});
+set_style_standard("concise");
 
 sub compile {
     my @options = grep(/^-/, @_);
@@ -119,29 +173,36 @@ sub compile {
 	    warn "Option $o unrecognized";
 	}
     }
-    if (@args) {
-	return sub {
+    return sub {
+	if (@args) {
 	    for my $objname (@args) {
-		$objname = "main::" . $objname unless $objname =~ /::/;
-		eval "concise_cv(\$order, \\&$objname)";
-		die "concise_cv($order, \\&$objname) failed: $@" if $@;
+		if ($objname eq "BEGIN") {
+		    concise_specials("BEGIN", $order,
+				     B::begin_av->isa("B::AV") ?
+				     B::begin_av->ARRAY : ());
+		} elsif ($objname eq "INIT") {
+		    concise_specials("INIT", $order,
+				     B::init_av->isa("B::AV") ?
+				     B::init_av->ARRAY : ());
+		} elsif ($objname eq "CHECK") {
+		    concise_specials("CHECK", $order,
+				     B::check_av->isa("B::AV") ?
+				     B::check_av->ARRAY : ());
+		} elsif ($objname eq "END") {
+		    concise_specials("END", $order,
+				     B::end_av->isa("B::AV") ?
+				     B::end_av->ARRAY : ());
+		} else {
+		    $objname = "main::" . $objname unless $objname =~ /::/;
+		    print "$objname:\n";
+		    eval "concise_subref(\$order, \\&$objname)";
+		    die "concise_subref($order, \\&$objname) failed: $@" if $@;
+		}
 	    }
 	}
-    }
-    if (!@args or $do_main) {
-	if ($order eq "exec") {
-	    return sub { return if class(main_start) eq "NULL";
-			 $curcv = main_cv;
-			 walk_exec(main_start) }
-	} elsif ($order eq "tree") {
-	    return sub { return if class(main_root) eq "NULL";
-			 $curcv = main_cv;
-			 print tree(main_root, 0) }
-	} elsif ($order eq "basic") {
-	    return sub { return if class(main_root) eq "NULL";
-			 $curcv = main_cv;
-			 walk_topdown(main_root,
-				      sub { $_[0]->concise($_[1]) }, 0); }
+	if (!@args or $do_main) {
+	    print "main program:\n" if $do_main;
+	    concise_main($order);
 	}
     }
 }
@@ -153,7 +214,7 @@ my %opclass = ('OP' => "0", 'UNOP' => "1", 'BINOP' => "2", 'LOGOP' => "|",
 	       'LISTOP' => "@", 'PMOP' => "/", 'SVOP' => "\$", 'GVOP' => "*",
 	       'PVOP' => '"', 'LOOP' => "{", 'COP' => ";", 'PADOP' => "#");
 
-no warnings 'qw'; # "Possible attempt to put comments..."
+no warnings 'qw'; # "Possible attempt to put comments..."; use #7
 my @linenoise =
   qw'#  () sc (  @? 1  $* gv *{ m$ m@ m% m? p/ *$ $  $# & a& pt \\ s\\ rf bl
      `  *? <> ?? ?/ r/ c/ // qr s/ /c y/ =  @= C  sC Cp sp df un BM po +1 +I
@@ -169,7 +230,7 @@ my @linenoise =
      co cr u. cm ut r. l@ s@ r@ mD uD oD rD tD sD wD cD f$ w$ p$ sh e$ k$ g3
      g4 s4 g5 s5 T@ C@ L@ G@ A@ S@ Hg Hc Hr Hw Mg Mc Ms Mr Sg Sc So rq do {e
      e} {t t} g6 G6 6e g7 G7 7e g8 G8 8e g9 G9 9e 6s 7s 8s 9s 6E 7E 8E 9E Pn
-     Pu GP SP EP Gn Gg GG SG EG g0 c$ lk t$ ;s n>';
+     Pu GP SP EP Gn Gg GG SG EG g0 c$ lk t$ ;s n> // /= CO';
 
 my $chars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
@@ -197,7 +258,14 @@ sub base_n {
     return $str;
 }
 
-sub seq { return $_[0]->seq ? base_n($_[0]->seq - $seq_base) : "-" }
+my %sequence_num;
+my $seq_max = 1;
+
+sub seq {
+    my($op) = @_;
+    return "-" if not exists $sequence_num{$$op};
+    return base_n($sequence_num{$$op});
+}
 
 sub walk_topdown {
     my($op, $sub, $level) = @_;
@@ -207,9 +275,13 @@ sub walk_topdown {
 	    walk_topdown($kid, $sub, $level + 1);
 	}
     }
-    if (class($op) eq "PMOP" and $ {$op->pmreplroot}
-	and $op->pmreplroot->isa("B::OP")) {
-	walk_topdown($op->pmreplroot, $sub, $level + 1);
+    if (class($op) eq "PMOP") {
+	my $maybe_root = $op->pmreplroot;
+	if (ref($maybe_root) and $maybe_root->isa("B::OP")) {
+	    # It really is the root of the replacement, not something
+	    # else stored here for lack of space elsewhere
+	    walk_topdown($maybe_root, $sub, $level + 1);
+	}
     }
 }
 
@@ -234,8 +306,7 @@ sub walk_exec {
 	    last if $opsseen{$$op}++;
 	    push @$targ, $op;
 	    my $name = $op->name;
-	    if ($name
-		=~ /^(or|and|(map|grep)while|entertry|range|cond_expr)$/) {
+	    if (class($op) eq "LOGOP") {
 		my $ar = [];
 		push @$targ, $ar;
 		push @todo, [$op->other, $ar];
@@ -251,6 +322,42 @@ sub walk_exec {
 	}
     }
     walklines(\@lines, 0);
+}
+
+# The structure of this routine is purposely modeled after op.c's peep()
+sub sequence {
+    my($op) = @_;
+    my $oldop = 0;
+    return if class($op) eq "NULL" or exists $sequence_num{$$op};
+    for (; $$op; $op = $op->next) {
+	last if exists $sequence_num{$$op};
+	my $name = $op->name;
+	if ($name =~ /^(null|scalar|lineseq|scope)$/) {
+	    next if $oldop and $ {$op->next};
+	} else {
+	    $sequence_num{$$op} = $seq_max++;
+	    if (class($op) eq "LOGOP") {
+		my $other = $op->other;
+		$other = $other->next while $other->name eq "null";
+		sequence($other);
+	    } elsif (class($op) eq "LOOP") {
+		my $redoop = $op->redoop;
+		$redoop = $redoop->next while $redoop->name eq "null";
+		sequence($redoop);
+		my $nextop = $op->nextop;
+		$nextop = $nextop->next while $nextop->name eq "null";
+		sequence($nextop);
+		my $lastop = $op->lastop;
+		$lastop = $lastop->next while $lastop->name eq "null";
+		sequence($lastop);
+	    } elsif ($name eq "subst" and $ {$op->pmreplstart}) {
+		my $replstart = $op->pmreplstart;
+		$replstart = $replstart->next while $replstart->name eq "null";
+		sequence($replstart);
+	    }
+	}
+	$oldop = $op;
+    }
 }
 
 sub fmt_line {
@@ -271,7 +378,7 @@ my %priv;
 $priv{$_}{128} = "LVINTRO"
   for ("pos", "substr", "vec", "threadsv", "gvsv", "rv2sv", "rv2hv", "rv2gv",
        "rv2av", "rv2arylen", "aelem", "helem", "aslice", "hslice", "padsv",
-       "padav", "padhv");
+       "padav", "padhv", "enteriter");
 $priv{$_}{64} = "REFC" for ("leave", "leavesub", "leavesublv", "leavewrite");
 $priv{"aassign"}{64} = "COMMON";
 $priv{"aassign"}{32} = "PHASH";
@@ -288,7 +395,8 @@ $priv{"entersub"}{32} = "TARG";
 @{$priv{$_}}{4,8,128} = ("INARGS","AMPER","NO()") for ("entersub", "rv2cv");
 $priv{"gv"}{32} = "EARLYCV";
 $priv{"aelem"}{16} = $priv{"helem"}{16} = "LVDEFER";
-$priv{$_}{16} = "OURINTR" for ("gvsv", "rv2sv", "rv2av", "rv2hv", "r2gv");
+$priv{$_}{16} = "OURINTR" for ("gvsv", "rv2sv", "rv2av", "rv2hv", "r2gv",
+	"enteriter");
 $priv{$_}{16} = "TARGMY"
   for (map(($_,"s$_"),"chop", "chomp"),
        map(($_,"i_$_"), "postinc", "postdec", "multiply", "divide", "modulo",
@@ -311,11 +419,11 @@ $priv{$_}{64} = "LOCALE"
        "scmp", "lc", "uc", "lcfirst", "ucfirst");
 @{$priv{"sort"}}{1,2,4} = ("NUM", "INT", "REV");
 $priv{"threadsv"}{64} = "SVREFd";
-$priv{$_}{16} = "INBIN" for ("open", "backtick");
-$priv{$_}{32} = "INCR" for ("open", "backtick");
-$priv{$_}{64} = "OUTBIN" for ("open", "backtick");
-$priv{$_}{128} = "OUTCR" for ("open", "backtick");
+@{$priv{$_}}{16,32,64,128} = ("INBIN","INCR","OUTBIN","OUTCR")
+  for ("open", "backtick");
 $priv{"exit"}{128} = "VMS";
+$priv{$_}{2} = "FTACCESS"
+  for ("ftrread", "ftrwrite", "ftrexec", "fteread", "ftewrite", "fteexec");
 
 sub private_flags {
     my($name, $x) = @_;
@@ -330,6 +438,42 @@ sub private_flags {
     return join(",", @s);
 }
 
+sub concise_sv {
+    my($sv, $hr) = @_;
+    $hr->{svclass} = class($sv);
+    $hr->{svclass} = "UV"
+      if $hr->{svclass} eq "IV" and $sv->FLAGS & SVf_IVisUV;
+    $hr->{svaddr} = sprintf("%#x", $$sv);
+    if ($hr->{svclass} eq "GV") {
+	my $gv = $sv;
+	my $stash = $gv->STASH->NAME;
+	if ($stash eq "main") {
+	    $stash = "";
+	} else {
+	    $stash = $stash . "::";
+	}
+	$hr->{svval} = "*$stash" . $gv->SAFENAME;
+	return "*$stash" . $gv->SAFENAME;
+    } else {
+	while (class($sv) eq "RV") {
+	    $hr->{svval} .= "\\";
+	    $sv = $sv->RV;
+	}
+	if (class($sv) eq "SPECIAL") {
+	    $hr->{svval} .= ["Null", "sv_undef", "sv_yes", "sv_no"]->[$$sv];
+	} elsif ($sv->FLAGS & SVf_NOK) {
+	    $hr->{svval} .= $sv->NV;
+	} elsif ($sv->FLAGS & SVf_IOK) {
+	    $hr->{svval} .= $sv->int_value;
+	} elsif ($sv->FLAGS & SVf_POK) {
+	    $hr->{svval} .= cstring($sv->PV);
+	} elsif (class($sv) eq "HV") {
+	    $hr->{svval} .= 'HASH';
+	}
+	return $hr->{svclass} . " " .  $hr->{svval};
+    }
+}
+
 sub concise_op {
     my ($op, $level, $format) = @_;
     my %h;
@@ -339,16 +483,28 @@ sub concise_op {
     $h{extarg} = $h{targ} = $op->targ;
     $h{extarg} = "" unless $h{extarg};
     if ($h{name} eq "null" and $h{targ}) {
+	# targ holds the old type
 	$h{exname} = "ex-" . substr(ppname($h{targ}), 3);
 	$h{extarg} = "";
+    } elsif ($op->name =~ /^leave(sub(lv)?|write)?$/) {
+	# targ potentially holds a reference count
+	if ($op->private & 64) {
+	    my $refs = "ref" . ($h{targ} != 1 ? "s" : "");
+	    $h{targarglife} = $h{targarg} = "$h{targ} $refs";
+	}
     } elsif ($h{targ}) {
 	my $padname = (($curcv->PADLIST->ARRAY)[0]->ARRAY)[$h{targ}];
 	if (defined $padname and class($padname) ne "SPECIAL") {
 	    $h{targarg}  = $padname->PVX;
-	    my $intro = $padname->NVX - $cop_seq_base;
-	    my $finish = int($padname->IVX) - $cop_seq_base;
-	    $finish = "end" if $finish == 999999999 - $cop_seq_base;
-	    $h{targarglife} = "$h{targarg}:$intro,$finish";
+	    if ($padname->FLAGS & SVf_FAKE) {
+		$h{targarglife} = "$h{targarg}:FAKE";
+	    }
+	    else {
+		my $intro = $padname->NVX - $cop_seq_base;
+		my $finish = int($padname->IVX) - $cop_seq_base;
+		$finish = "end" if $finish == 999999999 - $cop_seq_base;
+		$h{targarglife} = "$h{targarg}:$intro,$finish";
+	    }
 	} else {
 	    $h{targarglife} = $h{targarg} = "t" . $h{targ};
 	}
@@ -358,21 +514,23 @@ sub concise_op {
     if ($h{class} eq "PMOP") {
 	my $precomp = $op->precomp;
 	if (defined $precomp) {
-	    # Escape literal control sequences
-	    for ($precomp) {
-		s/\t/\\t/g; s/\n/\\n/g; s/\r/\\r/g;
-		# How can we do the below portably?
-		#s/([\0-\037\177-\377])/"\\".sprintf("%03o", ord($1))/eg;
-	    }
-	    $precomp = "/$precomp/";
+	    $precomp = cstring($precomp); # Escape literal control sequences
+ 	    $precomp = "/$precomp/";
+	} else {
+	    $precomp = "";
 	}
-	else { $precomp = ""; }
 	my $pmreplroot = $op->pmreplroot;
 	my $pmreplstart;
-	if ($$pmreplroot && $pmreplroot->isa("B::GV")) {
+	if (ref($pmreplroot) eq "B::GV") {
 	    # with C<@stash_array = split(/pat/, str);>,
-	    #  *stash_array is stored in pmreplroot.
+	    #  *stash_array is stored in /pat/'s pmreplroot.
 	    $h{arg} = "($precomp => \@" . $pmreplroot->NAME . ")";
+	} elsif (!ref($pmreplroot) and $pmreplroot) {
+	    # same as the last case, except the value is actually a
+	    # pad offset for where the GV is kept (this happens under
+	    # ithreads)
+	    my $gv = (($curcv->PADLIST->ARRAY)[1]->ARRAY)[$pmreplroot];
+	    $h{arg} = "($precomp => \@" . $gv->NAME . ")";
 	} elsif ($ {$op->pmreplstart}) {
 	    undef $lastnext;
 	    $pmreplstart = "replstart->" . seq($op->pmreplstart);
@@ -401,35 +559,16 @@ sub concise_op {
 	undef $lastnext;
 	$h{arg} = "(other->" . seq($op->other) . ")";
     } elsif ($h{class} eq "SVOP") {
-	my $sv = $op->sv;
-	$h{svclass} = class($sv);
-	$h{svaddr} = sprintf("%#x", $$sv);
-	if ($h{svclass} eq "GV") {
-	    my $gv = $sv;
-	    my $stash = $gv->STASH->NAME;
-	    if ($stash eq "main") {
-		$stash = "";
-	    } else {
-		$stash = $stash . "::";
-	    }
-	    $h{arg} = "(*$stash" . $gv->SAFENAME . ")";
-	    $h{svval} = "*$stash" . $gv->SAFENAME;
+	if (! ${$op->sv}) {
+	    my $sv = (($curcv->PADLIST->ARRAY)[1]->ARRAY)[$op->targ];
+	    $h{arg} = "[" . concise_sv($sv, \%h) . "]";
+	    $h{targarglife} = $h{targarg} = "";
 	} else {
-	    while (class($sv) eq "RV") {
-		$h{svval} .= "\\";
-		$sv = $sv->RV;
-	    }
-	    if (class($sv) eq "SPECIAL") {
-		$h{svval} = ["Null", "sv_undef", "sv_yes", "sv_no"]->[$$sv];
-	    } elsif ($sv->FLAGS & SVf_NOK) {
-		$h{svval} = $sv->NV;
-	    } elsif ($sv->FLAGS & SVf_IOK) {
-		$h{svval} = $sv->IV;
-	    } elsif ($sv->FLAGS & SVf_POK) {
-		$h{svval} = cstring($sv->PV);
-	    }
-	    $h{arg} = "($h{svclass} $h{svval})";
+	    $h{arg} = "(" . concise_sv($op->sv, \%h) . ")";
 	}
+    } elsif ($h{class} eq "PADOP") {
+	my $sv = (($curcv->PADLIST->ARRAY)[1]->ARRAY)[$op->padix];
+	$h{arg} = "[" . concise_sv($sv, \%h) . "]";
     }
     $h{seq} = $h{hyphseq} = seq($op);
     $h{seq} = "" if $h{seq} eq "-";
@@ -463,6 +602,30 @@ sub B::OP::concise {
     }
     $lastnext = $op->next;
     print concise_op($op, $level, $format);
+}
+
+# B::OP::terse (see Terse.pm) now just calls this
+sub b_terse {
+    my($op, $level) = @_;
+
+    # This isn't necessarily right, but there's no easy way to get
+    # from an OP to the right CV. This is a limitation of the
+    # ->terse() interface style, and there isn't much to do about
+    # it. In particular, we can die in concise_op if the main pad
+    # isn't long enough, or has the wrong kind of entries, compared to
+    # the pad a sub was compiled with. The fix for that would be to
+    # make a backwards compatible "terse" format that never even
+    # looked at the pad, just like the old B::Terse. I don't think
+    # that's worth the effort, though.
+    $curcv = main_cv unless $curcv;
+
+    if ($order eq "exec" and $lastnext and $$lastnext != $$op) {
+	my $h = {"seq" => seq($lastnext), "class" => class($lastnext),
+		 "addr" => sprintf("%#x", $$lastnext)};
+	print fmt_line($h, $style{"terse"}[1], $level+1);
+    }
+    $lastnext = $op->next;
+    print concise_op($op, $level, $style{"terse"}[0]);
 }
 
 sub tree {
@@ -517,6 +680,12 @@ sub tree {
 # compile a little code at the end of the module, and compute the base
 # sequence number for the user's program as being a small offset
 # later, so all we have to worry about are changes in the offset.
+# (Note that we now only play this game with COP sequence numbers. OP
+# sequence numbers aren't used to refer to OPs from a distance, and
+# they don't have much significance, so we just generate our own
+# sequence numbers which are easier to control. This way we also don't
+# stand in the way of a possible future removal of OP sequence
+# numbers).
 
 # When you say "perl -MO=Concise -e '$a'", the output should look like:
 
@@ -528,15 +697,13 @@ sub tree {
 # -     <1> ex-rv2sv vK/1 ->4
 # 3        <$> gvsv(*a) s ->4
 
-# If either of the marked numbers there aren't 1, it means you need to
-# update the corresponding magic number in the next two lines.
-# Remember, these need to stay the last things in the module.
+# If the second of the marked numbers there isn't 1, it means you need
+# to update the corresponding magic number in the next line.
+# Remember, this needs to stay the last things in the module.
 
-# Why these are different for MacOS?  Does it matter?
+# Why is this different for MacOS?  Does it matter?
 my $cop_seq_mnum = $^O eq 'MacOS' ? 12 : 11;
-my $seq_mnum = $^O eq 'MacOS' ? 100 : 84;
 $cop_seq_base = svref_2object(eval 'sub{0;}')->START->cop_seq + $cop_seq_mnum;
-$seq_base = svref_2object(eval 'sub{}')->START->seq + $seq_mnum;
 
 1;
 
@@ -569,7 +736,7 @@ Here's is a short example of output, using the default formatting
 conventions :
 
     % perl -MO=Concise -e '$a = $b + 42'
-    8  <@> leave[t1] vKP/REFC ->(end)
+    8  <@> leave[1 ref] vKP/REFC ->(end)
     1     <0> enter ->2
     2     <;> nextstate(main 1 -e:1) v ->3
     7     <2> sassign vKS/2 ->8
@@ -604,9 +771,11 @@ Finally an arrow points to the sequence number of the next op.
 =head1 OPTIONS
 
 Arguments that don't start with a hyphen are taken to be the names of
-subroutines to print the OPs of; if no such functions are specified, the
-main body of the program (outside any subroutines, and not including use'd
-or require'd files) is printed.
+subroutines to print the OPs of; if no such functions are specified,
+the main body of the program (outside any subroutines, and not
+including use'd or require'd files) is printed. Passing C<BEGIN>,
+C<CHECK>, C<INIT>, or C<END> will cause all of the corresponding
+special blocks to be printed.
 
 =over 4
 
@@ -831,7 +1000,7 @@ The address of the OP's next OP, in hexidecimal.
 
 =item B<#noise>
 
-The two-character abbreviation for the OP's name.
+A one- or two-character abbreviation for the OP's name.
 
 =item B<#private>
 
@@ -843,7 +1012,9 @@ The numeric value of the OP's private flags.
 
 =item B<#seq>
 
-The sequence number of the OP.
+The sequence number of the OP. Note that this is now a sequence number
+generated by B::Concise, rather than the real op_seq value (for which
+see B<#seqnum>).
 
 =item B<#seqnum>
 
@@ -953,11 +1124,14 @@ existing values if you need to.  The level and format are passed in as
 references to scalars, but it is unlikely that they will need to be
 changed or even used.
 
+To switch back to one of the standard styles like C<concise> or
+C<terse>, use C<set_style_standard>.
+
 To see the output, call the subroutine returned by B<compile> in the
 same way that B<O> does.
 
 =head1 AUTHOR
 
-Stephen McCamant, C<smcc@CSUA.Berkeley.EDU>
+Stephen McCamant, E<lt>smcc@CSUA.Berkeley.EDUE<gt>.
 
 =cut

@@ -1,6 +1,7 @@
 /*    mg.h
  *
- *    Copyright (c) 1991-2002, Larry Wall
+ *    Copyright (C) 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1999,
+ *    2000, 2002, by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -33,13 +34,12 @@ struct magic {
     I32		mg_len;
 };
 
-#define MGf_TAINTEDDIR 1
+#define MGf_TAINTEDDIR 1        /* PERL_MAGIC_envelem only */
+#define MGf_MINMATCH   1        /* PERL_MAGIC_regex_global only */
 #define MGf_REFCOUNTED 2
 #define MGf_GSKIP      4
 #define MGf_COPY       8
 #define MGf_DUP        16
-
-#define MGf_MINMATCH   1
 
 #define MgTAINTEDDIR(mg)	(mg->mg_flags & MGf_TAINTEDDIR)
 #define MgTAINTEDDIR_on(mg)	(mg->mg_flags |= MGf_TAINTEDDIR)

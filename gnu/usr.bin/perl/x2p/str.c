@@ -1,6 +1,7 @@
 /* $RCSfile: str.c,v $$Revision: 4.1 $$Date: 92/08/07 18:29:26 $
  *
- *    Copyright (c) 1991-2002, Larry Wall
+ *    Copyright (C) 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1999,
+ *    2001, 2002, by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -299,7 +300,7 @@ str_gets(register STR *str, register FILE *fp)
 	FILE_ptr(fp) = (void*)ptr; /* LHS STDCHAR* cast non-portable */
 	i = getc(fp);		/* get more characters */
 	cnt = FILE_cnt(fp);
-	ptr = FILE_ptr(fp);		/* reregisterize cnt and ptr */
+	ptr = (STDCHAR*)FILE_ptr(fp);		/* reregisterize cnt and ptr */
 
 	bpx = bp - str->str_ptr;	/* prepare for possible relocation */
 	GROWSTR(&(str->str_ptr), &(str->str_len), str->str_cur + cnt + 1);
@@ -316,7 +317,7 @@ str_gets(register STR *str, register FILE *fp)
 
 thats_all_folks:
     FILE_cnt(fp) = cnt;			/* put these back or we're in trouble */
-    FILE_ptr(fp) = (STDCHAR*)ptr;
+    FILE_ptr(fp) = (void*)ptr; /* LHS STDCHAR* cast non-portable */
     *bp = '\0';
     str->str_cur = bp - str->str_ptr;	/* set length */
 

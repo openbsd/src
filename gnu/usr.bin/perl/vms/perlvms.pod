@@ -121,8 +121,9 @@ directory, and the procedure for building the extension is simply
 I<N.B.> The procedure by which extensions are built and
 tested creates several levels (at least 4) under the
 directory in which the extension's source files live.
-For this reason, you shouldn't nest the source directory
-too deeply in your directory structure, lest you exceed RMS'
+For this reason if you are runnning a version of VMS prior
+to V7.1 you shouldn't nest the source directory
+too deeply in your directory structure lest you exceed RMS'
 maximum of 8 levels of subdirectory in a filespec.  (You
 can use rooted logical names to get another 8 levels of
 nesting, if you can't place the files near the top of
@@ -139,22 +140,39 @@ the Perl extension, then the line C<PGPLOTSHR/Share> must
 be added to the linker options file F<PGPLOT.Opt> produced
 during the build process for the Perl extension.
 
-By default, the shareable image for an extension is placed
-F<[.lib.site_perl.auto>I<Arch>.I<Extname>F<]> directory of the
+By default, the shareable image for an extension is placed in
+the F<[.lib.site_perl.auto>I<Arch>.I<Extname>F<]> directory of the
 installed Perl directory tree (where I<Arch> is F<VMS_VAX> or
 F<VMS_AXP>, and I<Extname> is the name of the extension, with
 each C<::> translated to C<.>).  (See the MakeMaker documentation
 for more details on installation options for extensions.)
 However, it can be manually placed in any of several locations:
-   - the F<[.Lib.Auto.>I<Arch>I<$PVers>I<Extname>F<]> subdirectory
-     of one of the directories in C<@INC> (where I<PVers>
-     is the version of Perl you're using, as supplied in C<$]>,
-     with '.' converted to '_'), or
-   - one of the directories in C<@INC>, or
-   - a directory which the extensions Perl library module
-     passes to the DynaLoader when asking it to map
-     the shareable image, or
-   - F<Sys$Share> or F<Sys$Library>.
+
+=over 4
+
+=item *
+
+the F<[.Lib.Auto.>I<Arch>I<$PVers>I<Extname>F<]> subdirectory
+of one of the directories in C<@INC> (where I<PVers>
+is the version of Perl you're using, as supplied in C<$]>,
+with '.' converted to '_'), or
+
+=item *
+
+one of the directories in C<@INC>, or
+
+=item *
+
+a directory which the extensions Perl library module
+passes to the DynaLoader when asking it to map
+the shareable image, or
+
+=item *
+
+F<Sys$Share> or F<Sys$Library>.
+
+=back
+
 If the shareable image isn't in any of these places, you'll need
 to define a logical name I<Extshortname>, where I<Extshortname>
 is the portion of the extension's name after the last C<::>, which
@@ -198,8 +216,24 @@ the command line and within Perl globs (e.g. C<E<lt>*.cE<gt>>).  If
 the wildcard filespec uses VMS syntax, the resultant 
 filespecs will follow VMS syntax; if a Unix-style filespec is 
 passed in, Unix-style filespecs will be returned.
+Similar to the behavior of wildcard globbing for a Unix shell,
+one can escape command line wildcards with double quotation
+marks C<"> around a perl program command line argument.  However,
+owing to the stripping of C<"> characters carried out by the C
+handling of argv you will need to escape a construct such as
+this one (in a directory containing the files F<PERL.C>, F<PERL.EXE>,
+F<PERL.H>, and F<PERL.OBJ>):
 
-In both cases, VMS wildcard expansion is performed. (csh-style
+    $ perl -e "print join(' ',@ARGV)" perl.*
+    perl.c perl.exe perl.h perl.obj
+
+in the following triple quoted manner:
+
+    $ perl -e "print join(' ',@ARGV)" """perl.*"""
+    perl.*
+
+In both the case of unquoted command line arguments or in calls
+to C<glob()> VMS wildcard expansion is performed. (csh-style
 wildcard expansion is available if you use C<File::Glob::glob>.)
 If the wildcard filespec contains a device or directory 
 specification, then the resultant filespecs will also contain 
@@ -258,7 +292,7 @@ directory specifications may use either VMS or Unix syntax.
 Perl for VMS supports redirection of input and output on the 
 command line, using a subset of Bourne shell syntax:
 
-=over
+=over 4
 
 =item *
 
@@ -274,11 +308,15 @@ C<E<gt>E<gt>file> appends stdout to C<file>,
 
 =item *
 
-C<2E<gt>file> writes stderr to C<file>, and
+C<2E<gt>file> writes stderr to C<file>,
 
 =item *
 
-C<2E<gt>E<gt>file> appends stderr to C<file>. 
+C<2E<gt>E<gt>file> appends stderr to C<file>, and
+
+=item *
+
+C<< 2>&1 >> redirects stderr to stdout.
 
 =back
 

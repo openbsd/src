@@ -2,7 +2,7 @@
 
 # use strict;
 
-print "1..24\n";
+print "1..26\n";
 
 my $test = 1;
 
@@ -86,6 +86,12 @@ $a = 2147483648;
 $b = -$a;
 $b=$b-1;
 ok ($b == -(++$a), $a);
+
+$a = undef;
+ok ($a++ eq '0', do { $a=undef; $a++ }, "postinc undef returns '0'");
+
+$a = undef;
+ok (!defined($a--), do { $a=undef; $a-- }, "postdec undef returns undef");
 
 # Verify that shared hash keys become unshared.
 

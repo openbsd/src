@@ -140,19 +140,32 @@ esac
 #	foo foo 4.0 3.0 3441 Pentium III(TM)-ISA/PCI
 # Similar errors reported for
 #       foo foo 4.0 3.0 4400 pentium ii(tm)-isapci '
-
-# Configure sets osname=svr4.0, osvers=3.0, archname='3441-svr4.0'
-case "$myuname" in
-*3441*|*4400*isapci)
-    # With the NCR High Performance C Compiler R3.0c, miniperl fails 
-    # t/op/regexp.t test 461 unless we compile with optimizie=-g.
-    # The whole O/S is being phased out, so more detailed probing
-    # is probably not warranted.
-    case "$optimize" in 
-    '') optimize='-g' ;;
+# and also for
+#	foo foo 4.2 1.1.2 shg2 386at
+# W. Geoffrey Rommel, 2003-09-09 reported:
+# I have talked to a developer at NCR, and there seems to be no
+# reliable way to make sure that this is really MP-RAS. It's not
+# in uname, it's not in the kernel, it's not in sysinfo ...
+# However, the files /etc/issue and /etc/.relid are present in MP-RAS.
+#
+# Other System V-derived systems may have /etc/issue, but /etc/.relid
+# may well be unique.  Configure-time tests for the POSIX
+# _mwoflocheckl issue (see ext/POSIX/hints/svr4.pl) would be appreciated.
+#
+if test -f /etc/issue -a -f /etc/.relid; then
+    # libcrypt contains nothing libc wouldn't have.
+    libswanted=`echo " $libswanted " | sed -e 's/ crypt / /'`
+    # With the NCR High Performance C Compiler R3.0c, miniperl fails
+    # t/op/regexp.t test 461 unless we compile with optimize=-O0.
+    # Volunteers are needed to determine just which files need special
+    # treatment.  For now, use optimize=-O0 for everything.
+    #
+    d_usleep='undef'
+    d_ualarm='undef'
+    case "$optimize" in
+    '') optimize='-O0' ;;
     esac
-    ;;
-esac
+fi
 
 # Configure may fail to find lstat() since it's a static/inline function
 # in <sys/stat.h> on Unisys U6000 SVR4, UnixWare 2.x, and possibly other

@@ -1,6 +1,6 @@
 /*    nostdio.h
  *
- *    Copyright (c) 1987-2002, Larry Wall
+ *    Copyright (C) 1996, 2000, 2001, by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -68,8 +68,10 @@ struct _FILE;
 #undef tmpfile
 #undef ungetc
 #undef vfprintf
+#undef printf
 
 #define fprintf    _CANNOT _fprintf_
+#define printf     _CANNOT _printf_
 #define stdin      _CANNOT _stdin_
 #define stdout     _CANNOT _stdout_
 #define stderr     _CANNOT _stderr_

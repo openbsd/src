@@ -18,16 +18,17 @@ plan(tests => scalar(2*@tests)+6);
 foreach $test (@tests) {
   ($arg,$func,$expect) = split(/\s+/,$test);
 
+  $expect = undef if $expect eq 'undef';
   $rslt = eval "$func('$arg')";
-  is($@, '', "eval func('$arg')");
-  is($rslt, $expect, "  result");
+  is($@, '', "eval ${func}('$arg')");
+  is($rslt, $expect, "${func}('$arg'): '$rslt'");
 }
 
 $defwarn = <<'EOW';
 # Note: This failure may have occurred because your default device
 # was set using a non-concealed logical name.  If this is the case,
 # you will need to determine by inspection that the two resultant
-# file specifications shwn above are in fact equivalent.
+# file specifications shown above are in fact equivalent.
 EOW
 
 is(uc(rmsexpand('[]')),   "\U$ENV{DEFAULT}", 'rmsexpand()') || print $defwarn;
@@ -86,9 +87,9 @@ __down_:[__the_.__garden_.__path_]     fileify __down_:[__the_.__garden_]__path_
 __down_/__the_/__garden_/__path_       fileify __down_/__the_/__garden_/__path_.dir;1
 __down_:[__the_.__garden_]__path_      fileify __down_:[__the_.__garden_]__path_.dir;1
 __down_:[__the_.__garden_]__path_.     fileify # N.B. trailing . ==> null type
-__down_:[__the_]__garden_.__path_      fileify 
+__down_:[__the_]__garden_.__path_      fileify undef
 /__down_/__the_/__garden_/__path_.     fileify # N.B. trailing . ==> null type
-/__down_/__the_/__garden_.__path_      fileify 
+/__down_/__the_/__garden_.__path_      fileify undef
 
 # and pathifying them
 __down_:[__the_.__garden_]__path_.dir;1        pathify __down_:[__the_.__garden_.__path_]
@@ -97,15 +98,15 @@ __down_:[__the_.__garden_]__path_.dir;1        pathify __down_:[__the_.__garden_
 __down_/__the_/__garden_/__path_.dir   pathify __down_/__the_/__garden_/__path_/
 __down_:[__the_.__garden_]__path_      pathify __down_:[__the_.__garden_.__path_]
 __down_:[__the_.__garden_]__path_.     pathify # N.B. trailing . ==> null type
-__down_:[__the_]__garden_.__path_      pathify 
+__down_:[__the_]__garden_.__path_      pathify undef
 /__down_/__the_/__garden_/__path_.     pathify # N.B. trailing . ==> null type
-/__down_/__the_/__garden_.__path_      pathify 
+/__down_/__the_/__garden_.__path_      pathify undef
 __down_:[__the_.__garden_]__path_.dir;2        pathify #N.B. ;2
 __path_        pathify __path_/
 /__down_/__the_/__garden_/.    pathify /__down_/__the_/__garden_/./
 /__down_/__the_/__garden_/..   pathify /__down_/__the_/__garden_/../
 /__down_/__the_/__garden_/...  pathify /__down_/__the_/__garden_/.../
-__path_.notdir pathify 
+__path_.notdir pathify undef
 
 # Both VMS/Unix and file/path conversions
 __down_:[__the_.__garden_]__path_.dir;1        unixpath        /__down_/__the_/__garden_/__path_/

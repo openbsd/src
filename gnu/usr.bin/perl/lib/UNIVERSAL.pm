@@ -1,6 +1,6 @@
 package UNIVERSAL;
 
-our $VERSION = '1.00';
+our $VERSION = '1.01';
 
 # UNIVERSAL should not contain any extra subs/methods beyond those
 # that it exists to define. The use of Exporter below is a historical
@@ -41,20 +41,42 @@ C<UNIVERSAL> provides the following methods and functions:
 
 =over 4
 
-=item $obj->isa( TYPE ), CLASS->isa( TYPE ), isa( VAL, TYPE )
+=item C<< $obj->isa( TYPE ) >>
 
-    C<TYPE> is a package name
-    $obj is a blessed reference or a string containing a package name
-    C<CLASS> is a package name
-    C<VAL> is any of the above or an unblessed reference
+=item C<< CLASS->isa( TYPE ) >> 
 
-When used as an instance or class method (C<$obj->isa( TYPE )>), C<isa>
-returns I<true> if $obj is blessed into package C<TYPE> or inherits from
-package C<TYPE>.
+=item C<isa( VAL, TYPE )>
 
-When used as a class method (C<CLASS->isa( TYPE )>; sometimes referred to as a
-static method), C<isa> returns I<true> if C<CLASS> inherits from (or is itself)
-the name of the package C<TYPE> or inherits from package C<TYPE>.
+Where
+
+=over 4
+
+=item C<TYPE>
+
+is a package name
+
+=item C<$obj>
+
+is a blessed reference or a string containing a package name
+
+=item C<CLASS>
+
+is a package name
+
+=item C<VAL>
+
+is any of the above or an unblessed reference
+
+=back
+
+When used as an instance or class method (C<< $obj->isa( TYPE ) >>),
+C<isa> returns I<true> if $obj is blessed into package C<TYPE> or
+inherits from package C<TYPE>.
+
+When used as a class method (C<< CLASS->isa( TYPE ) >>: sometimes
+referred to as a static method), C<isa> returns I<true> if C<CLASS>
+inherits from (or is itself) the name of the package C<TYPE> or
+inherits from package C<TYPE>.
 
 When used as a function, like
 
@@ -67,11 +89,15 @@ or
    require UNIVERSAL ;
    $yes = UNIVERSAL::isa $a, "ARRAY";
 
-, C<isa> returns I<true> in the same cases as above and also if C<VAL> is an
+C<isa> returns I<true> in the same cases as above and also if C<VAL> is an
 unblessed reference to a perl variable of type C<TYPE>, such as "HASH",
 "ARRAY", or "Regexp".
 
-=item $obj->can( METHOD ), CLASS->can( METHOD ), can( VAL, METHOD )
+=item C<< $obj->can( METHOD ) >>
+
+=item C<< CLASS->can( METHOD ) >>
+
+=item C<can( VAL, METHOD )>
 
 C<can> checks if the object or class has a method called C<METHOD>. If it does
 then a reference to the sub is returned. If it does not then I<undef> is
@@ -95,24 +121,27 @@ has a method called C<METHOD>, C<can> returns a reference to the subroutine.
 If C<VAL> is not a blessed reference, or if it does not have a method
 C<METHOD>, I<undef> is returned.
 
-=item VERSION ( [ REQUIRE ] )
+=item C<VERSION ( [ REQUIRE ] )>
 
 C<VERSION> will return the value of the variable C<$VERSION> in the
 package the object is blessed into. If C<REQUIRE> is given then
 it will do a comparison and die if the package version is not
 greater than or equal to C<REQUIRE>.
 
-C<VERSION> can be called as either a class (static) method, an object method or
-or a function.
+C<VERSION> can be called as either a class (static) method, an object
+method or a function.
 
 
 =back
 
-These subroutines should I<not> be imported via S<C<use UNIVERSAL qw(...)>>.
-If you want simple local access to them you can do
+=head1 EXPORTS
 
-  *isa = \&UNIVERSAL::isa;
+None by default.
 
-to import isa into your package.
+You may request the import of all three functions (C<isa>, C<can>, and
+C<VERSION>), however it isn't usually necessary to do so.  Perl magically
+makes these functions act as methods on all objects.  The one exception is
+C<isa>, which is useful as a function when operating on non-blessed
+references.
 
 =cut

@@ -2,7 +2,14 @@
 
 # "This IS structured code.  It's just randomly structured."
 
-print "1..22\n";
+BEGIN {
+    chdir 't' if -d 't';
+    @INC = qw(. ../lib);
+}
+
+print "1..32\n";
+
+require "test.pl";
 
 while ($?) {
     $foo = 1;
@@ -143,6 +150,84 @@ $ok = 0;
 $ok = 0 if $@;
 }
 print ($ok ? "ok 22\n" : "not ok 22\n");
+
+{
+    my $false = 0;
+
+    $ok = 0;
+    { goto A; A: $ok = 1 } continue { }
+    print "not " unless $ok;
+    print "ok 23 - #20357 goto inside /{ } continue { }/ loop\n";
+
+    $ok = 0;
+    { do { goto A; A: $ok = 1 } while $false }
+    print "not " unless $ok;
+    print "ok 24 - #20154 goto inside /do { } while ()/ loop\n";
+
+    $ok = 0;
+    foreach(1) { goto A; A: $ok = 1 } continue { };
+    print "not " unless $ok;
+    print "ok 25 - goto inside /foreach () { } continue { }/ loop\n";
+
+    $ok = 0;
+    sub a {
+	A: { if ($false) { redo A; B: $ok = 1; redo A; } }
+	goto B unless $r++
+    }
+    a();
+    print "not " unless $ok;
+    print "ok 26 - #19061 loop label wiped away by goto\n";
+
+    $ok = 0;
+    for ($p=1;$p && goto A;$p=0) { A: $ok = 1 }
+    print "not " unless $ok;
+    print "ok 27 - weird case of goto and for(;;) loop\n";
+}
+
+# bug #9990 - don't prematurely free the CV we're &going to.
+
+sub f1 {
+    my $x;
+    goto sub { $x; print "ok 28 - don't prematurely free CV\n" }
+}
+f1();
+
+# bug #22181 - this used to coredump or make $x undefined, due to
+# erroneous popping of the inner BLOCK context
+
+for ($i=0; $i<2; $i++) {
+    my $x = 1;
+    goto LABEL29;
+    LABEL29:
+    print "not " if !defined $x || $x != 1;
+}
+print "ok 29 - goto in for(;;) with continuation\n";
+
+# bug #22299 - goto in require doesn't find label
+
+open my $f, ">goto01.pm" or die;
+print $f <<'EOT';
+package goto01;
+goto YYY;
+die;
+YYY: print "OK\n";
+1;
+EOT
+close $f;
+
+curr_test(30);
+my $r = runperl(prog => 'use goto01; print qq[DONE\n]');
+is($r, "OK\nDONE\n", "goto within use-d file"); 
+unlink "goto01.pm";
+
+# test for [perl #24108]
+sub i_return_a_label {
+    print "ok 31 - i_return_a_label called\n";
+    return "returned_label";
+}
+eval { goto +i_return_a_label; };
+print "not ";
+returned_label : print "ok 32 - done to returned_label\n";
 
 exit;
 

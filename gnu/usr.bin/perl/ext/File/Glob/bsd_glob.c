@@ -33,7 +33,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 static char sccsid[] = "@(#)glob.c	8.3 (Berkeley) 10/13/93";
 /* most changes between the version above and the one below have been ported:
-static char sscsid[]=  "$OpenBSD: bsd_glob.c,v 1.3 2002/10/27 22:25:22 millert Exp $";
+static char sscsid[]=  "$OpenBSD: bsd_glob.c,v 1.4 2003/12/03 03:02:29 millert Exp $";
  */
 #endif /* LIBC_SCCS and not lint */
 
@@ -261,12 +261,19 @@ bsd_glob(const char *pattern, int flags,
 #ifndef MACOS_TRADITIONAL
 	patnext = (U8 *) pattern;
 #endif
+	/* TODO: GLOB_APPEND / GLOB_DOOFFS aren't supported yet */
+#if 0
 	if (!(flags & GLOB_APPEND)) {
 		pglob->gl_pathc = 0;
 		pglob->gl_pathv = NULL;
 		if (!(flags & GLOB_DOOFFS))
 			pglob->gl_offs = 0;
 	}
+#else
+	pglob->gl_pathc = 0;
+	pglob->gl_pathv = NULL;
+	pglob->gl_offs = 0;
+#endif
 	pglob->gl_flags = flags & ~GLOB_MAGCHAR;
 	pglob->gl_errfunc = errfunc;
 	pglob->gl_matchc = 0;

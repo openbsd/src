@@ -1,7 +1,7 @@
 # Pod::Man -- Convert POD data to formatted *roff input.
-# $Id: Man.pm,v 1.7 2002/10/27 22:25:27 millert Exp $
+# $Id: Man.pm,v 1.8 2003/12/03 03:02:40 millert Exp $
 #
-# Copyright 1999, 2000, 2001, 2002 by Russ Allbery <rra@stanford.edu>
+# Copyright 1999, 2000, 2001, 2002, 2003 by Russ Allbery <rra@stanford.edu>
 #
 # This program is free software; you may redistribute it and/or modify it
 # under the same terms as Perl itself.
@@ -38,7 +38,7 @@ use vars qw(@ISA %ESCAPES $PREAMBLE $VERSION);
 # Don't use the CVS revision as the version, since this module is also in Perl
 # core and too many things could munge CVS magic revision strings.  This
 # number should ideally be the same as the CVS revision in podlators, however.
-$VERSION = 1.34;
+$VERSION = 1.37;
 
 
 ##############################################################################
@@ -471,6 +471,7 @@ $_
     $$self{INDEX}     = [];     # Index keys waiting to be printed.
     $$self{IN_NAME}   = 0;      # Whether processing the NAME section.
     $$self{ITEMS}     = 0;      # The number of consecutive =items.
+    $$self{ITEMTYPES} = [];     # Stack of =item types, one per list.
     $$self{SHIFTWAIT} = 0;      # Whether there is a shift waiting.
     $$self{SHIFTS}    = [];     # Stack of .RS shifts.
 }
@@ -537,9 +538,9 @@ sub textblock {
     $text =~ s/\n\s*$/\n/;
 
     # Output the paragraph.  We also have to handle =over without =item.  If
-    # there's an =over without =item, NEWINDENT will be set, and we need to
-    # handle creation of the indent here.  Set WEIRDINDENT so that it will be
-    # cleaned up on =back.
+    # there's an =over without =item, SHIFTWAIT will be set, and we need to
+    # handle creation of the indent here.  Add the shift to SHIFTS so that it
+    # will be cleaned up on =back.
     $self->makespace;
     if ($$self{SHIFTWAIT}) {
         $self->output (".RS $$self{INDENT}\n");
@@ -716,6 +717,7 @@ sub cmd_over {
         push (@{ $$self{SHIFTS} }, $$self{INDENT});
     }
     push (@{ $$self{INDENTS} }, $$self{INDENT});
+    push (@{ $$self{ITEMTYPES} }, 'unknown');
     $$self{INDENT} = ($_ + 0);
     $$self{SHIFTWAIT} = 1;
 }
@@ -726,7 +728,9 @@ sub cmd_over {
 sub cmd_back {
     my $self = shift;
     $$self{INDENT} = pop @{ $$self{INDENTS} };
-    unless (defined $$self{INDENT}) {
+    if (defined $$self{INDENT}) {
+        pop @{ $$self{ITEMTYPES} };
+    } else {
         my ($file, $line, $paragraph) = @_;
         ($file, $line) = $paragraph->file_line;
         warn "$file:$line: Unmatched =back\n";
@@ -759,8 +763,18 @@ sub cmd_item {
         $index = $_;
         $index =~ s/^\s*[-*+o.]?(?:\s+|\Z)//;
     }
-    $_ = '*' unless $_;
-    s/^\*(\s|\Z)/\\\(bu$1/;
+    $_ = '*' unless length ($_) > 0;
+    my $type = $$self{ITEMTYPES}[0];
+    unless (defined $type) {
+        my ($file, $line, $paragraph) = @_;
+        ($file, $line) = $paragraph->file_line;
+        $type = 'unknown';
+    }
+    if ($type eq 'unknown') {
+        $type = /^\*\s*\Z/ ? 'bullet' : 'text';
+        $$self{ITEMTYPES}[0] = $type if $$self{ITEMTYPES}[0];
+    }
+    s/^\*\s*\Z/\\\(bu/ if $type eq 'bullet';
     if (@{ $$self{SHIFTS} } == @{ $$self{INDENTS} }) {
         $self->output (".RE\n");
         pop @{ $$self{SHIFTS} };
@@ -1121,11 +1135,12 @@ sub switchquotes {
     }
 }
 
-__END__
+##############################################################################
+# Module return value and documentation
+##############################################################################
 
-##############################################################################
-# Documentation
-##############################################################################
+1;
+__END__
 
 =head1 NAME
 
@@ -1387,7 +1402,7 @@ B<pod2man> by Tom Christiansen <tchrist@mox.perl.com>.
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright 1999, 2000, 2001, 2002 by Russ Allbery <rra@stanford.edu>.
+Copyright 1999, 2000, 2001, 2002, 2003 by Russ Allbery <rra@stanford.edu>.
 
 This program is free software; you may redistribute it and/or modify it
 under the same terms as Perl itself.

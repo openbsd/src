@@ -2,7 +2,24 @@
 
 perlop - Perl operators and precedence
 
-=head1 SYNOPSIS
+=head1 DESCRIPTION
+
+=head2 Operator Precedence and Associativity
+
+Operator precedence and associativity work in Perl more or less like
+they do in mathematics.
+
+I<Operator precedence> means some operators are evaluated before
+others.  For example, in C<2 + 4 * 5>, the multiplication has higher
+precedence so C<4 * 5> is evaluated first yielding C<2 + 20 ==
+22> and not C<6 * 5 == 30>.
+
+I<Operator associativity> defines what happens if a sequence of the
+same operators is used one after another: whether the evaluator will
+evaluate the left operations first or the right.  For example, in C<8
+- 4 - 2>, subtraction is left associative so Perl evaluates the
+expression left to right.  C<8 - 4> is evaluated first making the
+expression C<4 - 2 == 2> and not C<8 - 2 == 6>.
 
 Perl operators have the following associativity and precedence,
 listed from highest precedence to lowest.  Operators borrowed from
@@ -39,8 +56,6 @@ values only, not array values.
 In the following sections, these operators are covered in precedence order.
 
 Many operators can be overloaded for objects.  See L<overload>.
-
-=head1 DESCRIPTION
 
 =head2 Terms and List Operators (Leftward)
 
@@ -83,8 +98,18 @@ Also note that
 
     print ($foo & 255) + 1, "\n";
 
-probably doesn't do what you expect at first glance.  See
-L<Named Unary Operators> for more discussion of this.
+probably doesn't do what you expect at first glance.  The parentheses
+enclose the argument list for C<print> which is evaluated (printing
+the result of C<$foo & 255>).  Then one is added to the return value
+of C<print> (usually 1).  The result is something like this:
+
+    1 + 1, "\n";    # Obviously not what you meant.
+
+To do what you meant properly, you must write:
+
+    print(($foo & 255) + 1, "\n");
+
+See L<Named Unary Operators> for more discussion of this.
 
 Also parsed as terms are the C<do {}> and C<eval {}> constructs, as
 well as subroutine and method calls, and the anonymous
@@ -110,9 +135,14 @@ or a class name (that is, a package name).  See L<perlobj>.
 
 =head2 Auto-increment and Auto-decrement
 
-"++" and "--" work as in C.  That is, if placed before a variable, they
-increment or decrement the variable before returning the value, and if
-placed after, increment or decrement the variable after returning the value.
+"++" and "--" work as in C.  That is, if placed before a variable,
+they increment or decrement the variable by one before returning the
+value, and if placed after, increment or decrement after returning the
+value.
+
+    $i = 0;  $j = 0;
+    print $i++;  # prints 0
+    print ++$j;  # prints 1
 
 The auto-increment operator has a little extra builtin magic to it.  If
 you increment a variable that is numeric, or that has ever been used in
@@ -126,6 +156,10 @@ character within its range, with carry:
     print ++($foo = 'a0');	# prints 'a1'
     print ++($foo = 'Az');	# prints 'Ba'
     print ++($foo = 'zz');	# prints 'aaa'
+
+C<undef> is always treated as numeric, and in particular is changed
+to C<0> before incrementing (so that a post-increment of an undef value
+will return C<0> rather than C<undef>).
 
 The auto-decrement operator is not magical.
 
@@ -153,7 +187,7 @@ example, C<0666 & ~027> is 0640.  (See also L<Integer Arithmetic> and
 L<Bitwise String Operators>.)  Note that the width of the result is
 platform-dependent: ~0 is 32 bits wide on a 32-bit platform, but 64
 bits wide on a 64-bit platform, so if you are expecting a certain bit
-width, remember use the & operator to mask off the excess bits.
+width, remember to use the & operator to mask off the excess bits.
 
 Unary "+" has no effect whatsoever, even on strings.  It is useful
 syntactically for separating a function name from a parenthesized expression
@@ -178,8 +212,7 @@ operator.  See L</"Regexp Quote-Like Operators"> for details.
 
 If the right argument is an expression rather than a search pattern,
 substitution, or transliteration, it is interpreted as a search pattern at run
-time.  This can be less efficient than an explicit search, because the
-pattern must be compiled every time the expression is evaluated.
+time.
 
 Binary "!~" is just like "=~" except the return value is negated in
 the logical sense.
@@ -196,7 +229,7 @@ C<$a> minus the largest multiple of C<$b> that is not greater than
 C<$a>.  If C<$b> is negative, then C<$a % $b> is C<$a> minus the
 smallest multiple of C<$b> that is not less than C<$a> (i.e. the
 result will be less than or equal to zero). 
-Note than when C<use integer> is in scope, "%" gives you direct access
+Note that when C<use integer> is in scope, "%" gives you direct access
 to the modulus operator as implemented by your C compiler.  This
 operator is not as well defined for negative operands, but it will
 execute faster.
@@ -248,8 +281,7 @@ of bits is also undefined.
 =head2 Named Unary Operators
 
 The various named unary operators are treated as functions with one
-argument, with optional parentheses.  These include the filetest
-operators, like C<-f>, C<-M>, etc.  See L<perlfunc>.
+argument, with optional parentheses.
 
 If any list operator (print(), etc.) or any unary operator (chdir(), etc.)
 is followed by a left parenthesis as the next token, the operator and
@@ -273,6 +305,11 @@ but, because * is higher precedence than named operators:
     rand(10) * 20;	# (rand 10) * 20
     rand (10) * 20;	# (rand 10) * 20
     rand +(10) * 20;	# rand (10 * 20)
+
+Regarding precedence, the filetest operators, like C<-f>, C<-M>, etc. are
+treated like named unary operators, but they don't follow this functional
+parenthesis rule.  That means, for example, that C<-f($file).".bak"> is
+equivalent to C<-f "$file.bak">.
 
 See also L<"Terms and List Operators (Leftward)">.
 
@@ -336,16 +373,26 @@ by the current locale if C<use locale> is in effect.  See L<perllocale>.
 
 =head2 Bitwise And
 
-Binary "&" returns its operators ANDed together bit by bit.
+Binary "&" returns its operands ANDed together bit by bit.
 (See also L<Integer Arithmetic> and L<Bitwise String Operators>.)
+
+Note that "&" has lower priority than relational operators, so for example
+the brackets are essential in a test like
+
+	print "Even\n" if ($x & 1) == 0;
 
 =head2 Bitwise Or and Exclusive Or
 
-Binary "|" returns its operators ORed together bit by bit.
+Binary "|" returns its operands ORed together bit by bit.
 (See also L<Integer Arithmetic> and L<Bitwise String Operators>.)
 
-Binary "^" returns its operators XORed together bit by bit.
+Binary "^" returns its operands XORed together bit by bit.
 (See also L<Integer Arithmetic> and L<Bitwise String Operators>.)
+
+Note that "|" and "^" have lower priority than relational operators, so
+for example the brackets are essential in a test like
+
+	print "false\n" if (8 | 2) != 10;
 
 =head2 C-style Logical And
 
@@ -361,9 +408,9 @@ if the left operand is true, the right operand is not even evaluated.
 Scalar or list context propagates down to the right operand if it
 is evaluated.
 
-The C<||> and C<&&> operators differ from C's in that, rather than returning
-0 or 1, they return the last value evaluated.  Thus, a reasonably portable
-way to find out the home directory (assuming it's not "0") might be:
+The C<||> and C<&&> operators return the last value evaluated
+(unlike C's C<||> and C<&&>, which return 0 or 1). Thus, a reasonably
+portable way to find out the home directory might be:
 
     $home = $ENV{'HOME'} || $ENV{'LOGDIR'} ||
 	(getpwuid($<))[7] || die "You're homeless!\n";
@@ -394,10 +441,10 @@ Using "or" for assignment is unlikely to do what you want; see below.
 =head2 Range Operators
 
 Binary ".." is the range operator, which is really two different
-operators depending on the context.  In list context, it returns an
+operators depending on the context.  In list context, it returns a
 list of values counting (up by ones) from the left value to the right
 value.  If the left value is greater than the right value then it
-returns the empty array.  The range operator is useful for writing
+returns the empty list.  The range operator is useful for writing
 C<foreach (1..10)> loops and for doing slice operations on arrays. In
 the current implementation, no temporary array is created when the
 range operator is used as the expression in C<foreach> loops, but older
@@ -434,23 +481,42 @@ sequence number in a range has the string "E0" appended to it, which
 doesn't affect its numeric value, but gives you something to search
 for if you want to exclude the endpoint.  You can exclude the
 beginning point by waiting for the sequence number to be greater
-than 1.  If either operand of scalar ".." is a constant expression,
-that operand is implicitly compared to the C<$.> variable, the
-current line number.  Examples:
+than 1.
+
+If either operand of scalar ".." is a constant expression,
+that operand is considered true if it is equal (C<==>) to the current
+input line number (the C<$.> variable).
+
+To be pedantic, the comparison is actually C<int(EXPR) == int(EXPR)>,
+but that is only an issue if you use a floating point expression; when
+implicitly using C<$.> as described in the previous paragraph, the
+comparison is C<int(EXPR) == int($.)> which is only an issue when C<$.>
+is set to a floating point value and you are not reading from a file.
+Furthermore, C<"span" .. "spat"> or C<2.18 .. 3.14> will not do what
+you want in scalar context because each of the operands are evaluated
+using their integer representation.
+
+Examples:
 
 As a scalar operator:
 
-    if (101 .. 200) { print; }	# print 2nd hundred lines
-    next line if (1 .. /^$/);	# skip header lines
+    if (101 .. 200) { print; } # print 2nd hundred lines, short for
+                               #   if ($. == 101 .. $. == 200) ...
+    next line if (1 .. /^$/);  # skip header lines, short for
+                               #   ... if ($. == 1 .. /^$/);
     s/^/> / if (/^$/ .. eof());	# quote body
 
     # parse mail messages
     while (<>) {
         $in_header =   1  .. /^$/;
-        $in_body   = /^$/ .. eof();
-	# do something based on those
+        $in_body   = /^$/ .. eof;
+        if ($in_header) {
+            # ...
+        } else { # in body
+            # ...
+        }
     } continue {
-	close ARGV if eof; 		# reset $. each file
+        close ARGV if eof;             # reset $. each file
     }
 
 As a list operator:
@@ -477,6 +543,11 @@ to get dates with leading zeros.  If the final value specified is not
 in the sequence that the magical increment would produce, the sequence
 goes until the next value would be longer than the final value
 specified.
+
+Because each operand is evaluated in integer form, C<2.18 .. 3.14> will
+return two elements in list context.
+
+    @list = (2.18 .. 3.14); # same as @list = (2 .. 3);
 
 =head2 Conditional Operator
 
@@ -571,9 +642,10 @@ argument and returns that value.  This is just like C's comma operator.
 In list context, it's just the list argument separator, and inserts
 both its arguments into the list.
 
-The => digraph is mostly just a synonym for the comma operator.  It's useful for
-documenting arguments that come in pairs.  As of release 5.001, it also forces
-any word to the left of it to be interpreted as a string.
+The C<< => >> operator is a synonym for the comma, but forces any word
+to its left to be interpreted as a string (as of 5.001). It is helpful
+in documenting the correspondence between keys and values in hashes,
+and other paired elements in lists.
 
 =head2 List Operators (Rightward)
 
@@ -747,8 +819,8 @@ you may be burned some day.
 
 For constructs that do interpolate, variables beginning with "C<$>"
 or "C<@>" are interpolated.  Subscripted variables such as C<$a[3]> or
-C<$href->{key}[0]> are also interpolated, as are array and hash slices.
-But method calls such as C<$obj->meth> are not.
+C<< $href->{key}[0] >> are also interpolated, as are array and hash slices.
+But method calls such as C<< $obj->meth >> are not.
 
 Interpolating an array or slice interpolates the elements in order,
 separated by the value of C<$">, so is equivalent to interpolating
@@ -1140,7 +1212,8 @@ equivalent to:
 
     split(' ', q/STRING/);
 
-the difference being that it generates a real list at compile time.  So
+the differences being that it generates a real list at compile time, and
+in scalar context it returns the last element in the list.  So
 this expression:
 
     qw(foo bar baz)
@@ -1628,7 +1701,7 @@ alphanumeric char, as in:
 
 In the RE above, which is intentionally obfuscated for illustration, the
 delimiter is C<m>, the modifier is C<mx>, and after backslash-removal the
-RE is the same as for C<m/ ^ a s* b /mx>).  There's more than one 
+RE is the same as for C<m/ ^ a \s* b /mx>.  There's more than one 
 reason you're encouraged to restrict your delimiters to non-alphanumeric,
 non-whitespace choices.
 

@@ -7,6 +7,8 @@
 #define INCL_WININPUT
 #define INCL_VIO
 #define INCL_KBD
+#define INCL_WINCLIPBOARD
+#define INCL_WINATOM
 #include <os2.h>
 
 #include "EXTERN.h"
@@ -234,12 +236,14 @@ file_type(char *path)
     if (!(_emx_env & 0x200)) 
 	croak("file_type not implemented on DOS"); /* not OS/2. */
     if (CheckOSError(DosQueryAppType(path, &apptype))) {
+#if 0
 	if (rc == ERROR_INVALID_EXE_SIGNATURE) 
 	    croak("Invalid EXE signature"); 
 	else if (rc == ERROR_EXE_MARKED_INVALID) {
 	    croak("EXE marked invalid"); 
 	}
-	croak("DosQueryAppType err %ld", rc); 
+#endif
+	croak_with_os2error("DosQueryAppType"); 
     }
     
     return apptype;
@@ -260,7 +264,7 @@ DeclFuncByORD(ULONG, XmyWinSwitchToProgram,  ORD_WinSwitchToProgram,
 #define myWinSwitchToProgram(hsw) (!CheckOSError(XmyWinSwitchToProgram(hsw)))
 
 
-
+/* These function croak if the return value is 0. */
 DeclWinFunc_CACHE(HWND, QueryWindow, (HWND hwnd, LONG cmd), (hwnd, cmd))
 DeclWinFunc_CACHE(BOOL, QueryWindowPos, (HWND hwnd, PSWP pswp),
 		  (hwnd, pswp))
@@ -300,6 +304,63 @@ DeclWinFunc_CACHE(HWND, EnumDlgItem, (HWND hwndDlg, HWND hwnd, ULONG code),
 DeclWinFunc_CACHE(HWND, QueryDesktopWindow, (HAB hab, HDC hdc), (hab, hdc));
 DeclWinFunc_CACHE(BOOL, SetActiveWindow, (HWND hwndDesktop, HWND hwnd),
 		  (hwndDesktop, hwnd));
+DeclWinFunc_CACHE(BOOL, QueryActiveDesktopPathname, (PSZ pszPathName, ULONG ulSize),
+		  (pszPathName, ulSize));
+DeclWinFunc_CACHE(BOOL, InvalidateRect,
+		  (HWND hwnd, /*RECTL*/ char *prcl, BOOL fIncludeChildren),
+		  (hwnd, prcl, fIncludeChildren));
+DeclWinFunc_CACHE(BOOL, CreateFrameControls,
+		  (HWND hwndFrame, /*PFRAMECDATA*/ char* pfcdata, PCSZ pszTitle),
+		  (hwndFrame, pfcdata, pszTitle));
+DeclWinFunc_CACHE(BOOL, OpenClipbrd, (HAB hab), (hab));
+DeclWinFunc_CACHE(BOOL, EmptyClipbrd, (HAB hab), (hab));
+DeclWinFunc_CACHE(BOOL, CloseClipbrd, (HAB hab), (hab));
+DeclWinFunc_CACHE(HWND, QueryClipbrdViewer, (HAB hab), (hab));
+DeclWinFunc_CACHE(HWND, QueryClipbrdOwner, (HAB hab), (hab));
+DeclWinFunc_CACHE(BOOL, QueryClipbrdFmtInfo, (HAB hab, ULONG fmt, PULONG prgfFmtInfo), (hab, fmt, prgfFmtInfo));
+DeclWinFunc_CACHE(ULONG, QueryClipbrdData, (HAB hab, ULONG fmt), (hab, fmt));
+DeclWinFunc_CACHE(HWND, SetClipbrdViewer, (HAB hab, HWND hwnd), (hab, hwnd));
+DeclWinFunc_CACHE(HWND, SetClipbrdOwner, (HAB hab, HWND hwnd), (hab, hwnd));
+DeclWinFunc_CACHE(ULONG, EnumClipbrdFmts, (HAB hab, ULONG fmt), (hab, fmt));
+DeclWinFunc_CACHE(ATOM, AddAtom, (HATOMTBL hAtomTbl, PCSZ pszAtomName),
+		  (hAtomTbl, pszAtomName));
+DeclWinFunc_CACHE(ATOM, FindAtom, (HATOMTBL hAtomTbl, PCSZ pszAtomName),
+		  (hAtomTbl, pszAtomName));
+DeclWinFunc_CACHE(ATOM, DeleteAtom, (HATOMTBL hAtomTbl, PCSZ pszAtomName),
+		  (hAtomTbl, pszAtomName));
+DeclWinFunc_CACHE(ULONG, QueryAtomUsage, (HATOMTBL hAtomTbl, ATOM atom),
+		  (hAtomTbl, atom));
+DeclWinFunc_CACHE(ULONG, QueryAtomLength, (HATOMTBL hAtomTbl, ATOM atom),
+		  (hAtomTbl, atom));
+DeclWinFunc_CACHE(ULONG, QueryAtomName,
+		  (HATOMTBL hAtomTbl, ATOM atom, PSZ pchBuffer, ULONG cchBufferMax),
+		  (hAtomTbl, atom, pchBuffer, cchBufferMax));
+DeclWinFunc_CACHE(HATOMTBL, QuerySystemAtomTable, (VOID), ());
+DeclWinFunc_CACHE(HATOMTBL, CreateAtomTable, (ULONG initial, ULONG buckets),
+		  (initial, buckets));
+DeclWinFunc_CACHE(HATOMTBL, DestroyAtomTable, (HATOMTBL hAtomTbl), (hAtomTbl));
+DeclWinFunc_CACHE(ULONG, MessageBox, (HWND hwndParent, HWND hwndOwner, PCSZ pszText, PCSZ pszCaption, ULONG idWindow, ULONG flStyle), (hwndParent, hwndOwner, pszText, pszCaption, idWindow, flStyle));
+DeclWinFunc_CACHE(ULONG, MessageBox2,
+		  (HWND hwndParent, HWND hwndOwner, PCSZ pszText,
+		   PCSZ pszCaption, ULONG idWindow, PMB2INFO pmb2info),
+		  (hwndParent, hwndOwner, pszText, pszCaption, idWindow, pmb2info));
+DeclWinFunc_CACHE(HPOINTER, LoadPointer,
+		  (HWND hwndDesktop, HMODULE hmod, ULONG idres),
+		  (hwndDesktop, hmod, idres));
+DeclWinFunc_CACHE(HPOINTER, QuerySysPointer,
+		  (HWND hwndDesktop, LONG lId, BOOL fCopy),
+		  (hwndDesktop, lId, fCopy));
+DeclWinFunc_CACHE(BOOL, Alarm, (HWND hwndDesktop, ULONG rgfType), (hwndDesktop, rgfType));
+DeclWinFunc_CACHE(BOOL, FlashWindow, (HWND hwndFrame, BOOL fFlash), (hwndFrame, fFlash));
+
+
+/* These functions do not croak on error */
+DeclWinFunc_CACHE_survive(BOOL, SetClipbrdData,
+			  (HAB hab, ULONG ulData, ULONG fmt, ULONG rgfFmtInfo),
+			  (hab, ulData, fmt, rgfFmtInfo));
+
+#define get_InvalidateRect	InvalidateRect
+#define get_CreateFrameControls	CreateFrameControls
 
 /* These functions may return 0 on success; check $^E/Perl_rc on res==0: */
 DeclWinFunc_CACHE_resetError(PVOID, QueryWindowPtr, (HWND hwnd, LONG index),
@@ -334,6 +395,9 @@ HWND (*pWinWindowFromPoint)(HWND hwnd, __const__ POINTL *pptl, BOOL fChildren);
 #define WindowPos_set(hwnd, x, y, fl, cx, cy, hwndInsertBehind)	\
 	SetWindowPos(hwnd, hwndInsertBehind, x, y, cx, cy, fl)
 #define myWinQueryWindowPtr(hwnd, i)	((ULONG)QueryWindowPtr(hwnd, i))
+#define _ClipbrdData_set SetClipbrdData
+#define ClipbrdOwner_set SetClipbrdOwner
+#define ClipbrdViewer_set SetClipbrdViewer
 
 int
 WindowText_set(HWND hwnd, char* text)
@@ -355,7 +419,7 @@ myQueryWindowText(HWND hwnd)
     }
     sv = newSVpvn("", 0);
     SvGROW(sv, l + 1);
-    len = WinQueryWindowText(hwnd, l + 1, SvPV_force(sv, n_a));
+    len = QueryWindowText(hwnd, l + 1, SvPV_force(sv, n_a));
     if (len != l) {
 	Safefree(sv);
 	croak("WinQueryWindowText() uncompatible with WinQueryWindowTextLength()");
@@ -411,20 +475,29 @@ WindowFromPoint(long x, long y, HWND hwnd, BOOL fChildren)
     return SaveWinError(pWinWindowFromPoint(hwnd, &ppl, fChildren));
 }
 
-static void
-fill_swentry(SWENTRY *swentryp, HWND hwnd, PID pid)
+static HSWITCH
+switch_of(HWND hwnd, PID pid)
 {
-	 int rc;
 	 HSWITCH hSwitch;    
 
 	 if (!(_emx_env & 0x200)) 
 	     croak("switch_entry not implemented on DOS"); /* not OS/2. */
 	 if (CheckWinError(hSwitch = 
 			   myWinQuerySwitchHandle(hwnd, pid)))
-	     croak("WinQuerySwitchHandle: %s", os2error(Perl_rc));
+	     croak_with_os2error("WinQuerySwitchHandle");
+	 return hSwitch;
+}
+
+
+static void
+fill_swentry(SWENTRY *swentryp, HWND hwnd, PID pid)
+{
+	 int rc;
+	 HSWITCH hSwitch = switch_of(hwnd, pid);
+
 	 swentryp->hswitch = hSwitch;
 	 if (CheckOSError(myWinQuerySwitchEntry(hSwitch, &swentryp->swctl)))
-	     croak("WinQuerySwitchEntry err %ld", rc);
+	     croak_with_os2error("WinQuerySwitchEntry");
 }
 
 static void
@@ -432,6 +505,103 @@ fill_swentry_default(SWENTRY *swentryp)
 {
 	fill_swentry(swentryp, NULLHANDLE, getpid());
 }
+
+static SV*
+myWinQueryActiveDesktopPathname()
+{
+    SV *buf = newSVpv("",0);
+    STRLEN n_a;
+
+    SvGROW(buf, MAXPATHLEN);
+    QueryActiveDesktopPathname(SvPV(buf,n_a), MAXPATHLEN);
+    SvCUR_set(buf, strlen(SvPV(buf, n_a)));
+    return buf;
+}
+
+SV *
+myWinQueryAtomName(ATOM atom, HATOMTBL hAtomTbl)
+{
+    ULONG len = QueryAtomLength(hAtomTbl, atom);
+    SV *sv = newSVpvn("",0);
+    STRLEN n_a;
+
+    SvGROW(sv, len + 1);
+    QueryAtomName(hAtomTbl, atom, SvPV(sv, n_a), len);
+    SvCUR_set(sv, len);
+    *SvEND(sv) = 0;
+    return sv;
+}
+
+#define myWinQueryClipbrdFmtInfo	QueryClipbrdFmtInfo
+
+/* Put data into shared memory, then call SetClipbrdData */
+void
+ClipbrdData_set(SV *sv, int convert_nl, unsigned long fmt, unsigned long rgfFmtInfo, HAB hab)
+{
+    STRLEN len;
+    char *buf = SvPV_force(sv, len);
+    char *pByte = 0, *s = buf, c;
+    ULONG nls = 0, rc;
+
+    if (convert_nl) {
+	while ((c = *s++)) {
+	    if (c == '\r' && *s == '\n')
+		s++;
+	    else if (c == '\n')
+		nls++;
+	}
+    }
+
+    if (CheckOSError(DosAllocSharedMem((PPVOID)&pByte, 0, len + nls + 1,
+				       PAG_WRITE | PAG_COMMIT | OBJ_GIVEABLE | OBJ_GETTABLE)))
+	croak_with_os2error("ClipbrdData_set: DosAllocSharedMem error");
+
+    if (!nls)
+	memcpy(pByte, buf, len + 1);
+    else {
+	char *t = pByte, *e = buf + len;
+
+	while (buf < e) {
+	    c = *t++ = *buf++;
+	    if (c == '\n' && (t == pByte + 1 || t[-2] != '\r'))
+		t[-1] = '\r', *t++ = '\n';
+	}
+    }
+
+    if (!SetClipbrdData(hab, (ULONG)pByte, fmt, rgfFmtInfo)) {
+	DosFreeMem((PPVOID)&pByte);
+	croak_with_os2error("ClipbrdData_set: WinSetClipbrdData error");
+    }
+}
+
+#if 0
+
+ULONG
+myWinMessageBox(HWND hwndParent, HWND hwndOwner, PCSZ pszText, PCSZ pszCaption, ULONG idWindow, ULONG flStyle)
+{
+    ULONG rc = MessageBox(hwndParent, hwndOwner, pszText, pszCaption,
+			  idWindow, flStyle);
+
+    if (rc == MBID_ERROR)
+	rc = 0;
+    if (CheckWinError(rc))
+	croak_with_os2error("MessageBox");
+    return rc;
+}
+
+ULONG
+myWinMessageBox2(HWND hwndParent, HWND hwndOwner, PCSZ pszText,
+		   PCSZ pszCaption, ULONG idWindow, PMB2INFO pmb2info)
+{
+    ULONG rc = MessageBox2(hwndParent, hwndOwner, pszText, pszCaption, idWindow, pmb2info);
+
+    if (rc == MBID_ERROR)
+	rc = 0;
+    if (CheckWinError(rc))
+	croak_with_os2error("MessageBox2");
+    return rc;
+}
+#endif
 
 /* static ULONG (* APIENTRY16 pDosSmSetTitle)(ULONG, PSZ); */
 ULONG _THUNK_FUNCTION(DosSmSetTitle)(ULONG, PSZ);
@@ -508,7 +678,7 @@ set_title2(char *s)
 #endif
 
 SV *
-process_swentry(unsigned long pid, unsigned long hwnd)
+process_swentry(unsigned long pid, HWND hwnd)
 {
     SWENTRY swentry;
 
@@ -660,7 +830,7 @@ cursor(int *sp, int *ep, int *wp, int *ap)
     VIO_FROM_VIOB;
 
     if (CheckOSError(VioGetCurType( vio, 0 )))
-	croak("VioGetCurType() error");
+	croak_with_os2error("VioGetCurType() error");
 
     *sp = vio->yStart;
     *ep = vio->cEnd;
@@ -706,7 +876,7 @@ bufsize(void)
 
     vio->cb = sizeof(*vio);
     if (CheckOSError(VioGetMode( vio, 0 )))
-	croak("Can't get size of buffer for screen");
+	croak_with_os2error("Can't get size of buffer for screen");
 #if 0	/* buf=323552247, full=1118455, partial=0 */
     croak("Lengths: buf=%d, full=%d, partial=%d",vio->buf_length,vio->full_length,vio->partial_length);
     return newSVpvn((char*)vio->buf_addr, vio->full_length);
@@ -719,7 +889,286 @@ bufsize(void)
     return i[0]*i[1]*2;
 #endif	/* 0 */
 }
-    
+
+SV*
+_kbdChar(unsigned int nowait, int handle)
+{
+    KBDKEYINFO viob[2], *vio;
+    ULONG rc;
+
+    VIO_FROM_VIOB;
+
+    if (nowait > 2)
+	croak("unexpected nowait");
+    if (CheckOSError(nowait == 2
+		     ? KbdPeek( vio, handle )
+		     : KbdCharIn( vio, nowait == 1, handle )))
+	croak_with_os2error("Can't _kbdChar");
+    return newSVpvn((char*)vio, sizeof(*vio));
+}
+
+SV*
+_kbdStatus(int handle)
+{
+    KBDINFO viob[2], *vio;
+    ULONG rc;
+
+    VIO_FROM_VIOB;
+
+    vio->cb = sizeof(*vio);
+    if (CheckOSError(KbdGetStatus( vio, handle )))
+	croak_with_os2error("Can't _kbdStatus");
+    return newSVpvn((char*)vio, sizeof(*vio));
+}
+
+void
+_kbdStatus_set(SV* sv, int handle)
+{
+    KBDINFO viob[2], *vio;
+    ULONG rc;
+    STRLEN l;
+    char *s = SvPV(sv, l);
+
+    VIO_FROM_VIOB;
+
+    if (l != sizeof(*vio))
+	croak("unexpected datasize");
+    Copy((KBDINFO*)s, vio, 1, KBDINFO);
+    if (vio->cb != sizeof(*vio))
+	croak("unexpected datasize");
+    if (CheckOSError(KbdSetStatus( vio, handle )))
+	croak_with_os2error("Can't kbdStatus_set()");
+}
+
+SV*
+_vioConfig(int which, int handle)
+{
+    struct {VIOCONFIGINFO i; short a[20];} viob[2], *vio;
+    ULONG rc;
+
+    VIO_FROM_VIOB;
+
+    vio->i.cb = 2;
+    if (CheckOSError(VioGetConfig( which, &vio->i, handle )))
+	croak_with_os2error("Can't get VIO config size");
+    if (vio->i.cb > sizeof(*vio))
+	vio->i.cb = sizeof(*vio);
+    if (CheckOSError(VioGetConfig( which, &vio->i, handle )))
+	croak_with_os2error("Can't get VIO config");
+    return newSVpvn((char*)vio, vio->i.cb);
+}
+
+SV*
+_vioMode(void)
+{
+    VIOMODEINFO viob[2], *vio;
+    ULONG rc;
+
+    VIO_FROM_VIOB;
+
+    vio->cb = sizeof(*vio);
+    if (CheckOSError(VioGetMode( vio, 0 )))
+	croak_with_os2error("Can't get VIO mode");
+    return newSVpvn((char*)vio, sizeof(*vio));
+}
+
+void
+_vioMode_set(SV* sv)
+{
+    VIOMODEINFO viob[2], *vio;
+    ULONG rc;
+    STRLEN l;
+    char *s = SvPV(sv, l);
+
+    VIO_FROM_VIOB;
+
+    Copy((VIOMODEINFO*)s, vio, 1, VIOMODEINFO);
+    if (vio->cb != sizeof(*vio) || l != vio->cb)
+	croak("unexpected datasize");
+    if (CheckOSError(VioSetMode( vio, 0 )))
+	croak_with_os2error("Can't set VIO mode");
+}
+
+SV*
+vioFont(int type, int *w, int *h) /* 0 for actual RAM font, 1 for ROM font */
+{
+    VIOFONTINFO viob[2], *vio;
+    ULONG rc;
+    UCHAR b[1<<17];
+    UCHAR *buf = b;
+    SV *sv;
+
+    VIO_FROM_VIOB;
+
+    /* Should not cross 64K boundaries too: */
+    if (((ULONG)buf) & 0xFFFF)
+	buf += 0x10000 - (((ULONG)buf) & 0xFFFF);
+
+    vio->cb = sizeof(*vio);
+    vio->type = type;			/* BIOS or the loaded font. */
+    vio->cbData = 0xFFFF;		/* How large is my buffer? */
+    vio->pbData = _emx_32to16(buf);	/* Wants an 16:16 pointer */
+    if (CheckOSError(VioGetFont( vio, 0 )))
+	croak_with_os2error("Can't get VIO font");
+    *w = vio->cxCell;
+    *h = vio->cyCell;
+    return newSVpvn(buf,vio->cbData);
+}
+
+void
+vioFont_set(SV *sv, int cellwidth, int cellheight, int type)
+{
+    VIOFONTINFO viob[2], *vio;
+    ULONG rc;
+    UCHAR b[1<<17];
+    UCHAR *buf = b;
+    STRLEN l;
+    char *s = SvPV(sv, l);
+
+    VIO_FROM_VIOB;
+
+    /* Should not cross 64K boundaries too: */
+    if (((ULONG)buf) & 0xFFFF)
+	buf += 0x10000 - (((ULONG)buf) & 0xFFFF);
+
+    if (l > 0xFFFF)
+	croak("length overflow of VIO font");
+    if (l != (cellwidth + 7)/8 * cellheight * 256)
+	warn("unexpected length of VIO font");
+    vio->cb = sizeof(*vio);
+    vio->type = type;			/* BIOS or the loaded font. */
+    vio->cbData = l;			/* How large is my buffer? */
+    vio->pbData = _emx_32to16(buf);	/* Wants an 16:16 pointer */
+    vio->cxCell = cellwidth;
+    vio->cyCell = cellheight;
+    Copy(s, buf, l, char);
+
+    if (CheckOSError(VioSetFont( vio, 0 )))
+	croak_with_os2error("Can't set VIO font");
+}
+
+/*
+  uses use32,os2def,os2base,crt,defs;
+  var   Plt :Plt256;
+  const Pal :VioPalState=(Cb:sizeof(VioPalState);rType:0;iFirst:0;
+    Acolor:($FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF));
+        CReg:VioColorReg=(Cb:sizeof(VioColorReg);rType:3;FirstColorReg:0;
+    NumColorRegs:256; ColorRegAddr:@Plt);
+  var   ii:Pointer;
+  begin
+   VioGetState(Pal,0);
+   Pal.Acolor[09]:=$0F;
+   Pal.Acolor[10]:=$A;
+   Pal.Acolor[13]:=$2F;
+   VioSetState(Pal,0); // ce smena EGA registrov
+   asm
+  lea   eax,Plt
+     call  DosFlatToSel
+     mov   ii,eax
+   end;
+   CReg.ColorRegAddr:=ii;
+   VioGetState(CReg,0);
+   Plt[10,0]:=$00;
+   Plt[10,1]:=$32;
+   Plt[10,2]:=$2A;
+   VioSetState(CReg,0); // a ce - VGA registrov
+  end.
+*/
+
+typedef union {
+  VIOPALSTATE pal;
+  struct { VIOPALSTATE pal; USHORT a[15]; } pal_padded;
+  VIOOVERSCAN overscan;
+  VIOINTENSITY intensity;
+  VIOCOLORREG colorreg;
+  struct { VIOCOLORREG reg; char rgb[3*256]; } colorreg_padded;
+  VIOSETULINELOC lineloc;
+  VIOSETTARGET target;
+} my_VIOSTATE;
+
+int
+vio_state_size(int what)
+{
+    static const char sizes[] = {
+	sizeof(VIOPALSTATE),
+	sizeof(VIOOVERSCAN),
+	sizeof(VIOINTENSITY),
+	sizeof(VIOCOLORREG),
+	6,				/* Random number: Reserved entry */
+	sizeof(VIOSETULINELOC),
+	sizeof(VIOSETTARGET)
+    };
+    if (what < 0 || what >= sizeof(sizes))
+	croak("Unexpected VIO state type");
+    return sizes[what];
+}
+
+SV*
+_vioState(int what, int first, int count)
+{
+    my_VIOSTATE viob[2], *vio;
+    ULONG rc, size = vio_state_size(what);
+
+    VIO_FROM_VIOB;
+
+    vio->pal.cb = size;
+    vio->pal.type = what;
+    if (what == 0) {
+	vio->pal.iFirst = first;
+	if (first < 0 || first >= 16)
+	    croak("unexpected palette start value");
+	if (count < 0 || count > 16)
+	    croak("unexpected palette count");
+	vio->pal.cb = (size += (count - 1) * sizeof(short));
+    } else if (what == 3) {
+	/* Wants an 16:16 pointer */
+	if (count < 0 || count > 256)
+	    croak("unexpected palette count");
+	vio->colorreg.colorregaddr = (PCH)_emx_32to16(vio->colorreg_padded.rgb);
+	vio->colorreg.numcolorregs = count;		/* 256 is max */
+	vio->colorreg.firstcolorreg = first;
+	size += 3 * count;
+    }
+    if (CheckOSError(VioGetState( (void*)vio, 0 )))
+	croak_with_os2error("Can't get VIO state");
+    return newSVpvn((char*)vio, size);
+}
+
+void
+_vioState_set(SV *sv)
+{
+    my_VIOSTATE viob[2], *ovio = (my_VIOSTATE*)SvPV_nolen(sv), *vio = ovio;
+    int what = ovio->pal.type, cb = ovio->pal.cb;
+    ULONG rc, size = vio_state_size(what);
+    STRLEN l;
+    char *s = SvPV(sv, l);
+
+    VIO_FROM_VIOB;
+
+    switch (what) {
+    case 0:
+	if ( cb < size || cb > size + 15*sizeof(SHORT) || l != cb)
+	    croak("unexpected datasize");
+	size = l;
+	break;
+    case 3:
+	if (l != cb + 3 * ovio->colorreg.numcolorregs || cb != size)
+	    croak("unexpected datasize");
+	size = l;
+	break;
+    default:
+	if (l != cb || l != size )
+	    croak("unexpected datasize");
+	break;
+    }
+    Copy(s, (char*)vio, size, char);
+    if (what == 3)	/* We expect colors put after VIOCOLORREG */
+	vio->colorreg.colorregaddr = (PCH)_emx_32to16(vio->colorreg_padded.rgb);
+
+    if (CheckOSError(VioSetState( (void*)vio, 0 )))
+	croak_with_os2error("Can't set VIO state");
+}
+
 SV *
 screen(void)
 {
@@ -766,7 +1215,7 @@ process_codepages()
     ULONG cps[4], cp, rc;
 
     if (CheckOSError(DosQueryCp( sizeof(cps), cps, &cp )))
-	croak("DosQueryCp() error");
+	croak_with_os2error("DosQueryCp()");
     return cp;
 }
 
@@ -776,7 +1225,7 @@ out_codepage()
     USHORT cp, rc;
 
     if (CheckOSError(VioGetCp( 0, &cp, 0 )))
-	croak("VioGetCp() error");
+	croak_with_os2error("VioGetCp()");
     return cp;
 }
 
@@ -794,7 +1243,7 @@ in_codepage()
     USHORT cp, rc;
 
     if (CheckOSError(KbdGetCp( 0, &cp, 0 )))
-	croak("KbdGetCp() error");
+	croak_with_os2error("KbdGetCp()");
     return cp;
 }
 
@@ -853,6 +1302,9 @@ sidOf(int pid)
 #define ulMPFROMSH2CH(s, c1, c2)	((unsigned long)MPFROMSH2CH(s, c1, c2))
 #define ulMPFROMLONG(x)			((unsigned long)MPFROMLONG(x))
 
+#define _MessageBox			MessageBox
+#define _MessageBox2			MessageBox2
+
 MODULE = OS2::Process		PACKAGE = OS2::Process
 
 PROTOTYPES: ENABLE
@@ -904,7 +1356,7 @@ sesmgr_title_set(s)
     char *s
 
 SV *
-process_swentry(unsigned long pid = getpid(), unsigned long hwnd = NULLHANDLE);
+process_swentry(unsigned long pid = getpid(), HWND hwnd = NULLHANDLE);
   PROTOTYPE: DISABLE
 
 int
@@ -917,27 +1369,27 @@ void
 ResetWinError()
 
 int
-WindowText_set(unsigned long hwndFrame, char *title)
+WindowText_set(HWND hwndFrame, char *title)
 
 bool
-FocusWindow_set(unsigned long hwndFocus, unsigned long hwndDesktop = HWND_DESKTOP)
+FocusWindow_set(HWND hwndFocus, HWND hwndDesktop = HWND_DESKTOP)
 
 bool
-ShowWindow(unsigned long hwnd, bool fShow = TRUE)
+ShowWindow(HWND hwnd, bool fShow = TRUE)
 
 bool
-EnableWindow(unsigned long hwnd, bool fEnable = TRUE)
+EnableWindow(HWND hwnd, bool fEnable = TRUE)
 
 bool
-PostMsg(unsigned long hwnd, unsigned long msg, unsigned long mp1 = 0, unsigned long mp2 = 0)
+PostMsg(HWND hwnd, unsigned long msg, unsigned long mp1 = 0, unsigned long mp2 = 0)
     C_ARGS: hwnd, msg, (MPARAM)mp1, (MPARAM)mp2
 
 bool
-WindowPos_set(unsigned long hwnd, long x, long y, unsigned long fl = SWP_MOVE, long cx = 0, long cy = 0, unsigned long hwndInsertBehind = HWND_TOP)
+WindowPos_set(HWND hwnd, long x, long y, unsigned long fl = SWP_MOVE, long cx = 0, long cy = 0, HWND hwndInsertBehind = HWND_TOP)
   PROTOTYPE: DISABLE
 
 unsigned long
-BeginEnumWindows(unsigned long hwnd)
+BeginEnumWindows(HWND hwnd)
 
 bool
 EndEnumWindows(unsigned long henum)
@@ -946,55 +1398,59 @@ unsigned long
 GetNextWindow(unsigned long henum)
 
 bool
-IsWindowVisible(unsigned long hwnd)
+IsWindowVisible(HWND hwnd)
 
 bool
-IsWindowEnabled(unsigned long hwnd)
+IsWindowEnabled(HWND hwnd)
 
 bool
-IsWindowShowing(unsigned long hwnd)
+IsWindowShowing(HWND hwnd)
 
 unsigned long
-QueryWindow(unsigned long hwnd, long cmd)
+QueryWindow(HWND hwnd, long cmd)
 
 unsigned long
-IsChild(unsigned long hwnd, unsigned long hwndParent)
+IsChild(HWND hwnd, HWND hwndParent)
 
 unsigned long
-WindowFromId(unsigned long hwndParent, unsigned long id)
+WindowFromId(HWND hwndParent, unsigned long id)
 
 unsigned long
-WindowFromPoint(long x, long y, unsigned long hwnd = HWND_DESKTOP, bool fChildren = TRUE)
+WindowFromPoint(long x, long y, HWND hwnd = HWND_DESKTOP, bool fChildren = TRUE)
 PROTOTYPE: DISABLE
 
 unsigned long
-EnumDlgItem(unsigned long hwndDlg, unsigned long code, unsigned long hwnd = NULLHANDLE)
+EnumDlgItem(HWND hwndDlg, unsigned long code, HWND hwnd = NULLHANDLE)
    C_ARGS: hwndDlg, hwnd, code
 
 bool
-EnableWindowUpdate(unsigned long hwnd, bool fEnable = TRUE)
+EnableWindowUpdate(HWND hwnd, bool fEnable = TRUE)
 
 bool
-SetWindowBits(unsigned long hwnd, long index, unsigned long flData, unsigned long flMask)
+SetWindowBits(HWND hwnd, long index, unsigned long flData, unsigned long flMask)
 
 bool
-SetWindowPtr(unsigned long hwnd, long index, unsigned long p)
+SetWindowPtr(HWND hwnd, long index, unsigned long p)
     C_ARGS: hwnd, index, (PVOID)p
 
 bool
-SetWindowULong(unsigned long hwnd, long index, unsigned long i)
+SetWindowULong(HWND hwnd, long index, unsigned long i)
 
 bool
-SetWindowUShort(unsigned long hwnd, long index, unsigned short i)
+SetWindowUShort(HWND hwnd, long index, unsigned short i)
 
 bool
-IsWindow(unsigned long hwnd, unsigned long hab = Acquire_hab())
+IsWindow(HWND hwnd, HAB hab = Acquire_hab())
     C_ARGS: hab, hwnd
 
 BOOL
-ActiveWindow_set(unsigned long hwnd, unsigned long hwndDesktop = HWND_DESKTOP)
+ActiveWindow_set(HWND hwnd, HWND hwndDesktop = HWND_DESKTOP)
     CODE:
 	RETVAL = SetActiveWindow(hwndDesktop, hwnd);
+
+unsigned long
+LoadPointer(unsigned long idres, unsigned long hmod = 0, HWND hwndDesktop = HWND_DESKTOP)
+    C_ARGS: hwndDesktop, hmod, idres
 
 int
 out_codepage()
@@ -1039,55 +1495,202 @@ cursor(OUTLIST int stp, OUTLIST int ep, OUTLIST int wp, OUTLIST int ap)
 bool
 cursor_set(int s, int e, int w = cursor__(0), int a = cursor__(1))
 
+SV*
+_kbdChar(int nowait = 0, int handle = 0)
+
+SV*
+_kbdStatus(int handle = 0)
+
+void
+_kbdStatus_set(SV *sv, int handle = 0)
+
+SV*
+_vioConfig(int which = 0, int handle = 0)
+
+SV*
+_vioMode()
+
+void
+_vioMode_set(SV *buffer)
+
+SV*
+_vioState(int what, int first = -1, int count = -1)
+
+void
+_vioState_set(SV *buffer)
+
+SV*
+vioFont( int type = 0, OUTLIST int w, OUTLIST int h)
+
+void
+vioFont_set(SV *buffer, int cellwidth, int cellheight, int type = 0)
+
+NO_OUTPUT bool
+_ClipbrdData_set(unsigned long ulData, unsigned long fmt = CF_TEXT, unsigned long rgfFmtInfo = ((fmt == CF_TEXT || fmt == CF_DSPTEXT) ? CFI_POINTER : CFI_HANDLE), HAB hab = perl_hab_GET())
+    PROTOTYPE: DISABLE
+    C_ARGS: hab, ulData, fmt, rgfFmtInfo
+    POSTCALL:
+	if (CheckWinError(RETVAL))
+	    croak_with_os2error("_ClipbrdData_set() error");
+
+void
+ClipbrdData_set(SV *text, int convert_nl = 1, unsigned long fmt = CF_TEXT, unsigned long rgfFmtInfo = ((fmt == CF_TEXT || fmt == CF_DSPTEXT) ? CFI_POINTER : CFI_HANDLE), HAB hab = perl_hab_GET())
+    PROTOTYPE: DISABLE
+
+void
+ClipbrdOwner_set(HWND hwnd, HAB hab = perl_hab_GET())
+    C_ARGS: hab, hwnd
+
+void
+ClipbrdViewer_set(HWND hwnd, HAB hab = perl_hab_GET())
+    C_ARGS: hab, hwnd
+
+unsigned long
+EnumClipbrdFmts(unsigned long fmt = 0, HAB hab = perl_hab_GET())
+    C_ARGS: hab, fmt
+
+unsigned long
+AddAtom(char *pszAtomName, HATOMTBL hAtomTbl = QuerySystemAtomTable())
+    C_ARGS: hAtomTbl, pszAtomName
+
+unsigned long
+FindAtom(char *pszAtomName, HATOMTBL hAtomTbl = QuerySystemAtomTable())
+    C_ARGS: hAtomTbl, pszAtomName
+
+unsigned long
+DeleteAtom(char *pszAtomName, HATOMTBL hAtomTbl = QuerySystemAtomTable())
+    C_ARGS: hAtomTbl, pszAtomName
+
+void
+Alarm(unsigned long rgfType = WA_ERROR, HWND hwndDesktop = HWND_DESKTOP)
+    C_ARGS: hwndDesktop, rgfType
+
+void
+FlashWindow(HWND hwndFrame, bool fFlash)
+
 MODULE = OS2::Process		PACKAGE = OS2::Process	PREFIX = myQuery
 
 SV *
-myQueryWindowText(unsigned long hwnd)
+myQueryWindowText(HWND hwnd)
 
 SV *
-myQueryClassName(unsigned long hwnd)
+myQueryClassName(HWND hwnd)
 
 MODULE = OS2::Process		PACKAGE = OS2::Process	PREFIX = Query
 
 unsigned long
-QueryFocusWindow(unsigned long hwndDesktop = HWND_DESKTOP)
+QueryFocusWindow(HWND hwndDesktop = HWND_DESKTOP)
 
 long
-QueryWindowTextLength(unsigned long hwnd)
+QueryWindowTextLength(HWND hwnd)
 
 SV *
-QueryWindowSWP(unsigned long hwnd)
+QueryWindowSWP(HWND hwnd)
 
 unsigned long
-QueryWindowULong(unsigned long hwnd, long index)
+QueryWindowULong(HWND hwnd, long index)
 
 unsigned short
-QueryWindowUShort(unsigned long hwnd, long index)
+QueryWindowUShort(HWND hwnd, long index)
 
 unsigned long
-QueryActiveWindow(unsigned long hwnd = HWND_DESKTOP)
+QueryActiveWindow(HWND hwnd = HWND_DESKTOP)
 
 unsigned long
-QueryDesktopWindow(unsigned long hab = Acquire_hab(), unsigned long hdc = NULLHANDLE)
+QueryDesktopWindow(HAB hab = Acquire_hab(), unsigned long hdc = NULLHANDLE)
+
+unsigned long
+QueryClipbrdData(unsigned long fmt = CF_TEXT, HAB hab = perl_hab_GET())
+    C_ARGS: hab, fmt
+    PROTOTYPE: DISABLE
+
+unsigned long
+QueryClipbrdViewer(HAB hab = perl_hab_GET())
+
+unsigned long
+QueryClipbrdOwner(HAB hab = perl_hab_GET())
+
+void
+CloseClipbrd(HAB hab = perl_hab_GET())
+
+void
+EmptyClipbrd(HAB hab = perl_hab_GET())
+
+bool
+OpenClipbrd(HAB hab = perl_hab_GET())
+
+unsigned long
+QueryAtomUsage(ATOM atom, HATOMTBL hAtomTbl = QuerySystemAtomTable())
+    C_ARGS: hAtomTbl, atom
+
+unsigned long
+QueryAtomLength(ATOM atom, HATOMTBL hAtomTbl = QuerySystemAtomTable())
+    C_ARGS: hAtomTbl, atom
+
+unsigned long
+QuerySystemAtomTable()
+
+unsigned long
+QuerySysPointer(long lId, bool fCopy = 1, HWND hwndDesktop = HWND_DESKTOP)
+    C_ARGS: hwndDesktop, lId, fCopy
+
+unsigned long
+CreateAtomTable(unsigned long initial = 0, unsigned long buckets = 0)
+
+unsigned long
+DestroyAtomTable(HATOMTBL hAtomTbl)
+
 
 MODULE = OS2::Process		PACKAGE = OS2::Process	PREFIX = myWinQuery
 
 unsigned long
-myWinQueryWindowPtr(unsigned long hwnd, long index)
+myWinQueryWindowPtr(HWND hwnd, long index)
 
 NO_OUTPUT BOOL
-myWinQueryWindowProcess(unsigned long hwnd, OUTLIST unsigned long pid, OUTLIST unsigned long tid)
+myWinQueryWindowProcess(HWND hwnd, OUTLIST unsigned long pid, OUTLIST unsigned long tid)
    PROTOTYPE: $
    POSTCALL:
 	if (CheckWinError(RETVAL))
-	    croak("WindowProcess() error");
+	    croak_with_os2error("WindowProcess() error");
+
+SV *
+myWinQueryActiveDesktopPathname()
+
+void
+myWinQueryClipbrdFmtInfo(OUTLIST unsigned long prgfFmtInfo, unsigned long fmt = CF_TEXT, HAB hab = perl_hab_GET())
+   C_ARGS: hab, fmt, &prgfFmtInfo
+
+SV *
+myWinQueryAtomName(ATOM atom, HATOMTBL hAtomTbl = QuerySystemAtomTable())
 
 MODULE = OS2::Process		PACKAGE = OS2::Process	PREFIX = myWin
 
 int
-myWinSwitchToProgram(unsigned long hsw)
+myWinSwitchToProgram(HSWITCH hsw = switch_of(NULLHANDLE, getpid()))
     PREINIT:
 	ULONG rc;
+
+#if 0
+
+unsigned long
+myWinMessageBox(unsigned long pszText, char* pszCaption = "Perl script error", unsigned long flStyle = MB_CANCEL | MB_ICONHAND, HWND hwndParent = HWND_DESKTOP, HWND hwndOwner = HWND_DESKTOP, unsigned long idWindow = 0)
+    C_ARGS: hwndParent, hwndOwner, pszText, pszCaption, idWindow, flStyle
+
+#endif
+
+unsigned long
+_MessageBox(char* pszText, char* pszCaption = "Perl script error", unsigned long flStyle = MB_CANCEL | MB_INFORMATION | MB_MOVEABLE, HWND hwndParent = HWND_DESKTOP, HWND hwndOwner = NULLHANDLE, unsigned long idWindow = 0)
+    C_ARGS: hwndParent, hwndOwner, pszText, pszCaption, idWindow, flStyle
+    POSTCALL:
+	if (RETVAL == MBID_ERROR)
+	    RETVAL = 0;
+
+unsigned long
+_MessageBox2(char *pszText, char* pmb2info, char *pszCaption, HWND hwndParent = HWND_DESKTOP, HWND hwndOwner = NULLHANDLE, unsigned long idWindow = 0)
+    C_ARGS: hwndParent, hwndOwner, pszText, pszCaption, idWindow, (PMB2INFO)pmb2info
+    POSTCALL:
+	if (RETVAL == MBID_ERROR)
+	    RETVAL = 0;
 
 MODULE = OS2::Process		PACKAGE = OS2::Process	PREFIX = myWinQuery
 
@@ -1108,6 +1711,12 @@ getscrsize(OUTLIST int wp, OUTLIST int hp)
 
 bool
 scrsize_set(int w_or_h, int h = -9999)
+
+void
+get_InvalidateRect(HWND hwnd, char *prcl, bool fIncludeChildren)
+
+void
+get_CreateFrameControls(HWND hwndFrame, char *pfcdata, char* pszTitle)
 
 MODULE = OS2::Process		PACKAGE = OS2::Process	PREFIX = ul
 

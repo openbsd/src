@@ -10,7 +10,7 @@
 # Currently, only byacc version 1.8 is fully supported.
 #
 #  Hacks to make it work with Interactive's SysVr3 Version 2.2
-#   doughera@lafvax.lafayette.edu (Andy Dougherty)   3/23/91
+#   doughera@lafayette.edu (Andy Dougherty)   3/23/91
 #
 # Additional information to make the BSD section work with SunOS 4.0.2
 #   tdinger@East.Sun.COM (Tom Dinger)	4/15/1991

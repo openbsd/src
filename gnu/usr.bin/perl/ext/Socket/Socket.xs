@@ -9,7 +9,9 @@
 # ifdef I_SYS_TYPES
 #  include <sys/types.h>
 # endif
-# include <sys/socket.h>
+# if !defined(ultrix) /* Avoid double definition. */
+#   include <sys/socket.h>
+# endif
 # if defined(USE_SOCKS) && defined(I_SOCKS)
 #   include <socks.h>
 # endif
@@ -25,11 +27,16 @@
 # if defined(NeXT) || defined(__NeXT__)
 #  include <netinet/in_systm.h>
 # endif
-# ifdef I_NETINET_IN
+# if defined(__sgi) && !defined(AF_LINK) && defined(PF_LINK) && PF_LINK == AF_LNK
+#  undef PF_LINK
+# endif
+# if defined(I_NETINET_IN) || defined(__ultrix__)
 #  include <netinet/in.h>
 # endif
 # ifdef I_NETDB
-#  include <netdb.h>
+#  if !defined(ultrix)  /* Avoid double definition. */
+#   include <netdb.h>
+#  endif
 # endif
 # ifdef I_ARPA_INET
 #  include <arpa/inet.h>
@@ -364,10 +371,10 @@ unpack_sockaddr_un(sun_sv)
 			addr.sun_family,
 			AF_UNIX);
 	}
-	e = addr.sun_path;
-	while (*e && e < addr.sun_path + sizeof addr.sun_path)
+	e = (char*)addr.sun_path;
+	while (*e && e < (char*)addr.sun_path + sizeof addr.sun_path)
 	    ++e;
-	ST(0) = sv_2mortal(newSVpvn(addr.sun_path, e - addr.sun_path));
+	ST(0) = sv_2mortal(newSVpvn(addr.sun_path, e - (char*)addr.sun_path));
 #else
 	ST(0) = (SV *) not_here("unpack_sockaddr_un");
 #endif

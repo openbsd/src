@@ -10,7 +10,8 @@ mechanics of object and class relationships.  The reader is encouraged to
 consult relevant textbooks for discussion of Object Oriented definitions and
 methodology.  This is not intended as a tutorial for object-oriented
 programming or as a comprehensive guide to Perl's object oriented features,
-nor should it be construed as a style guide.
+nor should it be construed as a style guide.  If you're looking for tutorials,
+be sure to read L<perlboot>, L<perltoot>, and L<perltooc>.
 
 The Perl motto still holds:  There's more than one way to do it.
 
@@ -525,3 +526,7 @@ behavior by adding custom FETCH() and STORE() methods, if this is desired.
 	tie %foo, "Mydbm", "adbm", O_RDWR|O_CREAT, 0640;
 	$foo{'bar'} = 123;
 	print "foo-bar = $foo{'bar'}\n";
+
+=head1 SEE ALSO
+
+L<perlboot>, L<perltoot>, L<perltooc>.

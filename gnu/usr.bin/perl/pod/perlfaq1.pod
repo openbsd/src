@@ -1,6 +1,6 @@
 =head1 NAME
 
-perlfaq1 - General Questions About Perl ($Revision: 1.8 $, $Date: 2002/04/07 18:46:13 $)
+perlfaq1 - General Questions About Perl ($Revision: 1.12 $, $Date: 2003/07/09 15:47:28 $)
 
 =head1 DESCRIPTION
 
@@ -40,7 +40,7 @@ http://www.xray.mpe.mpg.de/mailing-lists/perl5-porters/
 and http://archive.develooper.com/perl5-porters@perl.org/
 or the news gateway nntp://nntp.perl.org/perl.perl5.porters or
 its web interface at http://nntp.perl.org/group/perl.perl5.porters ,
-or read the faq at http://perlhacker.org/p5p-faq ,
+or read the faq at http://simon-cozens.org/writings/p5p-faq ,
 or you can subscribe to the mailing list by sending
 perl5-porters-request@perl.org a subscription request
 (an empty message with no subject is fine).
@@ -59,14 +59,15 @@ users the informal support will more than suffice.  See the answer to
 You should definitely use version 5.  Version 4 is old, limited, and
 no longer maintained; its last patch (4.036) was in 1992, long ago and
 far away.  Sure, it's stable, but so is anything that's dead; in fact,
-perl4 had been called a dead, flea-bitten camel carcass.  The most recent
-production release is 5.6 (although 5.005_03 is still supported).
-The most cutting-edge development release is 5.7.  Further references
-to the Perl language in this document refer to the production release
-unless otherwise specified.  There may be one or more official bug fixes
-by the time you read this, and also perhaps some experimental versions
-on the way to the next release.  All releases prior to 5.004 were subject
-to buffer overruns, a grave security issue.
+perl4 had been called a dead, flea-bitten camel carcass.  The most
+recent production release is 5.8.1 (although 5.005_03 and 5.6.1 are
+still supported). The most cutting-edge development release is 5.9.
+Further references to the Perl language in this document refer to the
+production release unless otherwise specified.  There may be one or
+more official bug fixes by the time you read this, and also perhaps
+some experimental versions on the way to the next release.
+All releases prior to 5.004 were subject to buffer overruns, a grave
+security issue.
 
 =head2 What are perl4 and perl5?
 
@@ -82,7 +83,7 @@ The 5.0 release is, essentially, a ground-up rewrite of the original
 perl source code from releases 1 through 4.  It has been modularized,
 object-oriented, tweaked, trimmed, and optimized until it almost doesn't
 look like the old code.  However, the interface is mostly the same, and
-compatibility with previous releases is very high. 
+compatibility with previous releases is very high.
 See L<perltrap/"Perl4 to Perl5 Traps">.
 
 To avoid the "what language is perl5?" confusion, some people prefer to
@@ -91,16 +92,26 @@ simply use "perl" to refer to the latest version of perl and avoid using
 
 See L<perlhist> for a history of Perl revisions.
 
+=head2 What is Ponie?
+
+At The O'Reilly Open Source Software Convention in 2003, Artur
+Bergman, Fotango, and The Perl Foundation announced a project to
+run perl5 on the Parrot virtual machine named Ponie. Ponie stands for
+Perl On New Internal Engine.  The Perl 5.10 language implementation
+will be used for Ponie, and there will be no language level
+differences between perl5 and ponie.  Ponie is not a complete rewrite
+of perl5.
+
 =head2 What is perl6?
 
-At The Second O'Reilly Open Source Software Convention, Larry Wall            
+At The Second O'Reilly Open Source Software Convention, Larry Wall
 announced Perl6 development would begin in earnest. Perl6 was an oft
 used term for Chip Salzenberg's project to rewrite Perl in C++ named
 Topaz. However, Topaz provided valuable insights to the next version
-of Perl and its implementation, but was ultimately abandoned.   
+of Perl and its implementation, but was ultimately abandoned.
 
-If you want to learn more about Perl6, or have a desire to help in 
-the crusade to make Perl a better place then peruse the Perl6 developers 
+If you want to learn more about Perl6, or have a desire to help in
+the crusade to make Perl a better place then peruse the Perl6 developers
 page at http://dev.perl.org/perl6/ and get involved.
 
 Perl6 is not scheduled for release yet, and Perl5 will still be supported
@@ -296,11 +307,12 @@ for any given task.  Also mention that the difference between version
 (Well, OK, maybe it's not quite that distinct, but you get the idea.)
 If you want support and a reasonable guarantee that what you're
 developing will continue to work in the future, then you have to run
-the supported version.  As of January 2002 that probably means
-running either of the releases 5.6.1 (released in April 2001) or
-5.005_03 (released in March 1999), although 5.004_05 isn't that bad
-if you B<absolutely> need such an old version (released in April 1999)
-for stability reasons.  Anything older than 5.004_05 shouldn't be used.
+the supported version.  As of October 2003 that means running either
+5.8.1 (released in September 2003), or one of the older releases like
+5.6.1 (released in April 2001) or 5.005_03 (released in March 1999),
+although 5.004_05 isn't that bad if you B<absolutely> need such an old
+version (released in April 1999) for stability  reasons.
+Anything older than 5.004_05 shouldn't be used.
 
 Of particular note is the massive bug hunt for buffer overflow
 problems that went into the 5.004 release.  All releases prior to

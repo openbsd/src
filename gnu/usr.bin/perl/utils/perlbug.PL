@@ -138,7 +138,8 @@ my $Version = "1.34";
 
 my( $file, $usefile, $cc, $address, $perlbug, $testaddress, $filename, $messageid, $domain,
     $subject, $from, $verbose, $ed, $outfile, $Is_MacOS, $category, $severity,
-    $fh, $me, $Is_MSWin32, $Is_Linux, $Is_VMS, $msg, $body, $andcc, %REP, $ok);
+    $fh, $me, $Is_MSWin32, $Is_Linux, $Is_VMS, $msg, $body, $andcc, %REP, $ok,
+    $Is_OpenBSD);
 
 my $perl_version = $^V ? sprintf("v%vd", $^V) : $];
 
@@ -211,6 +212,7 @@ sub Init {
     $Is_MSWin32 = $^O eq 'MSWin32';
     $Is_VMS = $^O eq 'VMS';
     $Is_Linux = lc($^O) eq 'linux';
+    $Is_OpenBSD = lc($^O) eq 'openbsd';
     $Is_MacOS = $^O eq 'MacOS';
 
     @ARGV = split m/\s+/,
@@ -833,7 +835,7 @@ sub Send {
     # on linux certain mail implementations won't accept the subject
     # as "~s subject" and thus the Subject header will be corrupted
     # so don't use Mail::Send to be safe
-    if ($::HaveSend && !$Is_Linux) {
+    if ($::HaveSend && !$Is_Linux && !$Is_OpenBSD) {
 	$msg = new Mail::Send Subject => $subject, To => $address;
 	$msg->cc($cc) if $cc;
 	$msg->add("Reply-To",$from) if $from;

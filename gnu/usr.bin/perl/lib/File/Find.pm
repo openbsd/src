@@ -3,9 +3,15 @@ use 5.006;
 use strict;
 use warnings;
 use warnings::register;
-our $VERSION = '1.04';
+our $VERSION = '1.05';
 require Exporter;
 require Cwd;
+
+#
+# Modified to ensure sub-directory traversal order is not inverded by stack
+# push and pops.  That is remains in the same order as in the directory file,
+# or user pre-processing (EG:sorted).
+#
 
 =head1 NAME
 
@@ -14,7 +20,7 @@ File::Find - Traverse a directory tree.
 =head1 SYNOPSIS
 
     use File::Find;
-    find(\&wanted, @directories_to_seach);
+    find(\&wanted, @directories_to_search);
     sub wanted { ... }
 
     use File::Find;
@@ -39,7 +45,7 @@ but have subtle differences.
   find(\%options, @directories);
 
 find() does a breadth-first search over the given @directories in the
-order they are given.  In essense, it works from the top down.
+order they are given.  In essence, it works from the top down.
 
 For each file or directory found the &wanted subroutine is called (see
 below for details).  Additionally, for each directory found it will go
@@ -568,7 +574,7 @@ sub _find_opt {
     local ($wanted_callback, $avoid_nlink, $bydepth, $no_chdir, $follow,
 	$follow_skip, $full_check, $untaint, $untaint_skip, $untaint_pat,
 	$pre_process, $post_process, $dangling_symlinks);
-    local($dir, $name, $fullname, $prune);
+    local($dir, $name, $fullname, $prune, $_);
 
     my $cwd            = $wanted->{bydepth} ? Cwd::fastcwd() : Cwd::getcwd();
     my $cwd_untainted  = $cwd;
@@ -662,7 +668,7 @@ sub _find_opt {
 		next Proc_Top_Item;
 	    }
 	    if (-d _) {
-		$top_item =~ s/\.dir\z// if $Is_VMS;
+		$top_item =~ s/\.dir\z//i if $Is_VMS;
 		_find_dir($wanted, $top_item, $topnlink);
 		$Is_Dir= 1;
 	    }
@@ -700,6 +706,7 @@ sub _find_opt {
 	    }
 
 	    $name = $abs_dir . $_; # $File::Find::name
+	    $_ = $name if $no_chdir;
 
 	    { $wanted_callback->() }; # protect against wild "next"
 
@@ -762,7 +769,7 @@ sub _find_dir($$$) {
 		}
 	    }
 	}
-	unless (chdir $udir) {
+	unless (chdir ($Is_VMS && $udir !~ /[\/\[<]+/ ? "./$udir" : $udir)) {
 	    warnings::warnif "Can't cd to $udir: $!\n";
 	    return;
 	}
@@ -804,7 +811,7 @@ sub _find_dir($$$) {
 		    }
 		}
 	    }
-	    unless (chdir $udir) {
+	    unless (chdir ($Is_VMS && $udir !~ /[\/\[<]+/ ? "./$udir" : $udir)) {
 		if ($Is_MacOS) {
 		    warnings::warnif "Can't cd to ($p_dir) $udir: $!\n";
 		}
@@ -854,6 +861,11 @@ sub _find_dir($$$) {
 	    # This dir has subdirectories.
 	    $subcount = $nlink - 2;
 
+	    # HACK: insert directories at this position. so as to preserve
+	    # the user pre-processed ordering of files.
+	    # EG: directory traversal is in user sorted order, not at random.
+            my $stack_top = @Stack;
+
 	    for my $FN (@filenames) {
 		next if $FN =~ $File::Find::skip_pattern;
 		if ($subcount > 0 || $no_nlink) {
@@ -864,8 +876,11 @@ sub _find_dir($$$) {
 
 		    if (-d _) {
 			--$subcount;
-			$FN =~ s/\.dir\z// if $Is_VMS;
-			push @Stack,[$CdLvl,$dir_name,$FN,$sub_nlink];
+			$FN =~ s/\.dir\z//i if $Is_VMS;
+			# HACK: replace push to preserve dir traversal order
+			#push @Stack,[$CdLvl,$dir_name,$FN,$sub_nlink];
+			splice @Stack, $stack_top, 0,
+			         [$CdLvl,$dir_name,$FN,$sub_nlink];
 		    }
 		    else {
 			$name = $dir_pref . $FN; # $File::Find::name

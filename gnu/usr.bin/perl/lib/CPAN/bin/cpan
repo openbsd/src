@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $Id: cpan,v 1.1.1.1 2003/12/03 02:44:01 millert Exp $
+# $Id: cpan,v 1.2 2003/12/03 03:02:37 millert Exp $
 use strict;
 
 =head1 NAME
@@ -117,7 +117,7 @@ use CPAN ();
 use Getopt::Std;
 
 my $VERSION = 
-	sprintf "%d.%02d", q$Revision: 1.1.1.1 $ =~ m/ (\d+) \. (\d+) /xg;
+	sprintf "%d.%02d", q$Revision: 1.2 $ =~ m/ (\d+) \. (\d+) /xg;
 
 my $Default = 'default';
 

@@ -6,7 +6,7 @@
 
 $| = 1;
 
-print "1..922\n";
+print "1..1055\n";
 
 BEGIN {
     chdir 't' if -d 't';
@@ -1367,10 +1367,10 @@ print "ok 247\n";
     print "ok 263\n";
 }
 
-{
+SKIP: {
     my $test = 264; # till 575
 
-    use charnames ':full';
+    use charnames ":full";
 
     # This is far from complete testing, there are dozens of character
     # classes in Unicode.  The mixing of literals and \N{...} is
@@ -2902,3 +2902,356 @@ print "e" =~ /\P{InConsonant}/ ? "ok $test\n" : "not ok $test\n"; $test++;
 }
 
 $test = 923;
+
+$a = bless qr/foo/, 'Foo';
+print(('goodfood' =~ $a ? '' : 'not '),
+	"ok $test\t# reblessed qr// matches\n");
+++$test;
+
+print(($a eq '(?-xism:foo)' ? '' : 'not '),
+	"ok $test\t# reblessed qr// stringizes\n");
+++$test;
+
+$x = "\x{3fe}";
+$z=$y = "\317\276"; # $y is byte representation of $x
+
+$a = qr/$x/;
+print(($x =~ $a ? '' : 'not '), "ok $test - utf8 interpolation in qr//\n");
+++$test;
+
+print(("a$a" =~ $x ? '' : 'not '),
+      "ok $test - stringifed qr// preserves utf8\n");
+++$test;
+
+print(("a$x" =~ /^a$a\z/ ? '' : 'not '),
+      "ok $test - interpolated qr// preserves utf8\n");
+++$test;
+
+print(("a$x" =~ /^a(??{$a})\z/ ? '' : 'not '),
+      "ok $test - postponed interpolation of qr// preserves utf8\n");
+++$test;
+
+print((length(qr/##/x) == 12 ? '' : 'not '),
+      "ok $test - ## in qr// doesn't corrupt memory [perl #17776]\n");
+++$test;
+
+{ use re 'eval';
+
+print(("$x$x" =~ /^$x(??{$x})\z/ ? '' : 'not '),
+      "ok $test - postponed utf8 string in utf8 re matches utf8\n");
+++$test;
+
+print(("$y$x" =~ /^$y(??{$x})\z/ ? '' : 'not '),
+      "ok $test - postponed utf8 string in non-utf8 re matches utf8\n");
+++$test;
+
+print(("$y$x" !~ /^$y(??{$y})\z/ ? '' : 'not '),
+      "ok $test - postponed non-utf8 string in non-utf8 re doesn't match utf8\n");
+++$test;
+
+print(("$x$x" !~ /^$x(??{$y})\z/ ? '' : 'not '),
+      "ok $test - postponed non-utf8 string in utf8 re doesn't match utf8\n");
+++$test;
+
+print(("$y$y" =~ /^$y(??{$y})\z/ ? '' : 'not '),
+      "ok $test - postponed non-utf8 string in non-utf8 re matches non-utf8\n");
+++$test;
+
+print(("$x$y" =~ /^$x(??{$y})\z/ ? '' : 'not '),
+      "ok $test - postponed non-utf8 string in utf8 re matches non-utf8\n");
+++$test;
+$y = $z; # reset $y after upgrade
+
+print(("$x$y" !~ /^$x(??{$x})\z/ ? '' : 'not '),
+      "ok $test - postponed utf8 string in utf8 re doesn't match non-utf8\n");
+++$test;
+$y = $z; # reset $y after upgrade
+
+print(("$y$y" !~ /^$y(??{$x})\z/ ? '' : 'not '),
+      "ok $test - postponed utf8 string in non-utf8 re doesn't match non-utf8\n");
+++$test;
+
+} # no re 'eval'
+
+print "# more user-defined character properties\n";
+
+sub IsSyriac1 {
+    return <<'END';
+0712	072C
+0730	074A
+END
+}
+
+print "\x{0712}" =~ /\p{IsSyriac1}/ ? "ok $test\n" : "not ok $test\n"; $test++;
+print "\x{072F}" =~ /\P{IsSyriac1}/ ? "ok $test\n" : "not ok $test\n"; $test++;
+
+sub Syriac1 {
+    return <<'END';
+0712	072C
+0730	074A
+END
+}
+
+print "\x{0712}" =~ /\p{Syriac1}/ ? "ok $test\n" : "not ok $test\n"; $test++;
+print "\x{072F}" =~ /\P{Syriac1}/ ? "ok $test\n" : "not ok $test\n"; $test++;
+
+{
+    print "# Change #18179\n";
+    # previously failed with "panic: end_shift
+    my $s = "\x{100}" x 5;
+    my $ok = $s =~ /(\x{100}{4})/;
+    my($ord, $len) = (ord $1, length $1);
+    print +($ok && $ord == 0x100 && $len == 4)
+	    ? "ok $test\n" : "not ok $test\t# $ok/$ord/$len\n";
+    ++$test;
+}
+
+{
+    print "# [perl #15763]\n";
+
+    $a = "x\x{100}";
+    chop $a; # but leaves the UTF-8 flag
+    $a .= "y"; # 1 byte before "y"
+
+    ok($a =~ /^\C/,      'match one \C on 1-byte UTF-8');
+    ok($a =~ /^\C{1}/,   'match \C{1}');
+
+    ok($a =~ /^\Cy/,      'match \Cy');
+    ok($a =~ /^\C{1}y/,   'match \C{1}y');
+
+    $a = "\x{100}y"; # 2 bytes before "y"
+
+    ok($a =~ /^\C/,       'match one \C on 2-byte UTF-8');
+    ok($a =~ /^\C{1}/,    'match \C{1}');
+    ok($a =~ /^\C\C/,     'match two \C');
+    ok($a =~ /^\C{2}/,    'match \C{2}');
+
+    ok($a =~ /^\C\C\C/,    'match three \C on 2-byte UTF-8 and a byte');
+    ok($a =~ /^\C{3}/,     'match \C{3}');
+
+    ok($a =~ /^\C\Cy/,     'match two \C');
+    ok($a =~ /^\C{2}y/,    'match \C{2}');
+
+    ok($a !~ /^\C\C\Cy/,    q{don't match three \Cy});
+    ok($a !~ /^\C{2}\Cy/,   q{don't match \C{3}y});
+
+    $a = "\x{1000}y"; # 3 bytes before "y"
+
+    ok($a =~ /^\C/,         'match one \C on three-byte UTF-8');
+    ok($a =~ /^\C{1}/,      'match \C{1}');
+    ok($a =~ /^\C\C/,       'match two \C');
+    ok($a =~ /^\C{2}/,      'match \C{2}');
+    ok($a =~ /^\C\C\C/,     'match three \C');
+    ok($a =~ /^\C{3}/,      'match \C{3}');
+
+    ok($a =~ /^\C\C\C\C/,   'match four \C on three-byte UTF-8 and a byte');
+    ok($a =~ /^\C{4}/,      'match \C{4}');
+
+    ok($a =~ /^\C\C\Cy/,    'match three \Cy');
+    ok($a =~ /^\C{3}y/,     'match \C{3}y');
+
+    ok($a !~ /^\C\C\C\C\y/, q{don't match four \Cy});
+    ok($a !~ /^\C{4}y/,     q{don't match \C{4}y});
+}
+
+$_ = 'aaaaaaaaaa';
+utf8::upgrade($_); chop $_; $\="\n";
+ok(/[^\s]+/, "m/[^\s]/ utf8");
+ok(/[^\d]+/, "m/[^\d]/ utf8");
+ok(($a = $_, $_ =~ s/[^\s]+/./g), "s/[^\s]/ utf8");
+ok(($a = $_, $a =~ s/[^\d]+/./g), "s/[^\s]/ utf8");
+
+ok("\x{100}" =~ /\x{100}/, "[perl #15397]");
+ok("\x{100}" =~ /(\x{100})/, "[perl #15397]");
+ok("\x{100}" =~ /(\x{100}){1}/, "[perl #15397]");
+ok("\x{100}\x{100}" =~ /(\x{100}){2}/, "[perl #15397]");
+ok("\x{100}\x{100}" =~ /(\x{100})(\x{100})/, "[perl #15397]");
+
+$x = "CD";
+$x =~ /(AB)*?CD/;
+ok(!defined $1, "[perl #7471]");
+
+$x = "CD";
+$x =~ /(AB)*CD/;
+ok(!defined $1, "[perl #7471]");
+
+$pattern = "^(b+?|a){1,2}c";
+ok("bac"    =~ /$pattern/ && $1 eq 'a', "[perl #3547]");
+ok("bbac"   =~ /$pattern/ && $1 eq 'a', "[perl #3547]");
+ok("bbbac"  =~ /$pattern/ && $1 eq 'a', "[perl #3547]");
+ok("bbbbac" =~ /$pattern/ && $1 eq 'a', "[perl #3547]");
+
+{
+    # [perl #18232]
+    "\x{100}" =~ /(.)/;
+    ok( $1 eq "\x{100}", '$1 is utf-8 [perl #18232]' );
+    { 'a' =~ /./; }
+    ok( $1 eq "\x{100}", '$1 is still utf-8' );
+    ok( $1 ne "\xC4\x80", '$1 is not non-utf-8' );
+}
+
+{
+    use utf8;
+    my $attr = 'Name-1' ;
+
+    my $NormalChar          = qr/[\p{IsDigit}\p{IsLower}\p{IsUpper}]/;
+    my $NormalWord          = qr/${NormalChar}+?/;
+    my $PredNameHyphen      = qr/^${NormalWord}(\-${NormalWord})*?$/;
+
+    $attr =~ /^$/;
+    ok( $attr =~ $PredNameHyphen, "[perl #19767] original test" );
+}
+
+{
+    use utf8;
+    "a" =~ m/[b]/;
+    ok ( "0" =~ /\p{N}+\z/, "[perl #19767] variant test" );
+}
+
+{
+
+    $p = 1;
+    foreach (1,2,3,4) {
+	    $p++ if /(??{ $p })/
+    }
+    ok ($p == 5, "[perl #20683] (??{ }) returns stale values");
+    { package P; $a=1; sub TIESCALAR { bless[] } sub FETCH { $a++ } }
+    tie $p, P;
+    foreach (1,2,3,4) {
+	    /(??{ $p })/
+    }
+    ok ( $p == 5, "(??{ }) returns stale values");
+}
+
+{
+  # Subject: Odd regexp behavior
+  # From: Markus Kuhn <Markus.Kuhn@cl.cam.ac.uk>
+  # Date: Wed, 26 Feb 2003 16:53:12 +0000
+  # Message-Id: <E18o4nw-0008Ly-00@wisbech.cl.cam.ac.uk>
+  # To: perl-unicode@perl.org
+    
+  $x = "\x{2019}\nk"; $x =~ s/(\S)\n(\S)/$1 $2/sg;
+  ok($x eq "\x{2019} k", "Markus Kuhn 2003-02-26");
+
+  $x = "b\nk"; $x =~ s/(\S)\n(\S)/$1 $2/sg;
+  ok($x eq "b k", "Markus Kuhn 2003-02-26");
+
+  ok("\x{2019}" =~ /\S/, "Markus Kuhn 2003-02-26");
+}
+
+{
+    my $i;
+    ok('-1-3-5-' eq join('', split /((??{$i++}))/, '-1-3-5-'),
+	"[perl #21411] (??{ .. }) corrupts split's stack");
+    split /(?{'WOW'})/, 'abc';
+    ok('a|b|c' eq join ('|', @_),
+       "[perl #21411] (?{ .. }) version of the above");
+}
+
+{
+    split /(?{ split "" })/, "abc";
+    ok(1,'cache_re & "(?{": it dumps core in 5.6.1 & 5.8.0');
+}
+
+{
+    ok("\x{100}\n" =~ /\x{100}\n$/, "UTF8 length cache and fbm_compile");  
+}
+
+{
+    package Str;
+    use overload q/""/ => sub { ${$_[0]}; };
+    sub new { my ($c, $v) = @_; bless \$v, $c; }
+
+    package main;
+    $_ = Str->new("a\x{100}/\x{100}b");
+    ok(join(":", /\b(.)\x{100}/g) eq "a:/", "re_intuit_start and PL_bostr");
+}
+
+{
+    $_ = "code:   'x' { '...' }\n"; study;
+    my @x; push @x, $& while m/'[^\']*'/gx;
+    ok(join(":", @x) eq "'x':'...'",
+       "[perl #17757] Parse::RecDescent triggers infinite loop");
+}
+
+{
+    my $re = qq/^([^X]*)X/;
+    utf8::upgrade($re);
+    ok("\x{100}X" =~ /$re/, "S_cl_and ANYOF_UNICODE & ANYOF_INVERTED");
+}
+
+ok(1, 'skip - $* not deprecated in Perl 5.8') for 1..6;
+
+# bug #19049
+$_="abcdef\n";
+@x = m/./g;
+ok("abcde" eq "$`", '# TODO #19049 - global match not setting $`');
+
+ok("123\x{100}" =~ /^.*1.*23\x{100}$/, 'uft8 + multiple floating substr');
+
+# LATIN SMALL/CAPITAL LETTER A WITH MACRON
+ok("  \x{101}" =~ qr/\x{100}/i,
+   "<20030808193656.5109.1@llama.ni-s.u-net.com>");
+
+# LATIN SMALL/CAPITAL LETTER A WITH RING BELOW
+ok("  \x{1E01}" =~ qr/\x{1E00}/i,
+   "<20030808193656.5109.1@llama.ni-s.u-net.com>");
+
+# DESERET SMALL/CAPITAL LETTER LONG I
+ok("  \x{10428}" =~ qr/\x{10400}/i,
+   "<20030808193656.5109.1@llama.ni-s.u-net.com>");
+
+# LATIN SMALL/CAPITAL LETTER A WITH RING BELOW + 'X'
+ok("  \x{1E01}x" =~ qr/\x{1E00}X/i,
+   "<20030808193656.5109.1@llama.ni-s.u-net.com>");
+
+{
+    # [perl #23769] Unicode regex broken on simple example
+    # regrepeat() didn't handle UTF-8 EXACT case right.
+
+    my $s = "\x{a0}\x{a0}\x{a0}\x{100}"; chop $s;
+
+    ok($s =~ /\x{a0}/,       "[perl #23769]");
+    ok($s =~ /\x{a0}+/,      "[perl #23769]");
+    ok($s =~ /\x{a0}\x{a0}/, "[perl #23769]");
+
+    ok("aaa\x{100}" =~ /(a+)/, "[perl #23769] easy invariant");
+    ok($1 eq "aaa", "[perl #23769]");
+
+    ok("\xa0\xa0\xa0\x{100}" =~ /(\xa0+)/, "[perl #23769] regrepeat invariant");
+    ok($1 eq "\xa0\xa0\xa0", "[perl #23769]");
+
+    ok("ababab\x{100}  " =~ /((?:ab)+)/, "[perl #23769] hard invariant");
+    ok($1 eq "ababab", "[perl #23769]");
+
+    ok("\xa0\xa1\xa0\xa1\xa0\xa1\x{100}" =~ /((?:\xa0\xa1)+)/, "[perl #23769] hard variant");
+    ok($1 eq "\xa0\xa1\xa0\xa1\xa0\xa1", "[perl #23769]");
+
+    ok("aaa\x{100}     " =~ /(a+?)/, "[perl #23769] easy invariant");
+    ok($1 eq "a", "[perl #23769]");
+
+    ok("\xa0\xa0\xa0\x{100}    " =~ /(\xa0+?)/, "[perl #23769] regrepeat variant");
+    ok($1 eq "\xa0", "[perl #23769]");
+
+    ok("ababab\x{100}  " =~ /((?:ab)+?)/, "[perl #23769] hard invariant");
+    ok($1 eq "ab", "[perl #23769]");
+
+    ok("\xa0\xa1\xa0\xa1\xa0\xa1\x{100}" =~ /((?:\xa0\xa1)+?)/, "[perl #23769] hard variant");
+    ok($1 eq "\xa0\xa1", "[perl #23769]");
+
+    ok("\xc4\xc4\xc4" !~ /(\x{100}+)/, "[perl #23769] don't match first byte of utf8 representation");
+    ok("\xc4\xc4\xc4" !~ /(\x{100}+?)/, "[perl #23769] don't match first byte of utf8 representation");
+}
+
+for (120 .. 130) {
+    my $head = 'x' x $_;
+    for my $tail ('\x{0061}', '\x{1234}') {
+	ok(
+	    eval qq{ "$head$tail" =~ /$head$tail/ },
+	    '\x{...} misparsed in regexp near 127 char EXACT limit'
+	);
+    }
+}
+
+# last test 1055
+

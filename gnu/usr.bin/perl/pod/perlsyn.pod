@@ -4,36 +4,40 @@ perlsyn - Perl syntax
 
 =head1 DESCRIPTION
 
-A Perl script consists of a sequence of declarations and statements.
-The sequence of statements is executed just once, unlike in B<sed>
-and B<awk> scripts, where the sequence of statements is executed
-for each input line.  While this means that you must explicitly
-loop over the lines of your input file (or files), it also means
-you have much more control over which files and which lines you look at.
-(Actually, I'm lying--it is possible to do an implicit loop with
-either the B<-n> or B<-p> switch.  It's just not the mandatory
-default like it is in B<sed> and B<awk>.)
+A Perl program consists of a sequence of declarations and statements
+which run from the top to the bottom.  Loops, subroutines and other
+control structures allow you to jump around within the code.
 
-Perl is, for the most part, a free-form language.  (The only exception
-to this is format declarations, for obvious reasons.)  Text from a
-C<"#"> character until the end of the line is a comment, and is
-ignored.  If you attempt to use C</* */> C-style comments, it will be
-interpreted either as division or pattern matching, depending on the
-context, and C++ C<//> comments just look like a null regular
-expression, so don't do that.
+Perl is a B<free-form> language, you can format and indent it however
+you like.  Whitespace mostly serves to separate tokens, unlike
+languages like Python where it is an important part of the syntax.
+
+Many of Perl's syntactic elements are B<optional>.  Rather than
+requiring you to put parentheses around every function call and
+declare every variable, you can often leave such explicit elements off
+and Perl will figure out what you meant.  This is known as B<Do What I
+Mean>, abbreviated B<DWIM>.  It allows programmers to be B<lazy> and to
+code in a style with which they are comfortable.
+
+Perl B<borrows syntax> and concepts from many languages: awk, sed, C,
+Bourne Shell, Smalltalk, Lisp and even English.  Other
+languages have borrowed syntax from Perl, particularly its regular
+expression extensions.  So if you have programmed in another language
+you will see familiar pieces in Perl.  They often work the same, but
+see L<perltrap> for information about how they differ.
 
 =head2 Declarations
 
-The only things you need to declare in Perl are report formats
-and subroutines--and even undefined subroutines can be handled
-through AUTOLOAD.  A variable holds the undefined value (C<undef>)
-until it has been assigned a defined value, which is anything
-other than C<undef>.  When used as a number, C<undef> is treated
-as C<0>; when used as a string, it is treated the empty string,
-C<"">; and when used as a reference that isn't being assigned
-to, it is treated as an error.  If you enable warnings, you'll
-be notified of an uninitialized value whenever you treat C<undef>
-as a string or a number.  Well, usually.  Boolean contexts, such as:
+The only things you need to declare in Perl are report formats and
+subroutines (and sometimes not even subroutines).  A variable holds
+the undefined value (C<undef>) until it has been assigned a defined
+value, which is anything other than C<undef>.  When used as a number,
+C<undef> is treated as C<0>; when used as a string, it is treated as
+the empty string, C<"">; and when used as a reference that isn't being
+assigned to, it is treated as an error.  If you enable warnings,
+you'll be notified of an uninitialized value whenever you treat
+C<undef> as a string or a number.  Well, usually.  Boolean contexts,
+such as:
 
     my $a;
     if ($a) {}
@@ -79,16 +83,30 @@ like an ordinary statement, and is elaborated within the sequence of
 statements as if it were an ordinary statement.  That means it actually
 has both compile-time and run-time effects.
 
-=head2 Simple statements
+=head2 Comments
+
+Text from a C<"#"> character until the end of the line is a comment,
+and is ignored.  Exceptions include C<"#"> inside a string or regular
+expression.
+
+=head2 Simple Statements
 
 The only kind of simple statement is an expression evaluated for its
 side effects.  Every simple statement must be terminated with a
 semicolon, unless it is the final statement in a block, in which case
-the semicolon is optional.  (A semicolon is still encouraged there if the
-block takes up more than one line, because you may eventually add another line.)
-Note that there are some operators like C<eval {}> and C<do {}> that look
-like compound statements, but aren't (they're just TERMs in an expression),
-and thus need an explicit termination if used as the last item in a statement.
+the semicolon is optional.  (A semicolon is still encouraged if the
+block takes up more than one line, because you may eventually add
+another line.)  Note that there are some operators like C<eval {}> and
+C<do {}> that look like compound statements, but aren't (they're just
+TERMs in an expression), and thus need an explicit termination if used
+as the last item in a statement.
+
+=head2 Truth and Falsehood
+
+The number 0, the strings C<'0'> and C<''>, the empty list C<()>, and
+C<undef> are all false in a boolean context. All other values are true.
+
+=head2 Statement Modifiers
 
 Any simple statement may optionally be followed by a I<SINGLE> modifier,
 just before the terminating semicolon (or block ending).  The possible
@@ -98,16 +116,36 @@ modifiers are:
     unless EXPR
     while EXPR
     until EXPR
-    foreach EXPR
+    foreach LIST
 
-The C<if> and C<unless> modifiers have the expected semantics,
-presuming you're a speaker of English.  The C<foreach> modifier is an
-iterator:  For each value in EXPR, it aliases C<$_> to the value and
-executes the statement.  The C<while> and C<until> modifiers have the
-usual "C<while> loop" semantics (conditional evaluated first), except
-when applied to a C<do>-BLOCK (or to the deprecated C<do>-SUBROUTINE
-statement), in which case the block executes once before the
-conditional is evaluated.  This is so that you can write loops like:
+The C<EXPR> following the modifier is referred to as the "condition".
+Its truth or falsehood determines how the modifier will behave.
+
+C<if> executes the statement once I<if> and only if the condition is
+true.  C<unless> is the opposite, it executes the statement I<unless>
+the condition is true (i.e., if the condition is false).
+
+    print "Basset hounds got long ears" if length $ear >= 10;
+    go_outside() and play() unless $is_raining;
+
+The C<foreach> modifier is an iterator: it executes the statement once
+for each item in the LIST (with C<$_> aliased to each item in turn).
+
+    print "Hello $_!\n" foreach qw(world Dolly nurse);
+
+C<while> repeats the statement I<while> the condition is true.
+C<until> does the opposite, it repeats the statement I<until> the
+condition is true (or while the condition is false):
+
+    # Both of these count from 0 to 10.
+    print $i++ while $i <= 10;
+    print $j++ until $j >  10;
+
+The C<while> and C<until> modifiers have the usual "C<while> loop"
+semantics (conditional evaluated first), except when applied to a
+C<do>-BLOCK (or to the deprecated C<do>-SUBROUTINE statement), in
+which case the block executes once before the conditional is
+evaluated.  This is so that you can write loops like:
 
     do {
 	$line = <STDIN>;
@@ -134,7 +172,14 @@ For C<last>, you have to be more elaborate:
 	    } while $x++ <= $z;
     }
 
-=head2 Compound statements
+B<NOTE:> The behaviour of a C<my> statement modified with a statement
+modifier conditional or loop construct (e.g. C<my $x if ...>) is
+B<undefined>.  The value of the C<my> variable may be C<undef>, any
+previously assigned value, or possibly anything else.  Don't rely on
+it.  Future versions of perl might do something different from the
+version of perl you try it out on.  Here be dragons.
+
+=head2 Compound Statements
 
 In Perl, a sequence of statements that defines a scope is called a block.
 Sometimes a block is delimited by the file containing it (in the case
@@ -183,27 +228,22 @@ refers to the innermost enclosing loop.  This may include dynamically
 looking back your call-stack at run time to find the LABEL.  Such
 desperate behavior triggers a warning if you use the C<use warnings>
 pragma or the B<-w> flag.
-Unlike a C<foreach> statement, a C<while> statement never implicitly
-localises any variables.
 
 If there is a C<continue> BLOCK, it is always executed just before the
-conditional is about to be evaluated again, just like the third part of a
-C<for> loop in C.  Thus it can be used to increment a loop variable, even
-when the loop has been continued via the C<next> statement (which is
-similar to the C C<continue> statement).
+conditional is about to be evaluated again.  Thus it can be used to
+increment a loop variable, even when the loop has been continued via
+the C<next> statement.
 
 =head2 Loop Control
 
-The C<next> command is like the C<continue> statement in C; it starts
-the next iteration of the loop:
+The C<next> command starts the next iteration of the loop:
 
     LINE: while (<STDIN>) {
 	next LINE if /^#/;	# discard comments
 	...
     }
 
-The C<last> command is like the C<break> statement in C (as used in
-loops); it immediately exits the loop in question.  The
+The C<last> command immediately exits the loop in question.  The
 C<continue> block, if any, is not executed:
 
     LINE: while (<STDIN>) {
@@ -310,6 +350,14 @@ hang.
 	# do something
     }
 
+Using C<readline> (or the operator form, C<< <EXPR> >>) as the
+conditional of a C<for> loop is shorthand for the following.  This
+behaviour is the same as a C<while> loop conditional.
+
+    for ( prompt(); defined( $_ = <STDIN> ); prompt() ) {
+        # do something
+    }
+
 =head2 Foreach Loops
 
 The C<foreach> loop iterates over a normal list value and sets the
@@ -319,7 +367,8 @@ is therefore visible only within the loop.  Otherwise, the variable is
 implicitly local to the loop and regains its former value upon exiting
 the loop.  If the variable was previously declared with C<my>, it uses
 that variable instead of the global one, but it's still localized to
-the loop.  
+the loop.  This implicit localisation occurs I<only> in a C<foreach>
+loop.
 
 The C<foreach> keyword is actually a synonym for the C<for> keyword, so
 you can use C<foreach> for readability or C<for> for brevity.  (Or because
@@ -428,8 +477,8 @@ In addition to the above BLOCK construct, you could write
     }
 
 (That's actually not as strange as it looks once you realize that you can
-use loop control "operators" within an expression,  That's just the normal
-C comma operator.)
+use loop control "operators" within an expression.  That's just the binary
+comma operator in scalar context.  See L<perlop/"Comma Operator">.)
 
 or
 
@@ -618,14 +667,20 @@ of code.
 
 =head2 Plain Old Comments (Not!)
 
-Much like the C preprocessor, Perl can process line directives.  Using
+Perl can process line directives, much like the C preprocessor.  Using
 this, one can control Perl's idea of filenames and line numbers in
 error or warning messages (especially for strings that are processed
 with C<eval()>).  The syntax for this mechanism is the same as for most
 C preprocessors: it matches the regular expression
-C</^#\s*line\s+(\d+)\s*(?:\s"([^"]+)")?\s*$/> with C<$1> being the line
-number for the next line, and C<$2> being the optional filename
-(specified within quotes).
+
+    # example: '# line 42 "new_filename.plx"'
+    /^\#   \s*
+      line \s+ (\d+)   \s*
+      (?:\s("?)([^"]+)\2)? \s*
+     $/x
+
+with C<$1> being the line number for the next line, and C<$3> being
+the optional filename (specified with or without quotes).
 
 There is a fairly obvious gotcha included with the line directive:
 Debuggers and profilers will only show the last source line to appear

@@ -52,11 +52,11 @@ d_csh='undef'
 # of perl (there are probably more of these that might be useful, but
 # for the extensions I build, this turned out to be enough). The -uldexp
 # makes sure the custom ldexp.o I add to archobjs actually gets pulled
-# into perl from libperl.a
+# into perl from libperl.a.  The -unanosleep makes Timer::HiRes happy.
 #
 cc='/usr/ccs/bin/ec'
 cccdlflags='-Zpic'
-ccdlflags='-Zlink=dynamic -Wl,-usys_nerr -Wl,-uldexp -Wl,-Bexport'
+ccdlflags='-Zlink=dynamic -Wl,-usys_nerr -Wl,-uldexp -Wl,-unanosleep -Wl,-Bexport'
 lddlflags='-Zlink=so'
 
 # Sigh... Various versions of Power MAX went out with a broken ldexp runtime

@@ -1,8 +1,16 @@
 #!./perl
 
-print "1..18\n";
+BEGIN {
+    chdir 't' if -d 't';
+    @INC = '../lib';
+}
 
-$foo = 'STDOUT';
+use strict 'vars';
+use Errno;
+
+print "1..19\n";
+
+my $foo = 'STDOUT';
 print $foo "ok 1\n";
 
 print "ok 2\n","ok 3\n","ok 4\n";
@@ -14,7 +22,7 @@ print foo "ok 6\n";
 printf "ok %d\n",7;
 printf("ok %d\n",8);
 
-@a = ("ok %d%c",9,ord("\n"));
+my @a = ("ok %d%c",9,ord("\n"));
 printf @a;
 
 $a[1] = 10;
@@ -25,10 +33,19 @@ $\ = "\n";
 
 print "ok","11";
 
-@x = ("ok","12\nok","13\nok");
-@y = ("15\nok","16");
+my @x = ("ok","12\nok","13\nok");
+my @y = ("15\nok","16");
 print @x,"14\nok",@y;
 {
     local $\ = "ok 17\n# null =>[\000]\nok 18\n";
     print "";
+}
+
+if (!exists &Errno::EBADF) {
+    print "ok 19 # skipped: no EBADF\n";
+} else {
+    $! = 0;
+    print NONEXISTENT "foo";
+    print "not " if ($! != &Errno::EBADF);
+    print "ok 19\n";
 }

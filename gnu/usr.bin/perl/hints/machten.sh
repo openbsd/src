@@ -9,7 +9,7 @@
 # MachTen 2.x has its own hint file.
 #
 # The original version of this file was put together by Andy Dougherty
-# <doughera@lafcol.lafayette.edu> based on comments from lots of
+# <doughera@lafayette.edu> based on comments from lots of
 # folks, especially 
 # 	Mark Pease <peasem@primenet.com>
 #	Martijn Koster <m.koster@webcrawler.com>

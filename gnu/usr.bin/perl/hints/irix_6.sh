@@ -3,7 +3,7 @@
 # original from Krishna Sethuraman, krishna@sgi.com
 #
 # Modified Mon Jul 22 14:52:25 EDT 1996
-# 	Andy Dougherty <doughera@lafcol.lafayette.edu>
+# 	Andy Dougherty <doughera@lafayette.edu>
 # 	with help from Dean Roehrich <roehrich@cray.com>.
 #   cc -n32 update info from Krishna Sethuraman, krishna@sgi.com.
 #       additional update from Scott Henry, scotth@sgi.com
@@ -37,7 +37,43 @@
 # If that fails, or you didn't use that, then try adjusting other
 # optimization options (-LNO, -INLINE, -O3 to -O2, etcetera).
 # The compiler bug has been reported to SGI.
-# -- Allen Smith <easmith@beatrice.rutgers.edu>
+# -- Allen Smith <allens@cpan.org>
+
+case "$use64bitall" in
+$define|true|[yY]*)
+    case "`uname -s`" in
+       IRIX)
+           cat <<END >&2
+You have asked for use64bitall but you aren't running on 64-bit IRIX.
+I'll try changing it to use64bitint.
+END
+       use64bitall="$undef"
+
+       case "`uname -r`" in
+           [1-5]*|6.[01])
+               cat <<END >&2
+Sorry, can't do use64bitint either. Try upgrading to IRIX 6.2 or later.
+END
+               use64bitint="$undef"
+           ;;
+           *) use64bitint="$define"
+           ;;
+       esac
+       ;;
+    esac
+    ;;
+esac
+
+# Until we figure out what to be probed for in Configure (ditto for hpux.sh)
+case "$usemorebits" in # Need to expand this now, then.
+$define|true|[yY]*)
+    case "`uname -r`" in
+           [1-5]*|6.[01])
+               uselongdouble="$define"
+               ;;
+           *) use64bitint="$define" uselongdouble="$define" ;;
+    esac
+esac
 
 # Let's assume we want to use 'cc -n32' by default, unless the
 # necessary libm is missing (which has happened at least twice)
@@ -48,51 +84,38 @@ case "$cc" in
     esac    	
 esac
 
+case "$use64bitint" in
+    "$define"|true|[yY]*) ;;
+    *)  d_casti32="$undef" ;;
+esac
+
 cc=${cc:-cc}
+cat=${cat:-cat}
+
+$cat > UU/cc.cbu <<'EOCCBU'
+# This script UU/cc.cbu will get 'called-back' by Configure after it
+# has prompted the user for the C compiler to use.
 
 case "$cc" in
 *gcc*) ;;
 *) ccversion=`cc -version 2>&1` ;;
 esac
 
-case "$use64bitint" in
-$define|true|[yY]*)
-	    case "`uname -r`" in
-	    [1-5]*|6.[01])
-		cat >&4 <<EOM
-IRIX `uname -r` does not support 64-bit types.
-You should upgrade to at least IRIX 6.2.
-Cannot continue, aborting.
-EOM
-		exit 1
-		;;
-	    esac
-	    ;;
-esac
-
-case "$use64bitall" in
-"$define"|true|[yY]*)
-  case "`uname -s`" in
-  IRIX)
-            cat >&4 <<EOM
-You cannot use -Duse64bitall in 32-bit IRIX, sorry.
-
-Cannot continue, aborting.
-EOM
-            exit 1
-	;;
-  esac
-  ;;
-esac
-
 # Check for which compiler we're using
 
 case "$cc" in
 *"cc -n32"*)
+    test -z "$ldlibpthname" && ldlibpthname='LD_LIBRARYN32_PATH'
 
 	# If a library is requested to link against, make sure the
 	# objects in the library are of the same ABI we are compiling
 	# against. Albert Chin-A-Young <china@thewrittenword.com>
+
+       # In other words, you no longer have to worry regarding having old
+       # library paths (/usr/lib) in the searchpath for -n32 or -64; thank
+       # you very much, Albert! Now if we could just get more module authors
+       # to use something like this... - Allen
+
 	libscheck='case "$xxx" in
 *.a) /bin/ar p $xxx `/bin/ar t $xxx | sed q` >$$.o;
   case "`/usr/bin/file $$.o`" in
@@ -106,37 +129,49 @@ case "$cc" in
 esac'
 
 	# NOTE: -L/usr/lib32 -L/lib32 are automatically selected by the linker
-	ldflags=' -L/usr/local/lib32 -L/usr/local/lib'
+       test -z "$ldflags" && ldflags=' -L/usr/local/lib32 -L/usr/local/lib'
 	cccdlflags=' '
     # From: David Billinghurst <David.Billinghurst@riotinto.com.au>
     # If you get complaints about so_locations then change the following
     # line to something like:
     #	lddlflags="-n32 -shared -check_registry /usr/lib32/so_locations"
-	lddlflags="-n32 -shared"
-	libc='/usr/lib32/libc.so'
-	plibpth='/usr/lib32 /lib32 /usr/ccs/lib'
+       test -z "$lddlflags" && lddlflags="-n32 -shared"
+       test -z "$libc" && libc='/usr/lib32/libc.so'
+       test -z "$plibpth" && plibpth='/usr/lib32 /lib32 /usr/ccs/lib'
 	;;
 *"cc -64"*)
-
+    case "`uname -s`" in
+    IRIX)
+	$cat >&4 <<EOM
+You cannot use cc -64 or -Duse64bitall in 32-bit IRIX, sorry.
+Cannot continue, aborting.
+EOM
+       exit 1
+       ;;
+    esac
+       test -z "$ldlibpthname" && ldlibpthname='LD_LIBRARY64_PATH'
+       test -z "$use64bitall" && use64bitall="$define"
+       test -z "$use64bitint" && use64bitint="$define"
 	loclibpth="$loclibpth /usr/lib64"
 	libscheck='case "`/usr/bin/file $xxx`" in
 *64-bit*) ;;
 *) xxx=/no/64-bit$xxx ;;
 esac'
 	# NOTE: -L/usr/lib64 -L/lib64 are automatically selected by the linker
-	ldflags=' -L/usr/local/lib64 -L/usr/local/lib'
+       test -z "$ldflags" && ldflags=' -L/usr/local/lib64 -L/usr/local/lib'
 	cccdlflags=' '
+       test -z "$archname64" && archname64='64all'
     # From: David Billinghurst <David.Billinghurst@riotinto.com.au>
     # If you get complaints about so_locations then change the following
     # line to something like:
     #	lddlflags="-64 -shared -check_registry /usr/lib64/so_locations"
-	lddlflags="-64 -shared"
-	libc='/usr/lib64/libc.so'
-	plibpth='/usr/lib64 /lib64 /usr/ccs/lib'
+       test -z lddlflags="-64 -shared"
+       test -z "$libc" && libc='/usr/lib64/libc.so'
+       test -z "$plibpth" && plibpth='/usr/lib64 /lib64 /usr/ccs/lib'
 	;;
 *gcc*)
-	ccflags="$ccflags -D_BSD_TYPES -D_BSD_TIME -D_POSIX_C_SOURCE"
-	optimize="-O3"
+	ccflags="$ccflags -D_BSD_TYPES -D_BSD_TIME"
+       test -z "$optimize" && optimize="-O3"
 	usenm='undef'
 	case "`uname -s`" in
 	# Without the -mabi=64 gcc in 64-bit IRIX has problems passing
@@ -162,7 +197,7 @@ esac
 # Settings common to both native compiler modes.
 case "$cc" in
 *"cc -n32"*|*"cc -64"*)
-	ld=$cc
+       test -z "$ld" && ld=$cc
 
 	# perl's malloc can return improperly aligned buffer
 	# which (under 5.6.0RC1) leads into really bizarre bus errors
@@ -175,10 +210,12 @@ case "$cc" in
         # miniperl, as was Scott Henry with snapshots from just before
 	# the RC1. --jhi
 	usemymalloc='undef'
-#malloc_cflags='ccflags="-DSTRICT_ALIGNMENT $ccflags"'
 
-	nm_opt='-p'
-	nm_so_opt='-p'
+       # Was at the first of the line - Allen
+       #malloc_cflags='ccflags="-DSTRICT_ALIGNMENT $ccflags"'
+
+       nm_opt="$nm_opt -p"
+       nm_so_opt="$nm_so_opt -p"
 
 	# Warnings to turn off because the source code hasn't
 	# been cleaned up enough yet to satisfy the IRIX cc.
@@ -197,24 +234,45 @@ case "$cc" in
 	     optimize='none'
 	     ;;
 	*7.1*|*7.2|*7.20)             # Mongoose 7.1+
-	     ccflags="$ccflags -D_BSD_TYPES -D_BSD_TIME -woff $woff -OPT:Olimit=0"
-	     optimize='-O3'
-# This is a temporary fix for 5.005.
-# Leave pp_ctl_cflags  line at left margin for Configure.  See 
-# hints/README.hints, especially the section 
-# =head2 Propagating variables to config.sh
-pp_ctl_cflags='optimize=-O'
+            ccflags="$ccflags -D_BSD_TYPES -D_BSD_TIME -woff $woff"
+            case "$optimize" in
+               '') optimize='-O3 -OPT:Olimit=0' ;;
+               '-O') optimize='-O3 -OPT:Olimit=0' ;;
+               *) ;;
+            esac
+
+           # This is a temporary fix for 5.005+.
+           # See hints/README.hints, especially the section
+           # =head2 Propagating variables to config.sh
+
+           # Note the part about case statements not working without
+           # weirdness like the below echo statement... and, since
+           # we're in a callback unit, it's to config.sh, not UU/config.sh
+           # - Allen
+
+
+           pp_ctl_cflags="$pp_ctl_flags optimize=\"$optimize -O1\""
+           echo "pp_ctl_cflags=\"$pp_ctl_flags optimize=\\\"\$optimize -O1\\\"\"" >> config.sh
 	     ;;
+
+
+
+# XXX What is space=ON doing in here? Could someone ask Scott Henry? - Allen
+
 	*7.*)                         # Mongoose 7.2.1+
-	     ccflags="$ccflags -D_BSD_TYPES -D_BSD_TIME -woff $woff -OPT:Olimit=0:space=ON"
-	     optimize='-O3'
+            ccflags="$ccflags -D_BSD_TYPES -D_BSD_TIME -woff $woff"
+            case "$optimize" in
+               '') optimize='-O3 -OPT:Olimit=0:space=ON' ;;
+               '-O') optimize='-O3 -OPT:Olimit=0:space=ON' ;;
+               *) ;;
+            esac
 	     ;;
 	*6.2*)                        # Ragnarok 6.2
 	     ccflags="$ccflags -D_BSD_TYPES -D_BSD_TIME -woff $woff"
 	     optimize='none'
 	     ;;
 	*)                            # Be safe and not optimize
-	     ccflags="$ccflags -D_BSD_TYPES -D_BSD_TIME -woff $woff -OPT:Olimit=0"
+	     ccflags="$ccflags -D_BSD_TYPES -D_BSD_TIME -woff $woff"
 	     optimize='none'
 	     ;;
 	esac
@@ -242,31 +300,41 @@ pp_ctl_cflags='optimize=-O'
 	;;
 esac
 
-# Don't groan about unused libraries.
-ldflags="$ldflags -Wl,-woff,84"
-
 # workaround for an optimizer bug
+# Made to work via UU/config.sh thing (or, rather, config.sh, since we're in
+# a callback) from README.hints, plus further stuff; doesn't handle -g still,
+# unfortunately - Allen
 case "`$cc -version 2>&1`" in
-*7.2.*)   op_cflags='optimize=-O1'; opmini_cflags='optimize=-O1' ;;
-*7.3.1.*) op_cflags='optimize=-O2'; opmini_cflags='optimize=-O2' ;;
+*7.2.*)
+    test -z "$op_cflags" && echo "op_cflags=\"optimize=\\\"\$optimize -O1\\\"\"" >> config.sh
+    test -z "$op_cflags" && op_cflags="optimize=\"\$optimize -O1\""
+    test -z "$opmini_cflags" && echo "opmini_cflags=\"optimize=\\\"\$optimize -O1\\\"\"" >> config.sh
+    test -z "$opmini_cflags" && opmini_cflags="optimize=\"\$optimize -O1\""
+    ;;
+*7.3.1.*)
+    test -z "$op_cflags" && echo "op_cflags=\"optimize=\\\"\$optimize -O2\\\"\"" >> config.sh
+    test -z "$op_cflags" && op_cflags="$op_cflags optimize=\"\$optimize -O2\""
+    test -z "$opmini_cflags" && echo "opmini_cflags=\"optimize=\\\"\$optimize -O2\\\"\"" >> config.sh
+    test -z "$opmini_cflags" && opmini_cflags="optimize=\"\$optimize -O2\""
+    ;;
 esac
+
+EOCCBU
+
+# End of cc.cbu callback unit. - Allen
 
 # We don't want these libraries.
 # Socket networking is in libc, these are not installed by default,
 # and just slow perl down. (scotth@sgi.com)
-set `echo X "$libswanted "|sed -e 's/ socket / /' -e 's/ nsl / /' -e 's/ dl / /'`
+# librt contains nothing we need (some places need it for Time::HiRes) --jhi
+set `echo X "$libswanted "|sed -e 's/ socket / /' -e 's/ nsl / /' -e 's/ dl / /' -e 's/ rt / /'`
 shift
 libswanted="$*"
-
-# Irix 6.5.6 seems to have a broken header <sys/mode.h>
-# don't include that (it doesn't contain S_IFMT, S_IFREG, et al)
-
-i_sysmode="$undef"
 
 # I have conflicting reports about the sun, crypt, bsd, and PW
 # libraries on Irix 6.2.
 #
-# One user rerports:
+# One user reports:
 # Don't need sun crypt bsd PW under 6.2.  You *may* need to link
 # with these if you want to run perl built under 6.2 on a 5.3 machine
 # (I haven't checked)
@@ -287,7 +355,33 @@ set `echo X "$libswanted "|sed -e 's/ sun / /' -e 's/ crypt / /' -e 's/ bsd / /'
 shift
 libswanted="$*"
 
-cat > UU/usethreads.cbu <<'EOCBU'
+# libbind.{so|a} would be from a BIND/named installation - IRIX 6.5.* has
+# pretty much everything that would be useful in libbind in libc, including
+# accessing a local caching server (nsd) that will also look in /etc/hosts,
+# NIS (yuck!), etcetera. libbind also doesn't have the _r (thread-safe
+# reentrant) functions.
+# - Allen <easmith@beatrice.rutgers.edu>
+
+case "`uname -r`" in
+6.5)
+    set `echo X "$libswanted "|sed -e 's/ bind / /'`
+    shift
+    libswanted="$*"
+    ;;
+esac
+
+# Don't groan about unused libraries.
+case "$ldflags" in
+    *-Wl,-woff,84*) ;;
+    *) ldflags="$ldflags -Wl,-woff,84" ;;
+esac
+
+# Irix 6.5.6 seems to have a broken header <sys/mode.h>
+# don't include that (it doesn't contain S_IFMT, S_IFREG, et al)
+
+i_sysmode="$undef"
+
+$cat > UU/usethreads.cbu <<'EOCBU'
 # This script UU/usethreads.cbu will get 'called-back' by Configure 
 # after it has prompted the user for whether to use threads.
 case "$usethreads" in
@@ -328,7 +422,6 @@ EOM
             exit 1
         fi
         set `echo X "$libswanted "| sed -e 's/ c / pthread /'`
-        ld="${cc:-cc}"
         shift
         libswanted="$*"
 
@@ -337,24 +430,185 @@ EOM
 	# These are hidden behind a _POSIX1C ifdef that would
 	# require including <pthread.h> for the Configure hasproto
 	# to see these.
-	d_asctime_r_proto="$define"
-	d_ctime_r_proto="$define"
-	d_gmtime_r_proto="$define"
-	d_localtime_r_proto="$define"
+
+#      d_asctime_r_proto="$define"
+#      d_ctime_r_proto="$define"
+#      d_gmtime_r_proto="$define"
+#      d_localtime_r_proto="$define"
+
+       # Safer just to go ahead and include it, for other ifdefs like them
+       # (there are a lot, such as in netdb.h). - Allen
+       ccflags="$ccflags -DPTHREAD_H_FIRST"
+
+       pthread_h_first="$define"
+       echo "pthread_h_first='define'" >> config.sh
+
 	;;
+
 esac
 EOCBU
 
 # The -n32 makes off_t to be 8 bytes, so we should have largefileness.
 
-# Until we figure out what to be probe for in Configure (ditto for hpux.sh)
-case "$usemorebits" in # Need to expand this now, then.
-$define|true|[yY]*) use64bitint="$define"; uselongdouble="$define" ;;
-esac
+$cat > UU/use64bitint.cbu <<'EOCBU'
+# This script UU/use64bitint.cbu will get 'called-back' by Configure
+# after it has prompted the user for whether to use 64 bit integers.
+
 case "$use64bitint" in
-$define|true|[yY]*) ;;
-*) d_casti32='undef' ;;
+$define|true|[yY]*)
+           case "`uname -r`" in
+           [1-5]*|6.[01])
+               cat >&4 <<EOM
+IRIX `uname -r` does not support 64-bit types.
+You should upgrade to at least IRIX 6.2.
+Cannot continue, aborting.
+EOM
+               exit 1
+               ;;
+            esac
+    usemymalloc="$undef"
+    ;;
+*) d_casti32="$undef" ;;
 esac
+
+EOCBU
+
+$cat > UU/use64bitall.cbu <<'EOCBU'
+# This script UU/use64bitall.cbu will get 'called-back' by Configure
+# after it has prompted the user for whether to be maximally 64 bitty.
+
+case "$use64bitall" in
+$define|true|[yY]*)
+    case "$cc" in
+       *-n32*|*-32*)
+           cat >&4 <<EOM
+You cannot use a non-64 bit cc for -Duse64bitall, sorry.
+Cannot continue, aborting.
+EOM
+           exit 1
+       ;;
+    esac
+    ;;
+esac
+
+EOCBU
+
+$cat > UU/uselongdouble.cbu <<'EOCBU'
+# This script UU/uselongdouble.cbu will get 'called-back' by Configure
+# after it has prompted the user for whether to use long doubles.
+
+# This script is designed to test IRIX (and other machines, once it's put into
+# Configure) for a bug in which they fail to round correctly when using
+# sprintf/printf/etcetera on a long double with precision specified (%.0Lf or
+# whatever). Sometimes, this only happens when the number in question is
+# between 1 and -1, weirdly enough. - Allen
+
+case "$uselongdouble" in
+$define|true|[yY]*)
+
+case "$d_PRIfldbl" in
+$define|true|[yY]*)
+
+    echo " " >try.c
+    $cat >>try.c <<EOP
+#include <stdio.h>
+
+#define sPRIfldbl $sPRIfldbl
+
+#define I_STDLIB $i_stdlib
+#ifdef I_STDLIB
+#include <stdlib.h>
+#endif
+
+int main()
+{ 
+        char buf1[64];
+ 	char buf2[64];
+        buf1[63] = '\0';
+	buf2[63] = '\0';
+
+	(void)sprintf(buf1,"%.0"sPRIfldbl,(long double)0.6L);
+	(void)sprintf(buf2,"%.0f",(double)0.6);
+	if (strcmp(buf1,buf2)) {
+	    exit(1);
+	}
+	(void)sprintf(buf1,"%.0"sPRIfldbl,(long double)-0.6L);
+	(void)sprintf(buf2,"%.0f",(double)-0.6);
+	if (strcmp(buf1,buf2)) {
+	    exit(1);
+	} else {
+	    exit(0);
+	}
+}
+
+EOP
+
+    set try
+    if eval $compile && $run ./try; then
+	rm -f try try.* >/dev/null
+    else
+	rm -f try try.* core a.out >/dev/null
+	ccflags="$ccflags -DHAS_LDBL_SPRINTF_BUG"
+	cppflags="$cppflags -DHAS_LDBL_SPRINTF_BUG"
+
+        echo " " >try.c
+    $cat >>try.c <<EOP
+#include <stdio.h>
+
+#define sPRIfldbl $sPRIfldbl
+
+#define I_STDLIB $i_stdlib
+#ifdef I_STDLIB
+#include <stdlib.h>
+#endif
+
+int main()
+{ 
+        char buf1[64];
+ 	char buf2[64];
+        buf1[63] = '\0';
+	buf2[63] = '\0';
+
+	(void)sprintf(buf1,"%.0"sPRIfldbl,(long double)1.6L);
+	(void)sprintf(buf2,"%.0f",(double)1.6);
+	if (strcmp(buf1,buf2)) {
+	    exit(1);
+	}
+	(void)sprintf(buf1,"%.0"sPRIfldbl,(long double)-1.6L);
+	(void)sprintf(buf2,"%.0f",(double)-1.6);
+	if (strcmp(buf1,buf2)) {
+	    exit(1);
+	} else {
+	    exit(0);
+	}
+}
+
+EOP
+
+	set try
+	if eval $compile && $run ./try; then
+	    rm -f try try.c >/dev/null
+	    ccflags="$ccflags -DHAS_LDBL_SPRINTF_BUG_LESS1"
+	    cppflags="$cppflags -DHAS_LDBL_SPRINTF_BUG_LESS1"
+	else
+	    rm -f try try.c core try.o a.out >/dev/null
+	fi
+    fi
+;;
+*) # Can't tell!
+   ccflags="$ccflags -DHAS_LDBL_SPRINTF_BUG"
+   cppflags="$cppflags -DHAS_LDBL_SPRINTF_BUG"
+   ;;
+esac
+
+# end of case statement for how to print ldbl with 'f'
+;;
+*) ;;
+esac
+
+# end of case statement for whether to do long doubles
+
+EOCBU
 
 # Helmut Jarausch reports that Perl's malloc is rather unusable
 # with IRIX, and SGI confirms the problem.

@@ -1,10 +1,20 @@
-# $OpenBSD: Makefile.bsd-wrapper,v 1.57 2003/08/10 20:44:27 espie Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.58 2003/12/03 03:02:19 millert Exp $
 #
-# Build wrapper for Perl 5.8.0
+# Build wrapper for Perl 5.8.2
 #
 
-# To build a threaded perl, uncomment this.  Currently, there are bugs...
-#THREADED=-Dusethreads
+# To build a threaded perl, uncomment this.  Not stable on all platforms...
+THREADED_PERL=true
+
+# Perl builds with -fno-strict-aliasing, we want libperl to do the same
+CFLAGS+= -fno-strict-aliasing
+
+# Arguments passed to Configure...
+CONFIGURE_ARGS= -dsE -Dopenbsd_distribution=defined
+.if defined(THREADED_PERL) && ($(THREADED_PERL) == true)
+CONFIGURE_ARGS+= -Dusethreads
+CFLAGS+= -pthread
+.endif
 
 # For ``NOMAN''
 .include <bsd.own.mk>
@@ -13,13 +23,15 @@
 # with the one installed with X11.
 LNDIR=		/usr/bin/lndir
 
-# We use the pod2man we just built since we don't know what's in the tree.
-# This will be wrong for cross builds.  In that case, just use in-tree one.
+# If we are cross-compiling, we use the native pod2man.
+# Otherwise, we use the pod2man (and libperl) we just
+# built since we don't know what's in the tree.
 TARGET_MACHINE_ARCH?=	$(MACHINE_ARCH)
 .if ($(TARGET_MACHINE_ARCH) != $(MACHINE_ARCH))
 POD2MAN=	/usr/bin/pod2man
 .else
-POD2MAN=	./perl -I ./lib ./pod/pod2man
+POD2MAN=	LD_LIBRARY_PATH=${.OBJDIR} ${.OBJDIR}/perl -I ${.OBJDIR}/lib \
+		${.OBJDIR}/pod/pod2man
 .endif
 H2PH=		/usr/bin/h2ph
 
@@ -34,6 +46,7 @@ MANALL=
 .for page sect file in \
     a2p 1 			x2p/a2p.pod \
     c2ph 1			utils/c2ph \
+    cpan 1			lib/CPAN/bin/cpan \
     dprofpp 1 			utils/dprofpp \
     enc2xs 1			ext/Encode/bin/enc2xs \
     find2perl 1			x2p/find2perl \
@@ -43,14 +56,25 @@ MANALL=
     perl 1			pod/perl.pod \
     perl5004delta 1		pod/perl5004delta.pod \
     perl5005delta 1		pod/perl5005delta.pod \
+    perl561delta 1		pod/perl561delta.pod \
+    perl56delta 1		pod/perl56delta.pod \
+    perl570delta 1		pod/perl570delta.pod \
+    perl571delta 1		pod/perl571delta.pod \
+    perl572delta 1		pod/perl572delta.pod \
+    perl573delta 1		pod/perl573delta.pod \
+    perl58delta 1		pod/perl58delta.pod \
+    perl581delta 1		pod/perl581delta.pod \
     perlapi 1			pod/perlapi.pod \
     perlapio 1			pod/perlapio.pod \
+    perlartistic 1		pod/perlartistic.pod \
     perlbook 1			pod/perlbook.pod \
     perlboot 1			pod/perlboot.pod \
     perlbot 1			pod/perlbot.pod \
     perlbug 1			utils/perlbug \
     perlcall 1			pod/perlcall.pod \
     perlcc 1			utils/perlcc \
+    perlcheat 1			pod/perlcheat.pod \
+    perlclib 1			pod/perlclib.pod \
     perlcn 1			README.cn \
     perlcompile 1		pod/perlcompile.pod \
     perldata 1			pod/perldata.pod \
@@ -60,7 +84,7 @@ MANALL=
     perldebug 1			pod/perldebug.pod \
     perldelta 1			pod/perldelta.pod \
     perldiag 1			pod/perldiag.pod \
-    perldoc 1			utils/perldoc \
+    perldoc 1			pod/perldoc.pod \
     perldsc 1			pod/perldsc.pod \
     perlembed 1			pod/perlembed.pod \
     perlfaq 1			pod/perlfaq.pod \
@@ -77,6 +101,7 @@ MANALL=
     perlfork 1			pod/perlfork.pod \
     perlform 1			pod/perlform.pod \
     perlfunc 1			pod/perlfunc.pod \
+    perlgpl 1			pod/perlgpl.pod \
     perlguts 1			pod/perlguts.pod \
     perlhack 1			pod/perlhack.pod \
     perlhist 1			pod/perlhist.pod \
@@ -119,12 +144,12 @@ MANALL=
     perltoc 1			pod/perltoc.pod \
     perltodo 1			pod/perltodo.pod \
     perltooc 1			pod/perltooc.pod \
-    perltooc 1			pod/perltooc.pod \
     perltoot 1			pod/perltoot.pod \
     perltrap 1			pod/perltrap.pod \
     perltw 1			README.tw \
     perlunicode 1		pod/perlunicode.pod \
     perluniintro 1		pod/perluniintro.pod \
+    perlutil 1			pod/perlutil.pod \
     perlvar 1			pod/perlvar.pod \
     perlxs 1			pod/perlxs.pod \
     perlxstut 1			pod/perlxstut.pod \
@@ -137,7 +162,6 @@ MANALL=
     pod2usage 1			pod/pod2usage \
     podchecker 1		pod/podchecker \
     podselect 1			pod/podselect \
-    pstruct 1			utils/pstruct \
     s2p	1			x2p/s2p \
     splain 1			utils/splain \
     xsubpp 1			lib/ExtUtils/xsubpp \
@@ -179,7 +203,7 @@ MANALL=
     Carp::Heavy 3p		lib/Carp/Heavy.pm \
     Class::ISA 3p		lib/Class/ISA.pm \
     Class::Struct 3p		lib/Class/Struct.pm \
-    Config 3p			lib/Config.pm \
+    Config 3p			lib/Config.pod \
     Cwd 3p			lib/Cwd.pm \
     DB 3p			lib/DB.pm \
     DB_File 3p			ext/DB_File/DB_File.pm \
@@ -215,6 +239,7 @@ MANALL=
     Encode::Symbol 3p		ext/Encode/Symbol/Symbol.pm \
     Encode::TW 3p		ext/Encode/TW/TW.pm \
     Encode::Unicode 3p		ext/Encode/Unicode/Unicode.pm \
+    Encode::Unicode::UTF7 3p	ext/Encode/lib/Encode/Unicode/UTF7.pm \
     English 3p			lib/English.pm \
     Env 3p			lib/Env.pm \
     Errno 3p			ext/Errno/Errno_pm.PL \
@@ -230,14 +255,22 @@ MANALL=
     ExtUtils::MM 3p		lib/ExtUtils/MM.pm \
     ExtUtils::MM_Any 3p		lib/ExtUtils/MM_Any.pm \
     ExtUtils::MM_BeOS 3p	lib/ExtUtils/MM_BeOS.pm \
+    ExtUtils::MM_Cygwin 3p	lib/ExtUtils/MM_Cygwin.pm \
     ExtUtils::MM_DOS 3p		lib/ExtUtils/MM_DOS.pm \
     ExtUtils::MM_MacOS 3p	lib/ExtUtils/MM_MacOS.pm \
     ExtUtils::MM_NW5 3p		lib/ExtUtils/MM_NW5.pm \
+    ExtUtils::MM_OS2 3p		lib/ExtUtils/MM_OS2.pm \
     ExtUtils::MM_UWIN 3p	lib/ExtUtils/MM_UWIN.pm \
     ExtUtils::MM_Unix 3p	lib/ExtUtils/MM_Unix.pm \
+    ExtUtils::MM_VMS 3p		lib/ExtUtils/MM_VMS.pm \
+    ExtUtils::MM_Win32 3p	lib/ExtUtils/MM_Win32.pm \
     ExtUtils::MM_Win95 3p	lib/ExtUtils/MM_Win95.pm \
     ExtUtils::MY 3p		lib/ExtUtils/MY.pm \
     ExtUtils::MakeMaker 3p	lib/ExtUtils/MakeMaker.pm \
+    ExtUtils::MakeMaker::FAQ 3p	lib/ExtUtils/MakeMaker/FAQ.pod \
+    ExtUtils::MakeMaker::Tutorial 3p	lib/ExtUtils/MakeMaker/Tutorial.pod \
+    ExtUtils::MakeMaker::bytes 3p	lib/ExtUtils/MakeMaker/bytes.pm \
+    ExtUtils::MakeMaker::vmsish 3p	lib/ExtUtils/MakeMaker/vmsish.pm \
     ExtUtils::Manifest 3p	lib/ExtUtils/Manifest.pm \
     ExtUtils::Miniperl 3p	lib/ExtUtils/Miniperl.pm \
     ExtUtils::Mkbootstrap 3p	lib/ExtUtils/Mkbootstrap.pm \
@@ -256,8 +289,13 @@ MANALL=
     File::Path 3p		lib/File/Path.pm \
     File::Spec 3p		lib/File/Spec.pm \
     File::Spec::Cygwin 3p	lib/File/Spec/Cygwin.pm \
+    File::Spec::Epoc 3p		lib/File/Spec/Epoc.pm \
     File::Spec::Functions 3p	lib/File/Spec/Functions.pm \
+    File::Spec::Mac 3p		lib/File/Spec/Mac.pm \
+    File::Spec::OS2 3p		lib/File/Spec/OS2.pm \
     File::Spec::Unix 3p		lib/File/Spec/Unix.pm \
+    File::Spec::VMS 3p		lib/File/Spec/VMS.pm \
+    File::Spec::Win32 3p	lib/File/Spec/Win32.pm \
     File::Temp 3p		lib/File/Temp.pm \
     File::stat 3p		lib/File/stat.pm \
     FileCache 3p		lib/FileCache.pm \
@@ -301,6 +339,7 @@ MANALL=
     Math::BigFloat 3p		lib/Math/BigFloat.pm \
     Math::BigInt 3p		lib/Math/BigInt.pm \
     Math::BigInt::Calc 3p	lib/Math/BigInt/Calc.pm \
+    Math::BigInt::Scalar 3p	lib/Math/BigInt/Scalar.pm \
     Math::BigRat 3p		lib/Math/BigRat.pm \
     Math::Complex 3p		lib/Math/Complex.pm \
     Math::Trig 3p		lib/Math/Trig.pm \
@@ -347,6 +386,15 @@ MANALL=
     Pod::ParseLink 3p		lib/Pod/ParseLink.pm \
     Pod::ParseUtils 3p		lib/Pod/ParseUtils.pm \
     Pod::Parser 3p		lib/Pod/Parser.pm \
+    Pod::Perldoc::ToChecker 3p	lib/Pod/Perldoc/ToChecker.pm \
+    Pod::Perldoc::ToMan 3p	lib/Pod/Perldoc/ToMan.pm \
+    Pod::Perldoc::ToNroff 3p	lib/Pod/Perldoc/ToNroff.pm \
+    Pod::Perldoc::ToPod 3p	lib/Pod/Perldoc/ToPod.pm \
+    Pod::Perldoc::ToRtf 3p	lib/Pod/Perldoc/ToRtf.pm \
+    Pod::Perldoc::ToText 3p	lib/Pod/Perldoc/ToText.pm \
+    Pod::Perldoc::ToTk 3p	lib/Pod/Perldoc/ToTk.pm \
+    Pod::Perldoc::ToXml 3p	lib/Pod/Perldoc/ToXml.pm \
+    Pod::PlainText 3p		lib/Pod/PlainText.pm \
     Pod::Plainer 3p		lib/Pod/Plainer.pm \
     Pod::Select 3p		lib/Pod/Select.pm \
     Pod::Text 3p		lib/Pod/Text.pm \
@@ -461,17 +509,15 @@ ${page}.ps${sect}: ${file}
 
 LIB=	perl
 
-SRCS=	gv.c toke.c perly.c op.c regcomp.c dump.c util.c mg.c reentr.c hv.c \
-	av.c run.c pp_hot.c sv.c pp.c scope.c pp_ctl.c pp_sys.c doop.c doio.c \
-	regexec.c utf8.c taint.c deb.c universal.c xsutils.c globals.c perl.c \
-	perlio.c perlapi.c numeric.c locale.c pp_pack.c pp_sort.c
+SRCS=	perl.c gv.c toke.c perly.c op.c pad.c regcomp.c dump.c util.c mg.c \
+	reentr.c hv.c av.c run.c pp_hot.c sv.c pp.c scope.c pp_ctl.c pp_sys.c \
+	doop.c doio.c regexec.c utf8.c taint.c deb.c universal.c xsutils.c \
+	globals.c perlio.c perlapi.c numeric.c locale.c pp_pack.c pp_sort.c    
 
 CPPFLAGS+= -DPERL_CORE -DPERL_RANDOM_DEVICE=\"/dev/arandom\" -I.
 
 .if defined (INSTALL_STRIP) && ${INSTALL_STRIP} == "-s"
-INST_PROG='/usr/bin/install -cs'
-.else
-INST_PROG='/usr/bin/install -c'
+STRIPFLAGS='-s'
 .endif
 
 MLINKS=		c2ph.1 pstruct.1 s2p.1 psed.1 \
@@ -502,7 +548,7 @@ perl.build:	perl.lib
 
 config.sh:	${.OBJDIR}/config.over
 	cd ${.OBJDIR} && PATH="/bin:/usr/bin:/sbin:/usr/sbin" \
-	 exec /bin/sh Configure -Dopenbsd_distribution=defined ${THREADED} -dsE
+	    exec /bin/sh Configure ${CONFIGURE_ARGS}
 
 Policy.sh:
 	cd ${.OBJDIR} && exec /bin/sh Policy_sh.SH
@@ -544,6 +590,33 @@ x2p/cflags:
 perly.c perly.h: perly.y
 	-@true
 
+# Work around a gcc bug on hppa
+.if ${MACHINE} == "hppa"
+pp_pack.o: pp_pack.c
+	@echo "${COMPILE.c} ${.IMPSRC} -O0 -o ${.TARGET}"
+	@${COMPILE.c} ${.IMPSRC} -O0 -o ${.TARGET}.o
+	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
+
+pp_pack.go: pp_pack.c
+	@echo "${COMPILE.c} -g ${.IMPSRC} -O0 -o ${.TARGET}"
+	@${COMPILE.c} -g ${.IMPSRC} -O0 -o ${.TARGET}.o
+	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
+
+pp_pack.po: pp_pack.c
+	@echo "${COMPILE.c} -p ${.IMPSRC} -O0 -o ${.TARGET}"
+	@${COMPILE.c} -p ${.IMPSRC} -O0 -o ${.TARGET}.o
+	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
+
+pp_pack.so: pp_pack.c
+	@echo "${COMPILE.c} ${PICFLAG} -DPIC ${.IMPSRC} -O0 -o ${.TARGET}"
+	@${COMPILE.c} ${PICFLAG} -DPIC ${.IMPSRC} -O0 -o ${.TARGET}.o
+	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
+.endif
+
 .ifdef NOMAN
 maninstall:
 	@echo NOMAN is set
@@ -560,7 +633,8 @@ install: install.lib install.perl maninstall
 
 install.perl:
 	(cd ${.OBJDIR}; INSTALL=${INSTALL} INSTALL_COPY=${INSTALL_COPY} \
-	 INSTALL_STRIP=${INSTALL_STRIP} NOLIBINSTALL=1 ${MAKE} install.perl)
+	 STRIPFLAGS=${STRIPFLAGS} INSTALLFLAGS=-o NOLIBINSTALL=1 \
+	 ${MAKE} install.perl)
 
 test:
 	-@if [ -e Makefile ]; then ${MAKE} test; fi

@@ -753,7 +753,7 @@ Finally, here's the test program:
     $him->fullname->title("St");
     $him->age(1);
 
-    printf "%s is really %s.\n", $him->name, $him->fullname;
+    printf "%s is really %s.\n", $him->name, $him->fullname->as_string;
     printf "%s's age: %d.\n", $him->name, $him->age;
     $him->happy_birthday;
     printf "%s's age: %d.\n", $him->name, $him->age;
@@ -969,7 +969,7 @@ And here's the test program:
     $boss->age(47);
     $boss->peers("Frank", "Felipe", "Faust");
 
-    printf "%s is age %d.\n", $boss->fullname, $boss->age;
+    printf "%s is age %d.\n", $boss->fullname->as_string, $boss->age;
     printf "His peers are: %s\n", join(", ", $boss->peers);
 
 Running it, we see that we're still ok.  If you'd like to dump out your

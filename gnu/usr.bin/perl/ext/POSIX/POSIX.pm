@@ -2,11 +2,11 @@ package POSIX;
 
 our(@ISA, %EXPORT_TAGS, @EXPORT_OK, $AUTOLOAD) = ();
 
+our $VERSION = "1.06" ;
+
 use AutoLoader;
 
 use XSLoader ();
-
-our $VERSION = "1.05" ;
 
 # Grandfather old foo_h form to new :foo_h form
 my $loaded;
@@ -51,9 +51,12 @@ sub AUTOLOAD {
     goto &$AUTOLOAD;
 }
 
-sub POSIX::SigAction::new {
-    bless {HANDLER => $_[1], MASK => $_[2], FLAGS => $_[3] || 0}, $_[0];
-}
+package POSIX::SigAction;
+
+use AutoLoader 'AUTOLOAD';
+sub new { bless {HANDLER => $_[1], MASK => $_[2], FLAGS => $_[3] || 0, SAFE => 0}, $_[0] }
+
+package POSIX;
 
 1;
 __END__
@@ -279,6 +282,10 @@ sub fseek {
     redef "IO::Seekable::seek()";
 }
 
+sub fsync {
+    redef "IO::Handle::sync()";
+}
+
 sub ferror {
     redef "IO::Handle::error()";
 }
@@ -418,7 +425,7 @@ sub calloc {
 }
 
 sub div {
-    unimpl "div() is C-specific, stopped";
+    unimpl "div() is C-specific, use /, % and int instead";
 }
 
 sub exit {
@@ -440,7 +447,7 @@ sub labs {
 }
 
 sub ldiv {
-    unimpl "ldiv() is C-specific, use / and int instead";
+    unimpl "ldiv() is C-specific, use /, % and int instead";
 }
 
 sub malloc {
@@ -875,7 +882,7 @@ sub load_imports {
 		_SC_STREAM_MAX _SC_TZNAME_MAX _SC_VERSION
 		_exit access ctermid cuserid
 		dup2 dup execl execle execlp execv execve execvp
-		fpathconf getcwd getegid geteuid getgid getgroups
+		fpathconf fsync getcwd getegid geteuid getgid getgroups
 		getpid getuid isatty lseek pathconf pause setgid setpgid
 		setsid setuid sysconf tcgetpgrp tcsetpgrp ttyname)],
 
@@ -948,3 +955,10 @@ for (values %EXPORT_TAGS) {
 
 require Exporter;
 }
+
+package POSIX::SigAction;
+
+sub handler { $_[0]->{HANDLER} = $_[1] if @_ > 1; $_[0]->{HANDLER} };
+sub mask    { $_[0]->{MASK}    = $_[1] if @_ > 1; $_[0]->{MASK} };
+sub flags   { $_[0]->{FLAGS}   = $_[1] if @_ > 1; $_[0]->{FLAGS} };
+sub safe    { $_[0]->{SAFE}    = $_[1] if @_ > 1; $_[0]->{SAFE} };

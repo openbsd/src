@@ -1,4 +1,3 @@
-
 package Devel::PPPort;
 
 =head1 NAME
@@ -65,6 +64,10 @@ even if available, access to a fixed interface):
     aTHX_
     AvFILLp
     boolSV(b)
+    call_argv
+    call_method
+    call_pv
+    call_sv
     DEFSV
     dMY_CXT	
     dMY_CXT_SV
@@ -74,6 +77,15 @@ even if available, access to a fixed interface):
     dTHXa
     dTHXoa
     ERRSV
+    get_av
+    get_cv
+    get_hv
+    get_sv
+    grok_hex
+    grok_oct
+    grok_bin
+    grok_number
+    grok_numeric_radix
     gv_stashpvn(str,len,flags)
     INT2PTR(type,int)
     IVdf
@@ -90,7 +102,6 @@ even if available, access to a fixed interface):
     NVgf
     PERL_REVISION
     PERL_SUBVERSION
-    PERL_UNUSED_DECL
     PERL_UNUSED_DECL
     PERL_VERSION
     PL_compiling
@@ -148,7 +159,7 @@ require DynaLoader;
 use strict;
 use vars qw( $VERSION @ISA @EXPORT @EXPORT_OK $data );
 
-$VERSION = "2.0002";
+$VERSION = "2.009";
 
 @ISA = qw(Exporter DynaLoader);
 @EXPORT =  qw();
@@ -196,7 +207,7 @@ __DATA__;
  * version of Perl.
  * 
  * This version of ppport.h is designed to support operation with Perl
- * installations back to 5.004, and has been tested up to 5.8.0.
+ * installations back to 5.004, and has been tested up to 5.8.1.
  *
  * If this version of ppport.h is failing during the compilation of this
  * module, please check if a newer version of Devel::PPPort is available
@@ -355,7 +366,10 @@ __DATA__
 
 #ifndef PERL_REVISION
 #   ifndef __PATCHLEVEL_H_INCLUDED__
-#       include "patchlevel.h"
+#       include <patchlevel.h>
+#   endif
+#   if !(defined(PERL_VERSION) || (SUBVERSION > 0 && defined(PATCHLEVEL)))
+#       include <could_not_find_Perl_patchlevel.h>
 #   endif
 #   ifndef PERL_REVISION
 #	define PERL_REVISION	(5)
@@ -403,7 +417,7 @@ __DATA__
 #endif
 
 #ifdef HASATTRIBUTE
-#  if defined(__GNUC__) && defined(__cplusplus)
+#  if (defined(__GNUC__) && defined(__cplusplus)) || defined(__INTEL_COMPILER)
 #    define PERL_UNUSED_DECL
 #  else
 #    define PERL_UNUSED_DECL __attribute__((unused))
@@ -433,6 +447,15 @@ __DATA__
 #    define aTHX
 #    define aTHX_
 #endif         
+
+/* IV could also be a quad (say, a long long), but Perls
+ * capable of those should have IVSIZE already. */
+#if !defined(IVSIZE) && defined(LONGSIZE)
+#   define IVSIZE LONGSIZE
+#endif
+#ifndef IVSIZE
+#   define IVSIZE 4 /* A bold guess, but the best we can make. */
+#endif
 
 #ifndef UVSIZE
 #   define UVSIZE IVSIZE
@@ -649,7 +672,6 @@ SV *sv;
 
 #else /* single interpreter */
 
-
 #define START_MY_CXT	static my_cxt_t my_cxt;
 #define dMY_CXT_SV	dNOOP
 #define dMY_CXT		dNOOP
@@ -718,6 +740,543 @@ SV *sv;
 #   endif
 #else
 #   define SvPVbyte SvPV
+#endif
+
+#ifndef SvPV_nolen
+#   define SvPV_nolen(sv) \
+        ((SvFLAGS(sv) & (SVf_POK)) == SVf_POK \
+         ? SvPVX(sv) : sv_2pv_nolen(sv))
+    static char *
+    sv_2pv_nolen(pTHX_ register SV *sv)
+    {   
+        STRLEN n_a;
+        return sv_2pv(sv, &n_a);
+    }
+#endif
+
+#ifndef get_cv
+#   define get_cv(name,create) perl_get_cv(name,create)
+#endif
+
+#ifndef get_sv
+#   define get_sv(name,create) perl_get_sv(name,create)
+#endif
+
+#ifndef get_av
+#   define get_av(name,create) perl_get_av(name,create)
+#endif
+
+#ifndef get_hv
+#   define get_hv(name,create) perl_get_hv(name,create)
+#endif
+
+#ifndef call_argv
+#   define call_argv perl_call_argv
+#endif
+
+#ifndef call_method
+#   define call_method perl_call_method
+#endif
+
+#ifndef call_pv
+#   define call_pv perl_call_pv
+#endif
+
+#ifndef call_sv
+#   define call_sv perl_call_sv
+#endif
+
+#ifndef eval_pv
+#   define eval_pv perl_eval_pv
+#endif
+
+#ifndef eval_sv
+#   define eval_sv perl_eval_sv
+#endif
+
+#ifndef PERL_SCAN_GREATER_THAN_UV_MAX
+#   define PERL_SCAN_GREATER_THAN_UV_MAX 0x02
+#endif
+
+#ifndef PERL_SCAN_SILENT_ILLDIGIT
+#   define PERL_SCAN_SILENT_ILLDIGIT 0x04
+#endif
+
+#ifndef PERL_SCAN_ALLOW_UNDERSCORES
+#   define PERL_SCAN_ALLOW_UNDERSCORES 0x01
+#endif
+
+#ifndef PERL_SCAN_DISALLOW_PREFIX
+#   define PERL_SCAN_DISALLOW_PREFIX 0x02
+#endif
+
+#if (PERL_VERSION > 6) || ((PERL_VERSION == 6) && (PERL_SUBVERSION >= 1))
+#define I32_CAST
+#else
+#define I32_CAST (I32*)
+#endif
+
+#ifndef grok_hex
+static UV _grok_hex (char *string, STRLEN *len, I32 *flags, NV *result) {
+    NV r = scan_hex(string, *len, I32_CAST len);
+    if (r > UV_MAX) {
+        *flags |= PERL_SCAN_GREATER_THAN_UV_MAX;
+        if (result) *result = r;
+        return UV_MAX;
+    }
+    return (UV)r;
+}
+        
+#   define grok_hex(string, len, flags, result)     \
+        _grok_hex((string), (len), (flags), (result))
+#endif 
+
+#ifndef grok_oct
+static UV _grok_oct (char *string, STRLEN *len, I32 *flags, NV *result) {
+    NV r = scan_oct(string, *len, I32_CAST len);
+    if (r > UV_MAX) {
+        *flags |= PERL_SCAN_GREATER_THAN_UV_MAX;
+        if (result) *result = r;
+        return UV_MAX;
+    }
+    return (UV)r;
+}
+
+#   define grok_oct(string, len, flags, result)     \
+        _grok_oct((string), (len), (flags), (result))
+#endif
+
+#if !defined(grok_bin) && defined(scan_bin)
+static UV _grok_bin (char *string, STRLEN *len, I32 *flags, NV *result) {
+    NV r = scan_bin(string, *len, I32_CAST len);
+    if (r > UV_MAX) {
+        *flags |= PERL_SCAN_GREATER_THAN_UV_MAX;
+        if (result) *result = r;
+        return UV_MAX;
+    }
+    return (UV)r;
+}
+
+#   define grok_bin(string, len, flags, result)     \
+        _grok_bin((string), (len), (flags), (result))
+#endif
+
+#ifndef IN_LOCALE
+#   define IN_LOCALE \
+	(PL_curcop == &PL_compiling ? IN_LOCALE_COMPILETIME : IN_LOCALE_RUNTIME)
+#endif
+
+#ifndef IN_LOCALE_RUNTIME
+#   define IN_LOCALE_RUNTIME   (PL_curcop->op_private & HINT_LOCALE)
+#endif
+
+#ifndef IN_LOCALE_COMPILETIME
+#   define IN_LOCALE_COMPILETIME   (PL_hints & HINT_LOCALE)
+#endif
+
+
+#ifndef IS_NUMBER_IN_UV
+#   define IS_NUMBER_IN_UV		            0x01   
+#   define IS_NUMBER_GREATER_THAN_UV_MAX    0x02
+#   define IS_NUMBER_NOT_INT	            0x04
+#   define IS_NUMBER_NEG		            0x08
+#   define IS_NUMBER_INFINITY	            0x10 
+#   define IS_NUMBER_NAN                    0x20  
+#endif
+   
+#ifndef grok_numeric_radix
+#   define GROK_NUMERIC_RADIX(sp, send) grok_numeric_radix(aTHX_ sp, send)
+
+#define grok_numeric_radix Perl_grok_numeric_radix
+    
+bool
+Perl_grok_numeric_radix(pTHX_ const char **sp, const char *send)
+{
+#ifdef USE_LOCALE_NUMERIC
+#if (PERL_VERSION > 6) || ((PERL_VERSION == 6) && (PERL_SUBVERSION >= 1))
+    if (PL_numeric_radix_sv && IN_LOCALE) { 
+        STRLEN len;
+        char* radix = SvPV(PL_numeric_radix_sv, len);
+        if (*sp + len <= send && memEQ(*sp, radix, len)) {
+            *sp += len;
+            return TRUE; 
+        }
+    }
+#else
+    /* pre5.6.0 perls don't have PL_numeric_radix_sv so the radix
+     * must manually be requested from locale.h */
+#include <locale.h>
+    struct lconv *lc = localeconv();
+    char *radix = lc->decimal_point;
+    if (radix && IN_LOCALE) { 
+        STRLEN len = strlen(radix);
+        if (*sp + len <= send && memEQ(*sp, radix, len)) {
+            *sp += len;
+            return TRUE; 
+        }
+    }
+#endif /* PERL_VERSION */
+#endif /* USE_LOCALE_NUMERIC */
+    /* always try "." if numeric radix didn't match because
+     * we may have data from different locales mixed */
+    if (*sp < send && **sp == '.') {
+        ++*sp;
+        return TRUE;
+    }
+    return FALSE;
+}
+#endif /* grok_numeric_radix */
+
+#ifndef grok_number
+
+#define grok_number Perl_grok_number
+
+int
+Perl_grok_number(pTHX_ const char *pv, STRLEN len, UV *valuep)
+{
+  const char *s = pv;
+  const char *send = pv + len;
+  const UV max_div_10 = UV_MAX / 10;
+  const char max_mod_10 = UV_MAX % 10;
+  int numtype = 0;
+  int sawinf = 0;
+  int sawnan = 0;
+
+  while (s < send && isSPACE(*s))
+    s++;
+  if (s == send) {
+    return 0;
+  } else if (*s == '-') {
+    s++;
+    numtype = IS_NUMBER_NEG;
+  }
+  else if (*s == '+')
+  s++;
+
+  if (s == send)
+    return 0;
+
+  /* next must be digit or the radix separator or beginning of infinity */
+  if (isDIGIT(*s)) {
+    /* UVs are at least 32 bits, so the first 9 decimal digits cannot
+       overflow.  */
+    UV value = *s - '0';
+    /* This construction seems to be more optimiser friendly.
+       (without it gcc does the isDIGIT test and the *s - '0' separately)
+       With it gcc on arm is managing 6 instructions (6 cycles) per digit.
+       In theory the optimiser could deduce how far to unroll the loop
+       before checking for overflow.  */
+    if (++s < send) {
+      int digit = *s - '0';
+      if (digit >= 0 && digit <= 9) {
+        value = value * 10 + digit;
+        if (++s < send) {
+          digit = *s - '0';
+          if (digit >= 0 && digit <= 9) {
+            value = value * 10 + digit;
+            if (++s < send) {
+              digit = *s - '0';
+              if (digit >= 0 && digit <= 9) {
+                value = value * 10 + digit;
+		        if (++s < send) {
+                  digit = *s - '0';
+                  if (digit >= 0 && digit <= 9) {
+                    value = value * 10 + digit;
+                    if (++s < send) {
+                      digit = *s - '0';
+                      if (digit >= 0 && digit <= 9) {
+                        value = value * 10 + digit;
+                        if (++s < send) {
+                          digit = *s - '0';
+                          if (digit >= 0 && digit <= 9) {
+                            value = value * 10 + digit;
+                            if (++s < send) {
+                              digit = *s - '0';
+                              if (digit >= 0 && digit <= 9) {
+                                value = value * 10 + digit;
+                                if (++s < send) {
+                                  digit = *s - '0';
+                                  if (digit >= 0 && digit <= 9) {
+                                    value = value * 10 + digit;
+                                    if (++s < send) {
+                                      /* Now got 9 digits, so need to check
+                                         each time for overflow.  */
+                                      digit = *s - '0';
+                                      while (digit >= 0 && digit <= 9
+                                             && (value < max_div_10
+                                                 || (value == max_div_10
+                                                     && digit <= max_mod_10))) {
+                                        value = value * 10 + digit;
+                                        if (++s < send)
+                                          digit = *s - '0';
+                                        else
+                                          break;
+                                      }
+                                      if (digit >= 0 && digit <= 9
+                                          && (s < send)) {
+                                        /* value overflowed.
+                                           skip the remaining digits, don't
+                                           worry about setting *valuep.  */
+                                        do {
+                                          s++;
+                                        } while (s < send && isDIGIT(*s));
+                                        numtype |=
+                                          IS_NUMBER_GREATER_THAN_UV_MAX;
+                                        goto skip_value;
+                                      }
+                                    }
+                                  }
+				                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+	    }
+      }
+    }
+    numtype |= IS_NUMBER_IN_UV;
+    if (valuep)
+      *valuep = value;
+
+  skip_value:
+    if (GROK_NUMERIC_RADIX(&s, send)) {
+      numtype |= IS_NUMBER_NOT_INT;
+      while (s < send && isDIGIT(*s))  /* optional digits after the radix */
+        s++;
+    }
+  }
+  else if (GROK_NUMERIC_RADIX(&s, send)) {
+    numtype |= IS_NUMBER_NOT_INT | IS_NUMBER_IN_UV; /* valuep assigned below */
+    /* no digits before the radix means we need digits after it */
+    if (s < send && isDIGIT(*s)) {
+      do {
+        s++;
+      } while (s < send && isDIGIT(*s));
+      if (valuep) {
+        /* integer approximation is valid - it's 0.  */
+        *valuep = 0;
+      }
+    }
+    else
+      return 0;
+  } else if (*s == 'I' || *s == 'i') {
+    s++; if (s == send || (*s != 'N' && *s != 'n')) return 0;
+    s++; if (s == send || (*s != 'F' && *s != 'f')) return 0;
+    s++; if (s < send && (*s == 'I' || *s == 'i')) {
+      s++; if (s == send || (*s != 'N' && *s != 'n')) return 0;
+      s++; if (s == send || (*s != 'I' && *s != 'i')) return 0;
+      s++; if (s == send || (*s != 'T' && *s != 't')) return 0;
+      s++; if (s == send || (*s != 'Y' && *s != 'y')) return 0;
+      s++;
+    }
+    sawinf = 1;
+  } else if (*s == 'N' || *s == 'n') {
+    /* XXX TODO: There are signaling NaNs and quiet NaNs. */
+    s++; if (s == send || (*s != 'A' && *s != 'a')) return 0;
+    s++; if (s == send || (*s != 'N' && *s != 'n')) return 0;
+    s++;
+    sawnan = 1;
+  } else
+    return 0;
+
+  if (sawinf) {
+    numtype &= IS_NUMBER_NEG; /* Keep track of sign  */
+    numtype |= IS_NUMBER_INFINITY | IS_NUMBER_NOT_INT;
+  } else if (sawnan) {
+    numtype &= IS_NUMBER_NEG; /* Keep track of sign  */
+    numtype |= IS_NUMBER_NAN | IS_NUMBER_NOT_INT;
+  } else if (s < send) {
+    /* we can have an optional exponent part */
+    if (*s == 'e' || *s == 'E') {
+      /* The only flag we keep is sign.  Blow away any "it's UV"  */
+      numtype &= IS_NUMBER_NEG;
+      numtype |= IS_NUMBER_NOT_INT;
+      s++;
+      if (s < send && (*s == '-' || *s == '+'))
+        s++;
+      if (s < send && isDIGIT(*s)) {
+        do {
+          s++;
+        } while (s < send && isDIGIT(*s));
+      }
+      else
+      return 0;
+    }
+  }
+  while (s < send && isSPACE(*s))
+    s++;
+  if (s >= send)
+    return numtype;
+  if (len == 10 && memEQ(pv, "0 but true", 10)) {
+    if (valuep)
+      *valuep = 0;
+    return IS_NUMBER_IN_UV;
+  }
+  return 0;
+}
+#endif /* grok_number */
+
+#ifndef PERL_MAGIC_sv
+#   define PERL_MAGIC_sv             '\0'
+#endif
+
+#ifndef PERL_MAGIC_overload
+#   define PERL_MAGIC_overload       'A'
+#endif
+
+#ifndef PERL_MAGIC_overload_elem
+#   define PERL_MAGIC_overload_elem  'a'
+#endif
+
+#ifndef PERL_MAGIC_overload_table
+#   define PERL_MAGIC_overload_table 'c'
+#endif
+
+#ifndef PERL_MAGIC_bm
+#   define PERL_MAGIC_bm             'B'
+#endif
+
+#ifndef PERL_MAGIC_regdata
+#   define PERL_MAGIC_regdata        'D'
+#endif
+
+#ifndef PERL_MAGIC_regdatum
+#   define PERL_MAGIC_regdatum       'd'
+#endif
+
+#ifndef PERL_MAGIC_env
+#   define PERL_MAGIC_env            'E'
+#endif
+
+#ifndef PERL_MAGIC_envelem
+#   define PERL_MAGIC_envelem        'e'
+#endif
+
+#ifndef PERL_MAGIC_fm
+#   define PERL_MAGIC_fm             'f'
+#endif
+
+#ifndef PERL_MAGIC_regex_global
+#   define PERL_MAGIC_regex_global   'g'
+#endif
+
+#ifndef PERL_MAGIC_isa
+#   define PERL_MAGIC_isa            'I'
+#endif
+
+#ifndef PERL_MAGIC_isaelem
+#   define PERL_MAGIC_isaelem        'i'
+#endif
+
+#ifndef PERL_MAGIC_nkeys
+#   define PERL_MAGIC_nkeys          'k'
+#endif
+
+#ifndef PERL_MAGIC_dbfile
+#   define PERL_MAGIC_dbfile         'L'
+#endif
+
+#ifndef PERL_MAGIC_dbline
+#   define PERL_MAGIC_dbline         'l'
+#endif
+
+#ifndef PERL_MAGIC_mutex
+#   define PERL_MAGIC_mutex          'm'
+#endif
+
+#ifndef PERL_MAGIC_shared
+#   define PERL_MAGIC_shared         'N'
+#endif
+
+#ifndef PERL_MAGIC_shared_scalar
+#   define PERL_MAGIC_shared_scalar  'n'
+#endif
+
+#ifndef PERL_MAGIC_collxfrm
+#   define PERL_MAGIC_collxfrm       'o'
+#endif
+
+#ifndef PERL_MAGIC_tied
+#   define PERL_MAGIC_tied           'P'
+#endif
+
+#ifndef PERL_MAGIC_tiedelem
+#   define PERL_MAGIC_tiedelem       'p'
+#endif
+
+#ifndef PERL_MAGIC_tiedscalar
+#   define PERL_MAGIC_tiedscalar     'q'
+#endif
+
+#ifndef PERL_MAGIC_qr
+#   define PERL_MAGIC_qr             'r'
+#endif
+
+#ifndef PERL_MAGIC_sig
+#   define PERL_MAGIC_sig            'S'
+#endif
+
+#ifndef PERL_MAGIC_sigelem
+#   define PERL_MAGIC_sigelem        's'
+#endif
+
+#ifndef PERL_MAGIC_taint
+#   define PERL_MAGIC_taint          't'
+#endif
+
+#ifndef PERL_MAGIC_uvar
+#   define PERL_MAGIC_uvar           'U'
+#endif
+
+#ifndef PERL_MAGIC_uvar_elem
+#   define PERL_MAGIC_uvar_elem      'u'
+#endif
+
+#ifndef PERL_MAGIC_vstring
+#   define PERL_MAGIC_vstring        'V'
+#endif
+
+#ifndef PERL_MAGIC_vec
+#   define PERL_MAGIC_vec            'v'
+#endif
+
+#ifndef PERL_MAGIC_utf8
+#   define PERL_MAGIC_utf8           'w'
+#endif
+
+#ifndef PERL_MAGIC_substr
+#   define PERL_MAGIC_substr         'x'
+#endif
+
+#ifndef PERL_MAGIC_defelem
+#   define PERL_MAGIC_defelem        'y'
+#endif
+
+#ifndef PERL_MAGIC_glob
+#   define PERL_MAGIC_glob           '*'
+#endif
+
+#ifndef PERL_MAGIC_arylen
+#   define PERL_MAGIC_arylen         '#'
+#endif
+
+#ifndef PERL_MAGIC_pos
+#   define PERL_MAGIC_pos            '.'
+#endif
+
+#ifndef PERL_MAGIC_backref
+#   define PERL_MAGIC_backref        '<'
+#endif
+
+#ifndef PERL_MAGIC_ext
+#   define PERL_MAGIC_ext            '~'
 #endif
 
 #endif /* _P_P_PORTABILITY_H_ */

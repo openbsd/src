@@ -6,7 +6,7 @@ use vars qw($VERSION @ISA);
 use ExtUtils::MakeMaker qw(neatvalue);
 use File::Spec;
 
-$VERSION = '1.03';
+$VERSION = '1.04';
 
 require ExtUtils::MM_Any;
 require ExtUtils::MM_Unix;
@@ -32,16 +32,20 @@ the semantics.
 
 =over 4
 
+=item init_dist (o)
+
+Define TO_UNIX to convert OS2 linefeeds to Unix style.
+
 =cut
 
-sub dist {
-    my($self, %attribs) = @_;
+sub init_dist {
+    my($self) = @_;
 
-    $attribs{TO_UNIX} ||= sprintf <<'MAKE_TEXT', $self->{NOECHO};
-%s$(TEST_F) tmp.zip && $(RM) tmp.zip; $(ZIP) -ll -mr tmp.zip $(DISTVNAME) && unzip -o tmp.zip && $(RM) tmp.zip
+    $self->{TO_UNIX} ||= <<'MAKE_TEXT';
+$(NOECHO) $(TEST_F) tmp.zip && $(RM_F) tmp.zip; $(ZIP) -ll -mr tmp.zip $(DISTVNAME) && unzip -o tmp.zip && $(RM_F) tmp.zip
 MAKE_TEXT
 
-    return $self->SUPER::dist(%attribs);
+    $self->SUPER::init_dist;
 }
 
 sub dlsyms {
@@ -117,38 +121,33 @@ sub maybe_command {
     return;
 }
 
-sub perl_archive {
-    return "\$(PERL_INC)/libperl\$(LIB_EXT)";
+=item init_linker
+
+=cut
+
+sub init_linker {
+    my $self = shift;
+
+    $self->{PERL_ARCHIVE} = "\$(PERL_INC)/libperl\$(LIB_EXT)";
+
+    $self->{PERL_ARCHIVE_AFTER} = $OS2::is_aout
+      ? ''
+      : '$(PERL_INC)/libperl_override$(LIB_EXT)';
+    $self->{EXPORT_LIST} = '$(BASEEXT).def';
 }
 
-=item perl_archive_after
+=item os_flavor
 
-This is an internal method that returns path to a library which
-should be put on the linker command line I<after> the external libraries
-to be linked to dynamic extensions.  This may be needed if the linker
-is one-pass, and Perl includes some overrides for C RTL functions,
-such as malloc().
+OS/2 is OS/2
 
-=cut 
+=cut
 
-sub perl_archive_after
-{
- return "\$(PERL_INC)/libperl_override\$(LIB_EXT)" unless $OS2::is_aout;
- return "";
+sub os_flavor {
+    return('OS/2');
 }
-
-sub export_list
-{
- my ($self) = @_;
- return "$self->{BASEEXT}.def";
-}
-
-1;
-
-__END__
-
-=pod
 
 =back
 
 =cut
+
+1;

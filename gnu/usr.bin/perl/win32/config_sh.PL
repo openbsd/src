@@ -93,6 +93,11 @@ if (defined(&Win32::IsWin95) && Win32::IsWin95()) {
     $opt{d_link} = 'undef';
 }
 
+if ($opt{uselargefiles} ne 'define') {
+    $opt{lseeksize} = 4;
+    $opt{lseektype} = 'off_t';
+}
+
 while (<>) {
     s/~([\w_]+)~/$opt{$1}/g;
     if (/^([\w_]+)=(.*)$/) {

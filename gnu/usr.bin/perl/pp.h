@@ -1,6 +1,7 @@
 /*    pp.h
  *
- *    Copyright (c) 1991-2002, Larry Wall
+ *    Copyright (C) 1991, 1992, 1993, 1994, 1995, 1996, 1998, 1999,
+ *    2000, 2001, by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -212,12 +213,12 @@ See C<PUSHu>.
 =cut
 */
 
-#define EXTEND(p,n)	STMT_START { if (PL_stack_max - p < (n)) {		\
+#define EXTEND(p,n)	STMT_START { if (PL_stack_max - p < (int)(n)) {		\
 			    sp = stack_grow(sp,p, (int) (n));		\
 			} } STMT_END
 
 /* Same thing, but update mark register too. */
-#define MEXTEND(p,n)	STMT_START {if (PL_stack_max - p < (n)) {		\
+#define MEXTEND(p,n)	STMT_START {if (PL_stack_max - p < (int)(n)) {		\
 			    int markoff = mark - PL_stack_base;		\
 			    sp = stack_grow(sp,p,(int) (n));		\
 			    mark = PL_stack_base + markoff;		\
@@ -392,8 +393,8 @@ See C<PUSHu>.
    changed SV* ref to SV* tmpRef */
 #define RvDEEPCP(rv) STMT_START { SV* tmpRef=SvRV(rv);      \
   if (SvREFCNT(tmpRef)>1) {                 \
+    SvRV(rv)=AMG_CALLun(rv,copy);	\
     SvREFCNT_dec(tmpRef);                   \
-    SvRV(rv)=AMG_CALLun(rv,copy);        \
   } } STMT_END
 
 /*

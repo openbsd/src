@@ -1,12 +1,12 @@
 /*    dosish.h
  *
- *    Copyright (c) 1997-2002, Larry Wall
+ *    Copyright (C) 1993, 1994, 1996, 1997, 1998, 1999,
+ *    2000, 2001, 2002, by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
  *
  */
-
 #define ABORT() abort();
 
 #ifndef SH_PATH
@@ -16,7 +16,7 @@
 #ifdef DJGPP
 #  define BIT_BUCKET "nul"
 #  define OP_BINARY O_BINARY
-#  define PERL_SYS_INIT(c,v) Perl_DJGPP_init(c,v)
+#  define PERL_SYS_INIT(c,v) MALLOC_CHECK_TAINT2(*c,*v) Perl_DJGPP_init(c,v)
 #  define init_os_extras Perl_init_os_extras
 #  include <signal.h>
 #  define HAS_UTIME
@@ -32,20 +32,23 @@
 #  define PERL_FS_VER_FMT	"%d_%d_%d"
 #else	/* DJGPP */
 #  ifdef WIN32
-#    define PERL_SYS_INIT(c,v)	Perl_win32_init(c,v)
+#    define PERL_SYS_INIT(c,v)	MALLOC_CHECK_TAINT2(*c,*v) Perl_win32_init(c,v)
+#    define PERL_SYS_TERM()	Perl_win32_term()
 #    define BIT_BUCKET "nul"
 #  else
 #	 ifdef NETWARE
-#      define PERL_SYS_INIT(c,v)	Perl_nw5_init(c,v)
+#      define PERL_SYS_INIT(c,v)	MALLOC_CHECK_TAINT2(*c,*v) Perl_nw5_init(c,v)
 #      define BIT_BUCKET "nwnul"
 #    else
-#      define PERL_SYS_INIT(c,v)
+#      define PERL_SYS_INIT(c,v)	MALLOC_CHECK_TAINT2(*c,*v)
 #      define BIT_BUCKET "\\dev\\nul" /* "wanna be like, umm, Newlined, or somethin?" */
 #    endif /* NETWARE */
 #  endif
 #endif	/* DJGPP */
 
-#define PERL_SYS_TERM() OP_REFCNT_TERM; MALLOC_TERM
+#ifndef PERL_SYS_TERM
+#  define PERL_SYS_TERM() OP_REFCNT_TERM; MALLOC_TERM
+#endif
 #define dXSUB_SYS
 
 /*
@@ -60,9 +63,9 @@
  * if you need the last, try #DEFINE MEM_SIZE unsigned long.
  */
 #ifdef MSDOS
- #ifndef DJGPP
-  #define HAS_64K_LIMIT
- #endif
+#  ifndef DJGPP
+#    define HAS_64K_LIMIT
+#  endif
 #endif
 
 /* USEMYBINMODE
@@ -82,7 +85,11 @@
 #if defined(WIN64) || defined(USE_LARGE_FILES)
 #define Stat_t struct _stati64
 #else
+#if defined(UNDER_CE)
+#define Stat_t struct xcestat
+#else
 #define Stat_t struct stat
+#endif
 #endif
 
 /* USE_STAT_RDEV:
@@ -135,3 +142,48 @@
 #  define HAS_WAIT
 #  define HAS_CHOWN
 #endif	/* WIN32 */
+
+/*
+ * <rich@phekda.freeserve.co.uk>: The DJGPP port has code that converts
+ * the return code of system() into the form that Unixy wait usually
+ * returns:
+ *
+ * - signal number in bits 0-6;
+ * - core dump flag in bit 7;
+ * - exit code in bits 8-15.
+ *
+ * Bits 0-7 are always zero for DJGPP, because it uses system().
+ * See djgpp.c.
+ *
+ * POSIX::W* use the W* macros from <sys/wait.h> to decode
+ * the return code. Unfortunately the W* macros for DJGPP use
+ * a different format than Unixy wait does. So there's a mismatch
+ * and, say, WEXITSTATUS($?) will return bogus values.
+ *
+ * So here we add hack to redefine the W* macros from DJGPP's <sys/wait.h>
+ * to work with our return-code conversion.
+ */
+
+#ifdef DJGPP
+
+#include <sys/wait.h>
+
+#undef WEXITSTATUS
+#undef WIFEXITED
+#undef WIFSIGNALED
+#undef WIFSTOPPED
+#undef WNOHANG
+#undef WSTOPSIG
+#undef WTERMSIG
+#undef WUNTRACED
+
+#define WEXITSTATUS(stat_val) ((stat_val) >> 8)
+#define WIFEXITED(stat_val)   0
+#define WIFSIGNALED(stat_val) 0
+#define WIFSTOPPED(stat_val)  0
+#define WNOHANG               0
+#define WSTOPSIG(stat_val)    0
+#define WTERMSIG(stat_val)    0
+#define WUNTRACED             0
+
+#endif

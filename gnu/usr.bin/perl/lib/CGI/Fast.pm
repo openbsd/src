@@ -16,7 +16,7 @@ package CGI::Fast;
 # The most recent version and complete docs are available at:
 #   http://www.genome.wi.mit.edu/ftp/pub/software/WWW/cgi_docs.html
 #   ftp://ftp-genome.wi.mit.edu/pub/software/WWW/
-$CGI::Fast::VERSION='1.04';
+$CGI::Fast::VERSION='1.041';
 
 use CGI;
 use FCGI;
@@ -187,7 +187,7 @@ documentation for C<FCGI::OpenSocket> for more information.)
 =item FCGI_SOCKET_PATH
 
 The address (TCP/IP) or path (UNIX Domain) of the socket the external FastCGI
-script to which bind an listen for incoming connections from the web server.
+script to which bind can listen for incoming connections from the web server.
 
 =item FCGI_LISTEN_QUEUE
 

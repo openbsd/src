@@ -52,6 +52,8 @@ static LONG    APIENTRY (*pRexxStart) (LONG, PRXSTRING, PSZ, PRXSTRING,
 				    PSZ, LONG, PRXSYSEXIT, PSHORT, PRXSTRING);
 static APIRET  APIENTRY (*pRexxRegisterFunctionExe) (PSZ,
 						  RexxFunctionHandler *);
+static APIRET  APIENTRY (*pRexxRegisterSubcomExe)  (PCSZ pszEnvName, PFN pfnEntryPoint,
+    PUCHAR pUserArea);
 static APIRET  APIENTRY (*pRexxDeregisterFunction) (PSZ);
 
 static ULONG (*pRexxVariablePool) (PSHVBLOCK pRequest);
@@ -72,7 +74,8 @@ exec_in_REXX_with(pTHX_ char *cmd, int c, char **handlerNames, RexxFunctionHandl
     LONG rc;
     SV *res;
     char *subs = 0;
-    int n = c;
+    int n = c, have_nl = 0;
+    char *ocmd = cmd, *s, *t;
 
     incompartment++;
 
@@ -84,6 +87,23 @@ exec_in_REXX_with(pTHX_ char *cmd, int c, char **handlerNames, RexxFunctionHandl
 	    subs[n] = 1;
     }
 
+    s = cmd;
+    while (*s) {
+	if (*s == '\n') {		/* Is not preceeded by \r! */
+	    New(728, cmd, 2*strlen(cmd)+1, char);
+	    s = ocmd;
+	    t = cmd;
+	    while (*s) {
+		if (*s == '\n')
+		    *t++ = '\r';
+		*t++ = *s++;
+	    }
+	    *t = 0;
+	    break;
+	} else if (*s == '\r')
+	    s++;
+	s++;
+    }
     MAKERXSTRING(args[0], NULL, 0);
     MAKERXSTRING(inst[0], cmd,  strlen(cmd));
     MAKERXSTRING(inst[1], NULL, 0);
@@ -105,6 +125,8 @@ exec_in_REXX_with(pTHX_ char *cmd, int c, char **handlerNames, RexxFunctionHandl
 	    pRexxDeregisterFunction(handlerNames[n]);
     if (c)
 	Safefree(subs);
+    if (cmd != ocmd)
+	Safefree(cmd);
 #if 0					/* Do we want to restore these? */
     DosFreeModule(hRexxAPI);
     DosFreeModule(hRexx);
@@ -293,11 +315,13 @@ initialize(void)
     *(PFN *)&pRexxDeregisterFunction
 	= loadByOrdinal(ORD_RexxDeregisterFunction, 1);
     *(PFN *)&pRexxVariablePool = loadByOrdinal(ORD_RexxVariablePool, 1);
+    *(PFN *)&pRexxRegisterSubcomExe
+	= loadByOrdinal(ORD_RexxRegisterSubcomExe, 1);
     needstrs(8);
     needvars(8);
     trace = getenv("PERL_REXX_DEBUG");
      
-    rc = RexxRegisterSubcomExe("PERLEVAL", (PFN)&SubCommandPerlEval, NULL);
+    rc = pRexxRegisterSubcomExe("PERLEVAL", (PFN)&SubCommandPerlEval, NULL);
 }
 
 static int

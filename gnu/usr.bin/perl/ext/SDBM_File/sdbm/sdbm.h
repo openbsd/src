@@ -186,9 +186,11 @@ Free_t   Perl_mfree proto((Malloc_t where));
 #endif /* MYMALLOC */
 
 #ifdef I_STRING
-#include <string.h>
+# ifndef __ultrix__
+#  include <string.h>
+# endif
 #else
-#include <strings.h>
+# include <strings.h>
 #endif
 
 #ifdef I_MEMORY
@@ -243,7 +245,7 @@ Free_t   Perl_mfree proto((Malloc_t where));
 #    endif
 #  endif
 #  ifdef BUGGY_MSC
-  #  pragma function(memcmp)
+#    pragma function(memcmp)
 #  endif
 #else
 #   ifndef memcmp

@@ -2,7 +2,7 @@
 # Created by: JT McDuffie (jt@kpc.com)  26 DEC 1991
 # p5ed by: Jarkko Hietaniemi <jhi@iki.fi> Aug 27 1994
 #  NOTE:   You should run Configure with tcsh (yes, tcsh).
-# Comments by Andy Dougherty <doughera@lafcol.lafayette.edu> 28 Mar 1995
+# Comments by Andy Dougherty <doughera@lafayette.edu> 28 Mar 1995
 alignbytes="8"
 byteorder="4321"
 castflags='0'

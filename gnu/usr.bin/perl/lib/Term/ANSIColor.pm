@@ -1,5 +1,5 @@
 # Term::ANSIColor -- Color screen output using ANSI escape sequences.
-# $Id: ANSIColor.pm,v 1.4 2002/10/27 22:25:27 millert Exp $
+# $Id: ANSIColor.pm,v 1.5 2003/12/03 03:02:41 millert Exp $
 #
 # Copyright 1996, 1997, 1998, 2000, 2001, 2002
 #   by Russ Allbery <rra@stanford.edu> and Zenin <zenin@bawdycaste.com>
@@ -34,7 +34,7 @@ Exporter::export_ok_tags ('constants');
 
 # Don't use the CVS revision as the version, since this module is also in Perl
 # core and too many things could munge CVS magic revision strings.
-$VERSION = 1.05;
+$VERSION = 1.07;
 
 ##############################################################################
 # Internal data structures
@@ -227,7 +227,7 @@ Term::ANSIColor - Color screen output using ANSI escape sequences
 
 This module has two interfaces, one through color() and colored() and the
 other through constants.  It also offers the utility function uncolor(),
-which has to be explicitly imported to be used (see L<SYNOPSYS>).
+which has to be explicitly imported to be used (see L<SYNOPSIS>).
 
 color() takes any number of strings as arguments and considers them to be
 space-separated lists of attributes.  It then forms and returns the escape
@@ -410,7 +410,8 @@ ignored, or they may display as an ESC character followed by some apparent
 garbage.
 
 Jean Delvare provided the following table of different common terminal
-emulators and their support for the various attributes:
+emulators and their support for the various attributes and others have helped
+me flesh it out:
 
               clear    bold     dark    under    blink   reverse  conceal
  ------------------------------------------------------------------------
@@ -420,11 +421,15 @@ emulators and their support for the various attributes:
  dtterm        yes      yes      yes     yes    reverse    yes      yes
  teraterm      yes    reverse    no      yes    rev/red    yes      no
  aixterm      kinda   normal     no      yes      no       yes      yes
+ PuTTY         yes     color     no      yes      no       yes      no
+ Windows       yes      no       no      no       no       yes      no
+ Cygwin SSH    yes      yes      no     color    color    color     yes
 
-Where the entry is other than yes or no, that emulator interpret the given
-attribute as something else instead.  Note that on an aixterm, clear doesn't
-reset colors; you have to explicitly set the colors back to what you want.
-More entries in this table are welcome.
+Windows is Windows telnet, and Cygwin SSH is the OpenSSH implementation under
+Cygwin on Windows NT.  Where the entry is other than yes or no, that emulator
+displays the given attribute as something else instead.  Note that on an
+aixterm, clear doesn't reset colors; you have to explicitly set the colors
+back to what you want.  More entries in this table are welcome.
 
 Note that codes 3 (italic), 6 (rapid blink), and 9 (strikethrough) are
 specified in ANSI X3.64 and ECMA-048 but are not commonly supported by most
@@ -438,7 +443,7 @@ supported by this module.
 =head1 SEE ALSO
 
 ECMA-048 is available on-line (at least at the time of this writing) at
-L<http://www.ecma.ch/ecma1/STAND/ECMA-048.HTM>.
+L<http://www.ecma-international.org/publications/standards/ECMA-048.HTM>.
 
 ISO 6429 is available from ISO for a charge; the author of this module does
 not own a copy of it.  Since the source material for ISO 6429 was ECMA-048

@@ -5,7 +5,7 @@ BEGIN {
     @INC = qw(. ../lib);
 }
 
-print "1..62\n";
+print "1..68\n";
 
 require 'test.pl';
 
@@ -200,25 +200,29 @@ foo WHATEVER "ok 38\n";
 # test the \(@foo) construct
 #
 package main;
-@foo = (1,2,3);
+@foo = \(1..3);
 @bar = \(@foo);
 @baz = \(1,@foo,@bar);
 print @bar == 3 ? "ok 39\n" : "not ok 39\n";
 print grep(ref($_), @bar) == 3 ? "ok 40\n" : "not ok 40\n";
 print @baz == 3 ? "ok 41\n" : "not ok 41\n";
 
-my(@fuu) = (1,2,3);
+my(@fuu) = \(1..2,3);
 my(@baa) = \(@fuu);
 my(@bzz) = \(1,@fuu,@baa);
 print @baa == 3 ? "ok 42\n" : "not ok 42\n";
 print grep(ref($_), @baa) == 3 ? "ok 43\n" : "not ok 43\n";
 print @bzz == 3 ? "ok 44\n" : "not ok 44\n";
 
+# also, it can't be an lvalue
+eval '\\($x, $y) = (1, 2);';
+print $@ =~ /Can\'t modify.*ref.*in.*assignment/ ? "ok 45\n" : "not ok 45\n";
+
 # test for proper destruction of lexical objects
 
-sub larry::DESTROY { print "# larry\nok 45\n"; }
-sub curly::DESTROY { print "# curly\nok 46\n"; }
-sub moe::DESTROY   { print "# moe\nok 47\n"; }
+sub larry::DESTROY { print "# larry\nok 46\n"; }
+sub curly::DESTROY { print "# curly\nok 47\n"; }
+sub moe::DESTROY   { print "# moe\nok 48\n"; }
 
 {
     my ($joe, @curly, %larry);
@@ -232,13 +236,13 @@ print "# left block\n";
 
 # another glob test
 
-$foo = "not ok 48";
+$foo = "not ok 49";
 { local(*bar) = "foo" }
-$bar = "ok 48";
+$bar = "ok 49";
 local(*bar) = *bar;
 print "$bar\n";
 
-$var = "ok 49";
+$var = "ok 50";
 $_   = \$var;
 print $$_,"\n";
 
@@ -247,10 +251,10 @@ print $$_,"\n";
 {
     package A;
     sub new { bless {}, shift }
-    DESTROY { print "# destroying 'A'\nok 51\n" }
+    DESTROY { print "# destroying 'A'\nok 52\n" }
     package _B;
     sub new { bless {}, shift }
-    DESTROY { print "# destroying '_B'\nok 50\n"; bless shift, 'A' }
+    DESTROY { print "# destroying '_B'\nok 51\n"; bless shift, 'A' }
     package main;
     my $b = _B->new;
 }
@@ -262,11 +266,11 @@ print $$_,"\n";
     local $SIG{'__DIE__'} = sub {
 	my $m = shift;
 	if ($i++ > 4) {
-	    print "# infinite recursion, bailing\nnot ok 52\n";
+	    print "# infinite recursion, bailing\nnot ok 53\n";
 	    exit 1;
         }
 	print "# $m";
-	if ($m =~ /^Modification of a read-only/) { print "ok 52\n" }
+	if ($m =~ /^Modification of a read-only/) { print "ok 53\n" }
     };
     package C;
     sub new { bless {}, shift }
@@ -282,7 +286,7 @@ print $$_,"\n";
 
 {
     my @a;
-    $a[1] = "ok 53\n";
+    $a[1] = "ok 54\n";
     print ${\$_} for @a;
 }
 
@@ -290,34 +294,73 @@ print $$_,"\n";
 $a = [1,2,3];
 $a = $a->[1];
 print "not " unless $a == 2;
-print "ok 54\n";
+print "ok 55\n";
 
-sub x::DESTROY {print "ok ", 54 + shift->[0], "\n"}
-{ my $a1 = bless [4],"x";
-  my $a2 = bless [3],"x";
-  { my $a3 = bless [2],"x";
-    my $a4 = bless [1],"x";
+# This test used to coredump. The BEGIN block is important as it causes the
+# op that created the constant reference to be freed. Hence the only
+# reference to the constant string "pass" is in $a. The hack that made
+# sure $a = $a->[1] would work didn't work with references to constants.
+
+my $test = 56;
+
+foreach my $lexical ('', 'my $a; ') {
+  my $expect = "pass\n";
+  my $result = runperl (switches => ['-wl'], stderr => 1,
+    prog => $lexical . 'BEGIN {$a = \q{pass}}; $a = $$a; print $a');
+
+  if ($? == 0 and $result eq $expect) {
+    print "ok $test\n";
+  } else {
+    print "not ok $test # \$? = $?\n";
+    print "# expected ", _qq ($expect), ", got ", _qq ($result), "\n";
+  }
+  $test++;
+}
+
+sub x::DESTROY {print "ok ", $test + shift->[0], "\n"}
+{ my $a1 = bless [3],"x";
+  my $a2 = bless [2],"x";
+  { my $a3 = bless [1],"x";
+    my $a4 = bless [0],"x";
     567;
   }
 }
-
+$test+=4;
 
 my $result = runperl (switches=>['-l'],
                       prog=> 'print 1; print qq-*$\*-;print 1;');
 my $expect = "1\n*\n*\n1\n";
 if ($result eq $expect) {
-  print "ok 59\n";
+  print "ok $test\n";
 } else {
-  print "not ok 59\n";
+  print "not ok $test\n";
   foreach ($expect, $result) {
     s/\n/\\n/gs;
   }
   print "# expected \"$expect\", got \"$result\"\n";
 }
 
+# bug #21347
+
+runperl(prog => 'sub UNIVERSAL::AUTOLOAD { qr// } a->p' );
+if ($? != 0) { print "not " };
+print "ok ",++$test," - UNIVERSAL::AUTOLOAD called when freeing qr//\n";
+
+runperl(prog => 'sub UNIVERSAL::DESTROY { warn } bless \$a, A', stderr => 1);
+if ($? != 0) { print "not " };
+print "ok ",++$test," - warn called inside UNIVERSAL::DESTROY\n";
+
+
+# bug #22719
+
+runperl(prog => 'sub f { my $x = shift; *z = $x; } f({}); f();');
+if ($? != 0) { print "not " };
+print "ok ",++$test," - coredump on typeglob = (SvRV && !SvROK)\n";
+
+
 # test global destruction
 
-my $test = 60;
+++$test;
 my $test1 = $test + 1;
 my $test2 = $test + 2;
 

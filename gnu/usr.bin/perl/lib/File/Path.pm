@@ -90,8 +90,20 @@ were not deleted may be left with permissions reset to allow world
 read and write access.  Note also that the occurrence of errors in
 rmtree can be determined I<only> by trapping diagnostic messages
 using C<$SIG{__WARN__}>; it is not apparent from the return value.
-Therefore, you must be extremely careful about using C<rmtree($foo,$bar,0>
+Therefore, you must be extremely careful about using C<rmtree($foo,$bar,0)>
 in situations where security is an issue.
+
+=head1 DIAGNOSTICS
+
+=over 4
+
+=item *
+
+On Windows, if C<mkpath> gives you the warning: B<No such file or
+directory>, this may mean that you've exceeded your filesystem's
+maximum path length.
+
+=back
 
 =head1 AUTHORS
 
@@ -107,7 +119,7 @@ use Exporter ();
 use strict;
 use warnings;
 
-our $VERSION = "1.05";
+our $VERSION = "1.06";
 our @ISA = qw( Exporter );
 our @EXPORT = qw( mkpath rmtree );
 

@@ -37,7 +37,7 @@ EOT
 } else {
     # This is the output of: 'md5sum Changes README MD5.pm MD5.xs rfc1321.txt'
     $EXPECT = <<EOT;
-2bdd59aa1e816cd8df05968e70f75cf1  Changes
+465bf969cb780d0b268dcc6b077a4c21  Changes
 6c950a0211a5a28f023bb482037698cd  README
 546c4e62999c9888d7d46732a21c9dff  MD5.pm
 ca3f8cb317c5d088ed9f97204c6b8cda  MD5.xs

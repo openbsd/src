@@ -4,7 +4,7 @@
 #
 # GNU configure-like front end to metaconfig's Configure.
 #
-# Written by Andy Dougherty <doughera@lafcol.lafayette.edu>
+# Written by Andy Dougherty <doughera@lafayette.edu>
 # and Matthew Green <mrg@mame.mu.oz.au>.
 #
 # Reformatted and modified for inclusion in the dist-3.0 package by
@@ -62,6 +62,12 @@ EOM
 		;;
 	--prefix=*)
 		arg=`echo $1 | sed 's/--prefix=/-Dprefix=/'`
+		opts="$opts $arg"
+		shift
+		;;
+	--prefix)
+		shift
+		arg="-Dprefix=$1"
 		opts="$opts $arg"
 		shift
 		;;

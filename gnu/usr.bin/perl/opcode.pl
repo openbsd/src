@@ -1,4 +1,8 @@
 #!/usr/bin/perl
+BEGIN {
+    # Get function prototypes
+    require 'regen_lib.pl';
+}
 
 $opcode_new = 'opcode.h-new';
 $opname_new = 'opnames.h-new';
@@ -34,7 +38,8 @@ print <<"END";
 /*
  *    opcode.h
  *
- *    Copyright (c) 1997-2002, Larry Wall
+ *    Copyright (C) 1993, 1994, 1995, 1996, 1997, 1998, 1999,
+ *    2000, 2001, 2002, 2003, by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -55,7 +60,7 @@ print ON <<"END";
 /*
  *    opnames.h
  *
- *    Copyright (c) 1997-2002, Larry Wall
+ *    Copyright (C) 1999, 2000, 2001, 2002, 2003, by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -85,10 +90,10 @@ print <<END;
 START_EXTERN_C
 
 
-#define OP_NAME(o) (o->op_type == OP_CUSTOM ? custom_op_name(o) : \\
-                    PL_op_name[o->op_type])
-#define OP_DESC(o) (o->op_type == OP_CUSTOM ? custom_op_desc(o) : \\
-                    PL_op_desc[o->op_type])
+#define OP_NAME(o) ((o)->op_type == OP_CUSTOM ? custom_op_name(o) : \\
+                    PL_op_name[(o)->op_type])
+#define OP_DESC(o) ((o)->op_type == OP_CUSTOM ? custom_op_desc(o) : \\
+                    PL_op_desc[(o)->op_type])
 
 #ifndef DOINIT
 EXT char *PL_op_name[];
@@ -278,15 +283,11 @@ if (keys %OP_IS_FILETEST) {
 close OC or die "Error closing opcode.h: $!";
 close ON or die "Error closing opnames.h: $!";
 
-chmod 0600, 'opcode.h';  # required by dosish filesystems
-chmod 0600, 'opnames.h'; # required by dosish filesystems
-
-# Some dosish systems can't rename over an existing file:
-unlink		"$_-old"	for qw(opcode.h opnames.h);
-rename $_,	"$_-old"	for qw(opcode.h opnames.h);
-
-rename $opcode_new, 'opcode.h' or die "renaming opcode.h: $!\n";
-rename $opname_new, 'opnames.h' or die "renaming opnames.h: $!\n";
+foreach ('opcode.h', 'opnames.h') {
+    safer_rename_silent $_, "$_-old";
+}
+safer_rename $opcode_new, 'opcode.h';
+safer_rename $opname_new, 'opnames.h';
 
 $pp_proto_new = 'pp_proto.h-new';
 $pp_sym_new  = 'pp.sym-new';
@@ -330,15 +331,17 @@ for (@ops) {
 close PP or die "Error closing pp_proto.h: $!";
 close PPSYM or die "Error closing pp.sym: $!";
 
-chmod 0600, 'pp_proto.h'; # required by dosish filesystems
-chmod 0600, 'pp.sym';     # required by dosish filesystems
+foreach ('pp_proto.h', 'pp.sym') {
+    safer_rename_silent $_, "$_-old";
+}
+safer_rename $pp_proto_new, 'pp_proto.h';
+safer_rename $pp_sym_new, 'pp.sym';
 
-# Some dosish systems can't rename over an existing file:
-unlink		"$_-old"	for qw(pp_proto.h pp.sym);
-rename $_,	"$_-old"	for qw(pp_proto.h pp.sym);
-
-rename $pp_proto_new, 'pp_proto.h' or die "rename pp_proto.h: $!\n";
-rename $pp_sym_new, 'pp.sym' or die "rename pp.sym: $!\n";
+END {
+  foreach ('opcode.h', 'opnames.h', 'pp_proto.h', 'pp.sym') {
+    1 while unlink "$_-old";
+  }
+}
 
 ###########################################################################
 sub tab {
@@ -420,7 +423,7 @@ __END__
 # logop       - |            listop   - @            pmop       - /
 # padop/svop  - $            padop    - # (unused)   loop       - {
 # baseop/unop - %            loopexop - }            filestatop - -
-# pvop/svop   - "
+# pvop/svop   - "            cop      - ;
 
 # Other options are:
 #   needs stack mark                    - m
@@ -644,8 +647,8 @@ anonhash	anonymous hash ({})	ck_fun		ms@	L
 
 splice		splice			ck_fun		m@	A S? S? L
 push		push			ck_fun		imsT@	A L
-pop		pop			ck_shift	s%	A
-shift		shift			ck_shift	s%	A
+pop		pop			ck_shift	s%	A?
+shift		shift			ck_shift	s%	A?
 unshift		unshift			ck_fun		imsT@	A L
 sort		sort			ck_sort		m@	C? L
 reverse		reverse			ck_fun		mt@	L
@@ -917,7 +920,7 @@ getlogin	getlogin		ck_null		st0
 syscall		syscall			ck_fun		imst@	S L
 
 # For multi-threading
-lock		lock			ck_rfun		s%	S
+lock		lock			ck_rfun		s%	R
 threadsv	per-thread value	ck_null		ds0
 
 # Control (contd.)

@@ -48,7 +48,7 @@ libswanted="$*"
 # If you have glibc, then report the version for ./myconfig bug reporting.
 # (Configure doesn't need to know the specific version since it just uses
 # gcc to load the library for all tests.)
-# We don't use __GLIBC__ and  __GLIBC_MINOR__ because they 
+# We don't use __GLIBC__ and  __GLIBC_MINOR__ because they
 # are insufficiently precise to distinguish things like
 # libc-2.0.6 and libc-2.0.7.
 if test -L /lib/libc.so.6; then
@@ -60,11 +60,23 @@ fi
 # function in <sys/stat.h>.
 d_lstat=define
 
-# The system malloc() is about as fast and as frugal as perl's. 
+# The system malloc() is about as fast and as frugal as perl's.
 # Since the system malloc() has been the default since at least
 # 5.001, we might as well leave it that way.  --AD  10 Jan 2002
 case "$usemymalloc" in
 '') usemymalloc='n' ;;
+esac
+
+# Check if we're about to use Intel's ICC compiler
+case "`${cc:-cc} -V 2>&1`" in
+*"Intel(R) C++ Compiler"*)
+    # This is needed for Configure's prototype checks to work correctly
+    ccflags="-we147 $ccflags"
+    # If we're using ICC, we usually want the best performance
+    case "$optimize" in
+    '') optimize='-O3' ;;
+    esac
+    ;;
 esac
 
 case "$optimize" in
@@ -134,8 +146,8 @@ EOM
     #so='none'
 
 	# In addition, on some systems there is a problem with perl and NDBM
-	# which causes AnyDBM and NDBM_File to lock up. This is evidenced 
-	# in the tests as AnyDBM just freezing.  Apparently, this only 
+	# which causes AnyDBM and NDBM_File to lock up. This is evidenced
+	# in the tests as AnyDBM just freezing.  Apparently, this only
 	# happens on a.out systems, so we disable NDBM for all a.out linux
 	# systems.  If someone can suggest a more robust test
 	#  that would be appreciated.
@@ -148,7 +160,7 @@ EOM
 	# just as advertised. Checking into it, I found that the lockup was
 	# during the call to dbm_open. Not *in* dbm_open -- but between the call
 	# to and the jump into.
-	# 
+	#
 	# To make a long story short, making sure that the *.a and *.sa pairs of
 	#   /usr/lib/lib{m,db,gdbm}.{a,sa}
 	# were perfectly in sync took care of it.
@@ -218,13 +230,13 @@ fi
 
 # Shimpei Yamashita <shimpei@socrates.patnet.caltech.edu>
 # Message-Id: <33EF1634.B36B6500@pobox.com>
-# 
+#
 # The DR2 of MkLinux (osname=linux,archname=ppc-linux) may need
 # special flags passed in order for dynamic loading to work.
 # instead of the recommended:
 #
 # ccdlflags='-rdynamic'
-# 
+#
 # it should be:
 # ccdlflags='-Wl,-E'
 #
@@ -244,12 +256,29 @@ sparc-linux)
 	;;
 esac
 
-# This script UU/usethreads.cbu will get 'called-back' by Configure 
+# SuSE8.2 has /usr/lib/libndbm* which are ld scripts rather than
+# true libraries. The scripts cause binding against static
+# version of -lgdbm which is a bad idea. So if we have 'nm'
+# make sure it can read the file
+# NI-S 2003/08/07
+if [ -r /usr/lib/libndbm.so  -a  -x /usr/bin/nm ] ; then
+   if /usr/bin/nm /usr/lib/libndbm.so >/dev/null 2>&1 ; then
+    echo 'Your shared -lndbm seems to be a real library.'
+   else
+    echo 'Your shared -lndbm is not a real library.'
+    set `echo X "$libswanted "| sed -e 's/ ndbm / /'`
+    shift
+    libswanted="$*"
+   fi
+fi
+
+
+# This script UU/usethreads.cbu will get 'called-back' by Configure
 # after it has prompted the user for whether to use threads.
 cat > UU/usethreads.cbu <<'EOCBU'
 case "$usethreads" in
 $define|true|[yY]*)
-        ccflags="-D_REENTRANT -D_GNU_SOURCE $ccflags"
+        ccflags="-D_REENTRANT -D_GNU_SOURCE -DTHREADS_HAVE_PIDS $ccflags"
         set `echo X "$libswanted "| sed -e 's/ c / pthread c /'`
         shift
         libswanted="$*"
@@ -271,7 +300,7 @@ esac
 EOCBU
 
 cat > UU/uselargefiles.cbu <<'EOCBU'
-# This script UU/uselargefiles.cbu will get 'called-back' by Configure 
+# This script UU/uselargefiles.cbu will get 'called-back' by Configure
 # after it has prompted the user for whether to use large files.
 case "$uselargefiles" in
 ''|$define|true|[yY]*)

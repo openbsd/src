@@ -144,6 +144,24 @@ C<AUTOLOAD> from the .pm file.
 
 Turn on debugging messages.
 
+=item B<-e>, B<--omit-enums>=[I<regular expression>]
+
+If I<regular expression> is not given, skip all constants that are defined in
+a C enumeration. Otherwise skip only those constants that are defined in an
+enum whose name matches I<regular expression>.
+
+Since I<regular expression> is optional, make sure that this switch is followed
+by at least one other switch if you omit I<regular expression> and have some
+pending arguments such as header-file names. This is ok:
+
+    h2xs -e -n Module::Foo foo.h
+
+This is not ok:
+
+    h2xs -n Module::Foo -e foo.h
+
+In the latter, foo.h is taken as I<regular expression>.
+
 =item B<-f>, B<--force>
 
 Allows an extension to be created for a header even if that header is
@@ -267,57 +285,68 @@ also the section on L<LIMITATIONS of B<-x>>.
 =head1 EXAMPLES
 
 
-	# Default behavior, extension is Rusers
-	h2xs rpcsvc/rusers
+    # Default behavior, extension is Rusers
+    h2xs rpcsvc/rusers
 
-	# Same, but extension is RUSERS
-	h2xs -n RUSERS rpcsvc/rusers
+    # Same, but extension is RUSERS
+    h2xs -n RUSERS rpcsvc/rusers
 
-	# Extension is rpcsvc::rusers. Still finds <rpcsvc/rusers.h>
-	h2xs rpcsvc::rusers
+    # Extension is rpcsvc::rusers. Still finds <rpcsvc/rusers.h>
+    h2xs rpcsvc::rusers
 
-	# Extension is ONC::RPC.  Still finds <rpcsvc/rusers.h>
-	h2xs -n ONC::RPC rpcsvc/rusers
+    # Extension is ONC::RPC.  Still finds <rpcsvc/rusers.h>
+    h2xs -n ONC::RPC rpcsvc/rusers
 
-	# Without constant() or AUTOLOAD
-	h2xs -c rpcsvc/rusers
+    # Without constant() or AUTOLOAD
+    h2xs -c rpcsvc/rusers
 
-	# Creates templates for an extension named RPC
-	h2xs -cfn RPC
+    # Creates templates for an extension named RPC
+    h2xs -cfn RPC
 
-	# Extension is ONC::RPC.
-	h2xs -cfn ONC::RPC
+    # Extension is ONC::RPC.
+    h2xs -cfn ONC::RPC
+    
+    # Extension is Lib::Foo which works at least with Perl5.005_03.
+    # Constants are created for all #defines and enums h2xs can find
+    # in foo.h.
+    h2xs -b 5.5.3 -n Lib::Foo foo.h
 
-	# Makefile.PL will look for library -lrpc in 
-	# additional directory /opt/net/lib
-	h2xs rpcsvc/rusers -L/opt/net/lib -lrpc
+    # Extension is Lib::Foo which works at least with Perl5.005_03.
+    # Constants are created for all #defines but only for enums
+    # whose names do not start with 'bar_'.
+    h2xs -b 5.5.3 -e '^bar_' -n Lib::Foo foo.h
 
-        # Extension is DCE::rgynbase
-        # prefix "sec_rgy_" is dropped from perl function names
-        h2xs -n DCE::rgynbase -p sec_rgy_ dce/rgynbase
+    # Makefile.PL will look for library -lrpc in 
+    # additional directory /opt/net/lib
+    h2xs rpcsvc/rusers -L/opt/net/lib -lrpc
 
-        # Extension is DCE::rgynbase
-        # prefix "sec_rgy_" is dropped from perl function names
-        # subroutines are created for sec_rgy_wildcard_name and sec_rgy_wildcard_sid
-        h2xs -n DCE::rgynbase -p sec_rgy_ \
-        -s sec_rgy_wildcard_name,sec_rgy_wildcard_sid dce/rgynbase
+    # Extension is DCE::rgynbase
+    # prefix "sec_rgy_" is dropped from perl function names
+    h2xs -n DCE::rgynbase -p sec_rgy_ dce/rgynbase
 
-	# Make XS without defines in perl.h, but with function declarations
-	# visible from perl.h. Name of the extension is perl1.
-	# When scanning perl.h, define -DEXT=extern -DdEXT= -DINIT(x)=
-	# Extra backslashes below because the string is passed to shell.
-	# Note that a directory with perl header files would 
-	#  be added automatically to include path.
-	h2xs -xAn perl1 -F "-DEXT=extern -DdEXT= -DINIT\(x\)=" perl.h
+    # Extension is DCE::rgynbase
+    # prefix "sec_rgy_" is dropped from perl function names
+    # subroutines are created for sec_rgy_wildcard_name and 
+    # sec_rgy_wildcard_sid
+    h2xs -n DCE::rgynbase -p sec_rgy_ \
+    -s sec_rgy_wildcard_name,sec_rgy_wildcard_sid dce/rgynbase
 
-	# Same with function declaration in proto.h as visible from perl.h.
-	h2xs -xAn perl2 perl.h,proto.h
+    # Make XS without defines in perl.h, but with function declarations
+    # visible from perl.h. Name of the extension is perl1.
+    # When scanning perl.h, define -DEXT=extern -DdEXT= -DINIT(x)=
+    # Extra backslashes below because the string is passed to shell.
+    # Note that a directory with perl header files would 
+    #  be added automatically to include path.
+    h2xs -xAn perl1 -F "-DEXT=extern -DdEXT= -DINIT\(x\)=" perl.h
 
-	# Same but select only functions which match /^av_/
-	h2xs -M '^av_' -xAn perl2 perl.h,proto.h
+    # Same with function declaration in proto.h as visible from perl.h.
+    h2xs -xAn perl2 perl.h,proto.h
 
-	# Same but treat SV* etc as "opaque" types
-	h2xs -o '^[S]V \*$' -M '^av_' -xAn perl2 perl.h,proto.h
+    # Same but select only functions which match /^av_/
+    h2xs -M '^av_' -xAn perl2 perl.h,proto.h
+
+    # Same but treat SV* etc as "opaque" types
+    h2xs -o '^[S]V \*$' -M '^av_' -xAn perl2 perl.h,proto.h
 
 =head2 Extension based on F<.h> and F<.c> files
 
@@ -463,7 +492,7 @@ See L<perlxs> and L<perlxstut> for additional details.
 use strict;
 
 
-my( $H2XS_VERSION ) = ' $Revision: 1.22 $ ' =~ /\$Revision:\s+([^\s]+)/;
+my( $H2XS_VERSION ) = ' $Revision: 1.23 $ ' =~ /\$Revision:\s+([^\s]+)/;
 my $TEMPLATE_VERSION = '0.01';
 my @ARGS = @ARGV;
 my $compat_version = $];
@@ -475,6 +504,7 @@ $Text::Wrap::huge = 'overflow';
 $Text::Wrap::columns = 80;
 use ExtUtils::Constant qw (WriteConstants WriteMakefileSnippet autoload);
 use File::Compare;
+use File::Path;
 
 sub usage {
     warn "@_\n" if @_;
@@ -497,6 +527,9 @@ OPTIONS:
     -c, --omit-constant   Omit the constant() function and specialised AUTOLOAD
                           from the XS file.
     -d, --debugging       Turn on debugging messages.
+    -e, --omit-enums      Omit constants from enums in the constant() function.
+                          If a pattern is given, only the matching enums are 
+                          ignored.
     -f, --force           Force creation of the extension even if the C header
                           does not exist.
     -g, --global          Include code for safely storing static data in the .xs file. 
@@ -538,6 +571,7 @@ my ($opt_A,
     $opt_a,
     $opt_c,
     $opt_d,
+    $opt_e,
     $opt_f,
     $opt_g,
     $opt_h,
@@ -561,6 +595,7 @@ my ($opt_A,
    );
 
 Getopt::Long::Configure('bundling');
+Getopt::Long::Configure('pass_through');
 
 my %options = (
                 'omit-autoload|A'    => \$opt_A,
@@ -575,6 +610,7 @@ my %options = (
                 'compat-version|b=s' => \$opt_b,
                 'omit-constant|c'    => \$opt_c,
                 'debugging|d'        => \$opt_d,
+                'omit-enums|e:s'     => \$opt_e,
                 'force|f'            => \$opt_f,
                 'global|g'           => \$opt_g,
                 'help|h|?'           => \$opt_h,
@@ -673,9 +709,10 @@ my @path_h;
 
 while (my $arg = shift) {
     if ($arg =~ /^-l/i) {
-        $extralibs = "$arg @ARGV";
-        last;
+        $extralibs .= "$arg ";
+        next;
     }
+    last if $extralibs;
     push(@path_h, $arg);
 }
 
@@ -841,7 +878,34 @@ if( @path_h ){
 	    }
 	  }
       }
-      close(CH);
+      if (defined $opt_e and !$opt_e) {
+        close(CH);
+      }
+      else {
+	# Work from miniperl too - on "normal" systems
+        my $SEEK_SET = eval 'use Fcntl qw/SEEK_SET/; SEEK_SET' or 0;
+        seek CH, 0, $SEEK_SET;
+        my $src = do { local $/; <CH> };
+        close CH;
+        no warnings 'uninitialized';
+        
+        # Remove C and C++ comments 
+        $src =~ s#/\*[^*]*\*+([^/*][^*]*\*+)*/|("(\\.|[^"\\])*"|'(\\.|[^'\\])*'|.[^/"'\\]*)#$2#gs;
+        
+        while ($src =~ /(\benum\s*([\w_]*)\s*\{\s([\s\w=,]+)\})/gsc) {
+            my ($enum_name, $enum_body) = 
+                $1 =~ /enum\s*([\w_]*)\s*\{\s([\s\w=,]+)\}/gs;
+            # skip enums matching $opt_e
+            next if $opt_e && $enum_name =~ /$opt_e/;
+            my $val = 0;
+            for my $item (split /,/, $enum_body) {
+                my ($key, $declared_val) = $item =~ /(\w*)\s*=\s*(.*)/;
+                $val = length($declared_val) ? $declared_val : 1 + $val;
+                $seen_define{$key} = $declared_val;
+                $const_names{$key}++;
+            }
+        } # while (...)
+      } # if (!defined $opt_e or $opt_e)
     }
     }
 }
@@ -849,7 +913,6 @@ if( @path_h ){
 # Save current directory so that C::Scan can use it
 my $cwd = File::Spec->rel2abs( File::Spec->curdir );
 
-my ($ext, $nested, @modparts, $modfname, $modpname);
 # As Ilya suggested, use a name that contains - and then it can't clash with
 # the names of any packages. A directory 'fallback' will clash with any
 # new pragmata down the fallback:: tree, but that seems unlikely.
@@ -857,35 +920,21 @@ my $constscfname = 'const-c.inc';
 my $constsxsfname = 'const-xs.inc';
 my $fallbackdirname = 'fallback';
 
-$ext = chdir 'ext' ? 'ext/' : '';
-
-if( $module =~ /::/ ){
-	$nested = 1;
-	@modparts = split(/::/,$module);
-	$modfname = $modparts[-1];
-	$modpname = join('/',@modparts);
-}
-else {
-	$nested = 0;
-	@modparts = ();
-	$modfname = $modpname = $module;
-}
-
-
+my $ext = chdir 'ext' ? 'ext/' : '';
+  
+my @modparts  = split(/::/,$module);
+my $modpname  = join('-', @modparts);
+my $modfname  = pop @modparts;
+my $modpmdir  = join '/', 'lib', @modparts;
+my $modpmname = join '/', $modpmdir, $modfname.'.pm';
+  
 if ($opt_O) {
 	warn "Overwriting existing $ext$modpname!!!\n" if -e $modpname;
 }
 else {
 	die "Won't overwrite existing $ext$modpname\n" if -e $modpname;
 }
-if( $nested ){
-	my $modpath = "";
-	foreach (@modparts){
-		-d "$modpath$_" || mkdir("$modpath$_", 0777);
-		$modpath .= "$_/";
-	}
-}
--d "$modpname"   || mkdir($modpname, 0777);
+-d "$modpname"   || mkpath([$modpname], 0, 0775);
 chdir($modpname) || die "Can't chdir $ext$modpname: $!\n";
 
 my %types_seen;
@@ -1017,10 +1066,11 @@ if( ! $opt_X ){  # use XS, unless it was disabled
 }
 my @const_names = sort keys %const_names;
 
-open(PM, ">$modfname.pm") || die "Can't create $ext$modpname/$modfname.pm: $!\n";
+-d $modpmdir || mkpath([$modpmdir], 0, 0775);
+open(PM, ">$modpmname") || die "Can't create $ext$modpname/$modpmname: $!\n";
 
 $" = "\n\t";
-warn "Writing $ext$modpname/$modfname.pm\n";
+warn "Writing $ext$modpname/$modpmname\n";
 
 print PM <<"END";
 package $module;
@@ -1169,7 +1219,7 @@ print PM <<"END";
 __END__
 END
 
-my ($email,$author);
+my ($email,$author,$licence);
 
 eval {
        my $username;
@@ -1184,6 +1234,14 @@ eval {
 
 $author ||= "A. U. Thor";
 $email  ||= 'a.u.thor@a.galaxy.far.far.away';
+
+$licence = sprintf << "DEFAULT", $^V;
+Copyright (C) ${\(1900 + (localtime) [5])} by $author
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself, either Perl version %vd or,
+at your option, any later version of Perl 5 you may have available.
+DEFAULT
 
 my $revhist = '';
 $revhist = <<EOT if $opt_C;
@@ -1243,6 +1301,12 @@ if ($opt_x && $opt_a) {
     while ($name, $struct) = each %structs;
 }
 
+# Prefix the default licence with hash symbols.
+# Is this just cargo cult - it seems that the first thing that happens to this
+# block is that all the hashes are then s///g out.
+my $licence_hash = $licence;
+$licence_hash =~ s/^/#/gm;
+
 my $pod = <<"END" unless $opt_P;
 ## Below is stub documentation for your module. You'd better edit it!
 #
@@ -1254,13 +1318,6 @@ my $pod = <<"END" unless $opt_P;
 #
 #  use $module;
 #  blah blah blah
-#
-#=head1 ABSTRACT
-#
-#  This should be the abstract for $module.
-#  The abstract is used when making PPD (Perl Package Description) files.
-#  If you don't want an ABSTRACT you should also edit Makefile.PL to
-#  remove the ABSTRACT_FROM option.
 #
 #=head1 DESCRIPTION
 #
@@ -1288,10 +1345,7 @@ $exp_doc$meth_doc$revhist
 #
 #=head1 COPYRIGHT AND LICENSE
 #
-#Copyright ${\(1900 + (localtime) [5])} by $author
-#
-#This library is free software; you can redistribute it and/or modify
-#it under the same terms as Perl itself. 
+$licence_hash
 #
 #=cut
 END
@@ -1842,12 +1896,12 @@ use ExtUtils::MakeMaker;
 # See lib/ExtUtils/MakeMaker.pm for details of how to influence
 # the contents of the Makefile that is written.
 WriteMakefile(
-    'NAME'		=> '$module',
-    'VERSION_FROM'	=> '$modfname.pm', # finds \$VERSION
-    'PREREQ_PM'		=> {$prereq_pm}, # e.g., Module::Name => 1.1
-    (\$] >= 5.005 ?    ## Add these new keywords supported since 5.005
-      (ABSTRACT_FROM => '$modfname.pm', # retrieve abstract from module
-       AUTHOR     => '$author <$email>') : ()),
+    NAME              => '$module',
+    VERSION_FROM      => '$modpmname', # finds \$VERSION
+    PREREQ_PM         => {$prereq_pm}, # e.g., Module::Name => 1.1
+    (\$] >= 5.005 ?     ## Add these new keywords supported since 5.005
+      (ABSTRACT_FROM  => '$modpmname', # retrieve abstract from module
+       AUTHOR         => '$author <$email>') : ()),
 END
 if (!$opt_X) { # print C stuff, unless XS is disabled
   $opt_F = '' unless defined $opt_F;
@@ -1858,9 +1912,9 @@ if (!$opt_X) { # print C stuff, unless XS is disabled
 EOC
 
   print PL <<END;
-    'LIBS'		=> ['$extralibs'], # e.g., '-lm'
-    'DEFINE'		=> '$opt_F', # e.g., '-DHAVE_SOMETHING'
-$Icomment    'INC'		=> '$I', # e.g., '${Ihelp}-I/usr/include/other'
+    LIBS              => ['$extralibs'], # e.g., '-lm'
+    DEFINE            => '$opt_F', # e.g., '-DHAVE_SOMETHING'
+$Icomment    INC               => '$I', # e.g., '${Ihelp}-I/usr/include/other'
 END
 
   my $C = grep {$_ ne "$modfname.c"}
@@ -1871,7 +1925,7 @@ END
 EOC
 
   print PL <<END;
-$Ccomment    $Cpre\'OBJECT'		=> '\$(O_FILES)', # link all the C files too
+$Ccomment    ${Cpre}OBJECT            => '\$(O_FILES)', # link all the C files too
 END
 } # ' # Grr
 print PL ");\n";
@@ -1992,16 +2046,13 @@ COPYRIGHT AND LICENCE
 
 Put the correct copyright and licence information here.
 
-Copyright (C) $thisyear $author
-
-This library is free software; you can redistribute it and/or modify
-it under the same terms as Perl itself. 
+$licence
 
 _RMEND_
 close(RM) || die "Can't close $ext$modpname/README: $!\n";
 
 my $testdir  = "t";
-my $testfile = "$testdir/1.t";
+my $testfile = "$testdir/$modpname.t";
 unless (-d "$testdir") {
   mkdir "$testdir" or die "Cannot mkdir $testdir: $!\n";
 }
@@ -2012,7 +2063,7 @@ open EX, ">$testfile" or die "Can't create $ext$modpname/$testfile: $!\n";
 
 print EX <<_END_;
 # Before `make install' is performed this script should be runnable with
-# `make test'. After `make install' it should work as `perl 1.t'
+# `make test'. After `make install' it should work as `perl $modpname.t'
 
 #########################
 
@@ -2126,7 +2177,7 @@ EOP
 
 warn "Writing $ext$modpname/MANIFEST\n";
 open(MANI,'>MANIFEST') or die "Can't create MANIFEST: $!";
-my @files = grep { -f } (<*>, <t/*>, <$fallbackdirname/*>);
+my @files = grep { -f } (<*>, <t/*>, <$fallbackdirname/*>, <$modpmdir/*>);
 if (!@files) {
   eval {opendir(D,'.');};
   unless ($@) { @files = readdir(D); closedir(D); }

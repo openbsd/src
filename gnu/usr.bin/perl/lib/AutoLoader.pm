@@ -1,7 +1,9 @@
 package AutoLoader;
 
+use strict;
 use 5.006_001;
-our(@EXPORT, @EXPORT_OK, $VERSION);
+
+our($VERSION, $AUTOLOAD);
 
 my $is_dosish;
 my $is_epoc;
@@ -9,14 +11,11 @@ my $is_vms;
 my $is_macos;
 
 BEGIN {
-    require Exporter;
-    @EXPORT = @EXPORT = ();
-    @EXPORT_OK = @EXPORT_OK = qw(AUTOLOAD);
     $is_dosish = $^O eq 'dos' || $^O eq 'os2' || $^O eq 'MSWin32' || $^O eq 'NetWare';
     $is_epoc = $^O eq 'epoc';
     $is_vms = $^O eq 'VMS';
     $is_macos = $^O eq 'MacOS';
-    $VERSION = '5.59';
+    $VERSION = '5.60';
 }
 
 AUTOLOAD {
@@ -93,22 +92,24 @@ AUTOLOAD {
     eval { local $SIG{__DIE__}; require $filename };
     if ($@) {
 	if (substr($sub,-9) eq '::DESTROY') {
+	    no strict 'refs';
 	    *$sub = sub {};
-	} else {
+	    $@ = undef;
+	} elsif ($@ =~ /^Can't locate/) {
 	    # The load might just have failed because the filename was too
 	    # long for some old SVR3 systems which treat long names as errors.
-	    # If we can succesfully truncate a long name then it's worth a go.
+	    # If we can successfully truncate a long name then it's worth a go.
 	    # There is a slight risk that we could pick up the wrong file here
 	    # but autosplit should have warned about that when splitting.
 	    if ($filename =~ s/(\w{12,})\.al$/substr($1,0,11).".al"/e){
 		eval { local $SIG{__DIE__}; require $filename };
 	    }
-	    if ($@){
-		$@ =~ s/ at .*\n//;
-		my $error = $@;
-		require Carp;
-		Carp::croak($error);
-	    }
+	}
+	if ($@){
+	    $@ =~ s/ at .*\n//;
+	    my $error = $@;
+	    require Carp;
+	    Carp::croak($error);
 	}
     }
     $@ = $save;
@@ -124,8 +125,9 @@ sub import {
     #
 
     if ($pkg eq 'AutoLoader') {
-      local $Exporter::ExportLevel = 1;
-      Exporter::import $pkg, @_;
+	no strict 'refs';
+	*{ $callpkg . '::AUTOLOAD' } = \&AUTOLOAD
+	    if @_ and $_[0] =~ /^&?AUTOLOAD$/;
     }
 
     #
@@ -166,8 +168,12 @@ sub import {
 }
 
 sub unimport {
-  my $callpkg = caller;
-  eval "package $callpkg; sub AUTOLOAD;";
+    my $callpkg = caller;
+
+    no strict 'refs';
+    my $symname = $callpkg . '::AUTOLOAD';
+    undef *{ $symname } if \&{ $symname } == \&AUTOLOAD;
+    *{ $symname } = \&{ $symname };
 }
 
 1;

@@ -2,7 +2,7 @@ package Net::hostent;
 use strict;
 
 use 5.006_001;
-our $VERSION = '1.00';
+our $VERSION = '1.01';
 our(@EXPORT, @EXPORT_OK, %EXPORT_TAGS);
 BEGIN { 
     use Exporter   ();
@@ -70,7 +70,7 @@ Net::hostent - by-name interface to Perl's built-in gethost*() functions
 
 =head1 SYNOPSIS
 
- use Net::hostnet;
+ use Net::hostent;
 
 =head1 DESCRIPTION
 

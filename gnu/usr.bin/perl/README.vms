@@ -176,12 +176,22 @@ SYSTEM table then try DEFINE TMP "NL:" or somesuch in your process table)
 otherwise simply deassign the dangerous logical names.  The potentially 
 troublesome logicals and symbols are:
 
-    TMP  "LOGICAL"
-    LIB  "LOGICAL"
-    T    "LOGICAL"
-    FOO  "LOGICAL"
-    EXT  "LOGICAL"
-    TEST "SYMBOL"
+    COMP    "LOGICAL"
+    EXT     "LOGICAL"
+    FOO     "LOGICAL"
+    LIB     "LOGICAL"
+    LIST    "LOGICAL"
+    MIME    "LOGICAL"
+    POSIX   "LOGICAL"
+    SYS     "LOGICAL"
+    T       "LOGICAL"
+    THREAD  "LOGICAL"
+    THREADS "LOGICAL"
+    TIME    "LOGICAL"
+    TMP     "LOGICAL"
+    UNICODE "LOGICAL"
+    UTIL    "LOGICAL"
+    TEST    "SYMBOL"
 
 As a handy shortcut, the command:
 

@@ -82,7 +82,7 @@ also read the README file specific to that system.
 
 If there is a hint file for your system (in the hints/ directory) you
 should also read that hint file for specific information for your
-system.  (Unixware users should use the svr4.sh hint file.)
+system.  (Unixware users should use the svr4.sh or the svr5.sh hint file.)
 Additional information is in the Porting/ directory.
 
 =head1 WARNING:  This version requires an extra step to build old extensions.
@@ -319,14 +319,24 @@ It may seem obvious, but Perl is useful only when users can easily
 find it.  It's often a good idea to have both /usr/bin/perl and
 /usr/local/bin/perl be symlinks to the actual binary.  Be especially
 careful, however, not to overwrite a version of perl supplied by your
-vendor unless you are sure you know what you are doing.
+vendor unless you are sure you know what you are doing.  If you insist
+on replacing your vendor's perl, useful information on how it was
+configured may be found with
 
-By default, Configure will arrange for /usr/bin/perl to be linked to
-the current version of perl.  You can turn off that behavior by running
+	perl -V:config_args
 
-	Configure -Uinstallusrbinperl
+(Check the output carefully, however, since this doesn't preserve
+spaces in arguments to Configure.  For that, you have to look
+carefully at config_arg1, config_arg2, etc.)
 
-or by answering 'no' to the appropriate Configure prompt.
+By default, Configure will not try to link /usr/bin/perl to
+the current version of perl.  You can turn on that behavior by running
+
+	Configure -Dinstallusrbinperl
+
+or by answering 'yes' to the appropriate Configure prompt.
+(Note that before perl 5.8.1, the default behavior was to create
+or overwrite /usr/bin/perl even if it already existed.)
 
 In any case, system administrators are strongly encouraged to
 put (symlinks to) perl and its accompanying utilities, such as perldoc,
@@ -438,10 +448,10 @@ be used for installing those add-on modules and scripts.
     $sitescript		$siteprefix/bin
     $sitelib		$siteprefix/lib/perl5/site_perl/$version
     $sitearch		$siteprefix/lib/perl5/site_perl/$version/$archname
-    $siteman1		$siteprefix/man/man1
-    $siteman3		$siteprefix/man/man3
-    $sitehtml1		(none)
-    $sitehtml3		(none)
+    $siteman1dir	$siteprefix/man/man1
+    $siteman3dir	$siteprefix/man/man3
+    $sitehtml1dir	(none)
+    $sitehtml3dir	(none)
 
 By default, ExtUtils::MakeMaker will install architecture-independent
 modules into $sitelib and architecture-dependent modules into $sitearch.
@@ -459,10 +469,10 @@ for you to use to distribute add-on modules.
     $vendorscript	$vendorprefix/bin
     $vendorlib		$vendorprefix/lib/perl5/vendor_perl/$version
     $vendorarch		$vendorprefix/lib/perl5/vendor_perl/$version/$archname
-    $vendorman1		$vendorprefix/man/man1
-    $vendorman3		$vendorprefix/man/man3
-    $vendorhtml1	(none)
-    $vendorhtml3	(none)
+    $vendorman1dir	$vendorprefix/man/man1
+    $vendorman3dir	$vendorprefix/man/man3
+    $vendorhtml1dir	(none)
+    $vendorhtml3dir	(none)
 
 These are normally empty, but may be set as needed.  For example,
 a vendor might choose the following settings:
@@ -484,15 +494,15 @@ This would have the effect of setting the following:
 	$sitescript	/usr/local/bin
 	$sitelib	/usr/local/lib/perl5/site_perl/$version
 	$sitearch	/usr/local/lib/perl5/site_perl/$version/$archname
-	$siteman1	/usr/local/man/man1
-	$siteman3	/usr/local/man/man3
+	$siteman1dir	/usr/local/man/man1
+	$siteman3dir	/usr/local/man/man3
 
 	$vendorbin	/usr/bin
 	$vendorscript	/usr/bin
 	$vendorlib	/usr/lib/perl5/vendor_perl/$version
 	$vendorarch	/usr/lib/perl5/vendor_perl/$version/$archname
-	$vendorman1	/usr/man/man1
-	$vendorman3	/usr/man/man3
+	$vendorman1dir	/usr/man/man1
+	$vendorman3dir	/usr/man/man3
 
 Note how in this example, the vendor-supplied directories are in the
 /usr hierarchy, while the directories reserved for the end-user are in
@@ -650,6 +660,18 @@ Here's one way to do that:
     cd /opt/perl # Or wherever you specified as $prefix
     tar xvf perl5-archive.tar
 
+Alternatively, the DESTDIR variable is honored during C<make install>.
+The DESTDIR is automatically prepended to all the installation paths
+(and there is no need to edit anything).  With DESTDIR, the above
+example can we written as:
+
+    sh Configure -Dprefix=/opt/perl -des
+    make
+    make test
+    make install DESTDIR=/tmp/perl5
+    cd /tmp/perl5/opt/perl
+    tar cvf /tmp/perl5-archive.tar .
+
 =head2 Site-wide Policy settings
 
 After Configure runs, it stores a number of common site-wide "policy"
@@ -711,6 +733,14 @@ However, if you wish, you can select the unsupported old 5005threads behavior
 If you decide to use ithreads, the 'threads' module allows their use,
 and the 'Thread' module offers an interface to both 5005threads and
 ithreads (whichever has been configured).
+
+When building threaded for certain library calls like the getgr*() and
+the getpw*() there is a dynamically sized result buffer: the buffer
+starts small but Perl will keep growing the buffer until the result fits.
+To get a fixed upper limit you will have to recompile Perl with
+PERL_REENTRANT_MAXSIZE defined to be the number of bytes you want.
+One way to do this is to run Configure with
+C<-Accflags=-DPERL_REENTRANT_MAXSIZE=65536>
 
 =head2 Large file support.
 
@@ -828,6 +858,38 @@ Configure should detect this problem and warn you about problems with
 _exit vs. exit.  If you have this problem, the fix is to go back to
 your sfio sources and correct iffe's guess about atexit.
 
+=head2 Algorithmic Complexity Attacks on Hashes
+
+In Perls 5.8.0 and earlier it was easy to create degenerate hashes.
+Processing such hashes would consume large amounts of CPU time,
+enabling a "Denial of Service" attack against Perl.  Such hashes may be
+a problem for example for mod_perl sites, sites with Perl CGI scripts
+and web services, that process data originating from external sources.
+
+In Perl 5.8.1 a security feature was introduced to make it harder
+to create such degenerate hashes.
+
+Because of this feature the keys(), values(), and each() functions may
+return the hash elements in different order between different runs of
+Perl even with the same data.  One can still revert to the old
+repeatable order by setting the environment variable PERL_HASH_SEED,
+see L<perlrun/PERL_HASH_SEED>.  Another option is to add
+-DUSE_HASH_SEED_EXPLICIT to the compilation flags (for example by
+using C<Configure -Accflags=-DUSE_HAS_SEED_EXPLICIT>), in which case
+one has to explicitly set the PERL_HASH_SEED environment variable to
+enable the security feature, or by adding -DNO_HASH_SEED to the compilation
+flags to completely disable the randomisation feature.
+
+B<Perl has never guaranteed any ordering of the hash keys>, and the
+ordering has already changed several times during the lifetime of
+Perl 5.  Also, the ordering of hash keys has always been, and
+continues to be, affected by the insertion order.
+
+Note that because of this randomisation for example the Data::Dumper
+results will be different between different runs of Perl since
+Data::Dumper by default dumps hashes "unordered".  The use of the
+Data::Dumper C<Sortkeys> option is recommended.
+
 =head2 SOCKS
 
 Perl can be configured to be 'socksified', that is, to use the SOCKS
@@ -929,14 +991,19 @@ libperl.so.8 rather with the installed libperl.so.8?  The answer is
 that you might not be able to.  The installation directory is encoded
 in the perl binary with the LD_RUN_PATH environment variable (or
 equivalent ld command-line option).  On Solaris, you can override that
-with LD_LIBRARY_PATH; on Linux you can't.  On Digital Unix, you can
-override LD_LIBRARY_PATH by setting the _RLD_ROOT environment variable
-to point to the perl build directory.
+with LD_LIBRARY_PATH; on Linux, you can only override at runtime via
+LD_PRELOAD, specifying the exact filename you wish to be used; and on
+Digital Unix, you can override LD_LIBRARY_PATH by setting the
+_RLD_ROOT environment variable to point to the perl build directory.
 
-The only reliable answer is that you should specify a different
-directory for the architecture-dependent library for your -DDEBUGGING
-version of perl.  You can do this by changing all the *archlib*
-variables in config.sh to point to your new architecture-dependent library.
+In other words, it is generally not a good idea to try to build a perl
+with a shared library if $archlib/CORE/$libperl already exists from a
+previous build.
+
+A good workaround is to specify a different directory for the
+architecture-dependent library for your -DDEBUGGING version of perl.
+You can do this by changing all the *archlib* variables in config.sh to
+point to your new architecture-dependent library.
 
 =head2 Malloc Issues
 
@@ -981,6 +1048,16 @@ from the linker for malloc et al.  In such cases, the system probably
 does not allow its malloc functions to be fully replaced with custom
 versions.
 
+=item -DPERL_DEBUGGING_MSTATS
+
+This flag enables debugging mstats, which is required to use the
+Devel::Peek::mstat() function. You cannot enable this unless you are
+using Perl's malloc, so a typical Configure command would be
+
+       sh Configure -Accflags=-DPERL_DEBUGGING_MSTATS -Dusemymalloc='y'
+
+to enable this option.
+
 =back
 
 =head2 Building a debugging perl
@@ -1007,7 +1084,7 @@ You can actually specify -g and -DDEBUGGING independently, but usually
 it's convenient to have both.
 
 If you are using a shared libperl, see the warnings about multiple
-versions of perl under L<Building a shared libperl.so Perl library>.
+versions of perl under L<Building a shared Perl library>.
 
 =head2 Extensions
 
@@ -1032,6 +1109,9 @@ convenient way to do that in one step.  (It is not necessary, however;
 you can build and install extensions just fine even if you don't have
 dynamic loading.  See lib/ExtUtils/MakeMaker.pm for more details.)
 
+If you have dynamic loading, another way of specifying extra modules
+is described in L<"Adding extra modules to the build"> below.
+
 You can learn more about each of the supplied extensions by consulting the
 documentation in the individual .pm modules, located under the
 ext/ subdirectory.
@@ -1040,8 +1120,20 @@ Even if you do not have dynamic loading, you must still build the
 DynaLoader extension; you should just build the stub dl_none.xs
 version.  (Configure will suggest this as the default.)
 
-In summary, here are the Configure command-line variables you can set
-to turn off various extensions.  All others are included by default.
+To disable certain extensions so that they are not built, use
+the -Dnoextensions=... and -Donlyextensions=... options.  They both
+accept a space-separated list of extensions.  The extensions listed
+in C<noextensions> are removed from the list of extensions to build,
+while the C<onlyextensions> is rather more severe and builds only
+the listed extensions.  The latter should be used with extreme caution
+since certain extensions are used by many other extensions and modules:
+such modules include Fcntl and IO.  The order of processing these
+options is first C<only> (if present), then C<no> (if present).
+
+Another, older way to turn off various extensions (which is still good
+to know if you have to work with older Perl) exists.  Here are the
+Configure command-line variables you can set to turn off various
+extensions.  All others are included by default.
 
     DB_File		i_db
     DynaLoader		(Must always be included as a static extension)
@@ -1382,6 +1474,9 @@ command line parameter to Configure, for example like this:
 or answer first 'y' to the question 'Install any extra modules?' and
 then answer "Compress::Zlib Bundle::LWP DBI" to the 'Extras?' question.
 The module or the bundle names are as for the CPAN module 'install' command.
+This will only work if those modules are to be built as dynamic
+extensions.  If you wish to include those extra modules as static
+extensions, see L<"Extensions"> above.
 
 Notice that because the CPAN module will be used to fetch the extra
 modules, you will need access to the CPAN, either via the Internet,
@@ -1430,6 +1525,15 @@ explicitly above.
 =head1 make
 
 This will attempt to make perl in the current directory.
+
+=head2 Expected errors
+
+These errors are normal, and can be ignored:
+
+  ...
+  make: [extra.pods] Error 1 (ignored)
+  ...
+  make: [extras.make] Error 1 (ignored)
 
 =head2 What if it doesn't work?
 
@@ -1550,10 +1654,22 @@ referring to __inet_* symbols, check to see whether BIND 8.1 is
 installed.  It installs a /usr/local/include/arpa/inet.h that refers to
 these symbols.  Versions of BIND later than 8.1 do not install inet.h
 in that location and avoid the errors.  You should probably update to a
-newer version of BIND.  If you can't, you can either link with the
-updated resolver library provided with BIND 8.1 or rename
-/usr/local/bin/arpa/inet.h during the Perl build and test process to
-avoid the problem.
+newer version of BIND (and remove the files the old one left behind).
+If you can't, you can either link with the updated resolver library provided
+with BIND 8.1 or rename /usr/local/bin/arpa/inet.h during the Perl build and
+test process to avoid the problem.
+
+=item *_r() prototype NOT found
+
+On a related note, if you see a bunch of complaints like the above about
+reentrant functions - specifically networking-related ones - being present
+but without prototypes available, check to see if BIND 8.1 (or possibly
+other BIND 8 versions) is (or has been) installed. They install
+header files such as netdb.h into places such as /usr/local/include (or into
+another directory as specified at build/install time), at least optionally.
+Remove them or put them in someplace that isn't in the C preprocessor's 
+header file include search path (determined by -I options plus defaults,
+normally /usr/include).
 
 =item #error "No DATAMODEL_NATIVE specified"
 
@@ -1641,12 +1757,12 @@ bval settings.  Upgrade your DB library or OS.
 
 =item Bad arg length for semctl, is XX, should be ZZZ
 
-If you get this error message from the lib/ipc_sysv test, your System
+If you get this error message from the ext/IPC/SysV/t/sem test, your System
 V IPC may be broken.  The XX typically is 20, and that is what ZZZ
 also should be.  Consider upgrading your OS, or reconfiguring your OS
 to include the System V semaphores.
 
-=item lib/ipc_sysv........semget: No space left on device
+=item ext/IPC/SysV/t/sem........semget: No space left on device
 
 Either your account or the whole system has run out of semaphores.  Or
 both.  Either list the semaphores with "ipcs" and remove the unneeded
@@ -1680,7 +1796,7 @@ archive, please report it to the site's maintainer.
 =item invalid token: ##
 
 You are using a non-ANSI-compliant C compiler.  See L<WARNING:  This
-version requires a compiler that supports ANSI C>.
+version requires a compiler that supports ANSI C.>
 
 =item Miscellaneous
 
@@ -1692,7 +1808,7 @@ NCR Tower 32 (OS 2.01.01) may need -W2,-Sl,2000 and #undef MKDIR.
 
 UTS may need one or more of -K or -g, and undef LSTAT.
 
-FreeBSD can fail the lib/ipc_sysv.t test if SysV IPC has not been
+FreeBSD can fail the ext/IPC/SysV/t/sem.t test if SysV IPC has not been
 configured in the kernel.  Perl tries to detect this, though, and
 you will get a message telling what to do.
 
@@ -1701,6 +1817,13 @@ Patch Bundle" has been reported to break the io/fs test #18 which
 tests whether utime() can change timestamps.  The Y2K patch seems to
 break utime() so that over NFS the timestamps do not get changed
 (on local filesystems utime() still works).
+
+Building Perl on a system that has also BIND (headers and libraries)
+installed may run into troubles because BIND installs its own netdb.h
+and socket.h, which may not agree with the operating system's ideas of
+the same files.  Similarly, including -lbind may conflict with libc's
+view of the world.  You may have to tweak -Dlocincpth and -Dloclibpth
+to avoid the BIND.
 
 =back
 
@@ -1722,14 +1845,17 @@ line invocation (detailed shortly) is required to access the
 functionality.
 
     NOTE: Perl is routinely built using cross-compilation
-    in the EPOC environment but the solutions from there
-    can't directly be used elsewhere.
+    in the EPOC environment, in the WinCE, and in the OpenZaurus
+    project, but all those use something slightly different setup
+    than what described here.  For the WinCE setup, read the
+    wince/README.compile.  For the OpenZaurus setup, read the
+    Cross/README.
 
-The one environment where cross-compilation has successfully been used
-as of this writing is the Compaq iPAQ running ARM Linux.  The build
-host was Intel Linux, the networking setup was PPP + SSH.  The exact
-setup details are beyond the scope of this document, see
-http://www.handhelds.org/ for more information.
+The one environment where this cross-compilation setup has
+successfully been used as of this writing is the Compaq iPAQ running
+ARM Linux.  The build host was Intel Linux, the networking setup was
+PPP + SSH.  The exact setup details are beyond the scope of this
+document, see http://www.handhelds.org/ for more information.
 
 To run Configure in cross-compilation mode the basic switch is
 C<-Dusecrosscompile>.
@@ -1904,50 +2030,55 @@ test, it does not necessarily mean you have a broken perl.  This test
 tries to exercise the regular expression subsystem quite thoroughly,
 and may well be far more demanding than your normal usage.
 
-=item Test failures from lib/ftmp-security saying "system possibly insecure"
+=item Failures from lib/File/Temp/t/security saying "system possibly insecure"
 
-Firstly, test failures from the ftmp-security are not necessarily
-serious or indicative of a real security threat.  That being said,
-they bear investigating.
+First, such warnings are not necessarily serious or indicative of a
+real security threat.  That being said, they bear investigating.
 
-The tests may fail for the following reasons.   Note that each of the
-tests is run both in the building directory and the temporary
-directory, as returned by File::Spec->tmpdir().
+Note that each of the tests is run twice.  The first time is in the
+directory returned by File::Spec->tmpdir() (often /tmp on Unix
+systems), and the second time in the directory from which the test was
+run (usually the 't' directory, if the test was run as part of 'make
+test').
 
-(1) If the directory the tests are being run is owned by somebody else
-than the user running the tests, or root (uid 0).  This failure can
-happen if the Perl source code distribution is unpacked in a way that
-the user ids in the distribution package are used as-is.  Some tar
-programs do this.
+The tests may fail for the following reasons:
 
-(2) If the directory the tests are being run in is writable by group
-or by others (remember: with UNIX/POSIX semantics, write access to
-a directory means the right to add/remove files in that directory),
-and there is no sticky bit set in the directory.  'Sticky bit' is
-a feature used in some UNIXes to give extra protection to files: if
-the bit is on a directory, no one but the owner (or the root) can remove
-that file even if the permissions of the directory would allow file
-removal by others.  This failure can happen if the permissions in the
-directory simply are a bit too liberal for the tests' liking.  This
-may or may not be a real problem: it depends on the permissions policy
-used on this particular directory/project/system/site.  This failure
-can also happen if the system either doesn't support the sticky bit
-(this is the case with many non-UNIX platforms: in principle
-File::Temp should know about these platforms and skip the tests), or
-if the system supports the sticky bit but for some reason or reasons
-it is not being used.  This is for example the case with HP-UX: as of
-HP-UX release 11.00, the sticky bit is very much supported, but HP-UX
-doesn't use it on its /tmp directory as shipped.  Also, as with the
-permissions, some local policy might dictate that the stickiness is
-not used.
+(1) If the directory the tests are being run in is owned by somebody
+other than the user running the tests, or by root (uid 0).
+
+This failure can happen if the Perl source code distribution is
+unpacked in such a way that the user ids in the distribution package
+are used as-is.  Some tar programs do this.
+
+(2) If the directory the tests are being run in is writable by group or
+by others, and there is no sticky bit set for the directory.  (With
+UNIX/POSIX semantics, write access to a directory means the right to
+add or remove files in that directory.  The 'sticky bit' is a feature
+used in some UNIXes to give extra protection to files: if the bit is
+set for a directory, no one but the owner (or root) can remove that
+file even if the permissions would otherwise allow file removal by
+others.)
+
+This failure may or may not be a real problem: it depends on the
+permissions policy used on this particular system.  This failure can
+also happen if the system either doesn't support the sticky bit (this
+is the case with many non-UNIX platforms: in principle File::Temp
+should know about these platforms and skip the tests), or if the system
+supports the sticky bit but for some reason or reasons it is not being
+used.  This is, for example, the case with HP-UX: as of HP-UX release
+11.00, the sticky bit is very much supported, but HP-UX doesn't use it
+on its /tmp directory as shipped.  Also, as with the permissions, some
+local policy might dictate that the stickiness is not used.
 
 (3) If the system supports the POSIX 'chown giveaway' feature and if
 any of the parent directories of the temporary file back to the root
 directory are 'unsafe', using the definitions given above in (1) and
-(2).
+(2).  For Unix systems, this is usually not an issue if you are
+building on a local disk.  See the documentation for the File::Temp
+module for more information about 'chown giveaway'.
 
 See the documentation for the File::Temp module for more information
-about the various security aspects.
+about the various security aspects of temporary files.
 
 =back
 

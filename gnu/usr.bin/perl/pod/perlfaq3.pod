@@ -1,6 +1,6 @@
 =head1 NAME
 
-perlfaq3 - Programming Tools ($Revision: 1.22 $, $Date: 2002/05/06 13:11:13 $)
+perlfaq3 - Programming Tools ($Revision: 1.35 $, $Date: 2003/08/24 05:26:59 $)
 
 =head1 DESCRIPTION
 
@@ -42,26 +42,70 @@ operations typically found in symbolic debuggers.
 
 =head2 Is there a Perl shell?
 
-In general, not yet.  There is psh available at
+The psh (Perl sh) is currently at version 1.8. The Perl Shell is a
+shell that combines the interactive nature of a Unix shell with the
+power of Perl. The goal is a full featured shell that behaves as
+expected for normal shell activity and uses Perl syntax and
+functionality for control-flow statements and other things.
+You can get psh at http://www.focusresearch.com/gregor/psh/ .
 
-    http://www.focusresearch.com/gregor/psh
-
-Which includes the following description:
-
-    The Perl Shell is a shell that combines the interactive nature
-    of a Unix shell with the power of Perl. The goal is to eventually
-    have a full featured shell that behaves as expected for normal
-    shell activity. But, the Perl Shell will use Perl syntax and
-    functionality for control-flow statements and other things.
+Zoidberg is a similar project and provides a shell written in perl,
+configured in perl and operated in perl. It is intended as a login shell
+and development environment. It can be found at http://zoidberg.sf.net/
+or your local CPAN mirror.
 
 The Shell.pm module (distributed with Perl) makes Perl try commands
 which aren't part of the Perl language as shell commands.  perlsh
 from the source distribution is simplistic and uninteresting, but
 may still be what you want.
 
+=head2 How do I find which modules are installed on my system?
+
+You can use the ExtUtils::Installed module to show all
+installed distributions, although it can take awhile to do
+its magic.  The standard library which comes with Perl just
+shows up as "Perl" (although you can get those with
+Mod::CoreList).
+
+	use ExtUtils::Installed;
+
+	my $inst    = ExtUtils::Installed->new();
+	my @modules = $inst->modules();
+
+If you want a list of all of the Perl module filenames, you
+can use File::Find::Rule.
+
+	use File::Find::Rule;
+
+	my @files = File::Find::Rule->file()->name( '*.pm' )->in( @INC );
+
+If you do not have that module, you can do the same thing
+with File::Find which is part of the standard library.
+
+    use File::Find;
+    my @files;
+
+    find sub { push @files, $File::Find::name if -f _ && /\.pm$/ },
+         @INC;
+
+	print join "\n", @files;
+
+If you simply need to quickly check to see if a module is
+available, you can check for its documentation.  If you can
+read the documentation the module is most likely installed.
+If you cannot read the documentation, the module might not
+have any (in rare cases).
+
+	prompt% perldoc Module::Name
+
+You can also try to include the module in a one-liner to see if
+perl finds it.
+
+	perl -MModule::Name -e1
+
 =head2 How do I debug my Perl programs?
 
-Have you tried C<use warnings> or used C<-w>?  They enable warnings 
+Have you tried C<use warnings> or used C<-w>?  They enable warnings
 to detect dubious practices.
 
 Have you tried C<use strict>?  It prevents you from using symbolic
@@ -87,9 +131,9 @@ why what it's doing isn't what it should be doing.
 =head2 How do I profile my Perl programs?
 
 You should get the Devel::DProf module from the standard distribution
-(or separately on CPAN) and also use Benchmark.pm from the standard 
-distribution.  The Benchmark module lets you time specific portions of 
-your code, while Devel::DProf gives detailed breakdowns of where your 
+(or separately on CPAN) and also use Benchmark.pm from the standard
+distribution.  The Benchmark module lets you time specific portions of
+your code, while Devel::DProf gives detailed breakdowns of where your
 code spends its time.
 
 Here's a sample use of Benchmark:
@@ -102,10 +146,8 @@ Here's a sample use of Benchmark:
   timethese($count, {
             'map' => sub { my @a = @junk;
 			   map { s/a/b/ } @a;
-			   return @a
-			 },
+			   return @a },
             'for' => sub { my @a = @junk;
-			   local $_;
 			   for (@a) { s/a/b/ };
 			   return @a },
            });
@@ -123,7 +165,7 @@ of contrasting algorithms.
 
 =head2 How do I cross-reference my Perl programs?
 
-The B::Xref module can be used to generate cross-reference reports 
+The B::Xref module can be used to generate cross-reference reports
 for Perl programs.
 
     perl -MO=Xref[,OPTIONS] scriptname.plx
@@ -154,7 +196,7 @@ for indenting, ^D is for undenting, and ^O is for blockdenting--
 as it were.  A more complete example, with comments, can be found at
 http://www.cpan.org/authors/id/TOMC/scripts/toms.exrc.gz
 
-The a2ps http://www-inf.enst.fr/%7Edemaille/a2ps/black+white.ps does
+The a2ps http://www-inf.enst.fr/%7Edemaille/a2ps/black+white.ps.gz does
 lots of things related to generating nicely printed output of
 documents, as does enscript at http://people.ssh.fi/mtr/genscript/ .
 
@@ -219,19 +261,6 @@ environment, including debugger and syntax highlighting editor.
 
 =back
 
-For Windows there's also the
-
-=over 4
-
-=item CodeMagicCD
-
-( http://www.codemagiccd.com/ ) Collection of various programming
-tools for Windows: Perl (5.005_03), TclTk, Python, GNU programming
-tools, REBOL, wxWindows toolkit, the MinGW GNU C/C++ compiler, DJGPP
-GNU C/C++ compiler, Cint C interpreter, YaBasic.
-
-=back
-
 For editors: if you're on Unix you probably have vi or a vi clone already,
 and possibly an emacs too, so you may not need to download anything.
 In any emacs the cperl-mode (M-x cperl-mode) gives you perhaps the
@@ -247,10 +276,10 @@ specifically for programming, such as Textpad
 ( http://www.textpad.com/ ) and UltraEdit
 ( http://www.ultraedit.com/ ), among others.
 
-If you are using Mac OS, the same concerns apply.  MacPerl
+If you are using MacOS, the same concerns apply.  MacPerl
 (for Classic environments) comes with a simple editor.
 Popular external editors are BBEdit ( http://www.bbedit.com/ )
-or Alpha ( http://www.kelehers.org/alpha/ ). Mac OS X users can
+or Alpha ( http://www.kelehers.org/alpha/ ). MacOS X users can
 use Unix editors as well.
 
 =over 4
@@ -261,11 +290,15 @@ http://www.gnu.org/software/emacs/windows/ntemacs.html
 
 =item MicroEMACS
 
-http://members.nbci.com/uemacs/
+http://www.microemacs.de/
 
 =item XEmacs
 
 http://www.xemacs.org/Download/index.html
+
+=item Jed
+
+http://space.mit.edu/~davis/jed/
 
 =back
 
@@ -279,13 +312,11 @@ ftp://ftp.cs.pdx.edu/pub/elvis/ http://www.fh-wedel.de/elvis/
 
 =item Vile
 
-http://vile.cx/
+http://dickey.his.com/vile/vile.html
 
 =item Vim
 
 http://www.vim.org/
-
-win32: http://www.cs.vu.nl/%7Etmgil/vi.html
 
 =back
 
@@ -323,7 +354,7 @@ There is also a toyedit Text widget based editor written in Perl
 that is distributed with the Tk module on CPAN.  The ptkdb
 ( http://world.std.com/~aep/ptkdb/ ) is a Perl/tk based debugger that
 acts as a development environment of sorts.  Perl Composer
-( http://perlcomposer.sourceforge.net/vperl.html ) is an IDE for Perl/Tk
+( http://perlcomposer.sourceforge.net/ ) is an IDE for Perl/Tk
 GUI creation.
 
 In addition to an editor/IDE you might be interested in a more
@@ -411,7 +442,7 @@ shouldn't be an issue.
 
 The Curses module from CPAN provides a dynamically loadable object
 module interface to a curses library.  A small demo can be found at the
-directory http://www.cpan.org/authors/Tom_Christiansen/scripts/rep ;
+directory http://www.cpan.org/authors/Tom_Christiansen/scripts/rep.gz ;
 this program repeats a command and updates the screen as needed, rendering
 B<rep ps axu> similar to B<top>.
 
@@ -438,45 +469,33 @@ module, which is curses-based, can help with this.
 
 The best way to do this is to come up with a better algorithm.  This
 can often make a dramatic difference.  Jon Bentley's book
-``Programming Pearls'' (that's not a misspelling!)  has some good tips
+I<Programming Pearls> (that's not a misspelling!)  has some good tips
 on optimization, too.  Advice on benchmarking boils down to: benchmark
 and profile to make sure you're optimizing the right part, look for
 better algorithms instead of microtuning your code, and when all else
 fails consider just buying faster hardware.  You will probably want to
-read the answer to the earlier question ``How do I profile my Perl programs?''
-if you haven't done so already.
+read the answer to the earlier question ``How do I profile my Perl
+programs?'' if you haven't done so already.
 
 A different approach is to autoload seldom-used Perl code.  See the
 AutoSplit and AutoLoader modules in the standard distribution for
 that.  Or you could locate the bottleneck and think about writing just
 that part in C, the way we used to take bottlenecks in C code and
-write them in assembler.  Similar to rewriting in C,
-modules that have critical sections can be written in C (for instance, the
-PDL module from CPAN).
+write them in assembler.  Similar to rewriting in C, modules that have
+critical sections can be written in C (for instance, the PDL module
+from CPAN).
 
-In some cases, it may be worth it to use the backend compiler to
-produce byte code (saving compilation time) or compile into C, which
-will certainly save compilation time and sometimes a small amount (but
-not much) execution time.  See the question about compiling your Perl
-programs for more on the compiler--the wins aren't as obvious as you'd
-hope.
+If you're currently linking your perl executable to a shared
+I<libc.so>, you can often gain a 10-25% performance benefit by
+rebuilding it to link with a static libc.a instead.  This will make a
+bigger perl executable, but your Perl programs (and programmers) may
+thank you for it.  See the F<INSTALL> file in the source distribution
+for more information.
 
-If you're currently linking your perl executable to a shared I<libc.so>,
-you can often gain a 10-25% performance benefit by rebuilding it to
-link with a static libc.a instead.  This will make a bigger perl
-executable, but your Perl programs (and programmers) may thank you for
-it.  See the F<INSTALL> file in the source distribution for more
-information.
-
-Unsubstantiated reports allege that Perl interpreters that use sfio
-outperform those that don't (for I/O intensive applications).  To try
-this, see the F<INSTALL> file in the source distribution, especially
-the ``Selecting File I/O mechanisms'' section.
-
-The undump program was an old attempt to speed up your Perl program
-by storing the already-compiled form to disk.  This is no longer
-a viable option, as it only worked on a few architectures, and
-wasn't a good solution anyway.
+The undump program was an ancient attempt to speed up Perl program by
+storing the already-compiled form to disk.  This is no longer a viable
+option, as it only worked on a few architectures, and wasn't a good
+solution anyway.
 
 =head2 How can I make my Perl program take less memory?
 
@@ -533,7 +552,7 @@ instead of this:
 
 When the files you're processing are small, it doesn't much matter which
 way you do it, but it makes a huge difference when they start getting
-larger. 
+larger.
 
 =item * Use map and grep selectively
 
@@ -598,16 +617,17 @@ causing your hard disk to thrash due to massive swapping.
 
 =back
 
-=head2 Is it unsafe to return a pointer to local data?
+=head2 Is it safe to return a reference to local or lexical data?
 
-No, Perl's garbage collection system takes care of this.
+Yes. Perl's garbage collection system takes care of this so
+everything works out right.
 
     sub makeone {
 	my @a = ( 1 .. 10 );
 	return \@a;
     }
 
-    for $i ( 1 .. 10 ) {
+    for ( 1 .. 10 ) {
         push @many, makeone();
     }
 
@@ -705,6 +725,12 @@ crackers might be able to disassemble it.  These pose varying degrees
 of difficulty to people wanting to get at your code, but none can
 definitively conceal it (true of every language, not just Perl).
 
+It is very easy to recover the source of Perl programs.  You simply
+feed the program to the perl interpreter and use the modules in
+the B:: hierarchy.  The B::Deparse module should be able to
+defeat most attempts to hide source.  Again, this is not
+unique to Perl.
+
 If you're concerned about people profiting from your code, then the
 bottom line is that nothing but a restrictive license will give you
 legal security.  License your software and pepper it with threatening
@@ -769,8 +795,8 @@ For OS/2 just use
 
 as the first line in C<*.cmd> file (C<-S> due to a bug in cmd.exe's
 `extproc' handling).  For DOS one should first invent a corresponding
-batch file and codify it in C<ALTERNATIVE_SHEBANG> (see the
-F<INSTALL> file in the source distribution for more information).
+batch file and codify it in C<ALTERNATE_SHEBANG> (see the
+F<dosish.h> file in the source distribution for more information).
 
 The Win95/NT installation, when using the ActiveState port of Perl,
 will modify the Registry to associate the C<.pl> extension with the
@@ -879,7 +905,7 @@ L<perlboot>, L<perltoot>, L<perltooc>, and L<perlbot> for reference.
 try http://www.perldoc.com/ , but consider upgrading your perl.)
 
 A good book on OO on Perl is the "Object-Oriented Perl"
-by Damian Conway from Manning Publications, 
+by Damian Conway from Manning Publications,
 http://www.manning.com/Conway/index.html
 
 =head2 Where can I learn about linking C with Perl? [h2xs, xsubpp]

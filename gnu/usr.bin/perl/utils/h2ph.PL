@@ -42,8 +42,13 @@ use Config;
 use File::Path qw(mkpath);
 use Getopt::Std;
 
-getopts('Dd:rlhaQ');
-use vars qw($opt_D $opt_d $opt_r $opt_l $opt_h $opt_a $opt_Q);
+# Make sure read permissions for all are set:
+if (defined umask && (umask() & 0444)) {
+    umask (umask() & ~0444);
+}
+
+getopts('Dd:rlhaQe');
+use vars qw($opt_D $opt_d $opt_r $opt_l $opt_h $opt_a $opt_Q $opt_e);
 die "-r and -a options are mutually exclusive\n" if ($opt_r and $opt_a);
 my @inc_dirs = inc_dirs() if $opt_a;
 
@@ -65,13 +70,21 @@ my %isatype;
 @isatype{@isatype} = (1) x @isatype;
 my $inif = 0;
 my %Is_converted;
+my %bad_file = ();
 
 @ARGV = ('-') unless @ARGV;
 
 build_preamble_if_necessary();
 
+sub reindent($) {
+    my($text) = shift;
+    $text =~ s/\n/\n    /g;
+    $text =~ s/        /\t/g;
+    $text;
+}
+
 my ($t, $tab, %curargs, $new, $eval_index, $dir, $name, $args, $outfile);
-my ($incl, $next);
+my ($incl, $incl_type, $next);
 while (defined (my $file = next_file())) {
     if (-l $file and -d $file) {
         link_if_possible($file) if ($opt_l);
@@ -107,7 +120,9 @@ while (defined (my $file = next_file())) {
 	open(OUT,">$Dest_dir/$outfile") || die "Can't create $outfile: $!\n";
     }
 
-    print OUT "require '_h2ph_pre.ph';\n\n";
+    print OUT
+        "require '_h2ph_pre.ph';\n\n",
+        "no warnings 'redefine';\n\n";
 
     while (defined (local $_ = next_line($file))) {
 	if (s/^\s*\#\s*//) {
@@ -169,22 +184,31 @@ while (defined (my $file = next_file())) {
                       print OUT $t,"unless(defined(\&$name)) {\n    sub $name () {\t",$new,";}\n}\n";
 		    }
 		}
-	    } elsif (/^(include|import)\s*[<"](.*)[>"]/) {
-		($incl = $2) =~ s/\.h$/.ph/;
-		print OUT $t,"require '$incl';\n";
-	    } elsif(/^include_next\s*[<"](.*)[>"]/) {
-		($incl = $1) =~ s/\.h$/.ph/;
+	    } elsif (/^(include|import|include_next)\s*[<\"](.*)[>\"]/) {
+                $incl_type = $1;
+                $incl = $2;
+                if (($incl_type eq 'include_next') ||
+                    ($opt_e && exists($bad_file{$incl}))) {
+                    $incl =~ s/\.h$/.ph/;
 		print OUT ($t,
 			   "eval {\n");
                 $tab += 4;
                 $t = "\t" x ($tab / 8) . ' ' x ($tab % 8);
+                    print OUT ($t, "my(\@REM);\n");
+                    if ($incl_type eq 'include_next') {
 		print OUT ($t,
 			   "my(\%INCD) = map { \$INC{\$_} => 1 } ",
-			   "(grep { \$_ eq \"$incl\" } keys(\%INC));\n");
+			           "(grep { \$_ eq \"$incl\" } ",
+                                   "keys(\%INC));\n");
 		print OUT ($t,
-			   "my(\@REM) = map { \"\$_/$incl\" } ",
+			           "\@REM = map { \"\$_/$incl\" } ",
 			   "(grep { not exists(\$INCD{\"\$_/$incl\"})",
-			   "and -f \"\$_/$incl\" } \@INC);\n");
+			           " and -f \"\$_/$incl\" } \@INC);\n");
+                    } else {
+                        print OUT ($t,
+                                   "\@REM = map { \"\$_/$incl\" } ",
+                                   "(grep {-r \"\$_/$incl\" } \@INC);\n");
+                    }
 		print OUT ($t,
 			   "require \"\$REM[0]\" if \@REM;\n");
                 $tab -= 4;
@@ -193,6 +217,10 @@ while (defined (my $file = next_file())) {
 			   "};\n");
 		print OUT ($t,
 			   "warn(\$\@) if \$\@;\n");
+                } else {
+                    $incl =~ s/\.h$/.ph/;
+		    print OUT $t,"require '$incl';\n";
+                }
 	    } elsif (/^ifdef\s+(\w+)/) {
 		print OUT $t,"if(defined(&$1)) {\n";
 		$tab += 4;
@@ -274,22 +302,22 @@ while (defined (my $file = next_file())) {
 	    }
 	}
     }
-    print OUT "1;\n";
-
     $Is_converted{$file} = 1;
+    if ($opt_e && exists($bad_file{$file})) {
+        unlink($Dest_dir . '/' . $outfile);
+        $next = '';
+    } else {
+        print OUT "1;\n";
     queue_includes_from($file) if ($opt_a);
+    }
+}
+
+if ($opt_e && (scalar(keys %bad_file) > 0)) {
+    warn "Was unable to convert the following files:\n";
+    warn "\t" . join("\n\t",sort(keys %bad_file)) . "\n";
 }
 
 exit $Exit;
-
-
-sub reindent($) {
-    my($text) = shift;
-    $text =~ s/\n/\n    /g;
-    $text =~ s/        /\t/g;
-    $text;
-}
-
 
 sub expr {
     my $joined_args;
@@ -463,10 +491,18 @@ sub next_line
                 $out    .= $1;
             } elsif ($in =~ s/^(\\.)//) {                   # \...
                 $out    .= $1;
-            } elsif ($in =~ s/^('(\\.|[^'\\])*')//) {       # '...
-                $out    .= $1;
-            } elsif ($in =~ s/^("(\\.|[^"\\])*")//) {       # "...
-                $out    .= $1;
+            } elsif ($in =~ /^'/) {                         # '...
+                if ($in =~ s/^('(\\.|[^'\\])*')//) {
+                    $out    .= $1;
+                } else {
+                    next READ;
+                }
+            } elsif ($in =~ /^"/) {                         # "...
+                if ($in =~ s/^("(\\.|[^"\\])*")//) {
+                    $out    .= $1;
+                } else {
+                    next READ;
+                }
             } elsif ($in =~ s/^\/\/.*//) {                  # //...
                 # fall through
             } elsif ($in =~ m/^\/\*/) {                     # /*...
@@ -485,7 +521,15 @@ sub next_line
                      $in   =~ s!\'T KNOW!!) {
                 $out    =~ s!I DON$!I_DO_NOT_KNOW!;
             } else {
+                if ($opt_e) {
+                    warn "Cannot parse $file:\n$in\n";
+                    $bad_file{$file} = 1;
+                    $in = '';
+                    $out = undef;
+                    last READ;
+                } else {
 		die "Cannot parse:\n$in\n";
+                }
             }
         }
 

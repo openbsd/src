@@ -1,17 +1,18 @@
 /*    cv.h
  *
- *    Copyright (c) 1991-2002, Larry Wall
+ *    Copyright (C) 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1999,
+ *    2000, 2001, 2002, 2003, by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
  *
  */
 
-/* This structure much match XPVCV in B/C.pm and the beginning of XPVFM
+/* This structure must match XPVCV in B/C.pm and the beginning of XPVFM
  * in sv.h  */
 
 struct xpvcv {
-    char *	xpv_pv;		/* pointer to malloced string */
+    char *	xpv_pv;		/* pointer to malloced string (for prototype) */
     STRLEN	xpv_cur;	/* length of xp_pv as a C string */
     STRLEN	xpv_len;	/* allocated size */
     IV		xof_off;	/* integer value */
@@ -27,13 +28,16 @@ struct xpvcv {
     GV *	xcv_gv;
     char *	xcv_file;
     long	xcv_depth;	/* >= 2 indicates recursive call */
-    AV *	xcv_padlist;
+    PADLIST *	xcv_padlist;
     CV *	xcv_outside;
 #ifdef USE_5005THREADS
     perl_mutex *xcv_mutexp;
     struct perl_thread *xcv_owner;	/* current owner thread */
 #endif /* USE_5005THREADS */
     cv_flags_t	xcv_flags;
+    U32		xcv_outside_seq; /* the COP sequence (at the point of our
+				  * compilation) in the lexically enclosing
+				  * sub */
 };
 
 /*
@@ -73,6 +77,7 @@ Returns the stash of the CV.
 #define CvOWNER(sv)	((XPVCV*)SvANY(sv))->xcv_owner
 #endif /* USE_5005THREADS */
 #define CvFLAGS(sv)	((XPVCV*)SvANY(sv))->xcv_flags
+#define CvOUTSIDE_SEQ(sv) ((XPVCV*)SvANY(sv))->xcv_outside_seq
 
 #define CVf_CLONE	0x0001	/* anon CV uses external lexicals */
 #define CVf_CLONED	0x0002	/* a clone of one of those */
@@ -85,6 +90,8 @@ Returns the stash of the CV.
 #define CVf_LOCKED	0x0080	/* CV locks itself or first arg on entry */
 #define CVf_LVALUE	0x0100  /* CV return value can be used as lvalue */
 #define CVf_CONST	0x0200  /* inlinable sub */
+#define CVf_WEAKOUTSIDE	0x0400  /* CvOUTSIDE isn't ref counted */
+
 /* This symbol for optimised communication between toke.c and op.c: */
 #define CVf_BUILTIN_ATTRS	(CVf_METHOD|CVf_LOCKED|CVf_LVALUE)
 
@@ -130,7 +137,7 @@ Returns the stash of the CV.
 #define CvEVAL_on(cv)		(CvUNIQUE_on(cv),SvFAKE_off(cv))
 #define CvEVAL_off(cv)		CvUNIQUE_off(cv)
 
-/* BEGIN|INIT|END */
+/* BEGIN|CHECK|INIT|END */
 #define CvSPECIAL(cv)		(CvUNIQUE(cv) && SvFAKE(cv))
 #define CvSPECIAL_on(cv)	(CvUNIQUE_on(cv),SvFAKE_on(cv))
 #define CvSPECIAL_off(cv)	(CvUNIQUE_off(cv),SvFAKE_off(cv))
@@ -139,61 +146,62 @@ Returns the stash of the CV.
 #define CvCONST_on(cv)		(CvFLAGS(cv) |= CVf_CONST)
 #define CvCONST_off(cv)		(CvFLAGS(cv) &= ~CVf_CONST)
 
+#define CvWEAKOUTSIDE(cv)	(CvFLAGS(cv) & CVf_WEAKOUTSIDE)
+#define CvWEAKOUTSIDE_on(cv)	(CvFLAGS(cv) |= CVf_WEAKOUTSIDE)
+#define CvWEAKOUTSIDE_off(cv)	(CvFLAGS(cv) &= ~CVf_WEAKOUTSIDE)
+
+
 /*
-=head1 Pad Data Structures
+=head1 CV reference counts and CvOUTSIDE
 
-=for apidoc m|AV *|CvPADLIST|CV *cv
-CV's can have CvPADLIST(cv) set to point to an AV.
+=for apidoc m|bool|CvWEAKOUTSIDE|CV *cv
 
-For these purposes "forms" are a kind-of CV, eval""s are too (except they're
-not callable at will and are always thrown away after the eval"" is done
-executing).
+Each CV has a pointer, C<CvOUTSIDE()>, to its lexically enclosing
+CV (if any). Because pointers to anonymous sub prototypes are
+stored in C<&> pad slots, it is a possible to get a circular reference,
+with the parent pointing to the child and vice-versa. To avoid the
+ensuing memory leak, we do not increment the reference count of the CV
+pointed to by C<CvOUTSIDE> in the I<one specific instance> that the parent
+has a C<&> pad slot pointing back to us. In this case, we set the
+C<CvWEAKOUTSIDE> flag in the child. This allows us to determine under what
+circumstances we should decrement the refcount of the parent when freeing
+the child.
 
-XSUBs don't have CvPADLIST set - dXSTARG fetches values from PL_curpad,
-but that is really the callers pad (a slot of which is allocated by
-every entersub).
+There is a further complication with non-closure anonymous subs (ie those
+that do not refer to any lexicals outside that sub). In this case, the
+anonymous prototype is shared rather than being cloned. This has the
+consequence that the parent may be freed while there are still active
+children, eg
 
-The CvPADLIST AV has does not have AvREAL set, so REFCNT of component items
-is managed "manual" (mostly in op.c) rather than normal av.c rules.
-The items in the AV are not SVs as for a normal AV, but other AVs:
+    BEGIN { $a = sub { eval '$x' } }
 
-0'th Entry of the CvPADLIST is an AV which represents the "names" or rather
-the "static type information" for lexicals.
+In this case, the BEGIN is freed immediately after execution since there
+are no active references to it: the anon sub prototype has
+C<CvWEAKOUTSIDE> set since it's not a closure, and $a points to the same
+CV, so it doesn't contribute to BEGIN's refcount either.  When $a is
+executed, the C<eval '$x'> causes the chain of C<CvOUTSIDE>s to be followed,
+and the freed BEGIN is accessed.
 
-The CvDEPTH'th entry of CvPADLIST AV is an AV which is the stack frame at that
-depth of recursion into the CV.
-The 0'th slot of a frame AV is an AV which is @_.
-other entries are storage for variables and op targets.
+To avoid this, whenever a CV and its associated pad is freed, any
+C<&> entries in the pad are explicitly removed from the pad, and if the
+refcount of the pointed-to anon sub is still positive, then that
+child's C<CvOUTSIDE> is set to point to its grandparent. This will only
+occur in the single specific case of a non-closure anon prototype
+having one or more active references (such as C<$a> above).
 
-During compilation:
-C<PL_comppad_name> is set the the the names AV.
-C<PL_comppad> is set the the frame AV for the frame CvDEPTH == 1.
-C<PL_curpad> is set the body of the frame AV (i.e. AvARRAY(PL_comppad)).
+One other thing to consider is that a CV may be merely undefined
+rather than freed, eg C<undef &foo>. In this case, its refcount may
+not have reached zero, but we still delete its pad and its C<CvROOT> etc.
+Since various children may still have their C<CvOUTSIDE> pointing at this
+undefined CV, we keep its own C<CvOUTSIDE> for the time being, so that
+the chain of lexical scopes is unbroken. For example, the following
+should print 123:
 
-Itterating over the names AV itterates over all possible pad
-items. Pad slots that are SVs_PADTMP (targets/GVs/constants) end up having
-&PL_sv_undef "names" (see pad_alloc()).
-
-Only my/our variable (SVs_PADMY/SVs_PADOUR) slots get valid names.
-The rest are op targets/GVs/constants which are statically allocated
-or resolved at compile time.  These don't have names by which they
-can be looked up from Perl code at run time through eval"" like
-my/our variables can be.  Since they can't be looked up by "name"
-but only by their index allocated at compile time (which is usually
-in PL_op->op_targ), wasting a name SV for them doesn't make sense.
-
-The SVs in the names AV have their PV being the name of the variable.
-NV+1..IV inclusive is a range of cop_seq numbers for which the name is valid.
-For typed lexicals name SV is SVt_PVMG and SvSTASH points at the type.
-
-If SvFAKE is set on the name SV then slot in the frame AVs are
-a REFCNT'ed references to a lexical from "outside".
-
-If the 'name' is '&' the the corresponding entry in frame AV
-is a CV representing a possible closure.
-(SvFAKE and name of '&' is not a meaningful combination currently but could
-become so if C<my sub foo {}> is implemented.)
+    my $x = 123;
+    sub tmp { sub { eval '$x' } }
+    my $a = tmp();
+    undef &tmp;
+    print  $a->();
 
 =cut
 */
-

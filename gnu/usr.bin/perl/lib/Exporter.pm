@@ -9,7 +9,8 @@ require 5.006;
 our $Debug = 0;
 our $ExportLevel = 0;
 our $Verbose ||= 0;
-our $VERSION = '5.566';
+our $VERSION = '5.567';
+our (%Cache);
 $Carp::Internal{Exporter} = 1;
 
 sub as_heavy {
@@ -30,10 +31,10 @@ sub import {
   my $callpkg = caller($ExportLevel);
 
   # We *need* to treat @{"$pkg\::EXPORT_FAIL"} since Carp uses it :-(
-  my($exports, $export_cache, $fail)
-    = (\@{"$pkg\::EXPORT"}, \%{"$pkg\::EXPORT"}, \@{"$pkg\::EXPORT_FAIL"});
+  my($exports, $fail) = (\@{"$pkg\::EXPORT"}, \@{"$pkg\::EXPORT_FAIL"});
   return export $pkg, $callpkg, @_
     if $Verbose or $Debug or @$fail > 1;
+  my $export_cache = ($Cache{$pkg} ||= {});
   my $args = @_ or @_ = @$exports;
 
   local $_;

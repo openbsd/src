@@ -2,7 +2,7 @@
 # Hint file for EP/IX on CDC RISC boxes.
 #
 # From: Stanley Donald Capelik <sd9sdc@hp100.den.mmc.com>
-# Modified by Andy Dougherty   <doughera@lafcol.lafayette.edu>
+# Modified by Andy Dougherty   <doughera@lafayette.edu>
 # Last modified:  Mon May  8 15:29:18 EDT 1995
 #
 #  This hint file appears to be based on the svr4 hints for perl5.000,

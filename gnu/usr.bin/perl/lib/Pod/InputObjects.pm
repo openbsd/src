@@ -11,7 +11,7 @@
 package Pod::InputObjects;
 
 use vars qw($VERSION);
-$VERSION = 1.13;  ## Current version of this package
+$VERSION = 1.14;  ## Current version of this package
 require  5.005;    ## requires this Perl version or later
 
 #############################################################################
@@ -855,9 +855,15 @@ the current one.
 sub append {
    my $self = shift;
    local *ptree = $self;
+   my $can_append = @ptree && !(ref $ptree[-1]);
    for (@_) {
-      next  unless length;
-      if (@ptree  and  !(ref $ptree[-1])  and  !(ref $_)) {
+      if (ref) {
+         push @ptree, $_;
+      }
+      elsif(!length) {
+         next;
+      }
+      elsif ($can_append) {
          $ptree[-1] .= $_;
       }
       else {

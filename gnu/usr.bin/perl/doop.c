@@ -1,6 +1,7 @@
 /*    doop.c
  *
- *    Copyright (c) 1991-2002, Larry Wall
+ *    Copyright (C) 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
+ *    2000, 2001, 2002, by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -41,7 +42,7 @@ S_do_trans_simple(pTHX_ SV *sv)
     s = (U8*)SvPV(sv, len);
     send = s + len;
 
-    /* First, take care of non-UTF8 input strings, because they're easy */
+    /* First, take care of non-UTF-8 input strings, because they're easy */
     if (!SvUTF8(sv)) {
 	while (s < send) {
 	    if ((ch = tbl[*s]) >= 0) {
@@ -73,7 +74,7 @@ S_do_trans_simple(pTHX_ SV *sv)
             s += ulen;
         }
 	else { /* No match -> copy */
-	    Copy(s, d, ulen, U8);
+	    Move(s, d, ulen, U8);
 	    d += ulen;
 	    s += ulen;
         }
@@ -251,7 +252,7 @@ S_do_trans_complex(pTHX_ SV *sv)
 	        UV comp = utf8_to_uvchr(s, &len);
 		if (comp > 0xff) {
 		    if (!complement) {
-			Copy(s, d, len, U8);
+			Move(s, d, len, U8);
 			d += len;
 		    }
 		    else {
@@ -351,7 +352,7 @@ S_do_trans_simple_utf8(pTHX_ SV *sv)
 	}
 	else if (uv == none) {
 	    int i = UTF8SKIP(s);
-	    Copy(s, d, i, U8);
+	    Move(s, d, i, U8);
 	    d += i;
 	    s += i;
 	}
@@ -510,7 +511,7 @@ S_do_trans_complex_utf8(pTHX_ SV *sv)
 	    }
 	    else if (uv == none) {	/* "none" is unmapped character */
 		int i = UTF8SKIP(s);
-		Copy(s, d, i, U8);
+		Move(s, d, i, U8);
 		d += i;
 		s += i;
 		puv = 0xfeedface;
@@ -529,7 +530,7 @@ S_do_trans_complex_utf8(pTHX_ SV *sv)
 		    STRLEN len;
 		    uv = utf8_to_uvuni(s, &len);
 		    if (uv != puv) {
-			Copy(s, d, len, U8);
+			Move(s, d, len, U8);
 			d += len;
 			puv = uv;
 		    }
@@ -561,7 +562,7 @@ S_do_trans_complex_utf8(pTHX_ SV *sv)
 	    }
 	    else if (uv == none) {	/* "none" is unmapped character */
 		int i = UTF8SKIP(s);
-		Copy(s, d, i, U8);
+		Move(s, d, i, U8);
 		d += i;
 		s += i;
 		continue;
@@ -608,10 +609,11 @@ Perl_do_trans(pTHX_ SV *sv)
     (void)SvPV(sv, len);
     if (!len)
 	return 0;
-    if (!SvPOKp(sv))
-	(void)SvPV_force(sv, len);
-    if (!(PL_op->op_private & OPpTRANS_IDENTICAL))
+    if (!(PL_op->op_private & OPpTRANS_IDENTICAL)) {
+	if (!SvPOKp(sv))
+	    (void)SvPV_force(sv, len);
 	(void)SvPOK_only_UTF8(sv);
+    }
 
     DEBUG_t( Perl_deb(aTHX_ "2.TBL\n"));
 

@@ -123,18 +123,43 @@ for file do
     *) ;;
     esac
 
-# Add -Wall for the core and core modules iff gcc and not already -Wall
+# Add -Wall for the core modules iff gcc and not already -Wall
 warn=''
 case "$gccversion" in
 '') ;;
 *)  case "$ccflags" in
     *-Wall*) ;;
-# Can't add -ansi here because it will fail e.g. in Solaris.
+    *) warn="$warn -Wall" ;;
+    esac
+    case "$gccansipedantic" in
+    define)
+	case "$gccversion" in
+	[12]*) ;; # gcc versions 1 (gasp!) and 2 are not good for this.
+	*)  case "$osname" in
+	    # Add -ansi -pedantic only for known platforms.
+	    aix|dec_osf|freebsd|hpux|irix|linux)
+		ansipedantic="-ansi -pedantic" ;;
+	    solaris)
+# Can't add -ansi for Solaris.
 # Off_t/off_t is a struct in Solaris with largefiles, and with -ansi
 # that struct cannot be compared with a flat integer, such as a STRLEN.
 # The -ansi will also cause a lot of noise in Solaris because of:
 # /usr/include/sys/resource.h:148: warning: `struct rlimit64' declared inside parameter list
-    *) warn='-Wall' ;;
+		ansipedantic="-pedantic" ;;
+	    esac
+	    for i in $ansipedantic
+	    do
+		case "$ccflags" in
+		*$i*) ;;
+		*) warn="$warn $i" ;;
+		esac
+	    done
+	    case "$warn$ccflags" in
+	    *-pedantic*) warn="$warn -DPERL_GCC_PEDANTIC" ;;
+	    esac
+	    ;;
+	esac
+	;;
     esac
     ;;
 esac

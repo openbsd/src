@@ -12,7 +12,7 @@ use Config;
 $Is_VMS = $^O eq 'VMS';
 $Is_MacOS = $^O eq 'MacOS';
 
-plan tests => 94;
+plan tests => 105;
 
 my $Perl = which_perl();
 
@@ -210,14 +210,14 @@ like( $@, qr/Bad filehandle:\s+afile/,          '       right error' );
 {
     local *F;
     for (1..2) {
-        ok( open(F, qq{$Perl -le "print 'ok'"|}), 'open to pipe' );
+	ok( open(F, qq{$Perl -le "print 'ok'"|}), 'open to pipe' );
 	is(scalar <F>, "ok\n",  '       readline');
-        ok( close F,            '       close' );
+	ok( close F,            '       close' );
     }
 
     for (1..2) {
-        ok( open(F, "-|", qq{$Perl -le "print 'ok'"}), 'open -|');
-        is( scalar <F>, "ok\n", '       readline');
+	ok( open(F, "-|", qq{$Perl -le "print 'ok'"}), 'open -|');
+	is( scalar <F>, "ok\n", '       readline');
 	ok( close F,            '       close' );
     }
 }
@@ -225,8 +225,16 @@ like( $@, qr/Bad filehandle:\s+afile/,          '       right error' );
 
 # other dupping techniques
 {
-    ok( open(my $stdout, ">&", \*STDOUT), 'dup \*STDOUT into lexical fh');
-    ok( open(STDOUT,     ">&", $stdout),  'restore dupped STDOUT from lexical fh');
+    ok( open(my $stdout, ">&", \*STDOUT),       'dup \*STDOUT into lexical fh');
+    ok( open(STDOUT,     ">&", $stdout),        'restore dupped STDOUT from lexical fh');
+
+    {
+	use strict; # the below should not warn
+	ok( open(my $stdout, ">&", STDOUT),         'dup STDOUT into lexical fh');
+    }
+
+    # used to try to open a file [perl #17830]
+    ok( open(my $stdin,  "<&", fileno STDIN),   'dup fileno(STDIN) into lexical fh');
 }
 
 SKIP: {
@@ -241,3 +249,56 @@ SKIP: {
     ok( !eval { open F, "BAR", "QUUX" },       'Unknown open() mode' );
     like( $@, qr/\QUnknown open() mode 'BAR'/, '       right error' );
 }
+
+{
+    local $SIG{__WARN__} = sub { $@ = shift };
+
+    sub gimme {
+        my $tmphandle = shift;
+	my $line = scalar <$tmphandle>;
+	warn "gimme";
+	return $line;
+    }
+
+    open($fh0[0], "TEST");
+    gimme($fh0[0]);
+    like($@, qr/<\$fh0\[...\]> line 1\./, "autoviv fh package aelem");
+
+    open($fh1{k}, "TEST");
+    gimme($fh1{k});
+    like($@, qr/<\$fh1{...}> line 1\./, "autoviv fh package helem");
+
+    my @fh2;
+    open($fh2[0], "TEST");
+    gimme($fh2[0]);
+    like($@, qr/<\$fh2\[...\]> line 1\./, "autoviv fh lexical aelem");
+
+    my %fh3;
+    open($fh3{k}, "TEST");
+    gimme($fh3{k});
+    like($@, qr/<\$fh3{...}> line 1\./, "autoviv fh lexical helem");
+}
+    
+SKIP: {
+    skip("These tests use perlio", 5) unless $Config{useperlio};
+    my $w;
+    use warnings 'layer';
+    local $SIG{__WARN__} = sub { $w = shift };
+
+    eval { open(F, ">>>", "afile") };
+    like($w, qr/Invalid separator character '>' in PerlIO layer spec/,
+	 "bad open (>>>) warning");
+    like($@, qr/Unknown open\(\) mode '>>>'/,
+	 "bad open (>>>) failure");
+
+    eval { open(F, ">:u", "afile" ) };
+    like($w, qr/Unknown PerlIO layer "u"/,
+	 'bad layer ">:u" warning');
+    eval { open(F, "<:u", "afile" ) };
+    like($w, qr/Unknown PerlIO layer "u"/,
+	 'bad layer "<:u" warning');
+    eval { open(F, ":c", "afile" ) };
+    like($@, qr/Unknown open\(\) mode ':c'/,
+	 'bad layer ":c" failure');
+}
+

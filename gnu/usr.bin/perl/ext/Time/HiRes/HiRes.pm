@@ -187,7 +187,7 @@ replacement for the C<alarm> provided with perl, see the L</EXAMPLES> below.
 B<NOTE 1>: With some operating system and Perl release combinations
 C<SIGALRM> restarts C<select()>, instead of interuping it.  
 This means that an C<alarm()> followed by a C<select()>
-may together take the sum of the times specified for the the
+may together take the sum of the times specified for the
 C<alarm()> and the C<select()>, not just the time of the C<alarm()>.
 
 =item setitimer ( $which, $floating_seconds [, $interval_floating_seconds ] )

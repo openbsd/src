@@ -160,12 +160,17 @@ so it is (currently) legal to use C<printf(fmt,...)> in perl sources.
 
 =item B<PerlIO_read(f,buf,count)>, B<PerlIO_write(f,buf,count)>
 
-These correspond to fread() and fwrite(). Note that arguments are
-different, there is only one "count" and order has "file"
-first. Returns a byte count if successful (which may be zero or positive), returns
-negative value and sets C<errno> on error.  Depending on
-implementation C<errno> may be C<EINTR> if operation was interrupted
-by a signal.
+These correspond functionally to fread() and fwrite() but the
+arguments and return values are different.  The PerlIO_read() and
+PerlIO_write() signatures have been modeled on the more sane low level
+read() and write() functions instead: The "file" argument is passed
+first, there is only one "count", and the return value can distinguish
+between error and C<EOF>.
+
+Returns a byte count if successful (which may be zero or
+positive), returns negative value and sets C<errno> on error.
+Depending on implementation C<errno> may be C<EINTR> if operation was
+interrupted by a signal.
 
 =item B<PerlIO_close(f)>
 
@@ -220,12 +225,13 @@ This corresponds to clearerr(), i.e., clears 'error' and (usually)
 
 This corresponds to fflush().  Sends any buffered write data to the
 underlying file.  If called with C<NULL> this may flush all open
-streams (or core dump with some USE_STDIO implementattions).
-Calling on a handle open for read only, or on  which last operation was a read of some kind
-may lead to undefined behaviour on some USE_STDIO implementations.
-The USE_PERLIO (layers) implementation tries to behave better: it flushes all open streams
-when passed C<NULL>, and attempts to retain data on read streams either in the buffer
-or by seeking the handle to the current logical position.
+streams (or core dump with some USE_STDIO implementattions).  Calling
+on a handle open for read only, or on which last operation was a read
+of some kind may lead to undefined behaviour on some USE_STDIO
+implementations.  The USE_PERLIO (layers) implementation tries to
+behave better: it flushes all open streams when passed C<NULL>, and
+attempts to retain data on read streams either in the buffer or by
+seeking the handle to the current logical position.
 
 =item B<PerlIO_seek(f,offset,whence)>
 
@@ -310,10 +316,11 @@ changes in this area.
 
 Used to get a PerlIO * from a FILE *.
 
-The mode argument should be a string as would be passed to fopen/PerlIO_open.
-If it is NULL then - for legacy support - the code will (depending upon
-the platform and the implementation) either attempt to empirically determine the mode in
-which I<f> is open, or use "r+" to indicate a read/write stream.
+The mode argument should be a string as would be passed to
+fopen/PerlIO_open.  If it is NULL then - for legacy support - the code
+will (depending upon the platform and the implementation) either
+attempt to empirically determine the mode in which I<f> is open, or
+use "r+" to indicate a read/write stream.
 
 Once called the FILE * should I<ONLY> be closed by calling
 C<PerlIO_close()> on the returned PerlIO *.
@@ -326,17 +333,17 @@ This is B<not> the reverse of PerlIO_exportFILE().
 =item B<PerlIO_exportFILE(f,mode)>
 
 Given a PerlIO * create a 'native' FILE * suitable for passing to code
-expecting to be compiled and linked with ANSI C I<stdio.h>.
-The mode argument should be a string as would be passed to fopen/PerlIO_open.
-If it is NULL then - for legacy support - the FILE * is opened
-in same mode as the PerlIO *.
+expecting to be compiled and linked with ANSI C I<stdio.h>.  The mode
+argument should be a string as would be passed to fopen/PerlIO_open.
+If it is NULL then - for legacy support - the FILE * is opened in same
+mode as the PerlIO *.
 
-The fact that such a FILE * has been 'exported' is recorded, (normally by
-pushing a new :stdio "layer" onto the PerlIO *), which may affect future
-PerlIO operations on the original PerlIO *.
-You should not call C<fclose()> on the file unless you call
-C<PerlIO_releaseFILE()> to disassociate it from the PerlIO *.
-(Do not use PerlIO_importFILE() for doing the disassociation.)
+The fact that such a FILE * has been 'exported' is recorded, (normally
+by pushing a new :stdio "layer" onto the PerlIO *), which may affect
+future PerlIO operations on the original PerlIO *.  You should not
+call C<fclose()> on the file unless you call C<PerlIO_releaseFILE()>
+to disassociate it from the PerlIO *.  (Do not use PerlIO_importFILE()
+for doing the disassociation.)
 
 Calling this function repeatedly will create a FILE * on each call
 (and will push an :stdio layer each time as well).
@@ -378,8 +385,8 @@ traditional way if a handle does not support them.
 =item B<PerlIO_fast_gets(f)>
 
 Returns true if implementation has all the interfaces required to
-allow perl's C<sv_gets> to "bypass" normal IO mechanism.
-This can vary from handle to handle.
+allow perl's C<sv_gets> to "bypass" normal IO mechanism.  This can
+vary from handle to handle.
 
   PerlIO_fast_gets(f) = PerlIO_has_cntptr(f) && \
                         PerlIO_canset_cnt(f) && \
@@ -453,8 +460,8 @@ happened to C<read()> (or whatever) last time IO was requested.
 
 The new interface to the USE_PERLIO implementation. The layers ":crlf"
 and ":raw" are only ones allowed for other implementations and those
-are silently ignored. (As of perl5.8 ":raw" is deprecated.)
-Use PerlIO_binmode() below for the portable case.
+are silently ignored. (As of perl5.8 ":raw" is deprecated.)  Use
+PerlIO_binmode() below for the portable case.
 
 =item PerlIO_binmode(f,ptype,imode,layers)
 
@@ -473,8 +480,9 @@ B<ptype> is perl's character for the kind of IO:
 
 B<imode> is C<O_BINARY> or C<O_TEXT>.
 
-B<layers> is a string of layers to apply, only ":crlf" makes sense in the non USE_PERLIO
-case. (As of perl5.8 ":raw" is deprecated in favour of passing NULL.)
+B<layers> is a string of layers to apply, only ":crlf" makes sense in
+the non USE_PERLIO case. (As of perl5.8 ":raw" is deprecated in favour
+of passing NULL.)
 
 Portable cases are:
 

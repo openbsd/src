@@ -210,7 +210,7 @@ that looks like this:
 
 	Mytest::hello();
 
-Now we make the script executable (C<chmod -x hello>), run the script
+Now we make the script executable (C<chmod +x hello>), run the script
 and we should see the following output:
 
 	% ./hello
@@ -692,7 +692,7 @@ makes these functions visible from Perl interpreter.
 
 Pay a special attention to the function C<constant>.  This name appears
 twice in the generated .xs file: once in the first part, as a static C
-function, the another time in the second part, when an XSUB interface to
+function, then another time in the second part, when an XSUB interface to
 this static C function is defined.
 
 This is quite typical for .xs files: usually the .xs file provides

@@ -35,7 +35,7 @@ and then raise an exception.  That's because on most systems,
 libraries are not re-entrant; particularly, memory allocation and I/O
 routines are not.  That meant that doing nearly I<anything> in your
 handler could in theory trigger a memory fault and subsequent core
-dump - see L<Deferred Signals> below.
+dump - see L</Deferred Signals (Safe Signals)> below.
 
 The names of the signals are the ones listed out by C<kill -l> on your
 system, or you can retrieve them from the Config module.  Set up an
@@ -95,11 +95,20 @@ it doesn't kill itself):
     }
 
 Another interesting signal to send is signal number zero.  This doesn't
-actually affect another process, but instead checks whether it's alive
+actually affect a child process, but instead checks whether it's alive
 or has changed its UID.
 
     unless (kill 0 => $kid_pid) {
 	warn "something wicked happened to $kid_pid";
+    }
+
+When directed at a process whose UID is not identical to that
+of the sending process, signal number zero may fail because
+you lack permission to send the signal, even though the process is alive.
+You may be able to determine the cause of failure using C<%!>.
+
+    unless (kill 0 => $pid or $!{EPERM}) {
+	warn "$pid looks dead";
     }
 
 You might also want to employ anonymous functions for simple signal
@@ -279,7 +288,7 @@ to find out whether anyone (or anything) has accidentally removed our fifo.
 	sleep 2;    # to avoid dup signals
     }
 
-=head2 Deferred Signals
+=head2 Deferred Signals (Safe Signals)
 
 In Perls before Perl 5.7.3 by installing Perl code to deal with
 signals, you were exposing yourself to danger from two things.  First,
@@ -340,6 +349,32 @@ the signal flags and calls %SIG handlers before resuming IO operation.)
 Note that the default in Perl 5.7.3 and later is to automatically use
 the C<:perlio> layer.
 
+Note that some networking library functions like gethostbyname() are
+known to have their own implementations of timeouts which may conflict
+with your timeouts.  If you are having problems with such functions,
+you can try using the POSIX sigaction() function, which bypasses the
+Perl safe signals (note that this means subjecting yourself to
+possible memory corruption, as described above).  Instead of setting
+C<$SIG{ALRM}> try something like the following:
+
+    use POSIX;
+    sigaction SIGALRM, new POSIX::SigAction sub { die "alarm\n" }
+        or die "Error setting SIGALRM handler: $!\n";
+
+=item Restartable system calls
+
+On systems that supported it, older versions of Perl used the
+SA_RESTART flag when installing %SIG handlers.  This meant that
+restartable system calls would continue rather than returning when
+a signal arrived.  In order to deliver deferred signals promptly,
+Perl 5.7.3 and later do I<not> use SA_RESTART.  Consequently, 
+restartable system calls can fail (with $! set to C<EINTR>) in places
+where they previously would have succeeded.
+
+Note that the default C<:perlio> layer will retry C<read>, C<write>
+and C<close> as described above and that interrupted C<wait> and 
+C<waitpid> calls will always be retried.
+
 =item Signals as "faults"
 
 Certain signals e.g. SEGV, ILL, BUS are generated as a result of
@@ -367,6 +402,10 @@ look like a loop as the operating system will re-issue the signal as
 there are un-waited-for completed child processes.
 
 =back
+
+If you want the old signal behaviour back regardless of possible
+memory corruption, set the environment variable C<PERL_SIGNALS> to
+C<"unsafe"> (a new feature since Perl 5.8.1).
 
 =head1 Using open() for IPC
 
@@ -555,7 +594,7 @@ And here's a safe pipe open for writing:
 
     # add error processing as above
     $pid = open(KID_TO_WRITE, "|-");
-    $SIG{ALRM} = sub { die "whoops, $program pipe broke" };
+    $SIG{PIPE} = sub { die "whoops, $program pipe broke" };
 
     if ($pid) {  # parent
 	for (@data) {
@@ -1388,7 +1427,7 @@ Here's the code.  We'll
    $client->autoflush(1);
    print $client "Welcome to $0; type help for command list.\n";
    $hostinfo = gethostbyaddr($client->peeraddr);
-   printf "[Connect from %s]\n", $hostinfo->name || $client->peerhost;
+   printf "[Connect from %s]\n", $hostinfo ? $hostinfo->name : $client->peerhost;
    print $client "Command? ";
    while ( <$client>) {
      next unless /\S/;	     # blank line
@@ -1638,10 +1677,11 @@ version and suggestions from the Perl Porters.
 There's a lot more to networking than this, but this should get you
 started.
 
-For intrepid programmers, the indispensable textbook is I<Unix Network
-Programming> by W. Richard Stevens (published by Addison-Wesley).  Note
-that most books on networking address networking from the perspective of
-a C programmer; translation to Perl is left as an exercise for the reader.
+For intrepid programmers, the indispensable textbook is I<Unix
+Network Programming, 2nd Edition, Volume 1> by W. Richard Stevens
+(published by Prentice-Hall).  Note that most books on networking
+address the subject from the perspective of a C programmer; translation
+to Perl is left as an exercise for the reader.
 
 The IO::Socket(3) manpage describes the object library, and the Socket(3)
 manpage describes the low-level interface to sockets.  Besides the obvious

@@ -26,6 +26,6 @@ That is, they should not require Config.pm nor should they require any
 extensions to have been built.  TEST will abort if any tests in the
 t/base/ directory fail.
 
-Tests in the t/comp/, t/cmd/, t/run/, t/io/, and t/op/ directories should
-also be runnable by miniperl and not require Config.pm, but failures
-to comply will not cause TEST to abort like for t/base/.
+Tests in the t/comp/, t/cmd/, t/run/, t/io/, t/op/ and t/uni/ directories
+should also be runnable by miniperl and not require Config.pm, but
+failures to comply will not cause TEST to abort like for t/base/.

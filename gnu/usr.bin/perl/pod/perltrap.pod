@@ -18,6 +18,11 @@ Accustomed B<awk> users should take special note of the following:
 
 =item *
 
+A Perl program executes only once, not once for each input line.  You can
+do an implicit loop with C<-n> or C<-p>.
+
+=item *
+
 The English module, loaded via
 
     use English;
@@ -143,9 +148,9 @@ gives you.
 
 =back
 
-=head2 C Traps
+=head2 C/C++ Traps
 
-Cerebral C programmers should take note of the following:
+Cerebral C and C++ programmers should take note of the following:
 
 =over 4
 
@@ -159,13 +164,14 @@ You must use C<elsif> rather than C<else if>.
 
 =item *
 
-The C<break> and C<continue> keywords from C become in
-Perl C<last> and C<next>, respectively.
-Unlike in C, these do I<not> work within a C<do { } while> construct.
+The C<break> and C<continue> keywords from C become in Perl C<last>
+and C<next>, respectively.  Unlike in C, these do I<not> work within a
+C<do { } while> construct.  See L<perlsyn/"Loop Control">.
 
 =item *
 
-There's no switch statement.  (But it's easy to build one on the fly.)
+There's no switch statement.  (But it's easy to build one on the fly,
+see L<perlsyn/"Basic BLOCKs and Switch Statements">)
 
 =item *
 
@@ -173,7 +179,9 @@ Variables begin with "$", "@" or "%" in Perl.
 
 =item *
 
-Comments begin with "#", not "/*".
+Comments begin with "#", not "/*" or "//".  Perl may interpret C/C++
+comments as division operators, unterminated regular expressions or
+the defined-or operator.
 
 =item *
 
@@ -202,6 +210,11 @@ to find their names on your system.
 Seasoned B<sed> programmers should take note of the following:
 
 =over 4
+
+=item *
+
+A Perl program executes only once, not once for each input line.  You can
+do an implicit loop with C<-n> or C<-p>.
 
 =item *
 
@@ -1223,6 +1236,10 @@ repeatedly, like C</x/> or C<m!x!>.
     # perl4 prints: perl4
     # perl5 prints: perl5
 
+=item * Regular Expression
+
+Unlike in Ruby, failed matches in Perl do not reset the match variables
+($1, $2, ..., C<$`>, ...).
 
 =back
 
@@ -1344,13 +1361,12 @@ within certain expressions, statements, contexts, or whatever.
 
 =item * Interpolation
 
-Double-quoted strings may no longer end with an unescaped $ or @.
+Double-quoted strings may no longer end with an unescaped $.
 
     $foo = "foo$";
-    $bar = "bar@";
-    print "foo is $foo, bar is $bar\n";
+    print "foo is $foo\n";
 
-    # perl4 prints: foo is foo$, bar is bar@
+    # perl4 prints: foo is foo$
     # perl5 errors: Final $ should be \$ or $name
 
 Note: perl5 DOES NOT error on the terminating @ in $bar
@@ -1436,12 +1452,25 @@ perl4 programs which unconsciously rely on the bugs in earlier perl versions.
 
 =item * Interpolation
 
-You also have to be careful about array references.
+You also have to be careful about array and hash brackets during
+interpolation.
+
+    print "$foo["
+
+    perl 4 prints: [
+    perl 5 prints: syntax error
 
     print "$foo{"
 
     perl 4 prints: {
     perl 5 prints: syntax error
+
+Perl 5 is expecting to find an index or key name following the respective
+brackets, as well as an ending bracket of the appropriate type.  In order
+to mimic the behavior of Perl 4, you must escape the bracket like so.
+
+    print "$foo\[";
+    print "$foo\{";
 
 =item * Interpolation
 

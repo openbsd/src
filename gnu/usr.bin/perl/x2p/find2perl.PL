@@ -191,7 +191,7 @@ while (@ARGV) {
         $out .= tab;
         for (@cmd)
             { s/'/\\'/g }
-        { local $" = "','"; $out .= "doexec(0, '@cmd')"; }
+        { local $" = "','"; $out .= "doexec(1, '@cmd')"; }
         $declaresubs .= "sub doexec (\$\@);\n";
         $init{doexec} = 1;
     } elsif ($_ eq 'prune') {

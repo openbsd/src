@@ -13,7 +13,6 @@ WriteMakefile(
 #    LINKTYPE  => 'static',
     DEFINE    => $define,
     INC       => '-I$(PERL_INC)', # force PERL_INC dir ahead of system -I's
-    INST_ARCHLIB => '.',
     SKIP      => [qw(dynamic dynamic_lib dlsyms)],
     OBJECT    => '$(O_FILES)',
     clean     => {'FILES' => 'dbu libsdbm.a dbd dba dbe x-dbu *.dir *.pag'},
@@ -22,34 +21,21 @@ WriteMakefile(
 );
 
 sub MY::constants {
-  package MY;
-  my $r = shift->SUPER::constants();
-  if ($^O eq 'VMS') {
-    $r =~ s/^INST_STATIC =.*$/INST_STATIC = libsdbm\$(LIB_EXT)/m
-  }
-  return $r;
-}
+    package MY;
+    my $self = shift;
 
-sub MY::post_constants {
-  package MY;
-  if ($^O eq 'VMS') {
-    shift->SUPER::post_constants();
-  } else {
-'
-INST_STATIC = libsdbm$(LIB_EXT)
-'
-  }
+    $self->{INST_STATIC} = 'libsdbm$(LIB_EXT)';
+
+    return $self->SUPER::constants();
 }
 
 sub MY::top_targets {
-    my $noecho = shift->{NOECHO};
-    
     my $r = '
 all :: static
-	' . $noecho . '$(NOOP)
+	$(NOECHO) $(NOOP)
 
 config ::
-	' . $noecho . '$(NOOP)
+	$(NOECHO) $(NOOP)
 
 lint:
 	lint -abchx $(LIBSRCS)
@@ -60,7 +46,7 @@ lint:
 # variables into the environment so $(MYEXTLIB) is set in here to this
 # value which can not be built.
 sdbm/libsdbm.a:
-	' . $noecho . '$(NOOP)
+	$(NOECHO) $(NOOP)
 ' unless $^O eq 'VMS';
 
     return $r;

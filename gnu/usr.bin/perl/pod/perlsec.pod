@@ -44,14 +44,6 @@ directories, or processes, B<with the following exceptions>:
 
 =item *
 
-If you pass more than one argument to either C<system> or C<exec>,
-the arguments are checked for taintedness B<but> the operation will still
-be attempted, emitting an optional warning.  This will be fatal in a 
-future version of perl so do not rely on it to bypass the tainting 
-mechanism.
-
-=item *
-
 Arguments to C<print> and C<syswrite> are B<not> checked for taintedness.
 
 =item *
@@ -92,7 +84,7 @@ For example:
     $data = 'abc';		# Not tainted
 
     system "echo $arg";		# Insecure
-    system "/bin/echo", $arg;	# Allowed but considered insecure
+    system "/bin/echo", $arg;	# Considered insecure
 				# (Perl doesn't know about /bin/echo)
     system "echo $hid";		# Insecure
     system "echo $data";	# Insecure until PATH set
@@ -110,7 +102,7 @@ For example:
 
     open(FOO,"echo $arg|");	# Not OK
     open(FOO,"-|")
-	or exec 'echo', $arg;	# Allowed but not really OK
+	or exec 'echo', $arg;	# Also not OK
 
     $shout = `echo $arg`;	# Insecure, $shout now tainted
 
@@ -118,8 +110,8 @@ For example:
     umask $arg;			# Insecure
 
     exec "echo $arg";		# Insecure
-    exec "echo", $arg;		# Allowed but considered insecure
-    exec "sh", '-c', $arg;	# Considered secure, alas!
+    exec "echo", $arg;		# Insecure
+    exec "sh", '-c', $arg;	# Very insecure!
 
     @files = <*.c>;		# insecure (uses readdir() or similar)
     @files = glob('*.c');	# insecure (uses readdir() or similar)
@@ -133,10 +125,7 @@ For example:
     $arg, `true`;		# Insecure (although it isn't really)
 
 If you try to do something insecure, you will get a fatal error saying
-something like "Insecure dependency" or "Insecure $ENV{PATH}".  Note that you
-can still write an insecure B<system> or B<exec>, but only by explicitly
-doing something like the "considered secure" example above.  This will not
-be possible in a future version of Perl.
+something like "Insecure dependency" or "Insecure $ENV{PATH}".
 
 =head2 Laundering and Detecting Tainted Data
 
@@ -175,7 +164,7 @@ or a dot.
     if ($data =~ /^([-\@\w.]+)$/) {
 	$data = $1; 			# $data now untainted
     } else {
-	die "Bad data in $data"; 	# log this somewhere
+	die "Bad data in '$data'"; 	# log this somewhere
     }
 
 This is fairly secure because C</\w+/> doesn't normally match shell
@@ -396,6 +385,75 @@ Unicode is a new and complex technology and one may easily overlook
 certain security pitfalls.  See L<perluniintro> for an overview and
 L<perlunicode> for details, and L<perlunicode/"Security Implications
 of Unicode"> for security implications in particular.
+
+=head2 Algorithmic Complexity Attacks
+
+Certain internal algorithms used in the implementation of Perl can
+be attacked by choosing the input carefully to consume large amounts
+of either time or space or both.  This can lead into the so-called
+I<Denial of Service> (DoS) attacks.
+
+=over 4
+
+=item *
+
+Hash Function - the algorithm used to "order" hash elements has been
+changed several times during the development of Perl, mainly to be
+reasonably fast.  In Perl 5.8.1 also the security aspect was taken
+into account.
+
+In Perls before 5.8.1 one could rather easily generate data that as
+hash keys would cause Perl to consume large amounts of time because
+internal structure of hashes would badly degenerate.  In Perl 5.8.1
+the hash function is randomly perturbed by a pseudorandom seed which
+makes generating such naughty hash keys harder.
+See L<perlrun/PERL_HASH_SEED> for more information.
+
+The random perturbation is done by default but if one wants for some
+reason emulate the old behaviour one can set the environment variable
+PERL_HASH_SEED to zero (or any other integer).  One possible reason
+for wanting to emulate the old behaviour is that in the new behaviour
+consecutive runs of Perl will order hash keys differently, which may
+confuse some applications (like Data::Dumper: the outputs of two
+different runs are no more identical).
+
+B<Perl has never guaranteed any ordering of the hash keys>, and the
+ordering has already changed several times during the lifetime of
+Perl 5.  Also, the ordering of hash keys has always been, and
+continues to be, affected by the insertion order.
+
+Also note that while the order of the hash elements might be
+randomised, this "pseudoordering" should B<not> be used for
+applications like shuffling a list randomly (use List::Util::shuffle()
+for that, see L<List::Util>, a standard core module since Perl 5.8.0;
+or the CPAN module Algorithm::Numerical::Shuffle), or for generating
+permutations (use e.g. the CPAN modules Algorithm::Permute or
+Algorithm::FastPermute), or for any cryptographic applications.
+
+=item *
+
+Regular expressions - Perl's regular expression engine is so called
+NFA (Non-Finite Automaton), which among other things means that it can
+rather easily consume large amounts of both time and space if the
+regular expression may match in several ways.  Careful crafting of the
+regular expressions can help but quite often there really isn't much
+one can do (the book "Mastering Regular Expressions" is required
+reading, see L<perlfaq2>).  Running out of space manifests itself by
+Perl running out of memory.
+
+=item *
+
+Sorting - the quicksort algorithm used in Perls before 5.8.0 to
+implement the sort() function is very easy to trick into misbehaving
+so that it consumes a lot of time.  Nothing more is required than
+resorting a list already sorted.  Starting from Perl 5.8.0 a different
+sorting algorithm, mergesort, is used.  Mergesort is insensitive to
+its input data, so it cannot be similarly fooled.
+
+=back
+
+See L<http://www.cs.rice.edu/~scrosby/hash/> for more information,
+and any computer science text book on the algorithmic complexity.
 
 =head1 SEE ALSO
 

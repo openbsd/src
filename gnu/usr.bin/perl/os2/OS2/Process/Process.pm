@@ -20,7 +20,7 @@ BEGIN {
   #require AutoLoader;
 
   our @ISA = qw(Exporter);
-  our $VERSION = "1.0";
+  our $VERSION = "1.01";
   XSLoader::load('OS2::Process', $VERSION);
 }
 
@@ -65,6 +65,22 @@ our @EXPORT = qw(
 	sidOf
 	scrsize
 	scrsize_set
+	kbdChar
+	kbdhChar
+	kbdStatus
+	_kbdStatus_set
+	kbdhStatus
+	kbdhStatus_set
+	vioConfig
+	viohConfig
+	vioMode
+	viohMode
+	viohMode_set
+	_vioMode_set
+	_vioState
+	_vioState_set
+	vioFont
+	vioFont_set
 	process_entry
 	process_entries
 	process_hentry
@@ -101,6 +117,7 @@ our @EXPORT = qw(
 	ChildWindows
 	out_codepage
 	out_codepage_set
+	process_codepage_set
 	in_codepage
 	in_codepage_set
 	cursor
@@ -124,6 +141,45 @@ our @EXPORT = qw(
         SetWindowPtr
         SetWindowULong
         SetWindowUShort
+	TopLevel
+	FocusWindow_set_keep_Zorder
+
+	ActiveDesktopPathname
+	InvalidateRect
+	CreateFrameControl
+	ClipbrdFmtInfo
+	ClipbrdOwner
+	ClipbrdViewer
+	ClipbrdData
+	OpenClipbrd
+	CloseClipbrd
+	ClipbrdData_set
+	ClipbrdOwner_set
+	ClipbrdViewer_set
+	EnumClipbrdFmts
+	EmptyClipbrd
+	AddAtom
+	FindAtom
+	DeleteAtom
+	AtomUsage
+	AtomName
+	AtomLength
+	SystemAtomTable
+	CreateAtomTable
+	DestroyAtomTable
+
+	_ClipbrdData_set
+	ClipbrdText
+	ClipbrdText_set
+
+	_MessageBox
+	MessageBox
+	_MessageBox2
+	MessageBox2
+	LoadPointer
+	SysPointer
+	Alarm
+	FlashWindow
 
 	get_title
 	set_title
@@ -178,7 +234,7 @@ sub import {
   my $ini = @_;
   @_ = ($class,
 	map {
-	  /^(HWND|WM|SC|SWP|WC|PROG|QW|EDI|WS|QWS|QWP|QWL|FF|FI|LS|FS|FCF|BS|MS|TBM|CF|CFI|FID)_/ ? const_import($_) : $_
+	  /^(HWND|WM|SC|SWP|WC|PROG|QW|EDI|WS|QWS|QWP|QWL|FF|FI|LS|FS|FCF|BS|MS|TBM|CF|CFI|FID|MB|MBID|CF|CFI|SPTR)_/ ? const_import($_) : $_
 	} @_);
   goto &Exporter::import if @_ > 1 or $ini == 0;
 }
@@ -335,9 +391,188 @@ sub ChildWindows (;$) {
   @kids;
 }
 
+sub TopLevel ($) {
+  my $d = DesktopWindow;
+  my $w = shift;
+  while (1) {
+    my $p = QueryWindow $w, 5;	# QW_PARENT;
+    return $w if not $p or $p == $d;
+    $w = $p;
+  }
+}
+
+sub FocusWindow_set_keep_Zorder ($) {
+  my $w = shift;
+  my $t = TopLevel $w;
+  my $b = hWindowPos($t)->{behind}; # we are behind this
+  EnableWindowUpdate($t, 0);
+  FocusWindow_set($w);
+# sleep 1;    # Make flicker stronger when present
+  hWindowPos_set {behind => $b}, $t;
+  EnableWindowUpdate($t, 1);
+}
+
+sub ClipbrdText (@) {
+  my $morph = OS2::localMorphPM->new(0);
+  OpenClipbrd();
+  my $txt = unpack 'p', pack 'L', ClipbrdData @_;
+  CloseClipbrd();
+  $txt;
+}
+
+sub ClipbrdText_set ($;$) {
+  my $morph = OS2::localMorphPM->new(0);
+  OpenClipbrd();
+  EmptyClipbrd();				# It may contain other types
+  my ($txt, $no_convert_nl) = (shift, shift);
+  ClipbrdData_set($txt, !$no_convert_nl, @_);
+  CloseClipbrd();
+}
+
+sub MessageBox ($;$$$$$) {
+  my $morph = OS2::localMorphPM->new(0);
+  die "MessageBox needs text" unless @_;
+  push @_ , ($0 eq '-e' ? "Perl one-liner's message" : "$0 message") if @_ == 1;
+  &_MessageBox;
+}
+
+my %pointers;
+
+sub get_pointer ($;$$) {
+  my $id = $_[0];
+  return $pointers{$id} if exists $pointers{$id};
+  $pointers{$id} = &SysPointer;
+}
+
+# $button needs to be of the form 'String', ['String'] or ['String', flag].
+# If ['String'], it is assumed the default button; same for 'String' if $only
+# is set.
+sub process_MB2 ($$;$) {
+  die "process_MB2() needs 2 arguments, got '@_'" unless @_ == 2 or @_ == 3;
+  my ($button, $ret, $only) = @_;
+  # default is BS_PUSHBUTTON, add BS_DEFAULT if $only is set
+  $button = [$button, $only ? 0x400 : 0] unless ref $button eq 'ARRAY';
+  push @$button, 0x400 if @$button == 1; # BS_PUSHBUTTON|BS_DEFAULT
+  die "Button needs to be of the form 'String', ['String'] or ['String', flag]"
+    unless @$button == 2;
+  pack "Z71 x L l", $button->[0], $ret, $button->[1]; # name, retval, flag
+}
+
+# If one button, make it the default one even if it is of 'String' => val form.
+# If icon is of the form 'SP#<number>', load this via SysPointer.
+sub process_MB2_INFO ($;$$$) {
+  my $l = 0;
+  my $out;
+  die "process_MB2_INFO() needs 1..4 arguments" unless @_ and @_ < 5;
+  my $buttons = shift;
+  die "Buttons array should consist of pairs" if @$buttons % 2;
+
+  push @_, 0 unless @_;		# Icon id (pointer)
+  # Box flags (MB_MOVABLE and MB_INFORMATION or MB_CUSTOMICON)
+  push @_, ($_[0] ? 0x4080 : 0x4030) unless @_ > 1;
+  push @_, 0 unless @_ > 2;	# Notify window
+
+  my ($icon, $style, $notify) = (shift, shift, shift);
+  $icon = get_pointer $1 if $icon =~ /^SP#(\d+)\z/;
+  $out = pack "L L L L",	# icon, #buttons, style, notify, buttons
+      $icon, @$buttons/2, $style, $notify;
+  $out .= join '',
+    map process_MB2($buttons->[2*$_], $buttons->[2*$_+1], @$buttons == 2),
+      0..@$buttons/2-1;
+  pack('L', length(pack 'L', 0) + length $out) . $out;
+}
+
+# MessageBox2 'Try this', OS2::Process::process_MB2_INFO([['Dismiss', 0] => 0x1000], OS2::Process::get_pointer(22),0x4080,0), 'me', 1, 0, 0
+# or the shortcut
+# MessageBox2 'Try this', [[['Dismiss', 0] => 0x1000], 'SP#22'], 'me'
+# 0x80 means MB_CUSTOMICON (does not focus?!).  This focuses:
+# MessageBox2 'Try this', [[['Dismiss',0x400] => 0x1000], 0, 0x4030,0]
+# 0x400 means BS_DEFAULT.  This is the same as the shortcut
+# MessageBox2 'Try this', [[Dismiss => 0x1000]]
+sub MessageBox2 ($;$$$$$) {
+  my $morph = OS2::localMorphPM->new(0);
+  die "MessageBox needs text" unless @_;
+  push @_ , [[Dismiss => 0x1000], # Name, retval (BS_PUSHBUTTON|BS_DEFAULT)
+	     #0,		# get_pointer(11),	# SPTR_ICONINFORMATION
+	     #0x4030,		# MB_MOVEABLE | MB_INFORMATION
+	     #0,		# Notify window; was 1==HWND_DESKTOP
+	    ] if @_ == 1;
+  push @_ , ($0 eq '-e' ? "Perl one-liner's message" : "$0's message") if @_ == 2;
+  $_[1] = &process_MB2_INFO(@{$_[1]}) if ref($_[1]) eq 'ARRAY';
+  &_MessageBox2;
+}
+
 # backward compatibility
 *set_title = \&Title_set;
 *get_title = \&Title;
+
+# adapter; display; cbMemory; Configuration; VDHVersion; Flags; HWBufferSize;
+# FullSaveSize; PartSaveSize; EMAdaptersOFF; EMDisplaysOFF;
+sub vioConfig (;$$) {
+  my $data = &_vioConfig;
+  my @out = unpack 'x[S]SSLSSSLLLSS', $data;
+  # If present, offset points to S/S (with only the first work making sense)
+  my (@adaptersEMU, @displayEMU);
+  @displaysEMU = unpack("x[$out[10]]S/S", $data), pop @out if @out > 10;
+  @adaptersEMU = unpack("x[$out[ 9]]S/S", $data), pop @out if @out > 9;
+  $out[9] = $adaptersEMU[0] if @adaptersEMU;
+  $out[10] = $displaysEMU[0] if @displaysEMU;
+  @out;
+}
+
+my @vioConfig = qw(adapter display cbMemory Configuration VDHVersion Flags
+		   HWBufferSize FullSaveSize PartSaveSize EMAdapters EMDisplays);
+
+sub viohConfig (;$$) {
+  my %h;
+  @h{@vioConfig} = &vioConfig;
+  %h;
+}
+
+# fbType; color; col; row; hres; vres; fmt_ID; attrib; buf_addr; buf_length;
+# full_length; partial_length; ext_data_addr;
+sub vioMode() {unpack 'x[S]CCSSSSCCLLLLL', _vioMode}
+
+my @vioMode = qw( fbType color col row hres vres fmt_ID attrib buf_addr
+		  buf_length full_length partial_length ext_data_addr);
+
+sub viohMode() {
+  my %h;
+  @h{@vioMode} = vioMode;
+  %h;
+}
+
+sub viohMode_set {
+  my %h = (viohMode, @_);
+  my $o = pack 'x[S]CCSSSSCCLLLLL', @h{@vioMode};
+  $o = pack 'SCCSSSSCCLLLLL', length $o, @h{@vioMode};
+  _vioMode_set($o);
+}
+
+sub kbdChar (;$$) {unpack 'CCCCSL', &_kbdChar}
+
+my @kbdChar = qw(ascii scancode status nlsstate shifts time);
+sub kbdhChar (;$$) {
+  my %h;
+  @h{@kbdChar} = &kbdChar;
+  %h
+}
+
+sub kbdStatus (;$) {unpack 'x[S]SSSS', &_kbdStatus}
+my @kbdStatus = qw(state turnChar intCharFlags shifts);
+sub kbdhStatus (;$) {
+  my %h;
+  @h{@kbdStatus} = &kbdStatus;
+  %h
+}
+sub kbdhStatus_set {
+  my $h = (@_ % 2 ? shift @_ : 0);
+  my %h = (kbdhStatus($h), @_);
+  my $o = pack 'x[S]SSSS', @h{@kbdStatus};
+  $o = pack 'SSSSS', length $o, @h{@kbdStatus};
+  _kbdStatus_set($o,$h);
+}
+
 
 # Autoload methods go after __END__, and are processed by the autosplit program.
 
@@ -551,7 +786,19 @@ gets a buffer with characters and attributes of the screen.
 
 =item C<screen_set($buffer)>
 
-restores the screen given the result of screen().
+restores the screen given the result of screen().  E.g., if the file
+C<$file> contains the sceen contents, then
+
+  open IN, $file or die;
+  binmode IN;
+  read IN, $in, -s IN;
+  $s = screen;
+  $in .= qq(\0) x (length($s) - length $in);
+  substr($in, length $s) = '';
+  screen_set $in;
+
+will restore the screen content even if the height of the window
+changed (if the width changed, more manipulation is needed).
 
 =back
 
@@ -705,9 +952,9 @@ titlebar of the current window.
 sets text of the titlebar and task switch menu of the current process' window
 via direct manipulation of the windows' texts.
 
-=item C<SwitchToProgram($sw_entry)>
+=item C<SwitchToProgram([$sw_entry])>
 
-switch to session given by a switch list handle.
+switch to session given by a switch list handle (defaults to the entry of our process).
 
 Use of this function causes another window (and its related windows)
 of a PM session to appear on the front of the screen, or a switch to
@@ -824,10 +1071,18 @@ to use.  E.g, the first entry in program_entries() is the C<Ctrl-Esc> list.
 To show an application, use either one of
 
        WinShowWindow( $hwnd, 1 );
-       SetFocus( $hwnd );
+       FocusWindow_set( $hwnd );
        SwitchToProgram($switch_handle);
 
-(Which work with alternative focus-to-front policies?)  Requires (morphing to) PM.
+(Which work with alternative focus-to-front policies?)  Requires
+(morphing to) PM.
+
+Switching focus to currently-unfocused window moves the window to the
+front in Z-order; use FocusWindow_set_keep_Zorder() to avoid this.
+
+=item C<FocusWindow_set_keep_Zorder($hwnd)>
+
+same as FocusWindow_set(), but preserves the Z-order of windows.
 
 =item C<ActiveWindow([$parentHwnd])>
 
@@ -1013,6 +1268,16 @@ item list when beginning is reached.
 
 =back
 
+=item DesktopWindow()
+
+gets the actual window handle of the PM desktop; most APIs accept the
+pseudo-handle C<HWND_DESKTOP> instead.  Keep in mind that the WPS
+desktop (one with WindowText() being C<"Desktop">) is a different beast?!
+
+=item TopLevel($hwnd)
+
+gets the toplevel window of $hwnd.
+
 =item ResetWinError()
 
 Resets $^E.  One may need to call it before the C<Win*>-class APIs which may
@@ -1028,6 +1293,77 @@ do ResetWinError() themselves, thus do not need an explicit one:
   PostMsg
 
 This function is normally not needed.  Not exported by default.
+
+=back
+
+=head2 Control of the PM data
+
+=over
+
+=item ActiveDesktopPathname()
+
+gets the path of the directory which corresponds to Desktop.
+
+=item ClipbrdText()
+
+gets the content of the clipboard.  An optional argument is the format
+of the data in the clipboard (defaults to C<CF_TEXT>).
+
+Note that the usual convention is to have clipboard data with
+C<"\r\n"> as line separators.
+
+=item ClipbrdText_set($txt)
+
+sets the text content of the clipboard.  Unless the optional argument
+is TRUE, will convert newlines to C<"\r\n">.  Another optional
+argument is the format of the data in the clipboard (defaults to
+C<CF_TEXT>).
+
+=item 	InvalidateRect
+
+=item	CreateFrameControl
+
+=item	ClipbrdFmtInfo
+
+=item	ClipbrdOwner
+
+=item	ClipbrdViewer
+
+=item	ClipbrdData
+
+=item	OpenClipbrd
+
+=item	CloseClipbrd
+
+=item	ClipbrdData_set
+
+=item	ClipbrdOwner_set
+
+=item	ClipbrdViewer_set
+
+=item	EnumClipbrdFmts
+
+=item	EmptyClipbrd
+
+=item	AddAtom
+
+=item	FindAtom
+
+=item	DeleteAtom
+
+=item	AtomUsage
+
+=item	AtomName
+
+=item	AtomLength
+
+=item	SystemAtomTable
+
+=item	CreateAtomTable
+
+=item	DestroyAtomTable
+
+Low-level methods to access clipboard and the atom table(s).
 
 =back
 
@@ -1072,12 +1408,14 @@ Add tests for:
 	scrsize
 	scrsize_set
 
-Document:
-Query/SetWindowULong/Short/Ptr, SetWindowBits.
+Document and test: Query/SetWindowULong/Short/Ptr, SetWindowBits.
+InvalidateRect, CreateFrameControl, ClipbrdFmtInfo ClipbrdOwner
+ClipbrdViewer ClipbrdData OpenClipbrd CloseClipbrd ClipbrdData_set
+ClipbrdOwner_set ClipbrdViewer_set EnumClipbrdFmts EmptyClipbrd
+AddAtom FindAtom DeleteAtom AtomUsage AtomName AtomLength
+SystemAtomTable CreateAtomTable DestroyAtomTable
 
-Implement InvalidateRect,
-CreateFrameControl. ClipbrdFmtInfo, ClipbrdData, OpenClipbrd, CloseClipbrd,
-ClipbrdData_set, EnumClipbrdFmt, EmptyClipbrd.  SOMETHINGFROMMR.
+Implement SOMETHINGFROMMR.
 
 
   >But I wish to change the default button if the user enters some

@@ -1,6 +1,7 @@
 /*    taint.c
  *
- *    Copyright (c) 1997-2002, Larry Wall
+ *    Copyright (C) 1993, 1994, 1995, 1996, 1997, 1998, 1999,
+ *    2000, 2001, 2002, by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
  *    License or the Artistic License, as specified in the README file.
@@ -129,7 +130,7 @@ Perl_taint_env(pTHX)
 	PL_tainted = was_tainted;
 	if (t < e && isALNUM(*t))
 	    t++;
-	while (t < e && (isALNUM(*t) || *t == '-' || *t == ':'))
+	while (t < e && (isALNUM(*t) || strchr("-_.+", *t)))
 	    t++;
 	if (t < e) {
 	    TAINT;

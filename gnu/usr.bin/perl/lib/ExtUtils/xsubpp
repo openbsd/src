@@ -137,6 +137,7 @@ $ProtoUsed = 0 ;
 $WantLineNumbers = 1 ;
 $WantOptimize = 1 ;
 $Overload = 0;
+$Fallback = 'PL_sv_undef';
 
 my $process_inout = 1;
 my $process_argtypes = 1;
@@ -293,7 +294,7 @@ $END = "!End!\n\n";		# "impossible" keyword (multiple newline)
 $BLOCK_re= '\s*(' . join('|', qw(
 	REQUIRE BOOT CASE PREINIT INPUT INIT CODE PPCODE OUTPUT
 	CLEANUP ALIAS ATTRS PROTOTYPES PROTOTYPE VERSIONCHECK INCLUDE
-	SCOPE INTERFACE INTERFACE_MACRO C_ARGS POSTCALL OVERLOAD
+	SCOPE INTERFACE INTERFACE_MACRO C_ARGS POSTCALL OVERLOAD FALLBACK
 	)) . "|$END)\\s*:";
 
 # Input:  ($_, @line) == unparsed input.
@@ -617,6 +618,24 @@ sub OVERLOAD_handler()
 
 }
 
+sub FALLBACK_handler()
+{
+    # the rest of the current line should contain either TRUE, 
+    # FALSE or UNDEF
+
+    TrimWhitespace($_) ;
+    my %map = (
+	TRUE => "PL_sv_yes", 1 => "PL_sv_yes",
+	FALSE => "PL_sv_no", 0 => "PL_sv_no",
+	UNDEF => "PL_sv_undef",
+    ) ;
+
+    # check for valid FALLBACK value
+    death ("Error: FALLBACK: TRUE/FALSE/UNDEF") unless exists $map{uc $_} ;
+
+    $Fallback = $map{uc $_} ;
+}
+
 sub REQUIRE_handler ()
 {
     # the rest of the current line should contain a version number
@@ -888,7 +907,19 @@ while (<$FH>) {
         my $podstartline = $.;
     	do {
 	    if (/^=cut\s*$/) {
-		print("/* Skipped embedded POD. */\n");
+		# We can't just write out a /* */ comment, as our embedded
+		# POD might itself be in a comment. We can't put a /**/
+		# comment inside #if 0, as the C standard says that the source
+		# file is decomposed into preprocessing characters in the stage
+		# before preprocessing commands are executed.
+		# I don't want to leave the text as barewords, because the spec
+		# isn't clear whether macros are expanded before or after
+		# preprocessing commands are executed, and someone pathological
+		# may just have defined one of the 3 words as a macro that does
+		# something strange. Multiline strings are illegal in C, so
+		# the "" we write must be a string literal. And they aren't
+		# concatenated until 2 steps later, so we are safe.
+		print("#if 0\n  \"Skipped embedded POD.\"\n#endif\n");
 		printf("#line %d \"$filename\"\n", $. + 1)
 		  if $WantLineNumbers;
 		next firstmodule
@@ -1053,7 +1084,7 @@ while (fetch_para()) {
     $xsreturn = 0;
 
     $_ = shift(@line);
-    while ($kwd = check_keyword("REQUIRE|PROTOTYPES|VERSIONCHECK|INCLUDE")) {
+    while ($kwd = check_keyword("REQUIRE|PROTOTYPES|FALLBACK|VERSIONCHECK|INCLUDE")) {
         &{"${kwd}_handler"}() ;
         next PARAGRAPH unless @line ;
         $_ = shift(@line);
@@ -1422,7 +1453,11 @@ EOF
 	$xsreturn = 1 if $ret_type ne "void";
 	my $num = $xsreturn;
 	my $c = @outlist;
-	print "\tXSprePUSH;" if $c and not $prepush_done;
+	# (PP)CODE set different values of SP; reset to PPCODE's with 0 output
+	print "\tXSprePUSH;"    if $c and not $prepush_done;
+	# Take into account stuff already put on stack
+	print "\t++SP;"         if $c and not $prepush_done and $xsreturn;
+	# Now SP corresponds to ST($xsreturn), so one can combine PUSH and ST()
 	print "\tEXTEND(SP,$c);\n" if $c;
 	$xsreturn += $c;
 	generate_output($var_types{$_}, $num++, $_, 0, 1) for @outlist;
@@ -1542,6 +1577,25 @@ EOF
     }
 }
 
+if ($Overload) # make it findable with fetchmethod
+{
+    
+    print Q<<"EOF"; 
+#XS(XS_${Packid}_nil); /* prototype to pass -Wmissing-prototypes */
+#XS(XS_${Packid}_nil)
+#{
+#   XSRETURN_EMPTY;
+#}
+#
+EOF
+    unshift(@InitFileCode, <<"MAKE_FETCHMETHOD_WORK");
+    /* Making a sub named "${Package}::()" allows the package */
+    /* to be findable via fetchmethod(), and causes */
+    /* overload::Overloaded("${Package}") to return true. */
+    newXS("${Package}::()", XS_${Packid}_nil, file$proto);
+MAKE_FETCHMETHOD_WORK
+}
+
 # print initialization routine
 
 print Q<<"EOF";
@@ -1580,15 +1634,15 @@ print Q<<"EOF" if defined $XsubAliases or defined $Interfaces ;
 EOF
 
 print Q<<"EOF" if ($Overload);
-#    {
-#        /* create the package stash */
-#        HV *hv = get_hv(\"$Package\::OVERLOAD\",TRUE);
-#        SV *sv = *hv_fetch(hv,"register",8,1);
-#        sv_inc(sv);
-#        SvSETMAGIC(sv);
-#        /* Make it findable via fetchmethod */
-#        newXS(\"$Package\::()\", NULL, file);
-#    }
+#    /* register the overloading (type 'A') magic */
+#    PL_amagic_generation++;
+#    /* The magic for overload gets a GV* via gv_fetchmeth as */
+#    /* mentioned above, and looks in the SV* slot of it for */
+#    /* the "fallback" status. */
+#    sv_setsv(
+#        get_sv( "${Package}::()", TRUE ),
+#        $Fallback
+#    );
 EOF
 
 print @InitFileCode;

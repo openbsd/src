@@ -20,7 +20,7 @@ sub ok {
 
     unless( $ok ) {
         printf "# Failed test at line %d\n", (caller)[2];
-        print  "# $info" if defined $info;
+        print  "# $info\n" if defined $info;
     }
 
     $test++;
@@ -36,7 +36,7 @@ sub skip {
     return 1;
 }
 
-print "1..46\n";
+print "1..53\n";
 
 $Is_MSWin32 = $^O eq 'MSWin32';
 $Is_NetWare = $^O eq 'NetWare';
@@ -67,7 +67,7 @@ ok $!, $!;
 close FOO; # just mention it, squelch used-only-once
 
 if ($Is_MSWin32 || $Is_NetWare || $Is_Dos || $Is_MPE || $Is_MacOS) {
-    skip('SIGINT not safe on this platform') for 1..2;
+    skip('SIGINT not safe on this platform') for 1..4;
 }
 else {
   # the next tests are done in a subprocess because sh spits out a
@@ -98,7 +98,37 @@ END
 
     close CMDPIPE;
 
-    $test += 2;
+    open( CMDPIPE, "| $PERL");
+    print CMDPIPE <<'END';
+
+    { package X;
+	sub DESTROY {
+	    kill "INT",$$;
+	}
+    }
+    sub x {
+	my $x=bless [], 'X';
+	return sub { $x };
+    }
+    $| = 1;		# command buffering
+    $SIG{"INT"} = "ok5";
+    {
+	local $SIG{"INT"}=x();
+	print ""; # Needed to expose failure in 5.8.0 (why?)
+    }
+    sleep 1;
+    delete $SIG{"INT"};
+    kill "INT",$$; sleep 1;
+    sub ok5 {
+	print "ok 5\n";
+    }
+END
+    close CMDPIPE;
+    $? >>= 8 if $^O eq 'VMS'; # POSIX status hiding in 2nd byte
+    my $todo = ($^O eq 'os2' ? ' # TODO: EMX v0.9d_fix4 bug: wrong nibble? ' : '');
+    print $? & 0xFF ? "ok 6$todo\n" : "not ok 6$todo\n";
+
+    $test += 4;
 }
 
 # can we slice ENV?
@@ -235,17 +265,21 @@ ok $^O;
 ok $^T > 850000000, $^T;
 
 if ($Is_VMS || $Is_Dos || $Is_MacOS) {
-    skip("%ENV manipulations fail or aren't safe on $^O") for 1..2;
+    skip("%ENV manipulations fail or aren't safe on $^O") for 1..4;
 }
 else {
-	$PATH = $ENV{PATH};
-	$PDL = $ENV{PERL_DESTRUCT_LEVEL} || 0;
-	$ENV{foo} = "bar";
-	%ENV = ();
-	$ENV{PATH} = $PATH;
-	$ENV{PERL_DESTRUCT_LEVEL} = $PDL || 0;
-	ok ($Is_MSWin32 ? (`set foo 2>NUL` eq "")
-				: (`echo \$foo` eq "\n") );
+	if ($ENV{PERL_VALGRIND}) {
+	    skip("clearing \%ENV is not safe when running under valgrind");
+	} else {
+	    $PATH = $ENV{PATH};
+	    $PDL = $ENV{PERL_DESTRUCT_LEVEL} || 0;
+	    $ENV{foo} = "bar";
+	    %ENV = ();
+	    $ENV{PATH} = $PATH;
+	    $ENV{PERL_DESTRUCT_LEVEL} = $PDL || 0;
+	    ok ($Is_MSWin32 ? (`set foo 2>NUL` eq "")
+			    : (`echo \$foo` eq "\n") );
+	}
 
 	$ENV{__NoNeSuCh} = "foo";
 	$0 = "bar";
@@ -253,6 +287,41 @@ else {
 # -- Nikola Knezevic
        ok ($Is_MSWin32 ? (`set __NoNeSuCh` =~ /^(?:__NoNeSuCh=)?foo$/)
 			    : (`echo \$__NoNeSuCh` eq "foo\n") );
+	if ($^O =~ /^(linux|freebsd)$/ &&
+	    open CMDLINE, "/proc/$$/cmdline") {
+	    chomp(my $line = scalar <CMDLINE>);
+	    my $me = (split /\0/, $line)[0];
+	    ok($me eq $0, 'altering $0 is effective (testing with /proc/)');
+	    close CMDLINE;
+            # perlbug #22811
+            my $mydollarzero = sub {
+              my($arg) = shift;
+              $0 = $arg if defined $arg;
+	      # In FreeBSD the ps -o command= will cause
+	      # an empty header line, grab only the last line.
+              my $ps = (`ps -o command= -p $$`)[-1];
+              return if $?;
+              chomp $ps;
+              printf "# 0[%s]ps[%s]\n", $0, $ps;
+              $ps;
+            };
+            my $ps = $mydollarzero->("x");
+            ok(!$ps  # we allow that something goes wrong with the ps command
+	       # In Linux 2.4 we would get an exact match ($ps eq 'x') but
+	       # in Linux 2.2 there seems to be something funny going on:
+	       # it seems as if the original length of the argv[] would
+	       # be stored in the proc struct and then used by ps(1),
+	       # no matter what characters we use to pad the argv[].
+	       # (And if we use \0:s, they are shown as spaces.)  Sigh.
+               || $ps =~ /^x\s*$/
+	       # FreeBSD cannot get rid of both the leading "perl :"
+	       # and the trailing " (perl)": some FreeBSD versions
+	       # can get rid of the first one.
+	       || ($^O eq 'freebsd' && $ps =~ m/^(?:perl: )?x(?: \(perl\))?$/),
+		       'altering $0 is effective (testing with `ps`)');
+	} else {
+	    skip("\$0 check only on Linux and FreeBSD") for 0, 1;
+	}
 }
 
 {
@@ -299,9 +368,10 @@ open(FOO, "nonesuch"); # Generate ENOENT
 my %errs = %{"!"}; # Cause Errno.pm to be loaded at run-time
 ok ${"!"}{ENOENT};
 
-ok $^S == 0;
+ok $^S == 0 && defined $^S;
 eval { ok $^S == 1 };
-ok $^S == 0;
+eval " BEGIN { ok ! defined \$^S } ";
+ok $^S == 0 && defined $^S;
 
 ok ${^TAINT} == 0;
 eval { ${^TAINT} = 1 };
@@ -314,3 +384,20 @@ ok ${^TAINT} == 0;
 ok "@-" eq  "0 0 2 7";
 ok "@+" eq "10 1 6 10";
 
+# Tests for the magic get of $\
+{
+    my $ok = 0;
+    # [perl #19330]
+    {
+	local $\ = undef;
+	$\++; $\++;
+	$ok = $\ eq 2;
+    }
+    ok $ok;
+    $ok = 0;
+    {
+	local $\ = "a\0b";
+	$ok = "a$\b" eq "aa\0bb";
+    }
+    ok $ok;
+}

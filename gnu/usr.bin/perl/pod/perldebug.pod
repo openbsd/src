@@ -39,6 +39,12 @@ Any command not recognized by the debugger is directly executed
 (C<eval>'d) as Perl code in the current package.  (The debugger
 uses the DB package for keeping its own state information.)
 
+Note that the said C<eval> is bound by an implicit scope. As a
+result any newly introduced lexical variable or any modified
+capture buffer content is lost after the eval. The debugger is a
+nice environment to learn Perl, but if you interactively experiment using
+material which should be in the same scope, stuff it in one line.
+
 For any text entered at the debugger prompt, leading and trailing whitespace
 is first stripped before further processing.  If a debugger command
 coincides with some function in your own program, merely precede the
@@ -351,7 +357,10 @@ List out all pre-prompt Perl command actions.
 
 Set an action (Perl command) to happen before every debugger prompt.
 A multi-line command may be entered by backslashing the newlines.  
-B<WARNING> If C<command> is missing, all actions are wiped out!
+
+=item < * 
+
+Delete all pre-prompt Perl command actions.
 
 =item << command
 
@@ -367,8 +376,11 @@ List out post-prompt Perl command actions.
 Set an action (Perl command) to happen after the prompt when you've
 just given a command to return to executing the script.  A multi-line
 command may be entered by backslashing the newlines (we bet you
-couldn't've guessed this by now).  B<WARNING> If C<command> is
-missing, all actions are wiped out!
+couldn't've guessed this by now). 
+
+=item > * 
+
+Delete all post-prompt Perl command actions.
 
 =item >> command
 
@@ -384,12 +396,15 @@ List out pre-prompt debugger commands.
 
 Set an action (debugger command) to happen before every debugger prompt.
 A multi-line command may be entered in the customary fashion.  
-B<WARNING> If C<command> is missing, all actions are wiped out!
 
 Because this command is in some senses new, a warning is issued if
 you appear to have accidentally entered a block instead.  If that's
 what you mean to do, write it as with C<;{ ... }> or even 
 C<do { ... }>.
+
+=item { * 
+
+Delete all pre-prompt debugger commands.
 
 =item {{ command
 
@@ -890,6 +905,15 @@ directory, or in the home directory.  Because this file is sourced
 in by Perl and may contain arbitrary commands, for security reasons,
 it must be owned by the superuser or the current user, and writable
 by no one but its owner.
+
+You can mock TTY input to debugger by adding arbitrary commands to
+@DB::typeahead. For example, your F<.perldb> file might contain:
+
+    sub afterinit { push @DB::typeahead, "b 4", "b 6"; }
+
+Which would attempt to set breakpoints on lines 4 and 6 immediately
+after debugger initilization. Note that @DB::typeahead is not a supported
+interface and is subject to change in future releases.
 
 If you want to modify the debugger, copy F<perl5db.pl> from the
 Perl library to another name and hack it to your heart's content.

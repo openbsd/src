@@ -1,12 +1,7 @@
 # hints/solaris_2.sh
-# Last modified: Mon Jan 29 12:52:28 2001
-# Lupe Christoph <lupe@lupe-christoph.de>
-# Based on version by:
-# Andy Dougherty  <doughera@lafayette.edu>
-# Which was based on input from lots of folks, especially
-# Dean Roehrich <roehrich@ironwood-fddi.cray.com>
-# Additional input from Alan Burlison, Jarkko Hietaniemi,
-# and Richard Soderberg.
+# Contributions by (in alphabetical order) Alan Burlison, Andy Dougherty,
+# Dean Roehrich, Jarkko Hietaniemi, Lupe Christoph, Richard Soderberg and
+# many others.
 #
 # See README.solaris for additional information.
 #
@@ -25,11 +20,11 @@
 #  gcc will occasionally emit warnings about "unused prefix", but
 #  these ought to be harmless.  See below for more details.
 
-# See man vfork.
-usevfork=${usevfork:-false}
-
 # Solaris has secure SUID scripts
 d_suidsafe=${d_suidsafe:-define}
+
+# Be paranoid about nm failing to find symbols
+mistrustnm=${mistrustnm:-run}
 
 # Several people reported problems with perl's malloc, especially
 # when use64bitall is defined or when using gcc.
@@ -65,34 +60,18 @@ case "$archname" in
     ;;
 esac
 
-cat > UU/workshoplibpth.cbu << 'EOCBU'
-# This script UU/workshoplibpth.cbu will get 'called-back'
-# by other CBUs this script creates.
-case "$workshoplibpth_done" in
-    '')	if test `uname -p` = "sparc"; then
-	case "$use64bitall" in
-	    "$define"|true|[yY]*)
-		# add SPARC-specific 64 bit libraries
-		loclibpth="$loclibpth /usr/lib/sparcv9"
-		if test -n "$workshoplibs"; then
-		    loclibpth=`echo $loclibpth | sed -e "s% $workshoplibs%%" `
-		    for lib in $workshoplibs; do
-			# Logically, it should be sparcv9.
-			# But the reality fights back, it's v9.
-			loclibpth="$loclibpth $lib/sparcv9 $lib/v9"
-		    done
-		fi
-	    ;;
-	*)  loclibpth="$loclibpth $workshoplibs"
-	    ;;
-	esac
-	else
-	    loclibpth="$loclibpth $workshoplibs"
-	fi
-	workshoplibpth_done="$define"
-	;;
-esac
-EOCBU
+#
+# This extracts the library directories that will be searched by the Sun
+# Workshop compiler, given the command-line supplied in $tryworkshopcc.
+# Use thusly: loclibpth="`$getworkshoplibs` $loclibpth"
+#
+	getworkshoplibs=`cat <<'END'
+eval $tryworkshopcc -### 2>&1 | \
+sed -n '/ -Y /s!.* -Y "P,\([^"]*\)".*!\1!p' | tr ':' ' ' | \
+sed -e 's!/usr/lib/sparcv9!!' -e 's!/usr/ccs/lib/sparcv9!!' \
+    -e 's!/usr/lib!!g' -e 's!/usr/ccs/lib!!g'
+END
+`
 
 case "$cc" in
 '')	if test -f /opt/SUNWspro/bin/cc; then
@@ -134,7 +113,7 @@ esac
 
 # Check that /dev/fd is mounted.  If it is not mounted, let the
 # user know that suid scripts may not work.
-df /dev/fd 2>&1 > /dev/null
+mount | grep '^/dev/fd ' 2>&1 > /dev/null
 case $? in
 0) ;;
 *)
@@ -223,7 +202,7 @@ cat > UU/cc.cbu <<'EOCBU'
 #	Tue Apr 13 17:19:43 EDT 1999
 
 # Get gcc to share its secrets.
-echo 'main() { return 0; }' > try.c
+echo 'int main() { return 0; }' > try.c
 	# Indent to avoid propagation to config.sh
 	verbose=`${cc:-cc} -v -o try try.c 2>&1`
 
@@ -231,6 +210,7 @@ if echo "$verbose" | grep '^Reading specs from' >/dev/null 2>&1; then
 	#
 	# Using gcc.
 	#
+	cc_name='gcc'
 
 	# See if as(1) is GNU as(1).  GNU as(1) might not work for this job.
 	if echo "$verbose" | grep ' /usr/ccs/bin/as ' >/dev/null 2>&1; then
@@ -301,23 +281,27 @@ else
 	#
 	# Not using gcc.
 	#
-
-	ccversion="`${cc:-cc} -V 2>&1|sed -n -e '1s/^cc: //p'`"
-	case "$ccversion" in
-	*WorkShop*) ccname=workshop ;;
-	*) ccversion='' ;;
-	esac
-
-	case "$ccname" in
-	workshop)
-		cat >try.c <<EOM
-#include <sunmath.h>
-int main() { return(0); }
+	cat > try.c << 'EOM'
+#include <stdio.h>
+int main() {
+#ifdef __SUNPRO_C
+	printf("workshop\n");
+#else
+	printf("\n");
+#endif
+return(0);
+}
 EOM
-		workshoplibs=`cc -### try.c -lsunmath -o try 2>&1|sed -n '/ -Y /s%.* -Y "P,\(.*\)".*%\1%p'|tr ':' '\n'|grep '/SUNWspro/'`
-		. ./workshoplibpth.cbu
-	;;
-	esac
+	tryworkshopcc="${cc:-cc} try.c -o try"
+	if $tryworkshopcc >/dev/null 2>&1; then
+		cc_name=`./try`
+		if test "$cc_name" = "workshop"; then
+			ccversion="`${cc:-cc} -V 2>&1|sed -n -e '1s/^cc: //p'`"
+			if test ! "$use64bitall_done"; then
+				loclibpth="/usr/lib /usr/ccs/lib `$getworkshoplibs` $loclibpth"
+			fi
+		fi
+	fi
 
 	# See if as(1) is GNU as(1).  GNU might not work for this job.
 	case `as --version < /dev/null 2>&1` in
@@ -348,14 +332,10 @@ to the beginning of your PATH.
 
 END
 	fi
-
 fi
 
 # as --version or ld --version might dump core.
-rm -f try try.c
-rm -f core
-
-# XXX
+rm -f try try.c core
 EOCBU
 
 cat > UU/usethreads.cbu <<'EOCBU'
@@ -365,12 +345,8 @@ case "$usethreads" in
 $define|true|[yY]*)
         ccflags="-D_REENTRANT $ccflags"
 
-        # sched_yield is in -lposix4 up to Solaris 2.6, in -lrt starting with Solaris 2.7
-	case `uname -r` in
-	5.[0-6] | 5.5.1) sched_yield_lib="posix4" ;;
-	*) sched_yield_lib="rt";
-	esac
-        set `echo X "$libswanted "| sed -e "s/ c / $sched_yield_lib pthread c /"`
+	sched_yield='yield'
+        set `echo X "$libswanted "| sed -e "s/ c / pthread c /"`
         shift
         libswanted="$*"
 
@@ -385,7 +361,7 @@ $define|true|[yY]*)
 	/* Test for sig(set|long)jmp bug. */
 	#include <setjmp.h>
 
-	main()
+	int main()
 	{
 	    sigjmp_buf env;
 	    int ret;
@@ -520,10 +496,9 @@ Cannot continue, aborting.
 EOM
 		exit 1
 	    fi
-	    . ./workshoplibpth.cbu
-	    case "$cc -v 2>/dev/null" in
+	    case "${cc:-cc} -v 2>/dev/null" in
 	    *gcc*)
-		echo 'main() { return 0; }' > try.c
+		echo 'int main() { return 0; }' > try.c
 		case "`${cc:-cc} -mcpu=v9 -m64 -S try.c 2>&1 | grep 'm64 is not supported by this configuration'`" in
 		*"m64 is not supported"*)
 		    cat >&4 <<EOM
@@ -538,6 +513,7 @@ EOM
 		    exit 1
 		    ;;
 		esac
+	        loclibpth="/usr/lib/sparcv9 $loclibpth"
 		ccflags="$ccflags -mcpu=v9 -m64"
 		if test X`getconf XBS5_LP64_OFF64_CFLAGS 2>/dev/null` != X; then
 		    ccflags="$ccflags -Wa,`getconf XBS5_LP64_OFF64_CFLAGS 2>/dev/null`"
@@ -553,14 +529,14 @@ EOM
 		ccflags="$ccflags `getconf XBS5_LP64_OFF64_CFLAGS 2>/dev/null`"
 		ldflags="$ldflags `getconf XBS5_LP64_OFF64_LDFLAGS 2>/dev/null`"
 		lddlflags="$lddlflags -G `getconf XBS5_LP64_OFF64_LDFLAGS 2>/dev/null`"
+		echo "int main() { return(0); } " > try.c
+		tryworkshopcc="${cc:-cc} try.c -o try $ccflags"
+		loclibpth="/usr/lib/sparcv9 /usr/ccs/lib/sparcv9 `$getworkshoplibs` $loclibpth"
 		;;
 	    esac
-	    libscheck='case "`/usr/bin/file $xxx`" in
-*64-bit*|*SPARCV9*) ;;
-*) xxx=/no/64-bit$xxx ;;
-esac'
 
 	    use64bitall_done=yes
+	    archname64=64
 	    ;;
 esac
 EOCBU
@@ -580,19 +556,20 @@ cat > UU/uselongdouble.cbu <<'EOCBU'
 # after it has prompted the user for whether to use long doubles.
 case "$uselongdouble" in
 "$define"|true|[yY]*)
-	if test -f /opt/SUNWspro/lib/libsunmath.so; then
-		# Unfortunately libpth has already been set and
-		# searched, so we need to add in everything manually.
-		libpth="$libpth /opt/SUNWspro/lib"
-		libs="$libs -lsunmath"
-		ldflags="$ldflags -L/opt/SUNWspro/lib -R/opt/SUNWspro/lib"
-		d_sqrtl=define
+	if test "$cc_name" = "workshop"; then
+		cat > try.c << 'EOM'
+#include <sunmath.h>
+int main() { (void) powl(2, 256); return(0); }
+EOM
+		if ${cc:-cc} try.c -lsunmath -o try > /dev/null 2>&1 && ./try; then
+			libswanted="$libswanted sunmath"
+		fi
 	else
 		cat >&4 <<EOM
 
-The Sun Workshop math library is not installed; therefore I do not
-know how to do long doubles, sorry.  I'm disabling the use of long
-doubles.
+The Sun Workshop math library is either not available or not working,
+so I do not know how to do long doubles, sorry.
+I'm therefore disabling the use of long doubles.
 EOM
 		uselongdouble="$undef"
 	fi

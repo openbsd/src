@@ -5,7 +5,7 @@
 #	  Jarkko Hietaniemi <jhi@iki.fi>.
 # AIX 4.3.x LP64 build by Steven Hirsch <hirschs@btv.ibm.com>
 # Merged on Mon Feb  6 10:22:35 EST 1995 by
-#   Andy Dougherty  <doughera@lafcol.lafayette.edu>
+#   Andy Dougherty  <doughera@lafayette.edu>
 
 #
 # Contact dfavor@corridor.com for any of the following:
@@ -51,7 +51,8 @@ esac
 # Intuiting the existence of system calls under AIX is difficult,
 # at best; the safest technique is to find them empirically.
 
-# AIX 4.3.* and above default to using nm for symbol extraction
+# AIX 4.3.* and above default to letting Configure test if nm
+# extraction will work.
 case "$osvers" in
    3.*|4.1.*|4.2.*)
       case "$usenm" in
@@ -62,9 +63,6 @@ case "$osvers" in
 	  esac
       ;;
    *)
-      case "$usenm" in
-	  '') usenm='true'
-	  esac
       case "$usenativedlopen" in
 	  '') usenativedlopen='true'
 	  esac
@@ -136,20 +134,20 @@ d_setreuid='undef'
 # Changes for dynamic linking by Wayne Scott <wscott@ichips.intel.com>
 #
 # Tell perl which symbols to export for dynamic linking.
-cccdlflags='none'      # All AIX code is position independent
-cc_type=xlc
+cccdlflags='none'	# All AIX code is position independent
+   cc_type=xlc		# do not export to config.sh
 case "$cc" in
 *gcc*)
    cc_type=gcc
    ccdlflags='-Xlinker'
    if [ "X$gccversion" = "X" ]; then
      # Done too late in Configure if hinted
-     gccversion=`$cc --version | sed 's/.*(GCC) *//`
+     gccversion=`$cc --version | sed 's/.*(GCC) *//'`
      fi
    ;;
-*) ccversion=`lslpp -L | grep 'C for AIX Compiler$' | grep -v '\.msg\.[A-Za-z_]*\.' | awk '{print $2}'`
+*) ccversion=`lslpp -L | grep 'C for AIX Compiler$' | grep -v '\.msg\.[A-Za-z_]*\.' | head -1 | awk '{print $1,$2}'`
    case "$ccversion" in
-     '') ccversion=`lslpp -L | grep 'IBM C and C++ Compilers LUM$' | awk '{print $2}'`
+     '') ccversion=`lslpp -L | grep 'IBM C and C++ Compilers LUM$'`
 	 ;;
      *.*.*.*.*.*.*)		# Ahhrgg, more than one C compiler installed
 	 first_cc_path=`which ${cc:-cc}`
@@ -166,9 +164,13 @@ case "$cc" in
 	       fi
 	     ;;
 	   esac
-	 ccversion=`lslpp -L | grep 'C for AIX Compiler$' | grep -i $cc_type | awk '{print $2}' | head -1`
+	 ccversion=`lslpp -L | grep 'C for AIX Compiler$' | grep -i $cc_type | head -1`
+	 ;;
+     vac*.*.*.*)
+         cc_type=vac
 	 ;;
      esac
+   ccversion=`echo "$ccversion" | awk '{print $2}'`
    case "$ccversion" in
      3.6.6.0)
 	optimize='none'
@@ -211,23 +213,69 @@ esac
 # the required -bE:$installarchlib/CORE/perl.exp is added by
 # libperl.U (Configure) later.
 
-case "$ldlibpthname" in
-'') ldlibpthname=LIBPATH ;;
-esac
-
 # The first 3 options would not be needed if dynamic libs. could be linked
 # with the compiler instead of ld.
 # -bI:$(PERL_INC)/perl.exp  Read the exported symbols from the perl binary
 # -bE:$(BASEEXT).exp	    Export these symbols.  This file contains only one
 #			    symbol: boot_$(EXP)	 can it be auto-generated?
 case "$osvers" in
-3*) 
-    lddlflags="$lddlflags -H512 -T512 -bhalt:4 -bM:SRE -bI:\$(PERL_INC)/perl.exp -bE:\$(BASEEXT).exp -e _nostart -lc"
-    ;;
-*) 
-    lddlflags="$lddlflags -bhalt:4 -bM:SRE -bI:\$(PERL_INC)/perl.exp -bE:\$(BASEEXT).exp -bnoentry -lc"
-    ;;
+    3*) 
+	lddlflags="$lddlflags -H512 -T512 -bhalt:4 -bM:SRE -bI:\$(PERL_INC)/perl.exp -bE:\$(BASEEXT).exp -e _nostart -lc"
+	;;
+    *) 
+	lddlflags="$lddlflags -bhalt:4 -bM:SRE -bI:\$(PERL_INC)/perl.exp -bE:\$(BASEEXT).exp -bnoentry -lc"
+	;;
+    esac
+
+case "$use64bitall" in
+    $define|true|[yY]*) use64bitint="$define" ;;
+    esac
+
+case "$usemorebits" in
+    $define|true|[yY]*) use64bitint="$define"; uselongdouble="$define" ;;
+    esac
+
+case $cc_type in
+    vac|xlc)
+	case "$uselongdouble" in
+	    $define|true|[yY]*)
+		ccflags="$ccflags -qlongdouble"
+		libswanted="c128 $libswanted"
+		lddlflags=`echo "$lddlflags " | sed -e 's/ -lc / -lc128 -lc /'`
+		;;
+	    esac
+    esac
+
+case "$cc" in
+*gcc*) ;;
+cc*|xlc*) # cc should've been set by line 116 or so if empty.
+	if test ! -x /usr/bin/$cc -a -x /usr/vac/bin/$cc; then
+		case ":$PATH:" in
+		*:/usr/vac/bin:*) ;;
+		*) if test ! -x /QOpenSys/usr/bin/$cc; then
+			# The /QOpenSys/usr/bin/$cc saves us if we are
+			# building natively in OS/400 PASE.
+			cat >&4 <<EOF
+
+***
+*** You either implicitly or explicitly specified an IBM C compiler,
+*** but you do not seem to have one in /usr/bin, but you seem to have
+*** the VAC installed in /usr/vac, but you do not have the /usr/vac/bin
+*** in your PATH.  I suggest adding that and retrying Configure.
+***
+EOF
+			exit 1
+		   fi 
+		   ;;
+		esac
+	fi
+	;;
 esac
+
+case "$ldlibpthname" in
+'') ldlibpthname=LIBPATH ;;
+esac
+
 # AIX 4.2 (using latest patchlevels on 20001130) has a broken bind
 # library (getprotobyname and getprotobynumber are outversioned by
 # the same calls in libc, at least for xlc version 3...
@@ -251,7 +299,8 @@ $define|true|[yY]*)
 	ccflags="$ccflags -DNEED_PTHREAD_INIT"
 	case "$cc" in
 	*gcc*)
-echo "GCC $gccversion disabling some _r functions" >&4
+	    ccflags="-D_THREAD_SAFE $ccflags"
+	    echo "GCC $gccversion disabling some _r functions" >&4
 	    case "$gccversion" in
 		3*) d_drand48_r='undef'
 		    d_endgrent_r='undef'
@@ -354,10 +403,10 @@ libswanted_uselargefiles="`getconf XBS5_ILP32_OFFBIG_LIBS 2>/dev/null|sed -e 's@
 	esac
 	case "$gccversion" in
 	'') ;;
-	*) # Remove xlc-spefific -qflags.
+	*) # Remove xlc-specific -qflags.
 	   ccflags="`echo $ccflags | sed -e 's@ -q[^ ]*@ @g' -e 's@^-q[^ ]* @@g'`"
 	   ldflags="`echo $ldflags | sed -e 's@ -q[^ ]*@ @g' -e 's@^-q[^ ]* @@g'`"
-	   # Move xld-spefific -bflags.
+	   # Move xlc-specific -bflags.
 	   ccflags="`echo $ccflags | sed -e 's@ -b@ -Wl,-b@g'`"
 	   ldflags="`echo ' '$ldflags | sed -e 's@ -b@ -Wl,-b@g'`"
 	   lddlflags="`echo ' '$lddlflags | sed -e 's@ -b@ -Wl,-b@g'`"
@@ -514,5 +563,38 @@ else
 	    fi
 	esac
 fi
+
+case "$PASE" in
+define)
+	case "$prefix" in
+	'') prefix=/QOpenSys/perl ;;
+	esac
+	cat >&4 <<EOF
+
+***
+*** You seem to be compiling in AIX for the OS/400 PASE environment.
+*** I'm not going to use the AIX bind, nsl, and possible util libraries, then.
+*** I'm also not going to install perl as /usr/bin/perl.
+*** Perl will be installed under $prefix.
+*** For instructions how to install this build from AIX to PASE,
+*** see the file README.os400.  Accept the "aix" for the question
+*** about "Operating system name".
+***
+EOF
+	set `echo " $libswanted " | sed -e 's@ bind @ @' -e 's@ nsl @ @' -e 's@ util @ @'`
+	shift
+	libswanted="$*"
+	installusrbinperl="$undef"
+
+	# V5R1 doesn't have this (V5R2 does), without knowing
+	# which one we have it's safer to be pessimistic.
+	# Cwd will work fine even without fchdir(), but if
+	# V5R1 tries to use code compiled assuming fchdir(),
+	# lots of grief will issue forth from Cwd.
+	case "$d_fchdir" in
+	'') d_fchdir="$undef" ;;
+	esac
+	;;
+esac
 
 # EOF

@@ -2,11 +2,14 @@
 
 BEGIN {
     chdir 't' if -d 't';
-    @INC = '../lib';
+    @INC = qw(. ../lib);
+    require "./test.pl";
 }
 
+use Config;
+
 my $test = 1;
-print "1..8\n";
+print "1..26\n";
 print "ok 1\n";
 
 open(DUPOUT,">&STDOUT");
@@ -33,7 +36,7 @@ print `$cmd`;
 
 # KNOWN BUG system() does not honor STDOUT redirections on VMS.
 if( $^O eq 'VMS' ) {
-    print "not ok $_ # TODO system() not honoring STDOUT redirect on VMS\n" 
+    print "not ok $_ # TODO system() not honoring STDOUT redirect on VMS\n"
       for 6..7;
 }
 else {
@@ -59,3 +62,75 @@ unlink 'Io.dup';
 
 print STDOUT "ok 8\n";
 
+open(F,">&",1) or die "Cannot dup to numeric 1: $!";
+print F "ok 9\n";
+close(F);
+
+open(F,">&",'1') or die "Cannot dup to string '1': $!";
+print F "ok 10\n";
+close(F);
+
+open(F,">&=",1) or die "Cannot dup to numeric 1: $!";
+print F "ok 11\n";
+close(F);
+
+if ($Config{useperlio}) {
+    open(F,">&=",'1') or die "Cannot dup to string '1': $!";
+    print F "ok 12\n";
+    close(F);
+} else {
+    open(F, ">&DUPOUT") or die "Cannot dup stdout back: $!";
+    print F "ok 12\n";
+    close(F);
+}
+
+# To get STDOUT back.
+open(F, ">&DUPOUT") or die "Cannot dup stdout back: $!";
+
+curr_test(13);
+
+SKIP: {
+    skip("need perlio", 14) unless $Config{useperlio};
+    
+    ok(open(F, ">&", STDOUT));
+    isnt(fileno(F), fileno(STDOUT));
+    close F;
+
+    ok(open(F, "<&=STDIN"));
+    is(fileno(F), fileno(STDIN));
+    close F;
+
+    ok(open(F, ">&=STDOUT"));
+    is(fileno(F), fileno(STDOUT));
+    close F;
+
+    ok(open(F, ">&=STDERR"));
+    is(fileno(F), fileno(STDERR));
+    close F;
+
+    open(G, ">dup$$") or die;
+    my $g = fileno(G);
+
+    ok(open(F, ">&=$g"));
+    is(fileno(F), $g);
+    close F;
+
+    ok(open(F, ">&=G"));
+    is(fileno(F), $g);
+
+    print G "ggg\n";
+    print F "fff\n";
+
+    close G; # flush first
+    close F; # flush second
+
+    open(G, "<dup$$") or die;
+    {
+	my $line;
+	$line = <G>; chomp $line; is($line, "ggg");
+	$line = <G>; chomp $line; is($line, "fff");
+    }
+    close G;
+
+    END { 1 while unlink "dup$$" }
+}

@@ -43,6 +43,9 @@ if ($^O eq 'VMS') {
     $Is_VMS_VAX = $hw_model < 1024 ? 1 : 0;
 }
 
+# No %Config.
+my $Is_Ultrix_VAX = $^O eq 'ultrix' && `uname -m` =~ /^VAX$/;
+
 for ($i = 1; @tests; $i++) {
     ($template, $data, $result, $comment) = @{shift @tests};
     if ($^O eq 'os390' || $^O eq 's390') { # non-IEEE (s390 is UTS)
@@ -51,9 +54,10 @@ for ($i = 1; @tests; $i++) {
         $data   =~ s/([eE])\-101$/${1}-56/;  # larger exponents
         $result =~ s/([eE])\-102$/${1}-57/;  #  "       "
     }
-    if ($Is_VMS_VAX) { # VAX DEC C 5.3 at least since there is no 
-                       # ccflags =~ /float=ieee/ on VAX.
-                       # AXP is unaffected whether or not it's using ieee.
+    if ($Is_VMS_VAX || $Is_Ultrix_VAX) {
+	# VAX DEC C 5.3 at least since there is no 
+	# ccflags =~ /float=ieee/ on VAX.
+	# AXP is unaffected whether or not it's using ieee.
         $data   =~ s/([eE])96$/${1}26/;      # smaller exponents
         $result =~ s/([eE]\+)102$/${1}32/;   #  "       "
         $data   =~ s/([eE])\-101$/${1}-24/;  # larger exponents
@@ -104,7 +108,7 @@ for ($i = 1; @tests; $i++) {
     }
 }
 
-# In each of the the following lines, there are three required fields:
+# In each of the following lines, there are three required fields:
 # printf template, data to be formatted (as a Perl expression), and
 # expected result of formatting.  An optional fourth field can contain
 # a comment.  Each field is delimited by a starting '>' and a
@@ -236,6 +240,8 @@ __END__
 >%#e<       >-1234.875<   >-1.234875e+03<
 >%.0e<      >1234.875<    >1e+03<
 >%#.0e<     >1234.875<    >1.e+03<
+>%.0e<      >1.875<       >2e+00<
+>%.0e<      >0.875<       >9e-01<
 >%.*e<      >[0, 1234.875]< >1e+03<
 >%.1e<      >1234.875<    >1.2e+03<
 >%-12.4e<   >1234.875<    >1.2349e+03  <
@@ -265,10 +271,14 @@ __END__
 >%.0f<      >0<           >0<
 >%.0f<      >2**38<       >274877906944<   >Should have exact int'l rep'n<
 >%.0f<      >0.1<         >0<
->%.0f<      >0.6<         >1<              >Known to fail with sfio and (irix|nonstop-ux|powerux)<
->%.0f<      >-0.6<        >-1<             >Known to fail with sfio and (irix|nonstop-ux|powerux)<
+>%.0f<      >0.6<         >1<              >Known to fail with sfio, (irix|nonstop-ux|powerux); -DHAS_LDBL_SPRINTF_BUG may fix<
+>%.0f<      >-0.6<        >-1<             >Known to fail with sfio, (irix|nonstop-ux|powerux); -DHAS_LDBL_SPRINTF_BUG may fix<
+>%.0f<      >1.6<         >2<
+>%.0f<      >-1.6<        >-2<
 >%.0f<      >1<           >1<
 >%#.0f<     >1<           >1.<
+>%.0lf<     >1<           >1<              >'l' should have no effect<
+>%.0hf<     >1<           >%.0hf INVALID<  >'h' should be rejected<
 >%g<        >12345.6789<  >12345.7<
 >%+g<       >12345.6789<  >+12345.7<
 >%#g<       >12345.6789<  >12345.7<
@@ -353,7 +363,7 @@ __END__
 >%2$d %d %d<	>[12, 34]<	>34 12 34<
 >%3$d %d %d<	>[12, 34, 56]<	>56 12 34<
 >%2$*3$d %d<	>[12, 34, 3]<	> 34 12<
->%*3$2$d %d<	>[12, 34, 3]<	>%*3$2$d 34 INVALID<
+>%*3$2$d %d<	>[12, 34, 3]<	>%*3$2$d 12 INVALID<
 >%2$d<		>12<	>0 UNINIT<
 >%0$d<		>12<	>%0$d INVALID<
 >%1$$d<		>12<	>%1$$d INVALID<
@@ -367,3 +377,11 @@ __END__
 >%vp<	>''<	>%vp INVALID<
 >%vs,%d<	>[1, 2, 3]<	>1,2<
 >%v_<	>''<	>%v_ INVALID<
+>%v#x<	>''<	>%v#x INVALID<
+>%v02x<	>"foo\012"<	>66.6f.6f.0a<
+>%V-%s<		>["Hello"]<	>%V-Hello INVALID<
+>%K %d %d<	>[13, 29]<	>%K 13 29 INVALID<
+>%*.*K %d<	>[13, 29, 76]<	>%*.*K 13 INVALID<
+>%4$K %d<	>[45, 67]<	>%4$K 45 INVALID<
+>%d %K %d<	>[23, 45]<	>23 %K 45 INVALID<
+>%*v*999\$d %d %d<	>[11, 22, 33]<	>%*v*999\$d 11 22 INVALID<

@@ -30,4 +30,9 @@ print "ok 4\n" if $res[0] == $$;
 print "# @pid\n";
 
 eval { $rxu->nixda(); };
-print "ok 5\n" if $@ =~ /^Can't find entry 'nixda\'/;
+my $err = $@;
+if ($err) {
+  $err =~ s/\n/\n#\t/g;
+  print "# \$\@ = '$err'\n";
+}
+print "ok 5\n" if $@ =~ /^Can't find symbol `nixda\'/;

@@ -127,6 +127,6 @@ unlink "Io_argv3.tmp";
 **PROG**
 
 END {
-    unlink 'Io_argv1.tmp', 'Io_argv1.tmp_bak',
+    1 while unlink 'Io_argv1.tmp', 'Io_argv1.tmp_bak',
 	'Io_argv2.tmp', 'Io_argv2.tmp_bak', 'Io_argv3.tmp';
 }

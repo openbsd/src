@@ -18,7 +18,7 @@ use File::Basename ();
 use File::Path ();
 use File::Spec;
 use vars qw($VERSION);
-$VERSION = substr q$Revision: 1.5 $, 10;
+$VERSION = substr q$Revision: 1.6 $, 10;
 
 =head1 NAME
 
@@ -48,7 +48,7 @@ sub init {
     local($\) = "";
     local($|) = 1;
 
-    my($ans,$default,$local,$cont,$url,$expected_size);
+    my($ans,$default);
 
     #
     # Files, directories
@@ -117,6 +117,14 @@ First of all, I\'d like to create this directory. Where?
 
     $default = $cpan_home;
     while ($ans = prompt("CPAN build and cache directory?",$default)) {
+      unless (File::Spec->file_name_is_absolute($ans)) {
+        require Cwd;
+        my $cwd = Cwd::cwd();
+        my $absans = File::Spec->catdir($cwd,$ans);
+        warn "The path '$ans' is not an absolute path. Please specify an absolute path\n";
+        $default = $absans;
+        next;
+      }
       eval { File::Path::mkpath($ans); }; # dies if it can't
       if ($@) {
 	warn "Couldn't create directory $ans.
@@ -218,6 +226,32 @@ will be output in UTF-8.
     $CPAN::Config->{term_is_latin} = ($ans =~ /^\s*y/i ? 1 : 0);
 
     #
+    # save history in file histfile
+    #
+    print qq{
+
+If you have one of the readline packages (Term::ReadLine::Perl,
+Term::ReadLine::Gnu, possibly others) installed, the interactive CPAN
+shell will have history support. The next two questions deal with the
+filename of the history file and with its size. If you do not want to
+set this variable, please hit SPACE RETURN to the following question.
+
+};
+
+    defined($default = $CPAN::Config->{histfile}) or
+        $default = File::Spec->catfile($CPAN::Config->{cpan_home},"histfile");
+    $ans = prompt("File to save your history?", $default);
+    $ans =~ s/^\s+//;
+    $ans =~ s/\s+\z//;
+    $CPAN::Config->{histfile} = $ans;
+
+    if ($CPAN::Config->{histfile}) {
+      defined($default = $CPAN::Config->{histsize}) or $default = 100;
+      $ans = prompt("Number of lines to save?", $default);
+      $CPAN::Config->{histsize} = $ans;
+    }
+
+    #
     # prerequisites_policy
     # Do we follow PREREQ_PM?
     #
@@ -258,7 +292,7 @@ by ENTER.
     my(@path) = split /$Config{'path_sep'}/, $ENV{'PATH'};
     local $^W = $old_warn;
     my $progname;
-    for $progname (qw/gzip tar unzip make lynx wget ncftpget ncftp ftp/){
+    for $progname (qw/gzip tar unzip make lynx wget ncftpget ncftp ftp gpg/){
       if ($^O eq 'MacOS') {
           $CPAN::Config->{$progname} = 'not_here';
           next;
@@ -329,8 +363,7 @@ If you don\'t understand this question, just press ENTER.
 	prompt("Parameters for the 'perl Makefile.PL' command?
 Typical frequently used settings:
 
-    POLLUTE=1        increasing backwards compatibility
-    LIB=~/perl       non-root users (please see manual for more hints)
+    PREFIX=~/perl       non-root users (please see manual for more hints)
 
 Your choice: ",$default);
     $default = $CPAN::Config->{make_arg} || "";
@@ -429,19 +462,6 @@ be echoed to the terminal!
 
     conf_sites() unless $fastread;
 
-    unless (@{$CPAN::Config->{'wait_list'}||[]}) {
-	print qq{
-
-WAIT support is available as a Plugin. You need the CPAN::WAIT module
-to actually use it.  But we need to know your favorite WAIT server. If
-you don\'t know a WAIT server near you, just press ENTER.
-
-};
-	$default = "wait://ls6-www.informatik.uni-dortmund.de:1404";
-	$ans = prompt("Your favorite WAIT server?\n  ",$default);
-	push @{$CPAN::Config->{'wait_list'}}, $ans;
-    }
-
     # We don't ask that now, it will be noticed in time, won't it?
     $CPAN::Config->{'inhibit_startup_message'} = 0;
     $CPAN::Config->{'getcwd'} = 'cwd';
@@ -519,33 +539,33 @@ sub picklist {
     my($items,$prompt,$default,$require_nonempty,$empty_warning)=@_;
     $default ||= '';
 
-	my $pos = 0;
+    my $pos = 0;
 
     my @nums;
     while (1) {
 
-		# display, at most, 15 items at a time
-		my $limit = $#{ $items } - $pos;
-		$limit = 15 if $limit > 15;
+        # display, at most, 15 items at a time
+        my $limit = $#{ $items } - $pos;
+        $limit = 15 if $limit > 15;
 
-		# show the next $limit items, get the new position
-		$pos = display_some($items, $limit, $pos);
-		$pos = 0 if $pos >= @$items;
+        # show the next $limit items, get the new position
+        $pos = display_some($items, $limit, $pos);
+        $pos = 0 if $pos >= @$items;
 
-		my $num = prompt($prompt,$default);
-		
-		@nums = split (' ', $num);
-		my $i = scalar @$items;
-		(warn "invalid items entered, try again\n"), next
-		    if grep (/\D/ || $_ < 1 || $_ > $i, @nums);
-		if ($require_nonempty) {
-		    (warn "$empty_warning\n");
-		}
-    	print "\n";
+        my $num = prompt($prompt,$default);
 
-		# a blank line continues...
-		next unless @nums;
-		last;
+        @nums = split (' ', $num);
+        my $i = scalar @$items;
+        (warn "invalid items entered, try again\n"), next
+            if grep (/\D/ || $_ < 1 || $_ > $i, @nums);
+        if ($require_nonempty) {
+            (warn "$empty_warning\n");
+        }
+        print "\n";
+
+        # a blank line continues...
+        next unless @nums;
+        last;
     }
     for (@nums) { $_-- }
     @{$items}[@nums];
@@ -559,7 +579,10 @@ sub display_some {
     for my $item (@displayable) {
 		printf "(%d) %s\n", ++$pos, $item;
     }
-	printf "%d more items, hit ENTER\n", (@$items - $pos) if $pos < @$items;
+	printf("%d more items, hit SPACE RETURN to show them\n",
+               (@$items - $pos)
+              )
+            if $pos < @$items;
 	return $pos;
 }
 
@@ -643,8 +666,8 @@ http: -- that host a CPAN mirror.
         }
     }
     push (@urls, map ("$_ (previous pick)", @previous_urls));
-    my $prompt = "Select as many URLs as you like,
-put them on one line, separated by blanks";
+    my $prompt = "Select as many URLs as you like (by number),
+put them on one line, separated by blanks, e.g. '1 4 5'";
     if (@previous_urls) {
        $default = join (' ', ((scalar @urls) - (scalar @previous_urls) + 1) ..
                              (scalar @urls));
@@ -669,6 +692,8 @@ Please enter your CPAN site:};
         $ans = prompt ($prompt, "");
 
         if ($ans) {
+            $ans =~ s/^\s+//;  # no leading spaces
+            $ans =~ s/\s+\z//; # no trailing spaces
             $ans =~ s|/?\z|/|; # has to end with one slash
             $ans = "file:$ans" unless $ans =~ /:/; # without a scheme is a file:
             if ($ans =~ /^\w+:\/./) {

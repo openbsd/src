@@ -1,7 +1,7 @@
 #
 # Override default paths when building in the OpenBSD src tree
 #
-# $OpenBSD: config.over,v 1.11 2002/10/27 22:25:17 millert Exp $
+# $OpenBSD: config.over,v 1.12 2003/12/03 03:02:19 millert Exp $
 #
 
 # We use a different architecture name than the default
@@ -46,6 +46,12 @@ man3dir=''
 man3direxp=''
 installman3dir=''
 man3ext='3p'
+siteman1dir='/usr/local/man/man1'
+siteman1direxp='/usr/local/man/man1'
+installsiteman1dir='/usr/local/man/man1'
+siteman3dir='/usr/local/man/man3p'
+siteman3direxp='/usr/local/man/man3p'
+installsiteman3dir='/usr/local/man/man3p'
 
 # Never hardcode developer info into a distribution
 cf_by='root'

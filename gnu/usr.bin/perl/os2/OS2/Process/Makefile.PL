@@ -32,7 +32,7 @@ sub create_constants {
       '--skip-strict', '--skip-warnings', # likewise
 	'--skip-ppport',	# will not work without dynaloading.
 				# Most useful for OS2::Process:
-	  '-M^(HWND|WM|SC|SWP|WC|PROG|QW|EDI|WS|QWS|QWP|QWL|FF|FI|LS|FS|FCF|BS|MS|TBM|CF|CFI|FID)_',
+	  '-M^(HWND|WM|SC|SWP|WC|PROG|QW|EDI|WS|QWS|QWP|QWL|FF|FI|LS|FS|FCF|BS|MS|TBM|CF|CFI|FID|MB|MBID|CF|CFI|SPTR)_',
 	    '-F', '-DINCL_NLS -DINCL_BASE -DINCL_PM', # Define more symbols
 	      'os2emx.h'	# EMX version of OS/2 API
     and warn("Can't build module with contants, falling back to no constants"),

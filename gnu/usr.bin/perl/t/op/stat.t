@@ -9,7 +9,7 @@ BEGIN {
 use Config;
 use File::Spec;
 
-plan tests => 73;
+plan tests => 78;
 
 my $Perl = which_perl();
 
@@ -25,6 +25,7 @@ $Is_OS2     = $^O eq 'os2';
 $Is_Solaris = $^O eq 'solaris';
 $Is_VMS     = $^O eq 'VMS';
 $Is_DGUX    = $^O eq 'dgux';
+$Is_MPRAS   = $^O =~ /svr4/ && -f '/etc/.relid';
 
 $Is_Dosish  = $Is_Dos || $Is_OS2 || $Is_MSWin32 || $Is_NetWare || $Is_Cygwin;
 
@@ -40,7 +41,7 @@ my $tmpfile = 'Op_stat.tmp';
 my $tmpfile_link = $tmpfile.'2';
 
 
-unlink $tmpfile;
+1 while unlink $tmpfile;
 open(FOO, ">$tmpfile") || DIE("Can't open temp test file: $!");
 close FOO;
 
@@ -55,7 +56,7 @@ SKIP: {
 
 SKIP: {
   skip "mtime and ctime not reliable", 2
-    if $Is_MSWin32 or $Is_NetWare or $Is_Cygwin or $Is_Dos;
+    if $Is_MSWin32 or $Is_NetWare or $Is_Cygwin or $Is_Dos or $Is_MacOS;
 
   ok( $mtime,           'mtime' );
   is( $mtime, $ctime,   'mtime == ctime' );
@@ -211,6 +212,8 @@ SKIP: {
       if $Is_MSWin32 || $Is_NetWare || $Is_Dos;
     skip "/dev isn't available to test against", 6
       unless -d '/dev' && -r '/dev' && -x '/dev';
+    skip "Skipping; unexpected ls output in MP-RAS", 6
+      if $Is_MPRAS;
 
     my $LS  = $Config{d_readlink} ? "ls -lL" : "ls -l";
     my $CMD = "$LS /dev 2>/dev/null";
@@ -241,6 +244,11 @@ SKIP: {
     # so let's weed them out.
     $DEV =~ s{^.+?\s\..+?$}{}m;
     @DEV =  grep { ! m{^\..+$} } @DEV;
+
+    # Irix ls -l marks sockets with 'S' while 's' is a 'XENIX semaphore'.
+    if ($^O eq 'irix') {
+        $DEV =~ s{^S(.+?)}{s$1}mg;
+    }
 
     my $try = sub {
 	my @c1 = eval qq[\$DEV =~ /^$_[0].*/mg];
@@ -420,4 +428,23 @@ SKIP: {
     like( $@, qr/^The stat preceding -l _ wasn't an lstat/,
 	'-l _ croaks after -T _' );
     unlink $linkname or print "# unlink $linkname failed: $!\n";
+}
+
+print "# Zzz...\n";
+sleep(3);
+my $f = 'tstamp.tmp';
+unlink $f;
+ok (open(S, "> $f"), 'can create tmp file');
+close S or die;
+my @a = stat $f;
+print "# time=$^T, stat=(@a)\n";
+my @b = (-M _, -A _, -C _);
+print "# -MAC=(@b)\n";
+ok( (-M _) < 0, 'negative -M works');
+ok( (-A _) < 0, 'negative -A works');
+ok( (-C _) < 0, 'negative -C works');
+ok(unlink($f), 'unlink tmp file');
+
+END {
+    1 while unlink $tmpfile;
 }

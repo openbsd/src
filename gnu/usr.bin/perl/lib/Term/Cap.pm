@@ -6,7 +6,7 @@ use strict;
 use vars qw($VERSION $VMS_TERMCAP);
 use vars qw($termpat $state $first $entry);
 
-$VERSION = '1.07';
+$VERSION = '1.08';
 
 # Version undef: Thu Dec 14 20:02:42 CST 1995 by sanders@bsdi.com
 # Version 1.00:  Thu Nov 30 23:34:29 EST 2000 by schwern@pobox.com
@@ -29,6 +29,8 @@ $VERSION = '1.07';
 # Version 1.07:  Wed Jan  2 21:35:09 GMT 2002
 #       Sanity check on infocmp output from Norton Allen
 #       Repaired INSTALLDIRS thanks to Michael Schwern
+# Version 1.08: Fri Aug 30 14:15:55 CEST 2002
+#	Cope with comments lines from 'infocmp' from Brendan O'Dea
 
 # TODO:
 # support Berkeley DB termcaps
@@ -217,9 +219,9 @@ sub Tgetent { ## public -- static method
         }
         else {
            if ( grep { -x "$_/infocmp" } split /:/, $ENV{PATH} ) {
-              eval
-              {
+              eval {
                 my $tmp = `infocmp -C 2>/dev/null`;
+                $tmp =~ s/^#.*\n//gm;	# remove comments
 
                 if (( $tmp !~ m%^/%s ) && ( $tmp =~ /(^|\|)${termpat}[:|]/s)) {
                    $entry = $tmp;

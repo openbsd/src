@@ -19,7 +19,7 @@ dirname - extract just the directory from a path
 
     ($name,$path,$suffix) = fileparse("lib/File/Basename.pm",qr{\.pm});
     fileparse_set_fstype("VMS");
-    $basename = basename("lib/File/Basename.pm",qr{\.pm});
+    $basename = basename("lib/File/Basename.pm",".pm");
     $dirname = dirname("lib/File/Basename.pm");
 
 =head1 DESCRIPTION
@@ -130,7 +130,7 @@ directory name to be F<.>).
 # not be available.
 BEGIN {
   unless (eval { require re; })
-    { eval ' sub re::import { $^H |= 0x00100000; } ' }
+    { eval ' sub re::import { $^H |= 0x00100000; } ' } # HINT_RE_TAINT
   import re 'taint';
 }
 
@@ -142,7 +142,7 @@ our(@ISA, @EXPORT, $VERSION, $Fileparse_fstype, $Fileparse_igncase);
 require Exporter;
 @ISA = qw(Exporter);
 @EXPORT = qw(fileparse fileparse_set_fstype basename dirname);
-$VERSION = "2.71";
+$VERSION = "2.72";
 
 
 #   fileparse_set_fstype() - specify OS-based rules used in future
@@ -169,7 +169,7 @@ sub fileparse {
   my($fullname,@suffices) = @_;
   unless (defined $fullname) {
       require Carp;
-      Carp::croak "fileparse(): need a valid pathname";
+      Carp::croak("fileparse(): need a valid pathname");
   }
   my($fstype,$igncase) = ($Fileparse_fstype, $Fileparse_igncase);
   my($dirpath,$tail,$suffix,$basename);

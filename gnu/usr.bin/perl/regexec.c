@@ -67,7 +67,8 @@
  *
  ****    Alterations to Henry's code are...
  ****
- ****    Copyright (c) 1991-2002, Larry Wall
+ ****    Copyright (C) 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
+ ****    2000, 2001, 2002, 2003, by Larry Wall and others
  ****
  ****    You may distribute under the terms of either the GNU General Public
  ****    License or the Artistic License, as specified in the README file.
@@ -86,6 +87,7 @@
 #define RF_warned	2		/* warned about big count? */
 #define RF_evaled	4		/* Did an EVAL with setting? */
 #define RF_utf8		8		/* String contains multibyte chars? */
+#define RF_false	16		/* odd number of nested negatives */
 
 #define UTF ((PL_reg_flags & RF_utf8) != 0)
 
@@ -171,7 +173,7 @@ S_regcppush(pTHX_ I32 parenfloor)
 	Perl_croak(aTHX_ "panic: paren_elems_to_push < 0");
 
 #define REGCP_OTHER_ELEMS 6
-    SSCHECK(paren_elems_to_push + REGCP_OTHER_ELEMS);
+    SSGROW(paren_elems_to_push + REGCP_OTHER_ELEMS);
     for (p = PL_regsize; p > parenfloor; p--) {
 /* REGCP_PARENS_ELEMS are pushed per pairs of parentheses. */
 	SSPUSHINT(PL_regendp[p]);
@@ -400,6 +402,7 @@ Perl_re_intuit_start(pTHX_ regexp *prog, SV *sv, char *strpos,
     char *i_strpos = strpos;
     SV *dsv = PERL_DEBUG_PAD_ZERO(0);
 #endif
+    RX_MATCH_UTF8_set(prog,do_utf8);
 
     if (prog->reganch & ROPT_UTF8) {
 	DEBUG_r(PerlIO_printf(Perl_debug_log,
@@ -541,6 +544,9 @@ Perl_re_intuit_start(pTHX_ regexp *prog, SV *sv, char *strpos,
 			    start_shift + (s - strbeg), end_shift, pp, 0);
 	else
 	    goto fail_finish;
+	/* we may be pointing at the wrong string */
+	if (s && RX_MATCH_COPIED(prog))
+	    s = strbeg + (s - SvPVX(sv));
 	if (data)
 	    *data->scream_olds = s;
     }
@@ -595,7 +601,7 @@ Perl_re_intuit_start(pTHX_ regexp *prog, SV *sv, char *strpos,
 
 		t = s - prog->check_offset_max;
 		if (s - strpos > prog->check_offset_max  /* signed-corrected t > strpos */
-		    && (!(prog->reganch & ROPT_UTF8)
+		    && (!do_utf8
 			|| ((t = reghopmaybe3_c(s, -(prog->check_offset_max), strpos))
 			    && t > strpos)))
 		    /* EMPTY */;
@@ -715,7 +721,7 @@ Perl_re_intuit_start(pTHX_ regexp *prog, SV *sv, char *strpos,
 
     t = s - prog->check_offset_max;
     if (s - strpos > prog->check_offset_max  /* signed-corrected t > strpos */
-        && (!(prog->reganch & ROPT_UTF8)
+        && (!do_utf8
 	    || ((t = reghopmaybe3_c(s, -prog->check_offset_max, strpos))
 		 && t > strpos))) {
 	/* Fixed substring is found far enough so that the match
@@ -848,10 +854,7 @@ Perl_re_intuit_start(pTHX_ regexp *prog, SV *sv, char *strpos,
 	char *startpos = strbeg;
 
 	t = s;
-	if (prog->reganch & ROPT_UTF8) {	
-	    PL_regdata = prog->data;
-	    PL_bostr = startpos;
-	}
+	cache_re(prog);
 	s = find_byclass(prog, prog->regstclass, s, endpos, startpos, 1);
 	if (!s) {
 #ifdef DEBUGGING
@@ -950,6 +953,7 @@ S_find_byclass(pTHX_ regexp * prog, regnode *c, char *s, char *strend, char *sta
 	I32 doevery = (prog->reganch & ROPT_SKIP) == 0;
 	char *m;
 	STRLEN ln;
+	STRLEN lnc;
 	unsigned int c1;
 	unsigned int c2;
 	char *e;
@@ -959,25 +963,40 @@ S_find_byclass(pTHX_ regexp * prog, regnode *c, char *s, char *strend, char *sta
 	/* We know what class it must start with. */
 	switch (OP(c)) {
 	case ANYOF:
-	    while (s < strend) {
-		STRLEN skip = do_utf8 ? UTF8SKIP(s) : 1;
-		  
-		if (do_utf8 ?
-		    reginclass(c, (U8*)s, 0, do_utf8) :
-		    REGINCLASS(c, (U8*)s) ||
-		    (ANYOF_FOLD_SHARP_S(c, s, strend) &&
-		     /* The assignment of 2 is intentional:
-		      * for the sharp s, the skip is 2. */
-		     (skip = SHARP_S_SKIP)
-		     )) {
-		    if (tmp && (norun || regtry(prog, s)))
-			goto got_it;
-		    else
-			tmp = doevery;
-		}
-		else 
-		    tmp = 1;
-		s += skip;
+	    if (do_utf8) {
+		 while (s < strend) {
+		      if ((ANYOF_FLAGS(c) & ANYOF_UNICODE) ||
+			  !UTF8_IS_INVARIANT((U8)s[0]) ?
+			  reginclass(c, (U8*)s, 0, do_utf8) :
+			  REGINCLASS(c, (U8*)s)) {
+			   if (tmp && (norun || regtry(prog, s)))
+				goto got_it;
+			   else
+				tmp = doevery;
+		      }
+		      else 
+			   tmp = 1;
+		      s += UTF8SKIP(s);
+		 }
+	    }
+	    else {
+		 while (s < strend) {
+		      STRLEN skip = 1;
+
+		      if (REGINCLASS(c, (U8*)s) ||
+			  (ANYOF_FOLD_SHARP_S(c, s, strend) &&
+			   /* The assignment of 2 is intentional:
+			    * for the folded sharp s, the skip is 2. */
+			   (skip = SHARP_S_SKIP))) {
+			   if (tmp && (norun || regtry(prog, s)))
+				goto got_it;
+			   else
+				tmp = doevery;
+		      }
+		      else 
+			   tmp = 1;
+		      s += skip;
+		 }
 	    }
 	    break;
 	case CANY:
@@ -990,10 +1009,12 @@ S_find_byclass(pTHX_ regexp * prog, regnode *c, char *s, char *strend, char *sta
 	    }
 	    break;
 	case EXACTF:
-	    m = STRING(c);
-	    ln = STR_LEN(c);
+	    m   = STRING(c);
+	    ln  = STR_LEN(c);	/* length to match in octets/bytes */
+	    lnc = (I32) ln;	/* length to match in characters */
 	    if (UTF) {
 	        STRLEN ulen1, ulen2;
+		U8 *sm = (U8 *) m;
 		U8 tmpbuf1[UTF8_MAXLEN_UCLC+1];
 		U8 tmpbuf2[UTF8_MAXLEN_UCLC+1];
 
@@ -1004,6 +1025,11 @@ S_find_byclass(pTHX_ regexp * prog, regnode *c, char *s, char *strend, char *sta
 				    0, ckWARN(WARN_UTF8) ? 0 : UTF8_ALLOW_ANY);
 		c2 = utf8n_to_uvchr(tmpbuf2, UTF8_MAXLEN_UCLC,
 				    0, ckWARN(WARN_UTF8) ? 0 : UTF8_ALLOW_ANY);
+		lnc = 0;
+		while (sm < ((U8 *) m + ln)) {
+		    lnc++;
+		    sm += UTF8SKIP(sm);
+		}
 	    }
 	    else {
 		c1 = *(U8*)m;
@@ -1011,12 +1037,13 @@ S_find_byclass(pTHX_ regexp * prog, regnode *c, char *s, char *strend, char *sta
 	    }
 	    goto do_exactf;
 	case EXACTFL:
-	    m = STRING(c);
-	    ln = STR_LEN(c);
+	    m   = STRING(c);
+	    ln  = STR_LEN(c);
+	    lnc = (I32) ln;
 	    c1 = *(U8*)m;
 	    c2 = PL_fold_locale[c1];
 	  do_exactf:
-	    e = HOP3c(strend, -(I32)ln, s);
+	    e = HOP3c(strend, -((I32)lnc), s);
 
 	    if (norun && e < s)
 		e = s;			/* Due to minlen logic of intuit() */
@@ -1039,6 +1066,8 @@ S_find_byclass(pTHX_ regexp * prog, regnode *c, char *s, char *strend, char *sta
 		STRLEN len, foldlen;
 		
 		if (c1 == c2) {
+		    /* Upper and lower of 1st char are equal -
+		     * probably not a "letter". */
 		    while (s <= e) {
 		        c = utf8n_to_uvchr((U8*)s, UTF8_MAXLEN, &len,
 					   ckWARN(WARN_UTF8) ?
@@ -1597,6 +1626,7 @@ Perl_regexec_flags(pTHX_ register regexp *prog, char *stringarg, register char *
     SV *dsv0 = PERL_DEBUG_PAD_ZERO(0);
     SV *dsv1 = PERL_DEBUG_PAD_ZERO(1);
 #endif
+    RX_MATCH_UTF8_set(prog,do_utf8);
 
     PL_regcc = 0;
 
@@ -1843,6 +1873,9 @@ Perl_regexec_flags(pTHX_ register regexp *prog, char *stringarg, register char *
 		 : (s = fbm_instr((unsigned char*)HOP3(s, back_min, strend),
 				  (unsigned char*)strend, must,
 				  PL_multiline ? FBMrf_MULTILINE : 0))) ) {
+	    /* we may be pointing at the wrong string */
+	    if ((flags & REXEC_SCREAM) && RX_MATCH_COPIED(prog))
+		s = strbeg + (s - SvPVX(sv));
 	    DEBUG_r( did_match = 1 );
 	    if (HOPc(s, -back_max) > last1) {
 		last1 = HOPc(s, -back_min);
@@ -1882,9 +1915,12 @@ Perl_regexec_flags(pTHX_ register regexp *prog, char *stringarg, register char *
 	goto phooey;
     }
     else if ((c = prog->regstclass)) {
-	if (minlen && PL_regkind[(U8)OP(prog->regstclass)] != EXACT)
+	if (minlen) {
+	    I32 op = (U8)OP(prog->regstclass);
 	    /* don't bother with what can't match */
-	    strend = HOPc(strend, -(minlen - 1));
+	    if (PL_regkind[op] != EXACT && op != CANY)
+	        strend = HOPc(strend, -(minlen - 1));
+	}
 	DEBUG_r({
 	    SV *prop = sv_newmortal();
 	    char *s0;
@@ -1926,6 +1962,9 @@ Perl_regexec_flags(pTHX_ register regexp *prog, char *stringarg, register char *
 				   end_shift, &scream_pos, 1); /* last one */
 		if (!last)
 		    last = scream_olds; /* Only one occurrence. */
+		/* we may be pointing at the wrong string */
+		else if (RX_MATCH_COPIED(prog))
+		    s = strbeg + (s - SvPVX(sv));
 	    }
 	    else {
 		STRLEN len;
@@ -2107,6 +2146,7 @@ S_regtry(pTHX_ regexp *prog, char *startpos)
     PL_reglastparen = &prog->lastparen;
     PL_reglastcloseparen = &prog->lastcloseparen;
     prog->lastparen = 0;
+    prog->lastcloseparen = 0;
     PL_regsize = 0;
     DEBUG_r(PL_reg_starttry = startpos);
     if (PL_reg_start_tmpl <= prog->nparens) {
@@ -2269,17 +2309,17 @@ S_regmatch(pTHX_ regnode *prog)
 	    regprop(prop, scan);
 	    {
 	      char *s0 =
-		do_utf8 ?
+		do_utf8 && OP(scan) != CANY ?
 		pv_uni_display(dsv0, (U8*)(locinput - pref_len),
 			       pref0_len, 60, UNI_DISPLAY_REGEX) :
 		locinput - pref_len;
 	      int len0 = do_utf8 ? strlen(s0) : pref0_len;
-	      char *s1 = do_utf8 ?
+	      char *s1 = do_utf8 && OP(scan) != CANY ?
 		pv_uni_display(dsv1, (U8*)(locinput - pref_len + pref0_len),
 			       pref_len - pref0_len, 60, UNI_DISPLAY_REGEX) :
 		locinput - pref_len + pref0_len;
 	      int len1 = do_utf8 ? strlen(s1) : pref_len - pref0_len;
-	      char *s2 = do_utf8 ?
+	      char *s2 = do_utf8 && OP(scan) != CANY ?
 		pv_uni_display(dsv2, (U8*)locinput,
 			       PL_regeol - locinput, 60, UNI_DISPLAY_REGEX) :
 		locinput;
@@ -2791,13 +2831,14 @@ S_regmatch(pTHX_ regnode *prog)
 	    dSP;
 	    OP_4tree *oop = PL_op;
 	    COP *ocurcop = PL_curcop;
-	    SV **ocurpad = PL_curpad;
+	    PAD *old_comppad;
 	    SV *ret;
+	    struct regexp *oreg = PL_reg_re;
 	
 	    n = ARG(scan);
 	    PL_op = (OP_4tree*)PL_regdata->data[n];
 	    DEBUG_r( PerlIO_printf(Perl_debug_log, "  re_eval 0x%"UVxf"\n", PTR2UV(PL_op)) );
-	    PL_curpad = AvARRAY((AV*)PL_regdata->data[n + 2]);
+	    PAD_SAVE_LOCAL(old_comppad, (PAD*)PL_regdata->data[n + 2]);
 	    PL_regendp[0] = PL_reg_magic->mg_len = locinput - PL_bostr;
 
 	    {
@@ -2813,7 +2854,7 @@ S_regmatch(pTHX_ regnode *prog)
 	    }
 
 	    PL_op = oop;
-	    PL_curpad = ocurpad;
+	    PAD_RESTORE_LOCAL(old_comppad);
 	    PL_curcop = ocurcop;
 	    if (logical) {
 		if (logical == 2) {	/* Postponed subexpression. */
@@ -2821,13 +2862,18 @@ S_regmatch(pTHX_ regnode *prog)
 		    MAGIC *mg = Null(MAGIC*);
 		    re_cc_state state;
 		    CHECKPOINT cp, lastcp;
+                    int toggleutf;
+		    register SV *sv;
 
-		    if(SvROK(ret) || SvRMAGICAL(ret)) {
-			SV *sv = SvROK(ret) ? SvRV(ret) : ret;
-
-			if(SvMAGICAL(sv))
-			    mg = mg_find(sv, PERL_MAGIC_qr);
+		    if(SvROK(ret) && SvSMAGICAL(sv = SvRV(ret)))
+			mg = mg_find(sv, PERL_MAGIC_qr);
+		    else if (SvSMAGICAL(ret)) {
+			if (SvGMAGICAL(ret))
+			    sv_unmagic(ret, PERL_MAGIC_qr);
+			else
+			    mg = mg_find(ret, PERL_MAGIC_qr);
 		    }
+
 		    if (mg) {
 			re = (regexp *)mg->mg_obj;
 			(void)ReREFCNT_inc(re);
@@ -2841,9 +2887,11 @@ S_regmatch(pTHX_ regnode *prog)
 			I32 onpar = PL_regnpar;
 
 			Zero(&pm, 1, PMOP);
+                        if (DO_UTF8(ret)) pm.op_pmdynflags |= PMdf_DYN_UTF8;
 			re = CALLREGCOMP(aTHX_ t, t + len, &pm);
 			if (!(SvFLAGS(ret)
-			      & (SVs_TEMP | SVs_PADTMP | SVf_READONLY)))
+			      & (SVs_TEMP | SVs_PADTMP | SVf_READONLY
+				| SVs_GMG)))
 			    sv_magic(ret,(SV*)ReREFCNT_inc(re),
 					PERL_MAGIC_qr,0,0);
 			PL_regprecomp = oprecomp;
@@ -2873,6 +2921,9 @@ S_regmatch(pTHX_ regnode *prog)
 		    *PL_reglastcloseparen = 0;
 		    PL_reg_call_cc = &state;
 		    PL_reginput = locinput;
+		    toggleutf = ((PL_reg_flags & RF_utf8) != 0) ^
+				((re->reganch & ROPT_UTF8) != 0);
+		    if (toggleutf) PL_reg_flags ^= RF_utf8;
 
 		    /* XXXX This is too dramatic a measure... */
 		    PL_reg_maxiter = 0;
@@ -2887,6 +2938,7 @@ S_regmatch(pTHX_ regnode *prog)
 			PL_regcc = state.cc;
 			PL_reg_re = state.re;
 			cache_re(PL_reg_re);
+			if (toggleutf) PL_reg_flags ^= RF_utf8;
 
 			/* XXXX This is too dramatic a measure... */
 			PL_reg_maxiter = 0;
@@ -2903,6 +2955,7 @@ S_regmatch(pTHX_ regnode *prog)
 		    PL_regcc = state.cc;
 		    PL_reg_re = state.re;
 		    cache_re(PL_reg_re);
+		    if (toggleutf) PL_reg_flags ^= RF_utf8;
 
 		    /* XXXX This is too dramatic a measure... */
 		    PL_reg_maxiter = 0;
@@ -2913,8 +2966,10 @@ S_regmatch(pTHX_ regnode *prog)
 		sw = SvTRUE(ret);
 		logical = 0;
 	    }
-	    else
+	    else {
 		sv_setsv(save_scalar(PL_replgv), ret);
+		cache_re(oreg);
+	    }
 	    break;
 	}
 	case OPEN:
@@ -3147,7 +3202,10 @@ S_regmatch(pTHX_ regnode *prog)
 				      "%*s  already tried at this position...\n",
 				      REPORT_CODE_OFF+PL_regindent*2, "")
 			);
-			sayNO_SILENT;
+			if (PL_reg_flags & RF_false)
+			    sayYES;
+			else
+			    sayNO_SILENT;
 		    }
 		    PL_reg_poscache[o] |= (1<<b);
 		}
@@ -3333,19 +3391,8 @@ S_regmatch(pTHX_ regnode *prog)
 		    if (! HAS_TEXT(text_node)) c1 = c2 = -1000;
 		    else {
 			if (PL_regkind[(U8)OP(text_node)] == REF) {
-			    I32 n, ln;
-			    n = ARG(text_node);  /* which paren pair */
-			    ln = PL_regstartp[n];
-			    /* assume yes if we haven't seen CLOSEn */
-			    if (
-				(I32)*PL_reglastparen < n ||
-				ln == -1 ||
-				ln == PL_regendp[n]
-			    ) {
-				c1 = c2 = -1000;
-				goto assume_ok_MM;
-			    }
-			    c1 = *(PL_bostr + ln);
+			    c1 = c2 = -1000;
+			    goto assume_ok_MM;
 			}
 			else { c1 = (U8)*STRING(text_node); }
 			if (OP(text_node) == EXACTF || OP(text_node) == REFF)
@@ -3415,19 +3462,8 @@ S_regmatch(pTHX_ regnode *prog)
 			if (! HAS_TEXT(text_node)) c1 = c2 = -1000;
 			else {
 			    if (PL_regkind[(U8)OP(text_node)] == REF) {
-				I32 n, ln;
-				n = ARG(text_node);  /* which paren pair */
-				ln = PL_regstartp[n];
-				/* assume yes if we haven't seen CLOSEn */
-				if (
-				    (I32)*PL_reglastparen < n ||
-				    ln == -1 ||
-				    ln == PL_regendp[n]
-				) {
-				    c1 = c2 = -1000;
-				    goto assume_ok_REG;
-				}
-				c1 = *(PL_bostr + ln);
+				c1 = c2 = -1000;
+				goto assume_ok_REG;
 			    }
 			    else { c1 = (U8)*STRING(text_node); }
 
@@ -3524,19 +3560,8 @@ S_regmatch(pTHX_ regnode *prog)
 		if (! HAS_TEXT(text_node)) c1 = c2 = -1000;
 		else {
 		    if (PL_regkind[(U8)OP(text_node)] == REF) {
-			I32 n, ln;
-			n = ARG(text_node);  /* which paren pair */
-			ln = PL_regstartp[n];
-			/* assume yes if we haven't seen CLOSEn */
-			if (
-			    (I32)*PL_reglastparen < n ||
-			    ln == -1 ||
-			    ln == PL_regendp[n]
-			) {
-			    c1 = c2 = -1000;
-			    goto assume_ok_easy;
-			}
-			s = (U8*)PL_bostr + ln;
+			c1 = c2 = -1000;
+			goto assume_ok_easy;
 		    }
 		    else { s = (U8*)STRING(text_node); }
 
@@ -3682,14 +3707,14 @@ S_regmatch(pTHX_ regnode *prog)
 			/* If it could work, try it. */
 		        if (c == (UV)c1 || c == (UV)c2)
 		        {
-			    TRYPAREN(paren, n, PL_reginput);
+			    TRYPAREN(paren, ln, PL_reginput);
 			    REGCP_UNWIND(lastcp);
 		        }
 		    }
 		    /* If it could work, try it. */
 		    else if (c1 == -1000)
 		    {
-			TRYPAREN(paren, n, PL_reginput);
+			TRYPAREN(paren, ln, PL_reginput);
 			REGCP_UNWIND(lastcp);
 		    }
 		    /* Couldn't or didn't -- move forward. */
@@ -3830,6 +3855,7 @@ S_regmatch(pTHX_ regnode *prog)
 	    }
 	    else
 		PL_reginput = locinput;
+	    PL_reg_flags ^= RF_false;
 	    goto do_ifmatch;
 	case IFMATCH:
 	    n = 1;
@@ -3845,6 +3871,8 @@ S_regmatch(pTHX_ regnode *prog)
 	  do_ifmatch:
 	    inner = NEXTOPER(NEXTOPER(scan));
 	    if (regmatch(inner) != n) {
+		if (n == 0)
+		    PL_reg_flags ^= RF_false;
 	      say_no:
 		if (logical) {
 		    logical = 0;
@@ -3854,6 +3882,8 @@ S_regmatch(pTHX_ regnode *prog)
 		else
 		    sayNO;
 	    }
+	    if (n == 0)
+		PL_reg_flags ^= RF_false;
 	  say_yes:
 	    if (logical) {
 		logical = 0;

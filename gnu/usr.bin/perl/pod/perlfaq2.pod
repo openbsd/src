@@ -1,6 +1,6 @@
 =head1 NAME
 
-perlfaq2 - Obtaining and Learning about Perl ($Revision: 1.13 $, $Date: 2002/04/26 16:56:35 $)
+perlfaq2 - Obtaining and Learning about Perl ($Revision: 1.20 $, $Date: 2003/01/26 17:50:56 $)
 
 =head1 DESCRIPTION
 
@@ -69,7 +69,7 @@ approaches are doomed to failure.
 One simple way to check that things are in the right place is to print out
 the hard-coded @INC that perl looks through for libraries:
 
-    % perl -e 'print join("\n",@INC)'
+    % perl -le 'print for @INC'
 
 If this command lists any paths that don't exist on your system, then you
 may need to move the appropriate libraries to these locations, or create
@@ -90,7 +90,7 @@ architecture.
 
 =head2 What modules and extensions are available for Perl?  What is CPAN?  What does CPAN/src/... mean?
 
-CPAN stands for Comprehensive Perl Archive Network, a ~700mb archive
+CPAN stands for Comprehensive Perl Archive Network, a ~1.2Gb archive
 replicated on nearly 200 machines all over the world.  CPAN contains
 source code, non-native ports, documentation, scripts, and many
 third-party modules and extensions, designed for everything from
@@ -167,29 +167,37 @@ assistance:
 
     http://perldoc.cpan.org/
     http://www.perldoc.com/
-    http://reference.perl.com/query.cgi?tutorials
     http://bookmarks.cpan.org/search.cgi?cat=Training%2FTutorials
 
 =head2 What are the Perl newsgroups on Usenet?  Where do I post questions?
 
-The now defunct comp.lang.perl newsgroup has been superseded by the
-following groups:
+Several groups devoted to the Perl language are on Usenet:
 
     comp.lang.perl.announce 		Moderated announcement group
-    comp.lang.perl.misc     		Very busy group about Perl in general
-    comp.lang.perl.moderated            Moderated discussion group
+    comp.lang.perl.misc     		High traffic general Perl discussion
+    comp.lang.perl.moderated        Moderated discussion group
     comp.lang.perl.modules  		Use and development of Perl modules
     comp.lang.perl.tk           	Using Tk (and X) from Perl
 
     comp.infosystems.www.authoring.cgi 	Writing CGI scripts for the Web.
 
-There is also a Usenet gateway to Perl mailing lists sponsored by perl.org at
-nntp://nntp.perl.org , a web interface to the same lists at
-http://nntp.perl.org/group/ and these lists are also available under the
-C<perl.*> hierarchy at http://groups.google.com . Other groups are listed at
-http://lists.perl.org/ ( also known as http://lists.cpan.org/ ).
+Some years ago, comp.lang.perl was divided into those groups, and
+comp.lang.perl itself officially removed.  While that group may still
+be found on some news servers, it is unwise to use it, because
+postings there will not appear on news servers which honour the
+official list of group names.  Use comp.lang.perl.misc for topics
+which do not have a more-appropriate specific group.
 
-A nice place to ask questions is the PerlMonks site, http://www.perlmonks.org/
+There is also a Usenet gateway to Perl mailing lists sponsored by
+perl.org at nntp://nntp.perl.org , a web interface to the same lists
+at http://nntp.perl.org/group/ and these lists are also available
+under the C<perl.*> hierarchy at http://groups.google.com . Other
+groups are listed at http://lists.perl.org/ ( also known as
+http://lists.cpan.org/ ).
+
+A nice place to ask questions is the PerlMonks site, 
+http://www.perlmonks.org/ , or the Perl Beginners mailing list
+http://lists.perl.org/showlist.cgi?name=beginners .
 
 Note that none of the above are supposed to write your code for you:
 asking questions about particular problems or general advice is fine,
@@ -205,7 +213,7 @@ see their FAQ ( http://www.faqs.org/faqs/alt-sources-intro/ ) for details.
 
 If you're just looking for software, first use Google
 ( http://www.google.com ), Google's usenet search interface
-( http://groups.google.com ),  and CPAN Search ( http://search.cpan.org ).  
+( http://groups.google.com ),  and CPAN Search ( http://search.cpan.org ).
 This is faster and more productive than just posting a request.
 
 =head2 Perl Books
@@ -231,7 +239,7 @@ of real-world examples, mini-tutorials, and complete programs is:
 	by Tom Christiansen and Nathan Torkington,
 	    with Foreword by Larry Wall
 	ISBN 1-56592-243-3 [1st Edition August 1998]
-	http://perl.oreilly.com/cookbook/
+	http://perl.oreilly.com/catalog/cookbook/
 
 If you're already a seasoned programmer, then the Camel Book might
 suffice for you to learn Perl from.  If you're not, check out the
@@ -241,6 +249,15 @@ Llama book:
 	by Randal L. Schwartz and Tom Phoenix
 	ISBN 0-596-00132-0 [3rd edition July 2001]
 	http://www.oreilly.com/catalog/lperl3/
+
+And for more advanced information on writing larger programs,
+presented in the same style as the Llama book, continue your education
+with the Alpaca book:
+
+    Learning Perl Objects, References, and Modules (the "Alpaca Book")
+       by Randal L. Schwartz, with Tom Phoenix (foreword by Damian Conway)
+       ISBN 0-596-00478-8 [1st edition June 2003]
+       http://www.oreilly.com/catalog/lrnperlorm/
 
 If you're not an accidental programmer, but a more serious and
 possibly even degreed computer scientist who doesn't need as much
@@ -306,6 +323,11 @@ Recommended books on (or mostly on) Perl follow.
 	ISBN 0-596-00132-0 [3rd edition July 2001]
 	http://www.oreilly.com/catalog/lperl3/
 
+    Learning Perl Objects, References, and Modules
+       by Randal L. Schwartz, with Tom Phoenix (foreword by Damian Conway)
+       ISBN 0-596-00478-8 [1st edition June 2003]
+       http://www.oreilly.com/catalog/lrnperlorm/
+
     Learning Perl on Win32 Systems
 	by Randal L. Schwartz, Erik Olson, and Tom Christiansen,
 	    with foreword by Larry Wall
@@ -347,8 +369,8 @@ Recommended books on (or mostly on) Perl follow.
 
     Mastering Regular Expressions
 	by Jeffrey E. F. Friedl
-	ISBN 1-56592-257-3 [1st edition January 1997]
-	http://www.oreilly.com/catalog/regex/
+	ISBN 0-596-00289-0 [2nd edition July 2002]
+	http://www.oreilly.com/catalog/regex2/
 
     Network Programming with Perl
 	by Lincoln Stein
@@ -366,10 +388,15 @@ Recommended books on (or mostly on) Perl follow.
 	ISBN 1-930110-00-6 [1st edition 2001]
 	http://www.manning.com/cross
 
-	Mastering Perl/Tk
+    Mastering Perl/Tk
 	by Steve Lidie and Nancy Walsh
 	ISBN 1-56592-716-8 [1st edition January 2002]
 	http://www.oreilly.com/catalog/mastperltk/
+
+    Extending and Embedding Perl
+       by Tim Jenness and Simon Cozens
+       ISBN 1-930110-82-0 [1st edition August 2002]
+       http://www.manning.com/jenness
 
 =back
 
@@ -399,26 +426,13 @@ http://www.stonehenge.com/merlyn/LinuxMag/ .
 
 =head2 Perl on the Net: FTP and WWW Access
 
-To get the best performance, pick a site from
-the list below and use it to grab the complete list of mirror sites
-which is at /CPAN/MIRRORED.BY or at http://mirror.cpan.org/ .
-From there you can find the quickest site for you.  Remember, the
-following list is I<not> the complete list of CPAN mirrors
-(the complete list contains 165 sites as of January 2001):
+To get the best performance, pick a site from the list at
+http://www.cpan.org/SITES.html . From there you can find the quickest
+site for you.
 
-  http://www.cpan.org/
-  http://www.perl.com/CPAN/
-  http://download.sourceforge.net/mirrors/CPAN/
-  ftp://ftp.digital.com/pub/plan/perl/CPAN/
-  ftp://ftp.flirble.org/pub/languages/perl/CPAN/
-  ftp://ftp.uvsq.fr/pub/perl/CPAN/
-  ftp://ftp.funet.fi/pub/languages/perl/CPAN/
-  ftp://ftp.dti.ad.jp/pub/lang/CPAN/
-  ftp://cpan.if.usp.br/pub/mirror/CPAN/
-
-One may also use xx.cpan.org where "xx" is the 2-letter country code
-for your domain; e.g. Australia would use au.cpan.org.
-[Note: This only applies to countries that host at least one mirror.]
+You may also use xx.cpan.org where "xx" is the 2-letter country code
+for your domain; e.g. Australia would use au.cpan.org. [Note: This
+only applies to countries that host at least one mirror.]
 
 =head2 What mailing lists are there for Perl?
 
@@ -428,14 +442,12 @@ subscription information.
 
 A comprehensive list of Perl related mailing lists can be found at:
 
-	http://lists.cpan.org/
-
-( also visible as http://lists.perl.org/ )
+	http://lists.perl.org/
 
 =head2 Archives of comp.lang.perl.misc
 
 The Google search engine now carries archived and searchable newsgroup
-content. 
+content.
 
 http://groups.google.com/groups?group=comp.lang.perl.misc
 
