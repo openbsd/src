@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.34 2004/08/06 11:51:19 claudio Exp $ */
+/*	$OpenBSD: control.c,v 1.35 2004/08/20 15:47:38 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -239,32 +239,29 @@ control_dispatch_msg(struct pollfd *pfd, u_int *ctl_cnt)
 			imsg_compose_parent(imsg.hdr.type, 0, NULL, 0);
 			break;
 		case IMSG_CTL_NEIGHBOR_UP:
-			if (imsg.hdr.len == IMSG_HEADER_SIZE +
-			    sizeof(struct bgpd_addr)) {
-				addr = imsg.data;
-				p = getpeerbyaddr(addr);
-				if (p != NULL)
-					bgp_fsm(p, EVNT_START);
-				else
-					log_warnx("IMSG_CTL_NEIGHBOR_UP "
-					    "with unknown neighbor");
-			} else
-				log_warnx("got IMSG_CTL_NEIGHBOR_UP with "
-				    "wrong length");
-			break;
 		case IMSG_CTL_NEIGHBOR_DOWN:
 			if (imsg.hdr.len == IMSG_HEADER_SIZE +
 			    sizeof(struct bgpd_addr)) {
 				addr = imsg.data;
 				p = getpeerbyaddr(addr);
-				if (p != NULL)
+				if (p == NULL) {
+					log_warnx("IMSG_CTL_NEIGHBOR_"
+					    "with unknown neighbor");
+					break;
+				}
+				switch (imsg.hdr.type) {
+				case IMSG_CTL_NEIGHBOR_UP:
+					bgp_fsm(p, EVNT_START);
+					break;
+				case IMSG_CTL_NEIGHBOR_DOWN:
 					bgp_fsm(p, EVNT_STOP);
-				else
-					log_warnx("IMSG_CTL_NEIGHBOR_DOWN"
-					    " with unknown neighbor");
+					break;
+				default:
+					fatal("king bula wants more humppa");
+				}
 			} else
-				log_warnx("got IMSG_CTL_NEIGHBOR_DOWN "
-				    "with wrong length");
+				log_warnx("got IMSG_CTL_NEIGHBOR_ with "
+				    "wrong length");
 			break;
 		case IMSG_CTL_KROUTE:
 		case IMSG_CTL_KROUTE_ADDR:
