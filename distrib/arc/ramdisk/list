@@ -1,0 +1,110 @@
+#	$OpenBSD: list,v 1.1 1997/05/14 20:52:45 pefo Exp $
+
+# copy the crunched binary, link to it, and kill it
+COPY	${OBJDIR}/bin/cat		bin/cat
+COPY	${OBJDIR}/bin/chmod		bin/chmod
+COPY	${OBJDIR}/bin/cp		bin/cp
+COPY	${OBJDIR}/bin/cpio		bin/cpio
+LINK	bin/cpio			bin/pax
+LINK	bin/cpio			bin/tar
+COPY	${OBJDIR}/bin/dd		bin/dd
+COPY	${OBJDIR}/bin/df		bin/df
+COPY	${OBJDIR}/bin/ed		bin/ed
+COPY	${OBJDIR}/bin/expr		bin/expr
+COPY	${OBJDIR}/bin/hostname		bin/hostname
+COPY	${OBJDIR}/bin/ln		bin/ln
+COPY	${OBJDIR}/bin/ls		bin/ls
+COPY	${OBJDIR}/bin/mkdir		bin/mkdir
+COPY	${OBJDIR}/bin/mv		bin/mv
+COPY	${OBJDIR}/bin/pwd		bin/pwd
+COPY	${OBJDIR}/bin/rm		bin/rm
+COPY	${OBJDIR}/bin/sh		bin/sh
+LINK	bin/sh				bin/pdksh
+COPY	${OBJDIR}/bin/sleep		bin/sleep
+COPY	${OBJDIR}/bin/stty		bin/stty
+COPY	${OBJDIR}/bin/sync		bin/sync
+COPY	${OBJDIR}/bin/test		bin/test
+LINK	bin/test			bin/[
+COPY	${OBJDIR}/sbin/disklabel	sbin/disklabel
+COPY	${OBJDIR}/sbin/fdisk		sbin/fdisk
+COPY	${OBJDIR}/sbin/fsck		sbin/fsck
+LINK	sbin/fsck			sbin/fsck_ffs
+COPY	${OBJDIR}/sbin/halt		sbin/halt
+LINK	sbin/halt			sbin/reboot
+COPY	${OBJDIR}/sbin/ifconfig		sbin/ifconfig
+COPY	${OBJDIR}/sbin/init		sbin/init
+COPY	${OBJDIR}/sbin/ldconfig		sbin/ldconfig
+COPY	${OBJDIR}/sbin/mknod		sbin/mknod
+COPY	${OBJDIR}/sbin/mount		sbin/mount
+COPY	${OBJDIR}/sbin/mount_cd9660	sbin/mount_cd9660
+COPY	${OBJDIR}/sbin/mount_ffs	sbin/mount_ffs
+COPY	${OBJDIR}/sbin/mount_msdos	sbin/mount_msdos
+COPY	${OBJDIR}/sbin/mount_nfs	sbin/mount_nfs
+COPY	${OBJDIR}/sbin/mount_kernfs	sbin/mount_kernfs
+#COPY	${OBJDIR}/sbin/mount_ext2fs	sbin/mount_ext2fs
+COPY	${OBJDIR}/sbin/newfs		sbin/newfs
+LINK	sbin/newfs			sbin/mount_mfs
+COPY	${OBJDIR}/sbin/ping		sbin/ping
+COPY	${OBJDIR}/sbin/restore		sbin/restore
+COPY	${OBJDIR}/sbin/route		sbin/route
+#COPY	${OBJDIR}/sbin/slattach		sbin/slattach
+#COPY	${OBJDIR}/sbin/scsi		sbin/scsi
+COPY	${OBJDIR}/sbin/umount		sbin/umount
+COPY	${OBJDIR}/usr/bin/cut		usr/bin/cut
+COPY	${OBJDIR}/usr/bin/egrep		usr/bin/egrep
+LINK	usr/bin/egrep			usr/bin/fgrep
+LINK	usr/bin/egrep			usr/bin/grep
+COPY	${OBJDIR}/usr/bin/ftp		usr/bin/ftp
+COPY	${OBJDIR}/usr/bin/gzip		usr/bin/gzip
+LINK	usr/bin/gzip			usr/bin/gunzip
+LINK	usr/bin/gzip			usr/bin/gzcat
+COPY	${OBJDIR}/usr/bin/less		usr/bin/less
+LINK	usr/bin/less			usr/bin/more
+COPY	${OBJDIR}/usr/bin/rsh		usr/bin/rsh
+COPY	${OBJDIR}/usr/bin/sed		usr/bin/sed
+COPY	${OBJDIR}/usr/bin/sort		usr/bin/sort
+#COPY	${OBJDIR}/usr/bin/tip		usr/bin/tip
+#COPY	${OBJDIR}/usr/bin/vi		usr/bin/vi
+#COPY	${OBJDIR}/usr/sbin/bad144	usr/sbin/bad144
+#COPY	${OBJDIR}/usr/sbin/chat		usr/sbin/chat
+COPY	${OBJDIR}/usr/sbin/chown	usr/sbin/chown usr/sbin/chgrp
+LINK	usr/sbin/chown			usr/sbin/chgrp
+#COPY	${OBJDIR}/usr/sbin/pppd		usr/sbin/pppd
+COPY	${OBJDIR}/usr/lib/libc.so.16.1	usr/lib/libc.so.16.1
+COPY	${OBJDIR}/usr/lib/libtermcap.so.0.0	usr/lib/libtermcap.so.0.0
+COPY	${OBJDIR}/usr/libexec/ld.so	usr/libexec/ld.so
+
+# `internal' crunchgen links
+ARGVLINK sh		-sh
+
+# copy the MAKEDEV script and make some devices
+COPY	${DESTDIR}/dev/MAKEDEV	dev/MAKEDEV
+SPECIAL	cd dev; sh MAKEDEV ramdisk
+SPECIAL	/bin/rm dev/MAKEDEV
+
+# we need the contents of /usr/mdec
+#COPY	${DESTDIR}/usr/mdec/bootsd	usr/mdec/bootsd
+#COPY	${DESTDIR}/usr/mdec/sdboot	usr/mdec/sdboot
+#LINK	usr/mdec/bootsd			usr/mdec/bootwd
+#LINK	usr/mdec/sdboot			usr/mdec/wdboot
+
+# various files that we need in /etc for the install
+COPY	${DESTDIR}/etc/group		etc/group
+COPY	${DESTDIR}/etc/protocols	etc/protocols
+COPY	${DESTDIR}/etc/services		etc/services
+COPY	${DESTDIR}/etc/spwd.db		etc/spwd.db
+
+COPYDIR	${DESTDIR}/etc/ppp		etc/ppp
+
+# and the common installation tools
+COPY	${CURDIR}/termcap.pc3	usr/share/misc/termcap
+COPY	${DESTDIR}/usr/share/misc/scsi_modes	usr/share/misc/scsi_modes
+
+# and the installation tools
+COPY	dot.profile			.profile
+COPY	dot.instutils			.instutils
+COPY	install.md			install.md
+COPY	${CURDIR}/../../../miniroot/install.sh		install
+COPY	${CURDIR}/../../../miniroot/upgrade.sh		upgrade
+SPECIAL sed "/^VERSION=/s/=.*/=${REV}/" < ${CURDIR}/../../../miniroot/install.sub > install.sub
+SPECIAL	chmod 755 install
