@@ -1,0 +1,286 @@
+.\"
+.\" Copyright (c) 1996,1997 Berkeley Software Design, Inc. All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"	This product includes software developed by Berkeley Software Design,
+.\"	Inc.
+.\" 4. The name of Berkeley Software Design, Inc.  may not be used to endorse
+.\"    or promote products derived from this software without specific prior
+.\"    written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY BERKELEY SOFTWARE DESIGN, INC. ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL BERKELEY SOFTWARE DESIGN, INC. BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\" $OpenBSD: login_cap.3,v 1.1 2000/08/20 18:37:20 millert Exp $
+.\" BSDI $From: login_cap.3,v 1.4 1997/11/07 16:22:27 jch Exp $
+.\"
+.Dd July 16, 1996
+.Dt LOGIN_CAP 3 
+.Os
+.Sh NAME
+.Nm login_getclass ,
+.Nm login_getstyle ,
+.Nm login_getcapbool ,
+.Nm login_getcapnum ,
+.Nm login_getcapsize ,
+.Nm login_getcapstr ,
+.Nm login_getcaptime ,
+.Nm login_close ,
+.Nm secure_path ,
+.Nm setclasscontext ,
+.Nm setusercontext
+.Nd query login.conf database about a user class
+.Sh SYNOPSIS
+.Fd #include <login_cap.h>
+.Ft login_cap_t *
+.Fn login_getclass "char *class"
+.Ft char *
+.Fn login_getstyle "login_cap_t *lc" "char *style" "char *type"
+.Ft int
+.Fn login_getcapbool "login_cap_t *lc" "char *cap" "u_int def"
+.Ft quad_t
+.Fn login_getcapnum "login_cap_t *lc" "char *cap" "quad_t def" "quad_t err"
+.Ft quad_t
+.Fn login_getcapsize "login_cap_t *lc" "char *cap" "quad_t def" "quad_t err"
+.Ft char *
+.Fn login_getcapstr "login_cap_t *lc" "char *cap" "char *def" "char *err"
+.Ft quad_t
+.Fn login_getcaptime "login_cap_t *lc" "char *cap" "quad_t def" "quad_t err"
+.Ft void
+.Fn login_close "login_cap_t *lc"
+.Ft int
+.Fn secure_path "char *path"
+.Ft int
+.Fn setclasscontext "char *class" "u_int flags"
+.Ft int
+.Fn setusercontext "login_cap_t *lc" "struct passwd *pwd" "uid_t uid" "u_int flags"
+.Sh DESCRIPTION
+The
+.Fn login_getclass
+function extracts the entry specified by
+.Ar class
+(or
+.Li default
+if
+.Ar class
+is NULL or the empty string)
+from
+.Pa /etc/login.conf
+(see
+.Xr login.conf 5 ) .
+If the entry is found, a
+.Li login_cap_t
+pointer is returned.
+NULL is returned if the user class is not found.
+When the
+.Li login_cap_t
+structure is no longer needed, is should be freed by the
+.Fn login_close
+function.
+.Pp
+Once
+.Ar lc
+has been returned by
+.Fn login_getclass ,
+any of the other
+.Fn login_*
+functions may be called.
+The
+.Fn login_getstyle
+function
+is used to obtain the style of authentication that should be used for
+this user class.
+The
+.Ar style
+argument may either be NULL or the desired style of authentication.
+If NULL, the first available authentication style will be used.
+The
+.Ar type
+argument refers to the type of authentication being performed.
+This is used to override the standard
+.Li auth
+entry in the database.  By convention this should be of the form "auth-type".
+Future releases may remove the requirement for the "auth-" prefix and add
+it if it is missing.
+If
+.Ar type
+is NULL then only "auth" will be looked at.
+(See
+.Xr login.conf 5 ) .
+The
+.Fn login_getstyle 
+function will return NULL if the desired style of authentication
+is not available, or if no style is available.
+.Pp
+The
+.Fn login_getcapnum ,
+.Fn login_getcapsize ,
+.Fn login_getcapstr ,
+and
+.Fn login_getcaptime
+functions all query the database entry for a field named
+.Ar cap .
+If the field is found, its value is returned.  If the field is not
+found, the value specified by
+.Ar def
+is returned.
+If an error is encountered while trying to find the field,
+.Ar err
+is returned.
+See
+.Xr login.conf 5
+for a discussion of the various textual forms the value may take.
+The
+.Fn login_getcapbool
+function is slightly different.  It returns
+.Ar def
+if no capabilities were found for this class (typically meaning that
+the default class was used and the
+.Li /etc/login.conf
+file is missing).
+It returns a non-zero value if 
+.Ar cap ,
+with no value, was found,
+zero otherwise.
+.Pp
+The
+.Fn secure_path
+function takes a path name and returns 0 if the path name is secure, -1
+if not.
+To be secure a path must
+exist,
+be a regular file (and not a directory),
+owned by root,
+and only writable by the owner (root).
+.Pp
+The
+.Fn setclasscontext
+function takes
+.Ar class ,
+the name of a user class,
+and sets the resources defined by that class according to
+.Ar flags.
+Only the
+.Nm LOGIN_SETPATH ,
+.Nm LOGIN_SETPRIORITY ,
+.Nm LOGIN_SETRESOURCES ,
+and
+.Nm LOGIN_SETUMASK
+bits are used.  (See 
+.Fn setusercontext
+below).
+It returns 0 on success and -1 on failure.
+.Pp
+The
+.Fn setusercontext
+function
+sets the resources according to
+.Ar flags .
+The
+.Ar lc
+argument, if not NULL, contains the class information that should
+be used.
+The
+.Ar pwd
+argument, if not NULL, provides information about the user.
+Both
+.Ar lc
+and
+.Ar pwd
+cannot be NULL.
+The
+.Ar uid
+argument is used in place of the user id contained in the
+.Ar pwd
+structure when calling
+.Xr setuid 2 .
+The various bits available to be or-ed together to make up
+.Ar flags
+are:
+.Bl -tag -width LOGIN_SETRESOURCESXX
+.It LOGIN_SETGROUP
+Set the group id and call
+.Xr initgroups 3 .
+Requires the
+.Xr pwd
+field be specified.
+.It LOGIN_SETLOGIN
+Sets the login name by
+.Xr setlogin 2 .
+Requires the
+.Ar pwd
+field be specified.
+.It LOGIN_SETPATH
+Sets the
+.Ev PATH
+environment variable.
+.It LOGIN_SETPRIORITY
+Sets the priority by
+.Xr setpriority 2 .
+.It LOGIN_SETRESOURCES
+Sets the various system resources by
+.Xr setrlimit 2 .
+.It LOGIN_SETUMASK
+Sets the umask by
+.Xr umask 2 .
+.It LOGIN_SETUSER
+Sets the user id to
+.Ar uid
+by
+.Xr setuid 2 .
+.It LOGIN_SETALL
+Sets all of the above.
+.El
+.Sh SEE ALSO
+.Xr setlogin 2 ,
+.Xr setpriority 2 ,
+.Xr setrlimit 2 ,
+.Xr setuid 2 ,
+.Xr umask 2 ,
+.Xr initgroups 3 ,
+.Xr login.conf 5
+.Sh HISTORY
+The
+.Nm
+utility appeared in
+.Ox 2.8 .
+.Sh CAVEATS
+The string returned by
+.Fn login_getcapstr
+is allocated via
+.Xr malloc 3
+when the specified capability is present and thus it is the responsibility
+of the caller to
+.Fn free
+this space.  However, if the the capability was not found or an error
+occurred and
+.Fa def
+or
+.Fa err
+(whichever is relevant) are non-NUL the returned value is simply what
+was passed in to
+.Fn login_getcapstr .
+Therefore it is not possible to blindly
+.Fn free
+the return value without first checking it against
+.Fa def
+and
+.Fa err .

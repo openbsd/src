@@ -1,21 +1,20 @@
-#	$OpenBSD: Makefile.inc,v 1.25 2000/07/19 19:26:05 mickey Exp $
+#	$OpenBSD: Makefile.inc,v 1.26 2000/08/20 18:37:20 millert Exp $
 
 # gen sources
 .PATH: ${LIBCSRCDIR}/arch/${MACHINE_ARCH}/gen ${LIBCSRCDIR}/gen
 
-SRCS+=	alarm.c assert.c basename.c clock.c closedir.c confstr.c ctermid.c \
-	ctype_.c daemon.c devname.c dirname.c disklabel.c elf_hash.c err.c \
-	errx.c errlist.c errno.c exec.c fnmatch.c fstab.c ftok.c fts.c \
-	getbsize.c getcap.c getcwd.c getdomainname.c getgrent.c \
-	getgrouplist.c gethostname.c getloadavg.c getlogin.c getmntinfo.c \
-	getnetgrent.c getpagesize.c getpass.c getpwent.c \
-	getttyent.c getusershell.c glob.c initgroups.c isatty.c isctype.c \
-	lockf.c nice.c nlist.c opendir.c pause.c popen.c psignal.c pwcache.c \
-	raise.c readdir.c rewinddir.c scandir.c seekdir.c setdomainname.c \
-	sethostname.c setjmperr.c setmode.c setproctitle.c siginterrupt.c \
-	siglist.c signal.c signame.c sigsetops.c sleep.c strtofflags.c \
-	sysconf.c sysctl.c syslog.c \
-	telldir.c time.c times.c timezone.c tolower_.c ttyname.c \
+SRCS+=	alarm.c assert.c basename.c clock.c closedir.c confstr.c \
+	ctermid.c ctype_.c daemon.c devname.c dirname.c disklabel.c elf_hash.c \
+	err.c errx.c errlist.c errno.c exec.c fnmatch.c fstab.c ftok.c fts.c \
+	getbsize.c getcap.c getcwd.c getdomainname.c getgrent.c getgrouplist.c \
+	gethostname.c getloadavg.c getlogin.c getmntinfo.c getnetgrent.c \
+	getpagesize.c getpass.c getpwent.c getttyent.c getusershell.c glob.c \
+	initgroups.c isatty.c isctype.c lockf.c login_cap.c nice.c nlist.c \
+	opendir.c pause.c popen.c psignal.c pwcache.c raise.c readdir.c \
+	rewinddir.c scandir.c seekdir.c setdomainname.c sethostname.c \
+	setjmperr.c setmode.c setproctitle.c siginterrupt.c siglist.c signal.c \
+	signame.c sigsetops.c sleep.c strtofflags.c sysconf.c sysctl.c \
+	syslog.c telldir.c time.c times.c timezone.c tolower_.c ttyname.c \
 	ttyslot.c toupper_.c ualarm.c uname.c unvis.c usleep.c utime.c \
 	valloc.c vis.c wait.c wait3.c waitpid.c warn.c warnx.c vwarn.c \
 	vwarnx.c verr.c verrx.c
@@ -44,20 +43,18 @@ errlst.o errlst.po:
 .endif	# _NOTDEF_XXX_
 
 MAN+=	alarm.3 basename.3 clock.3 confstr.3 ctermid.3 ctype.3 daemon.3 \
-	devname.3 directory.3 dirname.3 err.3 exec.3 fnmatch.3 frexp.3 \
-	ftok.3 fts.3 \
-	getbsize.3 getcap.3 getcwd.3 getdomainname.3 getdiskbyname.3 \
+	devname.3 directory.3 dirname.3 err.3 exec.3 fnmatch.3 frexp.3 ftok.3 \
+	fts.3 getbsize.3 getcap.3 getcwd.3 getdomainname.3 getdiskbyname.3 \
 	getfsent.3 getgrent.3 getgrouplist.3 gethostname.3 getloadavg.3 \
 	getmntinfo.3 getnetgrent.3 getpagesize.3 getpass.3 getpwent.3 \
-	getttyent.3 getusershell.3 glob.3 initgroups.3 isalnum.3 \
-	isalpha.3 isascii.3 isblank.3 iscntrl.3 isdigit.3 isgraph.3 isinf.3 \
-	islower.3 isprint.3 ispunct.3 isspace.3 isupper.3 isxdigit.3 lockf.3 \
-	ldexp.3 modf.3 nice.3 nlist.3 pause.3 popen.3 psignal.3 pwcache.3 \
+	getttyent.3 getusershell.3 glob.3 initgroups.3 isalnum.3 isalpha.3 \
+	isascii.3 isblank.3 iscntrl.3 isdigit.3 isgraph.3 isinf.3 islower.3 \
+	isprint.3 ispunct.3 isspace.3 isupper.3 isxdigit.3 ldexp.3 lockf.3 \
+	login_cap.3 modf.3 nice.3 nlist.3 pause.3 popen.3 psignal.3 pwcache.3 \
 	raise.3 scandir.3 setjmp.3 setmode.3 setproctitle.3 siginterrupt.3 \
 	signal.3 sigsetops.3 sleep.3 sysconf.3 sysctl.3 strtofflags.3 syslog.3 \
-	time.3 times.3 timezone.3 toascii.3 \
-	tolower.3 toupper.3 ttyname.3 ualarm.3 uname.3 unvis.3 \
-	usleep.3 utime.3 valloc.3 vis.3
+	time.3 times.3 timezone.3 toascii.3 tolower.3 toupper.3 ttyname.3 \
+	ualarm.3 uname.3 unvis.3 usleep.3 utime.3 valloc.3 vis.3
 
 MLINKS+=directory.3 closedir.3 directory.3 dirfd.3 directory.3 opendir.3 \
 	directory.3 readdir.3 directory.3 rewinddir.3 directory.3 seekdir.3 \
@@ -88,6 +85,11 @@ MLINKS+=getpwent.3 endpwent.3 getpwent.3 setpassent.3 getpwent.3 getpwnam.3 \
 MLINKS+=getttyent.3 endttyent.3 getttyent.3 getttynam.3 getttyent.3 setttyent.3
 MLINKS+=getusershell.3 endusershell.3 getusershell.3 setusershell.3
 MLINKS+=glob.3 globfree.3
+MLINKS+=login_cap.3 login_getclass.3 login_cap.3 login_getstyle.3 login_cap.3 \
+	login_getcapbool.3 login_cap.3 login_getcapnum.3 login_cap.3 \
+	login_getcapsize.3 login_cap.3 login_getcapstr.3 login_cap.3 \
+	login_getcaptime.3 login_cap.3 login_close.3 login_cap.3 \
+	secure_path.3 login_cap.3 setclasscontext.3 login_cap.3 setusercontext.3
 MLINKS+=popen.3 pclose.3
 MLINKS+=psignal.3 sys_siglist.3 psignal.3 sys_signame.3
 MLINKS+=pwcache.3 user_from_uid.3 pwcache.3 group_from_gid.3

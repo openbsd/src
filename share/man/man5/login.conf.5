@@ -1,0 +1,289 @@
+.\"
+.\" Copyright (c) 1995,1996,1997 Berkeley Software Design, Inc.
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"	This product includes software developed by Berkeley Software Design,
+.\"	Inc.
+.\" 4. The name of Berkeley Software Design, Inc.  may not be used to endorse
+.\"    or promote products derived from this software without specific prior
+.\"    written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY BERKELEY SOFTWARE DESIGN, INC. ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL BERKELEY SOFTWARE DESIGN, INC. BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\" $OpenBSD: login.conf.5,v 1.1 2000/08/20 18:37:21 millert Exp $
+.\" BSDI $From: login.conf.5,v 2.20 2000/06/26 14:50:38 prb Exp $
+.\"
+.Dd February 23, 1995
+.Dt LOGIN.CONF 5
+.Os
+.Sh NAME
+.Nm login.conf
+.Nd login class capability data base
+.Sh SYNOPSIS
+.Nm /etc/login.conf
+.Sh DESCRIPTION
+The
+.Nm login.conf
+file describes the various attributes of login classes.
+A login class determines session resource limits and environment setup.
+It is used by various programs in the system to set up a user's login
+environment and to enforce local policy and restrictions.
+At a future date, the login class will also determine what styles of
+authentication are available to a user.
+.Pp
+A special record,
+.Dq default ,
+in
+.Pa /etc/login.conf
+is used for any user without a valid login class in
+.Pa /etc/master.passwd .
+.Sh CAPABILITIES
+Refer to
+.Xr getcap 3
+for a description of the file layout.
+All entries in the
+.Nm login.conf
+file are either boolean or use a `=' to separate the capability
+from the value.
+The types are described after the capability table.
+.Bl -column alwaysuseklogin programxx xusrxbinxbin
+.Sy Name	Type	Default	Description
+.\"
+.It coredumpsize Ta size Ta "" Ta
+Maximum coredump size limit.
+.\"
+.sp
+.It cputime Ta time Ta "" Ta
+CPU usage limit.
+.\"
+.sp
+.It datasize Ta size Ta "" Ta
+Maximum data size limit.
+.\"
+.sp
+.It expire-warn Ta time Ta Dv 2w Ta
+If the user's account will expire within this length of time then
+warn the user of this.
+.\"
+.sp
+.It filesize Ta size Ta "" Ta
+Maximum file size limit.
+.\"
+.sp
+.It harduserlimit Ta bool Ta Dv false Ta
+Do not allow the user to log in if this session will be beyond
+the licensed number of simultaneous users.
+.\"
+.sp
+.It hushlogin Ta bool Ta Dv false Ta
+Same as having a
+.Pa $HOME/.hushlogin
+file.
+See
+.Xr login 8 .
+.\"
+.\"
+.sp
+.It ignorenologin Ta bool Ta Dv false Ta
+Not affected by
+.Pa nologin
+files.
+See
+.Xr login 8 .
+.\"
+.sp
+.It stacksize Ta size Ta "" Ta
+Maximum stack size limit.
+.\"
+.sp
+.It maxproc Ta number Ta "" Ta
+Maximum number of process.
+.\"
+.sp
+.It memorylocked Ta size Ta "" Ta
+Maximum locked in core memory size limit.
+.\"
+.sp
+.It memoryuse Ta size Ta "" Ta
+Maximum in core memoryuse size limit.
+.\"
+.sp
+.It nologin Ta file Ta "" Ta
+If the file exists it will be displayed
+and the login session will be terminated.
+.\"
+.sp
+.It openfiles Ta number Ta "" Ta
+Maximum number of open files per process.
+.\"
+.sp
+.It password-warn Ta time Ta Dv 2w Ta
+If the user's password will expire within this length of time then
+warn the user of this.
+.\"
+.sp
+.It path Ta path Ta Dv "value of _PATH_DEFPATH" Ta
+.br
+Default search path.  See
+.Pa /usr/include/paths.h .
+.\"
+.sp
+.It priority Ta number Ta "" Ta
+Initial priority (nice) level.
+.\"
+.sp
+.It requirehome Ta bool Ta Dv false Ta
+Require home directory to login.
+.\"
+.sp
+.It shell Ta program Ta "" Ta
+Session shell to execute rather than the shell specified in the password file.
+The
+.Ev SHELL
+environment variable will contain the shell specified in the password file.
+.\"
+.sp
+.It term Ta string Ta Dv su Ta
+Default terminal type if not able to determine from other means.
+.\"
+.sp
+.It umask Ta number Ta Dv 022 Ta
+Initial umask.
+Should always have a leading
+.Li 0
+to assure octal interpretation.
+See
+.Xr umask 2 .
+.\"
+.sp
+.It welcome Ta file Ta Pa /etc/motd Ta
+File containing welcome message.
+.El
+.Pp
+The resource limit entries
+.No ( Ns Va cputime , filesize , datasize , stacksize , coredumpsize ,
+.Va memoryuse , memorylocked , maxproc ,
+and
+.Va openfiles )
+actually specify both the maximum and current limits (see
+.Xr getrlimit 2 ).
+The current limit is the one normally used,
+although the user is permitted to increase the current limit to the
+maximum limit.
+The maximum and current limits may be specified individually by appending
+a
+.Va \-max
+or
+.Va \-cur
+to the capability name (e.g.,
+.Va openfiles-max
+and
+.Va openfiles-cur Ns No ).
+.Pp
+\*(oSwill never define capabilities which start with
+.Li x-
+or
+.Li X- ,
+these are reserved for external use (unless included through contributed
+software).
+.Pp
+The argument types are defined as:
+.Bl -tag -width programxx
+.\"
+.It file
+Path name to a text file.
+.\"
+.It list
+A comma separated list of values.
+.\"
+.It number
+A number.  A leading
+.Li 0x
+implies the number is expressed in hexadecimal.
+A leading
+.Li 0
+implies the number is expressed in octal.
+Any other number is treated as decimal.
+.\"
+.It path
+A space separated list of path names.
+If a
+.Li ~
+is the first character in the path name, the
+.Li ~
+is expanded to the user's home directory.
+.\"
+.It program
+A path name to program.
+.\"
+.It size
+A
+.Va number
+which expresses a size in bytes.
+It may have a trailing
+.Li b
+to multiply the value by 512, a
+.Li k
+to multiply the value by 1 K (1024), and a
+.Li m
+to multiply the value by 1 M (1048576).
+.\"
+.It time
+A time in seconds.
+A time may be expressed as a series of numbers
+which are added together.
+Each number may have a trailing character to
+represent time units:
+.Bl -tag -width xxx
+.\"
+.It y
+Indicates a number of 365 day years.
+.\"
+.It w
+Indicates a number of 7 day weeks.
+.\"
+.It d
+Indicates a number of 24 hour days.
+.\"
+.It h
+Indicates a number of 60 minute hours.
+.\"
+.It m
+Indicates a number of 60 second minutes.
+.\"
+.It s
+Indicates a number of seconds.
+.El
+.Pp
+For example, to indicate 1 and 1/2 hours, the following string
+could be used:
+.Li 1h30m .
+.El
+.\"
+.Sh SEE ALSO
+.Xr getcap 3 ,
+.Xr login_cap 3 ,
+.Xr passwd 5 ,
+.Xr ttys 5 ,
+.Xr ftpd 8 ,
+.Xr login 8
