@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.29 2000/04/11 19:59:06 jason Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.30 2000/04/13 00:28:44 deraadt Exp $	*/
 
 /*
  * Invertex AEON / Hi/fn 7751 driver
@@ -121,6 +121,9 @@ hifn_probe(parent, match, aux)
 		return (1);
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_HIFN &&
 	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_HIFN_7751)
+		return (1);
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_NETSEC &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_NETSEC_7751)
 		return (1);
 	return (0);
 }
@@ -350,6 +353,11 @@ struct pci2id {
 	char		card_id[13];
 } pci2id[] = {
 	{
+		PCI_VENDOR_NETSEC,
+		PCI_PRODUCT_NETSEC_7751,
+		{ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+		  0x00, 0x00, 0x00, 0x00, 0x00 }
+	}, {
 		PCI_VENDOR_INVERTEX,
 		PCI_PRODUCT_INVERTEX_AEON,
 		{ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
