@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth.h,v 1.48 2003/11/04 08:54:09 djm Exp $	*/
+/*	$OpenBSD: auth.h,v 1.49 2004/01/30 09:48:57 markus Exp $	*/
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -52,6 +52,7 @@ struct Authctxt {
 	int		 valid;		/* user exists and is allowed to login */
 	int		 attempt;
 	int		 failures;
+	int		 force_pwchange;
 	char		*user;		/* username sent by the client */
 	char		*service;
 	struct passwd	*pw;		/* set if 'valid' */
