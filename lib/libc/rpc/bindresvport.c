@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: bindresvport.c,v 1.12 2000/01/24 02:24:21 deraadt Exp $";
+static char *rcsid = "$OpenBSD: bindresvport.c,v 1.13 2000/01/26 03:43:21 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -51,32 +51,36 @@ bindresvport(sd, sin)
 	int sd;
 	struct sockaddr_in *sin;
 {
-	if (sin)
-		return bindresvport_af(sd, (struct sockaddr *)sin, sin->sin_family);
-	return bindresvport_af(sd, NULL, AF_INET);
+	return bindresvport_sa(sd, (struct sockaddr *)sin);
 }
 
 /*
- * Bind a socket to a privileged IP port
+ * Bind a socket to a privileged port for whatever protocol.
  */
 int
-bindresvport_af(sd, sa, af)
+bindresvport_sa(sd, sa)
 	int sd;
 	struct sockaddr *sa;
-	int af;
 {
-	int old, error;
+	int old, error, af;
 	struct sockaddr_storage myaddr;
 	struct sockaddr_in *sin;
 	struct sockaddr_in6 *sin6;
 	int proto, portrange, portlow;
-	u_int16_t *portp;
+	u_int16_t port;
 	int salen;
 
 	if (sa == NULL) {
-		memset(&myaddr, 0, sizeof(myaddr));
+		salen = sizeof(myaddr);
 		sa = (struct sockaddr *)&myaddr;
-	}
+
+		if (getsockname(sd, sa, &salen) == -1)
+			return -1;	/* errno is correctly set */
+
+		af = sa->sa_family;
+		memset(&myaddr, 0, salen);
+	} else
+		af = sa->sa_family;
 
 	if (af == AF_INET) {
 		proto = IPPROTO_IP;
@@ -84,14 +88,14 @@ bindresvport_af(sd, sa, af)
 		portlow = IP_PORTRANGE_LOW;
 		sin = (struct sockaddr_in *)sa;
 		salen = sizeof(struct sockaddr_in);
-		portp = &sin->sin_port;
+		port = sin->sin_port;
 	} else if (af == AF_INET6) {
 		proto = IPPROTO_IPV6;
 		portrange = IPV6_PORTRANGE;
 		portlow = IPV6_PORTRANGE_LOW;
 		sin6 = (struct sockaddr_in6 *)sa;
 		salen = sizeof(struct sockaddr_in6);
-		portp = &sin6->sin6_port;
+		port = sin6->sin6_port;
 	} else {
 		errno = EPFNOSUPPORT;
 		return (-1);
@@ -99,22 +103,22 @@ bindresvport_af(sd, sa, af)
 	sa->sa_family = af;
 	sa->sa_len = salen;
 
-	if (*portp == 0) {
+	if (port == 0) {
 		int oldlen = sizeof(old);
 
 		error = getsockopt(sd, proto, portrange, &old, &oldlen);
 		if (error < 0)
-			return(error);
+			return (error);
 
 		error = setsockopt(sd, proto, portrange, &portlow,
 		    sizeof(portlow));
 		if (error < 0)
-			return(error);
+			return (error);
 	}
 
 	error = bind(sd, sa, salen);
 
-	if (*portp == 0) {
+	if (port == 0) {
 		int saved_errno = errno;
 
 		if (error) {

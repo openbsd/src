@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.h,v 1.36 2000/01/21 03:15:04 angelos Exp $	*/
+/*	$OpenBSD: in.h,v 1.37 2000/01/26 03:43:17 deraadt Exp $	*/
 /*	$NetBSD: in.h,v 1.20 1996/02/13 23:41:47 christos Exp $	*/
 
 /*
@@ -487,7 +487,7 @@ struct ip_mreq {
 __BEGIN_DECLS
 int	   bindresvport __P((int, struct sockaddr_in *));
 struct sockaddr;
-int	   bindresvport_af __P((int, struct sockaddr *, int af));
+int	   bindresvport_sa __P((int, struct sockaddr *));
 __END_DECLS
 
 #else
