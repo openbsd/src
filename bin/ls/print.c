@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.11 1999/05/01 23:54:48 deraadt Exp $	*/
+/*	$OpenBSD: print.c,v 1.12 2000/01/05 15:58:27 espie Exp $	*/
 /*	$NetBSD: print.c,v 1.15 1996/12/11 03:25:39 thorpej Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.5 (Berkeley) 7/28/94";
 #else
-static char rcsid[] = "$OpenBSD: print.c,v 1.11 1999/05/01 23:54:48 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: print.c,v 1.12 2000/01/05 15:58:27 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -68,6 +68,7 @@ static int	printaname __P((FTSENT *, u_long, u_long));
 static void	printlink __P((FTSENT *));
 static void	printtime __P((time_t));
 static int	printtype __P((u_int));
+static int	compute_columns __P((DISPLAY *, int *));
 
 #define	IS_NOPRINT(p)	((p)->fts_number == NO_PRINT)
 
@@ -136,11 +137,37 @@ printlong(dp)
 	}
 }
 
+static int
+compute_columns(dp, pnum)
+	DISPLAY *dp;
+	int	*pnum;
+{
+	int colwidth;
+	extern int termwidth;
+
+	colwidth = dp->maxlen;
+	if (f_inode)
+		colwidth += dp->s_inode + 1;
+	if (f_size)
+		colwidth += dp->s_block + 1;
+	if (f_type || f_typedir)
+		colwidth += 1;
+
+	colwidth += 1;
+
+	if (termwidth < 2 * colwidth) {
+		printscol(dp);
+		return (0);
+	}
+
+	*pnum = termwidth / colwidth;
+	return (termwidth / *pnum);		/* spread out if possible */
+}
+
 void
 printcol(dp)
 	DISPLAY *dp;
 {
-	extern int termwidth;
 	static FTSENT **array;
 	static int lastentries = -1;
 	FTSENT *p;
@@ -167,23 +194,9 @@ printcol(dp)
 		if (p->fts_number != NO_PRINT)
 			array[num++] = p;
 
-	colwidth = dp->maxlen;
-	if (f_inode)
-		colwidth += dp->s_inode + 1;
-	if (f_size)
-		colwidth += dp->s_block + 1;
-	if (f_type || f_typedir)
-		colwidth += 1;
-
-	colwidth += 1;
-
-	if (termwidth < 2 * colwidth) {
-		printscol(dp);
+	if ( (colwidth = compute_columns(dp, &numcols)) == 0)
 		return;
-	}
 
-	numcols = termwidth / colwidth;
-	colwidth = termwidth / numcols;		/* spread out if possible */
 	numrows = num / numcols;
 	if (num % numcols)
 		++numrows;
@@ -257,28 +270,12 @@ void
 printacol(dp)
 	DISPLAY *dp;
 {
-	extern int termwidth;
 	FTSENT *p;
 	int chcnt, col, colwidth;
 	int numcols;
 
-	colwidth = dp->maxlen;
-	if (f_inode)
-		colwidth += dp->s_inode + 1;
-	if (f_size)
-		colwidth += dp->s_block + 1;
-	if (f_type || f_typedir)
-		colwidth += 1;
-
-	colwidth += 1;
-
-	if (termwidth < 2 * colwidth) {
-		printscol(dp);
+	if ( (colwidth = compute_columns(dp, &numcols)) == 0)
 		return;
-	}
-
-	numcols = termwidth / colwidth;
-	colwidth = termwidth / numcols;		/* spread out if possible */
 
 	if (dp->list->fts_level != FTS_ROOTLEVEL && (f_longform || f_size))
 		(void)printf("total %llu\n",
