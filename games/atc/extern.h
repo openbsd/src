@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.2 1998/09/21 07:36:05 pjanzen Exp $	*/
+/*	$OpenBSD: extern.h,v 1.3 1999/09/01 00:27:07 pjanzen Exp $	*/
 /*	$NetBSD: extern.h,v 1.4 1995/04/27 21:22:22 mycroft Exp $	*/
 
 /*-
@@ -85,7 +85,6 @@ void		erase_all __P((void));
 int		getAChar __P((void));
 int		getcommand __P((void));
 int		gettoken __P((void));
-void		init_gr __P((void));
 void		ioaddstr __P((int, const char *));
 void		ioclrtobot __P((void));
 void		ioclrtoeol __P((int));

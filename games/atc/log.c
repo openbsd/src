@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.5 1998/09/21 07:36:06 pjanzen Exp $	*/
+/*	$OpenBSD: log.c,v 1.6 1999/09/01 00:27:08 pjanzen Exp $	*/
 /*	$NetBSD: log.c,v 1.3 1995/03/21 15:04:21 cgd Exp $	*/
 
 /*-
@@ -50,7 +50,7 @@
 #if 0
 static char sccsid[] = "@(#)log.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: log.c,v 1.5 1998/09/21 07:36:06 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: log.c,v 1.6 1999/09/01 00:27:08 pjanzen Exp $";
 #endif
 #endif not lint
 
@@ -65,8 +65,8 @@ compar(va, vb)
 {
 	const SCORE *a, *b;
 
-	a = (SCORE *)va;
-	b = (SCORE *)vb;
+	a = (const SCORE *)va;
+	b = (const SCORE *)vb;
 	if (b->planes == a->planes)
 		return (b->time - a->time);
 	else

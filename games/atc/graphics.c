@@ -1,4 +1,4 @@
-/*	$OpenBSD: graphics.c,v 1.3 1999/07/31 20:08:30 pjanzen Exp $	*/
+/*	$OpenBSD: graphics.c,v 1.4 1999/09/01 00:27:07 pjanzen Exp $	*/
 /*	$NetBSD: graphics.c,v 1.3 1995/03/21 15:04:04 cgd Exp $	*/
 
 /*-
@@ -50,7 +50,7 @@
 #if 0
 static char sccsid[] = "@(#)graphics.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: graphics.c,v 1.3 1999/07/31 20:08:30 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: graphics.c,v 1.4 1999/09/01 00:27:07 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -117,12 +117,20 @@ draw_all()
 }
 
 void
-init_gr()
+setup_screen(scp)
+	const C_SCREEN	*scp;
 {
 	static char	buffer[BUFSIZ];
+	int	i, j;
+	char	str[3];
+	const char *airstr;
 
 	initscr();
-	if (LINES < 24 || COLS < 80) {
+	/* size of screen depends on chosen game, but we need at least 80
+	 * columns for "Information area" to work. */
+	if (LINES < (INPUT_LINES + scp->height) ||
+	    COLS < (PLANE_COLS + 2 * scp->width) ||
+	    COLS < 80) {
 		endwin();
 		errx(1, "screen too small.");
 	}
@@ -131,15 +139,6 @@ init_gr()
 	credit = newwin(INPUT_LINES, PLANE_COLS, LINES - INPUT_LINES, 
 		COLS - PLANE_COLS);
 	planes = newwin(LINES - INPUT_LINES, PLANE_COLS, 0, COLS - PLANE_COLS);
-}
-
-void
-setup_screen(scp)
-	const C_SCREEN	*scp;
-{
-	register int	i, j;
-	char	str[3];
-	const char *airstr;
 
 	str[2] = '\0';
 

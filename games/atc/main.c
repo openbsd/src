@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.7 1998/09/21 07:36:06 pjanzen Exp $	*/
+/*	$OpenBSD: main.c,v 1.8 1999/09/01 00:27:08 pjanzen Exp $	*/
 /*	$NetBSD: main.c,v 1.4 1995/04/27 21:22:25 mycroft Exp $	*/
 
 /*-
@@ -56,7 +56,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.7 1998/09/21 07:36:06 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.8 1999/09/01 00:27:08 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -161,7 +161,6 @@ main(ac, av)
 	if (file == NULL || read_file(file) < 0)
 		exit(1);
 
-	init_gr();
 	setup_screen(sp);
 
 	addplane();
