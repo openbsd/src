@@ -1,4 +1,4 @@
-/*	$OpenBSD: dma_sbus.c,v 1.3 2001/08/20 19:48:33 jason Exp $	*/
+/*	$OpenBSD: dma_sbus.c,v 1.4 2001/08/21 05:45:43 jason Exp $	*/
 /*	$NetBSD: dma_sbus.c,v 1.5 2000/07/09 20:57:42 pk Exp $ */
 
 /*-
@@ -119,6 +119,10 @@ struct cfattach ledma_ca = {
 
 struct cfdriver ledma_cd = {
 	NULL, "ledma", DV_DULL
+};
+
+struct cfdriver dma_cd = {
+	NULL, "dma", DV_DULL
 };
 
 int
