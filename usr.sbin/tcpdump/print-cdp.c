@@ -1,4 +1,4 @@
-/*	$Id	*/
+/*	$OpenBSD: print-cdp.c,v 1.2 2001/05/30 23:22:46 mickey Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995, 1996, 1997
@@ -28,7 +28,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-cdp.c,v 1.1 2001/04/08 22:45:53 jakob Exp $";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-cdp.c,v 1.2 2001/05/30 23:22:46 mickey Exp $";
 #endif
 
 #include <sys/param.h>
@@ -45,8 +45,8 @@ static const char rcsid[] =
 #include "addrtoname.h"
 #include "extract.h"			/* must come after interface.h */
 
-static void cdp_print_addr( const u_char * p, int l );
-static void cdp_print_prefixes( const u_char * p, int l );
+void cdp_print_addr(const u_char * p, int l);
+void cdp_print_prefixes(const u_char * p, int l);
 
 /*
  * Returns non-zero IFF it succeeds in printing the header
@@ -60,83 +60,80 @@ cdp_print(const u_char *p, u_int length, u_int caplen,
 
 	/* Cisco Discovery Protocol */
 
-
-	if ( caplen < 12 ) {
-		(void)printf("[|cdp]");
+	if (caplen < 12) {
+		printf("[|cdp]");
 		return;
 	}
 
 	i=8;		/* CDP data starts at offset 8 */
-	printf ("CDP v%d, ttl=%ds", p[i], p[i+1] );
+	printf("CDP v%d, ttl=%ds", p[i], p[i+1]);
 	i+=4;		/* skip version, TTL and chksum */
 
 	while (i < length) {
-	    if ( i+4 > caplen ) {
-		printf("[!cdp]");
-		return;
-	    }
-	    type = (p[i]<<8) + p[i+1];
-	    len  = (p[i+2]<<8) + p[i+3];
+		if (i + 4 > caplen) {
+			printf("[!cdp]");
+			return;
+		}
 
-	    if ( vflag )
-		printf( "\n\t%02x/%02x", type, len );
-	    else
-		printf( "\n\t" );
+		type = (p[i]<<8) + p[i+1];
+		len  = (p[i+2]<<8) + p[i+3];
 
-	    if ( i+len > caplen ) {
-		printf("[!cdp]");
-		return;
-	    }
+		if (vflag)
+			printf(" %02x/%02x", type, len);
 
-	    switch( type )
-	    {
-	    case 0x01:
-		printf( " DevID '%.*s'", len-4, p+i+4 );
-		break;
-	    case 0x02:
-		printf( " Addr" );
-		cdp_print_addr( p+i+4, len-4 );
-		break;
-	    case 0x03:
-		printf( " PortID '%.*s'", len-4, p+i+4 );
-		break;
-	    case 0x04:
-		printf( " CAP 0x%02x", (unsigned) p[i+7] );
-		break;
-	    case 0x05:
-		if ( vflag )
-		    printf( " Version:\n%.*s", len-4, p+i+4 );
-		else
-		    printf( " Version: (suppressed)" );
-		break;
-	    case 0x06:
-		printf( " Platform: '%.*s'", len-4, p+i+4 );
-		break;
-	    case 0x07:
-	        cdp_print_prefixes( p+i+4, len-4 );
-		break;
-	    case 0x09:		/* guess - not documented */
-		printf( " VTP Management Domain: '%.*s'", len-4, p+i+4 );
-		break;
-	    case 0x0a:		/* guess - not documented */
-		printf( " Native VLAN ID: %d", (p[i+4]<<8) + p[i+4+1] - 1 );
-		break;
-	    case 0x0b:		/* guess - not documented */
-		printf( " Duplex: %s", p[i+4] ? "full": "half" );
-		break;
-	    default:
-		printf( " unknown field type %02x, len %d", type, len );
-	    }
+		if (i+len > caplen) {
+			printf("[!cdp]");
+			return;
+		}
 
-	    /* avoid infinite loop */
-	    if (len == 0)
-		break;
-	    i+=len;
+		switch(type) {
+		case 0x01:
+			printf(" DevID '%.*s'", len - 4, p + i + 4);
+			break;
+		case 0x02:
+			printf(" Addr");
+			cdp_print_addr(p + i + 4, len - 4);
+			break;
+		case 0x03:
+			printf(" PortID '%.*s'", len - 4, p + i + 4);
+			break;
+		case 0x04:
+			printf(" CAP 0x%02x", (unsigned) p[i+7]);
+			break;
+		case 0x05:
+			if (vflag)
+				printf(" Version %.*s", len-4, p+i+4 );
+			else
+				printf(" Version (suppressed)" );
+			break;
+		case 0x06:
+			printf(" Platform '%.*s'", len-4, p+i+4 );
+			break;
+		case 0x07:
+			cdp_print_prefixes(p+i+4, len-4);
+			break;
+		case 0x09:		/* guess - not documented */
+			printf(" VTP-Management-Domain '%.*s'", len-4, p+i+4 );
+			break;
+		case 0x0a:		/* guess - not documented */
+			printf(" Native-VLAN-ID %d", (p[i+4]<<8) + p[i+4+1] - 1 );
+			break;
+		case 0x0b:		/* guess - not documented */
+			printf(" Duplex %s", p[i+4] ? "full": "half" );
+			break;
+		default:
+			printf(" unknown-type %02x len %d", type, len );
+		}
+
+		/* avoid infinite loop */
+		if (len == 0)
+			break;
+		i += len;
 	}
 }
 
-static void
-cdp_print_addr( const u_char * p, int l )
+void
+cdp_print_addr(const u_char * p, int l)
 {
 	int pl, al, num;
 	const u_char * endp = p+l;
@@ -144,28 +141,27 @@ cdp_print_addr( const u_char * p, int l )
 	num = (p[0] << 24) + (p[1]<<16) + (p[2]<<8)+ p[3];
 	p+=4;
 
-	printf(" (%d): ", num );
+	printf(" (%d): ", num);
 
-	while( p < endp && num >= 0) {
+	while(p < endp && num >= 0) {
 		pl=*(p+1);
-		p+=2; 
+		p+=2;
 
 		/* special case: IPv4, protocol type=0xcc, addr. length=4 */
-		if ( pl == 1 && *p == 0xcc && 
-		     p[1] == 0 && p[2] == 4 ) {
+		if (pl == 1 && *p == 0xcc && p[1] == 0 && p[2] == 4) {
 			p+=3;
 
-			printf( "IPv4 %d.%d.%d.%d ", p[0], p[1], p[2], p[3] );
+			printf("IPv4 %d.%d.%d.%d ", p[0], p[1], p[2], p[3]);
 			p+=4;
 		} else {	/* generic case: just print raw data */
 			printf("pt=0x%02x, pl=%d, pb=", *(p-2), pl);
-			while( pl-- > 0 )
-				printf( " %02x", *p++);
+			while(pl-- > 0)
+				printf(" %02x", *p++);
 			al=(*p << 8) + *(p+1);
-			printf( ", al=%d, a=", al );
-			p+=2; 
-			while( al-- > 0 )
-				printf( " %02x", *p++);
+			printf(", al=%d, a=", al);
+			p+=2;
+			while(al-- > 0)
+				printf(" %02x", *p++);
 		}
 		printf("  ");
 		num--;
@@ -173,13 +169,13 @@ cdp_print_addr( const u_char * p, int l )
 }
 
 
-static void
-cdp_print_prefixes( const u_char * p, int l )
+void
+cdp_print_prefixes(const u_char * p, int l)
 {
-    printf( " IPv4 Prefixes (%d):", l/5 );
+	printf(" IPv4 Prefixes (%d):", l/5);
 
-    while(l > 0) {
-	printf( " %d.%d.%d.%d/%d", p[0], p[1], p[2], p[3], p[4] );
-	l-=5; p+=5;
-    }
+	while (l > 0) {
+		printf(" %d.%d.%d.%d/%d", p[0], p[1], p[2], p[3], p[4] );
+		l-=5; p+=5;
+	}
 }
