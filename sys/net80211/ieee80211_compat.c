@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_compat.c,v 1.2 2004/07/04 22:34:14 naddy Exp $	*/
+/*	$OpenBSD: ieee80211_compat.c,v 1.3 2004/10/04 16:01:46 mickey Exp $	*/
 /*	$NetBSD: ieee80211_compat.c,v 1.3 2003/09/23 15:57:25 dyoung Exp $	*/
 
 /*-
@@ -28,6 +28,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/param.h>
 #include <sys/socket.h>
 #include <sys/systm.h>
 #include <net/if.h>
