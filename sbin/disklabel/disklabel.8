@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disklabel.8,v 1.33 1999/10/09 21:05:57 angelos Exp $
+.\"	$OpenBSD: disklabel.8,v 1.34 1999/10/10 16:49:28 aaron Exp $
 .\"	$NetBSD: disklabel.8,v 1.9 1995/03/18 14:54:38 cgd Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
@@ -115,14 +115,15 @@
 .Ar disk Ar protofile
 .Oo Ar disktype Oc
 .Sh DESCRIPTION
+The
 .Nm
-can be used to install, examine, or modify the label on a disk drive or
-pack. The disk label is information about disk characteristics (size,
-type, etc.) and partition layout of the disk, stored on the disk
-itself. It is used by the operating system to optimize disk I/O, and
-to locate the filesystems resident on the disk.
+utility can be used to install, examine, or modify the label on a disk drive or
+pack. The disk label contains information about disk characteristics (size,
+type, etc.) and the partition layout, stored on the disk
+itself. It is used by the operating system to optimize disk I/O and
+locate the filesystems resident on the disk.
 .Pp
-The following options are available:
+The options are as follows:
 .Bl -tag -width -indent
 .It Fl n
 Make no permanent changes to the disklabel (useful for debugging
@@ -134,8 +135,8 @@ Causes the label to be read from or written to the disk directly,
 rather than going through the system's in-core copy of the label. This
 option may allow a label to be installed on a disk without kernel
 support for a label, such as when labels are first installed on a
-system. This flag does not work on a number of architecture, thus it is
-not considered the right wa to put a new label on a disk. Its use is
+system. This flag does not work on a number of architectures, thus it is
+not considered the right way to put a new label on a disk. Its use is
 discouraged.
 .It Fl B
 Install bootstrap code. The
