@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.98 2004/07/03 17:19:59 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.99 2004/07/04 03:37:03 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -233,6 +233,7 @@ main(int argc, char *argv[])
 
 	while ((la = TAILQ_FIRST(conf.listen_addrs)) != NULL) {
 		TAILQ_REMOVE(conf.listen_addrs, la, entry);
+		close(la->fd);
 		free(la);
 	}
 

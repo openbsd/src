@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.122 2004/07/03 17:19:59 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.123 2004/07/04 03:37:03 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -162,6 +162,7 @@ rde_main(struct bgpd_config *config, struct network_head *net_l,
 
 	while ((la = TAILQ_FIRST(config->listen_addrs)) != NULL) {
 		TAILQ_REMOVE(config->listen_addrs, la, entry);
+		close(la->fd);
 		free(la);
 	}
 	free(config->listen_addrs);
