@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ctime.3,v 1.17 2000/03/06 21:47:27 aaron Exp $
+.\"	$OpenBSD: ctime.3,v 1.18 2000/03/23 22:10:21 d Exp $
 .\"
 .\"
 .Dd February 16, 1999
@@ -6,10 +6,14 @@
 .Os
 .Sh NAME
 .Nm asctime ,
+.Nm asctime_r ,
 .Nm ctime ,
+.Nm ctime_r ,
 .Nm difftime ,
 .Nm gmtime ,
+.Nm gmtime_r ,
 .Nm localtime ,
+.Nm localtime_r ,
 .Nm mktime
 .Nd convert date and time to ASCII
 .Sh SYNOPSIS
@@ -20,14 +24,22 @@
 .Fn tzset "void"
 .Ft "char *"
 .Fn ctime "time_t *clock"
+.Ft "char *"
+.Fn ctime_r "time_t *clock" "char *buf"
 .Ft double
 .Fn difftime "time_t time1" "time_t time0"
 .Ft "char *"
 .Fn asctime "const struct tm *tm"
+.Ft "char *"
+.Fn asctime_r "const struct tm *tm" "char *buf"
 .Ft "struct tm *"
 .Fn localtime "const time_t *clock"
 .Ft "struct tm *"
+.Fn localtime_r "const time_t *clock" "struct tm *result"
+.Ft "struct tm *"
 .Fn gmtime "const time_t *clock"
+.Ft "struct tm *"
+.Fn gmtime_r "const time_t *clock" "struct tm *result"
 .Ft time_t
 .Fn mktime "struct tm *tm"
 .Sh DESCRIPTION
@@ -47,6 +59,23 @@ Thu Nov 24 18:22:48 1986\en\0
 .Ed
 .Pp
 All the fields have constant width.
+.Pp
+The
+.Fn ctime_r
+function converts the calendar time pointed to by
+.Fa clock
+to local time in exactly the same way as
+.Fn ctime
+and puts the string into the array pointed to by
+.Fa buf
+(which contains at least 26 bytes) and returns
+.Fa buf .
+Unlike
+.Fn ctime ,
+the thread-safe version
+.Fn ctime_r
+is not required to set
+.Fa tzname .
 .Pp
 The
 .Fn localtime
@@ -75,6 +104,24 @@ the return value of
 .Fn gmtime
 converts to Coordinated Universal Time.
 .Pp
+The
+.Fn localtime_r
+and
+.Fn gmtime_r
+functions convert the calendar time pointed to by
+.Fa clock
+into a broken-down time in exactly the same was as their non-reentrant
+counterparts,
+.Fn localtime
+and
+.Fn gmtime ,
+but instead store the result directly into the structure pointed to by
+.Fa result .
+Unlike
+.Fn localtime ,
+the reentrant version is not required to set
+.Fa tzname .
+.Pp
 .Fn asctime
 converts a time value contained in a
 .Li tm
@@ -82,6 +129,12 @@ structure to a 26-character string,
 as shown in the above example,
 and returns a pointer
 to the string.
+.Fn asctime_r
+uses the buffer pointed to by
+.Fa buf
+(which should contain at least 26 bytes) and then
+returns
+.Fa buf .
 .Pp
 .Fn mktime
 converts the broken-down time,
@@ -201,7 +254,9 @@ UTC leap seconds are loaded from
 .Xr tzset 3 ,
 .Xr tzfil 5
 .Sh NOTES
-The return values point to static data;
+The return values
+of the non re-entrant functions
+point to static data;
 the data is overwritten by each call.
 The
 .Fa tm_zone
