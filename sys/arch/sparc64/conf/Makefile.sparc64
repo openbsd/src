@@ -17,7 +17,8 @@ S!=	cd ../../../..; pwd
 SPARC64=	$S/arch/sparc64
 
 INCLUDES=	-nostdinc -I. -I$S/arch -I$S
-CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL -Dsparc64
+# XXX - remove the __OpenBSD__ later!
+CPPFLAGS=	-D__OpenBSD__ ${INCLUDES} ${IDENT} -D_KERNEL -Dsparc64
 
 CDIAGFLAGS=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \
 		-Wno-uninitialized -Wno-format -Wno-main
@@ -26,7 +27,7 @@ CMACHFLAGS=	-Wa,-Av9a, -mno-fpu
 
 CFLAGS=		${DEBUG} -O2 ${CDIAGFLAGS} ${CMACHFLAGS} ${COPTS}
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE -Wa,-Av9a
-LINKFLAGS=	-N -p -Ttext 01000000 -Tdata 01800000 -e start
+LINKFLAGS=	-n -Ttext 01000000 -Tdata 01800000 -e start
 STRIPFLAGS=	-d
 TOUCHFLAGS=	-f -c
 
