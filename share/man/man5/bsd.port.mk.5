@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.42 2001/08/02 14:05:11 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.43 2001/08/12 11:47:19 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -521,7 +521,7 @@ Base location where packages suitable for ftp (see
 PERMIT_PACKAGE_FTP) will be placed
 (default: ${PORTSDIR}/ftp-packages/${ARCH})
 .It Ev FULLPKGNAME
-Full name of the created package, taking flavors into account.
+Full name of the main created package, taking flavors into account.
 Defaults to ${PKGNAME}${FLAVOR_EXT}.
 .It Ev FULLPKGNAME-foo
 Full package name for sub-package foo, if the default value is not
@@ -745,9 +745,9 @@ Location for packaging information (packing list, port description, port
 short description).
 Default: pkg.${ARCH} or pkg.
 .It Ev PKGNAME
-Name of the created package.
+Name of the main created package.
 Default is ${DISTNAME} for the main package,
-and ${DISTNAME}${SUBPACKAGE} for multi-packages ports.
+and ${DISTNAME} for multi-packages ports.
 This does not take flavors into account.
 See
 .Ev FULLPKGNAME
@@ -1111,7 +1111,10 @@ does not give a specific name to the generated file.
 It is not recommended to try to access them directly.
 .It Ev PKGNAME
 Used to refer to the full package name, has been superseded by
-.Ev FULLPKGNAME .
+.Ev FULLPKGNAME-foo ,
+for 
+.Ev SUBPACKAGE
+-foo .
 .Ev PKGNAME
 now holds the package name, not taking multi-packages nor flavors
 into account.
@@ -1258,7 +1261,6 @@ in FLAVORS.
 .Pp
 In recursive package building, flavors can be specified as a comma
 separated list after the package directory, e.g., SUBDIR+=vim,no_x11.
-This is not yet supported for dependencies.
 .Pp
 Finally, packing information will use templates with the canonical package
 extension if they are available: if FLAVOR='option1 option2' and both
@@ -1269,26 +1271,32 @@ If a port can generate several useful packages, set MULTI_PACKAGES
 accordingly.
 Each extension of a MULTI_PACKAGES name should start with a dash, so that
 they cannot be confused with FLAVORS.
+In dependency checking and recursive builds, a subpackage can be 
+specified after a comma, e.g., SUBDIR+=quake,-server.
 MULTI_PACKAGES only affects the actual package building step (and the
 describe step, since a MULTI_PACKAGES port will produce several
 descriptions).
 .Pp
 If MULTI_PACKAGES is set, each element of MULTI_PACKAGES triggers a
-recursive make package, with SUBPACKAGE set to the right value.
+recursive make package, with SUBPACKAGE set to the right value, and
+PACKAGING defined.
 For instance, if MULTI_PACKAGES=-lib -server,
 make package will work as follows:
 .Pp
 .Bl -bullet -compact
 .It
-Run make package SUBPACKAGE=,
+Run make package SUBPACKAGE= PACKAGING=,
 .It
-Run make package SUBPACKAGE=-lib,
+Run make package SUBPACKAGE=-lib PACKAGING=-lib,
 .It
-Run make package SUBPACKAGE=-server,
+Run make package SUBPACKAGE=-server PACKAGING=-server,
 .El
 .Pp
 The port's Makefile can test the value of SUBPACKAGE to specialize
 processing for all sub packages.
+Note that SUBPACKAGE can also be set for dependency checking, so be 
+careful to also test PACKAGING: the build stage is shared among all
+subpackages, and tests often only make sense during the packaging stage.
 All packing information is derived from
 templates with SUBPACKAGE appended.
 In the preceding example, the packing-list template for pkgname-foo
@@ -1362,11 +1370,22 @@ to register directories that hold dynamic libraries (see
 .Xr ldconfig 8 ).
 .Li "NEWDYNLIBDIR"
 is meant for directories that will go away when the package is deleted.
+If possible, it should not be used, because users also have to edit 
+.Pa rc.conf
+to add the directory. 
+It is usually better to also let libraries be visible as a link 
+under ${LOCALBASE}.
+Having a separate directory is enough to trick
+.Xr ld 1
+into grabbing the right version.
+Note that libraries used only for 
+.Xr dlopen 3
+do not need NEWDYNLIDIR.
 .Pp
 The special
 .Ar plist
-target does a fairly good job of automatically generating PLIST-auto and
-PFRAG.shared-auto fragments.
+target does a fairly good job of automatically generating PLIST and
+PFRAG.shared fragments.
 .Pp
 In MULTI_PACKAGES mode, there must be separate COMMENT, DESCR, and PLIST
 templates for each SUBPACKAGE (and optional distinct MESSAGE, REQ, INSTALL,
@@ -1393,7 +1412,7 @@ A lot of additions were taken from
 .Nx
 over the years.
 .Pp
-When the file grew too large, Marc Espie cleaned it up to restore some of
+When the file grew too large, it was cleaned up to restore some of
 its speed and remove a lot of bugs.
 .Pp
 FLAVORS, MULTI_PACKAGES and FAKE are
@@ -1401,7 +1420,6 @@ FLAVORS, MULTI_PACKAGES and FAKE are
 improvements.
 .\" Voluntarily undocumented:
 .\" AUTOCONF_ENV: probably not needed anyway, should be internal.
-.\" HAVE_MOTIF, REQUIRE_MOTIF: need to revisit what these should mean.
 .\"
 .\" Todo: OBJMACHINE
 .Sh SEE ALSO
