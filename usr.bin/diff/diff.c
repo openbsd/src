@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.10 2003/06/25 22:22:34 millert Exp $	*/
+/*	$OpenBSD: diff.c,v 1.11 2003/06/25 23:04:53 millert Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -214,10 +214,10 @@ __dead void
 usage(void)
 {
 	(void)fprintf(stderr, "usage: diff [-bitw] [-c | -e | -f | -h | -n | -u ] file1 file2\n"
-	    "       diff [-bitw] -Cnumber file1 file2\n"
-	    "       diff [-bitw] -Dstring file1 file2\n"
-	    "       diff [-bitw] -Unumber file1 file2\n"
-	    "       diff [-biwt] [-c | -e | -f | -h | -n | -u ] [-l] [-r] [-s] [-Sname]\n            dir1 dir2\n");
+	    "       diff [-bitw] -C number file1 file2\n"
+	    "       diff [-bitw] -D string file1 file2\n"
+	    "       diff [-bitw] -U number file1 file2\n"
+	    "       diff [-biwt] [-c | -e | -f | -h | -n | -u ] [-l] [-r] [-s] [-S name]\n            dir1 dir2\n");
 
 	exit(1);
 }
