@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ipwreg.h,v 1.12 2005/03/12 13:23:30 damien Exp $	*/
+/*	$OpenBSD: if_ipwreg.h,v 1.13 2005/03/12 13:31:26 damien Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005
@@ -118,7 +118,7 @@ struct ipw_firmware_hdr {
 	u_int32_t	version;
 	u_int32_t	main_size;	/* firmware size */
 	u_int32_t	ucode_size;	/* microcode size */
-} __attribute__((__packed__));
+} __packed;
 
 /* buffer descriptor */
 struct ipw_bd {
@@ -132,7 +132,7 @@ struct ipw_bd {
 #define IPW_BD_FLAG_TX_LAST_FRAGMENT		0x08
 	u_int8_t	nfrag;	/* number of fragments */
 	u_int8_t	reserved[6];
-} __attribute__((__packed__));
+} __packed;
 
 /* status */
 struct ipw_status {
@@ -147,7 +147,7 @@ struct ipw_status {
 #define IPW_STATUS_FLAG_DECRYPTED	0x01
 #define IPW_STATUS_FLAG_WEP_ENCRYPTED	0x02
 	u_int8_t	rssi;	/* received signal strength indicator */
-} __attribute__((__packed__));
+} __packed;
 
 /* data header */
 struct ipw_hdr {
@@ -163,7 +163,7 @@ struct ipw_hdr {
 	u_int8_t	src_addr[IEEE80211_ADDR_LEN];
 	u_int8_t	dst_addr[IEEE80211_ADDR_LEN];
 	u_int16_t	fragmentsz;
-} __attribute__((__packed__));
+} __packed;
 
 /* command */
 struct ipw_cmd {
@@ -199,7 +199,7 @@ struct ipw_cmd {
 	u_int8_t	data[400];
 	u_int32_t	status;
 	u_int8_t	reserved[68];
-} __attribute__((__packed__));
+} __packed;
 
 /* possible values for command IPW_CMD_SET_POWER_MODE */
 #define IPW_POWER_MODE_CAM	0
@@ -218,7 +218,7 @@ struct ipw_wep_key {
 	u_int8_t	idx;
 	u_int8_t	len;
 	u_int8_t	key[13];
-} __attribute__((__packed__));
+} __packed;
 
 /* structure for command IPW_CMD_SET_SECURITY_INFORMATION */
 struct ipw_security {
@@ -231,7 +231,7 @@ struct ipw_security {
 #define IPW_AUTH_OPEN	0
 #define IPW_AUTH_SHARED	1
 	u_int16_t	reserved2;
-} __attribute__((__packed__));
+} __packed;
 
 /* structure for command IPW_CMD_SET_SCAN_OPTIONS */
 struct ipw_scan_options {
@@ -239,7 +239,7 @@ struct ipw_scan_options {
 #define IPW_SCAN_DO_NOT_ASSOCIATE	0x00000001
 #define IPW_SCAN_PASSIVE		0x00000008
 	u_int32_t	channels;
-} __attribute__((__packed__));
+} __packed;
 
 /* structure for command IPW_CMD_SET_CONFIGURATION */
 struct ipw_configuration {
@@ -252,7 +252,7 @@ struct ipw_configuration {
 #define IPW_CFG_IBSS_MASK	0x00010000
 	u_int32_t	bss_chan;
 	u_int32_t	ibss_chan;
-} __attribute__((__packed__));
+} __packed;
 
 /* EEPROM = Electrically Erasable Programmable Read-Only Memory */
 

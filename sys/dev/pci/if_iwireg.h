@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwireg.h,v 1.11 2005/01/09 16:47:50 damien Exp $	*/
+/*	$OpenBSD: if_iwireg.h,v 1.12 2005/03/12 13:31:26 damien Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005
@@ -129,7 +129,7 @@
 struct iwi_firmware_hdr {
 	u_int32_t	version;
 	u_int32_t	mode;
-} __attribute__((__packed__));
+} __packed;
 
 struct iwi_hdr {
 	u_int8_t	type;
@@ -141,7 +141,7 @@ struct iwi_hdr {
 	u_int8_t	flags;
 #define IWI_HDR_FLAG_IRQ	0x04
 	u_int8_t	reserved;
-} __attribute__((__packed__));
+} __packed;
 
 struct iwi_notif {
 	u_int32_t	reserved[2];
@@ -155,14 +155,14 @@ struct iwi_notif {
 #define IWI_NOTIF_TYPE_NOISE		25
 	u_int8_t	flags;
 	u_int16_t	len;
-} __attribute__((__packed__));
+} __packed;
 
 /* structure for notification IWI_NOTIF_TYPE_AUTHENTICATION */
 struct iwi_notif_authentication {
 	u_int8_t	state;
 #define IWI_DEAUTHENTICATED	0
 #define IWI_AUTHENTICATED	9
-} __attribute__((__packed__));
+} __packed;
 
 /* structure for notification IWI_NOTIF_TYPE_ASSOCIATION */
 struct iwi_notif_association {
@@ -173,13 +173,13 @@ struct iwi_notif_association {
 	u_int16_t		capinfo;
 	u_int16_t		status;
 	u_int16_t		associd;
-} __attribute__((__packed__));
+} __packed;
 
 /* structure for notification IWI_NOTIF_TYPE_SCAN_CHANNEL */
 struct iwi_notif_scan_channel {
 	u_int8_t	nchan;
 	u_int8_t	reserved[47];
-} __attribute__((__packed__));
+} __packed;
 
 /* structure for notification IWI_NOTIF_TYPE_SCAN_COMPLETE */
 struct iwi_notif_scan_complete {
@@ -187,7 +187,7 @@ struct iwi_notif_scan_complete {
 	u_int8_t	nchan;
 	u_int8_t	status;
 	u_int8_t	reserved;
-} __attribute__((__packed__));
+} __packed;
 
 /* received frame header */
 struct iwi_frame {
@@ -204,7 +204,7 @@ struct iwi_frame {
 	u_int8_t	control;
 	u_int8_t	reserved2[2];
 	u_int16_t	len;
-} __attribute__((__packed__));
+} __packed;
 
 /* header for transmission */
 struct iwi_tx_desc {
@@ -233,7 +233,7 @@ struct iwi_tx_desc {
 #define IWI_MAX_NSEG	6
 	u_int32_t	seg_addr[IWI_MAX_NSEG];
 	u_int16_t	seg_len[IWI_MAX_NSEG];
-} __attribute__((__packed__));
+} __packed;
 
 /* command */
 struct iwi_cmd_desc {
@@ -256,7 +256,7 @@ struct iwi_cmd_desc {
 	u_int8_t	len;
 	u_int16_t	reserved;
 	u_int8_t	data[120];
-} __attribute__((__packed__));
+} __packed;
 
 /* constants for 'mode' fields */
 #define IWI_MODE_11A	0
@@ -278,7 +278,7 @@ struct iwi_rateset {
 #define IWI_RATESET_TYPE_SUPPORTED	1
 	u_int8_t	reserved;
 	u_int8_t	rates[12];
-} __attribute__((__packed__));
+} __packed;
 
 /* structure for command IWI_CMD_SET_TX_POWER */
 struct iwi_txpower {
@@ -289,8 +289,8 @@ struct iwi_txpower {
 		u_int8_t	power;
 #define IWI_TXPOWER_MAX		20
 #define IWI_TXPOWER_RATIO	(IEEE80211_TXPOWER_MAX / IWI_TXPOWER_MAX)
-	} __attribute__((__packed__)) chan[37];
-} __attribute__((__packed__));
+	} __packed chan[37];
+} __packed;
 
 /* structure for command IWI_CMD_ASSOCIATE */
 struct iwi_associate {
@@ -312,7 +312,7 @@ struct iwi_associate {
 	u_int8_t	dst[IEEE80211_ADDR_LEN];
 	u_int32_t	reserved3;
 	u_int16_t	reserved4;
-} __attribute__((__packed__));
+} __packed;
 
 /* structure for command IWI_CMD_SCAN */
 struct iwi_scan {
@@ -323,7 +323,7 @@ struct iwi_scan {
 #define IWI_CHAN_5GHZ	(0 << 6)
 #define IWI_CHAN_2GHZ	(1 << 6)
 	u_int8_t	reserved[3];
-} __attribute__((__packed__));
+} __packed;
 
 /* structure for command IWI_CMD_SET_CONFIGURATION */
 struct iwi_configuration {
@@ -347,7 +347,7 @@ struct iwi_configuration {
 	u_int8_t	allow_mgt;
 	u_int8_t	noise_reported;
 	u_int8_t	reserved5;
-} __attribute__((__packed__));
+} __packed;
 
 /* structure for command IWI_CMD_SET_WEP_KEY */
 struct iwi_wep_key {
@@ -357,7 +357,7 @@ struct iwi_wep_key {
 	u_int8_t	idx;
 	u_int8_t	len;
 	u_int8_t	key[IEEE80211_KEYBUF_SIZE];
-} __attribute__((__packed__));
+} __packed;
 
 /* EEPROM = Electrically Erasable Programmable Read-Only Memory */
 
