@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.9 2000/07/11 12:28:30 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.10 2000/07/11 13:00:48 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -667,6 +667,7 @@ If no do-install override is present, the port is installed using
     PREFIX=${WRKINST}${PREFIX} DESTDIR=${WRKINST} TRUEPREFIX=${PREFIX}
     ${MAKE_PROGRAM} ${FAKE_FLAGS} -f ${MAKE_FILE} ${FAKE_TARGET}
 .Ed
+.Pp
 Note that this does set both PREFIX and DESTDIR. If a port's Makefile both
 heeds DESTDIR, and references PREFIX explicitly, FAKE_FLAGS may rectify
 the problem by setting PREFIX=${PREFIX}
@@ -687,7 +688,74 @@ to ensure that the right values are passed down to submakes.
 .Sh FLAVORS AND MULTI_PACKAGES
 Starting with
 .Ox 2.7 ,
-each port can generate several packages through two orthogonal mechanims.
+each port can generate several packages through two orthogonal mechanims:
+FLAVORS and MULTI_PACKAGES.
+.Pp
+If a port can be compiled with several options, set FLAVORS to the list of
+possible options in the Makefile.
+When building the port, set
+.Li "FLAVOR='option1 option2...'"
+to build a specific flavor of the port. The Makefile should test the value
+of FLAVOR as follows:
+.Bd -literal
+    FLAVOR?=
+    .if ${FLAVOR:L:Moption1}
+    # what to do if option1
+    .endif
+    .if ${FLAVOR:L:Moption2}
+    # what to do if option2
+    .endif
+.Ed
+.Pp
+.Pa bsd.port.mk
+takes care of a few details, such as generating a distinct work directory for
+each flavor, or adding a dash separated list of options to the package
+name.
+The order in which FLAVOR is specified does not matter: the generated list,
+called the canonical package extension, matches the ordering of FLAVORS.
+Also, it is an error to specify an option in FLAVOR that does not appear
+in FLAVORS.
+.Pp
+In recursive package building, flavors can be specified as a comma
+separated list after the package directory, e.g., SUBDIR+=vim,no_x11.
+This is not yet supported for dependencies.
+.Pp
+Finally, packing information will use templates with the canonical package
+extension if they are available: if FLAVOR='option1 option2' and both
+DESCR and DESCR-option1-option2 are available, DESCR-option1-option2 will
+be used.
+.Pp
+If a port can generate several useful packages, set MULTI_PACKAGES
+accordingly.
+Each extension of a MULTI_PACKAGES name should start with a dash, so that
+they cannot be confused with FLAVORS.
+MULTI_PACKAGES only affects the actual package building step (and the
+describe step, since a MULTI_PACKAGES port will produce several
+descriptions).
+.Pp
+Apart from the main package, created by default, each element of
+MULTI_PACKAGES triggers a recursive make package, with SUBPACKAGE set to the
+right value.
+For instance, if MULTI_PACKAGES=-lib -server,
+make package will work as follows:
+.Bl -bullet -compact
+.It
+Run make package SUBPACKAGE=-lib,
+.It
+Run make package SUBPACKAGE=-server,
+.It
+Build the main package, by running make package SUBPACKAGE=''
+.El
+.Pp
+The port's Makefile can test the value of SUBPACKAGE to specialize
+processing for all sub packages. All packing information is derived from
+templates with SUBPACKAGE appended. In the preceding example, the
+packing-list template for pkgname-foo must be in PLIST-foo.
+.Pp
+It is currently not possible to have a subpackage depend on the main
+package, except by inserting an explicit
+.Li "@pkgdep"
+command into the packing-list.
 .Sh THE GENERATION OF PACKING INFORMATION
 Starting after
 .Ox 2.7
@@ -761,12 +829,6 @@ The special
 .Ar plist
 target does a fairly good job of automatically generating PLIST-auto and
 PFRAG.shared-auto fragments.
-.Pp
-In MULTI_PACKAGES mode, there is a main package that is built after several
-SUBPACKAGEs: make package is invoked recursively, after setting SUBPACKAGE
-to the right value. All SUBPACKAGEs should start with a dash, e.g.,
-.Sq -lib
-is a correct name.
 .Pp
 In MULTI_PACKAGES mode, there must be separate COMMENT, DESCR, and PLIST
 templates for each SUBPACKAGE (and optional distinct MESSAGE, REQ, INSTALL,
