@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.121 2003/12/17 15:35:40 miod Exp $	*/
+/*	$OpenBSD: locore.S,v 1.122 2004/03/09 04:43:55 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -2226,21 +2226,16 @@ LEAF_ENTRY(fpu_save)
 	fstds,ma %fr29, 8(arg0)
 	fstds,ma %fr30, 8(arg0)
 	fstds    %fr31, 0(arg0)
-	fdc	r0(arg0)
-	ldo	-56(arg0), arg0
-	fdc	r0(arg0)
-	ldo	-32(arg0), arg0
-	fdc	r0(arg0)
-	ldo	-32(arg0), arg0
-	fdc	r0(arg0)
-	ldo	-32(arg0), arg0
-	fdc	r0(arg0)
-	ldo	-32(arg0), arg0
-	fdc	r0(arg0)
-	ldo	-32(arg0), arg0
-	fdc	r0(arg0)
-	ldo	-32(arg0), arg0
-	fdc	r0(arg0)
+	ldo	-24(arg0), arg0
+	ldi	-32, r25	/* gotta be free for all callers */
+	fdc,m	r25(arg0)
+	fdc,m	r25(arg0)
+	fdc,m	r25(arg0)
+	fdc,m	r25(arg0)
+	fdc,m	r25(arg0)
+	fdc,m	r25(arg0)
+	fdc,m	r25(arg0)
+	fdc,m	r25(arg0)
 	bv	r0(rp)
 	sync
 EXIT(fpu_save)
@@ -2311,21 +2306,16 @@ ENTRY($fpu_emulate,320)
 	nop
 
 	mfctl	cr30, arg0
+	ldi	32, r1
+	fdc,m	r1(arg0)
+	fdc,m	r1(arg0)
+	fdc,m	r1(arg0)
+	fdc,m	r1(arg0)
+	fdc,m	r1(arg0)
+	fdc,m	r1(arg0)
+	fdc,m	r1(arg0)
 	fdc	r0(arg0)
-	ldo	32(arg0), arg0
-	fdc	r0(arg0)
-	ldo	32(arg0), arg0
-	fdc	r0(arg0)
-	ldo	32(arg0), arg0
-	fdc	r0(arg0)
-	ldo	32(arg0), arg0
-	fdc	r0(arg0)
-	ldo	32(arg0), arg0
-	fdc	r0(arg0)
-	ldo	32(arg0), arg0
-	fdc	r0(arg0)
-	ldo	32(arg0), arg0
-	fdc	r0(arg0)
+	sync
 
 	ldil	L%fpemu_stack, r31
 	ldw	R%fpemu_stack(r31), r31
