@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.253 2000/05/01 19:33:39 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.254 2000/05/03 05:00:05 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -2257,6 +2257,18 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Intel",
 	    "82802AC Firmware Hub 8Mbit",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82451NX,
+	    0,
+	    "Intel",
+	    "82451NX Mem & IO",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82454NX,
+	    0,
+	    "Intel",
+	    "82454NX PCI Bridge",
 	},
 	{
 	    PCI_VENDOR_INTERGRAPH, PCI_PRODUCT_INTERGRAPH_4D50T,
