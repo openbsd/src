@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.109 2003/07/15 18:15:41 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.110 2003/08/05 02:04:58 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -1895,23 +1895,23 @@ ENTRY(TLABEL(intr),0)
 	ldil	L%intr_table, r1
 	ldo	R%intr_table(r1), r1
 $intr_ffs
-	addi	16, r1, r1
+	addi	32, r1, r1
 	bb,>=	r8, 31, $intr_ffs
 	shd	r0, r8, 1, r8
 
-	ldb	2-16(r1), r17
-	ldw	4-16(r1), r9
+	ldb	2-32(r1), r17
+	ldw	4-32(r1), r9
 	subi,<>	1, r17, r0
 	bv,n	r0(r9)
 	nop
 
 	mfctl	sar, r25
-	ldb	1-16(r1), r9
+	ldb	1-32(r1), r9
 	mtsar	r9
 	vdepi	1, 1, r24
 	mtsar	r25
 
-	ldb	0-16(r1), r9
+	ldb	0-32(r1), r9
 	ldil	L%intrcnt, r25
 	ldo	R%intrcnt(r25), r25
 	sh2add	r9, r25, r25
@@ -1942,23 +1942,29 @@ EXIT(TLABEL(intr))
 	.export	gsc_intr, entry
 LEAF_ENTRY(gsc_intr)
 
-	ldw	8-16(r1), r9	/* arg: ioreg */
+	ldw	8-32(r1), r9	/* arg: ioreg */
 	mtctl	r1, tr7
 	ldw	0(r9), r16	/* irr */
 
-	ldw	12-16(r1), r1	/* next: sub-intr_table */
+	ldw	12-32(r1), r1	/* next: sub-intr_table */
+
+$gsc_intr_loop
+	comb,=,n r0, r16, $intr_cont
+	mfctl	tr7, r1
 $gsc_ffs
-	addi	16, r1, r1
+	addi	32, r1, r1
 	bb,>=	r16, 31, $gsc_ffs
 	shd	r0, r16, 1, r16
 
+	copy	r1, r9
+$gsc_share
 	mfctl	sar, r25
-	ldb	1-16(r1), r17
+	ldb	1-32(r1), r17
 	mtsar	r17
 	vdepi	1, 1, r24
 	mtsar	r25
 
-	ldb	0-16(r1), r17
+	ldb	0-32(r1), r17
 	ldil	L%intrcnt, r25
 	ldo	R%intrcnt(r25), r25
 	sh2add	r17, r25, r25
@@ -1966,11 +1972,12 @@ $gsc_ffs
 	addi	1, r17, r17
 	stw	r17, 0(r25)
 
-	comb,<>	r0, r16, $gsc_ffs
-	nop
+	ldw	16-32(r1), r17
+	comb,<>,n r0, r17, $gsc_share
+	ldo	32(r17), r1
 
-	b	$intr_cont
-	mfctl	tr7, r1
+	b	$gsc_intr_loop
+	copy	r9, r1
 EXIT(gsc_intr)
 
 	.export	TLABEL(ibrk), entry

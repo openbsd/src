@@ -1,4 +1,4 @@
-/*	$OpenBSD: gsckbc.c,v 1.5 2003/05/25 16:32:59 mickey Exp $	*/
+/*	$OpenBSD: gsckbc.c,v 1.6 2003/08/05 02:04:57 mickey Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -99,8 +99,6 @@ struct	gsckbc_softc {
 	int sc_irq;
 	void *sc_ih;
 	int sc_type;
-
-	struct device *sc_sibling;
 };
 
 struct cfattach gsckbc_ca = {
@@ -158,7 +156,7 @@ void pckbc_cleanqueue(struct pckbc_slotdata *);
 void pckbc_cleanup(void *);
 int pckbc_cmdresponse(struct pckbc_internal *, pckbc_slot_t, u_char);
 void pckbc_start(struct pckbc_internal *, pckbc_slot_t);
-int gsckbcintr(struct gsckbc_softc *);
+int gsckbcintr(void *);
 
 const char *pckbc_slot_names[] = { "kbd", "mouse" };
 
@@ -367,10 +365,9 @@ gsckbc_attach(struct device *parent, struct device *self, void *aux)
 	struct gsckbc_softc *gsc = (void *)self;
 	struct pckbc_softc *sc = &gsc->sc_pckbc;
 	struct pckbc_internal *t;
-	struct device *tdev;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
-	int ident, dev;
+	int ident;
 
 	iot = ga->ga_ca.ca_iot;
 	gsc->sc_irq = ga->ga_ca.ca_irq;
@@ -391,6 +388,8 @@ gsckbc_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
+	printf("\n");
+
 	sc->intr_establish = gsckbc_intr_establish;
 
 	t = malloc(sizeof(struct pckbc_internal), M_DEVBUF, M_WAITOK);
@@ -402,37 +401,6 @@ gsckbc_attach(struct device *parent, struct device *self, void *aux)
 	t->t_sc = sc;
 	timeout_set(&t->t_cleanup, pckbc_cleanup, t);
 	sc->id = t;
-
-	/*
-	 * Several gsckbc attachments might share the same interrupt.
-	 * Try to find existing gsckbc devices, and associate them
-	 * together. We do not expect more than two gsckbc devices to
-	 * share an interrupt.
-	 */
-	for (dev = 0; dev < gsckbc_cd.cd_ndevs; dev++) {
-		tdev = gsckbc_cd.cd_devs[dev];
-		if (tdev != NULL && tdev != self &&
-		    tdev->dv_parent == parent &&
-		    strcmp(tdev->dv_cfdata->cf_driver->cd_name,
-		      gsckbc_cd.cd_name) == 0) {
-			struct gsckbc_softc *alter = (void *)tdev;
-			if (alter->sc_irq == gsc->sc_irq) {
-#ifdef PCKBCDEBUG
-				if (alter->sc_sibling != NULL) {
-					printf(": more than two ps/2 ports"
-					    " sharing the same interrupt???\n");
-					bus_space_unmap(iot, ioh, KBMAPSIZE);
-					return;
-				}
-#endif
-				gsc->sc_sibling = (void *)alter;
-				alter->sc_sibling = self;
-				printf(" (shared with %s)", tdev->dv_xname);
-			}
-		}
-	}
-
-	printf("\n");
 
 	/*
 	 * Reset port and probe device, if plugged
@@ -461,7 +429,7 @@ gsckbc_intr_establish(struct pckbc_softc *sc, pckbc_slot_t slot)
 
 	gsc->sc_ih = gsc_intr_establish(
 	    (struct gsc_softc *)sc->sc_dv.dv_parent,
-	    IPL_TTY, gsc->sc_irq, pckbcintr, sc, &sc->sc_dv);
+	    IPL_TTY, gsc->sc_irq, gsckbcintr, sc, &sc->sc_dv);
 }
 
 /*
@@ -654,7 +622,7 @@ pckbc_set_poll(self, slot, on)
                  */
 		if (t->t_sc) {
 			s = spltty();
-			pckbcintr(t->t_sc);
+			gsckbcintr(t->t_sc);
 			splx(s);
 		}
 	}
@@ -1012,8 +980,9 @@ pckbc_set_inputhandler(self, slot, func, arg, name)
 }
 
 int
-gsckbcintr(struct gsckbc_softc *gsc)
+gsckbcintr(void *v)
 {
+	struct gsckbc_softc *gsc = v;
 	struct pckbc_softc *sc = (struct pckbc_softc *)gsc;
 	struct pckbc_internal *t = sc->id;
 	pckbc_slot_t slot;
@@ -1054,23 +1023,4 @@ gsckbcintr(struct gsckbc_softc *gsc)
 	}
 
 	return (served);
-}
-
-int
-pckbcintr(void *vsc)
-{
-	struct gsckbc_softc *gsc = vsc;
-	int claimed;
-
-	claimed = gsckbcintr(gsc);
-
-	/*
-	 * We also need to handle interrupts for the associated slot device,
-	 * if any
-	 */
-	gsc = (struct gsckbc_softc *)gsc->sc_sibling;
-	if (gsc != NULL)
-		claimed |= gsckbcintr(gsc);
-
-	return (claimed);
 }

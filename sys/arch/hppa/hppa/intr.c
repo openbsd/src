@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.9 2003/06/23 18:24:32 mickey Exp $	*/
+/*	$OpenBSD: intr.c,v 1.10 2003/08/05 02:04:58 mickey Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -55,18 +55,26 @@ struct hppa_iv {
 	int (*handler)(void *);
 	void *arg;
 	struct hppa_iv *next;
+	struct hppa_iv *share;
+	int pad2[3];
 } __attribute__((__packed__));
 
 register_t kpsw = PSL_Q | PSL_P | PSL_C | PSL_D;
 volatile int cpl = IPL_NESTED;
-volatile u_long ipending, imask[NIPL];
 u_long cpu_mask;
-struct hppa_iv *intr_list, intr_store[8*CPU_NINTS], *intr_more = intr_store;
+struct hppa_iv *intr_list, intr_store[8*2*CPU_NINTS], *intr_more = intr_store;
 struct hppa_iv intr_table[CPU_NINTS] = {
 	{ IPL_SOFTCLOCK, 0, HPPA_IV_SOFT, 0, (int (*)(void *))&softclock },
 	{ IPL_SOFTNET  , 0, HPPA_IV_SOFT, 0, (int (*)(void *))&softnet },
 	{ 0 }, { 0 },
 	{ IPL_SOFTTTY  , 0, HPPA_IV_SOFT, 0, (int (*)(void *))&softtty }
+};
+volatile u_long ipending, imask[NIPL] = {
+	0,
+	1 << (IPL_SOFTCLOCK - 1),
+	1 << (IPL_SOFTNET - 1),
+	0, 0,
+	1 << (IPL_SOFTTTY - 1)
 };
 
 #ifdef DIAGNOSTIC
@@ -101,21 +109,21 @@ void
 cpu_intr_init(void)
 {
 	u_long mask = cpu_mask | SOFTINT_MASK;
-	int level;
+	struct hppa_iv *iv;
+	int level, bit;
 
 	/* map the shared ints */
 	while (intr_list) {
-		struct hppa_iv *iv = intr_list;
-		int bit = ffs(imask[(int)iv->pri]);
+		iv = intr_list;
 		intr_list = iv->next;
-
+		bit = ffs(imask[(int)iv->pri]);
 		if (!bit--) {
 			bit = ffs(~mask);
 			if (!bit--)
 				panic("cpu_intr_init: out of bits");
 
-			iv->next = NULL;
 			iv->bit = 31 - bit;
+			iv->next = NULL;
 			intr_table[bit] = *iv;
 			mask |= (1 << bit);
 			imask[(int)iv->pri] |= (1 << bit);
@@ -125,11 +133,6 @@ cpu_intr_init(void)
 			intr_table[bit].next = iv;
 		}
 	}
-
-	/* match the init for intr_table */
-	imask[IPL_SOFTCLOCK] = 1 << (IPL_SOFTCLOCK - 1);
-	imask[IPL_SOFTNET  ] = 1 << (IPL_SOFTNET - 1);
-	imask[IPL_SOFTTTY  ] = 1 << (IPL_SOFTTTY - 1);
 
 	for (level = 0; level < NIPL - 1; level++)
 		imask[level + 1] |= imask[level];
@@ -157,10 +160,21 @@ cpu_intr_map(void *v, int pri, int irq, int (*handler)(void *), void *arg,
 {
 	struct hppa_iv *iv, *pv = v, *ivb = pv->next;
 
-	if (irq < 0 || irq >= CPU_NINTS || ivb[irq].handler)
+	if (irq < 0 || irq >= CPU_NINTS)
 		return (NULL);
 
 	iv = &ivb[irq];
+	if (iv->handler) {
+		if (!pv->share)
+			return (NULL);
+		else {
+			iv = pv->share;
+			pv->share = iv->share;
+			iv->share = ivb[irq].share;
+			ivb[irq].share = iv;
+		}
+	}
+
 	iv->pri = pri;
 	iv->bit = irq;
 	iv->flags = 0;
@@ -176,7 +190,7 @@ void *
 cpu_intr_establish(int pri, int irq, int (*handler)(void *), void *arg,
     struct device *dv)
 {
-	struct hppa_iv *iv;
+	struct hppa_iv *iv, *ev;
 
 	if (irq < 0 || irq >= CPU_NINTS || intr_table[irq].handler)
 		return (NULL);
@@ -190,13 +204,16 @@ cpu_intr_establish(int pri, int irq, int (*handler)(void *), void *arg,
 	iv->flags = 0;
 	iv->handler = handler;
 	iv->arg = arg;
+	iv->next = NULL;
+	iv->share = NULL;
 
 	if (pri == IPL_NESTED) {
 		iv->flags = HPPA_IV_CALL;
 		iv->next = intr_more;
-		intr_more += CPU_NINTS;
-	} else
-		iv->next = NULL;
+		intr_more += 2 * CPU_NINTS;
+		for (ev = iv->next + CPU_NINTS; ev < intr_more; ev++)
+			ev->share = iv->share, iv->share = ev;
+	}
 
 	return (iv);
 }
