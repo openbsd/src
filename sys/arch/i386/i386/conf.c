@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.108 2004/06/03 18:13:13 grange Exp $	*/
+/*	$OpenBSD: conf.c,v 1.109 2004/10/03 21:28:34 jcs Exp $	*/
 /*	$NetBSD: conf.c,v 1.75 1996/05/03 19:40:20 christos Exp $	*/
 
 /*
@@ -120,6 +120,13 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
 	(dev_type_stop((*))) enodev, 0, seltrue, (dev_type_mmap((*))) enodev }
 
+/* open, close, read */
+#define cdev_nvram_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
+	(dev_type_write((*))) enodev, (dev_type_ioctl((*))) enodev, \
+	(dev_type_stop((*))) enodev, 0, seltrue, \
+	(dev_type_mmap((*))) enodev, 0 }
+
 
 #define	mmread	mmrw
 #define	mmwrite	mmrw
@@ -184,6 +191,8 @@ cdev_decl(wdt);
 cdev_decl(cztty);
 #include "radio.h"
 #include "gpr.h"
+#include "nvram.h"
+cdev_decl(nvram);
 
 /* XXX -- this needs to be supported by config(8)! */
 #if (NCOM > 0) && (NPCCOM > 0)
@@ -314,6 +323,7 @@ struct cdevsw	cdevsw[] =
 	cdev_ptm_init(NPTY,ptm),	/* 81: pseudo-tty ptm device */
 	cdev_hotplug_init(NHOTPLUG,hotplug), /* 82: devices hot plugging */
 	cdev_gpio_init(NGPIO,gpio),	/* 83: GPIO interface */
+	cdev_nvram_init(NNVRAM,nvram),	/* 84: NVRAM interface */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 

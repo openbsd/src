@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.378 2004/09/16 10:37:21 grange Exp $
+#	$OpenBSD: GENERIC,v 1.379 2004/10/03 21:28:34 jcs Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -569,6 +569,7 @@ scsibus* at ioprbs?
 
 pseudo-device	pctr		1
 pseudo-device	mtrr		1	# Memory range attributes control
+pseudo-device	nvram		1
 pseudo-device	sequencer	1
 #pseudo-device	raid		4	# RAIDframe disk driver
 pseudo-device	bio		1	# ioctl multiplexing device

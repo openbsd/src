@@ -1,5 +1,5 @@
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.27 2004/09/06 10:06:05 deraadt Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.28 2004/10/03 21:28:34 jcs Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2004 Todd T. Fries <todd@OpenBSD.org>
@@ -17,6 +17,8 @@ dnl ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 dnl OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 dnl
 dnl
+__devitem(nvram, nvram, NVRAM access)dnl
+_mkdev(nvram, nvram, {-M nvram c major_nvram_c 0 440 kmem-})dnl
 _TITLE(make)
 _DEV(all)
 _DEV(ramdisk)
@@ -76,6 +78,7 @@ _DEV(iop, 75)
 _DEV(joy, 26)
 _DEV(lkm, 28)
 _DEV(music, 53)
+_DEV(nvram, 84)
 _DEV(pci, 72)
 _DEV(pctr, 46)
 _DEV(pf, 73)
@@ -127,6 +130,7 @@ target(all, vnd, 0, 1, 2, 3)dnl
 target(all, ccd, 0, 1, 2, 3)dnl
 target(all, bktr, 0)dnl
 target(all, gpio, 0, 1, 2)dnl
+target(all, nvram)dnl
 target(ramd, tty0, 0, 1, 2, 3)dnl
 twrget(ramd, wsdisp, ttyC, 0)dnl
 target(ramd, wt, 0)dnl

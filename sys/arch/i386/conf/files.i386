@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.128 2004/09/16 09:14:03 mickey Exp $
+#	$OpenBSD: files.i386,v 1.129 2004/10/03 21:28:34 jcs Exp $
 #
 # new style config file for i386 architecture
 #
@@ -217,6 +217,9 @@ file	arch/i386/i386/pctr.c		pctr needs-flag
 
 pseudo-device	mtrr
 file 	arch/i386/i386/mtrr.c		mtrr needs-flag
+
+pseudo-device	nvram
+file	arch/i386/i386/nvram.c	nvram needs-flag
 
 #
 # EISA-only drivers
