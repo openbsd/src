@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mongoose.4,v 1.1 2004/06/08 05:24:34 mickey Exp $
+.\"	$OpenBSD: mongoose.4,v 1.2 2004/06/08 07:55:54 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Michael Shalayeff
 .\" All rights reserved.
@@ -34,10 +34,11 @@
 .Cd "eisa* at mongoose?"
 .Sh DESCRIPTION
 Provides an interface from the CPU-memory bus to EISA and ISA
-devices. Two variations exists providing the same functionality
+devices.
+Two variations exist providing the same functionality
 based on
 .Tn Intel i82350
-or a
+or
 .Tn Texas Instruments
 chips.
 Depending on the model the bus clock is either 25 MHz or 33 MHz.
