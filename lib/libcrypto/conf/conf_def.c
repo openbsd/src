@@ -445,7 +445,7 @@ err:
 	if (buff != NULL) BUF_MEM_free(buff);
 	if (section != NULL) OPENSSL_free(section);
 	if (line != NULL) *line=eline;
-	sprintf(btmp,"%ld",eline);
+	snprintf(btmp,sizeof btmp,"%ld",eline);
 	ERR_add_error_data(2,"line ",btmp);
 	if ((h != conf->data) && (conf->data != NULL))
 		{

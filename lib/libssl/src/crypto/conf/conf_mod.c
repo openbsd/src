@@ -232,7 +232,7 @@ static int module_run(const CONF *cnf, char *name, char *value,
 			{
 			char rcode[DECIMAL_SIZE(ret)+1];
 			CONFerr(CONF_F_CONF_MODULES_LOAD, CONF_R_MODULE_INITIALIZATION_ERROR);
-			sprintf(rcode, "%-8d", ret);
+			snprintf(rcode, sizeof rcode, "%-8d", ret);
 			ERR_add_error_data(6, "module=", name, ", value=", value, ", retcode=", rcode);
 			}
 		}

@@ -116,7 +116,8 @@ int X509_REQ_print_ex(BIO *bp, X509_REQ *x, unsigned long nmflags, unsigned long
 		l=0;
 		for (i=0; i<ri->version->length; i++)
 			{ l<<=8; l+=ri->version->data[i]; }
-		sprintf(str,"%8sVersion: %s%lu (%s0x%lx)\n","",neg,l,neg,l);
+		snprintf(str,sizeof str,"%8sVersion: %s%lu (%s0x%lx)\n","",neg,
+			 l,neg,l);
 		if (BIO_puts(bp,str) <= 0) goto err;
 		}
         if(!(cflag & X509_FLAG_NO_SUBJECT))
@@ -168,13 +169,13 @@ int X509_REQ_print_ex(BIO *bp, X509_REQ *x, unsigned long nmflags, unsigned long
 	if(!(cflag & X509_FLAG_NO_ATTRIBUTES))
 		{
 		/* may not be */
-		sprintf(str,"%8sAttributes:\n","");
+		snprintf(str,sizeof str,"%8sAttributes:\n","");
 		if (BIO_puts(bp,str) <= 0) goto err;
 
 		sk=x->req_info->attributes;
 		if (sk_X509_ATTRIBUTE_num(sk) == 0)
 			{
-			sprintf(str,"%12sa0:00\n","");
+			snprintf(str,sizeof str,"%12sa0:00\n","");
 			if (BIO_puts(bp,str) <= 0) goto err;
 			}
 		else
@@ -190,7 +191,7 @@ int X509_REQ_print_ex(BIO *bp, X509_REQ *x, unsigned long nmflags, unsigned long
 				a=sk_X509_ATTRIBUTE_value(sk,i);
 				if(X509_REQ_extension_nid(OBJ_obj2nid(a->object)))
 									continue;
-				sprintf(str,"%12s","");
+				snprintf(str,sizeof str,"%12s","");
 				if (BIO_puts(bp,str) <= 0) goto err;
 				if ((j=i2a_ASN1_OBJECT(bp,a->object)) > 0)
 				{

@@ -181,46 +181,60 @@ void lh_stats_bio(const LHASH *lh, BIO *out)
 	{
 	char buf[128];
 
-	sprintf(buf,"num_items             = %lu\n",lh->num_items);
+	snprintf(buf,sizeof buf,"num_items             = %lu\n",lh->num_items);
 	BIO_puts(out,buf);
-	sprintf(buf,"num_nodes             = %u\n",lh->num_nodes);
+	snprintf(buf,sizeof buf,"num_nodes             = %u\n",lh->num_nodes);
 	BIO_puts(out,buf);
-	sprintf(buf,"num_alloc_nodes       = %u\n",lh->num_alloc_nodes);
+	snprintf(buf,sizeof buf,"num_alloc_nodes       = %u\n",
+		 lh->num_alloc_nodes);
 	BIO_puts(out,buf);
-	sprintf(buf,"num_expands           = %lu\n",lh->num_expands);
+	snprintf(buf,sizeof buf,"num_expands           = %lu\n",
+		 lh->num_expands);
 	BIO_puts(out,buf);
-	sprintf(buf,"num_expand_reallocs   = %lu\n",lh->num_expand_reallocs);
+	snprintf(buf,sizeof buf,"num_expand_reallocs   = %lu\n",
+		 lh->num_expand_reallocs);
 	BIO_puts(out,buf);
-	sprintf(buf,"num_contracts         = %lu\n",lh->num_contracts);
+	snprintf(buf,sizeof buf,"num_contracts         = %lu\n",
+		 lh->num_contracts);
 	BIO_puts(out,buf);
-	sprintf(buf,"num_contract_reallocs = %lu\n",lh->num_contract_reallocs);
+	snprintf(buf,sizeof buf,"num_contract_reallocs = %lu\n",
+		 lh->num_contract_reallocs);
 	BIO_puts(out,buf);
-	sprintf(buf,"num_hash_calls        = %lu\n",lh->num_hash_calls);
+	snprintf(buf,sizeof buf,"num_hash_calls        = %lu\n",
+		 lh->num_hash_calls);
 	BIO_puts(out,buf);
-	sprintf(buf,"num_comp_calls        = %lu\n",lh->num_comp_calls);
+	snprintf(buf,sizeof buf,"num_comp_calls        = %lu\n",
+		 lh->num_comp_calls);
 	BIO_puts(out,buf);
-	sprintf(buf,"num_insert            = %lu\n",lh->num_insert);
+	snprintf(buf,sizeof buf,"num_insert            = %lu\n",
+		 lh->num_insert);
 	BIO_puts(out,buf);
-	sprintf(buf,"num_replace           = %lu\n",lh->num_replace);
+	snprintf(buf,sizeof buf,"num_replace           = %lu\n",
+		 lh->num_replace);
 	BIO_puts(out,buf);
-	sprintf(buf,"num_delete            = %lu\n",lh->num_delete);
+	snprintf(buf,sizeof buf,"num_delete            = %lu\n",
+		 lh->num_delete);
 	BIO_puts(out,buf);
-	sprintf(buf,"num_no_delete         = %lu\n",lh->num_no_delete);
+	snprintf(buf,sizeof buf,"num_no_delete         = %lu\n",
+		 lh->num_no_delete);
 	BIO_puts(out,buf);
-	sprintf(buf,"num_retrieve          = %lu\n",lh->num_retrieve);
+	snprintf(buf,sizeof buf,"num_retrieve          = %lu\n",
+		 lh->num_retrieve);
 	BIO_puts(out,buf);
-	sprintf(buf,"num_retrieve_miss     = %lu\n",lh->num_retrieve_miss);
+	snprintf(buf,sizeof buf,"num_retrieve_miss     = %lu\n",
+		 lh->num_retrieve_miss);
 	BIO_puts(out,buf);
-	sprintf(buf,"num_hash_comps        = %lu\n",lh->num_hash_comps);
+	snprintf(buf,sizeof buf,"num_hash_comps        = %lu\n",
+		 lh->num_hash_comps);
 	BIO_puts(out,buf);
 #if 0
-	sprintf(buf,"p                     = %u\n",lh->p);
+	snprintf(buf,sizeof buf,"p                     = %u\n",lh->p);
 	BIO_puts(out,buf);
-	sprintf(buf,"pmax                  = %u\n",lh->pmax);
+	snprintf(buf,sizeof buf,"pmax                  = %u\n",lh->pmax);
 	BIO_puts(out,buf);
-	sprintf(buf,"up_load               = %lu\n",lh->up_load);
+	snprintf(buf,sizeof buf,"up_load               = %lu\n",lh->up_load);
 	BIO_puts(out,buf);
-	sprintf(buf,"down_load             = %lu\n",lh->down_load);
+	snprintf(buf,sizeof buf,"down_load             = %lu\n",lh->down_load);
 	BIO_puts(out,buf);
 #endif
 	}
@@ -235,7 +249,7 @@ void lh_node_stats_bio(const LHASH *lh, BIO *out)
 		{
 		for (n=lh->b[i],num=0; n != NULL; n=n->next)
 			num++;
-		sprintf(buf,"node %6u -> %3u\n",i,num);
+		snprintf(buf,sizeof buf,"node %6u -> %3u\n",i,num);
 		BIO_puts(out,buf);
 		}
 	}
@@ -258,12 +272,13 @@ void lh_node_usage_stats_bio(const LHASH *lh, BIO *out)
 			total+=num;
 			}
 		}
-	sprintf(buf,"%lu nodes used out of %u\n",n_used,lh->num_nodes);
+	snprintf(buf,sizeof buf,"%lu nodes used out of %u\n",n_used,
+		 lh->num_nodes);
 	BIO_puts(out,buf);
-	sprintf(buf,"%lu items\n",total);
+	snprintf(buf,sizeof buf,"%lu items\n",total);
 	BIO_puts(out,buf);
 	if (n_used == 0) return;
-	sprintf(buf,"load %d.%02d  actual load %d.%02d\n",
+	snprintf(buf,sizeof buf,"load %d.%02d  actual load %d.%02d\n",
 		(int)(total/lh->num_nodes),
 		(int)((total%lh->num_nodes)*100/lh->num_nodes),
 		(int)(total/n_used),
