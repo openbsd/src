@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.113 2004/04/27 22:06:54 henning Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.114 2004/04/27 22:42:13 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -153,8 +153,9 @@ enum auth_method {
 	IPSEC_IKE
 };
 	
-struct peer_ipsec {
+struct peer_auth {
 	enum auth_method	method;
+	char			md5key[TCP_MD5_KEY_LEN];
 	u_int32_t		spi_in;
 	u_int32_t		spi_out;
 	u_int8_t		auth_alg_in;
@@ -191,8 +192,7 @@ struct peer_config {
 	struct filter_set	 attrset;
 	enum announce_type	 announce_type;
 	enum enforce_as		 enforce_as;
-	char			 tcp_md5_key[TCP_MD5_KEY_LEN];
-	struct peer_ipsec	 ipsec;
+	struct peer_auth	 auth;
 	u_int8_t		 capabilities;
 	enum reconf_action	 reconf_action;
 };

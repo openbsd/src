@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.89 2004/04/27 22:06:54 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.90 2004/04/27 22:42:13 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -507,11 +507,11 @@ peeropts	: REMOTEAS asnumber	{
 			curpeer->conf.max_prefix = $2;
 		}
 		| TCP MD5SIG PASSWORD string {
-			if (strlcpy(curpeer->conf.tcp_md5_key, $4,
-			    sizeof(curpeer->conf.tcp_md5_key)) >=
-			    sizeof(curpeer->conf.tcp_md5_key)) {
+			if (strlcpy(curpeer->conf.auth.md5key, $4,
+			    sizeof(curpeer->conf.auth.md5key)) >=
+			    sizeof(curpeer->conf.auth.md5key)) {
 				yyerror("tcp md5sig password too long: max %u",
-				    sizeof(curpeer->conf.tcp_md5_key) - 1);
+				    sizeof(curpeer->conf.auth.md5key) - 1);
 				free($4);
 				YYERROR;
 			}
@@ -522,7 +522,7 @@ peeropts	: REMOTEAS asnumber	{
 			char		s[3];
 
 			if (strlen($4) / 2 >=
-			    sizeof(curpeer->conf.tcp_md5_key)) {
+			    sizeof(curpeer->conf.auth.md5key)) {
 				yyerror("key too long");
 				free($4);
 				YYERROR;
@@ -543,13 +543,13 @@ peeropts	: REMOTEAS asnumber	{
 					free($4);
 					YYERROR;
 				}
-				curpeer->conf.tcp_md5_key[i] =
+				curpeer->conf.auth.md5key[i] =
 				    strtoul(s, NULL, 16);
 			}
 			free($4);
 		}
 		| IPSEC IKE {
-			curpeer->conf.ipsec.method = IPSEC_IKE;
+			curpeer->conf.auth.method = IPSEC_IKE;
 		}
 		| IPSEC ESP inout SPI number STRING STRING encspec {
 			unsigned	i;
@@ -557,7 +557,7 @@ peeropts	: REMOTEAS asnumber	{
 			u_int32_t	auth_alg;
 			u_int8_t	keylen;
 
-			curpeer->conf.ipsec.method = IPSEC_MANUAL_ESP;
+			curpeer->conf.auth.method = IPSEC_MANUAL_ESP;
 
 			if (!strcmp($6, "sha1")) {
 				auth_alg = SADB_AALG_SHA1HMAC;
@@ -596,34 +596,34 @@ peeropts	: REMOTEAS asnumber	{
 					YYERROR;
 				}
 				if ($3 == 1)
-					curpeer->conf.ipsec.auth_key_in[i] =
+					curpeer->conf.auth.auth_key_in[i] =
 					    strtoul(s, NULL, 16);
 				else
-					curpeer->conf.ipsec.auth_key_out[i] =
+					curpeer->conf.auth.auth_key_out[i] =
 					    strtoul(s, NULL, 16);
 			}
 			free($7);
 
 			if ($3 == 1) {
-				curpeer->conf.ipsec.spi_in = $5;
-				curpeer->conf.ipsec.auth_alg_in = auth_alg;
-				curpeer->conf.ipsec.enc_alg_in = $8.enc_alg;
-				memcpy(&curpeer->conf.ipsec.enc_key_in,
+				curpeer->conf.auth.spi_in = $5;
+				curpeer->conf.auth.auth_alg_in = auth_alg;
+				curpeer->conf.auth.enc_alg_in = $8.enc_alg;
+				memcpy(&curpeer->conf.auth.enc_key_in,
 				    &$8.enc_key,
-				    sizeof(curpeer->conf.ipsec.enc_key_in));
-				curpeer->conf.ipsec.enc_keylen_in =
+				    sizeof(curpeer->conf.auth.enc_key_in));
+				curpeer->conf.auth.enc_keylen_in =
 				    $8.enc_key_len;
-				curpeer->conf.ipsec.auth_keylen_in = keylen;
+				curpeer->conf.auth.auth_keylen_in = keylen;
 			} else {
-				curpeer->conf.ipsec.spi_out = $5;
-				curpeer->conf.ipsec.auth_alg_out = auth_alg;
-				curpeer->conf.ipsec.enc_alg_out = $8.enc_alg;
-				memcpy(&curpeer->conf.ipsec.enc_key_out,
+				curpeer->conf.auth.spi_out = $5;
+				curpeer->conf.auth.auth_alg_out = auth_alg;
+				curpeer->conf.auth.enc_alg_out = $8.enc_alg;
+				memcpy(&curpeer->conf.auth.enc_key_out,
 				    &$8.enc_key,
-				    sizeof(curpeer->conf.ipsec.enc_key_out));
-				curpeer->conf.ipsec.enc_keylen_out =
+				    sizeof(curpeer->conf.auth.enc_key_out));
+				curpeer->conf.auth.enc_keylen_out =
 				    $8.enc_key_len;
-				curpeer->conf.ipsec.auth_keylen_out = keylen;
+				curpeer->conf.auth.auth_keylen_out = keylen;
 			}
 		}
 		| ANNOUNCE CAPABILITIES yesno {

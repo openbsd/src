@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.h,v 1.46 2004/04/27 03:53:43 henning Exp $ */
+/*	$OpenBSD: session.h,v 1.47 2004/04/27 22:42:13 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -145,11 +145,6 @@ struct peer_stats {
 	time_t			 last_read;
 };
 
-struct peer_auth {
-	u_int32_t	spi_in;
-	u_int32_t	spi_out;
-};
-
 struct peer_capa {
 	u_int8_t	announce;
 	u_int8_t	mp_v4;		/* multiprotocol extensions, RFC 2858 */
@@ -160,7 +155,6 @@ struct peer_capa {
 struct peer {
 	struct peer_config	 conf;
 	struct peer_stats	 stats;
-	struct peer_auth	 auth;
 	struct peer_capa	 capa;
 	u_int32_t		 remote_bgpid;
 	u_int16_t		 holdtime;

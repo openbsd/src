@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.157 2004/04/27 17:41:34 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.158 2004/04/27 22:42:13 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -795,7 +795,7 @@ session_accept(int listenfd)
 				return;
 			}
 		}
-		if (p->conf.tcp_md5_key[0]) {
+		if (p->conf.auth.method == MD5SIG) {
 			len = sizeof(opt);
 			if (getsockopt(connfd, IPPROTO_TCP, TCP_MD5SIG,
 			    &opt, &len) == -1)
@@ -844,7 +844,7 @@ session_connect(struct peer *peer)
 		return (-1);
 	}
 
-	if (peer->conf.tcp_md5_key[0])
+	if (peer->conf.auth.method == MD5SIG)
 		if (setsockopt(peer->sock, IPPROTO_TCP, TCP_MD5SIG,
 		    &opt, sizeof(opt)) == -1) {
 			log_peer_warn(&peer->conf, "setsockopt md5sig");
