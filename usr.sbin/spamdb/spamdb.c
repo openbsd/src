@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamdb.c,v 1.5 2004/03/11 17:48:59 millert Exp $	*/
+/*	$OpenBSD: spamdb.c,v 1.6 2004/03/11 18:09:43 beck Exp $	*/
 
 /*
  * Copyright (c) 2004 Bob Beck.  All rights reserved.
@@ -164,7 +164,7 @@ dblist(char *dbname)
 
 	/* walk db, list in text format */
 	memset(&btreeinfo, 0, sizeof(btreeinfo));
-	db = dbopen(dbname, O_EXLOCK|O_RDWR, 0600, DB_BTREE, &btreeinfo);
+	db = dbopen(dbname, O_EXLOCK|O_RDONLY, 0600, DB_BTREE, &btreeinfo);
 	if (db == NULL)
 		err(1, "dbopen");
 	memset(&dbk, 0, sizeof(dbk));
