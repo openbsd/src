@@ -1,10 +1,10 @@
-/*	$OpenBSD: pcmciadevs.h,v 1.101 2003/03/18 23:13:45 mickey Exp $	*/
+/*	$OpenBSD: pcmciadevs.h,v 1.102 2003/05/11 09:49:42 henning Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcmciadevs,v 1.99 2003/03/18 23:13:26 mickey Exp 
+ *		OpenBSD: pcmciadevs,v 1.100 2003/05/11 09:49:16 henning Exp 
  */
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
@@ -614,6 +614,8 @@
 #define	PCMCIA_PRODUCT_EDIMAX_NE2000	PCMCIA_PRODUCT_INVALID
 #define	PCMCIA_CIS_CNET_NE2000	{ "CNet", "CN40BC Ethernet", "D", "NE2000" }
 #define	PCMCIA_PRODUCT_CNET_NE2000	PCMCIA_PRODUCT_INVALID
+#define	PCMCIA_CIS_CNET_CNF301	{ "CNet", "CNF301 Ethernet", NULL, NULL }
+#define	PCMCIA_PRODUCT_CNET_CNF301	PCMCIA_PRODUCT_INVALID
 #define	PCMCIA_CIS_SHUTTLE_IDE_ATAPI	{ "SHUTTLE TECHNOLOGY LTD.", "PCCARD-IDE/ATAPI Adapter", NULL, NULL }
 #define	PCMCIA_PRODUCT_SHUTTLE_IDE_ATAPI	PCMCIA_PRODUCT_INVALID
 #define	PCMCIA_CIS_ZOOM_AIR4000	{ "Zoom", "Air-4000", NULL, NULL }
