@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.c,v 1.32 2005/03/13 10:06:27 dtucker Exp $ */
+/*	$OpenBSD: ntpd.c,v 1.33 2005/03/24 10:56:22 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -264,13 +264,13 @@ dispatch_imsg(struct ntpd_conf *conf)
 		switch (imsg.hdr.type) {
 		case IMSG_ADJTIME:
 			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(d))
-				fatal("invalid IMSG_ADJTIME received");
+				fatalx("invalid IMSG_ADJTIME received");
 			memcpy(&d, imsg.data, sizeof(d));
 			ntpd_adjtime(d);
 			break;
 		case IMSG_SETTIME:
 			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(d))
-				fatal("invalid IMSG_SETTIME received");
+				fatalx("invalid IMSG_SETTIME received");
 			if (!conf->settime)
 				break;
 			memcpy(&d, imsg.data, sizeof(d));
@@ -285,7 +285,7 @@ dispatch_imsg(struct ntpd_conf *conf)
 		case IMSG_HOST_DNS:
 			name = imsg.data;
 			if (imsg.hdr.len != strlen(name) + 1 + IMSG_HEADER_SIZE)
-				fatal("invalid IMSG_HOST_DNS received");
+				fatalx("invalid IMSG_HOST_DNS received");
 			if ((cnt = host_dns(name, &hn)) > 0) {
 				buf = imsg_create(ibuf, IMSG_HOST_DNS,
 				    imsg.hdr.peerid, 0,
