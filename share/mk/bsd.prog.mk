@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.prog.mk,v 1.18 1998/12/31 23:49:46 millert Exp $
+#	$OpenBSD: bsd.prog.mk,v 1.19 1999/09/29 19:21:57 beck Exp $
 #	$NetBSD: bsd.prog.mk,v 1.55 1996/04/08 21:19:26 jtc Exp $
 #	@(#)bsd.prog.mk	5.26 (Berkeley) 6/25/91
 
@@ -22,6 +22,7 @@ LIBCRT0?=	${DESTDIR}/usr/lib/crt0.o
 LIBC?=		${DESTDIR}/usr/lib/libc.a
 LIBCOMPAT?=	${DESTDIR}/usr/lib/libcompat.a
 LIBCURSES?=	${DESTDIR}/usr/lib/libcurses.a
+LIBCRYPTO?=	${DESTDIR}/usr/lib/libcrypto.a
 LIBDBM?=	${DESTDIR}/usr/lib/libdbm.a
 LIBDES?=	${DESTDIR}/usr/lib/libdes.a
 LIBEDIT?=	${DESTDIR}/usr/lib/libedit.a
@@ -40,6 +41,7 @@ LIBPLOT?=	${DESTDIR}/usr/lib/libplot.a
 LIBRESOLV?=	${DESTDIR}/usr/lib/libresolv.a
 LIBRPCSVC?=	${DESTDIR}/usr/lib/librpcsvc.a
 LIBSKEY?=	${DESTDIR}/usr/lib/libskey.a
+LIBSSL?=	${DESTDIR}/usr/lib/libssl.a
 LIBTELNET?=	${DESTDIR}/usr/lib/libtelnet.a
 LIBTERMCAP?=	${DESTDIR}/usr/lib/libtermcap.a
 LIBTERMLIB?=	${DESTDIR}/usr/lib/libtermlib.a
