@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsold.c,v 1.34 2004/01/03 06:20:17 itojun Exp $	*/
+/*	$OpenBSD: rtsold.c,v 1.35 2004/01/05 20:32:50 itojun Exp $	*/
 /*	$KAME: rtsold.c,v 1.75 2004/01/03 00:00:07 itojun Exp $	*/
 
 /*
@@ -60,6 +60,7 @@ struct ifinfo *iflist;
 struct timeval tm_max =	{0x7fffffff, 0x7fffffff};
 static int log_upto = 999;
 static int fflag = 0;
+static int Fflag = 0;	/* force setting sysctl parameters */
 
 int aflag = 0;
 int dflag = 0;
@@ -119,9 +120,9 @@ main(int argc, char *argv[])
 	if (argv0 && argv0[strlen(argv0) - 1] != 'd') {
 		fflag = 1;
 		once = 1;
-		opts = "adD";
+		opts = "adDF";
 	} else
-		opts = "adDfm1";
+		opts = "adDfFm1";
 
 	while ((ch = getopt(argc, argv, opts)) != -1) {
 		switch (ch) {
@@ -136,6 +137,9 @@ main(int argc, char *argv[])
 			break;
 		case 'f':
 			fflag = 1;
+			break;
+		case 'F':
+			Fflag = 1;
 			break;
 		case 'm':
 			mobile_node = 1;
@@ -172,12 +176,17 @@ main(int argc, char *argv[])
 			setlogmask(LOG_UPTO(log_upto));
 	}
 
-	/* warn if accept_rtadv is down */
-	if (!getinet6sysctl(IPV6CTL_ACCEPT_RTADV))
-		warnx("kernel is configured not to accept RAs");
-	/* warn if forwarding is up */
-	if (getinet6sysctl(IPV6CTL_FORWARDING))
-		warnx("kernel is configured as a router, not a host");
+	if (Fflag) {
+		setinet6sysctl(IPV6CTL_ACCEPT_RTADV, 1);
+		setinet6sysctl(IPV6CTL_FORWARDING, 0);
+	} else {
+		/* warn if accept_rtadv is down */
+		if (!getinet6sysctl(IPV6CTL_ACCEPT_RTADV))
+			warnx("kernel is configured not to accept RAs");
+		/* warn if forwarding is up */
+		if (getinet6sysctl(IPV6CTL_FORWARDING))
+			warnx("kernel is configured as a router, not a host");
+	}
 
 #ifndef SMALL
 	/* initialization to dump internal status to a file */
