@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.106 2004/06/26 04:00:05 pb Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.107 2004/06/26 06:59:17 alex Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.106 2004/06/26 04:00:05 pb Exp $";
+static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.107 2004/06/26 06:59:17 alex Exp $";
 #endif
 #endif /* not lint */
 
@@ -186,6 +186,7 @@ void	clone_create(const char *, int);
 void	clone_destroy(const char *, int);
 void	unsetmediaopt(const char *, int);
 void	setmediainst(const char *, int);
+void	settimeslot(const char *, int);
 void	setvlantag(const char *, int);
 void	setvlandev(const char *, int);
 void	unsetvlandev(const char *, int);
@@ -310,6 +311,7 @@ const struct	cmd {
 	{ "-mediaopt",	NEXTARG,	A_MEDIAOPTCLR,	unsetmediaopt },
 	{ "instance",	NEXTARG,	A_MEDIAINST,	setmediainst },
 	{ "inst",	NEXTARG,	A_MEDIAINST,	setmediainst },
+	{ "timeslot",	NEXTARG,	0,		settimeslot },
 	{ "description", NEXTARG,	0,		setifdesc },
 	{ "descr",	NEXTARG,	0,		setifdesc },
 	{ NULL, /*src*/	0,		0,		setifaddr },
@@ -338,6 +340,7 @@ void	print_media_word(int, int, int);
 void	process_media_commands(void);
 void	init_current_media(void);
 
+unsigned long get_ts_map(int ts_flag, int ts_start, int ts_stop);
 /*
  * XNS support liberally adapted from code written at the University of
  * Maryland principally by James O'Toole and Chris Torek.
@@ -1518,6 +1521,67 @@ setmediainst(const char *val, int d)
 	/* Media will be set after other processing is complete. */
 }
 
+void
+settimeslot(const char *val, int d)
+{
+#define SINGLE_CHANNEL	0x1
+#define RANGE_CHANNEL	0x2
+#define ALL_CHANNELS	0xFFFFFFFF
+	unsigned long	ts_map = 0;
+	char	*ptr = (char*)val;
+	int		ts_flag = 0;
+	int		ts = 0, ts_start = 0, i;
+
+	if (strcmp(val,"all") == 0){
+		ts_map = ALL_CHANNELS;
+	}else{
+		while(*ptr != '\0') {
+			if (isdigit(*ptr)) {
+				ts = strtoul(ptr, &ptr, 10);
+				ts_flag |= SINGLE_CHANNEL;
+			} else {
+				if (*ptr == '-') {
+					ts_flag |= RANGE_CHANNEL;
+					ts_start = ts;
+				} else {
+					ts_map |= get_ts_map(ts_flag, ts_start, ts);
+					ts_flag = 0;
+				}
+				ptr++;
+			}
+		}
+		if (ts_flag){
+			ts_map |= get_ts_map(ts_flag, ts_start, ts);
+		}
+	}
+	(void) strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
+	ifr.ifr_data = (caddr_t)&ts_map;
+
+	if (ioctl(s, SIOCSIFTIMESLOT, (caddr_t)&ifr) < 0)
+		err(1, "SIOCSIFTIMESLOT");
+
+
+}
+
+unsigned long get_ts_map(int ts_flag, int ts_start, int ts_stop)
+{
+	int		i = 0;
+	unsigned long	map = 0, mask = 0;
+
+	if ((ts_flag & (SINGLE_CHANNEL | RANGE_CHANNEL)) == 0)
+		return 0;
+	if (ts_flag & RANGE_CHANNEL) { /* Range of channels */
+		for(i = ts_start; i <= ts_stop; i++) {
+			mask = 1 << (i - 1);
+			map |=mask;
+		}
+	} else { /* Single channel */ 
+		mask = 1 << (ts_stop - 1);
+		map |= mask; 
+	}
+	return map;
+}
+
 const struct ifmedia_description ifm_type_descriptions[] =
     IFM_TYPE_DESCRIPTIONS;
 
@@ -2486,6 +2550,7 @@ usage(void)
 	    "\t[state init | backup | master] [syncif iface] [-syncif]\n"
 	    "\t[phase n] [range netrange]\n"
 	    "\t[802.2] [802.2tr] [802.3] [snap] [EtherII]\n"
+	    "\t[timeslot timeslot_range]\n"
 #endif
 	    "       ifconfig -A | -Am | -a | -am [address_family]\n"
 	    "       ifconfig -C\n"
