@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwd_mkdb.c,v 1.14 1998/04/26 10:10:51 deraadt Exp $	*/
+/*	$OpenBSD: pwd_mkdb.c,v 1.15 1998/06/10 09:00:48 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)pwd_mkdb.c	8.5 (Berkeley) 4/20/94";
 #else
-static char *rcsid = "$OpenBSD: pwd_mkdb.c,v 1.14 1998/04/26 10:10:51 deraadt Exp $";
+static char *rcsid = "$OpenBSD: pwd_mkdb.c,v 1.15 1998/06/10 09:00:48 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -100,7 +100,7 @@ main(argc, argv)
 	FILE *fp, *oldfp;
 	struct stat st;
 	sigset_t set;
-	int ch, cnt, len, makeold, tfd, flags;
+	int ch, cnt, len, makeold, tfd, flags = 0;
 	char *p, *t;
 	char buf[MAX(MAXPATHLEN, LINE_MAX * 2)], tbuf[1024];
 	int hasyp = 0;
@@ -418,6 +418,7 @@ scan(fp, pw, flags)
 
 	}
 	*p = '\0';
+	*flags = 0;
 	if (!pw_scan(line, pw, flags)) {
 		warnx("at line #%d", lcnt);
 fmt:		errno = EFTYPE;	/* XXX */
