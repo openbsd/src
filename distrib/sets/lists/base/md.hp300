@@ -281,6 +281,9 @@
 ./usr/lib/perl5/m68k-openbsd/5.003/cpio.ph
 ./usr/lib/perl5/m68k-openbsd/5.003/ctype.ph
 ./usr/lib/perl5/m68k-openbsd/5.003/curses.ph
+./usr/lib/perl5/m68k-openbsd/5.003/inttypes.ph
+./usr/lib/perl5/m68k-openbsd/5.003/libgen.ph
+./usr/lib/perl5/m68k-openbsd/5.003/machine/hp300spu.ph
 ./usr/lib/perl5/m68k-openbsd/5.003/des.ph
 ./usr/lib/perl5/m68k-openbsd/5.003/gmp.ph
 ./usr/lib/perl5/m68k-openbsd/5.003/db.ph
@@ -309,7 +312,6 @@
 ./usr/lib/perl5/m68k-openbsd/5.003/link.ph
 ./usr/lib/perl5/m68k-openbsd/5.003/locale.ph
 ./usr/lib/perl5/m68k-openbsd/5.003/machine
-> ./usr/lib/perl5/m68k-openbsd/5.003/machine/hp300spu.ph
 ./usr/lib/perl5/m68k-openbsd/5.003/machine/ansi.ph
 ./usr/lib/perl5/m68k-openbsd/5.003/machine/asm.ph
 ./usr/lib/perl5/m68k-openbsd/5.003/machine/autoconf.ph
