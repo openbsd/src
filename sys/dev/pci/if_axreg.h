@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axreg.h,v 1.1 1999/08/14 17:29:22 aaron Exp $ */
+/*	$OpenBSD: if_axreg.h,v 1.2 1999/09/27 00:07:50 aaron Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -31,7 +31,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: if_axreg.h,v 1.1 1999/08/14 17:29:22 aaron Exp $
+ *	$Id: if_axreg.h,v 1.2 1999/09/27 00:07:50 aaron Exp $
  */
 
 /*
@@ -267,7 +267,7 @@ struct ax_desc {
 
 #define AX_MAXFRAGS		16
 #define AX_RX_LIST_CNT		64
-#define AX_TX_LIST_CNT		64
+#define AX_TX_LIST_CNT		128
 #define AX_MIN_FRAMELEN		60
 
 /*
@@ -572,11 +572,14 @@ struct ax_softc {
 #define PHY_BMSR_JABBER			0x0002
 #define PHY_BMSR_EXTENDED		0x0001
 
+#ifndef ETHER_CRC_LEN
+#define ETHER_CRC_LEN 4
+#endif
+#ifndef ETHER_ALIGN
+#define ETHER_ALIGN 2
+#endif
+
 #ifdef __alpha__
 #undef vtophys
 #define vtophys(va)		alpha_XXX_dmamap((vm_offset_t)va)
-#endif
-
-#ifndef ETHER_CRC_LEN
-#define ETHER_CRC_LEN	4
 #endif
