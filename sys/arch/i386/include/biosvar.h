@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosvar.h,v 1.33 2000/02/18 17:10:09 mickey Exp $	*/
+/*	$OpenBSD: biosvar.h,v 1.34 2000/03/05 19:07:43 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -194,6 +194,7 @@ void bios_getopt __P((void));
 
 extern u_int bootapiver;
 extern bios_memmap_t *bios_memmap;
+extern bios_pciinfo_t *bios_pciinfo;
 
 #endif /* _KERNEL */
 #endif /* _LOCORE */
