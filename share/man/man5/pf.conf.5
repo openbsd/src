@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.157 2002/12/23 15:18:51 mcbride Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.158 2002/12/23 18:42:20 henning Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -214,12 +214,9 @@ These can be combined:
 Optimize the engine for one of the following network environments:
 .Pp
 .Bl -tag -width xxxx -compact
-.It Pa default
+.It Pa normal
 A normal network environment.
 Suitable for almost all networks.
-.It Pa normal
-Alias for
-.Pa default
 .It Em high-latency
 A high-latency environment (such as a satellite connection)
 .It Pa satellite
