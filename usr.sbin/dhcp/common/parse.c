@@ -119,13 +119,14 @@ char *parse_string (cfile)
 		skip_to_semi (cfile);
 		return (char *)0;
 	}
+	if (!parse_semi (cfile))
+		return (char *)0;
+
 	s = (char *)malloc (strlen (val) + 1);
 	if (!s)
 		error ("no memory for string %s.", val);
 	strlcpy (s, val, strlen(val) + 1);
 
-	if (!parse_semi (cfile))
-		return (char *)0;
 	return s;
 }
 
