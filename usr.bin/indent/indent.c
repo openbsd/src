@@ -1,4 +1,4 @@
-/*	$OpenBSD: indent.c,v 1.7 2000/06/30 16:00:15 millert Exp $	*/
+/*	$OpenBSD: indent.c,v 1.8 2000/07/25 17:08:12 espie Exp $	*/
 
 /*
  * Copyright (c) 1985 Sun Microsystems, Inc.
@@ -45,7 +45,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)indent.c	5.16 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$OpenBSD: indent.c,v 1.7 2000/06/30 16:00:15 millert Exp $";
+static char rcsid[] = "$OpenBSD: indent.c,v 1.8 2000/07/25 17:08:12 espie Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -996,7 +996,7 @@ check_type:
 		    if (buf_ptr >= buf_end)
 			fill_buffer();
 		}
-		while (*buf_ptr != '\n' || in_comment) {
+		while (*buf_ptr != '\n' || (in_comment && !had_eof)) {
 		    CHECK_SIZE_LAB;
 		    *e_lab = *buf_ptr++;
 		    if (buf_ptr >= buf_end)
