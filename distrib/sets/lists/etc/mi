@@ -27,6 +27,7 @@
 ./etc/ifaliases
 ./etc/inetd.conf
 ./etc/ipf.rules
+./etc/ipnat.rules
 ./etc/kerberosIV/README
 ./etc/kerberosIV/krb.conf
 ./etc/kerberosIV/krb.realms
@@ -48,7 +49,6 @@
 ./etc/namedb/localhost.rev
 ./etc/namedb/named.boot
 ./etc/namedb/root.cache
-./etc/ipnat.rules
 ./etc/netstart
 ./etc/networks
 ./etc/newsyslog.conf

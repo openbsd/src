@@ -16,10 +16,10 @@
 ./usr/share/man/cat5/keycap.0
 ./usr/share/man/cat5/ranlib.0
 ./usr/share/man/cat8/apm.0
-./usr/share/man/cat8/boot.conf.0
 ./usr/share/man/cat8/apmd.0
 ./usr/share/man/cat8/biosboot.0
 ./usr/share/man/cat8/boot.0
+./usr/share/man/cat8/boot.conf.0
 ./usr/share/man/cat8/fdisk.0
 ./usr/share/man/cat8/i386/bad144.0
 ./usr/share/man/cat8/installboot.0

@@ -18,7 +18,6 @@
 ./usr/lib/libg++.so.28.0
 ./usr/lib/libi386.so.0.2
 ./usr/lib/libiberty.so.0.1
-./usr/lib/librx.so.0.1
 ./usr/lib/libkadm.so.5.0
 ./usr/lib/libkafs.so.5.0
 ./usr/lib/libkdb.so.5.0
@@ -31,6 +30,7 @@
 ./usr/lib/libpanel.so.1.1
 ./usr/lib/libpcap.so.0.2
 ./usr/lib/libresolv.so.2.0
+./usr/lib/librx.so.0.1
 ./usr/lib/libskey.so.1.0
 ./usr/lib/libss.so.4.0
 ./usr/lib/libstdc++.so.28.0
@@ -40,6 +40,7 @@
 ./usr/lib/libutil.so.4.1
 ./usr/lib/libwrap.so.1.0
 ./usr/lib/libz.so.1.2
+./usr/lib/perl5/IO
 ./usr/lib/perl5/i386-openbsd
 ./usr/lib/perl5/i386-openbsd/5.00404
 ./usr/lib/perl5/i386-openbsd/5.00404/CORE
@@ -320,4 +321,3 @@
 ./usr/share/misc/pcvtfonts/vt220l.810
 ./usr/share/misc/pcvtfonts/vt220l.814
 ./usr/share/misc/pcvtfonts/vt220l.816
-./usr/lib/perl5/IO

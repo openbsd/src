@@ -1,6 +1,3 @@
-./usr/share/info/gcc.info-26
-./usr/share/info/gcc.info-27
-./usr/share/info/gcc.info-28
 ./usr/share/info/cpp.info
 ./usr/share/info/cpp.info-1
 ./usr/share/info/cpp.info-2
@@ -49,6 +46,9 @@
 ./usr/share/info/gcc.info-23
 ./usr/share/info/gcc.info-24
 ./usr/share/info/gcc.info-25
+./usr/share/info/gcc.info-26
+./usr/share/info/gcc.info-27
+./usr/share/info/gcc.info-28
 ./usr/share/info/gcc.info-3
 ./usr/share/info/gcc.info-4
 ./usr/share/info/gcc.info-5
@@ -341,7 +341,6 @@
 ./usr/share/man/cat1/perlvar.0
 ./usr/share/man/cat1/perlxs.0
 ./usr/share/man/cat1/perlxstut.0
-./usr/share/man/cat1/photurisd.0
 ./usr/share/man/cat1/pkg_add.0
 ./usr/share/man/cat1/pkg_create.0
 ./usr/share/man/cat1/pkg_delete.0
@@ -381,8 +380,6 @@
 ./usr/share/man/cat1/rmdir.0
 ./usr/share/man/cat1/rs.0
 ./usr/share/man/cat1/rsh.0
-./usr/share/man/cat1/rt.0
-./usr/share/man/cat1/rtdelete.0
 ./usr/share/man/cat1/rup.0
 ./usr/share/man/cat1/ruptime.0
 ./usr/share/man/cat1/rusers.0
@@ -406,7 +403,6 @@
 ./usr/share/man/cat1/source.0
 ./usr/share/man/cat1/splain.0
 ./usr/share/man/cat1/split.0
-./usr/share/man/cat1/startkey.0
 ./usr/share/man/cat1/stop.0
 ./usr/share/man/cat1/strings.0
 ./usr/share/man/cat1/stty.0
@@ -641,7 +637,6 @@
 ./usr/share/man/cat8/ac.0
 ./usr/share/man/cat8/accton.0
 ./usr/share/man/cat8/adduser_proc.0
-./usr/share/man/cat8/afterboot.0
 ./usr/share/man/cat8/amd.0
 ./usr/share/man/cat8/amq.0
 ./usr/share/man/cat8/arm32/MAKEDEV.0
@@ -664,6 +659,7 @@
 ./usr/share/man/cat8/clri.0
 ./usr/share/man/cat8/compat_bsdos.0
 ./usr/share/man/cat8/compat_freebsd.0
+./usr/share/man/cat8/compat_ibcs2.0
 ./usr/share/man/cat8/compat_linux.0
 ./usr/share/man/cat8/compat_sunos.0
 ./usr/share/man/cat8/compat_svr4.0
@@ -772,6 +768,7 @@
 ./usr/share/man/cat8/nslookup.0
 ./usr/share/man/cat8/pac.0
 ./usr/share/man/cat8/pcnfsd.0
+./usr/share/man/cat8/photurisd.0
 ./usr/share/man/cat8/ping.0
 ./usr/share/man/cat8/portmap.0
 ./usr/share/man/cat8/ppp.0
@@ -818,6 +815,8 @@
 ./usr/share/man/cat8/rrestore.0
 ./usr/share/man/cat8/rshd.0
 ./usr/share/man/cat8/rstatd.0
+./usr/share/man/cat8/rt.0
+./usr/share/man/cat8/rtdelete.0
 ./usr/share/man/cat8/rtquery.0
 ./usr/share/man/cat8/rusersd.0
 ./usr/share/man/cat8/rwalld.0
@@ -840,6 +839,7 @@
 ./usr/share/man/cat8/smtpfwdd.0
 ./usr/share/man/cat8/spray.0
 ./usr/share/man/cat8/sprayd.0
+./usr/share/man/cat8/startkey.0
 ./usr/share/man/cat8/stdethers.0
 ./usr/share/man/cat8/stdhosts.0
 ./usr/share/man/cat8/sticky.0
@@ -905,4 +905,3 @@
 ./usr/share/man/cat9/splstatclock.0
 ./usr/share/man/cat9/spltty.0
 ./usr/share/man/cat9/splx.0
-./usr/share/man/cat8/compat_ibcs2.0

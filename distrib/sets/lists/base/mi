@@ -687,6 +687,7 @@
 ./usr/libexec/getty
 ./usr/libexec/identd
 ./usr/libexec/kadmind
+./usr/libexec/kauthd
 ./usr/libexec/kerberos
 ./usr/libexec/kpropd
 ./usr/libexec/locate.bigram
@@ -1084,6 +1085,7 @@
 ./usr/share/man/cat7
 ./usr/share/man/cat8
 ./usr/share/man/cat8/adduser.0
+./usr/share/man/cat8/afterboot.0
 ./usr/share/man/cat8/alpha
 ./usr/share/man/cat8/amiga
 ./usr/share/man/cat8/arc
@@ -1091,6 +1093,7 @@
 ./usr/share/man/cat8/atari
 ./usr/share/man/cat8/hp300
 ./usr/share/man/cat8/i386
+./usr/share/man/cat8/kauthd.0
 ./usr/share/man/cat8/mac68k
 ./usr/share/man/cat8/mvme68k
 ./usr/share/man/cat8/mvme88k
@@ -1192,6 +1195,10 @@
 ./usr/share/skel/dot.mailrc
 ./usr/share/skel/dot.profile
 ./usr/share/skel/dot.rhosts
+./usr/share/smtpd
+./usr/share/smtpd/example.antispam
+./usr/share/smtpd/example.features
+./usr/share/smtpd/example.norelay
 ./usr/share/tabset
 ./usr/share/tabset/3101
 ./usr/share/tabset/9837
@@ -1802,9 +1809,3 @@
 ./var/yp/Makefile.yp
 ./var/yp/Makefile.yp.dist
 ./var/yp/README
-./usr/share/smtpd
-./usr/share/smtpd/example.antispam
-./usr/share/smtpd/example.features
-./usr/share/smtpd/example.norelay
-./usr/libexec/kauthd
-./usr/share/man/cat8/kauthd.0

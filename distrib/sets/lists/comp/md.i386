@@ -84,7 +84,6 @@
 ./usr/lib/gcc-lib/i386-unknown-openbsd2.2/2.8.0/libobjc.a
 ./usr/lib/gcc-lib/i386-unknown-openbsd2.2/2.8.0/specs
 ./usr/lib/libacl_pic.a
-./usr/lib/librx_pic.a
 ./usr/lib/libc_pic.a
 ./usr/lib/libcom_err_pic.a
 ./usr/lib/libcurses_pic.a
@@ -113,6 +112,7 @@
 ./usr/lib/libpanel_pic.a
 ./usr/lib/libpcap_pic.a
 ./usr/lib/libresolv_pic.a
+./usr/lib/librx_pic.a
 ./usr/lib/libskey_pic.a
 ./usr/lib/libss_pic.a
 ./usr/lib/libstdc++_pic.a
