@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.298 2004/05/23 17:33:43 grange Exp $
+#	$OpenBSD: files,v 1.299 2004/05/27 20:48:46 tedu Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -411,6 +411,9 @@ file	net/if_pfsync.c		pfsync	needs-flag
 pseudo-device bio
 file	dev/bio.c	bio needs-flag
 
+pseudo-device hotplug
+file	dev/hotplug.c		hotplug	needs-flag
+
 # XXX machine-independent SCSI files should live somewhere here, maybe
 
 # kernel sources
@@ -541,7 +544,7 @@ file kern/exec_script.c
 file kern/exec_subr.c
 file kern/init_main.c
 file kern/init_sysent.c
-file kern/kern_acct.c
+file kern/kern_acct.c			accounting
 file kern/kern_clock.c
 file kern/kern_descrip.c
 file kern/kern_event.c
@@ -614,6 +617,7 @@ file kern/vfs_syscalls.c
 file kern/vfs_vnops.c
 file kern/vnode_if.c
 file miscfs/deadfs/dead_vnops.c
+file miscfs/genfs/genfs_vnops.c
 file miscfs/genfs/layer_subr.c		nullfs | umapfs
 file miscfs/genfs/layer_vfsops.c	nullfs | umapfs
 file miscfs/genfs/layer_vnops.c		nullfs | umapfs

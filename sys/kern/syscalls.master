@@ -1,4 +1,4 @@
-;	$OpenBSD: syscalls.master,v 1.69 2004/05/03 17:38:48 millert Exp $
+;	$OpenBSD: syscalls.master,v 1.70 2004/05/27 20:48:46 tedu Exp $
 ;	$NetBSD: syscalls.master,v 1.32 1996/04/23 10:24:21 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -130,7 +130,11 @@
 48	STD		{ int sys_sigprocmask(int how, sigset_t mask); }
 49	STD		{ int sys_getlogin(char *namebuf, u_int namelen); }
 50	STD		{ int sys_setlogin(const char *namebuf); }
+#ifdef ACCOUNTING
 51	STD		{ int sys_acct(const char *path); }
+#else
+51	UNIMPL		acct
+#endif
 52	STD		{ int sys_sigpending(void); }
 53	STD		{ int sys_osigaltstack(const struct osigaltstack *nss, \
 			    struct osigaltstack *oss); }

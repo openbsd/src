@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.105 2004/05/03 17:41:22 millert Exp $
+#	$OpenBSD: GENERIC,v 1.106 2004/05/27 20:48:46 tedu Exp $
 #
 #	Machine-independent option; used by all architectures for their
 #	GENERIC kernel
@@ -12,6 +12,7 @@ option		DDB		# in-kernel debugger
 #option		GPROF		# kernel profiling, kgmon(8)
 option		DIAGNOSTIC	# internal consistency checks
 option		KTRACE		# system call tracing, a la ktrace(1)
+option		ACCOUNTING	# acct(2) process accounting
 option		KMEMSTATS	# collect malloc(9) statistics
 option		PTRACE		# ptrace(2) system call
 
