@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.111 2001/06/25 23:12:52 niklas Exp $
+#	$OpenBSD: files.pci,v 1.112 2001/08/03 15:15:09 mickey Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -14,7 +14,7 @@ file	dev/pci/pci_subr.c		pci
 
 # Generic VGA
 attach	vga at pci with vga_pci
-file	dev/pci/vga_pci.c		vga_pci		needs-flag
+file	dev/pci/vga_pci.c		vga_pci
 
 device	tga: wsemuldisplaydev, rasops8, rasops32
 attach	tga at pci
