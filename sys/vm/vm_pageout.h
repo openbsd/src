@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_pageout.h,v 1.6 1998/03/01 00:38:22 niklas Exp $	*/
+/*	$OpenBSD: vm_pageout.h,v 1.7 2000/03/15 14:16:12 art Exp $	*/
 /*	$NetBSD: vm_pageout.h,v 1.14 1998/02/10 14:09:04 mrg Exp $	*/
 
 /* 
@@ -69,6 +69,7 @@
  *	Header file for pageout daemon.
  */
 
+#if !defined(UVM)
 /*
  *	Exported data structures.
  */
@@ -88,7 +89,6 @@ u_int32_t	vm_pages_reserved;	/* i.e., reserved for pageout_daemon */
  *	Signal pageout-daemon and wait for it.
  */
 
-#if !defined(UVM)
 #ifdef _KERNEL
 void		 vm_wait __P((char *));
 void		 vm_pageout __P((void));
