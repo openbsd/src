@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.487 2002/02/16 17:24:19 krw Exp 
+ *		OpenBSD: pcidevs,v 1.488 2002/02/17 19:24:10 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -532,6 +532,7 @@
 #define	PCI_VENDOR_KAWASAKI	0x136b		/* Kawasaki */
 #define	PCI_VENDOR_LMC	0x1376		/* LAN Media Corp */
 #define	PCI_VENDOR_NETGEAR	0x1385		/* Netgear */
+#define	PCI_VENDOR_MOXA	0x1393		/* Moxa */
 #define	PCI_VENDOR_LEVEL1	0x1394		/* Level 1 */
 #define	PCI_VENDOR_HIFN	0x13a3		/* Hifn */
 #define	PCI_VENDOR_TRIWARE	0x13c1		/* 3ware */
@@ -552,6 +553,7 @@
 #define	PCI_VENDOR_BLUESTEEL	0x15ab		/* Bluesteel Networks */
 #define	PCI_VENDOR_VMWARE	0x15ad		/* VMware */
 #define	PCI_VENDOR_COREGA	0x15e8		/* Corega */
+#define	PCI_VENDOR_SYBA	0x1592		/* Syba */
 #define	PCI_VENDOR_EUMITCOM	0x1638		/* Eumitcom */
 #define	PCI_VENDOR_NETSEC	0x1660		/* NetSec */
 #define	PCI_VENDOR_GLOBALSUN	0x16ab		/* Global Sun */
@@ -578,6 +580,7 @@
 #define	PCI_VENDOR_ADP	0x9004		/* Adaptec */
 #define	PCI_VENDOR_ADP2	0x9005		/* Adaptec */
 #define	PCI_VENDOR_ATRONICS	0x907f		/* Atronics */
+#define	PCI_VENDOR_NETMOS	0x9710		/* NetMos */
 #define	PCI_VENDOR_ARC	0xedd8		/* ARC Logic */
 #define	PCI_VENDOR_CHRYSALIS	0xcafe		/* Chrysalis-ITS */
 #define	PCI_VENDOR_INVALID	0xffff		/* INVALID VENDOR ID */
@@ -1507,6 +1510,10 @@
 #define	PCI_PRODUCT_MOT_SM56	0x5600		/* SM56 */
 #define	PCI_PRODUCT_MOT_RAVEN	0x4801		/* Raven Host-PCI */
 
+/* Moxa */
+#define	PCI_PRODUCT_MOXA_CP114	0x1141		/* CP-114 */
+#define	PCI_PRODUCT_MOXA_C168H	0x1680		/* C168H */
+
 /* Mylex products */
 #define	PCI_PRODUCT_MYLEX_960P	0x0001		/* DAC960P RAID */
 #define	PCI_PRODUCT_MYLEX_ACCELERAID	0x0050		/* AcceleRAID */
@@ -1546,6 +1553,9 @@
 #define	PCI_PRODUCT_NETGEAR_MA301	0x4100		/* MA301 */
 #define	PCI_PRODUCT_NETGEAR_GA620	0x620a		/* GA620 */
 #define	PCI_PRODUCT_NETGEAR_GA620T	0x630a		/* GA620T */
+
+/* NetMos */
+#define	PCI_PRODUCT_NETMOS_2S1P	0x9835		/* 2S1P */
 
 /* Network Security Technologies, Inc. */
 #define	PCI_PRODUCT_NETSEC_7751	0x7751		/* 7751 */
@@ -1914,6 +1924,9 @@
 
 /* Surecom products */
 #define	PCI_PRODUCT_SURECOM_NE34	0x0e34		/* Surecom NE-34 */
+
+/* Syba */
+#define	PCI_PRODUCT_SYBA_4S2P	0x0781		/* 4S2P */
 
 /* Symphony Labs products */
 #define	PCI_PRODUCT_SYMPHONY_82C101	0x0001		/* 82C101 */

@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.487 2002/02/16 17:24:19 krw Exp 
+ *		OpenBSD: pcidevs,v 1.488 2002/02/17 19:24:10 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -2895,6 +2895,14 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Raven Host-PCI",
 	},
 	{
+	    PCI_VENDOR_MOXA, PCI_PRODUCT_MOXA_CP114,
+	    "CP-114",
+	},
+	{
+	    PCI_VENDOR_MOXA, PCI_PRODUCT_MOXA_C168H,
+	    "C168H",
+	},
+	{
 	    PCI_VENDOR_MYLEX, PCI_PRODUCT_MYLEX_960P,
 	    "DAC960P RAID",
 	},
@@ -3005,6 +3013,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_NETGEAR, PCI_PRODUCT_NETGEAR_GA620T,
 	    "GA620T",
+	},
+	{
+	    PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_2S1P,
+	    "2S1P",
 	},
 	{
 	    PCI_VENDOR_NETSEC, PCI_PRODUCT_NETSEC_7751,
@@ -4117,6 +4129,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_SURECOM, PCI_PRODUCT_SURECOM_NE34,
 	    "Surecom NE-34",
+	},
+	{
+	    PCI_VENDOR_SYBA, PCI_PRODUCT_SYBA_4S2P,
+	    "4S2P",
 	},
 	{
 	    PCI_VENDOR_SYMPHONY, PCI_PRODUCT_SYMPHONY_82C101,
@@ -7059,6 +7075,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	    "Netgear",
 	},
 	{
+	    PCI_VENDOR_MOXA,
+	    "Moxa",
+	},
+	{
 	    PCI_VENDOR_LEVEL1,
 	    "Level 1",
 	},
@@ -7137,6 +7157,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_COREGA,
 	    "Corega",
+	},
+	{
+	    PCI_VENDOR_SYBA,
+	    "Syba",
 	},
 	{
 	    PCI_VENDOR_EUMITCOM,
@@ -7241,6 +7265,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_ATRONICS,
 	    "Atronics",
+	},
+	{
+	    PCI_VENDOR_NETMOS,
+	    "NetMos",
 	},
 	{
 	    PCI_VENDOR_ARC,
