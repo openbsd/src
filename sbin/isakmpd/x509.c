@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.40 2001/02/08 22:37:45 angelos Exp $	*/
+/*	$OpenBSD: x509.c,v 1.41 2001/02/18 23:16:14 angelos Exp $	*/
 /*	$EOM: x509.c,v 1.54 2001/01/16 18:42:16 ho Exp $	*/
 
 /*
@@ -104,9 +104,9 @@ static int bucket_mask;
 int
 x509_generate_kn (X509 *cert)
 {
-  char *fmt = "Authorizer: \"rsa-hex:%s\"\nLicensees: \"rsa-hex:%s\"\n";
+  char *fmt = "Authorizer: \"rsa-hex:%s\"\nLicensees: \"rsa-hex:%s\"\nConditions: %s >= \"%s\" && %s <= \"%s\";\n";
   char *ikey, *skey, *buf, isname[256], subname[256];
-  char *fmt2 = "Authorizer: \"DN:%s\"\nLicensees: \"DN:%s\"\n";
+  char *fmt2 = "Authorizer: \"DN:%s\"\nLicensees: \"DN:%s\"\nConditions: %s >= \"%s\" && %s <= \"%s\";\n";
   X509_NAME *issuer, *subject;
   struct keynote_deckey dc;
   X509_STORE_CTX csc;
@@ -114,6 +114,11 @@ x509_generate_kn (X509 *cert)
   X509 *icert;
   RSA *key;
   char **new_asserts;
+  time_t tt;
+  char before[15], after[15];
+  ASN1_TIME *tm;
+  char *timecomp, *timecomp2;
+  int i;
 
   LOG_DBG ((LOG_CRYPTO, 90,
 	    "x509_generate_kn: generating KeyNote policy for certificate %p",
@@ -219,7 +224,239 @@ x509_generate_kn (X509 *cert)
       return 0;
     }
 
-  sprintf (buf, fmt, skey, ikey);
+  if (((tm = X509_get_notBefore (cert)) == NULL) ||
+      (tm->type != V_ASN1_UTCTIME && tm->type != V_ASN1_GENERALIZEDTIME))
+    {
+      tt = time ((time_t) NULL);
+      strftime (before, 14, "%G%m%d%H%M%S", localtime (&tt));
+      timecomp = "LocalTimeOfDay";
+    }
+  else
+    {
+      if (tm->data[tm->length - 1] == 'Z')
+	{
+	  timecomp = "GMTTimeOfDay";
+	  i = tm->length - 2;
+	}
+      else
+        {
+	  timecomp = "LocalTimeOfDay";
+	  i = tm->length - 1;
+	}
+
+      for (; i >= 0; i--)
+        {
+	  if (tm->data[i] < '0' || tm->data[i] > '9')
+	    {
+		log_error ("x509_generate_kn: invalid data in "
+			   "NotValidBefore time field");
+		free (ikey);
+		free (skey);
+		free (buf);
+		return 0;
+	    }
+	}
+
+      if (tm->type == V_ASN1_UTCTIME)
+	{
+	  if ((tm->length < 10) || (tm->length > 13))
+	    {
+	      log_error ("x509_generate_kn: "
+			 "invalid length of NotValidBefore time field (%d)",
+			 tm->length);
+	      free (ikey);
+	      free (skey);
+	      free (buf);
+	      return 0;
+	    }
+
+	  /* Validity checks */
+	  if ((tm->data[2] != '0' && tm->data[2] != '1') ||
+	      (tm->data[2] == '0' && tm->data[3] == '0') ||
+	      (tm->data[2] == '1' && tm->data[3] > '2') ||
+	      (tm->data[4] > '3') ||
+	      (tm->data[4] == '0' && tm->data[5] == '0') ||
+	      (tm->data[4] == '3' && tm->data[5] > '1') ||
+	      (tm->data[6] > '2') ||
+	      (tm->data[6] == '2' && tm->data[7] > '3') ||
+	      (tm->data[8] > '5'))
+	    {
+		log_error ("x509_generate_kn: invalid value in "
+			   "NotValidBefore time field");
+		free (ikey);
+		free (skey);
+		free (buf);
+		return 0;
+	    }
+
+	  /* Stupid UTC tricks */
+	  if (tm->data[0] < '5')
+	    sprintf (before, "20%s", tm->data);
+	  else
+	    sprintf (before, "19%s", tm->data);
+	}
+      else
+        { /* V_ASN1_GENERICTIME */
+	  if ((tm->length < 12) || (tm->length > 15))
+	    {
+	      log_error ("x509_generate_kn: "
+			 "invalid length of NotValidBefore time field (%d)",
+			 tm->length);
+	      free (ikey);
+	      free (skey);
+	      free (buf);
+	      return 0;
+	    }
+
+	  /* Validity checks */
+	  if ((tm->data[4] != '0' && tm->data[4] != '1') ||
+	      (tm->data[4] == '0' && tm->data[5] == '0') ||
+	      (tm->data[4] == '1' && tm->data[5] > '2') ||
+	      (tm->data[6] > '3') ||
+	      (tm->data[6] == '0' && tm->data[7] == '0') ||
+	      (tm->data[6] == '3' && tm->data[7] > '1') ||
+	      (tm->data[8] > '2') ||
+	      (tm->data[8] == '2' && tm->data[9] > '3') ||
+	      (tm->data[10] > '5'))
+	    {
+		log_error ("x509_generate_kn: invalid value in "
+			   "NotValidBefore time field");
+		free (ikey);
+		free (skey);
+		free (buf);
+		return 0;
+	    }
+
+	  sprintf(before, "%s", tm->data);
+	}
+
+      /* Fix missing seconds */
+      if (tm->length < 12)
+        {
+	  before[12] = '0';
+	  before[13] = '0';
+	}
+
+      before[14] = '\0'; /* This will overwrite trailing 'Z' */
+    }
+
+  if (((tm = X509_get_notAfter (cert)) == NULL) &&
+      (tm->type != V_ASN1_UTCTIME && tm->type != V_ASN1_GENERALIZEDTIME))
+    {
+      tt = time ((time_t) NULL);
+      strftime (after, 14, "%G%m%d%H%M%S", localtime (&tt));
+      timecomp2 = "LocalTimeOfDay";
+    }
+  else
+    {
+      if (tm->data[tm->length - 1] == 'Z')
+	{
+	  timecomp2 = "GMTTimeOfDay";
+	  i = tm->length - 2;
+	}
+      else
+        {
+	  timecomp2 = "LocalTimeOfDay";
+	  i = tm->length - 1;
+	}
+
+      for (; i >= 0; i--)
+        {
+	  if (tm->data[i] < '0' || tm->data[i] > '9')
+	    {
+		log_error ("x509_generate_kn: invalid data in "
+			   "NotValidAfter time field");
+		free (ikey);
+		free (skey);
+		free (buf);
+		return 0;
+	    }
+	}
+
+      if (tm->type == V_ASN1_UTCTIME)
+	{
+	  if ((tm->length < 10) || (tm->length > 13))
+	    {
+	      log_error ("x509_generate_kn: "
+			 "invalid length of NotValidAfter time field (%d)",
+			 tm->length);
+	      free (ikey);
+	      free (skey);
+	      free (buf);
+	      return 0;
+	    }
+
+	  /* Validity checks */
+	  if ((tm->data[2] != '0' && tm->data[2] != '1') ||
+	      (tm->data[2] == '0' && tm->data[3] == '0') ||
+	      (tm->data[2] == '1' && tm->data[3] > '2') ||
+	      (tm->data[4] > '3') ||
+	      (tm->data[4] == '0' && tm->data[5] == '0') ||
+	      (tm->data[4] == '3' && tm->data[5] > '1') ||
+	      (tm->data[6] > '2') ||
+	      (tm->data[6] == '2' && tm->data[7] > '3') ||
+	      (tm->data[8] > '5'))
+	    {
+		log_error ("x509_generate_kn: invalid value in "
+			   "NotValidAfter time field");
+		free (ikey);
+		free (skey);
+		free (buf);
+		return 0;
+	    }
+
+	  /* Stupid UTC tricks */
+	  if (tm->data[0] < '5')
+	    sprintf (after, "20%s", tm->data);
+	  else
+	    sprintf (after, "19%s", tm->data);
+	}
+      else
+        { /* V_ASN1_GENERICTIME */
+	  if ((tm->length < 12) || (tm->length > 15))
+	    {
+	      log_error ("x509_generate_kn: "
+			 "invalid length of NotValidAfter time field (%d)",
+			 tm->length);
+	      free (ikey);
+	      free (skey);
+	      free (buf);
+	      return 0;
+	    }
+
+	  /* Validity checks */
+	  if ((tm->data[4] != '0' && tm->data[4] != '1') ||
+	      (tm->data[4] == '0' && tm->data[5] == '0') ||
+	      (tm->data[4] == '1' && tm->data[5] > '2') ||
+	      (tm->data[6] > '3') ||
+	      (tm->data[6] == '0' && tm->data[7] == '0') ||
+	      (tm->data[6] == '3' && tm->data[7] > '1') ||
+	      (tm->data[8] > '2') ||
+	      (tm->data[8] == '2' && tm->data[9] > '3') ||
+	      (tm->data[10] > '5'))
+	    {
+		log_error ("x509_generate_kn: invalid value in "
+			   "NotValidAfter time field");
+		free (ikey);
+		free (skey);
+		free (buf);
+		return 0;
+	    }
+
+	  sprintf(after, "%s", tm->data);
+        }
+
+      /* Fix missing seconds */
+      if (tm->length < 12)
+        {
+	  after[12] = '0';
+	  after[13] = '0';
+	}
+
+      after[14] = '\0'; /* This will overwrite trailing 'Z' */
+    }
+
+  sprintf (buf, fmt, skey, ikey, timecomp, before, timecomp2, after);
   free (ikey);
   free (skey);
 
@@ -256,7 +493,7 @@ x509_generate_kn (X509 *cert)
       return 0;
     }
 
-  sprintf (buf, fmt2, isname, subname);
+  sprintf (buf, fmt2, isname, subname, timecomp, before, timecomp2, after);
 
   if (LK (kn_add_assertion, (keynote_sessid, buf, strlen (buf),
 			     ASSERT_FLAG_LOCAL)) == -1)
