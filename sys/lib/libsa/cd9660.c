@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660.c,v 1.11 2004/06/22 23:17:10 tom Exp $	*/
+/*	$OpenBSD: cd9660.c,v 1.12 2004/07/09 19:20:17 drahn Exp $	*/
 /*	$NetBSD: cd9660.c,v 1.1 1996/09/30 16:01:19 ws Exp $	*/
 
 /*
@@ -314,20 +314,25 @@ cd9660_read(struct open_file *f, void *start, size_t size, size_t *resid)
 			return rc;
 		if (nread != ISO_DEFAULT_BLOCK_SIZE)
 			return EIO;
-		if (dp == buf) {
-			off = fp->off & (ISO_DEFAULT_BLOCK_SIZE - 1);
-			if (nread > off + size)
-				nread = off + size;
-			nread -= off;
+
+		/*
+		 * off is either 0 in the dp == start case or
+		 * the offset to the interesting data into the buffer of 'buf'
+		 */
+		off = fp->off & (ISO_DEFAULT_BLOCK_SIZE - 1);
+		nread -= off;
+		if (nread > size)
+			nread = size;
+
+		if (nread > (fp->size - fp->off))
+			nread = (fp->size - fp->off);
+
+		if (dp == buf)
 			bcopy(buf + off, start, nread);
-			start += nread;
-			fp->off += nread;
-			size -= nread;
-		} else {
-			start += ISO_DEFAULT_BLOCK_SIZE;
-			fp->off += ISO_DEFAULT_BLOCK_SIZE;
-			size -= ISO_DEFAULT_BLOCK_SIZE;
-		}
+
+		start += nread;
+		fp->off += nread;
+		size -= nread;
 	}
 	if (resid)
 		*resid = size;
