@@ -1,4 +1,4 @@
-/*	$OpenBSD: w.c,v 1.25 1998/07/08 22:14:20 deraadt Exp $	*/
+/*	$OpenBSD: w.c,v 1.26 1999/04/25 00:33:56 millert Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)w.c	8.4 (Berkeley) 4/16/94";
 #else
-static char *rcsid = "$OpenBSD: w.c,v 1.25 1998/07/08 22:14:20 deraadt Exp $";
+static char *rcsid = "$OpenBSD: w.c,v 1.26 1999/04/25 00:33:56 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -208,7 +208,7 @@ main(argc, argv)
 			err(1, NULL);
 		*nextp = ep;
 		nextp = &(ep->next);
-		memmove(&(ep->utmp), &utmp, sizeof(struct utmp));
+		memcpy(&(ep->utmp), &utmp, sizeof(struct utmp));
 		if (!(stp = ttystat(ep->utmp.ut_line)))
 			continue;
 		ep->tdev = stp->st_rdev;
@@ -254,11 +254,15 @@ main(argc, argv)
 		for (ep = ehead; ep != NULL; ep = ep->next) {
 			/* ftp is a special case. */
 			if (strncmp(ep->utmp.ut_line, "ftp", 3) == 0) {
-				pid_t fp = (pid_t)strtol(&ep->utmp.ut_line[3],
-							 NULL, 10);
+				char pidstr[UT_LINESIZE-2];
+				pid_t fp;
+
+				(void)strncpy(pidstr, &ep->utmp.ut_line[3],
+				    sizeof(pidstr) - 1);
+				pidstr[sizeof(pidstr) - 1] = '\0';
+				fp = (pid_t)strtol(pidstr, NULL, 10);
 				if (p->p_pid == fp) {
 					ep->kp = kp;
-
 					break;
 				}
 			} else if (ep->tdev == e->e_tdev
@@ -355,7 +359,7 @@ pr_args(kp)
 	if (kp == NULL)
 		goto nothing;
 	left = argwidth;
-	argv = kvm_getargv(kd, kp, argwidth+60);  /*+60 for ftpd snip */
+	argv = kvm_getargv(kd, kp, argwidth+60);  /* +60 for ftpd snip */
 	if (argv == NULL)
 		goto nothing;
 
@@ -466,9 +470,12 @@ ttystat(line)
 	char *line;
 {
 	static struct stat sb;
-	char ttybuf[MAXPATHLEN];
+	char ttybuf[sizeof(_PATH_DEV) + UT_LINESIZE];
 
-	(void)snprintf(ttybuf, sizeof(ttybuf), "%s/%s", _PATH_DEV, line);
+	/* Note, line may not be NUL-terminated */
+	(void)strcpy(ttybuf, _PATH_DEV);
+	(void)strncpy(ttybuf + sizeof(_PATH_DEV) - 1, line, UT_LINESIZE);
+	ttybuf[sizeof(ttybuf) - 1] = '\0';
 	if (stat(ttybuf, &sb))
 		return (NULL);
 	return (&sb);
