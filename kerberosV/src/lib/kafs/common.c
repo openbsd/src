@@ -237,13 +237,16 @@ _kafs_afslog_all_local_cells(kafs_data *data, uid_t uid, const char *homedir)
 	snprintf(home, sizeof(home), "%s/.TheseCells", homedir);
 	find_cells(home, &cells, &index);
     }
+#if 0
     find_cells(_PATH_THESECELLS, &cells, &index);
     find_cells(_PATH_THISCELL, &cells, &index);
+#endif
     find_cells(_PATH_ARLA_THESECELLS, &cells, &index);
     find_cells(_PATH_ARLA_THISCELL, &cells, &index);
+#if 0
     find_cells(_PATH_OPENAFS_DEBIAN_THESECELLS, &cells, &index);
     find_cells(_PATH_OPENAFS_DEBIAN_THISCELL, &cells, &index);
-    
+#endif    
     ret = afslog_cells(data, cells, index, uid, homedir);
     while(index > 0)
 	free(cells[--index]);
@@ -260,9 +263,13 @@ file_find_cell(kafs_data *data, const char *cell, char **realm, int exact)
     char *p;
     int ret = -1;
 
+#if 0
     if ((F = fopen(_PATH_CELLSERVDB, "r"))
 	|| (F = fopen(_PATH_ARLA_CELLSERVDB, "r"))
 	|| (F = fopen(_PATH_OPENAFS_DEBIAN_CELLSERVDB, "r"))) {
+#else
+    if (F = fopen(_PATH_ARLA_CELLSERVDB, "r")) {
+#endif
 	while (fgets(buf, sizeof(buf), F)) {
 	    int cmp;
 
