@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: suff.c,v 1.48 2001/11/23 23:42:45 deraadt Exp $ */
+/*	$OpenBSD: suff.c,v 1.49 2002/02/26 14:33:45 espie Exp $ */
 /*	$NetBSD: suff.c,v 1.13 1996/11/06 17:59:25 christos Exp $	*/
 
 /*
@@ -1232,6 +1232,8 @@ SuffExpandVarChildren(after, cgn, pgn)
 	    else if (*cp2 == '\\' && cp2[1] != '\0')
 		/* Escaped something -- skip over it.  */
 		cp2+=2;
+	    else
+	    	cp2++;
 	}
 
 	if (cp2 != start) {
