@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.61 2005/03/15 18:46:37 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.62 2005/03/15 18:47:44 miod Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.73 1997/07/29 09:41:53 fair Exp $ */
 
 /*
@@ -969,7 +969,7 @@ romprop(rp, cp, node)
 	const char *cp;
 	register int node;
 {
-	int len, n;
+	int len, n, intr;
 	union { char regbuf[256]; struct rom_reg rr[RA_MAXREG]; } u;
 	static const char pl[] = "property length";
 
@@ -1023,9 +1023,18 @@ romprop(rp, cp, node)
 			getprop(node, "interrupts", interrupts, len);
 			len /= sizeof(u_int32_t);
 			for (n = 0; n < len; n++) {
-				rp->ra_intr[n].int_pri = CPU_ISSUN4M ?
-				    intr_sbus2ipl_4m[interrupts[n]] :
-				    intr_sbus2ipl_4c[interrupts[n]];
+				intr = interrupts[n];
+				/*
+				 * Non-Sbus devices (such as the cgfourteen,
+				 * which attaches on obio) do not need their
+				 * interrupt level translated.
+				 */
+				if (intr < 8) {
+					intr = CPU_ISSUN4M ?
+					    intr_sbus2ipl_4m[intr] :
+					    intr_sbus2ipl_4c[intr];
+				}
+				rp->ra_intr[n].int_pri = intr;
 				rp->ra_intr[n].int_vec = 0;
 			};
 			len *= sizeof(struct rom_intr);
