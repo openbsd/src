@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.41 2001/09/17 19:17:30 gluk Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.42 2001/09/19 18:05:27 art Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*-
@@ -107,7 +107,6 @@ struct bio_ops bioops;
 static __inline struct buf *bio_doread __P((struct vnode *, daddr_t, int,
 					    struct ucred *, int));
 int getnewbuf __P((int slpflag, int slptimeo, struct buf **));
-void wakeup_flusher __P((void));
 
 /*
  * We keep a few counters to monitor the utilization of the buffer cache
@@ -133,7 +132,7 @@ int mincleanbufs;
 #endif
 
 struct proc *flusherproc;
-int bd_req;			/* 1 if buf_daemon already runnable */
+int bd_req;			/* Sleep point for flusher daemon. */
 
 void
 bremfree(bp)
@@ -868,8 +867,8 @@ start:
 	/*
 	 * Wake up flusher if we're getting low on buffers.
 	 */
-	if (bd_req == 0 && numdirtybufs >= hidirtybufs)
-		wakeup_flusher();
+	if (numdirtybufs >= hidirtybufs)
+		wakeup(&bd_req);
 
 	if ((numcleanbufs <= locleanbufs)
 	    && (curproc != syncerproc || curproc != flusherproc)) {
@@ -956,8 +955,7 @@ buf_daemon(struct proc *p)
 
 	for (;;) {
 		if (numdirtybufs < hidirtybufs) {
-			bd_req = 0;
-			tsleep(&flusherproc, PRIBIO - 7, "flusher", 0);
+			tsleep(&bd_req, PRIBIO - 7, "flusher", 0);
 		}
 
 		starttime = time;
@@ -1003,22 +1001,6 @@ buf_daemon(struct proc *p)
 			nbp = TAILQ_FIRST(&bufqueues[BQ_DIRTY]);
 		}
 	}
-}
-
-/*
- * Wakeup the buffer flushing daemon.
- */
-void
-wakeup_flusher()
-{
-	int s;
-
-	s = splhigh();
-	if (flusherproc && flusherproc->p_wchan != NULL) {
-		setrunnable(flusherproc);
-		bd_req = 1;
-	}
-	splx(s);
 }
 
 /*
