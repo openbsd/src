@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.14 1997/06/29 20:52:41 millert Exp $	*/
+/*	$OpenBSD: route.c,v 1.15 1997/06/29 21:46:06 millert Exp $	*/
 /*	$NetBSD: route.c,v 1.15 1996/05/07 02:55:06 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-static char *rcsid = "$OpenBSD: route.c,v 1.14 1997/06/29 20:52:41 millert Exp $";
+static char *rcsid = "$OpenBSD: route.c,v 1.15 1997/06/29 21:46:06 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -62,6 +62,7 @@ static char *rcsid = "$OpenBSD: route.c,v 1.14 1997/06/29 20:52:41 millert Exp $
 
 #include <sys/sysctl.h>
 
+#include <limits.h>
 #include <netdb.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -216,7 +217,7 @@ pr_rthdr()
 {
 
 	if (Aflag)
-		printf("%-18.18s ","Address");
+		printf("%-*.*s ", PLEN, PLEN, "Address");
 	printf("%-*.*s %-*.*s %-6.6s  %6.6s%16.16s %6.6s  %s\n",
 		WID_DST, WID_DST, "Destination",
 		WID_GW, WID_GW, "Gateway",
@@ -230,7 +231,7 @@ void
 pr_encaphdr()
 {
 	if (Aflag)
-		printf("%-18s ", "Address");
+		printf("%-*s ", PLEN, "Address");
 	printf("%-15s %-15s %-5s %-15s %-15s %-5s %-5s %-15s %-8s %s\n",
 	    "Source address", "Source mask", "Port", "Dest. address", 
 	    "Dest. mask", "Port", "Proto", "Tunnel exit",

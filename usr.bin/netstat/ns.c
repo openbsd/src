@@ -1,4 +1,4 @@
-/*	$OpenBSD: ns.c,v 1.3 1997/06/29 20:18:03 millert Exp $	*/
+/*	$OpenBSD: ns.c,v 1.4 1997/06/29 21:46:05 millert Exp $	*/
 /*	$NetBSD: ns.c,v 1.8 1995/10/03 21:42:46 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)ns.c	8.1 (Berkeley) 6/6/93";
 #else
-static char *rcsid = "$OpenBSD: ns.c,v 1.3 1997/06/29 20:18:03 millert Exp $";
+static char *rcsid = "$OpenBSD: ns.c,v 1.4 1997/06/29 21:46:05 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -65,6 +65,7 @@ static char *rcsid = "$OpenBSD: ns.c,v 1.3 1997/06/29 20:18:03 millert Exp $";
 #define SANAMES
 #include <netns/spp_debug.h>
 
+#include <limits.h>
 #include <nlist.h>
 #include <errno.h>
 #include <stdio.h>

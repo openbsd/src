@@ -1,4 +1,4 @@
-/*	$OpenBSD: mroute.c,v 1.4 1997/06/29 20:18:02 millert Exp $	*/
+/*	$OpenBSD: mroute.c,v 1.5 1997/06/29 21:46:03 millert Exp $	*/
 /*	$NetBSD: mroute.c,v 1.10 1996/05/11 13:51:27 mycroft Exp $	*/
 
 /*
@@ -59,6 +59,7 @@
 #include <netinet/ip_mroute.h>
 #undef _KERNEL
 
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include "netstat.h"

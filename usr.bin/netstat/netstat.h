@@ -1,4 +1,4 @@
-/*	$OpenBSD: netstat.h,v 1.7 1997/06/29 20:18:02 millert Exp $	*/
+/*	$OpenBSD: netstat.h,v 1.8 1997/06/29 21:46:04 millert Exp $	*/
 /*	$NetBSD: netstat.h,v 1.6 1996/05/07 02:55:05 thorpej Exp $	*/
 
 /*
@@ -37,6 +37,13 @@
  */
 
 #include <sys/cdefs.h>
+
+/* What is the max length of a pointer printed with %p? */
+#if (UINT_MAX == ULONG_MAX)
+#define PLEN	10
+#else
+#define PLEN	18
+#endif
 
 int	Aflag;		/* show addresses of protocol control block */
 int	aflag;		/* show all sockets (including servers) */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: unix.c,v 1.4 1997/06/29 20:52:42 millert Exp $	*/
+/*	$OpenBSD: unix.c,v 1.5 1997/06/29 21:46:06 millert Exp $	*/
 /*	$NetBSD: unix.c,v 1.13 1995/10/03 21:42:48 thorpej Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)unix.c	8.1 (Berkeley) 6/6/93";
 #else
-static char *rcsid = "$OpenBSD: unix.c,v 1.4 1997/06/29 20:52:42 millert Exp $";
+static char *rcsid = "$OpenBSD: unix.c,v 1.5 1997/06/29 21:46:06 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -60,6 +60,7 @@ struct proc;
 
 #include <netinet/in.h>
 
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <kvm.h>
@@ -124,15 +125,16 @@ unixdomainpr(so, soaddr)
 	if (first) {
 		printf("Active UNIX domain sockets\n");
 		printf(
-"%-18.18s %-6.6s %-6.6s %-6.6s %18.18s %18.18s %18.18s %18.18s Addr\n",
-		    "Address", "Type", "Recv-Q", "Send-Q",
-		    "Inode", "Conn", "Refs", "Nextref");
+"%-*.*s %-6.6s %-6.6s %-6.6s %*.*s %*.*s %*.*s %*.*s Addr\n",
+		    PLEN, PLEN, "Address", "Type", "Recv-Q", "Send-Q",
+		    PLEN, PLEN, "Inode", PLEN, PLEN, "Conn",
+		    PLEN, PLEN, "Refs", PLEN, PLEN, "Nextref");
 		first = 0;
 	}
-	printf("%18p %-6.6s %6ld %6ld %18p %18p %18p %18p",
-	    soaddr, socktype[so->so_type], so->so_rcv.sb_cc, so->so_snd.sb_cc,
-	    unp->unp_vnode, unp->unp_conn,
-	    unp->unp_refs, unp->unp_nextref);
+	printf("%*p %-6.6s %6ld %6ld %*p %*p %*p %*p",
+	    PLEN, soaddr, socktype[so->so_type], so->so_rcv.sb_cc,
+	    so->so_snd.sb_cc, PLEN, unp->unp_vnode, PLEN, unp->unp_conn,
+	    PLEN, unp->unp_refs, PLEN, unp->unp_nextref);
 	if (m)
 		printf(" %.*s",
 		    m->m_len - (int)(sizeof(*sa) - sizeof(sa->sun_path)),

@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.17 1997/06/29 20:52:39 millert Exp $	*/
+/*	$OpenBSD: inet.c,v 1.18 1997/06/29 21:46:01 millert Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-static char *rcsid = "$OpenBSD: inet.c,v 1.17 1997/06/29 20:52:39 millert Exp $";
+static char *rcsid = "$OpenBSD: inet.c,v 1.18 1997/06/29 21:46:01 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -73,6 +73,7 @@ static char *rcsid = "$OpenBSD: inet.c,v 1.17 1997/06/29 20:52:39 millert Exp $"
 #include <netinet/ip_ip4.h>
 
 #include <arpa/inet.h>
+#include <limits.h>
 #include <netdb.h>
 #include <stdio.h>
 #include <string.h>
@@ -139,19 +140,22 @@ protopr(off, name)
 				printf(" (including servers)");
 			putchar('\n');
 			if (Aflag)
-				printf("%-18.18s ", "PCB");
-			printf(Aflag ?
-				"%-5.5s %-6.6s %-6.6s  %-18.18s %-18.18s %s\n" :
-				"%-5.5s %-6.6s %-6.6s  %-22.22s %-22.22s %s\n",
-				"Proto", "Recv-Q", "Send-Q",
-				"Local Address", "Foreign Address", "(state)");
+				printf("%-*.*s %-5.5s %-6.6s %-6.6s  %-*.*s %-*.*s %s\n",
+				    PLEN, PLEN, "PCB", "Proto", "Recv-Q",
+				    "Send-Q", PLEN, PLEN, "Local Address",
+				    PLEN, PLEN, "Foreign Address", "(state)");
+			else
+				printf("%-5.5s %-6.6s %-6.6s  %-22.22s %-22.22s %s\n",
+				    "Proto", "Recv-Q", "Send-Q",
+				    "Local Address", "Foreign Address",
+				    "(state)");
 			first = 0;
 		}
 		if (Aflag)
 			if (istcp)
-				printf("%18p ", inpcb.inp_ppcb);
+				printf("%*p ", PLEN, inpcb.inp_ppcb);
 			else
-				printf("%18p ", prev);
+				printf("%*p ", PLEN, prev);
 		printf("%-5.5s %6ld %6ld ", name, sockb.so_rcv.sb_cc,
 			sockb.so_snd.sb_cc);
 		inetprint(&inpcb.inp_laddr, (int)inpcb.inp_lport, name, 1);

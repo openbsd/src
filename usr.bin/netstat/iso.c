@@ -1,4 +1,4 @@
-/*	$OpenBSD: iso.c,v 1.5 1997/06/29 20:52:41 millert Exp $	*/
+/*	$OpenBSD: iso.c,v 1.6 1997/06/29 21:46:02 millert Exp $	*/
 /*	$NetBSD: iso.c,v 1.12 1995/10/03 21:42:38 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)iso.c	8.1 (Berkeley) 6/6/93";
 #else
-static char *rcsid = "$OpenBSD: iso.c,v 1.5 1997/06/29 20:52:41 millert Exp $";
+static char *rcsid = "$OpenBSD: iso.c,v 1.6 1997/06/29 21:46:02 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -104,6 +104,7 @@ SOFTWARE.
 #endif
 #include <netiso/cons_pcb.h>
 #include <arpa/inet.h>
+#include <limits.h>
 #include <netdb.h>
 #include <string.h>
 #include <stdio.h>
@@ -266,17 +267,20 @@ iso_protopr1(kern_addr, istp)
 			printf(" (including servers)");
 		putchar('\n');
 		if (Aflag)
-			printf("%-18.18s ", "PCB");
-		printf(Aflag ?
-			"%-5.5s %-6.6s %-6.6s  %-18.18s %-18.18s %s\n" :
-			"%-5.5s %-6.6s %-6.6s  %-22.22s %-22.22s %s\n",
-			"Proto", "Recv-Q", "Send-Q",
-			"Local Address", "Foreign Address", "(state)");
+			printf("%-*.*s %-5.5s %-6.6s %-6.6s  %-*.*s %-*.*s %s\n",
+			    PLEN, PLEN, "PCB", "Proto", "Recv-Q",
+			    "Send-Q", PLEN, PLEN, "Local Address",
+			    PLEN, PLEN, "Foreign Address", "(state)");
+		else
+			printf("%-5.5s %-6.6s %-6.6s  %-22.22s %-22.22s %s\n",
+			    "Proto", "Recv-Q", "Send-Q",
+			    "Local Address", "Foreign Address",
+			    "(state)");
 		first = 0;
 	}
 	if (Aflag)
-			printf("%18p ",
-					(sockb.so_pcb ? (void *)sockb.so_pcb : (void *)kern_addr));
+			printf("%*p ", PLEN,
+			    (sockb.so_pcb ? (void *)sockb.so_pcb : (void *)kern_addr));
 	printf("%-5.5s %6ld %6ld ", "tp", sockb.so_rcv.sb_cc,
 	    sockb.so_snd.sb_cc);
 	if (istp && tpcb.tp_lsuffixlen) {
@@ -510,12 +514,15 @@ x25_protopr(off, name)
 				printf(" (including servers)");
 			putchar('\n');
 			if (Aflag)
-				printf("%-8.8s ", "PCB");
-			printf(Aflag ?
-				"%-5.5s %-6.6s %-6.6s  %-18.18s %-18.18s %s\n" :
-				"%-5.5s %-6.6s %-6.6s  %-22.22s %-22.22s %s\n",
-				"Proto", "Recv-Q", "Send-Q",
-				"Local Address", "Foreign Address", "(state)");
+				printf("%-*.*s %-5.5s %-6.6s %-6.6s  %-*.*s %-*.*s %s\n",
+				    PLEN, PLEN, "PCB", "Proto", "Recv-Q",
+				    "Send-Q", PLEN, PLEN, "Local Address",
+				    PLEN, PLEN, "Foreign Address", "(state)");
+			else
+				printf("%-5.5s %-6.6s %-6.6s  %-22.22s %-22.22s %s\n",
+				    "Proto", "Recv-Q", "Send-Q",
+				    "Local Address", "Foreign Address",
+				    "(state)");
 			first = 0;
 		}
 		printf("%-5.5s %6d %6d ", name, sockb.so_rcv.sb_cc,
