@@ -1,4 +1,4 @@
-/*	$Id: if_ipw.c,v 1.15 2004/10/27 21:23:45 damien Exp $  */
+/*	$Id: if_ipw.c,v 1.16 2004/10/27 21:24:49 damien Exp $  */
 
 /*-
  * Copyright (c) 2004
@@ -1600,7 +1600,7 @@ ipw_load_ucode(struct ipw_softc *sc, u_char *uc, int size)
 {
 	int ntries;
 
-	MEM_WRITE_4(sc, 0x003000e0, 0x80000000);
+	MEM_WRITE_4(sc, 0x3000e0, 0x80000000);
 	CSR_WRITE_4(sc, IPW_CSR_RST, 0);
 
 	MEM_WRITE_2(sc, 0x220000, 0x0703);
@@ -1628,15 +1628,18 @@ ipw_load_ucode(struct ipw_softc *sc, u_char *uc, int size)
 	MEM_WRITE_1(sc, 0x210000, 0x00);
 	MEM_WRITE_1(sc, 0x210000, 0x80);
 
-	for (ntries = 0; ntries < 10; ntries++) {
+	for (ntries = 0; ntries < 100; ntries++) {
 		if (MEM_READ_1(sc, 0x210000) & 1)
 			break;
-		DELAY(10);
+		DELAY(1000);
 	}
-	if (ntries == 10)
+	if (ntries == 100) {
+		printf("%s: timeout waiting for ucode to initialize\n",
+		    sc->sc_dev.dv_xname);
 		return EIO;
+	}
 
-	MEM_WRITE_4(sc, 0x003000e0, 0);
+	MEM_WRITE_4(sc, 0x3000e0, 0);
 
 	return 0;
 }
