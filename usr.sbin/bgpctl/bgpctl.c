@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.13 2004/01/04 20:07:30 henning Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.14 2004/01/04 20:21:56 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -233,6 +233,22 @@ show_neighbor_msg(struct imsg *imsg)
 		printf("  Last read %s, holdtime %us, keepalive interval %us\n",
 		    fmt_timeframe(p->stats.last_read),
 		    p->holdtime, p->holdtime/3);
+		printf("  Message statistics:\n");
+		printf("  %-15s %-10s %-10s\n", "", "Sent", "Received");
+		printf("  %-15s %10llu %10llu\n", "Opens",
+		    p->stats.msg_sent_open, p->stats.msg_rcvd_open);
+		printf("  %-15s %10llu %10llu\n", "Notifications",
+		    p->stats.msg_sent_notification,
+		    p->stats.msg_rcvd_notification);
+		printf("  %-15s %10llu %10llu\n", "Updates",
+		    p->stats.msg_sent_update, p->stats.msg_rcvd_update);
+		printf("  %-15s %10llu %10llu\n", "Keepalives",
+		    p->stats.msg_sent_keepalive, p->stats.msg_rcvd_keepalive);
+		printf("  %-15s %10llu %10llu\n", "Total",
+		    p->stats.msg_sent_open + p->stats.msg_sent_notification +
+		    p->stats.msg_sent_update + p->stats.msg_sent_keepalive,
+		    p->stats.msg_rcvd_open + p->stats.msg_rcvd_notification +
+		    p->stats.msg_rcvd_update + p->stats.msg_rcvd_keepalive);
 		printf("\n");
 		break;
 	case IMSG_CTL_END:
@@ -300,5 +316,5 @@ parse_addr(const char *word, struct bgpd_addr *addr)
 		return (1);
 	}
 
-	return (0);	
+	return (0);
 }
