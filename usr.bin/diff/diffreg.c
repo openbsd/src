@@ -1,4 +1,4 @@
-/*	$OpenBSD: diffreg.c,v 1.12 2003/06/25 03:53:59 deraadt Exp $	*/
+/*	$OpenBSD: diffreg.c,v 1.13 2003/06/25 03:55:45 deraadt Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -398,7 +398,7 @@ prepare(int i, FILE *fd)
 	struct line *p;
 	int j, h;
 
-	fseek(fd, (off_t)0, SEEK_SET);
+	fseek(fd, 0L, SEEK_SET);
 	p = talloc(3 * sizeof(struct line));
 	for (j = 0; (h = readhash(fd));) {
 		p = ralloc(p, (++j + 3) * sizeof(struct line));
@@ -1016,7 +1016,7 @@ asciifile(FILE *f)
 	char buf[BUFSIZ], *cp;
 	int cnt;
 
-	fseek(f, (off_t)0, SEEK_SET);
+	fseek(f, 0L, SEEK_SET);
 	cnt = fread(buf, 1, BUFSIZ, f);
 	cp = buf;
 	while (--cnt >= 0)
