@@ -1031,9 +1031,9 @@ assign_stack_temp_for_type (mode, size, keep, type)
       if (mode == BLKmode && align < BIGGEST_ALIGNMENT)
 	abort();
       p->slot = assign_stack_local (mode,
-                                   (mode == BLKmode
-                                    ? CEIL_ROUND (size, align / BITS_PER_UNIT)
-                                    : size),
+				    (mode == BLKmode
+				     ? CEIL_ROUND (size, align / BITS_PER_UNIT)
+				     : size),
 				    align);
 
       p->align = align;
