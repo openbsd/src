@@ -22,7 +22,7 @@ sleeper(void *arg)
 {
 
 	pthread_set_name_np(pthread_self(), "slpr");
-	sleep(10);
+	sleep(2);
 	PANIC("sleeper timed out");
 }
 
@@ -53,6 +53,7 @@ main()
 	int flags;
 	pid_t pid;
 	pthread_t sleeper_thread;
+	void *result;
 
 	parent_pid = getpid();
 
@@ -77,7 +78,7 @@ main()
 		/* Our pid should change */
 		ASSERT(getpid() != parent_pid);
 		/* Our sleeper thread should have disappeared */
-		ASSERT(ESRCH == pthread_cancel(sleeper_thread));
+		ASSERT(ESRCH == pthread_join(sleeper_thread, &result));
 		printf("child ok\n");
 		_exit(0);
 		PANIC("child _exit");
@@ -87,7 +88,7 @@ main()
 		/* Our pid should stay the same */
 		ASSERT(getpid() == parent_pid);
 		/* Our sleeper thread should still be around */
-		CHECKr(pthread_cancel(sleeper_thread));
+		CHECKr(pthread_join(sleeper_thread, &result));
 		/* wait for the SIGCHLD from the child */
 		CHECKe(pause());
 		PANIC("pause");
