@@ -46,7 +46,7 @@ typedef	unsigned int		u_int32_t;
 typedef	long long		int64_t;
 typedef	unsigned long long	u_int64_t;
 
-typedef	int32_t			register_t;
+typedef	u_int32_t		register_t;
 
 typedef	unsigned long		vm_size_t;
 typedef	unsigned long		vm_offset_t;

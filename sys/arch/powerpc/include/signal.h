@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.h,v 1.2 1997/02/05 01:33:53 rahnds Exp $	*/
+/*	$OpenBSD: signal.h,v 1.3 1997/02/18 15:54:27 rahnds Exp $	*/
 /*	$NetBSD: signal.h,v 1.1 1996/09/30 16:34:34 ws Exp $	*/
 
 /*
@@ -36,6 +36,8 @@
 
 typedef int sig_atomic_t;
 
+#include <machine/types.h>
+
 /*
  * We have to save all registers on every trap, because
  *	1. user could attach this process every time
@@ -44,19 +46,18 @@ typedef int sig_atomic_t;
  * these are not used by the kernel. They are saved only when switching
  * between processes using the FPU.
  *
- * Change ordering to cluster together these register_t's.		XXX
  */
 struct trapframe {
-	register_t fixreg[32];
-	register_t lr;
-	int cr;
-	int xer;
-	register_t ctr;
-	register_t srr0;
-	register_t srr1;
-	register_t dar;			/* dar & dsisr are only filled on a DSI trap */
+	u_int32_t fixreg[32];
+	u_int32_t lr;
+	u_int32_t cr;
+	u_int32_t xer;
+	u_int32_t ctr;
+	int srr0;
+	int srr1;
+	int dar;			/* dar & dsisr are only filled on a DSI trap */
 	int dsisr;
-	int exc;
+	u_int32_t exc;
 };
 
 struct sigcontext {
