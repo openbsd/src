@@ -1,4 +1,4 @@
-/*	$OpenBSD: utility.c,v 1.12 1998/04/25 04:43:05 millert Exp $	*/
+/*	$OpenBSD: utility.c,v 1.13 1998/05/08 19:32:35 deraadt Exp $	*/
 /*	$NetBSD: utility.c,v 1.9 1996/02/28 20:38:29 thorpej Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
 static char sccsid[] = "@(#)utility.c	8.4 (Berkeley) 5/30/95";
 static char rcsid[] = "$NetBSD: utility.c,v 1.9 1996/02/28 20:38:29 thorpej Exp $";
 #else
-static char rcsid[] = "$OpenBSD: utility.c,v 1.12 1998/04/25 04:43:05 millert Exp $";
+static char rcsid[] = "$OpenBSD: utility.c,v 1.13 1998/05/08 19:32:35 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -384,7 +384,7 @@ fatalperror(f, msg)
 {
 	char buf[BUFSIZ], *strerror();
 
-	(void) sprintf(buf, "%s: %s", msg, strerror(errno));
+	(void) snprintf(buf, sizeof buf, "%s: %s", msg, strerror(errno));
 	fatal(f, buf);
 }
 

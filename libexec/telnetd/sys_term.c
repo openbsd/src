@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_term.c,v 1.12 1998/04/25 04:43:02 millert Exp $	*/
+/*	$OpenBSD: sys_term.c,v 1.13 1998/05/08 19:32:33 deraadt Exp $	*/
 /*	$NetBSD: sys_term.c,v 1.9 1996/03/20 04:25:53 tls Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
 static char sccsid[] = "@(#)sys_term.c	8.4+1 (Berkeley) 5/30/95";
 static char rcsid[] = "$NetBSD: sys_term.c,v 1.8 1996/02/28 20:38:21 thorpej Exp $";
 #else
-static char rcsid[] = "$OpenBSD: sys_term.c,v 1.12 1998/04/25 04:43:02 millert Exp $";
+static char rcsid[] = "$OpenBSD: sys_term.c,v 1.13 1998/05/08 19:32:33 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -1472,7 +1472,7 @@ startslave(host, autologin, autoname)
 	 */
 	if ((i = open(INIT_FIFO, O_WRONLY)) < 0) {
 		char tbuf[128];
-		(void) sprintf(tbuf, "Can't open %s\n", INIT_FIFO);
+		(void) snprintf(tbuf, sizeof tbuf, "Can't open %s\n", INIT_FIFO);
 		fatalperror(net, tbuf);
 	}
 	memset((void *)&request, 0, sizeof(request));
@@ -1495,7 +1495,7 @@ startslave(host, autologin, autoname)
 #endif /* BFTPDAEMON */
 	if (write(i, (char *)&request, sizeof(request)) < 0) {
 		char tbuf[128];
-		(void) sprintf(tbuf, "Can't write to %s\n", INIT_FIFO);
+		(void) snprintf(tbuf, sizeof tbuf, "Can't write to %s\n", INIT_FIFO);
 		fatalperror(net, tbuf);
 	}
 	(void) close(i);
@@ -1507,7 +1507,9 @@ startslave(host, autologin, autoname)
 		if (i == 3 || n >= 0 || !gotalarm)
 			break;
 		gotalarm = 0;
-		sprintf(tbuf, "telnetd: waiting for /etc/init to start login process on %s\r\n", line);
+		snprintf(tbuf, sizeof tbuf,
+		    "telnetd: waiting for /etc/init to start login process on %s\r\n",
+		    line);
 		(void) write(net, tbuf, strlen(tbuf));
 	}
 	if (n < 0 && gotalarm)
@@ -1722,8 +1724,9 @@ start_login(host, autologin, name)
 			len = strlen(name)+1;
 			write(xpty, name, len);
 			write(xpty, name, len);
-			sprintf(speed, "%s/%d", (cp = getenv("TERM")) ? cp : "",
-				(def_rspeed > 0) ? def_rspeed : 9600);
+			snprintf(speed, sizeof speed,
+			    "%s/%d", (cp = getenv("TERM")) ? cp : "",
+			    (def_rspeed > 0) ? def_rspeed : 9600);
 			len = strlen(speed)+1;
 			write(xpty, speed, len);
 
