@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_usrreq.c,v 1.3 1998/02/05 16:49:22 deraadt Exp $	*/
+/*	$OpenBSD: db_usrreq.c,v 1.4 2000/02/27 04:57:29 hugh Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff.  All rights reserved.
@@ -38,6 +38,8 @@
 
 #include <ddb/db_var.h>
 
+extern int securelevel;
+
 int
 ddb_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	int	*name;
@@ -48,6 +50,8 @@ ddb_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	size_t	newlen;
 	struct proc *p;
 {
+	int error, ctlval;
+
 	/* All sysctl names at this level are terminal. */
 	if (namelen != 1)
 		return (ENOTDIR);
@@ -63,9 +67,27 @@ ddb_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	case DBCTL_MAXLINE:
 		return sysctl_int(oldp, oldlenp, newp, newlen, &db_max_line);
 	case DBCTL_PANIC:
-		return sysctl_int(oldp, oldlenp, newp, newlen, &db_panic);
+		ctlval = db_panic;
+		if ((error = sysctl_int(oldp, oldlenp, newp, newlen, &ctlval)) ||
+		    newp == NULL)
+			return (error);
+		if (ctlval != 1 && ctlval != 0)
+			return (EINVAL);
+		if (ctlval > db_panic && securelevel > 1)
+			return (EPERM);
+		db_panic = ctlval;
+		return (0);
 	case DBCTL_CONSOLE:
-		return sysctl_int(oldp, oldlenp, newp, newlen, &db_console);
+		ctlval = db_console;
+		if ((error = sysctl_int(oldp, oldlenp, newp, newlen, &ctlval)) ||
+		    newp == NULL)
+			return (error);
+		if (ctlval != 1 && ctlval != 0)
+			return (EINVAL);
+		if (ctlval > db_console && securelevel > 1)
+			return (EPERM);
+		db_console = ctlval;
+		return (0);
 	default:
 		return (EOPNOTSUPP);
 	}
