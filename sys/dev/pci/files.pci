@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.39 1999/07/01 23:10:39 deraadt Exp $
+#	$OpenBSD: files.pci,v 1.40 1999/07/18 03:26:43 csapuntz Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -8,6 +8,7 @@
 device	pci {[dev = -1], [function = -1]}
 attach	pci at pcibus
 file	dev/pci/pci.c			pci needs-flag
+file	dev/pci/pci_map.c		pci
 file	dev/pci/pci_subr.c		pci
 
 # Generic VGA
@@ -83,6 +84,11 @@ file	dev/pci/if_le_pci.c		le_pci
 device	ncr: scsi
 attach	ncr at pci
 file	dev/pci/ncr.c			ncr
+
+# PCI IDE controllers
+#device	pciide {[channel = -1]}: wdc_base, ata, atapi
+#attach	pciide at pci
+#file	dev/pci/pciide.c		pciide
 
 # PCI-PCI bridge chips
 device	ppb: pcibus
