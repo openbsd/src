@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.23 2003/07/06 20:48:59 millert Exp $	*/
+/*	$OpenBSD: diff.c,v 1.24 2003/07/06 22:02:36 millert Exp $	*/
 
 /*
  * Copyright (c) 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -21,7 +21,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: diff.c,v 1.23 2003/07/06 20:48:59 millert Exp $";
+static const char rcsid[] = "$OpenBSD: diff.c,v 1.24 2003/07/06 22:02:36 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -38,13 +38,13 @@ static const char rcsid[] = "$OpenBSD: diff.c,v 1.23 2003/07/06 20:48:59 millert
 
 #include "diff.h"
 
-int	 aflag, bflag, iflag, Nflag, rflag, sflag, tflag, wflag;
+int	 aflag, bflag, iflag, Nflag, Pflag, rflag, sflag, tflag, wflag;
 int	 format, context, status;
 char	*start, *ifdefname, *diffargs;
 struct stat stb1, stb2;
 struct excludes *excludes_list;
 
-#define	OPTIONS	"abC:cD:efhinNrS:stU:uwX:x:"
+#define	OPTIONS	"abC:cD:efhinNPrS:stU:uwX:x:"
 static struct option longopts[] = {
 	{ "text",			no_argument,		0,	'a' },
 	{ "ignore-space-change",	no_argument,		0,	'b' },
@@ -55,6 +55,7 @@ static struct option longopts[] = {
 	{ "ignore-case",		no_argument,		0,	'i' },
 	{ "new-file",			no_argument,		0,	'N' },
 	{ "rcs",			no_argument,		0,	'n' },
+	{ "unidirectional-new-file",	no_argument,		0,	'P' },
 	{ "recursive",			no_argument,		0,	'r' },
 	{ "report-identical-files",	no_argument,		0,	's' },
 	{ "starting-file",		required_argument,	0,	'S' },
@@ -120,6 +121,9 @@ main(int argc, char **argv)
 			break;
 		case 'n':
 			format = D_NREVERSE;
+			break;
+		case 'P':
+			Pflag = 1;
 			break;
 		case 'r':
 			rflag = 1;
@@ -314,7 +318,7 @@ usage(void)
 	    "       diff [-bitw] -C number file1 file2\n"
 	    "       diff [-bitw] -D string file1 file2\n"
 	    "       diff [-bitw] -U number file1 file2\n"
-	    "       diff [-biNwt] [-c | -e | -f | -n | -u ] [-r] [-s] [-S name]"
+	    "       diff [-biNPwt] [-c | -e | -f | -n | -u ] [-r] [-s] [-S name]"
 	    " [-X file]\n            [-x pattern] dir1 dir2\n");
 
 	exit(2);

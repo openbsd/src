@@ -1,4 +1,4 @@
-/*	$OpenBSD: diffdir.c,v 1.19 2003/07/06 20:48:59 millert Exp $	*/
+/*	$OpenBSD: diffdir.c,v 1.20 2003/07/06 22:02:36 millert Exp $	*/
 
 /*
  * Copyright (c) 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -21,7 +21,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: diffdir.c,v 1.19 2003/07/06 20:48:59 millert Exp $";
+static const char rcsid[] = "$OpenBSD: diffdir.c,v 1.20 2003/07/06 22:02:36 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -42,7 +42,7 @@ static const char rcsid[] = "$OpenBSD: diffdir.c,v 1.19 2003/07/06 20:48:59 mill
 
 static int dircompare(const void *, const void *);
 static int excluded(const char *);
-static struct dirent **slurpdir(char *, char **);
+static struct dirent **slurpdir(char *, char **, int);
 static void diffit(struct dirent *, char *, size_t, char *, size_t);
 
 /*
@@ -80,8 +80,8 @@ diffdir(char *p1, char *p2)
 	}
 
 	/* get a list of the entries in each directory */
-	dp1 = dirp1 = slurpdir(path1, &dirbuf1);
-	dp2 = dirp2 = slurpdir(path2, &dirbuf2);
+	dp1 = dirp1 = slurpdir(path1, &dirbuf1, Nflag + Pflag);
+	dp2 = dirp2 = slurpdir(path2, &dirbuf2, Nflag);
 	if (dirp1 == NULL || dirp2 == NULL)
 		return;
 
@@ -120,8 +120,8 @@ diffdir(char *p1, char *p2)
 				    path1, dent1->d_name);
 			dp1++;
 		} else {
-			/* file only in second dir, only diff if -N */
-			if (Nflag)
+			/* file only in second dir, only diff if -N or -P */
+			if (Nflag || Pflag)
 				diffit(dent2, path1, dirlen1, path2, dirlen2);
 			else if (format == D_NORMAL || format == D_CONTEXT ||
 			    format == D_UNIFIED)
@@ -149,7 +149,7 @@ diffdir(char *p1, char *p2)
  * returned via bufp.  Caller is responsible for free()ing both of these.
  */
 static struct dirent **
-slurpdir(char *path, char **bufp)
+slurpdir(char *path, char **bufp, int enoentok)
 {
 	char *buf, *ebuf, *cp;
 	size_t bufsize;
@@ -162,7 +162,7 @@ slurpdir(char *path, char **bufp)
 	if ((fd = open(path, O_RDONLY, 0644)) == -1) {
 		static struct dirent *dummy;
 
-		if (!Nflag) {
+		if (!enoentok || errno != ENOENT) {
 			warn("%s", path);
 			return (NULL);
 		}
@@ -237,7 +237,7 @@ diffit(struct dirent *dp, char *path1, size_t plen1, char *path2, size_t plen2)
 
 	strlcpy(path1 + plen1, dp->d_name, MAXPATHLEN - plen1);
 	if (stat(path1, &stb1) != 0) {
-		if (!Nflag || errno != ENOENT) {
+		if (!(Nflag || Pflag) || errno != ENOENT) {
 			warn("%s", path1);
 			return;
 		}
@@ -259,12 +259,12 @@ diffit(struct dirent *dp, char *path1, size_t plen1, char *path2, size_t plen2)
 		stb1.st_mode = stb2.st_mode;
 
 	if (S_ISDIR(stb1.st_mode) && S_ISDIR(stb2.st_mode)) {
-		/* XXX GNU diff always prints this for dirs XXX */
-		if (format != D_EDIT)
-			printf("Common subdirectories: %s and %s\n",
-			    path1, path2);
 		if (rflag)
 			diffdir(path1, path2);
+		else if (format != D_EDIT)
+			/* XXX GNU diff always prints this for dirs XXX */
+			printf("Common subdirectories: %s and %s\n",
+			    path1, path2);
 		return;
 	}
 	diffreg(path1, path2, flags);
