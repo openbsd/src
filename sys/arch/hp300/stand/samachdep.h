@@ -1,4 +1,4 @@
-/*	$OpenBSD: samachdep.h,v 1.2 1997/01/17 08:32:58 downsj Exp $	*/
+/*	$OpenBSD: samachdep.h,v 1.3 1997/02/03 07:19:09 downsj Exp $	*/
 /*	$NetBSD: samachdep.h,v 1.7 1996/10/14 07:34:48 thorpej Exp $	*/
 
 /*
@@ -40,7 +40,7 @@
 
 #define	NHPIB		4
 #define	NSCSI		2
-#define NRD		8
+#define NHD		8
 #define NCT		8
 #define NSD		8
 

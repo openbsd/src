@@ -1,4 +1,4 @@
-/*	$OpenBSD: rd.c,v 1.2 1997/01/17 08:32:56 downsj Exp $	*/
+/*	$OpenBSD: hd.c,v 1.1 1997/02/03 07:19:06 downsj Exp $	*/
 /*	$NetBSD: rd.c,v 1.11 1996/12/21 21:34:40 thorpej Exp $	*/
 
 /*
@@ -51,92 +51,92 @@
 #include "stand.h"
 #include "samachdep.h"
 
-#include <hp300/dev/rdreg.h>
+#include <hp300/dev/hdreg.h>
 
-struct	rd_iocmd rd_ioc;
-struct	rd_rscmd rd_rsc;
-struct	rd_stat rd_stat;
-struct	rd_ssmcmd rd_ssmc;
+struct	hd_iocmd hd_ioc;
+struct	hd_rscmd hd_rsc;
+struct	hd_stat hd_stat;
+struct	hd_ssmcmd hd_ssmc;
 
-struct	disklabel rdlabel;
+struct	disklabel hdlabel;
 
-struct	rdminilabel {
+struct	hdminilabel {
 	u_short	npart;
 	u_long	offset[MAXPARTITIONS];
 };
 
-struct	rd_softc {
+struct	hd_softc {
 	int	sc_ctlr;
 	int	sc_unit;
 	int	sc_part;
 	char	sc_retry;
 	char	sc_alive;
 	short	sc_type;
-	struct	rdminilabel sc_pinfo;
-} rd_softc[NHPIB][NRD];
+	struct	hdminilabel sc_pinfo;
+} hd_softc[NHPIB][NHD];
 
-#define	RDRETRY		5
+#define	HDRETRY		5
 
-struct	rdidentinfo {
+struct	hdidentinfo {
 	short	ri_hwid;
 	short	ri_maxunum;
 	int	ri_nblocks;
-} rdidentinfo[] = {
-	{ RD7946AID,	0,	 108416 },
-	{ RD9134DID,	1,	  29088 },
-	{ RD9134LID,	1,	   1232 },
-	{ RD7912PID,	0,	 128128 },
-	{ RD7914PID,	0,	 258048 },
-	{ RD7958AID,	0,	 255276 },
-	{ RD7957AID,	0,	 159544 },
-	{ RD7933HID,	0,	 789958 },
-	{ RD9134LID,	1,	  77840 },
-	{ RD7936HID,	0,	 600978 },
-	{ RD7937HID,	0,	1116102 },
-	{ RD7914CTID,	0,	 258048 },
-	{ RD7946AID,	0,	 108416 },
-	{ RD9134LID,	1,	   1232 },
-	{ RD7957BID,	0,	 159894 },
-	{ RD7958BID,	0,	 297108 },
-	{ RD7959BID,	0,	 594216 },
-	{ RD2200AID,	0,	 654948 },
-	{ RD2203AID,	0,	1309896 }
+} hdidentinfo[] = {
+	{ HD7946AID,	0,	 108416 },
+	{ HD9134DID,	1,	  29088 },
+	{ HD9134LID,	1,	   1232 },
+	{ HD7912PID,	0,	 128128 },
+	{ HD7914PID,	0,	 258048 },
+	{ HD7958AID,	0,	 255276 },
+	{ HD7957AID,	0,	 159544 },
+	{ HD7933HID,	0,	 789958 },
+	{ HD9134LID,	1,	  77840 },
+	{ HD7936HID,	0,	 600978 },
+	{ HD7937HID,	0,	1116102 },
+	{ HD7914CTID,	0,	 258048 },
+	{ HD7946AID,	0,	 108416 },
+	{ HD9134LID,	1,	   1232 },
+	{ HD7957BID,	0,	 159894 },
+	{ HD7958BID,	0,	 297108 },
+	{ HD7959BID,	0,	 594216 },
+	{ HD2200AID,	0,	 654948 },
+	{ HD2203AID,	0,	1309896 }
 };
-int numrdidentinfo = sizeof(rdidentinfo) / sizeof(rdidentinfo[0]);
+int numhdidentinfo = sizeof(hdidentinfo) / sizeof(hdidentinfo[0]);
 
-rdinit(ctlr, unit)
+hdinit(ctlr, unit)
 	int ctlr, unit;
 {
-	register struct rd_softc *rs = &rd_softc[ctlr][unit];
+	register struct hd_softc *rs = &hd_softc[ctlr][unit];
 	u_char stat;
 
-	rs->sc_type = rdident(ctlr, unit);
+	rs->sc_type = hdident(ctlr, unit);
 	if (rs->sc_type < 0)
 		return (0);
 	rs->sc_alive = 1;
 	return (1);
 }
 
-rdreset(ctlr, unit)
+hdreset(ctlr, unit)
 	register int ctlr, unit;
 {
 	u_char stat;
 
-	rd_ssmc.c_unit = C_SUNIT(0);
-	rd_ssmc.c_cmd = C_SSM;
-	rd_ssmc.c_refm = REF_MASK;
-	rd_ssmc.c_fefm = FEF_MASK;
-	rd_ssmc.c_aefm = AEF_MASK;
-	rd_ssmc.c_iefm = IEF_MASK;
-	hpibsend(ctlr, unit, C_CMD, &rd_ssmc, sizeof(rd_ssmc));
+	hd_ssmc.c_unit = C_SUNIT(0);
+	hd_ssmc.c_cmd = C_SSM;
+	hd_ssmc.c_refm = REF_MASK;
+	hd_ssmc.c_fefm = FEF_MASK;
+	hd_ssmc.c_aefm = AEF_MASK;
+	hd_ssmc.c_iefm = IEF_MASK;
+	hpibsend(ctlr, unit, C_CMD, &hd_ssmc, sizeof(hd_ssmc));
 	hpibswait(ctlr, unit);
 	hpibrecv(ctlr, unit, C_QSTAT, &stat, 1);
 }
 
-rdident(ctlr, unit)
+hdident(ctlr, unit)
 	register int ctlr, unit;
 {
-	struct rd_describe desc;
+	struct hd_describe desc;
 	u_char stat, cmd[3];
 	char name[7];
 	register int id, i;
@@ -144,13 +144,13 @@ rdident(ctlr, unit)
 	id = hpibid(ctlr, unit);
 	if ((id & 0x200) == 0)
 		return(-1);
-	for (i = 0; i < numrdidentinfo; i++)
-		if (id == rdidentinfo[i].ri_hwid)
+	for (i = 0; i < numhdidentinfo; i++)
+		if (id == hdidentinfo[i].ri_hwid)
 			break;
-	if (i == numrdidentinfo)
+	if (i == numhdidentinfo)
 		return(-1);
 	id = i;
-	rdreset(ctlr, unit);
+	hdreset(ctlr, unit);
 	cmd[0] = C_SUNIT(0);
 	cmd[1] = C_SVOL(0);
 	cmd[2] = C_DESC;
@@ -171,33 +171,33 @@ rdident(ctlr, unit)
 	 * 2. 9122S and 9134D both return same HW id
 	 * 3. 9122D and 9134L both return same HW id
 	 */
-	switch (rdidentinfo[id].ri_hwid) {
-	case RD7946AID:
+	switch (hdidentinfo[id].ri_hwid) {
+	case HD7946AID:
 		if (bcmp(name, "079450", 6) == 0)
-			id = RD7945A;
+			id = HD7945A;
 		else
-			id = RD7946A;
+			id = HD7946A;
 		break;
 
-	case RD9134LID:
+	case HD9134LID:
 		if (bcmp(name, "091340", 6) == 0)
-			id = RD9134L;
+			id = HD9134L;
 		else
-			id = RD9122D;
+			id = HD9122D;
 		break;
 
-	case RD9134DID:
+	case HD9134DID:
 		if (bcmp(name, "091220", 6) == 0)
-			id = RD9122S;
+			id = HD9122S;
 		else
-			id = RD9134D;
+			id = HD9134D;
 		break;
 	}
 	return(id);
 }
 
 #ifdef COMPAT_NOLABEL
-int rdcyloff[][8] = {
+int hdcyloff[][8] = {
 	{ 1, 143, 0, 143, 0,   0,   323, 503, },	/* 7945A */
 	{ 1, 167, 0, 0,	  0,   0,   0,	 0,   },	/* 9134D */
 	{ 0, 0,	  0, 0,	  0,   0,   0,	 0,   },	/* 9122S */
@@ -216,42 +216,42 @@ int rdcyloff[][8] = {
 	{ 1, 11,  0, 53,  63,  217, 53,	 371, },	/* 7937H */
 };
 
-struct rdcompatinfo {
+struct hdcompatinfo {
 	int	nbpc;
 	int	*cyloff;
-} rdcompatinfo[] = {
-	NRD7945ABPT*NRD7945ATRK, rdcyloff[0],
-	NRD9134DBPT*NRD9134DTRK, rdcyloff[1],
-	NRD9122SBPT*NRD9122STRK, rdcyloff[2],
-	NRD7912PBPT*NRD7912PTRK, rdcyloff[3],
-	NRD7914PBPT*NRD7914PTRK, rdcyloff[4],
-	NRD7958ABPT*NRD7958ATRK, rdcyloff[8],
-	NRD7957ABPT*NRD7957ATRK, rdcyloff[7],
-	NRD7933HBPT*NRD7933HTRK, rdcyloff[5],
-	NRD9134LBPT*NRD9134LTRK, rdcyloff[6],
-	NRD7936HBPT*NRD7936HTRK, rdcyloff[14],
-	NRD7937HBPT*NRD7937HTRK, rdcyloff[15],
-	NRD7914PBPT*NRD7914PTRK, rdcyloff[4],
-	NRD7945ABPT*NRD7945ATRK, rdcyloff[0],
-	NRD9122SBPT*NRD9122STRK, rdcyloff[2],
-	NRD7957BBPT*NRD7957BTRK, rdcyloff[9],
-	NRD7958BBPT*NRD7958BTRK, rdcyloff[10],
-	NRD7959BBPT*NRD7959BTRK, rdcyloff[11],
-	NRD2200ABPT*NRD2200ATRK, rdcyloff[12],
-	NRD2203ABPT*NRD2203ATRK, rdcyloff[13],
+} hdcompatinfo[] = {
+	NHD7945ABPT*NHD7945ATRK, hdcyloff[0],
+	NHD9134DBPT*NHD9134DTRK, hdcyloff[1],
+	NHD9122SBPT*NHD9122STRK, hdcyloff[2],
+	NHD7912PBPT*NHD7912PTRK, hdcyloff[3],
+	NHD7914PBPT*NHD7914PTRK, hdcyloff[4],
+	NHD7958ABPT*NHD7958ATRK, hdcyloff[8],
+	NHD7957ABPT*NHD7957ATRK, hdcyloff[7],
+	NHD7933HBPT*NHD7933HTRK, hdcyloff[5],
+	NHD9134LBPT*NHD9134LTRK, hdcyloff[6],
+	NHD7936HBPT*NHD7936HTRK, hdcyloff[14],
+	NHD7937HBPT*NHD7937HTRK, hdcyloff[15],
+	NHD7914PBPT*NHD7914PTRK, hdcyloff[4],
+	NHD7945ABPT*NHD7945ATRK, hdcyloff[0],
+	NHD9122SBPT*NHD9122STRK, hdcyloff[2],
+	NHD7957BBPT*NHD7957BTRK, hdcyloff[9],
+	NHD7958BBPT*NHD7958BTRK, hdcyloff[10],
+	NHD7959BBPT*NHD7959BTRK, hdcyloff[11],
+	NHD2200ABPT*NHD2200ATRK, hdcyloff[12],
+	NHD2203ABPT*NHD2203ATRK, hdcyloff[13],
 };
-int	nrdcompatinfo = sizeof(rdcompatinfo) / sizeof(rdcompatinfo[0]);
+int	nhdcompatinfo = sizeof(hdcompatinfo) / sizeof(hdcompatinfo[0]);
 #endif					
 
 char io_buf[MAXBSIZE];
 
-rdgetinfo(rs)
-	register struct rd_softc *rs;
+hdgetinfo(rs)
+	register struct hd_softc *rs;
 {
-	register struct rdminilabel *pi = &rs->sc_pinfo;
-	register struct disklabel *lp = &rdlabel;
+	register struct hdminilabel *pi = &rs->sc_pinfo;
+	register struct disklabel *lp = &hdlabel;
 	char *msg, *getdisklabel();
-	int rdstrategy(), err, savepart;
+	int hdstrategy(), err, savepart;
 	size_t i;
 
 	bzero((caddr_t)lp, sizeof *lp);
@@ -260,25 +260,25 @@ rdgetinfo(rs)
 	/* Disklabel is always from RAW_PART. */
 	savepart = rs->sc_part;
 	rs->sc_part = RAW_PART;
-	err = rdstrategy(rs, F_READ, LABELSECTOR,
+	err = hdstrategy(rs, F_READ, LABELSECTOR,
 	    lp->d_secsize ? lp->d_secsize : DEV_BSIZE, io_buf, &i);
 	rs->sc_part = savepart;
 
 	if (err) {
-		printf("rdgetinfo: rdstrategy error %d\n", err);
+		printf("hdgetinfo: hdstrategy error %d\n", err);
 		return(0);
 	}
 	
 	msg = getdisklabel(io_buf, lp);
 	if (msg) {
-		printf("rd(%d,%d,%d): WARNING: %s, ",
+		printf("hd(%d,%d,%d): WARNING: %s, ",
 		       rs->sc_ctlr, rs->sc_unit, rs->sc_part, msg);
 #ifdef COMPAT_NOLABEL
 		{
-			register struct rdcompatinfo *ci;
+			register struct hdcompatinfo *ci;
 
 			printf("using old default partitioning\n");
-			ci = &rdcompatinfo[rs->sc_type];
+			ci = &hdcompatinfo[rs->sc_type];
 			pi->npart = 8;
 			for (i = 0; i < pi->npart; i++)
 				pi->offset[i] = ci->cyloff[i] * ci->nbpc;
@@ -298,25 +298,25 @@ rdgetinfo(rs)
 	return(1);
 }
 
-rdopen(f, ctlr, unit, part)
+hdopen(f, ctlr, unit, part)
 	struct open_file *f;
 	int ctlr, unit, part;
 {
-	register struct rd_softc *rs;
-	struct rdinfo *ri;
+	register struct hd_softc *rs;
+	struct hdinfo *ri;
 
 	if (ctlr >= NHPIB || hpibalive(ctlr) == 0)
 		return (EADAPT);
-	if (unit >= NRD)
+	if (unit >= NHD)
 		return (ECTLR);
-	rs = &rd_softc[ctlr][unit];
+	rs = &hd_softc[ctlr][unit];
 	rs->sc_part = part;
 	rs->sc_unit = unit;
 	rs->sc_ctlr = ctlr;
 	if (rs->sc_alive == 0) {
-		if (rdinit(ctlr, unit) == 0)
+		if (hdinit(ctlr, unit) == 0)
 			return (ENXIO);
-		if (rdgetinfo(rs) == 0)
+		if (hdgetinfo(rs) == 0)
 			return (ERDLAB);
 	}
 	if (part != RAW_PART &&     /* always allow RAW_PART to be opened */
@@ -326,22 +326,22 @@ rdopen(f, ctlr, unit, part)
 	return (0);
 }
 
-rdclose(f)
+hdclose(f)
 	struct open_file *f;
 {
-	struct rd_softc *rs = f->f_devdata;
+	struct hd_softc *rs = f->f_devdata;
 
 	/*
 	 * Mark the disk `not alive' so that the disklabel
 	 * will be re-loaded at next open.
 	 */
-	bzero(rs, sizeof(struct rd_softc));
+	bzero(rs, sizeof(struct hd_softc));
 	f->f_devdata = NULL;
 
 	return (0);
 }
 
-rdstrategy(devdata, func, dblk, size, v_buf, rsize)
+hdstrategy(devdata, func, dblk, size, v_buf, rsize)
 	void *devdata;
 	int func;
 	daddr_t dblk;
@@ -350,7 +350,7 @@ rdstrategy(devdata, func, dblk, size, v_buf, rsize)
 	size_t *rsize;
 {
 	char *buf = v_buf;
-	struct rd_softc *rs = devdata;
+	struct hd_softc *rs = devdata;
 	register int ctlr = rs->sc_ctlr;
 	register int unit = rs->sc_unit;
 	daddr_t blk;
@@ -366,25 +366,25 @@ rdstrategy(devdata, func, dblk, size, v_buf, rsize)
 	    rs->sc_pinfo.offset[rs->sc_part]));
 
 	rs->sc_retry = 0;
-	rd_ioc.c_unit = C_SUNIT(0);
-	rd_ioc.c_volume = C_SVOL(0);
-	rd_ioc.c_saddr = C_SADDR;
-	rd_ioc.c_hiaddr = 0;
-	rd_ioc.c_addr = RDBTOS(blk);
-	rd_ioc.c_nop2 = C_NOP;
-	rd_ioc.c_slen = C_SLEN;
-	rd_ioc.c_len = size;
-	rd_ioc.c_cmd = func == F_READ ? C_READ : C_WRITE;
+	hd_ioc.c_unit = C_SUNIT(0);
+	hd_ioc.c_volume = C_SVOL(0);
+	hd_ioc.c_saddr = C_SADDR;
+	hd_ioc.c_hiaddr = 0;
+	hd_ioc.c_addr = HDBTOS(blk);
+	hd_ioc.c_nop2 = C_NOP;
+	hd_ioc.c_slen = C_SLEN;
+	hd_ioc.c_len = size;
+	hd_ioc.c_cmd = func == F_READ ? C_READ : C_WRITE;
 retry:
-	hpibsend(ctlr, unit, C_CMD, &rd_ioc.c_unit, sizeof(rd_ioc)-2);
+	hpibsend(ctlr, unit, C_CMD, &hd_ioc.c_unit, sizeof(hd_ioc)-2);
 	hpibswait(ctlr, unit);
 	hpibgo(ctlr, unit, C_EXEC, buf, size, func);
 	hpibswait(ctlr, unit);
 	hpibrecv(ctlr, unit, C_QSTAT, &stat, 1);
 	if (stat) {
-		if (rderror(ctlr, unit, rs->sc_part) == 0)
+		if (hderror(ctlr, unit, rs->sc_part) == 0)
 			return(EIO);
-		if (++rs->sc_retry > RDRETRY)
+		if (++rs->sc_retry > HDRETRY)
 			return(EIO);
 		goto retry;
 	}
@@ -393,30 +393,30 @@ retry:
 	return(0);
 }
 
-rderror(ctlr, unit, part)
+hderror(ctlr, unit, part)
 	register int ctlr, unit;
 	int part;
 {
-	register struct rd_softc *rd = &rd_softc[ctlr][unit];
+	register struct hd_softc *hd = &hd_softc[ctlr][unit];
 	char stat;
 
-	rd_rsc.c_unit = C_SUNIT(0);
-	rd_rsc.c_sram = C_SRAM;
-	rd_rsc.c_ram = C_RAM;
-	rd_rsc.c_cmd = C_STATUS;
-	hpibsend(ctlr, unit, C_CMD, &rd_rsc, sizeof(rd_rsc));
-	hpibrecv(ctlr, unit, C_EXEC, &rd_stat, sizeof(rd_stat));
+	hd_rsc.c_unit = C_SUNIT(0);
+	hd_rsc.c_sram = C_SRAM;
+	hd_rsc.c_ram = C_RAM;
+	hd_rsc.c_cmd = C_STATUS;
+	hpibsend(ctlr, unit, C_CMD, &hd_rsc, sizeof(hd_rsc));
+	hpibrecv(ctlr, unit, C_EXEC, &hd_stat, sizeof(hd_stat));
 	hpibrecv(ctlr, unit, C_QSTAT, &stat, 1);
 	if (stat) {
-		printf("rd(%d,%d,0,%d): request status fail %d\n",
+		printf("hd(%d,%d,0,%d): request status fail %d\n",
 		       ctlr, unit, part, stat);
 		return(0);
 	}
-	printf("rd(%d,%d,0,%d) err: vu 0x%x",
-	       ctlr, unit, part, rd_stat.c_vu);
-	if ((rd_stat.c_aef & AEF_UD) || (rd_stat.c_ief & (IEF_MD|IEF_RD)))
-		printf(", block %d", rd_stat.c_blk);
+	printf("hd(%d,%d,0,%d) err: vu 0x%x",
+	       ctlr, unit, part, hd_stat.c_vu);
+	if ((hd_stat.c_aef & AEF_UD) || (hd_stat.c_ief & (IEF_MD|IEF_RD)))
+		printf(", block %d", hd_stat.c_blk);
 	printf(", R0x%x F0x%x A0x%x I0x%x\n",
-	       rd_stat.c_ref, rd_stat.c_fef, rd_stat.c_aef, rd_stat.c_ief);
+	       hd_stat.c_ref, hd_stat.c_fef, hd_stat.c_aef, hd_stat.c_ief);
 	return(1);
 }

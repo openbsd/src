@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 1997/01/17 08:32:37 downsj Exp $
+#	$OpenBSD: Makefile,v 1.5 1997/02/03 07:19:01 downsj Exp $
 #	$NetBSD: Makefile,v 1.22 1996/10/18 06:03:25 thorpej Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/10/93
 
@@ -18,9 +18,9 @@ CFLAGS=	-O3 ${INCPATH} ${DEFS}
 
 SRCS=   autoconf.c cons.c devopen.c machdep.c prf.c
 OBJS=	${SRCS:N*.h:R:S/$/.o/g}
-DSRCS=	ct.c dca.c dcm.c fhpib.c hil.c hpib.c if_le.c \
+DSRCS=	ct.c dca.c dcm.c fhpib.c hd.c hil.c hpib.c if_le.c \
 	ite.c ite_dv.c ite_gb.c ite_rb.c ite_subr.c ite_tc.c ite_hy.c \
-	nhpib.c rd.c scsi.c sd.c
+	nhpib.c scsi.c sd.c
 DOBJS=	${DSRCS:N*.h:R:S/$/.o/g}
 
 S=	${.CURDIR}/../../..

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.2 1997/01/17 08:32:40 downsj Exp $	*/
+/*	$OpenBSD: conf.c,v 1.3 1997/02/03 07:19:03 downsj Exp $	*/
 /*	$NetBSD: conf.c,v 1.12 1996/10/14 07:29:15 thorpej Exp $	*/
 
 /*
@@ -66,10 +66,10 @@ int	ctopen __P((struct open_file *, ...));
 int	ctclose __P((struct open_file *));
 #define	ctioctl		noioctl
 
-int	rdstrategy __P((void *, int, daddr_t, size_t, void *, size_t *));
-int	rdopen __P((struct open_file *, ...));
-int	rdclose __P((struct open_file *));
-#define rdioctl		noioctl
+int	hdstrategy __P((void *, int, daddr_t, size_t, void *, size_t *));
+int	hdopen __P((struct open_file *, ...));
+int	hdclose __P((struct open_file *));
+#define hdioctl		noioctl
 
 int	sdstrategy __P((void *, int, daddr_t, size_t, void *, size_t *));
 int	sdopen __P((struct open_file *, ...));
@@ -87,7 +87,7 @@ int	sdclose __P((struct open_file *));
 struct devsw devsw[] = {
 	{ "ct",	ctstrategy,	ctopen,	ctclose,	ctioctl }, /*0*/
 	{ "??",	xxstrategy,	xxopen,	xxclose,	noioctl }, /*1*/
-	{ "rd",	rdstrategy,	rdopen,	rdclose,	rdioctl }, /*2*/
+	{ "hd",	hdstrategy,	hdopen,	hdclose,	hdioctl }, /*2*/
 	{ "??",	xxstrategy,	xxopen,	xxclose,	noioctl }, /*3*/
 	{ "sd",	sdstrategy,	sdopen,	sdclose,	sdioctl }, /*4*/
 	{ "??",	xxstrategy,	xxopen,	xxclose,	noioctl }, /*5*/
@@ -118,14 +118,14 @@ punitzero(ctlr, slave, punit)
 
 extern	int ctpunit __P((int, int, int *));
 #define	xxpunit		punitzero
-#define	rdpunit		punitzero
+#define	hdpunit		punitzero
 #define	sdpunit		punitzero
 #define	lepunit		punitzero
 
 struct punitsw punitsw[] = {
 	{ ctpunit },
 	{ xxpunit },
-	{ rdpunit },
+	{ hdpunit },
 	{ xxpunit },
 	{ sdpunit },
 	{ xxpunit },
