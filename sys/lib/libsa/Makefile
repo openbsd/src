@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.17 1997/04/02 04:57:34 mickey Exp $
+#	$OpenBSD: Makefile,v 1.18 1997/04/13 21:44:46 weingart Exp $
 #	$NetBSD: Makefile,v 1.13 1996/10/02 16:19:51 ws Exp $
 
 LIB=	sa
@@ -56,11 +56,6 @@ SRCS+=	bootp.c rarp.c bootparam.c
 CFLAGS+=-DNO_NET
 .endif
 
-.if ${MACHINE_ARCH}=="i386"
-CFLAGS+=-I${DIR}/../../arch/${MACHINE_ARCH}/stand/libsa
-.PATH: ${DIR}/../../arch/${MACHINE_ARCH}/stand/libsa
-.include "${DIR}/../../arch/${MACHINE_ARCH}/stand/libsa/Makefile.inc"
-.endif
 
 NOPROFILE=
 NOPIC=
