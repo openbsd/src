@@ -1,4 +1,4 @@
-.\" $OpenBSD: pfctl.8,v 1.74 2003/02/13 10:14:43 henning Exp $
+.\" $OpenBSD: pfctl.8,v 1.75 2003/02/14 09:44:31 henning Exp $
 .\"
 .\" Copyright (c) 2001 Kjell Wooding.  All rights reserved.
 .\"
@@ -84,7 +84,8 @@ variables
 .Em net.inet.ip.forwarding
 and/or
 .Em net.inet6.ip6.forwarding ,
-to 1. Set them permanently in
+to 1.
+Set them permanently in
 .Xr sysctl.conf 5 .
 .Pp
 The
@@ -171,8 +172,8 @@ Help.
 .It Fl n
 Do not actually load rules, just parse them.
 .It Fl N
-Load only the NAT rules present in the rule file. Filter rules and options are
-ignored.
+Load only the NAT rules present in the rule file.
+Filter rules and options are ignored.
 .It Fl q
 Only print errors and warnings.
 .It Fl r
@@ -233,7 +234,8 @@ Show all of the above.
 .It Fl t Ar table
 Specify the name of the table.
 .It Fl T Ar command
-Specify the command to apply to the table. commands include:
+Specify the command to apply to the table.
+commands include:
 .Bl -tag -width "T Replace " -compact
 .It Fl T Ar create
 Create a new table.
@@ -294,7 +296,8 @@ The address/network is duplicated and therefore ignored.
 The address/network cannot be added/deleted due to conflicting "!" attribute.
 .El
 .It Fl v
-Produce more verbose output.  A second use of
+Produce more verbose output.
+A second use of
 .Fl v
 will produce an additional level of more verbose output.
 .It Fl x Ar level
