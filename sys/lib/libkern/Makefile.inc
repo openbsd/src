@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.6 1997/05/04 23:33:35 millert Exp $
+#	$OpenBSD: Makefile.inc,v 1.7 1997/05/05 04:44:10 millert Exp $
 #	$NetBSD: Makefile.inc,v 1.22 1996/09/30 15:54:35 ws Exp $
 #
 #	NOTE: $S must correspond to the top of the 'sys' tree
@@ -40,13 +40,11 @@ ${KERNLIB_PROF}:	.NOTMAIN __always_make_kernlib
 	@${KERNMAKE} libkern.po
 .endif
 
-clean:			.NOTMAIN cleankernlib
-cleankernlib: 		.NOTMAIN __always_make_kernlib
+clean::			.NOTMAIN __always_make_kernlib
 	@echo cleaning the kern library objects
 	@${KERNMAKE} clean
 
-depend: 		.NOTMAIN dependkernlib
-dependkernlib: 		.NOTMAIN __always_make_kernlib
+depend:: 		.NOTMAIN __always_make_kernlib
 	@echo depending the kern library objects
 	@${KERNMAKE} depend
 
