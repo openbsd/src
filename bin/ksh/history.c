@@ -1,4 +1,4 @@
-/*	$OpenBSD: history.c,v 1.24 2004/08/03 12:44:59 danh Exp $	*/
+/*	$OpenBSD: history.c,v 1.25 2004/12/12 06:53:13 deraadt Exp $	*/
 
 /*
  * command history
@@ -63,7 +63,6 @@ static int	hist_execute ARGS((char *cmd));
 static int	hist_replace ARGS((char **hp, const char *pat, const char *rep,
 				   int global));
 static char   **hist_get ARGS((const char *str, int approx, int allow_cur));
-static char   **hist_get_newest ARGS((int allow_cur));
 static char   **hist_get_oldest ARGS((void));
 static void	histbackup ARGS((void));
 
@@ -426,7 +425,7 @@ hist_get(str, approx, allow_cur)
 }
 
 /* Return a pointer to the newest command in the history */
-static char **
+char **
 hist_get_newest(allow_cur)
 	int allow_cur;
 {
@@ -525,6 +524,26 @@ findhist(start, fwd, str, anchored)
 			return hp - history;
 
 	return -1;
+}
+
+int
+findhistrel(str)
+	const char  *str;
+{
+	int	maxhist = histptr - history;
+	int	start = maxhist - 1;
+	int	rec = atoi(str);
+
+	if (rec == 0)
+		return -1;
+	if (rec > 0) {
+		if (rec > maxhist)
+			return -1;
+		return rec - 1;
+	}
+	if (rec > maxhist)
+		return -1;
+	return start + rec + 1;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.22 2004/11/10 21:13:54 deraadt Exp $	*/
+/*	$OpenBSD: lex.c,v 1.23 2004/12/12 06:53:13 deraadt Exp $	*/
 
 /*
  * lexical analysis and source input
@@ -163,6 +163,66 @@ yylex(cf)
 		Xcheck(ws, wp);
 		switch (state) {
 		  case SBASE:
+			if (Flag(FCSHHISTORY) && (source->flags & SF_TTY) && c == '!') {
+				char **replace = NULL;
+
+				c2 = getsc();
+				if (c2 == '\0')
+					;
+				else if (c2 == ' ' || c2 == '\t')
+					ungetsc(c2);
+				else if (c2 == '!')
+					replace = hist_get_newest(0);
+				else if (isdigit(c2) || c2 == '-' ||
+				    isalpha(c2)) {
+					int get = !isalpha(c2);
+					char match[200], *str = match;
+
+					*str++ = c2;
+					do {
+						if ((c2 = getsc()) == '\0')
+							break;
+						if (c2 == '\t' || c2 == ' ' ||
+						    c2 == '\n') {
+							ungetsc(c2);
+							break;
+						}
+						*str++ = c2;
+					} while (str < &match[sizeof(match)-1]);
+					*str = '\0';
+
+					if (get) {
+						int h = findhistrel(match);
+						if (h >= 0)
+							replace = &history[h];
+					} else {
+						int h = findhist(-1, 0, match, TRUE);
+						if (h >= 0)
+							replace = &history[h];
+					}
+				}
+
+				/*
+				 * XXX ksh history buffer saves un-expanded
+				 * commands. Until the history buffer code is
+				 * changed to contain expanded commands, we
+				 * ignore the bad commands (spinning sucks)
+				 */
+				if (replace && **replace == '!')
+					ungetsc(c2);
+				else if (replace) {
+					Source *s;
+
+					/* do not strdup replacement via alloc */
+					s = pushs(SREREAD,
+					      source->areap);
+					s->start = s->str = *replace;
+					s->next = source;
+					source = s;
+					continue;
+				} else
+					ungetsc(c2);
+			}
 			if (c == '[' && (cf & (VARASN|ARRAYVAR))) {
 				*wp = EOS; /* temporary */
 				if (is_wdvarname(Xstring(ws, wp), FALSE))

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sh.h,v 1.18 2004/05/31 10:36:35 otto Exp $	*/
+/*	$OpenBSD: sh.h,v 1.19 2004/12/12 06:53:13 deraadt Exp $	*/
 
 /*
  * Public Domain Bourne/Korn shell
@@ -463,6 +463,7 @@ enum sh_flag {
 #endif
 	FBGNICE,	/* bgnice */
 	FCOMMAND,	/* -c: (invocation) execute specified command */
+	FCSHHISTORY,	/* csh-style history enabled */
 #ifdef EMACS
 	FEMACS,		/* emacs command editing */
 	FEMACSUSEMETA,	/* use 8th bit as meta */
