@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.339 2000/10/29 00:48:18 aaron Exp 
+ *		OpenBSD: pcidevs,v 1.341 2000/11/07 20:54:11 mickey Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -733,8 +733,9 @@
 #define	PCI_PRODUCT_AMD_PBC756_USB	0x740C		/* 756 USB Host */
 
 /* AMI */
-#define	PCI_PRODUCT_AMI_MEGARAID1200	0x9010		/* MegaRAID Enterprise 1200 */
-#define	PCI_PRODUCT_AMI_MEGARAID1300	0x9060		/* MegaRAID Enterprise 1300 */
+#define	PCI_PRODUCT_AMI_MEGARAID	0x1960		/* MegaRAID */
+#define	PCI_PRODUCT_AMI_MEGARAID428	0x9010		/* MegaRAID Series 428 */
+#define	PCI_PRODUCT_AMI_MEGARAID434	0x9060		/* MegaRAID Series 434 */
 
 /* Apple products */
 #define	PCI_PRODUCT_APPLE_BANDIT	0x0001		/* Bandit */

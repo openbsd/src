@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.339 2000/10/29 00:48:18 aaron Exp 
+ *		OpenBSD: pcidevs,v 1.341 2000/11/07 20:54:11 mickey Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -843,16 +843,22 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "756 USB Host",
 	},
 	{
-	    PCI_VENDOR_AMI, PCI_PRODUCT_AMI_MEGARAID1200,
+	    PCI_VENDOR_AMI, PCI_PRODUCT_AMI_MEGARAID,
 	    0,
 	    "AMI",
-	    "MegaRAID Enterprise 1200",
+	    "MegaRAID",
 	},
 	{
-	    PCI_VENDOR_AMI, PCI_PRODUCT_AMI_MEGARAID1300,
+	    PCI_VENDOR_AMI, PCI_PRODUCT_AMI_MEGARAID428,
 	    0,
 	    "AMI",
-	    "MegaRAID Enterprise 1300",
+	    "MegaRAID Series 428",
+	},
+	{
+	    PCI_VENDOR_AMI, PCI_PRODUCT_AMI_MEGARAID434,
+	    0,
+	    "AMI",
+	    "MegaRAID Series 434",
 	},
 	{
 	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_BANDIT,
