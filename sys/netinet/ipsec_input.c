@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.10 2000/01/10 01:20:53 angelos Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.11 2000/01/10 01:23:27 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -239,7 +239,7 @@ ipsec_common_input(struct mbuf **m0, int skip, int protoff, int af, int sproto)
     }
 
     /* If we do ingress filtering and the list is empty, quick drop */
-    if (ipsec-acl && (tdbp->tdb_access == NULL))
+    if (ipsec_acl && (tdbp->tdb_access == NULL))
     {
 	DPRINTF(("%s: packet from %s dropped due to empty policy list, SA %s/%08x\n", IPSEC_NAME, ipsp_address(src_address), ipsp_address(tdbp->tdb_dst), ntohl(spi)));
 	splx(s);
