@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ldconfig.8,v 1.13 2003/10/20 05:14:13 jmc Exp $
+.\"	$OpenBSD: ldconfig.8,v 1.14 2003/11/21 08:50:38 djm Exp $
 .\"
 .\" Copyright (c) 1993,1995 Paul Kranenburg
 .\" All rights reserved.
@@ -38,6 +38,8 @@
 .Sh SYNOPSIS
 .Nm ldconfig
 .Op Fl RUmrsv
+.Op Fl f Ar hints_file
+.Op Fl S Ar strip_path
 .Op Ar directory Ar ...
 .Sh DESCRIPTION
 .Nm
@@ -91,6 +93,9 @@ for further information.
 The following options are recognized by
 .Nm ldconfig :
 .Bl -tag -width indent
+.It Fl f Ar hints_file
+Allows the specification of a hints file other than
+.Pa /var/run/ld.so.hints .
 .It Fl m
 Merge the result of the scan of the directories given as arguments into
 the existing hints file.
@@ -106,6 +111,10 @@ The hints file will not be modified.
 Rescan the previously configured directories.
 This opens the hints file and fetches the directory list from the header.
 Any additional pathnames on the command line are also processed.
+.It Fl S Ar strip_path
+Remove
+.Pa strip_path
+from the start of library paths in the generated hints file.
 .It Fl s
 Do not scan the built-in system directory
 .Pq Dq /usr/lib
