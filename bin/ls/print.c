@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.20 2003/08/06 19:09:09 tedu Exp $	*/
+/*	$OpenBSD: print.c,v 1.21 2003/09/24 20:36:36 deraadt Exp $	*/
 /*	$NetBSD: print.c,v 1.15 1996/12/11 03:25:39 thorpej Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.5 (Berkeley) 7/28/94";
 #else
-static char rcsid[] = "$OpenBSD: print.c,v 1.20 2003/08/06 19:09:09 tedu Exp $";
+static char rcsid[] = "$OpenBSD: print.c,v 1.21 2003/09/24 20:36:36 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -168,7 +168,7 @@ printcol(DISPLAY *dp)
 	int base, chcnt, col, colwidth, num;
 	int numcols, numrows, row;
 
-	if ( (colwidth = compute_columns(dp, &numcols)) == 0)
+	if ((colwidth = compute_columns(dp, &numcols)) == 0)
 		return;
 	/*
 	 * Have to do random access in the linked list -- build a table
@@ -177,11 +177,16 @@ printcol(DISPLAY *dp)
 	if (dp->entries > lastentries) {
 		FTSENT **a;
 
-		if ((a =
-		    realloc(array, dp->entries * sizeof(FTSENT *))) == NULL) {
+		if ((a = realloc(array, dp->entries * sizeof(FTSENT *))) ==
+		    NULL) {
+			if (array)
+				free(array);
+			array = NULL;
+			dp->entries = 0;
+			lastentries = -1;
 			warn(NULL);
 			printscol(dp);
-			return;			
+			return;
 		}
 		lastentries = dp->entries;
 		array = a;
