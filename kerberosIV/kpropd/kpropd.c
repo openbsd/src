@@ -1,4 +1,4 @@
-/*      $OpenBSD: kpropd.c,v 1.7 1998/11/28 23:41:02 art Exp $  */
+/*      $OpenBSD: kpropd.c,v 1.8 2000/01/12 19:54:47 ericj Exp $  */
 /* $KTH: kpropd.c,v 2.24 1997/12/05 01:34:57 assar Exp $ */
 
 /*
@@ -305,7 +305,7 @@ main(int argc, char **argv)
 
     krb_get_lrealm(realm, 1);
     
-    while((opt = getopt(argc, argv, ":d:l:mp:P:r:s:i")) >= 0){
+    while((opt = getopt(argc, argv, ":d:l:mp:P:r:s:i")) != -1){
 	switch(opt){
 	case 'd':
 	    database = optarg;
