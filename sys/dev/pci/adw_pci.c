@@ -1,4 +1,4 @@
-/* $NetBSD: adw_pci.c,v 1.3 2000/02/03 20:28:26 dante Exp $	 */
+/* $NetBSD: adw_pci.c,v 1.4 2000/02/04 13:16:22 dante Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
 
 /******************************************************************************/
 
-#define PCI_CBIO        0x10
+#define PCI_BASEADR_IO        0x10
 
 /******************************************************************************/
 
@@ -113,14 +113,43 @@ adw_pci_attach(parent, self, aux)
 {
 	struct pci_attach_args *pa = aux;
 	ADW_SOFTC      *sc = (void *) self;
+	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
-	bus_addr_t adwbase;
-	bus_size_t adwsize;
 	pci_intr_handle_t ih;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	u_int32_t       command;
 	const char     *intrstr;
-	int retval;
+
+	/*
+	 * Set chip type
+	 */
+	switch (PCI_PRODUCT(pa->pa_id)) {
+	case PCI_PRODUCT_ADVSYS_WIDE:
+		sc->chip_type = ADV_CHIP_ASC3550;
+		break;
+
+	case PCI_PRODUCT_ADVSYS_U2W:
+		sc->chip_type = ADV_CHIP_ASC38C0800;
+		break;
+
+	default:
+		printf("\n%s: unknown model: %d\n", sc->sc_dev.dv_xname,
+		       PCI_PRODUCT(pa->pa_id));
+		return;
+	}
+
+	/*
+	 * Make sure IO/MEM/MASTER are enabled
+	 */
+	command = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
+	if ((command & (PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE |
+			PCI_COMMAND_MASTER_ENABLE)) !=
+	    (PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE |
+	     PCI_COMMAND_MASTER_ENABLE)) {
+		pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
+		 command | (PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE |
+			    PCI_COMMAND_MASTER_ENABLE));
+	}
 
 	/*
 	 * Latency timer settings.
@@ -149,15 +178,13 @@ adw_pci_attach(parent, self, aux)
 	/*
 	 * Map Device Registers for I/O
 	 */
-	retval = pci_io_find(pc, pa->pa_tag, PCI_CBIO, &adwbase, &adwsize);
-	if (retval == 0)
-		retval = bus_space_map(pa->pa_iot, adwbase, adwsize, 0, &ioh);
-	if (retval) {
+	if (pci_mapreg_map(pa, PCI_BASEADR_IO, PCI_MAPREG_TYPE_IO, 0,
+			   &iot, &ioh, NULL, NULL)) {
 		printf("\n%s: unable to map device registers\n",
 		       sc->sc_dev.dv_xname);
 		return;
 	}
-	sc->sc_iot = pa->pa_iot;
+	sc->sc_iot = iot;
 	sc->sc_ioh = ioh;
 	sc->sc_dmat = pa->pa_dmat;
 
@@ -172,7 +199,7 @@ adw_pci_attach(parent, self, aux)
 	 */
 	if (pci_intr_map(pc, pa->pa_intrtag, pa->pa_intrpin,
 			 pa->pa_intrline, &ih)) {
-		printf("%s: couldn't map interrupt\n", sc->sc_dev.dv_xname);
+		printf("\n%s: couldn't map interrupt\n", sc->sc_dev.dv_xname);
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
@@ -183,7 +210,7 @@ adw_pci_attach(parent, self, aux)
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_BIO, adw_intr, sc,
 				       sc->sc_dev.dv_xname);
 	if (sc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt", sc->sc_dev.dv_xname);
+		printf("\n%s: couldn't establish interrupt", sc->sc_dev.dv_xname);
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
