@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: syslog.c,v 1.10 2001/06/27 00:58:54 lebel Exp $";
+static char rcsid[] = "$OpenBSD: syslog.c,v 1.11 2001/08/18 22:56:22 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -142,7 +142,9 @@ vsyslog(pri, fmt, ap)
 	
 #define	DEC()	\
 	do {					\
-		if (prlen >= tbuf_left)		\
+		if (prlen < 0)			\
+			prlen = 0;		\
+		else if (prlen >= tbuf_left)	\
 			prlen = tbuf_left - 1;	\
 		p += prlen;			\
 		tbuf_left -= prlen;		\
