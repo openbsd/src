@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxp.c,v 1.53 2004/05/18 22:37:25 beck Exp $	*/
+/*	$OpenBSD: fxp.c,v 1.54 2004/06/27 02:38:37 brad Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -345,15 +345,15 @@ fxp_power(why, arg)
  * Do generic parts of attach.
  */
 int
-fxp_attach_common(sc, enaddr, intrstr)
+fxp_attach_common(sc, intrstr)
 	struct fxp_softc *sc;
-	u_int8_t *enaddr;
 	const char *intrstr;
 {
 	struct ifnet *ifp;
 	struct mbuf *m;
 	bus_dmamap_t rxmap;
 	u_int16_t data;
+	u_int8_t enaddr[6];
 	int i, err;
 
 	/*

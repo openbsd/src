@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fxp_pci.c,v 1.26 2004/05/18 22:37:25 beck Exp $	*/
+/*	$OpenBSD: if_fxp_pci.c,v 1.27 2004/06/27 02:38:38 brad Exp $	*/
 
 /*
  * Copyright (c) 1995, David Greenman
@@ -134,7 +134,6 @@ fxp_pci_attach(parent, self, aux)
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pci_intr_handle_t ih;
 	const char *intrstr = NULL;
-	u_int8_t enaddr[6];
 	bus_size_t iosize;
 	pcireg_t rev = PCI_REVISION(pa->pa_class);
 
@@ -224,7 +223,7 @@ fxp_pci_attach(parent, self, aux)
 	    pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG));
 
 	/* Do generic parts of attach. */
-	if (fxp_attach_common(sc, enaddr, intrstr)) {
+	if (fxp_attach_common(sc, intrstr)) {
 		/* Failed! */
 		pci_intr_disestablish(pc, sc->sc_ih);
 		bus_space_unmap(sc->sc_st, sc->sc_sh, iosize);
