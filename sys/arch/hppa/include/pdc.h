@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdc.h,v 1.2 1998/07/07 21:32:43 mickey Exp $	*/
+/*	$OpenBSD: pdc.h,v 1.3 1998/07/08 21:33:42 mickey Exp $	*/
 
 /*
  * Copyright (c) 1990 mt Xinu, Inc.  All rights reserved.
@@ -181,12 +181,16 @@
 #define	PDC_MEMMAP_HPA		0	/* map module # to HPA */
 
 
-#if !defined(_LOCORE) && !defined(ASSEMBLER)
+#if !defined(_LOCORE)
+
+struct iomod;
+
+typedef int (*pdcio_t) __P((int, int, ...));
+typedef int (*iodcio_t) __P((struct iomod *, int, ...));
 
 /*
  * Commonly used PDC calls and the structures they return.
  */
-#include <sys/types.h>
 
 struct pdc_pim {	/* PDC_PIM */
 	u_int	count;		/* actual (HPMC, LPMC) or total (SIZE) count */
@@ -434,7 +438,7 @@ struct pz_device {
 #define	pz_layers	pz_dp.dp_layers
 	struct iomod *pz_hpa;	/* HPA base address of device */
 	caddr_t	pz_spa;		/* SPA base address (zero if no SPA exists) */
-	int	(*pz_iodc_io) __P((int, ...));/* entry point of device's driver routines */
+	iodcio_t pz_iodc_io;	/* entry point of device's driver routines */
 	short	pz_resv;	/* (reserved) */
 	u_short	pz_class;	/* (see below) */
 };
@@ -455,8 +459,8 @@ struct pz_device {
 	delay(5000000); \
 }
 
-extern int (*pdc) __P((int, ...));
+extern pdcio_t pdc;
 
-#endif	/* !(_LOCORE || ASSEMBLER) */
+#endif	/* !(_LOCORE) */
 
 #endif	/* _HPPA_PDC_H_ */
