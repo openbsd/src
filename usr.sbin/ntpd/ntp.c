@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.54 2005/03/08 16:33:43 henning Exp $ */
+/*	$OpenBSD: ntp.c,v 1.55 2005/03/24 14:50:07 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -340,7 +340,7 @@ ntp_dispatch_imsg(void)
 				}
 			}
 			if (dlen != 0)
-				fatal("IMSG_HOST_DNS: dlen != 0");
+				fatalx("IMSG_HOST_DNS: dlen != 0");
 			if (peer->addr_head.pool)
 				peer_remove(peer);
 			else
