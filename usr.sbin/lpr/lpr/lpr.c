@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpr.c,v 1.17 1997/07/09 00:16:12 millert Exp $ */
+/*	$OpenBSD: lpr.c,v 1.18 1997/07/19 07:11:44 deraadt Exp $ */
 /*	$NetBSD: lpr.c,v 1.10 1996/03/21 18:12:25 jtc Exp $	*/
 
 /*
@@ -50,7 +50,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)lpr.c	8.4 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: lpr.c,v 1.17 1997/07/09 00:16:12 millert Exp $";
+static char rcsid[] = "$OpenBSD: lpr.c,v 1.18 1997/07/19 07:11:44 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -111,12 +111,12 @@ static void	 chkprinter __P((char *));
 static void	 cleanup __P((int));
 static void	 copy __P((int, char []));
 static void	 fatal2 __P((const char *, ...));
-static char	*itoa __P((int));
 static char	*linked __P((char *));
 static char	*lmktemp __P((char *, int, int));
 static void	 mktemps __P((void));
 static int	 nfile __P((char *));
 static int	 test __P((char *));
+static char	*itoa __P((int));
 
 uid_t	uid, euid;
 
@@ -127,7 +127,6 @@ main(argc, argv)
 {
 	struct passwd *pw;
 	struct group *gptr;
-	extern char *itoa();
 	register char *arg, *cp;
 	char buf[BUFSIZ];
 	int i, f;
@@ -411,6 +410,7 @@ main(argc, argv)
 		exit(0);
 	}
 	cleanup(0);
+	return (1);
 	/* NOTREACHED */
 }
 

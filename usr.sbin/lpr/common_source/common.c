@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.4 1997/01/17 16:11:35 millert Exp $	*/
+/*	$OpenBSD: common.c,v 1.5 1997/07/19 07:11:41 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)common.c	8.5 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: common.c,v 1.4 1997/01/17 16:11:35 millert Exp $";
+static char rcsid[] = "$OpenBSD: common.c,v 1.5 1997/07/19 07:11:41 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -52,6 +52,7 @@ static char rcsid[] = "$OpenBSD: common.c,v 1.4 1997/01/17 16:11:35 millert Exp 
 
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <arpa/inet.h>
 #include <netdb.h>
 
 #include <dirent.h>
@@ -145,8 +146,7 @@ getport(rhost, rport)
 	if (rhost == NULL)
 		fatal("no remote host to connect to");
 	bzero((char *)&sin, sizeof(sin));
-	sin.sin_addr.s_addr = inet_addr(rhost);
-	if (sin.sin_addr.s_addr != INADDR_NONE)
+	if (inet_aton(rhost, &sin.sin_addr) != -1)
 		sin.sin_family = AF_INET;
 	else {
 		hp = gethostbyname(rhost);

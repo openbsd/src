@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpd.c,v 1.13 1997/01/17 16:12:41 millert Exp $ */
+/*	$OpenBSD: lpd.c,v 1.14 1997/07/19 07:11:43 deraadt Exp $ */
 /*	$NetBSD: lpd.c,v 1.7 1996/04/24 14:54:06 mrg Exp $	*/
 
 /*
@@ -45,7 +45,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)lpd.c	8.7 (Berkeley) 5/10/95";
 #else
-static char rcsid[] = "$OpenBSD: lpd.c,v 1.13 1997/01/17 16:12:41 millert Exp $";
+static char rcsid[] = "$OpenBSD: lpd.c,v 1.14 1997/07/19 07:11:43 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -102,6 +102,8 @@ static char rcsid[] = "$OpenBSD: lpd.c,v 1.13 1997/01/17 16:12:41 millert Exp $"
 #include "lp.local.h"
 #include "pathnames.h"
 #include "extern.h"
+
+extern int __ivaliduser __P((FILE *, in_addr_t, const char *, const char *));
 
 int	lflag;				/* log requests flag */
 int	from_remote;			/* from remote socket */
@@ -357,7 +359,7 @@ doit()
 		if (lflag) {
 			if (*cp >= '\1' && *cp <= '\5')
 				syslog(LOG_INFO, "%s requests %s %s",
-					from, cmdnames[*cp], cp+1);
+					from, cmdnames[(int)*cp], cp+1);
 			else
 				syslog(LOG_INFO, "bad request (%d) from %s",
 					*cp, from);
@@ -516,7 +518,6 @@ chkhost(f)
 	register struct hostent *hp;
 	register FILE *hostf;
 	int first = 1;
-	extern char *inet_ntoa();
 	int good = 0;
 
 	/* Need real hostname for temporary filenames */

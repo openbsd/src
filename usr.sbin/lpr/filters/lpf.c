@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpf.c,v 1.3 1997/01/17 16:12:33 millert Exp $	*/
+/*	$OpenBSD: lpf.c,v 1.4 1997/07/19 07:11:42 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)lpf.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: lpf.c,v 1.3 1997/01/17 16:12:33 millert Exp $";
+static char rcsid[] = "$OpenBSD: lpf.c,v 1.4 1997/07/19 07:11:42 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -177,7 +177,7 @@ main(argc, argv)
 				}
 
 			default:
-				if (col >= width || !literal && ch < ' ') {
+				if ((col >= width) || (!literal && ch < ' ')) {
 					col++;
 					break;
 				}
