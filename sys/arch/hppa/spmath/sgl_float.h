@@ -1,4 +1,4 @@
-/*	$OpenBSD: sgl_float.h,v 1.9 2003/04/10 17:27:59 mickey Exp $	*/
+/*	$OpenBSD: sgl_float.h,v 1.10 2004/01/02 14:39:01 mickey Exp $	*/
 /*
   (c) Copyright 1986 HEWLETT-PACKARD COMPANY
   To anyone who acknowledges that this file is provided "AS IS"
@@ -192,10 +192,10 @@
     Deposit_sexponent(sgl_value,(exponent op SGL_WRAP))
 
 #define Sgl_setlargestpositive(sgl_value)				\
-    Sall(sgl_value) = ((FLT_MAX_EXP+SGL_BIAS) << (32-(1+SGL_EXP_LENGTH)))	\
+    Sall(sgl_value) = ((SGL_EMAX+SGL_BIAS) << (32-(1+SGL_EXP_LENGTH)))	\
 			| ((1<<(32-(1+SGL_EXP_LENGTH))) - 1)
 #define Sgl_setlargestnegative(sgl_value)				\
-    Sall(sgl_value) = ((FLT_MAX_EXP+SGL_BIAS) << (32-(1+SGL_EXP_LENGTH)))	\
+    Sall(sgl_value) = ((SGL_EMAX+SGL_BIAS) << (32-(1+SGL_EXP_LENGTH)))	\
 			| ((1<<(32-(1+SGL_EXP_LENGTH))) - 1 ) | (1<<31)
 
 #define Sgl_setnegativeinfinity(sgl_value)	\
@@ -203,11 +203,11 @@
     ((1<<SGL_EXP_LENGTH) | SGL_INFINITY_EXPONENT) << (32-(1+SGL_EXP_LENGTH))
 #define Sgl_setlargest(sgl_value,sign)					\
     Sall(sgl_value) = ((sign) << 31) |					\
-	(((FLT_MAX_EXP+SGL_BIAS) << (32-(1+SGL_EXP_LENGTH)))		\
+	(((SGL_EMAX+SGL_BIAS) << (32-(1+SGL_EXP_LENGTH)))		\
 	  | ((1 << (32-(1+SGL_EXP_LENGTH))) - 1 ))
 #define Sgl_setlargest_exponentmantissa(sgl_value)			\
     Sall(sgl_value) = (Sall(sgl_value) & (1<<31)) |			\
-	(((FLT_MAX_EXP+SGL_BIAS) << (32-(1+SGL_EXP_LENGTH)))		\
+	(((SGL_EMAX+SGL_BIAS) << (32-(1+SGL_EXP_LENGTH)))		\
 	  | ((1 << (32-(1+SGL_EXP_LENGTH))) - 1 ))
 
 /* The high bit is always zero so arithmetic or logical shifts will work. */
@@ -248,10 +248,10 @@
 
 /* Need to Initialize */
 #define Sgl_makequietnan(dest)						\
-    Sall(dest) = ((FLT_MAX_EXP+SGL_BIAS)+1)<< (32-(1+SGL_EXP_LENGTH))	\
+    Sall(dest) = ((SGL_EMAX+SGL_BIAS)+1)<< (32-(1+SGL_EXP_LENGTH))	\
 		| (1<<(32-(1+SGL_EXP_LENGTH+2)))
 #define Sgl_makesignalingnan(dest)					\
-    Sall(dest) = ((FLT_MAX_EXP+SGL_BIAS)+1)<< (32-(1+SGL_EXP_LENGTH))	\
+    Sall(dest) = ((SGL_EMAX+SGL_BIAS)+1)<< (32-(1+SGL_EXP_LENGTH))	\
 		| (1<<(32-(1+SGL_EXP_LENGTH+1)))
 
 #define Sgl_normalize(sgl_opnd,exponent)			\
