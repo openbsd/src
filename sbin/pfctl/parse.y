@@ -1,4 +1,4 @@
-/*      $OpenBSD: parse.y,v 1.8 2001/07/17 23:25:42 provos Exp $ */
+/*      $OpenBSD: parse.y,v 1.9 2001/07/17 23:41:01 markus Exp $ */
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -103,6 +103,7 @@ ruleset:	/* empty */
 		| ruleset pfrule '\n'
 		| ruleset natrule '\n'
 		| ruleset rdrrule '\n'
+		| ruleset error '\n'		{ errors++; }
 		;
 
 pfrule: 	action direction log quick iface proto fromto flags icmpspec keep nodf minttl
@@ -145,7 +146,7 @@ pfrule: 	action direction log quick iface proto fromto flags icmpspec keep nodf 
 				r.min_ttl = $12;
 			
 			if (rule_consistent(&r) < 0)
-				yyerror("skipping rule due to errors");
+				warnx("skipping rule due to errors");
 			else
 				pfctl_add_rule(pf, &r);
 		}
@@ -163,14 +164,15 @@ blockspec:				{ $$.b2 = 0; $$.w = 0; }
 			$$.w = (ICMP_UNREACH << 8) | ICMP_UNREACH_PORT;
 		}
 		| RETURNICMP '(' STRING ')'	{
-			struct icmpcodeent *ic;
+			struct icmpcodeent *p;
 
-			ic = geticmpcodebyname(ICMP_UNREACH, $3);
-			if (ic == NULL)
-				errx(1, "line %d: unknown icmp code %s",
+			if ((p = geticmpcodebyname(ICMP_UNREACH, $3)) == NULL) {
+				warnx("line %d: unknown icmp code %s",
 				    lineno, $3);
+				YYERROR;
+			}
+			$$.w = (p->type << 8) | p->code;
 			$$.b2 = 0;
-			$$.w = (ic->type << 8) | ic->code;
 		}
 		;
 
@@ -190,8 +192,10 @@ quick:					{ $$ = 0; }
 iface:					{ $$.string = NULL; }
 		| ON STRING		{ $$.string = strdup($2); }
 		| ON '!' STRING		{
-			if (! natmode)
-				yyerror("can't '!' interface in pf rule");
+			if (! natmode) {
+				warnx("can't '!' interface in pf rule");
+				YYERROR;
+			}
 			$$.string = strdup($3); $$.not = 1;
 		}
 		;
@@ -200,19 +204,21 @@ proto:					{ $$ = proto; }
 		| PROTO NUMBER		{
 			struct protoent *p;
 
-			p = getprotobynumber($2);
-			if (p == NULL)
-				errx(1, "line %d: unknown protocol %d", lineno,
+			if ((p = getprotobynumber($2)) == NULL) {
+				warnx("line %d: unknown protocol %d", lineno,
 				    $2);
+				YYERROR;
+			}
 			proto = $$ = p->p_proto;
 		}
 		| PROTO STRING		{
 			struct protoent *p;
 
-			p = getprotobyname($2);
-			if (p == NULL)
-				errx(1, "line %d: unknown protocol %s", lineno,
+			if ((p = getprotobyname($2)) == NULL) {
+				warnx("line %d: unknown protocol %s", lineno,
 				    $2);
+				YYERROR;
+			}
 			proto = $$ = p->p_proto;
 		}
 		;
@@ -261,9 +267,11 @@ address:	STRING {
 			struct hostent *hp;
 
 			if (inet_pton(AF_INET, $1, &$$) != 1) {
-				if ((hp = gethostbyname($1)) == NULL)
-					errx(1, "line %d: cannot resolve %s",
+				if ((hp = gethostbyname($1)) == NULL) {
+					warnx("line %d: cannot resolve %s",
 					    lineno, $1);
+					YYERROR;
+				}
 				memcpy(&$$, hp->h_addr, sizeof(u_int32_t));
 			}
 		}
@@ -294,9 +302,11 @@ port:		NUMBER			{ $$ = htons($1); }
 			if (proto) {
 				s = getservbyname($1,
 				    proto == IPPROTO_TCP ? "tcp" : "udp");
-				if (s == NULL)
-					errx(1, "line %d: unknown protocol %s",
+				if (s == NULL) {
+					warnx("line %d: unknown protocol %s",
 					    lineno, $1);
+					YYERROR;
+				}
 				$$ = s->s_port;
 			} else {
 				$$ = 0;
@@ -308,19 +318,25 @@ flags:					{ $$.b1 = 0; $$.b2 = 0; }
 		| FLAGS STRING		{
 			int f;
 
-			if ((f = parse_flags($2)) < 0)
-				errx(1, "line %d: bad flags %s", lineno, $2);
+			if ((f = parse_flags($2)) < 0) {
+				warnx("line %d: bad flags %s", lineno, $2);
+				YYERROR;
+			}
 			$$.b1 = f;
 			$$.b2 = 63;
 		}
 		| FLAGS STRING "/" STRING	{
 			int f;
 
-			if ((f = parse_flags($2)) < 0)
-				errx(1, "line %d: bad flags %s", lineno, $2);
+			if ((f = parse_flags($2)) < 0) {
+				warnx("line %d: bad flags %s", lineno, $2);
+				YYERROR;
+			}
 			$$.b1 = f;
-			if ((f = parse_flags($4)) < 0)
-				errx(1, "line %d: bad flags %s", lineno, $4);
+			if ((f = parse_flags($4)) < 0) {
+				warnx("line %d: bad flags %s", lineno, $4);
+				YYERROR;
+			}
 			$$.b2 = f;
 		}
 		;
@@ -332,25 +348,27 @@ icmpspec:				{ $$.b1 = 0; $$.b2 = 0; }
 			$$.b2 = $4 + 1;
 		}
 		| ICMPTYPE icmptype CODE STRING	{
-			struct icmpcodeent *ic;
+			struct icmpcodeent *p;
 
 			$$.b1 = $2;
-			ic = geticmpcodebyname($2, $4);
-			if (ic == NULL)
-				errx(1, "line %d: unknown icmp-code %s",
+			if ((p = geticmpcodebyname($2, $4)) == NULL) {
+				warnx("line %d: unknown icmp-code %s",
 				    lineno, $4);
-			$$.b2 = ic->code + 1;
+				YYERROR;
+			}
+			$$.b2 = p->code + 1;
 		}
 		;
 
 icmptype:	STRING			{
-			struct icmptypeent *te;
+			struct icmptypeent *p;
 
-			te = geticmptypebyname($1);
-			if (te == NULL)
-				errx(1, "line %d: unknown icmp-type %s",
+			if ((p = geticmptypebyname($1)) == NULL) {
+				warnx("line %d: unknown icmp-type %s",
 				    lineno, $1);
-			$$ = te->type + 1;
+				YYERROR;
+			}
+			$$ = p->type + 1;
 		}
 		| NUMBER		{ $$ = $1 + 1; }
 		;
@@ -406,9 +424,10 @@ rdrrule:	RDR { proto = IPPROTO_TCP; } iface proto FROM ipspec TO ipspec dport AR
 		{
 			struct pf_rdr rdr;
 
-			if (!natmode)
+			if (!natmode) {
 				errx(1, "line %d: nat rule in filter mode",
 				    lineno);
+			}
 
 			memset(&rdr, 0, sizeof(rdr));
 
@@ -482,42 +501,42 @@ rule_consistent(struct pf_rule *r)
 
 	if (r->action == PF_SCRUB) {
                 if (r->quick) {
-			yyerror("quick does not apply to scrub");
+			warnx("quick does not apply to scrub");
 			problems++;
 		}
                 if (r->keep_state) {
-			yyerror("keep state does not apply to scrub");
+			warnx("keep state does not apply to scrub");
 			problems++;
 		}
 		if (r->src.port_op) {
-			yyerror("src port does not apply to scrub");
+			warnx("src port does not apply to scrub");
 			problems++;
 		}
 		if (r->dst.port_op) {
-			yyerror("dst port does not apply to scrub");
+			warnx("dst port does not apply to scrub");
 			problems++;
 		}
 		if (r->type || r->code) {
-			yyerror("icmp-type/code does not apply to scrub");
+			warnx("icmp-type/code does not apply to scrub");
 			problems++;
 		}
 	} else {
 		if (r->rule_flag & PFRULE_NODF) {
-			yyerror("nodf applies only to scrub");
+			warnx("nodf applies only to scrub");
 			problems++;
 		}
 		if (r->min_ttl) {
-			yyerror("min-ttl applies only to scrub");
+			warnx("min-ttl applies only to scrub");
 			problems++;
 		}
 	}
 	if (r->proto != IPPROTO_TCP && r->proto != IPPROTO_UDP &&
 	    (r->src.port_op || r->dst.port_op)) {
-		yyerror("ports do only apply to tcp/udp");
+		warnx("ports do only apply to tcp/udp");
 		problems++;
 	}
 	if (r->proto != IPPROTO_ICMP && (r->type || r->code)) {
-		yyerror("icmp-type/code does only apply to icmp");
+		warnx("icmp-type/code does only apply to icmp");
 		problems++;
 	}
 	return -problems;
