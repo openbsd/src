@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay.c,v 1.6 2000/08/01 16:44:33 mickey Exp $ */
+/* $OpenBSD: wsdisplay.c,v 1.7 2000/11/15 20:00:39 aaron Exp $ */
 /* $NetBSD: wsdisplay.c,v 1.37.4.1 2000/06/30 16:27:53 simonb Exp $ */
 
 /*
@@ -1497,7 +1497,7 @@ wsdisplay_switch1(arg, error, waitok)
 	}
 
 	if (error) {
-	sc->sc_flags &= ~SC_SWITCHPENDING;
+		sc->sc_flags &= ~SC_SWITCHPENDING;
 		return (error);
 	}
 
@@ -1508,8 +1508,8 @@ wsdisplay_switch1(arg, error, waitok)
 	  sc->sc_isconsole && wsdisplay_cons_pollmode ? 0 : wsswitch_cb2, sc);
 	if (error == EAGAIN) {
 		/* switch will be done asynchronously */
-	return (0);
-}
+		return (0);
+	}
 
 	return (wsdisplay_switch2(sc, error, waitok));
 }
@@ -1798,6 +1798,22 @@ wsdisplay_switchtoconsole()
 	if (wsdisplay_console_device != NULL)
 		wsdisplay_switch((struct device *)wsdisplay_console_device, 
 		    0, 0);
+}
+
+void
+wsscrollback(arg, op)
+	void *arg;
+	int op;
+{
+	struct wsdisplay_softc *sc = arg;
+	int lines;
+
+	lines = sc->sc_focus->scr_dconf->scrdata->nrows - 1;
+	if (op == WSCONS_SCROLL_BACKWARD)
+		lines = -lines;
+
+	(*sc->sc_accessops->scrollback)(sc->sc_accesscookie,
+	    sc->sc_focus->scr_dconf->emulcookie, lines);
 }
 
 /*

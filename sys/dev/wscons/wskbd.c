@@ -1,4 +1,4 @@
-/* $OpenBSD: wskbd.c,v 1.2 2000/08/01 13:51:18 mickey Exp $ */
+/* $OpenBSD: wskbd.c,v 1.3 2000/11/15 20:00:40 aaron Exp $ */
 /* $NetBSD: wskbd.c,v 1.38 2000/03/23 07:01:47 thorpej Exp $ */
 
 /*
@@ -107,6 +107,7 @@
 #include <dev/wscons/wsksymvar.h>
 #include <dev/wscons/wseventvar.h>
 #include <dev/wscons/wscons_callbacks.h>
+#include <dev/wscons/wsdisplayvar.h>
 
 #include "wsdisplay.h"
 #include "wsmux.h"
@@ -1296,9 +1297,27 @@ internal_command(sc, type, ksym)
 		break;
 	}
 
-	if (*type != WSCONS_EVENT_KEY_DOWN ||
-	    (! MOD_ONESET(sc->id, MOD_COMMAND) &&
-	     ! MOD_ALLSET(sc->id, MOD_COMMAND1 | MOD_COMMAND2)))
+	if (*type != WSCONS_EVENT_KEY_DOWN)
+		return (0);
+
+#if NWSDISPLAY > 0
+	switch (ksym) {
+	case KS_Cmd_ScrollBack:
+		if (MOD_ONESET(sc->id, MOD_ANYSHIFT)) {
+			wsscrollback(sc->sc_displaydv, WSCONS_SCROLL_BACKWARD);
+			return (1);
+		}
+
+	case KS_Cmd_ScrollFwd:
+		if (MOD_ONESET(sc->id, MOD_ANYSHIFT)) {
+			wsscrollback(sc->sc_displaydv, WSCONS_SCROLL_FORWARD);
+			return (1);
+		}
+	}
+#endif
+
+	if (!MOD_ONESET(sc->id, MOD_COMMAND) &&
+	    !MOD_ALLSET(sc->id, MOD_COMMAND1 | MOD_COMMAND2))
 		return (0);
 
 	switch (ksym) {
