@@ -30,7 +30,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $OpenBSD: login.conf.5,v 1.32 2003/09/04 08:48:53 jmc Exp $
+.\" $OpenBSD: login.conf.5,v 1.33 2003/09/05 19:28:04 jmc Exp $
 .\" BSDI $From: login.conf.5,v 2.20 2000/06/26 14:50:38 prb Exp $
 .\"
 .Dd June 18, 2001
@@ -76,7 +76,9 @@ To build
 from
 .Pa /etc/login.conf
 the following command may be used:
+.Pp
 .Dl # cap_mkdb /etc/login.conf
+.Pp
 Note that
 .Xr cap_mkdb 1
 must be run after each edit of
@@ -98,51 +100,51 @@ The types are described after the capability table.
 .It approve Ta program Ta "" Ta
 Default program to approve login.
 .\"
-.sp
+.Pp
 .It approve- Ns Ar service Ta program Ta "" Ta
 Program to approve login for
 .Ar service .
 .\"
-.sp
+.Pp
 .It auth Ta list Ta Dv passwd Ta
 Allowed authentication styles.
 The first value is the default styles.
 .\"
-.sp
+.Pp
 .It auth- Ns Ar type Ta list Ta "" Ta
 Allowed authentication styles for the authentication type
 .Ar type .
 .\"
-.sp
+.Pp
 .It classify Ta program Ta "" Ta
 Classify type of login.
 .\"
-.sp
+.Pp
 .It copyright Ta file Ta "" Ta
 File containing additional copyright information.
 .\"
-.sp
+.Pp
 .It coredumpsize Ta size Ta "" Ta
 Maximum coredump size limit.
 .\"
-.sp
+.Pp
 .It cputime Ta time Ta "" Ta
 CPU usage limit.
 .\"
-.sp
+.Pp
 .It datasize Ta size Ta "" Ta
 Maximum data size limit.
 .\"
-.sp
+.Pp
 .It expire-warn Ta time Ta Dv 2w Ta
 If the user's account will expire within this length of time then
 warn the user of this.
 .\"
-.sp
+.Pp
 .It filesize Ta size Ta "" Ta
 Maximum file size limit.
 .\"
-.sp
+.Pp
 .It hushlogin Ta bool Ta Dv false Ta
 Same as having a
 .Pa $HOME/.hushlogin
@@ -150,7 +152,7 @@ file.
 See
 .Xr login 1 .
 .\"
-.sp
+.Pp
 .It ignorenologin Ta bool Ta Dv false Ta
 Not affected by
 .Pa nologin
@@ -158,7 +160,7 @@ files.
 See
 .Xr login 1 .
 .\"
-.sp
+.Pp
 .It localcipher Ta string Ta old Ta
 The cipher to use for local passwords.
 Possible values are:
@@ -178,13 +180,13 @@ For
 the value can be between 4 and 31.
 It specifies the base 2 logarithm of the number of rounds.
 .\"
-.sp
+.Pp
 .It ypcipher Ta string Ta old Ta
 The cipher to use for YP passwords.
 The possible values are the same as for
 .Ar localcipher .
 .\"
-.sp
+.Pp
 .It login-backoff Ta number Ta 3 Ta
 After
 .Ar login-backoff
@@ -192,7 +194,7 @@ unsuccessful login attempts during a single session,
 .Xr login 1
 will start sleeping a bit in between attempts.
 .\"
-.sp
+.Pp
 .It login-timeout Ta time Ta 300 Ta
 Number of seconds before
 .Xr login 1
@@ -201,29 +203,29 @@ Note that this setting is only valid for the
 .Li default
 record.
 .\"
-.sp
+.Pp
 .It login-tries Ta number Ta 10 Ta
 Number of tries a user gets to successfully login before
 .Xr login 1
 closes the connection.
 .\"
-.sp
+.Pp
 .It stacksize Ta size Ta "" Ta
 Maximum stack size limit.
 .\"
-.sp
+.Pp
 .It maxproc Ta number Ta "" Ta
 Maximum number of processes.
 .\"
-.sp
+.Pp
 .It memorylocked Ta size Ta "" Ta
 Maximum locked in core memory size limit.
 .\"
-.sp
+.Pp
 .It memoryuse Ta size Ta "" Ta
 Maximum in core memoryuse size limit.
 .\"
-.sp
+.Pp
 .It minpasswordlen Ta number Ta 6 Ta
 The minimum length a local password may be.
 If a negative value or zero, no length restrictions are enforced.
@@ -231,16 +233,16 @@ Used by the
 .Xr passwd 1
 utility.
 .\"
-.sp
+.Pp
 .It nologin Ta file Ta "" Ta
 If the file exists it will be displayed
 and the login session will be terminated.
 .\"
-.sp
+.Pp
 .It openfiles Ta number Ta "" Ta
 Maximum number of open file descriptors per process.
 .\"
-.sp
+.Pp
 .It password-dead Ta time Ta Dv 0 Ta
 Length of time a password may be expired but not quite dead yet.
 When set (for both the client and remote server machine when doing
@@ -248,12 +250,12 @@ remote authentication), a user is allowed to log in just one more
 time after their password (but not account) has expired.
 This allows a grace period for updating their password.
 .\"
-.sp
+.Pp
 .It password-warn Ta time Ta Dv 2w Ta
 If the user's password will expire within this length of time then
 warn the user of this.
 .\"
-.sp
+.Pp
 .It passwordcheck Ta path Ta "" Ta
 An external program that checks the quality of the password.
 The password is passed to the program on
@@ -261,7 +263,7 @@ The password is passed to the program on
 An exit code of 0 indicates that the quality of the password is
 sufficient, an exit code of 1 signals that the password failed the check.
 .\"
-.sp
+.Pp
 .It passwordtime Ta time Ta "" Ta
 The lifetime of a password in seconds, reset every time a user
 changes their password.
@@ -273,7 +275,7 @@ Used by the
 .Xr passwd 1
 utility.
 .\"
-.sp
+.Pp
 .It passwordtries Ta number Ta 3 Ta
 The number of times the
 .Xr passwd 1
@@ -281,33 +283,33 @@ utility enforces a check on the password.
 If 0, the new password will only be accepted if it passes the password
 quality check.
 .\"
-.sp
-.It path Ta path Ta Dv "value of _PATH_DEFPATH" Ta
+.Pp
+.It path Ta path Ta value of Dv _PATH_DEFPATH
 .br
 Default search path.
 See
 .Pa /usr/include/paths.h .
 .\"
-.sp
+.Pp
 .It priority Ta number Ta "" Ta
 Initial priority (nice) level.
 .\"
-.sp
+.Pp
 .It requirehome Ta bool Ta Dv false Ta
 Require home directory to login.
 .\"
-.sp
+.Pp
 .It shell Ta program Ta "" Ta
 Session shell to execute rather than the shell specified in the password file.
 The
 .Ev SHELL
 environment variable will contain the shell specified in the password file.
 .\"
-.sp
+.Pp
 .It term Ta string Ta Dv su Ta
 Default terminal type if not able to determine from other means.
 .\"
-.sp
+.Pp
 .It umask Ta number Ta Dv 022 Ta
 Initial umask.
 Should always have a leading
@@ -316,7 +318,7 @@ to ensure octal interpretation.
 See
 .Xr umask 2 .
 .\"
-.sp
+.Pp
 .It welcome Ta file Ta Pa /etc/motd Ta
 File containing welcome message.
 .El
@@ -602,13 +604,12 @@ For any given style, the program
 .Pa /usr/libexec/auth/login_ Ns Va style
 is used to perform the authentication.
 The synopsis of this program is:
-.sp
-.ti +.5i
+.Pp
 .Li /usr/libexec/auth/login_ Ns Va style
 .Op Fl v Va name=value
 .Op Fl s Va service
 .Va username class
-.sp
+.Pp
 The
 .Fl v
 option is used to specify arbitrary information to the authentication
@@ -828,11 +829,11 @@ response from the user.
 Not all authentication styles support empty challenges.
 .Sh APPROVAL
 An approval program has the synopsis of:
-.sp
-.ti +.5i
+.Bd -filled -offset indent
 .Va approve
 .Op Fl v Ar name=value
 .Va username class service
+.Ed
 .Pp
 Just as with an authentication program, file descriptor 3 will be
 open for writing when the approval program is executed.
@@ -855,12 +856,12 @@ This allows for simple programs which have no information to provide
 other than approval or denial.
 .Sh CLASSIFICATION
 A classify program has the synopsis of:
-.sp
-.ti +.5i
+.Bd -filled -offset indent
 .Va classify
 .Op Fl v Ar name=value
 .Op Fl f
 .Op user
+.Ed
 .Pp
 See
 .Xr login 1
