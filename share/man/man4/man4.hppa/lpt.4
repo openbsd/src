@@ -1,0 +1,79 @@
+.\"	$OpenBSD: lpt.4,v 1.1 1999/04/18 20:16:02 mickey Exp $
+.\"
+.\"
+.\" Copyright (c) 1999 Michael Shalayeff
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"	This product includes software developed by Michael Shalayeff.
+.\" 4. The name of the author may not be used to endorse or promote products
+.\"    derived from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd April 14, 1999
+.Dt LPT 4
+.Os OpenBSD
+.Sh NAME
+.Nm lpt
+.Nd Printer port controller
+.Sh SYNOPSIS
+.Cd "lpt0 at gsc? irq 7"
+.Pp
+.Cd "lpt0 at isa? port" \&"IO_LPT1\&" irq 7
+.Pp
+.Sh INTRODUCTION
+Parallel port controller provides Centronics port for unidirectional
+data communications
+.Tn ( IEEE 1284 ) .
+.Pp
+The
+.Nm
+ports on
+.Xr isa 4
+comes in whole rainbow of flaivours.
+The parallel port controller on
+.Xr gsc 4
+(core) bus comes in several chip implementations:
+.Pp
+.Bl -tag -compact -width WD16C552
+.It WD16C552
+contains both serial ports and a parallel port;
+.It LASI
+incorporated into the
+.Xr lasi 4
+megacell hyperchip.
+.El
+.Pp
+In either case the bus interface is the same and compatible with
+PC parallel ports.
+.Sh SEE ALSO
+.Xr gsc 4 ,
+.Xr isa 4 ,
+.Xr lasi 4 ,
+.Xr com 4
+.Sh HISTORY
+The
+.Nm
+driver was originally developped by William F. Jolitz, TeleMuse.
+The implementation for hppa port is using MI implementation of this
+driver and first appeared in
+.Ox 2.4 .
