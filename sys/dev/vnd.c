@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.21 1998/03/10 17:40:37 millert Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.22 1998/08/04 22:01:54 millert Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -364,8 +364,9 @@ vndstrategy(bp)
 	int unit = vndunit(bp->b_dev);
 	register struct vnd_softc *vnd = &vnd_softc[unit];
 	register struct vndbuf *nbp;
-	register int bn, bsize, resid;
+	register int bn, bsize;
 	register caddr_t addr;
+	register size_t resid;
 	int sz, flags, error, s;
 	struct iovec aiov;
 	struct uio auio;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.h,v 1.12 1998/01/18 14:41:32 csapuntz Exp $	*/
+/*	$OpenBSD: buf.h,v 1.13 1998/08/04 22:01:49 millert Exp $	*/
 /*	$NetBSD: buf.h,v 1.25 1997/04/09 21:12:17 mycroft Exp $	*/
 
 /*
@@ -85,7 +85,7 @@ struct buf {
 	int	b_error;		/* Errno value. */
 	long	b_bufsize;		/* Allocated buffer size. */
 	long	b_bcount;		/* Valid bytes in buffer. */
-	long	b_resid;		/* Remaining I/O. */
+	size_t	b_resid;		/* Remaining I/O. */
 	dev_t	b_dev;			/* Device associated with buffer. */
 	struct {
 		caddr_t	b_addr;		/* Memory, superblocks, indirect etc. */
