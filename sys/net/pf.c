@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.114 2001/07/17 20:34:51 provos Exp $ */
+/*	$OpenBSD: pf.c,v 1.115 2001/07/17 21:54:25 provos Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -1446,7 +1446,7 @@ pf_test_tcp(int direction, struct ifnet *ifp, struct mbuf *m,
 			PFLOG_PACKET(h, m, AF_INET, direction, reason, rm);
 
 		if ((rm->action == PF_DROP) &&
-		    (rm->return_rst || rm->return_icmp)) {
+		    ((rm->rule_flag & PFRULE_RETURNRST) || rm->return_icmp)) {
 			/* undo NAT/RST changes, if they have taken place */
 			if (nat != NULL) {
 				pf_change_ap(&h->ip_src.s_addr, &th->th_sport,
@@ -1457,7 +1457,7 @@ pf_test_tcp(int direction, struct ifnet *ifp, struct mbuf *m,
 				    &h->ip_sum, &th->th_sum, baddr, bport);
 				rewrite++;
 			}
-			if (rm->return_rst)
+			if (rm->rule_flag & PFRULE_RETURNRST)
 				pf_send_reset(h, off, th);
 			else
 				pf_send_icmp(m, rm->return_icmp >> 8,

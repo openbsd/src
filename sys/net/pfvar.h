@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.33 2001/07/17 20:34:51 provos Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.34 2001/07/17 21:54:26 provos Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -71,8 +71,12 @@ struct pf_rule {
 
 	u_int8_t	 flags;
 	u_int8_t	 flagset;
-	u_int8_t	 return_rst;
+
+	u_int8_t	 rule_flag;
 };
+
+#define	PFRULE_RETURNRST	0x01
+#define	PFRULE_NODF		0x02
 
 struct pf_state_host {
 	u_int32_t	addr;
