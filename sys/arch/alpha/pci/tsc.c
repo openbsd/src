@@ -1,4 +1,4 @@
-/* $OpenBSD: tsc.c,v 1.5 2001/11/04 23:12:46 art Exp $ */
+/* $OpenBSD: tsc.c,v 1.6 2001/12/14 00:44:59 nate Exp $ */
 /* $NetBSD: tsc.c,v 1.3 2000/06/25 19:17:40 thorpej Exp $ */
 
 /*-
@@ -194,8 +194,8 @@ tspattach(parent, self, aux)
 	pci_6600_pickintr(pcp);
 
 	pba.pba_busname = "pci";
-	pba.pba_iot = pcp->pc_iot;
-	pba.pba_memt = pcp->pc_memt;
+	pba.pba_iot = &pcp->pc_iot;
+	pba.pba_memt = &pcp->pc_memt;
 	pba.pba_dmat =
 	    alphabus_dma_get_tag(&pcp->pc_dmat_direct, ALPHA_BUS_PCI);
 	pba.pba_pc = &pcp->pc_pc;
@@ -220,8 +220,8 @@ tsp_init(mallocsafe, n)
 	pcp->pc_iobase = TS_Pn(n, 0);
 	pcp->pc_csr = S_PAGE(TS_Pn(n, P_CSRBASE));
 	if (!pcp->pc_initted) {
-		pcp->pc_iot = tsp_bus_io_init(pcp);
-		pcp->pc_memt = tsp_bus_mem_init(pcp);
+		tsp_bus_io_init(&pcp->pc_iot, pcp);
+		tsp_bus_mem_init(&pcp->pc_memt, pcp);
 #if 0
 		alpha_bus_window_count[ALPHA_BUS_TYPE_PCI_IO] = 1;
 		alpha_bus_window_count[ALPHA_BUS_TYPE_PCI_MEM] = 1;

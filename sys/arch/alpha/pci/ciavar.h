@@ -1,4 +1,4 @@
-/* $OpenBSD: ciavar.h,v 1.10 2000/11/08 20:59:25 ericj Exp $ */
+/* $OpenBSD: ciavar.h,v 1.11 2001/12/14 00:44:59 nate Exp $ */
 /* $NetBSD: ciavar.h,v 1.17 2000/03/19 01:43:25 thorpej Exp $ */
 
 /*
@@ -41,7 +41,7 @@
 struct cia_config {
 	int	cc_initted;
 
-	bus_space_tag_t cc_iot, cc_memt;
+	struct alpha_bus_space cc_iot, cc_memt;
 	struct alpha_pci_chipset cc_pc;
 
 	struct alpha_bus_dma_tag cc_dmat_direct;
@@ -76,10 +76,10 @@ void	cia_init __P((struct cia_config *, int));
 void	cia_pci_init __P((pci_chipset_tag_t, void *));
 void	cia_dma_init __P((struct cia_config *));
 
-bus_space_tag_t	cia_bwx_bus_io_init __P((void *));
-bus_space_tag_t	cia_bwx_bus_mem_init __P((void *));
+void	cia_bwx_bus_io_init __P((bus_space_tag_t, void *));
+void	cia_bwx_bus_mem_init __P((bus_space_tag_t, void *));
 
-bus_space_tag_t	cia_bus_io_init __P((void *));
-bus_space_tag_t	cia_bus_mem_init __P((void *));
+void	cia_bus_io_init __P((bus_space_tag_t, void *));
+void	cia_bus_mem_init __P((bus_space_tag_t, void *));
 
 void	cia_pyxis_intr_enable __P((int, int));

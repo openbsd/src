@@ -1,4 +1,4 @@
-/*	$OpenBSD: lca.c,v 1.14 2001/11/06 19:53:13 miod Exp $	*/
+/*	$OpenBSD: lca.c,v 1.15 2001/12/14 00:44:59 nate Exp $	*/
 /*	$NetBSD: lca.c,v 1.14 1996/12/05 01:39:35 cgd Exp $	*/
 
 /*-
@@ -151,8 +151,8 @@ lca_init(lcp, mallocsafe)
 
 	if (!lcp->lc_initted) {
 		/* don't do these twice since they set up extents */
-		lcp->lc_iot = lca_bus_io_init(lcp);
-		lcp->lc_memt = lca_bus_mem_init(lcp);
+		lca_bus_io_init(&lcp->lc_iot, lcp);
+		lca_bus_mem_init(&lcp->lc_memt, lcp);
 
 #if 0
 		/*
@@ -250,8 +250,8 @@ lcaattach(parent, self, aux)
 	}
 
 	pba.pba_busname = "pci";
-	pba.pba_iot = lcp->lc_iot;
-	pba.pba_memt = lcp->lc_memt;
+	pba.pba_iot = &lcp->lc_iot;
+	pba.pba_memt = &lcp->lc_memt;
 	pba.pba_dmat =
 	    alphabus_dma_get_tag(&lcp->lc_dmat_direct, ALPHA_BUS_PCI);
 	pba.pba_pc = &lcp->lc_pc;

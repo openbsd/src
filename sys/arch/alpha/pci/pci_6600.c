@@ -1,4 +1,4 @@
-/* $OpenBSD: pci_6600.c,v 1.6 2001/11/06 19:53:13 miod Exp $ */
+/* $OpenBSD: pci_6600.c,v 1.7 2001/12/14 00:44:59 nate Exp $ */
 /* $NetBSD: pci_6600.c,v 1.5 2000/06/06 00:50:15 thorpej Exp $ */
 
 /*-
@@ -97,7 +97,7 @@ void
 pci_6600_pickintr(pcp)
 	struct tsp_config *pcp;
 {
-	bus_space_tag_t iot = pcp->pc_iot;
+	bus_space_tag_t iot = &pcp->pc_iot;
 	pci_chipset_tag_t pc = &pcp->pc_pc;
 #if 0
 	char *cp;

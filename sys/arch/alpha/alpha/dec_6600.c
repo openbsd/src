@@ -1,4 +1,4 @@
-/* $OpenBSD: dec_6600.c,v 1.3 2001/12/13 19:13:22 nate Exp $ */
+/* $OpenBSD: dec_6600.c,v 1.4 2001/12/14 00:44:59 nate Exp $ */
 /* $NetBSD: dec_6600.c,v 1.7 2000/06/20 03:48:54 matt Exp $ */
 
 /*
@@ -116,7 +116,7 @@ dec_6600_cons_init()
 			 */
 			DELAY(160000000 / comcnrate);
 
-			if(comcnattach(tsp->pc_iot, 0x3f8, comcnrate,
+			if(comcnattach(&tsp->pc_iot, 0x3f8, comcnrate,
 			    COM_FREQ,
 			    (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8))
 				panic("can't init serial console");
@@ -128,17 +128,17 @@ dec_6600_cons_init()
 #if NPCKBD > 0
 		/* display console ... */
 		/* XXX */
-		(void) pckbc_cnattach(tsp->pc_iot, IO_KBD, KBCMDP,
+		(void) pckbc_cnattach(&tsp->pc_iot, IO_KBD, KBCMDP,
 		    PCKBC_KBD_SLOT);
 
 		if (CTB_TURBOSLOT_TYPE(ctbslot) ==
 		    CTB_TURBOSLOT_TYPE_ISA)
-			isa_display_console(tsp->pc_iot, tsp->pc_memt);
+			isa_display_console(&tsp->pc_iot, &tsp->pc_memt);
 		else {
 			/* The display PCI might be different */
 			tsp_console_hose = CTB_TURBOSLOT_HOSE(ctbslot);
 			tsp = tsp_init(0, tsp_console_hose);
-			pci_display_console(tsp->pc_iot, tsp->pc_memt,
+			pci_display_console(&tsp->pc_iot, &tsp->pc_memt,
 			    &tsp->pc_pc, CTB_TURBOSLOT_BUS(ctbslot),
 			    CTB_TURBOSLOT_SLOT(ctbslot), 0);
 		}

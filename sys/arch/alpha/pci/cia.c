@@ -1,4 +1,4 @@
-/* $OpenBSD: cia.c,v 1.16 2001/11/06 19:53:13 miod Exp $ */
+/* $OpenBSD: cia.c,v 1.17 2001/12/14 00:44:59 nate Exp $ */
 /* $NetBSD: cia.c,v 1.56 2000/06/29 08:58:45 mrg Exp $ */
 
 /*-
@@ -236,11 +236,11 @@ cia_init(ccp, mallocsafe)
 	if (!ccp->cc_initted) {
 		/* don't do these twice since they set up extents */
 		if (ccp->cc_flags & CCF_BUS_USE_BWX) {
-			ccp->cc_iot = cia_bwx_bus_io_init(ccp);
-			ccp->cc_memt = cia_bwx_bus_mem_init(ccp);
+			cia_bwx_bus_io_init(&ccp->cc_iot, ccp);
+			cia_bwx_bus_mem_init(&ccp->cc_memt, ccp);
 		} else {
-			ccp->cc_iot = cia_bus_io_init(ccp);
-			ccp->cc_memt = cia_bus_mem_init(ccp);
+			cia_bus_io_init(&ccp->cc_iot, ccp);
+			cia_bus_mem_init(&ccp->cc_memt, ccp);
 		}
 	}
 	ccp->cc_mallocsafe = mallocsafe;
@@ -396,8 +396,8 @@ ciaattach(parent, self, aux)
 	}
 
 	pba.pba_busname = "pci";
-	pba.pba_iot = ccp->cc_iot;
-	pba.pba_memt = ccp->cc_memt;
+	pba.pba_iot = &ccp->cc_iot;
+	pba.pba_memt = &ccp->cc_memt;
 	pba.pba_dmat = 
 	    alphabus_dma_get_tag(&ccp->cc_dmat_direct, ALPHA_BUS_PCI);
 	pba.pba_pc = &ccp->cc_pc;

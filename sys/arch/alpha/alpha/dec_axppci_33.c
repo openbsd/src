@@ -1,4 +1,4 @@
-/* $OpenBSD: dec_axppci_33.c,v 1.14 2001/12/13 19:13:22 nate Exp $ */
+/* $OpenBSD: dec_axppci_33.c,v 1.15 2001/12/14 00:44:59 nate Exp $ */
 /* $NetBSD: dec_axppci_33.c,v 1.44 2000/05/22 20:13:32 thorpej Exp $ */
 
 /*
@@ -120,7 +120,7 @@ dec_axppci_33_init()
 	platform.device_register = dec_axppci_33_device_register;
 
 	lcp = lca_preinit();
-	iot = lcp->lc_iot;
+	iot = &lcp->lc_iot;
 	if (bus_space_map(iot, NSIO_PORT, NSIO_SIZE, 0, &nsio))
 		return;
 
@@ -161,7 +161,7 @@ dec_axppci_33_cons_init()
 			 */
 			DELAY(160000000 / comcnrate);
 
-			if(comcnattach(lcp->lc_iot, 0x3f8, comcnrate,
+			if(comcnattach(&lcp->lc_iot, 0x3f8, comcnrate,
 			    COM_FREQ,
 			    (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8))
 				panic("can't init serial console");
@@ -173,14 +173,14 @@ dec_axppci_33_cons_init()
 #if NPCKBD > 0
 		/* display console ... */
 		/* XXX */
-		(void) pckbc_cnattach(lcp->lc_iot, IO_KBD, KBCMDP,
+		(void) pckbc_cnattach(&lcp->lc_iot, IO_KBD, KBCMDP,
 		    PCKBC_KBD_SLOT);
 
 		if (CTB_TURBOSLOT_TYPE(ctb->ctb_turboslot) ==
 		    CTB_TURBOSLOT_TYPE_ISA)
-			isa_display_console(lcp->lc_iot, lcp->lc_memt);
+			isa_display_console(&lcp->lc_iot, &lcp->lc_memt);
 		else
-			pci_display_console(lcp->lc_iot, lcp->lc_memt,
+			pci_display_console(&lcp->lc_iot, &lcp->lc_memt,
 			    &lcp->lc_pc, CTB_TURBOSLOT_BUS(ctb->ctb_turboslot),
 			    CTB_TURBOSLOT_SLOT(ctb->ctb_turboslot), 0);
 #else

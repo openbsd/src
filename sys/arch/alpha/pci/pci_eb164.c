@@ -1,4 +1,4 @@
-/* $OpenBSD: pci_eb164.c,v 1.11 2001/11/06 19:53:13 miod Exp $ */
+/* $OpenBSD: pci_eb164.c,v 1.12 2001/12/14 00:44:59 nate Exp $ */
 /* $NetBSD: pci_eb164.c,v 1.27 2000/06/06 00:50:15 thorpej Exp $ */
 
 /*-
@@ -124,7 +124,7 @@ void
 pci_eb164_pickintr(ccp)
 	struct cia_config *ccp;
 {
-	bus_space_tag_t iot = ccp->cc_iot;
+	bus_space_tag_t iot = &ccp->cc_iot;
 	pci_chipset_tag_t pc = &ccp->cc_pc;
 	int i;
 

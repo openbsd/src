@@ -1,4 +1,4 @@
-/*	$OpenBSD: irongatevar.h,v 1.2 2001/04/17 14:53:34 art Exp $	*/
+/*	$OpenBSD: irongatevar.h,v 1.3 2001/12/14 00:44:59 nate Exp $	*/
 /* $NetBSD: irongatevar.h,v 1.3 2000/11/29 06:29:10 thorpej Exp $ */
 
 /*-
@@ -49,7 +49,7 @@
 struct irongate_config {
 	int	ic_initted;
 
-	bus_space_tag_t ic_iot, ic_memt;
+	struct alpha_bus_space ic_iot, ic_memt;
 	struct alpha_pci_chipset ic_pc;
 
 	struct alpha_bus_dma_tag ic_dmat_pci;
@@ -71,8 +71,8 @@ void	irongate_init(struct irongate_config *, int);
 void	irongate_pci_init(pci_chipset_tag_t, void *);
 void	irongate_dma_init(struct irongate_config *);
 
-bus_space_tag_t	irongate_bus_io_init(void *);
-bus_space_tag_t	irongate_bus_mem_init(void *);
+void	irongate_bus_io_init(bus_space_tag_t, void *);
+void	irongate_bus_mem_init(bus_space_tag_t, void *);
 
 void	irongate_bus_mem_init2(bus_space_tag_t, void *);
 

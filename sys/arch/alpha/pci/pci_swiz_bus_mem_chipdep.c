@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_swiz_bus_mem_chipdep.c,v 1.1 2001/02/06 19:26:39 art Exp $	*/
+/*	$OpenBSD: pci_swiz_bus_mem_chipdep.c,v 1.2 2001/12/14 00:44:59 nate Exp $	*/
 /*	$NetBSD: pcs_bus_mem_common.c,v 1.15 1996/12/02 22:19:36 cgd Exp $	*/
 
 /*
@@ -176,95 +176,95 @@ static long
 static long
     __C(CHIP,_smem_ex_storage)[EXTENT_FIXED_STORAGE_SIZE(8) / sizeof(long)];
 
-static struct alpha_bus_space __C(CHIP,_mem_space) = {
-	/* cookie */
-	NULL,
-
-	/* mapping/unmapping */
-	__C(CHIP,_mem_map),
-	__C(CHIP,_mem_unmap),
-	__C(CHIP,_mem_subregion),
-
-	/* allocation/deallocation */
-	__C(CHIP,_mem_alloc),
-	__C(CHIP,_mem_free),
-
-	/* barrier */
-	__C(CHIP,_mem_barrier),
-	
-	/* read (single) */
-	__C(CHIP,_mem_read_1),
-	__C(CHIP,_mem_read_2),
-	__C(CHIP,_mem_read_4),
-	__C(CHIP,_mem_read_8),
-	
-	/* read multiple */
-	__C(CHIP,_mem_read_multi_1),
-	__C(CHIP,_mem_read_multi_2),
-	__C(CHIP,_mem_read_multi_4),
-	__C(CHIP,_mem_read_multi_8),
-	
-	/* read region */
-	__C(CHIP,_mem_read_region_1),
-	__C(CHIP,_mem_read_region_2),
-	__C(CHIP,_mem_read_region_4),
-	__C(CHIP,_mem_read_region_8),
-	
-	/* write (single) */
-	__C(CHIP,_mem_write_1),
-	__C(CHIP,_mem_write_2),
-	__C(CHIP,_mem_write_4),
-	__C(CHIP,_mem_write_8),
-	
-	/* write multiple */
-	__C(CHIP,_mem_write_multi_1),
-	__C(CHIP,_mem_write_multi_2),
-	__C(CHIP,_mem_write_multi_4),
-	__C(CHIP,_mem_write_multi_8),
-	
-	/* write region */
-	__C(CHIP,_mem_write_region_1),
-	__C(CHIP,_mem_write_region_2),
-	__C(CHIP,_mem_write_region_4),
-	__C(CHIP,_mem_write_region_8),
-
-	/* set multiple */
-	__C(CHIP,_mem_set_multi_1),
-	__C(CHIP,_mem_set_multi_2),
-	__C(CHIP,_mem_set_multi_4),
-	__C(CHIP,_mem_set_multi_8),
-	
-	/* set region */
-	__C(CHIP,_mem_set_region_1),
-	__C(CHIP,_mem_set_region_2),
-	__C(CHIP,_mem_set_region_4),
-	__C(CHIP,_mem_set_region_8),
-
-	/* copy */
-	__C(CHIP,_mem_copy_1),
-	__C(CHIP,_mem_copy_2),
-	__C(CHIP,_mem_copy_4),
-	__C(CHIP,_mem_copy_8),
-
-	/* read multiple raw */
-	__C(CHIP,_mem_read_raw_multi_2),
-	__C(CHIP,_mem_read_raw_multi_4),
-	__C(CHIP,_mem_read_raw_multi_8),
-	
-	/* write multiple raw*/
-	__C(CHIP,_mem_write_raw_multi_2),
-	__C(CHIP,_mem_write_raw_multi_4),
-	__C(CHIP,_mem_write_raw_multi_8),
-};
-
-bus_space_tag_t
-__C(CHIP,_bus_mem_init)(v)
+void
+__C(CHIP,_bus_mem_init)(t, v)
+	bus_space_tag_t t;
 	void *v;
 {
-        bus_space_tag_t t = &__C(CHIP,_mem_space);
 	struct extent *dex, *sex;
 
+	/*
+	 * Initialize the bus space tag.
+	 */
+
+	/* cookie */
 	t->abs_cookie = v;
+
+	/* mapping/unmapping */
+	t->abs_map =		__C(CHIP,_mem_map);
+	t->abs_unmap =		__C(CHIP,_mem_unmap);
+	t->abs_subregion =	__C(CHIP,_mem_subregion);
+
+	/* allocation/deallocation */
+	t->abs_alloc =		__C(CHIP,_mem_alloc);
+	t->abs_free = 		__C(CHIP,_mem_free);
+
+	/* barrier */
+	t->abs_barrier =	__C(CHIP,_mem_barrier);
+	
+	/* read (single) */
+	t->abs_r_1 =		__C(CHIP,_mem_read_1);
+	t->abs_r_2 =		__C(CHIP,_mem_read_2);
+	t->abs_r_4 =		__C(CHIP,_mem_read_4);
+	t->abs_r_8 =		__C(CHIP,_mem_read_8);
+	
+	/* read multiple */
+	t->abs_rm_1 =		__C(CHIP,_mem_read_multi_1);
+	t->abs_rm_2 =		__C(CHIP,_mem_read_multi_2);
+	t->abs_rm_4 =		__C(CHIP,_mem_read_multi_4);
+	t->abs_rm_8 =		__C(CHIP,_mem_read_multi_8);
+	
+	/* read region */
+	t->abs_rr_1 =		__C(CHIP,_mem_read_region_1);
+	t->abs_rr_2 =		__C(CHIP,_mem_read_region_2);
+	t->abs_rr_4 =		__C(CHIP,_mem_read_region_4);
+	t->abs_rr_8 =		__C(CHIP,_mem_read_region_8);
+	
+	/* write (single) */
+	t->abs_w_1 =		__C(CHIP,_mem_write_1);
+	t->abs_w_2 =		__C(CHIP,_mem_write_2);
+	t->abs_w_4 =		__C(CHIP,_mem_write_4);
+	t->abs_w_8 =		__C(CHIP,_mem_write_8);
+	
+	/* write multiple */
+	t->abs_wm_1 =		__C(CHIP,_mem_write_multi_1);
+	t->abs_wm_2 =		__C(CHIP,_mem_write_multi_2);
+	t->abs_wm_4 =		__C(CHIP,_mem_write_multi_4);
+	t->abs_wm_8 =		__C(CHIP,_mem_write_multi_8);
+	
+	/* write region */
+	t->abs_wr_1 =		__C(CHIP,_mem_write_region_1);
+	t->abs_wr_2 =		__C(CHIP,_mem_write_region_2);
+	t->abs_wr_4 =		__C(CHIP,_mem_write_region_4);
+	t->abs_wr_8 =		__C(CHIP,_mem_write_region_8);
+
+	/* set multiple */
+	t->abs_sm_1 =		__C(CHIP,_mem_set_multi_1);
+	t->abs_sm_2 =		__C(CHIP,_mem_set_multi_2);
+	t->abs_sm_4 =		__C(CHIP,_mem_set_multi_4);
+	t->abs_sm_8 =		__C(CHIP,_mem_set_multi_8);
+	
+	/* set region */
+	t->abs_sr_1 =		__C(CHIP,_mem_set_region_1);
+	t->abs_sr_2 =		__C(CHIP,_mem_set_region_2);
+	t->abs_sr_4 =		__C(CHIP,_mem_set_region_4);
+	t->abs_sr_8 =		__C(CHIP,_mem_set_region_8);
+
+	/* copy */
+	t->abs_c_1 =		__C(CHIP,_mem_copy_1);
+	t->abs_c_2 =		__C(CHIP,_mem_copy_2);
+	t->abs_c_4 =		__C(CHIP,_mem_copy_4);
+	t->abs_c_8 =		__C(CHIP,_mem_copy_8);
+
+	/* read multiple raw */
+	t->abs_rrm_2 =		__C(CHIP,_mem_read_raw_multi_2);
+	t->abs_rrm_4 =		__C(CHIP,_mem_read_raw_multi_4);
+	t->abs_rrm_8 =		__C(CHIP,_mem_read_raw_multi_8);
+	
+	/* write multiple raw*/
+	t->abs_wrm_2 =		__C(CHIP,_mem_write_raw_multi_2);
+	t->abs_wrm_4 =		__C(CHIP,_mem_write_raw_multi_4);
+	t->abs_wrm_8 =		__C(CHIP,_mem_write_raw_multi_8);
 
 	/* XXX WE WANT EXTENT_NOCOALESCE, BUT WE CAN'T USE IT. XXX */
 	dex = extent_create(__S(__C(CHIP,_bus_dmem)), 0x0UL,
@@ -342,8 +342,6 @@ __C(CHIP,_bus_mem_init)(v)
         extent_print(sex);
 #endif
         CHIP_S_MEM_EXTENT(v) = sex;
-
-	return (t);
 }
 
 static int	__C(CHIP,_xlate_addr_to_dense_handle) __P((void *,

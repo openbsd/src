@@ -1,4 +1,4 @@
-/* $OpenBSD: dec_kn20aa.c,v 1.12 2001/12/13 19:13:22 nate Exp $ */
+/* $OpenBSD: dec_kn20aa.c,v 1.13 2001/12/14 00:44:59 nate Exp $ */
 /* $NetBSD: dec_kn20aa.c,v 1.42 2000/05/22 20:13:32 thorpej Exp $ */
 
 /*
@@ -118,7 +118,7 @@ dec_kn20aa_cons_init()
 			 */
 			DELAY(160000000 / comcnrate);
 
-			if(comcnattach(ccp->cc_iot, 0x3f8, comcnrate,
+			if(comcnattach(&ccp->cc_iot, 0x3f8, comcnrate,
 			    COM_FREQ,
 			    (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8))
 				panic("can't init serial console");
@@ -130,14 +130,14 @@ dec_kn20aa_cons_init()
 #if NPCKBD > 0
 		/* display console ... */
 		/* XXX */
-		(void) pckbc_cnattach(ccp->cc_iot, IO_KBD, KBCMDP,
+		(void) pckbc_cnattach(&ccp->cc_iot, IO_KBD, KBCMDP,
 		    PCKBC_KBD_SLOT);
 
 		if (CTB_TURBOSLOT_TYPE(ctb->ctb_turboslot) ==
 		    CTB_TURBOSLOT_TYPE_ISA)
-			isa_display_console(ccp->cc_iot, ccp->cc_memt);
+			isa_display_console(&ccp->cc_iot, &ccp->cc_memt);
 		else
-			pci_display_console(ccp->cc_iot, ccp->cc_memt,
+			pci_display_console(&ccp->cc_iot, &ccp->cc_memt,
 			    &ccp->cc_pc, CTB_TURBOSLOT_BUS(ctb->ctb_turboslot),
 			    CTB_TURBOSLOT_SLOT(ctb->ctb_turboslot), 0);
 #else

@@ -1,4 +1,4 @@
-/* $OpenBSD: tsvar.h,v 1.2 2001/04/15 01:33:00 mjacob Exp $ */
+/* $OpenBSD: tsvar.h,v 1.3 2001/12/14 00:44:59 nate Exp $ */
 /* $NetBSD: tsvar.h,v 1.1 1999/06/29 06:46:47 ross Exp $ */
 
 /*-
@@ -48,7 +48,7 @@ struct tsp_config {
 	u_int64_t pc_iobase;		/* All Pchip space starts here */
 	struct	ts_pchip *pc_csr;	/* Pchip CSR space starts here */
 
-	bus_space_tag_t pc_iot, pc_memt;
+	struct	alpha_bus_space pc_iot, pc_memt;
 	struct	alpha_pci_chipset pc_pc;
 
 	struct	alpha_bus_dma_tag pc_dmat_direct;
@@ -79,7 +79,7 @@ struct	tsp_config *tsp_init __P((int, int));
 void	tsp_pci_init __P((pci_chipset_tag_t, void *));
 void	tsp_dma_init __P((struct tsp_config *));
 
-bus_space_tag_t tsp_bus_io_init __P((void *));
-bus_space_tag_t tsp_bus_mem_init __P((void *));
+void	tsp_bus_io_init __P((bus_space_tag_t, void *));
+void	tsp_bus_mem_init __P((bus_space_tag_t, void *));
 
 void tsp_bus_mem_init2 __P((void *));

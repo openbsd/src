@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_axppci_33.c,v 1.14 2001/11/06 19:53:13 miod Exp $	*/
+/*	$OpenBSD: pci_axppci_33.c,v 1.15 2001/12/14 00:44:59 nate Exp $	*/
 /*	$NetBSD: pci_axppci_33.c,v 1.10 1996/11/13 21:13:29 cgd Exp $	*/
 
 /*
@@ -66,7 +66,7 @@ void
 pci_axppci_33_pickintr(lcp)
 	struct lca_config *lcp;
 {
-	bus_space_tag_t iot = lcp->lc_iot;
+	bus_space_tag_t iot = &lcp->lc_iot;
 	pci_chipset_tag_t pc = &lcp->lc_pc;
 	pcireg_t sioclass;
 	int sioII;

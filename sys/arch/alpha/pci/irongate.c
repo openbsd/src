@@ -1,4 +1,4 @@
-/*	$OpenBSD: irongate.c,v 1.4 2001/06/26 21:13:43 art Exp $	*/
+/*	$OpenBSD: irongate.c,v 1.5 2001/12/14 00:44:59 nate Exp $	*/
 /* $NetBSD: irongate.c,v 1.3 2000/11/29 06:29:10 thorpej Exp $ */
 
 /*-
@@ -109,8 +109,8 @@ irongate_init(struct irongate_config *icp, int mallocsafe)
 
 	if (icp->ic_initted == 0) {
 		/* Don't do these twice, since they set up extents. */
-		icp->ic_iot = irongate_bus_io_init(icp);
-		icp->ic_memt = irongate_bus_mem_init(icp);
+		irongate_bus_io_init(&icp->ic_iot, icp);
+		irongate_bus_mem_init(&icp->ic_memt, icp);
 
 #if 0
 		/* Only one each PCI I/O and MEM window. */
@@ -165,7 +165,7 @@ irongate_attach(struct device *parent, struct device *self, void *aux)
 	 * Do PCI memory initialization that needs to be deferred until
 	 * malloc is safe.
 	 */
-	irongate_bus_mem_init2(icp->ic_memt, icp);
+	irongate_bus_mem_init2(&icp->ic_memt, icp);
 
 	switch (cputype) {
 #ifdef API_UP1000
@@ -179,8 +179,8 @@ irongate_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	pba.pba_busname = "pci";
-	pba.pba_iot = icp->ic_iot;
-	pba.pba_memt = icp->ic_memt;
+	pba.pba_iot = &icp->ic_iot;
+	pba.pba_memt = &icp->ic_memt;
 	pba.pba_dmat =
 	    alphabus_dma_get_tag(&icp->ic_dmat_pci, ALPHA_BUS_PCI);
 	pba.pba_pc = &icp->ic_pc;
