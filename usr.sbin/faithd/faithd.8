@@ -1,4 +1,4 @@
-.\"	$OpenBSD: faithd.8,v 1.19 2001/07/25 10:04:57 mpech Exp $
+.\"	$OpenBSD: faithd.8,v 1.20 2002/05/06 23:34:33 millert Exp $
 .\"	$KAME: faithd.8,v 1.31 2001/06/30 00:57:01 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -171,7 +171,7 @@ for IPv4 TCP connection toward final destination.
 For relaying
 .Xr ftp 1
 and
-.Xr rlogin 1 ,
+.Xr rsh 1 ,
 this flag is not necessary as special program code is supplied.
 .El
 .Pp
@@ -182,7 +182,7 @@ It is capable of emulating TCP half close as well.
 includes special support for protocols used by
 .Xr ftp 1
 and
-.Xr rlogin 1 .
+.Xr rsh 1 .
 When translating FTP protocol,
 .Nm
 translates network level addresses in
@@ -193,9 +193,9 @@ commands.
 For RLOGIN protocol,
 .Nm
 will relay back connection from
-.Xr rlogind 8
+.Nm rlogind
 on the server to
-.Xr rlogin 1
+.Nm rlogin
 on client.
 .Pp
 Inactive sessions will be disconnected in 30 minutes,

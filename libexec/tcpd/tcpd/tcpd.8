@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tcpd.8,v 1.12 2001/09/06 15:04:34 mpech Exp $
+.\"	$OpenBSD: tcpd.8,v 1.13 2002/05/06 23:34:33 millert Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -43,9 +43,7 @@ program can be set up to monitor incoming requests for
 .Xr telnet 1 ,
 .Xr finger 1 ,
 .Xr ftp 1 ,
-.Xr rexecd 8 ,
 .Xr rsh 1 ,
-.Xr rlogin 1 ,
 .Xr tftp 1 ,
 .Xr talk 1 ,
 .Xr comsat 8 ,
@@ -97,10 +95,8 @@ For details, see the
 manual page.
 .Sh HOST NAME VERIFICATION
 The authentication scheme of some protocols
-.Pf ( Xr rlogin 1 ,
-.Xr rsh 1 )
-relies
-on host names.
+.Pf ( .Xr rsh 1 )
+relies on host names.
 Some implementations believe the host name that they get from any random
 name server; other implementations are more careful but use a flawed algorithm.
 .Pp

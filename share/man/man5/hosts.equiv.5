@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hosts.equiv.5,v 1.6 2001/08/02 18:49:08 mpech Exp $
+.\"	$OpenBSD: hosts.equiv.5,v 1.7 2002/05/06 23:34:33 millert Exp $
 .\"
 .\" Copyright (c) 1997 Todd Vierling
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -50,7 +50,6 @@ and
 files list hosts and users which are
 .Dq trusted
 by the local host when a connection is made via
-.Xr rlogind 8 ,
 .Xr rshd 8 ,
 or any other server that uses
 .Xr ruserok 3 .
@@ -163,9 +162,7 @@ file is not checked for security.
 Access permitted through root's
 .Pa .rhosts
 file is typically only for
-.Xr rsh 1 ,
-as root must still login on the console for an interactive login such as
-.Xr rlogin 1 .
+.Xr rsh 1 .
 .Sh FILES
 .Bl -tag -width /etc/hosts.equiv -compact
 .It Pa /etc/hosts.equiv
@@ -175,7 +172,6 @@ per-user trusted host-user pairs list
 .El
 .Sh SEE ALSO
 .Xr rcp 1 ,
-.Xr rlogin 1 ,
 .Xr rsh 1 ,
 .Xr rcmd 3 ,
 .Xr ruserok 3 ,

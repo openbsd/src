@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rmt.8,v 1.7 2000/03/19 17:57:13 aaron Exp $
+.\"	$OpenBSD: rmt.8,v 1.8 2002/05/06 23:34:33 millert Exp $
 .\"
 .\" Copyright (c) 1983, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)rmt.8	6.5 (Berkeley) 3/16/91
-.\"	$Id: rmt.8,v 1.7 2000/03/19 17:57:13 aaron Exp $
+.\"	$Id: rmt.8,v 1.8 2002/05/06 23:34:33 millert Exp $
 .\"
 .Dd March 16, 1991
 .Dt RMT 8
@@ -49,9 +49,9 @@ in manipulating a magnetic tape drive through an interprocess
 communication connection.
 .Nm
 is normally started up with an
-.Xr rexec 3
-or
 .Xr rcmd 3
+or
+.Xr rcmdsh 3
 call.
 .Pp
 The
@@ -210,7 +210,7 @@ to exit.
 All responses are of the form described above.
 .Sh SEE ALSO
 .Xr rcmd 3 ,
-.Xr rexec 3 ,
+.Xr rcmdsh 3 ,
 .Xr mtio 4 ,
 .Xr rdump 8 ,
 .Xr rrestore 8
