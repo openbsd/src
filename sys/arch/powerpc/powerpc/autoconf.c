@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.9 2000/01/23 17:32:02 rahnds Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.10 2000/04/04 02:11:47 rahnds Exp $	*/
 /*
  * Copyright (c) 1996, 1997 Per Fogelstrom
  * Copyright (c) 1995 Theo de Raadt
@@ -41,7 +41,7 @@
  * from: Utah Hdr: autoconf.c 1.31 91/01/21
  *
  *	from: @(#)autoconf.c	8.1 (Berkeley) 6/10/93
- *      $Id: autoconf.c,v 1.9 2000/01/23 17:32:02 rahnds Exp $
+ *      $Id: autoconf.c,v 1.10 2000/04/04 02:11:47 rahnds Exp $
  */
 
 /*
@@ -533,13 +533,16 @@ findtype(s)
 	char **s;
 {
 	static struct devmap devmap[] = {
-		{ "/pci", NULL, T_BUS },
-		{ "/mac-io", NULL, T_BUS },
-		{ "/scsi@", "sd", T_SCSI },
-		{ "/ide@", "wd", T_IDE },
-		{ "/ide", "wd", T_IDE },
-		{ "/disk@", "sd", T_DISK },
-		{ "/disk", "wd", T_DISK },
+		{ "/pci@",	NULL, T_BUS },
+		{ "/pci",	NULL, T_BUS },
+		{ "/mac-io@",	NULL, T_BUS },
+		{ "/mac-io",	NULL, T_BUS },
+		{ "/@",		NULL, T_BUS },
+		{ "/scsi@",	"sd", T_SCSI },
+		{ "/ide",	"wd", T_IDE },
+		{ "/ata",	"wd", T_IDE },
+		{ "/disk@",	"sd", T_DISK },
+		{ "/disk",	"wd", T_DISK },
 		{ NULL, NULL }
 	};
 	struct devmap *dp = &devmap[0];
@@ -573,6 +576,9 @@ makebootdev(bp)
 
 	cp = bp;
 	do {
+		while(*cp && *cp != '/') {
+			cp++;
+		}
 		dp = findtype(&cp);
 		if (!dp->att) {
 			printf("Warning: boot device unrecognized: %s\n", bp);
