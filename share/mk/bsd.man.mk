@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.man.mk,v 1.8 1996/03/05 11:12:48 mickey Exp $
+#	$OpenBSD: bsd.man.mk,v 1.9 1996/03/05 13:30:14 mickey Exp $
 #	$NetBSD: bsd.man.mk,v 1.23 1996/02/10 07:49:33 jtc Exp $
 #	@(#)bsd.man.mk	5.2 (Berkeley) 5/11/90
 
@@ -35,8 +35,7 @@ maninstall:
 .if defined(MANALL)
 	@for page in ${MANALL}; do \
 		dir=${DESTDIR}${MANDIR}$${page##*.cat}; \
-		base=$${page##*/}; \
-		instpage=$${dir}${MANSUBDIR}/$${base%.*}.0${MCOMPRESSSUFFIX}; \
+		instpage=$${dir}${MANSUBDIR}/$${page%.*}.0${MCOMPRESSSUFFIX}; \
 		if [ X"${MCOMPRESS}" = X ]; then \
 			echo ${MINSTALL} $$page $$instpage; \
 			${MINSTALL} $$page $$instpage; \
