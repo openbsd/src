@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.3 1996/07/27 07:26:39 joshd Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.4 1996/07/28 19:45:36 downsj Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -56,6 +56,7 @@ static char rcsid[] = "$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $"
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <sys/wait.h>
+#include <sys/mman.h>
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
@@ -187,7 +188,7 @@ static FILE	*getdatasock __P((char *));
 static char	*gunique __P((char *));
 static void	 lostconn __P((int));
 static int	 receive_data __P((FILE *, FILE *));
-static void	 send_data __P((FILE *, FILE *, off_t));
+static void	 send_data __P((FILE *, FILE *, off_t, off_t, int));
 static struct passwd *
 		 sgetpwnam __P((char *));
 static char	*sgetsave __P((char *));
@@ -750,7 +751,8 @@ retrieve(cmd, name)
 	dout = dataconn(name, st.st_size, "w");
 	if (dout == NULL)
 		goto done;
-	send_data(fin, dout, st.st_blksize);
+	send_data(fin, dout, st.st_blksize, st.st_size,
+		  (restart_point == 0 && cmd == 0 && S_ISREG(st.st_mode)));
 	(void) fclose(dout);
 	data = -1;
 	pdata = -1;
@@ -980,17 +982,20 @@ dataconn(name, size, mode)
 
 /*
  * Tranfer the contents of "instr" to "outstr" peer using the appropriate
- * encapsulation of the data subject * to Mode, Structure, and Type.
+ * encapsulation of the data subject to Mode, Structure, and Type.
  *
  * NB: Form isn't handled.
  */
 static void
-send_data(instr, outstr, blksize)
+send_data(instr, outstr, blksize, filesize, isreg)
 	FILE *instr, *outstr;
 	off_t blksize;
+	off_t filesize;
+	int isreg;
 {
 	int c, cnt, filefd, netfd;
-	char *buf;
+	char *buf, *bp;
+	size_t len;
 
 	transflag++;
 	if (setjmp(urgcatch)) {
@@ -1020,13 +1025,45 @@ send_data(instr, outstr, blksize)
 
 	case TYPE_I:
 	case TYPE_L:
+		/*
+		 * isreg is only set if we are not doing restart and we
+		 * are sending a regular file
+		 */
+		netfd = fileno(outstr);
+		filefd = fileno(instr);
+
+		if (isreg && filesize < (off_t)16 * 1024 * 1024) {
+			buf = mmap(0, filesize, PROT_READ, MAP_SHARED, filefd,
+				   (off_t)0);
+			if (!buf) {
+				syslog(LOG_WARNING, "mmap(%lu): %m",
+				       (unsigned long)filesize);
+				goto oldway;
+			}
+			bp = buf;
+			len = filesize;
+			do {
+				cnt = write(netfd, bp, len);
+				len -= cnt;
+				bp += cnt;
+				if (cnt > 0) byte_count += cnt;
+			} while(cnt > 0 && len > 0);
+
+			transflag = 0;
+			munmap(buf, (size_t)filesize);
+			if (cnt < 0)
+				goto data_err;
+			reply(226, "Transfer complete.");
+			return;
+		}
+
+oldway:
 		if ((buf = malloc((u_int)blksize)) == NULL) {
 			transflag = 0;
 			perror_reply(451, "Local resource failure: malloc");
 			return;
 		}
-		netfd = fileno(outstr);
-		filefd = fileno(instr);
+
 		while ((cnt = read(filefd, buf, (u_int)blksize)) > 0 &&
 		    write(netfd, buf, cnt) == cnt)
 			byte_count += cnt;
