@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.3 2001/06/27 06:19:52 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.4 2001/07/06 05:14:30 smurph Exp $	*/
 /*	$NetBSD: pmap.c,v 1.1 1996/09/30 16:34:52 ws Exp $	*/
 
 /*
@@ -943,16 +943,26 @@ void
 pmap_zero_page(pa)
 	vm_offset_t pa;
 {
+#ifdef SDEBUG
+	int s = splimp();
+#endif 
 #if 0
 	bzero((caddr_t)pa, NBPG);
 #else
         int i;
                  
         for (i = NBPG/CACHELINESIZE; i > 0; i--) {
+#ifdef SDEBUG
+		printf("pmap_zero_page() pa = %p\n", pa);
+#endif 
                 __asm __volatile ("dcbz 0,%0" :: "r"(pa));
                 pa += CACHELINESIZE;
         }
 #endif
+#ifdef SDEBUG
+	splx(s);
+	printf("pmap_zero_page() done.\n");
+#endif 
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.1 2001/06/26 21:57:40 smurph Exp $	*/
+/*	$OpenBSD: clock.c,v 1.2 2001/07/06 05:14:29 smurph Exp $	*/
 /*	$NetBSD: clock.c,v 1.1 1996/09/30 16:34:40 ws Exp $	*/
 
 /*
@@ -245,6 +245,7 @@ resettodr()
 	}
 }
 
+static unsigned cnt = 1001;
 void
 decr_intr(frame)
 struct clockframe *frame;
@@ -260,9 +261,15 @@ struct clockframe *frame;
 	 */
 	if (!ticks_per_intr)
 		return;
-
+#if 0
+	cnt++;
+	if (cnt > 1000) {
+		printf("derc int\n");
+		cnt = 0;
+	}
+#endif 
 	intrcnt[PPC_CLK_IRQ]++;
-
+	
 	/*
 	 * Based on the actual time delay since the last decrementer reload,
 	 * we arrange for earlier interrupt next time.
@@ -301,6 +308,11 @@ struct clockframe *frame;
 		hardclock(frame);
 	}
 	splx(pri);
+#if 0
+	if (cnt == 0) 
+		printf("derc int done.\n");
+#endif 
+
 }
 
 void

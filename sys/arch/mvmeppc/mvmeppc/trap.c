@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.2 2001/06/27 04:32:46 art Exp $	*/
+/*	$OpenBSD: trap.c,v 1.3 2001/07/06 05:14:30 smurph Exp $	*/
 /*	$NetBSD: trap.c,v 1.3 1996/10/13 03:31:37 christos Exp $	*/
 
 /*
@@ -153,7 +153,7 @@ trap(frame)
 			}
 			map = kernel_map;
 		}
-printf("kern dsi on addr %x iar %x\n", frame->dar, frame->srr0);
+		printf("kern dsi on addr %x iar %x\n", frame->dar, frame->srr0);
 		goto brain_damage;
 	case EXC_DSI|EXC_USER:
 		{
@@ -170,7 +170,7 @@ printf("kern dsi on addr %x iar %x\n", frame->dar, frame->srr0);
 				break;
 			}
 #if 0
-printf("dsi on addr %x iar %x lr %x\n", frame->dar, frame->srr0,frame->lr);
+			printf("dsi on addr %x iar %x lr %x\n", frame->dar, frame->srr0,frame->lr);
 #endif
 /*
  * keep this for later in case we want it later.
@@ -314,6 +314,14 @@ syscall_bad:
 		enable_fpu(p);
 		break;
 
+	case EXC_ALI:
+		if (EXC_ALI_OPCODE_INDICATOR(frame->dsisr) == EXC_ALI_DCBZ) {
+			bzero((void*)frame->dar, CACHELINESIZE);
+			frame->srr0 += 4;
+		} else 
+			goto brain_damage;
+		break;
+
 	case EXC_ALI|EXC_USER:
 		/* alignment exception 
 		 * we check to see if this can be fixed up
@@ -348,7 +356,6 @@ mpc_print_pci_stat();
 	{
 		char *errstr[8];
 		int errnum = 0;
-		int i;
 
 		if (frame->srr1 & (1<<(31-11))) { 
 			/* floating point enabled program exception */

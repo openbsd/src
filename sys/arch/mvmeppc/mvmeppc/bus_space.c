@@ -1,4 +1,4 @@
-/*      $OpenBSD: bus_space.c,v 1.3 2001/07/05 10:00:36 art Exp $     */
+/*      $OpenBSD: bus_space.c,v 1.4 2001/07/06 05:14:30 smurph Exp $     */
 /*      $NetBSD: bus_space.c,v 1.4 2001/06/15 15:50:05 nonaka Exp $     */
 
 /*-
@@ -199,12 +199,12 @@ prep_memio_alloc(t, rstart, rend, size, alignment, boundary, flags,
         if (rstart < ex->ex_start || rend > ex->ex_end)
                 panic("prep_memio_alloc: bad region start/end");
 
-        error = extent_alloc_subregion(ex, rstart, rend, size, alignment, 0,
+	error = extent_alloc_subregion(ex, rstart, rend, size, alignment, 0,
             boundary,
             EX_FAST | EX_NOWAIT | (ioport_malloc_safe ?  EX_MALLOCOK : 0),
             &bpa);
-
-        if (error)
+        
+	if (error)
                 return (error);
 
         *bpap = bpa;

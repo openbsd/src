@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa_machdep.c,v 1.1 2001/06/26 21:57:51 smurph Exp $	*/
+/*	$OpenBSD: isa_machdep.c,v 1.2 2001/07/06 05:14:30 smurph Exp $	*/
 /*	$NetBSD: isa_machdep.c,v 1.22 1997/06/12 23:57:32 thorpej Exp $	*/
 
 #define ISA_DMA_STATS
@@ -133,7 +133,7 @@
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
 #include <dev/isa/isadmavar.h>
-#include <powerpc/isa/isa_machdep.h>
+#include <mvmeppc/isa/isa_machdep.h>
 
 void	*i8259_intr_establish( void * lcv, int irq, int type, int level,
 		int (*ih_fun) __P((void *)), void *ih_arg, char *name);

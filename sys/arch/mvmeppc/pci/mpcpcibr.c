@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpcpcibr.c,v 1.1 2001/06/26 21:57:56 smurph Exp $ */
+/*	$OpenBSD: mpcpcibr.c,v 1.2 2001/07/06 05:14:31 smurph Exp $ */
 
 /*
  * Copyright (c) 2001 Steve Murphree, Jr.
@@ -61,7 +61,7 @@ int    mpcpcibrmatch __P((struct device *, void *, void *));
 void   mpcpcibrattach __P((struct device *, struct device *, void *));
 
 void   mpc_attach_hook __P((struct device *, struct device *,
-                            struct pcibus_attach_args *));
+									 struct pcibus_attach_args *));
 int    mpc_bus_maxdevs __P((void *, int));
 pcitag_t mpc_make_tag __P((void *, int, int, int));
 void   mpc_decompose_tag __P((void *, pcitag_t, int *, int *, int *));
@@ -71,7 +71,7 @@ void   mpc_conf_write __P((void *, pcitag_t, int, pcireg_t));
 int      mpc_intr_map __P((void *, pcitag_t, int, int, pci_intr_handle_t *));
 const char *mpc_intr_string __P((void *, pci_intr_handle_t));
 void     *mpc_intr_establish __P((void *, pci_intr_handle_t,
-                                  int, int (*func)(void *), void *, char *));
+											 int, int (*func)(void *), void *, char *));
 void     mpc_intr_disestablish __P((void *, void *));
 int      mpc_ether_hw_addr __P((struct ppc_pci_chipset *, u_int8_t *));
 
@@ -92,11 +92,11 @@ u_int32_t
 mpc_cfg_read_4( struct pcibr_config *cp, u_int32_t reg);
 
 struct cfattach mpcpcibr_ca = {
-        sizeof(struct pcibr_softc), mpcpcibrmatch, mpcpcibrattach,
+	sizeof(struct pcibr_softc), mpcpcibrmatch, mpcpcibrattach,
 };
 
 struct cfdriver mpcpcibr_cd = {
-        NULL, "mpcpcibr", DV_DULL,
+	NULL, "mpcpcibr", DV_DULL,
 };
 
 static int      mpcpcibrprint __P((void *, const char *pnp));
@@ -114,20 +114,20 @@ struct pcibr_config mpc_config;
  */
 
 struct powerpc_bus_dma_tag pci_bus_dma_tag = {
-        NULL,
-        _bus_dmamap_create,
-        _bus_dmamap_destroy,
-        _bus_dmamap_load,
-        _bus_dmamap_load_mbuf,
-        _bus_dmamap_load_uio,
-        _bus_dmamap_load_raw,
-        _bus_dmamap_unload,
-        _bus_dmamap_sync,
-        _bus_dmamem_alloc,
-        _bus_dmamem_free,
-        _bus_dmamem_map,
-        _bus_dmamem_unmap,
-        _bus_dmamem_mmap
+	NULL,
+	_bus_dmamap_create,
+	_bus_dmamap_destroy,
+	_bus_dmamap_load,
+	_bus_dmamap_load_mbuf,
+	_bus_dmamap_load_uio,
+	_bus_dmamap_load_raw,
+	_bus_dmamap_unload,
+	_bus_dmamap_sync,
+	_bus_dmamem_alloc,
+	_bus_dmamem_free,
+	_bus_dmamem_map,
+	_bus_dmamem_unmap,
+	_bus_dmamem_mmap
 };
 
 int
@@ -135,17 +135,17 @@ mpcpcibrmatch(parent, match, aux)
 struct device *parent;
 void *match, *aux;
 {
-        struct confargs *ca = aux;
-        int found = 0;
+	struct confargs *ca = aux;
+	int found = 0;
 
-        /* We must be a child of the raven device */
-        if (strcmp(parent->dv_cfdata->cf_driver->cd_name, "raven") != 0)
-                return (0);
+	/* We must be a child of the raven device */
+	if (strcmp(parent->dv_cfdata->cf_driver->cd_name, "raven") != 0)
+		return (0);
 #if 0
-        if (strcmp(ca->ca_name, mpcpcibr_cd.cd_name) != 0)
-                return (0);
+	if (strcmp(ca->ca_name, mpcpcibr_cd.cd_name) != 0)
+		return (0);
 #endif 
-        return 1;
+	return 1;
 }
 
 int pci_map_a = 0;
@@ -154,95 +154,95 @@ mpcpcibrattach(parent, self, aux)
 struct device *parent, *self;
 void *aux;
 {
-        struct pcibr_softc *sc = (struct pcibr_softc *)self;
-        struct confargs *ca = aux;
-        struct pcibr_config *lcp;
-        struct pcibus_attach_args pba;
-        int map, node;
-        char *bridge;
-        int of_node = 0;
+	struct pcibr_softc *sc = (struct pcibr_softc *)self;
+	struct confargs *ca = aux;
+	struct pcibr_config *lcp;
+	struct pcibus_attach_args pba;
+	int map, node;
+	char *bridge;
+	int of_node = 0;
 
-        lcp = sc->sc_pcibr = &mpc_config;
+	lcp = sc->sc_pcibr = &mpc_config;
 
-        /*
-	addbatmap(RAVEN_V_PCI_MEM_SPACE, RAVEN_P_PCI_MEM_SPACE, BAT_I);
-	*/
-        sc->sc_membus_space = prep_mem_space_tag;
-        sc->sc_iobus_space = prep_io_space_tag;
-
-        lcp->lc_pc.pc_conf_v = lcp;
-        lcp->lc_pc.pc_attach_hook = mpc_attach_hook;
-        lcp->lc_pc.pc_bus_maxdevs = mpc_bus_maxdevs;
-        lcp->lc_pc.pc_make_tag = mpc_make_tag;
-        lcp->lc_pc.pc_decompose_tag = mpc_decompose_tag;
-        lcp->lc_pc.pc_conf_read = mpc_conf_read;
-        lcp->lc_pc.pc_conf_write = mpc_conf_write;
-        lcp->lc_pc.pc_ether_hw_addr = mpc_ether_hw_addr;
-        lcp->lc_iot = &sc->sc_iobus_space;
-        lcp->lc_memt = &sc->sc_membus_space;
-
-        lcp->ioh_cf8 = PREP_CONFIG_ADD;
-        lcp->ioh_cfc = PREP_CONFIG_DAT;
-
-        lcp->config_type = 0;
-
-        lcp->lc_pc.pc_intr_v = lcp;
-        lcp->lc_pc.pc_intr_map = mpc_intr_map;
-        lcp->lc_pc.pc_intr_string = mpc_intr_string;
-        lcp->lc_pc.pc_intr_establish = mpc_intr_establish;
-        lcp->lc_pc.pc_intr_disestablish = mpc_intr_disestablish;
-
-        printf(": Raven, Revision 0x%x.\n", 
-               mpc_cfg_read_1(lcp, RAVEN_PCI_REVID));
-        bridge = "RAVEN";
-        pba.pba_dmat = &pci_bus_dma_tag;
-
-        pba.pba_busname = "pci";
-        pba.pba_iot = &sc->sc_iobus_space;
-        pba.pba_memt = &sc->sc_membus_space;
-        pba.pba_pc = &lcp->lc_pc;
-        pba.pba_bus = 0; 
-/*	
-   pba.pba_flags = PCI_FLAGS_MEM_ENABLED | PCI_FLAGS_IO_ENABLED;
+	/*
+addbatmap(RAVEN_V_PCI_MEM_SPACE, RAVEN_P_PCI_MEM_SPACE, BAT_I);
 */
-#if 1
-        /* set up prep environment */
-        *(unsigned int *)RAVEN_MSADD0 = RAVEN_MSADD0_PREP;
-        *(unsigned int *)RAVEN_MSOFF0 = RAVEN_MSOFF0_PREP;
-        *(unsigned int *)RAVEN_MSADD1 = RAVEN_MSADD1_PREP;
-        *(unsigned int *)RAVEN_MSOFF1 = RAVEN_MSOFF1_PREP;
-        *(unsigned int *)RAVEN_MSADD2 = RAVEN_MSADD2_PREP;
-        *(unsigned int *)RAVEN_MSOFF2 = RAVEN_MSOFF2_PREP;
-        *(unsigned int *)RAVEN_MSADD3 = RAVEN_MSADD3_PREP;
-        *(unsigned int *)RAVEN_MSOFF3 = RAVEN_MSOFF3_PREP;
+	sc->sc_membus_space = prep_mem_space_tag;
+	sc->sc_iobus_space = prep_io_space_tag;
 
-        /* set up PCI local bus */
-        mpc_cfg_write_4(lcp, RAVEN_PCI_PSADD0, RAVEN_PCI_PSADD0_VAL);
-        mpc_cfg_write_4(lcp, RAVEN_PCI_PSOFF0, RAVEN_PCI_PSOFF0_VAL);
-        mpc_cfg_write_4(lcp, RAVEN_PCI_PSADD1, RAVEN_PCI_PSADD1_VAL);
-        mpc_cfg_write_4(lcp, RAVEN_PCI_PSOFF1, RAVEN_PCI_PSOFF1_VAL);
-        mpc_cfg_write_4(lcp, RAVEN_PCI_PSADD2, RAVEN_PCI_PSADD2_VAL);
-        mpc_cfg_write_4(lcp, RAVEN_PCI_PSOFF2, RAVEN_PCI_PSOFF2_VAL);
-        mpc_cfg_write_4(lcp, RAVEN_PCI_PSADD3, RAVEN_PCI_PSADD3_VAL);
-        mpc_cfg_write_4(lcp, RAVEN_PCI_PSOFF3, RAVEN_PCI_PSOFF3_VAL);
+	lcp->lc_pc.pc_conf_v = lcp;
+	lcp->lc_pc.pc_attach_hook = mpc_attach_hook;
+	lcp->lc_pc.pc_bus_maxdevs = mpc_bus_maxdevs;
+	lcp->lc_pc.pc_make_tag = mpc_make_tag;
+	lcp->lc_pc.pc_decompose_tag = mpc_decompose_tag;
+	lcp->lc_pc.pc_conf_read = mpc_conf_read;
+	lcp->lc_pc.pc_conf_write = mpc_conf_write;
+	lcp->lc_pc.pc_ether_hw_addr = mpc_ether_hw_addr;
+	lcp->lc_iot = &sc->sc_iobus_space;
+	lcp->lc_memt = &sc->sc_membus_space;
 
-        /* set up VME -> PCI local bus */
+	lcp->ioh_cf8 = PREP_CONFIG_ADD;
+	lcp->ioh_cfc = PREP_CONFIG_DAT;
 
-        mpc_cfg_write_4(lcp, 0x100, 0x0);
-        mpc_cfg_write_4(lcp, 0x114, 0x0);
-        mpc_cfg_write_4(lcp, 0x128, 0x0);
-        mpc_cfg_write_4(lcp, 0x13C, 0x0);
+	lcp->config_type = 0;
 
-        mpc_cfg_write_4(lcp, 0xF00, 0x0);
-        mpc_cfg_write_4(lcp, 0xF14, 0x0);
-        mpc_cfg_write_4(lcp, 0xF28, 0x0);
-        mpc_cfg_write_4(lcp, 0xF3C, 0x0);
+	lcp->lc_pc.pc_intr_v = lcp;
+	lcp->lc_pc.pc_intr_map = mpc_intr_map;
+	lcp->lc_pc.pc_intr_string = mpc_intr_string;
+	lcp->lc_pc.pc_intr_establish = mpc_intr_establish;
+	lcp->lc_pc.pc_intr_disestablish = mpc_intr_disestablish;
+
+	printf(": Raven, Revision 0x%x.\n", 
+			 mpc_cfg_read_1(lcp, RAVEN_PCI_REVID));
+	bridge = "RAVEN";
+	pba.pba_dmat = &pci_bus_dma_tag;
+
+	pba.pba_busname = "pci";
+	pba.pba_iot = &sc->sc_iobus_space;
+	pba.pba_memt = &sc->sc_membus_space;
+	pba.pba_pc = &lcp->lc_pc;
+	pba.pba_bus = 0; 
+/*	
+	pba.pba_flags = PCI_FLAGS_MEM_ENABLED | PCI_FLAGS_IO_ENABLED;
+*/
+#if 0
+	/* set up prep environment */
+	*(unsigned int *)RAVEN_MSADD0 = RAVEN_MSADD0_PREP;
+	*(unsigned int *)RAVEN_MSOFF0 = RAVEN_MSOFF0_PREP;
+	*(unsigned int *)RAVEN_MSADD1 = RAVEN_MSADD1_PREP;
+	*(unsigned int *)RAVEN_MSOFF1 = RAVEN_MSOFF1_PREP;
+	*(unsigned int *)RAVEN_MSADD2 = RAVEN_MSADD2_PREP;
+	*(unsigned int *)RAVEN_MSOFF2 = RAVEN_MSOFF2_PREP;
+	*(unsigned int *)RAVEN_MSADD3 = RAVEN_MSADD3_PREP;
+	*(unsigned int *)RAVEN_MSOFF3 = RAVEN_MSOFF3_PREP;
+
+	/* set up PCI local bus */
+	mpc_cfg_write_4(lcp, RAVEN_PCI_PSADD0, RAVEN_PCI_PSADD0_VAL);
+	mpc_cfg_write_4(lcp, RAVEN_PCI_PSOFF0, RAVEN_PCI_PSOFF0_VAL);
+	mpc_cfg_write_4(lcp, RAVEN_PCI_PSADD1, RAVEN_PCI_PSADD1_VAL);
+	mpc_cfg_write_4(lcp, RAVEN_PCI_PSOFF1, RAVEN_PCI_PSOFF1_VAL);
+	mpc_cfg_write_4(lcp, RAVEN_PCI_PSADD2, RAVEN_PCI_PSADD2_VAL);
+	mpc_cfg_write_4(lcp, RAVEN_PCI_PSOFF2, RAVEN_PCI_PSOFF2_VAL);
+	mpc_cfg_write_4(lcp, RAVEN_PCI_PSADD3, RAVEN_PCI_PSADD3_VAL);
+	mpc_cfg_write_4(lcp, RAVEN_PCI_PSOFF3, RAVEN_PCI_PSOFF3_VAL);
+
+	/* set up VME -> PCI local bus */
+
+	mpc_cfg_write_4(lcp, 0x100, 0x0);
+	mpc_cfg_write_4(lcp, 0x114, 0x0);
+	mpc_cfg_write_4(lcp, 0x128, 0x0);
+	mpc_cfg_write_4(lcp, 0x13C, 0x0);
+
+	mpc_cfg_write_4(lcp, 0xF00, 0x0);
+	mpc_cfg_write_4(lcp, 0xF14, 0x0);
+	mpc_cfg_write_4(lcp, 0xF28, 0x0);
+	mpc_cfg_write_4(lcp, 0xF3C, 0x0);
 #endif 
-        /* enable mem and io mapping, and bus master */
-        mpc_cfg_write_2(lcp, RAVEN_PCI_CMD, 
-                        RAVEN_CMD_IOSP|RAVEN_CMD_MEMSP|RAVEN_CMD_MASTR);
+	/* enable mem and io mapping, and bus master */
+	mpc_cfg_write_2(lcp, RAVEN_PCI_CMD, 
+						 RAVEN_CMD_IOSP|RAVEN_CMD_MEMSP|RAVEN_CMD_MASTR);
 
-        config_found(self, &pba, mpcpcibrprint);
+	config_found(self, &pba, mpcpcibrprint);
 }
 
 static int
@@ -250,12 +250,12 @@ mpcpcibrprint(aux, pnp)
 void *aux;
 const char *pnp;
 {
-        struct pcibus_attach_args *pba = aux;
+	struct pcibus_attach_args *pba = aux;
 
-        if (pnp)
-                printf("%s at %s", pba->pba_busname, pnp);
-        printf(" bus %d", pba->pba_bus);
-        return (UNCONF);
+	if (pnp)
+		printf("%s at %s", pba->pba_busname, pnp);
+	printf(" bus %d", pba->pba_bus);
+	return (UNCONF);
 }
 
 /*
@@ -267,39 +267,41 @@ vm_offset_t
 vtophys(p)
 void *p;
 {
-        vm_offset_t pa;
-        vm_offset_t va;
+	vm_offset_t pa;
+	vm_offset_t va;
 
-        va = (vm_offset_t)p;
-        if ((vm_offset_t)va < VM_MIN_KERNEL_ADDRESS) {
-                pa = va;
-        } else {
-                pmap_extract(vm_map_pmap(phys_map), va, (paddr_t *)&pa);
-        }
-        return (pa | ((pci_map_a == 1) ? RAVEN_PCI_CPUMEM : 0 ));
+	va = (vm_offset_t)p;
+	if ((vm_offset_t)va < VM_MIN_KERNEL_ADDRESS) {
+		pa = va;
+	} else {
+		pmap_extract(vm_map_pmap(phys_map), va, (paddr_t *)&pa);
+	}
+	return (pa | ((pci_map_a == 1) ? RAVEN_PCI_CPUMEM : 0 ));
 }
 
 #else 
 vm_offset_t
 vtophys(p)
-	void *p;
+void *p;
 {
-        vm_offset_t pa;
-        vm_offset_t va;
+	vm_offset_t pa;
+	vm_offset_t va;
 	extern int segment8_mapped;
 	extern int segmentC_mapped;
 
-        va = (vm_offset_t)p;
-        /* This crap gets maped by bats 1:1 */
-        if ((vm_offset_t)va < VM_MIN_KERNEL_ADDRESS) {
-                pa = va;
-        } else if (segment8_mapped && (va >= 0x80000000 && va < 0x90000000)) {
-                pa = va;
+	va = (vm_offset_t)p;
+	/* This crap gets maped by bats 1:1 */
+	if (segment8_mapped && (va >= 0x80000000 && va < 0x90000000)) {
+		pa = va;
 	} else if (segmentC_mapped && (va >= 0xC0000000 && va < 0xD0000000)) {
-                pa = va;
+		pa = va;
+	} else if (va >= 0xF0000000) {
+		pa = va;
+	} else if ((vm_offset_t)va < VM_MIN_KERNEL_ADDRESS) {
+			pa = va;
 	} else if (pmap_extract(pmap_kernel(), va, &pa))
-                return pa;
-        return va;
+		return pa;
+	return va;
 }
 #endif 
 
@@ -315,8 +317,8 @@ mpc_ether_hw_addr(p, ethaddr)
 struct ppc_pci_chipset *p;
 u_int8_t *ethaddr;
 {
-        printf("mpc_ether_hw_addr not supported\n");
-        return (0);
+	printf("mpc_ether_hw_addr not supported\n");
+	return (0);
 }
 
 int
@@ -324,7 +326,7 @@ mpc_bus_maxdevs(cpv, busno)
 void *cpv;
 int busno;
 {
-        return (32);
+	return (32);
 }
 
 #define BUS_SHIFT 16
@@ -336,7 +338,7 @@ mpc_make_tag(cpv, bus, dev, fnc)
 void *cpv;
 int bus, dev, fnc;
 {
-        return (bus << BUS_SHIFT) | (dev << DEVICE_SHIFT) | (fnc << FNC_SHIFT);
+	return (bus << BUS_SHIFT) | (dev << DEVICE_SHIFT) | (fnc << FNC_SHIFT);
 }
 
 void
@@ -345,12 +347,12 @@ void *cpv;
 pcitag_t tag;
 int *busp, *devp, *fncp;
 {
-        if (busp != NULL)
-                *busp = (tag >> BUS_SHIFT) & 0xff;
-        if (devp != NULL)
-                *devp = (tag >> DEVICE_SHIFT) & 0x1f;
-        if (fncp != NULL)
-                *fncp = (tag >> FNC_SHIFT) & 0x7;
+	if (busp != NULL)
+		*busp = (tag >> BUS_SHIFT) & 0xff;
+	if (devp != NULL)
+		*devp = (tag >> DEVICE_SHIFT) & 0x1f;
+	if (fncp != NULL)
+		*fncp = (tag >> FNC_SHIFT) & 0x7;
 }
 
 static u_int32_t
@@ -359,48 +361,48 @@ void *cpv;
 pcitag_t tag;
 int offset;
 {
-        struct pcibr_config *cp = cpv;
-        unsigned int bus, dev, fcn;
-        u_int32_t reg;
-        /*
-        static int spin = 0;
-        while (spin > 85);
-        spin++;
-        */
+	struct pcibr_config *cp = cpv;
+	unsigned int bus, dev, fcn;
+	u_int32_t reg;
+	/*
+	static int spin = 0;
+	while (spin > 85);
+	spin++;
+	*/
 
-        mpc_decompose_tag(cpv, tag, &bus, &dev, &fcn);
+	mpc_decompose_tag(cpv, tag, &bus, &dev, &fcn);
 
-        if (cp->config_type & 1) {
-                /* Config Mechanism #2 */
-                if (bus == 0) {
-                        if (dev < 11) {
-                                return 0xffffffff;
-                        }
-                        /*
-                         * Need to do config type 0 operation
-                         *  1 << (11?+dev) | fcn << 8 | reg
-                         * 11? is because pci spec states
-                         * that 11-15 is reserved.
-                         */
-                        reg = 1 << (dev) | fcn << 8 | offset;
+	if (cp->config_type & 1) {
+		/* Config Mechanism #2 */
+		if (bus == 0) {
+			if (dev < 11) {
+				return 0xffffffff;
+			}
+			/*
+			 * Need to do config type 0 operation
+			 *  1 << (11?+dev) | fcn << 8 | reg
+			 * 11? is because pci spec states
+			 * that 11-15 is reserved.
+			 */
+			reg = 1 << (dev) | fcn << 8 | offset;
 
-                } else {
-                        if (dev > 15) {
-                                return 0xffffffff;
-                        }
-                        /*
-                         * config type 1 
-                         */
-                        reg =  tag  | offset | 1;
+		} else {
+			if (dev > 15) {
+				return 0xffffffff;
+			}
+			/*
+			 * config type 1 
+			 */
+			reg =  tag  | offset | 1;
 
-                }
-        } else {
-                /* config mechanism #2, type 0
-                /* standard cf8/cfc config */
-                reg =  0x80000000 | tag  | offset;
+		}
+	} else {
+		/* config mechanism #2, type 0
+		/* standard cf8/cfc config */
+		reg =  0x80000000 | tag  | offset;
 
-        }
-        return reg;
+	}
+	return reg;
 }
 
 /*#define DEBUG_CONFIG */
@@ -410,51 +412,51 @@ void *cpv;
 pcitag_t tag;
 int offset;
 {
-        struct pcibr_config *cp = cpv;
+	struct pcibr_config *cp = cpv;
 
-        pcireg_t data;
-        u_int32_t reg;
-        int device;
-        int s;
-        int handle; 
-        int daddr = 0;
+	pcireg_t data;
+	u_int32_t reg;
+	int device;
+	int s;
+	int handle; 
+	int daddr = 0;
 
-        if (offset & 3 || offset < 0 || offset >= 0x100) {
-                printf ("pci_conf_read: bad reg %x\n", offset);
-                return (~0);
-        }
+	if (offset & 3 || offset < 0 || offset >= 0x100) {
+		printf ("pci_conf_read: bad reg %x\n", offset);
+		return (~0);
+	}
 
-        reg = mpc_gen_config_reg(cpv, tag, offset);
-        /* if invalid tag, return -1 */
-        if (reg == 0xffffffff) {
-                return 0xffffffff;
-        }
+	reg = mpc_gen_config_reg(cpv, tag, offset);
+	/* if invalid tag, return -1 */
+	if (reg == 0xffffffff) {
+		return 0xffffffff;
+	}
 
-        if ((cp->config_type & 2) && (offset & 0x04)) {
-                daddr += 4;
-        }
+	if ((cp->config_type & 2) && (offset & 0x04)) {
+		daddr += 4;
+	}
 
-        s = splhigh();
+	s = splhigh();
 
-        bus_space_write_4(cp->lc_iot, cp->ioh_cf8, 0, reg);
-        bus_space_read_4(cp->lc_iot, cp->ioh_cf8, 0); /* XXX */
-        data = bus_space_read_4(cp->lc_iot, cp->ioh_cfc, daddr);
-        bus_space_write_4(cp->lc_iot, cp->ioh_cf8, 0, 0); /* disable */
-        bus_space_read_4(cp->lc_iot, cp->ioh_cf8, 0); /* XXX */
+	bus_space_write_4(cp->lc_iot, cp->ioh_cf8, 0, reg);
+	bus_space_read_4(cp->lc_iot, cp->ioh_cf8, 0); /* XXX */
+	data = bus_space_read_4(cp->lc_iot, cp->ioh_cfc, daddr);
+	bus_space_write_4(cp->lc_iot, cp->ioh_cf8, 0, 0); /* disable */
+	bus_space_read_4(cp->lc_iot, cp->ioh_cf8, 0); /* XXX */
 
-        splx(s);
+	splx(s);
 #ifdef DEBUG_CONFIG
-        if (!((offset == 0) && (data == 0xffffffff))) {
-                unsigned int bus, dev, fcn;
-                mpc_decompose_tag(cpv, tag, &bus, &dev, &fcn);
-                printf("mpc_conf_read bus %x dev %x fcn %x offset %x", bus, dev, fcn,
-                       offset);
-                printf(" daddr %x reg %x",daddr, reg);
-                printf(" data %x\n", data);
-        }
+	if (!((offset == 0) && (data == 0xffffffff))) {
+		unsigned int bus, dev, fcn;
+		mpc_decompose_tag(cpv, tag, &bus, &dev, &fcn);
+		printf("mpc_conf_read bus %x dev %x fcn %x offset %x", bus, dev, fcn,
+				 offset);
+		printf(" daddr %x reg %x",daddr, reg);
+		printf(" data %x\n", data);
+	}
 #endif
 
-        return (data);
+	return (data);
 }
 
 void
@@ -464,41 +466,41 @@ pcitag_t tag;
 int offset;
 pcireg_t data;
 {
-        struct pcibr_config *cp = cpv;
-        u_int32_t reg;
-        int s;
-        int handle; 
-        int daddr = 0;
+	struct pcibr_config *cp = cpv;
+	u_int32_t reg;
+	int s;
+	int handle; 
+	int daddr = 0;
 
-        reg = mpc_gen_config_reg(cpv, tag, offset);
+	reg = mpc_gen_config_reg(cpv, tag, offset);
 
-        /* if invalid tag, return ??? */
-        if (reg == 0xffffffff) {
-                return;
-        }
-        if ((cp->config_type & 2) && (offset & 0x04)) {
-                daddr += 4;
-        }
+	/* if invalid tag, return ??? */
+	if (reg == 0xffffffff) {
+		return;
+	}
+	if ((cp->config_type & 2) && (offset & 0x04)) {
+		daddr += 4;
+	}
 #ifdef DEBUG_CONFIG
-        {
-                unsigned int bus, dev, fcn;
-                mpc_decompose_tag(cpv, tag, &bus, &dev, &fcn);
-                printf("mpc_conf_write bus %x dev %x fcn %x offset %x", bus,
-                       dev, fcn, offset);
-                printf(" daddr %x reg %x",daddr, reg);
-                printf(" data %x\n", data);
-        }
+	{
+		unsigned int bus, dev, fcn;
+		mpc_decompose_tag(cpv, tag, &bus, &dev, &fcn);
+		printf("mpc_conf_write bus %x dev %x fcn %x offset %x", bus,
+				 dev, fcn, offset);
+		printf(" daddr %x reg %x",daddr, reg);
+		printf(" data %x\n", data);
+	}
 #endif
 
-        s = splhigh();
+	s = splhigh();
 
-        bus_space_write_4(cp->lc_iot, cp->ioh_cf8, 0, reg);
-        bus_space_read_4(cp->lc_iot, cp->ioh_cf8, 0); /* XXX */
-        bus_space_write_4(cp->lc_iot, cp->ioh_cfc, daddr, data);
-        bus_space_write_4(cp->lc_iot, cp->ioh_cf8, 0, 0); /* disable */
-        bus_space_read_4(cp->lc_iot, cp->ioh_cf8, 0); /* XXX */
+	bus_space_write_4(cp->lc_iot, cp->ioh_cf8, 0, reg);
+	bus_space_read_4(cp->lc_iot, cp->ioh_cf8, 0); /* XXX */
+	bus_space_write_4(cp->lc_iot, cp->ioh_cfc, daddr, data);
+	bus_space_write_4(cp->lc_iot, cp->ioh_cf8, 0, 0); /* disable */
+	bus_space_read_4(cp->lc_iot, cp->ioh_cf8, 0); /* XXX */
 
-        splx(s);
+	splx(s);
 }
 
 
@@ -509,25 +511,25 @@ pcitag_t bustag;
 int buspin, line;
 pci_intr_handle_t *ihp;
 {
-        struct pcibr_config *lcp = lcv;
-        pci_chipset_tag_t pc = &lcp->lc_pc; 
-        int error = 0;
-        int route;
-        int lvl;
-        int device;
+	struct pcibr_config *lcp = lcv;
+	pci_chipset_tag_t pc = &lcp->lc_pc; 
+	int error = 0;
+	int route;
+	int lvl;
+	int device;
 
-        *ihp = -1;
-        if (buspin == 0) {
-                /* No IRQ used. */
-                error = 1;
-        } else if (buspin > 4) {
-                printf("mpc_intr_map: bad interrupt pin %d\n", buspin);
-                error = 1;
-        }
+	*ihp = -1;
+	if (buspin == 0) {
+		/* No IRQ used. */
+		error = 1;
+	} else if (buspin > 4) {
+		printf("mpc_intr_map: bad interrupt pin %d\n", buspin);
+		error = 1;
+	}
 
-        if (!error)
-                *ihp = line;
-        return error;
+	if (!error)
+		*ihp = line;
+	return error;
 }
 
 const char *
@@ -535,14 +537,14 @@ mpc_intr_string(lcv, ih)
 void *lcv;
 pci_intr_handle_t ih;
 {
-        static char str[16];
+	static char str[16];
 
-        sprintf(str, "irq %d", ih);
-        return (str);
+	sprintf(str, "irq %d", ih);
+	return (str);
 }
 
 typedef void     *(intr_establish_t) __P((void *, pci_intr_handle_t,
-                                          int, int, int (*func)(void *), void *, char *));
+														int, int, int (*func)(void *), void *, char *));
 typedef void     (intr_disestablish_t) __P((void *, void *));
 extern intr_establish_t *intr_establish_func;
 extern intr_disestablish_t *intr_disestablish_func;
@@ -556,27 +558,27 @@ int (*func) __P((void *));
 void *arg;
 char *name;
 {
-        return (*intr_establish_func)(lcv, ih, IST_LEVEL, level, func, arg,
-                                      name);
+	return (*intr_establish_func)(lcv, ih, IST_LEVEL, level, func, arg,
+											name);
 }
 
 void
 mpc_intr_disestablish(lcv, cookie)
 void *lcv, *cookie;
 {
-        /* XXX We should probably do something clever here.... later */
+	/* XXX We should probably do something clever here.... later */
 }
 
 u_int32_t
 pci_iack()
 {
-        /* do pci IACK cycle */
-        /* this should be bus allocated. */
-        volatile u_int8_t *iack = (u_int8_t *)RAVEN_PIACK;
-        u_int8_t val;
+	/* do pci IACK cycle */
+	/* this should be bus allocated. */
+	volatile u_int8_t *iack = (u_int8_t *)RAVEN_PIACK;
+	u_int8_t val;
 
-        val = *iack;
-        return val;
+	val = *iack;
+	return val;
 }
 
 void
@@ -585,12 +587,12 @@ struct pcibr_config *cp;
 u_int32_t reg;
 u_int8_t val;
 {
-        int s;
-        s = splhigh();
-        bus_space_write_4(cp->lc_iot, cp->ioh_cf8, 0,
-                          RAVEN_REGOFFS(reg));
-        bus_space_write_1(cp->lc_iot, cp->ioh_cfc, 0, val);
-        splx(s);
+	int s;
+	s = splhigh();
+	bus_space_write_4(cp->lc_iot, cp->ioh_cf8, 0,
+							RAVEN_REGOFFS(reg));
+	bus_space_write_1(cp->lc_iot, cp->ioh_cfc, 0, val);
+	splx(s);
 }
 
 void
@@ -599,11 +601,11 @@ struct pcibr_config *cp;
 u_int32_t reg;
 u_int16_t val;
 {
-        int s;
-        s = splhigh();
-        bus_space_write_4(cp->lc_iot, cp->ioh_cf8, 0, RAVEN_REGOFFS(reg));
-        bus_space_write_2(cp->lc_iot, cp->ioh_cfc, 0, val);
-        splx(s);
+	int s;
+	s = splhigh();
+	bus_space_write_4(cp->lc_iot, cp->ioh_cf8, 0, RAVEN_REGOFFS(reg));
+	bus_space_write_2(cp->lc_iot, cp->ioh_cfc, 0, val);
+	splx(s);
 }
 
 void
@@ -613,11 +615,11 @@ u_int32_t reg;
 u_int32_t val;
 {
 
-        int s;
-        s = splhigh();
-        bus_space_write_4(cp->lc_iot, cp->ioh_cf8, 0, RAVEN_REGOFFS(reg));
-        bus_space_write_4(cp->lc_iot, cp->ioh_cfc, 0, val);
-        splx(s);
+	int s;
+	s = splhigh();
+	bus_space_write_4(cp->lc_iot, cp->ioh_cf8, 0, RAVEN_REGOFFS(reg));
+	bus_space_write_4(cp->lc_iot, cp->ioh_cfc, 0, val);
+	splx(s);
 }
 
 u_int8_t
@@ -625,14 +627,14 @@ mpc_cfg_read_1(cp, reg)
 struct pcibr_config *cp;
 u_int32_t reg;
 {
-        u_int8_t _v_;
+	u_int8_t _v_;
 
-        int s;
-        s = splhigh();
-        bus_space_write_4(cp->lc_iot, cp->ioh_cf8, 0, RAVEN_REGOFFS(reg));
-        _v_ = bus_space_read_1(cp->lc_iot, cp->ioh_cfc, 0);
-        splx(s);
-        return (_v_);
+	int s;
+	s = splhigh();
+	bus_space_write_4(cp->lc_iot, cp->ioh_cf8, 0, RAVEN_REGOFFS(reg));
+	_v_ = bus_space_read_1(cp->lc_iot, cp->ioh_cfc, 0);
+	splx(s);
+	return (_v_);
 }
 
 u_int16_t
@@ -640,14 +642,14 @@ mpc_cfg_read_2(cp, reg)
 struct pcibr_config *cp;
 u_int32_t reg;
 {
-        u_int16_t _v_;
+	u_int16_t _v_;
 
-        int s;
-        s = splhigh();
-        bus_space_write_4(cp->lc_iot, cp->ioh_cf8, 0, RAVEN_REGOFFS(reg));
-        _v_ = bus_space_read_2(cp->lc_iot, cp->ioh_cfc, 0);
-        splx(s);
-        return (_v_);
+	int s;
+	s = splhigh();
+	bus_space_write_4(cp->lc_iot, cp->ioh_cf8, 0, RAVEN_REGOFFS(reg));
+	_v_ = bus_space_read_2(cp->lc_iot, cp->ioh_cfc, 0);
+	splx(s);
+	return (_v_);
 }
 
 u_int32_t
@@ -655,12 +657,12 @@ mpc_cfg_read_4(cp, reg)
 struct pcibr_config *cp;
 u_int32_t reg;
 {
-        u_int32_t _v_;
+	u_int32_t _v_;
 
-        int s;
-        s = splhigh();
-        bus_space_write_4(cp->lc_iot, cp->ioh_cf8, 0, RAVEN_REGOFFS(reg));
-        _v_ = bus_space_read_4(cp->lc_iot, cp->ioh_cfc, 0);
-        splx(s);
-        return (_v_);
+	int s;
+	s = splhigh();
+	bus_space_write_4(cp->lc_iot, cp->ioh_cf8, 0, RAVEN_REGOFFS(reg));
+	_v_ = bus_space_read_4(cp->lc_iot, cp->ioh_cfc, 0);
+	splx(s);
+	return (_v_);
 }

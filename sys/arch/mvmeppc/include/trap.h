@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.h,v 1.2 2001/07/04 08:31:32 niklas Exp $	*/
+/*	$OpenBSD: trap.h,v 1.3 2001/07/06 05:14:30 smurph Exp $	*/
 /*	$NetBSD: trap.h,v 1.1 1996/09/30 16:34:35 ws Exp $	*/
 
 /*
@@ -77,6 +77,7 @@
 #define EXC_ALI_OPCODE_INDICATOR(dsisr) ((dsisr >> 10) & 0x7f)
 #define EXC_ALI_LFD	0x09
 #define EXC_ALI_STFD	0x0b
+#define EXC_ALI_DCBZ	0x5f
 
 /* Macros to extract register information */
 #define EXC_ALI_RST(dsisr) ((dsisr >> 5) & 0x1f)   /* source or target */
