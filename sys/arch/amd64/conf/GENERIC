@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.25 2004/06/25 11:03:28 art Exp $
+#	$OpenBSD: GENERIC,v 1.26 2004/08/01 21:34:34 deraadt Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -122,6 +122,7 @@ aue*	at uhub? port ?			# ADMtek AN986 Pegasus Ethernet
 axe*	at uhub? port ?			# ASIX Electronics AX88172 USB Ethernet
 cue*	at uhub? port ?			# CATC USB-EL1201A based Ethernet
 kue*	at uhub? port ?			# Kawasaki KL5KUSB101B based Ethernet
+cdce*	at uhub? port ?			# CDC Ethernet
 upl*	at uhub? port ?			# Prolific PL2301/PL2302 host-to-host `network'
 url*	at uhub? port ?			# Realtek RTL8150L based adapters
 wi*	at uhub? port ?			# WaveLAN IEEE 802.11DS
