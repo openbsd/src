@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypwhich.c,v 1.4 1996/06/05 23:56:00 deraadt Exp $
+/*	$OpenBSD: ypwhich.c,v 1.5 1997/04/22 01:49:16 deraadt Exp $
 /*	$NetBSD: ypwhich.c,v 1.6 1996/05/13 02:43:48 thorpej Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$Id: ypwhich.c,v 1.4 1996/06/05 23:56:00 deraadt Exp $";
+static char rcsid[] = "$Id: ypwhich.c,v 1.5 1997/04/22 01:49:16 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -90,25 +90,25 @@ struct sockaddr_in *sin;
 	tv.tv_sec = 15;
 	tv.tv_usec = 0;
 	client = clntudp_create(sin, YPBINDPROG, YPBINDVERS, tv, &sock);
-	if(client==NULL) {
+	if (client==NULL) {
 		fprintf(stderr, "can't clntudp_create: %s\n",
-			yperr_string(YPERR_YPBIND));
+		    yperr_string(YPERR_YPBIND));
 		return YPERR_YPBIND;
 	}
 
 	tv.tv_sec = 5;
 	tv.tv_usec = 0;
 	r = clnt_call(client, YPBINDPROC_DOMAIN,
-		xdr_domainname, &dom, xdr_ypbind_resp, &ypbr, tv);
-	if( r != RPC_SUCCESS) {
+	    xdr_domainname, &dom, xdr_ypbind_resp, &ypbr, tv);
+	if (r != RPC_SUCCESS) {
 		fprintf(stderr, "can't clnt_call: %s\n",
-			yperr_string(YPERR_YPBIND));
+		    yperr_string(YPERR_YPBIND));
 		clnt_destroy(client);
 		return YPERR_YPBIND;
 	} else {
 		if (ypbr.ypbind_status != YPBIND_SUCC_VAL) {
 			fprintf(stderr, "can't yp_bind: Reason: %s\n",
-				yperr_string(ypbr.ypbind_status));
+			    yperr_string(ypbr.ypbind_status));
 			clnt_destroy(client);
 			return r;
 		}
@@ -141,13 +141,12 @@ char **argv;
 
 	map = NULL;
 	getmap = notrans = mode = 0;
-	while( (c=getopt(argc, argv, "xd:mt")) != -1)
-		switch(c) {
+	while ((c=getopt(argc, argv, "xd:mt")) != -1)
+		switch (c) {
 		case 'x':
-			for(i=0; i<sizeof ypaliases/sizeof ypaliases[0]; i++)
+			for (i=0; i<sizeof ypaliases/sizeof ypaliases[0]; i++)
 				printf("Use \"%s\" for \"%s\"\n",
-					ypaliases[i].alias,
-					ypaliases[i].name);
+				    ypaliases[i].alias, ypaliases[i].name);
 			exit(0);
 		case 'd':
 			domain = optarg;
@@ -164,14 +163,14 @@ char **argv;
 	argc -= optind;
 	argv += optind;
 
-	if(mode==0) {
-		switch(argc) {
+	if (mode==0) {
+		switch (argc) {
 		case 0:
 			bzero(&sin, sizeof sin);
 			sin.sin_family = AF_INET;
 			sin.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
 
-			if(bind_host(domain, &sin))
+			if (bind_host(domain, &sin))
 				exit(1);
 			break;
 		case 1:
@@ -179,15 +178,15 @@ char **argv;
 			sin.sin_family = AF_INET;
 			if (inet_aton(argv[0], &sin.sin_addr) == 0) {
 				hent = gethostbyname(argv[0]);
-				if(!hent) {
+				if (!hent) {
 					fprintf(stderr, "ypwhich: host %s unknown\n",
 					    argv[0]);
 					exit(1);
 				}
 				bcopy((char *)hent->h_addr,
-					(char *)&sin.sin_addr, sizeof sin.sin_addr);
+				    (char *)&sin.sin_addr, sizeof sin.sin_addr);
 			}
-			if(bind_host(domain, &sin))
+			if (bind_host(domain, &sin))
 				exit(1);
 			break;
 		default:
@@ -196,16 +195,16 @@ char **argv;
 		exit(0);
 	}
 
-	if( argc > 1)
+	if (argc > 1)
 		usage();
 
-	if(argv[0]) {
+	if (argv[0]) {
 		map = argv[0];
-		for(i=0; (!notrans) && i<sizeof ypaliases/sizeof ypaliases[0]; i++)
-			if( strcmp(map, ypaliases[i].alias) == 0)
+		for (i=0; (!notrans) && i<sizeof ypaliases/sizeof ypaliases[0]; i++)
+			if (strcmp(map, ypaliases[i].alias) == 0)
 				map = ypaliases[i].name;
 		r = yp_master(domain, map, &master);
-		switch(r) {
+		switch (r) {
 		case 0:
 			printf("%s\n", master);
 			free(master);
@@ -215,7 +214,7 @@ char **argv;
 			exit(1);
 		default:
 			fprintf(stderr, "Can't find master for map %s. Reason: %s\n",
-				map, yperr_string(r));
+			    map, yperr_string(r));
 			exit(1);
 		}
 		exit(0);
@@ -226,7 +225,7 @@ char **argv;
 	r = 0;
 	switch(r) {
 	case 0:
-		for(y = ypml; y; ) {
+		for (y = ypml; y; ) {
 			ypml = y;
 			r = yp_master(domain, ypml->map, &master);
 			switch(r) {
@@ -236,8 +235,8 @@ char **argv;
 				break;
 			default:
 				fprintf(stderr,
-					"YP: can't find the master of %s: Reason: %s\n",
-					ypml->map, yperr_string(r));
+				    "YP: can't find the master of %s: Reason: %s\n",
+				    ypml->map, yperr_string(r));
 				break;
 			}
 			y = ypml->next;
@@ -249,7 +248,7 @@ char **argv;
 		exit(1);
 	default:
 		fprintf(stderr, "Can't get map list for domain %s. Reason: %s\n",
-			domain, yperr_string(r));
+		    domain, yperr_string(r));
 		exit(1);
 	}
 	exit(0);
