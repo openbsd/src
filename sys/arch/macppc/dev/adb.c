@@ -1,4 +1,4 @@
-/*	$OpenBSD: adb.c,v 1.4 2002/03/14 01:26:36 millert Exp $	*/
+/*	$OpenBSD: adb.c,v 1.5 2002/06/07 07:14:48 miod Exp $	*/
 /*	$NetBSD: adb.c,v 1.6 1999/08/16 06:28:09 tsubai Exp $	*/
 
 /*-
@@ -43,6 +43,7 @@
 #include <machine/autoconf.h>
 
 #include <macppc/dev/adbvar.h>
+#include <macppc/dev/adb_direct.h>
 #include <macppc/dev/akbdvar.h>
 #include <macppc/dev/viareg.h>
 
@@ -52,17 +53,16 @@
 /*
  * Function declarations.
  */
-static int	adbmatch(struct device *, void *, void *);
-static void	adbattach(struct device *, struct device *, void *);
-static int	adbprint(void *, const char *);
+int	adbmatch(struct device *, void *, void *);
+void	adbattach(struct device *, struct device *, void *);
+int	adbprint(void *, const char *);
 
 /*
  * Global variables.
  */
-int     adb_polling = 0;	/* Are we polling?  (Debugger mode) */
-int     adb_initted = 0;	/* adb_init() has completed successfully */
+int     adb_polling;		/* Are we polling?  (Debugger mode) */
 #ifdef ADB_DEBUG
-int	adb_debug = 0;		/* Output debugging messages */
+int	adb_debug;		/* Output debugging messages */
 #endif /* ADB_DEBUG */
 
 /*
@@ -75,7 +75,7 @@ struct cfdriver adb_cd = {
 	NULL, "adb", DV_DULL
 };
 
-static int
+int
 adbmatch(parent, cf, aux)
 	struct device *parent;
 	void *cf;
@@ -99,20 +99,16 @@ adbmatch(parent, cf, aux)
 }
 
 /* HACK ALERT */
-int adb_read_date_time(unsigned long *time);
-int adb_write_date_time(unsigned long time);
-int adb_set_date_time(unsigned long time);
 typedef int (clock_read_t)(int *sec, int *min, int *hour, int *day,
          int *mon, int *yr);
-typedef int (time_read_t)(unsigned long *sec);
-typedef int (time_write_t)(unsigned long sec);
+typedef int (time_read_t)(u_long *sec);
+typedef int (time_write_t)(u_long sec);
 extern time_read_t  *time_read;
 extern time_write_t  *time_write;
 extern clock_read_t  *clock_read;
 
 
-
-static void
+void
 adbattach(parent, self, aux)
 	struct device *parent, *self;
 	void   *aux;
@@ -124,8 +120,6 @@ adbattach(parent, self, aux)
 	struct adb_attach_args aa_args;
 	int totaladbs;
 	int adbindex, adbaddr;
-
-	extern volatile u_char *Via1Base;
 
 	ca->ca_reg[0] += ca->ca_baseaddr;
 
@@ -217,10 +211,12 @@ adbprint(args, name)
 		printf("%s addr %d: ", name, aa_args->adbaddr);
 		switch(aa_args->origaddr) {
 #ifdef DIAGNOSTIC
+#if NAED > 0
 		case 0:
 			printf("ADB event device");
 			rv = UNCONF;
 			break;
+#endif
 		case ADBADDR_SECURE:
 			printf("security dongle (%d)", aa_args->handler_id);
 			break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: aed.c,v 1.3 2002/03/14 01:26:36 millert Exp $	*/
+/*	$OpenBSD: aed.c,v 1.4 2002/06/07 07:14:48 miod Exp $	*/
 /*	$NetBSD: aed.c,v 1.5 2000/03/23 06:40:33 thorpej Exp $	*/
 
 /*
@@ -41,6 +41,7 @@
 #include <sys/systm.h>
 
 #include <machine/autoconf.h>
+#include <machine/conf.h>
 #include <machine/cpu.h>
 
 #include <macppc/dev/keyboard.h>
@@ -53,29 +54,19 @@
 /*
  * Function declarations.
  */
-#ifdef __NetBSD__
-static int	aedmatch(struct device *, struct cfdata *, void *);
-#endif /* __NetBSD__ */
-#ifdef __OpenBSD__
-static int	aedmatch(struct device *, void *, void *);
-#endif /* __OpenBSD__ */
-static void	aedattach(struct device *, struct device *, void *);
-static void	aed_emulate_mouse(adb_event_t *event);
-static void	aed_kbdrpt(void *kstate);
-static void	aed_dokeyupdown(adb_event_t *event);
-static void	aed_handoff(adb_event_t *event);
-static void	aed_enqevent(adb_event_t *event);
-
-/*
- * Global variables.
- */
-extern int adb_polling;			/* Are we polling?  (Debugger mode) */
+int	aedmatch(struct device *, void *, void *);
+void	aedattach(struct device *, struct device *, void *);
+void	aed_emulate_mouse(adb_event_t *event);
+void	aed_kbdrpt(void *kstate);
+void	aed_dokeyupdown(adb_event_t *event);
+void	aed_handoff(adb_event_t *event);
+void	aed_enqevent(adb_event_t *event);
 
 /*
  * Local variables.
  */
-static struct aed_softc *aed_sc = NULL;
-static int aed_options = 0; /* | AED_MSEMUL; */
+struct aed_softc *aed_sc = NULL;
+int aed_options = 0; /* | AED_MSEMUL; */
 
 /* Driver definition */
 struct cfdriver aed_cd = {
@@ -86,17 +77,10 @@ struct cfattach aed_ca = {
 	sizeof(struct aed_softc), aedmatch, aedattach
 };
 
-extern struct cfdriver aed_cd;
-
-static int
+int
 aedmatch(parent, cf, aux)
 	struct device *parent;
-#ifdef __NetBSD__
-	struct cfdata *cf;
-#endif /* __NetBSD__ */
-#ifdef __OpenBSD__
 	void *cf;
-#endif /* __OpenBSD__ */
 	void *aux;
 {
 	struct adb_attach_args *aa_args = (struct adb_attach_args *)aux;
@@ -110,7 +94,7 @@ aedmatch(parent, cf, aux)
                 return (0);
 }
 
-static void
+void
 aedattach(parent, self, aux)
 	struct device *parent, *self;
 	void   *aux;
@@ -142,10 +126,7 @@ aedattach(parent, self, aux)
 
 	sc->sc_open = 0;
 
-
 	printf("ADB Event device\n");
-
-	return;
 }
 
 /*
@@ -173,7 +154,7 @@ aed_input(event)
 		break;
 	default:                /* God only knows. */
 #ifdef DIAGNOSTIC
-		panic("aed: received event from unsupported device!\n");
+		panic("aed: received event from unsupported device!");
 #endif
 		break;
 	}
@@ -186,7 +167,7 @@ aed_input(event)
  * 3rd mouse button events while the 1, 2, and 3 keys will generate
  * the corresponding mouse button event.
  */
-static void 
+void 
 aed_emulate_mouse(event)
 	adb_event_t *event;
 {
@@ -323,7 +304,7 @@ aed_emulate_mouse(event)
  * for the repeating key and schedules the next call at sc_rptinterval
  * ticks in the future.
  */
-static void 
+void 
 aed_kbdrpt(kstate)
 	void *kstate;
 {
@@ -348,7 +329,7 @@ aed_kbdrpt(kstate)
  * a new repeating key event if needed, and hands the event off to the
  * appropriate subsystem.
  */
-static void 
+void 
 aed_dokeyupdown(event)
 	adb_event_t *event;
 {
@@ -377,7 +358,7 @@ aed_dokeyupdown(event)
  * Place the event in the event queue if a requesting device is open
  * and we are not polling.
  */
-static void
+void
 aed_handoff(event)
 	adb_event_t *event;
 {
@@ -388,9 +369,9 @@ aed_handoff(event)
 /*
  * Place the event in the event queue and wakeup any waiting processes.
  */
-static void 
+void 
 aed_enqevent(event)
-    adb_event_t *event;
+	adb_event_t *event;
 {
 	int     s;
 
@@ -421,9 +402,9 @@ aed_enqevent(event)
 
 int 
 aedopen(dev, flag, mode, p)
-    dev_t dev;
-    int flag, mode;
-    struct proc *p;
+	dev_t dev;
+	int flag, mode;
+	struct proc *p;
 {
 	int unit;
 	int error = 0;
@@ -451,9 +432,9 @@ aedopen(dev, flag, mode, p)
 
 int 
 aedclose(dev, flag, mode, p)
-    dev_t dev;
-    int flag, mode;
-    struct proc *p;
+	dev_t dev;
+	int flag, mode;
+	struct proc *p;
 {
 	int s = spladb();
 
@@ -467,9 +448,9 @@ aedclose(dev, flag, mode, p)
 
 int 
 aedread(dev, uio, flag)
-    dev_t dev;
-    struct uio *uio;
-    int flag;
+	dev_t dev;
+	struct uio *uio;
+	int flag;
 {
 	int s, error;
 	int willfit;
@@ -516,9 +497,9 @@ aedread(dev, uio, flag)
 
 int 
 aedwrite(dev, uio, flag)
-    dev_t dev;
-    struct uio *uio;
-    int flag;
+	dev_t dev;
+	struct uio *uio;
+	int flag;
 {
 	return 0;
 }
@@ -526,14 +507,15 @@ aedwrite(dev, uio, flag)
 
 int 
 aedioctl(dev, cmd, data, flag, p)
-    dev_t dev;
-    int cmd;
-    caddr_t data;
-    int flag;
-    struct proc *p;
+	dev_t dev;
+	u_long cmd;
+	caddr_t data;
+	int flag;
+	struct proc *p;
 {
 	switch (cmd) {
-	case ADBIOCDEVSINFO: {
+	case ADBIOCDEVSINFO:
+	{
 		adb_devinfo_t *di;
 		ADBDataBlock adbdata;
 		int totaldevs;
@@ -552,66 +534,47 @@ aedioctl(dev, cmd, data, flag, p)
 			di->dev[adbaddr].addr = adbaddr;
 			di->dev[adbaddr].default_addr = (int)(adbdata.origADBAddr);
 			di->dev[adbaddr].handler_id = (int)(adbdata.devType);
-			}
+		}
 
 		/* Must call ADB Manager to get devices now */
-		break;
 	}
+		break;
 
-	case ADBIOCGETREPEAT:{
+	case ADBIOCGETREPEAT:
+	{
 		adb_rptinfo_t *ri;
 
 		ri = (void *)data;
 		ri->delay_ticks = aed_sc->sc_rptdelay;
 		ri->interval_ticks = aed_sc->sc_rptinterval;
-		break;
 	}
+		break;
 
-	case ADBIOCSETREPEAT:{
+	case ADBIOCSETREPEAT:
+	{
 		adb_rptinfo_t *ri;
 
 		ri = (void *) data;
 		aed_sc->sc_rptdelay = ri->delay_ticks;
 		aed_sc->sc_rptinterval = ri->interval_ticks;
-		break;
 	}
+		break;
 
 	case ADBIOCRESET:
 		/* Do nothing for now */
 		break;
 
-	case ADBIOCLISTENCMD:{
+	case ADBIOCLISTENCMD:
+	{
 		adb_listencmd_t *lc;
 
 		lc = (void *)data;
 	}
+		/* FALLTHROUGH */
 
 	default:
 		return (EINVAL);
 	}
+
 	return (0);
-}
-
-
-int 
-aedpoll(dev, events, p)
-	dev_t dev;
-	int events;
-	struct proc *p;
-{
-	int s, revents;
-
-	revents = events & (POLLOUT | POLLWRNORM);
-	
-	if ((events & (POLLIN | POLLRDNORM)) == 0)
-		return (revents);
-
-	s = spladb();
-	if (aed_sc->sc_evq_len > 0)
-		revents |= events & (POLLIN | POLLRDNORM);
-	else
-		selrecord(p, &aed_sc->sc_selinfo);
-	splx(s);
-
-	return (revents);
 }

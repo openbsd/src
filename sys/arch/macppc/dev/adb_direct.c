@@ -1,7 +1,5 @@
-/*	$OpenBSD: adb_direct.c,v 1.4 2002/03/14 03:15:55 millert Exp $	*/
+/*	$OpenBSD: adb_direct.c,v 1.5 2002/06/07 07:14:48 miod Exp $	*/
 /*	$NetBSD: adb_direct.c,v 1.14 2000/06/08 22:10:45 tsubai Exp $	*/
-
-/* From: adb_direct.c 2.02 4/18/97 jpw */
 
 /*
  * Copyright (C) 1996, 1997 John P. Wittkoski
@@ -91,46 +89,20 @@
 #define vSR_INT		0x04
 #define vSR_OUT		0x10
 
-/* the type of ADB action that we are currently preforming */
+/* the type of ADB action that we are currently performing */
 #define ADB_ACTION_NOTREADY	0x1	/* has not been initialized yet */
 #define ADB_ACTION_IDLE		0x2	/* the bus is currently idle */
 #define ADB_ACTION_OUT		0x3	/* sending out a command */
 #define ADB_ACTION_IN		0x4	/* receiving data */
-#define ADB_ACTION_POLLING	0x5	/* polling - II only */
-
-/*
- * These describe the state of the ADB bus itself, although they
- * don't necessarily correspond directly to ADB states.
- * Note: these are not really used in the IIsi code.
- */
-#define ADB_BUS_UNKNOWN		0x1	/* we don't know yet - all models */
-#define ADB_BUS_IDLE		0x2	/* bus is idle - all models */
-#define ADB_BUS_CMD		0x3	/* starting a command - II models */
-#define ADB_BUS_ODD		0x4	/* the "odd" state - II models */
-#define ADB_BUS_EVEN		0x5	/* the "even" state - II models */
-#define ADB_BUS_ACTIVE		0x6	/* active state - IIsi models */
-#define ADB_BUS_ACK		0x7	/* currently ACKing - IIsi models */
 
 /*
  * Shortcuts for setting or testing the VIA bit states.
  * Not all shortcuts are used for every type of ADB hardware.
  */
-#define ADB_SET_STATE_IDLE_II()     via_reg_or(VIA1, vBufB, (vPB4 | vPB5))
-#define ADB_SET_STATE_IDLE_IISI()   via_reg_and(VIA1, vBufB, ~(vPB4 | vPB5))
 #define ADB_SET_STATE_IDLE_CUDA()   via_reg_or(VIA1, vBufB, (vPB4 | vPB5))
-#define ADB_SET_STATE_CMD()         via_reg_and(VIA1, vBufB, ~(vPB4 | vPB5))
-#define ADB_SET_STATE_EVEN()        write_via_reg(VIA1, vBufB, \
-                              (read_via_reg(VIA1, vBufB) | vPB4) & ~vPB5)
-#define ADB_SET_STATE_ODD()         write_via_reg(VIA1, vBufB, \
-                              (read_via_reg(VIA1, vBufB) | vPB5) & ~vPB4 )
-#define ADB_SET_STATE_ACTIVE() 	    via_reg_or(VIA1, vBufB, vPB5)
-#define ADB_SET_STATE_INACTIVE()    via_reg_and(VIA1, vBufB, ~vPB5)
 #define ADB_SET_STATE_TIP()	    via_reg_and(VIA1, vBufB, ~vPB5)
 #define ADB_CLR_STATE_TIP() 	    via_reg_or(VIA1, vBufB, vPB5)
-#define ADB_SET_STATE_ACKON()	    via_reg_or(VIA1, vBufB, vPB4)
-#define ADB_SET_STATE_ACKOFF()	    via_reg_and(VIA1, vBufB, ~vPB4)
 #define ADB_TOGGLE_STATE_ACK_CUDA() via_reg_xor(VIA1, vBufB, vPB4)
-#define ADB_SET_STATE_ACKON_CUDA()  via_reg_and(VIA1, vBufB, ~vPB4)
 #define ADB_SET_STATE_ACKOFF_CUDA() via_reg_or(VIA1, vBufB, vPB4)
 #define ADB_SET_SR_INPUT()	    via_reg_and(VIA1, vACR, ~vSR_OUT)
 #define ADB_SET_SR_OUTPUT()	    via_reg_or(VIA1, vACR, vSR_OUT)
@@ -140,7 +112,6 @@
 #define ADB_VIA_CLR_INTR()	    write_via_reg(VIA1, vIFR, 0x04)
 #define ADB_INTR_IS_OFF		   (vPB3 == (read_via_reg(VIA1, vBufB) & vPB3))
 #define ADB_INTR_IS_ON		   (0 == (read_via_reg(VIA1, vBufB) & vPB3))
-#define ADB_SR_INTR_IS_OFF	   (0 == (read_via_reg(VIA1, vIFR) & vSR_INT))
 #define ADB_SR_INTR_IS_ON	   (vSR_INT == (read_via_reg(VIA1, \
 						vIFR) & vSR_INT))
 
@@ -203,22 +174,15 @@ struct adbCommand {
  */
 int	adbHardware = ADB_HW_UNKNOWN;
 int	adbActionState = ADB_ACTION_NOTREADY;
-int	adbBusState = ADB_BUS_UNKNOWN;
 int	adbWaiting = 0;		/* waiting for return data from the device */
 int	adbWriteDelay = 0;	/* working on (or waiting to do) a write */
-int	adbOutQueueHasData = 0;	/* something in the queue waiting to go out */
-int	adbNextEnd = 0;		/* the next incoming bute is the last (II) */
 int	adbSoftPower = 0;	/* machine supports soft power */
 
 int	adbWaitingCmd = 0;	/* ADB command we are waiting for */
 u_char	*adbBuffer = (long)0;	/* pointer to user data area */
 void	*adbCompRout = (long)0;	/* pointer to the completion routine */
 void	*adbCompData = (long)0;	/* pointer to the completion routine data */
-long	adbFakeInts = 0;	/* keeps track of fake ADB interrupts for
-				 * timeouts (II) */
 int	adbStarting = 1;	/* doing ADBReInit so do polling differently */
-int	adbSendTalk = 0;	/* the intr routine is sending the talk, not
-				 * the user (II) */
 int	adbPolling = 0;		/* we are polling for service request */
 int	adbPollCmd = 0;		/* the last poll command we sent */
 
@@ -227,9 +191,6 @@ u_char	adbOutputBuffer[ADB_MAX_MSG_LENGTH];	/* data output buffer */
 struct	adbCmdHoldEntry adbOutQueue;		/* our 1 entry output queue */
 
 int	adbSentChars = 0;	/* how many characters we have sent */
-int	adbLastDevice = 0;	/* last ADB dev we heard from (II ONLY) */
-int	adbLastDevIndex = 0;	/* last ADB dev loc in dev table (II ONLY) */
-int	adbLastCommand = 0;	/* the last ADB command we sent (II) */
 
 struct	ADBDevEntry ADBDevTable[16];	/* our ADB device table */
 int	ADBNumDevices;		/* num. of ADB devices found with ADBReInit */
@@ -250,13 +211,6 @@ struct	timeout adb_cuda_timeout;
 struct	timeout adb_softintr_timeout;
 
 volatile u_char *Via1Base;
-extern int adb_polling;			/* Are we polling? */
-
-void	pm_setup_adb(void);
-void	pm_check_adb_devices(int);
-void	pm_intr(void);
-int	pm_adb_op(u_char *, void *, void *, int);
-void	pm_init_adb_device(void);
 
 /*
  * The following are private routines.
@@ -264,14 +218,9 @@ void	pm_init_adb_device(void);
 #ifdef ADB_DEBUG
 void	print_single(u_char *);
 #endif
-void	adb_intr_II(void);
-void	adb_intr_IIsi(void);
 void	adb_intr_cuda(void);
 void	adb_soft_intr(void);
-int	send_adb_II(u_char *, u_char *, void *, void *, int);
-int	send_adb_IIsi(u_char *, u_char *, void *, void *, int);
 int	send_adb_cuda(u_char *, u_char *, void *, void *, int);
-void	adb_intr_cuda_test(void);
 void	adb_cuda_tickle(void);
 void	adb_pass_up(struct adbCommand *);
 void	adb_op_comprout(caddr_t, caddr_t, int);
@@ -282,18 +231,9 @@ int	get_adb_info(ADBDataBlock *, int);
 int	set_adb_info(ADBSetInfoBlock *, int);
 void	adb_setup_hw_type(void);
 int	adb_op(Ptr, Ptr, Ptr, short);
-void	adb_read_II(u_char *);
 void	adb_hw_setup(void);
-void	adb_hw_setup_IIsi(u_char *);
-void	adb_comp_exec(void);
 int	adb_cmd_result(u_char *);
-int	adb_cmd_extra(u_char *);
-int	adb_guess_next_device(void);
-int	adb_prog_switch_enable(void);
-int	adb_prog_switch_disable(void);
-/* we should create this and it will be the public version */
-int	send_adb(u_char *, void *, void *);
-int setsoftadb(void);
+void	setsoftadb(void);
 
 #ifdef ADB_DEBUG
 /*
@@ -579,9 +519,7 @@ switch_start:
 	ADB_VIA_INTR_ENABLE();	/* enable ADB interrupt on IIs. */
 
 	splx(s);		/* restore */
-
-	return;
-}				/* end adb_intr_cuda */
+}
 
 
 int
@@ -617,11 +555,6 @@ send_adb_cuda(u_char * in, u_char * buffer, void *compRout, void *data, int
 		printf_intr("QUEUE\n");
 #endif
 	if ((long)in == (long)0) {	/* need to convert? */
-		/*
-		 * Don't need to use adb_cmd_extra here because this section
-		 * will be called ONLY when it is an ADB command (no RTC or
-		 * PRAM)
-		 */
 		if ((command & 0x0c) == 0x08)	/* copy addl data ONLY if
 						 * doing a listen! */
 			len = buffer[0];	/* length of additional data */
@@ -671,75 +604,7 @@ send_adb_cuda(u_char * in, u_char * buffer, void *compRout, void *data, int
 			}
 
 	return 0;
-}				/* send_adb_cuda */
-
-
-void
-adb_intr_II(void)
-{
-	panic("adb_intr_II");
 }
-
-
-/*
- * send_adb version for II series machines
- */
-int
-send_adb_II(u_char * in, u_char * buffer, void *compRout, void *data, int command)
-{
-	panic("send_adb_II");
-}
-
-
-/*
- * This routine is called from the II series interrupt routine
- * to determine what the "next" device is that should be polled.
- */
-int
-adb_guess_next_device(void)
-{
-	int last, i, dummy;
-
-	if (adbStarting) {
-		/*
-		 * Start polling EVERY device, since we can't be sure there is
-		 * anything in the device table yet
-		 */
-		if (adbLastDevice < 1 || adbLastDevice > 15)
-			adbLastDevice = 1;
-		if (++adbLastDevice > 15)	/* point to next one */
-			adbLastDevice = 1;
-	} else {
-		/* find the next device using the device table */
-		if (adbLastDevice < 1 || adbLastDevice > 15)	/* let's be parinoid */
-			adbLastDevice = 2;
-		last = 1;	/* default index location */
-
-		for (i = 1; i < 16; i++)	/* find index entry */
-			if (ADBDevTable[i].currentAddr == adbLastDevice) {	/* look for device */
-				last = i;	/* found it */
-				break;
-			}
-		dummy = last;	/* index to start at */
-		for (;;) {	/* find next device in index */
-			if (++dummy > 15)	/* wrap around if needed */
-				dummy = 1;
-			if (dummy == last) {	/* didn't find any other
-						 * device! This can happen if
-						 * there are no devices on the
-						 * bus */
-				dummy = 1;
-				break;
-			}
-			/* found the next device */
-			if (ADBDevTable[dummy].devType != 0)
-				break;
-		}
-		adbLastDevice = ADBDevTable[dummy].currentAddr;
-	}
-	return adbLastDevice;
-}
-
 
 /*
  * Called when when an adb interrupt happens.
@@ -750,14 +615,6 @@ int
 adb_intr(void *arg)
 {
 	switch (adbHardware) {
-	case ADB_HW_II:
-		adb_intr_II();
-		break;
-
-	case ADB_HW_IISI:
-		adb_intr_IIsi();
-		break;
-
 	case ADB_HW_PB:
 		pm_intr();
 		break;
@@ -765,46 +622,8 @@ adb_intr(void *arg)
 	case ADB_HW_CUDA:
 		adb_intr_cuda();
 		break;
-
-	case ADB_HW_UNKNOWN:
-		break;
 	}
 	return 1;
-}
-
-
-/*
- * called when when an adb interrupt happens
- *
- * IIsi version of adb_intr
- *
- */
-void
-adb_intr_IIsi(void)
-{
-	panic("adb_intr_IIsi");
-}
-
-
-/*****************************************************************************
- * if the device is currently busy, and there is no data waiting to go out, then
- * the data is "queued" in the outgoing buffer. If we are already waiting, then
- * we return.
- * in: if (in == 0) then the command string is built from command and buffer
- *     if (in != 0) then in is used as the command string
- * buffer: additional data to be sent (used only if in == 0)
- *         this is also where return data is stored
- * compRout: the completion routine that is called when then return value
- *	     is received (if a return value is expected)
- * data: a data pointer that can be used by the completion routine
- * command: an ADB command to be sent (used only if in == 0)
- *
- */
-int
-send_adb_IIsi(u_char * in, u_char * buffer, void *compRout, void *data, int
-	command)
-{
-	panic("send_adb_IIsi");
 }
 
 
@@ -857,16 +676,6 @@ adb_pass_up(struct adbCommand *in)
 		start = 0;
 	} else {
 		switch (adbHardware) {
-		case ADB_HW_II:
-			cmd = in->data[1];
-			if (in->data[0] < 2)
-				len = 0;
-			else
-				len = in->data[0]-1;
-			start = 1;
-			break;
-
-		case ADB_HW_IISI:
 		case ADB_HW_CUDA:
 			/* If it's unsolicited, accept only ADB data for now */
 			if (in->unsol)
@@ -947,8 +756,6 @@ adb_pass_up(struct adbCommand *in)
 		adb_soft_intr();
 	else
 		setsoftadb();
-
-	return;
 }
 
 
@@ -1044,7 +851,6 @@ adb_soft_intr(void)
 		splx(s);
 
 	}
-	return;
 }
 
 
@@ -1067,31 +873,6 @@ adb_op(Ptr buffer, Ptr compRout, Ptr data, short command)
 	int result;
 
 	switch (adbHardware) {
-	case ADB_HW_II:
-		result = send_adb_II((u_char *)0, (u_char *)buffer,
-		    (void *)compRout, (void *)data, (int)command);
-		if (result == 0)
-			return 0;
-		else
-			return -1;
-		break;
-
-	case ADB_HW_IISI:
-		result = send_adb_IIsi((u_char *)0, (u_char *)buffer,
-		    (void *)compRout, (void *)data, (int)command);
-		/*
-		 * I wish I knew why this delay is needed. It usually needs to
-		 * be here when several commands are sent in close succession,
-		 * especially early in device probes when doing collision
-		 * detection. It must be some race condition. Sigh. - jpw
-		 */
-		delay(100);
-		if (result == 0)
-			return 0;
-		else
-			return -1;
-		break;
-
 	case ADB_HW_PB:
 		result = pm_adb_op((u_char *)buffer, (void *)compRout,
 		    (void *)data, (int)command);
@@ -1111,7 +892,6 @@ adb_op(Ptr buffer, Ptr compRout, Ptr data, short command)
 			return -1;
 		break;
 
-	case ADB_HW_UNKNOWN:
 	default:
 		return -1;
 	}
@@ -1127,55 +907,8 @@ void
 adb_hw_setup(void)
 {
 	volatile int i;
-	u_char send_string[ADB_MAX_MSG_LENGTH];
 
 	switch (adbHardware) {
-	case ADB_HW_II:
-		via_reg_or(VIA1, vDirB, 0x30);	/* register B bits 4 and 5:
-						 * outputs */
-		via_reg_and(VIA1, vDirB, 0xf7);	/* register B bit 3: input */
-		via_reg_and(VIA1, vACR, ~vSR_OUT);	/* make sure SR is set
-							 * to IN (II, IIsi) */
-		adbActionState = ADB_ACTION_IDLE;	/* used by all types of
-							 * hardware (II, IIsi) */
-		adbBusState = ADB_BUS_IDLE;	/* this var. used in II-series
-						 * code only */
-		write_via_reg(VIA1, vIER, 0x84);/* make sure VIA interrupts
-						 * are on (II, IIsi) */
-		ADB_SET_STATE_IDLE_II();	/* set ADB bus state to idle */
-
-		ADB_VIA_CLR_INTR();	/* clear interrupt */
-		break;
-
-	case ADB_HW_IISI:
-		via_reg_or(VIA1, vDirB, 0x30);	/* register B bits 4 and 5:
-						 * outputs */
-		via_reg_and(VIA1, vDirB, 0xf7);	/* register B bit 3: input */
-		via_reg_and(VIA1, vACR, ~vSR_OUT);	/* make sure SR is set
-							 * to IN (II, IIsi) */
-		adbActionState = ADB_ACTION_IDLE;	/* used by all types of
-							 * hardware (II, IIsi) */
-		adbBusState = ADB_BUS_IDLE;	/* this var. used in II-series
-						 * code only */
-		write_via_reg(VIA1, vIER, 0x84);/* make sure VIA interrupts
-						 * are on (II, IIsi) */
-		ADB_SET_STATE_IDLE_IISI();	/* set ADB bus state to idle */
-
-		/* get those pesky clock ticks we missed while booting */
-		for (i = 0; i < 30; i++) {
-			delay(ADB_DELAY);
-			adb_hw_setup_IIsi(send_string);
-#ifdef ADB_DEBUG
-			if (adb_debug) {
-				printf_intr("adb: cleanup: ");
-				print_single(send_string);
-			}
-#endif
-			delay(ADB_DELAY);
-			if (ADB_INTR_IS_OFF)
-				break;
-		}
-		break;
 
 	case ADB_HW_PB:
 		/*
@@ -1194,8 +927,6 @@ adb_hw_setup(void)
 		write_via_reg(VIA1, vACR, (read_via_reg(VIA1, vACR) | 0x0c) & ~0x10);
 		adbActionState = ADB_ACTION_IDLE;	/* used by all types of
 							 * hardware */
-		adbBusState = ADB_BUS_IDLE;	/* this var. used in II-series
-						 * code only */
 		write_via_reg(VIA1, vIER, 0x84);/* make sure VIA interrupts
 						 * are on */
 		ADB_SET_STATE_IDLE_CUDA();	/* set ADB bus state to idle */
@@ -1220,25 +951,9 @@ adb_hw_setup(void)
 	default:
 		write_via_reg(VIA1, vIER, 0x04);/* turn interrupts off - TO
 						 * DO: turn PB ints off? */
-		return;
 		break;
 	}
 }
-
-
-/*
- * adb_hw_setup_IIsi
- * This is sort of a "read" routine that forces the adb hardware through a read cycle
- * if there is something waiting. This helps "clean up" any commands that may have gotten
- * stuck or stopped during the boot process.
- *
- */
-void
-adb_hw_setup_IIsi(u_char * buffer)
-{
-	panic("adb_hw_setup_IIsi");
-}
-
 
 /*
  * adb_reinit sets up the adb stuff
@@ -1467,11 +1182,6 @@ adb_reinit(void)
 	}
 #endif
 
-#ifndef MRG_ADB
-	/* enable the programmer's switch, if we have one */
-	adb_prog_switch_enable();
-#endif
-
 #ifdef ADB_DEBUG
 	if (adb_debug) {
 		if (0 == ADBNumDevices)	/* tell user if no devices found */
@@ -1495,45 +1205,6 @@ adb_reinit(void)
 }
 
 
-#if 0
-/*
- * adb_comp_exec
- * This is a general routine that calls the completion routine if there is one.
- * NOTE: This routine is now only used by pm_direct.c
- *       All the code in this file (adb_direct.c) uses 
- *       the adb_pass_up routine now.
- */
-void
-adb_comp_exec(void)
-{
-	if ((long)0 != adbCompRout) /* don't call if empty return location */
-#ifdef __NetBSD__
-		asm("	movml #0xffff,sp@-	| save all registers
-			movl %0,a2		| adbCompData
-			movl %1,a1		| adbCompRout
-			movl %2,a0		| adbBuffer
-			movl %3,d0		| adbWaitingCmd
-			jbsr a1@		| go call the routine
-			movml sp@+,#0xffff	| restore all registers"
-		    :
-		    : "g"(adbCompData), "g"(adbCompRout),
-			"g"(adbBuffer), "g"(adbWaitingCmd)
-		    : "d0", "a0", "a1", "a2");
-#else /* for Mac OS-based testing */
-		asm {
-			movem.l a0/a1/a2/d0, -(a7)
-			move.l adbCompData, a2
-			move.l adbCompRout, a1
-			move.l adbBuffer, a0
-			move.w adbWaitingCmd, d0
-			jsr(a1)
-			movem.l(a7) +, d0/a2/a1/a0
-		}
-#endif
-}
-#endif
-
-
 /*
  * adb_cmd_result
  *
@@ -1547,13 +1218,6 @@ int
 adb_cmd_result(u_char *in)
 {
 	switch (adbHardware) {
-	case ADB_HW_II:
-		/* was it an ADB talk command? */
-		if ((in[1] & 0x0c) == 0x0c)
-			return 0;
-		return 1;
-
-	case ADB_HW_IISI:
 	case ADB_HW_CUDA:
 		/* was it an ADB talk command? */
 		if ((in[1] == 0x00) && ((in[2] & 0x0c) == 0x0c))
@@ -1566,50 +1230,11 @@ adb_cmd_result(u_char *in)
 	case ADB_HW_PB:
 		return 1;
 
-	case ADB_HW_UNKNOWN:
 	default:
 		return 1;
 	}
 }
 
-
-/*
- * adb_cmd_extra
- *
- * This routine lets the caller know whether the specified adb command string
- * may have extra data appended to the end of it, such as a LISTEN command.
- *
- * returns: 0 if extra data is allowed
- *          1 if extra data is NOT allowed
- */
-int
-adb_cmd_extra(u_char *in)
-{
-	switch (adbHardware) {
-		case ADB_HW_II:
-		if ((in[1] & 0x0c) == 0x08)	/* was it a listen command? */
-			return 0;
-		return 1;
-
-	case ADB_HW_IISI:
-	case ADB_HW_CUDA:
-		/*
-		 * TO DO: support needs to be added to recognize RTC and PRAM
-		 * commands
-		 */
-		if ((in[2] & 0x0c) == 0x08)	/* was it a listen command? */
-			return 0;
-		/* add others later */
-		return 1;
-
-	case ADB_HW_PB:
-		return 1;
-
-	case ADB_HW_UNKNOWN:
-	default:
-		return 1;
-	}
-}
 
 /*
  * adb_op_sync
@@ -1693,127 +1318,6 @@ adb_setup_hw_type(void)
 	default:
 		panic("unknown adb hardware");
 	}
-#if 0
-	response = 0; /*mac68k_machine.machineid;*/
-
-	/*
-	 * Determine what type of ADB hardware we are running on.
-	 */
-	switch (response) {
-	case MACH_MACC610:		/* Centris 610 */
-	case MACH_MACC650:		/* Centris 650 */
-	case MACH_MACII:		/* II */
-	case MACH_MACIICI:		/* IIci */
-	case MACH_MACIICX:		/* IIcx */
-	case MACH_MACIIX:		/* IIx */
-	case MACH_MACQ610:		/* Quadra 610 */
-	case MACH_MACQ650:		/* Quadra 650 */
-	case MACH_MACQ700:		/* Quadra 700 */
-	case MACH_MACQ800:		/* Quadra 800 */
-	case MACH_MACSE30:		/* SE/30 */
-		adbHardware = ADB_HW_II;
-#ifdef ADB_DEBUG
-		if (adb_debug)
-			printf_intr("adb: using II series hardware support\n");
-#endif
-		break;
-
-	case MACH_MACCLASSICII:		/* Classic II */
-	case MACH_MACLCII:		/* LC II, Performa 400/405/430 */
-	case MACH_MACLCIII:		/* LC III, Performa 450 */
-	case MACH_MACIISI:		/* IIsi */
-	case MACH_MACIIVI:		/* IIvi */
-	case MACH_MACIIVX:		/* IIvx */
-	case MACH_MACP460:		/* Performa 460/465/467 */
-	case MACH_MACP600:		/* Performa 600 */
-		adbHardware = ADB_HW_IISI;
-#ifdef ADB_DEBUG
-		if (adb_debug)
-			printf_intr("adb: using IIsi series hardware support\n");
-#endif
-		break;
-
-	case MACH_MACPB140:		/* PowerBook 140 */
-	case MACH_MACPB145:		/* PowerBook 145 */
-	case MACH_MACPB150:		/* PowerBook 150 */
-	case MACH_MACPB160:		/* PowerBook 160 */
-	case MACH_MACPB165:		/* PowerBook 165 */
-	case MACH_MACPB165C:		/* PowerBook 165c */
-	case MACH_MACPB170:		/* PowerBook 170 */
-	case MACH_MACPB180:		/* PowerBook 180 */
-	case MACH_MACPB180C:		/* PowerBook 180c */
-		adbHardware = ADB_HW_PB;
-		pm_setup_adb();
-#ifdef ADB_DEBUG
-		if (adb_debug)
-			printf_intr("adb: using PowerBook 100-series hardware support\n");
-#endif
-		break;
-
-	case MACH_MACPB210:		/* PowerBook Duo 210 */
-	case MACH_MACPB230:		/* PowerBook Duo 230 */
-	case MACH_MACPB250:		/* PowerBook Duo 250 */
-	case MACH_MACPB270:		/* PowerBook Duo 270 */
-	case MACH_MACPB280:		/* PowerBook Duo 280 */
-	case MACH_MACPB280C:		/* PowerBook Duo 280c */
-	case MACH_MACPB500:		/* PowerBook 500 series */
-		adbHardware = ADB_HW_PB;
-		pm_setup_adb();
-#ifdef ADB_DEBUG
-		if (adb_debug)
-			printf_intr("adb: using PowerBook Duo-series and PowerBook 500-series hardware support\n");
-#endif
-		break;
-
-	case MACH_MACC660AV:		/* Centris 660AV */
-	case MACH_MACCCLASSIC:		/* Color Classic */
-	case MACH_MACCCLASSICII:	/* Color Classic II */
-	case MACH_MACLC475:		/* LC 475, Performa 475/476 */
-	case MACH_MACLC475_33:		/* Clock-chipped 47x */
-	case MACH_MACLC520:		/* LC 520 */
-	case MACH_MACLC575:		/* LC 575, Performa 575/577/578 */
-	case MACH_MACP550:		/* LC 550, Performa 550 */
-	case MACH_MACP580:		/* Performa 580/588 */
-	case MACH_MACQ605:		/* Quadra 605 */
-	case MACH_MACQ605_33:		/* Clock-chipped Quadra 605 */
-	case MACH_MACQ630:		/* LC 630, Performa 630, Quadra 630 */
-	case MACH_MACQ840AV:		/* Quadra 840AV */
-		adbHardware = ADB_HW_CUDA;
-#ifdef ADB_DEBUG
-		if (adb_debug)
-			printf_intr("adb: using Cuda series hardware support\n");
-#endif
-		break;
-	default:
-		adbHardware = ADB_HW_UNKNOWN;
-#ifdef ADB_DEBUG
-		if (adb_debug) {
-			printf_intr("adb: hardware type unknown for this machine\n");
-			printf_intr("adb: ADB support is disabled\n");
-		}
-#endif
-		break;
-	}
-
-	/*
-	 * Determine whether this machine has ADB based soft power.
-	 */
-	switch (response) {
-	case MACH_MACCCLASSIC:		/* Color Classic */
-	case MACH_MACCCLASSICII:	/* Color Classic II */
-	case MACH_MACIISI:		/* IIsi */
-	case MACH_MACIIVI:		/* IIvi */
-	case MACH_MACIIVX:		/* IIvx */
-	case MACH_MACLC520:		/* LC 520 */
-	case MACH_MACLC575:		/* LC 575, Performa 575/577/578 */
-	case MACH_MACP550:		/* LC 550, Performa 550 */
-	case MACH_MACP600:		/* Performa 600 */
-	case MACH_MACQ630:		/* LC 630, Performa 630, Quadra 630 */
-	case MACH_MACQ840AV:		/* Quadra 840AV */
-		adbSoftPower = 1;
-		break;
-	}
-#endif
 }
 	
 int 
@@ -1893,8 +1397,6 @@ set_adb_info(ADBSetInfoBlock * info, int adbAddr)
 
 }
 
-#ifndef MRG_ADB
-
 /* caller should really use machine-independant version: getPramTime */
 /* this version does pseudo-adb access only */
 int 
@@ -1906,28 +1408,6 @@ adb_read_date_time(unsigned long *time)
 	volatile int flag = 0;
 
 	switch (adbHardware) {
-	case ADB_HW_II:
-		retcode = -1;
-		break;
-
-	case ADB_HW_IISI:
-		output[0] = 0x02;	/* 2 byte message */
-		output[1] = 0x01;	/* to pram/rtc device */
-		output[2] = 0x03;	/* read date/time */
-		result = send_adb_IIsi((u_char *)output, (u_char *)output,
-		    (void *)adb_op_comprout, (int *)&flag, (int)0);
-		if (result != 0) {	/* exit if not sent */
-			retcode = -1;
-			break;
-		}
-
-		while (0 == flag)	/* wait for result */
-			;
-
-		*time = (long)(*(long *)(output + 1));
-		retcode = 0;
-		break;
-
 	case ADB_HW_PB:
 		pm_read_date_time(time);
 		retcode = 0;
@@ -2001,9 +1481,6 @@ adb_set_date_time(unsigned long time)
 		pm_set_date_time(time);
 		return 0;
 
-	case ADB_HW_II:
-	case ADB_HW_IISI:
-	case ADB_HW_UNKNOWN:
 	default:
 		return -1;
 	}
@@ -2022,19 +1499,6 @@ adb_poweroff(void)
 	adb_polling = 1;
 
 	switch (adbHardware) {
-	case ADB_HW_IISI:
-		output[0] = 0x02;	/* 2 byte message */
-		output[1] = 0x01;	/* to pram/rtc/soft-power device */
-		output[2] = 0x0a;	/* set date/time */
-		result = send_adb_IIsi((u_char *)output, (u_char *)0,
-		    (void *)0, (void *)0, (int)0);
-		if (result != 0)	/* exit if not sent */
-			return -1;
-
-		for (;;);		/* wait for power off */
-
-		return 0;
-
 	case ADB_HW_PB:
 		pm_adb_poweroff();
 
@@ -2055,76 +1519,6 @@ adb_poweroff(void)
 
 		return 0;
 
-	case ADB_HW_II:			/* II models don't do ADB soft power */
-	case ADB_HW_UNKNOWN:
-	default:
-		return -1;
-	}
-}
-
-int 
-adb_prog_switch_enable(void)
-{
-	u_char output[ADB_MAX_MSG_LENGTH];
-	int result;
-	volatile int flag = 0;
-
-	switch (adbHardware) {
-	case ADB_HW_IISI:
-		output[0] = 0x03;	/* 3 byte message */
-		output[1] = 0x01;	/* to pram/rtc/soft-power device */
-		output[2] = 0x1c;	/* prog. switch control */
-		output[3] = 0x01;	/* enable */
-		result = send_adb_IIsi((u_char *)output, (u_char *)0,
-		    (void *)adb_op_comprout, (void *)&flag, (int)0);
-		if (result != 0)	/* exit if not sent */
-			return -1;
-
-		while (0 == flag)	/* wait for send to finish */
-			;
-
-		return 0;
-
-	case ADB_HW_PB:
-		return -1;
-
-	case ADB_HW_II:		/* II models don't do prog. switch */
-	case ADB_HW_CUDA:	/* cuda doesn't do prog. switch TO DO: verify this */
-	case ADB_HW_UNKNOWN:
-	default:
-		return -1;
-	}
-}
-
-int 
-adb_prog_switch_disable(void)
-{
-	u_char output[ADB_MAX_MSG_LENGTH];
-	int result;
-	volatile int flag = 0;
-
-	switch (adbHardware) {
-	case ADB_HW_IISI:
-		output[0] = 0x03;	/* 3 byte message */
-		output[1] = 0x01;	/* to pram/rtc/soft-power device */
-		output[2] = 0x1c;	/* prog. switch control */
-		output[3] = 0x01;	/* disable */
-		result = send_adb_IIsi((u_char *)output, (u_char *)0,
-			(void *)adb_op_comprout, (void *)&flag, (int)0);
-		if (result != 0)	/* exit if not sent */
-			return -1;
-
-		while (0 == flag)	/* wait for send to finish */
-			;
-
-		return 0;
-
-	case ADB_HW_PB:
-		return -1;
-
-	case ADB_HW_II:		/* II models don't do prog. switch */
-	case ADB_HW_CUDA:	/* cuda doesn't do prog. switch */
-	case ADB_HW_UNKNOWN:
 	default:
 		return -1;
 	}
@@ -2160,21 +1554,12 @@ SetADBInfo(ADBSetInfoBlock * info, int adbAddr)
 	return (set_adb_info(info, adbAddr));
 }
 
-int 
-ADBOp(Ptr buffer, Ptr compRout, Ptr data, short commandNum)
-{
-	return (adb_op(buffer, compRout, data, commandNum));
-}
-
-#endif
-
-int
+void
 setsoftadb()
 {
 	if (!timeout_initialized(&adb_softintr_timeout))
 		timeout_set(&adb_softintr_timeout, (void *)adb_soft_intr, NULL);
 	timeout_add(&adb_softintr_timeout, 1);
-	return 0;
 }
 
 void

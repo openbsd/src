@@ -1,4 +1,4 @@
-/*	$OpenBSD: akbd.c,v 1.9 2002/03/28 04:17:40 drahn Exp $	*/
+/*	$OpenBSD: akbd.c,v 1.10 2002/06/07 07:14:48 miod Exp $	*/
 /*	$NetBSD: akbd.c,v 1.13 2001/01/25 14:08:55 tsubai Exp $	*/
 
 /*
@@ -57,7 +57,6 @@
 #include <macppc/dev/akbdvar.h>
 #include <macppc/dev/amsvar.h>
 #include <macppc/dev/adb_direct.h>
-#include <macppc/dev/pm_direct.h>
 
 #include "aed.h"
 
@@ -82,8 +81,6 @@ struct cfdriver akbd_cd = {
 	NULL, "akbd", DV_DULL
 };
 
-
-extern struct cfdriver akbd_cd;
 
 int akbd_enable(void *, int);
 void akbd_set_leds(void *, int);
@@ -502,7 +499,6 @@ akbd_rawrepeat(void *v)
 
 
 static int polledkey;
-extern int adb_polling;
 
 int
 akbd_intr(event)
