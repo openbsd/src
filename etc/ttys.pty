@@ -1,6 +1,3 @@
-# The tty letters are: pqrstuwxyzPQRST.
-# XXX Must skip 'v' because some architectures use that
-# name for something else
 ttyp0	none				network
 ttyp1	none				network
 ttyp2	none				network
