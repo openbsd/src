@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_mutex.c,v 1.11 2000/01/06 07:19:35 d Exp $	*/
+/*	$OpenBSD: uthread_mutex.c,v 1.12 2001/11/12 02:24:30 marc Exp $	*/
 /*
  * Copyright (c) 1995 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -134,7 +134,7 @@ pthread_mutex_init(pthread_mutex_t * mutex,
 
 	/* Check mutex protocol: */
 	else if (((*mutex_attr)->m_protocol < PTHREAD_PRIO_NONE) ||
-	    ((*mutex_attr)->m_protocol > PTHREAD_MUTEX_RECURSIVE))
+		 ((*mutex_attr)->m_protocol > PTHREAD_PRIO_PROTECT))
 		/* Return an invalid argument error: */
 		ret = EINVAL;
 
@@ -438,6 +438,10 @@ pthread_mutex_lock(pthread_mutex_t * mutex)
 				/* Lock the mutex for this thread: */
 				(*mutex)->m_owner = _thread_run;
 
+				/* if recursive, increment the lock count */
+				if ((*mutex)->m_type == PTHREAD_MUTEX_RECURSIVE)
+					(*mutex)->m_data.m_count++;
+
 				/* Add to the list of owned mutexes: */
 				_MUTEX_ASSERT_NOT_OWNED(*mutex);
 				TAILQ_INSERT_TAIL(&_thread_run->mutexq,
@@ -476,6 +480,10 @@ pthread_mutex_lock(pthread_mutex_t * mutex)
 			if ((*mutex)->m_owner == NULL) {
 				/* Lock the mutex for this thread: */
 				(*mutex)->m_owner = _thread_run;
+
+				/* if recursive, increment the lock count */
+				if ((*mutex)->m_type == PTHREAD_MUTEX_RECURSIVE)
+					(*mutex)->m_data.m_count++;
 
 				/* Track number of priority mutexes owned: */
 				_thread_run->priority_mutex_count++;
@@ -540,6 +548,10 @@ pthread_mutex_lock(pthread_mutex_t * mutex)
 				 * thread:
 				 */
 				(*mutex)->m_owner = _thread_run;
+
+				/* if recursive, increment the lock count */
+				if ((*mutex)->m_type == PTHREAD_MUTEX_RECURSIVE)
+					(*mutex)->m_data.m_count++;
 
 				/* Track number of priority mutexes owned: */
 				_thread_run->priority_mutex_count++;
