@@ -83,9 +83,9 @@ krb_realmofhost(host)
 	if ((trans_file = fopen(KRB_RLM_TRANS, "r")) == (FILE *) 0) {
 	        char tbuf[128];
 		char *tdir = (char *) getenv("KRBCONFDIR");
-		strncpy(tbuf, tdir ? tdir : "/etc", sizeof(tbuf));
-		strncat(tbuf, "/krb.realms", sizeof(tbuf));
-		tbuf[sizeof(tbuf)-1] = 0;
+		strncpy(tbuf, tdir ? tdir : "/etc", sizeof(tbuf)-1);
+		tbuf[sizeof(tbuf)-1] = '\0';
+		strncat(tbuf, "/krb.realms", sizeof(tbuf) - strlen(tbuf));
 		if ((trans_file = fopen(tbuf,"r")) == NULL)
                         return(ret_realm[0] ? ret_realm : NULL); /* krb_errno = KRB_NO_TRANS */
 	}

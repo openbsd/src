@@ -90,10 +90,12 @@ afs_transarc_StringToKey (str, cell, key)
     char password[BUFSIZ];
     int  passlen;
 
-    strncpy (password, str, sizeof(password));
+    strncpy (password, str, sizeof(password)-1);
+    password[sizeof(password)-1] = '\0';
     if ((passlen = strlen (password)) < sizeof(password)-1)
         strncat (password, cell, sizeof(password)-passlen);
-    if ((passlen = strlen(password)) > sizeof(password)) passlen = sizeof(password);
+    if ((passlen = strlen(password)) > sizeof(password))
+	passlen = sizeof(password);
 
     bcopy ("kerberos", &ivec, 8);
     bcopy ("kerberos", &temp_key, 8);
