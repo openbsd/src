@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr53c9x.c,v 1.16 2002/10/09 23:43:11 krw Exp $	*/
+/*	$OpenBSD: ncr53c9x.c,v 1.17 2002/10/25 17:44:52 fgsch Exp $	*/
 /*     $NetBSD: ncr53c9x.c,v 1.56 2000/11/30 14:41:46 thorpej Exp $    */
 
 /*
@@ -781,11 +781,7 @@ ncr53c9x_scsi_cmd(xs)
 	ti = &sc->sc_tinfo[sc_link->target];
 	li = TINFO_LUN(ti, lun);
 	if (li == NULL) {
-		int wait = M_NOWAIT;
-
 		/* Initialize LUN info and add to list. */
-		if ((curproc != NULL) && ((flags & SCSI_NOSLEEP) == 0))
-			wait = M_WAITOK;
 		if ((li = malloc(sizeof(*li), M_DEVBUF, M_NOWAIT)) == NULL) {
 			return (TRY_AGAIN_LATER);
 		}
@@ -924,12 +920,7 @@ ncr53c9x_sched(sc)
 		s = splbio();
 		li = TINFO_LUN(ti, lun);
 		if (!li) {
-			int wait = M_NOWAIT;
-			int flags = ecb->flags;
-
 			/* Initialize LUN info and add to list. */
-			if ((curproc != NULL) && ((flags & SCSI_NOSLEEP) == 0))
-				wait = M_WAITOK;
 			if ((li = malloc(sizeof(*li), M_DEVBUF, M_NOWAIT)) == NULL) {
 				splx(s);
 				continue;
