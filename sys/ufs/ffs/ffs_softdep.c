@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_softdep.c,v 1.19 2001/03/04 07:00:33 csapuntz Exp $	*/
+/*	$OpenBSD: ffs_softdep.c,v 1.20 2001/03/08 10:56:47 art Exp $	*/
 /*
  * Copyright 1998, 2000 Marshall Kirk McKusick. All Rights Reserved.
  *
@@ -525,8 +525,11 @@ softdep_process_worklist(matchmnt)
 	/*
 	 * Record the process identifier of our caller so that we can give
 	 * this process preferential treatment in request_cleanup below.
+	 * We can't do this in softdep_initialize, because the syncer doesn't
+	 * have to run then.
+	 * NOTE! This function _could_ be called with a curproc != syncerproc.
 	 */
-	filesys_syncer = p;
+	filesys_syncer = syncerproc;
 	matchcnt = 0;
 
 	/*
