@@ -1,4 +1,4 @@
-.\" $OpenBSD: starttls.8,v 1.3 2002/03/20 21:18:53 millert Exp $
+.\" $OpenBSD: starttls.8,v 1.4 2002/10/14 14:48:13 millert Exp $
 .Dd January 11, 2002
 .Dt STARTTLS 8
 .Sh NAME
@@ -112,10 +112,8 @@ A simple way to ensure this is to run the following:
 The global sendmail configuration files,
 .Pa /etc/mail/sendmail.cf
 and
-.Pa /etc/mail/submit.cf
-(used for mail submitted from the command line by
-.Xr mail 1
-and others) must be modified to support TLS functionality.
+.Pa /etc/mail/localhost.cf
+must be modified to support TLS functionality.
 An example .mc file which has entries for TLS options, such as certificates,
 is available as
 .Pa /usr/share/sendmail/cf/knecht.mc .
@@ -148,30 +146,26 @@ use the same certificates both as a client (outgoing mail) and as a server
 This can be changed by having different entries for the respective roles.
 .Pp
 The next step is to edit the .mc files your
-.Pa localhost.cf ,
-.Pa sendmail.cf ,
+.Pa sendmail.cf
 and
-.Pa submit.cf
+.Pa localhost.cf
 files are generated from.
 First, change to the directory where your .mc files are stored.
 You will need to make TLS-enabled versions of the following files:
-.Pa openbsd-localhost.mc ,
-.Pa openbsd-proto.mc ,
+.Pa openbsd-proto.mc
 and
-.Pa submit.mc .
+.Pa openbsd-localhost.mc .
 .Bd -literal -offset indent -width Ds
 # chdir /usr/share/sendmail/cf
 
-# cp openbsd-localhost.mc openbsd-localhost-tls.mc
 # cp openbsd-proto.mc openbsd-proto-tls.mc
-# cp submit.mc submit-tls.mc
+# cp openbsd-localhost.mc openbsd-localhost-tls.mc
 .Ed
 .Pp
-You must then edit each of
-.Pa openbsd-localhost-tls.mc ,
+You must then edit
 .Pa openbsd-proto-tls.mc ,
 and
-.Pa submit-tls.mc
+.Pa openbsd-localhost-tls.mc
 to add the following lines after the
 .Dq VERSIONID
 definition (the actual placement within the file is not critical as long
@@ -193,18 +187,17 @@ you must generate .cf files from them and install the .cf
 files in
 .Pa /etc/mail .
 .Bd -literal -offset indent -width Ds
-# make openbsd-localhost-tls.cf openbsd-proto-tls.cf submit-tls.cf
+# make openbsd-proto-tls.cf openbsd-localhost-tls.cf
 
-# cp openbsd-localhost-tls.cf /etc/mail/localhost.cf
 # cp openbsd-proto-tls.cf /etc/mail/sendmail.cf
-# cp submit-tls.cf /etc/mail/submit.cf
+# cp openbsd-localhost-tls.cf /etc/mail/localhost.cf
 .Ed
 .Pp
 Finally, restart sendmail with the new configuration by sending
 it a
 .Dv SIGHUP .
 .Bd -literal -offset indent -width Ds
-# kill -HUP `sed 1q /var/run/sendmail.pid`
+# kill -HUP `head -1 /var/run/sendmail.pid`
 .Ed
 .Pp
 Note that those are backticks and not single quotes in the example above.
