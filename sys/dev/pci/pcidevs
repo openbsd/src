@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.171 1999/08/10 07:24:12 deraadt Exp $
+$OpenBSD: pcidevs,v 1.172 1999/08/12 11:30:49 deraadt Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1091,7 +1091,8 @@ product PEQUR PCIBRIDGE		0x0200	PCI
 
 /* Promise products */
 product PROMISE DC5030		0x5300	DC5030
-product PROMISE ULTRA33		0x4d33	Ultra DMA/ATA Bus Master IDE Accelerator
+product	PROMISE ULTRA33		0x4d33  Ultra33/ATA IDE
+product	PROMISE ULTRA66		0x4d38  Ultra66/ATA IDE
 
 /* QLogic products */
 product QLOGIC ISP1020		0x1020	ISP1020
