@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wx.4,v 1.1 2000/02/11 19:01:01 jason Exp $
+.\"	$OpenBSD: wx.4,v 1.2 2000/02/12 22:23:25 jason Exp $
 .\"
 .\" Copyright (c) 2000
 .\"	Traakan Software. All rights reserved.
@@ -38,15 +38,78 @@ Intel Gigabit Ethernet device driver
 .Sh DESCRIPTION
 The
 .Nm wx
-driver provides support for Intel Gigabit Ethernet PCI cards.
+driver provides support for Intel Gigabit Ethernet PCI cards based on the
+.Tn i82452
+chipset such as the Intel Pro/1000 Gigabit Server Adapter.
 .Pp
 For more information on configuring this device, see
 .Xr ifconfig 8 .
+.Sh DIAGNOSTICS
+.Bl -diag
+.It "wx%d: can't map registers"
+A fatal initialization error has occurred.
+.It "wx%d: couldn't map interrupt"
+A fatal initialization error has occurred.
+.It "wx%d: couldn't establish interrupt"
+The device failed to allocate an interrupt (irq) line.
+.It "wx%d: len (%lx) over a page for the receive ring"
+The size of the receive ring is larger than the hardware page size.
+.It "wx%d: could not allocate rcv descriptors"
+The device failed to allocate memory for the receive descriptors.
+.It "wx%d: rcv descriptors not 4KB aligned"
+The memory management system returned memory for the receive descriptors
+that was not aligned correctly.
+.It "wx%d: len (%lx) over a page for the xmit ring"
+The size of the transmit ring is larger than the hardware page size.
+.It "wx%d: could not allocate xmt descriptors"
+The device failed to allocate memory for the transmit descriptors.
+.It "wx%d: xmt descriptors not 4KB aligned"
+The memory management system returned memory for the transmit descriptors
+that was not aligned correctly.
+.It "wx%d: failed to do common attach (%d)"
+The operating system independent section of the device driver
+initialization failed.
+.It "wx%d: link intr 0x%x"
+The device has sensed a change in its link to the network.
+.It "wx%d: packet with errors (%x)"
+.It "wx%d: receive descriptor with no mbuf"
+.It "wx%d: lost sync with partial packet"
+.It "wx%d: null mbuf in gc"
+.It ""
+.It "wx%d: excess collisions"
+The device has dropped a packet because too many collisions were seen
+when trying to send it.
+.It "wx%d: lost carrier"
+The device has lost link integrity with the network, most likely a cabling
+problem.
+.It "wx%d: nactive < 0?"
+.It "wx%d: swdpio did not clear"
+.It ""
+.It "wx%d: link never came up"
+The device never saw the link to the network established.
+.It "wx%d: device timeout"
+The device has stopped responding to the network,
+or there is a problem with the network connection (cable).
+.It "wx%d: could not re-init device"
+An error occured when trying to reset the device.
+.It "wx%d: could not set up rbufs"
+.El
+.Sh SEE ALSO
+.Xr arp 4 ,
+.Xr ifmedia 4 ,
+.Xr netintro 4 ,
+.Xr ifconfig 8
 .Sh AUTHOR
 The
 .Nm
 driver was written by
 .An Matthew Jacob Aq mjacob@freebsd.org .
+.Sh HISTORY
+.Ox
+support for the
+.Nm
+device driver first appeared in
+.Ox 2.7 .
 .Sh BUGS
 The
 .Nm
