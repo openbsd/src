@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.2 1997/07/18 01:03:55 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.3 1997/07/21 15:41:55 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -32,7 +32,7 @@
  *
  */
 
-#include <i386/stand/libsa/libsa.h>
+#include "libsa.h"
 #include <machine/biosvar.h>
 #include <machine/apmvar.h>
 #include "debug.h"
