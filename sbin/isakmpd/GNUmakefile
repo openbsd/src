@@ -1,4 +1,4 @@
-#    $OpenBSD: GNUmakefile,v 1.3 2002/06/09 08:13:06 todd Exp $
+#    $OpenBSD: GNUmakefile,v 1.4 2002/08/23 18:17:17 ho Exp $
 
 #
 # Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -41,14 +41,14 @@
 # produce similar behaviour.
 #
 
-# openbsd means 2.5 or newer, openbsd-encap is for older kernels with PF_ENCAP
-# linux is the name for Linux with FreeS/WAN integrated, freebsd/netbsd means
-# FreeBSD/NetBSD with KAME IPsec.
+# openbsd means 2.5 or newer, linux is the name for Linux with FreeS/WAN
+# integrated, freebsd/netbsd means FreeBSD/NetBSD with KAME IPsec.
+# darwin means MacOS X 10.2 and later with KAME IPsec.
 OS=		openbsd
-#OS=		openbsd-encap
 #OS=		netbsd
 #OS=		freebsd
 #OS=		linux
+#OS=		darwin
 
 .CURDIR:=	$(shell pwd)
 VPATH=		${.CURDIR}/sysdep/${OS}
@@ -65,12 +65,11 @@ endif
 SRCS=		app.c attribute.c cert.c connection.c \
 		constants.c conf.c cookie.c crypto.c dh.c doi.c exchange.c \
 		exchange_num.c field.c gmp_util.c hash.c if.c ike_auth.c \
-		ike_aggressive.c ike_main_mode.c ike_phase_1.c \
-		ike_quick_mode.c init.c ipsec.c ipsec_fld.c ipsec_num.c \
-		isakmpd.c isakmp_doi.c isakmp_fld.c isakmp_num.c libcrypto.c \
-		log.c message.c math_2n.c math_ec2n.c math_group.c \
-		prf.c sa.c sysdep.c timer.c transport.c udp.c ui.c \
-		util.c
+		ike_main_mode.c ike_phase_1.c ike_quick_mode.c init.c \
+		ipsec.c ipsec_fld.c ipsec_num.c isakmpd.c isakmp_doi.c \
+		isakmp_fld.c isakmp_num.c key.c libcrypto.c log.c message.c \
+		math_2n.c math_group.c prf.c sa.c sysdep.c timer.c \
+		transport.c udp.c ui.c util.c
 
 GENERATED=	exchange_num.h ipsec_fld.h ipsec_num.h isakmp_fld.h \
 		isakmp_num.h
@@ -156,12 +155,6 @@ FEATURES_UC=	$(shell echo ${FEATURES} | tr '[:lower:]' '[:upper:]')
 CFLAGS+=	$(foreach F, ${FEATURES_UC}, -DUSE_${F})
 -include	$(foreach F, ${FEATURES}, features/${F})
 
-ifdef HAVE_DLOPEN
-X509=		x509.c
-CFLAGS+=	-DHAVE_DLOPEN
-SRCS+=		dyn.c
-endif
-
 ifdef USE_KEYNOTE
 USE_LIBCRYPTO=	yes
 LDADD+=		-lkeynote -lm
@@ -177,7 +170,13 @@ LDADD+=		-lcrypto
 DPADD+=		${LIBCRYPTO}
 endif
 
-SRCS+=		${IPSEC_SRCS} ${X509} ${POLICY}
+ifdef USE_RAWKEY
+USE_LIBCRYPTO=  yes
+CFLAGS+=        -DUSE_RAWKEY
+endif
+
+SRCS+=		${IPSEC_SRCS} ${X509} ${POLICY} ${EC} ${AGGRESSIVE} ${DNSSEC} \
+		$(ISAKMP_CFG)
 CFLAGS+=	${IPSEC_CFLAGS}
 LDADD+=		${DESLIB}
 DPADD+=		${DESLIBDEP}
