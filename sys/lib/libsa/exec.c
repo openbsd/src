@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.7 1996/12/08 15:15:49 niklas Exp $	*/
+/*	$OpenBSD: exec.c,v 1.8 1997/01/18 03:28:50 downsj Exp $	*/
 /*	$NetBSD: exec.c,v 1.15 1996/10/13 02:29:01 christos Exp $	*/
 
 /*-
@@ -48,6 +48,12 @@ static char *ssym, *esym;
 
 extern u_int opendev;
 
+#ifdef hp300
+#undef N_PAGSIZ
+/* XXX - force padding of the text segment to 4k, not 8k. */
+#define N_PAGSIZ(_x)	0x1000
+#endif
+
 void
 exec(path, loadaddr, howto)
 	char *path;
@@ -87,7 +93,8 @@ exec(path, loadaddr, howto)
 	printf("%ld", x.a_text);
 	addr = loadaddr;
 #ifdef NO_LSEEK
-	if (N_GETMAGIC(x) == ZMAGIC && read(io, (char *)addr, 0x400) == -1)
+	if (N_GETMAGIC(x) == ZMAGIC && read(io, (char *)addr,
+	    (0x400 - sizeof(x))) == -1)
 #else
 	if (N_GETMAGIC(x) == ZMAGIC && lseek(io, 0x400, SEEK_SET) == -1)
 #endif
