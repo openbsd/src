@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.10 1996/05/30 09:30:08 deraadt Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.11 1996/06/02 10:44:21 mickey Exp $	*/
 /*	$NetBSD: pmap.c,v 1.36 1996/05/03 19:42:22 christos Exp $	*/
 
 /*
@@ -1379,7 +1379,8 @@ pmap_collect(pmap)
 	pmap_t pmap;
 {
 #ifdef DEBUG
-	printf("pmap_collect(%x) ", pmap);
+	if (pmapdebug & PDB_FOLLOW)
+		printf("pmap_collect(%x) ", pmap);
 #endif
 
 	if (pmap != pmap_kernel())
@@ -1387,13 +1388,16 @@ pmap_collect(pmap)
 
 }
 
-#if 0
+#if DEBUG
 void
 pmap_dump_pvlist(phys, m)
 	vm_offset_t phys;
 	char *m;
 {
 	register struct pv_entry *pv;
+
+	if (!(pmapdebug & PDB_PARANOIA))
+		return;
 
 	if (!pmap_initialized)
 		return;
