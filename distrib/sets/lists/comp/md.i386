@@ -145,3 +145,7 @@
 ./usr/share/man/cat3/kgetflag.0
 ./usr/share/man/cat3/kgetnum.0
 ./usr/share/man/cat3/kgetstr.0
+./usr/share/man/cat3/kvm_dump.0
+./usr/share/man/cat3/kvm_dump_inval.0
+./usr/share/man/cat3/kvm_dump_mkheader.0
+./usr/share/man/cat3/kvm_dump_wrtheader.0
