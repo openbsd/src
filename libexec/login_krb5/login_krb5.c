@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_krb5.c,v 1.11 2001/06/26 05:03:27 hin Exp $	*/
+/*	$OpenBSD: login_krb5.c,v 1.12 2001/08/12 21:55:46 millert Exp $	*/
 
 /*-
  * Copyright (c) 2001 Hans Insulander <hin@openbsd.org>.
@@ -57,16 +57,16 @@ store_tickets(struct passwd *pwd, int ticket_newfiles, int ticket_store,
 	int get_krb4_ticket = 0;
 	char krb4_ticket_file[MAXPATHLEN];
 
-	if(ticket_newfiles)
+	if (ticket_newfiles)
 		snprintf(cc_file, sizeof(cc_file), "FILE:/tmp/krb5cc_%d",
 			 pwd->pw_uid);
 	else
 		snprintf(cc_file, sizeof(cc_file),"%s",
 			 krb5_cc_default_name(context));
 
-	if(ticket_store) {
+	if (ticket_store) {
 		ret = krb5_cc_resolve(context, cc_file, &ccache_store);
-		if(ret != 0) {
+		if (ret != 0) {
 			krb5_syslog(context, LOG_ERR, ret,
 				    "krb5_cc_gen_new");
 			exit(1);
@@ -74,7 +74,7 @@ store_tickets(struct passwd *pwd, int ticket_newfiles, int ticket_store,
 		
 		ret = krb5_cc_copy_cache(context, ccache,
 					 ccache_store);
-		if(ret != 0) {
+		if (ret != 0) {
 			krb5_syslog(context, LOG_ERR, ret,
 				    "krb5_cc_copy_cache");
 		}
@@ -93,13 +93,13 @@ store_tickets(struct passwd *pwd, int ticket_newfiles, int ticket_store,
 						      "libdefaults",
 						      "krb4_get_tickets",
 						      NULL);
-		if(get_krb4_ticket) {
+		if (get_krb4_ticket) {
 			CREDENTIALS c;
 			krb5_creds cred;
 			krb5_cc_cursor cursor;
 			
 			ret = krb5_cc_start_seq_get(context, ccache, &cursor);
-			if(ret != 0) {
+			if (ret != 0) {
 				krb5_syslog(context, LOG_ERR, ret,
 					    "start seq");
 				exit(1);
@@ -107,7 +107,7 @@ store_tickets(struct passwd *pwd, int ticket_newfiles, int ticket_store,
 			
 			ret = krb5_cc_next_cred(context, ccache,
 						&cursor, &cred);
-			if(ret != 0) {
+			if (ret != 0) {
 				krb5_syslog(context, LOG_ERR, ret,
 					    "next cred");
 				exit(1);
@@ -115,7 +115,7 @@ store_tickets(struct passwd *pwd, int ticket_newfiles, int ticket_store,
 			
 			ret = krb5_cc_end_seq_get(context, ccache,
 						  &cursor);
-			if(ret != 0) {
+			if (ret != 0) {
 				krb5_syslog(context, LOG_ERR, ret,
 					    "end seq");
 				exit(1);
@@ -123,7 +123,7 @@ store_tickets(struct passwd *pwd, int ticket_newfiles, int ticket_store,
 			
 			ret = krb524_convert_creds_kdc(context, ccache,
 						       &cred, &c);
-			if(ret != 0) {
+			if (ret != 0) {
 				krb5_syslog(context, LOG_ERR, ret,
 					    "convert");
 			} else {
@@ -141,7 +141,7 @@ store_tickets(struct passwd *pwd, int ticket_newfiles, int ticket_store,
 	
 	/* Need to chown the ticket file */
 #ifdef KRB524
-	if(get_krb4_ticket)
+	if (get_krb4_ticket)
 		fprintf(back, BI_SETENV " KRBTKFILE %s\n",
 			krb4_ticket_file);
 #endif
@@ -152,22 +152,22 @@ krb5_login(char *username, char *invokinguser, char *password, int login, int ti
 {
 	int return_code = AUTH_FAILED;
 
-	if(username == NULL || password == NULL)
-		return AUTH_FAILED;
+	if (username == NULL || password == NULL)
+		return (AUTH_FAILED);
 
 	ret = krb5_init_context(&context);
-	if(ret != 0) {
+	if (ret != 0) {
 		krb5_syslog(context, LOG_ERR, ret, "krb5_init_context");
 		exit(1);
 	}
 
 	ret = krb5_cc_gen_new(context, &krb5_mcc_ops, &ccache);
-	if(ret != 0) {
+	if (ret != 0) {
 		krb5_syslog(context, LOG_ERR, ret, "krb5_cc_gen_new");
 		exit(1);
 	}
 
-	if(strcmp(username, "root") == 0) {
+	if (strcmp(username, "root") == 0) {
 		char *tmp;
 		tmp = malloc(strlen(invokinguser)+6);
 		sprintf(tmp, "%s/root", invokinguser);
@@ -175,7 +175,7 @@ krb5_login(char *username, char *invokinguser, char *password, int login, int ti
 		free(tmp);
 	} else
 		ret = krb5_parse_name(context, username, &princ);
-	if(ret != 0) {
+	if (ret != 0) {
 		krb5_syslog(context, LOG_ERR, ret, "krb5_parse_name");
 		exit(1);
 	}
@@ -190,10 +190,10 @@ krb5_login(char *username, char *invokinguser, char *password, int login, int ti
 		struct passwd *pwd;
 
 		pwd = getpwnam(username);
-		if(pwd == NULL) {
+		if (pwd == NULL) {
 			krb5_syslog(context, LOG_ERR, ret,
 				    "%s: no such user", username);
-			return AUTH_FAILED;
+			return (AUTH_FAILED);
 		}
 		fprintf(back, BI_AUTH "\n");
 		
@@ -215,5 +215,5 @@ krb5_login(char *username, char *invokinguser, char *password, int login, int ti
 	krb5_free_principal(context, princ);
 	krb5_cc_close(context, ccache);
 
-	return return_code;
+	return (return_code);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_krb4.c,v 1.2 2001/06/26 05:03:26 hin Exp $	*/
+/*	$OpenBSD: login_krb4.c,v 1.3 2001/08/12 21:55:46 millert Exp $	*/
 
 /*-
  * Copyright (c) 2001 Hans Insulander <hin@openbsd.org>.
@@ -42,26 +42,26 @@ krb4_login(char *username, char *password, char *invokinguser, int new_tickets)
 	int fd;
 
 	/* Check if we can open the srvtab file */
-	if((fd = open(KEYFILE, O_RDONLY, 0400)) < 0)
-		return AUTH_FAILED;
+	if ((fd = open(KEYFILE, O_RDONLY, 0400)) < 0)
+		return (AUTH_FAILED);
 	close(fd);
 
 	pwd = getpwnam(username);
 	tkfile[0] = '\0';
 
 	targetuser = username;
-	if(krb_get_lrealm(realm, 1)){
+	if (krb_get_lrealm(realm, 1)){
 		syslog(LOG_INFO, "krb_get_lrealm failed");
 	}
 
-	if(new_tickets) {
+	if (new_tickets) {
 		snprintf(tkfile, sizeof(tkfile), "%s%d", TKT_ROOT, 
 			 pwd ? pwd->pw_uid : getuid());
 		krb_set_tkt_string(tkfile);
 		unlink(tkfile);
 	}
 
-	if(strcmp(username, "root") == 0) {
+	if (strcmp(username, "root") == 0) {
 		instance = "root";
 		username = invokinguser;
 	} else
@@ -78,16 +78,16 @@ krb4_login(char *username, char *password, char *invokinguser, int new_tickets)
 	setuid(geteuid());
 	ret = krb_verify_user(username, instance , realm, password, 1, "rcmd");
 
-	if(new_tickets && pwd)
+	if (new_tickets && pwd)
 		chown(tkfile, pwd->pw_uid, pwd->pw_gid);
 
-	if(ret == KSUCCESS &&
+	if (ret == KSUCCESS &&
 	   krb_kuserok(username, instance, realm, targetuser) == 0) {
 		fprintf(back, BI_AUTH "\n");
-		if(strlen(tkfile) > 0)
+		if (strlen(tkfile) > 0)
 			fprintf(back, BI_SETENV " KRBTKFILE %s\n", tkfile);
-		return AUTH_OK;
+		return (AUTH_OK);
 	}
 	unlink(tkfile);
-	return AUTH_FAILED;
+	return (AUTH_FAILED);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_passwd.c,v 1.4 2001/06/29 05:56:36 deraadt Exp $	*/
+/*	$OpenBSD: login_passwd.c,v 1.5 2001/08/12 21:55:46 millert Exp $	*/
 
 /*-
  * Copyright (c) 2001 Hans Insulander <hin@openbsd.org>.
@@ -39,7 +39,7 @@ pwd_login(char *username, char *password, char *wheel, int lastchance,
 		fprintf(back, BI_VALUE " errormsg %s\n",
 		    auth_mkvalue("you are not in group wheel"));
 		fprintf(back, BI_REJECT "\n");
-		return AUTH_FAILED;
+		return (AUTH_FAILED);
 	}
 
 	pwd = getpwnam(username);
@@ -47,7 +47,7 @@ pwd_login(char *username, char *password, char *wheel, int lastchance,
 	/* Check for empty password */
 	if (pwd != NULL && *pwd->pw_passwd == '\0') {
 		fprintf(back, BI_AUTH "\n");
-		return AUTH_OK;
+		return (AUTH_OK);
 	}
 
 	if (pwd)
@@ -60,12 +60,12 @@ pwd_login(char *username, char *password, char *wheel, int lastchance,
 	salt = crypt(password, salt);
 	memset(password, 0, strlen(password));
 	if (!pwd || strcmp(salt, pwd->pw_passwd) != 0)
-		return AUTH_FAILED;
+		return (AUTH_FAILED);
 
 	if (login_check_expire(back, pwd, class, lastchance) == 0)
 		fprintf(back, BI_AUTH "\n");
 	else
-		return AUTH_FAILED;
+		return (AUTH_FAILED);
 
-	return AUTH_OK;
+	return (AUTH_OK);
 }
