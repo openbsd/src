@@ -1,5 +1,5 @@
-/*	$OpenBSD: exchange.c,v 1.23 1999/07/17 21:54:39 niklas Exp $	*/
-/*	$EOM: exchange.c,v 1.109 1999/07/17 20:44:09 niklas Exp $	*/
+/*	$OpenBSD: exchange.c,v 1.24 1999/08/26 22:32:16 niklas Exp $	*/
+/*	$EOM: exchange.c,v 1.111 1999/08/20 11:57:29 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -59,6 +59,7 @@
 #include "transport.h"
 #include "sa.h"
 #include "util.h"
+#include "x509.h"
 
 /* Initial number of bits from the cookies used as hash.  */
 #define INITIAL_BUCKET_BITS 6
@@ -1298,12 +1299,58 @@ exchange_finalize (struct message *msg)
   /*
    * If this was an phase 1 SA negotiation, save the keystate in the ISAKMP SA
    * structure for future initialization of phase 2 exchanges' keystates.
+   * Also save the Phase 1 ID and authentication information.
    */
   if (exchange->phase == 1 && msg->isakmp_sa)
     {
       msg->isakmp_sa->keystate = exchange->keystate;
       exchange->keystate = 0;
+
+      msg->isakmp_sa->recv_certtype = exchange->recv_certtype;
+      msg->isakmp_sa->recv_certlen = exchange->recv_certlen;
+      msg->isakmp_sa->id_i_len = exchange->id_i_len;
+      msg->isakmp_sa->id_r_len = exchange->id_r_len;
+      msg->isakmp_sa->initiator = exchange->initiator;
+
+      msg->isakmp_sa->id_i = calloc (exchange->id_i_len, sizeof (char));
+      if (msg->isakmp_sa->id_i == NULL)
+	log_fatal ("exchange_finalize: failed to allocate memory for copying id_i (%d bytes)", exchange->id_i_len);
+      msg->isakmp_sa->id_r = calloc (exchange->id_r_len, sizeof (char));
+      if (msg->isakmp_sa->id_r == NULL)
+	log_fatal ("exchange_finalize: failed to allocate memory for copying id_r (%d bytes)", exchange->id_r_len);
+
+      memcpy (msg->isakmp_sa->id_i, exchange->id_i, exchange->id_i_len);
+      memcpy (msg->isakmp_sa->id_r, exchange->id_r, exchange->id_r_len);
+
+      switch (exchange->recv_certtype)
+        {
+        case ISAKMP_CERTENC_NONE:
+	    msg->isakmp_sa->recv_cert = strdup (exchange->recv_cert);
+	    if (msg->isakmp_sa->recv_cert == NULL)
+	      log_fatal ("exchange_finalize: failed copying shared secret to isakmp_sa");
+	    break;
+
+	case ISAKMP_CERTENC_X509_SIG:
+	    msg->isakmp_sa->recv_cert = LC (X509_dup,
+					    ((X509 *) exchange->recv_cert));
+	    if (msg->isakmp_sa->recv_cert == NULL)
+	      log_fatal ("exchange_finalize: failed copying X509 certificate to isakmp_sa");
+	    break;
+
+	    /* XXX Eventually handle these */
+	case ISAKMP_CERTENC_PKCS:
+	case ISAKMP_CERTENC_PGP:	
+	case ISAKMP_CERTENC_DNS:
+	case ISAKMP_CERTENC_X509_KE:
+	case ISAKMP_CERTENC_KERBEROS:
+	case ISAKMP_CERTENC_CRL:
+	case ISAKMP_CERTENC_ARL:
+	case ISAKMP_CERTENC_SPKI:
+	case ISAKMP_CERTENC_X509_ATTR:
+/*      case ISAKMP_CERTENC_KEYNOTE: */
+	}
     }
+
   exchange->doi->finalize_exchange (msg);
   if (exchange->finalize)
     exchange->finalize (exchange, exchange->finalize_arg, 0);
@@ -1563,6 +1610,13 @@ exchange_establish (char *name,
 	  if (!name)
 	    {
 	      log_error ("exchange_establish: strdup(\"%s\") failed", name);
+	      return;
+	    }
+
+	  if (conf_get_num (peer, "Phase", 0) != 1)
+	    {
+	      log_error ("exchange_establish: "
+			 "[%s]:ISAKMP-peer's (%s) phase is not 1", name, peer);
 	      return;
 	    }
 
