@@ -1,4 +1,4 @@
-/*	$OpenBSD: union_subr.c,v 1.15 2004/04/25 19:00:29 tedu Exp $ */
+/*	$OpenBSD: union_subr.c,v 1.16 2004/04/25 19:46:40 tedu Exp $ */
 /*	$NetBSD: union_subr.c,v 1.41 2001/11/10 13:33:45 lukem Exp $	*/
 
 /*
@@ -127,7 +127,7 @@ int union_check(p, vpp, fp, auio, error)
 				vrele(lvp);
 				return (0);
 			}
-			fp->f_data = (caddr_t) lvp;
+			fp->f_data = lvp;
 			fp->f_offset = 0;
 			*error = vn_close(*vpp, FREAD, fp->f_cred, p);
 			if (*error)
@@ -175,7 +175,7 @@ union_list_unlock(ix)
 
 	if (unvplock[ix] & UN_WANTED) {
 		unvplock[ix] &= ~UN_WANTED;
-		wakeup((caddr_t) &unvplock[ix]);
+		wakeup(&unvplock[ix]);
 	}
 }
 
@@ -970,7 +970,7 @@ union_vn_create(vpp, un, p)
 	cn.cn_namelen = strlen(un->un_path);
 	if ((cn.cn_namelen + 1) > MAXPATHLEN)
 		return (ENAMETOOLONG);
-	cn.cn_pnbuf = (caddr_t) malloc(cn.cn_namelen+1, M_NAMEI, M_WAITOK);
+	cn.cn_pnbuf = malloc(cn.cn_namelen+1, M_NAMEI, M_WAITOK);
 	memcpy(cn.cn_pnbuf, un->un_path, cn.cn_namelen+1);
 	cn.cn_nameiop = CREATE;
 	cn.cn_flags = (LOCKPARENT|HASBUF|SAVENAME|SAVESTART|ISLASTCN);
@@ -1152,8 +1152,7 @@ union_dircache(vp, p)
 		cnt = 0;
 		union_dircache_r(vp, 0, &cnt);
 		cnt++;
-		dircache = (struct vnode **)
-				malloc(cnt * sizeof(struct vnode *),
+		dircache = malloc(cnt * sizeof(struct vnode *),
 					M_TEMP, M_WAITOK);
 		vpp = dircache;
 		union_dircache_r(vp, &vpp, &cnt);

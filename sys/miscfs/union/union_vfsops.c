@@ -1,4 +1,4 @@
-/*	$OpenBSD: union_vfsops.c,v 1.17 2004/04/25 19:40:51 tedu Exp $	*/
+/*	$OpenBSD: union_vfsops.c,v 1.18 2004/04/25 19:46:40 tedu Exp $	*/
 /*	$NetBSD: union_vfsops.c,v 1.10 1995/06/18 14:47:47 cgd Exp $	*/
 
 /*
@@ -125,8 +125,7 @@ union_mount(mp, path, data, ndp, p)
 		goto bad;
 	}
 	
-	um = (struct union_mount *) malloc(sizeof(struct union_mount),
-				M_MISCFSMNT, M_WAITOK);
+	um = malloc(sizeof(struct union_mount), M_MISCFSMNT, M_WAITOK);
 
 	/*
 	 * Keep a held reference to the target vnodes.
