@@ -1,4 +1,4 @@
-.\" $OpenBSD: ntpd.conf.5,v 1.1 2004/06/18 04:11:24 henning Exp $
+.\" $OpenBSD: ntpd.conf.5,v 1.2 2004/07/07 02:16:07 henning Exp $
 .\"
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
 .\"
@@ -38,11 +38,12 @@ Can appear multiple times,
 .Ar ntpd
 will listen on each given address.
 .It Ar server
-Specify the IP address of a
+Specify the IP address or the hostname of a
 .Ar ntp
 server to syncronize to.
 .Bd -literal -offset indent
 server 10.0.0.2
+server pool.ntp.org
 .Ed
 .El
 .Sh FILES
