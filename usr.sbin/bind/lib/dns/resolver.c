@@ -524,7 +524,7 @@ fctx_cancelquery(resquery_t **queryp, dns_dispatchevent_t **deventp,
 			 */
 			INSIST(no_response);
 			rtt = query->addrinfo->srtt +
-				(100000 * fctx->restarts);
+				(200000 * fctx->restarts);
 			if (rtt > 10000000)
 				rtt = 10000000;
 			/*
@@ -791,7 +791,10 @@ resquery_senddone(isc_task_t *task, isc_event_t *event) {
 				isc_socket_detach(&query->tcpsocket);
 			resquery_destroy(&query);
 		}
-	} else if (sevent->result != ISC_R_SUCCESS)
+	} else if (sevent->result == ISC_R_HOSTUNREACH ||
+		   sevent->result == ISC_R_NETUNREACH)
+		fctx_cancelquery(&query, NULL, NULL, ISC_TRUE);
+	else if (sevent->result != ISC_R_SUCCESS)
 		fctx_cancelquery(&query, NULL, NULL, ISC_FALSE);
 
 	isc_event_free(&event);
@@ -1378,6 +1381,10 @@ resquery_connected(isc_task_t *task, isc_event_t *event) {
 						 ISC_FALSE);
 				fctx_done(fctx, result);
 			}
+		} else if (sevent->result == ISC_R_HOSTUNREACH ||
+			   sevent->result == ISC_R_NETUNREACH) {
+			isc_socket_detach(&query->tcpsocket);
+			fctx_cancelquery(&query, NULL, NULL, ISC_TRUE);
 		} else {
 			isc_socket_detach(&query->tcpsocket);
 			fctx_cancelquery(&query, NULL, NULL, ISC_FALSE);
