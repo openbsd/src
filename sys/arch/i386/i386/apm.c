@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.29 2000/01/31 02:04:35 mickey Exp $	*/
+/*	$OpenBSD: apm.c,v 1.30 2000/01/31 10:00:05 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1998-2000 Michael Shalayeff. All rights reserved.
@@ -647,7 +647,7 @@ apm_set_ver(self)
 	struct apm_softc *self;
 {
 	struct apmregs regs;
-	int rv;
+	int rv = 0;
 
 	bzero(&regs, sizeof(regs));
 	regs.cx = APM_VERSION;
