@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.23 1999/11/09 17:49:01 millert Exp $	*/
+/*	$OpenBSD: if.c,v 1.24 1999/11/20 18:51:58 espie Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -639,7 +639,7 @@ ifioctl(so, cmd, data, p)
 			(struct mbuf *) ifp));
 #else
 	    {
-		int ocmd = cmd;
+		u_long ocmd = cmd;
 
 		switch (cmd) {
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pctr.c,v 1.12 1998/06/04 04:56:42 downsj Exp $	*/
+/*	$OpenBSD: pctr.c,v 1.13 1999/11/20 18:51:59 espie Exp $	*/
 
 /*
  * Pentium performance counter driver for OpenBSD.
@@ -39,7 +39,7 @@ int pctr_isintel;
 void pctrattach __P((int));
 int pctropen __P((dev_t, int, int, struct proc *));
 int pctrclose __P((dev_t, int, int, struct proc *));
-int pctrioctl __P((dev_t, int, caddr_t, int, struct proc *));
+int pctrioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
 int p5ctrsel __P((int fflag, u_int cmd, u_int fn));
 static __inline void p5ctrrd __P((struct pctrst *st));
 int p6ctrsel __P((int fflag, u_int cmd, u_int fn));
@@ -189,7 +189,7 @@ p6ctrrd (st)
 int
 pctrioctl (dev, cmd, data, fflag, p)
 	dev_t dev;
-	int cmd;
+	u_long cmd;
 	caddr_t data;
 	int fflag;
 	struct proc *p;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ossaudiovar.h,v 1.2 1998/04/26 22:15:45 provos Exp $	*/
+/*	$OpenBSD: ossaudiovar.h,v 1.3 1999/11/20 18:52:00 espie Exp $	*/
 /*	$NetBSD: ossaudiovar.h,v 1.4 1997/10/16 16:49:40 augustss Exp $	*/
 
 /*
@@ -45,7 +45,7 @@ struct oss_sys_ioctl_args {
 #define OSS_IOC_IN          0x40000000      /* copy in parameters */
 #define OSS_IOC_OUT         0x80000000      /* copy out parameters */
 #define OSS_IOC_INOUT       (OSS_IOC_IN | OSS_IOC_OUT)
-#define	_OSS_IOCTL(w,x,y,z) ((int)((w)|(((z)&OSS_IOCPARM_MASK)<<16)|((x)<<8)|(y)))
+#define	_OSS_IOCTL(w,x,y,z) ((u_long)((w)|(((z)&OSS_IOCPARM_MASK)<<16)|((x)<<8)|(y)))
 #define _OSS_IO(x,y)        _OSS_IOCTL(OSS_IOC_VOID, x, y, 0)
 #define _OSS_IOR(x,y,t)     _OSS_IOCTL(OSS_IOC_OUT, x, y, sizeof(t))
 #define _OSS_IOW(x,y,t)     _OSS_IOCTL(OSS_IOC_IN, x, y, sizeof(t))

@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.17 1999/06/19 19:49:02 jason Exp $	*/
+/*	$OpenBSD: audio.c,v 1.18 1999/11/20 18:51:58 espie Exp $	*/
 /*	$NetBSD: audio.c,v 1.105 1998/09/27 16:43:56 christos Exp $	*/
 
 /*
@@ -108,13 +108,13 @@ int	audio_open __P((dev_t, int, int, struct proc *));
 int	audio_close __P((dev_t, int, int, struct proc *));
 int	audio_read __P((dev_t, struct uio *, int));
 int	audio_write __P((dev_t, struct uio *, int));
-int	audio_ioctl __P((dev_t, int, caddr_t, int, struct proc *));
+int	audio_ioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
 int	audio_select __P((dev_t, int, struct proc *));
 int	audio_mmap __P((dev_t, int, int));
 
 int	mixer_open __P((dev_t, int, int, struct proc *));
 int	mixer_close __P((dev_t, int, int, struct proc *));
-int	mixer_ioctl __P((dev_t, int, caddr_t, int, struct proc *));
+int	mixer_ioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
 static	void mixer_remove __P((struct audio_softc *, struct proc *p));
 static	void mixer_signal __P((struct audio_softc *));
     
@@ -1440,7 +1440,7 @@ audio_write(dev, uio, ioflag)
 int
 audio_ioctl(dev, cmd, addr, flag, p)
 	dev_t dev;
-	int cmd;
+	u_long cmd;
 	caddr_t addr;
 	int flag;
 	struct proc *p;
@@ -2791,7 +2791,7 @@ mixer_close(dev, flags, ifmt, p)
 int
 mixer_ioctl(dev, cmd, addr, flag, p)
 	dev_t dev;
-	int cmd;
+	u_long cmd;
 	caddr_t addr;
 	int flag;
 	struct proc *p;
