@@ -1,4 +1,4 @@
-/*	$OpenBSD: cons.c,v 1.6 1997/08/04 20:31:21 mickey Exp $	*/
+/*	$OpenBSD: cons.c,v 1.7 1997/08/07 11:32:19 niklas Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -52,7 +52,7 @@ cons_probe()
 		}
 	}
 	if (!f)	/* not found */
-		printf("no any console detected, ");
+		printf("no console detected, ");
 	printf("using %s console\n", console->name);
 	return 1;
 }
