@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.3 2004/11/01 11:48:03 espie Exp $
+# $OpenBSD: Update.pm,v 1.4 2004/11/01 14:30:00 espie Exp $
 #
 # Copyright (c) 2004 Marc Espie <espie@openbsd.org>
 #
@@ -52,16 +52,16 @@ sub extract
 	}
 	my $destdir = $state->{destdir};
 
+	if (defined $self->{link} || defined $self->{symlink}) {
+		$self->{tempname} = 1;
+		return;
+	}
 	my ($fh, $tempname) = tempfile(DIR => dirname($destdir.$fullname));
 
 	print "extracting $tempname\n";
 	$file->{name} = $tempname;
 	$file->{cwd} = $self->{cwd};
 	$file->{destdir} = $destdir;
-	# faked installation are VERY weird
-	if (defined $self->{symlink} && $state->{do_faked}) {
-		$file->{linkname} = $destdir.$file->{linkname};
-	}
 	$file->create();
 	$self->{tempname} = $tempname;
 }

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.2 2004/11/01 11:48:03 espie Exp $
+# $OpenBSD: Add.pm,v 1.3 2004/11/01 14:30:00 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -163,7 +163,13 @@ sub install
 	my $destdir = $state->{destdir};
 
 	if (defined $self->{tempname}) {
-		rename($self->{tempname}, $destdir.$fullname);
+		if (defined $self->{link}) {
+			link($destdir.$self->{link}, $destdir.$fullname);
+		} elsif (defined $self->{symlink}) {
+			symlink($self->{symlink}, $destdir.$fullname);
+		} else {
+			rename($self->{tempname}, $destdir.$fullname);
+		}
 	} else {
 		my $file=$state->{archive}->next();
 		if ($file->{name} ne $self->{name}) {
