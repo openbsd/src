@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.vax,v 1.9 1998/05/11 15:37:23 niklas Exp $
+#	$OpenBSD: Makefile.vax,v 1.10 1998/05/11 16:35:07 niklas Exp $
 #	$NetBSD: Makefile.vax,v 1.32 1997/03/14 23:27:35 mycroft Exp $
 
 # Makefile for OpenBSD
@@ -26,6 +26,7 @@ CC?=	cc
 LD?=	ld
 MKDEP?=	mkdep
 STRIP?=	strip
+SIZE?=	size
 COPTS?= 	-O2
 
 # source tree is located via $S relative to the compilation directory
@@ -88,7 +89,7 @@ SYSTEM_DEP=	Makefile ${SYSTEM_OBJ}
 SYSTEM_LD_HEAD=	@rm -f $@
 SYSTEM_LD=	@echo ${LD} ${LINKFLAGS} -o $@ '$${SYSTEM_OBJ}' vers.o; \
 		${LD} ${LINKFLAGS} -o $@ ${SYSTEM_OBJ} vers.o
-SYSTEM_LD_TAIL=	@size $@; chmod 755 $@
+SYSTEM_LD_TAIL=	@${SIZE} $@; chmod 755 $@
 
 DEBUG?=
 .if ${DEBUG} == "-g"
