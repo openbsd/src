@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.19 1999/08/14 03:11:31 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.20 1999/09/20 21:40:53 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -67,6 +67,7 @@
 #include <machine/iomod.h>
 #include <machine/pdc.h>
 #include <machine/intr.h>
+#include <machine/frame.h>
 #ifdef	GPROF
 #include <machine/gprof.h>
 #endif
@@ -147,7 +148,7 @@ ENTRY($start)
 	 * to keep the spl() routines consistent we need to put the correct
 	 * spl level into eiem
 	 */
-	ldi	INT_NONE,r1
+	ldi	IPL_NONE,r1
 	mtctl	r1,eiem
 
 	/*
@@ -204,9 +205,9 @@ $qisnowon
 	 * sp marker to mark that this is the first frame on the stack.
 	 */
 	copy	sp, t1
-	stwm	r0, FM_SIZE(sp)
+	stwm	r0, HPPA_FRAME_SIZE(sp)
 	copy	sp, r3
-	stwm	t1, FM_SIZE(sp)
+	stwm	t1, HPPA_FRAME_SIZE(sp)
 
 	/*
 	 * disable all coprocessors
@@ -332,9 +333,9 @@ $osf_syscall
 	 * We also need to save r29 (aka ret1) for the emulator since it may
 	 * get clobbered between here and there.
 	 */
-	stw	r22,VA_ARG4(sp)
-	stw	r21,VA_ARG5(sp)
-	stw	r29,FM_SL(sp)
+	stw	r22,HPPA_FRAME_ARG(4)(sp)
+	stw	r21,HPPA_FRAME_ARG(5)(sp)
+	stw	r29,HPPA_FRAME_SL(sp)
 	gate	$bsd_syscall,r0
 	copy	r1,r22
 #endif /* COMPAT_OSF1 */
@@ -383,7 +384,7 @@ $syscall
 	copy	sp, t4
 
 	/* calculate kernel sp, load, create kernel stack frame */
-	ldo	FM_SIZE+ARG_SIZE+NBPG(t2), sp
+	ldo	HPPA_FRAME_SIZE+HPPA_FRAME_MAXARGS+NBPG(t2), sp
 	
 	stw	r1 , TF_R1 +pcb_tf+u_pcb(sr1, t2)
 	stw	r2 , TF_R2 +pcb_tf+u_pcb(sr1, t2)
@@ -412,18 +413,18 @@ $syscall
 	stwm	arg1, 4(sr1, t3)
 	stwm	arg2, 4(sr1, t3)
 	stwm	arg3, 4(sr1, t3)
-	ldw	VA_ARG4(sr0, t4), arg0
-	ldw	VA_ARG5(sr0, t4), arg1
-	ldw	VA_ARG6(sr0, t4), arg2
-	ldw	VA_ARG7(sr0, t4), arg3
+	ldw	HPPA_FRAME_ARG( 4)(sr0, t4), arg0
+	ldw	HPPA_FRAME_ARG( 5)(sr0, t4), arg1
+	ldw	HPPA_FRAME_ARG( 6)(sr0, t4), arg2
+	ldw	HPPA_FRAME_ARG( 7)(sr0, t4), arg3
 	stwm	arg0, 4(sr1, t3)
 	stwm	arg1, 4(sr1, t3)
 	stwm	arg2, 4(sr1, t3)
 	stwm	arg3, 4(sr1, t3)
-	ldw	VA_ARG8 (sr0, t4), arg0
-	ldw	VA_ARG9 (sr0, t4), arg1
-	ldw	VA_ARG10(sr0, t4), arg2
-	ldw	VA_ARG11(sr0, t4), arg3
+	ldw	HPPA_FRAME_ARG( 8)(sr0, t4), arg0
+	ldw	HPPA_FRAME_ARG( 9)(sr0, t4), arg1
+	ldw	HPPA_FRAME_ARG(10)(sr0, t4), arg2
+	ldw	HPPA_FRAME_ARG(11)(sr0, t4), arg3
 	stwm	arg0, 4(sr1, t3)
 	stwm	arg1, 4(sr1, t3)
 	stwm	arg2, 4(sr1, t3)
@@ -445,8 +446,8 @@ $syscall
 	mtctl	t4, pidr3
 
 	/* setup frame */
-	stw	r0, FM_PSP(sr1, sp)
-	stw	r0, FM_CRP(sr1, sp)
+	stw	r0, HPPA_FRAME_PSP(sr1, sp)
+	stw	r0, HPPA_FRAME_CRP(sr1, sp)
 
 	ldo	pcb_tf+u_pcb(t2), arg0
 	copy	r1, arg1
@@ -741,7 +742,7 @@ TLABEL(excpt)
 	.import	$fpemu_stack
 	ldil	L%$fpemu_stack, r31
 	ldo	R%$fpemu_stack(r31), r31
-	ldo	R%TF_SIZE+FM_SIZE(r31), sp
+	ldo	R%TF_SIZE+HPPA_FRAME_SIZE(r31), sp
 
 	stw	r1 , TF_R1 (r31)
 	stw	r2 , TF_R2 (r31)
@@ -1029,7 +1030,7 @@ TLABEL(all)
 
 $trap_recurse
 	copy	sp, t3
-	ldo	FM_SIZE+TF_SIZE(sp), sp
+	ldo	HPPA_FRAME_SIZE+TF_SIZE(sp), sp
 
 	/* t3 is (struct trapframe *) */
 $trap_trap
@@ -1138,7 +1139,7 @@ $trap_trap
 	 * Load up a real value into eiem to reflect an spl level of splhigh.
 	 * Right now interrupts are still off.
 	 */
-	ldi	INT_NONE, t1
+	ldi	IPL_NONE, t1
 	mtctl	t1, eiem
 
 	/* load in the address to "return" to with the rfir instruction */
@@ -1169,7 +1170,7 @@ $trapnowvirt
 	comb,=	r0, t3, $trap_recurse
 	nop
 
-	ldo	FM_SIZE(sp), sp
+	ldo	HPPA_FRAME_SIZE(sp), sp
 	b	$trap_trap
 	ldo	p_md(t3), t3
 #endif
@@ -1182,8 +1183,8 @@ $trapnowvirt
 	stw	r1,TF_R1(t3)
 	stw	r2,TF_R2(t3)
 #ifdef DDB
-	stw	rp,FM_CRP(sp)
-	stw	r3,FM_PSP(sp)
+	stw	rp,HPPA_FRAME_CRP(sp)
+	stw	r3,HPPA_FRAME_PSP(sp)
 #endif
 	stw	r3,TF_R3(t3)
 	stw	r4,TF_R4(t3)
@@ -1268,7 +1269,7 @@ $trapnowvirt
 	copy	t3, arg1
 
 #ifdef DDB
-	ldo	-FM_SIZE(sp), r3
+	ldo	-HPPA_FRAME_SIZE(sp), r3
 #endif
 	.import	trap, code
 	ldil	L%trap,t1
@@ -1556,7 +1557,7 @@ ENTRY(spstrcpy)
 	ldo	R%copy_on_fault(t2), t2
 	stw	t2, pcb_onfault+u_pcb(r31)
 
-	ldw	VA_ARG4(sp), ret1
+	ldw	HPPA_FRAME_ARG(4)(sp), ret1
 	mfctl	sr2, ret0	/* XXX need this? */
 	mtctl	arg0, sr1
 	mtctl	arg2, sr2
@@ -1572,11 +1573,11 @@ $spstrcpy_exit
 	/* reset fault handler */
 	stw	r0, pcb_onfault+u_pcb(r31)
 	copy	r0, ret0
-	ldw	VA_ARG4(sp), t1
+	ldw	HPPA_FRAME_ARG(4)(sp), t1
 	mtctl	ret0, sr2
 	sub	ret1, t1, ret1
 	bv	0(rp)
-	stw	ret1, VA_ARG5(sp)
+	stw	ret1, HPPA_FRAME_ARG(5)(sp)
 EXIT(spstrcpy)
 
 
