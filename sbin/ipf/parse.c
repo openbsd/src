@@ -1,4 +1,4 @@
-/*     $OpenBSD: parse.c,v 1.21 1998/09/15 09:55:45 pattonme Exp $      */
+/*     $OpenBSD: parse.c,v 1.22 1998/11/24 03:05:34 deraadt Exp $      */
 /*
  * Copyright (C) 1993-1997 by Darren Reed.
  *
@@ -40,7 +40,7 @@
 
 #if !defined(lint)
 static const char sccsid[] ="@(#)parse.c	1.44 6/5/96 (C) 1993-1996 Darren Reed";
-static const char rcsid[] = "@(#)$Id: parse.c,v 1.21 1998/09/15 09:55:45 pattonme Exp $";
+static const char rcsid[] = "@(#)$Id: parse.c,v 1.22 1998/11/24 03:05:34 deraadt Exp $";
 #endif
 
 extern	struct	ipopt_names	ionames[], secclass[];
@@ -661,6 +661,11 @@ u_char	*cp;
 				comp = FR_OUTRANGE;
 			else if (!strcmp(**seg, "><"))
 				comp = FR_INRANGE;
+			else {
+				fprintf(stderr,"unknown range operator (%s)\n",
+				    **seg);
+				return -1;
+			}
 			(*seg)++;
 			*tp = portnum(**seg);
 		} else if (!strcmp(**seg, "=") || !strcasecmp(**seg, "eq"))
