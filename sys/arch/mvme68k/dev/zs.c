@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.5 1996/06/11 10:17:40 deraadt Exp $ */
+/*	$OpenBSD: zs.c,v 1.6 2000/01/27 03:06:50 smurph Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -164,8 +164,23 @@ zsmatch(parent, vcf, args)
 {
 	struct cfdata *cf = vcf;
 	struct confargs *ca = args;
-
-	return (!badvaddr(ca->ca_vaddr, 1));
+   unsigned char *zstest = (unsigned char *)ca->ca_vaddr;
+   /* 
+    * If zs1 is in the config, we must test to see if it really exists.  
+    * Some 162s only have one scc device, but the memory location for 
+    * the second scc still checks valid and every byte contains 0xFF. So 
+    * this is what we test with for now. XXX - smurph
+    */
+   if (!badvaddr(ca->ca_vaddr, 1))
+      if (*zstest != 0xFF)
+         return(0);
+      else 
+         return(1);
+   else 
+      return(0);
+#if 0
+   return (!badvaddr(ca->ca_vaddr, 1));
+#endif 
 }
 
 void
