@@ -71,7 +71,6 @@ Find_Names (repository, which, aflag, optentries)
 {
     List *entries;
     List *files;
-    char dir[PATH_MAX];
 
     /* make a list for the files */
     files = filelist = getlist ();
@@ -103,8 +102,11 @@ Find_Names (repository, which, aflag, optentries)
 	/* search the attic too */
 	if (which & W_ATTIC)
 	{
+	    char *dir;
+	    dir = xmalloc (strlen (repository) + sizeof (CVSATTIC) + 10);
 	    (void) sprintf (dir, "%s/%s", repository, CVSATTIC);
 	    (void) find_rcs (dir, files);
+	    free (dir);
 	}
     }
 
@@ -221,16 +223,11 @@ Find_Directories (repository, which, entries)
 	if (find_dirs (repository, dirlist, 0, entries) != 0)
 	    error (1, errno, "cannot open directory %s", repository);
 
-#ifdef ATTIC_DIR_SUPPORT		/* XXX - FIXME */
-	/* search the attic too */
-	if (which & W_ATTIC)
-	{
-	    char dir[PATH_MAX];
-
-	    (void) sprintf (dir, "%s/%s", repository, CVSATTIC);
-	    (void) find_dirs (dir, dirlist, 0, entries);
-	}
-#endif
+	/* We don't need to look in the attic because directories
+	   never go in the attic.  In the future, there hopefully will
+	   be a better mechanism for detecting whether a directory in
+	   the repository is alive or dead; it may or may not involve
+	   moving directories to the attic.  */
     }
 
     /* sort the list into alphabetical order and return it */
@@ -344,6 +341,9 @@ find_dirs (dir, list, checkadm, entries)
 		if (dp->d_type == DT_LNK)
 		    continue;
 #endif
+		/* FIXME: tmp is not set here, or doesn't seem to be.
+		   This would appear to just be a mistake...  Needs more
+		   investigation to be sure...  */
 		if (islink (tmp))
 		    continue;
 #ifdef DT_DIR

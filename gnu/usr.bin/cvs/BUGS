@@ -15,9 +15,32 @@ similar file for the unix-like operating systems (not yet, at least).
 This file also might contain some platform-specific bugs.
 
 
-* The "&" feature of the modules file does not work correctly with
-client/server CVS.  The documented behavior (which is implemented by
-non-client/server CVS) is the correct one.
+* Importing files as binary (using wrappers to specify that--like
+binwrap-1 in the testsuite) will not work on systems which need to
+translate between text and binary files (that is, it will work only on
+unix).  (for the cause, look at send_modified and note that it knows
+nothing about whether wrappers specified binary-ness).  The file will
+be marked as binary, but the contents will be incorrect.  The
+workaround is (a) import the binary files (but not text files, unless
+they have been converted to unix text files) on unix, or (b) check in
+the correct contents for the binary files after the import is done.
+
+
+* Some people have reported seeing the message "dying gasps from %s
+unexpected" (where %s is the name of your server) when using
+client/server CVS.  One person reported that this had to do with using
+pserver and trying to run a program not in the PATH (which is set up
+by inetd, I think) from one of the *info scripts.  But noone has
+carefully tracked this down (is it caused by something in the server
+writing to stdout or stderr when it shouldn't?  But then wouldn't the
+"dying gasps" message be preceded by "warning: unrecognized response
+`%s' from cvs server"?).
+
+
+* "make remotecheck" sometimes fails on test 187a3 with
+    cvs server: in directory .:
+    cvs [server aborted]: *PANIC* administration files missing
+This does not happen every time.  (-kingdon, Nov 96, Red Hat linux 3.0.3).
 
 
 * The -m option to "cvs add" does not work with client/server CVS.

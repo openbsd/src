@@ -11,17 +11,20 @@
 
 static int find_type PROTO((Node * p, void *closure));
 static int fmt_proc PROTO((Node * p, void *closure));
-static int logfile_write PROTO((char *repository, char *filter, char *title,
+static int logfile_write PROTO((char *repository, char *filter,
 			  char *message, FILE * logfp, List * changes));
 static int rcsinfo_proc PROTO((char *repository, char *template));
 static int title_proc PROTO((Node * p, void *closure));
 static int update_logfile_proc PROTO((char *repository, char *filter));
 static void setup_tmpfile PROTO((FILE * xfp, char *xprefix, List * changes));
 static int editinfo_proc PROTO((char *repository, char *template));
+static int verifymsg_proc PROTO((char *repository, char *script));
 
 static FILE *fp;
 static char *str_list;
+static char *str_list_format;	/* The format for str_list's contents. */
 static char *editinfo_editor;
+static char *verifymsg_script;
 static Ctype type;
 
 /*
@@ -188,6 +191,7 @@ do_editor (dir, messagep, repository, changes)
     if (strcmp (Editor, "") == 0 && !editinfo_editor)
 	error(1, 0, "no editor defined, must use -e or -m");
 
+
     /* Create a temporary file */
     fname = cvs_temp_name ();
   again:
@@ -198,7 +202,8 @@ do_editor (dir, messagep, repository, changes)
     {
 	(void) fprintf (fp, "%s", *messagep);
 
-	if ((*messagep)[strlen (*messagep) - 1] != '\n')
+	if ((*messagep)[0] == '\0' ||
+	    (*messagep)[strlen (*messagep) - 1] != '\n')
 	    (void) fprintf (fp, "\n");
     }
     else
@@ -247,8 +252,9 @@ do_editor (dir, messagep, repository, changes)
   "%s----------------------------------------------------------------------\n",
 		    CVSEDITPREFIX);
     (void) fprintf (fp,
-  "%sEnter Log.  Lines beginning with `%s' are removed automatically\n%s\n",
-		    CVSEDITPREFIX, CVSEDITPREFIX, CVSEDITPREFIX);
+  "%sEnter Log.  Lines beginning with `%.*s' are removed automatically\n%s\n",
+		    CVSEDITPREFIX, CVSEDITPREFIXLEN, CVSEDITPREFIX,
+		    CVSEDITPREFIX);
     if (dir != NULL && *dir)
 	(void) fprintf (fp, "%sCommitting in %s\n%s\n", CVSEDITPREFIX,
 			dir, CVSEDITPREFIX);
@@ -267,6 +273,11 @@ do_editor (dir, messagep, repository, changes)
     if (editinfo_editor)
 	free (editinfo_editor);
     editinfo_editor = (char *) NULL;
+#ifdef CLIENT_SUPPORT
+    if (client_active)
+	; /* nothing, leave editinfo_editor NULL */
+    else
+#endif
     if (repository != NULL)
 	(void) Parse_Info (CVSROOTADM_EDITINFO, repository, editinfo_proc, 0);
 
@@ -314,7 +325,7 @@ do_editor (dir, messagep, repository, changes)
 		    error (0, errno, "warning: cannot read %s", fname);
 		break;
 	    }
-	    if (strncmp (line, CVSEDITPREFIX, sizeof (CVSEDITPREFIX) - 1) == 0)
+	    if (strncmp (line, CVSEDITPREFIX, CVSEDITPREFIXLEN) == 0)
 		continue;
 	    (void) strcpy (p, line);
 	    p += line_length;
@@ -358,6 +369,83 @@ do_editor (dir, messagep, repository, changes)
     if (unlink_file (fname) < 0)
 	error (0, errno, "warning: cannot remove temp file %s", fname);
     free (fname);
+}
+
+/* Runs the user-defined verification script as part of the commit or import 
+   process.  This verification is meant to be run whether or not the user 
+   included the -m atribute.  unlike the do_editor function, this is 
+   independant of the running of an editor for getting a message.
+ */
+void
+do_verify (message, repository)
+    char *message;
+    char *repository;
+{
+    FILE *fp;
+    char *fname;
+    int retcode = 0;
+
+#ifdef CLIENT_SUPPORT
+    if (client_active)
+	/* The verification will happen on the server.  */
+	return;
+#endif
+
+    /* FIXME? Do we really want to skip this on noexec?  What do we do
+       for the other administrative files?  */
+    if (noexec)
+	return;
+
+    /* If there's no message, then we have nothing to verify.  Can this
+       case happen?  And if so why would we print a message?  */
+    if (message == NULL)
+    {
+	cvs_output ("No message to verify\n", 0);
+	return;
+    }
+
+    /* Get a temp filename, open a temporary file, write the message to the 
+       temp file, and close the file.  */
+
+    fname = cvs_temp_name ();
+
+    if ((fp = fopen (fname, "w")) < 0)
+    {
+	error (1, 0, "cannot create temporary file %s", fname);
+	return;
+    }
+    else
+    {
+	fprintf (fp, "%s", message);
+	if ((message)[0] == '\0' ||
+	    (message)[strlen (message) - 1] != '\n')
+	    (void) fprintf (fp, "%s", "\n");
+	if (fclose (fp) == EOF)
+	    error (1, errno, "%s", fname);
+
+	/* Get the name of the verification script to run  */
+
+	if (repository != NULL)
+	    (void) Parse_Info (CVSROOTADM_VERIFYMSG, repository, 
+			       verifymsg_proc, 0);
+
+	/* Run the verification script  */
+
+	if (verifymsg_script)
+	{
+	    run_setup ("%s", verifymsg_script);
+	    run_arg (fname);
+	    if ((retcode = run_exec (RUN_TTY, RUN_TTY, RUN_TTY,
+				     RUN_NORMAL | RUN_SIGIGNORE)) != 0)
+		error (1, retcode == -1 ? errno : 0, 
+		       "Message verification failed");
+	}
+
+	/* Close and delete the temp file  */
+
+	unlink_file (fname);
+	free (fname);
+    }
 }
 
 /*
@@ -409,7 +497,6 @@ rcsinfo_proc (repository, template)
  * directory in the source repository.  The log information is fed into the
  * specified program as standard input.
  */
-static char *title;
 static FILE *logfp;
 static char *message;
 static List *changes;
@@ -421,8 +508,6 @@ Update_Logfile (repository, xmessage, xlogfp, xchanges)
     FILE *xlogfp;
     List *xchanges;
 {
-    char *srepos;
-
     /* nothing to do if the list is empty */
     if (xchanges == NULL || xchanges->list->next == xchanges->list)
 	return;
@@ -432,34 +517,8 @@ Update_Logfile (repository, xmessage, xlogfp, xchanges)
     logfp = xlogfp;
     changes = xchanges;
 
-    /* figure out a good title string */
-    srepos = Short_Repository (repository);
-
-    /* allocate a chunk of memory to hold the title string */
-    if (!str_list)
-	str_list = xmalloc (MAXLISTLEN);
-    str_list[0] = '\0';
-
-    type = T_TITLE;
-    (void) walklist (changes, title_proc, NULL);
-    type = T_ADDED;
-    (void) walklist (changes, title_proc, NULL);
-    type = T_MODIFIED;
-    (void) walklist (changes, title_proc, NULL);
-    type = T_REMOVED;
-    (void) walklist (changes, title_proc, NULL);
-    title = xmalloc (strlen (srepos) + strlen (str_list) + 1 + 2); /* for 's */
-    (void) sprintf (title, "'%s%s'", srepos, str_list);
-
-    /* to be nice, free up this chunk of memory */
-    free (str_list);
-    str_list = (char *) NULL;
-
     /* call Parse_Info to do the actual logfile updates */
     (void) Parse_Info (CVSROOTADM_LOGINFO, repository, update_logfile_proc, 1);
-
-    /* clean up */
-    free (title);
 }
 
 /*
@@ -470,12 +529,11 @@ update_logfile_proc (repository, filter)
     char *repository;
     char *filter;
 {
-    return (logfile_write (repository, filter, title, message, logfp,
-			   changes));
+    return (logfile_write (repository, filter, message, logfp, changes));
 }
 
 /*
- * concatenate each name onto str_list
+ * concatenate each filename/version onto str_list
  */
 static int
 title_proc (p, closure)
@@ -483,19 +541,58 @@ title_proc (p, closure)
     void *closure;
 {
     struct logfile_info *li;
+    char *c;
 
     li = (struct logfile_info *) p->data;
     if (li->type == type)
     {
+	/* Until we decide on the correct logging solution when we add
+	   directories or perform imports, T_TITLE nodes will only
+	   tack on the name provided, regardless of the format string.
+	   You can verify that this assumption is safe by checking the
+	   code in add.c (add_directory) and import.c (import). */
+
 	(void) strcat (str_list, " ");
-	(void) strcat (str_list, p->key);
+
+	if (li->type == T_TITLE)
+	{
+	    (void) strcat (str_list, p->key);
+	}
+	else
+	{
+	    /* All other nodes use the format string. */
+
+	    for (c = str_list_format; *c != '\0'; c++)
+	    {
+		switch (*c)
+		{
+		case 's':
+		    (void) strcat (str_list, p->key);
+		    break;
+		case 'V':
+		    (void) strcat (str_list, (li->rev_old
+					      ? li->rev_old : "NONE"));
+		    break;
+		case 'v':
+		    (void) strcat (str_list, (li->rev_new
+					      ? li->rev_new : "NONE"));
+		    break;
+		/* All other characters, we insert an empty field (but
+		   we do put in the comma separating it from other
+		   fields).  This way if future CVS versions add formatting
+		   characters, one can write a loginfo file which at least
+		   won't blow up on an old CVS.  */
+		}
+		if (*(c + 1) != '\0')
+		    (void) strcat (str_list, ",");
+	    }
+	}
     }
     return (0);
 }
 
 /*
- * Since some systems don't define this...
- */
+ * Since some systems don't define this...  */
 #ifndef MAXHOSTNAMELEN
 #define	MAXHOSTNAMELEN	256
 #endif
@@ -505,25 +602,185 @@ title_proc (p, closure)
  * filter program.
  */
 static int
-logfile_write (repository, filter, title, message, logfp, changes)
+logfile_write (repository, filter, message, logfp, changes)
     char *repository;
     char *filter;
-    char *title;
     char *message;
     FILE *logfp;
     List *changes;
 {
     char cwd[PATH_MAX];
     FILE *pipefp;
-    char *prog = xmalloc (MAXPROGLEN);
+    char *prog;
     char *cp;
     int c;
     int pipestatus;
+    char *fmt_percent;		/* the location of the percent sign
+				   that starts the format string. */
 
-    /*
-     * Only 1 %s argument is supported in the filter
-     */
-    (void) sprintf (prog, filter, title);
+    prog = xmalloc (MAXPROGLEN);
+      
+    /* The user may specify a format string as part of the filter.
+       Originally, `%s' was the only valid string.  The string that
+       was substituted for it was:
+
+         <repository-name> <file1> <file2> <file3> ...
+
+       Each file was either a new directory/import (T_TITLE), or a
+       added (T_ADDED), modified (T_MODIFIED), or removed (T_REMOVED)
+       file.
+
+       It is desirable to preserve that behavior so lots of commitlog
+       scripts won't die when they get this new code.  At the same
+       time, we'd like to pass other information about the files (like
+       version numbers, statuses, or checkin times).
+
+       The solution is to allow a format string that allows us to
+       specify those other pieces of information.  The format string
+       will be composed of `%' followed by a single format character,
+       or followed by a set of format characters surrounded by `{' and
+       `}' as separators.  The format characters are:
+
+         s = file name
+	 V = old version number (pre-checkin)
+	 v = new version number (post-checkin)
+
+       For example, valid format strings are:
+
+         %{}
+	 %s
+	 %{s}
+	 %{sVv}
+
+       There's no reason that more items couldn't be added (like
+       modification date or file status [added, modified, updated,
+       etc.]) -- the code modifications would be minimal (logmsg.c
+       (title_proc) and commit.c (check_fileproc)).
+
+       The output will be a string of tokens separated by spaces.  For
+       backwards compatibility, the the first token will be the
+       repository name.  The rest of the tokens will be
+       comma-delimited lists of the information requested in the
+       format string.  For example, if `/u/src/master' is the
+       repository, `%{sVv}' is the format string, and three files
+       (ChangeLog, Makefile, foo.c) were modified, the output might
+       be:
+
+         /u/src/master ChangeLog,1.1,1.2 Makefile,1.3,1.4 foo.c,1.12,1.13
+
+       Why this duplicates the old behavior when the format string is
+       `%s' is left as an exercise for the reader. */
+
+    fmt_percent = strchr (filter, '%');
+    if (fmt_percent)
+    {
+	int len;
+	char *srepos;
+	char *fmt_begin, *fmt_end;	/* beginning and end of the
+					   format string specified in
+					   filter. */
+	char *fmt_continue;		/* where the string continues
+					   after the format string (we
+					   might skip a '}') somewhere
+					   in there... */
+
+	/* Grab the format string. */
+
+	if ((*(fmt_percent + 1) == ' ') || (*(fmt_percent + 1) == '\0'))
+	{
+	    /* The percent stands alone.  This is an error.  We could
+	       be treating ' ' like any other formatting character, but
+	       using it as a formatting character seems like it would be
+	       a mistake.  */
+
+	    /* Would be nice to also be giving the line number.  */
+	    error (0, 0, "loginfo: '%%' not followed by formatting character");
+	    fmt_begin = fmt_percent + 1;
+	    fmt_end = fmt_begin;
+	    fmt_continue = fmt_begin;
+	}
+	else if (*(fmt_percent + 1) == '{')
+	{
+	    /* The percent has a set of characters following it. */
+
+	    fmt_begin = fmt_percent + 2;
+	    fmt_end = strchr (fmt_begin, '}');
+	    if (fmt_end)
+	    {
+		/* Skip over the '}' character. */
+
+		fmt_continue = fmt_end + 1;
+	    }
+	    else
+	    {
+		/* There was no close brace -- assume that format
+                   string continues to the end of the line. */
+
+		/* Would be nice to also be giving the line number.  */
+		error (0, 0, "loginfo: '}' missing");
+		fmt_end = fmt_begin + strlen (fmt_begin);
+		fmt_continue = fmt_end;
+	    }
+	}
+	else
+	{
+	    /* The percent has a single character following it.  FIXME:
+	       %% should expand to a regular percent sign.  */
+
+	    fmt_begin = fmt_percent + 1;
+	    fmt_end = fmt_begin + 1;
+	    fmt_continue = fmt_end;
+	}
+
+	len = fmt_end - fmt_begin;
+	str_list_format = xmalloc (sizeof (char) * (len + 1));
+	strncpy (str_list_format, fmt_begin, len);
+	str_list_format[len] = '\0';
+	
+	/* Allocate a chunk of memory to hold the string. */
+
+	if (!str_list)
+	    str_list = xmalloc (MAXLISTLEN);
+	str_list[0] = '\0';
+
+	/* Add entries to the string.  Don't bother looking for
+           entries if the format string is empty. */
+
+	if (str_list_format[0] != '\0')
+	{
+	    type = T_TITLE;
+	    (void) walklist (changes, title_proc, NULL);
+	    type = T_ADDED;
+	    (void) walklist (changes, title_proc, NULL);
+	    type = T_MODIFIED;
+	    (void) walklist (changes, title_proc, NULL);
+	    type = T_REMOVED;
+	    (void) walklist (changes, title_proc, NULL);
+	}
+
+	/* Construct the final string. */
+
+	srepos = Short_Repository (repository);
+
+	(void) strncpy (prog, filter, fmt_percent - filter);
+	prog[fmt_percent - filter] = '\0';
+	(void) strcat (prog, "'");
+	(void) strcat (prog, srepos);
+	(void) strcat (prog, str_list);
+	(void) strcat (prog, "'");
+	(void) strcat (prog, fmt_continue);
+	    
+	/* To be nice, free up some memory. */
+
+	free (str_list);
+	str_list = (char *) NULL;
+    }
+    else
+    {
+	/* There's no format string. */
+	strcpy (prog, filter);
+    }
+
     if ((pipefp = run_popen (prog, "w")) == NULL)
     {
 	if (!noexec)
@@ -569,5 +826,21 @@ editinfo_proc(repository, editor)
 	free (editinfo_editor);
 
     editinfo_editor = xstrdup (editor);
+    return (0);
+}
+
+/*  This routine is calld by Parse_Info.  it asigns the name of the
+ *  message verification script to the global variable verify_script
+ */
+static int
+verifymsg_proc (repository, script)
+    char *repository;
+    char *script;
+{
+    if (verifymsg_script && strcmp (verifymsg_script, script) == 0)
+	return (0);
+    if (verifymsg_script)
+	free (verifymsg_script);
+    verifymsg_script = xstrdup (script);
     return (0);
 }

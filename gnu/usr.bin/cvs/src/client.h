@@ -82,16 +82,8 @@ send_file_names PROTO((int argc, char **argv, unsigned int flags));
  * local is nonzero if we should not recurse (-l option).
  */
 void
-send_files PROTO((int argc, char **argv, int local, int aflag));
-
-/*
- * Like send_files but never send "Unchanged"--just send the contents of the
- * file in that case.  This is used to fix it if you import a directory which
- * happens to have CVS directories (yes it is obscure but the testsuite tests
- * it).
- */
-void
-send_files_contents PROTO((int argc, char **argv, int local, int aflag));
+send_files PROTO((int argc, char **argv, int local, int aflag,
+		  int build_dirs));
 
 /* Send an argument to the remote server.  */
 void
@@ -160,14 +152,15 @@ extern struct response responses[];
 
 extern void client_senddate PROTO((const char *date));
 extern void client_expand_modules PROTO((int argc, char **argv, int local));
-extern void client_send_expansions PROTO((int local, char *where));
+extern void client_send_expansions PROTO((int local, char *where,
+					  int build_dirs));
 extern void client_nonexpanded_setup PROTO((void));
 
 extern void send_init_command PROTO ((void));
 
 extern char **failed_patches;
 extern int failed_patches_count;
-extern char toplevel_wd[];
+extern char *toplevel_wd;
 extern void client_import_setup PROTO((char *repository));
 extern int client_process_import_file
     PROTO((char *message, char *vfile, char *vtag,

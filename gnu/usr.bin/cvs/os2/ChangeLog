@@ -1,3 +1,93 @@
+Wed Jan 15 23:56:12 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* watcom.mak (OS2_OBJECTS): Remove strippath.
+
+	* Makefile.in (DISTFILES): Add os2inc.h and watcom.mak.
+
+Thu Jan  2 13:30:56 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* filesubr.c, pwd.c, pwd.h, run.c, stripslash.c:
+	Remove "675" paragraph;	see ../ChangeLog for rationale.
+
+Wed Jan  1 22:50:31 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* options.h: Reword comment for TMPDIR_DFLT to make it clear that
+	this isn't specific to the pserver server.
+
+Wed Dec 18 10:51:38 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* Makefile.in (CFLAGS): Specify -Gd- not -Gd+.  The documentation
+	says this causes a static link, although it hasn't yet been
+	verified whether this option is sufficient to make the binary work
+	on a system without the compiler's DLL.
+
+Fri Dec  6 11:00:49 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* os2inc.h, watcom.mak: Add GPL notice.
+
+1996-11-24  Ullrich von Bassewitz  <uz@wuschel.ibb.schwaben.com>
+
+	Changes for Watcom C:
+	* README: Describe watcom port.
+	* config.h: Include stdio.h and errno.h.
+	* config.h: If EACCES is not defined, define it to EACCESS.
+	* filesubr.c: Use EACCES not EACCESS.
+	* config.h [__WATCOMC__]: Define _setmode and _cwait.
+	Don't define HAVE_DIRENT_H.  Don't declare getpid.  Don't
+	define NEED_DECOY_PERMISSIONS.  Don't define R_OK and friends.
+	* os2inc.h: New file; includes os2.h but protected against
+	multiple inclusion.
+	* config.h: Include os2inc.h before defining sleep.
+	* filesubr.c, getpass.c, popen.c, run.c: Include os2inc.h rather than
+	trying to go through the right contortions to include os2.h
+	ourselves.
+	* popen.c (popen) [__WATCOMC__]: Use _hdopen together with fdopen.
+	(popenRW): Change pid from PID to int.
+	* tcpip.h [__WATCOMC__]: Work around errno value conflict
+	between the TCP/IP header and errno.h.
+	* watcom.mak: New file.
+
+Sat Nov 23 18:36:11 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* README: Try to clarify status vis-a-vis client vs. local.
+
+Tue Nov 19 17:21:52 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* Makefile.in (OS2_SOURCES): Remove strippath.c
+	(OS2_OBJECTS): Remove strippath.obj.
+	* strippath.c: Removed.
+
+Fri Nov  8 14:28:19 1996  Ullrich von Bassewitz  <uz@wuschel.ibb.schwaben.com>
+
+	* filesubr.c (expand_wild): Check for ERROR_NO_MORE_FILES from
+	DosFindFirst instead of ERROR_FILE_NOT_FOUND; that is what the
+	function actually returns.  Cope with the fact that DosFindFirst
+	and DosFindNext return only the name of the file itself, not any
+	directory names.
+
+Fri Nov 08 11:46:50 1996  Jim Kingdon
+
+	IBM ICC (OS/2) lint:
+	* filesubr.c: Cast from const char * to char * before passing to
+	various system functions.
+	(xchmod): Print error message instead of trying to return ENOENT.
+	(unlink_file): Only call xchmod if the file exists.
+
+	* Makefile.in (CFLAGS): Don't specify -Wpro; there is no way
+	that we could prototype getopt, for example.
+	Don't specify -Wuse.  The EDC0805 warning ("Automatic
+	variable line_allocated is set but not referenced.") warns
+	about unavoidable constructs like line_allocated in
+	client.c (send_file_names).
+
+Sat Oct 26 16:21:26 1996  Jim Blandy  <jimb@totoro.cyclic.com>
+
+	* config.h (HAVE_TZSET): Add a #definition for this.
+
+Tue Oct  8 12:37:35 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* options.h (HAD_RCS4): Remove; no longer used.
+
 Thu Sep 26 14:15:55 1996  Jim Kingdon  <kingdon@cyclic.com>
 
 	* filesubr.c (mkdir_if_needed): mkdir only takes one

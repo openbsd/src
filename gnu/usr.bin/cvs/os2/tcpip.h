@@ -43,6 +43,30 @@
 #include	<errno.h>
 
 #if defined( TCPIP_IBM )
+/* Here comes some ugly stuff: The watcom compiler and the IBM TCPIP
+ * toolkit do not work together very well. The return codes for the
+ * socket calls are not integrated into the usual error codes, there
+ * are separate values instead. This results in a crash for two values.
+ * Since these values are not needed for socket access as far as I can
+ * see, I will save those values and redefine them after including
+ * nerrno.h (types.h will include nerrno.h, so this is needed here).
+ */
+#       ifdef __WATCOMC__
+                /* First check the numeric values */
+#               if ENAMETOOLONG != 35
+#                       error "ENAMETOOLONG: value unknown"
+#               endif
+#               if ENOTEMPTY != 39
+#                       error "ENOTEMPTY: value unknown"
+#               endif
+#               undef  ENAMETOOLONG
+#               undef  ENOTEMPTY
+#               include <nerrno.h>
+#               undef  ENAMETOOLONG
+#               undef  ENOTEMPTY
+#               define ENAMETOOLONG     35
+#               define ENOTEMPTY        39
+#       endif
 #	include	<types.h>
 #	if !defined( TCPIP_IBM_NOHIDE )
 #		define send IbmSockSend

@@ -27,7 +27,6 @@ SOURCES = \
   rcmd.c \
   run.c \
   startserver.c \
-  strippath.c \
   stripslash.c \
   waitpid.c \
   win32.c

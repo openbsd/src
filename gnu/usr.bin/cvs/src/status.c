@@ -79,7 +79,7 @@ status (argc, argv)
       send_file_names (argc, argv, SEND_EXPAND_WILD);
       /* XXX This should only need to send file info; the file
 	 contents themselves will not be examined.  */
-      send_files (argc, argv, local, 0);
+      send_files (argc, argv, local, 0, 0);
 
       send_to_server ("status\012", 0);
       err = get_responses_and_close ();
@@ -326,7 +326,7 @@ tag_list_proc (p, closure)
 
     buf = xmalloc (80 + strlen (p->key)
 		   + (branch ? strlen (branch) : strlen (p->data)));
-    sprintf (buf, "\t%-25.25s\t(%s: %s)\n", p->key,
+    sprintf (buf, "\t%-25s\t(%s: %s)\n", p->key,
 	     branch ? "branch" : "revision",
 	     branch ? branch : p->data);
     cvs_output (buf, 0);

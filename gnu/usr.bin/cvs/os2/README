@@ -1,7 +1,9 @@
-        This port requires IBM C/C++ and the IBM TCPIP library.
-You'll need to edit the makefile to reflect your system's paths
-(unless you're our customer for this port, in which case the paths
-are correct because we did the port on your machine. :-) ).
+        This port requires IBM C/C++ and the IBM TCPIP library.  It
+has probably only been tested with the CVS client.  Local CVS might or
+might not work, and the server would definitely not work.  You'll need
+to edit the makefile to reflect your system's paths (unless you're our
+customer for this port, in which case the paths are correct because we
+did the port on your machine. :-) ).
 
         That should be all -- edit the makefile, do "make" and get
 os2\cvs.exe.  Assuming you have edited the `install_dir' variable in
@@ -17,5 +19,27 @@ such as emacs will generally do this).
         You will get warnings during the compilation; ignore them.
 Report bugs to <bug-cvs@prep.ai.mit.edu>.
 
--Karl
- <kfogel@cyclic.com>
+
+
+Some notes on the watcom port:
+------------------------------
+
+You need the OS/2 TCPIP developers toolkit to translate the sources.
+This is not as bad as it sounds, since the toolkit is on your OS/2
+CD.
+
+To compile the sources, enter
+
+        wmake -f watcom.mak
+
+at the OS/2 prompt.
+
+The executable created by the watcom compiler does *not* need a runtime
+DLL.
+
+
+        Uz      (uz@musoftware.com)
+
+Credits:
+
+Original port in 1995 by Karl Fogel <kfogel@cyclic.com>.

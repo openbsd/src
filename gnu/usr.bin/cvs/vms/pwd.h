@@ -1,9 +1,7 @@
 #ifndef _PWD_H
 #define _PWD_H
 
-#define uid_t unsigned int
-#define gid_t unsigned int
-#define pid_t int
+#include <sys/types.h>
 
 struct passwd {
    char  *pw_name;

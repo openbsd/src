@@ -25,23 +25,24 @@ Create_Admin (dir, update_dir, repository, tag, date)
 {
     FILE *fout;
     char *cp;
-    char tmp[PATH_MAX];
+    char *tmp;
 
 #ifdef SERVER_SUPPORT
     if (trace)
     {
-	char wd[PATH_MAX];
-	getwd (wd);
+	char *wd = xgetwd ();
 	fprintf (stderr, "%c-> Create_Admin (%s, %s, %s, %s, %s) in %s\n",
 		 (server_active) ? 'S' : ' ',
                 dir, update_dir, repository, tag ? tag : "",
                 date ? date : "", wd);
+	free (wd);
     }
 #endif
 
     if (noexec)
 	return;
 
+    tmp = xmalloc (strlen (dir) + 100);
     if (dir != NULL)
 	(void) sprintf (tmp, "%s/%s", dir, CVSADM);
     else
@@ -67,7 +68,7 @@ Create_Admin (dir, update_dir, repository, tag, date)
 	    error (1, errno, "cannot open %s/%s", update_dir, CVSADM_REP);
     }
     cp = repository;
-    strip_path (cp);
+    strip_trailing_slashes (cp);
 
 #ifdef RELATIVE_REPOS
     /*
@@ -76,11 +77,12 @@ Create_Admin (dir, update_dir, repository, tag, date)
      */
     if (CVSroot_directory != NULL)
     {
-	char path[PATH_MAX];
+	char *path = xmalloc (strlen (CVSroot_directory) + 10);
 
 	(void) sprintf (path, "%s/", CVSroot_directory);
 	if (strncmp (repository, path, strlen (path)) == 0)
 	    cp = repository + strlen (path);
+	free (path);
     }
 #endif
 
@@ -137,4 +139,5 @@ Create_Admin (dir, update_dir, repository, tag, date)
     }
 #endif
 
+    free (tmp);
 }

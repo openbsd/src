@@ -26,9 +26,15 @@ struct buffer
        both.  */
 
     /* Read data into the buffer DATA.  There is room for up to SIZE
-       bytes.  At least NEED bytes must be read (NEED may be 0).  This
-       should return 0 on success, or -1 on end of file, or an errno
-       code.  It should set the number of bytes read in *GOT.  */
+       bytes.  In blocking mode, wait until some input, at least NEED
+       bytes, is available (NEED may be 0 but that is the same as NEED
+       == 1).  In non-blocking mode return immediately no matter how
+       much input is available; NEED is ignored. Return 0 on success,
+       or -1 on end of file, or an errno code.  Set the number of
+       bytes read in *GOT.
+       
+       If there are a nonzero number of bytes available, less than NEED,
+       followed by end of file, just read those bytes and return 0.  */
     int (*input) PROTO((void *closure, char *data, int need, int size,
 			int *got));
 

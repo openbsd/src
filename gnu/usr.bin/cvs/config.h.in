@@ -117,6 +117,9 @@
 /* Define if you have the putenv function.  */
 #undef HAVE_PUTENV
 
+/* Define if you have the readlink function.  */
+#undef HAVE_READLINK
+
 /* Define if you have the setvbuf function.  */
 #undef HAVE_SETVBUF
 
@@ -137,6 +140,9 @@
 
 /* Define if you have the timezone function.  */
 #undef HAVE_TIMEZONE
+
+/* Define if you have the tzset function.  */
+#undef HAVE_TZSET
 
 /* Define if you have the vfork function.  */
 #undef HAVE_VFORK

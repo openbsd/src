@@ -518,7 +518,15 @@ rtag_fileproc (callerdat, finfo)
 
     /* Lock the directory if it is not already locked.  We might be
        able to rely on rtag_dirproc for this.  */
-    tag_lockdir (finfo->repository);
+
+    /* It would be nice to provide consistency with respect to
+       commits; however CVS lacks the infrastructure to do that (see
+       Concurrency in cvs.texinfo and comment in do_recursion).  We
+       can and will prevent simultaneous tag operations from
+       interfering with each other, by write locking each directory as
+       we enter it, and unlocking it as we leave it.  */
+
+    lock_dir_for_write (finfo->repository);
 
     /* find the parsed RCS data */
     if ((rcsfile = finfo->rcs) == NULL)
@@ -694,7 +702,7 @@ rtag_filesdoneproc (callerdat, err, repos, update_dir, entries)
     char *update_dir;
     List *entries;
 {
-    tag_unlockdir ();
+    Lock_Cleanup ();
 
     return (err);
 }

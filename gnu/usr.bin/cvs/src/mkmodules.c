@@ -28,37 +28,50 @@ struct admin_file {
 
    /* This is a one line description of what the file is for.  It is not
       currently used, although one wonders whether it should be, somehow.
-      If NULL, then don't process this file in mkmodules (FIXME: a bit of
+      If NULL, then don't process this file in mkmodules (FIXME?: a bit of
       a kludge; probably should replace this with a flags field).  */
    char *errormsg;
 
    /* Contents which the file should have in a new repository.  To avoid
       problems with brain-dead compilers which choke on long string constants,
       this is a pointer to an array of char * terminated by NULL--each of
-      the strings is concatenated.  */
+      the strings is concatenated.
+
+      If this field is NULL, the file is not created in a new
+      repository, but it can be added with "cvs add" (just as if one
+      had created the repository with a version of CVS which didn't
+      know about the file) and the checked-out copy will be updated
+      without having to add it to checkoutlist.  */
    const char * const *contents;
 };
 
 static const char *const loginfo_contents[] = {
-    "# The \"loginfo\" file is used to control where \"cvs commit\" log information is\n",
-    "# sent.  The first entry on a line is a regular expression which is tested\n",
-    "# against the directory that the change is being made to, relative to the\n",
-    "# $CVSROOT.  For the first match that is found, the remainder of the line is a\n",
-    "# filter program that should expect log information on its standard input\n",
+    "# The \"loginfo\" file controls where \"cvs commit\" log information\n"
+    "# is sent.  The first entry on a line is a regular expression which must match\n",
+    "# the directory that the change is being made to, relative to the\n",
+    "# $CVSROOT.  If a match is found, then the remainder of the line is a filter\n",
+    "# program that should expect log information on its standard input.\n",
     "#\n",
-    "# If the repository name does not match any of the regular expressions in the\n",
-    "# first field of this file, the \"DEFAULT\" line is used, if it is specified.\n",
+    "# If the repository name does not match any of the regular expressions in this\n",
+    "# file, the \"DEFAULT\" line is used, if it is specified.\n",
     "#\n",
-    "# If the name \"ALL\" appears as a regular expression it is always used\n",
-    "# in addition to the first matching regex or \"DEFAULT\".\n",
+    "# If the name ALL appears as a regular expression it is always used\n",
+    "# in addition to the first matching regex or DEFAULT.\n",
     "#\n",
-    "# The filter program may use one and only one \"%s\" modifier (ala printf).  If\n",
-    "# such a \"%s\" is specified in the filter program, a brief title is included\n",
-    "# (as one argument, enclosed in single quotes) showing the relative directory\n",
-    "# name and listing the modified file names.\n",
+    "# You may specify a format string as part of the\n",
+    "# filter.  The string is composed of a `%' followed\n",
+    "# by a single format character, or followed by a set of format\n",
+    "# characters surrounded by `{' and `}' as separators.  The format\n",
+    "# characters are:\n",
+    "#\n",
+    "#   s = file name\n",
+    "#   V = old version number (pre-checkin)\n",
+    "#   v = new version number (post-checkin)\n",
     "#\n",
     "# For example:\n",
-    "#DEFAULT		(echo \"\"; who am i; echo %s; date; cat) >> $CVSROOT/CVSROOT/commitlog\n",
+    "#DEFAULT (echo \"\"; id; echo %s; date; cat) >> $CVSROOT/CVSROOT/commitlog\n",
+    "# or\n",
+    "#DEFAULT (echo \"\"; id; echo %{sVv}; date; cat) >> $CVSROOT/CVSROOT/commitlog\n",
     NULL
 };
 
@@ -81,6 +94,31 @@ static const char *const rcsinfo_contents[] = {
 
 static const char *const editinfo_contents[] = {
     "# The \"editinfo\" file is used to allow verification of logging\n",
+    "# information.  It works best when a template (as specified in the\n",
+    "# rcsinfo file) is provided for the logging procedure.  Given a\n",
+    "# template with locations for, a bug-id number, a list of people who\n",
+    "# reviewed the code before it can be checked in, and an external\n",
+    "# process to catalog the differences that were code reviewed, the\n",
+    "# following test can be applied to the code:\n",
+    "#\n",
+    "#   Making sure that the entered bug-id number is correct.\n",
+    "#   Validating that the code that was reviewed is indeed the code being\n",
+    "#       checked in (using the bug-id number or a seperate review\n",
+    "#       number to identify this particular code set.).\n",
+    "#\n",
+    "# If any of the above test failed, then the commit would be aborted.\n",
+    "#\n",
+    "# Actions such as mailing a copy of the report to each reviewer are\n",
+    "# better handled by an entry in the loginfo file.\n",
+    "#\n",
+    "# One thing that should be noted is the the ALL keyword is not\n",
+    "# supported.  There can be only one entry that matches a given\n",
+    "# repository.\n",
+    NULL
+};
+
+static const char *const verifymsg_contents[] = {
+    "# The \"verifymsg\" file is used to allow verification of logging\n",
     "# information.  It works best when a template (as specified in the\n",
     "# rcsinfo file) is provided for the logging procedure.  Given a\n",
     "# template with locations for, a bug-id number, a list of people who\n",
@@ -246,6 +284,9 @@ static const struct admin_file filelist[] = {
     {CVSROOTADM_EDITINFO,
 	"a %s file can be used to validate log messages",
 	editinfo_contents},
+    {CVSROOTADM_VERIFYMSG,
+	"a %s file can be used to validate log messages",
+	verifymsg_contents},
     {CVSROOTADM_COMMITINFO,
 	"a %s file can be used to configure 'cvs commit' checking",
 	commitinfo_contents},
@@ -268,6 +309,20 @@ static const struct admin_file filelist[] = {
 	/* modules is special-cased in mkmodules.  */
 	NULL,
 	modules_contents},
+    {CVSROOTADM_READERS,
+	"a %s file specifies read-only users",
+	NULL},
+    {CVSROOTADM_WRITERS,
+	"a %s file specifies read/write users",
+	NULL},
+    /* Some have suggested listing CVSROOTADM_PASSWD here too.  The
+       security implications of transmitting hashed passwords over the
+       net are no worse than transmitting cleartext passwords which pserver
+       does, so this isn't a problem.  But I'm worried about the implications
+       of storing old passwords--if someone used a password in the past
+       they might be using it elsewhere, using a similar password, etc,
+       and so it doesn't seem to me like we should be saving old passwords,
+       even hashed.  */
     {NULL, NULL}
 };
 
@@ -289,7 +344,7 @@ mkmodules (dir)
     const struct admin_file *fileptr;
 
     if (save_cwd (&cwd))
-	exit (EXIT_FAILURE);
+	error_exit ();
 
     if ( CVS_CHDIR (dir) < 0)
 	error (1, errno, "cannot chdir to %s", dir);
@@ -315,7 +370,7 @@ mkmodules (dir)
 
 	case -1:			/* fork failed */
 	    (void) unlink_file (temp);
-	    exit (EXIT_FAILURE);
+	    error (1, errno, "cannot check out %s", CVSROOTADM_MODULES);
 	    /* NOTREACHED */
 
 	default:
@@ -393,7 +448,7 @@ mkmodules (dir)
     }
 
     if (restore_cwd (&cwd, NULL))
-	exit (EXIT_FAILURE);
+	error_exit ();
     free_cwd (&cwd);
 
     return (0);
@@ -428,18 +483,30 @@ checkout_file (file, temp)
     char *file;
     char *temp;
 {
-    char rcs[PATH_MAX];
+    char *rcs;
+    RCSNode *rcsnode;
     int retcode = 0;
 
-    (void) sprintf (rcs, "%s%s", file, RCSEXT);
+    if (noexec)
+	return 0;
+
+    rcs = xmalloc (strlen (file) + 5);
+    strcpy (rcs, file);
+    strcat (rcs, RCSEXT);
     if (!isfile (rcs))
-	return (1);
-    run_setup ("%s%s -x,v/ -q -p", Rcsbin, RCS_CO);
-    run_arg (rcs);
-    if ((retcode = run_exec (RUN_TTY, temp, RUN_TTY, RUN_NORMAL)) != 0)
     {
-	error (0, retcode == -1 ? errno : 0, "failed to check out %s file", file);
+	free (rcs);
+	return (1);
     }
+    rcsnode = RCS_parsercsfile (rcs);
+    retcode = RCS_checkout (rcsnode, NULL, NULL, NULL, NULL, temp);
+    if (retcode != 0)
+    {
+	error (0, retcode == -1 ? errno : 0, "failed to check out %s file",
+	       file);
+    }
+    freercsnode (&rcsnode);
+    free (rcs);
     return (retcode);
 }
 

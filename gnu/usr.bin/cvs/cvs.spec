@@ -33,7 +33,7 @@ make install-info
 gzip -9nf $RPM_BUILD_ROOT/usr/info/cvs*
 
 %files
-%doc BUGS COPYING COPYING.LIB ChangeLog ChangeLog.zoo FAQ HACKING
+%doc BUGS COPYING COPYING.LIB FAQ HACKING
 %doc INSTALL MINOR-BUGS NEWS PROJECTS README TESTS TODO
 /usr/bin/cvs
 /usr/bin/cvsbug

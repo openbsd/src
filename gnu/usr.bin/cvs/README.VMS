@@ -165,19 +165,38 @@ to their advantage.
 
 -------------------------------------------------------------------------------
 Wildcard expansion is not yet implemented (i.e. CVS COMMIT *.c won't
-work.)  I have found GPL'd routine which does shell globbing, but I
-have not tried to put it in yet.
+work.)  I think that expand_wild should be calling lib$findfile
+(util.c in gzip is said to provide an example), but noone has gotten
+around to implementing this.
 
-Log messages must be entered on the command line using -m.  I wanted to start
-up TPU for editing log messages, but apparently SYS$SYSTEM:TPU.EXE requires
-some command table parsing through DCL, and cannot be directly invoked using C
-within CVS.  [I did get LSEDIT to launch, but it wasn't interested in argv at
-all.]
+Log messages must be entered on the command line using -m or -F.  You
+can use -e or define the logical EDITOR to cause CVS to try other
+editors (TPU.EXE or any other editor which wants DCL command parsing
+will not work) if you want to test what's available on your system.  I
+haven't tested this, but if you install vi or emacs, chances are it
+will probably work.  Just make sure the .EXE files are in a directory
+listed in VAXC$PATH (is this a typo for DCL$PATH?  Also, will a
+logical name work?).  If someone gets around to implementing it, we
+should probably be using the callable editors (e.g. TPU$TPU), although
+of course we also need interface(s) which are not locked into any
+particular editors.
 
-You can use -e or define the logical EDITOR to cause CVS to try other editors
-if you want to test what's available on your system.  I haven't tested this,
-but if you install vi or emacs, chances are it will probably work.  Just make
-sure the .EXE files are in a directory listed in VAXC$PATH.
+----------------------------------------
+
+Notes regarding compiling on VAX/VMS 6.2 (not Alpha) (These are items
+which hopefully will have cleaner solutions in the future, but here is
+how to get around them for now):
+
+* Need to compile lib/getdate.c with vaxc instead of decc to avoid a
+compiler bugcheck.  Therefore one must add SYS$LIBRARY:VAXCRTL/LIBRARY
+to the link.
+
+* In src/ignore.c, change lstat to stat.  In vms/filesubr.c, change
+"#ifdef S_ISLNK" to "#if 0".
+
+* Ignore the warnings in vms/vmsmunch.c; the system include file
+declares something as an int when it should be void *.  Not *our*
+fault!
 
 Credits:
 

@@ -1,3 +1,11 @@
+1997-01-01  Fred Fish  <fnf@ninemoons.com>
+
+	* Makefile.in (CC): Use @CC@ rather than hard coded "cc".
+	(CFLAGS): Use @CFLAGS@ rather than hard coded "-O".
+	(LDFLAGS): Use @LDFLAGS@ rather than hard coded "-L. -lz".
+	(prefix): Use @prefix@ rather than hard coded "/usr/local".
+	(example, minigzip): Use $(LIBS) when linking.
+
 Wed Sep 11 00:59:44 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
 
 	* build_zlib.com: Add infblock.c and infcodes.c.

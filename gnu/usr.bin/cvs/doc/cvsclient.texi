@@ -9,13 +9,12 @@
 This document describes the client/server protocol used by CVS.  It does
 not describe how to use or administer client/server CVS; see the regular
 CVS manual for that.  This is version @value{CVSVN} of the protocol
-specification---@xref{Introduction} for more on what this version number
+specification---@xref{Introduction}, for more on what this version number
 means.
 
 @menu
 * Introduction::      What is CVS and what is the client/server protocol for?
 * Goals::             Basic design decisions, requirements, scope, etc.
-* Notes::             Notes on the current implementation
 * Protocol Notes::    Possible enhancements, limitations, etc. of the protocol
 * Connection and Authentication::  Various ways to connect to the server
 * Protocol::          Complete description of the protocol
@@ -60,7 +59,7 @@ versions of this specification.  Although the specification is currently
 maintained in conjunction with the CVS implementation, and carries the
 same version number, it also intends to document what is involved with
 interoperating with other implementations (such as other versions of
-CVS); see @xref{Requirements}.  This version number should not be used
+CVS); see @ref{Requirements}.  This version number should not be used
 by clients or servers to determine what variant of the protocol to
 speak; they should instead use the @code{valid-requests} and
 @code{Valid-responses} mechanism (@pxref{Protocol}), which is more
@@ -83,45 +82,28 @@ Security and authentication are handled outside this protocol (but see
 below about @samp{cvs kserver} and @samp{cvs pserver}).
 
 @item
-This might be a first step towards adding transactions to CVS (i.e. a
-set of operations is either executed atomically or none of them is
-executed), improving the locking, or other features.  The current server
-implementation is a long way from being able to do any of these
-things.  The protocol, however, is not known to contain any defects
-which would preclude them.
+The protocol makes it possible for updates to be atomic with respect to
+checkins; that is if someone commits changes to several files in one cvs
+command, then an update by someone else would either get all the
+changes, or none of them.  The current @sc{cvs} server can't do this,
+but that isn't the protocol's fault.
 
 @item
-The server never has to have any CVS locks in place while it is waiting
-for communication with the client.  This makes things robust in the face
-of flaky networks.
-
-@item
-Data is transferred in large chunks, which is necessary for good
-performance.  In fact, currently the client uploads all the data
-(without waiting for server responses), and then waits for one server
-response (which consists of a massive download of all the data).  There
-may be cases in which it is better to have a richer interraction, but
-the need for the server to release all locks whenever it waits for the
-client makes it complicated.
+The protocol is, with a few exceptions, transaction-based.  That is, the
+client sends all its requests (without waiting for server responses),
+and then waits for the server to send back all responses (without
+waiting for further client requests).  This has the advantage of
+minimizing network turnarounds and the disadvantage of sometimes
+transferring more data than would be necessary if there were a richer
+interaction.  Another, more subtle, advantage is that there is no need
+for the protocol to provide locking for features such as making checkins
+atomic with respect to updates.  Any such locking can be handled
+entirely by the server.  A good server implementation (such as the
+current @sc{cvs} server) will make sure that it does not have any such
+locks in place whenever it is waiting for communication with the client;
+this prevents one client on a slow or flaky network from interfering
+with the work of others.
 @end itemize
-
-@node Notes
-@chapter Notes on the Current Implementation
-
-The client is built in to the normal @code{cvs} program, triggered by a
-specially-formatted @code{CVSROOT} variable, for example
-@code{:server:cygnus.com:/rel/cvsfiles}.
-
-The client stores what is stored in checked-out directories (including
-@file{CVS}).  The way these are stored is totally compatible with
-standard CVS.  The server requires no storage other than the repository,
-which also is totally compatible with standard CVS.
-
-The current server implementation can use up huge amounts of memory
-when transmitting a lot of data over a slow link (i.e. the network is
-slower than the server can generate the data).  There is some
-experimental code (see @code{SERVER_FLOWCONTROL} in options.h) which
-should help significantly.
 
 @node Protocol Notes
 @chapter Notes on the Protocol
@@ -137,6 +119,10 @@ of "cvs edit" in this case is the most sensible course (the "cvs edit"
 could be handled by a package like VC for emacs).  This would also allow
 local operation of @code{cvs diff} without arguments.
 
+@c It isn't clear exactly how this should relate to a more general
+@c multisite feature (in which one can modify the local copy even if the
+@c network is down between the local and the master, and then they get
+@c reconciled by a potentially manual process).
 @item
 Have the client keep a copy of some part of the repository.  This allows
 all of @code{cvs diff} and large parts of @code{cvs update} and
@@ -191,7 +177,11 @@ implementation, by having inetd call "cvs pserver") which defaults to
 connects, sends the string @samp{BEGIN AUTH REQUEST}, a linefeed, the
 cvs root, a linefeed, the username, a linefeed, the password trivially
 encoded (see scramble.c in the cvs sources), a linefeed, the string
-@samp{END AUTH REQUEST}, and a linefeed.  The server responds with
+@samp{END AUTH REQUEST}, and a linefeed.  The client must sent the
+identical string for cvs root here, as it sends later, in the
+@code{Root} request of the cvs
+protocol itself.  Servers are encouraged to enforce this restriction.
+The server responds with
 @samp{I LOVE YOU} and a linefeed if the authentication is successful or
 @samp{I HATE YOU} and a linefeed if the authentication fails.  After
 receiving @samp{I LOVE YOU}, the client proceeds with the cvs protocol.
@@ -216,6 +206,7 @@ to a horizontal tab.
 * Responses::                   
 * Example::                     
 * Requirements::
+* Obsolete::                        Former protocol features
 @end menu
 
 @node Entries Lines
@@ -332,23 +323,19 @@ request-list is a space separated list of tokens.
 Response expected: yes.
 Ask the server to send back a @code{Valid-requests} response.
 
-@item Repository @var{repository} \n
-Response expected: no.  Tell the server what repository to use.  This
-should be a directory name from a previous server response.  Note that
-this both gives a default for @code{Entry } and @code{Modified } and
-also for @code{ci} and the other commands; normal usage is to send a
-@code{Repository } for each directory in which there will be an
-@code{Entry } or @code{Modified }, and then a final @code{Repository }
-for the original directory, then the command.
-
 @item Directory @var{local-directory} \n
 Additional data: @var{repository} \n.  Response expected: no.
-This is like @code{Repository},
-but the local name of the directory may differ from the repository name.
+Tell the server what directory to use.  The @var{repository} should be a
+directory name from a previous server response.  Note that
+this both gives a default for @code{Entry} and @code{Modified} and
+also for @code{ci} and the other commands; normal usage is to send 
+@code{Directory} for each directory in which there will be an
+@code{Entry} or @code{Modified}, and then a final @code{Directory}
+for the original directory, then the command.
 If the client uses this request, it affects the way the server returns
 pathnames; see @ref{Responses}.  @var{local-directory} is relative to
 the top level at which the command is occurring (i.e. the last
-@code{Directory} or @code{Repository} which is sent before the command);
+@code{Directory} which is sent before the command);
 to indicate that top level, @samp{.} should be send for
 @var{local-directory}.
 
@@ -364,7 +351,7 @@ request.
 
 @item Static-directory \n
 Response expected: no.  Tell the server that the directory most recently
-specified with @code{Repository} or @code{Directory} should not have
+specified with @code{Directory} should not have
 additional files checked out unless explicitly requested.  The client
 sends this if the @code{Entries.Static} flag is set, which is controlled
 by the @code{Set-static-directory} and @code{Clear-static-directory}
@@ -372,7 +359,7 @@ responses.
 
 @item Sticky @var{tagspec} \n
 Response expected: no.  Tell the server that the directory most recently
-specified with @code{Repository} has a sticky tag or date @var{tagspec}.
+specified with @code{Directory} has a sticky tag or date @var{tagspec}.
 The first character of @var{tagspec} is @samp{T} for a tag, or @samp{D}
 for a date.  The remainder of @var{tagspec} contains the actual tag or
 date.
@@ -392,42 +379,29 @@ Such a program would have been previously set with the
 @item Entry @var{entry-line} \n
 Response expected: no.  Tell the server what version of a file is on the
 local machine.  The name in @var{entry-line} is a name relative to the
-directory most recently specified with @code{Repository}.  If the user
+directory most recently specified with @code{Directory}.  If the user
 is operating on only some files in a directory, @code{Entry} requests
 for only those files need be included.  If an @code{Entry} request is
-sent without @code{Modified}, @code{Unchanged}, or @code{Lost} for that
-file the meaning depends on whether @code{UseUnchanged} has been sent;
-if it has been it means the file is lost, if not it means the file is
-unchanged.
+sent without @code{Modified} or @code{Unchanged}, it means the file is
+lost (does not exist in the working directory).
 
 @item Modified @var{filename} \n
 Response expected: no.  Additional data: mode, \n, file transmission.
 Send the server a copy of one locally modified file.  @var{filename} is
-relative to the most recent repository sent with @code{Repository}.  If
+relative to the most recent repository sent with @code{Directory}.  If
 the user is operating on only some files in a directory, only those
 files need to be included.  This can also be sent without @code{Entry},
 if there is no entry for the file.
 
-@item Lost @var{filename} \n
-Response expected: no.  Tell the server that @var{filename} no longer
-exists.  The name is relative to the most recent repository sent with
-@code{Repository}.  This is used for any case in which @code{Entry} is
-being sent but the file no longer exists.  If the client has issued the
-@code{UseUnchanged} request, then this request is not used.
-
 @item Unchanged @var{filename} \n
 Response expected: no.  Tell the server that @var{filename} has not been
 modified in the checked out directory.  The name is relative to the most
-recent repository sent with @code{Repository}.  This request can only be
-issued if @code{UseUnchanged} has been sent.
+recent repository sent with @code{Directory}.
 
 @item UseUnchanged \n
-Response expected: no.  Tell the server that the client will be
-indicating unmodified files with @code{Unchanged}, and that files for
-which no information is sent are nonexistent on the client side, not
-unchanged.  This is necessary for correct behavior since only the server
-knows what possible files may exist, and thus what files are
-nonexistent.
+Response expected: no.  To specify the version of the protocol described
+in this document, servers must support this request (although it need
+not do anything) and clients must issue it.
 
 @item Notify @var{filename} \n
 Response expected: no.
@@ -533,9 +507,9 @@ need to expand modules on the client side.
 @itemx editors \n
 @itemx annotate \n
 Response expected: yes.  Actually do a cvs command.  This uses any
-previous @code{Argument}, @code{Repository}, @code{Entry},
-@code{Modified}, or @code{Lost} requests, if they have been sent.  The
-last @code{Repository} sent specifies the working directory at the time
+previous @code{Argument}, @code{Directory}, @code{Entry}, or
+@code{Modified} requests, if they have been sent.  The
+last @code{Directory} sent specifies the working directory at the time
 of the operation.  No provision is made for any input from the user.
 This means that @code{ci} must use a @code{-m} argument if it wants to
 specify a log message.
@@ -548,18 +522,18 @@ directory and @emph{not} a fully qualified @code{CVSROOT} variable.  The
 
 @itemx update \n
 Response expected: yes.  Actually do a @code{cvs update} command.  This
-uses any previous @code{Argument}, @code{Repository}, @code{Entry},
-@code{Modified}, or @code{Lost} requests, if they have been sent.  The
-last @code{Repository} sent specifies the working directory at the time
+uses any previous @code{Argument}, @code{Directory}, @code{Entry},
+or @code{Modified} requests, if they have been sent.  The
+last @code{Directory} sent specifies the working directory at the time
 of the operation.  The @code{-I} option is not used--files which the
 client can decide whether to ignore are not mentioned and the client
 sends the @code{Questionable} request for others.
 
 @item import \n
 Response expected: yes.  Actually do a @code{cvs import} command.  This
-uses any previous @code{Argument}, @code{Repository}, @code{Entry},
-@code{Modified}, or @code{Lost} requests, if they have been sent.  The
-last @code{Repository} sent specifies the working directory at the time
+uses any previous @code{Argument}, @code{Directory}, @code{Entry}, or
+@code{Modified} requests, if they have been sent.  The
+last @code{Directory} sent specifies the working directory at the time
 of the operation.  The files to be imported are sent in @code{Modified}
 requests (files which the client knows should be ignored are not sent;
 the server must still process the CVSROOT/cvsignore file unless -I ! is
@@ -573,8 +547,8 @@ argument.
 Response expected: yes.  Actually do the @code{cvs watch on}, @code{cvs
 watch off}, @code{cvs watch add}, and @code{cvs watch remove} commands,
 respectively.  This uses any previous @code{Argument},
-@code{Repository}, @code{Entry}, @code{Modified}, or @code{Lost}
-requests, if they have been sent.  The last @code{Repository} sent
+@code{Directory}, @code{Entry}, or @code{Modified}
+requests, if they have been sent.  The last @code{Directory} sent
 specifies the working directory at the time of the operation.
 
 @item release \n
@@ -634,14 +608,13 @@ message and exiting---this should be investigated further).
 
 @c FIXME: should better document when the specified repository needs to
 @c end in "/.".
-Pathnames are of the actual files operated on (i.e. they do not contain
-@samp{,v} endings), and are suitable for use in a subsequent
-@code{Repository} request.  However, if the client has used the
-@code{Directory} request, then it is instead a local directory name
+In the following, @var{pathname} actually indicates a pair of
+pathnames.  First, a local directory name
 relative to the directory in which the command was given (i.e. the last
 @code{Directory} before the command).  Then a newline and a repository
-name (the pathname which is sent if @code{Directory} is not used).  Then
-the slash and the filename.  For example, for a file @file{i386.mh}
+name.  Then
+a slash and the filename (without a @samp{,v} ending).
+For example, for a file @file{i386.mh}
 which is in the local directory @file{gas.clean/config} and for which
 the repository is @file{/rel/cvsfiles/devo/gas/config}:
 
@@ -827,77 +800,181 @@ The command completed successfully.
 @node Example
 @section Example
 
-@c FIXME: Use Directory, not Repository!
-@c FIXME-less-important: Use Created and Update-existing, not Updated.
-@c FIXME: the presence of timestamps in the entries lines is not right.
+@c The C:/S: convention is in imitation of RFC1869 (and presumably
+@c other RFC's).  In other formatting concerns, we might want to think
+@c about whether there is an easy way to provide RFC1543 formatting
+@c (without negating the advantages of texinfo), and whether we should
+@c use RFC822-style BNF (I fear that would be less clear than
+@c what we do now, however).  Plus what about IETF terminology (SHOULD,
+@c MUST, etc.) or ISO terminology (shall, should, or whatever they are)?
+Here is an example; lines are prefixed by @samp{C: } to indicate the
+client sends them or @samp{S: } to indicate the server sends them.
 
-Lines beginning with @samp{c>} are sent by the client; lines beginning
-with @samp{s>} are sent by the server; lines beginning with @samp{#} are
-not part of the actual exchange.
+The client starts by connecting, sending the root, and completing the
+protocol negotiation.  In actual practice the lists of valid responses
+and requests would be longer.
+@c The reason that we artificially shorten the lists is to avoid phony
+@c line breaks.  Any better solutions?
+@c Other than that, this exchange is taken verbatim from the data
+@c exchanged by CVS (as of Nov 1996).  That is why some of the requests and
+@c reponses are not quite what you would pick for pedagogical purposes.
 
 @example
-c> Root /rel/cvsfiles
-# In actual practice the lists of valid responses and requests would
-# be longer
-c> Valid-responses Updated Checked-in M ok error
-c> valid-requests
-s> Valid-requests Root co Modified Entry Repository ci Argument Argumentx
-s> ok
-# cvs co devo/foo
-c> Argument devo/foo
-c> co
-s> Updated /rel/cvsfiles/devo/foo/foo.c
-s> /foo.c/1.4/Mon Apr 19 15:36:47 1993 Mon Apr 19 15:36:47 1993//
-s> 26
-s> int mein () @{ abort (); @}
-s> Updated /rel/cvsfiles/devo/foo/Makefile
-s> /Makefile/1.2/Mon Apr 19 15:36:47 1993 Mon Apr 19 15:36:47 1993//
-s> 28
-s> foo: foo.c
-s>         $(CC) -o foo $<
-s> ok
-# The current implementation would break the connection here and make a
-# new connection for the next command.  However, the protocol allows it
-# to keep the connection open and continue, which is what we show here.
-c> Repository /rel/cvsfiles/devo/foo
-# foo.c relative to devo/foo just set as Repository.
-c> Entry /foo.c/1.4/Mon Apr 19 15:36:47 1993 Mon Apr 19 15:36:47 1993//
-c> Entry /Makefile/1.2/Mon Apr 19 15:36:47 1993 Mon Apr 19 15:36:47 1993//
-c> Modified foo.c
-c> 26
-c> int main () @{ abort (); @}
-# cvs ci -m <log message> foo.c
-c> Argument -m
-c> Argument Well, you see, it took me hours and hours to find this typo and I
-c> Argumentx searched and searched and eventually had to ask John for help.
-c> Argument foo.c
-c> ci
-s> Checked-in /rel/cvsfiles/devo/foo/foo.c
-s> /foo.c/1.5/ Mon Apr 19 15:54:22 CDT 1993//
-s> M Checking in foo.c;
-s> M /cygint/rel/cvsfiles/devo/foo/foo.c,v  <--  foo.c
-s> M new revision: 1.5; previous revision: 1.4
-s> M done
-s> ok
+C: Root /home/kingdon/testing/cvsroot
+C: Valid-responses ok error Checked-in M E
+C: valid-requests
+S: Valid-requests Root Directory Entry Modified Argument Argumentx ci co
+S: ok
+C: UseUnchanged
+@end example
+
+The client wants to check out the @code{supermunger} module into a fresh
+working directory.  Therefore it first expands the @code{supermunger}
+module; this step would be omitted if the client was operating on a
+directory rather than a module.
+@c Why does it send Directory here?  The description of expand-modules
+@c doesn't really say much of anything about what use, if any, it makes of
+@c Directory and similar requests sent previously.
+
+@example
+C: Argument supermunger
+C: Directory .
+C: /home/kingdon/testing/cvsroot
+C: expand-modules
+@end example
+
+The server replies that the @code{supermunger} module expands to the
+directory @code{supermunger} (the simplest case):
+
+@example
+S: Module-expansion supermunger
+S: ok
+@end example
+
+The client then proceeds to check out the directory.  The fact that it
+sends only a single @code{Directory} request which specifies @samp{.}
+for the working directory means that there is not already a
+@code{supermunger} directory on the client.
+@c What is -N doing here?
+
+@example
+C: Argument -N
+C: Argument supermunger
+C: Directory .
+C: /home/kingdon/testing/cvsroot
+C: co
+@end example
+
+The server replies with the requested files.  In this example, there is
+only one, @file{mungeall.c}.  The @code{Clear-sticky} and
+@code{Clear-static-directory} requests are sent by the current
+implementation but they have no effect because the default is for those
+settings to be clear when a directory is newly created.
+
+@example
+S: Clear-sticky supermunger/
+S: /home/kingdon/testing/cvsroot/supermunger/
+S: Clear-static-directory supermunger/
+S: /home/kingdon/testing/cvsroot/supermunger/
+S: E cvs server: Updating supermunger
+S: M U supermunger/mungeall.c
+S: Created supermunger/
+S: /home/kingdon/testing/cvsroot/supermunger/mungeall.c
+S: /mungeall.c/1.1///
+S: u=rw,g=r,o=r
+S: 26
+S: int mein () @{ abort (); @}
+S: ok
+@end example
+
+The current client implementation would break the connection here and make a
+new connection for the next command.  However, the protocol allows it
+to keep the connection open and continue, which is what we show here.
+
+After the user modifies the file and instructs the client to check it
+back in.  The client sends arguments to specify the log message and file
+to check in:
+
+@example
+C: Argument -m
+C: Argument Well, you see, it took me hours and hours to find this typo and I
+C: Argumentx searched and searched and eventually had to ask John for help.
+C: Argument mungeall.c
+@end example
+
+It also sends information about the contents of the working directory,
+including the new contents of the modified file.  Note that the user has
+changed into the @file{supermunger} directory before executing this
+command; the top level directory is a user-visible concept because the
+server should print filenames in @code{M} and @code{E} responses
+relative to that directory.
+@c We are waving our hands about the order of the requests.  "Directory"
+@c and "Argument" can be in any order, but this probably isn't specified
+@c very well.
+
+@example
+C: Directory .
+C: /home/kingdon/testing/cvsroot/supermunger
+C: Entry /mungeall.c/1.1///
+C: Modified mungeall.c
+C: u=rw,g=r,o=r
+C: 26
+C: int main () @{ abort (); @}
+@end example
+
+And finally, the client issues the checkin command (which makes use of
+the data just sent):
+
+@example
+C: ci
+@end example
+
+And the server tells the client that the checkin succeeded:
+
+@example
+S: M Checking in mungeall.c;
+S: E /home/kingdon/testing/cvsroot/supermunger/mungeall.c,v  <--  mungeall.c
+S: E new revision: 1.2; previous revision: 1.1
+S: E done
+S: Mode u=rw,g=r,o=r
+S: Checked-in ./
+S: /home/kingdon/testing/cvsroot/supermunger/mungeall.c
+S: /mungeall.c/1.2///
+S: ok
 @end example
 
 @node Requirements
 @section Required versus optional parts of the protocol
 
-The following are part of every known implementation of the CVS
-protocol and it is considered reasonable behavior to completely fail
-to work if you are connected with an implementation which attempts to
-not support them.  Requests: Root, Valid-responses, valid-requests,
-Repository, Entry, Modified, Argument, Argumentx, ci, co, update.
-Responses: ok, error, Valid-requests, Checked-in, Updated, Merged,
-Removed, M, E.
+The following are part of every known implementation of the CVS protocol
+(except obsolete, pre-1.5, versions of CVS) and it is considered
+reasonable behavior to completely fail to work if you are connected with
+an implementation which attempts to not support them.  Requests:
+@code{Root}, @code{Valid-responses}, @code{valid-requests},
+@code{Directory}, @code{Entry}, @code{Modified}, @code{Unchanged},
+@code{Argument}, @code{Argumentx}, @code{ci}, @code{co}, @code{update}.
+Responses: @code{ok}, @code{error}, @code{Valid-requests},
+@code{Checked-in}, @code{Updated}, @code{Merged}, @code{Removed},
+@code{M}, @code{E}.
 
-Failure to support the Directory, UseUnchanged, and Unchanged requests
-is deprecated.  CVS 1.5 and later have supported these requests and in
-the future it will be considered reasonable behavior to completely
-fail to work with an implementation which attempts to not support
-them.  Support for the Repository and Lost requests is deprecated; CVS
-clients 1.5 and later will not use them if communicating with a server
-which supports Directory and UseUnchanged.
+A server need not implement @code{Repository}, but in order to interoperate
+with CVS 1.5 through 1.9 it must claim to implement it (in
+@code{Valid-requests}).  The client will not actually send the request.
+
+@node Obsolete
+@section Obsolete protocol elements
+
+This section briefly describes protocol elements which are obsolete.
+There is no attempt to document them in full detail.
+
+There was a @code{Repository} request which was like @code{Directory}
+except it only provided @var{repository}, and the local directory was
+assumed to be similarly named.
+
+If the @code{UseUnchanged} request was not sent, there was a @code{Lost}
+request which was sent to indicate that a file did not exist in the
+working directory, and the meaning of sending @code{Entries} without
+@code{Lost} or @code{Modified} was different.  All current clients (CVS
+1.5 and later) will send @code{UseUnchanged} if it is supported.
 
 @bye

@@ -1,11 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "cvs.h"
-
-#define INCL_BASE
-#define INCL_SUB
-#define INCL_KBD
-#include <os2.h>
+#include "os2inc.h"
 
 /* Only define this if you're testing and want to compile this file
    standalone. */

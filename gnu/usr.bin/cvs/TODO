@@ -1,5 +1,3 @@
-$CVSid: @(#)TODO 1.26 94/09/21 $
-
 14. Pathname stripper, for checkout, as well as for writing the
     Repository file.
     [[ I have a simple one, but need to make sure to call it at all the

@@ -80,16 +80,14 @@ Name_Root(dir, update_dir)
 
     /*
      * root now contains a candidate for CVSroot. It must be an
-     * absolute pathname
+     * absolute pathname or specify a remote server.
      */
 
+    if (
 #ifdef CLIENT_SUPPORT
-    /* It must specify a server via remote CVS or be an absolute pathname.  */
-    if ((strchr (root, ':') == NULL)
-    	&& ! isabsolute (root))
-#else /* ! CLIENT_SUPPORT */
-    if (root[0] != '/')
-#endif /* CLIENT_SUPPORT */
+	(strchr (root, ':') == NULL) &&
+#endif
+    	! isabsolute (root))
     {
 	error (0, 0, "in directory %s:", xupdate_dir);
 	error (0, 0,
@@ -112,7 +110,7 @@ Name_Root(dir, update_dir)
     }
 
     /* allocate space to return and fill it in */
-    strip_path (root);
+    strip_trailing_slashes (root);
     ret = xstrdup (root);
     return (ret);
 }
@@ -196,6 +194,26 @@ CVSmethod CVSroot_method;	/* one of the enum values defined in cvs.h */
 char *CVSroot_username;		/* the username or NULL if method == local */
 char *CVSroot_hostname;		/* the hostname or NULL if method == local */
 char *CVSroot_directory;	/* the directory name */
+
+#ifdef AUTH_SERVER_SUPPORT
+/* Die if CVSroot_directory and Pserver_Repos don't match. */
+static void
+check_root_consistent ()
+{
+    /* FIXME: Should be using a deferred error, as the rest of
+       serve_root does.  As it is now the call to error could conceivably
+       cause deadlock, as noted in server_cleanup.  Best solution would
+       presumably be to write some code so that error() automatically
+       defers the error in those cases where that is needed.  */
+
+    if ((Pserver_Repos != NULL) && (CVSroot_directory != NULL))
+	if (strcmp (Pserver_Repos, CVSroot_directory) != 0)
+	    error (1, 0, "repository mismatch: \"%s\" vs \"%s\"",
+		   Pserver_Repos, CVSroot_directory);
+}
+
+#endif /* AUTH_SERVER_SUPPORT */
+
 
 int
 parse_cvsroot (CVSroot)
@@ -299,6 +317,9 @@ parse_cvsroot (CVSroot)
     }
 
     CVSroot_directory = cvsroot_copy;
+#ifdef AUTH_SERVER_SUPPORT
+    check_root_consistent ();
+#endif /* AUTH_SERVER_SUPPORT */
 
 #if ! defined (CLIENT_SUPPORT) && ! defined (DEBUG)
     if (CVSroot_method != local_method)
@@ -368,6 +389,9 @@ set_local_cvsroot (dir)
     CVSroot_original = xstrdup (dir);
     CVSroot_method = local_method;
     CVSroot_directory = CVSroot_original;
+#ifdef AUTH_SERVER_SUPPORT
+    check_root_consistent ();
+#endif /* AUTH_SERVER_SUPPORT */
     CVSroot_username = NULL;
     CVSroot_hostname = NULL;
     client_active = 0;

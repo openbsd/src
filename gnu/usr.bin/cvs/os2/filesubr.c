@@ -11,21 +11,15 @@
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
+   GNU General Public License for more details.  */
 
 /* These functions were moved out of subr.c because they need different
    definitions under operating systems (like, say, Windows NT) with different
    file system semantics.  */
 
 #include <io.h>
-#define INCL_DOSFILEMGR   /* File Manager values */
-#define INCL_DOSERRORS
-#include <os2.h>
 
+#include "os2inc.h"
 #include "cvs.h"
 
 static int deep_remove_dir PROTO((const char *path));
@@ -98,7 +92,7 @@ copy_file (from, to)
     memset ((char *) &t, 0, sizeof (t));
     t.actime = sb.st_atime;
     t.modtime = sb.st_mtime;
-    (void) utime (to, &t);
+    (void) utime ((char *)to, &t);
 }
 
 /*
@@ -227,7 +221,7 @@ make_directory (name)
 
     if (stat (name, &buf) == 0 && (!S_ISDIR (buf.st_mode)))
 	    error (0, 0, "%s already exists but is not a directory", name);
-    if (!noexec && mkdir (name) < 0)
+    if (!noexec && mkdir ((char *)name) < 0)
 	error (1, errno, "cannot make directory %s", name);
 }
 
@@ -244,7 +238,7 @@ make_directories (name)
     if (noexec)
 	return;
 
-    if (mkdir (name) == 0 || errno == EACCESS)
+    if (mkdir ((char *)name) == 0 || errno == EACCES)
 	return;
     if (! existence_error (errno))
     {
@@ -258,7 +252,7 @@ make_directories (name)
     *cp++ = '/';
     if (*cp == '\0')
 	return;
-    (void) mkdir (name);
+    (void) mkdir ((char *)name);
 }
 
 /* Create directory NAME if it does not already exist; fatal error for
@@ -275,19 +269,19 @@ mkdir_if_needed (name)
 
 	       "The file already exists",
 
-	   and the error string for EACCESS is:
+           and the error string for EACCES is:
 
 	       "The file or directory specified is read-only".
 
-	   Nonetheless, mkdir() will set EACCESS if the
+           Nonetheless, mkdir() will set EACCES if the
 	   directory *exists*, according both to the
 	   documentation and its actual behavior.
 
 	   I'm sure that this made sense, to someone,
 	   somewhere, sometime.  Just not me, here, now.  */
 	if (errno != EEXIST
-#ifdef EACCESS
-	    && errno != EACCESS
+#ifdef EACCES
+            && errno != EACCES
 #endif
 	    )
 	    error (1, errno, "cannot make directory %s", name);
@@ -313,7 +307,11 @@ xchmod (fname, writable)
     char *q;
 
     if (!isfile (fname))
-	return ENOENT;
+    {
+	error (0, 0, "cannot change mode of file %s; it does not exist",
+	       fname);
+	return;
+    }
 
     attrib_cmd = "attrib "; /* No, really? */
 
@@ -383,7 +381,8 @@ unlink_file (f)
     * name is closer to our interface, what the heck.  Also, we know
     * unlink()'s error code when trying to remove a directory.
     */
-    xchmod (f, 1);
+    if (isfile (f))
+	xchmod ((char *)f, 1);
     return (unlink (f));
 }
 
@@ -408,9 +407,9 @@ unlink_file_dir (f)
 
     if (unlink_file (f) != 0)
     {
-	/* under OS/2, unlink returns EACCESS if the path
+        /* under OS/2, unlink returns EACCES if the path
 	   is a directory.  */
-        if (errno == EACCESS)
+        if (errno == EACCES)
                 return deep_remove_dir (f);
         else
 		/* The file wasn't a directory and some other
@@ -434,9 +433,9 @@ deep_remove_dir (path)
     struct dirent *dp;
     char	   buf[PATH_MAX];
 
-    if ( rmdir (path) != 0 && errno == EACCESS )
+    if (rmdir ((char *)path) != 0 && errno == EACCES)
     {
-	if ((dirp = opendir (path)) == NULL)
+	if ((dirp = opendir ((char *)path)) == NULL)
 	    /* If unable to open the directory return
 	     * an error
 	     */
@@ -471,7 +470,7 @@ deep_remove_dir (path)
 	    }
 	}
 	closedir (dirp);
-	return rmdir (path);
+	return rmdir ((char *)path);
     }
     /* Was able to remove the directory return 0 */
     return 0;
@@ -811,18 +810,40 @@ expand_wild (argc, argv, pargc, pargv)
 	ULONG         FindCount = 1;
 	APIRET        rc;          /* Return code */
 #define ALL_FILES (FILE_ARCHIVED|FILE_DIRECTORY|FILE_SYSTEM|FILE_HIDDEN|FILE_READONLY) 
- 
-	rc = DosFindFirst(argv[i],               /* File pattern */
+
+	/* DosFindFirst, called with a string like 'dir/file' will return
+	 * *only* the file part. So what we have to do here is to save the
+	 * directory part, and add it later to the returned filename.
+	 */
+
+	/* Path + name */
+	char *PathName = argv [i];
+
+	/* Path only, including slash */
+	char *Path = NULL;
+
+	/* Name without path */
+	char *Name = last_component (PathName);
+
+	if (Name > PathName)
+	{
+	    /* We have a path component, save it */
+	    Path = xmalloc (Name - PathName + 1);
+	    memcpy (Path, PathName, Name - PathName);
+	    Path [Name - PathName] = '\0';
+	}
+
+	rc = DosFindFirst(PathName,     	 /* File pattern */
 			  &FindHandle,           /* Directory search handle */
 			  ALL_FILES,             /* Search attribute */
 			  (PVOID) &FindBuffer,   /* Result buffer */
 			  sizeof(FindBuffer),    /* Result buffer length */
 			  &FindCount,            /* Number of entries to find */
 			  FIL_STANDARD);	 /* Return level 1 file info */
- 
+
 	if (rc != 0)
 	{
-	    if (rc == ERROR_FILE_NOT_FOUND)
+	    if (rc == ERROR_NO_MORE_FILES)
 	    {
 		/* No match.  The file specified didn't contain a wildcard (in which case
 		   we clearly should return it unchanged), or it contained a wildcard which
@@ -837,7 +858,7 @@ expand_wild (argc, argv, pargc, pargv)
 	    }
 	    else
 	    {
-		error (1, rc, "cannot find %s", argv[i]);
+                error (1, rc, "cannot find %s", PathName);
 	    }
 	}
 	else
@@ -853,18 +874,32 @@ expand_wild (argc, argv, pargc, pargv)
 		    (strcmp(FindBuffer.achName, "..") != 0) &&
 		    ((argv[i][0] == '.') || (FindBuffer.achName[0] != '.')))
 		{
-		    new_argv [new_argc++] = xstrdup (FindBuffer.achName);
+		    /* Be sure to add the path if needed */
+		    char *NewArg;
+		    if (Path)
+		    {
+			unsigned Len =
+			    strlen (Path) + strlen (FindBuffer.achName) + 1;
+			NewArg = xmalloc (Len);
+			strcpy (NewArg, Path);
+			strcat (NewArg, FindBuffer.achName);
+		    }
+		    else
+		    {
+			NewArg = xstrdup (FindBuffer.achName);
+		    }
+		    new_argv [new_argc++] = NewArg;
 		    if (new_argc == max_new_argc)
 		    {
 			max_new_argc *= 2;
 			new_argv = xrealloc (new_argv, max_new_argc * sizeof (char *));
 		    }
 		}
-		
-		rc = DosFindNext(FindHandle,
-                     (PVOID) &FindBuffer,
-                     sizeof(FindBuffer),
-                     &FindCount);
+
+		rc = DosFindNext (FindHandle,
+				  (PVOID) &FindBuffer,
+				  sizeof(FindBuffer),
+				  &FindCount);
 		if (rc == ERROR_NO_MORE_FILES)
 		    break;
 		else if (rc != NO_ERROR)
@@ -874,6 +909,8 @@ expand_wild (argc, argv, pargc, pargv)
 	    if (rc != 0)
 		error (1, rc, "cannot close %s", argv[i]);
 	}
+	if (Path != NULL)
+	    free (Path);
     }
     *pargc = new_argc;
     *pargv = new_argv;

@@ -21,8 +21,10 @@ extern char *getpass ();
 /* If non-NULL, get_cvs_password() will just return this. */
 static char *cvs_password = NULL;
 
+static char *construct_cvspass_filename PROTO ((void));
+
 /* The return value will need to be freed. */
-char *
+static char *
 construct_cvspass_filename ()
 {
     char *homedir;
@@ -215,10 +217,11 @@ login (argc, argv)
 	    linebuf = (char *) NULL;
 	    while (getline (&linebuf, &linebuf_len, fp) >= 0)
             {
-              if (strncmp (CVSroot_original, linebuf, root_len))
-                fprintf (tmp_fp, "%s", linebuf);
-              else
-                fprintf (tmp_fp, "%s %s\n", CVSroot_original, typed_password);
+		if (strncmp (CVSroot_original, linebuf, root_len))
+		    fprintf (tmp_fp, "%s", linebuf);
+		else
+		    fprintf (tmp_fp, "%s %s\n", CVSroot_original,
+			     typed_password);
 
 		free (linebuf);
 		linebuf = (char *) NULL;
@@ -240,8 +243,8 @@ login (argc, argv)
 	    return 1;
         }
 
-      fprintf (fp, "%s %s\n", CVSroot_original, typed_password);
-      fclose (fp);
+	fprintf (fp, "%s %s\n", CVSroot_original, typed_password);
+	fclose (fp);
     }
 
     /* Utter, total, raving paranoia, I know. */
@@ -264,99 +267,99 @@ login (argc, argv)
 char *
 get_cvs_password ()
 {
-  int found_it = 0;
-  int root_len;
-  char *password;
-  char *linebuf = (char *) NULL;
-  size_t linebuf_len;
-  FILE *fp;
-  char *passfile;
+    int found_it = 0;
+    int root_len;
+    char *password;
+    char *linebuf = (char *) NULL;
+    size_t linebuf_len;
+    FILE *fp;
+    char *passfile;
 
-  /* If someone (i.e., login()) is calling connect_to_pserver() out of
-     context, then assume they have supplied the correct, scrambled
-     password. */
-  if (cvs_password)
-    return cvs_password;
+    /* If someone (i.e., login()) is calling connect_to_pserver() out of
+       context, then assume they have supplied the correct, scrambled
+       password. */
+    if (cvs_password)
+	return cvs_password;
 
-  /* Environment should override file. */
-  if ((password = getenv ("CVS_PASSWORD")) != NULL)
+    if (getenv ("CVS_PASSWORD") != NULL)
     {
-      char *p;
-      p = xstrdup (password);
-      /* If we got it from the environment, then it wasn't properly
-         scrambled.  Since unscrambling is done on the server side, we
-         need to transmit it scrambled. */
-      p = scramble (p);
-      return p;
+	/* In previous versions of CVS one could specify a password in
+	   CVS_PASSWORD.  This is a bad idea, because in BSD variants
+	   of unix anyone can see the environment variable with 'ps'.
+	   But for users who were using that feature we want to at
+	   least let them know what is going on.  After printing this
+	   warning, we should fall through to the regular error where
+	   we tell them to run "cvs login" (unless they already ran
+	   it, of course).  */
+	error (0, 0, "CVS_PASSWORD is no longer supported; ignored");
     }
 
-  /* Else get it from the file.  First make sure that the CVSROOT
-   * variable has the appropriate fields filled in. */
+    /* Else get it from the file.  First make sure that the CVSROOT
+       variable has the appropriate fields filled in. */
 
-  if (CVSroot_method != pserver_method)
+    if (CVSroot_method != pserver_method)
     {
-      error (0, 0, "can only call GET_CVS_PASSWORD  with pserver method");
-      error (1, 0, "CVSROOT: %s", CVSroot_original);
-    }
-    
-  if (! CVSroot_username)
-    {
-      error (0, 0, "CVSROOT \"%s\" is not fully-qualified.", CVSroot_original);
-      error (1, 0, "Please make sure to specify \"user@host\"!");
+	error (0, 0, "can only call GET_CVS_PASSWORD  with pserver method");
+	error (1, 0, "CVSROOT: %s", CVSroot_original);
     }
 
-  passfile = construct_cvspass_filename ();
-  fp = CVS_FOPEN (passfile, "r");
-  if (fp == NULL)
+    if (! CVSroot_username)
     {
-      error (0, errno, "could not open %s", passfile);
-      free (passfile);
-      error (1, 0, "use \"cvs login\" to log in first");
+	error (0, 0, "CVSROOT \"%s\" is not fully-qualified.",
+	       CVSroot_original);
+	error (1, 0, "Please make sure to specify \"user@host\"!");
     }
 
-  root_len = strlen (CVSroot_original);
-
-  /* Check each line to see if we have this entry already. */
-  while (getline (&linebuf, &linebuf_len, fp) >= 0)
+    passfile = construct_cvspass_filename ();
+    fp = CVS_FOPEN (passfile, "r");
+    if (fp == NULL)
     {
-      if (strncmp (CVSroot_original, linebuf, root_len) == 0)
+	error (0, errno, "could not open %s", passfile);
+	free (passfile);
+	error (1, 0, "use \"cvs login\" to log in first");
+    }
+
+    root_len = strlen (CVSroot_original);
+
+    /* Check each line to see if we have this entry already. */
+    while (getline (&linebuf, &linebuf_len, fp) >= 0)
+    {
+	if (strncmp (CVSroot_original, linebuf, root_len) == 0)
         {
-          /* This is it!  So break out and deal with linebuf. */
-          found_it = 1;
-          break;
+	    /* This is it!  So break out and deal with linebuf. */
+	    found_it = 1;
+	    break;
         }
-      else
+	else
         {
-          free (linebuf);
-          linebuf = (char *) NULL;
+	    free (linebuf);
+	    linebuf = (char *) NULL;
         }
     }
 
-  if (found_it)
+    if (found_it)
     {
-      /* linebuf now contains the line with the password. */
-      char *tmp;
-      
-      strtok (linebuf, " ");
-      password = strtok (NULL, "\n");
-      
-      /* Give it permanent storage. */
-      tmp = xmalloc (strlen (password) + 1);
-      strcpy (tmp, password);
-      tmp[strlen (password)] = '\0';
-      memset (password, 0, strlen (password));
-      free (linebuf);
-      return tmp;
+	/* linebuf now contains the line with the password. */
+	char *tmp;
+
+	strtok (linebuf, " ");
+	password = strtok (NULL, "\n");
+
+	/* Give it permanent storage. */
+	tmp = xmalloc (strlen (password) + 1);
+	strcpy (tmp, password);
+	tmp[strlen (password)] = '\0';
+	memset (password, 0, strlen (password));
+	free (linebuf);
+	return tmp;
     }
-  else
+    else
     {
-      error (0, 0, "cannot find password");
-      error (0, 0, "use \"cvs login\" to log in first");
-      error (1, 0, "or set the CVS_PASSWORD environment variable");
+	error (0, 0, "cannot find password");
+	error (1, 0, "use \"cvs login\" to log in first");
     }
-  /* NOTREACHED */
-  return NULL;
+    /* NOTREACHED */
+    return NULL;
 }
 
 #endif /* AUTH_CLIENT_SUPPORT from beginning of file. */
-

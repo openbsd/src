@@ -1,5 +1,3 @@
-/* $CVSid: @(#)hash.h 1.23 94/10/07 $	 */
-
 /*
  * Copyright (c) 1992, Brian Berliner and Jeff Polk
  * 

@@ -9,7 +9,6 @@ $ CC md5.c
 $ CC regex.c
 $ CC savecwd.c
 $ CC sighandle.c
-$ CC strippath.c
 $ CC stripslash.c
 $ CC valloc.c
 $ CC xgetwd.c

@@ -27,7 +27,12 @@ static char *entfilename;		/* for error messages */
 /*
  * Construct an Entnode
  */
-Entnode *
+static Entnode *Entnode_Create PROTO ((enum ent_type, const char *,
+				       const char *, const char *,
+				       const char *, const char *,
+				       const char *, const char *));
+
+static Entnode *
 Entnode_Create(type, user, vn, ts, options, tag, date, ts_conflict)
     enum ent_type type;
     const char *user;
@@ -57,7 +62,9 @@ Entnode_Create(type, user, vn, ts, options, tag, date, ts_conflict)
 /*
  * Destruct an Entnode
  */
-void
+static void Entnode_Destroy PROTO ((Entnode *));
+
+static void
 Entnode_Destroy (ent)
     Entnode *ent;
 {
@@ -596,11 +603,14 @@ WriteTag (dir, tag, date)
     char *date;
 {
     FILE *fout;
-    char tmp[PATH_MAX];
+    char *tmp;
 
     if (noexec)
 	return;
 
+    tmp = xmalloc ((dir ? strlen (dir) : 0)
+		   + sizeof (CVSADM_TAG)
+		   + 10);
     if (dir == NULL)
 	(void) strcpy (tmp, CVSADM_TAG);
     else
@@ -625,6 +635,7 @@ WriteTag (dir, tag, date)
     else
 	if (unlink_file (tmp) < 0 && ! existence_error (errno))
 	    error (1, errno, "cannot remove %s", tmp);
+    free (tmp);
 }
 
 /*

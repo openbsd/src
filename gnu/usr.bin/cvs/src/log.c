@@ -236,7 +236,7 @@ cvslog (argc, argv)
 /* FIXME:  We shouldn't have to send current files to get log entries, but it
    doesn't work yet and I haven't debugged it.  So send the files --
    it's slower but it works.  gnu@cygnus.com  Apr94  */
-	send_files (argc - i, argv + i, local, 0);
+	send_files (argc - i, argv + i, local, 0, 0);
 
 	send_to_server ("log\012", 0);
         err = get_responses_and_close ();
@@ -399,7 +399,10 @@ log_parse_date (log_data, argstring)
 	else
 	{
 	  /* 1970 was the beginning of time, as far as get_date and
-	     Make_Date are concerned.  */
+	     Make_Date are concerned.  FIXME: That is true only if time_t
+	     is a POSIX-style time and there is nothing in ANSI that
+	     mandates that.  It would be cleaner to set a flag saying
+	     whether or not there is a start date.  */
 	    nd->start = Make_Date ("1/1/1970 UTC");
 	}
 
@@ -407,11 +410,17 @@ log_parse_date (log_data, argstring)
 	    nd->end = Make_Date (de);
 	else
 	{
-	  /* We want to set the end date to some time sufficiently far
-	     in the future to pick up all revisions that have been
-	     created since the specified date and the time `cvs log'
-	     completes.  */
-	    nd->end = Make_Date ("next week");
+	    /* We want to set the end date to some time sufficiently far
+	       in the future to pick up all revisions that have been
+	       created since the specified date and the time `cvs log'
+	       completes.  FIXME: The date in question only makes sense
+	       if time_t is a POSIX-style time and it is 32 bits
+	       and signed.  We should instead be setting a flag saying
+	       whether or not there is an end date.  Note that using
+	       something like "next week" would break the testsuite (and,
+	       perhaps less importantly, loses if the clock is set grossly
+	       wrong).  */
+	    nd->end = Make_Date ("2038-01-01");
 	}
 
 	nd->next = *pd;

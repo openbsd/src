@@ -4,6 +4,7 @@
 #include "config.h"
 #endif /* HAVE_CONFIG_H */
 
+#include <assert.h>
 #include "cvs.h"
 #include "getline.h"
 #include "edit.h"
@@ -431,7 +432,8 @@ static int use_socket_style = 0;
 static int server_sock;
 
 /* These routines implement a buffer structure which uses send and
-   recv.  We don't need the block routine, so we don't implement it.  */
+   recv.  The buffer is always in blocking mode so we don't implement
+   the block routine.  */
 
 /* We use an instance of this structure as the closure field.  */
 
@@ -490,16 +492,28 @@ socket_buffer_input (closure, data, need, size, got)
 
     *got = 0;
 
-    while (need > 0)
+    do
     {
 	nbytes = recv (sb->socket, data, size, 0);
 	if (nbytes < 0)
 	    error (1, errno, "reading from server");
+	if (nbytes == 0)
+	{
+	    /* End of file (for example, the server has closed
+	       the connection).  If we've already read something, we
+	       just tell the caller about the data, not about the end of
+	       file.  If we've read nothing, we return end of file.  */
+	    if (*got == 0)
+		return -1;
+	    else
+		return 0;
+	}
 	need -= nbytes;
 	size -= nbytes;
 	data += nbytes;
 	*got += nbytes;
     }
+    while (need > 0);
 
     return 0;
 }
@@ -636,8 +650,10 @@ int filter_through_gunzip (fd, dir, pidp)
  */
 static char *toplevel_repos;
 
-/* Working directory when we first started.  */
-char toplevel_wd[PATH_MAX];
+/* Working directory when we first started.  Note: we could speed things
+   up on some systems by using savecwd.h here instead of just always
+   storing a name.  */
+char *toplevel_wd;
 
 static void
 handle_ok (args, len)
@@ -710,9 +726,6 @@ handle_valid_requests (args, len)
 		 */
 		send_to_server (rq->name, 0);
                 send_to_server ("\012", 0);
-
-		if (!strcmp("UseUnchanged",rq->name))
-		    use_unchanged = 1;
 	    }
 	    else
 		rq->status = rq_supported;
@@ -726,27 +739,6 @@ handle_valid_requests (args, len)
 	else if (rq->status == rq_optional)
 	    rq->status = rq_not_supported;
     }
-}
-
-static int use_directory = -1;
-
-static char *get_short_pathname PROTO((const char *));
-
-static char *
-get_short_pathname (name)
-    const char *name;
-{
-    const char *retval;
-    if (use_directory)
-	return (char *) name;
-    if (strncmp (name, toplevel_repos, strlen (toplevel_repos)) != 0)
-	error (1, 0, "server bug: name `%s' doesn't specify file in `%s'",
-	       name, toplevel_repos);
-    retval = name + strlen (toplevel_repos) + 1;
-    if (retval[-1] != '/')
-	error (1, 0, "server bug: name `%s' doesn't specify file in `%s'",
-	       name, toplevel_repos);
-    return (char *) retval;
 }
 
 /* This variable holds the result of Entries_Open, so that we can
@@ -777,7 +769,7 @@ call_in_directory (pathname, func, data)
     char *dir_name;
     char *filename;
     /* Just the part of pathname relative to toplevel_repos.  */
-    char *short_pathname = get_short_pathname (pathname);
+    char *short_pathname = pathname;
     char *p;
 
     /*
@@ -800,30 +792,23 @@ call_in_directory (pathname, func, data)
     int reposdirname_absolute;
 
     reposname = NULL;
-    if (use_directory)
-	read_line (&reposname);
+    read_line (&reposname);
+    assert (reposname != NULL);
 
     reposdirname_absolute = 0;
-    if (reposname != NULL)
+    if (strncmp (reposname, toplevel_repos, strlen (toplevel_repos)) != 0)
     {
-	if (strncmp (reposname, toplevel_repos, strlen (toplevel_repos)) != 0)
+	reposdirname_absolute = 1;
+	short_repos = reposname;
+    }
+    else
+    {
+	short_repos = reposname + strlen (toplevel_repos) + 1;
+	if (short_repos[-1] != '/')
 	{
 	    reposdirname_absolute = 1;
 	    short_repos = reposname;
 	}
-	else
-	{
-	    short_repos = reposname + strlen (toplevel_repos) + 1;
-	    if (short_repos[-1] != '/')
-	    {
-		reposdirname_absolute = 1;
-		short_repos = reposname;
-	    }
-	}
-    }
-    else
-    {
-	short_repos = short_pathname;
     }
     reposdirname = xstrdup (short_repos);
     p = strrchr (reposdirname, '/');
@@ -853,14 +838,9 @@ call_in_directory (pathname, func, data)
     else
 	++filename;
 
-    if (reposname != NULL)
-    {
-	/* This is the use_directory case.  */
-
-	short_pathname = xmalloc (strlen (pathname) + strlen (filename) + 5);
-	strcpy (short_pathname, pathname);
-	strcat (short_pathname, filename);
-    }
+    short_pathname = xmalloc (strlen (pathname) + strlen (filename) + 5);
+    strcpy (short_pathname, pathname);
+    strcat (short_pathname, filename);
 
     if (last_dir_name == NULL
 	|| strcmp (last_dir_name, dir_name) != 0)
@@ -875,14 +855,48 @@ call_in_directory (pathname, func, data)
 	    free (last_dir_name);
 	last_dir_name = dir_name;
 
-	if (toplevel_wd[0] == '\0')
-	    if (getwd (toplevel_wd) == NULL)
-		error (1, 0,
-		       "could not get working directory: %s", toplevel_wd);
+	if (toplevel_wd == NULL)
+	{
+	    toplevel_wd = xgetwd ();
+	    if (toplevel_wd == NULL)
+		error (1, errno, "could not get working directory");
+	}
 
-	if ( CVS_CHDIR (toplevel_wd) < 0)
+	if (CVS_CHDIR (toplevel_wd) < 0)
 	    error (1, errno, "could not chdir to %s", toplevel_wd);
 	newdir = 0;
+
+	/* Create the CVS directory at the top level if needed.
+	   The isdir seems like an unneeded system call, but it *does*
+	   need to be called both if the CVS_CHDIR below succeeds (e.g.
+	   "cvs co .") or if it fails (e.g. basicb-1a in testsuite).  */
+	if (/* I think the reposdirname_absolute case has to do with
+	       things like "cvs update /foo/bar".  In any event, the
+	       code below which tries to put toplevel_repos into
+	       CVS/Repository is almost surely unsuited to
+	       the reposdirname_absolute case.  */
+	    !reposdirname_absolute
+
+	    && ! isdir (CVSADM))
+	{
+	    char *repo;
+	    char *r;
+
+	    newdir = 1;
+
+	    repo = xmalloc (strlen (toplevel_repos)
+			    + 10);
+	    strcpy (repo, toplevel_repos);
+	    r = repo + strlen (repo);
+	    if (r[-1] != '.' || r[-2] != '/')
+	        strcpy (r, "/.");
+
+	    Create_Admin (".", ".", repo, (char *) NULL,
+			  (char *) NULL);
+
+	    free (repo);
+	}
+
 	if ( CVS_CHDIR (dir_name) < 0)
 	{
 	    char *dir;
@@ -953,6 +967,14 @@ call_in_directory (pathname, func, data)
 		    strcpy (dir, dir_name);
 		}
 
+		if (fncmp (dir, CVSADM) == 0)
+		{
+		    error (0, 0, "cannot create a directory named %s", dir);
+		    error (0, 0, "because CVS uses \"%s\" for its own uses",
+			   CVSADM);
+		    error (1, 0, "rename the directory and try again");
+		}
+
 		if (mkdir_if_needed (dir))
 		{
 		    /* It already existed, fine.  Just keep going.  */
@@ -1019,41 +1041,6 @@ call_in_directory (pathname, func, data)
 		error (1, errno, "could not chdir to %s", dir_name);
 	}
 
-	/* If the modules file has an entry for the entire tree (e.g.,
-           ``world -a .''), we may need to create the CVS directory
-           specially in this working directory.  */
-	if (strcmp (dir_name, ".") == 0
-	    && ! isdir (CVSADM))
-	{
-	    char *repo;
-	    char *r;
-
-	    newdir = 1;
-
-	    repo = xmalloc (strlen (reposdirname)
-			    + strlen (toplevel_repos)
-			    + 10);
-	    if (reposdirname_absolute)
-	        r = repo;
-	    else
-	    {
-	        strcpy (repo, toplevel_repos);
-		r = repo + strlen (repo);
-		*r++ = '/';
-	    }
-
-	    strcpy (r, reposdirname);
-
-	    r += strlen (r);
-	    if (r[-1] != '.' || r[-2] != '/')
-	        strcpy (r, "/.");
-
-	    Create_Admin (dir_name, dir_name, repo, (char *) NULL,
-			  (char *) NULL);
-
-	    free (repo);
-	}
-
 	if (strcmp (command_name, "export") != 0)
 	{
 	    last_entries = Entries_Open (0);
@@ -1084,11 +1071,8 @@ call_in_directory (pathname, func, data)
 	free (dir_name);
     free (reposdirname);
     (*func) (data, last_entries, short_pathname, filename);
-    if (reposname != NULL)
-    {
-	free (short_pathname);
-	free (reposname);
-    }
+    free (short_pathname);
+    free (reposname);
 }
 
 static void
@@ -1575,10 +1559,12 @@ update_entries (data_arg, ent_list, short_pathname, filename)
 	else
 	{
 	    int retcode;
-	    char backup[PATH_MAX];
+	    char *backup;
 	    struct stat s;
 
-	    (void) sprintf (backup, "%s~", filename);
+	    backup = xmalloc (strlen (filename) + 5);
+	    strcpy (backup, filename);
+	    strcat (backup, "~");
 	    (void) unlink_file (backup);
 	    if (!isfile (filename))
 	        error (1, 0, "patch original file %s does not exist",
@@ -1631,8 +1617,10 @@ update_entries (data_arg, ent_list, short_pathname, filename)
 
 		stored_checksum_valid = 0;
 
+		free (backup);
 		return;
 	    }
+	    free (backup);
 	}
 	free (temp_filename);
 
@@ -1886,28 +1874,10 @@ static int
 is_cvsroot_level (pathname)
     char *pathname;
 {
-    char *short_pathname;
-
     if (strcmp (toplevel_repos, CVSroot_directory) != 0)
 	return 0;
 
-    if (!use_directory)
-    {
-	if (strncmp (pathname, CVSroot_directory, strlen (CVSroot_directory)) != 0)
-	    error (1, 0,
-		   "server bug: pathname `%s' doesn't specify file in `%s'",
-		   pathname, CVSroot_directory);
-	short_pathname = pathname + strlen (CVSroot_directory) + 1;
-	if (short_pathname[-1] != '/')
-	    error (1, 0,
-		   "server bug: pathname `%s' doesn't specify file in `%s'",
-		   pathname, CVSroot_directory);
-	return strchr (short_pathname, '/') == NULL;
-    }
-    else
-    {
-	return strchr (pathname, '/') == NULL;
-    }
+    return strchr (pathname, '/') == NULL;
 }
 
 static void
@@ -2133,15 +2103,17 @@ do_deferred_progs ()
     struct save_prog *p;
     struct save_prog *q;
 
-    char fname[PATH_MAX];
+    char *fname;
     FILE *f;
-    if (toplevel_wd[0] != '\0')
-      {
-	if ( CVS_CHDIR (toplevel_wd) < 0)
-	  error (1, errno, "could not chdir to %s", toplevel_wd);
-      }
+
+    if (toplevel_wd != NULL)
+    {
+	if (CVS_CHDIR (toplevel_wd) < 0)
+	    error (1, errno, "could not chdir to %s", toplevel_wd);
+    }
     for (p = checkin_progs; p != NULL; )
     {
+	fname = xmalloc (strlen (p->dir) + sizeof CVSADM_CIPROG + 10);
 	sprintf (fname, "%s/%s", p->dir, CVSADM_CIPROG);
 	f = open_file (fname, "w");
 	if (fprintf (f, "%s\n", p->name) < 0)
@@ -2153,10 +2125,12 @@ do_deferred_progs ()
 	q = p->next;
 	free (p);
 	p = q;
+	free (fname);
     }
     checkin_progs = NULL;
-    for (p = update_progs; p != NULL; p = p->next)
+    for (p = update_progs; p != NULL; )
     {
+	fname = xmalloc (strlen (p->dir) + sizeof CVSADM_UPROG + 10);
 	sprintf (fname, "%s/%s", p->dir, CVSADM_UPROG);
 	f = open_file (fname, "w");
 	if (fprintf (f, "%s\n", p->name) < 0)
@@ -2165,50 +2139,14 @@ do_deferred_progs ()
 	    error (1, errno, "closing %s", fname);
 	free (p->name);
 	free (p->dir);
+	q = p->next;
 	free (p);
+	p = q;
+	free (fname);
     }
     update_progs = NULL;
 }
 
-static int client_isemptydir PROTO((char *));
-
-/*
- * Returns 1 if the argument directory exists and is completely empty,
- * other than the existence of the CVS directory entry.  Zero otherwise.
- */
-static int
-client_isemptydir (dir)
-    char *dir;
-{
-    DIR *dirp;
-    struct dirent *dp;
-
-    if ((dirp = CVS_OPENDIR (dir)) == NULL)
-    {
-	if (! existence_error (errno))
-	    error (0, errno, "cannot open directory %s for empty check", dir);
-	return (0);
-    }
-    errno = 0;
-    while ((dp = readdir (dirp)) != NULL)
-    {
-	if (strcmp (dp->d_name, ".") != 0 && strcmp (dp->d_name, "..") != 0 &&
-	    strcmp (dp->d_name, CVSADM) != 0)
-	{
-	    (void) closedir (dirp);
-	    return (0);
-	}
-    }
-    if (errno != 0)
-    {
-	error (0, errno, "cannot read directory %s", dir);
-	(void) closedir (dirp);
-	return (0);
-    }
-    (void) closedir (dirp);
-    return (1);
-}
-
 struct save_dir {
     char *dir;
     struct save_dir *next;
@@ -2238,18 +2176,19 @@ process_prune_candidates ()
     struct save_dir *p;
     struct save_dir *q;
 
-    if (toplevel_wd[0] != '\0')
+    if (toplevel_wd != NULL)
     {
-	if ( CVS_CHDIR (toplevel_wd) < 0)
-	  error (1, errno, "could not chdir to %s", toplevel_wd);
+	if (CVS_CHDIR (toplevel_wd) < 0)
+	    error (1, errno, "could not chdir to %s", toplevel_wd);
     }
     for (p = prune_candidates; p != NULL; )
     {
-	if (client_isemptydir (p->dir))
+	if (isemptydir (p->dir, 1))
 	{
 	    char *b;
 
-	    unlink_file_dir (p->dir);
+	    if (unlink_file_dir (p->dir) < 0)
+		error (0, errno, "cannot remove %s", p->dir);
 	    b = strrchr (p->dir, '/');
 	    if (b == NULL)
 		Subdir_Deregister ((List *) NULL, (char *) NULL, p->dir);
@@ -2319,23 +2258,12 @@ send_repository (dir, repos, update_dir)
     /* 80 is large enough for any of CVSADM_*.  */
     adm_name = xmalloc (strlen (dir) + 80);
 
-    if (use_directory == -1)
-	use_directory = supported_request ("Directory");
+    send_to_server ("Directory ", 0);
+    send_to_server (update_dir, 0);
+    send_to_server ("\012", 1);
+    send_to_server (repos, 0);
+    send_to_server ("\012", 1);
 
-    if (use_directory)
-    {
-	send_to_server ("Directory ", 0);
-	send_to_server (update_dir, 0);
-	send_to_server ("\012", 1);
-	send_to_server (repos, 0);
-	send_to_server ("\012", 1);
-    }
-    else
-    {
-	send_to_server ("Repository ", 0);
-	send_to_server (repos, 0);
-	send_to_server ("\012", 1);
-    }
     if (supported_request ("Static-directory"))
     {
 	adm_name[0] = '\0';
@@ -2606,9 +2534,10 @@ client_expand_modules (argc, argv, local)
 }
 
 void
-client_send_expansions (local, where)
+client_send_expansions (local, where, build_dirs)
     int local;
     char *where;
+    int build_dirs;
 {
     int i;
     char *argv[1];
@@ -2625,7 +2554,7 @@ client_send_expansions (local, where)
     {
 	argv[0] = where ? where : modules_vector[i];
 	if (isfile (argv[0]))
-	    send_files (1, argv, local, 0);
+	    send_files (1, argv, local, 0, build_dirs);
     }
     send_a_repository ("", CVSroot_directory, "");
 }
@@ -2987,28 +2916,34 @@ supported_request (name)
 
 
 #ifdef AUTH_CLIENT_SUPPORT
-void
+static void init_sockaddr PROTO ((struct sockaddr_in *, char *,
+				  unsigned int));
+
+static void
 init_sockaddr (name, hostname, port)
     struct sockaddr_in *name;
-    const char *hostname;
-    unsigned short int port;
+    char *hostname;
+    unsigned int port;
 {
     struct hostent *hostinfo;
+	unsigned short shortport = port;
 
     memset (name, 0, sizeof (*name));
     name->sin_family = AF_INET;
-    name->sin_port = htons (port);
+    name->sin_port = htons (shortport);
     hostinfo = gethostbyname (hostname);
     if (hostinfo == NULL)
     {
 	fprintf (stderr, "Unknown host %s.\n", hostname);
-	exit (EXIT_FAILURE);
+	error_exit ();
     }
     name->sin_addr = *(struct in_addr *) hostinfo->h_addr;
 }
 
 
-int
+static int auth_server_port_number PROTO ((void));
+
+static int
 auth_server_port_number ()
 {
     struct servent *s = getservbyname ("cvspserver", "tcp");
@@ -3047,7 +2982,7 @@ connect_to_pserver (tofdp, fromfdp, verify_only)
     if (sock == -1)
     {
 	fprintf (stderr, "socket() failed\n");
-	exit (EXIT_FAILURE);
+	error_exit ();
     }
     port_number = auth_server_port_number ();
     init_sockaddr (&client_sai, CVSroot_hostname, port_number);
@@ -3059,7 +2994,15 @@ connect_to_pserver (tofdp, fromfdp, verify_only)
     /* Run the authorization mini-protocol before anything else. */
     {
 	int i;
-	char ch, read_buf[PATH_MAX];
+	char ch;
+
+	/* Long enough to hold I LOVE YOU or I HATE YOU.  Using a fixed-size
+	   buffer seems better than letting an apeshit server chew up our
+	   memory with illegal responses, and the value comes from
+	   the protocol itself; it is not an arbitrary limit on data sent.  */
+#define LARGEST_RESPONSE 80
+	char read_buf[LARGEST_RESPONSE];
+
 	char *begin      = NULL;
 	char *repository = CVSroot_directory;
 	char *username   = CVSroot_username;
@@ -3108,8 +3051,8 @@ connect_to_pserver (tofdp, fromfdp, verify_only)
 	 * end of both ACK and NACK, and we loop, reading until "\n".
 	 */
 	ch = 0;
-	memset (read_buf, 0, PATH_MAX);
-	for (i = 0; (i < (PATH_MAX - 1)) && (ch != '\n'); i++)
+	memset (read_buf, 0, LARGEST_RESPONSE);
+	for (i = 0; (i < (LARGEST_RESPONSE - 1)) && (ch != '\n'); i++)
 	{
 	    if (recv (sock, &ch, 1, 0) < 0)
                 error (1, errno, "recv() from server %s", CVSroot_hostname);
@@ -3528,7 +3471,7 @@ the :server: access method is not supported by this port of CVS");
     send_to_server ("valid-requests\012", 0);
 
     if (get_server_responses ())
-	exit (EXIT_FAILURE);
+	error_exit ();
 
     /*
      * Now handle global options.
@@ -3719,7 +3662,6 @@ start_rsh_server (tofdp, fromfdp)
        invoke another rsh on a proxy machine.  */
     char *cvs_rsh = getenv ("CVS_RSH");
     char *cvs_server = getenv ("CVS_SERVER");
-    char command[PATH_MAX];
     int i = 0;
     /* This needs to fit "rsh", "-b", "-l", "USER", "host",
        "cmd (w/ args)", and NULL.  We leave some room to grow. */
@@ -3760,7 +3702,6 @@ start_rsh_server (tofdp, fromfdp)
     if (trace)
     {
 	fprintf (stderr, " -> Starting server: ");
-	fprintf (stderr, "%s", command);
 	putc ('\n', stderr);
     }
 
@@ -4172,18 +4113,8 @@ send_fileproc (callerdat, finfo)
 	 * Do we want to print "file was lost" like normal CVS?
 	 * Would it always be appropriate?
 	 */
-	/* File no longer exists.  */
-	if (!use_unchanged)
-	{
-	    /* if the server is old, use the old request... */
-	    send_to_server ("Lost ", 0);
-	    send_to_server (filename, 0);
-	    send_to_server ("\012", 1);
-	    /*
-	     * Otherwise, don't do anything for missing files,
-	     * they just happen.
-	     */
-	}
+	/* File no longer exists.  Don't do anything, missing files
+	   just happen.  */
     }
     else if (vers->ts_rcs == NULL
 	     || strcmp (vers->ts_user, vers->ts_rcs) != 0)
@@ -4192,13 +4123,9 @@ send_fileproc (callerdat, finfo)
     }
     else
     {
-	/* Only use this request if the server supports it... */
-	if (use_unchanged)
-          {
-	    send_to_server ("Unchanged ", 0);
-	    send_to_server (filename, 0);
-	    send_to_server ("\012", 1);
-          }
+	send_to_server ("Unchanged ", 0);
+	send_to_server (filename, 0);
+	send_to_server ("\012", 1);
     }
 
     /* if this directory has an ignore list, add this file to it */
@@ -4276,6 +4203,7 @@ send_dirent_proc (callerdat, dir, repository, update_dir, entries)
     char *update_dir;
     List *entries;
 {
+    int build_dirs = *(int *) callerdat;
     int dir_exists;
     char *cvsadm_name;
     char *cvsadm_repos_name;
@@ -4323,7 +4251,14 @@ send_dirent_proc (callerdat, dir, repository, update_dir, entries)
 	free (repos);
     }
     else
-	send_a_repository (dir, repository, update_dir);
+    {
+	/* Don't send a non-existent directory unless we are building
+           new directories (build_dirs is true).  Otherwise, CVS may
+           see a D line in an Entries file, and recreate a directory
+           which the user removed by hand.  */
+	if (dir_exists || build_dirs)
+	    send_a_repository (dir, repository, update_dir);
+    }
     free (cvsadm_repos_name);
 
     return (dir_exists ? R_PROCESS : R_SKIP_ALL);
@@ -4376,11 +4311,6 @@ send_file_names (argc, argv, flags)
     char *q;
     int level;
     int max_level;
-    char *line;
-    size_t line_allocated;
-
-    line = NULL;
-    line_allocated = 0;
 
     /* The fact that we do this here as well as start_recursion is a bit 
        of a performance hit.  Perhaps worth cleaning up someday.  */
@@ -4436,6 +4366,7 @@ send_file_names (argc, argv, flags)
     {
 	char buf[1];
 	char *p = argv[i];
+	char *line = NULL;
 
 #ifdef FILENAMES_CASE_INSENSITIVE
 	/* We want to send the file name as it appears
@@ -4447,39 +4378,28 @@ send_file_names (argc, argv, flags)
 	   non-local case too, though.  */
 	if (p == last_component (p))
 	{
-	    FILE *ent;
+	    List *entries;
+	    Node *node;
 
-	    ent = CVS_FOPEN (CVSADM_ENT, "r");
-	    if (ent == NULL)
+	    /* If we were doing non-local directory,
+	       we would save_cwd, CVS_CHDIR
+	       like in update.c:isemptydir.  */
+	    /* Note that if we are adding a directory,
+	       the following will read the entry
+	       that we just wrote there, that is, we
+	       will get the case specified on the
+	       command line, not the case of the
+	       directory in the filesystem.  This
+	       is correct behavior.  */
+	    entries = Entries_Open (0);
+	    node = findnode_fn (entries, p);
+	    if (node != NULL)
 	    {
-		if (!existence_error (errno))
-		    error (0, errno, "cannot read %s", CVSADM_ENT);
+		line = xstrdup (node->key);
+		p = line;
+		delnode (node);
 	    }
-	    else
-	    {
-		while (getline (&line, &line_allocated, ent) > 0)
-		{
-		    char *cp;
-
-		    if (line[0] != '/')
-			continue;
-		    cp = strchr (line + 1, '/');
-		    if (cp == NULL)
-			continue;
-		    *cp = '\0';
-		    if (fncmp (p, line + 1) == 0)
-		    {
-			p = line + 1;
-			break;
-		    }
-		}
-		if (ferror (ent))
-		    error (0, errno, "cannot read %s", CVSADM_ENT);
-		if (fclose (ent) < 0)
-		    error (0, errno, "cannot close %s", CVSADM_ENT);
-		/* We don't attempt to look at CVS/Entries.Log.  In a few cases that might
-		   lead to strange behaviors, but they should be fairly obscure.  */
-	    }
+	    Entries_Close (entries);
 	}
 #endif /* FILENAMES_CASE_INSENSITIVE */
 
@@ -4504,10 +4424,9 @@ send_file_names (argc, argv, flags)
 	    ++p;
 	}
 	send_to_server ("\012", 1);
+	if (line != NULL)
+	    free (line);
     }
-
-    if (line != NULL)
-	free (line);
 
     if (flags & SEND_EXPAND_WILD)
     {
@@ -4522,16 +4441,18 @@ send_file_names (argc, argv, flags)
 /*
  * Send Repository, Modified and Entry.  argc and argv contain only
  * the files to operate on (or empty for everything), not options.
- * local is nonzero if we should not recurse (-l option).  Also sends
+ * local is nonzero if we should not recurse (-l option).  build_dirs
+ * is nonzero if nonexistent directories should be sent.  Also sends
  * Argument lines for argc and argv, so should be called after options
  * are sent.
  */
 void
-send_files (argc, argv, local, aflag)
+send_files (argc, argv, local, aflag, build_dirs)
     int argc;
     char **argv;
     int local;
     int aflag;
+    int build_dirs;
 {
     int err;
 
@@ -4542,10 +4463,10 @@ send_files (argc, argv, local, aflag)
      */
     err = start_recursion
 	(send_fileproc, send_filesdoneproc,
-	 send_dirent_proc, (DIRLEAVEPROC)NULL, NULL,
+	 send_dirent_proc, (DIRLEAVEPROC)NULL, (void *) &build_dirs,
 	 argc, argv, local, W_LOCAL, aflag, 0, (char *)NULL, 0);
     if (err)
-	exit (EXIT_FAILURE);
+	error_exit ();
     if (toplevel_repos == NULL)
 	/*
 	 * This happens if we are not processing any files,

@@ -10,18 +10,12 @@
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
+   GNU General Public License for more details.  */
 
 #include "cvs.h"
 
-#define INCL_DOSQUEUES
-#define INCL_DOSPROCESS
-#define INCL_DOSSESMGR
-#include <os2.h>
+#include "os2inc.h"
+
 #include <process.h>
 
 #include <stdio.h>

@@ -8,8 +8,33 @@
  */
 
 
+/* We need some system header files here since we evaluate values from
+ * these files below.
+ */
+#include <stdio.h>
+#include <errno.h>
+
+
+
+#ifndef __STDC__
 /* You bet! */
 #define __STDC__ 1
+#endif
+
+/* The IBM compiler uses the (non-standard) error code EACCESS instead of
+   EACCES (note: one 'S'). Define EACCESS to be EACCES and use the standard
+   name in the code. */
+#ifndef EACCES
+#define EACCES EACCESS
+#endif
+
+/* Handle some other name differences between the IBM and the Watcom
+ * compiler.
+ */
+#ifdef __WATCOMC__
+#define _setmode        setmode
+#define _cwait          cwait
+#endif
 
 /* Define if on AIX 3.
    System headers sometimes define this.
@@ -174,6 +199,9 @@
    this function in the code anyway, hmm.  */
 #undef HAVE_TIMEZONE
 
+/* Define if you have the tzset function.  */
+#define HAVE_TZSET 1
+
 /* Define if you have the vfork function.  */
 #undef HAVE_VFORK
 
@@ -185,7 +213,11 @@
 
 /* Define if you have the <dirent.h> header file.  */
 /* We have our own dirent.h and dirent.c. */
+#ifdef __WATCOMC__
+#undef HAVE_DIRENT_H
+#else
 #define HAVE_DIRENT_H 1
+#endif
 
 /* Define if you have the <errno.h> header file.  */
 #define HAVE_ERRNO_H 1
@@ -261,7 +293,9 @@ extern int os2_mkdir (const char *PATH, int MODE);
 extern int readlink (char *path, char *buf, int buf_size);
 
 /* This is just a call to GetCurrentProcessID.  */
+#ifndef __WATCOMC__
 extern pid_t getpid (void);
+#endif
 
 /* We definitely have prototypes.  */
 #define USE_PROTOTYPES 1
@@ -315,17 +349,26 @@ extern void convert_file (char *INFILE,  int INFLAGS,
    according to the C library manual pages.  So we'll make decoys.
    (This was partly introduced for an obsolete reason, now taken care
    of by CHMOD_BROKEN, but I haven't carefully looked at every case
-   (in particular mode_to_string), so it might still be needed).  */
+   (in particular mode_to_string), so it might still be needed).
+   We do not need that for the watcom compiler since watcom already
+   all those permission bits defined. It would probably be better to
+   include the necessary system header files in system.h, and then make
+   each permission define only if it is not already defined.
+*/
+#ifndef __WATCOMC__
 #define NEED_DECOY_PERMISSIONS 1     /* see system.h */
+#endif
 
 
 
-/* For the access() function, for which OS/2 has no pre-defined
+/* For the access() function, for which IBM OS/2 compiler has no pre-defined
    mnemonic masks. */
+#ifndef __WATCOMC__
 #define R_OK 04
 #define W_OK 02
 #define F_OK 00
 #define X_OK R_OK  /* I think this is right for OS/2. */
+#endif
 
 /* For getpid() */
 #include <process.h>
@@ -344,7 +387,7 @@ extern void init_sockets();
 /*
  * This tells the client that it must use send()/recv() to talk to the
  * server if it is connected to the server via a socket.  Sigh.
- * Windows 95 also cannot convert sockets to file descriptors,
+ * Windows 95 and VMS cannot convert sockets to file descriptors either,
  * apparently.
  */
 #define NO_SOCKET_TO_FD 1
@@ -357,8 +400,10 @@ extern void init_sockets();
 #define CHMOD_BROKEN 1
 
 /* Rule Number 1 of OS/2 Programming: If the function you're looking
-   for doesn't exist, try putting "Dos" in front of it. */
+   for doesn't exist, try putting "Dos" in front of it.
+   Do not forget to include the os2 header file if we use DosSleep. */
 #ifndef sleep
+#include "os2inc.h"
 #define sleep(x) DosSleep(((long)(x))*1000L)
 #endif /* sleep */
 

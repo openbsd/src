@@ -12,7 +12,8 @@ WARNING:  This test can take quite a while to run, esp. if your
 disks are slow or over-loaded.
 
 You will probably need GNU expr, which is part of the GNU sh-utils
-package.
+package (this is just for running the tests; CVS itself doesn't use
+expr).
 
 If there is some unexpected output, that is a failure which can be
 somewhat hard to track down.  Finding out which test is producing the

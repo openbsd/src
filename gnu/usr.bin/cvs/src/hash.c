@@ -332,6 +332,19 @@ list_isempty (list)
     return list == NULL || list->list->next == list->list;
 }
 
+static int (*client_comp) PROTO ((const Node *, const Node *));
+static int qsort_comp PROTO ((const void *, const void *));
+
+static int
+qsort_comp (elem1, elem2)
+    const void *elem1;
+    const void *elem2;
+{
+    Node **node1 = (Node **) elem1;
+    Node **node2 = (Node **) elem2;
+    return client_comp (*node1, *node2);
+}
+
 /*
  * sort the elements of a list (in place)
  */
@@ -340,49 +353,48 @@ sortlist (list, comp)
     List *list;
     int (*comp) PROTO ((const Node *, const Node *));
 {
-    Node *head, *remain, *p, *q;
+    Node *head, *remain, *p, **array;
+    int i, n;
 
     /* save the old first element of the list */
     head = list->list;
     remain = head->next;
 
-    /* make the header node into a null list of it's own */
+    /* count the number of nodes in the list */
+    n = 0;
+    for (p = remain; p != head; p = p->next)
+	n++;
+
+    /* allocate an array of nodes and populate it */
+    array = (Node **) xmalloc (sizeof(Node *) * n);
+    i = 0;
+    for (p = remain; p != head; p = p->next)
+	array[i++] = p;
+
+    /* sort the array of nodes */
+    client_comp = comp;
+    qsort (array, n, sizeof(Node *), qsort_comp);
+
+    /* rebuild the list from beginning to end */
     head->next = head->prev = head;
-
-    /* while there are nodes remaining, do insert sort */
-    while (remain != head)
+    for (i = 0; i < n; i++)
     {
-	/* take one from the list */
-	p = remain;
-	remain = remain->next;
-
-	/* traverse the sorted list looking for the place to insert it */
-	for (q = head->next; q != head; q = q->next)
-	{
-	    if (comp (p, q) < 0)
-	    {
-		/* p comes before q */
-		p->next = q;
-		p->prev = q->prev;
-		p->prev->next = p;
-		q->prev = p;
-		break;
-	    }
-	}
-	if (q == head)
-	{
-	    /* it belongs at the end of the list */
-	    p->next = head;
-	    p->prev = head->prev;
-	    p->prev->next = p;
-	    head->prev = p;
-	}
+	p = array[i];
+	p->next = head;
+	p->prev = head->prev;
+	p->prev->next = p;
+	head->prev = p;
     }
+
+    /* release the array of nodes */
+    free (array);
 }
 
 /* Debugging functions.  Quite useful to call from within gdb. */
 
-char *
+static char *nodetypestring PROTO ((Ntype));
+
+static char *
 nodetypestring (type)
     Ntype type;
 {
@@ -423,6 +435,11 @@ printnode (node, closure)
 
     return(0);
 }
+
+/* This is global, not static, so that its name is unique and to avoid
+   compiler warnings about it not being used.  But it is not used by CVS;
+   it exists so one can call it from a debugger.  */
+void printlist PROTO ((List *));
 
 void
 printlist (list)

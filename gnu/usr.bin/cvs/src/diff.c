@@ -51,9 +51,8 @@ static char *user_file_rev;
 #endif
 
 static char *options;
-/* FIXME: arbitrary limit (security hole, if the client passes us
-   data which overflows it).  */
-static char opts[PATH_MAX];
+static char *opts;
+static size_t opts_allocated = 1;
 static int diff_errors;
 static int empty_files = 0;
 
@@ -146,6 +145,28 @@ static struct option const longopts[] =
     {0, 0, 0, 0}
 };
 
+static void strcat_and_allocate PROTO ((char **, size_t *, const char *));
+
+/* *STR is a pointer to a malloc'd string.  *LENP is its allocated
+   length.  Add SRC to the end of it, reallocating if necessary.  */
+static void
+strcat_and_allocate (str, lenp, src)
+    char **str;
+    size_t *lenp;
+    const char *src;
+{
+    size_t new_size;
+
+    new_size = strlen (*str) + strlen (src) + 1;
+    if (*str == NULL || new_size >= *lenp)
+    {
+	while (new_size >= *lenp)
+	    *lenp *= 2;
+	*str = xrealloc (*str, *lenp);
+    }
+    strcat (*str, src);
+}
+
 int
 diff (argc, argv)
     int argc;
@@ -165,11 +186,17 @@ diff (argc, argv)
      * intercept the -r arguments for doing revision diffs; and -l/-R for a
      * non-recursive/recursive diff.
      */
-#ifdef SERVER_SUPPORT
-    /* Need to be able to do this command more than once (according to
-       the protocol spec, even if the current client doesn't use it).  */
+
+    /* For server, need to be able to do this command more than once
+       (according to the protocol spec, even if the current client
+       doesn't use it).  */
+    if (opts == NULL)
+    {
+	opts_allocated = 1;
+	opts = xmalloc (opts_allocated);
+    }
     opts[0] = '\0';
-#endif
+
     optind = 1;
     while ((c = getopt_long (argc, argv,
 	       "abcdefhilnpstuwy0123456789BHNRTC:D:F:I:L:U:V:W:k:r:",
@@ -183,30 +210,31 @@ diff (argc, argv)
 	    case '3': case '4': case '5': case '6': case '7': case '8':
 	    case '9': case 'B': case 'H': case 'T':
 		(void) sprintf (tmp, " -%c", (char) c);
-		(void) strcat (opts, tmp);
+		strcat_and_allocate (&opts, &opts_allocated, tmp);
 		break;
 	    case 'C': case 'F': case 'I': case 'L': case 'U': case 'V':
 	    case 'W':
 		(void) sprintf (tmp, " -%c", (char) c);
-		strcat (opts, tmp);
-		strcat (opts, optarg);
+		strcat_and_allocate (&opts, &opts_allocated, tmp);
+		strcat_and_allocate (&opts, &opts_allocated, optarg);
 		break;
 	    case 147:
 		/* --ifdef.  */
-		strcat (opts, " -D");
-		strcat (opts, optarg);
+		strcat_and_allocate (&opts, &opts_allocated, " -D");
+		strcat_and_allocate (&opts, &opts_allocated, optarg);
 		break;
 	    case 129: case 130: case 131: case 132: case 133: case 134:
 	    case 135: case 136: case 137: case 138: case 139: case 140:
 	    case 141: case 142: case 143: case 144: case 145: case 146:
-		strcat (opts, " --");
-		strcat (opts, longopts[option_index].name);
+		strcat_and_allocate (&opts, &opts_allocated, " --");
+		strcat_and_allocate (&opts, &opts_allocated,
+				     longopts[option_index].name);
 		if (longopts[option_index].has_arg == 1
 		    || (longopts[option_index].has_arg == 2
 			&& optarg != NULL))
 		{
-		    strcat (opts, "=");
-		    strcat (opts, optarg);
+		    strcat_and_allocate (&opts, &opts_allocated, "=");
+		    strcat_and_allocate (&opts, &opts_allocated, optarg);
 		}
 		break;
 	    case 'R':
@@ -284,7 +312,7 @@ diff (argc, argv)
 	/* Send the current files unless diffing two revs from the archive */
 	if (diff_rev2 == NULL && diff_date2 == NULL)
 #endif
-	send_files (argc, argv, local, 0);
+	send_files (argc, argv, local, 0, 0);
 
 	send_to_server ("diff\012", 0);
         err = get_responses_and_close ();
@@ -328,7 +356,7 @@ diff_fileproc (callerdat, finfo)
     enum diff_file empty_file = DIFF_DIFFERENT;
     char *tmp;
     char *tocvsPath;
-    char fname[PATH_MAX];
+    char *fname;
 
 #ifdef SERVER_SUPPORT
     user_file_rev = 0;
@@ -508,10 +536,14 @@ diff_fileproc (callerdat, finfo)
     if (tocvsPath)
     {
 	/* Backup the current version of the file to CVS/,,filename */
+	fname = xmalloc (strlen (finfo->file)
+			 + sizeof CVSADM
+			 + sizeof CVSPREFIX
+			 + 10);
 	sprintf(fname,"%s/%s%s",CVSADM, CVSPREFIX, finfo->file);
 	if (unlink_file_dir (fname) < 0)
 	    if (! existence_error (errno))
-		error (1, errno, "cannot remove %s", finfo->file);
+		error (1, errno, "cannot remove %s", fname);
 	rename_file (finfo->file, fname);
 	/* Copy the wrapped file to the current directory then go to work */
 	copy_file (tocvsPath, finfo->file);
@@ -609,7 +641,8 @@ diff_fileproc (callerdat, finfo)
 
 	rename_file (fname,finfo->file);
 	if (unlink_file (tocvsPath) < 0)
-	    error (1, errno, "cannot remove %s", finfo->file);
+	    error (1, errno, "cannot remove %s", tocvsPath);
+	free (fname);
     }
 
     if (empty_file == DIFF_REMOVED
@@ -828,16 +861,25 @@ diff_file_nodiff (finfo, vers, empty_file)
 	    return DIFF_DIFFERENT;
     }
 #endif /* SERVER_SUPPORT */
+
     if (use_rev1 == NULL
 	|| (vers->vn_user != NULL && strcmp (use_rev1, vers->vn_user) == 0))
     {
-	if (strcmp (vers->ts_rcs, vers->ts_user) == 0 &&
-	    (!(*options) || strcmp (options, vers->options) == 0))
+	if (empty_file == DIFF_DIFFERENT
+	    && vers->ts_user != NULL
+	    && strcmp (vers->ts_rcs, vers->ts_user) == 0
+	    && (!(*options) || strcmp (options, vers->options) == 0))
 	{
 	    return DIFF_SAME;
 	}
-	if (use_rev1 == NULL)
-	    use_rev1 = xstrdup (vers->vn_user);
+	if (use_rev1 == NULL
+	    && (vers->vn_user[0] != '0' || vers->vn_user[1] != '\0'))
+	{
+	    if (vers->vn_user[0] == '-')
+		use_rev1 = xstrdup (vers->vn_user + 1);
+	    else
+		use_rev1 = xstrdup (vers->vn_user);
+	}
     }
 
     /* If we already know that the file is being added or removed,

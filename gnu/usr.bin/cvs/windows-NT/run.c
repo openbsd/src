@@ -10,11 +10,7 @@
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
+   GNU General Public License for more details.  */
 
 #include "cvs.h"
 
@@ -392,7 +388,22 @@ run_popen (cmd, mode)
        double quotes.  */
     {
         char *requoted = requote (cmd);
+	/* Save and restore our file descriptors to work around
+	   apparent bugs in _popen.  We are perhaps better off using
+	   the win32 functions instead of _popen.  */
+	int old_stdin = dup (STDIN_FILENO);
+	int old_stdout = dup (STDOUT_FILENO);
+	int old_stderr = dup (STDERR_FILENO);
+
 	FILE *result = popen (requoted, mode);
+
+	dup2 (old_stdin, STDIN_FILENO);
+	dup2 (old_stdout, STDOUT_FILENO);
+	dup2 (old_stderr, STDERR_FILENO);
+	close (old_stdin);
+	close (old_stdout);
+	close (old_stderr);
+
 	free (requoted);
 	return result;
     }

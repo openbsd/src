@@ -1,5 +1,3 @@
-$CVSid: @(#)README 1.32 94/10/22 $
-
 				CVS Kit
 
 		Copyright (c) 1993-1994 Brian Berliner
@@ -16,10 +14,6 @@ $CVSid: @(#)README 1.32 94/10/22 $
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with this program; if not, write to the Free Software
-    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
 -------------------------------------------------------------------------------
 
@@ -73,7 +67,7 @@ CVS but will tend to require some script-writing and software other
 than CVS: bug-tracking, build management (that is, make and make-like
 tools), and automated testing.
 
-And a whole lot more.  See the doc/cvs.texinfo file for more information.
+And a whole lot more.  See the manual for more information.
 
 -------------------------------------------------------------------------------
 
@@ -81,23 +75,10 @@ Notes to people upgrading from a previous release of CVS:
 
 See the NEWS file for a description of features new in this version.
 
-The repository format is compatible going back to CVS 1.3.  But see
-the "Watches compatibility" section of doc/cvs.texinfo if you have
-copies of CVS 1.6 or older and you want to use the optional developer
-communication features.
-
-The working directory format is compatible going back to CVS 1.5.  It
-did change between CVS 1.3 and CVS 1.5.  If you run CVS 1.5 or newer
-on a working directory checked out with CVS 1.3, CVS will convert it,
-but to go back to CVS 1.3 you need to check out a new working
-directory with CVS 1.3.
-
-The remote protocol is interoperable going back to CVS 1.5.  Using a
-client or server older than 1.5 is deprecated and may fail to work at
-some point in the future (1.5 was the first official release with the
-remote protocol, but some older versions might still be floating
-around).  In many cases you need to upgrade both the client and the
-server to take advantage of new features and bugfixes, however.
+See the Compatibility section of the manual for information on
+compatibility between CVS versions.  The quick summary is that as long
+as you not using the optional watch features, there are no
+compatibility problems with CVS 1.5 or later.
 
 -------------------------------------------------------------------------------
 
@@ -114,8 +95,11 @@ Please read the INSTALL file for installation instructions.  Brief summary:
 The documentation is in the doc subdirectory.  cvs.texinfo is the main
 manual; cvs.info* and cvs.ps are the info and postscript versions,
 respectively, generated from cvs.texinfo.  The postscript version is
-for A4 paper; if you want US letter size, you need to remove the line
-@afourpaper from cvs.texinfo and re-generate cvs.ps using TeX.
+for US letter size paper; we do this not because we consider this size
+"better" than A4, but because we believe that the US letter version
+will print better on A4 paper than the other way around. If you want a
+version formatted for A4, add the line @afourpaper near the start of
+cvs.texinfo and re-generate cvs.ps using TeX.
 
 -------------------------------------------------------------------------------
 
@@ -154,7 +138,7 @@ D.C., is included in the "doc" directory.
 Jeff Polk from BSDI <polk@bsdi.com> converted the CVS 1.2
 sources into much more readable and maintainable C code.  He also added a
 whole lot of functionality and modularity to the code in the process.
-See the ChangeLog file.
+See the bottom of the NEWS file (from about 1992).
 
 david d `zoo' zuhn <zoo@armadillo.com> contributed the working base code
 for CVS 1.4 Alpha.  His work carries on from work done by K. Richard Pixley
@@ -174,9 +158,9 @@ K. Richard Pixley, Cygnus Support <rich@cygnus.com> contributed many bug
 fixes/enhancement as well as completing early reviews of the CVS 1.3 manual
 pages.
 
-Roland Pesch, then of Cygnus Support <roland@wrs.com> contributed brand new
-cvs(1) and cvs(5) manual pages.  We should all thank him for saving us from
-my poor use of our language!
+Roland Pesch, then of Cygnus Support <roland@wrs.com> contributed
+brand new cvs(1) and cvs(5) manual pages.  Thanks to him for saving us
+from poor use of our language!
 
 Paul Sander, HaL Computer Systems, Inc. <paul@hal.com> wrote and
 contributed the code in lib/sighandle.c.  I added support for POSIX, BSD,
@@ -185,13 +169,17 @@ and non-POSIX/non-BSD systems.
 Jim Kingdon and others at Cygnus Support <info@cygnus.com> wrote the
 remote repository access code.
 
-In addition to the above contributors, the following Beta testers deserve
-special mention for their support.  If I have left off your name, I
-apologize.  Just write to me and let me know!
+There have been many, many contributions not listed here.  Consult the
+ChangeLog files in each directory for a more complete idea.
+
+In addition to the above contributors, the following Beta testers
+deserve special mention for their support.  This is only a partial
+list; if you have helped in this way and would like to be listed, let
+bug-cvs know (as described elsewhere in this file).
 
 	Mark D. Baushke <mdb@cisco.com>
 	Per Cederqvist <ceder@signum.se>
-	J.T. Conklin (jtc@cygnus.com>
+	J.T. Conklin <jtc@cygnus.com>
 	Vince DeMarco <vdemarco@fdcsrvr.cs.mci.com>
 	Paul Eggert <eggert@twinsun.com>
 	Lal George <george@research.att.com>

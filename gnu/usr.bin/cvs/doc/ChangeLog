@@ -1,3 +1,300 @@
+Mon Jan 13 15:41:02 1997  Karl Fogel  <kfogel@ynu38.ynu.edu.cn>
+
+	* cvs.texinfo (Read-only access): rephrase to imply that there may
+        be other administrative files, besides history and locks, which
+        read-only users can also affect (in the future, for example, the
+        `passwd' file).
+
+Wed Jan  8 14:50:47 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* Makefile.in: Remove CVSid; we decided to get rid
+	of these some time ago.
+
+Wed Jan  8 09:08:36 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* cvsclient.texi (Connection and Authentication): Document
+	restriction that cvs root sent in the cvs protocol and in the
+	pserver authentication protocol must be identical.
+
+Thu Jan  2 13:30:56 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* Makefile.in, cvs.texinfo: Remove "675" paragraph;
+	see ../ChangeLog for rationale.
+
+Thu Jan  2 09:34:51 1997  Karl Fogel  <kfogel@ynu38.ynu.edu.cn>
+
+        * cvs.texinfo (Read-only access): new node.
+        (Repository): new menu item for above new node.
+        (Password authentication server): document the user-aliasing
+        feature.  Why was this undocumented before?
+
+Wed Jan  1 18:12:11 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* cvs.texinfo (Conflicts example): Use @asis in example to prevent
+	starting a line with a conflict marker.  This means that when
+	maintaining the file with CVS itself, CVS will not think there is
+	a conflict merely because of the conflict marker in the example.
+	IMHO, this is totally bogus and CVS needs a better way of figuring
+	out whether a conflict is resolved (see comments elsewhere in this
+	node), but until then....  Credit to Fred Fish for reporting the
+	problem.
+
+	* cvs.texinfo (cvsignore): Add paragraph about how .cvsignore
+	files in the sources being imported by "cvs import" override
+	"-I !".  Credit goes to Fred Fish for pointing out this problem.
+
+Thu Dec 19 12:36:46 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* cvs.texinfo (Credits): Update Roland Pesch email address per his
+	request.
+
+Tue Dec 17 12:57:56 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* cvs.texinfo (verifymsg): In example, remove text "and reedit if
+	necessary"; it was copied from editinfo and doesn't apply here.
+	Fix syntax of if statement; remove unnecessary attempt at loop;
+	don't use -n with echo.  Add @appendixsec at start of node.
+	Add note about how verifymsg cannot change log message.
+	(editinfo): In paragraph saying editinfo is obsolete, fix various
+	typos and formatting glitches.  Mention -e as well as EDITOR.
+	(editinfo): In saying that editinfo doesn't get consulted with -m,
+	-F or client/server, recommend verifymsg.  Remove comment which
+	says, in effect, "we need a feature like verifymsg".
+	(editinfo example): Change "verifymsg" back to "editinfo" here;
+	the example is of editinfo not verifymsg.
+
+Tue Dec 17 12:45:32 1996  Abe Feldman  <feldman@cyclic.com>
+
+	* cvs.texinfo (verifymsg): New node.
+	various places: Say that editinfo is obsolete, or refer to
+	verifymsg instead of editinfo
+
+Wed Dec 11 08:55:26 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* cvs.texinfo (Compatibility): Add comment about 1.3 and file death.
+
+	* cvs.texinfo (update output, release output): Document "P" as
+	well as "U".
+
+Tue Dec 10 16:23:40 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* cvs.texinfo (Builds): Change "make" to "implement" and "build";
+	in this context "make" is ambiguous.
+	(Builds): Add new URL of mk web page.
+
+Mon Dec  9 11:03:37 1996  Jim Blandy  <jimb@floss.cyclic.com>
+
+	* cvs.texinfo (Password authentication client, Environment
+	variables): Remove mention of CVS_PASSWORD.
+
+Sun Dec  8 22:38:34 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* cvs.texinfo (Repository files): Mention differences between RCS
+	files in RCS and in CVS.
+	(Tags): Tag names must start with a letter.
+
+Fri Dec  6 09:08:18 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* cvs.texinfo (syntax): Expand discussion of regular expression
+	syntax.
+
+Fri Nov 29 09:06:41 1996  fnf@ninemoons.com (Fred Fish)
+			  and Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* cvs.texinfo, cvsclient.texi: Make sure @ref and friends are
+	followed by "," or "." as described in the texinfo manual.  This
+	is a dubious practice as texi2html and texinfo.tex don't require
+	it, and makeinfo could insert them as needed, but since makeinfo
+	doesn't do that yet, cope.
+
+	* cvs.texinfo (From files): Suggest "diff -r" rather than "ls -R"
+	as the way to see that the sources seem to have been imported
+	correctly.
+	(Common options): -k is also available with import.
+	(admin options): Fix typo ("interrested" -> "interested").
+
+Mon Nov 25 10:03:56 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* cvs.texinfo (Common options): Add comments about two digit
+	years, year 2000, and ambiguous/nonexistent dates.
+
+Sun Nov 24 17:27:24 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* cvs.texinfo (First import): Don't say what the wdiff program we
+	are using as an example does--that is confusing.  Also don't show
+	untarring it--people might be familiar with cpio, ZIP, VMS BACKUP,
+	etc., instead of tar.
+
+	* cvs.texinfo (Adding files): Update comment about "cvs add -m".
+
+	* cvs.texinfo (Common options): Remove -H; -H is not a command
+	option.
+	(Global options): Also list --help and --version.  Don't say that
+	-H gives a list of commands; it doesn't any more (directly).
+
+	* cvs.texinfo: Add comment pointing to paper size web page.
+
+	* cvs.texinfo (Common options): Rewrite section on date formats.
+	Executive summary is that RFC822 and ISO8601 are now preferred.
+
+Wed Nov 20 08:39:45 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* cvs.texinfo (Getting Notified): Add paragraph clarifying that
+	watches happen per user, not per working directory.
+
+Tue Nov 19 09:39:08 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* cvs.texinfo (Tags): Suggest that future special tag names might
+	start with ".".  Fix typo.
+
+	* cvs.texinfo (Removing directories): -P is also available with
+	export.
+	(Moving directories): Rewrite first paragraph; now says that you
+	must use -P for the directory to disappear from working
+	directories.  Thanks to Martin Lorentzon
+	<Martin.Lorentzson@emw.ericsson.se> for reporting this bug.
+	(various): Where we mention -P, point to Removing directories
+	node.
+
+Sat Nov 16 18:03:22 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* cvsclient.texi (Example): Rewrite to actually be based on a real
+	live example (and therefore reflect the way the protocol currently
+	works).  Add comment about formatting of the document itself.
+
+Thu Nov 14 10:22:58 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* cvsclient.texi (Introduction): Use @ref, not @xref, after "see".
+	(Goals): Rewrite items about locking, about uploading in big
+	chunks, and about atomicity to be focused more on the protocol
+	than the current implementation.
+	(Notes): Remove this node.  The attempt to describe the basic
+	model has pretty much been replaced by the Introduction.  
+	The material about how to start the client is incomplete and
+	better left to cvs.texinfo.  And the item about the lack of
+	SERVER_FLOWCONTROL is obsolete now that SERVER_FLOWCONTROL is the
+	default.
+	(Protocol Notes): Add comment about multisite features.
+	(Requirements): Use @code for requests and responses.
+
+	* cvs.texinfo (Remote repositories): Add a few sentences defining
+	"client" and "server"; before we had been using the terms without
+	defining them.
+
+	* cvs.texinfo (What is CVS?): Add paragraph about reporting bugs.
+	Reword and expand comp.software.config-mgmt description (and add
+	comments about other newsgroup facts).  Point people at GNU list
+	of FTP sites rather than directly at prep.ai.mit.edu.
+
+Wed Nov  6 09:45:08 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* cvs.texinfo (Tracking sources): Add comment regarding added and
+	removed files.
+
+Tue Nov  5 14:00:31 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* cvs.texinfo: Rename node "Invoking CVS" to "CVS commands".
+	Rewrite the intro and comments to reflect addition of the new
+	Invoking CVS.
+	(Invoking CVS): New node, a quick summary of each command.
+	(annotate): Don't list the options; refer to Invoking CVS and
+	Common options instead.
+
+Sun Nov  3 21:22:42 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* cvs.texinfo (Compatibility): New node, moved from ../README.
+
+	* cvs.texinfo (Common options): Add comment about how tar manual
+	contains documentation for getdate date formats.
+
+Fri Nov  1 14:00:31 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* cvs.texinfo (commit examples): Rewrite "New major release
+	number" section to tighten up the wording, better motivate the
+	discussion, and replace the term "rcs revision number" with
+	"numeric revision".
+
+Fri Oct 25 07:49:21 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* cvs.texinfo (loginfo): Don't say "a la printf"; the syntax is
+	only vaguely similar to printf.
+
+	* cvs.texinfo (loginfo): To get just the repository name, suggest
+	%{} instead of % "standing alone"; the latter is now an error.
+
+Tue Oct 22 13:08:54 1996  Noel Cragg  <noel@gargle.rain.org>
+
+	* cvs.texinfo (loginfo): add information on the new loginfo format
+ 	string specification.
+
+Mon Oct 21 17:33:44 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* cvs.texinfo (Builds): New node.
+	(What is CVS?): Refer to it.
+
+Sat Oct 19 14:32:21 1996  Jim Meyering <meyering@asic.sc.ti.com>
+			  and Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* cvs.texinfo (Choosing a model): Wording/grammar fix.
+
+Sat Oct 19 14:32:21 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* cvsclient.texi (Obsolete): New node.
+	(Requests): Remove Repository and Lost and adjust Directory,
+	UseUnchanged, and other places accordingly.
+	(Required): Directory and Unchanged are now required.
+
+	* cvs.texinfo (Removing files): Don't talk about modules; they are
+	not relevant in this context.
+	(Removing directories): New node.
+	(Common options): Refer to it instead of duplicating information.
+
+Fri Oct 18 11:05:06 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* cvs.texinfo (First import, import): Add paragraph about the fact
+	that import doesn't modify the directory which it imports from.
+
+	* cvs.texinfo (Creating a repository): Add paragraph about
+	resource requirements.
+
+	* cvs.texinfo (Copying): Replace empty node with a copy of the GPL.
+
+Thu Oct 17 12:10:55 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* cvs.texinfo (Adding files): Revise comment to more accurately
+	reflect the functioning/nonfunctioning status of cvs add -m.
+
+	* cvs.texinfo (Reverting local changes): New node, somewhat based
+	on the version of this node from 30 Sep 96 change.
+	(admin options): Refer to it.
+
+	* cvs.texinfo: Reinstate 30 Sep 96 change from A4 to US letter.
+
+	* cvs.texinfo (Concurrency): When telling people how to clean up
+	locks, tell them to make sure the locks are owned by the person
+	who has the stale locks.
+	(update output, release output): Remove text about how CVS doesn't
+	print "? foo" for directories; CVS has since been changed (see
+	conflicts-130 in sanity.sh).
+
+Wed Oct 16 15:01:42 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* cvs.texinfo (history options): Mention new option -x E.
+
+Mon Oct 14 15:21:25 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* cvs.texinfo (Tags): Add paragraph on choosing a convention for
+	naming tags.
+
+Thu Oct 10 16:05:26 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* cvs.texinfo (modules): Describe what & does.
+
+Mon Oct  7 17:20:11 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* cvs.texinfo (Removing files): Correct apparent cut and paste
+	error: refer to the removed file, not the added file.
+
 Tue Oct  1 14:15:33 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
 
 	* cvs.texinfo: Revert all recent changes (the last unscathed one

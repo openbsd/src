@@ -91,7 +91,40 @@ Filenames for .c and .h files may contain _ but should not contain -
 (the latter causes Visual C++ 2.1 to create makefiles which Visual C++
 4.0 cannot use).
 
-* Submitting patches
+* Submitting patches (strategy)
+
+Only some kinds of changes are suitable for inclusion in the
+"official" CVS.  Bugfixes, where CVS's behavior contradicts the
+documentation and/or expectations that everyone agrees on, should be
+OK (strategically).  For features, the desirable attributes are that
+the need is clear and that they fit nicely into the architecture of
+CVS.
+
+However, if there is reason to think that a change would significantly
+inconvenience any significant body of CVS users, or would be
+controversial for other reasons, then the design should be re-thought.
+Go back to the requirements (writing documentation might help, if you
+write the documentation to explain why one would use the feature not
+just what the feature does).  Think about whether there is a behavior
+which works in both your situation and the other situations.  Make a
+list of the issues (for example, submit a comment or documentation
+change).  Ask your coworkers, a newsgroup, or a mailing list, and see
+what other people think.  Distribute some experimental patches outside
+the "official" CVS and see what people think.  By this process, the
+intention is that once-controversial changes can be refined to the
+point where they are relatively uncontroversial before they are
+actually checked in to the "official" CVS.  Features like zlib,
+encryption, and others have benefitted from this process in the past
+by being mentioned in the documentation and/or discussed, before an
+implementation was checked in.
+
+If longstanding CVS behavior, that people may be relying on, is
+clearly deficient, it can be changed, but only slowly and carefully.
+For example, the global -q option was introduced in CVS 1.3 but the
+command -q options, which the global -q replaced, were not removed
+until CVS 1.6.
+
+* Submitting patches (tactics)
 
 Please include a ChangeLog entry (see the GNU coding standards for
 information on writing one) with patches.  Include a description of
@@ -101,6 +134,9 @@ be checked in unless there is some reason for them, and the
 description may be helpful if there is a better way to solve the
 problem.  In addition to the ChangeLog entry, there should be a change
 to the NEWS file and cvs.texinfo in the case of a user-visible change.
+
+It is nice to have a test case (see TESTS), especially for fixes which
+involve subtle behaviors or twisted sections of the code.
 
 If you solve several unrelated problems, submit a separate
 patch for each one.  Patches should be tested before submission.  Use

@@ -172,11 +172,7 @@ conflict: %s created independently by second party",
 
 	if (vers->ts_user == NULL)
 	{
-	    char tmp[PATH_MAX];
-
 	    /* There is no user file (as it should be) */
-
-	    (void) sprintf (tmp, "-%s", vers->vn_rcs ? vers->vn_rcs : "");
 
 	    if (vers->vn_rcs == NULL
 		|| RCS_isdead (vers->srcfile, vers->vn_rcs))
@@ -188,8 +184,9 @@ conflict: %s created independently by second party",
 		 */
 		ret = T_REMOVE_ENTRY;
 	    }
-	    else if (strcmp (tmp, vers->vn_user) == 0)
-
+	    else if (vers->vn_rcs == NULL
+		     ? vers->vn_user[1] == '\0'
+		     : strcmp (vers->vn_rcs, vers->vn_user + 1) == 0)
 		/*
 		 * The RCS file is the same version as the user file was, and
 		 * that's OK; remove it

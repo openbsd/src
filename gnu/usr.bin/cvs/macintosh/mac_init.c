@@ -23,13 +23,6 @@ extern int argc;
 extern char **argv;
 
 void
-macos_error_cleanup( void )
-{
-	Lock_Cleanup();
-	RemoveConsole();		// FIXME - Ugly, but necessary until MW fixes _exit
-}
-
-void
 InitializeMacToolbox( void )
 {
 	#ifndef __POWERPC__
@@ -59,8 +52,6 @@ MacOS_Initialize( int *argc, char ***argv )
 	#else
 	*argc = ccommand(argv);
 	#endif
-	
-	error_set_cleanup (macos_error_cleanup);
 }
 
 void

@@ -1,7 +1,5 @@
 /* Determined from CC RTL function prototypes in online documentation */
 
-#define mode_t unsigned int
-     
 #define fork(x) vfork(x)
 
 #include <sys/types.h>
@@ -23,8 +21,6 @@ extern int fnmatch(char *pattern, char *string, int options);
 
 int unlink(char *path);
 int link(char *from, char *to);
-
-int rmdir(char *path);
 
 #define stat(a, b) wrapped_stat(a, b)
 

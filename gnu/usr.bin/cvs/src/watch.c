@@ -8,11 +8,7 @@
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
+   GNU General Public License for more details.  */
 
 #include "cvs.h"
 #include "edit.h"
@@ -340,7 +336,7 @@ watch_addremove (argc, argv)
 	/* FIXME:  We shouldn't have to send current files, but I'm not sure
 	   whether it works.  So send the files --
 	   it's slower but it works.  */
-	send_files (argc, argv, local, 0);
+	send_files (argc, argv, local, 0, 0);
 	send_to_server (the_args.adding ?
                         "watch-add\012" : "watch-remove\012",
                         0);
@@ -357,7 +353,7 @@ watch_addremove (argc, argv)
 			   argc, argv, local, W_LOCAL, 0, 0, (char *)NULL,
 			   1);
 
-    lock_tree_cleanup ();
+    Lock_Cleanup ();
     return err;
 }
 
@@ -515,7 +511,7 @@ watchers (argc, argv)
 	/* FIXME:  We shouldn't have to send current files, but I'm not sure
 	   whether it works.  So send the files --
 	   it's slower but it works.  */
-	send_files (argc, argv, local, 0);
+	send_files (argc, argv, local, 0, 0);
 	send_to_server ("watchers\012", 0);
 	return get_responses_and_close ();
     }

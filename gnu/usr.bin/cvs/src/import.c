@@ -184,7 +184,7 @@ import (argc, argv)
 	do_editor ((char *) NULL, &message, repository,
 		   (List *) NULL);
     }
-
+    do_verify (message, repository);
     msglen = message == NULL ? 0 : strlen (message);
     if (msglen == 0 || message[msglen - 1] != '\n')
     {
@@ -304,6 +304,7 @@ import (argc, argv)
     li = (struct logfile_info *) xmalloc (sizeof (struct logfile_info));
     li->type = T_TITLE;
     li->tag = xstrdup (vbranch);
+    li->rev_old = li->rev_new = NULL;
     p->data = (char *) li;
     (void) addnode (ulist, p);
     Update_Logfile (repository, message, logfp, ulist);
@@ -1240,7 +1241,7 @@ import_descend_dir (message, dir, vtag, targc, targv)
     else
 	repository[0] = '\0';
     if (restore_cwd (&cwd, NULL))
-      exit (EXIT_FAILURE);
+	error_exit ();
     free_cwd (&cwd);
     return (err);
 }

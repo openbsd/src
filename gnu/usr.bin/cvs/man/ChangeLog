@@ -1,3 +1,14 @@
+Thu Jan  2 13:30:56 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* Makefile.in, cvsbug.8: Remove "675" paragraph;
+	see ../ChangeLog for rationale.
+
+Sat Nov 30 14:49:32 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* cvs.1: Add note at beginning about how cvs.texinfo is more
+	complete than this document.  Without some such indication, users
+	have no way of knowing which document to consult.
+
 Tue Oct  1 14:01:28 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
 
 	* cvs.1: Revert all changes by Greg Woods since CVS 1.8.86.  They

@@ -86,10 +86,15 @@ you have a different arrangement, you will need to modify the access paths in
 You will need CodeWarrier 9 and GUSI 1.7.2.  I have a report of a successful build
 under MPW, but don't support it directly.
 
-There are problems with the CodeWarrier Plum-Hall ANSI libraries and CW9
-compilers that I have worked around.  Certain failure and exit modes (most nobably,
-exiting after help and usage commands) trigger the problem, which manifests itself as
-the DONE flag not being set in result AppleEvents, and loss of the last data packet.  Metrowerks has reproduced the problems, and hopefully will have a fix soon.
+There are problems with the CodeWarrier Plum-Hall ANSI libraries and
+CW9 compilers that I have worked around.  Certain failure and exit
+modes (most nobably, exiting after help and usage commands) trigger
+the problem, which manifests itself as the DONE flag not being set in
+result AppleEvents, and loss of the last data packet.  Metrowerks has
+reproduced the problems, and hopefully will have a fix soon.  (Note:
+this should be fixed, without needing metrowerks changes, by
+SYSTEM_CLEANUP changes of October 28; awaiting verification that it
+really is fixed).
 
 
 4. Feedback

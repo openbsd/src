@@ -1,3 +1,30 @@
+Wed Jan  8 14:50:47 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* Makefile.in, getopt.h, sighandle.c, system.h: Remove CVSid; we
+	decided to get rid of these some time ago.
+
+Thu Jan  2 13:30:56 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* Makefile.in, argmatch.c, fnmatch.c, fnmatch.h, getline.c,
+	getopt.c, getopt.h, getopt1.c, getwd.c, hostname.c, mkdir.c,
+	regex.c, regex.h, rename.c, sighandle.c, strdup.c, strerror.c,
+	stripslash.c, system.h, vasprintf.c, wait.h, xgetwd.c, yesno.c:
+	Remove "675" paragraph;	see ../ChangeLog for rationale.
+
+Sun Nov 24 13:34:25 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* getdate.y (Convert): Change last acceptable year from 1999 to
+	2038.
+	* getdate.c: Regenerated using byacc 1.9.
+
+Tue Nov 19 17:11:17 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* Makefile.in (OBJECTS): Remove strippath.o; we don't use
+	strip_path anymore.
+	(SOURCES): Remove strippath.c.
+	* strippath.c: Removed.
+	* build_lib.com: Remove strippath.c.
+
 Wed Oct  2 10:43:35 1996  Norbert Kiesel  <nk@col.sw-ley.de>
 
 	* getdate.y: removed CVSid variable

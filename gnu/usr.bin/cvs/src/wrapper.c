@@ -377,7 +377,9 @@ wrap_name_has (name,has)
     return (0);
 }
 
-WrapperEntry *
+static WrapperEntry *wrap_matching_entry PROTO ((const char *));
+
+static WrapperEntry *
 wrap_matching_entry (name)
     const char *name;
 {

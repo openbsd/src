@@ -72,7 +72,7 @@ static const char *const tag_usage[] =
 };
 
 int
-tag (argc, argv)
+cvstag (argc, argv)
     int argc;
     char **argv;
 {
@@ -178,7 +178,7 @@ tag (argc, argv)
 	/* FIXME:  We shouldn't have to send current files, but I'm not sure
 	   whether it works.  So send the files --
 	   it's slower but it works.  */
-	send_files (argc, argv, local, 0);
+	send_files (argc, argv, local, 0, 0);
 	send_to_server ("tag\012", 0);
         return get_responses_and_close ();
     }
@@ -430,7 +430,13 @@ tag_fileproc (callerdat, finfo)
     /* Lock the directory if it is not already locked.  We can't rely
        on tag_dirproc because it won't handle the case where the user
        specifies a list of files on the command line.  */
-    tag_lockdir (finfo->repository);
+    /* We do not need to acquire a full write lock for the tag operation:
+       the revisions are obtained from the working directory, so we do not
+       require consistency across the entire repository.  However, we do
+       need to prevent simultaneous tag operations from interfering with
+       each other.  Therefore, we write lock each directory as we enter
+       it, and unlock it as we leave it.  */
+    lock_dir_for_write (finfo->repository);
 
     vers = Version_TS (finfo, NULL, NULL, NULL, 0, 0);
 
@@ -481,7 +487,9 @@ tag_fileproc (callerdat, finfo)
 	/* warm fuzzies */
 	if (!really_quiet)
 	{
-	    (void) printf ("D %s\n", finfo->fullname);
+	    cvs_output ("D ", 2);
+	    cvs_output (finfo->fullname, 0);
+	    cvs_output ("\n", 1);
 	}
 
 	freevers_ts (&vers);
@@ -556,12 +564,19 @@ tag_fileproc (callerdat, finfo)
 	if (!force_tag_move)
 	{
 	    /* we're NOT going to move the tag */
-	    (void) printf ("W %s", finfo->fullname);
-
-	    (void) printf (" : %s already exists on %s %s", 
-			   symtag, isbranch ? "branch" : "version", oversion);
-	    (void) printf (" : NOT MOVING tag to %s %s\n", 
-			   branch_mode ? "branch" : "version", rev);
+	    cvs_output ("W ", 2);
+	    cvs_output (finfo->fullname, 0);
+	    cvs_output (" : ", 0);
+	    cvs_output (symtag, 0);
+	    cvs_output (" already exists on ", 0);
+	    cvs_output (isbranch ? "branch" : "version", 0);
+	    cvs_output (" ", 0);
+	    cvs_output (oversion, 0);
+	    cvs_output (" : NOT MOVING tag to ", 0);
+	    cvs_output (branch_mode ? "branch" : "version", 0);
+	    cvs_output (" ", 0);
+	    cvs_output (rev, 0);
+	    cvs_output ("\n", 1);
 	    free (oversion);
 	    freevers_ts (&vers);
 	    return (0);
@@ -581,7 +596,9 @@ tag_fileproc (callerdat, finfo)
     /* more warm fuzzies */
     if (!really_quiet)
     {
-	(void) printf ("T %s\n", finfo->fullname);
+	cvs_output ("T ", 2);
+	cvs_output (finfo->fullname, 0);
+	cvs_output ("\n", 1);
     }
 
     if (nversion != NULL)
@@ -602,7 +619,7 @@ tag_filesdoneproc (callerdat, err, repos, update_dir, entries)
     char *update_dir;
     List *entries;
 {
-    tag_unlockdir ();
+    Lock_Cleanup ();
 
     return (err);
 }
@@ -622,66 +639,6 @@ tag_dirproc (callerdat, dir, repos, update_dir, entries)
     if (!quiet)
 	error (0, 0, "%s %s", delete_flag ? "Untagging" : "Tagging", update_dir);
     return (R_PROCESS);
-}
-
-/* We do not need to acquire a full write lock for the tag operation:
-   the revisions are obtained from the working directory, so we do not
-   require consistency across the entire repository.  However, we do
-   need to prevent simultaneous tag operations from interfering with
-   each other.  Therefore, we write lock each directory as we enter
-   it, and unlock it as we leave it.
-
-   In the rtag case, it would be nice to provide consistency with
-   respect to commits; however CVS lacks the infrastructure to do that
-   (see Concurrency in cvs.texinfo and comment in do_recursion).  We
-   can and will prevent simultaneous tag operations from interfering
-   with each other, by write locking each directory as we enter it,
-   and unlocking it as we leave it.  */
-static char *locked_dir;
-static List *locked_list;
-
-/*
- * Lock the directory for a tag operation.  This is also called by the
- * rtag code.
- */
-void
-tag_lockdir (repository)
-     char *repository;
-{
-    if (repository != NULL
-	&& (locked_dir == NULL
-	    || strcmp (locked_dir, repository) != 0))
-    {
-        Node *node;
-
-	if (locked_dir != NULL)
-	    tag_unlockdir ();
-
-	locked_dir = xstrdup (repository);
-	locked_list = getlist ();
-	node = getnode ();
-	node->type = LOCK;
-	node->key = xstrdup (repository);
-	(void) addnode (locked_list, node);
-	Writer_Lock (locked_list);
-    }
-}
-
-/*
- * Unlock the directory for a tag operation.  This is also called by
- * the rtag code.
- */
-void
-tag_unlockdir ()
-{
-    if (locked_dir != NULL)
-    {
-        Lock_Cleanup ();
-	dellist (&locked_list);
-	free (locked_dir);
-	locked_dir = NULL;
-	locked_list = NULL;
-    }
 }
 
 /* Code relating to the val-tags file.  Note that this file has no way
@@ -846,7 +803,7 @@ Numeric tag %s contains characters other than digits and '.'", name);
 	else
 	{
 	    if (save_cwd (&cwd))
-		exit (EXIT_FAILURE);
+		error_exit ();
 	    if ( CVS_CHDIR (repository) < 0)
 		error (1, errno, "cannot change to %s directory", repository);
 	}

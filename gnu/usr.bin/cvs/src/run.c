@@ -10,11 +10,7 @@
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
+   GNU General Public License for more details.  */
 
 #include "cvs.h"
 
@@ -192,12 +188,11 @@ run_exec (stin, stout, sterr, flags)
     if (trace)
     {
 #ifdef SERVER_SUPPORT
-	(void) fprintf (stderr, "%c-> system(", (server_active) ? 'S' : ' ');
-#else
-	(void) fprintf (stderr, "-> system(");
+	cvs_outerr (server_active ? "S" : " ", 1);
 #endif
+	cvs_outerr ("-> system(", 0);
 	run_print (stderr);
-	(void) fprintf (stderr, ")\n");
+	cvs_outerr (")\n", 0);
     }
     if (noexec && (flags & RUN_REALLY) == 0)
 	return (0);
@@ -244,7 +239,14 @@ run_exec (stin, stout, sterr, flags)
     fflush (stdout);
     fflush (stderr);
 
-    /* The output files, if any, are now created.  Do the fork and dups */
+    /* The output files, if any, are now created.  Do the fork and dups.
+
+       We use vfork not so much for the sake of unices without
+       copy-on-write (such systems are rare these days), but for the
+       sake of systems without an MMU, which therefore can't do
+       copy-on-write (e.g. Amiga).  The other solution is spawn (see
+       windows-NT/run.c).  */
+
 #ifdef HAVE_VFORK
     pid = vfork ();
 #else
@@ -393,12 +395,22 @@ run_print (fp)
     FILE *fp;
 {
     int i;
+    void (*outfn) PROTO ((const char *, size_t));
+
+    if (fp == stderr)
+	outfn = cvs_outerr;
+    else if (fp == stdout)
+	outfn = cvs_output;
+    else
+	error (1, 0, "internal error: bad argument to run_print");
 
     for (i = 0; i < run_argc; i++)
     {
-	(void) fprintf (fp, "'%s'", run_argv[i]);
+	(*outfn) ("'", 1);
+	(*outfn) (run_argv[i], 0);
+	(*outfn) ("'", 1);
 	if (i != run_argc - 1)
-	    (void) fprintf (fp, " ");
+	    (*outfn) (" ", 1);
     }
 }
 
@@ -437,7 +449,11 @@ piped_child (command, tofdp, fromfdp)
     if (pipe (from_child_pipe) < 0)
 	error (1, errno, "cannot create pipe");
 
+#ifdef HAVE_VFORK
+    pid = vfork ();
+#else
     pid = fork ();
+#endif
     if (pid < 0)
 	error (1, errno, "cannot fork");
     if (pid == 0)
@@ -494,7 +510,11 @@ filter_stream_through_program (oldfd, dir, prog, pidp)
 
     if (pipe (p))
 	error (1, errno, "cannot create pipe");
+#ifdef HAVE_VFORK
+    newpid = vfork ();
+#else
     newpid = fork ();
+#endif
     if (pidp)
 	*pidp = newpid;
     switch (newpid)

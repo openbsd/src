@@ -15,10 +15,6 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with GNU VMSLIB; see the file COPYING.  If not, write to
- * the Free Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
 #include <varargs.h>
@@ -109,7 +105,7 @@ opendir (infilename, filepattern)
   filename = (char *) malloc(length+1);
   strcpy(filename, infilename);
 
-  strip_path(filename);
+  strip_trailing_slashes (filename);
   if(strcmp(filename, ".") == 0)
      {
      getcwd(filename, length+1, 1); /* Get a VMS filespec */

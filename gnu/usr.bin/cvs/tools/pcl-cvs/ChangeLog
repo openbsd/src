@@ -1,3 +1,13 @@
+Mon Oct 14 19:19:17 1996  Jim Blandy  <jimb@totoro.cyclic.com>
+
+	* pcl-cvs.el (cvs-parse-stderr): Ignore messages about patch hunks
+	failing; CVS will refetch the file.
+
+Thu Oct 10 10:20:20 1996  Jim Blandy  <jimb@totoro.cyclic.com>
+
+	* Makefile.in: Allow pcl-cvs to find the site-lisp directory where
+	it is installed in modern Emacsen.  (Patch thanks to David Kågedal.)
+
 Wed Sep 25 05:38:09 1996  Jim Blandy  <jimb@floss.cyclic.com>
 
 	* pcl-cvs.el (cvs-find-program): New function.

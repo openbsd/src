@@ -29,22 +29,6 @@
 #endif
 
 /*
- * If, before installing this version of CVS, you were running RCS V4
- * AND you are installing this CVS and RCS V5 and GNU diff 1.15 all at
- * the same time, you should turn on the following define.  It only
- * exists to try to do reasonable things with your existing checked
- * out files when you upgrade to RCS V5, since the keyword expansion
- * formats have changed with RCS V5.
- * 
- * If you already have been running with RCS5, or haven't been running
- * with CVS yet at all, or are sticking with RCS V4 for now, leave the
- * commented out.
- */
-#ifndef HAD_RCS4
-/* #define	HAD_RCS4 */
-#endif
-
-/*
  * For portability and heterogeneity reasons, CVS is shipped by
  * default using my own text-file version of the ndbm database library
  * in the src/myndbm.c file.  If you want better performance and are
@@ -70,16 +54,6 @@
  */
 #ifndef DIFF
 #define	DIFF	"diff"
-#endif
-
-/*
- * The "grep" program to execute when checking to see if a merged file
- * had any conflicts.  This "grep" must support a standard basic
- * regular expression as an argument.  Specify a full pathname if your
- * site wants to use a particular grep.
- */
-#ifndef GREP
-#define GREP "grep"
 #endif
 
 /*
@@ -126,13 +100,10 @@
 #define	RCSBIN_DFLT	""
 #endif
 
-/*
- * The password-authenticating server creates a temporary checkout of
- * the affected files.  The variable TMPDIR_DFLT (or even better, the
- * command-line option "-T" in the line for CVS in /etc/inetd.conf)
- * can be used to specify the used directory.  This directory will
- * also be used for other temporary files.
- */
+/* Directory used for storing temporary files, if not overridden by
+   environment variables or the -T global option.  There should be little
+   need to change this (-T is a better mechanism if you need to use a
+   different directory for temporary files).  */
 #ifndef TMPDIR_DFLT
 #define	TMPDIR_DFLT	"/tmp"
 #endif
@@ -231,17 +202,25 @@
 #define	CVS_BADROOT
 #endif
 
-/*
- * Define this to enable the SETXID support.  The way to use this is
- * to create a group with no users in it (except perhaps cvs
- * administrators), set the cvs executable to setgid that group, chown
- * all the repository files to that group, and change all directory
- * permissions in the repository to 770.  The last person to modify a
- * file will own it, but as long as directory permissions are set
- * right that won't matter.  You'll need a system which inherits file
- * groups from the parent directory.  I don't know how carefully this
- * has been inspected for security holes.
- */
+/* Define this to enable the SETXID support.  The way to use this is
+   to create a group with no users in it (except perhaps cvs
+   administrators), set the cvs executable to setgid that group, chown
+   all the repository files to that group, and change all directory
+   permissions in the repository to 770.  The last person to modify a
+   file will own it, but as long as directory permissions are set
+   right that won't matter.  You'll need a system which inherits file
+   groups from the parent directory (WARNING: using the wrong kind of
+   system (I think Solaris 2.4 is the wrong kind, for example) will
+   create a security hole!  You will receive no warning other than the
+   fact that files in the working directory are owned by the group
+   which cvs is setgid to).
+
+   One security hole which has been reported is that setgid is not
+   turned off when the editor is invoked--most editors provide a way
+   to execute a shell, or the user can specify an editor (this one is
+   large enough to drive a truck through).  Don't assume that the
+   holes described here are the only ones; I don't know how carefully
+   SETXID has been inspected for security holes.  */
 #ifndef SETXID_SUPPORT
 /* #define SETXID_SUPPORT */
 #endif

@@ -3,10 +3,12 @@
 			   Cyclic Software
 
 Check the ../INSTALL file for information on the most recent version
-of CVS which has been known to be tested with NT.
+of CVS which has been known to be tested with NT and/or Win95.
 
 This port implements the full set of CVS commands, both local and
-client.  It does not provide a CVS server for NT.
+client.  It does not provide a CVS server for NT.  Multiple users can
+access a common CVS repository, if they can mount the repository,
+either directly or via a networked file system.
 
 We don't distribute a .ZIP source distribution partly because, as far
 as I can tell, PKZIP insists on munging long file names, which would
@@ -28,11 +30,14 @@ limitation in the NT command shell.  sanity.sh provides pretty minimal
 feature coverage, but still gives me some confidence it isn't totally
 broken.
 
-To operate in client mode, you will need GNU patch.  gzip is useful
-but not required.
+To operate in client mode, you will need GNU patch.  To do compressed
+transfers with old versions of CVS (1.8 and older), you also need
+gzip.  Note that you do NOT need an rsh client if you are using the
+:server: access method (which uses the internal rsh client), except
+perhaps for debugging.
 
-To operate in local mode, you will need GNU patch, GNU diffutils, a
-version of grep, and rcs version 5.7 installed on your system.  Make
+To operate in local mode, you will need GNU patch, GNU diffutils,
+and rcs version 5.7 installed on your system.  Make
 sure NOT to get a version of rcs less than 5.7 (gr564bnt.zip was
 particularly bad), because those versions insist on putting their
 files in their own directory structure, making them incompatible with
@@ -41,12 +46,13 @@ CVS.
 Noel Cragg, who did the latest mods to the Windows NT port, used the
 following packages:
 
-	ftp://wuarchive.wustl.edu/systems/ibmpc/gnuish/grep15.zip
-	  ** use grepb.exe and egrepb.exe, but install as
-	  ** grep.exe and egrep.exe respectively)
 	ftp://wuarchive.wustl.edu/systems/ibmpc/gnuish/patch212.zip
 	ftp://ftp.netcom.com/pub/al/alexande/rcs57nt.zip
 	ftp://ftp.netcom.com/pub/al/alexande/diff57nt.zip
+
+Copies of these zip files can be also be found at:
+
+	ftp://ftp.cyclic.com/pub/cvs/cvs-1.8.3/windows-nt
 
 If you want to try other versions of these utilities, you might have
 luck with the Congruent ports of these packages to Windows NT, binary
@@ -65,11 +71,6 @@ Morten Hindsholm's port of CVS 1.4A2 to Windows NT may be useful if
 you're modifying CVS itself:
 
 	ftp://ftp.digex.net/pub/access/schueman/cvs/cvsnt14b.zip
-
-Mark A. Solinski <markso@www.mcs.net> has ported CVS 1.7 to Windows
-95.  You can find his source code at:
-
-	http://www.mcs.net/~markso/cvs/cvs95.html
 
 Here are some other things which may be of interest for unix junkies:
 

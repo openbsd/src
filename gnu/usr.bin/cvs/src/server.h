@@ -80,6 +80,11 @@ extern void server_update_entries
     PROTO((char *file, char *update_dir, char *repository,
 	   enum server_updated_arg4 updated));
 
+/* Pointer to a malloc'd string which is the directory which
+   the server should prepend to the pathnames which it sends
+   to the client.  */
+extern char *server_dir;
+
 enum progs {PROG_CHECKIN, PROG_UPDATE};
 extern void server_prog PROTO((char *, char *, enum progs));
 extern void server_cleanup PROTO((int sig));
@@ -135,5 +140,3 @@ struct request
 
 /* Table of requests ending with an entry with a NULL name.  */
 extern struct request requests[];
-
-extern int use_unchanged;

@@ -14,8 +14,10 @@ Alpha:
 	DEC Alpha running OSF/1 version 2.0 (1.8)
 	DEC Alpha running OSF/1 version 2.1 (about 1.4A2)
 	DEC Alpha running OSF/1 version 3.0 (1.5.95) (footnote 7)
-	DEC Alpha running OSF/1 version 3.2 (1.7+obvious patch)
+	DEC Alpha running OSF/1 version 3.2 (1.9)
 	DEC Alpha running VMS 6.2 (1.8.85 client-only)
+Cray:
+	J90 running unicos 9 (CVS version unknown; Oct 1996) (footnote 10)
 HPPA:
 	HP 9000/710 running HP-UX 8.07A using gcc (about 1.4A2)
 	HPPA running HP-UX 9 (1.8)
@@ -31,7 +33,7 @@ i386 family:
 	ISC 4.0.1 (1.8.87)
 	Linux (kernel 1.2.x) (1.8.86)
 	BSDI 2.0 (1.4.93) (footnote 5)
-	FreeBSD 2.0.5, i486, gcc (1.5.95)
+	FreeBSD 2.1.5-stable (1.8.87)
 	NextSTEP 3.3 (1.7)
 	SCO Unix 3.2.4.2, gcc 2.7.2 (1.8.87) (footnote 4)
 	SCO OpenServer 5 (1.8.86)
@@ -42,7 +44,7 @@ i386 family:
 	OS/2 Version 3 using IBM C/C++ Tools 2.01 (1.8.86 + patches)
 m68k:
 	Sun 3 running SunOS 4.1.1_U1 w/ bundled K&R /usr/5bin/cc (1.8.86+)
-	NextSTEP 3.3 (1.7)
+	NextSTEP 3.3p1 (1.8.87)
 	Lynx 2.3.0 062695 (1.6.86) (footnote 9)
 m88k:
 	Data General AViiON running dgux 5.4R2.10 (1.5)
@@ -67,6 +69,9 @@ SPARC:
 	Sun SPARC running Solaris 2.5 (1.8.87)
 	NextSTEP 3.3 (1.7)
 	Sun SparcClassing running Linux 2.0.17, gcc 2.7.2 (1.8.87)
+VAX:
+	VAX running VMS 6.2 (1.9+patches, client-only)
+	  (see README.VMS for information on necessary hacks).
 
 (footnote 1)
 	AIX 4.1 systems fail to run "configure" due to bugs in their
@@ -111,9 +116,16 @@ SPARC:
     So after running configure I had to undef HAVE_DIRENT_H and
     define HAVE_SYS_DIR_H.
 
+(footnote 10)
+    remove CLIENT_SUPPORT and SERVER_SUPPORT from config.h
+    remove md5.o from lib/Makefile
+    remove "#include "regex.h" from cvs.h
+
 -------------------------------------------------------------------------------
 
-Installation under Unix:
+Installation under Unix (if you got a binary distribution from
+somewhere, install it according to procedure for that binary
+distribution, then skip to step 5):
 
 1)  Run "configure":
 
@@ -127,6 +139,18 @@ Installation under Unix:
     or some path that is more appropriate for your site.  The default prefix
     value is "/usr/local", with binaries in sub-directory "bin", manual
     pages in sub-directory "man", and libraries in sub-directory "lib".
+
+    A normal build of CVS will create an executable which supports
+    local, server, or client CVS (if you don't know the difference,
+    it is described in the Repository chapter of doc/cvs.texinfo).  If
+    you do not intend to use client or server CVS, you may want to
+    prevent these features from being included in the executable you
+    build. You can do this with the --disable-client and
+    --disable-server options:
+
+	$ ./configure --disable-client --disable-server
+
+    Typically this can reduce the size of the executable by around 30%.
 
     If you are using server or local CVS, RCS needs to be installed in
     the user's PATH (or a path you have configured in src/options.h,

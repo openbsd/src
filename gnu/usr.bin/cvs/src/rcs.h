@@ -1,5 +1,3 @@
-/* $CVSid: @(#)rcs.h 1.18 94/09/23 $	 */
-
 /*
  * Copyright (c) 1992, Brian Berliner and Jeff Polk
  * Copyright (c) 1989-1992, Brian Berliner
@@ -15,7 +13,10 @@
 #define	RCS_CO		"co"
 #define	RCS_DIFF	"rcsdiff"
 #define	RCS_RCSMERGE	"rcsmerge"
-#define	RCS_MERGE_PAT	"^>>>>>>> "	/* runs "grep" with this pattern */
+
+/* String which indicates a conflict if it occurs at the start of a line.  */
+#define	RCS_MERGE_PAT ">>>>>>> "
+
 #define	RCSEXT		",v"
 #define RCSPAT		"*,v"
 #define	RCSHEAD		"head"

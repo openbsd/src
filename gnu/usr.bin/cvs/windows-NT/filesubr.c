@@ -11,11 +11,7 @@
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
+   GNU General Public License for more details.  */
 
 /* These functions were moved out of subr.c because they need different
    definitions under operating systems (like, say, Windows NT) with different
@@ -956,7 +952,16 @@ expand_wild (argc, argv, pargc, pargv)
 
 		/* Copy the file name. */
 		
-		strcat (new_argv[new_argc], fdata.cFileName);
+		if (fncmp (argv[i] + dirname_length, fdata.cFileName) == 0)
+		    /* We didn't expand a wildcard; we just matched a filename.
+		       Use the file name as specified rather than the filename
+		       which exists in the directory (they may differ in case).
+		       This is needed to make cvs add on a directory consistently
+		       use the name specified on the command line, but it is
+		       probably a good idea in other contexts too.  */
+		    strcpy (new_argv[new_argc], argv[i]);
+		else
+		    strcat (new_argv[new_argc], fdata.cFileName);
 
 		new_argc++;
 

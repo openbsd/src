@@ -92,57 +92,57 @@ add (argc, argv)
 
 #ifdef CLIENT_SUPPORT
     if (client_active)
-      {
+    {
 	int i;
 	start_server ();
 	ign_setup ();
 	if (options) send_arg(options);
 	option_with_arg ("-m", message);
 	for (i = 0; i < argc; ++i)
-	  /* FIXME: Does this erroneously call Create_Admin in error
-	     conditions which are only detected once the server gets its
-	     hands on things?  */
-	  if (isdir (argv[i]))
+	    /* FIXME: Does this erroneously call Create_Admin in error
+	       conditions which are only detected once the server gets its
+	       hands on things?  */
+	    if (isdir (argv[i]))
 	    {
-	      char *tag;
-	      char *date;
-	      char *rcsdir = xmalloc (strlen (repository)
-				      + strlen (argv[i]) + 10);
+		char *tag;
+		char *date;
+		char *rcsdir = xmalloc (strlen (repository)
+					+ strlen (argv[i]) + 10);
 
-	      /* before we do anything else, see if we have any
-		 per-directory tags */
-	      ParseTag (&tag, &date);
+		/* before we do anything else, see if we have any
+		   per-directory tags */
+		ParseTag (&tag, &date);
 
-	      sprintf (rcsdir, "%s/%s", repository, argv[i]);
+		sprintf (rcsdir, "%s/%s", repository, argv[i]);
 
-	      strip_trailing_slashes (argv[i]);
+		strip_trailing_slashes (argv[i]);
 
-	      Create_Admin (argv[i], argv[i], rcsdir, tag, date);
+		Create_Admin (argv[i], argv[i], rcsdir, tag, date);
 
-	      if (tag)
-		free (tag);
-	      if (date)
-		free (date);
-	      free (rcsdir);
+		if (tag)
+		    free (tag);
+		if (date)
+		    free (date);
+		free (rcsdir);
 
-	      if (strchr (argv[i], '/') == NULL)
-		  Subdir_Register ((List *) NULL, (char *) NULL, argv[i]);
-	      else
-	      {
-		  char *cp, *b;
+		if (strchr (argv[i], '/') == NULL)
+		    Subdir_Register ((List *) NULL, (char *) NULL, argv[i]);
+		else
+		{
+		    char *cp, *b;
 
-		  cp = xstrdup (argv[i]);
-		  b = strrchr (cp, '/');
-		  *b++ = '\0';
-		  Subdir_Register ((List *) NULL, cp, b);
-		  free (cp);
-	      }
+		    cp = xstrdup (argv[i]);
+		    b = strrchr (cp, '/');
+		    *b++ = '\0';
+		    Subdir_Register ((List *) NULL, cp, b);
+		    free (cp);
+		}
 	    }
 	send_file_names (argc, argv, SEND_EXPAND_WILD);
-	send_files (argc, argv, 0, 0);
+	send_files (argc, argv, 0, 0, 1);
 	send_to_server ("add\012", 0);
 	return get_responses_and_close ();
-      }
+    }
 #endif
 
     entries = Entries_Open (0);
@@ -151,7 +151,9 @@ add (argc, argv)
     for (i = 0; i < argc; i++)
     {
 	int begin_err = err;
+#ifdef SERVER_SUPPORT
 	int begin_added_files = added_files;
+#endif
 	struct file_info finfo;
 
 	user = argv[i];
@@ -195,7 +197,8 @@ add (argc, argv)
 		     * See if a directory exists in the repository with
 		     * the same name.  If so, blow this request off.
 		     */
-		    char dname[PATH_MAX];
+		    char *dname = xmalloc (strlen (repository) + strlen (user)
+					   + 10);
 		    (void) sprintf (dname, "%s/%s", repository, user);
 		    if (isdir (dname))
 		    {
@@ -206,6 +209,7 @@ add (argc, argv)
 			       dname);
 			error (1, 0, "illegal filename overlap");
 		    }
+		    free (dname);
 
 		    if (vers->options == NULL || *vers->options == '\0')
 		    {
@@ -251,13 +255,16 @@ scheduling %s `%s' for addition on branch `%s'",
 	    {
 		if (isdir (user) && !wrap_name_has (user, WRAP_TOCVS))
 		{
-		    error (0, 0, "the directory `%s' cannot be added because a file of the", user);
-		    error (1, 0, "same name already exists in the repository.");
+		    error (0, 0, "\
+the directory `%s' cannot be added because a file of the", user);
+		    error (1, 0, "\
+same name already exists in the repository.");
 		}
 		else
 		{
 		    if (vers->tag)
-			error (0, 0, "file `%s' will be added on branch `%s' from version %s",
+			error (0, 0, "\
+file `%s' will be added on branch `%s' from version %s",
 			       user, vers->tag, vers->vn_rcs);
 		    else
 			/* I'm not sure that mentioning vers->vn_rcs makes
@@ -304,8 +311,8 @@ re-adding file %s (in place of dead revision %s)",
 		     * There is no RCS file, so somebody else must've removed
 		     * it from under us
 		     */
-		    error (0, 0,
-			   "cannot resurrect %s; RCS file removed by second party", user);
+		    error (0, 0, "\
+cannot resurrect %s; RCS file removed by second party", user);
 		    err++;
 		}
 		else
@@ -343,7 +350,8 @@ re-adding file %s (in place of dead revision %s)",
 	    else
 	    {
 		/* The user file shouldn't be there */
-		error (0, 0, "%s should be removed and is still there (or is back again)", user);
+		error (0, 0, "\
+%s should be removed and is still there (or is back again)", user);
 		err++;
 	    }
 	}
@@ -394,9 +402,9 @@ add_directory (repository, entries, dir)
     List *entries;
     char *dir;
 {
-    char rcsdir[PATH_MAX];
+    char *rcsdir = NULL;
     struct saved_cwd cwd;
-    char message[PATH_MAX + 100];
+    char *message = NULL;
     char *tag, *date;
 
     if (strchr (dir, '/') != NULL)
@@ -432,6 +440,7 @@ add_directory (repository, entries, dir)
 	goto out;
     }
 
+    rcsdir = xmalloc (strlen (repository) + strlen (dir) + 10);
     (void) sprintf (rcsdir, "%s/%s", repository, dir);
     if (isfile (rcsdir) && !isdir (rcsdir))
     {
@@ -440,6 +449,7 @@ add_directory (repository, entries, dir)
     }
 
     /* setup the log message */
+    message = xmalloc (strlen (rcsdir) + 80);
     (void) sprintf (message, "Directory %s added to the repository\n", rcsdir);
     if (tag)
     {
@@ -499,6 +509,7 @@ add_directory (repository, entries, dir)
 	li = (struct logfile_info *) xmalloc (sizeof (struct logfile_info));
 	li->type = T_TITLE;
 	li->tag = xstrdup (tag);
+	li->rev_old = li->rev_new = NULL;
 	p->data = (char *) li;
 	(void) addnode (ulist, p);
 	Update_Logfile (rcsdir, message, (FILE *) NULL, ulist);
@@ -517,19 +528,23 @@ add_directory (repository, entries, dir)
 	free (date);
 
     if (restore_cwd (&cwd, NULL))
-	exit (EXIT_FAILURE);
+	error_exit ();
     free_cwd (&cwd);
 
     Subdir_Register (entries, (char *) NULL, dir);
 
     (void) printf ("%s", message);
+    free (rcsdir);
+    free (message);
 
     return (0);
 
 out:
     if (restore_cwd (&cwd, NULL))
-      exit (EXIT_FAILURE);
+	error_exit ();
     free_cwd (&cwd);
+    if (rcsdir != NULL)
+	free (rcsdir);
     return (0);
 }
 
@@ -546,7 +561,7 @@ build_entry (repository, user, options, message, entries, tag)
     List *entries;
     char *tag;
 {
-    char fname[PATH_MAX];
+    char *fname;
     char line[MAXLINELEN];
     FILE *fp;
 
@@ -558,12 +573,14 @@ build_entry (repository, user, options, message, entries, tag)
      * file user,t.  If the "message" argument is set, use it as the
      * initial creation log (which typically describes the file).
      */
+    fname = xmalloc (strlen (user) + 80);
     (void) sprintf (fname, "%s/%s%s", CVSADM, user, CVSEXT_LOG);
     fp = open_file (fname, "w+");
     if (message && fputs (message, fp) == EOF)
 	    error (1, errno, "cannot write to %s", fname);
     if (fclose(fp) == EOF)
         error(1, errno, "cannot close %s", fname);
+    free (fname);
 
     /*
      * Create the entry now, since this allows the user to interrupt us above

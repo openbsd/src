@@ -28,20 +28,6 @@
 #endif
 
 /*
- * If, before installing this version of CVS, you were running RCS V4 AND you
- * are installing this CVS and RCS V5 and GNU diff 1.15 all at the same time,
- * you should turn on the following define.  It only exists to try to do
- * reasonable things with your existing checked out files when you upgrade to
- * RCS V5, since the keyword expansion formats have changed with RCS V5.
- * 
- * If you already have been running with RCS5, or haven't been running with CVS
- * yet at all, or are sticking with RCS V4 for now, leave the commented out.
- */
-#ifndef HAD_RCS4
-/* #define	HAD_RCS4 */
-#endif
-
-/*
  * For portability and heterogeneity reasons, CVS is shipped by default using
  * my own text-file version of the ndbm database library in the src/myndbm.c
  * file.  If you want better performance and are not concerned about
@@ -104,15 +90,12 @@
 #define	RCSBIN_DFLT	""
 #endif
 
-/*
- * The password-authenticating server creates a temporary checkout of
- * the affected files.  The variable TMPDIR_DFLT (or even better, the
- * command-line option "-T" in the line for CVS in /etc/inetd.conf)
- * can be used to specify the used directory.  This directory will
- * also be used for other temporary files.
- *
- * I have no idea what the right default for this is on the Mac.
- */
+/* Directory used for storing temporary files, if not overridden by
+   environment variables or the -T global option.  There should be little
+   need to change this (-T is a better mechanism if you need to use a
+   different directory for temporary files).
+
+   I have no idea what the right default for this is on the Mac.  */
 #ifndef TMPDIR_DFLT
 #define	TMPDIR_DFLT	"/tmp"
 #endif

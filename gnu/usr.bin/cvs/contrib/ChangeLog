@@ -1,3 +1,32 @@
+Wed Jan  8 14:48:58 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* Makefile.in, README, log.pl: Remove CVSid; we decided to get rid
+	of these some time ago.
+
+Thu Jan  2 13:30:56 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* Makefile.in: Remove "675" paragraph; see ../ChangeLog for rationale.
+
+Thu Oct 17 18:28:25 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* patch-2.1-.new-fix: Removed; it was not in DISTFILES so it never
+	made it into distributions.  It also isn't clear what it has to do
+	with CVS.  It is available from
+	    ftp://ftp.weird.com/pub/patch-2.1-.new-fix
+	* README: Remove entry for patch-2.1-.new-fix.
+
+Wed Oct 16 10:22:44 1996  Jim Blandy  <jimb@totoro.cyclic.com>
+
+	* rcs2log.sh: Change date output format to something CVS 1.9
+ 	accepts.  I think this breaks the Sep 29 change, but I don't have
+ 	a copy of CVS 1.5 handy, so I can't find a format that works with
+ 	both, and I think it's more important that it work with the
+ 	version it's distributed with.
+
+Sat Oct 12 21:18:19 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* README: Don't mention pcl-cvs; it isn't here any more.
+
 Sun Sep 29 19:45:19 1996  Greg A. Woods  <woods@most.weird.com>
 
 	* README: add entry for patch-2.1-.new-fix.

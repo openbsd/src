@@ -19,7 +19,7 @@
 
 #ifdef MY_NDBM
 
-static void mydbm_load_file ();
+static void mydbm_load_file PROTO ((FILE *, List *));
 
 /* ARGSUSED */
 DBM *

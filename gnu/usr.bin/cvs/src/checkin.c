@@ -29,12 +29,13 @@ Checkin (type, finfo, rcs, rev, tag, options, message)
     char *options;
     char *message;
 {
-    char fname[PATH_MAX];
+    char *fname;
     Vers_TS *vers;
     int set_time;
     char *tocvsPath = NULL;
 
     (void) printf ("Checking in %s;\n", finfo->fullname);
+    fname = xmalloc (strlen (finfo->file) + 80);
     (void) sprintf (fname, "%s/%s%s", CVSADM, CVSPREFIX, finfo->file);
 
     /*
@@ -134,6 +135,7 @@ Checkin (type, finfo, rcs, rev, tag, options, message)
 	    if (!noexec)
 		error (1, errno, "could not check in %s -- fork failed",
 		       finfo->fullname);
+	    free (fname);
 	    return (1);
 
 	default:			/* ci failed */
@@ -151,6 +153,7 @@ Checkin (type, finfo, rcs, rev, tag, options, message)
 		rename_file (fname, finfo->file);
 		error (0, 0, "could not check in %s", finfo->fullname);
 	    }
+	    free (fname);
 	    return (1);
     }
 
@@ -179,5 +182,6 @@ Checkin (type, finfo, rcs, rev, tag, options, message)
 	mark_up_to_date (finfo->file);
 
     freevers_ts (&vers);
+    free (fname);
     return (0);
 }

@@ -11,11 +11,7 @@
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
+   GNU General Public License for more details.  */
 
 /* These functions were moved out of subr.c because they need different
    definitions under operating systems (like, say, Windows NT) with different
@@ -469,45 +465,55 @@ deep_remove_dir (path)
     struct dirent *dp;
     char	   buf[PATH_MAX];
 
-    if (rmdir (path) != 0 && (errno == ENOTEMPTY || errno == EEXIST)) 
+    if (rmdir (path) != 0)
     {
-	if ((dirp = opendir (path)) == NULL)
-	    /* If unable to open the directory return
-	     * an error
-	     */
-	    return -1;
-
-	while ((dp = readdir (dirp)) != NULL)
+	if (errno == ENOTEMPTY
+	    || errno == EEXIST
+	    /* Ugly workaround for ugly AIX 4.1 (and 3.2) header bug
+	       (it defines ENOTEMPTY and EEXIST to 17 but actually
+	       returns 87).  */
+	    || (ENOTEMPTY == 17 && EEXIST == 17 && errno == 87))
 	{
-	    if (strcmp (dp->d_name, ".") == 0 ||
-			strcmp (dp->d_name, "..") == 0)
-		continue;
+	    if ((dirp = opendir (path)) == NULL)
+		/* If unable to open the directory return
+		 * an error
+		 */
+		return -1;
 
-	    sprintf (buf, "%s/%s", path, dp->d_name);
-
-	    /* See comment in unlink_file_dir explanation of why we use
-	       isdir instead of just calling unlink and checking the
-	       status.  */
-	    if (isdir(buf)) 
+	    while ((dp = readdir (dirp)) != NULL)
 	    {
-		if (deep_remove_dir(buf))
+		if (strcmp (dp->d_name, ".") == 0 ||
+			    strcmp (dp->d_name, "..") == 0)
+		    continue;
+
+		sprintf (buf, "%s/%s", path, dp->d_name);
+
+		/* See comment in unlink_file_dir explanation of why we use
+		   isdir instead of just calling unlink and checking the
+		   status.  */
+		if (isdir(buf)) 
 		{
-		    closedir(dirp);
-		    return -1;
+		    if (deep_remove_dir(buf))
+		    {
+			closedir(dirp);
+			return -1;
+		    }
+		}
+		else
+		{
+		    if (unlink (buf) != 0)
+		    {
+			closedir(dirp);
+			return -1;
+		    }
 		}
 	    }
-	    else
-	    {
-		if (unlink (buf) != 0)
-		{
-		    closedir(dirp);
-		    return -1;
-		}
-	    }
+	    closedir (dirp);
+	    return rmdir (path);
 	}
-	closedir (dirp);
-	return rmdir (path);
-	}
+	else
+	    return -1;
+    }
 
     /* Was able to remove the directory return 0 */
     return 0;
@@ -672,19 +678,24 @@ last_component (path)
 }
 
 /* Return the home directory.  Returns a pointer to storage
-   managed by this function or its callees (currently getenv).  */
+   managed by this function or its callees (currently getenv).
+   This function will return the same thing every time it is
+   called.  */
 char *
 get_homedir ()
 {
-    static char home[PATH_MAX];
+    static char *home = NULL;
     char *env = getenv ("HOME");
     struct passwd *pw;
 
+    if (home != NULL)
+	return home;
+
     if (env)
-	strcpy (home, env);
+	home = env;
     else if ((pw = (struct passwd *) getpwuid (getuid ()))
 	     && pw->pw_dir)
-	strcpy (home, pw->pw_dir);
+	home = xstrdup (pw->pw_dir);
     else
 	return 0;
 

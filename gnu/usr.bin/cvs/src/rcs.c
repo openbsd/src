@@ -68,8 +68,11 @@ RCS_parse (file, repos)
 {
     RCSNode *rcs;
     FILE *fp;
-    char rcsfile[PATH_MAX];
+    RCSNode *retval;
+    char *rcsfile;
 
+    rcsfile = xmalloc (strlen (repos) + strlen (file)
+		       + sizeof (RCSEXT) + sizeof (CVSATTIC) + 10);
     (void) sprintf (rcsfile, "%s/%s%s", repos, file, RCSEXT);
     if ((fp = CVS_FOPEN (rcsfile, FOPEN_BINARY_READ)) != NULL) 
     {
@@ -78,12 +81,14 @@ RCS_parse (file, repos)
 	    rcs->flags |= VALID;
 
 	fclose (fp);
-	return (rcs);
+	retval = rcs;
+	goto out;
     }
     else if (! existence_error (errno))
     {
 	error (0, errno, "cannot open %s", rcsfile);
-	return NULL;
+	retval = NULL;
+	goto out;
     }
 
     (void) sprintf (rcsfile, "%s/%s/%s%s", repos, CVSATTIC, file, RCSEXT);
@@ -97,15 +102,21 @@ RCS_parse (file, repos)
 	}
 
 	fclose (fp);
-	return (rcs);
+	retval = rcs;
+	goto out;
     }
     else if (! existence_error (errno))
     {
 	error (0, errno, "cannot open %s", rcsfile);
-	return NULL;
+	retval = NULL;
+	goto out;
     }
+    retval = NULL;
 
-    return (NULL);
+ out:
+    free (rcsfile);
+
+    return retval;
 }
 
 /*
@@ -1859,11 +1870,11 @@ RCS_getrevtime (rcs, rev, date, fudge)
     /* put the date in a form getdate can grok */
 #ifdef HAVE_RCS5
     (void) sprintf (tdate, "%d/%d/%d GMT %d:%d:%d", ftm->tm_mon,
-		    ftm->tm_mday, ftm->tm_year, ftm->tm_hour,
+		    ftm->tm_mday, ftm->tm_year + 1900, ftm->tm_hour,
 		    ftm->tm_min, ftm->tm_sec);
 #else
     (void) sprintf (tdate, "%d/%d/%d %d:%d:%d", ftm->tm_mon,
-		    ftm->tm_mday, ftm->tm_year, ftm->tm_hour,
+		    ftm->tm_mday, ftm->tm_year + 1900, ftm->tm_hour,
 		    ftm->tm_min, ftm->tm_sec);
 #endif
 
@@ -2306,11 +2317,19 @@ RCS_checkout (rcs, workfile, rev, nametag, options, sout)
 		error (1, errno, "cannot open %s", workfile);
 	}
 
-	if (fwrite (value, 1, len, ofp) != len)
-	    error (1, errno, "cannot write %s",
-		   (workfile != NULL
-		    ? workfile
-		    : (sout != RUN_TTY ? sout : "stdout")));
+	if (workfile == NULL && sout == RUN_TTY)
+	{
+	    if (len > 0)
+		cvs_output (value, len);
+	}
+	else
+	{
+	    if (fwrite (value, 1, len, ofp) != len)
+		error (1, errno, "cannot write %s",
+		       (workfile != NULL
+			? workfile
+			: (sout != RUN_TTY ? sout : "stdout")));
+	}
 
 	if (workfile != NULL)
 	{
@@ -3168,7 +3187,7 @@ invalid rcs file %s (`d' operand out of range)",
 		    /* Now output the date.  */
 		    ym = strchr (prvers->date, '.');
 		    if (ym == NULL)
-			cvs_output ("??-???-??", 0);
+			cvs_output ("?\?-??\?-??", 0);
 		    else
 		    {
 			md = strchr (ym + 1, '.');
@@ -3345,7 +3364,7 @@ annotate (argc, argv)
 	/* FIXME:  We shouldn't have to send current files, but I'm not sure
 	   whether it works.  So send the files --
 	   it's slower but it works.  */
-	send_files (argc, argv, local, 0);
+	send_files (argc, argv, local, 0, 0);
 	send_to_server ("annotate\012", 0);
 	return get_responses_and_close ();
     }

@@ -8,11 +8,7 @@
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-
-   You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
+   GNU General Public License for more details.  */
 
 #include "cvs.h"
 #include "getline.h"
@@ -94,7 +90,7 @@ watch_onoff (argc, argv)
 	/* FIXME:  We shouldn't have to send current files, but I'm not sure
 	   whether it works.  So send the files --
 	   it's slower but it works.  */
-	send_files (argc, argv, local, 0);
+	send_files (argc, argv, local, 0, 0);
 	send_to_server (turning_on ? "watch-on\012" : "watch-off\012", 0);
 	return get_responses_and_close ();
     }
@@ -109,7 +105,7 @@ watch_onoff (argc, argv)
 			   argc, argv, local, W_LOCAL, 0, 0, (char *)NULL,
 			   0);
 
-    lock_tree_cleanup ();
+    Lock_Cleanup ();
     return err;
 }
 
@@ -268,7 +264,7 @@ send_notifications (argc, argv, local)
 				(DIRENTPROC) NULL, (DIRLEAVEPROC) NULL, NULL,
 				argc, argv, local, W_LOCAL, 0, 0, (char *)NULL,
 				0);
-	lock_tree_cleanup ();
+	Lock_Cleanup ();
     }
     return err;
 }
@@ -1006,7 +1002,7 @@ editors (argc, argv)
 	/* FIXME:  We shouldn't have to send current files, but I'm not sure
 	   whether it works.  So send the files --
 	   it's slower but it works.  */
-	send_files (argc, argv, local, 0);
+	send_files (argc, argv, local, 0, 0);
 	send_to_server ("editors\012", 0);
 	return get_responses_and_close ();
     }

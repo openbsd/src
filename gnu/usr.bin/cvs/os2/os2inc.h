@@ -1,5 +1,5 @@
-/* yesno.c -- read a yes/no response from stdin
-   Copyright (C) 1990 Free Software Foundation, Inc.
+/* This file is used to make the os/2 header files idempotent.
+   Written 11/96 by Ullrich von Bassewitz (uz@musoftware.com)
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -11,28 +11,12 @@
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
    GNU General Public License for more details.  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
+#ifndef IN_OS2INC_H
+#define IN_OS2INC_H
+
+#define INCL_BASE
+#define INCL_SUB
+#define INCL_KBD
+#include <os2.h>
+
 #endif
-
-#include <stdio.h>
-
-/* Read one line from standard input
-   and return nonzero if that line begins with y or Y,
-   otherwise return 0. */
-
-int
-yesno ()
-{
-  int c;
-  int rv;
-
-  fflush (stderr);
-  fflush (stdout);
-  c = getchar ();
-  rv = (c == 'y') || (c == 'Y');
-  while (c != EOF && c != '\n')
-    c = getchar ();
-
-  return rv;
-}

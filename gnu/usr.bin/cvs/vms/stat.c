@@ -10,7 +10,7 @@ struct stat *buffer;
   int rs;
 
   strcpy(statpath, path);
-  strip_path(statpath);
+  strip_trailing_slashes (statpath);
   if(strcmp(statpath, ".") == 0)
      getwd(statpath);
 

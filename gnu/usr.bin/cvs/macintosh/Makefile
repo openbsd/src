@@ -3,13 +3,14 @@
 #### this makefile.  However, we need this file in order for 'make
 #### dist' to work properly on Unix machines.
 
-srcdir     = .
-top_srcdir = ..
-cvs_srcdir = ../src
+srcdir     = ../../work/ccvs/macintosh
+top_srcdir = ../../work/ccvs
+cvs_srcdir = ../../work/ccvs/src
+VPATH      = ../../work/ccvs/macintosh
 
 SHELL = /bin/sh
 
-prefix = /usr/local
+prefix = /usr
 exec_prefix = ${prefix}
 
 

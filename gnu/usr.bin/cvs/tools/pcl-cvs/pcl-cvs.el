@@ -1,7 +1,7 @@
 ;;;
 ;;;#ident "@(#)OrigId: pcl-cvs.el,v 1.93 1993/05/31 22:44:00 ceder Exp "
 ;;;
-;;;#ident "@(#)cvs/contrib/pcl-cvs:$Name:  $:$Id: pcl-cvs.el,v 1.1.1.2 1996/10/18 03:36:26 tholo Exp $"
+;;;#ident "@(#)cvs/contrib/pcl-cvs:$Name:  $:$Id: pcl-cvs.el,v 1.1.1.3 1997/02/21 06:38:27 tholo Exp $"
 ;;;
 ;;; pcl-cvs.el -- A Front-end to CVS 1.3 or later.
 ;;; Release 1.05-CVS-$Name:  $.
@@ -1014,7 +1014,7 @@ ERR-BUF should be 'STDOUT or 'STDERR."
     (insert "Pcl-cvs Version: "
 	    "@(#)OrigId: pcl-cvs.el,v 1.93 1993/05/31 22:44:00 ceder Exp\n")
     (insert "CVS Version: "
-	    "@(#)cvs/contrib/pcl-cvs:$Name:  $:$Id: pcl-cvs.el,v 1.1.1.2 1996/10/18 03:36:26 tholo Exp $\n\n")
+	    "@(#)cvs/contrib/pcl-cvs:$Name:  $:$Id: pcl-cvs.el,v 1.1.1.3 1997/02/21 06:38:27 tholo Exp $\n\n")
     (insert (format "--- Contents of stdout buffer (%d chars) ---\n"
 		    (length stdout)))
     (insert stdout)
@@ -1174,6 +1174,11 @@ This function returns the last cons-cell in the list that is built."
 
 	 ((looking-at
 	   "^cvs \\(update\\|server\\): warning: .* was lost$")
+	  (forward-line 1))
+
+	 ;; Patch failed; CVS will refetch the file.  Ignored.
+	 ((looking-at
+	   "^[0-9]+ out of [0-9]+ hunks failed--saving rejects to .*$")
 	  (forward-line 1))
 
 	 ;; File unknown for some reason.

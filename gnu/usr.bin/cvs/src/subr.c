@@ -9,6 +9,7 @@
  */
 
 #include "cvs.h"
+#include "getline.h"
 
 extern char *getlogin ();
 
@@ -315,4 +316,40 @@ make_message_rcslegal (message)
     }
 
     return message;
+}
+
+/* Does the file FINFO contain conflict markers?  The whole concept
+   of looking at the contents of the file to figure out whether there are
+   unresolved conflicts is kind of bogus (people do want to manage files
+   which contain those patterns not as conflict markers), but for now it
+   is what we do.  */
+int
+file_has_markers (finfo)
+    struct file_info *finfo;
+{
+    FILE *fp;
+    char *line = NULL;
+    size_t line_allocated = 0;
+    int result;
+
+    result = 0;
+    fp = CVS_FOPEN (finfo->file, "r");
+    if (fp == NULL)
+	error (1, errno, "cannot open %s", finfo->fullname);
+    while (getline (&line, &line_allocated, fp) > 0)
+    {
+	if (strncmp (line, RCS_MERGE_PAT, sizeof RCS_MERGE_PAT - 1) == 0)
+	{
+	    result = 1;
+	    goto out;
+	}
+    }
+    if (ferror (fp))
+	error (0, errno, "cannot read %s", finfo->fullname);
+out:
+    if (fclose (fp) < 0)
+	error (0, errno, "cannot close %s", finfo->fullname);
+    if (line != NULL)
+	free (line);
+    return result;
 }

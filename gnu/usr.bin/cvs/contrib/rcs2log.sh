@@ -12,7 +12,7 @@
 
 # Author: Paul Eggert <eggert@twinsun.com>
 
-# $Id: rcs2log.sh,v 1.1.1.2 1996/10/18 03:36:19 tholo Exp $
+# $Id: rcs2log.sh,v 1.1.1.3 1997/02/21 06:38:19 tholo Exp $
 
 # Copyright 1992, 1993, 1994, 1995 Free Software Foundation, Inc.
 
@@ -159,8 +159,7 @@ case $rlog_options in
 						}
 					}
 				}
-				# Output comma instead of space to avoid CVS 1.5 bug.
-				printf "%d/%02d/%02d,%02d:%02d:%02d\n", year,i+1,dd,hh,mm,ss
+				printf "%02d/%02d/%d %02d:%02d:%02d\n", i+1,dd,year,hh,mm,ss
 				exit
 			}
 		'

@@ -206,39 +206,27 @@ time_stamp_server (file, vers_ts)
     {
 	if (! existence_error (errno))
 	    error (1, errno, "cannot stat temp file");
-	if (use_unchanged)
-	  {
-	    /* Missing file means lost or unmodified; check entries
-	       file to see which.
 
-	       XXX FIXME - If there's no entries file line, we
-	       wouldn't be getting the file at all, so consider it
-	       lost.  I don't know that that's right, but it's not
-	       clear to me that either choice is.  Besides, would we
-	       have an RCS string in that case anyways?  */
-	    if (vers_ts->entdata == NULL)
-	      mark_lost (vers_ts);
-	    else if (vers_ts->entdata->timestamp
-		     && vers_ts->entdata->timestamp[0] == '=')
-	      mark_unchanged (vers_ts);
-	    else
-	      mark_lost (vers_ts);
-	  }
-	else
-	  {
-	    /* Missing file in the temp directory means that the file
-	       was not modified.  */
+	/* Missing file means lost or unmodified; check entries
+	   file to see which.
+
+	   XXX FIXME - If there's no entries file line, we
+	   wouldn't be getting the file at all, so consider it
+	   lost.  I don't know that that's right, but it's not
+	   clear to me that either choice is.  Besides, would we
+	   have an RCS string in that case anyways?  */
+	if (vers_ts->entdata == NULL)
+	    mark_lost (vers_ts);
+	else if (vers_ts->entdata->timestamp
+		 && vers_ts->entdata->timestamp[0] == '=')
 	    mark_unchanged (vers_ts);
-	  }
+	else
+	    mark_lost (vers_ts);
     }
     else if (sb.st_mtime == 0)
     {
-	if (use_unchanged)
-	  /* We shouldn't reach this case any more!  */
-	  abort ();
-
-	/* Special code used by server.c to indicate the file was lost.  */
-	mark_lost (vers_ts);
+	/* We shouldn't reach this case any more!  */
+	abort ();
     }
     else
     {

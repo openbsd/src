@@ -1,3 +1,31 @@
+Thu Jan  2 13:30:56 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* dir.h, filesubr.c, filutils.c, filutils.h, misc.c, misc.h,
+	ndir.c, pipe.c, pipe.h, waitpid.c: Remove "675" paragraph;
+	see ../ChangeLog for rationale.
+
+Wed Jan  1 22:50:44 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* options.h: Reword comment for TMPDIR_DFLT to make it clear that
+	this isn't specific to the pserver server.
+
+Tue Nov 19 17:13:55 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* ndir.c (opendir): Change strip_path to strip_trailing_slashes
+	per corresponding change to src.
+	* stat.c (wrapped_stat): Likewise.
+
+Sat Oct 12 19:36:42 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* vms.h: Don't declare/define mode_t and rmdir; they conflict with
+	declarations in system include files on VAX/VMS 6.2.
+	* pwd.h: #include sys/types.h instead of trying to define uid_t,
+	gid_t and pid_t ourselves.
+
+Tue Oct  8 12:37:45 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* options.h: Remove; no longer used.
+
 Wed Sep 25 15:09:53 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
 
 	* options.h: Define TMPDIR_DFLT to sys$scratch not sys$login.

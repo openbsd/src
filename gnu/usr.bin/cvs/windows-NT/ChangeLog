@@ -1,3 +1,67 @@
+1997-01-08  Jim Kingdon
+
+	* filesubr.c (expand_wild): If we just find a file (that
+	is, without expanding a wildcard), return the file name
+	as specified rather than as it exists in the filesystem.
+
+Thu Jan  2 13:30:56 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* filesubr.c, ndir.c, ndir.h, pwd.c, pwd.h, run.c, stripslash.c:
+	Remove "675" paragraph;	see ../ChangeLog for rationale.
+
+Wed Jan  1 22:51:01 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* options.h: Reword comment for TMPDIR_DFLT to make it clear that
+	this isn't specific to the pserver server.
+
+Tue Dec 31 14:17:38 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* README: Remove another mention of grep; CVS no longer uses it.
+
+Tue Dec 31 11:01:29 1996  Noel Cragg  <noel@gargle.rain.org>
+
+	* README: Add note that the various support utilities can also be
+ 	found at the Cyclic FTP site; things move around on the net.
+
+Tue Dec 31 12:33:29 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* README: Add note about lack of need for rsh.  I don't know if
+	this is the best place to talk about this, but many people get
+	confused by it.
+
+Sat Nov 30 15:33:22 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* README: Grep is no longer required.  Specify when gzip is required.
+
+Tue Nov 19 17:19:35 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* Makefile.in (SOURCES): Remove strippath.c.
+	* strippath.c: Removed.
+
+Sun Nov 10 22:54:04 1996  Paul Sanders <p.sanders@dial.pipex.com>
+			  and Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* run.c (run_popen): Save and restore file descriptors.
+
+Fri Oct 18 16:54:00 1996  Tony Brusseau  <brusseau@jprc.com>
+			  and Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* strippath.c (strip_path): Leave leading "\\" unmolested for UNC.
+
+Thu Oct 17 10:57:06 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* README: Clarify who it is who needs to be able to mount the
+	repository.
+
+Mon Oct 14 08:30:38 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* README: Remove item about markso Win95 web site now that it is
+	merged in.  Mention Win95 at beginning.
+
+Tue Oct  8 12:37:54 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* options.h (HAD_RCS4): Remove; no longer used.
+
 Wed Sep 25 14:31:51 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
 
 	* options.h (TMPDIR_DFLT): Change from c:\temp to c:\\temp.

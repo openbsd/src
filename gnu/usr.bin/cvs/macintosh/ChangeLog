@@ -1,3 +1,25 @@
+Thu Jan  2 13:42:14 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* filesubr.c, pwd.c: Remove "675" paragraph;
+	see ../ChangeLog for rationale.
+
+Wed Jan  1 22:49:49 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* options.h: Reword comment for TMPDIR_DFLT to make it clear that
+	this isn't specific to the pserver server.
+
+Mon Oct 28 09:22:09 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* mac_init.c (macos_error_cleanup): Removed; SYSTEM_CLEANUP (aka
+	MacOS_Cleanup) now gets called in the cases in question.
+	(MacOS_Initialize): Don't call error_set_cleanup.
+	* README.MacCVS: Adjust description of problem which should be
+	fixed by above change.
+
+Tue Oct  8 12:37:25 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* options.h (HAD_RCS4): Remove; no longer used.
+
 Mon Sept 30 13:17:07 1996  Mike Ladwig  <mike@twinpeaks.prc.com>
 
 	* ae_if.c (DoScript): Fixed bug cutting off the last character of

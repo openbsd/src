@@ -1,4 +1,47 @@
-Changes since 1.8:
+Changes since 1.9:
+
+* Read-only repository access is implemented for the
+password-authenticated server (other access methods are just governed
+by Unix file permissions, since they require login access to the
+repository machine anyway).  See the "Repository" section of
+cvs.texinfo for details.  Note that the security cautions in
+cvs.texinfo ("Password authentication security"), and the requirement
+that read-only users be able to create locks and write the history
+file, both apply.
+
+* The "checkout" command now creates a CVS directory at the top level
+of the new working directory, in addition to CVS directories created
+within checked-out directories.
+
+* There is a new administrative file verifymsg which is like editinfo
+but merely validates the message, rather than also getting it from the
+user.  It therefore works with client/server CVS or if one uses the -m
+or -F options to commit.  See the verifymsg section of cvs.texinfo for
+details.
+
+* The %s format formerly accepted in loginfo has been extended to
+formats such as %{sVv}, so that loginfo scripts have access to the
+version numbers being changed.  See the Loginfo section of cvs.texinfo
+for details.
+
+* The postscript documentation (doc/cvs.ps) shipped with CVS is now
+formatted for US letter size instead of A4.  This is not because we
+consider this size "better" than A4, but because we believe that the
+US letter version will print better on A4 paper than the other way
+around.
+
+* The "cvs export" command is now logged in the history file and there
+is a "cvs history -x E" command to select history file entries
+produced by export.
+
+* CVS no longer uses the CVS_PASSWORD environment variable.  Storing
+passwords in cleartext in an environment variable is a security risk,
+especially since (on BSD variants) any user on the system can display
+any process's environment using 'ps'.  Users should use the 'cvs
+login' command instead.
+
+
+Changes from 1.8 to 1.9:
 
 * Windows NT client should now work on Windows 95 as well.
 
@@ -980,5 +1023,3 @@ Mon Nov 19 23:15:11 1990  Brian Berliner  (berliner at prisma.com)
 	1986 version of CVS and making it available to the world.  Dick's
 	version is available on uunet.uu.net in the
 	comp.sources.unix/volume6/cvs directory.
-
-$CVSid: @(#)ChangeLog 1.35 94/10/22 $

@@ -525,6 +525,11 @@ do_file_proc (p, closure)
     freercsnode(&finfo->rcs);
     free (finfo->fullname);
 
+    /* Allow the user to monitor progress with tail -f.  Doing this once
+       per file should be no big deal, but we don't want the performance
+       hit of flushing on every line like previous versions of CVS.  */
+    cvs_flushout ();
+
     return (ret);
 }
 
@@ -593,7 +598,7 @@ do_dir_proc (p, closure)
     {
 	/* save our current directory and static vars */
         if (save_cwd (&cwd))
-	    exit (EXIT_FAILURE);
+	    error_exit ();
 	sdirlist = dirlist;
 	srepository = repository;
 	dirlist = NULL;
@@ -629,7 +634,7 @@ do_dir_proc (p, closure)
 
 	/* get back to where we started and restore state vars */
 	if (restore_cwd (&cwd, NULL))
-	    exit (EXIT_FAILURE);
+	    error_exit ();
 	free_cwd (&cwd);
 	dirlist = sdirlist;
 	repository = srepository;
@@ -713,7 +718,7 @@ unroll_files_proc (p, closure)
     if (strcmp(p->key, ".") != 0)
     {
         if (save_cwd (&cwd))
-	    exit (EXIT_FAILURE);
+	    error_exit ();
 	if ( CVS_CHDIR (p->key) < 0)
 	    error (1, errno, "could not chdir to %s", p->key);
 
@@ -733,7 +738,7 @@ unroll_files_proc (p, closure)
 	free (save_update_dir);
 
 	if (restore_cwd (&cwd, NULL))
-	    exit (EXIT_FAILURE);
+	    error_exit ();
 	free_cwd (&cwd);
     }
 

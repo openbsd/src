@@ -4,10 +4,6 @@
    Search for "DIAGNOSTIC" in the code to see what it's for. */
 #define DIAGNOSTIC 0
 
-#define INCL_DOSQUEUES
-#define INCL_DOSPROCESS
-#define INCL_DOSSESMGR
-#include    <os2.h>
 #include    <process.h>
 
 #include    <stdio.h>
@@ -18,9 +14,11 @@
 #include    <string.h>
 #include    <fcntl.h>
 
+#include    "config.h"
+#include    "os2inc.h"
+
 #define LL_VAL ULONG
 #define LL_KEY PID    /* also ULONG, really */
-
 
 #define STDIN       0
 #define STDOUT      1
@@ -224,7 +222,14 @@ popen (const char *Command, const char *Mode)
         return NULL;
     }
   
+#ifdef __WATCOMC__
+    /* Watcom does not allow mixing operating system handles and
+     * C library handles, so we have to convert.
+     */
+    File = fdopen (_hdopen (End1, *Mode == 'w'? O_WRONLY : O_RDONLY), Mode);
+#else
     File = fdopen (End1, Mode);
+#endif
     ll_insert ((LL_KEY) End1, (LL_VAL) Result.codeTerminate);
 
     return File;
@@ -247,7 +252,7 @@ popenRW (const char **argv, int *pipes)
     HFILE Out1, Out2, In1, In2;
     HFILE Old0 = -1, Old1 = -1, Old2 = -1, Tmp;
 
-    PID pid;
+    int pid;
 
     if (DosCreatePipe (&Out2, &Out1, 4096))
         return FALSE;

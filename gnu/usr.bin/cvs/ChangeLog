@@ -1,3 +1,177 @@
+Wed Jan  8 14:50:47 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* Makefile.in, NEWS, README, TODO, configure.in: Remove CVSid; we
+	decided to get rid of these some time ago.
+
+Wed Jan  8 00:17:13 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* README (Credits): Refer to NEWS not ChangeLog; the ChangeLog in
+	question got renamed a bit but ended up as the bottom of the NEWS
+	file.  Eliminate use of first person in a few places where it is
+	unclear who it refers to.  Explicitly say that the lists
+	of contributors are not comprehensive.
+
+Thu Jan  2 12:59:45 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* README, Makefile.in: Remove paragraph about writing to the Free
+	Software Foundation at 675 Massachusetts Avenue.  (1) They are no
+	longer at that address; (2) the Free Software Foundation are not
+	the ones to write to concerning CVS licensing.  bug-cvs would be a
+	more appropriate choice; (3) there is probably little need for
+	this paragraph anyway.
+
+Thu Jan  2 09:46:37 1997  Karl Fogel  <kfogel@ynu38.ynu.edu.cn>
+
+        * NEWS: mention read-only repository access feature.
+
+Wed Jan  1 18:47:08 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* cvs.spec: Don't include ChangeLog and ChangeLog.zoo in %doc.
+	There is no point in including them without src/ChangeLog,
+	src/ChangeLog-96, etc., but more to the point they really belong
+	in the source distribution rather than a binary distribution anyway.
+
+Mon Dec 30 16:55:54 1996  Abe Feldman  <feldman@harvey.cyclic.com>
+
+	* NEWS: Add entry for changes to checkout command (creating CVS
+	directory at top of working directory)
+
+Tue Dec 17 13:13:30 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* NEWS: Add entry for verifymsg.
+
+Tue Dec 10 19:22:20 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* cvs-format.el: Revise comments to explain how to use it and
+	general minor tidying of comments.
+
+Mon Dec  2 13:05:44 1996  Ian Lance Taylor  <ian@cygnus.com>
+
+	* configure.in: Don't call AC_CHECK_FUNCS(connect) a second time,
+	because the value will have been cached; instead, check whether
+	the library was found with connect defined.
+	* configure: Rebuild with autoconf 2.12.
+
+Sat Nov 30 23:04:52 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* BUGS: Add note about mysterious failure in test 187a3.
+
+Fri Nov 29 10:19:50 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* configure.in (AC_CHECK_FUNCS): Also check for readlink.
+	* config.h.in: Regenerated using autoheader 2.10.
+
+Fri Nov 22 16:30:27 1996  Brendan Kehoe  <brendan@cygnus.com>
+
+	* configure.in: Check for -lsocket, etc., before checking for
+	Kerberos libraries.
+	* configure: Rebuild.
+
+1996-11-19  Jim Kingdon
+
+	* cvsnt.mak: Remove strippath.c.
+
+Sun Nov  3 21:54:18 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* README: Move detailed information on compatibility to
+	the manual; simply point to it here.
+
+Thu Oct 31 07:20:45 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* BUGS: Add note about cvs import of binary files on non-unix.
+
+Tue Oct 29 13:59:14 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* BUGS: Add note about "dying gasps" message.
+
+Sat Oct 26 16:17:09 1996  Jim Blandy  <jimb@totoro.cyclic.com>
+
+	* configure.in (AC_CHECK_FUNCS): Check for tzset.
+
+Fri Oct 25 10:27:08 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* NEWS: Mention new loginfo features.
+
+Thu Oct 24 08:21:48 1996  Lars.Henriksen@netman.dk
+
+	* INSTALL: Update to "DEC Alpha running OSF/1 version 3.2 (1.9)"
+
+Tue Oct 22 10:34:21 1996  Noel Cragg  <noel@gargle.rain.org>
+
+	* configure.in: don't check for the existence of the /etc/security
+ 	directory, because it's possible to have PAM installed without
+ 	using shadow passwords.
+	* configure: regenerated.
+
+Sat Oct 19 18:34:29 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* README: Say that the remote protocol is not interoperable before
+	CVS 1.5.
+
+Sat Oct 19 13:06:53 1996  Mark H. Wilkinson  <mhw@minster.york.ac.uk>
+			  and Jim Kingdon  <kingdon@cyclic.com>
+
+	* configure.in, INSTALL: New options for configure to enable or
+	disable client and server code, overriding configure's defaults.
+	* confiugre: Regenerated.
+
+Sat Oct 19 13:06:53 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* INSTALL: Add note about what to do if you got a binary
+	distribution of CVS.  Add VAX/VMS entry.
+
+Thu Oct 17 15:38:03 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* NEWS, README: Reinstate 30 Sep 96 changes concerning US letter
+	vs. A4 paper.
+
+Wed Oct 16 16:59:57 1996  Jim Blandy  <jimb@totoro.cyclic.com>
+
+	* configure.in: Simplify code to check for crypt.  Check for
+	-lcrypt first, and then check for the crypt function.  The old
+	code did slightly funky things with cache variables, which JimK's
+	last change disturbed.  Let's just keep it simple.
+	* configure: Rebuilt.
+
+Wed Oct 16 15:01:59 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* configure.in: Don't call unset.  It isn't portable to Ultrix,
+	but perhaps more to the point, seems like we should be using the
+	cached values (there was no comment explaining why we should
+	ignore the cached values, and none of the CVS developers were
+	able to	provide an explanation when I asked).
+	* configure: Regenerated.
+
+	* NEWS: Add item regarding export and "cvs history".
+
+Tue Oct 15 07:40:42 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* TESTS: Mention the fact that expr is only for the tests, not for
+	CVS itself.  At least one person was unclear on this.
+
+Mon Oct 14 12:13:03 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* HACKING: Add "Submitting patches (strategy)" section and
+	sentence about test cases.  These changes have been run by
+	devel-cvs and there was no objection.
+
+Sat Oct 12 19:43:56 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* README.VMS: Add notes about some build problems on VAX/VMS.
+
+Thu Oct 10 09:20:25 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* BUGS: Remove item about & in modules file and client/server; the
+	bug is fixed.
+
+	* README.VMS: Rewrite sections about wildcard expansion and
+	calling editors to suggest technical approaches and to make it
+	clear that fixes will only happen if someone gets around to them.
+
+Sat Oct  5 15:01:22 1996  Jim Blandy  <jimb@totoro.cyclic.com>
+
+	* Version 1.9 released.
+
 Tue Oct  1 14:32:44 1996  Jim Kingdon  <kingdon@harvey.cyclic.com>
 
 	* NEWS, README: Revert changes regarding -D, -g, and A4.  They

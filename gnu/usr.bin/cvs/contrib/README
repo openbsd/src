@@ -1,5 +1,3 @@
-$CVSid: @(#)README 1.12 94/09/25 $
-
 This "contrib" directory is a place holder for code/scripts sent to me
 by contributors around the world.  This README file will be kept
 up-to-date from release to release.  BUT, we must point out that these
@@ -35,9 +33,6 @@ An attempt at a table of Contents for this directory:
 			changes.  Includes the RCS revision of the change
 			as part of the log.
 			Contributed by Kevin Samborn <samborn@sunrise.com>.
-	pcl-cvs		A directory that contains GNU Emacs lisp code which
-			implements a CVS-mode for emacs.
-			Contributed by Per Cederqvist <ceder@lysator.liu.se>.
 	commit_prep	A perl script, to be combined with log_accum.pl, to
 	log_accum	provide for a way to combine the individual log
 			messages of a multi-directory "commit" into a
@@ -110,7 +105,3 @@ An attempt at a table of Contents for this directory:
 			by hostname, then runs a subprocess whose input/output
 			is redirected through the port.
 			Contributed by Benjamin J. Lee <benjamin@cyclic.com>
-	patch-2.1-.new-fix
-			A fix for GNU Patch version 2.1 which (more) properly
-			handles creation of new files.
-			Contributed by Greg A. Woods <woods@planix.com>
