@@ -1,4 +1,4 @@
-/*	$OpenBSD: emacs.c,v 1.23 2003/08/23 02:30:59 fgsch Exp $	*/
+/*	$OpenBSD: emacs.c,v 1.24 2003/08/26 17:55:01 fgsch Exp $	*/
 
 /*
  *  Emacs-like command line editing and history
@@ -595,7 +595,7 @@ static int
 x_del_bword(c)
 	int c;
 {
-	x_delete(x_bword(), FALSE);
+	x_delete(x_bword(), TRUE);
 	return KSTD;
 }
 
@@ -619,7 +619,7 @@ static int
 x_del_fword(c)
 	int c;
 {
-	x_delete(x_fword(), FALSE);
+	x_delete(x_fword(), TRUE);
 	return KSTD;
 }
 
