@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.48 2005/03/01 09:43:08 xsa Exp $
+dnl	$OpenBSD: hardware,v 1.49 2005/03/16 22:50:09 jsg Exp $
 OpenBSD/MACHINE OSREV runs on iMac, G4 Power Macintosh, and G4 Cube, as well
 as PowerBook and iBook machines.
 
@@ -143,6 +143,7 @@ Supported devices {:-include-:}:
 			D-Link DUB-E100
 			Hawking UF200
 			Intellinet USB 2.0 to Ethernet (rev A)
+			JVC MP-PRX1
 			LinkSys USB200M
 			Netgear FA120
 			Sitecom LN-029

@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.53 2005/02/25 12:57:49 jsg Exp $
+dnl	$OpenBSD: hardware,v 1.54 2005/03/16 22:50:08 jsg Exp $
 OpenBSD/MACHINE OSREV is expected to run on the following hardware.
 If you have hardware that is listed here and are unable to run
 OpenBSD, or if you are able to run OpenBSD on hardware not listed
@@ -383,9 +383,10 @@ work. It's our best guess that they do, but any feedback is appreciated.
 			Billionton Systems USB2AR
 			Buffalo(MELCO) LUA-U2-KTX
 			Corega FEther USB2-TX
-			D-Link DUBE100
+			D-Link DUB-E100
 			Hawking UF200
 			Intellinet USB 2.0 to Ethernet (rev A)
+			JVC MP-PRX1
 			LinkSys USB200M
 			Netgear FA120
 			Sitecom LN-029

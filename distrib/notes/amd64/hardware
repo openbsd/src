@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.38 2005/03/08 10:58:50 jsg Exp $
+dnl	$OpenBSD: hardware,v 1.39 2005/03/16 22:50:08 jsg Exp $
 OpenBSD/MACHINE OSREV should work on all Athlon 64-based and
 compatible designs.
 
@@ -254,9 +254,10 @@ dnl		YENTA-compatible PCI-CardBus bridges
 		    Billionton Systems USB2AR
 		    Buffalo(MELCO) LUA-U2-KTX
 		    Corega FEther USB2-TX
-		    D-Link DUBE100
+		    D-Link DUB-E100
 		    Hawking UF200
 		    Intellinet USB 2.0 to Ethernet (rev A)
+		    JVC MP-PRX1
 		    LinkSys USB200M
 		    Netgear FA120
 		    Sitecom LN-029
