@@ -1,4 +1,4 @@
-/*	$OpenBSD: advlib.c,v 1.3 1998/11/17 04:25:21 downsj Exp $	*/
+/*	$OpenBSD: advlib.c,v 1.4 2001/04/23 13:33:35 krw Exp $	*/
 /*      $NetBSD: advlib.c,v 1.7 1998/10/28 20:39:46 dante Exp $        */
 
 /*
@@ -3092,6 +3092,7 @@ AscRiscHaltedAbortCCB(sc, ccb)
 				AscWriteLramByte(iot, ioh, q_addr + ASC_SCSIQ_B_STATUS,
 						 scsiq->q_status);
 				(*asc_isr_callback) (sc, scsiq);
+				DvcLeaveCritical(last_int_level);
 				return (1);
 			}
 		}
