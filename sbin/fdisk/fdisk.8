@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fdisk.8,v 1.26 1999/07/04 18:59:39 aaron Exp $
+.\"	$OpenBSD: fdisk.8,v 1.27 1999/07/21 01:07:53 deraadt Exp $
 .\"
 .\" Copyright (c) 1997 Tobias Weingartner
 .\" All rights reserved.
@@ -38,9 +38,9 @@
 .Nm fdisk
 .Op Fl ie
 .Op Fl f Ar mbrname
-.Op Fl c Ar cyls
+.Op Fl c Ar cylinders
 .Op Fl h Ar heads
-.Op Fl s Ar sects
+.Op Fl s Ar sectors
 .Ar device
 .Sh DESCRIPTION
 In order for the BIOS to boot the kernel, certain conventions must be
@@ -58,14 +58,20 @@ is found, the boot block from that partition is loaded and executed in
 place of the original (MBR) boot block.
 .Pp
 The following options are available:
-.Bl -tag -width "-f mbrname"
+.Pp
+.Bl -tag -width "-c cylinders" -compact
 .It Fl i
 Initialize the MBR sector.
+.Pp
 .It Fl e
 Edit existing MBR sectors.
+.Pp
 .It Fl f Ar mbrname
 Specifies an alternate MBR template file.
-.It Fl c,h,s
+.Pp
+.It Fl c Ar cylinders
+.It Fl h Ar heads
+.It Fl s Ar sectors
 Specifies an alternate BIOS geometry for
 .Nm
 to use.

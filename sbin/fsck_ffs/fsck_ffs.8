@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fsck_ffs.8,v 1.9 1999/06/04 02:45:16 aaron Exp $
+.\"	$OpenBSD: fsck_ffs.8,v 1.10 1999/07/21 01:07:53 deraadt Exp $
 .\"	$NetBSD: fsck_ffs.8,v 1.12 1996/09/23 16:18:34 christos Exp $
 .\"
 .\" Copyright (c) 1980, 1989, 1991, 1993
@@ -165,12 +165,16 @@ in the file system superblock and
 will not check the file system.  This option forces
 .Nm
 to check the file system, regardless of the state of the clean flag.
-.It Fl b
-Use the block specified immediately after the flag as
+.It Fl b Ar block#
+Use the
+.Ar block
+specified as
 the super block for the filesystem.  Block 32 is usually
 an alternate super block.
-.It Fl m
-Use the mode specified in octal immediately after the flag as the
+.It Fl m Ar mode
+Use the
+.Ar mode
+specified in octal as the
 permission bits to use when creating the
 .Pa lost+found
 directory rather than the default 1700.
@@ -193,8 +197,9 @@ except for
 .Dq CONTINUE? ,
 which is assumed to be affirmative;
 do not open the filesystem for writing.
-.It Fl c
-Convert the filesystem to the specified level.
+.It Fl c Ar level
+Convert the filesystem to the specified
+.Ar level .
 Note that the level of a filesystem can only be raised.
 .Bl -tag -width indent
 There are currently four levels defined:

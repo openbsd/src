@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ftpd.8,v 1.22 1999/07/09 13:35:50 aaron Exp $
+.\"	$OpenBSD: ftpd.8,v 1.23 1999/07/21 01:07:57 deraadt Exp $
 .\"	$NetBSD: ftpd.8,v 1.8 1996/01/14 20:55:23 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1988, 1991, 1993
@@ -127,19 +127,19 @@ session is logged to the file
 .Pa /var/run/utmp ,
 making them visible to commands such as
 .Xr who 1 .
-.It Fl T
+.It Fl T Ar maxtimeout
 A client may also request a different timeout period;
 the maximum period allowed may be set to
-.Ar timeout
+.Ar maxtimeout
 seconds with the
 .Fl T
 option.
 The default limit is 2 hours.
-.It Fl t
+.It Fl t Ar timeout
 The inactivity timeout period is set to
 .Ar timeout
 seconds (the default is 15 minutes).
-.It Fl u
+.It Fl u Ar mask
 Change the default umask from 027 to
 .Ar mask .
 .El

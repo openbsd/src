@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fsck_ext2fs.8,v 1.9 1999/06/04 02:45:16 aaron Exp $
+.\"	$OpenBSD: fsck_ext2fs.8,v 1.10 1999/07/21 01:07:53 deraadt Exp $
 .\"	$NetBSD: fsck_ext2fs.8,v 1.1 1997/06/11 11:21:48 bouyer Exp $
 .\"
 .\" Copyright (c) 1997 Manuel Bouyer.
@@ -44,7 +44,6 @@
 .Sh SYNOPSIS
 .Nm fsck_ext2fs
 .Op Fl b Ar block#
-.Op Fl c Ar level
 .Op Fl d
 .Op Fl f
 .Op Fl m Ar mode
@@ -124,7 +123,7 @@ action.
 The following flags are interpreted by
 .Nm fsck_ext2fs :
 .Bl -tag -width indent
-.It Fl b
+.It Fl b Ar block#
 Use the block specified immediately after the flag as
 the super block for the filesystem.  Block 8193 is usually
 an alternate super block.
@@ -139,8 +138,10 @@ in the file system superblock and
 will not check the file system.  This option forces
 .Nm
 to check the file system, regardless of the state of the clean flag.
-.It Fl m
-Use the mode specified in octal immediately after the flag as the
+.It Fl m Ar mode
+Use the
+.Ar mode
+specified in octal as the
 permission bits to use when creating the
 .Pa lost+found
 directory rather than the default 1777.
