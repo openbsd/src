@@ -1,4 +1,4 @@
-/*	$OpenBSD: cyberflex.c,v 1.23 2002/06/17 07:10:52 deraadt Exp $ */
+/*	$OpenBSD: cyberflex.c,v 1.24 2003/04/04 00:51:10 deraadt Exp $ */
 
 /*
  * copyright 1999, 2000
@@ -418,7 +418,7 @@ ls(int argc, char *argv[])
 			continue;
 
 		/* Format name */
-		sectok_fmt_fid(fname, &buf[4]);
+		sectok_fmt_fid(fname, sizeof fname, &buf[4]);
 
 		/* Format size */
 		fsize = (buf[2] << 8) | buf[3];
@@ -679,8 +679,8 @@ jload(int argc, char *argv[])
 	if (!aut0_vfyd)
 		jaut(0, NULL);
 
-	sectok_fmt_fid(progname, progID);
-	sectok_fmt_fid(contname, contID);
+	sectok_fmt_fid(progname, sizeof progname, progID);
+	sectok_fmt_fid(contname, sizeof contname, contID);
 
 	if (vflag) {
 		printf("applet file             \"%s\"\n", filename);
@@ -869,8 +869,8 @@ junload(int argc, char *argv[])
 	if (!aut0_vfyd)
 		jaut(0, NULL);
 
-	sectok_fmt_fid(progname, progID);
-	sectok_fmt_fid(contname, contID);
+	sectok_fmt_fid(progname, sizeof progname, progID);
+	sectok_fmt_fid(contname, sizeof contname, contID);
 
 	if (vflag) {
 		printf("program ID              %s\n", progname);
