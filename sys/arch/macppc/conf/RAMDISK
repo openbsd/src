@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.30 2004/06/24 16:24:18 nordin Exp $
+#	$OpenBSD: RAMDISK,v 1.31 2004/06/25 09:49:12 pvalchev Exp $
 #
 # PPC GENERIC config file
 #
@@ -64,6 +64,7 @@ dc*		at pci? dev ? function ?	# DEC Tulip 21143 clones
 xl*		at pci? dev ? function ?	# 3C9xx ethernet
 em*		at pci? dev ? function ?	# Intel Pro/1000 ethernet
 ti*		at pci? dev ? function ?	# Alteon Tigon 1Gb ethernet
+re*		at pci? dev ? function ?	# Realtek 8169/8169S/8110S
 an*		at pci? dev ? function ?	# Cisco/Aironet 802.11DS
 wi*		at pci? dev ? function ?	# WaveLAN IEEE 802.11DS
 
@@ -84,6 +85,7 @@ sqphy*		at mii? phy ?		# Seeq 80220/80221/80223 PHYs
 brgphy*		at mii? phy ?		# Broadcom 10/100/1000 PHYs 
 bmtphy*		at mii? phy ?		# Broadcom 10/100 PHYs 
 eephy*		at mii? phy ?			# Marvell 88E1000 Gigabit PHYs
+rgephy*		at mii? phy ?			# Realtek 8169S/8110S PHY
 ukphy*		at mii? phy ?		# generic unknown PHYs
 
 macintr0	at macobio?		# old interrupt controller

@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.55 2004/06/24 16:24:18 nordin Exp $g
+#	$OpenBSD: GENERIC,v 1.56 2004/06/25 09:49:12 pvalchev Exp $g
 #
 # PPC GENERIC config file
 #
@@ -63,6 +63,7 @@ dc*		at pci? dev ? function ?	# DEC Tulip 21143 clones
 xl*		at pci? dev ? function ?	# 3C9xx ethernet
 em*		at pci? dev ? function ?	# Intel Pro/1000 ethernet
 ti*		at pci? dev ? function ?	# Alteon Tigon 1Gb ethernet
+re*		at pci? dev ? function ?	# Realtek 8169/8169S/8110S
 an*		at pci? dev ? function ?	# Cisco/Aironet
 wi*		at pci? dev ? function ?	# WaveLAN IEEE 802.11DS
 iop*		at pci? dev ? function ?	# I2O processor
@@ -85,6 +86,7 @@ sqphy*		at mii? phy ?			# Seeq 8022[013] PHYs
 brgphy*		at mii? phy ?			# Broadcom 10/100/1000 PHYs 
 bmtphy*		at mii? phy ?			# Broadcom 10/100 PHYs 
 eephy*		at mii? phy ?			# Marvell 88E1000 Gigabit PHYs
+rgephy*		at mii? phy ?			# Realtek 8169S/8110S PHY
 ukphy*		at mii? phy ?			# generic unknown PHYs
 
 # crypto
