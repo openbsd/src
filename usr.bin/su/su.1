@@ -1,4 +1,4 @@
-.\"	$OpenBSD: su.1,v 1.5 1996/10/26 03:19:30 millert Exp $
+.\"	$OpenBSD: su.1,v 1.6 1997/09/04 08:16:22 provos Exp $
 .\" Copyright (c) 1988, 1990 The Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -160,7 +160,15 @@ has users listed then only those users can
 .Nm su
 to
 .Dq root .
-Otherwise, anyone can
+It is not sufficient to change a user's
+.Pa /etc/passwd
+entry to add them to the
+.Dq wheel
+group; they must explicitly be listed in
+.Pa /etc/group .
+If no one is in the
+.Dq wheel
+group, it is ignored, and anyone who knows the root password is permitted to
 .Nm su
 to
 .Dq root .
