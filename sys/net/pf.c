@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.39 2001/06/25 23:02:20 provos Exp $ */
+/*	$OpenBSD: pf.c,v 1.40 2001/06/26 00:11:00 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -558,6 +558,7 @@ pfattach(int num)
 	TAILQ_INIT(&pf_nats[1]);
 	TAILQ_INIT(&pf_rdrs[0]);
 	TAILQ_INIT(&pf_rdrs[1]);
+	TAILQ_INIT(&pf_states);
 	pf_rules_active = &pf_rules[0];
 	pf_rules_inactive = &pf_rules[1];
 	pf_nats_active = &pf_nats[0];
