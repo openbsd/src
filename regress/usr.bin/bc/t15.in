@@ -1,0 +1,24 @@
+if (1 && 2) "ok1"
+if (0 && 2) "nok2" else "ok2"
+if (3 && 0) "nok3" else "ok3"
+if (0 && 0) "nok4" else "ok4"
+if (0 && 0 && 0) "nok5" else "ok5"
+if (0 && 1 && 0) "nok6" else "ok6"
+if (1 && 1 && 1) "ok7" else "nok7"
+print "\n"
+define f() {
+	"f"
+}
+define g() {
+	"g"
+	return 1
+}
+if (f() && g()) {
+	"nok8"
+} else "ok8"
+if (!f() && g()) {
+	"ok9"
+} else "nok9"
+print "\n"
+if (1 < 2 && 3 < 4) "ok10" else "nok10"
+print "\n"

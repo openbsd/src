@@ -1,0 +1,78 @@
+[[ok]P]s0
+[[nok]P]s1
+ 0 0G 0!=0e1 
+[[nok]P]s0
+[[ok]P]s1
+ 1 0G 0!=0e1 
+[[nok]P]s0
+[[ok]P]s1
+ 0 1G 0!=0e1 
+[
+]n
+[[nok]P]s0
+[[ok]P]s1
+ 0 0GN 0!=0e1 
+[[ok]P]s0
+[[nok]P]s1
+ 1 0GN 0!=0e1 
+[[ok]P]s0
+[[nok]P]s1
+ 0 1GN 0!=0e1 
+[
+]n
+[[ok]P]s0
+[[nok]P]s1
+ 0 0G 0!=0e1 
+[[nok]P]s0
+[[ok]P]s1
+ 1 0G 0!=0e1 
+[[nok]P]s0
+[[ok]P]s1
+ 0 1G 0!=0e1 
+[
+]n
+[[ok]P]s0
+[[nok]P]s1
+ 1 0( 0!=0e1 
+[[nok]P]s0
+[[ok]P]s1
+ 0 1( 0!=0e1 
+[[nok]P]s0
+[[ok]P]s1
+ 1 1( 0!=0e1 
+[
+]n
+[[ok]P]s0
+[[nok]P]s1
+ 1 0{ 0!=0e1 
+[[nok]P]s0
+[[ok]P]s1
+ 0 1{ 0!=0e1 
+[[ok]P]s0
+[[nok]P]s1
+ 1 1{ 0!=0e1 
+[
+]n
+[[nok]P]s0
+[[ok]P]s1
+ 0 1( 0!=0e1 
+[[ok]P]s0
+[[nok]P]s1
+ 1 0( 0!=0e1 
+[[nok]P]s0
+[[ok]P]s1
+ 1 1( 0!=0e1 
+[
+]n
+[[nok]P]s0
+[[ok]P]s1
+ 0 1{ 0!=0e1 
+[[ok]P]s0
+[[nok]P]s1
+ 1 0{ 0!=0e1 
+[[ok]P]s0
+[[nok]P]s1
+ 1 1{ 0!=0e1 
+[
+]n
+q

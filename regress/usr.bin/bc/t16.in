@@ -1,0 +1,24 @@
+if (0 || 0) "nok1" else "ok1"
+if (1 || 0) "ok2" else "nok2"
+if (0 || 1) "ok3" else "nok3"
+if (1 || 1) "ok4" else "nok4"
+print "\n"
+
+define f() {
+	"f";
+	return 0
+}
+define g() {
+	"g";
+	return 0
+}
+define h() {
+	"h";
+	return 1
+}
+
+if (f() || g() || h()) "ok5" else "nok5"
+if (f() || g() || !h()) "nok6" else "ok6"
+if (f() || !h() || g()) "nok7" else "ok7"
+
+print "\n"
