@@ -1,4 +1,4 @@
-/*	$OpenBSD: diffdir.c,v 1.17 2003/07/04 17:50:24 millert Exp $	*/
+/*	$OpenBSD: diffdir.c,v 1.18 2003/07/06 02:11:12 millert Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -121,7 +121,8 @@ diffdir(char **argv)
 		else
 			cmp = strcmp(d1->d_entry, d2->d_entry);
 		if (cmp < 0) {
-			if (opt == 0 || opt == 2)
+			if (opt == D_NORMAL || opt == D_CONTEXT ||
+			    opt == D_UNIFIED)
 				only(d1, 1);
 			d1++;
 			dirstatus |= 1;
@@ -130,7 +131,8 @@ diffdir(char **argv)
 			d1++;
 			d2++;
 		} else {
-			if (opt == 0 || opt == 2)
+			if (opt == D_NORMAL || opt == D_CONTEXT ||
+			    opt == D_UNIFIED)
 				only(d2, 2);
 			d2++;
 			dirstatus |= 1;
