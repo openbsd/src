@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcfs_fileinfo.h,v 1.2 2000/06/17 17:32:27 provos Exp $	*/
+/*	$OpenBSD: tcfs_fileinfo.h,v 1.3 2000/06/17 20:25:54 provos Exp $	*/
 /*
  * Copyright 2000 The TCFS Project at http://tcfs.dia.unisa.it/
  * All rights reserved.
@@ -25,14 +25,13 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-/*	Gestione informazioni sui files cifrati
-*/
 
+/* Management information for files */
 
 typedef struct {	
-		 unsigned long flag;
-		 unsigned int end_of_file;
-		} tcfs_fileinfo;
+	unsigned long flag;
+	unsigned int end_of_file;
+} tcfs_fileinfo;
 
 #define		MBFLAG	0x00000010
 #define		SPFLAG	0x000000e0
@@ -52,7 +51,7 @@ typedef struct {
 #define	FI_SET_GS(x,y)	((x)->flag=\
 			 ((x)->flag & (~GSFLAG))|((y<<8)&GSFLAG))
 
-/*	prototipi	*/
+/* Function prototypes */
 
 tcfs_fileinfo 	tcfs_get_fileinfo(void *);
 tcfs_fileinfo 	tcfs_xgetflags(struct vnode *,struct proc *,struct ucred*);

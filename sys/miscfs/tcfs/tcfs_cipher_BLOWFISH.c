@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcfs_cipher_BLOWFISH.c,v 1.2 2000/06/17 17:32:26 provos Exp $	*/
+/*	$OpenBSD: tcfs_cipher_BLOWFISH.c,v 1.3 2000/06/17 20:25:54 provos Exp $	*/
 /*
  * Copyright 2000 The TCFS Project at http://tcfs.dia.unisa.it/
  * All rights reserved.
@@ -28,16 +28,18 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
-#include "tcfs_cipher.h"
-#include "crypto/blf.h"
+
+#include <miscfs/tcfs/tcfs_cipher.h>
+
+#include <crypto/blf.h>
 
 
 void *
 BLOWFISH_init_key (char *key)
 {
-	blf_ctx *ks=NULL;
+	blf_ctx *ks = NULL;
 
-	ks=(blf_ctx *)malloc (sizeof (blf_ctx), M_FREE, M_NOWAIT);
+	ks = (blf_ctx *)malloc (sizeof (blf_ctx), M_FREE, M_NOWAIT);
 	if (!ks)
 		return NULL;
 

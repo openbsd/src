@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcfs_dir.c,v 1.2 2000/06/17 17:32:26 provos Exp $	*/
+/*	$OpenBSD: tcfs_dir.c,v 1.3 2000/06/17 20:25:54 provos Exp $	*/
 /*
  * Copyright 2000 The TCFS Project at http://tcfs.dia.unisa.it/
  * All rights reserved.
@@ -36,137 +36,143 @@
 #include <sys/malloc.h>
 #include <sys/buf.h>
 #include <sys/dirent.h>
+
 #include <miscfs/tcfs/tcfs.h>
-#include "tcfs_rw.h"
+#include <miscfs/tcfs/tcfs_rw.h>
 
-int tcfs_new_direntry	(void *, tcfs_fileinfo *);
+int tcfs_new_direntry	__P((void *, tcfs_fileinfo *));
 
-int tcfs_new_direntry(void *v , tcfs_fileinfo *i)
+int
+tcfs_new_direntry(void *v, tcfs_fileinfo *i)
 {
 	struct vop_create_args *x;
 	struct ucred *cr;
 	struct proc *pr;
 	int err;
 
-	x=(struct vop_create_args *)v;
-	cr=x->a_cnp->cn_cred;
-	pr=x->a_cnp->cn_proc;
+	x = (struct vop_create_args *)v;
+	cr = x->a_cnp->cn_cred;
+	pr = x->a_cnp->cn_proc;
 
-	if(!TCFS_CHECK_AKEY(cr,pr,x->a_dvp))
+	if (!TCFS_CHECK_AKEY(cr, pr, x->a_dvp))
 		return tcfs_bypass(v);
 
 	/* Per i file speciali e per i link, niente flags (per ora)*/
-	if((x->a_desc==VDESC(vop_mknod))||
-	   (x->a_desc==VDESC(vop_symlink))||
-	   (x->a_desc==VDESC(vop_link)))
-	{
+	if((x->a_desc == VDESC(vop_mknod)) ||
+	   (x->a_desc == VDESC(vop_symlink)) ||
+	   (x->a_desc == VDESC(vop_link))) {
 		err=tcfs_bypass(v);
 		return err;
 	}
 	   
-	if(!(err=tcfs_bypass(v)))
-		err=tcfs_xsetflags(*(x->a_vpp),pr,cr,i);
+	if (!(err=tcfs_bypass(v)))
+		err = tcfs_xsetflags(*(x->a_vpp),pr,cr,i);
 
 	return err;
 }
 
-int tcfs_create(v)
-void *v;
+int
+tcfs_create(v)
+	void *v;
 {
 	struct vop_create_args *x;
 	struct ucred *cr;
 	struct proc *pr;
 	tcfs_fileinfo i;
 
-	x=(struct vop_create_args *)v;
-	cr=x->a_cnp->cn_cred;
-	pr=x->a_cnp->cn_proc;
-	i=tcfs_xgetflags(x->a_dvp,pr,cr);
+	x = (struct vop_create_args *)v;
+	cr = x->a_cnp->cn_cred;
+	pr = x->a_cnp->cn_proc;
+	i = tcfs_xgetflags(x->a_dvp, pr, cr);
 
-	if(FI_CFLAG(&i)||FI_GSHAR(&i))
-		return tcfs_new_direntry(v,&i);
+	if (FI_CFLAG(&i)||FI_GSHAR(&i))
+		return tcfs_new_direntry(v, &i);
 	else
 		return tcfs_bypass(v);
 }
 
-int tcfs_mknod(v)
-void *v;
+int 
+tcfs_mknod(v)
+	void *v;
 {
 	struct vop_mknod_args *x;
 	struct ucred *cr;
 	struct proc *pr;
 	tcfs_fileinfo i;
 
-	x=(struct vop_mknod_args *)v;
-	cr=x->a_cnp->cn_cred;
-	pr=x->a_cnp->cn_proc;
-	i=tcfs_xgetflags(x->a_dvp,pr,cr);
+	x = (struct vop_mknod_args *)v;
+	cr = x->a_cnp->cn_cred;
+	pr = x->a_cnp->cn_proc;
+	i = tcfs_xgetflags(x->a_dvp, pr, cr);
 
-	if(FI_CFLAG(&i)||FI_GSHAR(&i))
-		return tcfs_new_direntry(v,&i);
+	if (FI_CFLAG(&i) || FI_GSHAR(&i))
+		return tcfs_new_direntry(v, &i);
 	else
-	return tcfs_bypass(v);
+		return tcfs_bypass(v);
 }
 
-int tcfs_mkdir(v)
-void *v;
+int
+tcfs_mkdir(v)
+	void *v;
 {
 	struct vop_mkdir_args *x;
 	struct ucred *cr;
 	struct proc *pr;
 	tcfs_fileinfo i;
 
-	x=(struct vop_mkdir_args *)v;
-	cr=x->a_cnp->cn_cred;
-	pr=x->a_cnp->cn_proc;
-	i=tcfs_xgetflags(x->a_dvp,pr,cr);
+	x = (struct vop_mkdir_args *)v;
+	cr = x->a_cnp->cn_cred;
+	pr = x->a_cnp->cn_proc;
+	i = tcfs_xgetflags(x->a_dvp,pr,cr);
 
-	if(FI_CFLAG(&i)||FI_GSHAR(&i))
-		return tcfs_new_direntry(v,&i);
+	if (FI_CFLAG(&i) || FI_GSHAR(&i))
+		return tcfs_new_direntry(v, &i);
 	else
-	return tcfs_bypass(v);
+		return tcfs_bypass(v);
 }
 
 int tcfs_link(v)
-void *v;
+	void *v;
 {
 	struct vop_link_args *x;
 	struct ucred *cr;
 	struct proc *pr;
 	tcfs_fileinfo i;
 
-	x=(struct vop_link_args *)v;
-	cr=x->a_cnp->cn_cred;
-	pr=x->a_cnp->cn_proc;
-	i=tcfs_xgetflags(x->a_dvp,pr,cr);
+	x = (struct vop_link_args *)v;
+	cr = x->a_cnp->cn_cred;
+	pr = x->a_cnp->cn_proc;
+	i = tcfs_xgetflags(x->a_dvp, pr, cr);
 
-	if(FI_CFLAG(&i)||FI_GSHAR(&i))
-		return tcfs_new_direntry(v,&i);
+	if (FI_CFLAG(&i) || FI_GSHAR(&i))
+		return tcfs_new_direntry(v, &i);
 	else
-	return tcfs_bypass(v);
+		return tcfs_bypass(v);
 }
 
-int tcfs_symlink(v)
-void *v;
+int
+tcfs_symlink(v)
+	void *v;
 {
 	struct vop_symlink_args *x;
 	struct ucred *cr;
 	struct proc *pr;
 	tcfs_fileinfo i;
 
-	x=(struct vop_symlink_args *)v;
-	cr=x->a_cnp->cn_cred;
-	pr=x->a_cnp->cn_proc;
-	i=tcfs_xgetflags(x->a_dvp,pr,cr);
+	x = (struct vop_symlink_args *)v;
+	cr = x->a_cnp->cn_cred;
+	pr = x->a_cnp->cn_proc;
+	i = tcfs_xgetflags(x->a_dvp,pr,cr);
 
-	if(FI_CFLAG(&i)||FI_GSHAR(&i))
-		return tcfs_new_direntry(v,&i);
+	if (FI_CFLAG(&i) || FI_GSHAR(&i))
+		return tcfs_new_direntry(v, &i);
 	else
 		return tcfs_bypass(v);
 }
 
-int tcfs_readdir(v)
-void *v;
+int
+tcfs_readdir(v)
+	void *v;
 {
 /*
 	tcfs_fileinfo i;
@@ -208,8 +214,9 @@ void *v;
 	return tcfs_bypass(v);
 }
 
-int tcfs_rename(v)
-void *v;
+int
+tcfs_rename(v)
+	void *v;
 {
 	return tcfs_bypass(v);
 }

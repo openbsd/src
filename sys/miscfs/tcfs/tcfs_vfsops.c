@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcfs_vfsops.c,v 1.2 2000/06/17 17:32:29 provos Exp $	*/
+/*	$OpenBSD: tcfs_vfsops.c,v 1.3 2000/06/17 20:25:55 provos Exp $	*/
 /*
  * Copyright 2000 The TCFS Project at http://tcfs.dia.unisa.it/
  * All rights reserved.
@@ -64,7 +64,7 @@ tcfs_mount(mp, path, data, ndp, p)
 	struct vnode *tcfsm_rootvp;
 	struct tcfs_mount *xmp;
 	size_t size;
-	int tcfs_error=0;
+	int tcfs_error = 0;
 
 #ifdef TCFS_DIAGNOSTIC
 	printf("tcfs_mount(mp = %p)\n", mp);
@@ -80,8 +80,8 @@ tcfs_mount(mp, path, data, ndp, p)
 	/* receiving user directives */
         if (mp->mnt_flag & MNT_UPDATE) {
                  int i;
-                 i=tcfs_exec_cmd(MOUNTTOTCFSMOUNT(mp),&args);
-                 copyout((caddr_t)&args,data,sizeof(struct tcfs_args));
+                 i = tcfs_exec_cmd(MOUNTTOTCFSMOUNT(mp), &args);
+                 copyout((caddr_t)&args, data, sizeof(struct tcfs_args));
                  return i;
         }
 	
@@ -157,7 +157,6 @@ tcfs_mount(mp, path, data, ndp, p)
         tcfs_error=tcfs_init_mp(xmp,&args);
         copyout((caddr_t)&args,data,sizeof(struct tcfs_args));
         return (tcfs_error);
-
 }
 
 /*
@@ -233,7 +232,7 @@ tcfs_unmount(mp, mntflags, p)
 
 	free(mp->mnt_data, M_UFSMNT);	/* XXX */
 	mp->mnt_data = 0;
-	return 0;
+	return (0);
 }
 
 int
@@ -258,7 +257,7 @@ tcfs_root(mp, vpp)
 	VREF(vp);
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
 	*vpp = vp;
-	return 0;
+	return (0);
 }
 
 int
@@ -269,7 +268,6 @@ tcfs_quotactl(mp, cmd, uid, arg, p)
 	caddr_t arg;
 	struct proc *p;
 {
-
 	return VFS_QUOTACTL(MOUNTTOTCFSMOUNT(mp)->tcfsm_vfs, cmd, uid, arg, p);
 }
 

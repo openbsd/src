@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcfs_vnops.c,v 1.2 2000/06/17 17:32:29 provos Exp $	*/
+/*	$OpenBSD: tcfs_vnops.c,v 1.3 2000/06/17 20:25:55 provos Exp $	*/
 /*
  * Copyright 2000 The TCFS Project at http://tcfs.dia.unisa.it/
  * All rights reserved.
@@ -100,7 +100,8 @@ tcfs_bypass(v)
 		if (descp->vdesc_vp_offsets[i] == VDESC_NO_OFFSET)
 			break;   /* bail out at end of list */
 		vps_p[i] = this_vp_p = 
-			VOPARG_OFFSETTO(struct vnode**,descp->vdesc_vp_offsets[i],ap);
+			VOPARG_OFFSETTO(struct vnode**,
+					descp->vdesc_vp_offsets[i], ap);
 		/*
 		 * We're not guaranteed that any but the first vnode
 		 * are of our type.  Check for and don't map any
@@ -178,7 +179,6 @@ tcfs_bypass(v)
 
  out:
 	return (error);
-	
 }
 
 
@@ -247,7 +247,6 @@ tcfs_reclaim(v)
 	vrele (lowervp);
 	return (0);
 }
-
 
 int
 tcfs_print(v)
@@ -457,6 +456,6 @@ struct vnodeopv_entry_desc tcfs_vnodeop_entries[] = {
         { &vop_symlink_desc,    tcfs_symlink },
         { (struct vnodeop_desc*)NULL,   (int(*) __P((void *)))NULL }
 };
+
 struct vnodeopv_desc tcfs_vnodeop_opv_desc =
         { &tcfs_vnodeop_p, tcfs_vnodeop_entries };
-

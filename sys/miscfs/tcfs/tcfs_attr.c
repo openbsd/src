@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcfs_attr.c,v 1.2 2000/06/17 17:32:26 provos Exp $	*/
+/*	$OpenBSD: tcfs_attr.c,v 1.3 2000/06/17 20:25:54 provos Exp $	*/
 /*
  * Copyright 2000 The TCFS Project at http://tcfs.dia.unisa.it/
  * All rights reserved.
@@ -35,8 +35,9 @@
 #include <sys/namei.h>
 #include <sys/malloc.h>
 #include <sys/buf.h>
+
 #include <miscfs/tcfs/tcfs.h>
-#include "tcfs_rw.h"
+#include <miscfs/tcfs/tcfs_rw.h>
 
 int
 tcfs_getattr(v)
@@ -59,98 +60,78 @@ tcfs_getattr(v)
 
 int           
 tcfs_setattr(v)
-void *v;
+	void *v;
 {
 	struct vop_setattr_args *a = v;
 	struct vattr *ap;
-	u_quad_t size=0;
-	tcfs_fileinfo i,n;
-	int error,sp=0;
-	
+	u_quad_t size = 0;
+	tcfs_fileinfo i, n;
+	int error, sp = 0;
 			
-	i=tcfs_xgetflags(a->a_vp,a->a_p,a->a_cred);
-	ap=a->a_vap;
+	i = tcfs_xgetflags(a->a_vp,a->a_p,a->a_cred);
+	ap = a->a_vap;
 
-        if(FI_GSHAR(&i))
-                {
-                 if(!tcfs_getgkey(a->a_cred,a->a_p,a->a_vp))
-			{
+        if (FI_GSHAR(&i)) {
+		if(!tcfs_getgkey(a->a_cred,a->a_p,a->a_vp))
                         return EACCES;
-			}
-                }
-        else
-                {
-                 if (!tcfs_getpkey(a->a_cred,a->a_p,a->a_vp))
-                 	if (!tcfs_getukey(a->a_cred,a->a_p,a->a_vp))
-			{
+        } else {
+		if (!tcfs_getpkey(a->a_cred, a->a_p,a->a_vp))
+                 	if (!tcfs_getukey(a->a_cred, a->a_p,a->a_vp))
                          	return EACCES;
-			}
-                }
+	}
 
-	if ((ap->va_flags)!=VNOVAL)
-	{
+	if ((ap->va_flags) != VNOVAL) {
+		n.flag = ap->va_flags;
+		n.end_of_file = i.end_of_file;
 
-
-		n.flag=ap->va_flags;
-		n.end_of_file=i.end_of_file;
-
-		if((FI_CFLAG(&n)&&FI_GSHAR(&i))||(FI_GSHAR(&n)&&FI_CFLAG(&i)))
-			{ 
+		if ((FI_CFLAG(&n) && FI_GSHAR(&i)) || 
+		    (FI_GSHAR(&n) && FI_CFLAG(&i)))
 			return EACCES;
-			}
 
-		if(FI_SPURE(&n)!=FI_SPURE(&i))
-			{ 
+		if (FI_SPURE(&n) != FI_SPURE(&i)) {
 			/* le spure no (le settano solo write e trunc) */
 			return EACCES;
-			}
+		}
 	
-		if(FI_CFLAG(&n)&&(!FI_CFLAG(&i)))
-		{
-			sp=tcfs_ed(a->a_vp, a->a_p, a->a_cred, &n);
+		if (FI_CFLAG(&n) && (!FI_CFLAG(&i))) {
+			sp = tcfs_ed(a->a_vp, a->a_p, a->a_cred, &n);
+			FI_SET_SP(&n, sp);
+		}
+
+		if ((!FI_CFLAG(&n)) && FI_CFLAG(&i)) {
+			sp = tcfs_ed(a->a_vp, a->a_p, a->a_cred, &n);
+			FI_SET_SP(&n, 0);
+		}
+
+		if (FI_GSHAR(&n) && (!FI_GSHAR(&i))) {
+			sp = tcfs_ed(a->a_vp, a->a_p, a->a_cred, &n);
 			FI_SET_SP(&n,sp);
 		}
 
-		if((!FI_CFLAG(&n))&&FI_CFLAG(&i))
-		{
-			sp=tcfs_ed(a->a_vp, a->a_p, a->a_cred, &n);
-			FI_SET_SP(&n,0);
-		}
-
-		if(FI_GSHAR(&n)&&(!FI_GSHAR(&i)))
-		{
-			sp=tcfs_ed(a->a_vp, a->a_p, a->a_cred, &n);
-			FI_SET_SP(&n,sp);
-		}
-
-		if((!FI_GSHAR(&n))&&FI_GSHAR(&i))
-		{
-			sp=tcfs_ed(a->a_vp, a->a_p, a->a_cred, &n);
+		if ((!FI_GSHAR(&n)) && FI_GSHAR(&i)) {
+			sp = tcfs_ed(a->a_vp, a->a_p, a->a_cred, &n);
 			FI_SET_SP(&n,0);
 		}
 
 
-		ap->va_flags=i.flag=n.flag;
-		if(a->a_vp->v_type==VREG)
-		{
-			ap->va_size=FI_ENDOF(&i)+sp;
-			error=tcfs_xsetflags(a->a_vp, a->a_p,a->a_cred,&i);
+		ap->va_flags = i.flag = n.flag;
+		if (a->a_vp->v_type == VREG) {
+			ap->va_size = FI_ENDOF(&i) + sp;
+			error = tcfs_xsetflags(a->a_vp, a->a_p, a->a_cred,&i);
 		}
-		return tcfs_bypass((void*)v);
+		return tcfs_bypass((void *)v);
 	}
-	if ((ap->va_size)!=VNOVAL)
-	{
-
-		if(ap->va_size == 0)
-			size=0;
+	if ((ap->va_size) != VNOVAL) {
+		if (ap->va_size == 0)
+			size = 0;
 		else
-			size=(u_quad_t)(D_PFOFF(ap->va_size)+1);
+			size = (u_quad_t)(D_PFOFF(ap->va_size) + 1);
 
 		FI_SET_SP(&i,(size-ap->va_size));
-		ap->va_size=size;
-		error=tcfs_xsetflags(a->a_vp, a->a_p,a->a_cred,&i);
+		ap->va_size = size;
+		error = tcfs_xsetflags(a->a_vp, a->a_p,a->a_cred, &i);
 	}
 
-	return tcfs_bypass((void*)v);
+	return tcfs_bypass((void *)v);
 }
 

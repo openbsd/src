@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcfs_mount.h,v 1.2 2000/06/17 17:32:27 provos Exp $	*/
+/*	$OpenBSD: tcfs_mount.h,v 1.3 2000/06/17 20:25:55 provos Exp $	*/
 /*
  * Copyright 2000 The TCFS Project at http://tcfs.dia.unisa.it/
  * All rights reserved.
@@ -25,25 +25,23 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef _TCFS_KEYTAB_H_
-#include "tcfs_keytab.h"
-#endif
+#ifndef _TCFS_MOUNT_H_
 #define _TCFS_MOUNT_H_
 
-#ifndef _TCFS_VERSION_H_
-#include "tcfs_version.h"
-#endif
+#include <miscfs/tcfs/tcfs_keytab.h>
+#include <miscfs/tcfs/tcfs_version.h>
 
 #define MaxCipherNameLen	8
 struct tcfs_status {
-			int	status;
-			int 	n_ukey;
-			int	n_gkey;
-			int	tcfs_version;
-			char	cipher_desc[MaxCipherNameLen];
-			int	cipher_keysize;
-			int	cipher_version;
-		   };
+	int	status;
+	int 	n_ukey;
+	int	n_gkey;
+	int	tcfs_version;
+	char	cipher_desc[MaxCipherNameLen];
+	int	cipher_keysize;
+	int	cipher_version;
+};
+
 struct tcfs_args {
 	char		*target;	/* Target of loopback   */
 	char 		*tcfs_key;	/* chiave 		*/
@@ -59,8 +57,10 @@ struct tcfs_args {
 struct tcfs_mount {
 	struct mount	*tcfsm_vfs;
 	struct vnode	*tcfsm_rootvp;	/* Reference to root tcfs_node */
-	void* ks;
+	void *ks;
 	tcfs_keytab *tcfs_uid_kt;
 	tcfs_keytab *tcfs_gid_kt;
 	int tcfs_cipher_num;
 };
+
+#endif /* _TCFS_MOUNT_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcfs_rw.h,v 1.2 2000/06/17 17:32:27 provos Exp $	*/
+/*	$OpenBSD: tcfs_rw.h,v 1.3 2000/06/17 20:25:55 provos Exp $	*/
 /*
  * Copyright 2000 The TCFS Project at http://tcfs.dia.unisa.it/
  * All rights reserved.
@@ -25,22 +25,23 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-/*	Gestione informazioni sui files cifrati
-*/
+
+#ifndef _TCFS_RW_H_
+#define _TCFS_RW_H_
+
+/* Gestione informazioni sui files cifrati */
 #include <miscfs/tcfs/tcfs_fileinfo.h>
 
 typedef struct {
-	 		tcfs_fileinfo	i;
-	 		int off;
-	 		int req;
-	 		int tcfs_op_desc;
-			int in_boff;
-			int in_foff;
-			int out_boff;
-			int out_foff;
-		} tcfs_opinfo;
-	 
-
+	tcfs_fileinfo	i;
+	int off;
+	int req;
+	int tcfs_op_desc;
+	int in_boff;
+	int in_foff;
+	int out_boff;
+	int out_foff;
+} tcfs_opinfo;
 
 /* tcfs_opinfo x */
 
@@ -68,7 +69,7 @@ typedef struct {
 #define TCFS_WRITE_C4	6
 #define TCFS_WRITE_C5	7
 
-/*	prototyphes		*/
+/* prototypes */
 
 char    *tcfs_new_uio_i(struct uio*,struct uio**,tcfs_opinfo*);
 char    *tcfs_new_uio_obs(struct uio*,struct uio**,int off, int ireq);
@@ -77,3 +78,4 @@ void    dispose_new_uio(struct uio *);
 int 	tcfs_ed(struct vnode*, struct proc*, struct ucred *, tcfs_fileinfo *);
 tcfs_opinfo tcfs_get_opinfo(void*);
 
+#endif /* _TCFS_RW_H_ */

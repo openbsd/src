@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcfs_subr.c,v 1.1 2000/06/17 17:16:07 provos Exp $	*/
+/*	$OpenBSD: tcfs_subr.c,v 1.2 2000/06/17 20:25:55 provos Exp $	*/
 /*	$NetBSD: tcfs_subr.c,v 1.6 1996/05/10 22:50:52 jtk Exp $	*/
 
 /*
@@ -125,9 +125,8 @@ loop:
 		}
 	}
 
-	return NULLVP;
+	return (NULLVP);
 }
-
 
 /*
  * Make a new tcfs_node node.

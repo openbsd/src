@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcfs_fileinfo.c,v 1.2 2000/06/17 17:32:27 provos Exp $	*/
+/*	$OpenBSD: tcfs_fileinfo.c,v 1.3 2000/06/17 20:25:54 provos Exp $	*/
 /*
  * Copyright 2000 The TCFS Project at http://tcfs.dia.unisa.it/
  * All rights reserved.
@@ -36,67 +36,73 @@
 #include <sys/malloc.h>
 #include <sys/buf.h>
 #include <sys/stat.h>
+
 #include <miscfs/tcfs/tcfs.h>
-#include "tcfs_rw.h"
+#include <miscfs/tcfs/tcfs_rw.h>
 
 
-tcfs_fileinfo tcfs_xgetflags(struct vnode *v, struct proc *p, struct ucred *c)
+tcfs_fileinfo
+tcfs_xgetflags(struct vnode *v, struct proc *p, struct ucred *c)
 {
         tcfs_fileinfo r;
         struct vop_getattr_args x;
         struct vattr att;
         int retval;
 
-        att=va_null;
-        x.a_desc=VDESC(vop_getattr);
-        x.a_vp=v;
-        x.a_vap=&att;
-        x.a_cred=c;
-        x.a_p=p;
+        att = va_null;
+        x.a_desc = VDESC(vop_getattr);
+        x.a_vp = v;
+        x.a_vap = &att;
+        x.a_cred = c;
+        x.a_p = p;
 
-        retval=tcfs_bypass((void*)&x);
-        r.flag=(unsigned long)(x.a_vap->va_flags);
-        r.end_of_file=x.a_vap->va_size;
+        retval = tcfs_bypass((void*)&x);
+        r.flag = (unsigned long)(x.a_vap->va_flags);
+        r.end_of_file = x.a_vap->va_size;
 
         return r;
 }
 
-int tcfs_xsetflags(struct vnode *v, struct proc *p, struct ucred *c, tcfs_fileinfo *i)
+int 
+tcfs_xsetflags(struct vnode *v, struct proc *p, struct ucred *c,
+	       tcfs_fileinfo *i)
 {
         struct vop_setattr_args x;
         struct vattr att;
         int retval;
 
-        att=va_null;
+        att = va_null;
 
-	att.va_flags=i->flag;
+	att.va_flags = i->flag;
 
-        x.a_desc=VDESC(vop_setattr);
-        x.a_vp=v;
-        x.a_vap=&att;
-        x.a_cred=c;
-        x.a_p=p;
+        x.a_desc = VDESC(vop_setattr);
+        x.a_vp = v;
+        x.a_vap = &att;
+        x.a_cred = c;
+        x.a_p = p;
 
-        retval=tcfs_bypass((void*)&x);
+        retval = tcfs_bypass((void*)&x);
         return retval;
 }
 
 
 
-tcfs_fileinfo tcfs_get_fileinfo(void *a)
+tcfs_fileinfo
+tcfs_get_fileinfo(void *a)
 {
 	struct vop_read_args *arg;
 
-	arg=(struct vop_read_args*)a;
-	return tcfs_xgetflags(arg->a_vp,arg->a_uio->uio_procp,arg->a_cred);
+	arg = (struct vop_read_args*)a;
+	return tcfs_xgetflags(arg->a_vp, arg->a_uio->uio_procp, arg->a_cred);
 }
 
 
-int tcfs_set_fileinfo(void *a, tcfs_fileinfo *i)
+int
+tcfs_set_fileinfo(void *a, tcfs_fileinfo *i)
 {
 	struct vop_read_args *arg;
 
-	arg=(struct vop_read_args*)a;
-	return tcfs_xsetflags(arg->a_vp, arg->a_uio->uio_procp,arg->a_cred,i); ;
+	arg = (struct vop_read_args*)a;
+	return tcfs_xsetflags(arg->a_vp, arg->a_uio->uio_procp,
+			      arg->a_cred, i);
 }
-

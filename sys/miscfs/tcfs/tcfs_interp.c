@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcfs_interp.c,v 1.2 2000/06/17 17:32:27 provos Exp $	*/
+/*	$OpenBSD: tcfs_interp.c,v 1.3 2000/06/17 20:25:54 provos Exp $	*/
 /*
  * Copyright 2000 The TCFS Project at http://tcfs.dia.unisa.it/
  * All rights reserved.
@@ -25,11 +25,12 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#include<sys/types.h>
-#include<sys/malloc.h>
-#include<sys/errno.h>
-#include "tcfs_keytab.h"
-#include "tcfs_cipher.h"
+#include <sys/types.h>
+#include <sys/malloc.h>
+#include <sys/errno.h>
+
+#include <miscfs/tcfs/tcfs_keytab.h>
+#include <miscfs/tcfs/tcfs_cipher.h>
 
 int interp(tcfs_grp_data *,unsigned char *);
 void doinverse(void);
@@ -76,80 +77,81 @@ unsigned int mod(long a)
 }
 */
 
-int interp(tcfs_grp_data *gd,unsigned char *gidkey)
+int 
+interp(tcfs_grp_data *gd,unsigned char *gidkey)
 {
 	unsigned int tp,kkk;
-	int i=0,j,l,idx;
-	tcfs_grp_uinfo ktmp[MAXUSRPERGRP],*gui;
-	unsigned int inv,ttt;
+	int i = 0, j, l, idx;
+	tcfs_grp_uinfo ktmp[MAXUSRPERGRP], *gui;
+	unsigned int inv, ttt;
 	union bobbit obits;
 	int k;
 
-	k=gd->gd_k;
+	k = gd->gd_k;
 
-	for (i=0;i<MAXUSRPERGRP && i<k;i++)
-	{
-		gui=&(gd->gd_part[i]);
-		if(!IS_SET_GUI(*gui))
+	for (i = 0; i < MAXUSRPERGRP && i < k; i++) {
+		gui = &(gd->gd_part[i]);
+		if (!IS_SET_GUI(*gui))
 			continue;
-		ktmp[i].gui_uid=gui->gui_uid;
+		ktmp[i].gui_uid = gui->gui_uid;
 
-		for(l=0;l<KEYSIZE/8;l++){
-			obits.byte=gui->gui_tcfskey[9*l+8];
-			ktmp[i].gui_tcfskey[8*l+0]=mod(obits.bf.b1<<8 | gui->gui_tcfskey[9*l+0]);
-			ktmp[i].gui_tcfskey[8*l+1]=mod(obits.bf.b2<<8 | gui->gui_tcfskey[9*l+1]);
-			ktmp[i].gui_tcfskey[8*l+2]=mod(obits.bf.b3<<8 | gui->gui_tcfskey[9*l+2]);
-			ktmp[i].gui_tcfskey[8*l+3]=mod(obits.bf.b4<<8 | gui->gui_tcfskey[9*l+3]);
-			ktmp[i].gui_tcfskey[8*l+4]=mod(obits.bf.b5<<8 | gui->gui_tcfskey[9*l+4]);
-			ktmp[i].gui_tcfskey[8*l+5]=mod(obits.bf.b6<<8 | gui->gui_tcfskey[9*l+5]);
-			ktmp[i].gui_tcfskey[8*l+6]=mod(obits.bf.b7<<8 | gui->gui_tcfskey[9*l+6]);
-			ktmp[i].gui_tcfskey[8*l+7]=mod(obits.bf.b8<<8 | gui->gui_tcfskey[9*l+7]);
+		for(l = 0; l < KEYSIZE/8; l++) {
+			obits.byte = gui->gui_tcfskey[9*l+8];
+			ktmp[i].gui_tcfskey[8*l+0] = mod(obits.bf.b1<<8 | gui->gui_tcfskey[9*l+0]);
+			ktmp[i].gui_tcfskey[8*l+1] = mod(obits.bf.b2<<8 | gui->gui_tcfskey[9*l+1]);
+			ktmp[i].gui_tcfskey[8*l+2] = mod(obits.bf.b3<<8 | gui->gui_tcfskey[9*l+2]);
+			ktmp[i].gui_tcfskey[8*l+3] = mod(obits.bf.b4<<8 | gui->gui_tcfskey[9*l+3]);
+			ktmp[i].gui_tcfskey[8*l+4] = mod(obits.bf.b5<<8 | gui->gui_tcfskey[9*l+4]);
+			ktmp[i].gui_tcfskey[8*l+5] = mod(obits.bf.b6<<8 | gui->gui_tcfskey[9*l+5]);
+			ktmp[i].gui_tcfskey[8*l+6] = mod(obits.bf.b7<<8 | gui->gui_tcfskey[9*l+6]);
+			ktmp[i].gui_tcfskey[8*l+7] = mod(obits.bf.b8<<8 | gui->gui_tcfskey[9*l+7]);
 		}
 
 		i++;
 	}
 
-	for (idx=0;idx<KEYSIZE;idx++) {
-		kkk=0;
-		for (i=0;i<k;i++) {
-			tp=1;
-			for (j=0;j<k;j++) {
-				if (j!=i) {
+	for (idx = 0;idx<KEYSIZE;idx++) {
+		kkk = 0;
+		for (i = 0; i < k; i++) {
+			tp = 1;
+			for (j = 0; j < k; j++) {
+				if (j != i) {
 					inv = inverse[mod(ktmp[i].gui_uid-ktmp[j].gui_uid)];
 					ttt = mod(inv * mod(-ktmp[j].gui_uid));
 					tp = mod(tp * ttt);
 				}
 			}
 			tp *= mod(ktmp[i].gui_tcfskey[idx]);
-			kkk=(tp+kkk);
+			kkk= (tp + kkk);
 		}
-		gidkey[idx]=(unsigned char)mod(kkk);
+		gidkey[idx] = (unsigned char)mod(kkk);
 	}
 	return 0;
 }
 
-void doinverse(void)
+void
+doinverse(void)
 {
-	int i,j;
-	for (i=0;i<257;i++) {
-		for (j=0;j<257;j++) {
-			if (mod((i*j))==1)
-				inverse[i]=j;
+	int i, j;
+	for (i = 0; i < 257; i++) {
+		for (j = 0; j < 257; j++) {
+			if (mod((i*j)) == 1)
+				inverse[i] = j;
 		}
 	}
 }
 
-int tcfs_interp(struct tcfs_mount *mp, tcfs_keytab_node* x) 
+int
+tcfs_interp(struct tcfs_mount *mp, tcfs_keytab_node* x) 
 {
         void *ks;
         char key[KEYSIZE];
 
         interp(x->kn_data,key);
-	ks=TCFS_INIT_KEY(mp,key);
+	ks = TCFS_INIT_KEY(mp,key);
 	if (!ks)
 		return ENOMEM;
 
-        x->kn_key=ks;
+        x->kn_key = ks;
         return TCFS_OK;
 }
-

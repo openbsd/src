@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcfs_cipher_none.c,v 1.2 2000/06/17 17:32:26 provos Exp $	*/
+/*	$OpenBSD: tcfs_cipher_none.c,v 1.3 2000/06/17 20:25:54 provos Exp $	*/
 /*
  * Copyright 2000 The TCFS Project at http://tcfs.dia.unisa.it/
  * All rights reserved.
@@ -25,21 +25,25 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#include "tcfs_cipher.h"
+#include <miscfs/tcfs/tcfs_cipher.h>
 
-void *cnone_init_key (char *key)
+void *
+cnone_init_key (char *key)
 {
         return (void *)key;
 }
 
-void cnone_cleanup_key(void *k)
+void
+cnone_cleanup_key(void *k)
 {
 }
 
-void cnone_encrypt(char *block, int nb, void *key)
+void
+cnone_encrypt(char *block, int nb, void *key)
 {
 }
 
-void cnone_decrypt(char *block, int nb, void *key)
+void
+cnone_decrypt(char *block, int nb, void *key)
 {
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcfs_cipher.h,v 1.2 2000/06/17 17:32:26 provos Exp $	*/
+/*	$OpenBSD: tcfs_cipher.h,v 1.3 2000/06/17 20:25:54 provos Exp $	*/
 /*
  * Copyright 2000 The TCFS Project at http://tcfs.dia.unisa.it/
  * All rights reserved.
@@ -25,28 +25,24 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef _TCFS_MOUNT_H_
-#include "tcfs_mount.h"
-#endif
+#ifndef _TCFS_CIPHER_H_
+#define _TCFS_CIPHER_H_
+
+#include <miscfs/tcfs/tcfs_mount.h>
 
 #define _TCFS_CIPHER_H_
 #define MaxNumOfCipher	 8
 #define MaxCipherNameLen 8
 
-enum {
-	 C_TDES=0,C_BLOW=2
-	} ;
-
-struct tcfs_cipher
-	{
-	 char cipher_desc[MaxCipherNameLen];
-	 int  cipher_version;
-	 int cipher_keysize;
-	 void *(*init_key)(char*);
-	 void (*cleanup_key)(void*);
-	 void (*encrypt)(char*, int, void*);
-	 void (*decrypt)(char*, int, void*);
-	};
+struct tcfs_cipher {
+	char cipher_desc[MaxCipherNameLen];
+	int  cipher_version;
+	int cipher_keysize;
+	void *(*init_key)(char*);
+	void (*cleanup_key)(void*);
+	void (*encrypt)(char*, int, void*);
+	void (*decrypt)(char*, int, void*);
+};
 
 extern struct tcfs_cipher tcfs_cipher_vect[MaxNumOfCipher];
 
@@ -89,7 +85,7 @@ static __inline void  TCFS_DECRYPT(struct tcfs_mount *mp,char *blk,int len,void 
 void mkencrypt (struct tcfs_mount *, char *, int, void*);
 void mkdecrypt (struct tcfs_mount *, char *, int, void*);
 
-/* prototipi funzioni */
+/* function prototypes */
 
 void *cnone_init_key(char *);
 void cnone_cleanup_key(void*);
@@ -109,3 +105,4 @@ void BLOWFISH_encrypt(char *, int , void*);
 void BLOWFISH_decrypt(char *, int , void*);
 #define BLOWFISH_KEYSIZE	8
 
+#endif /* _TCFS_CIPHER_H_ */
