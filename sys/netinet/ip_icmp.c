@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.22 2000/09/18 22:06:37 provos Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.23 2000/09/20 17:02:39 provos Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -84,12 +84,6 @@ int	icmpmaskrepl = 0;
 int	icmpbmcastecho = 0;
 #ifdef ICMPPRINTFS
 int	icmpprintfs = 0;
-#endif
-
-#if 0
-static int	ip_next_mtu __P((int, int));
-#else
-/*static*/ int	ip_next_mtu __P((int, int));
 #endif
 
 void icmp_mtudisc __P((struct icmp *));
@@ -804,44 +798,6 @@ icmp_mtudisc(icp)
 
 	if (rt)
 		rtfree(rt);
-}
-
-/*
- * Return the next larger or smaller MTU plateau (table from RFC 1191)
- * given current value MTU.  If DIR is less than zero, a larger plateau
- * is returned; otherwise, a smaller value is returned.
- */
-int
-ip_next_mtu(mtu, dir)	/* XXX */
-	int mtu;
-	int dir;
-{
-	static u_short mtutab[] = {
-		65535, 32000, 17914, 8166, 4352, 2002, 1492, 1006, 508, 296,
-		68, 0
-	};
-	int i;
-
-	for (i = 0; i < (sizeof mtutab) / (sizeof mtutab[0]); i++) {
-		if (mtu >= mtutab[i])
-			break;
-	}
-
-	if (dir < 0) {
-		if (i == 0) {
-			return 0;
-		} else {
-			return mtutab[i - 1];
-		}
-	} else {
-		if (mtutab[i] == 0) {
-			return 0;
-		} else if(mtu > mtutab[i]) {
-			return mtutab[i];
-		} else {
-			return mtutab[i + 1];
-		}
-	}
 }
 
 void
