@@ -1,5 +1,5 @@
-/*	$OpenBSD: asn.c,v 1.7 1999/04/19 20:56:57 niklas Exp $	*/
-/*	$EOM: asn.c,v 1.25 1999/04/18 15:17:22 niklas Exp $	*/
+/*	$OpenBSD: asn.c,v 1.8 1999/06/05 18:01:28 niklas Exp $	*/
+/*	$EOM: asn.c,v 1.27 1999/06/05 18:02:38 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niels Provos.  All rights reserved.
@@ -214,9 +214,9 @@ asn_parse_objectid (struct asn_objectid *table, char *id)
 
   while (table->name)
     {
-      if (!strcmp (table->objectid, id))
+      if (strcmp (table->objectid, id) == 0)
 	return table->name;
-      if (!strncmp (table->objectid, id, strlen (table->objectid))
+      if (strncmp (table->objectid, id, strlen (table->objectid) == 0)
 	  && strlen (table->objectid) > len)
 	{
 	  len = strlen (table->objectid);
@@ -244,10 +244,16 @@ asn_decompose (char *path, struct norm_type *obj)
   char *p, *p2, *tmp;
   int counter;
 
-  if (!strcasecmp (path, obj->name))
-      return obj->data;
+  if (strcasecmp (path, obj->name) == 0)
+    return obj->data;
 
-  p = path = strdup (path);
+  p = strdup (path);
+  if (!p)
+    {
+      log_error ("asn_decompose: strdup(\"%s\") failed", path);
+      return 0;
+    }
+  path = p;
   p2 = strsep (&p, ".");
 
   if (strcasecmp (p2, obj->name) || !p)
@@ -268,7 +274,7 @@ asn_decompose (char *path, struct norm_type *obj)
       tmp = strchr (p2, '[');
       if (tmp)
 	{
-	  counter = atoi (tmp+1);
+	  counter = atoi (tmp + 1);
 	  *tmp = 0;
 	}
       else
@@ -277,7 +283,7 @@ asn_decompose (char *path, struct norm_type *obj)
       /* Find the tag.  */
       while (obj->type != TAG_STOP)
 	{
-	  if (!strcasecmp (p2, obj->name) && counter-- == 0)
+	  if (strcasecmp (p2, obj->name) == 0 && counter-- == 0)
 	    break;
 	  obj++;
 	}
