@@ -1,4 +1,4 @@
-/*	$OpenBSD: denode.h,v 1.17 2004/05/14 04:05:05 tedu Exp $	*/
+/*	$OpenBSD: denode.h,v 1.18 2005/03/01 14:24:33 tom Exp $	*/
 /*	$NetBSD: denode.h,v 1.24 1997/10/17 11:23:39 ws Exp $	*/
 
 /*-
@@ -177,6 +177,9 @@ struct denode {
  * Note: Must be < sizeof(dirent.d_name)
  */
 #define	WIN_MAXLEN	255
+
+/* Maximum size of a file on a FAT filesystem */
+#define MSDOSFS_FILESIZE_MAX	0xFFFFFFFFLL
 
 /*
  * Transfer directory entries between internal and external form.
