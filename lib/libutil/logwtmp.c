@@ -1,4 +1,4 @@
-/*	$OpenBSD: logwtmp.c,v 1.7 2004/05/28 07:03:47 deraadt Exp $	*/
+/*	$OpenBSD: logwtmp.c,v 1.8 2004/09/18 19:22:09 deraadt Exp $	*/
 /*
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,7 +30,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /* from: static char sccsid[] = "@(#)logwtmp.c	8.1 (Berkeley) 6/4/93"; */
-static const char rcsid[] = "$Id: logwtmp.c,v 1.7 2004/05/28 07:03:47 deraadt Exp $";
+static const char rcsid[] = "$Id: logwtmp.c,v 1.8 2004/09/18 19:22:09 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -58,7 +58,7 @@ logwtmp(const char *line, const char *name, const char *host)
 		(void) strncpy(ut.ut_name, name, sizeof(ut.ut_name));
 		(void) strncpy(ut.ut_host, host, sizeof(ut.ut_host));
 		(void) time(&ut.ut_time);
-		if (write(fd, (char *)&ut, sizeof(struct utmp)) !=
+		if (write(fd, &ut, sizeof(struct utmp)) !=
 		    sizeof(struct utmp))
 			(void) ftruncate(fd, buf.st_size);
 	}
