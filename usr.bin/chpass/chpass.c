@@ -1,4 +1,4 @@
-/*	$OpenBSD: chpass.c,v 1.30 2004/04/20 23:21:23 millert Exp $	*/
+/*	$OpenBSD: chpass.c,v 1.31 2004/05/10 20:05:48 wilfried Exp $	*/
 /*	$NetBSD: chpass.c,v 1.8 1996/05/15 21:50:43 jtc Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)chpass.c	8.4 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: chpass.c,v 1.30 2004/04/20 23:21:23 millert Exp $";
+static char rcsid[] = "$OpenBSD: chpass.c,v 1.31 2004/05/10 20:05:48 wilfried Exp $";
 #endif
 #endif /* not lint */
 
@@ -155,14 +155,6 @@ main(int argc, char *argv[])
 			usage();
 		}
 
-	if (op == NEWSH) {
-		/* protect p_shell -- it thinks NULL is /bin/sh */
-		if (!arg[0])
-			usage();
-		if (p_shell(arg, pw, NULL))
-			pw_error(NULL, 0, 1);
-	}
-
 	if (op == LOADENTRY) {
 		if (uid)
 			baduser();
@@ -199,6 +191,14 @@ main(int argc, char *argv[])
 			pw_error(tempname, 1, 1);
 			break;
 		}
+	}
+
+	if (op == NEWSH) {
+		/* protect p_shell -- it thinks NULL is /bin/sh */
+		if (!arg[0])
+			usage();
+		if (p_shell(arg, pw, NULL))
+			pw_error(NULL, 0, 1);
 	}
 
 	/* Drop user's real uid and block all signals to avoid a DoS. */
