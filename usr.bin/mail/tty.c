@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.4 1997/07/13 23:54:03 millert Exp $	*/
+/*	$OpenBSD: tty.c,v 1.5 1997/07/14 00:24:31 millert Exp $	*/
 /*	$NetBSD: tty.c,v 1.7 1997/07/09 05:25:46 mikel Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tty.c	8.2 (Berkeley) 4/20/95";
 #else
-static char rcsid[] = "$OpenBSD: tty.c,v 1.4 1997/07/13 23:54:03 millert Exp $";
+static char rcsid[] = "$OpenBSD: tty.c,v 1.5 1997/07/14 00:24:31 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -52,12 +52,12 @@ static char rcsid[] = "$OpenBSD: tty.c,v 1.4 1997/07/13 23:54:03 millert Exp $";
 #include "extern.h"
 #include <sys/ioctl.h>
 
-static	cc_t	c_erase;		/* Current erase char */
-static	cc_t	c_kill;			/* Current kill char */
-static	jmp_buf	rewrite;		/* Place to go when continued */
-static	jmp_buf	intjmp;			/* Place to go when interrupted */
+static	cc_t		c_erase;	/* Current erase char */
+static	cc_t		c_kill;		/* Current kill char */
+static	sigjmp_buf	rewrite;	/* Place to go when continued */
+static	sigjmp_buf	intjmp;		/* Place to go when interrupted */
 #ifndef TIOCSTI
-static	int	ttyset;			/* We must now do erase/kill */
+static	int		ttyset;		/* We must now do erase/kill */
 #endif
 
 /*
@@ -81,7 +81,7 @@ grabh(hp, gflags)
 	sig_t savettin;
 	int errs;
 #ifdef __GNUC__
-	/* Avoid longjmp clobbering */
+	/* Avoid siglongjmp clobbering */
 #ifdef TIOCSTI
 	(void)&extproc;
 #endif
@@ -117,7 +117,7 @@ grabh(hp, gflags)
 			warn("TIOCEXT: off");
 	}
 # endif	/* TIOCEXT */
-	if (setjmp(intjmp))
+	if (sigsetjmp(intjmp, 1))
 		goto out;
 	saveint = signal(SIGINT, ttyint);
 #endif
@@ -131,7 +131,7 @@ grabh(hp, gflags)
 	}
 	if (gflags & GSUBJECT) {
 #ifndef TIOCSTI
-		if (!ttyset && hp->h_subject != NOSTR)
+		if (!ttyset && hp->h_subject != NULL)
 			ttyset++, tcsetattr(fileno(stdin), TCSADRAIN, &ttybuf);
 #endif
 		hp->h_subject = readtty("Subject: ", hp->h_subject);
@@ -190,26 +190,26 @@ readtty(pr, src)
 	int c;
 	char *cp, *cp2;
 #if __GNUC__
-	/* Avoid longjmp clobbering */
+	/* Avoid siglongjmp clobbering */
 	(void)&c;
 	(void)&cp2;
 #endif
 
 	fputs(pr, stdout);
 	fflush(stdout);
-	if (src != NOSTR && strlen(src) > BUFSIZ - 2) {
+	if (src != NULL && strlen(src) > BUFSIZ - 2) {
 		puts("too long to edit");
 		return(src);
 	}
 #ifndef TIOCSTI
-	if (src != NOSTR)
+	if (src != NULL)
 		cp = copy(src, canonb);
 	else
 		cp = copy("", canonb);
 	fputs(canonb, stdout);
 	fflush(stdout);
 #else
-	cp = src == NOSTR ? "" : src;
+	cp = src == NULL ? "" : src;
 	while ((c = *cp++) != '\0') {
 		if ((c_erase != _POSIX_VDISABLE && c == c_erase) ||
 		    (c_kill != _POSIX_VDISABLE && c == c_kill)) {
@@ -226,7 +226,7 @@ readtty(pr, src)
 	while (cp2 < canonb + BUFSIZ)
 		*cp2++ = 0;
 	cp2 = cp;
-	if (setjmp(rewrite))
+	if (sigsetjmp(rewrite, 1))
 		goto redo;
 	signal(SIGTSTP, ttystop);
 	signal(SIGTTOU, ttystop);
@@ -244,16 +244,16 @@ readtty(pr, src)
 	signal(SIGTTIN, SIG_DFL);
 	if (c == EOF && ferror(stdin)) {
 redo:
-		cp = strlen(canonb) > 0 ? canonb : NOSTR;
+		cp = strlen(canonb) > 0 ? canonb : NULL;
 		clearerr(stdin);
 		return(readtty(pr, cp));
 	}
 #ifndef TIOCSTI
-	if (cp == NOSTR || *cp == '\0')
+	if (cp == NULL || *cp == '\0')
 		return(src);
 	cp2 = cp;
 	if (!ttyset)
-		return(strlen(canonb) > 0 ? savestr(canonb) : NOSTR);
+		return(strlen(canonb) > 0 ? savestr(canonb) : NULL);
 	while (*cp != '\0') {
 		c = *cp++;
 		if (c_erase != _POSIX_VDISABLE && c == c_erase) {
@@ -281,7 +281,7 @@ redo:
 	*cp2 = '\0';
 #endif
 	if (equal("", canonb))
-		return(NOSTR);
+		return(NULL);
 	return(savestr(canonb));
 }
 
@@ -301,7 +301,7 @@ ttystop(s)
 	kill(0, s);
 	sigprocmask(SIG_UNBLOCK, &nset, NULL);
 	signal(s, old_action);
-	longjmp(rewrite, 1);
+	siglongjmp(rewrite, 1);
 }
 
 /*ARGSUSED*/
@@ -309,5 +309,5 @@ void
 ttyint(s)
 	int s;
 {
-	longjmp(intjmp, 1);
+	siglongjmp(intjmp, 1);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd2.c,v 1.4 1997/07/13 23:53:57 millert Exp $	*/
+/*	$OpenBSD: cmd2.c,v 1.5 1997/07/14 00:24:24 millert Exp $	*/
 /*	$NetBSD: cmd2.c,v 1.7 1997/05/17 19:55:10 pk Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmd2.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: cmd2.c,v 1.4 1997/07/13 23:53:57 millert Exp $";
+static char rcsid[] = "$OpenBSD: cmd2.c,v 1.5 1997/07/14 00:24:24 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -177,7 +177,7 @@ save1(str, mark, cmd, ignore)
 	FILE *obuf;
 
 	msgvec = (int *)salloc((msgCount + 2) * sizeof(*msgvec));
-	if ((file = snarf(str, &f)) == NOSTR)
+	if ((file = snarf(str, &f)) == NULL)
 		return(1);
 	if (!f) {
 		*msgvec = first(0, MMNORM);
@@ -189,7 +189,7 @@ save1(str, mark, cmd, ignore)
 	}
 	if (f && getmsglist(str, msgvec, 0) < 0)
 		return(1);
-	if ((file = expand(file)) == NOSTR)
+	if ((file = expand(file)) == NULL)
 		return(1);
 	printf("\"%s\" ", file);
 	fflush(stdout);
@@ -198,13 +198,13 @@ save1(str, mark, cmd, ignore)
 	else
 		disp = "[New file]";
 	if ((obuf = Fopen(file, "a")) == NULL) {
-		warn(NOSTR);
+		warn(NULL);
 		return(1);
 	}
 	for (ip = msgvec; *ip && ip-msgvec < msgCount; ip++) {
 		mp = &message[*ip - 1];
 		touch(mp);
-		if (send(mp, obuf, ignore, NOSTR) < 0) {
+		if (send(mp, obuf, ignore, NULL) < 0) {
 			perror(file);
 			(void)Fclose(obuf);
 			return(1);
@@ -236,7 +236,7 @@ swrite(v)
 /*
  * Snarf the file from the end of the command line and
  * return a pointer to it.  If there is no file attached,
- * just return NOSTR.  Put a null in front of the file
+ * just return NULL.  Put a null in front of the file
  * name so that the message list processing won't see it,
  * unless the file name is the only thing on the line, in
  * which case, return 0 in the reference flag variable.
@@ -268,7 +268,7 @@ snarf(linebuf, flag)
 		cp--;
 	if (*cp == '\0') {
 		puts("No file specified.");
-		return(NOSTR);
+		return(NULL);
 	}
 	if (isspace(*cp))
 		*cp++ = 0;
@@ -493,7 +493,7 @@ ignore1(list, tab, which)
 	register struct ignore *igp;
 	char **ap;
 
-	if (*list == NOSTR)
+	if (*list == NULL)
 		return(igshow(tab, which));
 	for (ap = list; *ap != 0; ap++) {
 		istrcpy(field, *ap);

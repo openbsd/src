@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.4 1997/07/13 23:53:59 millert Exp $	*/
+/*	$OpenBSD: edit.c,v 1.5 1997/07/14 00:24:26 millert Exp $	*/
 /*	$NetBSD: edit.c,v 1.5 1996/06/08 19:48:20 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)edit.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: edit.c,v 1.4 1997/07/13 23:53:59 millert Exp $";
+static char rcsid[] = "$OpenBSD: edit.c,v 1.5 1997/07/14 00:24:26 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -193,9 +193,9 @@ run_editor(fp, size, type, readonly)
 		goto out;
 	}
 	nf = NULL;
-	if ((edit = value(type == 'e' ? "EDITOR" : "VISUAL")) == NOSTR)
+	if ((edit = value(type == 'e' ? "EDITOR" : "VISUAL")) == NULL)
 		edit = type == 'e' ? _PATH_EX : _PATH_VI;
-	if (run_command(edit, 0, -1, -1, tempEdit, NOSTR, NOSTR) < 0) {
+	if (run_command(edit, 0, -1, -1, tempEdit, NULL, NULL) < 0) {
 		(void)unlink(tempEdit);
 		goto out;
 	}

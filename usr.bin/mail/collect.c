@@ -1,4 +1,4 @@
-/*	$OpenBSD: collect.c,v 1.7 1997/07/13 23:53:58 millert Exp $	*/
+/*	$OpenBSD: collect.c,v 1.8 1997/07/14 00:24:25 millert Exp $	*/
 /*	$NetBSD: collect.c,v 1.9 1997/07/09 05:25:45 mikel Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)collect.c	8.2 (Berkeley) 4/19/94";
 #else
-static char rcsid[] = "$OpenBSD: collect.c,v 1.7 1997/07/13 23:53:58 millert Exp $";
+static char rcsid[] = "$OpenBSD: collect.c,v 1.8 1997/07/14 00:24:25 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -71,9 +71,9 @@ static	sig_t	savettin;		/* Previous SIGTTIN value */
 static	FILE	*collf;			/* File for saving away */
 static	int	hadintr;		/* Have seen one SIGINT so far */
 
-static	jmp_buf	colljmp;		/* To get back to work */
-static	int	colljmp_p;		/* whether to long jump */
-static	jmp_buf	collabort;		/* To end collection with error */
+static	sigjmp_buf	colljmp;	/* To get back to work */
+static	int		colljmp_p;	/* whether to long jump */
+static	sigjmp_buf	collabort;	/* To end collection with error */
 
 FILE *
 collect(hp, printheaders)
@@ -90,7 +90,7 @@ collect(hp, printheaders)
 	int longline, lastlong, rc;	/* Can deal with lines > LINESIZE */
 
 #if __GNUC__
-	/* Avoid longjmp clobbering */
+	/* Avoid siglongjmp clobbering */
 	(void)&escape;
 	(void)&eofcount;
 	(void)&getsub;
@@ -110,7 +110,7 @@ collect(hp, printheaders)
 	savetstp = signal(SIGTSTP, collstop);
 	savettou = signal(SIGTTOU, collstop);
 	savettin = signal(SIGTTIN, collstop);
-	if (setjmp(collabort) || setjmp(colljmp)) {
+	if (sigsetjmp(collabort, 1) || sigsetjmp(colljmp, 1)) {
 		rm(tempMail);
 		goto err;
 	}
@@ -130,14 +130,14 @@ collect(hp, printheaders)
 	 */
 	t = GTO|GSUBJECT|GCC|GNL;
 	getsub = 0;
-	if (hp->h_subject == NOSTR && value("interactive") != NOSTR &&
-	    (value("ask") != NOSTR || value("asksub") != NOSTR))
+	if (hp->h_subject == NULL && value("interactive") != NULL &&
+	    (value("ask") != NULL || value("asksub") != NULL))
 		t &= ~GNL, getsub++;
 	if (printheaders) {
 		puthead(hp, stdout, t);
 		fflush(stdout);
 	}
-	if ((cp = value("escape")) != NOSTR)
+	if ((cp = value("escape")) != NULL)
 		escape = *cp;
 	else
 		escape = ESCAPE;
@@ -146,7 +146,7 @@ collect(hp, printheaders)
 	lastlong = 0;
 	longline = 0;
 
-	if (!setjmp(colljmp)) {
+	if (!sigsetjmp(colljmp, 1)) {
 		if (getsub)
 			grabh(hp, GSUBJECT);
 	} else {
@@ -172,8 +172,8 @@ cont:
 		c = readline(stdin, linebuf, LINESIZE);
 		colljmp_p = 0;
 		if (c < 0) {
-			if (value("interactive") != NOSTR &&
-			    value("ignoreeof") != NOSTR && ++eofcount < 25) {
+			if (value("interactive") != NULL &&
+			    value("ignoreeof") != NULL && ++eofcount < 25) {
 				puts("Use \".\" to terminate letter");
 				continue;
 			}
@@ -184,10 +184,10 @@ cont:
 		eofcount = 0;
 		hadintr = 0;
 		if (linebuf[0] == '.' && linebuf[1] == '\0' &&
-		    value("interactive") != NOSTR && !lastlong &&
-		    (value("dot") != NOSTR || value("ignoreeof") != NOSTR))
+		    value("interactive") != NULL && !lastlong &&
+		    (value("dot") != NULL || value("ignoreeof") != NULL))
 			break;
-		if (linebuf[0] != escape || value("interactive") == NOSTR ||
+		if (linebuf[0] != escape || value("interactive") == NULL ||
 		    lastlong) {
 			if (putline(collf, linebuf, !longline) < 0)
 				goto err;
@@ -292,7 +292,7 @@ cont:
 				break;
 			}
 			cp = expand(cp);
-			if (cp == NOSTR)
+			if (cp == NULL)
 				break;
 			if (isdir(cp)) {
 				printf("%s: Directory\n", cp);
@@ -330,7 +330,7 @@ cont:
 				fputs("Write what file!?\n", stderr);
 				break;
 			}
-			if ((cp = expand(cp)) == NOSTR)
+			if ((cp = expand(cp)) == NULL)
 				break;
 			rewind(collf);
 			exwrite(cp, collf, 1);
@@ -434,7 +434,7 @@ exwrite(name, fp, f)
 		return(-1);
 	}
 	if ((of = Fopen(name, "w")) == NULL) {
-		warn(NOSTR);
+		warn(NULL);
 		return(-1);
 	}
 	lc = 0;
@@ -501,10 +501,10 @@ mespipe(fp, cmd)
 	 * stdin = current message.
 	 * stdout = new message.
 	 */
-	if ((shell = value("SHELL")) == NOSTR)
+	if ((shell = value("SHELL")) == NULL)
 		shell = _PATH_CSHELL;
 	if (run_command(shell,
-	    0, fileno(fp), fileno(nf), "-c", cmd, NOSTR) < 0) {
+	    0, fileno(fp), fileno(nf), "-c", cmd, NULL) < 0) {
 		(void)Fclose(nf);
 		goto out;
 	}
@@ -543,7 +543,7 @@ forward(ms, fp, f)
 	char *tabst;
 
 	msgvec = (int *)salloc((msgCount+1) * sizeof(*msgvec));
-	if (msgvec == (int *)NOSTR)
+	if (msgvec == NULL)
 		return(0);
 	if (getmsglist(ms, msgvec, 0) < 0)
 		return(0);
@@ -556,8 +556,8 @@ forward(ms, fp, f)
 		msgvec[1] = NULL;
 	}
 	if (f == 'f' || f == 'F')
-		tabst = NOSTR;
-	else if ((tabst = value("indentprefix")) == NOSTR)
+		tabst = NULL;
+	else if ((tabst = value("indentprefix")) == NULL)
 		tabst = "\t";
 	ig = isupper(f) ? NULL : ignore;
 	fputs("Interpolating:", stdout);
@@ -595,7 +595,7 @@ collstop(s)
 	if (colljmp_p) {
 		colljmp_p = 0;
 		hadintr = 0;
-		longjmp(colljmp, 1);
+		siglongjmp(colljmp, 1);
 	}
 }
 
@@ -612,19 +612,19 @@ collint(s)
 	 * the control flow is subtle, because we can be called from ~q.
 	 */
 	if (hadintr == 0 && isatty(0)) {
-		if (value("ignore") != NOSTR) {
+		if (value("ignore") != NULL) {
 			puts("@");
 			fflush(stdout);
 			clearerr(stdin);
 			return;
 		}
 		hadintr = 1;
-		longjmp(colljmp, 1);
+		siglongjmp(colljmp, 1);
 	}
 	rewind(collf);
-	if (value("nosave") == NOSTR)
+	if (value("nosave") == NULL)
 		savedeadletter(collf);
-	longjmp(collabort, 1);
+	siglongjmp(collabort, 1);
 }
 
 /*ARGSUSED*/

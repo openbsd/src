@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.6 1997/07/13 23:54:00 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.7 1997/07/14 00:24:28 millert Exp $	*/
 /*	$NetBSD: main.c,v 1.7 1997/05/13 06:15:57 mikel Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 4/20/95";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.6 1997/07/13 23:54:00 millert Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.7 1997/07/14 00:24:28 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -59,7 +59,7 @@ static char rcsid[] = "$OpenBSD: main.c,v 1.6 1997/07/13 23:54:00 millert Exp $"
  * Startup -- interface with user.
  */
 
-jmp_buf	hdrjmp;
+sigjmp_buf	hdrjmp;
 
 int
 main(argc, argv)
@@ -90,12 +90,12 @@ main(argc, argv)
 	 * of users to mail to.  Argp will be set to point to the
 	 * first of these users.
 	 */
-	ef = NOSTR;
+	ef = NULL;
 	to = NIL;
 	cc = NIL;
 	bcc = NIL;
 	smopts = NIL;
-	subject = NOSTR;
+	subject = NULL;
 	while ((i = getopt(argc, argv, "INT:b:c:dfins:u:v")) != -1) {
 		switch (i) {
 		case 'T':
@@ -199,9 +199,9 @@ Usage: %s [-iInv] [-s subject] [-c cc-addr] [-b bcc-addr] to-addr ...\n\
 	/*
 	 * Check for inconsistent arguments.
 	 */
-	if (to == NIL && (subject != NOSTR || cc != NIL || bcc != NIL))
+	if (to == NIL && (subject != NULL || cc != NIL || bcc != NIL))
 		errx(1, "You must specify direct recipients with -s, -c, or -b");
-	if (ef != NOSTR && to != NIL)
+	if (ef != NULL && to != NIL)
 		errx(1, "Cannot give -f and people to send to");
 	tinit();
 	setscreensize();
@@ -229,16 +229,16 @@ Usage: %s [-iInv] [-s subject] [-c cc-addr] [-b bcc-addr] to-addr ...\n\
 	 * Decide whether we are editing a mailbox or reading
 	 * the system mailbox, and open up the right stuff.
 	 */
-	if (ef == NOSTR)
+	if (ef == NULL)
 		ef = "%";
 	if (setfile(ef) < 0)
 		exit(1);		/* error already reported */
-	if (setjmp(hdrjmp) == 0) {
+	if (sigsetjmp(hdrjmp, 1) == 0) {
 		extern char *version;
 
 		if ((prevint = signal(SIGINT, SIG_IGN)) != SIG_IGN)
 			signal(SIGINT, hdrstop);
-		if (value("quiet") == NOSTR)
+		if (value("quiet") == NULL)
 			printf("Mail version %s.  Type ? for help.\n",
 				version);
 		announce();
@@ -263,7 +263,7 @@ hdrstop(signo)
 
 	fflush(stdout);
 	fputs("\nInterrupt\n", stderr);
-	longjmp(hdrjmp, 1);
+	siglongjmp(hdrjmp, 1);
 }
 
 /*

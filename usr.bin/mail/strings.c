@@ -1,4 +1,4 @@
-/*	$OpenBSD: strings.c,v 1.4 1997/07/13 23:54:02 millert Exp $	*/
+/*	$OpenBSD: strings.c,v 1.5 1997/07/14 00:24:30 millert Exp $	*/
 /*	$NetBSD: strings.c,v 1.5 1996/06/08 19:48:40 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)strings.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: strings.c,v 1.4 1997/07/13 23:54:02 millert Exp $";
+static char rcsid[] = "$OpenBSD: strings.c,v 1.5 1997/07/14 00:24:30 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -75,7 +75,7 @@ salloc(size)
 	s &= ~(sizeof(char *) - 1);
 	index = 0;
 	for (sp = &stringdope[0]; sp < &stringdope[NSPACE]; sp++) {
-		if (sp->s_topFree == NOSTR && (STRINGSIZE << index) >= s)
+		if (sp->s_topFree == NULL && (STRINGSIZE << index) >= s)
 			break;
 		if (sp->s_nleft >= s)
 			break;
@@ -83,10 +83,10 @@ salloc(size)
 	}
 	if (sp >= &stringdope[NSPACE])
 		panic("String too large");
-	if (sp->s_topFree == NOSTR) {
+	if (sp->s_topFree == NULL) {
 		index = sp - &stringdope[0];
 		sp->s_topFree = (char *)malloc(STRINGSIZE << index);
-		if (sp->s_topFree == NOSTR) {
+		if (sp->s_topFree == NULL) {
 			fprintf(stderr, "No room for space %d\n", index);
 			panic("Internal error");
 		}
@@ -114,7 +114,7 @@ sreset()
 		return;
 	index = 0;
 	for (sp = &stringdope[0]; sp < &stringdope[NSPACE]; sp++) {
-		if (sp->s_topFree == NOSTR)
+		if (sp->s_topFree == NULL)
 			continue;
 		sp->s_nextFree = sp->s_topFree;
 		sp->s_nleft = STRINGSIZE << index;
@@ -132,5 +132,5 @@ spreserve()
 	register struct strings *sp;
 
 	for (sp = &stringdope[0]; sp < &stringdope[NSPACE]; sp++)
-		sp->s_topFree = NOSTR;
+		sp->s_topFree = NULL;
 }

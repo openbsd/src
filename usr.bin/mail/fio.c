@@ -1,4 +1,4 @@
-/*	$OpenBSD: fio.c,v 1.7 1997/07/13 23:53:59 millert Exp $	*/
+/*	$OpenBSD: fio.c,v 1.8 1997/07/14 00:24:26 millert Exp $	*/
 /*	$NetBSD: fio.c,v 1.8 1997/07/07 22:57:55 phil Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)fio.c	8.2 (Berkeley) 4/20/95";
 #else
-static char rcsid[] = "$OpenBSD: fio.c,v 1.7 1997/07/13 23:53:59 millert Exp $";
+static char rcsid[] = "$OpenBSD: fio.c,v 1.8 1997/07/14 00:24:26 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -360,11 +360,11 @@ expand(name)
 			break;
 		if (prevfile[0] == 0) {
 			puts("No previous file");
-			return(NOSTR);
+			return(NULL);
 		}
 		return(savestr(prevfile));
 	case '&':
-		if (name[1] == 0 && (name = value("MBOX")) == NOSTR)
+		if (name[1] == 0 && (name = value("MBOX")) == NULL)
 			name = "~/mbox";
 		/* fall through */
 	}
@@ -384,32 +384,32 @@ expand(name)
 		return(name);
 	}
 	snprintf(cmdbuf, sizeof(cmdbuf), "echo %s", name);
-	if ((shell = value("SHELL")) == NOSTR)
+	if ((shell = value("SHELL")) == NULL)
 		shell = _PATH_CSHELL;
-	pid = start_command(shell, 0, -1, pivec[1], "-c", cmdbuf, NOSTR);
+	pid = start_command(shell, 0, -1, pivec[1], "-c", cmdbuf, NULL);
 	if (pid < 0) {
 		(void)close(pivec[0]);
 		(void)close(pivec[1]);
-		return(NOSTR);
+		return(NULL);
 	}
 	(void)close(pivec[1]);
 	l = read(pivec[0], xname, PATHSIZE);
 	(void)close(pivec[0]);
 	if (wait_child(pid) < 0 && wait_status.w_termsig != SIGPIPE) {
 		fprintf(stderr, "\"%s\": Expansion failed.\n", name);
-		return(NOSTR);
+		return(NULL);
 	}
 	if (l < 0) {
 		warn("read");
-		return(NOSTR);
+		return(NULL);
 	}
 	if (l == 0) {
 		fprintf(stderr, "\"%s\": No match.\n", name);
-		return(NOSTR);
+		return(NULL);
 	}
 	if (l == PATHSIZE) {
 		fprintf(stderr, "\"%s\": Expansion buffer overflow.\n", name);
-		return(NOSTR);
+		return(NULL);
 	}
 	xname[l] = '\0';
 	for (cp = &xname[l-1]; *cp == '\n' && cp > xname; cp--)
@@ -417,7 +417,7 @@ expand(name)
 	cp[1] = '\0';
 	if (strchr(xname, ' ') && stat(xname, &sbuf) < 0) {
 		fprintf(stderr, "\"%s\": Ambiguous.\n", name);
-		return(NOSTR);
+		return(NULL);
 	}
 	return(savestr(xname));
 }
@@ -432,7 +432,7 @@ getfold(name, namelen)
 {
 	char *folder;
 
-	if ((folder = value("folder")) == NOSTR)
+	if ((folder = value("folder")) == NULL)
 		return(-1);
 	if (*folder == '/') {
 		strncpy(name, folder, namelen-1);
@@ -450,7 +450,7 @@ getdeadletter()
 {
 	register char *cp;
 
-	if ((cp = value("DEAD")) == NOSTR || (cp = expand(cp)) == NOSTR)
+	if ((cp = value("DEAD")) == NULL || (cp = expand(cp)) == NULL)
 		cp = expand("~/dead.letter");
 	else if (*cp != '/') {
 		char buf[PATHSIZE];

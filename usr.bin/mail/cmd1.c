@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd1.c,v 1.7 1997/07/13 23:53:57 millert Exp $	*/
+/*	$OpenBSD: cmd1.c,v 1.8 1997/07/14 00:24:24 millert Exp $	*/
 /*	$NetBSD: cmd1.c,v 1.9 1997/07/09 05:29:48 mikel Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmd1.c	8.2 (Berkeley) 4/20/95";
 #else
-static char rcsid[] = "$OpenBSD: cmd1.c,v 1.7 1997/07/13 23:53:57 millert Exp $";
+static char rcsid[] = "$OpenBSD: cmd1.c,v 1.8 1997/07/14 00:24:24 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -146,7 +146,7 @@ screensize()
 	int s;
 	char *cp;
 
-	if ((cp = value("screen")) != NOSTR && (s = atoi(cp)) > 0)
+	if ((cp = value("screen")) != NULL && (s = atoi(cp)) > 0)
 		return(s);
 	return(screenheight - 4);
 }
@@ -186,7 +186,7 @@ printhead(mesg)
 
 	mp = &message[mesg-1];
 	(void)readline(setinput(mp), headline, LINESIZE);
-	if ((subjline = hfield("subject", mp)) == NOSTR)
+	if ((subjline = hfield("subject", mp)) == NULL)
 		subjline = hfield("subj", mp);
 	/*
 	 * Bletch!
@@ -206,9 +206,9 @@ printhead(mesg)
 	parse(headline, &hl, pbuf);
 	snprintf(wcount, sizeof(wcount), "%3d/%-5d", mp->m_lines, mp->m_size);
 	subjlen = screenwidth - 50 - strlen(wcount);
-	name = value("show-rcpt") != NOSTR ?
+	name = value("show-rcpt") != NULL ?
 		skin(hfield("to", mp)) : nameof(mp, 0);
-	if (subjline == NOSTR || subjlen < 0)		/* pretty pathetic */
+	if (subjline == NULL || subjlen < 0)		/* pretty pathetic */
 		printf("%c%c%3d %-20.20s  %16.16s %s\n",
 			curind, dispc, mesg, name, hl.l_date, wcount);
 	else
@@ -246,7 +246,7 @@ pcmdlist(v)
 			putchar('\n');
 			cc = strlen(cp->c_name) + 2;
 		}
-		if ((cp+1)->c_name != NOSTR)
+		if ((cp+1)->c_name != NULL)
 			printf("%s, ", cp->c_name);
 		else
 			puts(cp->c_name);
@@ -304,7 +304,7 @@ Type(v)
 /*
  * Type out the messages requested.
  */
-jmp_buf	pipestop;
+sigjmp_buf	pipestop;
 int
 type1(msgvec, doign, page)
 	int *msgvec;
@@ -316,16 +316,16 @@ type1(msgvec, doign, page)
 	int nlines;
 	FILE *obuf;
 #if __GNUC__
-	/* Avoid longjmp clobbering */
+	/* Avoid siglongjmp clobbering */
 	(void)&cp;
 	(void)&obuf;
 #endif
 
 	obuf = stdout;
-	if (setjmp(pipestop))
+	if (sigsetjmp(pipestop, 1))
 		goto close_pipe;
-	if (value("interactive") != NOSTR &&
-	    (page || (cp = value("crt")) != NOSTR)) {
+	if (value("interactive") != NULL &&
+	    (page || (cp = value("crt")) != NULL)) {
 		nlines = 0;
 		if (!page) {
 			for (ip = msgvec; *ip && ip-msgvec < msgCount; ip++)
@@ -347,9 +347,9 @@ type1(msgvec, doign, page)
 		mp = &message[*ip - 1];
 		touch(mp);
 		dot = mp;
-		if (value("quiet") == NOSTR)
+		if (value("quiet") == NULL)
 			fprintf(obuf, "Message %d:\n", *ip);
-		(void)send(mp, obuf, doign ? ignore : 0, NOSTR);
+		(void)send(mp, obuf, doign ? ignore : 0, NULL);
 	}
 close_pipe:
 	if (obuf != stdout) {
@@ -371,7 +371,7 @@ void
 brokpipe(signo)
 	int signo;
 {
-	longjmp(pipestop, 1);
+	siglongjmp(pipestop, 1);
 }
 
 /*
@@ -392,7 +392,7 @@ top(v)
 
 	topl = 5;
 	valtop = value("toplines");
-	if (valtop != NOSTR) {
+	if (valtop != NULL) {
 		topl = atoi(valtop);
 		if (topl < 0 || topl > 10000)
 			topl = 5;
@@ -402,7 +402,7 @@ top(v)
 		mp = &message[*ip - 1];
 		touch(mp);
 		dot = mp;
-		if (value("quiet") == NOSTR)
+		if (value("quiet") == NULL)
 			printf("Message %d:\n", *ip);
 		ibuf = setinput(mp);
 		c = mp->m_lines;
@@ -469,9 +469,9 @@ folders(v)
 		puts("No value set for \"folder\"");
 		return(1);
 	}
-	if ((cmd = value("LISTER")) == NOSTR)
+	if ((cmd = value("LISTER")) == NULL)
 		cmd = "ls";
-	(void)run_command(cmd, 0, -1, -1, dirname, NOSTR, NOSTR);
+	(void)run_command(cmd, 0, -1, -1, dirname, NULL, NULL);
 	return(0);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: popen.c,v 1.7 1997/07/13 23:54:01 millert Exp $	*/
+/*	$OpenBSD: popen.c,v 1.8 1997/07/14 00:24:29 millert Exp $	*/
 /*	$NetBSD: popen.c,v 1.6 1997/05/13 06:48:42 mikel Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)popen.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: popen.c,v 1.7 1997/07/13 23:54:01 millert Exp $";
+static char rcsid[] = "$OpenBSD: popen.c,v 1.8 1997/07/14 00:24:29 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -131,7 +131,7 @@ Popen(cmd, mode)
 		fd1 = -1;
 	}
 	sigemptyset(&nset);
-	if ((pid = start_command(cmd, &nset, fd0, fd1, NOSTR, NOSTR, NOSTR)) < 0) {
+	if ((pid = start_command(cmd, &nset, fd0, fd1, NULL, NULL, NULL)) < 0) {
 		(void)close(p[READ]);
 		(void)close(p[WRITE]);
 		return(NULL);
@@ -256,10 +256,10 @@ start_command(cmd, mask, infd, outfd, a0, a1, a2)
 		char *argv[100];
 		int i = getrawlist(cmd, argv, sizeof(argv)/ sizeof(*argv));
 
-		if ((argv[i++] = a0) != NOSTR &&
-		    (argv[i++] = a1) != NOSTR &&
-		    (argv[i++] = a2) != NOSTR)
-			argv[i] = NOSTR;
+		if ((argv[i++] = a0) != NULL &&
+		    (argv[i++] = a1) != NULL &&
+		    (argv[i++] = a2) != NULL)
+			argv[i] = NULL;
 		prepare_child(mask, infd, outfd);
 		execvp(argv[0], argv);
 		warn(argv[0]);

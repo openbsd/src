@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.5 1997/07/13 21:21:10 millert Exp $	*/
+/*	$OpenBSD: def.h,v 1.6 1997/07/14 00:24:26 millert Exp $	*/
 /*	$NetBSD: def.h,v 1.9 1996/12/28 07:11:00 tls Exp $	*/
 /*
  * Copyright (c) 1980, 1993
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)def.h	8.4 (Berkeley) 4/20/95
- *	$OpenBSD: def.h,v 1.5 1997/07/13 21:21:10 millert Exp $
+ *	$OpenBSD: def.h,v 1.6 1997/07/14 00:24:26 millert Exp $
  */
 
 /*
@@ -65,7 +65,6 @@
 #define	LINESIZE	BUFSIZ		/* max readable line width */
 #define	STRINGSIZE	((unsigned) 128)/* Dynamic allocation units */
 #define	MAXARGC		1024		/* Maximum list of raw strings */
-#define	NOSTR		((char *) 0)	/* Null string pointer */
 #define	MAXEXP		25		/* Maximum expansion of aliases */
 
 #define	equal(a, b)	(strcmp(a,b)==0)/* A nice function to string compare */
@@ -263,11 +262,11 @@ struct ignoretab {
 #define	CSEND		2		/* Execute in send mode only */
 
 /*
- * Kludges to handle the change from setexit / reset to setjmp / longjmp
+ * Kludges to handle the change from setexit / reset to sigsetjmp / siglongjmp
  */
 
-#define	setexit()	setjmp(srbuf)
-#define	reset(x)	longjmp(srbuf, x)
+#define	setexit()	sigsetjmp(srbuf, 1)
+#define	reset(x)	siglongjmp(srbuf, x)
 
 /*
  * Truncate a file to the last character written. This is

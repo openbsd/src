@@ -1,4 +1,4 @@
-/*	$OpenBSD: temp.c,v 1.6 1997/07/13 21:21:17 millert Exp $	*/
+/*	$OpenBSD: temp.c,v 1.7 1997/07/14 00:24:31 millert Exp $	*/
 /*	$NetBSD: temp.c,v 1.5 1996/06/08 19:48:42 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)temp.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: temp.c,v 1.6 1997/07/13 21:21:17 millert Exp $";
+static char rcsid[] = "$OpenBSD: temp.c,v 1.7 1997/07/14 00:24:31 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -85,18 +85,18 @@ tinit()
 	 * It's okay to call savestr in here because main will
 	 * do a spreserve() after us.
 	 */
-	if (myname != NOSTR) {
+	if (myname != NULL) {
 		if (getuserid(myname) < 0)
 			errx(1, "\"%s\" is not a user of this system", myname);
 	} else {
-		if ((cp = username()) == NOSTR) {
+		if ((cp = username()) == NULL) {
 			myname = "nobody";
 			if (rcvmode)
 				exit(1);
 		} else
 			myname = savestr(cp);
 	}
-	if ((cp = getenv("HOME")) == NOSTR || strlen(getenv("HOME")) >= PATHSIZE)
+	if ((cp = getenv("HOME")) == NULL || strlen(getenv("HOME")) >= PATHSIZE)
 		cp = ".";
 	homedir = savestr(cp);
 	if (debug)

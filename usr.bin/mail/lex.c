@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.7 1997/07/13 23:54:00 millert Exp $	*/
+/*	$OpenBSD: lex.c,v 1.8 1997/07/14 00:24:27 millert Exp $	*/
 /*	$NetBSD: lex.c,v 1.10 1997/05/17 19:55:13 pk Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)lex.c	8.2 (Berkeley) 4/20/95";
 #else
-static char rcsid[] = "$OpenBSD: lex.c,v 1.7 1997/07/13 23:54:00 millert Exp $";
+static char rcsid[] = "$OpenBSD: lex.c,v 1.8 1997/07/14 00:24:27 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -74,7 +74,7 @@ setfile(name)
 	extern char *tempMesg;
 	extern int errno;
 
-	if ((name = expand(name)) == NOSTR)
+	if ((name = expand(name)) == NULL)
 		return(-1);
 
 	if ((ibuf = Fopen(name, "r")) == NULL) {
@@ -209,7 +209,7 @@ commands()
 	register int n;
 	char linebuf[LINESIZE];
 #if __GNUC__
-	/* Avoid longjmp clobbering */
+	/* Avoid siglongjmp clobbering */
 	(void)&eofloop;
 #endif
 
@@ -228,8 +228,8 @@ commands()
 		 * Print the prompt, if needed.  Clear out
 		 * string space, and flush the output.
 		 */
-		if (!sourcing && value("interactive") != NOSTR) {
-			if ((value("autoinc") != NOSTR) && (incfile() > 0))
+		if (!sourcing && value("interactive") != NULL) {
+			if ((value("autoinc") != NULL) && (incfile() > 0))
 				puts("New mail has arrived.");
 			reset_on_stop = 1;
 			printf(prompt);
@@ -263,8 +263,8 @@ commands()
 				unstack();
 				continue;
 			}
-			if (value("interactive") != NOSTR &&
-			    value("ignoreeof") != NOSTR &&
+			if (value("interactive") != NULL &&
+			    value("ignoreeof") != NULL &&
 			    ++eofloop < 25) {
 				puts("Use \"quit\" to quit.");
 				continue;
@@ -317,7 +317,7 @@ execute(linebuf, contxt)
 		return(0);
 	}
 	cp2 = word;
-	while (*cp && strchr(" \t0123456789$^.:/-+*'\"", *cp) == NOSTR)
+	while (*cp && strchr(" \t0123456789$^.:/-+*'\"", *cp) == NULL)
 		*cp2++ = *cp++;
 	*cp2 = '\0';
 
@@ -468,7 +468,7 @@ out:
 	}
 	if (com == NULL)
 		return(0);
-	if (value("autoprint") != NOSTR && com->c_argtype & P)
+	if (value("autoprint") != NULL && com->c_argtype & P)
 		if ((dot->m_flag & MDELETED) == 0) {
 			muvec[0] = dot - &message[0] + 1;
 			muvec[1] = 0;
@@ -505,7 +505,7 @@ lex(word)
 	extern const struct cmd cmdtab[];
 	register const struct cmd *cp;
 
-	for (cp = &cmdtab[0]; cp->c_name != NOSTR; cp++)
+	for (cp = &cmdtab[0]; cp->c_name != NULL; cp++)
 		if (isprefix(word, cp->c_name))
 			return(cp);
 	return(NONE);
@@ -610,7 +610,7 @@ announce()
 	vec[0] = mdot;
 	vec[1] = 0;
 	dot = &message[mdot - 1];
-	if (msgCount > 0 && value("noheader") == NOSTR) {
+	if (msgCount > 0 && value("noheader") == NULL) {
 		inithdr++;
 		headers(vec);
 		inithdr = 0;

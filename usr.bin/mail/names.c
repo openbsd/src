@@ -1,4 +1,4 @@
-/*	$OpenBSD: names.c,v 1.5 1997/07/13 23:54:01 millert Exp $	*/
+/*	$OpenBSD: names.c,v 1.6 1997/07/14 00:24:29 millert Exp $	*/
 /*	$NetBSD: names.c,v 1.5 1996/06/08 19:48:32 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)names.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: names.c,v 1.5 1997/07/13 23:54:01 millert Exp $";
+static char rcsid[] = "$OpenBSD: names.c,v 1.6 1997/07/14 00:24:29 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -103,12 +103,12 @@ extract(line, ntype)
 	register struct name *top, *np, *t;
 	char nbuf[BUFSIZ];
 
-	if (line == NOSTR || *line == '\0')
+	if (line == NULL || *line == '\0')
 		return(NIL);
 	top = NIL;
 	np = NIL;
 	cp = line;
-	while ((cp = yankword(cp, nbuf)) != NOSTR) {
+	while ((cp = yankword(cp, nbuf)) != NULL) {
 		t = nalloc(nbuf, ntype);
 		if (top == NIL)
 			top = t;
@@ -135,7 +135,7 @@ detract(np, ntype)
 
 	comma = ntype & GCOMMA;
 	if (np == NIL)
-		return(NOSTR);
+		return(NULL);
 	ntype &= ~GCOMMA;
 	s = 0;
 	if (debug && comma)
@@ -148,7 +148,7 @@ detract(np, ntype)
 			s++;
 	}
 	if (s == 0)
-		return(NOSTR);
+		return(NULL);
 	s += 2;
 	top = salloc(s);
 	cp = top;
@@ -179,7 +179,7 @@ yankword(ap, wbuf)
 	cp = ap;
 	for (;;) {
 		if (*cp == '\0')
-			return(NOSTR);
+			return(NULL);
 		if (*cp == '(') {
 			register int nesting = 0;
 
@@ -297,14 +297,14 @@ outof(names, fo, hp)
 			 * share the same lseek location and trample
 			 * on one another.
 			 */
-			if ((shell = value("SHELL")) == NOSTR)
+			if ((shell = value("SHELL")) == NULL)
 				shell = _PATH_CSHELL;
 			sigemptyset(&nset);
 			sigaddset(&nset, SIGHUP);
 			sigaddset(&nset, SIGINT);
 			sigaddset(&nset, SIGQUIT);
 			pid = start_command(shell, &nset,
-				image, -1, "-c", fname, NOSTR);
+				image, -1, "-c", fname, NULL);
 			if (pid < 0) {
 				senderr++;
 				goto cant;
@@ -393,7 +393,7 @@ usermap(names)
 
 	new = NIL;
 	np = names;
-	metoo = (value("metoo") != NOSTR);
+	metoo = (value("metoo") != NULL);
 	while (np != NIL) {
 		if (np->n_name[0] == '\\') {
 			cp = np->n_flink;
@@ -504,10 +504,10 @@ unpack(np)
 	 */
 	extra = 2;
 	extra++;
-	metoo = value("metoo") != NOSTR;
+	metoo = value("metoo") != NULL;
 	if (metoo)
 		extra++;
-	verbose = value("verbose") != NOSTR;
+	verbose = value("verbose") != NULL;
 	if (verbose)
 		extra++;
 	top = (char **)salloc((t + extra) * sizeof(*top));
@@ -521,7 +521,7 @@ unpack(np)
 	for (; n != NIL; n = n->n_flink)
 		if ((n->n_type & GDEL) == 0)
 			*ap++ = n->n_name;
-	*ap = NOSTR;
+	*ap = NULL;
 	return(top);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: head.c,v 1.3 1997/07/13 21:21:13 millert Exp $	*/
+/*	$OpenBSD: head.c,v 1.4 1997/07/14 00:24:27 millert Exp $	*/
 /*	$NetBSD: head.c,v 1.6 1996/12/28 07:11:03 tls Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)head.c	8.2 (Berkeley) 4/20/95";
 #else
-static char rcsid[] = "$OpenBSD: head.c,v 1.3 1997/07/13 21:21:13 millert Exp $";
+static char rcsid[] = "$OpenBSD: head.c,v 1.4 1997/07/14 00:24:27 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -69,7 +69,7 @@ ishead(linebuf)
 	    *cp++ != ' ')
 		return(0);
 	parse(linebuf, &hl, parbuf);
-	if (hl.l_from == NOSTR || hl.l_date == NOSTR) {
+	if (hl.l_from == NULL || hl.l_date == NULL) {
 		fail(linebuf, "No from or date field");
 		return(0);
 	}
@@ -90,7 +90,7 @@ fail(linebuf, reason)
 {
 
 	/*
-	if (value("debug") == NOSTR)
+	if (value("debug") == NULL)
 		return;
 	fprintf(stderr, "\"%s\"\nnot a header because %s\n", linebuf, reason);
 	*/
@@ -111,9 +111,9 @@ parse(line, hl, pbuf)
 	char *sp;
 	char word[LINESIZE];
 
-	hl->l_from = NOSTR;
-	hl->l_tty = NOSTR;
-	hl->l_date = NOSTR;
+	hl->l_from = NULL;
+	hl->l_tty = NULL;
+	hl->l_date = NULL;
 	cp = line;
 	sp = pbuf;
 	/*
@@ -123,11 +123,11 @@ parse(line, hl, pbuf)
 	cp = nextword(cp, word);
 	if (*word)
 		hl->l_from = copyin(word, &sp);
-	if (cp != NOSTR && cp[0] == 't' && cp[1] == 't' && cp[2] == 'y') {
+	if (cp != NULL && cp[0] == 't' && cp[1] == 't' && cp[2] == 'y') {
 		cp = nextword(cp, word);
 		hl->l_tty = copyin(word, &sp);
 	}
-	if (cp != NOSTR)
+	if (cp != NULL)
 		hl->l_date = copyin(cp, &sp);
 }
 
@@ -236,7 +236,7 @@ cmatch(cp, tp)
 /*
  * Collect a liberal (space, tab delimited) word into the word buffer
  * passed.  Also, return a pointer to the next word following that,
- * or NOSTR if none follow.
+ * or NULL if none follow.
  */
 char *
 nextword(wp, wbuf)
@@ -244,9 +244,9 @@ nextword(wp, wbuf)
 {
 	register c;
 
-	if (wp == NOSTR) {
+	if (wp == NULL) {
 		*wbuf = 0;
-		return(NOSTR);
+		return(NULL);
 	}
 	while ((c = *wp++) && c != ' ' && c != '\t') {
 		*wbuf++ = c;
@@ -263,6 +263,6 @@ nextword(wp, wbuf)
 	for (; c == ' ' || c == '\t'; c = *wp++)
 		;
 	if (c == 0)
-		return(NOSTR);
+		return(NULL);
 	return(wp - 1);
 }
