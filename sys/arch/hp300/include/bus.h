@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.1 2005/01/14 22:39:29 miod Exp $	*/
+/*	$OpenBSD: bus.h,v 1.2 2005/02/13 03:37:14 jsg Exp $	*/
 /*	$NetBSD: bus.h,v 1.6 2001/12/02 01:20:33 gmcgarry Exp $	*/
 
 /*-
@@ -392,10 +392,10 @@ int	hp300_bus_space_probe(bus_space_tag_t t,
 
 #define	__HP300_copy_region_N(BYTES)					\
 static __inline void __CONCAT(bus_space_copy_region_,BYTES)		\
-	__P((bus_space_tag_t,						\
+	(bus_space_tag_t,						\
 	    bus_space_handle_t bsh1, bus_size_t off1,			\
 	    bus_space_handle_t bsh2, bus_size_t off2,			\
-	    bus_size_t count));						\
+	    bus_size_t count);						\
 									\
 static __inline void							\
 __CONCAT(bus_space_copy_region_,BYTES)(t, h1, o1, h2, o2, c)		\
