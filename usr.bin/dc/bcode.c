@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcode.c,v 1.25 2004/12/01 08:29:38 otto Exp $	*/
+/*	$OpenBSD: bcode.c,v 1.26 2004/12/01 08:40:12 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: bcode.c,v 1.25 2004/12/01 08:29:38 otto Exp $";
+static const char rcsid[] = "$OpenBSD: bcode.c,v 1.26 2004/12/01 08:40:12 otto Exp $";
 #endif /* not lint */
 
 #include <ssl/ssl.h>
@@ -50,7 +50,7 @@ struct bmachine {
 	bool			extended_regs;
 	size_t			reg_array_size;
 	struct stack		*reg;
-	volatile bool		interrupted;
+	volatile sig_atomic_t	interrupted;
 	struct source		readstack[RECURSION_STACK_SIZE];
 };
 
