@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.47 2004/05/28 08:16:23 grange Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.48 2004/05/31 13:04:13 markus Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -935,31 +935,7 @@ bpf_setif(d, ifr)
 	struct ifreq *ifr;
 {
 	struct bpf_if *bp;
-	char *cp;
-	int unit_seen, i, s, error;
-
-	/*
-	 * Make sure the provided name has a unit number, and default
-	 * it to '0' if not specified.
-	 * XXX This is ugly ... do this differently?
-	 */
-	unit_seen = 0;
-	cp = ifr->ifr_name;
-	cp[sizeof(ifr->ifr_name) - 1] = '\0';	/* sanity */
-	while (*cp++)
-		if (*cp >= '0' && *cp <= '9')
-			unit_seen = 1;
-	if (!unit_seen) {
-		/* Make sure to leave room for the '\0'. */
-		for (i = 0; i < (IFNAMSIZ - 1); ++i) {
-			if ((ifr->ifr_name[i] >= 'a' &&
-			     ifr->ifr_name[i] <= 'z') ||
-			    (ifr->ifr_name[i] >= 'A' &&
-			     ifr->ifr_name[i] <= 'Z'))
-				continue;
-			ifr->ifr_name[i] = '0';
-		}
-	}
+	int s, error;
 
 	/*
 	 * Look through attached interfaces for the named one.
