@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gm.c,v 1.6 2000/10/16 01:51:08 drahn Exp $	*/
+/*	$OpenBSD: if_gm.c,v 1.7 2000/10/16 13:51:00 deraadt Exp $	*/
 /*	$NetBSD: if_gm.c,v 1.2 2000/03/04 11:17:00 tsubai Exp $	*/
 
 /*-
@@ -299,8 +299,7 @@ gmac_attach(parent, self, aux)
 	}
 #endif /* __OpenBSD__ */
 
-	printf(": %s", intrstr);
-	printf(": address %s\n", ether_sprintf(laddr));
+	printf(": %s, address %s\n", intrstr, ether_sprintf(laddr));
 
 	gmac_reset(sc);
 	gmac_init_mac(sc);
