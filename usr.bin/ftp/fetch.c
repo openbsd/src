@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.18 1998/03/26 03:17:08 marc Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.19 1998/05/13 10:42:38 deraadt Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: fetch.c,v 1.18 1998/03/26 03:17:08 marc Exp $";
+static char rcsid[] = "$OpenBSD: fetch.c,v 1.19 1998/05/13 10:42:38 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -61,6 +61,7 @@ static char rcsid[] = "$OpenBSD: fetch.c,v 1.18 1998/03/26 03:17:08 marc Exp $";
 #include <fcntl.h>
 #include <signal.h>
 #include <stdio.h>
+#include <errno.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -102,6 +103,7 @@ url_get(origline, proxyenv, outfile)
 	char *line, *proxy, *host;
 	volatile sig_t oldintr;
 	off_t hashbytes;
+	struct hostent *hp = NULL;
 
 	s = -1;
 	proxy = NULL;
@@ -191,8 +193,6 @@ url_get(origline, proxyenv, outfile)
 			goto cleanup_url_get;
 		}
 	} else {
-		struct hostent *hp;
-
 		hp = gethostbyname(host);
 		if (hp == NULL) {
 			warnx("%s: %s", host, hstrerror(h_errno));
@@ -225,7 +225,36 @@ url_get(origline, proxyenv, outfile)
 		goto cleanup_url_get;
 	}
 
-	if (connect(s, (struct sockaddr *)&sin, sizeof(sin)) == -1) {
+	while (connect(s, (struct sockaddr *)&sin, sizeof(sin)) < 0) {
+		if (errno == EINTR)
+			continue;
+		if (hp && hp->h_addr_list[1]) {
+			int oerrno = errno;
+			char *ia;
+
+			ia = inet_ntoa(sin.sin_addr);
+			errno = oerrno;
+			warn("connect to address %s", ia);
+			hp->h_addr_list++;
+			memcpy(&sin.sin_addr, hp->h_addr_list[0],
+			    (size_t)hp->h_length);
+			fprintf(ttyout, "Trying %s...\n",
+			    inet_ntoa(sin.sin_addr));
+			(void)close(s);
+			s = socket(AF_INET, SOCK_STREAM, 0);
+			if (s < 0) {
+				warn("socket");
+				goto cleanup_url_get;
+			}
+			continue;
+		}
+		warn("connect");
+		goto cleanup_url_get;
+	}
+
+	while (connect(s, (struct sockaddr *)&sin, sizeof(sin)) == -1) {
+		if (errno == EINTR)
+			continue;
 		warn("Can't connect to %s", host);
 		goto cleanup_url_get;
 	}
