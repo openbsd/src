@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.27 2000/06/18 19:10:50 angelos Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.28 2000/06/19 17:11:32 itojun Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -766,8 +766,9 @@ esp4_input_cb(struct mbuf *m, ...)
 int
 ah6_input(struct mbuf **mp, int *offp, int proto)
 {
-    u_int8_t nxt = 0;
+    int l = 0;
     int protoff;
+    struct ip6_ext ip6e;
 
     if (*offp < sizeof(struct ip6_hdr))
     {
@@ -785,14 +786,20 @@ ah6_input(struct mbuf **mp, int *offp, int proto)
 
 	do
 	{
-	    protoff += nxt;
-	    m_copydata(*mp, protoff + offsetof(struct ip6_ext, ip6e_len),
-		       sizeof(u_int8_t), (caddr_t) &nxt);
-	    nxt = (nxt + 1) * 8;
-	} while (protoff + nxt < *offp);
+	    protoff += l;
+	    m_copydata(*mp, protoff, sizeof(ip6e), (caddr_t) &ip6e);
+	    if (ip6e.ip6e_nxt == IPPROTO_AH)
+		l = (ip6e.ip6e_len + 2) << 2;
+	    else
+		l = (ip6e.ip6e_len + 1) << 3;
+#ifdef DIAGNOSTIC
+	    if (l <= 0)
+		panic("ah6_input: l went zero or negative");
+#endif
+	} while (protoff + l < *offp);
 
 	/* Malformed packet check */
-	if (protoff + nxt != *offp)
+	if (protoff + l != *offp)
 	{
 	    DPRINTF(("ah6_input(): bad packet header chain\n"));
 	    ahstat.ahs_hdrops++;
@@ -854,8 +861,9 @@ bad:
 int
 esp6_input(struct mbuf **mp, int *offp, int proto)
 {
-    u_int8_t nxt = 0;
+    int l = 0;
     int protoff;
+    struct ip6_ext ip6e;
 
     if (*offp < sizeof(struct ip6_hdr))
     {
@@ -873,14 +881,20 @@ esp6_input(struct mbuf **mp, int *offp, int proto)
 
 	do
 	{
-	    protoff += nxt;
-	    m_copydata(*mp, protoff + offsetof(struct ip6_ext, ip6e_len),
-		       sizeof(u_int8_t), (caddr_t) &nxt);
-	    nxt = (nxt + 1) * 8;
-	} while (protoff + nxt < *offp);
+	    protoff += l;
+	    m_copydata(*mp, protoff, sizeof(ip6e), (caddr_t) &ip6e);
+	    if (ip6e.ip6e_nxt == IPPROTO_AH)
+		l = (ip6e.ip6e_len + 2) << 2;
+	    else
+		l = (ip6e.ip6e_len + 1) << 3;
+#ifdef DIAGNOSTIC
+	    if (l <= 0)
+		panic("esp6_input: l went zero or negative");
+#endif
+	} while (protoff + l < *offp);
 
 	/* Malformed packet check */
-	if (protoff + nxt != *offp)
+	if (protoff + l != *offp)
 	{
 	    DPRINTF(("esp6_input(): bad packet header chain\n"));
 	    espstat.esps_hdrops++;
