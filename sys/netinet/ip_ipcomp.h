@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_ipcomp.h,v 1.3 2001/07/17 12:35:35 jjbg Exp $ */
+/* $OpenBSD: ip_ipcomp.h,v 1.4 2003/02/12 14:41:08 jason Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Jacques Bernard-Gundol (jj@wabbitt.org)
@@ -76,6 +76,6 @@ struct ipcomp {
 
 #ifdef _KERNEL
 extern int ipcomp_enable;
-struct ipcompstat ipcompstat;
+extern struct ipcompstat ipcompstat;
 #endif				/* _KERNEL */
 #endif	/* _NETINET_IP_IPCOMP_H_ */

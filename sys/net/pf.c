@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.319 2003/02/12 12:50:29 mcbride Exp $ */
+/*	$OpenBSD: pf.c,v 1.320 2003/02/12 14:41:07 jason Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -142,7 +142,6 @@ int			*pftm_timeouts[PFTM_MAX] = { &pftm_tcp_first_packet,
 
 struct pool		 pf_tree_pl, pf_rule_pl, pf_addr_pl;
 struct pool		 pf_state_pl, pf_altq_pl, pf_pooladdr_pl;
-struct pool		 pfr_ktable_pl, pfr_kentry_pl;
 
 void			 pf_addrcpy(struct pf_addr *, struct pf_addr *,
 			    sa_family_t);

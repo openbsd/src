@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_run.c,v 1.15 2001/11/06 19:53:18 miod Exp $	*/
+/*	$OpenBSD: db_run.c,v 1.16 2003/02/12 14:41:07 jason Exp $	*/
 /*	$NetBSD: db_run.c,v 1.8 1996/02/05 01:57:12 christos Exp $	*/
 
 /* 
@@ -48,6 +48,10 @@
 db_breakpoint_t	db_not_taken_bkpt = 0;
 db_breakpoint_t	db_taken_bkpt = 0;
 #endif
+
+int		db_inst_count;
+int		db_load_count;
+int		db_store_count;
 
 #ifndef KGDB
 

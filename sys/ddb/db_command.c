@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_command.c,v 1.29 2002/05/18 09:49:17 art Exp $	*/
+/*	$OpenBSD: db_command.c,v 1.30 2003/02/12 14:41:07 jason Exp $	*/
 /*	$NetBSD: db_command.c,v 1.20 1996/03/30 22:30:05 christos Exp $	*/
 
 /* 
@@ -65,6 +65,13 @@ label_t		*db_recover;
  * Otherwise: 'dot' points to next item, '..' points to last.
  */
 boolean_t	db_ed_style = TRUE;
+
+db_addr_t	db_dot;		/* current location */
+db_addr_t	db_last_addr;	/* last explicit address typed */
+db_addr_t	db_prev;	/* last address examined
+				   or written */
+db_addr_t	db_next;	/* next address to be examined
+				   or written */
 
 /*
  * Utility routine - discard tokens through end-of-line.

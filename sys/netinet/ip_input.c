@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.109 2003/02/11 21:08:04 cedric Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.110 2003/02/12 14:41:07 jason Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -85,6 +85,8 @@
 #ifndef IPMTUDISCTIMEOUT
 #define IPMTUDISCTIMEOUT (10 * 60)	/* as per RFC 1191 */
 #endif
+
+struct ipqhead ipq;
 
 int encdebug = 0;
 int ipsec_keep_invalid = IPSEC_DEFAULT_EMBRYONIC_SA_TIMEOUT;

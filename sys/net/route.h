@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.15 2003/01/17 17:48:25 camield Exp $	*/
+/*	$OpenBSD: route.h,v 1.16 2003/02/12 14:41:07 jason Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -284,9 +284,9 @@ struct rttimer_queue {
 #define	ONNET_CLONING 1
 #define	NO_CLONING 2
 
-struct	route_cb route_cb;
-struct	rtstat	rtstat;
-struct	radix_node_head *rt_tables[AF_MAX+1];
+extern struct route_cb route_cb;
+extern struct rtstat rtstat;
+extern struct radix_node_head *rt_tables[];
 
 struct	socket;
 void	 route_init(void);

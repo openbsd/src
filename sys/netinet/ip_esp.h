@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.h,v 1.37 2002/06/09 16:26:10 itojun Exp $	*/
+/*	$OpenBSD: ip_esp.h,v 1.38 2003/02/12 14:41:07 jason Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -76,6 +76,6 @@ struct espstat
 
 #ifdef _KERNEL
 extern int esp_enable;
-struct espstat espstat;
+extern struct espstat espstat;
 #endif /* _KERNEL */
 #endif /* _NETINET_IP_ESP_H_ */

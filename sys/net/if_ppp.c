@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ppp.c,v 1.32 2003/01/07 09:00:33 kjc Exp $	*/
+/*	$OpenBSD: if_ppp.c,v 1.33 2003/02/12 14:41:07 jason Exp $	*/
 /*	$NetBSD: if_ppp.c,v 1.39 1997/05/17 21:11:59 christos Exp $	*/
 
 /*
@@ -161,6 +161,8 @@
 #define PACKETPTR	struct mbuf *
 #include <net/ppp-comp.h>
 #endif
+
+struct	ppp_softc ppp_softc[NPPP];
 
 static int	pppsioctl(struct ifnet *, u_long, caddr_t);
 static void	ppp_requeue(struct ppp_softc *);

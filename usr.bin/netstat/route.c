@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.50 2003/02/01 01:51:31 deraadt Exp $	*/
+/*	$OpenBSD: route.c,v 1.51 2003/02/12 14:41:08 jason Exp $	*/
 /*	$NetBSD: route.c,v 1.15 1996/05/07 02:55:06 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-static char *rcsid = "$OpenBSD: route.c,v 1.50 2003/02/01 01:51:31 deraadt Exp $";
+static char *rcsid = "$OpenBSD: route.c,v 1.51 2003/02/12 14:41:08 jason Exp $";
 #endif
 #endif /* not lint */
 
@@ -87,6 +87,8 @@ static char *rcsid = "$OpenBSD: route.c,v 1.50 2003/02/01 01:51:31 deraadt Exp $
 #define ROUNDUP(a) \
 	((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
 #define ADVANCE(x, n) (x += ROUNDUP((n)->sa_len))
+
+struct radix_node_head *rt_tables[AF_MAX+1];
 
 /*
  * Definitions for showing gateway flags.

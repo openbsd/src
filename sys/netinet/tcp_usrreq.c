@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.67 2002/09/11 03:15:36 itojun Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.68 2003/02/12 14:41:08 jason Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -110,6 +110,8 @@ extern int tcp_rst_ppslim;
 
 /* from in_pcb.c */
 extern	struct baddynamicports baddynamicports;
+
+struct	inpcbtable tcbtable;
 
 int tcp_ident(void *, size_t *, void *, size_t);
 

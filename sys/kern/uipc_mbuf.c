@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.58 2002/07/03 21:19:08 miod Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.59 2003/02/12 14:41:07 jason Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -92,6 +92,7 @@
 
 #include <uvm/uvm_extern.h>
 
+struct	mbstat mbstat;		/* mbuf stats */
 struct	pool mbpool;		/* mbuf pool */
 struct	pool mclpool;		/* mbuf cluster pool */
 

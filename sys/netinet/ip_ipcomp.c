@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_ipcomp.c,v 1.9 2002/09/12 10:11:39 ho Exp $ */
+/* $OpenBSD: ip_ipcomp.c,v 1.10 2003/02/12 14:41:07 jason Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Jacques Bernard-Gundol (jj@wabbitt.org)
@@ -68,6 +68,8 @@
 #else
 #define DPRINTF(x)
 #endif
+
+struct ipcompstat ipcompstat;
 
 /*
  * ipcomp_attach() is called from the transformation code

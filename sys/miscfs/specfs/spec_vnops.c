@@ -1,4 +1,4 @@
-/*	$OpenBSD: spec_vnops.c,v 1.24 2002/11/08 04:34:17 art Exp $	*/
+/*	$OpenBSD: spec_vnops.c,v 1.25 2003/02/12 14:41:07 jason Exp $	*/
 /*	$NetBSD: spec_vnops.c,v 1.29 1996/04/22 01:42:38 christos Exp $	*/
 
 /*
@@ -55,6 +55,8 @@
 #include <miscfs/specfs/specdev.h>
 
 #define v_lastr v_specinfo->si_lastr
+
+struct vnode *speclisth[SPECHSZ];
 
 /* symbolic sleep message strings for devices */
 char	devopn[] = "devopn";

@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.34 2002/09/11 05:38:47 itojun Exp $	*/
+/*	$OpenBSD: route.c,v 1.35 2003/02/12 14:41:07 jason Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -134,6 +134,10 @@ extern struct ifnet encif;
 #endif
 
 #define	SA(p) ((struct sockaddr *)(p))
+
+struct	route_cb route_cb;
+struct	rtstat  rtstat;
+struct	radix_node_head *rt_tables[AF_MAX+1];
 
 int	rttrash;		/* routes not in table but not freed */
 struct	sockaddr wildcard;	/* zero valued cookie for wildcard searches */

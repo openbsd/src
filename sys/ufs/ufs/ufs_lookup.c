@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_lookup.c,v 1.20 2003/01/31 17:37:50 art Exp $	*/
+/*	$OpenBSD: ufs_lookup.c,v 1.21 2003/02/12 14:41:08 jason Exp $	*/
 /*	$NetBSD: ufs_lookup.c,v 1.7 1996/02/09 22:36:06 christos Exp $	*/
 
 /*
@@ -60,7 +60,8 @@
 #include <ufs/ufs/ufsmount.h>
 #include <ufs/ufs/ufs_extern.h>
 
-struct	nchstats nchstats;
+extern	struct nchstats nchstats;
+
 #ifdef DIAGNOSTIC
 int	dirchk = 1;
 #else

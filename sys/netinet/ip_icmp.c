@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.56 2003/02/01 19:34:06 henning Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.57 2003/02/12 14:41:07 jason Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -108,6 +108,7 @@ struct timeval icmperrppslim_last;
 int	icmp_rediraccept = 1;
 int	icmp_redirtimeout = 10 * 60;
 static struct rttimer_queue *icmp_redirect_timeout_q = NULL;
+struct	icmpstat icmpstat;
 
 void icmp_mtudisc_timeout(struct rtentry *, struct rttimer *);
 int icmp_ratelimit(const struct in_addr *, const int, const int);
