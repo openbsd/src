@@ -1,4 +1,4 @@
-.\"	$OpenBSD: queue.3,v 1.20 2001/08/02 19:06:58 mpech Exp $
+.\"	$OpenBSD: queue.3,v 1.21 2002/02/03 16:36:40 jason Exp $
 .\"	$NetBSD: queue.3,v 1.4 1995/07/03 00:25:36 mycroft Exp $
 .\"
 .\" Copyright (c) 1993 The Regents of the University of California.
@@ -50,6 +50,7 @@
 .Nm SLIST_INSERT_AFTER ,
 .Nm SLIST_INSERT_HEAD ,
 .Nm SLIST_REMOVE_HEAD ,
+.Nm SLIST_REMOVE ,
 .Nm LIST_ENTRY ,
 .Nm LIST_HEAD ,
 .Nm LIST_HEAD_INITIALIZER ,
@@ -135,6 +136,8 @@
 .Fn SLIST_INSERT_HEAD "SLIST_HEAD *head" "struct TYPE *elm" "SLIST_ENTRY NAME"
 .Ft void
 .Fn SLIST_REMOVE_HEAD "SLIST_HEAD *head" "SLIST_ENTRY NAME"
+.Ft void
+.Fn SLIST_REMOVE "SLIST_HEAD *head" "TYPE *elm" "TYPE" "SLIST_ENTRY NAME"
 .Pp
 .Fn LIST_ENTRY "TYPE"
 .Fn LIST_HEAD "HEADNAME" "TYPE"
@@ -441,6 +444,13 @@ after the element
 The
 .Fn SLIST_REMOVE_HEAD
 macro removes the first element of the list pointed by
+.Fa head .
+.Pp
+The
+.Fn SLIST_REMOVE
+macro removes the element
+.Fa elm
+of the list pointed by
 .Fa head .
 .Pp
 The
