@@ -1,4 +1,4 @@
-/*	$OpenBSD: altqd.c,v 1.7 2002/02/13 08:23:04 kjc Exp $	*/
+/*	$OpenBSD: altqd.c,v 1.8 2002/02/20 10:54:24 kjc Exp $	*/
 /*	$KAME: altqd.c,v 1.9 2002/02/12 10:12:15 kjc Exp $	*/
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -64,6 +64,9 @@
 #include <fcntl.h>
 #include <syslog.h>
 #include <err.h>
+#ifndef __FreeBSD__
+#include <util.h>
+#endif
 
 #include <altq/altq.h>
 #include "altq_qop.h"
@@ -71,46 +74,38 @@
 
 #define MAX_CLIENT		10
 
-volatile sig_atomic_t gotsig_hup, gotsig_int, gotsig_term;
+static volatile sig_atomic_t gotsig_hup, gotsig_int, gotsig_term;
 
-void usage(void);
-void sig_pipe(int);
-void sig_hup(int);
-void sig_int(int);
-void sig_term(int);
+static void usage(void);
+static void sig_handler(int);
 
-void
+static void
 usage(void)
 {
 	fprintf(stderr, "usage: altqd [-vd] [-f config]\n");
 	exit(1);
 }
 
-void
-sig_pipe(int sig)
+static void
+sig_handler(int sig)
 {
-	/*
-	 * we have lost an API connection.
-	 * a subsequent output operation will catch EPIPE.
-	 */
-}
-
-void
-sig_hup(int sig)
-{
-	gotsig_hup = 1;
-}
-
-void
-sig_int(int sig)
-{
-	gotsig_int = 1;
-}
-
-void
-sig_term(int sig)
-{
-	gotsig_term = 1;
+	switch (sig) {
+	case SIGHUP:
+		gotsig_hup = 1;
+		break;
+	case SIGINT:
+		gotsig_int = 1;
+		break;
+	case SIGTERM:
+		gotsig_term = 1;
+		break;
+	case SIGPIPE:
+		/*
+		 * we have lost an API connection.
+		 * a subsequent output operation will catch EPIPE.
+		 */
+		break;
+	}
 }
 
 int
@@ -151,10 +146,10 @@ main(int argc, char **argv)
 		}
 	}
 
-	signal(SIGINT, sig_int);
-	signal(SIGTERM, sig_term);
-	signal(SIGHUP, sig_hup);
-	signal(SIGPIPE, sig_pipe);
+	signal(SIGINT, sig_handler);
+	signal(SIGTERM, sig_handler);
+	signal(SIGHUP, sig_handler);
+	signal(SIGPIPE, sig_handler);
 
 	if (daemonize)
 		openlog("altqd", LOG_PID, LOG_DAEMON);
