@@ -1,4 +1,4 @@
-/* $Id: cyberflex.c,v 1.13 2001/07/26 20:00:16 rees Exp $ */
+/* $Id: cyberflex.c,v 1.14 2001/07/26 21:05:15 rees Exp $ */
 
 /*
 copyright 1999, 2000
@@ -71,11 +71,11 @@ static des_cblock app_key = {0x6A, 0x21, 0x36, 0xF5, 0xD8, 0x0C, 0x47, 0x83};
 static void print_acl(int isdir, unsigned char *acl);
 
 static int
-get_AUT0(int ac, char *av[], char *prompt, unsigned char *digest)
+get_AUT0(int ac, char *av[], char *prompt, int confirm, unsigned char *digest)
 {
     int i, dflag = 0, xflag = 0;
     SHA1_CTX ctx;
-    char *s;
+    char *s, *s2;
 
     optind = optreset = 1;
     opterr = 0;
@@ -99,6 +99,16 @@ get_AUT0(int ac, char *av[], char *prompt, unsigned char *digest)
     if (!dflag && !xflag) {
 	SHA1Init(&ctx);
 	s = getpass(prompt);
+	if (confirm) {
+	    s2 = strdup(s);
+	    s = getpass("Re-enter passphrase: ");
+	    if (strcmp(s, s2)) {
+		printf("passphrase mismatch\n");
+		return -1;
+	    }
+	    bzero(s2, strlen(s2));
+	    free(s2);
+	}
 	SHA1Update(&ctx, s, strlen(s));
 	bzero(s, strlen(s));
 	SHA1Final(digest, &ctx);
@@ -133,7 +143,7 @@ int jlogin(int ac, char *av[])
 	}
     }
 
-    if (get_AUT0(ac, av, "Enter AUT0 passphrase: ", AUT0) < 0)
+    if (get_AUT0(ac, av, "Enter AUT0 passphrase: ", 0, AUT0) < 0)
 	return -1;
 
     if (vflag) {
@@ -930,7 +940,7 @@ int jsetpass(int ac, char *av[])
     if (!aut0_vfyd && jaut(0, NULL) < 0)
 	return -1;
 
-    if (get_AUT0(ac, av, "Enter new AUT0 passphrase: ", AUT0) < 0)
+    if (get_AUT0(ac, av, "Enter new AUT0 passphrase: ", 1, AUT0) < 0)
 	return -1;
 
     cyberflex_fill_key_block (data, 0, 1, AUT0);
