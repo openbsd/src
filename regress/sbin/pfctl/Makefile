@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.14 2002/06/07 18:36:54 frantzen Exp $
+# $OpenBSD: Makefile,v 1.15 2002/06/08 09:43:58 kjell Exp $
 
 PFTESTS=1 2 3 4 5 6 7 8 9 10 11 12 13 14
 PFFAIL=1 2 3 4 5 6 7 8
@@ -22,11 +22,16 @@ pf${n}:
 
 .endfor
 
-binat1:
-	pfctl -nv -N - < ${.CURDIR}/binat1.in | \
-	    cmp -s ${.CURDIR}/binat1.ok /dev/stdin
+NATTESTS=binat1 nat1
 
-REGRESSTARGETS+=binat1
+.for n in ${NATTESTS}
+REGRESSTARGETS+=${n}
+
+${n}:
+	pfctl -nv -N - < ${.CURDIR}/${n}.in | \
+	    cmp -s ${.CURDIR}/${n}.ok /dev/stdin
+
+.endfor
 
 .PHONY: ${REGRESSTARGETS}
 
