@@ -1,4 +1,4 @@
-/*	$OpenBSD: busdma.c,v 1.1 2004/08/06 20:56:03 pefo Exp $ */
+/*	$OpenBSD: busdma.c,v 1.2 2004/08/06 22:11:54 pefo Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -44,8 +44,6 @@
 #include <machine/autoconf.h>
 
 #include <machine/bus.h>
-
-#include <pmonmips/localbus/localbus.h>
 
 /*
  * Common function for DMA map creation.  May be called by bus-specific
