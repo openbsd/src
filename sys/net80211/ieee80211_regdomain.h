@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_regdomain.h,v 1.3 2004/12/25 20:40:19 deraadt Exp $	*/
+/*     $OpenBSD: ieee80211_regdomain.h,v 1.4 2004/12/30 23:35:35 reyk Exp $ */
 
 /*
  * Copyright (c) 2004 Reyk Floeter <reyk@vantronix.net>.
@@ -105,7 +105,7 @@ enum ieee80211_regdomain {
 	DMN_MKKA		= 0xf0200000,
 	DMN_NULL1		= 0xf0400000,
 	DMN_WORLD		= 0xf0800000,
-	DMN_DEBUG               = 0xf1000000  /* used for debugging */
+	DMN_DEBUG               = 0xf1000000	/* used for debugging */
 };
 
 #define IEEE80211_DMN(_d)	((_d) & ~0xf0000000)
@@ -117,79 +117,79 @@ struct ieee80211_regdomainname {
 
 #define IEEE80211_REGDOMAIN_NAMES {					\
 	{ DMN_APL1,		    "APL1" }, 				\
-	{ DMN_APL1_APLA,	    "APL1_APLA" }, 			\
+	{ DMN_APL1_APLA,	    "APL1A" },	 			\
 	{ DMN_APL1_ETSIC,	    "APL1_ETSIC" }, 			\
 	{ DMN_APL1_FCCA,	    "APL1_FCCA" }, 			\
-	{ DMN_APL1_WORLD,	    "APL1_WORLD" }, 			\
+	{ DMN_APL1_WORLD,	    "APL1W" }, 				\
 	{ DMN_APL2,		    "APL2" }, 				\
-	{ DMN_APL2_APLC,	    "APL2_APLC" }, 			\
-	{ DMN_APL2_APLD,	    "APL2_APLD" }, 			\
+	{ DMN_APL2_APLC,	    "APL2C" }, 				\
+	{ DMN_APL2_APLD,	    "APL2D" },	 			\
 	{ DMN_APL2_ETSIC,	    "APL2_ETSIC" }, 			\
-	{ DMN_APL2_WORLD,	    "APL2_WORLD" }, 			\
+	{ DMN_APL2_WORLD,	    "APL2W" }, 				\
 	{ DMN_APL3,		    "APL3" },				\
-	{ DMN_APL3_WORLD,	    "APL3_WORLD" },			\
+	{ DMN_APL3_WORLD,	    "APL3W" },				\
 	{ DMN_APL4,		    "APL4" },				\
-	{ DMN_APL4_WORLD,	    "APL4_WORLD" },			\
+	{ DMN_APL4_WORLD,	    "APL4W" },				\
 	{ DMN_APL5,		    "APL5" },				\
-	{ DMN_APL5_WORLD,	    "APL5_WORLD" },			\
+	{ DMN_APL5_WORLD,	    "APL5W" },				\
 	{ DMN_APLD,		    "APLD" },				\
-	{ DMN_APL_RESERVED,	    "APL_RESERVED" },			\
+	{ DMN_APL_RESERVED,	    "APL_RES" },			\
 	{ DMN_DEBUG,		    "DEBUG" },				\
 	{ DMN_ETSI1,		    "ETSI1" },				\
-	{ DMN_ETSI1_WORLD,	    "ETSI1_WORLD" },			\
+	{ DMN_ETSI1_WORLD,	    "ETSI1W" },				\
 	{ DMN_ETSI2,		    "ETSI2" },				\
-	{ DMN_ETSI2_WORLD,	    "ETSI2_WORLD" },			\
+	{ DMN_ETSI2_WORLD,	    "ETSI2W" },				\
 	{ DMN_ETSI3,		    "ETSI3" },				\
-	{ DMN_ETSI3_ETSIA,	    "ETSI3_ETSIA" },			\
-	{ DMN_ETSI3_WORLD,	    "ETSI3_WORLD," },			\
+	{ DMN_ETSI3_ETSIA,	    "ETSI3A" },				\
+	{ DMN_ETSI3_WORLD,	    "ETSI3W," },			\
 	{ DMN_ETSI4,		    "ETSI4" },				\
-	{ DMN_ETSI4_ETSIC,	    "ETSI4_ETSIC" },			\
-	{ DMN_ETSI4_WORLD,	    "ETSI4_WORLD" },			\
+	{ DMN_ETSI4_ETSIC,	    "ETSI4C" },				\
+	{ DMN_ETSI4_WORLD,	    "ETSI4W" },				\
 	{ DMN_ETSI5,		    "ETSI5" },				\
-	{ DMN_ETSI5_WORLD,	    "ETSI5_WORLD" },			\
+	{ DMN_ETSI5_WORLD,	    "ETSI5W" },				\
 	{ DMN_ETSI6,		    "ETSI6" },				\
-	{ DMN_ETSI6_WORLD,	    "ETSI6_WORLD" },			\
+	{ DMN_ETSI6_WORLD,	    "ETSI6W" },				\
 	{ DMN_ETSIA,		    "ETSIA" },				\
 	{ DMN_ETSIB,		    "ETSIB" },				\
 	{ DMN_ETSIC,		    "ETSIC" },				\
-	{ DMN_ETSI_RESERVED,	    "ETSI_RESERVED" },			\
-	{ DMN_EU1_WORLD,	    "EU1_WORLD" },			\
+	{ DMN_ETSI_RESERVED,	    "ETSI_RES" },			\
+	{ DMN_EU1_WORLD,	    "EU1W" },				\
 	{ DMN_FCC1,		    "FCC1" },				\
-	{ DMN_FCC1_FCCA,	    "FCC1_FCCA" },			\
-	{ DMN_FCC1_WORLD,	    "FCC1_WORLD" },			\
+	{ DMN_FCC1_FCCA,	    "FCC1A" },				\
+	{ DMN_FCC1_WORLD,	    "FCC1W" },				\
 	{ DMN_FCC2,		    "FCC2" },				\
-	{ DMN_FCC2_ETSIC,	    "FCC2_ETSIC" },			\
-	{ DMN_FCC2_FCCA,	    "FCC2_FCCA" },			\
-	{ DMN_FCC2_WORLD,	    "FCC2_WORLD" },			\
+	{ DMN_FCC2_ETSIC,	    "FCC2C" },				\
+	{ DMN_FCC2_FCCA,	    "FCC2A" },				\
+	{ DMN_FCC2_WORLD,	    "FCC2W" },				\
 	{ DMN_FCC3,		    "FCC3" },				\
-	{ DMN_FCC3_FCCA,	    "FCC3_FCCA" },			\
+	{ DMN_FCC3_FCCA,	    "FCC3A" },				\
 	{ DMN_FCCA,		    "FCCA" },				\
 	{ DMN_FRANCE_RES,	    "FRANCE_RES" },			\
 	{ DMN_MKK1,		    "MKK1" },				\
 	{ DMN_MKK1_FCCA,	    "MKK1_FCCA" },			\
-	{ DMN_MKK1_MKKA,	    "MKK1_MKKA" },			\
-	{ DMN_MKK1_MKKA1,	    "MKK1_MKKA" },			\
-	{ DMN_MKK1_MKKA2,	    "MKK1_MKKA2" },			\
-	{ DMN_MKK1_MKKB,	    "MKK1_MKKB" },			\
+	{ DMN_MKK1_MKKA,	    "MKK1A" },				\
+	{ DMN_MKK1_MKKA1,	    "MKK1A1" },				\
+	{ DMN_MKK1_MKKA2,	    "MKK1A2" },				\
+	{ DMN_MKK1_MKKB,	    "MKK1B" },				\
 	{ DMN_MKK2,		    "MKK2" },				\
-	{ DMN_MKK2_MKKA,	    "MKK2_MKKA" },			\
+	{ DMN_MKK2_MKKA,	    "MKK2A" },				\
 	{ DMN_MKKA,		    "MKKA" },				\
 	{ DMN_DEFAULT,		    "NONE" },				\
 	{ DMN_NULL1,		    "NULL1" },				\
 	{ DMN_NULL1_ETSIB,	    "NULL1_ETSIB" },			\
 	{ DMN_NULL1_ETSIC,	    "NULL1_ETSIC" },			\
-	{ DMN_WOR01_WORLD,	    "WOR01_WORLD" },			\
-	{ DMN_WOR02_WORLD,	    "WOR02_WORLD" },			\
-	{ DMN_WOR0_WORLD,	    "WOR0_WORLD" },			\
-	{ DMN_WOR1_WORLD,	    "WOR1_WORLd" },			\
-	{ DMN_WOR2_WORLD,	    "WOR2_WORLD" },			\
-	{ DMN_WOR3_WORLD,	    "WOR3_WORLD" },			\
-	{ DMN_WOR4_WORLD,	    "WOR4_WORLD" },			\
+	{ DMN_WOR01_WORLD,	    "WOR01W" },				\
+	{ DMN_WOR02_WORLD,	    "WOR02W" },				\
+	{ DMN_WOR0_WORLD,	    "WOR0W" },				\
+	{ DMN_WOR1_WORLD,	    "WOR1_WORLD" },			\
+	{ DMN_WOR2_WORLD,	    "WOR2W" },				\
+	{ DMN_WOR3_WORLD,	    "WOR3W" },				\
+	{ DMN_WOR4_WORLD,	    "WOR4W" },				\
 	{ DMN_WOR5_ETSIC,	    "WOR5_ETSIC" },			\
-	{ DMN_WOR9_WORLD,	    "WOR9_WORLD" },			\
-	{ DMN_WORA_WORLD,	    "WORA_WORLD" },			\
+	{ DMN_WOR9_WORLD,	    "WOR9W" },				\
+	{ DMN_WORA_WORLD,	    "WORAW" },				\
 	{ DMN_NULL1_WORLD,	    "WORLD" },				\
-	{ DMN_WORLD,		    "WORLD" },				\
+	{ DMN_WORLD,		    "WORLD" }				\
 }
 
 struct ieee80211_regdomainmap {
@@ -230,7 +230,7 @@ struct ieee80211_regdomainmap {
 	{ DMN_MKK2_MKKA,	DMN_MKK2,	DMN_MKKA },		\
 	{ DMN_MKK1_FCCA,	DMN_MKK1,	DMN_FCCA },		\
 	{ DMN_MKK1_MKKA1,	DMN_MKK1,	DMN_MKKA },		\
-	{ DMN_MKK1_MKKA2,	DMN_MKK1,	DMN_MKKA },		\
+	{ DMN_MKK1_MKKA2,	DMN_MKK1,	DMN_MKKA }		\
 }
 
 enum ieee80211_countrycode {
@@ -476,7 +476,7 @@ struct ieee80211_countryname {
 	{ CTRY_YEMEN,              "ye", DMN_NULL1_WORLD },		\
 	{ CTRY_SOUTH_AFRICA,       "za", DMN_ETSI1_WORLD },		\
 	{ CTRY_ZIMBABWE,           "zw", DMN_NULL1_WORLD },		\
-	{ CTRY_DEBUG,              "zz", DMN_DEBUG },			\
+	{ CTRY_DEBUG,              "zz", DMN_DEBUG }			\
 }
 
 struct ieee80211_regchannel {
@@ -508,17 +508,17 @@ struct ieee80211_regchannel {
         { 2397 /*  -2 */, IEEE80211_CHAN_CCK,	DMN_DEBUG },		\
         { 2402 /*  -1 */, IEEE80211_CHAN_CCK,	DMN_DEBUG },		\
         { 2407 /*   0 */, IEEE80211_CHAN_CCK,	DMN_DEBUG },		\
-        { 2412 /*   1 */, IEEE80211_CHAN_CCK,	DMN_DEBUG },		\
-        { 2417 /*   2 */, IEEE80211_CHAN_CCK,	DMN_DEBUG },		\
-        { 2422 /*   3 */, IEEE80211_CHAN_CCK,	DMN_DEBUG },		\
-        { 2427 /*   4 */, IEEE80211_CHAN_CCK,	DMN_DEBUG },		\
-        { 2432 /*   5 */, IEEE80211_CHAN_CCK,	DMN_DEBUG },		\
-        { 2437 /*   6 */, IEEE80211_CHAN_CCK,	DMN_DEBUG },		\
-        { 2442 /*   7 */, IEEE80211_CHAN_CCK,	DMN_DEBUG },		\
-        { 2447 /*   8 */, IEEE80211_CHAN_CCK,	DMN_DEBUG },		\
-        { 2452 /*   9 */, IEEE80211_CHAN_CCK,	DMN_DEBUG },		\
-        { 2457 /*  10 */, IEEE80211_CHAN_CCK,	DMN_DEBUG },		\
-        { 2462 /*  11 */, IEEE80211_CHAN_CCK,	DMN_DEBUG },		\
+        { 2412 /*   1 */, IEEE80211_CHAN_CCK,	DMN_DEBUG | DMN_FCCA },	\
+        { 2417 /*   2 */, IEEE80211_CHAN_CCK,	DMN_DEBUG | DMN_FCCA },	\
+        { 2422 /*   3 */, IEEE80211_CHAN_CCK,	DMN_DEBUG | DMN_FCCA },	\
+        { 2427 /*   4 */, IEEE80211_CHAN_CCK,	DMN_DEBUG | DMN_FCCA },	\
+        { 2432 /*   5 */, IEEE80211_CHAN_CCK,	DMN_DEBUG | DMN_FCCA },	\
+        { 2437 /*   6 */, IEEE80211_CHAN_CCK,	DMN_DEBUG | DMN_FCCA },	\
+        { 2442 /*   7 */, IEEE80211_CHAN_CCK,	DMN_DEBUG | DMN_FCCA },	\
+        { 2447 /*   8 */, IEEE80211_CHAN_CCK,	DMN_DEBUG | DMN_FCCA },	\
+        { 2452 /*   9 */, IEEE80211_CHAN_CCK,	DMN_DEBUG | DMN_FCCA },	\
+        { 2457 /*  10 */, IEEE80211_CHAN_CCK,	DMN_DEBUG | DMN_FCCA },	\
+        { 2462 /*  11 */, IEEE80211_CHAN_CCK,	DMN_DEBUG | DMN_FCCA },	\
         { 2467 /*  12 */, IEEE80211_CHAN_CCK,	DMN_DEBUG },		\
         { 2472 /*  13 */, IEEE80211_CHAN_CCK,	DMN_DEBUG },		\
         { 2484 /*  14 */, IEEE80211_CHAN_CCK,	DMN_DEBUG },		\
@@ -533,7 +533,7 @@ struct ieee80211_regchannel {
         { 2672 /*  23 */, IEEE80211_CHAN_CCK,	DMN_DEBUG },		\
         { 2692 /*  24 */, IEEE80211_CHAN_CCK,	DMN_DEBUG },		\
         { 2712 /*  25 */, IEEE80211_CHAN_CCK,	DMN_DEBUG },		\
-        { 2732 /*  26 */, IEEE80211_CHAN_CCK,	DMN_DEBUG },		\
+        { 2732 /*  26 */, IEEE80211_CHAN_CCK,	DMN_DEBUG }		\
 }
 
 #define IEEE80211_CHANNELS_5GHZ_MIN	4800
@@ -800,7 +800,7 @@ struct ieee80211_regchannel {
         { 6085, IEEE80211_CHAN_OFDM,	DMN_DEBUG },			\
         { 6090, IEEE80211_CHAN_OFDM,	DMN_DEBUG },			\
         { 6095, IEEE80211_CHAN_OFDM,	DMN_DEBUG },			\
-        { 6100, IEEE80211_CHAN_OFDM,    DMN_DEBUG },			\
+        { 6100, IEEE80211_CHAN_OFDM,    DMN_DEBUG }			\
 }
 
 __BEGIN_DECLS
