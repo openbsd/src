@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.59 2001/08/18 02:24:02 krw Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.60 2001/08/25 19:29:16 fgsch Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -166,6 +166,9 @@ scsibusattach(parent, self, aux)
 		sb->adapter_link->luns = 8;
 
 	printf(": %d targets\n", sb->sc_buswidth);
+
+	/* Initialize shared data. */
+	scsi_init();
 
 	nbytes = sb->sc_buswidth * sizeof(struct scsi_link **);
 	sb->sc_link = (struct scsi_link ***)malloc(nbytes, M_DEVBUF, M_NOWAIT);

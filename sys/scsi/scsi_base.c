@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.30 2001/08/19 15:07:34 miod Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.31 2001/08/25 19:29:16 fgsch Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -45,20 +45,38 @@
 #include <sys/errno.h>
 #include <sys/device.h>
 #include <sys/proc.h>
+#include <sys/pool.h>
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsi_disk.h>
 #include <scsi/scsiconf.h>
 
-LIST_HEAD(xs_free_list, scsi_xfer) xs_free_list;
-
 static __inline struct scsi_xfer *scsi_make_xs __P((struct scsi_link *,
     struct scsi_generic *, int cmdlen, u_char *data_addr,
     int datalen, int retries, int timeout, struct buf *, int flags));
 static __inline void asc2ascii __P((u_char asc, u_char ascq, char *result));
-int sc_err1 __P((struct scsi_xfer *, int));
-int scsi_interpret_sense __P((struct scsi_xfer *));
-char *scsi_decode_sense __P((void *, int));
+int	sc_err1 __P((struct scsi_xfer *, int));
+int	scsi_interpret_sense __P((struct scsi_xfer *));
+char   *scsi_decode_sense __P((void *, int));
+
+struct pool scsi_xfer_pool;
+
+/*
+ * Called when a scsibus is attached to initialize global data.
+ */
+void
+scsi_init()
+{
+	static int scsi_init_done;
+
+	if (scsi_init_done)
+		return;
+	scsi_init_done = 1;
+
+	/* Initialize the scsi_xfer pool. */
+	pool_init(&scsi_xfer_pool, sizeof(struct scsi_xfer), 0,
+	    0, 0, "scxspl", 0, NULL, NULL, M_DEVBUF);
+}
 
 /*
  * Get a scsi transfer structure for the caller. Charge the structure
@@ -80,35 +98,32 @@ scsi_get_xs(sc_link, flags)
 	int s;
 
 	SC_DEBUG(sc_link, SDEV_DB3, ("scsi_get_xs\n"));
+
 	s = splbio();
 	while (sc_link->openings <= 0) {
 		SC_DEBUG(sc_link, SDEV_DB3, ("sleeping\n"));
 		if ((flags & SCSI_NOSLEEP) != 0) {
 			splx(s);
-			return 0;
+			return (NULL);
 		}
 		sc_link->flags |= SDEV_WAITING;
 		(void) tsleep(sc_link, PRIBIO, "getxs", 0);
 	}
-	sc_link->openings--;
-	if ((xs = xs_free_list.lh_first) != NULL) {
-		LIST_REMOVE(xs, free_list);
-		splx(s);
+	SC_DEBUG(sc_link, SDEV_DB3, ("calling pool_get\n"));
+	xs = pool_get(&scsi_xfer_pool,
+	    ((flags & SCSI_NOSLEEP) != 0 ? M_NOWAIT : M_WAITOK));
+	if (xs != NULL) {
+		sc_link->openings--;
+		xs->flags = flags;
 	} else {
-		splx(s);
-		SC_DEBUG(sc_link, SDEV_DB3, ("making\n"));
-		xs = malloc(sizeof(*xs), M_DEVBUF,
-		    ((flags & SCSI_NOSLEEP) != 0 ? M_NOWAIT : M_WAITOK));
-		if (!xs) {
-			sc_print_addr(sc_link);
-			printf("cannot allocate scsi xs\n");
-			return 0;
-		}
+		sc_print_addr(sc_link);
+		printf("cannot allocate scsi xs\n");
 	}
+	splx(s);
 
 	SC_DEBUG(sc_link, SDEV_DB3, ("returning\n"));
-	xs->flags = INUSE | flags;
-	return xs;
+
+	return (xs);
 }
 
 /*
@@ -123,10 +138,10 @@ scsi_free_xs(xs, flags)
 {
 	struct scsi_link *sc_link = xs->sc_link;
 
-	xs->flags &= ~INUSE;
-	LIST_INSERT_HEAD(&xs_free_list, xs, free_list);
-
 	SC_DEBUG(sc_link, SDEV_DB3, ("scsi_free_xs\n"));
+
+	pool_put(&scsi_xfer_pool, xs);
+
 	/* if was 0 and someone waits, wake them up */
 	sc_link->openings++;
 	if ((sc_link->flags & SDEV_WAITING) != 0) {
@@ -134,7 +149,8 @@ scsi_free_xs(xs, flags)
 		wakeup(sc_link);
 	} else {
 		if (sc_link->device->start) {
-			SC_DEBUG(sc_link, SDEV_DB2, ("calling private start()\n"));
+			SC_DEBUG(sc_link, SDEV_DB2,
+			    ("calling private start()\n"));
 			(*(sc_link->device->start)) (sc_link->device_softc);
 		}
 	}
