@@ -1,4 +1,4 @@
-/*	$OpenBSD: bsd_fdintr.s,v 1.9 2003/04/06 22:49:36 miod Exp $	*/
+/*	$OpenBSD: bsd_fdintr.s,v 1.10 2004/09/22 22:12:59 miod Exp $	*/
 /*	$NetBSD: bsd_fdintr.s,v 1.11 1997/04/07 21:00:36 pk Exp $ */
 
 /*
@@ -189,13 +189,16 @@ _C_LABEL(fdchwintr):
 	!!ld	[R_fdc + FDC_REG_DOR], R_dor	! get chip DOR reg addr
 
 	! find out what we are supposed to do
-	ld	[R_fdc + FDC_ISTATE], %l7	! examine flags
-	cmp	%l7, ISTATE_SENSEI
+	ld	[R_fdc + FDC_ITASK], %l7	! get task from fdc
+	cmp	%l7, FDC_ITASK_SENSEI
 	be	sensei
-	 nop
-	cmp	%l7, ISTATE_DMA
-	bne	spurious
-	 nop
+	 !nop
+	cmp	%l7, FDC_ITASK_RESULT
+	be	resultphase
+	 !nop
+	cmp	%l7, FDC_ITASK_DMA
+	bne,a	ssi				! a spurious interrupt
+	 mov	FDC_ISTATUS_SPURIOUS, %l7	! set status and post sw intr
 
 	! pseudo DMA
 	ld	[R_fdc + FDC_TC], R_tc		! residual count
@@ -245,16 +248,12 @@ nextc:
 	FD_DEASSERT_TC
 	b,a	resultphase1
 
-spurious:
-	mov	ISTATE_SPURIOUS, %l7
-	st	%l7, [R_fdc + FDC_ISTATE]
-	b,a	ssi
-
 sensei:
 	ldub	[R_msr], %l7
 	set	POLL_TIMO, %l6
 1:	deccc	%l6				! timeout?
-	be	ssi
+	be,a	ssi				! if so, set status
+	 mov	FDC_ISTATUS_ERROR, %l7		! and post sw interrupt
 	and	%l7, (NE7_RQM | NE7_DIO | NE7_CB), %l7
 	cmp	%l7, NE7_RQM
 	bne,a	1b				! loop till chip ready
@@ -273,7 +272,8 @@ resultphase1:
 	ldub	[R_msr], %l7
 	set	POLL_TIMO, %l6
 1:	deccc	%l6				! timeout?
-	be	ssi
+	be,a	ssi				! if so, set status
+	 mov	FDC_ISTATUS_ERROR, %l7		! and post sw interrupt
 	and	%l7, (NE7_RQM | NE7_DIO | NE7_CB), %l7
 	cmp	%l7, NE7_RQM
 	be	3f				! done
@@ -293,11 +293,12 @@ resultphase1:
 3:
 	! got status, update sc_nstat and mark istate DONE
 	st	R_stcnt, [R_fdc + FDC_NSTAT]
-	mov	ISTATE_DONE, %l7
-	st	%l7, [R_fdc + FDC_ISTATE]
+	mov	FDC_ISTATUS_DONE, %l7
 
 ssi:
 	! set software interrupt
+	! enter here with status in %l7
+	st	%l7, [R_fdc + FDC_ISTATUS]
 	FD_SET_SWINTR
 
 x:

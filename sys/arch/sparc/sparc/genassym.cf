@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.15 2004/06/13 21:49:20 niklas Exp $
+#	$OpenBSD: genassym.cf,v 1.16 2004/09/22 22:12:59 miod Exp $
 #	$NetBSD: genassym.cf,v 1.2 1997/06/28 19:59:04 pk Exp $
 
 #
@@ -208,7 +208,8 @@ member	HALT		exitToMon
 struct	fdcio
 member	FDC_REG_MSR	fdcio_reg_msr
 member	FDC_REG_FIFO	fdcio_reg_fifo
-member	FDC_ISTATE	fdcio_istate
+member	FDC_ITASK	fdcio_itask
+member	FDC_ISTATUS	fdcio_istatus
 member	FDC_STATUS	fdcio_status
 member	FDC_NSTAT	fdcio_nstat
 member	FDC_DATA	fdcio_data
