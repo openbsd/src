@@ -1125,14 +1125,20 @@ readwrite(fd)
 
 /* and now the big ol' select shoveling loop ... */
 	while (FD_ISSET(fd, &fds1)) {	/* i.e. till the *net* closes! */
+		struct timeval *tv;
+
 		wretry = 8200;	/* more than we'll ever hafta write */
 		if (wfirst) {	/* any saved stdin buffer? */
 			wfirst = 0;	/* clear flag for the duration */
 			goto shovel;	/* and go handle it first */
 		}
 		fds2 = fds1;
-		memcpy(&timer2, &timer1, sizeof(struct timeval));
-		rr = select(getdtablesize(), &fds2, 0, 0, &timer2);
+		if (timer1.tv_sec > 0 || timer1.tv_usec > 0) {
+			memcpy(&timer2, &timer1, sizeof(struct timeval));
+			tv = &timer2;
+		} else
+			tv = NULL;
+		rr = select(getdtablesize(), &fds2, 0, 0, tv);
 		if (rr < 0) {
 			if (errno != EINTR) {	/* might have gotten ^Zed, etc
 						 * ? */
