@@ -1,4 +1,4 @@
-/*	$OpenBSD: genassym.c,v 1.8 1997/02/14 21:53:18 kstailey Exp $	*/
+/*	$OpenBSD: genassym.c,v 1.9 2000/07/14 14:27:04 miod Exp $	*/
 /*	$NetBSD: genassym.c,v 1.32 1996/10/23 16:39:27 gwr Exp $	*/
 
 /*
@@ -199,14 +199,6 @@ main()
 	/* FP frame offsets */
 	def("FPF_REGS", &fpf->fpf_regs[0]);
 	def("FPF_FPCR", &fpf->fpf_fpcr);
-
-	/* SPL values */
-	def("SPL1", PSL_S | PSL_IPL1);
-	def("SPL2", PSL_S | PSL_IPL2);
-	def("SPL3", PSL_S | PSL_IPL3);
-	def("SPL4", PSL_S | PSL_IPL4);
-	def("SPL5", PSL_S | PSL_IPL5);
-	def("SPL6", PSL_S | PSL_IPL6);
 
 	exit(0);
 }
