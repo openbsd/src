@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc.c,v 1.23 1997/08/07 10:24:25 niklas Exp $	*/
+/*	$OpenBSD: wdc.c,v 1.24 1997/11/22 20:23:53 mickey Exp $	*/
 /*	$NetBSD: wd.c,v 1.150 1996/05/12 23:54:03 mycroft Exp $ */
 
 /*
@@ -180,7 +180,7 @@ wdcprobe(parent, match, aux)
 	if (wdcreset(wdc, WDCRESET_SILENT) != 0) {
 		/*
 		 * if the reset failed,, there is no master. test for ATAPI
-		 * signature on the salve device. If no ATAPI slave, wait 5s
+		 * signature on the slave device. If no ATAPI slave, wait 5s
 		 * and retry a reset.
 		 */
 		bus_space_write_1(iot, ioh, wd_sdh, WDSD_IBM | 0x10);	/* slave */
