@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_timer.c,v 1.24 2002/01/14 03:11:55 provos Exp $	*/
+/*	$OpenBSD: tcp_timer.c,v 1.25 2002/01/14 20:13:45 provos Exp $	*/
 /*	$NetBSD: tcp_timer.c,v 1.14 1996/02/13 23:44:09 christos Exp $	*/
 
 /*
@@ -177,11 +177,11 @@ tcp_timers(tp, timer)
 	 * Free SACK holes for 2MSL and REXMT timers.
 	 */
 	if (timer == TCPT_2MSL || timer == TCPT_REXMT) {
-		q = p = tp->snd_holes;
-		while (p != 0) {
-			q = p->next;
-			free(p, M_PCB);
+		q = tp->snd_holes;
+		while (q != NULL) {
 			p = q;
+			q = q->next;
+			free(p, M_PCB);
 		}
 		tp->snd_holes = 0;
 #if defined(TCP_SACK) && defined(TCP_FACK)
@@ -203,7 +203,7 @@ tcp_timers(tp, timer)
 	case TCPT_2MSL:
 		if (tp->t_state != TCPS_TIME_WAIT &&
 		    tp->t_idle <= tcp_maxidle)
-			TCP_TIMER_ARM(tp,TCPT_2MSL, tcp_keepintvl);
+			TCP_TIMER_ARM(tp, TCPT_2MSL, tcp_keepintvl);
 		else
 			tp = tcp_close(tp);
 		break;
