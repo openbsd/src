@@ -1,4 +1,4 @@
-/*	$OpenBSD: uperf_psycho.c,v 1.1 2002/01/30 23:58:02 jason Exp $	*/
+/*	$OpenBSD: uperf_psycho.c,v 1.2 2002/01/31 18:27:26 jason Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -43,10 +43,12 @@
 #include <machine/intr.h>
 #include <machine/autoconf.h>
 
+#include <dev/pci/pcivar.h>
+
 #include <arch/sparc64/dev/iommureg.h>
 #include <arch/sparc64/dev/psychoreg.h>
+#include <arch/sparc64/dev/psychovar.h>
 #include <arch/sparc64/dev/uperfvar.h>
-#include <arch/sparc64/dev/uperf_psychovar.h>
 
 int uperf_psycho_match __P((struct device *, void *, void *));
 void uperf_psycho_attach __P((struct device *, struct device *, void *));

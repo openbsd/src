@@ -1,4 +1,4 @@
-/*	$OpenBSD: psychovar.h,v 1.2 2001/08/29 02:47:58 jason Exp $	*/
+/*	$OpenBSD: psychovar.h,v 1.3 2002/01/31 18:27:26 jason Exp $	*/
 /*	$NetBSD: psychovar.h,v 1.6 2001/07/20 00:07:13 eeh Exp $	*/
 
 /*
@@ -116,5 +116,11 @@ bus_space_tag_t psycho_alloc_bus_tag __P((struct psycho_pbm *, int));
 #define psycho_alloc_config_tag(pp) psycho_alloc_bus_tag((pp), PCI_CONFIG_BUS_SPACE)
 #define psycho_alloc_mem_tag(pp) psycho_alloc_bus_tag((pp), PCI_MEMORY_BUS_SPACE)
 #define psycho_alloc_io_tag(pp) psycho_alloc_bus_tag((pp), PCI_IO_BUS_SPACE)
+
+/* uperf attachment to psycho's */
+struct uperf_psycho_attach_args {
+	char *upaa_name;
+	struct perfmon *upaa_regs;
+};
 
 #endif /* _SPARC64_DEV_PSYCHOVAR_H_ */

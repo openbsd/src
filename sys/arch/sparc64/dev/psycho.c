@@ -1,4 +1,4 @@
-/*	$OpenBSD: psycho.c,v 1.12 2002/01/30 23:58:02 jason Exp $	*/
+/*	$OpenBSD: psycho.c,v 1.13 2002/01/31 18:27:26 jason Exp $	*/
 /*	$NetBSD: psycho.c,v 1.39 2001/10/07 20:30:41 eeh Exp $	*/
 
 /*
@@ -57,9 +57,6 @@
 #include <sparc64/dev/iommuvar.h>
 #include <sparc64/dev/psychoreg.h>
 #include <sparc64/dev/psychovar.h>
-#if NUPERF_PSYCHO > 0
-#include <sparc64/dev/uperf_psychovar.h>
-#endif
 #include <sparc64/sparc64/cache.h>
 
 #undef DEBUG
