@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.54 1999/02/15 16:41:37 art Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.55 1999/02/15 16:46:57 art Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -425,8 +425,8 @@ dounmount(mp, flags, p)
 
 	simple_lock(&mountlist_slock);
 	if (mp->mnt_flag & MNT_UNMOUNT) {
-		simple_unlock(&mountlist_slock);
 		mp->mnt_flag |= MNT_MWAIT;
+		simple_unlock(&mountlist_slock);
 		sleep(mp, PVFS);
 		return ENOENT;
 	}
@@ -445,9 +445,9 @@ dounmount(mp, flags, p)
  	if (error) {
  		if ((mp->mnt_flag & MNT_RDONLY) == 0 && mp->mnt_syncer == NULL)
  			(void) vfs_allocate_syncvnode(mp);
+		mp->mnt_flag &= ~MNT_UNMOUNT;
 		lockmgr(&mp->mnt_lock, LK_RELEASE | LK_INTERLOCK | LK_REENABLE,
 		    &mountlist_slock, p);
-		mp->mnt_flag &= ~MNT_UNMOUNT;
 		if (mp->mnt_flag & MNT_MWAIT)
 			wakeup((caddr_t)mp);
 		mp->mnt_flag &= ~MNT_MWAIT;
