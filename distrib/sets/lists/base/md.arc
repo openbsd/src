@@ -11,7 +11,7 @@
 ./usr/lib/gcc-lib/mipsel-unknown-openbsd2.2/2.7.2.1/include
 ./usr/lib/gcc-lib/mipsel-unknown-openbsd2.2/2.7.2.1/include/objc
 ./usr/lib/libacl.so.4.0
-./usr/lib/libc.so.17.3
+./usr/lib/libc.so.17.4
 ./usr/lib/libcurses.so.3.1
 ./usr/lib/libdes.so.6.0
 ./usr/lib/libedit.so.0.0
@@ -32,7 +32,7 @@
 ./usr/lib/libtelnet.so.1.0
 ./usr/lib/libtermcap.so.0.0
 ./usr/lib/libtermlib.so.2.0
-./usr/lib/libutil.so.4.0
+./usr/lib/libutil.so.4.1
 ./usr/lib/libwrap.so.1.0
 ./usr/lib/libz.so.1.2
 ./usr/lib/perl5/auto/Text
@@ -383,3 +383,6 @@
 ./usr/mipsel-unknown-openbsd2.2/bin
 ./usr/mipsel-unknown-openbsd2.2/lib
 ./usr/mipsel-unknown-openbsd2.2/lib/ldscripts
+./usr/lib/perl5/mips-openbsd/5.003/sys/endian.ph
+./usr/lib/perl5/mips-openbsd/5.003/sys/lock.ph
+./usr/lib/perl5/mips-openbsd/5.003/sys/simplelock.ph

@@ -863,3 +863,10 @@
 ./usr/share/man/cat9/splx.0
 ./usr/share/man/cat8/mkisofs.0
 ./usr/share/man/cat8/afterboot.0
+./usr/share/man/cat3/uu_lock.0
+./usr/share/man/cat3/uu_lockerr.0
+./usr/share/man/cat3/uu_unlock.0
+./usr/share/man/cat3/uucplock.0
+./usr/share/man/cat8/faq.0
+./usr/share/man/cat8/getNAME.0
+./usr/share/man/cat8/makewhatis.0

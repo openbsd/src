@@ -957,7 +957,6 @@
 ./usr/include/varargs.h
 ./usr/include/vis.h
 ./usr/include/vm/device_pager.h
-./usr/include/vm/lock.h
 ./usr/include/vm/pmap.h
 ./usr/include/vm/swap_pager.h
 ./usr/include/vm/vm.h
@@ -1099,6 +1098,7 @@
 ./usr/share/man/cat1/yacc.0
 ./usr/share/man/cat2/__syscall.0
 ./usr/share/man/cat2/_exit.0
+./usr/share/man/cat2/getsid.0
 ./usr/share/man/cat2/accept.0
 ./usr/share/man/cat2/access.0
 ./usr/share/man/cat2/acct.0
@@ -2247,3 +2247,21 @@
 ./usr/share/mk/bsd.subdir.mk
 ./usr/share/mk/bsd.sys.mk
 ./var/db/libc.tags
+./usr/include/dev/ic/vgavar.h
+./usr/include/dev/isa/vga_isavar.h
+./usr/include/dev/pci/vga_pcivar.h
+./usr/include/dev/wscons
+./usr/include/dev/wscons/ascii.h
+./usr/include/dev/wscons/event_var.h
+./usr/include/dev/wscons/kbd.h
+./usr/include/dev/wscons/ms.h
+./usr/include/dev/wscons/wscons_emul.h
+./usr/include/dev/wscons/wscons_raster.h
+./usr/include/dev/wscons/wscons_rfont.h
+./usr/include/dev/wscons/wsconsvar.h
+./usr/include/netinet/ip_blf.h
+./usr/include/netinet/ip_cast.h
+./usr/include/netinet/ip_castsb.h
+./usr/include/sys/endian.h
+./usr/include/sys/lock.h
+./usr/include/sys/simplelock.h

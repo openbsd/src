@@ -341,3 +341,6 @@
 ./usr/powerpc-unknown-openbsd2.2/lib
 ./usr/powerpc-unknown-openbsd2.2/lib/ldscripts
 ./usr/lib/perl5/powerpc-openbsd/5.003/rmd160.ph
+./usr/lib/perl5/powerpc-openbsd/5.003/sys/endian.ph
+./usr/lib/perl5/powerpc-openbsd/5.003/sys/lock.ph
+./usr/lib/perl5/powerpc-openbsd/5.003/sys/simplelock.ph

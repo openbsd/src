@@ -358,3 +358,6 @@
 ./usr/mdec/installboot
 ./usr/mdec/netboot
 ./usr/mdec/setnetbootinfo
+./usr/lib/perl5/alpha-openbsd/5.003/sys/endian.ph
+./usr/lib/perl5/alpha-openbsd/5.003/sys/lock.ph
+./usr/lib/perl5/alpha-openbsd/5.003/sys/simplelock.ph
