@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.36 2004/10/05 10:09:34 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.37 2004/10/05 10:12:22 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -239,11 +239,10 @@ our @ISA=qw(OpenBSD::PackingElement);
 package OpenBSD::PackingElement::Unique;
 our @ISA=qw(OpenBSD::PackingElement::Meta);
 
-sub add 
+sub add_object
 {
-	my ($class, $plist, @args) = @_;
+	my ($self, $plist) = @_;
 
-	my $self = $class->new(@args);
 	$self->destate($plist->{state});
 	$plist->addunique($self);
 	return $self;
