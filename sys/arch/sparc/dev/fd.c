@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.12 1996/12/05 17:16:59 deraadt Exp $	*/
+/*	$OpenBSD: fd.c,v 1.13 1996/12/06 11:23:02 deraadt Exp $	*/
 /*	$NetBSD: fd.c,v 1.33.4.1 1996/06/12 20:52:25 pk Exp $	*/
 
 /*-
@@ -1649,6 +1649,7 @@ fdgetdisklabel(dev)
 	lp->d_type = DTYPE_FLOPPY;
 	strncpy(lp->d_packname, "fictitious", sizeof(lp->d_packname));
 	lp->d_rpm = 300;	/* XXX like it matters... */
+	lp->d_secperunit = fd->sc_type->size;
 	lp->d_interleave = 1;
 	lp->d_flags = D_REMOVABLE;
 
@@ -1664,7 +1665,7 @@ fdgetdisklabel(dev)
 	/*
 	 * Call the generic disklabel extraction routine.
 	 */
-	(void) readdisklabel(dev, fdstrategy, lp, clp);
+	errstring = readdisklabel(dev, fdstrategy, lp, clp);
 	if (errstring) {
 		printf("%s: %s\n", fd->sc_dv.dv_xname, errstring);
 		return;
