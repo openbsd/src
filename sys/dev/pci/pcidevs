@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.359 2001/01/22 23:05:48 aaron Exp $
+	$OpenBSD: pcidevs,v 1.360 2001/01/23 00:05:01 deraadt Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -1061,6 +1061,7 @@ product IBM 0x0020		0x0020	MCA
 product IBM 82351		0x0022	82351 PCI-PCI
 product IBM 0x0036		0x0036	Miami/PCI
 product IBM OLYMPIC		0x003e	Olympic
+product IBM FIREGL2		0x0170	FireGL2
 
 /* IDT products */
 product IDT 77201		0x0001	77201/77211 ATM (NICStAR)
