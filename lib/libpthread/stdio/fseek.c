@@ -1,5 +1,6 @@
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
+ * Copyright (c) 1993, 1994 Chris Provenzano. 
  * All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
@@ -36,9 +37,10 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)fseek.c	5.7 (Berkeley) 2/24/91";*/
-static char *rcsid = "$Id: fseek.c,v 1.2 1997/07/25 20:30:22 mickey Exp $";
+static char *rcsid = "$Id: fseek.c,v 1.3 1998/07/21 13:53:56 peter Exp $";
 #endif /* LIBC_SCCS and not lint */
 
+#include <pthread.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -69,8 +71,7 @@ fseek(fp, offset, whence)
 	int havepos;
 
 	/* make sure stdio is set up */
-	if (!__sdidinit)
-		__sinit();
+	__sinit ();
 
 	flockfile(fp);
 
@@ -88,10 +89,11 @@ fseek(fp, offset, whence)
 		if (fp->_flags & __SOFF)
 			curoff = fp->_offset;
 		else {
-			curoff = __sseek(fp, (fpos_t)0, SEEK_CUR);
-			if (curoff == -1L)
+			curoff = __sseek(fp, (off_t)0, SEEK_CUR);
+			if (curoff == -1L) {
 				funlockfile(fp);
 				return (EOF);
+			}
 		}
 		if (fp->_flags & __SRD) {
 			curoff -= fp->_r;
@@ -155,7 +157,7 @@ fseek(fp, offset, whence)
 		if (fp->_flags & __SOFF)
 			curoff = fp->_offset;
 		else {
-			curoff = __sseek(fp, 0L, SEEK_CUR);
+			curoff = __sseek(fp, (off_t)0, SEEK_CUR);
 			if (curoff == POS_ERR)
 				goto dumb;
 		}
@@ -208,7 +210,7 @@ fseek(fp, offset, whence)
 	 * ensures that we only read one block, rather than two.
 	 */
 	curoff = target & ~(fp->_blksize - 1);
-	if (__sseek(fp, 0L, SEEK_CUR) != POS_ERR) {
+	if (__sseek(fp, (off_t)curoff, SEEK_SET) != POS_ERR) {
 		fp->_r = 0;
  		fp->_p = fp->_bf._base;
 		if (HASUB(fp))
@@ -230,7 +232,7 @@ fseek(fp, offset, whence)
 	 * do it.  Allow the seek function to change fp->_bf._base.
 	 */
 dumb:
-	if (__sflush(fp) || __sseek(fp, offset, whence) == POS_ERR) {
+	if (__sflush(fp) || __sseek(fp, (off_t)offset, whence) == POS_ERR) {
 		funlockfile(fp);
 		return (EOF);
 	}

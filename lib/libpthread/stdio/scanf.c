@@ -1,5 +1,6 @@
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
+ * Copyright (c) 1993, 1994 Chris Provenzano. 
  * All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
@@ -36,7 +37,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)scanf.c	5.3 (Berkeley) 1/20/91";*/
-static char *rcsid = "$Id: scanf.c,v 1.2 1997/07/25 20:30:23 mickey Exp $";
+static char *rcsid = "$Id: scanf.c,v 1.3 1998/07/21 13:53:59 peter Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <pthread.h>
@@ -65,7 +66,7 @@ scanf(fmt, va_alist)
 #endif
 	flockfile(stdin);
 	ret = __svfscanf(stdin, fmt, ap);
-	flockfile(stdin);
+	funlockfile(stdin);
 	va_end(ap);
 	return (ret);
 }

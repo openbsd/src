@@ -35,20 +35,20 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)stdio.h	5.17 (Berkeley) 6/3/91
- *	$Id: stdio.h,v 1.2 1997/04/13 17:08:35 briggs Exp $ $provenid: stdio.h,v 1.18 1994/02/07 03:32:06 proven Exp $
+ *	$Id: stdio.h,v 1.3 1998/07/21 13:53:52 peter Exp $
  */
 
 #ifndef _STDIO_H_
 #define _STDIO_H_
 
 #include <sys/cdefs.h>
+#include <pthread/types.h>
 #include <pthread/posix.h>
+#include <sys/__stdio.h>
 
 #ifndef NULL
 #define	NULL	0
 #endif
-
-typedef long fpos_t;		/* Must match off_t <sys/types.h> */
 
 #define	_FSTDIO				/* Define for new stdio with functions. */
 
@@ -185,53 +185,62 @@ __END_DECLS
  * Functions defined in ANSI C standard.
  */
 __BEGIN_DECLS
-void	clearerr 	__P((FILE *));
-int	 	fclose 		__P((FILE *));
-int	 	feof 		__P((FILE *));
-int	 	ferror 		__P((FILE *));
-int	 	fflush 		__P((FILE *));
-int	 	fgetc 		__P((FILE *));
-int	 	fgetpos 	__P((FILE *, fpos_t *));
-char  * fgets 		__P((char *, size_t, FILE *));
-FILE  * fopen 		__P((const char *, const char *));
-int	 	fprintf 	__P((FILE *, const char *, ...));
-int	 	fputc 		__P((int, FILE *));
-int	 	fputs 		__P((const char *, FILE *));
-size_t	fread 		__P((void *, size_t, size_t, FILE *));
-FILE  * freopen 	__P((const char *, const char *, FILE *));
-int	 	fscanf 		__P((FILE *, const char *, ...));
-int	 	fseek 		__P((FILE *, long, int));
-int	 	fsetpos 	__P((FILE *, const fpos_t *));
-long	ftell 		__P((const FILE *));
-size_t	fwrite 		__P((const void *, size_t, size_t, FILE *));
-int	 	getc 		__P((FILE *));
-int	 	getchar 	__P((void));
-char  * gets 		__P((char *));
+void	clearerr 	__P_((FILE *));
+int	 	fclose 		__P_((FILE *));
+int	 	feof 		__P_((FILE *));
+int	 	ferror 		__P_((FILE *));
+int	 	fflush 		__P_((FILE *));
+int	 	fgetc 		__P_((FILE *));
+int	 	fgetpos 	__P_((FILE *, fpos_t *));
+char  * fgets 		__P_((char *, size_t, FILE *));
+FILE  * fopen 		__P_((const char *, const char *));
+int	 	fprintf 	__P_((FILE *, const char *, ...));
+int	 	fputc 		__P_((int, FILE *));
+int	 	fputs 		__P_((const char *, FILE *));
+size_t	fread 		__P_((void *, size_t, size_t, FILE *));
+FILE  * freopen 	__P_((const char *, const char *, FILE *));
+int	 	fscanf 		__P_((FILE *, const char *, ...));
+int	 	fseek 		__P_((FILE *, long, int));
+int	 	fsetpos 	__P_((FILE *, const fpos_t *));
+long	ftell 		__P_((const FILE *));
+size_t	fwrite 		__P_((const void *, size_t, size_t, FILE *));
+int	 	getc 		__P_((FILE *));
+int	 	getchar 	__P_((void));
+char  * gets 		__P_((char *));
 
 #if !defined(_ANSI_SOURCE) && !defined(_POSIX_SOURCE)
 extern int sys_nerr;			/* perror(3) external variables */
+/* Under NetBSD and BSD 4.4, at least, this is expected to be a const
+   array of pointers to const.  If you take `const' back out of this
+   declaration, please make it conditional on __NetBSD__ and bsd4_4.  */
+#ifdef HAVE_SYS_ERRLIST_WITHOUT_CONST
 extern char *sys_errlist[];
+#else
+extern const char *const sys_errlist[];
+#endif
 #endif
 
-void	 perror __P((const char *));
-int	 printf __P((const char *, ...));
-int	 putc __P((int, FILE *));
-int	 putchar __P((int));
-int	 puts __P((const char *));
-int	 remove __P((const char *));
-int	 rename  __P((const char *, const char *));
-void	 rewind __P((FILE *));
-int	 scanf __P((const char *, ...));
-void	 setbuf __P((FILE *, char *));
-int	 setvbuf __P((FILE *, char *, int, size_t));
-int	 sprintf __P((char *, const char *, ...));
-int	 sscanf __P((const char *, const char *, ...));
-FILE	*tmpfile __P((void));
-char	*tmpnam __P((char *));
-int	 ungetc __P((int, FILE *));
-int	 vfprintf __P((FILE *, const char *, va_list));
-int	 vprintf __P((const char *, va_list));
-int	 vsprintf __P((char *, const char *, va_list));
+void	perror 		__P_((const char *));
+int		printf 		__P_((const char *, ...));
+int		putc 		__P_((int, FILE *));
+int		putchar		__P_((int));
+int		puts 		__P_((const char *));
+int	 	remove 		__P_((const char *));
+int	 	rename 		__P_((const char *, const char *));
+void	rewind 		__P_((FILE *));
+int	 	scanf		__P_((const char *, ...));
+void	setbuf 		__P_((FILE *, char *));
+int	 	setvbuf 	__P_((FILE *, char *, int, size_t));
+int	 	sprintf 	__P_((char *, const char *, ...));
+int	 	sscanf 		__P_((const char *, const char *, ...));
+FILE  *	tmpfile 	__P_((void));
+char  *	tmpnam 		__P_((char *));
+int	 	ungetc 		__P_((int, FILE *));
+int	 	vfprintf 	__P_((FILE *, const char *, pthread_va_list));
+int	 	vprintf 	__P_((const char *, pthread_va_list));
+int	 	vsprintf 	__P_((char *, const char *, pthread_va_list));
+char *mprintf __P_((const char *, ...));
+char *vmprintf __P_((const char *, pthread_va_list));
 __END_DECLS
 
 /*
@@ -242,10 +251,21 @@ __END_DECLS
 #define L_cuserid	9	/* size for cuserid(); UT_NAMESIZE + 1 */
 
 __BEGIN_DECLS
-char	*ctermid __P((char *));
-char	*cuserid __P((char *));
-FILE	*fdopen __P((int, const char *));
-int	 fileno __P((FILE *));
+char  * ctermid __P_((char *));
+char  * cuserid __P_((char *));
+FILE  * fdopen __P_((int, const char *));
+int	 	fileno __P_((FILE *));
+__END_DECLS
+#endif /* not ANSI */
+
+/*
+ * Functions defined in POSIX 1003.4a. (1c)
+ */
+#ifndef _ANSI_SOURCE
+__BEGIN_DECLS
+void	flockfile __P_((FILE *));
+void	funlockfile __P_((FILE *));
+int		ftrylockfile __P_((FILE *));
 __END_DECLS
 #endif /* not ANSI */
 
@@ -254,19 +274,19 @@ __END_DECLS
  */
 #if !defined (_ANSI_SOURCE) && !defined(_POSIX_SOURCE)
 __BEGIN_DECLS
-char	*fgetline __P((FILE *, size_t *));
-int	 fpurge __P((FILE *));
-int	 getw __P((FILE *));
-int	 pclose __P((FILE *));
-FILE	*popen __P((const char *, const char *));
-int	 putw __P((int, FILE *));
-void	 setbuffer __P((FILE *, char *, int));
-int	 setlinebuf __P((FILE *));
-char	*tempnam __P((const char *, const char *));
-int	 snprintf __P((char *, size_t, const char *, ...));
-int	 vsnprintf __P((char *, size_t, const char *, va_list));
-int	 vscanf __P((const char *, va_list));
-int	 vsscanf __P((const char *, const char *, va_list));
+char	*fgetline __P_((FILE *, size_t *));
+int	 fpurge __P_((FILE *));
+int	 getw __P_((FILE *));
+int	 pclose __P_((FILE *));
+FILE	*popen __P_((const char *, const char *));
+int	 putw __P_((int, FILE *));
+void	 setbuffer __P_((FILE *, char *, int));
+int	 setlinebuf __P_((FILE *));
+char	*tempnam __P_((const char *, const char *));
+int	 snprintf __P_((char *, size_t, const char *, ...));
+int	 vsnprintf __P_((char *, size_t, const char *, pthread_va_list));
+int	 vscanf __P_((const char *, pthread_va_list));
+int	 vsscanf __P_((const char *, const char *, pthread_va_list));
 __END_DECLS
 
 /*
@@ -280,7 +300,7 @@ __END_DECLS
  * Stdio function-access interface.
  */
 __BEGIN_DECLS
-FILE	*funopen __P((const void *,
+FILE	*funopen __P_((const void *,
 		int (*)(void *, char *, int),
 		int (*)(void *, const char *, int),
 		fpos_t (*)(void *, fpos_t, int),
@@ -294,11 +314,9 @@ __END_DECLS
  * Functions internal to the implementation.
  */
 __BEGIN_DECLS
-int	__srget __P((FILE *));
-int	__svfscanf __P((FILE *, const char *, va_list));
-int	__swbuf __P((int, FILE *));
-void	flockfile __P((FILE *fp));
-void	funlockfile __P((FILE *fp));
+int	__srget __P_((FILE *));
+int	__svfscanf __P_((FILE *, const char *, pthread_va_list));
+int	__swbuf __P_((int, FILE *));
 __END_DECLS
 
 /*
@@ -306,38 +324,35 @@ __END_DECLS
  * define function versions in the C library.
  */
 #define	__sgetc(p) (--(p)->_r < 0 ? __srget(p) : (int)(*(p)->_p++))
-static __inline int __getc(FILE *_p)
-{
-	int ret;
-	flockfile(_p);
-	ret = __sgetc(_p);
-	funlockfile(_p);
-	return(ret);
-}
 
-#define getc(fp)			__gets(fp)
-#define	getchar()			getc(stdin)
-#define getc_unlocked(fp)	__sgetc(fp)
-#define getchar_unlocked()	getc_unlocked(stdin)
+__BEGIN_DECLS
+int 	__getc 					__P_((FILE *));
+__END_DECLS
 
-static __inline int __sputc(int _c, FILE *_p)
+#define getc(fp)				__getc(fp)
+#define	getchar()				getc(stdin)
+#define getc_unlocked(fp)		__sgetc(fp)
+#define getchar_unlocked()		getc_unlocked(stdin)
+
+#ifdef __CAN_DO_EXTERN_INLINE
+__INLINE int __sputc(int _c, FILE *_p)
 {
 	if (--_p->_w >= 0 || (_p->_w >= _p->_lbfsize && (char)_c != '\n'))
 		return (*_p->_p++ = _c);
 	else
 		return (__swbuf(_c, _p));
 }
+#else
+__BEGIN_DECLS
+int 	__sputc 				__P_((int, FILE *));
+__END_DECLS
+#endif
 
-static __inline int __putc(int _c, FILE *_p)
-{
-	int ret;
-	flockfile(_p);
-	ret = __sputc(_c, _p);
-	funlockfile(_p);
-	return(ret);
-}
+__BEGIN_DECLS
+int 	__putc 					__P_((int, FILE *));
+__END_DECLS
 
-#define putc(x, fp)				__putc(x, fp);
+#define putc(x, fp)				__putc(x, fp)
 #define	putchar(x)				putc(x, stdout)
 #define putc_unlocked(x, fp)	__sputc(x, fp)
 #define putchar_unlocked(x)		putc_unlocked(x, stdout)

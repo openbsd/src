@@ -1,5 +1,6 @@
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
+ * Copyright (c) 1993, 1994 Chris Provenzano. 
  * All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
@@ -36,7 +37,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)vfscanf.c	5.7 (Berkeley) 12/14/92";*/
-static char *rcsid = "$Id: vfscanf.c,v 1.2 1997/07/25 20:30:25 mickey Exp $";
+static char *rcsid = "$Id: vfscanf.c,v 1.3 1998/07/21 13:54:05 peter Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
@@ -98,7 +99,7 @@ static u_char *__sccl();
 __svfscanf(fp, fmt0, ap)
 	register FILE *fp;
 	char const *fmt0;
-	va_list ap;
+	pthread_va_list ap;
 {
 	register u_char *fmt = (u_char *)fmt0;
 	register int c;		/* character from format, or conversion */

@@ -1,5 +1,6 @@
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
+ * Copyright (c) 1993, 1994 Chris Provenzano. 
  * All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
@@ -36,10 +37,12 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)funopen.c	5.2 (Berkeley) 2/5/91";*/
-static char *rcsid = "$Id: funopen.c,v 1.2 1997/07/25 20:30:22 mickey Exp $";
+static char *rcsid = "$Id: funopen.c,v 1.3 1998/07/21 13:53:58 peter Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <pthread.h>
+#include <stdlib.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <errno.h>
 #include "local.h"
@@ -74,20 +77,22 @@ funopen(cookie, readfn, writefn, seekfn, closefn)
 	}
 
 	if (fd_ops = (struct fd_ops*)malloc(sizeof(struct fd_ops))) {
-		if ((!(fd = fd_allocate())) < OK) {
+		if ((fd = fd_allocate()) >= OK) {
 
 			/* Set functions */
-			fd_ops->seek = seekfn;
-			fd_ops->read = readfn;
-			fd_ops->write = writefn;
+			fd_ops->seek = (off_t(*)())seekfn;
+			fd_ops->read = (pthread_ssize_t(*)())readfn;
+			fd_ops->write = (pthread_ssize_t(*)())writefn;
 			fd_ops->close = closefn;
+			fd_ops->use_kfds = 2;
 
 			/* Alloc space for funtion pointer table */
 			fd_table[fd]->type = FD_HALF_DUPLEX;
 			fd_table[fd]->ops = fd_ops;
+			fd_table[fd]->flags = O_RDWR;
 	
 			/* Save the cookie, it's important */
-			fd_table[fd]->fd.ptr = cookie;
+			fd_table[fd]->fd.ptr = (void *)cookie;
 
 			if (fp = fdopen(fd, flags))
 				return(fp);

@@ -1,5 +1,6 @@
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
+ * Copyright (c) 1993, 1994 Chris Provenzano. 
  * All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
@@ -36,7 +37,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)ftell.c	5.4 (Berkeley) 2/5/91";*/
-static char *rcsid = "$Id: ftell.c,v 1.4 1997/02/28 16:22:31 kstailey Exp $";
+static char *rcsid = "$Id: ftell.c,v 1.5 1998/07/21 13:53:57 peter Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <pthread.h>
@@ -51,18 +52,18 @@ long
 ftell(fp)
 	register const FILE *fp;
 {
-	register fpos_t pos;
+	long pos;
 
-	flockfile(fp);
+	flockfile((FILE *)fp);
 
 	/*
 	 * Find offset of underlying I/O object, then
 	 * adjust for buffered bytes.
 	 */
-	if (fp->_flags & __SOFF)
+	if (fp->_flags & __SOFF) {
 		pos = fp->_offset;
-	else {
-		pos = lseek(fp->_file, (fpos_t)0, SEEK_CUR);
+	} else {
+		pos = (long)__sseek((FILE *)fp, (off_t)0, SEEK_CUR);
 	}
 
 	if (pos != -1L) {
@@ -84,6 +85,6 @@ ftell(fp)
 			pos += fp->_p - fp->_bf._base;
 		}
 	}
-	funlockfile(fp);
+	funlockfile((FILE *)fp);
 	return (pos);
 }

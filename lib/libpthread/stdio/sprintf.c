@@ -1,5 +1,6 @@
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
+ * Copyright (c) 1993, 1994 Chris Provenzano. 
  * All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
@@ -36,16 +37,16 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)sprintf.c	5.7 (Berkeley) 1/20/91";*/
-static char *rcsid = "$Id: sprintf.c,v 1.2 1997/07/25 20:30:24 mickey Exp $";
+static char *rcsid = "$Id: sprintf.c,v 1.3 1998/07/21 13:54:01 peter Exp $";
 #endif /* LIBC_SCCS and not lint */
 
+#include <limits.h>
 #include <stdio.h>
 #ifdef __STDC__
 #include <stdarg.h>
 #else
 #include <varargs.h>
 #endif
-#include <limits.h>
 #include "local.h"
 
 #ifdef __STDC__
@@ -61,6 +62,7 @@ sprintf(str, fmt, va_alist)
 	va_list ap;
 	FILE f;
 
+	f._file = -1;
 	f._flags = __SWR | __SSTR;
 	f._bf._base = f._p = (unsigned char *)str;
 	f._bf._size = f._w = INT_MAX;
