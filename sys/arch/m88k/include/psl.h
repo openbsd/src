@@ -1,4 +1,4 @@
-/*	$OpenBSD: psl.h,v 1.1 2004/04/26 12:34:05 miod Exp $ */
+/*	$OpenBSD: psl.h,v 1.2 2004/06/19 18:24:15 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -47,7 +47,7 @@
 #define __M88K_PSL_H__
 
 /*
- * 88100 control registers
+ * 881x0 control registers
  */
 
 /*
@@ -55,7 +55,7 @@
  */
 #define PID_ARN		0x0000FF00U	/* architectural revision number */
 #define PID_VN		0x000000FEU	/* version number */
-#define PID_MC		0x00000001U	/* master/checker */
+#define PID_MC		0x00000001U	/* 88100 master/checker mode */
 
 /*
  * processor status register
@@ -74,10 +74,6 @@
 #define PSR_MXM		0x00000004U	/* misaligned access enable */
 #define PSR_IND		0x00000002U	/* interrupt disable */
 #define PSR_SFRZ	0x00000001U	/* shadow freeze */
-
-#define PSR_SUPERVISOR	(PSR_MODE | PSR_SFD)
-#define PSR_USER	(PSR_SFD)
-#define PSR_SET_BY_USER	(PSR_BO | PSR_SER | PSR_C | PSR_MXM)
 
 #define FIP_V		0x00000002U	/* valid */
 #define FIP_E		0x00000001U	/* exception */
