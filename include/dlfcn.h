@@ -1,4 +1,4 @@
-/*	$OpenBSD: dlfcn.h,v 1.3 1999/12/09 18:10:23 espie Exp $	*/
+/*	$OpenBSD: dlfcn.h,v 1.4 2001/05/31 14:04:09 art Exp $	*/
 /*	$NetBSD: dlfcn.h,v 1.2 1995/06/05 19:38:00 pk Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ extern void	*dlopen __P((const char *, int));
 extern int	dlclose __P((void *));
 extern void	*dlsym __P((void *, const char *));
 extern int	dlctl __P((void *, int, void *));
-extern char	*dlerror __P((void));
+extern const char	*dlerror __P((void));
 __END_DECLS
 
 /* Values for dlopen `mode'. */
