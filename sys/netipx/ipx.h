@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipx.h,v 1.11 2000/01/13 07:10:36 fgsch Exp $	*/
+/*	$OpenBSD: ipx.h,v 1.12 2000/01/17 00:34:00 fgsch Exp $	*/
 
 /*-
  *
@@ -201,6 +201,8 @@ struct ipx {
 #define	sipxtosa(a)	((struct sockaddr *)(a))
 
 extern int ipxcksum;
+extern int ipxforwarding;
+extern int ipxnetbios;
 extern struct domain ipxdomain;
 extern struct sockaddr_ipx ipx_netmask;
 extern struct sockaddr_ipx ipx_hostmask;

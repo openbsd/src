@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipx_var.h,v 1.4 2000/01/11 19:52:16 fgsch Exp $	*/
+/*	$OpenBSD: ipx_var.h,v 1.5 2000/01/17 00:34:00 fgsch Exp $	*/
 
 /*-
  *
@@ -64,12 +64,18 @@ struct	ipxstat {
  * Names for IPX sysctl objects.
  */
 
-#define IPXCTL_RECVSPACE	1
-#define IPXCTL_SENDSPACE	2
-#define IPXCTL_MAXID		3
+#define	IPXCTL_CHECKSUM		1
+#define IPXCTL_FORWARDING	2
+#define IPXCTL_NETBIOS		3
+#define IPXCTL_RECVSPACE	4
+#define IPXCTL_SENDSPACE	5
+#define	IPXCTL_MAXID		6
 
 #define IPXCTL_NAMES { \
 	{ 0, 0}, \
+	{ "checksum", CTLTYPE_INT }, \
+	{ "forwarding", CTLTYPE_INT }, \
+	{ "netbios", CTLTYPE_INT }, \
 	{ "recvspace", CTLTYPE_INT }, \
 	{ "sendspace", CTLTYPE_INT }, \
 }
