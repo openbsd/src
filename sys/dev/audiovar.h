@@ -1,4 +1,5 @@
-/*	$NetBSD: audiovar.h,v 1.3 1995/05/08 22:01:44 brezak Exp $	*/
+/*	$OpenBSD: audiovar.h,v 1.2 1996/02/27 09:43:17 niklas Exp $	*/
+/*	$NetBSD: audiovar.h,v 1.5 1996/02/16 02:25:44 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.

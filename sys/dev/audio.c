@@ -1,4 +1,5 @@
-/*	$NetBSD: audio.c,v 1.14 1996/01/07 06:21:02 mycroft Exp $	*/
+/*	$OpenBSD: audio.c,v 1.4 1996/02/27 09:43:15 niklas Exp $	*/
+/*	$NetBSD: audio.c,v 1.17 1996/02/16 02:25:43 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -140,6 +141,7 @@ void	audiostartr __P((struct audio_softc *));
 void	audiostartp __P((struct audio_softc *));
 void	audio_rint __P((struct audio_softc *));
 void	audio_pint __P((struct audio_softc *));
+void	audio_rpint __P((struct audio_softc *));
 
 int	audio_calc_blksize __P((struct audio_softc *));
 void	audio_silence_fill __P((struct audio_softc *, u_char *, int));
@@ -441,11 +443,8 @@ audio_initbufs(sc)
 
 	audio_init_ring(&sc->rr, sc->sc_blksize);
 	audio_init_ring(&sc->pr, sc->sc_blksize);
-	sc->sc_lowat = 1;
-	if (nblk == 1)
-	  sc->sc_hiwat = 1;
-	else
-	  sc->sc_hiwat = nblk - sc->sc_lowat;
+	sc->sc_lowat = nblk / 2;
+	sc->sc_hiwat = nblk;
 }
 
 static inline int
@@ -934,18 +933,15 @@ audio_write(dev, uio, ioflag)
 	error = 0;
 
 	while (uio->uio_resid > 0) {
-		int watermark = sc->sc_hiwat;
-		while (cb->nblk > watermark) {
-			DPRINTF(("audio_write: nblk=%d watermark=%d\n", cb->nblk, watermark));
-			if (ioflag & IO_NDELAY) {
-				error = EWOULDBLOCK;
-				return (error);
-			}
-			error = audio_sleep(&sc->sc_wchan, "aud wr");
-			if (error != 0) {
-				return (error);
-			}
-			watermark = sc->sc_lowat;
+		if (cb->nblk >= sc->sc_hiwat) {
+			do {
+				DPRINTF(("audio_write: nblk=%d hiwat=%d lowat=%d\n", cb->nblk, sc->sc_hiwat, sc->sc_lowat));
+				if (ioflag & IO_NDELAY)
+					return (EWOULDBLOCK);
+				error = audio_sleep(&sc->sc_wchan, "aud wr");
+				if (error)
+					return (error);
+			} while (cb->nblk >= sc->sc_lowat);
 		}
 #if 0
 		if (cb->nblk == 0 &&
@@ -1223,7 +1219,7 @@ audiostartp(sc)
 	if (sc->pr.nblk > 0) {
 		u_char *hp = sc->pr.hp;
 		if (rval = sc->hw_if->start_output(sc->hw_hdl, hp, sc->sc_blksize,
-		    				   audio_pint, (void *)sc)) {
+		    				   audio_rpint, (void *)sc)) {
 		    	DPRINTF(("audiostartp: failed: %d\n", rval));
 		}
 		else {
@@ -1234,6 +1230,19 @@ audiostartp(sc)
 			sc->pr.hp = hp;
 		}
 	}
+}
+
+/*
+ * Use this routine as DMA callback if we played user data.  We need to
+ * account for user data and silence separately.
+ */
+void
+audio_rpint(sc)
+	struct audio_softc *sc;
+{
+
+	sc->pr.nblk--;
+	audio_pint(sc);		/* 'twas a real audio block */
 }
 
 /*
@@ -1258,7 +1267,7 @@ audio_pint(sc)
 	 * always fails and the output is always silence after the
 	 * first block.
 	 */
-	if (--cb->nblk > 0) {
+	if (cb->nblk > 0) {
 		hp = cb->hp;
 		if (cb->cb_pause) {
 		    cb->cb_pdrops++;
@@ -1274,7 +1283,7 @@ audio_pint(sc)
 		    	Dprintf("audio_pint: hp=0x%x cc=%d\n", hp, cc);
 #endif
 		    if (err = hw->start_output(sc->hw_hdl, hp, cc,
-					       audio_pint, (void *)sc)) {
+					       audio_rpint, (void *)sc)) {
 			    DPRINTF(("audio_pint restart failed: %d\n", err));
 			    audio_clear(sc);
 		    }

@@ -1,4 +1,5 @@
-/*	$NetBSD: vnd.c,v 1.23 1996/01/07 22:03:33 thorpej Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.4 1996/02/27 09:43:20 niklas Exp $	*/
+/*	$NetBSD: vnd.c,v 1.24 1996/02/10 00:11:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -125,13 +126,9 @@ struct vnd_softc {
 struct vnd_softc *vnd_softc;
 int numvnd = 0;
 
-/* {b,c}devsw[] function prototypes */
-dev_type_open(vndopen);
-dev_type_close(vndclose);
-dev_type_strategy(vndstrategy);
-dev_type_ioctl(vndioctl);
-dev_type_read(vndread);
-dev_type_write(vndwrite);
+/* {b,c}devsw[] function prototypes XXX: move them to dev_conf.h */
+bdev_decl(vnd);
+cdev_decl(vnd);
 
 /* called by main() at boot time */
 void	vndattach __P((int));
@@ -140,6 +137,8 @@ void	vndclear __P((struct vnd_softc *));
 void	vndstart __P((struct vnd_softc *));
 int	vndsetcred __P((struct vnd_softc *, struct ucred *));
 void	vndthrottle __P((struct vnd_softc *, struct vnode *));
+void	vndiodone __P((struct buf *));
+void	vndshutdown __P((void));
 
 static	int vndlock __P((struct vnd_softc *));
 static	void vndunlock __P((struct vnd_softc *));
@@ -180,13 +179,13 @@ vndopen(dev, flags, mode, p)
 
 #ifdef DEBUG
 	if (vnddebug & VDB_FOLLOW)
-		printf("vndopen(%x, %x, %x, %x)\n", dev, flags, mode, p);
+		printf("vndopen(%x, %x, %x, %p)\n", dev, flags, mode, p);
 #endif
 	if (unit >= numvnd)
 		return (ENXIO);
 	sc = &vnd_softc[unit];
 
-	if (error = vndlock(sc))
+	if ((error = vndlock(sc)) != 0)
 		return (error);
 
 	part = DISKPART(dev);
@@ -221,14 +220,14 @@ vndclose(dev, flags, mode, p)
 
 #ifdef DEBUG
 	if (vnddebug & VDB_FOLLOW)
-		printf("vndclose(%x, %x, %x, %x)\n", dev, flags, mode, p);
+		printf("vndclose(%x, %x, %x, %p)\n", dev, flags, mode, p);
 #endif
 
 	if (unit >= numvnd)
 		return (ENXIO);
 	sc = &vnd_softc[unit];
 
-	if (error = vndlock(sc))
+	if ((error = vndlock(sc)) != 0)
 		return (error);
 
 	part = DISKPART(dev);
@@ -265,11 +264,10 @@ vndstrategy(bp)
 	register int bn, bsize, resid;
 	register caddr_t addr;
 	int sz, flags, error;
-	extern void vndiodone();
 
 #ifdef DEBUG
 	if (vnddebug & VDB_FOLLOW)
-		printf("vndstrategy(%x): unit %d\n", bp, unit);
+		printf("vndstrategy(%p): unit %d\n", bp, unit);
 #endif
 	if ((vnd->sc_flags & VNF_INITED) == 0) {
 		bp->b_error = ENXIO;
@@ -308,7 +306,7 @@ vndstrategy(bp)
 			nra = 0;
 #endif
 
-		if (off = bn % bsize)
+		if ((off = bn % bsize) != 0)
 			sz = bsize - off;
 		else
 			sz = (1 + nra) * bsize;
@@ -316,7 +314,7 @@ vndstrategy(bp)
 			sz = resid;
 #ifdef DEBUG
 		if (vnddebug & VDB_IO)
-			printf("vndstrategy: vp %x/%x bn %x/%x sz %x\n",
+			printf("vndstrategy: vp %p/%p bn %x/%x sz %x\n",
 			       vnd->sc_vp, vp, bn, nbn, sz);
 #endif
 
@@ -396,7 +394,7 @@ vndstart(vnd)
 	vnd->sc_tab.b_actf = bp->b_actf;
 #ifdef DEBUG
 	if (vnddebug & VDB_IO)
-		printf("vndstart(%d): bp %x vp %x blkno %x addr %x cnt %x\n",
+		printf("vndstart(%d): bp %p vp %p blkno %x addr %p cnt %x\n",
 		    vnd-vnd_softc, bp, bp->b_vp, bp->b_blkno, bp->b_data,
 		    bp->b_bcount);
 #endif
@@ -410,9 +408,10 @@ vndstart(vnd)
 }
 
 void
-vndiodone(vbp)
-	register struct vndbuf *vbp;
+vndiodone(bp)
+	struct buf *bp;
 {
+	register struct vndbuf *vbp = (struct vndbuf *) bp;
 	register struct buf *pbp = vbp->vb_obp;
 	register struct vnd_softc *vnd = &vnd_softc[vndunit(pbp->b_dev)];
 	int s;
@@ -420,7 +419,7 @@ vndiodone(vbp)
 	s = splbio();
 #ifdef DEBUG
 	if (vnddebug & VDB_IO)
-		printf("vndiodone(%d): vbp %x vp %x blkno %x addr %x cnt %x\n",
+		printf("vndiodone(%d): vbp %p vp %p blkno %x addr %p cnt %x\n",
 		    vnd-vnd_softc, vbp, vbp->vb_buf.b_vp, vbp->vb_buf.b_blkno,
 		    vbp->vb_buf.b_data, vbp->vb_buf.b_bcount);
 #endif
@@ -428,7 +427,7 @@ vndiodone(vbp)
 	if (vbp->vb_buf.b_error) {
 #ifdef DEBUG
 		if (vnddebug & VDB_IO)
-			printf("vndiodone: vbp %x error %d\n", vbp,
+			printf("vndiodone: vbp %p error %d\n", vbp,
 			    vbp->vb_buf.b_error);
 #endif
 		pbp->b_flags |= B_ERROR;
@@ -440,7 +439,7 @@ vndiodone(vbp)
 	if (pbp->b_resid == 0) {
 #ifdef DEBUG
 		if (vnddebug & VDB_IO)
-			printf("vndiodone: pbp %x iodone\n", pbp);
+			printf("vndiodone: pbp %p iodone\n", pbp);
 #endif
 		biodone(pbp);
 	}
@@ -463,7 +462,7 @@ vndread(dev, uio, flags)
 
 #ifdef DEBUG
 	if (vnddebug & VDB_FOLLOW)
-		printf("vndread(%x, %x)\n", dev, uio);
+		printf("vndread(%x, %p)\n", dev, uio);
 #endif
 
 	if (unit >= numvnd)
@@ -488,7 +487,7 @@ vndwrite(dev, uio, flags)
 
 #ifdef DEBUG
 	if (vnddebug & VDB_FOLLOW)
-		printf("vndwrite(%x, %x)\n", dev, uio);
+		printf("vndwrite(%x, %p)\n", dev, uio);
 #endif
 
 	if (unit >= numvnd)
@@ -519,7 +518,7 @@ vndioctl(dev, cmd, data, flag, p)
 
 #ifdef DEBUG
 	if (vnddebug & VDB_FOLLOW)
-		printf("vndioctl(%x, %lx, %x, %x, %x): unit %d\n",
+		printf("vndioctl(%x, %lx, %p, %x, %p): unit %d\n",
 		    dev, cmd, data, flag, p, unit);
 #endif
 	error = suser(p->p_ucred, &p->p_acflag);
@@ -536,7 +535,7 @@ vndioctl(dev, cmd, data, flag, p)
 		if (vnd->sc_flags & VNF_INITED)
 			return (EBUSY);
 
-		if (error = vndlock(vnd))
+		if ((error = vndlock(vnd)) != 0)
 			return (error);
 
 		/*
@@ -546,11 +545,12 @@ vndioctl(dev, cmd, data, flag, p)
 		 * have to worry about them.
 		 */
 		NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, vio->vnd_file, p);
-		if (error = vn_open(&nd, FREAD|FWRITE, 0)) {
+		if ((error = vn_open(&nd, FREAD|FWRITE, 0)) != 0) {
 			vndunlock(vnd);
 			return(error);
 		}
-		if (error = VOP_GETATTR(nd.ni_vp, &vattr, p->p_ucred, p)) {
+		error = VOP_GETATTR(nd.ni_vp, &vattr, p->p_ucred, p);
+		if (error) {
 			VOP_UNLOCK(nd.ni_vp);
 			(void) vn_close(nd.ni_vp, FREAD|FWRITE, p->p_ucred, p);
 			vndunlock(vnd);
@@ -559,7 +559,7 @@ vndioctl(dev, cmd, data, flag, p)
 		VOP_UNLOCK(nd.ni_vp);
 		vnd->sc_vp = nd.ni_vp;
 		vnd->sc_size = btodb(vattr.va_size);	/* note truncation */
-		if (error = vndsetcred(vnd, p->p_ucred)) {
+		if ((error = vndsetcred(vnd, p->p_ucred)) != 0) {
 			(void) vn_close(nd.ni_vp, FREAD|FWRITE, p->p_ucred, p);
 			vndunlock(vnd);
 			return(error);
@@ -569,7 +569,7 @@ vndioctl(dev, cmd, data, flag, p)
 		vnd->sc_flags |= VNF_INITED;
 #ifdef DEBUG
 		if (vnddebug & VDB_INIT)
-			printf("vndioctl: SET vp %x size %x\n",
+			printf("vndioctl: SET vp %p size %x\n",
 			    vnd->sc_vp, vnd->sc_size);
 #endif
 
@@ -587,7 +587,7 @@ vndioctl(dev, cmd, data, flag, p)
 		if ((vnd->sc_flags & VNF_INITED) == 0)
 			return (ENXIO);
 
-		if (error = vndlock(vnd))
+		if ((error = vndlock(vnd)) != 0)
 			return (error);
 
 		/*
@@ -611,7 +611,7 @@ vndioctl(dev, cmd, data, flag, p)
 #endif
 
 		/* Detatch the disk. */
-		disk_detatch(&vnd->sc_dkdev);
+		disk_detach(&vnd->sc_dkdev);
 
 		/* This must be atomic. */
 		s = splhigh();
@@ -677,7 +677,7 @@ vndthrottle(vnd, vp)
 	struct vnode *vp;
 {
 #ifdef NFSCLIENT
-	extern int (**nfsv2_vnodeop_p)();
+	extern int (**nfsv2_vnodeop_p) __P((void *));
 
 	if (vp->v_op == nfsv2_vnodeop_p)
 		vnd->sc_maxactive = 2;
@@ -708,7 +708,7 @@ vndclear(vnd)
 
 #ifdef DEBUG
 	if (vnddebug & VDB_FOLLOW)
-		printf("vndclear(%x): vp %x\n", vp);
+		printf("vndclear(%p): vp %p\n", vnd, vp);
 #endif
 	vnd->sc_flags &= ~VNF_INITED;
 	if (vp == (struct vnode *)0)

@@ -1,7 +1,8 @@
-/*	$NetBSD: ccd.c,v 1.23 1996/01/07 22:03:28 thorpej Exp $	*/
+/*	$OpenBSD: ccd.c,v 1.6 1996/02/27 09:43:17 niklas Exp $	*/
+/*	$NetBSD: ccd.c,v 1.27 1996/02/11 18:04:01 thorpej Exp $	*/
 
 /*
- * Copyright (c) 1995 Jason R. Thorpe.
+ * Copyright (c) 1995, 1996 Jason R. Thorpe.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -83,6 +84,9 @@
  *	Mail Stop 258-6
  *	NASA Ames Research Center
  *	Moffett Field, CA 94035
+ *
+ * Mirroring support based on code written by Satoshi Asami
+ * and Nisha Talagala.
  */
 
 #include <sys/param.h>
@@ -109,12 +113,12 @@
 #endif
 
 #ifdef DEBUG
-int ccddebug = 0x00;
 #define CCDB_FOLLOW	0x01
 #define CCDB_INIT	0x02
 #define CCDB_IO		0x04
 #define CCDB_LABEL	0x08
 #define CCDB_VNODE	0x10
+int ccddebug = 0x00;
 #endif
 
 #define	ccdunit(x)	DISKUNIT(x)
@@ -124,6 +128,9 @@ struct ccdbuf {
 	struct buf	*cb_obp;	/* ptr. to original I/O buf */
 	int		cb_unit;	/* target unit */
 	int		cb_comp;	/* target component */
+	int		cb_flags;	/* misc. flags */
+
+#define CBF_MIRROR	0x01		/* we're for a mirror component */
 };
 
 #define	getccdbuf()		\
@@ -153,8 +160,8 @@ static	void ccdinterleave __P((struct ccd_softc *, int));
 static	void ccdintr __P((struct ccd_softc *, struct buf *));
 static	int ccdinit __P((struct ccddevice *, char **, struct proc *));
 static	int ccdlookup __P((char *, struct proc *p, struct vnode **));
-static	struct ccdbuf *ccdbuffer __P((struct ccd_softc *, struct buf *,
-		daddr_t, caddr_t, long));
+static	void ccdbuffer __P((struct ccd_softc *, struct buf *,
+		daddr_t, caddr_t, long, struct ccdbuf **));
 static	void ccdgetdisklabel __P((dev_t));
 static	void ccdmakedisklabel __P((struct ccd_softc *));
 static	int ccdlock __P((struct ccd_softc *));
@@ -354,6 +361,34 @@ ccdinit(ccd, cpaths, p)
 	}
 
 	/*
+	 * Mirroring support requires uniform interleave and
+	 * and even number of components.
+	 */
+	if (ccd->ccd_flags & CCDF_MIRROR) {
+		ccd->ccd_flags |= CCDF_UNIFORM;
+		if (cs->sc_ileave == 0) {
+#ifdef DEBUG
+			if (ccddebug & (CCDB_FOLLOW|CCDB_INIT))
+			printf("%s: mirroring requires interleave\n",
+			    cs->sc_xname);
+#endif
+			free(ci->ci_path, M_DEVBUF);
+			free(cs->sc_cinfo, M_DEVBUF);
+			return (EINVAL);
+		}
+		if (cs->sc_nccdisks % 2) { 
+#ifdef DEBUG
+			if (ccddebug & (CCDB_FOLLOW|CCDB_INIT))
+			printf("%s: mirroring requires even # of components\n",
+			    cs->sc_xname); 
+#endif
+			free(ci->ci_path, M_DEVBUF);
+			free(cs->sc_cinfo, M_DEVBUF);
+			return (EINVAL);
+		}
+	}
+
+	/*
 	 * If uniform interleave is desired set all sizes to that of
 	 * the smallest component.
 	 */
@@ -361,7 +396,11 @@ ccdinit(ccd, cpaths, p)
 		for (ci = cs->sc_cinfo;
 		     ci < &cs->sc_cinfo[cs->sc_nccdisks]; ci++)
 			ci->ci_size = minsize;
-		cs->sc_size = cs->sc_nccdisks * minsize;
+
+		if (ccd->ccd_flags & CCDF_MIRROR)
+			cs->sc_size = (cs->sc_nccdisks / 2) * minsize;
+		else
+			cs->sc_size = cs->sc_nccdisks * minsize;
 	}
 
 	/*
@@ -526,10 +565,13 @@ ccdopen(dev, flags, fmt, p)
 		ccdgetdisklabel(dev);
 
 	/* Check that the partition exists. */
-	if (part != RAW_PART && ((part > lp->d_npartitions) ||
-	    (lp->d_partitions[part].p_fstype == FS_UNUSED))) {
-		error = ENXIO;
-		goto done;
+	if (part != RAW_PART) {
+		if (((cs->sc_flags & CCDF_INITED) == 0) ||
+		    ((part > lp->d_npartitions) ||
+		     (lp->d_partitions[part].p_fstype == FS_UNUSED))) {
+			error = ENXIO;
+			goto done;
+		}
 	}
 
 	/* Prevent our unit from being unconfigured while open. */
@@ -647,7 +689,7 @@ ccdstart(cs, bp)
 	register struct buf *bp;
 {
 	register long bcount, rcount;
-	struct ccdbuf *cbp;
+	struct ccdbuf *cbp[4];
 	caddr_t addr;
 	daddr_t bn;
 	struct partition *pp;
@@ -674,11 +716,21 @@ ccdstart(cs, bp)
 	 */
 	addr = bp->b_data;
 	for (bcount = bp->b_bcount; bcount > 0; bcount -= rcount) {
-		cbp = ccdbuffer(cs, bp, bn, addr, bcount);
-		rcount = cbp->cb_buf.b_bcount;
-		if ((cbp->cb_buf.b_flags & B_READ) == 0)
-			cbp->cb_buf.b_vp->v_numoutput++;
-		VOP_STRATEGY(&cbp->cb_buf);
+		ccdbuffer(cs, bp, bn, addr, bcount, cbp);
+		rcount = cbp[0]->cb_buf.b_bcount;
+		if ((cbp[0]->cb_buf.b_flags & B_READ) == 0)
+			cbp[0]->cb_buf.b_vp->v_numoutput++;
+		VOP_STRATEGY(&cbp[0]->cb_buf);
+
+		/*
+		 * Mirror requires additional write.
+		 */
+		if ((cs->sc_cflags & CCDF_MIRROR) &&
+		    ((cbp[0]->cb_buf.b_flags & B_READ) == 0)) {
+			cbp[1]->cb_buf.b_vp->v_numoutput++;
+			VOP_STRATEGY(&cbp[1]->cb_buf);
+		}
+
 		bn += btodb(rcount);
 		addr += rcount;
 	}
@@ -687,15 +739,16 @@ ccdstart(cs, bp)
 /*
  * Build a component buffer header.
  */
-static struct ccdbuf *
-ccdbuffer(cs, bp, bn, addr, bcount)
+static void
+ccdbuffer(cs, bp, bn, addr, bcount, cbpp)
 	register struct ccd_softc *cs;
 	struct buf *bp;
 	daddr_t bn;
 	caddr_t addr;
 	long bcount;
+	struct ccdbuf **cbpp;
 {
-	register struct ccdcinfo *ci;
+	register struct ccdcinfo *ci, *ci2;
 	register struct ccdbuf *cbp;
 	register daddr_t cbn, cboff;
 
@@ -739,8 +792,19 @@ ccdbuffer(cs, bp, bn, addr, bcount)
 			ccdisk = ii->ii_index[0];
 			cbn = ii->ii_startoff + off;
 		} else {
-			ccdisk = ii->ii_index[off % ii->ii_ndisk];
-			cbn = ii->ii_startoff + off / ii->ii_ndisk;
+			if (cs->sc_cflags & CCDF_MIRROR) {
+				ccdisk =
+				    ii->ii_index[off % (ii->ii_ndisk / 2)];
+				cbn = ii->ii_startoff +
+				    (off / (ii->ii_ndisk / 2));
+				/* Mirrored data */
+				ci2 =
+				    &cs->sc_cinfo[ccdisk + (ii->ii_ndisk / 2)];
+			} else {
+				/* Normal case. */
+				ccdisk = ii->ii_index[off % ii->ii_ndisk];
+				cbn = ii->ii_startoff + off / ii->ii_ndisk;
+			}
 		}
 		cbn *= cs->sc_ileave;
 		ci = &cs->sc_cinfo[ccdisk];
@@ -750,6 +814,7 @@ ccdbuffer(cs, bp, bn, addr, bcount)
 	 * Fill in the component buf structure.
 	 */
 	cbp = getccdbuf();
+	cbp->cb_flags = 0;
 	cbp->cb_buf.b_flags = bp->b_flags | B_CALL;
 	cbp->cb_buf.b_iodone = (void (*)())ccdiodone;
 	cbp->cb_buf.b_proc = bp->b_proc;
@@ -771,13 +836,30 @@ ccdbuffer(cs, bp, bn, addr, bcount)
 	cbp->cb_unit = cs - ccd_softc;
 	cbp->cb_comp = ci - cs->sc_cinfo;
 
+	/* First buffer is dealt with. */
+	cbpp[0] = cbp;
+
 #ifdef DEBUG
 	if (ccddebug & CCDB_IO)
 		printf(" dev %x(u%d): cbp %x bn %d addr %x bcnt %d\n",
 		       ci->ci_dev, ci-cs->sc_cinfo, cbp, cbp->cb_buf.b_blkno,
 		       cbp->cb_buf.b_data, cbp->cb_buf.b_bcount);
 #endif
-	return (cbp);
+
+	/*
+	 * Mirrors have an additional write operation that is nearly
+	 * identical to the first.
+	 */
+	if ((cs->sc_cflags & CCDF_MIRROR) &&
+	    ((cbp->cb_buf.b_flags & B_READ) == 0)) {
+		cbp = getccdbuf();
+		*cbp = *cbpp[0];
+		cbp->cb_flags = CBF_MIRROR;
+		cbp->cb_buf.b_dev = ci2->ci_dev;	/* XXX */
+		cbp->cb_buf.b_vp = ci2->ci_vp;
+		cbp->cb_comp = ci2 - cs->sc_cinfo;
+		cbpp[1] = cbp;
+	}
 }
 
 static void
@@ -811,15 +893,19 @@ ccdiodone(cbp)
 	register struct buf *bp = cbp->cb_obp;
 	register int unit = cbp->cb_unit;
 	struct ccd_softc *cs = &ccd_softc[unit];
-	int count, s;
+	int count, cbflags, s;
+	char *comptype;
 
 	s = splbio();
 #ifdef DEBUG
 	if (ccddebug & CCDB_FOLLOW)
 		printf("ccdiodone(%x)\n", cbp);
 	if (ccddebug & CCDB_IO) {
-		printf("ccdiodone: bp %x bcount %d resid %d\n",
-		       bp, bp->b_bcount, bp->b_resid);
+		if (cbp->cb_flags & CBF_MIRROR)
+			printf("ccdiodone: mirror component\n");
+		else
+			printf("ccdiodone: bp %x bcount %d resid %d\n",
+			       bp, bp->b_bcount, bp->b_resid);
 		printf(" dev %x(u%d), cbp %x bn %d addr %x bcnt %d\n",
 		       cbp->cb_buf.b_dev, cbp->cb_comp, cbp,
 		       cbp->cb_buf.b_blkno, cbp->cb_buf.b_data,
@@ -828,24 +914,35 @@ ccdiodone(cbp)
 #endif
 
 	if (cbp->cb_buf.b_flags & B_ERROR) {
-		bp->b_flags |= B_ERROR;
-		bp->b_error = cbp->cb_buf.b_error ? cbp->cb_buf.b_error : EIO;
-#ifdef DEBUG
-		printf("%s: error %d on component %d\n",
-		       cs->sc_xname, bp->b_error, cbp->cb_comp);
-#endif
+		if (cbp->cb_flags & CBF_MIRROR)
+			comptype = " (mirror)";
+		else {
+			bp->b_flags |= B_ERROR;
+			bp->b_error = cbp->cb_buf.b_error ?
+			    cbp->cb_buf.b_error : EIO;
+			comptype = "";
+		}
+
+		printf("%s: error %d on component %d%s\n",
+		       cs->sc_xname, bp->b_error, cbp->cb_comp, comptype);
 	}
 	count = cbp->cb_buf.b_bcount;
+	cbflags = cbp->cb_flags;
 	putccdbuf(cbp);
 
 	/*
 	 * If all done, "interrupt".
+	 *
+	 * Note that mirror component buffers aren't counted against
+	 * the original I/O buffer.
 	 */
-	bp->b_resid -= count;
-	if (bp->b_resid < 0)
-		panic("ccdiodone: count");
-	if (bp->b_resid == 0)
-		ccdintr(&ccd_softc[unit], bp);
+	if ((cbflags & CBF_MIRROR) == 0) {
+		bp->b_resid -= count;
+		if (bp->b_resid < 0)
+			panic("ccdiodone: count");
+		if (bp->b_resid == 0)
+			ccdintr(&ccd_softc[unit], bp);
+	}
 	splx(s);
 }
 
@@ -1089,7 +1186,7 @@ ccdioctl(dev, cmd, data, flag, p)
 		bcopy(&ccd, &ccddevs[unit], sizeof(ccd));
 
 		/* Detatch the disk. */
-		disk_detatch(&cs->sc_dkdev);
+		disk_detach(&cs->sc_dkdev);
 
 		/* This must be atomic. */
 		s = splhigh();

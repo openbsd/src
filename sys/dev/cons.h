@@ -1,4 +1,5 @@
-/*	$NetBSD: cons.h,v 1.12 1995/11/25 00:03:41 cgd Exp $	*/
+/*	$OpenBSD: cons.h,v 1.3 1996/02/27 09:43:19 niklas Exp $	*/
+/*	$NetBSD: cons.h,v 1.13 1996/02/04 02:04:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -79,7 +80,7 @@ int	cnwrite __P((dev_t, struct uio *, int));
 int	cnioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
 int	cnselect __P((dev_t, int, struct proc *));
 int	cngetc __P((void));
-int	cnputc __P((int));
+void	cnputc __P((int));
 void	nullcnpollc __P((dev_t, int));
 
 /* console-specific types */
