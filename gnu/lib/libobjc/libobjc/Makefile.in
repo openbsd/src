@@ -95,9 +95,13 @@ LIBTOOL_CLEAN   = $(LIBTOOL) --mode=clean
 #
 CC1OBJ = `$(CC) -print-prog-name=cc1obj`
 
-INCLUDES = -I$(srcdir)/objc  -I$(srcdir)/$(MULTISRCTOP)../gcc \
-  -I$(srcdir)/$(MULTISRCTOP)../gcc/config -I$(MULTIBUILDTOP)../../gcc \
-  -I$(srcdir)/$(MULTISRCTOP)../include
+GCCSRCDIR=$(srcdir)/$(MULTISRCTOP)../gcc
+GCCOBJDIR=$(MULTIBUILDTOP)/../../gcc
+LIBIBERTY_INCLUDES=$(srcdir)/$(MULTISRCTOP)../include
+
+INCLUDES = -I$(srcdir)/objc  -I$(GCCSRCDIR) \
+  -I$(GCCSRCDIR)/config -I$(GCCOBJDIR) \
+  -I$(LIBIBERTY_INCLUDES)
 
 OBJC_GCFLAGS=-DOBJC_WITH_GC=1
 OBJC_THREAD_FILE=thr-objc
