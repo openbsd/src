@@ -1,4 +1,4 @@
-/*	$OpenBSD: pw_yp.c,v 1.3 1996/08/30 13:09:41 deraadt Exp $	*/
+/*	$OpenBSD: pw_yp.c,v 1.4 1996/08/31 01:55:33 deraadt Exp $	*/
 /*	$NetBSD: pw_yp.c,v 1.5 1995/03/26 04:55:33 glass Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)pw_yp.c	1.0 2/2/93";
 #else
-static char rcsid[] = "$OpenBSD: pw_yp.c,v 1.3 1996/08/30 13:09:41 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: pw_yp.c,v 1.4 1996/08/31 01:55:33 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -145,13 +145,16 @@ pw_yp(pw, uid)
 	    xdr_yppasswd, &yppasswd, xdr_int, &status, tv);
 	if (r) {
 		fprintf(stderr, "%s: rpc to yppasswdd failed. %d\n", progname, r);
+		clnt_destroy(client);
 		return(0);
 	} else if (status) {
 		printf("Couldn't change YP password information.\n");
+		clnt_destroy(client);
 		return(0);
 	}
 	printf("The YP password information has been changed on %s, the master YP passwd server.\n", master);
 
+	clnt_destroy(client);
 	return(1);
 }
 
