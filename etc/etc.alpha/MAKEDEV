@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: MAKEDEV,v 1.29 1997/12/08 21:27:34 mickey Exp $
+#	$OpenBSD: MAKEDEV,v 1.30 1997/12/16 21:17:40 deraadt Exp $
 #	$NetBSD: MAKEDEV,v 1.8.4.1 1996/06/18 00:41:56 cgd Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -136,7 +136,7 @@ fd)
 	rm -f fd/*
 	mkdir fd > /dev/null 2>&1
 	n=0
-	(cd fd && while [ $n -lt 64 ]; do mknod $n c 24 $n; n="$(( $n + 1 ))"; done)
+	(cd fd && while [ $n -lt 64 ]; do mknod $n c 10 $n; n="$(( $n + 1 ))"; done)
 	chown -R root.wheel fd
 	chmod 555 fd
 	chmod 666 fd/*
