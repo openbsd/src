@@ -1,4 +1,4 @@
-/*	$OpenBSD: link.h,v 1.7 2001/06/08 07:00:48 art Exp $	*/
+/*	$OpenBSD: link.h,v 1.8 2001/06/08 07:45:18 art Exp $	*/
 /*	$NetBSD: link.h,v 1.10 1996/01/09 00:00:11 pk Exp $	*/
 
 /*
@@ -41,8 +41,6 @@
 
 #ifndef _LINK_H_
 #define _LINK_H_
-
-#include <sys/exec_elf.h>
 
 /* XXXART - ? */
 #ifndef DT_PROCNUM
@@ -172,10 +170,9 @@ struct so_debug {
 
 /*
  *	Debug rendezvous struct. Pointer to this is set up in the
- *	target code pointed by the DT_MIPS_RLD_MAP tag. If it is
+ *	target code pointed by the DT_DEBUG tag. If it is
  *	defined.
  */
-
 struct r_debug {
 	int	r_version;		/* Protocol version. */
 	struct link_map *r_map;		/* Head of list of loaded objects. */
@@ -187,7 +184,7 @@ struct r_debug {
 	 * The debugger can set a breakpoint at this address if it wants to
 	 * notice shared object mapping changes.
 	 */
-	Elf_Addr r_brk;
+	unsigned long r_brk;
 	enum {
 		/*
 		 * This state value describes the mapping change taking place
@@ -198,9 +195,8 @@ struct r_debug {
 		RT_DELETE,		/* Removing an object mapping.  */
 	} r_state;
 
-	Elf_Addr r_ldbase;		/* Base address the linker is loaded at.  */
+	unsigned long r_ldbase;		/* Base address the linker is loaded at.  */
 };
-
 
 /*
  * Entry points into ld.so - user interface to the run-time linker.
