@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ed.c,v 1.38 1998/06/03 18:50:45 deraadt Exp $	*/
+/*	$OpenBSD: if_ed.c,v 1.39 1998/07/31 18:02:05 millert Exp $	*/
 /*	$NetBSD: if_ed.c,v 1.105 1996/10/21 22:40:45 thorpej Exp $	*/
 
 /*
@@ -223,7 +223,7 @@ ed_pcmcia_isa_attach(parent, match, aux, pc_link)
 			    printf("Cannot read cis info %d\n", err);
 			    return 0;
 		    }
-		    if(bcmp(enaddr, sc->sc_arpcom.ac_enaddr, ETHER_ADDR_LEN)) {
+		    if (bcmp(enaddr, sc->sc_arpcom.ac_enaddr, ETHER_ADDR_LEN)) {
 			    printf("ENADDR MISMATCH %s ",
 				   ether_sprintf(sc->sc_arpcom.ac_enaddr));
 			    printf("- %s\n", ether_sprintf(enaddr));
@@ -319,6 +319,8 @@ struct pcmciadevs pcmcia_ed_devs[]={
       /* something screwed up in ports requested */
       { "ed", 0, "SVEC", "FD605 PCMCIA EtherNet Card", "V1-1", NULL,
 	(void *)-1, (void *)&pcmcia_dlink },
+      { "ed", 0, "Ethernet", "Adapter", "2.0", NULL, (void *) -1,
+	(void *)&pcmcia_dlink },
 #if 0
       /* not quite right for ethernet adress */
       { "ed", 0, "PMX   ", "PE-200", "ETHERNET", "R01", (void *)-1,
