@@ -1,4 +1,4 @@
-/*	$OpenBSD: rl2var.h,v 1.1 1999/06/21 23:21:47 d Exp $	*/
+/*	$OpenBSD: rl2var.h,v 1.2 1999/06/23 04:48:49 d Exp $	*/
 /*
  * David Leonard <d@openbsd.org>, 1999. Public domain.
  *
@@ -58,8 +58,8 @@ struct rl2_softc {
 
 /* Structure used to hold partial read state for rl2_rx_pdata() */
 struct rl2_pdata {
-	u_int8_t p_data;		/* extra bytes read but not consumed */
-        int      p_nremain;		/* number of bytes not consumed */
+	u_int8_t p_data;		/* extra data read but not consumed */
+        int      p_nremain;		/* size of unconsumed data */
 };
 #define RL2_PDATA_INIT {0,0}
 
@@ -78,22 +78,24 @@ struct rl2_mm_cmd;			/* fwd decl */
 void		rl2config __P((struct rl2_softc *));
 int		rl2intr __P((void *));
 void		rl2read __P((struct rl2_softc *, struct rl2_mm_cmd *, int));
-int             rl2_enable __P((struct rl2_softc *, int));
-int             rl2_reset __P((struct rl2_softc *));
-u_int8_t        rl2_wakeup __P((struct rl2_softc *, u_int8_t));
-int  		rl2_rx_request __P((struct rl2_softc *, int));
-int             rl2_rx_data __P((struct rl2_softc *, void *, int));
-void            rl2_rx_pdata __P((struct rl2_softc *, void *, int,
+int		rl2_enable __P((struct rl2_softc *, int));
+int		rl2_reset __P((struct rl2_softc *));
+u_int8_t	rl2_wakeup __P((struct rl2_softc *, u_int8_t));
+int		rl2_rx_request __P((struct rl2_softc *, int));
+int		rl2_rx_data __P((struct rl2_softc *, void *, int));
+void		rl2_rx_pdata __P((struct rl2_softc *, void *, int,
 			struct rl2_pdata *));
-void            rl2_rx_end __P((struct rl2_softc *));
-void            rl2_clear_nak __P((struct rl2_softc *));
+void		rl2_rx_end __P((struct rl2_softc *));
+void		rl2_clear_nak __P((struct rl2_softc *));
+u_int8_t	rl2_newseq __P((struct rl2_softc *));
+
 void		rl2_msg_tx_data __P((struct rl2_softc *, void *, u_int16_t,
 			struct rl2_msg_tx_state *));
-int             rl2_msg_tx_start __P((struct rl2_softc *, void *, int,
+int		rl2_msg_tx_start __P((struct rl2_softc *, void *, int,
 			struct rl2_msg_tx_state *));
-int             rl2_msg_tx_end __P((struct rl2_softc *, 
+int		rl2_msg_tx_end __P((struct rl2_softc *, 
 			struct rl2_msg_tx_state *));
-int             rl2_msg_txrx __P((struct rl2_softc *, void *, int, 
+int		rl2_msg_txrx __P((struct rl2_softc *, void *, int, 
 			void *, int));
 
 int		rl2_mbox_create __P((struct rl2_softc *, u_int8_t, void *,
@@ -123,7 +125,7 @@ void		rl2_mbox_unlock __P((struct rl2_softc *, u_int8_t, size_t));
 #define dprinthex(buf, len)	/* nothing */
 #endif
 
-/* debug messages to/from card. prints 4-byte groups separated by commas */
+/* debug messages to/from card. prints 4-octet groups separated by commas */
 #define RL2DUMP
 #define RL2DUMPHEX(buf, buflen) do {				\
 	int _i;							\

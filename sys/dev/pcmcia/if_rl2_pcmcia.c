@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rl2_pcmcia.c,v 1.1 1999/06/21 23:21:45 d Exp $	*/
+/*	$OpenBSD: if_rl2_pcmcia.c,v 1.2 1999/06/23 04:48:49 d Exp $	*/
 /*
  * David Leonard <d@openbsd.org>, 1999. Public domain.
  *
@@ -83,7 +83,7 @@ rl2_pcmcia_product_lookup(pa)
 {
 	struct rl2_pcmcia_product *rpp;
 
-	for (rpp = rl2_pcmcia_products; rpp->manufacturer && rpp->product; 
+	for (rpp = rl2_pcmcia_products; rpp->manufacturer && rpp->product;
 	    rpp++)
 		if (pa->manufacturer == rpp->manufacturer &&
 		    pa->product == rpp->product)
@@ -102,7 +102,7 @@ rl2_pcmcia_match(parent, match, aux)
 	int i;
 
 	for (i = 0; i < 4; i++)
-		if (cis1_info[i] && 
+		if (cis1_info[i] &&
 		    strcmp(cis1_info[i], pa->card->cis1_info[i]) != 0)
 			return (0);
 
@@ -126,7 +126,7 @@ rl2_pcmcia_attach(parent, self, aux)
 	int i;
 	static bus_addr_t iobases[] = {
 		0x270, 		/* useful in user-space debugging */
-		0x100, 0x120, 0x140, 0x218, 0x270, 0x280, 0x290, 0x298, 
+		0x100, 0x120, 0x140, 0x218, 0x270, 0x280, 0x290, 0x298,
 		0x2a0, 0x2a8, 0x2e0, 0x300, 0x310, 0x358, 0x360, 0x368,
 		0
 	};
@@ -164,12 +164,12 @@ rl2_pcmcia_attach(parent, self, aux)
 #ifdef RL2DEBUG
 	/* Try only those ports from the manual */
 	for (i=0; iobases[i] != 0; i++)
-		if (pcmcia_io_alloc(psc->sc_pf, iobases[i], RL2_NPORTS, 
+		if (pcmcia_io_alloc(psc->sc_pf, iobases[i], RL2_NPORTS,
 		    RL2_NPORTS, &psc->sc_pcioh) == 0)
 			break;
 	if (iobases[i] == 0) {
 #else
-	if (pcmcia_io_alloc(psc->sc_pf, 0, RL2_NPORTS, 
+	if (pcmcia_io_alloc(psc->sc_pf, 0, RL2_NPORTS,
 	    RL2_NPORTS, &psc->sc_pcioh)) {
 #endif
 		printf(": can't alloc i/o space\n");
@@ -265,7 +265,7 @@ rl2_pcmcia_enable(sc)
 	struct pcmcia_function *pf = psc->sc_pf;
 
 	/* Establish the interrupt */
-	sc->sc_ih = pcmcia_intr_establish(psc->sc_pf, IPL_NET, 
+	sc->sc_ih = pcmcia_intr_establish(psc->sc_pf, IPL_NET,
 		rl2intr_pcmcia, sc);
 	if (sc->sc_ih == NULL) {
 		printf("%s: couldn't establish interrupt\n",
@@ -281,7 +281,7 @@ rl2_pcmcia_disable(sc)
 	struct rl2_softc *sc;
 {
 	struct rl2_pcmcia_softc *psc = (struct rl2_pcmcia_softc *) sc;
-	
+
 	pcmcia_function_disable(psc->sc_pf);
 	pcmcia_intr_disestablish(psc->sc_pf, sc->sc_ih);
 }

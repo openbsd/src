@@ -1,4 +1,4 @@
-/*	$OpenBSD: rl2subr.c,v 1.1 1999/06/21 23:21:47 d Exp $	*/
+/*	$OpenBSD: rl2subr.c,v 1.2 1999/06/23 04:48:49 d Exp $	*/
 /*
  * David Leonard <d@openbsd.org>, 1999. Public Domain.
  *
@@ -375,12 +375,12 @@ rl2_rx_request(sc, timeo)
 	if (sc->sc_width == 16) {
 		if (status != 0x10)
 			goto badstatus_quiet;
-		/* Read 2 bytes. */
+		/* Read 2 octets. */
 		len = rl2_data_read_2(sc);
 	} else if (sc->sc_width == 8) {
 		if (status != 0x60)
 			goto badstatus_quiet;
-		/* Read low byte. */
+		/* Read low octet. */
 		lo = rl2_data_read_1(sc);
 		rl2_status_rx_write(sc, 0x70);
 		rl2_status_rx_int(sc);
@@ -394,7 +394,7 @@ rl2_rx_request(sc, timeo)
 		splx(s);
 		if (status != 0x10)
 			goto badstatus;
-		/* Read high byte. */
+		/* Read high octet. */
 		hi = rl2_data_read_1(sc);
 		len = lo | (hi << 8);
 	}
@@ -405,9 +405,9 @@ rl2_rx_request(sc, timeo)
 
 	dprintf(" len=%d]", len);
 	return (len);
-	
+
 badstatus:
-	printf("%s: rx_request tiemd out, status %02x\n", 
+	printf("%s: rx_request timed out, status %02x\n", 
 	    sc->sc_dev.dv_xname, status);
 badstatus_quiet:
 	if (status == 0x50)
@@ -442,7 +442,7 @@ rl2_rx_pdata(sc, buf, len, pd)
 		dprinthex(data, len);
 #endif
 		if (len & 1) {
-			/* Read the last byte plus a bit extra. */
+			/* Read the last octet plus a bit extra. */
 			union {
 				u_int16_t w;
 				u_int8_t  b[2];
@@ -652,6 +652,22 @@ rl2_msg_tx_end(sc, state)
 	return (ret);
 }
 
+/* Return the next unique sequence number to use for a transmitted command */
+u_int8_t
+rl2_newseq(sc)
+	struct rl2_softc * sc;
+{
+	int s;
+	u_int8_t seq;
+
+	s = splhigh();
+	seq = sc->sc_pktseq++;
+	if (sc->sc_pktseq > 0x7c)
+		sc->sc_pktseq = 0;
+	splx(s);
+	return (seq);
+}
+
 /*
  * Transmit a command message to, and (optionally) receive a response
  * message from the card.  Each transmitted message has a sequence
@@ -674,19 +690,13 @@ rl2_msg_txrx(sc, tx, txlen, rx, rxlen)
 	struct rl2_msg_tx_state state;
 	int			ien;
 	int			ret;
-	int			s;
 
 #ifdef DIAGNOSTIC
 	if (rx != NULL && rxlen < sizeof *rxc)
 		panic("rl2_msg_txrx");
 #endif
 
-	/* Each message has a unique sequence number. */
-	s = splhigh();
-	txc->cmd_seq = sc->sc_pktseq++;
-	if (sc->sc_pktseq > 0x7c)
-		sc->sc_pktseq = 0;
-	splx(s);
+	txc->cmd_seq = rl2_newseq(sc);
 
 #ifdef RL2DUMP
 	printf("%s: send %c%d seq %d data ", sc->sc_dev.dv_xname, 
@@ -709,7 +719,7 @@ rl2_msg_txrx(sc, tx, txlen, rx, rxlen)
 		return (ret);
 	}
 
-	/* Always send an even number of bytes. */
+	/* Always send an even number of octets. */
 	rl2_msg_tx_data(sc, tx, (txlen + 1) & ~1, &state);
 
 	/* End the transmission. */
@@ -884,7 +894,7 @@ rl2_mbox_lock(sc, seq, bufp, lenp)
 	return (0);
 }
 
-/* Unlock a mailbox and inform the waiter of the actual number of bytes. */
+/* Unlock a mailbox and inform the waiter of the actual number of octets. */
 void
 rl2_mbox_unlock(sc, seq, actlen)
 	struct rl2_softc *	sc;

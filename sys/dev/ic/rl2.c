@@ -1,4 +1,4 @@
-/*	$OpenBSD: rl2.c,v 1.1 1999/06/21 23:21:46 d Exp $	*/
+/*	$OpenBSD: rl2.c,v 1.2 1999/06/23 04:48:48 d Exp $	*/
 /*
  * David Leonard <d@openbsd.org>, 1999. Public Domain.
  *
@@ -82,7 +82,6 @@ static int	rl2_standby __P((struct rl2_softc *));
 #endif
 
 /* Back-end attach and configure. */
-
 void
 rl2config(sc)
 	struct rl2_softc * sc;
@@ -97,7 +96,7 @@ rl2config(sc)
 	sc->sc_cardtype |= sc->sc_dev.dv_cfdata->cf_flags;
 
 	/* Initialise values in the soft state. */
-	sc->sc_pktseq = 0;
+	sc->sc_pktseq = 0;	/* rl2_newseq() */
 	sc->sc_txseq = 0;
 	sc->sc_promisc = 0;
 
@@ -162,7 +161,6 @@ rl2config(sc)
 }
 
 /* Bring device up. */
-
 static void
 rl2init(sc)
 	struct rl2_softc * sc;
@@ -215,10 +213,7 @@ rl2init(sc)
 	return;
 }
 
-/*
- * Start outputting on interface.
- * This is always called at splnet().
- */
+/* Start outputting on interface. This is always called at splnet(). */
 static void
 rl2start(ifp)
 	struct ifnet *	ifp;
@@ -267,7 +262,7 @@ rl2start(ifp)
 #define PACKETMIN	(sizeof (struct ether_header) + ETHERMIN)
 #define PACKETMAX	(sizeof (struct ether_header) + ETHERMTU + 4)
 
-	/* Packet size has to be an even number between 60 and 1518 bytes. */
+	/* Packet size has to be an even number between 60 and 1518 octets. */
 	pad = len & 1;
 	if (len + pad < PACKETMIN)
 		pad = PACKETMIN - len;
@@ -307,34 +302,39 @@ rl2_transmit(sc, m0, len, pad)
 	int 		pad;
 {
 	struct mbuf *	m;
-	int 		zfirst = !(mtod(m0, u_int8_t*)[0]&1);
+	int 		zfirst;
 	int 		actlen;
 	int 		tlen = len + pad;
 	struct rl2_msg_tx_state state;
 	static u_int8_t zeroes[60];
-	struct rl2_mm_sendpacket cmd = { 
-		RL2_MM_SENDPACKET,
+	struct rl2_mm_sendpacket cmd = { RL2_MM_SENDPACKET };
+
+	/* Does the packet start with a zero bit? */
+	zfirst = ((*mtod(m0, u_int8_t *) & 1) == 0);
+
+	cmd.mode = 
 		RL2_MM_SENDPACKET_MODE_BIT7 | 
 		   (zfirst ? RL2_MM_SENDPACKET_MODE_ZFIRST : 0) |
-		   (1 ? RL2_MM_SENDPACKET_MODE_QFSK : 0),	/* sc->qfsk? */
-		0x70,						/* txpower */
-		htons(4 + tlen) & 0xff,
-		(htons(4 + tlen) >> 8) & 0xff,
-		0,
-		0,
-		sc->sc_txseq++,
-		0
-	};
+		   (0 ? RL2_MM_SENDPACKET_MODE_QFSK : 0),	/* sc->qfsk? */
+	cmd.power = 0x70;	/* 0x70 or 0xf0 */
+	cmd.length_lo = htons(4 + tlen) & 0xff;
+	cmd.length_hi = (htons(4 + tlen) >> 8) & 0xff;
+	cmd.xxx1 = 0;
+	cmd.xxx2 = 0;
+	cmd.xxx3 = 0;
 
-#ifdef DIAGNOSTIC
-	if (sizeof cmd != 12)
-		panic("rl2_transmit");
-#endif
+	/* A unique packet-level sequence number. XXX related to sc_seq? */
+	cmd.sequence = sc->sc_txseq;
+	sc->sc_txseq++;
+	if (sc->sc_txseq > 0x7c)
+		sc->sc_txseq = 0;
 
 	dprintf(" T[%d+%d", len, pad);
 
 	if (rl2_msg_tx_start(sc, &cmd, sizeof cmd + tlen, &state))
 		goto error;
+
+	cmd.mm_cmd.cmd_seq = rl2_newseq(sc);
 
 #ifdef RL2DUMP
 	printf("%s: send %c%d seq %d data ", sc->sc_dev.dv_xname,
@@ -564,6 +564,7 @@ rl2read(sc, hdr, len)
 			    sc->sc_dev.dv_xname);
 		}
 #endif
+		/* XXX Jean's driver dealt with RFC893 trailers here */
 		eh = mtod(m, struct ether_header *);
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
@@ -593,8 +594,8 @@ rl2read(sc, hdr, len)
 	switch (RL2_MM_CMD(hdr->cmd_letter, hdr->cmd_fn)) {
 	case RL2_MM_CMD('b', 0):			/* b0: Transmit done. */
 #ifdef DIAGNOSTIC
-		if (len != 4)
-			printf("%s: 'b0' len %d != 4\n",
+		if (len != 7)
+			printf("%s: 'b0' len %d != 7\n",
 			    sc->sc_dev.dv_xname, len);
 #endif
 		ifp->if_flags &= ~IFF_OACTIVE;
@@ -668,7 +669,7 @@ rl2get(sc, hdr, totlen)
 	int len;
 	struct mbuf *m, **mp, *top;
 	struct rl2_pdata pd = RL2_PDATA_INIT;
-	/* u_int8_t  hwhdr[ETHER_ADDR_LEN * 2]; */
+	u_int8_t  hwhdr[20];
 
 	dprintf(" [get]");
 
@@ -687,14 +688,12 @@ rl2get(sc, hdr, totlen)
 	}
 #endif
 
-#if 0
 	totlen -= sizeof hwhdr;
 	/* Skip the hardware header. */
 	rl2_rx_pdata(sc, hwhdr, sizeof hwhdr, &pd);
 #ifdef RL2DUMP
 	RL2DUMPHEX(hwhdr, sizeof hwhdr);
 	printf("/");
-#endif
 #endif
 	/* (Most of the following code fleeced from elink3.c.) */
 
@@ -980,7 +979,7 @@ rl2_roamconfig(sc)
 	if (rl2_msg_txrx(sc, &roam, sizeof roam,
 	    &response, sizeof response))
 		return (-1);
-	
+
 	return (0);
 }
 
