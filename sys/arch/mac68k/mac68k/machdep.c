@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.36 1997/04/05 16:22:07 briggs Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.37 1997/04/07 03:23:35 briggs Exp $	*/
 /*	$NetBSD: machdep.c,v 1.134 1997/02/14 06:15:30 scottr Exp $	*/
 
 /*
@@ -882,42 +882,6 @@ straytrap(pc, evec)
 int    *nofault;
 
 int badaddr __P((caddr_t));
-
-int
-bus_space_bad_addr(t, h, o, sz)
-	bus_space_tag_t		t;
-	bus_space_handle_t	h;
-	bus_size_t		o;
-	int			sz;
-{
-	register int i;
-	label_t faultbuf;
-
-#ifdef lint
-	i = *addr;
-	if (i)
-		return (0);
-#endif
-	nofault = (int *) &faultbuf;
-	if (setjmp((label_t *) nofault)) {
-		nofault = (int *) 0;
-		return (1);
-	}
-	switch (sz) {
-	default:
-	case 1:
-		i = bus_space_read_1(t, h, o);
-		break;
-	case 2:
-		i = bus_space_read_2(t, h, o);
-		break;
-	case 4:
-		i = bus_space_read_4(t, h, o);
-		break;
-	}
-	nofault = (int *) 0;
-	return (0);
-}
 
 int
 badaddr(addr)
@@ -2603,7 +2567,7 @@ get_mapping(void)
 		nblen[nbnumranges - 1] = -nblen[nbnumranges - 1];
 		same = 0;
 	}
-#if 0
+#if 1
 	printf("Non-system RAM (nubus, etc.):\n");
 	for (i = 0; i < nbnumranges; i++) {
 		printf("     Log = 0x%lx, Phys = 0x%lx, Len = 0x%lx (%lu)\n",
@@ -2630,7 +2594,6 @@ get_mapping(void)
 	}
 	if (i == nbnumranges) {
 		if (0x60000000 <= videoaddr && videoaddr < 0x70000000) {
-			printf("Checking for Internal Video ");
 			/*
 			 * Kludge for IIvx internal video (60b0 0000).
 			 * PB 520 (6000 0000)

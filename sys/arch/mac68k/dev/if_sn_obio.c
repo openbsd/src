@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sn_obio.c,v 1.7 1997/04/06 01:02:13 briggs Exp $	*/
+/*	$OpenBSD: if_sn_obio.c,v 1.8 1997/04/07 03:23:36 briggs Exp $	*/
 
 /*
  * Copyright (C) 1997 Allen Briggs
@@ -161,7 +161,7 @@ sn_obio_getaddr(sc)
 		panic("failed to map space to read SONIC address.\n");
 	}
 
-	if (bus_space_bad_addr(sc->sc_regt, bsh, 0, 1)) {
+	if (bus_probe(sc->sc_regt, bsh, 0, 1)) {
 		bus_space_unmap(sc->sc_regt, bsh, NBPG);
 		return -1;
 	}

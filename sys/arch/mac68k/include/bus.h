@@ -1,4 +1,4 @@
-/*      $OpenBSD: bus.h,v 1.2 1997/04/05 16:22:06 briggs Exp $ */
+/*      $OpenBSD: bus.h,v 1.3 1997/04/07 03:23:37 briggs Exp $ */
 /*	$NetBSD: bus.h,v 1.6 1997/02/24 05:55:14 scottr Exp $	*/
 
 /*
@@ -66,8 +66,6 @@ int	bus_space_alloc __P((bus_space_tag_t t, bus_addr_t rstart,
 	    bus_space_handle_t *bshp));
 void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 	    bus_size_t size));
-int	bus_space_bad_addr __P((bus_space_tag_t tag, bus_space_handle_t hand,
-				bus_size_t offset, int byte_size));
 
 /*
  *	u_intN_t bus_space_read_N __P((bus_space_tag_t tag,
