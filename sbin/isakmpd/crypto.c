@@ -1,8 +1,9 @@
-/*	$OpenBSD: crypto.c,v 1.4 1999/02/26 03:35:54 niklas Exp $	*/
-/*	$EOM: crypto.c,v 1.22 1999/02/25 11:38:50 niklas Exp $	*/
+/*	$OpenBSD: crypto.c,v 1.5 1999/04/05 21:00:27 niklas Exp $	*/
+/*	$EOM: crypto.c,v 1.24 1999/04/05 07:57:03 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niels Provos.  All rights reserved.
+ * Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -252,24 +253,26 @@ struct keystate *
 crypto_init (struct crypto_xf *xf, u_int8_t *key, u_int16_t len,
 	     enum cryptoerr *err)
 {
-  struct keystate *ks = NULL;
+  struct keystate *ks;
 
   if (len < xf->keymin || len > xf->keymax)
     {
       log_debug (LOG_CRYPTO, 10, "crypto_init: invalid key length %d", len);
       *err = EKEYLEN;
-      return NULL;
+      return 0;
     }
 
-  if ((ks = calloc (1, sizeof (struct keystate))) == NULL)
+  ks = calloc (1, sizeof *ks);
+  if (!ks)
     {
+      log_error ("crypto_init: calloc (1, %d) failed", sizeof *ks);
       *err = ENOCRYPTO;
-      return NULL;
+      return 0;
     }
 
   ks->xf = xf;
 
-  /* Set up the iv */
+  /* Setup the IV.  */
   ks->riv = ks->iv;
   ks->liv = ks->iv2;
 
@@ -281,7 +284,7 @@ crypto_init (struct crypto_xf *xf, u_int8_t *key, u_int16_t len,
       log_debug (LOG_CRYPTO, 30, "crypto_init: weak key found for %s",
 		 xf->name);
       free (ks);
-      return NULL;
+      return 0;
     }
 
   return ks;
@@ -335,6 +338,7 @@ crypto_decrypt (struct keystate *ks, u_int8_t *buf, u_int16_t len)
 		 len);
 }
 
+/* Make a copy of the keystate pointed to by OKS.  */
 struct keystate *
 crypto_clone_keystate (struct keystate *oks)
 {
@@ -342,7 +346,10 @@ crypto_clone_keystate (struct keystate *oks)
 
   ks = malloc (sizeof *ks);
   if (!ks)
-    return 0;
+    {
+      log_error ("crypto_clone_keystate: malloc (%d) failed", sizeof *ks);
+      return 0;
+    }
   memcpy (ks, oks, sizeof *ks);
   if (oks->riv == oks->iv)
     {
