@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.132 2002/07/20 17:55:45 millert Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.133 2002/07/24 23:10:01 millert Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -74,7 +74,7 @@ static const char copyright[] =
 static const char sccsid[] = "@(#)ftpd.c	8.4 (Berkeley) 4/16/94";
 #else
 static const char rcsid[] = 
-    "$OpenBSD: ftpd.c,v 1.132 2002/07/20 17:55:45 millert Exp $";
+    "$OpenBSD: ftpd.c,v 1.133 2002/07/24 23:10:01 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -867,7 +867,7 @@ end_login()
 	if (setusercontext(NULL, getpwuid(0), (uid_t)0,
 	    LOGIN_SETPRIORITY|LOGIN_SETRESOURCES) != 0) {
 		perror_reply(451, "Local resource failure: setusercontext");
-		syslog(LOG_NOTICE, "setusercontext: %p");
+		syslog(LOG_NOTICE, "setusercontext: %m");
 		exit(1);
 	}
 	logged_in = 0;
@@ -958,7 +958,7 @@ pass(passwd)
 		(void) umask(defumask);
 	if (setusercontext(lc, pw, (uid_t)0, flags) != 0) {
 		perror_reply(451, "Local resource failure: setusercontext");
-		syslog(LOG_NOTICE, "setusercontext: %p");
+		syslog(LOG_NOTICE, "setusercontext: %m");
 		dologout(1);
 		/* NOTREACHED */
 	}
