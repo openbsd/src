@@ -1,8 +1,11 @@
-.\"	$OpenBSD: ossaudio.3,v 1.4 1999/07/09 13:35:28 aaron Exp $
-.\"	$NetBSD: ossaudio.3,v 1.6 1998/02/05 18:52:19 perry Exp $
+.\"	$OpenBSD: ossaudio.3,v 1.5 2001/08/18 19:33:30 brad Exp $
+.\"	$NetBSD: ossaudio.3,v 1.12 2001/05/19 17:23:39 jdolecek Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Lennart Augustsson,
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -68,7 +71,7 @@ that would block in non-blocking mode Linux returns
 whereas
 .Ox 2.3
 returns
-.Dv EWOULDBLOCK .
+.Dv EAGAIN .
 .Sh HISTORY
 The
 .Nm

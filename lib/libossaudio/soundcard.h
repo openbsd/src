@@ -1,9 +1,12 @@
-/*	$OpenBSD: soundcard.h,v 1.5 2001/05/24 04:21:03 aaron Exp $	*/
-/*	$NetBSD: soundcard.h,v 1.4 1997/10/29 20:23:27 augustss Exp $	*/
+/*	$OpenBSD: soundcard.h,v 1.6 2001/08/18 19:33:30 brad Exp $	*/
+/*	$NetBSD: soundcard.h,v 1.11 2001/05/09 21:49:58 augustss Exp $	*/
 
-/*
+/*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
  * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Lennart Augustsson.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -41,8 +44,8 @@
  * only for compiling Linux programs.
  */
 
-#ifndef _soundcard_h_
-#define _soundcard_h_
+#ifndef _SOUNDCARD_H_
+#define _SOUNDCARD_H_
 
 #ifndef	_IOWR
 #include <sys/ioccom.h>
@@ -266,6 +269,21 @@
 #define SOUND_MASK_LINE2	(1 << SOUND_MIXER_LINE2)
 #define SOUND_MASK_LINE3	(1 << SOUND_MIXER_LINE3)
 
+typedef struct mixer_info {
+	char id[16];
+	char name[32];
+	int  modify_counter;
+	int  fillers[10];
+} mixer_info;
+
+typedef struct _old_mixer_info {
+	char id[16];
+	char name[32];
+} _old_mixer_info;
+
+#define SOUND_MIXER_INFO		_IOR ('M', 101, mixer_info)
+#define SOUND_OLD_MIXER_INFO		_IOR ('M', 101, _old_mixer_info)
+
 #define OSS_GETVERSION			_IOR ('M', 118, int)
 
 typedef struct audio_buf_info {
@@ -286,8 +304,17 @@ typedef struct buffmem_desc {
 	int size;
 } buffmem_desc;
 
-#define ioctl(fd, com, argp) _oss_ioctl(fd, com, argp)
-
-int _oss_ioctl(int fd, unsigned long com, void *argp);
-
+#if 0
+/* This is what we'd like to have, but it causes prototype conflicts. */
+#define ioctl _oss_ioctl
+#else
+#define ioctl(x,y,z) _oss_ioctl(x,y,z)
 #endif
+
+#include <sys/cdefs.h>
+
+__BEGIN_DECLS
+int _oss_ioctl __P((int fd, unsigned long com, void *argp));
+__END_DECLS
+
+#endif /* !_SOUNDCARD_H_ */
