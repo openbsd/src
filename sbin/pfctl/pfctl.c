@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.124 2003/01/05 22:34:20 henning Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.125 2003/01/07 01:04:33 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -152,7 +152,6 @@ static const struct {
 	const struct pf_hint *hint;
 } pf_hints[] = {
 	{ "normal",		pf_hint_normal },
-	{ "default",		pf_hint_normal },
 	{ "satellite",		pf_hint_satellite },
 	{ "high-latency",	pf_hint_satellite },
 	{ "conservative",	pf_hint_conservative },
