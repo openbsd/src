@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.25 2000/08/13 22:07:11 deraadt Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.26 2000/08/15 01:00:47 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -633,10 +633,9 @@ ubsec_process(crp)
 		q->q_ctx.pc_flags |= UBS_PKTCTX_ENC_3DES;
 
 		if (enccrd->crd_flags & CRD_F_ENCRYPT) {
-			if (enccrd->crd_flags & CRD_F_IV_EXPLICIT) {
-				q->q_ctx.pc_iv[0] = enccrd->crd_iv[0];
-				q->q_ctx.pc_iv[1] = enccrd->crd_iv[1];
-			} else {
+			if (enccrd->crd_flags & CRD_F_IV_EXPLICIT)
+				bcopy(enccrd->crd_iv, &q->q_ctx.pc_iv[0], 8);
+			else {
 				q->q_ctx.pc_iv[0] = ses->ses_iv[0];
 				q->q_ctx.pc_iv[1] = ses->ses_iv[1];
 			}
@@ -695,7 +694,7 @@ ubsec_process(crp)
 		dtheend = stheend = (enccrd)?enccrd->crd_len:maccrd->crd_len;
 		coffset = 0;
 	}
-	q->q_ctx.pc_offset = coffset << 2;
+	q->q_ctx.pc_offset = coffset >> 2;
 
 	q->q_src_l = mbuf2pages(q->q_src_m, &q->q_src_npa, q->q_src_packp,
 	    q->q_src_packl, MAX_SCATTER, &nicealign);
@@ -769,10 +768,12 @@ ubsec_process(crp)
 		q->q_mcr->mcr_opktbuf.pb_len = 0;
 		q->q_mcr->mcr_opktbuf.pb_next =
 		    (u_int32_t)vtophys(&q->q_macbuf[0]);
+#ifdef UBSEC_DEBUG
 		printf("opkt: %x %x %x\n",
 		    q->q_mcr->mcr_opktbuf.pb_addr,
 		    q->q_mcr->mcr_opktbuf.pb_len,
 		    q->q_mcr->mcr_opktbuf.pb_next);
+#endif
 	} else {
 		if (!nicealign) {
 			int totlen, len;
