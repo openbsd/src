@@ -56,7 +56,7 @@ typedef struct {
 #endif /* KADM_SYSLOG */
 
 #ifndef DEFAULT_ACL_DIR
-#define DEFAULT_ACL_DIR	"/var/kerberos"
+#define DEFAULT_ACL_DIR	"/etc/kerberosIV"
 #endif /* DEFAULT_ACL_DIR */
 #define	ADD_ACL_FILE	"/admin_acl.add"
 #define	GET_ACL_FILE	"/admin_acl.get"

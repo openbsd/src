@@ -54,5 +54,5 @@ krb_get_default_keyfile(void)
   if (t)
     return t;
   else
-    return "/etc/srvtab";
+    return "/etc/kerberosIV/srvtab";
 }

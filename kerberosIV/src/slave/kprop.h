@@ -9,7 +9,7 @@
  */
 
 #define KPROP_SERVICE_NAME "rcmd"
-#define KPROP_SRVTAB "/etc/srvtab"
+#define KPROP_SRVTAB "/etc/kerberosIV/srvtab"
 #define KPROP_PROT_VERSION_LEN 8
 #define KPROP_PROT_VERSION "kprop01"
 #define KPROP_TRANSFER_PRIVATE 1
