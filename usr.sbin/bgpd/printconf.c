@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.5 2004/02/24 15:43:03 claudio Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.6 2004/03/01 16:47:06 claudio Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -19,13 +19,17 @@
 #include <stdio.h>
 
 #include "bgpd.h"
+#include "mrt.h"
 #include "session.h"
 
 void		 print_op(enum comp_ops);
+void		 print_set(struct filter_set *);
 void		 print_mainconf(struct bgpd_config *);
 void		 print_network(struct network_config *);
 void		 print_peer(struct peer_config *);
 void		 print_rule(struct peer *, struct filter_rule *);
+const char *	 mrt_type(enum mrt_type);
+void		 print_mrt(u_int32_t, u_int32_t, const char *);
 
 void
 print_op(enum comp_ops op)
@@ -62,6 +66,23 @@ print_op(enum comp_ops op)
 }
 
 void
+print_set(struct filter_set *set)
+{
+	if (set->flags) {
+		printf("set { ");
+		if (set->flags & SET_LOCALPREF)
+			printf("localpref %u ", set->localpref);
+		if (set->flags & SET_MED)
+			printf("med %u ", set->med);
+		if (set->flags & SET_NEXTHOP)
+			printf("nexthop %s ", inet_ntoa(set->nexthop));
+		if (set->flags & SET_PREPEND)
+			printf("prepend-self %u ", set->prepend);
+		printf("}");
+	}
+}
+
+void
 print_mainconf(struct bgpd_config *conf)
 {
 	struct in_addr	ina;
@@ -79,6 +100,9 @@ print_mainconf(struct bgpd_config *conf)
 	else
 		printf("fib-update yes\n");
 
+	if (conf->flags & BGPD_FLAG_NO_EVALUATE)
+		printf("route-collector yes\n");
+
 	if (conf->log & BGPD_LOG_UPDATES)
 		printf("log updates\n");
 
@@ -89,7 +113,9 @@ print_mainconf(struct bgpd_config *conf)
 void
 print_network(struct network_config *n)
 {
-	printf("network %s/%u\n", log_addr(&n->prefix), n->prefixlen);
+	printf("network %s/%u", log_addr(&n->prefix), n->prefixlen);
+	print_set(&n->attrset);
+	printf("\n");
 }
 
 void
@@ -130,20 +156,15 @@ print_peer(struct peer_config *p)
 		printf("%s\tannounce ???\n", c);
 	if (p->tcp_md5_key[0])
 		printf("%s\ttcp md5sig\n", c);
-	if (p->attrset.flags) {
-		printf("%s\tset {\n", c);
-		if (p->attrset.flags & SET_LOCALPREF)
-			printf("%s\t\tlocalpref %u\n", c, p->attrset.localpref);
-		if (p->attrset.flags & SET_MED)
-			printf("%s\t\tmed %u\n", c, p->attrset.med);
-		if (p->attrset.flags & SET_NEXTHOP)
-			printf("%s\t\tnexthop %s\n",
-			    c, inet_ntoa(p->attrset.nexthop));
-		if (p->attrset.flags & SET_PREPEND)
-			printf("%s\t\tprepend-self %u\n",
-			    c, p->attrset.prepend);
-		printf("%s\t}\n", c);
-	}
+
+	if (p->attrset.flags)
+		printf("%s\t", c);
+	print_set(&p->attrset);
+	if (p->attrset.flags)
+		printf("\n");
+
+	print_mrt(p->id, p->groupid, c == nada ? "\t" : "\t\t");
+	
 	printf("%s}\n", c);
 	if (p->group[0])
 		printf("}\n");
@@ -218,33 +239,66 @@ print_rule(struct peer *peer_l, struct filter_rule *r)
 			printf("unfluffy-AS %u ", r->match.as.as);
 	}
 
-	if (r->set.flags) {
-		printf("set { ");
-		if (r->set.flags & SET_LOCALPREF)
-			printf("localpref %u ", r->set.localpref);
-		if (r->set.flags & SET_MED)
-			printf("med %u ", r->set.med);
-		if (r->set.flags & SET_NEXTHOP)
-			printf("nexthop %s ", inet_ntoa(r->set.nexthop));
-		if (r->set.flags & SET_PREPEND)
-			printf("prepend-self %u ", r->set.prepend);
-
-
-		printf("}");
-	}
+	print_set(&r->set);
 
 	printf("\n");
 }
 
+const char *
+mrt_type(enum mrt_type t)
+{
+	switch (t) {
+	case MRT_NONE:
+		return "unfluffy MRT";
+	case MRT_TABLE_DUMP:
+		return "table";
+	case MRT_ALL_IN:
+		return "all in";
+	case MRT_ALL_OUT:
+		return "all out";
+	case MRT_UPDATE_IN:
+		return "updates in";
+	case MRT_UPDATE_OUT:
+		return "updates out";
+	}
+	return "unfluffy MRT";
+}
+
+struct mrt_head	*xmrt_l = NULL;
+
+void
+print_mrt(u_int32_t pid, u_int32_t gid, const char *prep)
+{
+	struct mrt	*m;
+
+	if (xmrt_l == NULL)
+		return;
+
+	LIST_FOREACH(m, xmrt_l, list)
+		if ((gid != 0 && m->conf.group_id == gid) ||
+		    (m->conf.peer_id == pid && m->conf.group_id == gid)) {
+			if (m->ReopenTimerInterval == 0)
+				printf("%sdump %s %s\n", prep,
+				    mrt_type(m->conf.type), m->name);
+			else
+				printf("%sdump %s %s %d\n", prep,
+				    mrt_type(m->conf.type),
+				    m->name, m->ReopenTimerInterval);
+		}
+}
+
 void
 print_config(struct bgpd_config *conf, struct network_head *net_l,
-    struct peer *peer_l, struct filter_head *rules_l)
+    struct peer *peer_l, struct filter_head *rules_l, struct mrt_head *mrt_l)
 {
 	struct peer		*p;
 	struct filter_rule	*r;
 	struct network		*n;
 
+	xmrt_l = mrt_l;
 	print_mainconf(conf);
+	printf("\n");
+	print_mrt(0, 0, "");
 	printf("\n");
 	TAILQ_FOREACH(n, net_l, network_l)
 		print_network(&n->net);

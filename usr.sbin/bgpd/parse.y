@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.64 2004/03/01 16:02:01 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.65 2004/03/01 16:47:06 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1183,8 +1183,13 @@ add_mrtconfig(enum mrt_type type, char *name, time_t timeout, struct peer *p)
 	}
 	n->ReopenTimerInterval = timeout;
 	if (p != NULL) {
-		n->conf.peer_id = p->conf.id;
-		n->conf.group_id = p->conf.groupid;
+		if (curgroup == p) {
+			n->conf.peer_id = 0;
+			n->conf.group_id = p->conf.id;
+		} else {
+			n->conf.peer_id = p->conf.id;
+			n->conf.group_id = 0;
+		}
 	}
 
 	LIST_INSERT_HEAD(mrtconf, n, list);
