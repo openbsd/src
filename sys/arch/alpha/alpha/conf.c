@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.12 1997/07/06 18:12:01 niklas Exp $	*/
+/*	$OpenBSD: conf.c,v 1.13 1997/08/04 10:01:43 dgregor Exp $	*/
 /*	$NetBSD: conf.c,v 1.16 1996/10/18 21:26:57 cgd Exp $	*/
 
 /*-
@@ -123,6 +123,8 @@ cdev_decl(ipl);
 cdev_decl(prom);			/* XXX XXX XXX */
 cdev_decl(wd);
 cdev_decl(acd);
+#include "cy.h"
+cdev_decl(cy);
 
 struct cdevsw	cdevsw[] =
 {
@@ -164,6 +166,7 @@ struct cdevsw	cdevsw[] =
 	cdev_gen_ipf(NIPF,ipl),		/* 35: IP filter log */
 	cdev_disk_init(NWDC,wd),	/* 36: ST506/ESDI/IDE disk */
 	cdev_disk_init(NACD,acd),	/* 37: ATAPI CD-ROM */
+        cdev_tty_init(NCY,cy),          /* 38: Cyclom serial port */
 };
 int	nchrdev = sizeof (cdevsw) / sizeof (cdevsw[0]);
 
@@ -243,6 +246,7 @@ static int chrtoblktbl[] = {
 	/* 35 */	NODEV,
 	/* 36 */	0,
 	/* 37 */	4,
+	/* 38 */	NODEV,
 };
 
 /*
