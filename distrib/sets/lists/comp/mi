@@ -3283,3 +3283,5 @@
 ./var/db/libc.tags
 ./usr/include/sys/memrange.h
 ./usr/include/dev/ic/isp_inline.h
+./usr/include/dev/ic/dptreg.h
+./usr/include/dev/ic/dptvar.h
