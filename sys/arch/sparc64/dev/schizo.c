@@ -1,4 +1,4 @@
-/*	$OpenBSD: schizo.c,v 1.6 2002/07/24 19:12:00 jason Exp $	*/
+/*	$OpenBSD: schizo.c,v 1.7 2002/08/01 18:26:35 jason Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -557,7 +557,56 @@ _schizo_intr_establish(t, ihandle, level, flags, handler, arg)
 	int (*handler)(void *);
 	void *arg;
 {
-	return (NULL);
+	struct schizo_pbm *pbm = t->cookie;
+	struct schizo_softc *sc = pbm->sp_sc;	
+	struct intrhand *ih = NULL;
+	volatile u_int64_t *intrmapptr = NULL, *intrclrptr = NULL;
+	int ino;
+	long vec = INTVEC(ihandle);
+
+	ih = (struct intrhand *)malloc(sizeof(struct intrhand), M_DEVBUF,
+	    M_NOWAIT);
+	if (ih == NULL)
+		return (NULL);
+
+	vec = INTVEC(ihandle);
+	ino = INTINO(vec);
+
+	if (level == IPL_NONE)
+		level = INTLEV(vec);
+	if (level == IPL_NONE) {
+		printf(": no IPL, setting IPL 2.\n");
+		level = 2;
+	}
+
+	if ((flags & BUS_INTR_ESTABLISH_SOFTINTR) == 0) {
+		struct schizo_pbm_regs *pbmreg;
+
+		pbmreg = pbm->sp_bus_a ? &sc->sc_regs->pbm_a :
+		    &sc->sc_regs->pbm_b;
+		intrmapptr = &pbmreg->imap[ino];
+		intrclrptr = &pbmreg->iclr[ino];
+	}
+
+	ih->ih_map = intrmapptr;
+	ih->ih_clr = intrclrptr;
+	ih->ih_fun = handler;
+	ih->ih_pil = level;
+	ih->ih_number = ino;
+
+	intr_establish(ih->ih_pil, ih);
+
+	if (intrmapptr != NULL) {
+		u_int64_t intrmap;
+
+		intrmap = *intrmapptr;
+		intrmap |= INTMAP_V;
+		*intrmapptr = intrmap;
+		intrmap = *intrmapptr;
+		ih->ih_number |= intrmap & INTMAP_INR;
+	}
+
+	return (ih);
 }
 
 const struct cfattach schizo_ca = {
