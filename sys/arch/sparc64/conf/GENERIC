@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.43 2002/01/24 15:54:37 jason Exp $
+#	$OpenBSD: GENERIC,v 1.44 2002/01/25 16:34:20 jason Exp $
 # 	$NetBSD: GENERIC32,v 1.18 2001/07/20 00:07:12 eeh Exp $
 
 machine		sparc64
@@ -42,7 +42,7 @@ wsdisplay*	at vgafb?
 
 # USB bridges
 ohci*	at pci? dev ? function ?
-usb*	at ohci?
+usb*	at ohci? flags 0x1
 
 # USB devices
 uhub*	at usb?
