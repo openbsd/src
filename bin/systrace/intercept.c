@@ -1,4 +1,4 @@
-/*	$OpenBSD: intercept.c,v 1.37 2002/12/09 07:22:53 itojun Exp $	*/
+/*	$OpenBSD: intercept.c,v 1.38 2003/02/20 22:03:31 art Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -384,6 +384,17 @@ intercept_freepid(pid_t pidnr)
 }
 
 struct intercept_pid *
+intercept_findpid(pid_t pid)
+{
+	struct intercept_pid *tmp, tmp2;
+
+	tmp2.pid = pid;
+	tmp = SPLAY_FIND(pidtree, &pids, &tmp2);
+
+	return (tmp);
+}
+
+struct intercept_pid *
 intercept_getpid(pid_t pid)
 {
 	struct intercept_pid *tmp, tmp2;
@@ -746,9 +757,13 @@ intercept_syscall(int fd, pid_t pid, u_int16_t seqnr, int policynr,
 	if (action > 0) {
 		error = action;
 		action = ICPOLICY_NEVER;
-	} else
-		elevate = icpid->elevate;
-
+	} else {
+		icpid = intercept_findpid(pid);
+		if (icpid != NULL)
+			elevate = icpid->elevate;
+		else
+			elevate = NULL;
+	}
 
 	/* Resume execution of the process */
 	intercept.answer(fd, pid, seqnr, action, error, flags, elevate);
