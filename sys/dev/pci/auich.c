@@ -1,4 +1,4 @@
-/*	$OpenBSD: auich.c,v 1.46 2005/03/22 20:03:07 marc Exp $	*/
+/*	$OpenBSD: auich.c,v 1.47 2005/04/02 01:20:56 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Michael Shalayeff
@@ -170,6 +170,7 @@ struct auich_softc {
 	audio_device_t sc_audev;
 
 	bus_space_tag_t iot;
+	bus_space_tag_t iot_mix;
 	bus_space_handle_t mix_ioh;
 	bus_space_handle_t aud_ioh;
 	bus_dma_tag_t dmat;
@@ -362,12 +363,12 @@ auich_attach(parent, self, aux)
 		 * Use native mode for ICH4/ICH5
 		 */
 		if (pci_mapreg_map(pa, AUICH_MMBAR, PCI_MAPREG_TYPE_MEM, 0,
-		    &sc->iot, &sc->mix_ioh, NULL, &mix_size, 0)) {
+		    &sc->iot_mix, &sc->mix_ioh, NULL, &mix_size, 0)) {
 			csr = pci_conf_read(pa->pa_pc, pa->pa_tag, AUICH_CFG);
 			pci_conf_write(pa->pa_pc, pa->pa_tag, AUICH_CFG,
 			    csr | AUICH_CFG_IOSE);
 			if (pci_mapreg_map(pa, AUICH_NAMBAR, PCI_MAPREG_TYPE_IO,
-			    0, &sc->iot, &sc->mix_ioh, NULL, &mix_size, 0)) {
+			    0, &sc->iot_mix, &sc->mix_ioh, NULL, &mix_size, 0)) {
 				printf(": can't map codec mem/io space\n");
 				return;
 			}
@@ -382,13 +383,13 @@ auich_attach(parent, self, aux)
 			    PCI_MAPREG_TYPE_IO, 0, &sc->iot,
 			    &sc->aud_ioh, NULL, &aud_size, 0)) {
 				printf(": can't map device mem/io space\n");
-				bus_space_unmap(sc->iot, sc->mix_ioh, mix_size);
+				bus_space_unmap(sc->iot_mix, sc->mix_ioh, mix_size);
 				return;
 			}
 		}
 	} else {
 		if (pci_mapreg_map(pa, AUICH_NAMBAR, PCI_MAPREG_TYPE_IO,
-		    0, &sc->iot, &sc->mix_ioh, NULL, &mix_size, 0)) {
+		    0, &sc->iot_mix, &sc->mix_ioh, NULL, &mix_size, 0)) {
 			printf(": can't map codec i/o space\n");
 			return;
 		}
@@ -396,7 +397,7 @@ auich_attach(parent, self, aux)
 		if (pci_mapreg_map(pa, AUICH_NABMBAR, PCI_MAPREG_TYPE_IO,
 		    0, &sc->iot, &sc->aud_ioh, NULL, &aud_size, 0)) {
 			printf(": can't map device i/o space\n");
-			bus_space_unmap(sc->iot, sc->mix_ioh, mix_size);
+			bus_space_unmap(sc->iot_mix, sc->mix_ioh, mix_size);
 			return;
 		}
 	}
@@ -408,9 +409,8 @@ auich_attach(parent, self, aux)
 	    csr | PCI_COMMAND_MASTER_ENABLE);
 
 	if (pci_intr_map(pa, &ih)) {
-		printf(": can't map interrupt\n");
 		bus_space_unmap(sc->iot, sc->aud_ioh, aud_size);
-		bus_space_unmap(sc->iot, sc->mix_ioh, mix_size);
+		bus_space_unmap(sc->iot_mix, sc->mix_ioh, mix_size);
 		return;
 	}
 	intrstr = pci_intr_string(pa->pa_pc, ih);
@@ -422,7 +422,7 @@ auich_attach(parent, self, aux)
 			printf(" at %s", intrstr);
 		printf("\n");
 		bus_space_unmap(sc->iot, sc->aud_ioh, aud_size);
-		bus_space_unmap(sc->iot, sc->mix_ioh, mix_size);
+		bus_space_unmap(sc->iot_mix, sc->mix_ioh, mix_size);
 		return;
 	}
 
@@ -475,7 +475,7 @@ auich_attach(parent, self, aux)
 	if (ac97_attach(&sc->host_if) != 0) {
 		pci_intr_disestablish(pa->pa_pc, sc->sc_ih);
 		bus_space_unmap(sc->iot, sc->aud_ioh, aud_size);
-		bus_space_unmap(sc->iot, sc->mix_ioh, mix_size);
+		bus_space_unmap(sc->iot_mix, sc->mix_ioh, mix_size);
 		return;
 	}
 
@@ -507,7 +507,7 @@ auich_read_codec(v, reg, val)
 		return (-1);
 	}
 
-	*val = bus_space_read_2(sc->iot, sc->mix_ioh, reg);
+	*val = bus_space_read_2(sc->iot_mix, sc->mix_ioh, reg);
 	DPRINTF(AUICH_DEBUG_CODECIO, ("%s: read_codec(%x, %x)\n",
 	    sc->sc_dev.dv_xname, reg, *val));
 	return (0);
@@ -529,7 +529,7 @@ auich_write_codec(v, reg, val)
 	if (sc->sc_ignore_codecready || i >= 0) {
 		DPRINTF(AUICH_DEBUG_CODECIO, ("%s: write_codec(%x, %x)\n",
 		    sc->sc_dev.dv_xname, reg, val));
-		bus_space_write_2(sc->iot, sc->mix_ioh, reg, val);
+		bus_space_write_2(sc->iot_mix, sc->mix_ioh, reg, val);
 		return (0);
 	} else {
 		DPRINTF(AUICH_DEBUG_CODECIO,
