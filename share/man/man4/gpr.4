@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gpr.4,v 1.1 2002/06/15 18:08:19 fgsch Exp $
+.\"	$OpenBSD: gpr.4,v 1.2 2002/06/18 01:10:37 fgsch Exp $
 .\"
 .\" Copyright (c) 2002, Federico G. Schwindt
 .\" All rights reserved.
@@ -6,15 +6,15 @@
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions are
 .\" met:
-.\"   * Redistributions of source code must retain the above copyright
-.\"     notice, this list of conditions and the following disclaimer.
-.\"   * Redistributions in binary form must reproduce the above copyright
-.\"     notice, this list of conditions and the following disclaimer in
-.\"     the documentation and/or other materials provided with the
-.\"     distribution.
-.\"   * Neither the name of the Federico G. Schwindt nor the names of its
-.\"     contributors may be used to endorse or promote products derived
-.\"     from this software without specific prior written permission.
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in
+.\"    the documentation and/or other materials provided with the
+.\"    distribution.
+.\" 3. Neither the name of the Federico G. Schwindt nor the names of its
+.\"    contributors may be used to endorse or promote products derived
+.\"    from this software without specific prior written permission.
 .\"
 .\" THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 .\" "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -40,7 +40,19 @@
 The
 .Nm
 driver provides support for the GemPlus GPR400 PCMCIA smartcard reader.
+.Pp
+The
+.NM
+driver provides a number of ioctl functions to send and received information
+from the smartcard reader and/or the smartcard (see
+.Pa /usr/include/dev/pcmcia/gprio.h ) .
+.Sh FILES
+.Bl -tag -width /usr/include/dev/pcmcia/gprio.h -compact
+.It Pa /dev/gpr*
+.It Pa /usr/include/dev/pcmcia/gprio.h
+.El
 .Sh SEE ALSO
+.Xr ioctl 2 ,
 .Xr intro 4 ,
 .Xr pcmcia 4
 .Sh BUGS
