@@ -1665,12 +1665,12 @@ for this_target in $target $canon_targets ; do
 
       alpha*-*-*vms*)	    fmt=evax ;;
       alpha*-*-netware*)    fmt=ecoff ;;
-      alpha*-*-openbsd*)    fmt=ecoff ;;
       alpha*-*-osf*)        fmt=ecoff ;;
       alpha*-*-linuxecoff*) fmt=ecoff ;;
       alpha*-*-linux-gnu*)  fmt=elf em=linux ;;
       alpha*-*-freebsd*)    fmt=elf em=freebsd ;;
       alpha*-*-netbsd*)     fmt=elf em=nbsd ;;
+      alpha*-*-openbsd*)    fmt=elf em=obsd ;;
 
       arc-*-elf*)           fmt=elf bfd_gas=yes ;;
 
