@@ -1,4 +1,4 @@
-/*	$OpenBSD: rndioctl.h,v 1.4 1997/06/21 04:59:37 flipk Exp $	*/
+/*	$OpenBSD: rndioctl.h,v 1.5 1997/06/22 04:58:06 flipk Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff.
@@ -38,13 +38,13 @@
 #ifndef __RNDIOCTL_H__
 #define __RNDIOCTL_H__
 
+/* ioctl()'s for the random number generator */
+
 struct rnd_pool_info {
 	size_t	entropy_count;
 	size_t	buf_size;
 	u_int32_t *buf;
 };
-
-/* ioctl()'s for the random number generator */
 
 #define RNDGETENTCNT	_IOR('R', 0, sizeof(u_int))
 #define RNDADDTOENTCNT	_IOW('R', 1, sizeof(u_int))
