@@ -1,4 +1,4 @@
-.\"	$OpenBSD: siginterrupt.3,v 1.10 2000/12/24 00:30:51 aaron Exp $
+.\"	$OpenBSD: siginterrupt.3,v 1.11 2001/02/04 22:43:12 millert Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -31,7 +31,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd June 4, 1993
+.Dd February 4, 2001
 .Dt SIGINTERRUPT 3
 .Os
 .Sh NAME
@@ -53,7 +53,7 @@ they are interrupted by the specified signal
 .Fa sig
 and no data has been transferred yet.
 System call restart is the default behavior on
-.Bx 4.2 .
+.Ox .
 .Pp
 If
 .Fa flag
@@ -68,42 +68,26 @@ set to
 Interrupted system calls that have started transferring
 data will return the amount of data actually transferred.
 System call interrupt is the signal behavior found on
-.Bx 4.1
-and
-.At V
-systems.
-.Pp
-Note that the new
+.Bx
+systems prior to
 .Bx 4.2
-signal handling semantics are not
-altered in any other way.
-Most notably, signal handlers always remain installed until
-explicitly changed by a subsequent
-.Xr sigaction 2
-call, and the signal mask operates as documented in
-.Xr sigaction 2 .
+as well as most systems based upon
+.At V .
+.Pp
 Programs may switch between restartable and interruptible
 system call operation as often as desired in the execution of a program.
-.Pp
 Issuing a
 .Fn siginterrupt
 call during the execution of a signal handler will cause
 the new action to take place on the next signal to be caught.
-.Sh NOTES
-This library routine uses an extension of the
-.Xr sigaction 2
-system call that is not available in
-.Bx 4.2 ,
-hence it should not be used if backward compatibility is needed.
 .Sh RETURN VALUES
 .Fn siginterrupt
 returns 0 on success or \-1 if an invalid signal number has been
 specified.
 .Sh SEE ALSO
 .Xr sigaction 2 ,
-.Xr sigblock 3 ,
-.Xr sigpause 3 ,
-.Xr sigsetmask 3
+.Xr sigprocmask 2 ,
+.Xr sigsuspend 2
 .Sh HISTORY
 The
 .Fn siginterrupt
