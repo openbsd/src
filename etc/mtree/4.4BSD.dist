@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.68 1999/02/26 18:32:22 mickey Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.69 1999/03/01 05:00:39 beck Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -1796,6 +1796,12 @@ manual  type=dir uname=root gname=daemon mode=755
 
 #./www/htdocs/manual/mod
 mod  type=dir uname=root gname=daemon mode=755
+
+#./www/htdocs/manual/mod/mod_ssl
+mod_ssl  type=dir uname=root gname=daemon mode=755
+#./www/htdocs/manual/mod/mod_ssl
+..
+
 #./www/htdocs/manual/mod
 ..
 
