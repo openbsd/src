@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipip.c,v 1.26 2002/07/05 23:11:09 angelos Exp $ */
+/*	$OpenBSD: ip_ipip.c,v 1.27 2002/07/05 23:12:19 angelos Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -585,7 +585,7 @@ ipip_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 		m_freem(m);
 		*mp = NULL;
 		ipipstat.ipips_family++;
-		return ENOBUFS;
+		return EAFNOSUPPORT;
 	}
 
 	ipipstat.ipips_opackets++;
