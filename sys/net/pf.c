@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.380 2003/07/29 20:56:55 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.381 2003/08/07 14:20:50 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1322,7 +1322,7 @@ pf_match_addr(u_int8_t n, struct pf_addr *a, struct pf_addr *m,
 }
 
 int
-pf_match(u_int8_t op, u_int16_t a1, u_int16_t a2, u_int16_t p)
+pf_match(u_int8_t op, u_int32_t a1, u_int32_t a2, u_int32_t p)
 {
 	switch (op) {
 	case PF_OP_IRG:
