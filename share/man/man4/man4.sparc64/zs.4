@@ -1,10 +1,10 @@
-.\"	$OpenBSD: zs.4,v 1.5 2002/10/01 21:03:28 miod Exp $
+.\"	$OpenBSD: zs.4,v 1.6 2002/12/03 19:50:33 miod Exp $
 .\"
-.\" Copyright (c) 1998 The OpenBSD Project
+.\" Copyright (c) 1998, 2002 The OpenBSD Project
 .\" All rights reserved.
 .\"
 .\"
-.Dd March 4, 1998
+.Dd December 3, 2002
 .Dt ZS 4 sparc64
 .Os
 .Sh NAME
@@ -15,6 +15,8 @@
 .Cd "zstty* at zs? channel ?"
 .Cd "zskbd* at zs? channel ?"
 .Cd "wskbd* at zskbd? console ?"
+.Cd "option SUNKBD_LAYOUT=XXX"
+.Cd "option SUNKBD5_LAYOUT=XXX"
 .Sh DESCRIPTION
 The
 .Nm
@@ -47,20 +49,110 @@ only the DTR and RTS signals can be modified with TIOCMSET, TIOCMBIC,
 and TIOCMBIS
 .Xr ioctl 2
 commands.
-.Sh BUGS
+.Pp
 The
-.Nm
-driver now supports cua minor devices, but with this known deficiency
-in the simultaneous outgoing/incoming aspect of the driver:
-The first outgoing connection succeeds, but second and subsequent
-connections fail, apparently due to a getty hang.
-The hung getty apparently prevents the cua device from being re-opened.
+.Nm zskbd
+driver supports a number of different key mappings.
+By default, the layout corresponding to the keyboard model
+as probed by the
+.Nm zskbd
+driver will be used.
+A different layout can be chosen either with the kernel options
+.Dq SUNKBD_LAYOUT
+(for type 4 keyboards)
+and
+.Dq SUNKBD5_LAYOUT
+(for type 5 keyboards)
+at compile time or with the utility
+.Xr wsconsctl 8
+(variable:
+.Dq keyboard.encoding
+) at runtime.
+.Pp
+Other mappings can be used if the whole keymap is replaced by means of
+.Xr wsconsctl 8 .
+The built-in mappings are at this time:
+.Bl -hang
+.It KB_BE
+(
+.Dq be
+) Belgium French (type 4 only).
+.It KB_DE
+(
+.Dq de
+) German.
+.It KB_DK
+(
+.Dq dk
+) Danish.
+.It KB_ES
+(
+.Dq es
+) Spanish.
+.It KB_FR
+(
+.Dq fr
+) French (type 5 only).
+.It KB_IT
+(
+.Dq it
+) Italian.
+.It KB_NL
+(
+.Dq \&nl
+) Dutch.
+.It KB_NO
+(
+.Dq no
+) Norwegian.
+.It KB_PT
+(
+.Dq pt
+) Portuguese.
+.It KB_SF
+(
+.Dq sf
+) Swiss French.
+.It KB_SG
+(
+.Dq sg
+) Swiss German.
+.It KB_SV
+(
+.Dq sv
+) Swedish with
+.Dq dead accents .
+.It KB_UK
+(
+.Dq uk
+) British.
+.It KB_US
+(
+.Dq us
+) English / US keyboard mapping.
+.El
+.Pp
+The KB_SV mapping can be used in
+the KB_NODEAD (
+.Dq .nodead
+) variant.
+This switches off the
+.Dq dead accents .
+.Sh EXAMPLES
+To set a german keyboard layout, use
+.Ic wsconsctl -w keyboard.encoding=de .
+To set it at kernel build time, add
+.Em option SUNKBD_LAYOUT="KB_DE"
+to the kernel configuration file for a type 4 keyboard, or
+.Em option SUNKBD5_LAYOUT="KB_DE"
+for a type 5 keyboard.
 .Sh SEE ALSO
 .Xr ioctl 2 ,
 .Xr intro 4 ,
 .Xr sbus 4 ,
 .Xr tty 4 ,
-.Xr wskbd 4
+.Xr wskbd 4 ,
+.Xr wsconsctl 8
 .Sh HISTORY
 The
 .Nm
@@ -70,3 +162,14 @@ Support for the TIOCM*
 .Xr ioctl 2 Ns s
 appeared in
 .Ox 2.3 .
+.Sh BUGS
+The
+.Nm
+driver now supports cua minor devices, but with this known deficiency
+in the simultaneous outgoing/incoming aspect of the driver:
+The first outgoing connection succeeds, but second and subsequent
+connections fail, apparently due to a getty hang.
+The hung getty apparently prevents the cua device from being re-opened.
+.Pp
+The kernel does not provide a keyboard layout for all manufactured Sun
+keyboard models.
