@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 2001/02/09 05:20:52 drahn Exp $
+#	$OpenBSD: Makefile,v 1.1 2001/09/01 15:34:13 drahn Exp $
 #	$NetBSD: Makefile,v 1.2 1997/04/17 07:46:24 thorpej Exp $
 
 S=	${.CURDIR}/../../../..
@@ -6,7 +6,7 @@ R=../
 
 PROG=		ofwboot
 SRCS=		Locore.c boot.c ofdev.c net.c netif_of.c alloc.c cache.c hfs.c
-.PATH:		${S}/arch/powerpc/stand
+.PATH:		${S}/arch/macppc/stand
 SRCS+=		ofwmagic.S
 #CFLAGS+=	-DDEBUG -DNETIF_DEBUG
 NOMAN=
