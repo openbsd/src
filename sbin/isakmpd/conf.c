@@ -1,4 +1,4 @@
-/* $OpenBSD: conf.c,v 1.64 2004/04/15 18:53:56 deraadt Exp $	 */
+/* $OpenBSD: conf.c,v 1.65 2004/04/15 20:20:55 deraadt Exp $	 */
 /* $EOM: conf.c,v 1.48 2000/12/04 02:04:29 angelos Exp $	 */
 
 /*
@@ -138,7 +138,7 @@ conf_remove_now(char *section, char *tag)
 		    && strcasecmp(cb->tag, tag) == 0) {
 			LIST_REMOVE(cb, link);
 			LOG_DBG((LOG_MISC, 95, "[%s]:%s->%s removed", section, tag,
-				 cb->value));
+			    cb->value));
 			free(cb->section);
 			free(cb->tag);
 			free(cb->value);
@@ -161,7 +161,7 @@ conf_remove_section_now(char *section)
 			unseen = 0;
 			LIST_REMOVE(cb, link);
 			LOG_DBG((LOG_MISC, 95, "[%s]:%s->%s removed", section, cb->tag,
-				 cb->value));
+			    cb->value));
 			free(cb->section);
 			free(cb->tag);
 			free(cb->value);
@@ -186,13 +186,13 @@ conf_set_now(char *section, char *tag, char *value, int override,
 	else if (conf_get_str(section, tag)) {
 		if (!is_default)
 			log_print("conf_set_now: duplicate tag [%s]:%s, ignoring...\n",
-				  section, tag);
+			    section, tag);
 		return 1;
 	}
 	node = calloc(1, sizeof *node);
 	if (!node) {
 		log_error("conf_set_now: calloc (1, %lu) failed", (unsigned long) sizeof
-			  *node);
+		    *node);
 		return 1;
 	}
 	node->section = strdup(section);
@@ -202,7 +202,7 @@ conf_set_now(char *section, char *tag, char *value, int override,
 
 	LIST_INSERT_HEAD(&conf_bindings[conf_hash(section)], node, link);
 	LOG_DBG((LOG_MISC, 95, "conf_set_now: [%s]:%s->%s", node->section, node->tag,
-		 node->value));
+	    node->value));
 	return 0;
 }
 
@@ -234,14 +234,14 @@ conf_parse_line(int trans, char *line, size_t sz)
 			free(section);
 		if (i == sz) {
 			log_print("conf_parse_line: %d:"
-			"non-matched ']', ignoring until next section", ln);
+			    "non-matched ']', ignoring until next section", ln);
 			section = 0;
 			return;
 		}
 		section = malloc(i);
 		if (!section) {
 			log_print("conf_parse_line: %d: malloc (%lu) failed", ln,
-				  (unsigned long) i);
+			    (unsigned long) i);
 			return;
 		}
 		strlcpy(section, line + 1, i);
@@ -252,8 +252,8 @@ conf_parse_line(int trans, char *line, size_t sz)
 		if (line[i] == '=') {
 			/* If no section, we are ignoring the lines.  */
 			if (!section) {
-				log_print("conf_parse_line: %d: ignoring line due to no section",
-					  ln);
+				log_print("conf_parse_line: %d: ignoring line "
+				    "due to no section", ln);
 				return;
 			}
 			line[strcspn(line, " \t=")] = '\0';
@@ -269,8 +269,6 @@ conf_parse_line(int trans, char *line, size_t sz)
 	i = strspn(line, " \t");
 	if (line[i])
 		log_print("conf_parse_line: %d: syntax error", ln);
-
-	return;
 }
 
 /* Parse the mapped configuration file.  */
@@ -438,35 +436,46 @@ conf_load_defaults(int tr)
 		 CONF_DFLT_PHASE1_TRANSFORMS, 0, 1);
 
 	/* Main modes */
-	for (enc = 0; mm_enc[enc]; enc++)
-		for (hash = 0; mm_hash[hash]; hash++)
-			for (auth = 0; mm_auth[auth]; auth++)
-				for (group = 0; dh_group_p[group]; group++) {	/* special */
-					snprintf(sect, sizeof sect, "%s-%s%s%s", mm_enc_p[enc],
-						 mm_hash[hash], dh_group_p[group], mm_auth_p[auth]);
+	for (enc = 0; mm_enc[enc]; enc++) {
+		for (hash = 0; mm_hash[hash]; hash++) {
+			for (auth = 0; mm_auth[auth]; auth++) {
+				for (group = 0; dh_group_p[group]; group++) {
+					/* special */
+					snprintf(sect, sizeof sect, "%s-%s%s%s",
+					    mm_enc_p[enc], mm_hash[hash],
+					    dh_group_p[group], mm_auth_p[auth]);
 
 #if 0
 					if (!conf_find_trans_xf(1, sect))
 						continue;
 #endif
 
-					LOG_DBG((LOG_MISC, 90, "conf_load_defaults : main mode %s",
-						 sect));
+					LOG_DBG((LOG_MISC, 90,
+					    "conf_load_defaults : main mode %s",
+					    sect));
 
-					conf_set(tr, sect, "ENCRYPTION_ALGORITHM", mm_enc[enc], 0, 1);
+					conf_set(tr, sect, "ENCRYPTION_ALGORITHM",
+					    mm_enc[enc], 0, 1);
 					if (strcmp(mm_enc[enc], "BLOWFISH_CBC") == 0)
-						conf_set(tr, sect, "KEY_LENGTH", CONF_DFLT_VAL_BLF_KEYLEN, 0,
-							 1);
+						conf_set(tr, sect, "KEY_LENGTH",
+						    CONF_DFLT_VAL_BLF_KEYLEN, 0, 1);
 
-					conf_set(tr, sect, "HASH_ALGORITHM", mm_hash[hash], 0, 1);
-					conf_set(tr, sect, "AUTHENTICATION_METHOD", mm_auth[auth], 0, 1);
+					conf_set(tr, sect, "HASH_ALGORITHM",
+					    mm_hash[hash], 0, 1);
+					conf_set(tr, sect, "AUTHENTICATION_METHOD",
+					    mm_auth[auth], 0, 1);
 
 					/* XXX Always DH group 2 (MODP_1024) */
 					conf_set(tr, sect, "GROUP_DESCRIPTION",
-						 dh_group[group < group_max ? group : 1], 0, 1);
+					    dh_group[group < group_max ? group : 1],
+					    0, 1);
 
-					conf_set(tr, sect, "Life", CONF_DFLT_TAG_LIFE_MAIN_MODE, 0, 1);
+					conf_set(tr, sect, "Life",
+					    CONF_DFLT_TAG_LIFE_MAIN_MODE, 0, 1);
 				}
+			}
+		}
+	}
 
 	/* Setup a default Phase 1 entry */
 	conf_set(tr, "Phase 1", "Default", "Default-phase-1", 0, 1);
@@ -479,98 +488,104 @@ conf_load_defaults(int tr)
 		conf_set(tr, "Default-phase-1", "ID", dflt, 0, 1);
 
 	/* Quick modes */
-	for (enc = 0; qm_enc[enc]; enc++)
-		for (proto = 0; proto < 2; proto++)
-			for (mode = 0; mode < 2; mode++)
-				for (pfs = 0; pfs < 2; pfs++)
-					for (hash = 0; qm_hash[hash]; hash++)
-						for (group = 0; dh_group_p[group]; group++)
-							if ((proto == 1 && strcmp(qm_hash[hash], "NONE") == 0))	/* AH */
+	for (enc = 0; qm_enc[enc]; enc++) {
+		for (proto = 0; proto < 2; proto++) {
+			for (mode = 0; mode < 2; mode++) {
+				for (pfs = 0; pfs < 2; pfs++) {
+					for (hash = 0; qm_hash[hash]; hash++) {
+						for (group = 0; dh_group_p[group];
+						    group++) {
+							char tmp[CONF_MAX];
+
+							if ((proto == 1 &&
+							    strcmp(qm_hash[hash],
+							    "NONE") == 0)) /* AH */
 								continue;
-							else {
-								char            tmp[CONF_MAX];
 
-								snprintf(tmp, sizeof tmp, "QM-%s%s%s%s%s%s", PROTO(proto),
-									 MODE_p(mode), qm_enc_p[enc], qm_hash_p[hash],
-									 PFS(pfs), dh_group_p[group]);
+							snprintf(tmp, sizeof tmp,
+							    "QM-%s%s%s%s%s%s",
+							    PROTO(proto),
+							    MODE_p(mode),
+							    qm_enc_p[enc],
+							    qm_hash_p[hash],
+							    PFS(pfs),
+							    dh_group_p[group]);
 
-								strlcpy(sect, tmp, CONF_MAX);
-								strlcat(sect, "-SUITE", CONF_MAX);
+							strlcpy(sect, tmp, CONF_MAX);
+							strlcat(sect, "-SUITE",
+							    CONF_MAX);
 
 #if 0
-								if (!conf_find_trans_xf(2, sect))
-									continue;
+							if (!conf_find_trans_xf(2, sect))
+								continue;
 #endif
 
-								LOG_DBG((LOG_MISC, 90, "conf_load_defaults : quick mode %s",
-								     sect));
+							LOG_DBG((LOG_MISC, 90,
+							    "conf_load_defaults : quick mode %s",
+							    sect));
 
-								conf_set(tr, sect, "Protocols", tmp, 0, 1);
+							conf_set(tr, sect, "Protocols",
+							    tmp, 0, 1);
 
-								snprintf(sect, sizeof sect, "IPSEC_%s", PROTO(proto));
-								conf_set(tr, tmp, "PROTOCOL_ID", sect, 0, 1);
+							snprintf(sect, sizeof sect,
+							    "IPSEC_%s", PROTO(proto));
+							conf_set(tr, tmp, "PROTOCOL_ID",
+							    sect, 0, 1);
 
-								strlcpy(sect, tmp, CONF_MAX);
-								strlcat(sect, "-XF", CONF_MAX);
-								conf_set(tr, tmp, "Transforms", sect, 0, 1);
+							strlcpy(sect, tmp, CONF_MAX);
+							strlcat(sect, "-XF", CONF_MAX);
+							conf_set(tr, tmp, "Transforms",
+							    sect, 0, 1);
 
-								/*
-								 * XXX For
-								 * now,
-								 * defaults
-								 * contain
-								 * one xf per
-								 * protocol.
-								 */
+							/*
+							 * XXX For now, defaults
+							 * contain one xf per protocol.
+							 */
 
-								conf_set(tr, sect, "TRANSFORM_ID", qm_enc[enc], 0, 1);
+							conf_set(tr, sect,
+							    "TRANSFORM_ID",
+							    qm_enc[enc], 0, 1);
 
-								if (strcmp(qm_enc[enc], "BLOWFISH") == 0)
-									conf_set(tr, sect, "KEY_LENGTH", CONF_DFLT_VAL_BLF_KEYLEN,
-										 0, 1);
+							if (strcmp(qm_enc[enc],
+							    "BLOWFISH") == 0)
+								conf_set(tr, sect,
+								    "KEY_LENGTH",
+								    CONF_DFLT_VAL_BLF_KEYLEN,
+								    0, 1);
 
-								conf_set(tr, sect, "ENCAPSULATION_MODE", MODE(mode), 0, 1);
+							conf_set(tr, sect,
+							    "ENCAPSULATION_MODE",
+							    MODE(mode), 0, 1);
 
-								if (strcmp(qm_hash[hash], "NONE")) {
-									conf_set(tr, sect, "AUTHENTICATION_ALGORITHM",
-										 qm_hash[hash], 0, 1);
+							if (strcmp(qm_hash[hash], "NONE")) {
+								conf_set(tr, sect, "AUTHENTICATION_ALGORITHM",
+								    qm_hash[hash], 0, 1);
 
-									/*
-									 * XXX
-									 *
-									 * Ano
-									 * the
-									 * r
-									 * sho
-									 * rtc
-									 * ut
-									 * --
-									 * to
-									 * kee
-									 * p
-									 * len
-									 * gth
-									 *
-									 * dow
-									 * n.
-									 */
-									if (pfs)
-										conf_set(tr, sect, "GROUP_DESCRIPTION",
-											 dh_group[group < group_max ? group : 1], 0,
-											 1);
-								}
 								/*
 								 * XXX
-								 * Lifetimes
-								 * depending
-								 * on
-								 * enc/auth
-								 * strength?
+								 *
+								 * Another shortcut:
+								 * to keep length down
 								 */
-								conf_set(tr, sect, "Life", CONF_DFLT_TAG_LIFE_QUICK_MODE, 0,
-									 1);
+								if (pfs)
+									conf_set(tr, sect, "GROUP_DESCRIPTION",
+									    dh_group[group < group_max ? group : 1],
+									    0, 1);
 							}
-	return;
+							/*
+							 * XXX
+							 * Lifetimes depending
+							 * on enc/auth strength?
+							 */
+							conf_set(tr, sect, "Life", CONF_DFLT_TAG_LIFE_QUICK_MODE, 0,
+							    1);
+
+						}
+					}
+				}
+			}
+		}
+	}
 }
 
 void
@@ -1139,5 +1154,4 @@ mem_fail:
 			free(dnode->s);
 		free(dnode);
 	}
-	return;
 }
