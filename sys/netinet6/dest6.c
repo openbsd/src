@@ -1,4 +1,4 @@
-/*	$OpenBSD: dest6.c,v 1.5 2001/02/16 08:48:05 itojun Exp $	*/
+/*	$OpenBSD: dest6.c,v 1.6 2001/02/16 15:57:58 itojun Exp $	*/
 /*	$KAME: dest6.c,v 1.23 2001/01/23 13:32:26 itojun Exp $	*/
 
 /*
@@ -89,31 +89,31 @@ dest6_input(mp, offp, proto)
 	/* search header for all options. */
 	for (optlen = 0; dstoptlen > 0; dstoptlen -= optlen, opt += optlen) {
 		switch(*opt) {
-		 case IP6OPT_PAD1:
-			 optlen = 1;
-			 break;
-		 case IP6OPT_PADN:
-			 if (dstoptlen < IP6OPT_MINLEN) {
-				 ip6stat.ip6s_toosmall++;
-				 goto bad;
-			 }
-			 optlen = *(opt + 1) + 2;
-			 break;
-		 default:		/* unknown option */
-			 if (dstoptlen < IP6OPT_MINLEN) {
-				 ip6stat.ip6s_toosmall++;
-				 goto bad;
-			 }
-			 if ((optlen = ip6_unknown_opt(opt, m,
-						       opt-mtod(m, u_int8_t *))) == -1)
-				 return(IPPROTO_DONE);
-			 optlen += 2;
-			 break;
+		case IP6OPT_PAD1:
+			optlen = 1;
+			break;
+		case IP6OPT_PADN:
+			if (dstoptlen < IP6OPT_MINLEN) {
+				ip6stat.ip6s_toosmall++;
+				goto bad;
+			}
+			optlen = *(opt + 1) + 2;
+			break;
+		default:		/* unknown option */
+			if (dstoptlen < IP6OPT_MINLEN) {
+				ip6stat.ip6s_toosmall++;
+				goto bad;
+			}
+			if ((optlen = ip6_unknown_opt(opt, m,
+						      opt-mtod(m, u_int8_t *))) == -1)
+				return(IPPROTO_DONE);
+			optlen += 2;
+			break;
 		}
 	}
 
 	*offp = off;
-	return(dstopts->ip6d_nxt);
+	return (dstopts->ip6d_nxt);
 
   bad:
 	m_freem(m);
