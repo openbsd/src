@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.776 2004/10/07 00:52:56 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.777 2004/10/07 20:53:29 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -183,6 +183,7 @@
 #define	PCI_VENDOR_ATML	0x121b		/* Advanced Telecommunications Modules */
 #define	PCI_VENDOR_CCUBE	0x123f		/* C-Cube */
 #define	PCI_VENDOR_AVM	0x1244		/* AVM */
+#define	PCI_VENDOR_COREGA	0x1259		/* Corega */
 #define	PCI_VENDOR_ASIX	0x125b		/* ASIX */
 #define	PCI_VENDOR_ESSTECH	0x125d		/* ESS */
 #define	PCI_VENDOR_INTERSIL	0x1260		/* Intersil */
@@ -212,6 +213,7 @@
 #define	PCI_VENDOR_LEVEL1	0x1394		/* Level 1 */
 #define	PCI_VENDOR_HIFN	0x13a3		/* Hifn */
 #define	PCI_VENDOR_TRIWARE	0x13c1		/* 3ware */
+#define	PCI_VENDOR_ABOCOM	0x13d1		/* Abocom */
 #define	PCI_VENDOR_SUNDANCE	0x13f0		/* Sundance */
 #define	PCI_VENDOR_CMI	0x13f6		/* C-Media Electronics */
 #define	PCI_VENDOR_LAVA	0x1407		/* Lava */
@@ -225,6 +227,7 @@
 #define	PCI_VENDOR_AVLAB	0x14db		/* Avlab */
 #define	PCI_VENDOR_INVERTEX	0x14e1		/* Invertex */
 #define	PCI_VENDOR_BROADCOM	0x14e4		/* Broadcom */
+#define	PCI_VENDOR_PLANEX	0x14ea		/* Planex */
 #define	PCI_VENDOR_CONEXANT	0x14f1		/* Conexant */
 #define	PCI_VENDOR_DELTA	0x1500		/* Delta */
 #define	PCI_VENDOR_MYSON	0x1516		/* Myson Century */
@@ -239,6 +242,7 @@
 #define	PCI_VENDOR_NDC	0x15e8		/* National Datacomm Corp */
 #define	PCI_VENDOR_EUMITCOM	0x1638		/* Eumitcom */
 #define	PCI_VENDOR_NETSEC	0x1660		/* NetSec */
+#define	PCI_VENDOR_ATHEROS	0x168c		/* Atheros */
 #define	PCI_VENDOR_GLOBALSUN	0x16ab		/* Global Sun */
 #define	PCI_VENDOR_SAFENET	0x16ae		/* SafeNet */
 #define	PCI_VENDOR_USR2	0x16ec		/* US Robotics */
@@ -297,9 +301,17 @@
 #define	PCI_PRODUCT_3COM_3C595T4	0x5951		/* 3c595 100Base-T4 */
 #define	PCI_PRODUCT_3COM_3C595MII	0x5952		/* 3c595 10Mbps-MII */
 #define	PCI_PRODUCT_3COM_3C555	0x5055		/* 3c555 100Base-TX */
+#define	PCI_PRODUCT_3COM_3C575	0x5057		/* 3c575 */
+#define	PCI_PRODUCT_3COM_3CCFE575BT	0x5157		/* 3CCFE575BT */
+#define	PCI_PRODUCT_3COM_3CCFE575CT	0x5257		/* 3CCFE575CT */
 #define	PCI_PRODUCT_3COM_3CRSHPW796	0x6000		/* 3CRSHPW796 802.11b */
 #define	PCI_PRODUCT_3COM_3C556	0x6055		/* 3c556 100Base-TX */
 #define	PCI_PRODUCT_3COM_3C556B	0x6056		/* 3c556B 100Base-TX */
+#define	PCI_PRODUCT_3COM_3CCFEM656	0x6560		/* 3CCFEM656 */
+#define	PCI_PRODUCT_3COM_3CCFEM656B	0x6562		/* 3CCFEM656B */
+#define	PCI_PRODUCT_3COM_MODEM56	0x6563		/* 56k Modem */
+#define	PCI_PRODUCT_3COM_3CCFEM656C	0x6564		/* 3CCFEM656C */
+#define	PCI_PRODUCT_3COM_GLOBALMODEM56	0x6565		/* 56k Global Modem */
 #define	PCI_PRODUCT_3COM_3CSOHO100TX	0x7646		/* 3cSOHO-TX */
 #define	PCI_PRODUCT_3COM_3CRWE777A	0x7770		/* 3crwe777a AirConnect */
 #define	PCI_PRODUCT_3COM_3C900TPO	0x9000		/* 3c900 10Base-T */
@@ -351,6 +363,11 @@
 /* 3Ware products */
 #define	PCI_PRODUCT_TRIWARE_ESCALADE	0x1000		/* Escalade IDE RAID */
 #define	PCI_PRODUCT_TRIWARE_ESCALADE_ASIC	0x1001		/* Escalade IDE RAID */
+
+/* Abocom products */
+#define	PCI_PRODUCT_ABOCOM_FE2500	0xab02		/* FE2500 */
+#define	PCI_PRODUCT_ABOCOM_PCM200	0xab03		/* PCM200 */
+#define	PCI_PRODUCT_ABOCOM_TE100	0xab06		/* TE100 */
 
 /* Aironet Products */
 #define	PCI_PRODUCT_AIRONET_PC4800_1	0x0001		/* PC4800 Wireless */
@@ -428,6 +445,7 @@
 #define	PCI_PRODUCT_ADP_AIC7855	0x5578		/* AIC-7855 */
 #define	PCI_PRODUCT_ADP_AIC5900	0x5900		/* AIC-5900 ATM */
 #define	PCI_PRODUCT_ADP_AIC5905	0x5905		/* AIC-5905 ATM */
+#define	PCI_PRODUCT_ADP_1480	0x6075		/* APA-1480 */
 #define	PCI_PRODUCT_ADP_AIC7860	0x6078		/* AIC-7860 */
 #define	PCI_PRODUCT_ADP_2940AU	0x6178		/* AHA-2940AU */
 #define	PCI_PRODUCT_ADP_AIC7870	0x7078		/* AIC-7870 */
@@ -713,6 +731,9 @@
 #define	PCI_PRODUCT_AMCIRCUITS_S5933	0x4750		/* S5933 PCI Matchmaker */
 #define	PCI_PRODUCT_AMCIRCUITS_LANAI	0x8043		/* Myrinet LANai */
 
+/* Atheros products */
+#define	PCI_PRODUCT_ATHEROS_AR5201	0x0007		/* AR5201 Wireless */
+
 /* Atronics products */
 #define	PCI_PRODUCT_ATRONICS_IDE_2015PL	0x2015		/* IDE-2015PL */
 
@@ -914,6 +935,10 @@
 #define	PCI_PRODUCT_CONTAQ_82C599	0x0600		/* 82C599 VLB */
 #define	PCI_PRODUCT_CONTAQ_82C693	0xc693		/* CY82C693U ISA */
 
+/* Corega products */
+#define	PCI_PRODUCT_COREGA_CB_TXD	0xa117		/* FEther CB-TXD 10/100 */
+#define	PCI_PRODUCT_COREGA_2CB_TXD	0xa11e		/* FEther II CB-TXD 10/100 */
+
 /* Corollary Products */
 #define	PCI_PRODUCT_COROLLARY_CBUSII_PCIB	0x0014		/* C-Bus II-PCI */
 
@@ -1006,6 +1031,7 @@
 /* D-Link products */
 #define	PCI_PRODUCT_DLINK_550TX	0x1002		/* 550TX */
 #define	PCI_PRODUCT_DLINK_530TXPLUS	0x1300		/* 530TX+ */
+#define	PCI_PRODUCT_DLINK_DFE690TXD	0x1340		/* DFE-690TXD */
 #define	PCI_PRODUCT_DLINK_DGE550T	0x4000		/* DGE-550T */
 #define	PCI_PRODUCT_DLINK_DGE530T	0x4c00		/* DGE-530T */
 
@@ -1189,6 +1215,7 @@
 #define	PCI_PRODUCT_INTEL_80960RN	0x0964		/* i960 RN PCI-PCI */
 #define	PCI_PRODUCT_INTEL_82542	0x1000		/* PRO/1000 (82542) */
 #define	PCI_PRODUCT_INTEL_82543GC_SC	0x1001		/* PRO/1000F (82543GC) */
+#define	PCI_PRODUCT_INTEL_MODEM56	0x1002		/* Modem */
 #define	PCI_PRODUCT_INTEL_82543GC	0x1004		/* PRO/1000T (82543GC) */
 #define	PCI_PRODUCT_INTEL_82544EI	0x1008		/* PRO/1000XT (82544EI) */
 #define	PCI_PRODUCT_INTEL_82544EI_SC	0x1009		/* PRO/1000XF (82544EI) */
@@ -1512,6 +1539,7 @@
 /* Linksys products */
 #define	PCI_PRODUCT_LINKSYS_EG1032	0x1032		/* EG1032 */
 #define	PCI_PRODUCT_LINKSYS_EG1064	0x1064		/* EG1064 */
+#define	PCI_PRODUCT_LINKSYS_PCM200	0xab09		/* PCM200 */
 
 /* Lite-On Communications */
 #define	PCI_PRODUCT_LITEON_PNIC	0x0002		/* PNIC */
@@ -1780,6 +1808,10 @@
 /* Packet Engines products */
 #define	PCI_PRODUCT_SYMBIOS_PE_GNIC	0x0702		/* Packet Engines G-NIC */
 
+/* Planex products */
+#define	PCI_PRODUCT_PLANEX_FNW_3603_TX	0xab06		/* FNW-3603-TX 10/100 */
+#define	PCI_PRODUCT_PLANEX_FNW_3800_TX	0xab07		/* FNW-3800-TX 10/100 */
+
 /* NexGen products */
 #define	PCI_PRODUCT_NEXGEN_NX82C501	0x4e78		/* NX82C501 PCI */
 
@@ -1921,7 +1953,7 @@
 #define	PCI_PRODUCT_OPTI_82C700	0xc700		/* 82C700 */
 #define	PCI_PRODUCT_OPTI_82C701	0xc701		/* 82C701 */
 #define	PCI_PRODUCT_OPTI_82C822	0xc822		/* 82C822 */
-#define	PCI_PRODUCT_OPTI_RM861HA	0xc861		/* RM861HA */
+#define	PCI_PRODUCT_OPTI_82C861	0xc861		/* 82C861 */
 
 /* Oxford/ VScom */
 #define	PCI_PRODUCT_OXFORD_VSCOM_PCI010L	0x8001		/* VScom 010L */
@@ -2044,6 +2076,7 @@
 /* Realtek (Creative Labs?) products */
 #define	PCI_PRODUCT_REALTEK_RT8029	0x8029		/* 8029 */
 #define	PCI_PRODUCT_REALTEK_RT8129	0x8129		/* 8129 */
+#define	PCI_PRODUCT_REALTEK_RT8138	0x8138		/* 8138 */
 #define	PCI_PRODUCT_REALTEK_RT8139	0x8139		/* 8139 */
 #define	PCI_PRODUCT_REALTEK_RT8169	0x8169		/* 8169 */
 
@@ -2627,6 +2660,8 @@
 #define	PCI_PRODUCT_XIRCOM_X3201_3	0x0002		/* X3201-3 */
 #define	PCI_PRODUCT_XIRCOM_X3201_3_21143	0x0003		/* X3201-3 (21143) */
 #define	PCI_PRODUCT_XIRCOM_MPCI_MODEM	0x000c		/* Modem */
+#define	PCI_PRODUCT_XIRCOM_MODEM56	0x0103		/* 56k Modem */
+#define	PCI_PRODUCT_XIRCOM_CBEM56G	0x0105		/* CBEM56G Modem */
 
 /* Yamaha products */
 #define	PCI_PRODUCT_YAMAHA_YMF724	0x0004		/* 724 */

@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.776 2004/10/07 00:52:56 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.777 2004/10/07 20:53:29 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -111,6 +111,18 @@ static const struct pci_known_product pci_known_products[] = {
 	    "3c555 100Base-TX",
 	},
 	{
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C575,
+	    "3c575",
+	},
+	{
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3CCFE575BT,
+	    "3CCFE575BT",
+	},
+	{
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3CCFE575CT,
+	    "3CCFE575CT",
+	},
+	{
 	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3CRSHPW796,
 	    "3CRSHPW796 802.11b",
 	},
@@ -121,6 +133,26 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C556B,
 	    "3c556B 100Base-TX",
+	},
+	{
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3CCFEM656,
+	    "3CCFEM656",
+	},
+	{
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3CCFEM656B,
+	    "3CCFEM656B",
+	},
+	{
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_MODEM56,
+	    "56k Modem",
+	},
+	{
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3CCFEM656C,
+	    "3CCFEM656C",
+	},
+	{
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_GLOBALMODEM56,
+	    "56k Global Modem",
 	},
 	{
 	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3CSOHO100TX,
@@ -301,6 +333,18 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_TRIWARE, PCI_PRODUCT_TRIWARE_ESCALADE_ASIC,
 	    "Escalade IDE RAID",
+	},
+	{
+	    PCI_VENDOR_ABOCOM, PCI_PRODUCT_ABOCOM_FE2500,
+	    "FE2500",
+	},
+	{
+	    PCI_VENDOR_ABOCOM, PCI_PRODUCT_ABOCOM_PCM200,
+	    "PCM200",
+	},
+	{
+	    PCI_VENDOR_ABOCOM, PCI_PRODUCT_ABOCOM_TE100,
+	    "TE100",
 	},
 	{
 	    PCI_VENDOR_AIRONET, PCI_PRODUCT_AIRONET_PC4800_1,
@@ -537,6 +581,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_ADP, PCI_PRODUCT_ADP_AIC5905,
 	    "AIC-5905 ATM",
+	},
+	{
+	    PCI_VENDOR_ADP, PCI_PRODUCT_ADP_1480,
+	    "APA-1480",
 	},
 	{
 	    PCI_VENDOR_ADP, PCI_PRODUCT_ADP_AIC7860,
@@ -1527,6 +1575,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Myrinet LANai",
 	},
 	{
+	    PCI_VENDOR_ATHEROS, PCI_PRODUCT_ATHEROS_AR5201,
+	    "AR5201 Wireless",
+	},
+	{
 	    PCI_VENDOR_ATRONICS, PCI_PRODUCT_ATRONICS_IDE_2015PL,
 	    "IDE-2015PL",
 	},
@@ -2151,6 +2203,14 @@ static const struct pci_known_product pci_known_products[] = {
 	    "CY82C693U ISA",
 	},
 	{
+	    PCI_VENDOR_COREGA, PCI_PRODUCT_COREGA_CB_TXD,
+	    "FEther CB-TXD 10/100",
+	},
+	{
+	    PCI_VENDOR_COREGA, PCI_PRODUCT_COREGA_2CB_TXD,
+	    "FEther II CB-TXD 10/100",
+	},
+	{
 	    PCI_VENDOR_COROLLARY, PCI_PRODUCT_COROLLARY_CBUSII_PCIB,
 	    "C-Bus II-PCI",
 	},
@@ -2429,6 +2489,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_530TXPLUS,
 	    "530TX+",
+	},
+	{
+	    PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DFE690TXD,
+	    "DFE-690TXD",
 	},
 	{
 	    PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DGE550T,
@@ -2929,6 +2993,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82543GC_SC,
 	    "PRO/1000F (82543GC)",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_MODEM56,
+	    "Modem",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82543GC,
@@ -4119,6 +4187,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "EG1064",
 	},
 	{
+	    PCI_VENDOR_LINKSYS, PCI_PRODUCT_LINKSYS_PCM200,
+	    "PCM200",
+	},
+	{
 	    PCI_VENDOR_LITEON, PCI_PRODUCT_LITEON_PNIC,
 	    "PNIC",
 	},
@@ -4947,6 +5019,14 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Packet Engines G-NIC",
 	},
 	{
+	    PCI_VENDOR_PLANEX, PCI_PRODUCT_PLANEX_FNW_3603_TX,
+	    "FNW-3603-TX 10/100",
+	},
+	{
+	    PCI_VENDOR_PLANEX, PCI_PRODUCT_PLANEX_FNW_3800_TX,
+	    "FNW-3800-TX 10/100",
+	},
+	{
 	    PCI_VENDOR_NEXGEN, PCI_PRODUCT_NEXGEN_NX82C501,
 	    "NX82C501 PCI",
 	},
@@ -5443,8 +5523,8 @@ static const struct pci_known_product pci_known_products[] = {
 	    "82C822",
 	},
 	{
-	    PCI_VENDOR_OPTI, PCI_PRODUCT_OPTI_RM861HA,
-	    "RM861HA",
+	    PCI_VENDOR_OPTI, PCI_PRODUCT_OPTI_82C861,
+	    "82C861",
 	},
 	{
 	    PCI_VENDOR_OXFORD, PCI_PRODUCT_OXFORD_VSCOM_PCI010L,
@@ -5821,6 +5901,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8129,
 	    "8129",
+	},
+	{
+	    PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8138,
+	    "8138",
 	},
 	{
 	    PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8139,
@@ -7771,6 +7855,14 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Modem",
 	},
 	{
+	    PCI_VENDOR_XIRCOM, PCI_PRODUCT_XIRCOM_MODEM56,
+	    "56k Modem",
+	},
+	{
+	    PCI_VENDOR_XIRCOM, PCI_PRODUCT_XIRCOM_CBEM56G,
+	    "CBEM56G Modem",
+	},
+	{
 	    PCI_VENDOR_YAMAHA, PCI_PRODUCT_YAMAHA_YMF724,
 	    "724",
 	},
@@ -8359,6 +8451,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	    "AVM",
 	},
 	{
+	    PCI_VENDOR_COREGA,
+	    "Corega",
+	},
+	{
 	    PCI_VENDOR_ASIX,
 	    "ASIX",
 	},
@@ -8475,6 +8571,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	    "3ware",
 	},
 	{
+	    PCI_VENDOR_ABOCOM,
+	    "Abocom",
+	},
+	{
 	    PCI_VENDOR_SUNDANCE,
 	    "Sundance",
 	},
@@ -8525,6 +8625,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_BROADCOM,
 	    "Broadcom",
+	},
+	{
+	    PCI_VENDOR_PLANEX,
+	    "Planex",
 	},
 	{
 	    PCI_VENDOR_CONEXANT,
@@ -8581,6 +8685,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_NETSEC,
 	    "NetSec",
+	},
+	{
+	    PCI_VENDOR_ATHEROS,
+	    "Atheros",
 	},
 	{
 	    PCI_VENDOR_GLOBALSUN,
