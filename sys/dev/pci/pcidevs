@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.132 1999/04/28 23:21:00 alex Exp $
+$OpenBSD: pcidevs,v 1.133 1999/05/03 17:23:59 deraadt Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -298,7 +298,7 @@ vendor CREATIVELABS	0x1102	Creative Labs
 vendor TRIONES		0x1103	Triones Technologies
 vendor RASTEROPS	0x1104	RasterOps
 vendor SIGMA		0x1105	Sigma Designs
-vendor VIATECH		0x1106	VIA Technologies
+vendor VIATECH		0x1106	VIA
 vendor STRATIS		0x1107	Stratus Computer
 vendor PROTEON		0x1108	Proteon
 vendor COGENT		0x1109	Cogent Data Technologies
