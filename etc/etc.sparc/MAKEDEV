@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.39 1998/03/02 14:32:26 jason Exp $
+#	$OpenBSD: MAKEDEV,v 1.40 1998/03/24 19:32:48 marc Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -162,7 +162,7 @@ case $i in
 all)
 	sh ${this} std sd0 sd1 sd2 sd3 sd4 xd0 xd1 xd2 xd3 xy0 xy1 xy2 xy3
 	sh ${this} cd0 st0 st1 rd0
-	sh ${this} fd0 fdB0 fdC0 fdD0 fdE0 fdF0 fdG0 fdH0
+	sh ${this} fd0 fd0B fd0C fd0D fd0E fd0F fd0G fd0H
 	sh ${this} uk0 uk1
 	sh ${this} ss0 ss1
 	sh ${this} pty0 vnd0 vnd1 vnd2 vnd3 audio tun0 tun1 tun2 tun3
@@ -277,8 +277,8 @@ tun*)
 	;;
 
 fd*)
-	umask 2 ; unit=`expr $i : 'fd.*\(.\)$'`
-	typnam=`expr $i : 'fd\(.\).*'`
+	umask 2 ; typnam=`expr $i : 'fd.*\(.\)$'`
+	unit=`expr $i : 'fd\(.\).*'`
 	case $typnam in
 	0|1)		typnam=; typnum=0;;	# no type specified, assume A
 	A)		typnam=; typnum=0;;
@@ -295,7 +295,7 @@ fd*)
 	0|1)	blk=16; chr=54;;
 	*)	echo bad unit $unit for $i; exit 1;;
 	esac
-	nam=fd${typnam}$unit
+	nam=fd${unit}${typnam}
 	rm -f ${nam}? r${nam}?
 	basenum=`expr $unit '*' 128 + $typnum '*' 16`
 	mknod ${nam}a	b $blk `expr $basenum + 0`
