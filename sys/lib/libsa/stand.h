@@ -1,4 +1,4 @@
-/*	$OpenBSD: stand.h,v 1.12 1996/10/23 09:02:54 mickey Exp $	*/
+/*	$OpenBSD: stand.h,v 1.13 1996/10/29 07:59:29 mickey Exp $	*/
 /*	$NetBSD: stand.h,v 1.13 1996/01/13 22:25:42 leo Exp $	*/
 
 /*-
@@ -181,10 +181,14 @@ off_t	null_seek __P((struct open_file *f, off_t offset, int where));
 int	null_stat __P((struct open_file *f, struct stat *sb));
 int	null_readdir __P((struct open_file *f, char *name));
 
+void	putchar __P((int));    
+int	getchar __P((void));
+
 /* Machine dependent functions */
 int	devopen __P((struct open_file *, const char *, char **));
 void	machdep_start __P((char *, int, char *, char *, char *));
-int	getchar __P((void));
-void	putchar __P((int));    
 time_t	getsecs __P((void));
+void	putc __P((int));    
+int	getc __P((void));
+int	ischar __P((void));
 
