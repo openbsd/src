@@ -40,7 +40,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh.c,v 1.183 2002/08/29 16:02:54 stevesk Exp $");
+RCSID("$OpenBSD: ssh.c,v 1.184 2002/08/29 19:49:42 stevesk Exp $");
 
 #include <openssl/evp.h>
 #include <openssl/err.h>
@@ -218,6 +218,15 @@ main(int ac, char **av)
 	original_real_uid = getuid();
 	original_effective_uid = geteuid();
 
+	/*
+	 * Use uid-swapping to give up root privileges for the duration of
+	 * option processing.  We will re-instantiate the rights when we are
+	 * ready to create the privileged port, and will permanently drop
+	 * them when the port has been created (actually, when the connection
+	 * has been made, as we may need to create the port several times).
+	 */
+	PRIV_END;
+
 	/* If we are installed setuid root be careful to not drop core. */
 	if (original_real_uid != original_effective_uid) {
 		struct rlimit rlim;
@@ -233,15 +242,6 @@ main(int ac, char **av)
 	}
 	/* Take a copy of the returned structure. */
 	pw = pwcopy(pw);
-
-	/*
-	 * Use uid-swapping to give up root privileges for the duration of
-	 * option processing.  We will re-instantiate the rights when we are
-	 * ready to create the privileged port, and will permanently drop
-	 * them when the port has been created (actually, when the connection
-	 * has been made, as we may need to create the port several times).
-	 */
-	PRIV_END;
 
 	/*
 	 * Set our umask to something reasonable, as some files are created
