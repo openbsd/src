@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.22 2002/04/20 10:13:57 fgsch Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.23 2002/04/20 18:26:03 dhartmei Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -90,7 +90,7 @@ u_int16_t		 pf_cksum_fixup(u_int16_t, u_int16_t, u_int16_t);
 int			 pf_normalize_tcp(int, struct ifnet *, struct mbuf *,
 			    int, int, void *, struct pf_pdesc *);
 
-#define DPFPRINTF(x)		if (pf_status.debug) printf x
+#define DPFPRINTF(x)	if (pf_status.debug >= PF_DEBUG_MISC) printf x
 
 #if NPFLOG > 0
 #define PFLOG_PACKET(i,x,a,b,c,d,e) \
