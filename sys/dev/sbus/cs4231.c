@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4231.c,v 1.1 2001/09/30 00:45:17 jason Exp $	*/
+/*	$OpenBSD: cs4231.c,v 1.2 2001/09/30 20:58:16 jason Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -264,7 +264,7 @@ cs4231_attach(parent, self, aux)
 }
 
 /*
- * Write to one of the indirect registers of cs4231.
+ * Write to one of the indexed registers of cs4231.
  */
 void
 cs4231_write(sc, r, v)
@@ -276,7 +276,7 @@ cs4231_write(sc, r, v)
 }
 
 /*
- * Read from one of the indirect registers of cs4231.
+ * Read from one of the indexed registers of cs4231.
  */
 u_int8_t
 cs4231_read(sc, r)
@@ -377,44 +377,6 @@ cs4231_set_speed(sc, argp)
 	return (0);
 }
 
-void
-cs4231_wait(sc)
-	struct cs4231_softc *sc;
-{
-	int tries;
-	u_int8_t ir;
-
-	DELAY(100);
-
-	CS_WRITE(sc, CS4231_IAR, ~(CS_IAR_MCE));
-	tries = CS_TIMEOUT;
-	while (1) {
-		ir = CS_READ(sc, CS4231_IAR);
-		if (ir != CS_IAR_INIT)
-			break;
-		if (--tries == 0)
-			break;
-		DELAY(100);
-	}
-	if (!tries)
-		printf("%s: waited too long to reset iar\n",
-		    sc->sc_dev.dv_xname);
-
-	CS_WRITE(sc, CS4231_IAR, CS_IAR_ERRINIT);
-	tries = CS_TIMEOUT;
-	while (1) {
-		ir = CS_READ(sc, CS4231_IDR);
-		if (ir != CS_ERRINIT_ACI)
-			break;
-		if (--tries == 0)
-			break;
-		DELAY(100);
-	}
-	if (!tries)
-		printf("%s: waited too long to reset errinit\n",
-		    sc->sc_dev.dv_xname);
-}
-
 /*
  * Audio interface functions
  */
@@ -424,6 +386,7 @@ cs4231_open(addr, flags)
 	int flags;
 {
 	struct cs4231_softc *sc = addr;
+	int tries;
 	u_int8_t reg;
 
 	if (sc->sc_open)
@@ -444,11 +407,16 @@ cs4231_open(addr, flags)
 	DELAY(20);
 
 	APC_WRITE(sc, APC_CSR, APC_READ(sc, APC_CSR) & (~APC_CSR_CODEC_RESET));
-	CS_WRITE(sc, CS4231_IAR, CS_READ(sc, CS4231_IAR) | CS_IAR_MCE);
 
-	cs4231_wait(sc);
+	for (tries = CS_TIMEOUT;
+	     tries && CS_READ(sc, CS4231_IAR) == CS_IAR_INIT; tries--)
+		DELAY(10);
+	if (tries == 0)
+		printf("%s: timeout waiting for reset\n", sc->sc_dev.dv_xname);
 
-	cs4231_write(sc, CS_IAR_MCE | CS_IAR_MODEID, CS_MODEID_MODE2);
+	/* Turn on cs4231 mode */
+	cs4231_write(sc, CS_IAR_MODEID,
+	    cs4231_read(sc, CS_IAR_MODEID) | CS_MODEID_MODE2);
 
 	reg = cs4231_read(sc, CS_IAR_VID);
 	if ((reg & CS_VID_CHIP_MASK) == CS_VID_CHIP_CS4231) {
@@ -467,16 +435,6 @@ cs4231_open(addr, flags)
 		    sc->sc_dev.dv_xname, reg & CS_VID_CHIP_MASK,
 		    reg & CS_VID_VER_MASK);
 	}
-
-	/* XXX TODO: setup some defaults */
-	CS_WRITE(sc, CS4231_IAR, ~(CS_IAR_MCE));
-	cs4231_wait(sc);
-
-	reg = cs4231_read(sc, CS_IAR_MCE | CS_IAR_IC);
-	reg &= ~(CS_IC_CAL_CONV);
-	cs4231_write(sc, CS_IAR_MCE | CS_IAR_IC, reg);
-	CS_WRITE(sc, CS4231_IAR, ~(CS_IAR_MCE));
-	cs4231_wait(sc);
 
 	cs4231_setup_output(sc);
 	return (0);
@@ -709,7 +667,7 @@ cs4231_commit_settings(addr)
 {
 	struct cs4231_softc *sc = (struct cs4231_softc *)addr;
 	int s, tries;
-	u_int8_t fs;
+	u_int8_t r;
 
 	if (sc->sc_need_commit == 0)
 		return (0);
@@ -718,45 +676,52 @@ cs4231_commit_settings(addr)
 
 	cs4231_mute_monitor(sc, 1);
 
-	fs = sc->sc_speed_bits | (sc->sc_format_bits << 5);
+	r = cs4231_read(sc, CS_IAR_IC) | CS_IC_ACAL;
+	CS_WRITE(sc, CS4231_IAR, CS_IAR_MCE);
+	CS_WRITE(sc, CS4231_IAR, CS_IAR_MCE | CS_IAR_IC);
+	CS_WRITE(sc, CS4231_IDR, r);
+
+	r = sc->sc_speed_bits | (sc->sc_format_bits << 5);
 	if (sc->sc_channels == 2)
-		fs |= CS_FSPB_SM_STEREO;
+		r |= CS_FSPB_SM_STEREO;
 
-	cs4231_write(sc, CS_IAR_MCE | CS_IAR_FSPB, fs);
+	printf("commit: %02x\n", r);
+
+	CS_WRITE(sc, CS4231_IAR, CS_IAR_MCE | CS_IAR_FSPB);
+	CS_WRITE(sc, CS4231_IDR, r);
 	CS_READ(sc, CS4231_IDR);
 	CS_READ(sc, CS4231_IDR);
-	tries = 100000;
-	while (1) {
-		if (CS_READ(sc, CS4231_IAR) != CS_IAR_INIT)
-			break;
-		if (--tries == 0)
-			break;
+	tries = CS_TIMEOUT;
+	for (tries = CS_TIMEOUT;
+	     tries && CS_READ(sc, CS4231_IAR) == CS_IAR_INIT; tries--)
 		DELAY(10);
-	}
-	if (tries == 0) {
+	if (tries == 0)
 		printf("%s: timeout committing fspb\n", sc->sc_dev.dv_xname);
-		splx(s);
-		return (0);
-	}
 
-	cs4231_write(sc, CS_IAR_MCE | CS_IAR_CDF, fs);
+	CS_WRITE(sc, CS4231_IAR, CS_IAR_MCE | CS_IAR_CDF);
+	CS_WRITE(sc, CS4231_IDR, r);
 	CS_READ(sc, CS4231_IDR);
 	CS_READ(sc, CS4231_IDR);
-	tries = 100000;
-	while (1) {
-		if (CS_READ(sc, CS4231_IAR) != CS_IAR_INIT)
-			break;
-		if (--tries == 0)
-			break;
+	for (tries = CS_TIMEOUT;
+	     tries && CS_READ(sc, CS4231_IAR) == CS_IAR_INIT; tries--)
 		DELAY(10);
-	}
-	if (tries == 0) {
+	if (tries == 0)
 		printf("%s: timeout committing cdf\n", sc->sc_dev.dv_xname);
-		splx(s);
-		return (0);
-	}
 
-	cs4231_wait(sc);
+	CS_WRITE(sc, CS4231_IAR, 0);
+	for (tries = CS_TIMEOUT;
+	     tries && CS_READ(sc, CS4231_IAR) == CS_IAR_INIT; tries--)
+		DELAY(10);
+	if (tries == 0)
+		printf("%s: timeout waiting for !mce\n", sc->sc_dev.dv_xname);
+
+	CS_WRITE(sc, CS4231_IAR, CS_IAR_ERRINIT);
+	for (tries = CS_TIMEOUT;
+	     tries && CS_READ(sc, CS4231_IDR) & CS_ERRINIT_ACI; tries--)
+		DELAY(10);
+	if (tries == 0)
+		printf("%s: timeout waiting for autocalibration\n",
+		    sc->sc_dev.dv_xname);
 
 	cs4231_mute_monitor(sc, 0);
 
