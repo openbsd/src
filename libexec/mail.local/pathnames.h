@@ -31,8 +31,8 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pathnames.h	5.3 (Berkeley) 1/17/91
- *	$Id: pathnames.h,v 1.1.1.1 1995/10/18 08:43:19 deraadt Exp $
+ *	$Id: pathnames.h,v 1.2 1998/02/24 04:52:53 millert Exp $
  */
 #include <paths.h>
 
-#define _PATH_LOCTMP	"/tmp/local.XXXXXX"
+#define _PATH_LOCTMP	"/tmp/local.XXXXXXXXXX"

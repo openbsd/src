@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)mail.local.8	6.8 (Berkeley) 4/27/91
-.\"	$Id: mail.local.8,v 1.10 1998/02/06 15:48:08 gene Exp $
+.\"	$Id: mail.local.8,v 1.11 1998/02/24 04:52:54 millert Exp $
 .\"
 .Dd April 27, 1991
 .Dt MAIL.LOCAL 8
@@ -97,7 +97,7 @@ The default of mode 755 is more secure, but it prevents mail clients from using
 all styles of locking.  The use of 1777 is more flexible in an NFS shared-spool
 environment, thus many sites use it.  However it does carry some risks, such
 as attackers filling the spool disk.  Some of these problems may be alleviated
-by making the spool a seperate filesystem, and placing quotas on it.
+by making the spool a separate filesystem, and placing quotas on it.
 The use of any mode other than 1777 and 755 for the spool directory is
 recommended against but may work properly.
 .Pp
@@ -122,19 +122,12 @@ utility exits 0 on success, and >0 if an error occurs.
 Used to set the appropriate time zone on the timestamp.
 .El
 .Sh FILES
-.Bl -tag -width /tmp/local.XXXXXX -compact
-.It Pa /tmp/local.XXXXXX
+.Bl -tag -width /tmp/local.XXXXXXXXXX -compact
+.It Pa /tmp/local.XXXXXXXXXX
 temporary files
 .It Pa /var/mail/user
 user's mailbox directory
 .El
-.Sh SEE ALSO
-.Xr mail 1 ,
-.Xr xsend 1 ,
-.Xr flock 2 ,
-.Xr getservbyname 3 ,
-.Xr comsat 8 ,
-.Xr sendmail 8
 .Sh HISTORY
 A superset of
 .Nm mail.local
@@ -143,3 +136,55 @@ appeared in
 .At v7
 as the program
 .Nm mail .
+.Sh BUGS
+Since
+.Xr sendmail 8
+bases its idea of whether a message has been delivered or not
+on the return value from
+.Nm mail.local ,
+using quotas in
+.Pa /var/mail
+can be problematic.  By default,
+.Xr sendmail 8
+will ask
+.Nm mail.local
+to deliver a message to multiple recipients if possible.  This
+causes problems in a quota environment since a message may be
+delivered to some users but not others due to disk quotas.
+Even though the message was delivered to some of the recipients,
+.Nm mail.local
+will exit with an exit code > 0, causing
+.Xr sendmail 8
+to attempt redelivery later.  That means that some users will keep getting
+the same message every time
+.Xr sendmail 8
+runs its queue.
+.br
+If you are running with disk quotas on
+.Pa /var/mail
+it is imperative that you unset the
+.Dq m
+mailer flag for the
+.Sq local
+mailer.  To do this, locate the line beginning with
+.Dq Mlocal
+in
+.Pa /etc/sendmail.cf
+and remove the
+.Dq m
+from the flags section, denoted by
+.Dq F= .
+Alternately, you can override the default mailer flags by adding
+the line:
+.Dl define(`LOCAL_MAILER_FLAGS', `rn9')dnl
+to your
+.Dq \.mc
+file (this is the source file that is used to generate
+.Pa /etc/sendmail.cf ) .
+.Sh SEE ALSO
+.Xr mail 1 ,
+.Xr xsend 1 ,
+.Xr flock 2 ,
+.Xr getservbyname 3 ,
+.Xr comsat 8 ,
+.Xr sendmail 8
