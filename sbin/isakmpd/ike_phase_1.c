@@ -1,5 +1,5 @@
-/*	$OpenBSD: ike_phase_1.c,v 1.7 1999/08/26 22:27:51 niklas Exp $	*/
-/*	$EOM: ike_phase_1.c,v 1.8 1999/08/18 00:44:55 angelos Exp $	*/
+/*	$OpenBSD: ike_phase_1.c,v 1.8 1999/10/01 14:07:42 niklas Exp $	*/
+/*	$EOM: ike_phase_1.c,v 1.11 1999/09/29 22:05:38 ho Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
@@ -1097,14 +1097,19 @@ attribute_unacceptable (u_int16_t type, u_int8_t *value, u_int16_t len,
     case IKE_ATTR_PRF:
       str = conf_get_str (xf->field, tag);
       if (!str)
-	/* This attribute does not exist in this policy.  */
-	return 1;
+	{
+	  /* This attribute does not exist in this policy.  */
+	  log_print ("attribute_unacceptable: attr %s does not exist in %s", 
+		     tag, xf->field);
+	  return 1;
+	}
 
       map = constant_link_lookup (ike_attr_cst, type);
       if (!map)
 	return 1;
 
-      if (constant_value (map, str) == decode_16 (value))
+      if ((constant_value (map, str) == decode_16 (value)) ||
+	  (!strcmp (str, "ANY")))
 	{
 	  /* Mark this attribute as seen.  */
 	  node = malloc (sizeof *node);
@@ -1118,6 +1123,7 @@ attribute_unacceptable (u_int16_t type, u_int8_t *value, u_int16_t len,
 	  LIST_INSERT_HEAD (&vs->attrs, node, link);
 	  return 0;
 	}
+      log_print ("attribute_unacceptable: got %s, expected %s", map, str);
       return 1;
 
     case IKE_ATTR_GROUP_PRIME:
@@ -1130,11 +1136,17 @@ attribute_unacceptable (u_int16_t type, u_int8_t *value, u_int16_t len,
 
     case IKE_ATTR_LIFE_TYPE:
     case IKE_ATTR_LIFE_DURATION:
+      if (!strcmp (conf_get_str (xf->field, "Life"), "ANY"))
+	return 0;
+	
       rv = 1;
       life_conf = conf_get_list (xf->field, "Life");
       if (!life_conf)
-	/* Life attributes given, but not in our policy.  */
-	return 1;
+	{
+	  /* Life attributes given, but not in our policy.  */
+	  log_print ("attribute_unacceptable: received unexpected life attribute");
+	  return 1;
+	}
 
       /*
        * Each lifetime type must match, otherwise we turn the proposal down.
@@ -1179,8 +1191,13 @@ attribute_unacceptable (u_int16_t type, u_int8_t *value, u_int16_t len,
 	      rv = 1;
 	      goto bail_out;
 	    }
-	  rv = !conf_match_num (vs->life, "LIFE_DURATION",
-				len == 4 ? decode_32 (value) : decode_16 (value));
+
+	  if (!strcmp (conf_get_str (vs->life, "LIFE_DURATION"), "ANY"))
+	    rv = 0;
+	  else
+	    rv = !conf_match_num (vs->life, "LIFE_DURATION",
+				  len == 4 ? decode_32 (value) :
+				  decode_16 (value));
 	  free (vs->life);
 	  vs->life = 0;
 	  break;
