@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.16 1999/12/05 02:37:55 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.17 2000/01/22 20:24:49 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1995/03/21 09:04:44 cgd Exp $	*/
 
 /* main.c: This file contains the main control and user-interface routines
@@ -39,7 +39,7 @@ char *copyright =
 #if 0
 static char *rcsid = "@(#)main.c,v 1.1 1994/02/01 00:34:42 alm Exp";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.16 1999/12/05 02:37:55 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.17 2000/01/22 20:24:49 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -64,6 +64,7 @@ static char rcsid[] = "$OpenBSD: main.c,v 1.16 1999/12/05 02:37:55 deraadt Exp $
 #include <sys/wait.h>
 #include <ctype.h>
 #include <setjmp.h>
+#include <unistd.h>
 #include <pwd.h>
 
 #include "ed.h"
@@ -105,9 +106,6 @@ char *prompt;			/* command-line prompt */
 char *dps = "*";		/* default command-line prompt */
 
 char *usage = "usage: %s [-] [-sx] [-p string] [name]\n";
-
-extern int optind;
-extern char *optarg;
 
 /* ed: line editor */
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsd.c,v 1.10 1999/02/24 09:51:12 deraadt Exp $	*/
+/*	$OpenBSD: nfsd.c,v 1.11 2000/01/22 20:25:03 deraadt Exp $	*/
 /*	$NetBSD: nfsd.c,v 1.19 1996/02/18 23:18:56 mycroft Exp $	*/
 
 /*
@@ -139,7 +139,6 @@ main(argc, argv, envp)
 	int argc;
 	char *argv[], *envp[];
 {
-	extern int optind;
 	struct group *grp;
 	struct nfsd_args nfsdargs;
 	struct passwd *pwd;

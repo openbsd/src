@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.8 1997/07/25 19:13:15 mickey Exp $	*/
+/*	$OpenBSD: main.c,v 1.9 2000/01/22 20:24:57 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.8 1996/10/17 20:29:53 cgd Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
 
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: main.c,v 1.8 1997/07/25 19:13:15 mickey Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.9 2000/01/22 20:24:57 deraadt Exp $";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -71,7 +71,6 @@ main(argc, argv)
 	int argc;
 	char **argv;
 {
-	extern int optind;
 	int ret = 0, erg;
 	int ch;
 

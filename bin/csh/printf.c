@@ -1,4 +1,4 @@
-/*	$OpenBSD: printf.c,v 1.8 1998/08/25 13:35:17 deraadt Exp $	*/
+/*	$OpenBSD: printf.c,v 1.9 2000/01/22 20:24:47 deraadt Exp $	*/
 /*	$NetBSD: printf.c,v 1.6 1995/03/21 09:03:15 cgd Exp $	*/
 
 /*
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)printf.c	8.1 (Berkeley) 7/20/93";
 #else
-static char rcsid[] = "$OpenBSD: printf.c,v 1.8 1998/08/25 13:35:17 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: printf.c,v 1.9 2000/01/22 20:24:47 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -56,6 +56,7 @@ static char rcsid[] = "$OpenBSD: printf.c,v 1.8 1998/08/25 13:35:17 deraadt Exp 
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <string.h>
 #include <err.h>
 
@@ -92,7 +93,6 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	extern int optind;
 	static char *skip1, *skip2;
 	int ch, end, fieldwidth, precision;
 	char convch, nextch, *format, *fmt, *start;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.17 1999/09/03 18:11:49 deraadt Exp $	*/
+/*	$OpenBSD: init.c,v 1.18 2000/01/22 20:24:58 deraadt Exp $	*/
 /*	$NetBSD: init.c,v 1.22 1996/05/15 23:29:33 jtc Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)init.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: init.c,v 1.17 1999/09/03 18:11:49 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: init.c,v 1.18 2000/01/22 20:24:58 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -451,7 +451,6 @@ getsecuritylevel()
 #ifdef KERN_SECURELVL
 	int name[2], curlevel;
 	size_t len;
-	extern int errno;
 
 	name[0] = CTL_KERN;
 	name[1] = KERN_SECURELVL;

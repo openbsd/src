@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.1 1999/12/11 08:43:19 itojun Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.2 2000/01/22 20:25:05 deraadt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -246,8 +246,6 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	extern int errno, optind;
-	extern char *optarg;
 	struct itimerval itimer;
 	struct sockaddr_in6 from;
 	struct timeval timeout;

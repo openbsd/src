@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_xfs.c,v 1.5 1998/12/21 14:19:42 art Exp $	*/
+/*	$OpenBSD: mount_xfs.c,v 1.6 2000/01/22 20:25:02 deraadt Exp $	*/
 /*
  * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
@@ -70,7 +70,6 @@ usage(void)
 int
 main(int argc, char **argv)
 {
-	extern int optreset;
 	int ch;
 	int mntflags = 0;
 

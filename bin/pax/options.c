@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.40 1999/07/28 12:33:40 espie Exp $	*/
+/*	$OpenBSD: options.c,v 1.41 2000/01/22 20:24:52 deraadt Exp $	*/
 /*	$NetBSD: options.c,v 1.6 1996/03/26 23:54:18 mrg Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: options.c,v 1.40 1999/07/28 12:33:40 espie Exp $";
+static char rcsid[] = "$OpenBSD: options.c,v 1.41 2000/01/22 20:24:52 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -205,8 +205,6 @@ pax_options(argc, argv)
 	unsigned int bflg = 0;
 	register char *pt;
 	FSUB tmp;
-	extern char *optarg;
-	extern int optind;
 
 	/*
 	 * process option flags

@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi.c,v 1.5 1997/12/10 05:02:02 angelos Exp $	*/
+/*	$OpenBSD: scsi.c,v 1.6 2000/01/22 20:25:07 deraadt Exp $	*/
 /*	$FreeBSD: scsi.c,v 1.11 1996/04/06 11:00:28 joerg Exp $	*/
 
 /*
@@ -107,8 +107,6 @@ void procargs(int *argc_p, char ***argv_p)
 {
 	int argc = *argc_p;
 	char **argv = *argv_p;
-	extern char        *optarg;
-	extern int          optind;
 	int		    fflag,
 	                    ch;
 

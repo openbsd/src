@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.15 1999/03/01 07:45:17 d Exp $	*/
+/*	$OpenBSD: main.c,v 1.16 2000/01/22 20:24:56 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.22 1996/10/11 20:15:48 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 1/23/94";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.15 1999/03/01 07:45:17 d Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.16 2000/01/22 20:24:56 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -79,8 +79,6 @@ main(argc, argv)
 {
 	int ch;
 	int ret = 0;
-	extern char *optarg;
-	extern int optind;
 
 	sync();
 	skipclean = 1;

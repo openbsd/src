@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_ffs.c,v 1.8 1997/08/20 05:34:24 millert Exp $	*/
+/*	$OpenBSD: mount_ffs.c,v 1.9 2000/01/22 20:25:01 deraadt Exp $	*/
 /*	$NetBSD: mount_ffs.c,v 1.3 1996/04/13 01:31:19 jtc Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount_ufs.c	8.2 (Berkeley) 3/27/94";
 #else
-static char rcsid[] = "$OpenBSD: mount_ffs.c,v 1.8 1997/08/20 05:34:24 millert Exp $";
+static char rcsid[] = "$OpenBSD: mount_ffs.c,v 1.9 2000/01/22 20:25:01 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -76,7 +76,6 @@ main(argc, argv)
 	int argc;
 	char * const argv[];
 {
-	extern int optreset;
 	struct ufs_args args;		/* XXX ffs_args */
 	int ch, mntflags;
 	char *fs_name, *errcause;

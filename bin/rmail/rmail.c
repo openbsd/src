@@ -1,4 +1,4 @@
-/*	$OpenBSD: rmail.c,v 1.9 1998/04/30 05:55:06 deraadt Exp $	*/
+/*	$OpenBSD: rmail.c,v 1.10 2000/01/22 20:24:53 deraadt Exp $	*/
 /*	$NetBSD: rmail.c,v 1.8 1995/09/07 06:51:50 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)rmail.c	8.3 (Berkeley) 5/15/95";
 #else
-static char rcsid[] = "$OpenBSD: rmail.c,v 1.9 1998/04/30 05:55:06 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rmail.c,v 1.10 2000/01/22 20:24:53 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -81,6 +81,7 @@ static char rcsid[] = "$OpenBSD: rmail.c,v 1.9 1998/04/30 05:55:06 deraadt Exp $
 #include <string.h>
 #include <sysexits.h>
 #include <unistd.h>
+#include <errno.h>
 
 #ifndef MAX
 # define MAX(a, b)	((a) < (b) ? (b) : (a))
@@ -96,8 +97,6 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	extern char *optarg;
-	extern int errno, optind;
 	FILE *fp;
 	struct stat sb;
 	size_t fplen, fptlen, len;
