@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.55 2002/09/04 07:24:59 itojun Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.56 2002/09/04 07:30:51 itojun Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -512,7 +512,8 @@ nd6_timer(ignored_arg)
 		if (IFA6_IS_INVALID(ia6)) {
 			in6_purgeaddr(&ia6->ia_ifa);
 		}
-		if (IFA6_IS_DEPRECATED(ia6)) {
+		if ((ia6->ia6_flags & IN6_IFF_DEPRECATED) != 0 ||
+		    IFA6_IS_DEPRECATED(ia6)) {
 			ia6->ia6_flags |= IN6_IFF_DEPRECATED;
 		} else {
 			/*
