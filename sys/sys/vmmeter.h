@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmmeter.h,v 1.4 1996/07/07 18:06:43 mickey Exp $	*/
+/*	$OpenBSD: vmmeter.h,v 1.5 1997/11/09 22:12:22 millert Exp $	*/
 /*	$NetBSD: vmmeter.h,v 1.9 1995/03/26 20:25:04 jtc Exp $	*/
 
 /*-
@@ -95,20 +95,20 @@ struct	vmmeter cnt;
 /* systemwide totals computed every five seconds */
 struct vmtotal
 {
-	int16_t	t_rq;		/* length of the run queue */
-	int16_t	t_dw;		/* jobs in ``disk wait'' (neg priority) */
-	int16_t	t_pw;		/* jobs in page wait */
-	int16_t	t_sl;		/* jobs sleeping in core */
-	int16_t	t_sw;		/* swapped out runnable/short block jobs */
-	int32_t	t_vm;		/* total virtual memory */
-	int32_t	t_avm;		/* active virtual memory */
-	int32_t	t_rm;		/* total real memory in use */
-	int32_t	t_arm;		/* active real memory */
-	int32_t	t_vmshr;	/* shared virtual memory */
-	int32_t	t_avmshr;	/* active shared virtual memory */
-	int32_t	t_rmshr;	/* shared real memory */
-	int32_t	t_armshr;	/* active shared real memory */
-	int32_t	t_free;		/* free memory pages */
+	u_int16_t t_rq;		/* length of the run queue */
+	u_int16_t t_dw;		/* jobs in ``disk wait'' (neg priority) */
+	u_int16_t t_pw;		/* jobs in page wait */
+	u_int16_t t_sl;		/* jobs sleeping in core */
+	u_int16_t t_sw;		/* swapped out runnable/short block jobs */
+	u_int32_t t_vm;		/* total virtual memory */
+	u_int32_t t_avm;	/* active virtual memory */
+	u_int32_t t_rm;		/* total real memory in use */
+	u_int32_t t_arm;	/* active real memory */
+	u_int32_t t_vmshr;	/* shared virtual memory */
+	u_int32_t t_avmshr;	/* active shared virtual memory */
+	u_int32_t t_rmshr;	/* shared real memory */
+	u_int32_t t_armshr;	/* active shared real memory */
+	u_int32_t t_free;	/* free memory pages */
 };
 #ifdef _KERNEL
 struct	vmtotal total;
