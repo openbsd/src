@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_lockf.c,v 1.8 2004/01/14 19:34:05 grange Exp $	*/
+/*	$OpenBSD: vfs_lockf.c,v 1.9 2004/04/13 00:15:28 tedu Exp $	*/
 /*	$NetBSD: vfs_lockf.c,v 1.7 1996/02/04 02:18:21 christos Exp $	*/
 
 /*
@@ -673,7 +673,7 @@ lf_split(lock1, lock2)
 	 * the encompassing lock
 	 */
 	splitlock = pool_get(&lockfpool, PR_WAITOK);
-	memcpy(splitlock, lock1, sizeof (*splitlock));
+	memcpy(splitlock, lock1, sizeof(*splitlock));
 	splitlock->lf_start = lock2->lf_end + 1;
 	splitlock->lf_block.tqe_next = NULL;
 	TAILQ_INIT(&splitlock->lf_blkhd);

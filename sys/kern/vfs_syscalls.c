@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.108 2004/01/06 04:18:18 tedu Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.109 2004/04/13 00:15:28 tedu Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -319,7 +319,7 @@ update:
 	} else {
 		mp->mnt_vnodecovered->v_mountedhere = (struct mount *)0;
 		vfs_unbusy(mp, p);
-		free((caddr_t)mp, M_MOUNT);
+		free(mp, M_MOUNT);
 		vput(vp);
 	}
 	return (error);
@@ -487,7 +487,7 @@ dounmount(struct mount *mp, int flags, struct proc *p, struct vnode *olddp)
 	if (mp->mnt_vnodelist.lh_first != NULL)
 		panic("unmount: dangling vnode");
 	lockmgr(&mp->mnt_lock, LK_RELEASE | LK_INTERLOCK, &mountlist_slock, p);
-	free((caddr_t)mp, M_MOUNT);
+	free(mp, M_MOUNT);
 	return (0);
 }
 
@@ -601,11 +601,11 @@ sys_statfs(p, v, retval)
 #endif
 	/* Don't let non-root see filesystem id (for NFS security) */
 	if (suser(p, 0)) {
-		bcopy((caddr_t)sp, (caddr_t)&sb, sizeof(sb));
+		bcopy(sp, &sb, sizeof(sb));
 		sb.f_fsid.val[0] = sb.f_fsid.val[1] = 0;
 		sp = &sb;
 	}
-	return (copyout((caddr_t)sp, (caddr_t)SCARG(uap, buf), sizeof(*sp)));
+	return (copyout(sp, SCARG(uap, buf), sizeof(*sp)));
 }
 
 /*
@@ -647,11 +647,11 @@ sys_fstatfs(p, v, retval)
 #endif
 	/* Don't let non-root see filesystem id (for NFS security) */
 	if (suser(p, 0)) {
-		bcopy((caddr_t)sp, (caddr_t)&sb, sizeof(sb));
+		bcopy(sp, &sb, sizeof(sb));
 		sb.f_fsid.val[0] = sb.f_fsid.val[1] = 0;
 		sp = &sb;
 	}
-	return (copyout((caddr_t)sp, (caddr_t)SCARG(uap, buf), sizeof(*sp)));
+	return (copyout(sp, SCARG(uap, buf), sizeof(*sp)));
 }
 
 /*
@@ -671,12 +671,12 @@ sys_getfsstat(p, v, retval)
 	register struct mount *mp, *nmp;
 	register struct statfs *sp;
 	struct statfs sb;
-	caddr_t sfsp;
+	struct statfs *sfsp;
 	size_t count, maxcount;
 	int error, flags = SCARG(uap, flags);
 
 	maxcount = SCARG(uap, bufsize) / sizeof(struct statfs);
-	sfsp = (caddr_t)SCARG(uap, buf);
+	sfsp = SCARG(uap, buf);
 	count = 0;
 	simple_lock(&mountlist_slock);
 	for (mp = CIRCLEQ_FIRST(&mountlist); mp != CIRCLEQ_END(&mountlist);
@@ -706,16 +706,16 @@ sys_getfsstat(p, v, retval)
 				sp->f_eflags = STATFS_SOFTUPD;
 #endif
 			if (suser(p, 0)) {
-				bcopy((caddr_t)sp, (caddr_t)&sb, sizeof(sb));
+				bcopy(sp, &sb, sizeof(sb));
 				sb.f_fsid.val[0] = sb.f_fsid.val[1] = 0;
 				sp = &sb;
 			}
-			error = copyout((caddr_t)sp, sfsp, sizeof(*sp));
+			error = copyout(sp, sfsp, sizeof(*sp));
 			if (error) {
 				vfs_unbusy(mp, p);
 				return (error);
 			}
-			sfsp += sizeof(*sp);
+			sfsp++;
 		}
 		count++;
 		simple_lock(&mountlist_slock);
@@ -925,7 +925,7 @@ sys_open(p, v, retval)
 	fp->f_flag = flags & FMASK;
 	fp->f_type = DTYPE_VNODE;
 	fp->f_ops = &vnops;
-	fp->f_data = (caddr_t)vp;
+	fp->f_data = vp;
 	if (flags & (O_EXLOCK | O_SHLOCK)) {
 		lf.l_whence = SEEK_SET;
 		lf.l_start = 0;
@@ -1007,13 +1007,13 @@ sys_getfh(p, v, retval)
 	if (error)
 		return (error);
 	vp = nd.ni_vp;
-	bzero((caddr_t)&fh, sizeof(fh));
+	bzero(&fh, sizeof(fh));
 	fh.fh_fsid = vp->v_mount->mnt_stat.f_fsid;
 	error = VFS_VPTOFH(vp, &fh.fh_fid);
 	vput(vp);
 	if (error)
 		return (error);
-	error = copyout((caddr_t)&fh, (caddr_t)SCARG(uap, fhp), sizeof (fh));
+	error = copyout(&fh, SCARG(uap, fhp), sizeof(fh));
 	return (error);
 }
 
@@ -1113,7 +1113,7 @@ sys_fhopen(p, v, retval)
 	fp->f_flag = flags & FMASK;
 	fp->f_type = DTYPE_VNODE;
 	fp->f_ops = &vnops;
-	fp->f_data = (caddr_t)vp;
+	fp->f_data = vp;
 	if (flags & (O_EXLOCK | O_SHLOCK)) {
 		lf.l_whence = SEEK_SET;
 		lf.l_start = 0;
@@ -1668,7 +1668,7 @@ sys_stat(p, v, retval)
 	/* Don't let non-root see generation numbers (for NFS security) */
 	if (suser(p, 0))
 		sb.st_gen = 0;
-	error = copyout((caddr_t)&sb, (caddr_t)SCARG(uap, ub), sizeof (sb));
+	error = copyout(&sb, SCARG(uap, ub), sizeof(sb));
 	return (error);
 }
 
@@ -1701,7 +1701,7 @@ sys_lstat(p, v, retval)
 	/* Don't let non-root see generation numbers (for NFS security) */
 	if (suser(p, 0))
 		sb.st_gen = 0;
-	error = copyout((caddr_t)&sb, (caddr_t)SCARG(uap, ub), sizeof (sb));
+	error = copyout(&sb, SCARG(uap, ub), sizeof(sb));
 	return (error);
 }
 
@@ -2130,8 +2130,8 @@ sys_utimes(p, v, retval)
 		tv[1] = tv[0];
 		vattr.va_vaflags |= VA_UTIMES_NULL;
 	} else {
-		error = copyin((caddr_t)SCARG(uap, tptr), (caddr_t)tv,
-		    sizeof (tv));
+		error = copyin(SCARG(uap, tptr), tv,
+		    sizeof(tv));
 		if (error)
 			return (error);
 		/* XXX workaround timeval matching the VFS constant VNOVAL */
@@ -2186,8 +2186,8 @@ sys_futimes(p, v, retval)
 		tv[1] = tv[0];
 		vattr.va_vaflags |= VA_UTIMES_NULL;
 	} else {
-		error = copyin((caddr_t)SCARG(uap, tptr), (caddr_t)tv,
-		    sizeof (tv));
+		error = copyin(SCARG(uap, tptr), tv,
+		    sizeof(tv));
 		if (error)
 			return (error);
 		/* XXX workaround timeval matching the VFS constant VNOVAL */
@@ -2582,12 +2582,12 @@ unionread:
 		struct vnode *tvp = vp;
 		vp = vp->v_mount->mnt_vnodecovered;
 		VREF(vp);
-		fp->f_data = (caddr_t) vp;
+		fp->f_data = vp;
 		fp->f_offset = 0;
 		vrele(tvp);
 		goto unionread;
 	}
-	error = copyout((caddr_t)&loff, (caddr_t)SCARG(uap, basep),
+	error = copyout(&loff, SCARG(uap, basep),
 	    sizeof(long));
 	*retval = SCARG(uap, count) - auio.uio_resid;
 bad:
