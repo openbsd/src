@@ -1,4 +1,4 @@
-/*	$OpenBSD: bugio.c,v 1.2 2001/07/04 08:31:31 niklas Exp $	*/
+/*	$OpenBSD: bugio.c,v 1.3 2002/06/08 15:48:01 miod Exp $	*/
 
 /*
  * bug routines -- assumes that the necessary sections of memory
@@ -7,65 +7,23 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/types.h>
-#include <machine/prom.h>
 
+#include <machine/bugio.h>
+#include <machine/cpu.h>
 
-/* BUG - timing routine */
-void
-mvmeprom_delay(msec)
-	int msec; /* This is r3 */
-{
-	unsigned long omsr = ppc_get_msr();
-        ppc_set_msr(((omsr | PSL_IP) &~ PSL_EE));
-	asm volatile ("mr 3, %0" :: "r"(msec));
-	MVMEPROM_CALL(MVMEPROM_DELAY);
-        ppc_set_msr(omsr);
-}
-
-/* returns 0: success, nonzero: error */
-int
-mvmeprom_diskrd(arg)
-	struct mvmeprom_dskio *arg;
-{
-	int ret;
-	unsigned long omsr = ppc_get_msr();
-        ppc_set_msr(((omsr | PSL_IP) &~ PSL_EE));
-
-	asm volatile ("mr 3, %0" :: "r"(arg));
-	MVMEPROM_CALL(MVMEPROM_NETRD);
-	asm volatile ("mr %0, 3" :  "=r" (ret));
-        ppc_set_msr(omsr);
-	return ((ret & 0x8));
-}
-
-/* returns 0: success, nonzero: error */
-int
-mvmeprom_diskwr(arg)
-	struct mvmeprom_dskio *arg;
-{
-	int ret;
-	unsigned long omsr = ppc_get_msr();
-        ppc_set_msr(((omsr | PSL_IP) &~ PSL_EE));
-
-	asm volatile ("mr 3, %0" :: "r"(arg));
-	MVMEPROM_CALL(MVMEPROM_DSKWR);
-	asm volatile ("mr %0, 3" :  "=r" (ret));
-        ppc_set_msr(omsr);
-	return ((ret & 0x8));
-}
+int bugenvsz(void);
 
 /* BUG - query board routines */
-struct mvmeprom_brdid *
-mvmeprom_brdid()
-{
+void
+mvmeprom_brdid(id)
 	struct mvmeprom_brdid *id;
+{
 	unsigned long omsr = ppc_get_msr();
         ppc_set_msr(((omsr | PSL_IP) &~ PSL_EE));
 
 	MVMEPROM_CALL(MVMEPROM_BRD_ID);
 	asm volatile ("mr %0, 3": "=r" (id):);
         ppc_set_msr(omsr);
-	return (id);
 }
 
 /* returns 0 if no characters ready to read */
@@ -94,184 +52,6 @@ mvmeprom_instat()
 	asm volatile ("mr %0, 3" :  "=r" (ret));
         ppc_set_msr(omsr);
 	return (!(ret & 0x4));
-}
-
-/* returns 0: success, nonzero: error */
-int
-mvmeprom_netctrl(arg)
-	struct mvmeprom_netctrl *arg;
-{
-	unsigned long omsr = ppc_get_msr();
-        ppc_set_msr(((omsr | PSL_IP) &~ PSL_EE));
-	asm volatile ("mr 3, %0":: "r" (arg));
-	MVMEPROM_CALL(MVMEPROM_NETCTRL);
-        ppc_set_msr(omsr);
-	return (arg->status);
-}
-
-int 
-mvmeprom_netctrl_init(clun, dlun)
-u_char	clun;
-u_char	dlun;
-{
-	struct mvmeprom_netctrl niocall;
-	niocall.clun = clun;
-	niocall.dlun = dlun;
-	niocall.status = 0;
-	niocall.cmd = 0; /* init */
-	niocall.addr = 0;
-	niocall.len = 0;
-	niocall.flags = 0;
-	mvmeprom_netctrl(&niocall);
-	return(niocall.status);
-}
-
-int 
-mvmeprom_netctrl_hwa(clun, dlun, addr, len)
-u_char	clun;
-u_char	dlun;
-void 	*addr;
-u_long  *len;
-{
-	struct mvmeprom_netctrl niocall;
-	unsigned long omsr = ppc_get_msr();
-        ppc_set_msr(((omsr | PSL_IP) &~ PSL_EE));
-	niocall.clun = clun;
-	niocall.dlun = dlun;
-	niocall.status = 0;
-	niocall.cmd = 1; /* get hw address */
-	niocall.addr = addr;
-	niocall.len = *len;
-	niocall.flags = 0;
-	mvmeprom_netctrl(&niocall);
-	*len = niocall.len;
-	return(niocall.status);
-}
-
-int 
-mvmeprom_netctrl_tx(clun, dlun, addr, len)
-u_char	clun;
-u_char	dlun;
-void 	*addr;
-u_long  *len;
-{
-	struct mvmeprom_netctrl niocall;
-	niocall.clun = clun;
-	niocall.dlun = dlun;
-	niocall.status = 0;
-	niocall.cmd = 2; /* transmit */
-	niocall.addr = addr;
-	niocall.len = *len;
-	niocall.flags = 0;
-	mvmeprom_netctrl(&niocall);
-	*len = niocall.len;
-	return(niocall.status);
-}
-
-int 
-mvmeprom_netctrl_rx(clun, dlun, addr, len)
-u_char	clun;
-u_char	dlun;
-void 	*addr;
-u_long  *len;
-{
-	struct mvmeprom_netctrl niocall;
-	niocall.clun = clun;
-	niocall.dlun = dlun;
-	niocall.status = 0;
-	niocall.cmd = 3; /* receive */
-	niocall.addr = addr;
-	niocall.len = *len;
-	niocall.flags = 0;
-	mvmeprom_netctrl(&niocall);
-	*len = niocall.len;
-	return(niocall.status);
-}
-
-int 
-mvmeprom_netctrl_flush_rx(clun, dlun)
-u_char	clun;
-u_char	dlun;
-{
-	struct mvmeprom_netctrl niocall;
-	niocall.clun = clun;
-	niocall.dlun = dlun;
-	niocall.status = 0;
-	niocall.cmd = 4; /* reset */
-	niocall.addr = 0;
-	niocall.len = 0;
-	niocall.flags = 0;
-	mvmeprom_netctrl(&niocall);
-	return(niocall.status);
-}
-
-int 
-mvmeprom_netctrl_reset(clun, dlun)
-u_char	clun;
-u_char	dlun;
-{
-	struct mvmeprom_netctrl niocall;
-	niocall.clun = clun;
-	niocall.dlun = dlun;
-	niocall.status = 0;
-	niocall.cmd = 5; /* reset */
-	niocall.addr = 0;
-	niocall.len = 0;
-	niocall.flags = 0;
-	mvmeprom_netctrl(&niocall);
-	return(niocall.status);
-}
-
-/* returns 0: success, nonzero: error */
-int
-mvmeprom_netfopen(arg)
-	struct mvmeprom_netfopen *arg;
-{
-	unsigned long omsr = ppc_get_msr();
-        ppc_set_msr(((omsr | PSL_IP) &~ PSL_EE));
-	asm volatile ("mr 3, %0": : "r" (arg));
-	MVMEPROM_CALL(MVMEPROM_NETFOPEN);
-        ppc_set_msr(omsr);
-	return (arg->status);
-}
-
-/* returns 0: success, nonzero: error */
-int
-mvmeprom_netfread(arg)
-	struct mvmeprom_netfread *arg;
-{
-	unsigned long omsr = ppc_get_msr();
-        ppc_set_msr(((omsr | PSL_IP) &~ PSL_EE));
-	asm volatile ("mr 3, %0": : "r" (arg));
-	MVMEPROM_CALL(MVMEPROM_NETFREAD);
-        ppc_set_msr(omsr);
-	return (arg->status);
-}
-
-/* returns 0: success, nonzero: error */
-int
-mvmeprom_netrd(arg)
-	struct mvmeprom_netio *arg;
-{
-	unsigned long omsr = ppc_get_msr();
-        ppc_set_msr(((omsr | PSL_IP) &~ PSL_EE));
-	asm volatile ("mr 3, %0": : "r" (arg));
-	MVMEPROM_CALL(MVMEPROM_NETRD);
-        ppc_set_msr(omsr);
-	return (arg->status);
-}
-
-/* returns 0: success, nonzero: error */
-int
-mvmeprom_netwr(arg)
-	struct mvmeprom_netio *arg;
-{
-	unsigned long omsr = ppc_get_msr();
-        ppc_set_msr(((omsr | PSL_IP) &~ PSL_EE));
-	asm volatile ("mr 3, %0": : "r" (arg));
-	MVMEPROM_CALL(MVMEPROM_NETWR);
-        ppc_set_msr(omsr);
-	return (arg->status);
 }
 
 void
@@ -481,4 +261,3 @@ mvmeprom_envrd(void)
         ppc_set_msr(omsr);
 	return NULL;
 }
-
