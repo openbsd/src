@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.124 2004/10/18 07:41:28 otto Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.125 2005/01/20 15:00:13 markus Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -908,8 +908,8 @@ ip_freef(fp)
 
 /*
  * IP timer processing;
- * if a timer expires on a reassembly
- * queue, discard it.
+ * if a timer expires on a reassembly queue, discard it.
+ * clear the forwarding cache, there might be a better route.
  */
 void
 ip_slowtimo()
@@ -926,6 +926,10 @@ ip_slowtimo()
 		}
 	}
 	ipq_unlock();
+	if (ipforward_rt.ro_rt) {
+		RTFREE(ipforward_rt.ro_rt);
+		ipforward_rt.ro_rt = 0;
+	}
 	splx(s);
 }
 
