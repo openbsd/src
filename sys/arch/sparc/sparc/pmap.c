@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.63 2000/01/27 00:01:06 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.64 2000/01/27 00:03:09 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -3998,10 +3998,6 @@ pmap_rmk4m(pm, va, endva, vr, vs)
 		va += NBPG;
 	}
 
-	/*
-	 * If the segment is all gone, remove it from everyone and
-	 * flush the TLB.
-	 */
 	sp->sg_npte = nleft;
 }
 #endif /* sun4m */
