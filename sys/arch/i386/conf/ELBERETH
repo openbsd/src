@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: ELBERETH,v 1.20 1999/08/18 18:13:20 kstailey Exp $
+#	$OpenBSD: ELBERETH,v 1.21 1999/09/21 17:17:12 kstailey Exp $
 #
 #
 #	ELBERETH -- 166MHz Pentium PCI
@@ -136,3 +136,5 @@ pseudo-device	bpfilter 4		# packet filter (used by rarpd)
 pseudo-device	pty	32		# pseudo-terminals
 #pseudo-device	tb	1		# tablet line discipline
 pseudo-device	vnd	2		# paging to files; mount floppy images
+pseudo-device	pctr	1		# performance counters
+pseudo-device	ksyms	1		# kernel symbols device
