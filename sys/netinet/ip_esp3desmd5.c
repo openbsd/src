@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp3desmd5.c,v 1.5 1997/06/20 05:41:51 provos Exp $	*/
+/*	$OpenBSD: ip_esp3desmd5.c,v 1.6 1997/06/20 19:43:06 provos Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -60,7 +60,7 @@
 
 extern struct ifnet loif;
 
-extern void des_ecb_encrypt(caddr_t, caddr_t, caddr_t, int);
+extern void des_ecb3_encrypt(caddr_t, caddr_t, caddr_t, caddr_t, caddr_t, int);
 extern void des_set_key(caddr_t, caddr_t);
 
 int
@@ -358,12 +358,9 @@ esp3desmd5_input(struct mbuf *m, struct tdb *tdb)
 
 	if (i == 8)
 	{
-	    des_ecb_encrypt(blk, blk, (caddr_t)(xd->edx_eks[2]), 
-			    0);
-	    des_ecb_encrypt(blk, blk, (caddr_t)(xd->edx_eks[1]), 
-			    0);
-	    des_ecb_encrypt(blk, blk, (caddr_t)(xd->edx_eks[0]), 
-			    0);
+	    des_ecb3_encrypt(blk, blk, (caddr_t)(xd->edx_eks[2]), 
+			     (caddr_t)(xd->edx_eks[1]), 
+			     (caddr_t)(xd->edx_eks[0]), 0);
 	    for (i=0; i<8; i++)
 	    {
 		while (olen == 0)
@@ -711,12 +708,9 @@ esp3desmd5_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb, st
 
 	if (i == 8)   /* We have full block */
 	{
-	    des_ecb_encrypt(blk, blk, (caddr_t)(xd->edx_eks[0]), 
-			    1);
-	    des_ecb_encrypt(blk, blk, (caddr_t)(xd->edx_eks[1]), 
-			    1);
-	    des_ecb_encrypt(blk, blk, (caddr_t)(xd->edx_eks[2]), 
-			    1);
+	    des_ecb3_encrypt(blk, blk, (caddr_t)(xd->edx_eks[0]), 
+			     (caddr_t)(xd->edx_eks[1]), 
+			     (caddr_t)(xd->edx_eks[2]), 1);
 	    for (i=0; i<8; i++)
 	    {
 		while (olen == 0)
