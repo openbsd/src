@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.24 2004/08/06 20:12:15 jfb Exp $	*/
+/*	$OpenBSD: file.c,v 1.25 2004/08/10 14:23:57 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -227,6 +227,7 @@ cvs_file_chkign(const char *file)
  * cvs_file_create()
  *
  * Create a new file whose path is specified in <path> and of type <type>.
+ * Returns the created file on success, or NULL on failure.
  */
 
 CVSFILE*
@@ -372,11 +373,6 @@ cvs_file_attach(CVSFILE *parent, CVSFILE *file)
 
 	dp = parent->cf_ddat;
 
-	/* if the parent doesn't have an entry for that file, create it */
-	if ((dp->cd_ent != NULL) &&
-	    ((ent = cvs_ent_get(dp->cd_ent, file->cf_name)) == NULL)) {
-	}
-
 	TAILQ_INSERT_TAIL(&(dp->cd_files), file, cf_list);
 	dp->cd_nfiles++;
 	file->cf_parent = parent;
@@ -429,7 +425,7 @@ cvs_file_getdir(CVSFILE *cf, int flags)
 			}
 		}
 
-		cdp->cd_ent = cvs_ent_open(cf->cf_path, O_RDONLY);
+		cdp->cd_ent = cvs_ent_open(cf->cf_path, O_RDWR);
 	}
 
 	fd = open(cf->cf_path, O_RDONLY);
@@ -476,12 +472,6 @@ cvs_file_getdir(CVSFILE *cf, int flags)
 			}
 		}
 	} while (ret > 0);
-
-	/* we can now close our Entries file */
-	if (cdp->cd_ent != NULL) {
-		cvs_ent_close(cdp->cd_ent);
-		cdp->cd_ent = NULL;
-	}
 
 	if (flags & CF_SORT) {
 		cvs_file_sort(&(cdp->cd_files), cdp->cd_nfiles);
