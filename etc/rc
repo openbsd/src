@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.46 1997/09/14 10:35:40 deraadt Exp $
+#	$OpenBSD: rc,v 1.47 1997/09/17 09:37:11 deraadt Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -153,7 +153,7 @@ fi
 # $nfs_server is imported from /etc/netstart;
 # if $nfs_server == YES, the machine is setup for being an nfs server
 if [ X${nfs_server} = X"YES" -a -r /etc/exports -a \
-    `cat /etc/exports | sed -e '/^#/d' | wc -l` -ne 0]; then
+    `cat /etc/exports | sed -e '/^#/d' | wc -l` -ne 0 ]; then
 	rm -f /var/db/mountdtab	
 	echo -n > /var/db/mountdtab
 	echo -n ' mountd';		mountd
