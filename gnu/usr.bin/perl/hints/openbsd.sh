@@ -11,17 +11,23 @@
 # OpenBSD has a better malloc than perl...
 test "$usemymalloc" || usemymalloc='n'
 
-# Currently, vfork(2) is not a real win over fork(2) but this will
-# change starting with OpenBSD 2.7.
-usevfork='true'
+# Currently, vfork(2) is not a real win over fork(2).
+usevfork="$undef"
 
-# setre?[ug]id() have been replaced by the _POSIX_SAVED_IDS versions
-# in 4.4BSD.  Configure will find these but they are just emulated
-# and do not have the same semantics as in 4.3BSD.
-d_setregid=$undef
-d_setreuid=$undef
-d_setrgid=$undef
-d_setruid=$undef
+# getservbyname_r() on OpenBSD is broken.
+d_getservbyname_r=$undef
+
+# In OpenBSD < 3.3, the setre?[ug]id() are emulated using the
+# _POSIX_SAVED_IDS functionality which does not have the same
+# semantics as 4.3BSD.  Starting with OpenBSD 3.3, the original
+# semantics have been restored.
+case "$osvers" in
+[0-2].*|3.[0-2])
+	d_setregid=$undef
+	d_setreuid=$undef
+	d_setrgid=$undef
+	d_setruid=$undef
+esac
 
 #
 # Not all platforms support dynamic loading...
@@ -101,8 +107,6 @@ $define|true|[yY]*)
 	# any openbsd version dependencies with pthreads?
 	ccflags="-pthread $ccflags"
 	ldflags="-pthread $ldflags"
-	# This is strange.
-	usevfork="$undef"
 esac
 EOCBU
 
