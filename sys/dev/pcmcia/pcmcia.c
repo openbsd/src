@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcmcia.c,v 1.28 2000/04/28 13:36:58 niklas Exp $	*/
+/*	$OpenBSD: pcmcia.c,v 1.29 2000/06/28 17:38:25 aaron Exp $	*/
 /*	$NetBSD: pcmcia.c,v 1.9 1998/08/13 02:10:55 eeh Exp $	*/
 
 /*
@@ -151,8 +151,10 @@ pcmcia_power(why, arg)
 		d = pf->child;
 		if (d == NULL)
 			continue;
-		if (d->dv_cfdata->cf_attach->ca_activate)
-			(*d->dv_cfdata->cf_attach->ca_activate)(d, act);
+		if (act == DVACT_ACTIVATE)
+			config_activate(pf->child);
+		else
+			config_deactivate(pf->child);
 	}
 }
 
