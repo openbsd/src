@@ -28,7 +28,7 @@
 /* XXX: recursive operations */
 
 #include "includes.h"
-RCSID("$OpenBSD: sftp-int.c,v 1.22 2001/02/14 09:46:03 djm Exp $");
+RCSID("$OpenBSD: sftp-int.c,v 1.23 2001/03/01 02:18:04 deraadt Exp $");
 
 #include "buffer.h"
 #include "xmalloc.h"
@@ -443,7 +443,7 @@ parse_dispatch_command(int in, int out, const char *cmd, char **pwd)
 	int pflag, cmdnum;
 	unsigned long n_arg;
 	Attrib a, *aa;
-	char path_buf[PATH_MAX];
+	char path_buf[MAXPATHLEN];
 
 	path1 = path2 = NULL;
 	cmdnum = parse_args(&cmd, &pflag, &n_arg, &path1, &path2);
