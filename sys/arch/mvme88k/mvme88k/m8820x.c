@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x.c,v 1.27 2004/01/05 20:07:03 miod Exp $	*/
+/*	$OpenBSD: m8820x.c,v 1.28 2004/01/09 00:23:08 miod Exp $	*/
 /*
  * Copyright (c) 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -848,8 +848,8 @@ m8820x_cmmu_init()
 			cr->sctr &=
 			    ~(CMMU_SCTR_PE | CMMU_SCTR_SE | CMMU_SCTR_PR);
 			cr->sapr = cr->uapr =
-			    ((0x00000 << PG_BITS) | AREA_D_WT | AREA_D_G |
-			    AREA_D_CI) & ~AREA_D_TE;
+			    ((0x00000 << PG_BITS) | CACHE_WT | CACHE_GLOBAL |
+			    CACHE_INH) & ~APR_V;
 
 #ifdef SHADOW_BATC
 			m8820x_cmmu[cmmu_num].batc[0] =
@@ -902,8 +902,8 @@ m8820x_cmmu_init()
 		if (!cpu_sets[cpu])
 			continue;
 
-		tmp = ((0x00000 << PG_BITS) | AREA_D_WT | AREA_D_G)
-		    & ~(AREA_D_CI | AREA_D_TE);
+		tmp = ((0x00000 << PG_BITS) | CACHE_WT | CACHE_GLOBAL)
+		    & ~(CACHE_INH | APR_V);
 
 		m8820x_cmmu_set(CMMU_SAPR, tmp, MODE_VAL, cpu, INST_CMMU, 0, 0);
 		m8820x_cmmu_set(CMMU_SCR, CMMU_FLUSH_SUPER_ALL,
@@ -928,8 +928,8 @@ m8820x_cmmu_shutdown_now()
 			cr->sctr &=
 			    ~(CMMU_SCTR_PE | CMMU_SCTR_SE | CMMU_SCTR_PR);
 			cr->sapr = cr->uapr =
-			    ((0x00000 << PG_BITS) | AREA_D_CI) &
-			    ~(AREA_D_WT | AREA_D_G | AREA_D_TE);
+			    ((0x00000 << PG_BITS) | CACHE_INH) &
+			    ~(CACHE_WT | CACHE_GLOBAL | APR_V);
 		}
 	CMMU_UNLOCK;
 }
@@ -1006,8 +1006,6 @@ m8820x_cmmu_set_sapr(cpu, ap)
 	unsigned cpu, ap;
 {
 	CMMU_LOCK;
-	if (cache_policy & CACHE_INH)
-		ap |= AREA_D_CI;
 	m8820x_cmmu_set(CMMU_SAPR, ap, ACCESS_VAL, cpu, 0, CMMU_ACS_SUPER, 0);
 	CMMU_UNLOCK;
 }

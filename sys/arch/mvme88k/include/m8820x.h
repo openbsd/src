@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x.h,v 1.9 2003/10/11 22:46:24 miod Exp $ */
+/*	$OpenBSD: m8820x.h,v 1.10 2004/01/09 00:23:05 miod Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1992 Carnegie Mellon University
@@ -102,12 +102,6 @@
 #define CMMU_PFSR_PFAULT	5	/* page fault */
 #define CMMU_PFSR_SUPER		6	/* supervisor violation */
 #define CMMU_PFSR_WRITE		7	/* writer violation */
-
-/* Area Description */
-#define AREA_D_WT	0x00000200	/* write through */
-#define AREA_D_G	0x00000080	/* global */
-#define AREA_D_CI	0x00000040	/* cache inhibit */
-#define AREA_D_TE	0x00000001	/* translation enable */
 
 /*
  * Possible MVME188 board configurations

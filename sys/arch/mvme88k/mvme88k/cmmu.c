@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmmu.c,v 1.24 2004/01/07 23:43:54 miod Exp $	*/
+/*	$OpenBSD: cmmu.c,v 1.25 2004/01/09 00:23:08 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -71,7 +71,6 @@
  */
 struct simplelock cmmu_cpu_lock;
 
-unsigned cache_policy = /*CACHE_INH*/ 0;
 unsigned cpu_sets[MAX_CPUS];
 unsigned master_cpu = 0;
 int      max_cpus, max_cmmus;
