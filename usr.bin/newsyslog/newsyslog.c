@@ -1,4 +1,4 @@
-/*	$OpenBSD: newsyslog.c,v 1.75 2003/07/25 10:28:53 mpech Exp $	*/
+/*	$OpenBSD: newsyslog.c,v 1.76 2003/12/16 19:32:45 otto Exp $	*/
 
 /*
  * Copyright (c) 1999, 2002, 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -71,7 +71,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: newsyslog.c,v 1.75 2003/07/25 10:28:53 mpech Exp $";
+static const char rcsid[] = "$OpenBSD: newsyslog.c,v 1.76 2003/12/16 19:32:45 otto Exp $";
 #endif /* not lint */
 
 #ifndef CONF
@@ -243,10 +243,10 @@ main(int argc, char **argv)
 			struct pidinfo *pltmp;
 
 			for (pltmp = pidlist; pltmp < pl; pltmp++) {
-				if ((q->pidfile &&
+				if ((q->pidfile && pltmp->file &&
 				    strcmp(pltmp->file, q->pidfile) == 0 &&
 				    pltmp->signal == q->signal) ||
-				    (q->runcmd &&
+				    (q->runcmd && pltmp->file &&
 				    strcmp(q->runcmd, pltmp->file) == 0))
 					break;
 			}
@@ -265,7 +265,7 @@ main(int argc, char **argv)
 	}
 
 	/* Step 3, send a signal or run a command */
-	for (pl = pidlist; pl->file; pl++) {
+	for (pl--; pl >= pidlist; pl--) {
 		if (pl->file != NULL) {
 			if (pl->signal == -1)
 				run_command(pl->file);
