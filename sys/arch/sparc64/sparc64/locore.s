@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.45 2004/06/13 21:49:21 niklas Exp $	*/
+/*	$OpenBSD: locore.s,v 1.46 2004/06/20 04:30:34 aaron Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -8922,10 +8922,10 @@ Lfp_finish:
 	retl
 	 wr	%g0, FPRS_FEF, %fprs	! Mark FPU clean
 3:
-#ifdef DIAGONSTIC
+#ifdef DIAGNOSTIC
 	btst	7, %o2			! 32-bit aligned!?!?
 	bnz,pn	%icc, 6f
-#endif	/* DIAGONSTIC */
+#endif	/* DIAGNOSTIC */
 	 btst	FPRS_DL, %o5		! Lower FPU clean?
 	bz,a,pt	%icc, 4f		! Then skip it
 	 add	%o0, 128, %o0
