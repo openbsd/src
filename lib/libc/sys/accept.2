@@ -1,4 +1,4 @@
-.\"	$OpenBSD: accept.2,v 1.10 2000/10/18 05:12:08 aaron Exp $
+.\"	$OpenBSD: accept.2,v 1.11 2001/02/07 12:48:37 itojun Exp $
 .\"	$NetBSD: accept.2,v 1.7 1996/01/31 20:14:42 mycroft Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
@@ -155,6 +155,8 @@ are present to be accepted.
 The per-process descriptor table is full.
 .It Bq Er ENFILE
 The system file table is full.
+.It Bq Er ECONNABORTED
+A connection has been aborted. 
 .El
 .Sh SEE ALSO
 .Xr bind 2 ,
