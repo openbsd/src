@@ -1,9 +1,10 @@
-/*      $OpenBSD: pf_key_v2.c,v 1.67 2001/06/27 03:31:43 angelos Exp $  */
+/*      $OpenBSD: pf_key_v2.c,v 1.68 2001/06/29 04:12:00 ho Exp $  */
 /*	$EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Niklas Hallqvist.  All rights reserved.
  * Copyright (c) 1999, 2000, 2001 Angelos D. Keromytis.  All rights reserved.
+ * Copyright (c) 2001 Håkan Olsson.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -53,20 +54,22 @@
 #include <unistd.h>
 #include <pwd.h>
 #include <errno.h>
+#include <bitstring.h>
 
 #include "sysdep.h"
 
+#include "cert.h"
 #include "conf.h"
 #include "exchange.h"
 #include "ipsec.h"
 #include "ipsec_num.h"
+#include "key.h"
 #include "log.h"
 #include "pf_key_v2.h"
 #include "sa.h"
 #include "timer.h"
 #include "transport.h"
-#include "cert.h"
-#include "key.h"
+#include "util.h"
 
 #ifdef USE_KEYNOTE
 #include "policy.h"
@@ -647,10 +650,9 @@ pf_key_v2_get_spi (size_t *sz, u_int8_t proto, struct sockaddr *src,
 
   /* Setup the ADDRESS extensions.  */
   len = sizeof (struct sadb_address) + PF_KEY_V2_ROUND (srclen); 
-  addr = malloc (len);
+  addr = calloc (1, len);
   if (!addr)
     goto cleanup;
-  memset (addr + 1, '\0', sizeof (struct sockaddr_in));
   addr->sadb_address_exttype = SADB_EXT_ADDRESS_SRC;
   addr->sadb_address_len = len / PF_KEY_V2_CHUNK;
 #ifndef __OpenBSD__
@@ -659,18 +661,24 @@ pf_key_v2_get_spi (size_t *sz, u_int8_t proto, struct sockaddr *src,
 #endif
   addr->sadb_address_reserved = 0;
   memcpy (addr + 1, src, srclen);
-  /* XXX IPv4-specific.  */
-  ((struct sockaddr_in *)(addr + 1))->sin_port = 0;
+  switch (((struct sockaddr *)(addr + 1))->sa_family)
+    {
+    case AF_INET:
+      ((struct sockaddr_in *)(addr + 1))->sin_port = 0;
+      break;
+    case AF_INET6:
+      ((struct sockaddr_in6 *)(addr + 1))->sin6_port = 0;
+      break;
+    }
   if (pf_key_v2_msg_add (getspi, (struct sadb_ext *)addr,
 			 PF_KEY_V2_NODE_MALLOCED) == -1)
     goto cleanup;
   addr = 0;
 
   len = sizeof (struct sadb_address) + PF_KEY_V2_ROUND (dstlen); 
-  addr = malloc (len);
+  addr = calloc (1, len);
   if (!addr)
     goto cleanup;
-  memset (addr + 1, '\0', sizeof (struct sockaddr_in));
   addr->sadb_address_exttype = SADB_EXT_ADDRESS_DST;
   addr->sadb_address_len = len / PF_KEY_V2_CHUNK;
 #ifndef __OpenBSD__
@@ -679,8 +687,15 @@ pf_key_v2_get_spi (size_t *sz, u_int8_t proto, struct sockaddr *src,
 #endif
   addr->sadb_address_reserved = 0;
   memcpy (addr + 1, dst, dstlen);
-  /* XXX IPv4-specific.  */
-  ((struct sockaddr_in *)(addr + 1))->sin_port = 0;
+  switch (((struct sockaddr *)(addr + 1))->sa_family)
+    {
+    case AF_INET:
+      ((struct sockaddr_in *)(addr + 1))->sin_port = 0;
+      break;
+    case AF_INET6:
+      ((struct sockaddr_in6 *)(addr + 1))->sin6_port = 0;
+      break;
+    }
   if (pf_key_v2_msg_add (getspi, (struct sadb_ext *)addr,
 			 PF_KEY_V2_NODE_MALLOCED) == -1)
     goto cleanup;
@@ -761,7 +776,7 @@ pf_key_v2_set_spi (struct sa *sa, struct proto *proto, int incoming,
   struct sockaddr *src, *dst;
   struct sadb_ident *sid = 0;
   char *pp;
-  int dstlen, srclen, keylen, hashlen, err, idtype;
+  int srclen, dstlen, keylen, hashlen, err, idtype;
   struct pf_key_v2_msg *update = 0, *ret = 0;
   struct ipsec_proto *iproto = proto->data;
 #if defined (SADB_X_CREDTYPE_NONE) || defined (SADB_X_AUTHTYPE_NONE)
@@ -770,6 +785,9 @@ pf_key_v2_set_spi (struct sa *sa, struct proto *proto, int incoming,
   size_t len;
 #ifdef KAME
   struct sadb_x_sa2 ssa2;
+#endif
+#ifdef USE_DEBUG
+  char *addr_str;
 #endif
 
   msg.sadb_msg_type = incoming ? SADB_UPDATE : SADB_ADD;
@@ -1002,15 +1020,13 @@ pf_key_v2_set_spi (struct sa *sa, struct proto *proto, int incoming,
 
   /*
    * Setup the ADDRESS extensions.
-   *
-   * XXX Addresses have to be thought through.  Assumes IPv4.
    */
   if (incoming)
     sa->transport->vtbl->get_dst (sa->transport, &src, &srclen);
   else
     sa->transport->vtbl->get_src (sa->transport, &src, &srclen);
   len = sizeof *addr + PF_KEY_V2_ROUND (srclen);
-  addr = malloc (len);
+  addr = calloc (1, len);
   if (!addr)
     goto cleanup;
   addr->sadb_address_exttype = SADB_EXT_ADDRESS_SRC;
@@ -1021,14 +1037,22 @@ pf_key_v2_set_spi (struct sa *sa, struct proto *proto, int incoming,
 #endif
   addr->sadb_address_reserved = 0;
   memcpy (addr + 1, src, srclen);
-  ((struct sockaddr_in *)(addr + 1))->sin_port = 0;
+  switch (((struct sockaddr *)(addr + 1))->sa_family)
+    {
+    case AF_INET:
+      ((struct sockaddr_in *)(addr + 1))->sin_port = 0;
+      break;
+    case AF_INET6:
+      ((struct sockaddr_in6 *)(addr + 1))->sin6_port = 0;
+      break;
+    }
   if (pf_key_v2_msg_add (update, (struct sadb_ext *)addr,
 			 PF_KEY_V2_NODE_MALLOCED) == -1)
     goto cleanup;
   addr = 0;
 
   len = sizeof *addr + PF_KEY_V2_ROUND (dstlen);
-  addr = malloc (len);
+  addr = calloc (1, len);
   if (!addr)
     goto cleanup;
   addr->sadb_address_exttype = SADB_EXT_ADDRESS_DST;
@@ -1039,7 +1063,15 @@ pf_key_v2_set_spi (struct sa *sa, struct proto *proto, int incoming,
 #endif
   addr->sadb_address_reserved = 0;
   memcpy (addr + 1, dst, dstlen);
-  ((struct sockaddr_in *)(addr + 1))->sin_port = 0;
+  switch (((struct sockaddr *)(addr + 1))->sa_family)
+    {
+    case AF_INET:
+      ((struct sockaddr_in *)(addr + 1))->sin_port = 0;
+      break;
+    case AF_INET6:
+      ((struct sockaddr_in6 *)(addr + 1))->sin6_port = 0;
+      break;
+    }
   if (pf_key_v2_msg_add (update, (struct sadb_ext *)addr,
 			 PF_KEY_V2_NODE_MALLOCED) == -1)
     goto cleanup;
@@ -1050,7 +1082,7 @@ pf_key_v2_set_spi (struct sa *sa, struct proto *proto, int incoming,
   if (iproto->encap_mode == IPSEC_ENCAP_TUNNEL)
     {
       len = sizeof *addr + PF_KEY_V2_ROUND (dstlen);
-      addr = malloc (len);
+      addr = calloc (1, len);
       if (!addr)
 	goto cleanup;
       addr->sadb_address_exttype = SADB_EXT_ADDRESS_PROXY;
@@ -1061,7 +1093,15 @@ pf_key_v2_set_spi (struct sa *sa, struct proto *proto, int incoming,
 #endif
       addr->sadb_address_reserved = 0;
       memcpy (addr + 1, dst, dstlen);
-      ((struct sockaddr_in *)(addr + 1))->sin_port = 0;
+      switch (((struct sockaddr *)(addr + 1))->sa_family)
+	{
+	case AF_INET:
+	  ((struct sockaddr_in *)(addr + 1))->sin_port = 0;
+	  break;
+	case AF_INET6:
+	  ((struct sockaddr_in6 *)(addr + 1))->sin6_port = 0;
+	  break;
+	}
       if (pf_key_v2_msg_add (update, (struct sadb_ext *)addr,
 			     PF_KEY_V2_NODE_MALLOCED) == -1)
 	goto cleanup;
@@ -1320,11 +1360,17 @@ pf_key_v2_set_spi (struct sa *sa, struct proto *proto, int incoming,
 
   /* XXX Here can sensitivity extensions be setup.  */
 
-  /* XXX IPv4 specific.  */
+#ifdef USE_DEBUG
+  if (sockaddr2text (dst, &addr_str, 0))
+    addr_str = 0;
+
   LOG_DBG ((LOG_SYSDEP, 10, "pf_key_v2_set_spi: satype %d dst %s SPI 0x%x",
-	    msg.sadb_msg_satype,
-	    inet_ntoa (((struct sockaddr_in *)dst)->sin_addr),
+	    msg.sadb_msg_satype, addr_str ? addr_str : "unknown",
 	    ntohl (ssa.sadb_sa_spi)));
+
+  if (addr_str)
+    free (addr_str);
+#endif /* USE_DEBUG */
 
   /*
    * Although PF_KEY knows about expirations, it is unreliable per the specs
@@ -1380,7 +1426,61 @@ pf_key_v2_set_spi (struct sa *sa, struct proto *proto, int incoming,
 static __inline__ int
 pf_key_v2_mask_to_bits (u_int32_t mask) 
 {
-  return (33 - ffs (~mask + 1)) % 33;
+  u_int32_t hmask = ntohl (mask);
+  return (33 - ffs (~hmask + 1)) % 33;
+}
+
+static int
+pf_key_v2_mask6_to_bits (u_int8_t *mask) 
+{
+  int n;
+  bit_ffc (mask, 128, &n);
+  return n;
+}
+
+static void
+pf_key_v2_setup_sockaddr (void *res, struct sockaddr *src, 
+			  struct sockaddr *dst, in_port_t port, int ingress)
+{
+  struct sockaddr_in *ip4_sa;
+  struct sockaddr_in6 *ip6_sa;
+  u_int8_t *p;
+
+  switch (src->sa_family)
+    {
+    case AF_INET:
+      ip4_sa = (struct sockaddr_in *)res;
+      ip4_sa->sin_family = AF_INET;
+      ip4_sa->sin_len = sizeof *ip4_sa;
+      ip4_sa->sin_port = port;
+      if (dst)
+	p = (u_int8_t *)(ingress ? 
+			 &((struct sockaddr_in *)src)->sin_addr.s_addr :
+			 &((struct sockaddr_in *)dst)->sin_addr.s_addr);
+      else
+	p = (u_int8_t *)&((struct sockaddr_in *)src)->sin_addr.s_addr;
+      ip4_sa->sin_addr.s_addr = *((in_addr_t *)p);
+      break;
+
+    case AF_INET6:
+      ip6_sa = (struct sockaddr_in6 *)res;
+      ip6_sa->sin6_family = AF_INET6;
+      ip6_sa->sin6_len = sizeof *ip6_sa;
+      ip6_sa->sin6_port = port;
+      if (dst)
+	p = (u_int8_t *)(ingress ? 
+			 &((struct sockaddr_in6 *)src)->sin6_addr.s6_addr :
+			 &((struct sockaddr_in6 *)dst)->sin6_addr.s6_addr);
+      else
+	p = (u_int8_t *)&((struct sockaddr_in6 *)src)->sin6_addr.s6_addr;
+      memcpy (ip6_sa->sin6_addr.s6_addr, p, sizeof (struct in6_addr));
+      break;
+
+    default:
+      log_print ("pf_key_v2_setup_sockaddr: unknown family %d\n",
+		 src->sa_family);
+      break;
+    }
 }
 
 /*
@@ -1389,10 +1489,11 @@ pf_key_v2_mask_to_bits (u_int32_t mask)
  * Should probably be moved to sysdep.c
  */
 static int
-pf_key_v2_flow (in_addr_t laddr, in_addr_t lmask, in_addr_t raddr,
-		in_addr_t rmask, u_int8_t tproto, u_int16_t sport,
-		u_int16_t dport, u_int8_t *spi, u_int8_t proto,
-		in_addr_t dst, in_addr_t src, int delete, int ingress,
+pf_key_v2_flow (struct sockaddr *laddr, struct sockaddr *lmask,
+		struct sockaddr *raddr,	struct sockaddr *rmask, 
+		u_int8_t tproto, u_int16_t sport, u_int16_t dport, 
+		u_int8_t *spi, u_int8_t proto, struct sockaddr *dst, 
+		struct sockaddr *src, int delete, int ingress,
 		u_int8_t srcid_type, u_int8_t *srcid, int srcid_len,
 		u_int8_t dstid_type, u_int8_t *dstid, int dstid_len)
 {
@@ -1409,6 +1510,9 @@ pf_key_v2_flow (in_addr_t laddr, in_addr_t lmask, in_addr_t raddr,
   struct pf_key_v2_msg *flow = 0, *ret = 0;
   size_t len;
   int err;
+#ifdef USE_DEBUG
+  char *laddr_str, *lmask_str, *raddr_str, *rmask_str;
+#endif
 
 #if !defined (SADB_X_SAFLAGS_INGRESS_FLOW) && !defined (SADB_X_EXT_FLOW_TYPE)
   if (ingress)
@@ -1517,98 +1621,74 @@ pf_key_v2_flow (in_addr_t laddr, in_addr_t lmask, in_addr_t raddr,
 
   /*
    * Setup the ADDRESS extensions.
-   *
-   * XXX Addresses have to be thought through.  Assumes IPv4.
    */
-  len = sizeof *addr + PF_KEY_V2_ROUND (sizeof (struct sockaddr_in));
+  len = sizeof *addr + PF_KEY_V2_ROUND (src->sa_len);
 #ifndef SADB_X_EXT_FLOW_TYPE
   if (!delete || ingress)
 #else
   if (!delete)
 #endif /* SADB_X_EXT_FLOW_TYPE */
     {
-      addr = malloc (len);
+      addr = calloc (1, len);
       if (!addr)
 	goto cleanup;
       addr->sadb_address_exttype = SADB_EXT_ADDRESS_DST;
       addr->sadb_address_len = len / PF_KEY_V2_CHUNK;
       addr->sadb_address_reserved = 0;
-      memset (addr + 1, '\0', sizeof (struct sockaddr_in));
-      ((struct sockaddr_in *)(addr + 1))->sin_len
-	= sizeof (struct sockaddr_in);
-      ((struct sockaddr_in *)(addr + 1))->sin_family = AF_INET;
 #ifdef SADB_X_EXT_FLOW_TYPE
-      ((struct sockaddr_in *)(addr + 1))->sin_addr.s_addr
-	= ingress ? src : dst;
+      pf_key_v2_setup_sockaddr (addr + 1, src, dst, 0, ingress);
 #else
-      ((struct sockaddr_in *)(addr + 1))->sin_addr.s_addr = dst;
+      pf_key_v2_setup_sockaddr (addr + 1, dst, NULL, 0, 0);
 #endif
-      ((struct sockaddr_in *)(addr + 1))->sin_port = 0;
       if (pf_key_v2_msg_add (flow, (struct sadb_ext *)addr,
 			     PF_KEY_V2_NODE_MALLOCED) == -1)
 	goto cleanup;
       addr = 0;
     }
 
-  addr = malloc (len);
+  addr = calloc (1, len);
   if (!addr)
     goto cleanup;
   addr->sadb_address_exttype = SADB_X_EXT_SRC_FLOW;
   addr->sadb_address_len = len / PF_KEY_V2_CHUNK;
   addr->sadb_address_reserved = 0;
-  memset (addr + 1, '\0', sizeof (struct sockaddr_in));
-  ((struct sockaddr_in *)(addr + 1))->sin_len = sizeof (struct sockaddr_in);
-  ((struct sockaddr_in *)(addr + 1))->sin_family = AF_INET;
-  ((struct sockaddr_in *)(addr + 1))->sin_addr.s_addr = laddr;
-  ((struct sockaddr_in *)(addr + 1))->sin_port = sport;
+  pf_key_v2_setup_sockaddr (addr + 1, laddr, NULL, sport, 0);
   if (pf_key_v2_msg_add (flow, (struct sadb_ext *)addr,
 			 PF_KEY_V2_NODE_MALLOCED) == -1)
     goto cleanup;
   addr = 0;
 
-  addr = malloc (len);
+  addr = calloc (1, len);
   if (!addr)
     goto cleanup;
   addr->sadb_address_exttype = SADB_X_EXT_SRC_MASK;
   addr->sadb_address_len = len / PF_KEY_V2_CHUNK;
   addr->sadb_address_reserved = 0;
-  memset (addr + 1, '\0', sizeof (struct sockaddr_in));
-  ((struct sockaddr_in *)(addr + 1))->sin_len = sizeof (struct sockaddr_in);
-  ((struct sockaddr_in *)(addr + 1))->sin_family = AF_INET;
-  ((struct sockaddr_in *)(addr + 1))->sin_addr.s_addr = lmask;
-  ((struct sockaddr_in *)(addr + 1))->sin_port = sport ? 0xffff : 0;
+  pf_key_v2_setup_sockaddr (addr + 1, lmask, NULL, sport ? 0xffff : 0, 0);
   if (pf_key_v2_msg_add (flow, (struct sadb_ext *)addr,
 			 PF_KEY_V2_NODE_MALLOCED) == -1)
     goto cleanup;
   addr = 0;
 
-  addr = malloc (len);
+  addr = calloc (1, len);
   if (!addr)
     goto cleanup;
   addr->sadb_address_exttype = SADB_X_EXT_DST_FLOW;
   addr->sadb_address_len = len / PF_KEY_V2_CHUNK;
   addr->sadb_address_reserved = 0;
-  memset (addr + 1, '\0', sizeof (struct sockaddr_in));
-  ((struct sockaddr_in *)(addr + 1))->sin_len = sizeof (struct sockaddr_in);
-  ((struct sockaddr_in *)(addr + 1))->sin_family = AF_INET;
-  ((struct sockaddr_in *)(addr + 1))->sin_addr.s_addr = raddr;
-  ((struct sockaddr_in *)(addr + 1))->sin_port = dport;
+  pf_key_v2_setup_sockaddr (addr + 1, raddr, NULL, sport, 0);
   if (pf_key_v2_msg_add (flow, (struct sadb_ext *)addr,
 			 PF_KEY_V2_NODE_MALLOCED) == -1)
     goto cleanup;
   addr = 0;
 
-  addr = malloc (len);
+  addr = calloc (1, len);
   if (!addr)
     goto cleanup;
   addr->sadb_address_exttype = SADB_X_EXT_DST_MASK;
   addr->sadb_address_len = len / PF_KEY_V2_CHUNK;
   addr->sadb_address_reserved = 0;
-  memset (addr + 1, '\0', sizeof (struct sockaddr_in));
-  ((struct sockaddr_in *)(addr + 1))->sin_len = sizeof (struct sockaddr_in);
-  ((struct sockaddr_in *)(addr + 1))->sin_family = AF_INET;
-  ((struct sockaddr_in *)(addr + 1))->sin_addr.s_addr = rmask;
-  ((struct sockaddr_in *)(addr + 1))->sin_port = dport ? 0xffff : 0;
+  pf_key_v2_setup_sockaddr (addr + 1, rmask, NULL, sport ? 0xffff : 0, 0);
   if (pf_key_v2_msg_add (flow, (struct sadb_ext *)addr,
 			 PF_KEY_V2_NODE_MALLOCED) == -1)
     goto cleanup;
@@ -1623,10 +1703,31 @@ pf_key_v2_flow (in_addr_t laddr, in_addr_t lmask, in_addr_t raddr,
   if (pf_key_v2_msg_add (flow, (struct sadb_ext *)&tprotocol, 0) == -1)
     goto cleanup;
 
+#ifdef USE_DEBUG
+  if (sockaddr2text (laddr, &laddr_str, 0))
+    laddr_str = 0;
+  if (sockaddr2text (lmask, &lmask_str, 0))
+    lmask_str = 0;
+  if (sockaddr2text (raddr, &raddr_str, 0))
+    raddr_str = 0;
+  if (sockaddr2text (rmask, &rmask_str, 0))
+    rmask_str = 0;
+
   LOG_DBG ((LOG_SYSDEP, 50,
 	    "pf_key_v2_flow: src %x %x dst %x %x proto %u sport %u dport %u",
-	    ntohl (laddr), ntohl (lmask), ntohl (raddr), ntohl (rmask),
+	    laddr_str ? laddr_str : "<???>", lmask_str ? laddr_str : "<???>",
+	    raddr_str ? laddr_str : "<???>", rmask_str ? laddr_str : "<???>",
 	    tproto, ntohs (sport), ntohs (dport)));
+
+  if (laddr_str)
+    free (laddr_str);
+  if (lmask_str)
+    free (lmask_str);
+  if (raddr_str)
+    free (raddr_str);
+  if (rmask_str)
+    free (rmask_str);
+#endif /* USE_DEBUG */
 
   ret = pf_key_v2_call (flow);
   pf_key_v2_msg_free (flow);
@@ -1669,10 +1770,9 @@ pf_key_v2_flow (in_addr_t laddr, in_addr_t lmask, in_addr_t raddr,
   struct sadb_x_ipsecrequest *ipsecrequest;
   struct sadb_x_sa2 ssa2;
   struct sadb_address *addr = 0;
-  struct sockaddr_in *saddr;
-  u_int8_t
-    policy_buf[sizeof *policy + sizeof *ipsecrequest + 2 * sizeof *saddr];
+  struct sockaddr *saddr;
   struct pf_key_v2_msg *flow = 0, *ret = 0;
+  u_int8_t *policy_buf;
   size_t len;
   int err;
 
@@ -1692,47 +1792,70 @@ pf_key_v2_flow (in_addr_t laddr, in_addr_t lmask, in_addr_t raddr,
 
   /*
    * Setup the ADDRESS extensions.
-   *
-   * XXX Addresses have to be thought through.  Assumes IPv4.
    */
-  len = sizeof *addr + PF_KEY_V2_ROUND (sizeof (struct sockaddr_in));
-  addr = malloc (len);
+  len = sizeof *addr + PF_KEY_V2_ROUND (src->sa_len);
+  addr = calloc (1, len);
   if (!addr)
     goto cleanup;
   addr->sadb_address_exttype = SADB_EXT_ADDRESS_SRC;
   addr->sadb_address_len = len / PF_KEY_V2_CHUNK;
   addr->sadb_address_proto = IPSEC_ULPROTO_ANY;
-  addr->sadb_address_prefixlen = pf_key_v2_mask_to_bits (ntohl (lmask));
   addr->sadb_address_reserved = 0;
-  memset (addr + 1, '\0', sizeof (struct sockaddr_in));
-  ((struct sockaddr_in *)(addr + 1))->sin_len = sizeof (struct sockaddr_in);
-  ((struct sockaddr_in *)(addr + 1))->sin_family = AF_INET;
-  ((struct sockaddr_in *)(addr + 1))->sin_addr.s_addr = laddr;
-  ((struct sockaddr_in *)(addr + 1))->sin_port = IPSEC_PORT_ANY;
+  pf_key_v2_setup_sockaddr (addr + 1, laddr, NULL, IPSEC_PORT_ANY, 0);
+  switch (laddr->sa_family)
+    {
+    case AF_INET:
+      ip4_sa = (struct sockaddr_in *)lmask;
+      addr->sadb_address_prefixlen = 
+	pf_key_v2_mask_to_bits (ip4_sa->sin_addr.in_addr);
+      break;
+    case AF_INET6:
+      ip6_sa = (struct sockaddr_in6 *)lmask;
+      addr->sadb_address_prefixlen = 
+	pf_key_v2_mask6_to_bits (ip6_sa->sin6_addr.in6_addr);
+      break;
+    }
   if (pf_key_v2_msg_add (flow, (struct sadb_ext *)addr,
 			 PF_KEY_V2_NODE_MALLOCED) == -1)
     goto cleanup;
   addr = 0;
 
-  addr = malloc (len);
+  addr = calloc (1, len);
   if (!addr)
     goto cleanup;
   addr->sadb_address_exttype = SADB_EXT_ADDRESS_DST;
   addr->sadb_address_len = len / PF_KEY_V2_CHUNK;
   addr->sadb_address_proto = IPSEC_ULPROTO_ANY;
-  addr->sadb_address_prefixlen = pf_key_v2_mask_to_bits (ntohl (rmask));
   addr->sadb_address_reserved = 0;
-  memset (addr + 1, '\0', sizeof (struct sockaddr_in));
-  ((struct sockaddr_in *)(addr + 1))->sin_len = sizeof (struct sockaddr_in);
-  ((struct sockaddr_in *)(addr + 1))->sin_family = AF_INET;
-  ((struct sockaddr_in *)(addr + 1))->sin_addr.s_addr = raddr;
-  ((struct sockaddr_in *)(addr + 1))->sin_port = IPSEC_PORT_ANY;
+  pf_key_v2_setup_sockaddr (addr + 1, raddr, NULL, IPSEC_PORT_ANY, 0);
+  switch (raddr->sa_family)
+    {
+    case AF_INET:
+      ip4_sa = (struct sockaddr_in *)rmask;
+      addr->sadb_address_prefixlen = 
+	pf_key_v2_mask_to_bits (ip4_sa->sin_addr.in_addr);
+      break;
+    case AF_INET6:
+      ip6_sa = (struct sockaddr_in6 *)rmask;
+      addr->sadb_address_prefixlen = 
+	pf_key_v2_mask6_to_bits (ip6_sa->sin6_addr.in6_addr);
+      break;
+    }
   if (pf_key_v2_msg_add (flow, (struct sadb_ext *)addr,
 			 PF_KEY_V2_NODE_MALLOCED) == -1)
     goto cleanup;
   addr = 0;
 
   /* Setup the POLICY extension.  */
+  policy_buf = (u_int8_t *)calloc (1, sizeof *policy + sizeof *ipsecrequest +
+				   2 * sockaddr_len (src));
+  if (!policy_buf)
+    {
+      log_error ("pf_key_v2_flow: calloc %d failed", sizeof *policy +
+		 sizeof *ipsecrequest + 2 * sockaddr_len (src));
+      goto cleanup;
+    }
+
   policy = (struct sadb_x_policy *)policy_buf;
   policy->sadb_x_policy_exttype = SADB_X_EXT_POLICY;
   policy->sadb_x_policy_len = sizeof policy_buf / PF_KEY_V2_CHUNK;
@@ -1746,7 +1869,7 @@ pf_key_v2_flow (in_addr_t laddr, in_addr_t lmask, in_addr_t raddr,
   /* Setup the IPSECREQUEST extension part.  */
   ipsecrequest = (struct sadb_x_ipsecrequest *)(policy + 1);
   ipsecrequest->sadb_x_ipsecrequest_len
-    = sizeof *ipsecrequest + 2 * sizeof *saddr;
+    = sizeof *ipsecrequest + 2 * sockaddr_len (src);
   switch (proto)
     {
     case IPSEC_PROTO_IPSEC_ESP:
@@ -1764,26 +1887,45 @@ pf_key_v2_flow (in_addr_t laddr, in_addr_t lmask, in_addr_t raddr,
     = ingress ? IPSEC_LEVEL_USE : IPSEC_LEVEL_REQUIRE;
   ipsecrequest->sadb_x_ipsecrequest_reqid = 0;	/* XXX */
 
-  /* Add source and destination addresses.  XXX IPv4 dependent */
-  saddr = (struct sockaddr_in *)(ipsecrequest + 1);
-  memset (saddr, '\0', sizeof *saddr);
-  saddr->sin_len = sizeof (struct sockaddr_in);
-  saddr->sin_family = AF_INET;
-  saddr->sin_addr.s_addr = src;
-  saddr->sin_port = 0;
-
-  saddr++;
-  memset (saddr, '\0', sizeof *saddr);
-  saddr->sin_len = sizeof (struct sockaddr_in);
-  saddr->sin_family = AF_INET;
-  saddr->sin_addr.s_addr = dst;
-  saddr->sin_port = 0;
-  
+  /* Add source and destination addresses. */
+  saddr = (struct sockaddr *)(ipsecrequest + 1);
+  pf_key_v2_setup_sockaddr (saddr, src, NULL, 0, 0);
+  switch (src->sa_family)
+    {
+    case AF_INET:
+      saddr = (struct sockaddr_in *)saddr + 1;
+      break;
+    case AF_INET6:
+      saddr = (struct sockaddr_in6 *)saddr + 1;
+      break;
+    }
+  pf_key_v2_setup_sockaddr (saddr, dst, NULL, 0, 0);
   if (pf_key_v2_msg_add (flow, (struct sadb_ext *)policy, 0) == -1)
     goto cleanup;
 
+#ifdef USE_DEBUG
+  if (sockaddr2text (laddr, &laddr_str, 0))
+    laddr_str = 0;
+  if (sockaddr2text (lmask, &lmask_str, 0))
+    lmask_str = 0;
+  if (sockaddr2text (raddr, &raddr_str, 0))
+    raddr_str = 0;
+  if (sockaddr2text (rmask, &rmask_str, 0))
+    rmask_str = 0;
+
   LOG_DBG ((LOG_SYSDEP, 50, "pf_key_v2_flow: src %x %x dst %x %x",
-	    ntohl (laddr), ntohl (lmask), ntohl (raddr), ntohl (rmask)));
+	    laddr_str ? laddr_str : "<???>", lmask_str ? laddr_str : "<???>", 
+	    raddr_str ? laddr_str : "<???>", rmask_str ? laddr_str : "<???>"));
+
+  if (laddr_str)
+    free (laddr_str);
+  if (lmask_str)
+    free (lmask_str);
+  if (raddr_str)
+    free (raddr_str);
+  if (rmask_str)
+    free (rmask_str);
+#endif
 
   ret = pf_key_v2_call (flow);
   pf_key_v2_msg_free (flow);
@@ -1825,6 +1967,7 @@ pf_key_v2_convert_id (u_int8_t *id, int idlen, int *reslen, int *idtype)
 {
   u_int8_t *res = 0;
   char addrbuf[ADDRESS_MAX + 5];
+  char *addr;
 
   switch (id[0])
     {
@@ -1864,7 +2007,7 @@ pf_key_v2_convert_id (u_int8_t *id, int idlen, int *reslen, int *idtype)
     case IPSEC_ID_IPV6_ADDR: /* XXX CONNECTION ? */
       if (inet_ntop (AF_INET6, id + ISAKMP_ID_DATA_OFF - ISAKMP_GEN_SZ,
 		     addrbuf, ADDRESS_MAX) != NULL)
-	*reslen = strlen (addrbuf) + 4;
+	*reslen = strlen (addrbuf) + 5;
       strcat (addrbuf, "/128");
       res = strdup (addrbuf);
       if (!res)
@@ -1873,7 +2016,30 @@ pf_key_v2_convert_id (u_int8_t *id, int idlen, int *reslen, int *idtype)
       return res;
 
     case IPSEC_ID_IPV4_ADDR_SUBNET: /* XXX PREFIX */
+      addr = id + ISAKMP_ID_DATA_OFF - ISAKMP_GEN_SZ;
+      if (inet_ntop (AF_INET, addr, addrbuf, ADDRESS_MAX) != NULL)
+	*reslen = strlen (addrbuf) + 4;
+      sprintf (addrbuf + strlen (addrbuf), "/%d", 
+	       pf_key_v2_mask_to_bits ((u_int32_t)*(addr + 
+						    sizeof (struct in_addr))));
+      res = strdup (addrbuf);
+      if (!res)
+	return 0;
+      *idtype = SADB_IDENTTYPE_PREFIX;
+      return res;
+
     case IPSEC_ID_IPV6_ADDR_SUBNET: /* XXX PREFIX */
+      addr = id + ISAKMP_ID_DATA_OFF - ISAKMP_GEN_SZ;
+      if (inet_ntop (AF_INET6, addr, addrbuf, ADDRESS_MAX) != NULL)
+	*reslen = strlen (addrbuf) + 5;
+      sprintf (addrbuf + strlen (addrbuf), "/%d", 
+	       pf_key_v2_mask6_to_bits (addr + sizeof (struct in6_addr)));
+      res = strdup (addrbuf);
+      if (!res)
+	return 0;
+      *idtype = SADB_IDENTTYPE_PREFIX;
+      return res;
+
     case IPSEC_ID_IPV4_RANGE:
     case IPSEC_ID_IPV6_RANGE:
     case IPSEC_ID_DER_ASN1_DN:
@@ -1897,7 +2063,8 @@ pf_key_v2_enable_sa (struct sa *sa, struct sa *isakmp_sa)
   int sidtype = 0, didtype = 0, sidlen = 0, didlen = 0;
   u_int8_t *sid = 0, *did = 0;
 #ifndef SADB_X_EXT_FLOW_TYPE
-  in_addr_t hostmask = 0xffffffff; /* XXX IPv4 specific */
+  struct sockaddr_storage hostmask_storage;
+  struct sockaddr *hostmask = (struct sockaddr *)&hostmask_storage;
 #endif /* SADB_X_EXT_FLOW_TYPE */
 
   sa->transport->vtbl->get_dst (sa->transport, &dst, &dstlen);
@@ -1925,26 +2092,36 @@ pf_key_v2_enable_sa (struct sa *sa, struct sa *isakmp_sa)
     }
 #endif /* SADB_X_EXT_FLOW_TYPE */
 
-  /* XXX IPv4 specific */
   error = pf_key_v2_flow (isa->src_net, isa->src_mask, isa->dst_net,
 			  isa->dst_mask, isa->tproto, isa->sport, isa->dport,
-			  proto->spi[0], proto->proto,
-			  ((struct sockaddr_in *)dst)->sin_addr.s_addr,
-			  ((struct sockaddr_in *)src)->sin_addr.s_addr, 0, 0,
+			  proto->spi[0], proto->proto, dst, src, 0, 0,
 			  sidtype, sid, sidlen, didtype, did, didlen);
   if (error)
     goto cleanup;
 
 #ifndef SADB_X_EXT_FLOW_TYPE
+  /* Set hostmask to '-1'. */
+  switch (dst->sa_family)
+    {
+    case AF_INET:
+      ((struct sockaddr_in *)hostmask)->sin_family = AF_INET;
+      ((struct sockaddr_in *)hostmask)->sin_len = sizeof (struct in_addr);
+      memset (&((struct sockaddr_in *)hostmask)->sin_addr.s_addr, 0xff, 
+	      sizeof (struct in_addr));
+      break;
+    case AF_INET6:
+      ((struct sockaddr_in6 *)hostmask)->sin6_family = AF_INET6;
+      ((struct sockaddr_in6 *)hostmask)->sin6_len = sizeof (struct in6_addr);
+      memset (&((struct sockaddr_in6 *)hostmask)->sin6_addr.s6_addr, 0xff, 
+	      sizeof (struct in6_addr));
+      break;
+    }
+
   /* Ingress flows, handling SA bundles. */
   while (TAILQ_NEXT (proto, link))
     {
-      error = pf_key_v2_flow (((struct sockaddr_in *)dst)->sin_addr.s_addr,
-			      hostmask,
-			      ((struct sockaddr_in *)src)->sin_addr.s_addr,
-			      hostmask, 0, 0, 0, proto->spi[1], proto->proto,
-			      ((struct sockaddr_in *)src)->sin_addr.s_addr,
-			      ((struct sockaddr_in *)dst)->sin_addr.s_addr,
+      error = pf_key_v2_flow (dst, hostmask, src, hostmask, 0, 0, 0, 
+			      proto->spi[1], proto->proto, src, dst, 
 			      0, 1, 0, 0, 0, 0, 0, 0);
       if (error)
 	goto cleanup;
@@ -1954,9 +2131,7 @@ pf_key_v2_enable_sa (struct sa *sa, struct sa *isakmp_sa)
 
   error = pf_key_v2_flow (isa->dst_net, isa->dst_mask, isa->src_net,
 			  isa->src_mask, isa->tproto, isa->dport, isa->sport,
-			  proto->spi[1], proto->proto,
-			  ((struct sockaddr_in *)src)->sin_addr.s_addr,
-			  ((struct sockaddr_in *)dst)->sin_addr.s_addr, 0, 1,
+			  proto->spi[1], proto->proto, src, dst, 0, 1,
 			  sidtype, sid, sidlen, didtype, did, didlen);
 
  cleanup:
@@ -2104,7 +2279,8 @@ pf_key_v2_disable_sa (struct sa *sa, int incoming)
   int dstlen, srclen;
   struct proto *proto = TAILQ_FIRST (&sa->protos);
 #ifndef SADB_X_EXT_FLOW_TYPE
-  in_addr_t hostmask = 0xffffffff; /* XXX IPv4 specific */
+  struct sockaddr_storage hostmask_storage;
+  struct sockaddr *hostmask = (struct sockaddr *)&hostmask_storage;
   int error;
 #endif /* SADB_X_EXT_FLOW_TYPE */
 
@@ -2114,23 +2290,34 @@ pf_key_v2_disable_sa (struct sa *sa, int incoming)
   if (!incoming)
     return pf_key_v2_flow (isa->src_net, isa->src_mask, isa->dst_net,
 			   isa->dst_mask, isa->tproto, isa->sport, isa->dport,
-			   proto->spi[0], proto->proto,
-			   ((struct sockaddr_in *)dst)->sin_addr.s_addr,
-			   ((struct sockaddr_in *)src)->sin_addr.s_addr, 1, 0,
+			   proto->spi[0], proto->proto, src, dst, 1, 0,
 			   0, 0, 0, 0, 0, 0);
   else
     {
 #ifndef SADB_X_EXT_FLOW_TYPE
+      /* Set hostmask to '-1'. */
+      switch (dst->sa_family)
+	{
+	case AF_INET:
+	  ((struct sockaddr_in *)hostmask)->sin_family = AF_INET;
+	  ((struct sockaddr_in *)hostmask)->sin_len = sizeof (struct in_addr);
+	  memset (&((struct sockaddr_in *)hostmask)->sin_addr.s_addr, 0xff, 
+		  sizeof (struct in_addr));
+	  break;
+	case AF_INET6:
+	  ((struct sockaddr_in6 *)hostmask)->sin6_family = AF_INET6;
+	  ((struct sockaddr_in6 *)hostmask)->sin6_len = 
+	    sizeof (struct in6_addr);
+	  memset (&((struct sockaddr_in6 *)hostmask)->sin6_addr.s6_addr, 0xff, 
+		  sizeof (struct in6_addr));
+	  break;
+	}
+
       /* Ingress flow --- SA bundles */
       while (TAILQ_NEXT (proto, link))
 	{
-          error = pf_key_v2_flow (((struct sockaddr_in *)dst)->sin_addr.s_addr,
-				  hostmask,
-				  ((struct sockaddr_in *)src)->sin_addr.s_addr,
-				  hostmask, 0, 0, 0,
-				  proto->spi[1], proto->proto,
-				  ((struct sockaddr_in *)src)->sin_addr.s_addr,
-				  ((struct sockaddr_in *)dst)->sin_addr.s_addr,
+          error = pf_key_v2_flow (dst, hostmask, src, hostmask, 0, 0, 0, 
+				  proto->spi[1], proto->proto, src, dst, 
 				  1, 1, 0, 0, 0, 0, 0, 0);
           if (error)
 	    return error;
@@ -2141,9 +2328,7 @@ pf_key_v2_disable_sa (struct sa *sa, int incoming)
       return pf_key_v2_flow (isa->dst_net, isa->dst_mask, isa->src_net,
 			     isa->src_mask, isa->tproto, isa->dport,
 			     isa->sport, proto->spi[1], proto->proto,
-			     ((struct sockaddr_in *)src)->sin_addr.s_addr,
-			     ((struct sockaddr_in *)dst)->sin_addr.s_addr,
-                             1, 1, 0, 0, 0, 0, 0, 0);
+			     src, dst, 1, 1, 0, 0, 0, 0, 0, 0);
     }
 }
 
@@ -2222,15 +2407,13 @@ pf_key_v2_delete_spi (struct sa *sa, struct proto *proto, int incoming)
 
   /*
    * Setup the ADDRESS extensions.
-   *
-   * XXX Addresses have to be thought through.  Assumes IPv4.
    */
   if (incoming)
     sa->transport->vtbl->get_dst (sa->transport, &saddr, &saddrlen);
   else
     sa->transport->vtbl->get_src (sa->transport, &saddr, &saddrlen);
   len = sizeof *addr + PF_KEY_V2_ROUND (saddrlen);
-  addr = malloc (len);
+  addr = calloc (1, len);
   if (!addr)
     goto cleanup;
   addr->sadb_address_exttype = SADB_EXT_ADDRESS_SRC;
@@ -2241,7 +2424,15 @@ pf_key_v2_delete_spi (struct sa *sa, struct proto *proto, int incoming)
 #endif
   addr->sadb_address_reserved = 0;
   memcpy (addr + 1, saddr, saddrlen);
-  ((struct sockaddr_in *)(addr + 1))->sin_port = 0;
+  switch (saddr->sa_family)
+    {
+    case AF_INET:
+      ((struct sockaddr_in *)(addr + 1))->sin_port = 0;
+      break;
+    case AF_INET6:
+      ((struct sockaddr_in6 *)(addr + 1))->sin6_port = 0;
+      break;
+    }
   if (pf_key_v2_msg_add (delete, (struct sadb_ext *)addr,
 			 PF_KEY_V2_NODE_MALLOCED) == -1)
     goto cleanup;
@@ -2252,7 +2443,7 @@ pf_key_v2_delete_spi (struct sa *sa, struct proto *proto, int incoming)
   else
     sa->transport->vtbl->get_dst (sa->transport, &saddr, &saddrlen);
   len = sizeof *addr + PF_KEY_V2_ROUND (saddrlen);
-  addr = malloc (len);
+  addr = calloc (1, len);
   if (!addr)
     goto cleanup;
   addr->sadb_address_exttype = SADB_EXT_ADDRESS_DST;
@@ -2263,7 +2454,15 @@ pf_key_v2_delete_spi (struct sa *sa, struct proto *proto, int incoming)
 #endif
   addr->sadb_address_reserved = 0;
   memcpy (addr + 1, saddr, saddrlen);
-  ((struct sockaddr_in *)(addr + 1))->sin_port = 0;
+  switch (saddr->sa_family)
+    {
+    case AF_INET:
+      ((struct sockaddr_in *)(addr + 1))->sin_port = 0;
+      break;
+    case AF_INET6:
+      ((struct sockaddr_in6 *)(addr + 1))->sin6_port = 0;
+      break;
+    }
   if (pf_key_v2_msg_add (delete, (struct sadb_ext *)addr,
 			 PF_KEY_V2_NODE_MALLOCED) == -1)
     goto cleanup;
@@ -2345,6 +2544,7 @@ pf_key_v2_expire (struct pf_key_v2_msg *pmsg)
   struct sadb_lifetime *life, *lifecurrent;
   struct sa *sa;
   struct pf_key_v2_node *lifenode, *ext;
+  char *dst_str;
 
   msg = (struct sadb_msg *)TAILQ_FIRST (pmsg)->seg;
   ext = pf_key_v2_find_ext (pmsg, SADB_EXT_SA);
@@ -2380,12 +2580,20 @@ pf_key_v2_expire (struct pf_key_v2_msg *pmsg)
     }
   lifecurrent = lifenode->seg;
 
-  /* XXX IPv4 specific.  */
+#ifdef USE_DEBUG
+
+  if (sockaddr2text (dstaddr, &dst_str, 0))
+    dst_str = 0;
+
   LOG_DBG ((LOG_SYSDEP, 20, "pf_key_v2_expire: %s dst %s SPI %x sproto %d",
 	    life->sadb_lifetime_exttype == SADB_EXT_LIFETIME_SOFT ? "SOFT"
-	    : "HARD",
-	    inet_ntoa (((struct sockaddr_in *)dstaddr)->sin_addr),
+	    : "HARD", dst_str ? dst_str : "<unknown>",
 	    ntohl (ssa->sadb_sa_spi), msg->sadb_msg_satype));
+
+  if (dst_str)
+    free (dst_str);
+
+#endif /* USE_DEBUG */
 
   /*
    * Find the IPsec SA.  The IPsec stack has two SAs for every IKE SA,
@@ -2396,10 +2604,8 @@ pf_key_v2_expire (struct pf_key_v2_msg *pmsg)
    * of the full suite.
    *
    * XXX When anything else than AH and ESP is supported this needs to change.
-   * XXX IPv4 specific.
    */
-  sa = ipsec_sa_lookup (((struct sockaddr_in *)dstaddr)->sin_addr.s_addr,
-			ssa->sadb_sa_spi,
+  sa = ipsec_sa_lookup (dstaddr, ssa->sadb_sa_spi,
 			msg->sadb_msg_satype == SADB_SATYPE_ESP
 			? IPSEC_PROTO_IPSEC_ESP : IPSEC_PROTO_IPSEC_AH);
 
@@ -3647,15 +3853,13 @@ pf_key_v2_group_spis (struct sa *sa, struct proto *proto1,
 
   /*
    * Setup the ADDRESS extensions.
-   *
-   * XXX Addresses have to be thought through.  Assumes IPv4.
    */
   if (incoming)
     sa->transport->vtbl->get_src (sa->transport, &saddr, &saddrlen);
   else
     sa->transport->vtbl->get_dst (sa->transport, &saddr, &saddrlen);
   len = sizeof *addr + PF_KEY_V2_ROUND (saddrlen);
-  addr = malloc (len);
+  addr = calloc (1, len);
   if (!addr)
     goto cleanup;
   addr->sadb_address_exttype = SADB_EXT_ADDRESS_DST;
@@ -3672,7 +3876,7 @@ pf_key_v2_group_spis (struct sa *sa, struct proto *proto1,
     goto cleanup;
   addr = 0;
 
-  addr = malloc (len);
+  addr = calloc (1, len);
   if (!addr)
     goto cleanup;
   addr->sadb_address_exttype = SADB_X_EXT_DST2;

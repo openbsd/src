@@ -1,9 +1,10 @@
-/*	$OpenBSD: ike_phase_1.c,v 1.26 2001/06/05 10:50:55 angelos Exp $	*/
+/*	$OpenBSD: ike_phase_1.c,v 1.27 2001/06/29 04:12:00 ho Exp $	*/
 /*	$EOM: ike_phase_1.c,v 1.31 2000/12/11 23:47:56 niklas Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Niklas Hallqvist.  All rights reserved.
  * Copyright (c) 1999, 2000 Angelos D. Keromytis.  All rights reserved.
+ * Copyright (c) 2001 Håkan Olsson.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -821,12 +822,12 @@ ike_phase_1_send_ID (struct message *msg)
       switch (id_type)
 	{
 	case IPSEC_ID_IPV4_ADDR:
+	case IPSEC_ID_IPV6_ADDR:
       	  msg->transport->vtbl->get_src (msg->transport, &src, &src_len);
 
       	  /* Already in network byteorder.  */
-      	  memcpy (buf + ISAKMP_ID_DATA_OFF,
-	      	  &((struct sockaddr_in *)src)->sin_addr.s_addr,
-	      	  sizeof (in_addr_t));
+      	  memcpy (buf + ISAKMP_ID_DATA_OFF, sockaddr_data (src), 
+		  sockaddr_len (src));
 	  break;
 	case IPSEC_ID_FQDN:
 	case IPSEC_ID_USER_FQDN:
@@ -843,12 +844,18 @@ ike_phase_1_send_ID (struct message *msg)
   else
     {
       msg->transport->vtbl->get_src (msg->transport, &src, &src_len);
-      /* XXX Assumes IPv4.  */
-      SET_ISAKMP_ID_TYPE (buf, IPSEC_ID_IPV4_ADDR);
+      switch (src->sa_family)
+	{
+	case AF_INET:
+	  SET_ISAKMP_ID_TYPE (buf, IPSEC_ID_IPV4_ADDR);
+	  break;
+	case AF_INET6:
+	  SET_ISAKMP_ID_TYPE (buf, IPSEC_ID_IPV6_ADDR);
+	  break;
+	}
       /* Already in network byteorder.  */
-      memcpy (buf + ISAKMP_ID_DATA_OFF,
-	      &((struct sockaddr_in *)src)->sin_addr.s_addr,
-	      sizeof (in_addr_t));
+      memcpy (buf + ISAKMP_ID_DATA_OFF, sockaddr_data (src), 
+	      sockaddr_len (src));
     }
 
   if (message_add_payload (msg, ISAKMP_PAYLOAD_ID, buf, sz, 1))
@@ -950,8 +957,19 @@ ike_phase_1_recv_ID (struct message *msg)
 	      return -1;
 	    }
 
-	  /* XXX IPv4 specific */
 	  inet_pton (AF_INET, p, rid);
+	  break;
+	case IPSEC_ID_IPV6_ADDR:
+	  p = conf_get_str (rs, "Address");
+	  if (!p)
+	    {
+	      log_print ("ike_phase_1_recv_ID: failed to get Address in "
+			 "Remote-ID section [%s]", rs);
+	      free (rid);
+	      return -1;
+	    }
+
+	  inet_pton (AF_INET6, p, rid);
 	  break;
 	case IPSEC_ID_FQDN:
 	case IPSEC_ID_USER_FQDN:

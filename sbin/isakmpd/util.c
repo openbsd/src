@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.14 2001/06/27 05:16:49 ho Exp $	*/
+/*	$OpenBSD: util.c,v 1.15 2001/06/29 04:12:01 ho Exp $	*/
 /*	$EOM: util.c,v 1.23 2000/11/23 12:22:08 niklas Exp $	*/
 
 /*
@@ -269,10 +269,16 @@ text2sockaddr (char *address, char *port, struct sockaddr **sa)
 #endif
 }
 
+/*
+ * Convert a sockaddr to text. With zflag non-zero fill out with zeroes,
+ * i.e 10.0.0.10 --> "010.000.000.010"
+ */
 int
-sockaddr2text (struct sockaddr *sa, char **address)
+sockaddr2text (struct sockaddr *sa, char **address, int zflag)
 {
   char buf[NI_MAXHOST];
+  char *token, *bstart, *p;
+  int c_pre = 0, c_post = 0;
 
 #ifdef HAVE_GETNAMEINFO
   if (getnameinfo (sa, sa->sa_len, buf, sizeof buf, 0, 0,
@@ -293,10 +299,79 @@ sockaddr2text (struct sockaddr *sa, char **address)
     }
 #endif
 
-  *address = malloc (strlen (buf) + 1);
-  if (!address)
-    return -1;
-  
+  if (zflag == 0)
+    {
+      *address = malloc (strlen (buf) + 1);
+      if (*address == NULL)
+	return -1;
+    }
+  else
+    switch (sa->sa_family)
+      {
+      case AF_INET:
+	*address = malloc (16);
+	if (*address == NULL)
+	  return -1;
+	bstart = buf; **address = '\0';
+	while ((token = strsep (&bstart, ".")) != NULL)
+	  {
+	    if (strlen (*address) > 12)
+	      {
+		free (*address);
+		return -1;
+	      }
+	    sprintf (*address + strlen (*address), "%03ld",
+		     strtol (token, NULL, 10));
+	    if (bstart)
+	      strcat (*address + strlen (*address), ".");
+	  }
+	break;
+      case AF_INET6:
+	*address = malloc (40);
+	if (!address)
+	  return -1;
+	bstart = buf; **address = '\0';
+	buf[40] = '\0'; /* Make sure buf is terminated. */
+	while ((token = strsep (&bstart, ":")) != NULL)
+	  {
+	    if (strlen (token) == 0)
+	      {
+		/* Encountered a '::'. Fill out the string. */
+		/* XXX Isn't there a library function for this somewhere? */
+		for (p = buf; p < token - 1; p++)
+		  if (*p == 0)
+		    c_pre++;
+		for (p = token + 1; p < (bstart + strlen (bstart)); p++)
+		  if (*p == ':')
+		    c_post++;
+		/* The number of zero groups to add. */
+		c_pre = 7 - c_pre - c_post - 1;
+		if (c_pre > 6 || strlen (*address) > (40 - 5 * c_pre))
+		  {
+		    free (*address);
+		    return -1;
+		  }
+		for (; c_pre; c_pre--)
+		  strcat (*address + strlen (*address), "0000:");
+	      }
+	    else
+	      {
+		if (strlen (*address) > 35)
+		  {
+		    free (*address);
+		    return -1;
+		  }
+		sprintf (*address + strlen (*address), "%04lx", 
+			 strtol (token, NULL, 16));
+		if (bstart)
+		  strcat (*address + strlen (*address), ":");
+	      }
+	  }
+	break;
+      default:
+	strcpy (buf, "<error>");
+      }
+	
   strcpy (*address, buf);
   return 0;
 }
@@ -334,7 +409,41 @@ sockaddr_data (struct sockaddr *sa)
       return 0; /* XXX */
     }
 }
-     
+
+/*
+ * Convert network address to text. The network address does not need
+ * to be properly aligned.
+ */
+void
+util_ntoa (char **buf, int af, u_int8_t *addr)
+{
+  struct sockaddr_storage from;
+  struct sockaddr *sfrom = (struct sockaddr *)&from;
+  socklen_t fromlen = sizeof from;
+  u_int32_t ip4_buf;
+
+  memset (&from, 0, fromlen);
+  sfrom->sa_family = af;
+  switch (af)
+    {
+    case AF_INET:
+      sfrom->sa_len = sizeof (struct sockaddr_in);
+      memcpy (&ip4_buf, addr, sizeof (struct in_addr));
+      ((struct sockaddr_in *)sfrom)->sin_addr.s_addr = htonl (ip4_buf);
+      break;
+    case AF_INET6:
+      sfrom->sa_len = sizeof (struct sockaddr_in6);
+      memcpy (sockaddr_data (sfrom), addr, sizeof (struct in6_addr));
+      break;
+    }
+
+  if (sockaddr2text (sfrom, buf, 0))
+    {
+      log_error ("util_ntoa: sockaddr2text () failed");
+      *buf = 0;
+    }
+}
+
 /*
  * Perform sanity check on files containing secret information.
  * Returns -1 on failure, 0 otherwise.
@@ -370,4 +479,3 @@ check_file_secrecy (char *name, off_t *file_size)
 
   return 0;
 }
-

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike_auth.c,v 1.49 2001/06/28 21:41:58 angelos Exp $	*/
+/*	$OpenBSD: ike_auth.c,v 1.50 2001/06/29 04:11:59 ho Exp $	*/
 /*	$EOM: ike_auth.c,v 1.59 2000/11/21 00:21:31 angelos Exp $	*/
 
 /*
@@ -336,7 +336,6 @@ pre_shared_gen_skeyid (struct exchange *exchange, size_t *sz)
   u_int8_t *key;
   u_int8_t *buf = 0;
   size_t keylen;
-  in_addr_t addr;
 
   /*
    * If we're the responder and have the initiator's ID (which is the
@@ -349,16 +348,16 @@ pre_shared_gen_skeyid (struct exchange *exchange, size_t *sz)
       switch (exchange->id_i[0])
         {
 	case IPSEC_ID_IPV4_ADDR:
-	  buf = malloc (16);
+	  util_ntoa ((char **)&buf, AF_INET, exchange->id_i +
+		     ISAKMP_ID_DATA_OFF - ISAKMP_GEN_SZ);
 	  if (!buf)
-	    {
-	      log_error ("pre_shared_gen_skeyid: malloc (16) failed");
-	      return 0;
-	    }
-	  addr = htonl (decode_32 (exchange->id_i + ISAKMP_ID_DATA_OFF -
-				   ISAKMP_GEN_SZ));
-	  inet_ntop (AF_INET, &addr, buf, 16);
+	    return 0;
 	  break;
+	case IPSEC_ID_IPV6_ADDR:
+	  util_ntoa ((char **)&buf, AF_INET6, exchange->id_i +
+		     ISAKMP_ID_DATA_OFF - ISAKMP_GEN_SZ);
+	  if (!buf)
+	    return 0;
 
 	case IPSEC_ID_FQDN:
 	case IPSEC_ID_USER_FQDN:
@@ -901,7 +900,6 @@ rsa_sig_encode_hash (struct message *msg)
   u_int8_t *id;
   size_t id_len;
   int idtype;
-  in_addr_t addr;
 
   id = initiator ? exchange->id_i : exchange->id_r;
   id_len = initiator ? exchange->id_i_len : exchange->id_r_len;
@@ -1013,14 +1011,16 @@ rsa_sig_encode_hash (struct message *msg)
   switch (id[ISAKMP_ID_TYPE_OFF - ISAKMP_GEN_SZ])
     {
     case IPSEC_ID_IPV4_ADDR:
-      buf2 = malloc (16);
+      util_ntoa ((char **)&buf2, AF_INET, id + ISAKMP_ID_DATA_OFF -
+		 ISAKMP_GEN_SZ);
       if (!buf2)
-        {
-	  log_error ("rsa_sig_encode_hash: malloc (16) failed");
-	  return 0;
-	}
-      addr = htonl (decode_32 (id + ISAKMP_ID_DATA_OFF - ISAKMP_GEN_SZ));
-      inet_ntop (AF_INET, &addr, buf2, 16);
+	return 0;
+      break;
+    case IPSEC_ID_IPV6_ADDR:
+      util_ntoa ((char **)&buf2, AF_INET6, id + ISAKMP_ID_DATA_OFF -
+		 ISAKMP_GEN_SZ);
+      if (!buf2)
+	return 0;
       break;
 
     case IPSEC_ID_FQDN:

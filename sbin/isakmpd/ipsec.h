@@ -1,9 +1,10 @@
-/*	$OpenBSD: ipsec.h,v 1.16 2001/06/27 03:31:41 angelos Exp $	*/
+/*	$OpenBSD: ipsec.h,v 1.17 2001/06/29 04:12:00 ho Exp $	*/
 /*	$EOM: ipsec.h,v 1.42 2000/12/03 07:58:20 angelos Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
  * Copyright (c) 1999 Angelos D. Keromytis.  All rights reserved.
+ * Copyright (c) 2001 Håkan Olsson.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -110,10 +111,10 @@ struct ipsec_sa {
   u_int16_t group_desc;
 
   /* Tunnel parameters.  These are in network byte order.  */
-  in_addr_t src_net;
-  in_addr_t src_mask;
-  in_addr_t dst_net;
-  in_addr_t dst_mask;
+  struct sockaddr *src_net;
+  struct sockaddr *src_mask;
+  struct sockaddr *dst_net;
+  struct sockaddr *dst_mask;
   u_int8_t  tproto;
   u_int16_t sport;
   u_int16_t dport;
@@ -143,8 +144,8 @@ extern int ipsec_esp_authkeylength (struct proto *);
 extern int ipsec_esp_enckeylength (struct proto *);
 extern int ipsec_fill_in_hash (struct message *msg);
 extern int ipsec_gen_g_x (struct message *);
-extern int ipsec_get_id (char *, int *, struct in_addr *, struct in_addr *,
-			 u_int8_t *, u_int16_t *);
+extern int ipsec_get_id (char *, int *, struct sockaddr **, 
+			 struct sockaddr **, u_int8_t *, u_int16_t *);
 extern ssize_t ipsec_id_size (char *, u_int8_t *);
 extern void ipsec_init (void);
 extern int ipsec_initial_contact (struct message *msg);
@@ -152,7 +153,7 @@ extern int ipsec_is_attribute_incompatible (u_int16_t, u_int8_t *, u_int16_t,
 					    void *);
 extern int ipsec_keymat_length (struct proto *);
 extern int ipsec_save_g_x (struct message *);
-extern struct sa *ipsec_sa_lookup (in_addr_t, u_int32_t, u_int8_t);
+extern struct sa *ipsec_sa_lookup (struct sockaddr *, u_int32_t, u_int8_t);
 
 extern char *ipsec_decode_ids(char *, u_int8_t *, size_t, u_int8_t *, size_t,
 			      int);

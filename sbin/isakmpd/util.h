@@ -1,8 +1,9 @@
-/*	$OpenBSD: util.h,v 1.8 2001/06/27 00:10:35 ho Exp $	*/
+/*	$OpenBSD: util.h,v 1.9 2001/06/29 04:12:01 ho Exp $	*/
 /*	$EOM: util.h,v 1.10 2000/10/24 13:33:39 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
+ * Copyright (c) 2001 Håkan Olsson.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -60,7 +61,8 @@ extern void encode_128 (u_int8_t *, u_int8_t *);
 #endif
 extern u_int8_t *getrandom (u_int8_t *, size_t);
 extern int hex2raw (char *, u_int8_t *, size_t);
-extern int sockaddr2text (struct sockaddr *, char **);
+extern int sockaddr2text (struct sockaddr *, char **, int);
+extern void util_ntoa (char **, int, u_int8_t *);
 extern int text2sockaddr (char *, char *, struct sockaddr **);
 extern int sockaddr_len (struct sockaddr *);
 extern u_int8_t *sockaddr_data (struct sockaddr *);

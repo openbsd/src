@@ -1,8 +1,9 @@
-/*	$OpenBSD: pf_encap.c,v 1.22 2001/06/27 03:31:42 angelos Exp $	*/
+/*	$OpenBSD: pf_encap.c,v 1.23 2001/06/29 04:12:00 ho Exp $	*/
 /*	$EOM: pf_encap.c,v 1.73 2000/12/04 04:46:34 angelos Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2001 Niklas Hallqvist.  All rights reserved.
+ * Copyright (c) 2001 Håkan Olsson.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -724,11 +725,14 @@ pf_encap_enable_sa (struct sa *sa, struct sa *isakmp_sa)
 
 /* Enable a flow.  */
 int
-pf_encap_enable_spi (in_addr_t laddr, in_addr_t lmask, in_addr_t raddr,
-		     in_addr_t rmask, u_int8_t *spi, u_int8_t proto,
-		     in_addr_t dst)
+pf_encap_enable_spi (struct sockaddr *laddr, struct sockaddr *lmask,
+		     struct sockaddr *raddr, struct sockaddr *rmask,
+		     u_int8_t *spi, u_int8_t proto, in_addr_t dst)
 {
   struct encap_msghdr *emsg = 0;
+#ifdef USE_DEBUG
+  char *la_str, *lm_str, *ra_str, *rm_str;
+#endif
 
   emsg = calloc (1, EMT_ENABLESPI_FLEN);
   if (!emsg)
@@ -741,12 +745,34 @@ pf_encap_enable_spi (in_addr_t laddr, in_addr_t lmask, in_addr_t raddr,
   memcpy (&emsg->em_ena_spi, spi, sizeof emsg->em_ena_spi);
   emsg->em_ena_dst.s_addr = dst;
 
+#ifdef USE_DEBUG
+  if (sockaddr2text (laddr, &la_str))
+    la_str = 0;
+  if (sockaddr2text (lmask, &lm_str))
+    lm_str = 0;
+  if (sockaddr2text (raddr, &ra_str))
+    ra_str = 0;
+  if (sockaddr2text (rmask, &rm_str))
+    rm_str = 0;
+  
   LOG_DBG ((LOG_SYSDEP, 50, "pf_encap_enable_spi: src %x %x dst %x %x",
-	    htonl (laddr), htonl (lmask), htonl (raddr), htonl (rmask)));
-  emsg->em_ena_isrc.s_addr = laddr;
-  emsg->em_ena_ismask.s_addr = lmask;
-  emsg->em_ena_idst.s_addr = raddr;
-  emsg->em_ena_idmask.s_addr = rmask;
+	    la_str ? la_str : "<???>", lm_str : lm_str ? "<???>",
+	    ra_str ? ra_str : "<???>", rm_str : rm_str ? "<???>"));
+  
+  if (la_str)
+    free (la_str);
+  if (lm_str)
+    free (lm_str);
+  if (ra_str)
+    free (ra_str);
+  if (rm_str)
+    free (rm_str);
+#endif /* USE_DEBUG */
+
+  emsg->em_ena_isrc.s_addr = ((struct sockaddr_in *)laddr)->sin_addr.s_addr;
+  emsg->em_ena_ismask.s_addr = ((struct sockaddr_in *)lmask)->sin_addr.s_addr;
+  emsg->em_ena_idst.s_addr = ((struct sockaddr_in *)raddr)->sin_addr.s_addr;
+  emsg->em_ena_idmask.s_addr = ((struct sockaddr_in *)rmask)->sin_addr.s_addr;
   emsg->em_ena_flags = ENABLE_FLAG_REPLACE;
 
   /* XXX What if IPCOMP etc. comes along?  */
@@ -903,7 +929,8 @@ void
 pf_encap_connection_check (char *conn)
 {
   char *conf, *doi_str, *local_id, *remote_id, *peer, *address;
-  struct in_addr laddr, lmask, raddr, rmask, gwaddr;
+  struct sockaddr *laddr, *lmask, *raddr, *rmask;
+  struct in_addr gwaddr;
   int lid, rid, err;
   u_int8_t tproto;
   u_int16_t sport, dport;
@@ -974,7 +1001,10 @@ pf_encap_connection_check (char *conn)
   if (err)
     return;
 
-  if (pf_encap_route (laddr.s_addr, lmask.s_addr, raddr.s_addr, rmask.s_addr,
+  if (pf_encap_route (((struct sockaddr_in *)laddr)->sin_addr.s_addr,
+		      ((struct sockaddr_in *)lmask)->sin_addr.s_addr,
+		      ((struct sockaddr_in *)raddr)->sin_addr.s_addr,
+		      ((struct sockaddr_in *)rmask)->sin_addr.s_addr,
 		      gwaddr.s_addr))
     {
       pf_encap_deregister_on_demand_connection (conn);

@@ -1,9 +1,10 @@
-/*	$OpenBSD: policy.c,v 1.32 2001/06/07 04:46:45 angelos Exp $	*/
+/*	$OpenBSD: policy.c,v 1.33 2001/06/29 04:12:01 ho Exp $	*/
 /*	$EOM: policy.c,v 1.49 2000/10/24 13:33:39 niklas Exp $ */
 
 /*
  * Copyright (c) 1999, 2000, 2001 Angelos D. Keromytis.  All rights reserved.
  * Copyright (c) 1999, 2000, 2001 Niklas Hallqvist.  All rights reserved.
+ * Copyright (c) 2001 Håkan Olsson.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -165,13 +166,14 @@ policy_callback (char *name)
 
   u_int8_t *attr, *value, *id, *idlocal, *idremote;
   size_t id_sz, idlocalsz, idremotesz;
-  struct sockaddr_in *sin;
+  struct sockaddr *sin;
   struct ipsec_exch *ie;
   struct ipsec_sa *is;
   int fmt, i, lifetype = 0;
   in_addr_t net, subnet;
   u_int16_t len, type;
   time_t tt;
+  char *addr;
   static char mytimeofday[15];
 
   /* We use all these as a cache.  */
@@ -626,16 +628,23 @@ policy_callback (char *name)
 	    }
 	}
 
-      /* XXX IPv4-specific.  */
-      policy_sa->transport->vtbl->get_src (policy_sa->transport,
-					   (struct sockaddr **)&sin, &fmt);
-      my_inet_ntop4 (&(sin->sin_addr.s_addr), local_ike_address,
-		     sizeof local_ike_address - 1, 0);
+      policy_sa->transport->vtbl->get_src (policy_sa->transport, &sin, &fmt);
+      if (sockaddr2text (sin, &addr, 1))
+	{
+	  log_error ("policy_callback: sockaddr2text failed");
+	  goto bad;
+	}
+      memcpy (local_ike_address, addr, sizeof local_ike_address);
+      free (addr);
 
-      policy_sa->transport->vtbl->get_dst (policy_sa->transport,
-					   (struct sockaddr **)&sin, &fmt);
-      my_inet_ntop4 (&(sin->sin_addr.s_addr), remote_ike_address,
-		     sizeof remote_ike_address - 1, 0);
+      policy_sa->transport->vtbl->get_dst (policy_sa->transport, &sin, &fmt);
+      if (sockaddr2text (sin, &addr, 1))
+	{
+	  log_error ("policy_callback: sockaddr2text failed");
+	  goto bad;
+	}
+      memcpy (local_ike_address, addr, sizeof remote_ike_address);
+      free (addr);
 
       switch (policy_isakmp_sa->exch_type)
 	{
@@ -1039,15 +1048,31 @@ policy_callback (char *name)
 	}
       else
         {
-	  policy_sa->transport->vtbl->get_dst (policy_sa->transport,
-					       (struct sockaddr **) &sin,
+	  policy_sa->transport->vtbl->get_dst (policy_sa->transport, &sin,
 					       &fmt);
-	  remote_filter_type = "IPv4 address";
-
-	  my_inet_ntop4 (&(sin->sin_addr.s_addr), remote_filter_addr_upper,
-			 sizeof remote_filter_addr_upper - 1, 0);
-	  my_inet_ntop4 (&(sin->sin_addr.s_addr), remote_filter_addr_lower,
-			 sizeof remote_filter_addr_lower - 1, 0);
+	  switch (sin->sa_family)
+	    {
+	    case AF_INET:
+	      remote_filter_type = "IPv4 address";
+	      break;
+	    case AF_INET6:
+	      remote_filter_type = "IPv6 address";
+	      break;
+	    default:
+	      log_print ("policy_callback: unsupported protocol family %d",
+			 sin->sa_family);
+	      goto bad;
+	    }
+	  if (sockaddr2text (sin, &addr, 1))
+	    {
+	      log_error ("policy_callback: sockaddr2text failed");
+	      goto bad;
+	    }
+	  memcpy (remote_filter_addr_upper, addr, 
+		  sizeof remote_filter_addr_upper);
+	  memcpy (remote_filter_addr_lower, addr, 
+		  sizeof remote_filter_addr_lower);
+	  free (addr);
 	  remote_filter = strdup (remote_filter_addr_upper);
 	  if (!remote_filter)
 	    {
@@ -1242,13 +1267,30 @@ policy_callback (char *name)
 	  policy_sa->transport->vtbl->get_src (policy_sa->transport,
 					       (struct sockaddr **)&sin,
 					       &fmt);
+	  switch (sin->sa_family)
+	    {
+	    case AF_INET:
+	      local_filter_type = "IPv4 address";
+	      break;
+	    case AF_INET6:
+	      local_filter_type = "IPv6 address";
+	      break;
+	    default:
+	      log_print ("policy_callback: unsupported protocol family %d",
+			 sin->sa_family);
+	      goto bad;
+	    }
 
-	  local_filter_type = "IPv4 address";
-
-	  my_inet_ntop4 (&(sin->sin_addr.s_addr), local_filter_addr_upper,
-			 sizeof local_filter_addr_upper - 1, 0);
-	  my_inet_ntop4 (&(sin->sin_addr.s_addr), local_filter_addr_lower,
-			 sizeof local_filter_addr_lower - 1, 0);
+	  if (sockaddr2text (sin, &addr, 1))
+	    {
+	      log_error ("policy_callback: sockaddr2text failed");
+	      goto bad;
+	    }
+	  memcpy (local_filter_addr_upper, addr, 
+		  sizeof local_filter_addr_upper);
+	  memcpy (local_filter_addr_lower, addr, 
+		  sizeof local_filter_addr_lower);
+	  free (addr);
 	  local_filter = strdup (local_filter_addr_upper);
 	  if (!local_filter)
 	    {
@@ -1704,7 +1746,7 @@ int
 keynote_cert_obtain (u_int8_t *id, size_t id_len, void *data, u_int8_t **cert,
 		     u_int32_t *certlen)
 {
-  char *dirname, *file;
+  char *dirname, *file, *addr_str;
   struct stat sb;
   int idtype, fd, len;
 
@@ -1732,21 +1774,24 @@ keynote_cert_obtain (u_int8_t *id, size_t id_len, void *data, u_int8_t **cert,
   switch (idtype)
     {
     case IPSEC_ID_IPV4_ADDR:
-      {
-	struct in_addr in;
+    case IPSEC_ID_IPV6_ADDR:
+      util_ntoa (&addr_str, idtype == IPSEC_ID_IPV4_ADDR ? AF_INET : AF_INET6,
+		 id);
+      if (addr_str == 0)
+	return 0;
 
-	file = calloc (len + 15, sizeof (char));
-	if (file == NULL)
-	  {
-	    log_error ("keynote_cert_obtain: failed to allocate %d bytes",
-		       len + 15);
-	    return 0;
-	  }
+      file = calloc (len + strlen (addr_str), sizeof (char));
+      if (file == NULL)
+	{
+	  log_error ("keynote_cert_obtain: failed to allocate %d bytes",
+		     len + strlen (addr_str));
+	  free (addr_str);
+	  return 0;
+	}
 
-	memcpy (&in, id, sizeof in);
-	sprintf (file, "%s/%s/%s", dirname, inet_ntoa (in), CREDENTIAL_FILE);
-	break;
-      }
+      sprintf (file, "%s/%s/%s", dirname, addr_str, CREDENTIAL_FILE);
+      free (addr_str);
+      break;
 
     case IPSEC_ID_FQDN:
     case IPSEC_ID_USER_FQDN:
