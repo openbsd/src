@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypset.c,v 1.8 2003/06/02 04:00:17 deraadt Exp $ */
+/*	$OpenBSD: ypset.c,v 1.9 2003/06/25 21:44:16 deraadt Exp $ */
 /*	$NetBSD: ypset.c,v 1.8 1996/05/13 02:46:33 thorpej Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ypset.c,v 1.8 2003/06/02 04:00:17 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ypset.c,v 1.9 2003/06/25 21:44:16 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -45,7 +45,7 @@ static char rcsid[] = "$OpenBSD: ypset.c,v 1.8 2003/06/02 04:00:17 deraadt Exp $
 #include <rpcsvc/ypclnt.h>
 #include <arpa/inet.h>
 
-extern bool_t xdr_domainname();
+extern bool_t xdr_domainname(XDR *, domainname *);
 
 void
 usage(void)
