@@ -5,9 +5,9 @@ allowed them to do so.
 
 To do the upgrade, and if you are using the miniroot installation, you
 must have the OpenBSD kernel on AmigaDOS and you must transfer the root
-filesystem miniroot22.fs onto the swap partition of the OpenBSD hard disk.
+filesystem miniroot23.fs onto the swap partition of the OpenBSD hard disk.
 If you are using the ramdisk installation, the bsd.rd kernel is enough.
-You must also have at least the "base22" binary distribution set available,
+You must also have at least the "base23" binary distribution set available,
 so that you can upgrade with it, using one of the upgrade methods described
 above.  Finally, you must have sufficient disk space available to install
 the new binaries.  Since the old binaries are being overwritten in place,
@@ -102,7 +102,7 @@ Your system has now been upgraded to OpenBSD 2.3.
 	process.  There are several things that you should do, or might
 	have to do, to insure that the system works properly.
 
-	First, you will probably want to get the etc22.tar.gz distribution,
+	First, you will probably want to get the etc23.tar.gz distribution,
 	extract it, and compare its contents with those in your /etc/
 	directory.  You will probably want to replace some of your
 	system configuration files, or incorporate some of the changes

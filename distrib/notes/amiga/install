@@ -18,11 +18,10 @@ begin again from scratch.
 	recommend using the ramdisk kernel instead.  This way you don't
 	need to setup any root image beforehand.
 
-	You then need to have "ixemul.library" in your LIBS: directory
-	on AmigaDOS.  You also need to have the "loadbsd" program
-	in your command path.  If AmigaDOS complains about loadbsd
-	not being an executable file, be sure that the "Execute"
-	protection bit is set.  If not, set it with the command:
+	You need to have the "loadbsd" program in your command path.
+	If AmigaDOS complains about loadbsd not being an executable file,
+	be sure that the "Execute" protection bit is set.  If not, set it
+	with the command:
 		Protect loadbsd add e
 
 	Next you need to get yourself into OpenBSD by loading the
@@ -321,18 +320,27 @@ begin again from scratch.
 	using, all the device nodes needed by the installed system will
 	be created for you and the file systems will be unmounted.  For
 	this to work properly, it is expected that you have installed
-	at least the "base22" and "etc22" distribution sets.
+	at least the "base23" and "etc23" distribution sets.
 
 
 Congratulations, you have successfully installed OpenBSD 2.3.  When you
 reboot into OpenBSD, you should log in as "root" at the login prompt.
 There is no initial password, but if you're using the machine in a
 networked environment, you should create yourself an account and
-protect it and the "root" account with good passwords.
+protect it and the "root" account with good passwords.  You should have
+got a mail from the install program we recommend you to read.  This you
+can do by running
 
-Some of the files in the OpenBSD 2.3 distribution might need to be
-tailored for your site.  In particular, the /etc/sendmail.cf file will
-almost definitely need to be adjusted, and other files in /etc will
-probably need to be modified, as well.  If you are unfamiliar with
-UN*X-like system administration, it's recommended that you buy a book
-that discusses it.
+	mail
+
+and then just enter "1" to get at the first mail.  You quit mail by
+entering "q".
+
+Some of the files in the OpenBSD 2.3 distribution will need to be
+tailored for your site.  We recommend you run:
+
+	man afterboot
+
+which will tell you about a bunch of the files needing to be reviewed.
+If you are unfamiliar with UN*X-like system administration, it's
+recommended that you buy a book that discusses it.
