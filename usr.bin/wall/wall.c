@@ -1,4 +1,4 @@
-/*	$OpenBSD: wall.c,v 1.10 1998/12/16 01:20:14 deraadt Exp $	*/
+/*	$OpenBSD: wall.c,v 1.11 1999/05/24 22:35:49 d Exp $	*/
 /*	$NetBSD: wall.c,v 1.6 1994/11/17 07:17:58 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)wall.c	8.2 (Berkeley) 11/16/93";
 #endif
-static char rcsid[] = "$OpenBSD: wall.c,v 1.10 1998/12/16 01:20:14 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: wall.c,v 1.11 1999/05/24 22:35:49 d Exp $";
 #endif /* not lint */
 
 /*
@@ -187,6 +187,7 @@ makemsg(fname)
 	int fd;
 	char *p, *whom, hostname[MAXHOSTNAMELEN], lbuf[100], tmpname[64];
 	char tmpbuf[5];
+	char *ttynam;
 
 	snprintf(tmpname, sizeof(tmpname), "%s/wall.XXXXXX", _PATH_TMP);
 	if (!(fd = mkstemp(tmpname)) || !(fp = fdopen(fd, "r+")))
@@ -199,6 +200,8 @@ makemsg(fname)
 		(void)gethostname(hostname, sizeof(hostname));
 		(void)time(&now);
 		lt = localtime(&now);
+		if ((ttynam = ttyname(STDERR_FILENO)) == NULL)
+			ttynam = "(not a tty)";
 
 		/*
 		 * all this stuff is to blank out a square for the message;
@@ -212,7 +215,7 @@ makemsg(fname)
 		    "Broadcast Message from %s@%s", whom, hostname);
 		(void)fprintf(fp, "%-79.79s\007\007\r\n", lbuf);
 		(void)snprintf(lbuf, sizeof lbuf,
-		    "        (%s) at %d:%02d ...", ttyname(2),
+		    "        (%s) at %d:%02d ...", ttynam,
 		    lt->tm_hour, lt->tm_min);
 		(void)fprintf(fp, "%-79.79s\r\n", lbuf);
 	}
