@@ -1,3 +1,5 @@
+/*	$OpenBSD: if_dc.c,v 1.2 1999/12/09 15:29:26 jason Exp $	*/
+
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.

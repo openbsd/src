@@ -1,4 +1,5 @@
-/*	$OpenBSD: if_dcreg.h,v 1.1 1999/12/08 22:35:33 aaron Exp $ */
+/*	$OpenBSD: if_dcreg.h,v 1.2 1999/12/09 15:29:27 jason Exp $ */
+
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
