@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.5 1994/10/26 08:24:22 cgd Exp $	*/
+/*	$NetBSD: asm.h,v 1.6 1996/01/26 08:10:10 phil Exp $	*/
 
 /* 
  * Mach Operating System
@@ -51,14 +51,6 @@
 
 #define FRAME	enter [],0
 #define EMARF	exit []
-
-#if 1 /* DEBUG */
-#define DFRAME	FRAME
-#define DEMARF	EMARF
-#else
-#define DFRAME
-#define DEMARF
-#endif
 
 #define S_ARG0	4(sp)
 #define S_ARG1	8(sp)

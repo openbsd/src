@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopy.s,v 1.5 1995/08/29 22:37:41 phil Exp $	*/
+/*	$NetBSD: bcopy.s,v 1.6 1996/01/26 08:11:46 phil Exp $	*/
 
 /* 
  * Mach Operating System
@@ -33,15 +33,13 @@
  *	Helsinki University of Technology 1992.
  */
 
-#include <machine/asm.h>
-
 	.text
 
 /* ovbcopy (from, to, bcount)  -- does overlapping stuff */
 
 ENTRY(bcopy)
 ENTRY(ovbcopy)
-	DFRAME
+	enter	[],0
 	movd	B_ARG0,r1  /* from */
 	movd	B_ARG1,r2  /* to */
 	cmpd	r2, r1
@@ -66,13 +64,13 @@ ENTRY(ovbcopy)
 	movd	B_ARG2, r0
 	lshd	-2,r0
 	movsd	b	   /* move words backwards */
-	DEMARF
+	exit	[]
 	ret	0
 
 /* bcopy(from, to, bcount) -- non overlapping */
 
 /* ENTRY(bcopy)  -- same as ovbcopy until furthur notice.... */
-	DFRAME
+	enter	[],0
 	movd	B_ARG0,r1  /* from */
 	movd	B_ARG1,r2  /* to */
 common:	movd	B_ARG2,r0  /* bcount */
@@ -81,5 +79,5 @@ common:	movd	B_ARG2,r0  /* bcount */
 	movd	B_ARG2,r0
 	andd	3,r0
 	movsb		   /* move bytes */
-	DEMARF
+	exit	[]
 	ret	0

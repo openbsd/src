@@ -1,4 +1,4 @@
-/*	$NetBSD: bzero.s,v 1.2 1994/10/26 08:24:51 cgd Exp $	*/
+/*	$NetBSD: bzero.s,v 1.3 1996/01/26 08:11:47 phil Exp $	*/
 
 /* 
  * Mach Operating System
@@ -31,19 +31,17 @@
  * 	File: ns532/bzero.s
  *	Author: Tero Kivinen, Helsinki University of Technology 1992.
  *
- *	$Id: bzero.s,v 1.1.1.1 1995/10/18 08:51:21 deraadt Exp $
+ *	$Id: bzero.s,v 1.2 1996/01/31 06:36:15 deraadt Exp $
  */
 
-#include <machine/asm.h>
 
 /*
  * bzero(char * addr, unsigned int length)
  */
 
 	.text
-Entry(blkclr)
 ENTRY(bzero)
-	DFRAME
+	enter	[],0
 	movd	B_ARG0,r1   /* addr */
 	movd	B_ARG1,r2   /* length */
 	movd	r1,r0       /* align addr */
@@ -95,5 +93,5 @@ bytes:	movd	r2,r0       /* length */
 bloop:	movqb	0,0(r1)      /* zero bytes */
 	addqd	1,r1
 	acbb	-1,r0,bloop
-done:	DEMARF
+done:	exit	[]
 	ret	0
