@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcap.h,v 1.11 2002/01/17 23:29:12 ericj Exp $	*/
+/*	$OpenBSD: pcap.h,v 1.12 2004/06/24 18:29:38 naddy Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * @(#) $Header: /home/cvs/src/lib/libpcap/pcap.h,v 1.11 2002/01/17 23:29:12 ericj Exp $ (LBL)
+ * @(#) $Header: /home/cvs/src/lib/libpcap/pcap.h,v 1.12 2004/06/24 18:29:38 naddy Exp $ (LBL)
  */
 
 #ifndef lib_pcap_h
@@ -101,6 +101,7 @@ struct pcap_stat {
 typedef void (*pcap_handler)(u_char *, const struct pcap_pkthdr *,
 			     const u_char *);
 
+__BEGIN_DECLS
 char	*pcap_lookupdev(char *);
 int	pcap_lookupnet(char *, bpf_u_int32 *, bpf_u_int32 *, char *);
 pcap_t	*pcap_open_live(char *, int, int, int, char *);
@@ -138,4 +139,5 @@ void	pcap_dump(u_char *, const struct pcap_pkthdr *, const u_char *);
 /* XXX this guy lives in the bpf tree */
 u_int	bpf_filter(struct bpf_insn *, u_char *, u_int, u_int);
 char	*bpf_image(struct bpf_insn *, int);
+__END_DECLS
 #endif
