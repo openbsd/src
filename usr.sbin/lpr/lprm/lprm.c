@@ -1,4 +1,4 @@
-/*	$OpenBSD: lprm.c,v 1.12 2002/06/08 01:53:43 millert Exp $	*/
+/*	$OpenBSD: lprm.c,v 1.13 2002/12/08 16:50:07 millert Exp $	*/
 /*	$$NetBSD: lprm.c,v 1.9 1999/08/16 03:12:32 simonb Exp $	*/
 
 /*
@@ -45,7 +45,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)lprm.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: lprm.c,v 1.12 2002/06/08 01:53:43 millert Exp $";
+static const char rcsid[] = "$OpenBSD: lprm.c,v 1.13 2002/12/08 16:50:07 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -111,7 +111,7 @@ main(int argc, char **argv)
 		fatal("Your name is too long");
 	strlcpy(luser, p->pw_name, sizeof(luser));
 	person = luser;
-	while ((ch = getopt(argc, argv, "-P:w:")) != -1) {
+	while ((ch = getopt(argc, argv, "P:w:-")) != -1) {
 		switch (ch) {
 		case '-':
 			users = -1;

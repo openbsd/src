@@ -1,4 +1,4 @@
-/*	$OpenBSD: strings.c,v 1.8 2002/09/23 04:10:14 millert Exp $	*/
+/*	$OpenBSD: strings.c,v 1.9 2002/12/08 16:50:07 millert Exp $	*/
 /*	$NetBSD: strings.c,v 1.7 1995/02/15 15:49:19 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)strings.c	8.2 (Berkeley) 1/28/94";
 #endif
-static char rcsid[] = "$OpenBSD: strings.c,v 1.8 2002/09/23 04:10:14 millert Exp $";
+static char rcsid[] = "$OpenBSD: strings.c,v 1.9 2002/12/08 16:50:07 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -103,7 +103,7 @@ main(argc, argv)
 	offset_format = NULL;
 	minlen = -1;
 	maxlen = -1;
-	while ((ch = getopt(argc, argv, "-0123456789an:m:oft:")) != -1)
+	while ((ch = getopt(argc, argv, "0123456789an:m:oft:-")) != -1)
 		switch((char)ch) {
 		case '0': case '1': case '2': case '3': case '4':
 		case '5': case '6': case '7': case '8': case '9':

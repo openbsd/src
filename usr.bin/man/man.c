@@ -1,4 +1,4 @@
-/*	$OpenBSD: man.c,v 1.22 2002/11/23 18:43:29 espie Exp $	*/
+/*	$OpenBSD: man.c,v 1.23 2002/12/08 16:50:07 millert Exp $	*/
 /*	$NetBSD: man.c,v 1.7 1995/09/28 06:05:34 tls Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)man.c	8.17 (Berkeley) 1/31/95";
 #else
-static char rcsid[] = "$OpenBSD: man.c,v 1.22 2002/11/23 18:43:29 espie Exp $";
+static char rcsid[] = "$OpenBSD: man.c,v 1.23 2002/12/08 16:50:07 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -109,7 +109,7 @@ main(int argc, char *argv[])
 	machine = sflag = NULL;
 	f_cat = f_how = 0;
 	conffile = p_add = p_path = NULL;
-	while ((ch = getopt(argc, argv, "-aC:cfhkM:m:P:s:S:w")) != -1)
+	while ((ch = getopt(argc, argv, "aC:cfhkM:m:P:s:S:w-")) != -1)
 		switch (ch) {
 		case 'a':
 			f_all = 1;

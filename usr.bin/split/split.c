@@ -1,4 +1,4 @@
-/*	$OpenBSD: split.c,v 1.6 2002/02/16 21:27:53 millert Exp $	*/
+/*	$OpenBSD: split.c,v 1.7 2002/12/08 16:50:07 millert Exp $	*/
 /*	$NetBSD: split.c,v 1.5 1995/08/31 22:22:05 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)split.c	8.3 (Berkeley) 4/25/94";
 #else
-static char rcsid[] = "$OpenBSD: split.c,v 1.6 2002/02/16 21:27:53 millert Exp $";
+static char rcsid[] = "$OpenBSD: split.c,v 1.7 2002/12/08 16:50:07 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -85,7 +85,7 @@ main(argc, argv)
 	int ch;
 	char *ep, *p;
 
-	while ((ch = getopt(argc, argv, "-0123456789b:l:p:")) != -1)
+	while ((ch = getopt(argc, argv, "0123456789b:l:p:-")) != -1)
 		switch (ch) {
 		case '0': case '1': case '2': case '3': case '4':
 		case '5': case '6': case '7': case '8': case '9':

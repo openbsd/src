@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.9 2002/06/14 04:21:54 art Exp $	*/
+/*	$OpenBSD: main.c,v 1.10 2002/12/08 16:50:07 millert Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1996/05/16 16:00:55 thorpej Exp $	*/
 
 /*-
@@ -122,9 +122,9 @@ main(argc, argv)
 	int ch, do_stdin = 0;
 	char *cp, line[BUFSIZE];
 #ifdef __sparc__
-	char *optstring = "-cf:ivN:";
+	char *optstring = "cf:ivN:-";
 #else
-	char *optstring = "-cf:i";
+	char *optstring = "cf:i-";
 #endif /* __sparc__ */
 
 	while ((ch = getopt(argc, argv, optstring)) != -1)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: xstr.c,v 1.9 2002/02/24 02:25:48 deraadt Exp $	*/
+/*	$OpenBSD: xstr.c,v 1.10 2002/12/08 16:50:07 millert Exp $	*/
 /*	$NetBSD: xstr.c,v 1.5 1994/12/24 16:57:59 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)xstr.c	8.1 (Berkeley) 6/9/93";
 #endif
-static char rcsid[] = "$OpenBSD: xstr.c,v 1.9 2002/02/24 02:25:48 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: xstr.c,v 1.10 2002/12/08 16:50:07 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -103,7 +103,7 @@ main(int argc, char *argv[])
 	int c;
 	int fdesc;
 
-	while ((c = getopt(argc, argv, "-cvl:")) != -1)
+	while ((c = getopt(argc, argv, "cvl:-")) != -1)
 		switch (c) {
 		case '-':
 			readstd++;

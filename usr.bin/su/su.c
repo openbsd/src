@@ -1,4 +1,4 @@
-/*	$OpenBSD: su.c,v 1.49 2002/12/07 22:54:13 millert Exp $	*/
+/*	$OpenBSD: su.c,v 1.50 2002/12/08 16:50:07 millert Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -43,7 +43,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "from: @(#)su.c	5.26 (Berkeley) 7/6/91";
 #else
-static const char rcsid[] = "$OpenBSD: su.c,v 1.49 2002/12/07 22:54:13 millert Exp $";
+static const char rcsid[] = "$OpenBSD: su.c,v 1.50 2002/12/08 16:50:07 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -89,7 +89,7 @@ main(int argc, char **argv)
 	login_cap_t *lc;
 	uid_t ruid;
 
-	while ((ch = getopt(argc, argv, "-a:c:fKLlm")) != -1)
+	while ((ch = getopt(argc, argv, "a:c:fKLlm-")) != -1)
 		switch (ch) {
 		case 'a':
 			if (style)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: shutdown.c,v 1.26 2002/07/03 22:32:33 deraadt Exp $	*/
+/*	$OpenBSD: shutdown.c,v 1.27 2002/12/08 16:50:07 millert Exp $	*/
 /*	$NetBSD: shutdown.c,v 1.9 1995/03/18 15:01:09 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)shutdown.c	8.2 (Berkeley) 2/16/94";
 #else
-static char rcsid[] = "$OpenBSD: shutdown.c,v 1.26 2002/07/03 22:32:33 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: shutdown.c,v 1.27 2002/12/08 16:50:07 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -131,7 +131,7 @@ main(int argc, char *argv[])
 	}
 #endif
 	readstdin = 0;
-	while ((ch = getopt(argc, argv, "-dfhknpr")) != -1)
+	while ((ch = getopt(argc, argv, "dfhknpr-")) != -1)
 		switch (ch) {
 		case '-':
 			readstdin = 1;
