@@ -1,4 +1,4 @@
-/*	$OpenBSD: compat.c,v 1.9 1998/01/02 05:56:33 deraadt Exp $	*/
+/*	$OpenBSD: compat.c,v 1.10 1998/05/12 07:10:01 deraadt Exp $	*/
 /*	$NetBSD: compat.c,v 1.14 1996/11/06 17:59:01 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)compat.c	8.2 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: compat.c,v 1.9 1998/01/02 05:56:33 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: compat.c,v 1.10 1998/05/12 07:10:01 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -135,6 +135,51 @@ CompatInterrupt (signo)
 
 /*-
  *-----------------------------------------------------------------------
+ * shellneed --
+ *	
+ * Results:
+ *	Returns 1 if a specified line must be executed by the shell,
+ *	0 if it can be run via execve, and -1 if the command is a no-op.
+ *
+ * Side Effects:
+ *	None.
+ *	
+ *-----------------------------------------------------------------------
+ */
+static int
+shellneed (cmd)
+	char *cmd;
+{
+	char **av;
+	int ac;
+
+	av = brk_string(cmd, &ac, TRUE);
+	if (strcmp(av[1], "exit") == 0)
+		return (1);
+	if (strcmp(av[1], "umask") == 0) {
+		long umi;
+		char *ep = NULL;
+		mode_t um;
+
+		if (av[2] != NULL) {
+			umi = strtol(av[2], &ep, 8);
+			if (ep == NULL)
+				return (1);
+			um = umi;
+			(void) umask(um);
+			return (-1);
+		}
+		um = umask(0);
+		(void) umask(um);
+		printf("%o\n", um);
+		return (-1);
+	}
+
+	return (0);
+}
+
+/*-
+ *-----------------------------------------------------------------------
  * CompatRunCommand --
  *	Execute the next command for a target. If the command returns an
  *	error, the node's made field is set to ERROR and creation stops.
@@ -166,6 +211,7 @@ CompatRunCommand (cmdp, gnp)
 				 * dynamically allocated */
     Boolean 	  local;    	/* TRUE if command should be executed
 				 * locally */
+    int		  internal;	/* Various values.. */
     char	  *cmd = (char *) cmdp;
     GNode	  *gn = (GNode *) gnp;
 
@@ -253,6 +299,23 @@ CompatRunCommand (cmdp, gnp)
 	 * error.
 	 */
 	static char	*shargv[4] = { "/bin/sh" };
+
+	shargv[1] = (errCheck ? "-ec" : "-c");
+	shargv[2] = cmd;
+	shargv[3] = (char *)NULL;
+	av = shargv;
+	argc = 0;
+    } else if ((internal = shellneed(cmd))) {
+	/*
+	 * This command must be passed by the shell for other reasons..
+	 * or.. possibly not at all.
+	 */
+	static char	*shargv[4] = { "/bin/sh" };
+
+	if (internal == -1) {
+		/* Command does not need to be executed */
+		return (0);
+	}
 
 	shargv[1] = (errCheck ? "-ec" : "-c");
 	shargv[2] = cmd;
