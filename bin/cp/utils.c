@@ -1,4 +1,4 @@
-/*	$OpenBSD: utils.c,v 1.2 1996/06/23 14:19:10 deraadt Exp $	*/
+/*	$OpenBSD: utils.c,v 1.3 1997/01/26 22:04:45 kstailey Exp $	*/
 /*	$NetBSD: utils.c,v 1.4 1995/08/02 07:17:02 jtc Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)utils.c	8.3 (Berkeley) 4/1/94";
 #else
-static char rcsid[] = "$OpenBSD: utils.c,v 1.2 1996/06/23 14:19:10 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: utils.c,v 1.3 1997/01/26 22:04:45 kstailey Exp $";
 #endif
 #endif /* not lint */
 
@@ -200,7 +200,7 @@ copy_link(p, exists)
 		warn("symlink: %s", link);
 		return (1);
 	}
-	return (0);
+	return (pflag ? setfile(NULL, 0) : 0);
 }
 
 int
@@ -245,13 +245,15 @@ setfile(fs, fd)
 	int rval;
 
 	rval = 0;
-	fs->st_mode &= S_ISUID | S_ISGID | S_IRWXU | S_IRWXG | S_IRWXO;
+	if (fs != NULL) {
+		fs->st_mode &= S_ISUID | S_ISGID | S_IRWXU | S_IRWXG | S_IRWXO;
 
-	TIMESPEC_TO_TIMEVAL(&tv[0], &fs->st_atimespec);
-	TIMESPEC_TO_TIMEVAL(&tv[1], &fs->st_mtimespec);
-	if (utimes(to.p_path, tv)) {
-		warn("utimes: %s", to.p_path);
-		rval = 1;
+		TIMESPEC_TO_TIMEVAL(&tv[0], &fs->st_atimespec);
+		TIMESPEC_TO_TIMEVAL(&tv[1], &fs->st_mtimespec);
+		if (utimes(to.p_path, tv)) {
+			warn("utimes: %s", to.p_path);
+			rval = 1;
+		}
 	}
 	/*
 	 * Changing the ownership probably won't succeed, unless we're root
@@ -260,11 +262,13 @@ setfile(fs, fd)
 	 * chown.  If chown fails, lose setuid/setgid bits.
 	 */
 	if (fd ? fchown(fd, fs->st_uid, fs->st_gid) :
-	    chown(to.p_path, fs->st_uid, fs->st_gid)) {
+	    lchown(to.p_path, fs->st_uid, fs->st_gid)) {
 		if (errno != EPERM) {
-			warn("chown: %s", to.p_path);
+			warn("lchown: %s", to.p_path);
 			rval = 1;
 		}
+		if (fs == NULL)
+			return (rval);
 		fs->st_mode &= ~(S_ISUID | S_ISGID);
 	}
 	if (fd ? fchmod(fd, fs->st_mode) : chmod(to.p_path, fs->st_mode)) {
