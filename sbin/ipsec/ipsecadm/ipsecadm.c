@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsecadm.c,v 1.15 1998/05/24 13:29:01 provos Exp $ */
+/* $OpenBSD: ipsecadm.c,v 1.16 1998/06/08 17:42:33 provos Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -173,7 +173,7 @@ main(argc, argv)
 	int auth = 0, enc = 0, ivlen = 0, klen = 0, alen = 0;
 	int proto = IPPROTO_ESP, proto2 = IPPROTO_AH;
 	int dport = -1, sport = -1, tproto = -1;
-	int delete = 0, local = 0;
+	int delete = 0, local = 0, result;
 	int chain = 0; 
 	u_int32_t spi = 0, spi2 = 0;
 	struct in_addr src, dst, dst2, osrc, odst, osmask, odmask;
@@ -374,8 +374,8 @@ main(argc, argv)
 		     argv[0]);
 	     exit(1);
 	} else if (iscmd(mode, FLOW) && 
-		   (((odst.s_addr & odmask.s_addr) == 0) || 
-		    ((osrc.s_addr & osmask.s_addr) == 0))) {
+		   (odst.s_addr == 0 && odmask.s_addr == 0 && 
+		    osrc.s_addr == 0 && osmask.s_addr == 0)) {
 	     fprintf(stderr, "%s: No subnets for flow specified\n", 
 		     argv[0]);
 	     exit(1);
@@ -388,36 +388,36 @@ main(argc, argv)
 	if (isencauth(mode)) {
 	     switch(mode) {
 	     case ESP_NEW:
-		  xf_esp_new(src, dst, spi, enc, auth, ivp, keyp, authp, 
-			     osrc, odst, newpadding);
+		  result = xf_esp_new(src, dst, spi, enc, auth, ivp, keyp,
+				     authp, osrc, odst, newpadding);
 		  break;
 	     case ESP_OLD:
-		  xf_esp_old(src, dst, spi, enc, ivp, keyp, osrc, odst);
+		  result = xf_esp_old(src, dst, spi, enc, ivp, keyp, osrc, odst);
 		  break;
 	     case AH_NEW:
-		  xf_ah_new(src, dst, spi, auth, keyp, osrc, odst);
+		  result = xf_ah_new(src, dst, spi, auth, keyp, osrc, odst);
 		  break;
 	     case AH_OLD:
-		  xf_ah_old(src, dst, spi, auth, keyp, osrc, odst);
+		  result = xf_ah_old(src, dst, spi, auth, keyp, osrc, odst);
 		  break;
 	     }
 	} else {
 	     switch(mode & CMD_MASK) {
 	     case GRP_SPI:
-		  xf_grp(dst, spi, proto, dst2, spi2, proto2);
+		  result = xf_grp(dst, spi, proto, dst2, spi2, proto2);
 		  break;
 	     case DEL_SPI:
-		  xf_delspi(dst, spi, proto, chain);
+		  result = xf_delspi(dst, spi, proto, chain);
 		  break;
 	     case ENC_IP:
-		  xf_ip4(src, dst, spi, osrc, odst);
+		  result = xf_ip4(src, dst, spi, osrc, odst);
 		  break;
 	     case FLOW:
-		  xf_flow(dst, spi, proto, osrc, osmask, odst, odmask, tproto,
-			  sport, dport, delete, local);
+		  result = xf_flow(dst, spi, proto, osrc, osmask, odst, odmask,
+				  tproto, sport, dport, delete, local);
 		  break;
 	     }
 	}
 
-	return 1;
+	exit (result ? 0 : 1);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: xf_flow.c,v 1.3 1998/06/01 10:51:40 provos Exp $	*/
+/*	$OpenBSD: xf_flow.c,v 1.4 1998/06/08 17:42:34 provos Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -69,7 +69,7 @@ xf_flow(struct in_addr dst, u_int32_t spi, int proto,
 {
     struct sockaddr_encap *ddst, *msk, *gw;
     struct rt_msghdr *rtm;
-    int sd, off;
+    int sd, off, error = 0;
 
     sd = socket(PF_ROUTE, SOCK_RAW, AF_UNSPEC);
     if (sd < 0) {
@@ -137,19 +137,19 @@ xf_flow(struct in_addr dst, u_int32_t spi, int proto,
     rtm->rtm_msglen = sizeof(*rtm) + ddst->sen_len + 
 	(delete ? 0 : gw->sen_len) + msk->sen_len;
 	
-    if (write(sd, (caddr_t) buf, rtm->rtm_msglen) < 0) {
+    if (write(sd, (caddr_t) buf, rtm->rtm_msglen) == -1) {
 	perror("write");
-	return 0;
+	error = 1;
     }
 
     /* Additionally create/delete a flow for local packets */
     if (local) {
 	 ddst->sen_ip_src.s_addr = INADDR_ANY;
 	 msk->sen_ip_src.s_addr = INADDR_BROADCAST;
-	 if (write(sd, (caddr_t) buf, rtm->rtm_msglen) < 0) {
+	 if (write(sd, (caddr_t) buf, rtm->rtm_msglen) == -1) {
 	      perror("write");
-	      return 0;
+	      error = 1;
 	 }
     }
-    return 1;
+    return (error ? 0 : 1);
 }
