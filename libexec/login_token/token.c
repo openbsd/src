@@ -1,4 +1,4 @@
-/*	$OpenBSD: token.c,v 1.4 2000/12/20 20:08:23 markus Exp $	*/
+/*	$OpenBSD: token.c,v 1.5 2001/06/28 21:18:45 millert Exp $	*/
 
 /*-
  * Copyright (c) 1995 Migration Associates Corp. All Rights Reserved
@@ -78,7 +78,6 @@ static	TOKEN_CBlock tokennumber;
  * Static function prototypes
  */
 
-static	long	tokenrandomnumber(void);
 static	void	tokenseed(TOKEN_CBlock *);
 static	void	lcase(char *);
 static	void	h2d(char *);
@@ -95,21 +94,6 @@ tokenseed(TOKEN_CBlock *cb)
 {
 	cb->ul[0] = arc4random();
 	cb->ul[1] = arc4random();
-}
-
-/*
- * Generate a random key of eight decimal digits. Actually,
- * with the CRYPTOCard, this could be up to 64 digits.
- * This string must be zero filled
- * and padded to a 64-bit boundary with a trailing null byte.
- * It could also be hex, but decimal is easier for the user
- * to enter into the token.
- */
-
-static long
-tokenrandomnumber(void)
-{
-	return arc4random();
 }
 
 /*
@@ -156,8 +140,8 @@ tokenchallenge(char *user, char *challenge, int size, char *card_type)
 	}
 	if (r != 0 || tr.rim[0] == '\0') {
 		memset(tokennumber.ct, 0, sizeof(tokennumber.ct));
-		snprintf(tokennumber.ct, sizeof(tokennumber.ct), "%8.8lu",
-				tokenrandomnumber());
+		snprintf(tokennumber.ct, sizeof(tokennumber.ct), "%8.8u",
+				arc4random());
 		if (r == 0) {
 			memcpy(tr.rim, tokennumber.ct, 8);
 			tokendb_putrec(user, &tr);
