@@ -1,4 +1,4 @@
-#	$OpenBSD: pnpdevs,v 1.29 1998/11/12 21:42:31 deraadt Exp $
+#	$OpenBSD: pnpdevs,v 1.30 1998/11/12 21:46:36 deraadt Exp $
 
 #
 # NOTE: All `com' devices also need pccom identifiers.
@@ -347,7 +347,9 @@ com	PNPC001	#Compaq 2400/9600 Modem (TBD)
 pccom	PNPC001	#Compaq 2400/9600 Modem (TBD)
 
 #
-# Everything else.
+# Everything else.  The following list is exlusively for devices which 
+# do not have correct PNPxxx IDs set; in which case we must match on the
+# vendor specific ID
 #
 
 # Modems:
