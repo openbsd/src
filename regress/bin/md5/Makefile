@@ -1,51 +1,38 @@
-# $OpenBSD: Makefile,v 1.2 2002/01/01 23:00:51 art Exp $
+# $OpenBSD: Makefile,v 1.3 2002/02/18 10:36:26 art Exp $
 
-REGRESSTARGETS=t1 t2 t3 t4 t5 t6 t7
+REGRESSTARGETS=md5 sha1 rmd160 md5_string_vs_files md5_pipe
+REGRESSTARGETS+=md5_pipe_vs_file md5_multiple_files
 
-t1: t1.out
-	@cmp -s ${.CURDIR}/testsuite.md5 t1.out || \
-	    echo 'MD5 test suite output does not match expected output'
+md5:
+	md5 -x | cmp -s ${.CURDIR}/testsuite.md5 /dev/stdin
 
-t2: t2.out
-	@cmp -s ${.CURDIR}/testsuite.sha1 t2.out || \
-	    echo 'SHA1 test suite output does not match expected output'
+sha1:
+	sha1 -x | cmp -s ${.CURDIR}/testsuite.sha1 /dev/stdin
 
-t3: t3.out
-	@cmp -s ${.CURDIR}/testsuite.rmd160 t3.out || \
-	    echo 'RMD160 test suite output does not match expected output'
+rmd160:
+	rmd160 -x | cmp -s ${.CURDIR}/testsuite.rmd160 /dev/stdin
 
-t4:
-	@if md5 -s "" /dev/null >/dev/null 2>&1; then \
-	    echo "FAILED: md5 should not allow a string on the command line along with a filename"; \
+#	shouldn't allow files on the command line along with '-s'
+md5_string_vs_files:
+	if md5 -s "" /dev/null >/dev/null 2>&1; then \
+		false ; \
 	fi
 
-t5: t5.out
-	@cmp -s ${.CURDIR}/pipe_test.md5 t5.out || \
-	    echo '"echo hi | md5 -p" does not match expected output'
+md5_pipe:
+	echo hi | md5 -p | cmp -s ${.CURDIR}/pipe_test.md5 /dev/stdin
 
-t6:
-	@if echo hi | md5 -p /dev/null >/dev/null 2>&1; then \
-	    echo "FAILED: md5 should not allow a filename on the command line in -p mode"; \
+#	shouldn't allow files on the command line along with '-p'
+md5_pipe_vs_file:
+	if echo hi | md5 -p /dev/null >/dev/null 2>&1; then \
+		false ; \
 	fi
 
-t7:
-	@if [ `md5 /dev/null /dev/null | wc -l` != 2 ]; then \
-	    echo "FAILED: md5 doesn't handle multiple files"; \
+#	should allow multiple files
+md5_multiple_files:
+	if [ `md5 /dev/null /dev/null | wc -l` != 2 ]; then \
+		false ; \
 	fi
 
-t1.out:
-	md5 -x >$@
-
-t2.out:
-	sha1 -x >$@
-
-t3.out:
-	rmd160 -x >$@
-
-t5.out:
-	echo hi | md5 -p >$@
-
-.PHONY: t1 t2 t3 t4 t5 t6 t7 regress
-CLEANFILES+=t1.out t2.out t3.out t5.out
+.PHONY: ${REGRESSTARGETS}
 
 .include <bsd.regress.mk>
