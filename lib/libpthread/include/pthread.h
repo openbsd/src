@@ -30,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
  * SUCH DAMAGE.
  *
- * $OpenBSD: pthread.h,v 1.7 1999/05/26 00:17:41 d Exp $
+ * $OpenBSD: pthread.h,v 1.8 1999/06/15 00:10:37 d Exp $
  *
  */
 #ifndef _PTHREAD_H_
@@ -201,7 +201,6 @@ enum pthread_mutextype {
  * Thread function prototype definitions:
  */
 __BEGIN_DECLS
-int		pthread_atfork(void (*)(void), void (*)(void), void (*)(void));
 int		pthread_attr_destroy __P((pthread_attr_t *));
 int		pthread_attr_getstacksize __P((pthread_attr_t *, size_t *));
 int		pthread_attr_getstackaddr __P((pthread_attr_t *, void **));
