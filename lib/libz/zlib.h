@@ -701,6 +701,11 @@ extern char EXPORT  *gzerror OF((gzFile file, int *errnum));
    to get the exact error code.
 */
 
+/* ===========================================================================
+     Returns true (1) if file is zipped, else returns false (0).              
+*/
+extern int  gz_iszipped OF((gzFile file));
+
                         /* checksum functions */
 
 /*
