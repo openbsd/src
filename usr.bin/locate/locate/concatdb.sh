@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: concatdb.sh,v 1.6 1997/12/13 20:06:12 deraadt Exp $
+# $OpenBSD: concatdb.sh,v 1.7 2002/10/04 17:33:45 millert Exp $
 #
 # Copyright (c) September 1995 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
 # All rights reserved.
@@ -32,7 +32,7 @@
 #
 # Sequence of databases is important.
 #
-# $Id: concatdb.sh,v 1.6 1997/12/13 20:06:12 deraadt Exp $
+# $Id: concatdb.sh,v 1.7 2002/10/04 17:33:45 millert Exp $
 
 # The directory containing locate subprograms
 : ${LIBEXECDIR=/usr/libexec}; export LIBEXECDIR
@@ -49,7 +49,7 @@ fi
 # utilities to built locate database
 : ${bigram=locate.bigram}
 : ${code=locate.code}
-: ${sort=sort}
+: ${sort=sort -H}
 
 
 case $# in 
