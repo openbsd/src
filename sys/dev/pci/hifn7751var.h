@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751var.h,v 1.39 2001/11/05 17:25:58 art Exp $	*/
+/*	$OpenBSD: hifn7751var.h,v 1.40 2001/11/12 18:04:06 jason Exp $	*/
 
 /*
  * Invertex AEON / Hifn 7751 driver
@@ -142,6 +142,8 @@ struct hifn_softc {
 
 	struct hifn_dma *sc_dma;
 	bus_dmamap_t sc_dmamap;
+	bus_dma_segment_t sc_dmasegs[1];
+	int sc_dmansegs;
 	int32_t sc_cid;
 	int sc_maxses;
 	int sc_ramsize;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.107 2001/11/09 03:11:38 deraadt Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.108 2001/11/12 18:04:06 jason Exp $	*/
 
 /*
  * Invertex AEON / Hifn 7751 driver
@@ -191,19 +191,16 @@ hifn_attach(parent, self, aux)
 		goto fail_io1;
 	}
 	if (bus_dmamem_alloc(sc->sc_dmat, sizeof(*sc->sc_dma), PAGE_SIZE, 0,
-	    sc->sc_dmamap->dm_segs, 1, &sc->sc_dmamap->dm_nsegs,
-	    BUS_DMA_NOWAIT)) {
+	    sc->sc_dmasegs, 1, &sc->sc_dmansegs, BUS_DMA_NOWAIT)) {
 		printf(": can't alloc dma buffer\n");
 		bus_dmamap_destroy(sc->sc_dmat, sc->sc_dmamap);
 		goto fail_io1;
 	}
-	if (bus_dmamem_map(sc->sc_dmat, sc->sc_dmamap->dm_segs,
-	    sc->sc_dmamap->dm_nsegs, sizeof(*sc->sc_dma), &kva,
-	    BUS_DMA_NOWAIT)) {
+	if (bus_dmamem_map(sc->sc_dmat, sc->sc_dmasegs, sc->sc_dmansegs,
+	    sizeof(*sc->sc_dma), &kva, BUS_DMA_NOWAIT)) {
 		printf(": can't map dma buffers (%lu bytes)\n",
 		    (u_long)sizeof(*sc->sc_dma));
-		bus_dmamem_free(sc->sc_dmat, sc->sc_dmamap->dm_segs,
-		    sc->sc_dmamap->dm_nsegs);
+		bus_dmamem_free(sc->sc_dmat, sc->sc_dmasegs, sc->sc_dmansegs);
 		bus_dmamap_destroy(sc->sc_dmat, sc->sc_dmamap);
 		goto fail_io1;
 	}
@@ -211,8 +208,7 @@ hifn_attach(parent, self, aux)
 	    sizeof(*sc->sc_dma), NULL, BUS_DMA_NOWAIT)) {
 		printf(": can't load dma map\n");
 		bus_dmamem_unmap(sc->sc_dmat, kva, sizeof(*sc->sc_dma));
-		bus_dmamem_free(sc->sc_dmat, sc->sc_dmamap->dm_segs,
-		    sc->sc_dmamap->dm_nsegs);
+		bus_dmamem_free(sc->sc_dmat, sc->sc_dmasegs, sc->sc_dmansegs);
 		bus_dmamap_destroy(sc->sc_dmat, sc->sc_dmamap);
 		goto fail_io1;
 	}
@@ -327,8 +323,7 @@ fail_intr:
 fail_mem:
 	bus_dmamap_unload(sc->sc_dmat, sc->sc_dmamap);
 	bus_dmamem_unmap(sc->sc_dmat, kva, sizeof(*sc->sc_dma));
-	bus_dmamem_free(sc->sc_dmat, sc->sc_dmamap->dm_segs,
-	    sc->sc_dmamap->dm_nsegs);
+	bus_dmamem_free(sc->sc_dmat, sc->sc_dmasegs, sc->sc_dmansegs);
 	bus_dmamap_destroy(sc->sc_dmat, sc->sc_dmamap);
 
 	/* Turn off DMA polling */
