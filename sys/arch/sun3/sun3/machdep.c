@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.11 1997/01/16 04:04:28 kstailey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.12 1997/01/16 04:22:49 kstailey Exp $	*/
 /*	$NetBSD: machdep.c,v 1.77 1996/10/13 03:47:51 christos Exp $	*/
 
 /*
@@ -815,13 +815,11 @@ reboot2(howto, user_boot_string)
 		reboot_sync();
 		/*
 		 * If we've been adjusting the clock, the todr
-		 * will be out of synch; adjust it now.
-		 *
-		 * XXX - However, if the kernel has been sitting in ddb,
-		 * the time will be way off, so don't set the HW clock!
-		 * XXX - Should do sanity check against HW clock. -gwr
+		 * will be out of synch; adjust it now unless
+		 * the system was sitting in ddb.
 		 */
-		/* resettodr(); */
+		if ((howto & RB_TIMEBAD) == 0) {
+			resettodr();
 	}
 
 	/* Disable interrupts. */
