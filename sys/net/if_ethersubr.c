@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.12 1996/05/10 12:31:08 deraadt Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.13 1996/06/02 16:31:01 niklas Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -103,7 +103,6 @@ ether_ioctl(ifp, arp, cmd, data)
 	caddr_t data;
 {
 	struct ifaddr *ifa = (struct ifaddr *)data;
-	struct ifreq *ifr = (struct ifreq *)data;
 	int	error = 0;
 
 	switch (cmd) {
