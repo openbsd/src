@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.150 2003/02/17 06:58:27 mpech Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.151 2003/02/17 15:11:29 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -75,7 +75,6 @@ int	 pfctl_show_limits(int);
 int	 pfctl_rules(int, char *, int);
 int	 pfctl_debug(int, u_int32_t, int);
 int	 pfctl_clear_rule_counters(int, int);
-int	 pfctl_add_pool(struct pfctl *, struct pf_pool *, sa_family_t);
 int	 pfctl_test_altqsupport(int, int);
 int	 pfctl_show_anchors(int, int);
 char	*pfctl_lookup_option(char *, char **);
