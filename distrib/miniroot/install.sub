@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.151 2000/04/27 16:11:05 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.152 2000/05/07 17:08:26 millert Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -99,10 +99,16 @@ fi
 # get a reponse with default[s]
 getresp() {
 	local _shell_aware=0
+	local _no_shell=0
 
 	# -s option means exit after a shell (caller is shell-aware)
 	if [ "$1" = "-s" ]; then
 		_shell_aware=1
+		shift
+	fi
+	# -n option means don't try to run shell commands
+	if [ "$1" = "-n" ]; then
+		_no_shell=1
 		shift
 	fi
 
@@ -110,18 +116,22 @@ getresp() {
 	valid="false"
 	while [ "X$valid" = "Xfalse" ]; do
 		read resp
-		case "$resp" in
-			"")	resp=$1
-				;;
-			!)	echo "Type 'exit' to return to install."
-				sh
-				test $_shell_aware -eq 0 && continue
-				;;
-			!*)
-				eval ${resp#?}
-				test $_shell_aware -eq 0 && continue
-				;;
-		esac
+		if [ ${_no_shell} -eq 1 ]; then
+			test -z "$resp" && resp=$1
+		else
+			case "$resp" in
+				"")	resp=$1
+					;;
+				!)	echo "Type 'exit' to return to install."
+					sh
+					test $_shell_aware -eq 0 && continue
+					;;
+				!*)
+					eval ${resp#?}
+					test $_shell_aware -eq 0 && continue
+					;;
+			esac
+		fi
 		if [ $# -gt 1 ]; then
 			for i in $@; do
 				if [ "X$resp" = "X$i" ]; then
@@ -252,7 +262,7 @@ isnumeric() {
 
 get_ifdevs() {
 	# return available network devices
-	/sbin/ifconfig -a | egrep -v '^([[:space:]]|(lo|enc|ppp|sl|tun|bridge)[[:digit:]])' | cutword -t: 1
+	/sbin/ifconfig -a | egrep -v '^([[:space:]]|(lo|enc|gre|ppp|sl|tun|bridge)[[:digit:]])' | cutword -t: 1
 }
 
 dir_has_sets() {
@@ -978,7 +988,7 @@ if [ X"$_reuse" = X ]; then
 			while [ "X${resp}" = X"" ]; do
 				echo -n "Password (will not echo): "
 				stty -echo
-				getresp "${_ftp_server_password}"
+				getresp -n "${_ftp_server_password}"
 				stty echo
 				echo
 				_ftp_server_password=$resp
