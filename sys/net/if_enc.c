@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_enc.c,v 1.2 1997/02/24 13:33:58 niklas Exp $	*/
+/*	$OpenBSD: if_enc.c,v 1.3 1997/02/27 04:05:45 angelos Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -104,7 +104,9 @@ encattach(int nenc)
 		enc->enc_if.if_hdrlen = 0;
 		enc->enc_if.if_addrlen = 0;
 		if_attach(&enc->enc_if);
+#if NBPFILTER > 0
 		bpfattach(&enc->enc_if.if_bpf, &enc->enc_if, DLT_NULL, sizeof(u_int));
+#endif
 	}
 }
 
@@ -126,6 +128,7 @@ register struct rtentry *rt;
 	if ((m->m_flags & M_PKTHDR) == 0)
 		panic("encoutput no HDR");
 	ifp->if_lastchange = time;
+#if NBPFILTER > 0
 	if (ifp->if_bpf) {
 		/*
 		 * We need to prepend the address family as
@@ -143,6 +146,7 @@ register struct rtentry *rt;
 		
 		bpf_mtap(ifp->if_bpf, &m0);
 	}
+#endif
 	m->m_pkthdr.rcvif = ifp;
 
 	if (rt && rt->rt_flags & (RTF_REJECT|RTF_BLACKHOLE)) {
