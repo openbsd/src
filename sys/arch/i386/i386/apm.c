@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.40 2000/07/26 03:39:45 mickey Exp $	*/
+/*	$OpenBSD: apm.c,v 1.41 2000/10/18 16:53:01 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1998-2000 Michael Shalayeff. All rights reserved.
@@ -162,7 +162,7 @@ int apmcall __P((u_int, u_int, struct apmregs *));
 void apm_power_print __P((struct apm_softc *, struct apmregs *));
 void apm_handle_event __P((struct apm_softc *, struct apmregs *));
 void apm_set_ver __P((struct apm_softc *));
-void apm_periodic_check __P((struct apm_softc *));
+int apm_periodic_check __P((struct apm_softc *));
 void apm_thread_create __P((void *v));
 void apm_thread __P((void *));
 void apm_disconnect __P((struct apm_softc *));
@@ -233,6 +233,7 @@ apm_perror(str, regs)
 	printf("apm0: APM %s: %s (%d)\n", str,
 	    apm_err_translate(APM_ERR_CODE(regs)),
 	    APM_ERR_CODE(regs));
+	delay(1000000);
 
 	apmerrors++;
 }
@@ -504,11 +505,12 @@ apm_handle_event(sc, regs)
 	}
 }
 
-void
+int
 apm_periodic_check(sc)
 	struct apm_softc *sc;
 {
 	struct apmregs regs;
+	int ret = 0;
 
 	if (apm_op_inprog)
 		apm_set_powstate(APM_DEV_ALLDEVS, APM_LASTREQ_INPROG);
@@ -518,7 +520,10 @@ apm_periodic_check(sc)
 
 	/* i think some bioses actually combine the error codes */
 	if (!(APM_ERR_CODE(&regs) & APM_ERR_NOEVENTS))
-		apm_perror("get event", &regs);
+		apm_perror("periodic get event", &regs);
+
+	if (apm_error || APM_ERR_CODE(&regs) == APM_ERR_NOTCONN)
+		ret = -1;
 
 	if (apm_suspends /*|| (apm_battlow && apm_userstandbys)*/) {
 		apm_op_inprog = 0;
@@ -532,6 +537,7 @@ apm_periodic_check(sc)
 
 	if (apm_resumes)
 		apm_resumes--;
+	return (ret);
 }
 
 void
@@ -702,7 +708,7 @@ apm_disconnect(sc)
 	if (apmcall(APM_DISCONNECT, APM_DEV_APM_BIOS, &regs))
 		apm_perror("disconnect failed", &regs);
 	else
-		printf("APM disconnected\n");
+		printf("%s: disconnected\n", sc->sc_dev.dv_xname);
 }
 
 int
@@ -852,9 +858,11 @@ apmattach(parent, self, aux)
 
 		lockinit(&sc->sc_lock, PWAIT, "apmlk", 0, 0);
 
-		apm_periodic_check(sc);
-
-		kthread_create_deferred(apm_thread_create, sc);
+		if (apm_periodic_check(sc) == -1) {
+			apm_disconnect(sc);
+			apm_dobusy = apm_doidle = 0;
+		} else
+			kthread_create_deferred(apm_thread_create, sc);
 	} else {
 		dynamic_gdt[GAPM32CODE_SEL] = dynamic_gdt[GNULL_SEL];
 		dynamic_gdt[GAPM16CODE_SEL] = dynamic_gdt[GNULL_SEL];
@@ -883,7 +891,7 @@ apm_thread(v)
 
 	for (;;) {
 		APM_LOCK(sc);
-		apm_periodic_check(sc);
+		(void) apm_periodic_check(sc);
 		APM_UNLOCK(sc);
 		tsleep(&lbolt, PWAIT, "apmev", 0);
 	}
