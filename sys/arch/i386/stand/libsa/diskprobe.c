@@ -1,4 +1,4 @@
-/*	$OpenBSD: diskprobe.c,v 1.21 2003/08/11 06:23:09 deraadt Exp $	*/
+/*	$OpenBSD: diskprobe.c,v 1.22 2003/09/19 05:25:12 fgsch Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -98,9 +98,10 @@ hardprobe(void)
 	int i;
 	u_int bsdunit, type;
 	u_int scsi = 0, ide = 0;
+	const char *dc = (const char *)((0x40 << 4) + 0x75);
 
 	/* Hard disks */
-	for(i = 0x80; i < 0x88; i++) {
+	for (i = 0x80; i < (0x80 + *dc); i++) {
 		dip = alloc(sizeof(struct diskinfo));
 		bzero(dip, sizeof(*dip));
 
