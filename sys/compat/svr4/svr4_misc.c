@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_misc.c,v 1.19 1997/12/12 06:22:51 deraadt Exp $	 */
+/*	$OpenBSD: svr4_misc.c,v 1.20 1998/03/06 21:58:09 niklas Exp $	 */
 /*	$NetBSD: svr4_misc.c,v 1.42 1996/12/06 03:22:34 christos Exp $	 */
 
 /*
@@ -37,6 +37,8 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/exec.h>
+#include <sys/exec_olf.h>
 #include <sys/namei.h>
 #include <sys/dirent.h>
 #include <sys/proc.h>
@@ -1364,6 +1366,7 @@ svr4_sys_setegid(p, v, retval)
 		extern struct emul emul_linux_elf;
 
 		p->p_emul = &emul_linux_elf;
+		p->p_os = OOS_LINUX;
 #ifdef KTRACE
 		if (KTRPOINT(p, KTR_EMUL))
 			ktremul(p->p_tracep, p->p_emul->e_name);
@@ -1371,7 +1374,20 @@ svr4_sys_setegid(p, v, retval)
 		return (0);
 	}
 #else
-	(void) uap;
+	(void)uap;
 #endif
-        return sys_setegid(p, v, retval);
+        return (sys_setegid(p, v, retval));
+}
+
+int
+svr4_sys_rdebug(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+#ifdef SVR4_COMPAT_NCR
+	return (ENXIO);
+#else
+	return (p->p_os == OOS_NCR ? ENXIO : sys_nosys(p, v, retval));
+#endif
 }

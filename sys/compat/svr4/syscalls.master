@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.22 1998/02/10 13:41:55 niklas Exp $
+	$OpenBSD: syscalls.master,v 1.23 1998/03/06 21:58:10 niklas Exp $
 ;	$NetBSD: syscalls.master,v 1.17 1996/02/10 17:12:51 christos Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
@@ -142,11 +142,7 @@
 73	OBSOL		rumount
 74	OBSOL		rfstart
 75	OBSOL		sigret
-#ifdef COMPAT_SVR4_NCR
-76	STD		{ int svr4_ncr_sys_rdebug(void); }
-#else
-76	OBSOL		rdebug
-#endif
+76	STD		{ int svr4_sys_rdebug(void); }
 77	OBSOL		rfstop
 78	UNIMPL		rfsys
 79	NOARGS		{ int sys_rmdir(char *path); }
