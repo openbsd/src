@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.59 2002/04/18 06:02:18 deraadt Exp $	*/
+/*	$OpenBSD: parse.y,v 1.60 2002/04/23 14:32:23 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -172,13 +172,13 @@ typedef struct {
 %token	RETURNRST RETURNICMP RETURNICMP6 PROTO INET INET6 ALL ANY ICMPTYPE
 %token  ICMP6TYPE CODE KEEP MODULATE STATE PORT RDR NAT BINAT ARROW NODF
 %token	MINTTL IPV6ADDR ERROR ALLOWOPTS FASTROUTE ROUTETO DUPTO NO LABEL
-%token	NOROUTE
+%token	NOROUTE FRAGMENT
 %token	<v.string> STRING
 %token	<v.number> NUMBER
 %token	<v.i>	PORTUNARY PORTBINARY
 %type	<v.interface>	interface if_list if_item_not if_item
 %type	<v.number>	port icmptype icmp6type minttl
-%type	<v.i>	no dir log quick af keep nodf allowopts
+%type	<v.i>	no dir log quick af keep nodf allowopts fragment
 %type	<v.b>	action flag flags blockspec
 %type	<v.range>	dport rport
 %type	<v.proto>	proto proto_list proto_item
@@ -213,7 +213,7 @@ varset		: STRING PORTUNARY STRING
 		}
 		;
 
-pfrule		: action dir log quick interface route af proto fromto flags icmpspec keep nodf minttl allowopts label
+pfrule		: action dir log quick interface route af proto fromto flags icmpspec keep fragment nodf minttl allowopts label
 		{
 			struct pf_rule r;
 
@@ -240,10 +240,12 @@ pfrule		: action dir log quick interface route af proto fromto flags icmpspec ke
 			r.keep_state = $12;
 
 			if ($13)
-				r.rule_flag |= PFRULE_NODF;
+				r.rule_flag |= PFRULE_FRAGMENT;
 			if ($14)
-				r.min_ttl = $14;
-			r.allow_opts = $15;
+				r.rule_flag |= PFRULE_NODF;
+			if ($15)
+				r.min_ttl = $15;
+			r.allow_opts = $16;
 
 			if ($6.rt) {
 				r.rt = $6.rt;
@@ -266,14 +268,14 @@ pfrule		: action dir log quick interface route af proto fromto flags icmpspec ke
 				}
 			}
 
-			if ($16) {
-				if (strlen($16) >= PF_RULE_LABEL_SIZE) {
+			if ($17) {
+				if (strlen($17) >= PF_RULE_LABEL_SIZE) {
 					yyerror("rule label too long (max "
 					    "%d chars)", PF_RULE_LABEL_SIZE-1);
 					YYERROR;
 				}
-				strlcpy(r.label, $16, sizeof(r.label));
-				free($16);
+				strlcpy(r.label, $17, sizeof(r.label));
+				free($17);
 			}
 
 			expand_rule(&r, $5, $8, $9.src.host, $9.src.port,
@@ -756,6 +758,9 @@ keep		: /* empty */			{ $$ = 0; }
 		| MODULATE STATE		{ $$ = PF_STATE_MODULATE; }
 		;
 
+fragment	: /* empty */			{ $$ = 0; }
+		| FRAGMENT			{ $$ = 1; }
+
 minttl		: /* empty */			{ $$ = 0; }
 		| MINTTL NUMBER			{
 			if ($2 < 0 || $2 > 255) {
@@ -1126,6 +1131,10 @@ rule_consistent(struct pf_rule *r)
 			yyerror("icmp-type/code does not apply to scrub");
 			problems++;
 		}
+		if (r->rule_flag & PFRULE_FRAGMENT) {
+			yyerror("fragment flag does not apply to scrub");
+			problems++;
+		}
 	} else {
 		if (r->rule_flag & PFRULE_NODF) {
 			yyerror("nodf only applies to scrub");
@@ -1168,6 +1177,11 @@ rule_consistent(struct pf_rule *r)
 	}
 	if (r->allow_opts && r->action != PF_PASS) {
 		yyerror("allow-opts can only be specified for pass rules");
+		problems++;
+	}
+	if (r->rule_flag & PFRULE_FRAGMENT && (r->src.port_op ||
+	    r->dst.port_op || r->flagset || r->type || r->code)) {
+		yyerror("fragments can be filtered only on IP header fields");
 		problems++;
 	}
 	return (-problems);
@@ -1368,6 +1382,7 @@ lookup(char *s)
 		{ "dup-to",	DUPTO},
 		{ "fastroute",	FASTROUTE},
 		{ "flags",	FLAGS},
+		{ "fragment",	FRAGMENT},
 		{ "from",	FROM},
 		{ "icmp-type",	ICMPTYPE},
 		{ "in",		IN},

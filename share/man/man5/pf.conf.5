@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.38 2002/04/17 17:25:35 dhartmei Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.39 2002/04/23 14:32:23 dhartmei Exp $
 .\"
 .\" Copyright (c) 2001, Daniel Hartmeier
 .\" All rights reserved.
@@ -53,8 +53,8 @@ rule           = action ( "in" | "out" )
                  hosts
                  [ flags ] ( [ icmp-type ] | [ ipv6-icmp-type ] )
                  [ "keep state" ] [ "modulate state" ]
-                 [ "no-df" ] [ "min-ttl" number ] [ "allow-opts" ]
-                 [ "label" string ] .
+                 [ "fragment" ] [ "no-df" ] [ "min-ttl" number ]
+                 [ "allow-opts" ] [ "label" string ] .
 
 action         = "pass" | "block" [ return ] | "scrub" .
 return         = "return-rst" |
@@ -477,6 +477,67 @@ Normalization occurs before filtering, scrub rules and pass/block
 rules are evaluated independantly.
 Hence, their relative position in the rule set is not relevant,
 and packets can't be blocked before normalization.
+.Sh FRAGMENT HANDLING
+IP datagrams (packets) can have a size of up to 65335 bytes.
+Most network links, however, have a maximum transmission unit (MTU)
+that is significantly lower (1500 bytes is common).
+When an IP packet's size exceeds the MTU of the interface it has to
+be sent out through, the packet is fragmented.
+In general, a fragment only contains an IP header, which is sufficient
+for the receiver to reassemble the complete packet.
+The headers of subprotocols like TCP, UDP or ICMP are only data payload
+on IP level, and such headers are not part of all fragments of a packet.
+It's even possible that no fragment contains a complete subprotocol
+header, because that header is split among fragments.
+.Pp
+There are two options for handling fragments in the packet filter:
+.Pp
+Using scrub rules, fragments can be reassembled by normalization.
+In this case, fragments are cached until they form a complete
+packet, and only complete packets are passed on to the filter.
+The advantage is that filter rules have to deal only with complete
+packets, and can ignore fragments.
+The drawback of caching fragments is the additional memory cost.
+.Pp
+The alternative is to filter individual fragments with filter rules.
+If no scrub rule applies to a fragment, it is passed to the filter.
+Filter rules with matching IP header parameters decide whether the
+fragment is passed or blocked, in the same way as complete packets
+are filtered.
+Without reassembly, fragments can only be filtered based on IP header
+fields (source/destination address, protocol), since subprotocol header
+fields are not available (TCP/UDP port numbers, ICMP code/type).
+The
+.Pa fragment
+option can be used to restrict filter rules to apply only to
+fragments but not complete packets.
+Filter rules without the
+.Pa fragment
+option still apply to fragments, if they only specify IP header fields.
+For instance, the rule 'pass in proto tcp from any to any port 80' never
+applies to a fragment, even if the fragment is part of a TCP packet with
+destination port 80, because without reassembly, this information is not
+available for each fragment.
+This also means that fragments can't create new or match existing
+state table entries, which makes stateful filtering and address
+translations (NAT, redirection) for fragments impossible.
+.Pp
+It's also possible to reassemble only certain fragments by specifying
+source or destination addresses or protocols as parameters in scrub
+rules.
+.Pp
+In most cases, the benefits of reassembly outweigh the additional
+memory cost, and it's recommended to use scrub rules to reassemble
+all fragments.
+.Pp
+The memory allocated for fragment caching can be limited using
+.Xr pfctl 8 .
+Once this limit is reached, fragments that would have to be cached
+are dropped until other entries time out. The timeout value can
+also be adjusted.
+.Pp
+Currently, only IPv4 fragments are supported and IPv6 fragments
+are blocked unconditionally.
 .Sh EXAMPLES
 .Bd -literal
 # The external interface is kue0 (157.161.48.183, the only routable address)

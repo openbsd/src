@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.66 2002/03/27 18:16:21 mickey Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.67 2002/04/23 14:32:22 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -245,6 +245,7 @@ struct pf_rule {
 
 #define	PFRULE_RETURNRST	0x01
 #define	PFRULE_NODF		0x02
+#define	PFRULE_FRAGMENT		0x04
 
 struct pf_state_host {
 	struct pf_addr	addr;

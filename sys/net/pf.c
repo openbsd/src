@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.202 2002/04/20 10:13:57 fgsch Exp $ */
+/*	$OpenBSD: pf.c,v 1.203 2002/04/23 14:32:22 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -244,6 +244,8 @@ int			 pf_test_udp(struct pf_rule **, int, struct ifnet *,
 int			 pf_test_icmp(struct pf_rule **, int, struct ifnet *,
 			    struct mbuf *, int, int, void *, struct pf_pdesc *);
 int			 pf_test_other(struct pf_rule **, int, struct ifnet *,
+			    struct mbuf *, void *, struct pf_pdesc *);
+int			 pf_test_fragment(struct pf_rule **, int, struct ifnet *,
 			    struct mbuf *, void *, struct pf_pdesc *);
 int			 pf_test_state_tcp(struct pf_state **, int,
 			    struct ifnet *, struct mbuf *, int, int,
@@ -3005,6 +3007,8 @@ pf_test_tcp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 		else if (r->dst.port_op && !pf_match_port(r->dst.port_op,
 		    r->dst.port[0], r->dst.port[1], th->th_dport))
 			r = r->skip[PF_SKIP_DST_PORT];
+		else if (r->rule_flag & PFRULE_FRAGMENT)
+			r = TAILQ_NEXT(r, entries);
 		else if ((r->flagset & th->th_flags) != r->flags)
 			r = TAILQ_NEXT(r, entries);
 		else {
@@ -3239,6 +3243,8 @@ pf_test_udp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 		else if (r->dst.port_op && !pf_match_port(r->dst.port_op,
 		    r->dst.port[0], r->dst.port[1], uh->uh_dport))
 			r = r->skip[PF_SKIP_DST_PORT];
+		else if (r->rule_flag & PFRULE_FRAGMENT)
+			r = TAILQ_NEXT(r, entries);
 		else {
 			*rm = r;
 			if ((*rm)->quick)
@@ -3513,6 +3519,8 @@ pf_test_icmp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 			r = TAILQ_NEXT(r, entries);
 		else if (r->code && r->code != icmpcode + 1)
 			r = TAILQ_NEXT(r, entries);
+		else if (r->rule_flag & PFRULE_FRAGMENT)
+			r = TAILQ_NEXT(r, entries);
 		else {
 			*rm = r;
 			if ((*rm)->quick)
@@ -3716,6 +3724,8 @@ pf_test_other(struct pf_rule **rm, int direction, struct ifnet *ifp,
 		    !PF_AZERO(&r->dst.mask, af) && !PF_MATCHA(r->dst.not,
 		    &r->dst.addr, &r->dst.mask, pd->dst, af))
 			r = r->skip[PF_SKIP_DST_ADDR];
+		else if (r->rule_flag & PFRULE_FRAGMENT)
+			r = TAILQ_NEXT(r, entries);
 		else {
 			*rm = r;
 			if ((*rm)->quick)
@@ -3788,6 +3798,67 @@ pf_test_other(struct pf_rule **rm, int direction, struct ifnet *ifp,
 		s->packets = 1;
 		s->bytes = pd->tot_len;
 		pf_insert_state(s);
+	}
+
+	return (PF_PASS);
+}
+
+int
+pf_test_fragment(struct pf_rule **rm, int direction, struct ifnet *ifp,
+    struct mbuf *m, void *h, struct pf_pdesc *pd)
+{
+	struct pf_rule *r;
+	u_int8_t af = pd->af;
+
+	*rm = NULL;
+
+	r = TAILQ_FIRST(pf_rules_active);
+	while (r != NULL) {
+		r->evaluations++;
+		if (r->action == PF_SCRUB)
+			r = r->skip[PF_SKIP_ACTION];
+		else if (r->ifp != NULL && r->ifp != ifp)
+			r = r->skip[PF_SKIP_IFP];
+		else if (r->direction != direction)
+			r = r->skip[PF_SKIP_DIR];
+		else if (r->af && r->af != af)
+			r = r->skip[PF_SKIP_AF];
+		else if (r->proto && r->proto != pd->proto)
+			r = r->skip[PF_SKIP_PROTO];
+		else if (r->src.noroute && pf_routable(pd->src, af))
+			r = TAILQ_NEXT(r, entries);
+		else if (!r->src.noroute &&
+		    !PF_AZERO(&r->src.mask, af) && !PF_MATCHA(r->src.not,
+		    &r->src.addr, &r->src.mask, pd->src, af))
+			r = r->skip[PF_SKIP_SRC_ADDR];
+		else if (r->dst.noroute && pf_routable(pd->dst, af))
+			r = TAILQ_NEXT(r, entries);
+		else if (!r->src.noroute &&
+		    !PF_AZERO(&r->dst.mask, af) && !PF_MATCHA(r->dst.not,
+		    &r->dst.addr, &r->dst.mask, pd->dst, af))
+			r = r->skip[PF_SKIP_DST_ADDR];
+		else if (r->src.port_op || r->dst.port_op ||
+		    r->flagset || r->type || r->code)
+			r = TAILQ_NEXT(r, entries);
+		else {
+			*rm = r;
+			if ((*rm)->quick)
+				break;
+			r = TAILQ_NEXT(r, entries);
+		}
+	}
+
+	if (*rm != NULL) {
+		u_short reason;
+
+		(*rm)->packets++;
+		(*rm)->bytes += pd->tot_len;
+		REASON_SET(&reason, PFRES_MATCH);
+		if ((*rm)->log)
+			PFLOG_PACKET(ifp, h, m, af, direction, reason, *rm);
+
+		if ((*rm)->action != PF_PASS)
+			return (PF_DROP);
 	}
 
 	return (PF_PASS);
@@ -5086,6 +5157,12 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0)
 	pd.proto = h->ip_p;
 	pd.af = AF_INET;
 	pd.tot_len = h->ip_len;
+
+	/* handle fragments that didn't get reassembled by normalization */
+	if (h->ip_off & (IP_MF | IP_OFFMASK)) {
+		action = pf_test_fragment(&r, dir, ifp, m, h, &pd);
+		goto done;
+	}
 
 	switch (h->ip_p) {
 

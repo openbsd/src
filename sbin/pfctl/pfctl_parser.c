@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.64 2002/04/15 20:39:58 dhartmei Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.65 2002/04/23 14:32:23 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -777,6 +777,8 @@ print_rule(struct pf_rule *r)
 		printf("keep state ");
 	else if (r->keep_state == PF_STATE_MODULATE)
 		printf("modulate state ");
+	if (r->rule_flag & PFRULE_FRAGMENT)
+		printf("fragment ");
 	if (r->rule_flag & PFRULE_NODF)
 		printf("no-df ");
 	if (r->min_ttl)
