@@ -1,4 +1,4 @@
-/*	$OpenBSD: passwd.c,v 1.6 1997/02/13 05:41:38 deraadt Exp $	*/
+/*	$OpenBSD: passwd.c,v 1.7 1997/02/15 09:47:54 provos Exp $	*/
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
  *	The Regents of the University of California.  All rights reserved.
@@ -287,7 +287,7 @@ pw_scan(bp, pw, flags)
 		warnx("root uid should be 0");
 		return (0);
 	}
-	if (*p2 != ':') {
+	if (*p2 != '\0') {
 		warnx("illegal uid field");
 		return (0);
 	}
@@ -303,7 +303,7 @@ pw_scan(bp, pw, flags)
 	if (!(p = strsep(&bp, ":")))			/* gid */
 		goto fmt;
 	id = strtoul(p, &p2, 10);
-	if (*p2 != ':') {
+	if (*p2 != '\0') {
 		warnx("illegal gid field");
 		return (0);
 	}
