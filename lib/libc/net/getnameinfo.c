@@ -1,4 +1,4 @@
-/*	$OpenBSD: getnameinfo.c,v 1.11 2000/03/13 02:18:36 itojun Exp $	*/
+/*	$OpenBSD: getnameinfo.c,v 1.12 2000/03/13 02:22:12 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -105,7 +105,7 @@ getnameinfo(sa, salen, host, hostlen, serv, servlen, flags)
 	struct hostent *hp;
 	u_short port;
 	int family, i;
-	char *addr, *p;
+	char *addr;
 	u_int32_t v4a;
 	int h_error;
 	char numserv[512];
@@ -268,8 +268,11 @@ getnameinfo(sa, salen, host, hostlen, serv, servlen, flags)
 		if (hp) {
 #if 0
 			if (flags & NI_NOFQDN) {
+				char *p;
+
 				p = strchr(hp->h_name, '.');
-				if (p) *p = '\0';
+				if (p)
+					*p = '\0';
 			}
 #endif
 			if (strlen(hp->h_name) > hostlen) {
