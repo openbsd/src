@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: SVR4_MAKEDEV,v 1.1 1995/07/02 06:29:46 christos Exp $
+#     $NetBSD: SVR4_MAKEDEV,v 1.2 1996/02/10 18:14:11 christos Exp $
 #
 # Copyright (c) 1995 Christos Zoulas
 # All rights reserved.
@@ -47,7 +47,7 @@ unit=`expr $i : '[a-z][a-z]*\([0-9][0-9]*\)'`
 case $i in
 
 all)
-	sh SVR4_MAKEDEV tcp udp wabi ticotsord
+      sh $0 tcp udp wabi ticotsord
 	;;
 tcp)
 	mknod $i		c 43 35
