@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.81 2004/03/02 12:51:12 markus Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.82 2004/04/12 19:05:38 tedu Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -176,7 +176,7 @@ tcp_usrreq(so, req, m, nam, control)
 	/*
 	 * When a TCP is attached to a socket, then there will be
 	 * a (struct inpcb) pointed at by the socket, and this
-	 * structure will point at a subsidary (struct tcpcb).
+	 * structure will point at a subsidiary (struct tcpcb).
 	 */
 	if (inp == 0 && req != PRU_ATTACH) {
 		splx(s);
@@ -296,12 +296,6 @@ tcp_usrreq(so, req, m, nam, control)
 			if ((sin->sin_addr.s_addr == INADDR_ANY) ||
 			    IN_MULTICAST(sin->sin_addr.s_addr) ||
 			    in_broadcast(sin->sin_addr, NULL)) {
-				error = EINVAL;
-				break;
-			}
-
-			/* Trying to connect to some broadcast address */
-			if (in_broadcast(sin->sin_addr, NULL)) {
 				error = EINVAL;
 				break;
 			}
