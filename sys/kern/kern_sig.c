@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.53 2002/01/23 00:39:47 art Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.54 2002/01/31 02:12:18 weingart Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -770,6 +770,10 @@ psignal(p, signum)
 
 	KNOTE(&p->p_klist, NOTE_SIGNAL | signum);
 
+	/* Ignore signal if we are exiting */
+	if (p->p_flag & P_WEXIT)
+		return;
+
 	mask = sigmask(signum);
 	prop = sigprop[signum];
 
@@ -1229,6 +1233,9 @@ sigexit(p, signum)
 	register struct proc *p;
 	int signum;
 {
+
+	/* Mark process as going away */
+	p->p_flag |= P_WEXIT;
 
 	p->p_acflag |= AXSIG;
 	if (sigprop[signum] & SA_CORE) {

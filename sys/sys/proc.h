@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.54 2002/01/25 15:00:26 art Exp $	*/
+/*	$OpenBSD: proc.h,v 1.55 2002/01/31 02:12:18 weingart Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -233,6 +233,7 @@ struct	proc {
 #define	P_TIMEOUT	0x000400	/* Timing out during sleep. */
 #define	P_TRACED	0x000800	/* Debugged process being traced. */
 #define	P_WAITED	0x001000	/* Debugging proc has waited for child. */
+/* XXX - Should be merged with INEXEC */
 #define	P_WEXIT		0x002000	/* Working on exiting. */
 #define	P_EXEC		0x004000	/* Process called exec. */
 
