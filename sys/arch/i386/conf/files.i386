@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.36 1997/10/27 14:42:01 niklas Exp $
+#	$OpenBSD: files.i386,v 1.37 1997/11/06 02:17:30 mickey Exp $
 #	$NetBSD: files.i386,v 1.73 1996/05/07 00:58:36 thorpej Exp $
 #
 # new style config file for i386 architecture
@@ -32,7 +32,7 @@ file	arch/i386/i386/random.s
 file	arch/i386/i386/sys_machdep.c
 file	arch/i386/i386/trap.c
 file	arch/i386/i386/vm_machdep.c
-file	arch/i386/i386/dkcsum.c
+file	arch/i386/i386/dkcsum.c		bios
 file	lib/libz/adler32.c		!ppp_deflate
 file	dev/cons.c
 file	dev/cninit.c

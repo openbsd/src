@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.27 1997/10/28 10:52:17 niklas Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.28 1997/11/06 02:17:29 mickey Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -335,11 +335,14 @@ main(framep)
 	schedcpu(NULL);
 
 #ifdef i386
+#include "bios.h"
+#if NBIOS
 	/* XXX This is only a transient solution */
 	{
 		extern dkcsumattach __P((void));
 		dkcsumattach();
 	}
+#endif
 #endif
 
 	/* Mount the root file system. */
