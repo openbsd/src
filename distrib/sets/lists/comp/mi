@@ -848,7 +848,7 @@
 ./usr/include/netinet/ip_esp.h
 ./usr/include/netinet/ip_ether.h
 ./usr/include/netinet/ip_fil.h
-./usr/include/netinet/ip_fil_compat.h
+./usr/include/netinet/ip_compat.h
 ./usr/include/netinet/ip_frag.h
 ./usr/include/netinet/ip_gre.h
 ./usr/include/netinet/ip_icmp.h

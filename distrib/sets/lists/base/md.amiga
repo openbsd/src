@@ -1245,7 +1245,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/netinet/ip_esp.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/netinet/ip_ether.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/netinet/ip_fil.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/netinet/ip_fil_compat.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/netinet/ip_compat.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/netinet/ip_frag.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/netinet/ip_gre.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/netinet/ip_icmp.ph

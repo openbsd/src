@@ -1,3 +1,5 @@
+./usr/libexec/sm.bin
+./usr/sbin/ipfs
 ./altroot
 ./bin
 ./bin/[
