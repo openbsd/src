@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.35 2001/03/14 14:41:04 art Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.36 2001/03/30 10:30:26 art Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*-
@@ -108,7 +108,18 @@ static __inline struct buf *bio_doread __P((struct vnode *, daddr_t, int,
 					    struct ucred *, int));
 int count_lock_queue __P((void));
 
-/* We are currently only using *cleanbufs, but count all num*bufs */
+/*
+ * We keep a few counters to monitor the utilization of the buffer cache
+ *
+ *  numdirtybufs - number of dirty (B_DELWRI) buffers. unused.
+ *  lodirtybufs  - ? unused.
+ *  hidirtybufs  - ? unused.
+ *  numfreebufs  - number of buffers on BQ_LRU and BQ_AGE. unused.
+ *  numcleanbufs - number of clean (!B_DELWRI) buffers on BQ_LRU and BQ_AGE.
+ *    Used to track the need to speedup the syncer and for the syncer reserve.
+ *  numemptybufs - number of buffers on BQ_EMPTY. unused.
+ *  mincleanbufs - the lowest number of clean buffers this far.
+ */
 int numdirtybufs;	/* number of all dirty buffers */
 int lodirtybufs, hidirtybufs;
 int numfreebufs;	/* number of buffers on LRU+AGE free lists */
@@ -602,18 +613,16 @@ already_queued:
 	/* Allow disk interrupts. */
 	splx(s);
 
-	/* Wake up syncer process waiting for any buffer to become free. */
+	/* Wake up syncer process waiting for buffers */
 	if (syncer_needbuffer) {
+		wakeup(&syncer_needbuffer);
 		syncer_needbuffer = 0;
-		wakeup_one(&syncer_needbuffer);
 	}
-	if (numcleanbufs < locleanbufs + min(locleanbufs, 4))
-		speedup_syncer();
 
 	/* Wake up any processes waiting for any buffer to become free. */
 	if (needbuffer && (numcleanbufs > locleanbufs)) {
-		needbuffer = 0;
-		wakeup(&needbuffer);
+		needbuffer--;
+		wakeup_one(&needbuffer);
 	}
 
 	/* Wake up any proceeses waiting for _this_ buffer to become free. */
@@ -714,6 +723,7 @@ start:
 		splx(s);
 	}
 	allocbuf(bp, size);
+
 	return (bp);
 }
 
@@ -839,11 +849,15 @@ getnewbuf(slpflag, slptimeo)
 
 start:
 	s = splbio();
+	/*
+	 * If we're getting low on buffers kick the syncer to work harder.
+	 */
+	if (numcleanbufs < locleanbufs + min(locleanbufs, 4))
+		speedup_syncer();
+
 	if ((numcleanbufs <= locleanbufs) && curproc != syncerproc) {
 		/* wait for a free buffer of any kind */
-		if (needbuffer == 0)
-			speedup_syncer();
-		needbuffer = 1;
+		needbuffer++;
 		tsleep(&needbuffer, slpflag|(PRIBIO+1), "getnewbuf", slptimeo);
 		splx(s);
 		return (0);
