@@ -47,14 +47,16 @@ CFLAGS+=-DDO_BAD144 -I. -I${.CURDIR} -I$S -I${.CURDIR}/../..
 OBJS=	start.o table.o boot.o asm.o bios.o io.o disk.o sys.o version.o \
 	serial.o
 
-boot:	${OBJS}
-	${LD} -Bstatic -e start -N -T 0 -o boot ${OBJS}
-	cp boot boot.sym
-	@if [ `size boot | awk 'BEGIN {getline} {print $$1+$$2}'` -gt 7680 ];\
+boot.sym:	${OBJS}
+	${LD} -Bstatic -e start -N -T 0 -o boot.sym ${OBJS}
+
+boot: boot.sym
+	@if [ `size boot.sym | awk 'BEGIN {getline} {print $$1+$$2}'` -gt 7680 ];\
 	then \
 		echo BOOT BLOCKS ARE TOO BIG;\
-		fail;\
+		exit 1; \
 	fi
+	@cp boot.sym boot
 	@strip boot
 	@sh ${.CURDIR}/rmaouthdr boot boot.tmp
 	@mv -f boot.tmp boot
