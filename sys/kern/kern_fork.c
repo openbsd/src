@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.37 2001/02/13 21:00:48 art Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.38 2001/03/23 18:42:06 art Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -56,6 +56,7 @@
 #include <sys/ktrace.h>
 #include <sys/sched.h>
 #include <dev/rndvar.h>
+#include <sys/pool.h>
 
 #include <sys/syscallargs.h>
 
@@ -195,7 +196,7 @@ fork1(p1, flags, stack, stacksize, retval)
 		return ENOMEM;
 
 	/* Allocate new proc. */
-	MALLOC(newproc, struct proc *, sizeof(struct proc), M_PROC, M_WAITOK);
+	newproc = pool_get(&proc_pool, PR_WAITOK);
 
 	lastpid++;
 	if (randompid)

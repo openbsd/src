@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_proc.c,v 1.7 2000/06/05 11:02:50 art Exp $	*/
+/*	$OpenBSD: kern_proc.c,v 1.8 2001/03/23 18:42:06 art Exp $	*/
 /*	$NetBSD: kern_proc.c,v 1.14 1996/02/09 18:59:41 christos Exp $	*/
 
 /*
@@ -52,6 +52,7 @@
 #include <sys/ioctl.h>
 #include <sys/tty.h>
 #include <sys/signalvar.h>
+#include <sys/pool.h>
 
 /*
  * Structure associated with user cacheing.
@@ -74,6 +75,8 @@ struct pgrphashhead *pgrphashtbl;
 u_long pgrphash;
 struct proclist allproc;
 struct proclist zombproc;
+
+struct pool proc_pool;
 
 /*
  * Locking of this proclist is special; it's accessed in a
@@ -106,6 +109,9 @@ procinit()
 	pidhashtbl = hashinit(maxproc / 4, M_PROC, M_WAITOK, &pidhash);
 	pgrphashtbl = hashinit(maxproc / 4, M_PROC, M_WAITOK, &pgrphash);
 	uihashtbl = hashinit(maxproc / 16, M_PROC, M_WAITOK, &uihash);
+
+	pool_init(&proc_pool, sizeof(struct proc), 0, 0, 0, "procpl",
+		0, pool_page_alloc_nointr, pool_page_free_nointr, M_PROC);
 }
 
 /*

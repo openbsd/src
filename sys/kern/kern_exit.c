@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.28 2000/11/16 20:02:16 provos Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.29 2001/03/23 18:42:06 art Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -64,6 +64,7 @@
 #include <sys/signalvar.h>
 #include <sys/sched.h>
 #include <sys/ktrace.h>
+#include <sys/pool.h>
 #ifdef SYSVSHM
 #include <sys/shm.h>
 #endif
@@ -547,7 +548,7 @@ proc_zap(p)
 	if (p->p_textvp)
 		vrele(p->p_textvp);
 
-	FREE(p, M_PROC);
+	pool_put(&proc_pool, p);
 	nprocs--;
 }
 
