@@ -8,7 +8,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: session.c,v 1.7 2000/04/28 08:10:20 markus Exp $");
+RCSID("$OpenBSD: session.c,v 1.8 2000/04/29 16:06:08 markus Exp $");
 
 #include "xmalloc.h"
 #include "ssh.h"
@@ -1401,7 +1401,8 @@ session_exit_message(Session *s, int status)
 	 * Note that we must not call 'chan_read_failed', since there could
 	 * be some more data waiting in the pipe.
 	 */
-	chan_write_failed(c);
+	if (c->ostate != CHAN_OUTPUT_CLOSED)
+		chan_write_failed(c);
 	s->chanid = -1;
 }
 
