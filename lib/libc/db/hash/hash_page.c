@@ -1,4 +1,4 @@
-/*	$OpenBSD: hash_page.c,v 1.8 2002/01/31 03:51:21 millert Exp $	*/
+/*	$OpenBSD: hash_page.c,v 1.9 2002/02/01 18:17:36 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)hash_page.c	8.7 (Berkeley) 8/16/94";
 #else
-static char rcsid[] = "$OpenBSD: hash_page.c,v 1.8 2002/01/31 03:51:21 millert Exp $";
+static char rcsid[] = "$OpenBSD: hash_page.c,v 1.9 2002/02/01 18:17:36 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -718,6 +718,7 @@ overflow_page(hashp)
 	if (offset > SPLITMASK) {
 		if (++splitnum >= NCACHED) {
 			(void)write(STDERR_FILENO, OVMSG, sizeof(OVMSG) - 1);
+			errno = EFBIG;
 			return (0);
 		}
 		hashp->OVFL_POINT = splitnum;
@@ -731,6 +732,7 @@ overflow_page(hashp)
 		free_page++;
 		if (free_page >= NCACHED) {
 			(void)write(STDERR_FILENO, OVMSG, sizeof(OVMSG) - 1);
+			errno = EFBIG;
 			return (0);
 		}
 		/*
@@ -756,6 +758,7 @@ overflow_page(hashp)
 			if (++splitnum >= NCACHED) {
 				(void)write(STDERR_FILENO, OVMSG,
 				    sizeof(OVMSG) - 1);
+				errno = EFBIG;
 				return (0);
 			}
 			hashp->OVFL_POINT = splitnum;
@@ -799,8 +802,11 @@ found:
 	/* Calculate the split number for this page */
 	for (i = 0; (i < splitnum) && (bit > hashp->SPARES[i]); i++);
 	offset = (i ? bit - hashp->SPARES[i - 1] : bit);
-	if (offset >= SPLITMASK)
+	if (offset >= SPLITMASK) {
+		(void)write(STDERR_FILENO, OVMSG, sizeof(OVMSG) - 1);
+		errno = EFBIG;
 		return (0);	/* Out of overflow pages */
+	}
 	addr = OADDR_OF(i, offset);
 #ifdef DEBUG2
 	(void)fprintf(stderr, "OVERFLOW_PAGE: ADDR: %d BIT: %d PAGE %d\n",
