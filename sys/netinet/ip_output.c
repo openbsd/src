@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.20 1997/07/31 00:40:21 deraadt Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.21 1997/08/04 01:12:06 angelos Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -164,20 +164,28 @@ ip_output(m0, va_alist)
 		dst->sen_ip_dst = ip->ip_dst;
 		dst->sen_proto = ip->ip_p;
 
-		if (m->m_len < hlen + 2 * sizeof(u_int16_t)) {
-		    if ((m = m_pullup(m, hlen + 2 * sizeof(u_int16_t))) == 0)
-			goto bad;
-		    ip = mtod(m, struct ip *);
-		}
-
 		switch (ip->ip_p) {
 		case IPPROTO_UDP:
+			if (m->m_len < hlen + 2 * sizeof(u_int16_t)) {
+		    	    	if ((m = m_pullup(m, hlen + 2 *
+						  sizeof(u_int16_t))) == 0)
+					return ENOBUFS;
+		    		ip = mtod(m, struct ip *);
+			}
+
 			udp = (struct udphdr *) (mtod(m, u_char *) + hlen);
 			dst->sen_sport = ntohs(udp->uh_sport);
 			dst->sen_dport = ntohs(udp->uh_dport);
 			break;
 
 		case IPPROTO_TCP:
+			if (m->m_len < hlen + 2 * sizeof(u_int16_t)) {
+		    	    	if ((m = m_pullup(m, hlen + 2 *
+						  sizeof(u_int16_t))) == 0)
+					return ENOBUFS;
+		    		ip = mtod(m, struct ip *);
+			}
+
 			tcp = (struct tcphdr *) (mtod(m, u_char *) + hlen);
 			dst->sen_sport = ntohs(tcp->th_sport);
 			dst->sen_dport = ntohs(tcp->th_dport);
