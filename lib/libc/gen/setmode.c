@@ -1,4 +1,4 @@
-/*	$OpenBSD: setmode.c,v 1.8 1998/08/14 21:39:33 deraadt Exp $	*/
+/*	$OpenBSD: setmode.c,v 1.9 1998/11/18 23:28:34 deraadt Exp $	*/
 /*	$NetBSD: setmode.c,v 1.15 1997/02/07 22:21:06 christos Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)setmode.c	8.2 (Berkeley) 3/25/94";
 #else
-static char rcsid[] = "$OpenBSD: setmode.c,v 1.8 1998/08/14 21:39:33 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: setmode.c,v 1.9 1998/11/18 23:28:34 deraadt Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -188,6 +188,7 @@ setmode(p)
 	sigset_t sigset, sigoset;
 	mode_t mask;
 	int equalopdone, permXbits, setlen;
+	long perml;
 
 	if (!*p)
 		return (NULL);
@@ -216,11 +217,12 @@ setmode(p)
 	 * or illegal bits.
 	 */
 	if (isdigit(*p)) {
-		perm = (mode_t)strtol(p, NULL, 8);
-		if (perm & ~(STANDARD_BITS|S_ISTXT)) {
+		perml = strtol(p, NULL, 8);
+		if (perml < 0 || (perml & ~(STANDARD_BITS|S_ISTXT))) {
 			free(saveset);
 			return (NULL);
 		}
+		perm = (mode_t)perml;
 		while (*++p)
 			if (*p < '0' || *p > '7') {
 				free(saveset);
