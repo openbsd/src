@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.h,v 1.23 1999/04/11 19:41:36 niklas Exp $	*/
+/*	$OpenBSD: in.h,v 1.24 1999/10/28 01:55:12 angelos Exp $	*/
 /*	$NetBSD: in.h,v 1.20 1996/02/13 23:41:47 christos Exp $	*/
 
 /*
@@ -69,6 +69,7 @@
 #define IPPROTO_NONE		59		/* No next header */
 #define IPPROTO_DSTOPTS		60		/* Destination options header. */
 #define	IPPROTO_EON		80		/* ISO cnlp */
+#define IPPROTO_ETHERIP		97		/* Ethernet in IPv4 */
 #define	IPPROTO_ENCAP		98		/* encapsulation header */
 #define	IPPROTO_RAW		255		/* raw IP packet */
 
