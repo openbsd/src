@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti_sgc.c,v 1.15 2003/08/11 07:35:39 mickey Exp $	*/
+/*	$OpenBSD: sti_sgc.c,v 1.16 2003/08/21 18:03:18 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000-2003 Michael Shalayeff
@@ -59,6 +59,11 @@
 #define	STI_ROMSIZE	0x8000
 #define	STI_ID_FDDI	0x280b31af	/* Medusa FDDI ROM id */
 
+/* gecko optional graphics */
+#define	STI_GOPT1_REV	0x17
+#define	STI_GOPT2_REV	0x70
+
+/* internal EG */
 #define	STI_INEG_REV	0x60
 #define	STI_INEG_PROM	0xf0011000
 
@@ -78,18 +83,27 @@ struct cfattach sti_phantom_ca = {
  * On some machines it may not be part of the HPA space.
  */
 paddr_t
-sti_sgc_getrom(struct confargs *ca)
+sti_sgc_getrom(int unit, struct confargs *ca)
 {
-	paddr_t rom;
+	paddr_t rom = PAGE0->pd_resv2[1];
 
-	if (PAGE0->pd_resv2[1] < HPPA_IOBEGIN)
+	if (unit) {
 		if (ca->ca_type.iodc_sv_model == HPPA_FIO_GSGC &&
+		    (ca->ca_type.iodc_revision == STI_GOPT1_REV ||
+		     ca->ca_type.iodc_revision == STI_GOPT2_REV))
+			/* these two share the onboard's prom */ ;
+		else
+			rom = 0;
+	}
+
+	if (rom < HPPA_IOBEGIN) {
+		if (unit == 0 &&
+		    ca->ca_type.iodc_sv_model == HPPA_FIO_GSGC &&
 		    ca->ca_type.iodc_revision == STI_INEG_REV)
 			rom = STI_INEG_PROM;
 		else
 			rom = ca->ca_hpa;
-	else
-		rom = PAGE0->pd_resv2[1];
+	}
 
 	return (rom);
 }
@@ -99,6 +113,7 @@ sti_sgc_probe(parent, match, aux)
 	struct device *parent;
 	void *match, *aux;
 {
+	struct cfdata *cf = match;
 	struct confargs *ca = aux;
 	bus_space_handle_t romh;
 	paddr_t rom;
@@ -117,7 +132,7 @@ sti_sgc_probe(parent, match, aux)
 	if (ca->ca_type.iodc_sv_model != HPPA_FIO_SGC)
 		return 0;
 
-	rom = sti_sgc_getrom(ca);
+	rom = sti_sgc_getrom(cf->cf_unit, ca);
 #ifdef STIDEBUG
 	printf ("sti: hpa=%x, rom=%x\n", ca->ca_hpa, rom);
 #endif
@@ -187,7 +202,7 @@ sti_sgc_attach(parent, self, aux)
 	paddr_t rom;
 	int rv;
 
-	rom = sti_sgc_getrom(ca);
+	rom = sti_sgc_getrom(sc->sc_dev.dv_cfdata->cf_unit, ca);
 
 #ifdef STIDEBUG
 	printf("sti: hpa=%x, rom=%x\n", ca->ca_hpa, rom);
