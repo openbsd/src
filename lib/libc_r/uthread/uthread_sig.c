@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_sig.c,v 1.15 2002/11/02 23:52:46 millert Exp $	*/
+/*	$OpenBSD: uthread_sig.c,v 1.16 2002/11/08 23:18:25 todd Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -111,15 +111,15 @@ _thread_sig_handler(int sig, siginfo_t *info, struct sigcontext * scp)
 		_sched_ticks++;
 
 		/* only process signal when scheduler isn't running */
-		if (_thread_kern_in_sched == 0)
-			if (curthread->sig_defer_count > 0)
+		if (_thread_kern_in_sched == 0) {
+			if (curthread->sig_defer_count > 0) {
 				/*
 				 * The scheduler interrupt has come when
 				 * the currently running thread has deferred
 				 * thread signals.
 				 */
 				curthread->yield_on_sig_undefer = 1;
-			else {
+			} else {
 				/* Schedule the next thread. */
 				_thread_kern_sched(scp);
 
@@ -137,6 +137,7 @@ _thread_sig_handler(int sig, siginfo_t *info, struct sigcontext * scp)
 				 */
 				return;
 			}
+		}
 	} else if ((_queue_signals != 0) ||
 		   ((_thread_kern_in_sched == 0) &&
 		    (curthread->sig_defer_count > 0))) {
@@ -318,6 +319,7 @@ _thread_signal(pthread_t pthread, int sig)
 	case PS_SUSPENDED:
 	case PS_SPINBLOCK:
 	case PS_DEADLOCK:
+	case PS_STATE_MAX: /* only here to quell a compiler warning */
 		/* Nothing to do here. */
 		break;
 
