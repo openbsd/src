@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.19 2002/06/11 15:33:27 matthieu Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.20 2002/06/11 22:53:09 jason Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -65,7 +65,7 @@ struct vgafb_softc {
 	int sc_node, sc_ofhandle;
 	bus_space_tag_t sc_mem_t;
 	bus_space_tag_t sc_io_t;
-	pcitag_t pcitag;
+	pcitag_t sc_pcitag;
 	bus_space_handle_t sc_mem_h, sc_io_h, sc_mmio_h;
 	bus_addr_t sc_io_addr, sc_mem_addr, sc_mmio_addr, sc_rom_addr;
 	bus_size_t sc_io_size, sc_mem_size, sc_mmio_size, sc_rom_size;
