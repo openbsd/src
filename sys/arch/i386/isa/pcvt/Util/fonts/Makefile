@@ -1,5 +1,6 @@
 FONTS	= 	vt220l.814 vt220h.814 vt220l.808 vt220h.808 \
-		vt220l.816 vt220h.816 vt220l.810 vt220h.810
+		vt220l.816 vt220h.816 vt220l.810 vt220h.810 \
+		koi8-8x8 koi8-8x14 koi8-8x16
 
 LIBMODE	=	644
 LIBOWN	=	bin
@@ -51,4 +52,13 @@ vt220l.810: ${.CURDIR}/vt220l.810.uu
 	uudecode ${.CURDIR}/$@.uu
 
 vt220h.810: ${.CURDIR}/vt220h.810.uu
+	uudecode ${.CURDIR}/$@.uu
+
+koi8-8x8: ${.CURDIR}/koi8-8x8.uu
+	uudecode ${.CURDIR}/$@.uu
+
+koi8-8x14: ${.CURDIR}/koi8-8x14.uu
+	uudecode ${.CURDIR}/$@.uu
+
+koi8-8x16: ${.CURDIR}/koi8-8x16.uu
 	uudecode ${.CURDIR}/$@.uu
