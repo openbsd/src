@@ -1,4 +1,4 @@
-# 	$OpenBSD: files.cats,v 1.2 2004/02/01 14:53:23 miod Exp $
+# 	$OpenBSD: files.cats,v 1.3 2004/02/23 05:07:54 drahn Exp $
 #	$NetBSD: files.cats,v 1.27 2003/10/21 08:15:40 skrll Exp $
 #
 # CATS-specific configuration info
@@ -60,8 +60,6 @@ file	arch/cats/cats/cats_machdep.c
 # library functions
 
 file	arch/arm/arm/disksubr.c			disk
-#file	arch/arm/arm/disksubr_acorn.c		disk
-file	arch/arm/arm/disksubr_mbr.c		disk
 
 # ISA Plug 'n Play autoconfiguration glue.
 file	arch/arm/footbridge/isa/isapnp_machdep.c	isapnp
