@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hz.9,v 1.1 1999/09/01 20:52:11 espie Exp $
+.\"	$OpenBSD: hz.9,v 1.2 1999/09/10 05:00:48 tholo Exp $
 .\"
 .\" Copyright (c) 1999 Marc Espie
 .\" All rights reserved.
@@ -48,7 +48,7 @@
 .br
 .Va extern int stathz;
 .br
-.Va extern int stathz;
+.Va extern int profhz;
 .Sh DESCRIPTION
 The system is driven by
 .Xr hardclock 9
@@ -58,15 +58,23 @@ frequency, and are used to keep track of real time.
 .Pp
 On systems where another independent clock is available, it is set at
 .Va stathz
-frequency, and used to gather timing statistics.  Otherwise, 
+frequency, and used to gather timing statistics.  Ideally, it would be
+better to drive
+.Va stathz
+with a slightly randomized clock, that is still a fixed number on average,
+as this would prevent malicious processes from working around the
+scheduler.  If a separate clock is not available,
 .Va stathz 
 is set to
 .Va hz .
 .Pp
-If profiling is enabled, the second clock may be run at a higher rate
+If profiling is enabled, the clock normally used to drive
+.Va stathz
+may be run at a higher rate
 .Va profhz ,
 which must be a multiple of
 .Va stathz .
+This will give higher resolution profiling information.
 .Pp
 Normally, 
 .Xr hardclock 9
