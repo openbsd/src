@@ -1,4 +1,4 @@
-/*	$OpenBSD: am7990.c,v 1.15 1999/02/28 05:02:16 jason Exp $	*/
+/*	$OpenBSD: am7990.c,v 1.16 1999/12/08 06:08:04 itojun Exp $	*/
 /*	$NetBSD: am7990.c,v 1.22 1996/10/13 01:37:19 christos Exp $	*/
 
 /*-
@@ -416,10 +416,15 @@ am7990_get(sc, boff, totlen)
 			}
 			len = MLEN;
 		}
-		if (top && totlen >= MINCLSIZE) {
+		if (totlen >= MINCLSIZE) {
 			MCLGET(m, M_DONTWAIT);
-			if (m->m_flags & M_EXT)
+			if (m->m_flags & M_EXT) {
 				len = MCLBYTES;
+				if (!top) {
+					m->m_data += pad;
+					len -= pad;
+				}
+			}
 		}
 		m->m_len = len = min(totlen, len);
 		(*sc->sc_copyfrombuf)(sc, mtod(m, caddr_t), boff, len);

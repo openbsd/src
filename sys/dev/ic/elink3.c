@@ -1,4 +1,4 @@
-/*	$OpenBSD: elink3.c,v 1.35 1999/08/13 19:00:37 deraadt Exp $	*/
+/*	$OpenBSD: elink3.c,v 1.36 1999/12/08 06:08:04 itojun Exp $	*/
 /*	$NetBSD: elink3.c,v 1.32 1997/05/14 00:22:00 thorpej Exp $	*/
 
 /*
@@ -1250,8 +1250,14 @@ epget(sc, totlen)
 	m->m_pkthdr.rcvif = ifp;
 	m->m_pkthdr.len = totlen;
 	pad = ALIGN(sizeof(struct ether_header)) - sizeof(struct ether_header);
+	len = MHLEN;
+	if (totlen >= MINCLSIZE) {
+		MCLGET(m, M_DONTWAIT);
+		if (m->m_flags & M_EXT)
+			len = MCLBYTES;
+	}
 	m->m_data += pad;
-	len = MHLEN - pad;
+	len -= pad;
 	top = 0;
 	mp = &top;
 
