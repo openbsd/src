@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.5 2003/12/24 23:48:06 henning Exp $ */
+/*	$OpenBSD: config.c,v 1.6 2003/12/25 17:27:36 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -37,7 +37,7 @@ int
 merge_config(struct bgpd_config *xconf, struct bgpd_config *conf)
 {
 	enum reconf_action	 reconf = RECONF_NONE;
-	struct peer		*p;
+	struct peer		*p, *next;
 
 	/* merge conf (new) into xconf (old)  */
 	if (!conf->as) {
@@ -86,6 +86,11 @@ merge_config(struct bgpd_config *xconf, struct bgpd_config *conf)
 		p->conf.ebgp = (p->conf.remote_as != xconf->as);
 		if (!p->conf.id)
 			p->conf.id = get_id(p);
+	}
+
+	for (p = xconf->peers; p != NULL; p = next) {
+		next = p->next;
+		free(p);
 	}
 
 	/* merge peers done by session egine except for initial config */
