@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.19 1998/09/02 03:02:29 jason Exp $
+#	$OpenBSD: files.pci,v 1.20 1998/09/21 05:24:54 jason Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config.new file and device description for machine-independent PCI code.
@@ -94,3 +94,8 @@ file	dev/pci/brooktree848.c		bktr	needs-count
 device	xl: ether, ifnet
 attach	xl at pci
 file	dev/pci/if_xl.c			xl
+
+# SMC EPIC, 83c170
+device	tx: ether, ifnet
+attach	tx at pci
+file	dev/pci/if_tx.c			tx
