@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.159 2002/05/12 13:51:38 espie Exp $
+#	$OpenBSD: Makefile,v 1.160 2002/05/13 07:22:42 espie Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	US/Pacific
@@ -340,15 +340,12 @@ MAKEDEVARCHS+= sparc64
 MAKEDEVARCHS+= sun3
 #MAKEDEVARCHS+= vax
 
-all:
-#	make M=${MACHINE} m4
-
 clean:
 	rm -f etc.${MACHINE}/MAKEDEV
 
 cleandir:
 	cd ${.CURDIR}; for m in ${MAKEDEVARCHS}; do \
-	    make MACHINE=$$m clean; done
+	    ${MAKE} MACHINE=$$m clean; done
 
 m4: etc.${M}/MAKEDEV
 
@@ -361,6 +358,10 @@ etc.${M}/MAKEDEV: MAKEDEV.sub MAKEDEV.mi etc.${M}/MAKEDEV.md
 allarchs: MAKEDEV.sub MAKEDEV.mi
 	cd ${.CURDIR}; for m in ${MAKEDEVARCHS}; do \
 	    ${MAKE} M=$$m m4; done
+
+distrib:
+	cd ${.CURDIR}/../distrib && \
+	    ${MAKE} cleandir && ${MAKE} && exec ${SUDO} ${MAKE} install
 
 .PHONY: distribution-etc-root-var distribution distrib-dirs \
 	release snapshot allarchs snap_pre snap_tar snap_md m4

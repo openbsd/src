@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.4 2000/06/19 01:49:30 miod Exp $
+#	$OpenBSD: Makefile.inc,v 1.5 2002/05/13 07:22:43 espie Exp $
 #	etc.sun3/Makefile.inc -- sun3-specific etc Makefile targets
 
 .ifdef DESTDIR
@@ -9,13 +9,11 @@ snap_md: bsd bootblocks distrib
 bsd:
 	cd ${.CURDIR}/../sys/arch/sun3/conf && config GENERIC
 	cd ${.CURDIR}/../sys/arch/sun3/compile/GENERIC && \
-	    make clean && make depend && make
+	    ${MAKE} clean && ${MAKE} depend && exec ${MAKE}
 
 bootblocks:
 	cp ${DESTDIR}/usr/mdec/*boot* ${DESTDIR}/snapshot
 
-distrib:
-	cd ${.CURDIR}/../distrib && make cleandir && \
-	    make && make install
+.PHONY: bsd bootblocks
 
 .endif	# DESTDIR check

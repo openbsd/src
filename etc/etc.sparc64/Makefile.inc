@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.1 2001/09/11 15:51:50 jason Exp $
+#	$OpenBSD: Makefile.inc,v 1.2 2002/05/13 07:22:43 espie Exp $
 #	etc.sparc64/Makefile.inc -- sparc64-specific etc Makefile targets
 
 .ifdef DESTDIR
@@ -9,13 +9,11 @@ snap_md: bsd bootblocks distrib
 bsd:
 	cd ${.CURDIR}/../sys/arch/sparc64/conf && config GENERIC
 	cd ${.CURDIR}/../sys/arch/sparc64/compile/GENERIC && \
-	    make clean && make depend && make
+	    ${MAKE} clean && ${MAKE} depend && exec ${MAKE}
 
 bootblocks:
 	cp ${DESTDIR}/usr/mdec/*boot* ${DESTDIR}/snapshot
 
-distrib:
-	cd ${.CURDIR}/../distrib && make cleandir && \
-	    make && make install
+.PHONY: bsd bootblocks
 
 .endif	# DESTDIR check
