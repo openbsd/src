@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.39 2003/11/18 06:08:18 tedu Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.40 2004/05/27 04:55:27 tedu Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -434,7 +434,7 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 	pp->pr_npages = 0;
 	pp->pr_minitems = 0;
 	pp->pr_minpages = 0;
-	pp->pr_maxpages = UINT_MAX;
+	pp->pr_maxpages = 8;
 	pp->pr_roflags = flags;
 	pp->pr_flags = 0;
 	pp->pr_size = size;
@@ -2081,15 +2081,14 @@ pool_page_alloc(struct pool *pp, int flags)
 {
 	boolean_t waitok = (flags & PR_WAITOK) ? TRUE : FALSE;
 
-	return ((void *)uvm_km_alloc_poolpage1(kmem_map, uvmexp.kmem_object,
-	    waitok));
+	return (uvm_km_getpage(waitok));
 }
 
 void
 pool_page_free(struct pool *pp, void *v)
 {
 
-	uvm_km_free_poolpage1(kmem_map, (vaddr_t)v);
+	uvm_km_putpage(v);
 }
 
 void *
@@ -2099,8 +2098,7 @@ pool_page_alloc_nointr(struct pool *pp, int flags)
 
 	splassert(IPL_NONE);
 
-	return ((void *)uvm_km_alloc_poolpage1(kernel_map, uvm.kernel_object,
-	    waitok));
+	return (uvm_km_getpage(waitok));
 }
 
 void
@@ -2108,5 +2106,5 @@ pool_page_free_nointr(struct pool *pp, void *v)
 {
 	splassert(IPL_NONE);
 
-	uvm_km_free_poolpage1(kernel_map, (vaddr_t)v);
+	uvm_km_putpage(v);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.69 2004/05/23 19:41:23 tedu Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.70 2004/05/27 04:55:28 tedu Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -99,8 +99,6 @@ int max_protohdr;		/* largest protocol header */
 int max_hdr;			/* largest link+protocol header */
 int max_datalen;		/* MHLEN - max_hdr */
 
-void	*mclpool_alloc(struct pool *, int);
-void	mclpool_release(struct pool *, void *);
 struct mbuf *m_copym0(struct mbuf *, int, int, int, int);
 void	nmbclust_update(void);
 
@@ -108,18 +106,14 @@ void	nmbclust_update(void);
 const char *mclpool_warnmsg =
     "WARNING: mclpool limit reached; increase kern.maxclusters";
 
-struct pool_allocator mclpool_allocator = {
-	mclpool_alloc, mclpool_release, 0,
-};
-
 /*
  * Initialize the mbuf allcator.
  */
 void
 mbinit()
 {
-	pool_init(&mbpool, MSIZE, 0, 0, 0, "mbpl", &mclpool_allocator);
-	pool_init(&mclpool, MCLBYTES, 0, 0, 0, "mclpl", &mclpool_allocator);
+	pool_init(&mbpool, MSIZE, 0, 0, 0, "mbpl", NULL);
+	pool_init(&mclpool, MCLBYTES, 0, 0, 0, "mclpl", NULL);
 
 	pool_set_drain_hook(&mbpool, m_reclaim, NULL);
 	pool_set_drain_hook(&mclpool, m_reclaim, NULL);
@@ -145,20 +139,6 @@ nmbclust_update(void)
 	 * reached message max once a minute.
 	 */
 	(void)pool_sethardlimit(&mclpool, nmbclust, mclpool_warnmsg, 60);
-}
-
-
-
-void *
-mclpool_alloc(struct pool *pp, int flags)
-{
-	return uvm_km_getpage();
-}
-
-void
-mclpool_release(struct pool *pp, void *v)
-{
-	uvm_km_putpage(v);
 }
 
 void

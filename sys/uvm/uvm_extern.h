@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_extern.h,v 1.52 2004/04/28 02:20:58 markus Exp $	*/
+/*	$OpenBSD: uvm_extern.h,v 1.53 2004/05/27 04:55:28 tedu Exp $	*/
 /*	$NetBSD: uvm_extern.h,v 1.57 2001/03/09 01:02:12 chs Exp $	*/
 
 /*
@@ -510,7 +510,7 @@ void			uvm_km_free_poolpage1(vm_map_t, vaddr_t);
 #define	uvm_km_alloc_poolpage(waitok)	uvm_km_alloc_poolpage1(kmem_map, \
 						uvmexp.kmem_object, (waitok))
 #define	uvm_km_free_poolpage(addr)	uvm_km_free_poolpage1(kmem_map, (addr))
-void			*uvm_km_getpage(void);
+void			*uvm_km_getpage(boolean_t);
 void			uvm_km_putpage(void *);
 
 /* uvm_map.c */
