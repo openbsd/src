@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.29 2001/07/18 13:29:49 espie Exp $
+#	$OpenBSD: Makefile,v 1.30 2001/09/16 01:25:50 art Exp $
 
 PROG=	make
 CFLAGS+= -I${.OBJDIR} -I${.CURDIR}
@@ -39,8 +39,8 @@ varhashconsts.h: generate
 condhashconsts.h: generate
 	${.OBJDIR}/generate 2 ${MAGICCONDSLOTS} >${.TARGET}
 
-generate: generate.o stats.o memory.o
-	${CC} -o ${.TARGET} ${CFLAGS} ${.ALLSRC} ${LDADD}
+generate: generate.c stats.c memory.c
+	${HOSTCC} -o ${.TARGET} ${CFLAGS} ${.ALLSRC} ${LDADD}
 
 check: regress.o str.o memory.o buf.o
 	${CC} -o ${.TARGET} ${CFLAGS} ${.ALLSRC} ${LDADD}
