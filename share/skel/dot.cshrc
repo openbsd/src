@@ -11,7 +11,7 @@ alias ll	ls -lgsA
 alias tset	'set noglob histchars=""; eval `\tset -s \!*`; unset noglob histchars'
 alias z		suspend
 
-set path = (~/bin /bin /usr/{bin,local/bin,games} .)
+set path = (~/bin /bin /sbin /usr/{bin,local/bin,games,sbin} .)
 
 if ($?prompt) then
 	# An interactive shell -- set some stuff up

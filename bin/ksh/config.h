@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.h,v 1.4 1999/01/08 20:24:58 millert Exp $	*/
+/*	$OpenBSD: config.h,v 1.5 1999/10/04 16:44:00 deraadt Exp $	*/
 
 /* config.h.  Generated automatically by configure.  */
 /* config.h.in.  Generated automatically from configure.in by autoheader.  */
@@ -193,7 +193,7 @@
 #define HAVE_DEV_FD 1
 
 /* Default PATH (see comments in configure.in for more details) */
-#define DEFAULT_PATH "/bin:/usr/bin:/usr/ucb"
+#define DEFAULT_PATH "/bin:/usr/bin:/sbin:/usr/sbin"
 
 /* Define if your C library's getwd/getcwd function dumps core in unreadable
  * directories.  */
