@@ -4035,3 +4035,9 @@
 ./usr/share/misc/gprof.flat
 ./usr/share/misc/operator
 ./var/db/libc.tags
+./usr/include/ssl/conf_api.h
+./usr/include/ssl/dso.h
+./usr/include/ssl/engine.h
+./usr/include/ssl/md4.h
+./usr/include/ssl/obj_mac.h
+./usr/include/ssl/symhacks.h
