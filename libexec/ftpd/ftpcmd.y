@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpcmd.y,v 1.28 2001/12/28 17:38:17 millert Exp $	*/
+/*	$OpenBSD: ftpcmd.y,v 1.29 2002/01/08 01:52:00 millert Exp $	*/
 /*	$NetBSD: ftpcmd.y,v 1.7 1996/04/08 19:03:11 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@
 #if 0
 static char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
-static char rcsid[] = "$OpenBSD: ftpcmd.y,v 1.28 2001/12/28 17:38:17 millert Exp $";
+static char rcsid[] = "$OpenBSD: ftpcmd.y,v 1.29 2002/01/08 01:52:00 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -237,8 +237,7 @@ cmd
 		{
 			if ($2)
 				extended_port($4);
-			if ($4 != NULL)
-				free($4);
+			free($4);
 		}
 
 	| PASV check_login_epsvall CRLF
@@ -372,8 +371,7 @@ cmd
 		{
 			if ($2 && $4 != NULL)
 				send_file_list($4);
-			if ($4 != NULL)
-				free($4);
+			free($4);
 		}
 	| LIST check_login CRLF
 		{
@@ -455,9 +453,7 @@ cmd
 					help(sitetab, NULL);
 			} else
 				help(cmdtab, $3);
-
-			if ($3 != NULL)
-				free ($3);
+			free ($3);
 		}
 	| NOOP CRLF
 		{
@@ -494,9 +490,7 @@ cmd
 	| SITE SP HELP SP STRING CRLF
 		{
 			help(sitetab, $5);
-
-			if ($5 != NULL)
-				free ($5);
+			free ($5);
 		}
 	| SITE SP UMASK check_login CRLF
 		{
