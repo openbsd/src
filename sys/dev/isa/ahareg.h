@@ -1,3 +1,4 @@
+/*	$OpenBSD: ahareg.h,v 1.2 1996/04/22 20:03:04 hannken Exp $	*/
 typedef u_int8_t physaddr[3];
 typedef u_int8_t physlen[3];
 #define	ltophys	_lto3b
@@ -115,9 +116,9 @@ struct aha_ccb {
 	struct scsi_sense_data scsi_sense;
 	struct aha_scat_gath scat_gath[AHA_NSEG];
 	/*----------------------------------------------------------------*/
+#define CCB_PHYS_SIZE ((int)&((struct aha_ccb *)0)->chain)
 	TAILQ_ENTRY(aha_ccb) chain;
 	struct aha_ccb *nexthash;
-	long hashkey;
 	struct scsi_xfer *xs;		/* the scsi_xfer for this cmd */
 	int flags;
 #define	CCB_ALLOC	0x01
@@ -126,6 +127,9 @@ struct aha_ccb {
 #define	CCB_SENDING	0x04
 #endif
 	int timeout;
+	struct isadma_seg ccb_phys[1];	/* phys segment of this ccb */
+	struct isadma_seg data_phys[AHA_NSEG];	/* phys segments of data */
+	int data_nseg;			/* number of phys segments of data */
 };
 
 /*

@@ -1,12 +1,12 @@
-/*	$OpenBSD: isadmavar.h,v 1.3 1996/04/18 23:47:42 niklas Exp $	*/
+/*	$OpenBSD: isadmavar.h,v 1.4 1996/04/22 20:03:05 hannken Exp $	*/
 /*	$NetBSD: isadmavar.h,v 1.4 1996/03/01 04:08:46 mycroft Exp $	*/
 
 #define	DMAMODE_WRITE	0
 #define	DMAMODE_READ	1
 #define	DMAMODE_LOOP	2
 
-#define ISADMA_START_READ	0x0001	/* read from device */
-#define ISADMA_START_WRITE	0x0002	/* write to device */
+#define ISADMA_START_READ	DMAMODE_READ	/* read from device */
+#define ISADMA_START_WRITE	DMAMODE_WRITE	/* write to device */
 
 #define	ISADMA_MAP_WAITOK	0x0001	/* OK for isadma_map to sleep */
 #define	ISADMA_MAP_BOUNCE	0x0002	/* use bounce buffer if necessary */
@@ -33,8 +33,9 @@ void isadma_done __P((int));
 /*
  * XXX these are needed until all drivers have been cleaned up
  */
+
 #define isa_dmacascade(c)	isadma_cascade((c))
 #define isa_dmastart(f, a, s, c)	isadma_start((a), (s), (c), (f))
 #define isa_dmaabort(c)		isadma_abort((c))
 #define isa_dmafinished(c)	isadma_finished((c))
-#define isa_dmadone(a, s, c, f)	isadma_abort((c))
+#define isa_dmadone(f, a, s, c)	isadma_done((c))

@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa_machdep.c,v 1.12 1996/04/21 22:16:54 deraadt Exp $	*/
+/*	$OpenBSD: isa_machdep.c,v 1.13 1996/04/22 20:03:07 hannken Exp $	*/
 /*	$NetBSD: isa_machdep.c,v 1.12 1996/04/11 22:11:32 cgd Exp $	*/
 
 /*-
@@ -344,31 +344,32 @@ static unsigned long bitmap[MAX_CHUNK / 32 + 1];
 static int bit_ptr = -1;	/* last segment visited */
 static int chunk_size = 0;	/* size (bytes) of one low mem segment */
 static int chunk_num = 0;	/* actual number of low mem segments */
+#ifdef DIAGNOSTIC
+int bounce_alloc_cur = 0;
+int bounce_alloc_max = 0;
+#endif
 
 vm_offset_t isaphysmem;		/* base address of low mem arena */
 int isaphysmempgs;		/* number of pages of low mem arena */
 
 /*
- * check if addr is from our low mem arena
- */
-
-static int
-bounce_isbounced(addr)
-	vm_offset_t addr;
-{
-	return(addr >= vtophys(isaphysmem) &&
-	       addr < vtophys(isaphysmem)+isaphysmempgs*NBPG);
-}
-
-/*
- * return the virtual address of addr. addr must be from low mem arena
+ * if addr is the physical address of an allocated bounce buffer return the
+ * corresponding virtual address, 0 otherwise
  */
 
 static caddr_t
-bounce_to_virt(addr)
+bounce_vaddr(addr)
 	vm_offset_t addr;
 {
-	return((caddr_t)(isaphysmem+(addr-vtophys(isaphysmem))));
+	int i;
+
+	if (addr < vtophys(isaphysmem) ||
+	    addr >= vtophys(isaphysmem + chunk_num*chunk_size) ||
+	    ((i = (int)(addr-vtophys(isaphysmem))) % chunk_size) != 0 ||
+	    bit(i/chunk_size))
+		return(0);
+
+	return((caddr_t) (isaphysmem + (addr - vtophys(isaphysmem))));
 }
 
 /*
@@ -421,11 +422,16 @@ bounce_alloc(nbytes, pmask, waitok)
 		l = -1;
 		do{
 			if (bit(i) && l >= 0 && (i - l + 1) >= nunits){
-				r = vtophys(isaphysmem+(i-nunits+1)*chunk_size);
-				if (((r ^ (r+nbytes-1)) & pmask) == 0) {
+				r = vtophys(isaphysmem + (i - nunits + 1)*chunk_size);
+				if (((r ^ (r + nbytes - 1)) & pmask) == 0) {
 					for (l = i - nunits + 1; l <= i; l++)
 						clr(l);
 					bit_ptr = i;
+#ifdef DIAGNOSTIC
+					bounce_alloc_cur += nunits*chunk_size;
+					bounce_alloc_max = max(bounce_alloc_max,
+							       bounce_alloc_cur);
+#endif
 					splx(opri);
 					return(r);
 				}
@@ -462,13 +468,15 @@ bounce_free(addr, nbytes)
 
 	opri = splbio();
 
-	vaddr = (vm_offset_t)bounce_to_virt(addr);
-	if (vaddr < isaphysmem || vaddr >= isaphysmem+chunk_num*chunk_size ||
-	    ((i = (int)(vaddr-isaphysmem)) % chunk_size) != 0)
+	if ((vaddr = (vm_offset_t) bounce_vaddr(addr)) == 0)
 		panic("bounce_free: bad address");
 
-	i /= chunk_size;
-	j = i + (nbytes+chunk_size-1)/chunk_size;
+	i = (int) (vaddr - isaphysmem)/chunk_size;
+	j = i + (nbytes + chunk_size - 1)/chunk_size;
+
+#ifdef DIAGNOSTIC
+	bounce_alloc_cur -= (j - i)*chunk_size;
+#endif
 
 	while (i < j) {
 		if (bit(i))
@@ -477,12 +485,12 @@ bounce_free(addr, nbytes)
 		i++;
 	}
 
-	wakeup((caddr_t)&bit_ptr);
+	wakeup((caddr_t) &bit_ptr);
 	splx(opri);
 }
 
 /*
- * setup (addr,nbytes) for an ISA dma transfer.
+ * setup (addr, nbytes) for an ISA dma transfer.
  * flags&ISADMA_MAP_WAITOK	may wait
  * flags&ISADMA_MAP_BOUNCE	may use a bounce buffer if necessary
  * flags&ISADMA_MAP_CONTIG	result must be physically contiguous
@@ -505,37 +513,34 @@ isadma_map(addr, nbytes, phys, flags)
 	int seg, waitok, i;
 
 	if (flags & ISADMA_MAP_8BIT)
-		pmask = ~((64*1024)-1);
+		pmask = ~((64*1024) - 1);
 	else if (flags & ISADMA_MAP_16BIT)
-		pmask = ~((128*1024)-1);
+		pmask = ~((128*1024) - 1);
 	else
 		pmask = 0;
 
 	waitok = (flags & ISADMA_MAP_WAITOK) != 0;
 
-	thiskv = (vm_offset_t)addr;
+	thiskv = (vm_offset_t) addr;
 	datalen = nbytes;
 	thisphys = vtophys(thiskv);
 	seg = 0;
 
 	while (datalen > 0 && (seg == 0 || (flags & ISADMA_MAP_CONTIG) == 0)) {
-		if (thisphys == 0)
-			panic("isadma_map: no physical page present");
-
 		phys[seg].length = 0;
 		phys[seg].addr = thisphys;
 
 		nextphys = thisphys;
 		while (datalen > 0 && thisphys == nextphys) {
 			nextphys = trunc_page(thisphys) + NBPG;
-			phys[seg].length += min(nextphys-thisphys, datalen);
-			datalen -= min(nextphys-thisphys, datalen);
+			phys[seg].length += min(nextphys - thisphys, datalen);
+			datalen -= min(nextphys - thisphys, datalen);
 			thiskv = trunc_page(thiskv) + NBPG;
 			if (datalen)
 				thisphys = vtophys(thiskv);
 		}
 
-		if (phys[seg].addr+phys[seg].length > 0xffffff) {
+		if (phys[seg].addr + phys[seg].length > 0xffffff) {
 			if (flags & ISADMA_MAP_CONTIG) {
 				phys[seg].length = nbytes;
 				datalen = 0;
@@ -543,12 +548,11 @@ isadma_map(addr, nbytes, phys, flags)
 			if ((flags & ISADMA_MAP_BOUNCE) == 0)
 				phys[seg].addr = 0;
 			else
-				phys[seg].addr =
-				    bounce_alloc(phys[seg].length, pmask,
-						 waitok);
+				phys[seg].addr = bounce_alloc(phys[seg].length,
+							      pmask, waitok);
 			if (phys[seg].addr == 0) {
 				for (i = 0; i < seg; i++)
-					if (bounce_isbounced(phys[i].addr))
+					if (bounce_vaddr(phys[i].addr))
 						bounce_free(phys[i].addr,
 							    phys[i].length);
 				return 0;
@@ -560,7 +564,7 @@ isadma_map(addr, nbytes, phys, flags)
 
 	/* check all constraints */
 	if (datalen ||
-	    ((phys[0].addr ^ (phys[0].addr+phys[0].length-1)) & pmask) != 0 ||
+	    ((phys[0].addr ^ (phys[0].addr + phys[0].length - 1)) & pmask) != 0 ||
 	    ((phys[0].addr & 1) && (flags & ISADMA_MAP_16BIT))) {
 		if ((flags & ISADMA_MAP_BOUNCE) == 0)
 			return 0;
@@ -586,7 +590,7 @@ isadma_unmap(addr, nbytes, nphys, phys)
 	int i;
 
 	for (i = 0; i < nphys; i++)
-		if (bounce_isbounced(phys[i].addr))
+		if (bounce_vaddr(phys[i].addr))
 			bounce_free(phys[i].addr, phys[i].length);
 }
 
@@ -602,12 +606,11 @@ isadma_copyfrombuf(addr, nbytes, nphys, phys)
 	struct isadma_seg *phys;
 {
 	int i;
+	caddr_t vaddr;
 
 	for (i = 0; i < nphys; i++) {
-		if (bounce_isbounced(phys[i].addr)) {
-			bcopy(bounce_to_virt(phys[i].addr), addr,
-			    phys[i].length);
-		}
+		if (vaddr = bounce_vaddr(phys[i].addr))
+			bcopy(vaddr, addr, phys[i].length);
 		addr += phys[i].length;
 	}
 }
@@ -624,12 +627,11 @@ isadma_copytobuf(addr, nbytes, nphys, phys)
 	struct isadma_seg *phys;
 {
 	int i;
+	caddr_t vaddr;
 
 	for (i = 0; i < nphys; i++) {
-		if (bounce_isbounced(phys[i].addr)) {
-			bcopy(addr, bounce_to_virt(phys[i].addr),
-			    phys[i].length);
-		}
+		if (vaddr = bounce_vaddr(phys[i].addr))
+			bcopy(addr, vaddr, phys[i].length);
 		addr += phys[i].length;
 	}
 }

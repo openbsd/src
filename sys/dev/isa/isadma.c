@@ -1,4 +1,4 @@
-/*	$OpenBSD: isadma.c,v 1.4 1996/04/21 22:24:14 deraadt Exp $	*/
+/*	$OpenBSD: isadma.c,v 1.5 1996/04/22 20:03:05 hannken Exp $	*/
 /*	$NetBSD: isadma.c,v 1.18 1996/03/31 20:51:43 mycroft Exp $	*/
 
 #include <sys/param.h>
@@ -19,6 +19,7 @@
 
 struct dma_info {
 	int flags;
+	int active;
 	caddr_t addr;
 	vm_size_t nbytes;
 	struct isadma_seg phys[1];
@@ -92,12 +93,13 @@ isadma_start(addr, nbytes, chan, flags)
 #endif
 
 	di = dma_info+chan;
-	if (di->flags != 0) {
+	if (di->active) {
 		log(LOG_ERR,"isadma_start: old request active on %d\n",chan);
 		isadma_abort(chan);
 	}
 
 	di->flags = flags;
+	di->active = 1;
 	di->addr = addr;
 	di->nbytes = nbytes;
 
@@ -171,7 +173,7 @@ isadma_abort(chan)
 #endif
 
 	di = dma_info+chan;
-	if (di->flags == 0) {
+	if (! di->active) {
 		log(LOG_ERR,"isadma_abort: no request active on %d\n",chan);
 		return;
 	}
@@ -183,7 +185,7 @@ isadma_abort(chan)
 		outb(DMA2_SMSK, DMA37SM_SET | (chan & 3));
 
 	isadma_unmap(di->addr, di->nbytes, 1, di->phys);
-	di->flags = 0;
+	di->active = 0;
 }
 
 int
@@ -218,7 +220,7 @@ isadma_done(chan)
 #endif
 
 	di = dma_info+chan;
-	if (di->flags == 0) {
+	if (! di->active) {
 		log(LOG_ERR,"isadma_done: no request active on %d\n",chan);
 		return;
 	}
@@ -243,5 +245,5 @@ isadma_done(chan)
 		isadma_copyfrombuf(di->addr, di->nbytes, 1, di->phys);
 
 	isadma_unmap(di->addr, di->nbytes, 1, di->phys);
-	di->flags = 0;
+	di->active = 0;
 }
