@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wi.4tbl,v 1.26 2003/01/10 23:12:27 millert Exp $
+.\"	$OpenBSD: wi.4tbl,v 1.27 2003/06/23 17:56:40 miod Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -41,6 +41,8 @@
 .Sh SYNOPSIS
 .Cd "# i386/macppc/sparc64"
 .Cd "wi* at pci? dev ? function ?"
+.Pp
+.Cd "# i386/macppc/sparc/sparc64"
 .Cd "wi* at pcmcia? function ?"
 .Pp
 .Cd "# macppc"
