@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpc106reg.h,v 1.2 1998/08/25 07:40:47 pefo Exp $ */
+/*	$OpenBSD: mpc106reg.h,v 1.3 1998/10/09 02:09:19 rahnds Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -45,7 +45,7 @@
 /* Where we map the PCI I/O space */
 #define MPC106_P_ISA_IO_SPACE	0x80000000
 #define MPC106_V_ISA_IO_SPACE	0x80000000
-#define MPC106_V_PCI_IO_SPACE	(MPC106_V_ISA_IO_SPACE + 0x01000000)
+#define MPC106_V_PCI_IO_SPACE	0x80000000
 
 /* Where we map the config space */
 #define MPC106_PCI_CONF_SPACE	(MPC106_V_ISA_IO_SPACE + 0x00800000)
