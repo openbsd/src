@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996, 1998-2001 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1996, 1998-2002 Todd C. Miller <Todd.Miller@courtesan.com>
  * All rights reserved.
  *
  * This code is derived from software contributed by Chris Jepeway
@@ -97,7 +97,7 @@
 #endif /* HAVE_FNMATCH */
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: parse.c,v 1.134 2001/12/14 19:52:48 millert Exp $";
+static const char rcsid[] = "$Sudo: parse.c,v 1.136 2002/01/08 15:00:18 millert Exp $";
 #endif /* lint */
 
 /*

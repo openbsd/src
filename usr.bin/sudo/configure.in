@@ -1,6 +1,6 @@
 dnl
 dnl Process this file with GNU autoconf to produce a configure script.
-dnl $Sudo: configure.in,v 1.341 2002/01/02 22:36:49 millert Exp $
+dnl $Sudo: configure.in,v 1.342 2002/01/07 18:59:47 millert Exp $
 dnl
 dnl Copyright (c) 1994-1996,1998-2002 Todd C. Miller <Todd.Miller@courtesan.com>
 dnl
@@ -1351,6 +1351,12 @@ case "$host" in
 		    AC_CHECK_LIB(gen, getspnam, AC_DEFINE(HAVE_GETSPNAM) [SUDO_LIBS="${SUDO_LIBS} -lgen"; LIBS="${LIBS} -lgen"])
 		    CHECKSHADOW="false"
 		fi
+		test -n "$mansectsu" || mansectsu=1m
+		test -n "$mansectform" || mansectform=4
+		;;
+    m88k-motorola-sysv*)
+		# motorolla's cc (a variant of gcc) does -O but not -O2
+		CFLAGS=`echo $CFLAGS | sed 's/-O2/-O/g'`
 		test -n "$mansectsu" || mansectsu=1m
 		test -n "$mansectform" || mansectform=4
 		;;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1993-1996,1998-2001 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1993-1996,1998-2002 Todd C. Miller <Todd.Miller@courtesan.com>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -98,7 +98,7 @@
 #include "version.h"
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: sudo.c,v 1.311 2001/12/15 00:45:13 millert Exp $";
+static const char rcsid[] = "$Sudo: sudo.c,v 1.313 2002/01/08 15:00:18 millert Exp $";
 #endif /* lint */
 
 /*
@@ -155,6 +155,7 @@ main(argc, argv, envp)
     int cmnd_status;
     int sudo_mode;
     int pwflag;
+    char **new_environ;
     sigaction_t sa;
     extern int printmatches;
     extern char **environ;
@@ -271,8 +272,8 @@ main(argc, argv, envp)
 	    log_error(NO_MAIL|MSG_ONLY, "no passwd entry for %s!", *user_runas);
     }
 
-    /* Customize environment and get rid of any nasty bits. */
-    environ = rebuild_env(sudo_mode, envp);
+    /* Build up custom environment that avoids any nasty bits. */
+    new_environ = rebuild_env(sudo_mode, envp);
 
     /* This goes after the sudoers parse since we honor sudoers options. */
     if (sudo_mode == MODE_KILL || sudo_mode == MODE_INVALIDATE) {
@@ -368,6 +369,9 @@ main(argc, argv, envp)
 
 	/* Become specified user or root. */
 	set_perms(PERM_RUNAS, sudo_mode);
+
+	/* Install the new environment. */
+	environ = new_environ;
 
 #ifndef PROFILING
 	if ((sudo_mode & MODE_BACKGROUND) && fork() > 0)

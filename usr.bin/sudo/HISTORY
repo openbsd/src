@@ -7,9 +7,9 @@ a handful of folks at CU-Boulder, including Bob Coggeshall, Bob
 Manchek, and Trent Hein.
 
 In 1991, Dave Hieb and Jeff Nieusma wrote a new version of sudo
-with an enhanced sudoers format.  This version was bought by a
-consulting firm called "The Root Group" and released under the GNU
-public license.
+with an enhanced sudoers format under contract to a consulting firm
+called "The Root Group".  This version was later released under the
+GNU public license.
 
 In 1994, after maintaining sudo informally within CU-Boulder for
 some time, Todd Miller made a public release of "CU sudo" (version

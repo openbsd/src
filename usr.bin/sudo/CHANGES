@@ -1360,9 +1360,10 @@ Sudo 1.6.3p7 released.
 426) Added stay_setuid option for systems that have libraries that perform
      extra paranoia checks in system libraries for setuid programs.
 
-427) Environment munging is now done by hand.  We build up a new environment
-     and assign it to "environ".  This means we don't rely on getenv(3),
-     putenv(3), or setenv(3).
+427) Environment munging is now done by hand.  The environment is zeroed
+     upon sudo startup and a new environment is built before the command
+     is executed.  This means we don't rely on getenv(3), putenv(3),
+     or setenv(3).
 
 428) Added a class of environment variables that are only cleared if they
      contain '/' or '%' characters.
