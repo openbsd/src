@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.96 2000/01/24 05:00:07 smurph Exp $
+#	$OpenBSD: Makefile,v 1.97 2000/02/06 11:44:01 jakob Exp $
 #	$NetBSD: Makefile,v 1.22.4.2 1996/07/18 00:51:10 jtc Exp $
 
 MAN=	ac97.4 atalk.4 atapiscsi.4 audio.4 adv.4 ahc.4 al.4 ax.4 bpf.4 \
@@ -11,9 +11,9 @@ MAN=	ac97.4 atalk.4 atapiscsi.4 audio.4 adv.4 ahc.4 al.4 ax.4 bpf.4 \
 	opl.4 options.4 pciide.4 pcmcia.4 pty.4 qsphy.4 raid.4 random.4 \
 	rl.4 rln.4 rlphy.4 route.4 scsi.4 sd.4 sf.4 sis.4 sk.4 sl.4 sm.4 \
 	spp.4 sppp.4 sqphy.4 ss.4 st.4 ste.4 sv.4 tb.4 tcp.4 termios.4 ti.4 \
-	tl.4 tlphy.4 tp.4 tqphy.4 tty.4 tun.4 tx.4 txphy.4 udp.4 ugen.4 \
-	uhid.4 uk.4 ukphy.4 unix.4 usb.4 vnd.4 vr.4 wb.4 wd.4 we.4 xl.4 ym.4 \
-	zero.4
+	tl.4 tlphy.4 tp.4 tqphy.4 tty.4 tun.4 tx.4 txphy.4 uaudio.4 udp.4 \
+	ugen.4 uhid.4 uk.4 ukphy.4 unix.4 usb.4 vnd.4 vr.4 wb.4 wd.4 we.4 \
+	xl.4 ym.4 zero.4
 
 # IPv6
 MAN+=	faith.4 gif.4 icmp6.4 inet6.4 ip6.4
