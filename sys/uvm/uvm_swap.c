@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.2 1999/02/26 05:32:08 art Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.3 1999/06/02 13:23:22 mickey Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.23 1998/12/26 06:25:59 marc Exp $	*/
 
 /*
@@ -129,11 +129,12 @@
  * swd_nblks <= swd_mapsize [because mapsize includes miniroot+disklabel]
  */
 struct swapdev {
-	struct oswapent swd_ose;
-#define	swd_dev		swd_ose.ose_dev		/* device id */
-#define	swd_flags	swd_ose.ose_flags	/* flags:inuse/enable/fake */
-#define	swd_priority	swd_ose.ose_priority	/* our priority */
-	/* also: swd_ose.ose_nblks, swd_ose.ose_inuse */
+	struct swapent	swd_se;
+#define	swd_dev		swd_se.se_dev		/* device id */
+#define	swd_flags	swd_se.se_flags		/* flags:inuse/enable/fake */
+#define	swd_priority	swd_se.se_priority	/* our priority */
+#define	swd_inuse	swd_se.se_inuse		/* our priority */
+#define	swd_nblks	swd_se.se_nblks		/* our priority */
 	char			*swd_path;	/* saved pathname of device */
 	int			swd_pathlen;	/* length of pathname */
 	int			swd_npages;	/* #pages we can use */
@@ -240,19 +241,15 @@ static simple_lock_data_t swap_data_lock;
 /*
  * prototypes
  */
-#ifdef notyet
 static void		 swapdrum_add __P((struct swapdev *, int));
-#endif
 static struct swapdev	*swapdrum_getsdp __P((int));
 
-#ifdef notyet /* swapctl */
 static struct swapdev	*swaplist_find __P((struct vnode *, int));
 static void		 swaplist_insert __P((struct swapdev *, 
 					     struct swappri *, int));
 static void		 swaplist_trim __P((void));
 
 static int swap_on __P((struct proc *, struct swapdev *));
-#endif
 #ifdef SWAP_OFF_WORKS
 static int swap_off __P((struct proc *, struct swapdev *));
 #endif
@@ -347,7 +344,6 @@ uvm_swap_init()
  *	FREE it if we don't need it... this it to prevent malloc blocking
  *	here while adding swap)
  */
-#ifdef notyet /* used by swapctl */
 static void
 swaplist_insert(sdp, newspp, priority)
 	struct swapdev *sdp;
@@ -398,9 +394,7 @@ swaplist_insert(sdp, newspp, priority)
 	 * done!
 	 */
 }
-#endif
 
-#ifdef notyet /* used by swapctl */
 /*
  * swaplist_find: find and optionally remove a swap device from the
  *	global list.
@@ -477,7 +471,6 @@ swapdrum_add(sdp, npages)
 	sdp->swd_drumoffset = result;
 	sdp->swd_drumsize = npages;
 }
-#endif
 
 /*
  * swapdrum_getsdp: given a page offset in /dev/drum, convert it back
@@ -518,7 +511,6 @@ sys_swapon(p, v, retval)
 	return EINVAL;
 }
 
-#ifdef notyet /* XXXXXXXXXXXXXXXX (it has other bugs beside the fact that I don't want to change syscalls.master) */
 /*
  * sys_swapctl: main entry point for swapctl(2) system call
  * 	[with two helper functions: swap_on and swap_off]
@@ -595,10 +587,10 @@ sys_swapctl(p, v, retval)
 				 * want to retain backwards compatibility
 				 * with NetBSD 1.3.
 				 */
-				sdp->swd_ose.ose_inuse = 
+				sdp->swd_inuse = 
 				    btodb(sdp->swd_npginuse << PAGE_SHIFT);
-				error = copyout((caddr_t)&sdp->swd_ose,
-				    (caddr_t)sep, sizeof(struct oswapent));
+				error = copyout((caddr_t)&sdp->swd_se,
+				    (caddr_t)sep, sizeof(struct swapent));
 
 				/* now copy out the path if necessary */
 #if defined(COMPAT_13)
@@ -645,7 +637,7 @@ sys_swapctl(p, v, retval)
 	 */
 	if (SCARG(uap, arg) == NULL) {
 		vp = rootvp;		/* miniroot */
-		if (vget(vp, LK_EXCLUSIVE)) {
+		if (vget(vp, LK_EXCLUSIVE, p)) {
 			error = EBUSY;
 			goto out;
 		}
@@ -815,8 +807,6 @@ out:
 	UVMHIST_LOG(pdhist, "<- done!  error=%d", error, 0, 0, 0);
 	return (error);
 }
-#endif
-
 
 /*
  * swap_on: attempt to enable a swapdev for swapping.   note that the
@@ -828,7 +818,6 @@ out:
  * => caller should leave swap_data_lock unlocked, we may lock it
  *	if needed.
  */
-#ifdef notyet /* used by swapctl */
 static int
 swap_on(p, sdp)
 	struct proc *p;
@@ -922,7 +911,7 @@ swap_on(p, sdp)
 	 * save nblocks in a safe place and convert to pages.
 	 */
 
-	sdp->swd_ose.ose_nblks = nblocks;
+	sdp->swd_nblks = nblocks;
 	npages = dbtob((u_int64_t)nblocks) >> PAGE_SHIFT;
 
 	/*
@@ -1061,7 +1050,6 @@ bad:
 		(void)VOP_CLOSE(vp, FREAD|FWRITE, p->p_ucred, p);
 	return (error);
 }
-#endif
 
 #ifdef SWAP_OFF_WORKS
 /*
