@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 2005/03/18 20:28:38 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.3 2005/03/19 00:10:46 deraadt Exp $
 
 TOP=    ${.CURDIR}/..
 IPK=	openbsd${OSrev}_arm.ipk
@@ -45,6 +45,7 @@ ${IPK}:
 
 install:
 	cp ${IPK} ${DESTDIR}/snapshot
+	cp Packages ${DESTDIR}/snapshot
 
 clean cleandir:
 	rm -rf data control ${IPK} debian-binary control.tar.gz data.tar.gz \
