@@ -32,7 +32,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 /*$FreeBSD: if_em.h,v 1.24 2003/11/14 18:02:24 pdeuskar Exp $*/
-/* $OpenBSD: if_em.h,v 1.6 2004/05/19 11:37:00 brad Exp $ */
+/* $OpenBSD: if_em.h,v 1.7 2004/06/18 20:42:35 mcbride Exp $ */
 
 #ifndef _EM_H_DEFINED_
 #define _EM_H_DEFINED_
@@ -326,7 +326,14 @@ struct em_softc {
 	struct timeout	em_intr_enable;
 	struct timeout	timer_handle;
 	struct timeout	tx_fifo_timer_handle;
+
 #endif /* __OpenBSD__ */
+
+#ifdef __STRICT_ALIGNMENT
+	/* Used for carrying forward alignment adjustments */
+	unsigned char	align_buf[ETHER_ALIGN];	/* tail of unaligned packet */
+	u_int8_t	align_buf_len;		/* bytes in tail */
+#endif /* __STRICT_ALIGNMENT */
 
 	/* Info about the board itself */
 	u_int32_t       part_num;

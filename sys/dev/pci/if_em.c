@@ -32,7 +32,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 /*$FreeBSD: if_em.c,v 1.38 2004/03/17 17:50:31 njl Exp $*/
-/* $OpenBSD: if_em.c,v 1.22 2004/06/18 20:31:31 mcbride Exp $ */
+/* $OpenBSD: if_em.c,v 1.23 2004/06/18 20:42:34 mcbride Exp $ */
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -3161,8 +3161,57 @@ em_process_receive_interrupts(struct em_softc* sc, int count)
 			/* Assign correct length to the current fragment */
 			mp->m_len = len;
 
+#ifdef __STRICT_ALIGNMENT
+			/*
+			 * The ethernet payload is not 32-bit aligned when
+			 * Jumbo packets are enabled, so on architectures with
+			 * strict alignment we need to shift the entire packet
+			 * ETHER_ALIGN bytes. Ugh.
+			 */
+			if (ifp->if_mtu > ETHERMTU) {
+				unsigned char tmp_align_buf[ETHER_ALIGN];
+				int tmp_align_buf_len = 0;
+
+				if (prev_len_adj > sc->align_buf_len)
+					prev_len_adj -= sc->align_buf_len;
+				else
+					prev_len_adj = 0;
+
+				if (mp->m_len > MCLBYTES - ETHER_ALIGN) {
+					bcopy(mp->m_data +
+					    (MCLBYTES - ETHER_ALIGN),
+					    &tmp_align_buf,
+					    ETHER_ALIGN);
+					tmp_align_buf_len = mp->m_len -
+					    (MCLBYTES - ETHER_ALIGN);
+					mp->m_len -= ETHER_ALIGN;
+				} 
+
+				if (mp->m_len) {
+					bcopy(mp->m_data,
+					    mp->m_data + ETHER_ALIGN,
+					    mp->m_len);
+					if (!sc->align_buf_len)
+						mp->m_data += ETHER_ALIGN;
+				}
+
+				if (sc->align_buf_len) {
+					mp->m_len += sc->align_buf_len;
+					bcopy(&sc->align_buf,
+					    mp->m_data,
+					    sc->align_buf_len);
+				}
+
+				if (tmp_align_buf_len) 
+					bcopy(&tmp_align_buf,
+					    &sc->align_buf,
+					    tmp_align_buf_len);
+				sc->align_buf_len = tmp_align_buf_len;
+			}
+#endif /* __STRICT_ALIGNMENT */
+
 			if (sc->fmp == NULL) {
-				mp->m_pkthdr.len = len;
+				mp->m_pkthdr.len = mp->m_len;
 				sc->fmp = mp;	 /* Store the first mbuf */
 				sc->lmp = mp;
 			} else {
@@ -3178,7 +3227,7 @@ em_process_receive_interrupts(struct em_softc* sc, int count)
                                 }
                                 sc->lmp->m_next = mp;
                                 sc->lmp = sc->lmp->m_next;
-                                sc->fmp->m_pkthdr.len += len;
+                                sc->fmp->m_pkthdr.len += mp->m_len;
 			}
 
 			if (eop) {
