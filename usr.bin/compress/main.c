@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.54 2004/02/29 13:59:15 markus Exp $	*/
+/*	$OpenBSD: main.c,v 1.55 2004/07/29 04:07:44 millert Exp $	*/
 
 #ifndef SMALL
 static const char copyright[] =
@@ -36,7 +36,7 @@ static const char license[] =
 #endif /* SMALL */
 
 #ifndef SMALL
-static const char main_rcsid[] = "$OpenBSD: main.c,v 1.54 2004/02/29 13:59:15 markus Exp $";
+static const char main_rcsid[] = "$OpenBSD: main.c,v 1.55 2004/07/29 04:07:44 millert Exp $";
 #endif
 
 #include <sys/param.h>
@@ -146,8 +146,7 @@ main(int argc, char *argv[])
 	char *nargv[512];	/* some estimate based on ARG_MAX */
 	int bits, exists, oreg, ch, error, i, rc, oflag;
 
-	exists = 0;
-	bits = oflag = 0;
+	oreg = exists = bits = oflag = 0;
 	nosave = -1;
 	p = __progname;
 	if (p[0] == 'g') {
@@ -383,7 +382,7 @@ main(int argc, char *argv[])
 
 		if (cat)
 			strlcpy(outfile, "/dev/stdout", sizeof outfile);
-		else if (!oflag) {
+		else if (!oflag && !testmode) {
 			if (decomp) {
 				if (set_outfile(infile, outfile,
 				    sizeof outfile) == NULL) {
@@ -405,15 +404,15 @@ main(int argc, char *argv[])
 			}
 		}
 
-		if (!testmode)
+		if (!testmode) {
 			exists = !stat(outfile, &osb);
-		if (!force && exists && S_ISREG(osb.st_mode) &&
-		    !permission(outfile)) {
-			rc = rc ? rc : WARNING;
-			continue;
+			if (!force && exists && S_ISREG(osb.st_mode) &&
+			    !permission(outfile)) {
+				rc = rc ? rc : WARNING;
+				continue;
+			}
+			oreg = !exists || S_ISREG(osb.st_mode);
 		}
-
-		oreg = !exists || S_ISREG(osb.st_mode);
 
 		if (verbose > 0 && !pipin && !list)
 			fprintf(stderr, "%s:\t", infile);
