@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass_quirks.c,v 1.15 2004/07/21 07:43:41 dlg Exp $	*/
+/*	$OpenBSD: umass_quirks.c,v 1.16 2004/10/18 12:56:43 dlg Exp $	*/
 /*	$NetBSD: umass_quirks.c,v 1.67 2004/06/28 07:49:16 mycroft Exp $	*/
 
 /*
@@ -447,6 +447,14 @@ Static const struct umass_quirk umass_quirks[] = {
 	},
 
 	{ { USB_VENDOR_SIGMATEL, USB_PRODUCT_SIGMATEL_DNSSF7X},
+	 UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
+	 0,
+	 SDEV_NOSYNCCACHE | PQUIRK_NODOORLOCK,
+	 UMATCH_VENDOR_PRODUCT,
+	 NULL, NULL
+	},
+
+	{ { USB_VENDOR_CREATIVE, USB_PRODUCT_CREATIVE_NOMAD},
 	 UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
 	 0,
 	 SDEV_NOSYNCCACHE | PQUIRK_NODOORLOCK,
