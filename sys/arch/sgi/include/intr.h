@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.10 2004/10/20 12:49:15 pefo Exp $ */
+/*	$OpenBSD: intr.h,v 1.11 2005/01/02 19:34:15 kettenis Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -53,6 +53,7 @@
 
 /* Interrupt priority `levels'; not mutually exclusive. */
 #define	IPL_BIO		0	/* block I/O */
+#define IPL_AUDIO	IPL_BIO
 #define	IPL_NET		1	/* network */
 #define	IPL_TTY		2	/* terminal */
 #define	IPL_VM		3	/* memory allocation */
@@ -84,6 +85,7 @@
 #define splbio()		splraise(imask[IPL_BIO])
 #define splnet()		splraise(imask[IPL_NET])
 #define spltty()		splraise(imask[IPL_TTY])
+#define splaudio()		splraise(imask[IPL_AUDIO])
 #define splclock()		splraise(SPL_CLOCKMASK|SINT_ALLMASK)
 #define splimp()		splraise(imask[IPL_VM])
 #define splvm()			splraise(imask[IPL_VM])
