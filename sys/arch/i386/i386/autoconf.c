@@ -70,9 +70,6 @@ extern int	cold;		/* cold start flag initialized in locore.s */
  */
 configure()
 {
-
-	startrtclock();
-
 	config_rootfound("isa", NULL);
 	config_rootfound("eisa", NULL);
 	config_rootfound("pci", NULL);

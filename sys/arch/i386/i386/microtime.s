@@ -46,13 +46,21 @@
  */
 #ifndef HZ
 ENTRY(microtime)
+
+#ifdef I586_CPU
+	movl	_pentium_mhz, %ecx
+	testl	%ecx, %ecx
+	jne	pentium_microtime
+#else
+	xorl	%ecx,%ecx
+#endif
+	movb	$(TIMER_SEL0|TIMER_LATCH),%al
+
 	cli				# disable interrupts
 
-	movb	$(TIMER_SEL0|TIMER_LATCH),%al
 	outb	%al,$TIMER_MODE		# latch timer 0's counter
 
 	# Read counter value into ecx, LSB first
-	xorl	%ecx,%ecx
 	inb	$TIMER_CNTR0,%al
 	movb	%al,%cl
 	inb	$TIMER_CNTR0,%al
@@ -111,6 +119,7 @@ ENTRY(microtime)
 	leal	(%edx,%eax,8),%eax	# a = 8a + d = 3433d
 	shrl	$12,%eax		# a = a/4096 = 3433d/4096
 
+common_microtime:
 	movl	_time,%edx	# get time.tv_sec
 	addl	_time+4,%eax	# add time.tv_usec
 
@@ -126,4 +135,14 @@ ENTRY(microtime)
 	movl	%eax,4(%ecx)	# tvp->tv_usec = usec
 
 	ret
+
+#ifdef I586_CPU
+	.align	2, 0x90
+pentium_microtime:
+	cli
+	.byte	0x0f, 0x31	# RDTSC
+	divl	%ecx		# convert to usec
+	jmp	common_microtime
+#endif
+
 #endif

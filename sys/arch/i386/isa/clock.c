@@ -107,6 +107,10 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 void spinwait __P((int));
 
+#ifdef I586_CPU
+int pentium_mhz;
+#endif
+
 #define	SECMIN	((unsigned)60)			/* seconds per minute */
 #define	SECHOUR	((unsigned)(60*SECMIN))		/* seconds per hour */
 #define	SECDAY	((unsigned)(24*SECHOUR))	/* seconds per day */
@@ -302,6 +306,19 @@ findcpuspeed()
 	 */
 	delaycount = (FIRST_GUESS * TIMER_DIV(1000)) / (0xffff-remainder);
 }
+
+#ifdef I586_CPU
+void
+calibrate_cyclecounter()
+{
+	unsigned long long count, last_count;
+
+	__asm __volatile(".byte 0xf, 0x31" : "=A" (last_count));
+	delay(1000000);
+	__asm __volatile(".byte 0xf, 0x31" : "=A" (count));
+	pentium_mhz = ((count - last_count) + 500000) / 1000000;
+}
+#endif
 
 void
 cpu_initclocks()

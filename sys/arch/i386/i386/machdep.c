@@ -165,6 +165,7 @@ cpu_startup()
 	msgbufmapped = 1;
 
 	printf(version);
+	startrtclock();
 	identifycpu();
 	printf("real mem  = %d\n", ctob(physmem));
 
@@ -390,7 +391,14 @@ identifycpu()
 		break;
 	}
 	strcat(cpu_model, "-class CPU)");
-	printf("%s\n", cpu_model);	/* cpu speed would be nice, but how? */
+	printf("%s", cpu_model);	/* cpu speed would be nice, but how? */
+#if defined(I586_CPU)
+	if (cpu_class == CPUCLASS_586) {
+		calibrate_cyclecounter();
+		printf(" %d MHz", pentium_mhz);
+	}
+#endif
+	printf("\n");
 
 	/*
 	 * Now that we have told the user what they have,
