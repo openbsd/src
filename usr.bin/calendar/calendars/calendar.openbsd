@@ -1,7 +1,7 @@
 /*
  * OpenBSD-related dates to celebrate
  *
- * $OpenBSD: calendar.openbsd,v 1.2 2002/08/29 18:35:13 mickey Exp $
+ * $OpenBSD: calendar.openbsd,v 1.3 2002/08/29 21:08:21 mickey Exp $
  */
 
 #ifndef _calendar_openbsd_
@@ -13,18 +13,18 @@ Jan 26	Anoncvs service inaugurated, 1996
 Jan 29	``second anoncvs server is 100 miles from the first'', 1996
 Feb 03	Describe the ports mechanism [in OpenBSD], 1997
 Feb 13	Unpatented fast block cipher for new password hashing, 1997
-Feb 19	IPSEC package by John Ioannidis and Angelos D. Keromytis, 1997
+Feb 19	IPsec package by John Ioannidis and Angelos D. Keromytis, 1997
 Feb 26	OpenBSD/Amiga gets ISA bus support, 1996
 Feb 28	Cryptographic services framework in OpenBSD, 2000
 Mar 10	OpenBSD/WWW translation started -- German, Spanish, Dutch, 2000
 May 19	OpenBSD 2.3 released, including ``ports'' system, 1998
 May 29	IPF is removed for license incompatibility, 2001
 Jun 01	OpenBSD 2.1 released, first time on CD (double set), 1997
-Jun 04	First hackothon, Calgary, Canada, 10 developers, 1999
-Jun 04	c2k2 hackothon, "Shutup and Hack", Calgary, Canada, 42 developers, 2002
-Jun 15	c2k hackothon, Calgary, Canada, 18 developers, 2000
+Jun 04	First hackathon, Calgary, Canada, 10 developers, 1999
+Jun 04	c2k2 hackathon, "Shutup and Hack", Calgary, Canada, 42 developers, 2002
+Jun 15	c2k hackathon, Calgary, Canada, 18 developers, 2000
 Jun 15	OpenBSD 2.7 released, including OpenSSH, 2000
-Jun 21	c2k1 hackothon, Cambridge, MA, 35 developers, 2001
+Jun 21	c2k1 hackathon, Cambridge, MA, 35 developers, 2001
 Jun 24	PF added. Insane amounts of work done my dhartmei@, 2001
 Jul 01	OpenBSD 1.2 released on ftp, 1996
 Jul 01	add strlcpy/strlcat, safe and sensible string copy/append, 1998
@@ -35,14 +35,14 @@ Jul 25	Gigabit speed to OpenBSD with the addition of if_ti, 1999
 Aug 11	OpenBSD/sparc is ELF, 2002
 Aug 12	OpenBSD/sparc is switched to wscons, 2002
 Aug 16	IPX network stack added to OpenBSD, from FreeBSD, 1996
-Aug 17	c2k1-II hackothon, Washington D.C., 12 developers, 2001
+Aug 17	c2k1-II hackathon, Washington D.C., 12 developers, 2001
 Aug 17	OpenBSD/sparc64 port added, from NetBSD, 2001
 Sep 26	OpenSSH born, Sunday 11:56 MST, 1999
 Oct 14	OpenBSD born, Saturday 16:36 MST, 1995
 Nov 11	want.html added to OpenBSD/www, 1998
 Nov 27	Unified buffer & VM cache enters OpenBSD, 2001
 Nov 30	OpenBSD gets RAID suppoprt w/ a dpt(4) addition, 1999
-Dec 01	OpenBSD 3.0 released, including PF, tripple set, 2001
+Dec 01	OpenBSD 3.0 released, including PF, triple set, 2001
 Dec 07	KAME IPv6 merger TODOs.  you may want to see them earlier..., 1999
 Dec 21	OpenBSD/powerpc added, 1996
 
