@@ -1,4 +1,4 @@
-#	$OpenBSD: changelist,v 1.15 2001/03/25 04:50:27 millert Exp $
+#	$OpenBSD: changelist,v 1.16 2001/05/04 15:57:11 millert Exp $
 #
 # List of files which the security script backs up and checks
 # for modifications.
@@ -76,6 +76,7 @@
 +/etc/ssh_host_key
 /etc/ssh_host_key.pub
 /etc/sshd_config
+/etc/sudoers
 /etc/syslog.conf
 /etc/sysctl.conf
 /etc/ttys
