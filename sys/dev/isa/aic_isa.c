@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic_isa.c,v 1.1 1998/09/11 07:42:58 fgsch Exp $ */
+/*	$OpenBSD: aic_isa.c,v 1.2 1998/10/05 07:34:43 fgsch Exp $	*/
 /*	$NetBSD: aic6360.c,v 1.52 1996/12/10 21:27:51 thorpej Exp $	*/
 
 /*
@@ -98,6 +98,7 @@ aic_isa_probe(parent, match, aux)
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
 	bus_space_handle_t ioh;
+	int rv;
 
 #ifdef NEWCONFIG
 	if (ia->ia_iobase == IOBASEUNK)
@@ -108,8 +109,7 @@ aic_isa_probe(parent, match, aux)
 		return (0);
 
 	AIC_TRACE(("aic: probing for aic-chip at port 0x%x\n", ia->ia_iobase));
-	if (aic_find(iot, ioh) != 0)
-		return (0);
+	rv = aic_find(iot, ioh);
 
 	bus_space_unmap(iot, ioh, AIC_NPORTS);
 
@@ -135,9 +135,11 @@ aic_isa_probe(parent, match, aux)
 		ia->ia_drq = sc->sc_drq;
 #endif
 
-	ia->ia_msize = 0;
-	ia->ia_iosize = AIC_NPORTS;
-	return (1);
+	if (rv) {
+		ia->ia_msize = 0;
+		ia->ia_iosize = AIC_NPORTS;
+	}
+	return (rv);
 }
 
 /*
@@ -165,9 +167,9 @@ aic_isa_attach(parent, self, aux)
 	isa_establish(&sc->sc_id, &sc->sc_dev);
 #endif
 
-	aicattach(sc);
-
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
 	    IPL_BIO, aicintr, sc, sc->sc_dev.dv_xname);
+
+	aicattach(sc);
 }
 

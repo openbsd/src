@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic6360.c,v 1.1 1998/09/11 07:24:57 fgsch Exp $	*/
+/*	$OpenBSD: aic6360.c,v 1.2 1998/10/05 07:34:43 fgsch Exp $	*/
 /*	$NetBSD: aic6360.c,v 1.52 1996/12/10 21:27:51 thorpej Exp $	*/
 
 #ifdef DDB
@@ -110,7 +110,7 @@
  * kernel debugger.  If you set AIC_DEBUG to 0 they are not included (the
  * kernel uses less memory) but you lose the debugging facilities.
  */
-#define AIC_DEBUG		0
+#define AIC_DEBUG		1
 
 #define	AIC_ABORT_TIMEOUT	2000	/* time to wait for abort */
 
@@ -236,8 +236,7 @@ aic_find(iot, ioh)
 		;
 	if (i != STSIZE) {
 		AIC_START(("STACK futzed at %d.\n", i));
-		bus_space_unmap(iot, ioh, AIC_NPORTS);
-		return (1);
+		return (0);
 	}
 
 	/* See if we can pull the id string out of the ID register,
@@ -249,7 +248,7 @@ aic_find(iot, ioh)
 	AIC_START(("chip revision %d\n",
 	    (int)bus_space_read_1(iot, ioh, REV)));
 
-	return (0);
+	return (1);
 }
 
 /* 
