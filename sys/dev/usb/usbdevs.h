@@ -1,12 +1,12 @@
-/*	$OpenBSD: usbdevs.h,v 1.2 1999/08/27 08:58:58 fgsch Exp $	*/
+/*	$OpenBSD: usbdevs.h,v 1.3 1999/08/27 09:08:52 fgsch Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: usbdevs,v 1.2 1999/08/27 08:57:54 fgsch Exp 
+ *		OpenBSD: usbdevs,v 1.3 1999/08/27 09:08:03 fgsch Exp 
  */
-/* $NetBSD: usbdevs,v 1.36 1999/08/23 16:53:32 augustss Exp $ */
+/*	$NetBSD: usbdevs,v 1.39 1999/08/25 23:23:17 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -84,8 +84,10 @@
 #define	USB_VENDOR_BELKIN	0x05ab		/* In-System Design */
 #define	USB_VENDOR_APPLE	0x05ac		/* Apple Computer */
 #define	USB_VENDOR_EIZONANAO	0x05e7		/* EIZO Nanao */
+#define	USB_VENDOR_PIENGINEERING	0x05f3		/* P.I. Engineering */
 #define	USB_VENDOR_CHIC	0x05fe		/* Chic Technology */
 #define	USB_VENDOR_MACALLY	0x0618		/* Macally */
+#define	USB_VENDOR_MULTITECH	0x06e0		/* MultiTech */
 #define	USB_VENDOR_ADS	0x06e1		/* ADS Technologies */
 #define	USB_VENDOR_PLX	0x10b5		/* PLX */
 #define	USB_VENDOR_INSIDEOUT	0x1608		/* Inside Out Networks */
@@ -145,7 +147,7 @@
 /* Acer products */
 #define	USB_PRODUCT_ACER_ACERSCAN_C310U	0x12a6		/* Acerscan C310U */
 
-/* Cypress Semiconduuctor products */
+/* Cypress Semiconductor products */
 #define	USB_PRODUCT_CYPRESS_MOUSE	0x0001		/* mouse */
 
 /* Epson products */
@@ -202,11 +204,17 @@
 #define	USB_PRODUCT_LOGITECH_M4848	0x0301		/* M4848 mouse */
 #define	USB_PRODUCT_LOGITECH_USBPS2	0xc001		/* USB-PS/2 mouse */
 
+/* P.I. Engineering products */
+#define	USB_PRODUCT_PIENGINEERING_PS2USB	0x020b		/* PS2 to Mac USB Adapter */
+
 /* Chic Technology products */
 #define	USB_PRODUCT_CHIC_MOUSE1	0x0001		/* mouse */
 
 /* Macally products */
 #define	USB_PRODUCT_MACALLY_MOUSE1	0x0101		/* mouse */
+
+/* MultiTech products */
+#define	USB_PRODUCT_MULTITECH_MT5634ZBA	0xf101		/* MT5634ZBA */
 
 /* ADS products */
 #define	USB_PRODUCT_ADS_ENET	0x0008		/* Ethernet adapter */
