@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_enc.c,v 1.13 1999/11/02 00:15:56 angelos Exp $	*/
+/*	$OpenBSD: if_enc.c,v 1.14 1999/12/27 03:06:40 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -44,8 +44,7 @@
 #include <sys/socket.h>
 #include <sys/errno.h>
 #include <sys/ioctl.h>
-#include <sys/time.h>
-#include <machine/cpu.h>
+#include <sys/proc.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -60,8 +59,15 @@
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/in_var.h>
+#include <netinet/ip_var.h>
 #include <netinet/ip.h>
 #endif
+
+#ifdef INET6
+#include <netinet6/in6.h>
+#include <netinet6/ip6.h>
+#include <netinet6/ip6_var.h>
+#endif /* INET6 */
 
 #ifdef ISO
 extern struct ifqueue clnlintrq;
@@ -73,6 +79,16 @@ extern struct ifqueue nsintrq;
 
 #include "bpfilter.h"
 #include "enc.h"
+
+#ifdef ENCDEBUG
+#define DPRINTF(x)    do { if (encdebug) printf x ; } while (0)
+#else
+#define DPRINTF(x)
+#endif
+
+#ifndef offsetof
+#define offsetof(s, e) ((int)&((s *)0)->e)
+#endif
 
 struct enc_softc encif[NENC];
 
@@ -93,7 +109,8 @@ encattach(int nenc)
 
     bzero(encif, sizeof(encif));
 
-    for (i = 0; i < NENC; i++) {
+    for (i = 0; i < NENC; i++)
+    {
 	ifp = &encif[i].sc_if;
 	sprintf(ifp->if_xname, "enc%d", i);
 	ifp->if_softc = &encif[i];
@@ -119,7 +136,136 @@ void
 encstart(ifp)
 struct ifnet *ifp;
 {
-    /* XXX Code needed */
+    struct enc_softc *enc = ifp->if_softc;
+    int s, err = 0, protoflag;
+    struct mbuf *m, *mp;
+    struct tdb *tdb;
+
+    /* If the interface is not setup, flush the queue */
+    if ((enc->sc_spi == 0) && (enc->sc_sproto == 0) &&
+	((enc->sc_dst.sa.sa_family == AF_INET) ||
+	 (enc->sc_dst.sa.sa_family == AF_INET6)))
+    {
+	DPRINTF(("%s: not initialized with SA\n", ifp->if_xname));
+
+	for (;;)
+	{
+	    s = splimp();
+	    IF_DEQUEUE(&ifp->if_snd, m);
+	    splx(s);
+	    if (m == NULL)
+	      return;
+	    else
+	      m_freem(m);
+	}
+
+	/* Unreachable */
+    }
+
+    /* Find what type of processing we need to do */
+    tdb = gettdb(enc->sc_spi, &(enc->sc_dst), enc->sc_sproto);
+    if (tdb == NULL)
+    {
+	DPRINTF(("%s: SA non-existant\n", ifp->if_xname));
+
+	/* Flush the queue */
+	for (;;)
+	{
+	    s = splimp();
+	    IF_DEQUEUE(&ifp->if_snd, m);
+	    splx(s);
+	    if (m == NULL)
+	      return;
+	    else
+	      m_freem(m);
+	}
+    }
+
+    /* See if we need to notify a key mgmt. daemon to setup SAs */
+    if (ntohl(enc->sc_spi) == SPI_LOCAL_USE)
+    {
+	/*
+	 * XXX Can't do this for now, as there's no way for
+	 * XXX key mgmt. to specify link-layer properties
+	 * XXX (e.g., encrypt everything on this interface)
+	 */ 
+#ifdef notyet
+	if (tdb->tdb_satype != SADB_X_SATYPE_BYPASS)
+	  pfkeyv2_acquire(tdb, 0); /* No point checking for errors */
+#endif
+
+	/* Flush the queue */
+	for (;;)
+	{
+	    s = splimp();
+	    IF_DEQUEUE(&ifp->if_snd, m);
+	    splx(s);
+	    if (m == NULL)
+	      return;
+	    else
+	      m_freem(m);
+	}
+
+	/* Unreachable */
+    }
+
+    /* IPsec-process all packets in the queue */
+    for (;;)
+    {
+	/* Get a packet from the queue */
+	s = splimp();
+	IF_DEQUEUE(&ifp->if_snd, m);
+	splx(s);
+
+	if (m == NULL) /* Empty queue */
+	  return;
+
+	/* First, we encapsulate in etherip */
+	err = etherip_output(m, tdb, &mp, 0, 0); /* Last 2 args not used */
+	if ((mp == NULL) || err)
+	{
+	    /* Just skip this frame */
+	    if (mp)
+	      m_freem(mp);
+	    continue;
+	}
+	else
+	{
+	    m = mp;
+	    mp = NULL;
+	}
+
+	protoflag = tdb->tdb_dst.sa.sa_family;
+
+	/* IPsec packet processing -- skip encapsulation */
+	err = ipsp_process_packet(m, &mp, tdb, &protoflag, 1);
+	if ((mp == NULL) || err)
+	{
+	    if (mp)
+	      m_freem(mp);
+	    continue;
+	}
+	else
+	{
+	    m = mp;
+	    mp = NULL;
+	}
+
+#ifdef INET
+	/* Send the packet on its way, no point checking for errors here */
+	if (protoflag == AF_INET)
+	  ip_output(m, NULL, NULL, IP_ENCAPSULATED | IP_RAWOUTPUT, NULL, NULL);
+#endif /* INET */
+
+#ifdef INET6
+	/* Send the packet on its way, no point checking for errors here */
+	if (protoflag == AF_INET6)
+	  ip6_output(m, NULL, NULL, IP_ENCAPSULATED | IP_RAWOUTPUT,
+		     NULL, NULL);
+#endif /* INET6 */
+
+	/* XXX Should find a way to avoid bridging-loops, some mbuf flag ? */
+    }
 }
 
 /*
@@ -141,7 +287,8 @@ register struct rtentry *rt;
     ifp->if_lastchange = time;
     m->m_pkthdr.rcvif = ifp;
     
-    if (rt && rt->rt_flags & (RTF_REJECT|RTF_BLACKHOLE)) {
+    if (rt && rt->rt_flags & (RTF_REJECT|RTF_BLACKHOLE))
+    {
 	m_freem(m);
 	return (rt->rt_flags & RTF_BLACKHOLE ? 0 :
 		rt->rt_flags & RTF_HOST ? EHOSTUNREACH : ENETUNREACH);
@@ -150,11 +297,18 @@ register struct rtentry *rt;
     ifp->if_opackets++;
     ifp->if_obytes += m->m_pkthdr.len;
 
-    switch (dst->sa_family) {
+    switch (dst->sa_family)
+    {
 #ifdef INET
 	case AF_INET:
 	    ifq = &ipintrq;
 	    isr = NETISR_IP;
+	    break;
+#endif
+#ifdef INET6
+	case AF_INET6:
+	    ifq = &ip6intrq;
+	    isr = NETISR_IPV6;
 	    break;
 #endif
 #ifdef NS
@@ -175,7 +329,8 @@ register struct rtentry *rt;
     }
 
     s = splimp();
-    if (IF_QFULL(ifq)) {
+    if (IF_QFULL(ifq))
+    {
 	IF_DROP(ifq);
 	m_freem(m);
 	splx(s);
@@ -210,21 +365,99 @@ register struct ifnet *ifp;
 u_long cmd;
 caddr_t data;
 {
-    register struct ifaddr *ifa;
-    register int error = 0;
+    struct enc_softc *enc = (struct enc_softc *) ifp->if_softc;
+    struct ifsa *ifsa = (struct ifsa *) data;
+    struct proc *prc = curproc;             /* XXX */
+    struct tdb *tdb;
+    int s, error;
 
-    switch (cmd) {
-	case SIOCSIFADDR:
-	    /*
-	     * Everything else is done at a higher level.
-	     */
-	    ifp->if_flags |= IFF_UP;
-	    ifa = (struct ifaddr *) data;
+    switch (cmd) 
+    {
+	case SIOCGENCSA:
+	    ifsa->sa_spi = enc->sc_spi;
+	    ifsa->sa_proto = enc->sc_sproto;
+	    bcopy(&enc->sc_dst, &ifsa->sa_dst, enc->sc_dst.sa.sa_len);
+	    break;
+
+	case SIOCSENCSA:
+	    /* Check for superuser */
+	    if ((error = suser(prc->p_ucred, &prc->p_acflag)) != 0)
+	      break;
+
+	    /* Check for valid TDB */
+	    s = spltdb();
+
+	    /* Clear interface pointer in pre-existing TDB */
+	    if (enc->sc_sproto != 0)
+	    {
+		tdb = gettdb(enc->sc_spi, &enc->sc_dst, enc->sc_sproto);
+		if (tdb)
+		  tdb->tdb_interface = NULL;
+	    }
+
+	    if (ifsa->sa_proto != 0)
+	    {
+		tdb = gettdb(ifsa->sa_spi, &ifsa->sa_dst, ifsa->sa_proto);
+		if (tdb == NULL)
+		{
+		    splx(s);
+		    error = ENOENT;
+		    break;
+		}
+	    }
+	    else
+	      tdb = NULL;
+
+	    /* Clear SA if requested */
+	    if ((ifsa->sa_spi == 0) && (ifsa->sa_proto == 0))
+	    {
+		bzero(&enc->sc_dst, sizeof(union sockaddr_union));
+		enc->sc_spi = 0;
+		enc->sc_sproto = 0;
+
+		splx(s);
+		break;
+	    }
+
+	    if (tdb == NULL)
+	    {
+		splx(s);
+		error = ENOENT;
+		break;
+	    }
+
+#ifdef INET
+	    if ((ifsa->sa_dst.sa.sa_family == AF_INET) &&
+		(ifsa->sa_dst.sa.sa_len != sizeof(struct sockaddr_in)))
+	    {
+		splx(s);
+	    	error = EINVAL;
+		break;
+	    }
+#endif /* INET */
+
+#ifdef INET6
+	    if ((ifsa->sa_dst.sa.sa_family == AF_INET6) &&
+		(ifsa->sa_dst.sa.sa_len != sizeof(struct sockaddr_in6)))
+	    {
+		splx(s);
+		error = EINVAL;
+		break;
+	    }
+#endif /* INET6 */
+
+	    bcopy(&ifsa->sa_dst, &enc->sc_dst, ifsa->sa_dst.sa.sa_len);
+	    enc->sc_spi = ifsa->sa_spi;
+	    enc->sc_sproto = ifsa->sa_proto;
+	    tdb->tdb_interface = (caddr_t) ifp;
+
+	    splx(s);
 	    break;
 
 	default:
 	    error = EINVAL;
 	    break;
     }
+
     return (error);
 }

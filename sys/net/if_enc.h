@@ -44,6 +44,13 @@ struct enc_softc {
         u_int32_t		sc_sproto;
 };
 
+struct ifsa {
+        char                    sa_ifname[IFNAMSIZ];    /* bridge ifs name */
+	u_int32_t		sa_spi;
+	u_int8_t		sa_proto;
+	union sockaddr_union	sa_dst;
+};
+
 struct enchdr {
 	u_int32_t af;
 	u_int32_t spi;
