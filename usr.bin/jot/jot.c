@@ -1,4 +1,4 @@
-/*	$OpenBSD: jot.c,v 1.6 2000/12/21 15:11:29 aaron Exp $	*/
+/*	$OpenBSD: jot.c,v 1.7 2000/12/21 15:34:51 aaron Exp $	*/
 /*	$NetBSD: jot.c,v 1.3 1994/12/02 20:29:43 pk Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)jot.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: jot.c,v 1.6 2000/12/21 15:11:29 aaron Exp $";
+static char rcsid[] = "$OpenBSD: jot.c,v 1.7 2000/12/21 15:34:51 aaron Exp $";
 #endif /* not lint */
 
 /*
@@ -53,6 +53,7 @@ static char rcsid[] = "$OpenBSD: jot.c,v 1.6 2000/12/21 15:11:29 aaron Exp $";
  * Author:  John Kunze, Office of Comp. Affairs, UCB
  */
 
+#include <err.h>
 #include <ctype.h>
 #include <limits.h>
 #include <stdio.h>
@@ -75,19 +76,17 @@ int	randomize;
 int	infinity;
 int	boring;
 int	prec;
-
-
 int	dox;
 int	chardata;
 int	nofinalnl;
 char	sepstring[BUFSIZ] = "\n";
 char	format[BUFSIZ];
 
-void	error __P((char *, char *));
-void	getargs __P((int, char *[]));
-void	getformat __P((void));
-int	getprec __P((char *));
-void	putdata __P((double, long));
+void		getargs __P((int, char *[]));
+void		getformat __P((void));
+int		getprec __P((char *));
+void		putdata __P((double, long));
+static void	usage __P((void));
 
 int
 main(argc, argv)
@@ -141,47 +140,47 @@ getargs(ac, av)
 			if ((*av)[2]) {
 				if (strlcpy(format, *av + 2, sizeof(format)) >=
 				    sizeof(format))
-					error("-w word too long", "");
+					errx(1, "-w word too long");
 			} else if (!--ac)
-				error("Need context word after -w or -b", "");
+				errx(1, "Need context word after -w or -b");
 			else {
 				if (strlcpy(format, *++av, sizeof(format)) >=
 				    sizeof(format))
-					error("-w word too long", "");
+					errx(1, "-w word too long");
 			}
 			break;
 		case 's':
 			if ((*av)[2]) {
 				if (strlcpy(sepstring, *av + 2, sizeof(sepstring)) >=
 				    sizeof(sepstring))
-					error("-s word too long", "");
+					errx(1, "-s word too long");
 			} else if (!--ac)
-				error("Need string after -s", "");
+				errx(1, "Need string after -s");
 			else {
 				if (strlcpy(sepstring, *++av, sizeof(sepstring)) >=
 				    sizeof(sepstring))
-					error("-s word too long", "");
+					errx(1, "-s word too long");
 			}
 			break;
 		case 'p':
 			if ((*av)[2])
 				prec = atoi(*av + 2);
 			else if (!--ac)
-				error("Need number after -p", "");
+				errx(1, "Need number after -p");
 			else
 				prec = atoi(*++av);
 			if (prec <= 0)
-				error("Bad precision value", "");
+				errx(1, "Bad precision value");
 			break;
 		default:
-			error("Unknown option %s", *av);
+			usage();
 		}
 
 	switch (ac) {	/* examine args right to left, falling thru cases */
 	case 4:
 		if (!isdefault(av[3])) {
 			if (!sscanf(av[3], "%lf", &s))
-				error("Bad s value:  %s", av[3]);
+				errx(1, "Bad s value:  %s", av[3]);
 			mask |= 01;
 		}
 	case 3:
@@ -205,14 +204,14 @@ getargs(ac, av)
 	case 1:
 		if (!isdefault(av[0])) {
 			if (!sscanf(av[0], "%ld", &reps))
-				error("Bad reps value:  %s", av[0]);
+				errx(1, "Bad reps value:  %s", av[0]);
 			mask |= 010;
 		}
 		break;
 	case 0:
-		error("jot - print sequential or random data", "");
+		errx(1, "jot - print sequential or random data");
 	default:
-		error("Too many arguments.  What do you mean by %s?", av[4]);
+		errx(1, "Too many arguments.  What do you mean by %s?", av[4]);
 	}
 	getformat();
 	while (mask)	/* 4 bit mask has 1's where last 4 args were given */
@@ -254,7 +253,7 @@ getargs(ac, av)
 			}
 			reps = (ender - begin + s) / s;
 			if (reps <= 0)
-				error("Impossible stepsize", "");
+				errx(1, "Impossible stepsize");
 			mask = 0;
 			break;
 		case 010:
@@ -273,7 +272,7 @@ getargs(ac, av)
 			if (randomize)
 				begin = BEGIN_DEF;
 			else if (reps == 0)
-				error("Must specify begin if reps == 0", "");
+				errx(1, "Must specify begin if reps == 0");
 			begin = ender - reps * s + s;
 			mask = 0;
 			break;
@@ -292,8 +291,7 @@ getargs(ac, av)
 			if (randomize)
 				s = time(NULL);
 			else if (reps == 0)
-				error("Infinite sequences cannot be bounded",
-				    "");
+				errx(1, "Infinite sequences cannot be bounded");
 			else if (reps == 1)
 				s = 0.0;
 			else
@@ -304,14 +302,14 @@ getargs(ac, av)
 			if (!randomize && s != 0.0) {
 				long t = (ender - begin + s) / s;
 				if (t <= 0)
-					error("Impossible stepsize", "");
+					errx(1, "Impossible stepsize");
 				if (t < reps)		/* take lesser */
 					reps = t;
 			}
 			mask = 0;
 			break;
 		default:
-			error("Bad mask", "");
+			errx(1, "Bad mask");
 		}
 	if (reps == 0)
 		infinity = 1;
@@ -335,23 +333,11 @@ putdata(x, notlast)
 		fputs(sepstring, stdout);
 }
 
-void
-error(msg, s)
-	char *msg, *s;
+static void
+usage(void)
 {
-	fprintf(stderr, "jot: ");
-	fprintf(stderr, msg, s);
-	fprintf(stderr,
-	    "\nusage:  jot [ options ] [ reps [ begin [ end [ s ] ] ] ]\n");
-	if (strncmp("jot - ", msg, 6) == 0)
-		fprintf(stderr, "Options:\n\t%s\t%s\t%s\t%s\t%s\t%s\t%s",
-			"-r		random data\n",
-			"-c		character data\n",
-			"-n		no final newline\n",
-			"-b word		repeated word\n",
-			"-w word		context word\n",
-			"-s string	data separator\n",
-			"-p precision	number of characters\n");
+	(void)fprintf(stderr, "usage: jot [-cnr] [-b word] [-w word] "
+	    "[-s string] [-p precision] [reps [begin [end [s]]]]\n");
 	exit(1);
 }
 
@@ -398,7 +384,7 @@ getformat()
 		case 'f': case 'e': case 'g': case '%':
 			break;
 		case 's':
-			error("Cannot convert numeric data to strings", "");
+			errx(1, "Cannot convert numeric data to strings");
 			break;
 		/* case 'd': case 'o': case 'x': case 'D': case 'O': case 'X':
 		case 'c': case 'u': */
