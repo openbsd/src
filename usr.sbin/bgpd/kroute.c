@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.91 2004/03/10 12:59:13 henning Exp $ */
+/*	$OpenBSD: kroute.c,v 1.92 2004/03/10 13:00:42 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -74,14 +74,17 @@ int	kif_compare(struct kif_node *, struct kif_node *);
 struct kroute_node	*kroute_find(in_addr_t, u_int8_t);
 int			 kroute_insert(struct kroute_node *);
 int			 kroute_remove(struct kroute_node *);
+void			 kroute_clear(void);
 
 struct knexthop_node	*knexthop_find(struct bgpd_addr *);
 int			 knexthop_insert(struct knexthop_node *);
 int			 knexthop_remove(struct knexthop_node *);
+void			 knexthop_clear(void);
 
 struct kif_node		*kif_find(int);
 int			 kif_insert(struct kif_node *);
 int			 kif_remove(struct kif_node *);
+void			 kif_clear(void);
 
 int			 kif_kr_insert(struct kroute_node *);
 int			 kif_kr_remove(struct kroute_node *);
@@ -216,6 +219,9 @@ void
 kr_shutdown(void)
 {
 	kr_fib_decouple();
+	knexthop_clear();
+	kroute_clear();
+	kif_clear();
 }
 
 void
@@ -490,6 +496,15 @@ kroute_remove(struct kroute_node *kr)
 	return (0);
 }
 
+void
+kroute_clear(void)
+{
+	struct kroute_node	*kr;
+
+	while ((kr = RB_MIN(kroute_tree, &krt)) != NULL)
+		kroute_remove(kr);
+}
+
 struct knexthop_node *
 knexthop_find(struct bgpd_addr *addr)
 {
@@ -528,6 +543,15 @@ knexthop_remove(struct knexthop_node *kn)
 
 	free(kn);
 	return (0);
+}
+
+void
+knexthop_clear(void)
+{
+	struct knexthop_node	*kn;
+
+	while ((kn = RB_MIN(knexthop_tree, &knt)) != NULL)
+		knexthop_remove(kn);
 }
 
 struct kif_node *
@@ -574,6 +598,15 @@ kif_remove(struct kif_node *kif)
 
 	free(kif);
 	return (0);
+}
+
+void
+kif_clear(void)
+{
+	struct kif_node	*kif;
+
+	while ((kif = RB_MIN(kif_tree, &kit)) != NULL)
+		kif_remove(kif);
 }
 
 int
