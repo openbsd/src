@@ -821,6 +821,7 @@
 ./usr/libdata/perl5/OpenBSD/PackageName.pm
 ./usr/libdata/perl5/OpenBSD/PackingElement.pm
 ./usr/libdata/perl5/OpenBSD/PackingList.pm
+./usr/libdata/perl5/OpenBSD/PackingOld.pm
 ./usr/libdata/perl5/OpenBSD/PkgCfl.pm
 ./usr/libdata/perl5/OpenBSD/RequiredBy.pm
 ./usr/libdata/perl5/OpenBSD/Temp.pm
