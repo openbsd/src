@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_misc.c,v 1.13 1996/01/06 03:23:49 scottb Exp $	*/
+/*	$NetBSD: ibcs2_misc.c,v 1.14 1996/01/07 06:11:13 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
@@ -1399,12 +1399,12 @@ ibcs2_sys_readlink(p, v, retval)
 }
 
 int
-ibcs2_sysi86(p, v, retval)
+ibcs2_sys_sysi86(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct ibcs2_sysi86_args /* {
+	struct ibcs2_sys_sysi86_args /* {
 		syscallarg(int) cmd;
 		syscallarg(int) arg;
 	} */ *uap = v;

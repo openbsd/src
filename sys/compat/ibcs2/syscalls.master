@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.7 1996/01/06 03:23:55 scottb Exp $
+	$NetBSD: syscalls.master,v 1.8 1996/01/07 06:09:43 mycroft Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -103,7 +103,7 @@
 #else
 49	UNIMPL		msgsys
 #endif
-50	STD		{ int ibcs2_sysi86(int cmd, int arg); }
+50	STD		{ int ibcs2_sys_sysi86(int cmd, int arg); }
 51	UNIMPL		ibcs2_acct
 #ifdef SYSVSHM
 52	STD		{ int ibcs2_sys_shmsys(int which, int a2, int a3, \
