@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.33 2000/03/13 23:40:19 kjell Exp $	*/
+/*	$OpenBSD: parse.c,v 1.34 2000/04/05 05:35:28 kjell Exp $	*/
 
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
@@ -43,7 +43,7 @@
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)parse.c	1.44 6/5/96 (C) 1993-1996 Darren Reed";
-static const char rcsid[] = "@(#)$IPFilter: parse.c,v 2.1.2.11 2000/03/04 05:19:25 darrenr Exp $";
+static const char rcsid[] = "@(#)$IPFilter: parse.c,v 2.1.2.12 2000/03/08 11:43:55 darrenr Exp $";
 #endif
 
 extern	struct	ipopt_names	ionames[], secclass[];
@@ -1560,7 +1560,7 @@ struct	frentry	*fp;
 		type = ntohs(fp->fr_icmp);
 		code = type & 0xff;
 		type /= 256;
-		if (type < (sizeof(icmptypes) / sizeof(char *)) &&
+		if (type < (sizeof(icmptypes) / sizeof(char *) - 1) &&
 		    icmptypes[type])
 			printf(" icmp-type %s", icmptypes[type]);
 		else

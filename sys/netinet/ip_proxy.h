@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_proxy.h,v 1.7 2000/03/13 23:40:18 kjell Exp $	*/
+/*	$OpenBSD: ip_proxy.h,v 1.8 2000/04/05 05:35:27 kjell Exp $	*/
 
 /*
  * Copyright (C) 1997-1998 by Darren Reed.
@@ -7,7 +7,7 @@
  * provided that this notice is preserved and due credit is given
  * to the original author and the contributors.
  *
- * $IPFilter: ip_proxy.h,v 2.1.2.2 2000/02/22 11:41:15 darrenr Exp $
+ * $IPFilter: ip_proxy.h,v 2.1.2.3 2000/03/15 13:58:15 darrenr Exp $
  */
 
 #ifndef	__IP_PROXY_H__
@@ -85,6 +85,13 @@ typedef	struct	aproxy	{
 
 #define	APR_DELETE	1
 
+
+/*
+ * For the ftp proxy.
+ */
+typedef struct  ftpinfo {
+	u_int   ftp_passok;
+} ftpinfo_t;
 
 /*
  * Real audio proxy structure and #defines

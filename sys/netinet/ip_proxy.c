@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_proxy.c,v 1.8 2000/03/13 23:40:18 kjell Exp $	*/
+/*	$OpenBSD: ip_proxy.c,v 1.9 2000/04/05 05:35:27 kjell Exp $	*/
 
 /*
  * Copyright (C) 1997-1998 by Darren Reed.
@@ -8,7 +8,7 @@
  * to the original author and the contributors.
  */
 #if !defined(lint)
-static const char rcsid[] = "@(#)$IPFilter: ip_proxy.c,v 2.2.2.3 2000/02/29 22:47:17 darrenr Exp $";
+static const char rcsid[] = "@(#)$IPFilter: ip_proxy.c,v 2.2.2.4 2000/03/15 13:57:53 darrenr Exp $";
 #endif
 
 #if defined(__FreeBSD__) && defined(KERNEL) && !defined(_KERNEL)
@@ -102,8 +102,8 @@ ap_session_t	*ap_sess_tab[AP_SESS_SIZE];
 ap_session_t	*ap_sess_list = NULL;
 aproxy_t	ap_proxies[] = {
 #ifdef	IPF_FTP_PROXY
-	{ "ftp", (char)IPPROTO_TCP, 0, 0, ippr_ftp_init, NULL, NULL,
-	  ippr_ftp_in, ippr_ftp_out },
+	{ "ftp", (char)IPPROTO_TCP, 0, 0, ippr_ftp_init, NULL,
+	  ippr_ftp_new, ippr_ftp_in, ippr_ftp_out },
 #endif
 #ifdef	IPF_RCMD_PROXY
 	{ "rcmd", (char)IPPROTO_TCP, 0, 0, ippr_rcmd_init, NULL,
@@ -154,16 +154,18 @@ nat_t *nat;
 	if (!aps)
 		return NULL;
 	bzero((char *)aps, sizeof(*aps));
-	aps->aps_next = ap_sess_list;
 	aps->aps_p = ip->ip_p;
 	aps->aps_data = NULL;
 	aps->aps_apr = apr;
 	aps->aps_psiz = 0;
-	ap_sess_list = aps;
-	aps->aps_nat = nat;
-	nat->nat_aps = aps;
 	if (apr->apr_new != NULL)
-		(void) (*apr->apr_new)(fin, ip, aps, nat);
+		if ((*apr->apr_new)(fin, ip, aps, nat) == -1) {
+			KFREE(aps);
+			return NULL;
+		}
+	aps->aps_nat = nat;
+	aps->aps_next = ap_sess_list;
+	ap_sess_list = aps;
 	return aps;
 }
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: ifaddr.c,v 1.4 2000/03/13 23:40:19 kjell Exp $ */
+/* $OpenBSD: ifaddr.c,v 1.5 2000/04/05 05:35:28 kjell Exp $ */
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>

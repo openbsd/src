@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_raudio_pxy.c,v 1.6 2000/03/13 23:40:18 kjell Exp $	*/
+/*	$OpenBSD: ip_raudio_pxy.c,v 1.7 2000/04/05 05:35:27 kjell Exp $	*/
 
 #if SOLARIS && defined(_KERNEL)
 extern	kmutex_t	ipf_rw;
@@ -40,12 +40,13 @@ nat_t *nat;
 
 
 	KMALLOCS(aps->aps_data, void *, sizeof(raudio_t));
-	if (aps->aps_data != NULL) {
-		bzero(aps->aps_data, sizeof(raudio_t));
-		rap = aps->aps_data;
-		aps->aps_psiz = sizeof(raudio_t);
-		rap->rap_mode = RAP_M_TCP;	/* default is for TCP */
-	}
+	if (aps->aps_data == NULL)
+		return -1;
+
+	bzero(aps->aps_data, sizeof(raudio_t));
+	rap = aps->aps_data;
+	aps->aps_psiz = sizeof(raudio_t);
+	rap->rap_mode = RAP_M_TCP;	/* default is for TCP */
 	return 0;
 }
 

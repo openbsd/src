@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_nat.h,v 1.16 2000/03/13 23:40:18 kjell Exp $	*/
+/*	$OpenBSD: ip_nat.h,v 1.17 2000/04/05 05:35:27 kjell Exp $	*/
 
 /*
  * Copyright (C) 1995-1998 by Darren Reed.
@@ -8,7 +8,7 @@
  * to the original author and the contributors.
  *
  * @(#)ip_nat.h	1.5 2/4/96
- * $IPFilter: ip_nat.h,v 2.1.2.3 2000/01/24 12:44:24 darrenr Exp $
+ * $IPFilter: ip_nat.h,v 2.1.2.4 2000/03/15 13:57:03 darrenr Exp $
  */
 
 #ifndef	__IP_NAT_H__
@@ -63,14 +63,16 @@
 
 #define	DEF_NAT_AGE	1200     /* 10 minutes (600 seconds) */
 
+struct ap_session;
+
 typedef	struct	nat	{
 	u_long	nat_age;
 	int	nat_flags;
 	u_32_t	nat_sumd[2];
 	u_32_t	nat_ipsumd;
 	void	*nat_data;
-	void	*nat_aps;		/* proxy session */
-	frentry_t	*nat_fr;	/* filter rule ptr if appropriate */
+	struct	ap_session	*nat_aps;		/* proxy session */
+	struct	frentry	*nat_fr;	/* filter rule ptr if appropriate */
 	struct	in_addr	nat_inip;
 	struct	in_addr	nat_outip;
 	struct	in_addr	nat_oip;	/* other ip */

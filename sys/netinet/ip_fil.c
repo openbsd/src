@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_fil.c,v 1.32 2000/03/13 23:40:17 kjell Exp $	*/
+/*	$OpenBSD: ip_fil.c,v 1.33 2000/04/05 05:35:27 kjell Exp $	*/
 
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
@@ -9,7 +9,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-1995 Darren Reed";
-static const char rcsid[] = "@(#)$IPFilter: ip_fil.c,v 2.4.2.18 2000/02/22 11:40:06 darrenr Exp $";
+static const char rcsid[] = "@(#)$IPFilter: ip_fil.c,v 2.4.2.19 2000/03/07 14:41:39 darrenr Exp $";
 #endif
 
 #ifndef	SOLARIS
@@ -472,19 +472,23 @@ int mode;
 	SPL_NET(s);
 
 	if (unit == IPL_LOGNAT) {
-		if (!fr_running)
-			return EIO;
-		error = nat_ioctl(data, cmd, mode);
+		if (fr_running)
+			error = nat_ioctl(data, cmd, mode);
+		else
+			error = EIO;
 		SPL_X(s);
 		return error;
 	}
+
 	if (unit == IPL_LOGSTATE) {
-		if (!fr_running)
-			return EIO;
-		error = fr_state_ioctl(data, cmd, mode);
+		if (fr_running)
+			error = fr_state_ioctl(data, cmd, mode);
+		else
+			error = EIO;
 		SPL_X(s);
 		return error;
 	}
+
 	switch (cmd) {
 	case FIONREAD :
 #ifdef IPFILTER_LOG

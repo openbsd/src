@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_fil.h,v 1.17 2000/03/13 23:40:17 kjell Exp $	*/
+/*	$OpenBSD: ip_fil.h,v 1.18 2000/04/05 05:35:27 kjell Exp $	*/
 
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
@@ -8,7 +8,7 @@
  * to the original author and the contributors.
  *
  * @(#)ip_fil.h	1.35 6/5/96
- * $IPFilter: ip_fil.h,v 2.3.2.8 2000/02/23 11:16:36 darrenr Exp $
+ * $IPFilter: ip_fil.h,v 2.3.2.9 2000/03/08 11:43:30 darrenr Exp $
  */
 
 #ifndef	__IP_FIL_H__
@@ -187,7 +187,7 @@ typedef	struct	frentry {
 	u_short	fr_skip;	/* # of rules to skip */
 	u_short	fr_loglevel;	/* syslog log facility + priority */
 	int	(*fr_func) __P((int, ip_t *, fr_info_t *));	/* call this function */
-	char	fr_icode;	/* return ICMP code */
+	u_char	fr_icode;	/* return ICMP code */
 	char	fr_ifname[IFNAMSIZ];
 #if BSD >= 199306
 	char	fr_oifname[IFNAMSIZ];
