@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti_sgc.c,v 1.19 2003/12/16 06:07:13 mickey Exp $	*/
+/*	$OpenBSD: sti_sgc.c,v 1.20 2003/12/17 05:22:38 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000-2003 Michael Shalayeff
@@ -55,7 +55,7 @@
 
 #include <hppa/dev/cpudevs.h>
 
-#define	STI_ROMSIZE	0x8000
+#define	STI_ROMSIZE	(sizeof(struct sti_dd) * 4)
 #define	STI_ID_FDDI	0x280b31af	/* Medusa FDDI ROM id */
 
 /* gecko optional graphics */
@@ -116,19 +116,16 @@ sti_sgc_probe(parent, match, aux)
 	struct confargs *ca = aux;
 	bus_space_handle_t romh;
 	paddr_t rom;
-	u_int32_t id;
+	u_int32_t id, romend;
 	u_char devtype;
 	int rv = 0, romunmapped = 0;
 
 	if (ca->ca_type.iodc_type != HPPA_TYPE_FIO)
 		return (0);
 
-	/* these can only be graphics anyway */
-	if (ca->ca_type.iodc_sv_model == HPPA_FIO_GSGC)
-		return (1);
-
 	/* these need futher checking for the graphics id */
-	if (ca->ca_type.iodc_sv_model != HPPA_FIO_SGC)
+	if (ca->ca_type.iodc_sv_model != HPPA_FIO_GSGC &&
+	    ca->ca_type.iodc_sv_model != HPPA_FIO_SGC)
 		return 0;
 
 	rom = sti_sgc_getrom(cf->cf_unit, ca);
@@ -150,10 +147,6 @@ sti_sgc_probe(parent, match, aux)
 		}
 	}
 
-#ifdef STIDEBUG
-	printf("sti: romh=%x\n", romh);
-#endif
-
 	devtype = bus_space_read_1(ca->ca_iot, romh, 3);
 
 #ifdef STIDEBUG
@@ -163,13 +156,18 @@ sti_sgc_probe(parent, match, aux)
 	switch (devtype) {
 	case STI_DEVTYPE4:
 		id = bus_space_read_4(ca->ca_iot, romh, 0x8);
+		romend = bus_space_read_4(ca->ca_iot, romh, 0x18);
 		break;
 	case STI_DEVTYPE1:
 		id = (bus_space_read_1(ca->ca_iot, romh, 0x10 +  3) << 24) |
 		     (bus_space_read_1(ca->ca_iot, romh, 0x10 +  7) << 16) |
 		     (bus_space_read_1(ca->ca_iot, romh, 0x10 + 11) <<  8) |
 		     (bus_space_read_1(ca->ca_iot, romh, 0x10 + 15));
-
+		romend =
+		     (bus_space_read_1(ca->ca_iot, romh, 0x50 +  3) << 24) |
+		     (bus_space_read_1(ca->ca_iot, romh, 0x50 +  7) << 16) |
+		     (bus_space_read_1(ca->ca_iot, romh, 0x50 + 11) <<  8) |
+		     (bus_space_read_1(ca->ca_iot, romh, 0x50 + 15));
 		break;
 	default:
 #ifdef STIDEBUG
@@ -186,6 +184,15 @@ sti_sgc_probe(parent, match, aux)
 		rv = 0;
 	}
 
+	if (ca->ca_naddrs >= sizeof(ca->ca_addrs)/sizeof(ca->ca_addrs[0])) {
+		printf("sti: address list overflow\n");
+		return (0);
+	}
+
+	ca->ca_addrs[ca->ca_naddrs].addr = rom;
+	ca->ca_addrs[ca->ca_naddrs].size = round_page(romend);
+	ca->ca_naddrs++;
+
 	if (!romunmapped)
 		bus_space_unmap(ca->ca_iot, romh, STI_ROMSIZE);
 	return (rv);
@@ -199,13 +206,16 @@ sti_sgc_attach(parent, self, aux)
 	struct sti_softc *sc = (void *)self;
 	struct confargs *ca = aux;
 	paddr_t rom;
+	u_int32_t romlen;
 	int rv;
 
 	sc->memt = sc->iot = ca->ca_iot;
 	sc->base = ca->ca_hpa;
 
-	rom = sti_sgc_getrom(sc->sc_dev.dv_cfdata->cf_unit, ca);
-	if ((rv = bus_space_map(ca->ca_iot, rom, STI_ROMSIZE, 0, &sc->romh))) {
+	/* we stashed rom addr/len into the last slot during probe */
+	rom = ca->ca_addrs[ca->ca_naddrs - 1].addr;
+	romlen = ca->ca_addrs[ca->ca_naddrs - 1].size;
+	if ((rv = bus_space_map(ca->ca_iot, rom, romlen, 0, &sc->romh))) {
 		if ((rom & HPPA_IOBEGIN) == HPPA_IOBEGIN)
 			sc->romh = rom;
 		else {
