@@ -1,4 +1,4 @@
-/*	$OpenBSD: be.c,v 1.5 2001/11/28 05:42:24 jason Exp $	*/
+/*	$OpenBSD: be.c,v 1.6 2001/11/28 16:52:44 jason Exp $	*/
 /*	$NetBSD: be.c,v 1.26 2001/03/20 15:39:20 pk Exp $	*/
 
 /*-
@@ -63,6 +63,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
