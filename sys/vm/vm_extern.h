@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_extern.h,v 1.20 2001/06/27 04:52:39 art Exp $	*/
+/*	$OpenBSD: vm_extern.h,v 1.21 2001/06/27 07:10:27 art Exp $	*/
 /*	$NetBSD: vm_extern.h,v 1.20 1996/04/23 12:25:23 christos Exp $	*/
 
 /*-
@@ -46,26 +46,11 @@ struct vnode;
 struct core;
 
 #ifdef _KERNEL
-#ifdef TYPEDEF_FOR_UAP
-int		compat_43_getpagesize __P((struct proc *p, void *, int *));
-int		madvise __P((struct proc *, void *, int *));
-int		mincore __P((struct proc *, void *, int *));
-int		mprotect __P((struct proc *, void *, int *));
-int		minherit __P((struct proc *, void *, int *));
-int		msync __P((struct proc *, void *, int *));
-int		munmap __P((struct proc *, void *, int *));
-int		obreak __P((struct proc *, void *, int *));
-int		sbrk __P((struct proc *, void *, int *));
-int		smmap __P((struct proc *, void *, int *));
-int		sstk __P((struct proc *, void *, int *));
-#endif
-
 void		assert_wait __P((void *, boolean_t));
 void		swstrategy __P((struct buf *));
 void		thread_block __P((char *));
 void		thread_sleep_msg __P((void *, simple_lock_t,
 		    boolean_t, char *, int));
-
 
 /* backwards compatibility */
 #define		thread_sleep(event, lock, ruptible) \
