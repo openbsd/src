@@ -1,4 +1,4 @@
-/*	$OpenBSD: iop.c,v 1.4 2001/06/26 07:35:04 mickey Exp $	*/
+/*	$OpenBSD: iop.c,v 1.5 2001/06/26 07:47:29 niklas Exp $	*/
 /*	$NetBSD: iop.c,v 1.12 2001/03/21 14:27:05 ad Exp $	*/
 
 /*-
@@ -1264,6 +1264,10 @@ iop_systab_set(struct iop_softc *sc)
 	ioa[1] = sc->sc_status.desiredpriviosize;
 
 	if (mema[1] != 0) {
+		/*
+		 * XXX This will waste virtual memory.  We need a flag to tell
+		 * bus_space_alloc to just reserve, not actually map the area.
+		 */
 		rv = bus_space_alloc(sc->sc_bus_memt, 0, 0xffffffff,
 		    letoh32(mema[1]), PAGE_SIZE, 0, 0, &boo, &bsh);
 		mema[0] = htole32(boo);
@@ -1276,6 +1280,11 @@ iop_systab_set(struct iop_softc *sc)
 	}
 
 	if (ioa[1] != 0) {
+		/*
+		 * XXX This will potentially waste virtual memory.  We
+		 * need a flag to tell bus_space_alloc to just
+		 * reserve, not actually map the area.
+		 */
 		rv = bus_space_alloc(sc->sc_bus_iot, 0, 0xffff,
 		    letoh32(ioa[1]), 0, 0, 0, &boo, &bsh);
 		ioa[0] = htole32(boo);
