@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.7 1997/10/02 16:38:20 millert Exp $	*/
+/*	$OpenBSD: editor.c,v 1.8 1997/10/03 23:01:52 millert Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.7 1997/10/02 16:38:20 millert Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.8 1997/10/03 23:01:52 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -233,6 +233,8 @@ editor(lp, f)
 				puts("No changes.");
 			else if (writelabel(f, bootarea, &label) != 0)
 				warnx("unable to write label");
+			else
+				*lp = label;
 			break;
 
 		case 'x':
