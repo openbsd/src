@@ -40,7 +40,8 @@ typedef void *pointer;
 
 #if defined(__alpha__) || defined(__m68k__)    || defined(__i386__) || \
     defined(__m88k__)  || defined(__mips__)    || defined(__powerpc__) || \
-    defined(__sparc__) || defined(__sparc64__) || defined(__vax__)
+    defined(__sparc__) || defined(__sparc64__) || defined(__vax__) || \
+    defined(__x86_64__)
 # define	STACK_DIRECTION	-1
 #elif defined(__hppa__)
 # define	STACK_DIRECTION	1
