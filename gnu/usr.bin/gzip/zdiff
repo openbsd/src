@@ -45,10 +45,11 @@ elif test $# -eq 2; then
                 case "$2" in
 	        *[-.]gz* | *[-.][zZ] | *.t[ga]z)
 			F=`echo "$2" | sed 's|.*/||;s|[-.][zZtga]*||'`
-                        gzip -cdfq "$2" > /tmp/"$F".$$
-                        gzip -cdfq "$1" | $comp $OPTIONS - /tmp/"$F".$$
+			TF=`mktemp /tmp/"$F".XXXXXXXXXX` || exit 1
+                        gzip -cdfq "$2" > $TF
+                        gzip -cdfq "$1" | $comp $OPTIONS - $TF
                         STAT="$?"
-			/bin/rm -f /tmp/"$F".$$;;
+			/bin/rm -f $TF;;
 
                 *)      gzip -cdfq "$1" | $comp $OPTIONS - "$2"
                         STAT="$?";;

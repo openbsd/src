@@ -11,33 +11,39 @@ new=0
 block=1024
 # block is the disk block size (best guess, need not be exact)
 
-warn="(does not preserve modes and timestamp)"
-tmp=/tmp/zfoo.$$
-echo hi > $tmp.1
-echo hi > $tmp.2
-if test -z "`(${CPMOD-cpmod} $tmp.1 $tmp.2) 2>&1`"; then
-  cpmod=${CPMOD-cpmod}
-  warn=""
-fi
-
-if test -z "$cpmod" && ${TOUCH-touch} -r $tmp.1 $tmp.2 2>/dev/null; then
-  cpmod="${TOUCH-touch}"
-  cpmodarg="-r"
-  warn="(does not preserve file modes)"
-fi
-
-# check if GZIP env. variable uses -S or --suffix
-gzip -q $tmp.1
-ext=`echo $tmp.1* | sed "s|$tmp.1||"`
-rm -f $tmp.[12]*
-if test -z "$ext"; then
-  echo znew: error determining gzip extension
-  exit 1
-fi
+case "$GZIP" in
+  *-S*) ext=`echo "$GZIP" | sed 's/^.*-S[ 	]*\([^ 	]*\).*$/\1/'`
+	;;
+  *-suffix*) ext=`echo "$GZIP" | sed 's/^.*--suffix[ 	=]*\([^ 	]*\).*$/\1/'`
+	;;
+  *)	ext='.gz'
+	;;
+esac
 if test "$ext" = ".Z"; then
   echo znew: cannot use .Z as gzip extension.
   exit 1
 fi
+
+warn="(does not preserve modes and timestamp)"
+TMP1=`mktemp /tmp/zfoo.XXXXXXXXXX` || exit 1
+TMP2=`mktemp /tmp/zbar.XXXXXXXXXX`
+if [ $? -ne 0 ]; then
+  rm -f $TMP1
+  exit 1
+fi
+echo hi > $TMP1
+echo hi > $TMP2
+if test -z "`(${CPMOD-cpmod} $TMP1 $TMP2) 2>&1`"; then
+  cpmod=${CPMOD-cpmod}
+  warn=""
+fi
+
+if test -z "$cpmod" && ${TOUCH-touch} -r $TMP1 $TMP2 2>/dev/null; then
+  cpmod="${TOUCH-touch}"
+  cpmodarg="-r"
+  warn="(does not preserve file modes)"
+fi
+rm -f $TMP1 $TMP2
 
 for arg
 do

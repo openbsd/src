@@ -2,7 +2,7 @@
 
 # rcsfreeze - assign a symbolic revision number to a configuration of RCS files
 
-#	$Id: rcsfreeze.sh,v 1.2 1998/03/31 03:39:48 deraadt Exp $
+#	$Id: rcsfreeze.sh,v 1.3 2001/09/27 21:57:15 millert Exp $
 
 #       The idea is to run rcsfreeze each time a new version is checked
 #       in. A unique symbolic revision number (C_[number], where number
@@ -56,7 +56,7 @@ rcsfreeze: give log message, summarizing changes (end with EOF or single '.')" \
 
 # Stamp the logfile. Because we order the logfile the most recent
 # first we will have to save everything right now in a temporary file.
-TMPLOG=/tmp/rcsfrz$$
+TMPLOG=`mktemp /tmp/rcsfrz.XXXXXXXXXX` || exit 1
 trap 'rm -f $TMPLOG; exit 1' 1 2 13 15
 # Now ask for a log message, continously add to the log file
 (
