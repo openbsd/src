@@ -1,8 +1,9 @@
-/*	$OpenBSD: display.c,v 1.8 2001/11/19 19:02:14 mpech Exp $	*/
+/*	$OpenBSD: display.c,v 1.9 2001/12/30 08:17:32 pvalchev Exp $	*/
+/*	$NetBSD: display.c,v 1.12 2001/12/07 15:14:29 bjh21 Exp $	*/
 
 /*
- * Copyright (c) 1989 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -35,119 +36,42 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)display.c	5.11 (Berkeley) 3/9/91";*/
-static char rcsid[] = "$OpenBSD: display.c,v 1.8 2001/11/19 19:02:14 mpech Exp $";
+static char rcsid[] = "$OpenBSD: display.c,v 1.9 2001/12/30 08:17:32 pvalchev Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/stat.h>
-#include <unistd.h>
-#include <errno.h>
+
 #include <ctype.h>
+#include <err.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <err.h>
+#include <unistd.h>
+
 #include "hexdump.h"
 
 enum _vflag vflag = FIRST;
 
 static off_t address;			/* address/offset in stream */
 static off_t eaddress;			/* end address */
-static off_t savaddress;		/* saved address/offset in stream */
 
-#define PRINT { \
-	switch(pr->flags) { \
-	case F_ADDRESS: \
-		(void)printf(pr->fmt, address); \
-		break; \
-	case F_BPAD: \
-		(void)printf(pr->fmt, ""); \
-		break; \
-	case F_C: \
-		conv_c(pr, bp); \
-		break; \
-	case F_CHAR: \
-		(void)printf(pr->fmt, *bp); \
-		break; \
-	case F_DBL: { \
-		double dval; \
-		float fval; \
-		switch(pr->bcnt) { \
-		case 4: \
-			bcopy((char *)bp, (char *)&fval, sizeof(fval)); \
-			(void)printf(pr->fmt, fval); \
-			break; \
-		case 8: \
-			bcopy((char *)bp, (char *)&dval, sizeof(dval)); \
-			(void)printf(pr->fmt, dval); \
-			break; \
-		} \
-		break; \
-	} \
-	case F_INT: { \
-		int ival; \
-		short sval; \
-		switch(pr->bcnt) { \
-		case 1: \
-			(void)printf(pr->fmt, (int)*bp); \
-			break; \
-		case 2: \
-			bcopy((char *)bp, (char *)&sval, sizeof(sval)); \
-			(void)printf(pr->fmt, (int)sval); \
-			break; \
-		case 4: \
-			bcopy((char *)bp, (char *)&ival, sizeof(ival)); \
-			(void)printf(pr->fmt, ival); \
-			break; \
-		} \
-		break; \
-	} \
-	case F_P: \
-		(void)printf(pr->fmt, isprint(*bp) ? *bp : '.'); \
-		break; \
-	case F_STR: \
-		(void)printf(pr->fmt, (char *)bp); \
-		break; \
-	case F_TEXT: \
-		(void)printf(pr->fmt); \
-		break; \
-	case F_U: \
-		conv_u(pr, bp); \
-		break; \
-	case F_UINT: { \
-		u_int ival; \
-		u_short sval; \
-		switch(pr->bcnt) { \
-		case 1: \
-			(void)printf(pr->fmt, (u_int)*bp); \
-			break; \
-		case 2: \
-			bcopy((char *)bp, (char *)&sval, sizeof(sval)); \
-			(void)printf(pr->fmt, (u_int)sval); \
-			break; \
-		case 4: \
-			bcopy((char *)bp, (char *)&ival, sizeof(ival)); \
-			(void)printf(pr->fmt, ival); \
-			break; \
-		} \
-		break; \
-	} \
-	} \
-}
+static inline void print __P((PR *, u_char *));
 
 void
 display()
 {
-	extern FU *endfu;
 	FS *fs;
 	FU *fu;
 	PR *pr;
 	int cnt;
 	u_char *bp;
 	off_t saveaddress;
-	u_char savech, *savebp, *get();
+	u_char savech, *savebp;
 
-	while ((bp = get()))
+	savech = 0;
+	while ((bp = get()) != NULL)
 	    for (fs = fshead, savebp = bp, saveaddress = address; fs;
 		fs = fs->nextfs, bp = savebp, address = saveaddress)
 		    for (fu = fs->nextfu; fu; fu = fu->nextfu) {
@@ -157,20 +81,20 @@ display()
 			    for (pr = fu->nextpr; pr; address += pr->bcnt,
 				bp += pr->bcnt, pr = pr->nextpr) {
 				    if (eaddress && address >= eaddress &&
-					!(pr->flags&(F_TEXT|F_BPAD)))
+					!(pr->flags & (F_TEXT|F_BPAD)))
 					    bpad(pr);
 				    if (cnt == 1 && pr->nospace) {
 					savech = *pr->nospace;
 					*pr->nospace = '\0';
 				    }
-				    PRINT;
+				    print(pr, bp);
 				    if (cnt == 1 && pr->nospace)
 					*pr->nospace = savech;
 			    }
 		    }
 	if (endfu) {
 		/*
-		 * if eaddress not set, error or file size was multiple of
+		 * If eaddress not set, error or file size was multiple of
 		 * blocksize, and no partial block ever found.
 		 */
 		if (!eaddress) {
@@ -181,12 +105,104 @@ display()
 		for (pr = endfu->nextpr; pr; pr = pr->nextpr)
 			switch(pr->flags) {
 			case F_ADDRESS:
-				(void)printf(pr->fmt, eaddress);
+				(void)printf(pr->fmt, (quad_t)eaddress);
 				break;
 			case F_TEXT:
-				(void)printf(pr->fmt);
+				(void)printf("%s", pr->fmt);
 				break;
 			}
+	}
+}
+
+static inline void
+print(pr, bp)
+	PR *pr;
+	u_char *bp;
+{
+	   double f8;
+	    float f4;
+	  int16_t s2;
+	  int32_t s4;
+	  int64_t s8;
+	u_int16_t u2;
+	u_int32_t u4;
+	u_int64_t u8;
+
+	switch(pr->flags) {
+	case F_ADDRESS:
+		(void)printf(pr->fmt, (quad_t)address);
+		break;
+	case F_BPAD:
+		(void)printf(pr->fmt, "");
+		break;
+	case F_C:
+		conv_c(pr, bp);
+		break;
+	case F_CHAR:
+		(void)printf(pr->fmt, *bp);
+		break;
+	case F_DBL:
+		switch(pr->bcnt) {
+		case 4:
+			memmove(&f4, bp, sizeof(f4));
+			(void)printf(pr->fmt, f4);
+			break;
+		case 8:
+			memmove(&f8, bp, sizeof(f8));
+			(void)printf(pr->fmt, f8);
+			break;
+		}
+		break;
+	case F_INT:
+		switch(pr->bcnt) {
+		case 1:
+			(void)printf(pr->fmt, (quad_t)*bp);
+			break;
+		case 2:
+			memmove(&s2, bp, sizeof(s2));
+			(void)printf(pr->fmt, (quad_t)s2);
+			break;
+		case 4:
+			memmove(&s4, bp, sizeof(s4));
+			(void)printf(pr->fmt, (quad_t)s4);
+			break;
+		case 8:
+			memmove(&s8, bp, sizeof(s8));
+			(void)printf(pr->fmt, s8);
+			break;
+		}
+		break;
+	case F_P:
+		(void)printf(pr->fmt, isprint(*bp) ? *bp : '.');
+		break;
+	case F_STR:
+		(void)printf(pr->fmt, (char *)bp);
+		break;
+	case F_TEXT:
+		(void)printf("%s", pr->fmt);
+		break;
+	case F_U:
+		conv_u(pr, bp);
+		break;
+	case F_UINT:
+		switch(pr->bcnt) {
+		case 1:
+			(void)printf(pr->fmt, (u_quad_t)*bp);
+			break;
+		case 2:
+			memmove(&u2, bp, sizeof(u2));
+			(void)printf(pr->fmt, (u_quad_t)u2);
+			break;
+		case 4:
+			memmove(&u4, bp, sizeof(u4));
+			(void)printf(pr->fmt, (u_quad_t)u4);
+			break;
+		case 8:
+			memmove(&u8, bp, sizeof(u8));
+			(void)printf(pr->fmt, u8);
+			break;
+		}
+		break;
 	}
 }
 
@@ -194,19 +210,19 @@ void
 bpad(pr)
 	PR *pr;
 {
-	static char *spec = " -0+#";
+	static const char *spec = " -0+#";
 	char *p1, *p2;
 
 	/*
-	 * remove all conversion flags; '-' is the only one valid
+	 * Remove all conversion flags; '-' is the only one valid
 	 * with %s, and it's not useful here.
 	 */
 	pr->flags = F_BPAD;
-	*pr->cchar = 's';
+	pr->cchar[0] = 's';
+	pr->cchar[1] = '\0';
 	for (p1 = pr->fmt; *p1 != '%'; ++p1);
 	for (p2 = ++p1; *p1 && strchr(spec, *p1); ++p1);
-	while ((*p2++ = *p1++))
-		;
+	while ((*p2++ = *p1++) != '\0');
 }
 
 static char **_argv;
@@ -214,24 +230,20 @@ static char **_argv;
 u_char *
 get()
 {
-	extern enum _vflag vflag;
-	extern int length;
 	static int ateof = 1;
 	static u_char *curp, *savp;
 	int n;
 	int need, nread;
-	int valid_save = 0;
 	u_char *tmpp;
 
 	if (!curp) {
-		curp = (u_char *)emalloc(blocksize);
-		savp = (u_char *)emalloc(blocksize);
+		curp = emalloc(blocksize);
+		savp = emalloc(blocksize);
 	} else {
 		tmpp = curp;
 		curp = savp;
 		savp = tmpp;
-		address = savaddress += blocksize;
-		valid_save = 1;
+		address += blocksize;
 	}
 	for (need = blocksize, nread = 0;;) {
 		/*
@@ -239,16 +251,16 @@ get()
 		 * and no other files are available, zero-pad the rest of the
 		 * block and set the end flag.
 		 */
-		if (!length || ateof && !next((char **)NULL)) {
+		if (!length || (ateof && !next(NULL))) {
 			if (need == blocksize)
-				return((u_char *)NULL);
-			if (vflag != ALL && valid_save &&
-			    !bcmp(curp, savp, nread)) {
+				return(NULL);
+			if (!need && vflag != ALL &&
+			    !memcmp(curp, savp, nread)) {
 				if (vflag != DUP)
 					(void)printf("*\n");
-				return((u_char *)NULL);
+				return(NULL);
 			}
-			bzero((char *)curp + nread, need);
+			memset((char *)curp + nread, 0, need);
 			eaddress = address + nread;
 			return(curp);
 		}
@@ -264,8 +276,8 @@ get()
 		if (length != -1)
 			length -= n;
 		if (!(need -= n)) {
-			if (vflag == ALL || vflag == FIRST || !valid_save ||
-			    bcmp(curp, savp, blocksize)) {
+			if (vflag == ALL || vflag == FIRST ||
+			    memcmp(curp, savp, blocksize)) {
 				if (vflag == DUP || vflag == FIRST)
 					vflag = WAIT;
 				return(curp);
@@ -273,7 +285,7 @@ get()
 			if (vflag == WAIT)
 				(void)printf("*\n");
 			vflag = DUP;
-			address = savaddress += blocksize;
+			address += blocksize;
 			need = blocksize;
 			nread = 0;
 		}
@@ -282,13 +294,10 @@ get()
 	}
 }
 
-extern off_t skip;			/* bytes to skip */
-
 int
 next(argv)
 	char **argv;
 {
-	extern int exitval;
 	static int done;
 	int statok;
 
@@ -322,34 +331,49 @@ next(argv)
 
 void
 doskip(fname, statok)
-	char *fname;
+	const char *fname;
 	int statok;
 {
-	struct stat sbuf;
+	int cnt;
+	struct stat sb;
 
 	if (statok) {
-		if (fstat(fileno(stdin), &sbuf))
-			err(1, "%s", fname);
-		if (skip >= sbuf.st_size) {
-			skip -= sbuf.st_size;
-			address += sbuf.st_size;
+		if (fstat(fileno(stdin), &sb))
+			err(1, "fstat %s", fname);
+		if (S_ISREG(sb.st_mode) && skip >= sb.st_size) {
+			address += sb.st_size;
+			skip -= sb.st_size;
 			return;
 		}
 	}
-	if (fseek(stdin, skip, SEEK_SET))
-		err(1, "%s", fname);
-	savaddress = address += skip;
-	skip = 0;
+	if (S_ISREG(sb.st_mode)) {
+		if (fseek(stdin, skip, SEEK_SET))
+			err(1, "fseek %s", fname);
+		address += skip;
+		skip = 0;
+	} else {
+		for (cnt = 0; cnt < skip; ++cnt)
+			if (getchar() == EOF)
+				break;
+		address += cnt;
+		skip -= cnt;
+	}
 }
 
-char *
-emalloc(size)
-	int size;
+void *
+emalloc(allocsize)
+	int allocsize;
 {
-	char *p;
+	void *p;
 
-	if (!(p = malloc((u_int)size)))
-		err(1, "malloc");
-	bzero(p, size);
+	if ((p = malloc((u_int)allocsize)) == NULL)
+		nomem();
+	memset(p, 0, allocsize);
 	return(p);
+}
+
+void
+nomem()
+{
+	err(1, NULL);
 }

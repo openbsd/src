@@ -1,6 +1,8 @@
-.\"	$OpenBSD: hexdump.1,v 1.12 2000/11/09 17:52:14 aaron Exp $
-.\" Copyright (c) 1989, 1990 The Regents of the University of California.
-.\" All rights reserved.
+.\"	$OpenBSD: hexdump.1,v 1.13 2001/12/30 08:17:32 pvalchev Exp $
+.\"	$NetBSD: hexdump.1,v 1.14 2001/12/07 14:46:24 bjh21 Exp $
+.\"
+.\" Copyright (c) 1989, 1990, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -30,9 +32,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	from: @(#)hexdump.1	5.12 (Berkeley) 7/27/91
+.\"	from: @(#)hexdump.1	8.2 (Berkeley) 4/18/94
 .\"
-.Dd July 27, 1991
+.Dd April 18, 1994
 .Dt HEXDUMP 1
 .Os
 .Sh NAME
@@ -40,14 +42,20 @@
 .Nd ascii, decimal, hexadecimal, octal dump
 .Sh SYNOPSIS
 .Nm hexdump
-.Op Fl bcdovx
-.Op Fl e Ar format_string
-.Op Fl f Ar format_file
-.Op Fl n Ar length
+.Op Fl bcCdovx
 .Bk -words
-.Op Fl s Ar offset
+.Op Fl e Ar format_string
 .Ek
-.Ar file Op Ar ...
+.Bk -words
+.Op Fl f Ar format_file
+.Ek
+.Bk -words
+.Op Fl n Ar length
+.Ek
+.Bk -words
+.Op Fl s Ar skip
+.Ek
+.Ar file ...
 .Sh DESCRIPTION
 The
 .Nm
@@ -67,6 +75,11 @@ in octal, per line.
 Display the input offset in hexadecimal, followed by sixteen
 space-separated, three column, space-filled, characters of input
 data per line.
+.It Fl C
+.Em Canonical hex+ASCII display .
+Display the input offset in hexadecimal, followed by sixteen
+space-separated, two column, hexadecimal bytes, followed by the
+same sixteen bytes in %_p format enclosed in ``|'' characters.
 .It Fl d
 .Em Two-byte decimal display .
 Display the input offset in hexadecimal, followed by eight
@@ -167,7 +180,7 @@ Any whitespace before or after the slash is ignored.
 The format is required and must be surrounded by double quote
 .Pq \&"\& \&"
 marks.
-It is interpreted as an fprintf-style format string (see
+It is interpreted as a fprintf-style format string (see
 .Xr fprintf 3 ) ,
 with the
 following exceptions:
@@ -185,9 +198,11 @@ default which prints the entire string if the precision is unspecified).
 .It
 The conversion characters
 .Sq h ,
+.Sq l ,
 .Sq n ,
+.Sq p ,
 and
-.Sq p
+.Sq q
 are not supported.
 .It
 The single character escape sequences
@@ -258,7 +273,7 @@ One byte counts only.
 .Li \&%d , \&%i , \&%o ,
 .Li \&%u , \&%X , \&%x
 .Xc
-Four byte default, one and two byte counts supported.
+Four byte default, one, two, four and eight byte counts supported.
 .It Xo
 .Li \&%E , \&%e , \&%f ,
 .Li \&%G , \&%g
@@ -320,7 +335,7 @@ to specifying the
 option.
 .Pp
 .Nm
-exits 0 on success or >0 if an error occurred.
+exits 0 on success and >0 if an error occurred.
 .Sh EXAMPLES
 Display the input in perusal format:
 .Bd -literal -offset indent
@@ -336,9 +351,3 @@ Implement the \-x option:
 .Ed
 .Sh SEE ALSO
 .Xr od 1
-.Sh STANDARDS
-The
-.Nm
-utility is expected to be
-.St -p1003.2
-compatible.

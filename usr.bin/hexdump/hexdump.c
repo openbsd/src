@@ -1,8 +1,9 @@
-/*	$OpenBSD: hexdump.c,v 1.6 2001/11/19 19:02:14 mpech Exp $	*/
+/*	$OpenBSD: hexdump.c,v 1.7 2001/12/30 08:17:32 pvalchev Exp $	*/
+/*	$NetBSD: hexdump.c,v 1.7 1997/10/19 02:34:06 lukem Exp $	*/
 
 /*
- * Copyright (c) 1989 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -41,7 +42,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)hexdump.c	5.5 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$OpenBSD: hexdump.c,v 1.6 2001/11/19 19:02:14 mpech Exp $";
+static char rcsid[] = "$OpenBSD: hexdump.c,v 1.7 2001/12/30 08:17:32 pvalchev Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -54,10 +55,12 @@ int blocksize;				/* data block size */
 int exitval;				/* final exit value */
 int length = -1;			/* max bytes to read */
 
+int	main __P((int, char **));
+
 int
 main(argc, argv)
 	int argc;
-	char **argv;
+	char *argv[];
 {
 	FS *tfs;
 	char *p;
