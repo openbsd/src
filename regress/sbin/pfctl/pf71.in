@@ -1,0 +1,4 @@
+no rdr on lo0 from 10.0.1.0/24 tag regress
+   rdr on lo0 proto tcp from 10.0.0.0/8 to port 80 -> lo0
+block out on lo0 tagged regress
+
