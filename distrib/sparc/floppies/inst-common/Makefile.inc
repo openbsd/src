@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.10 1997/05/14 18:39:06 niklas Exp $
+#	$OpenBSD: Makefile.inc,v 1.11 1997/09/26 01:51:29 millert Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -26,7 +26,7 @@ all: ${CBIN}
 	dd if=/dev/zero of=${REALIMAGE} bs=120k count=12
 	vnconfig -v -c ${VND} ${REALIMAGE}
 	disklabel -w ${VND} floppy3
-	newfs -O -m 0 -o space -i 8192 -c 80 ${VND_RDEV} floppy
+	newfs -O -m 0 -o space -i 8192 -c 80 ${VND_RDEV}
 	mount ${VND_DEV} ${MOUNT_POINT}
 	mtree -def ${MTREE} -p ${MOUNT_POINT}/ -u
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
