@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.17 1997/08/29 20:36:13 kstailey Exp $
+	$OpenBSD: syscalls.master,v 1.18 1997/08/29 20:44:26 kstailey Exp $
 ;	$NetBSD: syscalls.master,v 1.17 1996/02/10 17:12:51 christos Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
@@ -377,8 +377,8 @@
 			    const void *val, int valsize); }
 247	UNIMPL		sockconfig
 #ifdef NTP
-248	NOARGS		{ int ntp_gettime(struct ntptimeval *ntvp); }
-249	NOARGS		{ int ntp_adjtime(struct timex *tp); }
+248	NOARGS		{ int sys_ntp_gettime(struct ntptimeval *ntvp); }
+249	NOARGS		{ int sys_ntp_adjtime(struct timex *tp); }
 #else
 248	UNIMPL		ntp_gettime
 249	UNIMPL		ntp_adjtime

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_ntptime.c,v 1.4 1996/06/12 07:51:06 deraadt Exp $	*/
+/*	$OpenBSD: kern_ntptime.c,v 1.5 1997/08/29 20:44:25 kstailey Exp $	*/
 /*	$NetBSD: kern_ntptime.c,v 1.2 1996/03/07 14:31:20 christos Exp $	*/
 
 /******************************************************************************
@@ -104,13 +104,13 @@ extern long pps_stbcnt;		/* stability limit exceeded */
  * ntp_gettime() - NTP user application interface
  */
 int
-ntp_gettime(p, v, retval)
+sys_ntp_gettime(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 
 {
-	struct ntp_gettime_args /* {
+	struct sys_ntp_gettime_args /* {
 		syscallarg(struct timex *) tp;
 	} */ *uap = v;
 	struct timeval atv;
@@ -191,12 +191,12 @@ ntp_gettime(p, v, retval)
  * ntp_adjtime() - NTP daemon application interface
  */
 int
-ntp_adjtime(p, v, retval)
+sys_ntp_adjtime(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct ntp_adjtime_args /* {
+	struct sys_ntp_adjtime_args /* {
 		syscallarg(struct timex *) tp;
 	} */ *uap = v;
 	struct timex ntv;
