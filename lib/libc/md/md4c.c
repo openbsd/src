@@ -22,7 +22,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: md4c.c,v 1.5 1996/11/24 02:25:58 niklas Exp $";
+static char rcsid[] = "$OpenBSD: md4c.c,v 1.6 1996/12/04 02:31:56 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <string.h>
@@ -53,10 +53,8 @@ static void MD4Transform __P ((u_int32_t [4], const unsigned char [64]));
 #define Encode memcpy
 #define Decode memcpy                       
 #else /* BIG_ENDIAN */
-static void Encode __P
-  ((unsigned char *, u_int32_t *, size_t));
-static void Decode __P
-  ((u_int32_t *, const unsigned char *, size_t));
+static void Encode __P ((void *, void *, size_t));
+static void Decode __P ((void *, const void *, size_t));
 #endif /* LITTLE_ENDIAN */
 
 static unsigned char PADDING[64] = {
@@ -94,11 +92,13 @@ static unsigned char PADDING[64] = {
 /* Encodes input (u_int32_t) into output (unsigned char). Assumes len is
      a multiple of 4.
  */
-static void Encode (output, input, len)
-unsigned char *output;
-u_int32_t *input;
+static void Encode (out, in, len)
+void *out;
+void *in;
 size_t len;
 {
+  u_int32_t *input = in;
+  unsigned char *output = out;
   size_t i, j;
 
   for (i = 0, j = 0; j < len; i++, j += 4) {
@@ -112,11 +112,13 @@ size_t len;
 /* Decodes input (unsigned char) into output (u_int32_t). Assumes len is
      a multiple of 4.
  */
-static void Decode (output, input, len)
-u_int32_t *output;
-const unsigned char *input;
+static void Decode (out, in, len)
+void *out;
+const void *in;
 size_t len;
 {
+  u_int32_t *output = out;
+  const unsigned char *input = in;
   size_t i, j;
 
   for (i = 0, j = 0; j < len; i++, j += 4)
