@@ -1,4 +1,4 @@
-/* $OpenBSD: signodefer.c,v 1.1 2002/10/21 18:46:35 marc Exp $ */
+/* $OpenBSD: signodefer.c,v 1.2 2002/10/23 22:30:04 marc Exp $ */
 /* PUBLIC DOMAIN Oct 2002 <marc@snafu.org> */
 
 /*
@@ -28,7 +28,7 @@ act_handler(int signal, siginfo_t *siginfo, void *context)
 	ASSERT(siginfo != NULL);
 
 	asprintf(&str,
-		 "%sact_handler/%d, signal %d, siginfo 0x%p, context 0x%p\n",
+		 "%sact_handler/%d, signal %d, siginfo %p, context %p\n",
 		 was_active ? "[recurse] " : "",
 		 sigcount, signal, siginfo, context);
 	CHECKe(write(STDOUT_FILENO, str, strlen(str)));
