@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.4 1999/02/26 17:05:55 jason Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.5 1999/08/05 23:03:47 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -93,7 +93,6 @@
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
-#define bootverbose 0
 
 #define VR_USEIOSPACE
 
@@ -676,34 +675,23 @@ static void vr_getmode_mii(sc)
 	ifp = &sc->arpcom.ac_if;
 
 	bmsr = vr_phy_readreg(sc, PHY_BMSR);
-	if (bootverbose)
-		printf("%s: PHY status word: %x\n", sc->sc_dev.dv_xname, bmsr);
 
 	/* fallback */
 	sc->ifmedia.ifm_media = IFM_ETHER|IFM_10_T|IFM_HDX;
 
 	if (bmsr & PHY_BMSR_10BTHALF) {
-		if (bootverbose)
-			printf("%s: 10Mbps half-duplex mode supported\n",
-							sc->sc_dev.dv_xname);
 		ifmedia_add(&sc->ifmedia,
 			IFM_ETHER|IFM_10_T|IFM_HDX, 0, NULL);
 		ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_10_T, 0, NULL);
 	}
 
 	if (bmsr & PHY_BMSR_10BTFULL) {
-		if (bootverbose)
-			printf("%s: 10Mbps full-duplex mode supported\n",
-							sc->sc_dev.dv_xname);
 		ifmedia_add(&sc->ifmedia,
 			IFM_ETHER|IFM_10_T|IFM_FDX, 0, NULL);
 		sc->ifmedia.ifm_media = IFM_ETHER|IFM_10_T|IFM_FDX;
 	}
 
 	if (bmsr & PHY_BMSR_100BTXHALF) {
-		if (bootverbose)
-			printf("%s: 100Mbps half-duplex mode supported\n",
-							sc->sc_dev.dv_xname);
 		ifp->if_baudrate = 100000000;
 		ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_100_TX, 0, NULL);
 		ifmedia_add(&sc->ifmedia,
@@ -712,9 +700,6 @@ static void vr_getmode_mii(sc)
 	}
 
 	if (bmsr & PHY_BMSR_100BTXFULL) {
-		if (bootverbose)
-			printf("%s: 100Mbps full-duplex mode supported\n",
-							sc->sc_dev.dv_xname);
 		ifp->if_baudrate = 100000000;
 		ifmedia_add(&sc->ifmedia,
 			IFM_ETHER|IFM_100_TX|IFM_FDX, 0, NULL);
@@ -723,24 +708,16 @@ static void vr_getmode_mii(sc)
 
 	/* Some also support 100BaseT4. */
 	if (bmsr & PHY_BMSR_100BT4) {
-		if (bootverbose)
-			printf("%s: 100baseT4 mode supported\n",
-							sc->sc_dev.dv_xname);
 		ifp->if_baudrate = 100000000;
 		ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_100_T4, 0, NULL);
 		sc->ifmedia.ifm_media = IFM_ETHER|IFM_100_T4;
 #ifdef FORCE_AUTONEG_TFOUR
-		if (bootverbose)
-			printf("%s: forcing on autoneg support for BT4\n",
-							sc->sc_dev.dv_xname);
 		ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_AUTO, 0 NULL):
 		sc->ifmedia.ifm_media = IFM_ETHER|IFM_AUTO;
 #endif
 	}
 
 	if (bmsr & PHY_BMSR_CANAUTONEG) {
-		if (bootverbose)
-			printf("%s: autoneg supported\n", sc->sc_dev.dv_xname);
 		ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_AUTO, 0, NULL);
 		sc->ifmedia.ifm_media = IFM_ETHER|IFM_AUTO;
 	}
@@ -1052,12 +1029,7 @@ vr_attach(parent, self, aux)
 	ifp->if_baudrate = 10000000;
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 
-	if (bootverbose)
-		printf("%s: probing for a PHY\n", sc->sc_dev.dv_xname);
 	for (i = VR_PHYADDR_MIN; i < VR_PHYADDR_MAX + 1; i++) {
-		if (bootverbose)
-			printf("%s: checking address: %d\n",
-						sc->sc_dev.dv_xname, i);
 		sc->vr_phy_addr = i;
 		vr_phy_writereg(sc, PHY_BMCR, PHY_BMCR_RESET);
 		DELAY(500);
@@ -1069,12 +1041,6 @@ vr_attach(parent, self, aux)
 	if (phy_sts) {
 		phy_vid = vr_phy_readreg(sc, PHY_VENID);
 		phy_did = vr_phy_readreg(sc, PHY_DEVID);
-		if (bootverbose) {
-			printf("%s: found PHY at address %d, ",
-					sc->sc_dev.dv_xname, sc->vr_phy_addr);
-			printf("vendor id: %x device id: %x\n",
-				phy_vid, phy_did);
-		}
 		p = vr_phys;
 		while(p->vr_vid) {
 			if (phy_vid == p->vr_vid &&
@@ -1086,9 +1052,6 @@ vr_attach(parent, self, aux)
 		}
 		if (sc->vr_pinfo == NULL)
 			sc->vr_pinfo = &vr_phys[PHY_UNKNOWN];
-		if (bootverbose)
-			printf("%s: PHY type: %s\n",
-				sc->sc_dev.dv_xname, sc->vr_pinfo->vr_name);
 	} else {
 		printf("%s: MII without any phy!\n", sc->sc_dev.dv_xname);
 		goto fail;
