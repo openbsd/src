@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txp.c,v 1.27 2001/05/10 00:44:33 jason Exp $	*/
+/*	$OpenBSD: if_txp.c,v 1.28 2001/05/15 05:18:13 jason Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -227,7 +227,7 @@ txp_attach(parent, self, aux)
 	if (txp_alloc_rings(sc))
 		return;
 
-	if (txp_command(sc, TXP_CMD_MAX_PKT_SIZE_WRITE, 0x800, 0, 0,
+	if (txp_command(sc, TXP_CMD_MAX_PKT_SIZE_WRITE, TXP_MAX_PKTLEN, 0, 0,
 	    NULL, NULL, NULL, 1))
 		return;
 
@@ -588,6 +588,7 @@ txp_rx_reclaim(sc, r)
 	struct txp_rx_desc *rxd;
 	struct ether_header *eh;
 	struct mbuf *m;
+	struct txp_swdesc *sd;
 	u_int32_t roff, woff;
 
 	roff = *r->r_roff;
@@ -602,7 +603,15 @@ txp_rx_reclaim(sc, r)
 			goto next;
 		}
 
-		m = (struct mbuf *)rxd->rx_vaddrlo;
+		/* retrieve stashed pointer */
+		bcopy((u_long *)&rxd->rx_vaddrlo, &sd, sizeof(sd));
+
+		bus_dmamap_sync(sc->sc_dmat, sd->sd_map,
+		    BUS_DMASYNC_POSTWRITE);
+		bus_dmamap_unload(sc->sc_dmat, sd->sd_map);
+		bus_dmamap_destroy(sc->sc_dmat, sd->sd_map);
+		m = sd->sd_mbuf;
+		free(sd, M_DEVBUF);
 		m->m_pkthdr.len = m->m_len = rxd->rx_len;
 
 		eh = mtod(m, struct ether_header *);
@@ -649,7 +658,7 @@ txp_rxbuf_reclaim(sc)
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	struct txp_hostvar *hv = sc->sc_hostvar;
 	struct txp_rxbuf_desc *rbd;
-	struct mbuf *m;
+	struct txp_swdesc *sd;
 	u_int32_t i, end;
 
 	end = TXP_OFFSET2IDX(hv->hv_rx_buf_read_idx);
@@ -661,20 +670,37 @@ txp_rxbuf_reclaim(sc)
 	rbd = sc->sc_rxbufs + i;
 
 	while (i != end) {
-		MGETHDR(m, M_DONTWAIT, MT_DATA);
-		if (m == NULL)
+		sd = (struct txp_swdesc *)malloc(sizeof(struct txp_swdesc),
+		    M_DEVBUF, M_NOWAIT);
+		if (sd == NULL)
 			break;
-		MCLGET(m, M_DONTWAIT);
-		if ((m->m_flags & M_EXT) == 0) {
-			m_freem(m);
-			break;
-		}
-		m->m_pkthdr.rcvif = ifp;
 
-		rbd->rb_vaddrlo = (u_int32_t)m;
-		rbd->rb_vaddrhi = 0;
-		rbd->rb_paddrlo = vtophys(m->m_data);
-		rbd->rb_paddrhi = 0;
+		MGETHDR(sd->sd_mbuf, M_DONTWAIT, MT_DATA);
+		if (sd->sd_mbuf == NULL)
+			goto err_sd;
+
+		MCLGET(sd->sd_mbuf, M_DONTWAIT);
+		if ((sd->sd_mbuf->m_flags & M_EXT) == 0)
+			goto err_mbuf;
+		sd->sd_mbuf->m_pkthdr.rcvif = ifp;
+		sd->sd_mbuf->m_pkthdr.len = sd->sd_mbuf->m_len = MCLBYTES;
+		if (bus_dmamap_create(sc->sc_dmat, TXP_MAX_PKTLEN, 1,
+		    TXP_MAX_PKTLEN, 0, BUS_DMA_NOWAIT, &sd->sd_map))
+			goto err_mbuf;
+		if (bus_dmamap_load_mbuf(sc->sc_dmat, sd->sd_map, sd->sd_mbuf,
+		    BUS_DMA_NOWAIT)) {
+			bus_dmamap_destroy(sc->sc_dmat, sd->sd_map);
+			goto err_mbuf;
+		}
+		bus_dmamap_sync(sc->sc_dmat, sd->sd_map, BUS_DMASYNC_PREWRITE);
+
+		/* stash away pointer */
+		bcopy(&sd, (u_long *)&rbd->rb_vaddrlo, sizeof(sd));
+
+		rbd->rb_paddrlo = ((u_int64_t)sd->sd_map->dm_segs[0].ds_addr)
+		    & 0xffffffff;
+		rbd->rb_paddrhi = ((u_int64_t)sd->sd_map->dm_segs[0].ds_addr)
+		    >> 32;
 
 		hv->hv_rx_buf_write_idx = TXP_IDX2OFFSET(i);
 
@@ -684,6 +710,12 @@ txp_rxbuf_reclaim(sc)
 		} else
 			rbd++;
 	}
+	return;
+
+err_mbuf:
+	m_freem(sd->sd_mbuf);
+err_sd:
+	free(sd, M_DEVBUF);
 }
 
 /*
@@ -698,6 +730,7 @@ txp_tx_reclaim(sc, r)
 	u_int32_t idx = TXP_OFFSET2IDX(*(r->r_off));
 	u_int32_t cons = r->r_cons, cnt = r->r_cnt;
 	struct txp_tx_desc *txd = r->r_desc + cons;
+	struct txp_swdesc *sd = sc->sc_txd + cons;
 	struct mbuf *m;
 
 	while (cons != idx) {
@@ -706,7 +739,11 @@ txp_tx_reclaim(sc, r)
 
 		if ((txd->tx_flags & TX_FLAGS_TYPE_M) ==
 		    TX_FLAGS_TYPE_DATA) {
-			m = (struct mbuf *)txd->tx_addrlo;
+			bus_dmamap_sync(sc->sc_dmat, sd->sd_map,
+			    BUS_DMASYNC_POSTREAD);
+			bus_dmamap_unload(sc->sc_dmat, sd->sd_map);
+			bus_dmamap_destroy(sc->sc_dmat, sd->sd_map);
+			m = sd->sd_mbuf;
 			if (m != NULL) {
 				m_freem(m);
 				txd->tx_addrlo = 0;
@@ -719,8 +756,11 @@ txp_tx_reclaim(sc, r)
 		if (++cons == TX_ENTRIES) {
 			txd = r->r_desc;
 			cons = 0;
-		} else
+			sd = sc->sc_txd;
+		} else {
 			txd++;
+			sd++;
+		}
 
 		cnt--;
 	}
@@ -754,6 +794,7 @@ txp_alloc_rings(sc)
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	struct txp_boot_record *boot;
+	struct txp_swdesc *sd;
 	u_int32_t r;
 	int i;
 
@@ -878,24 +919,40 @@ txp_alloc_rings(sc)
 	boot->br_rxbuf_siz = RXBUF_ENTRIES * sizeof(struct txp_rxbuf_desc);
 	sc->sc_rxbufs = (struct txp_rxbuf_desc *)sc->sc_rxbufring_dma.dma_vaddr;
 	for (i = 0; i < RXBUF_ENTRIES; i++) {
-		struct mbuf *m;
+		sd = (struct txp_swdesc *)malloc(sizeof(struct txp_swdesc),
+		    M_DEVBUF, M_NOWAIT);
+		if (sd == NULL)
+			break;
 
-		MGETHDR(m, M_DONTWAIT, MT_DATA);
-		if (m == NULL) {
-			printf(": rxbuf allocation failed\n");
-			goto bail_rspring;
+		MGETHDR(sd->sd_mbuf, M_DONTWAIT, MT_DATA);
+		if (sd->sd_mbuf == NULL) {
+			goto bail_rxbufring;
 		}
-		MCLGET(m, M_DONTWAIT);
-		if ((m->m_flags & M_EXT) == 0) {
-			printf(": rxbuf cluster allocation failed\n");
-			m_freem(m);
-			goto bail_rspring;
+
+		MCLGET(sd->sd_mbuf, M_DONTWAIT);
+		if ((sd->sd_mbuf->m_flags & M_EXT) == 0) {
+			goto bail_rxbufring;
 		}
-		m->m_pkthdr.rcvif = ifp;
-		sc->sc_rxbufs[i].rb_vaddrlo = (u_int32_t)m;
-		sc->sc_rxbufs[i].rb_vaddrhi = 0;
-		sc->sc_rxbufs[i].rb_paddrlo = vtophys(m->m_data);
-		sc->sc_rxbufs[i].rb_paddrhi = 0;
+		sd->sd_mbuf->m_pkthdr.len = sd->sd_mbuf->m_len = MCLBYTES;
+		sd->sd_mbuf->m_pkthdr.rcvif = ifp;
+		if (bus_dmamap_create(sc->sc_dmat, TXP_MAX_PKTLEN, 1,
+		    TXP_MAX_PKTLEN, 0, BUS_DMA_NOWAIT, &sd->sd_map)) {
+			goto bail_rxbufring;
+		}
+		if (bus_dmamap_load_mbuf(sc->sc_dmat, sd->sd_map, sd->sd_mbuf,
+		    BUS_DMA_NOWAIT)) {
+			bus_dmamap_destroy(sc->sc_dmat, sd->sd_map);
+			goto bail_rxbufring;
+		}
+		bus_dmamap_sync(sc->sc_dmat, sd->sd_map, BUS_DMASYNC_PREWRITE);
+
+		/* stash away pointer */
+		bcopy(&sd, (u_long *)&sc->sc_rxbufs[i].rb_vaddrlo, sizeof(sd));
+
+		sc->sc_rxbufs[i].rb_paddrlo =
+		    ((u_int64_t)sd->sd_map->dm_segs[0].ds_addr) & 0xffffffff;
+		sc->sc_rxbufs[i].rb_paddrhi =
+		    ((u_int64_t)sd->sd_map->dm_segs[0].ds_addr) >> 32;
 	}
 	sc->sc_hostvar->hv_rx_buf_write_idx = (RXBUF_ENTRIES - 1) *
 	    sizeof(struct txp_rxbuf_desc);
@@ -1145,8 +1202,9 @@ txp_start(ifp)
 	struct txp_tx_ring *r = &sc->sc_txhir;
 	struct txp_tx_desc *txd;
 	struct txp_frag_desc *fxd;
-	struct mbuf *mhead, *m;
-	u_int32_t firstprod, firstcnt, prod, cnt;
+	struct mbuf *m;
+	struct txp_swdesc *sd;
+	u_int32_t firstprod, firstcnt, prod, cnt, i;
 #if NVLAN > 0
 	struct ifvlan		*ifv;
 #endif
@@ -1161,30 +1219,41 @@ txp_start(ifp)
 		IF_DEQUEUE(&ifp->if_snd, m);
 		if (m == NULL)
 			break;
-		mhead = m;
-
-		if ((TX_ENTRIES - cnt) < 4) {
-			ifp->if_flags |= IFF_OACTIVE;
-			break;
-		}
 
 		firstprod = prod;
 		firstcnt = cnt;
 
+		sd = sc->sc_txd + prod;
+		sd->sd_mbuf = m;
+
+		if (bus_dmamap_create(sc->sc_dmat, TXP_MAX_SEGLEN,
+		    TX_ENTRIES - 4, TXP_MAX_PKTLEN, 0,
+		    BUS_DMA_NOWAIT, &sd->sd_map))
+			goto oactive1;
+
+		if (bus_dmamap_load_mbuf(sc->sc_dmat, sd->sd_map, m,
+		    BUS_DMA_NOWAIT))
+			goto oactive2;
+
+		/* XXX should copy if it doesn't currently fit. */
+
+		if ((TX_ENTRIES - cnt) < 4)
+			goto oactive;
+
 		txd = r->r_desc + prod;
+
+		txd->tx_flags = TX_FLAGS_TYPE_DATA;
+		txd->tx_numdesc = 0;
+		txd->tx_addrlo = 0;
+		txd->tx_addrhi = 0;
+		txd->tx_totlen = 0;
+		txd->tx_pflags = 0;
 
 		if (++prod == TX_ENTRIES)
 			prod = 0;
 
 		if (++cnt >= (TX_ENTRIES - 4))
 			goto oactive;
-
-		txd->tx_flags = TX_FLAGS_TYPE_DATA;
-		txd->tx_numdesc = 0;
-		txd->tx_addrlo = (u_int32_t)m;
-		txd->tx_addrhi = 0;
-		txd->tx_totlen = 0;
-		txd->tx_pflags = 0;
 
 #if NVLAN > 0
 		if ((m->m_flags & (M_PROTO1|M_PKTHDR)) == (M_PROTO1|M_PKTHDR) &&
@@ -1196,12 +1265,7 @@ txp_start(ifp)
 #endif
 
 		fxd = (struct txp_frag_desc *)(r->r_desc + prod);
-		while (m != NULL) {
-			if (m->m_len == 0) {
-				m = m->m_next;
-				continue;
-			}
-
+		for (i = 0; i < sd->sd_map->dm_nsegs; i++) {
 			if (++cnt >= (TX_ENTRIES - 4))
 				goto oactive;
 
@@ -1209,11 +1273,14 @@ txp_start(ifp)
 
 			fxd->frag_flags = FRAG_FLAGS_TYPE_FRAG;
 			fxd->frag_rsvd1 = 0;
-			fxd->frag_len = m->m_len;
-			fxd->frag_addrlo = vtophys(m->m_data);
-			fxd->frag_addrhi = 0;
+			fxd->frag_len = sd->sd_map->dm_segs[i].ds_len;
+			fxd->frag_addrlo =
+			    ((u_int64_t)sd->sd_map->dm_segs[i].ds_addr) &
+			    0xffffffff;
+			fxd->frag_addrhi =
+			    ((u_int64_t)sd->sd_map->dm_segs[i].ds_addr) >>
+			    32;
 			fxd->frag_rsvd2 = 0;
-			m = m->m_next;
 
 			if (++prod == TX_ENTRIES) {
 				fxd = (struct txp_frag_desc *)r->r_desc;
@@ -1227,9 +1294,10 @@ txp_start(ifp)
 
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, mhead);
+			bpf_mtap(ifp->if_bpf, m);
 #endif
 
+		bus_dmamap_sync(sc->sc_dmat, sd->sd_map, BUS_DMASYNC_PREREAD);
 		WRITE_REG(sc, r->r_reg, TXP_IDX2OFFSET(prod));
 	}
 
@@ -1238,9 +1306,14 @@ txp_start(ifp)
 	return;
 
 oactive:
+	bus_dmamap_unload(sc->sc_dmat, sd->sd_map);
+oactive2:
+	bus_dmamap_destroy(sc->sc_dmat, sd->sd_map);
+oactive1:
 	ifp->if_flags |= IFF_OACTIVE;
 	r->r_prod = firstprod;
 	r->r_cnt = firstcnt;
+	IF_PREPEND(&ifp->if_snd, m);
 }
 
 /*

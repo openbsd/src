@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txpreg.h,v 1.22 2001/05/09 02:25:09 jason Exp $ */
+/*	$OpenBSD: if_txpreg.h,v 1.23 2001/05/15 05:18:13 jason Exp $ */
 
 /*
  * Copyright (c) 2001 Aaron Campbell <aaron@monkey.org>.
@@ -551,6 +551,11 @@ struct txp_tx_ring {
 	volatile u_int32_t	*r_off;		/* hostvar index pointer */
 };
 
+struct txp_swdesc {
+	struct mbuf *		sd_mbuf;
+	bus_dmamap_t		sd_map;
+};
+
 struct txp_rx_ring {
 	struct txp_rx_desc	*r_desc;	/* base address of descs */
 	volatile u_int32_t	*r_roff;	/* hv read offset ptr */
@@ -567,6 +572,7 @@ struct txp_softc {
 	bus_dma_tag_t		sc_dmat;	/* dma tag */
 	struct txp_cmd_ring	sc_cmdring;
 	struct txp_rsp_ring	sc_rspring;
+	struct txp_swdesc	sc_txd[TX_ENTRIES];
 	void *			sc_ih;
 	struct timeout		sc_tick;
 	struct ifmedia		sc_ifmedia;
@@ -598,6 +604,9 @@ struct txp_fw_section_header {
 	u_int16_t	reserved;
 	u_int32_t	addr;
 };
+
+#define	TXP_MAX_SEGLEN	0xffff
+#define	TXP_MAX_PKTLEN	0x0800
 
 #define	WRITE_REG(sc,reg,val) \
     bus_space_write_4((sc)->sc_bt, (sc)->sc_bh, reg, val)
