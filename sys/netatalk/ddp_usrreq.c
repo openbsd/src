@@ -1,4 +1,4 @@
-/*	$OpenBSD: ddp_usrreq.c,v 1.3 2001/05/26 07:14:02 angelos Exp $	*/
+/*	$OpenBSD: ddp_usrreq.c,v 1.4 2001/05/26 07:17:11 angelos Exp $	*/
 
 /*
  * Copyright (c) 1990,1994 Regents of The University of Michigan.
@@ -462,7 +462,7 @@ at_pcballoc( so )
 {
     struct ddpcb	*ddp;
 
-    MALLOC(ddp, struct ddpcb *, sizeof(*ddp), M_PCB, M_NOWAIT);
+    MALLOC( ddp, struct ddpcb *, sizeof(*ddp), M_PCB, M_NOWAIT );
     if ( ddp == NULL ) {
 	return (ENOBUFS);
     }
@@ -517,7 +517,7 @@ at_pcbdetach( so, ddp )
 	ddp->ddp_next->ddp_prev = ddp->ddp_prev;
     }
 
-    free(ddp, M_PCB);
+    FREE( ddp, M_PCB );
 }
 
 /*
