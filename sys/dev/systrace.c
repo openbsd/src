@@ -1048,8 +1048,10 @@ systrace_preprepl(struct str_process *strp, struct systrace_replace *repl)
 	if (ret)
 		return (ret);
 
-	if (strp->replace != NULL)
+	if (strp->replace != NULL) {
 		free(strp->replace, M_XDATA);
+		strp->replace = NULL;
+	}
 
 	if (repl->strr_nrepl < 0 || repl->strr_nrepl > SYSTR_MAXARGS)
 		return (EINVAL);
