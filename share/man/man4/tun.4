@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tun.4,v 1.30 2004/06/26 12:24:28 jmc Exp $
+.\"	$OpenBSD: tun.4,v 1.31 2004/07/28 21:46:04 jmc Exp $
 .\"
 .\" Copyright (c) 2003 Marcus D. Watts  All rights reserved.
 .\"
@@ -54,10 +54,14 @@ command or by opening the character special device
 .Pa /dev/tunN .
 .Pp
 Both layer 3 and layer 2 tunneling is supported.
-Layer 3 tunneling is the default mode, to enable layer 2 tunneling mode the
+Layer 3 tunneling is the default mode; to enable layer 2 tunneling mode the
 .Ar link0
 flag needs to be set with
-.Xr ifconfig 8 .
+.Xr ifconfig 8 ,
+or by setting up a
+.Xr hostname.if 5
+configuration file for
+.Xr netstart 8 .
 In layer 2 mode the
 .Nm
 interface is simulating an Ethernet network interface.
@@ -221,7 +225,9 @@ interface address assigned to it, such as via
 .Xr inet 4 ,
 .Xr intro 4 ,
 .Xr netintro 4 ,
-.Xr ifconfig 8
+.Xr hostname.if 5 ,
+.Xr ifconfig 8 ,
+.Xr netstart 8
 .Sh BUGS
 There is no way to set
 .Dv TUN_STAYUP .
