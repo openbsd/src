@@ -1,7 +1,8 @@
-/*	$OpenBSD: abtn.c,v 1.3 2002/03/14 01:26:36 millert Exp $	*/
+/*	$OpenBSD: abtn.c,v 1.4 2002/05/22 21:01:14 miod Exp $	*/
 /*	$NetBSD: abtn.c,v 1.1 1999/07/12 17:48:26 tsubai Exp $	*/
 
 /*-
+ * Copyright (c) 2002, Miodrag Vallat.
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,10 +32,13 @@
 #include <sys/device.h>
 #include <sys/systm.h>
 
-#include <macppc/dev/adbvar.h>
-#include <macppc/dev/pm_direct.h>
+#include <machine/bus.h>
 
-#define NVRAM_BRIGHTNESS 0x140e
+#include <dev/ofw/openfirm.h>
+#include <macppc/macppc/ofw_machdep.h>
+
+#include <macppc/dev/adbvar.h>
+
 #define ABTN_HANDLER_ID 31
 
 struct abtn_softc {
@@ -43,14 +47,11 @@ struct abtn_softc {
 	int origaddr;		/* ADB device type */
 	int adbaddr;		/* current ADB address */
 	int handler_id;
-
-	int brightness;		/* backlight brightness */
-	int volume;		/* speaker volume (not yet) */
 };
 
-static int abtn_match(struct device *, void *, void *);
-static void abtn_attach(struct device *, struct device *, void *);
-static void abtn_adbcomplete(caddr_t, caddr_t, int);
+int abtn_match(struct device *, void *, void *);
+void abtn_attach(struct device *, struct device *, void *);
+void abtn_adbcomplete(caddr_t, caddr_t, int);
 
 struct cfattach abtn_ca = {
 	sizeof(struct abtn_softc), abtn_match, abtn_attach
@@ -82,13 +83,8 @@ abtn_attach(parent, self, aux)
 	struct abtn_softc *sc = (struct abtn_softc *)self;
 	struct adb_attach_args *aa = aux;
 	ADBSetInfoBlock adbinfo;
-	int bright;
 
-	printf("brightness/volume button\n");
-
-	bright = pm_read_nvram(NVRAM_BRIGHTNESS);
-	pm_set_brightness(bright);
-	sc->brightness = bright;
+	printf("brightness/volume/eject buttons\n");
 
 	sc->origaddr = aa->origaddr;
 	sc->adbaddr = aa->adbaddr;
@@ -105,26 +101,43 @@ abtn_adbcomplete(buffer, data, adb_command)
 	caddr_t buffer, data;
 	int adb_command;
 {
-	struct abtn_softc *sc = (struct abtn_softc *)data;
-	u_int cmd;
+	u_int cmd, brightness;
 
 	cmd = buffer[1];
 
 	switch (cmd) {
-	case 0x0a:
-		sc->brightness -= 8;
-		if (sc->brightness < 8)
-			sc->brightness = 8;
-		pm_set_brightness(sc->brightness);
-		pm_write_nvram(NVRAM_BRIGHTNESS, sc->brightness);
+	case 0x0a:	/* decrease brightness */
+		brightness = cons_brightness;
+		if (brightness == MAX_BRIGHTNESS)
+			brightness++;		/* get round values */
+		brightness -= STEP_BRIGHTNESS;
+		of_setbrightness(brightness);
 		break;
 
-	case 0x09:
-		sc->brightness += 8;
-		if (sc->brightness > 0x78)
-			sc->brightness = 0x78;
-		pm_set_brightness(sc->brightness);
-		pm_write_nvram(NVRAM_BRIGHTNESS, sc->brightness);
+	case 0x09:	/* increase brightness */
+		brightness = cons_brightness + STEP_BRIGHTNESS;
+		of_setbrightness(brightness);
 		break;
+
+#ifdef DEBUG
+	case 0x08:	/* mute */
+	case 0x01:	/* mute, AV hardware */
+	case 0x07:	/* decrease volume */
+	case 0x02:	/* decrease volume, AV hardware */
+	case 0x06:	/* increase volume */
+	case 0x03:	/* increase volume, AV hardware */
+		break;
+
+	case 0x0b:	/* eject tray */
+		break;
+
+	case 0x7f:	/* numlock */
+		break;
+
+	default:
+		if ((cmd & ~0x7f) == 0))
+			printf("unknown ADB button %d\n", cmd);
+		break;
+#endif
 	}
 }
