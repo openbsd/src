@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.2 1998/09/21 07:36:05 pjanzen Exp $	*/
+/*	$OpenBSD: def.h,v 1.3 1999/03/22 05:36:57 pjanzen Exp $	*/
 /*	$NetBSD: def.h,v 1.3 1995/03/21 15:03:47 cgd Exp $	*/
 
 /*-
@@ -50,7 +50,9 @@
 
 #define AUTHOR_STR		"ATC - by Ed James"
 
-#define PI			3.14159654
+#ifndef M_PI
+#define M_PI			3.14159265358979323846
+#endif
 
 #define LOWFUEL			15
 
@@ -59,7 +61,7 @@
 #define SGN(x)			((x < 0) ? -1 : ((x > 0) ? 1 : 0))
 #define ABS(x)			((x < 0) ? -(x) : (x))
 #define DIR_FROM_DXDY(dx,dy)	((int) (atan2((double)(dy), (double)(dx)) \
-				* MAXDIR / (2 * PI) + 2.5 + MAXDIR) % MAXDIR)
+				* MAXDIR / (2 * M_PI) + 2.5 + MAXDIR) % MAXDIR)
 
 #define MAXDIR		8
 
