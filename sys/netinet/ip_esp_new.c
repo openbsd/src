@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp_new.c,v 1.4 1997/09/24 00:05:34 angelos Exp $	*/
+/*	$OpenBSD: ip_esp_new.c,v 1.5 1997/09/24 18:39:40 angelos Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -706,9 +706,39 @@ esp_new_input(struct mbuf *m, struct tdb *tdb)
      * blk[7] contains the next protocol, and blk[6] contains the
      * amount of padding the original chain had. Chop off the
      * appropriate parts of the chain, and return.
+     * Verify correct decryption by checking the last padding bytes.
      */
 
-    m_adj(m, - blk[6] - 2 - alen);
+    if (xd->edx_flags & ESP_NEW_FLAG_OPADDING)
+    {
+        if (blk[6] != blk[5])
+	{
+	    log(LOG_ALERT, "esp_new_input(): decryption failed for packet from %x to %x, SA %x/%08x\n", ipo.ip_src, ipo.ip_dst, tdb->tdb_dst, ntohl(tdb->tdb_spi));
+	    m_freem(m);
+	    return NULL;
+	} 
+
+      	m_adj(m, - blk[6] - 2 - alen);		/* Old type padding */
+    }
+    else
+    {
+	if (blk[6] == 0)
+	{
+	    log(LOG_ALERT, "esp_new_input(): decryption failed for packet from %x to %x, SA %x/%08x -- peer is probably using old style padding\n", ipo.ip_src, ipo.ip_dst, tdb->tdb_dst, ntohl(tdb->tdb_spi));
+	    m_freem(m);
+	    return NULL;
+	}
+	else
+	  if ((blk[6] == 0) || (blk[6] != blk[5] + 1))
+          {
+              log(LOG_ALERT, "esp_new_input(): decryption failed for packet from %x to %x, SA %x/%08x\n", ipo.ip_src, ipo.ip_dst, tdb->tdb_dst, ntohl(tdb->tdb_spi));
+              m_freem(m);
+              return NULL;
+          }
+
+      	m_adj(m, - blk[6] - 1 - alen);
+    }
+
     m_adj(m, 2 * sizeof(u_int32_t) + xd->edx_ivlen);
 
     if (m->m_len < (ipo.ip_hl << 2))
@@ -729,7 +759,11 @@ esp_new_input(struct mbuf *m, struct tdb *tdb)
     ipo.ip_id = htons(ipo.ip_id);
     ipo.ip_off = 0;
     ipo.ip_len += (ipo.ip_hl << 2) -  2 * sizeof(u_int32_t) - xd->edx_ivlen -
-		  blk[6] - 2 - alen;
+		  blk[6] - 1 - alen;
+
+    if (xd->edx_flags & ESP_NEW_FLAG_OPADDING)
+      ipo.ip_len -= 1;
+
     ipo.ip_len = htons(ipo.ip_len);
     ipo.ip_sum = 0;
     *ip = ipo;
@@ -743,9 +777,15 @@ esp_new_input(struct mbuf *m, struct tdb *tdb)
     /* Update the counters */
     tdb->tdb_cur_packets++;
     tdb->tdb_cur_bytes += ntohs(ip->ip_len) - (ip->ip_hl << 2) + 
-	                  blk[6] + 2 + alen;
+	                  blk[6] + 1 + alen;
     espstat.esps_ibytes += ntohs(ip->ip_len) - (ip->ip_hl << 2) + 
-                           blk[6] + 2 + alen;
+                           blk[6] + 1 + alen;
+
+    if (xd->edx_flags & ESP_NEW_FLAG_OPADDING)
+    {
+	tdb->tdb_cur_bytes++;
+	espstat.esps_ibytes++;
+    }
 
     /* Notify on expiration */
     if (tdb->tdb_flags & TDBF_SOFT_PACKETS)
@@ -911,8 +951,16 @@ esp_new_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
       	return ENOBUFS;
     }
 
-    pad[padding-2] = padding - 2;
-    pad[padding-1] = nh;
+    /* Self describing padding */
+    for (i = 0; i < padding - 2; i++)
+      pad[i] = i + 1;
+
+    if (xd->edx_flags & ESP_NEW_FLAG_OPADDING)
+      pad[padding - 2] = padding - 2;
+    else
+      pad[padding - 2] = padding - 1;
+
+    pad[padding - 1] = nh;
 
     mi = mo = m;
     plen = rlen + padding;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.h,v 1.11 1997/09/23 21:42:20 angelos Exp $	*/
+/*	$OpenBSD: ip_esp.h,v 1.12 1997/09/24 18:39:38 angelos Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -126,6 +126,8 @@ struct esp_new_xencap
 #define ESP_NEW_XENCAP_LEN	(6 * sizeof(u_int32_t))
 
 #define ESP_NEW_FLAG_AUTH	0x00000001	/* Doing authentication too */
+#define ESP_NEW_FLAG_OPADDING	0x00000002	/* Old style padding */
+
 struct esp_new_xdata
 {
     u_int32_t   edx_enc_algorithm;
