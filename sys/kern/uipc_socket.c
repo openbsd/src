@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.4 1996/08/05 01:00:53 deraadt Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.5 1996/08/14 07:26:21 deraadt Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -427,7 +427,7 @@ restart:
 				} else
 					len = min(MCLBYTES, resid);
 #endif
-				space -= MCLBYTES;
+				space -= len;
 			} else {
 nopages:
 				len = min(min(mlen, resid), space);
