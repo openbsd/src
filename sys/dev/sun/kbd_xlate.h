@@ -1,5 +1,5 @@
-/*	$OpenBSD: kbd_xlate.h,v 1.2 1997/01/15 07:09:31 kstailey Exp $	*/
-/*	$NetBSD: kbd_xlate.h,v 1.1.1.1 1996/01/24 01:15:35 gwr Exp $	*/
+/*	$OpenBSD: kbd_xlate.h,v 1.3 1997/08/08 08:17:19 downsj Exp $	*/
+/*	$NetBSD: kbd_xlate.h,v 1.2 1996/12/17 20:46:15 gwr Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -90,3 +90,4 @@ extern int kbd_code_to_keysym __P((struct kbd_state *ks, int c));
 extern int kbd_iopen __P((int unit));
 extern void kd_init __P((int unit));
 extern void kd_input __P((int c));
+

@@ -1,5 +1,5 @@
-/*	$OpenBSD: kbd.c,v 1.6 1997/01/15 07:09:29 kstailey Exp $	*/
-/*	$NetBSD: kbd.c,v 1.8 1996/05/17 19:32:06 gwr Exp $	*/
+/*	$OpenBSD: kbd.c,v 1.7 1997/08/08 08:17:15 downsj Exp $	*/
+/*	$NetBSD: kbd.c,v 1.14 1997/07/17 01:17:45 jtk Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -60,15 +60,17 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/proc.h>
-#include <sys/device.h>
 #include <sys/conf.h>
-#include <sys/file.h>
+#include <sys/device.h>
 #include <sys/ioctl.h>
+#include <sys/kernel.h>
+#include <sys/proc.h>
+#include <sys/signal.h>
 #include <sys/signalvar.h>
 #include <sys/time.h>
-#include <sys/kernel.h>
 #include <sys/syslog.h>
+#include <sys/select.h>
+#include <sys/poll.h>
 
 #include <dev/ic/z8530reg.h>
 #include <machine/z8530var.h>
@@ -78,6 +80,7 @@
 
 #include "event_var.h"
 #include "kbd_xlate.h"
+#include "locators.h"
 
 /*
  * Ideas:
@@ -169,17 +172,14 @@ struct kbd_softc {
 };
 
 /* Prototypes */
-int 	kbd_docmd(struct kbd_softc *k, int cmd);
-int 	kbd_iopen(int unit);
-void	kbd_new_layout(struct kbd_softc *k);
-void	kbd_output(struct kbd_softc *k, int c);
-void	kbd_repeat(void *arg);
-void	kbd_set_leds(struct kbd_softc *k, int leds);
-void	kbd_start_tx(struct kbd_softc *k);
-void	kbd_update_leds(struct kbd_softc *k);
-void	kbd_was_reset(struct kbd_softc *k);
-
-extern void kd_input(int ascii);
+static void	kbd_new_layout(struct kbd_softc *k);
+static void	kbd_output(struct kbd_softc *k, int c);
+static void	kbd_repeat(void *arg);
+static void	kbd_set_leds(struct kbd_softc *k, int leds);
+static void	kbd_start_tx(struct kbd_softc *k);
+static void	kbd_update_leds(struct kbd_softc *k);
+static void	kbd_was_reset(struct kbd_softc *k);
+static int 	kbd_drain_tx(struct kbd_softc *k);
 
 cdev_decl(kbd);	/* open, close, read, write, ioctl, stop, ... */
 
@@ -189,18 +189,8 @@ struct zsops zsops_kbd;
  * Definition of the driver for autoconfig.
  ****************************************************************/
 
-static int	kbd_match __P((struct device *, void *, void *));
-static void	kbd_attach __P((struct device *, struct device *, void *));
-
-static int	kbd_drain_tx __P((struct kbd_softc *));
-static void	kbd_input_string __P((struct kbd_softc *, char *str));
-static void	kbd_input_funckey __P((struct kbd_softc *,register int));
-static void	kbd_input_keysym __P((struct kbd_softc *,register int));
-static void	kbd_input_raw __P((struct kbd_softc *,register int));
-static void	kbd_rxint __P((register struct zs_chanstate *));
-static void	kbd_txint __P((register struct zs_chanstate *));
-static void	kbd_stint __P((register struct zs_chanstate *));
-static void	kbd_softint __P((register struct zs_chanstate *));
+static int	kbd_match(struct device *, void *, void *);
+static void	kbd_attach(struct device *, struct device *, void *);
 
 struct cfattach kbd_ca = {
 	sizeof(struct kbd_softc), kbd_match, kbd_attach
@@ -215,15 +205,15 @@ struct cfdriver kbd_cd = {
  * kbd_match: how is this zs channel configured?
  */
 int 
-kbd_match(parent, match, aux)
+kbd_match(parent, vcf, aux)
 	struct device *parent;
-	void   *match, *aux;
+	void *vcf, *aux;
 {
-	struct cfdata *cf = match;
+	struct cfdata *cf = vcf;
 	struct zsc_attach_args *args = aux;
 
 	/* Exact match required for keyboard. */
-	if (cf->cf_loc[0] == args->channel)
+	if (cf->cf_loc[ZSCCF_CHANNEL] == args->channel)
 		return 2;
 
 	return 0;
@@ -241,12 +231,12 @@ kbd_attach(parent, self, aux)
 	struct zs_chanstate *cs;
 	struct cfdata *cf;
 	int channel, kbd_unit;
-	int reset, s, tconst;
+	int reset, s;
 
 	cf = k->k_dev.dv_cfdata;
 	kbd_unit = k->k_dev.dv_unit;
 	channel = args->channel;
-	cs = &zsc->zsc_cs[channel];
+	cs = zsc->zsc_cs[channel];
 	cs->cs_private = k;
 	cs->cs_ops = &zsops_kbd;
 	k->k_cs = cs;
@@ -258,7 +248,6 @@ kbd_attach(parent, self, aux)
 	printf("\n");
 
 	/* Initialize the speed, etc. */
-	tconst = BPS_TO_TCONST(cs->cs_brg_clk, KBD_BPS);
 	s = splzs();
 	if (k->k_isconsole == 0) {
 		/* Not the console; may need reset. */
@@ -267,9 +256,9 @@ kbd_attach(parent, self, aux)
 		zs_write_reg(cs, 9, reset);
 	}
 	/* These are OK as set by zscc: WR3, WR4, WR5 */
-	cs->cs_preg[5] |= ZSWR5_DTR | ZSWR5_RTS;
-	cs->cs_preg[12] = tconst;
-	cs->cs_preg[13] = tconst >> 8;
+	/* We don't care about status interrupts. */
+	cs->cs_preg[1] = ZSWR1_RIE | ZSWR1_TIE;
+	(void) zs_set_speed(cs, KBD_BPS);
 	zs_loadchannelregs(cs);
 	splx(s);
 
@@ -505,7 +494,7 @@ kbd_iockeymap(ks, cmd, kio)
 	u_long cmd;
 	struct kiockeymap *kio;
 {
-	struct keymap *km;
+	u_short *km;
 	u_int station;
 
 	switch (kio->kio_tablemask) {
@@ -534,11 +523,11 @@ kbd_iockeymap(ks, cmd, kio)
 	switch (cmd) {
 
 	case KIOCGKEY:	/* Get keymap entry */
-		kio->kio_entry = km->keymap[station];
+		kio->kio_entry = km[station];
 		break;
 
 	case KIOCSKEY:	/* Set keymap entry */
-		km->keymap[station] = kio->kio_entry;
+		km[station] = kio->kio_entry;
 		break;
 
 	default:
@@ -659,6 +648,10 @@ kbd_iocsled(k, data)
  *  - raw key codes to keysym
  ****************************************************************/
 
+static void kbd_input_string __P((struct kbd_softc *, char *));
+static void kbd_input_funckey __P((struct kbd_softc *, int));
+static void kbd_input_keysym __P((struct kbd_softc *, int));
+static void kbd_input_raw __P((struct kbd_softc *k, int));
 
 /*
  * Initialization done by either kdcninit or kbd_iopen
@@ -690,7 +683,7 @@ kbd_code_to_keysym(ks, c)
 	register struct kbd_state *ks;
 	register int c;
 {
-	struct keymap *km;
+	u_short *km;
 	int keysym;
 
 	/*
@@ -713,7 +706,7 @@ kbd_code_to_keysym(ks, c)
 		 */
 		return (KEYSYM_NOP);
 	}
-	keysym = km->keymap[KEY_CODE(c)];
+	keysym = km[KEY_CODE(c)];
 
 	/*
 	 * Post-processing for Caps-lock
@@ -737,7 +730,7 @@ kbd_code_to_keysym(ks, c)
 	return (keysym);
 }
 
-static void
+void
 kbd_input_string(k, str)
 	struct kbd_softc *k;
 	char *str;
@@ -748,7 +741,7 @@ kbd_input_string(k, str)
 	}
 }
 
-static void
+void
 kbd_input_funckey(k, keysym)
 	struct kbd_softc *k;
 	register int keysym;
@@ -769,7 +762,7 @@ kbd_input_funckey(k, keysym)
  * This is called by kbd_input_raw() or by kb_repeat()
  * to deliver ASCII input.  Called at spltty().
  */
-static void
+void
 kbd_input_keysym(k, keysym)
 	struct kbd_softc *k;
 	register int keysym;
@@ -830,7 +823,7 @@ kbd_input_keysym(k, keysym)
  * This is the autorepeat timeout function.
  * Called at splsoftclock().
  */
-void
+static void
 kbd_repeat(void *arg)
 {
 	struct kbd_softc *k = (struct kbd_softc *)arg;
@@ -961,6 +954,11 @@ kbd_input_raw(k, c)
  * Interface to the lower layer (zscc)
  ****************************************************************/
 
+static void kbd_rxint __P((struct zs_chanstate *));
+static void kbd_txint __P((struct zs_chanstate *));
+static void kbd_stint __P((struct zs_chanstate *));
+static void kbd_softint __P((struct zs_chanstate *));
+
 static void
 kbd_rxint(cs)
 	register struct zs_chanstate *cs;
@@ -993,7 +991,7 @@ kbd_rxint(cs)
 		k->k_magic1_down = 0;
 		if ((c == k->k_magic2) && k->k_isconsole) {
 			/* Magic "L1-A" sequence; enter debugger. */
-			zs_abort();
+			zs_abort(cs);
 			/* Debugger done.  Fake L1-up to finish it. */
 			c = k->k_magic1 | KBD_UP;
 		}
@@ -1050,11 +1048,18 @@ kbd_stint(cs)
 #if 0
 	if (rr0 & ZSRR0_BREAK) {
 		/* Keyboard unplugged? */
-		zs_abort();
+		zs_abort(cs);
 		return (0);
 	}
 #endif
 
+	/*
+	 * We have to accumulate status line changes here.
+	 * Otherwise, if we get multiple status interrupts
+	 * before the softint runs, we could fail to notice
+	 * some status line changes in the softint routine.
+	 * Fix from Bill Studenmund, October 1996.
+	 */
 	cs->cs_rr0_delta |= (cs->cs_rr0 ^ rr0);
 	cs->cs_rr0 = rr0;
 	k->k_intr_flags |= INTR_ST_CHECK;
@@ -1230,7 +1235,7 @@ out:
 /*
  * Called by kbd_input_raw, at spltty()
  */
-void
+static void
 kbd_was_reset(k)
 	struct kbd_softc *k;
 {
@@ -1275,7 +1280,7 @@ kbd_was_reset(k)
 /*
  * Called by kbd_input_raw, at spltty()
  */
-void
+static void
 kbd_new_layout(k)
 	struct kbd_softc *k;
 {
@@ -1316,7 +1321,7 @@ kbd_drain_tx(k)
  * Enqueue some output for the keyboard
  * Called at spltty().
  */
-void
+static void
 kbd_output(k, c)
 	struct kbd_softc *k;
 	int c;	/* the data */
@@ -1341,7 +1346,7 @@ kbd_output(k, c)
  * Start the sending data from the output queue
  * Called at spltty().
  */
-void
+static void
 kbd_start_tx(k)
     struct kbd_softc *k;
 {
@@ -1379,7 +1384,7 @@ kbd_start_tx(k)
  * Called at spltty by:
  * kbd_update_leds, kbd_iocsled
  */
-void
+static void
 kbd_set_leds(k, new_leds)
 	struct kbd_softc *k;
 	int new_leds;
@@ -1405,7 +1410,7 @@ kbd_set_leds(k, new_leds)
  * Called at spltty by:
  * kbd_input_keysym
  */
-void
+static void
 kbd_update_leds(k)
     struct kbd_softc *k;
 {
@@ -1422,3 +1427,4 @@ kbd_update_leds(k)
 
 	kbd_set_leds(k, leds);
 }
+

@@ -1,5 +1,5 @@
-/*	$OpenBSD: ms.c,v 1.6 1997/01/15 07:09:33 kstailey Exp $	*/
-/*	$NetBSD: ms.c,v 1.6 1996/05/17 19:32:09 gwr Exp $	*/
+/*	$OpenBSD: ms.c,v 1.7 1997/08/08 08:17:20 downsj Exp $	*/
+/*	$NetBSD: ms.c,v 1.12 1997/07/17 01:17:47 jtk Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -58,19 +58,25 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/proc.h>
-#include <sys/device.h>
 #include <sys/conf.h>
+#include <sys/device.h>
 #include <sys/ioctl.h>
 #include <sys/kernel.h>
+#include <sys/proc.h>
+#include <sys/signal.h>
 #include <sys/signalvar.h>
+#include <sys/time.h>
 #include <sys/syslog.h>
+#include <sys/select.h>
+#include <sys/poll.h>
+
+#include <machine/vuid_event.h>
 
 #include <dev/ic/z8530reg.h>
 #include <machine/z8530var.h>
-#include <machine/vuid_event.h>
 
 #include "event_var.h"
+#include "locators.h"
 
 /*
  * How many input characters we can buffer.
@@ -141,14 +147,8 @@ struct zsops zsops_ms;
  * Definition of the driver for autoconfig.
  ****************************************************************/
 
-static int	ms_match __P((struct device *, void *, void *));
-static void	ms_attach __P((struct device *, struct device *, void *));
-
-static void	ms_input __P((register struct ms_softc *, register int));
-static void	ms_rxint __P((register struct zs_chanstate *));
-static void	ms_txint __P((register struct zs_chanstate *));
-static void	ms_stint __P((register struct zs_chanstate *));
-static void	ms_softint __P((struct zs_chanstate *));
+static int	ms_match(struct device *, void *, void *);
+static void	ms_attach(struct device *, struct device *, void *);
 
 struct cfattach ms_ca = {
 	sizeof(struct ms_softc), ms_match, ms_attach
@@ -163,15 +163,15 @@ struct cfdriver ms_cd = {
  * ms_match: how is this zs channel configured?
  */
 int 
-ms_match(parent, match, aux)
+ms_match(parent, vcf, aux)
 	struct device *parent;
-	void   *match, *aux;
+	void *vcf, *aux;
 {
-	struct cfdata *cf = match;
+	struct cfdata *cf = vcf;
 	struct zsc_attach_args *args = aux;
 
 	/* Exact match required for keyboard. */
-	if (cf->cf_loc[0] == args->channel)
+	if (cf->cf_loc[ZSCCF_CHANNEL] == args->channel)
 		return 2;
 
 	return 0;
@@ -189,12 +189,12 @@ ms_attach(parent, self, aux)
 	struct zs_chanstate *cs;
 	struct cfdata *cf;
 	int channel, ms_unit;
-	int reset, s, tconst;
+	int reset, s;
 
 	cf = ms->ms_dev.dv_cfdata;
 	ms_unit = ms->ms_dev.dv_unit;
 	channel = args->channel;
-	cs = &zsc->zsc_cs[channel];
+	cs = zsc->zsc_cs[channel];
 	cs->cs_private = ms;
 	cs->cs_ops = &zsops_ms;
 	ms->ms_cs = cs;
@@ -202,16 +202,15 @@ ms_attach(parent, self, aux)
 	printf("\n");
 
 	/* Initialize the speed, etc. */
-	tconst = BPS_TO_TCONST(cs->cs_brg_clk, MS_BPS);
 	s = splzs();
 	/* May need reset... */
 	reset = (channel == 0) ?
 		ZSWR9_A_RESET : ZSWR9_B_RESET;
 	zs_write_reg(cs, 9, reset);
 	/* These are OK as set by zscc: WR3, WR4, WR5 */
-	cs->cs_preg[5] |= ZSWR5_DTR | ZSWR5_RTS;
-	cs->cs_preg[12] = tconst;
-	cs->cs_preg[13] = tconst >> 8;
+	/* We don't care about status or tx interrupts. */
+	cs->cs_preg[1] = ZSWR1_RIE;
+	(void) zs_set_speed(cs, MS_BPS);
 	zs_loadchannelregs(cs);
 	splx(s);
 
@@ -344,6 +343,9 @@ msselect(dev, rw, p)
 /****************************************************************
  * Middle layer (translator)
  ****************************************************************/
+
+static void ms_input __P((struct ms_softc *, int c));
+
 
 /*
  * Called by our ms_softint() routine on input.
@@ -486,6 +488,11 @@ out:
  * Interface to the lower layer (zscc)
  ****************************************************************/
 
+static void ms_rxint __P((struct zs_chanstate *));
+static void ms_txint __P((struct zs_chanstate *));
+static void ms_stint __P((struct zs_chanstate *));
+static void ms_softint __P((struct zs_chanstate *));
+
 static void
 ms_rxint(cs)
 	register struct zs_chanstate *cs;
@@ -554,6 +561,13 @@ ms_stint(cs)
 	rr0 = zs_read_csr(cs);
 	zs_write_csr(cs, ZSWR0_RESET_STATUS);
 
+	/*
+	 * We have to accumulate status line changes here.
+	 * Otherwise, if we get multiple status interrupts
+	 * before the softint runs, we could fail to notice
+	 * some status line changes in the softint routine.
+	 * Fix from Bill Studenmund, October 1996.
+	 */
 	cs->cs_rr0_delta |= (cs->cs_rr0 ^ rr0);
 	cs->cs_rr0 = rr0;
 	ms->ms_intr_flags |= INTR_ST_CHECK;
