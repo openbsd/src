@@ -1,4 +1,4 @@
-/*	$OpenBSD: bioskbd.S,v 1.5 1997/04/21 19:47:32 mickey Exp $	*/
+/*	$OpenBSD: bioskbd.S,v 1.6 1997/05/29 04:33:40 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -77,9 +77,11 @@ ENTRY(kbd_putc)
  *	read character from keyboard
  */
 ENTRY(kbd_getc)
+	pushl	%ebx
 	movb	$0, %ah
 	BIOSINT(0x16)
 	movzbl	%al, %eax
+	popl	%ebx
 	ret
 
 /*
@@ -87,9 +89,11 @@ ENTRY(kbd_getc)
  *	check if there is character available from keyboard
  */
 ENTRY(kbd_ischar)
+	pushl	%ebx
 	movb	$1, %ah
 	BIOSINT(0x16)
 	setnz	%al
 	movzbl	%al, %eax
+	popl	%ebx
 	ret
 
