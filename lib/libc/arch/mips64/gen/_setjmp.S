@@ -1,4 +1,4 @@
-/*	$OpenBSD: _setjmp.S,v 1.2 2004/09/09 16:14:02 pefo Exp $ */
+/*	$OpenBSD: _setjmp.S,v 1.3 2004/09/10 12:45:35 pefo Exp $ */
 
 /*
  * Copyright (c) 2002 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -35,7 +35,7 @@
 
 #if defined(LIBC_SCCS)
 	.text
-	.asciz "$OpenBSD: _setjmp.S,v 1.2 2004/09/09 16:14:02 pefo Exp $"
+	.asciz "$OpenBSD: _setjmp.S,v 1.3 2004/09/10 12:45:35 pefo Exp $"
 #endif /* LIBC_SCCS */
 
 /*
@@ -46,7 +46,7 @@
  *
  */
 
-FRAMESZ= MKFSIZ(1,1)
+FRAMESZ= MKFSIZ(0,4)
 GPOFF= FRAMESZ-2*REGSZ
 
 LEAF(_setjmp, FRAMESZ)
@@ -68,7 +68,8 @@ LEAF(_setjmp, FRAMESZ)
 	REG_S	s6, SC_REGS+S6*REGSZ(a0)
 	REG_S	s7, SC_REGS+S7*REGSZ(a0)
 	REG_S	s8, SC_REGS+S8*REGSZ(a0)
-	REG_S	gp, SC_REGS+GP*REGSZ(a0)
+	REG_L	v0, GPOFF(sp)
+	REG_S	v0, SC_REGS+GP*REGSZ(a0)
 	PTR_ADDU v0, sp, FRAMESZ
 	REG_S	v0, SC_REGS+SP*REGSZ(a0)
 	REG_S	ra, SC_PC(a0)
@@ -154,8 +155,9 @@ LEAF(_longjmp, FRAMESZ)
 	lwc1	$f30, SC_FPREGS+((F30-F0)*REGSZ)(a0)
 	lwc1	$f31, SC_FPREGS+((F31-F0)*REGSZ)(a0)
 #endif
-	RESTORE_GP64
-	PTR_ADDU sp, FRAMESZ
+	beql	a1, zero, 1f
+	li	a1, 1		# only executed if branch taken.
+1:
 	j	ra
 	move	v0, a1
 

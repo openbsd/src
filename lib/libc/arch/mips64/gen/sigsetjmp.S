@@ -36,7 +36,7 @@
 
 #if defined(LIBC_SCCS) 
 	.text
-	.asciz "$OpenBSD: sigsetjmp.S,v 1.3 2004/09/09 16:14:02 pefo Exp $"
+	.asciz "$OpenBSD: sigsetjmp.S,v 1.4 2004/09/10 12:45:35 pefo Exp $"
 #endif /* LIBC_SCCS */
 
 /*
@@ -74,8 +74,8 @@ LEAF(siglongjmp, FRAMESZ)
 	PTR_ADDU sp, FRAMESZ
 	jr	t9
 1:
+	LA	t9, longjmp
 	RESTORE_GP64
 	PTR_ADDU sp, FRAMESZ
-	LA	t9, longjmp
 	jr	t9
 END(siglongjmp)

@@ -1,4 +1,4 @@
-/*      $OpenBSD: setjmp.S,v 1.3 2004/09/09 16:14:02 pefo Exp $ */
+/*      $OpenBSD: setjmp.S,v 1.4 2004/09/10 12:45:35 pefo Exp $ */
 
 /*
  * Copyright (c) 2001-2002 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -36,7 +36,7 @@
 
 #if defined(LIBC_SCCS) 
 	.text
-	.asciz "$OpenBSD: setjmp.S,v 1.3 2004/09/09 16:14:02 pefo Exp $"
+	.asciz "$OpenBSD: setjmp.S,v 1.4 2004/09/10 12:45:35 pefo Exp $"
 #endif /* LIBC_SCCS */
 
 /*
@@ -90,7 +90,8 @@ NON_LEAF(setjmp, FRAMESZ, ra)
 	REG_S	s6, SC_REGS+S6*REGSZ(a0)
 	REG_S	s7, SC_REGS+S7*REGSZ(a0)
 	REG_S	s8, SC_REGS+S8*REGSZ(a0)
-	REG_S	gp, SC_REGS+GP*REGSZ(a0)
+	REG_L	v0, GPOFF(sp)
+	REG_S	v0, SC_REGS+GP*REGSZ(a0)
 	PTR_ADDU v0, sp, FRAMESZ
 	REG_S	v0, SC_REGS+SP*REGSZ(a0)
 	li	v0, 1				# be nice if we could tell
@@ -144,6 +145,9 @@ LEAF(longjmp, FRAMESZ)
 	PTR_SUBU sp, FRAMESZ
 	SETUP_GP64(GPOFF, longjmp)
 	.set	reorder
+	bne	a1, zero, 1f
+	li	a1, 1			# never return 0!
+1:
 	REG_S	a1, SC_REGS+V0*REGSZ(a0)
 	li	v0, SYS_sigreturn
 	syscall
