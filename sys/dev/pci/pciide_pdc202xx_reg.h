@@ -1,3 +1,4 @@
+/*	$OpenBSD: pciide_pdc202xx_reg.h,v 1.2 2000/01/10 22:54:46 chris Exp $	*/
 /*	$NetBSD: pciide_pdc202xx_reg.h,v 1.1 1999/08/29 17:20:10 bouyer Exp $ */
 
 /*
@@ -34,21 +35,24 @@
  */
 
 /*
- * Registers definitions for PROMISE PDC20246 PCI IDE controller.
- * Unfortunably the HW docs available don't provide much informations
- * Most of the values set in registers comes from the FreeBSD and linux
- * drivers, and from experiments with the BIOS of a Promise Ultra/33 board.
+ * Registers definitions for PROMISE PDC20246/PDC20262 PCI IDE controller.
+ * Unfortunably the HW docs are not publically available. I've been able
+ * to get a partial one for the PDC20246, and a better one for the PDC20262
+ * from Promise.
  */
 
-/* controller initial state */
 #define PDC2xx_STATE		0x50
-#define PDC2xx_STATE_SHIPID		0x8000
-#define PDC2xx_STATE_IOCHRDY		0x0400
-#define PDC2xx_STATE_LBA(channel)	(0x0100 << (channel))
-#define PDC2xx_STATE_NATIVE		0x0080
-#define PDC2xx_STATE_ISAIRQ		0x0008
-#define PDC2xx_STATE_EN(channel)	(0x0002 << (channel))
 #define PDC2xx_STATE_IDERAID		0x0001
+#define PDC2xx_STATE_NATIVE		0x0080
+/* controller initial state values(PDC20246 only) */
+#define PDC246_STATE_SHIPID		0x8000
+#define PDC246_STATE_IOCHRDY		0x0400
+#define PDC246_STATE_LBA(channel)	(0x0100 << (channel))
+#define PDC246_STATE_ISAIRQ		0x0008
+#define PDC246_STATE_EN(channel)	(0x0002 << (channel))
+/* controller initial state values(PDC20262 only) */
+#define PDC262_STATE_EN(chan)		(0x1000 << (chan))
+#define PDC262_STATE_80P(chan)		(0x0400 << (chan))
 
 /* per-drive timings */
 #define PDC2xx_TIM(channel, drive) (0x60 + 4 * (drive) + 8 * (channel))
@@ -67,13 +71,16 @@
 
 /* The following are extentions of the DMA registers */
 
+/* Ultra-DMA mode 3/4 control (PDC20262 only, 1 byte) */
+#define PDC262_U66	0x11
+#define PDC262_U66_EN(chan) (0x1 << ((chan) *2))
 /* primary mode (1 byte) */
 #define PDC2xx_PM	0x1a
 /* secondary mode (1 byte) */
 #define PDC2xx_SM	0x1b
 /* System control register (4 bytes) */
 #define PDC2xx_SCR	0x1c
-#define PDC2xx_SCR_SET_GEN(r,x) (((r) & 0xfffffff0) | ((x) & 0xf))
+#define PDC2xx_SCR_SET_GEN(r,x) (((r) & 0xffffff00) | ((x) & 0xff))
 #define PDC2xx_SCR_EMPTY(channel) (0x00000100 << (4 * channel))
 #define PDC2xx_SCR_FULL(channel) (0x00000200 << (4 * channel))
 #define PDC2xx_SCR_INT(channel) (0x00000400 << (4 * channel))
@@ -86,17 +93,24 @@
 #define PDC2xx_SCR_FLOAT	0x08000000
 #define PDC2xx_SCR_RSET		0x10000000
 #define PDC2xx_SCR_TST		0x20000000
+/* Values for "General Purpose Register" (PDC20262 only) */
+#define PDC262_SCR_GEN_LAT	0x20
+
+/* ATAPI port ((PDC20262 only) (4 bytes) */
+#define PDC262_ATAPI(chan) (0x20 + (4 * (chan)))
+#define PDC262_ATAPI_WC_MASK	0x00000fff
+#define PDC262_ATAPI_DMA_READ	0x00001000
+#define PDC262_ATAPI_DMA_WRITE	0x00002000
+#define PDC262_ATAPI_UDMA	0x00004000
 
 /*
- * The timings provided here results from things gathered from the FreeBSD
- * driver and experimentations with the BIOS of a promise board.
- * Unfortunably I didn't have enouth HW to test all the modes.
- * They may be suboptimal.
+ * The timings provided here cmoes from the PDC20262 docs. I hope they are
+ * rigth for the PDC20246 too ...
  */
 
-static int8_t pdc2xx_pa[] = {0x4, 0x4, 0x4, 0x7, 0x3};
-static int8_t pdc2xx_pb[] = {0x13, 0x13, 0x13, 0xf, 0x7};
+static int8_t pdc2xx_pa[] = {0x9, 0x5, 0x3, 0x2, 0x1};
+static int8_t pdc2xx_pb[] = {0x13, 0xc, 0x8, 0x6, 0x4};
 static int8_t pdc2xx_dma_mb[] = {0x7, 0x3, 0x3};
 static int8_t pdc2xx_dma_mc[] = {0xf, 0x4, 0x3};
 static int8_t pdc2xx_udma_mb[] = {0x3, 0x2, 0x1, 0x2, 0x1};
-static int8_t pdc2xx_udma_mc[] = {0x1, 0x1, 0x1, 0x1, 0x1};
+static int8_t pdc2xx_udma_mc[] = {0x3, 0x2, 0x1, 0x2, 0x1};

@@ -1,5 +1,38 @@
-/*      $OpenBSD: pciide.c,v 1.15 1999/11/23 20:48:35 chris Exp $     */
-/*	$NetBSD: pciide.c,v 1.40 1999/07/12 13:49:38 bouyer Exp $	*/
+/*      $OpenBSD: pciide.c,v 1.16 2000/01/10 22:54:45 chris Exp $     */
+/*	$NetBSD: pciide.c,v 1.48 1999/11/28 20:05:18 bouyer Exp $	*/
+
+/*
+ * Copyright (c) 1999 Manuel Bouyer.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software developed by the University of
+ *      California, Berkeley and its contributors.
+ * 4. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ */
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -2458,6 +2491,8 @@ acer_pci_intr(arg)
 	return rv;
 }
 
+/* A macro to test product */
+#define	PDC_IS_262(sc) (sc->sc_pp->ide_product == PCI_PRODUCT_PROMISE_ULTRA66)
 
 void
 pdc202xx_chip_map(sc, pa)
@@ -2495,7 +2530,7 @@ pdc202xx_chip_map(sc, pa)
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA | WDC_CAPABILITY_UDMA;
 	sc->sc_wdcdev.PIO_cap = 4;
 	sc->sc_wdcdev.DMA_cap = 2;
-	if (sc->sc_pp->ide_product == PCI_PRODUCT_PROMISE_ULTRA66) 
+	if (PDC_IS_262(sc))
 		sc->sc_wdcdev.UDMA_cap = 4;
 	else
 		sc->sc_wdcdev.UDMA_cap = 2;
@@ -2529,7 +2564,12 @@ pdc202xx_chip_map(sc, pa)
 	}
 
 	mode = PDC2xx_SCR_DMA;
-	mode = PDC2xx_SCR_SET_GEN(mode, 0x1); /* the BIOS set it up this way */
+	if (PDC_IS_262(sc)) {
+		mode = PDC2xx_SCR_SET_GEN(mode, PDC262_SCR_GEN_LAT);
+	} else {
+		/* the BIOS set it up this way */
+		mode = PDC2xx_SCR_SET_GEN(mode, 0x1);
+	}
 	mode = PDC2xx_SCR_SET_I2C(mode, 0x3); /* ditto */
 	mode = PDC2xx_SCR_SET_POLL(mode, 0x1); /* ditto */
 	WDCDEBUG_PRINT(("pdc202xx_setup_chip: initial SCR  0x%x, now 0x%x\n",
@@ -2538,7 +2578,7 @@ pdc202xx_chip_map(sc, pa)
 	bus_space_write_4(sc->sc_dma_iot, sc->sc_dma_ioh, PDC2xx_SCR, mode);
 
 	/* controller initial state register is OK even without BIOS */
-	/* The Linux driver does this */
+	/* Set DMA mode to IDE DMA compatibility */
 	mode = bus_space_read_1(sc->sc_dma_iot, sc->sc_dma_ioh, PDC2xx_PM);
 	WDCDEBUG_PRINT(("pdc202xx_setup_chip: primary mode 0x%x", mode ),
 	    DEBUG_PROBE);
@@ -2553,7 +2593,8 @@ pdc202xx_chip_map(sc, pa)
 		cp = &sc->pciide_channels[channel];
 		if (pciide_chansetup(sc, channel, interface) == 0)
 			continue;
-		if ((st & PDC2xx_STATE_EN(channel)) == 0) {
+		if ((st & (PDC_IS_262(sc) ?
+		    PDC262_STATE_EN(channel):PDC246_STATE_EN(channel))) == 0) {
 			printf("%s: %s ignored (disabled)\n",
 			    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
 			continue;
@@ -2563,7 +2604,8 @@ pdc202xx_chip_map(sc, pa)
 		if (cp->hw_ok == 0)
 		    continue;
 		if (pciiide_chan_candisable(cp))
-		    st &= ~PDC2xx_STATE_EN(channel);
+			st &= ~(PDC_IS_262(sc) ?
+			    PDC262_STATE_EN(channel):PDC246_STATE_EN(channel));
 		pciide_map_compat_intr(pa, cp, channel, interface);
 		pdc202xx_setup_channel(&cp->wdc_channel);
         }
@@ -2579,23 +2621,64 @@ pdc202xx_setup_channel(chp)
 {
 	struct ata_drive_datas *drvp;
 	int drive;
-	pcireg_t mode;
-	u_int32_t idedma_ctl;
+	pcireg_t mode, st;
+	u_int32_t idedma_ctl, scr, atapi;
 	struct pciide_channel *cp = (struct pciide_channel*)chp;
 	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.wdc;
+	int channel = chp->channel;
 
 	/* setup DMA if needed */
 	pciide_channel_dma_setup(cp);
 
 	idedma_ctl = 0;
+
+	/* Per channel settings */
+	if (PDC_IS_262(sc)) {
+		scr = bus_space_read_1(sc->sc_dma_iot, sc->sc_dma_ioh,
+		    PDC262_U66);
+		st = pci_conf_read(sc->sc_pc, sc->sc_tag, PDC2xx_STATE);
+		/* Trim UDMA mode */
+		if ((st & PDC262_STATE_80P(channel)) == 0 ||
+		    (chp->ch_drive[0].drive_flags & DRIVE_UDMA &&
+		    chp->ch_drive[0].UDMA_mode <= 2) ||
+		    (chp->ch_drive[1].drive_flags & DRIVE_UDMA &&
+		    chp->ch_drive[1].UDMA_mode <= 2)) {
+			if (chp->ch_drive[0].UDMA_mode > 2)
+				chp->ch_drive[0].UDMA_mode = 2;
+			if (chp->ch_drive[1].UDMA_mode > 2)
+				chp->ch_drive[1].UDMA_mode = 2;
+		}
+		/* Set U66 if needed */
+		if ((chp->ch_drive[0].drive_flags & DRIVE_UDMA &&
+		    chp->ch_drive[0].UDMA_mode > 2) ||
+		    (chp->ch_drive[1].drive_flags & DRIVE_UDMA &&
+		    chp->ch_drive[1].UDMA_mode > 2))
+			scr |= PDC262_U66_EN(channel);
+		else
+			scr &= ~PDC262_U66_EN(channel);
+		bus_space_write_1(sc->sc_dma_iot, sc->sc_dma_ioh,
+		    PDC262_U66, scr);
+		if (chp->ch_drive[0].drive_flags & DRIVE_ATAPI ||
+		    chp->ch_drive[1].drive_flags & DRIVE_ATAPI) {
+			if (((chp->ch_drive[0].drive_flags & DRIVE_UDMA) &&
+			    !(chp->ch_drive[1].drive_flags & DRIVE_UDMA) &&
+			    (chp->ch_drive[1].drive_flags & DRIVE_DMA)) ||
+			    ((chp->ch_drive[1].drive_flags & DRIVE_UDMA) &&
+			    !(chp->ch_drive[0].drive_flags & DRIVE_UDMA) &&
+			    (chp->ch_drive[0].drive_flags & DRIVE_DMA)))
+				atapi = 0;
+			else
+				atapi = PDC262_ATAPI_UDMA;
+			bus_space_write_4(sc->sc_dma_iot, sc->sc_dma_ioh,
+			    PDC262_ATAPI(channel), atapi);
+		}
+	}
 	for (drive = 0; drive < 2; drive++) {
 		drvp = &chp->ch_drive[drive];
 		/* If no drive, skip */
 		if ((drvp->drive_flags & DRIVE) == 0)
 			continue;
-		 mode = PDC2xx_TIM_IORDY;
-		if (drvp->drive_flags & DRIVE_ATA)
-			mode |= PDC2xx_TIM_PRE;
+		mode = 0;
 		if (drvp->drive_flags & DRIVE_UDMA) {
 			mode = PDC2xx_TIM_SET_MB(mode,
 			   pdc2xx_udma_mb[drvp->UDMA_mode]);
@@ -2617,11 +2700,14 @@ pdc202xx_setup_channel(chp)
 		}
 		mode = PDC2xx_TIM_SET_PA(mode, pdc2xx_pa[drvp->PIO_mode]);
 		mode = PDC2xx_TIM_SET_PB(mode, pdc2xx_pb[drvp->PIO_mode]);
-		mode |= PDC2xx_TIM_SYNC;
-		if (drvp->PIO_mode >= 3 &&(drvp->drive_flags & DRIVE_ATA))
-			mode |= PDC2xx_TIM_ERRDY;
-		if (drive == 0)
-			mode |= PDC2xx_TIM_IORDYp;
+		if (drvp->drive_flags & DRIVE_ATA)
+			mode |= PDC2xx_TIM_PRE;
+		mode |= PDC2xx_TIM_SYNC | PDC2xx_TIM_ERRDY;
+		if (drvp->PIO_mode >= 3) {
+			mode |= PDC2xx_TIM_IORDY;
+			if (drive == 0)
+				mode |= PDC2xx_TIM_IORDYp;
+		}
 		WDCDEBUG_PRINT(("pdc202xx_setup_channel: %s:%d:%d "
 		    "timings 0x%x\n",
 		    sc->sc_wdcdev.sc_dev.dv_xname, 
