@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.23 1999/12/08 07:45:30 itojun Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.24 1999/12/20 09:28:47 itojun Exp $	*/
 /*      $NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $      */
 
 /*
@@ -81,7 +81,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static char rcsid[] = "$OpenBSD: ifconfig.c,v 1.23 1999/12/08 07:45:30 itojun Exp $";
+static char rcsid[] = "$OpenBSD: ifconfig.c,v 1.24 1999/12/20 09:28:47 itojun Exp $";
 #endif
 #endif /* not lint */
 
@@ -1604,7 +1604,6 @@ in_getaddr(s, which)
 	char *s;
 	int which;
 {
-#ifndef KAME_SCOPEID
 	register struct sockaddr_in *sin = sintab[which];
 	struct hostent *hp;
 	struct netent *np;
@@ -1621,41 +1620,6 @@ in_getaddr(s, which)
 		else
 			errx(1, "%s: bad value", s);
 	}
-#else
-	/*
-	 * XXX
-	 * we can't use gethostbyname() nor getnetbyname() here due to
-	 * library conflicts between libinet6 and libc.
-	 * #if 0 should be modified when we do
-	 * the complete merger of libinet6 into libc.
-	 */
-	register struct sockaddr_in *sin = sintab[which];
-	struct addrinfo hints, *res;
-	int error;
-	struct netent *np;
-
-	memset(&hints, 0, sizeof(hints));
-	hints.ai_family = AF_INET;
-	hints.ai_socktype = SOCK_RAW;
-	error = getaddrinfo(s, "NULL", &hints, &res);
-	if (error) {
-#if 0	/* incompatible behavior! */
-		if ((np = getnetbyname(s)) != NULL) {
-			memset(sin, 0, sizeof(*sin));
-			sin->sin_family = AF_INET;
-			sin->sin_len = sizeof(struct sockaddr_in);
-			sin->sin_addr = inet_makeaddr(np->n_net, INADDR_ANY);
-			return;
-		}
-#endif
-
-		errx(1, "%s: %s", s, gai_strerror(error));
-	}
-	if (res->ai_addrlen != sizeof(struct sockaddr_in))
-		errx(1, "%s: bad value", s);
-	memcpy(sin, res->ai_addr, res->ai_addrlen);
-	freeaddrinfo(res);
-#endif
 }
 
 /*
