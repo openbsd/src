@@ -1,4 +1,4 @@
-/*	$OpenBSD: authpf.c,v 1.80 2004/04/28 05:06:13 cedric Exp $	*/
+/*	$OpenBSD: authpf.c,v 1.81 2004/05/13 17:14:55 henning Exp $	*/
 
 /*
  * Copyright (C) 1998 - 2002 Bob Beck (beck@openbsd.org).
@@ -39,6 +39,7 @@
 
 #include <err.h>
 #include <errno.h>
+#include <login_cap.h>
 #include <pwd.h>
 #include <signal.h>
 #include <stdio.h>
@@ -92,6 +93,8 @@ main(int argc, char *argv[])
 	struct passwd	*pw;
 	char		*cp;
 	uid_t		 uid;
+	char		*shell;
+	login_cap_t	*lc;
 
 	config = fopen(PATH_CONFFILE, "r");
 
@@ -130,15 +133,30 @@ main(int argc, char *argv[])
 
 	uid = getuid();
 	pw = getpwuid(uid);
+	endpwent();
 	if (pw == NULL) {
 		syslog(LOG_ERR, "cannot find user for uid %u", uid);
 		goto die;
 	}
-	if (strcmp(pw->pw_shell, PATH_AUTHPF_SHELL)) {
+
+	if ((lc = login_getclass(pw->pw_class)) != NULL)
+		shell = login_getcapstr(lc, "shell", pw->pw_shell,
+		    pw->pw_shell);
+	else
+		shell = pw->pw_shell;
+
+	login_close(lc);
+	
+	if (strcmp(shell, PATH_AUTHPF_SHELL)) {
 		syslog(LOG_ERR, "wrong shell for user %s, uid %u",
 		    pw->pw_name, pw->pw_uid);
+		if (shell != pw->pw_shell)
+			free(shell);
 		goto die;
 	}
+
+	if (shell != pw->pw_shell)
+		free(shell);
 
 	/*
 	 * Paranoia, but this data _does_ come from outside authpf, and
