@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.90 2004/07/11 05:13:15 deraadt Exp $
+$OpenBSD: usbdevs,v 1.91 2004/07/11 06:21:06 deraadt Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -623,6 +623,7 @@ product CYPRESS MOUSE		0x0001	mouse
 product CYPRESS THERMO		0x0002	thermometer
 product CYPRESS KBDHUB		0x0101	Keyboard/Hub
 product CYPRESS FMRADIO		0x1002	FM Radio
+product CYPRESS HUB2		0x6560	USB2 Hub
 
 /* Daisy Technology products */
 product DAISY DMC		0x6901	PhotoClip
