@@ -31,10 +31,10 @@
 .Fn krb_afslog "char *cell" "char *realm"
 .Ft int
 .Fn krb_afslog_uid "char *cell" "char *realm" "uid_t uid"
-\" .Ft krb5_error_code
-\" .Fn krb5_afslog_uid "krb5_context context" "krb5_ccache id" "const char *cell" "krb5_const_realm realm" "uid_t uid"
-\" .Ft krb5_error_code
-\" .Fn krb5_afslog "krb5_context context" "krb5_ccache id" "const char *cell" "krb5_const_realm realm"
+.\" .Ft krb5_error_code
+.\" .Fn krb5_afslog_uid "krb5_context context" "krb5_ccache id" "const char *cell" "krb5_const_realm realm" "uid_t uid"
+.\" .Ft krb5_error_code
+.\" .Fn krb5_afslog "krb5_context context" "krb5_ccache id" "const char *cell" "krb5_const_realm realm"
 .Sh DESCRIPTION
 .Fn k_hasafs
 initializes some library internal structures, and tests for the
@@ -42,7 +42,7 @@ presense of AFS in the kernel, none of the other functions should be
 called before 
 .Fn k_hasafs
 is called, or if it fails.
-
+.Pp
 .Fn krb_afslog ,
 and
 .Fn krb_afslog_uid
@@ -67,21 +67,21 @@ field in the token,
 .Fn krb_afslog_uid
 will use
 .Fa uid .
-
-\" .Fn krb5_afslog ,
-\" and 
-\" .Fn krb5_afslog_uid
-\" are the Kerberos 5 equivalents of
-\" .Fn krb_afslog ,
-\" and
-\" .Fn krb_afslog_uid .
-\" The extra arguments are the ubiquitous context, and the cache id where
-\" to store any obtained tickets. Since AFS servers normally can't handle
-\" Kerberos 5 tickets directly, these functions will first obtain version
-\" 5 tickets for the requested cells, and then convert them to version 4
-\" tickets, that can be stashed in the kernel. To convert tickets the
-\" .Fn krb524_convert_creds_kdc
-\" function will be used.
+.Pp
+.\" .Fn krb5_afslog ,
+.\" and 
+.\" .Fn krb5_afslog_uid
+.\" are the Kerberos 5 equivalents of
+.\" .Fn krb_afslog ,
+.\" and
+.\" .Fn krb_afslog_uid .
+.\" The extra arguments are the ubiquitous context, and the cache id where
+.\" to store any obtained tickets. Since AFS servers normally can't handle
+.\" Kerberos 5 tickets directly, these functions will first obtain version
+.\" 5 tickets for the requested cells, and then convert them to version 4
+.\" tickets, that can be stashed in the kernel. To convert tickets the
+.\" .Fn krb524_convert_creds_kdc
+.\" function will be used.
 
 .Fn k_afs_cell_of_file
 will in 
@@ -90,19 +90,19 @@ return the cell of a specified file, no more than
 .Fa len
 characters is put in 
 .Fa cell .
-
+.Pp
 .Fn k_pioctl
 does a 
 .Fn pioctl
 syscall with the specified arguments. This function is equivalent to
 .Fn lpioctl .
-
+.Pp
 .Fn k_setpag
 initializes a new PAG.
-
+.Pp
 .Fn k_unlog
 removes destroys all tokens in the current PAG.
-
+.Pp
 .Sh ENVIRONMENT
 The following environment variable affect the mode of operation of
 .Nm kafs :
@@ -136,14 +136,16 @@ the users home directory.
 .Bd -literal
 if (k_hasafs()) {
 	char cell[64];
+
 	k_setpag();
-	if(k_afs_cell_of_file(pwd->pw_dir, cell, sizeof(cell)) == 0)
+	if (k_afs_cell_of_file(pwd->pw_dir, cell, sizeof(cell)) == 0)
 		krb_afslog(cell, NULL);
 	krb_afslog(NULL, NULL);
 }
 .Ed
+.Pp
 .Sh ERRORS
-If any of these functions (appart from 
+If any of these functions (apart from 
 .Fn k_hasafs )
 is called without AFS beeing present in the kernel, the process will
 usually (depending on the operating system) receive a SIGSYS signal.
