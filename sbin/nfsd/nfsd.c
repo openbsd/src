@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsd.c,v 1.8 1997/08/18 03:11:26 millert Exp $	*/
+/*	$OpenBSD: nfsd.c,v 1.9 1997/09/05 18:29:34 deraadt Exp $	*/
 /*	$NetBSD: nfsd.c,v 1.19 1996/02/18 23:18:56 mycroft Exp $	*/
 
 /*
@@ -172,7 +172,8 @@ main(argc, argv, envp)
 		case 'n':
 			nfsdcnt = atoi(optarg);
 			if (nfsdcnt < 1 || nfsdcnt > MAXNFSDCNT) {
-				warnx("nfsd count %d; reset to %d", DEFNFSDCNT);
+				warnx("nfsd count %d; reset to %d",
+				    nfsdcnt, DEFNFSDCNT);
 				nfsdcnt = DEFNFSDCNT;
 			}
 			break;
@@ -214,7 +215,8 @@ main(argc, argv, envp)
 	if (argc == 1) {
 		nfsdcnt = atoi(argv[0]);
 		if (nfsdcnt < 1 || nfsdcnt > MAXNFSDCNT) {
-			warnx("nfsd count %d; reset to %d", DEFNFSDCNT);
+			warnx("nfsd count %d; reset to %d",
+			    nfsdcnt, DEFNFSDCNT);
 			nfsdcnt = DEFNFSDCNT;
 		}
 	}
