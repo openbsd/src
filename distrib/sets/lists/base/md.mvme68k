@@ -1751,3 +1751,11 @@
 ./usr/mdec/rboot
 ./usr/mdec/sboot
 ./usr/mdec/stboot
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/cacreg.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ic/cacvar.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/ssl/conf_api.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/ssl/dso.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/ssl/engine.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/ssl/md4.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/ssl/obj_mac.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/ssl/symhacks.ph

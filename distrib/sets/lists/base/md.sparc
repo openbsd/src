@@ -1,3 +1,11 @@
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ic/cacreg.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ic/cacvar.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/ssl/conf_api.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/ssl/dso.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/ssl/engine.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/ssl/md4.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/ssl/obj_mac.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/ssl/symhacks.ph
 ./dev/audio
 ./dev/audioctl
 ./dev/mixer

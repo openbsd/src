@@ -1739,3 +1739,11 @@
 ./usr/share/info/ld.info-2
 ./usr/share/info/ld.info-3
 ./usr/share/info/ld.info-4
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/cacreg.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/cacvar.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/ssl/conf_api.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/ssl/dso.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/ssl/engine.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/ssl/md4.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/ssl/obj_mac.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/ssl/symhacks.ph

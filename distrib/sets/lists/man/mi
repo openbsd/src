@@ -931,6 +931,7 @@
 ./usr/share/man/cat4/bpf.0
 ./usr/share/man/cat4/brgphy.0
 ./usr/share/man/cat4/bridge.0
+./usr/share/man/cat4/cac.0
 ./usr/share/man/cat4/cardbus.0
 ./usr/share/man/cat4/ccd.0
 ./usr/share/man/cat4/cd.0

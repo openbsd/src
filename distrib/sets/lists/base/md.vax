@@ -1662,3 +1662,11 @@
 ./usr/mdec/rdboot
 ./usr/mdec/sdboot
 ./usr/mdec/xxboot
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/cacreg.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/ic/cacvar.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/ssl/conf_api.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/ssl/dso.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/ssl/engine.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/ssl/md4.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/ssl/obj_mac.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/ssl/symhacks.ph

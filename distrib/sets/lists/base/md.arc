@@ -490,3 +490,11 @@
 ./usr/mipsel-unknown-openbsd2.8/bin
 ./usr/mipsel-unknown-openbsd2.8/lib
 ./usr/mipsel-unknown-openbsd2.8/lib/ldscripts
+./usr/libdata/perl5/site_perl/mips-openbsd/dev/ic/cacreg.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/dev/ic/cacvar.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/ssl/conf_api.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/ssl/dso.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/ssl/engine.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/ssl/md4.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/ssl/obj_mac.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/ssl/symhacks.ph

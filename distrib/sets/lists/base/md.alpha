@@ -1679,3 +1679,11 @@
 ./usr/share/info/ld.info-1
 ./usr/share/info/ld.info-2
 ./usr/share/info/ld.info-3
+./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/cacreg.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/cacvar.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/ssl/conf_api.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/ssl/dso.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/ssl/engine.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/ssl/md4.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/ssl/obj_mac.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/ssl/symhacks.ph
