@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic6360.c,v 1.6 2003/10/21 18:58:48 jmc Exp $	*/
+/*	$OpenBSD: aic6360.c,v 1.7 2004/07/26 16:36:30 miod Exp $	*/
 /*	$NetBSD: aic6360.c,v 1.52 1996/12/10 21:27:51 thorpej Exp $	*/
 
 #ifdef DDB
@@ -1372,9 +1372,9 @@ out:
 
 /* aic_dataout_pio: perform a data transfer using the FIFO datapath in the aic6360
  * Precondition: The SCSI bus should be in the DOUT phase, with REQ asserted
- * and ACK deasserted (i.e. waiting for a data byte)
+ * and ACK deasserted (i.e. waiting for a data byte).
  * This new revision has been optimized (I tried) to make the common case fast,
- * and the rarer cases (as a result) somewhat more comlex
+ * and the rarer cases (as a result) somewhat more complex.
  */
 int
 aic_dataout_pio(sc, p, n)

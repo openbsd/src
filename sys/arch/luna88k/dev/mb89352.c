@@ -1,4 +1,4 @@
-/*	$OpenBSD: mb89352.c,v 1.1.1.1 2004/04/21 15:23:54 aoyama Exp $	*/
+/*	$OpenBSD: mb89352.c,v 1.2 2004/07/26 16:36:29 miod Exp $	*/
 /*	$NetBSD: mb89352.c,v 1.5 2000/03/23 07:01:31 thorpej Exp $	*/
 /*	NecBSD: mb89352.c,v 1.4 1998/03/14 07:31:20 kmatsuda Exp	*/
 
@@ -1425,10 +1425,10 @@ out:
 /*
  * spc_dataout_pio: perform a data transfer using the FIFO datapath in the spc
  * Precondition: The SCSI bus should be in the DOUT phase, with REQ asserted
- * and ACK deasserted (i.e. waiting for a data byte)
+ * and ACK deasserted (i.e. waiting for a data byte).
  *
  * This new revision has been optimized (I tried) to make the common case fast,
- * and the rarer cases (as a result) somewhat more comlex
+ * and the rarer cases (as a result) somewhat more complex.
  */
 int
 spc_dataout_pio(sc, p, n)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mb89352reg.h,v 1.2 2004/04/29 14:35:20 miod Exp $	*/
+/*	$OpenBSD: mb89352reg.h,v 1.3 2004/07/26 16:36:29 miod Exp $	*/
 /*	$NetBSD: mb89352reg.h,v 1.3 2003/08/07 16:31:02 agc Exp $	*/
 /*	NecBSD: mb89352reg.h,v 1.3 1998/03/14 07:04:34 kmatsuda Exp 	*/
 
@@ -100,7 +100,7 @@
 #define SCMD		0x02	/* Command Register (R/W) */
 #define TMOD		0x03	/* Transmit Mode Register (synch models) */
 #define INTS		0x04	/* Interrupt sense (R); Interrupt Reset (W) */
-#define PSNS		0x05	/* Phase Sence (R); SPC Diagnostic Control (W) */
+#define PSNS		0x05	/* Phase Sense (R); SPC Diagnostic Control (W) */
 #define SSTS		0x06	/* SPC status (R/O) */
 #define SERR		0x07	/* SPC error status (R/O) */
 #define PCTL		0x08	/* Phase Control (R/W) */
