@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.1.1.1 1998/06/23 18:46:40 mickey Exp $
+#	$OpenBSD: Makefile.inc,v 1.2 1998/06/27 02:59:20 mickey Exp $
 
 CFLAGS=${DEBUG} -O2 -Wall -Werror
 CPPFLAGS+=-I${S} -I. -I${.CURDIR}
@@ -21,6 +21,7 @@ CLEANFILES+=	machine
 	@([ -h machine ] || ln -s $(S)/arch/hppa/include machine)
 .endif
 
+.if 0
 .if $(CC) != $(HOSTCC)
 .S.o .s.o:
 	@echo "${CPP} ${CPPFLAGS} ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC} | \
@@ -37,7 +38,7 @@ CLEANFILES+=	machine
 	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 .endif
-
+.endif
 .if exists(${SADIR}/libsa/libsa.a)
 LIBSA=${SADIR}/libsa/libsa.a
 .else
@@ -52,6 +53,11 @@ LIBKERN=${SADIR}/libkern/${__objdir}/libkern.a
 LIBZ=${SADIR}/libz/libz.a
 .else
 LIBZ=${SADIR}/libz/${__objdir}/libz.a
+.endif
+.if exists(${SADIR}/mkboot/mkboot)
+MKBOOT=${SADIR}/mkboot/mkboot
+.else
+MKBOOT=${SADIR}/mkboot/${__objdir}/mkboot
 .endif
 
 # NO_NET=no_net
