@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.42 1998/11/03 04:10:15 aaron Exp $
+#	$OpenBSD: install.md,v 1.43 1999/02/03 23:17:42 millert Exp $
 #
 #
 # Copyright rc) 1996 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@ md_installboot() {
 	/usr/mdec/installboot -v /mnt/boot /usr/mdec/biosboot ${1}
 
 	echo
-	echo -n "Do you expect to run X windows on this machine? [y or n] "
+	echo -n "Do you expect to run the X Window System on this machine? [y or n] "
 	getresp "n"
 	case "$resp" in
 		y*|Y*)
@@ -199,9 +199,7 @@ __md_prep_disklabel_1
 }
 
 md_copy_kernel() {
-	#echo -n "Copying kernel..."
-	#cp -p /bsd /mnt/bsd
-	#echo "done."
+	check_kernel
 }
 
 md_welcome_banner() {
