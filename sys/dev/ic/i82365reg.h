@@ -1,3 +1,5 @@
+/*	$OpenBSD: i82365reg.h,v 1.4 1996/10/31 01:01:31 niklas Exp $	*/
+
 #ifndef __82365_H__
 #define __82365_H__
 
@@ -8,7 +10,6 @@
  * Support is included for Intel 82365SL PCIC controllers and clones
  * thereof.
  *
- * $Id: i82365reg.h,v 1.3 1996/04/29 15:25:35 hvozda Exp $
  ***********************************************************************/
 
 /*

@@ -1,3 +1,4 @@
+/*	$OpenBSD: aic7xxxreg.h,v 1.3 1996/10/31 01:01:25 niklas Exp $	*/
 /*
  * Aic7xxx register and scratch ram definitions.
  *
@@ -27,8 +28,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	$Id: aic7xxxreg.h,v 1.2 1996/06/27 21:15:49 shawn Exp $
  */
 
 /*

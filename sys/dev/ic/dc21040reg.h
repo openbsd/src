@@ -1,3 +1,4 @@
+/*	$OpenBSD: dc21040reg.h,v 1.3 1996/10/31 01:01:28 niklas Exp $	*/
 /*	$NetBSD: dc21040reg.h,v 1.6 1995/08/19 04:15:29 cgd Exp $	*/
 
 /*-

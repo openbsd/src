@@ -1,3 +1,5 @@
+/*	$OpenBSD: aic7xxx.c,v 1.11 1996/10/31 01:01:24 niklas Exp $	*/
+
 /*
  * Generic driver for the aic7xxx based adaptec SCSI controllers
  * Product specific probe and attach routines can be found in:
@@ -30,9 +32,8 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *      $Id: aic7xxx.c,v 1.10 1996/10/16 10:25:07 deraadt Exp $
  */
+
 /*
  * TODO:
  *	Implement Target Mode

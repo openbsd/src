@@ -1,3 +1,4 @@
+/*	$OpenBSD: hayespreg.h,v 1.2 1996/10/31 01:01:30 niklas Exp $	*/
 /*	$NetBSD: hayespreg.h,v 1.1 1996/02/10 20:23:40 christos Exp $	*/
 
 /*-

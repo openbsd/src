@@ -1,3 +1,4 @@
+/*	$OpenBSD: am7990reg.h,v 1.2 1996/10/31 01:01:27 niklas Exp $	*/
 /*	$NetBSD: am7990reg.h,v 1.1 1995/04/11 04:17:50 mycroft Exp $	*/
 
 /*-

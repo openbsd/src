@@ -1,3 +1,4 @@
+/*	$OpenBSD: i82595reg.h,v 1.2 1996/10/31 01:01:32 niklas Exp $	*/
 /*	$NetBSD: i82595reg.h,v 1.1 1996/05/06 21:36:51 is Exp $	*/
 
 /*

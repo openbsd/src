@@ -1,3 +1,4 @@
+/*	$OpenBSD: smc93cx6var.h,v 1.4 1996/10/31 01:01:41 niklas Exp $	*/
 /*
  * Interface to the 93C46 serial EEPROM that is used to store BIOS
  * settings for the aic7xxx based adaptec SCSI controllers.  It can
@@ -19,8 +20,6 @@
  *    Justin T. Gibbs.
  * 4. Modifications may be freely made to this file if the above conditions
  *    are met.
- *
- *      $Id: smc93cx6var.h,v 1.3 1996/08/21 22:27:45 deraadt Exp $
  */
 
 #include <sys/param.h>

@@ -1,3 +1,5 @@
+/*	$OpenBSD: mb86960reg.h,v 1.2 1996/10/31 01:01:33 niklas Exp $	*/
+
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
  *

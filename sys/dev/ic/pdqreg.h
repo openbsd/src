@@ -1,3 +1,4 @@
+/*	$OpenBSD: pdqreg.h,v 1.7 1996/10/31 01:01:38 niklas Exp $	*/
 /*	$NetBSD: pdqreg.h,v 1.6 1996/08/28 16:01:29 cgd Exp $	*/
 
 /*-

@@ -1,3 +1,4 @@
+/*	$OpenBSD: i82586reg.h,v 1.2 1996/10/31 01:01:32 niklas Exp $	*/
 /*	$NetBSD: i82586reg.h,v 1.5 1995/04/04 01:59:34 mycroft Exp $	*/
 
 /*-

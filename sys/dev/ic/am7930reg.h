@@ -1,3 +1,4 @@
+/*	$OpenBSD: am7930reg.h,v 1.2 1996/10/31 01:01:26 niklas Exp $ */
 /*	$NetBSD: am7930reg.h,v 1.1 1995/04/24 19:17:17 pk Exp $ */
 
 /*

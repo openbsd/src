@@ -1,3 +1,4 @@
+/*	$OpenBSD: smc90cx6reg.h,v 1.2 1996/10/31 01:01:40 niklas Exp $ */
 /*	$NetBSD: smc90cx6reg.h,v 1.4 1995/06/07 00:16:59 cgd Exp $ */
 
 /*
