@@ -1,4 +1,4 @@
-.\"	$OpenBSD: crypto.9,v 1.14 2001/11/09 03:11:38 deraadt Exp $
+.\"	$OpenBSD: crypto.9,v 1.15 2002/01/26 18:12:09 angelos Exp $
 .\"
 .\" The author of this man page is Angelos D. Keromytis (angelos@cis.upenn.edu)
 .\"
@@ -22,17 +22,17 @@
 .Nm crypto
 .Nd API for cryptographic services in the kernel
 .Sh SYNOPSIS
-.Fd #include <crypto/crypto.h>
+.Fd #include <crypto/cryptodev.h>
 .Ft int32_t
 .Fn crypto_get_driverid "u_int8_t"
 .Ft int
-.Fn crypto_register "u_int32_t" "int" "int (*)(u_int32_t *, struct cryptoini *)" "int (*)(u_int64_t)" "int (*)(struct cryptop *)"
+.Fn crypto_register "u_int32_t" "int" "u_int16_t" "u_int32_t" "int (*)(u_int32_t *, struct cryptoini *)" "int (*)(u_int64_t)" "int (*)(struct cryptop *)"
 .Ft int
 .Fn crypto_unregister "u_int32_t" "int"
 .Ft void
 .Fn crypto_done "struct cryptop *"
 .Ft int
-.Fn crypto_newsession "u_int64_t *" "struct cryptoini *"
+.Fn crypto_newsession "u_int64_t *" "struct cryptoini *" "int"
 .Ft int
 .Fn crypto_freesession "u_int64_t"
 .Ft int
@@ -43,7 +43,7 @@
 .Fn crypto_freereq "void"
 .Bd -literal
 
-#define EALG_MAX_BLOCK_LEN      8
+#define EALG_MAX_BLOCK_LEN      16
 
 struct cryptoini {
     int                cri_alg;
@@ -74,6 +74,8 @@ struct cryptop {
     caddr_t            crp_opaque;
     struct cryptodesc *crp_desc;
     int              (*crp_callback) (struct cryptop *);
+    struct cryptop    *crp_next;
+    caddr_t            crp_mac;
 };
 .Ed
 .br
@@ -120,8 +122,8 @@ routine is called by consumers of cryptographic services (such as the
 stack) that wish to establish a new session with the framework.
 On success, the first argument will contain the Session Identifier (SID).
 The second argument contains all the necessary information for
-the driver to establish the session.
-The various fields in the
+the driver to establish the session.  The third argument indicates wether a
+hardware driver (1) should be used or not (0).  The various fields in the
 .Fa cryptoini
 structure are:
 .Bl -tag -width foobarmoocow
@@ -139,6 +141,10 @@ CRYPTO_SHA1_HMAC
 CRYPTO_RIPEMD160_HMAC
 CRYPTO_MD5_KPDK
 CRYPTO_SHA1_KPDK
+CRYPTO_AES_CBC
+CRYPTO_ARC4
+CRYPTO_MD5
+CRYPTO_SHA1
 .Ed
 .Pp
 .It Fa cri_klen
@@ -313,14 +319,14 @@ This flag is typically used when the IV is calculated
 by the consumer, and does not precede the data (some
 .Xr ipsec 4
 configurations, and the encrypted swap are two such examples).
+.It Dv CRD_F_COMP
+For compression algorithms, this bit is set when compression is required (when
+not set, decompression is performed).
 .El
-.It Xo Fa crd_alg , crd_klen , crd_rnd ,
-.Fa crd_key , crd_iv
-.Xc
-These have the exact same meaning as the corresponding fields in the
+.It Fa CRD_INI
+This
 .Fa cryptoini
-structure.
-These fields will not be modified by the framework or the device drivers.
+structure will not be modified by the framework or the device drivers.
 Since this information accompanies every cryptographic
 operation request, drivers may re-initialize state on-demand
 (typically an expensive operation).
@@ -373,7 +379,10 @@ as an argument (normally 0, but software-only drivers should specify
 For each algorithm the driver supports, it must then call
 .Fn crypto_register .
 The first two arguments are the driver and algorithm identifiers.
-The last three arguments must be provided in the first call to
+The next two arguments specify the largest possible operator length (in bits,
+important for public key operations) and flags (e.g., wether an hardware RNG is
+available) for this algorithm.  The last three arguments must be provided in the
+first call to
 .Fn crypto_register
 and are ignored in all subsequent calls.
 They are pointers to three
