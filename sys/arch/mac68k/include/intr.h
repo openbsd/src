@@ -1,5 +1,5 @@
-/*	$OpenBSD: intr.h,v 1.8 2003/01/05 01:51:27 miod Exp $	*/
-/*	$NetBSD: intr.h,v 1.8 1997/11/07 07:33:18 scottr Exp $	*/
+/*	$OpenBSD: intr.h,v 1.9 2004/11/25 18:32:10 miod Exp $	*/
+/*	$NetBSD: intr.h,v 1.9 1998/08/12 06:58:42 scottr Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -155,6 +155,11 @@ extern volatile u_int8_t ssir;
 #define	setsoftserial()	siron(SIR_SERIAL)
 #define	setsoftdtmgr()	siron(SIR_DTMGR)
 #define	setsoftadb()	siron(SIR_ADB)
+
+/* intr.c */
+void	intr_establish (int (*)(void *), void *, int);
+void	intr_disestablish (int);
+void	intr_dispatch (int);
 
 /* locore.s */
 int	spl0(void);

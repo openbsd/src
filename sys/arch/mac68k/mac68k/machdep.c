@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.112 2004/03/10 23:02:53 tom Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.113 2004/11/25 18:32:11 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.207 1998/07/08 04:39:34 thorpej Exp $	*/
 
 /*
@@ -1030,22 +1030,6 @@ badladdr(addr)
 	return (0);
 }
 
-int netisr;
-
-void
-netintr()
-{
-#define	DONETISR(bit, fn) \
-	do { \
-		if (netisr & (1 << (bit))) { \
-			netisr &= ~(1 << (bit)); \
-			(fn)(); \
-		} \
-	} while (0)
-#include <net/netisr_dispatch.h>
-#undef	DONETISR
-}
-
 /*
  * Level 7 interrupts can be caused by the keyboard or parity errors.
  */
@@ -1171,7 +1155,6 @@ getenvvars(flag, buf)
 	/* We need these for pre-mapping graybars & echo, but probably */
 	/* only on MacII or LC.  --  XXX */
 	/* videoaddr = getenv("MACOS_VIDEO"); */
-	/* sccaddr = getenv("MACOS_SCC"); */
 
 	/*
 	 * The following are not in a structure so that they can be
@@ -1195,9 +1178,11 @@ getenvvars(flag, buf)
 	mac68k_machine.modem_flags = getenv("SERIAL_MODEM_FLAGS");
 	mac68k_machine.modem_cts_clk = getenv("SERIAL_MODEM_HSKICLK");
 	mac68k_machine.modem_dcd_clk = getenv("SERIAL_MODEM_GPICLK");
+        mac68k_machine.modem_flags = getenv("SERIAL_MODEM_DSPEED");
 	mac68k_machine.print_flags = getenv("SERIAL_PRINT_FLAGS");
 	mac68k_machine.print_cts_clk = getenv("SERIAL_PRINT_HSKICLK");
 	mac68k_machine.print_dcd_clk = getenv("SERIAL_PRINT_GPICLK");
+	mac68k_machine.print_d_speed = getenv("SERIAL_PRINT_DSPEED");
 	mac68k_machine.booter_version = getenv("BOOTERVER");
 
 	/*
@@ -2003,7 +1988,6 @@ struct cpu_model_info cpu_models[] = {
 	{MACH_MACQ650, "Quadra", " 650", MACH_CLASSQ, &romvecs[6]},
 	{MACH_MACC650, "Centris", " 650", MACH_CLASSQ, &romvecs[6]},
 	{MACH_MACQ605, "Quadra", " 605", MACH_CLASSQ, &romvecs[9]},
-	{MACH_MACQ605_33, "Quadra", " 605/33", MACH_CLASSQ, &romvecs[9]},
 	{MACH_MACC610, "Centris", " 610", MACH_CLASSQ, &romvecs[6]},
 	{MACH_MACQ610, "Quadra", " 610", MACH_CLASSQ, &romvecs[6]},
 	{MACH_MACQ630, "Quadra", " 630", MACH_CLASSQ2, &romvecs[13]},
@@ -2043,7 +2027,6 @@ struct cpu_model_info cpu_models[] = {
 	{MACH_MACLCII,  "LC", " II",  MACH_CLASSLC, &romvecs[3]},
 	{MACH_MACLCIII, "LC", " III", MACH_CLASSLC, &romvecs[14]},
 	{MACH_MACLC475, "LC", " 475", MACH_CLASSQ,  &romvecs[9]},
-	{MACH_MACLC475_33, "LC", " 475/33", MACH_CLASSQ,  &romvecs[9]},
 	{MACH_MACLC520, "LC", " 520", MACH_CLASSLC, &romvecs[15]},
 	{MACH_MACLC575, "LC", " 575", MACH_CLASSQ2, &romvecs[16]},
 	{MACH_MACCCLASSIC, "Color Classic", "", MACH_CLASSLC, &romvecs[3]},
@@ -2317,7 +2300,6 @@ setmachdep()
 		Via1Base = (volatile u_char *)IOBase;
 		mac68k_machine.scsi80 = 1;
 		mac68k_machine.zs_chip = 0;
-		mac68k_machine.sccClkConst = 115200;
 		via_reg(VIA1, vIER) = 0x7f;	/* disable VIA1 int */
 		via_reg(VIA2, vIER) = 0x7f;	/* disable VIA2 int */
 		setup_mrg_vectors = 1;
@@ -2328,7 +2310,6 @@ setmachdep()
 		Via1Base = (volatile u_char *)IOBase;
 		mac68k_machine.scsi80 = 1;
 		mac68k_machine.zs_chip = 0;
-		mac68k_machine.sccClkConst = 115200;
 		/* Disable everything but PM; we need it. */
 		via_reg(VIA1, vIER) = 0x6f;	/* disable VIA1 int */
 		/* Are we disabling something important? */
@@ -2347,7 +2328,6 @@ setmachdep()
 		Via1Base = (volatile u_char *)IOBase;
 		mac68k_machine.scsi80 = 1;
 		mac68k_machine.zs_chip = 0;
-		mac68k_machine.sccClkConst = 115200;
 		/* Disable everything but PM; we need it. */
 		via_reg(VIA1, vIER) = 0x6f;	/* disable VIA1 int */
 		/* Are we disabling something important? */
@@ -2363,7 +2343,6 @@ setmachdep()
 		Via1Base = (volatile u_char *)IOBase;
 		mac68k_machine.scsi96 = 1;
 		mac68k_machine.zs_chip = 0;
-		mac68k_machine.sccClkConst = 115200;
 		via_reg(VIA1, vIER) = 0x7f;	/* disable VIA1 int */
 		via_reg(VIA2, vIER) = 0x7f;	/* disable VIA2 int */
 		break;
@@ -2373,7 +2352,6 @@ setmachdep()
 		Via1Base = (volatile u_char *)IOBase;
 		mac68k_machine.scsi80 = 1;
 		mac68k_machine.zs_chip = 0;
-		mac68k_machine.sccClkConst = 115200;
 		via_reg(VIA1, vIER) = 0x7f;	/* disable VIA1 int */
 		via_reg(VIA2, rIER) = 0x7f;	/* disable RBV int */
 		break;
@@ -2383,7 +2361,6 @@ setmachdep()
 		Via1Base = (volatile u_char *)IOBase;
 		mac68k_machine.scsi80 = 1;
 		mac68k_machine.zs_chip = 0;
-		mac68k_machine.sccClkConst = 115200;
 		via_reg(VIA1, vIER) = 0x7f;	/* disable VIA1 int */
 		via_reg(VIA2, rIER) = 0x7f;	/* disable RBV int */
 		break;
@@ -2393,7 +2370,6 @@ setmachdep()
 		Via1Base = (volatile u_char *)IOBase;
 		mac68k_machine.scsi80 = 1;
 		mac68k_machine.zs_chip = 0;
-		mac68k_machine.sccClkConst = 115200;
 		via_reg(VIA1, vIER) = 0x7f;	/* disable VIA1 int */
 		via_reg(VIA2, rIER) = 0x7f;	/* disable RBV int */
 		break;
@@ -2403,7 +2379,6 @@ setmachdep()
 		Via1Base = (volatile u_char *)IOBase;
 		mac68k_machine.scsi80 = 1;
 		mac68k_machine.zs_chip = 0;
-		mac68k_machine.sccClkConst = 115200;
 		via_reg(VIA1, vIER) = 0x7f;	/* disable VIA1 int */
 		via_reg(VIA2, rIER) = 0x7f;	/* disable RBV int */
 		break;
@@ -2413,7 +2388,6 @@ setmachdep()
 		Via1Base = (volatile u_char *)IOBase;
 		mac68k_machine.scsi80 = 1;
 		mac68k_machine.zs_chip = 0;
-		mac68k_machine.sccClkConst = 115200;	/* XXX unverified */
 		via_reg(VIA1, vIER) = 0x7f;  /* disable VIA1 int */
 		break;
 	default:

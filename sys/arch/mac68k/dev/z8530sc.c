@@ -1,5 +1,5 @@
-/*	$OpenBSD: z8530sc.c,v 1.6 2004/08/03 12:10:47 todd Exp $	*/
-/*	$NetBSD: z8530sc.c,v 1.1 1996/05/18 18:54:28 briggs Exp $	*/
+/*	$OpenBSD: z8530sc.c,v 1.7 2004/11/25 18:32:10 miod Exp $	*/
+/*	$NetBSD: z8530sc.c,v 1.5 1996/12/17 20:42:40 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -61,11 +61,13 @@
 #include <sys/kernel.h>
 #include <sys/syslog.h>
 
-/* #include <dev/ic/z8530reg.h> */
-#include "z8530reg.h"
+#include <mac68k/dev/z8530reg.h>
 #include <machine/z8530var.h>
 
-int
+static void zsnull_intr(struct zs_chanstate *);
+static void zsnull_softint(struct zs_chanstate *);
+
+void
 zs_break(cs, set)
 	struct zs_chanstate *cs;
 	int set;
@@ -82,24 +84,8 @@ zs_break(cs, set)
 	}
 	zs_write_reg(cs, 5, cs->cs_creg[5]);
 	splx(s);
-
-	return 0;
 }
 
-
-/*
- * Compute the current baud rate given a ZSCC channel.
- */
-int
-zs_getspeed(cs)
-	struct zs_chanstate *cs;
-{
-	int tconst;
-
-	tconst = zs_read_reg(cs, 12);
-	tconst |= zs_read_reg(cs, 13) << 8;
-	return (TCONST_TO_BPS(cs->cs_pclk_div16, tconst));
-}
 
 /*
  * drain on-chip fifo
@@ -130,49 +116,6 @@ zs_iflush(cs)
 	}
 }
 	
-/*
- * Figure out if a chip is an NMOS 8530, a CMOS 8530,
- * or an 85230. We use a form of the test in the Zilog SCC
- * users manual.
- */
-int
-zs_checkchip(cs)
-	struct zs_chanstate *cs;
-{
-	char	r1, r2, r3;
-	int	chip;
-
-	/* we assume we can write to the chip */
-
-	r1=cs->cs_creg[15]; /* see if bit 0 sticks */
-	zs_write_reg(cs, 15, (r1 | ZSWR15_ENABLE_ENHANCED));
-	if ((zs_read_reg(cs, 15) & ZSWR15_ENABLE_ENHANCED) != 0) {
-		/* we have either an 8580 or 85230. NB Zilog says we should only
-		 * have an 85230 at this point, but the 8580 seems to pass this
-		 * test too. To test, we try to write to WR7', and see if we
-		 * loose sight of RR14. */
-		r2=cs->cs_creg[14];
-		r3=(r2 != 0x47) ? 0x47 : 0x40;
-		/* unique bit pattern to turn on reading of WR7' at RR14 */
-		zs_write_reg(cs, 7, ~r2);
-		if (zs_read_reg(cs, ZSRR_ENHANCED) != r2) {
-			chip = ZS_CHIP_ESCC;
-			zs_write_reg(cs, 7, cs->cs_creg[ZS_ENHANCED_REG]);
-		} else {
-			chip = ZS_CHIP_8580;
-			zs_write_reg(cs, 7, cs->cs_creg[7]);
-		}
-		zs_write_reg(cs, 15, r1);
-	} else { /* now we have to tell an NMOS from a CMOS; does WR15 D2 work? */
-		zs_write_reg(cs, 15, (r1 | ZSWR15_SDLC_FIFO));
-		r2=cs->cs_creg[2];
-		zs_write_reg(cs, 2, (r2 | 0x80));
-		chip = (zs_read_reg(cs, 6) & 0x80) ? ZS_CHIP_NMOS : ZS_CHIP_CMOS;
-		zs_write_reg(cs, 2, r2);
-	}
-	zs_write_reg(cs, 15, r1);
-	return chip;
-}
 
 /*
  * Write the given register set to the given zs channel in the proper order.
@@ -201,8 +144,7 @@ zs_loadchannelregs(cs)
 #endif
 
 	/* disable interrupts */
-	zs_write_reg(cs, 1, reg[1] &
-		~(ZSWR1_RIE_SPECIAL_ONLY | ZSWR1_TIE | ZSWR1_SIE));
+	zs_write_reg(cs, 1, reg[1] & ~ZSWR1_IMASK);
 
 	/* baud clock divisor, stop bits, parity */
 	zs_write_reg(cs, 4, reg[4]);
@@ -234,11 +176,11 @@ zs_loadchannelregs(cs)
 
 	/* Shut down the BRG */
 	zs_write_reg(cs, 14, reg[14] & ~ZSWR14_BAUD_ENA);
-
-	if ((cs->cs_cclk_flag & ZSC_EXTERN) ||
-	    (cs->cs_pclk_flag & ZSC_EXTERN))
-		zsmd_setclock(cs);
-	/* the md layer wants to do something; let it. */
+	
+#ifdef ZS_MD_SETCLK
+	/* Let the MD code setup any external clock. */
+	ZS_MD_SETCLK(cs);
+#endif /* ZS_MD_SETCLK */
 
 	/* clock mode control */
 	zs_write_reg(cs, 11, reg[11]);
@@ -253,7 +195,8 @@ zs_loadchannelregs(cs)
 	/* which lines cause status interrupts */
 	zs_write_reg(cs, 15, reg[15]);
 
-	/* Zilog docs recommend resetting external status twice at this
+	/*
+	 * Zilog docs recommend resetting external status twice at this
 	 * point. Mainly as the status bits are latched, and the first
 	 * interrupt clear might unlatch them to new values, generating
 	 * a second interrupt request.
@@ -265,11 +208,8 @@ zs_loadchannelregs(cs)
 	zs_write_reg(cs, 3, reg[3]);
 	zs_write_reg(cs, 5, reg[5]);
 
-	/* interrupt enables: TX, TX, STATUS */
+	/* interrupt enables: RX, TX, STATUS */
 	zs_write_reg(cs, 1, reg[1]);
-
-	cs->cs_cclk_flag = cs->cs_pclk_flag;
-	cs->cs_csource = cs->cs_psource;
 }
 
 
@@ -293,53 +233,37 @@ zsc_intr_hard(arg)
 	register struct zs_chanstate *cs_b;
 	register int rval;
 	register u_char rr3, rr3a;
-#ifdef DIAGNOSTIC
-	register int loopcount;
-	loopcount = ZS_INTERRUPT_CNT;
-#endif
 
-	cs_a = &zsc->zsc_cs[0];
-	cs_b = &zsc->zsc_cs[1];
+	cs_a = zsc->zsc_cs[0];
+	cs_b = zsc->zsc_cs[1];
 	rval = 0;
 	rr3a = 0;
 
 	/* Note: only channel A has an RR3 */
-	rr3 = zs_read_reg(cs_a, 3);
-
-	while ((rr3 = zs_read_reg(cs_a, ZSRR_IPEND))
-#ifdef DIAGNOSTIC
-		 && --loopcount
-#endif
-		) {
+	while ((rr3 = zs_read_reg(cs_a, 3)) != 0) {
 
 		/* Handle receive interrupts first. */
 		if (rr3 & ZSRR3_IP_A_RX)
 			(*cs_a->cs_ops->zsop_rxint)(cs_a);
 		if (rr3 & ZSRR3_IP_B_RX)
-			(*cs_b->cs_ops->zsop_rxint)(cs_b);
+			(*cs_b->cs_ops->zsop_stint)(cs_b);
 	
 		/* Handle status interrupts (i.e. flow control). */
 		if (rr3 & ZSRR3_IP_A_STAT)
 			(*cs_a->cs_ops->zsop_stint)(cs_a);
 		if (rr3 & ZSRR3_IP_B_STAT)
 			(*cs_b->cs_ops->zsop_stint)(cs_b);
-	
+
 		/* Handle transmit done interrupts. */
 		if (rr3 & ZSRR3_IP_A_TX)
 			(*cs_a->cs_ops->zsop_txint)(cs_a);
 		if (rr3 & ZSRR3_IP_B_TX)
 			(*cs_b->cs_ops->zsop_txint)(cs_b);
-	
+
+		/* Accumulate so we know what needs to be cleared. */
 		rr3a |= rr3;
 	}
-#ifdef DIAGNOSTIC
-	if (loopcount == 0) {
-		if (rr3 & (ZSRR3_IP_A_RX | ZSRR3_IP_A_TX | ZSRR3_IP_A_STAT))
-			cs_a->cs_flags |= ZS_FLAGS_INTERRUPT_OVERRUN;
-		if (rr3 & (ZSRR3_IP_B_RX | ZSRR3_IP_B_TX | ZSRR3_IP_B_STAT))
-			cs_b->cs_flags |= ZS_FLAGS_INTERRUPT_OVERRUN;
-	}
-#endif
+			
 
 	/* Clear interrupt. */
 	if (rr3a & (ZSRR3_IP_A_RX | ZSRR3_IP_A_TX | ZSRR3_IP_A_STAT)) {
@@ -351,11 +275,7 @@ zsc_intr_hard(arg)
 		rval |= 2;
 	}
 
-	if ((cs_a->cs_softreq) || (cs_b->cs_softreq)) {
-		/* This is a machine-dependent function (or macro). */
-		zsc_req_softint(zsc);
-	}
-
+	/* Note: caller will check cs_x->cs_softreq and DTRT. */
 	return (rval);
 }
 
@@ -369,11 +289,11 @@ zsc_intr_soft(arg)
 {
 	register struct zsc_softc *zsc = arg;
 	register struct zs_chanstate *cs;
-	register int rval, unit;
+	register int rval, chan;
 
 	rval = 0;
-	for (unit = 0; unit < 2; unit++) {
-		cs = &zsc->zsc_cs[unit];
+	for (chan = 0; chan < 2; chan++) {
+		cs = zsc->zsc_cs[chan];
 
 		/*
 		 * The softint flag can be safely cleared once
@@ -383,27 +303,33 @@ zsc_intr_soft(arg)
 		if (cs->cs_softreq) {
 			cs->cs_softreq = 0;
 			(*cs->cs_ops->zsop_softint)(cs);
-			rval = 1;
+			rval++;
 		}
 	}
 	return (rval);
 }
 
-static void	zsnull_intr(struct zs_chanstate *);
-static void	zsnull_softint(struct zs_chanstate *);
+/*
+ * Provide a null zs "ops" vector.
+ */
+
+static void zsnull_intr(struct zs_chanstate *);
+static void zsnull_softint(struct zs_chanstate *);
 
 static void
 zsnull_intr(cs)
 	struct zs_chanstate *cs;
 {
-	zs_write_reg(cs,  1, 0);
-	zs_write_reg(cs, 15, 0);
+	/* Ask for softint() call. */
+	cs->cs_softreq = 1;
 }
 
 static void
 zsnull_softint(cs)
 	struct zs_chanstate *cs;
 {
+	zs_write_reg(cs,  1, 0);
+	zs_write_reg(cs, 15, 0);
 }
 
 struct zsops zsops_null = {

@@ -1,5 +1,5 @@
-/*	$OpenBSD: z8530reg.h,v 1.4 2003/06/02 23:27:49 millert Exp $	*/
-/*	$NetBSD: z8530reg.h,v 1.3 1996/05/18 18:54:23 briggs Exp $ */
+/*	$OpenBSD: z8530reg.h,v 1.5 2004/11/25 18:32:10 miod Exp $	*/
+/*	$NetBSD: z8530reg.h,v 1.7 1996/10/23 00:32:31 gwr Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -60,29 +60,12 @@
  * registers 2 and 9 across both channels, and reads registers 2 and 3
  * differently for the two channels.  We can, however, ignore this much
  * of the time.
- */
-
-/*
+ *
  * This file also includes flags for the Z85C30 and Z85230 enhanced scc.
  * The CMOS 8530 includes extra SDLC functionality, and is used in a
  * number of Macs (often in the Z85C80, an 85C30 combined w/ a SCSI
  * controller). -wrs
- */
-#if 0	/* Example only! */
-/*
- * The layout of this structure is hardware-dependent!
- * Define these in some machine-dependent place.
- */
-struct zschan {
-	volatile u_char	zc_csr;		/* ctrl, status, or reg. number */
-	volatile u_char	zc_data;	/* data or numbered register */
-};
-struct zsdevice {
-	struct	zschan zs_chan[2];
-};
-#endif	/* Example only! */
-
-/*
+ *
  * Some of the names in this files were chosen to make the hsis driver
  * work unchanged (which means that they will match some in SunOS).
  *
@@ -91,9 +74,7 @@ struct zsdevice {
  *	framing error		(missing stop bit, etc)
  *	end of frame		(in synchronous modes)
  *	parity error		(when `parity error is S.C.' is set)
- */
-
-/*
+ *
  * Registers with only a single `numeric value' get a name.
  * Other registers hold bits and are only numbered; the bit
  * definitions imply the register number (see below).
@@ -181,6 +162,8 @@ struct zsdevice {
 #define	ZSWR1_TIE		0x02	/* transmit interrupt enable */
 #define	ZSWR1_SIE		0x01	/* external/status interrupt enable */
 
+#define	ZSWR1_IMASK		0x1F	/* mask of all itr. enable bits. */
+
 /* HSIS compat */
 #define	ZSWR1_REQ_ENABLE	(ZSWR1_REQ_WAIT | ZSWR1_REQ_TX)
 
@@ -197,6 +180,7 @@ struct zsdevice {
 #define	ZSWR3_RX_7		0x40	/* receive 7 bits per char */
 #define	ZSWR3_RX_6		0x80	/* receive 6 bits per char */
 #define	ZSWR3_RX_8		0xc0	/* receive 8 bits per char */
+#define	ZSWR3_RXSIZE		0xc0	/* receive char size mask */
 
 #define	ZSWR3_HFC		0x20	/* hardware flow control */
 #define	ZSWR3_HUNT		0x10	/* enter hunt mode */
@@ -213,19 +197,23 @@ struct zsdevice {
 #define	ZSWR4_CLK_X16		0x40	/* clock divisor = 16 */
 #define	ZSWR4_CLK_X32		0x80	/* clock divisor = 32 */
 #define	ZSWR4_CLK_X64		0xc0	/* clock divisor = 64 */
+#define	ZSWR4_CLK_MASK		0xc0	/* clock divisor mask */
 
 #define	ZSWR4_MONOSYNC		0x00	/* 8 bit sync char (sync only) */
 #define	ZSWR4_BISYNC		0x10	/* 16 bit sync char (sync only) */
-#define	ZSWR4_SDLC		0x20	/* SDLC mode */
+#define	ZSWR4_SDLC  		0x20	/* SDLC mode */
 #define	ZSWR4_EXTSYNC		0x30	/* external sync mode */
+#define	ZSWR4_SYNC_MASK		0x30	/* sync mode bit mask */
 
-#define	ZSWR4_SYNCMODE		0x00	/* one of the above sync modes */
-#define	ZSWR4_ONESB		0x04	/* 1 stop bit */
-#define	ZSWR4_1P5SB		0x08	/* 1.5 stop bits (clk cannot be 1x) */
-#define	ZSWR4_TWOSB		0x0c	/* 2 stop bits */
+#define	ZSWR4_SYNCMODE		0x00	/* no stop bit (sync mode only) */
+#define	ZSWR4_ONESB 		0x04	/* 1 stop bit */
+#define	ZSWR4_1P5SB 		0x08	/* 1.5 stop bits (clk cannot be 1x) */
+#define	ZSWR4_TWOSB 		0x0c	/* 2 stop bits */
+#define	ZSWR4_SBMASK		0x0c	/* mask of all stop bits */
 
-#define	ZSWR4_EVENP		0x02	/* check for even parity */
+#define	ZSWR4_EVENP 		0x02	/* check for even parity */
 #define	ZSWR4_PARENB		0x01	/* enable parity checking */
+#define	ZSWR4_PARMASK		0x03	/* mask of all parity bits */
 
 /*
  * Bits in Write Register 5 (`Transmit Parameter and Controls').
@@ -238,6 +226,7 @@ struct zsdevice {
 #define	ZSWR5_TX_7		0x20	/* transmit 7 bits */
 #define	ZSWR5_TX_6		0x40	/* transmit 6 bits */
 #define	ZSWR5_TX_8		0x60	/* transmit 8 bits */
+#define	ZSWR5_TXSIZE		0x60	/* transmit char size mask */
 
 #define	ZSWR5_BREAK		0x10	/* send break (continuous 0s) */
 #define	ZSWR5_TX_ENABLE		0x08	/* enable transmitter */
@@ -340,7 +329,7 @@ struct zsdevice {
  *	2 bps
  *
  * rounded down to an integer.  This can be computed entirely
- * in integer arithemtic as:
+ * in integer arithmetic as:
  *
  *	f + bps
  *	------- - 2

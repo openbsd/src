@@ -1,4 +1,4 @@
-/*	$OpenBSD: adb_direct.c,v 1.13 2003/11/03 06:43:02 david Exp $	*/
+/*	$OpenBSD: adb_direct.c,v 1.14 2004/11/25 18:32:10 miod Exp $	*/
 /*	$NetBSD: adb_direct.c,v 1.5 1997/04/21 18:04:28 scottr Exp $	*/
 
 /*  From: adb_direct.c 2.02 4/18/97 jpw */
@@ -203,8 +203,6 @@ struct ADBDevEntry ADBDevTable[16];	/* our ADB device table */
 int	ADBNumDevices;		/* num. of ADB devices found with ADBReInit */
 
 extern struct mac68k_machine_S mac68k_machine;
-
-int	zshard(int);
 
 void	pm_setup_adb(void);
 void	pm_check_adb_devices(int);
@@ -1073,7 +1071,7 @@ switch_start:
 		ADB_SET_STATE_ACKON();	/* start ACK to ADB chip */
 		delay(ADB_DELAY);	/* delay */
 		ADB_SET_STATE_ACKOFF();	/* end ACK to ADB chip */
-		zshard(0);	/* grab any serial interrupts */
+		(void)intr_dispatch(0x70);
 		break;
 
 	case ADB_ACTION_IN:
@@ -1087,7 +1085,7 @@ switch_start:
 		ADB_SET_STATE_ACKON();	/* start ACK to ADB chip */
 		delay(ADB_DELAY);	/* delay */
 		ADB_SET_STATE_ACKOFF();	/* end ACK to ADB chip */
-		zshard(0);	/* grab any serial interrupts */
+		(void)intr_dispatch(0x70);
 
 		if (1 == ending) {	/* end of message? */
 			ADB_SET_STATE_INACTIVE();	/* signal end of frame */
@@ -1148,7 +1146,7 @@ switch_start:
 				adbActionState = ADB_ACTION_OUT;	/* set next state */
 
 				delay(ADB_DELAY);	/* delay */
-				zshard(0);	/* grab any serial interrupts */
+				(void)intr_dispatch(0x70);
 
 				if (ADB_INTR_IS_ON) {	/* ADB intr low during
 							 * write */
@@ -1189,13 +1187,13 @@ switch_start:
 			adbWriteDelay = 1;	/* must retry when done with
 						 * read */
 			delay(ADB_DELAY);	/* delay */
-			zshard(0);		/* grab any serial interrupts */
+			(void)intr_dispatch(0x70);
 			goto switch_start;	/* process next state right
 						 * now */
 			break;
 		}
 		delay(ADB_DELAY);	/* required delay */
-		zshard(0);	/* grab any serial interrupts */
+		(void)intr_dispatch(0x70);
 
 		if (adbOutputBuffer[0] == adbSentChars) {	/* check for done */
 			if (0 == adb_cmd_result(adbOutputBuffer)) {	/* do we expect data

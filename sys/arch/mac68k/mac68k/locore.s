@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.35 2004/07/02 17:33:43 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.36 2004/11/25 18:32:10 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.103 1998/07/09 06:02:50 scottr Exp $	*/
 
 /*
@@ -227,9 +227,11 @@ Lstart2:
 	jra	Lstart3
 
 Lget040TC:
+#if 0
 	movl	_C_LABEL(current_mac_model),a1	 | if an AV Mac, save current
 	cmpl	#MACH_CLASSAV,a1@(CPUINFO_CLASS) | TC so internal video will
 	jne	LnotAV				 | get configured
+#endif
 	.long	0x4e7a0003		| movc tc,d0
 	jra	LsaveTC
 LnotAV:
@@ -823,6 +825,9 @@ Lbrkpt3:
  *	Level 7:	NMIs: parity errors?, RESET button
  */
 
+#define	INTERRUPT_SAVEREG	moveml	#0xC0C0,sp@-
+#define	INTERRUPT_RESTOREREG	moveml	sp@+,#0x0303
+
 ENTRY_NOPROFILE(spurintr)
 	addql	#1,_C_LABEL(intrcnt)+0
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
@@ -853,63 +858,14 @@ ENTRY_NOPROFILE(lev2intr)
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
 	jra	_ASM_LABEL(rei)
 
-ENTRY_NOPROFILE(lev3intr)
-	addql	#1,_C_LABEL(intrcnt)+24
-	clrl	sp@-
-	moveml	#0xFFFF,sp@-
-	movl	sp, sp@-
-	movl	_C_LABEL(lev3_intrvec),a2
-	jbsr	a2@
+ENTRY_NOPROFILE(intrhand)	/* levels 3 through 6 */
+	INTERRUPT_SAVEREG
+	movw	sp@(22),sp@-		| push exception vector info	
+	clrw	sp@-
+	jbsr	_C_LABEL(intr_dispatch) | call dispatch routine
 	addql	#4,sp
-	moveml	sp@+, #0xFFFF
-	addql	#4,sp
-	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
-	jra	_ASM_LABEL(rei)
-
-ENTRY_NOPROFILE(lev4intr)
-	addql	#1,_C_LABEL(intrcnt)+12
-	clrl	sp@-
-	moveml	#0xFFFF,sp@-
-	movl	sp, sp@-
-	movl	_C_LABEL(lev4_intrvec),a2
-	jbsr	a2@
-	addql	#4,sp
-	tstl	d0
-	beq	normal_rei
-	moveml	sp@+, #0xFFFF
-	addql	#4,sp
-	rte
-normal_rei:
-	moveml	sp@+, #0xFFFF
-	addql	#4,sp
-	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
-	jra	_ASM_LABEL(rei)
-
-ENTRY_NOPROFILE(lev5intr)
-	addql	#1,_C_LABEL(intrcnt)+28
-	clrl	sp@-
-	moveml	#0xFFFF,sp@-
-	movl	sp, sp@-
-	movl	_C_LABEL(lev5_intrvec),a2
-	jbsr	a2@
-	addql	#4,sp
-	moveml	sp@+, #0xFFFF
-	addql	#4,sp
-	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
-	jra	_ASM_LABEL(rei)
-
-ENTRY_NOPROFILE(lev6intr)
-	addql	#1,_C_LABEL(intrcnt)+32
-	clrl	sp@-
-	moveml	#0xFFFF,sp@-
-	movl	sp, sp@-
-	movl	_C_LABEL(lev6_intrvec),a2
-	jbsr	a2@
-	addql	#4,sp
-	moveml	sp@+, #0xFFFF
-	addql	#4,sp
-	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
-	jra	_ASM_LABEL(rei)
+	INTERRUPT_RESTOREREG
+	jra	_ASM_LABEL(rei)		| all done
 
 ENTRY_NOPROFILE(lev7intr)
 	addql	#1,_C_LABEL(intrcnt)+16

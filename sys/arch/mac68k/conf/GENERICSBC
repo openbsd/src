@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERICSBC,v 1.18 2004/09/16 09:14:03 mickey Exp $
+#	$OpenBSD: GENERICSBC,v 1.19 2004/11/25 18:32:06 miod Exp $
 #	$NetBSD: GENERIC,v 1.52 1997/01/13 23:34:07 scottr Exp $
 #
 # GENERICSBC --- our generic kernel using the SBC SCSI driver
@@ -14,7 +14,6 @@ option		M68020		# Must have 68851 PMMU
 option		FPSP
 option		FPU_EMULATE
 option		COMPAT_SUNOS	# SunOS m68k binary compatibility
-option		ZS_CONSOLE_ABORT
 option		DISABLE_EXT_CACHE # Don't use IIci external cache
 option		DISABLE_ADB_WITH_SERIAL_CONSOLE
 #option		MRG_ADB		  # Use ROM-based ADB driver

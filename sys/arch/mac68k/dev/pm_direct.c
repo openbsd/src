@@ -1,4 +1,4 @@
-/*	$OpenBSD: pm_direct.c,v 1.6 2003/03/14 10:47:36 miod Exp $	*/
+/*	$OpenBSD: pm_direct.c,v 1.7 2004/11/25 18:32:10 miod Exp $	*/
 /*  pm_direct.c 1.22 01/09/97 Takashi Hamada */
 
 /*
@@ -173,7 +173,6 @@ extern int	adbStarting;	/* doing ADB reinit, so do "polling" differently */
 /*
  * Define the external functions
  */
-extern int zshard(int);			/* from zs.c */
 extern void adb_comp_exec(void);	/* from adb_direct.c */
 
 
@@ -255,7 +254,7 @@ pm_wait_busy(delay)
 {
 	while(PM_IS_ON) {
 #ifdef PM_GRAB_SI
-		zshard(0);		/* grab any serial interrupts */
+		(void)intr_dispatch(0x70);
 #endif
 		if ((--delay) < 0)
 			return( 1 );	/* timeout */
@@ -273,7 +272,7 @@ pm_wait_free(delay)
 {
 	while(PM_IS_OFF) {
 #ifdef PM_GRAB_SI
-		zshard(0);		/* grab any serial interrupts */
+		(void)intr_dispatch(0x70);
 #endif
 		if ((--delay) < 0)
 			return( 0 );	/* timeout */
@@ -980,7 +979,7 @@ pm_adb_op(buffer, compRout, data, command)
 		if ((via_reg(VIA1, vIFR) & 0x10) == 0x10)
 			pm_intr();
 #ifdef PM_GRAB_SI
-			zshard(0);		/* grab any serial interrupts */
+			(void)intr_dispatch(0x70);
 #endif
 		if ((--delay) < 0)
 			return( -1 );

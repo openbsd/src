@@ -1,5 +1,5 @@
-/*	$OpenBSD: via.c,v 1.17 2002/03/14 01:26:36 millert Exp $	*/
-/*	$NetBSD: via.c,v 1.58 1997/03/04 04:11:52 scottr Exp $	*/
+/*	$OpenBSD: via.c,v 1.18 2004/11/25 18:32:11 miod Exp $	*/
+/*	$NetBSD: via.c,v 1.62 1997/09/10 04:38:48 scottr Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -87,6 +87,7 @@ void *via2iarg[7] = {
 
 void		via2_intr(struct frame *);
 void		rbv_intr(struct frame *);
+void		oss_intr(struct frame *);
 
 void		(*real_via2_intr)(struct frame *);
 
@@ -169,6 +170,8 @@ via_init()
 
 		real_via2_intr = via2_intr;
 		via2itab[1] = via2_nubus_intr;
+	} else if (current_mac_model->class == MACH_CLASSIIfx) { /* OSS */
+		real_via2_intr = oss_intr;
 	} else {	/* RBV */
 		if (current_mac_model->class == MACH_CLASSIIci) {
 			/*
@@ -245,6 +248,30 @@ via2_intr(fp)
 	do {
 		if (intbits & mask)
 			via2itab[bitnum](via2iarg[bitnum]);
+		mask <<= 1;
+	} while (intbits >= mask && ++bitnum);
+}
+
+void
+oss_intr(fp)
+	struct frame *fp;
+{
+	u_int8_t intbits, bitnum;
+	u_int mask;
+
+	intbits = via2_reg(vIFR + rIFR);
+
+	if (intbits == 0)
+		return;
+
+	intbits &= 0x7f;
+	mask =1 ;
+	bitnum = 0;
+	do {
+		if (intbits & mask) {
+			(*slotitab[bitnum])(slotptab[bitnum], bitnum+9);
+			via2_reg(rIFR) = mask;
+		}
 		mask <<= 1;
 	} while (intbits >= mask && ++bitnum);
 }

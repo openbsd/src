@@ -1,5 +1,5 @@
-/*	$OpenBSD: vectors.s,v 1.6 2004/01/27 16:16:27 miod Exp $	*/
-|	$NetBSD: vectors.s,v 1.9 1997/09/03 06:16:24 scottr Exp $
+/*	$OpenBSD: vectors.s,v 1.7 2004/11/25 18:32:11 miod Exp $	*/
+|	$NetBSD: vectors.s,v 1.10 1998/08/12 06:58:42 scottr Exp $
 
 | Copyright (c) 1988 University of Utah
 | Copyright (c) 1990 Regents of the University of California.
@@ -75,10 +75,10 @@ GLOBAL(vectab)
 	VECTOR(spurintr)	/* 24: spurious interrupt */
 	VECTOR(lev1intr)	/* 25: level 1 interrupt autovector */
 	VECTOR(lev2intr)	/* 26: level 2 interrupt autovector */
-	VECTOR(lev3intr)	/* 27: level 3 interrupt autovector */
-	VECTOR(lev4intr)	/* 28: level 4 interrupt autovector */
-	VECTOR(lev5intr)	/* 29: level 5 interrupt autovector */
-	VECTOR(lev6intr)	/* 30: level 6 interrupt autovector */
+	VECTOR(intrhand)	/* 27: level 3 interrupt autovector */
+	VECTOR(intrhand)	/* 28: level 4 interrupt autovector */
+	VECTOR(intrhand)	/* 29: level 5 interrupt autovector */
+	VECTOR(intrhand)	/* 30: level 6 interrupt autovector */
 	VECTOR(lev7intr)	/* 31: level 7 interrupt autovector */
 	VECTOR(trap0)		/* 32: syscalls */
 	VECTOR(trap1)		/* 33: sigreturn syscall or breakpoint */

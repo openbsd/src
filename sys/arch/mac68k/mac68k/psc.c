@@ -1,5 +1,6 @@
-/*	$OpenBSD: psc.c,v 1.2 2002/03/14 01:26:36 millert Exp $	*/
-/*	$NetBSD: psc.c,v 1.4 1998/04/24 05:27:26 scottr Exp $	*/
+/*	$OpenBSD: psc.c,v 1.3 2004/11/25 18:32:11 miod Exp $	*/
+/*	$NetBSD: psc.c,v 1.5 1998/08/12 05:42:46 scottr Exp $	*/
+
 
 /*-
  * Copyright (c) 1997 David Huang <khym@bga.com>
@@ -39,30 +40,22 @@
 #include <machine/cpu.h>
 #include <machine/psc.h>
 
-void		psc_lev3_intr(struct frame *);
+int		psc_lev3_intr(void *);
 static void	psc_lev3_noint(void *);
-int		psc_lev4_intr(struct frame *);
+int		psc_lev4_intr(void *);
 static int	psc_lev4_noint(void *);
-void		psc_lev5_intr(struct frame *);
+int		psc_lev5_intr(void *);
 static void	psc_lev5_noint(void *);
-void		psc_lev6_intr(struct frame *);
+int		psc_lev6_intr(void *);
 static void	psc_lev6_noint(void *);
-void		psc_spurintr(struct frame *);
-
-void	(*lev3_intrvec)(struct frame *);
-int	(*lev4_intrvec)(struct frame *);
-void	(*lev5_intrvec)(struct frame *);
-void	(*lev6_intrvec)(struct frame *);
-
-extern int	zshard(void *);			/* from zs.c */
 
 void	(*psc3_ihandler)(void *) = psc_lev3_noint;
 void	*psc3_iarg;
 
 int (*psc4_itab[4])(void *) = {
-	psc_lev4_noint, /* 0 */
-	zshard,         /* 1 */
-	zshard,         /* 2 */
+	psc_lev4_noint,	/* 0 */
+	psc_lev4_noint,	/* 1 */
+	psc_lev4_noint,	/* 2 */
 	psc_lev4_noint  /* 3 */
 };
 
@@ -96,30 +89,19 @@ void
 psc_init()
 {
 	/*
-	 * Only Quadra AVs have a PSC. On other machines, point the
-	 * level 4 interrupt to zshard(), and levels 3, 5, and 6 to
-	 * psc_spurintr().
+	 * Only Quadra AVs have a PSC.
 	 */
 	if (current_mac_model->class == MACH_CLASSAV) {
-		lev3_intrvec = psc_lev3_intr;
-		lev4_intrvec = psc_lev4_intr;
-		lev5_intrvec = psc_lev5_intr;
-		lev6_intrvec = psc_lev6_intr;
+		intr_establish(psc_lev3_intr, NULL, 3);
+		intr_establish(psc_lev4_intr, NULL, 4);
+		intr_establish(psc_lev5_intr, NULL, 5);
+		intr_establish(psc_lev6_intr, NULL, 6);
 		psc_reg1(PSC_LEV3_IER) = 0x01; /* disable level 3 interrupts */
 		psc_reg1(PSC_LEV4_IER) = 0x09; /* disable level 4 interrupts */
 		psc_reg1(PSC_LEV4_IER) = 0x86; /* except for SCC */
 		psc_reg1(PSC_LEV5_IER) = 0x03; /* disable level 5 interrupts */
 		psc_reg1(PSC_LEV6_IER) = 0x07; /* disable level 6 interrupts */
-	} else {
-		lev3_intrvec = lev5_intrvec = lev6_intrvec = psc_spurintr;
-		lev4_intrvec = (int (*)(struct frame *))zshard;
 	}
-}
-
-void
-psc_spurintr(fp)
-	struct frame *fp;
-{
 }
 
 int
@@ -145,9 +127,9 @@ remove_psc_lev3_intr()
 	return add_psc_lev3_intr(psc_lev3_noint, (void *)0);
 }
 
-void
-psc_lev3_intr(fp)
-	struct frame *fp;
+int
+psc_lev3_intr(arg)
+	void *arg;
 {
 	u_int8_t intbits;
 
@@ -157,6 +139,8 @@ psc_lev3_intr(fp)
 
 	if (intbits)
 		psc3_ihandler(psc3_iarg);
+
+	return 0;
 }
 
 static void
@@ -167,8 +151,8 @@ psc_lev3_noint(arg)
 }
 
 int
-psc_lev4_intr(fp)
-	struct frame *fp;
+psc_lev4_intr(arg)
+	void * arg;
 {
 	u_int8_t intbits, bitnum;
 	u_int mask;
@@ -224,9 +208,9 @@ psc_lev4_noint(arg)
 	return 0;
 }
 
-void
-psc_lev5_intr(fp)
-	struct frame *fp;
+int
+psc_lev5_intr(arg)
+	void *arg;
 {
 	u_int8_t intbits, bitnum;
 	u_int mask;
@@ -242,6 +226,8 @@ psc_lev5_intr(fp)
 			psc5_itab[bitnum](psc5_iarg[bitnum]);
 		mask <<= 1;
 	} while (intbits >= mask && ++bitnum);
+
+	return 0;
 }
 
 int
@@ -279,9 +265,9 @@ psc_lev5_noint(arg)
 	printf("psc_lev5_noint: device %d\n", (int)arg);
 }
 
-void
-psc_lev6_intr(fp)
-	struct frame *fp;
+int
+psc_lev6_intr(arg)
+	void *arg;
 {
 	u_int8_t intbits, bitnum;
 	u_int mask;
@@ -297,6 +283,8 @@ psc_lev6_intr(fp)
 			psc6_itab[bitnum](psc6_iarg[bitnum]);
 		mask <<= 1;
 	} while (intbits >= mask && ++bitnum);
+
+	return 0;
 }
 
 int
