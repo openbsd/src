@@ -1,4 +1,4 @@
-.\"	$OpenBSD: enc.4,v 1.17 2004/03/21 19:47:59 miod Exp $
+.\"	$OpenBSD: enc.4,v 1.18 2005/01/05 03:30:16 jaredy Exp $
 .\"
 .\" Copyright (c) 1999 Angelos D. Keromytis
 .\" All rights reserved.
@@ -71,9 +71,9 @@ interface.
 To see all outgoing packets before they have been processed via
 .Xr ipsec 4 ,
 or all incoming packets after they have been similarly processed:
-.Bd -literal
-#> ifconfig enc0 up
-#> tcpdump -i enc0
+.Bd -literal -offset indent
+# ifconfig enc0 up
+# tcpdump -i enc0
 .Ed
 .Sh SEE ALSO
 .Xr bpf 4 ,
