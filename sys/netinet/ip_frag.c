@@ -1,6 +1,6 @@
-/*       $OpenBSD: ip_frag.c,v 1.10 1998/09/15 09:51:18 pattonme Exp $       */
+/*       $OpenBSD: ip_frag.c,v 1.11 1999/02/05 05:58:51 deraadt Exp $       */
 /*
- * Copyright (C) 1993-1997 by Darren Reed.
+ * Copyright (C) 1993-1998 by Darren Reed.
  *
  * Redistribution and use in source and binary forms are permitted
  * provided that this notice is preserved and due credit is given
@@ -8,18 +8,19 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_frag.c	1.11 3/24/96 (C) 1993-1995 Darren Reed";
-static const char rcsid[] = "@(#)$Id: ip_frag.c,v 1.10 1998/09/15 09:51:18 pattonme Exp $";
+static const char rcsid[] = "@(#)$Id: ip_frag.c,v 1.11 1999/02/05 05:58:51 deraadt Exp $";
 #endif
 
-#if !defined(_KERNEL) && !defined(KERNEL)
-# include <string.h>
-# include <stdlib.h>
-#endif
 #include <sys/errno.h>
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/file.h>
+#if !defined(_KERNEL) && !defined(KERNEL)
+# include <stdio.h>
+# include <string.h>
+# include <stdlib.h>
+#endif
 #if defined(KERNEL) && (__FreeBSD_version >= 220000)
 #include <sys/filio.h>
 #include <sys/fcntl.h>
@@ -81,7 +82,7 @@ int	ipfr_inuse = 0,
 extern	int	ipfr_timer_id;
 #endif
 #if	(SOLARIS || defined(__sgi)) && defined(_KERNEL)
-extern	krwlock_t	ipf_frag, ipf_natfrag, ipf_nat;
+extern	KRWLOCK_T	ipf_frag, ipf_natfrag, ipf_nat;
 extern	kmutex_t	ipf_rw;
 #endif
 
@@ -160,7 +161,7 @@ ipfr_t *table[];
 	/*
 	 * Compute the offset of the expected start of the next packet.
 	 */
-	fr->ipfr_off = (ip->ip_off & 0x1fff) + (fin->fin_dlen >> 3);
+	fr->ipfr_off = (ip->ip_off & IP_OFFMASK) + (fin->fin_dlen >> 3);
 	ATOMIC_INC(ipfr_stats.ifs_new);
 	ATOMIC_INC(ipfr_inuse);
 	return fr;
@@ -190,7 +191,8 @@ nat_t *nat;
 	ipfr_t	*ipf;
 
 	WRITE_ENTER(&ipf_natfrag);
-	if ((ipf = ipfr_new(ip, fin, pass, ipfr_nattab))) {
+	ipf = ipfr_new(ip, fin, pass, ipfr_nattab);
+	if (ipf != NULL) {
 		ipf->ipfr_data = nat;
 		nat->nat_data = ipf;
 	}
@@ -255,7 +257,7 @@ ipfr_t *table[];
 			 * If we've follwed the fragments, and this is the
 			 * last (in order), shrink expiration time.
 			 */
-			if ((off & 0x1fff) == f->ipfr_off) {
+			if ((off & IP_OFFMASK) == f->ipfr_off) {
 				if (!(off & IP_MF))
 					f->ipfr_ttl = 1;
 				else
@@ -280,12 +282,12 @@ fr_info_t *fin;
 
 	READ_ENTER(&ipf_natfrag);
 	ipf = ipfr_lookup(ip, fin, ipfr_nattab);
-	if (ipf) {
+	if (ipf != NULL) {
 		nat = ipf->ipfr_data;
 		/*
 		 * This is the last fragment for this packet.
 		 */
-		if (ipf->ipfr_ttl == 1) {
+		if ((ipf->ipfr_ttl == 1) && (nat != NULL)) {
 			nat->nat_data = NULL;
 			ipf->ipfr_data = NULL;
 		}
@@ -355,7 +357,8 @@ void ipfr_unload()
 	for (idx = IPFT_SIZE - 1; idx >= 0; idx--)
 		for (fp = &ipfr_nattab[idx]; (fr = *fp); ) {
 			*fp = fr->ipfr_next;
-			if ((nat = (nat_t *)fr->ipfr_data)) {
+			nat = (nat_t *)fr->ipfr_data;
+			if (nat != NULL) {
 				if (nat->nat_data == fr)
 					nat->nat_data = NULL;
 			}
@@ -434,7 +437,8 @@ int ipfr_slowtimer()
 				*fp = fr->ipfr_next;
 				ATOMIC_INC(ipfr_stats.ifs_expire);
 				ATOMIC_DEC(ipfr_inuse);
-				if ((nat = (nat_t *)fr->ipfr_data)) {
+				nat = (nat_t *)fr->ipfr_data;
+				if (nat != NULL) {
 					if (nat->nat_data == fr)
 						nat->nat_data = NULL;
 				}

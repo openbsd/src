@@ -1,6 +1,6 @@
-/*    $OpenBSD: ip_fil.c,v 1.19 1998/09/15 09:51:17 pattonme Exp $    */
+/*    $OpenBSD: ip_fil.c,v 1.20 1999/02/05 05:58:50 deraadt Exp $    */
 /*
- * Copyright (C) 1993-1997 by Darren Reed.
+ * Copyright (C) 1993-1998 by Darren Reed.
  *
  * Redistribution and use in source and binary forms are permitted
  * provided that this notice is preserved and due credit is given
@@ -8,7 +8,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-1995 Darren Reed";
-static const char rcsid[] = "@(#)$Id: ip_fil.c,v 1.19 1998/09/15 09:51:17 pattonme Exp $";
+static const char rcsid[] = "@(#)$Id: ip_fil.c,v 1.20 1999/02/05 05:58:50 deraadt Exp $";
 #endif
 
 #ifndef	SOLARIS
@@ -141,6 +141,9 @@ static	int	frrequest __P((int, int, caddr_t, int));
 #endif
 #ifdef	_KERNEL
 static	int	(*fr_savep) __P((ip_t *, int, void *, int, struct mbuf **));
+# ifdef	__sgi
+extern  kmutex_t        ipf_rw;
+# endif
 #else
 int	ipllog __P((void));
 void	init_ifp __P((void));
@@ -1006,9 +1009,16 @@ frdest_t *fdp;
 	/*
 	 * For input packets which are being "fastrouted", they won't
 	 * go back through output filtering and miss their chance to get
-	 * NAT'd.
+	 * NAT'd and counted.
 	 */
-	(void) ip_natout(ip, hlen, fin);
+	if (fin->fin_out == 0) {
+		if ((fin->fin_fr = ipacct[1][fr_active]) &&
+		    (FR_SCANLIST(FR_NOMATCH, ip, fin, m) & FR_ACCOUNT)) {
+			ATOMIC_INC(frstats[1].fr_acct);
+		}
+		fin->fin_fr = NULL;
+		(void) ip_natout(ip, hlen, fin);
+	}
 	if (fin->fin_out)
 		ip->ip_sum = 0;
 	/*
@@ -1124,9 +1134,8 @@ done:
 	else
 		ipl_frouteok[1]++;
 
-	if (ro->ro_rt) {
+	if (ro->ro_rt)
 		RTFREE(ro->ro_rt);
-	}
 	return;
 bad:
 	m_freem(m);

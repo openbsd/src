@@ -1,6 +1,6 @@
-/*     $OpenBSD: parse.c,v 1.22 1998/11/24 03:05:34 deraadt Exp $      */
+/*     $OpenBSD: parse.c,v 1.23 1999/02/05 05:58:42 deraadt Exp $      */
 /*
- * Copyright (C) 1993-1997 by Darren Reed.
+ * Copyright (C) 1993-1998 by Darren Reed.
  *
  * Redistribution and use in source and binary forms are permitted
  * provided that this notice is preserved and due credit is given
@@ -40,7 +40,7 @@
 
 #if !defined(lint)
 static const char sccsid[] ="@(#)parse.c	1.44 6/5/96 (C) 1993-1996 Darren Reed";
-static const char rcsid[] = "@(#)$Id: parse.c,v 1.22 1998/11/24 03:05:34 deraadt Exp $";
+static const char rcsid[] = "@(#)$Id: parse.c,v 1.23 1999/02/05 05:58:42 deraadt Exp $";
 #endif
 
 extern	struct	ipopt_names	ionames[], secclass[];

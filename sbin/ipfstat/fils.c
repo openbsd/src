@@ -1,6 +1,6 @@
-/*    $OpenBSD: fils.c,v 1.13 1998/09/15 09:58:34 pattonme Exp $    */
+/*    $OpenBSD: fils.c,v 1.14 1999/02/05 05:58:43 deraadt Exp $    */
 /*
- * Copyright (C) 1993-1997 by Darren Reed.
+ * Copyright (C) 1993-1998 by Darren Reed.
  *
  * Redistribution and use in source and binary forms are permitted
  * provided that this notice is preserved and due credit is given
@@ -51,7 +51,7 @@
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)fils.c	1.21 4/20/96 (C) 1993-1996 Darren Reed";
-static const char rcsid[] = "@(#)$Id: fils.c,v 1.13 1998/09/15 09:58:34 pattonme Exp $";
+static const char rcsid[] = "@(#)$Id: fils.c,v 1.14 1999/02/05 05:58:43 deraadt Exp $";
 #endif
 #ifdef	_PATH_UNIX
 # define	VMUNIX	_PATH_UNIX
@@ -224,6 +224,10 @@ struct	friostat	*fp;
 #if SOLARIS
 	PRINTF("dropped packets:\tin %lu\tout %lu\n",
 			fp->f_st[0].fr_drop, fp->f_st[1].fr_drop);
+	PRINTF("non-data packets:\tin %lu\tout %lu\n",
+			fp->f_st[0].fr_notdata, fp->f_st[1].fr_notdata);
+	PRINTF("no-data packets:\tin %lu\tout %lu\n",
+			fp->f_st[0].fr_nodata, fp->f_st[1].fr_nodata);
 	PRINTF("non-ip packets:\t\tin %lu\tout %lu\n",
 			fp->f_st[0].fr_notip, fp->f_st[1].fr_notip);
 	PRINTF("   bad packets:\t\tin %lu\tout %lu\n",
@@ -394,22 +398,21 @@ ips_stat_t *ipsp;
 				ips.is_pkts, ips.is_bytes);
 #endif
 			if (ips.is_p == IPPROTO_TCP)
-				PRINTF("\t%hu -> %hu %lu:%lu %hu:%hu\n",
+				PRINTF("\t%hu -> %hu %lu:%lu %hu:%hu",
 					ntohs(ips.is_sport),
 					ntohs(ips.is_dport),
 					ips.is_seq, ips.is_ack,
 					ips.is_swin, ips.is_dwin);
 			else if (ips.is_p == IPPROTO_UDP)
-				PRINTF(" %hu -> %hu\n", ntohs(ips.is_sport),
+				PRINTF(" %hu -> %hu", ntohs(ips.is_sport),
 					ntohs(ips.is_dport));
 			else if (ips.is_p == IPPROTO_ICMP)
-				PRINTF(" %hu %hu %d\n", ips.is_icmp.ics_id,
+				PRINTF(" %hu %hu %d", ips.is_icmp.ics_id,
 					ips.is_icmp.ics_seq,
 					ips.is_icmp.ics_type);
 
-			/* phil@ultimate.com ... */
-			PRINTF("\t");
-			/* from "printfr()" */
+			PRINTF("\n\t");
+
 			if (ips.is_pass & FR_PASS) {
 				PRINTF("pass");
 			} else if (ips.is_pass & FR_BLOCK) {
@@ -449,7 +452,6 @@ ips_stat_t *ipsp;
 			if (ips.is_pass & FR_KEEPSTATE)
 				PRINTF(" keep state");
 			PRINTF("\n");
-			/* ... phil@ultimate.com */
 
 			PRINTF("\tpkt_flags & %x = %x,\t", ips.is_flags & 0xf,
 				ips.is_flags >> 4);

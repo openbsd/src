@@ -1,4 +1,4 @@
-.\"     $OpenBSD: ipmon.8,v 1.7 1998/12/28 10:08:42 hugh Exp $          
+.\"     $OpenBSD: ipmon.8,v 1.8 1999/02/05 05:58:48 deraadt Exp $          
 .TH ipmon 8
 .SH NAME
 ipmon \- monitors /dev/ipl for logged packets
@@ -65,7 +65,8 @@ as for \fB-o\fP.
 .TP
 .B \-s
 Packet information read in will be sent through syslogd rather than
-saved to a file.  The following levels are used:
+saved to a file.  The default facility when compiled and installed is
+\fBlocal0\fP.  The following levels are used:
 .IP
 .B LOG_INFO
 \- packets logged using the "log" keyword as the action rather
@@ -89,6 +90,9 @@ Set the logfile to be opened for reading state log records from to <device>.
 .IP
 .B \-t
 read the input file/device in a manner akin to tail(1).
+.TP
+.B \-v
+show tcp window, ack and sequence fields.
 .TP
 .B \-x
 show the packet data in hex.

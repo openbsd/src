@@ -1,6 +1,6 @@
-/*       $OpenBSD: fil.c,v 1.13 1998/09/15 09:51:17 pattonme Exp $       */
+/*       $OpenBSD: fil.c,v 1.14 1999/02/05 05:58:49 deraadt Exp $       */
 /*
- * Copyright (C) 1993-1997 by Darren Reed.
+ * Copyright (C) 1993-1998 by Darren Reed.
  *
  * Redistribution and use in source and binary forms are permitted
  * provided that this notice is preserved and due credit is given
@@ -8,7 +8,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-1996 Darren Reed";
-static const char rcsid[] = "@(#)$Id: fil.c,v 1.13 1998/09/15 09:51:17 pattonme Exp $";
+static const char rcsid[] = "@(#)$Id: fil.c,v 1.14 1999/02/05 05:58:49 deraadt Exp $";
 #endif
 
 #include <sys/errno.h>
@@ -31,7 +31,9 @@ static const char rcsid[] = "@(#)$Id: fil.c,v 1.13 1998/09/15 09:51:17 pattonme 
 # endif
 #else
 # include <sys/byteorder.h>
+# if SOLARIS2 < 5
 # include <sys/dditypes.h>
+# endif
 # include <sys/stream.h>
 #endif
 #ifndef linux
@@ -93,13 +95,8 @@ extern	int	opts;
 # define	FR_VERBOSE(verb_pr)
 # define	FR_DEBUG(verb_pr)
 # define	IPLLOG(a, c, d, e)		ipflog(a, c, d, e)
-# if SOLARIS
-extern	krwlock_t	ipf_mutex, ipf_auth;
-# endif
-# if defined(__sgi)
-extern	kmutex_t	ipf_mutex, ipf_auth;
-# endif
 # if SOLARIS || defined(__sgi)
+extern	KRWLOCK_T	ipf_mutex, ipf_auth;
 extern	kmutex_t	ipf_rw;
 # endif
 # if SOLARIS
@@ -206,7 +203,6 @@ fr_info_t *fin;
 {
 	struct optlist *op;
 	tcphdr_t *tcp;
-	icmphdr_t *icmp;
 	fr_ip_t *fi = &fin->fin_fi;
 	u_short optmsk = 0, secmsk = 0, auth = 0;
 	int i, mv, ol, off;
@@ -227,14 +223,13 @@ fr_info_t *fin;
 	fin->fin_hlen = hlen;
 	fin->fin_dlen = ip->ip_len - hlen;
 	tcp = (tcphdr_t *)((char *)ip + hlen);
-	icmp = (icmphdr_t *)tcp;
 	fin->fin_dp = (void *)tcp;
 	(*(((u_short *)fi) + 1)) = (*(((u_short *)ip) + 4));
 	(*(((u_32_t *)fi) + 1)) = (*(((u_32_t *)ip) + 3));
 	(*(((u_32_t *)fi) + 2)) = (*(((u_32_t *)ip) + 4));
 
 	fi->fi_fl = (hlen > sizeof(ip_t)) ? FI_OPTIONS : 0;
-	off = (ip->ip_off & 0x1fff) << 3;
+	off = (ip->ip_off & IP_OFFMASK) << 3;
 	if (ip->ip_off & 0x3fff)
 		fi->fi_fl |= FI_FRAG;
 	switch (ip->ip_p)
@@ -242,10 +237,12 @@ fr_info_t *fin;
 	case IPPROTO_ICMP :
 	{
 		int minicmpsz = sizeof(struct icmp);
+		icmphdr_t *icmp;
 
-		if (!off && ip->ip_len > ICMP_MINLEN + hlen &&
-		    (icmp->icmp_type == ICMP_ECHOREPLY ||
-		     icmp->icmp_type == ICMP_UNREACH))
+		icmp = (icmphdr_t *)tcp;
+
+		if (!off && (icmp->icmp_type == ICMP_ECHOREPLY ||
+		     icmp->icmp_type == ICMP_ECHO))
 			minicmpsz = ICMP_MINLEN;
 		if ((!(ip->ip_len >= hlen + minicmpsz) && !off) ||
 		    (off && off < sizeof(struct icmp)))
@@ -408,7 +405,7 @@ fr_info_t *fin;
 		/*
 		 * Match the flags ?  If not, abort this match.
 		 */
-		if (fr->fr_tcpf &&
+		if (fr->fr_tcpfm &&
 		    fr->fr_tcpf != (fin->fin_tcpf & fr->fr_tcpfm)) {
 			FR_DEBUG(("f. %#x & %#x != %#x\n", fin->fin_tcpf,
 				 fr->fr_tcpfm, fr->fr_tcpf));
@@ -437,7 +434,7 @@ void *m;
 	fin->fin_fr = NULL;
 	fin->fin_rule = 0;
 	fin->fin_group = 0;
-	off = ip->ip_off & 0x1fff;
+	off = ip->ip_off & IP_OFFMASK;
 	pass |= (fi->fi_fl << 24);
 
 	if ((fi->fi_fl & FI_TCPUDP) && (fin->fin_dlen > 3) && !off)
@@ -557,7 +554,7 @@ void *m;
 
 /*
  * frcheck - filter check
- * check using source and destination addresses/pors in a packet whether
+ * check using source and destination addresses/ports in a packet whether
  * or not to pass it on or not.
  */
 int fr_check(ip, hlen, ifp, out
@@ -605,19 +602,20 @@ int out;
 	     ip->ip_p == IPPROTO_ICMP)) {
 		int plen = 0;
 
-		switch(ip->ip_p)
-		{
-		case IPPROTO_TCP:
-			plen = sizeof(tcphdr_t);
-			break;
-		case IPPROTO_UDP:
-			plen = sizeof(udphdr_t);
-			break;
-		case IPPROTO_ICMP:
+		if ((ip->ip_off & IP_OFFMASK) == 0)
+			switch(ip->ip_p)
+			{
+			case IPPROTO_TCP:
+				plen = sizeof(tcphdr_t);
+				break;
+			case IPPROTO_UDP:
+				plen = sizeof(udphdr_t);
+				break;
 			/* 96 - enough for complete ICMP error IP header */
-			plen = sizeof(struct icmp) + sizeof(ip_t) + 8;
-			break;
-		}
+			case IPPROTO_ICMP:
+				plen = 76 + sizeof(struct icmp);
+				break;
+			}
 		up = MIN(hlen + plen, ip->ip_len);
 
 		if (up > m->m_len) {
@@ -957,63 +955,90 @@ ip_t *ip;
 tcphdr_t *tcp;
 int len;
 {
+	u_short *sp, slen, ts;
+	u_int sum, sum2;
+	int hlen;
+
+
+	/*
+	 * Add up IP Header portion
+	 */
+	hlen = ip->ip_hl << 2;
+	slen = ip->ip_len - hlen;
+	sum = htons(ip->ip_p);
+	sum += htons(slen);
+	sp = (u_short *)&ip->ip_src;
+	sum += *sp++;	/* ip_src */
+	sum += *sp++;
+	sum += *sp++;	/* ip_dst */
+	sum += *sp++;
+	ts = tcp->th_sum;
+	tcp->th_sum = 0;
+#ifdef	KERNEL
+# if SOLARIS
+	sum2 = ip_cksum(m, hlen, sum);
+	sum2 = (sum2 & 0xffff) + (sum2 >> 16);
+	sum2 = ~sum2 & 0xffff;
+# else /* SOLARIS */
+#  if defined(BSD) || defined(sun)
+#   if BSD >= 199306
+	m->m_data += hlen;
+#   else
+	m->m_off += hlen;
+#   endif
+	m->m_len -= hlen;
+	sum2 = in_cksum(m, slen);
+	m->m_len += hlen;
+#   if BSD >= 199306
+	m->m_data -= hlen;
+#   else
+	m->m_off -= hlen;
+#   endif
+	/*
+	 * Both sum and sum2 are partial sums, so combine them together.
+	 */
+	sum = (sum & 0xffff) + (sum >> 16);
+	sum = ~sum & 0xffff;
+	sum2 += sum;
+	sum2 = (sum2 & 0xffff) + (sum2 >> 16);
+#  else /* defined(BSD) || defined(sun) */
+{
+
 	union {
 		u_char	c[2];
 		u_short	s;
 	} bytes;
 	u_32_t sum;
-	u_short	*sp;
-# if SOLARIS || defined(__sgi)
-	int add, hlen;
+	u_short	*sp, slen;
+# if defined(__sgi)
+	int add;
 # endif
 
 	/*
 	 * Add up IP Header portion
 	 */
-	bytes.c[0] = 0;
-	bytes.c[1] = IPPROTO_TCP;
-	len -= (ip->ip_hl << 2);
-	sum = bytes.s;
-	sum += htons((u_short)len);
 	sp = (u_short *)&ip->ip_src;
+	len -= (ip->ip_hl << 2);
+	sum = ntohs(IPPROTO_TCP);
+	sum += htons((u_short)len);
+	sum += *sp++;	/* ip_src */
 	sum += *sp++;
-	sum += *sp++;
-	sum += *sp++;
+	sum += *sp++;	/* ip_dst */
 	sum += *sp++;
 	if (sp != (u_short *)tcp)
 		sp = (u_short *)tcp;
+	sum += *sp++;	/* sport */
+	sum += *sp++;	/* dport */
+	sum += *sp++;	/* seq */
 	sum += *sp++;
+	sum += *sp++;	/* ack */
 	sum += *sp++;
-	sum += *sp++;
-	sum += *sp++;
-	sum += *sp++;
-	sum += *sp++;
-	sum += *sp++;
-	sum += *sp;
+	sum += *sp++;	/* off */
+	sum += *sp;	/* win */
 	sp += 2;	/* Skip over checksum */
-	sum += *sp++;
+	sum += *sp++;	/* urp */
 
-#if SOLARIS
-	/*
-	 * In case we had to copy the IP & TCP header out of mblks,
-	 * skip over the mblk bits which are the header
-	 */
-	if ((caddr_t)ip != (caddr_t)m->b_rptr) {
-		hlen = (caddr_t)sp - (caddr_t)ip;
-		while (hlen) {
-			add = MIN(hlen, m->b_wptr - m->b_rptr);
-			sp = (u_short *)((caddr_t)m->b_rptr + add);
-			hlen -= add;
-			if ((caddr_t)sp >= (caddr_t)m->b_wptr) {
-				m = m->b_cont;
-				PANIC((!m),("fr_tcpsum: not enough data"));
-				if (!hlen)
-					sp = (u_short *)m->b_rptr;
-			}
-		}
-	}
-#endif
-#ifdef	__sgi
+# ifdef	__sgi
 	/*
 	 * In case we had to copy the IP & TCP header out of mbufs,
 	 * skip over the mbuf bits which are the header
@@ -1024,52 +1049,57 @@ int len;
 			add = MIN(hlen, m->m_len);
 			sp = (u_short *)(mtod(m, caddr_t) + add);
 			hlen -= add;
-			if (add >= m->m_len) {
+			if (add == m->m_len) {
 				m = m->m_next;
-				PANIC((!m),("fr_tcpsum: not enough data"));
-				if (!hlen)
+				if (!hlen) {
+					if (!m)
+						break;
 					sp = mtod(m, u_short *);
+				}
+				PANIC((!m),("fr_tcpsum(1): not enough data"));
 			}
 		}
 	}
-#endif
+# endif
 
 	if (!(len -= sizeof(*tcp)))
 		goto nodata;
-	while (len > 0) {
-#if SOLARIS
-		while ((caddr_t)sp >= (caddr_t)m->b_wptr) {
-			m = m->b_cont;
-			PANIC((!m),("fr_tcpsum: not enough data"));
-			sp = (u_short *)m->b_rptr;
-		}
-#else
-		while (((caddr_t)sp - mtod(m, caddr_t)) >= m->m_len)
-		{
+	while (len > 1) {
+		if (((caddr_t)sp - mtod(m, caddr_t)) >= m->m_len) {
 			m = m->m_next;
-			PANIC((!m),("fr_tcpsum: not enough data"));
+			PANIC((!m),("fr_tcpsum(2): not enough data"));
 			sp = mtod(m, u_short *);
 		}
-#endif /* SOLARIS */
-		if (len < 2)
-			break;
-		if((u_long)sp & 1) {
+		if (((caddr_t)(sp + 1) - mtod(m, caddr_t)) > m->m_len) {
+			bytes.c[0] = *(u_char *)sp;
+			m = m->m_next;
+			PANIC((!m),("fr_tcpsum(3): not enough data"));
+			sp = mtod(m, u_short *);
+			bytes.c[1] = *(u_char *)sp;
+			sum += bytes.s;
+			sp = (u_short *)((u_char *)sp + 1);
+		}
+		if ((u_long)sp & 1) {
 			bcopy((char *)sp++, (char *)&bytes.s, sizeof(bytes.s));
 			sum += bytes.s;
 		} else
 			sum += *sp++;
 		len -= 2;
 	}
-	if (len) {
-		bytes.c[1] = 0;
-		bytes.c[0] = *(u_char *)sp;
-		sum += bytes.s;
-	}
+	if (len)
+		sum += ntohs(*(u_char *)sp << 8);
 nodata:
-	sum = (sum >> 16) + (sum & 0xffff);
-	sum += (sum >> 16);
-	sum = (u_short)((~sum) & 0xffff);
-	return sum;
+	while (sum > 0xffff)
+		sum = (sum & 0xffff) + (sum >> 16);
+	sum2 = (u_short)(~sum & 0xffff);
+}
+#   endif /*  defined(BSD)  || defined(sun) */
+# endif /* SOLARIS */
+#else /* KERNEL */
+	sum2 = 0;
+#endif /* KERNEL */
+	tcp->th_sum = ts;
+	return sum2;
 }
 
 
@@ -1107,7 +1137,7 @@ nodata:
  * SUCH DAMAGE.
  *
  *	@(#)uipc_mbuf.c	8.2 (Berkeley) 1/4/94
- * $Id: fil.c,v 1.13 1998/09/15 09:51:17 pattonme Exp $
+ * $Id: fil.c,v 1.14 1999/02/05 05:58:49 deraadt Exp $
  */
 /*
  * Copy data from an mbuf chain starting "off" bytes from the beginning,

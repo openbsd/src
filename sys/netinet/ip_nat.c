@@ -1,6 +1,6 @@
-/*       $OpenBSD: ip_nat.c,v 1.19 1999/02/01 07:45:53 d Exp $       */
+/*       $OpenBSD: ip_nat.c,v 1.20 1999/02/05 05:58:52 deraadt Exp $       */
 /*
- * Copyright (C) 1995-1997 by Darren Reed.
+ * Copyright (C) 1995-1998 by Darren Reed.
  *
  * Redistribution and use in source and binary forms are permitted
  * provided that this notice is preserved and due credit is given
@@ -10,23 +10,23 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_nat.c	1.11 6/5/96 (C) 1995 Darren Reed";
-static const char rcsid[] = "@(#)$Id: ip_nat.c,v 1.19 1999/02/01 07:45:53 d Exp $";
+static const char rcsid[] = "@(#)$Id: ip_nat.c,v 1.20 1999/02/05 05:58:52 deraadt Exp $";
 #endif
 
 #if defined(__FreeBSD__) && defined(KERNEL) && !defined(_KERNEL)
 #define _KERNEL
 #endif
 
-#if !defined(_KERNEL) && !defined(KERNEL)
-# include <stdio.h>
-# include <string.h>
-# include <stdlib.h>
-#endif
 #include <sys/errno.h>
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/file.h>
+#if !defined(_KERNEL) && !defined(KERNEL)
+# include <stdio.h>
+# include <string.h>
+# include <stdlib.h>
+#endif
 #if defined(KERNEL) && (__FreeBSD_version >= 220000)
 # include <sys/filio.h>
 # include <sys/fcntl.h>
@@ -111,7 +111,7 @@ u_long	fr_defnatage = 1200,	/* 10 minutes (600 seconds) */
 natstat_t nat_stats;
 #if	(SOLARIS || defined(__sgi)) && defined(_KERNEL)
 extern	kmutex_t	ipf_rw;
-extern	krwlock_t	ipf_nat;
+extern	KRWLOCK_T	ipf_nat;
 #endif
 
 static	int	nat_flushtable __P((void));
@@ -123,11 +123,10 @@ static	int	nat_ifpaddr __P((nat_t *, void *, struct in_addr *));
 #define	LONG_SUM(in)	(((in) & 0xffff) + ((in) >> 16))
 
 #define	CALC_SUMD(s1, s2, sd) { \
-			    /* Do it twice */ \
 			    (s1) = ((s1) & 0xffff) + ((s1) >> 16); \
-			    (s1) = ((s1) & 0xffff) + ((s1) >> 16); \
-			    /* Do it twice */ \
 			    (s2) = ((s2) & 0xffff) + ((s2) >> 16); \
+			    /* Do it twice */ \
+			    (s1) = ((s1) & 0xffff) + ((s1) >> 16); \
 			    (s2) = ((s2) & 0xffff) + ((s2) >> 16); \
 			    /* Because ~1 == -2, We really need ~1 == -1 */ \
 			    if ((s1) > (s2)) (s2)--; \
@@ -257,7 +256,13 @@ int mode;
 		n->in_ifp = (void *)GETUNIT(n->in_ifname);
 		if (!n->in_ifp)
 			n->in_ifp = (void *)-1;
-		n->in_apr = ap_match(n->in_p, n->in_plabel);
+		if (n->in_plabel[0] != '\0') {
+			n->in_apr = ap_match(n->in_p, n->in_plabel);
+			if (!n->in_apr) {
+				error = ENOENT;
+				break;
+			}
+		}
 		n->in_next = *np;
 		n->in_use = 0;
 		n->in_space = ~(0xffffffff & ntohl(n->in_outmsk));
@@ -281,7 +286,7 @@ int mode;
 		/* Otherwise, these fields are preset */
 		*np = n;
 		n = NULL;
-		ATOMIC_INC(nat_stats.ns_rules);
+		nat_stats.ns_rules++;
 		break;
 	case SIOCRMNAT :
 		if (!(mode & FWRITE)) {
@@ -298,7 +303,7 @@ int mode;
 			if (n->in_apr)
 				ap_free(n->in_apr);
 			KFREE(n);
-			ATOMIC_DEC(nat_stats.ns_rules);
+			nat_stats.ns_rules--;
 		} else {
 			n->in_flags |= IPN_DELETE;
 			n->in_next = NULL;
@@ -310,6 +315,7 @@ int mode;
 		nat_stats.ns_table[0] = nat_table[0];
 		nat_stats.ns_table[1] = nat_table[1];
 		nat_stats.ns_list = nat_list;
+		nat_stats.ns_apslist = ap_sess_list;
 		IWCOPY((char *)&nat_stats, (char *)data, sizeof(nat_stats));
 		break;
 	case SIOCGNATL :
@@ -331,7 +337,6 @@ int mode;
 			break;
 		}
 		ret = nat_flushtable();
-		(void) ap_unload();
 		MUTEX_DOWNGRADE(&ipf_nat);
 		IWCOPY((caddr_t)&ret, data, sizeof(ret));
 		break;
@@ -355,7 +360,7 @@ int mode;
 		error = EINVAL;
 		break;
 	}
-	RWLOCK_EXIT(&ipf_nat);
+	RWLOCK_EXIT(&ipf_nat);			/* READ/WRITE */
 	SPL_X(s);
 	if (nt)
 		KFREE(nt);
@@ -392,7 +397,7 @@ struct nat *natd;
 	 * longer being used.
 	 */
 	if ((ipn = natd->nat_ptr)) {
-		ATOMIC_INC(ipn->in_space);
+		ipn->in_space++;
 		ipn->in_use--;
 		if (!ipn->in_use && (ipn->in_flags & IPN_DELETE)) {
 			if (ipn->in_apr)
@@ -407,6 +412,8 @@ struct nat *natd;
 	 * dereference that as well.
 	 */
 	ipfr_forget((void *)natd);
+	aps_free(natd->nat_aps);
+	nat_stats.ns_inuse--;
 	KFREE(natd);
 }
 
@@ -418,9 +425,9 @@ static int nat_flushtable()
 {
 	register nat_t *nat, **natp;
 	register int j = 0;
-  
+
 	/*
-	 * Everything will be deleted, so lets just make it the deletions
+         * ALL NAT mappings deleted, so lets just make it the deletions
 	 * quicker.
 	 */
 	bzero((char *)nat_table[0], sizeof(nat_table[0]));
@@ -431,13 +438,13 @@ static int nat_flushtable()
 		nat_delete(nat);
 		j++;
 	}
-
+	nat_stats.ns_inuse = 0;
 	return j;
 }
 
 
 /*
- * nat_clearlist - delete all entries in the active NAT mapping list.
+ * nat_clearlist - delete all rules in the active NAT mapping list.
  */
 static int nat_clearlist()
 {
@@ -450,14 +457,13 @@ static int nat_clearlist()
 			if (n->in_apr)
 				ap_free(n->in_apr);
 			KFREE(n);
-			ATOMIC_DEC(nat_stats.ns_rules);
-			i++;
+			nat_stats.ns_rules--;
 		} else {
 			n->in_flags |= IPN_DELETE;
 			n->in_next = NULL;
 		}
+		i++;
 	}
-	nat_stats.ns_inuse = 0;
 	return i;
 }
 
@@ -531,6 +537,7 @@ struct in_addr *inp;
 
 /*
  * Create a new NAT table entry.
+ * NOTE: assumes write lock on ipf_nat has been obtained already.
  */
 nat_t *nat_new(np, ip, fin, flags, direction)
 ipnat_t *np;
@@ -566,14 +573,31 @@ int direction;
 	 */
 	if (direction == NAT_OUTBOUND) {
 		/*
+		* Values at which the search for a free resouce starts.
+		*/
+		u_32_t st_ip;
+		u_short st_port;
+
+		/*
 		 * If it's an outbound packet which doesn't match any existing
 		 * record, then create a new port
 		 */
 		l = 0;
+		st_ip = np->in_nip;
+		st_port = np->in_pnext;
+
 		do {
 			l++;
 			port = 0;
 			in.s_addr = np->in_nip;
+			if ((np->in_outmsk == 0xffffffff) &&
+			    (np->in_pnext == 0)) {
+				if (l > 1) {
+					KFREE(nat);
+					return NULL;
+				}
+			}
+
 			if (!in.s_addr && (np->in_outmsk == 0xffffffff)) {
 				if ((l > 1) ||
 				    nat_ifpaddr(nat, fin->fin_ifp, &in) == -1) {
@@ -586,19 +610,21 @@ int direction;
 					return NULL;
 				}
 				in.s_addr = ntohl(ip->ip_src.s_addr);
-				if (nflags & IPN_TCPUDP)
-					port = sport;
-			} else if (nflags & IPN_TCPUDP) {
+			} else if ((nflags & IPN_TCPUDP)) {
 				port = htons(np->in_pnext++);
 				if (np->in_pnext >= ntohs(np->in_pmax)) {
 					np->in_pnext = ntohs(np->in_pmin);
-					np->in_space--;
 					if (np->in_outmsk != 0xffffffff)
 						np->in_nip++;
 				}
-			} else if (np->in_outmsk != 0xffffffff) {
-				np->in_space--;
+			} else if (np->in_outmsk != 0xffffffff)
 				np->in_nip++;
+
+			if (!np->in_nip && (nflags & IPN_TCPUDP) &&
+			    (np->in_pnext != 0)) {
+				port = htons(np->in_pnext++);
+				if (np->in_pnext >= ntohs(np->in_pmax))
+					np->in_pnext = ntohs(np->in_pmin);
 			}
 
 			if (!port && (flags & IPN_TCPUDP))
@@ -606,8 +632,22 @@ int direction;
 			if ((np->in_nip & ntohl(np->in_outmsk)) >
 			    ntohl(np->in_outip))
 				np->in_nip = ntohl(np->in_outip) + 1;
+
+			/*
+			* Has the search wrapped around and come back to the
+			* start ?
+			*/
+			if ((np->in_pnext != 0) && (st_port == np->in_pnext) &&
+			    (np->in_nip != 0) && (st_ip == np->in_nip)) {
+				KFREE(nat);
+				return NULL;
+			}
+
 		} while (nat_inlookup(fin->fin_ifp, flags, ip->ip_dst,
 				      dport, in, port));
+
+		if (np->in_space > 1)
+			np->in_space--;
 
 		/* Setup the NAT table */
 		nat->nat_inip = ip->ip_src;
@@ -652,12 +692,10 @@ int direction;
 		}
 	}
 
-	/* Do it twice */
 	sum1 = (sum1 & 0xffff) + (sum1 >> 16);
-	sum1 = (sum1 & 0xffff) + (sum1 >> 16);
-
-	/* Do it twice */
 	sum2 = (sum2 & 0xffff) + (sum2 >> 16);
+	/* Do it twice */
+	sum1 = (sum1 & 0xffff) + (sum1 >> 16);
 	sum2 = (sum2 & 0xffff) + (sum2 >> 16);
 
 	if (sum1 > sum2)
@@ -676,12 +714,10 @@ int direction;
 
 		sum2 = (in.s_addr & 0xffff) + (in.s_addr >> 16);
 
-		/* Do it twice */
 		sum1 = (sum1 & 0xffff) + (sum1 >> 16);
-		sum1 = (sum1 & 0xffff) + (sum1 >> 16);
-
-		/* Do it twice */
 		sum2 = (sum2 & 0xffff) + (sum2 >> 16);
+		/* Do it twice */
+		sum1 = (sum1 & 0xffff) + (sum1 >> 16);
 		sum2 = (sum2 & 0xffff) + (sum2 >> 16);
 
 		if (sum1 > sum2)
@@ -708,6 +744,7 @@ int direction;
 	nat->nat_pkts = 0;
 	nat->nat_ifp = fin->fin_ifp;
 	nat->nat_dir = direction;
+	nat->nat_age = fr_defnatage;
 	if (direction == NAT_OUTBOUND) {
 		if (flags & IPN_TCPUDP)
 			tcp->th_sport = port;
@@ -715,9 +752,9 @@ int direction;
 		if (flags & IPN_TCPUDP)
 			tcp->th_dport = nport;
 	}
-	ATOMIC_INC(nat_stats.ns_added);
-	ATOMIC_INC(nat_stats.ns_inuse);
-	ATOMIC_INC(np->in_use);
+	nat_stats.ns_added++;
+	nat_stats.ns_inuse++;
+	np->in_use++;
 	return nat;
 }
 
@@ -737,7 +774,7 @@ fr_info_t *fin;
 	 * Only a basic IP header (no options) should be with an ICMP error
 	 * header.
 	 */
-	if ((ip->ip_hl != 5) || (ip->ip_len < sizeof(*icmp) + sizeof(ip_t)))
+	if ((ip->ip_hl != 5) || (ip->ip_len < ICMPERR_MINPKTLEN))
 		return NULL;
 	type = icmp->icmp_type;
 	/*
@@ -749,6 +786,8 @@ fr_info_t *fin;
 		return NULL;
 
 	oip = (ip_t *)((char *)fin->fin_dp + 8);
+	if (ip->ip_len < ICMPERR_MAXPKTLEN + ((oip->ip_hl - 5) << 2))
+		return NULL;
 	if (oip->ip_p == IPPROTO_TCP)
 		flags = IPN_TCP;
 	else if (oip->ip_p == IPPROTO_UDP)
@@ -758,7 +797,7 @@ fr_info_t *fin;
 		return nat_inlookup(fin->fin_ifp, flags, oip->ip_dst,
 				    tcp->th_dport, oip->ip_src, tcp->th_sport);
 	}
-	return nat_inlookup(fin->fin_ifp, 0, oip->ip_src, 0, oip->ip_dst, 0);
+	return nat_inlookup(fin->fin_ifp, 0, oip->ip_dst, 0, oip->ip_src, 0);
 }
 
 
@@ -771,6 +810,8 @@ ip_t *ip;
 fr_info_t *fin;
 int *nflags;
 {
+	u_32_t sum1, sum2, sumd;
+	struct in_addr in;
 	icmphdr_t *icmp;
 	nat_t *nat;
 	ip_t *oip;
@@ -778,10 +819,9 @@ int *nflags;
 
 	if (!(nat = nat_icmpinlookup(ip, fin)))
 		return NULL;
-
 	*nflags = IPN_ICMPERR;
 	icmp = (icmphdr_t *)fin->fin_dp;
-	oip = (ip_t *)((char *)icmp + 8);
+	oip = (ip_t *)&icmp->icmp_ip;
 	if (oip->ip_p == IPPROTO_TCP)
 		flags = IPN_TCP;
 	else if (oip->ip_p == IPPROTO_UDP)
@@ -795,54 +835,62 @@ int *nflags;
 	 * to only modify the checksum once for the port # and twice
 	 * for the IP#.
 	 */
-	if (flags & IPN_TCPUDP) {
-		tcphdr_t *tcp = (tcphdr_t *)(oip + 1);
-		u_32_t	sum1, sum2, sumd;
-		struct in_addr in;
+	if (nat->nat_dir == NAT_OUTBOUND) {
+		sum1 = LONG_SUM(ntohl(oip->ip_src.s_addr));
+		in = nat->nat_inip;
+		oip->ip_src = in;
+	} else {
+		sum1 = LONG_SUM(ntohl(oip->ip_dst.s_addr));
+		in = nat->nat_outip;
+		oip->ip_dst = in;
+	}
+
+	sum2 = LONG_SUM(ntohl(in.s_addr));
+
+	CALC_SUMD(sum1, sum2, sumd);
+
+	if (nat->nat_dir == NAT_OUTBOUND) {
+		fix_incksum(&oip->ip_sum, sumd);
+
+		sumd += (sumd & 0xffff);
+		while (sumd > 0xffff)
+			sumd = (sumd & 0xffff) + (sumd >> 16);
+		fix_outcksum(&icmp->icmp_cksum, sumd);
+	} else {
+		fix_outcksum(&oip->ip_sum, sumd);
+
+                sumd += (sumd & 0xffff);
+                while (sumd > 0xffff)
+                       sumd = (sumd & 0xffff) + (sumd >> 16);
+                fix_incksum(&icmp->icmp_cksum, sumd);
+	}
+ 
+ 
+	if ((flags & IPN_TCPUDP) != 0) {
+                tcphdr_t *tcp;
+
+		/* XXX - what if this is bogus hl and we go off the end ? */
+		tcp = (tcphdr_t *)((((char *)oip) + (oip->ip_hl << 2)));
 
 		if (nat->nat_dir == NAT_OUTBOUND) {
-			sum1 = LONG_SUM(ntohl(oip->ip_src.s_addr));
-			in = nat->nat_outip;
-			oip->ip_src = in;
-			tcp->th_sport = nat->nat_outport;
+			if (tcp->th_sport != nat->nat_inport) {
+				sum1 = ntohs(tcp->th_sport);
+				sum2 = ntohs(nat->nat_inport);
+				CALC_SUMD(sum1, sum2, sumd);
+				tcp->th_sport = nat->nat_inport;
+				fix_outcksum(&icmp->icmp_cksum, sumd);
+			}
 		} else {
-			sum1 = LONG_SUM(ntohl(oip->ip_dst.s_addr));
-			in = nat->nat_inip;
-			oip->ip_dst = in;
-			tcp->th_dport = nat->nat_inport;
-		}
-
-		sum2 = LONG_SUM(in.s_addr);
-
-		CALC_SUMD(sum1, sum2, sumd);
-		sumd = (sumd & 0xffff) + (sumd >> 16);
-
-		if (nat->nat_dir == NAT_OUTBOUND) {
-			fix_incksum(&oip->ip_sum, sumd);
-			fix_incksum(&icmp->icmp_cksum, sumd);
-		} else {
-			fix_outcksum(&oip->ip_sum, sumd);
-			fix_outcksum(&icmp->icmp_cksum, sumd);
-		}
-
-		/*
-		 * TCP checksum doesn't make it into the 1st eight
-		 * bytes but UDP does.
-		 */
-		if (ip->ip_p == IPPROTO_UDP) {
-			udphdr_t *udp = (udphdr_t *)tcp;
-
-			if (udp->uh_sum) {
-				if (nat->nat_dir == NAT_OUTBOUND)
-					fix_incksum(&udp->uh_sum,
-						    nat->nat_sumd);
-				else
-					fix_outcksum(&udp->uh_sum,
-						     nat->nat_sumd);
+			if (tcp->th_dport != nat->nat_outport) {
+				sum1 = ntohs(tcp->th_dport);
+				sum2 = ntohs(nat->nat_outport);
+				CALC_SUMD(sum1, sum2, sumd);
+				tcp->th_dport = nat->nat_outport;
+				fix_incksum(&icmp->icmp_cksum, sumd);
 			}
 		}
-	} else
-		ip->ip_dst = nat->nat_outip;
+	}
+
 	nat->nat_age = fr_defnaticmpage;
 	return nat;
 }
@@ -996,12 +1044,12 @@ fr_info_t *fin;
 	else
 		ifp = fin->fin_ifp;
 
-	if (!(ip->ip_off & 0x1fff) && !(fin->fin_fi.fi_fl & FI_SHORT)) {
+	if (!(ip->ip_off & IP_OFFMASK) && !(fin->fin_fi.fi_fl & FI_SHORT)) {
 		if (ip->ip_p == IPPROTO_TCP)
 			nflags = IPN_TCP;
 		else if (ip->ip_p == IPPROTO_UDP)
 			nflags = IPN_UDP;
-		if (nflags) {
+		if ((nflags & IPN_TCPUDP)) {
 			tcp = (tcphdr_t *)fin->fin_dp;
 			sport = tcp->th_sport;
 			dport = tcp->th_dport;
@@ -1049,7 +1097,7 @@ fr_info_t *fin;
 #endif
 				break;
 			}
-			MUTEX_DOWNGRADE(&ipf_nat);
+		MUTEX_DOWNGRADE(&ipf_nat);
 	}
 
 	if (nat) {
@@ -1073,11 +1121,14 @@ fr_info_t *fin;
 				fix_incksum(&ip->ip_sum, nat->nat_ipsumd);
 #endif
 
-			if (nflags && !(ip->ip_off & 0x1fff) &&
+			if (!(ip->ip_off & IP_OFFMASK) &&
 			    !(fin->fin_fi.fi_fl & FI_SHORT)) {
 
-				if (nat->nat_outport)
+				if ((nat->nat_outport != 0) &&
+				    (nflags & IPN_TCPUDP)) {
 					tcp->th_sport = nat->nat_outport;
+					fin->fin_data[0] = ntohs(tcp->th_sport);
+				}
 
 				if (ip->ip_p == IPPROTO_TCP) {
 					csump = &tcp->th_sum;
@@ -1098,10 +1149,6 @@ fr_info_t *fin;
 
 					if (udp->uh_sum)
 						csump = &udp->uh_sum;
-				} else if (ip->ip_p == IPPROTO_ICMP) {
-					icmphdr_t *ic = (icmphdr_t *)tcp;
-
-					csump = &ic->icmp_cksum;
 				}
 				if (csump) {
 					if (nat->nat_dir == NAT_OUTBOUND)
@@ -1112,12 +1159,12 @@ fr_info_t *fin;
 							    nat->nat_sumd);
 				}
 			}
-			(void) ap_check(ip, tcp, fin, nat);
+			(void) ap_check(ip, fin, nat);
 			ATOMIC_INC(nat_stats.ns_mapped[1]);
-			RWLOCK_EXIT(&ipf_nat);
+			RWLOCK_EXIT(&ipf_nat);	/* READ */
 			return -2;
 		}
-	RWLOCK_EXIT(&ipf_nat);
+	RWLOCK_EXIT(&ipf_nat);			/* READ/WRITE */
 	return 0;
 }
 
@@ -1139,13 +1186,13 @@ fr_info_t *fin;
 	nat_t *nat;
 	int nflags = 0, natadd = 1;
 
-	if (!(ip->ip_off & 0x1fff) && !(fin->fin_fi.fi_fl & FI_SHORT)) {
+	if (!(ip->ip_off & IP_OFFMASK) && !(fin->fin_fi.fi_fl & FI_SHORT)) {
 		if (ip->ip_p == IPPROTO_TCP)
 			nflags = IPN_TCP;
 		else if (ip->ip_p == IPPROTO_UDP)
 			nflags = IPN_UDP;
-		if (nflags) {
-			tcp = (tcphdr_t *)((char *)ip + hlen);
+		if ((nflags & IPN_TCPUDP)) {
+			tcp = (tcphdr_t *)fin->fin_dp;
 			dport = tcp->th_dport;
 			sport = tcp->th_sport;
 		}
@@ -1185,14 +1232,14 @@ fr_info_t *fin;
 #endif
 				break;
 			}
-			MUTEX_DOWNGRADE(&ipf_nat);
+		MUTEX_DOWNGRADE(&ipf_nat);
 	}
 	if (nat) {
 			if (natadd && fin->fin_fi.fi_fl & FI_FRAG)
 				ipfr_nat_newfrag(ip, fin, 0, nat);
-			MUTEX_ENTER(&ipf_rw);
-			(void) ap_check(ip, tcp, fin, nat);
+			(void) ap_check(ip, fin, nat);
 
+			MUTEX_ENTER(&ipf_rw);
 			if (nflags != IPN_ICMPERR)
 				nat->nat_age = fr_defnatage;
 
@@ -1200,6 +1247,7 @@ fr_info_t *fin;
 			nat->nat_pkts++;
 			MUTEX_EXIT(&ipf_rw);
 			ip->ip_dst = nat->nat_inip;
+			fin->fin_fi.fi_dst = nat->nat_inip;
 
 			/*
 			 * Fix up checksums, not by recalculating them, but
@@ -1211,11 +1259,14 @@ fr_info_t *fin;
 			else
 				fix_outcksum(&ip->ip_sum, nat->nat_ipsumd);
 #endif
-			if ((nflags & IPN_TCPUDP) && !(ip->ip_off & 0x1fff) &&
+			if (!(ip->ip_off & IP_OFFMASK) &&
 			    !(fin->fin_fi.fi_fl & FI_SHORT)) {
 
-				if (nat->nat_inport)
+				if ((nat->nat_inport != 0) &&
+				    (nflags & IPN_TCPUDP)) {
 					tcp->th_dport = nat->nat_inport;
+					fin->fin_data[1] = ntohs(tcp->th_dport);
+				}
 
 				if (ip->ip_p == IPPROTO_TCP) {
 					csump = &tcp->th_sum;
@@ -1236,10 +1287,6 @@ fr_info_t *fin;
 
 					if (udp->uh_sum)
 						csump = &udp->uh_sum;
-				} else if (ip->ip_p == IPPROTO_ICMP) {
-					icmphdr_t *ic = (icmphdr_t *)tcp;
-
-					csump = &ic->icmp_cksum;
 				}
 				if (csump) {
 					if (nat->nat_dir == NAT_OUTBOUND)
@@ -1251,10 +1298,10 @@ fr_info_t *fin;
 				}
 			}
 			ATOMIC_INC(nat_stats.ns_mapped[0]);
-			RWLOCK_EXIT(&ipf_nat);
+			RWLOCK_EXIT(&ipf_nat);			/* READ */
 			return -2;
 		}
-	RWLOCK_EXIT(&ipf_nat);
+	RWLOCK_EXIT(&ipf_nat);			/* READ/WRITE */
 	return 0;
 }
 
@@ -1267,7 +1314,6 @@ void ip_natunload()
 	WRITE_ENTER(&ipf_nat);
 	(void) nat_clearlist();
 	(void) nat_flushtable();
-	(void) ap_unload();
 	RWLOCK_EXIT(&ipf_nat);
 }
 
@@ -1286,7 +1332,7 @@ void ip_natexpire()
 	SPL_NET(s);
 	WRITE_ENTER(&ipf_nat);
 	for (natp = &nat_instances; (nat = *natp); ) {
-		ATOMIC_DEC(nat->nat_age);
+		nat->nat_age--;
 		if (nat->nat_age) {
 			natp = &nat->nat_next;
 			continue;
@@ -1296,11 +1342,8 @@ void ip_natexpire()
 		nat_log(nat, NL_EXPIRE);
 #endif
 		nat_delete(nat);
-		ATOMIC_INC(nat_stats.ns_expire);
+		nat_stats.ns_expire++;
 	}
-
-	ap_expire();
-
 	RWLOCK_EXIT(&ipf_nat);
 	SPL_X(s);
 }
@@ -1344,10 +1387,10 @@ void *ifp;
 				 * Do it twice
 				 */
 				sum1 = (sum1 & 0xffff) + (sum1 >> 16);
-				sum1 = (sum1 & 0xffff) + (sum1 >> 16);
+				sum2 = (sum2 & 0xffff) + (sum2 >> 16);
 
 				/* Do it twice */
-				sum2 = (sum2 & 0xffff) + (sum2 >> 16);
+				sum1 = (sum1 & 0xffff) + (sum1 >> 16);
 				sum2 = (sum2 & 0xffff) + (sum2 >> 16);
 
 				 /* Because ~1 == -2, We really need ~1 == -1 */

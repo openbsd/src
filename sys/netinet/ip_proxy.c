@@ -1,24 +1,19 @@
-/*       $OpenBSD: ip_proxy.c,v 1.3 1998/09/15 09:51:18 pattonme Exp $       */
+/*       $OpenBSD: ip_proxy.c,v 1.4 1999/02/05 05:58:53 deraadt Exp $       */
 /*
- * Copyright (C) 1997 by Darren Reed.
+ * Copyright (C) 1997-1998 by Darren Reed.
  *
  * Redistribution and use in source and binary forms are permitted
  * provided that this notice is preserved and due credit is given
  * to the original author and the contributors.
  */
 #if !defined(lint)
-static const char rcsid[] = "@(#)$Id: ip_proxy.c,v 1.3 1998/09/15 09:51:18 pattonme Exp $";
+static const char rcsid[] = "@(#)$Id: ip_proxy.c,v 1.4 1999/02/05 05:58:53 deraadt Exp $";
 #endif
 
 #if defined(__FreeBSD__) && defined(KERNEL) && !defined(_KERNEL)
 # define	_KERNEL
 #endif
 
-#if !defined(_KERNEL) && !defined(KERNEL)
-# include <stdio.h>
-# include <string.h>
-# include <stdlib.h>
-#endif
 #include <sys/errno.h>
 #include <sys/types.h>
 #include <sys/param.h>
@@ -27,6 +22,11 @@ static const char rcsid[] = "@(#)$Id: ip_proxy.c,v 1.3 1998/09/15 09:51:18 patto
 #include <sys/ioctl.h>
 #include <sys/fcntl.h>
 #include <sys/uio.h>
+#if !defined(_KERNEL) && !defined(KERNEL)
+# include <stdio.h>
+# include <string.h>
+# include <stdlib.h>
+#endif
 #ifndef	linux
 # include <sys/protosw.h>
 #endif
@@ -80,11 +80,8 @@ static const char rcsid[] = "@(#)$Id: ip_proxy.c,v 1.3 1998/09/15 09:51:18 patto
 #define MIN(a,b)        (((a)<(b))?(a):(b))
 #endif
 
-static ap_session_t *ap_find __P((ip_t *, tcphdr_t *));
-static ap_session_t *ap_new_session __P((aproxy_t *, ip_t *, tcphdr_t *,
+static ap_session_t *ap_new_session __P((aproxy_t *, ip_t *,
 					 fr_info_t *, nat_t *));
-static int ap_matchsrcdst __P((ap_session_t *, struct in_addr,
-			       struct in_addr, void *, u_short, u_short));
 
 
 #define	AP_SESS_SIZE	53
@@ -94,6 +91,7 @@ static int ap_matchsrcdst __P((ap_session_t *, struct in_addr,
 #endif
 
 ap_session_t	*ap_sess_tab[AP_SESS_SIZE];
+ap_session_t	*ap_sess_list = NULL;
 aproxy_t	ap_proxies[] = {
 #ifdef	IPF_FTP_PROXY
 	{ "ftp", (char)IPPROTO_TCP, 0, 0, ippr_ftp_init, ippr_ftp_in, ippr_ftp_out },
@@ -119,79 +117,32 @@ ipnat_t *nat;
 }
 
 
-static int
-ap_matchsrcdst(aps, src, dst, tcp, sport, dport)
-ap_session_t *aps;
-struct in_addr src, dst;
-void *tcp;
-u_short sport, dport;
-{
-	if (aps->aps_dst.s_addr == dst.s_addr) {
-		if ((aps->aps_src.s_addr == src.s_addr) &&
-		    (!tcp || ((sport == aps->aps_sport) &&
-		     (dport == aps->aps_dport))))
-			return 1;
-	} else if (aps->aps_dst.s_addr == src.s_addr) {
-		if ((aps->aps_src.s_addr == dst.s_addr) &&
-		    (!tcp || ((sport == aps->aps_dport) &&
-		     (dport == aps->aps_sport))))
-			return 1;
-	}
-	return 0;
-}
-
-
-static ap_session_t *ap_find(ip, tcp)
-ip_t *ip;
-tcphdr_t *tcp;
-{
-	register u_char p = ip->ip_p;
-	register ap_session_t *aps;
-	register u_short sp, dp;
-	register u_long hv;
-	struct in_addr src, dst;
-
-	src = ip->ip_src, dst = ip->ip_dst;
-	sp = dp = 0;			/* XXX gcc -Wunitialized */
-
-	hv = ip->ip_src.s_addr ^ ip->ip_dst.s_addr;
-	hv *= 651733;
-	if (tcp) {
-		sp = tcp->th_sport;
-		dp = tcp->th_dport;
-		hv ^= (sp + dp);
-		hv *= 5;
-	}
-	hv %= AP_SESS_SIZE;
-
-	for (aps = ap_sess_tab[hv]; aps; aps = aps->aps_next)
-		if ((aps->aps_p == p) &&
-		    ap_matchsrcdst(aps, src, dst, tcp, sp, dp))
-			break;
-	return aps;
-}
-
-
 /*
  * Allocate a new application proxy structure and fill it in with the
  * relevant details.  call the init function once complete, prior to
  * returning.
  */
-static ap_session_t *ap_new_session(apr, ip, tcp, fin, nat)
+static ap_session_t *ap_new_session(apr, ip, fin, nat)
 aproxy_t *apr;
 ip_t *ip;
-tcphdr_t *tcp;
 fr_info_t *fin;
 nat_t *nat;
 {
 	register ap_session_t *aps;
+	tcphdr_t *tcp;
 	u_short dport;
-	u_long hv;
+	u_int hv;
 
 	if (!apr || (apr && (apr->apr_flags & APR_DELETE)) ||
 	    (ip->ip_p != apr->apr_p))
 		return NULL;
+
+	if (!(fin->fin_fi.fi_fl & FI_TCPUDP))
+		tcp = NULL;
+	else
+		tcp = (tcphdr_t *)fin->fin_dp;
 	dport = nat->nat_ptr->in_dport;
+
 	if ((tcp && (tcp->th_dport != dport)) || (!tcp && dport))
 		return NULL;
 
@@ -211,16 +162,20 @@ nat_t *nat;
 	aps->aps_src = ip->ip_src;
 	aps->aps_dst = ip->ip_dst;
 	aps->aps_p = ip->ip_p;
-	aps->aps_tout = 1200;	/* XXX */
 	if (tcp) {
 		aps->aps_sport = tcp->th_sport;
 		aps->aps_dport = tcp->th_dport;
 	}
 	aps->aps_data = NULL;
 	aps->aps_psiz = 0;
-	aps->aps_next = ap_sess_tab[hv];
+	aps->aps_hnext = ap_sess_tab[hv];
+	aps->aps_next = ap_sess_list;
+	ap_sess_list = aps;
+	aps->aps_nat = nat;
+	aps->aps_hv = hv;
+	nat->nat_aps = aps;
 	ap_sess_tab[hv] = aps;
-	(void) (*apr->apr_init)(fin, ip, tcp, aps, nat);
+	(void) (*apr->apr_init)(fin, ip, aps, nat);
 	return aps;
 }
 
@@ -229,23 +184,21 @@ nat_t *nat;
  * check to see if a packet should be passed through an active proxy routine
  * if one has been setup for it.
  */
-int ap_check(ip, tcp, fin, nat)
+int ap_check(ip, fin, nat)
 ip_t *ip;
-tcphdr_t *tcp;
 fr_info_t *fin;
 nat_t *nat;
 {
 	ap_session_t *aps;
 	aproxy_t *apr;
+	tcphdr_t *tcp = NULL;
 	u_32_t sum;
 	int err;
 
-	if (!(fin->fin_fi.fi_fl & FI_TCPUDP))
-		tcp = NULL;
-
-	if ((aps = ap_find(ip, tcp)) ||
-	    (aps = ap_new_session(nat->nat_ptr->in_apr, ip, tcp, fin, nat))) {
+	if ((aps = nat->nat_aps) ||
+	    (aps = ap_new_session(nat->nat_ptr->in_apr, ip, fin, nat))) {
 		if (ip->ip_p == IPPROTO_TCP) {
+			tcp = (tcphdr_t *)fin->fin_dp;
 			/*
 			 * verify that the checksum is correct.  If not, then
 			 * don't do anything with this packet.
@@ -260,32 +213,31 @@ nat_t *nat;
 				frstats[fin->fin_out].fr_tcpbad++;
 				return -1;
 			}
-			fr_tcp_age(&aps->aps_tout, aps->aps_state, ip, fin,
-				   tcp->th_sport == aps->aps_sport);
 		}
 
 		apr = aps->aps_apr;
 		err = 0;
 		if (fin->fin_out) {
 			if (apr->apr_outpkt)
-				err = (*apr->apr_outpkt)(fin, ip, tcp,
-							 aps, nat);
+				err = (*apr->apr_outpkt)(fin, ip, aps, nat);
 		} else {
 			if (apr->apr_inpkt)
-				err = (*apr->apr_inpkt)(fin, ip, tcp,
-							aps, nat);
+				err = (*apr->apr_inpkt)(fin, ip, aps, nat);
 		}
-		if (err == 2) {
+
+		if (tcp != NULL) {
+			err = ap_fixseqack(fin, ip, aps, err);
 #if SOLARIS && defined(_KERNEL)
-			tcp->th_sum = fr_tcpsum(fin->fin_qfm, ip,
-						tcp, ip->ip_len);
+			tcp->th_sum = fr_tcpsum(fin->fin_qfm, ip, tcp,
+					        ip->ip_len);
 #else
 			tcp->th_sum = fr_tcpsum(*(mb_t **)fin->fin_mp, ip,
 						tcp, ip->ip_len);
 #endif
-			err = 0;
 		}
-		return err;
+		aps->aps_bytes += ip->ip_len;
+		aps->aps_pkts++;
+		return 2;
 	}
 	return -1;
 }
@@ -317,38 +269,128 @@ aproxy_t *ap;
 void aps_free(aps)
 ap_session_t *aps;
 {
-	if (aps->aps_data && aps->aps_psiz)
-		KFREES(aps->aps_data, aps->aps_psiz);
-	KFREE(aps);
+	ap_session_t *a, **ap;
+	u_int hv;
+
+	if (!aps)
+		return;
+
+	hv = aps->aps_hv;
+
+	for (ap = ap_sess_tab + hv; (a = *ap); ap = &a->aps_hnext)
+		if (a == aps) {
+			*ap = a->aps_hnext;
+			break;
+		}
+
+	for (ap = &ap_sess_list; (a = *ap); ap = &a->aps_next)
+		if (a == aps) {
+			*ap = a->aps_next;
+			break;
+		}
+
+	if (a) {
+		if (aps->aps_data && aps->aps_psiz)
+			KFREES(aps->aps_data, aps->aps_psiz);
+		KFREE(aps);
+	}
 }
 
 
-void ap_unload()
+int ap_fixseqack(fin, ip, aps, inc)
+fr_info_t *fin;
+ip_t *ip;
+ap_session_t *aps;
+int inc;
 {
-	ap_session_t *aps;
-	int i;
+	int sel, ch = 0, out, nlen;
+	u_32_t seq1, seq2;
+	tcphdr_t *tcp;
 
-	for (i = 0; i < AP_SESS_SIZE; i++)
-		while ((aps = ap_sess_tab[i])) {
-			ap_sess_tab[i] = aps->aps_next;
-			aps_free(aps);
+	tcp = (tcphdr_t *)fin->fin_dp;
+	out = fin->fin_out;
+	nlen = ip->ip_len;
+	nlen -= (ip->ip_hl << 2) + (tcp->th_off << 2);
+
+	if (out != 0) {
+		seq1 = (u_32_t)ntohl(tcp->th_seq);
+		sel = aps->aps_sel[out];
+
+		/* switch to other set ? */
+		if ((aps->aps_seqmin[!sel] > aps->aps_seqmin[sel]) &&
+		    (seq1 > aps->aps_seqmin[!sel]))
+			sel = aps->aps_sel[out] = !sel;
+
+		if (aps->aps_seqoff[sel]) {
+			seq2 = aps->aps_seqmin[sel] - aps->aps_seqoff[sel];
+			if (seq1 > seq2) {
+				seq2 = aps->aps_seqoff[sel];
+				seq1 += seq2;
+				tcp->th_seq = htonl(seq1);
+				ch = 1;
+			}
 		}
-}
 
-
-void ap_expire()
-{
-	ap_session_t *aps, **apsp;
-	int i;
-
-	for (i = 0; i < AP_SESS_SIZE; i++)
-		for (apsp = &ap_sess_tab[i]; (aps = *apsp); ) {
-			aps->aps_tout--;
-			if (!aps->aps_tout) {
-				ap_sess_tab[i] = aps->aps_next;
-				aps_free(aps);
-				*apsp = aps->aps_next;
-			} else
-				apsp = &aps->aps_next;
+		if (inc && (seq1 > aps->aps_seqmin[!sel])) {
+			aps->aps_seqmin[!sel] = seq1 + nlen - 1;
+			aps->aps_seqoff[!sel] = aps->aps_seqoff[sel] + inc;
 		}
+
+		/***/
+
+		seq1 = ntohl(tcp->th_ack);
+		sel = aps->aps_sel[1 - out];
+
+		/* switch to other set ? */
+		if ((aps->aps_ackmin[!sel] > aps->aps_ackmin[sel]) &&
+		    (seq1 > aps->aps_ackmin[!sel]))
+			sel = aps->aps_sel[1 - out] = !sel;
+
+		if (aps->aps_ackoff[sel] && (seq1 > aps->aps_ackmin[sel])) {
+			seq2 = aps->aps_ackoff[sel];
+			tcp->th_ack = htonl(seq1 - seq2);
+			ch = 1;
+		}
+	} else {
+		seq1 = ntohl(tcp->th_seq);
+		sel = aps->aps_sel[out];
+
+		/* switch to other set ? */
+		if ((aps->aps_ackmin[!sel] > aps->aps_ackmin[sel]) &&
+		    (seq1 > aps->aps_ackmin[!sel]))
+			sel = aps->aps_sel[out] = !sel;
+
+		if (aps->aps_ackoff[sel]) {
+			seq2 = aps->aps_ackmin[sel] -
+			       aps->aps_ackoff[sel];
+			if (seq1 > seq2) {
+				seq2 = aps->aps_ackoff[sel];
+				seq1 += seq2;
+				tcp->th_seq = htonl(seq1);
+				ch = 1;
+			}
+		}
+
+		if (inc && (seq1 > aps->aps_ackmin[!sel])) {
+			aps->aps_ackmin[!sel] = seq1 + nlen - 1;
+			aps->aps_ackoff[!sel] = aps->aps_ackoff[sel] + inc;
+		}
+
+		/***/
+
+		seq1 = ntohl(tcp->th_ack);
+		sel = aps->aps_sel[1 - out];
+
+		/* switch to other set ? */
+		if ((aps->aps_seqmin[!sel] > aps->aps_seqmin[sel]) &&
+		    (seq1 > aps->aps_seqmin[!sel]))
+			sel = aps->aps_sel[1 - out] = !sel;
+
+		if (aps->aps_seqoff[sel] && (seq1 > aps->aps_seqmin[sel])) {
+			seq2 = aps->aps_seqoff[sel];
+			tcp->th_ack = htonl(seq1 - seq2);
+			ch = 1;
+		}
+	}
+	return ch ? 2 : 0;
 }

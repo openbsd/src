@@ -1,6 +1,6 @@
-/*       $OpenBSD: ip_state.c,v 1.12 1998/09/15 09:51:19 pattonme Exp $       */
+/*       $OpenBSD: ip_state.c,v 1.13 1999/02/05 05:58:54 deraadt Exp $       */
 /*
- * Copyright (C) 1995-1997 by Darren Reed.
+ * Copyright (C) 1995-1998 by Darren Reed.
  *
  * Redistribution and use in source and binary forms are permitted
  * provided that this notice is preserved and due credit is given
@@ -8,10 +8,15 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_state.c	1.8 6/5/96 (C) 1993-1995 Darren Reed";
-static const char rcsid[] = "@(#)$Id: ip_state.c,v 1.12 1998/09/15 09:51:19 pattonme Exp $";
+static const char rcsid[] = "@(#)$Id: ip_state.c,v 1.13 1999/02/05 05:58:54 deraadt Exp $";
 #endif
 
+#include <sys/errno.h>
+#include <sys/types.h>
+#include <sys/param.h>
+#include <sys/file.h>
 #if !defined(_KERNEL) && !defined(KERNEL) && !defined(__KERNEL__)
+# include <stdio.h>
 # include <stdlib.h>
 # include <string.h>
 #else
@@ -20,10 +25,6 @@ static const char rcsid[] = "@(#)$Id: ip_state.c,v 1.12 1998/09/15 09:51:19 patt
 #  include <linux/module.h>
 # endif
 #endif
-#include <sys/errno.h>
-#include <sys/types.h>
-#include <sys/param.h>
-#include <sys/file.h>
 #if defined(KERNEL) && (__FreeBSD_version >= 220000)
 # include <sys/filio.h>
 # include <sys/fcntl.h>
@@ -87,7 +88,7 @@ ipstate_t *ips_table[IPSTATE_SIZE];
 int	ips_num = 0;
 ips_stat_t ips_stats;
 #if	(SOLARIS || defined(__sgi)) && defined(_KERNEL)
-extern	krwlock_t	ipf_state;
+extern	KRWLOCK_T	ipf_state;
 extern	kmutex_t	ipf_rw;
 #endif
 
@@ -223,7 +224,7 @@ u_int pass;
 	register ipstate_t *is = &ips;
 	register u_int hv;
 
-	if ((ip->ip_off & 0x1fff) || (fin->fin_fi.fi_fl & FI_SHORT))
+	if ((ip->ip_off & IP_OFFMASK) || (fin->fin_fi.fi_fl & FI_SHORT))
 		return -1;
 	if (ips_num == IPSTATE_MAX) {
 		ips_stats.iss_max++;
@@ -369,8 +370,8 @@ ip_t *ip;
 tcphdr_t *tcp;
 {
 	register int seqskew, ackskew;
-	register u_short swin, dwin;
 	register tcp_seq seq, ack;
+	u_short win;
 	int source;
 
 	/*
@@ -390,7 +391,7 @@ tcphdr_t *tcp;
 			 */
 			is->is_seq = seq;
 		seqskew = seq - is->is_seq;
-		ackskew = ack - is->is_ack;
+		ackskew = (ack - 1) - is->is_ack;
 	} else {
 		if (!is->is_ack)
 			/*
@@ -398,7 +399,7 @@ tcphdr_t *tcp;
 			 */
 			is->is_ack = seq;
 		ackskew = seq - is->is_ack;
-		seqskew = ack - is->is_seq;
+		seqskew = (ack - 1) - is->is_seq;
 	}
 
 	/*
@@ -414,23 +415,18 @@ tcphdr_t *tcp;
 	 * window size of the connection, store these values and match
 	 * the packet.
 	 */
-	if (source) {
-		swin = is->is_swin;
-		dwin = is->is_dwin;
-	} else {
-		dwin = is->is_swin;
-		swin = is->is_dwin;
-	}
-
-	if ((seqskew <= dwin) && (ackskew <= swin)) {
+	win = ntohs(tcp->th_win);
+	if ((seqskew <= is->is_dwin) && (ackskew <= is->is_swin)) {
 		if (source) {
 			is->is_seq = seq;
 			is->is_ack = ack;
-			is->is_swin = ntohs(tcp->th_win);
+			if (win != 0)
+				is->is_swin = win;
 		} else {
 			is->is_seq = ack;
 			is->is_ack = seq;
-			is->is_dwin = ntohs(tcp->th_win);
+			if (win != 0)
+				is->is_dwin = win;
 		}
 		ATOMIC_INC(ips_stats.iss_hits);
 		is->is_pkts++;
@@ -529,7 +525,7 @@ fr_info_t *fin;
 	tcphdr_t *tcp;
 	u_int hv, hlen, pass;
 
-	if ((ip->ip_off & 0x1fff) || (fin->fin_fi.fi_fl & FI_SHORT))
+	if ((ip->ip_off & IP_OFFMASK) || (fin->fin_fi.fi_fl & FI_SHORT))
 		return 0;
 
 	hlen = fin->fin_hlen;
@@ -657,6 +653,7 @@ void fr_stateunload()
 			*isp = is->is_next;
 			KFREE(is);
 		}
+	ips_num = 0;
 	RWLOCK_EXIT(&ipf_state);
 }
 
@@ -793,16 +790,20 @@ u_short type;
 	size_t sizes[1];
 	int types[1];
 
+	ipsl.isl_type = type;
 	ipsl.isl_pkts = is->is_pkts;
 	ipsl.isl_bytes = is->is_bytes;
 	ipsl.isl_src = is->is_src;
 	ipsl.isl_dst = is->is_dst;
 	ipsl.isl_p = is->is_p;
 	ipsl.isl_flags = is->is_flags;
-	ipsl.isl_type = type;
 	if (ipsl.isl_p == IPPROTO_TCP || ipsl.isl_p == IPPROTO_UDP) {
 		ipsl.isl_sport = is->is_sport;
 		ipsl.isl_dport = is->is_dport;
+		if (ipsl.isl_p == IPPROTO_TCP) {
+			ipsl.isl_state[0] = is->is_state[0];
+			ipsl.isl_state[1] = is->is_state[1];
+		}
 	} else if (ipsl.isl_p == IPPROTO_ICMP)
 		ipsl.isl_itype = is->is_icmp.ics_type;
 	else {

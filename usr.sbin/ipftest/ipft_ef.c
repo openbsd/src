@@ -1,6 +1,6 @@
-/*    $OpenBSD: ipft_ef.c,v 1.9 1998/09/15 10:05:50 pattonme Exp $     */
+/*    $OpenBSD: ipft_ef.c,v 1.10 1999/02/05 05:58:45 deraadt Exp $     */
 /*
- * Copyright (C) 1993-1997 by Darren Reed.
+ * Copyright (C) 1993-1998 by Darren Reed.
  *
  * Redistribution and use in source and binary forms are permitted
  * provided that this notice is preserved and due credit is given
@@ -56,7 +56,7 @@ etherfind -n -t
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)ipft_ef.c	1.6 2/4/96 (C)1995 Darren Reed";
-static const char rcsid[] = "@(#)$Id: ipft_ef.c,v 1.9 1998/09/15 10:05:50 pattonme Exp $";
+static const char rcsid[] = "@(#)$Id: ipft_ef.c,v 1.10 1999/02/05 05:58:45 deraadt Exp $";
 #endif
 
 static	int	etherf_open __P((char *));

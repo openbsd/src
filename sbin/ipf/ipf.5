@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipf.5,v 1.11 1998/09/15 09:55:44 pattonme Exp $
+.\"	$OpenBSD: ipf.5,v 1.12 1999/02/05 05:58:41 deraadt Exp $
 .TH IPF 5
 .SH NAME
 ipf \- IP packet filter rule syntax
@@ -447,9 +447,9 @@ all inbound packets, we would do something like:
 .LP
 .nf
        block in all
-       block in on le0 quick all head 100
-       block in on le1 quick all head 200
-       block in on lo0 quick all head 300
+       block in quick on le0 all head 100
+       block in quick on le1 all head 200
+       block in quick on lo0 all head 300
 .fi
 .PP
 

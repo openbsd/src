@@ -1,17 +1,21 @@
-/*       $OpenBSD: ip_fil.h,v 1.11 1998/09/15 09:51:18 pattonme Exp $       */
+/*       $OpenBSD: ip_fil.h,v 1.12 1999/02/05 05:58:50 deraadt Exp $       */
 /*
- * Copyright (C) 1993-1997 by Darren Reed.
+ * Copyright (C) 1993-1998 by Darren Reed.
  *
  * Redistribution and use in source and binary forms are permitted
  * provided that this notice is preserved and due credit is given
  * to the original author and the contributors.
  *
  * @(#)ip_fil.h	1.35 6/5/96
- * $Id: ip_fil.h,v 1.11 1998/09/15 09:51:18 pattonme Exp $
+ * $Id: ip_fil.h,v 1.12 1999/02/05 05:58:50 deraadt Exp $
  */
 
 #ifndef	__IP_FIL_H__
 #define	__IP_FIL_H__
+
+#if defined(__NetBSD__) && defined(PFIL_HOOKS)
+#include "opt_pfil_hooks.h"
+#endif
 
 /*
  * Pathnames for various IP Filter control devices.  Used by LKM
@@ -85,14 +89,14 @@
 typedef	struct	fr_ip	{
 	u_char	fi_v:4;		/* IP version */
 	u_char	fi_fl:4;	/* packet flags */
-	u_char	fi_tos;
-	u_char	fi_ttl;
-	u_char	fi_p;
-	struct	in_addr	fi_src;
-	struct	in_addr	fi_dst;
+	u_char	fi_tos;		/* IP packet TOS */
+	u_char	fi_ttl;		/* IP packet TTL */
+	u_char	fi_p;		/* IP packet protocol */
+	struct	in_addr	fi_src;	/* source address from packet */
+	struct	in_addr	fi_dst;	/* destination address from packet */
 	u_32_t	fi_optmsk;	/* bitmask composed from IP options */
 	u_short	fi_secmsk;	/* bitmask composed from IP security options */
-	u_short	fi_auth;
+	u_short	fi_auth;	/* authentication code from IP sec. options */
 } fr_ip_t;
 
 #define	FI_OPTIONS	(FF_OPTIONS >> 24)
@@ -101,34 +105,35 @@ typedef	struct	fr_ip	{
 #define	FI_SHORT	(FF_SHORT >> 24)
 
 typedef	struct	fr_info	{
-	struct	fr_ip	fin_fi;
-	u_short	fin_data[2];
-	u_short	fin_out;
-	u_short	fin_hlen;
-	u_char	fin_tcpf;
-	u_char	fin_icode;		/* From here on is packet specific */
-	u_short	fin_rule;
-	u_short	fin_group;
-	u_short	fin_dlen;
-	u_short	fin_id;
-	void	*fin_ifp;
-	struct	frentry *fin_fr;
+	struct	fr_ip	fin_fi;		/* IP Packet summary */
+	u_short	fin_data[2];		/* TCP/UDP ports, ICMP code/type */
+	u_short	fin_out;		/* in or out ? 1 == out, 0 == in */
+	u_short	fin_hlen;		/* length of IP header in bytes */
+	u_char	fin_tcpf;		/* TCP header flags (SYN, ACK, etc) */
+	/* From here on is packet specific */
+	u_char	fin_icode;		/* ICMP error to return */
+	u_short	fin_rule;		/* rule # last matched */
+	u_short	fin_group;		/* group number, -1 for none */
+	u_short	fin_dlen;		/* length of data portion of packet */
+	u_short	fin_id;			/* IP packet id field */
+	void	*fin_ifp;		/* interface packet is `on' */
+	struct	frentry *fin_fr;	/* last matching rule */
 	char	*fin_dp;		/* start of data past IP header */
-	void	*fin_mp;
+	void	*fin_mp;		/* pointer to pointer to mbuf */
 #if SOLARIS && defined(_KERNEL)
-	void	*fin_qfm;
+	void	*fin_qfm;		/* pointer to mblk where pkt starts */
 #endif
 } fr_info_t;
 
 /*
  * Size for compares on fr_info structures
  */
-#define	FI_CSIZE	(sizeof(struct fr_ip) + sizeof(u_short) * 4 + \
-			 sizeof(u_char))
+#define       FI_CSIZE        offsetof(fr_info_t, fin_icode)
+
 /*
  * Size for copying cache fr_info structure
  */
-#define	FI_COPYSIZE	(sizeof(fr_info_t) - sizeof(void *) * 2)
+#define	FI_COPYSIZE	offsetof(fr_info_t, fin_dp)
 
 typedef	struct	frdest	{
 	void	*fd_ifp;
@@ -266,6 +271,8 @@ typedef	struct	filterstats {
 	u_long	fr_tcpbad;	/* TCP checksum check failures */
 	u_long	fr_pull[2];	/* good and bad pullup attempts */
 #if SOLARIS
+	u_long	fr_notdata;	/* PROTO/PCPROTO that have no data */
+	u_long	fr_nodata;	/* mblks that have no data */
 	u_long	fr_bad;		/* bad IP packets to the filter */
 	u_long	fr_notip;	/* packets passed through no on ip queue */
 	u_long	fr_drop;	/* packets dropped - no info for them! */

@@ -1,13 +1,13 @@
-/*       $OpenBSD: ip_state.h,v 1.8 1998/09/15 09:51:19 pattonme Exp $       */
+/*       $OpenBSD: ip_state.h,v 1.9 1999/02/05 05:58:54 deraadt Exp $       */
 /*
- * Copyright (C) 1995-1997 by Darren Reed.
+ * Copyright (C) 1995-1998 by Darren Reed.
  *
  * Redistribution and use in source and binary forms are permitted
  * provided that this notice is preserved and due credit is given
  * to the original author and the contributors.
  *
  * @(#)ip_state.h	1.3 1/12/96 (C) 1995 Darren Reed
- * $Id: ip_state.h,v 1.8 1998/09/15 09:51:19 pattonme Exp $
+ * $Id: ip_state.h,v 1.9 1999/02/05 05:58:54 deraadt Exp $
  */
 #ifndef	__IP_STATE_H__
 #define	__IP_STATE_H__
@@ -88,6 +88,7 @@ typedef	struct	ipslog	{
 	struct	in_addr	isl_dst;
 	u_char	isl_p;
 	u_char	isl_flags;
+	u_char	isl_state[2]; 
 	u_short	isl_type;
 	union {
 		u_short	isl_filler[2];

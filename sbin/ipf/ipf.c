@@ -1,6 +1,6 @@
-/*     $OpenBSD: ipf.c,v 1.12 1998/09/15 09:55:44 pattonme Exp $      */
+/*     $OpenBSD: ipf.c,v 1.13 1999/02/05 05:58:42 deraadt Exp $      */
 /*
- * Copyright (C) 1993-1997 by Darren Reed.
+ * Copyright (C) 1993-1998 by Darren Reed.
  *
  * Redistribution and use in source and binary forms are permitted
  * provided that this notice is preserved and due credit is given
@@ -45,7 +45,7 @@
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)ipf.c	1.23 6/5/96 (C) 1993-1995 Darren Reed";
-static const char rcsid[] = "@(#)$Id: ipf.c,v 1.12 1998/09/15 09:55:44 pattonme Exp $";
+static const char rcsid[] = "@(#)$Id: ipf.c,v 1.13 1999/02/05 05:58:42 deraadt Exp $";
 #endif
 
 static	void	frsync __P((void));

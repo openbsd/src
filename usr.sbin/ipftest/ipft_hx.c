@@ -1,6 +1,6 @@
-/*    $OpenBSD: ipft_hx.c,v 1.7 1998/09/15 10:05:50 pattonme Exp $     */
+/*    $OpenBSD: ipft_hx.c,v 1.8 1999/02/05 05:58:46 deraadt Exp $     */
 /*
- * Copyright (C) 1995-1997 by Darren Reed.
+ * Copyright (C) 1995-1998 by Darren Reed.
  *
  * Redistribution and use in source and binary forms are permitted
  * provided that this notice is preserved and due credit is given
@@ -47,7 +47,7 @@
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)ipft_hx.c	1.1 3/9/96 (C) 1996 Darren Reed";
-static const char rcsid[] = "@(#)$Id: ipft_hx.c,v 1.7 1998/09/15 10:05:50 pattonme Exp $";
+static const char rcsid[] = "@(#)$Id: ipft_hx.c,v 1.8 1999/02/05 05:58:46 deraadt Exp $";
 #endif
 
 extern	int	opts;
