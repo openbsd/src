@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.45 2004/05/05 13:21:49 henning Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.46 2004/05/05 14:29:16 deraadt Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -79,6 +79,7 @@ char *path_dhclient_db = NULL;
 
 int log_perror = 1;
 int privfd;
+int nullfd = -1;
 
 struct iaddr iaddr_broadcast = { 4, { 255, 255, 255, 255 } };
 struct in_addr inaddr_any;
@@ -280,6 +281,9 @@ main(int argc, char *argv[])
 		}
 		fprintf(stderr, "got link\n");
 	}
+
+	if ((nullfd = open(_PATH_DEVNULL, O_RDWR, 0)) == -1)
+		error("cannot open %s: %m", _PATH_DEVNULL);
 
 	if ((pw = getpwnam("_dhcp")) == NULL)
 		error("no such user: _dhcp");
@@ -2088,6 +2092,15 @@ go_daemon(void)
 
 	if (daemon(1, 0) == -1)
 		error("daemon");
+
+	/* we are chrooted, daemon(3) fails to open /dev/null */
+	if (nullfd != -1) {
+		dup2(nullfd, STDIN_FILENO);
+		dup2(nullfd, STDOUT_FILENO);
+		dup2(nullfd, STDERR_FILENO);
+		close(nullfd);
+		nullfd = -1;
+	}
 }
 
 int
@@ -2296,6 +2309,10 @@ fork_privchld(int fd, int fd2)
 
 	setproctitle("%s [priv]", ifi->name);
 
+	dup2(nullfd, STDIN_FILENO);
+	dup2(nullfd, STDOUT_FILENO);
+	dup2(nullfd, STDERR_FILENO);
+	close(nullfd);
 	close(fd2);
 
 	for (;;) {
