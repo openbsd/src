@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.156 2005/03/11 12:54:19 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.157 2005/03/14 12:25:50 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -408,6 +408,7 @@ struct pftable_msg {
 struct ctl_show_nexthop {
 	struct bgpd_addr	addr;
 	u_int8_t		valid;
+	struct kif		kif;
 };
 
 struct ctl_neighbor {
