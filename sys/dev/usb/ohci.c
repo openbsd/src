@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci.c,v 1.53 2005/03/06 05:12:00 pascoe Exp $ */
+/*	$OpenBSD: ohci.c,v 1.54 2005/03/06 05:30:07 pascoe Exp $ */
 /*	$NetBSD: ohci.c,v 1.139 2003/02/22 05:24:16 tsutsui Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
@@ -1222,11 +1222,11 @@ ohci_rhsc_enable(void *v_sc)
 	ohci_softc_t *sc = v_sc;
 	int s;
 
+	s = splhardusb();
 	ohci_rhsc(sc, sc->sc_intrxfer);
 	DPRINTFN(2, ("%s: rhsc interrupt enabled\n",
 		     USBDEVNAME(sc->sc_bus.bdev)));
 
-	s = splhardusb();
 	ohci_rhsc_able(sc, 1);
 	splx(s);
 }
