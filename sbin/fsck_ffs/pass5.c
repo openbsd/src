@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass5.c,v 1.10 2001/03/02 18:35:20 csapuntz Exp $	*/
+/*	$OpenBSD: pass5.c,v 1.11 2001/03/09 07:26:09 mickey Exp $	*/
 /*	$NetBSD: pass5.c,v 1.16 1996/09/27 22:45:18 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pass5.c	8.6 (Berkeley) 11/30/94";
 #else
-static char rcsid[] = "$OpenBSD: pass5.c,v 1.10 2001/03/02 18:35:20 csapuntz Exp $";
+static char rcsid[] = "$OpenBSD: pass5.c,v 1.11 2001/03/09 07:26:09 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -143,7 +143,7 @@ pass5()
 		     &newcg->cg_space[0] - (u_char *)(&newcg->cg_firstfield);
 		newcg->cg_boff =
 		    newcg->cg_btotoff + fs->fs_cpg * sizeof(int32_t);
-		newcg->cg_iusedoff = newcg->cg_boff + 
+		newcg->cg_iusedoff = newcg->cg_boff +
 		    fs->fs_cpg * fs->fs_nrpos * sizeof(int16_t);
 		newcg->cg_freeoff =
 		    newcg->cg_iusedoff + howmany(fs->fs_ipg, NBBY);
@@ -169,7 +169,7 @@ pass5()
 		break;
 
 	default:
-		inomapsize = blkmapsize = sumsize = 0; 
+		inomapsize = blkmapsize = sumsize = 0;
 		errexit("UNKNOWN ROTATIONAL TABLE FORMAT %d\n",
 			fs->fs_postblformat);
 	}
@@ -340,34 +340,34 @@ pass5()
 					continue;
 				for (k = 0; k < NBBY; k++) {
 					if ((j & (1 << k)) == 0)
-                                               continue;
+						continue;
 					if (cg_inosused(cg)[i] & (1 << k))
 						continue;
-					pwarn("ALLOCATED INODE %d MARKED FREE",
+					pwarn("ALLOCATED INODE %d MARKED FREE\n",
 					      c * fs->fs_ipg + i * 8 + k);
 				}
 			}
 			for (i = 0; i < blkmapsize; i++) {
 				j = cg_blksfree(cg)[i];
 				if ((cg_blksfree(newcg)[i] & j) == j)
-                                       continue;
+					continue;
 				for (k = 0; k < NBBY; k++) {
 					if ((j & (1 << k)) == 0)
 						continue;
 					if (cg_inosused(cg)[i] & (1 << k))
 						continue;
-					pwarn("ALLOCATED FRAG %d MARKED FREE",
+					pwarn("ALLOCATED FRAG %d MARKED FREE\n",
 					      c * fs->fs_fpg + i * 8 + k);
 				}
 			}
 		}
-		if (memcmp(cg_inosused(newcg), cg_inosused(cg), 
+		if (memcmp(cg_inosused(newcg), cg_inosused(cg),
 			   mapsize) != 0 &&
 		    dofix(&idesc[1], "BLK(S) MISSING IN BIT MAPS")) {
 			memmove(cg_inosused(cg), cg_inosused(newcg),
 				(size_t)mapsize);
-                        cgdirty();
-                }
+			cgdirty();
+		}
 	}
 	info_fn = NULL;
 	if (fs->fs_postblformat == FS_42POSTBLFMT)
