@@ -26,7 +26,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)syslog.conf.5	8.1 (Berkeley) 6/9/93
-.\"     $OpenBSD: syslog.conf.5,v 1.16 2004/03/16 08:50:07 jmc Exp $
+.\"     $OpenBSD: syslog.conf.5,v 1.17 2004/06/03 12:21:08 dhartmei Exp $
 .\"	$NetBSD: syslog.conf.5,v 1.4 1996/01/02 17:41:46 perry Exp $
 .\"
 .Dd June 9, 1993
@@ -106,6 +106,11 @@ The tag is a line beginning with
 .Em !prog
 and each block will be associated with calls to syslog from that specific
 program.
+When a messages matches multiple blocks, the action of each matching
+block is taken.
+.Em !!prog
+causes the subsequent block to abort evaluation when a message matches,
+ensuring that only a single action is taken.
 .Pp
 See
 .Xr syslog 3
@@ -227,6 +232,14 @@ configuration file.
 .Sh EXAMPLES
 A configuration file might appear as follows:
 .Bd -literal
+# Log info (and higher) messages from spamd only to
+# a dedicated file, discarding debug messages.
+# Matching messages abort evaluation of further rules.
+!!spamd
+daemon.info						/var/log/spamd
+daemon.debug						/dev/null
+!*
+
 # Log all kernel messages, authentication messages of
 # level notice or higher and anything of level err or
 # higher to the console.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.78 2004/06/03 08:21:40 otto Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.79 2004/06/03 12:21:08 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-static const char rcsid[] = "$OpenBSD: syslogd.c,v 1.78 2004/06/03 08:21:40 otto Exp $";
+static const char rcsid[] = "$OpenBSD: syslogd.c,v 1.79 2004/06/03 12:21:08 dhartmei Exp $";
 #endif
 #endif /* not lint */
 
@@ -157,6 +157,7 @@ struct filed {
 	int	f_prevlen;			/* length of f_prevline */
 	int	f_prevcount;			/* repetition cnt of prevline */
 	int	f_repeatcount;			/* number of "repeated" msgs */
+	int	f_quick;			/* abort when matched */
 };
 
 /*
@@ -677,7 +678,7 @@ logmsg(int pri, char *msg, char *from, int flags)
 
 	/* extract program name */
 	for(i = 0; i < NAME_MAX; i++) {
-		if (!isalnum(msg[i]))
+		if (!isalnum(msg[i]) && msg[i] != '-')
 			break;
 		prog[i] = msg[i];
 	}
@@ -754,6 +755,9 @@ logmsg(int pri, char *msg, char *from, int flags)
 				fprintlog(f, flags, msg);
 			}
 		}
+
+		if (f->f_quick)
+			break;
 	}
 	(void)sigprocmask(SIG_SETMASK, &omask, NULL);
 }
@@ -1147,7 +1151,7 @@ init(void)
 				continue;
 			}
 			for (i = 0; i < NAME_MAX; i++) {
-				if (!isalnum(p[i]))
+				if (!isalnum(p[i]) && p[i] != '-' && p[i] != '!')
 					break;
 				prog[i] = p[i];
 			}
@@ -1235,6 +1239,11 @@ cfline(char *line, struct filed *f, char *prog)
 		f->f_pmask[i] = INTERNAL_NOPRI;
 
 	/* save program name if any */
+	if (*prog == '!') {
+		f->f_quick = 1;
+		prog++;
+	} else
+		f->f_quick = 0;
 	if (!strcmp(prog, "*"))
 		prog = NULL;
 	else {
