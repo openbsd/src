@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.98 2001/05/30 02:12:34 deraadt Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.99 2001/05/30 12:20:42 angelos Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -578,8 +578,7 @@ sendit:
 		m->m_flags &= ~(M_MCAST | M_BCAST);
 
 		/* Callee frees mbuf */
-		/* XXX Last argument should be used */
-		error = ipsp_process_packet(m, tdb, AF_INET, 0, NULL);
+		error = ipsp_process_packet(m, tdb, AF_INET, 0);
 		splx(s);
 		return error;  /* Nothing more to be done */
 	}
