@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.33 2003/12/26 14:38:58 henning Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.34 2003/12/26 14:55:03 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -381,8 +381,8 @@ send_nexthop_update(struct kroute_nexthop *msg)
 {
 	logit(LOG_INFO, "nexthop %s now %s%s%s%s", log_ntoa(msg->nexthop),
 	    msg->valid ? "valid" : "invalid",
-	    msg->connected ? ", connected" : "",
-	    msg->gateway ? ", via " : "",
+	    msg->connected ? ": directly connected" : "",
+	    msg->gateway ? ": via " : "",
 	    msg->gateway ? log_ntoa(msg->gateway) : "");
 
 	imsg_compose(&ibuf_rde, IMSG_NEXTHOP_UPDATE, 0,
