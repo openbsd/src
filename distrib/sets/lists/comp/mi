@@ -4394,11 +4394,9 @@
 ./usr/share/man/cat3/stdio.0
 ./usr/share/man/cat3/store.0
 ./usr/share/man/cat3/strcasecmp.0
-./usr/share/man/cat3/strcat.0
 ./usr/share/man/cat3/strchr.0
 ./usr/share/man/cat3/strcmp.0
 ./usr/share/man/cat3/strcoll.0
-./usr/share/man/cat3/strcpy.0
 ./usr/share/man/cat3/strcspn.0
 ./usr/share/man/cat3/strdup.0
 ./usr/share/man/cat3/strerror.0
@@ -5042,14 +5040,12 @@
 ./usr/share/man/cat9/spltty.0
 ./usr/share/man/cat9/splvm.0
 ./usr/share/man/cat9/splx.0
-./usr/share/man/cat9/sprintf.0
+./usr/share/man/cat9/snprintf.0
 ./usr/share/man/cat9/srandom.0
 ./usr/share/man/cat9/startuphook_disestablish.0
 ./usr/share/man/cat9/startuphook_establish.0
 ./usr/share/man/cat9/stathz.0
-./usr/share/man/cat9/strcat.0
 ./usr/share/man/cat9/strcmp.0
-./usr/share/man/cat9/strcpy.0
 ./usr/share/man/cat9/strlcat.0
 ./usr/share/man/cat9/strlcpy.0
 ./usr/share/man/cat9/strlen.0
@@ -5157,3 +5153,4 @@
 ./usr/share/misc/gprof.flat
 ./usr/share/misc/operator
 ./var/db/libc.tags
+./usr/share/man/cat9/vsnprintf.0

@@ -2094,7 +2094,6 @@
 ./usr/share/sendmail/cf/cs-sunos4.1.mc
 ./usr/share/sendmail/cf/cs-ultrix4.mc
 ./usr/share/sendmail/cf/cyrusproto.mc
-./usr/share/sendmail/cf/elbereth.mc
 ./usr/share/sendmail/cf/generic-bsd4.4.mc
 ./usr/share/sendmail/cf/generic-hpux10.mc
 ./usr/share/sendmail/cf/generic-hpux9.mc

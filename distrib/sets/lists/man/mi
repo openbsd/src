@@ -2193,3 +2193,7 @@
 ./usr/share/texinfo
 ./usr/share/texinfo/texinfo.dtd
 ./usr/share/texinfo/texinfo.xsl
+./usr/share/man/cat4/macppc/kauaiata.0
+./usr/share/man/cat4/macppc/macobio.0
+./usr/share/man/cat3/strcat.0
+./usr/share/man/cat3/strcpy.0
