@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_port.h,v 1.30 2001/10/31 04:24:44 nate Exp $ */
+/*	$OpenBSD: usb_port.h,v 1.31 2001/11/02 17:53:47 mickey Exp $ */
 /*	$NetBSD: usb_port.h,v 1.44 2001/05/14 20:35:29 bouyer Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_port.h,v 1.21 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -188,7 +188,6 @@ __CONCAT(dname,_detach)(self, flags) \
 /*
  * OpenBSD
  */
-#define USB_DEBUG
 #ifdef USB_DEBUG
 #define UKBD_DEBUG 1
 #define UHID_DEBUG 1
