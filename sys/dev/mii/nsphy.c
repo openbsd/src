@@ -1,4 +1,4 @@
-/*	$OpenBSD: nsphy.c,v 1.9 2000/08/26 20:04:18 nate Exp $	*/
+/*	$OpenBSD: nsphy.c,v 1.10 2001/10/05 18:26:48 nate Exp $	*/
 /*	$NetBSD: nsphy.c,v 1.25 2000/02/02 23:34:57 thorpej Exp $	*/
 
 /*-
@@ -139,6 +139,7 @@ nsphyattach(parent, self, aux)
 	sc->mii_status = nsphy_status;
 	sc->mii_pdata = mii;
 	sc->mii_flags = mii->mii_flags;
+	sc->mii_anegticks = 5;
 
 	nsphy_reset(sc);
 
@@ -251,7 +252,7 @@ nsphy_service(sc, mii, cmd)
 		/*
 		 * Only retry autonegotiation every 5 seconds.
 		 */
-		if (++sc->mii_ticks != 5)
+		if (++sc->mii_ticks != sc->mii_anegticks)
 			return (0);
 
 		sc->mii_ticks = 0;

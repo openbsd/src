@@ -1,4 +1,4 @@
-/*	$OpenBSD: nsgphy.c,v 1.4 2001/08/19 15:07:34 miod Exp $	*/
+/*	$OpenBSD: nsgphy.c,v 1.5 2001/10/05 18:26:48 nate Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 2001
@@ -127,6 +127,7 @@ nsgphyattach(parent, self, aux)
 	sc->mii_status = nsgphy_status;
 	sc->mii_pdata = mii;
 	sc->mii_flags = mii->mii_flags;
+	sc->mii_anegticks = 10;
 
 	mii_phy_reset(sc);
 
@@ -268,12 +269,9 @@ nsgphy_service(sc, mii, cmd)
 			return (0);
 
 		/*
-		 * Only retry autonegotiation every 5 seconds.
-		 * Actually, for gigE PHYs, we should wait longer, since
-		 * 5 seconds is the mimimum time the documentation
-		 * says to wait for a 1000mbps link to be established.
+		 * Only retry autonegotiation if we've hit the timeout.
 		 */
-		if (++sc->mii_ticks != 10)
+		if (++sc->mii_ticks != sc->mii_anegticks)
 			return (0);
 		
 		sc->mii_ticks = 0;

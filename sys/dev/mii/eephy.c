@@ -1,4 +1,4 @@
-/* $OpenBSD: eephy.c,v 1.2 2001/04/14 09:36:20 deraadt Exp $ */
+/* $OpenBSD: eephy.c,v 1.3 2001/10/05 18:26:48 nate Exp $ */
 /*
  * Principal Author: Parag Patel
  * Copyright (c) 2001
@@ -102,6 +102,7 @@ eephyattach(struct device *parent, struct device *self, void *aux)
 	sc->mii_status = eephy_status;
 	sc->mii_pdata = mii;
 	sc->mii_flags = mii->mii_flags;
+	sc->mii_anegticks = 5;
 
 	eephy_reset(sc);
 
@@ -304,7 +305,7 @@ eephy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		/*
 		 * Only retry autonegotiation every 5 seconds.
 		 */
-		if (++(sc->mii_ticks) != 5) {
+		if (++(sc->mii_ticks) != sc->mii_anegticks) {
 			return (0);
 		}
 		sc->mii_ticks = 0;

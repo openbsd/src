@@ -1,4 +1,4 @@
-/*	$OpenBSD: brgphy.c,v 1.5 2001/08/19 15:07:34 miod Exp $	*/
+/*	$OpenBSD: brgphy.c,v 1.6 2001/10/05 18:26:48 nate Exp $	*/
 
 /*
  * Copyright (c) 2000
@@ -116,6 +116,7 @@ brgphy_attach(parent, self, aux)
 	sc->mii_status = brgphy_status;
 	sc->mii_pdata = mii;
 	sc->mii_flags |= MIIF_NOISOLATE;
+	sc->mii_anegticks = 10;
 
 	mii_phy_reset(sc);
 
@@ -255,7 +256,7 @@ brgphy_service(sc, mii, cmd)
 		/*
 		 * Only retry autonegotiation every 5 seconds.
 		 */
-		if (++sc->mii_ticks != 5)
+		if (++sc->mii_ticks != sc->mii_anegticks)
 			return (0);
 		
 		sc->mii_ticks = 0;
