@@ -1,3 +1,5 @@
+.\" $OpenBSD: 7.t,v 1.2 1997/01/17 15:54:18 millert Exp $
+.\"
 .\" Copyright (c) 1983, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
