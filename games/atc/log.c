@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.13 2003/09/26 11:20:21 avsm Exp $	*/
+/*	$OpenBSD: log.c,v 1.14 2003/09/26 15:52:16 deraadt Exp $	*/
 /*	$NetBSD: log.c,v 1.3 1995/03/21 15:04:21 cgd Exp $	*/
 
 /*-
@@ -46,7 +46,7 @@
 #if 0
 static char sccsid[] = "@(#)log.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: log.c,v 1.13 2003/09/26 11:20:21 avsm Exp $";
+static char rcsid[] = "$OpenBSD: log.c,v 1.14 2003/09/26 15:52:16 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -147,7 +147,8 @@ log_score(list_em)
 		perror("flock");
 		return (-1);
 	}
-	snprintf(scanstr, 50, "%%%ds %%255s %%d %%d %%d", MAXLOGNAME);
+	snprintf(scanstr, 50, "%%%ds %%%ds %%d %%d %%d", sizeof(score[0].name)-1,
+	    sizeof(score[0].game)-1);
 	for (;;) {
 		good = fscanf(score_fp, scanstr,
 			score[num_scores].name, 
