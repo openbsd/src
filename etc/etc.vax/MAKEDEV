@@ -3,10 +3,10 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.vax/MAKEDEV.md,v 1.17 2004/02/17 11:18:08 miod Exp 
-#	OpenBSD: MAKEDEV.common,v 1.2 2004/02/17 11:18:03 miod Exp 
+#	OpenBSD: etc.vax/MAKEDEV.md,v 1.18 2004/02/20 19:13:08 miod Exp 
+#	OpenBSD: MAKEDEV.common,v 1.3 2004/02/20 19:13:01 miod Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.72 2004/02/16 18:58:53 miod Exp 
-#	OpenBSD: MAKEDEV.sub,v 1.11 2004/02/16 18:58:53 miod Exp 
+#	OpenBSD: MAKEDEV.sub,v 1.12 2004/02/20 19:13:01 miod Exp 
 #
 #
 # Copyright (c) 2001-2004 Todd T. Fries <todd@OpenBSD.org>
@@ -31,17 +31,18 @@
 #	local	Configuration specific devices
 # Disks:
 #	ccd*	Concatenated disk devices
-#	cd*	SCSI cdrom drives
+#	cd*	ATAPI and SCSI CD-ROM drives
 #	fd*	Floppy disk drives (3 1/2", 5 1/4")
 #	hk*	UNIBUS RK06 and RK07 disks
 #	hd*	HDC9224 disks
 #	hp*	MASSBUSS disks
 #	ra*	MSCP disks
+#	raid*	RAIDframe disk devices
 #	rb*	730 IDC w/ RB80 and/or RB02
 #	rd*	"rd" pseudo-disks
 #	rl*	UNIBUS RL02
 #	rx*	RX02 floppy disks
-#	sd*	SCSI disks
+#	sd*	SCSI disks, including flopticals
 #	up*	Other UNIBUS devices
 #	vnd*	"file" pseudo-disk devices
 # Tapes:
@@ -69,7 +70,6 @@
 #	fd	fd/* nodes for fdescfs
 #	lkm	Loadable kernel modules interface
 #	pf*	Packet Filter
-#	raid*	RAIDframe disk devices
 #	*random	In-kernel random data source
 #	ses*	SES/SAF-TE SCSI devices
 #	ss*	SCSI scanners
