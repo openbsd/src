@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs.c,v 1.13 1997/02/22 05:53:35 millert Exp $	*/
+/*	$OpenBSD: newfs.c,v 1.14 1997/02/23 03:51:25 millert Exp $	*/
 /*	$NetBSD: newfs.c,v 1.20 1996/05/16 07:13:03 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.8 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: newfs.c,v 1.13 1997/02/22 05:53:35 millert Exp $";
+static char rcsid[] = "$OpenBSD: newfs.c,v 1.14 1997/02/23 03:51:25 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -589,12 +589,7 @@ havelabel:
 			fatal("%s: %s", argv[1], strerror(errno));
 	}
 #endif
-	if (!Nflag) {
-		(void)execl(_PATH_FSIRAND, "fsirand", special, NULL);
-		err(1, "Can't exec %s", _PATH_FSIRAND);
-	} else {
-		exit(0);
-	}
+	exit(0);
 }
 
 #ifdef COMPAT

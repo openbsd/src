@@ -1,4 +1,4 @@
-.\"	$OpenBSD: newfs.8,v 1.4 1996/12/04 08:38:58 deraadt Exp $
+.\"	$OpenBSD: newfs.8,v 1.5 1997/02/23 03:51:24 millert Exp $
 .\"	$NetBSD: newfs.8,v 1.12 1995/03/18 14:58:41 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993, 1994
@@ -122,6 +122,17 @@ is used instead of a special file name, default configuration parameters
 will be used.  (This option is useful when trying to use
 .Nm mount_mfs
 on a machine without any disks.)
+.Pp
+Both
+.Nm
+and
+.Nm mount_mfs
+now have the functionality of
+.Xr fsirand 8
+built-in so it is not necesary to run
+.Xr fsirand 8
+manually unless you wish to re-randomize the
+filesystem (or list the inode generation numbers).
 .Pp
 The following options define the general layout policies.
 .Bl -tag -width Fl
@@ -277,7 +288,8 @@ man page for possible options and their meanings.
 .Xr fsck 8 ,
 .Xr format 8 ,
 .Xr mount 8 ,
-.Xr tunefs 8
+.Xr tunefs 8 ,
+.Xr fsirand 8
 .Rs
 .%A M. McKusick
 .%A W. Joy
