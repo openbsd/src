@@ -1,7 +1,7 @@
-/*	$OpenBSD: perform.c,v 1.2 1996/06/04 08:43:39 niklas Exp $	*/
+/*	$OpenBSD: perform.c,v 1.3 1997/12/14 09:42:19 gene Exp $	*/
 
 #ifndef lint
-static const char *rcsid = "$OpenBSD: perform.c,v 1.2 1996/06/04 08:43:39 niklas Exp $";
+static const char *rcsid = "$OpenBSD: perform.c,v 1.3 1997/12/14 09:42:19 gene Exp $";
 #endif
 
 /*
@@ -91,7 +91,7 @@ pkg_do(char *pkg)
 
     if (isURL(pkg)) {
 	if ((cp = fileGetURL(NULL, pkg)) != NULL) {
-	    strcpy(fname, cp);
+	    strncpy(fname, cp, FILENAME_MAX);
 	    isTMP = TRUE;
 	}
     }
@@ -105,7 +105,7 @@ pkg_do(char *pkg)
 	    snprintf(&fname[len], FILENAME_MAX - len, "/%s", pkg);
 	}
 	else
-	    strcpy(fname, pkg);
+	    strncpy(fname, pkg, FILENAME_MAX);
 	cp = fname;
     }
     else {
