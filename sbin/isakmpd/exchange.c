@@ -1,4 +1,4 @@
-/* $OpenBSD: exchange.c,v 1.102 2004/08/10 15:59:10 ho Exp $	 */
+/* $OpenBSD: exchange.c,v 1.103 2004/08/23 11:53:24 ho Exp $	 */
 /* $EOM: exchange.c,v 1.143 2000/12/04 00:02:25 angelos Exp $	 */
 
 /*
@@ -1399,6 +1399,7 @@ exchange_finalize(struct message *msg)
 		 * Locate any old SAs and mark them replaced
 		 * (SA_FLAG_REPLACED).
 		 */
+		sa->initiator = exchange->initiator;
 		while ((old_sa = sa_find(exchange_check_old_sa, sa)) != 0)
 			sa_mark_replaced(old_sa);
 
