@@ -1,4 +1,4 @@
-/*	$OpenBSD: netstat.c,v 1.25 2004/04/26 19:22:30 itojun Exp $	*/
+/*	$OpenBSD: netstat.c,v 1.26 2004/09/29 21:59:28 deraadt Exp $	*/
 /*	$NetBSD: netstat.c,v 1.3 1995/06/18 23:53:07 cgd Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)netstat.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: netstat.c,v 1.25 2004/04/26 19:22:30 itojun Exp $";
+static char rcsid[] = "$OpenBSD: netstat.c,v 1.26 2004/09/29 21:59:28 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -78,10 +78,8 @@ static char rcsid[] = "$OpenBSD: netstat.c,v 1.25 2004/04/26 19:22:30 itojun Exp
 static void enter(struct inpcb *, struct socket *, int, char *);
 static const char *inetname(struct in_addr);
 static void inetprint(struct in_addr *, int, char *);
-#ifdef INET6
 static const char *inet6name(struct in6_addr *);
 static void inet6print(struct in6_addr *, int, char *);
-#endif
 
 #define	streq(a,b)	(strcmp(a,b)==0)
 #define	YMAX(w)		((w)->_maxy-1)
@@ -105,14 +103,10 @@ struct netinfo {
 	short	nif_state;		/* tcp state */
 	char	*nif_proto;		/* protocol */
 	struct	in_addr nif_laddr;	/* local address */
-#ifdef INET6
 	struct	in6_addr nif_laddr6;	/* local address */
-#endif
 	long	nif_lport;		/* local port */
 	struct	in_addr	nif_faddr;	/* foreign address */
-#ifdef INET6
 	struct	in6_addr nif_faddr6;	/* foreign address */
-#endif
 	long	nif_fport;		/* foreign port */
 	long	nif_rcvcc;		/* rcv buffer character count */
 	long	nif_sndcc;		/* snd buffer character count */
@@ -216,20 +210,16 @@ again:
 		prev = next;
 		next = inpcb.inp_queue.cqe_next;
 
-#ifndef INET6
 		if (inpcb.inp_flags & INP_IPV6)
 			continue;
-#endif
 
 		if (!aflag) {
 			if (!(inpcb.inp_flags & INP_IPV6) &&
 			    inet_lnaof(inpcb.inp_laddr) == INADDR_ANY)
 				continue;
-#ifdef INET6
 			if ((inpcb.inp_flags & INP_IPV6) &&
 			    IN6_IS_ADDR_UNSPECIFIED(&inpcb.inp_laddr6))
 				continue;
-#endif
 		}
 		if (nhosts && !checkhost(&inpcb))
 			continue;
@@ -262,12 +252,10 @@ enter(struct inpcb *inp, struct socket *so, int state, char *proto)
 	 * data structures.
 	 */
 	for (p = netcb.nif_forw; p != (struct netinfo *)&netcb; p = p->nif_forw) {
-#ifdef INET6
 		if (p->nif_family == AF_INET && (inp->inp_flags & INP_IPV6))
 			continue;
 		if (p->nif_family == AF_INET6 && !(inp->inp_flags & INP_IPV6))
 			continue;
-#endif
 		if (!streq(proto, p->nif_proto))
 			continue;
 		if (p->nif_family == AF_INET) {
@@ -278,18 +266,14 @@ enter(struct inpcb *inp, struct socket *so, int state, char *proto)
 			    p->nif_fport == inp->inp_fport)
 				break;
 
-		}
-#ifdef INET6
-		else if (p->nif_family == AF_INET6) {
+		} else if (p->nif_family == AF_INET6) {
 			if (p->nif_lport != inp->inp_lport ||
 			    !IN6_ARE_ADDR_EQUAL(&p->nif_laddr6, &inp->inp_laddr6))
 				continue;
 			if (IN6_ARE_ADDR_EQUAL(&p->nif_faddr6, &inp->inp_faddr6) &&
 			    p->nif_fport == inp->inp_fport)
 				break;
-		}
-#endif
-		else
+		} else
 			continue;
 	}
 	if (p == (struct netinfo *)&netcb) {
@@ -306,14 +290,11 @@ enter(struct inpcb *inp, struct socket *so, int state, char *proto)
 		p->nif_fport = inp->inp_fport;
 		p->nif_proto = proto;
 		p->nif_flags = NIF_LACHG|NIF_FACHG;
-#ifdef INET6
 		if (inp->inp_flags & INP_IPV6) {
 			p->nif_laddr6 = inp->inp_laddr6;
 			p->nif_faddr6 = inp->inp_faddr6;
 			p->nif_family = AF_INET6;
-		} else
-#endif
-		{
+		} else {
 			p->nif_laddr = inp->inp_laddr;
 			p->nif_faddr = inp->inp_faddr;
 			p->nif_family = AF_INET;
@@ -399,12 +380,10 @@ shownetstat(void)
 				inetprint(&p->nif_laddr, p->nif_lport,
 					p->nif_proto);
 				break;
-#ifdef INET6
 			case AF_INET6:
 				inet6print(&p->nif_laddr6, p->nif_lport,
 					p->nif_proto);
 				break;
-#endif
 			}
 			p->nif_flags &= ~NIF_LACHG;
 		}
@@ -415,20 +394,16 @@ shownetstat(void)
 				inetprint(&p->nif_faddr, p->nif_fport,
 					p->nif_proto);
 				break;
-#ifdef INET6
 			case AF_INET6:
 				inet6print(&p->nif_faddr6, p->nif_fport,
 					p->nif_proto);
 				break;
-#endif
 			}
 			p->nif_flags &= ~NIF_FACHG;
 		}
 		mvwaddstr(wnd, p->nif_line, PROTO, p->nif_proto);
-#ifdef INET6
 		if (p->nif_family == AF_INET6)
 			waddstr(wnd, "6");
-#endif
 		mvwprintw(wnd, p->nif_line, RCVCC, "%6d", p->nif_rcvcc);
 		mvwprintw(wnd, p->nif_line, SNDCC, "%6d", p->nif_sndcc);
 		if (streq(p->nif_proto, "tcp")) {
@@ -475,7 +450,6 @@ inetprint(struct in_addr *in, int port, char *proto)
 	waddstr(wnd, line);
 }
 
-#ifdef INET6
 static void
 inet6print(struct in6_addr *in6, int port, char *proto)
 {
@@ -499,7 +473,6 @@ inet6print(struct in6_addr *in6, int port, char *proto)
 	*cp = '\0';
 	waddstr(wnd, line);
 }
-#endif
 
 /*
  * Construct an Internet address representation.
@@ -542,7 +515,6 @@ inetname(struct in_addr in)
 	return (line);
 }
 
-#ifdef INET6
 static const char *
 inet6name(struct in6_addr *in6)
 {
@@ -562,7 +534,6 @@ inet6name(struct in6_addr *in6)
 		return line;
 	return "?";
 }
-#endif
 
 int
 cmdnetstat(char *cmd, char *args)
