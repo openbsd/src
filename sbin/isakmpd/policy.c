@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.40 2001/07/03 23:39:01 angelos Exp $	*/
+/*	$OpenBSD: policy.c,v 1.41 2001/07/04 22:16:32 angelos Exp $	*/
 /*	$EOM: policy.c,v 1.49 2000/10/24 13:33:39 niklas Exp $ */
 
 /*
@@ -901,6 +901,17 @@ policy_callback (char *name)
 			 sizeof (char));
 	      goto bad;
 	    }
+	  /* Does it contain any non-printable characters ? */
+	  for (i = 0; i < id_sz - ISAKMP_ID_DATA_OFF + ISAKMP_GEN_SZ; i++)
+	    if (!isprint (*(id + ISAKMP_ID_DATA_OFF - ISAKMP_GEN_SZ + i)))
+	      break;
+	  if (i >= id_sz - ISAKMP_ID_DATA_OFF + ISAKMP_GEN_SZ)
+	    {
+	      memcpy (remote_id, id + ISAKMP_ID_DATA_OFF - ISAKMP_GEN_SZ,
+		      id_sz - ISAKMP_ID_DATA_OFF + ISAKMP_GEN_SZ);
+	      break;
+	    }
+	  /* Non-printable characters, convert to hex */
           for (i = 0; i < id_sz - ISAKMP_ID_DATA_OFF + ISAKMP_GEN_SZ; i++)
 	    {
 	      remote_id[2 * i]
@@ -1167,6 +1178,17 @@ policy_callback (char *name)
 			     sizeof (char));
 		  goto bad;
 	        }
+	      /* Does it contain any non-printable characters ? */
+	      for (i = 0; i < idremotesz - ISAKMP_ID_DATA_OFF; i++)
+		if (!isprint (*(idremote + ISAKMP_ID_DATA_OFF + i)))
+		  break;
+	      if (i >= idremotesz - ISAKMP_ID_DATA_OFF)
+	        {
+		  memcpy (remote_filter, idremote + ISAKMP_ID_DATA_OFF,
+			  idremotesz - ISAKMP_ID_DATA_OFF);
+		  break;
+		}
+	      /* Non-printable characters, convert to hex */
               for (i = 0; i < idremotesz - ISAKMP_ID_DATA_OFF; i++)
 	        {
 		  remote_filter[2 * i]
@@ -1451,7 +1473,18 @@ policy_callback (char *name)
 			     sizeof (char));
 		  goto bad;
 	        }
-              for (i = 0; i < idremotesz - ISAKMP_ID_DATA_OFF; i++)
+	      /* Does it contain any non-printable characters ? */
+	      for (i = 0; i < idlocalsz - ISAKMP_ID_DATA_OFF; i++)
+		if (!isprint (*(idlocal + ISAKMP_ID_DATA_OFF + i)))
+		  break;
+	      if (i >= idlocalsz - ISAKMP_ID_DATA_OFF)
+	        {
+		  memcpy (local_filter, idlocal + ISAKMP_ID_DATA_OFF,
+			  idlocalsz - ISAKMP_ID_DATA_OFF);
+		  break;
+		}
+	      /* Non-printable characters, convert to hex */
+              for (i = 0; i < idlocalsz - ISAKMP_ID_DATA_OFF; i++)
 	        {
 		  local_filter[2 * i]
 		    = hextab[*(idlocal + ISAKMP_ID_DATA_OFF) >> 4];
