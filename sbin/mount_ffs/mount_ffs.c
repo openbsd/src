@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_ffs.c,v 1.7 1997/08/20 05:10:21 millert Exp $	*/
+/*	$OpenBSD: mount_ffs.c,v 1.8 1997/08/20 05:34:24 millert Exp $	*/
 /*	$NetBSD: mount_ffs.c,v 1.3 1996/04/13 01:31:19 jtc Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount_ufs.c	8.2 (Berkeley) 3/27/94";
 #else
-static char rcsid[] = "$OpenBSD: mount_ffs.c,v 1.7 1997/08/20 05:10:21 millert Exp $";
+static char rcsid[] = "$OpenBSD: mount_ffs.c,v 1.8 1997/08/20 05:34:24 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -117,7 +117,7 @@ main(argc, argv)
 			errcause =
 			    "specified device does not match mounted device";
 			break;
-		case EINVAL:
+		case EOPNOTSUPP:
 			errcause = "filesystem not supported by kernel";
 			break;
 		default:
