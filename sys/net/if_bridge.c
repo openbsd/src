@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.77 2001/11/26 16:50:26 jasoni Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.78 2001/12/08 18:07:57 jason Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -1274,8 +1274,8 @@ bridge_broadcast(sc, ifp, eh, m)
 	struct bridge_iflist *p;
 	struct mbuf *mc;
 	struct ifnet *dst_if;
-	int error, len, used = 0;
-	short mflags;
+	int error, len = m->m_pkthdr.len, used = 0;
+	short mflags = m->m_flags;
 	ALTQ_DECL(struct altq_pktattr pktattr;)
 
 	LIST_FOREACH(p, &sc->sc_iflist, next) {
