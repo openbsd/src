@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fxp.4,v 1.30 2004/12/22 12:02:47 grange Exp $
+.\"	$OpenBSD: fxp.4,v 1.31 2004/12/22 14:44:41 jmc Exp $
 .\"
 .\" Copyright (c) 1997 David E. O'Brien
 .\"
@@ -103,21 +103,6 @@ Models exist with PHYs supported by both the
 and
 .Xr nsphy 4
 drivers.
-.Sh DIAGNOSTICS
-.Bl -diag
-.It "fxp%d: couldn't map memory"
-A fatal initialization error has occurred.
-.It "fxp%d: couldn't map interrupt"
-A fatal initialization error has occurred.
-.It "fxp%d: Failed to malloc memory"
-There are not enough mbufs available for allocation.
-.It "fxp%d: device timeout"
-The device has stopped responding to the network, or there is a problem with
-the network connection (cable).
-.It "fxp%d: failed loadfirmware of file %s: errno %d"
-The device is able to do interrupt coalescing but required firmware file
-is missing.
-.El
 .Sh FILES
 Some devices are able to do interrupt coalescing but it requires firmware
 updating.
@@ -134,7 +119,22 @@ interface is brought up:
 .It Pa /etc/firmware/fxp-license
 .El
 .Pp
-If a file is missing, the driver attempts to operate anyways.
+If a file is missing, the driver attempts to operate anyway.
+.Sh DIAGNOSTICS
+.Bl -diag
+.It "fxp%d: couldn't map memory"
+A fatal initialization error has occurred.
+.It "fxp%d: couldn't map interrupt"
+A fatal initialization error has occurred.
+.It "fxp%d: Failed to malloc memory"
+There are not enough mbufs available for allocation.
+.It "fxp%d: device timeout"
+The device has stopped responding to the network, or there is a problem with
+the network connection (cable).
+.It "fxp%d: failed loadfirmware of file %s: errno %d"
+The device is able to do interrupt coalescing but required firmware file
+is missing.
+.El
 .Sh SEE ALSO
 .Xr arp 4 ,
 .Xr cardbus 4 ,
