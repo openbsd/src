@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_extent.c,v 1.12 2001/01/17 02:48:17 deraadt Exp $	*/
+/*	$OpenBSD: subr_extent.c,v 1.13 2001/05/08 19:29:37 fgsch Exp $	*/
 /*	$NetBSD: subr_extent.c,v 1.7 1996/11/21 18:46:34 cgd Exp $	*/
 
 /*-
@@ -711,6 +711,13 @@ extent_alloc_subregion1(ex, substart, subend, size, alignment, skew, boundary,
 			 */
 			goto fail;
 		}
+
+		/*
+		 * Check that the current region don't run past the
+		 * end of the subregion.
+		 */
+		if (!LE_OV(newstart, (size - 1), subend))
+			goto fail;
 		
 		last = rp;
 	}
