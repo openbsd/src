@@ -1,5 +1,5 @@
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.8 2002/01/13 02:06:45 jason Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.9 2002/01/23 06:18:52 todd Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001 Todd T. Fries <todd@OpenBSD.org>
@@ -87,8 +87,10 @@ _DEV(bpf,105)
 _DEV(tun,111)
 _DEV(lkm,112)
 _DEV(rnd,119)
-_DEV(mag)
-_DEV(spif)
+_DEV(mag,71)
+_DEV(bppmag,72)
+_DEV(spif,108)
+_DEV(bppsp,109)
 _DEV(cry,75)
 dnl
 divert(7)dnl
@@ -115,41 +117,5 @@ mouse*)name=${i##mouse-}
 		$0 $name	# make the appropriate device
 	fi
 	RMlist="$RMlist mouse"
-	MKlist="$MKlist;ln -s $name mouse";;
-
-magma*)
-	case $U in
-	0)	offset=0  nam=m;;
-	1)	offset=16 nam=n;;
-	2)	offset=32 nam=o;;
-	*)	echo "bad unit for $i: $U"; exit 127;;
-	esac
-	offset=Mult($U,64)
-	n=0
-	while [ $n -lt 16 ]
-	do
-		name=${nam}`hex $n`
-		M tty$name c 71 Add($offset,$n) 660 dialer uucp
-		n=Add($n,1)
-	done
-	M bpp${nam}0 c 72 Add($offset,0) 600 wheel root
-	M bpp${nam}1 c 72 Add($offset,1) 600 wheel root
-	;;
-
-spif*)
-	case $U in
-	0)	offset=0  nam=j;;
-	1)	offset=16 nam=k;;
-	2)	offset=32 nam=l;;
-	*)	echo "bad unit for $i: $U"; exit 127;;
-	esac
-	offset=Mult($U,64)
-	n=0
-	while [ $n -lt 8 ]
-	do
-		name=${nam}`hex $n`
-		M tty$name c 108 Add($offset,$n) 660 dialer uucp
-		n=Add($n,1)
-	done
-	M bpp${nam}0 c 109 Add($offset,0) 600 wheel root
+	MKlist="$MKlist;ln -s $name mouse"
 	;;
