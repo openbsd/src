@@ -392,6 +392,7 @@ struct interface_info {
 	int noifmedia;
 	int errors;
 	int dead;
+	u_int16_t	index;
 };
 
 struct hardware_link {

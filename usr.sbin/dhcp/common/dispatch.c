@@ -139,6 +139,7 @@ void discover_interfaces (state)
 		if (ifa -> ifa_addr->sa_family == AF_LINK) {
 			struct sockaddr_dl *foo = ((struct sockaddr_dl *)
 						   (ifa -> ifa_addr));
+			tmp -> index = foo->sdl_index;
 			tmp -> hw_address.hlen = foo -> sdl_alen;
 			tmp -> hw_address.htype = HTYPE_ETHER; /* XXX */
 			memcpy (tmp -> hw_address.haddr,
