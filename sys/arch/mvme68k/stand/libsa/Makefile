@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.3 1995/11/07 08:50:40 deraadt Exp $
+#	$Id: Makefile,v 1.4 1995/11/22 11:17:17 deraadt Exp $
 
 LIB=sa
 
@@ -32,7 +32,7 @@ SRCS= ${SRC_net} ${SRC_sa} ${SRC_kern} ${SRC_sun3} ${SRC_here}
 # DBG= -DDEBUG -DNETIF_DEBUG -DNFS_DEBUG -DRPC_DEBUG \
 # 	-DNET_DEBUG -DRARP_DEBUG -DETHER_DEBUG
 
-DEFS= -DCOMPAT_UFS
+#DEFS= -DCOMPAT_UFS
 INCL= -I. -I${S}/lib/libsa -I${S}
 COPTS= #-fno-defer-pop
 CFLAGS= -O ${COPTS} ${DEFS} ${DBG} ${INCL}
