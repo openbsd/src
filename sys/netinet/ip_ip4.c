@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ip4.c,v 1.29 1999/04/20 20:06:11 niklas Exp $	*/
+/*	$OpenBSD: ip_ip4.c,v 1.30 1999/05/12 23:18:35 niklas Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -283,7 +283,7 @@ ipe4_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
     }
 
     /* Check that the destination address is AF_INET */
-    if (tdb->tdb_src.sa.sa_family != AF_INET)
+    if (tdb->tdb_dst.sa.sa_family != AF_INET)
     {
 	DPRINTF(("ipe4_output(): IP in protocol-family <%d> attempted, aborting", tdb->tdb_dst.sa.sa_family));
 	m_freem(m);
