@@ -1,4 +1,4 @@
-/*	$OpenBSD: private.h,v 1.6 1997/01/14 03:16:48 millert Exp $	*/
+/*	$OpenBSD: private.h,v 1.7 1998/01/18 23:24:55 millert Exp $	*/
 
 #ifndef PRIVATE_H
 
@@ -32,7 +32,7 @@
 #if 0
 #ifndef lint
 #ifndef NOID
-static char	privatehid[] = "@(#)private.h	7.44";
+static char	privatehid[] = "@(#)private.h	7.46";
 #endif /* !defined NOID */
 #endif /* !defined lint */
 #endif
@@ -185,6 +185,19 @@ extern int	unlink P((const char * filename));
 extern int errno;
 #endif /* !defined errno */
 #endif
+
+/*
+** Private function declarations.
+*/
+char *	icalloc P((int nelem, int elsize));
+char *	icatalloc P((char * old, const char * new));
+char *	icpyalloc P((const char * string));
+char *	imalloc P((int n));
+void *	irealloc P((void * pointer, int size));
+void	icfree P((char * pointer));
+void	ifree P((char * pointer));
+char *	scheck P((const char *string, const char *format));
+
 
 /*
 ** Finally, some convenience items.

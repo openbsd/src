@@ -3,12 +3,9 @@
 ** 1996-06-05 by Arthur David Olson (arthur_david_olson@nih.gov).
 */
 
-#if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-static char	elsieid[] = "@(#)asctime.c	7.8";
-#else
-static char rcsid[] = "$OpenBSD: asctime.c,v 1.3 1997/01/14 03:16:42 millert Exp $";
-#endif
+#if defined(LIBC_SCCS) && !defined(lint) && !defined(NOID)
+static char elsieid[] = "@(#)asctime.c	7.8";
+static char rcsid[] = "$OpenBSD: asctime.c,v 1.4 1998/01/18 23:24:50 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*LINTLIBRARY*/

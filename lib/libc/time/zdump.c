@@ -1,9 +1,6 @@
-#if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-static char	elsieid[] = "@(#)zdump.c	7.24";
-#else
-static char rcsid[] = "$OpenBSD: zdump.c,v 1.5 1997/01/21 04:52:45 millert Exp $";
-#endif
+#if defined(LIBC_SCCS) && !defined(lint) && !defined(NOID)
+static char elsieid[] = "@(#)zdump.c	7.27";
+static char rcsid[] = "$OpenBSD: zdump.c,v 1.6 1998/01/18 23:25:02 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -113,19 +110,28 @@ static char rcsid[] = "$OpenBSD: zdump.c,v 1.5 1997/01/21 04:52:45 millert Exp $
 #define TZ_DOMAIN "tz"
 #endif /* !defined TZ_DOMAIN */
 
+#ifndef P
+#ifdef __STDC__
+#define P(x)	x
+#endif /* defined __STDC__ */
+#ifndef __STDC__
+#define P(x)	()
+#endif /* !defined __STDC__ */
+#endif /* !defined P */
+
 extern char **	environ;
-extern int	getopt();
+extern int	getopt P((int argc, char * const argv[],
+			  const char * options));
 extern char *	optarg;
 extern int	optind;
-extern time_t	time();
 extern char *	tzname[2];
 
-static char *	abbr();
-static long	delta();
-static time_t	hunt();
-static int	longest;
+static char *	abbr P((struct tm * tmp));
+static long	delta P((struct tm * newp, struct tm * oldp));
+static time_t	hunt P((char * name, time_t lot, time_t hit));
+static size_t	longest;
 static char *	progname;
-static void	show();
+static void	show P((char * zone, time_t t, int v));
 
 int
 main(argc, argv)
@@ -161,7 +167,7 @@ char *	argv[];
 		if (c == 'v')
 			vflag = 1;
 		else	cutoff = optarg;
-	if (c != EOF ||
+	if (c != -1 ||
 		(optind == argc - 1 && strcmp(argv[optind], "=") == 0)) {
 			(void) fprintf(stderr,
 _("%s: usage is %s [ -v ] [ -c cutoff ] zonename ...\n"),
@@ -193,8 +199,7 @@ _("%s: usage is %s [ -v ] [ -c cutoff ] zonename ...\n"),
 		fakeenv = (char **) malloc((size_t) ((i + 2) *
 			sizeof *fakeenv));
 		if (fakeenv == NULL ||
-			(fakeenv[0] = (char *) malloc((size_t) (longest +
-				4))) == NULL) {
+			(fakeenv[0] = (char *) malloc(longest + 4)) == NULL) {
 					(void) perror(progname);
 					(void) exit(EXIT_FAILURE);
 		}
@@ -210,9 +215,10 @@ _("%s: usage is %s [ -v ] [ -c cutoff ] zonename ...\n"),
 		static char	buf[MAX_STRING_LENGTH];
 
 		(void) strcpy(&fakeenv[0][3], argv[i]);
-		show(argv[i], now, FALSE);
-		if (!vflag)
+		if (!vflag) {
+			show(argv[i], now, FALSE);
 			continue;
+		}
 		/*
 		** Get lowest value of t.
 		*/
@@ -281,7 +287,6 @@ time_t	hit;
 
 	lotm = *localtime(&lot);
 	(void) strncpy(loab, abbr(&lotm), (sizeof loab) - 1);
-	loab[(sizeof loab) - 1] = '\0';
 	while ((hit - lot) >= 2) {
 		t = lot / 2 + hit / 2;
 		if (t <= lot)
@@ -328,8 +333,6 @@ struct tm *	oldp;
 	return result;
 }
 
-extern struct tm *	localtime();
-
 static void
 show(zone, t, v)
 char *	zone;
@@ -338,9 +341,9 @@ int	v;
 {
 	struct tm *	tmp;
 
-	(void) printf("%-*s  ", longest, zone);
+	(void) printf("%-*s  ", (int) longest, zone);
 	if (v)
-		(void) printf("%.24s GMT = ", asctime(gmtime(&t)));
+		(void) printf("%.24s UTC = ", asctime(gmtime(&t)));
 	tmp = localtime(&t);
 	(void) printf("%.24s", asctime(tmp));
 	if (*abbr(tmp) != '\0')

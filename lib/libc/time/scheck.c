@@ -1,22 +1,16 @@
-#if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-static char	elsieid[] = "@(#)scheck.c	8.13";
-#else
-static char rcsid[] = "$OpenBSD: scheck.c,v 1.4 1997/01/14 03:16:49 millert Exp $";
-#endif
+#if defined(LIBC_SCCS) && !defined(lint) && !defined(NOID)
+static char elsieid[] = "@(#)scheck.c	8.15";
+static char rcsid[] = "$OpenBSD: scheck.c,v 1.5 1998/01/18 23:24:56 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*LINTLIBRARY*/
 
 #include "private.h"
 
-extern char *	imalloc P((int n));
-extern void	ifree P((char * p));
-
 char *
 scheck(string, format)
 const char * const	string;
-char * const		format;
+const char * const	format;
 {
 	register char *		fbuf;
 	register const char *	fp;

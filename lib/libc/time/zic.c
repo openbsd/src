@@ -1,9 +1,6 @@
-#if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-static char	elsieid[] = "@(#)zic.c	7.80";
-#else
-static char rcsid[] = "$OpenBSD: zic.c,v 1.6 1997/01/15 23:40:55 millert Exp $";
-#endif
+#if defined(LIBC_SCCS) && !defined(lint) && !defined(NOID)
+static char elsieid[] = "@(#)zic.c	7.93";
+static char rcsid[] = "$OpenBSD: zic.c,v 1.7 1998/01/18 23:25:04 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include "private.h"
@@ -81,15 +78,9 @@ struct zone {
 
 extern int	getopt P((int argc, char * const argv[],
 			const char * options));
-extern char *	icatalloc P((char * old, const char * new));
-extern char *	icpyalloc P((const char * string));
-extern void	ifree P((char * p));
-extern char *	imalloc P((int n));
-extern void *	irealloc P((void * old, int n));
 extern int	link P((const char * fromname, const char * toname));
 extern char *	optarg;
 extern int	optind;
-extern char *	scheck P((const char * string, const char * format));
 
 static void	addtt P((time_t starttime, int type));
 static int	addtype P((long gmtoff, const char * abbr, int isdst,
@@ -149,8 +140,10 @@ static int		leapcnt;
 static int		linenum;
 static time_t		max_time;
 static int		max_year;
+static int		max_year_representable;
 static time_t		min_time;
 static int		min_year;
+static int		min_year_representable;
 static int		noise;
 static const char *	rfilename;
 static int		rlinenum;
@@ -438,7 +431,7 @@ const char * const	string;
 
 	cp = ecpyalloc("warning: ");
 	cp = ecatalloc(cp, string);
-	error(string);
+	error(cp);
 	ifree(cp);
 	--errors;
 }
@@ -657,6 +650,8 @@ setboundaries P((void))
 	}
 	min_year = TM_YEAR_BASE + gmtime(&min_time)->tm_year;
 	max_year = TM_YEAR_BASE + gmtime(&max_time)->tm_year;
+	min_year_representable = min_year;
+	max_year_representable = max_year;
 }
 
 static int
@@ -1024,7 +1019,7 @@ const int		iscont;
 	}
 	z.z_filename = filename;
 	z.z_linenum = linenum;
-	z.z_gmtoff = gethms(fields[i_gmtoff], _("invalid GMT offset"), TRUE);
+	z.z_gmtoff = gethms(fields[i_gmtoff], _("invalid UTC offset"), TRUE);
 	if ((cp = strchr(fields[i_format], '%')) != 0) {
 		if (*++cp != 's' || strchr(cp, '%') != 0) {
 			error(_("invalid abbreviation format"));
@@ -1226,6 +1221,7 @@ const char * const		timep;
 				rp->r_todisstd = FALSE;
 				rp->r_todisgmt = FALSE;
 				*ep = '\0';
+				break;
 			case 'g':	/* Greenwich */
 			case 'u':	/* Universal */
 			case 'z':	/* Zulu */
@@ -1257,6 +1253,11 @@ const char * const		timep;
 	} else if (sscanf(cp, scheck(cp, "%d"), &rp->r_loyear) != 1) {
 		error(_("invalid starting year"));
 		return;
+	} else if (noise) {
+		if (rp->r_loyear < min_year_representable)
+			warning(_("starting year too low to be represented"));
+		else if (rp->r_loyear > max_year_representable)
+			warning(_("starting year too high to be represented"));
 	}
 	cp = hiyearp;
 	if ((lp = byword(cp, end_years)) != NULL) switch ((int) lp->l_value) {
@@ -1277,6 +1278,11 @@ const char * const		timep;
 	} else if (sscanf(cp, scheck(cp, "%d"), &rp->r_hiyear) != 1) {
 		error(_("invalid ending year"));
 		return;
+	} else if (noise) {
+		if (rp->r_loyear < min_year_representable)
+			warning(_("starting year too low to be represented"));
+		else if (rp->r_loyear > max_year_representable)
+			warning(_("starting year too high to be represented"));
 	}
 	if (rp->r_loyear > rp->r_hiyear) {
 		error(_("starting year greater than ending year"));
@@ -1291,6 +1297,8 @@ const char * const		timep;
 		}
 		rp->r_yrtype = ecpyalloc(typep);
 	}
+	if (rp->r_loyear < min_year && rp->r_loyear > 0)
+		min_year = rp->r_loyear;
 	/*
 	** Day work.
 	** Accept things such as:
@@ -1399,8 +1407,10 @@ const char * const	name;
 
 		toi = 0;
 		fromi = 0;
+		while (fromi < timecnt && attypes[fromi].at < min_time)
+			++fromi;
 		if (isdsts[0] == 0)
-			while (attypes[fromi].type == 0)
+			while (fromi < timecnt && attypes[fromi].type == 0)
 				++fromi;	/* handled by default rule */
 		for ( ; fromi < timecnt; ++fromi) {
 			if (toi != 0
@@ -1455,7 +1465,9 @@ const char * const	name;
 	convert(eitol(timecnt), tzh.tzh_timecnt);
 	convert(eitol(typecnt), tzh.tzh_typecnt);
 	convert(eitol(charcnt), tzh.tzh_charcnt);
+	(void) strncpy(tzh.tzh_magic, TZ_MAGIC, sizeof tzh.tzh_magic);
 #define DO(field)	(void) fwrite((void *) tzh.field, (size_t) sizeof tzh.field, (size_t) 1, fp)
+	DO(tzh_magic);
 	DO(tzh_reserved);
 	DO(tzh_ttisgmtcnt);
 	DO(tzh_ttisstdcnt);
@@ -1619,7 +1631,7 @@ const int			zonecount;
 				INITIALIZE(ktime);
 				if (useuntil) {
 					/*
-					** Turn untiltime into GMT
+					** Turn untiltime into UTC
 					** assuming the current gmtoff and
 					** stdoff values.
 					*/
@@ -1725,8 +1737,22 @@ error(_("can't determine time zone abbreviation to use just after until time"));
 static void
 addtt(starttime, type)
 const time_t	starttime;
-const int	type;
+int		type;
 {
+	if (starttime <= min_time ||
+		(timecnt == 1 && attypes[0].at < min_time)) {
+		gmtoffs[0] = gmtoffs[type];
+		isdsts[0] = isdsts[type];
+		ttisstds[0] = ttisstds[type];
+		ttisgmts[0] = ttisgmts[type];
+		if (abbrinds[type] != 0)
+			(void) strcpy(chars, &chars[abbrinds[type]]);
+		abbrinds[0] = 0;
+		charcnt = strlen(chars) + 1;
+		typecnt = 1;
+		timecnt = 0;
+		type = 0;
+	}
 	if (timecnt >= TZ_MAX_TIMES) {
 		error(_("too many transitions?!"));
 		(void) exit(EXIT_FAILURE);
@@ -1921,10 +1947,11 @@ register const struct lookup * const	table;
 	*/
 	foundlp = NULL;
 	for (lp = table; lp->l_word != NULL; ++lp)
-		if (itsabbr(word, lp->l_word))
+		if (itsabbr(word, lp->l_word)) {
 			if (foundlp == NULL)
 				foundlp = lp;
 			else	return NULL;	/* multiple inexact matches */
+		}
 	return foundlp;
 }
 
@@ -2128,15 +2155,20 @@ char * const	argname;
 		if (!itsdir(name)) {
 			/*
 			** It doesn't seem to exist, so we try to create it.
+			** Creation may fail because of the directory being
+			** created by some other multiprocessor, so we get
+			** to do extra checking.
 			*/
-			if (mkdir(name, 0755) != 0) {
+			if (mkdir(name, S_IRUSR|S_IWUSR|S_IXUSR|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH) != 0) {
 				const char *e = strerror(errno);
 
-				(void) fprintf(stderr,
-				    _("%s: Can't create directory %s: %s\n"),
-				    progname, name, e);
-				ifree(name);
-				return -1;
+				if (errno != EEXIST || !itsdir(name)) {
+					(void) fprintf(stderr,
+_("%s: Can't create directory %s: %s\n"),
+						progname, name, e);
+					ifree(name);
+					return -1;
+				}
 			}
 		}
 		*cp = '/';
