@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.33 1999/01/02 00:38:37 deraadt Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.34 1999/01/10 13:34:17 niklas Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -126,9 +126,9 @@ struct	timeval runtime;
 /* XXX return int so gcc -Werror won't complain */
 int	main __P((void *));
 void	check_console __P((struct proc *));
-void	start_init __P((struct proc *));
-void	start_pagedaemon __P((struct proc *));
-void	start_update __P((struct proc *));
+void	start_init __P((void *));
+void	start_pagedaemon __P((void *));
+void	start_update __P((void *));
 
 #ifdef cpu_set_init_frame
 void *initframep;				/* XXX should go away */
@@ -389,7 +389,7 @@ main(framep)
 		return 0;
 	}
 #else
-	cpu_set_kpc(pfind(1), start_init);
+	cpu_set_kpc(pfind(1), start_init, pfind(1));
 #endif
 
 	/* Create process 2 (the pageout daemon). */
@@ -403,7 +403,7 @@ main(framep)
 		start_pagedaemon(curproc);
 	}
 #else
-	cpu_set_kpc(pfind(2), start_pagedaemon);
+	cpu_set_kpc(pfind(2), start_pagedaemon, pfind(2));
 #endif
 
 	/* Create process 3 (the update daemon). */
@@ -417,7 +417,7 @@ main(framep)
 		start_update(curproc);
 	}
 #else
-	cpu_set_kpc(pfind(3), start_update);
+	cpu_set_kpc(pfind(3), start_update, pfind(3));
 #endif
 
 	microtime(&rtv);
@@ -462,9 +462,10 @@ check_console(p)
  * The program is invoked with one argument containing the boot flags.
  */
 void
-start_init(p)
-	struct proc *p;
+start_init(arg)
+	void *arg;
 {
+	struct proc *p = arg;
 	vm_offset_t addr;
 	struct sys_execve_args /* {
 		syscallarg(char *) path;
@@ -577,9 +578,10 @@ start_init(p)
 }
 
 void
-start_pagedaemon(p)
-	struct proc *p;
+start_pagedaemon(arg)
+	void *arg;
 {
+	struct proc *p = arg;
 
 	/*
 	 * Now in process 2.
@@ -591,9 +593,10 @@ start_pagedaemon(p)
 }
 
 void
-start_update(p)
-	struct proc *p;
+start_update(arg)
+	void *arg;
 {
+	struct proc *p = arg;
 
 	/*
 	 * Now in process 3.

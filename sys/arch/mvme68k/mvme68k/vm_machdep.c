@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.9 1998/07/28 00:13:44 millert Exp $ */
+/*	$OpenBSD: vm_machdep.c,v 1.10 1999/01/10 13:34:18 niklas Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -84,7 +84,7 @@ cpu_fork(p1, p2)
 
 	/*
 	 * Copy the trap frame, and arrange for the child to return directly
-	 * through return_to_user().
+	 * through return_to_user().  Note the inline version of cpu_set_kpc().
 	 */
 	tf = (struct trapframe *)((u_int)p2->p_addr + USPACE) - 1;
 	p2->p_md.md_regs = (int *)tf;
@@ -97,12 +97,13 @@ cpu_fork(p1, p2)
 }
 
 void
-cpu_set_kpc(p, pc)
+cpu_set_kpc(p, pc, arg)
 	struct proc *p;
-	void (*pc) __P((struct proc *));
+	void (*pc) __P((void *));
+	void *arg;
 {
-
-	p->p_addr->u_pcb.pcb_regs[6] = (int)pc;	/* A2 */
+	p->p_addr->u_pcb.pcb_regs[6] = (int)pc;		/* A2 */
+	p->p_addr->u_pcb.pcb_regs[7] = (int)arg;	/* A3 */
 }
 
 /*

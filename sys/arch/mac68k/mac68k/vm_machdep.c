@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.10 1998/07/28 00:13:40 millert Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.11 1999/01/10 13:34:18 niklas Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.21 1996/09/16 18:00:31 scottr Exp $	*/
 
 /*
@@ -117,9 +117,10 @@ cpu_fork(p1, p2)
  * should be invoked to return to user mode.
  */
 void
-cpu_set_kpc(p, pc)
+cpu_set_kpc(p, pc, arg)
 	struct proc *p;
-	void (*pc) __P((struct proc *));
+	void (*pc) __P((void *));
+	void *arg;
 {
 	struct pcb *pcbp;
 	struct switchframe *sf;

@@ -86,7 +86,7 @@ cpu_fork(p1, p2)
 
 	/*
 	 * Copy the trap frame, and arrange for the child to return directly
-	 * through return_to_user().
+	 * through return_to_user().  Note the inline cpu_set_kpc().
 	 */
 	tf = (struct trapframe *)((u_int)p2->p_addr + USPACE) - 1;
 	p2->p_md.md_regs = (int *)tf;
@@ -109,9 +109,10 @@ cpu_fork(p1, p2)
  * should be invoked, to return to user mode.
  */
 void
-cpu_set_kpc(p, pc)
+cpu_set_kpc(p, pc, arg)
 	struct proc *p;
-	u_int32_t pc;
+	void (*pc) __P((void *));
+	void *arg;
 {
 	struct pcb *pcbp;
 	struct switchframe *sf;
@@ -120,8 +121,8 @@ cpu_set_kpc(p, pc)
 	pcbp = &p->p_addr->u_pcb;
 	sf = (struct switchframe *)pcbp->pcb_regs[11];
 	sf->sf_pc = (u_int)proc_trampoline;
-	pcbp->pcb_regs[6] = pc;			/* A2 */
-	pcbp->pcb_regs[7] = (int)p;		/* A3 */
+	pcbp->pcb_regs[6] = (int)pc;		/* A2 */
+	pcbp->pcb_regs[7] = (int)arg;		/* A3 */
 }
 
 /*

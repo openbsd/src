@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.2 1998/03/01 00:37:34 niklas Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.3 1999/01/10 13:34:19 niklas Exp $	*/
 /*	$NetBSD: cpu.h,v 1.12 1995/06/28 02:55:56 cgd Exp $	*/
 
 /*-
@@ -242,8 +242,6 @@ void kgdb_panic __P((void));
 /* pmap.c */
 void	pmap_bootstrap __P((vm_offset_t));
 vm_offset_t pmap_map __P((vm_offset_t, vm_offset_t, vm_offset_t, int));
-/* vm_machdep.c */
-void cpu_set_kpc __P((struct proc *, void (*)(struct proc *)));
 /* iommu.c */
 void	iommu_enter __P((u_int, u_int));
 void	iommu_remove __P((u_int, u_int));

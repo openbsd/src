@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.1 1998/12/29 18:06:48 mickey Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.2 1999/01/10 13:34:18 niklas Exp $	*/
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,9 +86,10 @@ cpu_wait(p)
 }
 
 void
-cpu_set_kpc(p, pc)
+cpu_set_kpc(p, pc, arg)
 	struct proc *p;
-	void (*pc) __P((struct proc *));
+	void (*pc) __P((void *));
+	void *arg;
 {
 
 }

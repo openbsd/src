@@ -1,4 +1,4 @@
-/*      $OpenBSD: cpu.h,v 1.8 1997/09/12 09:21:19 maja Exp $      */
+/*      $OpenBSD: cpu.h,v 1.9 1999/01/10 13:34:20 niklas Exp $      */
 /*      $NetBSD: cpu.h,v 1.24 1997/07/26 10:12:40 ragge Exp $      */
 
 /*
@@ -107,7 +107,6 @@ extern	int     want_resched;   /* resched() was called */
 
 /* Some low-level prototypes */
 int	badaddr __P((caddr_t, int));
-void	cpu_set_kpc __P((struct proc *, void (*)(struct proc *)));
 void	cpu_swapin __P((struct proc *));
 int	hp_getdev __P((int, int, char **));
 int	ra_getdev __P((int, int, int, char **));

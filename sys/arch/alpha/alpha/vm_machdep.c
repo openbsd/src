@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.8 1998/07/28 00:13:26 millert Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.9 1999/01/10 13:34:17 niklas Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.21 1996/11/13 21:13:15 cgd Exp $	*/
 
 /*
@@ -240,6 +240,8 @@ printf("FORK CHILD: pc = %p, ra = %p\n", p2tf->tf_regs[FRAME_PC], p2tf->tf_regs[
 		    (u_int64_t)child_return;		/* s0: pc */
 		up->u_pcb.pcb_context[1] =
 		    (u_int64_t)exception_return;	/* s1: ra */
+		up->u_pcb.pcb_context[2] =
+		    (u_int64_t)p2;			/* s2: arg */
 		up->u_pcb.pcb_context[7] =
 		    (u_int64_t)switch_trampoline;	/* ra: assembly magic */
 	}
@@ -250,7 +252,7 @@ printf("FORK CHILD: pc = %p, ra = %p\n", p2tf->tf_regs[FRAME_PC], p2tf->tf_regs[
  *
  * Arrange for in-kernel execution of a process to continue at the
  * named pc, as if the code at that address were called as a function
- * with argument, the current process's process pointer.
+ * with argument, the current process' process pointer.
  *
  * Note that it's assumed that when the named process returns,
  * exception_return() should be invoked, to return to user mode.
@@ -258,15 +260,18 @@ printf("FORK CHILD: pc = %p, ra = %p\n", p2tf->tf_regs[FRAME_PC], p2tf->tf_regs[
  * (Note that cpu_fork(), above, uses an open-coded version of this.)
  */
 void
-cpu_set_kpc(p, pc)
+cpu_set_kpc(p, pc, arg)
 	struct proc *p;
-	void (*pc) __P((struct proc *));
+	void (*pc) __P((void *));
+	void *arg;
 {
 	struct pcb *pcbp;
 
 	pcbp = &p->p_addr->u_pcb;
 	pcbp->pcb_context[0] = (u_int64_t)pc;	/* s0 - pc to invoke */
-	pcbp->pcb_context[1] = (u_int64_t)exception_return; /* s1 - return address */
+	pcbp->pcb_context[1] = (u_int64_t)exception_return;
+						/* s1 - return address */
+	pcbp->pcb_context[2] = (u_int64_t)arg;	/* s2 - arg */
 	pcbp->pcb_context[7] =
 	    (u_int64_t)switch_trampoline;	/* ra - assembly magic */
 }

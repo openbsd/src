@@ -41,7 +41,7 @@
  *	from: Utah $Hdr: vm_machdep.c 1.21 91/04/06$
  *	from: @(#)vm_machdep.c	7.10 (Berkeley) 5/7/91
  *	vm_machdep.c,v 1.3 1993/07/07 07:09:32 cgd Exp
- *	$Id: vm_machdep.c,v 1.5 1998/12/15 05:11:03 smurph Exp $
+ *	$Id: vm_machdep.c,v 1.6 1999/01/10 13:34:18 niklas Exp $
  */
 
 #include <sys/param.h>
@@ -137,21 +137,21 @@ cpu_fork(struct proc *p1, struct proc *p2)
 }
 
 void
-cpu_set_kpc(struct proc *p, void (*func)(struct proc *))
+cpu_set_kpc(struct proc *p, void (*func)(void *), void *arg)
 {
 	/*
 	 * override func pointer in ksigframe with func.
 	 */
 
 	struct ksigframe {
-		void (*func)(struct proc *);
-		void *proc;
+		void (*func)(void *);
+		void *arg;
 	} *ksfp;
 
 	ksfp = (struct ksigframe *)p->p_addr->u_pcb.kernel_state.pcb_sp;
 
 	ksfp->func = func;
-
+	ksfp->arg = arg;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.4 1997/08/25 08:38:45 downsj Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.5 1999/01/10 13:34:20 niklas Exp $	*/
 /*	$NetBSD: cpu.h,v 1.24 1997/03/15 22:25:15 pk Exp $ */
 
 /*
@@ -229,8 +229,6 @@ void kgdb_attach __P((int (*)(void *), void (*)(void *, int), void *));
 void kgdb_connect __P((int));
 void kgdb_panic __P((void));
 #endif
-/* vm_machdep.c */
-void cpu_set_kpc __P((struct proc *, void (*)(struct proc *)));
 /* iommu.c */
 void	iommu_enter __P((u_int, u_int));
 void	iommu_remove __P((u_int, u_int));

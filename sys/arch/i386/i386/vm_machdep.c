@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.13 1998/07/28 00:13:36 millert Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.14 1999/01/10 13:34:18 niklas Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.61 1996/05/03 19:42:35 christos Exp $	*/
 
 /*-
@@ -137,7 +137,7 @@ cpu_fork(p1, p2)
 
 	/*
 	 * Copy the trapframe, and arrange for the child to return directly
-	 * through rei().
+	 * through rei().  Note the inline version of cpu_set_kpc().
 	 */
 	p2->p_md.md_regs = tf = (struct trapframe *)pcb->pcb_tss.tss_esp0 - 1;
 	*tf = *p1->p_md.md_regs;
@@ -150,13 +150,17 @@ cpu_fork(p1, p2)
 }
 
 void
-cpu_set_kpc(p, pc)
+cpu_set_kpc(p, pc, arg)
 	struct proc *p;
-	void (*pc) __P((struct proc *));
+	void (*pc) __P((void *));
+	void *arg;
 {
-	struct switchframe *sf = (struct switchframe *)p->p_addr->u_pcb.pcb_esp;
+	struct switchframe *sf =
+	    (struct switchframe *)p->p_addr->u_pcb.pcb_esp;
 
-	sf->sf_esi = (int) pc;
+	sf->sf_esi = (int)pc;
+	sf->sf_ebx = (int)arg;
+	sf->sf_eip = (int)proc_trampoline;
 }
 
 void

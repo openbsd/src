@@ -381,9 +381,10 @@ cpu_swapin(p)
  * (Note that cpu_fork(), above, uses an open-coded version of this.)
  */
 void
-cpu_set_kpc(p, pc)
+cpu_set_kpc(p, pc, arg)
 	struct proc *p;
-	void (*pc) __P((struct proc *));
+	void (*pc) __P((void *));
+	void *arg;
 {
 	struct pcb *pcb;
 	struct rwindow *rp;
@@ -392,7 +393,7 @@ cpu_set_kpc(p, pc)
 
 	rp = (struct rwindow *)((u_int)pcb + TOPFRAMEOFF);
 	rp->rw_local[0] = (int)pc;		/* Function to call */
-	rp->rw_local[1] = (int)p;		/* and its argument */
+	rp->rw_local[1] = (int)arg;		/* and its argument */
 
 	/*
 	 * Frob PCB:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: systm.h,v 1.24 1997/11/06 05:59:12 csapuntz Exp $	*/
+/*	$OpenBSD: systm.h,v 1.25 1999/01/10 13:34:16 niklas Exp $	*/
 /*	$NetBSD: systm.h,v 1.50 1996/06/09 04:55:09 briggs Exp $	*/
 
 /*-
@@ -232,7 +232,7 @@ void	longjmp	__P((label_t *));
 void	consinit __P((void));
 
 void	cpu_startup __P((void));
-void	cpu_set_kpc __P((struct proc *, void (*)(struct proc *)));
+void	cpu_set_kpc __P((struct proc *, void (*)(void *), void *));
 
 
 #ifdef GPROF

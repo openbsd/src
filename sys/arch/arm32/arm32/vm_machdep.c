@@ -231,6 +231,10 @@ cpu_fork(p1, p2)
 	arm_fpe_copycontext(FP_CONTEXT(p1), FP_CONTEXT(p2));
 #endif
 
+	/*
+	 * Copy the trap frame, and arrange for the child to return directly
+	 * through return_to_user().  Note the inline cpu_set_kpc().
+	 */
 	p2->p_md.md_regs = tf = (struct trapframe *)pcb->pcb_sp - 1;
 
 	*tf = *p1->p_md.md_regs;
@@ -244,14 +248,15 @@ cpu_fork(p1, p2)
 
 
 void
-cpu_set_kpc(p, pc)
+cpu_set_kpc(p, pc, arg)
 	struct proc *p;
-	u_long pc;
+	void (*pc) __P((void *));
+	void *arg;
 {
 	struct switchframe *sf = (struct switchframe *)p->p_addr->u_pcb.pcb_sp;
 
-	sf->sf_r4 = pc;
-	sf->sf_r5 = (u_int)p;
+	sf->sf_r4 = (u_int)pc;
+	sf->sf_r5 = (u_int)arg;
 }
 
 

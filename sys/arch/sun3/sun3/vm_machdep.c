@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.7 1998/07/28 00:13:54 millert Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.8 1999/01/10 13:34:19 niklas Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.35 1996/04/26 18:38:06 gwr Exp $	*/
 
 /*
@@ -128,7 +128,7 @@ cpu_fork(p1, p2)
 	 * onto the stack of p2, very much like signal delivery.
 	 * When p2 runs, it will find itself in child_return().
 	 */
-	cpu_set_kpc(p2, child_return);
+	cpu_set_kpc(p2, child_return, p2);
 }
 
 /*
@@ -153,15 +153,16 @@ cpu_fork(p1, p2)
  * before we "pushed" this call.
  */
 void
-cpu_set_kpc(proc, func)
+cpu_set_kpc(proc, func, arg)
 	struct proc *proc;
-	void (*func)(struct proc *);
+	void (*func)(void *);
+	void *arg;
 {
 	struct pcb *pcbp;
 	struct ksigframe {
 		struct switchframe sf;
-		void (*func)(struct proc *);
-		void *proc;
+		void (*func)(void *);
+		void *arg;
 	} *ksfp;
 
 	pcbp = &proc->p_addr->u_pcb;
@@ -173,7 +174,7 @@ cpu_set_kpc(proc, func)
 	/* Now fill it in for proc_trampoline. */
 	ksfp->sf.sf_pc = (u_int)proc_trampoline;
 	ksfp->func = func;
-	ksfp->proc = proc;
+	ksfp->arg = arg;
 }
 
 /*

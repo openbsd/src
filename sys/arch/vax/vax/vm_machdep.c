@@ -1,4 +1,4 @@
-/*      $OpenBSD: vm_machdep.c,v 1.13 1998/07/28 00:13:56 millert Exp $       */
+/*      $OpenBSD: vm_machdep.c,v 1.14 1999/01/10 13:34:19 niklas Exp $       */
 /*      $NetBSD: vm_machdep.c,v 1.33 1997/07/06 22:38:22 ragge Exp $       */
 
 /*
@@ -157,9 +157,10 @@ cpu_fork(p1, p2)
  * user mode.
  */
 void
-cpu_set_kpc(p, pc)
+cpu_set_kpc(p, pc, arg)
 	struct proc *p;
-	void (*pc) __P((struct proc *));
+	void (*pc) __P((void *));
+	void *arg;
 {
 	struct pcb *nyproc;
 	struct {
@@ -175,7 +176,7 @@ cpu_set_kpc(p, pc)
 	kc->cf.ca_maskpsw = 0x20000000;
 	kc->cf.ca_pc = (unsigned)&sret;
 	kc->cf.ca_argno = 1;
-	kc->cf.ca_arg1 = (unsigned)p;
+	kc->cf.ca_arg1 = (unsigned)arg;
 	kc->tf.r11 = boothowto;	/* If we have old init */
 	kc->tf.psl = 0x3c00000;
 
