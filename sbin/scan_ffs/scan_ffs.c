@@ -1,4 +1,4 @@
-/*	$OpenBSD: scan_ffs.c,v 1.4 1998/03/28 01:18:38 deraadt Exp $	*/
+/*	$OpenBSD: scan_ffs.c,v 1.5 1999/06/08 19:13:53 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist, Tobias Weingartner
@@ -66,7 +66,7 @@ ufsscan(fd, beg, end, flags)
 
 	for(blk = beg; blk <= ((end<0)?blk:end); blk += (SBCOUNT*SBSIZE/512)){
 		memset(buf, 0, SBSIZE * SBCOUNT);
-		if (lseek(fd, blk * 512, SEEK_SET) < 0)
+		if (lseek(fd, (off_t)blk * 512, SEEK_SET) < 0)
 		    err(1, "lseek");
 		if (read(fd, buf, SBSIZE * SBCOUNT) < 0)
 			err(1, "read");
@@ -82,19 +82,19 @@ ufsscan(fd, beg, end, flags)
 				if (((blk+(n/512)) - lastblk) == (SBSIZE/512)) {
 					if (flags & FLAG_LABELS ) {
 						printf("X: %d %d 4.2BSD %d %d %d # %s\n",
-						    sb->fs_size * sb->fs_fsize / 512,
+						    (daddr_t)((off_t)sb->fs_size * sb->fs_fsize / 512),
 						    blk+(n/512)-(2*SBSIZE/512),
 						    sb->fs_fsize, sb->fs_bsize,
 						    sb->fs_cpg, lastmount);
 					} else {
-						printf("ffs at %d size %d mount %s time %s",
+						printf("ffs at %d size %qd mount %s time %s",
 						    blk+(n/512)-(2*SBSIZE/512),
-						    sb->fs_size * sb->fs_fsize,
+						    (off_t)sb->fs_size * sb->fs_fsize,
 						    lastmount, ctime(&sb->fs_time));
 					}
 
 					if (flags & FLAG_SMART) {
-						int size = sb->fs_size * sb->fs_fsize;
+						off_t size = (off_t)sb->fs_size * sb->fs_fsize;
 
 						if ((n + size) < (SBSIZE * SBCOUNT))
 							n += size;
