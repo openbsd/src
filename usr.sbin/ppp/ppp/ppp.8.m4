@@ -25,7 +25,7 @@ changecom(,)dnl
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $OpenBSD: ppp.8.m4,v 1.4 2001/11/23 11:17:03 brian Exp $
+.\" $OpenBSD: ppp.8.m4,v 1.5 2002/03/25 14:22:39 brian Exp $
 .\"
 .Dd September 20, 1995
 .Dt PPP 8
@@ -3406,7 +3406,7 @@ to redirect packets of protocol type
 .Ar proto
 (see
 .Xr protocols 5 )
-to the internall address
+to the internal address
 .Ar localIP .
 .Pp
 If
