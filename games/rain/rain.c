@@ -1,4 +1,4 @@
-/*	$OpenBSD: rain.c,v 1.6 1998/08/19 07:41:06 pjanzen Exp $	*/
+/*	$OpenBSD: rain.c,v 1.7 1998/09/15 05:29:48 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)rain.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: rain.c,v 1.6 1998/08/19 07:41:06 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: rain.c,v 1.7 1998/09/15 05:29:48 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -144,10 +144,8 @@ main(argc, argv)
 	TI = tgetstr("ti", &tcp);
 	UP = tgetstr("up", &tcp);
 	if (!(LL = tgetstr("ll", &tcp))) {
-		if (!(LL = malloc((u_int)10))) {
-			fprintf(stderr, "%s: out of space.\n", *argv);
-			exit(1);
-		}
+		if (!(LL = malloc((u_int)10)))
+			errx(1, "out of memory");
 		(void)strcpy(LL, tgoto(CM, 0, 23));
 	}
 	(void)signal(SIGHUP, onsig);
