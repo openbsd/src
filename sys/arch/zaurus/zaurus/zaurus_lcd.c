@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_lcd.c,v 1.9 2005/01/13 17:43:31 drahn Exp $	*/
+/*	$OpenBSD: zaurus_lcd.c,v 1.10 2005/01/13 17:44:43 drahn Exp $	*/
 /* $NetBSD: lubbock_lcd.c,v 1.1 2003/08/09 19:38:53 bsh Exp $ */
 
 /*
@@ -117,12 +117,12 @@ const struct wsdisplay_accessops lcd_accessops = {
 	lcd_burner
 };
 
-struct cfattach lcd_obio_ca = {
+struct cfattach lcd_pxaip_ca = {
 	sizeof (struct pxa2x0_lcd_softc), lcd_match, lcd_attach
 };
 	 
 struct cfdriver lcd_cd = {
-	NULL, "lcd_obio", DV_DULL
+	NULL, "lcd_pxaip", DV_DULL
 };
 
 int
