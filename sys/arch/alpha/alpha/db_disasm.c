@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.9 1997/07/09 14:29:03 deraadt Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.10 1997/07/19 20:56:53 niklas Exp $	*/
 
 /*
  * Copyright (c) 1997 Niklas Hallqvist.  All rights reserverd.
@@ -34,17 +34,16 @@
 #include <sys/types.h>
 #include <sys/systm.h>
 
+#include <vm/vm.h>
+
 #include <machine/db_machdep.h>
+#include <machine/frame.h>
 
 #include <ddb/db_interface.h>
 #include <ddb/db_variables.h>
 #include <ddb/db_output.h>
 
-static struct opcode {
-	enum opc_fmt { OPC_PAL, OPC_RES, OPC_MEM, OPC_OP, OPC_BR } opc_fmt;
-	char *opc_name;
-	int opc_print;
-} opcode[] = {
+struct opcode opcode[] = {
 	{ OPC_PAL, "call_pal", 0 },	/* 00 */
 	{ OPC_RES, "opc01", 0 },	/* 01 */
 	{ OPC_RES, "opc02", 0 },	/* 02 */
