@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc_debug.c,v 1.4 2000/06/07 09:38:46 art Exp $	*/
+/*	$OpenBSD: kern_malloc_debug.c,v 1.5 2000/06/07 11:21:40 art Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Artur Grabowski <art@openbsd.org>
@@ -92,7 +92,7 @@ void debug_malloc_init __P((void));
 
 void malloc_deb_allocate_free __P((int));
 void debug_malloc_print __P((void));
-void debug_malloc_printit __P((int (*) __P((const char *, ...))));
+void debug_malloc_printit __P((int (*) __P((const char *, ...)), vaddr_t));
 
 struct malloc_deb_entry {
 	TAILQ_ENTRY(malloc_deb_entry) md_list;
@@ -294,14 +294,38 @@ malloc_deb_allocate_free(wait)
 void
 debug_malloc_print()
 {
-	debug_malloc_printit(printf);
+	debug_malloc_printit(printf, NULL);
 }
 
 void
-debug_malloc_printit(pr)
+debug_malloc_printit(pr, addr)
         int (*pr) __P((const char *, ...));
+	vaddr_t addr;
 {
 	struct malloc_deb_entry *md;
+
+	if (addr) {
+		TAILQ_FOREACH(md, &malloc_deb_free, md_list) {
+			if (addr >= md->md_va &&
+			    addr < md->md_va + 2 * PAGE_SIZE) {
+				(*pr)("Memory at address 0x%x is in a freed "
+				      "area. type %d, size: %d\n ",
+				      addr, md->md_type, md->md_size);
+				return;
+			}
+		}
+		TAILQ_FOREACH(md, &malloc_deb_used, md_list) {
+			if (addr >= md->md_va + PAGE_SIZE &&
+			    addr < md->md_va + 2 * PAGE_SIZE) {
+				(*pr)("Memory at address 0x%x is just outside "
+				      "an allocated area. type %d, size: %d\n",
+				      addr, md->md_type, md->md_size);
+				return;
+			}
+		}
+		(*pr)("Memory at address 0x%x is outside debugged malloc.\n");
+		return;
+	}
 
 	(*pr)("allocs: %d\n", malloc_deb_allocs);
 	(*pr)("frees: %d\n", malloc_deb_frees);
@@ -311,10 +335,12 @@ debug_malloc_printit(pr)
 	(*pr)("\taddr:\tsize:\n");
 	(*pr)("free chunks:\n");
 	TAILQ_FOREACH(md, &malloc_deb_free, md_list)
-		(*pr)("\t0x%x\t0x%x\t%d\n", md->md_va, md->md_size, md->md_type);
+		(*pr)("\t0x%x\t0x%x\t%d\n", md->md_va, md->md_size,
+		      md->md_type);
 	(*pr)("used chunks:\n");
 	TAILQ_FOREACH(md, &malloc_deb_used, md_list)
-		(*pr)("\t0x%x\t0x%x\t%d\n", md->md_va, md->md_size, md->md_type);
+		(*pr)("\t0x%x\t0x%x\t%d\n", md->md_va, md->md_size,
+		      md->md_type);
 }
 
 

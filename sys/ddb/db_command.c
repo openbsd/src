@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_command.c,v 1.18 2000/06/07 09:40:02 art Exp $	*/
+/*	$OpenBSD: db_command.c,v 1.19 2000/06/07 11:21:39 art Exp $	*/
 /*	$NetBSD: db_command.c,v 1.20 1996/03/30 22:30:05 christos Exp $	*/
 
 /* 
@@ -310,9 +310,12 @@ db_malloc_print_cmd(addr, have_addr, count, modif)
 	char *		modif;
 {
 #if defined(MALLOC_DEBUG)
-	extern void debug_malloc_printit __P((int (*) __P((const char *, ...))));
+	extern void debug_malloc_printit __P((int (*) __P((const char *, ...)), vaddr_t));
 
-	debug_malloc_printit(db_printf);
+	if (!have_addr)
+		addr = 0;
+
+	debug_malloc_printit(db_printf, (vaddr_t)addr);
 #else
 	db_printf("Malloc debugging not enabled.\n");
 #endif
