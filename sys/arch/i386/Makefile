@@ -8,7 +8,7 @@
 NOPROG=	noprog
 NOMAN=	noman
 
-SUBDIR=	boot boot.dos isa/pcvt/Util
+SUBDIR=	boot boot.dos stand isa/pcvt/Util
 
 TI386=	../i386/tags
 SI386=	../i386/eisa/*.[ch] ../i386/i386/*.[ch] ../i386/include/*.h \
