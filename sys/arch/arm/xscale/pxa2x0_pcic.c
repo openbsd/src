@@ -1,4 +1,4 @@
-/* $OpenBSD: pxa2x0_pcic.c,v 1.5 2005/01/15 15:20:50 drahn Exp $ */
+/* $OpenBSD: pxa2x0_pcic.c,v 1.6 2005/01/18 16:26:36 drahn Exp $ */
 /*
  * Copyright (c) Dale Rahn <drahn@openbsd.org>
  *
@@ -146,13 +146,12 @@ pxapcic_mem_map(pch, kind, card_addr, size, pmh, offsetp, windowp)
 	size = round_page(card_addr + size) - pa;
 	pmh->realsize = size;
 
-#define PXAPCIC_BASE_OFFSET	0x20000000
-#define PXAPCIC_SOCKET_OFFSET	0x10000000
+#define PXA2X0_SOCKET_OFFSET	(PXA2X0_PCMCIA_SLOT1-PXA2X0_PCMCIA_SLOT0)
 #define PXAPCIC_ATTR_OFFSET	0x08000000
 #define PXAPCIC_COMMON_OFFSET	0x0C000000
 
-	pa += PXAPCIC_BASE_OFFSET;
-	pa += PXAPCIC_SOCKET_OFFSET * so->socket;
+	pa += PXA2X0_PCMCIA_SLOT0;
+	pa += PXA2X0_SOCKET_OFFSET * so->socket;
 
 	switch (kind & ~PCMCIA_WIDTH_MEM_MASK) {
 	case PCMCIA_MEM_ATTR:   
@@ -199,8 +198,8 @@ pxapcic_io_alloc(pch, start, size, align, pih)
         pih->size = size;
         
         pa = pih->addr;
-        pa += PXAPCIC_BASE_OFFSET;
-        pa += PXAPCIC_SOCKET_OFFSET * so->socket;
+        pa += PXA2X0_PCMCIA_SLOT0;
+        pa += PXA2X0_SOCKET_OFFSET * so->socket;
 
 #if 0
         printf("pxapcic_io_alloc: %x %x\n", (unsigned int)pa,
@@ -430,9 +429,9 @@ pxapcic_create_event_thread(void *arg)
 		printf("%s: unable to create event thread for %s\n",
 		     sc->sc_dev.dv_xname,  sock->socket ? "1" : "0");
 	}
-	/*
+#ifdef DO_CONFIG_PENDING
 	config_pending_decr();
-	*/
+#endif
 }
 
 int
@@ -465,14 +464,36 @@ pxapcic_attach(struct device *parent, struct device *self, void *aux)
 	bus_addr_t pa;
 	bus_size_t size = 0x100;
 
-	sc->sc_iot = pxa->pxa_iot;
+	iot = sc->sc_iot = pxa->pxa_iot;
 
 	sc->sc_shutdown = 0;
 
 	printf("\n");
 
+	/*
+	 * should be model based not processor based, and in zaurus/...
+	 * not arm/xscale
+	 */
+	if ((cputype & ~CPU_ID_XSCALE_COREREV_MASK) == CPU_ID_PXA27X) {
+#define C3000_CF0_IRQ 105
+#define C3000_CF1_IRQ 106
+#define C3000_CF0_CD 94
+#define C3000_CF1_CD 93
+		sc->sc_nslots = 2;
+		sc->sc_irqpin[0] = C3000_CF0_IRQ;
+		sc->sc_irqcfpin[0] = C3000_CF0_CD;
+		sc->sc_irqpin[1] = C3000_CF1_IRQ;
+		sc->sc_irqcfpin[1] = C3000_CF1_CD;
+	} else {
+#define C860_CF0_IRQ 17
+#define C860_CF0_CD 14
+		/* C860 */
+		sc->sc_nslots = 1;
+		sc->sc_irqpin[0] = C860_CF0_IRQ;
+		sc->sc_irqcfpin[0] = C860_CF0_CD;
+	}
+
 	for(i = 0; i < NUM_CF_CARDS; i++) {
-		iot = sc->sc_iot;
 		so = &sc->sc_socket[i];
 		so->sc = sc;
 		so->socket = i;
@@ -521,68 +542,28 @@ pxapcic_attach(struct device *parent, struct device *self, void *aux)
 		     pxapcic_submatch);
 	}
 
-#if 0
-	/* XXX 860 */
-	so = &sc->sc_socket[0];
-	pxa2x0_gpio_set_function(14, GPIO_IN);
-	pxa2x0_gpio_set_function(17, GPIO_IN);
+	/* configure slot 1 first to make internal drive be wd0 */
+	for (i = sc->sc_nslots-1; i >= 0; i--) {
+		so = &sc->sc_socket[i];
+		pxa2x0_gpio_set_function(sc->sc_irqpin[i], GPIO_IN);
+		pxa2x0_gpio_set_function(sc->sc_irqcfpin[i], GPIO_IN);
 
-	sc->sc_socket[0].irq = pxa2x0_gpio_intr_establish(14 /*???*/,
-	    IST_EDGE_FALLING, IPL_BIO /* XXX */, pxapcic_intr_detect,
-	    so, sc->sc_dev.dv_xname);
-	sc->sc_socket[0].irqpin = 17;	/* GPIO pin for interrupt */
+		sc->sc_socket[i].irq = pxa2x0_gpio_intr_establish(
+		    sc->sc_irqcfpin[i], 
+		    IST_EDGE_BOTH, IPL_BIO /* XXX */, pxapcic_intr_detect,
+		    so, sc->sc_dev.dv_xname);
 
-	bus_space_write_2(sc->sc_iot, so->scooph, SCOOP_REG_IMR, 0x00ce);
-	bus_space_write_2(sc->sc_iot, so->scooph, SCOOP_REG_MCR, 0x0111);
+		/* GPIO pin for interrupt */
+		sc->sc_socket[i].irqpin = sc->sc_irqpin[i];
 
-	/*
-	config_pending_incr();
-	*/
-	kthread_create_deferred(pxapcic_create_event_thread, so);
-#else
-#define C3000_CF0_IRQ 105
-#define C3000_CF1_IRQ 106
-#define C3000_CF0_CD 94
-#define C3000_CF1_CD 93
+		bus_space_write_2(iot, so->scooph, SCOOP_REG_IMR, 0x00ce);
+		bus_space_write_2(iot, so->scooph, SCOOP_REG_MCR, 0x0111);
 
-	/* XXX c3000 */
-	so = &sc->sc_socket[0];
-	pxa2x0_gpio_set_function(C3000_CF0_IRQ, GPIO_IN); /* GPIO_CF_IRQ  */
-	pxa2x0_gpio_set_function(C3000_CF0_CD, GPIO_IN); /* GPIO_CF_CD */
-
-	sc->sc_socket[0].irq = pxa2x0_gpio_intr_establish(C3000_CF0_CD,
-	    IST_EDGE_FALLING, IPL_BIO /* XXX */, pxapcic_intr_detect,
-	    so, sc->sc_dev.dv_xname);
-	sc->sc_socket[0].irqpin = C3000_CF0_IRQ;	/* GPIO pin for interrupt */
-
-	bus_space_write_2(sc->sc_iot, so->scooph, SCOOP_REG_IMR, 0x00ce);
-	bus_space_write_2(sc->sc_iot, so->scooph, SCOOP_REG_MCR, 0x0111);
-
-	/*
-	config_pending_incr();
-	*/
-	kthread_create_deferred(pxapcic_create_event_thread, so);
-
-#if NUM_CF_CARDS > 1
-	pxa2x0_gpio_set_function(C3000_CF1_IRQ, GPIO_IN); /* GPIO_CF1_IRQ */
-	pxa2x0_gpio_set_function(C3000_CF1_CD, GPIO_IN); /* GPIO_CF1_CD */
-
-	so = &sc->sc_socket[1];
-	sc->sc_socket[1].irq = pxa2x0_gpio_intr_establish(C3000_CF1_CD, 
-	    IST_EDGE_FALLING, IPL_BIO /* XXX */, pxapcic_intr_detect,
-	    so, sc->sc_dev.dv_xname);
-	sc->sc_socket[1].irqpin = C3000_CF1_IRQ;	/* GPIO pin for interrupt */
-
-	bus_space_write_2(sc->sc_iot, so->scooph, SCOOP_REG_IMR, 0x00ce);
-	bus_space_write_2(sc->sc_iot, so->scooph, SCOOP_REG_MCR, 0x0111);
-
-	/*
-	config_pending_incr();
-	*/
-	kthread_create_deferred(pxapcic_create_event_thread, so);
-#endif /* NUM_CF_CARDS > 1 */
+#ifdef DO_CONFIG_PENDING
+		config_pending_incr();
 #endif
-
+		kthread_create_deferred(pxapcic_create_event_thread, so);
+	}
 }
 
 int

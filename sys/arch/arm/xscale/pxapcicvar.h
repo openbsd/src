@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxapcicvar.h,v 1.3 2005/01/04 05:37:43 drahn Exp $ */
+/*	$OpenBSD: pxapcicvar.h,v 1.4 2005/01/18 16:26:36 drahn Exp $ */
 struct pxapcic_socket {
         struct pxapcic_softc *sc;
         int socket;                     /* socket number */
@@ -42,8 +42,10 @@ struct pxapcic_softc {
         bus_space_tag_t sc_iot;
 
 	void *sc_irq;
-	int sc_gpio;
         int sc_shutdown;
+	int sc_nslots;
+	int sc_irqpin[2];
+	int sc_irqcfpin[2];
 };
 
  
