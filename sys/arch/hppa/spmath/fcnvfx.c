@@ -1,4 +1,4 @@
-/*	$OpenBSD: fcnvfx.c,v 1.3 1998/07/02 19:05:19 mickey Exp $	*/
+/*	$OpenBSD: fcnvfx.c,v 1.4 2000/01/11 08:18:43 mickey Exp $	*/
 
 /*
  * Copyright 1996 1995 by Open Software Foundation, Inc.   
@@ -49,10 +49,11 @@
  */
 /*ARGSUSED*/
 int
-sgl_to_sgl_fcnvfx(srcptr,nullptr,dstptr,status)
+sgl_to_sgl_fcnvfx(srcptr,dstptr,status)
 
-sgl_floating_point *srcptr, *nullptr, *status;
+sgl_floating_point *srcptr;
 int *dstptr;
+unsigned int *status;
 {
 	register unsigned int src, temp;
 	register int src_exponent, result;
@@ -144,11 +145,10 @@ int *dstptr;
  */
 /*ARGSUSED*/
 int
-sgl_to_dbl_fcnvfx(srcptr,nullptr,dstptr,status)
+sgl_to_dbl_fcnvfx(srcptr,dstptr,status)
 
 sgl_floating_point *srcptr;
 dbl_integer *dstptr;
-void *nullptr;
 unsigned int *status;
 {
 	register int src_exponent, resultp1;
@@ -260,11 +260,10 @@ unsigned int *status;
  */
 /*ARGSUSED*/
 int
-dbl_to_sgl_fcnvfx(srcptr,nullptr,dstptr,status)
+dbl_to_sgl_fcnvfx(srcptr,dstptr,status)
 
 dbl_floating_point *srcptr;
 int *dstptr;
-void *nullptr;
 unsigned int *status;
 {
 	register unsigned int srcp1,srcp2, tempp1,tempp2;
@@ -362,11 +361,10 @@ unsigned int *status;
  */
 /*ARGSUSED*/
 int
-dbl_to_dbl_fcnvfx(srcptr,nullptr,dstptr,status)
+dbl_to_dbl_fcnvfx(srcptr,dstptr,status)
 
 dbl_floating_point *srcptr;
 dbl_integer *dstptr;
-void *nullptr;
 unsigned int *status;
 {
 	register int src_exponent, resultp1;

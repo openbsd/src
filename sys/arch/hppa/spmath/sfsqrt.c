@@ -1,4 +1,4 @@
-/*	$OpenBSD: sfsqrt.c,v 1.3 1998/07/02 19:06:01 mickey Exp $	*/
+/*	$OpenBSD: sfsqrt.c,v 1.4 2000/01/11 08:18:43 mickey Exp $	*/
 
 /*
  * Copyright 1996 1995 by Open Software Foundation, Inc.   
@@ -48,10 +48,9 @@
 
 /*ARGSUSED*/
 int
-sgl_fsqrt(srcptr,nullptr,dstptr,status)
+sgl_fsqrt(srcptr,dstptr,status)
 
 sgl_floating_point *srcptr, *dstptr;
-void *nullptr;
 unsigned int *status;
 {
 	register unsigned int src, result;

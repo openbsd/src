@@ -1,4 +1,4 @@
-/*	$OpenBSD: fcnvff.c,v 1.3 1998/07/02 19:05:18 mickey Exp $	*/
+/*	$OpenBSD: fcnvff.c,v 1.4 2000/01/11 08:18:43 mickey Exp $	*/
 
 /*
  * Copyright 1996 1995 by Open Software Foundation, Inc.   
@@ -49,11 +49,10 @@
  */
 /*ARGSUSED*/
 int
-sgl_to_dbl_fcnvff(srcptr,nullptr,dstptr,status)
+sgl_to_dbl_fcnvff(srcptr,dstptr,status)
 
 sgl_floating_point *srcptr;
 dbl_floating_point *dstptr;
-void *nullptr;
 unsigned int *status;
 {
 	register unsigned int src, resultp1, resultp2;
@@ -137,11 +136,10 @@ unsigned int *status;
  */
 /*ARGSUSED*/
 int
-dbl_to_sgl_fcnvff(srcptr,nullptr,dstptr,status)
+dbl_to_sgl_fcnvff(srcptr,dstptr,status)
 
 dbl_floating_point *srcptr;
 sgl_floating_point *dstptr;
-void *nullptr;
 unsigned int *status;
 {
         register unsigned int srcp1, srcp2, result;

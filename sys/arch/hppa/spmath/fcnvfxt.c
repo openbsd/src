@@ -1,4 +1,4 @@
-/*	$OpenBSD: fcnvfxt.c,v 1.3 1998/07/02 19:05:21 mickey Exp $	*/
+/*	$OpenBSD: fcnvfxt.c,v 1.4 2000/01/11 08:18:43 mickey Exp $	*/
 
 /*
  * Copyright 1996 1995 by Open Software Foundation, Inc.   
@@ -50,11 +50,10 @@
  */
 /*ARGSUSED*/
 int
-sgl_to_sgl_fcnvfxt(srcptr,nullptr,dstptr,status)
+sgl_to_sgl_fcnvfxt(srcptr,dstptr,status)
 
 sgl_floating_point *srcptr;
 int *dstptr;
-void *nullptr;
 unsigned int *status;
 {
 	register unsigned int src, temp;
@@ -112,11 +111,10 @@ unsigned int *status;
  */
 /*ARGSUSED*/
 int
-sgl_to_dbl_fcnvfxt(srcptr,nullptr,dstptr,status)
+sgl_to_dbl_fcnvfxt(srcptr,dstptr,status)
 
 sgl_floating_point *srcptr;
 dbl_integer *dstptr;
-void *nullptr;
 unsigned int *status;
 {
 	register int src_exponent, resultp1;
@@ -179,11 +177,10 @@ unsigned int *status;
  */
 /*ARGSUSED*/
 int
-dbl_to_sgl_fcnvfxt(srcptr,nullptr,dstptr,status)
+dbl_to_sgl_fcnvfxt(srcptr,dstptr,status)
 
 dbl_floating_point *srcptr;
 int *dstptr;
-void  *nullptr;
 unsigned int *status;
 {
 	register unsigned int srcp1, srcp2, tempp1, tempp2;
@@ -237,11 +234,10 @@ unsigned int *status;
  */
 /*ARGSUSED*/
 int
-dbl_to_dbl_fcnvfxt(srcptr,nullptr,dstptr,status)
+dbl_to_dbl_fcnvfxt(srcptr,dstptr,status)
 
 dbl_floating_point *srcptr;
 dbl_integer *dstptr;
-void *nullptr;
 unsigned int *status;
 {
 	register int src_exponent, resultp1;

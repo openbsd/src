@@ -1,4 +1,4 @@
-/*	$OpenBSD: dbl_float.h,v 1.3 1998/07/02 19:04:56 mickey Exp $	*/
+/*	$OpenBSD: dbl_float.h,v 1.4 2000/01/11 08:18:43 mickey Exp $	*/
 
 /*
  * Copyright 1996 1995 by Open Software Foundation, Inc.   
@@ -557,12 +557,12 @@ int dbl_fcmp __P((dbl_floating_point *, dbl_floating_point*, unsigned int, unsig
 int dbl_fdiv __P((dbl_floating_point *, dbl_floating_point *, dbl_floating_point *, unsigned int *));
 int dbl_fmpy __P((dbl_floating_point *, dbl_floating_point *, dbl_floating_point*, unsigned int *));
 int dbl_frem __P((dbl_floating_point *, dbl_floating_point *, dbl_floating_point*, unsigned int *));
-int dbl_fsqrt __P((dbl_floating_point *, void *, dbl_floating_point *, unsigned int *));
+int dbl_fsqrt __P((dbl_floating_point *, dbl_floating_point *, unsigned int *));
 int dbl_fsub __P((dbl_floating_point *, dbl_floating_point *, dbl_floating_point*, unsigned int *));
 
 dbl_floating_point dbl_setoverflow __P((unsigned int));
 
-int sgl_to_dbl_fcnvff __P((sgl_floating_point *, void *, dbl_floating_point *, unsigned int *));
-int dbl_to_sgl_fcnvff __P((dbl_floating_point *, void *, sgl_floating_point *, unsigned int *));
+int sgl_to_dbl_fcnvff __P((sgl_floating_point *, dbl_floating_point *, unsigned int *));
+int dbl_to_sgl_fcnvff __P((dbl_floating_point *, sgl_floating_point *, unsigned int *));
 
-int dbl_frnd __P((dbl_floating_point *, void *, dbl_floating_point *, unsigned int *));
+int dbl_frnd __P((dbl_floating_point *, dbl_floating_point *, unsigned int *));

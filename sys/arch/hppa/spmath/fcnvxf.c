@@ -1,4 +1,4 @@
-/*	$OpenBSD: fcnvxf.c,v 1.3 1998/07/02 19:05:25 mickey Exp $	*/
+/*	$OpenBSD: fcnvxf.c,v 1.4 2000/01/11 08:18:43 mickey Exp $	*/
 
 /*
  * Copyright 1996 1995 by Open Software Foundation, Inc.   
@@ -48,11 +48,10 @@
  *  Convert single fixed-point to single floating-point format
  */
 int
-sgl_to_sgl_fcnvxf(srcptr,nullptr,dstptr,status)
+sgl_to_sgl_fcnvxf(srcptr,dstptr,status)
 
 int *srcptr;
 sgl_floating_point *dstptr;
-void *nullptr;
 unsigned int *status;
 {
 	register int src, dst_exponent;
@@ -119,11 +118,10 @@ unsigned int *status;
  *  Single Fixed-point to Double Floating-point 
  */
 int
-sgl_to_dbl_fcnvxf(srcptr,nullptr,dstptr,status)
+sgl_to_dbl_fcnvxf(srcptr,dstptr,status)
 
 int *srcptr;
 dbl_floating_point *dstptr;
-void *nullptr;
 unsigned int *status;
 {
 	register int src, dst_exponent;
@@ -170,11 +168,10 @@ unsigned int *status;
  *  Double Fixed-point to Single Floating-point 
  */
 int
-dbl_to_sgl_fcnvxf(srcptr,nullptr,dstptr,status)
+dbl_to_sgl_fcnvxf(srcptr,dstptr,status)
 
 dbl_integer *srcptr;
 sgl_floating_point *dstptr;
-void *nullptr;
 unsigned int *status;
 {
 	int dst_exponent, srcp1;
@@ -275,11 +272,10 @@ unsigned int *status;
  *  Double Fixed-point to Double Floating-point 
  */
 int
-dbl_to_dbl_fcnvxf(srcptr,nullptr,dstptr,status)
+dbl_to_dbl_fcnvxf(srcptr,dstptr,status)
 
 dbl_integer *srcptr;
 dbl_floating_point *dstptr;
-void *nullptr;
 unsigned int *status;
 {
 	register int srcp1, dst_exponent;

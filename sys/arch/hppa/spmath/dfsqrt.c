@@ -1,4 +1,4 @@
-/*	$OpenBSD: dfsqrt.c,v 1.3 1998/07/02 19:05:04 mickey Exp $	*/
+/*	$OpenBSD: dfsqrt.c,v 1.4 2000/01/11 08:18:43 mickey Exp $	*/
 
 /*
  * Copyright 1996 1995 by Open Software Foundation, Inc.   
@@ -48,10 +48,9 @@
 
 /*ARGSUSED*/
 int
-dbl_fsqrt(srcptr,nullptr,dstptr,status)
+dbl_fsqrt(srcptr,dstptr,status)
 
 dbl_floating_point *srcptr, *dstptr;
-void *nullptr;
 unsigned int *status;
 {
 	register unsigned int srcp1, srcp2, resultp1, resultp2;

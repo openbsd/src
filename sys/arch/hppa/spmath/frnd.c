@@ -1,4 +1,4 @@
-/*	$OpenBSD: frnd.c,v 1.3 1998/07/02 19:05:29 mickey Exp $	*/
+/*	$OpenBSD: frnd.c,v 1.4 2000/01/11 08:18:43 mickey Exp $	*/
 
 /*
  * Copyright 1996 1995 by Open Software Foundation, Inc.   
@@ -51,10 +51,9 @@
 
 /*ARGSUSED*/
 int
-sgl_frnd(srcptr,nullptr,dstptr,status)
+sgl_frnd(srcptr,dstptr,status)
 
 sgl_floating_point *srcptr, *dstptr;
-void *nullptr;
 unsigned int *status;
 {
 	register unsigned int src, result;
@@ -156,10 +155,9 @@ unsigned int *status;
 
 /*ARGSUSED*/
 int
-dbl_frnd(srcptr,nullptr,dstptr,status)
+dbl_frnd(srcptr,dstptr,status)
 
 dbl_floating_point *srcptr, *dstptr;
-void *nullptr;
 unsigned int *status;
 {
 	register unsigned int srcp1, srcp2, resultp1, resultp2;
@@ -260,10 +258,9 @@ unsigned int *status;
 
 /*ARGSUSED*/
 int
-quad_frnd(srcptr,nullptr,dstptr,status)
+quad_frnd(srcptr,dstptr,status)
 
 quad_floating_point *srcptr, *dstptr;
-void *nullptr;
 unsigned int *status;
 {
 	return(UNIMPLEMENTEDEXCEPTION);

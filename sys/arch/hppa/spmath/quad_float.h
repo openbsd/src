@@ -1,4 +1,4 @@
-/*	$OpenBSD: quad_float.h,v 1.3 1998/07/02 19:05:49 mickey Exp $	*/
+/*	$OpenBSD: quad_float.h,v 1.4 2000/01/11 08:18:43 mickey Exp $	*/
 
 /*
  * Copyright 1996 1995 by Open Software Foundation, Inc.   
@@ -99,4 +99,4 @@
     Qallp4(rightp4) = Qallp4(leftp4) XOR Qallp4(rightp4)	\
     Qallp4(leftp4)  = Qallp4(leftp4) XOR Qallp4(rightp4)
 
-int quad_frnd __P((quad_floating_point *, void *, quad_floating_point *, unsigned int *));
+int quad_frnd __P((quad_floating_point *, quad_floating_point *, unsigned int *));
