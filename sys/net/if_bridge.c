@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.137 2004/08/18 11:07:47 markus Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.138 2004/10/09 19:55:28 brad Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -220,12 +220,12 @@ bridge_clone_create(struct if_clone *ifc, int unit)
 	ifp->if_start = bridge_start;
 	ifp->if_type = IFT_BRIDGE;
 	ifp->if_snd.ifq_maxlen = ifqmaxlen;
-	ifp->if_hdrlen = sizeof(struct ether_header);
+	ifp->if_hdrlen = ETHER_HDR_LEN;
 	if_attach(ifp);
 	if_alloc_sadl(ifp);
 #if NBPFILTER > 0
 	bpfattach(&sc->sc_if.if_bpf, ifp,
-	    DLT_EN10MB, sizeof(struct ether_header));
+	    DLT_EN10MB, ETHER_HDR_LEN);
 #endif
 	s = splnet();
 	LIST_INSERT_HEAD(&bridge_list, sc, sc_list);
@@ -1013,13 +1013,13 @@ bridge_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *sa,
 			} else {
 				struct mbuf *m1, *m2, *mx;
 
-				m1 = m_copym2(m, 0, sizeof(struct ether_header),
+				m1 = m_copym2(m, 0, ETHER_HDR_LEN,
 				    M_DONTWAIT);
 				if (m1 == NULL) {
 					sc->sc_if.if_oerrors++;
 					continue;
 				}
-				m2 = m_copym2(m, sizeof(struct ether_header),
+				m2 = m_copym2(m, ETHER_HDR_LEN,
 				    M_COPYALL, M_DONTWAIT);
 				if (m2 == NULL) {
 					m_freem(m1);
@@ -1140,7 +1140,7 @@ bridgeintr_frame(struct bridge_softc *sc, struct mbuf *m)
 		m_freem(m);
 		return;
 	}
-	m_copydata(m, 0, sizeof(struct ether_header), (caddr_t)&eh);
+	m_copydata(m, 0, ETHER_HDR_LEN, (caddr_t)&eh);
 	dst = (struct ether_addr *)&eh.ether_dhost[0];
 	src = (struct ether_addr *)&eh.ether_shost[0];
 
@@ -1268,7 +1268,7 @@ bridgeintr_frame(struct bridge_softc *sc, struct mbuf *m)
 #endif
 
 	len = m->m_pkthdr.len;
-	if ((len - sizeof(struct ether_header)) > dst_if->if_mtu)
+	if ((len - ETHER_HDR_LEN) > dst_if->if_mtu)
 		bridge_fragment(sc, dst_if, &eh, m);
 	else {
 		s = splimp();
@@ -1340,10 +1340,10 @@ bridge_input(struct ifnet *ifp, struct ether_header *eh, struct mbuf *m)
 		mc = m_copym2(m, 0, M_COPYALL, M_NOWAIT);
 		if (mc == NULL)
 			return (m);
-		M_PREPEND(mc, sizeof(struct ether_header), M_DONTWAIT);
+		M_PREPEND(mc, ETHER_HDR_LEN, M_DONTWAIT);
 		if (mc == NULL)
 			return (m);
-		bcopy(eh, mtod(mc, caddr_t), sizeof(struct ether_header));
+		bcopy(eh, mtod(mc, caddr_t), ETHER_HDR_LEN);
 		s = splimp();
 		if (IF_QFULL(&sc->sc_if.if_snd)) {
 			m_freem(mc);
@@ -1410,10 +1410,10 @@ bridge_input(struct ifnet *ifp, struct ether_header *eh, struct mbuf *m)
 			return (NULL);
 		}
 	}
-	M_PREPEND(m, sizeof(struct ether_header), M_DONTWAIT);
+	M_PREPEND(m, ETHER_HDR_LEN, M_DONTWAIT);
 	if (m == NULL)
 		return (NULL);
-	bcopy(eh, mtod(m, caddr_t), sizeof(struct ether_header));
+	bcopy(eh, mtod(m, caddr_t), ETHER_HDR_LEN);
 	s = splimp();
 	if (IF_QFULL(&sc->sc_if.if_snd)) {
 		m_freem(m);
@@ -1486,13 +1486,13 @@ bridge_broadcast(struct bridge_softc *sc, struct ifnet *ifp,
 		} else {
 			struct mbuf *m1, *m2, *mx;
 
-			m1 = m_copym2(m, 0, sizeof(struct ether_header),
+			m1 = m_copym2(m, 0, ETHER_HDR_LEN,
 			    M_DONTWAIT);
 			if (m1 == NULL) {
 				sc->sc_if.if_oerrors++;
 				continue;
 			}
-			m2 = m_copym2(m, sizeof(struct ether_header),
+			m2 = m_copym2(m, ETHER_HDR_LEN,
 			    M_COPYALL, M_DONTWAIT);
 			if (m2 == NULL) {
 				m_freem(m1);
@@ -1520,7 +1520,7 @@ bridge_broadcast(struct bridge_softc *sc, struct ifnet *ifp,
 			continue;
 #endif
 
-		if ((len - sizeof(struct ether_header)) > dst_if->if_mtu)
+		if ((len - ETHER_HDR_LEN) > dst_if->if_mtu)
 			bridge_fragment(sc, dst_if, eh, mc);
 		else {
 			bridge_ifenqueue(sc, dst_if, mc);
@@ -1547,10 +1547,10 @@ bridge_span(struct bridge_softc *sc, struct ether_header *eh,
 	if (m == NULL)
 		return;
 	if (eh != NULL) {
-		M_PREPEND(m, sizeof(struct ether_header), M_DONTWAIT);
+		M_PREPEND(m, ETHER_HDR_LEN, M_DONTWAIT);
 		if (m == NULL)
 			return;
-		bcopy(eh, mtod(m, caddr_t), sizeof(struct ether_header));
+		bcopy(eh, mtod(m, caddr_t), ETHER_HDR_LEN);
 	}
 
 	LIST_FOREACH(p, &sc->sc_spanlist, next) {
@@ -2012,7 +2012,7 @@ bridge_blocknonip(struct ether_header *eh, struct mbuf *m)
 	struct llc llc;
 	u_int16_t etype;
 
-	if (m->m_pkthdr.len < sizeof(struct ether_header))
+	if (m->m_pkthdr.len < ETHER_HDR_LEN)
 		return (1);
 
 	etype = ntohs(eh->ether_type);
@@ -2028,10 +2028,10 @@ bridge_blocknonip(struct ether_header *eh, struct mbuf *m)
 		return (1);
 
 	if (m->m_pkthdr.len <
-	    (sizeof(struct ether_header) + LLC_SNAPFRAMELEN))
+	    (ETHER_HDR_LEN + LLC_SNAPFRAMELEN))
 		return (1);
 
-	m_copydata(m, sizeof(struct ether_header), LLC_SNAPFRAMELEN,
+	m_copydata(m, ETHER_HDR_LEN, LLC_SNAPFRAMELEN,
 	    (caddr_t)&llc);
 
 	etype = ntohs(llc.llc_snap.ether_type);
@@ -2344,10 +2344,10 @@ bridge_filter(struct bridge_softc *sc, int dir, struct ifnet *ifp,
 	if (etype != ETHERTYPE_IP && etype != ETHERTYPE_IPV6) {
 		if (etype > ETHERMTU ||
 		    m->m_pkthdr.len < (LLC_SNAPFRAMELEN +
-		    sizeof(struct ether_header)))
+		    ETHER_HDR_LEN))
 			return (m);
 
-		m_copydata(m, sizeof(struct ether_header),
+		m_copydata(m, ETHER_HDR_LEN,
 		    LLC_SNAPFRAMELEN, (caddr_t)&llc);
 
 		if (llc.llc_dsap != LLC_SNAP_LSAP ||
@@ -2364,7 +2364,7 @@ bridge_filter(struct bridge_softc *sc, int dir, struct ifnet *ifp,
 		hassnap = 1;
 	}
 
-	m_adj(m, sizeof(struct ether_header));
+	m_adj(m, ETHER_HDR_LEN);
 	if (hassnap)
 		m_adj(m, LLC_SNAPFRAMELEN);
 
@@ -2543,10 +2543,10 @@ bridge_fragment(struct bridge_softc *sc, struct ifnet *ifp,
 	if (etype != ETHERTYPE_IP) {
 		if (etype > ETHERMTU ||
 		    m->m_pkthdr.len < (LLC_SNAPFRAMELEN +
-		    sizeof(struct ether_header)))
+		    ETHER_HDR_LEN))
 			goto dropit;
 
-		m_copydata(m, sizeof(struct ether_header),
+		m_copydata(m, ETHER_HDR_LEN,
 		    LLC_SNAPFRAMELEN, (caddr_t)&llc);
 
 		if (llc.llc_dsap != LLC_SNAP_LSAP ||
@@ -2561,7 +2561,7 @@ bridge_fragment(struct bridge_softc *sc, struct ifnet *ifp,
 		hassnap = 1;
 	}
 
-	m_adj(m, sizeof(struct ether_header));
+	m_adj(m, ETHER_HDR_LEN);
 	if (hassnap)
 		m_adj(m, LLC_SNAPFRAMELEN);
 

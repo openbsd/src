@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.46 2004/03/27 23:41:04 deraadt Exp $ */
+/*	$OpenBSD: if_vlan.c,v 1.47 2004/10/09 19:55:29 brad Exp $ */
 /*
  * Copyright 1998 Massachusetts Institute of Technology
  *
@@ -218,12 +218,11 @@ vlan_start(struct ifnet *ifp)
 		} else {
 			struct ether_vlan_header evh;
 
-			m_copydata(m, 0, sizeof(struct ether_header),
-			    (caddr_t)&evh);
+			m_copydata(m, 0, ETHER_HDR_LEN, (caddr_t)&evh);
 			evh.evl_proto = evh.evl_encap_proto;
 			evh.evl_encap_proto = htons(ETHERTYPE_8021Q);
 			evh.evl_tag = htons(ifv->ifv_tag);
-			m_adj(m, sizeof(struct ether_header));
+			m_adj(m, ETHER_HDR_LEN);
 
 			m0 = m_prepend(m, sizeof(struct ether_vlan_header),
 			    M_DONTWAIT);
@@ -279,15 +278,15 @@ vlan_input_tag(struct mbuf *m, u_int16_t t)
 	}
 
 	if (ifv == NULL) {
-		if (m->m_pkthdr.len < sizeof(struct ether_header)) {
+		if (m->m_pkthdr.len < ETHER_HDR_LEN) {
 			m_freem(m);
 			return (-1);
 		}
-		m_copydata(m, 0, sizeof(struct ether_header), (caddr_t)&vh);
+		m_copydata(m, 0, ETHER_HDR_LEN, (caddr_t)&vh);
 		vh.evl_proto = vh.evl_encap_proto;
 		vh.evl_tag = htons(t);
 		vh.evl_encap_proto = htons(ETHERTYPE_8021Q);
-		m_adj(m, sizeof(struct ether_header));
+		m_adj(m, ETHER_HDR_LEN);
 		m = m_prepend(m, sizeof(struct ether_vlan_header), M_DONTWAIT);
 		if (m == NULL)
 			return (-1);
@@ -382,7 +381,7 @@ vlan_input(eh, m)
 
 		m0.m_flags = 0;
 		m0.m_next = m;
-		m0.m_len = sizeof(struct ether_header);
+		m0.m_len = ETHER_HDR_LEN;
 		m0.m_data = (char *)eh;
 		bpf_mtap(ifv->ifv_if.if_bpf, &m0);
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.79 2004/07/16 15:01:08 henning Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.80 2004/10/09 19:55:29 brad Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -452,7 +452,7 @@ ether_output(ifp, m0, dst, rt0)
 	 * Add local net header.  If no space in first mbuf,
 	 * allocate another.
 	 */
-	M_PREPEND(m, sizeof (struct ether_header), M_DONTWAIT);
+	M_PREPEND(m, ETHER_HDR_LEN, M_DONTWAIT);
 	if (m == 0)
 		senderr(ENOBUFS);
 	eh = mtod(m, struct ether_header *);
@@ -529,7 +529,7 @@ ether_output(ifp, m0, dst, rt0)
 		splx(s);
 		return (error);
 	}
-	ifp->if_obytes += len + sizeof (struct ether_header);
+	ifp->if_obytes += len + ETHER_HDR_LEN;
 	if (mflags & M_MCAST)
 		ifp->if_omcasts++;
 	if ((ifp->if_flags & IFF_OACTIVE) == 0)
@@ -859,7 +859,7 @@ ether_ifattach(ifp)
 	    LLADDR(ifp->if_sadl), ifp->if_addrlen);
 	LIST_INIT(&((struct arpcom *)ifp)->ac_multiaddrs);
 #if NBPFILTER > 0
-	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
+	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, ETHER_HDR_LEN);
 #endif
 }
 

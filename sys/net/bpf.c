@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.53 2004/09/23 03:31:08 brad Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.54 2004/10/09 19:55:28 brad Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -138,7 +138,7 @@ bpf_movein(uio, linktype, mp, sockp, filter)
 	case DLT_EN10MB:
 		sockp->sa_family = AF_UNSPEC;
 		/* XXX Would MAXLINKHDR be better? */
-		hlen = sizeof(struct ether_header);
+		hlen = ETHER_HDR_LEN;
 		break;
 
 	case DLT_ARCNET:
