@@ -1,5 +1,5 @@
 #	from: @(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
-#	$Id: 4.4BSD.dist,v 1.8 1995/12/26 20:00:28 david Exp $
+#	$Id: 4.4BSD.dist,v 1.9 1996/01/25 04:32:11 etheisen Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -317,6 +317,11 @@ man9
 # ./usr/local/sbin
 sbin
 # ./usr/local/sbin
+..
+
+# ./usr/local/info
+info
+# ./usr/local/info
 ..
 
 # ./usr/local
