@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptodev.c,v 1.12 2001/06/16 10:46:03 deraadt Exp $	*/
+/*	$OpenBSD: cryptodev.c,v 1.13 2001/06/18 10:55:01 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -54,13 +54,14 @@ struct csession {
 	u_int32_t	ses;
 
 	u_int32_t	cipher;
-	u_int32_t	blocksize;
+	struct enc_xform *txform;
+	u_int32_t	mac;
+	struct auth_hash *thash;
 
 	caddr_t		key;
 	int		keylen;
 	u_char		tmp_iv[EALG_MAX_BLOCK_LEN];
 
-	u_int32_t	mac;
 	caddr_t		mackey;
 	int		mackeylen;
 	u_char		tmp_mac[16];		/* XXX MAX_MAC_SIZE */
@@ -106,7 +107,7 @@ struct	csession *csefind(struct fcrypt *, u_int);
 int	csedelete(struct fcrypt *, struct csession *);
 struct	csession *cseadd(struct fcrypt *, struct csession *);
 struct	csession *csecreate(struct fcrypt *, u_int64_t, caddr_t, caddr_t, u_int32_t,
-	    u_int32_t, u_int32_t);
+	    u_int32_t, struct enc_xform *, struct auth_hash *);
 void	csefree(struct csession *);
 
 int	crypto_op(struct csession *, struct crypt_op *, struct proc *);
@@ -243,7 +244,7 @@ bail:
 		}
 
 		cse = csecreate(fcr, sid, crie.cri_key, cria.cri_key,
-		    sop->cipher, sop->mac, txform->blocksize);
+		    sop->cipher, sop->mac, txform, thash);
 		sop->ses = cse->ses;
 		break;
 	case CIOCFSESSION:
@@ -278,8 +279,11 @@ crypto_op(struct csession *cse, struct crypt_op *cop, struct proc *p)
 	struct cryptodesc *crde = NULL, *crda = NULL;
 	int i, error;
 
-	if (cop->len > 64*1024-4)
+	if (cop->len > 64*1024-4)		/* XXX -4 because of hifn bug */
 		return (E2BIG);
+
+	if (cse->txform && (cop->len % cse->txform->blocksize) != 0)
+		return (EINVAL);
 
 	bzero(&cse->uio, sizeof(cse->uio));
 	cse->uio.uio_iovcnt = 1;
@@ -294,18 +298,18 @@ crypto_op(struct csession *cse, struct crypt_op *cop, struct proc *p)
 	for (i = 0; i < cse->uio.uio_iovcnt; i++)
 		cse->uio.uio_resid += cse->uio.uio_iov[0].iov_len;
 
-	crp = crypto_getreq((cse->cipher > 0) + (cse->mac > 0));
+	crp = crypto_getreq((cse->txform != NULL) + (cse->thash != NULL));
 	if (crp == NULL) {
 		error = ENOMEM;
 		goto bail;
 	}
 
-	if (cse->mac) {
+	if (cse->thash) {
 		crda = crp->crp_desc;
-		if (cse->cipher)
+		if (cse->txform)
 			crde = crda->crd_next;
 	} else {
-		if (cse->cipher)
+		if (cse->txform)
 			crde = crp->crp_desc;
 		else {
 			error = EINVAL;
@@ -352,9 +356,9 @@ crypto_op(struct csession *cse, struct crypt_op *cop, struct proc *p)
 			error = EINVAL;
 			goto bail;
 		}
-		if ((error = copyin(cop->iv, cse->tmp_iv, cse->blocksize)))
+		if ((error = copyin(cop->iv, cse->tmp_iv, cse->txform->blocksize)))
 			goto bail;
-		bcopy(cse->tmp_iv, crde->crd_iv, cse->blocksize);
+		bcopy(cse->tmp_iv, crde->crd_iv, cse->txform->blocksize);
 		crde->crd_flags |= CRD_F_IV_EXPLICIT;
 	}
 
@@ -583,7 +587,8 @@ cseadd(struct fcrypt *fcr, struct csession *cse)
 
 struct csession *
 csecreate(struct fcrypt *fcr, u_int64_t sid, caddr_t key, caddr_t mackey,
-    u_int32_t cipher, u_int32_t mac, u_int32_t blocksize)
+    u_int32_t cipher, u_int32_t mac, struct enc_xform *txform,
+    struct auth_hash *thash)
 {
 	struct csession *cse;
 
@@ -594,7 +599,8 @@ csecreate(struct fcrypt *fcr, u_int64_t sid, caddr_t key, caddr_t mackey,
 	cse->sid = sid;
 	cse->cipher = cipher;
 	cse->mac = mac;
-	cse->blocksize = blocksize;
+	cse->txform = txform;
+	cse->thash = thash;
 	cseadd(fcr, cse);
 	return (cse);
 }
