@@ -1,5 +1,5 @@
-/*	$OpenBSD: gmp_util.c,v 1.3 1998/11/17 11:10:11 niklas Exp $	*/
-/*	$EOM: gmp_util.c,v 1.1 1998/08/03 19:32:36 provos Exp $	*/
+/*	$OpenBSD: gmp_util.c,v 1.4 1999/02/26 03:40:05 niklas Exp $	*/
+/*	$EOM: gmp_util.c,v 1.2 1999/02/25 11:38:58 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niels Provos.  All rights reserved.
@@ -36,6 +36,8 @@
 
 #include <sys/param.h>
 #include <gmp.h>
+
+#include "sysdep.h"
 
 #include "gmp_util.h"
 
