@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 1998/09/29 07:14:52 mickey Exp $
+#	$OpenBSD: Makefile,v 1.5 1999/01/25 21:53:31 mickey Exp $
 
 PROG=	boot
 SRCS=	srt0.S boot.c cmd.c vars.c bootarg.c conf.c
@@ -23,12 +23,14 @@ DPADD=	${LIBSA} ${LIBZ} ${LIBKERN}
 all:	boot.lif
 
 .if exists(${.CURDIR}/../../compile/DISKLESS/bsd)
-diskless: ${.CURDIR}/../../compile/DISKLESS/bsd
-	gzip -9c ${.CURDIR}/../../compile/DISKLESS/bsd > diskless
-ADDBOOT+=diskless
+bsd: ${.CURDIR}/../../compile/DISKLESS/bsd
+	gzip -9c ${.CURDIR}/../../compile/DISKLESS/bsd > bsd
+ADDBOOT+=bsd
 .endif
 
+# probably we should check for 256k limit for ISL
 boot.lif:	${PROG} ${ADDBOOT}
+	-@cp ${PROG} ${PROG}.gdb
 	${STRIP} ${PROG}
 	${MKBOOT} -v ${PROG} ${ADDBOOT} boot.lif
 

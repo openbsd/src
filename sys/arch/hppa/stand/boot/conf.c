@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.5 1998/09/29 07:14:53 mickey Exp $	*/
+/*	$OpenBSD: conf.c,v 1.6 1999/01/25 21:53:31 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -35,19 +35,15 @@
 #include <machine/lifvar.h>
 #include <lib/libsa/ufs.h>
 #include <lib/libsa/cd9660.h>
-#ifdef notdef
-#include <lib/libsa/nfs.h>
-#include <lib/libsa/netif.h>
-#endif
 #include <lib/libsa/exec.h>
 #include <dev/cons.h>
 
-const char version[] = "0.03";
-int	debug = 0;
+const char version[] = "0.04";
+int	debug = 1;
 
 const struct x_sw execsw[] = {
-	{ "elf", elf_probe,	elf_load },
-/*	{ "som", som_probe,	som_load }, */
+	{ "elf", elf_probe,	elf_load,	elf_ldsym },
+/*	{ "som", som_probe,	som_load,	som_ldsym }, */
 	{ ""   , NULL,		NULL },
 };
 
@@ -56,21 +52,10 @@ struct fs_ops file_system[] = {
 	  lif_stat,    lif_readdir    },
 	{ ufs_open,    ufs_close,    ufs_read,    ufs_write,    ufs_seek,
 	  ufs_stat,    ufs_readdir    },
-#ifdef notdef
-	{ nfs_open,    nfs_close,    nfs_read,    nfs_write,    nfs_seek,
-	  nfs_stat,    nfs_readdir    },
-#endif
 	{ cd9660_open, cd9660_close, cd9660_read, cd9660_write, cd9660_seek,
 	  cd9660_stat, cd9660_readdir },
 };
 int nfsys = NENTS(file_system);
-
-#ifdef notdef
-struct netif_driver	*netif_drivers[] = {
-	NULL
-};
-int n_netif_drivers = NENTS(netif_drivers);
-#endif
 
 struct devsw devsw[] = {
 	{ "ct",	iodcstrategy, ctopen, ctclose, noioctl },

@@ -1,5 +1,34 @@
-/*	$OpenBSD: srt0.S,v 1.3 1998/08/29 01:54:25 mickey Exp $	*/
+/*	$OpenBSD: srt0.S,v 1.4 1999/01/25 21:53:31 mickey Exp $	*/
 
+/*
+ * Copyright (c) 1998 Michael Shalayeff
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by Michael Shalayeff.
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 /*
  * Copyright 1996 1995 by Open Software Foundation, Inc.   
  *              All Rights Reserved 
@@ -36,12 +65,12 @@
 
 #define	_LOCORE
 #include <machine/iomod.h>
-
 #include <machine/asm.h>
 
 /*
+ * This is the ending of the begin
  */
-	ENTRY(begin)
+ENTRY(begin)
 
 	blr	%r0,%r5			; Get address of 'boff' into 'r5',
 	ldo	begin-boff(%r5),%r5	;   and subtract to get 'begin'.
@@ -60,7 +89,7 @@ copyloop				; do
 	stwm	%r1,4(%r4)
 
 	; here we zero the .bss
-	ldil	L%end, %r3		; the end af all
+	ldil	L%end, %r3		; the end of all
 	ldil	L%__bss_start, %r4	; .bss is here
 	sub	%r3,%r4,%r3
 zeroloop
@@ -100,31 +129,30 @@ loop	addib,>,n -16,%r21,loop		; Decrement by cache line size (16).
 	nop
 	nop
 	nop
-	EXIT(begin)			/* jump to relocated code */
+EXIT(begin)				/* jump to relocated code */
 
 start
 	ldil	L%stack_base,%sp
 	ldo	R%stack_base(%sp),%sp
 	dep	%r0,31,6,%sp		;   and ensure maximum alignment.	
 
+	b	boot			; Call boot(),
 	copy	%r0, arg0		; use default boot device
-	b,n	boot			; Call boot(),
 
 /*
  * rtt - restart the box
  */
-	ENTRY(_rtt)
-	ldi     CMD_RESET, %r26
+ENTRY(_rtt)
 	ldil    L%LBCAST_ADDR, %r25
-	stw     %r26,R%48(%r25)		; iomod->io_command
+	ldi     CMD_RESET, %r26
+	stw     %r26,R%iomod_command(%r25)
 forever                                 ; Loop until bus reset takes effect.
 	b,n     forever
 
 	ldo     -48(sp),sp
-	EXIT(_rtt)
+EXIT(_rtt)
 
 	.SPACE	$PRIVATE$
-;	.SUBSPA	$GLOBAL$
 	.EXPORT	$global$
 $global$
 	.WORD	0
