@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_de.c,v 1.55 2002/06/02 22:50:00 deraadt Exp $	*/
+/*	$OpenBSD: if_de.c,v 1.56 2002/06/30 16:00:30 art Exp $	*/
 /*	$NetBSD: if_de.c,v 1.45 1997/06/09 00:34:18 thorpej Exp $	*/
 
 /*-
@@ -624,7 +624,6 @@ tulip_media_link_monitor(
 	    return TULIP_LINK_UP;
 
 	sc->tulip_flags &= ~TULIP_LINKUP;
-	printf(TULIP_PRINTF_FMT ": link down: cable problem?\n", TULIP_PRINTF_ARGS);
     }
 #if defined(TULIP_DEBUG)
     sc->tulip_dbg.dbg_link_downed++;
@@ -855,8 +854,6 @@ tulip_media_poll(
 	    sc->tulip_probe_media -= 1;
 	    if (sc->tulip_probe_media == TULIP_MEDIA_UNKNOWN) {
 		if (++sc->tulip_probe_passes == 3) {
-		    printf(TULIP_PRINTF_FMT ": autosense failed: cable problem?\n",
-			   TULIP_PRINTF_ARGS);
 		    if ((sc->tulip_if.if_flags & IFF_UP) == 0) {
 			sc->tulip_if.if_flags &= ~IFF_RUNNING;
 			sc->tulip_probe_state = TULIP_PROBE_INACTIVE;
@@ -1212,8 +1209,6 @@ tulip_21041_media_poll(
 		sc->tulip_flags &= ~TULIP_WANTRXACT;
 		sc->tulip_probe_timeout = TULIP_21041_PROBE_AUIBNC_TIMEOUT;
 	    } else {
-		printf(TULIP_PRINTF_FMT ": autosense failed: cable problem?\n",
-		       TULIP_PRINTF_ARGS);
 		if ((sc->tulip_if.if_flags & IFF_UP) == 0) {
 		    sc->tulip_if.if_flags &= ~IFF_RUNNING;
 		    sc->tulip_probe_state = TULIP_PROBE_INACTIVE;
