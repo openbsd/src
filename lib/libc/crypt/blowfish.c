@@ -1,4 +1,4 @@
-/* $OpenBSD: blowfish.c,v 1.7 1998/03/02 14:11:50 provos Exp $ */
+/* $OpenBSD: blowfish.c,v 1.8 1998/03/04 00:34:17 deraadt Exp $ */
 /*
  * Blowfish block cipher for OpenBSD
  * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
@@ -584,7 +584,7 @@ blf_dec(c, data, blocks)
 		d += 2;
 	}
 }
-#ifdef 0
+#if 0
 void
 report(u_int32_t data[], u_int16_t len)
 {
