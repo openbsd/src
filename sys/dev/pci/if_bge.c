@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.41 2004/12/11 05:57:04 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.42 2004/12/12 05:03:05 brad Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -117,6 +117,7 @@
 
 /* #define BGE_CHECKSUM */
 
+const struct bge_revision * bge_lookup_rev(uint32_t);
 int bge_probe(struct device *, void *, void *);
 void bge_attach(struct device *, struct device *, void *);
 void bge_release_resources(struct bge_softc *);
@@ -237,6 +238,21 @@ const struct pci_matchid bge_devices[] = {
 
 	{ PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C996 },
 };
+
+/* Various chip quirks. */
+#define	BGE_QUIRK_LINK_STATE_BROKEN	0x00000001
+#define	BGE_QUIRK_CSUM_BROKEN		0x00000002
+#define	BGE_QUIRK_ONLY_PHY_1		0x00000004
+#define	BGE_QUIRK_5700_SMALLDMA		0x00000008
+#define	BGE_QUIRK_5700_PCIX_REG_BUG	0x00000010
+#define	BGE_QUIRK_PRODUCER_BUG		0x00000020
+#define	BGE_QUIRK_PCIX_DMA_ALIGN_BUG	0x00000040
+#define	BGE_QUIRK_5705_CORE		0x00000080
+#define	BGE_QUIRK_FEWER_MBUFS		0x00000100
+
+/* following bugs are common to bcm5700 rev B, all flavours */
+#define BGE_QUIRK_5700_COMMON \
+	(BGE_QUIRK_5700_SMALLDMA|BGE_QUIRK_PRODUCER_BUG)
 
 u_int32_t
 bge_readmem_ind(sc, off)
@@ -1498,6 +1514,167 @@ bge_blockinit(sc)
 	return(0);
 }
 
+static const struct bge_revision {
+	uint32_t		br_chipid;
+	uint32_t		br_quirks;
+	const char		*br_name;
+} bge_revisions[] = {
+	{ BGE_CHIPID_BCM5700_A0,
+	  BGE_QUIRK_LINK_STATE_BROKEN,
+	  "BCM5700 A0" },
+
+	{ BGE_CHIPID_BCM5700_A1,
+	  BGE_QUIRK_LINK_STATE_BROKEN,
+	  "BCM5700 A1" },
+
+	{ BGE_CHIPID_BCM5700_B0,
+	  BGE_QUIRK_LINK_STATE_BROKEN|BGE_QUIRK_CSUM_BROKEN|BGE_QUIRK_5700_COMMON,
+	  "BCM5700 B0" },
+
+	{ BGE_CHIPID_BCM5700_B1,
+	  BGE_QUIRK_LINK_STATE_BROKEN|BGE_QUIRK_5700_COMMON,
+	  "BCM5700 B1" },
+
+	{ BGE_CHIPID_BCM5700_B2,
+	  BGE_QUIRK_LINK_STATE_BROKEN|BGE_QUIRK_5700_COMMON,
+	  "BCM5700 B2" },
+
+	/* This is treated like a BCM5700 Bx */
+	{ BGE_CHIPID_BCM5700_ALTIMA,
+	  BGE_QUIRK_LINK_STATE_BROKEN|BGE_QUIRK_5700_COMMON,
+	  "BCM5700 Altima" },
+
+	{ BGE_CHIPID_BCM5700_C0,
+	  0,
+	  "BCM5700 C0" },
+
+	{ BGE_CHIPID_BCM5701_A0,
+	  0, /*XXX really, just not known */
+	  "BCM5701 A0" },
+
+	{ BGE_CHIPID_BCM5701_B0,
+	  BGE_QUIRK_PCIX_DMA_ALIGN_BUG,
+	  "BCM5701 B0" },
+
+	{ BGE_CHIPID_BCM5701_B2,
+	  BGE_QUIRK_PCIX_DMA_ALIGN_BUG,
+	  "BCM5701 B2" },
+
+	{ BGE_CHIPID_BCM5701_B5,
+	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_PCIX_DMA_ALIGN_BUG,
+	  "BCM5701 B5" },
+
+	{ BGE_CHIPID_BCM5703_A0,
+	  0,
+	  "BCM5703 A0" },
+
+	{ BGE_CHIPID_BCM5703_A1,
+	  0,
+	  "BCM5703 A1" },
+
+	{ BGE_CHIPID_BCM5703_A2,
+	  BGE_QUIRK_ONLY_PHY_1,
+	  "BCM5703 A2" },
+
+	{ BGE_CHIPID_BCM5703_A3,
+	  BGE_QUIRK_ONLY_PHY_1,
+	  "BCM5703 A3" },
+
+	{ BGE_CHIPID_BCM5704_A0,
+  	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_FEWER_MBUFS,
+	  "BCM5704 A0" },
+
+	{ BGE_CHIPID_BCM5704_A1,
+  	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_FEWER_MBUFS,
+	  "BCM5704 A1" },
+
+	{ BGE_CHIPID_BCM5704_A2,
+  	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_FEWER_MBUFS,
+	  "BCM5704 A2" },
+
+	{ BGE_CHIPID_BCM5704_A3,
+  	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_FEWER_MBUFS,
+	  "BCM5704 A3" },
+
+	{ BGE_CHIPID_BCM5705_A0,
+	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
+	  "BCM5705 A0" },
+
+	{ BGE_CHIPID_BCM5705_A1,
+	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
+	  "BCM5705 A1" },
+
+	{ BGE_CHIPID_BCM5705_A2,
+	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
+	  "BCM5705 A2" },
+
+	{ BGE_CHIPID_BCM5705_A3,
+	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
+	  "BCM5705 A3" },
+
+	{ BGE_CHIPID_BCM5750_A0,
+	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
+	  "BCM5750 A1" },
+
+	{ BGE_CHIPID_BCM5750_A1,
+	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
+	  "BCM5750 A1" },
+
+	{ 0, 0, NULL }
+};
+
+/*
+ * Some defaults for major revisions, so that newer steppings
+ * that we don't know about have a shot at working.
+ */
+static const struct bge_revision bge_majorrevs[] = {
+	{ BGE_ASICREV_BCM5700,
+	  BGE_QUIRK_LINK_STATE_BROKEN,
+	  "unknown BCM5700" },
+
+	{ BGE_ASICREV_BCM5701,
+	  BGE_QUIRK_PCIX_DMA_ALIGN_BUG,
+	  "unknown BCM5701" },
+
+	{ BGE_ASICREV_BCM5703,
+	  0,
+	  "unknown BCM5703" },
+
+	{ BGE_ASICREV_BCM5704,
+	  BGE_QUIRK_ONLY_PHY_1,
+	  "unknown BCM5704" },
+
+	{ BGE_ASICREV_BCM5705,
+	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
+	  "unknown BCM5705" },
+
+	{ BGE_ASICREV_BCM5750,
+	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
+	  "unknown BCM5750" },
+
+	{ 0,
+	  0,
+	  NULL }
+};
+
+const struct bge_revision *
+bge_lookup_rev(uint32_t chipid)
+{
+	const struct bge_revision *br;
+
+	for (br = bge_revisions; br->br_name != NULL; br++) {
+		if (br->br_chipid == chipid)
+			return (br);
+	}
+
+	for (br = bge_majorrevs; br->br_name != NULL; br++) {
+		if (br->br_chipid == BGE_ASICREV(chipid))
+			return (br);
+	}
+
+	return (NULL);
+}
+
 /*
  * Probe for a Broadcom chip. Check the PCI vendor and device IDs
  * against our list and return its name if we find a match. Note
@@ -1524,6 +1701,7 @@ bge_attach(parent, self, aux)
 	struct bge_softc	*sc = (struct bge_softc *)self;
 	struct pci_attach_args	*pa = aux;
 	pci_chipset_tag_t	pc = pa->pa_pc;
+	const struct bge_revision *br;
 	pci_intr_handle_t	ih;
 	const char		*intrstr = NULL;
 	bus_addr_t		iobase;
@@ -1592,15 +1770,29 @@ bge_attach(parent, self, aux)
 		printf("\n");
 		goto fail;
 	}
-	printf(": %s", intrstr);
 
-	/* Save ASIC rev. */
+	/*
+	 * Save ASIC rev.  Look up any quirks
+	 * associated with this ASIC.
+	 */
 
 	sc->bge_chipid =
             pci_conf_read(pc, pa->pa_tag, BGE_PCI_MISC_CTL) &
             BGE_PCIMISCCTL_ASICREV;
         sc->bge_asicrev = BGE_ASICREV(sc->bge_chipid);
         sc->bge_chiprev = BGE_CHIPREV(sc->bge_chipid);
+
+	printf(", ");
+	br = bge_lookup_rev(sc->bge_chipid);
+	if (br == NULL) {
+		printf("unknown ASIC 0x%08x", sc->bge_chipid);
+		sc->bge_quirks = 0;
+	} else {
+		printf("%s", br->br_name);
+		sc->bge_quirks = br->br_quirks;
+	}
+
+	printf(": %s", intrstr);
 
 	/*
 	 * XXX: Broadcom Linux driver.  Not in specs or eratta.

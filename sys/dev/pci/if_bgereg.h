@@ -1,4 +1,4 @@
-/* $OpenBSD: if_bgereg.h,v 1.13 2004/11/11 18:35:41 brad Exp $ */
+/* $OpenBSD: if_bgereg.h,v 1.14 2004/12/12 05:03:05 brad Exp $ */
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -219,6 +219,8 @@
 
 #define BGE_CHIPID_TIGON_I		0x40000000
 #define BGE_CHIPID_TIGON_II		0x60000000
+#define BGE_CHIPID_BCM5700_A0		0x70000000
+#define BGE_CHIPID_BCM5700_A1		0x70010000
 #define BGE_CHIPID_BCM5700_B0		0x71000000
 #define BGE_CHIPID_BCM5700_B1		0x71020000
 #define BGE_CHIPID_BCM5700_B2		0x71030000
@@ -231,6 +233,7 @@
 #define BGE_CHIPID_BCM5703_A0		0x10000000
 #define BGE_CHIPID_BCM5703_A1		0x10010000
 #define BGE_CHIPID_BCM5703_A2		0x10020000
+#define BGE_CHIPID_BCM5703_A3		0x11000000
 #define BGE_CHIPID_BCM5704_A0		0x20000000
 #define BGE_CHIPID_BCM5704_A1		0x20010000
 #define BGE_CHIPID_BCM5704_A2		0x20020000
@@ -2242,6 +2245,7 @@ struct bge_softc {
 	u_int32_t		bge_chipid;
 	u_int8_t		bge_asicrev;
 	u_int8_t		bge_chiprev;
+	u_int32_t		bge_quirks;
 	u_int8_t		bge_no_3_led;
 	u_int8_t		bge_pcie;
 	struct bge_ring_data	*bge_rdata;	/* rings */
