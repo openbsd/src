@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.i386,v 1.38 2003/07/22 19:39:50 otto Exp $
+#	$OpenBSD: Makefile.i386,v 1.39 2003/11/20 08:38:52 espie Exp $
 #	$NetBSD: Makefile.i386,v 1.67 1996/05/11 16:12:11 mycroft Exp $
 
 # Makefile for OpenBSD
@@ -47,6 +47,7 @@ CMACHFLAGS=
 .if ${IDENT:M-DNO_PROPOLICE}
 CMACHFLAGS+=	-fno-stack-protector
 .endif
+CMACHFLAGS+=	-fno-builtin-printf -fno-builtin-log
 
 COPTS?=		-O2
 CFLAGS=		${DEBUG} ${CDIAGFLAGS} ${CMACHFLAGS} ${COPTS} ${PIPE}

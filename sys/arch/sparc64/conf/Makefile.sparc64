@@ -18,7 +18,7 @@ CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL
 CDIAGFLAGS=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \
 		-Wno-uninitialized -Wno-format -Wno-main
 
-CMACHFLAGS=	-Wa,-Av9a, -mno-fpu
+CMACHFLAGS=	-Wa,-Av9a, -mno-fpu -fno-builtin-printf -fno-builtin-log
 .if ${IDENT:M-DNO_PROPOLICE}
 CMACHFLAGS+=	-fno-stack-protector
 .endif
