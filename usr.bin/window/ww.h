@@ -1,4 +1,4 @@
-/*	$OpenBSD: ww.h,v 1.6 1997/02/25 00:04:36 downsj Exp $	*/
+/*	$OpenBSD: ww.h,v 1.7 2000/04/14 18:43:34 millert Exp $	*/
 /*	$NetBSD: ww.h,v 1.9 1996/10/12 23:46:23 christos Exp $	*/
 
 /*
@@ -286,7 +286,7 @@ int wwdocheckpoint;
 
 	/* the window virtual terminal */
 #define WWT_TERM	"window-v2"
-#define WWT_TERMCAP	"WW|window-v2|window program version 2:\
+#define WWT_TERMCAP	"window-v2|window program version 2:\
 	:am:bs:da:db:ms:pt:cr=^M:nl=^J:bl=^G:ta=^I:\
 	:cm=\\EY%+ %+ :le=^H:nd=\\EC:up=\\EA:do=\\EB:ho=\\EH:\
 	:cd=\\EJ:ce=\\EK:cl=\\EE:me=\\Er^?:"
