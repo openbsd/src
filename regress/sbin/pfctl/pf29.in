@@ -1,0 +1,2 @@
+rdr on lo0 proto tcp from any to 192.168.0.0/24 port 8000:8010 -> 127.0.0.1 port 8000:*
+rdr on lo0 proto tcp from any to 192.168.0.0/24 port ftp:ssh -> 127.0.0.1 port bgp:*
