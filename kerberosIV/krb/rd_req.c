@@ -201,7 +201,7 @@ krb_rd_req(authent, service, instance, from_addr, ad, fn)
         mutual = 0;
 #endif /* lint */
     s_kvno = *ptr++;		/* get server key version */
-    (void) strcpy(realm,ptr);   /* And the realm of the issuing KDC */
+    (void) strncpy(realm,ptr, REALM_SZ);   /* And the realm of the issuing KDC */
     ptr += strlen(ptr) + 1;     /* skip the realm "hint" */
 
     /*
