@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.4 1996/07/28 19:45:36 downsj Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.5 1996/07/28 22:42:45 downsj Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -115,6 +115,10 @@ int	timeout = 900;    /* timeout after 15 minutes of inactivity */
 int	maxtimeout = 7200;/* don't allow idle time to be set beyond 2 hours */
 int	logging;
 int	guest;
+#ifdef STATS
+int	stats;
+int	statfd = -1;
+#endif
 int	dochroot;
 int	type;
 int	form;
@@ -141,7 +145,14 @@ static struct utmp utmp;	/* for utmp */
 #if defined(KERBEROS)
 int	notickets = 1;
 char	*krbtkfile_env = NULL;
-#endif 
+#endif
+
+#ifdef STATS
+char	*ident = NULL;
+
+void	logxfer __P((char *, off_t, time_t));
+#endif
+
 
 /*
  * Timeout intervals for retrying connections
@@ -215,6 +226,11 @@ main(argc, argv, envp)
 	int addrlen, ch, on = 1, tos;
 	char *cp, line[LINE_MAX];
 	FILE *fd;
+#ifdef STATS
+	char *argstr = "dlSt:T:u:Uv";
+#else
+	char *argstr = "dlt:T:u:Uv";
+#endif
 
 	/*
 	 * LOG_NDELAY sets up the logging connection immediately,
@@ -242,7 +258,7 @@ main(argc, argv, envp)
 	/* set this here so klogin can use it... */
 	(void)snprintf(ttyline, sizeof(ttyline), "ftp%d", getpid());
 
-	while ((ch = getopt(argc, argv, "dlt:T:u:Uv")) != EOF) {
+	while ((ch = getopt(argc, argv, argstr)) != EOF) {
 		switch (ch) {
 		case 'd':
 			debug = 1;
@@ -251,6 +267,12 @@ main(argc, argv, envp)
 		case 'l':
 			logging++;	/* > 1 == extra logging */
 			break;
+
+#ifdef STATS
+		case 'S':
+			stats = 1;
+			break;
+#endif
 
 		case 't':
 			timeout = atoi(optarg);
@@ -620,6 +642,13 @@ skip:
 		login(&utmp);
 	}
 
+#ifdef STATS
+	/* open stats file before chroot */
+	if (guest && (stats == 1) && (statfd < 0))
+		if ((statfd = open(_PATH_FTPDSTATFILE, O_WRONLY|O_APPEND)) < 0)
+			stats = 0;
+#endif
+
 	logged_in = 1;
 
 	dochroot = checkuser(_PATH_FTPCHROOT, pw->pw_name);
@@ -666,6 +695,13 @@ skip:
 		(void) fclose(fd);
 	}
 	if (guest) {
+#ifdef STATS
+		if (ident != NULL)
+			free(ident);
+		ident = strdup(passwd);
+		if (ident == (char *)NULL)
+			fatal("Ran out of memory.");
+#endif
 		reply(230, "Guest login ok, access restrictions apply.");
 #ifdef HASSETPROCTITLE
 		snprintf(proctitle, sizeof(proctitle),
@@ -702,6 +738,9 @@ retrieve(cmd, name)
 	FILE *fin, *dout;
 	struct stat st;
 	int (*closefunc) __P((FILE *));
+#ifdef STATS
+	time_t start;
+#endif
 
 	if (cmd == 0) {
 		fin = fopen(name, "r"), closefunc = fclose;
@@ -751,8 +790,15 @@ retrieve(cmd, name)
 	dout = dataconn(name, st.st_size, "w");
 	if (dout == NULL)
 		goto done;
+#ifdef STATS
+	time(&start);
+#endif
 	send_data(fin, dout, st.st_blksize, st.st_size,
 		  (restart_point == 0 && cmd == 0 && S_ISREG(st.st_mode)));
+#ifdef STATS
+	if ((cmd == 0) && guest && stats)
+		logxfer(name, st.st_size, start);
+#endif
 	(void) fclose(dout);
 	data = -1;
 	pdata = -1;
@@ -1752,3 +1798,24 @@ out:
 		globfree(&gl);
 	}
 }
+
+#ifdef STATS
+void
+logxfer(name, size, start)
+	char *name;
+	off_t size;
+	time_t start;
+{
+	char buf[1024];
+	char path[MAXPATHLEN + 1];
+	time_t now;
+
+	if ((statfd >= 0) && (getwd(path) != NULL)) {
+		time(&now);
+		snprintf(buf, sizeof(buf), "%.20s!%s!%s!%s/%s!%qd!%ld\n",
+			 ctime(&now)+4, ident, remotehost,
+			 path, name, size, now - start + (now == start));
+		write(statfd, buf, strlen(buf));
+	}
+}
+#endif
