@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.23 2004/09/14 23:04:10 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.24 2004/09/15 17:10:09 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -330,6 +330,11 @@ our @ISA=qw(OpenBSD::PackingElement::FileBase);
 __PACKAGE__->setKeyword('info');
 sub keyword() { "info" }
 sub dirclass() { "OpenBSD::PackingElement::Infodir" }
+
+package OpenBSD::PackingElement::Shell;
+our @ISA=qw(OpenBSD::PackingElement::FileBase);
+__PACKAGE__->setKeyword('shell');
+sub keyword() { "shell" }
 
 package OpenBSD::PackingElement::Manpage;
 our @ISA=qw(OpenBSD::PackingElement::FileBase);
