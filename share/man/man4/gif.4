@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gif.4,v 1.8 2000/10/18 02:38:22 aaron Exp $
+.\"	$OpenBSD: gif.4,v 1.9 2000/12/31 00:19:22 angelos Exp $
 .\"	$KAME: gif.4,v 1.15 2000/04/19 09:39:42 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -64,9 +64,26 @@ One may need to remove any IPv6 link-local address manually using
 .Xr ifconfig 8 ,
 to disable the use of IPv6 as inner header
 .Pq e.g., when a pure IPv4-over-IPv6 tunnel is required .
-Finally, the routing table may be used to route the packets toward the
+Also, the routing table may be used to route the packets toward the
 .Nm
 interface.
+.Pp
+Finally, the
+.Nm gif
+interface may be used as a
+.Xr bridge 4
+member.
+Ethernet frames forwarded by the bridge to the
+.Nm gif
+interface are encapsulated inside an IPv4 or IPv6 header (depending on
+how the interface is configured), with transport protocol number 97
+(etherip).
+IPv4 or IPv6 packets carrying transport protocol 97 are delivered to
+the
+.Nm gif
+interface whose "physical" addresses match the source/destination
+addresses of the packet (the source address of the packet must match
+the destination "physical" address, and vice versa).
 .\"
 .Sh SEE ALSO
 .Xr inet 4 ,
