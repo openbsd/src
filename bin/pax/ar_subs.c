@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar_subs.c,v 1.12 1997/09/01 18:29:44 deraadt Exp $	*/
+/*	$OpenBSD: ar_subs.c,v 1.13 1997/09/16 21:20:35 niklas Exp $	*/
 /*	$NetBSD: ar_subs.c,v 1.5 1995/03/21 09:07:06 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: ar_subs.c,v 1.12 1997/09/01 18:29:44 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ar_subs.c,v 1.13 1997/09/16 21:20:35 niklas Exp $";
 #endif
 #endif /* not lint */
 
@@ -1022,6 +1022,7 @@ next_head(arcn)
 	register int hsz;
 	register int in_resync = 0; 	/* set when we are in resync mode */
 	int cnt = 0;			/* counter for trailer function */
+	int first = 1;			/* on 1st read, EOF isn't premature. */
 
 	/*
 	 * set up initial conditions, we want a whole frmt->hsz block as we
@@ -1038,6 +1039,17 @@ next_head(arcn)
 		for (;;) {
 			if ((ret = rd_wrbuf(hdend, res)) == res)
 				break;
+
+			/*
+			 * If we read 0 bytes (EOF) from an archive when we
+			 * expect to find a header, we have stepped upon
+			 * an archive without the customary block of zeroes
+			 * end marker.  It's just stupid to error out on
+			 * them, so exit gracefully.
+			 */
+			if (first && ret == 0)
+				return(-1);
+			first = 0;
 
 			/*
 			 * some kind of archive read problem, try to resync the
