@@ -23,7 +23,7 @@ LFILES=	errno.h fcntl.h syslog.h termios.h
 CFILES=	curses.h
 
 DIRS=	arpa protocols rpc rpcsvc
-LDIRS=	dev net netinet netccitt netiso netns nfs sys ufs vm 
+LDIRS=	dev net netinet netccitt netiso netns nfs sys ufs vm ddb
 
 NOOBJ=	noobj
 
