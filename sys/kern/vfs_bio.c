@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.62 2002/05/24 13:59:33 art Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.63 2002/05/24 14:06:34 art Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*-
@@ -587,8 +587,6 @@ brelse(bp)
 	/* Unlock the buffer. */
 	CLR(bp->b_flags, (B_AGE | B_ASYNC | B_BUSY | B_NOCACHE | B_DEFERRED));
 
-	/* Allow disk interrupts. */
-	splx(s);
 
 	/* Wake up syncer and cleaner processes waiting for buffers */
 	if (nobuffers) {
@@ -601,6 +599,8 @@ brelse(bp)
 		needbuffer--;
 		wakeup_one(&needbuffer);
 	}
+
+	splx(s);
 
 	/* Wake up any processes waiting for _this_ buffer to become free. */
 	if (ISSET(bp->b_flags, B_WANTED)) {
