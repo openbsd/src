@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_misc.c,v 1.20 1998/03/06 21:58:09 niklas Exp $	 */
+/*	$OpenBSD: svr4_misc.c,v 1.21 1999/02/10 00:16:12 niklas Exp $	 */
 /*	$NetBSD: svr4_misc.c,v 1.42 1996/12/06 03:22:34 christos Exp $	 */
 
 /*
@@ -267,7 +267,7 @@ again:
 	if (error)
 		goto out;
 
-	if (!error && !cookiebuf) {
+	if (!error && !cookiebuf && !eofflag) {
 		error = EPERM;
 		goto out;
 	}
@@ -282,10 +282,10 @@ again:
 		bdp = (struct dirent *)inp;
 		reclen = bdp->d_reclen;
 		if (reclen & 3)
-			panic("svr4_getdents");
-		off = *cookie++;	/* each entry points to the next */
+			panic("svr4_getdents: bad reclen");
 		if (bdp->d_fileno == 0) {
 			inp += reclen;	/* it is a hole; squish it out */
+			off = *cookie++;
 			continue;
 		}
 		svr4_reclen = SVR4_RECLEN(&idb, bdp->d_namlen);
@@ -294,6 +294,8 @@ again:
 			outp++;
 			break;
 		}
+		off = *cookie++;	/* each entry points to the next */
+
 		/*
 		 * Massage in place to make a SVR4-shaped dirent (otherwise
 		 * we have to worry about touching user memory outside of
@@ -305,8 +307,10 @@ again:
 		strcpy(idb.d_name, bdp->d_name);
 		if ((error = copyout((caddr_t)&idb, outp, svr4_reclen)))
 			goto out;
+
 		/* advance past this real entry */
 		inp += reclen;
+
 		/* advance output past SVR4-shaped entry */
 		outp += svr4_reclen;
 		resid -= svr4_reclen;
@@ -1385,7 +1389,7 @@ svr4_sys_rdebug(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-#ifdef SVR4_COMPAT_NCR
+#ifdef COMPAT_SVR4_NCR
 	return (ENXIO);
 #else
 	return (p->p_os == OOS_NCR ? ENXIO : sys_nosys(p, v, retval));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sunos_misc.c,v 1.20 1998/03/23 07:12:39 millert Exp $	*/
+/*	$OpenBSD: sunos_misc.c,v 1.21 1999/02/10 00:16:12 niklas Exp $	*/
 /*	$NetBSD: sunos_misc.c,v 1.65 1996/04/22 01:44:31 christos Exp $	*/
 
 /*
@@ -447,10 +447,10 @@ again:
 		bdp = (struct dirent *)inp;
 		reclen = bdp->d_reclen;
 		if (reclen & 3)
-			panic("sunos_getdents");
-		off = *cookie++;	/* each entry points to next */
+			panic("sunos_getdents: bad reclen");
 		if (bdp->d_fileno == 0) {
 			inp += reclen;	/* it is a hole; squish it out */
+			off = *cookie++;
 			continue;
 		}
 		sunos_reclen = SUNOS_RECLEN(&idb, bdp->d_namlen);
@@ -459,6 +459,7 @@ again:
 			outp++;
 			break;
 		}
+		off = *cookie++;	/* each entry points to next */
 		/*
 		 * Massage in place to make a Sun-shaped dirent (otherwise
 		 * we have to worry about touching user memory outside of

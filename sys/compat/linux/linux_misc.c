@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_misc.c,v 1.18 1998/07/05 20:49:12 downsj Exp $	*/
+/*	$OpenBSD: linux_misc.c,v 1.19 1999/02/10 00:16:12 niklas Exp $	*/
 /*	$NetBSD: linux_misc.c,v 1.27 1996/05/20 01:59:21 fvdl Exp $	*/
 
 /*
@@ -853,7 +853,7 @@ again:
 		bdp = (struct dirent *)inp;
 		reclen = bdp->d_reclen;
 		if (reclen & 3)
-			panic("linux_readdir");
+			panic("linux_readdir: bad reclen");
 		if (bdp->d_fileno == 0) {
 			inp += reclen;	/* it is a hole; squish it out */
 			off = *cookie++;
@@ -863,15 +863,16 @@ again:
 		if (reclen > len || resid < linux_reclen) {
 			/* entry too big for buffer, so just stop */
 			outp++;
-			off = *cookie++;
 			break;
 		}
+
 		/*
 		 * Massage in place to make a Linux-shaped dirent (otherwise
 		 * we have to worry about touching user memory outside of
 		 * the copyout() call).
 		 */
 		idb.d_ino = (linux_ino_t)bdp->d_fileno;
+
 		/*
 		 * The old readdir() call misuses the offset and reclen fields.
 		 */

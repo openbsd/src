@@ -1,4 +1,4 @@
-/*	$OpenBSD: ibcs2_misc.c,v 1.13 1997/11/06 05:58:03 csapuntz Exp $	*/
+/*	$OpenBSD: ibcs2_misc.c,v 1.14 1999/02/10 00:16:11 niklas Exp $	*/
 /*	$NetBSD: ibcs2_misc.c,v 1.23 1997/01/15 01:37:49 perry Exp $	*/
 
 /*
@@ -395,7 +395,7 @@ again:
 	if (error)
 		goto out;
 
-	if (!error && !cookiebuf) {
+	if (!error && !cookiebuf && !eofflag) {
 		error = EPERM;
 		goto out;
 	}
@@ -410,10 +410,10 @@ again:
 		bdp = (struct dirent *)inp;
 		reclen = bdp->d_reclen;
 		if (reclen & 3)
-			panic("ibcs2_getdents");
-		off = *cookie++;	/* each entry points to the next */
+			panic("ibcs2_getdents: bad reclen");
 		if (bdp->d_fileno == 0) {
 			inp += reclen;	/* it is a hole; squish it out */
+			off = *cookie++;
 			continue;
 		}
 		ibcs2_reclen = IBCS2_RECLEN(&idb, bdp->d_namlen);
@@ -422,6 +422,8 @@ again:
 			outp++;
 			break;
 		}
+		off = *cookie++;	/* each entry points to the next */
+
 		/*
 		 * Massage in place to make a iBCS2-shaped dirent (otherwise
 		 * we have to worry about touching user memory outside of
@@ -434,8 +436,10 @@ again:
 		error = copyout((caddr_t)&idb, outp, ibcs2_reclen);
 		if (error)
 			goto out;
+
 		/* advance past this real entry */
 		inp += reclen;
+
 		/* advance output past iBCS2-shaped entry */
 		outp += ibcs2_reclen;
 		resid -= ibcs2_reclen;
@@ -520,7 +524,7 @@ again:
 	if (error)
 		goto out;
 
-	if (!error && !cookiebuf) {
+	if (!error && !cookiebuf && !eofflag) {
 		error = EPERM;
 		goto out;
 	}
@@ -534,10 +538,10 @@ again:
 		bdp = (struct dirent *)inp;
 		reclen = bdp->d_reclen;
 		if (reclen & 3)
-			panic("ibcs2_read");
-		off = *cookie++;	/* each entry points to the next */
+			panic("ibcs2_read: bad reclen");
 		if (bdp->d_fileno == 0) {
 			inp += reclen;	/* it is a hole; squish it out */
+			off = *cookie++;
 			continue;
 		}
 		ibcs2_reclen = 16;
@@ -546,6 +550,7 @@ again:
 			outp++;
 			break;
 		}
+		off = *cookie++;	/* each entry points to the next */
 		/*
 		 * Massage in place to make a iBCS2-shaped dirent (otherwise
 		 * we have to worry about touching user memory outside of
