@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.8 1996/04/21 22:16:06 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.9 1996/04/23 10:10:20 mickey Exp $
 #	$NetBSD: GENERIC,v 1.40 1996/03/30 23:57:09 perry Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -80,7 +80,7 @@ options		ISO,TPIP	# OSI
 options		EON		# OSI tunneling over IP
 options		CCITT,LLC,HDLC	# X.25
 
-config		netbsd	swap generic
+config		bsd	swap generic
 options		GENERIC
 
 mainbus0 at root
