@@ -153,6 +153,10 @@ Boston, MA 02111-1307, USA.  */
   "%{g:%{!nostdlib:-L/usr/lib/debug}} %{!shared:%{!nostdlib:%{!r*:%{!e*:-e start}}}} %{shared:-Bshareable -x} -dc -dp %{R*} %{static:-Bstatic} %{assert*}"
 #endif
 
+#if defined(HAVE_LD_EH_FRAME_HDR)
+#define LINK_EH_SPEC "%{!static:--eh-frame-hdr} "
+#endif
+
 #undef LIB_SPEC
 #define LIB_SPEC OBSD_LIB_SPEC
 #endif
