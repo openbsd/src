@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.98 2004/01/07 20:54:35 tedu Exp $
+#	$OpenBSD: GENERIC,v 1.99 2004/01/18 21:46:53 beck Exp $
 #
 #	Machine-independent option; used by all architectures for their
 #	GENERIC kernel
@@ -36,7 +36,7 @@ option		UFS_DIRHASH	# hash large directories
 option		QUOTA		# UFS quotas
 option		EXT2FS		# Second Extended Filesystem
 option		MFS		# memory file system
-#option		XFS		# xfs filesystem
+option		XFS		# xfs filesystem
 
 option		TCP_SACK	# Selective Acknowledgements for TCP
 option		TCP_ECN		# Explicit Congestion Notification for TCP
