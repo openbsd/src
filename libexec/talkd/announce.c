@@ -1,4 +1,4 @@
-/*	$OpenBSD: announce.c,v 1.6 1996/07/18 00:18:53 deraadt Exp $	*/
+/*	$OpenBSD: announce.c,v 1.7 1998/07/03 14:33:38 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)announce.c	5.9 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$Id: announce.c,v 1.6 1996/07/18 00:18:53 deraadt Exp $";
+static char rcsid[] = "$Id: announce.c,v 1.7 1998/07/03 14:33:38 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -123,7 +123,7 @@ announce_proc(request, remote_machine)
 	ioctl(fileno(tf), TIOCNOTTY, (struct sgttyb *) 0);
 	if (fstat(fileno(tf), &stbuf) < 0)
 		return (PERMISSION_DENIED);
-	if ((stbuf.st_mode&020) == 0)
+	if ((stbuf.st_mode&S_IWGRP) == 0)
 		return (PERMISSION_DENIED);
 	print_mesg(tf, request, remote_machine);
 	fclose(tf);
