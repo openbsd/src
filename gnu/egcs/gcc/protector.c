@@ -1,4 +1,4 @@
-/* Top level of GNU C compiler
+/* RTL buffer overflow protection function for GNU C compiler
    Copyright (C) 1987, 88, 89, 92-7, 1998 Free Software Foundation, Inc.
 
 This file is part of GNU CC.
@@ -73,7 +73,6 @@ static int current_function_defines_short_string;
 static int current_function_has_variable_string;
 static int current_function_defines_vsized_array;
 static int current_function_is_inlinable;
-static int saved_optimize_size = -1;
 
 static rtx guard_area, _guard;
 static rtx function_first_insn, prologue_insert_point;
@@ -83,6 +82,7 @@ static rtx debuginsn;
 static HOST_WIDE_INT sweep_frame_offset;
 static HOST_WIDE_INT push_allocated_offset = 0;
 static HOST_WIDE_INT push_frame_offset = 0;
+static int saved_cse_not_expected = 0;
 
 static int search_string_from_argsandvars PARAMS ((int caller));
 static int search_string_from_local_vars PARAMS ((tree block));
@@ -99,15 +99,14 @@ static void sweep_string_variable PARAMS ((rtx sweep_var, HOST_WIDE_INT var_size
 static void sweep_string_in_decls PARAMS ((tree block, HOST_WIDE_INT sweep_offset, HOST_WIDE_INT size));
 static void sweep_string_in_args PARAMS ((tree parms, HOST_WIDE_INT sweep_offset, HOST_WIDE_INT size));
 static void sweep_string_use_of_insns PARAMS ((rtx insn, HOST_WIDE_INT sweep_offset, HOST_WIDE_INT size));
-static void sweep_string_in_operand PARAMS ((rtx insn, rtx orig, HOST_WIDE_INT sweep_offset, HOST_WIDE_INT size));
+static void sweep_string_in_operand PARAMS ((rtx insn, rtx *loc, HOST_WIDE_INT sweep_offset, HOST_WIDE_INT size));
 static void move_arg_location PARAMS ((rtx insn, rtx orig, rtx new, HOST_WIDE_INT var_size));
 static void change_arg_use_of_insns PARAMS ((rtx insn, rtx orig, rtx new, HOST_WIDE_INT size));
 static void change_arg_use_in_operand PARAMS ((rtx x, rtx orig, rtx new, HOST_WIDE_INT size));
 static void expand_value_return PARAMS ((rtx val));
 static int  replace_return_reg PARAMS ((rtx insn, rtx return_save));
-static void propagate_virtual_stack_vars_in_insns PARAMS ((rtx insn));
-static void propagate_virtual_stack_vars_in_operand PARAMS ((rtx x, rtx orig));
-
+static void validate_insns_of_varrefs PARAMS ((rtx insn));
+static void validate_operand_of_varrefs PARAMS ((rtx insn, rtx *loc));
 
 #define SUSPICIOUS_BUF_SIZE 8
 
@@ -130,14 +129,12 @@ prepare_stack_protection (inlinable)
   tree blocks = DECL_INITIAL (current_function_decl);
   current_function_is_inlinable = inlinable && !flag_no_inline;
   push_frame_offset = push_allocated_offset = 0;
-
-  /* solve for ssp-ppc-20021125 */
-  if (saved_optimize_size < 0) saved_optimize_size = optimize_size;
-  optimize_size = saved_optimize_size;
+  saved_cse_not_expected = 0;
 
   /*
     skip the protection if the function has no block or it is an inline function
   */
+  if (current_function_is_inlinable) validate_insns_of_varrefs (get_insns ());
   if (! blocks || current_function_is_inlinable) return;
 
   current_function_defines_vulnerable_string = search_string_from_argsandvars (0);
@@ -153,10 +150,9 @@ prepare_stack_protection (inlinable)
 	  return;
       }
 
-      /* propagate virtual_stack_vars_rtx to access arg_pointer_save_area */
-      if (arg_pointer_save_area)
-	propagate_virtual_stack_vars_in_insns (function_first_insn);
-      
+      /* Initialize recognition, indicating that volatile is OK.  */
+      init_recog ();
+
       sweep_frame_offset = 0;
 	
 #ifdef STACK_GROWS_DOWNWARD
@@ -223,6 +219,7 @@ prepare_stack_protection (inlinable)
       /* Insert epilogue rtl instructions */
       rtl_epilogue (get_last_insn ());
 #endif
+      init_recog_no_volatile ();
     }
   else if (current_function_defines_short_string
 	   && warn_stack_protector)
@@ -417,6 +414,50 @@ search_string_def (type)
     default:
       break;
     }
+
+  return FALSE;
+}
+
+/*
+ * examine whether the input contains frame pointer addressing
+ */
+int
+contains_fp (op)
+     rtx op;
+{
+  register enum rtx_code code;
+  rtx x;
+  int i, j;
+  const char *fmt;
+
+  x = op;
+  if (x == 0)
+    return FALSE;
+
+  code = GET_CODE (x);
+
+  switch (code)
+    {
+    case PLUS:
+      if (XEXP (x, 0) == virtual_stack_vars_rtx
+	  && CONSTANT_P (XEXP (x, 1)))
+	return TRUE;
+      break;
+
+    default:
+      return FALSE;
+    }
+
+  /* Scan all subexpressions.  */
+  fmt = GET_RTX_FORMAT (code);
+  for (i = 0; i < GET_RTX_LENGTH (code); i++, fmt++)
+    if (*fmt == 'e')
+      {
+	if (contains_fp (XEXP (x, i))) return TRUE;
+      }
+    else if (*fmt == 'E')
+      for (j = 0; j < XVECLEN (x, i); j++)
+	if (contains_fp (XVECEXP (x, i, j))) return TRUE;
 
   return FALSE;
 }
@@ -698,7 +739,6 @@ rtl_prologue (insn)
   start_sequence ();
 
   _guard = gen_rtx_MEM (GUARD_m, gen_rtx_SYMBOL_REF (Pmode, "__guard"));
-  _guard = force_reg (GUARD_m, _guard);
   emit_move_insn ( guard_area, _guard);
 
   _val = gen_sequence ();
@@ -1037,6 +1077,9 @@ sweep_string_variable (sweep_var, var_size)
   switch (GET_CODE (sweep_var))
     {
     case MEM:
+      if (GET_CODE (XEXP (sweep_var, 0)) == ADDRESSOF
+	  && GET_CODE (XEXP (XEXP (sweep_var, 0), 0)) == REG)
+	return;
       sweep_offset = AUTO_OFFSET(XEXP (sweep_var, 0));
       break;
     case CONST_INT:
@@ -1231,6 +1274,8 @@ sweep_string_in_args (parms, sweep_offset, sweep_size)
 }
 
 
+static int has_virtual_reg;
+
 static void
 sweep_string_use_of_insns (insn, sweep_offset, sweep_size)
      rtx insn;
@@ -1240,17 +1285,18 @@ sweep_string_use_of_insns (insn, sweep_offset, sweep_size)
     if (GET_CODE (insn) == INSN || GET_CODE (insn) == JUMP_INSN
 	|| GET_CODE (insn) == CALL_INSN)
       {
-	sweep_string_in_operand (insn, PATTERN (insn), sweep_offset, sweep_size);
+	has_virtual_reg = FALSE;
+	sweep_string_in_operand (insn, &PATTERN (insn), sweep_offset, sweep_size);
       }
 }
 
 
 static void
-sweep_string_in_operand (insn, orig, sweep_offset, sweep_size)
-     rtx insn, orig;
+sweep_string_in_operand (insn, loc, sweep_offset, sweep_size)
+     rtx insn, *loc;
      HOST_WIDE_INT sweep_offset, sweep_size;
 {
-  register rtx x = orig;
+  register rtx x = *loc;
   register enum rtx_code code;
   int i, j;
   HOST_WIDE_INT offset;
@@ -1274,11 +1320,31 @@ sweep_string_in_operand (insn, orig, sweep_offset, sweep_size)
     case ADDR_VEC:
     case ADDR_DIFF_VEC:
     case RETURN:
-    case REG:
     case ADDRESSOF:
       return;
 	    
+    case REG:
+      if (x == virtual_incoming_args_rtx
+	  || x == virtual_stack_vars_rtx
+	  || x == virtual_stack_dynamic_rtx
+	  || x == virtual_outgoing_args_rtx
+	  || x == virtual_cfa_rtx)
+	has_virtual_reg = TRUE;
+      return;
+      
     case SET:
+      /*
+	skip setjmp setup insn and setjmp restore insn
+	Example:
+	(set (MEM (reg:SI xx)) (virtual_stack_vars_rtx)))
+	(set (virtual_stack_vars_rtx) (REG))
+      */
+      if (GET_CODE (XEXP (x, 0)) == MEM
+	  && XEXP (x, 1) == virtual_stack_vars_rtx)
+	return;
+      if (XEXP (x, 0) == virtual_stack_vars_rtx
+	  && GET_CODE (XEXP (x, 1)) == REG)
+	return;
       break;
 	    
     case PLUS:
@@ -1286,7 +1352,7 @@ sweep_string_in_operand (insn, orig, sweep_offset, sweep_size)
       if (XEXP (x, 0) == virtual_stack_vars_rtx
 	  && CONSTANT_P (XEXP (x, 1)))
 	{
-	  if (x->used) return;
+	  if (x->used) goto single_use_of_virtual_reg;
 	  
 	  offset = AUTO_OFFSET(x);
 
@@ -1306,42 +1372,39 @@ sweep_string_in_operand (insn, orig, sweep_offset, sweep_size)
 	      XEXP (x, 1) = gen_rtx_CONST_INT (VOIDmode, offset - sweep_size);
 	      x->used = 1;
 	    }
+	  
+	single_use_of_virtual_reg:
+	  if (has_virtual_reg) {
+	    /* excerpt from insn_invalid_p in recog.c */
+	    int icode = recog_memoized (insn);
+
+	    if (icode < 0 && asm_noperands (PATTERN (insn)) < 0)
+	      {
+		rtx temp, seq;
+		
+		start_sequence ();
+		temp = force_operand (x, NULL_RTX);
+		seq = get_insns ();
+		end_sequence ();
+		
+		emit_insns_before (seq, insn);
+		if (! validate_change (insn, loc, temp, 0)
+		    && ! validate_replace_rtx (x, temp, insn))
+		  fatal_insn ("sweep_string_in_operand", insn);
+	      }
+	  }
+
+	  has_virtual_reg = TRUE;
 	  return;
 	}
 
 #ifdef FRAME_GROWS_DOWNWARD
       /*
-	Handle special case of frame register plus constant given by reg.
-	This is happen when the mem is refered by legitimized address.
-
-	CAUTION:
-	This is only used at the case of guard sweep, not arrange_var_order.
-
-	Example:
-	    (plus:SI (reg:SI 78) (reg:SI 109))
+	special case of frame register plus constant given by reg.
 	*/
       else if (XEXP (x, 0) == virtual_stack_vars_rtx
 	       && GET_CODE (XEXP (x, 1)) == REG)
-	{
-	    rtx temp, *loc, seq;
-	    
-	    temp = plus_constant (virtual_stack_vars_rtx, -sweep_size);
-	    temp->used = 1;
-
-	    loc = &XEXP (x, 0);
-	    if (! validate_change (insn, loc, temp, 0)) {
-	      start_sequence ();
-	      temp = force_operand (temp, NULL_RTX);
-	      seq = get_insns ();
-	      end_sequence ();
-
-	      emit_insns_before (seq, insn);
-	      if (! validate_change (insn, loc, temp, 0)
-		  && ! validate_replace_rtx (XEXP (x, 0), temp, insn))
-		*loc = temp;		      /* abort (); */
-	    }
-	    return;
-	}
+	fatal_insn ("sweep_string_in_operand: unknown addressing", insn);
 #endif
 
       /*
@@ -1373,48 +1436,12 @@ sweep_string_in_operand (insn, orig, sweep_offset, sweep_size)
 	    (set (reg:SI xx) (MEM (reg:SI 78)))
 	*/
 	if (XEXP (x, i) == virtual_stack_vars_rtx)
-	  {
-	    rtx temp = 0, *loc, seq;
-	    offset = 0;
-	    
-	    /* the operand related to the sweep variable */
-	    if (sweep_offset <= offset
-		&& offset < sweep_offset + sweep_size)
-	      {
-		offset = sweep_frame_offset - sweep_size - sweep_offset;
-
-		temp = plus_constant (virtual_stack_vars_rtx, offset);
-		temp->used = 1;
-	      }
-	    else if (sweep_offset <= offset
-		     && offset < sweep_frame_offset)
-	      {	/* the rest of variables under sweep_frame_offset, so shift the location */
-		temp = plus_constant (virtual_stack_vars_rtx, -sweep_size);
-		temp->used = 1;
-	      }
-
-	    if (temp) {
-	      loc = &XEXP (x, i);
-	      if (! validate_change (insn, loc, temp, 0)) {
-		start_sequence ();
-		temp = force_operand (temp, NULL_RTX);
-		seq = get_insns ();
-		end_sequence ();
-
-		emit_insns_before (seq, insn);
-		if (! validate_change (insn, loc, temp, 0)
-		    && ! validate_replace_rtx (XEXP (x, i), temp, insn))
-		    *loc = temp;	/* abort (); */
-	      }
-	    }
-	    return;
-	  }
-
-	sweep_string_in_operand (insn, XEXP (x, i), sweep_offset, sweep_size);
+	  fatal_insn ("sweep_string_in_operand: unknown fp usage", insn);
+	sweep_string_in_operand (insn, &XEXP (x, i), sweep_offset, sweep_size);
       }
     else if (*fmt == 'E')
       for (j = 0; j < XVECLEN (x, i); j++)
-	sweep_string_in_operand (insn, XVECEXP (x, i, j), sweep_offset, sweep_size);
+	sweep_string_in_operand (insn, &XVECEXP (x, i, j), sweep_offset, sweep_size);
 }   
 
 
@@ -1634,27 +1661,42 @@ expand_value_return (val)
 
 
 static void
-propagate_virtual_stack_vars_in_insns (insn)
+validate_insns_of_varrefs (insn)
      rtx insn;
 {
-  for (; insn; insn = NEXT_INSN (insn))
-    if (GET_CODE (insn) == INSN || GET_CODE (insn) == JUMP_INSN
-	|| GET_CODE (insn) == CALL_INSN)
-      {
-	propagate_virtual_stack_vars_in_operand (insn, PATTERN (insn));
-      }
+  rtx next;
+
+  /* Initialize recognition, indicating that volatile is OK.  */
+  init_recog ();
+
+  for (; insn; insn = next)
+    {
+      next = NEXT_INSN (insn);
+      if (GET_CODE (insn) == INSN || GET_CODE (insn) == JUMP_INSN
+	  || GET_CODE (insn) == CALL_INSN)
+	{
+	  /* excerpt from insn_invalid_p in recog.c */
+	  int icode = recog_memoized (insn);
+
+	  if (icode < 0 && asm_noperands (PATTERN (insn)) < 0)
+	    validate_operand_of_varrefs (insn, &PATTERN (insn));
+	}
+    }
+
+  init_recog_no_volatile ();
 }
 
 
 static void
-propagate_virtual_stack_vars_in_operand (insn, orig)
-     rtx insn, orig;
+validate_operand_of_varrefs (insn, loc)
+     rtx insn, *loc;
 {
-  register rtx x = orig;
   register enum rtx_code code;
+  rtx x, temp, seq;
   int i, j;
   const char *fmt;
 
+  x = *loc;
   if (x == 0)
     return;
 
@@ -1662,6 +1704,7 @@ propagate_virtual_stack_vars_in_operand (insn, orig)
 
   switch (code)
     {
+    case USE:
     case CONST_INT:
     case CONST_DOUBLE:
     case CONST:
@@ -1676,38 +1719,50 @@ propagate_virtual_stack_vars_in_operand (insn, orig)
     case REG:
     case ADDRESSOF:
       return;
-	    
-    case SET:
-      if (RTX_INTEGRATED_P (insn)
-	  && (GET_CODE (SET_SRC (x)) == REG && GET_CODE (SET_DEST (x)) == REG)
-	  && VIRTUAL_STACK_VARS_P (SET_SRC (x)))
-	  {
-	    SET_DEST (x)->used = 1; debug_rtx (insn);
-	    return;
-	  }
-      break;
-	    
+
     case PLUS:
-      /* Handle typical case of frame register plus constant.  */
-      if (VIRTUAL_STACK_VARS_P (XEXP (x, 0))
-	  && (CONSTANT_P (XEXP (x, 1))
-	      ||  GET_CODE (XEXP (x, 1)) == REG))
+      /* validate insn of frame register plus constant.  */
+      if (GET_CODE (x) == PLUS
+	  && XEXP (x, 0) == virtual_stack_vars_rtx
+	  && CONSTANT_P (XEXP (x, 1)))
 	{
-	  XEXP (x, 0) =  virtual_stack_vars_rtx;
+	  start_sequence ();
+	  /* temp = force_operand (x, NULL_RTX); */
+	  { /* excerpt from expand_binop in optabs.c */
+	    optab binoptab = add_optab;
+	    enum machine_mode mode = GET_MODE (x);
+	    int icode = (int) binoptab->handlers[(int) mode].insn_code;
+	    enum machine_mode mode1 = insn_operand_mode[icode][2];
+	    rtx pat;
+	    rtx xop0 = XEXP (x, 0), xop1 = XEXP (x, 1);
+	    temp = gen_reg_rtx (mode);
+
+	    /* Now, if insn's predicates don't allow offset operands, put them into
+	       pseudo regs.  */
+
+	    if (! (*insn_operand_predicate[icode][2]) (xop1, mode1)
+		&& mode1 != VOIDmode)
+	      xop1 = copy_to_mode_reg (mode1, xop1);
+
+	    pat = GEN_FCN (icode) (temp, xop0, xop1);
+	    if (pat)
+	      emit_insn (pat);
+	  }	      
+	  seq = get_insns ();
+	  end_sequence ();
+	  
+	  emit_insns_before (seq, insn);
+	  if (! validate_change (insn, loc, temp, 0))
+	    abort ();
 	  return;
 	}
-
-      /*
-	    process further subtree:
-	    Example:  (plus:SI (mem/s:SI (plus:SI (reg:SI 17) (const_int 8)))
-	    (const_int 5))
-	  */
-      break;
+	break;
+      
 
     case CALL_PLACEHOLDER:
-      propagate_virtual_stack_vars_in_insns (XEXP (x, 0));
-      propagate_virtual_stack_vars_in_insns (XEXP (x, 1));
-      propagate_virtual_stack_vars_in_insns (XEXP (x, 2));
+      validate_insns_of_varrefs (XEXP (x, 0));
+      validate_insns_of_varrefs (XEXP (x, 1));
+      validate_insns_of_varrefs (XEXP (x, 2));
       break;
 
     default:
@@ -1718,11 +1773,11 @@ propagate_virtual_stack_vars_in_operand (insn, orig)
   fmt = GET_RTX_FORMAT (code);
   for (i = 0; i < GET_RTX_LENGTH (code); i++, fmt++)
     if (*fmt == 'e')
-      propagate_virtual_stack_vars_in_operand (insn, XEXP (x, i));
+      validate_operand_of_varrefs (insn, &XEXP (x, i));
     else if (*fmt == 'E')
       for (j = 0; j < XVECLEN (x, i); j++)
-	propagate_virtual_stack_vars_in_operand (insn, XVECEXP (x, i, j));
-}   
+	validate_operand_of_varrefs (insn, &XVECEXP (x, i, j));
+}
 
 
 
@@ -1734,12 +1789,12 @@ propagate_virtual_stack_vars_in_operand (insn, orig)
   the corruption of local variables that could be used to further corrupt
   arbitrary memory locations.
 */
-#ifndef FRAME_GROWS_DOWNWARD
+#if !defined(FRAME_GROWS_DOWNWARD) && defined(STACK_GROWS_DOWNWARD)
 static void push_frame PARAMS ((HOST_WIDE_INT var_size, HOST_WIDE_INT boundary));
 static void push_frame_in_decls PARAMS ((tree block, HOST_WIDE_INT push_size, HOST_WIDE_INT boundary));
 static void push_frame_in_args PARAMS ((tree parms, HOST_WIDE_INT push_size, HOST_WIDE_INT boundary));
 static void push_frame_of_insns PARAMS ((rtx insn, HOST_WIDE_INT push_size, HOST_WIDE_INT boundary));
-static void push_frame_in_operand PARAMS ((rtx orig, HOST_WIDE_INT push_size, HOST_WIDE_INT boundary));
+static void push_frame_in_operand PARAMS ((rtx insn, rtx orig, HOST_WIDE_INT push_size, HOST_WIDE_INT boundary));
 static void push_frame_of_reg_equiv_memory_loc PARAMS ((HOST_WIDE_INT push_size, HOST_WIDE_INT boundary));
 static void push_frame_of_reg_equiv_constant PARAMS ((HOST_WIDE_INT push_size, HOST_WIDE_INT boundary));
 static void reset_used_flags_for_push_frame PARAMS ((void));
@@ -1753,12 +1808,13 @@ assign_stack_local_for_pseudo_reg (mode, size, align)
      HOST_WIDE_INT size;
      int align;
 {
-#ifdef FRAME_GROWS_DOWNWARD
+#if defined(FRAME_GROWS_DOWNWARD) || !defined(STACK_GROWS_DOWNWARD)
   return assign_stack_local (mode, size, align);
 #else
   tree blocks = DECL_INITIAL (current_function_decl);
   rtx new;
-  HOST_WIDE_INT saved_frame_offset, units_per_push;
+  HOST_WIDE_INT saved_frame_offset, units_per_push, starting_frame;
+  int first_call_from_purge_addressof, first_call_from_global_alloc;
 
   if (! flag_propolice_protection
       || size == 0
@@ -1768,21 +1824,41 @@ assign_stack_local_for_pseudo_reg (mode, size, align)
       || current_function_contains_functions)
     return assign_stack_local (mode, size, align);
 
-  optimize_size = 1;		/* solve for ssp-ppc-20021125 */
+  first_call_from_purge_addressof = !push_frame_offset && !cse_not_expected;
+  first_call_from_global_alloc = !saved_cse_not_expected && cse_not_expected;
+  saved_cse_not_expected = cse_not_expected;
+
+  starting_frame = (STARTING_FRAME_OFFSET)?STARTING_FRAME_OFFSET:BIGGEST_ALIGNMENT / BITS_PER_UNIT;
   units_per_push = MAX(BIGGEST_ALIGNMENT / BITS_PER_UNIT,
 		       GET_MODE_SIZE (mode));
     
-  if (push_frame_offset == 0
-      && check_out_of_frame_access (get_insns (), STARTING_FRAME_OFFSET + push_allocated_offset))
+  if (first_call_from_purge_addressof)
     {
-      if (push_allocated_offset == 0)
+      push_frame_offset = push_allocated_offset;
+      if (check_out_of_frame_access (get_insns (), starting_frame))
 	{
 	  /* if there is an access beyond frame, push dummy region to seperate
 	     the address of instantiated variables */
 	  push_frame (GET_MODE_SIZE (DImode), 0);
 	  assign_stack_local (BLKmode, GET_MODE_SIZE (DImode), -1);
 	}
-      else push_allocated_offset = 0;
+    }
+
+  if (first_call_from_global_alloc)
+    {
+      push_frame_offset = push_allocated_offset = 0;
+      if (check_out_of_frame_access (get_insns (), starting_frame))
+	{
+	  if (STARTING_FRAME_OFFSET)
+	    {
+	      /* if there is an access beyond frame, push dummy region 
+		 to seperate the address of instantiated variables */
+	      push_frame (GET_MODE_SIZE (DImode), 0);
+	      assign_stack_local (BLKmode, GET_MODE_SIZE (DImode), -1);
+	    }
+	  else
+	    push_allocated_offset = starting_frame;
+	}
     }
 
   saved_frame_offset = frame_offset;
@@ -1793,19 +1869,20 @@ assign_stack_local_for_pseudo_reg (mode, size, align)
   push_frame_offset = frame_offset;
   frame_offset = saved_frame_offset;
   
-  if (push_frame_offset > push_allocated_offset) {
-    push_frame (units_per_push, AUTO_OFFSET(XEXP (new, 0)));
+  if (push_frame_offset > push_allocated_offset)
+    {
+      push_frame (units_per_push, push_allocated_offset + STARTING_FRAME_OFFSET);
 
-    assign_stack_local (BLKmode, units_per_push, -1);
-    push_allocated_offset += units_per_push;
-  }
+      assign_stack_local (BLKmode, units_per_push, -1);
+      push_allocated_offset += units_per_push;
+    }
 
   return new;
 #endif
 }
 
 
-#ifndef FRAME_GROWS_DOWNWARD
+#if !defined(FRAME_GROWS_DOWNWARD) && defined(STACK_GROWS_DOWNWARD)
 /*
   push frame infomation for instantiating pseudo register at the top of stack.
   This is only for the "frame grows upward", it means FRAME_GROWS_DOWNWARD is 
@@ -1993,31 +2070,81 @@ push_frame_in_args (parms, push_size, boundary)
 }
 
 
+static int insn_pushed;
+static int *fp_equiv = 0;
+
 static void
 push_frame_of_insns (insn, push_size, boundary)
      rtx insn;
      HOST_WIDE_INT push_size, boundary;
 {
+  /* init fp_equiv */
+  fp_equiv = (int *) alloca (max_reg_num () * sizeof (int));
+  bzero ((char *) fp_equiv, max_reg_num () * sizeof (int));
+		
   for (; insn; insn = NEXT_INSN (insn))
     if (GET_CODE (insn) == INSN || GET_CODE (insn) == JUMP_INSN
 	|| GET_CODE (insn) == CALL_INSN)
       {
-	debuginsn = insn;
-	push_frame_in_operand (PATTERN (insn), push_size, boundary);
+	insn_pushed = FALSE; debuginsn = insn;
+	push_frame_in_operand (insn, PATTERN (insn), push_size, boundary);
 
+	if (insn_pushed)
+	  {
+	    rtx after = insn;
+	    rtx seq = split_insns (PATTERN (insn), insn);
+
+	    if (seq && GET_CODE (seq) == SEQUENCE)
+	      {
+		register int i;
+
+		/* replace the pattern of the insn */
+		PATTERN (insn) = PATTERN (XVECEXP (seq, 0, 0));
+
+		if (XVECLEN (seq, 0) == 2)
+		  {
+		    rtx pattern = PATTERN (XVECEXP (seq, 0, 1));
+
+		    if (GET_CODE (pattern) == SET
+			&& GET_CODE (XEXP (pattern, 0)) == REG
+			&& GET_CODE (XEXP (pattern, 1)) == PLUS
+			&& XEXP (pattern, 0) == XEXP (XEXP (pattern, 1), 0)
+			&& CONSTANT_P (XEXP (XEXP (pattern, 1), 1)))
+		      {
+			rtx offset = XEXP (XEXP (pattern, 1), 1);
+			fp_equiv[REGNO (XEXP (pattern, 0))] = INTVAL (offset);
+			goto next;
+		      }
+		  }
+		
+		for (i = 1; i < XVECLEN (seq, 0); i++)
+		  {
+		    rtx insn = XVECEXP (seq, 0, i);
+		    add_insn_after (insn, after);
+		    after = insn;
+		  }
+
+		/* Recursively call try_split for each new insn created */
+	        insn = NEXT_INSN (insn);
+		for (i = 1; i < XVECLEN (seq, 0); i++, insn = NEXT_INSN (insn))
+		  insn = try_split (PATTERN (insn), insn, 1);
+	      }
+	  }
+
+      next:
 	/* push frame in NOTE */
-	push_frame_in_operand (REG_NOTES (insn), push_size, boundary);
+	push_frame_in_operand (insn, REG_NOTES (insn), push_size, boundary);
 
 	/* push frame in CALL EXPR_LIST */
 	if (GET_CODE (insn) == CALL_INSN)
-	  push_frame_in_operand (CALL_INSN_FUNCTION_USAGE (insn), push_size, boundary);
+	  push_frame_in_operand (insn, CALL_INSN_FUNCTION_USAGE (insn), push_size, boundary);
       }
 }
 
 
 static void
-push_frame_in_operand (orig, push_size, boundary)
-     rtx orig;
+push_frame_in_operand (insn, orig, push_size, boundary)
+     rtx insn, orig;
      HOST_WIDE_INT push_size, boundary;
 {
   register rtx x = orig;
@@ -2046,9 +2173,25 @@ push_frame_in_operand (orig, push_size, boundary)
     case RETURN:
     case REG:
     case ADDRESSOF:
+    case USE:
       return;
 	    
     case SET:
+      /* skip the insn that restores setjmp address */
+      if (XEXP (x, 0) == frame_pointer_rtx)
+	return;
+
+      /* reset fp_equiv register */
+      else if (GET_CODE (XEXP (x, 0)) == REG
+	  && fp_equiv[REGNO (XEXP (x, 0))])
+	fp_equiv[REGNO (XEXP (x, 0))] = 0;
+
+      /* propagete fp_equiv register */
+      else if (GET_CODE (XEXP (x, 0)) == REG
+	       && GET_CODE (XEXP (x, 1)) == REG
+	       && fp_equiv[REGNO (XEXP (x, 1))])
+	if (reg_renumber[REGNO (XEXP (x, 0))] > 0)
+	  fp_equiv[REGNO (XEXP (x, 0))] = fp_equiv[REGNO (XEXP (x, 1))];
       break;
 
     case MEM:
@@ -2056,7 +2199,7 @@ push_frame_in_operand (orig, push_size, boundary)
 	  && boundary == 0)
 	{
 	  XEXP (x, 0) = plus_constant (frame_pointer_rtx, push_size);
-	  XEXP (x, 0)->used = 1;
+	  XEXP (x, 0)->used = 1; insn_pushed = TRUE;
 	  return;
 	}
       break;
@@ -2076,10 +2219,62 @@ push_frame_in_operand (orig, push_size, boundary)
 	  else
 	    offset -= push_size;
 
-	  /* XEXP (x, 0) is frame_pointer_rtx */
 	  XEXP (x, 1) = gen_rtx_CONST_INT (VOIDmode, offset);
-	  x->used = 1;
+	  x->used = 1; insn_pushed = TRUE;
 
+	  return;
+	}
+      /*
+	Handle powerpc case:
+	 (set (reg x) (plus fp const))
+	 (set (.....) (... (plus (reg x) (const B))))
+      */
+      else if (CONSTANT_P (XEXP (x, 1))
+	       && GET_CODE (XEXP (x, 0)) == REG
+	       && fp_equiv[REGNO (XEXP (x, 0))])
+	{
+	  if (x->used) return;
+
+	  offset += fp_equiv[REGNO (XEXP (x, 0))];
+
+	  XEXP (x, 1) = gen_rtx_CONST_INT (VOIDmode, offset);
+	  x->used = 1; insn_pushed = TRUE;
+
+	  return;
+	}
+      /*
+	Handle special case of frame register plus reg (constant).
+	 (set (reg x) (const B))
+	 (set (....) (...(plus fp (reg x))))
+      */
+      else if (XEXP (x, 0) == frame_pointer_rtx
+	       && GET_CODE (XEXP (x, 1)) == REG
+	       && PREV_INSN (insn)
+	       && PATTERN (PREV_INSN (insn))
+	       && SET_DEST (PATTERN (PREV_INSN (insn))) == XEXP (x, 1)
+	       && CONSTANT_P (SET_SRC (PATTERN (PREV_INSN (insn)))))
+	{
+	  HOST_WIDE_INT offset = INTVAL (SET_SRC (PATTERN (PREV_INSN (insn))));
+
+	  if (x->used || abs (offset) < boundary)
+	    return;
+	  
+	  if (offset > 0)
+	    offset += push_size;
+	  else
+	    offset -= push_size;
+
+	  SET_SRC (PATTERN (PREV_INSN (insn))) = gen_rtx_CONST_INT (VOIDmode, offset);
+	  x->used = 1;
+	  XEXP (x, 1)->used = 1;
+
+	  return;
+	}
+      /* Handle special case of frame register plus reg (used).  */
+      else if (XEXP (x, 0) == frame_pointer_rtx
+	       && XEXP (x, 1)->used)
+	{
+	  x->used = 1;
 	  return;
 	}
       /*
@@ -2105,12 +2300,12 @@ push_frame_in_operand (orig, push_size, boundary)
     if (*fmt == 'e')
       {
 	if (XEXP (x, i) == frame_pointer_rtx && boundary == 0)
-	  fatal_insn ("push_frame_in_operand", debuginsn);
-	push_frame_in_operand (XEXP (x, i), push_size, boundary);
+	  fatal_insn ("push_frame_in_operand", insn);
+	push_frame_in_operand (insn, XEXP (x, i), push_size, boundary);
       }
     else if (*fmt == 'E')
       for (j = 0; j < XVECLEN (x, i); j++)
-	push_frame_in_operand (XVECEXP (x, i, j), push_size, boundary);
+	push_frame_in_operand (insn, XVECEXP (x, i, j), push_size, boundary);
 }   
 
 static void
