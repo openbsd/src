@@ -1,5 +1,5 @@
-/*	$OpenBSD: exchange.c,v 1.18 1999/04/30 22:32:51 niklas Exp $	*/
-/*	$EOM: exchange.c,v 1.101 1999/04/30 20:52:41 niklas Exp $	*/
+/*	$OpenBSD: exchange.c,v 1.19 1999/05/01 22:57:14 niklas Exp $	*/
+/*	$EOM: exchange.c,v 1.102 1999/05/01 22:35:13 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -822,6 +822,9 @@ exchange_establish_p2 (struct sa *isakmp_sa, u_int8_t type, char *name,
   char *tag, *str;
   u_int32_t doi = ISAKMP_DOI_ISAKMP;
 
+  if (isakmp_sa)
+    doi = isakmp_sa->doi->id;
+
   if (name)
     {
       /* Find out our phase 2 modes.  */
@@ -835,14 +838,15 @@ exchange_establish_p2 (struct sa *isakmp_sa, u_int8_t type, char *name,
 
       /* Figure out the DOI.  */
       str = conf_get_str (tag, "DOI");
-      if (!str)
-	doi = isakmp_sa->doi->id;
-      else if (strcasecmp (str, "IPSEC") == 0)
-	doi = IPSEC_DOI_IPSEC;
-      else
+      if (str)
 	{
-	  log_print ("exchange_establish_p2: DOI \"%s\" unsupported", str);
-	  return;
+	  if (strcasecmp (str, "IPSEC") == 0)
+	    doi = IPSEC_DOI_IPSEC;
+	  else
+	    {
+	      log_print ("exchange_establish_p2: DOI \"%s\" unsupported", str);
+	      return;
+	    }
 	}
 
       /* What exchange type do we want?  */
@@ -1125,6 +1129,7 @@ static void
 exchange_free_aux (void *v_exch)
 {
   struct exchange *exchange = v_exch;
+  struct sa *sa, *next_sa;
 
   log_debug (LOG_EXCHANGE, 80, "exchange_free_aux: freeing exchange %p", 
 	     exchange);
@@ -1154,9 +1159,19 @@ exchange_free_aux (void *v_exch)
   exchange_free_aca_list (exchange);
   LIST_REMOVE (exchange, link);
 
-  /* Tell potential finalize routine we never got there.  */
+  /*
+   * Tell potential finalize routine we never got there.  This also means
+   * any SAs we have need to be torn down as they never got finalized.
+   */
   if (exchange->finalize)
-    exchange->finalize (exchange, exchange->finalize_arg, 1);
+    {
+      exchange->finalize (exchange, exchange->finalize_arg, 1);
+      for (sa = TAILQ_FIRST (&exchange->sa_list); sa; sa = next_sa)
+	{
+	  next_sa = TAILQ_NEXT (sa, next);
+	  sa_free (sa);
+	}
+    }
 
   free (exchange);
 }
