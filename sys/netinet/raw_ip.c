@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip.c,v 1.4 1996/03/04 08:21:52 niklas Exp $	*/
+/*	$OpenBSD: raw_ip.c,v 1.5 1996/03/14 08:28:58 tholo Exp $	*/
 /*	$NetBSD: raw_ip.c,v 1.25 1996/02/18 18:58:33 christos Exp $	*/
 
 /*
@@ -205,35 +205,33 @@ rip_ctloutput(op, so, level, optname, m)
 	struct mbuf **m;
 {
 	register struct inpcb *inp = sotoinpcb(so);
-#ifdef MROUTING
-	int error;
-#endif
+	register int error;
 
 	if (level != IPPROTO_IP) {
-		if (m != 0 && *m != 0)
-			(void)m_free(*m);
+		if (op == PRCO_SETOPT && *m)
+			(void) m_free(*m);
 		return (EINVAL);
 	}
 
 	switch (optname) {
 
 	case IP_HDRINCL:
-		if (op == PRCO_SETOPT || op == PRCO_GETOPT) {
-			if (m == 0 || *m == 0 || (*m)->m_len < sizeof (int))
-				return (EINVAL);
-			if (op == PRCO_SETOPT) {
-				if (*mtod(*m, int *))
-					inp->inp_flags |= INP_HDRINCL;
-				else
-					inp->inp_flags &= ~INP_HDRINCL;
+		error = 0;
+		if (op == PRCO_SETOPT) {
+			if (*m == 0 || (*m)->m_len < sizeof (int))
+				error = EINVAL;
+			else if (*mtod(*m, int *))
+				inp->inp_flags |= INP_HDRINCL;
+			else
+				inp->inp_flags &= ~INP_HDRINCL;
+			if (*m)
 				(void)m_free(*m);
-			} else {
-				(*m)->m_len = sizeof (int);
-				*mtod(*m, int *) = inp->inp_flags & INP_HDRINCL;
-			}
-			return (0);
+		} else {
+			*m = m_get(M_WAIT, M_SOOPTS);
+			(*m)->m_len = sizeof(int);
+			*mtod(*m, int *) = inp->inp_flags & INP_HDRINCL;
 		}
-		break;
+		return (error);
 
 	case MRT_INIT:
 	case MRT_DONE:
@@ -261,6 +259,23 @@ rip_ctloutput(op, so, level, optname, m)
 			m_free(*m);
 		return (EOPNOTSUPP);
 #endif
+
+	default:
+		if (optname >= MRT_INIT) {
+#ifdef MROUTING
+			if (op == PRCO_SETOPT) {
+				error = ip_mrouter_cmd(optname, so, *m);
+				if (*m)
+					(void)m_free(*m);
+			} else
+				error = EINVAL;
+			return (error);
+#else
+			if (op == PRCO_SETOPT && *m)
+				(void)m_free(*m);
+			return (EOPNOTSUPP);
+#endif
+		}
 	}
 	return (ip_ctloutput(op, so, level, optname, m));
 }
