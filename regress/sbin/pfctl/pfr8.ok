@@ -13,7 +13,7 @@ A  127.0.0.1
 # add
 2/2 addresses added.
 # add
-pfctl: illegal address: "invalid$host"
+cannot resolve invalid$host: no address associated with name
 # table
 regress
 # table -v

@@ -1,11 +1,9 @@
 # create
 1 table added.
 # add
-pfctl: illegal address: "1.2.3.4.5"
+cannot resolve 1.2.3.4.5: no address associated with name
 # add
-pfctl: illegal netmask: "33"
-# add
-pfctl: illegal address: ":80"
+cannot resolve :80: no address associated with name
 # table
 regress
 # table -v
