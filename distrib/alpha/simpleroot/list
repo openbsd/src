@@ -2,7 +2,7 @@
 .profile
 altroot
 bin
-bsd
+bsd*
 dev
 etc
 home
