@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.20 2001/08/11 01:56:18 art Exp $ */
+/*	$OpenBSD: pmap.c,v 1.21 2001/08/21 14:06:25 hugh Exp $ */
 /*	$NetBSD: pmap.c,v 1.74 1999/11/13 21:32:25 matt Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999 Ludd, University of Lule}, Sweden.
@@ -741,15 +741,17 @@ if (startpmapdebug)
 
 	oldpte = patch[i] & ~(PG_V|PG_M);
 
-	/* No mapping change. Not allowed to happen. */
-	if (newpte == oldpte)
-		panic("pmap_enter onto myself");
-
 	pv = pv_table + (p >> PGSHIFT);
 
 	/* wiring change? */
 	if (newpte == (oldpte | PG_W)) {
 		patch[i] |= PG_W; /* Just wiring change */
+		RECURSEEND;
+		return (KERN_SUCCESS);
+	}
+
+	/* mapping unchanged? just return. */
+	if (newpte == oldpte) {
 		RECURSEEND;
 		return (KERN_SUCCESS);
 	}
