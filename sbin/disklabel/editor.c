@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.82 2003/02/13 00:10:39 tedu Exp $	*/
+/*	$OpenBSD: editor.c,v 1.83 2003/04/05 23:19:44 millert Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -28,7 +28,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.82 2003/02/13 00:10:39 tedu Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.83 2003/04/05 23:19:44 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1055,10 +1055,8 @@ getstring(prompt, helpstring, oval)
 			buf[--n] = '\0';
 		if (buf[0] == '?')
 			puts(helpstring);
-		else if (oval != NULL && buf[0] == '\0') {
-			(void)strncpy(buf, oval, sizeof(buf) - 1);
-			buf[sizeof(buf) - 1] = '\0';
-		}
+		else if (oval != NULL && buf[0] == '\0')
+			strlcpy(buf, oval, sizeof(buf));
 	} while (buf[0] == '?');
 
 	return(&buf[0]);
@@ -1321,8 +1319,7 @@ edit_parms(lp, freep)
 		*lp = oldlabel;		/* undo damage */
 		return;
 	}
-	strncpy(lp->d_packname, p, sizeof(lp->d_packname) - 1);
-	lp->d_packname[sizeof(lp->d_packname) - 1] = '\0';
+	strncpy(lp->d_packname, p, sizeof(lp->d_packname));	/* checked */
 
 	/* sectors/track */
 	for (;;) {
