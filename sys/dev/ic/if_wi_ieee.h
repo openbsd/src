@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_ieee.h,v 1.3 2001/06/07 18:51:59 millert Exp $	*/
+/*	$OpenBSD: if_wi_ieee.h,v 1.4 2002/03/28 18:21:06 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -31,11 +31,13 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	From: if_wavelan_ieee.h,v 1.1 1999/05/05 07:36:50 wpaul Exp $
+ *	From: if_wavelan_ieee.h,v 1.5.2.1 2001/07/04 00:12:34 brooks Exp $
  */
 
 #ifndef _IF_WI_IEEE_H
 #define _IF_WI_IEEE_H
+
+#pragma pack(1)
 
 /*
  * This header defines a simple command interface to the FreeBSD
@@ -82,6 +84,7 @@ struct wi_req {
  */
 #define WI_RID_IFACE_STATS	0x0100
 #define WI_RID_MGMT_XMIT	0x0200
+#define	WI_RID_MONITOR_MODE	0x0500
 
 struct wi_80211_hdr {
 	u_int16_t		frame_ctl;
@@ -120,6 +123,13 @@ struct wi_80211_hdr {
 #define WI_STYPE_MGMT_DISAS	0x00A0	/* disassociation */
 #define WI_STYPE_MGMT_AUTH	0x00B0	/* authentication */
 #define WI_STYPE_MGMT_DEAUTH	0x00C0	/* deauthentication */
+
+#define WI_STYPE_CTL_PSPOLL	0x00A0
+#define WI_STYPE_CTL_RTS	0x00B0
+#define WI_STYPE_CTL_CTS	0x00C0
+#define WI_STYPE_CTL_ACK	0x00D0
+#define WI_STYPE_CTL_CFEND	0x00E0
+#define WI_STYPE_CTL_CFENDACK	0x00F0
 
 struct wi_mgmt_hdr {
 	u_int16_t		frame_ctl;
@@ -204,7 +214,7 @@ struct wi_counters {
 #define	WI_RID_P2_CRYPT_KEY3	0xFC27
 #define	WI_RID_P2_ENCRYPTION	0xFC28
 #define	WI_RID_WEP_MAPTABLE	0xFC29
-#define	WI_RID_AUTH_CNTL	0xFC2A
+#define	WI_RID_CNFAUTHMODE	0xFC2A
 #define	WI_RID_ROAMING_MODE	0xFC2D /* Roaming mode (1:firm,3:disable) */
 #define	WI_RID_BASIC_RATE	0xFCB3
 #define	WI_RID_SUPPORT_RATE	0xFCB4
@@ -313,5 +323,7 @@ struct wi_ltv_keys {
 #define WI_RID_CCA_TIME		0xFDC4 /* clear chan assess time */
 #define WI_RID_MAC_PROC_DELAY	0xFDC5 /* MAC processing delay time */
 #define WI_RID_DATA_RATES	0xFDC6 /* supported data rates */
+
+#pragma pack()
 
 #endif

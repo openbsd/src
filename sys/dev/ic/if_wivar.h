@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wivar.h,v 1.5 2002/02/19 01:24:58 mickey Exp $	*/
+/*	$OpenBSD: if_wivar.h,v 1.6 2002/03/28 18:21:06 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -31,8 +31,10 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	From: if_wireg.h,v 1.5 1999/07/20 20:03:42 wpaul Exp $
+ *	From: if_wireg.h,v 1.8.2.2 2001/08/25 00:48:25 nsayer Exp $
  */
+
+#include <dev/ic/if_wi_hostap.h>
 
 struct wi_softc	{
 #ifndef __FreeBSD__
@@ -59,6 +61,7 @@ struct wi_softc	{
 	u_int16_t		wi_max_sleep;
 	u_int16_t		wi_authtype;
 	u_int16_t		wi_roaming;
+	u_int16_t		wi_supprates;
 
 	struct ieee80211_nwid	wi_node_name;
 	struct ieee80211_nwid	wi_net_name;
@@ -67,15 +70,22 @@ struct wi_softc	{
 	u_int8_t		wi_txbuf[1596];
 	int			wi_has_wep;
 	int			wi_use_wep;
+	int			wi_authmode;
 	int			wi_tx_key;
 	struct wi_ltv_keys	wi_keys;
 	struct wi_counters	wi_stats;
 	void			*sc_ih;
 	struct timeout		sc_timo;
+	int			sc_enabled;
 	int			sc_prism2;
 	int			sc_prism2_ver;
 	int			sc_pci;
+	struct wihap_info	wi_hostap_info;
+	u_int32_t		wi_icv;
+	int			wi_icv_flag;
 };
 
 #define WI_PRT_FMT "%s"
 #define WI_PRT_ARG(sc)	(sc)->sc_dev.dv_xname
+
+int wi_mgmt_xmit(struct wi_softc *, caddr_t, int);
