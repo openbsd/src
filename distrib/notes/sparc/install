@@ -116,9 +116,9 @@ installation scripts'' below.
 
 Booting From CD-ROM installation media:
 
-	> b sd(,30,0)bsd	# for Sun4 monitors* (not working currently)
-        ok boot sd(,6,0)bsd	# for version 1 OpenBOOT ROMs
-        ok boot cdrom bsd	# for version 2 OpenBOOT ROMs
+    > b sd(,30,0){:--:}OSrev/sparc/bsd.rd	# for Sun4 monitors*
+    ok boot sd(,6,0){:--:}OSrev/sparc/bsd.rd	# for version 1 OpenBOOT ROMs
+    ok boot cdrom {:--:}OSrev/sparc/bsd.rd	# for version 2 OpenBOOT ROMs
 
 If the boot is successful, you will get a loader version message,
 executable sizes and then the Kernel copyright and device probe
