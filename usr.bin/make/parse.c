@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: parse.c,v 1.64 2001/11/11 01:19:23 espie Exp $	*/
+/*	$OpenBSD: parse.c,v 1.65 2001/11/11 06:02:06 deraadt Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
@@ -1591,14 +1591,14 @@ void
 Parse_Init()
 {
     mainNode = NULL;
-    Static_Lst_Init(parseIncPath);
-    Static_Lst_Init(sysIncPath);
+    Lst_Init(parseIncPath);
+    Lst_Init(sysIncPath);
     Array_Init(&gsources, SOURCES_SIZE);
     Array_Init(&gtargets, TARGETS_SIZE);
     
     LowParse_Init();
 #ifdef CLEANUP
-    Static_Lst_Init(&targCmds);
+    Lst_Init(&targCmds);
 #endif
 }
 

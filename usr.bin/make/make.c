@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: make.c,v 1.28 2001/11/11 01:19:23 espie Exp $	*/
+/*	$OpenBSD: make.c,v 1.29 2001/11/11 06:02:06 deraadt Exp $	*/
 /*	$NetBSD: make.c,v 1.10 1996/11/06 17:59:15 christos Exp $	*/
 
 /*
@@ -781,7 +781,7 @@ Make_Run(targs)
     LIST	    examine;	/* List of targets to examine */
     int 	    errors;	/* Number of errors the Job module reports */
 
-    Static_Lst_Init(&toBeMade);
+    Lst_Init(&toBeMade);
 
     Lst_Clone(&examine, targs, NOCOPY);
     numNodes = 0;

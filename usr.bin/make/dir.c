@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: dir.c,v 1.35 2001/11/11 01:19:23 espie Exp $ */
+/*	$OpenBSD: dir.c,v 1.36 2001/11/11 06:02:06 deraadt Exp $ */
 /*	$NetBSD: dir.c,v 1.14 1997/03/29 16:51:26 christos Exp $	*/
 
 /*
@@ -320,7 +320,7 @@ Dir_Init()
 {
     char *dotname = ".";
 
-    Static_Lst_Init(dirSearchPath);
+    Lst_Init(dirSearchPath);
     ohash_init(&openDirectories, 4, &dir_info);
     ohash_init(&mtimes, 4, &stamp_info);
 
