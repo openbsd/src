@@ -1,4 +1,4 @@
-/*	$OpenBSD: it.c,v 1.7 2004/02/02 20:14:26 grange Exp $	*/
+/*	$OpenBSD: it.c,v 1.8 2004/02/10 20:01:40 grange Exp $	*/
 
 /*
  * Copyright (c) 2003 Julien Bordet <zejames@greyhats.org>
@@ -313,7 +313,9 @@ it_generic_fanrpm(struct it_softc *sc, struct sensor *sensors)
 				break;
 		}
 
-		if (sdata == 0xff || sdata == 0) {
+		if (sdata == 0xff) {
+			sensors[i].flags |= SENSOR_FINVALID;
+		} else if (sdata == 0) {
 			sensors[i].value = 0;
 		} else {
 			sensors[i].value = 1350000 / (sdata << divisor);
