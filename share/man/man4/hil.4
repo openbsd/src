@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hil.4,v 1.1 2003/02/11 20:10:33 miod Exp $
+.\"	$OpenBSD: hil.4,v 1.2 2003/02/11 23:24:58 mickey Exp $
 .\"
 .\" Copyright (c) 2003 Miodrag Vallat.
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .Os
 .Sh NAME
 .Nm hil
-.Nd HP-HIL loop driver
+.Nd HP-HIL driver
 .Sh SYNOPSIS
 .Cd "hil* at gsc? irq 1"
 .Cd "hilkbd* at hil?"
@@ -44,7 +44,7 @@ controller found on many
 .Tn HP
 workstations.
 .Pp
-It provides generic HIL loop management and interfaces for child devices,
+It provides generic HIL management and interfaces for child devices,
 such as keyboards, button boxes, mice, graphics tablet, and ID modules.
 .Sh SEE ALSO
 .Xr gsc 4 ,
