@@ -1,4 +1,4 @@
-/*	$OpenBSD: tp_emit.c,v 1.4 2000/02/25 04:26:11 itojun Exp $	*/
+/*	$OpenBSD: tp_emit.c,v 1.5 2001/05/22 19:02:36 angelos Exp $	*/
 /*	$NetBSD: tp_emit.c,v 1.8 1996/03/16 23:13:48 christos Exp $	*/
 
 /*-
@@ -199,7 +199,9 @@ tp_emit(dutype, tpcb, seq, eot, data)
 			m->m_nextpkt = MNULL;
 			m->m_data = m->m_pktdat;
 			m->m_flags = M_PKTHDR;
-			bzero(&m->m_pkthdr, sizeof(m->m_pkthdr));
+			m->m_pkthdr.rcvif = 0;
+			m->m_pkthdr.len = 0;
+			TAILQ_INIT(&m->m_pkthdr.tags);
 		}
 	} else {
 		MGETHDR(m, M_DONTWAIT, TPMT_TPHDR);
