@@ -543,6 +543,7 @@ sendsig(catcher, sig, mask, code, type, val)
 	 */
 	newsp = (int)fp - sizeof(struct rwindow);
 	write_user_windows();
+	/* XXX do not copyout siginfo if not needed */
 	if (rwindow_save(p) || copyout((caddr_t)&sf, (caddr_t)fp, sizeof sf) ||
 	    suword(&((struct rwindow *)newsp)->rw_in[6], oldsp)) {
 		/*

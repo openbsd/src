@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.18 1997/02/03 15:04:58 deraadt Exp $ */
+/*	$OpenBSD: machdep.c,v 1.19 1997/02/04 17:22:52 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -847,6 +847,7 @@ sendsig(catcher, sig, mask, code, type, val)
 		kfp->sf_scp = hkfp->hsf_scp;
 	}
 #endif
+	/* XXX do not copy out siginfo if not needed */
 	(void) copyout((caddr_t)kfp, (caddr_t)fp, fsize);
 	frame->f_regs[SP] = (int)fp;
 #ifdef DEBUG
