@@ -5,20 +5,25 @@ There are several ways to install OpenBSD onto a disk. The easiest way
 in terms of preliminary setup is to use the OpenBSD simpleroot that can
 be booted off your local disk. Alternatively, if your Decstation is
 hooked up in a network you can find a server and arrange for a
-diskless setup which is a convenient way to install on a machine whose
-disk does not currently hold a usable operating system (see the
-section `Installing using a diskless setup' below).
-
+diskless setup which is another convenient way to install
+OpenBSD/pmax. But at the moment i haven't tested the installation via
+network so i mostly recommend the installation via simpleroot. I plan
+to write something down about installing OpenBSD/pmax via the network
+in the near future - so watch out for documentation on that topic at
+the pmax section of the OpenBSD www server at http://www.OpenBSD.org.
 
 Installing using the OpenBSD simpleroot.
 
-The miniroot is a self-contained OpenBSD filesystem holding a complete
+The simpleroot is a self-contained OpenBSD filesystem holding a complete
 OpenBSD/pmax rootfilesystem plus all utilities necessary to install
 OpenBSD on a local disk. It is distributed as a plain file designed to
-be transferred to a raw disk partition from which it can be booted
-using the appropriate PROM command.
+be transferred to a raw disk from which it can be booted using the
+appropriate PROM command.
 
-Loading the simpleroot onto your raw partition is simple. On OpenBSD
+Loading the simpleroot onto your raw partition is simple. You can do
+this on any machine you can hang on the disk which you plan to put
+onto the pmax which allows you to write to the raw disk - i.e. on all
+UN*X like operatingsystems it should work using "dd". On OpenBSD
 as well as SunOS you use a command like:
 
 	# dd if=simpleroot21.fs of=/dev/rsd0c bs=20b conv=sync
@@ -32,7 +37,9 @@ After transferring the simpleroot to disk, bring the system down by:
 
 	# halt
 
-Then boot the miniroot by typing the appropriate command at the PROM:
+and hang the disk onto the pmax you want to install OpenBSD/pmax on.
+
+Then boot the simpleroot by typing the appropriate command at the PROM:
 
 	>> boot rz(0,0,0)/bsd		# for Decstation 2100/3100
 
@@ -46,11 +53,16 @@ the boot specifier accordingly.
 This will cause the kernel contained in the simpleroot to be booted.
 After the initial probe messages you'll asked to choose a shell with
 sh as default. Simply type Return here and you are in single user
-mode.
+mode. For further instructions please read on in the "Continuing the
+installation from single user mode" below.
 
-XXX more to come here
 
 Installing using a diskless setup.
+
+Again i want to note that thios method is at the moment only very bad
+documented - so you need some experiences with netbooting Decstations
+to do it. I hope to supply some more documentation about this topic
+soon. 
 
 First, you must setup a diskless client configuration on a server. If
 you are using a OpenBSD system as the boot-server, have a look at the
@@ -59,20 +71,9 @@ If the server runs another operating system, you'll have to consult
 documentation that came with it (on SunOS systems, add_client(8) is a
 good start).
 
-XXX more to come here
-
-As noted above in the section `Preparing your System for OpenBSD Installation',
-you have several options when choosing a location to store the installation
-filesets. However, the easiest way is to put the *.tar.gz files you want
-to install into the root directory for your client on the server.
-
-Next, unpack `base.tar.gz' and `etc.tar.gz' on the server in the root 
-directory for your machine. If you elect to use a separately NFS-mounted
-filesystem for `/usr' with your diskless setup, make sure the "./usr" base
-files in base.tar.gz end up in the correct location. One way to do this is
-to temporarily use a loopback mount on the server, re-routing <root>/usr to
-your server's exported OpenBSD "/usr" directory. Also put the kernel and the
-install/upgrade scripts into the root directory.
+One part of the distribution of OpenBSD/pmax is a file called
+simpleroot21.tar.gz which is a good start for the rootfilesystem area on
+the NFS server then you want to install via network.
 
 A few configuration files need to be edited:
 
@@ -87,33 +88,66 @@ A few configuration files need to be edited:
 		Enter the entries for the remotely mounted filesystems.
 		For example:
 			server:/export/root/client       /     nfs  rw 0 0
-			server:/export/exec/sun4.OpenBSD /usr  nfs  rw 0 0
 
-Now you must populate the the `/dev' directory for your client. If you server
-runs SunOS 4.x, you can simply change your working directory to `<root>/dev'
-and run the MAKEDEV script: `sh MAKEDEV all'.
+Now you must populate the the `/dev' directory for your client. If you
+have an intelligent tar command on the NFS server the /dev directory
+inside the simpleroot21.tar.gz should be usable (i.e. containing
+special devices and not only files) - else you'll have to remake the
+devices on the server using
 
-On SunOS 5.x systems, MAKEDEV can also be used, but there'll be error
-messages about unknown user and groups. These errors are inconsequential
-for the purpose of installing OpenBSD. However, you may want to correct them
-if you plan to the diskless setup regularly. In that case, you may re-run
-MAKEDEV on your OpenBSD machine once it has booted.
+	cd /export/root/client/dev
+	mv MAKEDEV* ..
+	rm -rf *
+	mkdir fd
+	mv ../MAKEDEV* .
+	./MAKEDEV all
 
-XXX more to come here
+This may not not work correctly on some operatingsystems.
 
-This will boot the OpenBSD kernel in single-user mode.
+After you have set up everything correctly you can boot your system
+over the network into singleuser mode and continue the installation.
 
-If you use a diskless setup with a separately NFS-mounted /usr filesystem,
-mount /usr by hand now:
 
-OpenBSD# mount /usr
+Continuing the installation from single user mode
 
-XXX more to come here
+If you have reached single user mode either via booting the
+simpleroot image or via booting over the network you will have to
+relabel/label your disk and put filesystems on the patitions.
+
+So here's what you have to do after going into single user mode:
+
+- simpleroot image (assuming you have the simpleroot on rz0 and want
+  to install on that disk too - everytinh behind the ";" is comment)
+
+	# fsck /dev/rrz0a		; check the filesystem
+	# mount /dev/rz0a /		; mount / read write
+	# disklabel -e rz0
+
+  If you want to install onto another disk than the one you booted
+  from then you have to give this disk to the disklabel command.
+
+- network boot
+
+	# disklabel -e rz0
 
 Here follows an example of what you'll see while in the dislabel editor.
 Do not touch any of the parameters except for the `label: ' entry and
 the actual partition size information at the bottom (the lines starting
 with `a:', `b:', ...).
+
+If you are using the simpleroot image and wan't to install onto the
+same disk you put the simpleroot on you'll also have to change the
+sector, track, cylinder, etc. entries to match the values for your
+disk. The Problem is to get those values for your disk :-) - you can
+either look into the /etc/disktab file for an matching entry or boot
+another verbose system like OpenBSD/i386 with your disk attached an
+see what it prints out about the geometry of the disk. Also you can
+get the total size of your disk from the bootup output of the
+Decstation - look for lines like:
+
+rz0 at sii0 drive 0 slave 0 SEAGATE ST1480 rev 7336, 832527 512 byte blocks
+
+here 832527 is the number of total sectors on that disk.
 
 The size and offset fields are given in sector units. Partitions on
 which you intend to have a mountable filesystem, should be given
@@ -127,40 +161,96 @@ even if you define less then eight partitions. If this line displays
 a different number and the program complains about it (after you leave
 the editor), then try setting it to `8 partitions:'.
 
+Ok - now lets see how the default disklabel of the simpleroot image
+looks like:
 
 <BEGIN SAMPLE DISKLABEL SCREEN>
 OpenBSD# disklabel rz0
- # /dev/rrz0c:
-type: SCSI 
-disk: SCSI disk
-label: Hold Your Breath
+# /dev/rrz0c:
+type: SCSI
+disk: simpleroot
+label: 
 flags:
 bytes/sector: 512
-sectors/track: 64
-tracks/cylinder: 7  
-sectors/cylinder: 448
-cylinders: 1429
+sectors/track: 32
+tracks/cylinder: 64
+sectors/cylinder: 2048
+cylinders: 96
+total sectors: 196608
 rpm: 3600
 interleave: 1
 trackskew: 0
 cylinderskew: 0
 headswitch: 0           # milliseconds
 track-to-track seek: 0  # milliseconds
-drivedata: 0
+drivedata: 0 
 
 8 partitions:
 #        size   offset    fstype   [fsize bsize   cpg]
-  a:    50176        0    4.2BSD        0     0     0   # (Cyl.    0 - 111)
-  b:    64512    50176      swap                        # (Cyl.  112 - 255)
-  c:   640192        0   unknown                        # (Cyl.    0 - 1428)
-  d:   525504   114688    4.2BSD        0     0     0   # (Cyl.  256 - 1428)
+  a:    65536        0    4.2BSD     1024  8192    16   # (Cyl.   0 - 32*)
+  b:   131072    65536      swap                        # (Cyl.  32*- 96*)
+  c:   196608        0    unused     1024  8192         # (Cyl.   0 - 96*)
 <END SAMPLE DISKLABEL SCREEN>
 
+ok - and now let's see how it looks like if it is adapted for the rz0
+disk above (SEAGATE ST1480).
 
-else, start the installation script:
+<BEGIN SAMPLE DISKLABEL SCREEN>
+OpenBSD# disklabel rz0
+# /dev/rrz0c:
+type: SCSI
+disk: SEAGATE ST1480 r
+label: 
+flags:
+bytes/sector: 512
+sectors/track: 63
+tracks/cylinder: 11
+sectors/cylinder: 693
+cylinders: 832527
+total sectors: 832527
+rpm: 3600
+interleave: 1
+trackskew: 0
+cylinderskew: 0
+headswitch: 0           # milliseconds
+track-to-track seek: 0  # milliseconds
+drivedata: 0 
 
-OpenBSD# sh install.sh
+8 partitions:
+#        size   offset    fstype   [fsize bsize   cpg]
+  a:    65536        0    4.2BSD     1024  8192    16   # (Cyl.   0 - 94*)
+  b:   131072    65536      swap                        # (Cyl.  94*- 283*)
+  c:   832527        0    unused     1024  8192         # (Cyl.   0 - 1201*)
+  d:   635919   196608    4.2BSD     1024  8192    16   # (Cyl. 283*- 1201*)
+<END SAMPLE DISKLABEL SCREEN>
 
+I hope you got the idea now - maybe it'll take some experiments until
+you get it right :-). One thing to note here is that you can't change
+the a and b partitions if you are relabeling the disk you are running
+the simpleroot on - you'll have to accept the simpleroot values here
+for those 2 partitions.
+
+If you have done labeled your disk successfully then you have to
+create filesystems on the partitions. (Note: you don't have to do
+anything special for the swap partition). In the example above this
+would look like:
+
+- you are installing on the disk your simpleroot is running on - so
+  you don't have to create a root filestem on it - because it is
+  already there from the simpleroot image
+
+	# newfs /dev/rrz0d
+
+- you are installing onto another disk - so you'll have to create the
+  rootfilesystem too
+
+	# newfs /dev/rrz0a
+	# newfs /dev/rrz0d
+
+Now the are done with all the preparations and can go on with the
+installation via some simle scripts:
+
+	# sh install.sh
 
 These scripts will do most of the work of transferring the system from the
 tar files onto your disk. You will frequently be asked for confirmation
@@ -175,7 +265,13 @@ The installation script goes through the following phases:
 
 	- determination of the disk to install OpenBSD on
 	- checking of the partition information on the disk
+
+XXX really creating filesystems here ? XXX
+
 	- creating and mounting the OpenBSD filesystems
+
+XXX really creating filesystems here ? XXX
+
 	- setup of IP configuration
 	- extraction of the distribution tar files
 	- installation of boot programs
@@ -184,11 +280,9 @@ The installation script goes through the following phases:
 Now try a reboot.  (If needed, swap your scsi id's first).  Initially
 I'd suggest you "boot" (Decstation 2100/3100) or "boot/rz0a/bsd", then
 try multiuser after that. if you boot single-user the OpenBSD
-incantation to make the root filesystem writable is
+incarnation to make the root filesystem writable is
 
     OpenBSD# mount -u /dev/sd0a /
-
-XXX more to come about setting defaults on the prom prompt
 
 Congratulations, you have successfully installed OpenBSD 2.1.  When you
 reboot into OpenBSD, you should log in as "root" at the login prompt.
@@ -202,4 +296,3 @@ almost definitely need to be adjusted, and other files in /etc will
 probably need to be modified.  If you are unfamiliar with UN*X-like
 system administration, it's recommended that you buy a book that
 discusses it.
-

@@ -12,8 +12,11 @@ out as follows:
 				floppies; see below.
 
 There is a pmax simpleroot image to be found in the "pmax/simpleroot"
-subdirectory of the OpenBSD 2.1 distribution.  Also there is a
-simpleroot tar file there.
+subdirectory of the OpenBSD 2.1 distribution.  This file you can dump
+onto a disk and boot from it to start the installation of
+OpenBSD/pmax. Also there is a simpleroot tar file there.  It can be
+used as root area on the NFS server if you plan to install via
+network.
 
 The OpenBSD/pmax binary distribution sets contain the binaries which
 comprise the OpenBSD 2.1 release for the pmax.  There are seven binary

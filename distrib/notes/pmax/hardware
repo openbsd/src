@@ -7,11 +7,11 @@ OpenBSD/pmax 2.1 runs on the following classes of machines:
 
 OpenBSD/pmax 2.1 does *not* (yet) run on these machines:
 	- Decstation 5100 (an r2000-based cousin of the Decstation 3100)
-	- Decsystem 5400 and 5500 (Qbus-based systems, similar to 
- 		a Vax 'Mayfair' and 'Mayfair II', but with an r2000a or r3000
-		cpu instead of a CVAX cpu.)
+	- Decsystem 5400 and 5500 (Qbus-based systems, similar to a
+	  Vax 'Mayfair' and 'Mayfair II', but with an r2000a or r3000
+	  cpu instead of a CVAX cpu.) 
 	- Decsystem 5800 (xbi-based multiprocessor, a Vax 8800 with
-		 Vax CPU boards replaced with Mips cpu boards)
+	  Vax CPU boards replaced with Mips cpu boards)
 
 The minimal configuration requires 8M of RAM and ~60M of disk space.
 To install the entire system requires much more disk space, and to run
@@ -49,8 +49,7 @@ Supported devices include:
 	DEC ("hockey puck" or compatible) mouse.
 
 
-Hardware the we do NOT currently support, but get questions
-about from time to time:
+Hardware the we do NOT currently support:
 	Q-bus Decsystem machines
 	Decstation 5100 machines
 	PrestoServe NVRAM on Decstation 5100 machines 
@@ -58,9 +57,3 @@ about from time to time:
 	floppy driver for Personal Decstation machines
 	TurboChannel audio hardware (LoFi)
 	PMAG-C 2-D accelerated framebuffers with onboard i860 processors
-
-	NOTE: the primary obstacle to support  of all but the very
-	last item is non-availability of sample hardware for development.
-
-	The primary obstacle for the i860-based framebuffers is that there
-	is no documentation on the accelerator board.
