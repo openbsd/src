@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ccd.4,v 1.20 2005/02/01 22:02:53 jmc Exp $
+.\"	$OpenBSD: ccd.4,v 1.21 2005/02/02 10:59:18 jmc Exp $
 .\"	$NetBSD: ccd.4,v 1.5 1995/10/09 06:09:09 thorpej Exp $
 .\"
 .\" Copyright (c) 1994 Jason Downs.
@@ -47,10 +47,6 @@ The
 driver provides the capability of combining one or more disks/partitions
 into one virtual disk.
 .Pp
-This document assumes that you're familiar with how to generate kernels,
-how to properly configure disks and pseudo-devices in a kernel
-configuration file, and how to partition disks.
-.Pp
 Note that the
 .Sq raw
 partitions of the disks
@@ -58,32 +54,34 @@ partitions of the disks
 be combined.
 Each component partition should be offset at least one
 cylinder from the beginning of the component disk.
-This avoids potential conflicts between the component disk's disklabel and the
-.Nm ccd Ns 's
-disklabel.
+This avoids potential conflicts between the component disk's
+.Xr disklabel 8
+and the concatenated disk's disklabel.
 The kernel wants to only allow component partitions of type
 .Dv FS_CCD ,
 but due to disklabel restrictions on some architectures will also accept
 component partitions of
 .Dv FS_BSDFFS .
 .Pp
-In order to compile in support for the ccd, you must add a line similar
-to the following to your kernel configuration file:
-.Bd -unfilled -offset indent
+In order to compile in support for
+.Nm ,
+make sure your kernel configuration file contains a line
+similar to the following (GENERIC does by default):
+.Bd -literal -offset indent
 pseudo-device	ccd	4	# concatenated disk devices
 .Ed
 .Pp
-The count argument is how many
-.Nm ccd Ns 's
-memory is allocated for at boot time.
+The optional
+.Ar count
+argument specifies how many
+concatenated disk devices are allocated for at boot time.
 In this example, no more than 4
-.Nm ccd Ns 's
 may be configured.
 .Pp
 A
 .Nm
-may be either serially concatenated, interleaved or mirrored.
-To serially concatenate partitions specify an interleave factor of 0.
+may be either serially concatenated, interleaved, or mirrored.
+To serially concatenate partitions, specify an interleave factor of 0.
 Mirroring configurations require an even number of components.
 .Pp
 If a
@@ -92,9 +90,12 @@ is interleaved correctly, a
 .Dq striping
 effect is achieved, which can increase performance.
 Finding the optimum interleave factor is a hard problem.
-Some things to think about are the number of disks in the ccd,
+Some things to think about are the number of disks in the
+.Nm ,
 the typical read-ahead opportunities, the filesystem blocksize, and if
-it's possible to use the optimized ccd I/O protocol.
+it's possible to use the optimized
+.Nm
+I/O protocol.
 The optimized protocol allows smaller interleave factors for a
 comparably cheap price but requires that the factor be a multiple of the
 software page size
@@ -120,16 +121,10 @@ Note that best performance is achieved if all component disks have the same
 geometry and size.
 Optimum striping cannot occur with different disk types.
 .Pp
-There is a run-time utility that is used for configuring
-.Nm ccd Ns 's .
+There is a run-time utility that is used for configuring concatenated disks.
 See
 .Xr ccdconfig 8
 for more information.
-.Sh WARNINGS
-If just one (or more) of the disks in a
-.Nm
-fails, the entire
-file system will be lost.
 .Sh FILES
 .Bl -tag -width tenletters+five -compact
 .It Pa /dev/{,r}ccd*
@@ -138,10 +133,16 @@ ccd device special files
 .Sh SEE ALSO
 .Xr MAKEDEV 8 ,
 .Xr ccdconfig 8 ,
-.Xr config 8 ,
+.Xr disklabel 8 ,
 .Xr fsck 8 ,
+.Xr growfs 8 ,
 .Xr mount 8 ,
 .Xr newfs 8
 .Sh HISTORY
 The concatenated disk driver was originally written at the University of
 Utah.
+.Sh CAVEATS
+If just one (or more) of the disks in a
+concatenated disk
+fails, the entire
+file system will be lost.
