@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.4 1995/12/17 04:46:00 jonathan Exp $	*/
+/*	$NetBSD: if_le.c,v 1.5 1995/12/22 12:52:09 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -222,6 +222,7 @@ leattach(parent, self, aux)
 		dma_mask  = (dma_mask & ~(word_t)0x1f) |
 			(((word_t)le_iomem >> 29) & 0x1f);
 #endif /*alpha*/
+		*ldp = dma_mask;
 		*(volatile u_int *)ASIC_REG_CSR(asic_base) |=
 		    ASIC_CSR_DMAEN_LANCE;
 		wbflush();

@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.3 1994/10/26 21:10:40 cgd Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.4 1995/12/20 02:00:34 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass   
@@ -72,13 +72,16 @@
 #include <sys/vnode.h>
 #include <sys/ptrace.h>
 #include <machine/psl.h>
+
 #include <machine/reg.h>
+
 
 int
 process_read_regs(p, regs)
 	struct proc *p;
 	struct reg *regs;
 {
+	bcopy(p->p_md.md_regs, (caddr_t)regs, sizeof(struct reg));
 	return (0);
 }
 
@@ -87,6 +90,9 @@ process_write_regs(p, regs)
 	struct proc *p;
 	struct reg *regs;
 {
+	bcopy((caddr_t)regs, p->p_md.md_regs, sizeof(struct reg));
+	/* FIXME: is it safe to let users set system coprocessor regs? */
+	/*p->p_md.md_tf->tf_psr = psr | (regs->r_psr & PSR_ICC);*/
 	return (0);
 }
 
