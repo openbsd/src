@@ -1,4 +1,4 @@
-/*	$OpenBSD: tetris.c,v 1.19 2004/01/10 01:23:20 tedu Exp $	*/
+/*	$OpenBSD: tetris.c,v 1.20 2004/07/10 07:26:24 deraadt Exp $	*/
 /*	$NetBSD: tetris.c,v 1.2 1995/04/22 07:42:47 cgd Exp $	*/
 
 /*-
@@ -83,7 +83,7 @@ void	usage(void);
  * right edges are set.
  */
 static void
-setup_board()
+setup_board(void)
 {
 	int i;
 	cell *p;
@@ -97,7 +97,7 @@ setup_board()
  * Elide any full active rows.
  */
 static void
-elide()
+elide(void)
 {
 	int rows = 0;
 	int i, j, base;
@@ -140,7 +140,7 @@ elide()
 }
 
 const struct shape *
-randshape()
+randshape(void)
 {
 	const struct shape *tmp;
 	int i, j;
@@ -154,9 +154,7 @@ randshape()
 	
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int pos, c;
 	char *keys;
@@ -360,8 +358,7 @@ main(argc, argv)
 }
 
 void
-onintr(signo)
-	int signo;
+onintr(int signo)
 {
 	scr_clear();		/* XXX signal race */
 	scr_end();		/* XXX signal race */
@@ -369,7 +366,7 @@ onintr(signo)
 }
 
 void
-usage()
+usage(void)
 {
 	(void)fprintf(stderr, "usage: tetris [-ps] [-k keys] [-l level]\n");
 	exit(1);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: support.c,v 1.8 2004/01/16 00:13:18 espie Exp $	*/
+/*	$OpenBSD: support.c,v 1.9 2004/07/10 07:26:23 deraadt Exp $	*/
 /*	$NetBSD: support.c,v 1.3 1995/03/21 15:08:59 cgd Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)support.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: support.c,v 1.8 2004/01/16 00:13:18 espie Exp $";
+static char rcsid[] = "$OpenBSD: support.c,v 1.9 2004/07/10 07:26:23 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -55,9 +55,7 @@ int tv[NTV] = {8, 7, 9, 6, 11, 12, 13, 14, 10, 5};
  * only called if no playable card will score points
  */
 int
-cchose(h, n, s)
-	CARD h[];
-	int n, s;
+cchose(CARD h[], int n, int s)
 {
 	int i, j, l;
 
@@ -124,9 +122,7 @@ cchose(h, n, s)
  *	Evaluate and score a player hand or crib
  */
 int
-plyrhand(hand, s)
-	CARD    hand[];
-	char   *s;
+plyrhand(CARD hand[], char *s)
 {
 	static char prompt[BUFSIZ];
 	int i, j;
@@ -166,9 +162,7 @@ plyrhand(hand, s)
  *	Handle scoring and displaying the computers hand
  */
 int
-comphand(h, s)
-	CARD h[];
-	char *s;
+comphand(CARD h[], char *s)
 {
 	int j;
 
@@ -186,8 +180,7 @@ comphand(h, s)
 int Lastscore[2] = {-1, -1};
 
 int
-chkscr(scr, inc)
-	int    *scr, inc;
+chkscr(int *scr, int inc)
 {
 	bool myturn;
 
@@ -208,10 +201,7 @@ chkscr(scr, inc)
  *	score up on the board.
  */
 void
-prpeg(score, peg, myturn)
-	int score;
-	int peg;
-	bool myturn;
+prpeg(int score, int peg, bool myturn)
 {
 	int y, x;
 
@@ -247,8 +237,7 @@ prpeg(score, peg, myturn)
  * the crib and puts the best two cards at the end
  */
 void
-cdiscard(mycrib)
-	bool mycrib;
+cdiscard(bool mycrib)
 {
 	CARD    d[CARDS], h[FULLHAND], cb[2];
 	int i, j, k;
@@ -300,9 +289,7 @@ cdiscard(mycrib)
  * returns true if some card in hand can be played without exceeding 31
  */
 int
-anymove(hand, n, sum)
-	CARD hand[];
-	int n, sum;
+anymove(CARD hand[], int n, int sum)
 {
 	int i, j;
 
@@ -321,9 +308,7 @@ anymove(hand, n, sum)
  * the s up to t, or -1 if there is none
  */
 int
-anysumto(hand, n, s, t)
-	CARD hand[];
-	int n, s, t;
+anysumto(CARD hand[], int n, int s, int t)
 {
 	int i;
 
@@ -338,9 +323,7 @@ anysumto(hand, n, s, t)
  * return the number of cards in h having the given rank value
  */
 int
-numofval(h, n, v)
-	CARD h[];
-	int n, v;
+numofval(CARD h[], int n, int v)
 {
 	int i, j;
 
@@ -356,9 +339,7 @@ numofval(h, n, v)
  * makeknown remembers all n cards in h for future recall
  */
 void
-makeknown(h, n)
-	CARD h[];
-	int n;
+makeknown(CARD h[], int n)
 {
 	int i;
 

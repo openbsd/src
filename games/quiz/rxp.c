@@ -1,4 +1,4 @@
-/*	$OpenBSD: rxp.c,v 1.6 2003/06/03 03:01:40 millert Exp $	*/
+/*	$OpenBSD: rxp.c,v 1.7 2004/07/10 07:26:23 deraadt Exp $	*/
 /*	$NetBSD: rxp.c,v 1.5 1995/04/22 10:17:00 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)rxp.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: rxp.c,v 1.6 2003/06/03 03:01:40 millert Exp $";
+static char rcsid[] = "$OpenBSD: rxp.c,v 1.7 2004/07/10 07:26:23 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -86,16 +86,13 @@ static char	*rxp__expand(int);
 static int	 rxp__match(const char *, int, Rxp_t *, Rxp_t *, const char *);
 
 int
-rxp_compile(s)
-	const char *	s;
+rxp_compile(const char *s)
 {
 	return (rxp__compile(s, TRUE));
 }
 
 static int
-rxp__compile(s, first)
-	const char *s;
-	int first;
+rxp__compile(const char *s, int first)
 {
 	static Rxp_t *rp;
 	static const char *sp;
@@ -196,19 +193,19 @@ rxp__compile(s, first)
  * match string against compiled regular expression
  */
 int
-rxp_match(s)
-	const char *s;
+rxp_match(const char *s)
 {
 	return (rxp__match(s, TRUE, NULL, NULL, NULL));
 }
 
+/*
+ * j_succ : jump here on successful alt match
+ * j_fail : jump here on failed match
+ * sp_fail: reset sp to here on failed match
+ */
 static int
-rxp__match(s, first, j_succ, j_fail, sp_fail)
-	const char *s;
-	int first;
-	Rxp_t *j_succ;		/* jump here on successful alt match */
-	Rxp_t *j_fail;		/* jump here on failed match */
-	const char *sp_fail;		/* reset sp to here on failed match */
+rxp__match(const char *s, int first, Rxp_t *j_succ, Rxp_t *j_fail,
+           const char *sp_fail)
 {
 	static Rxp_t *rp;
 	static const char *sp;
@@ -266,14 +263,13 @@ rxp__match(s, first, j_succ, j_fail, sp_fail)
  * Reverse engineer the regular expression, by picking first of all alternates.
  */
 char *
-rxp_expand()
+rxp_expand(void)
 {
 	return (rxp__expand(TRUE));
 }
 
 static char *
-rxp__expand(first)
-	int first;
+rxp__expand(int first)
 {
 	static char buf[RXP_LINE_SZ/2];
 	static Rxp_t *rp;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: score.c,v 1.7 2004/01/16 00:13:18 espie Exp $	*/
+/*	$OpenBSD: score.c,v 1.8 2004/07/10 07:26:23 deraadt Exp $	*/
 /*	$NetBSD: score.c,v 1.3 1995/03/21 15:08:57 cgd Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)score.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: score.c,v 1.7 2004/01/16 00:13:18 espie Exp $";
+static char rcsid[] = "$OpenBSD: score.c,v 1.8 2004/07/10 07:26:23 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -103,14 +103,11 @@ static int pairpoints, runpoints;		/* Globals from pairuns. */
  * scorehand:
  *	Score the given hand of n cards and the starter card.
  *	n must be <= 4
+ * crb       : true if scoring crib
+ * do_explain: true if must explain this hand 
  */
 int
-scorehand(hand, starter, n, crb, do_explain)
-	CARD hand[];
-	CARD starter;
-	int n;
-	bool crb;		/* true if scoring crib */
-	bool do_explain;	/* true if must explain this hand */
+scorehand(CARD hand[], CARD starter, int n, bool crb, bool do_explain)
 {
 	int i, k;
 	int score;
@@ -182,9 +179,7 @@ scorehand(hand, starter, n, crb, do_explain)
  *	Return number of fifteens in hand of n cards
  */
 int
-fifteens(hand, n)
-	CARD hand[];
-	int n;
+fifteens(CARD hand[], int n)
 {
 	int *sp, *np;
 	int i;
@@ -225,9 +220,7 @@ fifteens(hand, n)
  * sets the globals pairpoints and runpoints appropriately
  */
 int
-pairuns(h, n)
-	CARD h[];
-	int n;
+pairuns(CARD h[], int n)
 {
 	int i;
 	int runlength, runmult, lastmult, curmult;
@@ -294,9 +287,7 @@ pairuns(h, n)
  * the n cards in tbl during pegging
  */
 int
-pegscore(crd, tbl, n, sum)
-	CARD crd, tbl[];
-	int n, sum;
+pegscore(CARD crd, CARD tbl[], int n, int sum)
 {
 	bool got[RANKS];
 	int i, j, scr;
@@ -349,8 +340,7 @@ pegscore(crd, tbl, n, sum)
  * points such a crib will get.
  */
 int
-adjust(cb, tnv)
-	CARD cb[], tnv;
+adjust(CARD cb[], CARD tnv)
 {
 	long scr;
 	int i, c0, c1;

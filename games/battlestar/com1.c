@@ -1,4 +1,4 @@
-/*	$OpenBSD: com1.c,v 1.12 2003/06/03 03:01:38 millert Exp $	*/
+/*	$OpenBSD: com1.c,v 1.13 2004/07/10 07:26:22 deraadt Exp $	*/
 /*	$NetBSD: com1.c,v 1.3 1995/03/21 15:06:51 cgd Exp $	*/
 
 /*
@@ -34,15 +34,14 @@
 #if 0
 static char sccsid[] = "@(#)com1.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: com1.c,v 1.12 2003/06/03 03:01:38 millert Exp $";
+static char rcsid[] = "$OpenBSD: com1.c,v 1.13 2004/07/10 07:26:22 deraadt Exp $";
 #endif
 #endif /* not lint */
 
 #include "extern.h"
 
 int
-moveplayer(thataway, token)
-	int     thataway, token;
+moveplayer(int thataway, int token)
 {
 	wordnumber++;
 	if ((!notes[CANTMOVE] && !notes[LAUNCHED]) ||
@@ -66,10 +65,14 @@ moveplayer(thataway, token)
 	return (1);
 }
 
+/*
+ * Converts day to night and vice versa.
+ * Day objects are permanent.  Night objects
+ * are added at dusk, and subtracted at dawn.
+ */
 void
-convert(tothis)			/* Converts day to night and vice versa.     */
-	int     tothis;		/* Day objects are permanent.  Night objects */
-{				/* are added at dusk, and subtracted at dawn.*/
+convert(int tothis)			
+{				
 	const struct objs *p;
 	unsigned int i, j;
 
@@ -91,7 +94,7 @@ convert(tothis)			/* Converts day to night and vice versa.     */
 }
 
 void
-news()
+news(void)
 {
 	int     n;
 	int     hurt;
@@ -232,7 +235,7 @@ news()
 }
 
 void
-crash()
+crash(void)
 {
 	int     hurt1, hurt2;
 
@@ -267,7 +270,7 @@ crash()
 }
 
 void
-newlocation()
+newlocation(void)
 {
 	news();
 	if (beenthere[position] <= ROOMDESC)

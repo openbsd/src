@@ -1,4 +1,4 @@
-/*	$OpenBSD: getcom.c,v 1.11 2003/06/03 03:01:38 millert Exp $	*/
+/*	$OpenBSD: getcom.c,v 1.12 2004/07/10 07:26:22 deraadt Exp $	*/
 /*	$NetBSD: getcom.c,v 1.3 1995/03/21 15:07:30 cgd Exp $	*/
 
 /*
@@ -34,17 +34,14 @@
 #if 0
 static char sccsid[] = "@(#)getcom.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: getcom.c,v 1.11 2003/06/03 03:01:38 millert Exp $";
+static char rcsid[] = "$OpenBSD: getcom.c,v 1.12 2004/07/10 07:26:22 deraadt Exp $";
 #endif
 #endif /* not lint */
 
 #include "extern.h"
 
 char   *
-getcom(buf, size, prompt, error)
-	char   *buf;
-	int     size;
-	const char   *prompt, *error;
+getcom(char *buf, int size, const char *prompt, const char *error)
 {
 	for (;;) {
 		fputs(prompt, stdout);
@@ -76,9 +73,7 @@ getcom(buf, size, prompt, error)
  * and leaves it unchanged if flag = 0
  */
 char   *
-getword(buf1, buf2, flag)
-	char   *buf1, *buf2;
-	int     flag;
+getword(char *buf1, char *buf2, int flag)
 {
 	int cnt;
 

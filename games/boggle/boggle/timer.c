@@ -1,4 +1,4 @@
-/*	$OpenBSD: timer.c,v 1.6 2003/06/03 03:01:39 millert Exp $	*/
+/*	$OpenBSD: timer.c,v 1.7 2004/07/10 07:26:22 deraadt Exp $	*/
 /*	$NetBSD: timer.c,v 1.3 1995/04/24 12:22:45 cgd Exp $	*/
 
 /*-
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)timer.c	8.2 (Berkeley) 2/22/94";
 #else
-static char rcsid[] = "$OpenBSD: timer.c,v 1.6 2003/06/03 03:01:39 millert Exp $";
+static char rcsid[] = "$OpenBSD: timer.c,v 1.7 2004/07/10 07:26:22 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -62,7 +62,7 @@ static int waitch(long);
  * Leave the cursor where it was initially
  */
 int
-timerch()
+timerch(void)
 {
 	extern int tlimit;
 	extern time_t start_t;
@@ -97,8 +97,7 @@ timerch()
  * Returns 1 if input is ready, 0 oth.
  */
 static int
-waitch(delay)
-	long delay;
+waitch(long delay)
 {
 	fd_set fdbits;
 	struct timeval duration;
@@ -111,8 +110,7 @@ waitch(delay)
 }
 
 void
-delay(tenths)
-	int tenths;
+delay(int tenths)
 {
 	struct timeval duration;
 

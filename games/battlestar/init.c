@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.11 2003/09/26 18:58:01 tedu Exp $	*/
+/*	$OpenBSD: init.c,v 1.12 2004/07/10 07:26:22 deraadt Exp $	*/
 /*	$NetBSD: init.c,v 1.4 1995/03/21 15:07:35 cgd Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)init.c	8.4 (Berkeley) 4/30/95";
 #else
-static char rcsid[] = "$OpenBSD: init.c,v 1.11 2003/09/26 18:58:01 tedu Exp $";
+static char rcsid[] = "$OpenBSD: init.c,v 1.12 2004/07/10 07:26:22 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -45,8 +45,7 @@ static const char *getutmp(void);
 static int wizard(const char *);
 
 void
-initialize(filename)
-	const char    *filename;
+initialize(const char *filename)
 {
 	const struct objs *p;
 	char *savefile;
@@ -80,7 +79,7 @@ initialize(filename)
 }
 
 static const char *
-getutmp()
+getutmp(void)
 {
 	struct passwd *ptr;
 
@@ -111,8 +110,7 @@ static const char *const badguys[] = {
 };
 
 static int
-wizard(username)
-	const char   *username;
+wizard(const char *username)
 {
 	int     flag;
 
@@ -122,8 +120,7 @@ wizard(username)
 }
 
 static int
-checkout(username)
-	const char   *username;
+checkout(const char *username)
 {
 	const char  *const *ptr;
 

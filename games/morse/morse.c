@@ -1,4 +1,4 @@
-/*	$OpenBSD: morse.c,v 1.11 2003/07/10 00:03:01 david Exp $	*/
+/*	$OpenBSD: morse.c,v 1.12 2004/07/10 07:26:23 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)morse.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: morse.c,v 1.11 2003/07/10 00:03:01 david Exp $";
+static char rcsid[] = "$OpenBSD: morse.c,v 1.12 2004/07/10 07:26:23 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -121,9 +121,7 @@ static int sflag = 0;
 static int dflag = 0;
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char *argv[])
 {
 	int ch;
 	char *p;
@@ -199,8 +197,7 @@ main(argc, argv)
 }
 
 void
-morse(c)
-	int c;
+morse(int c)
 {
 	int i;
 
@@ -223,8 +220,7 @@ morse(c)
 }
 
 void
-decode(s)
-	char *s;
+decode(char *s)
 {
 	int i;
 	
@@ -253,8 +249,7 @@ decode(s)
 
 
 void
-show(s)
-	char *s;
+show(char *s)
 {
 	if (sflag)
 		printf(" %s", s);

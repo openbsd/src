@@ -1,4 +1,4 @@
-/*	$OpenBSD: com2.c,v 1.14 2003/06/03 03:01:38 millert Exp $	*/
+/*	$OpenBSD: com2.c,v 1.15 2004/07/10 07:26:22 deraadt Exp $	*/
 /*	$NetBSD: com2.c,v 1.3 1995/03/21 15:06:55 cgd Exp $	*/
 
 /*
@@ -34,14 +34,14 @@
 #if 0
 static char sccsid[] = "@(#)com2.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: com2.c,v 1.14 2003/06/03 03:01:38 millert Exp $";
+static char rcsid[] = "$OpenBSD: com2.c,v 1.15 2004/07/10 07:26:22 deraadt Exp $";
 #endif
 #endif /* not lint */
 
 #include "extern.h"
 
 int
-wearit()
+wearit(void)
 {				/* synonyms = {sheathe, sheath} */
 	int     firstnumber, value;
 
@@ -109,7 +109,7 @@ wearit()
 }
 
 int
-put()
+put(void)
 {				/* synonyms = {buckle, strap, tie} */
 	if (inc_wordnumber(words[wordnumber], "what"))
 		return(-1);
@@ -128,13 +128,13 @@ put()
 }
 
 int
-draw()
+draw(void)
 {				/* synonyms = {pull, carry} */
 	return (take(wear));
 }
 
 int
-use()
+use(void)
 {
 	if (inc_wordnumber(words[wordnumber], "what"))
 		return(-1);
@@ -178,7 +178,7 @@ use()
 }
 
 void
-murder()
+murder(void)
 {
 	int     n;
 
@@ -278,7 +278,7 @@ murder()
 }
 
 void
-ravage()
+ravage(void)
 {
 	if (inc_wordnumber(words[wordnumber], "whom"))
 		return;
@@ -335,7 +335,7 @@ ravage()
 }
 
 int
-follow()
+follow(void)
 {
 	if (followfight == ourtime) {
 		puts("The Dark Lord leaps away and runs down secret tunnels and corridors.");
@@ -360,7 +360,7 @@ follow()
 }
 
 void
-undress()
+undress(void)
 {
 	if (inc_wordnumber(words[wordnumber], "whom"))
 		return;

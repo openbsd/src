@@ -1,4 +1,4 @@
-/*	$OpenBSD: com7.c,v 1.10 2003/06/03 03:01:38 millert Exp $	*/
+/*	$OpenBSD: com7.c,v 1.11 2004/07/10 07:26:22 deraadt Exp $	*/
 /*	$NetBSD: com7.c,v 1.3 1995/03/21 15:07:12 cgd Exp $	*/
 
 /*
@@ -34,15 +34,14 @@
 #if 0
 static char sccsid[] = "@(#)com7.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: com7.c,v 1.10 2003/06/03 03:01:38 millert Exp $";
+static char rcsid[] = "$OpenBSD: com7.c,v 1.11 2004/07/10 07:26:22 deraadt Exp $";
 #endif
 #endif /* not lint */
 
 #include "extern.h"
 
 int
-fight(enemy, strength)
-	int     enemy, strength;
+fight(int enemy, int strength)
 {
 	int     lifeline = 0;
 	int     hurt;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: com3.c,v 1.11 2003/06/03 03:01:38 millert Exp $	*/
+/*	$OpenBSD: com3.c,v 1.12 2004/07/10 07:26:22 deraadt Exp $	*/
 /*	$NetBSD: com3.c,v 1.3 1995/03/21 15:07:00 cgd Exp $	*/
 
 /*
@@ -34,14 +34,14 @@
 #if 0
 static char sccsid[] = "@(#)com3.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: com3.c,v 1.11 2003/06/03 03:01:38 millert Exp $";
+static char rcsid[] = "$OpenBSD: com3.c,v 1.12 2004/07/10 07:26:22 deraadt Exp $";
 #endif
 #endif /* not lint */
 
 #include "extern.h"
 
 void
-dig()
+dig(void)
 {
 	if (TestBit(inven, SHOVEL)) {
 		puts("OK");
@@ -65,7 +65,7 @@ dig()
 }
 
 int
-jump()
+jump(void)
 {
 	int     n;
 
@@ -105,7 +105,7 @@ jump()
 }
 
 void
-bury()
+bury(void)
 {
 	int     value;
 
@@ -168,7 +168,7 @@ bury()
 }
 
 void
-drink()
+drink(void)
 {
 	int     n;
 
@@ -188,7 +188,7 @@ drink()
 }
 
 int
-shoot()
+shoot(void)
 {
 	int     firstnumber, value;
 

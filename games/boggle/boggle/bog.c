@@ -1,4 +1,4 @@
-/*	$OpenBSD: bog.c,v 1.13 2003/06/03 03:01:39 millert Exp $	*/
+/*	$OpenBSD: bog.c,v 1.14 2004/07/10 07:26:22 deraadt Exp $	*/
 /*	$NetBSD: bog.c,v 1.5 1995/04/24 12:22:32 cgd Exp $	*/
 
 /*-
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)bog.c	8.1 (Berkeley) 6/11/93";
 #else
-static char rcsid[] = "$OpenBSD: bog.c,v 1.13 2003/06/03 03:01:39 millert Exp $";
+static char rcsid[] = "$OpenBSD: bog.c,v 1.14 2004/07/10 07:26:22 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -121,9 +121,7 @@ int selfuse;
 int tlimit;
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int ch, done, i;
 	char *bspec, *p, *seed;
@@ -255,8 +253,7 @@ main(argc, argv)
  * Return a pointer to a legal word or a null pointer when EOF is reached
  */
 char *
-batchword(fp)
-	FILE *fp;
+batchword(FILE *fp)
 {
 	int *p, *q;
 	char *w;
@@ -284,7 +281,7 @@ batchword(fp)
  * Keep track of the running stats
  */
 void
-playgame()
+playgame(void)
 {
 	int i, *p, *q;
 	time_t t;
@@ -406,9 +403,7 @@ timesup: ;
  * Return 1 on success, -1 on failure
  */
 int
-checkword(word, prev, path)
-	char *word;
-	int prev, *path;
+checkword(char *word, int prev, int *path)
 {
 	char *p, *q;
 	int i, *lm;
@@ -489,8 +484,7 @@ checkword(word, prev, path)
  * the current board
  */
 int
-validword(word)
-	char *word;
+validword(char *word)
 {
 	int j;
 	char *q, *w;
@@ -524,7 +518,7 @@ validword(word)
  * Assume both the dictionary and the player's words are already sorted
  */
 void
-checkdict()
+checkdict(void)
 {
 	char *p, **pw, *w;
 	int i;
@@ -602,8 +596,7 @@ checkdict()
  * in ascending cube order, oth. make a random board
  */
 void
-newgame(b)
-	char *b;
+newgame(char *b)
 {
 	int i, p, q;
 	char *tmp;
@@ -672,14 +665,13 @@ newgame(b)
 }
 
 int
-compar(p, q)
-	const void *p, *q;
+compar(const void *p, const void *q)
 {
 	return (strcmp(*(char **)p, *(char **)q));
 }
 
 void
-usage()
+usage(void)
 {
 	(void) fprintf(stderr,
 	    "usage: bog [-bd] [-s#] [-t#] [-w#] [+[+]] [boardspec]\n");

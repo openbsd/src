@@ -1,4 +1,4 @@
-/*	$OpenBSD: wump.c,v 1.22 2003/06/03 03:01:42 millert Exp $	*/
+/*	$OpenBSD: wump.c,v 1.23 2004/07/10 07:26:24 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -43,7 +43,7 @@ static const char copyright[] =
 #if 0
 static char sccsid[] = "@(#)wump.c	8.1 (Berkeley) 5/31/93";
 #else
-static const char rcsid[] = "$OpenBSD: wump.c,v 1.22 2003/06/03 03:01:42 millert Exp $";
+static const char rcsid[] = "$OpenBSD: wump.c,v 1.23 2004/07/10 07:26:24 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -145,7 +145,7 @@ int	wump_nearby(void);
 
 
 int
-main(int argc, char **argv)
+main(int argc, char *argv[])
 {
 	int c;
 
@@ -277,7 +277,7 @@ quiver holds %d custom super anti-evil Wumpus arrows.  Good luck.\n",
 }
 
 void
-display_room_stats()
+display_room_stats(void)
 {
 	int i;
 
@@ -307,7 +307,7 @@ display_room_stats()
 }
 
 int
-take_action()
+take_action(void)
 {
 	/*
 	 * Do the action specified by the player, either 'm'ove, 's'hoot
@@ -336,8 +336,7 @@ take_action()
 }
 
 int
-move_to(room_number)
-	const char *room_number;
+move_to(const char *room_number)
 {
 	int i, just_moved_by_bats, next_room, tunnel_available;
 
@@ -569,7 +568,7 @@ gcd(int a, int b)
 }
 
 void
-cave_init()
+cave_init(void)
 {
 	int i, j, k, link;
 	int delta;
@@ -661,7 +660,7 @@ try_again:		link = (random() % room_num) + 1;
 }
 
 void
-dodecahedral_cave_init()
+dodecahedral_cave_init(void)
 {
 	int vert[20][3] = {
 		{1, 4, 7},
@@ -726,7 +725,7 @@ dodecahedral_cave_init()
 }
 
 void
-clear_things_in_cave()
+clear_things_in_cave(void)
 {
 	int i;
 
@@ -739,7 +738,7 @@ clear_things_in_cave()
 }
 
 void
-initialize_things_in_cave()
+initialize_things_in_cave(void)
 {
 	int i, loc;
 
@@ -811,7 +810,7 @@ getans(const char *prompt)
 }
 
 int
-bats_nearby()
+bats_nearby(void)
 {
 	int i;
 
@@ -823,7 +822,7 @@ bats_nearby()
 }
 
 int
-pit_nearby()
+pit_nearby(void)
 {
 	int i;
 
@@ -835,7 +834,7 @@ pit_nearby()
 }
 
 int
-wump_nearby()
+wump_nearby(void)
 {
 	int i, j;
 
@@ -852,7 +851,7 @@ wump_nearby()
 }
 
 void
-move_wump()
+move_wump(void)
 {
 	wumpus_loc = cave[wumpus_loc].tunnel[random() % link_num];
 #ifdef DEBUG
@@ -868,7 +867,7 @@ int_compare(const void *a, const void *b)
 }
 
 void
-instructions()
+instructions(void)
 {
 	const char *pager;
 	pid_t pid;
@@ -913,7 +912,7 @@ puff of greasy black smoke! (poof)\n");
 }
 
 void
-usage()
+usage(void)
 {
 	(void)fprintf(stderr,
 "usage: wump [-ho] [-a arrows] [-b bats] [-p pits] [-r rooms] [-t tunnels]\n");
@@ -922,7 +921,7 @@ usage()
 
 /* messages */
 void
-wump_kill()
+wump_kill(void)
 {
 	(void)printf(
 "*ROAR* *chomp* *snurfle* *chomp*!\n\
@@ -934,7 +933,7 @@ pass out from the stench!\n");
 }
 
 void
-wump_walk_kill()
+wump_walk_kill(void)
 {
 	(void)printf(
 "Oh dear.  All the commotion has managed to awaken the evil Wumpus, who\n\
@@ -945,7 +944,7 @@ also opens wide as the evil beast beholds dinner.\n\
 }
 
 void
-wump_bat_kill()
+wump_bat_kill(void)
 {
 	(void)printf(
 "Flap, flap.  The bats fly you right into the room with the evil Wumpus!\n\
@@ -958,7 +957,7 @@ It does.\n");
 }
 
 void
-kill_wump()
+kill_wump(void)
 {
 	(void)printf(
 "*thwock!* *groan* *crash*\n\n\
@@ -970,7 +969,7 @@ mightiest adventurer at a single whiff!!\n");
 }
 
 void
-no_arrows()
+no_arrows(void)
 {
 	(void)printf(
 "\nYou turn and look at your quiver, and realize with a sinking feeling\n\
@@ -980,7 +979,7 @@ you, and with a mighty *ROAR* eats you alive!\n");
 }
 
 void
-shoot_self()
+shoot_self(void)
 {
 	(void)printf(
 "\n*Thwack!*  A sudden piercing feeling informs you that your wild arrow\n\
@@ -1002,7 +1001,7 @@ to your side, not to help, alas, but to EAT YOU!\n\
  */
 
 void
-pit_kill()
+pit_kill(void)
 {
 	(void)printf(
 "*AAAUUUUGGGGGHHHHHhhhhhhhhhh...*\n\
@@ -1014,7 +1013,7 @@ you can at least find out if Jules Verne was right...\n");
 }
 
 void
-pit_kill_bat()
+pit_kill_bat(void)
 {
 	(void)printf(
 "*AAAUUUUGGGGGHHHHHhhhhhhhhhh...*\n\
@@ -1024,7 +1023,7 @@ the bright side; you can at least find out if Jules Verne was right...\n");
 }
 
 void
-pit_survive()
+pit_survive(void)
 {
 	(void)printf(
 "Without conscious thought you grab for the side of the cave and manage\n\

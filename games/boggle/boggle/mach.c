@@ -1,4 +1,4 @@
-/*	$OpenBSD: mach.c,v 1.7 2003/06/03 03:01:39 millert Exp $	*/
+/*	$OpenBSD: mach.c,v 1.8 2004/07/10 07:26:22 deraadt Exp $	*/
 /*	$NetBSD: mach.c,v 1.5 1995/04/28 22:28:48 mycroft Exp $	*/
 
 /*-
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)mach.c	8.1 (Berkeley) 6/11/93";
 #else
-static char rcsid[] = "$OpenBSD: mach.c,v 1.7 2003/06/03 03:01:39 millert Exp $";
+static char rcsid[] = "$OpenBSD: mach.c,v 1.8 2004/07/10 07:26:22 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -83,8 +83,7 @@ static void	winch_catcher(int);
  * This is called once, when the program starts
  */
 int
-setup(seed)
-	char *seed;
+setup(char *seed)
 {
 	if (tty_setup() < 0)
 		return(-1);
@@ -101,7 +100,7 @@ setup(seed)
  * This is called once, just before the program terminates
  */
 void
-cleanup()
+cleanup(void)
 {
 	tty_cleanup();
 }
@@ -111,7 +110,7 @@ cleanup()
  * stats
  */
 void
-results()
+results(void)
 {
 	int col, row;
 	int denom1, denom2;
@@ -141,17 +140,13 @@ results()
 }
 
 static void
-prword(base, indx)
-	char *base[];
-	int indx;
+prword(char *base[], int indx)
 {
 	printw("%s", base[indx]);
 }
 
 static int
-prwidth(base, indx)
-	char *base[];
-	int indx;
+prwidth(char *base[], int indx)
 {
 	return (strlen(base[indx]));
 }
@@ -162,8 +157,7 @@ prwidth(base, indx)
  * - doesn't accept words longer than MAXWORDLEN or containing caps
  */
 char *
-getline(q)
-	char *q;
+getline(char *q)
 {
 	int ch, done;
 	char *p;
@@ -257,21 +251,20 @@ getline(q)
 }
 
 int
-inputch()
+inputch(void)
 {
 	return (getch() & 0177);
 }
 
 void
-redraw()
+redraw(void)
 {
 	clearok(stdscr, 1);
 	refresh();
 }
 
 void
-flushin(fp)
-	FILE *fp;
+flushin(FILE *fp)
 {
 
 	(void) tcflush(fileno(fp), TCIFLUSH);
@@ -283,7 +276,7 @@ static int gone;
  * Stop the game timer
  */
 void
-stoptime()
+stoptime(void)
 {
 	extern time_t start_t;
 	time_t t;
@@ -296,7 +289,7 @@ stoptime()
  * Restart the game timer
  */
 void
-starttime()
+starttime(void)
 {
 	extern time_t start_t;
 	time_t t;
@@ -313,7 +306,7 @@ starttime()
  * There is no check for exceeding COLS
  */
 void
-startwords()
+startwords(void)
 {
 	crow = LIST_LINE;
 	ccol = LIST_COL;
@@ -330,8 +323,7 @@ startwords()
  * to start the next column
  */
 void
-addword(w)
-	char *w;
+addword(char *w)
 {
 	int n;
 
@@ -354,7 +346,7 @@ addword(w)
  * The current word is unacceptable so erase it
  */
 void
-badword()
+badword(void)
 {
 
 	move(crow, ccol);
@@ -367,8 +359,7 @@ badword()
  * No check for wild arg
  */
 void
-showword(n)
-	int n;
+showword(int n)
 {
 	int col, row;
 
@@ -396,7 +387,7 @@ showword(n)
  * Note: this function knows about the format of the board
  */
 void
-findword()
+findword(void)
 {
 	int c, col, found, i, r, row;
 	char buf[MAXWORDLEN + 1];
@@ -471,9 +462,7 @@ findword()
  * Display a string at the current cursor position for the given number of secs
  */
 void
-showstr(str, delaysecs)
-	char *str;
-	int delaysecs;
+showstr(char *str, int delaysecs)
 {
 	addstr(str);
 	refresh();
@@ -484,8 +473,7 @@ showstr(str, delaysecs)
 }
 
 void
-putstr(s)
-	char *s;
+putstr(char *s)
 {
 	addstr(s);
 }
@@ -494,8 +482,7 @@ putstr(s)
  * Get a valid word and put it in the buffer
  */
 void
-getword(q)
-	char *q;
+getword(char *q)
 {
 	int ch, col, done, i, row;
 	char *p;
@@ -552,15 +539,13 @@ getword(q)
 }
 
 void
-showboard(b)
-	char *b;
+showboard(char *b)
 {
 	tty_showboard(b);
 }
 
 void
-prompt(mesg)
-	char *mesg;
+prompt(char *mesg)
 {
 	move(PROMPT_LINE, PROMPT_COL);
 	printw("%s", mesg);
@@ -569,7 +554,7 @@ prompt(mesg)
 }
 
 static int
-tty_setup()
+tty_setup(void)
 {
 	initscr();
 	raw();
@@ -590,8 +575,7 @@ tty_setup()
 }
 
 static void
-stop_catcher(signo)
-	int signo;
+stop_catcher(int signo)
 {
 	sigset_t sigset, osigset;
 
@@ -611,8 +595,7 @@ stop_catcher(signo)
 }
  
 static void
-cont_catcher(signo)
-	int signo;
+cont_catcher(int signo)
 {
 	noecho();
 	raw();
@@ -627,8 +610,7 @@ cont_catcher(signo)
  * It would mean reformatting the entire display
  */
 static void
-winch_catcher(signo)
-	int signo;
+winch_catcher(int signo)
 {
 	struct winsize win;
 
@@ -641,7 +623,7 @@ winch_catcher(signo)
 }
 
 static void
-tty_cleanup()
+tty_cleanup(void)
 {
 	move(nlines - 1, 0);
 	refresh();
@@ -651,8 +633,7 @@ tty_cleanup()
 }
 
 static void
-tty_showboard(b)
-	char *b;
+tty_showboard(char *b)
 {
 	int i, line;
 

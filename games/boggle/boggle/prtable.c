@@ -1,4 +1,4 @@
-/*	$OpenBSD: prtable.c,v 1.8 2003/06/03 03:01:39 millert Exp $	*/
+/*	$OpenBSD: prtable.c,v 1.9 2004/07/10 07:26:22 deraadt Exp $	*/
 /*	$NetBSD: prtable.c,v 1.2 1995/03/21 12:14:42 cgd Exp $	*/
 
 /*-
@@ -59,11 +59,8 @@ static int	get_maxlen(char *[], int, int (*)(char **, int));
  * an index
  */
 void
-prtable(base, num, d_cols, width, prentry, length)
-	char *base[];
-	int num, d_cols, width;
-	void (*prentry)(char *[], int);
-	int (*length)(char *[], int);
+prtable(char *base[], int num, int d_cols, int width, 
+        void (*prentry)(char *[], int), int (*length)(char *[], int))
 {
 	int c, j;
 	int a, b, cols, loc, maxlen, nrows, z;
@@ -110,10 +107,7 @@ prtable(base, num, d_cols, width, prentry, length)
 }
 
 static int
-get_maxlen(base, num, length)
-	char *base[];
-	int num;
-	int (*length)(char **, int);
+get_maxlen(char *base[], int num, int (*length)(char **, int))
 {
 	int i, len, max;
 

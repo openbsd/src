@@ -1,4 +1,4 @@
-/*	$OpenBSD: cypher.c,v 1.14 2003/06/03 03:01:38 millert Exp $	*/
+/*	$OpenBSD: cypher.c,v 1.15 2004/07/10 07:26:22 deraadt Exp $	*/
 /*	$NetBSD: cypher.c,v 1.3 1995/03/21 15:07:15 cgd Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cypher.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: cypher.c,v 1.14 2003/06/03 03:01:38 millert Exp $";
+static char rcsid[] = "$OpenBSD: cypher.c,v 1.15 2004/07/10 07:26:22 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -47,7 +47,7 @@ static void verb_with_all(unsigned int *, int, int (*)(void), const char *);
  *         1 if there are more commands remaining on the current input line
  */
 int
-cypher()
+cypher(void)
 {
 	int     n;
 	int     junk;
@@ -469,8 +469,7 @@ cypher()
 }
 
 int
-inc_wordnumber(v, adv)
-	const char *v, *adv;
+inc_wordnumber(const char *v, const char *adv)
 {
 	wordnumber++;
 	if (wordnumber >= wordcount) {
@@ -481,11 +480,8 @@ inc_wordnumber(v, adv)
 }
 
 static void
-verb_with_all(testarray, objflg, verbfunc, verbname)
-	unsigned int *testarray;
-	int objflg;
-	int (*verbfunc)(void);
-	const char *verbname;
+verb_with_all(unsigned int *testarray, int objflg, int (*verbfunc)(void),
+              const char *verbname)
 {
 	int things, n;
 

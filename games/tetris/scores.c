@@ -1,4 +1,4 @@
-/*	$OpenBSD: scores.c,v 1.9 2003/06/03 03:01:41 millert Exp $	*/
+/*	$OpenBSD: scores.c,v 1.10 2004/07/10 07:26:24 deraadt Exp $	*/
 /*	$NetBSD: scores.c,v 1.2 1995/04/22 07:42:38 cgd Exp $	*/
 
 /*-
@@ -93,8 +93,7 @@ static char *thisuser(void);
  * Note, we assume closing the stdio file releases the lock.
  */
 static void
-getscores(fpp)
-	FILE **fpp;
+getscores(FILE **fpp)
 {
 	int sd, mint, lck, mask, i;
 	char *mstr, *human;
@@ -150,8 +149,7 @@ getscores(fpp)
 }
 
 void
-savescore(level)
-	int level;
+savescore(int level)
 {
 	struct highscore *sp;
 	int i;
@@ -217,7 +215,7 @@ savescore(level)
  * The result is always trimmed to fit in a score.
  */
 static char *
-thisuser()
+thisuser(void)
 {
 	const char *p;
 	struct passwd *pw;
@@ -244,8 +242,7 @@ thisuser()
  * listed first in the highscore file.
  */
 static int
-cmpscores(x, y)
-	const void *x, *y;
+cmpscores(const void *x, const void *y)
 {
 	const struct highscore *a, *b;
 	long l;
@@ -274,9 +271,7 @@ cmpscores(x, y)
  * Caveat:  the highest score on each level is always kept.
  */
 static int
-checkscores(hs, num)
-	struct highscore *hs;
-	int num;
+checkscores(struct highscore *hs, int num)
 {
 	struct highscore *sp;
 	int i, j, k, numnames;
@@ -348,8 +343,7 @@ checkscores(hs, num)
  *   before it can be shown anyway.
  */
 void
-showscores(level)
-	int level;
+showscores(int level)
 {
 	struct highscore *sp;
 	int i, n, c;
@@ -404,11 +398,7 @@ showscores(level)
 }
 
 static void
-printem(level, offset, hs, n, me)
-	int level, offset;
-	struct highscore *hs;
-	int n;
-	const char *me;
+printem(int level, int offset, struct highscore *hs, int n, const char *me)
 {
 	struct highscore *sp;
 	int row, highlight, i;

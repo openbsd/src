@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkindex.c,v 1.6 2003/07/10 00:03:01 david Exp $	*/
+/*	$OpenBSD: mkindex.c,v 1.7 2004/07/10 07:26:22 deraadt Exp $	*/
 /*	$NetBSD: mkindex.c,v 1.2 1995/03/21 12:14:52 cgd Exp $	*/
 
 /*-
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mkindex.c	8.1 (Berkeley) 6/11/93";
 #else
-static char rcsid[] = "$OpenBSD: mkindex.c,v 1.6 2003/07/10 00:03:01 david Exp $";
+static char rcsid[] = "$OpenBSD: mkindex.c,v 1.7 2004/07/10 07:26:22 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -55,9 +55,7 @@ static char rcsid[] = "$OpenBSD: mkindex.c,v 1.6 2003/07/10 00:03:01 david Exp $
 char *nextword(FILE *, char *, int *, int *);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int clen, rlen, prev;
 	long off, start;
@@ -85,10 +83,7 @@ main(argc, argv)
  * rlen to the strlen() of the real word
  */
 char *
-nextword(fp, buffer, clen, rlen)
-	FILE *fp;
-	char *buffer;
-	int *clen, *rlen;
+nextword(FILE *fp, char *buffer, int *clen, int *rlen)
 {
 	int ch, pcount;
 	char *p, *q;

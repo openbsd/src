@@ -1,4 +1,4 @@
-/*	$OpenBSD: battlestar.c,v 1.13 2003/06/03 03:01:38 millert Exp $	*/
+/*	$OpenBSD: battlestar.c,v 1.14 2004/07/10 07:26:22 deraadt Exp $	*/
 /*	$NetBSD: battlestar.c,v 1.3 1995/03/21 15:06:47 cgd Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)battlestar.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: battlestar.c,v 1.13 2003/06/03 03:01:38 millert Exp $";
+static char rcsid[] = "$OpenBSD: battlestar.c,v 1.14 2004/07/10 07:26:22 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -57,9 +57,7 @@ static char rcsid[] = "$OpenBSD: battlestar.c,v 1.13 2003/06/03 03:01:38 millert
 int main(int, char *[]);
 
 int
-main(argc, argv)
-	int     argc;
-	char  **argv;
+main(int argc, char *argv[])
 {
 	char    mainbuf[LINELENGTH];
 	char   *next;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkdict.c,v 1.5 2003/06/03 03:01:39 millert Exp $	*/
+/*	$OpenBSD: mkdict.c,v 1.6 2004/07/10 07:26:22 deraadt Exp $	*/
 /*	$NetBSD: mkdict.c,v 1.2 1995/03/21 12:14:49 cgd Exp $	*/
 
 /*-
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mkdict.c	8.1 (Berkeley) 6/11/93";
 #else
-static char rcsid[] = "$OpenBSD: mkdict.c,v 1.5 2003/06/03 03:01:39 millert Exp $";
+static char rcsid[] = "$OpenBSD: mkdict.c,v 1.6 2004/07/10 07:26:22 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -64,9 +64,7 @@ static char rcsid[] = "$OpenBSD: mkdict.c,v 1.5 2003/06/03 03:01:39 millert Exp 
 #include "bog.h"
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	char *p, *q;
 	int ch, common, n, nwords;

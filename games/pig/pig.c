@@ -1,4 +1,4 @@
-/*	$OpenBSD: pig.c,v 1.9 2003/06/03 03:01:40 millert Exp $	*/
+/*	$OpenBSD: pig.c,v 1.10 2004/07/10 07:26:23 deraadt Exp $	*/
 /*	$NetBSD: pig.c,v 1.2 1995/03/23 08:41:40 cgd Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)pig.c	8.2 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$OpenBSD: pig.c,v 1.9 2003/06/03 03:01:40 millert Exp $";
+static char rcsid[] = "$OpenBSD: pig.c,v 1.10 2004/07/10 07:26:23 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -57,9 +57,7 @@ void pigout(char *, int);
 void usage(void);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int len;
 	int ch;
@@ -91,9 +89,7 @@ main(argc, argv)
 }
 
 void
-pigout(buf, len)
-	char *buf;
-	int len;
+pigout(char *buf, int len)
 {
 	int ch, start, i;
 	int olen, allupper, firstupper;
@@ -132,7 +128,7 @@ pigout(buf, len)
 }
 
 void
-usage()
+usage(void)
 {
 	(void)fprintf(stderr, "usage: pig\n");
 	exit(1);

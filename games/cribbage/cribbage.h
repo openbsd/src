@@ -1,4 +1,4 @@
-/*	$OpenBSD: cribbage.h,v 1.7 2004/01/16 00:13:18 espie Exp $	*/
+/*	$OpenBSD: cribbage.h,v 1.8 2004/07/10 07:26:23 deraadt Exp $	*/
 /*	$NetBSD: cribbage.h,v 1.3 1995/03/21 15:08:46 cgd Exp $	*/
 
 /*
@@ -70,7 +70,7 @@ int	 chkscr(int *, int);
 int	 comphand(CARD [], char *);
 void	 cremove(CARD, CARD [], int);
 int	 cut(bool, int);
-int	 deal(int);
+int	 deal(bool);
 void	 discard(bool);
 void	 do_wait(void);
 void	 endmsg(void);

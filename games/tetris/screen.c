@@ -1,4 +1,4 @@
-/*	$OpenBSD: screen.c,v 1.11 2003/06/03 03:01:41 millert Exp $	*/
+/*	$OpenBSD: screen.c,v 1.12 2004/07/10 07:26:24 deraadt Exp $	*/
 /*	$NetBSD: screen.c,v 1.4 1995/04/29 01:11:36 mycroft Exp $	*/
 
 /*-
@@ -120,8 +120,7 @@ static char combuf[1024], tbuf[1024];
  * Routine used by tputs().
  */
 int
-put(c)
-	int c;
+put(int c)
 {
 
 	return (putchar(c));
@@ -139,7 +138,7 @@ put(c)
  * Set up from termcap.
  */
 void
-scr_init()
+scr_init(void)
 {
 	static int bsflag, xsflag, sgnum;
 #ifdef unneeded
@@ -208,8 +207,7 @@ scr_init()
 static jmp_buf scr_onstop;
 
 static void
-stopset(sig)
-	int sig;
+stopset(int sig)
 {
 	sigset_t sigset;
 
@@ -222,8 +220,7 @@ stopset(sig)
 }
 
 static void
-scr_stop(sig)
-	int sig;
+scr_stop(int sig)
 {
 	sigset_t sigset;
 
@@ -240,7 +237,7 @@ scr_stop(sig)
  * Set up screen mode.
  */
 void
-scr_set()
+scr_set(void)
 {
 	struct winsize ws;
 	struct termios newtt;
@@ -308,7 +305,7 @@ scr_set()
  * End screen mode.
  */
 void
-scr_end()
+scr_end(void)
 {
 	sigset_t sigset, osigset;
 
@@ -333,8 +330,7 @@ scr_end()
 }
 
 void
-stop(why)
-	char *why;
+stop(char *why)
 {
 
 	if (isset)
@@ -346,7 +342,7 @@ stop(why)
  * Clear the screen, forgetting the current contents in the process.
  */
 void
-scr_clear()
+scr_clear(void)
 {
 
 	putpad(CLstr);
@@ -364,7 +360,7 @@ typedef cell regcell;
  * Update the screen.
  */
 void
-scr_update()
+scr_update(void)
 {
 	cell *bp, *sp;
 	regcell so, cur_so = 0;
@@ -478,9 +474,7 @@ scr_update()
  * (We need its length in case we have to overwrite with blanks.)
  */
 void
-scr_msg(s, set)
-	char *s;
-	int set;
+scr_msg(char *s, int set)
 {
 	
 	if (set || CEstr == NULL) {

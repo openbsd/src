@@ -1,4 +1,4 @@
-/*	$OpenBSD: room.c,v 1.7 2003/06/03 03:01:38 millert Exp $	*/
+/*	$OpenBSD: room.c,v 1.8 2004/07/10 07:26:22 deraadt Exp $	*/
 /*	$NetBSD: room.c,v 1.3 1995/03/21 15:07:54 cgd Exp $	*/
 
 /*
@@ -34,14 +34,14 @@
 #if 0
 static char sccsid[] = "@(#)room.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: room.c,v 1.7 2003/06/03 03:01:38 millert Exp $";
+static char rcsid[] = "$OpenBSD: room.c,v 1.8 2004/07/10 07:26:22 deraadt Exp $";
 #endif
 #endif /* not lint */
 
 #include "extern.h"
 
 void
-writedes()
+writedes(void)
 {
 	int     compass;
 	const char   *p;
@@ -65,7 +65,7 @@ writedes()
 }
 
 void
-printobjs()
+printobjs(void)
 {
 	unsigned int *p = location[position].objects;
 	int     n;
@@ -77,8 +77,7 @@ printobjs()
 }
 
 void
-whichway(here)
-	struct room here;
+whichway(struct room here)
 {
 	switch (direction) {
 
@@ -114,9 +113,7 @@ whichway(here)
 }
 
 const char   *
-truedirec(way, option)
-	int     way;
-	char    option;
+truedirec(int way, char option)
 {
 	switch (way) {
 
@@ -175,8 +172,7 @@ truedirec(way, option)
 }
 
 void
-newway(thisway)
-	int     thisway;
+newway(int thisway)
 {
 	switch (direction) {
 

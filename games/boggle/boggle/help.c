@@ -1,4 +1,4 @@
-/*	$OpenBSD: help.c,v 1.3 2003/06/03 03:01:39 millert Exp $	*/
+/*	$OpenBSD: help.c,v 1.4 2004/07/10 07:26:22 deraadt Exp $	*/
 /*	$NetBSD: help.c,v 1.2 1995/03/21 12:14:38 cgd Exp $	*/
 
 /*-
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)help.c	8.1 (Berkeley) 6/11/93";
 #else
-static char rcsid[] = "$OpenBSD: help.c,v 1.3 2003/06/03 03:01:39 millert Exp $";
+static char rcsid[] = "$OpenBSD: help.c,v 1.4 2004/07/10 07:26:22 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -48,7 +48,7 @@ static char rcsid[] = "$OpenBSD: help.c,v 1.3 2003/06/03 03:01:39 millert Exp $"
 #include "extern.h"
 
 int
-help()
+help(void)
 {
 	extern int nlines;
 	int eof, i;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: com6.c,v 1.17 2003/06/03 03:01:38 millert Exp $	*/
+/*	$OpenBSD: com6.c,v 1.18 2004/07/10 07:26:22 deraadt Exp $	*/
 /*	$NetBSD: com6.c,v 1.5 1995/04/27 21:30:23 mycroft Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)com6.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: com6.c,v 1.17 2003/06/03 03:01:38 millert Exp $";
+static char rcsid[] = "$OpenBSD: com6.c,v 1.18 2004/07/10 07:26:22 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -42,7 +42,7 @@ static char rcsid[] = "$OpenBSD: com6.c,v 1.17 2003/06/03 03:01:38 millert Exp $
 #include "pathnames.h"
 
 int
-launch()
+launch(void)
 {
 	if (TestBit(location[position].objects, VIPER) && !notes[CANTLAUNCH]) {
 		if (fuel > 4) {
@@ -62,7 +62,7 @@ launch()
 }
 
 int
-land()
+land(void)
 {
 	if (notes[LAUNCHED] && TestBit(location[position].objects, LAND) &&
 	    location[position].down) {
@@ -78,17 +78,17 @@ land()
 	return (0);
 }
 
+/* endgame */
 void
-die(sigraised)
-	int     sigraised;
-{ 				/* endgame */
+die(int sigraised)
+{
 	printf("bye.\nYour rating was %s.\n", rate());
 	post(' ');
 	exit(0);
 }
 
 void
-live()
+live(void)
 {
 	puts("\nYou win!");
 	post('!');
@@ -98,15 +98,14 @@ live()
 static FILE *score_fp;
 
 void
-open_score_file()
+open_score_file(void)
 {
 	if ((score_fp = fopen(_PATH_SCORE, "a")) == NULL)
 		warn("can't append to high scores file (%s)", _PATH_SCORE);
 }
 
 void
-post(ch)
-	char    ch;
+post(char ch)
 {
 	time_t tv;
 	char   *date;
@@ -133,7 +132,7 @@ post(ch)
 }
 
 const char   *
-rate()
+rate(void)
 {
 	int     score;
 
@@ -172,7 +171,7 @@ rate()
 }
 
 int
-drive()
+drive(void)
 {
 	if (TestBit(location[position].objects, CAR)) {
 		puts("You hop in the car and turn the key.  There is a perceptible grating noise,");
@@ -189,7 +188,7 @@ drive()
 }
 
 int
-ride()
+ride(void)
 {
 	if (TestBit(location[position].objects, HORSE)) {
 		puts("You climb onto the stallion and kick it in the guts.  The stupid steed launches");
@@ -213,7 +212,7 @@ ride()
 }
 
 void
-light()
+light(void)
 {				/* synonyms = {strike, smoke} */
 	if (TestBit(inven, MATCHES) && matchcount) {
 		puts("Your match splutters to life.");
@@ -229,7 +228,7 @@ light()
 }
 
 void
-dooropen()
+dooropen(void)
 {				/* synonyms = {open, unlock} */
 	wordnumber++;
 	if (wordnumber <= wordcount && wordtype[wordnumber] == NOUNS

@@ -1,4 +1,4 @@
-/*	$OpenBSD: instr.c,v 1.9 2003/06/03 03:01:39 millert Exp $	*/
+/*	$OpenBSD: instr.c,v 1.10 2004/07/10 07:26:23 deraadt Exp $	*/
 /*	$NetBSD: instr.c,v 1.5 1997/07/10 06:47:30 mikel Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)instr.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: instr.c,v 1.9 2003/06/03 03:01:39 millert Exp $";
+static char rcsid[] = "$OpenBSD: instr.c,v 1.10 2004/07/10 07:26:23 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -57,7 +57,7 @@ static char rcsid[] = "$OpenBSD: instr.c,v 1.9 2003/06/03 03:01:39 millert Exp $
 #include "pathnames.h"
 
 void
-instructions()
+instructions(void)
 {
 	int pstat;
 	int fd;

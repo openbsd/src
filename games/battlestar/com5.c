@@ -1,4 +1,4 @@
-/*	$OpenBSD: com5.c,v 1.10 2003/06/03 03:01:38 millert Exp $	*/
+/*	$OpenBSD: com5.c,v 1.11 2004/07/10 07:26:22 deraadt Exp $	*/
 /*	$NetBSD: com5.c,v 1.3 1995/03/21 15:07:07 cgd Exp $	*/
 
 /*
@@ -34,14 +34,14 @@
 #if 0
 static char sccsid[] = "@(#)com5.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: com5.c,v 1.10 2003/06/03 03:01:38 millert Exp $";
+static char rcsid[] = "$OpenBSD: com5.c,v 1.11 2004/07/10 07:26:22 deraadt Exp $";
 #endif
 #endif /* not lint */
 
 #include "extern.h"
 
 void
-kiss()
+kiss(void)
 {
 	if (inc_wordnumber(words[wordnumber], "whom"))
 		return;
@@ -93,7 +93,7 @@ kiss()
 }
 
 void
-love()
+love(void)
 {
 	int     n;
 
@@ -159,7 +159,7 @@ love()
 }
 
 int
-zzz()
+zzz(void)
 {
 	int     oldtime;
 	int     n;
@@ -213,7 +213,7 @@ zzz()
 }
 
 void
-chime()
+chime(void)
 {
 	if ((ourtime / CYCLE + 1) % 2 && OUTSIDE)
 		switch ((ourtime % CYCLE) / (CYCLE / 7)) {
@@ -268,7 +268,7 @@ chime()
 }
 
 int
-give()
+give(void)
 {
 	int obj = -1, result = -1, person = 0, firstnumber, last1, last2;
 

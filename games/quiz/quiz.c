@@ -1,4 +1,4 @@
-/*	$OpenBSD: quiz.c,v 1.15 2003/07/06 02:04:03 avsm Exp $	*/
+/*	$OpenBSD: quiz.c,v 1.16 2004/07/10 07:26:23 deraadt Exp $	*/
 /*	$NetBSD: quiz.c,v 1.9 1995/04/22 10:16:58 cgd Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)quiz.c	8.3 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$OpenBSD: quiz.c,v 1.15 2003/07/06 02:04:03 avsm Exp $";
+static char rcsid[] = "$OpenBSD: quiz.c,v 1.16 2004/07/10 07:26:23 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -75,9 +75,7 @@ void	 show_index(void);
 void	 usage(void);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int ch;
 	const char *indexfile;
@@ -115,8 +113,7 @@ main(argc, argv)
 }
 
 void
-get_file(file)
-	const char *file;
+get_file(const char *file)
 {
 	FILE *fp;
 	QE *qp;
@@ -156,7 +153,7 @@ get_file(file)
 }
 
 void
-show_index()
+show_index(void)
 {
 	QE *qp;
 	const char *p, *s;
@@ -187,8 +184,7 @@ show_index()
 }
 
 void
-get_cats(cat1, cat2)
-	char *cat1, *cat2;
+get_cats(char *cat1, char *cat2)
 {
 	QE *qp;
 	int i;
@@ -220,7 +216,7 @@ get_cats(cat1, cat2)
 }
 
 void
-quiz()
+quiz(void)
 {
 	QE *qp;
 	int i;
@@ -306,8 +302,7 @@ quiz()
 }
 
 const char *
-next_cat(s)
-	const char *	s;
+next_cat(const char *s)
 {
 	int esc;
 
@@ -332,10 +327,7 @@ next_cat(s)
 }
 
 char *
-appdstr(s, tp, len)
-	char *s;
-	const char *tp;
-	size_t len;
+appdstr(char *s, const char *tp, size_t len)
 {
 	char *mp;
 	const char *sp;
@@ -359,8 +351,7 @@ appdstr(s, tp, len)
 }
 
 void
-score(r, w, g)
-	u_int r, w, g;
+score(u_int r, u_int w, u_int g)
 {
 	(void)printf("Rights %d, wrongs %d,", r, w);
 	if (g)
@@ -369,8 +360,7 @@ score(r, w, g)
 }
 
 void
-downcase(p)
-	char *p;
+downcase(char *p)
 {
 	int ch;
 
@@ -380,7 +370,7 @@ downcase(p)
 }
 
 void
-usage()
+usage(void)
 {
 	(void)fprintf(stderr, "quiz [-t] [-i file] category1 category2\n");
 	exit(1);

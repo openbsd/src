@@ -1,4 +1,4 @@
-/*	$OpenBSD: crib.c,v 1.12 2003/06/03 03:01:39 millert Exp $	*/
+/*	$OpenBSD: crib.c,v 1.13 2004/07/10 07:26:23 deraadt Exp $	*/
 /*	$NetBSD: crib.c,v 1.7 1997/07/10 06:47:29 mikel Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)crib.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: crib.c,v 1.12 2003/06/03 03:01:39 millert Exp $";
+static char rcsid[] = "$OpenBSD: crib.c,v 1.13 2004/07/10 07:26:23 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -58,9 +58,7 @@ static char rcsid[] = "$OpenBSD: crib.c,v 1.12 2003/06/03 03:01:39 millert Exp $
 #include "pathnames.h"
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	bool playing;
 	int ch;
@@ -159,7 +157,7 @@ main(argc, argv)
  *	Print out the initial board on the screen
  */
 void
-makeboard()
+makeboard(void)
 {
 	mvaddstr(SCORE_Y + 0, SCORE_X,
 	    "+---------------------------------------+");
@@ -187,7 +185,7 @@ makeboard()
  *	Print out the current game score
  */
 void
-gamescore()
+gamescore(void)
 {
 	if (pgames || cgames) {
 		mvprintw(SCORE_Y + 1, SCORE_X + 28, "Games: %3d", pgames);
@@ -203,7 +201,7 @@ gamescore()
  *	player what card to turn.  We do a random one, anyway.
  */
 void
-game()
+game(void)
 {
 	int i, j;
 	bool flag;
@@ -307,8 +305,7 @@ game()
  *	Do up one hand of the game
  */
 int
-playhand(mycrib)
-	bool mycrib;
+playhand(bool mycrib)
 {
 	int deckpos;
 
@@ -339,8 +336,7 @@ playhand(mycrib)
  * deal cards to both players from deck
  */
 int
-deal(mycrib)
-	bool mycrib;
+deal(bool mycrib)
 {
 	int i, j;
 
@@ -362,8 +358,7 @@ deal(mycrib)
  * Note: we call cdiscard() after prining first message so player doesn't wait
  */
 void
-discard(mycrib)
-	bool mycrib;
+discard(bool mycrib)
 {
 	char *prompt;
 	CARD crd;
@@ -392,9 +387,7 @@ discard(mycrib)
  *	player what card to turn.  We do a random one, anyway.
  */
 int
-cut(mycrib, pos)
-	bool mycrib;
-	int  pos;
+cut(bool mycrib, int pos)
 {
 	int i;
 	bool win;
@@ -448,8 +441,7 @@ cut(mycrib, pos)
  *	Print out the turnover card with crib indicator
  */
 void
-prcrib(mycrib, blank)
-	bool mycrib, blank;
+prcrib(bool mycrib, bool blank)
 {
 	int y, cardx;
 
@@ -479,8 +471,7 @@ static CARD Table[14];
 static int Tcnt;
 
 int
-peg(mycrib)
-	bool mycrib;
+peg(bool mycrib)
 {
 	static CARD ch[CINHAND], ph[CINHAND];
 	int i, j, k;
@@ -648,8 +639,7 @@ peg(mycrib)
  *	Print out the table with the current score
  */
 void
-prtable(score)
-	int score;
+prtable(int score)
 {
 	prhand(Table, Tcnt, Tablewin, FALSE);
 	mvwprintw(Tablewin, (Tcnt + 2) * 2, Tcnt + 1, "%2d", score);
@@ -661,8 +651,7 @@ prtable(score)
  *	Handle the scoring of the hands
  */
 int
-score(mycrib)
-	bool mycrib;
+score(bool mycrib)
 {
 	sorthand(crib, CINHAND);
 	if (mycrib) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rain.c,v 1.13 2003/06/03 03:01:40 millert Exp $	*/
+/*	$OpenBSD: rain.c,v 1.14 2004/07/10 07:26:23 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)rain.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: rain.c,v 1.13 2003/06/03 03:01:40 millert Exp $";
+static char rcsid[] = "$OpenBSD: rain.c,v 1.14 2004/07/10 07:26:23 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -62,9 +62,7 @@ static void	onsig(int);
 
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char *argv[])
 {
 	int x, y, j;
 	long tcols, tlines;
@@ -142,8 +140,7 @@ main(argc, argv)
 }
 
 static void
-onsig(dummy)
-	int dummy;
+onsig(int dummy)
 {
 	sig_caught = 1;
 }

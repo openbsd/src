@@ -1,4 +1,4 @@
-/*	$OpenBSD: number.c,v 1.10 2003/06/03 03:01:40 millert Exp $	*/
+/*	$OpenBSD: number.c,v 1.11 2004/07/10 07:26:23 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -39,7 +39,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)number.c	8.3 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$OpenBSD: number.c,v 1.10 2003/06/03 03:01:40 millert Exp $";
+static char rcsid[] = "$OpenBSD: number.c,v 1.11 2004/07/10 07:26:23 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -88,9 +88,7 @@ void	usage(void);
 int lflag;
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int ch, first;
 	char line[LINELEN];
@@ -132,8 +130,7 @@ main(argc, argv)
 }
 
 void
-convert(line)
-	char *line;
+convert(char *line)
 {
 	int flen, len, rval;
 	char *p, *fraction;
@@ -209,8 +206,7 @@ badnum:			errx(1, "illegal number: %s", line);
 }
 
 void
-convertexp(line)
-	char *line;
+convertexp(char *line)
 {
 	char locline[LINELEN];
 	char *part1, *part2, *part3, *part4;
@@ -253,9 +249,7 @@ convertexp(line)
 }
 
 int
-unit(len, p)
-	int len;
-	const char *p;
+unit(int len, const char *p)
 {
 	int off, rval;
 
@@ -289,9 +283,7 @@ unit(len, p)
 }
 
 int
-number(p, len)
-	const char *p;
-	int len;
+number(const char *p, int len)
 {
 	int val, rval;
 
@@ -329,8 +321,7 @@ number(p, len)
 }
 
 void
-pfract(len)
-	int len;
+pfract(int len)
 {
 	static const char *const pref[] = { "", "ten-", "hundred-" };
 
@@ -348,7 +339,7 @@ pfract(len)
 }
 
 void
-usage()
+usage(void)
 {
 	(void)fprintf(stderr, "usage: number [-l] [--] [# ...]\n");
 	exit(1);

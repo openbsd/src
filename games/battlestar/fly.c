@@ -1,4 +1,4 @@
-/*	$OpenBSD: fly.c,v 1.11 2003/06/03 03:01:38 millert Exp $	*/
+/*	$OpenBSD: fly.c,v 1.12 2004/07/10 07:26:22 deraadt Exp $	*/
 /*	$NetBSD: fly.c,v 1.3 1995/03/21 15:07:28 cgd Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)fly.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: fly.c,v 1.11 2003/06/03 03:01:38 millert Exp $";
+static char rcsid[] = "$OpenBSD: fly.c,v 1.12 2004/07/10 07:26:22 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -62,8 +62,7 @@ static void succumb(int);
 static void target(void);
 
 static void
-succumb(sigraised)
-	int     sigraised;
+succumb(int sigraised)
 {
 	if (oldsig == SIG_DFL) {
 		endfly();
@@ -76,7 +75,7 @@ succumb(sigraised)
 }
 
 int
-visual()
+visual(void)
 {
 	destroyed = 0;
 	if (initscr() == NULL) {
@@ -183,7 +182,7 @@ visual()
 }
 
 static void
-screen()
+screen(void)
 {
 	int     r, c, n;
 	int     i;
@@ -200,7 +199,7 @@ screen()
 }
 
 static void
-target()
+target(void)
 {
 	int     n;
 
@@ -213,7 +212,7 @@ target()
 }
 
 static void
-notarget()
+notarget(void)
 {
 	int     n;
 
@@ -226,7 +225,7 @@ notarget()
 }
 
 static void
-blast()
+blast(void)
 {
 	int     n;
 
@@ -248,8 +247,7 @@ blast()
 }
 
 static void
-moveenemy(sigraised)
-	int     sigraised;
+moveenemy(int sigraised)
 {
 	double  d;
 	int     oldr, oldc;
@@ -288,7 +286,7 @@ moveenemy(sigraised)
 }
 
 static void
-endfly()
+endfly(void)
 {
 	alarm(0);
 	signal(SIGALRM, SIG_DFL);

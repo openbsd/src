@@ -1,4 +1,4 @@
-/*	$OpenBSD: input.c,v 1.10 2003/06/03 03:01:41 millert Exp $	*/
+/*	$OpenBSD: input.c,v 1.11 2004/07/10 07:26:24 deraadt Exp $	*/
 /*    $NetBSD: input.c,v 1.3 1996/02/06 22:47:33 jtc Exp $    */
 
 /*-
@@ -73,8 +73,7 @@
  * Return 0 => no input, 1 => can read() from stdin
  */
 int
-rwait(tvp)
-	struct timeval *tvp;
+rwait(struct timeval *tvp)
 {
 	struct timeval starttv, endtv, *s;
 	fd_set fds;
@@ -124,7 +123,7 @@ again:
  * Eat any input that might be available.
  */
 void
-tsleep()
+tsleep(void)
 {
 	struct timeval tv;
 	char c;
@@ -140,7 +139,7 @@ tsleep()
  * getchar with timeout.
  */
 int
-tgetchar()
+tgetchar(void)
 {
 	static struct timeval timeleft;
 	char c;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.12 2003/06/03 03:01:38 millert Exp $	*/
+/*	$OpenBSD: parse.c,v 1.13 2004/07/10 07:26:22 deraadt Exp $	*/
 /*	$NetBSD: parse.c,v 1.3 1995/03/21 15:07:48 cgd Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)parse.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: parse.c,v 1.12 2003/06/03 03:01:38 millert Exp $";
+static char rcsid[] = "$OpenBSD: parse.c,v 1.13 2004/07/10 07:26:22 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -51,7 +51,7 @@ static struct wlist *lookup(const char *);
 struct wlist *hashtab[HASHSIZE];
 
 void
-wordinit()
+wordinit(void)
 {
 	struct wlist *w;
 
@@ -60,8 +60,7 @@ wordinit()
 }
 
 static int
-hash(s)
-	const char   *s;
+hash(const char *s)
 {
 	int     hashval = 0;
 
@@ -74,8 +73,7 @@ hash(s)
 }
 
 static struct wlist *
-lookup(s)
-	const char   *s;
+lookup(const char *s)
 {
 	struct wlist *wp;
 
@@ -86,8 +84,7 @@ lookup(s)
 }
 
 static void
-install(wp)
-	struct wlist *wp;
+install(struct wlist *wp)
 {
 	int     hashval;
 
@@ -100,7 +97,7 @@ install(wp)
 }
 
 void
-parse()
+parse(void)
 {
 	struct wlist *wp;
 	int     n;
