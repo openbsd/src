@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.280 2000/07/11 20:12:53 marc Exp 
+ *		OpenBSD: pcidevs,v 1.281 2000/07/13 01:10:44 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -1765,6 +1765,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "FORE Systems",
 	    "ATM PCA-200e",
+	},
+	{
+	    PCI_VENDOR_FORTEMEDIA, PCI_PRODUCT_FORTEMEDIA_FM801,
+	    0,
+	    "Forte Media",
+	    "801 Sound",
 	},
 	{
 	    PCI_VENDOR_FUTUREDOMAIN, PCI_PRODUCT_FUTUREDOMAIN_TMC_18C30,
@@ -4467,7 +4473,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "VT82C686A (Apollo 133) SMBus",
 	},
 	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C686A_AUD,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C686A_AC97,
 	    0,
 	    "VIA",
 	    "VT82C686A (Apollo 133) AC-97 Audio",
@@ -7734,6 +7740,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_ADMTEK, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "ADMtek",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_FORTEMEDIA, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Forte Media",
 	    NULL,
 	},
 	{
