@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.13 2002/02/16 20:25:02 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.14 2002/03/08 11:06:17 mpech Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -39,7 +39,7 @@ char copyright[] =
 #if !defined(lint)
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.13 2002/02/16 20:25:02 millert Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.14 2002/03/08 11:06:17 mpech Exp $";
 #endif
 
 #include "defs.h"
@@ -770,7 +770,7 @@ intvl_random(struct timeval *tp,	/* put value here */
 {
 	tp->tv_sec = (time_t)(hi == lo
 			      ? lo
-			      : (lo + arc4random() % ((hi - lo))));
+			      : (lo + arc4random() % ((1 + hi - lo))));
 	tp->tv_usec = arc4random() % 1000000;
 }
 
