@@ -369,7 +369,7 @@ process_output(fd_set * writeset)
 #ifdef USE_PIPES
 			close(fdin);
 #else
-			if (fdout == -1)
+			if (fdin != fdout)
 				close(fdin);
 			else
 				shutdown(fdin, SHUT_WR); /* We will no longer send. */
@@ -495,7 +495,7 @@ server_loop(int pid, int fdin_arg, int fdout_arg, int fderr_arg)
 #ifdef USE_PIPES
 			close(fdin);
 #else
-			if (fdout == -1)
+			if (fdin != fdout)
 				close(fdin);
 			else
 				shutdown(fdin, SHUT_WR); /* We will no longer send. */
