@@ -1,4 +1,4 @@
-/*	$OpenBSD: bios.c,v 1.32 2000/08/18 01:23:22 mickey Exp $	*/
+/*	$OpenBSD: bios.c,v 1.33 2000/09/22 02:00:21 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Michael Shalayeff
@@ -308,7 +308,11 @@ bios32_service(service, e, ei)
 	bios32_entry_t e;
 	bios32_entry_info_t ei;
 {
+	extern union descriptor *dynamic_gdt;
+	extern int gdt_get_slot __P((void));
+
 	u_int32_t base, count, off, ent;
+	int slot;
 
 	if (bios32_entry.offset == 0)
 		return 0;
@@ -326,8 +330,12 @@ bios32_service(service, e, ei)
 	if (ent <= BIOS32_START || ent >= BIOS32_END)
 		return 0;
 
-	e->offset = (vaddr_t)ISA_HOLE_VADDR(ent);
-	e->segment = GSEL(GCODE_SEL, SEL_KPL);
+	slot = gdt_get_slot();
+	setsegment(&dynamic_gdt[slot].sd, ISA_HOLE_VADDR(base),
+	    count - 1, SDT_MEMERA, SEL_KPL, 1, 0);
+
+	e->segment = GSEL(slot, SEL_KPL);
+	e->offset = (vaddr_t)(ent - base);
 
 	ei->bei_base = base;
 	ei->bei_size = count;

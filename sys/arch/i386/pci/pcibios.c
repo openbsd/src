@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcibios.c,v 1.13 2000/09/20 19:39:55 mickey Exp $	*/
+/*	$OpenBSD: pcibios.c,v 1.14 2000/09/22 02:00:43 mickey Exp $	*/
 /*	$NetBSD: pcibios.c,v 1.5 2000/08/01 05:23:59 uch Exp $	*/
 
 /*
@@ -128,6 +128,7 @@ int pcibios_pir_table_nentries;
 int pcibios_max_bus;
 
 struct bios32_entry pcibios_entry;
+struct bios32_entry_info pcibios_entry_info;
 
 struct pcibios_softc {
 	struct  device sc_dev;
@@ -168,11 +169,11 @@ pcibiosprobe(parent, match, aux)
 	void *match, *aux;
 {
 	struct bios_attach_args *ba = aux;
-	struct bios32_entry_info ei;
 	u_int32_t rev_maj, rev_min, mech1, mech2, scmech1, scmech2, maxbus;
 
 	return (!strcmp(ba->bios_dev, "pcibios") &&
-	    bios32_service(PCIBIOS_SIGNATURE, &pcibios_entry, &ei) &&
+	    bios32_service(PCIBIOS_SIGNATURE, &pcibios_entry,
+		&pcibios_entry_info) &&
 	    pcibios_get_status(NULL, &rev_maj, &rev_min, &mech1, &mech2,
 	        &scmech1, &scmech2, &maxbus) == PCIBIOS_SUCCESS);
 }
@@ -185,18 +186,17 @@ pcibiosattach(parent, self, aux)
 	void *aux;
 {
 	struct pcibios_softc *sc = (struct pcibios_softc *)self;
-	struct bios32_entry_info ei;
 	u_int32_t rev_maj, rev_min, mech1, mech2, scmech1, scmech2;
 
 	pcibios_flags = sc->sc_dev.dv_cfdata->cf_flags;
 
-	bios32_service(PCIBIOS_SIGNATURE, &pcibios_entry, &ei);
 	pcibios_get_status((struct pcibios_softc *)self, &rev_maj,
 	    &rev_min, &mech1, &mech2,
 	    &scmech1, &scmech2, &pcibios_max_bus);
 
-	printf(": rev. %d.%d found at 0x%lx\n", rev_maj, rev_min >> 4,
-	    ei.bei_entry);
+	printf(": rev. %d.%d found at 0x%lx[0x%lx]\n",
+	    rev_maj, rev_min >> 4, pcibios_entry_info.bei_base,
+	    pcibios_entry_info.bei_size);
 #ifdef PCIBIOSVERBOSE
 	printf("%s: config mechanism %s%s, special cycles %s%s, last bus %d\n",
 	    sc->sc_dev.dv_xname,
@@ -370,7 +370,11 @@ pcibios_get_status(sc, rev_maj, rev_min, mech1, mech2, scmech1, scmech2, maxbus)
 	u_int32_t ax, bx, cx, edx;
 	int rv;
 
-	__asm __volatile("lcall	(%%edi)\n\t"
+	__asm __volatile("pushl	%%ds\n\t"
+			 "movl	4(%%edi), %%ecx\n\t"
+			 "movl	%%ecx, %%ds\n\t"
+			 "lcall	%%cs:(%%edi)\n\t"
+			 "pop	%%ds\n\t"
 			 "jc	1f\n\t"
 			 "xor	%%ah, %%ah\n"
 		    "1:"
@@ -420,17 +424,19 @@ pcibios_get_intr_routing(sc, table, nentries, exclirq)
 
 	memset(table, 0, args.size);
 
-	__asm __volatile("pushl	%%ds\n\t"
-			 "pushl	%%es\n\t"
-			 "lcall	(%%esi)\n\t"
+	__asm __volatile("pushl	%%es\n\t"
+			 "pushl	%%ds\n\t"
+			 "movl	4(%%esi), %%ecx\n\t"
+			 "movl	%%ecx, %%ds\n\t"
+			 "lcall	%%cs:(%%esi)\n\t"
+			 "popl	%%ds\n\t"
+			 "popl	%%es\n\t"
 			 "jc	1f\n\t"
 			 "xor	%%ah, %%ah\n"
-		    "1:\n\t"
-			 "popl	%%es\n\t"
-			 "popl	%%ds"
+		    "1:\n"
 		: "=a" (ax), "=b" (bx)
 		: "0" (0xb10e), "1" (0), "D" (&args), "S" (&pcibios_entry)
-		: "cc", "memory");
+		: "%ecx", "cc", "memory");
 
 	rv = pcibios_return_code(sc, ax, "pcibios_get_intr_routing");
 	if (rv != PCIBIOS_SUCCESS)
