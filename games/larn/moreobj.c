@@ -36,7 +36,7 @@ oaltar()
 					  {
 					  case 'j':	if (rnd(100)<75) 
 									lprcat("\nnothing happens");
-								else if (rnd(13)<4) ohear();
+								else if (rnd(13)<4) ohear(1);
 								else if (rnd(43) == 10)
 									{
 									if (c[WEAR]) lprcat("\nYou feel your armor vibrate for a moment");
@@ -56,24 +56,24 @@ oaltar()
 								k = readnum((long)c[GOLD]);
 								if (c[GOLD]<k)
 									{
-									lprcat("\nYou don't have that much!");
+									lprcat("You don't have that much!");
 									return;
 									}
 								c[GOLD] -= k;
 								if (k < c[GOLD]/10 || k<rnd(50))
 									{ createmonster(makemonst(level+1)); c[AGGRAVATE] += 200; }
-								else if (rnd(101) > 50)	{ ohear(); return; }
+								else if (rnd(101) > 50)	{ ohear(0); return; }
 								else if (rnd(43) == 5)
 									{
-									if (c[WEAR]) lprcat("\nYou feel your armor vibrate for a moment");
+									if (c[WEAR]) lprcat("You feel your armor vibrate for a moment");
 									enchantarmor(); return;
 									}
 								else if (rnd(43) == 8)
 									{
-									if (c[WIELD]) lprcat("\nYou feel your weapon vibrate for a moment");
+									if (c[WIELD]) lprcat("You feel your weapon vibrate for a moment");
 									enchweapon(); return;
 									}
-								else	lprcat("\nThank You.");
+								else	lprcat("Thank You.");
 								bottomline();	return;
 
 					  case '\33':	return;
@@ -105,9 +105,13 @@ oaltar()
 	function to cast a +3 protection on the player
  */
 static void
-ohear()
+ohear(do_newline)
+	int do_newline;
 	{
-	lprcat("\nYou have been heard!");
+	if (do_newline)
+		lprcat("\nYou have been heard!");
+	else
+		lprcat("You have been heard!");
 	if (c[ALTPRO]==0) c[MOREDEFENSES]+=3;
 	c[ALTPRO] += 500;	/* protection field */
 	bottomline();
