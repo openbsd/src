@@ -1,4 +1,4 @@
-.\"	$OpenBSD: suexec.8,v 1.10 2004/12/21 16:09:34 jmc Exp $
+.\"	$OpenBSD: suexec.8,v 1.11 2004/12/28 14:34:37 jmc Exp $
 .\" ====================================================================
 .\" The Apache Software License, Version 1.1
 .\"
@@ -76,12 +76,6 @@ behaviour for the Apache
 server.
 It is run from within the server automatically to switch the user when
 an external program has to be run under a different user.
-For more information about
-.Nm ,
-see the online document
-.Dq Apache suEXEC Support
-at
-.Pa /var/www/htdocs/manual/suexec.html.en .
 .Pp
 The options are as follows:
 .Bl -tag -width indent
@@ -96,5 +90,26 @@ Because this program is only used internally by
 .Xr httpd 8 ,
 there are no other ways to directly invoke
 .Nm .
+.Pp
+In order to work correctly,
+the
+.Nm
+binary should be owned by
+.Dq root
+and have the SETUID execution bit set.
+.Ox
+currently does not install
+.Nm
+with the SETUID bit set,
+so a change of file mode is necessary to enable it:
+.Pp
+.Dl # chmod u+s /usr/sbin/suexec
+.Pp
+For more information about
+.Nm ,
+see the online document
+.Dq Apache suEXEC Support
+at
+.Pa /var/www/htdocs/manual/suexec.html.en .
 .Sh SEE ALSO
 .Xr httpd 8
