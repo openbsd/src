@@ -1,5 +1,5 @@
 #! /usr/bin/awk -f
-#	$OpenBSD: devlist2h.awk,v 1.2 2000/05/15 06:29:09 niklas Exp $
+#	$OpenBSD: devlist2h.awk,v 1.3 2000/05/15 06:31:37 niklas Exp $
 #	$NetBSD: devlist2h.awk,v 1.1 1999/10/15 06:07:22 haya Exp $
 #
 # Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -48,7 +48,7 @@ NR == 1 {
 	printf(" *\t%s\n", VERSION) > dfile
 	printf(" */\n") > dfile
 
-	printf("/*\t\OpenBSD\$\t*/\n\n") > hfile
+	printf("/*\t\$OpenBSD\$\t*/\n\n") > hfile
 	printf("/*\n") > hfile
 	printf(" * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.\n") \
 	    > hfile
