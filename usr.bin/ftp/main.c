@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.47 2000/06/21 19:22:54 itojun Exp $	*/
+/*	$OpenBSD: main.c,v 1.48 2001/06/23 22:48:45 millert Exp $	*/
 /*	$NetBSD: main.c,v 1.24 1997/08/18 10:20:26 lukem Exp $	*/
 
 /*
@@ -73,7 +73,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.47 2000/06/21 19:22:54 itojun Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.48 2001/06/23 22:48:45 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -95,12 +95,10 @@ static char rcsid[] = "$OpenBSD: main.c,v 1.47 2000/06/21 19:22:54 itojun Exp $"
 
 #include "ftp_var.h"
 
-int main __P((int, char **));
-
 int
 main(argc, argv)
-	int argc;
-	char *argv[];
+	volatile int argc;
+	char ** volatile argv;
 {
 	int ch, top, rval;
 	struct passwd *pw = NULL;
@@ -281,11 +279,6 @@ main(argc, argv)
 
 	setttywidth(0);
 	(void)signal(SIGWINCH, setttywidth);
-
-#ifdef __GNUC__				/* XXX: to shut up gcc warnings */
-	(void)&argc;
-	(void)&argv;
-#endif
 
 	if (argc > 0) {
 		if (isurl(argv[0])) {

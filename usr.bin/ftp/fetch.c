@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.33 2000/06/30 16:00:15 millert Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.34 2001/06/23 22:48:44 millert Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: fetch.c,v 1.33 2000/06/30 16:00:15 millert Exp $";
+static char rcsid[] = "$OpenBSD: fetch.c,v 1.34 2001/06/23 22:48:44 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -98,13 +98,14 @@ url_get(origline, proxyenv, outfile)
 {
 	struct addrinfo hints, *res0, *res;
 	int error;
-	int i, out, isftpurl, isfileurl;
-	volatile int s;
+	int i, isftpurl, isfileurl;
+	volatile int s, out;
 	size_t len;
 	char c, *cp, *ep, *portnum, *path, buf[4096];
 	char pbuf[NI_MAXSERV];
-	const char *savefile;
-	char *line, *proxy, *host, *port;
+	const char * volatile savefile;
+	char *line, *host, *port;
+	char * volatile proxy;
 	char *hosttail;
 	volatile sig_t oldintr;
 	off_t hashbytes;
@@ -114,12 +115,6 @@ url_get(origline, proxyenv, outfile)
 	proxy = NULL;
 	isftpurl = 0;
 	isfileurl = 0;
-
-#ifdef __GNUC__				/* XXX: to shut up gcc warnings */
-	(void)&out;
-	(void)&proxy;
-	(void)&savefile;
-#endif
 
 	line = strdup(origline);
 	if (line == NULL)
