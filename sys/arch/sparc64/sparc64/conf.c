@@ -54,7 +54,6 @@
 
 #include <machine/conf.h>
 
-#if 0
 #include "pty.h"
 #include "bpfilter.h"
 #include "tun.h"
@@ -67,10 +66,17 @@
 #include "st.h"
 #include "cd.h"
 #include "uk.h"
+#ifdef notyet
 #include "wd.h"
 #include "raid.h"
+#endif
+#define NWD 0
+#define NRAID 0
 
+#ifdef notyet
 #include "fb.h"
+#endif
+#define NFB 0
 #include "kbd.h"
 #include "ms.h"
 #if 0
@@ -81,37 +87,34 @@
 #define NSUNMS 0
 #endif
 #include "zstty.h"
-#endif
 #include "pcons.h"
-#if 0
 #include "com.h"
+#ifdef notyet
 #include "bpp.h"
 #include "magma.h"		/* has NMTTY and NMBPP */
+#endif
+#define NBPP 0
+#define NMAGMA 0
 
+#ifdef notyet
 #include "fdc.h"		/* has NFDC and NFD; see files.sparc */
 #include "bwtwo.h"
 #include "cgthree.h"
 #include "cgsix.h"
 #include "tcx.h"
 #include "cgfourteen.h"
-#include "md.h"
-#include "ipfilter.h"
-#include "rnd.h"
-#include "scsibus.h"
+#endif
+#define NFD 0
+#define NFDC 0
+#define NBWTWO 0
+#define NCGTHREE 0
+#define NCGSIX 0
+#define NTCX 0
+#define NCGFOURTEEN 0
+
+#include "rd.h"
 #include "ses.h"
 cdev_decl(ses);
-
-#include "i4b.h"
-#include "i4bctl.h"
-#include "i4btrc.h"
-#include "i4brbch.h"
-#include "i4btel.h"
-cdev_decl(i4b);
-cdev_decl(i4bctl);
-cdev_decl(i4btrc);
-cdev_decl(i4brbch);
-cdev_decl(i4btel);
-#endif
 
 struct bdevsw	bdevsw[] =
 {
@@ -119,9 +122,8 @@ struct bdevsw	bdevsw[] =
 	bdev_notdef(),			/* 1 */
 	bdev_notdef(),			/* 2 */
 	bdev_notdef(),			/* 3: SMD disk -- not this arch */
-#if 0
 	bdev_swap_init(1,sw),		/* 4 */
-	bdev_disk_init(NMD,md),		/* 5: memory disk */
+	bdev_disk_init(NRD,rd),		/* 5: ram disk */
 	bdev_notdef(),			/* 6 */
 	bdev_disk_init(NSD,sd),		/* 7: SCSI disk */
 	bdev_disk_init(NVND,vnd),	/* 8: vnode disk driver */
@@ -142,14 +144,12 @@ struct bdevsw	bdevsw[] =
 	bdev_lkm_dummy(),		/* 23 */
 	bdev_lkm_dummy(),		/* 24 */
 	bdev_disk_init(NRAID,raid),	/* 25: RAIDframe disk driver */
-#endif
 };
 int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 
 struct cdevsw	cdevsw[] =
 {
 	cdev_cn_init(1,cn),		/* 0: virtual console */
-#if 0
 	cdev_tty_init(NKBD+NSUNKBD,kd), /* 1: Sun keyboard/display */
 	cdev_ctty_init(1,ctty),		/* 2: controlling terminal */
 	cdev_mm_init(1,mm),		/* 3: /dev/{null,mem,kmem,...} */
@@ -174,7 +174,7 @@ struct cdevsw	cdevsw[] =
 	cdev_fb_init(NFB,fb),		/* 22: /dev/fb indirect driver */
 	cdev_disk_init(NCCD,ccd),	/* 23: concatenated disk driver */
 	cdev_fd_init(1,filedesc),	/* 24: file descriptor pseudo-device */
-	cdev_ipf_init(NIPFILTER,ipl),	/* 25: ip-filter device */
+	cdev_notdef(),			/* 25 */
 	cdev_disk_init(NWD,wd),		/* 26: IDE disk */
 	cdev_fb_init(NBWTWO,bwtwo),	/* 27: /dev/bwtwo */
 	cdev_notdef(),			/* 28: Systech VPC-2200 versatec/centronics */
@@ -210,7 +210,7 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(NCD,cd),		/* 58: SCSI CD-ROM */
 	cdev_scanner_init(NSS,ss),	/* 59: SCSI scanner */
 	cdev_uk_init(NUK,uk),		/* 60: SCSI unknown */
-	cdev_disk_init(NMD,md),		/* 61: memory disk */
+	cdev_disk_init(NRD,rd),		/* 61: memory disk */
 	cdev_notdef(),			/* 62 */
 	cdev_notdef(),			/* 63 */
 	cdev_notdef(),			/* 64: /dev/cgeight */
@@ -218,14 +218,18 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 66 */
 	cdev_fb_init(NCGSIX,cgsix),	/* 67: /dev/cgsix */
 	cdev_notdef(),			/* 68 */
-	cdev__ocrwip_init(NAUDIO,audio),	/* 69: /dev/audio */
+	cdev_audio_init(NAUDIO,audio),	/* 69: /dev/audio */
+#ifdef notyet
 	cdev_openprom_init(1,openprom),	/* 70: /dev/openprom */
+#else
+	cdev_notdef(),
+#endif
 	cdev_notdef(),			/* 71 */
-	cdev_i4b_init(NI4B, i4b),		/* 72: i4b main device */
-	cdev_i4bctl_init(NI4BCTL, i4bctl),	/* 73: i4b control device */
-	cdev_i4brbch_init(NI4BRBCH, i4brbch),	/* 74: i4b raw b-channel access */
-	cdev_i4btrc_init(NI4BTRC, i4btrc),	/* 75: i4b trace device */
-	cdev_i4btel_init(NI4BTEL, i4btel),	/* 76: i4b phone device */
+	cdev_notdef(),			/* 72 */
+	cdev_notdef(),			/* 73 */
+	cdev_notdef(),			/* 74 */
+	cdev_notdef(),			/* 75 */
+	cdev_notdef(),			/* 76 */
 	cdev_notdef(),			/* 77 */
 	cdev_notdef(),			/* 78 */
 	cdev_notdef(),			/* 79 */
@@ -256,7 +260,11 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 104 */
 	cdev_bpftun_init(NBPFILTER,bpf),/* 105: packet filter */
 	cdev_notdef(),			/* 106 */
-	cdev__ocrwip_init(NBPP,bpp),	/* 107: on-board parallel port */
+#ifdef notyet
+	cdev_bpp_init(NBPP,bpp),	/* 107: on-board parallel port */
+#else
+	cdev_notdef(),
+#endif
 	cdev_notdef(),			/* 108 */
 	cdev_fb_init(NTCX,tcx),		/* 109: /dev/tcx */
 	cdev_disk_init(NVND,vnd),	/* 110: vnode disk driver */
@@ -268,10 +276,9 @@ struct cdevsw	cdevsw[] =
 	cdev_lkm_dummy(),		/* 116 */
 	cdev_lkm_dummy(),		/* 117 */
 	cdev_lkm_dummy(),		/* 118 */
-	cdev_rnd_init(NRND,rnd),	/* 119: random source pseudo-device */
-	cdev_scsibus_init(NSCSIBUS,scsibus), /* 120: SCSI bus */
+	cdev_random_init(1,random),	/* 119: random data source */
+	cdev_notdef(),			/* 120 */
 	cdev_disk_init(NRAID,raid),	/* 121: RAIDframe disk driver */
-#endif
 	cdev_tty_init(NPCONS,pcons),	/* 122: PROM console */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
