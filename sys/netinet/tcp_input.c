@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.80 2000/12/11 08:04:55 itojun Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.81 2000/12/13 09:47:08 provos Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -1140,13 +1140,14 @@ findpcb:
 
 		if (iss)
 			tp->iss = iss;
-		else
-			tp->iss = tcp_iss;
+		else {
 #ifdef TCP_COMPAT_42
-		tcp_iss += TCP_ISSINCR/2;
+			tcp_iss += TCP_ISSINCR/2;
+			tp->iss = tcp_iss;
 #else /* TCP_COMPAT_42 */
-		tcp_iss += arc4random() % TCP_ISSINCR + 1;
+			tp->iss = tcp_rndiss_next();
 #endif /* !TCP_COMPAT_42 */
+		}
 		tp->irs = th->th_seq;
 		tcp_sendseqinit(tp);
 #if defined (TCP_SACK)

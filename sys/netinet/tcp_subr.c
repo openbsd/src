@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.36 2000/12/11 08:04:55 itojun Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.37 2000/12/13 09:47:08 provos Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -57,6 +57,8 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #include <sys/socketvar.h>
 #include <sys/protosw.h>
 #include <sys/errno.h>
+#include <sys/time.h>
+#include <sys/kernel.h>
 
 #include <net/route.h>
 #include <net/if.h>
@@ -137,9 +139,7 @@ tcp_init()
 {
 #ifdef TCP_COMPAT_42
 	tcp_iss = 1;		/* wrong */
-#else /* TCP_COMPAT_42 */
-	tcp_iss = arc4random() + 1;
-#endif /* !TCP_COMPAT_42 */
+#endif /* TCP_COMPAT_42 */
 	in_pcbinit(&tcbtable, tcbhashsize);
 
 #ifdef INET6
@@ -1069,3 +1069,54 @@ tcp_signature_apply(fstate, data, len)
 	return 0;
 }
 #endif /* TCP_SIGNATURE */
+
+#define TCP_RNDISS_ROUNDS	16
+#define TCP_RNDISS_OUT	7200
+#define TCP_RNDISS_MAX	30000
+
+u_int8_t tcp_rndiss_sbox[128];
+u_int16_t tcp_rndiss_msb;
+u_int16_t tcp_rndiss_cnt;
+long tcp_rndiss_reseed;
+
+u_int16_t
+tcp_rndiss_encrypt(val)
+	u_int16_t val;
+{
+	u_int16_t sum = 0, i;
+  
+	for (i = 0; i < TCP_RNDISS_ROUNDS; i++) {
+		sum += 0x79b9;
+		val ^= ((u_int16_t)tcp_rndiss_sbox[(val^sum) & 0x7f]) << 7;
+		val = ((val & 0xff) << 7) | (val >> 8);
+	}
+
+	return val;
+}
+
+void
+tcp_rndiss_init()
+{
+	get_random_bytes(tcp_rndiss_sbox, sizeof(tcp_rndiss_sbox));
+
+	tcp_rndiss_reseed = time.tv_sec + TCP_RNDISS_OUT;
+	tcp_rndiss_msb = tcp_rndiss_msb == 0x8000 ? 0 : 0x8000; 
+	tcp_rndiss_cnt = 0;
+}
+
+tcp_seq
+tcp_rndiss_next()
+{
+	u_int16_t tmp;
+
+        if (tcp_rndiss_cnt >= TCP_RNDISS_MAX ||
+	    time.tv_sec > tcp_rndiss_reseed)
+                tcp_rndiss_init();
+	
+	get_random_bytes(&tmp, sizeof(tmp));
+
+	/* (tmp & 0x7fff) ensures a 32768 byte gap between ISS */
+	return ((tcp_rndiss_encrypt(tcp_rndiss_cnt++) | tcp_rndiss_msb) <<16) |
+		(tmp & 0x7fff);
+}
+

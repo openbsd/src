@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_timer.c,v 1.19 2000/12/12 08:12:04 provos Exp $	*/
+/*	$OpenBSD: tcp_timer.c,v 1.20 2000/12/13 09:47:08 provos Exp $	*/
 /*	$NetBSD: tcp_timer.c,v 1.14 1996/02/13 23:44:09 christos Exp $	*/
 
 /*
@@ -144,9 +144,7 @@ tpgone:
 	tcp_iss += TCP_ISSINCR/PR_SLOWHZ;		/* increment iss */
 	if ((int)tcp_iss < 0)
 		tcp_iss = 0;				/* XXX */
-#else /* TCP_COMPAT_42 */
-	tcp_iss += arc4random() % (2 * TCP_ISSINCR / PR_SLOWHZ) + 1; /* increment iss */
-#endif /* !TCP_COMPAT_42 */
+#endif /* TCP_COMPAT_42 */
 	tcp_now++;					/* for timestamps */
 	splx(s);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.49 2000/12/11 08:04:56 itojun Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.50 2000/12/13 09:47:08 provos Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -304,12 +304,12 @@ tcp_usrreq(so, req, m, nam, control)
 		soisconnecting(so);
 		tcpstat.tcps_connattempt++;
 		tp->t_state = TCPS_SYN_SENT;
-		tp->t_timer[TCPT_KEEP] = tcptv_keep_init;
-		tp->iss = tcp_iss;
+		tp->t_timer[TCPT_KEEP] = tcptv_keep_init;	
 #ifdef TCP_COMPAT_42
+		tp->iss = tcp_iss;
 		tcp_iss += TCP_ISSINCR/2;
-#else /* TCP_COMPAT_42 */
-		tcp_iss += arc4random() % TCP_ISSINCR + 1;
+#else  /* TCP_COMPAT_42 */
+		tp->iss = tcp_rndiss_next();
 #endif /* !TCP_COMPAT_42 */
 		tcp_sendseqinit(tp);
 #if defined(TCP_SACK)
