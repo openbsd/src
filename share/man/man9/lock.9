@@ -125,7 +125,7 @@ Try to acquire the simplelock
 without spinning.  If the simplelock is held by another process
 then the return value is 0.  If the simplelock was acquired
 successfully then the return value is 1.
-.It Fn simple_lock_unlock "slock"
+.It Fn simple_unlock "slock"
 The simplelock
 .Fa slock
 is unlocked.  The simplelock must be locked and the calling process must
