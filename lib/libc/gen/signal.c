@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: signal.c,v 1.5 2003/06/02 20:18:35 millert Exp $";
+static char rcsid[] = "$OpenBSD: signal.c,v 1.6 2004/05/03 17:25:00 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -40,9 +40,7 @@ static char rcsid[] = "$OpenBSD: signal.c,v 1.5 2003/06/02 20:18:35 millert Exp 
 sigset_t __sigintr;		/* shared with siginterrupt */
 
 sig_t
-signal(s, a)
-	int s;
-	sig_t a;
+_signal(int s, sig_t a)
 {
 	struct sigaction sa, osa;
 
@@ -56,3 +54,6 @@ signal(s, a)
 		return (SIG_ERR);
 	return (osa.sa_handler);
 }
+
+__weak_alias(signal, _signal);
+__weak_alias(bsd_signal, _signal);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.h,v 1.7 2003/06/02 19:34:12 millert Exp $	*/
+/*	$OpenBSD: signal.h,v 1.8 2004/05/03 17:25:00 millert Exp $	*/
 /*	$NetBSD: signal.h,v 1.8 1996/02/29 00:04:57 jtc Exp $	*/
 
 /*-
@@ -49,6 +49,7 @@ extern __const char *__const sys_siglist[_NSIG];
 __BEGIN_DECLS
 int	raise(int);
 #ifndef	_ANSI_SOURCE
+void	(*bsd_signal(int, void (*)(int)))(int);
 int	kill(pid_t, int);
 int	sigaction(int, const struct sigaction *, struct sigaction *);
 int	sigaddset(sigset_t *, int);
