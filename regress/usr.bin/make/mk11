@@ -1,0 +1,22 @@
+# $OpenBSD: mk11,v 1.1 2001/05/15 13:40:02 espie Exp $
+
+
+V=text
+A=
+
+a:
+# we want empty substitutions to work correctly
+	@echo ${V:C/^$A//}
+	@echo ${V:C/$A$//}
+	@echo ${V:C/^${A}//}
+	@echo ${V:C/${A}$//}
+# with replacement text too
+	@echo ${V:C/^$A/1/}
+	@echo ${V:C/$A$/1/}
+	@echo ${V:C/^${A}/1/}
+	@echo ${V:C/${A}$/1/}
+# and with substituted text...
+	@echo ${V:C/^$A/1\&/}
+	@echo ${V:C/$A$/1\&/}
+	@echo ${V:C/^${A}/1\&/}
+	@echo ${V:C/${A}$/1\&/}

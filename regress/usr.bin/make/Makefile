@@ -1,9 +1,9 @@
-# $OpenBSD: Makefile,v 1.8 2001/05/15 13:33:09 espie Exp $
+# $OpenBSD: Makefile,v 1.9 2001/05/15 13:40:02 espie Exp $
 
 NOMAN=
 NOPROG=
 
-regress: t1 t2 t3 t4 t5 t6 t8 t9 t10 t7
+regress: t1 t2 t3 t4 t5 t6 t8 t9 t10 t11 t7
 
 MALLOC_OPTIONS?=AZJ
 t1: t1.out
@@ -54,13 +54,18 @@ t9:
 t10:	z.a
 	cd ${.CURDIR} && env -i PATH=${PATH} MALLOC_OPTIONS=${MALLOC_OPTIONS} ${MAKE} -r -f mk10 |diff - t10.out
 	
+# check for substitution parser in some confusing situations
+t11:
+	cd ${.CURDIR} && env -i PATH=${PATH} MALLOC_OPTIONS=${MALLOC_OPTIONS} ${MAKE} -r -f mk11 |diff - t11.out
+	cd ${.CURDIR} && env -i PATH=${PATH} MALLOC_OPTIONS=${MALLOC_OPTIONS} ${MAKE} -r -f mk11 A=t|diff - t11.out2
+
 z.a:
 	touch $@
 
 t1.out:
 	echo MACHINE_ARCH=${MACHINE_ARCH} >$@
 
-.PHONY: t1 t2 t3 t4 t5 t6 t7 t8 t9 t10 regress
+.PHONY: t1 t2 t3 t4 t5 t6 t7 t8 t9 t10 t11 regress
 
 CLEANFILES+=t1.out z.a
 
