@@ -1,5 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.3 1996/09/21 10:15:06 pefo Exp $	*/
-/*	$NetBSD: disksubr.c,v 1.3 1995/04/22 12:43:22 cgd Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.4 1996/09/22 11:26:09 pefo Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -111,7 +110,7 @@ readdisklabel(dev, strat, lp, clp)
 				    && dospartoff == 0) {
 					dospartoff = dp->dp_start;
 
-					/* set part a to show NetBSD part */
+					/* set part a to show OpenBSD part */
 					lp->d_partitions[0].p_size = dp->dp_size;
 					lp->d_partitions[0].p_offset = dp->dp_start;
 					lp->d_ntracks = dp->dp_ehd + 1;
@@ -138,7 +137,7 @@ readdisklabel(dev, strat, lp, clp)
 	dlp = (struct disklabel *)(bp->b_un.b_addr + LABELOFFSET);
 	if (dlp->d_magic == DISKMAGIC) {
 		if (dkcksum(dlp)) {
-			msg = "NetBSD disk label corrupted";
+			msg = "OpenBSD disk label corrupted";
 			goto done;
 		}
 		*lp = *dlp;
