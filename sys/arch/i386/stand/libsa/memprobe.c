@@ -1,4 +1,4 @@
-/*	$OpenBSD: memprobe.c,v 1.5 1997/04/17 17:21:16 weingart Exp $	*/
+/*	$OpenBSD: memprobe.c,v 1.6 1997/08/04 21:49:42 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -69,11 +69,11 @@ memprobe()
  * then test for the values.  This should croak on machines that
  * return values just written on non-existent memory...
  *
- * BTW: These machines are pretty boken IMHO.
+ * BTW: These machines are pretty broken IMHO.
  */
 static int addrprobe(int kloc){
 	volatile int *loc, i;
-	static int pat[] = {
+	static const int pat[] = {
 		0x00000000, 0xFFFFFFFF,
 		0x01010101, 0x10101010,
 		0x55555555, 0xCCCCCCCC
@@ -83,22 +83,22 @@ static int addrprobe(int kloc){
 	loc = (int *)(kloc * 1024);
 
 	/* Probe address */
-	for(i = 0; i < sizeof(pat)/sizeof(pat[0]); i++){
+	for(i = 0; i < NENTS(pat); i++){
 		*loc = pat[i];
-		if(*loc != pat[i]) return(1);
+		if(*loc != pat[i])
+			return (1);
 	}
 
 	/* Write address */
-	for(i = 0; i < sizeof(pat)/sizeof(pat[0]); i++){
+	for(i = 0; i < NENTS(pat); i++)
 		loc[i] = pat[i];
-	}
 
 	/* Read address */
-	for(i = 0; i < sizeof(pat)/sizeof(pat[0]); i++){
-		if(loc[i] != pat[i]) return(1);
-	}
+	for(i = 0; i < NENTS(pat); i++)
+		if(loc[i] != pat[i])
+			return (1);
 
-	return(0);
+	return (0);
 }
 
 
