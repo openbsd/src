@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.445 2001/09/20 04:14:21 nate Exp 
+ *		OpenBSD: pcidevs,v 1.446 2001/09/21 23:07:10 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -367,16 +367,24 @@ static const struct pci_known_product pci_known_products[] = {
 	    "M1621 Host-PCI",
 	},
 	{
-	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M4803,
-	    "M4803",
-	},
-	{
 	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M1523,
 	    "M1523 PCI-ISA",
 	},
 	{
 	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M1543,
 	    "M1543 PCI-ISA",
+	},
+	{
+	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M1647,
+	    "M1647 PCI",
+	},
+	{
+	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M3309,
+	    "M3309 MPEG Accelerator",
+	},
+	{
+	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M4803,
+	    "M4803",
 	},
 	{
 	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M5219,
@@ -401,10 +409,6 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M7101,
 	    "M7101 Power Mgmt",
-	},
-	{
-	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M3309,
-	    "M3309 MPEG Accelerator",
 	},
 	{
 	    PCI_VENDOR_ADMTEK, PCI_PRODUCT_ADMTEK_AL981,
@@ -1871,6 +1875,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "8849",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EESISA,
+	    "EES ISA",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PCEB,
 	    "82375EB PCI-EISA",
 	},
@@ -2645,6 +2653,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_MADGE, PCI_PRODUCT_MADGE_COLLAGE155,
 	    "Collage 155 ATM adapter",
+	},
+	{
+	    PCI_VENDOR_MARTINMARIETTA, PCI_PRODUCT_MARTINMARIETTA_I740,
+	    "i740 PCI",
 	},
 	{
 	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_ATLAS,

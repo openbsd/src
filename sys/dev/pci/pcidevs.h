@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.445 2001/09/20 04:14:21 nate Exp 
+ *		OpenBSD: pcidevs,v 1.446 2001/09/21 23:07:10 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -684,16 +684,17 @@
 #define	PCI_PRODUCT_ALI_M1531	0x1531		/* M1531 Host-PCI */
 #define	PCI_PRODUCT_ALI_M1541	0x1541		/* M1543 Host-PCI */
 #define	PCI_PRODUCT_ALI_M1621	0x1621		/* M1621 Host-PCI */
-#define	PCI_PRODUCT_ALI_M4803	0x5215		/* M4803 */
 #define	PCI_PRODUCT_ALI_M1523	0x1523		/* M1523 PCI-ISA */
 #define	PCI_PRODUCT_ALI_M1543	0x1533		/* M1543 PCI-ISA */
+#define	PCI_PRODUCT_ALI_M1647	0x1647		/* M1647 PCI */
+#define	PCI_PRODUCT_ALI_M3309	0x3309		/* M3309 MPEG Accelerator */
+#define	PCI_PRODUCT_ALI_M4803	0x5215		/* M4803 */
 #define	PCI_PRODUCT_ALI_M5219	0x5219		/* M5219 UDMA IDE */
 #define	PCI_PRODUCT_ALI_M5229	0x5229		/* M5229 UDMA IDE */
 #define	PCI_PRODUCT_ALI_M5237	0x5237		/* M5237 USB */
 #define	PCI_PRODUCT_ALI_M5247	0x5247		/* M5247 AGP/PCI-PCI */
 #define	PCI_PRODUCT_ALI_M5243	0x5243		/* M5243 AGP/PCI-PCI */
 #define	PCI_PRODUCT_ALI_M7101	0x7101		/* M7101 Power Mgmt */
-#define	PCI_PRODUCT_ALI_M3309	0x3309		/* M3309 MPEG Accelerator */
 
 /* ADMtek products */
 #define	PCI_PRODUCT_ADMTEK_AL981	0x0981		/* AL981 */
@@ -773,10 +774,10 @@
 #define	PCI_PRODUCT_AMD_SC751_SC	0x7006		/* 751 System Controller */
 #define	PCI_PRODUCT_AMD_SC751_PPB	0x7007		/* 751 PCI-PCI */
 /* http://www.amd.com/products/cpg/athlon/techdocs/pdf/24462.pdf */
-#define	PCI_PRODUCT_AMD_762_PCHB	0x700C		/* 762 Host-PCI */
-#define	PCI_PRODUCT_AMD_762_PPB	0x700D		/* 762 PCI-PCI */
-#define	PCI_PRODUCT_AMD_761_PCHB	0x700E		/* 761 Host-PCI */
-#define	PCI_PRODUCT_AMD_761_PPB	0x700F		/* 761 PCI-PCI */
+#define	PCI_PRODUCT_AMD_762_PCHB	0x700c		/* 762 Host-PCI */
+#define	PCI_PRODUCT_AMD_762_PPB	0x700d		/* 762 PCI-PCI */
+#define	PCI_PRODUCT_AMD_761_PCHB	0x700e		/* 761 Host-PCI */
+#define	PCI_PRODUCT_AMD_761_PPB	0x700f		/* 761 PCI-PCI */
 #define	PCI_PRODUCT_AMD_755_ISA	0x7400		/* 755 PCI-ISA */
 #define	PCI_PRODUCT_AMD_755_IDE	0x7401		/* 755 IDE */
 #define	PCI_PRODUCT_AMD_755_PMC	0x7403		/* 755 Power Mgmt */
@@ -1071,7 +1072,6 @@
 #define	PCI_PRODUCT_DEC_21140	0x0009		/* 21140 */
 #define	PCI_PRODUCT_DEC_PBXGB	0x000d		/* TGA2 */
 #define	PCI_PRODUCT_DEC_DEFPA	0x000f		/* DEFPA */
-/* product DEC ???		0x0010	??? VME Interface */
 #define	PCI_PRODUCT_DEC_21041	0x0014		/* 21041 */
 #define	PCI_PRODUCT_DEC_DGLPB	0x0016		/* DGLPB (OPPO) */
 #define	PCI_PRODUCT_DEC_21142	0x0019		/* 21142/3 */
@@ -1193,6 +1193,7 @@
 #define	PCI_PRODUCT_IMS_8849	0x8849		/* 8849 */
 
 /* Intel products */
+#define	PCI_PRODUCT_INTEL_EESISA	0x0008		/* EES ISA */
 #define	PCI_PRODUCT_INTEL_PCEB	0x0482		/* 82375EB PCI-EISA */
 #define	PCI_PRODUCT_INTEL_CDC	0x0483		/* 82424ZX Cache/DRAM */
 #define	PCI_PRODUCT_INTEL_SIO	0x0484		/* 82378IB PCI-ISA */
@@ -1408,9 +1409,6 @@
 /* LuxSonor */
 #define	PCI_PRODUCT_LUXSONOR_LS242	0x0020		/* LS242 DVD Decoder */
 
-/* Kawasaki */
-/* product KAWASAKI HUH		0xff01	No idea */
-
 /* Macronix */
 #define	PCI_PRODUCT_MACRONIX_MX98713	0x0512		/* PMAC 98713 */
 #define	PCI_PRODUCT_MACRONIX_MX98715	0x0531		/* PMAC 98715 */
@@ -1420,6 +1418,9 @@
 /* Madge Networks products */
 #define	PCI_PRODUCT_MADGE_COLLAGE25	0x1000		/* Collage 25 ATM adapter */
 #define	PCI_PRODUCT_MADGE_COLLAGE155	0x1001		/* Collage 155 ATM adapter */
+
+/* Martin-Marietta */
+#define	PCI_PRODUCT_MARTINMARIETTA_I740	0x00d1		/* i740 PCI */
 
 /* Matrox products */
 #define	PCI_PRODUCT_MATROX_ATLAS	0x0518		/* MGA PX2085 (Atlas) */
