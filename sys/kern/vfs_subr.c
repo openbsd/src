@@ -263,6 +263,8 @@ getnewfsid(mp, mtype)
 
 /*
  * Make a 'unique' number from a mount type name.
+ * Note that this is no longer used for ffs which
+ * now has an on-disk filesystem id.
  */
 long
 makefstype(type)

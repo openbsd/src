@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_alloc.c,v 1.4 1996/05/22 11:47:17 deraadt Exp $	*/
+/*	$OpenBSD: ffs_alloc.c,v 1.5 1997/02/11 06:59:27 millert Exp $	*/
 /*	$NetBSD: ffs_alloc.c,v 1.11 1996/05/11 18:27:09 mycroft Exp $	*/
 
 /*
@@ -46,6 +46,8 @@
 #include <sys/syslog.h>
 
 #include <vm/vm.h>
+
+#include <dev/rndvar.h>
 
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
@@ -563,10 +565,13 @@ ffs_valloc(v)
 	ip->i_flags = 0;
 	/*
 	 * Set up a new generation number for this inode.
+	 * XXX - just increment for now, this is wrong! (millert)
+	 *       Need a way to preserve randomization.
 	 */
-	if (++nextgennumber < (u_long)time.tv_sec)
-		nextgennumber = time.tv_sec;
-	ip->i_gen = nextgennumber;
+	if (ip->i_gen == 0 || ++(ip->i_gen) == 0)
+		ip->i_gen = arc4random();
+	if (ip->i_gen == 0 || ip->i_gen == -1)
+		ip->i_gen = 1;				/* shouldn't happen */
 	return (0);
 noinodes:
 	ffs_fserr(fs, ap->a_cred->cr_uid, "out of inodes");

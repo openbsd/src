@@ -198,8 +198,8 @@ struct fs {
 	int32_t	 fs_npsect;		/* # sectors/track including spares */
 	int32_t	 fs_interleave;		/* hardware sector interleave */
 	int32_t	 fs_trackskew;		/* sector 0 skew, per track */
-	int32_t	 fs_headswitch;		/* head switch time, usec */
-	int32_t	 fs_trkseek;		/* track-to-track seek, usec */
+/* fs_id takes the space of the unused fs_headswitch and fs_trkseek fields */
+	int32_t  fs_id[2];		/* unique filesystem id */
 /* sizes determined by number of cylinder groups and their sizes */
 	daddr_t  fs_csaddr;		/* blk addr of cyl grp summary area */
 	int32_t	 fs_cssize;		/* size of cyl grp summary area */

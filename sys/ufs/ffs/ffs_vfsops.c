@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.6 1996/06/27 06:42:06 downsj Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.7 1997/02/11 06:59:28 millert Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -51,6 +51,8 @@
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include <sys/malloc.h>
+
+#include <dev/rndvar.h>
 
 #include <miscfs/specfs/specdev.h>
 
@@ -522,7 +524,11 @@ ffs_mountfs(devvp, mp, p)
 	}
 	mp->mnt_data = (qaddr_t)ump;
 	mp->mnt_stat.f_fsid.val[0] = (long)dev;
-	mp->mnt_stat.f_fsid.val[1] = makefstype(MOUNT_FFS);
+	/* Use on-disk fsid if it exists, else fake it */
+	if (fs->fs_id[0] != 0 && fs->fs_id[1] != 0)
+		mp->mnt_stat.f_fsid.val[1] = fs->fs_id[1];
+	else
+		mp->mnt_stat.f_fsid.val[1] = makefstype(MOUNT_FFS);
 	mp->mnt_maxsymlinklen = fs->fs_maxsymlinklen;
 	mp->mnt_flag |= MNT_LOCAL;
 	ump->um_mountp = mp;
@@ -858,9 +864,9 @@ ffs_vget(mp, ino, vpp)
 	 * already have one. This should only happen on old filesystems.
 	 */
 	if (ip->i_gen == 0) {
-		if (++nextgennumber < (u_long)time.tv_sec)
-			nextgennumber = time.tv_sec;
-		ip->i_gen = nextgennumber;
+		ip->i_gen = arc4random();
+		if (ip->i_gen == 0 || ip->i_gen == -1)
+			ip->i_gen = 1;			/* shouldn't happen */
 		if ((vp->v_mount->mnt_flag & MNT_RDONLY) == 0)
 			ip->i_flag |= IN_MODIFIED;
 	}
