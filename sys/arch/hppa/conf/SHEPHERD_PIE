@@ -1,4 +1,4 @@
-#	$OpenBSD: SHEPHERD_PIE,v 1.4 1999/05/05 02:37:56 mickey Exp $
+#	$OpenBSD: SHEPHERD_PIE,v 1.5 1999/08/18 00:28:08 mickey Exp $
 #
 # Diskless kernel config
 #
@@ -108,7 +108,7 @@ option	EISAVERBOSE
 #com0	at gsc? irq 5	# RS/232 serial port
 #com1	at gsc? irq 6	# RS/232 serial port
 lpt0	at gsc? irq 7	# both com and lpt are on WD16C552
-#ie0	at gsc? irq 8	# 82C5[89]6 ether
+ie0	at gsc? irq 8	# 82C5[89]6 ether
 #siop0	at gsc? irq 9	# NCR 53C7xx
 #siop1	at gsc? irq 3	# NCR 53C7xx (Fast/Wide)
 #scsibus* at siop?
