@@ -1,4 +1,4 @@
-/*	$OpenBSD: timeout.h,v 1.3 2000/03/23 11:24:42 art Exp $	*/
+/*	$OpenBSD: timeout.h,v 1.4 2000/03/23 14:59:23 art Exp $	*/
 /*
  * Copyright (c) 2000 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -26,6 +26,9 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
  */
+
+#ifndef _SYS_TIMEOUT_H_
+#define _SYS_TIMEOUT_H_
 
 #include <sys/queue.h>
 
@@ -102,3 +105,4 @@ int timeout_hardclock_update __P((void));
  */
 extern int ntimeout;
 extern struct timeout *timeouts;
+#endif	/* _SYS_TIMEOUT_H_ */
