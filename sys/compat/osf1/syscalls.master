@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.6 1999/06/07 07:17:47 deraadt Exp $
+;	$OpenBSD: syscalls.master,v 1.7 2000/07/21 19:26:39 ericj Exp $
 ;	$NetBSD: syscalls.master,v 1.2 1995/10/07 06:27:28 mycroft Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
@@ -155,7 +155,8 @@
 97	STD		{ int osf1_sys_socket(int domain, int type, \
 			    int protocol); }
 98	NOARGS		{ int sys_connect(int s, caddr_t name, int namelen); }
-99	UNIMPL		old accept
+99	NOARGS		{ int compat_43_sys_accept(int s, caddr_t name, \
+			    int *anamelen); }
 100	NOARGS		{ int sys_getpriority(int which, int who); }
 101	NOARGS		{ int compat_43_sys_send(int s, caddr_t buf, int len, \
 			    int flags); }
@@ -165,7 +166,7 @@
 104	NOARGS		{ int sys_bind(int s, caddr_t name, int namelen); }
 105	NOARGS		{ int sys_setsockopt(int s, int level, int name, \
                             caddr_t val, int valsize); }
-106	UNIMPL		listen
+106	NOARGS		{ int sys_listen(int s, int backlog); }
 107	UNIMPL		plock
 108	UNIMPL		old sigvec
 109	UNIMPL		old sigblock
