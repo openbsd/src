@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgsix.c,v 1.12 1999/05/08 01:15:58 jason Exp $	*/
+/*	$OpenBSD: cgsix.c,v 1.13 2000/05/18 13:31:12 jason Exp $	*/
 /*	$NetBSD: cgsix.c,v 1.33 1997/08/07 19:12:30 pk Exp $ */
 
 /*
@@ -87,6 +87,8 @@
 #if defined(SUN4)
 #include <sparc/dev/pfourreg.h>
 #endif
+
+extern int sparc_vsyncblank;
 
 union cursor_cmap {		/* colormap, like bt_cmap, but tiny */
 	u_char	cm_map[2][3];	/* 2 R/G/B entries */
@@ -429,7 +431,8 @@ cgsixioctl(dev, cmd, data, flags, p)
 			cg6_unblank(&sc->sc_dev);
 		else if (!sc->sc_blanked) {
 			sc->sc_blanked = 1;
-			sc->sc_thc->thc_misc &= ~(THC_MISC_VIDEN|THC_MISC_SYNCEN);
+			sc->sc_thc->thc_misc &= ~(THC_MISC_VIDEN |
+			    (sparc_vsyncblank ? THC_MISC_SYNCEN : 0));
 		}
 		break;
 

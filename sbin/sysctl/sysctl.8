@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.8,v 1.45 2000/04/25 22:12:53 deraadt Exp $
+.\"	$OpenBSD: sysctl.8,v 1.46 2000/05/18 13:31:12 jason Exp $
 .\"	$NetBSD: sysctl.8,v 1.4 1995/09/30 07:12:49 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
@@ -238,6 +238,8 @@ privilege can change the value.
 .It machdep.apmwarn	integer	yes (i386 only)
 .It machdep.kbdreset	integer	yes (i386 only)
 .It machdep.allowaperture	integer	yes (i386 only, XFree86)
+.It machdep.led_blink	integer	yes (sparc only)
+.It machdep.vsyncblank	integer	yes (sparc only)
 .It user.cs_path	string	no
 .It user.bc_base_max	integer	no
 .It user.bc_dim_max	integer	no
