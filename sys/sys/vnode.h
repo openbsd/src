@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnode.h,v 1.43 2001/12/04 22:44:32 art Exp $	*/
+/*	$OpenBSD: vnode.h,v 1.44 2001/12/05 00:24:36 art Exp $	*/
 /*	$NetBSD: vnode.h,v 1.38 1996/02/29 20:59:05 cgd Exp $	*/
 
 /*
@@ -252,6 +252,9 @@ vref(vp)
 	simple_unlock(&vp->v_interlock);
 }
 #endif /* DIAGNOSTIC */
+
+void vhold __P((struct vnode *));
+void vholdrele __P((struct vnode *));
 
 #define	NULLVP	((struct vnode *)NULL)
 

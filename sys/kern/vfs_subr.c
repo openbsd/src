@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.75 2001/11/29 02:54:10 art Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.76 2001/12/05 00:24:36 art Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -858,14 +858,12 @@ vrele(vp)
 		VOP_INACTIVE(vp, p);
 }
 
-void vhold __P((struct vnode *vp));
-
 /*
  * Page or buffer structure gets a reference.
+ * Must be called at splbio();
  */
 void
-vhold(vp)
-	register struct vnode *vp;
+vhold(struct vnode *vp)
 {
 
 	/*
@@ -881,6 +879,34 @@ vhold(vp)
 		simple_unlock(&vnode_free_list_slock);
 	}
 	vp->v_holdcnt++;
+	simple_unlock(&vp->v_interlock);
+}
+
+/*
+ * Release a vhold reference.
+ * Must be called at splbio();
+ */
+void
+vholdrele(struct vnode *vp)
+{
+	simple_lock(&vp->v_interlock);
+#ifdef DIAGNOSTIC
+	if (vp->v_holdcnt == 0)
+		panic("vholdrele: holdcnt");
+#endif
+	vp->v_holdcnt--;
+
+	/*
+	 * If it is on the holdlist and the hold count drops to
+	 * zero, move it to the free list.
+	 */
+	if ((vp->v_bioflag & VBIOONFREELIST) &&
+	    vp->v_holdcnt == 0 && vp->v_usecount == 0) {
+		simple_lock(&vnode_free_list_slock);
+		TAILQ_REMOVE(&vnode_hold_list, vp, v_freelist);
+		TAILQ_INSERT_TAIL(&vnode_free_list, vp, v_freelist);
+		simple_unlock(&vnode_free_list_slock);
+	}
 	simple_unlock(&vp->v_interlock);
 }
 
@@ -2162,8 +2188,7 @@ bgetvp(vp, bp)
  * Manipulates vnode buffer queues. Must be called at splbio().
  */
 void
-brelvp(bp)
-	struct buf *bp;
+brelvp(struct buf *bp)
 {
 	struct vnode *vp;
 
@@ -2183,25 +2208,7 @@ brelvp(bp)
 	}
 	bp->b_vp = NULL;
 
-	simple_lock(&vp->v_interlock);
-#ifdef DIAGNOSTIC
-	if (vp->v_holdcnt == 0)
-		panic("brelvp: holdcnt");
-#endif
-	vp->v_holdcnt--;
-
-	/*
-	 * If it is on the holdlist and the hold count drops to
-	 * zero, move it to the free list.
-	 */
-	if ((vp->v_bioflag & VBIOONFREELIST) &&
-	    vp->v_holdcnt == 0 && vp->v_usecount == 0) {
-		simple_lock(&vnode_free_list_slock);
-		TAILQ_REMOVE(&vnode_hold_list, vp, v_freelist);
-		TAILQ_INSERT_TAIL(&vnode_free_list, vp, v_freelist);
-		simple_unlock(&vnode_free_list_slock);
-	}
-	simple_unlock(&vp->v_interlock);
+	vholdrele(vp);
 }
 
 /*
