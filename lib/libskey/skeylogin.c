@@ -11,7 +11,7 @@
  *
  * S/KEY verification check, lookups, and authentication.
  * 
- * $OpenBSD: skeylogin.c,v 1.21 1997/09/04 18:19:47 millert Exp $
+ * $OpenBSD: skeylogin.c,v 1.22 1997/09/12 20:47:39 millert Exp $
  */
 
 #include <sys/param.h>
@@ -439,7 +439,7 @@ skey_authenticate(username)
 			for (p = pbuf; *p && isalnum(*p); p++)
 				if (isalpha(*p) && isupper(*p))
 					*p = tolower(*p);
-		if (*p)
+		if (*p && pbuf - p < 4)
 			(void)strncpy(p, "asjd", 4 - (pbuf - p));
 		p = &pbuf[4];
 		*p = '\0';
