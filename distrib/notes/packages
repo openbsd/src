@@ -1,0 +1,110 @@
+As complete as your OpenBSD system you still may want to add any of
+several excellent third party software application.  There are several
+ways to do this.  You can
+
+1) Obtaining the source code and building the application based
+   upon whatever installation procedures are provided with the
+   application.
+
+2) Use the OpenBSD ``ports'' collection to automatically get any
+   needed source file, apply any required patches, create the
+   application, and install it for you.
+
+3) Use the OpenBSD ``package'' collection to grab a pre-compiled
+   and tested version of the application for your hardware.
+
+If you purchased the OpenBSD CD-ROM you already have several popular
+``packages'', the ``ports'' collection, and most of the ``ports''
+source file releases.
+
+Instructions for installing applications from various sources using
+the various methods follow.  If emacs is to be installed it should
+be installed first as it creates the ``info'' directory file that
+may be modified by other applications.
+
+Installing applications from the the CD-ROM package collection:
+
+	The OpenBSD CD-ROM ships with applications pre-built
+	for various hardware architectures.  The applications
+	and supported architectures are:
+
+			i386	sparc	m68k	alpha	mips
+	emacs-20.2	yes	yes	yes	yes	no
+	bash-2.01.1	yes	yes	yes	yes	no
+	tcsh-6.07.02	yes	yes	yes	yes	no
+	pine-3.96	yes	yes	yes	yes	no
+
+	To install one or more of these packages you must
+	1) become the superuser (root)
+	2) mount CD-ROM number 2
+	3) use the ``pkg_add'' command to install the software
+
+	Example:
+
+    $ su
+    Password: <enter your root password>
+    # mkdir -p /cdrom
+    # mount /dev/cd0a /cdrom
+    # pkg_add /cdrom/packages/<arch>/<package-name>
+    # <add more packages if desired>
+    # umount /cdrom
+	
+	Your hardware architecture can be determined by issing
+	the command ``arch''.  The response will be something like
+	``OpenBSD.sparc''.  ``sparc'' is the architecture.
+
+	Package names are usually the application name and version
+	with .tgz appended, e.g. pine-3.96.tgz
+
+Installing applications from the ftp.openbsd.org package collection:
+
+	The above packages, and others, have been placed on
+	ftp.openbsd.org in the directory pub/OpenBSD/2.3/packages/<arch>/
+	where <arch> is the supported hardware architecture.  You may
+	want to peruse the directory for your architecture to see what
+	packages are available.
+
+	Installation of a package is very easy.
+	1) become the superuser (root)
+	2) use the ``pkg_add'' command to install the software
+
+	``pkg_add'' is smart enough to know how to download the software
+	from the OpenBSD ftp server.  Example:
+
+    $ su
+    Password: <enter your root password>
+    # pkg_add ftp://ftp.openbsd.org/pub/OpenBSD/2.3/packages/i386/emacs-20.2.tgz
+
+	Note: there are both USA and INTERNATIONAL versoins of ssh and
+	pgp on the ftp server.  Be sure to grab the correct version.
+	The USA versions, ssh-usa-1.2.22.tgz and pgp-usa-2.6.3.tgz, use
+	RSAREF, a legal requirement for use within the United States.
+
+Installing applications from the CD-ROM ports collection:
+
+	The CD-ROM ``ports'' collection is a set of Makefiles, patches,
+	and other files used to control the building and installation
+	of an application from source files.  The source files come
+	from archives which are also, for the most part, on the
+	OpenBSD CD-ROM.
+
+	;;; <finish this>
+
+Installing applications from the OpenBSD ports collection:
+
+	;;; <finish this>
+
+Installing other applications:
+
+	If an OpenBSD package or port does not exist for an application
+	you're pretty much on your own.  The first thing to do is ask
+	ports@openbsd.org if anyone is working on a port -- there may
+	be one in progress.  If no luck there you may try the FreeBSD
+	ports collection.  If you are on an i386 based machine it is
+	quite possible that the FreeBSD port, if one exists, will work
+	for you,
+
+	If you can't find an existing port try to make your own and
+	feed it back to OpenBSD.  That's how our ports collection grows.
+	Some details can be found at http://www.openbsd.org/porting.html
+	with more help coming from the mailing list, ports@openbsd.org.
