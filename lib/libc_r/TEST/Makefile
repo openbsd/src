@@ -13,7 +13,7 @@ LIBC_R?=	/usr/lib/libc_r.a
 CFLAGS +=	-Wall # -Werror
 DEBUG =		-ggdb
 CFLAGS +=	-DSRCDIR='"${.CURDIR}"'
-LDLIBS +=	-lpthread -lm  ${LDSTATIC}
+LDLIBS +=	-pthread -lm  ${LDSTATIC}
 DPADD +=	${LIBC_R}
 MKDEP =		-p
 
