@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.177 2001/10/04 21:20:12 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.178 2001/10/04 21:25:03 mickey Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -3300,17 +3300,20 @@ _bus_dmamem_alloc_range(t, size, alignment, boundary, segs, nsegs, rsegs,
 	 * Compute the location, size, and number of segments actually
 	 * returned by the VM code.
 	 */
-	m = mlist.tqh_first;
+	m = TAILQ_FIRST(&mlist);
 	curseg = 0;
 	lastaddr = segs[curseg].ds_addr = VM_PAGE_TO_PHYS(m);
 	segs[curseg].ds_len = PAGE_SIZE;
-	m = m->pageq.tqe_next;
 
-	for (; m != NULL; m = m->pageq.tqe_next) {
+	for (m = TAILQ_NEXT(m, pageq); m != NULL; m = TAILQ_NEXT(m, pageq)) {
 		curaddr = VM_PAGE_TO_PHYS(m);
 #ifdef DIAGNOSTIC
+		if (curseg == nsegs) {
+			printf("uvm_pglistalloc returned too many\n");
+			panic("_bus_dmamem_alloc_range");
+		}
 		if (curaddr < low || curaddr >= high) {
-			printf("vm_page_alloc_memory returned non-sensical"
+			printf("uvm_pglistalloc returned non-sensical"
 			    " address 0x%lx\n", curaddr);
 			panic("_bus_dmamem_alloc_range");
 		}
