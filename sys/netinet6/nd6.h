@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.h,v 1.11 2001/02/08 14:51:22 itojun Exp $	*/
+/*	$OpenBSD: nd6.h,v 1.12 2001/02/08 15:07:28 itojun Exp $	*/
 /*	$KAME: nd6.h,v 1.46 2001/02/08 10:57:00 itojun Exp $	*/
 
 /*
@@ -284,7 +284,7 @@ struct	rtentry *nd6_lookup __P((struct in6_addr *, int, struct ifnet *));
 void nd6_setmtu __P((struct ifnet *));
 void nd6_timer __P((void *));
 void nd6_purge __P((struct ifnet *));
-void nd6_free __P((struct rtentry *));
+struct llinfo_nd6 *nd6_free __P((struct rtentry *));
 void nd6_nud_hint __P((struct rtentry *, struct in6_addr *, int));
 int nd6_resolve __P((struct ifnet *, struct rtentry *,
 		     struct mbuf *, struct sockaddr *, u_char *));
