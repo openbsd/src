@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.23 2002/12/06 00:47:32 dhartmei Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.24 2002/12/12 20:24:20 aaron Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -321,9 +321,9 @@ pf_compare_pool(struct pf_pool *a, struct pf_pool *b, sa_family_t af)
 	struct pf_pooladdr *pa_a, *pa_b;
 
 	if (a->key.key32[0] != b->key.key32[0] ||
-	    a->key.key32[0] != b->key.key32[0] ||
-	    a->key.key32[0] != b->key.key32[0] ||
-	    a->key.key32[0] != b->key.key32[0] ||
+	    a->key.key32[1] != b->key.key32[1] ||
+	    a->key.key32[2] != b->key.key32[2] ||
+	    a->key.key32[3] != b->key.key32[3] ||
 	    a->opts != b->opts)
 		return(1);
 	pa_a = TAILQ_FIRST(&a->list);
