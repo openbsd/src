@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwd_mkdb.c,v 1.31 2002/11/21 21:25:19 millert Exp $	*/
+/*	$OpenBSD: pwd_mkdb.c,v 1.32 2002/11/21 22:13:20 millert Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -45,7 +45,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)pwd_mkdb.c	8.5 (Berkeley) 4/20/94";
 #else
-static char *rcsid = "$OpenBSD: pwd_mkdb.c,v 1.31 2002/11/21 21:25:19 millert Exp $";
+static char *rcsid = "$OpenBSD: pwd_mkdb.c,v 1.32 2002/11/21 22:13:20 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -75,7 +75,7 @@ static char *rcsid = "$OpenBSD: pwd_mkdb.c,v 1.31 2002/11/21 21:25:19 millert Ex
 #define FILE_INSECURE	0x02
 #define FILE_ORIG	0x04
 
-#define	SHADOW_GROUP	"shadow"
+#define	SHADOW_GROUP	"_shadow"
 
 HASHINFO openinfo = {
 	4096,		/* bsize */
