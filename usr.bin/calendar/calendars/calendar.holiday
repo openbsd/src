@@ -1,7 +1,7 @@
 /*
  * Holiday
  *
- * $OpenBSD: calendar.holiday,v 1.13 2004/10/14 21:37:34 mickey Exp $
+ * $OpenBSD: calendar.holiday,v 1.14 2004/10/31 19:40:51 mickey Exp $
  */
 
 #ifndef _calendar_holiday_
@@ -541,7 +541,6 @@
 10/17	Dessaline's Death Anniversary in Haiti
 10/20	Anniversary of the 1944 Revolution in Guatemala
 11/01	Feast of All Saints in Portugal
-11/01	Samhain; Beginning of the Celtic year and most important holiday.
 11/03	Independence from Columbia in Panama
 11/03	Independence of Cuenca in Ecuador
 11/06	Prophet Mohammed's Birthday in Malaysia
