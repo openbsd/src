@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Error.pm,v 1.5 2004/10/23 09:43:16 espie Exp $
+# $OpenBSD: Error.pm,v 1.6 2004/11/15 02:44:50 espie Exp $
 #
 # Copyright (c) 2004 Marc Espie <espie@openbsd.org>
 #
@@ -60,7 +60,8 @@ sub Copy
 
 sub Fatal
 {
-	die @_;
+	require Carp;
+	Carp::croak @_;
 }
 
 sub Warn
@@ -92,7 +93,8 @@ sub warn
 sub fatal
 {
 	my $self = shift;
-	die ($self->{pkgname}, ':', @_);
+	require Carp;
+	Carp::croak ($self->{pkgname}, ':', @_);
 }
 
 sub print
