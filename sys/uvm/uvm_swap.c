@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.25 2001/03/09 03:13:47 deraadt Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.26 2001/03/26 05:37:03 aaron Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.28 1999/07/22 22:58:39 thorpej Exp $	*/
 
 /*
@@ -71,7 +71,7 @@
  * information that is passed up to the user (via system calls).
  *
  * each swap partition is assigned a "priority" (int) which controls
- * swap parition usage.
+ * swap partition usage.
  *
  * the system maintains a global data structure describing all swap
  * partitions/files.   there is a sorted LIST of "swappri" structures
