@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.18 1999/11/20 18:51:58 espie Exp $	*/
+/*	$OpenBSD: audio.c,v 1.19 1999/12/05 18:35:33 espie Exp $	*/
 /*	$NetBSD: audio.c,v 1.105 1998/09/27 16:43:56 christos Exp $	*/
 
 /*
@@ -1560,6 +1560,8 @@ audio_ioctl(dev, cmd, addr, flag, p)
 		
 	case AUDIO_GETENC:
 		DPRINTF(("AUDIO_GETENC\n"));
+		/* Pass read/write info down to query_encoding */
+		((struct audio_encoding *)addr)->flags = sc->sc_open;
 		error = hw->query_encoding(sc->hw_hdl, (struct audio_encoding *)addr);
 		break;
 

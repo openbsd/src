@@ -1,4 +1,4 @@
-/*	$OpenBSD: eso.c,v 1.6 1999/12/04 21:39:29 deraadt Exp $	*/
+/*	$OpenBSD: eso.c,v 1.7 1999/12/05 18:35:33 espie Exp $	*/
 /*	$NetBSD: eso.c,v 1.3 1999/08/02 17:37:43 augustss Exp $	*/
 
 /*
@@ -62,6 +62,7 @@
 #include <dev/ic/i8237reg.h>
 #include <dev/pci/esoreg.h>
 #include <dev/pci/esovar.h>
+#include <dev/audiovar.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -653,45 +654,73 @@ eso_query_encoding(hdl, fp)
 		fp->flags = 0;
 		break;
 	case 1:
-		strcpy(fp->name, AudioEmulaw);
-		fp->encoding = AUDIO_ENCODING_ULAW;
-		fp->precision = 8;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 2:
-		strcpy(fp->name, AudioEalaw);
-		fp->encoding = AUDIO_ENCODING_ALAW;
-		fp->precision = 8;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-	case 3:
 		strcpy(fp->name, AudioEslinear);
 		fp->encoding = AUDIO_ENCODING_SLINEAR;
 		fp->precision = 8;
 		fp->flags = 0;
 		break;
-	case 4:
-		strcpy(fp->name, AudioEslinear_le);
-		fp->encoding = AUDIO_ENCODING_SLINEAR_LE;
+	case 2:
 		fp->precision = 16;
+		if (fp->flags & AUOPEN_READ) {
+			strcpy(fp->name, AudioEslinear_be);
+			fp->encoding = AUDIO_ENCODING_SLINEAR_BE;
+			if (fp->flags & AUOPEN_WRITE)
+				fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
+			else
+				fp->flags = 0;
+		} else {
+			strcpy(fp->name, AudioEslinear_le);
+			fp->encoding = AUDIO_ENCODING_SLINEAR_LE;
+			fp->flags = 0;
+		}
+		break;
+	case 3:
+		fp->precision = 16;
+		if (fp->flags & AUOPEN_READ) {
+			strcpy(fp->name, AudioEulinear_be);
+			fp->encoding = AUDIO_ENCODING_ULINEAR_BE;
+			if (fp->flags & AUOPEN_WRITE)
+				fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
+			else
+				fp->flags = 0;
+		} else {
+			strcpy(fp->name, AudioEulinear_le);
+			fp->encoding = AUDIO_ENCODING_ULINEAR_LE;
+			fp->flags = 0;
+		}
+		break;
+	case 4:
+		fp->precision = 16;
+		if (fp->flags & AUOPEN_READ) {
+			strcpy(fp->name, AudioEslinear_le);
+			fp->encoding = AUDIO_ENCODING_SLINEAR_LE;
+		} else {
+			strcpy(fp->name, AudioEslinear_be);
+			fp->encoding = AUDIO_ENCODING_SLINEAR_BE;
+		}
 		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
 		break;
 	case 5:
-		strcpy(fp->name, AudioEulinear_le);
-		fp->encoding = AUDIO_ENCODING_ULINEAR_LE;
 		fp->precision = 16;
+		if (fp->flags & AUOPEN_READ) {
+			strcpy(fp->name, AudioEulinear_le);
+			fp->encoding = AUDIO_ENCODING_ULINEAR_LE;
+		} else {
+			strcpy(fp->name, AudioEulinear_be);
+			fp->encoding = AUDIO_ENCODING_ULINEAR_BE;
+		}
 		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
 		break;
 	case 6:
-		strcpy(fp->name, AudioEslinear_be);
-		fp->encoding = AUDIO_ENCODING_SLINEAR_BE;
-		fp->precision = 16;
+		strcpy(fp->name, AudioEmulaw);
+		fp->encoding = AUDIO_ENCODING_ULAW;
+		fp->precision = 8;
 		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
 		break;
 	case 7:
-		strcpy(fp->name, AudioEulinear_be);
-		fp->encoding = AUDIO_ENCODING_ULINEAR_BE;
-		fp->precision = 16;
+		strcpy(fp->name, AudioEalaw);
+		fp->encoding = AUDIO_ENCODING_ALAW;
+		fp->precision = 8;
 		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
 		break;
 	default:
