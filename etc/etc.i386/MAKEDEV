@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.88 2001/02/11 19:14:05 aaron Exp $
+#	$OpenBSD: MAKEDEV,v 1.89 2001/02/20 23:53:26 jbm Exp $
 #	$NetBSD: MAKEDEV,v 1.40 1996/03/31 00:50:47 perry Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -51,7 +51,7 @@
 #	ttyC0	pccons or wscons screen 0
 #	ttyC*	wscons
 #
-# Pointing devices:
+# Pointing devices: XXX no longer necessary with wsmouse drivers XXX
 #	mms*	Microsoft bus mouse
 #	lms*	Logitech bus mouse
 #	pms*	PS/2 mouse
@@ -191,7 +191,7 @@ all)
 	sh $this wscons
 	sh $this ipl tun0 tun1 tun2
 	sh $this bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9
-	sh $this speaker lkm mms0 lms0 pms0 audio joy0 joy1 apm local
+	sh $this speaker lkm audio joy0 joy1 apm local
 	sh $this random ses0 uk0 uk1 ss0 ss1 pctr bktr0 tuner0 wdt0
 	sh $this fd0 fd0B fd0C fd0D fd0E fd0F fd0G fd0H 
 	sh $this fd1 fd1B fd1C fd1D fd1E fd1F fd1G fd1H
@@ -579,40 +579,40 @@ lkm)
 	chmod 640 lkm
 	;;
 
-mms*|lms*)
-	case $i in
-	mms*) name=mms; chr=35;;
-	lms*) name=lms; chr=36;;
-	esac
-	rm -f $name$unit
-	mknod $name$unit c $chr $unit
-	chown root.wheel $name$unit
-	;;
+#mms*|lms*)
+#	case $i in
+#	mms*) name=mms; chr=35;;
+#	lms*) name=lms; chr=36;;
+#	esac
+#	rm -f $name$unit
+#	mknod $name$unit c $chr $unit
+#	chown root.wheel $name$unit
+#	;;
 
-pms*)
-	rm -f pms${unit}
-	rm -f psm${unit}
-	mknod pms${unit} c 37 0
-	mknod psm${unit} c 37 1
-	chown root.wheel pms${unit}
-	chown root.wheel psm${unit}
-	;;
+#pms*)
+#	rm -f pms${unit}
+#	rm -f psm${unit}
+#	mknod pms${unit} c 37 0
+#	mknod psm${unit} c 37 1
+#	chown root.wheel pms${unit}
+#	chown root.wheel psm${unit}
+#	;;
 
-mouse*)					# (XXX)
-	case $i in
-	mouse-*)
-		name=${i##mouse-}
-		if [ ! -c $name ]; then
-			/bin/sh $0 $name	# make the appropriate device
-		fi
-		rm -f mouse
-		ln -s $name mouse
-		;;
-	*)
-		echo no such device: use mouse-\${dev}, e.g. mouse-cua00
-		;;
-	esac
-	;;
+#mouse*)					# (XXX)
+#	case $i in
+#	mouse-*)
+#		name=${i##mouse-}
+#		if [ ! -c $name ]; then
+#			/bin/sh $0 $name	# make the appropriate device
+#		fi
+#		rm -f mouse
+#		ln -s $name mouse
+#		;;
+#	*)
+#		echo no such device: use mouse-\${dev}, e.g. mouse-cua00
+#		;;
+#	esac
+#	;;
 
 audio*)
 	[ "$unit" = "0" ] && n= || n=$unit

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.63 2001/01/30 00:00:31 aaron Exp $	*/
+/*	$OpenBSD: conf.c,v 1.64 2001/02/20 23:53:26 jbm Exp $	*/
 /*	$NetBSD: conf.c,v 1.75 1996/05/03 19:40:20 christos Exp $	*/
 
 /*
@@ -163,12 +163,14 @@ cdev_decl(pcmcia);
 #endif
 #include "spkr.h"
 cdev_decl(spkr);
+#if 0 /* old (non-wsmouse) drivers */
 #include "mms.h"
 cdev_decl(mms);
 #include "lms.h"
 cdev_decl(lms);
 #include "opms.h"
 cdev_decl(pms);
+#endif
 #include "cy.h"
 cdev_decl(cy);
 cdev_decl(mcd);
@@ -276,9 +278,9 @@ struct cdevsw	cdevsw[] =
 	cdev_lkm_dummy(),		/* 32 */
 	cdev_lkm_dummy(),		/* 33 */
 	cdev_lkm_dummy(),		/* 34 */
-	cdev_mouse_init(NMMS,mms),	/* 35: Microsoft mouse */
-	cdev_mouse_init(NLMS,lms),	/* 36: Logitech mouse */
-	cdev_mousewr_init(NOPMS,pms),	/* 37: Extended PS/2 mouse */
+	cdev_notdef(),			/* 35: Microsoft mouse */
+	cdev_notdef(),			/* 36: Logitech mouse */
+	cdev_notdef(),			/* 37: Extended PS/2 mouse */
 	cdev_tty_init(NCY,cy),		/* 38: Cyclom serial port */
 	cdev_disk_init(NMCD,mcd),	/* 39: Mitsumi CD-ROM */
 	cdev_bpftun_init(NTUN,tun),	/* 40: network tunnel */
