@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf.c,v 1.8 1997/01/16 09:24:07 niklas Exp $	*/
+/*	$OpenBSD: grf.c,v 1.9 2001/06/20 06:58:43 niklas Exp $	*/
 /*	$NetBSD: grf.c,v 1.32 1996/12/23 09:10:01 veego Exp $	*/
 
 /*
@@ -135,7 +135,7 @@ grfmatch(pdp, match, auxp)
 /*
  * attach.. plug pointer in and print some info.
  * then try and attach an ite to us. note: dp is NULL
- * durring console init.
+ * during console init.
  */
 void
 grfattach(pdp, dp, auxp)
