@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.4 2004/02/05 22:12:06 otto Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.5 2004/03/14 19:17:05 otto Exp $	*/
 
 /*
  * Copyright (c) 2003 Can Erkin Acar
@@ -128,7 +128,8 @@ priv_init(int argc, char **argv)
 			/* chroot, drop privs and return */
 			if (chroot(pw->pw_dir) != 0)
 				err(1, "unable to chroot");
-			chdir("/");
+			if (chdir("/") != 0)
+				err(1, "unable to chdir");
 
 			/* drop to _tcpdump */
 			if (setgroups(1, &pw->pw_gid) == -1)
