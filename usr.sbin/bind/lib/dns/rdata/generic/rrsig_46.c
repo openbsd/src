@@ -155,7 +155,7 @@ totext_rrsig(ARGS_TOTEXT) {
 		RETERR(dns_rdatatype_totext(covered, target));
 	} else {
 		char buf[sizeof("TYPE65535")];
-		sprintf(buf, "TYPE%u", covered);
+		snprintf(buf, sizeof(buf), "TYPE%u", covered);
 		RETERR(str_totext(buf, target));
 	}
 	RETERR(str_totext(" ", target));
@@ -163,7 +163,7 @@ totext_rrsig(ARGS_TOTEXT) {
 	/*
 	 * Algorithm.
 	 */
-	sprintf(buf, "%u", sr.base[0]);
+	snprintf(buf, sizeof(buf), "%u", sr.base[0]);
 	isc_region_consume(&sr, 1);
 	RETERR(str_totext(buf, target));
 	RETERR(str_totext(" ", target));
@@ -171,7 +171,7 @@ totext_rrsig(ARGS_TOTEXT) {
 	/*
 	 * Labels.
 	 */
-	sprintf(buf, "%u", sr.base[0]);
+	snprintf(buf, sizeof(buf), "%u", sr.base[0]);
 	isc_region_consume(&sr, 1);
 	RETERR(str_totext(buf, target));
 	RETERR(str_totext(" ", target));
@@ -181,7 +181,7 @@ totext_rrsig(ARGS_TOTEXT) {
 	 */
 	ttl = uint32_fromregion(&sr);
 	isc_region_consume(&sr, 4);
-	sprintf(buf, "%lu", ttl);
+	snprintf(buf, sizeof(buf), "%lu", ttl);
 	RETERR(str_totext(buf, target));
 	RETERR(str_totext(" ", target));
 
@@ -209,7 +209,7 @@ totext_rrsig(ARGS_TOTEXT) {
 	 */
 	foot = uint16_fromregion(&sr);
 	isc_region_consume(&sr, 2);
-	sprintf(buf, "%lu", foot);
+	snprintf(buf, sizeof(buf), "%lu", foot);
 	RETERR(str_totext(buf, target));
 	RETERR(str_totext(" ", target));
 

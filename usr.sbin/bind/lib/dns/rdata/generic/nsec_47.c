@@ -124,7 +124,7 @@ totext_nsec(ARGS_TOTEXT) {
 					RETERR(dns_rdatatype_totext(t, target));
 				} else {
 					char buf[sizeof("TYPE65535")];
-					sprintf(buf, "TYPE%u", t);
+					snprintf(buf, sizeof(buf), "TYPE%u", t);
 					RETERR(str_totext(buf, target));
 				}
 			}
