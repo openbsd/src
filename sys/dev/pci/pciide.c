@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.130 2003/06/07 19:49:50 grange Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.131 2003/06/07 20:00:31 grange Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -116,6 +116,7 @@ int wdcdebug_pciide_mask = 0;
 #include <dev/pci/pciide_acard_reg.h>
 #include <dev/pci/pciide_natsemi_reg.h>
 #include <dev/pci/pciide_nforce_reg.h>
+#include <dev/pci/pciide_i31244_reg.h>
 #include <dev/pci/cy82c693var.h>
 
 #include <dev/ata/atavar.h>
@@ -276,6 +277,8 @@ void nforce_chip_map(struct pciide_softc *, struct pci_attach_args *);
 void nforce_setup_channel(struct channel_softc *);
 int  nforce_pci_intr(void *);
 
+void artisea_chip_map(struct pciide_softc *, struct pci_attach_args *);
+
 void pciide_channel_dma_setup(struct pciide_channel *);
 int  pciide_dma_table_setup(struct pciide_softc*, int, int);
 int  pciide_dma_init(void *, int, int, void *, size_t, int);
@@ -360,6 +363,10 @@ const struct pciide_product_desc pciide_intel_products[] =  {
 	  0,				 /* (ICH5/ICH5R)	      */
 	  piix_chip_map
 	},
+	{ PCI_PRODUCT_INTEL_31244,	 /* Intel 31244 SATA */
+	  0,
+	  artisea_chip_map
+	}
 };
 
 const struct pciide_product_desc pciide_amd_products[] =  {
@@ -5784,4 +5791,60 @@ nforce_pci_intr(void *arg)
 			rv = 1;
 	}
 	return rv;
+}
+
+void
+artisea_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
+{
+	struct pciide_channel *cp;
+	bus_size_t cmdsize, ctlsize;
+	pcireg_t interface;
+	int channel;
+
+	if (pciide_chipen(sc, pa) == 0)
+		return;
+
+	printf("%s: DMA",
+	    sc->sc_wdcdev.sc_dev.dv_xname);
+#ifndef PCIIDE_I31244_ENABLEDMA
+	if (PCI_REVISION(pa->pa_class) == 0) {
+		printf(" disabled due to rev. 0");
+		sc->sc_dma_ok = 0;
+	} else
+#endif
+		pciide_mapreg_dma(sc, pa);
+	printf("\n");
+
+	/*
+	 * XXX Configure LEDs to show activity.
+	 */
+
+	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32 |
+	    WDC_CAPABILITY_MODE;
+	sc->sc_wdcdev.PIO_cap = 4;
+	if (sc->sc_dma_ok) {
+		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA | WDC_CAPABILITY_UDMA;
+		sc->sc_wdcdev.cap |= WDC_CAPABILITY_IRQACK;
+		sc->sc_wdcdev.irqack = pciide_irqack;
+		sc->sc_wdcdev.DMA_cap = 2;
+		sc->sc_wdcdev.UDMA_cap = 6;
+	}
+	sc->sc_wdcdev.set_modes = sata_setup_channel;
+
+	sc->sc_wdcdev.channels = sc->wdc_chanarray;
+	sc->sc_wdcdev.nchannels = PCIIDE_NUM_CHANNELS;
+
+	interface = PCI_INTERFACE(pa->pa_class);
+
+	for (channel = 0; channel < sc->sc_wdcdev.nchannels; channel++) {
+		cp = &sc->pciide_channels[channel];
+		if (pciide_chansetup(sc, channel, interface) == 0)
+			continue;
+		pciide_mapchan(pa, cp, interface, &cmdsize, &ctlsize,
+		    pciide_pci_intr);
+		if (cp->hw_ok == 0)
+			continue;
+		pciide_map_compat_intr(pa, cp, channel, interface);
+		sata_setup_channel(&cp->wdc_channel);
+	}
 }
