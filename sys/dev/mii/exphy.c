@@ -1,4 +1,4 @@
-/*	$OpenBSD: exphy.c,v 1.15 2004/09/27 18:25:48 brad Exp $	*/
+/*	$OpenBSD: exphy.c,v 1.16 2004/09/28 01:13:32 brad Exp $	*/
 /*	$NetBSD: exphy.c,v 1.23 2000/02/02 23:34:56 thorpej Exp $	*/
 
 /*-
@@ -204,12 +204,6 @@ exphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		break;
 
 	case MII_TICK:
-		/*
-		 * Only used for autonegotiation.
-		 */
-		if (IFM_SUBTYPE(ife->ifm_media) != IFM_AUTO)
-			return (0);
-
 		if (mii_phy_tick(sc) == EJUSTRETURN)
 			return (0);
 

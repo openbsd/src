@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukphy.c,v 1.13 2004/09/27 18:25:48 brad Exp $	*/
+/*	$OpenBSD: ukphy.c,v 1.14 2004/09/28 01:13:32 brad Exp $	*/
 /*	$NetBSD: ukphy.c,v 1.9 2000/02/02 23:34:57 thorpej Exp $	*/
 
 /*-
@@ -191,12 +191,6 @@ ukphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		 * If we're not currently selected, just return.
 		 */
 		if (IFM_INST(ife->ifm_media) != sc->mii_inst)
-			return (0);
-
-		/*
-		 * Only used for autonegotiation.
-		 */
-		if (IFM_SUBTYPE(ife->ifm_media) != IFM_AUTO)
 			return (0);
 
 		if (mii_phy_tick(sc) == EJUSTRETURN)
