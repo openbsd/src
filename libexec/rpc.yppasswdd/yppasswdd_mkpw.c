@@ -30,12 +30,13 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$Id: yppasswdd_mkpw.c,v 1.11 1997/02/18 22:44:49 provos Exp $";
+static char rcsid[] = "$Id: yppasswdd_mkpw.c,v 1.12 1997/02/18 23:38:58 provos Exp $";
 #endif
 
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <stdio.h>
+#include <fcntl.h>
 #include <rpc/rpc.h>
 #include <rpcsvc/yppasswd.h>
 #include <pwd.h>
@@ -116,6 +117,10 @@ make_passwd(argp)
 	    strlen(pw->pw_shell) >= 1023) {
 		return (1);
 	}
+
+	pfd = open(_PATH_MASTERPASSWD, O_RDONLY, 0);
+	if (pfd < 0)
+		pw_error(_PATH_MASTERPASSWD, 1, 1);
 
 	pw_init();
 	tfd = pw_lock(0);
