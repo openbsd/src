@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.10 1996/09/20 22:53:05 deraadt Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.11 1996/10/04 01:26:45 deraadt Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -140,7 +140,8 @@ struct ctlname {
 #define	KERN_OSVERSION		27	/* string: kernel build version */
 #define	KERN_SOMAXCONN		28	/* int: listen queue maximum */
 #define	KERN_SOMINCONN		29	/* int: half-open controllable param */
-#define	KERN_MAXID		30	/* number of valid kern ids */
+#define	KERN_USERMOUNT		30	/* int: users may mount filesystems */
+#define	KERN_MAXID		31	/* number of valid kern ids */
 
 #define CTL_KERN_NAMES { \
 	{ 0, 0 }, \
@@ -173,6 +174,7 @@ struct ctlname {
 	{ "osversion", CTLTYPE_STRING }, \
 	{ "somaxconn", CTLTYPE_INT }, \
 	{ "sominconn", CTLTYPE_INT }, \
+	{ "usermount", CTLTYPE_INT }, \
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.14 1996/09/24 02:40:12 deraadt Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.15 1996/10/04 01:26:48 deraadt Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -61,6 +61,7 @@
 #include <sys/sysctl.h>
 
 extern int suid_clear;
+int	usermount = 0;		/* sysctl: by default, users may not mount */
 
 static int change_dir __P((struct nameidata *, struct proc *));
 
@@ -94,6 +95,9 @@ sys_mount(p, v, retval)
 	char fstypename[MFSNAMELEN];
 	struct vattr va;
 	struct nameidata nd;
+
+	if (usermount == 0 && (error = suser(p->p_ucred, &p->p_acflag)))
+		return (error);
 
 	/*
 	 * Get vnode to be covered
