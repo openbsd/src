@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp.c,v 1.8 2001/11/16 19:55:49 deraadt Exp $	*/
+/*	$OpenBSD: tcp.c,v 1.9 2001/11/17 19:49:38 deraadt Exp $	*/
 /*	$KAME: tcp.c,v 1.6 2001/07/02 14:36:49 itojun Exp $	*/
 
 /*
@@ -59,7 +59,7 @@ static fd_set readfds, writefds, exceptfds;
 static char atmark_buf[2];
 static pid_t cpid = (pid_t)0;
 static pid_t ppid = (pid_t)0;
-static time_t child_lastactive = (time_t)0;
+volatile time_t child_lastactive = (time_t)0;
 static time_t parent_lastactive = (time_t)0;
 
 static void sig_ctimeout __P((int));

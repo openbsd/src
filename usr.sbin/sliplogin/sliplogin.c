@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)sliplogin.c	5.6 (Berkeley) 3/2/91";*/
-static char rcsid[] = "$Id: sliplogin.c,v 1.17 2001/11/17 03:58:00 deraadt Exp $";
+static char rcsid[] = "$Id: sliplogin.c,v 1.18 2001/11/17 19:49:40 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -180,7 +180,7 @@ sigstr(s)
 	}
 }
 
-int die;
+volatile sig_atomic_t die;
 
 void
 hup_handler(s)

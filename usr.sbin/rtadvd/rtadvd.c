@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtadvd.c,v 1.9 2001/02/04 06:22:05 itojun Exp $	*/
+/*	$OpenBSD: rtadvd.c,v 1.10 2001/11/17 19:49:40 deraadt Exp $	*/
 /*	$KAME: rtadvd.c,v 1.50 2001/02/04 06:15:15 itojun Exp $	*/
 
 /*
@@ -68,8 +68,8 @@ static u_char *rcvcmsgbuf;
 static size_t rcvcmsgbuflen;
 static u_char *sndcmsgbuf = NULL;
 static size_t sndcmsgbuflen;
-static int do_dump;
-static int do_die;
+volatile sig_atomic_t do_dump;
+volatile sig_atomic_t do_die;
 struct msghdr sndmhdr;
 struct iovec rcviov[2];
 struct iovec sndiov[2];

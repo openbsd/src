@@ -1,4 +1,4 @@
-/*	$OpenBSD: rip6query.c,v 1.4 2001/11/16 07:16:48 itojun Exp $	*/
+/*	$OpenBSD: rip6query.c,v 1.5 2001/11/17 19:49:40 deraadt Exp $	*/
 /*	$KAME: rip6query.c,v 1.15 2001/11/16 07:01:21 itojun Exp $	*/
 
 /*
@@ -216,5 +216,5 @@ sigalrm_handler(sig)
 	int sig;
 {
 
-	exit(0);
+	_exit(0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: iostat.c,v 1.10 2001/11/14 20:04:40 deraadt Exp $	*/
+/*	$OpenBSD: iostat.c,v 1.11 2001/11/17 19:49:38 deraadt Exp $	*/
 /*	$NetBSD: iostat.c,v 1.10 1996/10/25 18:21:58 scottr Exp $	*/
 
 /*
@@ -103,7 +103,8 @@ char	*nlistf, *memf;
 
 int		hz, reps, interval;
 static int	todo = 0;
-static int	wantheader;
+
+volatile sig_atomic_t wantheader;
 
 #define ISSET(x, a)	((x) & (a))
 #define SHOW_CPU	0x0001

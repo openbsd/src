@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "@(#)rwhod.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$OpenBSD: rwhod.c,v 1.18 2001/11/14 21:36:37 millert Exp $";
+static char rcsid[] = "$OpenBSD: rwhod.c,v 1.19 2001/11/17 19:49:40 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -97,7 +97,7 @@ struct	whod mywd;
 struct	servent *sp;
 int	s, utmpf;
 
-int	gothup;
+volatile sig_atomic_t gothup;
 
 #define	WHDRSIZE	(sizeof(mywd) - sizeof(mywd.wd_we))
 

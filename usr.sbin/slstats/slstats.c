@@ -1,4 +1,4 @@
-/*	$OpenBSD: slstats.c,v 1.12 2001/08/09 08:45:32 deraadt Exp $	*/
+/*	$OpenBSD: slstats.c,v 1.13 2001/11/17 19:49:41 deraadt Exp $	*/
 /*	$NetBSD: slstats.c,v 1.6.6.1 1996/06/07 01:42:30 thorpej Exp $	*/
 
 /*
@@ -25,7 +25,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: slstats.c,v 1.12 2001/08/09 08:45:32 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: slstats.c,v 1.13 2001/11/17 19:49:41 deraadt Exp $";
 #endif
 
 #define INET
@@ -131,7 +131,7 @@ usage()
 	exit(1);
 }
 
-sig_atomic_t	signalled;			/* set if alarm goes off "early" */
+volatile sig_atomic_t	signalled; 	/* set if alarm goes off "early" */
 
 static void
 get_sl_stats(curp)
