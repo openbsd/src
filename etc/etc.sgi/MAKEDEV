@@ -3,7 +3,7 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.sgi/MAKEDEV.md,v 1.6 2004/09/22 14:40:24 miod Exp 
+#	OpenBSD: etc.sgi/MAKEDEV.md,v 1.8 2004/12/13 17:06:17 miod Exp 
 #	OpenBSD: MAKEDEV.common,v 1.12 2004/08/19 07:05:20 miod Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.72 2004/02/16 18:58:53 miod Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.12 2004/02/20 19:13:01 miod Exp 
@@ -54,6 +54,7 @@
 #	wsmouse*	wscons mice
 # Special purpose devices:
 #	bpf*	Berkeley Packet Filter
+#	crypto	Hardware crypto access driver
 #	fd	fd/* nodes for fdescfs
 #	pci	PCI bus device
 #	pf*	Packet Filter
@@ -218,7 +219,7 @@ uk*)
 	;;
 
 tun*)
-	M tun$U c 40 $U 600
+	M tun$U c 13 $U 600
 	;;
 
 systrace)
@@ -254,6 +255,10 @@ fd)
 	RMlist="mkdir -p fd;$RMlist" n=0
 	while [ $n -lt 64 ];do M fd/$n c 7 $n;n=$(($n+1));done
 	MKlist="$MKlist;chmod 555 fd"
+	;;
+
+crypto)
+	M crypto c 47 0
 	;;
 
 bpf*)
@@ -367,8 +372,8 @@ all)
 	R ccd0 ccd1 ccd2 ccd3 vnd0 vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3 sd4
 	R cd0 cd1 rd0 tun0 tun1 tun2 tun3 bpf0 bpf1 bpf2 bpf3 bpf4
 	R bpf5 bpf6 bpf7 bpf8 bpf9 pty0 pty1 pty2 xfs0 ss0 ss1 ch0 ptm
-	R local wscons pci uk0 random tty00 tty01 tty02 tty03 pf
-	R systrace wd0 wd1 wd2 wd3 std st0 st1 fd
+	R local wscons pci uk0 random tty00 tty01 tty02 tty03 crypto
+	R pf systrace wd0 wd1 wd2 wd3 std st0 st1 fd
 	;;
 
 wd*|sd*|ccd*)
