@@ -1,7 +1,7 @@
-/*	$OpenBSD: SYS.h,v 1.3 1999/02/01 07:56:14 d Exp $	*/
+/*	$OpenBSD: SYS.h,v 1.4 1999/09/16 19:19:46 mickey Exp $	*/
 
 /*
- * Copyright (c) 1998 Michael Shalayeff
+ * Copyright (c) 1998-1999 Michael Shalayeff
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -23,8 +23,8 @@
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
  * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
  * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF MIND
+ * USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
@@ -33,29 +33,32 @@
 #include <sys/syscall.h>
 #include <machine/asm.h>
 #include <machine/vmparam.h>
+#undef _LOCORE
+#define _LOCORE
+#include <machine/frame.h>
 
 #define	__ENTRY(p,x)	ENTRY(__CONCAT(p,x))
 #define	__EXIT(p,x)	EXIT(__CONCAT(p,x))
 
 
-#define	__RSYSCALL(p,x)		!\
-__ENTRY(p,x)			!\
-	stw rp, FM_ERP(sr0,sp)	!\
-	ldil L%SYSCALLGATE, r1	!\
-	ble 4(sr7, r1)		!\
-	ldi __CONCAT(SYS_,x),r22!\
-	or,<> r0,r22,r0		!\
-	ldw FM_ERP(sr0,sp),rp	!\
+#define	__RSYSCALL(p,x)			!\
+__ENTRY(p,x)				!\
+	stw rp, HPPA_FRAME_ERP(sr0,sp)	!\
+	ldil L%SYSCALLGATE, r1		!\
+	ble 4(sr7, r1)			!\
+	ldi __CONCAT(SYS_,x),r22	!\
+	or,<> r0,r22,r0			!\
+	ldw HPPA_FRAME_ERP(sr0,sp),rp	!\
 __EXIT(p,x)
 
-#define	__PSEUDO(p,x,y)		!\
-__ENTRY(p,x)			!\
-	stw rp, FM_ERP(sr0,sp)	!\
-	ldil L%SYSCALLGATE, r1	!\
-	ble 4(sr7, r1)		!\
-	ldi __CONCAT(SYS_,y),r22!\
-	or,<> r0,r22,r0		!\
-	ldw FM_ERP(sr0,sp),rp	!\
+#define	__PSEUDO(p,x,y)			!\
+__ENTRY(p,x)				!\
+	stw rp, HPPA_FRAME_ERP(sr0,sp)	!\
+	ldil L%SYSCALLGATE, r1		!\
+	ble 4(sr7, r1)			!\
+	ldi __CONCAT(SYS_,y),r22	!\
+	or,<> r0,r22,r0			!\
+	ldw HPPA_FRAME_ERP(sr0,sp),rp	!\
 __EXIT(p,x)
 
 /*
@@ -85,4 +88,4 @@ __EXIT(p,x)
 # define PSEUDO(x,y)	__PSEUDO(,x,y)
 /*# define SYSENTRY(x)	__ENTRY(,x)*/
 #endif _THREAD_SAFE
-	.globl	cerror
+	.import	cerror, code
