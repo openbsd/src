@@ -1,4 +1,4 @@
-/*	$OpenBSD: display.c,v 1.4 1997/01/17 07:12:37 millert Exp $	*/
+/*	$OpenBSD: display.c,v 1.5 1998/12/16 01:28:24 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)display.c	5.11 (Berkeley) 3/9/91";*/
-static char rcsid[] = "$OpenBSD: display.c,v 1.4 1997/01/17 07:12:37 millert Exp $";
+static char rcsid[] = "$OpenBSD: display.c,v 1.5 1998/12/16 01:28:24 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -216,6 +216,7 @@ get()
 	static u_char *curp, *savp;
 	register int n;
 	int need, nread;
+	int valid_save = 0;
 	u_char *tmpp;
 
 	if (!curp) {
@@ -226,6 +227,7 @@ get()
 		curp = savp;
 		savp = tmpp;
 		address = savaddress += blocksize;
+		valid_save = 1;
 	}
 	for (need = blocksize, nread = 0;;) {
 		/*
@@ -236,7 +238,8 @@ get()
 		if (!length || ateof && !next((char **)NULL)) {
 			if (need == blocksize)
 				return((u_char *)NULL);
-			if (vflag != ALL && !bcmp(curp, savp, nread)) {
+			if (vflag != ALL && valid_save &&
+			    !bcmp(curp, savp, nread)) {
 				if (vflag != DUP)
 					(void)printf("*\n");
 				return((u_char *)NULL);
@@ -258,7 +261,7 @@ get()
 		if (length != -1)
 			length -= n;
 		if (!(need -= n)) {
-			if (vflag == ALL || vflag == FIRST ||
+			if (vflag == ALL || vflag == FIRST || !valid_save ||
 			    bcmp(curp, savp, blocksize)) {
 				if (vflag == DUP || vflag == FIRST)
 					vflag = WAIT;
