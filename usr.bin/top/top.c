@@ -1,4 +1,4 @@
-/*	$OpenBSD: top.c,v 1.11 2001/09/05 06:25:39 deraadt Exp $	*/
+/*	$OpenBSD: top.c,v 1.12 2001/11/11 01:48:58 fgsch Exp $	*/
 
 const char copyright[] = "Copyright (c) 1984 through 1996, William LeFebvre";
 
@@ -153,9 +153,9 @@ char *argv[];
     fd_set readfds;
 
 #ifdef ORDER
-    static char command_chars[] = "\f qh?en#sdkriIuo";
+    static char command_chars[] = "\f qh?en#sdkriIuSo";
 #else
-    static char command_chars[] = "\f qh?en#sdkriIu";
+    static char command_chars[] = "\f qh?en#sdkriIuS";
 #endif
 /* these defines enumerate the "strchr"s of the commands in command_chars */
 #define CMD_redraw	0
@@ -174,8 +174,9 @@ char *argv[];
 #define CMD_idletog     12
 #define CMD_idletog2    13
 #define CMD_user	14
+#define CMD_system	15
 #ifdef ORDER
-#define CMD_order       15
+#define CMD_order       16
 #endif
 
     /* set the buffer for stdout */
@@ -871,7 +872,14 @@ restart:
 				    clear_message();
 				}
 				break;
-	    
+
+			    case CMD_system:
+				ps.system = !ps.system;
+				new_message(MT_standout | MT_delayed,
+				    " %sisplaying system processes.",
+				    ps.system ? "D" : "Not d");
+				break;
+
 #ifdef ORDER
 			    case CMD_order:
 				new_message(MT_standout,
