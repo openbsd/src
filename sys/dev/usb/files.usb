@@ -1,4 +1,4 @@
-#	$OpenBSD: files.usb,v 1.31 2002/11/30 19:29:29 nate Exp $
+#	$OpenBSD: files.usb,v 1.32 2003/05/17 06:07:57 nate Exp $
 #	$NetBSD: files.usb,v 1.16 2000/02/14 20:29:54 augustss Exp $
 #
 # Config file and device description for machine-independent USB code.
@@ -89,9 +89,11 @@ file	dev/usb/ulpt.c			ulpt			needs-flag
 
 
 # Mass storage
-device	umass: scsi, atapi
+device	umass: scsi, atapi, ata
 attach	umass at uhub
 file	dev/usb/umass.c			umass
+file	dev/usb/umass_quirks.c		umass
+file	dev/usb/umass_scsi.c		umass & (scsibus | atapiscsi)
 
 
 # Misc

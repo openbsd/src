@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_port.h,v 1.40 2002/07/25 02:18:11 nate Exp $ */
+/*	$OpenBSD: usb_port.h,v 1.41 2003/05/17 06:07:57 nate Exp $ */
 /*	$NetBSD: usb_port.h,v 1.44 2001/05/14 20:35:29 bouyer Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_port.h,v 1.21 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -216,26 +216,21 @@ __CONCAT(dname,_detach)(self, flags) \
 
 #define Static
 
+#define UMASS_ATAPISTR		"atapiscsi"
+
+/* periph_quirks */
+#define	PQUIRK_FORCELUNS	SDEV_FORCELUNS	/* prehistoric device groks
+						   LUNs */
+#define	PQUIRK_NOMODESENSE	SDEV_NOMODESENSE/* device doesn't do MODE SENSE
+						   properly */
+#define	PQUIRK_NOTUR		ADEV_NOTUR	/* no TEST UNIT READY */
+#define	PQUIRK_NODOORLOCK	ADEV_NODOORLOCK	/* can't lock door */
+#define	PQUIRK_NOSENSE		ADEV_NOSENSE	/* can't REQUEST SENSE */
+#define PQUIRK_ONLYBIG		SDEV_ONLYBIG
+#define PQUIRK_NOBIGMODESENSE	0
+
 #define UCOMBUSCF_PORTNO		-1
 #define UCOMBUSCF_PORTNO_DEFAULT	-1
-
-#define SCSI_MODE_SENSE		MODE_SENSE
-#define XS_STS_DONE		ITSDONE
-#define XS_CTL_POLL		SCSI_POLL
-#define XS_CTL_DATA_IN		SCSI_DATA_IN
-#define XS_CTL_DATA_OUT		SCSI_DATA_OUT
-#define scsipi_adapter		scsi_adapter
-#define scsipi_cmd		scsi_cmd
-#define scsipi_device		scsi_device
-#define scsipi_done		scsi_done
-#define scsipi_link		scsi_link
-#define scsipi_minphys		scsi_minphys
-#define scsipi_sense		scsi_sense
-#define scsipi_xfer		scsi_xfer
-#define show_scsipi_xs          show_scsi_xs
-#define show_scsipi_cmd         show_scsi_cmd
-#define xs_control		flags
-#define xs_status		status
 #define UHIDBUSCF_REPORTID		-1
 #define UHIDBUSCF_REPORTID_DEFAULT	-1
 

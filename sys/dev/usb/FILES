@@ -39,7 +39,14 @@ ukbd.c			USB keyboard driver
 ukbdmap.c		wscons key mapping for ukbd
 ukbdvar.h		API for ukbd.c
 ulpt.c			USB printer class driver
-umass.c			USB mass storage driver (bulk only for now)
+umass.c			USB mass storage wire protocol driver
+umass_isdata.c		In-System Design ATA over bulk-only driver
+umass_isdata.h		  and definitions for it
+umass_quirks.c		Table of strange umass devices
+umass_quirks.h		  and definitions for it
+umass_scsi.c		umass command protocol driver
+umass_scsi.h		  and definitions for it
+umassvar.h		definitions for umass.c
 umidi.c			USB MIDI driver
 umidi_quirks.c		Strange MIDI devices
 umidi_quirks.h		  and definitions for it
