@@ -17,8 +17,8 @@ block in log quick on kue0 from 172.16.0.0/12	to any
 block in log quick on kue0 from 192.168.0.0/16	to any
 block in log quick on kue0 from 255.255.255.255/32 to any
 
-pass out on kue0 proto icmp all icmp-type 8 code 0 keep state
-pass in  on kue0 proto icmp all icmp-type 8 code 0 keep state
+pass out on kue0 inet proto icmp all icmp-type 8 code 0 keep state
+pass in  on kue0 inet proto icmp all icmp-type 8 code 0 keep state
 
 pass out on kue0 proto udp all keep state
 

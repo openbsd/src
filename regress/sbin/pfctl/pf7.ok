@@ -2,16 +2,16 @@
 @0 block in log on kue0 all 
 @0 block return-rst out log on kue0 proto tcp all 
 @0 block return-rst in log on kue0 proto tcp all 
-@0 block return-icmp out log on kue0 proto udp all 
-@0 block return-icmp in log on kue0 proto udp all 
-@0 block out log quick on kue0 from ! 157.161.48.183 to any 
-@0 block in quick on kue0 from any to 255.255.255.255 
-@0 block in log quick on kue0 from 10.0.0.0/255.0.0.0 to any 
-@0 block in log quick on kue0 from 172.16.0.0/255.240.0.0 to any 
-@0 block in log quick on kue0 from 192.168.0.0/255.255.0.0 to any 
-@0 block in log quick on kue0 from 255.255.255.255 to any 
-@0 pass out on kue0 proto icmp all icmp-type echoreq code 0 keep state 
-@0 pass in on kue0 proto icmp all icmp-type echoreq code 0 keep state 
+@0 block return-icmp(3,3) out log on kue0 proto udp all 
+@0 block return-icmp(3,3) in log on kue0 proto udp all 
+@0 block out log quick on kue0 inet from ! 157.161.48.183/32 to any 
+@0 block in quick on kue0 inet from any to 255.255.255.255/32 
+@0 block in log quick on kue0 inet from 10.0.0.0/8 to any 
+@0 block in log quick on kue0 inet from 172.16.0.0/12 to any 
+@0 block in log quick on kue0 inet from 192.168.0.0/16 to any 
+@0 block in log quick on kue0 inet from 255.255.255.255/32 to any 
+@0 pass out on kue0 inet proto icmp all icmp-type echoreq code 0 keep state 
+@0 pass in on kue0 inet proto icmp all icmp-type echoreq code 0 keep state 
 @0 pass out on kue0 proto udp all keep state 
 @0 pass in on kue0 proto udp from any to any port = domain keep state 
 @0 pass out on kue0 proto tcp all modulate state 
