@@ -1,4 +1,4 @@
-/*	$OpenBSD: pthread.h,v 1.19 2004/01/27 21:56:15 brad Exp $	*/
+/*	$OpenBSD: pthread.h,v 1.20 2004/02/16 22:48:40 brad Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 by Chris Provenzano, proven@mit.edu
@@ -205,8 +205,8 @@ enum pthread_mutextype {
  */
 __BEGIN_DECLS
 int		pthread_attr_destroy(pthread_attr_t *);
-int		pthread_attr_getstacksize(pthread_attr_t *, size_t *);
-int		pthread_attr_getstackaddr(pthread_attr_t *, void **);
+int		pthread_attr_getstacksize(const pthread_attr_t *, size_t *);
+int		pthread_attr_getstackaddr(const pthread_attr_t *, void **);
 int		pthread_attr_getdetachstate(const pthread_attr_t *, int *);
 int		pthread_attr_init(pthread_attr_t *);
 int		pthread_attr_setstacksize(pthread_attr_t *, size_t);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_attr_getstacksize.c,v 1.4 2002/11/07 02:56:20 marc Exp $	*/
+/*	$OpenBSD: uthread_attr_getstacksize.c,v 1.5 2004/02/16 22:48:40 brad Exp $	*/
 /*
  * Copyright (c) 1997 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -38,7 +38,7 @@
 #include "pthread_private.h"
 
 int
-pthread_attr_getstacksize(pthread_attr_t *attr, size_t *stacksize)
+pthread_attr_getstacksize(const pthread_attr_t *attr, size_t *stacksize)
 {
 	int	ret;
 
