@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.19 1997/06/17 10:20:06 niklas Exp $
+#	$OpenBSD: netstart,v 1.20 1997/06/17 13:13:48 niklas Exp $
 
 # set these to "NO" to turn them off.  otherwise, they're used as flags
 routed_flags=-q
@@ -28,6 +28,7 @@ lpd=NO				# printing daemons
 # miscellaneous other flags
 # only used if the appropriate server is marked YES above
 gated_flags=
+ypserv_flags=			# E.g. -1 for YP v1, -d for DNS etc
 yppasswdd_flags=		# "-d /etc/yp" if passwd files is in /etc/yp
 amd_dir=/amd			# AMD's mount directory
 amd_master=/etc/amd/master	# AMD 'master' map

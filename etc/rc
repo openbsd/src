@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.35 1997/06/17 10:20:05 niklas Exp $
+#	$OpenBSD: rc,v 1.36 1997/06/17 13:13:47 niklas Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -117,7 +117,7 @@ fi
 if [ -d /var/yp/binding ]; then
 	if [ -d /var/yp/`domainname` ]; then
 		# yp server capabilities needed...
-		echo -n ' ypserv';		ypserv
+		echo -n ' ypserv';		ypserv ${ypserv_flags}
 		#echo -n ' ypxfrd';		ypxfrd
 	fi
 
