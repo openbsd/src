@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.114 2004/07/13 21:04:29 millert Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.115 2004/07/18 12:05:07 avsm Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -2278,11 +2278,13 @@ sys_ftruncate(p, v, retval)
 	struct vattr vattr;
 	struct vnode *vp;
 	struct file *fp;
+	off_t len;
 	int error;
 
 	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
 		return (error);
-	if ((fp->f_flag & FWRITE) == 0) {
+	len = SCARG(uap, length);
+	if ((fp->f_flag & FWRITE) == 0 || len < 0) {
 		error = EINVAL;
 		goto bad;
 	}
@@ -2293,7 +2295,7 @@ sys_ftruncate(p, v, retval)
 		error = EISDIR;
 	else if ((error = vn_writechk(vp)) == 0) {
 		VATTR_NULL(&vattr);
-		vattr.va_size = SCARG(uap, length);
+		vattr.va_size = len;
 		error = VOP_SETATTR(vp, &vattr, fp->f_cred, p);
 	}
 	VOP_UNLOCK(vp, 0, p);
