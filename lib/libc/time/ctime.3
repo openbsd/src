@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ctime.3,v 1.19 2000/03/28 23:34:19 deraadt Exp $
+.\"	$OpenBSD: ctime.3,v 1.20 2000/03/31 00:10:14 millert Exp $
 .\"
 .\"
 .Dd February 16, 1999
@@ -252,7 +252,8 @@ UTC leap seconds are loaded from
 .Xr strftime 3 ,
 .Xr time 3 ,
 .Xr tzset 3 ,
-.Xr tzfile 5
+.Xr tzfile 5 ,
+.Xr zic 8
 .Sh NOTES
 The return values
 of the non re-entrant functions
@@ -267,6 +268,10 @@ will also be overwritten at the next call
 (and by calls to
 .Fn tzset
 ).
+.Pp
+The default system time zone may be set by running
+.Li Dq zic -l timezone
+as the superuser.
 .Pp
 Avoid using out-of-range values with
 .Fn mktime
