@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKC,v 1.31 2003/05/14 01:34:43 deraadt Exp $
+#	$OpenBSD: RAMDISKC,v 1.32 2003/05/31 23:58:43 miod Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -202,7 +202,6 @@ ne2	at isa? port 0x280 irq 9		# NE[12]000 ethernet
 ne*	at isapnp?				# NE[12]000 PnP ethernet
 #eg0	at isa? port 0x310 irq 5		# 3C505/Etherlink+ ethernet
 #el0	at isa? port 0x300 irq 9		# 3C501 ethernet
-ep0	at isa? port ? irq ?			# 3C509 ethernet
 ep*	at isa? port ? irq ?			# 3C509 ethernet
 ef*	at isapnp?				# 3C515 PnP ethernet
 #ie0	at isa? port 0x360 iomem 0xd0000 irq 7	# StarLAN and 3C507

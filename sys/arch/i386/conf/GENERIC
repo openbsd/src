@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.340 2003/05/20 20:28:34 grange Exp $
+#	$OpenBSD: GENERIC,v 1.341 2003/05/31 23:58:43 miod Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -332,9 +332,8 @@ ne2	at isa? port 0x280 irq 9		# NE[12]000 ethernet
 ne*	at isapnp?				# NE[12]000 PnP ethernet
 eg0	at isa? disable port 0x310 irq 5	# 3C505/Etherlink+ ethernet
 el0	at isa? disable port 0x300 irq 9 	# 3C501 ethernet
-ep0	at isa? port ? irq ?			# 3C509 ethernet
-ep*	at isapnp?				# 3C509 PnP ethernet
 ep*	at isa? port ? irq ?			# 3C509 ethernet
+ep*	at isapnp?				# 3C509 PnP ethernet
 ef*	at isapnp?				# 3C515 PnP ethernet
 ie0	at isa? port 0x360 iomem 0xd0000 irq 7	# StarLAN and 3C507
 #ie1	at isa? port 0x300 irq 10		# EtherExpress
@@ -345,7 +344,6 @@ ex0	at isa? port 0x320 irq 5		# Intel EtherExpress PRO/10
 #tr0	at isa? port 0xa20 iomem 0xd8000 irq ?	# IBM TROPIC based Token-Ring
 #tr1	at isa? port 0xa24 iomem 0xd0000 irq ?	# IBM TROPIC based Token-Ring
 #tr*	at isa? port ? irq ?			# 3COM TROPIC based Token-Ring
-ep0	at eisa? slot ?
 ep*	at eisa? slot ?				# 3C579 ethernet
 fea*	at eisa? slot ?				# DEC DEFEA FDDI
 lmc*	at pci? dev ? function ?		# Lan Media Corp SSI/T3/HSSI
@@ -355,7 +353,6 @@ de*	at pci? dev ? function ?		# DC21X4X-based ethernet
 fxp*	at pci? dev ? function ?		# EtherExpress 10/100B ethernet
 fxp*	at cardbus? dev ? function ?		# Intel PRO/100 ethernet
 ne*	at pci? dev ? function ?		# NE2000-compat ethernet
-ep0	at pci? dev ? function ?		# 3C59x ethernet
 ep*	at pci? dev ? function ?		# 3C59x ethernet
 ne*	at pcmcia? function ?			# PCMCIA based NE2000 ethernet
 ep*	at pcmcia? function ?			# PCMCIA based 3C5xx ethernet

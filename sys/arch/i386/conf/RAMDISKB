@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKB,v 1.59 2003/05/14 01:34:43 deraadt Exp $
+#	$OpenBSD: RAMDISKB,v 1.60 2003/05/31 23:58:43 miod Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -228,7 +228,6 @@ scsibus* at atapiscsi?
 #le*	at isapnp?
 de*	at pci? dev ? function ?		# DC21X4X-based ethernet cards
 fxp*	at pci? dev ? function ?		# EtherExpress 10/100B ethernet cards
-ep0	at pci? dev ? function ?		# 3C59x ethernet cards
 ep*	at pci? dev ? function ?		# 3C59x ethernet cards
 #ne*	at pci? dev ? function ?		# NE2000-compat ethernet cards
 #ne*	at pcmcia? function ?			# PCMCIA based NE2000 cards
