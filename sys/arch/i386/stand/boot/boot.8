@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot.8,v 1.25 2001/01/16 16:43:14 mickey Exp $
+.\"	$OpenBSD: boot.8,v 1.26 2001/05/02 16:02:40 mickey Exp $
 .\"
 .\" Copyright (c) 1997-2001 Michael Shalayeff
 .\" All rights reserved.
@@ -135,7 +135,7 @@ The following commands are accepted at the
 .Nm
 prompt:
 .Bl -tag -width stty_device_speed_____
-.It boot Op Ar image Op Fl abcds
+.It boot Op Ar image Op Fl acds
 Boots the kernel image specified by
 .Ar image
 with any options given.
@@ -145,6 +145,24 @@ either or both can be omitted (':' is not needed if both are omitted),
 in which case values from
 .Nm
 variables will be used.
+.Bl -tag -width _a_
+.It Fl a
+Causes the kernel to ask for the
+.Nm root
+device to use.
+.It Fl c
+Causes the kernel to go into
+.Xr boot_config 8
+before performing
+.Xr autoconf 4
+procedures.
+.It Fl d
+Causes the kernel to drop into
+.Xr ddb 4
+at the earliest convinient point.
+.It Fl s
+Causes the kernel to boot single-user.
+.El
 .It echo Op Ar args
 Displays
 .Ar args
@@ -312,9 +330,13 @@ kernel image
 .El
 .Sh SEE ALSO
 .Xr gzip 1 ,
+.Xr autoconf 4 ,
+.Xr ddb 4 ,
+.Xr boot_config 8 ,
 .Xr boot_i386 8 ,
 .Xr fdisk 8 ,
-.Xr installboot 8
+.Xr installboot 8 ,
+.Xr reboot 8
 .Pp
 RFC 1950 describes the zlib library interface.
 .Pp
