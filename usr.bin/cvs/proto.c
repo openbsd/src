@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.c,v 1.25 2004/09/23 15:36:32 jfb Exp $	*/
+/*	$OpenBSD: proto.c,v 1.26 2004/11/15 04:16:33 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -109,17 +109,16 @@ struct cvs_req cvs_requests[] = {
 	{ CVS_REQ_VALIDRCSOPT,   "Valid-RcsOptions",  0             },
 	{ CVS_REQ_SET,           "Set",               0             },
 	{ CVS_REQ_XPANDMOD,      "expand-modules",    CVS_REQF_RESP },
-	{ CVS_REQ_LOG,           "log",               0             },
+	{ CVS_REQ_LOG,           "log",               CVS_REQF_RESP },
 	{ CVS_REQ_CO,            "co",                CVS_REQF_RESP },
 	{ CVS_REQ_EXPORT,        "export",            CVS_REQF_RESP },
-	{ CVS_REQ_RANNOTATE,     "rannotate",         0             },
-	{ CVS_REQ_RDIFF,         "rdiff",             0             },
-	{ CVS_REQ_RLOG,          "rlog",              0             },
+	{ CVS_REQ_ANNOTATE,      "annotate",          CVS_REQF_RESP },
+	{ CVS_REQ_RDIFF,         "rdiff",             CVS_REQF_RESP },
 	{ CVS_REQ_RTAG,          "rtag",              CVS_REQF_RESP },
 	{ CVS_REQ_INIT,          "init",              CVS_REQF_RESP },
 	{ CVS_REQ_STATUS,        "status",            CVS_REQF_RESP },
 	{ CVS_REQ_UPDATE,        "update",            CVS_REQF_RESP },
-	{ CVS_REQ_HISTORY,       "history",           0             },
+	{ CVS_REQ_HISTORY,       "history",           CVS_REQF_RESP },
 	{ CVS_REQ_IMPORT,        "import",            CVS_REQF_RESP },
 	{ CVS_REQ_ADD,           "add",               CVS_REQF_RESP },
 	{ CVS_REQ_REMOVE,        "remove",            CVS_REQF_RESP },
