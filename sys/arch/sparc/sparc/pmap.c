@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.55 1999/12/09 21:35:28 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.56 1999/12/09 21:46:51 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -2594,7 +2594,7 @@ retry:
 		 * can/can't happen.
 		 */
 		printf("pv_link4m: pv changed during sleep!\n");
-		FREE(mpv, M_VMPVENT);
+		pvfree(mpv);
 		goto retry;
 	}
 
