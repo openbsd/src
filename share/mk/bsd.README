@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.README,v 1.14 1997/04/18 03:49:48 millert Exp $
+#	$OpenBSD: bsd.README,v 1.15 1997/04/27 21:38:25 millert Exp $
 #	$NetBSD: bsd.README,v 1.17 1996/04/13 02:08:08 thorpej Exp $
 #	@(#)bsd.README	5.1 (Berkeley) 5/11/90
 
@@ -162,16 +162,19 @@ NLSOWN		National Language Support files owner. [bin]
 
 NLSMODE		National Language Support files mode. [${NONBINMODE}]
 
-STRIP		The flag passed to the install program to cause the binary
+INSTALL_STRIP	The flag passed to the install program to cause the binary
 		to be stripped.  This is to be used when building your
 		own install script so that the entire system can be made
-		stripped/not-stripped using a single knob. [-s]
+		stripped/not-stripped using a single knob.  Note that
+		INSTALL_STRIP is not set if ${DEBUG} is defined. [-s]
 
-COPY		The flag passed to the install program to cause the binary
-		to be copied rather than moved.  This is to be used when
-		building our own install script so that the entire system
-		can either be installed with copies, or with moves using
-		a single knob. [-c]
+INSTALL_COPY	The old usage of this flag is obsolescent since install(1)
+		now copies by default.  However, it can also be used to
+		specify that a file not be copied unless it is different
+		(via the -p option).  See install(1) for details.  This
+		is to be used when building our own install script so
+		that the entire system can either be installed with copies,
+		or copy-if-different using a single knob. [-c]
 
 Additionally, the following variables may be set by bsd.own.mk or in a
 make configuration file to modify the behaviour of the system build

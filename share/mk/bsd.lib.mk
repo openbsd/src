@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.lib.mk,v 1.12 1997/02/06 10:49:17 niklas Exp $
+#	$OpenBSD: bsd.lib.mk,v 1.13 1997/04/27 21:38:28 millert Exp $
 #	$NetBSD: bsd.lib.mk,v 1.67 1996/01/17 20:39:26 mycroft Exp $
 #	@(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
 
@@ -184,36 +184,36 @@ beforeinstall:
 
 realinstall:
 #	ranlib lib${LIB}.a
-	${INSTALL} ${COPY} -o ${LIBOWN} -g ${LIBGRP} -m 600 lib${LIB}.a \
+	${INSTALL} ${INSTALL_COPY} -o ${LIBOWN} -g ${LIBGRP} -m 600 lib${LIB}.a \
 	    ${DESTDIR}${LIBDIR}
-.if (${COPY} != "-p")
+.if (${INSTALL_COPY} != "-p")
 	${RANLIB} -t ${DESTDIR}${LIBDIR}/lib${LIB}.a
 .endif
 	chmod ${LIBMODE} ${DESTDIR}${LIBDIR}/lib${LIB}.a
 .if !defined(NOPROFILE)
 #	ranlib lib${LIB}_p.a
-	${INSTALL} ${COPY} -o ${LIBOWN} -g ${LIBGRP} -m 600 \
+	${INSTALL} ${INSTALL_COPY} -o ${LIBOWN} -g ${LIBGRP} -m 600 \
 	    lib${LIB}_p.a ${DESTDIR}${LIBDIR}
-.if (${COPY} != "-p")
+.if (${INSTALL_COPY} != "-p")
 	${RANLIB} -t ${DESTDIR}${LIBDIR}/lib${LIB}_p.a
 .endif
 	chmod ${LIBMODE} ${DESTDIR}${LIBDIR}/lib${LIB}_p.a
 .endif
 .if !defined(NOPIC) && (${MACHINE_ARCH} != "mips") 
 #	ranlib lib${LIB}_pic.a
-	${INSTALL} ${COPY} -o ${LIBOWN} -g ${LIBGRP} -m 600 \
+	${INSTALL} ${INSTALL_COPY} -o ${LIBOWN} -g ${LIBGRP} -m 600 \
 	    lib${LIB}_pic.a ${DESTDIR}${LIBDIR}
-.if (${COPY} != "-p")
+.if (${INSTALL_COPY} != "-p")
 	${RANLIB} -t ${DESTDIR}${LIBDIR}/lib${LIB}_pic.a
 .endif
 	chmod ${LIBMODE} ${DESTDIR}${LIBDIR}/lib${LIB}_pic.a
 .endif
 .if !defined(NOPIC) && defined(SHLIB_MAJOR) && defined(SHLIB_MINOR)
-	${INSTALL} ${COPY} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
+	${INSTALL} ${INSTALL_COPY} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
 	    lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR} ${DESTDIR}${LIBDIR}
 .endif
 .if !defined(NOLINT)
-	${INSTALL} ${COPY} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
+	${INSTALL} ${INSTALL_COPY} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
 	    llib-l${LIB}.ln ${DESTDIR}${LINTLIBDIR}
 .endif
 .if defined(LINKS) && !empty(LINKS)

@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.prog.mk,v 1.12 1997/03/26 00:34:54 deraadt Exp $
+#	$OpenBSD: bsd.prog.mk,v 1.13 1997/04/27 21:38:34 millert Exp $
 #	$NetBSD: bsd.prog.mk,v 1.55 1996/04/08 21:19:26 jtc Exp $
 #	@(#)bsd.prog.mk	5.26 (Berkeley) 6/25/91
 
@@ -114,8 +114,8 @@ afterinstall:
 .if !target(realinstall)
 realinstall:
 .if defined(PROG)
-	${INSTALL} ${COPY} ${STRIP} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
-	    ${PROG} ${DESTDIR}${BINDIR}
+	${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP} -o ${BINOWN} -g ${BINGRP} \
+	    -m ${BINMODE} ${PROG} ${DESTDIR}${BINDIR}
 .endif
 .if defined(HIDEGAME)
 	(cd ${DESTDIR}/usr/games; rm -f ${PROG}; ln -s dm ${PROG})
