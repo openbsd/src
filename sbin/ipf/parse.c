@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.13 1997/06/23 01:16:14 deraadt Exp $	*/
+/*	$OpenBSD: parse.c,v 1.14 1997/06/23 17:20:31 kstailey Exp $	*/
 /*
  * (C)opyright 1993-1996 by Darren Reed.
  *
@@ -35,7 +35,7 @@
 
 #if !defined(lint) && defined(LIBC_SCCS)
 static	char	sccsid[] ="@(#)parse.c	1.44 6/5/96 (C) 1993-1996 Darren Reed";
-static	char	rcsid[] = "$DRId: parse.c,v 2.0.1.2 1997/02/17 13:59:44 darrenr Exp $";
+static	char	rcsid[] = "$DRId: parse.c,v 2.0.1.4 1997/03/20 15:49:25 darrenr Exp $";
 #endif
 
 extern	struct	ipopt_names	ionames[], secclass[];
@@ -110,9 +110,8 @@ char	*line;
 			fil.fr_flags |= FR_RETICMP;
 			cpp++;
 			if (*(*cpp + 11) == '(') {
-				int icode = icmpcode(*cpp + 12);
-
-				if (icode == -1) {
+				fil.fr_icode = icmpcode(*cpp + 12);
+				if (fil.fr_icode == -1) {
 					fprintf(stderr,
 						"unrecognized icmp code %s\n",
 						*cpp + 12);
@@ -463,7 +462,7 @@ char *tag;
 frdest_t *fdp;
 {
 	(void)printf("%s %s%s", tag, fdp->fd_ifname,
-		     (fdp->fd_ifp || (long)fdp->fd_ifp == -1) ? "" : "(!)");
+		     (fdp->fd_ifp || (int)fdp->fd_ifp == -1) ? "" : "(!)");
 	if (fdp->fd_ip.s_addr)
 		(void)printf(":%s", inet_ntoa(fdp->fd_ip));
 	putchar(' ');
@@ -932,8 +931,11 @@ struct	frentry	*fp;
 			if (!strcasecmp(*t, **cp))
 				break;
 		}
-		if (i == -1)
+		if (i == -1) {
+			(void)fprintf(stderr,
+				"Invalid icmp-type (%s) specified\n", **cp);
 			return -1;
+		}
 	}
 	fp->fr_icmp = (u_short)(i << 8);
 	fp->fr_icmpm = (u_short)0xff00;
@@ -1129,7 +1131,7 @@ struct	frentry	*fp;
 
 	if (*fp->fr_ifname) {
 		(void)printf("on %s%s ", fp->fr_ifname,
-			(fp->fr_ifa || (long)fp->fr_ifa == -1) ? "" : "(!)");
+			(fp->fr_ifa || (int)fp->fr_ifa == -1) ? "" : "(!)");
 		if (*fp->fr_dif.fd_ifname)
 			print_toif("dup-to", &fp->fr_dif);
 		if (*fp->fr_tif.fd_ifname)
