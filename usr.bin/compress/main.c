@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.2 1997/07/06 20:47:32 mickey Exp $	*/
+/*	$OpenBSD: main.c,v 1.3 1997/07/06 22:03:34 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)compress.c	8.2 (Berkeley) 1/7/94";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.2 1997/07/06 20:47:32 mickey Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.3 1997/07/06 22:03:34 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -276,12 +276,9 @@ main(argc, argv)
 					fputc(' ', stderr);
 				}
 			}
-		} else {
-			if (isreg >= 0)
-				warn("%s", outfile);
 		}
 
-		if (error && unlink(outfile) && verbose >= 0)
+		if (error && isreg && unlink(outfile) && verbose >= 0)
 			warn("%s", outfile);
 		else if (!error && verbose > 0)
 			fputs("OK\n", stderr);
@@ -311,10 +308,21 @@ compress(in, out, method, bits)
 
 	error = 0;
 	cookie  = NULL;
-	ifd = ofd = -1;
+
+	if ((ofd = open(out, O_WRONLY|O_CREAT, S_IWUSR)) < 0) {
+		if (verbose >= 0)
+			warn("%s", out);
+		return -1;
+	}
+
+	if (!force && isatty(ofd)) {
+		if (verbose >= 0)
+			warnx("%s: won't write compressed data to terminal",
+			      out);
+		return -1;
+	}
 
 	if ((ifd = open(in, O_RDONLY)) >= 0 &&
-	    (ofd = open(out, O_WRONLY|O_CREAT, S_IWUSR)) >= 0 &&
 	    (cookie = (*method->open)(ofd, "w", bits)) != NULL) {
 
 		while ((nr = read(ifd, buf, sizeof(buf))) > 0)
@@ -332,7 +340,7 @@ compress(in, out, method, bits)
 		error++;
 	}
 
-	if (ofd < 0 || cookie == NULL || (method->close)(cookie)) {
+	if (cookie == NULL || (method->close)(cookie)) {
 		if (!error && verbose >= 0)
 			warn("%s", out);
 		error++;
@@ -375,14 +383,31 @@ decompress(in, out, method, bits)
 	u_char buf[Z_BUFSIZE];
 	int error;
 
-	ifd = ofd = -1;
 	error = 0;
 	method = NULL;
 	cookie = NULL;
 
+	if ((ifd = open(in, O_RDONLY)) < 0) {
+		if (verbose >= 0)
+			warn("%s", in);
+		return -1;
+	}
+
+	if (!force && isatty(ifd)) {
+		if (verbose >= 0)
+			warnx("%s: won't read compressed data from terminal",
+			      in);
+		close (ifd);
+		return -1;
+	}
+
+	if ((method = check_method(ifd, out)) == NULL) {
+		if (verbose >= 0)
+			warnx("%s: unrecognized file format", in);
+		return -1;
+	}
+
 	if ((ofd = open(out, O_WRONLY|O_CREAT, S_IWUSR)) >= 0 &&
-	    (ifd = open(in, O_RDONLY)) >= 0 &&
-	    (method = check_method(ifd, out)) != NULL &&
 	    (cookie = (*method->open)(ifd, "r", bits)) != NULL) {
 
 		while ((nr = (method->read)(cookie, buf, sizeof(buf))) > 0)
@@ -400,14 +425,11 @@ decompress(in, out, method, bits)
 		error++;
 	}
 
-	if (ifd < 0 || cookie == NULL || method == NULL ||
-	    (method->close)(cookie) || nr < 0) {
+	if (cookie == NULL || (method->close)(cookie) || nr < 0) {
 		if (!error && verbose >= 0)
-			if (method == NULL)
-				warnx("%s: unrecognized file format", in);
-			else
-				warn("%s", in);
+			warn("%s", in);
 		error++;
+		(void) close (ifd);
 	}
 
 	return error;
