@@ -1,4 +1,4 @@
-/* $OpenBSD: http_main.c,v 1.34 2003/11/17 18:57:05 henning Exp $ */
+/* $OpenBSD: http_main.c,v 1.35 2004/02/10 12:59:29 henning Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -8140,7 +8140,7 @@ const XML_LChar *suck_in_expat(void)
 }
 #endif /* USE_EXPAT */
 
-API_EXPORT(int) ap_server_strip_chroot(char *src, int force)
+API_EXPORT(void) ap_server_strip_chroot(char *src, int force)
 {
     char buf[MAX_STRING_LEN];
 

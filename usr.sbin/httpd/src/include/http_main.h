@@ -127,7 +127,7 @@ API_EXPORT(int) ap_update_child_status(int child_num, int status, request_rec *r
 void ap_time_process_request(int child_num, int status);
 API_EXPORT(unsigned int) ap_set_callback_and_alarm(void (*fn) (int), int x);
 API_EXPORT(int) ap_check_alarm(void);
-API_EXPORT(int) ap_server_strip_chroot(char *src, int force);
+API_EXPORT(void) ap_server_strip_chroot(char *, int);
 API_EXPORT(int) ap_server_is_chrooted(void);
 API_EXPORT(int) ap_server_chroot_desired(void);
 
