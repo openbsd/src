@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.2 2004/09/09 17:47:43 pefo Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.3 2004/09/21 08:40:45 pefo Exp $ */
 
 /*
  * Copyright (c) 1998-2004 Opsycon AB, Sweden.
@@ -44,7 +44,10 @@ _dl_md_reloc(elf_object_t *object, int rel, int relsz)
 	int	fails = 0;
 	struct load_list *load_list;
 	Elf64_Addr loff;
+	Elf64_Addr ooff;
+	Elf64_Addr got_start, got_end;
 	Elf64_Rel  *relocs;
+	const Elf64_Sym *sym, *this;
 
 	loff = object->load_offs;
 	numrel = object->Dyn.info[relsz] / sizeof(Elf64_Rel);
@@ -66,18 +69,32 @@ _dl_md_reloc(elf_object_t *object, int rel, int relsz)
 		load_list = load_list->next;
 	}
 
+	/* XXX We need the got limits to know if reloc is in got. */
+	/* XXX Relocs against the got should not include the STUB address! */
+	this = NULL;
+	got_start = 0;
+	got_end = 0;
+	ooff = _dl_find_symbol("__got_start", object, &this, NULL,
+	    SYM_SEARCH_SELF|SYM_NOWARNNOTFOUND|SYM_PLT, 0, object);
+	if (this != NULL)
+		got_start = ooff + this->st_value;
+
+	this = NULL;
+	ooff = _dl_find_symbol("__got_end", object, &this, NULL,
+	    SYM_SEARCH_SELF|SYM_NOWARNNOTFOUND|SYM_PLT, 0, object);
+	if (this != NULL)
+		got_end = ooff + this->st_value;
 
 	DL_DEB(("relocating %d\n", numrel));
 	for (i = 0; i < numrel; i++, relocs++) {
 		Elf64_Addr r_addr = relocs->r_offset + loff;
-		Elf64_Addr ooff = 0;
-		const Elf64_Sym *sym, *this;
 		const char *symn;
 		int type;
 
 		if (ELF64_R_SYM(relocs->r_info) == 0xffffff)
 			continue;
 
+		ooff = 0;
 		sym = object->dyn.symtab;
 		sym += ELF64_R_SYM(relocs->r_info);
 		this = sym;
@@ -104,16 +121,15 @@ _dl_md_reloc(elf_object_t *object, int rel, int relsz)
 			    (ELF64_ST_TYPE(sym->st_info) == STT_SECTION ||
 			    ELF64_ST_TYPE(sym->st_info) == STT_NOTYPE) ) {
 				*(u_int64_t *)r_addr += loff + sym->st_value;
-			} else if (this) {
+			} else if (this && ((long)r_addr & 7)) {
 				/* XXX Handle non aligned relocs. .eh_frame
 				 * XXX in libstdc++ seems to have them... */
-				if (((long)r_addr & 7)) {
-					u_int64_t robj;
-					_dl_bcopy((char *)r_addr, &robj, sizeof(robj));
-					robj += this->st_value + ooff;
-					_dl_bcopy(&robj, (char *)r_addr, sizeof(robj));
-				} else
-					*(u_int64_t *)r_addr += this->st_value + ooff;
+				u_int64_t robj;
+				_dl_bcopy((char *)r_addr, &robj, sizeof(robj));
+				robj += this->st_value + ooff;
+				_dl_bcopy(&robj, (char *)r_addr, sizeof(robj));
+			} else if (this) {
+				*(u_int64_t *)r_addr += this->st_value + ooff;
 			}
 			break;
 
@@ -153,7 +169,6 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 	Elf64_Addr loff;
 	Elf64_Addr ooff;
 	Elf64_Addr *gotp;
-	Elf64_Addr plt_addr;
 	const Elf64_Sym  *symp;
 	const Elf64_Sym  *this;
 	const char *strt;
@@ -179,7 +194,6 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 	/*  First do all local references. */
 	for (i = ((gotp[1] & 0x0000000080000000) ? 2 : 1); i < n; i++) {
 		gotp[i] += loff;
-	DL_DEB(("got: '%p' = %x\n", &gotp[i], gotp[i]));
 	}
 
 	gotp += n;
@@ -189,7 +203,6 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 	n =  object->Dyn.info[DT_MIPS_SYMTABNO - DT_LOPROC + DT_NUM] -
 	    object->Dyn.info[DT_MIPS_GOTSYM - DT_LOPROC + DT_NUM];
 
-	plt_addr = 0;
 	this = NULL;
 	object->plt_size = 0;
 	object->got_size = 0;
@@ -202,19 +215,7 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 	ooff = _dl_find_symbol("__got_end", object, &this, NULL,
 	    SYM_SEARCH_SELF|SYM_NOWARNNOTFOUND|SYM_PLT, 0, object);
 	if (this != NULL)
-		object->got_size = ooff + this->st_value  - object->got_addr;
-
-	this = NULL;
-	ooff = _dl_find_symbol("__plt_start", object, &this, NULL,
-	    SYM_SEARCH_SELF|SYM_NOWARNNOTFOUND|SYM_PLT, 0, object);
-	if (this != NULL)
-		object->plt_start = ooff + this->st_value;
-
-	this = NULL;
-	ooff = _dl_find_symbol("__plt_end", object, &this, NULL,
-	    SYM_SEARCH_SELF|SYM_NOWARNNOTFOUND|SYM_PLT, 0, object);
-	if (this != NULL)
-		object->plt_size = ooff + this->st_value  - plt_addr;
+		object->got_size = ooff + this->st_value  - object->got_start;
 
 	/*
 	 *  Then do all global references according to the ABI.
@@ -223,7 +224,6 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 	while (n--) {
 		if (symp->st_shndx == SHN_UNDEF &&
 		    ELF64_ST_TYPE(symp->st_info) == STT_FUNC) {
-	DL_DEB(("got: '%s' = %x\n", strt + symp->st_name, symp->st_value));
 			if (symp->st_value == 0 || !lazy) {
 				this = 0;
 				ooff = _dl_find_symbol(strt + symp->st_name,
@@ -253,10 +253,8 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 	}
 	object->status |= STAT_GOT_DONE;
 
+	DL_DEB(("got: %x, %x\n", object->got_start, object->got_size));
 	if (object->got_size != 0)
 		_dl_mprotect((void*)object->got_start, object->got_size,
 		    PROT_READ);
-	if (object->plt_size != 0)
-		_dl_mprotect((void*)object->plt_start, object->plt_size,
-		    PROT_READ|PROT_EXEC);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.2 2004/09/09 17:47:43 pefo Exp $ */
+/*	$OpenBSD: ldasm.S,v 1.3 2004/09/21 08:40:45 pefo Exp $ */
 
 /*
  * Copyright (c) 1998-2002 Opsycon AB, Sweden.
@@ -53,10 +53,13 @@ LEAF(_dl_start, FRAMESZ)		/* Not really LEAF, but we simplify */
 	# This is a hack to change protection of .rodata so it
 	# can be relocated. A better way to find the location
 	# of .rodata should probably be used.
+	# We know that .rodata is aligned on 0x100000 and is at
+	# most 64 k in size.
 	li	v0, SYS_mprotect
 	or	a0, ra, 0xfff
 	xor	a0, 0xfff
-	li	a1, 0x8000
+	PTR_ADDU a0, 0x10000
+	li	a1, 0x10000
 	li	a2, 7 /* (PROT_READ|PROT_WRITE|PROT_EXEC) */
 	syscall
 

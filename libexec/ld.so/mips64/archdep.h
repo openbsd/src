@@ -1,4 +1,4 @@
-/*	$OpenBSD: archdep.h,v 1.2 2004/09/09 17:47:43 pefo Exp $ */
+/*	$OpenBSD: archdep.h,v 1.3 2004/09/21 08:40:45 pefo Exp $ */
 
 /*
  * Copyright (c) 1998-2002 Opsycon AB, Sweden.
@@ -35,19 +35,13 @@
 #include "resolve.h"
 #include "util.h"
 
-#define RTLD_PROTECT_PLT
-
-#define	DL_MALLOC_ALIGN	16	/* Arch constraint or otherwise */
+#define	DL_MALLOC_ALIGN	8	/* Arch constraint or otherwise */
 
 #define	MACHID	EM_MIPS		/* ELF e_machine ID value checked */
 
-//static inline void
-//RELOC_REL(Elf_Rel *r, const Elf_Sym *s, Elf_Addr *p, unsigned long v)
-//{
-//}
 #define RELOC_REL(relp, symp, adrp, val)				\
 do {									\
-	if (ELF64_R_TYPE(relp->r_info) == R_MIPS_REL32_64)	{		\
+	if (ELF64_R_TYPE(relp->r_info) == R_MIPS_REL32_64) {		\
 		if (ELF64_R_SYM(rp->r_info) != 0)			\
 			*adrp = symp->st_value + val;			\
 		else							\
@@ -57,11 +51,10 @@ do {									\
 	}								\
 } while (0)
 
-static inline void
-RELOC_RELA(Elf64_Rela *r, const Elf64_Sym *s, Elf64_Addr *p, unsigned long v)
-{
-	_dl_exit(20);
-}
+#define RELOC_RELA(rela, sym, ptr, val)					\
+do {									\
+	_dl_exit(20);	/* We don't do RELA now */			\
+} while(0)
 
 struct elf_object;
 
