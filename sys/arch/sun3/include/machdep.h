@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.h,v 1.9 2000/03/02 23:01:46 todd Exp $	*/
+/*	$OpenBSD: machdep.h,v 1.10 2000/07/14 14:26:18 miod Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -48,11 +48,6 @@
 
 #define	FC_CONTROL	3	/* sun control space
 				   XXX HP uses FC_PURGE instead */
-
-#define	SPL1		(PSL_S | PSL_IPL1); /* used in locore.s
-					     * XXX mvme68k does this in
-					     * genassym.c
-					     */
 
 /* Prototypes... */
 
@@ -104,6 +99,9 @@ int 	fpu_emulate __P((struct frame *, struct fpframe *));
 
 int 	getdfc __P((void));
 int 	getsfc __P((void));
+
+/* Backward compatibility... */
+#define getsr	_getsr
 
 void**	getvbr __P((void));
 
