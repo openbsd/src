@@ -1,4 +1,4 @@
-/*	$OpenBSD: systm.h,v 1.13 1996/11/06 01:29:24 deraadt Exp $	*/
+/*	$OpenBSD: systm.h,v 1.14 1996/11/11 15:35:20 mickey Exp $	*/
 /*	$NetBSD: systm.h,v 1.50 1996/06/09 04:55:09 briggs Exp $	*/
 
 /*-
@@ -128,6 +128,12 @@ int	enxio __P((void));
 int	eopnotsupp __P((void));
 
 int	lkmenodev __P((void));
+
+struct vnodeopv_desc;
+void vfs_opv_init __P((void));
+void vfs_opv_init_explicit __P((struct vnodeopv_desc *));
+void vfs_opv_init_default __P((struct vnodeopv_desc *));
+void vfs_op_init __P((void));
 
 int	seltrue __P((dev_t dev, int which, struct proc *p));
 void	*hashinit __P((int count, int type, u_long *hashmask));

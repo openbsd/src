@@ -76,11 +76,6 @@ int vfs_opv_numops;
 
 typedef (*PFI) __P((void *));
 
-void vfs_opv_init __P((void));
-void vfs_opv_init_explicit __P((struct vnodeopv_desc *));
-void vfs_opv_init_default __P((struct vnodeopv_desc *));
-void vfs_op_init __P((void));
-
 /*
  * A miscellaneous routine.
  * A generic "default" routine that just returns an error.
