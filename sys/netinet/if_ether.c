@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.18 1999/08/08 02:42:59 niklas Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.19 1999/11/10 18:48:47 chris Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -506,7 +506,7 @@ in_arpinput(m)
 				goto out;
 			} else if (rt->rt_ifp != &ac->ac_if) {
 			        log(LOG_WARNING,
-				   "arp: attemt to overwrite entry for %s "
+				   "arp: attempt to overwrite entry for %s "
 				   "on %s by %s on %s\n",
 				   inet_ntoa(isaddr), rt->rt_ifp->if_xname,
 				   ether_sprintf(ea->arp_sha),
