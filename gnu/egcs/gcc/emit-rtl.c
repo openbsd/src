@@ -1382,6 +1382,15 @@ operand_subword (op, i, validate_address, mode)
 	val = ((val & 0xffffffff) ^ 0x80000000) - 0x80000000;
 	return GEN_INT (val);
       }
+#if HOST_BITS_PER_WIDE_INT >= 64
+      else if (BITS_PER_WORD >= 64 && i <= 1)
+        { 
+          val = k[i * 2 + ! WORDS_BIG_ENDIAN];
+          val = (((val & 0xffffffff) ^ 0x80000000) - 0x80000000) << 32;
+          val |= (HOST_WIDE_INT) k[i * 2 + WORDS_BIG_ENDIAN] & 0xffffffff;
+          return GEN_INT (val);
+        }
+#endif
     else
       abort ();
   }
