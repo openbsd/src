@@ -1,4 +1,4 @@
-/*	$OpenBSD: gateA20.c,v 1.6 2000/11/13 15:53:34 aaron Exp $	*/
+/*	$OpenBSD: gateA20.c,v 1.7 2001/08/18 02:00:49 csapuntz Exp $	*/
 
 /*
  * Ported to boot 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
@@ -46,6 +46,8 @@
 #define A20_KBD		0
 #define A20_0x92	1
 
+int gateA20kbd __P((int));
+
 /*
  * Check for an oddball IBM_L40 machine.
  */
@@ -56,6 +58,34 @@ getA20type()
 }
 
 
+int
+gateA20kbd(on)
+	int on;
+{
+	u_int i = 1000000;
+
+	while (i && (inb(IO_KBD + KBSTATP) & KBS_IBF)) i--;
+	if (i == 0)
+		return (1);
+
+	while (inb(IO_KBD + KBSTATP) & KBS_DIB)
+		(void)inb(IO_KBD + KBDATAP);
+	
+	outb(IO_KBD + KBCMDP, KC_CMD_WOUT);
+	while (inb(IO_KBD + KBSTATP) & KBS_IBF);
+
+	if (on)
+		outb(IO_KBD + KBDATAP, KB_A20);
+	else
+		outb(IO_KBD + KBDATAP, 0xcd);
+	while (inb(IO_KBD + KBSTATP) & KBS_IBF);
+
+	while (inb(IO_KBD + KBSTATP) & KBS_DIB)
+		(void)inb(IO_KBD + KBDATAP);
+
+	return (0);
+}
+
 /*
  * Gate A20 for high memory
  */
@@ -63,37 +93,20 @@ void
 gateA20(on)
 	int on;
 {
+	int data;
 
-	if (getA20type() == A20_0x92) {
-		int data;
+	if (getA20type() == A20_KBD) {
+		if (!gateA20kbd(on))
+			return;
+	}
 
-		/* Try to use 0x92 to turn on A20 */
-		if (on) {
-			data = inb(0x92);
-			outb(0x92, data | 0x2);
-		} else {
-			data = inb(0x92);
-			outb(0x92, data & ~0x2);
-		}
+	/* Try to use 0x92 to turn on A20 */
+	if (on) {
+		data = inb(0x92);
+		outb(0x92, data | 0x2);
 	} else {
-
-		/* XXX - These whiles might need to be changed to bounded for loops */
-		while (inb(IO_KBD + KBSTATP) & KBS_IBF);
-
-		while (inb(IO_KBD + KBSTATP) & KBS_DIB)
-			(void)inb(IO_KBD + KBDATAP);
-
-		outb(IO_KBD + KBCMDP, KC_CMD_WOUT);
-		while (inb(IO_KBD + KBSTATP) & KBS_IBF);
-
-		if (on)
-			outb(IO_KBD + KBDATAP, KB_A20);
-		else
-			outb(IO_KBD + KBDATAP, 0xcd);
-		while (inb(IO_KBD + KBSTATP) & KBS_IBF);
-
-		while (inb(IO_KBD + KBSTATP) & KBS_DIB)
-			(void)inb(IO_KBD + KBDATAP);
+		data = inb(0x92);
+		outb(0x92, data & ~0x2);
 	}
 }
 
