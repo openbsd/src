@@ -1,10 +1,10 @@
-/*	$OpenBSD: sha1.c,v 1.8 1997/07/15 01:54:24 millert Exp $	*/
+/*	$OpenBSD: sha1.c,v 1.9 1997/07/23 21:12:32 kstailey Exp $	*/
 
 /*
  * SHA-1 in C
  * By Steve Reid <steve@edmweb.com>
  * 100% Public Domain
- * 
+ *
  * Test Vectors (from FIPS PUB 180-1)
  * "abc"
  *   A9993E36 4706816A BA3E2571 7850C26C 9CD0D89D
@@ -140,11 +140,11 @@ void SHA1Update(context, data, len)
 	context->count[1] += (len>>29)+1;
     j = (j >> 3) & 63;
     if ((j + len) > 63) {
-        (void)memcpy(&context->buffer[j], data, (i = 64-j));
-        SHA1Transform(context->state, context->buffer);
-        for ( ; i + 63 < len; i += 64)
-            SHA1Transform(context->state, &data[i]);
-        j = 0;
+	(void)memcpy(&context->buffer[j], data, (i = 64-j));
+	SHA1Transform(context->state, context->buffer);
+	for ( ; i + 63 < len; i += 64)
+	    SHA1Transform(context->state, &data[i]);
+	j = 0;
     } else {
 	i = 0;
     }
@@ -163,12 +163,12 @@ void SHA1Final(digest, context)
     u_char finalcount[8];
 
     for (i = 0; i < 8; i++) {
-        finalcount[i] = (u_char)((context->count[(i >= 4 ? 0 : 1)]
-         >> ((3-(i & 3)) * 8) ) & 255);  /* Endian independent */
+	finalcount[i] = (u_char)((context->count[(i >= 4 ? 0 : 1)]
+	 >> ((3-(i & 3)) * 8) ) & 255);	 /* Endian independent */
     }
     SHA1Update(context, (u_char *)"\200", 1);
     while ((context->count[0] & 504) != 448)
-        SHA1Update(context, (u_char *)"\0", 1);
+	SHA1Update(context, (u_char *)"\0", 1);
     SHA1Update(context, finalcount, 8);  /* Should cause a SHA1Transform() */
 
     if (digest) {

@@ -23,7 +23,7 @@ documentation and/or software.
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: md5c.c,v 1.10 1997/07/03 23:30:21 provos Exp $";
+static char rcsid[] = "$OpenBSD: md5c.c,v 1.11 1997/07/23 21:17:56 kstailey Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <string.h>
@@ -103,7 +103,7 @@ Rotation is separate from addition to prevent recomputation.
  (a) += (b); \
   }
 
-#if BYTE_ORDER != LITTLE_ENDIAN        
+#if BYTE_ORDER != LITTLE_ENDIAN
 /* Encodes input (u_int32_t) into output (unsigned char). Assumes len is
   a multiple of 4.
  */
@@ -145,7 +145,7 @@ size_t len;
 /* MD5 initialization. Begins an MD5 operation, writing a new context.
  */
 void MD5Init (context)
-MD5_CTX *context;                                        /* context */
+MD5_CTX *context;					 /* context */
 {
   context->count = 0;
   /* Load magic initialization constants. */
@@ -160,9 +160,9 @@ MD5_CTX *context;                                        /* context */
   context.
  */
 void MD5Update (context, input, inputLen)
-MD5_CTX *context;                                        /* context */
-const unsigned char *input;                                /* input block */
-size_t inputLen;                     /* length of input block */
+MD5_CTX *context;					/* context */
+const unsigned char *input;				/* input block */
+size_t inputLen;		     /* length of input block */
 {
   unsigned int i, index, partLen;
 
@@ -195,8 +195,8 @@ size_t inputLen;                     /* length of input block */
   the message digest and zeroizing the context.
  */
 void MD5Final (digest, context)
-unsigned char digest[16];                         /* message digest */
-MD5_CTX *context;                                       /* context */
+unsigned char digest[16];			  /* message digest */
+MD5_CTX *context;					/* context */
 {
   unsigned char bits[8];
   unsigned int index;

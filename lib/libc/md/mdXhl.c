@@ -8,7 +8,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: mdXhl.c,v 1.7 1997/07/12 20:30:57 millert Exp $";
+static char rcsid[] = "$OpenBSD: mdXhl.c,v 1.8 1997/07/23 21:17:56 kstailey Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdlib.h>
@@ -32,7 +32,7 @@ MDXEnd(ctx, buf)
     static const char hex[]="0123456789abcdef";
 
     if (!p)
-        p = malloc(33);
+	p = malloc(33);
     if (!p)
 	return 0;
     MDXFinal(digest,ctx);

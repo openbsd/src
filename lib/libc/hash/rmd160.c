@@ -3,11 +3,11 @@
  *      FILE:     rmd160.c
  *
  *      CONTENTS: A sample C-implementation of the RIPEMD-160
- *                hash-function.
+ *		  hash-function.
  *      TARGET:   any computer with an ANSI C compiler
  *
  *      AUTHOR:   Antoon Bosselaers, ESAT-COSIC
- *                (Arranged for libc by Todd C. Miller)
+ *		  (Arranged for libc by Todd C. Miller)
  *      DATE:     1 March 1996
  *      VERSION:  1.0
  *

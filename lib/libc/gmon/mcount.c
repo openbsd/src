@@ -32,7 +32,7 @@
  */
 
 #if !defined(lint) && !defined(_KERNEL) && defined(LIBC_SCCS)
-static char rcsid[] = "$OpenBSD: mcount.c,v 1.5 1997/01/30 05:05:00 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: mcount.c,v 1.6 1997/07/23 21:11:27 kstailey Exp $";
 #endif
 
 #include <sys/param.h>
@@ -48,7 +48,7 @@ static char rcsid[] = "$OpenBSD: mcount.c,v 1.5 1997/01/30 05:05:00 deraadt Exp 
  * _mcount updates data structures that represent traversals of the
  * program's call graph edges.  frompc and selfpc are the return
  * address and function address that represents the given call graph edge.
- * 
+ *
  * Note: the original BSD code used the same variable (frompcindex) for
  * both frompcindex and frompc.  Any reasonable, modern compiler will
  * perform this optimization.
@@ -162,7 +162,6 @@ _MCOUNT_DECL(frompc, selfpc)	/* _mcount; may be static, inline, etc */
 			*frompcindex = toindex;
 			goto done;
 		}
-		
 	}
 done:
 #ifdef _KERNEL

@@ -22,7 +22,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: md4c.c,v 1.10 1997/07/03 23:30:20 provos Exp $";
+static char rcsid[] = "$OpenBSD: md4c.c,v 1.11 1997/07/23 21:17:55 kstailey Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <string.h>
@@ -51,7 +51,7 @@ static void MD4Transform __P ((u_int32_t [4], const unsigned char [64]));
 
 #if BYTE_ORDER == LITTLE_ENDIAN
 #define Encode memcpy
-#define Decode memcpy                       
+#define Decode memcpy
 #else /* BIG_ENDIAN */
 static void Encode __P ((void *, const void *, size_t));
 static void Decode __P ((void *, const void *, size_t));
@@ -130,7 +130,7 @@ size_t len;
 /* MD4 initialization. Begins an MD4 operation, writing a new context.
  */
 void MD4Init (context)
-MD4_CTX *context;                                        /* context */
+MD4_CTX *context;					 /* context */
 {
   context->count = 0;
 
@@ -147,9 +147,9 @@ MD4_CTX *context;                                        /* context */
      context.
  */
 void MD4Update (context, input, inputLen)
-MD4_CTX *context;                                        /* context */
-const unsigned char *input;                                /* input block */
-size_t inputLen;                     /* length of input block */
+MD4_CTX *context;				/* context */
+const unsigned char *input;			/* input block */
+size_t inputLen;				/* length of input block */
 {
   unsigned int i, index, partLen;
 
@@ -184,8 +184,8 @@ size_t inputLen;                     /* length of input block */
      the message digest and zeroizing the context.
  */
 void MD4Final (digest, context)
-unsigned char digest[16];                         /* message digest */
-MD4_CTX *context;                                        /* context */
+unsigned char digest[16];			  /* message digest */
+MD4_CTX *context;					 /* context */
 {
   unsigned char bits[8];
   unsigned int index, padLen;
