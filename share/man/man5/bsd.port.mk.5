@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.79 2002/12/30 02:41:33 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.80 2002/12/31 08:33:52 pvalchev Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -285,6 +285,27 @@ will automatically recognize and handle such lines correctly.
 .Pp
 .Ar update-plist
 does not handle multi-packages nor flavor situations yet, so beware.
+.It Ar update-patches
+Create or update patches for a port, using
+.Xr diff 1
+between
+.Pa file
+and
+.Pa file.orig ,
+based on
+.Pa file.orig
+existence.
+In order to generate a patch, the original file needs to be named
+.Pa file.orig
+and
+.Pa file
+edited.
+After the target is invoked, the patches are placed under the
+patches/ directory.
+It moves existing patches from
+.Pa patch-file
+to
+.Pa patch-file.orig
 .El
 .Sh VARIABLES
 .Bl -tag -width MASTER_SITES
