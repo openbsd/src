@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.41 2001/06/26 21:05:56 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.42 2001/06/26 21:26:44 drahn Exp $
 #
 # PPC GENERIC config file
 #
@@ -53,7 +53,7 @@ vgafb0		at pci? dev ? function ?	# PCI VGA graphics
 #bha*		at pci? dev ? function ?	# BusLogic 9xx SCSI
 #ami*		at pci? dev ? function ?
 #pcscp*		at pci? dev ? function ?	# AMD Am53c974 PCscsi-PCI SCSI
-#pciide*	at pci? dev ? function ?
+pciide*		at pci? dev ? function ?
 macobio0	at pci? dev ? function ?
 gm*		at pci? dev ? function ?	# GMAC ethernet
 an*		at pci? dev ? function ?	# Cisco/Aironet
@@ -106,8 +106,6 @@ scsibus*	at siop?
 #scsibus*	at pcscp?
 
 wdc*		at macobio? flags 0x0
-#wd*		at pciide? channel ? drive ?
-#wd*		at wdc? channel ? drive ? flags 0x0000
 wd*		at wdc? drive ? flags 0x0000
 wd*		at pciide? drive ? flags 0x0000
 atapiscsi*	at wdc? channel ? flags 0x0000

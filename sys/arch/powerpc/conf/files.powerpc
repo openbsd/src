@@ -86,6 +86,7 @@ include "../../../scsi/files.scsi"
 include "../../../dev/i2o/files.i2o"
 
 include "dev/pci/files.pci"
+file	arch/powerpc/pci/pciide_machdep.c	pciide
 
 device	mpcpcibr {} : pcibus
 attach	mpcpcibr at mainbus
