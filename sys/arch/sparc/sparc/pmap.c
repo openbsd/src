@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.122 2002/03/31 21:38:10 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.123 2002/04/18 05:44:35 deraadt Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -163,8 +163,6 @@ int	pmapdebug = 0;
  * Internal helpers.
  */
 static __inline struct pvlist *pvhead(int);
-static __inline struct pvlist *pvalloc(void);
-static __inline void pvfree(struct pvlist *);
 
 #if defined(SUN4M)
 static u_int	VA2PA(caddr_t);
@@ -187,24 +185,6 @@ pvhead(pnum)
 }
 
 struct pool pvpool;
-
-/*
- * Wrappers around some memory allocation.
- * XXX - the plan is to make them non-sleeping.
- */
-
-static __inline struct pvlist *
-pvalloc()
-{
-	return pool_get(&pvpool, PR_WAITOK);
-}
-
-static __inline void
-pvfree(pv)
-	struct pvlist *pv;
-{
-	pool_put(&pvpool, pv);
-}
 
 #if defined(SUN4M)
 /*
@@ -2067,7 +2047,7 @@ pv_unlink4_4c(pv, pm, va)
 			pv->pv_va = npv->pv_va;
 			pv->pv_flags &= ~PV_NC;
 			pv->pv_flags |= npv->pv_flags & PV_NC;
-			pvfree(npv);
+			pool_put(&pvpool, npv);
 		} else {
 			/*
 			 * No mappings left; we still need to maintain
@@ -2091,7 +2071,7 @@ pv_unlink4_4c(pv, pm, va)
 				break;
 		}
 		prev->pv_next = npv->pv_next;
-		pvfree(npv);
+		pool_put(&pvpool, npv);
 	}
 	if (pv->pv_flags & PV_ANC && (pv->pv_flags & PV_NC) == 0) {
 		/*
@@ -2164,7 +2144,9 @@ pv_link4_4c(pv, pm, va, nc)
 			}
 		}
 	}
-	npv = pvalloc();
+	npv = pool_get(&pvpool, PR_NOWAIT);
+	if (npv == NULL)
+		panic("pv_link_4_4c: allocation failed");
 	npv->pv_next = pv->pv_next;
 	npv->pv_pmap = pm;
 	npv->pv_va = va;
@@ -2378,7 +2360,7 @@ pv_unlink4m(pv, pm, va)
 			pv->pv_va = npv->pv_va;
 			pv->pv_flags &= ~PV_C4M;
 			pv->pv_flags |= (npv->pv_flags & PV_C4M);
-			pvfree(npv);
+			pool_put(&pvpool, npv);
 		} else {
 			/*
 			 * No mappings left; we still need to maintain
@@ -2402,7 +2384,7 @@ pv_unlink4m(pv, pm, va)
 				break;
 		}
 		prev->pv_next = npv->pv_next;
-		pvfree(npv);
+		pool_put(&pvpool, npv);
 	}
 	if ((pv->pv_flags & (PV_C4M|PV_ANC)) == (PV_C4M|PV_ANC)) {
 		/*
@@ -2441,7 +2423,6 @@ pv_link4m(pv, pm, va, nc)
 
 	ret = nc ? SRMMU_PG_C : 0;
 
-retry:
 	if (pv->pv_pmap == NULL) {
 		/* no pvlist entries yet */
 		pmap_stats.ps_enter_firstpv++;
@@ -2459,16 +2440,9 @@ retry:
 	 * We do the malloc early so that we catch all changes that happen
 	 * during the (possible) sleep.
 	 */
-	mpv = pvalloc();
-	if (pv->pv_pmap == NULL) {
-		/*
-		 * XXX - remove this printf some day when we know that
-		 * can/can't happen.
-		 */
-		printf("pv_link4m: pv changed during sleep!\n");
-		pvfree(mpv);
-		goto retry;
-	}
+	mpv = pool_get(&pvpool, PR_NOWAIT);
+	if (mpv == NULL)
+		panic("pv_link4m: allocation failed");
 
 	/*
 	 * Before entering the new mapping, see if
@@ -4351,7 +4325,7 @@ pmap_page_protect4_4c(pg, prot)
 	nextpv:
 		npv = pv->pv_next;
 		if (pv != pv0)
-			pvfree(pv);
+			pool_put(&pvpool, pv);
 		if ((pv = npv) == NULL)
 			break;
 	}
@@ -4684,7 +4658,7 @@ pmap_page_protect4m(pg, prot)
 
 		npv = pv->pv_next;
 		if (pv != pv0)
-			pvfree(pv);
+			pool_put(&pvpool, pv);
 		pv = npv;
 	}
 	pv0->pv_pmap = NULL;
@@ -5197,7 +5171,7 @@ pmap_enu4_4c(pm, va, prot, flags, pv, pteproto)
 
 	splx(s);
 
-	return (KERN_SUCCESS);
+	return (0);
 }
 
 void
@@ -5513,7 +5487,7 @@ pmap_enu4m(pm, va, prot, flags, pv, pteproto)
 
 	splx(s);
 
-	return (KERN_SUCCESS);
+	return (0);
 }
 
 void
