@@ -13,8 +13,7 @@ at boot time.  If possible, you should use the parameters it prints.
 (You might not be able to if your disk is so old that the
 kernel can't figure out its geometry.)
 
-You should now be ready to install OpenBSD.  It might be handy for you
-to have a pencil, some paper, and a calculator handy.
+You should now be ready to install OpenBSD.
 
 The following is a walk-through of the steps you will take while
 getting OpenBSD installed on your hard disk.  If any question has a

@@ -24,8 +24,7 @@ should use this geometry for the remainder of the install.  This is
 only necessary if you are sharing the disk with other operating systems
 that use the translated geometry.
 
-You should now be ready to install OpenBSD.  It might be handy for you
-to have a pencil, some paper, and a calculator handy.
+You should now be ready to install OpenBSD.
 
 The following is a walk-through of the steps you will take while
 getting OpenBSD installed on your hard disk.  If any question has a

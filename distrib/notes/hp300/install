@@ -10,8 +10,7 @@ tracks per cylinder (also known as the number of heads), and the
 number of cylinders on the disk.  The OpenBSD kernel will provide limited
 information for SCSI disks, but not much.
 
-You should now be ready to install OpenBSD.  It might be handy for you
-to have a pencil, some paper, and a calculator handy.
+You should now be ready to install OpenBSD.
 
 The following is a walk-through of the steps you will take while
 getting OpenBSD installed on your hard disk.  If any question has a
