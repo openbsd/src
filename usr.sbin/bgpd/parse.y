@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.35 2004/01/17 19:15:07 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.36 2004/01/17 19:35:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -38,6 +38,7 @@
 
 static struct bgpd_config	*conf;
 static struct mrt_head		*mrtconf;
+static struct network_head	*netconf;
 static struct peer		*peer_l;
 static struct peer		*curpeer;
 static struct peer		*curgroup;
@@ -87,7 +88,7 @@ typedef struct {
 
 %token	SET
 %token	AS ROUTERID HOLDTIME YMIN LISTEN ON NO FIBUPDATE
-%token	GROUP NEIGHBOR
+%token	GROUP NEIGHBOR NETWORK
 %token	REMOTEAS DESCR LOCALADDR MULTIHOP PASSIVE MAXPREFIX ANNOUNCE
 %token	ERROR
 %token	DUMP MSG IN TABLE
@@ -197,8 +198,21 @@ conf_main	: AS number		{
 			if (add_mrtconfig(MRT_TABLE_DUMP, $3, $4) == -1)
 				YYERROR;
 		}
+		| NETWORK address '/' number		{
+			struct network	*n;
 
-;
+			if ((n = calloc(1, sizeof(struct network))) == NULL)
+				fatal("new_network");
+			n->net.prefix.af = AF_INET;
+			n->net.prefix.v4 = $2;
+			if ($4 > 32) {
+				yyerror("invalid netmask");
+				YYERROR;
+			}
+			n->net.prefixlen = $4;
+			TAILQ_INSERT_TAIL(netconf, n, network_l);
+		}
+		;
 
 address		: STRING		{
 			int	n;
@@ -385,6 +399,7 @@ lookup(char *s)
 		{ "msg",		MSG},
 		{ "multihop",		MULTIHOP},
 		{ "neighbor",		NEIGHBOR},
+		{ "network",		NETWORK},
 		{ "on",			ON},
 		{ "passive",		PASSIVE},
 		{ "remote-as",		REMOTEAS},
@@ -599,7 +614,7 @@ top:
 
 int
 parse_config(char *filename, struct bgpd_config *xconf,
-    struct mrt_head *xmconf, struct peer **xpeers)
+    struct mrt_head *xmconf, struct peer **xpeers, struct network_head* nc)
 {
 	struct sym	*sym, *next;
 
@@ -608,6 +623,8 @@ parse_config(char *filename, struct bgpd_config *xconf,
 	if ((mrtconf = calloc(1, sizeof(struct mrt_head))) == NULL)
 		fatal(NULL);
 	LIST_INIT(mrtconf);
+	netconf = nc;
+	TAILQ_INIT(netconf);
 
 	peer_l = NULL;
 	curpeer = NULL;

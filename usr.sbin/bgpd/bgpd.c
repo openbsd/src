@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.67 2004/01/17 18:05:46 henning Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.68 2004/01/17 19:35:35 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -93,7 +93,9 @@ main(int argc, char *argv[])
 {
 	struct bgpd_config	 conf;
 	struct peer		*peer_l, *p, *next;
-	struct mrt_head		 mrtconf;
+	struct mrt_head		 mrt_l;
+	struct network_head	 net_l;
+	struct network		*net;
 	struct mrt		*(mrt[POLL_MAX]);
 	struct pollfd		 pfd[POLL_MAX];
 	pid_t			 io_pid = 0, rde_pid = 0, pid;
@@ -110,7 +112,8 @@ main(int argc, char *argv[])
 	log_init(1);		/* log to stderr until daemonized */
 
 	bzero(&conf, sizeof(conf));
-	LIST_INIT(&mrtconf);
+	LIST_INIT(&mrt_l);
+	TAILQ_INIT(&net_l);
 	peer_l = NULL;
 
 	while ((ch = getopt(argc, argv, "dD:f:nv")) != -1) {
@@ -141,7 +144,7 @@ main(int argc, char *argv[])
 		}
 	}
 
-	if (parse_config(conffile, &conf, &mrtconf, &peer_l))
+	if (parse_config(conffile, &conf, &mrt_l, &peer_l, &net_l))
 		exit(1);
 
 	if (conf.opts & BGPD_OPT_NOACTION) {
@@ -179,7 +182,7 @@ main(int argc, char *argv[])
 		fatalx("control socket setup failed");
 
 	/* fork children */
-	rde_pid = rde_main(&conf, peer_l, pipe_m2r, pipe_s2r);
+	rde_pid = rde_main(&conf, peer_l, &net_l, pipe_m2r, pipe_s2r);
 	io_pid = session_main(&conf, peer_l, pipe_m2s, pipe_s2r);
 
 	setproctitle("parent");
@@ -207,6 +210,11 @@ main(int argc, char *argv[])
 		next = p->next;
 		free(p);
 	}
+	for (net = TAILQ_FIRST(&net_l); net != TAILQ_END(&net_l);
+	    net = TAILQ_FIRST(&net_l)) {
+		TAILQ_REMOVE(&net_l, net, network_l);
+		free(net);
+	}
 
 	while (quit == 0) {
 		pfd[PFD_PIPE_SESSION].fd = ibuf_se.sock;
@@ -220,7 +228,7 @@ main(int argc, char *argv[])
 		pfd[PFD_SOCK_ROUTE].fd = rfd;
 		pfd[PFD_SOCK_ROUTE].events = POLLIN;
 		i = PFD_MRT_START;
-		i = mrt_select(&mrtconf, pfd, mrt, i, POLL_MAX, &timeout);
+		i = mrt_select(&mrt_l, pfd, mrt, i, POLL_MAX, &timeout);
 
 		if ((nfds = poll(pfd, i, INFTIM)) == -1)
 			if (errno != EINTR) {
@@ -243,14 +251,14 @@ main(int argc, char *argv[])
 		if (nfds > 0 && pfd[PFD_PIPE_SESSION].revents & POLLIN) {
 			nfds--;
 			if (dispatch_imsg(&ibuf_se, PFD_PIPE_SESSION,
-			    &mrtconf) == -1)
+			    &mrt_l) == -1)
 				quit = 1;
 		}
 
 		if (nfds > 0 && pfd[PFD_PIPE_ROUTE].revents & POLLIN) {
 			nfds--;
 			if (dispatch_imsg(&ibuf_rde, PFD_PIPE_ROUTE,
-			    &mrtconf) == -1)
+			    &mrt_l) == -1)
 				quit = 1;
 		}
 
@@ -270,7 +278,7 @@ main(int argc, char *argv[])
 
 		if (reconfig) {
 			logit(LOG_CRIT, "rereading config");
-			reconfigure(conffile, &conf, &mrtconf, peer_l);
+			reconfigure(conffile, &conf, &mrt_l, peer_l);
 			reconfig = 0;
 		}
 
@@ -283,7 +291,7 @@ main(int argc, char *argv[])
 		}
 
 		if (mrtdump == 1) {
-			mrt_handler(&mrtconf);
+			mrt_handler(&mrt_l);
 			mrtdump = 0;
 		}
 	}
@@ -328,12 +336,14 @@ check_child(pid_t pid, const char *pname)
 }
 
 int
-reconfigure(char *conffile, struct bgpd_config *conf, struct mrt_head *mrtc,
+reconfigure(char *conffile, struct bgpd_config *conf, struct mrt_head *mrt_l,
     struct peer *peer_l)
 {
+	struct network_head	 net_l;
+	struct network		*n;
 	struct peer		*p, *next;
 
-	if (parse_config(conffile, conf, mrtc, &peer_l)) {
+	if (parse_config(conffile, conf, mrt_l, &peer_l, &net_l)) {
 		logit(LOG_CRIT, "config file %s has errors, not reloading",
 		    conffile);
 		return (-1);
@@ -355,6 +365,14 @@ reconfigure(char *conffile, struct bgpd_config *conf, struct mrt_head *mrtc,
 			return (-1);
 		free(p);
 	}
+	for (n = TAILQ_FIRST(&net_l); n != TAILQ_END(&net_l);
+	    n = TAILQ_FIRST(&net_l)) {
+		if (imsg_compose(&ibuf_rde, IMSG_RECONF_NETWORK, 0,
+		    &n->net, sizeof(struct network_config)) == -1)
+			return (-1);
+		TAILQ_REMOVE(&net_l, n, network_l);
+		free(n);
+	}
 	if (imsg_compose(&ibuf_se, IMSG_RECONF_DONE, 0, NULL, 0) == -1 ||
 	    imsg_compose(&ibuf_rde, IMSG_RECONF_DONE, 0, NULL, 0) == -1)
 		return (-1);
@@ -363,7 +381,7 @@ reconfigure(char *conffile, struct bgpd_config *conf, struct mrt_head *mrtc,
 }
 
 int
-dispatch_imsg(struct imsgbuf *ibuf, int idx, struct mrt_head *mrtc)
+dispatch_imsg(struct imsgbuf *ibuf, int idx, struct mrt_head *mrt_l)
 {
 	struct imsg		 imsg;
 	int			 n;
@@ -386,7 +404,7 @@ dispatch_imsg(struct imsgbuf *ibuf, int idx, struct mrt_head *mrtc)
 		switch (imsg.hdr.type) {
 		case IMSG_MRT_MSG:
 		case IMSG_MRT_END:
-			if (mrt_queue(mrtc, &imsg) == -1)
+			if (mrt_queue(mrt_l, &imsg) == -1)
 				logit(LOG_CRIT, "mrt_queue failed.");
 			break;
 		case IMSG_KROUTE_CHANGE:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_decide.c,v 1.21 2004/01/13 17:11:29 henning Exp $ */
+/*	$OpenBSD: rde_decide.c,v 1.22 2004/01/17 19:35:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -537,12 +537,10 @@ up_generate_attr(struct rde_peer *peer, struct update_attr *upa,
 	if (peer->conf.ebgp == 0) {
 		/*
 		 * if directly connected use peer->local_addr
-		 * This is only the case for announcements, which we
-		 * currenlty don't handle. It is currently unclear how
-		 * to recognize those routes. The connected flag is not
-		 * enough.
 		 */
-		if (a->nexthop == peer->remote_addr.v4.s_addr)
+		if (nh->flags & NEXTHOP_ANNOUNCE)
+			nexthop = peer->local_addr.v4.s_addr;
+		else if (a->nexthop == peer->remote_addr.v4.s_addr)
 			/*
 			 * per rfc: if remote peer address is equal to
 			 * the nexthop set the nexthop to our local address.
@@ -553,7 +551,7 @@ up_generate_attr(struct rde_peer *peer, struct update_attr *upa,
 			nexthop = nh->exit_nexthop.v4.s_addr;
 	} else if (peer->conf.distance == 1) {
 		/* ebgp directly connected */
-		if (nh->connected) {
+		if (nh->flags & NEXTHOP_CONNECTED) {
 			mask = 0xffffffff << (32 - nh->nexthop_netlen);
 			mask = htonl(mask);
 			if ((peer->remote_addr.v4.s_addr & mask) ==
@@ -567,8 +565,9 @@ up_generate_attr(struct rde_peer *peer, struct update_attr *upa,
 	} else
 		/* ebgp multihop */
 		/*
-		 * XXX for ebgp multihop nh->connected should always be false
-		 * so it should be possible to unify the two ebgp cases.
+		 * XXX for ebgp multihop nh->flags should never have
+		 * NEXTHOP_CONNECTED set so it should be possible to unify the
+		 * two ebgp cases.
 		 */
 		nexthop = peer->local_addr.v4.s_addr;
 

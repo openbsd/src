@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.70 2004/01/17 18:27:19 henning Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.71 2004/01/17 19:35:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -140,6 +140,18 @@ struct peer_config {
 	enum reconf_action	 reconf_action;
 };
 
+struct network_config {
+	struct bgpd_addr	prefix;
+	u_int8_t		prefixlen;
+};
+
+TAILQ_HEAD(network_head, network);
+
+struct network {
+	struct network_config	net;
+	TAILQ_ENTRY(network)	network_l;
+};
+
 /* ipc messages */
 
 #define	IMSG_HEADER_SIZE	sizeof(struct imsg_hdr)
@@ -156,6 +168,7 @@ enum imsg_type {
 	IMSG_NONE,
 	IMSG_RECONF_CONF,
 	IMSG_RECONF_PEER,
+	IMSG_RECONF_NETWORK,
 	IMSG_RECONF_DONE,
 	IMSG_UPDATE,
 	IMSG_UPDATE_ERR,

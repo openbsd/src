@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.24 2004/01/13 16:08:04 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.25 2004/01/17 19:35:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -762,6 +762,8 @@ prefix_add(struct rde_aspath *asp, struct bgpd_addr *prefix, int prefixlen)
 
 	if (needlink == 1)
 		prefix_link(p, pte, asp);
+	else
+		p->lastchange = time(NULL);
 
 	return pte;
 }
@@ -843,7 +845,7 @@ prefix_remove(struct rde_peer *peer, struct bgpd_addr *prefix, int prefixlen)
 		return;
 
 	p = prefix_bypeer(pte, peer);
-	if (p == NULL)	/* Got a dummy withdrawn request. */
+	if (p == NULL)		/* Got a dummy withdrawn request. */
 		return;
 
 	asp = p->aspath;
@@ -903,6 +905,38 @@ prefix_destroy(struct prefix *p)
 
 	if (pt_empty(pte))
 		pt_remove(pte);
+}
+
+/*
+ * helper function to clean up the connected networks after a reload
+ */ 
+void
+prefix_network_clean(struct rde_peer *peer, time_t reloadtime)
+{
+	struct rde_aspath	*asp, *xasp;
+	struct prefix		*p, *xp;
+	struct pt_entry		*pte;
+
+	for (asp = LIST_FIRST(&peer->path_h);
+	    asp != LIST_END(&peer->path_h);
+	    asp = xasp) {
+		xasp = LIST_NEXT(asp, peer_l);
+		for (p = LIST_FIRST(&asp->prefix_h);
+		    p != LIST_END(&asp->prefix_h);
+		    p = xp) {
+			xp = LIST_NEXT(p, path_l);
+			if (reloadtime > p->lastchange) {
+				pte = p->prefix;
+				prefix_unlink(p);
+				prefix_free(p);
+
+				if (pt_empty(pte))
+					pt_remove(pte);
+				if (path_empty(asp))
+					path_destroy(asp);
+			}
+		}
+	}
 }
 
 /*
@@ -1030,7 +1064,8 @@ struct nexthop_table {
 void
 nexthop_init(u_long hashsize)
 {
-	u_long hs, i;
+	struct nexthop	*nh;
+	u_long		 hs, i;
 
 	for (hs = 1; hs < hashsize; hs <<= 1)
 		;
@@ -1042,6 +1077,23 @@ nexthop_init(u_long hashsize)
 		LIST_INIT(&nexthoptable.nexthop_hashtbl[i]);
 
 	nexthoptable.nexthop_hashmask = hs - 1;
+
+	/* add dummy entry for connected networks */
+	nh = nexthop_alloc();
+	nh->state = NEXTHOP_REACH;
+	nh->exit_nexthop.af = AF_INET;
+	nh->exit_nexthop.v4.s_addr = INADDR_ANY;
+
+	LIST_INSERT_HEAD(NEXTHOP_HASH(nh->exit_nexthop.v4.s_addr), nh,
+	    nexthop_l);
+
+	memcpy(&nh->true_nexthop, &nh->exit_nexthop,
+	    sizeof(nh->true_nexthop));
+	nh->nexthop_netlen = 0;
+	nh->nexthop_net.af = AF_INET;
+	nh->nexthop_net.v4.s_addr = INADDR_ANY;
+
+	nh->flags = NEXTHOP_ANNOUNCE;
 }
 
 void
@@ -1079,6 +1131,10 @@ nexthop_remove(struct rde_aspath *asp)
 
 	/* see if list is empty */
 	nh = asp->nexthop;
+
+	/* never remove the dummy announce entry */
+	if (nh->flags & NEXTHOP_ANNOUNCE)
+		return;
 
 	if (LIST_EMPTY(&nh->path_h)) {
 		LIST_REMOVE(nh, nexthop_l);
@@ -1132,7 +1188,8 @@ nexthop_update(struct kroute_nexthop *msg)
 	nh->nexthop_net.af = AF_INET;
 	nh->nexthop_net.v4.s_addr = msg->kr.prefix;
 
-	nh->connected = msg->connected;
+	if (msg->connected)
+		nh->flags |= NEXTHOP_CONNECTED;
 
 	LIST_FOREACH(asp, &nh->path_h, nexthop_l) {
 		path_updateall(asp, nh->state);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.63 2004/01/13 13:45:49 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.64 2004/01/17 19:35:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -57,9 +57,14 @@ struct rde_peer	*peer_get(u_int32_t);
 void		 peer_up(u_int32_t, struct session_up *);
 void		 peer_down(u_int32_t);
 
+void		 network_init(struct network_head *);
+void		 network_add(struct network_config *);
+
 volatile sig_atomic_t	 rde_quit = 0;
 struct bgpd_config	*conf, *nconf;
+time_t			 reloadtime;
 struct rde_peer_head	 peerlist;
+struct rde_peer		 peerself;
 struct imsgbuf		 ibuf_se;
 struct imsgbuf		 ibuf_main;
 
@@ -81,8 +86,8 @@ u_long	pathhashsize = 1024;
 u_long	nexthophashsize = 64;
 
 int
-rde_main(struct bgpd_config *config, struct peer *peer_l, int pipe_m2r[2],
-    int pipe_s2r[2])
+rde_main(struct bgpd_config *config, struct peer *peer_l,
+    struct network_head *net_l, int pipe_m2r[2], int pipe_s2r[2])
 {
 	pid_t		 pid;
 	struct passwd	*pw;
@@ -124,12 +129,15 @@ rde_main(struct bgpd_config *config, struct peer *peer_l, int pipe_m2r[2],
 	close(pipe_m2r[0]);
 
 	/* initialize the RIB structures */
-	peer_init(peer_l, peerhashsize);
-	path_init(pathhashsize);
-	nexthop_init(nexthophashsize);
-	pt_init();
 	imsg_init(&ibuf_se, pipe_s2r[1]);
 	imsg_init(&ibuf_main, pipe_m2r[1]);
+
+	pt_init();
+	path_init(pathhashsize);
+	nexthop_init(nexthophashsize);
+	peer_init(peer_l, peerhashsize);
+
+	network_init(net_l);
 
 	logit(LOG_INFO, "route decision engine ready");
 
@@ -235,6 +243,7 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 
 		switch (imsg.hdr.type) {
 		case IMSG_RECONF_CONF:
+			reloadtime = time(NULL);
 			if ((nconf = malloc(sizeof(struct bgpd_config))) ==
 			    NULL)
 				fatal(NULL);
@@ -248,6 +257,9 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 				memcpy(&p->conf, pconf,
 				    sizeof(struct peer_config));
 			p->conf.reconf_action = RECONF_KEEP;
+			break;
+		case IMSG_RECONF_NETWORK:
+			network_add(imsg.data);
 			break;
 		case IMSG_RECONF_DONE:
 			if (nconf == NULL)
@@ -270,6 +282,7 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 			memcpy(conf, nconf, sizeof(struct bgpd_config));
 			free(nconf);
 			nconf = NULL;
+			prefix_network_clean(&peerself, reloadtime);
 			logit(LOG_INFO, "RDE reconfigured");
 			break;
 		case IMSG_NEXTHOP_UPDATE:
@@ -588,13 +601,16 @@ rde_send_kroute(struct prefix *new, struct prefix *old)
 	enum imsg_type	 type;
 
 	if ((old == NULL || old->aspath->nexthop == NULL ||
-	    old->aspath->nexthop->state != NEXTHOP_REACH) &&
+	    old->aspath->nexthop->state != NEXTHOP_REACH ||
+	    old->aspath->nexthop->flags & NEXTHOP_ANNOUNCE) &&
 	    (new == NULL || new->aspath->nexthop == NULL ||
-	    new->aspath->nexthop->state != NEXTHOP_REACH))
+	    new->aspath->nexthop->state != NEXTHOP_REACH ||
+	    new->aspath->nexthop->flags & NEXTHOP_ANNOUNCE))
 		return;
 
 	if (new == NULL || new->aspath->nexthop == NULL ||
-	    new->aspath->nexthop->state != NEXTHOP_REACH) {
+	    new->aspath->nexthop->state != NEXTHOP_REACH ||
+	    new->aspath->nexthop->flags & NEXTHOP_ANNOUNCE) {
 		type = IMSG_KROUTE_DELETE;
 		p = old;
 		kr.nexthop = 0;
@@ -853,3 +869,48 @@ peer_down(u_int32_t id)
 	if (peer->conf.reconf_action == RECONF_DELETE)
 		peer_remove(peer);
 }
+
+/*
+ * network announcement stuff
+ */
+void
+network_init(struct network_head *net_l)
+{
+	struct network	*n;
+
+	reloadtime = time(NULL);
+	bzero(&peerself, sizeof(peerself));
+	peerself.state = PEER_UP;
+	peerself.remote_bgpid = conf->bgpid;
+	peerself.conf.max_prefix = ULONG_MAX;
+	peerself.conf.remote_as = conf->as;
+	snprintf(peerself.conf.descr, sizeof(peerself.conf.descr),
+	    "LOCAL AS %hd", conf->as);
+
+	for (n = TAILQ_FIRST(net_l); n != TAILQ_END(net_l);
+	    n = TAILQ_FIRST(net_l)) {
+		TAILQ_REMOVE(net_l, n, network_l);
+		network_add(&n->net);
+		free(n);
+	}
+}
+
+void
+network_add(struct network_config *nc)
+{
+	struct attr_flags	 attrs;
+
+	bzero(&attrs, sizeof(attrs));
+
+	attrs.aspath = aspath_create(NULL, 0);
+	attrs.nexthop = INADDR_ANY;
+	/* med = 0 */
+	/* lpref = 0 */
+	attrs.origin = ORIGIN_IGP;
+	TAILQ_INIT(&attrs.others);
+
+	logit(LOG_DEBUG, "adding network %s/%d",
+	    inet_ntoa(nc->prefix.v4), nc->prefixlen);
+	path_update(&peerself, &attrs, &nc->prefix, nc->prefixlen);
+}
+

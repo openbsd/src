@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.20 2004/01/13 16:08:04 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.21 2004/01/17 19:35:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -152,6 +152,10 @@ struct nexthop {
 	LIST_ENTRY(nexthop)	nexthop_l;
 	enum nexthop_state	state;
 #if 0
+	/*
+	 * currently we use the boolean nexthop state, this could be exchanged
+	 * with a variable coast with a max for unreachable.
+	 */
 	u_int32_t		costs;
 #endif
 	struct aspath_head	path_h;
@@ -159,7 +163,9 @@ struct nexthop {
 	struct bgpd_addr	true_nexthop;
 	struct bgpd_addr	nexthop_net;
 	u_int8_t		nexthop_netlen;
-	u_int8_t		connected;
+	u_int8_t		flags;
+#define NEXTHOP_CONNECTED	0x1
+#define NEXTHOP_ANNOUNCE	0x2
 };
 
 LIST_HEAD(prefix_head, prefix);
@@ -171,13 +177,6 @@ struct rde_aspath {
 	struct nexthop			*nexthop;
 	u_int16_t			 prefix_cnt; /* # of prefixes */
 	u_int16_t			 active_cnt; /* # of active prefixes */
-	/*
-	 * currently we use the boolean nexthop state, this could be exchanged
-	 * with a variable coast with a max for unreachable.
-	 */
-#if 0
-	u_int32_t			 nexthop_costs;
-#endif
 	struct attr_flags		 flags;
 };
 
@@ -253,6 +252,7 @@ void		 prefix_remove(struct rde_peer *, struct bgpd_addr *, int);
 struct prefix	*prefix_bypeer(struct pt_entry *, struct rde_peer *);
 void		 prefix_updateall(struct rde_aspath *, enum nexthop_state);
 void		 prefix_destroy(struct prefix *);
+void		 prefix_network_clean(struct rde_peer *, time_t);
 
 void		 nexthop_init(u_long);
 void		 nexthop_add(struct rde_aspath *);
