@@ -110,6 +110,7 @@ main()
 	printf("#define\tT_TRAP15 %d\n", T_TRAP15);
 	printf("#define\tPSL_S %d\n", PSL_S);
 	printf("#define\tPSL_IPL7 %d\n", PSL_IPL7);
+	printf("#define\tPSL_IPL %d\n", PSL_IPL);
 	printf("#define\tPSL_LOWIPL %d\n", PSL_LOWIPL);
 	printf("#define\tPSL_HIGHIPL %d\n", PSL_HIGHIPL);
 	printf("#define\tPSL_USER %d\n", PSL_USER);

@@ -142,7 +142,88 @@ char *cpu_type = "m68k";
 /* the following is used externally (sysctl_hw) */
 char machine[] = "amiga";
  
- /*
+struct isr *isr_ports;
+#if defined(IPL_REMAP_1) || defined(IPL_REMAP_2)
+struct isr *isr_exter[7];
+#else
+struct isr *isr_exter;
+#endif
+
+#ifdef IPL_REMAP_1
+int isr_exter_lowipl = 7;
+int isr_exter_highipl = 0;
+int isr_exter_ipl = 0;
+
+/*
+ * Poll all registered ISRs starting at IPL start_ipl going down to
+ * isr_exter_lowipl.  If we reach the IPL of ending_psw along the way
+ * just return stating in isr_exter_ipl that we need to run the remaining
+ * layers later when the IPL gets lowered (i.e. a spl? call).  If some
+ * ISR handles the interrupt, or all layers have been processed, enable
+ * EXTER interrupts again and return.
+ */
+void
+walk_ipls (start_ipl, ending_psw)
+	int start_ipl;
+	int ending_psw;
+{
+	int i;
+	int handled = 0;
+
+	for (i = start_ipl; !handled && i >= isr_exter_lowipl; i--) {
+		register int psw = i << 8 | PSL_S;
+		struct isr *isr;
+		      
+		if (psw <= ending_psw) {
+			isr_exter_ipl = i;
+			return;
+		}
+		__asm __volatile("movew %0,sr" : : "d" (psw) : "cc");
+		for (isr = isr_exter[i]; !handled && isr; isr = isr->isr_forw)
+			handled = (*isr->isr_intr)(isr->isr_arg);
+	}
+	isr_exter_ipl = 0;
+	__asm __volatile("movew %0,sr" : : "di" (PSL_S|PSL_IPL6) : "cc");
+	custom.intreq = INTF_EXTER;
+	custom.intena = INTF_SETCLR | INTF_EXTER;
+}
+#endif
+
+#ifdef IPL_REMAP_2
+/*
+ * Service all waiting ISRs starting from current IPL to npsl.
+ */
+void
+walk_ipls (npsl)
+	int npsl;
+{
+        struct isr *isr_head;
+	register struct isr *isr;
+	int opsl;
+	register int psl;
+
+	psl = opsl = spl7();
+	isr_head = &isr_exter[(psl & PSL_IPL) >> 8];
+redo_ipl:
+	while (psl > to_psl) {
+		for (isr = isr_head; isr; isr = isr->isr_forw) {
+			if (isr->isr_status == ISR_WAIT) {
+				splx(psl);
+				isr->isr_status = ISR_BUSY;
+				(*isr->isr_intr)(isr->isr_arg);
+				isr->isr_status = ISR_IDLE;
+				spl7();
+				goto redo_ipl;
+			}
+		}
+		psl -= PSL_IPL1;
+		isr_head--;
+	}
+	return opsl;
+}
+#endif
+
+/*
  * Console initialization: called early on from main,
  * before vm init or startup.  Do enough configuration
  * to choose and initialize a console.
@@ -1143,17 +1224,17 @@ netintr()
  * function calls executed at very low interrupt priority.
  * Example for use is keyboard repeat, where the repeat 
  * handler running at splclock() triggers such a (hardware
- * aided) software interrupt.
- * Note: the installed functions are currently called in a
- * LIFO fashion, might want to change this to FIFO
- * later.
+ * aided) software interrupt.  These functions are called in
+ * a FIFO manner as expected.
  */
+
 struct si_callback {
 	struct si_callback *next;
 	void (*function) __P((void *rock1, void *rock2));
 	void *rock1, *rock2;
 };
 static struct si_callback *si_callbacks;
+static struct si_callback *si_callbacks_end;
 static struct si_callback *si_free;
 #ifdef DIAGNOSTIC
 static int ncb;		/* number of callback blocks allocated */
@@ -1212,8 +1293,12 @@ add_sicallback (function, rock1, rock2)
 	si->rock2 = rock2;
 
 	s = splhigh();
-	si->next = si_callbacks;
-	si_callbacks = si;
+	si->next = NULL;
+	if (si_callbacks)
+		si_callbacks_end->next = si;
+	else
+		si_callbacks = si;
+	si_callbacks_end = si;
 	splx(s);
 
 	/*
@@ -1245,6 +1330,8 @@ rem_sicallback(function)
 				psi->next = nsi;
 			else
 				si_callbacks = nsi;
+			if (si == si_callbacks_end)
+				si_callbacks_end = psi;
 		}
 		si = nsi;
 	}
@@ -1262,6 +1349,7 @@ call_sicallbacks()
 
 	do {
 		s = splhigh ();
+		/* Yes, that's an *assignment* below!  */
 		if (si = si_callbacks)
 			si_callbacks = si->next;
 		splx(s);
@@ -1289,23 +1377,30 @@ call_sicallbacks()
 #endif
 }
 
-struct isr *isr_ports;
-struct isr *isr_exter;
-
 void
 add_isr(isr)
 	struct isr *isr;
 {
 	struct isr **p, *q;
 
-	p = isr->isr_ipl == 2 ? &isr_ports : &isr_exter;
+#if defined(IPL_REMAP_1) || defined(IPL_REMAP_2)
+	p = isr->isr_ipl == 2 ? &isr_ports : &isr_exter[isr->isr_mapped_ipl];
+	if (isr->isr_ipl == 6) {
+		if (isr->isr_mapped_ipl > isr_exter_highipl)
+			isr_exter_highipl = isr->isr_mapped_ipl;
+		if (isr->isr_mapped_ipl < isr_exter_lowipl)
+			isr_exter_lowipl = isr->isr_mapped_ipl;
+	}
+#else
+  	p = isr->isr_ipl == 2 ? &isr_ports : &isr_exter;
+#endif
 	while ((q = *p) != NULL)
 		p = &q->isr_forw;
 	isr->isr_forw = NULL;
 	*p = isr;
 	/* enable interrupt */
-	custom.intena = isr->isr_ipl == 2 ? INTF_SETCLR | INTF_PORTS :
-	    INTF_SETCLR | INTF_EXTER;
+	custom.intena = INTF_SETCLR |
+	    (isr->isr_ipl == 2 ? INTF_PORTS : INTF_EXTER);
 }
 
 void
@@ -1314,7 +1409,11 @@ remove_isr(isr)
 {
 	struct isr **p, *q;
 
+#if defined(IPL_REMAP_1) || defined(IPL_REMAP_2)
+	p = isr->isr_ipl == 6 ? &isr_exter[isr->isr_mapped_ipl] : &isr_ports;
+#else
 	p = isr->isr_ipl == 6 ? &isr_exter : &isr_ports;
+#endif
 	while ((q = *p) != NULL && q != isr)
 		p = &q->isr_forw;
 	if (q)
@@ -1322,9 +1421,28 @@ remove_isr(isr)
 	else
 		panic("remove_isr: handler not registered");
 	/* disable interrupt if no more handlers */
+#if defined(IPL_REMAP_1) || defined(IPL_REMAP_2)
+	p = isr->isr_ipl == 6 ? &isr_exter[isr->isr_mapped_ipl] : &isr_ports;
+	if (*p == NULL) {
+		if (isr->isr_ipl == 6) {
+			if (isr->isr_mapped_ipl == isr_exter_lowipl)
+				while (isr_exter_lowipl++ < 6 &&
+				    !isr_exter[isr_exter_lowipl])
+					;
+			if (isr->isr_mapped_ipl == isr_exter_highipl)
+				while (isr_exter_highipl-- > 0 &&
+				    !isr_exter[isr_exter_highipl])
+					;
+			if (isr_exter_lowipl == 7)
+				custom.intena = INTF_EXTER;
+		} else if (isr->isr_ipl == 2)
+			custom.intena = INTF_PORTS;
+	}
+#else
 	p = isr->isr_ipl == 6 ? &isr_exter : &isr_ports;
 	if (*p == NULL)
 		custom.intena = isr->isr_ipl == 6 ? INTF_EXTER : INTF_PORTS;
+#endif
 }
 
 intrhand(sr)
@@ -1357,7 +1475,7 @@ intrhand(sr)
 			/*
 			 * first clear the softint-bit
 			 * then process all classes of softints.
-			 * this order is dicated by the nature of 
+			 * this order is dictated by the nature of 
 			 * software interrupts.  The other order
 			 * allows software interrupts to be missed
 			 */
@@ -1394,11 +1512,11 @@ intrhand(sr)
 		break;
     case 3: 
       /* VBL */
-		if (ireq & INTF_BLIT)  
+		if (ireq & INTF_BLIT)
 			blitter_handler();
-		if (ireq & INTF_COPER)  
+		if (ireq & INTF_COPER)
 			copper_handler();
-		if (ireq & INTF_VERTB) 
+		if (ireq & INTF_VERTB)
 			vbl_handler();
 		break;
 #if 0
@@ -1487,7 +1605,7 @@ regdump(fp, sbytes)
 
 	if (doingdump)
 		return;
-	s = splhigh();
+	s = spl7();
 	doingdump = 1;
 	printf("pid = %d, pc = %s, ", curproc->p_pid, hexstr(fp->f_pc, 8));
 	printf("ps = %s, ", hexstr(fp->f_sr, 4));

@@ -82,11 +82,8 @@ extern u_long noncontig_enable;
  */
 vm_offset_t INTREQRaddr;
 vm_offset_t INTREQWaddr;
-
-/*
- * these are used by the extended spl?() macros.
- */
-volatile unsigned short *amiga_intena_read, *amiga_intena_write;
+vm_offset_t INTENARaddr;
+vm_offset_t INTENAWaddr;
 
 /*
  * the number of pages in our hw mapping and the start address
@@ -596,6 +593,8 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync)
 	CUSTOMbase = CUSTOMADDR;
 	INTREQRaddr = (vm_offset_t)&custom.intreqr;
 	INTREQWaddr = (vm_offset_t)&custom.intreq;
+	INTENARaddr = (vm_offset_t)&custom.intenar;
+	INTENAWaddr = (vm_offset_t)&custom.intena;
 
 	/*
 	 * Get our chip memory allocation system working
@@ -620,13 +619,6 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync)
 	custom.intreq = 0x7fff;			/* clear any current */
 	ciaa.icr = 0x7f;			/* and keyboard */
 	ciab.icr = 0x7f;			/* and again */
-
-	/*
-	 * remember address of read and write intena register for use
-	 * by extended spl?() macros.
-	 */
-	amiga_intena_read  = &custom.intenar;
-	amiga_intena_write = &custom.intena;
 
 	/*
 	 * This is needed for 3000's with superkick ROM's. Bit 7 of

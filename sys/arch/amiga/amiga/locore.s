@@ -43,7 +43,8 @@
  *
  * Original (hp300) Author: unknown, maybe Mike Hibler?
  * Amiga author: Markus Wild
- * Other contributors: Bryan Ford (kernel reload stuff)
+ * Other contributors: Bryan Ford (kernel reload stuff),
+ *		       Niklas Hallqvist (remapping interrupt system)
  */
 
 #include "assym.s"
@@ -53,14 +54,15 @@
 
 #include <amiga/amiga/vectors.s>
 #include <amiga/amiga/custom.h>
-
+#include "ser.h"
+	
 #define CIAAADDR(ar)	movl	_CIAAbase,ar
 #define CIABADDR(ar)	movl	_CIABbase,ar
 #define CUSTOMADDR(ar)	movl	_CUSTOMbase,ar
 #define INTREQRADDR(ar)	movl	_INTREQRaddr,ar
 #define INTREQWADDR(ar)	movl	_INTREQWaddr,ar
-#define INTENAWADDR(ar) movl	_amiga_intena_write,ar
-#define	INTENARADDR(ar)	movl	_amiga_intena_read,ar
+#define INTENAWADDR(ar) movl	_INTENAWaddr,ar
+#define	INTENARADDR(ar)	movl	_INTENARaddr,ar
 
 	.text
 /*
@@ -477,12 +479,12 @@ Lsigr1:
  * Interrupt handlers.
  *
  *	Level 0:	Spurious: ignored.
- *	Level 1:	builtin-RS232 TBE, softint (not used yet)
- *	Level 2:	keyboard (CIA-A) + DMA + SCSI
+ *	Level 1:	builtin-RS232 TBE, softint
+ *	Level 2:	keyboard (CIA-A) + DMA + SCSI + External devices
  *	Level 3:	VBL
- *	Level 4:	not used
+ *	Level 4:	audio (and deferred IPL 6 when LEV6_DEFER)
  *	Level 5:	builtin-RS232 RBF
- *	Level 6:	Clock (CIA-B-Timers)
+ *	Level 6:	Clock (CIA-B-Timers) + External devices
  *	Level 7:	Non-maskable: shouldn't be possible. ignore.
  */
 
@@ -490,7 +492,8 @@ Lsigr1:
  * and serial RBF (int5) specially, to improve performance
  */
 
-	.globl	_intrhand, _hardclock
+	.globl	_intrhand
+	.globl	_hardclock
 
 _spurintr:
 	addql	#1,_intrcnt+0
@@ -499,7 +502,6 @@ _spurintr:
 
 _lev5intr:
 	moveml	d0/d1/a0/a1,sp@-
-#include "ser.h"
 #if NSER > 0
 	jsr	_ser_fastint
 #else
@@ -517,7 +519,7 @@ _lev3intr:
 #ifndef LEV6_DEFER
 _lev4intr:
 #endif
-	moveml	#0xC0C0,sp@-
+	moveml	d0-d1/a0-a1,sp@-
 Lintrcommon:
 	lea	_intrcnt,a0
 	movw	sp@(22),d0		| use vector offset
@@ -527,18 +529,31 @@ Lintrcommon:
 	clrw	sp@-			|    padded to longword
 	jbsr	_intrhand		| handle interrupt
 	addql	#4,sp			| pop SR
-	moveml	sp@+,#0x0303
+	moveml	sp@+,d0-d1/a0-a1
 	addql	#1,_cnt+V_INTR
 	jra	rei
 
+| Both IPL_REMAP_1 and IPL_REMAP_2 are experimental interruptsystems from
+| Niklas Hallqvist <niklas@appli.se>, checkout amiga/amiga/README.ints for
+| details...
+#ifdef IPL_REMAP_1
+	.globl	_isr_exter_ipl
+	.globl	_isr_exter_highipl
+	.globl	_isr_exter_lowipl
+#endif
+#if defined(IPL_REMAP_1) || defined(IPL_REMAP_2)
+	.globl	_hardclock_frame
+#endif
+	
 _lev6intr:
+#ifndef IPL_REMAP_1
 #ifdef LEV6_DEFER
 	/*
 	 * cause a level 4 interrupt (AUD3) to occur as soon
 	 * as we return. Block generation of level 6 ints until
 	 * we have dealt with this one.
 	 */
-	moveml	#0x8080,sp@-
+	moveml	d0/a0,sp@-
 	INTREQRADDR(a0)
 	movew	a0@,d0
 	btst	#INTB_EXTER,d0
@@ -548,17 +563,17 @@ _lev6intr:
 	INTENAWADDR(a0)
 	movew	#INTF_EXTER,a0@
 	movew	#INTF_SETCLR+INTF_AUD3,a0@	| make sure THIS one is ok...
-	moveml	sp@+,#0x0101
+	moveml	sp@+,d0/a0
 	rte
 Llev6spur:
 	addql	#1,_intrcnt+36		| count spurious level 6 interrupts
-	moveml	sp@+,#0x0101
+	moveml	sp@+,d0/a0
 	rte
 
 _lev4intr:
 _fake_lev6intr:
 #endif
-	moveml	#0xC0C0,sp@-
+	moveml	d0-d1/a0-a1,sp@-
 #ifdef LEV6_DEFER
 	/*
 	 * check for fake level 6
@@ -592,7 +607,7 @@ _fake_lev6intr:
 Lskipciab:
 | process any other CIAB interrupts?
 Llev6done:
-	moveml	sp@+,#0x0303		| restore scratch regs
+	moveml	sp@+,d0-d1/a0-a1	| restore scratch regs
 	addql	#1,_cnt+V_INTR		| chalk up another interrupt
 	jra	rei			| all done [can we do rte here?]
 Lchkexter:
@@ -622,6 +637,35 @@ Lexterdone:
 	addql	#1,_intrcnt+24		| count EXTER interrupts
 	jra	Llev6done
 
+#else /* IPL_REMAP_1 */
+
+	moveml	d0-d1/a0-a1,sp@-	| save clobbered regs
+#if 0
+	INTREQRADDR(a0)
+	movew	a0@,d0
+	btst	#INTB_EXTER,d0		| check for non-EXTER INT6 ints
+	jne	Lexter
+	| register spurious int6 interrupt
+Lexter:	
+#endif
+	moveal	#_hardclock_frame,a0	| store the clockframe
+	movel	sp@(16),a0@+		| where hardclock will find it
+	movel	sp@(20),a0@
+	INTENAWADDR(a0)
+	movew	#INTF_EXTER,a0@		| disable EXTER ints
+	movew	sp@(16),d0		| get PS-word
+	andl	#PSL_IPL,d0		| only IPL is interesting
+	orw	#PSL_S,d0		| note we're in kernel mode
+	movel	d0,sp@-
+	movel	_isr_exter_highipl,sp@-	| start out at the highest IPL
+	jbsr	_walk_ipls		| run all ISRs at appropriate IPLs
+	addql	#8,sp
+	addql	#1,_intrcnt+24		| add another exter interrupt
+	moveml	sp@+,d0-d1/a0-a1	| restore scratch regs
+	addql	#1,_cnt+V_INTR		| chalk up another interrupt
+	jra	Lastchk			| all done [can we do rte here?]
+#endif
+	
 _lev7intr:
 	addql	#1,_intrcnt+28
 	/*
@@ -630,7 +674,6 @@ _lev7intr:
 	 * reason why I do RTE here instead of jra rei.
 	 */
 	rte				| all done
-
 
 /*
  * Emulation of VAX REI instruction.
@@ -656,6 +699,20 @@ rei:
 #ifdef DEBUG
 	tstl	_panicstr		| have we paniced?
 	jne	Ldorte			| yes, do not make matters worse
+#endif
+#ifdef IPL_REMAP_1
+	tstl	_isr_exter_ipl		| IPL lowering in process?
+	jeq	Lastchk			| no, go on to check for ASTs
+	moveml	d0-d1/a0-a1,sp@-	| save scratch regs
+	movw	sp@(16),d0		| get PS
+	andl	#PSL_IPL,d0		| we're only interested in the IPL
+	orw	#PSL_S,d0		| note that we're in kernel mode
+	movel	d0,sp@-
+	movel	_isr_exter_ipl,sp@-	| start where we left last walk_ipls
+	jbsr	_walk_ipls		| run needed ISRs
+	addql	#8,sp			| pop params
+	moveml	sp@+,d0-d1/a0-a1	| restore scratch regs
+Lastchk:	
 #endif
 	tstl	_astpending		| AST pending?
 	jeq	Ldorte			| no, done
@@ -1254,7 +1311,7 @@ Lswnochg:
 	pflusha				| flush entire TLB
 	jra	Lres3
 Lres2:
-	.word	0xf518		| pflusha (68040)
+	.word	0xf518			| pflusha (68040)
 	movl	#CACHE40_ON,d0
 	movc	d0,cacr			| invalidate cache(s)
 Lres3:
@@ -1408,7 +1465,7 @@ __TBIA:
 Lmc68851a:
 	rts
 Ltbia040:
-	.word	0xf518		| pflusha
+	.word	0xf518			| pflusha
 	rts
 
 /*
@@ -1434,10 +1491,10 @@ Lmc68851b:
 Ltbis040:
 	moveq	#FC_SUPERD,d0		| select supervisor
 	movc	d0,dfc
-	.word	0xf508		| pflush a0@
+	.word	0xf508			| pflush a0@
 	moveq	#FC_USERD,d0		| select user
 	movc	d0,dfc
-	.word	0xf508		| pflush a0@
+	.word	0xf508			| pflush a0@
 	rts
 
 /*
@@ -1461,7 +1518,7 @@ Lmc68851c:
 	rts
 Ltbias040:
 | 68040 can't specify supervisor/user on pflusha, so we flush all
-	.word	0xf518		| pflusha
+	.word	0xf518			| pflusha
 	rts
 
 /*
@@ -1485,7 +1542,7 @@ Lmc68851d:
 	rts
 Ltbiau040:
 | 68040 can't specify supervisor/user on pflusha, so we flush all
-	.word	0xf518		| pflusha
+	.word	0xf518			| pflusha
 	rts
 
 /*
@@ -1680,7 +1737,7 @@ ENTRY(ploadw)
 	cmpl	#MMU_68040,_mmutype
 	jeq	Lploadw040
 	ploadw	#1,a0@			| pre-load translation
-Lploadw040:			| should 68040 do a ptest?
+Lploadw040:				| should 68040 do a ptest?
 	rts
 
 ENTRY(_insque)

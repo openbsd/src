@@ -41,6 +41,13 @@ struct isr {
 	int	(*isr_intr)();
 	void	*isr_arg;
 	int	isr_ipl;
+#if defined(IPL_REMAP_1) || defined(IPL_REMAP_2)
+	int	isr_mapped_ipl;
+#ifdef IPL_REMAP_2
+	void	(*isr_ackintr)();
+	int	isr_status;
+#endif
+#endif
 };
 
 #define	NISR		3
@@ -53,4 +60,10 @@ typedef void (*sifunc_t) __P((void *, void *));
 void alloc_sicallback __P((void));
 void add_sicallback __P((sifunc_t, void *, void *));
 void rem_sicallback __P((sifunc_t));
+#endif
+
+#ifdef IPL_REMAP2
+#define ISR_IDLE	0
+#define ISR_WAITING	1
+#define ISR_BUSY	2
 #endif
