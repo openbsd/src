@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_domain.c,v 1.6 1999/01/07 22:30:34 deraadt Exp $	*/
+/*	$OpenBSD: uipc_domain.c,v 1.7 1999/02/24 22:19:20 angelos Exp $	*/
 /*	$NetBSD: uipc_domain.c,v 1.14 1996/02/09 19:00:44 christos Exp $	*/
 
 /*
@@ -72,9 +72,6 @@ domaininit()
 	ADDDOMAIN(route);
 #ifdef INET
 	ADDDOMAIN(inet);
-#ifdef IPSEC
-	ADDDOMAIN(encap);
-#endif
 #endif
 #ifdef INET6
 	ADDDOMAIN(inet6);
