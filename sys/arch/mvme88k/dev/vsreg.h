@@ -1,4 +1,4 @@
-/*	$OpenBSD: vsreg.h,v 1.12 2004/07/20 20:32:02 miod Exp $	*/
+/*	$OpenBSD: vsreg.h,v 1.13 2004/09/06 06:25:28 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1999 Steve Murphree, Jr.
@@ -40,8 +40,8 @@
  */
 
 #define	JAGUAR_MIN_Q_SIZ		2
-#define	JAGUAR_MAX_Q_SIZ		2
 #define	JAGUAR_MAX_CTLR_CMDS		80	/* Interphase says so */
+#define	JAGUAR_MAX_Q_SIZ		(JAGUAR_MAX_CTLR_CMDS / NUM_WQ)
 
 /*
  * COUGAR specific device limits
