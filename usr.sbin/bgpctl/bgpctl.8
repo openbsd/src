@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpctl.8,v 1.11 2004/01/11 02:36:48 henning Exp $
+.\" $OpenBSD: bgpctl.8,v 1.12 2004/01/12 11:44:35 jmc Exp $
 .\"
 .\" Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
 .\"
@@ -51,6 +51,7 @@ Show routes from bgpd's view of the Forward Information Base.
 .Ar filter
 can be an IP address, in which case the route to this address is shown,
 or a flag:
+.Pp
 .Bl -tag -width connected -compact
 .It Li connected
 Show only connected routes.
@@ -58,7 +59,7 @@ Show only connected routes.
 Show only static routes.
 .It Li bgp
 Show only routes originating from
-.Ar bgpd
+.Xr bgpd 8
 itself.
 .It Li nexthop
 Show only routes required to reach a BGP nexthop.
