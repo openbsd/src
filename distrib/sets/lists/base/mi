@@ -1,4 +1,3 @@
-./usr/libexec/lockspool
 ./altroot
 ./bin
 ./bin/[
@@ -57,9 +56,9 @@
 ./root
 ./sbin
 ./sbin/badsect
-./sbin/dhclient
 ./sbin/ccdconfig
 ./sbin/clri
+./sbin/dhclient
 ./sbin/disklabel
 ./sbin/dmesg
 ./sbin/dump
@@ -150,6 +149,7 @@
 ./usr/bin/cal
 ./usr/bin/calendar
 ./usr/bin/cap_mkdb
+./usr/bin/captoinfo
 ./usr/bin/cdio
 ./usr/bin/chflags
 ./usr/bin/chfn
@@ -218,6 +218,7 @@
 ./usr/bin/indent
 ./usr/bin/info
 ./usr/bin/info_mkdb
+./usr/bin/infotocap
 ./usr/bin/install
 ./usr/bin/install-info
 ./usr/bin/ipcrm
@@ -351,6 +352,7 @@
 ./usr/bin/texi2dvi
 ./usr/bin/texindex
 ./usr/bin/tftp
+./usr/bin/tic
 ./usr/bin/time
 ./usr/bin/tip
 ./usr/bin/tn3270
@@ -694,6 +696,7 @@
 ./usr/libexec/locate.concatdb
 ./usr/libexec/locate.mklocatedb
 ./usr/libexec/locate.updatedb
+./usr/libexec/lockspool
 ./usr/libexec/lpr
 ./usr/libexec/lpr/lpf
 ./usr/libexec/mail.local
@@ -774,6 +777,8 @@
 ./usr/sbin/ctm_scan
 ./usr/sbin/ctm_smail
 ./usr/sbin/dev_mkdb
+./usr/sbin/dhcpd
+./usr/sbin/dhcrelay
 ./usr/sbin/dig
 ./usr/sbin/dnsquery
 ./usr/sbin/edquota
@@ -1040,10 +1045,10 @@
 ./usr/share/ipf/nat.1
 ./usr/share/ipf/nat.2
 ./usr/share/ipsec
-./usr/share/ipsec/rc.vpn
 ./usr/share/ipsec/attributes.conf
 ./usr/share/ipsec/photuris.conf
 ./usr/share/ipsec/photuris.startup
+./usr/share/ipsec/rc.vpn
 ./usr/share/ipsec/secrets.conf
 ./usr/share/lkm
 ./usr/share/lkm/misc
@@ -1171,8 +1176,6 @@
 ./usr/share/mk/bsd.port.subdir.mk
 ./usr/share/mk/sys.mk
 ./usr/share/nls
-./usr/share/nls/ru
-./usr/share/nls/ru/libc.cat
 ./usr/share/nls/C
 ./usr/share/nls/C/libc.cat
 ./usr/share/nls/Pig
@@ -1189,6 +1192,8 @@
 ./usr/share/nls/nl/libc.cat
 ./usr/share/nls/no
 ./usr/share/nls/no/libc.cat
+./usr/share/nls/ru
+./usr/share/nls/ru/libc.cat
 ./usr/share/nls/sv
 ./usr/share/nls/sv/libc.cat
 ./usr/share/sendmail
@@ -1300,7 +1305,6 @@
 ./usr/share/sendmail/mailer/usenet.m4
 ./usr/share/sendmail/mailer/uucp.m4
 ./usr/share/sendmail/ostype
-./usr/share/sendmail/ostype/openbsd.m4
 ./usr/share/sendmail/ostype/aix2.m4
 ./usr/share/sendmail/ostype/aix3.m4
 ./usr/share/sendmail/ostype/aix4.m4
@@ -1325,6 +1329,7 @@
 ./usr/share/sendmail/ostype/maxion.m4
 ./usr/share/sendmail/ostype/mklinux.m4
 ./usr/share/sendmail/ostype/nextstep.m4
+./usr/share/sendmail/ostype/openbsd.m4
 ./usr/share/sendmail/ostype/osf1.m4
 ./usr/share/sendmail/ostype/powerux.m4
 ./usr/share/sendmail/ostype/ptx2.m4
@@ -1927,6 +1932,7 @@
 ./var/games/hackdir/save
 ./var/games/larn
 ./var/games/phantasia
+./var/games/rogue.scores
 ./var/games/save
 ./var/log
 ./var/log/authlog
@@ -1946,8 +1952,8 @@
 ./var/mail/root
 ./var/msgs
 ./var/named
-./var/named/etc
 ./var/named/dev
+./var/named/etc
 ./var/named/localhost.rev
 ./var/named/named-xfer
 ./var/named/named.boot
@@ -2163,8 +2169,3 @@
 ./var/yp/Makefile.yp
 ./var/yp/Makefile.yp.dist
 ./var/yp/README
-./usr/bin/captoinfo
-./usr/bin/infotocap
-./usr/bin/tic
-./usr/sbin/dhcpd
-./usr/sbin/dhcrelay

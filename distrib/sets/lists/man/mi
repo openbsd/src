@@ -138,6 +138,7 @@
 ./usr/share/man/cat1/cal.0
 ./usr/share/man/cat1/calendar.0
 ./usr/share/man/cat1/cap_mkdb.0
+./usr/share/man/cat1/captoinfo.0
 ./usr/share/man/cat1/cat.0
 ./usr/share/man/cat1/cd.0
 ./usr/share/man/cat1/cdio.0
@@ -268,6 +269,7 @@
 ./usr/share/man/cat1/lndir.0
 ./usr/share/man/cat1/locate.0
 ./usr/share/man/cat1/lock.0
+./usr/share/man/cat1/lockspool.0
 ./usr/share/man/cat1/logger.0
 ./usr/share/man/cat1/login.0
 ./usr/share/man/cat1/logname.0
@@ -450,6 +452,7 @@
 ./usr/share/man/cat1/telnet.0
 ./usr/share/man/cat1/test.0
 ./usr/share/man/cat1/tftp.0
+./usr/share/man/cat1/tic.0
 ./usr/share/man/cat1/time.0
 ./usr/share/man/cat1/tip.0
 ./usr/share/man/cat1/tn3270.0
@@ -506,6 +509,7 @@
 ./usr/share/man/cat1/zgrep.0
 ./usr/share/man/cat1/zmore.0
 ./usr/share/man/cat1/znew.0
+./usr/share/man/cat3/mpool.0
 ./usr/share/man/cat3/uu_lock_txfr.0
 ./usr/share/man/cat4/acd.0
 ./usr/share/man/cat4/ahc.0
@@ -605,6 +609,7 @@
 ./usr/share/man/cat4/i386/aha.0
 ./usr/share/man/cat4/i386/ahb.0
 ./usr/share/man/cat4/i386/aic.0
+./usr/share/man/cat4/i386/apm.0
 ./usr/share/man/cat4/i386/aria.0
 ./usr/share/man/cat4/i386/ast.0
 ./usr/share/man/cat4/i386/autoconf.0
@@ -699,6 +704,7 @@
 ./usr/share/man/cat4/scsibus.0
 ./usr/share/man/cat4/sd.0
 ./usr/share/man/cat4/sl.0
+./usr/share/man/cat4/sparc/audioamd.0
 ./usr/share/man/cat4/sparc/bwtwo.0
 ./usr/share/man/cat4/sparc/cgeight.0
 ./usr/share/man/cat4/sparc/cgfour.0
@@ -803,6 +809,7 @@
 ./usr/share/man/cat4/vax/vv.0
 ./usr/share/man/cat4/vnd.0
 ./usr/share/man/cat4/wd.0
+./usr/share/man/cat4/ym.0
 ./usr/share/man/cat5/.rhosts.0
 ./usr/share/man/cat5/a.out.0
 ./usr/share/man/cat5/acct.0
@@ -813,6 +820,11 @@
 ./usr/share/man/cat5/crontab.0
 ./usr/share/man/cat5/ctm.0
 ./usr/share/man/cat5/cvs.0
+./usr/share/man/cat5/dhclient.conf.0
+./usr/share/man/cat5/dhclient.leases.0
+./usr/share/man/cat5/dhcp-options.0
+./usr/share/man/cat5/dhcpd.conf.0
+./usr/share/man/cat5/dhcpd.leases.0
 ./usr/share/man/cat5/dir.0
 ./usr/share/man/cat5/dirent.0
 ./usr/share/man/cat5/disklabel.0
@@ -866,6 +878,7 @@
 ./usr/share/man/cat5/sysctl.conf.0
 ./usr/share/man/cat5/syslog.conf.0
 ./usr/share/man/cat5/termcap.0
+./usr/share/man/cat5/terminfo.0
 ./usr/share/man/cat5/ttys.0
 ./usr/share/man/cat5/types.0
 ./usr/share/man/cat5/tzfile.0
@@ -936,6 +949,10 @@
 ./usr/share/man/cat8/cron.0
 ./usr/share/man/cat8/cvsbug.0
 ./usr/share/man/cat8/dev_mkdb.0
+./usr/share/man/cat8/dhclient-script.0
+./usr/share/man/cat8/dhclient.0
+./usr/share/man/cat8/dhcpd.0
+./usr/share/man/cat8/dhcrelay.0
 ./usr/share/man/cat8/disklabel.0
 ./usr/share/man/cat8/diskless.0
 ./usr/share/man/cat8/dm.0
@@ -1192,19 +1209,3 @@
 ./usr/share/man/cat9/splx.0
 ./usr/share/man/man4/alpha
 ./usr/share/man/man4/pmax
-./usr/share/man/cat4/sparc/audioamd.0
-./usr/share/man/cat3/mpool.0
-./usr/share/man/cat5/terminfo.0
-./usr/share/man/cat4/i386/apm.0
-./usr/share/man/cat1/tic.0
-./usr/share/man/cat1/captoinfo.0
-./usr/share/man/cat1/lockspool.0
-./usr/share/man/cat5/dhclient.conf.0
-./usr/share/man/cat5/dhclient.leases.0
-./usr/share/man/cat5/dhcp-options.0
-./usr/share/man/cat5/dhcpd.conf.0
-./usr/share/man/cat5/dhcpd.leases.0
-./usr/share/man/cat8/dhclient-script.0
-./usr/share/man/cat8/dhclient.0
-./usr/share/man/cat8/dhcpd.0
-./usr/share/man/cat8/dhcrelay.0
