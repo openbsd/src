@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: upgrade.sh,v 1.24 2002/03/30 00:50:57 krw Exp $
+#	$OpenBSD: upgrade.sh,v 1.25 2002/03/30 01:29:18 deraadt Exp $
 #	$NetBSD: upgrade.sh,v 1.2.4.5 1996/08/27 18:15:08 gwr Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -75,13 +75,11 @@ md_welcome_banner
 echo -n "Proceed with upgrade? [n] "
 getresp "n"
 case "$resp" in
-	y*|Y*)
-		echo	"Cool!  Let's get to it..."
-		;;
-	*)
-		md_not_going_to_install
-		exit
-		;;
+y*|Y*)	echo	"Cool!  Let's get to it..."
+	;;
+*)	md_not_going_to_install
+	exit
+	;;
 esac
 
 # Deal with terminal issues
@@ -149,13 +147,13 @@ __EOT
 echo -n	"Enable network? [y] "
 getresp "y"
 case "$resp" in
-	y*|Y*)
-		if ! enable_network; then
-			echo "ERROR: can't enable network!"
-			exit 1
-		fi
+y*|Y*)
+	if ! enable_network; then
+		echo "ERROR: can't enable network!"
+		exit 1
+	fi
 
-		cat << __EOT
+	cat << __EOT
 
 You will now be given the opportunity to escape to the command shell to
 do any additional network configuration you may need.  This may include
@@ -163,20 +161,14 @@ adding additional routes, if needed.  In addition, you might take this
 opportunity to redo the default route in the event that it failed above.
 
 __EOT
-		echo -n "Escape to shell? [n] "
-		getresp "n"
-		case "$resp" in
-			y*|Y*)
-				echo "Type 'exit' to return to upgrade."
-				sh
-				;;
-
-			*)
-				;;
-		esac
+	echo -n "Escape to shell? [n] "
+	getresp "n"
+	case "$resp" in
+	y*|Y*)	echo "Type 'exit' to return to upgrade."
+		sh
 		;;
-	*)
-		;;
+	esac
+	;;
 esac
 
 echo	"The fstab is configured as follows:\n"
@@ -197,12 +189,8 @@ __EOT
 echo -n	"Edit the fstab with ${EDITOR}? [n] "
 getresp "n"
 case "$resp" in
-	y*|Y*)
-		${EDITOR} /tmp/fstab
-		;;
-
-	*)
-		;;
+y*|Y*)	${EDITOR} /tmp/fstab
+	;;
 esac
 
 echo	""
@@ -250,11 +238,8 @@ fi
 echo -n	"Are the upgrade sets on one of your normally mounted (local) filesystems? [y] "
 getresp "y"
 case "$resp" in
-	y*|Y*)
-		get_localdir /mnt
-		;;
-	*)
-		;;
+y*|Y*)	get_localdir /mnt
+	;;
 esac
 
 # Install sets.

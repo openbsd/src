@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.87 2002/03/30 00:50:57 krw Exp $
+#	$OpenBSD: install.sh,v 1.88 2002/03/30 01:29:18 deraadt Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -117,15 +117,13 @@ else
 	echo -n "Skip disk initialization? [n] "
 	getresp "n"
 	case "$resp" in
-		y*|Y*)
-			echo
-			echo "Cool!  Let's get to it..."
-			echo
-			;;
-		*)
-			md_not_going_to_install
-			exit
-			;;
+	y*|Y*)	echo
+		echo "Cool!  Let's get to it..."
+		echo
+		;;
+	*)	md_not_going_to_install
+		exit
+		;;
 	esac
 fi
 
@@ -220,13 +218,13 @@ __EOT
 				echo -n "Mount point for ${DISK}${_pp} (size=${_ps}k) [$_mp, RET, none, or done]? "
 				getresp "$_mp"
 				case "X${resp}" in
-					X/*)	_mount_points[${_i}]=$resp
-						break ;;
-					Xdone|X)
-						break ;;
-					Xnone)	_mount_points[${_i}]=
-						break;;
-					*)	echo "mount point must be an absolute path!";;
+				X/*)	_mount_points[${_i}]=$resp
+					break ;;
+				Xdone|X)
+					break ;;
+				Xnone)	_mount_points[${_i}]=
+					break;;
+				*)	echo "mount point must be an absolute path!";;
 				esac
 			done
 			_i=$(( ${_i} + 1 ))
@@ -266,12 +264,10 @@ __EOT
 	echo -n	"Are you really sure that you're ready to proceed? [n] "
 	getresp "n"
 	case "$resp" in
-		y*|Y*)
-			;;
-		*)
-			echo "ok, try again later..."
-			exit
-			;;
+	y*|Y*)	;;
+	*)	echo "ok, try again later..."
+		exit
+		;;
 	esac
 
 	# Loop though the file, place filesystems on each device.
@@ -302,11 +298,8 @@ __EOT
 echo -n	"Configure the network? [y] "
 getresp "y"
 case "$resp" in
-	y*|Y*)
-		donetconfig
-		;;
-	*)
-		;;
+y*|Y*)	donetconfig
+	;;
 esac
 
 if [ ! -f /etc/fstab ]; then
@@ -334,11 +327,8 @@ mount | while read line; do
 		echo -n	"Are the install sets on one of your currently mounted filesystems? [n] "
 		getresp "n"
 		case "$resp" in
-			y*|Y*)
-				get_localdir
-				;;
-			*)
-				;;
+		y*|Y*)	get_localdir
+			;;
 		esac
 	fi
 done
