@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV,v 1.6 1995/12/20 10:27:34 cgd Exp $
+#	$NetBSD: MAKEDEV,v 1.7 1996/01/05 17:12:39 cgd Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -62,6 +62,8 @@
 #	lkm	loadable kernel modules interface
 #	tun*	network tunnel driver
 #	mmclock	memory mapped clock
+#	kbd	keyboard (provides events, for X11)
+#	mouse	mouse (provides events, for X11)
 
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 umask 77
@@ -75,7 +77,7 @@ all)
 	sh MAKEDEV ccd0 ccd1 ccd2 ccd3
 	sh MAKEDEV bpf0 bpf1 bpf2 bpf3 tun0 tun1 tun2 tun3
 	sh MAKEDEV ttyB0 ttyB1 ttyC0 ttyC1 ttyE0 ttyE1 lkm
-	sh MAKEDEV mmclock local
+	sh MAKEDEV mmclock kbd mouse local
 	;;
 
 std)
@@ -253,6 +255,18 @@ mmclock)
 	rm -f mmclock
 	mknod mmclock c 28 0
 	chmod 444 mmclock
+	;;
+
+kbd)
+	rm -f kbd
+	mknod kbd c 29 0
+	chmod 666 kbd
+	;;
+
+mouse)
+	rm -f mouse
+	mknod mouse c 30 0
+	chmod 666 mouse
 	;;
 
 local)
