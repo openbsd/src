@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcfs_rw.c,v 1.3 2000/06/17 20:25:55 provos Exp $	*/
+/*	$OpenBSD: tcfs_rw.c,v 1.4 2000/06/18 06:26:12 provos Exp $	*/
 /*
  * Copyright 2000 The TCFS Project at http://tcfs.dia.unisa.it/
  * All rights reserved.
@@ -491,7 +491,6 @@ tcfs_ed(struct vnode *v, struct proc *p, struct ucred *c, tcfs_fileinfo *i)
 	mp = MOUNTTOTCFSMOUNT(v->v_mount);
 	encr = FI_CFLAG(i) || FI_GSHAR(i);
 	
-
 	if (v->v_type != VREG)
 		return (0);
 
@@ -512,16 +511,17 @@ tcfs_ed(struct vnode *v, struct proc *p, struct ucred *c, tcfs_fileinfo *i)
 
 	size = FI_ENDOF(i);
 
-	if(encr) {
+	if (encr) {
+		resid = size;
 		w_size = D_PFOFF(size);
 		sp = D_SPURE(size);
 	} else {
-		w_size=size-FI_SPURE(i);
+	  	resid = D_PFOFF(size);
+		w_size= size - FI_SPURE(i);
 		sp = -FI_SPURE(i);
 	}
 
 	csize = 0;
-	resid = size;
 	w_resid = w_size;
 
 	bufsize = BLOCKSIZE;
@@ -543,7 +543,7 @@ tcfs_ed(struct vnode *v, struct proc *p, struct ucred *c, tcfs_fileinfo *i)
 	wa.a_uio = ra.a_uio = u;
 
 	
-	for(e = 0; e <= D_NOBLK(size); e++) {
+	for (e = 0; e < D_NOBLK(size); e++) {
 		int x, y; 
 
 		u->uio_offset = csize;
