@@ -1,6 +1,6 @@
 .\" Copyright (c) 1988, 1989, 1991 Carnegie Mellon University
 .\"
-.\"	$Header: /home/cvs/src/usr.sbin/bootpd/Attic/bootpd.8,v 1.9 2003/03/15 21:01:49 jmc Exp $
+.\"	$Header: /home/cvs/src/usr.sbin/bootpd/Attic/bootpd.8,v 1.10 2003/04/14 06:51:48 jmc Exp $
 .\"
 .TH BOOTPD 8 "November 06, 1993" "Carnegie Mellon University"
 .SH NAME
@@ -76,19 +76,19 @@ It is also possible to run
 .I bootpd
 (or
 .IR bootpgw )
-in "standalone mode" (without
+in "stand-alone mode" (without
 .IR inetd )
 by simply invoking it from a shell like any other regular command.
-Standalone mode is particularly useful when
+Stand-alone mode is particularly useful when
 .I bootpd
 is used with a large configuration database, where the start up
 delay might otherwise prevent timely response to client requests.
-(Automatic start up in standalone mode can be done by invoking
+(Automatic start up in stand-alone mode can be done by invoking
 .I bootpd
 from within
 .IR /etc/rc.local ,
 for example.)
-Standalone mode is less useful for
+Stand-alone mode is less useful for
 .I bootpgw
 which
 has very little start up delay because
@@ -100,7 +100,7 @@ The
 .B \-s
 or
 .B \-i
-option may be used to force standalone or inetd mode respectively
+option may be used to force stand-alone or inetd mode respectively
 (see OPTIONS).
 .SH OPTIONS
 .TP
@@ -116,7 +116,7 @@ If no packets are received for
 .I timeout
 minutes, then the program will exit.
 A timeout value of zero means "run forever".
-In standalone mode, this option is forced to zero.
+In stand-alone mode, this option is forced to zero.
 .TP
 .BI \-d \ debug\-level
 Sets the
@@ -144,7 +144,7 @@ compatibility with older versions of
 .IR bootpd .
 .TP
 .B \-s
-Force standalone mode.  This option is obsolete, but remains for
+Force stand-alone mode.  This option is obsolete, but remains for
 compatibility with older versions of
 .IR bootpd .
 .TP
