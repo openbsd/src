@@ -34,7 +34,7 @@
   
 /* USEMYBINMODE
  *	This symbol, if defined, indicates that the program should
- *	use the routine my_binmode(FILE *fp, char iotype) to insure
+ *	use the routine my_binmode(FILE *fp, char iotype, int mode) to insure
  *	that a file is in "binary" mode -- that is, that no translation
  *	of bytes occurs on read or write operations.
  */
@@ -97,7 +97,7 @@
 #ifndef SIGILL
 #    define SIGILL 6         /* blech */
 #endif
-#define ABORT() kill(getpid(),SIGABRT);
+#define ABORT() kill(PerlProc_getpid(),SIGABRT);
 
 /*
  * fwrite1() should be a routine with the same calling sequence as fwrite(),

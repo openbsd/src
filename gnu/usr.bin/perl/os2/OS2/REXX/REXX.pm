@@ -3,6 +3,8 @@ package OS2::REXX;
 use Carp;
 require Exporter;
 require DynaLoader;
+require OS2::DLL;
+
 @ISA = qw(Exporter DynaLoader);
 # Items to export into callers namespace by default
 # (move infrequently used names to @EXPORT_OK below)
@@ -10,65 +12,17 @@ require DynaLoader;
 # Other items we are prepared to export if requested
 @EXPORT_OK = qw(drop);
 
-sub AUTOLOAD {
-    $AUTOLOAD =~ /^OS2::REXX::.+::(.+)$/
-      or confess("Undefined subroutine &$AUTOLOAD called");
-    return undef if $1 eq "DESTROY";
-    $_[0]->find($1)
-      or confess("Can't find entry '$1' to DLL '$_[0]->{File}'");
-    goto &$AUTOLOAD;
-}
+# We cannot just put OS2::DLL in @ISA, since some scripts would use
+# function interface, not method interface...
 
-@libs = split(/;/, $ENV{'PERL5REXX'} || $ENV{'PERLREXX'} || $ENV{'LIBPATH'} || $ENV{'PATH'});
-%dlls = ();
+*_call = \&OS2::DLL::_call;
+*load = \&OS2::DLL::load;
+*find = \&OS2::DLL::find;
 
 bootstrap OS2::REXX;
 
 # Preloaded methods go here.  Autoload methods go after __END__, and are
 # processed by the autosplit program.
-
-# Cannot autoload, the autoloader is used for the REXX functions.
-
-sub load
-{
-	confess 'Usage: load OS2::REXX <file> [<dirs>]' unless $#_ >= 1;
-	my ($class, $file, @where) = (@_, @libs);
-	return $dlls{$file} if $dlls{$file};
-	my $handle;
-	foreach (@where) {
-		$handle = DynaLoader::dl_load_file("$_/$file.dll");
-		last if $handle;
-	}
-	$handle = DynaLoader::dl_load_file($file) unless $handle;
-	return undef unless $handle;
-	eval "package OS2::REXX::$file; \@ISA = ('OS2::REXX');"
-	   . "sub AUTOLOAD {"
-	   . "  \$OS2::REXX::AUTOLOAD = \$AUTOLOAD;"
-	   . "  goto &OS2::REXX::AUTOLOAD;"
-	   . "} 1;" or die "eval package $@";
-	return $dlls{$file} = bless {Handle => $handle, File => $file, Queue => 'SESSION' }, "OS2::REXX::$file";
-}
-
-sub find
-{
-	my $self   = shift;
-	my $file   = $self->{File};
-	my $handle = $self->{Handle};
-	my $prefix = exists($self->{Prefix}) ? $self->{Prefix} : "";
-	my $queue  = $self->{Queue};
-	foreach (@_) {
-		my $name = "OS2::REXX::${file}::$_";
-		next if defined(&$name);
-		my $addr = DynaLoader::dl_find_symbol($handle, uc $prefix.$_)
-		        || DynaLoader::dl_find_symbol($handle, $prefix.$_)
-			or return 0;
-		eval "package OS2::REXX::$file; sub $_".
-		     "{ shift; OS2::REXX::_call('$_', $addr, '$queue', \@_); }".
-		     "1;"
-			or die "eval sub";
-	}
-	return 1;
-}
 
 sub prefix
 {
@@ -381,9 +335,18 @@ which access REXX queues or REXX variables in signal handlers.
 
 See C<t/rx*.t> for examples.
 
+=head1 ENVIRONMENT
+
+If C<PERL_REXX_DEBUG> is set, prints trace info on calls to REXX runtime
+environment.
+
 =head1 AUTHOR
 
 Andreas Kaiser ak@ananke.s.bawue.de, with additions by Ilya Zakharevich
 ilya@math.ohio-state.edu.
+
+=head1 SEE ALSO
+
+L<OS2::DLL>.
 
 =cut

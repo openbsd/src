@@ -1,0 +1,48 @@
+class Sample {
+    public static void main(String[] args) {
+	Sample sam = new Sample();
+	System.out.println(sam.foo("manny","moe","jack"));
+	System.out.println(sam.foo(1));
+	System.out.println(sam.foo(3.0));
+	sam.foo();
+    }
+
+    public static int thrice(int i) {
+	return i * 3;
+    }
+
+    perl void foo() {{
+	use POSIX;
+	print "TZ = ", POSIX::tzname(), "\n";
+	print "Got to ${self}->foo() method\n";
+	print "foo__I(2) = ", $self->foo__I__I(2),"\n";
+	print "thrice(123) = ", JPL::Sample->thrice__I__I(123), "\n";
+	print "thrice(12) = ", JPL::Sample->thrice__I__I(12), "\n";
+	print $self->foo__sss__s("MANNY", "MOE", "JACK"), "\n";
+	print 41 + $self->foo__sss__s("1", "2", "3"), "\n";
+	print "Perl version is $]\n";
+    }}
+
+    perl int foo(int a) {{
+	$a + $a;
+    }}
+
+    perl double foo(double a) {{
+	use JPL::Class 'java::util::Random';
+	$rng = java::util::Random->new();
+	print "RNG = $rng\n";
+	print $rng->nextDouble____D(), "\n";
+	print $rng->nextDouble____D(), "\n";
+	print $rng->nextDouble____D(), "\n";
+	print $rng->nextDouble____D(), "\n";
+	return $a * $a;
+    }}
+
+    perl String foo( String a,
+		     String b,
+		     String c ) {{
+	print "a = $a, b = $b, c = $c\n";
+	join "+", $a, $b, $c;
+    }}
+
+}

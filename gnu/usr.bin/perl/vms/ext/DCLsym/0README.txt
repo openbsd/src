@@ -17,5 +17,5 @@ $ MMK install
 If you have any problems or suggestions, please feel free to let me know.
 
 Regards,
-Charles Bailey  bailey@genetics.upenn.edu
+Charles Bailey  bailey@newman.upenn.edu
 17-Aug-1995

@@ -16,7 +16,7 @@ foreach $dir (split(';', $path)) {
   $found = "$dir/YDBAUTIL.DLL";
   last;
 }
-$found or die "1..0\n#Cannot find YDBAUTIL.DLL\n";
+$found or print "1..0 # skipped: cannot find YDBAUTIL.DLL\n" and exit;
 
 print "1..5\n";
 

@@ -1,0 +1,229 @@
+#!/usr/bin/perl
+
+print <<'END' if $>;
+NOTE: Since you're not running as root, the installation will su at
+the appropriate time later.  You will need to supply the root password
+for the su program.
+
+END
+
+# Gather data.
+
+# JPL_SRC
+
+chop($JPL_SRC = `pwd`);
+print "JPL_SRC = $JPL_SRC\n";
+
+# JAVA_HOME
+
+foreach $dir (
+    $ENV{JAVA_HOME},
+    "/usr/java",
+    "/usr/local/java",
+    "/usr/lib/java",
+    "/usr/local/lib/java",
+) {
+    $JAVA_HOME = $dir, last if $dir and -d "$dir/bin";
+}
+die "You must set the \$JAVA_HOME environment variable first.\n"
+	unless $JAVA_HOME;
+print "JAVA_HOME = $JAVA_HOME\n";
+
+# JPL_HOME
+
+($likelyjpl = $JAVA_HOME) =~ s#(.*)/.*#$1/jpl#;
+
+print <<"END";
+
+You need to decide which directory JPL files are to be installed in.
+Applications will look in subdirectories of this directory for any JPL
+related files.
+
+You may use the current directory ($JPL_SRC)
+or you may use a directory such as $likelyjpl.
+
+END
+
+$| = 1;
+until (-d $JPL_HOME) {
+    print "Install JPL files where: [$JPL_SRC] ";
+    chop($JPL_HOME = <STDIN>);
+    $JPL_HOME ||= $JPL_SRC;
+    unless (-d $JPL_HOME) {
+	print "Warning: $JPL_HOME doesn't exist yet!\n\n";
+	print "Do you want to create it? [y] ";
+	chop($ans = <STDIN>);
+	$ans ||= 'y';
+	next unless $ans =~ /^y/i;
+
+	system "mkdir -p $JPL_HOME";
+	if ($> and not -d $JPL_HOME) {
+	    warn "Couldn't create $JPL_HOME!\nTrying again as root...running su...\n";
+	    system "set -x
+su root -c 'mkdir -p $JPL_HOME && chown $> $JPL_HOME && chmod 0755 $JPL_HOME'";
+	    warn "Couldn't create $JPL_HOME!\n" unless -d $JPL_HOME;
+	}
+    }
+}
+print "JPL_HOME = $JPL_HOME\n";
+
+#########################################################################
+# Spit out setvars.
+
+print "Writing setvars...\n";
+
+unlink "$JPL_SRC/setvars";
+open(SETVARS, ">$JPL_HOME/setvars") or die "Can't create setvars: $!\n";
+while (<DATA>) {
+    s/^JPL_SRC=.*/JPL_SRC='$JPL_SRC'/;
+    s/^JAVA_HOME=.*/JAVA_HOME='$JAVA_HOME'/;
+    s/^JPL_HOME=.*/JPL_HOME='$JPL_HOME'/;
+    print SETVARS $_;
+}
+close SETVARS;
+chmod 0755, "$JPL_HOME/setvars";
+symlink "$JPL_HOME/setvars", "$JPL_SRC/setvars" if $JPL_HOME ne $JPL_SRC;
+
+#########################################################################
+# Pretend we're make.
+
+eval `./setvars -perl`;		# Take our own medicine.
+
+print "\n\nStarting install...\n";
+
+system <<'END' and die "Couldn't install JPL\n";
+set -x
+cd JPL
+perl Makefile.PL
+make clean
+perl Makefile.PL
+make install
+END
+
+print "\nInstalling PerlInterpreter class\n";
+
+system <<'END' and die "Couldn't install PerlInterpreter\n";
+set -x
+cd PerlInterpreter
+perl Makefile.PL
+make clean
+perl Makefile.PL
+make install
+END
+
+print "\nInstalling JNI module\n";
+
+system <<'END' and die "Couldn't install JNI\n";
+set -x
+cd JNI
+perl Makefile.PL -e
+make clean
+perl Makefile.PL -e
+make
+echo 'Attempting to install JNI as root'
+su root -c "make install"
+END
+
+#touch Makefile
+#make -f makefile.jv
+## These should be executed as root
+#rm -rf /usr/lib/perl5/site_perl/i586-linux/auto/JNI
+#rm -rf /usr/lib/perl5/site_perl/auto/JNI
+#rm -f  /usr/lib/perl5/site_perl/JNI.pm
+#make -f makefile.jv install UNINST=1 
+
+print "\nInstalling Sample JPL program\n";
+
+system <<'END' and die "Couldn't install Sample\n";
+set -x
+cd Sample
+perl Makefile.PL
+make clean
+perl Makefile.PL
+make install
+END
+
+# Test
+print "\n\nTesting Sample...\n";
+system <<'END' and die "Couldn't run Sample\n";
+set -x
+cd Sample
+JPLDEBUG=1
+export JPLDEBUG
+java Sample
+END
+
+__END__
+#!/bin/sh
+
+# You can edit this, but your changes will only last until the next
+# time you run install-jpl.
+
+# Where jpl is currently installed
+
+cd `dirname $0`
+JPL_SRC=`pwd`
+
+# Where java is installed
+
+JAVA_HOME=/usr/local/java
+export JAVA_HOME
+
+# Where jpl will be installed
+
+JPL_HOME="$JPL_SRC"
+export JPL_HOME
+
+# Which perl to run
+
+JPLPERL=perl`perl -e "print $]"`
+#JPLPERL=perl5.00404
+export JPLPERL
+
+# Some derivative variables
+archname=`$JPLPERL -MConfig -e 'print $Config{archname}'`
+ archlib=`$JPLPERL -MConfig -e 'print $Config{archlib}'`
+
+CLASSPATH=".:$JPL_HOME/lib${CLASSPATH:+:$CLASSPATH}"
+export CLASSPATH
+
+LD_LIBRARY_PATH=".:$JPL_HOME/lib/$archname:$archlib/CORE${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+export LD_LIBRARY_PATH
+
+PERL5LIB="$JPL_HOME/perl${PERL5LIB:+:$PERL5LIB}"
+export PERL5LIB
+
+# Make sure the right java programs are selected.
+PATH="$JAVA_HOME/bin:$PATH"
+export PATH
+
+case "$1" in
+-perl)
+    cat <<END
+\$ENV{PATH} = '$PATH';
+\$ENV{JAVA_HOME} = '$JAVA_HOME';
+\$ENV{JPL_HOME} = '$JPL_HOME';
+\$ENV{JPLPERL} = '$JPLPERL';
+\$ENV{CLASSPATH} = '$CLASSPATH';
+\$ENV{LD_LIBRARY_PATH} = '$LD_LIBRARY_PATH';
+\$ENV{PERL5LIB} = '$PERL5LIB';
+END
+    ;;
+-sh)
+    cat <<END
+ PATH='$PATH';export PATH;JAVA_HOME='$JAVA_HOME';export JAVA_HOME;JPL_HOME='$JPL_HOME';export JPL_HOME;JPLPERL='$JPLPERL';export JPLPERL;CLASSPATH='$CLASSPATH';export CLASSPATH;LD_LIBRARY_PATH='$LD_LIBRARY_PATH';export LD_LIBRARY_PATH;PERL5LIB='$PERL5LIB';export PERL5LIB
+END
+    ;;
+-csh)
+    cat <<END
+setenv PATH '$PATH';
+setenv JAVA_HOME '$JAVA_HOME';
+setenv JPL_HOME '$JPL_HOME';
+setenv JPLPERL '$JPLPERL';
+setenv CLASSPATH '$CLASSPATH';
+setenv LD_LIBRARY_PATH '$LD_LIBRARY_PATH';
+setenv PERL5LIB '$PERL5LIB';
+END
+    ;;
+esac
+

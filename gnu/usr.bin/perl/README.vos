@@ -1,11 +1,11 @@
 Perl 5 README file for the Stratus VOS operating system.
 Paul Green (Paul_Green@stratus.com)
-February 4, 1999
+February 3, 2000
 
 
 Introduction
 ------------
-This is a port of Perl version 5, revision 005-03, to VOS.  Perl
+This is a port of Perl version 5, revision 005-63, to VOS.  Perl
 is a scripting or macro language that is popular on many
 systems.  See your local computer bookstore for a number of good
 books on Perl.
@@ -44,9 +44,19 @@ following additional items.
      Instructions for unbundling this file are at
      ftp://ftp.stratus.com/pub/vos/utility/utility.html.
 
+4.   You must compile this version of Perl 5 on VOS Release
+     14.1.0 or higher because some of the perl source files
+     contain more than 32,767 source lines.  Due to VOS
+     release-compatibility rules, this port of perl may not
+     execute on VOS Release 12 or earlier.
+
 To build perl 5, change to the "vos" subdirectory and type the
 command "compile_perl -processor X", where X is the processor
 type (mc68020, i80860, pa7100, pa8000) that you wish to use.
+Note that code compiled for the pa7100 processor type can
+execute on the PA7100, PA8000, and PA8500 processors, and that
+code compiled for the pa8000 processor type can execute on the
+PA8000 and PA8500 processors.
 
 
 Installing Perl 5 on VOS
@@ -134,6 +144,8 @@ Support Status
 --------------
 I'm offering this port "as is".  You can ask me questions, but I
 can't guarantee I'll be able to answer them; I don't know much
-about Perl itself; I'm still learning that.
+about Perl itself; I'm still learning that.  There are some
+excellent books available on the Perl language; consult a book
+seller.
 
 (end)

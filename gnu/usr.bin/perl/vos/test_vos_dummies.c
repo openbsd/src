@@ -1,6 +1,6 @@
 /*  +++begin copyright+++ *******************************************  */
 /*                                                                     */
-/*  COPYRIGHT (c) 1997, 1998 Stratus Computer, Inc.                    */
+/*  COPYRIGHT (c) 1997, 1998, 2000 Stratus Computer (DE), Inc.         */
 /*                                                                     */
 /*  This program is free software; you can redistribute it and/or      */
 /*  modify it under the terms of either:                               */

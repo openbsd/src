@@ -45,18 +45,16 @@
 &
 !set_library_paths include << < &POSIX&>incl &+
      (master_disk)>system>include_library
-!list_library_paths include
 &
 &if (exists *.obj -link)
 &then !unlink *.obj -no_ask -brief
 &
 & Suppress several harmless compiler warning and advice messages.
+& Use -list -show_include all -show_macros both_ways when debugging.
 &
-& For complete listings, add -list -show_macros both_ways -show_include all
-&set_string cflags -O4 -u
+&set_string cflags '-u -O4 -D_POSIX_C_SOURCE=199309L -DPERL_CORE'
+&
 !cc <<av.c -suppress_diag 2006 2064 2065 &cpu& &cflags&
-&if (command_status) ^= 0 &then &return
-!cc <<byterun.c -suppress_diag 2006 &cpu& &cflags&
 &if (command_status) ^= 0 &then &return
 !cc <<deb.c -suppress_diag 2006 &cpu& &cflags&
 &if (command_status) ^= 0 &then &return
@@ -82,32 +80,35 @@
 &if (command_status) ^= 0 &then &return
 !cc <<op.c -suppress_diag 2006 2064 2065 &cpu& &cflags&
 &if (command_status) ^= 0 &then &return
-!cc <<perl.c -suppress_diag 2006 2065 &cpu& &cflags& &+
+!cc <<perl.c -suppress_diag 2006 2053 2065 &cpu& &cflags& &+
      -DARCHLIB="/system/ported/perl/lib/5.005&obj2&" &+
      -DARCHLIB_EXP="/system/ported/perl/lib/5.005&obj2&" &+
      -DSITEARCH="/system/ported/perl/lib/site/5.005&obj2&" &+
      -DSITEARCH_EXP="/system/ported/perl/lib/site/5.005&obj2&"
+&if (command_status) ^= 0 &then &return
+!cc <<perlapi.c &cpu& &cflags&
 &if (command_status) ^= 0 &then &return
 !cc <<perlio.c -suppress_diag 2006 &cpu& &cflags&
 &if (command_status) ^= 0 &then &return
 !cc <<perly.c -suppress_diag 2006 &cpu& &cflags&
 &if (command_status) ^= 0 &then &return
 & compiling pp.c for the PA-RISC hits compiler bug pcg-98; avoid it.
-&if (index (string &cpu&) pa) > 0
-&then !cc <<pp.c -suppress_diag 2006 2064 &cpu& &cflags& -no_schedule
-&else !cc <<pp.c -suppress_diag 2006 2064 &cpu& &cflags&
+& The bug is fixed in VOS 14.1.0 and all later releases.
+&if (index (string &cpu&) pa) > 0 & (module_info os_release) < 'VOS Release 14.1.0'
+&then !cc <<pp.c -suppress_diag 2006 2064 2065 &cpu& &cflags& -no_schedule
+&else !cc <<pp.c -suppress_diag 2006 2064 2065 &cpu& &cflags&
 &if (command_status) ^= 0 &then &return
 !cc <<pp_ctl.c -suppress_diag 2006 2064 2065 &cpu& &cflags&
 &if (command_status) ^= 0 &then &return
-!cc <<pp_hot.c -suppress_diag 2006 2064 &cpu& &cflags&
+!cc <<pp_hot.c -suppress_diag 2006 2064 2065 &cpu& &cflags&
 &if (command_status) ^= 0 &then &return
-!cc <<pp_sys.c -suppress_diag 2002 2006 2064 2065 &cpu& &cflags& -Xc
+!cc <<pp_sys.c -suppress_diag 2006 2064 2065 &cpu& &cflags&
 &if (command_status) ^= 0 &then &return
-!cc <<regcomp.c -suppress_diag 2006 &cpu& &cflags&
+!cc <<regcomp.c -suppress_diag 2006 2064 &cpu& &cflags&
 &if (command_status) ^= 0 &then &return
-!cc <<regexec.c -suppress_diag 2006 &cpu& &cflags&
+!cc <<regexec.c -suppress_diag 2006 2064 &cpu& &cflags&
 &if (command_status) ^= 0 &then &return
-!cc <<run.c -suppress_diag 2006 &cpu& &cflags&
+!cc <<run.c -suppress_diag 2006 2065 &cpu& &cflags&
 &if (command_status) ^= 0 &then &return
 !cc <<scope.c -suppress_diag 2006 2064 2065 &cpu& &cflags&
 &if (command_status) ^= 0 &then &return
@@ -115,15 +116,17 @@
 &if (command_status) ^= 0 &then &return
 !cc <<taint.c -suppress_diag 2006 &cpu& &cflags&
 &if (command_status) ^= 0 &then &return
-!cc <<toke.c -suppress_diag 2006 2065 &cpu& &cflags&
+!cc <<toke.c -suppress_diag 2006 2064 2065 &cpu& &cflags&
 &if (command_status) ^= 0 &then &return
 !cc <<universal.c -suppress_diag 2006 &cpu& &cflags&
 &if (command_status) ^= 0 &then &return
+!cc <<utf8.c -suppress_diag 2065 &cpu& &cflags&
+&if (command_status) ^= 0 &then &return
 !cc <<util.c -suppress_diag 2006 2065 &cpu& &cflags&
 &if (command_status) ^= 0 &then &return
-!cc <vos_accept.c &cpu& &cflags& -Xc
+!cc <<xsutils.c &cpu& &cflags&
 &if (command_status) ^= 0 &then &return
-!cc <vos_dummies.c &cpu& &cflags&
+!cc <vos_dummies.c &cpu& -O4
 &if (command_status) ^= 0 &then &return
 &
 & If requested, bind the executable program module.
@@ -132,23 +135,23 @@
 &if &rebind& = 0
 &then &return
 &
-&if (exists -directory (master_disk)>system>tcp_os>object_library&obj&)
-&then &set_string tcp_objlib (master_disk)>system>tcp_os>object_library&obj&
+&if (exists -directory (master_disk)>system>tcp_os>object_library&obj2&)
+&then &set_string tcp_objlib (master_disk)>system>tcp_os>object_library&obj2&
 &else &set_string tcp_objlib (master_disk)>system>tcp_os>object_library
 &
-&if (exists -directory (master_disk)>system>object_library&obj&)
-&then &set_string objlib (master_disk)>system>object_library&obj&
+&if (exists -directory (master_disk)>system>object_library&obj2&)
+&then &set_string objlib (master_disk)>system>object_library&obj2&
 &else &set_string objlib (master_disk)>system>object_library
 &
-&if (exists -directory (master_disk)>system>c_object_library&obj&)
-&then &set_string c_objlib (master_disk)>system>c_object_library&obj&
+&if (exists -directory (master_disk)>system>c_object_library&obj2&)
+&then &set_string c_objlib (master_disk)>system>c_object_library&obj2&
 &else &set_string c_objlib (master_disk)>system>c_object_library
 &
 !set_library_paths object . &+
      &POSIX&>c>runtime>obj&obj& &+
      &POSIX&>c>sysv_runtime>obj&obj& &+
      &tcp_objlib& &objlib& &c_objlib&
-!list_library_paths object
-!bind -control <perl.bind &cpu&
+!bind -control <perl.bind &cpu& -map
 &if (command_status) ^= 0 &then &return
 !delete_file *.obj -no_ask -brief
+!unlink *.obj -no_ask -brief

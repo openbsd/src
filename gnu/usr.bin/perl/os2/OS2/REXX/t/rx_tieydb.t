@@ -9,7 +9,9 @@ BEGIN {
 }
 
 use OS2::REXX;
-$rx = load OS2::REXX "ydbautil" or die "1..0\n# load\n";    # from RXU17.ZIP
+$rx = load OS2::REXX "ydbautil"     # from RXU17.ZIP
+  or print "1..0 # skipped: cannot find YDBAUTIL.DLL\n" and exit;
+
 print "1..7\n", "ok 1\n";
 
 $rx->prefix("Rx");                         # implicit function prefix

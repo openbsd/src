@@ -18,7 +18,7 @@ foreach $dir (split(';', $path)) {
   print "# found at `$found'\n";
   last;
 }
-$found or die "1..0\n#Cannot find $name.DLL\n";
+$found or print "1..0 # skipped: cannot find $name.DLL\n" and exit;
 
 print "1..10\n";
 

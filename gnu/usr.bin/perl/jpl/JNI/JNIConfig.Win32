@@ -1,0 +1,21 @@
+# Are we using Kaffe?
+#
+$KAFFE = 0;
+
+# Where are the Java includes?
+#
+@INCLUDE = ("C:\\jdk1.1.8\\include", "C:\\jdk1.1.8\\include\\win32");
+
+# Are we embedding Perl in Java?
+#
+$EMBEDDEDPERL = 0;
+
+# Extra C flags
+#
+$CCFLAGS=" -Z7 -D_DEBUG";
+
+$MYEXTLIB = "C:\\jdk1.1.8\\lib\\javai.lib " .
+            "$Config{installarchlib}\\CORE\\perlcore.lib " .
+            "$Config{installarchlib}\\CORE\\perlcapi.lib";
+
+1;

@@ -231,7 +231,7 @@ from this set.
 
 =head1 AUTHOR
 
-Charles Bailey  E<lt>I<bailey@genetics.upenn.edu>E<gt>
+Charles Bailey  E<lt>I<bailey@newman.upenn.edu>E<gt>
 
 =head1 REVISION
 

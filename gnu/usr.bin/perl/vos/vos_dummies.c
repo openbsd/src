@@ -1,6 +1,6 @@
 /*  +++begin copyright+++ *******************************************  */
 /*                                                                     */
-/*  COPYRIGHT (c) 1997, 1998, 1999 Stratus Computer, Inc.              */
+/*  COPYRIGHT (c) 1997, 1998, 1999, 2000 Stratus Computer (DE), Inc.   */
 /*                                                                     */
 /*  This program is free software; you can redistribute it and/or      */
 /*  modify it under the terms of either:                               */
@@ -84,6 +84,11 @@ extern pid_t fork (void)
 extern void Perl_dump_mstats (char *s)
 {
      bomb ("Perl_dump_mstats");
+}
+
+extern int Perl_get_mstats (struct perl_mstats *buf, int buflen, int level)
+{
+     bomb ("Perl_get_mstats");
 }
 
 extern pid_t waitpid (pid_t pid, int *stat_loc, int options)

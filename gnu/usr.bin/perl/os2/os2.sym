@@ -5,6 +5,7 @@ OS2_Perl_data
 dlopen
 dlsym
 dlerror
+dlclose
 my_tmpfile
 my_tmpnam
 my_flock
@@ -28,3 +29,10 @@ XS_Cwd_sys_is_relative
 XS_Cwd_sys_is_rooted
 XS_DynaLoader_mod2fname
 XS_File__Copy_syscopy
+Perl_Register_MQ
+Perl_Deregister_MQ
+Perl_Serve_Messages
+Perl_Process_Messages
+init_PMWIN_entries
+PMWIN_entries
+Perl_hab_GET

@@ -17,13 +17,14 @@ SCOR='s=c\\\.c|=c\_c|=g'
 SHSED='s=\.\(hsed\)=_\1=g'
 SDEPTMP='s=\.\(deptmp\)=_\1=g'
 SCPP='s=\.\(cpp\.\)=_\1=g'
-SARGV='s=\.\(argv\.\)=_\1=g'
+SARGV='s=\.\(argv\)\.=_\1_=g'
 SABC='s=\.\([abc][^a]\)=_\1=g'
 SDBMX='s=\.\(dbmx\)=_\1=g'
 SDBHASH='s=dbhash\.tmp=dbhash_tmp=g'
 SSTAT='s=\.\(stat\.\)=_\1=g'
 STMP2='s=tmp2=tm2=g'
 SPACKLIST='s=\.\(packlist\)=_\1=g'
+SDOTTMP='s=\.tmp=_tmp=g'
 
 sed -e $SCONFIG -e $SGREPTMP -e $SECHOTMP -e $SDDC -e $SOUT -e 's=\.\( \./\$file\)$=sh\1=g' Configure |tr -d '\r' >s; mv -f s Configure
 sed -e $SEXISTS -e $SLIST -e $SCONFIG Makefile.SH |tr -d '\r' >s; mv -f s Makefile.SH
@@ -33,7 +34,7 @@ sed -e $SEXISTS -e $SPACKLIST installperl >s; mv -f s installperl
 sed -e $SPOD2HTML lib/Pod/Html.pm |tr -d '\r' >s; mv -f s lib/Pod/Html.pm
 sed -e $SCC -e $SLIST -e $SFILEC -e $SCOR -e $SDEPTMP -e $SHSED makedepend.SH |tr -d '\r' >s; mv -f s makedepend.SH
 sed -e $SCPP t/comp/cpp.aux |tr -d '\r' >s; mv -f s t/comp/cpp.aux
-sed -e $SARGV t/io/argv.t >s; mv -f s t/io/argv.t
+sed -e $SARGV -e $SDOTTMP t/io/argv.t >s; mv -f s t/io/argv.t
 sed -e $SABC t/io/inplace.t >s; mv -f s t/io/inplace.t
 sed -e $SDBMX t/lib/anydbm.t >s; mv -f s t/lib/anydbm.t
 sed -e $SDBMX -e $SDBHASH t/lib/gdbm.t >s; mv -f s t/lib/gdbm.t

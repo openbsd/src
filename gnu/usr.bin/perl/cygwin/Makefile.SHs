@@ -1,0 +1,193 @@
+# This file is read by Makefile.SH to produce rules for $(LIBPERL) (and
+# some additional rules as well).
+
+# Rerun `sh Makefile.SH; make depend' after making any change.
+
+# Additional rules supported: libperls.a (for static linking),
+# ld2, perlld (dynamic linking tools)
+#
+
+#! /bin/sh
+case $CONFIG in
+'')
+	if test -f config.sh; then TOP=.;
+	elif test -f ../config.sh; then TOP=..;
+	elif test -f ../../config.sh; then TOP=../..;
+	elif test -f ../../../config.sh; then TOP=../../..;
+	elif test -f ../../../../config.sh; then TOP=../../../..;
+	else
+		echo "Can't find config.sh."; exit 1
+	fi
+	. $TOP/config.sh
+	;;
+esac
+
+addtopath=`pwd`
+$spitshell >>Makefile <<!GROK!THIS!
+
+cygwin.c: cygwin/cygwin.c
+	\$(LNS) cygwin/cygwin.c
+
+# shell script feeding perlld to decent perl
+ld2: $& Makefile perlld ${src}/cygwin/ld2.in
+	@echo "extracting ld2 (with variable substitutions)"
+	@$sed s,@buildpath@,$addtopath,g <${src}/cygwin/ld2.in >ld2
+	@echo "installing ld2 into $installbin"
+# install is included in Cygwin distributions, and we make a note of th
+# requirement in the README.cygwin file. However, let's give them
+# a warning.
+	@install -c -m 755 ld2 ${installbin}/ld2
+	@if test ! -f  ${installbin}/ld2; then \
+		echo "*************************************************" ; \
+		echo "Make will probably fail in a few more steps." ; \
+		echo "When it does, copy \"ld2\" to a directory in" ; \
+		echo "your path, other than \".\"." ; \
+		echo "\"/usr/local/bin\" or something similar will do." ; \
+		echo "Then restart make." ; \
+		echo "*************************************************" ; \
+	fi
+
+!GROK!THIS!
+
+$spitshell >>Makefile <<!GROK!THIS!
+
+# perlld parameters
+#
+# this one is pretty mandatory
+DLLWRAP = 'dllwrap'
+
+# following are optional.
+WRAPDRIVER = gcc
+DLLTOOL = dlltool
+EXPORT_ALL = 1
+
+# if some of extensions are empty,
+# no corresponding output will be done.
+# most probably, you'd like to have an export library
+DEF_EXT = .def
+EXP_EXT = .exp
+
+perlld: $& Makefile ${src}/cygwin/perlld.in
+	@echo "extracting perlld (with variable substitutions)"
+	@$sed -e s,@CC@,\${CC}, -e s,@DLLWRAP@,\${DLLWRAP},g \\
+	-e s,@WRAPDRIVER@,\${WRAPDRIVER},g -e s,@DLLTOOL@,\${DLLTOOL},g \\
+	-e s,@AS@,\${AS},g -e s,@EXPORT_ALL@,\${EXPORT_ALL},g \\
+	-e s,@DEF_EXT@,\${DEF_EXT},g -e s,@EXP_EXT@,\${EXP_EXT},g \\
+	-e s,@LIB_EXT@,\${LIB_EXT},g \\
+	${src}/cygwin/perlld.in >perlld
+
+!GROK!THIS!
+
+# make sure that all library names are not malformed
+libperl=`echo $libperl|sed -e s,\\\..*,,`
+
+# it would be nice to allow dll to have any name,
+# but for now i insist on 'lib<whatever>.dll'
+if ( ! ( echo $libperl | grep '^lib' >/dev/null ) )
+then
+  libperl=lib$libperl
+fi
+linklibperl=-l`echo $libperl|sed -e s,^lib,,`
+
+$spitshell >>Makefile <<!GROK!THIS!
+LIBPERL = $libperl
+LLIBPERL= $linklibperl
+CLDFLAGS= -L$addtopath $ldflags
+CAT = $cat
+AWK = $awk
+!GROK!THIS!
+
+case "$useshrplib" in
+true)
+	$spitshell >>Makefile <<'!NO!SUBS!'
+cwobj = $(obj)
+
+# override default rule (NB: make croaks!) to force dll usage
+perlmain$(OBJ_EXT): perlmain.c
+	$(CCCMD) $(PLDLFLAGS) -DUSEIMPORTLIB $*.c
+
+# library used to make statically linked executables
+# miniperl is linked against it to avoid libperl.dll locking
+$(LIBPERL)s$(LIB_EXT): $& perl$(OBJ_EXT) $(cwobj)
+	$(AR) rcu $@ perl$(OBJ_EXT) $(cwobj)
+
+# dll and import library
+$(LIBPERL)$(LIB_EXT): $& perl$(OBJ_EXT) $(cwobj) ld2
+	$(LDLIBPTH) ld2 $(SHRPLDFLAGS) -o $(LIBPERL)$(DLSUFFIX) \
+	perl$(OBJ_EXT) $(cwobj) $(libs)
+
+# How to build executables.
+
+# The miniperl -w -MExporter line is a basic cheap test to catch errors
+# before make goes on to run preplibrary and then MakeMaker on extensions.
+# This is very handy because later errors are often caused by miniperl
+# build problems but that's not obvious to the novice.
+# The Module used here must not depend on Config or any extensions.
+
+miniperl: $& miniperlmain$(OBJ_EXT) $(LIBPERL)s$(LIB_EXT) opmini$(OBJ_EXT)
+	$(LDLIBPTH) $(CC) $(LARGE) $(CLDFLAGS) -o miniperl miniperlmain$(OBJ_EXT) opmini$(OBJ_EXT) $(LLIBPERL)s $(libs)
+	$(LDLIBPTH) ./miniperl -w -Ilib -MExporter -e '<?>' || $(MAKE) minitest
+
+!NO!SUBS!
+	;;
+*)
+$spitshell >>Makefile <<'!NO!SUBS!'
+cwobj = $(obj)
+
+# perl library
+$(LIBPERL)$(LIB_EXT): $& perl$(OBJ_EXT) $(cwobj)
+	$(AR) rcu $@ perl$(OBJ_EXT) $(cwobj)
+
+# How to build executables.
+
+# The miniperl -w -MExporter line is a basic cheap test to catch errors
+# before make goes on to run preplibrary and then MakeMaker on extensions.
+# This is very handy because later errors are often caused by miniperl
+# build problems but that's not obvious to the novice.
+# The Module used here must not depend on Config or any extensions.
+
+miniperl: $& miniperlmain$(OBJ_EXT) $(LIBPERL)$(LIB_EXT) opmini$(OBJ_EXT)
+	$(LDLIBPTH) $(CC) $(LARGE) $(CLDFLAGS) -o miniperl miniperlmain$(OBJ_EXT) opmini$(OBJ_EXT) $(LLIBPERL) $(libs)
+	$(LDLIBPTH) ./miniperl -w -Ilib -MExporter -e '<?>' || $(MAKE) minitest
+
+!NO!SUBS!
+	;;
+esac
+
+# libperl.a is _the_ library both in dll and static cases
+# $(LIBPERL)$(LIB_EXT) expands to this name dependless of build model
+#
+$spitshell >>Makefile <<'!NO!SUBS!'
+
+opmini$(OBJ_EXT) : op.c
+	$(CCCMD) $(PLDLFLAGS) -DPERL_EXTERNAL_GLOB -o opmini$(OBJ_EXT) op.c
+
+perl: $& perlmain$(OBJ_EXT) $(LIBPERL)$(LIB_EXT) $(DYNALOADER) $(static_ext) ext.libs
+	$(SHRPENV) $(LDLIBPTH) $(CC) $(LARGE) $(CLDFLAGS) $(CCDLFLAGS) -o perl perlmain$(OBJ_EXT) $(DYNALOADER) $(static_ext) $(LLIBPERL) `cat ext.libs` $(libs)
+
+pureperl: $& perlmain$(OBJ_EXT) $(LIBPERL)$(LIB_EXT) $(DYNALOADER) $(static_ext) ext.libs
+	$(SHRPENV) $(LDLIBPTH) purify $(CC) $(LARGE) $(CLDFLAGS) $(CCDLFLAGS) -o pureperl perlmain$(OBJ_EXT) $(DYNALOADER) $(static_ext) $(LLIBPERL) `cat ext.libs` $(libs)
+
+purecovperl: $& perlmain$(OBJ_EXT) $(LIBPERL)$(LIB_EXT) $(DYNALOADER) $(static_ext) ext.libs
+	$(SHRPENV) $(LDLIBPTH) purecov $(CC) $(LARGE) $(CLDFLAGS) $(CCDLFLAGS) -o purecovperl perlmain$(OBJ_EXT) $(DYNALOADER) $(static_ext) $(LLIBPERL) `cat ext.libs` $(libs)
+
+quantperl: $& perlmain$(OBJ_EXT) $(LIBPERL)$(LIB_EXT) $(DYNALOADER) $(static_ext) ext.libs
+	$(SHRPENV) $(LDLIBPTH) quantify $(CC) $(LARGE) $(CLDFLAGS) $(CCDLFLAGS) -o quantperl perlmain$(OBJ_EXT) $(DYNALOADER) $(static_ext) $(LLIBPERL) `cat ext.libs` $(libs)
+
+!NO!SUBS!
+
+# suid perl is removed - i've never seen suid scripts for win32
+
+##############################################
+# additional targets
+
+$spitshell >>Makefile <<'!NO!SUBS!'
+
+DIST_DIRECTORY = .dist
+
+distdir: miniperl
+	-mkdir $(DIST_DIRECTORY)
+	./miniperl '-MExtUtils::Manifest' \
+	-e "ExtUtils::Manifest::manicopy(ExtUtils::Manifest::maniread(),'$(DIST_DIRECTORY)')"
+
+!NO!SUBS!

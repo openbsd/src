@@ -63,17 +63,11 @@ and fix its stack.  I have made good experiences with
 This doesn't establish a stack of 2 Bytes only as you might
 think.  It really reserves one half of the available memory
 for cc1's stack.  A setting of 1 would reserve the entire
-memory for cc1, 3 would reserve three thirds.  You will have
+memory for cc1, 3 would reserve three fourths.  You will have
 to find out the value that suits to your system yourself.
 
-BTW, cc1 is maybe a little hard to find.  It is generally installed
-as
-	/usr/local/lib/gcc-lib/<platform>/<gcc-version>/cc1
-
-where <platform> is probably something like "m68k-atari-mint"
-and <version> is the gcc version you use (find out with
-"gcc --version").  Maybe "gcc-lib" is not installed in
-"/usr/local/lib" but "/usr/lib" on your system.
+To find out the location of the program `cc1' simply type
+`gcc --print-prog-name cc1' at your shell prompt.
 
 Now run make (maybe "make -k").  If you get a fatal signal 10 
 increase cc1's stacksize, if you run out of memory you should 

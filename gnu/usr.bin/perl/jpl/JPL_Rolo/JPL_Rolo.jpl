@@ -1,0 +1,557 @@
+import java.awt.*;
+import java.awt.event.*;
+import java.lang.*;
+import java.util.*;
+
+public class JPL_Rolo extends Frame {
+
+    // The primary key of the row that is current onscreen.
+    //
+    int current_row = 0;
+
+    // TextField objects for each column.
+    //
+    TextField fld_name, fld_address, fld_city, fld_state, fld_zip, fld_id;
+
+    // Add or Edit mode.
+    //
+    String edit_status; 
+
+    // a layout manager for the Frame
+    //
+    GridBagLayout gb = new GridBagLayout();
+
+    // Action buttons.
+    //
+    Button next, previous, quit, save, newrow, edit, cancel, delete;
+
+    // A Panel for the action buttons.
+    //
+    Panel actionbuttons;
+
+    /**
+     * Construct a new instance of JPL_Rolo.
+     */
+    public JPL_Rolo(String[] argv) {
+        CreateForm();
+        addWindowListener(new WinEventHandler() );
+    }
+
+    public void CreateForm() {
+
+        // set the layout for the frame
+        //
+        this.setLayout(gb);
+
+        // this is the offset within the GridBagLayout. If
+        // I want the next object on a different line, I 
+        // postincrement. If not, I don't.
+        //
+        int i = 0;
+
+        // Add a text field for the name.
+        // 
+        AddToFrame(new Label("Name:"), 0, i);
+        fld_name = new TextField(20);
+        fld_name.setEditable(false);
+        AddToFrame(fld_name, 1, i++);
+
+        // The address.
+        //
+        AddToFrame(new Label("Address:"), 0, i);
+        fld_address = new TextField(35);
+        fld_address.setEditable(false);
+        AddToFrame(fld_address, 1, i++);
+
+        // The City. I'm not going to increment i, so the
+        // next field will show up on the same line.
+        //
+        AddToFrame(new Label("City:"), 0, i);
+        fld_city = new TextField(20);
+        fld_city.setEditable(false);
+        AddToFrame(fld_city, 1, i);
+
+        // The State.
+        //
+        AddToFrame(new Label("State:"), 2, i);
+        fld_state = new TextField(2);
+        fld_state.setEditable(false);
+        AddToFrame(fld_state, 3, i++);
+
+        // The Zip Code.
+        //
+        AddToFrame(new Label("Zip:"), 0, i);
+        fld_zip = new TextField(11);
+        fld_zip.setEditable(false);
+        AddToFrame(fld_zip, 1, i++);
+
+        // The id - this is always read-only.
+        //
+        AddToFrame(new Label("Id:"), 0, i);
+        fld_id = new TextField(4);
+        fld_id.setEditable(false);
+        AddToFrame(fld_id, 1, i++);
+
+        // create the button panel and give it a FlowLayout
+        //
+        actionbuttons = new Panel();
+        actionbuttons.setLayout(new FlowLayout(FlowLayout.CENTER, 5, 5));
+    
+        // Add the button panel to the Frame. The AddToFrame
+        // method isn't really set up to handle this sort of
+        // panel, so we will go through the tedious process
+        // of managing the GridBagConstraints...
+        //
+        GridBagConstraints c = new GridBagConstraints();
+        c.gridwidth = 3; c.gridheight = 1;
+        c.fill = GridBagConstraints.NONE;
+        c.anchor = GridBagConstraints.CENTER;
+        c.weightx = 0.0; c.weighty = 0.0;   
+        c.gridx = 0; c.gridy = i;
+        ((GridBagLayout)this.getLayout()).setConstraints(actionbuttons, c);   
+        this.add(actionbuttons);
+
+        // instantiate and add each of the buttons
+        //
+        previous = new Button("Previous");
+        actionbuttons.add(previous);
+        previous.addActionListener( new PrevRowHandler() );
+
+        next = new Button("Next");
+        actionbuttons.add(next);
+        next.addActionListener( new NextRowHandler() );
+
+        quit = new Button("Quit");
+        actionbuttons.add(quit);
+        quit.addActionListener( new QuitHandler() );
+
+        newrow = new Button("New");
+        actionbuttons.add(newrow);
+        newrow.addActionListener( new NewRowHandler() );
+
+        edit = new Button("Edit");
+        actionbuttons.add(edit);
+        edit.addActionListener( new EditRowHandler() );
+
+        delete = new Button("Delete");
+        actionbuttons.add(delete);
+        delete.addActionListener( new DeleteRowHandler() );
+
+        // save and cancel are disabled until the user
+        // is adding or editing.
+        //
+        save = new Button("Save");
+        actionbuttons.add(save);
+        save.setEnabled(false);
+        save.addActionListener( new SaveHandler() );
+
+        cancel = new Button("Cancel");
+        actionbuttons.add(cancel);
+        cancel.setEnabled(false);
+        cancel.addActionListener( new CancelHandler() );
+
+        // Invoke getRow() to display the first row in the table.
+        //
+        getRow(0);
+
+    }
+
+    /**
+     * Return the id of the current row.
+     */
+    public int getCurrentRowVal() {
+        return current_row;
+    }
+
+    public void setCols(String name, String address, String city, String state, String zip, String id) {
+
+        clearForm();
+
+        fld_name.setText(name);
+        fld_address.setText(address);
+        fld_city.setText(city);
+        fld_state.setText(state);
+        fld_zip.setText(zip);
+        fld_id.setText(id);
+        current_row = Integer.parseInt(id);
+          
+    }
+
+
+    public void setCurrentRow(int r) {
+        current_row = r;
+    }
+
+    public String getName()    { return fld_name.getText(); }
+    public String getAddress() { return fld_address.getText(); }
+    public String getCity()    { return fld_city.getText(); }
+    public String getState()   { return fld_state.getText(); }
+    public String getZip()     { return fld_zip.getText(); }
+    public String getId()      { return fld_id.getText(); }
+
+    /**
+     * This eventhandler will move to the previous row.
+     */
+    class PrevRowHandler implements ActionListener {
+        public void actionPerformed( ActionEvent e) {
+            getRow(-1);
+        }
+    }
+
+    /**
+     * This eventhandler will move to the next row.
+     */
+    class NextRowHandler implements ActionListener {
+        public void actionPerformed( ActionEvent e) {
+            getRow(1);
+        }
+    }
+
+    /**
+     * This eventhandler will terminate the application.
+     */
+    class QuitHandler implements ActionListener {
+        public void actionPerformed( ActionEvent e) {
+            System.exit(0);
+        }
+    }
+
+    /**
+     * This eventhandler will display a blank record and put
+     * this application in new record mode.
+     */
+    class NewRowHandler implements ActionListener {
+        public void actionPerformed( ActionEvent e) {
+                clearForm();
+                edit_status = "new";
+                setEdit();
+        }
+    }
+
+    /**
+     * This eventhandler will put the application in edit
+     * mode (for the current row).
+     */
+    class EditRowHandler implements ActionListener {
+        public void actionPerformed( ActionEvent e) {
+            edit_status = "edit";
+            setEdit();
+        }
+    }
+    /**
+     * This eventhandler will delete the current row.
+     */
+    class DeleteRowHandler implements ActionListener {
+        public void actionPerformed( ActionEvent e) {
+            delRow();
+        }
+    }
+
+    /**
+     * This eventhandler will save (update or insert) the
+     * current record.
+     */
+    class SaveHandler implements ActionListener {
+        public void actionPerformed( ActionEvent e) {
+
+            if (edit_status.equals("new")) {
+                saveIt();
+            }
+            if (edit_status.equals("edit")) {
+                updateRow();
+            }
+
+            // set the edit_status to "browse", and call setBrowse()
+            //
+            edit_status = "browse";
+            setBrowse();
+        }
+    }
+
+    /**
+     * This eventhandler cancels any pending edit.
+     */
+    class CancelHandler implements ActionListener {
+        public void actionPerformed( ActionEvent e) {
+            // if it was new, make sure that they can't edit the
+            // id field...
+
+            if (edit_status.equals("new")) {
+                fld_id.setEditable(false);
+            } 
+
+            // return the edit_status to browse, call getRow()
+            // to retrieve the row they were looking at
+            // before editing or adding, and call setBrowse()
+            //
+            edit_status = "browse";
+            getRow(0);
+            setBrowse();
+        }
+    }
+
+    // This is the event handler to deal with cases where
+    // the user closes the window with a window control.
+    //  
+    class WinEventHandler extends WindowAdapter {
+        public void windowClosing(WindowEvent e) {
+            System.exit(0);
+        }
+    }       
+
+    /**
+     * clearForm()
+     */
+    protected void clearForm () {
+        fld_name.setText("");
+        fld_address.setText("");
+        fld_city.setText("");
+        fld_state.setText("");
+        fld_zip.setText("");
+        fld_id.setText("");
+    }
+
+    /**
+     * AddToFrame()
+     * A convenience method to wrap the living hell
+     * that is GridBagConstraints()
+     */
+    protected void AddToFrame (Component item, int x, int y) {
+
+        // some sane layout defaults.
+        //
+        GridBagConstraints c = new GridBagConstraints();
+        c.gridwidth = 1; c.gridheight = 1;
+        c.fill = GridBagConstraints.NONE;
+        c.anchor = GridBagConstraints.NORTHWEST;
+        c.weightx = 0.0; c.weighty = 0.0;        
+
+        // set the grid coordinates
+        //
+        c.gridx = x; c.gridy = y;
+
+        // set the constraints, and add the item to the layout
+        //
+
+        ((GridBagLayout)this.getLayout()).setConstraints(item, c);    
+        this.add(item);
+    }
+
+    /**
+     * setEdit()
+     *
+     * prepare the form for editing/adding
+     */
+    protected void setEdit () {
+    
+        // disable all these buttons
+        //
+        next.setEnabled(false);
+        previous.setEnabled(false);
+        newrow.setEnabled(false);
+        edit.setEnabled(false);
+        delete.setEnabled(false);
+
+        // set everything except the id to be editable
+        //
+        fld_name.setEditable(true);
+        fld_address.setEditable(true);
+        fld_city.setEditable(true);
+        fld_state.setEditable(true);
+        fld_zip.setEditable(true);
+
+        // enable these two buttons
+        //
+        save.setEnabled(true);
+        cancel.setEnabled(true);
+    }
+
+    /**
+     * setBrowse()
+     *
+     * prepare the form for viewing
+     *
+     */
+    protected void setBrowse() {
+
+        // enable all these buttons
+        //
+        next.setEnabled(true);
+        previous.setEnabled(true);
+        newrow.setEnabled(true);
+        edit.setEnabled(true);
+        delete.setEnabled(true);
+
+        // disable the fields
+        //
+        fld_name.setEditable(false);
+        fld_address.setEditable(false);
+        fld_city.setEditable(false);
+        fld_state.setEditable(false);
+        fld_zip.setEditable(false);
+        fld_id.setEditable(false);
+   
+        // disable these two buttons
+        //
+        save.setEnabled(false);
+        cancel.setEnabled(false);
+    }
+
+    perl void delRow() {{
+
+        my $id      = $self->getId____s();
+
+        $sql = qq[delete from cardfile ] .
+               qq[where (id = $id)];
+        
+        use Sprite;
+        my $rdb = new Sprite();
+        my @data = $rdb->sql($sql);
+        $rdb->close("cardfile");
+        my $status = shift @data;
+        if (!$status) {
+            print STDERR "Bummer - couldn't execute query!\n";
+            die;
+        }
+        $self->setCurrentRow__I(0);
+        $self->getRow__I(0);
+
+    }}
+
+    perl void updateRow() {{
+
+        my $name    = $self->getName____s();
+        my $address = $self->getAddress____s();
+        my $city    = $self->getCity____s();
+        my $state   = $self->getState____s();
+        my $zip     = $self->getZip____s();
+        my $id      = $self->getId____s();
+
+        $sql = qq[update cardfile ] .
+               qq[set name    = ('$name'), ] .
+               qq[set address = ('$address'), ] .
+               qq[set city    = ('$city'), ] .
+               qq[set state   = ('$state'), ] .
+               qq[set zip     = ('$zip') ] .
+               qq[where (id = $id)];
+        
+        use Sprite;
+        my $rdb = new Sprite();
+        my @data = $rdb->sql($sql);
+        $rdb->close("cardfile");
+        my $status = shift @data;
+        if (!$status) {
+            print STDERR "Bummer - couldn't execute query!\n";
+            die;
+        }
+
+    }}
+
+
+    /**
+     * getRow()
+     *
+     * This method is used to either fetch this current row,
+     * in which case it is given an argument of zero, or it
+     * can be used to move relative to the current row, in
+     * which case it must be given an argument of 1 or -1.
+     *
+     */
+
+
+    perl void getRow(int direction) {{
+
+        use Sprite;
+        my $rdb = new Sprite();
+
+        my $nextid = $self->getCurrentRowVal____I() + $direction;
+        my $op;
+        if ($direction == -1) {
+            $op = "<=";
+        } else {
+            $op = ">=";
+        }
+        my $sql = "select name, address, city, "  .
+                  "state, zip, id from cardfile " .
+                  "where id $op $nextid";
+	
+        my @data = $rdb->sql($sql);
+        $rdb->close("cardfile");
+
+        my $status = shift @data;
+        if (!$status) {
+            print STDERR "Bummer - couldn't execute query!\n";
+            die;
+        }
+
+        my $numrows = scalar(@data);
+
+        if (!$numrows) {
+            print STDERR "End of file reached.\n";
+            return;
+        }
+
+        my $index;
+        if ($direction == -1) {
+            $index = $#data;
+        } else {
+            $index = 0;
+        }
+        my($name, $address, $city, $state, $zip, $id) = @{$data[$index]};
+        $self->setCols__ssssss($name, $address, $city, $state, $zip, $id);
+
+    }}
+
+    perl void saveIt() {{
+
+        use Sprite;
+        my $rdb = new Sprite();
+
+        my @data = $rdb->sql("select id, name from cardfile");
+
+        my $status = shift @data;
+        if (!$status) {
+            print STDERR "Bummer - couldn't execute query!\n";
+            die;
+        }
+
+        my @ids;
+        foreach $record (@data) {
+            my ($id, $name) = split (/\0/, $record, 2);
+            push @ids, $id;
+        }
+        @ids = sort @ids;
+        my $newid = $ids[$#ids] + 1;
+
+        my $name    = $self->getName____s();
+        my $address = $self->getAddress____s();
+        my $city    = $self->getCity____s();
+        my $state   = $self->getState____s();
+        my $zip     = $self->getZip____s();
+
+        my $sql = "insert into cardfile (name, address, city, state, zip, id) values ('$name', '$address', '$city', '$state', '$zip', $newid)";
+        @data = $rdb->sql($sql);
+        $rdb->close("cardfile");
+
+        $status = shift @data;
+        if (!$status) {
+            print STDERR "Bummer - couldn't execute insert!\n";
+            die;
+        }
+
+        $self->setCurrentRow__I($newid);
+
+    }}
+
+    public static void main(String[] args) {
+
+        // make a new JPL_Rolo, pack() it and show() it.
+        JPL_Rolo cardfile = new JPL_Rolo(args);
+        cardfile.pack();
+        cardfile.show();
+
+    }
+
+}
+
+

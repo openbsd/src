@@ -1,0 +1,25 @@
+eval `$JPL_SRC/setvars -perl`;
+$java = $ENV{JAVA_HOME};
+$jpl = $ENV{JPL_HOME};
+
+# Are we using Kaffe?
+#
+$KAFFE = 0;
+
+# What is the name of the JVM library?
+#
+$LIBJVM="java";
+
+# Where is the JVM library?
+#
+$LIBLOC="/usr/local/java/lib/i686/green_threads/";
+
+# Where are the Java includes?
+#
+@INCLUDE = ("$java/include", "$java/include/$^O", "$java/include/genunix");
+
+# Are we embedding Perl in Java?
+#
+$EMBEDDEDPERL = 0;
+
+1;

@@ -8,6 +8,7 @@
      cpu       option(-processor)name,allow(mc68020,i80860,pa7100,pa8000),=mc68020
      recompile switch(-recompile),=1
      rebind    switch(-rebind),=1
+     module    option(-module)module_name,='(current_module)'
 &end_parameters
 &echo command_lines
 &
@@ -35,5 +36,5 @@
 &then !create_file obj&obj&>build.out ; set_implicit_locking obj&obj&>build.out
 &
 !change_current_dir obj&obj&
-!start_process (string <build -processor &cpu& &recompile& &rebind&)
+!start_process (string <build -processor &cpu& &recompile& &rebind&) -module &module&
 !change_current_dir <

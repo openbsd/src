@@ -15,7 +15,7 @@
 
 $spitshell<<!GROK!THIS!
 
-Summary of my $package ($baserev patchlevel $PATCHLEVEL) configuration:
+Summary of my $package ($baserev version $PERL_VERSION subversion $PERL_SUBVERSION) configuration:
   Platform:
     osname=$osname, osver=$osvers, archname=$archname
     uname='$myuname'

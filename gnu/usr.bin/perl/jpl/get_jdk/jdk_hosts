@@ -1,0 +1,4 @@
+solaris => ftp://ftp.javasoft.com/pub/jdk1.1/jdk1.1.3-solaris2-sparc.bin
+linux	=> ftp://ftp.infomagic.com/pub/mirrors/linux/Java/JDK-1.1.3/linux-jdk.1.1.3-v2.tar.gz
+linux	=> ftp://ftp.connectnet.com/pub/java/JDK-1.1.3/linux-jdk.1.1.3-v2.tar.gz
+freebsd	=> http://www.csi.uottawa.ca/~kwhite/jdkbinaries/jdk1.1-FreeBSD.tar.gz

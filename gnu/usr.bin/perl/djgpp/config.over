@@ -25,7 +25,16 @@ repair()
      -e 's/posix/POSIX/'\
      -e 's/sdbm_fil/SDBM_File/'\
      -e 's/socket/Socket/'\
-     -e 's/thread/Thread/'
+     -e 's/thread/Thread/'\
+     -e 's/byteload/ByteLoader/'\
+     -e 's=devel/peek=Devel/Peek='\
+     -e 's=devel/dprof=Devel/DProf='\
+     -e 's=sys/sys=Sys/Sys='\
+     -e 's=sys/hos=Sys/Hos='\
+     -e 's=file/=='\
+     -e 's=File/=='\
+     -e 's=glob=='\
+     -e 's=Glob=='
 }
 static_ext=$(repair "$static_ext")
 extensions=$(repair "$extensions")
@@ -35,5 +44,5 @@ nonxs_ext=$(repair "$nonxs_ext")
 # I use Dos::UseLFN in AutoSplit.pm to override this under win0.95
 d_flexfnam='undef'
 
-# under W95 + bash the test program returns bogus result
+# with W95 + bash the test program returns bogus result
 d_casti32='undef'

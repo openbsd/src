@@ -13,7 +13,8 @@ use OS2::REXX;
 #
 # DLL
 #
-$ydba = load OS2::REXX "ydbautil" or die "1..0\n# load\n";
+$ydba = load OS2::REXX "ydbautil" 
+  or print "1..0 # skipped: cannot find YDBAUTIL.DLL\n" and exit;
 print "1..5\n", "ok 1\n";
 
 #

@@ -8,52 +8,44 @@ extern CPerlObj* pPerl;
 #endif
 
 #ifdef USE_DECLSPEC_THREAD
-__declspec(thread) struct perl_thread *Perl_current_thread = NULL;
+__declspec(thread) void *PL_current_context = NULL;
 #endif
 
 void
-Perl_setTHR(struct perl_thread *t)
+Perl_set_context(void *t)
 {
-#ifdef USE_THREADS
-#ifdef USE_DECLSPEC_THREAD
- Perl_current_thread = t;
-#else
- TlsSetValue(PL_thr_key,t);
-#endif
+#if defined(USE_THREADS) || defined(USE_ITHREADS)
+#  ifdef USE_DECLSPEC_THREAD
+    Perl_current_context = t;
+#  else
+    DWORD err = GetLastError();
+    TlsSetValue(PL_thr_key,t);
+    SetLastError(err);
+#  endif
 #endif
 }
 
-struct perl_thread *
-Perl_getTHR(void)
+void *
+Perl_get_context(void)
 {
-#ifdef USE_THREADS
-#ifdef USE_DECLSPEC_THREAD
- return Perl_current_thread;
+#if defined(USE_THREADS) || defined(USE_ITHREADS)
+#  ifdef USE_DECLSPEC_THREAD
+    return Perl_current_context;
+#  else
+    DWORD err = GetLastError();
+    void *result = TlsGetValue(PL_thr_key);
+    SetLastError(err);
+    return result;
+#  endif
 #else
- return (struct perl_thread *) TlsGetValue(PL_thr_key);
-#endif
-#else
- return NULL;
+    return NULL;
 #endif
 }
 
-void
-Perl_alloc_thread_key(void)
-{
 #ifdef USE_THREADS
-    static int key_allocated = 0;
-    if (!key_allocated) {
-	if ((PL_thr_key = TlsAlloc()) == TLS_OUT_OF_INDEXES)
-	    croak("panic: TlsAlloc");
-	key_allocated = 1;
-    }
-#endif
-}
-
 void
 Perl_init_thread_intern(struct perl_thread *athr)
 {
-#ifdef USE_THREADS
 #ifndef USE_DECLSPEC_THREAD
 
  /* 
@@ -65,13 +57,11 @@ Perl_init_thread_intern(struct perl_thread *athr)
  memset(&athr->i,0,sizeof(athr->i));
 
 #endif
-#endif
 }
 
 void
 Perl_set_thread_self(struct perl_thread *thr)
 {
-#ifdef USE_THREADS
     /* Set thr->self.  GetCurrentThread() retrurns a pseudo handle, need
        this to convert it into a handle another thread can use.
      */
@@ -82,17 +72,15 @@ Perl_set_thread_self(struct perl_thread *thr)
 		    0,
 		    FALSE,
 		    DUPLICATE_SAME_ACCESS);
-#endif
 }
 
-#ifdef USE_THREADS
 int
 Perl_thread_create(struct perl_thread *thr, thread_func_t *fn)
 {
     DWORD junk;
     unsigned long th;
 
-    DEBUG_S(PerlIO_printf(PerlIO_stderr(),
+    DEBUG_S(PerlIO_printf(Perl_debug_log,
 			  "%p: create OS thread\n", thr));
 #ifdef USE_RTL_THREAD_API
     /* See comment about USE_RTL_THREAD_API in win32thread.h */
@@ -123,7 +111,7 @@ Perl_thread_create(struct perl_thread *thr, thread_func_t *fn)
 #else	/* !USE_RTL_THREAD_API */
     thr->self = CreateThread(NULL, 0, fn, (void*)thr, 0, &junk);
 #endif	/* !USE_RTL_THREAD_API */
-    DEBUG_S(PerlIO_printf(PerlIO_stderr(),
+    DEBUG_S(PerlIO_printf(Perl_debug_log,
 			  "%p: OS thread = %p, id=%ld\n", thr, thr->self, junk));
     return thr->self ? 0 : -1;
 }

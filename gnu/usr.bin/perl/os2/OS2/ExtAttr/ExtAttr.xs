@@ -11,14 +11,14 @@ extern "C" {
 #include "myea.h"
 
 SV *
-my_eadvalue(_ead ead, int index)
+my_eadvalue(pTHX_ _ead ead, int index)
 {
     SV *sv;
     int size = _ead_value_size(ead, index);
     void *p;
 
     if (size == -1) {
-	die("Error getting size of EA: %s", strerror(errno));
+	Perl_die(aTHX_ "Error getting size of EA: %s", strerror(errno));
     }
     p = _ead_get_value(ead, index);
     return  newSVpv((char*)p, size);
@@ -37,6 +37,10 @@ SV *
 my_eadvalue(ead, index)
 	_ead	ead
 	int	index
+    CODE:
+	RETVAL = my_eadvalue(aTHX_ ead, index);
+    OUTPUT:
+	RETVAL
 
 int
 my_eadreplace(ead, index, sv, flag = 0)

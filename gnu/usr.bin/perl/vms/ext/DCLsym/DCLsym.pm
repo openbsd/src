@@ -256,7 +256,7 @@ version of this package.
 
 =head1 AUTHOR
 
-Charles Bailey  bailey@genetics.upenn.edu
+Charles Bailey  bailey@newman.upenn.edu
 
 =head1 VERSION
 

@@ -47,10 +47,10 @@ main(int argc, char *argv[])
 {
   FILE *ConfigSH, *Config_H;
   char LineBuffer[LINEBUFFERSIZE], *TempValue, *StartTilde, *EndTilde;
-  char SecondaryLineBuffer[LINEBUFFERSIZE];
+  char SecondaryLineBuffer[LINEBUFFERSIZE], OutBuf[LINEBUFFERSIZE];
   char TokenBuffer[TOKENBUFFERSIZE];
   int LineBufferLength, TempLength, DummyVariable, LineBufferLoop;
-  int TokenBufferLoop, ConfigSubLoop, GotIt;
+  int TokenBufferLoop, ConfigSubLoop, GotIt, OutBufPos;
   Translate TildeSub[NUMTILDESUBS];    /* Holds the tilde (~FOO~) */
                                        /* substitutions */
   Translate ConfigSub[NUMCONFIGSUBS];  /* Holds the substitutions from */
@@ -197,19 +197,20 @@ main(int argc, char *argv[])
       LineBufferLength--;
     }
 
+    OutBufPos = 0;
     /* Right. Go looking for $s. */
     for(LineBufferLoop = 0; LineBufferLoop < LineBufferLength;
         LineBufferLoop++) {
       /* Did we find one? */
       if ('$' != LineBuffer[LineBufferLoop]) {
         /* Nope, spit out the value */
-        putchar(LineBuffer[LineBufferLoop]);
+	OutBuf[OutBufPos++] = LineBuffer[LineBufferLoop];
       } else {
         /* Yes, we did. Is it escaped? */
         if ((LineBufferLoop > 0) && ('\\' == LineBuffer[LineBufferLoop -
                                                        1])) {
           /* Yup. Spit it out */
-          putchar(LineBuffer[LineBufferLoop]);
+          OutBuf[OutBufPos++] = LineBuffer[LineBufferLoop];
         } else {
          /* Nope. Go grab us a token */
           TokenBufferLoop = 0;
@@ -238,8 +239,9 @@ main(int argc, char *argv[])
             for(ConfigSubLoop = 0; ConfigSubLoop < ConfigSubCount;
                 ConfigSubLoop++) {
               if (!strcmp(TokenBuffer, ConfigSub[ConfigSubLoop].Tag)) {
-                GotIt = 1;
-                printf("%s", ConfigSub[ConfigSubLoop].Value);
+                char *cp = ConfigSub[ConfigSubLoop].Value;
+		GotIt = 1;
+		while (*cp) OutBuf[OutBufPos++] = *(cp++);
                 break;
               }
             }
@@ -247,21 +249,49 @@ main(int argc, char *argv[])
             /* Did we find something? If not, spit out what was in our */
             /* buffer */
             if (!GotIt) {
-              printf("$%s", TokenBuffer);
+	      char *cp = TokenBuffer;
+	      OutBuf[OutBufPos++] = '$';
+	      while (*cp) OutBuf[OutBufPos++] = *(cp++);
             }
             
           } else {
             /* Just a bare $. Spit it out */
-            putchar('$');
+            OutBuf[OutBufPos++] = '$';
           }       
         }
       }
     }
     
-    /* We're all done. Spit out an EOL */
-    printf("\n");
-    
-    
+    /* If we've created an #undef line, make sure we don't output anthing
+     * after the "#undef FOO" besides comments.  We could do this as we
+     * go by recognizing the #undef as it goes by, and thus avoid another
+     * use of a fixed-length buffer, but this is simpler.
+     */
+    if (!strncmp(OutBuf,"#undef",6)) {
+      char *cp = OutBuf;
+      int i, incomment = 0;
+      LineBufferLoop = 0;
+      OutBuf[OutBufPos] = '\0';
+      for (i = 0; i <= 1; i++) {
+	while (!isspace(*cp)) LineBuffer[LineBufferLoop++] = *(cp++);
+	while ( isspace(*cp)) LineBuffer[LineBufferLoop++] = *(cp++);
+      }
+      while (*cp) {
+	while (isspace(*cp)) LineBuffer[LineBufferLoop++] = *(cp++);
+	if (!incomment && *cp == '/' && *(cp+1) == '*') incomment = 1;
+	while (*cp && !isspace(*cp)) {
+	  if (incomment) LineBuffer[LineBufferLoop++] = *cp;
+	  cp++;
+	}
+	if (incomment && *cp == '*' && *(cp+1) == '/') incomment = 0;
+      }
+      LineBuffer[LineBufferLoop] = '\0';
+      puts(LineBuffer);
+    }	
+    else {
+      OutBuf[OutBufPos] = '\0';
+      puts(OutBuf);
+    }
   }
   
   /* Close the files */

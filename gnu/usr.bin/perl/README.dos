@@ -5,7 +5,7 @@ specially designed to be readable as is.
 =head1 NAME
 
 perldos - Perl under DOS, W31, W95.
-                                 
+
 =head1 SYNOPSIS
 
 These are instructions for building Perl under DOS (or w??), using
@@ -46,7 +46,7 @@ the world. Like:
 
 You need the following files to build perl (or add new modules):
 
-        v2/djdev201.zip
+        v2/djdev202.zip
         v2/bnu27b.zip
         v2gnu/gcc2721b.zip
         v2gnu/bsh1147b.zip
@@ -60,17 +60,11 @@ You need the following files to build perl (or add new modules):
         v2gnu/gawk303b.zip
         v2misc/csdpmi4b.zip 
 
-or any newer version.
+or possibly any newer version.
 
 =item Pthreads
 
-If you want multithreading support in perl, you need a pthread library
-that supports DJGPP. One of them can be found at:
-
-        ftp://ftp.cs.fsu.edu/pub/PART/PTHREADS/pthreads.zip
-
-But thread support is still in alpha, it may be unstable. For more information
-see below.
+Thread support is not tested in this version of the djgpp perl.
 
 =back
 
@@ -105,11 +99,11 @@ sockets
 
 =item *
 
-Unpack the source package F<perl5.00?_??.tar.gz> with djtarx. If you want
+Unpack the source package F<perl5.6*.tar.gz> with djtarx. If you want
 to use long file names under w95, don't forget to use
 
         set LFN=y
-        
+
 before unpacking the archive.
 
 =item *
@@ -160,7 +154,7 @@ with: C<stubedit cc1.exe>).
 You can use the Configure script in non-interactive mode too.
 When I built my F<perl.exe>, I used something like this:
 
-        configure.bat -Uuseposix -des
+        configure.bat -des
 
 You can find more info about Configure's command line switches in
 the F<INSTALL> file.
@@ -191,9 +185,10 @@ Type:
 
         make test
 
-You should see "All tests successful" if you configured a database
-manager, and 1 failed test script if not (F<lib/anydbm.t>). If you
-configured POSIX you will see 1 additional failed subtest in F<lib/posix.t>.
+If you're lucky you should see "All tests successful". But there can be
+a few failed subtests (less than 5 hopefully) depending on some external
+conditions (e.g. some subtests fail under linux/dosemu or plain dos
+with short filenames only).
 
 =head2 Installation
 
@@ -206,67 +201,9 @@ directory structure. Perl.exe and the utilities go into C<($DJDIR)/bin>,
 and the library goes under C<($DJDIR)/lib/perl5>. The pod documentation
 goes under C<($DJDIR)/lib/perl5/pod>.
 
-=head2 Threaded perl under dos-djgpp
-
-Multithreading support is considered alpha, because some of the
-tests in C<ext/Thread> still die with SIGSEGV (patches are welcome). But
-if you want to give it a try, here are the necessary steps:
-
-=over 4
-
-=item
-
-1. You will need a pthread library which supports djgpp. Go, and download
-FSU's version from:
-
-      ftp://ftp.cs.fsu.edu/pub/PART/PTHREADS/pthreads.zip
-
-The latest version is 3.5, released in Feb 98.
-
-=item 
-
-2. Unzip the file, cd to C<threads\src> and run F<configur.bat>.
-
-=item 
-
-3. Add C<RAND_SWITCH> or C<MUTEX_SWITCH> or C<RR_SWITCH> to C<CFLAGS>
-in the F<makefile>. Note that using these values, multithreading will
-NOT be preemptive. This is necessary, since djgpp's libc is not thread safe.
-
-=item 
-
-4. Apply the following patch:
-
-    *** include/pthread/signal.h~	Wed Feb  4 10:51:24 1998
-    --- include/pthread/signal.h	Tue Feb 10 22:40:32 1998
-    ***************
-    *** 364,368 ****
-    --- 364,370 ----
-      
-      #ifndef SA_ONSTACK
-    + #ifdef  SV_ONSTACK
-      #define SA_ONSTACK SV_ONSTACK
-    + #endif
-      #endif /* !SA_ONSTACK */
-
-=item
-
-5. run make (before you do this, you must make sure your C<SHELL> environment 
-variable does NOT point to bash).
-
-=item
-
-6. Install the library and header files into your djgpp directory structure.
-
-=item
-
-7. Add C<-Dusethreads> to the commmand line of perl's F<configure.bat>.
-
-=back
-
 =head1 AUTHOR
 
-Laszlo Molnar, F<molnarl@cdata.tvnet.hu>
+Laszlo Molnar, F<laszlo.molnar@eth.ericsson.se>
 
 =head1 SEE ALSO
 

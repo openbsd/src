@@ -110,7 +110,7 @@ deficiencies in the UNIX-emulation, most notably:
 
 =item umask() works, but the correct permissions are only set when the file is
       finally close()d
- 
+
 =back
 
 =head1 INSTALLATION

@@ -1,5 +1,8 @@
 #ifndef _WIN32THREAD_H
 #define _WIN32THREAD_H
+
+#include "win32.h"
+
 typedef struct win32_cond { LONG waiters; HANDLE sem; } perl_cond;
 typedef DWORD perl_key;
 typedef HANDLE perl_os_thread;
@@ -19,25 +22,28 @@ typedef CRITICAL_SECTION perl_mutex;
 #else
 
 typedef HANDLE perl_mutex;
-#define MUTEX_INIT(m) \
+#  define MUTEX_INIT(m) \
     STMT_START {						\
 	if ((*(m) = CreateMutex(NULL,FALSE,NULL)) == NULL)	\
-	    croak("panic: MUTEX_INIT");				\
+	    Perl_croak_nocontext("panic: MUTEX_INIT");		\
     } STMT_END
-#define MUTEX_LOCK(m) \
+
+#  define MUTEX_LOCK(m) \
     STMT_START {						\
 	if (WaitForSingleObject(*(m),INFINITE) == WAIT_FAILED)	\
-	    croak("panic: MUTEX_LOCK");				\
+	    Perl_croak_nocontext("panic: MUTEX_LOCK");		\
     } STMT_END
-#define MUTEX_UNLOCK(m) \
+
+#  define MUTEX_UNLOCK(m) \
     STMT_START {						\
 	if (ReleaseMutex(*(m)) == 0)				\
-	    croak("panic: MUTEX_UNLOCK");			\
+	    Perl_croak_nocontext("panic: MUTEX_UNLOCK");	\
     } STMT_END
-#define MUTEX_DESTROY(m) \
+
+#  define MUTEX_DESTROY(m) \
     STMT_START {						\
 	if (CloseHandle(*(m)) == 0)				\
-	    croak("panic: MUTEX_DESTROY");			\
+	    Perl_croak_nocontext("panic: MUTEX_DESTROY");	\
     } STMT_END
 
 #endif
@@ -51,21 +57,21 @@ typedef HANDLE perl_mutex;
 	(c)->waiters = 0;					\
 	(c)->sem = CreateSemaphore(NULL,0,LONG_MAX,NULL);	\
 	if ((c)->sem == NULL)					\
-	    croak("panic: COND_INIT (%ld)",GetLastError());	\
+	    Perl_croak_nocontext("panic: COND_INIT (%ld)",GetLastError());	\
     } STMT_END
 
 #define COND_SIGNAL(c) \
     STMT_START {						\
 	if ((c)->waiters > 0 &&					\
 	    ReleaseSemaphore((c)->sem,1,NULL) == 0)		\
-	    croak("panic: COND_SIGNAL (%ld)",GetLastError());	\
+	    Perl_croak_nocontext("panic: COND_SIGNAL (%ld)",GetLastError());	\
     } STMT_END
 
 #define COND_BROADCAST(c) \
     STMT_START {						\
 	if ((c)->waiters > 0 &&					\
 	    ReleaseSemaphore((c)->sem,(c)->waiters,NULL) == 0)	\
-	    croak("panic: COND_BROADCAST (%ld)",GetLastError());\
+	    Perl_croak_nocontext("panic: COND_BROADCAST (%ld)",GetLastError());\
     } STMT_END
 
 #define COND_WAIT(c, m) \
@@ -76,7 +82,7 @@ typedef HANDLE perl_mutex;
 	 * COND_BROADCAST() on another thread will have seen the\
 	 * right number of waiters (i.e. including this one) */	\
 	if (WaitForSingleObject((c)->sem,INFINITE)==WAIT_FAILED)\
-	    croak("panic: COND_WAIT (%ld)",GetLastError());	\
+	    Perl_croak_nocontext("panic: COND_WAIT (%ld)",GetLastError());	\
 	/* XXX there may be an inconsequential race here */	\
 	MUTEX_LOCK(m);						\
 	(c)->waiters--;						\
@@ -86,14 +92,14 @@ typedef HANDLE perl_mutex;
     STMT_START {						\
 	(c)->waiters = 0;					\
 	if (CloseHandle((c)->sem) == 0)				\
-	    croak("panic: COND_DESTROY (%ld)",GetLastError());	\
+	    Perl_croak_nocontext("panic: COND_DESTROY (%ld)",GetLastError());	\
     } STMT_END
 
 #define DETACH(t) \
     STMT_START {						\
 	if (CloseHandle((t)->self) == 0) {			\
 	    MUTEX_UNLOCK(&(t)->mutex);				\
-	    croak("panic: DETACH");				\
+	    Perl_croak_nocontext("panic: DETACH");		\
 	}							\
     } STMT_END
 
@@ -140,27 +146,34 @@ typedef THREAD_RET_TYPE thread_func_t(void *);
 START_EXTERN_C
 
 #if defined(PERLDLL) && defined(USE_DECLSPEC_THREAD) && (!defined(__BORLANDC__) || defined(_DLL))
-extern __declspec(thread) struct perl_thread *Perl_current_thread;
-#define SET_THR(t)   		(Perl_current_thread = t)
-#define THR			Perl_current_thread
+extern __declspec(thread) void *PL_current_context;
+#define PERL_SET_CONTEXT(t)   		(PL_current_context = t)
+#define PERL_GET_CONTEXT		PL_current_context
 #else
-#define THR			Perl_getTHR()
-#define SET_THR(t)		Perl_setTHR(t)
+#define PERL_GET_CONTEXT		Perl_get_context()
+#define PERL_SET_CONTEXT(t)		Perl_set_context(t)
 #endif
-struct perl_thread;
 
-void Perl_alloc_thread_key _((void));
-int Perl_thread_create _((struct perl_thread *thr, thread_func_t *fn));
-void Perl_set_thread_self _((struct perl_thread *thr));
-struct perl_thread *Perl_getTHR _((void));
-void Perl_setTHR _((struct perl_thread *t));
-void Perl_init_thread_intern _((struct perl_thread *t));
+#if defined(USE_THREADS)
+struct perl_thread;
+int Perl_thread_create (struct perl_thread *thr, thread_func_t *fn);
+void Perl_set_thread_self (struct perl_thread *thr);
+void Perl_init_thread_intern (struct perl_thread *t);
+
+#define SET_THREAD_SELF(thr) Perl_set_thread_self(thr)
+
+#endif /* USE_THREADS */
 
 END_EXTERN_C
 
-#define INIT_THREADS NOOP
-#define ALLOC_THREAD_KEY Perl_alloc_thread_key()
-#define SET_THREAD_SELF(thr) Perl_set_thread_self(thr)
+#define INIT_THREADS		NOOP
+#define ALLOC_THREAD_KEY \
+    STMT_START {							\
+	if ((PL_thr_key = TlsAlloc()) == TLS_OUT_OF_INDEXES) {		\
+	    fprintf(stderr,"panic: TlsAlloc");				\
+	    exit(1);							\
+	}								\
+    } STMT_END
 
 #if defined(USE_RTL_THREAD_API) && !defined(_MSC_VER)
 #define JOIN(t, avp)							\
@@ -168,7 +181,7 @@ END_EXTERN_C
 	if ((WaitForSingleObject((t)->self,INFINITE) == WAIT_FAILED)	\
 	     || (GetExitCodeThread((t)->self,(LPDWORD)(avp)) == 0)	\
 	     || (CloseHandle((t)->self) == 0))				\
-	    croak("panic: JOIN");					\
+	    Perl_croak_nocontext("panic: JOIN");			\
 	*avp = (AV *)((t)->i.retv);					\
     } STMT_END
 #else	/* !USE_RTL_THREAD_API || _MSC_VER */
@@ -177,7 +190,7 @@ END_EXTERN_C
 	if ((WaitForSingleObject((t)->self,INFINITE) == WAIT_FAILED)	\
 	     || (GetExitCodeThread((t)->self,(LPDWORD)(avp)) == 0)	\
 	     || (CloseHandle((t)->self) == 0))				\
-	    croak("panic: JOIN");					\
+	    Perl_croak_nocontext("panic: JOIN");			\
     } STMT_END
 #endif	/* !USE_RTL_THREAD_API || _MSC_VER */
 

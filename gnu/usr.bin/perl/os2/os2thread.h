@@ -8,7 +8,11 @@ typedef _rmutex perl_mutex;
 /*typedef HEV perl_cond;*/	/* Will include os2.h into all C files.  */
 typedef unsigned long perl_cond;
 
+#ifdef USE_SLOW_THREAD_SPECIFIC
 typedef int perl_key;
+#else
+typedef void** perl_key;
+#endif
 
 typedef unsigned long pthread_attr_t;
 #define PTHREADS_INCLUDED
