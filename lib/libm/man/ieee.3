@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ieee.3,v 1.7 2003/02/28 19:58:41 jason Exp $
+.\"	$OpenBSD: ieee.3,v 1.8 2003/05/20 09:17:51 jmc Exp $
 .\" Copyright (c) 1985, 1991 Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -48,7 +48,7 @@
 .Nm remainderf ,
 .Nm scalbn ,
 .Nm scalbnf
-.Nd Functions for IEEE arithmetic
+.Nd functions for IEEE arithmetic
 .Sh SYNOPSIS
 .Fd #include <math.h>
 .Ft double
@@ -100,7 +100,7 @@ zero is returned
 .Pf \\*(Ba Ns Fa x Ns \\*(Ba
 = \*(If or
 .Fa x
-is \*(Na
+is \*(Na.
 The
 .Fn finitef
 function is a single precision version of
@@ -156,8 +156,8 @@ moreover if
 1/2
 then
 .Fa n
-is even.  Consequently
-the remainder is computed exactly and
+is even.
+Consequently, the remainder is computed exactly and
 .Sm off
 .Pf \\*(Ba Fa r No \\*(Ba
 .Sm on

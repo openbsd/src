@@ -1,4 +1,4 @@
-.\"	$OpenBSD: exp.3,v 1.13 2003/05/08 09:09:45 jmc Exp $
+.\"	$OpenBSD: exp.3,v 1.14 2003/05/20 09:17:51 jmc Exp $
 .\"
 .\" Copyright (c) 1985, 1991 Regents of the University of California.
 .\" All rights reserved.
@@ -83,7 +83,7 @@ function computes the exponential value of the given argument
 .Fa x .
 The
 .Fn expf
-function is a single precision version of 
+function is a single precision version of
 .Fn exp .
 .Pp
 The
@@ -189,7 +189,8 @@ and
 .Fn pow
 detect if the computed value will overflow,
 set the global variable
-.Va errno to
+.Va errno
+to
 .Er ERANGE
 and cause a reserved operand fault on a
 .Tn VAX
@@ -259,15 +260,16 @@ and
 .Em NaN
 (the reserved
 operand on a
-.Tn VAX ) .  Previous implementations of pow may
-have defined x**0 to be undefined in some or all of these
-cases.  Here are reasons for returning x**0 = 1 always:
+.Tn VAX ) .
+Previous implementations of pow may
+have defined x**0 to be undefined in some or all of these cases.
+Here are reasons for returning x**0 = 1 always:
 .Bl -enum -width indent
 .It
 Any program that already tests whether x is zero (or
 infinite or \*(Na) before computing x**0 cannot care
-whether 0**0 = 1 or not. Any program that depends
-upon 0**0 to be invalid is dubious anyway since that
+whether 0**0 = 1 or not.
+Any program that depends upon 0**0 to be invalid is dubious anyway since that
 expression's meaning and, if invalid, its consequences
 vary from one computer system to another.
 .It

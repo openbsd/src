@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hypot.3,v 1.9 2003/05/08 09:09:45 jmc Exp $
+.\"	$OpenBSD: hypot.3,v 1.10 2003/05/20 09:17:51 jmc Exp $
 .\" Copyright (c) 1985, 1991 Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -57,7 +57,7 @@ The
 and
 .Fn cabs
 functions
-computes the
+compute the
 sqrt(x*x+y*y)
 in such a way that underflow will not happen, and overflow
 occurs only if the final result deserves it.
@@ -104,7 +104,7 @@ same is true on a
 .Tn VAX .
 But programmers on machines other than a
 .Tn VAX
-(if has no \*(If)
+(it has no \*(If)
 might be surprised at first to discover that
 .Fn hypot "\(+-\*(If" "\*(Na"
 = +\*(If.

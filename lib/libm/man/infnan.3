@@ -1,4 +1,4 @@
-.\"	$OpenBSD: infnan.3,v 1.6 2003/03/06 20:13:15 jmc Exp $
+.\"	$OpenBSD: infnan.3,v 1.7 2003/05/20 09:17:51 jmc Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -54,8 +54,8 @@ Floating\-Point Arithmetic will be simulated in
 .Tn UNIX
 on the
 .Tn DEC VAX
-by using its Reserved Operands.  Meanwhile, the
-Invalid, Overflow and Divide\-by\-Zero exceptions of the
+by using its Reserved Operands.
+Meanwhile, the Invalid, Overflow and Divide\-by\-Zero exceptions of the
 .Tn IEEE
 standard are being approximated on a
 .Tn VAX
@@ -91,7 +91,8 @@ exceptions, it calls
 with an appropriate value of
 .Fa iarg .
 Then a
-reserved operand fault stops computation.  But
+reserved operand fault stops computation.
+But
 .Fn infnan
 could
 be replaced by a function with the same name that returns
@@ -100,15 +101,15 @@ variable
 .Va errno ,
 and allows computation to resume.
 Alternatively, the Reserved Operand Fault Handler could be
-changed to respond by returning that plausible value, etc.
+changed to respond by returning that plausible value, etc.,
 instead of aborting.
 .Pp
 In the table below, the first two columns show various
 exceptions signaled by the
 .Tn IEEE
 standard, and the default
-result it prescribes.  The third column shows what value is
-given to
+result it prescribes.
+The third column shows what value is given to
 .Fa iarg
 by functions in
 .Em libm
@@ -120,14 +121,15 @@ under analogous circumstances on a
 Currently
 .Fn infnan
 stops computation under all those
-circumstances.  The last two columns offer an alternative;
+circumstances.
+The last two columns offer an alternative;
 they suggest a setting for
 .Va errno
 and a value for a
 revised
 .Fn infnan
-to return.  And a C program to
-implement that suggestion follows.
+to return.
+And a C program to implement that suggestion follows.
 .sp 0.5
 .Bd -filled -offset indent
 .Bl -column "IEEE Sig" "IEEE Default" XXERANGE ERANGExEDOM
