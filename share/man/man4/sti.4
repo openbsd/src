@@ -1,0 +1,239 @@
+.\"	$OpenBSD: sti.4,v 1.1 2001/05/12 00:04:30 mickey Exp $
+.\"
+.\" Copyright (c) 2001 Michael Shalayeff
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"      This product includes software developed by Michael Shalayeff.
+.\" 4. The name of the author may not be used to endorse or promote products
+.\"    derived from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR OR HIS RELATIVES BE LIABLE FOR ANY DIRECT,
+.\" INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+.\" (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+.\" SERVICES; LOSS OF MIND, USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+.\" STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+.\" IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+.\" THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd May 11, 2001
+.Dt STI 4
+.Os
+.Sh NAME
+.Nm sti
+.Nd HP Standard Text Interface
+.Sh SYNOPSIS
+.Cd "sti*	at mainbus0 irq ?"
+.\" .Cd "sti*	at pci? device ? function ?"
+.Cd "wsdisplay*	at sti? console ?"
+.Pp
+.Sh DESCRIPTION
+The
+.Nm
+was created by HP to provide a unifor frame-buffer access operations
+for their 9000/300 and 9000/700 series of workstations.
+Implementation consists of a set of functions burnt in to the PROM
+on the card and providing the following set of functions (see below
+for PROM revision history on functions supported by particular PROM
+revision):
+.Pp
+.Bl -bullet -compact
+.It
+Initialize graphics.
+.It
+State management.
+.It
+Print a charecter onto the screen using currently selected font.
+.It
+Copy a region of the frame-buffer to another location.
+.It
+Self testing.
+.It
+Exception handling.
+.It
+Frame-buffer configuration enquiry.
+.It
+Setting colour-map entry.
+.It
+DMA parameters.
+.It
+Flow control.
+.It
+User timing.
+.It
+Processing management.
+.It
+Miscellaneous utility functions.
+.El
+.Pp
+There are two modes for accessing the PROM:
+.Dr byte
+and
+.Dq word
+mode.
+In
+.Dq byte
+mode each 4-byte word contains only the low ordered big endian
+byte of data, i.e. to compose one word of data 4 words should be read
+and low ordered bytes of those should be shifted correspondently.
+In
+.Dq word
+mode each word contains all 4 bytes of valid data.
+.Pp
+PROM revision history:
+.Bl -tag -width "00.00" -compact
+.It 8.02
+Original release.
+.It 8.03
+.Bl -bullet -compact
+.It
+OSF-extended self test (a.k.a fast).
+.It
+Restore display.
+.El
+.It 8.04
+.Bl -bullet -compact
+.\" global cfg
+.\" rename global cfg ext
+.\" global cfg ext
+.It
+Implement
+.Nm curr_mon
+function.
+.\" friendly boot
+.\" sti_mem_addr
+.\" dd
+.\" word mode
+.\" num mons
+.\" mon tbl
+.\" user data
+.\" sti mem req
+.\" user data size
+.\" maxtime
+.\" mon tbl desc struct
+.\" init_inptr
+.\" rename init_inptr_ext
+.\" init_inptr_ext
+.\" config mon type
+.\" cmt change
+.\" font unpmv
+.\" non text
+.It
+Implement
+.Dq block move .
+.\" non-text
+.It
+Implement
+.Dq set colour-map entry .
+.Nm
+Implement word mode.
+.It
+Support for multiple monitors.
+.It
+Support
+.Nm user_data
+.Nm
+space usage.
+.It
+Support for extra memory.
+.It
+Support for
+.Nm Windows NT (tm) .
+.It
+Monitor frequency reference.
+.It
+Early console.
+.It
+Support added for: PCXL,
+.Nm GSC
+bus, ROM-less operation.
+.El
+.It 8.05
+.Bl -bullet -compact
+.It
+Interrupt support.
+.It
+Report card's power usage.
+.It
+Birds of Prey.
+.It
+User interrupts.
+.El
+.It 8.06
+.Bl -bullet -compact
+.It
+Multiple fonts.
+.It
+Monitor table descriptor strings.
+.It
+PCXL2 and PCXU monitor descriptors.
+.El
+.It 8.08
+.Bl -bullet -compact
+.It
+HP/UX 10 support for Visualize FX
+.It
+.Nm dma_ctrl
+function added.
+.It
+.Nm flow_ctrl
+function added.
+.It
+.Nm user_timing
+function added.
+.El
+.It 8.09
+.Bl -bullet -compact
+.It
+Addition changes for
+.Nm Visualize FX
+due to rearchitecture for perfomance.
+.It
+.Nm process_mgr
+function added.
+.El
+.It 8.0a
+PCXL2 and PCXU dual
+.Nm PCI
+EPROM map mode, implemented on
+.Nm Visualize EG .
+.It 8.0b
+Support for HP-UX non-implicit locking DMA, implemented on
+.Nm Visuzlize FXE .
+.It 8.0c
+.Nm sti_util
+function added (flashing under HP-UX and other sideband traffic).
+.It 8.0d
+Colour frame buffer support.
+
+.Sh SEE ALSO
+.Xr intro 4 ,
+.Xr wsdisplay 4 .
+.Pp
+"Standard Text Interface For Graphics Devices",
+Revision 8.13, March 1, 2000, Hewlett Packard
+.Sh BUGS
+Currently none of the font loading, scroll back or screen blanking
+is implemented.
+.Sh HISTORY
+The
+.Nm
+driver was written by
+.An Michael Shalayeff Aq mickey@openbsd.org
+for
+.Xr hppa 4
+port for
+.Ox 2.7 .
