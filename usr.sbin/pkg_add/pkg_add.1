@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.23 2004/11/14 12:04:19 espie Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.24 2004/11/15 10:21:40 jmc Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -25,13 +25,13 @@
 .Nd install software package distributions
 .Sh SYNOPSIS
 .Nm pkg_add
-.Op Fl acqInrvx
+.Op Fl acInqrvx
 .Op Fl A Ar arch
 .Op Fl B Ar pkg-destdir
-.Op Fl Q Ar quick-destdir
 .Op Fl f Ar keys
 .Op Fl L Ar localbase
 .Op Fl P Ar type
+.Op Fl Q Ar quick-destdir
 .Ar pkg-name Op Ar ...
 .Sh DESCRIPTION
 The
@@ -88,22 +88,22 @@ in which case setting
 correctly will be necessary for any dependency to be found out and retrieved
 the same way.
 For example, the following works:
-.Bd -literal
-	$ ftp ftp://ftp.openbsd.org/pub/OpenBSD/2.7/packages/i386/
-	250 CWD command successful
-	ftp> ls m*
-	227 Entering Passive Mode (129,128,5,191,164,73)
-	150 Opening ASCII mode data connection for m*.
-	m4-1.4.tgz
-	metamail-2.7.tgz
-	mh-6.8.4.tgz
-	mm-1.0.12.tgz
-	mpeg_lib-1.2.1.tgz
-	mpeg_play-2.4.tgz
-	mpg123-0.59q.tgz
-	mutt-0.95.7i.tgz
-	226 Transfer complete.
-	ftp> get m4-1.4.tgz "|pkg_add -v -"
+.Bd -literal -offset indent
+$ ftp ftp://ftp.openbsd.org/pub/OpenBSD/2.7/packages/i386/
+250 CWD command successful
+ftp> ls m*
+227 Entering Passive Mode (129,128,5,191,164,73)
+150 Opening ASCII mode data connection for m*.
+m4-1.4.tgz
+metamail-2.7.tgz
+mh-6.8.4.tgz
+mm-1.0.12.tgz
+mpeg_lib-1.2.1.tgz
+mpeg_play-2.4.tgz
+mpg123-0.59q.tgz
+mutt-0.95.7i.tgz
+226 Transfer complete.
+ftp> get m4-1.4.tgz "|pkg_add -v -"
 .Ed
 .Pp
 .Sy Warning:
@@ -117,59 +117,29 @@ Be sure the specified package(s) are from trusted sources.
 .Pp
 The options are as follows:
 .Bl -tag -width keyword
-.It Fl a
-Automated package installation, do not record packages as installed manually.
-.It Fl c
-While replacing packages, delete extra configuration file in the old package, 
-mentioned as
-.Dl @extra file
-in the packing-list.
-.It Fl I
-If scripts exist for a given package, do not execute them.
-.It Fl n
-Don't actually install a package, just report the steps that
-would be taken if it was.
-.It Fl q
-Replace package quickly, do not bother checking md5s before removing files.
-.It Fl r
-Allow replacing existing packages.
-This is an experimental option for now:
-the code will try to take every precaution to make sure the update can
-proceed before removing the old package and adding the new one, and it
-should also handle shared libraries correctly.
-But this functionality has seen very little testing yet, and since it is
-rather powerful, it can break a system in a thorough way.
-.It Fl v
-Turn on verbose output.
-Several
-.Fl v
-turn on more verbose output.
-.It Fl x
-Disable progress-meter.
 .It Fl A Ar arch
 Assume
 .Ar arch
 as current machine architecture for any package tests.
+.It Fl a
+Automated package installation, do not record packages as installed manually.
 .It Fl B Ar pkg-destdir
 Set
 .Ar pkg-destdir
 as the prefix to prepend to any object extracted from the package.
-.It Fl Q Ar quick-destdir
-Quick and dirty installation under
-.Ar quick-destdir .
-Contrarily to
-.Fl B 
-.Ar pkg-destdir ,
-symbolic links are resolved, and package installation stops at
-.Cm @endfake
-marker.
+.It Fl c
+While replacing packages, delete extra configuration file in the old package,
+mentioned as
+.Dl @extra file
+in the packing-list.
 .It Fl f Ar keys
 Force installation of the package.
 .Ar keys
 is a comma-separated list of keywords that state what failsafes
-should be waived. 
+should be waived.
 These include:
-.Bl -tag -width keyword
+.Pp
+.Bl -tag -width "updatedependsXX" -compact
 .It Ar arch
 architecture recorded in package may not match.
 .It Ar conflicts
@@ -187,6 +157,8 @@ unsafe update: old packing-list will run scripts that may fail.
 .It Ar updatedepends
 force update even if forward dependencies no longer match.
 .El
+.It Fl I
+If scripts exist for a given package, do not execute them.
 .It Fl L Ar localbase
 Install a package under
 .Ar localbase .
@@ -196,17 +168,20 @@ equals
 .Pa /usr/local ,
 and specifying it is not necessary.
 However, packages can be created using a different
-.Ar localbase 
+.Ar localbase
 .Po
 see
 .Xr pkg_create 1
 .Pc ,
-and those packages can only be installed by using the same 
+and those packages can only be installed by using the same
 .Ar localbase .
 See
 .Xr bsd.port.mk 5
 for a description of
 .Ev LOCALBASE .
+.It Fl n
+Don't actually install a package, just report the steps that
+would be taken if it was.
 .It Fl P Ar type
 Check permissions for distribution, where
 .Ar type
@@ -214,6 +189,32 @@ can be
 .Sq cdrom
 or
 .Sq ftp .
+.It Fl Q Ar quick-destdir
+Quick and dirty installation under
+.Ar quick-destdir .
+Contrarily to
+.Fl B
+.Ar pkg-destdir ,
+symbolic links are resolved, and package installation stops at
+.Cm @endfake
+marker.
+.It Fl q
+Replace package quickly, do not bother checking md5s before removing files.
+.It Fl r
+Allow replacing existing packages.
+This is an experimental option for now:
+the code will try to take every precaution to make sure the update can
+proceed before removing the old package and adding the new one, and it
+should also handle shared libraries correctly.
+But this functionality has seen very little testing yet, and since it is
+rather powerful, it can break a system in a thorough way.
+.It Fl v
+Turn on verbose output.
+Several
+.Fl v
+turn on more verbose output.
+.It Fl x
+Disable progress-meter.
 .El
 .Pp
 By default, when adding packages via FTP, the
@@ -360,17 +361,6 @@ as it will safely record an interrupted install as
 .Pa borked.n .
 .Sh ENVIRONMENT
 .Bl -tag -width PKG_DESTDIR
-.It Ev PKG_PATH
-If a given package name cannot be found,
-the directories named by
-.Ev PKG_PATH
-are searched.
-It should contain a series of entries separated by colons.
-Each entry consists of a directory name.
-The current directory may be indicated
-implicitly by an empty directory name, or explicitly by a single
-period
-.Pq Ql \&. .
 .It Ev PKG_DBDIR
 Where to register packages instead of
 .Pa /var/db/pkg .
@@ -385,6 +375,17 @@ value passed to any
 or
 .Cm REQUIRE
 script invoked from the package.
+.It Ev PKG_PATH
+If a given package name cannot be found,
+the directories named by
+.Ev PKG_PATH
+are searched.
+It should contain a series of entries separated by colons.
+Each entry consists of a directory name.
+The current directory may be indicated
+implicitly by an empty directory name, or explicitly by a single
+period
+.Pq Ql \&. .
 .It Ev PKG_TMPDIR
 Temporary area where package information files will be extracted, instead of
 .Pa /var/tmp .
@@ -402,18 +403,6 @@ Initial design.
 .It "Marc Espie"
 Complete rewrite.
 .El
-.Sh BUGS
-The
-.Fl r
-option has not seen wide-testing yet and is almost certainly full of bugs.
-In particular, failure modes are untested, and a large number of code paths
-have not seen actual use yet.
-This options only handles atomic updates of single packages, there is no code
-to replace multiple packages with another set of equivalent multiple packages.
-For instance, since this option will often replace a package with 
-a newer package by creating an extra stub package for older shared libraries, 
-reversing the effect of pkg_add -r without wiping out most installed packages
-will be impossible.
 .Sh CAVEATS
 Package extraction does need a temporary area that
 can hold executable scripts.
@@ -437,3 +426,15 @@ to a suitable area, as
 .Nm
 does not check for noexec status except by failing to run installation
 scripts.
+.Sh BUGS
+The
+.Fl r
+option has not seen wide-testing yet and is almost certainly full of bugs.
+In particular, failure modes are untested, and a large number of code paths
+have not seen actual use yet.
+This options only handles atomic updates of single packages, there is no code
+to replace multiple packages with another set of equivalent multiple packages.
+For instance, since this option will often replace a package with
+a newer package by creating an extra stub package for older shared libraries,
+reversing the effect of pkg_add -r without wiping out most installed packages
+will be impossible.
