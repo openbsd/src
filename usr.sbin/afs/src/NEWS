@@ -1,0 +1,187 @@
+Changes in release 0.9:
+
+* merging of all BSD codes
+
+* support for more pioctl calls
+
+* use readpage instead of bmap in linux 2.0
+
+* lots of bug fixes
+
+Changes in release 0.8:
+
+* It should build with all makes
+
+* port to Rhapsody (contributed by Alexandra Ellwood <lxs@MIT.EDU>)
+
+* more functionality in arlad --test (from Alec Wolman <wolman@cs.washington.edu>)
+
+* port to OSF/1 (by Johan Danielsson  <joda@pdc.kth.se>)
+
+* create the cache vnodes in the background
+
+* invalidate nodes when the callback expires
+
+* better linux 2.[01] support
+
+* handle the case of different user and kernel types with glibc
+
+* udebug program added
+
+* some documentation written
+
+* lots of bug fixes
+
+Changes in release 0.7.2:
+
+* New way of building process.o
+
+Changes in release 0.7.1:
+
+* Bug fixes
+
+Changes in release 0.7:
+
+* IRIX support added though it does need more work
+
+* Autodetection of Linux htonl weirdness 
+
+* Linux xfs now includes modversions.h to get versioned names
+  of exported kernel symbols
+
+* New arlad option for recovering (not) stored state
+
+* Merged token clearing bugfix which fixed some panics
+
+Changes in release 0.6:
+
+* AIX support added
+
+* Linux 2.1 support added
+
+* Linux/alpha support in process.S
+
+* Solaris support updated with some new vnode ops
+
+* New --root-vol option to arlad
+
+* Expiring credential handling
+
+* Added fs library
+
+* Added fpriority to arlad
+
+Changes in release 0.5:
+
+* reserved major number for Linux
+
+* pts added
+
+* minor fixes for Solaris 2.6
+
+* moved almost all pioctl handling to arlad
+
+* fs {sa,lq,sq} now works
+
+* fixed pioctl handling in Linux (lookup of fid)
+
+* cred deletion added
+
+* updated getargs to handle options the transarc way
+
+* arlad now forks off per default
+
+* new debug levels to arlad
+
+* mkdir/rmdir in Linux added
+
+* Linux xfs access control fixed
+
+* df now produces something interesting in Linux
+
+* several new autoconf tests
+
+* arlad -t now works with cygwin32
+
+* time can now be mmaped to improve performance
+
+Changes in release 0.4:
+
+* bug that caused linux xfs module to loop fixed.
+
+* fix seek error on NetBSD
+
+* copy in arguments to xfs_mount which makes it not panic on some
+  NetBSD ports.
+
+* collect message statistics in arlad
+
+* fs getcrypt and fs setcrypt
+
+* set `d_type' in BSD directories which fixes lots of
+  directory-related problems.
+
+* some code reorganization.
+
+* fs getacl works
+
+* support for linking with the compatability libraries of krb 5.
+
+* support for reading cell information from /usr/vice/etc as a
+  fallback for /usr/arla/etc
+
+* now using the inconsistent interpretation of the unix mode bits on
+  directories to be compatible
+
+* some malloc/free related errors fixed
+
+Changes in release 0.3:
+
+* solaris port working
+
+* doc/ created with some introducing docs on Arla.
+
+* Local access checks introduced. (until now the rights were "shared" by
+  all users on the system)
+
+* arlad now reported to work on powerpc after a minimal fix.
+
+* xfs/Linux bugfixed and should work readonly
+
+Changes in release 0.2:
+
+* Improved directory handling code.
+
+* arlad now uses getarg for parsing arguments.  New arguments:
+  --test (-t)	     test mode
+  --conffile (-c)    configuration file
+  --log (-l)         write log here
+  --device (-d)      device used by xfs (default /dev/xfs0)
+  --rxkad-level (-r) minimum rxkad level
+  --version
+  --help
+
+* Fix reading from kernel space on Linux/i386.
+
+* Removed GCC-isms from the code.
+
+* More efficient.
+
+* arlad stores state between runs.
+
+* Only read new data when needed.
+
+* Handle volume callbacks.
+
+* arlad in test mode follows symlinks.
+
+* autoconf test for presence of `krb_principal'.  This makes it much
+easier to build with other kerberos distributions than kth-krb.
+
+* Bug fixes.
+
+* More stuff that I have repressed.
+
+Changes in release 0.1:
+
+* I don't remember any longer.  Try looking at the ChangeLog.

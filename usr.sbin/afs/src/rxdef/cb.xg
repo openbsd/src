@@ -1,0 +1,33 @@
+/* This is -*-c-*- */
+
+/*
+ * Interface to CM
+ */
+
+package RXAFSCB_
+
+%#include <atypes.h>
+%#include <rx/rx.h>
+%#include <rx/rx_null.h>
+/*%#include "fs.h"*/
+
+/*
+ * Interface
+ */
+
+#include "common.h"
+
+#if 0
+const AFSCBMAX = 50;
+
+typedef AFSCallBack AFSCBs<AFSCBMAX>;
+
+typedef AFSFid AFSCBFids<AFSCBMAX>;
+#endif
+
+CallBack (IN AFSCBFids *a_fidArrayP,
+	  IN AFSCBs *a_callBackArrayP) = 204;
+
+InitCallBackState () = 205;
+
+Probe () =  206;

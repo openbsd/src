@@ -1,0 +1,38 @@
+$Id: TODO,v 1.1.1.1 1998/09/14 21:52:52 art Exp $
+
+   TODO-list, in no particular order.
+
+Please mail arla-drinkers@stacken.kth.se if you want to work on
+any of these things so we don't do double work.
+
+arlad/xfs: More stable, bugfixes etc
+
+xfs/solaris: verify multithreadness
+
+xfs+arlad: implement advisory locking
+
+arlad: disconnected mode
+
+arlad: remove unused stuff from FCacheEntry
+
+arlad: fallback to disconnected mode if networking is not working
+(possibly per cell)
+
+arlad/xfs: return from open before fetching the whole file
+
+test suite
+
+OPTIMIZATIONS
+
+This is a list of posible optimizations that could be done to different parts
+of arla.
+
+ - Store cache files in inodes. Bypass the upper layer of VFS to read and
+   write cache.
+
+ - Delay reads and writes to cache and AFS-servers. Make the more operations
+   in one batch. (possible with rx?) Especially directories don't have to be
+   synced for every operation.
+
+ - send more messages to/from arlad in one sweep. (lookup on whole path in one
+   message, getattr+getdata, etc..)

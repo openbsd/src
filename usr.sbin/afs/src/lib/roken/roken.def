@@ -1,0 +1,10 @@
+LIBRARY roken
+EXPORTS
+	gettimeofday
+	strcasecmp
+	strtok_r
+	snprintf
+	asprintf
+	vsnprintf
+	base64_decode
+	base64_encode

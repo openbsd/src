@@ -1,0 +1,230 @@
+$Id: INSTALL,v 1.1.1.1 1998/09/14 21:52:51 art Exp $ ($Name:  $)
+
+Building arla
+
+Arla is configured with autoconf.  Start the configuration process by
+typing:
+
+- `./configure' in the source directory, or
+- `SRCDIR/configure' in the directory where you want to build arla.
+  (this is the recommended way but requires a make that understands VPATH)
+
+If you want to install somewhere different from the default
+`/usr/arla' give `--prefix=PATH' as an argument to configure.  There
+are also some arla-specific arguments to configure:
+
+  --with-arlacachedir=dir use dir as cachedir instead of $prefix/cache
+  --with-arlaconffile=file use file for configuration instead of $prefix/etc/arla.conf
+  --with-krb4=dir         use kerberos 4 in dir
+  --with-krb4-lib=dir     use krb4-lib in dir
+  --with-krb4-include=dir use krb4-include in dir
+  --with-krbafs=dir       use cmu's krbafs lib (If you not are using kth-krb.
+			  This is not needed when using kth-krb since
+			  libkafs is included there.)
+  --with-krb5=dir	  use kerberos 4 compat from kerberos 5 in dir
+  --disable-mmap	  don't use mmap at all
+  --enable-mmaptime       use mmap:ed time from /dev/kmem
+                          (known to work in FreeBSD)
+
+By default configure will use gcc if it finds it.  If you want to use
+a specific compiler or some special options you can specify that when
+running configure.  Running in a sh-style shell, type:
+
+  CC=my-compiler CFLAGS='magic-flags' ./configure
+
+If you are stuck with a broken shell, try using the env program:
+
+  env CC=my-compiler CFLAGS='magic-flags' ./configure
+
+If there's no kernel support for your operating system, configure will
+print a warning to that effect and only the user-level stuff will be
+configured.
+
+Once configured has completed, just run `make'.
+
+One common problem is the file lwp/process.S.  This has to be
+preprocessed with the appropriate defines and then assembled.  If the
+magic in lwp/make-process.o.sh.in for some reason fails, try doing it
+by hand. Then figure out what should be added and send us a patch to
+lwp/make-process.o.sh.in.
+
+Installing arla
+
+Run `make install'.  It will create and populate these directories:
+
+/usr/arla/bin		all binaries used
+/usr/arla/cache		the cached files will be stored here
+			(core-dumps from arlad as well)
+/usr/arla/etc		configuration files:
+			ThisCell, CellServDB, arla.conf
+/usr/arla/lib		random libraries
+
+If you're already part of an AFS cell, modify /usr/arla/etc/ThisCell
+and make sure your cell is mentioned in /usr/arla/etc/CellServDB.  If
+you don't have a cell you'll still be able to run as a client in the
+cell `stacken.kth.se' and access all cells listed in CellServDB.
+
+Services
+
+Everything works fine even if your /etc/services is not updated, but
+programs will print warning messages.  To get rid of these, add the
+contents of SRCDIR/conf/services to /etc/services.
+
+  cat SRCDIR/conf/services >> /etc/services
+
+Starting arla
+
+First try running arlad in test mode with `-t'.  If all goes well, it
+should print some messages and then give you the prompt `arla>'.
+There are very minimal commands for navigating the AFS space (ls, cd
+and cat).  Type `help' to get a list of all the commands.
+
+Run `arlad --help' for a list of the options supported.
+
+If you have a kernel module you can try to load it and mount the
+file system.  That's done somewhat differently depending on the
+operating system:
+
+Linux:
+
+  The linux major device number has changed in arla 0.5. Please
+  remove your old device and create a new one with the command
+  below if you have used arla before 0.5.
+
+  mknod /dev/xfs0 c 103 0
+  insmod /usr/arla/bin/xfs.o
+  /usr/arla/bin/arlad
+  mkdir /afs
+  mount -t xfs arla /afs
+
+  If you are using Linux 2.1, you may want to copy /usr/arla/lib/getcwd.so
+  to /lib and add this line to your /etc/ld.so.preload:
+
+  /lib/getcwd.so
+
+  This enables the getcwd syscall, which works much better than the old
+  way of doing getcwd. Be careful though, and execute /bin/pwd as a test
+  before you exit your editor. If /bin/pwd fails with a message like
+  "/bin/pwd: can't load library '/lib/getcwd.so'", remove the line from
+  /etc/ld.so.preload, and report the problem.
+
+  DO NOT load the file from /usr/arla/lib, since /usr probably is not
+  part of the root partition of your system. If you do this, your system
+  will probably not be able to boot, even in single user, since in most
+  Linux installations, init, sh, mount and other programs are dynamically
+  linked.
+
+SunOS4:
+
+  modload /usr/arla/bin/libxfs.o
+  modstat
+  mknod /dev/xfs0 c <C-major from modstat> 0
+  mkdir /afs
+  /usr/arla/bin/mount_xfs /afs /dev/xfs0
+  /usr/arla/bin/arlad
+
+{Net|Open}BSD:
+
+  modload -e xfs_mod -o /var/tmp/symbols -p /usr/arla/bin/xfs_makedev /usr/arla/bin/xfs_mod.o
+  mkdir /afs
+  /usr/arla/bin/mount_xfs /dev/xfs0 /afs
+  /usr/arla/bin/arlad
+
+FreeBSD
+  
+Do like in {Net|Open} except for doing the modload you can just do:
+
+  mkdir /lkm
+  cp /usr/arla/bin/xfs_mod.o /lkm/xfs_mod.o
+  
+And mount_xfs vill load the filesystem into the kernel.
+
+Solaris:
+
+add a line to /etc/name_to_major with (134 should be any unused number)
+
+  xfs 134
+
+and another one to /etc/name_to_sysnum (105 is the preferred system
+call number, if that's already used by Transarc AFS on your machine,
+pick some other number)
+
+  xfs 105
+
+You might have to reboot for these changes to take effect.  Then, type:
+
+  modload xfs
+
+You should probably add a file in /usr/kernel/drv/xfs.conf with:
+
+  name="xfs" parent="pseudo" instance=0;
+
+and then run:
+
+  drvconfig -i xfs
+
+Create a device with the name_to_major number and a directory:
+
+  mknod /dev/xfs0 c 134 0
+  mkdir /afs
+
+Now you can try mounting the file system and start the daemon:
+
+  /usr/arla/bin/mount_xfs /dev/xfs0 /afs
+  /usr/arla/bin/arlad
+
+
+If you want to, you can copy the xfs/solaris/xfs module to /kernel/fs
+and xfs/solaris/bin/mount_xfs to /lib/fs/xfs/mount which enables you to
+automatically load the xfs module when mounting the xfs file system.
+
+AIX:
+
+Create the device node:
+
+  mknod /dev/xfs0 c 100 0
+
+And add a line like the following to /etc/vfs:
+
+  arla    8       none    none
+
+Now you can try mounting the file system and start the daemon:
+
+  /usr/arla/bin/mount_xfs /dev/xfs0 /afs
+  /usr/arla/bin/arlad
+
+Digital Unix (aka OSF/1)
+
+Copy the xfs.mod to /subsystems.
+
+Load (configure) the module with sysconfig -c xfs
+
+Query the module to see if it loaded ok and get the
+character device and syscall number from it with:
+sysconfig -q xfs
+
+Create the char-device "mknod /dev/xfs0 c <MAJOR> 0"
+where <MAJOR> is the number obtained above.
+
+Create the afs directory: mkdir /afs
+
+Mount the device and start the daemon: 
+   /usr/arla/bin/mount_xfs /dev/xfs0 /afs
+   /usr/arla/bin/arlad
+
+It could look something like this:
+
+datan:~# sysconfig -c xfs
+datan:~# sysconfig -q xfs
+syscall = 34
+major = 68
+debug = 255
+datan:~# mknod /dev/xfs0 c 68 0
+datan:~# mkdir /afs
+datan:~# /usr/arla/bin/mount_xfs /dev/xfs0 /afs
+datan:~# /usr/arla/bin/arlad 
+datan:~# ls /afs | head
+.stacken.kth.se
+afs.brain.de
+afs.hursley.ibm.com
+afs1.scri.fsu.edu

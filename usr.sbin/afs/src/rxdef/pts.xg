@@ -1,0 +1,303 @@
+/* This is -*-c-*- */
+
+/*
+ * Interface to PTS
+ */
+
+package PR_
+
+%#include <atypes.h>
+%#include <rx/rx.h>
+%#include <rx/rx_null.h>
+
+
+/*
+ * Interface
+ */
+
+
+/* Opcodes */
+
+const PRINEWUSER = 500;
+const PRWHEREISIT = 501;
+const PRDUMPENTRY = 502;
+const PRADDTOGROUP = 503;
+const PRNAMETOUID = 504;
+const PRIDTONAME = 505;
+const PRDELETE = 506;
+const PRREMOVEFROMGROUP = 507;
+const PRGETCPS = 508;
+const PRNEWENTRY = 509;
+const PRLISTMAX = 510;
+const PRSETMAX = 511;
+const PRLISTENTRY = 512;
+const PRCHANGEENTRY = 513;
+const PRLISTELEMENTS = 514;
+const PROSAMEMBEROF = 515;
+const PRSETFIELDSENTRY = 516;
+const PRLISTOWNED = 517;
+
+/* Constants */
+
+const PR_MAXNAMELEN = 64;
+const PR_MAXGROUPS = 5000;
+const PR_MAXLIST = 5000;
+const PRSIZE = 10;
+const COSIZE = 39;
+const PRSRV = 73;
+const ENTRYSIZE = 192;
+const HASHSIZE = 8191;
+
+const PRDBVERSION = 0;
+
+/* Bits for PR_SetFieldsEntry() */
+
+const PR_SF_NGROUPS = 0x80000000;
+const PR_SF_NUSERS = 0x40000000;
+const PR_SF_ALLBITS = 0xff;
+
+/* Reserved IDs */
+const SYSADMINID = -204;
+const ANYUSERID = -101;
+const AUTHUSERID = -102;
+const ANONYMOUSID = 32766;
+const PRBADID = 0x80000000;
+
+/* Bits for struct prentry flags */
+const PRTYPE = 0x3f;
+const PRFREE = 1;
+const PRGRP = 2;
+const PRCONT = 4;
+const PRCELL = 8;
+const PRFOREIGN = 16;
+const PRINST = 32;
+const PRUSER = 0;
+
+const PRACCESS = 0x40;
+const PRQUOTA = 0x80;
+
+/* Privacy Bits */
+
+const PRP_REMOVE_MEM = 0x010000;
+const PRP_ADD_MEM    = 0x020000;
+const PRP_ADD_ANY    = 0x040000;
+const PRP_MEMBER_MEM = 0x080000;
+const PRP_MEMBER_ANY = 0x100000;
+const PRP_OWNED_ANY  = 0x200000;
+const PRP_STATUS_MEM = 0x400000;
+const PRP_STATUS_ANY = 0x800000;
+
+/* Misc */
+const PRSUCCESS = 0;
+const PR_REMEMBER_TIMES = 1;
+
+
+struct prheader {
+    long version;
+    long headerSize;
+    long freePtr;
+    long eofPtr;
+    long maxGroup;
+    long maxID;
+    long maxForeign;
+    long maxInst;
+    long orphan;
+    long usercount;
+    long groupcount;
+    long foreigncount;
+    long instcount;
+    long reserved[5];
+    long nameHash[HASHSIZE];
+    long idHash[HASHSIZE];
+};
+
+struct prentry {
+    long flags;
+    long id;
+    long cellid;
+    long next;
+    long reserved[5];
+    long entries[PRSIZE];
+    long nextID;
+    long nextName;
+    long owner;
+    long creator;
+    long ngroups;
+    long nusers;
+    long count;
+    long instance;
+    long owned;
+    long nextOwned;
+    long parent;
+    long sibling;
+    long child;
+    char name[PR_MAXNAMELEN];
+};
+
+struct prentry_disk {
+    long flags;
+    long id;
+    long cellid;
+    long next;
+    long reserved[5];
+    long entries[PRSIZE];
+    long nextID;
+    long nextName;
+    long owner;
+    long creator;
+    long ngroups;
+    long nusers;
+    long count;
+    long instance;
+    long owned;
+    long nextOwned;
+    long parent;
+    long sibling;
+    long child;
+    string name<PR_MAXNAMELEN>;
+};
+
+struct contentry {
+    long flags;
+    long id;
+    long cellid;
+    long next;
+    long reserved[5];
+    long entries[COSIZE];
+};
+
+struct prdebugentry {
+    long flags;
+    long id;
+    long cellid;
+    long next;
+    long reserved[5];
+    long entries[PRSIZE];
+    long nextID;
+    long nextname;
+    long owner;
+    long creator;
+    long ngroups;
+    long nusers;
+    long count;
+    long instance;
+    long owned;
+    long nextOwned;
+    long parent;
+    long sibling;
+    long child;
+    char name[PR_MAXNAMELEN];
+};
+
+struct prcheckentry {
+    long flags;
+    long id;
+    long owner;
+    long creator;
+    long ngroups;
+    long nusers;
+    long count;
+    long reserved[5];
+    char name[PR_MAXNAMELEN];
+};
+
+
+typedef char prname[PR_MAXNAMELEN];
+
+typedef prname namelist<PR_MAXLIST>;
+
+typedef long idlist<PR_MAXLIST>;
+
+typedef long prlist<PR_MAXGROUPS>;
+
+
+/* Error codes */
+
+const PREXIST        = 267264 ;
+const PRIDEXIST      = 267265 ;
+const PRNOIDS        = 267266 ;
+const PRDBFAIL       = 267267 ;
+const PRNOENT        = 267268 ;
+const PRPERM         = 267269 ;
+const PRNOTGROUP     = 267270 ;
+const PRNOTUSER      = 267271 ;
+const PRBADNAM       = 267272 ;
+const PRBADARG       = 267273 ;
+const PRNOMORE       = 267274 ;
+const PRDBBAD        = 267275 ;
+const PRGROUPEMPTY   = 267276 ;
+const PRINCONSISTENT = 267277 ;
+const PRBADDR        = 267278 ;
+const PRTOOMANY      = 267279 ;
+
+
+NameToID(IN namelist *nlist,
+	 OUT idlist *ilist) = 504;
+
+IDToName(IN idlist *ilist,
+	 OUT namelist *nlist) = 505;
+
+NewEntry(IN char name[PR_MAXNAMELEN],
+	 IN long flag,
+	 IN long oid,
+	 OUT long *id) = 509;
+
+INewEntry(IN char name[PR_MAXNAMELEN],
+	  IN long id,
+	  IN long oid) = 500;
+
+ListEntry(IN long id,
+	  OUT struct prcheckentry *entry) = 512;
+
+DumpEntry(IN long pos,
+	  OUT struct prdebugentry *entry) = 502;
+
+ChangeEntry(IN long id,
+	    IN char name[PR_MAXNAMELEN],
+	    IN long oid,
+	    IN long newid) = 513;
+
+SetFieldesEntry(IN long id,
+		IN long mask,
+		IN long flags,
+		IN long ngroups,
+		IN long nusers,
+		IN long spare1,
+		IN long spare2) = 516;
+
+Delete(IN long id) = 506;
+
+WhereIsIt(IN long id,
+	  OUT long *ps) = 501;
+
+AddToGroup(IN long uid,
+	   IN long gid) = 503;
+
+RemoveFromGroup(IN long id,
+		IN long gid) = 507;
+
+ListMax(OUT long *uid,
+	OUT long *gid) = 510;
+
+SetMax(IN long uid,
+       IN long gflag) = 511;
+
+ListElements(IN long id,
+	     OUT prlist *elist,
+	     OUT long *over) = 514;
+
+GetCPS(IN long id,
+       OUT prlist *elist,
+       OUT long *over) = 508;
+
+ListOwned(IN long id,
+	  OUT prlist *elist,
+	  OUT long *over) = 517;
+
+IsAMemberOf(IN long uid,
+	    IN long gid,
+	    OUT long *flag) = 515;
+
+
+
+/* the end */

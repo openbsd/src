@@ -1,0 +1,17 @@
+From:        Jim Doyle <jrd@bu.edu>
+To:          "Derrick J. Brashear" <shadow@DEMENTIA.ORG>
+Subject:     Re: more Krb4 issues
+Date:        Tue, 5 Mar 1996 16:47:51 -0500 (EST)
+
+In here are the two TAR files (rxbase.tar.gz, rxkad.tar.gz) that
+Transarc gave me with permission to freely redistribute.. This code
+was given to me by Mike Kazar and it was OK'd for release by Al Spector.
+
+From what I understand, Rx was developed at CMU as part of a DARPA
+funded research project jointly funded by IBM.  Rx was picked up by
+the AFS group and then used.. So, by all rights, the Rx stack is in
+the public domain because the DARPA funding requirement placed it
+there... You can read the copyright in the header for the full
+legalese.
+
+[snip]

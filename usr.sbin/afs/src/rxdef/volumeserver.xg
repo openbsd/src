@@ -1,0 +1,239 @@
+/*
+ * Interface to Volumeserver, 
+ * reference /afs/nada.kth.se/misc/reference/programming/afs/shadow/
+ *
+ * $Id: volumeserver.xg,v 1.1.1.1 1998/09/14 21:53:18 art Exp $
+ */
+
+package VOLSER_
+
+%#include <atypes.h>
+%#include <rx/rx.h>
+%#include <rx/rx_null.h>
+
+const VLDB_MAXSERVER = 80;
+const VOLSERVICE_PORT = 7005;
+const VOLSERVICE_ID = 4;
+const INVALID_BID = 0;
+const VOLSER_MAXVOLNAME = 65;
+const VOLSER_OLDMAXVOLNAME = 32;
+const VOLSER_MAX_REPSITES = 7;
+const VNAMESIZE = 32;
+
+
+const VOLCREATEVOLUME = 100;
+const VOLDELETEVOLUME = 101;
+const VOLRESTORE = 102;
+const VOLFORWARD = 103;
+const VOLENDTRANS = 104;
+const VOLCLONE = 105;
+const VOLSETFLAGS = 106;
+const VOLGETFLAGS = 107;
+const VOLTRANSCREATE = 108;
+const VOLDUMP = 109;
+const VOLGETNTHVOLUME = 110;
+const VOLSETFORWARDING = 111;
+const VOLGETNAME = 112;
+const VOLGETSTATUS = 113;
+const VOLSIGRESTORE = 114;
+const VOLLISTPARTITIONS = 115;
+const VOLLISTVOLS = 116;
+const VOLSETIDTYPES = 117;
+const VOLMONITOR = 118;
+const VOLDISKPART = 119;
+const VOLRECLOSE = 120;
+const VOLLISTONEVOL = 121;
+const VOLNUKE = 122;
+const VOLSETDATE = 123;
+
+const PARTVALID = 0x01;
+const VOK = 0x02;
+const VBUSY = 110;
+
+const VOLSERTRELE_ERROR       = 1492325120 ;
+const VOLSERNO_OP             = 1492325121 ;
+const VOLSERREAD_DUMPERROR    = 1492325122 ;
+const VOLSERDUMPERROR         = 1492325123 ;
+const VOLSERATTACH_ERROR      = 1492325124 ;
+const VOLSERILLEGAL_PARTITION = 1492325125 ;
+const VOLSERDETACH_ERROR      = 1492325126 ;
+const VOLSERBAD_ACCESS        = 1492325127 ;
+const VOLSERVLDB_ERROR        = 1492325128 ;
+const VOLSERBADNAME           = 1492325129 ;
+const VOLSERVOLMOVED          = 1492325130 ;
+const VOLSERBADOP             = 1492325131 ;
+const VOLSERBADRELEASE        = 1492325132 ;
+const VOLSERVOLBUSY           = 1492325133 ;
+const VOLSERNO_MEMORY         = 1492325134 ;
+const VOLSERNOVOL	      = 1492325135 ;
+const VOLSERMULTIRWVOL        = 1492325136 ;
+const VOLSERFAILEDOP          = 1492325137 ;
+
+struct volser_trans { 
+    volser_trans *next;
+    long tid;
+    long time;
+    long creationTime;
+    long returnCode;
+    long volid;
+    long partition;
+    long dumpTransId;
+    long dumpSeq;   /* Not used */
+    short refCount;
+    short iflags;
+    char vflags;    
+    char tflags;
+    char incremental;
+    char lastProcName[30];
+/*    struct rx_call *rxCallPtr; XXXXXXX BROKEN /lha */
+};
+
+struct volDescription {
+    char volName[VOLSER_MAXVOLNAME];
+    long volId;
+    long volSize;
+    long volFlags;
+    long volCloneId;
+};
+
+struct partList {
+    int partId[26];
+    long partFlags[26];
+};
+
+struct volser_status {
+    long volID;
+    long nextUnique;
+    long type;
+    long parentID;
+    long cloneID;
+    long backupID;
+    long restoredFromID;
+    long maxQuota;
+    long minQuota;
+    long owner;
+    long creationDate;
+    long accessDate;
+    long updateDate;
+    long exprirationDate;
+    long backupDate;
+    long copyDate;
+};
+
+struct destServer {
+    long destHost;
+    long destPort;
+    long destSSID;   /* currently allways set to 1 */
+};
+
+struct volintInfo {
+    char name[VNAMESIZE];
+    long volid;
+    long type;
+    long backupID;
+    long parentID;
+    long cloneID;
+    long status;
+    long copyDate;
+    char inUse;
+    char needsSalvaged;
+    char destroyMe;
+    long creationDate;
+    long accessDate;
+    long updateDate;
+    long backupDate;
+    long dayUse;
+    long filecount;
+    long maxquota;
+    long size;
+    long flags;
+    long spare0;
+    long spare1;
+    long spare2;
+    long spare3;
+};
+
+struct transDebugInfo {
+    long tid;
+    long time;
+    long creationTime;
+    long returnCode;
+    long volid ;
+    long partition;
+    short iflags;
+    char vflags;
+    char tflags;
+    char lastProcName[30];
+    long callValid;
+    long readNext;
+    long transmitNext;
+    long lastSendTime;
+    long lastReceiveTime;
+};
+
+struct pIDs {
+    long partIds[26];
+};
+
+struct diskPartition {
+    char name[32];
+    char devName[32];
+    long lock_fd;
+    long totalUsable;
+    long free;
+    long minFree;
+};
+
+struct restoreCookie {
+    char name[32];
+    long type;
+    long clone;
+    long parent;
+};
+  
+typedef transDebugInfo transDebugEntries<>;
+typedef volintInfo volEntries<>;
+
+
+AFSVolCreateVolume(IN long partition,
+	     IN char *name,
+	     IN long type,
+	     IN long parent,
+	     INOUT long *volid,
+	     OUT long *trans) = 100 ;
+
+AFSVolTransCreate(IN long volume,
+	    IN long partition,
+	    IN long flags,
+	    OUT long *trans) = 108 ;
+
+AFSVolEndTrans(IN long trans,
+	 OUT long *rcode) = 104 ;
+
+AFSVolGetFlags(IN long trans,
+	 OUT long *flags) = 107 ;
+
+AFSVolSetFlags(IN long trans,
+	 IN long flags) = 106 ;
+
+AFSVolGetName(IN long tid,
+	      OUT string tname<256>) = 112 ;
+
+AFSVolSetDate(IN long tid,
+	      IN long newDate) = 123 ;
+
+AFSVolListPartitions(OUT struct pIDs *partIDs) = 115 ;
+
+AFSVolPartitionInfo(IN string name<>, 
+		    OUT struct diskPartition *partition) = 119 ;
+
+AFSVolListVolumes(IN long partID,
+		  IN long flags,
+		  OUT struct volEntries *resultEntries) = 116 ;
+
+AFSVolListOneVolume(IN long partID,
+	      IN long volid,
+	      OUT struct volEntries *resultEntries) = 121 ;
+
+AFSVolMonitor(OUT transDebugEntries *result) = 118 ;
+    

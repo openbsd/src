@@ -1,0 +1,130 @@
+.\"	$OpenBSD: afsd.8,v 1.1.1.1 1998/09/14 21:53:33 art Exp $
+.\"
+.Dd September  5, 1998
+.Dt AFSD 8
+.Os
+.Sh NAME
+.Nm afsd
+.Nd AFS cache manager for xfs.
+.Sh SYNOPSIS
+.Nm
+.Op Fl t | Fl -test
+.Oo Fl c Ar string \*(Ba Xo
+.Fl -conffile= Ns Ar string Oc
+.Xc
+.Oo Fl l Ar string \*(Ba Xo
+.Fl -log= Ns Ar string Oc
+.Xc
+.Op Fl -debug= Ns Ar string
+.Oo Fl d Ar string \*(Ba Xo
+.Fl -device= Ns Ar string Oc
+.Xc
+.Op Fl -connected-mode= Ns Ar string
+.Op Fl n | Fl -no-fork
+.Oo Fl r Ar string \*(Ba Xo
+.Fl -rxkad-level= Ns Ar string Oc
+.Xc
+.Oo Fl s Ar string \*(Ba Xo
+.Fl -sysname= Ns Ar string Oc
+.Xc
+.Op Fl -root-volume= Ns Ar string
+.Op Fl -port= Ns Ar number
+.Op Fl z | Fl -recover
+.Op Fl -cache-dir= Ns Ar string
+.Op Fl -version
+.Op Fl -help
+.Ar [device]
+.Sh DESCRIPTION
+.Nm afsd
+runs on AFS client machines. It is used to manage the file cache, fetch files
+from AFS servers, handle callbacks and manage the authentication information
+for users. In normal cases you will not need to run it by yourself. It is
+automatically started when
+.Nm mount_afs
+is run.
+.Pp
+Supported options:
+.Bl -tag -width Ds
+.It Xo
+.Fl t Ns ,
+.Fl -test
+.Xc
+run in test mode
+.It Xo
+.Fl c Ar string Ns ,
+.Fl -conffile= Ns Ar string
+.Xc
+path to configuration file (default: /etc/arla.conf)
+.It Xo
+.Fl l Ar string Ns ,
+.Fl -log= Ns Ar string
+.Xc
+where to write log [stderr|syslog|path] (default: stderr)
+.It Xo
+.Fl -debug= Ns Ar string
+.Xc
+what to write in the log (default: none)
+.It Xo
+.Fl d Ar string Ns ,
+.Fl -device= Ns Ar string
+.Xc
+the XFS device to use (default: /dev/xfs0)
+.It Xo
+.Fl -connected-mode= Ns Ar string
+.Xc
+initial connected mode [conncted|fetch-only|disconnected]
+.It Xo
+.Fl n Ns ,
+.Fl -no-fork
+.Xc
+don't fork and daemonize
+.It Xo
+.Fl r Ar string Ns ,
+.Fl -rxkad-level= Ns Ar string
+.Xc
+the rxkad level to use [clear|auth|crypt] (default: auth)
+.It Xo
+.Fl s Ar string Ns ,
+.Fl -sysname= Ns Ar string
+.Xc
+set the sysname of this system
+.It Xo
+.Fl -root-volume= Ns Ar string
+.Xc
+name of the root volume
+.It Xo
+.Fl -port= Ns Ar number
+.Xc
+port number to use
+.It Xo
+.Fl z Ns ,
+.Fl -recover
+.Xc
+don't recover state
+.It Xo
+.Fl -cache-dir= Ns Ar string
+.Xc
+cache directory (default: /var/spool/afs)
+.It Xo
+.Fl -version
+.Xc 
+print version information
+.It Xo
+.Fl -help
+.Xc
+print usage information
+.El
+.Sh FILES
+/etc/arla.conf - default configuration for afsd.
+.Pp
+/var/spool/afs - default cache directory. It is highly recommended that this
+directory is a separate filesystem. When enough memory is available this
+could be a mfs to drastically improve performance.
+.Sh SEE ALSO
+.Xr mount_afs 8 .
+.Sh BUGS
+This code is still in the experimental stage and some bugs are present. If
+.Nm afsd
+happens to crash, it's recommended to restart it with the
+.Fl z
+flag. Otherwise a corrupted cache can be reused.

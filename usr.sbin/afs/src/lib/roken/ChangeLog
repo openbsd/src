@@ -1,0 +1,29 @@
+Sun Nov  9 04:48:46 1997  Johan Danielsson  <joda@emma.pdc.kth.se>
+
+	* fnmatch.c: Add fnmatch from NetBSD
+
+Sun Nov  9 02:00:08 1997  Assar Westerlund  <assar@sics.se>
+
+	* parse_units.c (parse_something): ignore white-space and ','
+
+Mon Nov  3 22:38:32 1997  Assar Westerlund  <assar@sics.se>
+	
+	* roken.h: fclose prototype
+
+	* roken.h: add prototype for vsyslog
+
+	* Makefile.in: add some more source files to make soriasis make
+ 	happy
+
+Sat Nov  1 00:19:21 1997  Assar Westerlund  <assar@sics.se>
+
+	* roken.h: include <sys/uio.h> and <errno.h>.
+	prototypes for readv and writev
+
+	* readv.c, writev.c: new files
+
+Wed Oct 29 02:21:38 1997  Assar Westerlund  <assar@sics.se>
+
+	* roken.h: Add ugly macros for openlog, gethostbyname,
+ 	gethostbyaddr, and getservbyname for the benefit of Crays.  Add
+ 	default definition of MAXPATHLEN

@@ -1,0 +1,265 @@
+/* This is -*-c-*- */
+
+/*
+ * Interface to VLDB
+ */
+
+package VL_
+
+%#include <atypes.h>
+%#include <rx/rx.h>
+%#include <rx/rx_null.h>
+
+/*
+ * Structures and defines for vldb data
+ */
+
+const VLDB_MAXNAMELEN=65;
+
+const MAXNSERVERS=8;
+const NMAXNSERVERS=13;
+
+const MAX_NUMBER_OPCODES=30;
+
+const MAXTYPES=3;
+
+const MAXSERVERID=30;
+
+const HASHSIZE=8191;
+
+const DEFAULTBULK=10000;
+
+typedef opaque bulk<DEFAULTBULK>;
+
+#if 0
+typedef struct single_vldbentry *vldblist;
+#endif
+
+const RWVOL   = 0;
+const ROVOL   = 1;
+const BACKVOL = 2;
+
+const VLSF_NEWREPSITE = 0x01;
+const VLSF_ROVOL      = 0x02;
+const VLSF_RWVOL      = 0x04;
+const VLSF_BACKVOL    = 0x08;
+
+const VLF_RWEXISTS    = 0x1000;
+const VLF_ROEXISTS    = 0x2000;
+const VLF_BOEXISTS    = 0x4000;
+const VLF_BACKEXISTS  = 0x4000;
+
+const VL_IDEXIST       = 363520;
+const VL_IO            = 363521;
+const VL_NAMEEXIST     = 363522;
+const VL_CREATEFAIL    = 363523;
+const VL_NOENT         = 363524;
+const VL_EMPTY         = 363525;
+const VL_ENTDELETED    = 363526;
+const VL_BADNAME       = 363527;
+const VL_BADINDEX      = 363528;
+const VL_BADVOLTYPE    = 363529;
+const VL_BADPARTITION  = 363530;
+const VL_BADSERVER     = 363531;
+const VL_REPSFULL      = 363532;
+const VL_NOREPSERVER   = 363533;
+const VL_DUPREPSERVER  = 363534;
+const VL_RWNOTFOUND    = 363535;
+const VL_BADREFCOUNT   = 363536;
+const VL_SIZEEXCEEDED  = 363537;
+const VL_BADENTRY      = 363538;
+const VL_BADVOLIDBUMP  = 363539;
+const VL_IDALREADHASED = 363540;
+const VL_ENTRYLOCKED   = 363541;
+const VL_BADVOLOPER    = 363542;
+const VL_BADRELLOCKTYPE= 363543;
+const VL_RERELEASE     = 363544;
+const VL_BADSERVERFLAG = 363545;
+const VL_PERM          = 363546;
+const VL_NOMEM         = 363547;
+
+
+struct vldbentry {
+     char name[VLDB_MAXNAMELEN];
+     long volumeType;
+     long nServers;
+     long serverNumber[MAXNSERVERS];
+     long serverPartition[MAXNSERVERS];
+     long serverFlags[MAXNSERVERS];
+     u_long volumeId[MAXTYPES];
+     long cloneId;
+     long flags;
+};
+
+struct nvldbentry {
+        char name[VLDB_MAXNAMELEN];
+        long nServers;
+        long serverNumber[NMAXNSERVERS];
+        long serverPartition[NMAXNSERVERS];
+        long serverFlags[NMAXNSERVERS];
+        u_long volumeId[MAXTYPES];
+        long cloneId;
+        long flags;
+        long spares1;
+        long spares2;
+        long spares3;
+        long spares4;
+        long spares5;
+        long spares6;
+        long spares7;
+        long spares8;
+        long spares9;
+};
+
+
+struct vital_vlheader {
+     long vldbversion;
+     long headersize;
+     long feePtr;
+     long eofPtr;
+     long allocs;
+     long frees;
+     long MaxVolumeId;
+     long totalEntries[MAXTYPES];
+};
+
+struct VldbUpdateEntry {
+     u_long Mask;
+     char name[VLDB_MAXNAMELEN];
+     long volumeType;
+     long flags;
+     u_long ReadOnlyId;
+     u_long BackupId;
+     long cloneid;
+     long nModifiedRepsites;
+     u_long RepsitesMask[MAXNSERVERS];
+     long RepsitesTargetServer[MAXNSERVERS];
+     long RepsitesTargetPart[MAXNSERVERS];
+     long RepsitesNewServer[MAXNSERVERS];
+     long RepsitesNewPart[MAXNSERVERS];
+     long RepsitesNewFlags[MAXNSERVERS];
+};
+
+struct VldbListByAttributes {
+     u_long Mask;
+     long server;
+     long partition;
+     long volumetype;
+     long volumeid;
+     long flag;
+};
+
+struct afsUUID {
+     u_long time_low;
+     u_short time_mid;
+     u_short time_hi_and_version;
+     char clock_seq_hi_and_reserved;
+     char clock_seq_low;
+     char node[6];
+};
+
+struct uvldbentry {
+     char name[VLDB_MAXNAMELEN];
+     long nServers;
+     afsUUID serverNumber[NMAXNSERVERS];
+     long serverUnique[NMAXNSERVERS];
+     long serverPartition[NMAXNSERVERS];
+     long serverFlags[NMAXNSERVERS];
+     u_long volumeId[MAXTYPES];
+     long cloneId;
+     long flags;
+     long spares1;
+     long spares2;
+     long spares3;
+     long spares4;
+     long spares5;
+     long spares6;
+     long spares7;
+     long spares8;
+     long spares9;
+};
+
+
+#if 0
+struct single_vldbentry {
+     vldbentry VldbEntry;
+     vldblist next_vldb;
+};
+
+struct vldb_list {
+     vldblist node;
+};
+#endif
+
+struct vldstats {
+     unsigned long start_time;
+     long requests[MAX_NUMBER_OPCODES];
+     long aborts[MAX_NUMBER_OPCODES];
+     long reserved[5];
+};
+
+typedef vldbentry bulkentries<>;
+
+/*
+ * Interface
+ */
+
+CreateEntry (IN vldbentry *newentry) = 501;
+
+DeleteEntry (IN long Volid,
+	     IN long voltype) = 502;
+
+GetEntryByID (IN long Volid,
+	      IN long voltype,
+	      OUT vldbentry *entry) = 503;
+
+GetEntryByName (IN string volumename<VLDB_MAXNAMELEN>,
+		OUT vldbentry *entry) = 504;
+
+GetNewVolumeId (IN long bumpcount,
+		OUT long *newvolumid) = 505;
+
+ReplaceEntry (IN long Volid,
+	      IN long voltype,
+	      IN vldbentry *newentry,
+	      IN long ReleaseType) = 506;
+
+UpdateEntry (IN long Volid,
+	     IN long voltype,
+	     IN VldbUpdateEntry *UpdateEntry,
+	     IN long ReleaseType) = 507;
+
+SetLock (IN long Volid,
+	 IN long voltype,
+	 IN long voloper) = 508;
+
+ReleaseLock (IN long volid,
+	     IN long voltype,
+	     IN long ReleaseType) = 509;
+
+ListEntry (IN long previous_index,
+	   OUT long *count,
+	   OUT long *next_index,
+	   OUT vldbentry *entry) = 510;
+
+ListAttributes (IN VldbListByAttributes *attributes,
+		OUT long *nentries,
+		OUT bulkentries *blkentries) = 511;
+
+#if 0
+LinkedList (IN VldbListByAttributes *attributes,
+	    OUT long *nentries,
+	    OUT vldb_list *linkedentries) = 512;
+#endif
+
+GetStats (OUT vldstats *stats,
+	  OUT vital_vlheader *vital_header) = 513;
+
+Probe () = 514;
+
+GetEntryByNameN(IN string volumename<VLDB_MAXNAMELEN>,
+		OUT nvldbentry *entry) = 519;
+
+
+GetEntryByNameU (IN string volumename<VLDB_MAXNAMELEN>,
+		 OUT struct uvldbentry *entry) = 527;

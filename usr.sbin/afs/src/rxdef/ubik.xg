@@ -1,0 +1,88 @@
+/* -*- C -*- */
+
+/*
+ * $Id: ubik.xg,v 1.1.1.1 1998/09/14 21:53:18 art Exp $
+ */
+
+package Ubik_
+
+%#include <atypes.h>
+%#include <rx/rx.h>
+%#include <rx/rx_null.h>
+
+/*
+ * Interface
+ */
+
+struct net_tid {
+    long epoch;
+    long counter;
+};
+
+typedef net_tid net_version;
+
+struct ubik_debug {
+        long now;
+        long lastYesTime;
+        long lastYesHost;
+        long lastYesState;
+        long lastYesClaim;
+        long lowestHost;
+        long lowestTime;
+        long syncHost;
+        long syncTime;
+        struct net_version syncVersion;
+        struct net_tid syncTid;
+        long amSyncSite;
+        long syncSiteUntil;
+        long nServers;
+        long lockedPages;
+        long writeLockedPages;
+        struct net_version localVersion;
+        long activeWrite;
+        long tidCounter;
+        long anyReadLocks;
+        long anyWriteLocks;
+        long recoveryState;
+        long currentTrans;
+        long writeTrans;
+        long epochTime;
+};
+
+struct ubik_sdebug {
+        long addr;
+        long lastVoteTime;
+        long lastBeaconSent;
+        long lastVote;
+        struct net_version remoteVersion;
+        long currentDB;
+        long beaconSinceDown;
+        long up;
+};
+
+
+
+/* Opcodes */
+
+const VOTE_BEACON	= 10000 ;
+const VOTE_DEBUG      	= 10001 ;
+const VOTE_SDEBUG     	= 10002 ;
+const VOTE_GETSYNCSITE	= 10003 ;
+
+/* Error codes */
+
+/* XXX */
+
+
+/* The rpc calls */
+
+Beacon (IN long state, 
+        IN long voteStart, 
+        IN net_version *Version, 
+        IN net_tid *tid) multi = 10000;
+
+Debug (OUT ubik_debug *db) = 10001 ;
+
+SDebug (IN long which, OUT ubik_sdebug *db) = 10002 ;
+
+GetSyncSite (OUT long *site) = 10003 ;
