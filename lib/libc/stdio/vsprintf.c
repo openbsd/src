@@ -31,14 +31,11 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: vsprintf.c,v 1.6 2003/06/11 21:03:10 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: vsprintf.c,v 1.7 2003/06/11 21:05:09 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
 #include <limits.h>
-
-__warn_references(vsprintf,
-    "warning: vsprintf() is often misused, please use vsnprintf()");
 
 int
 vsprintf(str, fmt, ap)

@@ -31,15 +31,13 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: sprintf.c,v 1.7 2003/06/11 21:03:10 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: sprintf.c,v 1.8 2003/06/11 21:05:09 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
 #include <stdarg.h>
 #include <limits.h>
 #include "local.h"
-
-__warn_references(sprintf, "warning: sprintf() is often misused, please use snprintf()");
 
 int
 sprintf(char *str, char const *fmt, ...)
