@@ -1,8 +1,8 @@
-#	$OpenBSD: files.scsi,v 1.9 2000/02/21 08:24:00 mjacob Exp $
+#	$OpenBSD: files.scsi,v 1.10 2001/11/23 00:35:50 miod Exp $
 #	$NetBSD: files.scsi,v 1.4 1996/05/16 04:01:08 mycroft Exp $
 #
 # Config.new file and device description for machine-independent SCSI code.
-# Included by ports that need it.  Ports that usee it must provide
+# Included by ports that need it.  Ports that use it must provide
 # their own "major" declarations for the appropriate devices.
 
 file	scsi/scsi_base.c		scsi
