@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop.c,v 1.36 2004/07/31 10:27:14 krw Exp $ */
+/*	$OpenBSD: siop.c,v 1.37 2004/10/13 23:33:02 krw Exp $ */
 /*	$NetBSD: siop.c,v 1.65 2002/11/08 22:04:41 bouyer Exp $	*/
 
 /*
@@ -74,6 +74,10 @@
 /* Number of scheduler slot (needs to match script) */
 #define SIOP_NSLOTS 40
 
+void	siop_table_sync(struct siop_cmd *, int);
+void	siop_script_sync(struct siop_softc *, int);
+u_int32_t siop_script_read(struct siop_softc *, u_int);
+void	siop_script_write(struct siop_softc *, u_int, u_int32_t);
 void	siop_reset(struct siop_softc *);
 void	siop_handle_reset(struct siop_softc *);
 int	siop_handle_qtag_reject(struct siop_cmd *);
@@ -121,8 +125,21 @@ void siop_printstats(void);
 #define INCSTAT(x) 
 #endif
 
-static __inline__ void siop_script_sync(struct siop_softc *, int);
-static __inline__ void
+void
+siop_table_sync(siop_cmd, ops)
+	struct siop_cmd *siop_cmd;
+	int ops;
+{
+	struct siop_common_softc *sc  = siop_cmd->cmd_c.siop_sc;
+	bus_addr_t offset;
+
+	offset = siop_cmd->cmd_c.dsa -
+	    siop_cmd->siop_cbdp->xferdma->dm_segs[0].ds_addr;
+	bus_dmamap_sync(sc->sc_dmat, siop_cmd->siop_cbdp->xferdma, offset,
+	    sizeof(struct siop_xfer), ops);
+}
+
+void
 siop_script_sync(sc, ops)
 	struct siop_softc *sc;
 	int ops;
@@ -132,8 +149,7 @@ siop_script_sync(sc, ops)
 		    PAGE_SIZE, ops);
 }
 
-static __inline__ u_int32_t siop_script_read(struct siop_softc *, u_int);
-static __inline__ u_int32_t
+u_int32_t
 siop_script_read(sc, offset)
 	struct siop_softc *sc;
 	u_int offset;
@@ -146,9 +162,7 @@ siop_script_read(sc, offset)
 	}
 }
 
-static __inline__ void siop_script_write(struct siop_softc *, u_int,
-	u_int32_t);
-static __inline__ void
+void
 siop_script_write(sc, offset, val)
 	struct siop_softc *sc;
 	u_int offset;

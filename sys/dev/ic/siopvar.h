@@ -1,4 +1,4 @@
-/*	$OpenBSD: siopvar.h,v 1.10 2003/11/16 20:30:06 avsm Exp $ */
+/*	$OpenBSD: siopvar.h,v 1.11 2004/10/13 23:33:03 krw Exp $ */
 /*	$NetBSD: siopvar.h,v 1.18 2002/04/23 20:41:15 bouyer Exp $ */
 
 /*
@@ -99,21 +99,6 @@ struct siop_lunsw {
 	u_int32_t lunsw_off; /* offset of this lun sw, from sc_scriptaddr*/
 	u_int32_t lunsw_size; /* size of this lun sw */
 };
-
-static __inline__ void siop_table_sync(struct siop_cmd *, int);
-static __inline__ void
-siop_table_sync(siop_cmd, ops)
-	struct siop_cmd *siop_cmd;
-	int ops;
-{
-	struct siop_common_softc *sc  = siop_cmd->cmd_c.siop_sc;
-	bus_addr_t offset;
-
-	offset = siop_cmd->cmd_c.dsa -
-	    siop_cmd->siop_cbdp->xferdma->dm_segs[0].ds_addr;
-	bus_dmamap_sync(sc->sc_dmat, siop_cmd->siop_cbdp->xferdma, offset,
-	    sizeof(struct siop_xfer), ops);
-}
 
 
 TAILQ_HEAD(cmd_list, siop_cmd);
