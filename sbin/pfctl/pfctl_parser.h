@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.h,v 1.74 2004/02/10 22:26:56 dhartmei Exp $ */
+/*	$OpenBSD: pfctl_parser.h,v 1.75 2004/04/14 11:16:43 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -77,6 +77,7 @@ struct pfctl {
 struct node_if {
 	char			 ifname[IFNAMSIZ];
 	u_int8_t		 not;
+	u_int8_t		 dynamic; /* antispoof */
 	u_int			 ifa_flags;
 	struct node_if		*next;
 	struct node_if		*tail;

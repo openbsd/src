@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.449 2004/03/20 23:20:20 david Exp $	*/
+/*	$OpenBSD: parse.y,v 1.450 2004/04/14 11:16:42 cedric Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -433,7 +433,7 @@ typedef struct {
 %type	<v.keep_state>		keep
 %type	<v.state_opt>		state_opt_spec state_opt_list state_opt_item
 %type	<v.logquick>		logquick
-%type	<v.interface>		antispoof_ifspc antispoof_iflst
+%type	<v.interface>		antispoof_ifspc antispoof_iflst antispoof_if
 %type	<v.qassign>		qname
 %type	<v.queue>		qassign qassign_list qassign_item
 %type	<v.queue_options>	scheduler
@@ -883,7 +883,7 @@ fragcache	: FRAGMENT REASSEMBLE	{ $$ = 0; /* default */ }
 
 antispoof	: ANTISPOOF logquick antispoof_ifspc af antispoof_opts {
 			struct pf_rule		 r;
-			struct node_host	*h = NULL;
+			struct node_host	*h = NULL, *hh;
 			struct node_if		*i, *j;
 
 			if (check_rulestate(PFCTL_STATE_FILTER))
@@ -909,7 +909,29 @@ antispoof	: ANTISPOOF logquick antispoof_ifspc af antispoof_opts {
 					YYERROR;
 				}
 				j->not = 1;
-				h = ifa_lookup(j->ifname, PFI_AFLAG_NETWORK);
+				if (i->dynamic) {
+					h = calloc(1, sizeof(*h));
+					if (h == NULL)
+						err(1, "address: calloc");
+					h->addr.type = PF_ADDR_DYNIFTL;
+					set_ipmask(h, 128);
+					if (strlcpy(h->addr.v.ifname, i->ifname,
+					    sizeof(h->addr.v.ifname)) >=
+					    sizeof(h->addr.v.ifname)) {
+						yyerror(
+						    "interface name too long");
+						YYERROR;
+					}
+					hh = malloc(sizeof(*hh));
+					if (hh == NULL)
+						 err(1, "address: malloc");
+					bcopy(h, hh, sizeof(*hh));
+					h->addr.iflags = PFI_AFLAG_NETWORK;
+				} else {
+					h = ifa_lookup(j->ifname,
+					    PFI_AFLAG_NETWORK);
+					hh = NULL;
+				}
 
 				if (h != NULL)
 					expand_rule(&r, j, NULL, NULL, NULL, h,
@@ -925,26 +947,37 @@ antispoof	: ANTISPOOF logquick antispoof_ifspc af antispoof_opts {
 					r.af = $4;
 					if (rule_label(&r, $5.label))
 						YYERROR;
-					h = ifa_lookup(i->ifname, 0);
+					if (hh != NULL)
+						h = hh;
+					else
+						h = ifa_lookup(i->ifname, 0);
 					if (h != NULL)
 						expand_rule(&r, NULL, NULL,
 						    NULL, NULL, h, NULL, NULL,
 						    NULL, NULL, NULL, NULL);
-				}
+				} else
+					free(hh);
 			}
 			free($5.label);
 		}
 		;
 
-antispoof_ifspc	: FOR if_item			{ $$ = $2; }
+antispoof_ifspc	: FOR antispoof_if		{ $$ = $2; }
 		| FOR '{' antispoof_iflst '}'	{ $$ = $3; }
 		;
 
-antispoof_iflst	: if_item			{ $$ = $1; }
-		| antispoof_iflst comma if_item	{
+antispoof_iflst	: antispoof_if				{ $$ = $1; }
+		| antispoof_iflst comma antispoof_if	{
 			$1->tail->next = $3;
 			$1->tail = $3;
 			$$ = $1;
+		}
+		;
+
+antispoof_if  : if_item				{ $$ = $1; }
+		| '(' if_item ')'		{
+			$2->dynamic = 1;
+			$$ = $2;
 		}
 		;
 
