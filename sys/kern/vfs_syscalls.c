@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.15 1996/10/04 01:26:48 deraadt Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.16 1996/10/26 07:27:01 tholo Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -1835,13 +1835,9 @@ sys_rename(p, v, retval)
 		error = EINVAL;
 	/*
 	 * If source is the same as the destination (that is the
-	 * same inode number with the same name in the same directory),
-	 * then there is nothing to do.
+	 * same inode number)
 	 */
-	if (fvp == tvp && fromnd.ni_dvp == tdvp &&
-	    fromnd.ni_cnd.cn_namelen == tond.ni_cnd.cn_namelen &&
-	    !bcmp(fromnd.ni_cnd.cn_nameptr, tond.ni_cnd.cn_nameptr,
-	      fromnd.ni_cnd.cn_namelen))
+	if (fvp == tvp)
 		error = -1;
 out:
 	if (!error) {
