@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.41 2004/12/08 21:04:44 dlg Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.42 2004/12/12 05:30:48 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -192,21 +192,6 @@ atu_msleep(struct atu_softc *sc, int ms)
 		ticks = 1;
 
 	tsleep(&dummy, PZERO | PCATCH, "atus", ms * hz / 1000);
-}
-
-static usbd_status
-atu_reset(struct atu_softc *sc)
-{
-	/* We don't need to actually send the device a reset... */
-#if 0
-	usb_port_status_t	stat;
-
-	usbd_reset_port(sc->atu_udev->myhub,
-	    sc->atu_udev->powersrc->portno, &stat);
-#endif
-
-	sc->atu_udev->address = USB_START_ADDR;
-	return(0);
 }
 
 usbd_status
@@ -897,15 +882,6 @@ atu_upload_internal_firmware(struct atu_softc *sc)
 	 */
 	atu_msleep(sc, 56+100);
 
-	/* reset the device to get the firmware to boot */
-	DPRINTFN(10, ("%s: trying to reset device...\n",
-	    USBDEVNAME(sc->atu_dev)));
-	err = atu_reset(sc);
-	if (err) {
-		DPRINTF(("%s: reset failed...\n", USBDEVNAME(sc->atu_dev)));
-		return err;
-	}
-
 	DPRINTFN(10, ("%s: internal firmware upload done\n",
 	    USBDEVNAME(sc->atu_dev)));
 	return 0;
@@ -1131,7 +1107,7 @@ atu_task(void *arg)
 
 	DPRINTFN(10, ("%s: atu_task\n", USBDEVNAME(sc->atu_dev)));
 
-	if (sc->atu_dying)
+	if (sc->sc_state != ATU_S_OK)
 		return;
 
 	switch (sc->sc_cmd) {
@@ -1234,9 +1210,11 @@ USB_ATTACH(atu)
 	ieee80211_debug = 11;
 #endif
 
+	sc->sc_state = ATU_S_UNCONFIG;
+
 	usbd_devinfo(uaa->device, 0, devinfo, sizeof devinfo);
 	USB_ATTACH_SETUP;
-	printf("%s: %s\n", USBDEVNAME(sc->atu_dev), devinfo);
+	printf("%s: %s", USBDEVNAME(sc->atu_dev), devinfo);
 
 	err = usbd_set_config_no(dev, ATU_CONFIG_NO, 1);
 	if (err) {
@@ -1293,8 +1271,10 @@ USB_ATTACH(atu)
 		if (err)
 			USB_ATTACH_ERROR_RETURN;
 
-		DPRINTFN(10, ("%s: done...\n", USBDEVNAME(sc->atu_dev)));
-		USB_ATTACH_NEED_RESET;
+		printf("\n%s: reattaching after firmware upload\n",
+		    USBDEVNAME(sc->atu_dev));
+		usb_needs_reattach(dev);
+		USB_ATTACH_SUCCESS_RETURN;
 	}
 
 	uaa->iface = sc->atu_iface;
@@ -1348,8 +1328,7 @@ USB_ATTACH(atu)
 	}
 
 	/* Show the world our MAC address */
-	printf("%s: address %s\n", USBDEVNAME(sc->atu_dev),
-	    ether_sprintf(ic->ic_myaddr));
+	printf(": address %s\n", ether_sprintf(ic->ic_myaddr));
 
 	sc->atu_cdata.atu_tx_inuse = 0;
 	sc->atu_encrypt = ATU_WEP_OFF;
@@ -1408,7 +1387,7 @@ USB_ATTACH(atu)
 
 	usb_init_task(&sc->sc_task, atu_task, sc);
 
-	sc->atu_dying = 0;
+	sc->sc_state = ATU_S_OK;
 
 	USB_ATTACH_SUCCESS_RETURN;
 }
@@ -1418,17 +1397,23 @@ USB_DETACH(atu)
 	USB_DETACH_START(atu, sc);
 	struct ifnet		*ifp = &sc->sc_ic.ic_if;
 
-	atu_stop(ifp, 1);
+	DPRINTFN(10, ("%s: atu_detach state=%d\n", USBDEVNAME(sc->atu_dev),
+	    sc->sc_state));
 
-	ieee80211_ifdetach(ifp);
-	if_detach(ifp);
+	if (sc->sc_state != ATU_S_UNCONFIG) {
+		atu_stop(ifp, 1);
 
-	if (sc->atu_ep[ATU_ENDPT_TX] != NULL)
-		usbd_abort_pipe(sc->atu_ep[ATU_ENDPT_TX]);
-	if (sc->atu_ep[ATU_ENDPT_RX] != NULL)
-		usbd_abort_pipe(sc->atu_ep[ATU_ENDPT_RX]);
+		ieee80211_ifdetach(ifp);
+		if_detach(ifp);
 
-	usb_rem_task(sc->atu_udev, &sc->sc_task);
+		if (sc->atu_ep[ATU_ENDPT_TX] != NULL)
+			usbd_abort_pipe(sc->atu_ep[ATU_ENDPT_TX]);
+		if (sc->atu_ep[ATU_ENDPT_RX] != NULL)
+			usbd_abort_pipe(sc->atu_ep[ATU_ENDPT_RX]);
+
+		usb_rem_task(sc->atu_udev, &sc->sc_task);
+	}
+
 	return(0);
 }
 
@@ -1442,8 +1427,10 @@ atu_activate(device_ptr_t self, enum devact act)
 		return (EOPNOTSUPP);
 		break;
 	case DVACT_DEACTIVATE:
-		if_deactivate(&sc->atu_ec.ec_if);
-		sc->atu_dying = 1;
+		if (sc->sc_state != ATU_S_UNCONFIG) {
+			if_deactivate(&sc->atu_ec.ec_if);
+			sc->sc_state = ATU_S_DEAD;
+		}
 		break;
 	}
 	return (0);
@@ -1584,7 +1571,7 @@ atu_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 
 	DPRINTFN(25, ("%s: atu_rxeof\n", USBDEVNAME(sc->atu_dev)));
 
-	if (sc->atu_dying)
+	if (sc->sc_state != ATU_S_OK)
 		return;
 
 	if ((ifp->if_flags & (IFF_RUNNING|IFF_UP)) != (IFF_RUNNING|IFF_UP))
@@ -1753,7 +1740,7 @@ atu_tx_start(struct atu_softc *sc, struct ieee80211_node *ni,
 	DPRINTFN(25, ("%s: atu_tx_start\n", USBDEVNAME(sc->atu_dev)));
 
 	/* Don't try to send when we're shutting down the driver */
-	if (sc->atu_dying)
+	if (sc->sc_state != ATU_S_OK)
 		return(EIO);
 
 	/*
@@ -2228,7 +2215,7 @@ atu_watchdog(struct ifnet *ifp)
 
 	ifp->if_timer = 0;
 
-	if (sc->atu_dying)
+	if (sc->sc_state != ATU_S_OK)
 		return;
 
 	sc = ifp->if_softc;
