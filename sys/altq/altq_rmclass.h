@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_rmclass.h,v 1.4 2002/03/14 03:15:50 millert Exp $	*/
+/*	$OpenBSD: altq_rmclass.h,v 1.5 2002/11/26 01:03:34 henning Exp $	*/
 /*	$KAME: altq_rmclass.h,v 1.6 2000/12/09 09:22:44 kjc Exp $	*/
 
 /*
@@ -137,7 +137,7 @@ typedef struct _rm_class_stats_ {
  */
 struct rm_class {
 	class_queue_t	*q_;		/* Queue of packets */
-	rm_ifdat_t	*ifdat_;			
+	rm_ifdat_t	*ifdat_;
 	int		pri_;		/* Class priority. */
 	int		depth_;		/* Class depth */
 	u_int		ns_per_byte_;	/* NanoSeconds per byte. */

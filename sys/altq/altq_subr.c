@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_subr.c,v 1.9 2002/10/11 09:30:30 kjc Exp $	*/
+/*	$OpenBSD: altq_subr.c,v 1.10 2002/11/26 01:03:34 henning Exp $	*/
 /*	$KAME: altq_subr.c,v 1.11 2002/01/11 08:11:49 kjc Exp $	*/
 
 /*
@@ -197,7 +197,7 @@ altq_enable(ifq)
 	struct ifaltq *ifq;
 {
 	int s;
-    
+
 	if (!ALTQ_IS_READY(ifq))
 		return ENXIO;
 	if (ALTQ_IS_ENABLED(ifq))
@@ -219,7 +219,7 @@ altq_disable(ifq)
 	struct ifaltq *ifq;
 {
 	int s;
-    
+
 	if (!ALTQ_IS_ENABLED(ifq))
 		return 0;
 
@@ -317,7 +317,7 @@ tbr_set(ifq, profile)
 		printf("tbr_set: no cpu clock available!\n");
 		return (ENXIO);
 	}
-	
+
 	if (profile->rate == 0) {
 		/* delete this tbr */
 		if ((tbr = ifq->altq_tbr) == NULL)
@@ -472,7 +472,7 @@ altq_pfdetach(struct pf_altq *a)
 {
 	struct ifnet *ifp;
 	int s, error = 0;
-	
+
 	if ((ifp = ifunit(a->ifname)) == NULL)
 		return (EINVAL);
 
@@ -599,13 +599,13 @@ altq_getqstats(struct pf_altq *a, void *ubuf, int *nbytes)
 #define	IPPROTO_AH	51		/* authentication header */
 #endif
 
-/* 
+/*
  * extract flow information from a given packet.
  * filt_mask shows flowinfo fields required.
  * we assume the ip header is in one mbuf, and addresses and ports are
  * in network byte order.
  */
-int 
+int
 altq_extractflow(m, af, flow, filt_bmask)
 	struct mbuf *m;
 	int af;
@@ -1674,7 +1674,7 @@ extern u_int64_t cpu_tsc_freq;
 #endif
 
 void
-init_machclk(void) 
+init_machclk(void)
 {
 	/* sanity check */
 #ifdef __i386__

@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_wfq.c,v 1.3 2002/03/14 01:26:26 millert Exp $	*/
+/*	$OpenBSD: altq_wfq.c,v 1.4 2002/11/26 01:03:34 henning Exp $	*/
 /*	$KAME: altq_wfq.c,v 1.7 2000/12/14 08:12:46 thorpej Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 /*
  *  March 27, 1997.  Written by Hiroshi Kyusojin of Keio University
- *  (kyu@mt.cs.keio.ac.jp). 
+ *  (kyu@mt.cs.keio.ac.jp).
  */
 
 #include <sys/types.h>
@@ -187,7 +187,7 @@ wfq_ifdetach(ifacep)
 	/* remove WFQ from the ifnet structure. */
 	(void)altq_disable(wfqp->ifq);
 	(void)altq_detach(wfqp->ifq);
-    
+
 	/* remove from the wfqstate list */
 	if (wfq_list == wfqp)
 		wfq_list = wfqp->next;
@@ -200,7 +200,7 @@ wfq_ifdetach(ifacep)
 			}
 		} while ((wp = wp->next) != NULL);
 	}
-    
+
 	/* deallocate wfq_state_t */
 	FREE(wfqp->queue, M_DEVBUF);
 	FREE(wfqp, M_DEVBUF);
@@ -316,7 +316,7 @@ wfq_ifenqueue(ifq, mp, pktattr)
 	}
 	return error;
 }
-	
+
 
 static u_long wfq_hash(flow, n)
 	struct flowinfo *flow;
@@ -433,14 +433,14 @@ wfq_ifdequeue(ifq, op)
 	if ((wfqp->bytes == 0) || ((queue = wfqp->rrp) == NULL))
 		/* no packet in the queues */
 		return NULL;
-	
+
 	while (1) {
 		if (queue->quota > 0) {
 			if (queue->bytes <= 0) {
 				/* this queue no longer has packet.
 				   remove the queue from the active list. */
 				if (queue->next == queue){
-					/* no other active queue 
+					/* no other active queue
 					   -- this case never happens in
 					   this algorithm. */
 					queue->next = queue->prev = NULL;
@@ -479,7 +479,7 @@ wfq_ifdequeue(ifq, op)
 			   the queue will be removed from the active list
 			   at the next round */
 		}
-	
+
 		/* advance the round-robin pointer */
 		queue = wfqp->rrp = queue->next;
 		WFQ_ADDQUOTA(queue);
@@ -495,7 +495,7 @@ wfq_getqid(gqidp)
 	if ((wfqp = altq_lookup(gqidp->iface.wfq_ifacename, ALTQT_WFQ))
 	    == NULL)
 		return (EBADF);
-	
+
 	gqidp->qid = (*wfqp->hash_func)(&gqidp->flow, wfqp->nums);
 	return 0;
 }
@@ -644,7 +644,7 @@ wfqclose(dev, flag, fmt, p)
 	struct wfq_interface iface;
 	wfq_state_t *wfqp;
 	int s;
-    
+
 	s = splimp();
 	while ((wfqp = wfq_list) != NULL) {
 		ifp = wfqp->ifq->altq_ifp;
@@ -688,7 +688,7 @@ wfqioctl(dev, cmd, addr, flag, p)
 
 	s = splimp();
 	switch (cmd) {
-		
+
 	case WFQ_ENABLE:
 		error = wfq_setenable((struct wfq_interface *)addr, ENABLE);
 		break;

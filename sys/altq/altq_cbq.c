@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_cbq.c,v 1.6 2002/10/11 09:30:30 kjc Exp $	*/
+/*	$OpenBSD: altq_cbq.c,v 1.7 2002/11/26 01:03:34 henning Exp $	*/
 /*	$KAME: altq_cbq.c,v 1.9 2000/12/14 08:12:45 thorpej Exp $	*/
 
 /*
@@ -27,7 +27,7 @@
  * SUN MICROSYSTEMS DOES NOT CLAIM MERCHANTABILITY OF THIS SOFTWARE OR THE
  * SUITABILITY OF THIS SOFTWARE FOR ANY PARTICULAR PURPOSE.  The software is
  * provided "as is" without express or implied warranty of any kind.
- *  
+ *
  * These notices must be retained in any copies of any part of this software.
  */
 
@@ -363,11 +363,11 @@ cbq_delete_filter(dfp)
 {
 	char		*ifacename;
 	cbq_state_t	*cbqp;
-    
+
 	ifacename = dfp->cbq_iface.cbq_ifacename;
 	if ((cbqp = altq_lookup(ifacename, ALTQT_CBQ)) == NULL)
 		return (EBADF);
-    
+
 	return acc_delete_filter(&cbqp->cbq_classifier,
 				 dfp->cbq_filter_handle);
 }
@@ -909,7 +909,7 @@ cbq_ifattach(ifacep)
 	bzero(new_cbqp->cbq_class_tbl, sizeof(struct rm_class *) * CBQ_MAX_CLASSES);
 	new_cbqp->cbq_qlen = 0;
 	new_cbqp->ifnp.ifq_ = &ifp->if_snd;	    /* keep the ifq */
-       
+
 	/*
 	 * set CBQ to this ifnet structure.
 	 */
@@ -1005,7 +1005,7 @@ cbq_enqueue(ifq, m, pktattr)
 		struct m_tag *t;
 
 		t = m_tag_find(m, PACKET_TAG_PF_QID, NULL);
-		if (t == NULL || 
+		if (t == NULL ||
 		    (cl = clh_to_clp(cbqp, ((struct altq_tag *)(t+1))->qid))
 		    == NULL) {
 			cl = cbqp->ifnp.default_;
@@ -1234,7 +1234,7 @@ static void cbq_class_dump(i)
 		return;
 	}
 	cl = cbq_list->cbq_class_tbl[i];
-    
+
 	printf("class %d cl=%p\n", i, cl);
 	if (cl != NULL) {
 		s = &cl->stats_;

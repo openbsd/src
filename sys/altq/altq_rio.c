@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_rio.c,v 1.4 2002/06/14 21:34:58 todd Exp $	*/
+/*	$OpenBSD: altq_rio.c,v 1.5 2002/11/26 01:03:34 henning Exp $	*/
 /*	$KAME: altq_rio.c,v 1.8 2000/12/14 08:12:46 thorpej Exp $	*/
 
 /*
@@ -99,7 +99,7 @@
 /*
  * AF DS (differentiated service) codepoints.
  * (classes can be mapped to CBQ or H-FSC classes.)
- * 
+ *
  *      0   1   2   3   4   5   6   7
  *    +---+---+---+---+---+---+---+---+
  *    |   CLASS   |DropPre| 0 |  CU   |
@@ -237,7 +237,7 @@ rioioctl(dev, cmd, addr, flag, p)
 #endif
 		break;
 	}
-    
+
 	switch (cmd) {
 
 	case RIO_ENABLE:
@@ -485,7 +485,7 @@ rio_alloc(weight, params, flags, pkttime)
 	rio_t 	*rp;
 	int	w, i;
 	int	npkts_per_sec;
-	
+
 	MALLOC(rp, rio_t *, sizeof(rio_t), M_DEVBUF, M_WAITOK);
 	if (rp == NULL)
 		return (NULL);
@@ -495,7 +495,7 @@ rio_alloc(weight, params, flags, pkttime)
 	if (pkttime == 0)
 		/* default packet time: 1000 bytes / 10Mbps * 8 * 1000000 */
 		rp->rio_pkttime = 800;
-	else 
+	else
 		rp->rio_pkttime = pkttime;
 
 	if (weight != 0)
@@ -577,13 +577,13 @@ rio_destroy(rp)
 	FREE(rp, M_DEVBUF);
 }
 
-void 
+void
 rio_getstats(rp, sp)
 	rio_t *rp;
 	struct redstats *sp;
 {
 	int i;
-	
+
 	for (i = 0; i < RIO_NDROPPREC; i++) {
 		bcopy(&rp->q_stats[i], sp, sizeof(struct redstats));
 		sp->q_avg = rp->rio_precstate[i].avg >> rp->rio_wshift;
@@ -696,7 +696,7 @@ rio_addq(rp, q, m, pktattr)
 
 	prec = &rp->rio_precstate[dpindex];
 	avg = prec->avg;
-    
+
 	/* see if we drop early */
 	droptype = DTYPE_NODROP;
 	if (avg >= prec->th_min_s && prec->qlen > 1) {

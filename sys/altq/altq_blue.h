@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_blue.h,v 1.3 2002/03/14 03:15:50 millert Exp $	*/
+/*	$OpenBSD: altq_blue.h,v 1.4 2002/11/26 01:03:34 henning Exp $	*/
 /*	$KAME: altq_blue.h,v 1.5 2000/12/14 08:12:45 thorpej Exp $	*/
 
 /*
@@ -64,7 +64,7 @@ struct blue_conf {
 #define	BLUEF_ECN6	0x02	/* use packet marking for IPv6 packets */
 #define	BLUEF_ECN	(BLUEF_ECN4 | BLUEF_ECN6)
 
-/* 
+/*
  * IOCTLs for BLUE
  */
 #define	BLUE_IF_ATTACH		_IOW('Q', 1, struct blue_interface)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_wfq.h,v 1.1 2001/06/27 05:28:36 kjc Exp $	*/
+/*	$OpenBSD: altq_wfq.h,v 1.2 2002/11/26 01:03:34 henning Exp $	*/
 /*	$KAME: altq_wfq.h,v 1.5 2000/12/14 08:12:46 thorpej Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 /*
  *  March 27, 1997.  Written by Hiroshi Kyusojin of Keio University
- *  (kyu@mt.cs.keio.ac.jp). 
+ *  (kyu@mt.cs.keio.ac.jp).
  */
 
 #ifndef _ALTQ_ALTQ_WFQ_H_

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_altq.h,v 1.5 2002/10/08 05:12:08 kjc Exp $	*/
+/*	$OpenBSD: if_altq.h,v 1.6 2002/11/26 01:03:34 henning Exp $	*/
 /*	$KAME: if_altq.h,v 1.6 2001/01/29 19:59:09 itojun Exp $	*/
 
 /*
@@ -161,7 +161,7 @@ struct tb_regulator {
 extern int altq_attach(struct ifaltq *, int, void *,
 			    int (*)(struct ifaltq *, struct mbuf *,
 				    struct altq_pktattr *),
-			    struct mbuf *(*)(struct ifaltq *, int), 
+			    struct mbuf *(*)(struct ifaltq *, int),
 			    int (*)(struct ifaltq *, int, void *),
 			    void *,
 			    void *(*)(void *, struct mbuf *, int));

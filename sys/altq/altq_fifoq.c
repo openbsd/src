@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_fifoq.c,v 1.4 2002/03/14 03:15:50 millert Exp $	*/
+/*	$OpenBSD: altq_fifoq.c,v 1.5 2002/11/26 01:03:34 henning Exp $	*/
 /*	$KAME: altq_fifoq.c,v 1.7 2000/12/14 08:12:45 thorpej Exp $	*/
 
 /*
@@ -137,7 +137,7 @@ fifoqioctl(dev, cmd, addr, flag, p)
 #endif
 		break;
 	}
-    
+
 	switch (cmd) {
 	case FIFOQ_ENABLE:
 		ifacep = (struct fifoq_interface *)addr;
@@ -315,7 +315,7 @@ fifoq_dequeue(ifq, op)
 
 	if (op == ALTDQ_POLL)
 		return (q->q_head);
-		
+
 	if ((m = q->q_head) == NULL)
 		return (NULL);
 

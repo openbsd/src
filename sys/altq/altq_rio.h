@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_rio.h,v 1.2 2002/03/14 01:26:26 millert Exp $	*/
+/*	$OpenBSD: altq_rio.h,v 1.3 2002/11/26 01:03:34 henning Exp $	*/
 /*	$KAME: altq_rio.h,v 1.5 2000/12/14 08:12:46 thorpej Exp $	*/
 
 /*
@@ -69,7 +69,7 @@ struct rio_conf {
 #define	RIOF_ECN	(RIOF_ECN4 | RIOF_ECN6)
 #define	RIOF_CLEARDSCP	0x200	/* clear diffserv codepoint */
 
-/* 
+/*
  * IOCTLs for RIO
  */
 #define	RIO_IF_ATTACH		_IOW('Q', 1, struct rio_interface)
@@ -103,7 +103,7 @@ typedef struct rio {
 		int old;	/* avg is above th_min */
 		struct timeval last;  /* timestamp when queue becomes idle */
 	} rio_precstate[RIO_NDROPPREC];
-		
+
 	int rio_wshift;		/* log(red_weight) */
 	int rio_weight;		/* weight for EWMA */
 	struct wtab *rio_wtab;	/* weight table */
@@ -114,7 +114,7 @@ typedef struct rio {
 
 	u_int8_t rio_codepoint;		/* codepoint value to tag packets */
 	u_int8_t rio_codepointmask;	/* codepoint mask bits */
-	
+
 	struct redstats q_stats[RIO_NDROPPREC];	/* statistics */
 } rio_t;
 

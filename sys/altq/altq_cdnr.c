@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_cdnr.c,v 1.4 2002/03/14 03:15:50 millert Exp $	*/
+/*	$OpenBSD: altq_cdnr.c,v 1.5 2002/11/26 01:03:34 henning Exp $	*/
 /*	$KAME: altq_cdnr.c,v 1.8 2000/12/14 08:12:45 thorpej Exp $	*/
 
 /*
@@ -144,7 +144,7 @@ altq_cdnr_input(m, af)
 #ifdef INET6
 	if (af == AF_INET6) {
 		u_int32_t flowlabel;
-		
+
 		flowlabel = ((struct ip6_hdr *)ip)->ip6_flow;
 		pktinfo.pkt_dscp = (ntohl(flowlabel) >> 20) & DSCP_MASK;
 	} else
@@ -163,7 +163,7 @@ altq_cdnr_input(m, af)
 
 	while (1) {
 		PKTCNTR_ADD(&top->tc_cnts[tca->tca_code], pktinfo.pkt_len);
-		
+
 		switch (tca->tca_code) {
 		case TCACODE_PASS:
 			return (1);
@@ -221,7 +221,7 @@ cdnr_handle2cb(handle)
 	cb = (struct cdnr_block *)handle;
 	if (handle != ALIGN(cb))
 		return (NULL);
-	
+
 	if (cb == NULL || cb->cb_handle != handle)
 		return (NULL);
 	return (cb);
@@ -268,7 +268,7 @@ cdnr_cballoc(top, type, input_func)
 	if (cb == NULL)
 		return (NULL);
 	bzero(cb, size);
-	
+
 	cb->cb_len = size;
 	cb->cb_type = type;
 	cb->cb_ref = 0;
@@ -449,7 +449,7 @@ top_destroy(top)
 		if (cb != NULL)
 			generic_element_destroy(cb);
 	}
-	
+
 	LIST_REMOVE(top, tc_next);
 
 	cdnr_cbdestroy(top);
@@ -566,7 +566,7 @@ tbm_destroy(tbm)
 	cdnr_cbdestroy(tbm);
 	return (0);
 }
-	
+
 static struct tc_action *
 tbm_input(cb, pktinfo)
 	struct cdnr_block *cb;
@@ -575,7 +575,7 @@ tbm_input(cb, pktinfo)
 	struct tbmeter *tbm = (struct tbmeter *)cb;
 	u_int64_t	len;
 	u_int64_t	interval, now;
-	
+
 	len = TB_SCALE(pktinfo->pkt_len);
 
 	if (tbm->tb.token < len) {
@@ -590,7 +590,7 @@ tbm_input(cb, pktinfo)
 		}
 		tbm->tb.last = now;
 	}
-	
+
 	if (tbm->tb.token < len) {
 		PKTCNTR_ADD(&tbm->out_cnt, pktinfo->pkt_len);
 		return (&tbm->out_action);
@@ -664,7 +664,7 @@ trtcm_destroy(tcm)
 	cdnr_cbdestroy(tcm);
 	return (0);
 }
-	
+
 static struct tc_action *
 trtcm_input(cb, pktinfo)
 	struct cdnr_block *cb;
@@ -708,7 +708,7 @@ trtcm_input(cb, pktinfo)
 		}
 		tcm->peak_tb.last = now;
 	}
-	
+
 	if (color == tcm->red_dscp || tcm->peak_tb.token < len) {
 		pktinfo->pkt_dscp = tcm->red_dscp;
 		PKTCNTR_ADD(&tcm->red_cnt, pktinfo->pkt_len);
@@ -831,7 +831,7 @@ tswtcm_input(cb, pktinfo)
 	 */
 	if (avg_rate > tsw->cmtd_rate) {
 		u_int32_t randval = random() % avg_rate;
-		
+
 		if (avg_rate > tsw->peak_rate) {
 			if (randval < avg_rate - tsw->peak_rate) {
 				/* mark red */
@@ -1050,13 +1050,13 @@ cdnrcmd_tcm_stats(ap)
 
 	if (cb->cb_type == TCETYPE_TRTCM) {
 	    struct trtcm *tcm = (struct trtcm *)cb;
-	    
+
 	    ap->green_cnt = tcm->green_cnt;
 	    ap->yellow_cnt = tcm->yellow_cnt;
 	    ap->red_cnt = tcm->red_cnt;
 	} else if (cb->cb_type == TCETYPE_TSWTCM) {
 	    struct tswtcm *tsw = (struct tswtcm *)cb;
-	    
+
 	    ap->green_cnt = tsw->green_cnt;
 	    ap->yellow_cnt = tsw->yellow_cnt;
 	    ap->red_cnt = tsw->red_cnt;
@@ -1248,10 +1248,10 @@ cdnrioctl(dev, cmd, addr, flag, p)
 			return (error);
 		break;
 	}
-    
+
 	s = splimp();
 	switch (cmd) {
-		
+
 	case CDNR_IF_ATTACH:
 		ifacep = (struct cdnr_interface *)addr;
 		error = cdnrcmd_if_attach(ifacep->cdnr_ifname);

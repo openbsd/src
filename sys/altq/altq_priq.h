@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_priq.h,v 1.1 2001/06/27 05:28:35 kjc Exp $	*/
+/*	$OpenBSD: altq_priq.h,v 1.2 2002/11/26 01:03:34 henning Exp $	*/
 /*	$KAME: altq_priq.h,v 1.1 2000/10/18 09:15:23 kjc Exp $	*/
 /*
  * Copyright (C) 2000
@@ -36,7 +36,7 @@
 
 #ifdef __cplusplus
 extern "C" {
-#endif 
+#endif
 
 #define	PRIQ_MAXPRI	16	/* upper limit of the number of priorities */
 
@@ -156,6 +156,6 @@ struct priq_if {
 
 #ifdef __cplusplus
 }
-#endif 
+#endif
 
 #endif /* _ALTQ_ALTQ_PRIQ_H_ */
