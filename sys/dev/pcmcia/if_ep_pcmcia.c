@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ep_pcmcia.c,v 1.21 2000/02/02 18:47:01 deraadt Exp $	*/
+/*	$OpenBSD: if_ep_pcmcia.c,v 1.22 2000/04/24 15:27:02 fgsch Exp $	*/
 /*	$NetBSD: if_ep_pcmcia.c,v 1.16 1998/08/17 23:20:40 thorpej Exp $  */
 
 /*-
@@ -158,9 +158,15 @@ struct ep_pcmcia_product {
 	{ PCMCIA_PRODUCT_3COM_3CXEM556B,EP_CHIPSET_3C509,
 	  0,				0 },
 
+	{ PCMCIA_PRODUCT_3COM_3C1,	EP_CHIPSET_3C509,
+	  0,				0 },
+
 #ifdef notyet
+	{ PCMCIA_PRODUCT_3COM_3CCFEM556BI, EP_CHIPSET_BOOMERANG,
+	  EP_FLAGS_MII,			0 },
+
 	{ PCMCIA_PRODUCT_3COM_3C574,	EP_CHIPSET_BOOMERANG,
-	  EP_FLAGS_MII,			0}
+	  EP_FLAGS_MII,			0 }
 #endif
 };
 
@@ -341,6 +347,7 @@ ep_pcmcia_attach(parent, self, aux)
 		 */
 		/* FALLTHROUGH */
 	case PCMCIA_PRODUCT_3COM_3C574:
+	case PCMCIA_PRODUCT_3COM_3CCFEM556BI:
 		/*
 		 * Apparently, some 3c574s do it this way, as well.
 		 */
