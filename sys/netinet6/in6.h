@@ -20,27 +20,6 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #include <sys/param.h>
 #endif /* __bsdi__ && !defined(_BSDI_VERSION) */
 
-/*
- * Next header types (called Protocols in netinet/in.h).
- */
-
-#define IPPROTO_HOPOPTS		0	/* Hop-by-hop option header. */
-#define IPPROTO_IPV4		4	/* IPv4 in IPv6 (?!?) */
-/* BAD PLACE #define IPPROTO_IPV6		41	 IPv6 in IPv6 */
-#define IPPROTO_ROUTING		43	/* Routing header. */
-#define IPPROTO_FRAGMENT	44	/* Fragmentation/reassembly header. */
-#define IPPROTO_ESP		50	/* Encapsulating security payload. */
-#define IPPROTO_AH		51	/* Authentication header. */
-#define IPPROTO_ICMPV6		58      /* ICMP for IPv6 */
-#define IPPROTO_NONE		59	/* No next header */
-#define IPPROTO_DSTOPTS		60	/* Destination options header. */
-
-/*
- * Following are TBD, and subject to change rapidly
- */
-#define IPPROTO_RAW		255	/* Payload of unknown type? */
-#define IPPROTO_MAX		256	/* Upper bound for next header type. */
-
 /* IPPROTO type macros. */
 
 #define IS_PREFRAG(x)   ( (x)==IPPROTO_HOPOPTS || (x)==IPPROTO_ROUTING || \
