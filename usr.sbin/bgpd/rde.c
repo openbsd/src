@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.136 2004/08/05 20:56:11 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.137 2004/08/05 21:01:38 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -103,12 +103,13 @@ u_int32_t	pathhashsize = 1024;
 u_int32_t	nexthophashsize = 64;
 
 pid_t
-rde_main(struct bgpd_config *config, struct network_head *net_l,
-    struct filter_head *rules, struct mrt_head *mrt_l,
-    int pipe_m2r[2], int pipe_s2r[2], int pipe_m2s[2])
+rde_main(struct bgpd_config *config, struct peer *peer_l,
+    struct network_head *net_l, struct filter_head *rules,
+    struct mrt_head *mrt_l, int pipe_m2r[2], int pipe_s2r[2], int pipe_m2s[2])
 {
 	pid_t			 pid;
 	struct passwd		*pw;
+	struct peer		*p;
 	struct listen_addr	*la;
 	struct pollfd		 pfd[3];
 	int			 nfds, i;
@@ -156,7 +157,12 @@ rde_main(struct bgpd_config *config, struct network_head *net_l,
 	imsg_init(&ibuf_se, pipe_s2r[1]);
 	imsg_init(&ibuf_main, pipe_m2r[1]);
 
-	/* main mrt list and listener list are not used in the SE */
+	/* peer list, mrt list and listener list are not used in the RDE */
+	while ((p = peer_l) != NULL) {
+		peer_l = p->next;
+		free(p);
+	}
+
 	while ((mrt = LIST_FIRST(mrt_l)) != NULL) {
 		LIST_REMOVE(mrt, entry);
 		free(mrt);
