@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.112 2003/10/19 03:58:25 david Exp $
+.\"	$OpenBSD: sysctl.3,v 1.113 2003/10/22 04:30:02 jmc Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -1119,7 +1119,7 @@ or as a result of dynamic
 entries.
 Supported values are hmac-md5, hmac-sha1, and hmac-ripemd160.
 If set to any other value, it is left to the key management daemons to
-select an authentiction algorithm for the security association.
+select an authentication algorithm for the security association.
 The default value is hmac-sha1.
 .It Li ip.ipsec-bytes
 The number of bytes that will be processed by a security association
@@ -1824,7 +1824,7 @@ The number of encryption keys that have been randomly created.
 The swap partition is divided into sections of normally 512KB.
 Each section has its own encryption key.
 .It Dv SWPENC_DELETED
-The number of encryption keys that have been deleted, thus effectivly
+The number of encryption keys that have been deleted, thus effectively
 erasing the data that has been encrypted with them.
 Encryption keys are deleted when their reference counter reaches zero.
 .It Dv SWPENC_ENABLE
