@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.4 2004/11/01 15:45:02 espie Exp $
+# $OpenBSD: Add.pm,v 1.5 2004/11/01 19:21:58 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -170,6 +170,7 @@ sub install
 			symlink($self->{symlink}, $destdir.$fullname);
 		} else {
 			rename($self->{tempname}, $destdir.$fullname);
+			print "moving ", $self->{tempname}, " -> $destdir$fullname\n" if $state->{very_verbose};
 		}
 	} else {
 		my $file = $self->prepare_to_extract($state);

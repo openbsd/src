@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.90 2004/11/01 19:14:26 espie Exp $
+# $OpenBSD: pkg_add,v 1.91 2004/11/01 19:21:58 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -673,6 +673,13 @@ my $dielater = $@;
 OpenBSD::PackingElement::Fontdir::finish_fontdirs();
 manpages_index($state);
 OpenBSD::PackingElement::Lib::ensure_ldconfig($state);
+# delayed directory/user/group removal
+if (defined $state->{dirs_to_rm} or defined $state->{users_to_rm} or
+	defined $state->{groups_to_rm}) {
+	require OpenBSD::SharedItems;
+
+	OpenBSD::SharedItems::cleanup($state);
+}
 
 if ($state->{beverbose}) {
 	OpenBSD::Vstat::tally();
