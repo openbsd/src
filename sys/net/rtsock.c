@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.24 2002/07/17 14:20:19 art Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.25 2002/12/31 02:30:10 itojun Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -783,7 +783,7 @@ sysctl_dumpentry(rn, v)
 			brdaddr = rt->rt_ifa->ifa_dstaddr;
 	}
 	size = rt_msg2(RTM_GET, &info, 0, w);
-	if (w->w_where && w->w_tmem) {
+	if (w->w_where && w->w_tmem && w->w_needed <= 0) {
 		register struct rt_msghdr *rtm = (struct rt_msghdr *)w->w_tmem;
 
 		rtm->rtm_flags = rt->rt_flags;
@@ -820,7 +820,7 @@ sysctl_iflist(af, w)
 		ifpaddr = ifa->ifa_addr;
 		len = rt_msg2(RTM_IFINFO, &info, (caddr_t)0, w);
 		ifpaddr = 0;
-		if (w->w_where && w->w_tmem) {
+		if (w->w_where && w->w_tmem && w->w_needed <= 0) {
 			register struct if_msghdr *ifm;
 
 			ifm = (struct if_msghdr *)w->w_tmem;
@@ -841,7 +841,7 @@ sysctl_iflist(af, w)
 			netmask = ifa->ifa_netmask;
 			brdaddr = ifa->ifa_dstaddr;
 			len = rt_msg2(RTM_NEWADDR, &info, 0, w);
-			if (w->w_where && w->w_tmem) {
+			if (w->w_where && w->w_tmem && w->w_needed <= 0) {
 				register struct ifa_msghdr *ifam;
 
 				ifam = (struct ifa_msghdr *)w->w_tmem;
