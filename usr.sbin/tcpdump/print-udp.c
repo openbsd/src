@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-udp.c,v 1.21 2002/01/22 18:33:07 mickey Exp $	*/
+/*	$OpenBSD: print-udp.c,v 1.22 2003/06/11 20:58:45 markus Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996
@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-udp.c,v 1.21 2002/01/22 18:33:07 mickey Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-udp.c,v 1.22 2003/06/11 20:58:45 markus Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -349,6 +349,7 @@ static int udp_cksum(register const struct ip *ip,
 #define KERBEROS_SEC_PORT 750	/*XXX*/
 #define L2TP_PORT 1701		/*XXX*/
 #define ISAKMP_PORT   500	/*XXX*/
+#define UDPENCAP_PORT  4500	/*XXX*/
 #define TIMED_PORT 525		/*XXX*/
 #define NETBIOS_NS_PORT    137	/*XXX*/
 #define NETBIOS_DGRAM_PORT 138	/*XXX*/
@@ -585,6 +586,8 @@ udp_print(register const u_char *bp, u_int length, register const u_char *bp2)
 			l2tp_print((const u_char *)(up + 1), length);
 		else if (ISPORT(ISAKMP_PORT))
 			ike_print((const u_char *)(up + 1), length);
+		else if (ISPORT(UDPENCAP_PORT))
+			udpencap_print((const u_char *)(up + 1), length, bp2);
 #if 0
 		else if (ISPORT(NETBIOS_NS_PORT))
 			nbt_udp137_print((const u_char *)(up + 1), length);

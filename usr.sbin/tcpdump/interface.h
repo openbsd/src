@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.h,v 1.37 2003/05/14 08:50:37 canacar Exp $	*/
+/*	$OpenBSD: interface.h,v 1.38 2003/06/11 20:58:45 markus Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -20,7 +20,7 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * @(#) $Header: /home/cvs/src/usr.sbin/tcpdump/interface.h,v 1.37 2003/05/14 08:50:37 canacar Exp $ (LBL)
+ * @(#) $Header: /home/cvs/src/usr.sbin/tcpdump/interface.h,v 1.38 2003/06/11 20:58:45 markus Exp $ (LBL)
  */
 
 #ifndef tcpdump_interface_h
@@ -244,6 +244,7 @@ extern void timed_print(const u_char *, u_int);
 extern void udp_print(const u_char *, u_int, const u_char *);
 extern void wb_print(const void *, u_int);
 extern void ike_print(const u_char *, u_int);
+extern void udpencap_print(const u_char *, u_int, const u_char *);
 extern void ah_print(const u_char *, u_int, const u_char *);
 extern void esp_print(const u_char *, u_int, const u_char *);
 extern void cdp_print(const u_char *, u_int, u_int, const u_char *,
