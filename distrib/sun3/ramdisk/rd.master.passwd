@@ -1,7 +1,0 @@
-root::0:0::0:0::/:/bin/sh
-daemon:*:1:31::0:0::/:/bin/sh
-operator:*:2:5::0:0::/:/bin/sh
-bin:*:3:7::0:0::/:/bin/sh
-uucp:*:66:1::0:0::/:/bin/sh
-www:*:67:67::0:0::/:/bin/sh
-named:*:70:70::0:0::/:/bin/sh

@@ -1,7 +1,6 @@
+#	$OpenBSD: dot.profile,v 1.2 2000/06/20 21:29:34 miod Exp $
 #
-#	$OpenBSD: dot.profile,v 1.1 1998/08/23 18:09:04 kstailey Exp $
-#	$NetBSD: dot.profile,v 1.1 1995/07/18 04:13:09 briggs Exp $
-#
+# Copyright (c) 1995 Jason R. Thorpe
 # Copyright (c) 1994 Christopher G. Demetriou
 # All rights reserved.
 # 
@@ -33,33 +32,42 @@
 
 export PATH=/sbin:/bin:/usr/bin:/usr/sbin:/
 export HISTFILE=/.sh_history
-export TERM=sun
-export HOME=/
 
 umask 022
 
 set -o emacs # emacs-style command line editing
+alias dmesg="cat /kern/msgbuf"
 
-TMPWRITEABLE=/tmp/writeable
+# XXX
+# the TERM/EDITOR stuff is really well enough parameterized to be moved
+# into install.sub where it could use the routines there and be invoked
+# from the various (semi) MI install and upgrade scripts
+
+# terminals believed to be in termcap, default TERM
+TERMS="sun vt* pcvt* pc3 dumb"
+TERM=sun
 
 if [ "X${DONEPROFILE}" = "X" ]; then
 	DONEPROFILE=YES
-	export DONEPROFILE
+
+	# mount kernfs and re-mount the boot media (perhaps r/w)
+	mount_kernfs /kern /kern
+	mount_ffs -o update /dev/rd0a /
 
 	# set up some sane defaults
-	echo 'erase ^H, werase ^W, kill ^U, intr ^C'
-	stty newcrt werase ^W intr ^C kill ^U erase ^H 9600
-	echo ''
+	echo 'erase ^?, werase ^W, kill ^U, intr ^C'
+	stty newcrt werase ^W intr ^C kill ^U erase ^? 9600
 
-	echo 'Remounting /dev/rd0a as root...'
-	mount /dev/rd0a /
-
-	# tell install.md we've done it
-	> ${TMPWRITEABLE}
-
-	# pull in the functions that people will use from the shell prompt.
-	. /.commonutils
-	. /.instutils
+	# get the terminal type
+	_forceloop=""
+	while [ "X$_forceloop" = X"" ]; do
+		echo "Supported terminals are: $TERMS"
+		eval `tset -s -m ":?$TERM"`
+		if [ "X$TERM" != X"unknown" ]; then
+			_forceloop="done"
+		fi
+	done
+	export TERM
 
 	# Installing or upgrading?
 	_forceloop=""

@@ -1,6 +1,4 @@
-#
-#	$OpenBSD: mr.profile,v 1.6 2000/05/02 21:46:11 miod Exp $
-#	$NetBSD: mr.profile,v 1.2.6.1 1996/08/29 03:21:13 gwr Exp $
+#	$OpenBSD: dot.profile,v 1.1 2000/06/20 21:29:24 miod Exp $
 #
 # Copyright (c) 1995 Jason R. Thorpe
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -32,25 +30,65 @@
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-PATH=/sbin:/bin:/usr/sbin:/usr/bin:/
-export PATH
-TERM=ansi
-export TERM
+export PATH=/sbin:/bin:/usr/bin:/usr/sbin:/
+export HISTFILE=/.sh_history
 
 umask 022
 
-# set up some sane defaults
-echo intr '^C' kill '^U' erase '^?' werase '^W' newcrt
-stty intr '^C' kill '^U' erase '^?' werase '^W' newcrt
+set -o emacs # emacs-style command line editing
+alias dmesg="cat /kern/msgbuf"
 
-# run update, so that installed software is written as it goes.
-update
+# XXX
+# the TERM/EDITOR stuff is really well enough parameterized to be moved
+# into install.sub where it could use the routines there and be invoked
+# from the various (semi) MI install and upgrade scripts
 
-# get the terminal type?
-# (nah, ansi is good enough)
+# terminals believed to be in termcap, default TERM
+TERMS="sun vt* pcvt* pc3 dumb"
+TERM=sun
 
-# run the installation script.
-echo 'To install OpenBSD, enter the command:  install'
-echo 'Otherwise, enter the command:  halt'
-# /install  XXX - Not yet...
+if [ "X${DONEPROFILE}" = "X" ]; then
+	DONEPROFILE=YES
 
+	# mount kernfs and re-mount the boot media (perhaps r/w)
+	mount_kernfs /kern /kern
+	mount_ffs -o update /kern/rootdev /
+
+	# set up some sane defaults
+	echo 'erase ^?, werase ^W, kill ^U, intr ^C'
+	stty newcrt werase ^W intr ^C kill ^U erase ^? 9600
+
+	# get the terminal type
+	_forceloop=""
+	while [ "X$_forceloop" = X"" ]; do
+		echo "Supported terminals are: $TERMS"
+		eval `tset -s -m ":?$TERM"`
+		if [ "X$TERM" != X"unknown" ]; then
+			_forceloop="done"
+		fi
+	done
+	export TERM
+
+	# Installing or upgrading?
+	_forceloop=""
+	while [ "X$_forceloop" = X"" ]; do
+		echo -n '(I)nstall, (U)pgrade, or (S)hell? '
+		read _forceloop
+		case "$_forceloop" in
+			i*|I*)
+				/install
+				;;
+
+			u*|U*)
+				/upgrade
+				;;
+
+			s*|S*)
+				;;
+
+			*)
+				_forceloop=""
+				;;
+		esac
+	done
+fi
