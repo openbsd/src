@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpc.c,v 1.9 2001/08/30 17:38:13 millert Exp $	*/
+/*	$OpenBSD: lpc.c,v 1.10 2001/11/23 03:58:18 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -44,7 +44,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)lpc.c	8.3 (Berkeley) 4/28/95";
 #else
-static const char rcsid[] = "$OpenBSD: lpc.c,v 1.9 2001/08/30 17:38:13 millert Exp $";
+static const char rcsid[] = "$OpenBSD: lpc.c,v 1.10 2001/11/23 03:58:18 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -52,11 +52,11 @@ static const char rcsid[] = "$OpenBSD: lpc.c,v 1.9 2001/08/30 17:38:13 millert E
 
 #include <dirent.h>
 #include <signal.h>
-#include <setjmp.h>
 #include <syslog.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <errno.h>
 #include <ctype.h>
 #include <string.h>
 #include <grp.h>
@@ -80,12 +80,9 @@ int	fromatty;
 char	cmdline[MAX_CMDLINE];
 int	margc;
 char	*margv[MAX_MARGV];
-int	top;
 uid_t	uid, euid;
 
-jmp_buf	toplevel;
-
-void		 cmdscanner __P((int));
+void		 cmdscanner __P((void));
 struct cmd	*getcmd __P((char *));
 void		 intr __P((int));
 void		 makeargv __P((void));
@@ -122,42 +119,51 @@ main(argc, argv)
 		exit(0);
 	}
 	fromatty = isatty(fileno(stdin));
-	top = sigsetjmp(toplevel, 1) == 0;
-	if (top)
-		signal(SIGINT, intr);
-	for (;;) {
-		cmdscanner(top);
-		top = 1;
-	}
+	signal(SIGINT, intr);
+	for (;;)
+		cmdscanner();
 }
+
+volatile sig_atomic_t gotintr;
 
 void
 intr(signo)
 	int signo;
 {
 	if (!fromatty)
-		exit(0);
-	siglongjmp(toplevel, 1);
+		_exit(0);
+	gotintr = 1;
 }
 
 /*
  * Command parser.
  */
 void
-cmdscanner(top)
-	int top;
+cmdscanner(void)
 {
 	struct cmd *c;
 
-	if (!top)
-		putchar('\n');
 	for (;;) {
+		if (gotintr) {
+			putchar('\n');
+			gotintr = 0;
+		}
 		if (fromatty) {
 			printf("lpc> ");
 			fflush(stdout);
 		}
-		if (fgets(cmdline, MAX_CMDLINE, stdin) == 0)
+
+		siginterrupt(SIGINT, 1);
+		if (fgets(cmdline, MAX_CMDLINE, stdin) == NULL) {
+			if (errno == EINTR && gotintr) {
+				siginterrupt(SIGINT, 0);
+				return;
+			}
+			siginterrupt(SIGINT, 0);
 			quit(0, NULL);
+		}
+		siginterrupt(SIGINT, 0);
+
 		if (cmdline[0] == 0 || cmdline[0] == '\n')
 			break;
 		makeargv();
@@ -176,7 +182,6 @@ cmdscanner(top)
 		}
 		(*c->c_handler)(margc, margv);
 	}
-	siglongjmp(toplevel, 0);
 }
 
 struct cmd *

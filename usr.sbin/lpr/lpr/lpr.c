@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpr.c,v 1.21 2001/11/19 20:26:51 deraadt Exp $ */
+/*	$OpenBSD: lpr.c,v 1.22 2001/11/23 03:58:18 deraadt Exp $ */
 /*	$NetBSD: lpr.c,v 1.10 1996/03/21 18:12:25 jtc Exp $	*/
 
 /*
@@ -50,7 +50,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)lpr.c	8.4 (Berkeley) 4/28/95";
 #else
-static const char rcsid[] = "$OpenBSD: lpr.c,v 1.21 2001/11/19 20:26:51 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: lpr.c,v 1.22 2001/11/23 03:58:18 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -105,6 +105,8 @@ static int	 userid;	/* user id */
 static char	*width;		/* width for versatec printing */
 
 static struct stat statb;
+
+volatile sig_atomic_t gotintr;
 
 static void	 card __P((int, char *));
 static void	 chkprinter __P((char *));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pac.c,v 1.10 2001/08/30 17:38:13 millert Exp $ */
+/*	$OpenBSD: pac.c,v 1.11 2001/11/23 03:58:19 deraadt Exp $ */
 /*	$NetBSD: pac.c,v 1.7 1996/03/21 18:21:20 jtc Exp $	*/
 
 /*
@@ -45,7 +45,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)pac.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: pac.c,v 1.10 2001/08/30 17:38:13 millert Exp $";
+static const char rcsid[] = "$OpenBSD: pac.c,v 1.11 2001/11/23 03:58:19 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -80,6 +80,8 @@ static char	*sumfile;	/* summary file */
 static int	 summarize;	/* Compress accounting file */
 
 uid_t	uid, euid;
+
+volatile sig_atomic_t gotintr;
 
 /*
  * Grossness follows:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.12 2001/08/30 17:38:13 millert Exp $	*/
+/*	$OpenBSD: common.c,v 1.13 2001/11/23 03:58:17 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -42,7 +42,7 @@
 #if 0
 static const char sccsid[] = "@(#)common.c	8.5 (Berkeley) 4/28/95";
 #else
-static const char rcsid[] = "$OpenBSD: common.c,v 1.12 2001/08/30 17:38:13 millert Exp $";
+static const char rcsid[] = "$OpenBSD: common.c,v 1.13 2001/11/23 03:58:17 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -149,9 +149,17 @@ getport(rhost, rport)
 	if (inet_aton(rhost, &sin.sin_addr) == 1)
 		sin.sin_family = AF_INET;
 	else {
+		siginterrupt(SIGINT, 1);
 		hp = gethostbyname(rhost);
-		if (hp == NULL)
+		if (hp == NULL) {
+			if (errno == EINTR && gotintr) {
+				siginterrupt(SIGINT, 0);
+				return (-1);
+			}
+			siginterrupt(SIGINT, 0);
 			fatal("unknown host %s", rhost);
+		}
+		siginterrupt(SIGINT, 0);
 		bcopy(hp->h_addr, (caddr_t)&sin.sin_addr, hp->h_length);
 		sin.sin_family = hp->h_addrtype;
 	}
@@ -168,14 +176,22 @@ getport(rhost, rport)
 	 */
 retry:
 	seteuid(euid);
+	siginterrupt(SIGINT, 1);
 	s = rresvport(&lport);
+	siginterrupt(SIGINT, 0);
 	seteuid(uid);
 	if (s < 0)
 		return(-1);
+	siginterrupt(SIGINT, 1);
 	if (connect(s, (struct sockaddr *)&sin, sizeof(sin)) < 0) {
 		err = errno;
 		(void) close(s);
+		siginterrupt(SIGINT, 0);
 		errno = err;
+		if (errno == EINTR && gotintr) {
+			close(s);
+			return (-1);
+		}
 		if (errno == EADDRINUSE) {
 			lport--;
 			goto retry;
@@ -187,6 +203,7 @@ retry:
 		}
 		return(-1);
 	}
+		siginterrupt(SIGINT, 0);
 	
 	/* Don't bother if we get an error here.  */
 	setsockopt(s, SOL_SOCKET, SO_KEEPALIVE, (char *)&on, sizeof on);
@@ -327,13 +344,21 @@ checkremote()
 		/* get the official name of the local host */
 		gethostname(name, sizeof(name));
 		name[sizeof(name)-1] = '\0';
+		siginterrupt(SIGINT, 1);
 		hp = gethostbyname(name);
 		if (hp == (struct hostent *) NULL) {
-		    (void) snprintf(errbuf, sizeof(errbuf),
-			"unable to get official name for local machine %s",
-			name);
-		    return errbuf;
-		} else (void) strcpy(name, hp->h_name);
+			if (errno == EINTR && gotintr) {
+				siginterrupt(SIGINT, 0);
+				return NULL;
+			}
+			siginterrupt(SIGINT, 0);
+			(void) snprintf(errbuf, sizeof(errbuf),
+			    "unable to get official name for local machine %s",
+			    name);
+			return errbuf;
+		} else
+			strlcpy(name, hp->h_name, sizeof name);
+		siginterrupt(SIGINT, 0);
 
 		/* get the official name of RM */
 		hp = gethostbyname(RM);

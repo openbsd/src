@@ -1,4 +1,4 @@
-/*	$OpenBSD: lp.h,v 1.4 2001/11/01 18:02:33 mickey Exp $	*/
+/*	$OpenBSD: lp.h,v 1.5 2001/11/23 03:58:17 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -90,6 +90,9 @@ extern char	host[MAXHOSTNAMELEN];
 extern char	*from;		/* client's machine name */
 extern int	remote;		/* true if sending files to a remote host */
 extern char	*printcapdb[];  /* printcap database array */
+
+extern volatile sig_atomic_t	gotintr;
+
 /*
  * Structure used for building a sorted list of control files.
  */

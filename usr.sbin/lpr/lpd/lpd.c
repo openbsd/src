@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpd.c,v 1.22 2001/11/19 20:27:13 deraadt Exp $ */
+/*	$OpenBSD: lpd.c,v 1.23 2001/11/23 03:58:18 deraadt Exp $ */
 /*	$NetBSD: lpd.c,v 1.7 1996/04/24 14:54:06 mrg Exp $	*/
 
 /*
@@ -45,7 +45,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)lpd.c	8.7 (Berkeley) 5/10/95";
 #else
-static const char rcsid[] = "$OpenBSD: lpd.c,v 1.22 2001/11/19 20:27:13 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: lpd.c,v 1.23 2001/11/23 03:58:18 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -115,6 +115,9 @@ static void       doit __P((void));
 static void       startup __P((void));
 static void       chkhost __P((struct sockaddr_in *));
 static int	  ckqueue __P((char *));
+
+/* unused, needed for lpc */
+volatile sig_atomic_t gotintr;
 
 uid_t	uid, euid;
 

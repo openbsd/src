@@ -1,4 +1,4 @@
-/*	$OpenBSD: startdaemon.c,v 1.4 2001/08/30 17:38:13 millert Exp $	*/
+/*	$OpenBSD: startdaemon.c,v 1.5 2001/11/23 03:58:17 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993, 1994
@@ -37,10 +37,9 @@
 #if 0
 static const char sccsid[] = "@(#)startdaemon.c	8.2 (Berkeley) 4/17/94";
 #else
-static const char rcsid[] = "$OpenBSD: startdaemon.c,v 1.4 2001/08/30 17:38:13 millert Exp $";
+static const char rcsid[] = "$OpenBSD: startdaemon.c,v 1.5 2001/11/23 03:58:17 deraadt Exp $";
 #endif
 #endif /* not lint */
-
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -82,18 +81,29 @@ startdaemon(printer)
 #define SUN_LEN(unp) (strlen((unp)->sun_path) + 2)
 #endif
 	seteuid(euid);
+	siginterrupt(SIGINT, 1);
 	if (connect(s, (struct sockaddr *)&un, SUN_LEN(&un)) < 0) {
+		if (errno == EINTR && gotintr) {
+			siginterrupt(SIGINT, 0);
+			seteuid(uid);
+			close(s);
+			return(0);
+		}
+		siginterrupt(SIGINT, 0);
 		seteuid(uid);
 		perr("connect");
 		(void) close(s);
 		return(0);
 	}
+	siginterrupt(SIGINT, 0);
 	seteuid(uid);
 	if (snprintf(buf, sizeof buf, "\1%s\n", printer) > sizeof buf-1) {
 		close(s);
 		return (0);
 	}
 	n = strlen(buf);
+
+	/* XXX atomicio inside siginterrupt? */
 	if (write(s, buf, n) != n) {
 		perr("write");
 		(void) close(s);
@@ -108,6 +118,7 @@ startdaemon(printer)
 	}
 	while ((n = read(s, buf, sizeof(buf))) > 0)
 		fwrite(buf, 1, n, stdout);
+
 	(void) close(s);
 	return(0);
 }
