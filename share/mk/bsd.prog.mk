@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.prog.mk,v 1.15 1998/03/26 23:47:33 deraadt Exp $
+#	$OpenBSD: bsd.prog.mk,v 1.16 1998/07/27 21:11:33 niklas Exp $
 #	$NetBSD: bsd.prog.mk,v 1.55 1996/04/08 21:19:26 jtc Exp $
 #	@(#)bsd.prog.mk	5.26 (Berkeley) 6/25/91
 
@@ -17,6 +17,7 @@ CRTBEGIN?=       ${DESTDIR}/usr/lib/crtbegin.o
 CRTEND?=         ${DESTDIR}/usr/lib/crtend.o
 .endif
 
+LIBATALK?=	${DESTDIR}/usr/lib/libatalk.a
 LIBCRT0?=	${DESTDIR}/usr/lib/crt0.o
 LIBC?=		${DESTDIR}/usr/lib/libc.a
 LIBCOMPAT?=	${DESTDIR}/usr/lib/libcompat.a
@@ -25,6 +26,7 @@ LIBDBM?=	${DESTDIR}/usr/lib/libdbm.a
 LIBDES?=	${DESTDIR}/usr/lib/libdes.a
 LIBEDIT?=	${DESTDIR}/usr/lib/libedit.a
 LIBGCC?=	${DESTDIR}/usr/lib/libgcc.a
+LIBGMP?=	${DESTDIR}/usr/lib/libgmp.a
 LIBKDB?=	${DESTDIR}/usr/lib/libkdb.a
 LIBKRB?=	${DESTDIR}/usr/lib/libkrb.a
 LIBKAFS?=	${DESTDIR}/usr/lib/libkafs.a
