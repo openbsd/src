@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.8 2004/06/22 18:26:12 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.9 2004/07/22 18:58:57 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -200,7 +200,7 @@ m88100_trap(unsigned type, struct trapframe *frame)
 	struct proc *p;
 	u_quad_t sticks = 0;
 	struct vm_map *map;
-	vaddr_t va;
+	vaddr_t va, pcb_onfault;
 	vm_prot_t ftype;
 	int fault_type, pbus_type;
 	u_long fault_code;
@@ -357,7 +357,10 @@ m88100_trap(unsigned type, struct trapframe *frame)
 			return;
 		case CMMU_PFSR_SFAULT:
 		case CMMU_PFSR_PFAULT:
+			if ((pcb_onfault = p->p_addr->u_pcb.pcb_onfault) != 0)
+				p->p_addr->u_pcb.pcb_onfault = 0;
 			result = uvm_fault(map, va, VM_FAULT_INVALID, ftype);
+			p->p_addr->u_pcb.pcb_onfault = pcb_onfault;
 			if (result == 0) {
 				/*
 				 * We could resolve the fault. Call
@@ -412,6 +415,8 @@ user_fault:
 
 		vm = p->p_vmspace;
 		map = &vm->vm_map;
+		if ((pcb_onfault = p->p_addr->u_pcb.pcb_onfault) != 0)
+			p->p_addr->u_pcb.pcb_onfault = 0;
 
 		/* Call uvm_fault() to resolve non-bus error faults */
 		switch (pbus_type) {
@@ -428,6 +433,8 @@ user_fault:
 			break;
 		}
 
+		p->p_addr->u_pcb.pcb_onfault = pcb_onfault;
+
 		if ((caddr_t)va >= vm->vm_maxsaddr) {
 			if (result == 0) {
 				nss = btoc(USRSTACK - va);/* XXX check this */
@@ -440,9 +447,9 @@ user_fault:
 		 * This could be a fault caused in copyin*()
 		 * while accessing user space.
 		 */
-		if (result != 0 && p->p_addr->u_pcb.pcb_onfault != NULL) {
-			frame->tf_snip = p->p_addr->u_pcb.pcb_onfault | NIP_V;
-			frame->tf_sfip = (p->p_addr->u_pcb.pcb_onfault + 4) | FIP_V;
+		if (result != 0 && pcb_onfault != 0) {
+			frame->tf_snip = pcb_onfault | NIP_V;
+			frame->tf_sfip = (pcb_onfault + 4) | FIP_V;
 			frame->tf_sxip = 0;
 			/*
 			 * Continue as if the fault had been resolved, but
@@ -645,7 +652,7 @@ m88110_trap(unsigned type, struct trapframe *frame)
 	struct proc *p;
 	u_quad_t sticks = 0;
 	struct vm_map *map;
-	vaddr_t va;
+	vaddr_t va, pcb_onfault;
 	vm_prot_t ftype;
 	int fault_type;
 	u_long fault_code;
@@ -820,7 +827,10 @@ m88110_trap(unsigned type, struct trapframe *frame)
 			 * On a segment or a page fault, call uvm_fault() to
 			 * resolve the fault.
 			 */
+			if ((pcb_onfault = p->p_addr->u_pcb.pcb_onfault) != 0)
+				p->p_addr->u_pcb.pcb_onfault = 0;
 			result = uvm_fault(map, va, VM_FAULT_INVALID, ftype);
+			p->p_addr->u_pcb.pcb_onfault = pcb_onfault;
 			if (result == 0)
 				return;
 		}
@@ -855,7 +865,10 @@ m88110_trap(unsigned type, struct trapframe *frame)
 				printf("Uncorrected kernel write fault, map %x pte %x\n",
 				    map->pmap, *pte);
 #endif
+				if ((pcb_onfault = p->p_addr->u_pcb.pcb_onfault) != 0)
+					p->p_addr->u_pcb.pcb_onfault = 0;
 				result = uvm_fault(map, va, VM_FAULT_INVALID, ftype);
+				p->p_addr->u_pcb.pcb_onfault = pcb_onfault;
 				if (result == 0)
 					return;
 #endif
@@ -894,6 +907,8 @@ m88110_user_fault:
 
 		vm = p->p_vmspace;
 		map = &vm->vm_map;
+		if ((pcb_onfault = p->p_addr->u_pcb.pcb_onfault) != 0)
+			p->p_addr->u_pcb.pcb_onfault = 0;
 
 		/*
 		 * Call uvm_fault() to resolve non-bus error faults
@@ -908,6 +923,7 @@ m88110_user_fault:
 			if (frame->tf_dsr & (CMMU_DSR_SI | CMMU_DSR_PI)) {
 				/* segment or page fault */
 				result = uvm_fault(map, va, VM_FAULT_INVALID, ftype);
+				p->p_addr->u_pcb.pcb_onfault = pcb_onfault;
 				if (result == EACCES)
 					result = EFAULT;
 			} else
@@ -955,6 +971,7 @@ m88110_user_fault:
 					    map->pmap, *pte);
 #endif
 					result = uvm_fault(map, va, VM_FAULT_INVALID, ftype);
+					p->p_addr->u_pcb.pcb_onfault = pcb_onfault;
 					if (result == EACCES)
 						result = EFAULT;
 				}
@@ -975,6 +992,7 @@ m88110_user_fault:
 			if (frame->tf_isr & (CMMU_ISR_SI | CMMU_ISR_PI)) {
 				/* segment or page fault */
 				result = uvm_fault(map, va, VM_FAULT_INVALID, ftype);
+				p->p_addr->u_pcb.pcb_onfault = pcb_onfault;
 				if (result == EACCES)
 					result = EFAULT;
 			} else {
@@ -998,8 +1016,8 @@ m88110_user_fault:
 		 * This could be a fault caused in copyin*()
 		 * while accessing user space.
 		 */
-		if (result != 0 && p->p_addr->u_pcb.pcb_onfault != NULL) {
-			frame->tf_exip = p->p_addr->u_pcb.pcb_onfault;
+		if (result != 0 && pcb_onfault != 0) {
+			frame->tf_exip = pcb_onfault;
 			/*
 			 * Continue as if the fault had been resolved.
 			 */
