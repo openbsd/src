@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.20 2003/02/11 19:48:15 miod Exp $
+#	$OpenBSD: GENERIC,v 1.21 2003/02/11 21:42:11 miod Exp $
 #
 # Diskless kernel config
 #
@@ -118,10 +118,10 @@ gsckbd*	at gsckbc?	# PS/2 keyboard
 # MI devices
 #wsdisplay*	at vgafb?
 wsdisplay*	at sti?
-wskbd*		at gsckbd?
-wskbd*		at hilkbd?
-#wsmouse*	at gscms?
-#wsmouse*	at hms?
+wskbd*		at gsckbd? mux 1
+wskbd*		at hilkbd? mux 1
+#wsmouse*	at gscms? mux 0
+#wsmouse*	at hms? mux 0
 
 #fd*	at fdc?	drive ?	# floppy drives
 
@@ -131,3 +131,5 @@ cd*	at scsibus? target ? lun ?
 ch*	at scsibus? target ? lun ?
 ss*	at scsibus? target ? lun ?
 uk*	at scsibus? target ? lun ?
+
+pseudo-device	wsmux	2	# mouse and keyboard multiplexor pseudo-device
