@@ -1,4 +1,4 @@
-#	$Id: Makefile.inc,v 1.9 1996/09/27 11:53:32 deraadt Exp $
+#	$Id: Makefile.inc,v 1.10 1996/12/20 06:25:15 kstailey Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -23,12 +23,12 @@ all: ${CBIN}
 	dd if=/dev/zero of=${REALIMAGE} bs=10k count=120
 	disklabel -w -B -b /usr/mdec/fdboot -s /usr/mdec/bootfd ${REALIMAGE} floppy5
 	vnconfig -v -c ${VND_DEV} ${REALIMAGE}
-	newfs -O -m 0 -o space -i 3000 -c 80 ${VND_RDEV} floppy5
+	newfs -t ffs -O -m 0 -o space -i 3000 -c 80 ${VND_RDEV} floppy5
 .else
 	dd if=/dev/zero of=${REALIMAGE} bs=10k count=144
 	disklabel -w -B -b /usr/mdec/fdboot -s /usr/mdec/bootfd ${REALIMAGE} floppy3
 	vnconfig -v -c ${VND_DEV} ${REALIMAGE}
-	newfs -O -m 0 -o space -i 3000 -c 80 ${VND_RDEV} floppy3
+	newfs -t ffs -O -m 0 -o space -i 3000 -c 80 ${VND_RDEV} floppy3
 .endif
 	mount ${VND_DEV} ${MOUNT_POINT}
 	mtree -def ${MTREE} -p ${MOUNT_POINT}/ -u
