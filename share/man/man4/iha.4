@@ -1,4 +1,4 @@
-.\"	$OpenBSD: iha.4,v 1.6 2001/07/13 11:53:39 brad Exp $
+.\"	$OpenBSD: iha.4,v 1.7 2001/10/07 23:25:25 jason Exp $
 .\"
 .\" Copyright (c) 2001, Kenneth R. Westerback.  All rights reserved.
 .\"
@@ -38,9 +38,18 @@
 The
 .Nm
 driver supports PCI SCSI host adapters based on the Initio INIC-940
-and INIC-950 chips.
+and INIC-950 chips, including the following:
 .Pp
-The INI-9090U, INI-9100U/UW and the Iwill 2935UW have been tested.
+.Bl -bullet -offset indent -compact
+.It
+DTC Domex 3194U Plus
+.It
+INI-9090U
+.It
+INI-9100U/UW
+.It
+Iwill 2935UW
+.El
 .Sh SEE ALSO
 .Xr cd 4 ,
 .Xr intro 4 ,
