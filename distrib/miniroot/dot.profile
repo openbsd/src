@@ -1,4 +1,4 @@
-#	$OpenBSD: dot.profile,v 1.3 2002/08/29 01:53:37 krw Exp $
+#	$OpenBSD: dot.profile,v 1.4 2002/09/13 21:38:47 deraadt Exp $
 #	$NetBSD: dot.profile,v 1.1 1995/12/18 22:54:43 pk Exp $
 #
 # Copyright (c) 1995 Jason R. Thorpe
@@ -50,7 +50,7 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 
 	# set up some sane defaults
 	echo 'erase ^?, werase ^W, kill ^U, intr ^C, status ^T'
-	stty newcrt werase ^W intr ^C kill ^U erase ^? status ^T 9600
+	stty newcrt werase ^W intr ^C kill ^U erase ^? status ^T
 
 	# Installing or upgrading?
 	_forceloop=""
