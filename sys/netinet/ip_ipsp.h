@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.88 2001/05/21 03:27:48 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.89 2001/05/21 06:01:34 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -267,6 +267,7 @@ struct tdb				/* tunnel descriptor block */
 #define TDBF_TUNNELING        0x01000	/* Force IP-IP encapsulation */
 #define TDBF_NOREPLAY         0x02000   /* No replay counter present */
 #define TDBF_RANDOMPADDING    0x04000   /* Random data in the ESP padding */
+#define TDBF_SKIPCRYPTO       0x08000   /* Skip actual crypto processing */
 
     u_int32_t	      tdb_flags;  	/* Flags related to this TDB */
 
