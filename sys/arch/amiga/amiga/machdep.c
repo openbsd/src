@@ -1278,7 +1278,8 @@ add_sicallback (function, rock1, rock2)
 	splx(s);
 
 	if (si == NULL) {
-		si = (struct si_callback *)malloc(sizeof(*si), M_TEMP, M_NOWAIT);
+		si = (struct si_callback *)malloc(sizeof(*si), M_TEMP,
+		    M_NOWAIT);
 #ifdef DIAGNOSTIC
 		if (si)
 			++ncbd;		/* count # dynamically allocated */
@@ -1323,7 +1324,6 @@ rem_sicallback(function)
 		if (si->function != function)
 			psi = si;
 		else {
-/*			free(si, M_TEMP); */
 			si->next = si_free;
 			si_free = si;
 			if (psi)
@@ -1349,8 +1349,8 @@ call_sicallbacks()
 
 	do {
 		s = splhigh ();
-		/* Yes, that's an *assignment* below!  */
-		if (si = si_callbacks)
+		si = si_callbacks;
+		if (si)
 			si_callbacks = si->next;
 		splx(s);
 
@@ -1358,8 +1358,6 @@ call_sicallbacks()
 			function = si->function;
 			rock1 = si->rock1;
 			rock2 = si->rock2;
-/*			si->function(si->rock1, si->rock2); */
-/*			free(si, M_TEMP); */
 			s = splhigh ();
 			si->next = si_free;
 			si_free = si;
@@ -1370,8 +1368,8 @@ call_sicallbacks()
 #ifdef DIAGNOSTIC
 	if (ncbd) {
 		ncb += ncbd;
-		printf ("call_sicallback: %d more dynamic structures %d total\n",
-		    ncbd, ncb);
+		printf ("call_sicallback: "
+		    "%d more dynamic structures %d total\n", ncbd, ncb);
 		ncbd = 0;
 	}
 #endif
