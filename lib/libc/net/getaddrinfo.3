@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getaddrinfo.3,v 1.31 2004/12/20 21:13:00 millert Exp $
+.\"	$OpenBSD: getaddrinfo.3,v 1.32 2004/12/20 21:20:56 millert Exp $
 .\"
 .\" Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
 .\" Copyright (C) 2000, 2001  Internet Software Consortium.
@@ -212,6 +212,37 @@ structure in the list, the
 member points to a filled-in socket address structure of length
 .Fa ai_addrlen .
 .Pp
+This implementation of
+.Fn getaddrinfo
+allows experimental numeric IPv6 address notation with scope identifier.
+By appending the percent character and scope identifier to addresses,
+you can fill the
+.Li sin6_scope_id
+field for addresses.
+This would make management of scoped address easier,
+and allows cut-and-paste input of scoped address.
+.Pp
+At this moment the code supports only link-local addresses with the format.
+Scope identifier is hardcoded to the name of the hardware interface associated
+with the link
+.Po
+such as
+.Li ne0
+.Pc .
+An example is
+.Dq Li fe80::1%ne0 ,
+which means
+.Do
+.Li fe80::1
+on the link associated with the
+.Li ne0
+interface
+.Dc .
+.Pp
+The IPv6 implementation is still very experimental and non-standard.
+The current implementation assumes a one-to-one relationship between
+the interface and link, which is not necessarily true from the specification.
+.Pp
 All of the information returned by
 .Fn getaddrinfo
 is dynamically allocated: the
@@ -247,6 +278,105 @@ are
 .Fn getaddrinfo
 returns
 .Dv EAI_NONAME .
+.Sh EXAMPLES
+The following code tries to connect to
+.Dq Li www.kame.net
+service
+.Dq Li http .
+via stream socket.
+It loops through all the addresses available, regardless of address family.
+If the destination resolves to an IPv4 address, it will use
+.Dv AF_INET
+socket.
+Similarly, if it resolves to IPv6,
+.Dv AF_INET6
+socket is used.
+Observe that there is no hardcoded reference to a particular address family.
+The code works even if
+.Nm getaddrinfo
+returns addresses that are not IPv4/v6.
+.Bd -literal -offset indent
+struct addrinfo hints, *res, *res0;
+int error;
+int s;
+const char *cause = NULL;
+
+memset(&hints, 0, sizeof(hints));
+hints.ai_family = PF_UNSPEC;
+hints.ai_socktype = SOCK_STREAM;
+error = getaddrinfo("www.kame.net", "http", &hints, &res0);
+if (error) {
+	errx(1, "%s", gai_strerror(error));
+	/*NOTREACHED*/
+}
+s = -1;
+for (res = res0; res; res = res->ai_next) {
+	s = socket(res->ai_family, res->ai_socktype,
+	    res->ai_protocol);
+	if (s < 0) {
+		cause = "socket";
+		continue;
+	}
+
+	if (connect(s, res->ai_addr, res->ai_addrlen) < 0) {
+		cause = "connect";
+		close(s);
+		s = -1;
+		continue;
+	}
+
+	break;	/* okay we got one */
+}
+if (s < 0) {
+	err(1, "%s", cause);
+	/*NOTREACHED*/
+}
+freeaddrinfo(res0);
+.Ed
+.Pp
+The following example tries to open a wildcard listening socket onto service
+.Dq Li http ,
+for all the address families available.
+.Bd -literal -offset indent
+struct addrinfo hints, *res, *res0;
+int error;
+int s[MAXSOCK];
+int nsock;
+const char *cause = NULL;
+
+memset(&hints, 0, sizeof(hints));
+hints.ai_family = PF_UNSPEC;
+hints.ai_socktype = SOCK_STREAM;
+hints.ai_flags = AI_PASSIVE;
+error = getaddrinfo(NULL, "http", &hints, &res0);
+if (error) {
+	errx(1, "%s", gai_strerror(error));
+	/*NOTREACHED*/
+}
+nsock = 0;
+for (res = res0; res && nsock < MAXSOCK; res = res->ai_next) {
+	s[nsock] = socket(res->ai_family, res->ai_socktype,
+	    res->ai_protocol);
+	if (s[nsock] < 0) {
+		cause = "socket";
+		continue;
+	}
+
+	if (bind(s[nsock], res->ai_addr, res->ai_addrlen) < 0) {
+		cause = "bind";
+		close(s[nsock]);
+		continue;
+	}
+	(void) listen(s[nsock], 5);
+
+	nsock++;
+}
+if (nsock == 0) {
+	err(1, "%s", cause);
+	/*NOTREACHED*/
+}
+freeaddrinfo(res0);
+.Ed
 .Sh SEE ALSO
 .Xr bind 2 ,
 .Xr connect 2 ,
