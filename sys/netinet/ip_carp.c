@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.89 2005/01/04 10:30:00 pascoe Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.90 2005/01/06 00:41:51 pascoe Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -2023,9 +2023,27 @@ carp_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *sa,
     struct rtentry *rt)
 {
 	struct ifnet *ifp0 = ((struct carp_softc *)ifp->if_softc)->sc_carpdev;
-	if (ifp0)
+	if (ifp0) {
+		struct m_tag *mtag;
+
+		/* Tag packet for carp_fix_lladdr if not already tagged */
+		mtag = m_tag_find(m, PACKET_TAG_CARP, NULL);
+		if (mtag == NULL) {
+			mtag = m_tag_get(PACKET_TAG_CARP, 
+			    sizeof(struct ifnet *), M_NOWAIT);
+			if (mtag == NULL) {
+				m_freem(m);
+				((struct carp_softc *)ifp->if_softc
+				    )->sc_if.if_oerrors++;
+				carpstats.carps_onomem++;
+				return (ENOMEM);
+			}
+			bcopy(&ifp, (caddr_t)(mtag + 1), 
+			    sizeof(struct ifnet *));
+			m_tag_prepend(m, mtag);
+		}
 		return (ifp0->if_output(ifp, m, sa, rt));
-	else
+	} else
 		return (EINVAL);
 }
 
