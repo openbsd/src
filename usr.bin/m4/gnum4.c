@@ -1,4 +1,4 @@
-/* $OpenBSD: gnum4.c,v 1.11 2001/09/18 13:42:37 espie Exp $ */
+/* $OpenBSD: gnum4.c,v 1.12 2001/09/18 13:52:58 espie Exp $ */
 
 /*
  * Copyright (c) 1999 Marc Espie
@@ -173,10 +173,7 @@ doindir(argv, argc)
 	if (p == NULL)
 		errx(1, "undefined macro %s", argv[2]);
 	argv[1] = p->defn;
-	if (p->type == MACRTYPE)
-		expand(argv+1, argc-1);
-	else
-		eval(argv+1, argc-1, p->type);
+	eval(argv+1, argc-1, p->type);
 }
 
 void 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: eval.c,v 1.29 2001/06/13 12:20:43 espie Exp $	*/
+/*	$OpenBSD: eval.c,v 1.30 2001/09/18 13:52:58 espie Exp $	*/
 /*	$NetBSD: eval.c,v 1.7 1996/11/10 21:21:29 pk Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.2 (Berkeley) 4/27/95";
 #else
-static char rcsid[] = "$OpenBSD: eval.c,v 1.29 2001/06/13 12:20:43 espie Exp $";
+static char rcsid[] = "$OpenBSD: eval.c,v 1.30 2001/09/18 13:52:58 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -78,8 +78,30 @@ static void	doundiv __P((const char *[], int));
 static void	dosub __P((const char *[], int));
 static void	map __P((char *, const char *, const char *, const char *));
 static const char *handledash __P((char *, char *, const char *));
+static void	expand_builtin __P((const char *[], int, int));
+static void	expand_macro __P((const char *[], int));
+
+
 /*
- * eval - evaluate built-in macros.
+ * eval - eval all macros and builtins calls
+ */
+void
+eval(argv, argc, td)
+	const char *argv[];
+	int argc;
+	int td;
+{
+	if (td & RECDEF) 
+		errx(1, "%s at line %lu: expanding recursive definition for %s",
+			CURRENT_NAME, CURRENT_LINE, argv[1]);
+	if (td == MACRTYPE)
+		expand_macro(argv, argc);
+	else
+		expand_builtin(argv, argc, td);
+}
+
+/*
+ * expand_builtin - evaluate built-in macros.
  *	  argc - number of elements in argv.
  *	  argv - element vector :
  *			argv[0] = definition of a user
@@ -98,7 +120,7 @@ static const char *handledash __P((char *, char *, const char *));
  */
 
 void
-eval(argv, argc, td)
+expand_builtin(argv, argc, td)
 	const char *argv[];
 	int argc;
 	int td;
@@ -112,9 +134,6 @@ eval(argv, argc, td)
 		printf("argv[%d] = %s\n", n, argv[n]);
 #endif
 
-	if (td & RECDEF) 
-		errx(1, "%s at line %lu: expanding recursive definition for %s",
-			CURRENT_NAME, CURRENT_LINE, argv[1]);
  /*
   * if argc == 3 and argv[2] is null, then we
   * have macro-or-builtin() type call. We adjust
@@ -446,10 +465,10 @@ eval(argv, argc, td)
 char *dumpfmt = "`%s'\t`%s'\n";	       /* format string for dumpdef   */
 
 /*
- * expand - user-defined macro expansion
+ * expand_macro - user-defined macro expansion
  */
 void
-expand(argv, argc)
+expand_macro(argv, argc)
 	const char *argv[];
 	int argc;
 {

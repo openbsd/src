@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.21 2000/07/27 17:44:33 espie Exp $	*/
+/*	$OpenBSD: extern.h,v 1.22 2001/09/18 13:52:58 espie Exp $	*/
 /*	$NetBSD: extern.h,v 1.3 1996/01/13 23:25:24 pk Exp $	*/
 
 /*-
@@ -41,7 +41,6 @@
 
 /* eval.c */
 extern void	eval __P((const char *[], int, int));
-extern void	expand __P((const char *[], int));
 extern void	dodefine __P((const char *, const char *));
 
 /* expr.c */
