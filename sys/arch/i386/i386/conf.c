@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.76 2001/07/03 22:49:05 niklas Exp $	*/
+/*	$OpenBSD: conf.c,v 1.77 2001/07/05 02:35:34 mickey Exp $	*/
 /*	$NetBSD: conf.c,v 1.75 1996/05/03 19:40:20 christos Exp $	*/
 
 /*
@@ -195,6 +195,7 @@ cdev_decl(svr4_net);
 #include "apm.h"
 #include "pctr.h"
 #include "bios.h"
+#include "iop.h"
 #ifdef XFS
 #include <xfs/nxfs.h>
 cdev_decl(xfs_dev);
@@ -219,8 +220,6 @@ cdev_decl(urio);
 cdev_decl(ucom);
 #include "cz.h"
 cdev_decl(cztty);
-#include "iop.h"
-cdev_decl(iop);
 
 /* XXX -- this needs to be supported by config(8)! */
 #if (NCOM > 0) && (NPCCOM > 0)
@@ -348,7 +347,7 @@ struct cdevsw	cdevsw[] =
 #endif
 	cdev_pf_init(NPF,pf),		/* 73: packet filter */
 	cdev_altq_init(NALTQ,altq),	/* 74: ALTQ control interface */
-	cdev_oci_init(NIOP,iop),	/* 75: I2O controller */
+	cdev_iop_init(NIOP,iop),	/* 75: I2O IOP control interface */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
