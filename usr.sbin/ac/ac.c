@@ -14,7 +14,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: ac.c,v 1.5 1997/08/01 07:33:57 deraadt Exp $";
+static char rcsid[] = "$Id: ac.c,v 1.6 1997/08/30 19:54:45 deraadt Exp $";
 #endif
 
 #include <sys/types.h>
@@ -195,7 +195,7 @@ update_user(head, name, secs)
 	struct user_list *up;
 
 	for (up = head; up != NULL; up = up->next) {
-		if (strncmp(up->name, name, sizeof (up->name)) == 0) {
+		if (strncmp(up->name, name, sizeof (up->name) - 1) == 0) {
 			up->secs += secs;
 			Total += secs;
 			return head;
