@@ -1,4 +1,4 @@
-/*	$OpenBSD: adpcm.c,v 1.1.1.1 2003/02/01 17:58:18 jason Exp $	*/
+/*	$OpenBSD: adpcm.c,v 1.2 2003/03/19 03:35:57 david Exp $	*/
 
 /***********************************************************
 Copyright 1992 by Stichting Mathematisch Centrum, Amsterdam, The
@@ -27,7 +27,7 @@ OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 /*
 ** Intel/DVI ADPCM coder/decoder.
 **
-** The algorithm for this coder was taken from the IMA Compatability Project
+** The algorithm for this coder was taken from the IMA Compatibility Project
 ** proceedings, Vol 2, Number 2; May 1992.
 **
 ** Version 1.2, 18-Dec-92.
