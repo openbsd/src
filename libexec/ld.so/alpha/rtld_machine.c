@@ -1,8 +1,9 @@
-/*	$OpenBSD: rtld_machine.c,v 1.3 2001/05/31 13:49:27 art Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.4 2001/05/31 22:10:49 art Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
  * Copyright (c) 2001 Niklas Hallqvist
+ * Copyright (c) 2001 Artur Grabowski
  * 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -106,9 +107,9 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 
 		sym = object->dyn.symtab;
 		sym += ELF64_R_SYM(relas->r_info);
-		this = sym;
 		symn = object->dyn.strtab + sym->st_name;
 
+		this = NULL;
 		switch (ELF64_R_TYPE(relas->r_info)) {
 		case R_TYPE(REFQUAD):
 			ooff = _dl_find_symbol(symn, _dl_objects, &this, 0, 1);
@@ -117,11 +118,7 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 			*r_addr += ooff + this->st_value + relas->r_addend;
 			break;
 		case R_TYPE(RELATIVE):
-#if 0
-			if ((caddr_t)r_addr < (caddr_t)_GLOBAL_OFFSET_TABLE_ ||
-			    (caddr_t)r_addr >= (caddr_t)&_DYNAMIC)
-#endif
-				*r_addr += loff;
+			*r_addr += loff;
 			break;
 		case R_TYPE(JMP_SLOT):
 			ooff = _dl_find_symbol(symn, _dl_objects, &this, 0, 1);
@@ -134,58 +131,6 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 			if (this == NULL)
 				goto resolve_failed;
 			*r_addr = ooff + this->st_value;
-			break;
-		case R_TYPE(COPY):
-_dl_printf("copy relocation, not tested\n");
-			ooff = _dl_find_symbol(symn, _dl_objects, &this, 0, 1);
-			if (this == NULL)
-				goto resolve_failed;
-#ifdef DL_PRINTF_DEBUG
-			_dl_printf("copy r_addr %lx, sym %x [%s] size %d val %lx\n",
-				r_addr, sym, symn, sym->st_size,
-				(ooff + this->st_value+
-				relas->r_addend)
-
-				);
-#endif
-{
-	/* we need to find a symbol, that is not in the current object,
-	 * start looking at the beginning of the list, searching all objects
-	 * but _not_ the current object, first one found wins.
-	 */
-	elf_object_t *cobj;
-	const Elf64_Sym *cpysrc = NULL;
-	Elf64_Addr src_loff = 0;
-	int size;
-	for (cobj = _dl_objects;
-		cobj != NULL && cpysrc == NULL;
-		cobj = cobj->next)
-	{
-		if (object != cobj) {
-
-			/* only look in this object */
-			src_loff = _dl_find_symbol(symn, cobj,
-				&cpysrc, 1, 1);
-		}
-	}
-	if (cpysrc == NULL) {
-		_dl_printf("symbol not found [%s] \n", symn);
-	} else {
-		size  = sym->st_size;
-		if (sym->st_size != cpysrc->st_size) {
-			_dl_printf("symbols size differ [%s] \n", symn);
-			size = sym->st_size < cpysrc->st_size ?
-				sym->st_size : cpysrc->st_size;
-		}
-#ifdef DL_PRINTF_DEBUG
-_dl_printf(" found other symbol at %x size %d\n", 
-		src_loff + cpysrc->st_value,  cpysrc->st_size);
-#endif
-		_dl_bcopy((void *)(src_loff + cpysrc->st_value),
-			(void *)(ooff + this->st_value+ relas->r_addend),
-			size);
-	}
-}
 			break;
 		case R_TYPE(NONE):
 			break;
@@ -219,16 +164,10 @@ resolve_failed:
 }
 
 /*
- *	Relocate the Global Offset Table (GOT). Currently we don't
- *	do lazy evaluation here because the GNU linker doesn't
- *	follow the ABI spec which says that if an external symbol
- *	is referenced by other relocations than CALL16 and 26 it
- *	should not be given a stub and have a zero value in the
- *	symbol table. By not doing so, we can't use pointers to
- *	external functions and use them in comparitions...
+ *	Relocate the Global Offset Table (GOT).
  */
 void
 _dl_md_reloc_got(elf_object_t *object, int lazy)
 {
-	/* relocations all done via rela relocations above */
+	/* no got relocations until lazy binding */
 }
