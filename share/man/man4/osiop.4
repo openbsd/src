@@ -1,4 +1,4 @@
-.\"	$OpenBSD: osiop.4,v 1.5 2004/03/21 19:50:25 miod Exp $
+.\"	$OpenBSD: osiop.4,v 1.6 2004/05/07 18:14:55 miod Exp $
 .\"	$NetBSD: osiop.4,v 1.2 2001/09/22 01:44:55 wiz Exp $
 .\"
 .\" Copyright (c) 2001 Izumi Tsutsui.  All rights reserved.
@@ -32,9 +32,8 @@
 .Nm osiop
 .Nd Symbios/NCR 53C710 SCSI driver
 .Sh SYNOPSIS
-.Cd "# hppa"
-.Cd "osiop* at gsc? irq 9"
-.Pp
+.Cd "osiop* at gsc? irq 9                  " Pq "hppa"
+.Cd "osiop0 at pcctwo0 offset 0x47000 ipl 2" Pq "mvme88k"
 .Cd "scsibus* at osiop?"
 .Sh DESCRIPTION
 The
@@ -90,10 +89,6 @@ Note that
 .Tn SCSI
 tape drives should be allowed to perform disconnect/reselect or performance
 will suffer.
-.\" .Sh BUGS
-.\" Neither
-.\" .Tn DMA
-.\" or synchronous data transfers are currently supported.
 .Sh SEE ALSO
 .Xr cd 4 ,
 .Xr ch 4 ,
@@ -108,6 +103,7 @@ will suffer.
 .Pp
 .Pa http://www.lsilogic.com/techlib/techdocs/storage_stand_prod/
 .Sh HISTORY
+The
 .Nm
 driver first appeared in
 .Nx 1.6 .

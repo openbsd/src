@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pcctwo.4,v 1.4 2004/05/05 13:17:46 miod Exp $
+.\"	$OpenBSD: pcctwo.4,v 1.5 2004/05/07 18:14:57 miod Exp $
 .\"
 .\" Copyright (c) 2003 Paul Weissmann
 .\" All rights reserved.
@@ -68,9 +68,8 @@ Host interface to
 i82596CA LAN coprocessor
 .It
 Host interface to
-.Xr ssh 4
-.Tn NCR
-53C710 SCSI I/O processor
+.Xr osiop 4
+Symbios/NCR 53C710 SCSI controller
 .It
 Interface to the
 .Xr memc 4
@@ -82,4 +81,4 @@ Memory controller ASIC
 .Xr ie 4 ,
 .Xr intro 4 ,
 .\" .Xr memc 4 ,
-.Xr ssh 4
+.Xr osiop 4
