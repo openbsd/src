@@ -50,6 +50,7 @@ static int patch_file PROTO ((struct file_info *finfo,
 			      Vers_TS *vers_ts, 
 			      int *docheckout, struct stat *file_info,
 			      unsigned char *checksum));
+static void patch_file_write PROTO ((void *, const char *, size_t));
 #endif
 static int merge_file PROTO ((struct file_info *finfo, Vers_TS *vers));
 static int scratch_file PROTO((struct file_info *finfo));
@@ -73,6 +74,15 @@ static void join_file PROTO ((struct file_info *finfo, Vers_TS *vers_ts));
 static char *options = NULL;
 static char *tag = NULL;
 static char *date = NULL;
+/* This is a bit of a kludge.  We call WriteTag at the beginning
+   before we know whether nonbranch is set or not.  And then at the
+   end, once we have the right value for nonbranch, we call WriteTag
+   again.  I don't know whether the first call is necessary or not.
+   rewrite_tag is nonzero if we are going to have to make that second
+   call.  */
+static int rewrite_tag;
+static int nonbranch;
+
 static char *join_rev1, *date_rev1;
 static char *join_rev2, *date_rev2;
 static int aflag = 0;
@@ -125,7 +135,7 @@ update (argc, argv)
 
     /* parse the args */
     optind = 1;
-    while ((c = getopt (argc, argv, "ApPflRQqduk:r:D:j:I:W:")) != -1)
+    while ((c = getopt (argc, argv, "+ApPflRQqduk:r:D:j:I:W:")) != -1)
     {
 	switch (c)
 	{
@@ -260,7 +270,10 @@ update (argc, argv)
 	    if (failed_patches == NULL)
 	    {
 		send_file_names (argc, argv, SEND_EXPAND_WILD);
-		send_files (argc, argv, local, aflag, update_build_dirs, 0);
+		/* If noexec, probably could be setting SEND_NO_CONTENTS.
+		   Same caveats as for "cvs status" apply.  */
+		send_files (argc, argv, local, aflag,
+			    update_build_dirs ? SEND_BUILD_DIRS : 0);
 	    }
 	    else
 	    {
@@ -279,7 +292,7 @@ update (argc, argv)
 		    (void) unlink_file (failed_patches[i]);
 		send_file_names (failed_patches_count, failed_patches, 0);
 		send_files (failed_patches_count, failed_patches, local,
-			    aflag, update_build_dirs, 0);
+			    aflag, update_build_dirs ? SEND_BUILD_DIRS : 0);
 	    }
 
 	    failed_patches = NULL;
@@ -342,11 +355,10 @@ update (argc, argv)
 	/* keep the CVS/Tag file current with the specified arguments */
 	if (aflag || tag || date)
 	{
-	    WriteTag ((char *) NULL, tag, date);
-#ifdef SERVER_SUPPORT
-	    if (server_active)
-		server_set_sticky (".", Name_Repository (NULL, NULL), tag, date);
-#endif
+	    WriteTag ((char *) NULL, tag, date, 0,
+		      ".", Name_Repository (NULL, NULL));
+	    rewrite_tag = 1;
+	    nonbranch = 0;
 	}
     }
 
@@ -466,6 +478,23 @@ update_fileproc (callerdat, finfo)
 
     status = Classify_File (finfo, tag, date, options, force_tag_match,
 			    aflag, &vers, pipeout);
+
+    /* Keep track of whether TAG is a branch tag.
+       Note that if it is a branch tag in some files and a nonbranch tag
+       in others, treat it as a nonbranch tag.  It is possible that case
+       should elicit a warning or an error.  */
+    if (rewrite_tag
+	&& tag != NULL
+	&& finfo->rcs != NULL)
+    {
+	char *rev = RCS_getversion (finfo->rcs, tag, NULL, 1, NULL);
+	if (rev != NULL
+	    && !RCS_nodeisbranch (finfo->rcs, tag))
+	    nonbranch = 1;
+	if (rev != NULL)
+	    free (rev);
+    }
+
     if (pipeout)
     {
 	/*
@@ -683,6 +712,12 @@ update_filesdone_proc (callerdat, err, repository, update_dir, entries)
     char *update_dir;
     List *entries;
 {
+    if (rewrite_tag)
+    {
+	WriteTag (NULL, tag, date, nonbranch, update_dir, repository);
+	rewrite_tag = 0;
+    }
+
     /* if this directory has an ignore list, process it then free it */
     if (ignlist)
     {
@@ -753,7 +788,12 @@ update_dirent_proc (callerdat, dir, repository, update_dir, entries)
 	{
 	    /* otherwise, create the dir and appropriate adm files */
 	    make_directory (dir);
-	    Create_Admin (dir, update_dir, repository, tag, date);
+	    Create_Admin (dir, update_dir, repository, tag, date,
+			  /* This is a guess.  We will rewrite it later
+			     via WriteTag.  */
+			  0);
+	    rewrite_tag = 1;
+	    nonbranch = 0;
 	    Subdir_Register (entries, (char *) NULL, dir);
 	}
     }
@@ -805,11 +845,9 @@ update_dirent_proc (callerdat, dir, repository, update_dir, entries)
 	/* keep the CVS/Tag file current with the specified arguments */
 	if (aflag || tag || date)
 	{
-	    WriteTag (dir, tag, date);
-#ifdef SERVER_SUPPORT
-	    if (server_active)
-		server_set_sticky (update_dir, repository, tag, date);
-#endif
+	    WriteTag (dir, tag, date, 0, update_dir, repository);
+	    rewrite_tag = 1;
+	    nonbranch = 0;
 	}
 
 	/* initialize the ignore list for this directory */
@@ -1059,7 +1097,8 @@ VERS: ", 0);
 	status = RCS_checkout (vers_ts->srcfile,
 			       pipeout ? NULL : finfo->file,
 			       vers_ts->vn_rcs, vers_ts->vn_tag,
-			       vers_ts->options, RUN_TTY);
+			       vers_ts->options, RUN_TTY,
+			       (RCSCHECKOUTPROC) NULL, (void *) NULL);
     }
     if (file_is_dead || status == 0)
     {
@@ -1185,6 +1224,24 @@ VERS: ", 0);
 }
 
 #ifdef SERVER_SUPPORT
+
+/* This structure is used to pass information between patch_file and
+   patch_file_write.  */
+
+struct patch_file_data
+{
+    /* File name, for error messages.  */
+    const char *filename;
+    /* File to which to write.  */
+    FILE *fp;
+    /* Whether to compute the MD5 checksum.  */
+    int compute_checksum;
+    /* Data structure for computing the MD5 checksum.  */
+    struct MD5Context context;
+    /* Set if the file has a final newline.  */
+    int final_nl;
+};
+
 /* Patch a file.  Runs rcsdiff.  This is only done when running as the
  * server.  The hope is that the diff will be smaller than the file
  * itself.
@@ -1205,10 +1262,19 @@ patch_file (finfo, vers_ts, docheckout, file_info, checksum)
     int fail;
     long file_size;
     FILE *e;
+    struct patch_file_data data;
 
     *docheckout = 0;
 
-    if (pipeout || joining ())
+    if (noexec || pipeout || joining ())
+    {
+	*docheckout = 1;
+	return 0;
+    }
+
+    /* If this file has been marked as being binary, then never send a
+       patch.  */
+    if (strcmp (vers_ts->options, "-kb") == 0)
     {
 	*docheckout = 1;
 	return 0;
@@ -1240,88 +1306,51 @@ patch_file (finfo, vers_ts, docheckout, file_info, checksum)
     /* We need to check out both revisions first, to see if either one
        has a trailing newline.  Because of this, we don't use rcsdiff,
        but just use diff.  */
-    if (noexec)
-	retcode = 0;
-    else
-	retcode = RCS_checkout (vers_ts->srcfile, (char *) NULL,
-				vers_ts->vn_user, (char *) NULL,
-				vers_ts->options, file1);
-    if (retcode != 0)
-        fail = 1;
-    else
-    {
-        e = CVS_FOPEN (file1, "r");
-	if (e == NULL)
-	    fail = 1;
-	else
-	{
-	    if (fseek (e, (long) -1, SEEK_END) == 0
-		&& getc (e) != '\n')
-	    {
-	        fail = 1;
-	    }
-	    fclose (e);
-	}
-    }
+
+    e = CVS_FOPEN (file1, "w");
+    if (e == NULL)
+	error (1, errno, "cannot open %s", file1);
+
+    data.filename = file1;
+    data.fp = e;
+    data.final_nl = 0;
+    data.compute_checksum = 0;
+
+    retcode = RCS_checkout (vers_ts->srcfile, (char *) NULL,
+			    vers_ts->vn_user, (char *) NULL,
+			    vers_ts->options, RUN_TTY,
+			    patch_file_write, (void *) &data);
+
+    if (fclose (e) < 0)
+	error (1, errno, "cannot close %s", file1);
+
+    if (retcode != 0 || ! data.final_nl)
+	fail = 1;
 
     if (! fail)
     {
-        /* Check it out into finfo->file, and then move to file2, so that we
-           can get the right modes into *FILE_INFO.  We can't check it
-           out directly into file2 because co doesn't understand how
-           to do that.  */
-	retcode = RCS_checkout (vers_ts->srcfile, finfo->file,
+	e = CVS_FOPEN (file2, "w");
+	if (e == NULL)
+	    error (1, errno, "cannot open %s", file2);
+
+	data.filename = file2;
+	data.fp = e;
+	data.final_nl = 0;
+	data.compute_checksum = 1;
+	MD5Init (&data.context);
+
+	retcode = RCS_checkout (vers_ts->srcfile, (char *) NULL,
 				vers_ts->vn_rcs, (char *) NULL,
-				vers_ts->options, RUN_TTY);
-	if (retcode != 0)
+				vers_ts->options, RUN_TTY,
+				patch_file_write, (void *) &data);
+
+	if (fclose (e) < 0)
+	    error (1, errno, "cannot close %s", file2);
+
+	if (retcode != 0 || ! data.final_nl)
 	    fail = 1;
 	else
-	{
-	    if (!isreadable (finfo->file))
-	    {
-	        /* File is dead.  */
-	        fail = 1;
-	    }
-	    else
-	    {
-	        rename_file (finfo->file, file2);
-		if (cvswrite == TRUE
-		    && !fileattr_get (finfo->file, "_watched"))
-		    xchmod (file2, 1);
-		e = CVS_FOPEN (file2, "r");
-		if (e == NULL)
-		    fail = 1;
-		else
-		{
-		    struct MD5Context context;
-		    int nl;
-		    unsigned char buf[8192];
-		    unsigned len;
-
-		    nl = 0;
-
-		    /* Compute the MD5 checksum and make sure there is
-                       a trailing newline.  */
-		    MD5Init (&context);
-		    while ((len = fread (buf, 1, sizeof buf, e)) != 0)
-		    {
-			nl = buf[len - 1] == '\n';
-		        MD5Update (&context, buf, len);
-		    }
-		    MD5Final (checksum, &context);
-
-		    if (ferror (e) || ! nl)
-		    {
-		        fail = 1;
-		    }
-
-		    fseek(e, 0L, SEEK_END);
-		    file_size = ftell(e);
-
-		    fclose (e);
-		}
-	    }
-	}
+	    MD5Final (checksum, &data.context);
     }	  
 
     retcode = 0;
@@ -1349,6 +1378,19 @@ patch_file (finfo, vers_ts, docheckout, file_info, checksum)
 #define BINARY "Binary"
 	    char buf[sizeof BINARY];
 	    unsigned int c;
+
+	    /* Stat the original RCS file, and then adjust it the way
+	       that RCS_checkout would.  FIXME: This is an abstraction
+	       violation.  */
+	    if (CVS_STAT (vers_ts->srcfile->path, file_info) < 0)
+		error (1, errno, "could not stat %s", vers_ts->srcfile->path);
+	    if (chmod (finfo->file,
+		       file_info->st_mode & ~(S_IWRITE | S_IWGRP | S_IWOTH))
+		< 0)
+		error (0, errno, "cannot change mode of file %s", finfo->file);
+	    if (cvswrite == TRUE
+		&& !fileattr_get (finfo->file, "_watched"))
+		xchmod (finfo->file, 1);
 
 	    /* Check the diff output to make sure patch will be handle it.  */
 	    e = CVS_FOPEN (finfo->file, "r");
@@ -1392,8 +1434,8 @@ patch_file (finfo, vers_ts, docheckout, file_info, checksum)
 		  xvers_ts->ts_user, xvers_ts->options,
 		  xvers_ts->tag, xvers_ts->date, NULL);
 
-	if ( CVS_STAT (file2, file_info) < 0)
-	    error (1, errno, "could not stat %s", file2);
+	if (CVS_STAT (finfo->file, file_info) < 0)
+	    error (1, errno, "could not stat %s", finfo->file);
 
 	/* If this is really Update and not Checkout, recode history */
 	if (strcmp (command_name, "update") == 0)
@@ -1431,7 +1473,29 @@ patch_file (finfo, vers_ts, docheckout, file_info, checksum)
     free (file2);
     return (retval);
 }
-#endif
+
+/* Write data to a file.  Record whether the last byte written was a
+   newline.  Optionally compute a checksum.  This is called by
+   patch_file via RCS_checkout.  */
+
+static void
+patch_file_write (callerdat, buffer, len)
+     void *callerdat;
+     const char *buffer;
+     size_t len;
+{
+    struct patch_file_data *data = (struct patch_file_data *) callerdat;
+
+    if (fwrite (buffer, 1, len, data->fp) != len)
+	error (1, errno, "cannot write %s", data->filename);
+
+    data->final_nl = (buffer[len - 1] == '\n');
+
+    if (data->compute_checksum)
+	MD5Update (&data->context, buffer, len);
+}
+
+#endif /* SERVER_SUPPORT */
 
 /*
  * Several of the types we process only print a bit of information consisting
@@ -1927,7 +1991,8 @@ join_file (finfo, vers)
 	/* The file is up to date.  Need to check out the current contents.  */
 	retcode = RCS_checkout (vers->srcfile, finfo->file,
 				vers->vn_user, (char *) NULL,
-				(char *) NULL, RUN_TTY);
+				(char *) NULL, RUN_TTY,
+				(RCSCHECKOUTPROC) NULL, (void *) NULL);
 	if (retcode != 0)
 	    error (1, retcode == -1 ? errno : 0,
 		   "failed to check out %s file", finfo->fullname);

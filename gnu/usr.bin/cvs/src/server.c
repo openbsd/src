@@ -1099,6 +1099,8 @@ struct an_entry {
 
 static struct an_entry *entries;
 
+static void serve_unchanged PROTO ((char *));
+
 static void
 serve_unchanged (arg)
     char *arg;
@@ -1134,6 +1136,68 @@ serve_unchanged (arg)
 	    }
 	    break;
 	}
+    }
+}
+
+static void serve_is_modified PROTO ((char *));
+
+static void
+serve_is_modified (arg)
+    char *arg;
+{
+    struct an_entry *p;
+    char *name;
+    char *cp;
+    char *timefield;
+    /* Have we found this file in "entries" yet.  */
+    int found;
+
+    if (error_pending ())
+	return;
+
+    /* Rewrite entries file to have `M' in timestamp field.  */
+    found = 0;
+    for (p = entries; p != NULL; p = p->next)
+    {
+	name = p->entry + 1;
+	cp = strchr (name, '/');
+	if (cp != NULL
+	    && strlen (arg) == cp - name
+	    && strncmp (arg, name, cp - name) == 0)
+	{
+	    timefield = strchr (cp + 1, '/') + 1;
+	    if (!(timefield[0] == 'M' && timefield[1] == '/'))
+	    {
+		cp = timefield + strlen (timefield);
+		cp[1] = '\0';
+		while (cp > timefield)
+		{
+		    *cp = cp[-1];
+		    --cp;
+		}
+		*timefield = 'M';
+	    }
+	    found = 1;
+	    break;
+	}
+    }
+    if (!found)
+    {
+	/* We got Is-modified but no Entry.  Add a dummy entry.
+	   The "D" timestamp is what makes it a dummy.  */
+	struct an_entry *p;
+	p = (struct an_entry *) malloc (sizeof (struct an_entry));
+	if (p == NULL)
+	{
+	    pending_error = ENOMEM;
+	    return;
+	}
+	p->entry = xmalloc (strlen (arg) + 80);
+	strcpy (p->entry, "/");
+	strcat (p->entry, arg);
+	strcat (p->entry, "//D//");
+	p->next = entries;
+	entries = p;
     }
 }
 
@@ -3243,11 +3307,12 @@ server_clear_entstat (update_dir, repository)
 }
 
 void
-server_set_sticky (update_dir, repository, tag, date)
+server_set_sticky (update_dir, repository, tag, date, nonbranch)
     char *update_dir;
     char *repository;
     char *tag;
     char *date;
+    int nonbranch;
 {
     static int set_sticky_supported = -1;
 
@@ -3273,7 +3338,10 @@ server_set_sticky (update_dir, repository, tag, date)
 	buf_output0 (protocol, "\n");
 	if (tag != NULL)
 	{
-	    buf_output0 (protocol, "T");
+	    if (nonbranch)
+		buf_output0 (protocol, "N");
+	    else
+		buf_output0 (protocol, "T");
 	    buf_output0 (protocol, tag);
 	}
 	else
@@ -3599,7 +3667,7 @@ struct request requests[] =
   REQ_LINE("Root", serve_root, rq_essential),
   REQ_LINE("Valid-responses", serve_valid_responses, rq_essential),
   REQ_LINE("valid-requests", serve_valid_requests, rq_essential),
-  REQ_LINE("Repository", serve_repository, rq_essential),
+  REQ_LINE("Repository", serve_repository, rq_optional),
   REQ_LINE("Directory", serve_directory, rq_essential),
   REQ_LINE("Max-dotdot", serve_max_dotdot, rq_optional),
   REQ_LINE("Static-directory", serve_static_directory, rq_optional),
@@ -3608,6 +3676,7 @@ struct request requests[] =
   REQ_LINE("Update-prog", serve_update_prog, rq_optional),
   REQ_LINE("Entry", serve_entry, rq_essential),
   REQ_LINE("Modified", serve_modified, rq_essential),
+  REQ_LINE("Is-modified", serve_is_modified, rq_optional),
 
   /* The client must send this request to interoperate with CVS 1.5
      through 1.9 servers.  The server must support it (although it can

@@ -413,11 +413,9 @@ main (argc, argv)
 		CVSUMASK_ENV, cp);
     }
 
-    /* This has the effect of setting getopt's ordering to REQUIRE_ORDER,
-       which is what we need to distinguish between global options and
-       command options.  FIXME: It would appear to be possible to do this
-       much less kludgily by passing "+" as the first character to the
-       option string we pass to getopt_long.  */
+    /* I'm not sure whether this needs to be 1 instead of 0 anymore.  Using
+       1 used to accomplish what passing "+" as the first character to
+       the option string does, but that reason doesn't exist anymore.  */
     optind = 1;
 
 
@@ -428,13 +426,13 @@ main (argc, argv)
     opterr = 0;
 
     while ((c = getopt_long
-            (argc, argv, "f", NULL, NULL))
+            (argc, argv, "+f", NULL, NULL))
            != EOF)
-      {
+    {
 	if (c == 'f')
 	    use_cvsrc = FALSE;
-      }
-    
+    }
+
     /*
      * Scan cvsrc file for global options.
      */
@@ -445,7 +443,7 @@ main (argc, argv)
     opterr = 1;
 
     while ((c = getopt_long
-            (argc, argv, "Qqrwtnlvb:T:e:d:Hfz:s:x", long_options, &option_index))
+            (argc, argv, "+Qqrwtnlvb:T:e:d:Hfz:s:x", long_options, &option_index))
            != EOF)
       {
 	switch (c)

@@ -75,6 +75,7 @@ static int run_module_prog = 1;
 static int aflag;
 static char *tag;
 static char *write_dirtag;
+static int write_dirnonbranch;
 static char *logfile;
 static List *mulist;
 static char *message;
@@ -123,6 +124,10 @@ struct find_data {
        the repository (pointer into storage managed by the recursion
        processor.  */
     char *repository;
+
+    /* Non-zero if we should force the commit.  This is enabled by
+       either -f or -r options, unlike force_ci which is just -f.  */
+    int force;
 };
 
 static Dtype find_dirent_proc PROTO ((void *callerdat, char *dir,
@@ -254,7 +259,7 @@ find_fileproc (callerdat, finfo)
 	status = T_ADDED;
     else if (vers->ts_user != NULL
 	     && vers->ts_rcs != NULL
-	     && (force_ci || strcmp (vers->ts_user, vers->ts_rcs) != 0))
+	     && (args->force || strcmp (vers->ts_user, vers->ts_rcs) != 0))
 	/* If we are forcing commits, pretend that the file is
            modified.  */
 	status = T_MODIFIED;
@@ -328,7 +333,7 @@ commit (argc, argv)
 #endif /* CVS_BADROOT */
 
     optind = 1;
-    while ((c = getopt (argc, argv, "nlRm:fF:r:")) != -1)
+    while ((c = getopt (argc, argv, "+nlRm:fF:r:")) != -1)
     {
 	switch (c)
 	{
@@ -429,6 +434,12 @@ commit (argc, argv)
 	find_args.questionables = NULL;
 	find_args.ignlist = NULL;
 	find_args.repository = NULL;
+
+	/* It is possible that only a numeric tag should set this.
+	   I haven't really thought about it much.
+	   Anyway, I suspect that setting it unnecessarily only causes
+	   a little unneeded network traffic.  */
+	find_args.force = force_ci || tag != NULL;
 
 	err = start_recursion (find_fileproc, find_filesdoneproc,
 			       find_dirent_proc, (DIRLEAVEPROC) NULL,
@@ -535,7 +546,8 @@ commit (argc, argv)
 	   previous versions of client/server CVS, but it probably is a Good
 	   Thing, or at least Not Such A Bad Thing.  */
 	send_file_names (find_args.argc, find_args.argv, 0);
-	send_files (find_args.argc, find_args.argv, local, 0, 0, force_ci);
+	send_files (find_args.argc, find_args.argv, local, 0,
+		    find_args.force ? SEND_FORCE : 0);
 
 	send_to_server ("ci\012", 0);
 	return get_responses_and_close ();
@@ -573,6 +585,7 @@ commit (argc, argv)
     /*
      * Run the recursion processor to commit the files
      */
+    write_dirnonbranch = 0;
     if (noexec == 0)
 	err = start_recursion (commit_fileproc, commit_filesdoneproc,
 			       commit_direntproc, commit_dirleaveproc, NULL,
@@ -1048,6 +1061,21 @@ commit_fileproc (callerdat, finfo)
     List *ulist, *cilist;
     struct commit_info *ci;
 
+    /* Keep track of whether write_dirtag is a branch tag.
+       Note that if it is a branch tag in some files and a nonbranch tag
+       in others, treat it as a nonbranch tag.  It is possible that case
+       should elicit a warning or an error.  */
+    if (write_dirtag != NULL
+	&& finfo->rcs != NULL)
+    {
+	char *rev = RCS_getversion (finfo->rcs, write_dirtag, NULL, 1, NULL);
+	if (rev != NULL
+	    && !RCS_nodeisbranch (finfo->rcs, write_dirtag))
+	    write_dirnonbranch = 1;
+	if (rev != NULL)
+	    free (rev);
+    }
+
     if (finfo->update_dir[0] == '\0')
 	p = findnode (mulist, ".");
     else
@@ -1380,14 +1408,13 @@ commit_dirleaveproc (callerdat, dir, err, update_dir, entries)
     List *entries;
 {
     /* update the per-directory tag info */
+    /* FIXME?  Why?  The "commit examples" node of cvs.texinfo briefly
+       mentions commit -r being sticky, but apparently in the context of
+       this being a confusing feature!  */
     if (err == 0 && write_dirtag != NULL)
     {
-	WriteTag ((char *) NULL, write_dirtag, (char *) NULL);
-#ifdef SERVER_SUPPORT
-	if (server_active)
-	    server_set_sticky (update_dir, Name_Repository (dir, update_dir),
-			       write_dirtag, (char *) NULL);
-#endif
+	WriteTag (NULL, write_dirtag, NULL, write_dirnonbranch,
+		  update_dir, Name_Repository (dir, update_dir));
     }
 
     return (err);
@@ -1534,7 +1561,8 @@ remove_file (finfo, tag, message)
     /* check something out.  Generally this is the head.  If we have a
        particular rev, then name it.  */
     retcode = RCS_checkout (finfo->rcs, finfo->file, rev ? corev : NULL,
-			    (char *) NULL, (char *) NULL, RUN_TTY);
+			    (char *) NULL, (char *) NULL, RUN_TTY,
+			    (RCSCHECKOUTPROC) NULL, (void *) NULL);
     if (retcode != 0)
     {
 	if (!quiet)

@@ -70,7 +70,7 @@ patch (argc, argv)
 	usage (patch_usage);
 
     optind = 1;
-    while ((c = getopt (argc, argv, "V:k:cuftsQqlRD:r:")) != -1)
+    while ((c = getopt (argc, argv, "+V:k:cuftsQqlRD:r:")) != -1)
     {
 	switch (c)
 	{
@@ -500,7 +500,8 @@ patch_fileproc (callerdat, finfo)
     if (vers_tag != NULL)
     {
 	retcode = RCS_checkout (rcsfile, (char *) NULL, vers_tag,
-				rev1, options, tmpfile1);
+				rev1, options, tmpfile1,
+				(RCSCHECKOUTPROC) NULL, (void *) NULL);
 	if (retcode != 0)
 	{
 	    if (!really_quiet)
@@ -522,7 +523,8 @@ patch_fileproc (callerdat, finfo)
     if (vers_head != NULL)
     {
 	retcode = RCS_checkout (rcsfile, (char *) NULL, vers_head,
-				rev2, options, tmpfile2);
+				rev2, options, tmpfile2,
+				(RCSCHECKOUTPROC) NULL, (void *) NULL);
 	if (retcode != 0)
 	{
 	    if (!really_quiet)

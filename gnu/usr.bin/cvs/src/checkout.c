@@ -36,8 +36,6 @@
 #include "cvs.h"
 
 static char *findslash PROTO((char *start, char *p));
-static int build_dirs_and_chdir PROTO((char *dir, char *prepath, char *realdir,
-				 int sticky));
 static int checkout_proc PROTO((int *pargc, char **argv, char *where,
 		          char *mwhere, char *mfile, int shorten,
 		          int local_specified, char *omodule,
@@ -118,13 +116,13 @@ checkout (argc, argv)
     if (strcmp (command_name, "export") == 0)
     {
         m_type = EXPORT;
-	valid_options = "Nnk:d:flRQqr:D:";
+	valid_options = "+Nnk:d:flRQqr:D:";
 	valid_usage = export_usage;
     }
     else
     {
         m_type = CHECKOUT;
-	valid_options = "ANnk:d:flRpQqcsr:D:j:P";
+	valid_options = "+ANnk:d:flRpQqcsr:D:j:P";
 	valid_usage = checkout_usage;
     }
 
@@ -297,6 +295,8 @@ checkout (argc, argv)
 	}
 	if (status)
 	    send_arg("-s");
+	/* Why not send -k for export?  This would appear to make
+	   remote export differ from local export.  FIXME.  */
 	if (strcmp (command_name, "export") != 0
 	    && options != NULL
 	    && options[0] != '\0')
@@ -368,7 +368,7 @@ checkout (argc, argv)
 		error (1, 0, "there is no repository %s", repository);
 
 	    Create_Admin (".", preload_update_dir, repository,
-			  (char *) NULL, (char *) NULL);
+			  (char *) NULL, (char *) NULL, 0);
 	    if (!noexec)
 	    {
 		FILE *fp;
@@ -479,6 +479,60 @@ safe_location ()
     return retval;
 }
 
+struct dir_to_build
+{
+    /* What to put in CVS/Repository.  */
+    char *repository;
+    /* The path to the directory.  */
+    char *dirpath;
+
+    struct dir_to_build *next;
+};
+
+static int build_dirs_and_chdir PROTO ((struct dir_to_build *list,
+					int sticky));
+
+static void build_one_dir PROTO ((char *, char *, int));
+
+static void
+build_one_dir (repository, dirpath, sticky)
+    char *repository;
+    char *dirpath;
+    int sticky;
+{
+    FILE *fp;
+
+    if (!isfile (CVSADM) && strcmp (command_name, "export") != 0)
+    {
+	/* I suspect that this check could be omitted.  */
+	if (!isdir (repository))
+	    error (1, 0, "there is no repository %s", repository);
+
+	Create_Admin (".", dirpath, repository,
+		      sticky ? (char *) NULL : tag,
+		      sticky ? (char *) NULL : date,
+
+		      /* FIXME?  This is a guess.  If it is important
+			 for nonbranch to be set correctly here I
+			 think we need to write it one way now and
+			 then rewrite it later via WriteTag, once
+			 we've had a chance to call RCS_nodeisbranch
+			 on each file.  */
+		      0);
+
+	if (!noexec)
+	{
+	    fp = open_file (CVSADM_ENTSTAT, "w+");
+	    if (fclose (fp) == EOF)
+		error (1, errno, "cannot close %s", CVSADM_ENTSTAT);
+#ifdef SERVER_SUPPORT
+	    if (server_active)
+		server_set_entstat (dirpath, repository);
+#endif
+	}
+    }
+}
+
 /*
  * process_module calls us back here so we do the actual checkout stuff
  */
@@ -504,7 +558,6 @@ checkout_proc (pargc, argv, where, mwhere, mfile, shorten,
     char *xwhere = NULL;
     char *oldupdate = NULL;
     char *prepath;
-    char *realdirs;
 
     /*
      * OK, so we're doing the checkout! Our args are as follows: 
@@ -678,24 +731,80 @@ checkout_proc (pargc, argv, where, mwhere, mfile, shorten,
      */
     if (!pipeout)
     {
+	size_t root_len;
+	struct dir_to_build *head;
 
-	/*
-	 * We need to tell build_dirs not only the path we want it to build,
-	 * but also the repositories we want it to populate the path with. To
-	 * accomplish this, we pass build_dirs a ``real path'' with valid
-	 * repositories and a string to pre-pend based on how many path
-	 * elements exist in where. Big Black Magic
-	 */
+	/* We need to tell build_dirs not only the path we want it to
+	   build, but also the repositories we want it to populate the
+	   path with. To accomplish this, we walk the path backwards,
+	   one pathname component at a time, constucting a linked
+	   list of struct dir_to_build.  */
 	prepath = xstrdup (repository);
+
+	/* We don't want to start stripping elements off prepath after we
+	   get to CVSROOT.  */
+	root_len = strlen (CVSroot_directory);
+	if (strncmp (repository, CVSroot_directory, root_len) != 0)
+	    error (1, 0, "\
+internal error: %s doesn't start with %s in checkout_proc",
+		   repository, CVSroot_directory);
+
+	/* We always create at least one directory, which corresponds to
+	   the entire strings for WHERE and REPOSITORY.  */
+	head = (struct dir_to_build *) xmalloc (sizeof (struct dir_to_build));
+	/* Special marker to indicate that we don't want build_dirs_and_chdir
+	   to create the CVSADM directory for us.  */
+	head->repository = NULL;
+	head->dirpath = xstrdup (where);
+	head->next = NULL;
+
 	cp = strrchr (where, '/');
 	cp2 = strrchr (prepath, '/');
+
 	while (cp != NULL)
 	{
+	    struct dir_to_build *new;
+	    new = (struct dir_to_build *)
+		xmalloc (sizeof (struct dir_to_build));
+	    new->dirpath = xmalloc (strlen (where));
+	    strncpy (new->dirpath, where, cp - where);
+	    new->dirpath[cp - where] = '\0';
+	    if (cp2 == NULL || cp2 < prepath + root_len)
+	    {
+		/* Don't walk up past CVSROOT; instead put in CVSNULLREPOS.  */
+		new->repository =
+		    xmalloc (strlen (CVSroot_directory) + 80);
+		(void) sprintf (new->repository, "%s/%s/%s",
+				CVSroot_directory,
+				CVSROOTADM, CVSNULLREPOS);
+		if (!isfile (new->repository))
+		{
+		    mode_t omask;
+		    omask = umask (cvsumask);
+		    if (CVS_MKDIR (new->repository, 0777) < 0)
+			error (0, errno, "cannot create %s",
+			       new->repository);
+		    (void) umask (omask);
+		}
+	    }
+	    else
+	    {
+		new->repository = xmalloc (strlen (prepath));
+		strncpy (new->repository, prepath, cp2 - prepath);
+		new->repository[cp2 - prepath] = '\0';
+	    }
+	    new->next = head;
+	    head = new;
+
 	    cp = findslash (where, cp - 1);
 	    cp2 = findslash (prepath, cp2 - 1);
 	}
-	*cp2 = '\0';
-	realdirs = cp2 + 1;
+
+	/* First build the top-level CVSADM directory.  The value we
+	   pass in here for repository is probably wrong; see modules3-7f
+	   in the testsuite.  */
+	build_one_dir (head->repository != NULL ? head->repository : prepath,
+		       ".", *pargc <= 1);
 
 	/*
 	 * build dirs on the path if necessary and leave us in the bottom
@@ -703,7 +812,7 @@ checkout_proc (pargc, argv, where, mwhere, mfile, shorten,
 	 * subdir yet, but all the others contain CVS and Entries.Static
 	 * files
 	 */
-	if (build_dirs_and_chdir (where, prepath, realdirs, *pargc <= 1) != 0)
+	if (build_dirs_and_chdir (head, *pargc <= 1) != 0)
 	{
 	    error (0, 0, "ignoring module %s", omodule);
 	    free (prepath);
@@ -726,7 +835,7 @@ checkout_proc (pargc, argv, where, mwhere, mfile, shorten,
 		    error (1, 0, "there is no repository %s", repository);
 
 		Create_Admin (".", preload_update_dir, repository,
-			      (char *) NULL, (char *) NULL);
+			      (char *) NULL, (char *) NULL, 0);
 		fp = open_file (CVSADM_ENTSTAT, "w+");
 		if (fclose(fp) == EOF)
 		    error(1, errno, "cannot close %s", CVSADM_ENTSTAT);
@@ -741,7 +850,15 @@ checkout_proc (pargc, argv, where, mwhere, mfile, shorten,
 		if (!isdir (repository))
 		    error (1, 0, "there is no repository %s", repository);
 
-		Create_Admin (".", preload_update_dir, repository, tag, date);
+		Create_Admin (".", preload_update_dir, repository, tag, date,
+
+			      /* FIXME?  This is a guess.  If it is important
+				 for nonbranch to be set correctly here I
+				 think we need to write it one way now and
+				 then rewrite it later via WriteTag, once
+				 we've had a chance to call RCS_nodeisbranch
+				 on each file.  */
+			      0);
 	    }
 	}
 	else
@@ -897,130 +1014,49 @@ findslash (start, p)
 {
     while (p >= start && *p != '/')
 	p--;
+    /* FIXME: indexing off the start of the array like this is *NOT*
+       OK according to ANSI, and will break some of the time on certain
+       segmented architectures.  */
     if (p < start)
 	return (NULL);
     else
 	return (p);
 }
 
-/*
- * build all the dirs along the path to dir with CVS subdirs with appropriate
- * repositories and Entries.Static files
- */
+/* Build all the dirs along the path to DIRS with CVS subdirs with appropriate
+   repositories.  If ->repository is NULL, do not create a CVSADM directory
+   for that subdirectory; just CVS_CHDIR into it.  */
 static int
-build_dirs_and_chdir (dir, prepath, realdir, sticky)
-    char *dir;
-    char *prepath;
-    char *realdir;
+build_dirs_and_chdir (dirs, sticky)
+    struct dir_to_build *dirs;
     int sticky;
 {
-    FILE *fp;
-    char *path;
-    char *path2;
-    char *slash;
-    char *slash2;
-    char *cp;
-    char *cp2;
     int retval = 0;
+    struct dir_to_build *nextdir;
 
-    path = xstrdup (dir);
-    path2 = xstrdup (realdir);
-    for (cp = path, cp2 = path2;
-    (slash = strchr (cp, '/')) != NULL && (slash2 = strchr (cp2, '/')) != NULL;
-	 cp = slash + 1, cp2 = slash2 + 1)
+    while (dirs != NULL)
     {
-	*slash = '\0';
-	*slash2 = '\0';
-	if (!isfile (CVSADM) && strcmp (command_name, "export") != 0)
-	{
-	    char *repository;
+	char *dir = last_component (dirs->dirpath);
 
-	    repository = xmalloc (strlen (prepath) + strlen (path2) + 5);
-	    (void) sprintf (repository, "%s/%s", prepath, path2);
-	    /* I'm not sure whether this check is redundant.  */
-	    if (!isdir (repository))
-		error (1, 0, "there is no repository %s", repository);
-	    Create_Admin (".", path, repository, sticky ? (char *) NULL : tag,
-			  sticky ? (char *) NULL : date);
-	    if (!noexec)
-	    {
-		fp = open_file (CVSADM_ENTSTAT, "w+");
-		if (fclose(fp) == EOF)
-		    error(1, errno, "cannot close %s", CVSADM_ENTSTAT);
-#ifdef SERVER_SUPPORT
-		if (server_active)
-		    server_set_entstat (path, repository);
-#endif
-	    }
-	    free (repository);
-	}
-	mkdir_if_needed (cp);
-	Subdir_Register ((List *) NULL, (char *) NULL, cp);
-	if ( CVS_CHDIR (cp) < 0)
+	mkdir_if_needed (dir);
+	Subdir_Register (NULL, NULL, dir);
+	if (CVS_CHDIR (dir) < 0)
 	{
-	    error (0, errno, "cannot chdir to %s", cp);
+	    error (0, errno, "cannot chdir to %s", dir);
 	    retval = 1;
 	    goto out;
 	}
-	if (!isfile (CVSADM) && strcmp (command_name, "export") != 0)
+	if (dirs->repository != NULL)
 	{
-	    char *repository;
-
-	    repository = xmalloc (strlen (prepath) + strlen (path2) + 5);
-	    (void) sprintf (repository, "%s/%s", prepath, path2);
-	    /* I'm not sure whether this check is redundant.  */
-	    if (!isdir (repository))
-		error (1, 0, "there is no repository %s", repository);
-	    Create_Admin (".", path, repository, sticky ? (char *) NULL : tag,
-			  sticky ? (char *) NULL : date);
-	    if (!noexec)
-	    {
-		fp = open_file (CVSADM_ENTSTAT, "w+");
-		if (fclose(fp) == EOF)
-		    error(1, errno, "cannot close %s", CVSADM_ENTSTAT);
-#ifdef SERVER_SUPPORT
-		if (server_active)
-		    server_set_entstat (path, repository);
-#endif
-	    }
-	    free (repository);
+	    build_one_dir (dirs->repository, dirs->dirpath, sticky);
+	    free (dirs->repository);
 	}
-	*slash = '/';
-	*slash2 = '/';
+	nextdir = dirs->next;
+	free (dirs->dirpath);
+	free (dirs);
+	dirs = nextdir;
     }
-    if (!isfile (CVSADM) && strcmp (command_name, "export") != 0)
-    {
-	char *repository;
 
-	repository = xmalloc (strlen (prepath) + strlen (path2) + 5);
-	(void) sprintf (repository, "%s/%s", prepath, path2);
-	/* I'm not sure whether this check is redundant.  */
-	if (!isdir (repository))
-	    error (1, 0, "there is no repository %s", repository);
-	Create_Admin (".", path, repository, sticky ? (char *) NULL : tag,
-		      sticky ? (char *) NULL : date);
-	if (!noexec)
-	{
-	    fp = open_file (CVSADM_ENTSTAT, "w+");
-	    if (fclose(fp) == EOF)
-		error(1, errno, "cannot close %s", CVSADM_ENTSTAT);
-#ifdef SERVER_SUPPORT
-	    if (server_active)
-		server_set_entstat (path, repository);
-#endif
-	}
-	free (repository);
-    }
-    mkdir_if_needed (cp);
-    Subdir_Register ((List *) NULL, (char *) NULL, cp);
-    if ( CVS_CHDIR (cp) < 0)
-    {
-	error (0, errno, "cannot chdir to %s", cp);
-	retval = 1;
-	goto out;
-    }
-out:
-    free (path);
-    free (path2);
+ out:
     return retval;
 }
