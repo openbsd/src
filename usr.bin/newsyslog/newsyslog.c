@@ -1,4 +1,36 @@
-/*	$OpenBSD: newsyslog.c,v 1.9 1997/04/27 13:48:55 downsj Exp $	*/
+/*	$OpenBSD: newsyslog.c,v 1.10 1997/07/07 22:50:56 downsj Exp $	*/
+
+/*
+ * Copyright (c) 1997, Jason Downs.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software developed by Jason Downs for the
+ *      OpenBSD system.
+ * 4. Neither the name(s) of the author(s) nor the name OpenBSD
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR(S) ``AS IS'' AND ANY EXPRESS
+ * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR(S) BE LIABLE FOR ANY DIRECT,
+ * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */
 
 /*
  * This file contains changes from the Open Software Foundation.
@@ -29,7 +61,7 @@ provided "as is" without express or implied warranty.
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: newsyslog.c,v 1.9 1997/04/27 13:48:55 downsj Exp $";
+static char rcsid[] = "$OpenBSD: newsyslog.c,v 1.10 1997/07/07 22:50:56 downsj Exp $";
 #endif /* not lint */
 
 #ifndef CONF
@@ -43,6 +75,12 @@ static char rcsid[] = "$OpenBSD: newsyslog.c,v 1.9 1997/04/27 13:48:55 downsj Ex
 #endif
 #ifndef COMPRESS_POSTFIX
 #define COMPRESS_POSTFIX ".Z"
+#endif
+#ifndef STATS_DIR
+#define STATS_DIR "/etc"
+#endif
+#ifndef SENDMAIL
+#define SENDMAIL "/usr/lib/sendmail"
 #endif
 
 #include <stdio.h>
@@ -62,9 +100,10 @@ static char rcsid[] = "$OpenBSD: newsyslog.c,v 1.9 1997/04/27 13:48:55 downsj Ex
 
 #define kbytes(size)  (((size) + 1023) >> 10)
 
-#define CE_COMPACT 1            /* Compact the achived log files */
-#define CE_BINARY 2             /* Logfile is in binary, don't add */
-                                /* status messages */
+#define CE_COMPACT	0x01		/* Compact the achived log files */
+#define CE_BINARY	0x02		/* Logfile is in binary, don't add */
+					/* status messages */
+#define CE_MONITOR	0x04		/* Monitory for changes */
 #define NONE -1
         
 struct conf_entry {
@@ -76,6 +115,7 @@ struct conf_entry {
         int     hours;          /* Hours between log trimming */
         int     permissions;    /* File permissions on the log */
         int     flags;          /* Flags (CE_COMPACT & CE_BINARY)  */
+	char	*whom;		/* Whom to notify if logfile changes */
         struct conf_entry       *next; /* Linked list pointer */
 };
 
@@ -83,6 +123,7 @@ char    *progname;              /* contains argv[0] */
 int     verbose = 0;            /* Print out what's going on */
 int     needroot = 1;           /* Root privs are necessary */
 int     noaction = 0;           /* Don't do anything, just show it */
+int	monitor = 0;		/* Don't do monitoring by default */
 char    *conf = CONF;           /* Configuration file to use */
 time_t  timenow;
 int     syslog_pid;             /* read in from /etc/syslog.pid */
@@ -104,7 +145,10 @@ int sizefile __P((char *));
 int age_old_log __P((char *));
 char *sob __P((char *));
 char *son __P((char *));
-int isnumber __P((char *));
+int isnumberstr __P((char *));
+void domonitor __P((char *, char *));
+FILE *openmail __P((void));
+void closemail __P((FILE *));
 
 int main(argc, argv)
         int argc;
@@ -149,7 +193,9 @@ void do_entry(ent)
                         printf("size (Kb): %d [%d] ", size, ent->size);
                 if (verbose && (ent->hours > 0))
                         printf(" age (hr): %d [%d] ", modtime, ent->hours);
-                if (((ent->size > 0) && (size >= ent->size)) ||
+		if (monitor && ent->flags & CE_MONITOR)
+			domonitor(ent->log, ent->whom);
+                if (!monitor && ((ent->size > 0) && (size >= ent->size)) ||
                     ((ent->hours > 0) && ((modtime >= ent->hours)
                                         || (modtime < 0)))) {
                         if (verbose)
@@ -202,7 +248,7 @@ void PRS(argc, argv)
 		*p = '\0';
 
         optind = 1;             /* Start options parsing */
-        while ((c = getopt(argc,argv,"nrvf:t:")) != -1) {
+        while ((c = getopt(argc,argv,"nrvmf:t:")) != -1) {
                 switch (c) {
                 case 'n':
                         noaction++; /* This implies needroot as off */
@@ -216,6 +262,9 @@ void PRS(argc, argv)
                 case 'f':
                         conf = optarg;
                         break;
+		case 'm':
+			monitor++;
+			break;
                 default:
                         usage();
                 }
@@ -255,24 +304,44 @@ struct conf_entry *parse_file()
                 if ((line[0]== '\n') || (line[0] == '#'))
                         continue;
                 errline = strdup(line);
+		if (errline == NULL) {
+			(void) fprintf(stderr,"%s: ",progname);
+			perror("strdup()");
+			exit(1);
+		}
                 if (!first) {
                         working = (struct conf_entry *) malloc(sizeof(struct conf_entry));
+			if (working == NULL) {
+				(void) fprintf(stderr,"%s: ",progname);
+				perror("malloc()");
+				exit(1);
+			}
                         first = working;
                 } else {
                         working->next = (struct conf_entry *) malloc(sizeof(struct conf_entry));
+			if (working->next == NULL) {
+				(void) fprintf(stderr,"%s: ",progname);
+				perror("malloc()");
+				exit(1);
+			}
                         working = working->next;
                 }
 
                 q = parse = missing_field(sob(line),errline);
                 *(parse = son(line)) = '\0';
                 working->log = strdup(q);
+		if (working->log == NULL) {
+			(void) fprintf(stderr,"%s: ",progname);
+			perror("strdup()");
+			exit(1);
+		}
 
                 q = parse = missing_field(sob(++parse),errline);
                 *(parse = son(parse)) = '\0';
                 if ((group = strchr(q, '.')) != NULL) {
                     *group++ = '\0';
                     if (*q) {
-                        if (!(isnumber(q))) {
+                        if (!(isnumberstr(q))) {
                             if ((pass = getpwnam(q)) == NULL) {
                                 fprintf(stderr,
                                     "Error in config file; unknown user:\n");
@@ -287,7 +356,7 @@ struct conf_entry *parse_file()
                     
                     q = group;
                     if (*q) {
-                        if (!(isnumber(q))) {
+                        if (!(isnumberstr(q))) {
                             if ((grp = getgrnam(q)) == NULL) {
                                 fprintf(stderr,
                                     "Error in config file; unknown group:\n");
@@ -344,6 +413,8 @@ struct conf_entry *parse_file()
                                 working->flags |= CE_COMPACT;
                         else if ((*q == 'B') || (*q == 'b'))
                                 working->flags |= CE_BINARY;
+			else if ((*q == 'M') || (*q == 'm'))
+				working->flags |= CE_MONITOR;
                         else {
                                 fprintf(stderr,
                                         "Illegal flag in config file -- %c\n",
@@ -352,6 +423,19 @@ struct conf_entry *parse_file()
                         }
                         q++;
                 }
+
+		working->whom = NULL;
+		if (working->flags & CE_MONITOR) {	/* Optional field */
+			q = parse = sob(++parse);
+			*(parse = son(parse)) = '\0';
+
+			working->whom = strdup(q);
+			if (working->log == NULL) {
+				(void) fprintf(stderr,"%s: ",progname);
+				perror("strdup()");
+				exit(1);
+			}
+		}
                 
                 free(errline);
         }
@@ -560,12 +644,152 @@ char *son(p)
         
 /* Check if string is actually a number */
 
-int isnumber(string)
-char *string;
+int isnumberstr(string)
+	char *string;
 {
         while (*string != '\0') {
             if (!isdigit(*string++))
 		return(0);
         }
         return(1);
+}
+
+void domonitor(log, whom)
+	char *log, *whom;
+{
+	struct stat sb, tsb;
+	char *fname, *flog, *p, *rb = NULL;
+	FILE *fp;
+	off_t osize;
+	int rd;
+
+	if (stat(log, &sb) < 0)
+		return;
+
+	flog = strdup(log);
+	if (flog == NULL) {
+		(void) fprintf(stderr,"%s: ",progname);
+		perror("strdup()");
+		exit(1);
+	}
+	for (p = flog; *p != '\0'; p++) {
+		if (*p == '/')
+			*p = '_';
+	}
+	fname = (char *) malloc(strlen(STATS_DIR) + strlen(flog) + 17);
+	if (fname == NULL) {
+		(void) fprintf(stderr,"%s: ",progname);
+		perror("malloc()");
+		exit(1);
+	}
+	sprintf(fname, "%s/newsyslog.%s.size", STATS_DIR, flog);
+
+	/* ..if it doesn't exist, simply record the current size. */
+	if ((sb.st_size == 0) || stat(fname, &tsb) < 0)
+		goto update;
+
+	fp = fopen(fname, "r");
+	if (fp == NULL) {
+		(void) fprintf(stderr,"%s: ",progname);
+		perror(fname);
+		goto cleanup;
+	}
+#ifdef QUAD_OFF_T
+	if (fscanf(fp, "%qd\n", &osize) != 1) {
+#else
+	if (fscanf(fp, "%ld\n", &osize) != 1) {
+#endif	/* QUAD_OFF_T */
+		fclose(fp);
+		goto update;
+	}
+
+	fclose(fp);
+
+	/* If the file is smaller, mark the entire thing as changed. */
+	if (sb.st_size < osize)
+		osize = 0;
+
+	/* Now see if current size is larger. */
+	if (sb.st_size > osize) {
+		rb = (char *) malloc(sb.st_size - osize);
+		if (rb == NULL) {
+			(void) fprintf(stderr,"%s: ",progname);
+			perror("malloc()");
+			exit(1);
+		}
+
+		/* Open logfile, seek. */
+		fp = fopen(log, "r");
+		if (fp == NULL) {
+			(void) fprintf(stderr,"%s: ",progname);
+			perror(log);
+			goto cleanup;
+		}
+		fseek(fp, osize, SEEK_SET);
+		rd = fread(rb, 1, sb.st_size - osize, fp);
+		if (rd < 1) {
+			(void) fprintf(stderr,"%s: ",progname);
+			perror("fread()");
+			fclose(fp);
+			goto cleanup;
+		}
+		
+		/* Send message. */
+		fclose(fp);
+
+		fp = openmail();
+		if (fp == NULL) {
+			(void) fprintf(stderr,"%s: ",progname);
+			perror("openmail()");
+			goto cleanup;
+		}
+		fprintf(fp, "To: %s\nSubject: LOGFILE NOTIFICATION: %s\n\n\n",
+		    whom, log);
+		fwrite(rb, 1, rd, fp);
+		fputs("\n\n", fp);
+
+		closemail(fp);
+	}
+update:
+	/* Reopen for writing and update file. */
+	fp = fopen(fname, "w");
+	if (fp == NULL) {
+		(void) fprintf(stderr,"%s: ",progname);
+		perror(fname);
+		goto cleanup;
+	}
+#ifdef QUAD_OFF_T
+	fprintf(fp, "%qd\n", sb.st_size);
+#else
+	fprintf(fp, "%ld\n", sb.st_size);
+#endif	/* QUAD_OFF_T */
+	fclose(fp);
+
+cleanup:
+	free(flog);
+	free(fname);
+	if (rb != NULL)
+		free(rb);
+}
+
+FILE *openmail()
+{
+	char *cmdbuf;
+	FILE *ret;
+
+	cmdbuf = (char *) malloc(strlen(SENDMAIL) + 3);
+	if (cmdbuf == NULL)
+		return(NULL);
+
+	sprintf(cmdbuf, "%s -t", SENDMAIL);
+	ret = popen(cmdbuf, "w");
+
+	free(cmdbuf);
+	return(ret);
+}
+
+void closemail(pfp)
+	FILE *pfp;
+{
+	pclose(pfp);
 }
