@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ahhmacsha1.c,v 1.7 1997/06/24 12:15:20 provos Exp $	*/
+/*	$OpenBSD: ip_ahhmacsha1.c,v 1.8 1997/06/24 20:48:40 provos Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -237,11 +237,11 @@ ahhmacsha1_input(struct mbuf *m, struct tdb *tdb)
       for (off = sizeof(struct ip); off < (ip->ip_hl << 2);)
       {
 	  optval = ((u_int8_t *)ip)[off];
-	  SHA1Update(&ctx, &optval, 1);
-	  switch (IPOPT_NUMBER(optval))
+	  switch (optval)
 	  {
 	      case IPOPT_EOL:
 	      case IPOPT_NOP:
+	          SHA1Update(&ctx, ipseczeroes, 1);
 		  off++;
 		  continue;
 		  
@@ -249,13 +249,13 @@ ahhmacsha1_input(struct mbuf *m, struct tdb *tdb)
 	      case 133:
 	      case 134:
 		  optval = ((u_int8_t *)ip)[off + 1];
-		  SHA1Update(&ctx, (u_int8_t *)ip + off + 1, optval - 1);
+		  SHA1Update(&ctx, (u_int8_t *)ip + off, optval);
 		  off += optval;
 		  continue;
 		  
 	      default:
-		  SHA1Update(&ctx, &optval, 1);
-		  SHA1Update(&ctx, ipseczeroes, optval - 2);
+		  optval = ((u_int8_t *)ip)[off + 1];
+		  SHA1Update(&ctx, ipseczeroes, optval);
 		  off += optval;
 		  continue;
 	  }
