@@ -41,10 +41,10 @@ forward:
 	beq	a3, zero, 1f
 	subu	a2, a2, a3		# subtract from remaining count
 /*XXX FIXME Endian dependent */
-	lwr	v1, 0(a0)		# get next 4 bytes (unaligned)
-	lwl	v1, 3(a0)
+	LWLO	v1, 0(a0)		# get next 4 bytes (unaligned)
+	LWHI	v1, 3(a0)
 	addu	a0, a0, a3
-	swr	v1, 0(a1)		# store 1, 2, or 3 bytes to align a1
+	SWLO	v1, 0(a1)		# store 1, 2, or 3 bytes to align a1
 	addu	a1, a1, a3
 1:
 	and	v1, a2, 3		# compute number of words left
@@ -53,8 +53,8 @@ forward:
 	addu	a3, a3, a0		# compute ending address
 2:
 /*XXX FIXME Endian dependent */
-	lwr	v1, 0(a0)		# copy words a0 unaligned, a1 aligned
-	lwl	v1, 3(a0)
+	LWLO	v1, 0(a0)		# copy words a0 unaligned, a1 aligned
+	LWHI	v1, 3(a0)
 	addu	a0, a0, 4
 	sw	v1, 0(a1)
 	addu	a1, a1, 4
@@ -65,9 +65,9 @@ forward:
 aligned:
 	beq	a3, zero, 1f
 	subu	a2, a2, a3		# subtract from remaining count
-	lwr	v1, 0(a0)		# copy 1, 2, or 3 bytes to align
+	LWLO	v1, 0(a0)		# copy 1, 2, or 3 bytes to align
 	addu	a0, a0, a3
-	swr	v1, 0(a1)
+	SWLO	v1, 0(a1)
 	addu	a1, a1, a3
 1:
 	and	v1, a2, 3		# compute number of whole words left

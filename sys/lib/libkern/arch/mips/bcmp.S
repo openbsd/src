@@ -17,8 +17,8 @@ LEAF(bcmp)
 	subu	a2, a2, a3		# subtract from remaining count
 	move	v0, v1			# init v0,v1 so unmodified bytes match
 /*XXX FIXME Endian dependent */
-	lwr	v0, 0(a0)		# read 1, 2, or 3 bytes
-	lwr	v1, 0(a1)
+	LWLO	v0, 0(a0)		# read 1, 2, or 3 bytes
+	LWLO	v1, 0(a1)
 	addu	a1, a1, a3
 	bne	v0, v1, nomatch
 	addu	a0, a0, a3
@@ -54,8 +54,8 @@ unalignedcmp:
 	addu	a3, a3, a0		# compute ending address
 3:
 /*XXX FIXME Endian dependent */
-	lwr	v0, 0(a0)		# compare words a0 unaligned, a1 aligned
-	lwl	v0, 3(a0)
+	LWLO	v0, 0(a0)		# compare words a0 unaligned, a1 aligned
+	LWHI	v0, 3(a0)
 	lw	v1, 0(a1)
 	addu	a0, a0, 4
 	bne	v0, v1, nomatch
