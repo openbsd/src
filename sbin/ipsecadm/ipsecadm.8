@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipsecadm.8,v 1.44 2001/09/06 06:34:13 jufi Exp $
+.\" $OpenBSD: ipsecadm.8,v 1.45 2001/11/13 18:04:39 deraadt Exp $
 .\"
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -627,7 +627,7 @@ only flush SAs of type ip4.
 Setup a SA which uses new esp with 3des encryption and HMAC-SHA1
 authentication:
 .Bd -literal
-ipsecadm new esp -enc 3des -auth sha1 -spi 100a -dst 169.20.12.2 \e\ 
+# ipsecadm new esp -enc 3des -auth sha1 -spi 100a -dst 169.20.12.2 \e\ 
 	-src 169.20.12.3 \e\ 
 	-key 638063806380638063806380638063806380638063806380 \e\ 
 	-authkey 1234123412341234123412341234123412341234
@@ -635,19 +635,19 @@ ipsecadm new esp -enc 3des -auth sha1 -spi 100a -dst 169.20.12.2 \e\
 .Pp
 Setup a SA for authentication with old ah only:
 .Bd -literal
-ipsecadm old ah -auth md5 -spi 10f2 -dst 169.20.12.2 -src 169.20.12.3 \e\ 
+# ipsecadm old ah -auth md5 -spi 10f2 -dst 169.20.12.2 -src 169.20.12.3 \e\ 
 	-key 12341234deadbeef
 .Ed
 .Pp
 Setup a flow requiring use of AH:
 .Bd -literal
-ipsecadm flow -dst 169.20.12.2 -proto ah \e\ 
+# ipsecadm flow -dst 169.20.12.2 -proto ah \e\ 
 	-addr 10.1.1.0 255.255.255.0 10.0.0.0 255.0.0.0 -out -require
 .Ed
 .Pp
 Setup an inbound SA:
 .Bd -literal
-ipsecadm new esp -enc blf -auth md5 -spi 1002 -dst 169.20.12.3 \e\ 
+# ipsecadm new esp -enc blf -auth md5 -spi 1002 -dst 169.20.12.3 \e\ 
 	-src 169.20.12.2 \e\ 
 	-key abadbeef15deadbeefabadbeef15deadbeefabadbeef15deadbeef \e\ 
 	-authkey 12349876432167890192837465098273
@@ -655,19 +655,19 @@ ipsecadm new esp -enc blf -auth md5 -spi 1002 -dst 169.20.12.3 \e\
 .Pp
 Setup an ingress flow on for the inbound SA:
 .Bd -literal
-ipsecadm flow -addr 10.0.0.0 255.0.0.0 10.1.1.0 255.255.255.0 \e\ 
+# ipsecadm flow -addr 10.0.0.0 255.0.0.0 10.1.1.0 255.255.255.0 \e\ 
 	-dst 169.20.12.2 -proto esp -in -require
 .Ed
 .Pp
 Setup a bypass flow:
 .Bd -literal
-ipsecadm flow -bypass -out \e\ 
+# ipsecadm flow -bypass -out \e\ 
 	-addr 10.1.1.0 255.255.255.0 10.1.1.0 255.255.255.0
 .Ed
 .Pp
 Delete all esp SAs and their flows and routing information:
 .Bd -literal
-ipsecadm flush -esp
+# ipsecadm flush -esp
 .Ed
 .Sh SEE ALSO
 .Xr netstat 1 ,
