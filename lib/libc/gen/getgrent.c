@@ -33,7 +33,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: getgrent.c,v 1.15 2002/02/16 21:27:22 millert Exp $";
+static char rcsid[] = "$OpenBSD: getgrent.c,v 1.16 2002/05/24 21:22:37 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -386,16 +386,18 @@ grscan(search, gid, name, p_gr, gs)
 						continue;
 					if (name) {
 						r = yp_match(__ypdomain,
-							     "group.byname",
-							     name, strlen(name),
-							     &data, &datalen);
+						    "group.byname",
+						    name, strlen(name),
+						    &data, &datalen);
 					} else {
 						char buf[20];
-						sprintf(buf, "%u", gid);
+
+						snprintf(buf, sizeof buf,
+						    "%u", gid);
 						r = yp_match(__ypdomain,
-							     "group.bygid",
-							     buf, strlen(buf),
-							     &data, &datalen);
+						    "group.bygid",
+						    buf, strlen(buf),
+						    &data, &datalen);
 					}
 					if (r != 0)
 						continue;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: basename.c,v 1.6 2001/06/28 04:27:19 pjanzen Exp $	*/
+/*	$OpenBSD: basename.c,v 1.7 2002/05/24 21:22:37 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -28,7 +28,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: basename.c,v 1.6 2001/06/28 04:27:19 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: basename.c,v 1.7 2002/05/24 21:22:37 deraadt Exp $";
 #endif /* not lint */
 
 #include <errno.h>
@@ -45,7 +45,7 @@ basename(path)
 
 	/* Empty or NULL string gets treated as "." */
 	if (path == NULL || *path == '\0') {
-		(void)strcpy(bname, ".");
+		(void)strlcpy(bname, ".", sizeof bname);
 		return(bname);
 	}
 
@@ -56,7 +56,7 @@ basename(path)
 
 	/* All slashes becomes "/" */
 	if (endp == path && *endp == '/') {
-		(void)strcpy(bname, "/");
+		(void)strlcpy(bname, "/", sizeof bname);
 		return(bname);
 	}
 

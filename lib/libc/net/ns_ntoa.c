@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: ns_ntoa.c,v 1.8 2002/02/16 21:27:23 millert Exp $";
+static char rcsid[] = "$OpenBSD: ns_ntoa.c,v 1.9 2002/05/24 21:22:37 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -54,7 +54,7 @@ ns_ntoa(addr)
 	u_char *uplim = up + 6;
 
 	net.net_e = addr.x_net;
-	sprintf(obuf, "%x", ntohl(net.long_e));
+	snprintf(obuf, sizeof obuf, "%x", ntohl(net.long_e));
 	cp = spectHex(obuf);
 	cp2 = cp + 1;
 	while (*up==0 && up < uplim) up++;

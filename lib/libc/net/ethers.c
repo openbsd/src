@@ -1,4 +1,4 @@
-/*	$OpenBSD: ethers.c,v 1.13 2002/02/16 21:27:23 millert Exp $	*/
+/*	$OpenBSD: ethers.c,v 1.14 2002/05/24 21:22:37 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -34,7 +34,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: ethers.c,v 1.13 2002/02/16 21:27:23 millert Exp $";
+static char rcsid[] = "$OpenBSD: ethers.c,v 1.14 2002/05/24 21:22:37 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -72,7 +72,7 @@ ether_ntoa(e)
 		return (NULL);
 	}
 
-	(void)sprintf(a, "%02x:%02x:%02x:%02x:%02x:%02x",
+	(void)snprintf(a, sizeof a, "%02x:%02x:%02x:%02x:%02x:%02x",
 	    e->ether_addr_octet[0], e->ether_addr_octet[1],
 	    e->ether_addr_octet[2], e->ether_addr_octet[3],
 	    e->ether_addr_octet[4], e->ether_addr_octet[5]);
@@ -138,7 +138,7 @@ ether_ntohost(hostname, e)
 	}
 
 #ifdef YP
-	sprintf(trybuf, "%x:%x:%x:%x:%x:%x", 
+	snprintf(trybuf, sizeof trybuf, "%x:%x:%x:%x:%x:%x", 
 	    e->ether_addr_octet[0], e->ether_addr_octet[1],
 	    e->ether_addr_octet[2], e->ether_addr_octet[3],
 	    e->ether_addr_octet[4], e->ether_addr_octet[5]);

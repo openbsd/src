@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: disklabel.c,v 1.6 2002/02/16 21:27:22 millert Exp $";
+static char rcsid[] = "$OpenBSD: disklabel.c,v 1.7 2002/05/24 21:22:37 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -114,11 +114,11 @@ getdiskbyname(name)
 	getnumdflt(dp->d_trkseek, "ts", 0);
 	getnumdflt(dp->d_bbsize, "bs", BBSIZE);
 	getnumdflt(dp->d_sbsize, "sb", SBSIZE);
-	strcpy(psize, "px");
-	strcpy(pbsize, "bx");
-	strcpy(pfsize, "fx");
-	strcpy(poffset, "ox");
-	strcpy(ptype, "tx");
+	strlcpy(psize, "px", sizeof psize);
+	strlcpy(pbsize, "bx", sizeof pbsize);
+	strlcpy(pfsize, "fx", sizeof pfsize);
+	strlcpy(poffset, "ox", sizeof poffset);
+	strlcpy(ptype, "tx", sizeof ptype);
 	max = 'a' - 1;
 	pp = &dp->d_partitions[0];
 	for (p = 'a'; p < 'a' + MAXPARTITIONS; p++, pp++) {
@@ -146,7 +146,7 @@ getdiskbyname(name)
 		}
 	}
 	dp->d_npartitions = max + 1 - 'a';
-	(void)strcpy(psize, "dx");
+	(void)strlcpy(psize, "dx", sizeof psize);
 	dx = dp->d_drivedata;
 	for (p = '0'; p < '0' + NDDATA; p++, dx++) {
 		psize[1] = p;

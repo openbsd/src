@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_debug.c,v 1.11 2001/06/11 10:05:59 itojun Exp $	*/
+/*	$OpenBSD: res_debug.c,v 1.12 2002/05/24 21:22:37 deraadt Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1990, 1993
@@ -82,7 +82,7 @@
 static char sccsid[] = "@(#)res_debug.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "$From: res_debug.c,v 8.19 1996/11/26 10:11:23 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: res_debug.c,v 1.11 2001/06/11 10:05:59 itojun Exp $";
+static char rcsid[] = "$OpenBSD: res_debug.c,v 1.12 2002/05/24 21:22:37 deraadt Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -159,7 +159,9 @@ dewks(wks)
 	case 161: return "snmp";
 	case 162: return "snmp-trap";
 	case 170: return "print-srv";
-	default: (void) sprintf(nbuf, "%d", wks); return (nbuf);
+	default:
+		(void) snprintf(nbuf, sizeof nbuf, "%d", wks);
+		return (nbuf);
 	}
 }
 
@@ -183,7 +185,9 @@ deproto(protonum)
 	case 12: return "pup";
 	case 16: return "chaos";
 	case 17: return "udp";
-	default: (void) sprintf(nbuf, "%d", protonum); return (nbuf);
+	default:
+		(void) snprintf(nbuf, sizeof nbuf, "%d", protonum);
+		return (nbuf);
 	}
 }
 
@@ -436,7 +440,7 @@ __p_fqnname(cp, msg, msglen, name, namelen)
 
 	if ((n = dn_expand(msg, cp + msglen, cp, name, namelen)) < 0)
 		return (NULL);
-	newlen = strlen (name);
+	newlen = strlen(name);
 	if (newlen == 0 || name[newlen - 1] != '.') {
 		if (newlen+1 >= namelen)	/* Lack space for final dot */
 			return (NULL);
@@ -958,7 +962,7 @@ __sym_ntos(syms, number, success)
 		}
 	}
 
-	sprintf (unname, "%d", number);
+	snprintf(unname, sizeof unname, "%d", number);
 	if (success)
 		*success = 0;
 	return (unname);
@@ -980,7 +984,7 @@ __sym_ntop(syms, number, success)
 			return (syms->humanname);
 		}
 	}
-	sprintf(unname, "%d", number);
+	snprintf(unname, sizeof unname, "%d", number);
 	if (success)
 		*success = 0;
 	return (unname);
@@ -1030,8 +1034,9 @@ __p_option(option)
 	case RES_INSECURE2:	return "insecure2";
 	case RES_USE_INET6:	return "inet6";
 	case RES_USE_EDNS0:	return "edns0";
-	default:		sprintf(nbuf, "?0x%lx?", (u_long)option);
-				return (nbuf);
+	default:
+		snprintf(nbuf, sizeof nbuf, "?0x%lx?", (u_long)option);
+		return (nbuf);
 	}
 }
 
@@ -1047,7 +1052,7 @@ p_time(value)
 	register char *p;
 
 	if (value == 0) {
-		strcpy(nbuf, "0 secs");
+		strlcpy(nbuf, "0 secs", sizeof nbuf);
 		return (nbuf);
 	}
 
@@ -1109,7 +1114,7 @@ precsize_ntoa(prec)
 
 	val = mantissa * poweroften[exponent];
 
-	(void) sprintf(retbuf, "%ld.%.2ld", val/100, val%100);
+	(void) snprintf(retbuf, sizeof retbuf, "%ld.%.2ld", val/100, val%100);
 	return (retbuf);
 }
 
@@ -1513,7 +1518,7 @@ __p_secstodate (secs)
 	time = gmtime(&clock);
 	time->tm_year += 1900;
 	time->tm_mon += 1;
-	sprintf(output, "%04d%02d%02d%02d%02d%02d",
+	snprintf(output, sizeof output, "%04d%02d%02d%02d%02d%02d",
 		time->tm_year, time->tm_mon, time->tm_mday,
 		time->tm_hour, time->tm_min, time->tm_sec);
 	return (output);

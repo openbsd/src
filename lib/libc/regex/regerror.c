@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)regerror.c	8.4 (Berkeley) 3/20/94";
 #else
-static char rcsid[] = "$OpenBSD: regerror.c,v 1.7 2002/02/16 21:27:24 millert Exp $";
+static char rcsid[] = "$OpenBSD: regerror.c,v 1.8 2002/05/24 21:22:37 deraadt Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -139,7 +139,7 @@ size_t errbuf_size;
 		if (errcode&REG_ITOA) {
 			if (r->code != 0) {
 				assert(strlen(r->name) < sizeof(convbuf));
-				(void) strcpy(convbuf, r->name);
+				(void) strlcpy(convbuf, r->name, sizeof convbuf);
 			} else
 				(void)sprintf(convbuf, "REG_0x%x", target);
 			s = convbuf;

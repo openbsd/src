@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_query.c,v 1.17 2002/02/16 21:27:23 millert Exp $	*/
+/*	$OpenBSD: res_query.c,v 1.18 2002/05/24 21:22:37 deraadt Exp $	*/
 
 /*
  * ++Copyright++ 1988, 1993
@@ -60,7 +60,7 @@
 static char sccsid[] = "@(#)res_query.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "$From: res_query.c,v 8.9 1996/09/22 00:13:28 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: res_query.c,v 1.17 2002/02/16 21:27:23 millert Exp $";
+static char rcsid[] = "$OpenBSD: res_query.c,v 1.18 2002/05/24 21:22:37 deraadt Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -351,7 +351,8 @@ res_querydomain(name, domain, class, type, answer, anslen)
 		} else
 			longname = name;
 	} else
-		sprintf(nbuf, "%.*s.%.*s", MAXDNAME, name, MAXDNAME, domain);
+		snprintf(nbuf, sizeof nbuf, "%.*s.%.*s",
+		    MAXDNAME, name, MAXDNAME, domain);
 
 	return (res_query(longname, class, type, answer, anslen));
 }

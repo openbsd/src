@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet_neta.c,v 1.2 1997/04/05 21:13:12 millert Exp $	*/
+/*	$OpenBSD: inet_neta.c,v 1.3 2002/05/24 21:22:37 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996 by Internet Software Consortium.
@@ -19,9 +19,9 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
-static const char rcsid[] = "$Id: inet_neta.c,v 1.2 1997/04/05 21:13:12 millert Exp $";
+static const char rcsid[] = "$Id: inet_neta.c,v 1.3 2002/05/24 21:22:37 deraadt Exp $";
 #else
-static const char rcsid[] = "$OpenBSD: inet_neta.c,v 1.2 1997/04/05 21:13:12 millert Exp $";
+static const char rcsid[] = "$OpenBSD: inet_neta.c,v 1.3 2002/05/24 21:22:37 deraadt Exp $";
 #endif
 #endif
 
@@ -73,7 +73,7 @@ inet_neta(src, dst, size)
 	if (dst == odst) {
 		if (size < sizeof "0.0.0.0")
 			goto emsgsize;
-		strcpy(dst, "0.0.0.0");
+		strlcpy(dst, "0.0.0.0", size);
 	}
 	return (odst);
 

@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: ipx_ntoa.c,v 1.2 1996/08/19 08:29:20 tholo Exp $";
+static char rcsid[] = "$OpenBSD: ipx_ntoa.c,v 1.3 2002/05/24 21:22:37 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -45,7 +45,7 @@ ipx_ntoa(addr)
 {
 	static char obuf[] = "xxxx.xx:xx:xx:xx:xx:xx.uuuuu";
 
-	sprintf(obuf, "%8xH.%02x:%02x:%02x:%02x:%02x:%02x.%u",
+	snprintf(obuf, sizeof obuf, "%8xH.%02x:%02x:%02x:%02x:%02x:%02x.%u",
 		ntohl(addr.ipx_net.l_net),
 		addr.ipx_host.c_host[0],
 		addr.ipx_host.c_host[1],

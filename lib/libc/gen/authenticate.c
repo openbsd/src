@@ -1,4 +1,4 @@
-/*	$OpenBSD: authenticate.c,v 1.9 2002/03/20 17:17:15 mpech Exp $	*/
+/*	$OpenBSD: authenticate.c,v 1.10 2002/05/24 21:22:37 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1997 Berkeley Software Design, Inc. All rights reserved.
@@ -208,7 +208,7 @@ auth_approval(auth_session_t *as, login_cap_t *lc, char *name, char *type)
 			return (0);
 		}
 		if (pwd == NULL && (approve = strchr(name, '.')) != NULL) {
-			strcpy(path, name);
+			strlcpy(path, name, sizeof path);
 			path[approve-name] = '\0';
 			pwd = getpwnam(name);
 		}
@@ -301,7 +301,7 @@ auth_usercheck(char *name, char *style, char *type, char *password)
 
 	if (strlen(name) >= sizeof(namebuf))
 		return (NULL);
-	strcpy(namebuf, name);
+	strlcpy(namebuf, name, sizeof namebuf);
 	name = namebuf;
 
 	/*
@@ -367,7 +367,7 @@ auth_userchallenge(char *name, char *style, char *type, char **challengep)
 
 	if (strlen(name) >= sizeof(namebuf))
 		return (NULL);
-	strcpy(namebuf, name);
+	strlcpy(namebuf, name, sizeof namebuf);
 	name = namebuf;
 
 	/*

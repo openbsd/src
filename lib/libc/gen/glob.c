@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)glob.c	8.3 (Berkeley) 10/13/93";
 #else
-static char rcsid[] = "$OpenBSD: glob.c,v 1.18 2002/02/17 19:42:22 millert Exp $";
+static char rcsid[] = "$OpenBSD: glob.c,v 1.19 2002/05/24 21:22:37 deraadt Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -812,7 +812,7 @@ g_opendir(str, pglob)
 	char buf[MAXPATHLEN];
 
 	if (!*str)
-		strcpy(buf, ".");
+		strlcpy(buf, ".", sizeof buf);
 	else {
 		if (g_Ctoc(str, buf, sizeof(buf)))
 			return(NULL);

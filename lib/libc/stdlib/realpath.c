@@ -35,7 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: realpath.c,v 1.6 2002/01/12 16:24:35 millert Exp $";
+static char *rcsid = "$OpenBSD: realpath.c,v 1.7 2002/05/24 21:22:37 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -66,7 +66,7 @@ realpath(path, resolved)
 
 	/* Save the starting point. */
 	if ((fd = open(".", O_RDONLY)) < 0) {
-		(void)strcpy(resolved, ".");
+		(void)strlcpy(resolved, ".", MAXPATHLEN);
 		return (NULL);
 	}
 
@@ -125,7 +125,7 @@ loop:
 	 * Save the last component name and get the full pathname of
 	 * the current directory.
 	 */
-	(void)strcpy(wbuf, p);
+	(void)strlcpy(wbuf, p, sizeof wbuf);
 	if (getcwd(resolved, MAXPATHLEN) == 0)
 		goto err1;
 
