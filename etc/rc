@@ -93,7 +93,7 @@ rm -f /var/spool/uucp/STST/*
 echo -n 'starting rpc daemons:'
 echo -n ' portmap';		portmap
 
-if [ -d /var/yp ]; then
+if [ -d /var/yp/binding ]; then
 	echo -n ' ypbind';		ypbind
 
 	if [ -d /var/yp/`domainname` ]; then
