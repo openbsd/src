@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.own.mk,v 1.19 1997/06/01 05:25:28 downsj Exp $
+#	$OpenBSD: bsd.own.mk,v 1.20 1998/03/12 16:54:21 art Exp $
 #	$NetBSD: bsd.own.mk,v 1.24 1996/04/13 02:08:09 thorpej Exp $
 
 # Host-specific overrides
@@ -19,6 +19,8 @@ YP?=		yes
 # Set `TCP_WRAPPERS' to `yes' to build certain networking daemons with
 # integrated support for libwrap.
 TCP_WRAPPERS?=	yes
+# Set `AFS` to `yes' to build certain utilities and libraries with AFS-support
+AFS?=		no
 
 # where the system object and source trees are kept; can be configurable
 # by the user in case they want them in ~/foosrc and ~/fooobj, for example
