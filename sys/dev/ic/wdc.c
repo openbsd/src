@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdc.c,v 1.57 2002/12/22 18:24:45 grange Exp $     */
+/*      $OpenBSD: wdc.c,v 1.58 2002/12/22 18:28:06 grange Exp $     */
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $ */
 
 
@@ -2192,7 +2192,7 @@ wdc_ioctl(drvp, xfer, addr, flag, p)
 
 	switch (xfer) {
 	case ATAIOGETTRACE: {
-		struct atagettrace *agt = (struct atagettrace *)addr;
+		atagettrace_t *agt = (atagettrace_t *)addr;
 		unsigned int size = 0;
 		char *log_to_copy;
 		
