@@ -557,7 +557,6 @@
 ./usr/share/man/cat3/pthread_detach.0
 ./usr/share/man/cat3/pthread_equal.0
 ./usr/share/man/cat3/pthread_exit.0
-./usr/share/man/cat3/pthread_getcancelstate.0
 ./usr/share/man/cat3/pthread_getspecific.0
 ./usr/share/man/cat3/pthread_join.0
 ./usr/share/man/cat3/pthread_key_create.0
@@ -1360,3 +1359,13 @@
 ./usr/share/man/cat1/infocmp.0
 ./usr/share/man/cat4/wb.0
 ./usr/share/man/cat8/ssl.0
+./usr/share/man/cat3/getc_unlocked.0
+./usr/share/man/cat3/getchar_unlocked.0
+./usr/share/man/cat3/pthread_multi_np.0
+./usr/share/man/cat3/pthread_resume_np.0
+./usr/share/man/cat3/pthread_setcanceltype.0
+./usr/share/man/cat3/pthread_sigmask.0
+./usr/share/man/cat3/pthread_single_np.0
+./usr/share/man/cat3/pthread_suspend_np.0
+./usr/share/man/cat3/putc_unlocked.0
+./usr/share/man/cat3/putchar_unlocked.0
