@@ -1,4 +1,4 @@
-/*	$OpenBSD */
+/*	$OpenBSD: ethertype.h,v 1.4 1999/06/17 15:51:08 brad Exp $	*/
 /*	$NetBSD: ethertype.h,v 1.2 1995/03/06 11:38:17 mycroft Exp $	*/
 
 /*

@@ -1,4 +1,4 @@
-/*      $OpenBSD */
+/*	$OpenBSD: bpf_image.c,v 1.6 1999/06/17 15:51:07 brad Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1994, 1995
