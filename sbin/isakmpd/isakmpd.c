@@ -1,4 +1,4 @@
-/* $OpenBSD: isakmpd.c,v 1.67 2004/06/25 20:25:34 hshoexer Exp $	 */
+/* $OpenBSD: isakmpd.c,v 1.68 2004/09/17 14:54:09 hshoexer Exp $	 */
 /* $EOM: isakmpd.c,v 1.54 2000/10/05 09:28:22 niklas Exp $	 */
 
 /*
@@ -266,8 +266,6 @@ report(void)
 	ui_report("r");
 	log_to(old);
 	fclose(rfp);
-
-	sigusr1ed = 0;
 }
 
 static void
@@ -286,8 +284,6 @@ rehash_timers(void)
 
 	timer_rehash_timers();
 #endif
-
-	sigusr2ed = 0;
 }
 
 static void
@@ -461,17 +457,19 @@ main(int argc, char *argv[])
 	while (1) {
 		/* If someone has sent SIGHUP to us, reconfigure.  */
 		if (sighupped) {
+			sighupped = 0;
 			log_print("SIGHUP received");
 			reinit();
-			sighupped = 0;
 		}
 		/* and if someone sent SIGUSR1, do a state report.  */
 		if (sigusr1ed) {
+			sigusr1ed = 0;
 			log_print("SIGUSR1 received");
 			report();
 		}
 		/* and if someone sent SIGUSR2, do a timer rehash.  */
 		if (sigusr2ed) {
+			sigusr2ed = 0;
 			log_print("SIGUSR2 received");
 			rehash_timers();
 		}
