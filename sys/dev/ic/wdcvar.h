@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdcvar.h,v 1.11 2000/07/20 19:15:23 csapuntz Exp $     */
+/*      $OpenBSD: wdcvar.h,v 1.12 2000/10/27 20:29:28 csapuntz Exp $     */
 /*	$NetBSD: wdcvar.h,v 1.17 1999/04/11 20:50:29 bouyer Exp $	*/
 
 /*-
@@ -247,7 +247,7 @@ void  wdcrestart __P((void*));
 int   wdcreset	__P((struct channel_softc *, int));
 #define VERBOSE 1 
 #define SILENT 0 /* wdcreset will not print errors */
-int   wdcwait __P((struct channel_softc *, int, int, int));
+int   wdc_wait_for_status __P((struct channel_softc *, int, int, int));
 void  wdcbit_bucket __P((struct channel_softc *, int));
 
 void  wdccommand __P((struct channel_softc *, u_int8_t, u_int8_t, u_int16_t,
@@ -261,11 +261,13 @@ void	wdc_delref __P((struct channel_softc *));
 /*	
  * ST506 spec says that if READY or SEEKCMPLT go off, then the read or write
  * command is aborted.
- */   
+ */
+#define wdcwait(chp, status, mask, timeout) ((wdc_wait_for_status((chp), (status), (mask), (timeout)) >= 0) ? 0 : -1)
 #define wait_for_drq(chp, timeout) wdcwait((chp), WDCS_DRQ, WDCS_DRQ, (timeout))
 #define wait_for_unbusy(chp, timeout)	wdcwait((chp), 0, 0, (timeout))
 #define wait_for_ready(chp, timeout) wdcwait((chp), WDCS_DRDY, \
 	WDCS_DRDY, (timeout))
+
 /* ATA/ATAPI specs says a device can take 31s to reset */
 #define WDC_RESET_WAIT 31000
 

@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdc.c,v 1.20 2000/07/20 19:15:23 csapuntz Exp $     */
+/*      $OpenBSD: wdc.c,v 1.21 2000/10/27 20:29:27 csapuntz Exp $     */
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $ */
 
 
@@ -143,6 +143,10 @@ void wdc_default_read_raw_multi_4 __P((struct channel_softc *,
     void *, unsigned int));
 void wdc_default_write_raw_multi_4 __P((struct channel_softc *, 
     void *, unsigned int));
+
+int wdc_floating_bus __P((struct channel_softc *, int));
+int wdc_preata_drive __P((struct channel_softc *, int));
+int wdc_ata_present __P((struct channel_softc *, int));
 
 struct channel_softc_vtbl wdc_default_vtbl = {
 	wdc_default_read_reg,
@@ -301,7 +305,7 @@ atapi_print(aux, pnp)
 {
 	struct ata_atapi_attach *aa_link = aux;
 	if (pnp)
-		printf("atapibus at %s", pnp);
+		printf("atapiscsi at %s", pnp);
 	printf(" channel %d", aa_link->aa_channel);
 	return (UNCONF);
 }
@@ -344,17 +348,165 @@ wdc_select_drive(chp, drive, howlong)
 	return 0;
 }
 
+int
+wdc_floating_bus(chp, drive)
+	struct channel_softc *chp;
+	int drive;
+	
+{
+	u_int8_t cumulative_status, status;
+	int      iter;
+	
+	CHP_WRITE_REG(chp, wdr_sdh, WDSD_IBM | (drive << 4));
+	delay(10);
 
-/* Test to see controller with at last one attached drive is there.
- * Returns a bit for each possible drive found (0x01 for drive 0,
- * 0x02 for drive 1).
- * Logic:
- * - If a status register is at 0xff, assume there is no drive here
- *   (ISA has pull-up resistors). If no drive at all -> return.
- * - reset the controller, wait for it to complete (may take up to 31s !).
- *   If timeout -> return.
- * - test ATA/ATAPI signatures. If at last one drive found -> return.
- * - try an ATA command on the master.
+	/* Stolen from Phoenix BIOS Drive Autotyping document */
+	cumulative_status = 0;
+	for (iter = 0; iter < 100; iter++) {
+		CHP_WRITE_REG(chp, wdr_seccnt, 0x7f);
+		delay (1);
+
+		status = CHP_READ_REG(chp, wdr_status);
+
+		/* The other bits are meaningless if BSY is set */
+		if (status & WDCS_BSY)
+			continue;
+
+		cumulative_status |= status;
+
+#define BAD_BIT_COMBO  (WDCS_DRDY | WDCS_DSC | WDCS_DRQ | WDCS_ERR)
+		if ((cumulative_status & BAD_BIT_COMBO) == BAD_BIT_COMBO)
+			return 1;
+	}
+
+	/*
+	 * Test register writability
+	 */
+	CHP_WRITE_REG(chp, wdr_cyl_lo, 0xaa);
+	CHP_WRITE_REG(chp, wdr_cyl_hi, 0x55);
+	CHP_WRITE_REG(chp, wdr_seccnt, 0xff);
+
+	if (CHP_READ_REG(chp, wdr_cyl_lo) == 0xaa &&
+	    CHP_READ_REG(chp, wdr_cyl_hi) == 0x55)
+		return 0;
+
+	CHP_WRITE_REG(chp, wdr_seccnt, 0x58);
+
+	return 1;
+}
+
+
+int
+wdc_preata_drive(chp, drive)
+	struct channel_softc *chp;
+	int drive;
+
+{
+	if (wdc_floating_bus(chp, drive)) {
+		WDCDEBUG_PRINT(("%s:%d:%d: floating bus detected\n",
+		    chp->wdc->sc_dev.dv_xname,
+		    chp->channel, drive), DEBUG_PROBE);
+		return 0;
+	}
+
+	CHP_WRITE_REG(chp, wdr_sdh, WDSD_IBM | (drive << 4));
+	delay(100);
+	if (wdcwait(chp, WDCS_DRDY | WDCS_DRQ, WDCS_DRDY, 10000) != 0) {
+		WDCDEBUG_PRINT(("%s:%d:%d: not ready\n",
+		    chp->wdc->sc_dev.dv_xname,
+		    chp->channel, drive), DEBUG_PROBE);
+		return 0;
+	}
+	
+	CHP_WRITE_REG(chp, wdr_command, WDCC_RECAL);
+	if (wdcwait(chp, WDCS_DRDY | WDCS_DRQ, WDCS_DRDY, 10000) != 0) {
+		WDCDEBUG_PRINT(("%s:%d:%d: WDCC_RECAL failed\n",
+		    chp->wdc->sc_dev.dv_xname,
+		    chp->channel, drive), DEBUG_PROBE);
+		return 0;
+	}
+
+	return 1;
+}
+
+int
+wdc_ata_present(chp, drive)
+	struct channel_softc *chp;
+	int drive;
+{
+	int time_to_done;
+
+	/* 
+	   You're actually supposed to wait up to 10 seconds
+	   for DRDY. However, as a practical matter, most
+	   drives assert DRDY very quickly after dropping BSY.
+
+	   The 10 seconds wait is sub-optimal because, according
+	   to the ATA standard, the master should reply with 00
+	   for any reads to a non-existant slave. 
+	*/
+
+	time_to_done = wdc_wait_for_status(chp, WDCS_DRDY, WDCS_DRDY, 1000);
+      	if (time_to_done == -1) return 0;
+
+	WDCDEBUG_PRINT(("%s:%d:%d: waiting for ready %d msec\n",
+	    chp->wdc ? chp->wdc->sc_dev.dv_xname : "wdcprobe",
+	    chp->channel, drive, time_to_done), DEBUG_PROBE);
+
+	/* 
+	   This section has been disabled because my Promise Ultra/66
+	   starts interrupting like crazy when I issue a NOP. This
+	   needs to be researched. - csapuntz@openbsd.org
+	*/
+#if 0
+	/* 
+	   The NOP command always aborts.
+
+	   If a drive doesn't understand NOP, it will abort the
+	   command.
+
+	   If a drive does understand NOP, it will abort the command.
+
+	   If a drive is not present, we may get random crud on
+	   register reads which will hopefully not pass the test.
+
+	   Thanks to gluk@ptci.ru for designing this check.
+	*/
+
+	CHP_WRITE_REG(chp, wdr_features, 0);
+	CHP_WRITE_REG(chp, wdr_command, WDCC_NOP);
+      	delay(10);
+
+	time_to_done = wdc_wait_for_status(chp, 0, 0, 1000);
+
+	if (time_to_done == -1) {
+		WDCDEBUG_PRINT(("%s:%d:%d: timeout waiting for NOP to complete\n", 
+		    chp->wdc ? chp->wdc->sc_dev.dv_xname : "wdcprobe",
+		    chp->channel, drive), DEBUG_PROBE);
+		return 0;
+	}
+
+	WDCDEBUG_PRINT(("%s:%d:%d: NOP completed in %d msec\n",
+	    chp->wdc ? chp->wdc->sc_dev.dv_xname : "wdcprobe",
+	    chp->channel, drive, time_to_done), DEBUG_PROBE);
+
+	if (!(chp->ch_status & WDCS_ERR) &&
+	    !(chp->ch_error & WDCE_ABRT)) {
+		WDCDEBUG_PRINT(("%s:%d:%d: NOP command did not ABORT command\n",
+		    chp->wdc ? chp->wdc->sc_dev.dv_xname : "wdcprobe",
+		    chp->channel, drive), DEBUG_PROBE);
+		return 0;
+	}
+#endif
+
+	return 1;
+}
+
+
+/* 
+   Test to see controller with at least one attached drive is there.
+   Returns a bit for each possible drive found (0x01 for drive 0,
+   0x02 for drive 1).
  */
 
 int
@@ -374,11 +526,10 @@ wdcprobe(chp)
 	    (chp->wdc->sc_dev.dv_cfdata->cf_flags & WDC_OPTION_PROBE_VERBOSE)))
 		wdcdebug_mask |= DEBUG_PROBE;
 #endif
-	/*
-	 * Sanity check to see if the wdc channel responds at all.
-	 */
+
 	if (chp->wdc == NULL ||
 	    (chp->wdc->cap & WDC_CAPABILITY_NO_EXTRA_RESETS) == 0) {
+		/* Sample the statuses of drive 0 and 1 into st0 and st1 */
 		CHP_WRITE_REG(chp, wdr_sdh, WDSD_IBM);
 		delay(10);
 		st0 = CHP_READ_REG(chp, wdr_status);
@@ -390,39 +541,36 @@ wdcprobe(chp)
 		    chp->wdc ? chp->wdc->sc_dev.dv_xname : "wdcprobe",
 		    chp->channel, st0, st1), DEBUG_PROBE);
 
-		if (st0 == 0xff)
+		/* 
+		   If the status is 0x7f or 0xff, then it's
+		   an empty channel with pull-up resistors.
+		*/
+		if ((st0 & 0x7f) == 0x7f)
 			ret_value &= ~0x01;
-		if (st1 == 0xff)
+		if ((st1 & 0x7f) == 0x7f)
 			ret_value &= ~0x02;
 		if (ret_value == 0) 
 			return 0;
 	}
 
-	/* assert SRST, wait for reset to complete */
-	CHP_WRITE_REG(chp, wdr_sdh, WDSD_IBM);
+	/* reset the channel */
+	CHP_WRITE_REG(chp,wdr_ctlr, WDCTL_RST | WDCTL_4BIT); 
 	delay(10);
-	CHP_WRITE_REG(chp,wdr_ctlr, WDCTL_RST | WDCTL_IDS); 
-	DELAY(1000);
-	CHP_WRITE_REG(chp, wdr_ctlr, WDCTL_IDS);
-	delay(1000);
-	(void) CHP_READ_REG(chp, wdr_error);
 	CHP_WRITE_REG(chp, wdr_ctlr, WDCTL_4BIT);
-	delay(10);
+	delay(2000);
 
 	ret_value = __wdcwait_reset(chp, ret_value);
 	WDCDEBUG_PRINT(("%s:%d: after reset, ret_value=0x%d\n",
 	    chp->wdc ? chp->wdc->sc_dev.dv_xname : "wdcprobe", chp->channel,
 	    ret_value), DEBUG_PROBE);
 
-	/* if reset failed, there's nothing here */
 	if (ret_value == 0)
 		return 0;
 
 	/*
-	 * Test presence of drives. First test register signatures looking for
-	 * ATAPI devices. If it's not an ATAPI and reset said there may be
-	 * something here assume it's ATA or OLD. Ghost will be killed later in
-	 * attach routine.
+	 * Use signatures to find ATAPI drives
+	 *
+	 * Also detect presence of ATA drive (wdc_ata_present)
 	 */
 	for (drive = 0; drive < 2; drive++) {
 		if ((ret_value & (0x01 << drive)) == 0)
@@ -436,8 +584,8 @@ wdcprobe(chp)
 		cl = CHP_READ_REG(chp, wdr_cyl_lo);
 		ch = CHP_READ_REG(chp, wdr_cyl_hi);
 
-		WDCDEBUG_PRINT(("%s:%d:%d: after reset, st=0x%x, sc=0x%x sn=0x%x "
-		    "cl=0x%x ch=0x%x\n",
+		WDCDEBUG_PRINT(("%s:%d:%d: after reset, st=0x%x, sc=0x%x"
+		    " sn=0x%x cl=0x%x ch=0x%x\n",
 		    chp->wdc ? chp->wdc->sc_dev.dv_xname : "wdcprobe",
 	    	    chp->channel, drive, st0, sc, sn, cl, ch), DEBUG_PROBE);
 		/*
@@ -447,11 +595,13 @@ wdcprobe(chp)
 		 */
 		if (cl == 0x14 && ch == 0xeb) {
 			chp->ch_drive[drive].drive_flags |= DRIVE_ATAPI;
-		} else {
+		} else if (wdc_ata_present(chp, drive)) {
 			chp->ch_drive[drive].drive_flags |= DRIVE_ATA;
 			if (chp->wdc == NULL ||
 			    (chp->wdc->cap & WDC_CAPABILITY_PREATA) != 0)
 				chp->ch_drive[drive].drive_flags |= DRIVE_OLD;
+		} else {
+			ret_value &= ~(1 << drive);
 		}
 	}
 
@@ -537,59 +687,29 @@ wdcattach(chp)
 		    (WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32)) ==
 		    WDC_CAPABILITY_DATA32)
 			chp->ch_drive[i].drive_flags |= DRIVE_CAP32;
+
 		if ((chp->ch_drive[i].drive_flags & DRIVE) == 0)
 			continue;
 
 		if (i == 1 && ((chp->ch_drive[0].drive_flags & DRIVE) == 0))
 			chp->ch_flags |= WDCF_ONESLAVE;
-
-		/* Issue a IDENTIFY command, to try to detect slave ghost */
+		/*
+		 * Issue an IDENTIFY command in order to distinct ATA from OLD.
+		 * This also kill ATAPI ghost.
+		 */
 		if (ata_get_params(&chp->ch_drive[i], at_poll, &params) ==
 		    CMD_OK) {
 			/* If IDENTIFY succeded, this is not an OLD ctrl */
-			chp->ch_drive[0].drive_flags &= ~DRIVE_OLD;
-			chp->ch_drive[1].drive_flags &= ~DRIVE_OLD;
+			chp->ch_drive[i].drive_flags &= ~DRIVE_OLD;
 		} else {
 			chp->ch_drive[i].drive_flags &=
 			    ~(DRIVE_ATA | DRIVE_ATAPI);
 			WDCDEBUG_PRINT(("%s:%d:%d: IDENTIFY failed\n",
 			    chp->wdc->sc_dev.dv_xname,
 			    chp->channel, i), DEBUG_PROBE);
-			if ((chp->ch_drive[i].drive_flags & DRIVE_OLD) == 0)
-				continue;
-			/*
-			 * Pre-ATA drive ?
-			 * Test registers writability (Error register not
-			 * writable, but cyllo is), then try an ATA command.
-			 */
-			CHP_WRITE_REG(chp, wdr_sdh, WDSD_IBM | (i << 4));
-			delay(10);
-			CHP_WRITE_REG(chp, wdr_features, 0x58);
-			CHP_WRITE_REG(chp, wdr_cyl_lo, 0xa5);
-			if ((CHP_READ_REG(chp, wdr_error) == 0x58) ||
-			    (CHP_READ_REG(chp, wdr_cyl_lo) != 0xa5)) {
-				WDCDEBUG_PRINT(("%s:%d:%d: register "
-				    "writability failed\n",
-				    chp->wdc->sc_dev.dv_xname,
-				    chp->channel, i), DEBUG_PROBE);
-				    chp->ch_drive[i].drive_flags &= ~DRIVE_OLD;
-			}
-			CHP_WRITE_REG(chp, wdr_sdh, WDSD_IBM | (i << 4));
-			delay(100);
-			if (wait_for_ready(chp, 10000) != 0) {
-				WDCDEBUG_PRINT(("%s:%d:%d: not ready\n",
-				    chp->wdc->sc_dev.dv_xname,
-				    chp->channel, i), DEBUG_PROBE);
+
+			if (!wdc_preata_drive(chp, i))
 				chp->ch_drive[i].drive_flags &= ~DRIVE_OLD;
-				continue;
-			}
-			CHP_WRITE_REG(chp, wdr_command, WDCC_RECAL);
-			if (wait_for_ready(chp, 10000) != 0) {
-				WDCDEBUG_PRINT(("%s:%d:%d: WDCC_RECAL failed\n",
-				    chp->wdc->sc_dev.dv_xname,
-				    chp->channel, i), DEBUG_PROBE);
-				chp->ch_drive[i].drive_flags &= ~DRIVE_OLD;
-			}
 		}
 	}
 	ctrl_flags = chp->wdc->sc_dev.dv_cfdata->cf_flags;
@@ -824,13 +944,10 @@ wdcreset(chp, verb)
 	if (!chp->_vtbl)
 		chp->_vtbl = &wdc_default_vtbl;
 
-	CHP_WRITE_REG(chp, wdr_sdh, WDSD_IBM); /* master */
-	CHP_WRITE_REG(chp, wdr_ctlr, WDCTL_RST | WDCTL_IDS);
-	delay(1000);
-	CHP_WRITE_REG(chp, wdr_ctlr, WDCTL_IDS);
-	delay(2000);
-	(void) CHP_READ_REG(chp,wdr_error);
+	CHP_WRITE_REG(chp, wdr_ctlr, WDCTL_RST | WDCTL_4BIT);
+	delay(10);
 	CHP_WRITE_REG(chp, wdr_ctlr, WDCTL_4BIT);
+	delay(2000);
 
 	drv_mask1 = (chp->ch_drive[0].drive_flags & DRIVE) ? 0x01:0x00;
 	drv_mask1 |= (chp->ch_drive[1].drive_flags & DRIVE) ? 0x02:0x00;
@@ -855,9 +972,6 @@ __wdcwait_reset(chp, drv_mask)
 {
 	int timeout;
 	u_int8_t st0, st1;
-
-	/* Wait 50ms for drive firmware to settle */
-	delay(50000);
 
 	/* wait for BSY to deassert */
 	for (timeout = 0; timeout < WDCNDELAY_RST;timeout++) {
@@ -888,15 +1002,16 @@ __wdcwait_reset(chp, drv_mask)
 		}
 		delay(WDCDELAY);
 	}
-	/* Reset timed out. Maybe it's because drv_mask was not rigth */
+	/* Reset timed out. Maybe it's because drv_mask was not right */
 	if (st0 & WDCS_BSY)
 		drv_mask &= ~0x01;
 	if (st1 & WDCS_BSY)
 		drv_mask &= ~0x02;
 end:
-	WDCDEBUG_PRINT(("%s:%d: wdcwait_reset() end, st0=0x%x, st1=0x%x\n",
+	WDCDEBUG_PRINT(("%s:%d: wdcwait_reset() end, st0=0x%x, st1=0x%x, "
+			"reset time=%d msec\n",
 	    chp->wdc ? chp->wdc->sc_dev.dv_xname : "wdcprobe", chp->channel,
-	    st0, st1), DEBUG_PROBE);
+	    st0, st1, timeout*WDCDELAY/1000), DEBUG_PROBE);
 
 	return drv_mask;
 }
@@ -906,7 +1021,7 @@ end:
  * return -1 for a timeout after "timeout" ms.
  */
 int
-wdcwait(chp, mask, bits, timeout)
+wdc_wait_for_status(chp, mask, bits, timeout)
 	struct channel_softc *chp;
 	int mask, bits, timeout;
 {
@@ -975,7 +1090,7 @@ wdcwait(chp, mask, bits, timeout)
 			    WDCDELAY * time);
 	}
 #endif
-	return 0;
+	return time;
 }
 
 void
