@@ -1,4 +1,4 @@
-/* $OpenBSD: sa.c,v 1.87 2005/01/30 12:36:13 hshoexer Exp $	 */
+/* $OpenBSD: sa.c,v 1.88 2005/02/16 22:00:14 hshoexer Exp $	 */
 /* $EOM: sa.c,v 1.112 2000/12/12 00:22:52 niklas Exp $	 */
 
 /*
@@ -1043,8 +1043,7 @@ cleanup:
 void
 sa_delete(struct sa *sa, int notify)
 {
-	/* Don't bother notifying of Phase 1 SA deletes.  */
-	if (sa->phase != 1 && notify)
+	if (notify)
 		message_send_delete(sa);
 	sa_free(sa);
 }

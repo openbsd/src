@@ -1,4 +1,4 @@
-/* $OpenBSD: isakmpd.c,v 1.68 2004/09/17 14:54:09 hshoexer Exp $	 */
+/* $OpenBSD: isakmpd.c,v 1.69 2005/02/16 22:00:14 hshoexer Exp $	 */
 /* $EOM: isakmpd.c,v 1.54 2000/10/05 09:28:22 niklas Exp $	 */
 
 /*
@@ -298,6 +298,12 @@ phase2_sa_check(struct sa *sa, void *arg)
 	return sa->phase == 2;
 }
 
+static int
+phase1_sa_check(struct sa *sa, void *arg)
+{
+	return sa->phase == 1;
+}
+
 static void
 daemon_shutdown(void)
 {
@@ -307,11 +313,15 @@ daemon_shutdown(void)
 	if (sigtermed == 1) {
 		log_print("isakmpd: shutting down...");
 
-		/* Delete all active phase 2 SAs.  */
-		while ((sa = sa_find(phase2_sa_check, NULL))) {
-			/* Each DELETE is another (outgoing) message.  */
+		/*
+		 * Delete all active SAs.  First IPsec SAs, then ISAKMPD. 
+		 * Each DELETE is another (outgoing) message.
+		 */
+		while ((sa = sa_find(phase2_sa_check, NULL)))
 			sa_delete(sa, 1);
-		}
+
+		while ((sa = sa_find(phase1_sa_check, NULL)))
+			sa_delete(sa, 1);
 		sigtermed++;
 	}
 	if (transport_prio_sendqs_empty()) {
