@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpr.c,v 1.31 2003/03/25 02:15:21 millert Exp $ */
+/*	$OpenBSD: lpr.c,v 1.32 2003/03/27 23:45:14 millert Exp $ */
 /*	$NetBSD: lpr.c,v 1.19 2000/10/11 20:23:52 is Exp $	*/
 
 /*
@@ -50,7 +50,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)lpr.c	8.4 (Berkeley) 4/28/95";
 #else
-static const char rcsid[] = "$OpenBSD: lpr.c,v 1.31 2003/03/25 02:15:21 millert Exp $";
+static const char rcsid[] = "$OpenBSD: lpr.c,v 1.32 2003/03/27 23:45:14 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -160,7 +160,7 @@ main(int argc, char **argv)
 	openlog("lpr", 0, LOG_LPR);
 
 	while ((ch = getopt(argc, argv,
-	    ":#:1:2:3:4:C:J:P:T:U:cdfghi:lnmprstvw:")) != -1) {
+	    ":#:1:2:3:4:C:J:P:T:U:cdfghi:lmnpqrstvw:")) != -1) {
 		switch (ch) {
 
 		case '#':		/* n copies */
@@ -740,7 +740,7 @@ usage(void)
 	extern char *__progname;
 
 	fprintf(stderr,
-	    "usage: %s [-cdfghlnmprstv] [-Pprinter] [-#num] [-C class] "
+	    "usage: %s [-cdfghlmnpqrstv] [-Pprinter] [-#num] [-C class] "
 	    "[-J job] [-T title]\n           [-U user] [-i [numcols]] "
 	    "[-1234 font] [-wnum] [name ...]\n", __progname);
 	exit(1);
