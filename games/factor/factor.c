@@ -1,4 +1,4 @@
-/*	$OpenBSD: factor.c,v 1.6 1999/09/25 15:52:19 pjanzen Exp $	*/
+/*	$OpenBSD: factor.c,v 1.7 1999/09/26 05:29:41 pjanzen Exp $	*/
 /*	$NetBSD: factor.c,v 1.5 1995/03/23 08:28:07 cgd Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)factor.c	8.4 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$OpenBSD: factor.c,v 1.6 1999/09/25 15:52:19 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: factor.c,v 1.7 1999/09/26 05:29:41 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -82,7 +82,7 @@ static char rcsid[] = "$OpenBSD: factor.c,v 1.6 1999/09/25 15:52:19 pjanzen Exp 
 #include "primes.h"
 
 /*
- * prime[i] is the (i-1)th prime.
+ * prime[i] is the (i+1)th prime.
  *
  * We are able to sieve 2^32-1 because this byte table yields all primes 
  * up to 65537 and 65537^2 > 2^32-1.
