@@ -1,8 +1,8 @@
-/*	$OpenBSD: profile.h,v 1.1 2004/04/29 06:25:34 miod Exp $ */
+#ifndef __M88K_PROFILE_H__
+#define __M88K_PROFILE_H__
+/*	$OpenBSD: profile.h,v 1.2 2004/07/24 19:12:34 miod Exp $ */
 /*
- * Copyright (c) 1996 Nivas Madhur
- * Copyright (c) 1992, 1993
- *	The Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2004, Miodrag Vallat.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -12,60 +12,41 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- *	from: @(#)profile.h	8.1 (Berkeley) 6/11/93
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT,
+ * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+ * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef __MACHINE_PROFILE_H__
-#define __MACHINE_PROFILE_H__
+
 #define	_MCOUNT_DECL static inline void _mcount
 
+/*
+ * On OpenBSD, calls to the function profiler save r2-r9 on stack. The
+ * monitor point is found in r1. The function's return address is taken
+ * from the stack frame pointed to by r30.
+ */
 #define	MCOUNT \
-extern void mcount() __asm__ ("mcount");					\
-void									\
-mcount()								\
-{									\
-	int selfret;							\
-	int callerret;							\
-	/*								\
-	 * find the return address for mcount,				\
-	 * and the return address for mcount's caller.			\
-	 *								\
-	 * selfret = ret pushed by mcount call				\
-	 */								\
-	__asm__ __volatile__ ("or %0,r1,0" : "=r" (selfret));		\
-	/*								\
-	 * callerret = ret pushed by call into self.			\
-	 */								\
-	/*								\
-	 * This may not be right. It all depends on where the		\
-	 * caller stores the return address. XXX			\
-	 */								\
-	__asm__ __volatile__("addu	 r10,r31,48");			\
-	__asm__ __volatile__("ld %0,r10,36" : "=r" (callerret));	\
-	_mcount(callerret, selfret);					\
+extern void mcount(void) __asm__ ("mcount"); \
+void \
+mcount() \
+{ \
+	int	returnaddress, monpoint; \
+	__asm__ __volatile__ ("or %0, r1, r0" : "=r"(returnaddress)); \
+	__asm__ __volatile__ ("ld %0, r30, 4" : "=r"(monpoint)); \
+	_mcount(monpoint, returnaddress); \
 }
 
 #ifdef _KERNEL
-/*
- * Note that we assume splhigh() and splx() cannot call mcount()
- * recursively.
- */
-#define	MCOUNT_ENTER	s = splhigh()
-#define	MCOUNT_EXIT	splx(s)
+#define	MCOUNT_ENTER	s = disable_interrupt()
+#define	MCOUNT_EXIT	set_psr(s)
 #endif /* _KERNEL */
-#endif /* __MACHINE_PROFILE_H__ */
+
+#endif /* __M88K_PROFILE_H__ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: crt0.c,v 1.7 2004/01/04 20:05:38 pvalchev Exp $	*/
+/*	$OpenBSD: crt0.c,v 1.8 2004/07/24 19:12:33 miod Exp $	*/
 
 /*   
  *   Mach Operating System
@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: crt0.c,v 1.7 2004/01/04 20:05:38 pvalchev Exp $";
+static char rcsid[] = "$OpenBSD: crt0.c,v 1.8 2004/07/24 19:12:33 miod Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -76,8 +76,23 @@ start(struct kframe *kfp)
 		__progname = __progname_storage;
 	}
 
-asm ("__callmain:");		/* Defined for the benefit of debuggers */
+__asm__ ("eprol:");
+
+#ifdef MCRT0
+	atexit(_mcleanup);
+	monstartup((u_long)&eprol, (u_long)&etext);
+#endif
+
+__asm__ ("__callmain:");	/* Defined for the benefit of debuggers */
 	exit(main(kfp->argc, argv, environ));
 }
 
 #include "common.c"
+
+#ifdef MCRT0
+__asm__ ("\
+	text\n\
+	global	_eprol\n\
+_eprol:\n\
+");
+#endif
