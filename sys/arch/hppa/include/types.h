@@ -1,4 +1,4 @@
-/*	$OpenBSD: types.h,v 1.9 2003/06/02 23:27:46 millert Exp $	*/
+/*	$OpenBSD: types.h,v 1.10 2004/06/30 21:01:08 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -83,5 +83,6 @@ typedef	unsigned long		 uint64_t;
 typedef int32_t			register_t;
 
 #define	__HAVE_DEVICE_REGISTER
+#define	__HAVE_EVCOUNT
 
 #endif	/* _MACHINE_TYPES_H_ */

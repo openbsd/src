@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.19 2004/06/30 15:24:12 mickey Exp $	*/
+/*	$OpenBSD: intr.c,v 1.20 2004/06/30 21:01:08 mickey Exp $	*/
 
 /*
  * Copyright (c) 2002-2004 Michael Shalayeff
@@ -30,6 +30,8 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
+#include <sys/evcount.h>
+#include <sys/malloc.h>
 
 #include <net/netisr.h>
 
@@ -50,14 +52,13 @@ struct hppa_iv {
 	int pad2;
 	int (*handler)(void *);
 	void *arg;
-	struct hppa_iv *next;
-	struct hppa_iv *share;
 	u_int bit;
-	int *cnt;
+	struct hppa_iv *share;
+	struct hppa_iv *next;
+	struct evcount *cnt;
 } __packed;
 
 register_t kpsw = PSL_Q | PSL_P | PSL_C | PSL_D;
-extern int intrcnt[];
 volatile int cpu_inintr, cpl = IPL_NESTED;
 u_long cpu_mask;
 struct hppa_iv intr_store[8*2*CPU_NINTS] __attribute__ ((aligned(32))),
@@ -158,15 +159,21 @@ cpu_intr_map(void *v, int pri, int irq, int (*handler)(void *), void *arg,
     const char *name)
 {
 	struct hppa_iv *iv, *pv = v, *ivb = pv->next;
+	struct evcount *cnt;
 
 	if (irq < 0 || irq >= CPU_NINTS)
 		return (NULL);
 
+	MALLOC(cnt, struct evcount *, sizeof *cnt, M_DEVBUF, M_NOWAIT);
+	if (!cnt)
+		return (NULL);
+
 	iv = &ivb[irq];
 	if (iv->handler) {
-		if (!pv->share)
+		if (!pv->share) {
+			FREE(cnt, M_DEVBUF);
 			return (NULL);
-		else {
+		} else {
 			iv = pv->share;
 			pv->share = iv->share;
 			iv->share = ivb[irq].share;
@@ -174,12 +181,13 @@ cpu_intr_map(void *v, int pri, int irq, int (*handler)(void *), void *arg,
 		}
 	}
 
+	evcount_attach(cnt, name, NULL, &evcount_intr);
 	iv->pri = pri;
 	iv->irq = irq;
 	iv->flags = 0;
 	iv->handler = handler;
 	iv->arg = arg;
-	iv->cnt = &intrcnt[pri];
+	iv->cnt = cnt;
 	iv->next = intr_list;
 	intr_list = iv;
 
@@ -191,8 +199,13 @@ cpu_intr_establish(int pri, int irq, int (*handler)(void *), void *arg,
     const char *name)
 {
 	struct hppa_iv *iv, *ev;
+	struct evcount *cnt;
 
 	if (irq < 0 || irq >= CPU_NINTS || intr_table[irq].handler)
+		return (NULL);
+
+	MALLOC(cnt, struct evcount *, sizeof *cnt, M_DEVBUF, M_NOWAIT);
+	if (!cnt)
 		return (NULL);
 
 	cpu_mask |= (1 << irq);
@@ -205,7 +218,7 @@ cpu_intr_establish(int pri, int irq, int (*handler)(void *), void *arg,
 	iv->flags = 0;
 	iv->handler = handler;
 	iv->arg = arg;
-	iv->cnt = &intrcnt[pri];
+	iv->cnt = cnt;
 	iv->next = NULL;
 	iv->share = NULL;
 
@@ -215,7 +228,10 @@ cpu_intr_establish(int pri, int irq, int (*handler)(void *), void *arg,
 		intr_more += 2 * CPU_NINTS;
 		for (ev = iv->next + CPU_NINTS; ev < intr_more; ev++)
 			ev->share = iv->share, iv->share = ev;
-	}
+		FREE(cnt, M_DEVBUF);
+		iv->cnt = NULL;
+	} else
+		evcount_attach(cnt, name, NULL, &evcount_intr);
 
 	return (iv);
 }
@@ -277,7 +293,11 @@ cpu_intr(void *v)
 		for (r = iv->flags & HPPA_IV_SOFT;
 		    iv && iv->handler; iv = iv->next)
 			/* no arg means pass the frame */
-			r |= (iv->handler)(iv->arg? iv->arg : v) == 1;
+			if ((iv->handler)(iv->arg? iv->arg : v) == 1) {
+				if (iv->cnt)
+					iv->cnt->ec_count++;
+				r |= 1;
+			}
 #if 0	/* XXX this does not work, lasi gives us double ints */
 		if (!r) {
 			cpl = 0;

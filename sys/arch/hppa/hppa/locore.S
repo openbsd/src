@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.135 2004/06/30 18:18:54 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.136 2004/06/30 21:01:08 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -107,32 +107,6 @@
 $trap_tmp_save
 	.block	TF_PHYS
 
-	.globl	intrcnt, eintrcnt, intrnames, eintrnames
-	.export	intrcnt, data
-intrcnt
-	.block	16 * 4
-	.export	eintrcnt, data
-eintrcnt
-	.export	intrnames, data
-intrnames
-	.asciz	"spur"
-	.asciz	"lev1"
-	.asciz	"lev2"
-	.asciz	"lev3"
-	.asciz	"lev4"
-	.asciz	"lev5"
-	.asciz	"lev6"
-	.asciz	"lev7"
-	.asciz	"lev8"
-	.asciz	"clock"
-	.asciz	"lev10"
-	.asciz	"lev11"
-	.asciz	"lev12"
-	.asciz	"lev13"
-	.asciz	"lev14"
-	.asciz	"lev15"
-	.export	eintrnames, data
-eintrnames
 	.export netisr, data
 	.align 16
 netisr
@@ -162,6 +136,17 @@ cpu_itmr			/* itmr value at the most recent clk int */
 	BSS(fpu_scratch, 16)	/* FPU scratch space, enough for a quad */
 	.export hppa_vtop, data
 	BSS(hppa_vtop, 4)	/* a vtop translation table addr (pa=va) */
+
+	.export intrcnt, data
+	.export eintrcnt, data
+	.export intrnames, data
+	.export eintrnames, data
+intrcnt
+	.word	0
+eintrcnt
+intrnames
+	.word	0
+eintrnames
 
 	.text
 	.import	$kernel_setup, entry
@@ -1988,16 +1973,11 @@ $intr_ffs
 	ldw	3*4(r1), r9	/* arg: ioreg */
 	mtctl	r1, tr7
 	bv	r0(r16)
-	ldw	4*4(r1), r1	/* next: sub-intr_table */
+	ldw	6*4(r1), r1	/* next: sub-intr_table */
 
 $intr_nocall
-	ldw	6*4(r1), r17	/* bit */
-	ldw	7*4(r1), r25	/* &intrcnt[pri] */
+	ldw	4*4(r1), r17	/* bit */
 	or	r17, r24, r24	/* ipending */
-
-	ldw	0(r25), r9
-	addi	1, r9, r9
-	stw	r9, 0(r25)
 
 	/* also return from nested handlers */
 $intr_cont
@@ -2047,15 +2027,11 @@ $gsc_ffs
 
 	ldo	-32(r1), r9
 $gsc_share
-	ldw	6*4(r9), r17	/* bit */
-	ldw	7*4(r9), r25	/* &intrcnt[pri] */
-	or	r17, r24, r24	/* ipending */
-
-	ldw	0(r25), r17
+	ldw	4*4(r9), r17	/* bit */
 	ldw	5*4(r9), r9	/* share */
-	addi	1, r17, r17
+
 	comb,<>	r0, r9, $gsc_share
-	stw	r17, 0(r25)
+	or	r17, r24, r24	/* ipending */
 
 	b,n	$gsc_intr_loop
 EXIT(gsc_intr)
@@ -2075,15 +2051,11 @@ $dino_ffs
 
 	ldo	-32(r1), r9
 $dino_share
-	ldw	6*4(r9), r17	/* bit */
-	ldw	7*4(r9), r25	/* &intrcnt[pri] */
-	or	r17, r24, r24	/* ipending */
-
-	ldw	0(r25), r17
+	ldw	4*4(r9), r17	/* bit */
 	ldw	5*4(r9), r9	/* share */
-	addi	1, r17, r17
+
 	comb,<>	r0, r9, $dino_share
-	stw	r17, 0(r25)
+	or	r17, r24, r24	/* ipending */
 
 	b,n	$dino_intr_loop
 EXIT(dino_intr)
