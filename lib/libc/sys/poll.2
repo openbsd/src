@@ -1,4 +1,4 @@
-.\"	$OpenBSD: poll.2,v 1.10 2000/10/18 05:12:11 aaron Exp $
+.\"	$OpenBSD: poll.2,v 1.11 2001/08/11 08:13:18 fgsch Exp $
 .\"
 .\" Copyright (c) 1994 Jason R. Thorpe
 .\" All rights reserved.
@@ -75,7 +75,7 @@ Maximum interval to wait for the poll to complete, in milliseconds.
 If this value is 0, then
 .Fn poll
 will return immediately.
-If this value is less than 0,
+If this value is INFTIM (-1),
 .Fn poll
 will block indefinitely until a condition is found.
 .El
