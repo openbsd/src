@@ -1,4 +1,4 @@
-/*	$OpenBSD: telnet.c,v 1.2 1996/03/27 19:33:10 niklas Exp $	*/
+/*	$OpenBSD: telnet.c,v 1.3 1997/06/05 01:07:39 deraadt Exp $	*/
 /*	$NetBSD: telnet.c,v 1.7 1996/02/28 21:04:15 thorpej Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
 static char sccsid[] = "@(#)telnet.c	8.4 (Berkeley) 5/30/95";
 static char rcsid[] = "$NetBSD: telnet.c,v 1.7 1996/02/28 21:04:15 thorpej Exp $";
 #else
-static char rcsid[] = "$OpenBSD: telnet.c,v 1.2 1996/03/27 19:33:10 niklas Exp $";
+static char rcsid[] = "$OpenBSD: telnet.c,v 1.3 1997/06/05 01:07:39 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -2025,7 +2025,7 @@ telsnd()
 	    }
 	}
 #endif
-	if (MODE_LOCAL_CHARS(globalmode)) {
+	if (sc != _POSIX_VDISABLE && MODE_LOCAL_CHARS(globalmode)) {
 	    if (TerminalSpecialChars(sc) == 0) {
 		bol = 1;
 		break;
