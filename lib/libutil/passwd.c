@@ -1,4 +1,4 @@
-/*	$OpenBSD: passwd.c,v 1.8 1997/02/16 19:59:21 provos Exp $	*/
+/*	$OpenBSD: passwd.c,v 1.9 1997/04/10 20:05:49 provos Exp $	*/
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
  *	The Regents of the University of California.  All rights reserved.
@@ -138,9 +138,8 @@ pw_getconf(data, max, key, option)
 	char    line[LINE_MAX];
 	static char result[LINE_MAX];
 	char   *p;
-	int     defaultw;
-	int     keyw;
-	int     got;
+	int     got = 0;
+	int     found = 0;
 
 	result[0] = '\0';
 
@@ -152,47 +151,42 @@ pw_getconf(data, max, key, option)
 			data[0] = '\0';
 		return;
 	}
-	defaultw = 0;
-	keyw = 0;
-	got = 0;
-	while (!keyw && (got || read_line(fp, line, LINE_MAX))) {
-		got = 0;
-		if (!strcmp("default:", line))
-			defaultw = 1;
-		if (!strncmp(key, line, strlen(key)) &&
-		    line[strlen(key)] == ':')
-			keyw = 1;
 
-		/* Now we found default or specified key */
-		if (defaultw || keyw) {
-			while (read_line(fp, line, LINE_MAX)) {
-				char   *p2;
-				/* Leaving key field */
-				if (strchr(line, ':')) {
-					got = 1;
-					keyw = 0;
-					break;
-				}
-				p2 = line;
-				if (!(p = strsep(&p2, "=")) || p2 == NULL)
-					continue;
-				remove_trailing_space(p);
-				if (!strncmp(p, option, strlen(option))) {
-					remove_trailing_space(p2);
-					strcpy(result, p2);
-					break;
-				}
-			}
-			if (keyw)
-				break;
-			defaultw = 0;
+	while (!found && (got || read_line(fp, line, LINE_MAX))) {
+		got = 0;
+		if (strncmp(key, line, strlen(key)) ||
+		    line[strlen(key)] != ':')
+			continue;
+
+		/* Now we found our specified key */
+		while (read_line(fp, line, LINE_MAX)) {
+		     char   *p2;
+		     /* Leaving key field */
+		     if (strchr(line, ':')) {
+			  got = 1;
+			  break;
+		     }
+		     p2 = line;
+		     if (!(p = strsep(&p2, "=")) || p2 == NULL)
+			  continue;
+		     remove_trailing_space(p);
+		     if (!strncmp(p, option, strlen(option))) {
+			  remove_trailing_space(p2);
+			  strcpy(result, p2);
+			  found = 1;
+			  break;
+		     }
 		}
 	}
 	fclose(fp);
 
-	/* If we got no result and have a default use that */
+	/* 
+	 * If we got no result and were looking for a default
+	 * value, try hard coded defaults.
+	 */
 
-	if (!strlen(result) && (p=(char *)pw_default(option)))
+	if (!strlen(result) && !strcmp(key,"default") &&
+	    (p=(char *)pw_default(option)))
 		strncpy(data, p, max - 1);
 	else 
 		strncpy(data, result, max - 1);

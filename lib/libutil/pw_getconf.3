@@ -49,11 +49,18 @@ from the section given be
 If no suitable entry is found
 for the 
 .Pa key
-a default value or an empty string will be returned in data. 
+an empty string will be returned in data.
+.Pp
+For default values the key
+.Pa default
+can be used, this might be useful when no entry was found
+for a specific key or option.
+.Pp
 An empty string is also returned for other errors.
 .Sh FILES
 .Bl -tag -width /etc/passwd.conf -compact
 .It Pa /etc/passwd.conf
 .El
 .Sh SEE ALSO
-.Xr passwd 5
+.Xr passwd 5 ,
+.Xr passwd.conf 5
