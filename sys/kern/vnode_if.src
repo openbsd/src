@@ -1,4 +1,4 @@
-#	$OpenBSD: vnode_if.src,v 1.10 2001/03/01 20:54:34 provos Exp $
+#	$OpenBSD: vnode_if.src,v 1.11 2001/06/23 02:21:05 csapuntz Exp $
 #	$NetBSD: vnode_if.src,v 1.10 1996/05/11 18:26:27 mycroft Exp $
 #
 # Copyright (c) 1992, 1993
@@ -243,16 +243,6 @@ vop_revoke {
 };
 
 #
-# XXX - not used
-#
-vop_mmap {
-	IN struct vnode *vp;
-	IN int fflags;
-	IN struct ucred *cred;
-	IN struct proc *p;
-};
-
-#
 #% fsync	vp	L L L
 #
 vop_fsync {
@@ -260,17 +250,6 @@ vop_fsync {
 	IN struct ucred *cred;
 	IN int waitfor;
 	IN struct proc *p;
-};
-
-#
-# XXX - not used
-# Needs work: Is newoff right?  What's it mean?
-#
-vop_seek {
-	IN struct vnode *vp;
-	IN off_t oldoff;
-	IN off_t newoff;
-	IN struct ucred *cred;
 };
 
 #
@@ -465,76 +444,11 @@ vop_advlock {
 };
 
 #
-#% blkatoff	vp	L L L
-#
-vop_blkatoff {
-	IN SHOULDBELOCKED struct vnode *vp;
-	IN off_t offset;
-	OUT char **res;
-	OUT struct buf **bpp;
-};
-
-#
-#% valloc	pvp	L L L
-#
-vop_valloc {
-	IN SHOULDBELOCKED struct vnode *pvp;
-	IN int mode;
-	IN struct ucred *cred;
-	OUT struct vnode **vpp;
-};
-
-#
-#% balloc       vp      L L L
-#
-vop_balloc {
-	IN SHOULDBELOCKED struct vnode *vp;
-	IN off_t startoffset;
-	IN int size;
-	IN struct ucred *cred;
-	IN int flags;
-	OUT struct buf **bpp;
-};
-
-#
 #% reallocblks	vp	L L L
 #
 vop_reallocblks {
 	IN SHOULDBELOCKED struct vnode *vp;
 	IN struct cluster_save *buflist;
-};
-
-#
-#% vfree	pvp	L L L
-#
-
-vop_vfree {
-	IN SHOULDBELOCKED struct vnode *pvp;
-	IN ino_t ino;
-	IN int mode;
-};
-
-#
-#% truncate	vp	L L L
-#
-
-vop_truncate {
-	IN SHOULDBELOCKED struct vnode *vp;
-	IN off_t length;
-	IN int flags;
-	IN struct ucred *cred;
-	IN struct proc *p;
-};
-
-#
-#% update	vp	L L L
-#
-
-vop_update {
-	IN SHOULDBELOCKED struct vnode *vp;
-	IN struct timespec *access;
-	IN struct timespec *modify;
-	IN int waitfor;
 };
 
 #
