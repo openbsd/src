@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.80 2004/04/25 07:16:24 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.81 2004/04/25 17:51:46 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -380,6 +380,14 @@ neighbor	: {	curpeer = new_peer(); }
 			}
 		}
 		    peeropts_l '}' {
+			if (curpeer->conf.local_addr.af &&
+			    curpeer->conf.local_addr.af !=
+			    curpeer->conf.remote_addr.af) {
+				yyerror("local-address and neighbor address "
+				    "must be of the same address family");
+				YYERROR;
+			}
+
 			curpeer->next = peer_l;
 			peer_l = curpeer;
 			curpeer = NULL;
@@ -440,11 +448,6 @@ peeropts	: REMOTEAS asnumber	{
 			free($2);
 		}
 		| LOCALADDR address	{
-			if ($2.af != curpeer->conf.remote_addr.af) {
-				yyerror("local-address and neighbor address "
-				    "must be of the same address family");
-				YYERROR;
-			}
 			memcpy(&curpeer->conf.local_addr, &$2,
 			    sizeof(curpeer->conf.local_addr));
 		}
