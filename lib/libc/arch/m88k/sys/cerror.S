@@ -1,4 +1,4 @@
-/*	$OpenBSD: cerror.S,v 1.5 2003/06/02 20:18:31 millert Exp $	*/
+/*	$OpenBSD: cerror.S,v 1.6 2003/10/16 17:47:48 miod Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,14 +35,13 @@
 
 #if defined(LIBC_SCCS)
 	.data
-	.string "$OpenBSD: cerror.S,v 1.5 2003/06/02 20:18:31 millert Exp $"
+	.string "$OpenBSD: cerror.S,v 1.6 2003/10/16 17:47:48 miod Exp $"
 #endif /* LIBC_SCCS */
 
 #include "SYS.h"
 
-	.align 8
 	.globl	_errno
-__cerror:
+ENTRY(_cerror)
 	or.u	r4,r0,hi16(_errno)
 	st	r2,r4,lo16(_errno)
 	sub	r2,r0,0x1
