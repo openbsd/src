@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpcmd.y,v 1.19 2000/01/15 05:10:55 ericj Exp $	*/
+/*	$OpenBSD: ftpcmd.y,v 1.20 2000/04/29 14:03:02 deraadt Exp $	*/
 /*	$NetBSD: ftpcmd.y,v 1.7 1996/04/08 19:03:11 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@
 #if 0
 static char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
-static char rcsid[] = "$OpenBSD: ftpcmd.y,v 1.19 2000/01/15 05:10:55 ericj Exp $";
+static char rcsid[] = "$OpenBSD: ftpcmd.y,v 1.20 2000/04/29 14:03:02 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -303,11 +303,11 @@ cmd
 			if (getaddrinfo(result[1], result[2], &hints, &res))
 				goto parsefail;
 			memcpy(&data_dest, res->ai_addr, res->ai_addrlen);
-			if (his_addr.su_family == AF_INET6
-			 && data_dest.su_family == AF_INET6) {
+			if (his_addr.su_family == AF_INET6 &&
+			    data_dest.su_family == AF_INET6) {
 				/* XXX more sanity checks! */
 				data_dest.su_sin6.sin6_scope_id =
-					his_addr.su_sin6.sin6_scope_id;
+				    his_addr.su_sin6.sin6_scope_id;
 			}
 			free(tmp);
 			tmp = NULL;
@@ -866,7 +866,7 @@ host_long_port6
 				if (his_addr.su_family == AF_INET6) {
 					/* XXX more sanity checks! */
 					data_dest.su_sin6.sin6_scope_id =
-						his_addr.su_sin6.sin6_scope_id;
+					    his_addr.su_sin6.sin6_scope_id;
 				}
 
 				$$ = 0;
