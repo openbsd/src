@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.42 1999/02/24 22:36:42 angelos Exp $
+#	$OpenBSD: GENERIC,v 1.43 1999/02/28 06:52:05 deraadt Exp $
 #
 #	Machine-independent option; used by all architectures for their
 #	GENERIC kernel
@@ -83,5 +83,6 @@ pseudo-device	tb	1	# tablet line discipline
 pseudo-device	vnd	4	# paging to files
 pseudo-device	ccd	4	# concatenated disk devices
 pseudo-device	ksyms	1	# kernel symbols device
+pseudo-device	bridge	2	# network bridging support
 
 option		BOOT_CONFIG	# add support for boot -c
