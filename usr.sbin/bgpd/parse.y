@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.82 2004/04/25 18:21:18 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.83 2004/04/26 07:58:04 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -96,6 +96,11 @@ typedef struct {
 			struct bgpd_addr	prefix;
 			u_int8_t		len;
 		}			prefix;
+		struct {
+			u_int8_t		enc_alg;
+			char			enc_key[IPSEC_ENC_KEY_LEN];
+			u_int8_t		enc_key_len;
+		}			encspec;
 	} v;
 	int lineno;
 } YYSTYPE;
@@ -115,6 +120,7 @@ typedef struct {
 %token	PREFIX PREFIXLEN SOURCEAS TRANSITAS COMMUNITY
 %token	SET LOCALPREF MED NEXTHOP PREPEND
 %token	ERROR
+%token	IPSEC ESP AH SPI
 %token	<v.string>		STRING
 %type	<v.number>		number asnumber optnumber yesno inout
 %type	<v.string>		string
@@ -125,6 +131,7 @@ typedef struct {
 %type	<v.filter_match>	filter_match prefixlenop
 %type	<v.filter_set>		filter_set filter_set_l filter_set_opt
 %type	<v.u8>			unaryop binaryop filter_as
+%type	<v.encspec>		encspec;
 %%
 
 grammar		: /* empty */
@@ -541,6 +548,79 @@ peeropts	: REMOTEAS asnumber	{
 			}
 			free($4);
 		}
+		| IPSEC ESP inout SPI number STRING STRING encspec {
+			unsigned	i;
+			char		s[3];
+			u_int32_t	auth_alg;
+
+			if (strlen($7) / 2 >
+			    sizeof(curpeer->conf.ipsec.auth_key_in)) {
+				yyerror("auth key too long");
+				free($7);
+				free($6);
+				YYERROR;
+			}
+
+			if (strlen($7) % 2) {
+				yyerror("auth key must be of even length");
+				free($6);
+				free($7);
+				YYERROR;
+			}
+
+			for (i = 0; i < strlen($7) / 2; i++) {
+				s[0] = $7[2*i];
+				s[1] = $7[2*i + 1];
+				s[2] = 0;
+				if (!isxdigit(s[0]) || !isxdigit(s[1])) {
+					yyerror("key must be specified in hex");
+					free($7);
+					YYERROR;
+				}
+				if ($3 == 1)
+					curpeer->conf.ipsec.auth_key_in[i] =
+					    strtoul(s, NULL, 16);
+				else
+					curpeer->conf.ipsec.auth_key_out[i] =
+					    strtoul(s, NULL, 16);
+			}
+			free($7);
+
+			if (!strcmp($6, "sha1"))
+				auth_alg = SADB_AALG_SHA1HMAC;
+			else if (!strcmp($6, "md5"))
+				auth_alg = SADB_AALG_MD5HMAC;
+			else {
+				yyerror("unknown auth algorithm \"%s\"", $6);
+				free($6);
+				YYERROR;
+			}
+			free($6);
+
+			if ($3 == 1) {
+				curpeer->conf.ipsec.spi_in = $5;
+				curpeer->conf.ipsec.auth_alg_in = auth_alg;
+				curpeer->conf.ipsec.enc_alg_in = $8.enc_alg;
+				memcpy(&curpeer->conf.ipsec.enc_key_in,
+				    &$8.enc_key,
+				    sizeof(curpeer->conf.ipsec.enc_key_in));
+				curpeer->conf.ipsec.enc_keylen_in =
+				    $8.enc_key_len;
+				curpeer->conf.ipsec.auth_keylen_in =
+				    strlen($7) / 2;
+			} else {
+				curpeer->conf.ipsec.spi_out = $5;
+				curpeer->conf.ipsec.auth_alg_out = auth_alg;
+				curpeer->conf.ipsec.enc_alg_out = $8.enc_alg;
+				memcpy(&curpeer->conf.ipsec.enc_key_out,
+				    &$8.enc_key,
+				    sizeof(curpeer->conf.ipsec.enc_key_out));
+				curpeer->conf.ipsec.enc_keylen_out =
+				    $8.enc_key_len;
+				curpeer->conf.ipsec.auth_keylen_out =
+				    strlen($7) / 2;
+			}
+		}
 		| ANNOUNCE CAPABILITIES yesno {
 			curpeer->conf.capabilities = $3;
 		}
@@ -553,6 +633,55 @@ peeropts	: REMOTEAS asnumber	{
 			    sizeof(curpeer->conf.attrset));
 		}
 		| mrtdump
+		;
+
+encspec		: /* nada */	{
+			bzero(&$$, sizeof($$));
+		}
+		| STRING STRING {
+			unsigned	i;
+			char		s[3];
+
+			bzero(&$$, sizeof($$));
+			if (!strcmp($1, "3des") || !strcmp($1, "3des-cbc"))
+				$$.enc_alg = SADB_EALG_3DESCBC;
+			else if (!strcmp($1, "aes") ||
+			    !strcmp($1, "aes-128-cbc"))
+				$$.enc_alg = SADB_X_EALG_AES;
+			else {
+				yyerror("unknown enc algorithm \"%s\"", $1);
+				free($1);
+				free($2);
+				YYERROR;
+			}
+			free($1);
+
+			if (strlen($2) / 2 >
+			    sizeof(curpeer->conf.ipsec.enc_key_in)) {
+				yyerror("enc key too long");
+				free($2);
+				YYERROR;
+			}
+
+			if (strlen($2) % 2) {
+				yyerror("key must be of even length");
+				free($2);
+				YYERROR;
+			}
+
+			for (i = 0; i < strlen($2) / 2; i++) {
+				s[0] = $2[2*i];
+				s[1] = $2[2*i + 1];
+				s[2] = 0;
+				if (!isxdigit(s[0]) || !isxdigit(s[1])) {
+					yyerror("key must be specified in hex");
+					free($2);
+					YYERROR;
+				}
+				$$.enc_key[i] = strtoul(s, NULL, 16);
+			}
+			free($2);
+		}
 		;
 
 filterrule	: action quick direction filter_peer filter_match filter_set
@@ -812,6 +941,7 @@ lookup(char *s)
 	/* this has to be sorted always */
 	static const struct keywords keywords[] = {
 		{ "AS",			AS},
+		{ "ah",			AH},
 		{ "allow",		ALLOW},
 		{ "announce",		ANNOUNCE},
 		{ "any",		ANY},
@@ -821,11 +951,13 @@ lookup(char *s)
 		{ "descr",		DESCR},
 		{ "dump",		DUMP},
 		{ "enforce",		ENFORCE},
+		{ "esp",		ESP},
 		{ "fib-update",		FIBUPDATE},
 		{ "from",		FROM},
 		{ "group",		GROUP},
 		{ "holdtime",		HOLDTIME},
 		{ "in",			IN},
+		{ "ipsec",		IPSEC},
 		{ "key",		KEY},
 		{ "listen",		LISTEN},
 		{ "local-address",	LOCALADDR},
@@ -854,6 +986,7 @@ lookup(char *s)
 		{ "router-id",		ROUTERID},
 		{ "set",		SET},
 		{ "source-AS",		SOURCEAS},
+		{ "spi",		SPI},
 		{ "table",		TABLE},
 		{ "tcp",		TCP},
 		{ "to",			TO},
