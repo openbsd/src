@@ -1,4 +1,4 @@
-#	$OpenBSD: files.cardbus,v 1.9 2004/11/20 03:11:41 brad Exp $
+#	$OpenBSD: files.cardbus,v 1.10 2004/11/20 20:07:54 brad Exp $
 #	$NetBSD: files.cardbus,v 1.8 2000/01/26 06:37:24 thorpej Exp $
 #
 # files.cardbus
@@ -48,11 +48,6 @@ file	dev/cardbus/fwohci_cardbus.c		fwohci_cardbus
 #
 attach	rl at cardbus with rl_cardbus
 file	dev/cardbus/if_rl_cardbus.c		rl_cardbus
-
-#
-#
-#attach	com at cardbus with com_cardbus
-#file	dev/cardbus/com_cardbus.c		com_cardbus
 
 #
 # Atheros AR5k
