@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.4 1997/07/06 07:46:22 downsj Exp $	*/
+/*	$OpenBSD: asm.h,v 1.5 2002/11/05 18:04:35 miod Exp $	*/
 /*	$NetBSD: asm.h,v 1.13 1997/04/24 22:49:39 thorpej Exp $	*/
 
 /*
@@ -46,11 +46,15 @@
 #ifndef _ASM_H_
 #define _ASM_H_
 
+#ifdef	__ELF__
+#define	_C_LABEL(name)		name
+#else
 #ifdef __STDC__
 #define	_C_LABEL(name)		_ ## name
 #else
 #define	_C_LABEL(name)		_/**/name
 #endif /* __STDC__ */
+#endif
 
 #define	_ASM_LABEL(name)	name
 
@@ -96,6 +100,22 @@
 #define RCSID(x)	.text			;	\
 			.asciz x		;	\
 			.even
+
+#ifdef	__ELF__
+#define	WEAK_ALIAS(alias,sym)				\
+	.weak alias;					\
+	alias = sym
+#else
+#ifdef	__STDC__
+#define	WEAK_ALIAS(alias,sym)				\
+	.weak _##alias;				\
+	_##alias = _##sym
+#else
+#define	WEAK_ALIAS(alias,sym)				\
+	.weak _/**/alias;				\
+	_/**/alias = _/**/sym
+#endif
+#endif
 
 /*
  * Global variables of whatever sort.
