@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpr.c,v 1.26 2002/06/08 01:53:43 millert Exp $ */
+/*	$OpenBSD: lpr.c,v 1.27 2002/06/09 03:56:29 millert Exp $ */
 /*	$NetBSD: lpr.c,v 1.19 2000/10/11 20:23:52 is Exp $	*/
 
 /*
@@ -50,7 +50,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)lpr.c	8.4 (Berkeley) 4/28/95";
 #else
-static const char rcsid[] = "$OpenBSD: lpr.c,v 1.26 2002/06/08 01:53:43 millert Exp $";
+static const char rcsid[] = "$OpenBSD: lpr.c,v 1.27 2002/06/09 03:56:29 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -113,14 +113,14 @@ volatile sig_atomic_t gotintr;
 static void	 card(int, const char *);
 static void	 chkprinter(char *);
 static void	 cleanup(int);
-static void	 copy(int, char []);
+static void	 copy(int, char *);
 static char	*itoa(int);
 static char	*linked(char *);
 static char	*lmktemp(char *, int, int);
 static void	 mktemps(void);
 static int	 nfile(char *);
 static int	 test(char *);
-static void	 usage(void);
+static __dead void usage(void);
 
 int
 main(int argc, char **argv)
@@ -404,9 +404,7 @@ main(int argc, char **argv)
  * Create the file n and copy from file descriptor f.
  */
 static void
-copy(f, n)
-	int f;
-	char n[];
+copy(int f, char *n)
 {
 	int fd, i, nr, nc;
 	char buf[BUFSIZ];
@@ -446,8 +444,7 @@ copy(f, n)
  * path name if successful.
  */
 static char *
-linked(file)
-	char *file;
+linked(char *file)
 {
 	char *cp;
 	static char buf[MAXPATHLEN];
@@ -487,9 +484,7 @@ linked(file)
  * Put a line into the control file.
  */
 static void
-card(c, p2)
-	int c;
-	const char *p2;
+card(int c, const char *p2)
 {
 	char buf[BUFSIZ];
 	char *p1 = buf;
@@ -512,8 +507,7 @@ card(c, p2)
  * Create a new file in the spool directory.
  */
 static int
-nfile(n)
-	char *n;
+nfile(char *n)
 {
 	int f;
 	int oldumask = umask(0);		/* should block signals */
@@ -541,8 +535,7 @@ nfile(n)
  * Cleanup after interrupts and errors.
  */
 static void
-cleanup(signo)
-	int signo;
+cleanup(int signo)
 {
 	int i;
 
@@ -576,8 +569,7 @@ cleanup(signo)
  * we should remove it after printing.
  */
 static int
-test(file)
-	char *file;
+test(char *file)
 {
 	struct exec execb;
 	int fd;
@@ -637,8 +629,7 @@ bad:
  * itoa - integer to string conversion
  */
 static char *
-itoa(i)
-	int i;
+itoa(int i)
 {
 	static char b[10] = "########";
 	char *p;
@@ -654,8 +645,7 @@ itoa(i)
  * Perform lookup for printer name or abbreviation --
  */
 static void
-chkprinter(s)
-	char *s;
+chkprinter(char *s)
 {
 	int status;
 
@@ -681,7 +671,7 @@ chkprinter(s)
  * Make the temp files.
  */
 static void
-mktemps()
+mktemps(void)
 {
 	int len, fd, n;
 	char *cp;
@@ -723,9 +713,7 @@ mktemps()
  * Make a temp file name.
  */
 static char *
-lmktemp(id, num, len)
-	char	*id;
-	int	num, len;
+lmktemp(char *id, int num, int len)
 {
 	char *s;
 
@@ -735,8 +723,8 @@ lmktemp(id, num, len)
 	return(s);
 }
 
-static void
-usage()
+static __dead void
+usage(void)
 {
 	extern char *__progname;
 

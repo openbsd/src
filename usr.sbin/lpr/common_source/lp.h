@@ -1,4 +1,4 @@
-/*	$OpenBSD: lp.h,v 1.11 2002/06/09 03:44:50 millert Exp $	*/
+/*	$OpenBSD: lp.h,v 1.12 2002/06/09 03:56:28 millert Exp $	*/
 /*	$NetBSD: lp.h,v 1.14 2000/04/16 14:43:58 mrg Exp $	*/
 
 /*
@@ -136,7 +136,7 @@ void	 fatal(const char *, ...)
 	__attribute__((__format__(__printf__, 1, 2)));
 int	 getline(FILE *);
 int	 getport(char *, int);
-int	 getq(struct queue *(*[]));
+int	 getq(struct queue ***);
 void     header(void);
 int      inlist(char *, char *);
 int      iscf(struct dirent *);

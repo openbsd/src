@@ -1,4 +1,4 @@
-/*	$OpenBSD: lptest.c,v 1.5 2002/05/20 23:13:50 millert Exp $ */
+/*	$OpenBSD: lptest.c,v 1.6 2002/06/09 03:56:29 millert Exp $ */
 /*	$NetBSD: lptest.c,v 1.6 1996/12/09 09:57:50 mrg Exp $	*/
 
 /*
@@ -45,7 +45,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)lptest.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: lptest.c,v 1.5 2002/05/20 23:13:50 millert Exp $";
+static const char rcsid[] = "$OpenBSD: lptest.c,v 1.6 2002/06/09 03:56:29 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -56,9 +56,7 @@ static const char rcsid[] = "$OpenBSD: lptest.c,v 1.5 2002/05/20 23:13:50 miller
  * lptest -- line printer test program (and other devices).
  */
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
 	int len, count;
 	int i, j, fc, nc;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpf.c,v 1.7 2002/05/20 23:13:50 millert Exp $	*/
+/*	$OpenBSD: lpf.c,v 1.8 2002/06/09 03:56:29 millert Exp $	*/
 /*	$NetBSD: lpf.c,v 1.8 2000/04/29 00:12:32 abs Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)lpf.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: lpf.c,v 1.7 2002/05/20 23:13:50 millert Exp $";
+static const char rcsid[] = "$OpenBSD: lpf.c,v 1.8 2002/06/09 03:56:29 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -80,9 +80,7 @@ char	*acctfile;	/* accounting information file */
 __dead void usage(void);
 
 int
-main(argc, argv) 
-	int argc;
-	char *argv[];
+main(int argc, char **argv) 
 {
 	FILE *p = stdin, *o = stdout;
 	int i, col;

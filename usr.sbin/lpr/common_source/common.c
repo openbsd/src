@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.21 2002/06/09 03:44:50 millert Exp $	*/
+/*	$OpenBSD: common.c,v 1.22 2002/06/09 03:56:28 millert Exp $	*/
 /*	$NetBSD: common.c,v 1.21 2000/08/09 14:28:50 itojun Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static const char sccsid[] = "@(#)common.c	8.5 (Berkeley) 4/28/95";
 #else
-static const char rcsid[] = "$OpenBSD: common.c,v 1.21 2002/06/09 03:44:50 millert Exp $";
+static const char rcsid[] = "$OpenBSD: common.c,v 1.22 2002/06/09 03:56:28 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -126,9 +126,7 @@ static int compar(const void *, const void *);
  * Most of this code comes from rcmd.c.
  */
 int
-getport(rhost, rport)
-	char *rhost;
-	int rport;
+getport(char *rhost, int rport)
 {
 	struct addrinfo hints, *res, *r;
 	u_int timo = 1;
@@ -212,8 +210,7 @@ retryport:
  * Returns 0 at EOF or the number of characters read.
  */
 int
-getline(cfp)
-	FILE *cfp;
+getline(FILE *cfp)
 {
 	int linel = 0;
 	char *lp = line;
@@ -242,8 +239,7 @@ getline(cfp)
  * Return the number of entries and a pointer to the list.
  */
 int
-getq(namelist)
-	struct queue *(*namelist[]);
+getq(struct queue ***namelist)
 {
 	struct dirent *d;
 	struct queue *q, **queue;
@@ -311,8 +307,7 @@ errdone:
  * Compare modification times.
  */
 static int
-compar(v1, v2)
-	const void *v1, *v2;
+compar(const void *v1, const void *v2)
 {
 	struct queue *p1 = *(struct queue **)v1;
 	struct queue *p2 = *(struct queue **)v2;
