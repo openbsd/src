@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.14 2003/12/25 02:09:19 henning Exp $ */
+/*	$OpenBSD: kroute.c,v 1.15 2003/12/25 02:49:05 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -111,7 +111,8 @@ retry:
 			} else if (r.hdr.rtm_type == RTM_DELETE) {
 				logit(LOG_INFO, "route vanished before delete");
 				return (0);
-			}
+			} else			/* nexthop invalid */
+				return (-1);
 			break;
 		case EEXIST:	/* connected route */
 			return (-2);
