@@ -1,4 +1,4 @@
-/*	$OpenBSD: i8253reg.h,v 1.1 1999/01/02 00:02:42 niklas Exp $	*/
+/*	$OpenBSD: i8253reg.h,v 1.2 2002/07/31 19:02:08 nordin Exp $	*/
 /*	$NetBSD: i8253reg.h,v 1.5 1998/01/19 11:38:00 drochner Exp $	*/
 
 /*-
@@ -45,7 +45,7 @@
  * register.  (Why are hardware interfaces always so braindead?).
  *
  * To write a value into the countdown register, the mode register
- * is first programmed with a command indicating the which byte of
+ * is first programmed with a command indicating which byte of
  * the two byte register is to be modified.  The three possibilities
  * are load msb (TMR_MR_MSB), load lsb (TMR_MR_LSB), or load lsb then
  * msb (TMR_MR_BOTH).
