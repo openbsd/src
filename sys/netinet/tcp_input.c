@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.149 2004/01/29 11:55:28 markus Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.150 2004/01/29 13:30:18 markus Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -2182,6 +2182,7 @@ tcp_dooptions(tp, cp, cnt, th, m, iphlen, oi)
 	int opt, optlen;
 #ifdef TCP_SIGNATURE
 	caddr_t sigp = NULL;
+	struct tdb *tdb = NULL;
 #endif /* TCP_SIGNATURE */
 
 #ifdef TCP_SIGNATURE
@@ -2272,16 +2273,8 @@ tcp_dooptions(tp, cp, cnt, th, m, iphlen, oi)
 	}
 
 #ifdef TCP_SIGNATURE
-	if ((sigp ? TF_SIGNATURE : 0) ^ (tp->t_flags & TF_SIGNATURE)) {
-		tcpstat.tcps_rcvbadsig++;
-		return (-1);
-	}
-
-	if (sigp) {
-		MD5_CTX ctx;
+	if (tp->t_flags & TF_SIGNATURE) {
 		union sockaddr_union src, dst;
-		struct tdb *tdb;
-		char sig[16];
 
 		memset(&src, 0, sizeof(union sockaddr_union));
 		memset(&dst, 0, sizeof(union sockaddr_union));
@@ -2311,6 +2304,25 @@ tcp_dooptions(tp, cp, cnt, th, m, iphlen, oi)
 		}
 
 		tdb = gettdbbysrcdst(0, &src, &dst, IPPROTO_TCP);
+
+		/*
+		 * We don't have an SA for this peer, so we turn off
+		 * TF_SIGNATURE on the listen socket
+		 */
+		if (tdb == NULL && tp->t_state == TCPS_LISTEN)
+			tp->t_flags &= ~TF_SIGNATURE;
+
+	}
+
+	if ((sigp ? TF_SIGNATURE : 0) ^ (tp->t_flags & TF_SIGNATURE)) {
+		tcpstat.tcps_rcvbadsig++;
+		return (-1);
+	}
+
+	if (sigp) {
+		MD5_CTX ctx;
+		char sig[16];
+
 		if (tdb == NULL) {
 			tcpstat.tcps_rcvbadsig++;
 			return (-1);
@@ -3954,6 +3966,7 @@ syn_cache_add(src, dst, th, iphlen, so, m, optp, optlen, oi)
 #endif
 		tb.t_flags = tcp_do_rfc1323 ? (TF_REQ_SCALE|TF_REQ_TSTMP) : 0;
 #ifdef TCP_SIGNATURE
+		tb.t_state = TCPS_LISTEN;
 		if (tp->t_flags & TF_SIGNATURE)
 			tb.t_flags |= TF_SIGNATURE;
 #endif
