@@ -1,6 +1,6 @@
 %{
 
-/*	$OpenBSD: parse.yacc,v 1.7 1998/01/13 05:30:28 millert Exp $	*/
+/*	$OpenBSD: parse.yacc,v 1.8 1998/01/13 07:31:06 millert Exp $	*/
 /*
  *  CU sudo version 1.5.4
  *
@@ -28,7 +28,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "Id: parse.yacc,v 1.103 1998/01/13 04:48:42 millert Exp $";
+static char rcsid[] = "Id: parse.yacc,v 1.104 1998/01/13 07:00:02 millert Exp $";
 #endif /* lint */
 
 #include "config.h"
@@ -681,13 +681,13 @@ static int add_alias(alias, type)
     (void) strcpy(ai.name, alias);
     if (lfind((VOID *)&ai, (VOID *)aliases, &naliases, sizeof(ai),
 	aliascmp) != NULL) {
-	(void) sprintf(s, "Alias `%.*s' already defined", sizeof(s) - 25,
+	(void) sprintf(s, "Alias `%.*s' already defined", (int) sizeof(s) - 25,
 		       alias);
 	yyerror(s);
     } else {
 	if (naliases >= nslots && !more_aliases()) {
 	    (void) sprintf(s, "Out of memory defining alias `%.*s'",
-			   sizeof(s) - 32, alias);
+			   (int) sizeof(s) - 32, alias);
 	    yyerror(s);
 	}
 
@@ -698,7 +698,7 @@ static int add_alias(alias, type)
 	    ok = TRUE;
 	} else {
 	    (void) sprintf(s, "Aliases corrupted defining alias `%.*s'",
-			   sizeof(s) - 36, alias);
+			   (int) sizeof(s) - 36, alias);
 	    yyerror(s);
 	}
     }
