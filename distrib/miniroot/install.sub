@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.115 1999/03/23 07:58:08 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.116 1999/04/01 17:41:26 millert Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -240,7 +240,7 @@ isnumeric() {
 
 get_ifdevs() {
 	# return available network devices
-	/sbin/ifconfig -a | egrep -v '^([[:space:]]|(lo|enc|ppp|sl|tun)[[:digit:]])' | cutword -t: 1
+	/sbin/ifconfig -a | egrep -v '^([[:space:]]|(lo|enc|ppp|sl|tun|bridge)[[:digit:]])' | cutword -t: 1
 }
 
 dir_has_sets() {
