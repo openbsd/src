@@ -1,4 +1,4 @@
-/*	$OpenBSD: sparc.c,v 1.2 2002/03/15 16:41:06 jason Exp $	*/
+/*	$OpenBSD: sparc.c,v 1.3 2002/03/19 21:32:10 fgsch Exp $	*/
 /*
  * Copyright (c) 2002 Federico Schwindt <fgsch@openbsd.org>
  * All rights reserved. 
@@ -55,12 +55,12 @@ md_getframe(struct pstate *ps, int frame, struct md_frame *fram)
 	int i;
 
 	if (ptrace(PT_GETREGS, ps->ps_pid, (caddr_t)&r, 0) != 0)
-		return -1;
+		return (-1);
 
 	if (frame == 0) {
 		fram->pc = r.r_pc;
 		fram->fp = r.r_out[6];
-		return 0;
+		return (0);
 	}
 
 	fp = r.r_out[6];
@@ -68,10 +68,10 @@ md_getframe(struct pstate *ps, int frame, struct md_frame *fram)
 
 	for (i = 1; i < frame; i++) {
 		if (fp < 8192 || (fp & 7) != 0)
-			return -1;
+			return (-1);
 
 		if (read_from_pid(ps->ps_pid, fp, &fr, sizeof(fr)) < 0)
-			return -1;
+			return (-1);
 		fp = (unsigned long)next_frame((&fr));
 		pc = fr.fr_pc;
 	}
@@ -83,7 +83,7 @@ md_getframe(struct pstate *ps, int frame, struct md_frame *fram)
 		fram->args[i] = fr.fr_arg[i];
 	}
 
-	return 0;
+	return (0);
 }
 
 int
@@ -93,15 +93,18 @@ md_getregs(struct pstate *ps, reg *regs)
 	int i;
 
 	if (ptrace(PT_GETREGS, ps->ps_pid, (caddr_t)&r, 0) != 0)
-		return -1;
+		return (-1);
+
 	regs[0] = r.r_pc;
 	regs[1] = r.r_npc;
+
 	for (i = 0; i < 8; i++) {
 		regs[2 + i] = r.r_out[i];
 	}
+
 	for (i = 0; i < 8; i++) {
 		regs[10 + i] = r.r_global[i];
 	}
 
-	return 0;
+	return (0);
 }

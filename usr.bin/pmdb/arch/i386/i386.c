@@ -1,4 +1,4 @@
-/*	$OpenBSD: i386.c,v 1.2 2002/03/15 16:41:06 jason Exp $	*/
+/*	$OpenBSD: i386.c,v 1.3 2002/03/19 21:32:10 fgsch Exp $	*/
 /*
  * Copyright (c) 2002 Federico Schwindt <fgsch@openbsd.org>
  * All rights reserved. 
@@ -74,7 +74,7 @@ md_getframe(struct pstate *ps, int frame, struct md_frame *fram)
 	fram->pc = fr.pc;
 	fram->fp = fr.fp;
 
-	return 0;
+	return (0);
 }
 
 int
@@ -83,9 +83,9 @@ md_getregs(struct pstate *ps, reg *regs)
 	struct reg r;
 
 	if (ptrace(PT_GETREGS, ps->ps_pid, (caddr_t)&r, 0) != 0)
-		return -1;
+		return (-1);
 
 	memcpy(regs, &r, sizeof(r));
 
-	return 0;
+	return (0);
 }

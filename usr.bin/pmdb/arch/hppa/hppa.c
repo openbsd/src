@@ -1,4 +1,4 @@
-/*	$OpenBSD: hppa.c,v 1.1 2002/03/15 19:48:19 mickey Exp $	*/
+/*	$OpenBSD: hppa.c,v 1.2 2002/03/19 21:32:10 fgsch Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -57,12 +57,12 @@ md_getframe(struct pstate *ps, int frame, struct md_frame *fram)
 	int i;
 
 	if (ptrace(PT_GETREGS, ps->ps_pid, (caddr_t)&r, 0) != 0)
-		return -1;
+		return (-1);
 
 	if (frame == 0) {
 		fram->pc = r.r_pc;
 		fram->fp = r.r_reg[3];
-		return 0;
+		return (0);
 	}
 
 	rp = r.r_reg[2];
@@ -72,7 +72,8 @@ md_getframe(struct pstate *ps, int frame, struct md_frame *fram)
 	for (i = 1; i < frame; i++) {
 
 		if (read_from_pid(ps->ps_pid, fp-60, &fr, sizeof(fr)) < 0)
-			return -1;
+			return (-1);
+
 		pc = rp;
 		fp = fr[15];
 		rp = fr[10];
@@ -86,7 +87,7 @@ md_getframe(struct pstate *ps, int frame, struct md_frame *fram)
 	fram->args[2] = fr.r_arg2;
 	fram->args[3] = fr.r_arg3;
 
-	return 0;
+	return (0);
 }
 
 int
@@ -96,11 +97,13 @@ md_getregs(struct pstate *ps, reg *regs)
 	int i;
 
 	if (ptrace(PT_GETREGS, ps->ps_pid, (caddr_t)&r, 0) != 0)
-		return -1;
+		return (-1);
+
 	regs[0] = r.r_pc;
 	regs[1] = r.r_npc;
+
 	for (i = 0; i < 32; i++)
 		regs[2 + i] = r.r_out[i];
 
-	return 0;
+	return (0);
 }

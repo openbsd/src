@@ -1,4 +1,4 @@
-/*	$OpenBSD: vax.c,v 1.1 2002/03/19 21:01:49 fgsch Exp $	*/
+/*	$OpenBSD: vax.c,v 1.2 2002/03/19 21:32:10 fgsch Exp $	*/
 /*
  * Copyright (c) 2002 Federico Schwindt <fgsch@openbsd.org>
  * All rights reserved. 
@@ -63,7 +63,7 @@ md_getframe(struct pstate *ps, int frame, struct md_frame *fram)
 	fram->pc = fr.ca_pc;
 	fram->fp = fr.ca_fp;
 
-	return 0;
+	return (0);
 }
 
 int
@@ -72,9 +72,9 @@ md_getregs(struct pstate *ps, reg *regs)
 	struct reg r;
 
 	if (ptrace(PT_GETREGS, ps->ps_pid, (caddr_t)&r, 0) != 0)
-		return -1;
+		return (-1);
 
 	memcpy(regs, &r, sizeof(r));
 
-	return 0;
+	return (0);
 }
