@@ -22,6 +22,7 @@ if ($?prompt) then
 	set mch = `hostname -s`
 	alias prompt 'set prompt = "$mch:q"":$cwd:t {\!} "'
 	alias cd 'cd \!*; prompt'
+        alias chdir 'cd \!*; prompt'
 	alias popd 'popd \!*; prompt'
 	alias pushd 'pushd \!*; prompt'
 	cd .
