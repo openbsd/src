@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.23 1995/12/09 04:01:42 mycroft Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.24 1995/12/18 14:35:08 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -503,6 +503,27 @@ linux_sys_mmap(p, v, retval)
 	SCARG(&cma,pos) = lmap.lm_pos;
 
 	return sys_mmap(p, &cma, retval);
+}
+
+int
+linux_sys_msync(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct linux_sys_msync_args /* {
+		syscallarg(caddr_t) addr;
+		syscallarg(int) len;
+		syscallarg(int) fl;
+	} */ *uap = v;
+
+	struct sys_msync_args bma;
+
+	/* flags are ignored */
+	SCARG(&bma, addr) = SCARG(uap, addr);
+	SCARG(&bma, len) = SCARG(uap, len);
+
+	return sys_msync(p, &bma, retval);
 }
 
 /*
