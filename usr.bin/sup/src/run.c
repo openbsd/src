@@ -1,4 +1,4 @@
-/*	$OpenBSD: run.c,v 1.9 2001/05/07 19:26:03 millert Exp $	*/
+/*	$OpenBSD: run.c,v 1.10 2001/07/25 16:54:11 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
@@ -201,7 +201,7 @@ dorun(name, argv, usepath)
 	struct sigaction ignoresig, intsig, quitsig;
 	int status;
 
-	if ((pid = vfork()) == -1)
+	if ((pid = fork()) == -1)
 		return(-1);	/* no more process's, so exit with error */
 
 	if (pid == 0) {			/* child process */
