@@ -1,4 +1,4 @@
-/*	$OpenBSD: tape.c,v 1.22 2005/01/23 18:33:12 millert Exp $	*/
+/*	$OpenBSD: tape.c,v 1.23 2005/01/23 18:49:19 millert Exp $	*/
 /*	$NetBSD: tape.c,v 1.11 1997/06/05 11:13:26 lukem Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.2 (Berkeley) 3/17/94";
 #else
-static const char rcsid[] = "$OpenBSD: tape.c,v 1.22 2005/01/23 18:33:12 millert Exp $";
+static const char rcsid[] = "$OpenBSD: tape.c,v 1.23 2005/01/23 18:49:19 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -119,7 +119,7 @@ static int tapea_volume;	/* value of spcl.c_tapea at volume start */
 
 int master;		/* pid of master, for sending error signals */
 int tenths;		/* length of tape used per block written */
-static int caught;	/* have we caught the signal to proceed? */
+static volatile sig_atomic_t caught;	/* have we caught the signal to proceed? */
 
 int
 alloctape(void)
@@ -201,6 +201,7 @@ int	nogripe = 0;
 void
 tperror(int signo)
 {
+	/* XXX - signal races */
 
 	if (pipeout) {
 		msg("write error on %s\n", tape);
