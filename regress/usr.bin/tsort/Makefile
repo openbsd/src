@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1.1.1 2001/02/22 18:12:42 espie Exp $
+# $OpenBSD: Makefile,v 1.2 2001/03/07 16:20:42 espie Exp $
 
 NOMAN=
 NOPROG=
@@ -27,7 +27,7 @@ t3.out: pairs3
 	tsort <pairs3 >$@
 
 t4.out: pairs4
-	/home/espie/openbsd/tsort/obj/tsort <pairs4 >$@
+	tsort <pairs4 >$@
 
 pairs3:
 	perl ${.CURDIR}/build-tree 4 8 >$@
