@@ -1,4 +1,4 @@
-/* $OpenBSD: machine.c,v 1.45 2004/11/17 09:22:43 markus Exp $	 */
+/* $OpenBSD: machine.c,v 1.46 2004/11/22 15:26:53 pat Exp $	 */
 
 /*-
  * Copyright (c) 1994 Thorsten Lockert <tholo@sigmasoft.com>
@@ -308,7 +308,7 @@ get_process_info(struct system_info *si, struct process_select *sel,
     int (*compare) (const void *, const void *))
 {
 	int show_idle, show_system, show_uid, show_pid;
-	int total_procs, active_procs, i;
+	int total_procs, active_procs;
 	struct kinfo_proc2 **prefp, *pp;
 
 	if ((pbase = getprocs(KERN_PROC_KTHREAD, 0, &nproc)) == NULL) {
@@ -336,7 +336,7 @@ get_process_info(struct system_info *si, struct process_select *sel,
 	active_procs = 0;
 	memset((char *) process_states, 0, sizeof(process_states));
 	prefp = pref;
-	for (pp = pbase, i = 0; i < nproc; pp++, i++) {
+	for (pp = pbase; pp < &pbase[nproc]; pp++) {
 		/*
 		 *  Place pointers to each valid proc structure in pref[].
 		 *  Process slots that are actually in use have a non-zero
