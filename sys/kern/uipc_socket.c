@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.7 1996/09/20 22:53:10 deraadt Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.8 1996/12/16 14:30:17 deraadt Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -705,6 +705,8 @@ dontblock:
 			splx(s);
 			error = uiomove(mtod(m, caddr_t) + moff, (int)len, uio);
 			s = splsoftnet();
+			if (error)
+				goto release;
 		} else
 			uio->uio_resid -= len;
 		if (len == m->m_len - moff) {
