@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipx.c,v 1.11 2002/05/27 01:50:36 deraadt Exp $	*/
+/*	$OpenBSD: ipx.c,v 1.12 2002/06/09 04:07:10 jsyn Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)ns.c	8.1 (Berkeley) 6/6/93";
 #else
-static char *rcsid = "$OpenBSD: ipx.c,v 1.11 2002/05/27 01:50:36 deraadt Exp $";
+static char *rcsid = "$OpenBSD: ipx.c,v 1.12 2002/06/09 04:07:10 jsyn Exp $";
 #endif
 #endif /* not lint */
 
@@ -222,7 +222,7 @@ spx_stats(off, name)
 	ANY(spxstat.spxs_rcvduppack, "duplicate-only packet", " received");
 	ANY(spxstat.spxs_rcvdupbyte, "duplicate-only byte", " received");
 	ANY(spxstat.spxs_rcvpartduppack, "packet", " with some duplicate data");
-	ANY(spxstat.spxs_rcvpartdupbyte, "dup. byte", " in part-dup. packet");
+	ANY(spxstat.spxs_rcvpartdupbyte, "duplicate byte", " in part-duplicate packet");
 	ANY(spxstat.spxs_rcvoopack, "out-of-order packet", " received");
 	ANY(spxstat.spxs_rcvoobyte, "out-of-order byte", " received");
 	ANY(spxstat.spxs_rcvpackafterwin, "packet", " with data after window");

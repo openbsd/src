@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet6.c,v 1.22 2002/06/09 02:16:39 deraadt Exp $	*/
+/*	$OpenBSD: inet6.c,v 1.23 2002/06/09 04:07:10 jsyn Exp $	*/
 /*	BSDI inet.c,v 2.3 1995/10/24 02:19:29 prb Exp	*/
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-/*__RCSID("$OpenBSD: inet6.c,v 1.22 2002/06/09 02:16:39 deraadt Exp $");*/
+/*__RCSID("$OpenBSD: inet6.c,v 1.23 2002/06/09 04:07:10 jsyn Exp $");*/
 /*__RCSID("KAME Id: inet6.c,v 1.10 2000/02/09 10:49:31 itojun Exp");*/
 #endif
 #endif /* not lint */
@@ -373,7 +373,7 @@ ip6_stats(off, name)
 	p1(ip6s_badvers, "\t%llu with incorrect version number\n");
 	p(ip6s_fragments, "\t%llu fragment%s received\n");
 	p(ip6s_fragdropped,
-	    "\t%llu fragment%s dropped (dup or out of space)\n");
+	    "\t%llu fragment%s dropped (duplicates or out of space)\n");
 	p(ip6s_fragtimeout, "\t%llu fragment%s dropped after timeout\n");
 	p(ip6s_fragoverflow, "\t%llu fragment%s that exceeded limit\n");
 	p(ip6s_reassembled, "\t%llu packet%s reassembled ok\n");

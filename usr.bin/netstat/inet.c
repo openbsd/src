@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.61 2002/06/09 01:39:43 aaron Exp $	*/
+/*	$OpenBSD: inet.c,v 1.62 2002/06/09 04:07:10 jsyn Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-static char *rcsid = "$OpenBSD: inet.c,v 1.61 2002/06/09 01:39:43 aaron Exp $";
+static char *rcsid = "$OpenBSD: inet.c,v 1.62 2002/06/09 04:07:10 jsyn Exp $";
 #endif
 #endif /* not lint */
 
@@ -284,7 +284,7 @@ tcp_stats(off, name)
 	    "\t\t%u completely duplicate packet%s (%qd byte%s)\n");
 	p(tcps_pawsdrop, "\t\t%u old duplicate packet%s\n");
 	p2(tcps_rcvpartduppack, tcps_rcvpartdupbyte,
-	    "\t\t%u packet%s with some dup. data (%qd byte%s duped)\n");
+	    "\t\t%u packet%s with some duplicate data (%qd byte%s duplicated)\n");
 	p2(tcps_rcvoopack, tcps_rcvoobyte,
 	    "\t\t%u out-of-order packet%s (%qd byte%s)\n");
 	p2(tcps_rcvpackafterwin, tcps_rcvbyteafterwin,
@@ -406,7 +406,7 @@ ip_stats(off, name)
 	p1(ips_badoptions, "\t%lu with bad options\n");
 	p1(ips_badvers, "\t%lu with incorrect version number\n");
 	p(ips_fragments, "\t%lu fragment%s received\n");
-	p(ips_fragdropped, "\t%lu fragment%s dropped (dup or out of space)\n");
+	p(ips_fragdropped, "\t%lu fragment%s dropped (duplicates or out of space)\n");
 	p(ips_badfrags, "\t%lu malformed fragment%s dropped\n");
 	p(ips_fragtimeout, "\t%lu fragment%s dropped after timeout\n");
 	p(ips_reassembled, "\t%lu packet%s reassembled ok\n");
@@ -731,7 +731,7 @@ ah_stats(off, name)
 	p(ahs_wrap, "\t%u packet%s where counter wrapping was detected\n");
 	p(ahs_replay, "\t%u possibly replayed packet%s received\n");
 	p(ahs_badauthl, "\t%u packet%s with bad authenticator length received\n");
-	p(ahs_invalid, "\t%u packet%s attempted to use an invalid tdb\n");
+	p(ahs_invalid, "\t%u packet%s attempted to use an invalid TDB\n");
 	p(ahs_toobig, "\t%u packet%s got larger than max IP packet size\n");
 	p(ahs_crypto, "\t%u packet%s that failed crypto processing\n");
 	p(ahs_ibytes, "\t%qu input byte%s\n");
@@ -804,7 +804,7 @@ esp_stats(off, name)
 	p(esps_wrap, "\t%u packet%s where counter wrapping was detected\n");
 	p(esps_replay, "\t%u possibly replayed packet%s received\n");
 	p(esps_badilen, "\t%u packet%s with bad payload size or padding received\n");
-	p(esps_invalid, "\t%u packet%s attempted to use an invalid tdb\n");
+	p(esps_invalid, "\t%u packet%s attempted to use an invalid TDB\n");
 	p(esps_toobig, "\t%u packet%s got larger than max IP packet size\n");
 	p(esps_crypto, "\t%u packet%s that failed crypto processing\n");
 	p(esps_ibytes, "\t%qu input byte%s\n");
@@ -872,7 +872,7 @@ ipcomp_stats(off, name)
 	p(ipcomps_noxform, "\t%u packet%s for which no XFORM was set in TDB received\n");
 	p(ipcomps_qfull, "\t%u packet%s were dropped due to full output queue\n");
 	p(ipcomps_wrap, "\t%u packet%s where counter wrapping was detected\n");
-	p(ipcomps_invalid, "\t%u packet%s attempted to use an invalid tdb\n");
+	p(ipcomps_invalid, "\t%u packet%s attempted to use an invalid TDB\n");
 	p(ipcomps_toobig, "\t%u packet%s got larger than max IP packet size\n");
 	p(ipcomps_crypto, "\t%u packet%s that failed (de)compression processing\n");
 	p(ipcomps_ibytes, "\t%qu input byte%s\n");

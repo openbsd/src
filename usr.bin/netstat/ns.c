@@ -1,4 +1,4 @@
-/*	$OpenBSD: ns.c,v 1.8 2002/05/27 01:50:36 deraadt Exp $	*/
+/*	$OpenBSD: ns.c,v 1.9 2002/06/09 04:07:10 jsyn Exp $	*/
 /*	$NetBSD: ns.c,v 1.8 1995/10/03 21:42:46 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)ns.c	8.1 (Berkeley) 6/6/93";
 #else
-static char *rcsid = "$OpenBSD: ns.c,v 1.8 2002/05/27 01:50:36 deraadt Exp $";
+static char *rcsid = "$OpenBSD: ns.c,v 1.9 2002/06/09 04:07:10 jsyn Exp $";
 #endif
 #endif /* not lint */
 
@@ -227,7 +227,7 @@ spp_stats(off, name)
 	ANY(sppstat.spps_rcvduppack, "duplicate-only packet", " received");
 	ANY(sppstat.spps_rcvdupbyte, "duplicate-only byte", " received");
 	ANY(sppstat.spps_rcvpartduppack, "packet", " with some duplicate data");
-	ANY(sppstat.spps_rcvpartdupbyte, "dup. byte", " in part-dup. packet");
+	ANY(sppstat.spps_rcvpartdupbyte, "duplicate byte", " in part-duplicate packet");
 	ANY(sppstat.spps_rcvoopack, "out-of-order packet", " received");
 	ANY(sppstat.spps_rcvoobyte, "out-of-order byte", " received");
 	ANY(sppstat.spps_rcvpackafterwin, "packet", " with data after window");
