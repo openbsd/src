@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcode.c,v 1.8 2003/10/11 18:31:18 otto Exp $	*/
+/*	$OpenBSD: bcode.c,v 1.9 2003/10/18 19:45:42 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: bcode.c,v 1.8 2003/10/11 18:31:18 otto Exp $";
+static const char rcsid[] = "$OpenBSD: bcode.c,v 1.9 2003/10/18 19:45:42 otto Exp $";
 #endif /* not lint */
 
 #include <ssl/ssl.h>
@@ -30,7 +30,8 @@ static const char rcsid[] = "$OpenBSD: bcode.c,v 1.8 2003/10/11 18:31:18 otto Ex
 #include "extern.h"
 
 BIGNUM		zero;
-static bool	trace = false;
+
+/* #define	DEBUGGING */
 
 #define MAX_ARRAY_INDEX		2048
 #define MAX_RECURSION		100
@@ -106,6 +107,8 @@ static void		store_array(void);
 static void		nop(void);
 static void		quit(void);
 static void		quitN(void);
+static void		skipN(void);
+static void		skip_until_mark(void);
 static void		parse_number(void);
 static void		unknown(void);
 static void		eval_string(char *);
@@ -161,6 +164,8 @@ static const struct jump_entry jump_table_data[] = {
 	{ '[',	push_line	},
 	{ 'q',	quit		},
 	{ 'Q',	quitN		},
+	{ 'J',	skipN		},
+	{ 'M',	nop		},
 	{ '<',	less		},
 	{ '>',	greater		},
 	{ '=',	equal		},
@@ -1345,6 +1350,74 @@ quitN(void)
 }
 
 static void
+skipN(void)
+{
+	struct number	*n;
+	u_long		i;
+
+	n = pop_number();
+	if (n == NULL)
+		return;
+	i = get_ulong(n);
+	if (i == BN_MASK2)
+		warnx("J command requires a number >= 0");
+	else if (i > 0 && bmachine.readsp < i)
+		warnx("J command argument exceeded string execution depth");
+	else {
+		while (i-- > 0) {
+			src_free();
+			bmachine.readsp--;
+		}
+		skip_until_mark();
+	}
+}
+
+static void
+skip_until_mark(void)
+{
+	int ch;
+
+	for (;;) {
+		ch = readch();
+		switch (ch) {
+		case 'M':
+			return;
+		case EOF:
+			errx(1, "mark not found");
+			return;
+		case 'l':
+		case 'L':
+		case 's':
+		case 'S':
+		case ':':
+		case ';':
+		case '<':
+		case '>':
+		case '=':
+			readch();
+			break;
+		case '[':
+			free(read_string(&bmachine.readstack[bmachine.readsp]));
+			break;
+		case '!':
+			switch (ch = readch()) {
+				case '<':
+				case '>':
+				case '=':
+					readch();
+					break;
+				default:
+					free(readline());
+					break;
+			}
+			break;
+		default:
+			break;
+		}
+	}
+}
+
+static void
 parse_number(void)
 {
 	unreadch();
@@ -1416,22 +1489,22 @@ eval(void)
 			bmachine.readsp--;
 			continue;
 		}
-		if (trace) {
-			fprintf(stderr, "# %c\n", ch);
-			stack_print(stderr, &bmachine.stack, "* ",
-			    bmachine.obase);
-			fprintf(stderr, "%d =>\n", bmachine.readsp);
-		}
+#ifdef DEBUGGING
+		fprintf(stderr, "# %c\n", ch);
+		stack_print(stderr, &bmachine.stack, "* ",
+		    bmachine.obase);
+		fprintf(stderr, "%d =>\n", bmachine.readsp);
+#endif
 
 		if (0 <= ch && ch < UCHAR_MAX)
 			(*jump_table[ch])();
 		else
 			warnx("internal error: opcode %d", ch);
 
-		if (trace) {
-			stack_print(stderr, &bmachine.stack, "* ",
-			    bmachine.obase);
-			fprintf(stderr, "%d ==\n", bmachine.readsp);
-		}
+#ifdef DEBUGGING
+		stack_print(stderr, &bmachine.stack, "* ",
+		    bmachine.obase);
+		fprintf(stderr, "%d ==\n", bmachine.readsp);
+#endif
 	}
 }
