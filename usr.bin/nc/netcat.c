@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.34 2001/09/02 18:45:41 jakob Exp $ */
+/* $OpenBSD: netcat.c,v 1.35 2001/09/02 19:04:23 jakob Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  *
@@ -192,8 +192,6 @@ main(argc, argv)
 		hints.ai_flags |= AI_NUMERICHOST;
 
 	if (xflag) {
-		char *tmp;
-
 		if (uflag)
 			errx(1, "no proxy support for UDP mode");
 
