@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.h,v 1.4 1998/09/14 03:54:35 rahnds Exp $	*/
+/*	$OpenBSD: mbr.h,v 1.5 2001/01/28 00:51:47 weingart Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -60,13 +60,14 @@ void MBR_print_disk __P((char *));
 void MBR_print __P((mbr_t *));
 void MBR_parse __P((disk_t *, char *, off_t, off_t, mbr_t *));
 void MBR_make __P((mbr_t *, char *));
+void MBR_init __P((disk_t *, mbr_t *));
 int MBR_read __P((int, off_t, char *));
 int MBR_write __P((int, off_t, char *));
 
 /* Sanity check */
 #include <machine/param.h>
 #if (DEV_BSIZE != 512)
-#error "DEV_BSIZE != 512, somebody better fix!"
+#error "DEV_BSIZE != 512, somebody better fix me!"
 #endif
 
 #endif _MBR_H

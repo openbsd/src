@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.c,v 1.11 2000/07/07 13:37:00 rahnds Exp $	*/
+/*	$OpenBSD: mbr.c,v 1.12 2001/01/28 00:51:46 weingart Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -36,6 +36,7 @@
 #include <unistd.h>
 #include <memory.h>
 #include <sys/fcntl.h>
+#include <sys/ioctl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/disklabel.h>
@@ -46,7 +47,11 @@
 #include "mbr.h"
 #include "part.h"
 
-MBR_init(disk_t *disk, mbr_t *mbr)
+
+void
+MBR_init(disk, mbr)
+	disk_t *disk;
+	mbr_t *mbr;
 {
 	/* Fix up given mbr for this disk */
 	mbr->part[0].flag = 0;
