@@ -1930,7 +1930,7 @@ void script_init (ip, reason, medium)
 		
 		ip->client->scriptEnv[0]=strdup(CLIENT_PATH);
 		if (ip->client->scriptEnv[0] == NULL)
-			error ("script_init:n no memory for environment initialization");
+			error ("script_init: no memory for environment initialization");
 
 		ip->client->scriptEnv[1]=NULL;
 
