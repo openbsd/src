@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ep_isapnp.c,v 1.1 1998/03/20 05:58:08 dgregor Exp $	*/
+/*	$OpenBSD: if_ep_isapnp.c,v 1.2 1998/03/23 03:06:07 deraadt Exp $	*/
 /*	$NetBSD: if_ep_isapnp.c,v 1.5 1996/05/12 23:52:36 mycroft Exp $	*/
 
 /*
@@ -109,25 +109,13 @@ ep_isapnp_attach(parent, self, aux)
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
 	bus_space_handle_t ioh;
-	int chipset;
 
 	sc->sc_iot = iot = ia->ia_iot;
 	sc->sc_ioh = ioh = ia->ipa_io[0].h;
 	sc->bustype = EP_BUS_ISA;
 
-	/* XXX This probably isn't right.  We should use the PnP ID instead. */
-	chipset = htons(epreadeeprom(iot, ioh, EEPROM_PROD_ID));
-	if ((chipset & 0xfff0) == PROD_ID_3C509) {
-		printf(": 3Com 3C509 Ethernet");
-		epconfig(sc, EP_CHIPSET_3C509);
-	} else {
-		/*
-		 * XXX: Maybe a 3c515, but the check in ep_isapnp_probe looks
-		 * at the moment only for a 3c509.
-		 */
-		printf(": unknown card %04x", chipset);
-		epconfig(sc, EP_CHIPSET_UNKNOWN);
-	}
+	/* Should look at ia->ia_devident... */
+	epconfig(sc, EP_CHIPSET_3C509);
 
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
 	    IPL_NET, epintr, sc, sc->sc_dev.dv_xname);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ep_isa.c,v 1.12 1998/02/26 06:44:04 deraadt Exp $	*/
+/*	$OpenBSD: if_ep_isa.c,v 1.13 1998/03/23 03:06:06 deraadt Exp $	*/
 /*	$NetBSD: if_ep_isa.c,v 1.5 1996/05/12 23:52:36 mycroft Exp $	*/
 
 /*
@@ -288,14 +288,12 @@ ep_isa_attach(parent, self, aux)
 
 	chipset = (int)(long)ia->ia_aux;
 	if ((chipset & 0xfff0) == PROD_ID_3C509) {
-		printf(": 3Com 3C509 Ethernet");
 		epconfig(sc, EP_CHIPSET_3C509);
 	} else {
 		/*
 		 * XXX: Maybe a 3c515, but the check in ep_isa_probe looks
 		 * at the moment only for a 3c509.
 		 */
-		printf(": unknown card %04x", chipset);
 		epconfig(sc, EP_CHIPSET_UNKNOWN);
 	}
 
