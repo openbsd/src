@@ -15,7 +15,7 @@ login (authentication) dialog.
 */
 
 #include "includes.h"
-RCSID("$Id: sshconnect.c,v 1.22 1999/10/16 23:11:29 markus Exp $");
+RCSID("$Id: sshconnect.c,v 1.23 1999/10/25 20:34:30 markus Exp $");
 
 #include <ssl/bn.h>
 #include "xmalloc.h"
@@ -925,7 +925,7 @@ void ssh_exchange_identification()
     enable_compat13();
     if (options.forward_agent && strcmp(remote_version, SSH_VERSION) != 0) {
       log("Agent forwarding disabled, remote version '%s' is not compatible.",
-	    SSH_VERSION);
+	    remote_version);
       options.forward_agent = 0;
     }
   }
