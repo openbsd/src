@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetcf.c,v 1.2 2002/07/30 22:27:20 deraadt Exp $	*/
+/*	$OpenBSD: inetcf.c,v 1.3 2003/04/07 22:56:19 deraadt Exp $	*/
 
  /*
   * Routines to parse an inetd.conf or tlid.conf file. This would be a great
@@ -11,7 +11,7 @@
 #if 0
 static char sccsid[] = "@(#) inetcf.c 1.7 97/02/12 02:13:23";
 #else
-static char rcsid[] = "$OpenBSD: inetcf.c,v 1.2 2002/07/30 22:27:20 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: inetcf.c,v 1.3 2003/04/07 22:56:19 deraadt Exp $";
 #endif
 #endif
 
@@ -279,15 +279,16 @@ void    inet_set(name, type)
 char   *name;
 int     type;
 {
+    int len = strlen(name);	/* NUL is inside the struct */
     struct inet_ent *ip =
-    (struct inet_ent *) malloc(sizeof(struct inet_ent) + strlen(name));
+    (struct inet_ent *) malloc(sizeof(struct inet_ent) + len);
 
     if (ip == 0) {
 	fprintf(stderr, "out of memory\n");
 	exit(1);
     }
     ip->next = inet_list;
-    strcpy(ip->name, name);
+    strlcpy(ip->name, name, len);
     ip->type = type;
     inet_list = ip;
 }
