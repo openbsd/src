@@ -1,4 +1,4 @@
-# 	$OpenBSD: RAMDISK,v 1.7 2001/10/09 21:32:04 deraadt Exp $
+# 	$OpenBSD: RAMDISK,v 1.8 2001/10/10 04:24:12 deraadt Exp $
 
 # Machine architecture; required by config(8)
 machine		sparc64
@@ -43,33 +43,25 @@ ebus*	at pci?
 hme*	at pci? dev ? function ?
 gem*	at pci? dev ? function ?
 
-#### Standard system devices -- all required for a given architecture
-
 auxio*	at ebus?
-
 com*	at ebus?
+clock*	at sbus? slot ? offset ?		# Mostek clock 
+clock*	at ebus?
+timer*	at mainbus0				# Timer chip
 
 ## PROM console driver -- if all else fails
 pcons0	at mainbus0				# PROM console
 
-## Mostek clock 
-clock*	at sbus? slot ? offset ?
-clock*	at ebus?
-
-## Timer chip found on (some) sun4u systems.
-timer*	at mainbus0
-
 ## Lance Ethernet - AMD7990
-le*		at sbus? slot ? offset ?
-ledma*		at sbus? slot ? offset ?
-le*		at ledma?
+le*	at sbus? slot ? offset ?
+ledma*	at sbus? slot ? offset ?
+le*	at ledma?
 
 # Quad-ethernet glue device, and sub-devices
-qec*		at sbus? slot ? offset ?
-qe*		at qec?
-be*		at qec?
-
-hme*		at sbus? slot ? offset ?
+qec*	at sbus? slot ? offset ?
+qe*	at qec?
+be*	at qec?
+hme*	at sbus? slot ? offset ?
 
 pciide*	at pci? dev ? function ? flags 0x0000
 wd*	at pciide? channel ? drive ? flags 0x0000
@@ -89,15 +81,15 @@ scsibus* at atapiscsi?
 dma*	at sbus? slot ? offset ?		# SBus
 esp*	at dma? flags 0x0000			# SBus
 esp*	at sbus? slot ? offset ?
-scsibus*	at esp?
+scsibus* at esp?
 
 siop*	at pci? dev ? function ?
 scsibus*	at siop?
 
 # These entries find devices on all SCSI busses and assign
 # unit numers dynamically.
-sd*		at scsibus? target ? lun ?	# SCSI disks
-cd*		at scsibus? target ? lun ?	# SCSI CD-ROMs
+sd*	at scsibus? target ? lun ?	# SCSI disks
+cd*	at scsibus? target ? lun ?	# SCSI CD-ROMs
 
 # Media Independent Interface (mii) drivers)
 nsphy*	at mii? phy ?				# NS and compatible PHYs
