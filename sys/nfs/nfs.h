@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs.h,v 1.20 2003/06/02 23:28:19 millert Exp $	*/
+/*	$OpenBSD: nfs.h,v 1.21 2003/10/22 04:45:54 jmc Exp $	*/
 /*	$NetBSD: nfs.h,v 1.10.4.1 1996/05/27 11:23:56 fvdl Exp $	*/
 
 /*
@@ -148,7 +148,7 @@ struct nfsd_srvargs {
 	struct ucred	nsd_cr;		/* Cred. uid maps to */
 	int		nsd_authlen;	/* Length of auth string (ret) */
 	u_char		*nsd_authstr;	/* Auth string (ret) */
-	int		nsd_verflen;	/* and the verfier */
+	int		nsd_verflen;	/* and the verifier */
 	u_char		*nsd_verfstr;
 	struct timeval	nsd_timestamp;	/* timestamp from verifier */
 	u_int32_t	nsd_ttl;	/* credential ttl (sec) */
