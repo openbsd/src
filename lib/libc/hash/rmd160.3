@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rmd160.3,v 1.23 2004/04/29 15:51:16 millert Exp $
+.\"	$OpenBSD: rmd160.3,v 1.24 2004/05/03 17:30:14 millert Exp $
 .\"
 .\" Copyright (c) 1997, 2004 Todd C. Miller <Todd.Miller@courtesan.com>
 .\"
@@ -23,10 +23,12 @@
 .Sh NAME
 .Nm RMD160Init ,
 .Nm RMD160Update ,
+.Nm RMD160Pad ,
 .Nm RMD160Final ,
 .Nm RMD160Transform ,
 .Nm RMD160End ,
 .Nm RMD160File ,
+.Nm RMD160FileChunk ,
 .Nm RMD160Data
 .Nd calculate the ``RIPEMD-160'' message digest
 .Sh SYNOPSIS
@@ -37,6 +39,8 @@
 .Ft void
 .Fn RMD160Update "RMD160_CTX *context" "const u_int8_t *data" "u_int32_t nbytes"
 .Ft void
+.Fn RMD160Pad "RMD160_CTX *context"
+.Ft void
 .Fn RMD160Final "u_int8_t digest[RMD160_DIGEST_LENGTH]" "RMD160_CTX *context"
 .Ft void
 .Fn RMD160Transform "u_int32_t state[5]" "const u_int8_t block[RMD160_BLOCK_LENGTH]"
@@ -44,6 +48,8 @@
 .Fn RMD160End "RMD160_CTX *context" "char *buf"
 .Ft "char *"
 .Fn RMD160File "char *filename" "char *buf"
+.Ft "char *"
+.Fn RMD160FileChunk "char *filename" "char *buf" "off_t offset" "off_t length"
 .Ft "char *"
 .Fn RMD160Data "const u_int8_t *data" "size_t len" "char *buf"
 .Sh DESCRIPTION
@@ -86,10 +92,12 @@ is called when all data has been added via
 and stores a message digest in the
 .Ar digest
 parameter.
-When a null pointer is passed to
-.Fn RMD160Final
-as first argument only the final padding will be applied and the
-current context can still be used with
+.Pp
+The
+.Fn RMD160Pad
+function can be used to apply padding to the message digest as in
+.Fn RMD160Final ,
+but the current context can still be used with
 .Fn RMD160Update .
 .Pp
 The
@@ -121,6 +129,23 @@ function calculates the digest for a file and returns the result via
 If
 .Fn RMD160File
 is unable to open the file a NULL pointer is returned.
+.Pp
+.Fn RMD160FileChunk
+behaves like
+.Fn RMD160File
+but calculates the digest only for that portion of the file starting at
+.Fa offset
+and continuing for
+.Fa length
+bytes or until end of file is reached, whichever comes first.
+A zero
+.Fa length
+can be specified to read until end of file.
+A negative
+.Fa length
+or
+.Fa offset
+will be ignored.
 .Pp
 The
 .Fn RMD160Data
@@ -203,6 +228,7 @@ This implementation of RMD-160 was written by Markus Friedl.
 The
 .Fn RMD160End ,
 .Fn RMD160File ,
+.Fn RMD160FileChunk ,
 and
 .Fn RMD160Data
 helper functions are derived from code written by Poul-Henning Kamp.

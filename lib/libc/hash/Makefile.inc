@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.16 2004/04/28 16:56:49 millert Exp $
+#	$OpenBSD: Makefile.inc,v 1.17 2004/05/03 17:30:14 millert Exp $
 
 # hash functions
 .PATH: ${LIBCSRCDIR}/hash
@@ -6,24 +6,28 @@
 HELPER=	md4hl.c md5hl.c rmd160hl.c sha1hl.c sha256hl.c sha384hl.c sha512hl.c
 SRCS+=	md4.c md5.c rmd160.c sha1.c sha2.c ${HELPER}
 MAN+=	md4.3 md5.3 rmd160.3 sha1.3 sha2.3
-MLINKS+=md4.3 MD4Init.3 md4.3 MD4Update.3 md4.3 MD4Final.3
-MLINKS+=md4.3 MD4End.3  md4.3 MD4File.3   md4.3 MD4Data.3
-MLINKS+=md4.3 MD4Transform.3
-MLINKS+=md5.3 MD5Init.3 md5.3 MD5Update.3 md5.3 MD5Final.3
-MLINKS+=md5.3 MD5End.3  md5.3 MD5File.3   md5.3 MD5Data.3
-MLINKS+=md5.3 MD5Transform.3
-MLINKS+=rmd160.3 RMD160Init.3 rmd160.3 RMD160Update.3 rmd160.3 RMD160Final.3
-MLINKS+=rmd160.3 RMD160End.3  rmd160.3 RMD160File.3   rmd160.3 RMD160Data.3
-MLINKS+=rmd160.3 RMD160Transform.3
-MLINKS+=sha1.3 SHA1Init.3 sha1.3 SHA1Update.3 sha1.3 SHA1Final.3
-MLINKS+=sha1.3 SHA1End.3  sha1.3 SHA1File.3   sha1.3 SHA1Data.3
-MLINKS+=sha1.3 SHA1Transform.3
+
+MLINKS+=md4.3 MD4Transform.3 md4.3 MD4Init.3 md4.3 MD4Final.3
+MLINKS+=md4.3 MD4Update.3    md4.3 MD4End.3  md4.3 MD4File.3
+MLINKS+=md4.3 MD4FileChunk.3 md4.3 MD4Pad.3  md4.3 MD4Data.3
+MLINKS+=md5.3 MD5Transform.3 md5.3 MD5Init.3 md5.3 MD5Final.3
+MLINKS+=md5.3 MD5Update.3    md5.3 MD5End.3  md5.3 MD5File.3
+MLINKS+=md5.3 MD5FileChunk.3 md5.3 MD5Pad.3  md5.3 MD5Data.3
+MLINKS+=rmd160.3 RMD160Transform.3 rmd160.3 RMD160Init.3 rmd160.3 RMD160Final.3
+MLINKS+=rmd160.3 RMD160Update.3    rmd160.3 RMD160End.3  rmd160.3 RMD160File.3
+MLINKS+=rmd160.3 RMD160FileChunk.3 rmd160.3 RMD160Pad.3  rmd160.3 RMD160Data.3
+MLINKS+=sha1.3 SHA1Transform.3 sha1.3 SHA1Init.3 sha1.3 SHA1Final.3
+MLINKS+=sha1.3 SHA1Update.3    sha1.3 SHA1End.3  sha1.3 SHA1File.3
+MLINKS+=sha1.3 SHA1FileChunk.3 sha1.3 SHA1Pad.3  sha1.3 SHA1Data.3
 MLINKS+=sha2.3 SHA256_Init.3 sha2.3 SHA256_Update.3 sha2.3 SHA256_Final.3
 MLINKS+=sha2.3 SHA256_End.3  sha2.3 SHA256_File.3   sha2.3 SHA256_Data.3
+MLINKS+=sha2.3 SHA256_Pad.3  sha2.3 SHA256_FileChunk.3
 MLINKS+=sha2.3 SHA384_Init.3 sha2.3 SHA384_Update.3 sha2.3 SHA384_Final.3
 MLINKS+=sha2.3 SHA384_End.3  sha2.3 SHA384_File.3   sha2.3 SHA384_Data.3
+MLINKS+=sha2.3 SHA384_Pad.3  sha2.3 SHA384_FileChunk.3
 MLINKS+=sha2.3 SHA512_Init.3 sha2.3 SHA512_Update.3 sha2.3 SHA512_Final.3
 MLINKS+=sha2.3 SHA512_End.3  sha2.3 SHA512_File.3   sha2.3 SHA512_Data.3
+MLINKS+=sha2.3 SHA512_Pad.3  sha2.3 SHA512_FileChunk.3
 CLEANFILES+= ${HELPER} md[45].3
 
 .ifndef NOMAN

@@ -1,4 +1,4 @@
-/*	$OpenBSD: helper.c,v 1.4 2004/04/29 15:51:16 millert Exp $	*/
+/*	$OpenBSD: helper.c,v 1.5 2004/05/03 17:30:14 millert Exp $	*/
 
 /*
  * ----------------------------------------------------------------------------
@@ -10,10 +10,10 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "$OpenBSD: helper.c,v 1.4 2004/04/29 15:51:16 millert Exp $";
+static const char rcsid[] = "$OpenBSD: helper.c,v 1.5 2004/05/03 17:30:14 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
-#include <sys/types.h>
+#include <sys/param.h>
 
 #include <errno.h>
 #include <fcntl.h>
@@ -46,24 +46,36 @@ HASHEnd(HASH_CTX *ctx, char *buf)
 }
 
 char *
-HASHFile(char *filename, char *buf)
+HASHFileChunk(char *filename, char *buf, off_t off, off_t len)
 {
 	u_char buffer[BUFSIZ];
 	HASH_CTX ctx;
-	int fd, num, save_errno;
+	int fd, save_errno;
+	ssize_t nr;
 
 	HASHInit(&ctx);
 
 	if ((fd = open(filename, O_RDONLY)) < 0)
 		return (NULL);
+	if (off > 0 && lseek(fd, off, SEEK_SET) < 0)
+		return (NULL);
 
-	while ((num = read(fd, buffer, sizeof(buffer))) > 0)
-		HASHUpdate(&ctx, buffer, num);
+	while ((nr = read(fd, buffer, MIN(sizeof(buffer), len))) > 0) {
+		HASHUpdate(&ctx, buffer, (size_t)nr);
+		if (len > 0 && (len -= nr) == 0)
+			break;
+	}
 
 	save_errno = errno;
 	close(fd);
 	errno = save_errno;
-	return (num < 0 ? NULL : HASHEnd(&ctx, buf));
+	return (nr < 0 ? NULL : HASHEnd(&ctx, buf));
+}
+
+char *
+HASHFile(char *filename, char *buf)
+{
+	return (HASHFileChunk(filename, buf, (off_t)0, (off_t)0));
 }
 
 char *

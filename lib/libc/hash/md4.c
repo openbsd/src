@@ -1,4 +1,4 @@
-/*	$OpenBSD: md4.c,v 1.3 2004/04/29 18:45:39 millert Exp $	*/
+/*	$OpenBSD: md4.c,v 1.4 2004/05/03 17:30:14 millert Exp $	*/
 
 /*
  * This code implements the MD4 message-digest algorithm.
@@ -19,7 +19,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "$OpenBSD: md4.c,v 1.3 2004/04/29 18:45:39 millert Exp $";
+static const char rcsid[] = "$OpenBSD: md4.c,v 1.4 2004/05/03 17:30:14 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -69,10 +69,10 @@ MD4Init(MD4_CTX *ctx)
 void
 MD4Update(MD4_CTX *ctx, const unsigned char *input, size_t len)
 {
-	u_int32_t have, need;
+	size_t have, need;
 
 	/* Check how many bytes we already have and how many more we need. */
-	have = (u_int32_t)((ctx->count >> 3) & (MD4_BLOCK_LENGTH - 1));
+	have = (size_t)((ctx->count >> 3) & (MD4_BLOCK_LENGTH - 1));
 	need = MD4_BLOCK_LENGTH - have;
 
 	/* Update bitcount */
@@ -101,15 +101,14 @@ MD4Update(MD4_CTX *ctx, const unsigned char *input, size_t len)
 }
 
 /*
- * Final wrapup - pad to 64-byte boundary with the bit pattern 
+ * Pad pad to 64-byte boundary with the bit pattern
  * 1 0* (64-bit count of bits processed, MSB-first)
  */
 void
-MD4Final(unsigned char digest[MD4_DIGEST_LENGTH], MD4_CTX *ctx)
+MD4Pad(MD4_CTX *ctx)
 {
 	u_int8_t count[8];
-	u_int32_t padlen;
-	int i;
+	size_t padlen;
 
 	/* Convert count to 8 bytes in little endian order. */
 	PUT_64BIT_LE(count, ctx->count);
@@ -121,7 +120,17 @@ MD4Final(unsigned char digest[MD4_DIGEST_LENGTH], MD4_CTX *ctx)
 		padlen += MD4_BLOCK_LENGTH;
 	MD4Update(ctx, PADDING, padlen - 8);		/* padlen - 8 <= 64 */
 	MD4Update(ctx, count, 8);
+}
 
+/*
+ * Final wrapup--call MD4Pad, fill in digest and zero out ctx.
+ */
+void
+MD4Final(unsigned char digest[MD4_DIGEST_LENGTH], MD4_CTX *ctx)
+{
+	int i;
+
+	MD4Pad(ctx);
 	if (digest != NULL) {
 		for (i = 0; i < 4; i++)
 			PUT_32BIT_LE(digest + i * 4, ctx->state[i]);

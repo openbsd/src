@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sha2.3,v 1.6 2004/04/29 15:51:16 millert Exp $
+.\"	$OpenBSD: sha2.3,v 1.7 2004/05/03 17:30:15 millert Exp $
 .\"
 .\" Copyright (c) 2003, 2004 Todd C. Miller <Todd.Miller@courtesan.com>
 .\"
@@ -26,9 +26,11 @@
 .Sh NAME
 .Nm SHA256_Init ,
 .Nm SHA256_Update ,
+.Nm SHA256_Pad ,
 .Nm SHA256_Final ,
 .Nm SHA256_End ,
 .Nm SHA256_File ,
+.Nm SHA256_FileChunk ,
 .Nm SHA256_Data
 .Nd calculate the NIST Secure Hash Standard (version 2)
 .Sh SYNOPSIS
@@ -39,11 +41,15 @@
 .Ft void
 .Fn SHA256_Update "SHA256_CTX *context" "const u_int8_t *data" "size_t len"
 .Ft void
+.Fn SHA256_Pad "SHA256_CTX *context"
+.Ft void
 .Fn SHA256_Final "u_int8_t digest[SHA256_DIGEST_LENGTH]" "SHA256_CTX *context"
 .Ft "char *"
 .Fn SHA256_End "SHA256_CTX *context" "char *buf"
 .Ft "char *"
 .Fn SHA256_File "char *filename" "char *buf"
+.Ft "char *"
+.Fn SHA256_FileChunk "char *filename" "char *buf" "off_t offset" "off_t length"
 .Ft "char *"
 .Fn SHA256_Data "u_int8_t *data" "u_int len" "char *buf"
 .Ft void
@@ -51,11 +57,15 @@
 .Ft void
 .Fn SHA384_Update "SHA384_CTX *context" "const u_int8_t *data" "size_t len"
 .Ft void
+.Fn SHA384_Pad "SHA384_CTX *context"
+.Ft void
 .Fn SHA384_Final "u_int8_t digest[SHA384_DIGEST_LENGTH]" "SHA384_CTX *context"
 .Ft "char *"
 .Fn SHA384_End "SHA384_CTX *context" "char *buf"
 .Ft "char *"
 .Fn SHA384_File "char *filename" "char *buf"
+.Ft "char *"
+.Fn SHA384_FileChunk "char *filename" "char *buf" "off_t offset" "off_t length"
 .Ft "char *"
 .Fn SHA384_Data "u_int8_t *data" "size_t len" "char *buf"
 .Ft void
@@ -63,11 +73,15 @@
 .Ft void
 .Fn SHA512_Update "SHA512_CTX *context" "const u_int8_t *data" "size_t len"
 .Ft void
+.Fn SHA512_Pad "SHA512_CTX *context"
+.Ft void
 .Fn SHA512_Final "u_int8_t digest[SHA512_DIGEST_LENGTH]" "SHA512_CTX *context"
 .Ft "char *"
 .Fn SHA512_End "SHA512_CTX *context" "char *buf"
 .Ft "char *"
 .Fn SHA512_File "char *filename" "char *buf"
+.Ft "char *"
+.Fn SHA512_FileChunk "char *filename" "char *buf" "off_t offset" "off_t length"
 .Ft "char *"
 .Fn SHA512_Data "u_int8_t *data" "size_t len" "char *buf"
 .Sh DESCRIPTION
@@ -110,10 +124,12 @@ is called when all data has been added via
 and stores a message digest in the
 .Ar digest
 parameter.
-When a null pointer is passed to
-.Fn SHA256_Final
-as first argument only the final padding will be applied and the
-current context can still be used with
+.Pp
+The
+.Fn SHA256_Pad
+function can be used to apply padding to the message digest as in
+.Fn SHA256_Final ,
+but the current context can still be used with
 .Fn SHA256_Update .
 .Pp
 The
@@ -132,6 +148,23 @@ If
 .Fn SHA256_File
 is unable to open the file, a NULL pointer is returned.
 .Pp
+.Fn SHA256_FileChunk
+behaves like
+.Fn SHA256_File
+but calculates the digest only for that portion of the file starting at
+.Fa offset
+and continuing for
+.Fa length
+bytes or until end of file is reached, whichever comes first.
+A zero
+.Fa length
+can be specified to read until end of file.
+A negative
+.Fa length
+or
+.Fa offset
+will be ignored.
+.Pp
 The
 .Fn SHA256_Data
 function
@@ -141,6 +174,7 @@ calculates the digest of an arbitrary string and returns the result via
 For each of the
 .Fn SHA256_End ,
 .Fn SHA256_File ,
+.Fn SHA256_FileChunk ,
 and
 .Fn SHA256_Data
 functions the
@@ -208,6 +242,7 @@ This implementation of the SHA functions was written by Aaron D. Gifford.
 The
 .Fn SHA256_End ,
 .Fn SHA256_File ,
+.Fn SHA256_FileChunk ,
 and
 .Fn SHA256_Data
 helper functions are derived from code written by Poul-Henning Kamp.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sha2.c,v 1.6 2004/05/03 02:57:47 millert Exp $	*/
+/*	$OpenBSD: sha2.c,v 1.7 2004/05/03 17:30:15 millert Exp $	*/
 
 /*
  * FILE:	sha2.c
@@ -35,7 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "$OpenBSD: sha2.c,v 1.6 2004/05/03 02:57:47 millert Exp $";
+static const char rcsid[] = "$OpenBSD: sha2.c,v 1.7 2004/05/03 17:30:15 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -164,7 +164,6 @@ static const char rcsid[] = "$OpenBSD: sha2.c,v 1.6 2004/05/03 02:57:47 millert 
  * library -- they are intended for private internal visibility/use
  * only.
  */
-void SHA512_Last(SHA512_CTX *);
 void SHA256_Transform(SHA256_CTX *, const u_int8_t *);
 void SHA512_Transform(SHA512_CTX *, const u_int8_t *);
 
@@ -340,7 +339,7 @@ SHA256_Transform(SHA256_CTX *context, const u_int8_t *data)
 		ROUND256_0_TO_15(b,c,d,e,f,g,h,a);
 	} while (j < 16);
 
-	/* Now for the remaining rounds to 64: */
+	/* Now for the remaining rounds up to 63: */
 	do {
 		ROUND256(a,b,c,d,e,f,g,h);
 		ROUND256(h,a,b,c,d,e,f,g);
@@ -493,65 +492,74 @@ SHA256_Update(SHA256_CTX *context, const u_int8_t *data, size_t len)
 }
 
 void
+SHA256_Pad(SHA256_CTX *context)
+{
+	unsigned int	usedspace;
+
+	usedspace = (context->bitcount >> 3) % SHA256_BLOCK_LENGTH;
+#if BYTE_ORDER == LITTLE_ENDIAN
+	/* Convert FROM host byte order */
+	REVERSE64(context->bitcount, context->bitcount);
+#endif
+	if (usedspace > 0) {
+		/* Begin padding with a 1 bit: */
+		context->buffer[usedspace++] = 0x80;
+
+		if (usedspace <= SHA256_SHORT_BLOCK_LENGTH) {
+			/* Set-up for the last transform: */
+			memset(&context->buffer[usedspace], 0,
+			    SHA256_SHORT_BLOCK_LENGTH - usedspace);
+		} else {
+			if (usedspace < SHA256_BLOCK_LENGTH) {
+				memset(&context->buffer[usedspace], 0,
+				    SHA256_BLOCK_LENGTH - usedspace);
+			}
+			/* Do second-to-last transform: */
+			SHA256_Transform(context, context->buffer);
+
+			/* Prepare for last transform: */
+			memset(context->buffer, 0, SHA256_SHORT_BLOCK_LENGTH);
+		}
+	} else {
+		/* Set-up for the last transform: */
+		memset(context->buffer, 0, SHA256_SHORT_BLOCK_LENGTH);
+
+		/* Begin padding with a 1 bit: */
+		*context->buffer = 0x80;
+	}
+	/* Store the length of input data (in bits): */
+	*(u_int64_t *)&context->buffer[SHA256_SHORT_BLOCK_LENGTH] = context->bitcount;
+
+	/* Final transform: */
+	SHA256_Transform(context, context->buffer);
+
+	/* Clean up: */
+	usedspace = 0;
+}
+
+void
 SHA256_Final(u_int8_t digest[], SHA256_CTX *context)
 {
 	u_int32_t	*d = (u_int32_t *)digest;
-	unsigned int	usedspace;
+
+	SHA256_Pad(context);
 
 	/* If no digest buffer is passed, we don't bother doing this: */
 	if (digest != NULL) {
-		usedspace = (context->bitcount >> 3) % SHA256_BLOCK_LENGTH;
 #if BYTE_ORDER == LITTLE_ENDIAN
-		/* Convert FROM host byte order */
-		REVERSE64(context->bitcount,context->bitcount);
-#endif
-		if (usedspace > 0) {
-			/* Begin padding with a 1 bit: */
-			context->buffer[usedspace++] = 0x80;
-
-			if (usedspace <= SHA256_SHORT_BLOCK_LENGTH) {
-				/* Set-up for the last transform: */
-				memset(&context->buffer[usedspace], 0, SHA256_SHORT_BLOCK_LENGTH - usedspace);
-			} else {
-				if (usedspace < SHA256_BLOCK_LENGTH) {
-					memset(&context->buffer[usedspace], 0, SHA256_BLOCK_LENGTH - usedspace);
-				}
-				/* Do second-to-last transform: */
-				SHA256_Transform(context, context->buffer);
-
-				/* And set-up for the last transform: */
-				memset(context->buffer, 0, SHA256_SHORT_BLOCK_LENGTH);
-			}
-		} else {
-			/* Set-up for the last transform: */
-			memset(context->buffer, 0, SHA256_SHORT_BLOCK_LENGTH);
-
-			/* Begin padding with a 1 bit: */
-			*context->buffer = 0x80;
-		}
-		/* Set the bit count: */
-		*(u_int64_t *)&context->buffer[SHA256_SHORT_BLOCK_LENGTH] = context->bitcount;
-
-		/* Final transform: */
-		SHA256_Transform(context, context->buffer);
-
-#if BYTE_ORDER == LITTLE_ENDIAN
-		{
-			/* Convert TO host byte order */
-			int	j;
-			for (j = 0; j < 8; j++) {
-				REVERSE32(context->state[j],context->state[j]);
-				*d++ = context->state[j];
-			}
+		/* Convert TO host byte order */
+		int	j;
+		for (j = 0; j < 8; j++) {
+			REVERSE32(context->state[j], context->state[j]);
+			*d++ = context->state[j];
 		}
 #else
 		memcpy(d, context->state, SHA256_DIGEST_LENGTH);
 #endif
 	}
 
-	/* Clean up state data: */
+	/* Zero out state data */
 	memset(context, 0, sizeof(*context));
-	usedspace = 0;
 }
 
 
@@ -599,8 +607,10 @@ void
 SHA512_Transform(SHA512_CTX *context, const u_int8_t *data)
 {
 	u_int64_t	a, b, c, d, e, f, g, h, s0, s1;
-	u_int64_t	T1, *W512 = (u_int64_t *)context->buffer;
+	u_int64_t	T1, *W512;
 	int		j;
+
+	W512 = (u_int64_t *)context->buffer;
 
 	/* Initialize registers with the prev. intermediate value */
 	a = context->state[0];
@@ -614,6 +624,7 @@ SHA512_Transform(SHA512_CTX *context, const u_int8_t *data)
 
 	j = 0;
 	do {
+		/* Rounds 0 to 15 (unrolled): */
 		ROUND512_0_TO_15(a,b,c,d,e,f,g,h);
 		ROUND512_0_TO_15(h,a,b,c,d,e,f,g);
 		ROUND512_0_TO_15(g,h,a,b,c,d,e,f);
@@ -656,8 +667,10 @@ void
 SHA512_Transform(SHA512_CTX *context, const u_int8_t *data)
 {
 	u_int64_t	a, b, c, d, e, f, g, h, s0, s1;
-	u_int64_t	T1, T2, *W512 = (u_int64_t *)context->buffer;
+	u_int64_t	T1, T2, *W512;
 	int		j;
+
+	W512 = (u_int64_t *)context->buffer;
 
 	/* Initialize registers with the prev. intermediate value */
 	a = context->state[0];
@@ -777,7 +790,7 @@ SHA512_Update(SHA512_CTX *context, const u_int8_t *data, size_t len)
 }
 
 void
-SHA512_Last(SHA512_CTX *context)
+SHA512_Pad(SHA512_CTX *context)
 {
 	unsigned int	usedspace;
 
@@ -817,6 +830,9 @@ SHA512_Last(SHA512_CTX *context)
 
 	/* Final transform: */
 	SHA512_Transform(context, context->buffer);
+
+	/* Clean up: */
+	usedspace = 0;
 }
 
 void
@@ -824,19 +840,16 @@ SHA512_Final(u_int8_t digest[], SHA512_CTX *context)
 {
 	u_int64_t	*d = (u_int64_t *)digest;
 
+	SHA512_Pad(context);
+
 	/* If no digest buffer is passed, we don't bother doing this: */
 	if (digest != NULL) {
-		SHA512_Last(context);
-
-		/* Save the hash data for output: */
 #if BYTE_ORDER == LITTLE_ENDIAN
-		{
-			/* Convert TO host byte order */
-			int	j;
-			for (j = 0; j < 8; j++) {
-				REVERSE64(context->state[j],context->state[j]);
-				*d++ = context->state[j];
-			}
+		/* Convert TO host byte order */
+		int	j;
+		for (j = 0; j < 8; j++) {
+			REVERSE64(context->state[j],context->state[j]);
+			*d++ = context->state[j];
 		}
 #else
 		memcpy(d, context->state, SHA512_DIGEST_LENGTH);
@@ -865,24 +878,23 @@ SHA384_Update(SHA384_CTX *context, const u_int8_t *data, size_t len)
 	SHA512_Update((SHA512_CTX *)context, data, len);
 }
 
+__weak_alias(SHA384_Pad, SHA512_Pad);
+
 void
 SHA384_Final(u_int8_t digest[], SHA384_CTX *context)
 {
 	u_int64_t	*d = (u_int64_t *)digest;
 
+	SHA384_Pad(context);
+
 	/* If no digest buffer is passed, we don't bother doing this: */
 	if (digest != NULL) {
-		SHA512_Last((SHA512_CTX *)context);
-
-		/* Save the hash data for output: */
 #if BYTE_ORDER == LITTLE_ENDIAN
-		{
-			/* Convert TO host byte order */
-			int	j;
-			for (j = 0; j < 6; j++) {
-				REVERSE64(context->state[j],context->state[j]);
-				*d++ = context->state[j];
-			}
+		/* Convert TO host byte order */
+		int	j;
+		for (j = 0; j < 6; j++) {
+			REVERSE64(context->state[j],context->state[j]);
+			*d++ = context->state[j];
 		}
 #else
 		memcpy(d, context->state, SHA384_DIGEST_LENGTH);

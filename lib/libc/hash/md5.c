@@ -1,4 +1,4 @@
-/*	$OpenBSD: md5.c,v 1.4 2004/04/29 18:38:23 millert Exp $	*/
+/*	$OpenBSD: md5.c,v 1.5 2004/05/03 17:30:14 millert Exp $	*/
 
 /*
  * This code implements the MD5 message-digest algorithm.
@@ -18,7 +18,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "$OpenBSD: md5.c,v 1.4 2004/04/29 18:38:23 millert Exp $";
+static const char rcsid[] = "$OpenBSD: md5.c,v 1.5 2004/05/03 17:30:14 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -68,10 +68,10 @@ MD5Init(MD5_CTX *ctx)
 void
 MD5Update(MD5_CTX *ctx, const unsigned char *input, size_t len)
 {
-	u_int32_t have, need;
+	size_t have, need;
 
 	/* Check how many bytes we already have and how many more we need. */
-	have = (u_int32_t)((ctx->count >> 3) & (MD5_BLOCK_LENGTH - 1));
+	have = (size_t)((ctx->count >> 3) & (MD5_BLOCK_LENGTH - 1));
 	need = MD5_BLOCK_LENGTH - have;
 
 	/* Update bitcount */
@@ -100,15 +100,14 @@ MD5Update(MD5_CTX *ctx, const unsigned char *input, size_t len)
 }
 
 /*
- * Final wrapup - pad to 64-byte boundary with the bit pattern 
+ * Pad pad to 64-byte boundary with the bit pattern
  * 1 0* (64-bit count of bits processed, MSB-first)
  */
 void
-MD5Final(unsigned char digest[MD5_DIGEST_LENGTH], MD5_CTX *ctx)
+MD5Pad(MD5_CTX *ctx)
 {
 	u_int8_t count[8];
-	u_int32_t padlen;
-	int i;
+	size_t padlen;
 
 	/* Convert count to 8 bytes in little endian order. */
 	PUT_64BIT_LE(count, ctx->count);
@@ -120,7 +119,17 @@ MD5Final(unsigned char digest[MD5_DIGEST_LENGTH], MD5_CTX *ctx)
 		padlen += MD5_BLOCK_LENGTH;
 	MD5Update(ctx, PADDING, padlen - 8);		/* padlen - 8 <= 64 */
 	MD5Update(ctx, count, 8);
+}
 
+/*
+ * Final wrapup--call MD5Pad, fill in digest and zero out ctx.
+ */
+void
+MD5Final(unsigned char digest[MD5_DIGEST_LENGTH], MD5_CTX *ctx)
+{
+	int i;
+
+	MD5Pad(ctx);
 	if (digest != NULL) {
 		for (i = 0; i < 4; i++)
 			PUT_32BIT_LE(digest + i * 4, ctx->state[i]);

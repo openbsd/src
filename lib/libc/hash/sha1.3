@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sha1.3,v 1.29 2004/04/29 15:51:16 millert Exp $
+.\"	$OpenBSD: sha1.3,v 1.30 2004/05/03 17:30:15 millert Exp $
 .\"
 .\" Copyright (c) 1997, 2004 Todd C. Miller <Todd.Miller@courtesan.com>
 .\"
@@ -23,10 +23,12 @@
 .Sh NAME
 .Nm SHA1Init ,
 .Nm SHA1Update ,
+.Nm SHA1Pad ,
 .Nm SHA1Final ,
 .Nm SHA1Transform ,
 .Nm SHA1End ,
 .Nm SHA1File ,
+.Nm SHA1FileChunk ,
 .Nm SHA1Data
 .Nd calculate the NIST Secure Hash Algorithm
 .Sh SYNOPSIS
@@ -37,6 +39,8 @@
 .Ft void
 .Fn SHA1Update "SHA1_CTX *context" "const u_int8_t *data" "u_int len"
 .Ft void
+.Fn SHA1Pad "SHA1_CTX *context"
+.Ft void
 .Fn SHA1Final "u_int8_t digest[SHA1_DIGEST_LENGTH]" "SHA1_CTX *context"
 .Ft void
 .Fn SHA1Transform "u_int32_t state[5]" "u_int8_t buffer[SHA1_BLOCK_LENGTH]"
@@ -44,6 +48,8 @@
 .Fn SHA1End "SHA1_CTX *context" "char *buf"
 .Ft "char *"
 .Fn SHA1File "char *filename" "char *buf"
+.Ft "char *"
+.Fn SHA1FileChunk "char *filename" "char *buf" "off_t offset" "off_t length"
 .Ft "char *"
 .Fn SHA1Data "const u_int8_t *data" "size_t len" "char *buf"
 .Sh DESCRIPTION
@@ -83,10 +89,12 @@ is called when all data has been added via
 and stores a message digest in the
 .Ar digest
 parameter.
-When a null pointer is passed to
-.Fn SHA1Final
-as first argument only the final padding will be applied and the
-current context can still be used with
+.Pp
+The
+.Fn SHA1Pad
+function can be used to apply padding to the message digest as in
+.Fn SHA1Final ,
+but the current context can still be used with
 .Fn SHA1Update .
 .Pp
 The
@@ -118,6 +126,23 @@ function calculates the digest for a file and returns the result via
 If
 .Fn SHA1File
 is unable to open the file a NULL pointer is returned.
+.Pp
+.Fn SHA1FileChunk
+behaves like
+.Fn SHA1File
+but calculates the digest only for that portion of the file starting at
+.Fa offset
+and continuing for
+.Fa length
+bytes or until end of file is reached, whichever comes first.
+A zero
+.Fa length
+can be specified to read until end of file.
+A negative
+.Fa length
+or
+.Fa offset
+will be ignored.
 .Pp
 The
 .Fn SHA1Data
@@ -194,6 +219,7 @@ This implementation of SHA-1 was written by Steve Reid.
 The
 .Fn SHA1End ,
 .Fn SHA1File ,
+.Fn SHA1FileChunk ,
 and
 .Fn SHA1Data
 helper functions are derived from code written by Poul-Henning Kamp.

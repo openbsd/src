@@ -1,4 +1,4 @@
-/*	$OpenBSD: sha1.c,v 1.15 2004/04/27 15:54:56 millert Exp $	*/
+/*	$OpenBSD: sha1.c,v 1.16 2004/05/03 17:30:15 millert Exp $	*/
 
 /*
  * SHA-1 in C
@@ -15,7 +15,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: sha1.c,v 1.15 2004/04/27 15:54:56 millert Exp $";
+static char rcsid[] = "$OpenBSD: sha1.c,v 1.16 2004/05/03 17:30:15 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #define SHA1HANDSOFF		/* Copies data before messing with it. */
@@ -131,11 +131,11 @@ SHA1Init(SHA1_CTX *context)
  * Run your data through this.
  */
 void
-SHA1Update(SHA1_CTX *context, const u_char *data, u_int len)
+SHA1Update(SHA1_CTX *context, const u_char *data, size_t len)
 {
-    u_int i, j;
+    size_t i, j;
 
-    j = (u_int32_t)((context->count >> 3) & 63);
+    j = (size_t)((context->count >> 3) & 63);
     context->count += (len << 3);
     if ((j + len) > 63) {
 	(void)memcpy(&context->buffer[j], data, (i = 64-j));
@@ -154,10 +154,10 @@ SHA1Update(SHA1_CTX *context, const u_char *data, u_int len)
  * Add padding and return the message digest.
  */
 void
-SHA1Final(u_char digest[SHA1_DIGEST_LENGTH], SHA1_CTX *context)
+SHA1Pad(SHA1_CTX *context)
 {
+    u_int8_t finalcount[8];
     u_int i;
-    u_char finalcount[8];
 
     for (i = 0; i < 8; i++) {
 	finalcount[i] = (u_char)((context->count >>
@@ -167,10 +167,18 @@ SHA1Final(u_char digest[SHA1_DIGEST_LENGTH], SHA1_CTX *context)
     while ((context->count & 504) != 448)
 	SHA1Update(context, (u_char *)"\0", 1);
     SHA1Update(context, finalcount, 8);  /* Should cause a SHA1Transform() */
+}
 
+void
+SHA1Final(u_char digest[SHA1_DIGEST_LENGTH], SHA1_CTX *context)
+{
+    u_int i;
+
+    SHA1Pad(context);
     if (digest) {
 	for (i = 0; i < SHA1_DIGEST_LENGTH; i++)
 	    digest[i] = (u_char)
 		((context->state[i>>2] >> ((3-(i & 3)) * 8) ) & 255);
     }
+    memset(context, 0, sizeof(*context));
 }

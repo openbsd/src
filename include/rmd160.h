@@ -1,4 +1,4 @@
-/*	$OpenBSD: rmd160.h,v 1.14 2004/04/29 15:51:16 millert Exp $	*/
+/*	$OpenBSD: rmd160.h,v 1.15 2004/05/03 17:30:14 millert Exp $	*/
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
  *
@@ -43,13 +43,16 @@ void	 RMD160Init(RMD160_CTX *);
 void	 RMD160Transform(u_int32_t [5], const u_int8_t [RMD160_BLOCK_LENGTH])
 		__attribute__((__bounded__(__minbytes__,1,5)))
 		__attribute__((__bounded__(__minbytes__,2,RMD160_BLOCK_LENGTH)));
-void	 RMD160Update(RMD160_CTX *, const u_int8_t *, u_int32_t)
+void	 RMD160Update(RMD160_CTX *, const u_int8_t *, size_t)
 		__attribute__((__bounded__(__string__,2,3)));
+void	 RMD160Pad(RMD160_CTX *);
 void	 RMD160Final(u_int8_t [RMD160_DIGEST_LENGTH], RMD160_CTX *)
 		__attribute__((__bounded__(__minbytes__,1,RMD160_DIGEST_LENGTH)));
 char	*RMD160End(RMD160_CTX *, char *)
 		__attribute__((__bounded__(__minbytes__,2,RMD160_DIGEST_STRING_LENGTH)));
 char	*RMD160File(char *, char *)
+		__attribute__((__bounded__(__minbytes__,2,RMD160_DIGEST_STRING_LENGTH)));
+char	*RMD160FileChunk(char *, char *, off_t, off_t)
 		__attribute__((__bounded__(__minbytes__,2,RMD160_DIGEST_STRING_LENGTH)));
 char	*RMD160Data(const u_int8_t *, size_t, char *)
 		__attribute__((__bounded__(__string__,1,2)))

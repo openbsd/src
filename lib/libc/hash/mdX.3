@@ -6,7 +6,7 @@
 .\" this stuff is worth it, you can buy me a beer in return.   Poul-Henning Kamp
 .\" ----------------------------------------------------------------------------
 .\"
-.\" 	$OpenBSD: mdX.3,v 1.3 2004/04/29 15:51:16 millert Exp $
+.\" 	$OpenBSD: mdX.3,v 1.4 2004/05/03 17:30:14 millert Exp $
 .\"
 .Dd April 29, 2004
 .Dt MDX 3
@@ -14,10 +14,12 @@
 .Sh NAME
 .Nm MDXInit ,
 .Nm MDXUpdate ,
+.Nm MDXPad ,
 .Nm MDXFinal ,
 .Nm MDXTransform ,
 .Nm MDXEnd ,
 .Nm MDXFile ,
+.Nm MDXFileChunk ,
 .Nm MDXData
 .Nd calculate the RSA Data Security, Inc., ``MDX'' message digest
 .Sh SYNOPSIS
@@ -28,6 +30,8 @@
 .Ft void
 .Fn MDXUpdate "MDX_CTX *context" "const unsigned char *data" "unsigned int len"
 .Ft void
+.Fn MDXPad "MDX_CTX *context"
+.Ft void
 .Fn MDXFinal "u_int8_t digest[MDX_DIGEST_LENGTH]" "MDX_CTX *context"
 .Ft void
 .Fn MDXTransform "u_int32_t state[4]" "u_int8_t block[MDX_BLOCK_LENGTH]"
@@ -35,6 +39,8 @@
 .Fn MDXEnd "MDX_CTX *context" "char *buf"
 .Ft "char *"
 .Fn MDXFile "char *filename" "char *buf"
+.Ft "char *"
+.Fn MDXFileChunk "char *filename" "char *buf" "off_t offset" "off_t length"
 .Ft "char *"
 .Fn MDXData "const u_int8_t *data" "size_t len" "char *buf"
 .Sh DESCRIPTION
@@ -70,10 +76,12 @@ run over the data with
 .Fn MDXUpdate ,
 and finally extract the result using
 .Fn MDXFinal .
-When a null pointer is passed to
-.Fn MDXFinal
-as first argument only the final padding will be applied and the
-current context can still be used with
+.Pp
+The
+.Fn MDXPad
+function can be used to apply padding to the message digest as in
+.Fn MDXFinal ,
+but the current context can still be used with
 .Fn MDXUpdate .
 .Pp
 The
@@ -103,6 +111,23 @@ calculates the digest of a file, and uses
 .Fn MDXEnd
 to return the result.
 If the file cannot be opened, a null pointer is returned.
+.Pp
+.Fn MDXFileChunk
+behaves like
+.Fn MDXFile
+but calculates the digest only for that portion of the file starting at
+.Fa offset
+and continuing for
+.Fa length
+bytes or until end of file is reached, whichever comes first.
+A zero
+.Fa length
+can be specified to read until end of file.
+A negative
+.Fa length
+or
+.Fa offset
+will be ignored.
 .Fn MDXData
 calculates the digest of a chunk of data in memory, and uses
 .Fn MDXEnd
@@ -111,6 +136,7 @@ to return the result.
 When using
 .Fn MDXEnd ,
 .Fn MDXFile ,
+.Fn MDXFileChunk ,
 or
 .Fn MDXData ,
 the
@@ -170,14 +196,15 @@ These functions appeared in
 The original MDX routines were developed by
 .Tn RSA
 Data Security, Inc., and published in the above references.
-This code is derived from a public domain implementation by Colin Plumb.
+This code is derived from a public domain implementation written by Colin Plumb.
 .Pp
 The
 .Fn MDXEnd ,
 .Fn MDXFile ,
+.Fn MDXFileChunk ,
 and
 .Fn MDXData
-helper functions were written by Poul-Henning Kamp.
+helper functions are derived from code written by Poul-Henning Kamp.
 .Sh BUGS
 Hans Dobbertin has shown collisions for the full version of MD4 and
 found a collision in the compress function of MD5.
