@@ -1,5 +1,5 @@
-/*	$OpenBSD: vm_mmap.c,v 1.4 1996/03/03 17:45:32 niklas Exp $	*/
-/*	$NetBSD: vm_mmap.c,v 1.45 1996/02/10 00:08:10 christos Exp $	*/
+/*	$OpenBSD: vm_mmap.c,v 1.5 1996/04/19 16:10:48 niklas Exp $	*/
+/*	$NetBSD: vm_mmap.c,v 1.46 1996/02/28 22:39:13 gwr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -820,13 +820,15 @@ vm_mmap(map, addr, size, prot, maxprot, flags, handle, foff)
 						     addr) == 1) {
 					rv = KERN_NO_SPACE;
 				} else {
-					vm_object_prefer(object, foff, addr);
+#ifdef	PMAP_PREFER
+					PMAP_PREFER(foff, addr);
+#endif
 					rv = vm_map_insert(map, NULL,
 							   (vm_offset_t)0,
 							   *addr, *addr+size);
 					/*
 					 * vm_map_insert() may fail if
-					 * vm_object_prefer() has altered
+					 * PMAP_PREFER() has altered
 					 * the initial address.
 					 * If so, we start again.
 					 */
@@ -846,7 +848,9 @@ vm_mmap(map, addr, size, prot, maxprot, flags, handle, foff)
 				if (rv == KERN_SUCCESS &&
 				    (mmapdebug & MDB_MAPIT)) {
 					vm_offset_t	paddr = *addr;
-					vm_object_prefer(object, foff, &paddr);
+#ifdef	PMAP_PREFER
+					PMAP_PREFER(foff, &paddr);
+#endif
 					if (paddr != *addr)
 					    printf(
 					      "vm_mmap: pmap botch! "

@@ -1,4 +1,5 @@
-/*	$NetBSD: skpc.c,v 1.2 1994/10/26 06:42:43 cgd Exp $	*/
+/*	$OpenBSD: skpc.c,v 1.2 1996/04/19 16:09:36 niklas Exp $	*/
+/*	$NetBSD: skpc.c,v 1.3 1996/03/14 18:52:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989 Regents of the University of California.
@@ -36,16 +37,17 @@
  */
 
 #include <sys/types.h>
+#include <lib/libkern/libkern.h>
 
 int
 skpc(mask, size, cp)
 	register int mask;
-	u_int size;
+	size_t size;
 	register u_char *cp;
 {
 	register u_char *end = &cp[size];
 
-	while (cp < end && *cp == mask)
+	while (cp < end && *cp == (u_char) mask)
 		cp++;
 	return (end - cp);
 }

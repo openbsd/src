@@ -1,5 +1,5 @@
-/*	$OpenBSD: msdosfs_lookup.c,v 1.3 1996/02/29 10:46:55 niklas Exp $	*/
-/*	$NetBSD: msdosfs_lookup.c,v 1.25 1996/02/09 19:13:47 christos Exp $	*/
+/*	$OpenBSD: msdosfs_lookup.c,v 1.4 1996/04/19 16:10:00 niklas Exp $	*/
+/*	$NetBSD: msdosfs_lookup.c,v 1.26 1996/03/07 13:30:46 ws Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995 Wolfgang Solfrank.
@@ -917,7 +917,7 @@ removede(pdep, dep)
 	dep->de_refcnt--;
 	do {
 		error = pcbmap(pdep, de_cluster(pmp, offset), &bn, 0, &blsize);
-		if (error);
+		if (error)
 			return error;
 		error = bread(pmp->pm_devvp, bn, blsize, NOCRED, &bp);
 		if (error) {

@@ -1,3 +1,6 @@
+/*	$OpenBSD: kern_ntptime.c,v 1.3 1996/04/19 16:08:57 niklas Exp $	*/
+/*	$NetBSD: kern_ntptime.c,v 1.2 1996/03/07 14:31:20 christos Exp $	*/
+
 /******************************************************************************
  *                                                                            *
  * Copyright (c) David L. Mills 1993, 1994                                    *
@@ -47,18 +50,28 @@
  * frequency of the phase-lock loop which controls the system clock.
  */
 #include <sys/param.h>
+#include <sys/resourcevar.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/timex.h>
+#include <sys/vnode.h>
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
+
+#include <machine/cpu.h>
+
+#include <vm/vm.h>
+#include <sys/sysctl.h>
+
+#ifdef NTP
 
 /*
  * The following variables are used by the hardclock() routine in the
  * kern_clock.c module and are described in that module. 
  */
+extern struct timeval time;	/* kernel time variable */
 extern int time_state;		/* clock state */
 extern int time_status;		/* clock status bits */
 extern long time_offset;	/* time adjustment (us) */
@@ -84,21 +97,26 @@ extern long pps_errcnt;		/* calibration errors */
 extern long pps_stbcnt;		/* stability limit exceeded */
 #endif /* PPS_SYNC */
 
+
+
+/*ARGSUSED*/
 /*
  * ntp_gettime() - NTP user application interface
  */
 int
-sys_ntp_gettime(p, v, retval)
+ntp_gettime(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
+
 {
-	register struct sys_ntp_gettime_args /* {
-		syscallarg(struct ntptimeval *) tp;
+	struct ntp_gettime_args /* {
+		syscallarg(struct timex *) tp;
 	} */ *uap = v;
 	struct timeval atv;
 	struct ntptimeval ntv;
-	int error, s;
+	int error = 0;
+	int s;
 
 	if (SCARG(uap, tp)) {
 		s = splclock();
@@ -162,29 +180,32 @@ sys_ntp_gettime(p, v, retval)
 		    time_status & (STA_PPSWANDER | STA_PPSERROR)))
 			*retval = TIME_ERROR;
 		else
-			*retval = time_state;
+			*retval = (register_t)time_state;
 	}
-	return (error);
+	return(error);
 }
 
+
+/* ARGSUSED */
 /*
  * ntp_adjtime() - NTP daemon application interface
  */
 int
-sys_ntp_adjtime(p, v, retval)
+ntp_adjtime(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	register struct sys_ntp_adjtime_args /* {
+	struct ntp_adjtime_args /* {
 		syscallarg(struct timex *) tp;
 	} */ *uap = v;
 	struct timex ntv;
+	int error = 0;
 	int modes;
-	int error, s;
+	int s;
 
-	error = copyin((caddr_t)SCARG(uap, tp), (caddr_t)&ntv, sizeof(ntv));
-	if (error)
+	if ((error = copyin((caddr_t)SCARG(uap, tp), (caddr_t)&ntv,
+			sizeof(ntv))))
 		return (error);
 
 	/*
@@ -193,8 +214,9 @@ sys_ntp_adjtime(p, v, retval)
 	 * the assumption the superuser should know what it is doing.
 	 */
 	modes = ntv.modes;
-	if (modes && (error = suser(p->p_ucred, &p->p_acflag)))
+	if (modes != 0 && (error = suser(p->p_ucred, &p->p_acflag)))
 		return (error);
+
 	s = splclock();
 	if (modes & MOD_FREQUENCY)
 #ifdef PPS_SYNC
@@ -245,8 +267,7 @@ sys_ntp_adjtime(p, v, retval)
 #endif /* PPS_SYNC */
 	(void)splx(s);
 
-	error = copyout((caddr_t)&ntv, (caddr_t)SCARG(uap, tp),
-	    sizeof(ntv));
+	error = copyout((caddr_t)&ntv, (caddr_t)SCARG(uap, tp), sizeof(ntv));
 	if (!error) {
 
 		/*
@@ -262,7 +283,127 @@ sys_ntp_adjtime(p, v, retval)
 		    time_status & (STA_PPSWANDER | STA_PPSERROR)))
 			*retval = TIME_ERROR;
 		else
-			*retval = time_state;
+			*retval = (register_t)time_state;
 	}
-	return (error);
+	return error;
 }
+
+
+
+/*
+ * return information about kernel precision timekeeping
+ */
+int
+sysctl_ntptime(where, sizep)
+	register char *where;
+	size_t *sizep;
+{
+	struct timeval atv;
+	struct ntptimeval ntv;
+	int s;
+
+	/*
+	 * Construct ntp_timeval.
+	 */
+
+	s = splclock();
+#ifdef EXT_CLOCK
+	/*
+	 * The microtime() external clock routine returns a
+	 * status code. If less than zero, we declare an error
+	 * in the clock status word and return the kernel
+	 * (software) time variable. While there are other
+	 * places that call microtime(), this is the only place
+	 * that matters from an application point of view.
+	 */
+	if (microtime(&atv) < 0) {
+		time_status |= STA_CLOCKERR;
+		ntv.time = time;
+	} else {
+		time_status &= ~STA_CLOCKERR;
+	}
+#else /* EXT_CLOCK */
+	microtime(&atv);
+#endif /* EXT_CLOCK */
+	ntv.time = atv;
+	ntv.maxerror = time_maxerror;
+	ntv.esterror = time_esterror;
+	splx(s);
+
+#ifdef notyet
+	/*
+	 * Status word error decode. If any of these conditions
+	 * occur, an error is returned, instead of the status
+	 * word. Most applications will care only about the fact
+	 * the system clock may not be trusted, not about the
+	 * details.
+	 *
+	 * Hardware or software error
+	 */
+	if ((time_status & (STA_UNSYNC | STA_CLOCKERR)) ||
+		ntv.time_state = TIME_ERROR;
+
+	/*
+	 * PPS signal lost when either time or frequency
+	 * synchronization requested
+	 */
+	   (time_status & (STA_PPSFREQ | STA_PPSTIME) &&
+	    !(time_status & STA_PPSSIGNAL)) ||
+
+	/*
+	 * PPS jitter exceeded when time synchronization
+	 * requested
+	 */
+	   (time_status & STA_PPSTIME &&
+	    time_status & STA_PPSJITTER) ||
+
+	/*
+	 * PPS wander exceeded or calibration error when
+	 * frequency synchronization requested
+	 */
+	   (time_status & STA_PPSFREQ &&
+	    time_status & (STA_PPSWANDER | STA_PPSERROR)))
+		ntv.time_state = TIME_ERROR;
+	else
+		ntv.time_state = time_state;
+#endif /* notyet */
+	return (sysctl_rdstruct(where, sizep, NULL, &ntv, sizeof(ntv)));
+}
+
+#else /* !NTP */
+
+/*
+ * For kernels configured without the NTP option, emulate the behavior
+ * of a kernel with no NTP support (i.e., sys_nosys()). On systems
+ * where kernel  NTP support appears present when xntpd is compiled,
+ * (e.g., sys/timex.h is present),  xntpd relies on getting a SIGSYS
+ * signal in response to an ntp_adjtime() syscal, to inform xntpd that
+ * NTP support is not really present, and xntpd should fall back to
+ * using a user-level phase-locked loop to discipline the clock.
+ */
+int
+ntp_gettime(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	return(ENOSYS);
+}
+
+int
+ntp_adjtime(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	return(sys_nosys(p, v, retval));
+}
+
+int
+sysctl_ntptime(where, sizep)
+	register char *where;
+	size_t *sizep;
+{
+	return (ENOSYS);
+}
+#endif /* NTP */

@@ -1,5 +1,5 @@
-/*	$OpenBSD: subr_autoconf.c,v 1.2 1996/03/03 17:19:59 niklas Exp $	*/
-/*	$NetBSD: subr_autoconf.c,v 1.17 1996/02/04 02:16:35 christos Exp $	*/
+/*	$OpenBSD: subr_autoconf.c,v 1.3 1996/04/19 16:09:01 niklas Exp $	*/
+/*	$NetBSD: subr_autoconf.c,v 1.18 1996/02/27 21:45:46 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -232,19 +232,21 @@ static char *msgs[3] = { "", " not configured\n", " unsupported\n" };
 /*
  * The given `aux' argument describes a device that has been found
  * on the given parent, but not necessarily configured.  Locate the
- * configuration data for that device (using the cd_match configuration
- * driver function) and attach it, and return true.  If the device was
+ * configuration data for that device (using the submatch function
+ * provided, or using candidates' cd_match configuration driver
+ * functions) and attach it, and return true.  If the device was
  * not configured, call the given `print' function and return 0.
  */
 int
-config_found(parent, aux, print)
+config_found_sm(parent, aux, print, submatch)
 	struct device *parent;
 	void *aux;
 	cfprint_t print;
+	cfmatch_t submatch;
 {
 	void *match;
 
-	if ((match = config_search((cfmatch_t)NULL, parent, aux)) != NULL) {
+	if ((match = config_search(submatch, parent, aux)) != NULL) {
 		config_attach(parent, match, aux, print);
 		return (1);
 	}

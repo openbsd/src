@@ -1,5 +1,5 @@
-/*	$OpenBSD: vm_object.c,v 1.3 1996/03/03 17:45:34 niklas Exp $	*/
-/*	$NetBSD: vm_object.c,v 1.33 1996/02/10 00:08:11 christos Exp $	*/
+/*	$OpenBSD: vm_object.c,v 1.4 1996/04/19 16:10:51 niklas Exp $	*/
+/*	$NetBSD: vm_object.c,v 1.34 1996/02/28 22:35:35 gwr Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -1403,56 +1403,6 @@ vm_object_coalesce(prev_object, next_object,
 	return(TRUE);
 }
 
-/*
- *	vm_object_prefer:
- *
- *	Return optimal virtual address for new mapping of this object.
- *
- *	The object must *not* be locked.
- */
-void
-vm_object_prefer(object, offset, addr)
-	register vm_object_t	object;
-	register vm_offset_t	offset;
-	register vm_offset_t	*addr;
-{
-	register vm_page_t	p;
-	register vm_offset_t	paddr;
-
-#ifdef PMAP_PREFER
-	if (object == NULL)
-		goto first_map;
-
-	/*
-	 * Look for the first page that the pmap layer has something
-	 * to say about. Since an object maps a contiguous range of
-	 * virutal addresses, this will determine the preferred origin
-	 * of the proposed mapping.
-	 */
-	vm_object_lock(object);
-	for (p = object->memq.tqh_first; p != NULL; p = p->listq.tqe_next) {
-		if (p->flags & (PG_FAKE | PG_FICTITIOUS))
-			continue;
-		paddr = PMAP_PREFER(VM_PAGE_TO_PHYS(p), *addr+p->offset-offset);
-		if (paddr == (vm_offset_t)-1)
-			continue;
-		*addr = paddr - (p->offset - offset);
-		vm_object_unlock(object);
-		return;
-	}
-	vm_object_unlock(object);
-
-first_map:
-	/*
-	 * No physical page attached; ask for a preferred address based
-	 * only on the given virtual address.
-	 */
-	paddr = PMAP_PREFER((vm_offset_t)-1, *addr);
-	if (paddr != (vm_offset_t)-1)
-		*addr = paddr;
-
-#endif
-}
 /*
  *	vm_object_print:	[ debug ]
  */

@@ -1,5 +1,5 @@
-/*	$OpenBSD: kern_descrip.c,v 1.3 1996/03/03 17:19:42 niklas Exp $	*/
-/*	$NetBSD: kern_descrip.c,v 1.39 1996/02/09 18:59:26 christos Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.4 1996/04/19 16:08:53 niklas Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.40 1996/03/14 19:01:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -863,7 +863,7 @@ sys_flock(p, v, retval)
  */
 /* ARGSUSED */
 int
-fdopen(dev, mode, type, p)
+filedescopen(dev, mode, type, p)
 	dev_t dev;
 	int mode, type;
 	struct proc *p;

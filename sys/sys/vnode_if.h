@@ -3,9 +3,9 @@
  * (Modifications made here may easily be lost!)
  *
  * Created from the file:
- *	NetBSD: vnode_if.src,v 1.9 1996/02/09 14:45:38 mycroft Exp 
+ *	OpenBSD
  * by the script:
- *	NetBSD: vnode_if.sh,v 1.9 1996/02/29 20:58:22 cgd Exp 
+ *	OpenBSD
  */
 
 /*

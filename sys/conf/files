@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.13 1996/04/19 07:31:23 mickey Exp $
+#	$OpenBSD: files,v 1.14 1996/04/19 16:08:25 niklas Exp $
 #	$NetBSD: files,v 1.82 1996/03/19 01:02:35 paulus Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -34,6 +34,7 @@ define	aic7xxx		# Adaptec aic7770 and aic7870 SCSI controllers
 define	isabus { }			# ISA attachment
 define	eisabus { }			# EISA attachment
 define	pcibus {[bus = -1]}		# PCI attachment
+define	pcmciabus { }			# PCMCIA attachment
 define	tcbus { }			# TurboChannel attachment
 
 # legitimate pseudo-devices

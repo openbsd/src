@@ -1,4 +1,5 @@
-/*	$NetBSD: sd.c,v 1.87 1996/02/14 21:47:40 christos Exp $	*/
+/*	$OpenBSD: sd.c,v 1.6 1996/04/19 16:10:17 niklas Exp $	*/
+/*	$NetBSD: sd.c,v 1.88 1996/03/05 00:15:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -196,12 +197,14 @@ sdattach(parent, self, aux)
 	 * the drive. We cannot use interrupts yet, so the
 	 * request must specify this.
 	 */
+	printf("\n");
+	printf("%s: ", sd->sc_dev.dv_xname);
 	if (scsi_start(sd->sc_link, SSS_START,
 	    SCSI_AUTOCONF | SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE | SCSI_SILENT) ||
 	    sd_get_parms(sd, SCSI_AUTOCONF) != 0)
-		printf(": drive offline\n");
+		printf("drive offline\n");
 	else
-	        printf(": %dMB, %d cyl, %d head, %d sec, %d bytes/sec\n",
+	        printf("%dMB, %d cyl, %d head, %d sec, %d bytes/sec\n",
 		    dp->disksize / (1048576 / dp->blksize), dp->cyls,
 		    dp->heads, dp->sectors, dp->blksize);
 }

@@ -1,5 +1,5 @@
-/*	$OpenBSD: cd9660_vnops.c,v 1.3 1996/02/29 10:12:28 niklas Exp $	*/
-/*	$NetBSD: cd9660_vnops.c,v 1.29 1996/02/10 00:33:53 christos Exp $	*/
+/*	$OpenBSD: cd9660_vnops.c,v 1.4 1996/04/19 16:08:43 niklas Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.31 1996/03/08 18:13:07 scottr Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -56,7 +56,7 @@
 #include <miscfs/specfs/specdev.h>
 #include <miscfs/fifofs/fifo.h>
 #include <sys/malloc.h>
-#include <sys/dir.h>
+#include <sys/dirent.h>
 
 #include <isofs/cd9660/iso.h>
 #include <isofs/cd9660/cd9660_node.h>
@@ -381,7 +381,7 @@ iso_uiodir(idp,dp,off)
 	int error;
 
 	dp->d_name[dp->d_namlen] = 0;
-	dp->d_reclen = DIRSIZ(dp);
+	dp->d_reclen = DIRENT_SIZE(dp);
 
 	if (idp->uio->uio_resid < dp->d_reclen) {
 		idp->eofflag = 0;
@@ -447,7 +447,7 @@ iso_shipdir(idp)
 			}
 		}
 	}
-	idp->current.d_reclen = DIRSIZ(&idp->current);
+	idp->current.d_reclen = DIRENT_SIZE(&idp->current);
 	if (assoc) {
 		idp->assocoff = idp->curroff;
 		bcopy(&idp->current,&idp->assocent,idp->current.d_reclen);

@@ -1,4 +1,5 @@
-/*	$NetBSD: rpc.c,v 1.10 1995/09/23 03:36:11 gwr Exp $	*/
+/*	$OpenBSD: rpc.c,v 1.2 1996/04/19 16:09:53 niklas Exp $	*/
+/*	$NetBSD: rpc.c,v 1.12 1996/02/26 23:05:26 gwr Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -53,11 +54,9 @@
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 
-#include <nfs/rpcv2.h>
-#include <nfs/nfsv2.h>
-#include <nfs/xdr_subs.h>
-
 #include <string.h>
+
+#include "rpcv2.h"
 
 #include "stand.h"
 #include "net.h"

@@ -1,4 +1,5 @@
-/*	$NetBSD: vm_user.c,v 1.12 1995/12/05 22:54:39 pk Exp $	*/
+/*	$OpenBSD: vm_user.c,v 1.3 1996/04/19 16:10:52 niklas Exp $	*/
+/*	$NetBSD: vm_user.c,v 1.13 1996/02/28 22:39:16 gwr Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -317,7 +318,9 @@ vm_allocate_with_pager(map, addr, size, anywhere, pager, poffset, internal)
 		if (vm_map_findspace(map, start, size, addr))
 			result = KERN_NO_SPACE;
 		else {
-			vm_object_prefer(object, poffset, addr);
+#ifdef	PMAP_PREFER
+			PMAP_PREFER(poffset, addr);
+#endif
 			start = *addr;
 			result = vm_map_insert(map, object, poffset,
 					       start, start + size);

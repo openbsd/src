@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_glue.c,v 1.12 1996/04/19 06:45:31 niklas Exp $    */
+/*	$OpenBSD: vm_glue.c,v 1.13 1996/04/19 16:10:47 niklas Exp $    */
 /*	$NetBSD: vm_glue.c,v 1.53 1996/02/18 22:53:43 mycroft Exp $	*/
 
 /* 

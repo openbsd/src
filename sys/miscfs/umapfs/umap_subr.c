@@ -1,5 +1,5 @@
-/*	$OpenBSD: umap_subr.c,v 1.6 1996/03/25 18:02:56 mickey Exp $	*/
-/*	$NetBSD: umap_subr.c,v 1.7 1996/02/09 22:41:02 christos Exp $	*/
+/*	$OpenBSD: umap_subr.c,v 1.7 1996/04/19 16:09:57 niklas Exp $	*/
+/*	$NetBSD: umap_subr.c,v 1.8 1996/03/05 02:35:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993

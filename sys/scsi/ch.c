@@ -1,4 +1,5 @@
-/*	$NetBSD: ch.c,v 1.14 1995/01/16 21:31:38 mycroft Exp $	*/
+/*	$OpenBSD: ch.c,v 1.3 1996/04/19 16:10:12 niklas Exp $	*/
+/*	$NetBSD: ch.c,v 1.16 1996/03/05 00:15:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -141,10 +142,12 @@ chattach(parent, self, aux)
 	 * the drive. We cannot use interrupts yet, so the
 	 * request must specify this.
 	 */
+	printf("\n");
+	printf("%s: ", ch->sc_dev.dv_xname);
 	if (ch_mode_sense(ch, SCSI_AUTOCONF) != 0)
-		printf(": offline\n");
+		printf("offline\n");
 	else
-		printf(": %d slot(s), %d drive(s), %d arm(s), %d i/e-slot(s)\n",
+		printf("%d slot(s), %d drive(s), %d arm(s), %d i/e-slot(s)\n",
 		    ch->slots, ch->drives, ch->chms, ch->imexs);
 }
 

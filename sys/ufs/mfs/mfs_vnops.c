@@ -1,5 +1,5 @@
-/*	$OpenBSD: mfs_vnops.c,v 1.2 1996/02/27 07:15:48 niklas Exp $	*/
-/*	$NetBSD: mfs_vnops.c,v 1.6 1996/02/09 22:31:30 christos Exp $	*/
+/*	$OpenBSD: mfs_vnops.c,v 1.3 1996/04/19 16:10:41 niklas Exp $	*/
+/*	$NetBSD: mfs_vnops.c,v 1.7 1996/02/21 00:06:45 cgd Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -332,8 +332,8 @@ mfs_print(v)
 	} */ *ap = v;
 	register struct mfsnode *mfsp = VTOMFS(ap->a_vp);
 
-	printf("tag VT_MFS, pid %d, base %d, size %d\n", mfsp->mfs_pid,
-		(unsigned int) mfsp->mfs_baseoff, mfsp->mfs_size);
+	printf("tag VT_MFS, pid %d, base %p, size %d\n", mfsp->mfs_pid,
+		mfsp->mfs_baseoff, mfsp->mfs_size);
 	return (0);
 }
 

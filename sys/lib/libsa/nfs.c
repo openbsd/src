@@ -1,4 +1,5 @@
-/*	$NetBSD: nfs.c,v 1.12 1995/09/23 03:36:08 gwr Exp $	*/
+/*	$OpenBSD: nfs.c,v 1.2 1996/04/19 16:09:50 niklas Exp $	*/
+/*	$NetBSD: nfs.c,v 1.14 1996/02/26 23:05:21 gwr Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -37,9 +38,8 @@
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 
-#include <nfs/rpcv2.h>
-#include <nfs/nfsv2.h>
-#include <nfs/xdr_subs.h>
+#include "rpcv2.h"
+#include "nfsv2.h"
 
 #include "stand.h"
 #include "net.h"
@@ -250,11 +250,11 @@ nfs_readdata(d, off, addr, len)
 	repl = &rdata.d;
 
 	bcopy(d->fh, args->fh, NFS_FHSIZE);
-	args->off = txdr_unsigned(off);
+	args->off = htonl((n_long)off);
 	if (len > NFSREAD_SIZE)
 		len = NFSREAD_SIZE;
-	args->len = txdr_unsigned(len);
-	args->xxx = txdr_unsigned(0);
+	args->len = htonl((n_long)len);
+	args->xxx = htonl((n_long)0);
 	hlen = sizeof(*repl) - NFSREAD_SIZE;
 
 	cc = rpc_call(d->iodesc, NFS_PROG, NFS_VER2, NFSPROC_READ,

@@ -1,5 +1,4 @@
-/*	$OpenBSD: aic7870.c,v 1.5 1996/04/18 23:47:54 niklas Exp $	*/
-/*	$NetBSD: aic7870.c,v 1.8 1996/03/17 00:55:23 thorpej Exp $	*/
+/*	$NetBSD: aic7870.c,v 1.7 1996/03/04 19:30:50 cgd Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -46,12 +45,9 @@
 static int aic7870_probe __P((struct device *, void *, void *));
 static void aic7870_attach __P((struct device *, struct device *, void *));
 
-struct cfattach ahc_ca = {
-	sizeof(struct ahc_softc), aic7870_probe, aic7870_attach
-};
-
-struct cfdriver ahc_cd = {
-        NULL, "ahc", DV_DULL
+struct cfdriver ahccd = {
+        NULL, "ahc", aic7870_probe, aic7870_attach, DV_DULL, 
+        sizeof(struct ahc_softc)
 }; 
 
 int ahcintr __P((void *));
@@ -110,6 +106,6 @@ aic7870_attach(parent, self, aux)
 
 	ahcattach(ahc);
 
-	ahc->sc_ih = pci_map_int(pa->pa_tag, IPL_BIO, ahcintr, ahc
+	ahc->sc_ih = pci_map_int(pa->pa_tag, IPL_BIO, ahcintr, ahc,
 	    ahc->sc_dev.dv_xname);
 }

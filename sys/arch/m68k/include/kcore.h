@@ -1,8 +1,8 @@
-/*	$OpenBSD: __main.c,v 1.2 1996/04/19 16:09:17 niklas Exp $	*/
-/*	$NetBSD: __main.c,v 1.4 1996/03/14 18:52:03 christos Exp $	*/
+/*	$OpenBSD: kcore.h,v 1.1 1996/04/19 16:08:13 niklas Exp $	*/
+/*	$NetBSD: kcore.h,v 1.1 1996/03/10 21:55:18 leo Exp $	*/
 
 /*
- * Copyright (c) 1993 Christopher G. Demetriou
+ * Copyright (c) 1996 Leo Weppelman.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -15,7 +15,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by Christopher G. Demetriou.
+ *      This product includes software developed by Leo Weppelman.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission
  *
@@ -31,11 +31,16 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/types.h>
+#ifndef _M68K_KCORE_H_
+#define	_M68K_KCORE_H_
 
-void __main __P((void));
+#define	NPHYS_RAM_SEGS	8
 
-void
-__main()
-{
-}
+typedef struct cpu_kcore_hdr {
+	vm_offset_t	kernel_pa;	/* Phys. address of kernel VA 0	*/
+	st_entry_t	*sysseg_pa;	/* Phys. address of Sysseg	*/
+	int		mmutype;
+	phys_ram_seg_t	ram_segs[NPHYS_RAM_SEGS];
+} cpu_kcore_hdr_t;
+
+#endif /* _M68K_KCORE_H_ */

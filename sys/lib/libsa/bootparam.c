@@ -1,4 +1,5 @@
-/*	$NetBSD: bootparam.c,v 1.6 1995/12/08 04:10:28 gwr Exp $	*/
+/*	$OpenBSD: bootparam.c,v 1.3 1996/04/19 16:09:49 niklas Exp $	*/
+/*	$NetBSD: bootparam.c,v 1.7 1996/02/26 23:05:14 gwr Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -42,9 +43,9 @@
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 
-#include <nfs/rpcv2.h>
-
 #include <string.h>
+
+#include "rpcv2.h"
 
 #include "stand.h"
 #include "net.h"

@@ -1,4 +1,5 @@
-/*	$NetBSD: uk.c,v 1.13 1995/03/24 20:17:15 glass Exp $	*/
+/*	$OpenBSD: uk.c,v 1.2 1996/04/19 16:10:30 niklas Exp $	*/
+/*	$NetBSD: uk.c,v 1.14 1996/03/05 00:15:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -100,7 +101,8 @@ ukattach(parent, self, aux)
 	sc_link->device_softc = uk;
 	sc_link->openings = 1;
 
-	printf(": unknown device\n");
+	printf("\n");
+	printf("%s: unknown device\n", uk->sc_dev.dv_xname);
 }
 
 /*

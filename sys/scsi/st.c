@@ -1,4 +1,5 @@
-/*	$NetBSD: st.c,v 1.54 1995/10/13 20:01:08 gwr Exp $	*/
+/*	$OpenBSD: st.c,v 1.9 1996/04/19 16:10:28 niklas Exp $	*/
+/*	$NetBSD: st.c,v 1.62 1996/03/05 00:15:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -201,13 +202,6 @@ struct st_quirk_inquiry_pattern st_quirk_patterns[] = {
 		{0, 0, 0},				/* minor 8-11 */
 		{0, 0, 0}				/* minor 12-15 */
 	}}},
-	{{T_SEQUENTIAL, T_REMOV,
-	 "WANGTEK ", "5150ES SCSI FA15\0""01 A", "????"}, {0, 0, {
-		{0, ST_Q_IGNORE_LOADS, 0},		/* minor 0-3 */
-		{0, 0, 0},				/* minor 4-7 */
-		{0, 0, 0},				/* minor 8-11 */
-		{0, 0, 0}				/* minor 12-15 */
-	}}},
 #if 0
 	{{T_SEQUENTIAL, T_REMOV,
 	 "EXABYTE ", "EXB-8200        ", ""},     {0, 12, {
@@ -217,6 +211,13 @@ struct st_quirk_inquiry_pattern st_quirk_patterns[] = {
 		{0, 0, 0}				/* minor 12-15 */
 	}}},
 #endif
+	{{T_SEQUENTIAL, T_REMOV,
+	 "WANGTEK ", "5150ES SCSI FA15\0""01 A", "????"}, {0, 0, {
+		{0, ST_Q_IGNORE_LOADS, 0},		/* minor 0-3 */
+		{0, 0, 0},				/* minor 4-7 */
+		{0, 0, 0},				/* minor 8-11 */
+		{0, 0, 0}				/* minor 12-15 */
+	}}},
 };
 
 #define NOEJECT 0
@@ -367,7 +368,8 @@ stattach(parent, self, aux)
 	 * the drive. We cannot use interrupts yet, so the
 	 * request must specify this.
 	 */
-	printf(": %s", st->quirkdata ? "rogue, " : "");
+	printf("\n");
+	printf("%s: %s", st->sc_dev.dv_xname, st->quirkdata ? "rogue, " : "");
 	if (scsi_test_unit_ready(sc_link,
 	    SCSI_AUTOCONF | SCSI_SILENT | SCSI_IGNORE_MEDIA_CHANGE) ||
 	    st_mode_sense(st,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pk_llcsubr.c,v 1.2 1996/03/04 07:36:42 niklas Exp $	*/
+/*	$OpenBSD: pk_llcsubr.c,v 1.3 1996/04/19 16:10:09 niklas Exp $	*/
 /*	$NetBSD: pk_llcsubr.c,v 1.4 1996/02/13 22:05:26 christos Exp $	*/
 
 /* 
@@ -126,8 +126,25 @@
 #define XIFA(rt) ((struct x25_ifaddr *)((rt)->rt_ifa))
 #define SA(s) ((struct sockaddr *)s)
 
-int
+static int cons_rtrequest_internal __P((int, struct rtentry *,
+    struct sockaddr *));
+
+/* 
+ * ifa_rtrequest currently does not check the error from the rtrequest call
+ * so we use a void version of the cons_rtrequest routine.
+ */
+void
 cons_rtrequest(cmd, rt, dst)
+        int             cmd;
+        struct rtentry *rt;
+        struct sockaddr *dst;
+{
+        cons_rtrequest_internal(cmd, rt, dst);
+}
+
+
+static int
+cons_rtrequest_internal(cmd, rt, dst)
 	int             cmd;
 	struct rtentry *rt;
 	struct sockaddr *dst;

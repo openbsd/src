@@ -1,8 +1,12 @@
-/*	$OpenBSD: strcat.c,v 1.2 1996/04/19 16:09:37 niklas Exp $	*/
+/*	$OpenBSD: rpcv2.h,v 1.1 1996/04/19 16:09:55 niklas Exp $	*/
+/*	$NetBSD: rpcv2.h,v 1.1 1996/02/26 23:05:32 gwr Exp $	*/
 
 /*
- * Copyright (c) 1988 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
+ *
+ * This code is derived from software contributed to Berkeley by
+ * Rick Macklem at The University of Guelph.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -31,23 +35,56 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ *	@(#)rpcv2.h	8.1 (Berkeley) 6/10/93
  */
 
-#if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)strcat.c	5.6 (Berkeley) 2/24/91";*/
-static char *rcsid = "$OpenBSD: strcat.c,v 1.2 1996/04/19 16:09:37 niklas Exp $";
-#endif /* LIBC_SCCS and not lint */
+/*
+ * Definitions for Sun RPC Version 2, from
+ * "RPC: Remote Procedure Call Protocol Specification" RFC1057
+ */
 
-#include <string.h>
+/* Version # */
+#define	RPC_VER2	2
 
-char *
-strcat(s, append)
-	register char *s;
-	register const char *append;
-{
-	char *save = s;
+/* Authentication */
+#define	RPCAUTH_NULL	0
+#define	RPCAUTH_UNIX	1
+#define	RPCAUTH_SHORT	2
+#define	RPCAUTH_MAXSIZ	400
+#define	RPCAUTH_UNIXGIDS 16
 
-	for (; *s; ++s);
-	while ((*s++ = *append++) != '\0');
-	return(save);
-}
+/* Rpc Constants */
+#define	RPC_CALL	0
+#define	RPC_REPLY	1
+#define	RPC_MSGACCEPTED	0
+#define	RPC_MSGDENIED	1
+#define	RPC_PROGUNAVAIL	1
+#define	RPC_PROGMISMATCH	2
+#define	RPC_PROCUNAVAIL	3
+#define	RPC_GARBAGE	4		/* I like this one */
+#define	RPC_MISMATCH	0
+#define	RPC_AUTHERR	1
+
+/* Authentication failures */
+#define	AUTH_BADCRED	1
+#define	AUTH_REJECTCRED	2
+#define	AUTH_BADVERF	3
+#define	AUTH_REJECTVERF	4
+#define	AUTH_TOOWEAK	5		/* Give em wheaties */
+
+/* Sizes of rpc header parts */
+#define	RPC_SIZ		24
+#define	RPC_REPLYSIZ	28
+
+/* RPC Prog definitions */
+#define	RPCPROG_MNT	100005
+#define	RPCMNT_VER1	1
+#define	RPCMNT_MOUNT	1
+#define	RPCMNT_DUMP	2
+#define	RPCMNT_UMOUNT	3
+#define	RPCMNT_UMNTALL	4
+#define	RPCMNT_EXPORT	5
+#define	RPCMNT_NAMELEN	255
+#define	RPCMNT_PATHLEN	1024
+#define	RPCPROG_NFS	100003

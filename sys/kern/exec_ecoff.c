@@ -1,4 +1,5 @@
-/*	$NetBSD: exec_ecoff.c,v 1.5 1994/08/18 22:09:35 cgd Exp $	*/
+/*	$OpenBSD: exec_ecoff.c,v 1.2 1996/04/19 16:08:47 niklas Exp $	*/
+/*	$NetBSD: exec_ecoff.c,v 1.6 1996/03/07 14:31:16 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass
@@ -70,8 +71,6 @@ exec_ecoff_makecmds(p, epp)
 	struct proc *p;
 	struct exec_package *epp;
 {
-	u_long midmag, magic;
-	u_short mid;
 	int error;
 	struct ecoff_filehdr *efp = epp->ep_hdr;
 	struct ecoff_aouthdr *eap;
@@ -104,7 +103,6 @@ exec_ecoff_makecmds(p, epp)
 	if (error)
 		kill_vmcmds(&epp->ep_vmcmds);
 
-bad:
 	return error;
 }
 

@@ -1,5 +1,5 @@
-/*	$OpenBSD: msdosfs_vnops.c,v 1.3 1996/02/29 10:46:59 niklas Exp $	*/
-/*	$NetBSD: msdosfs_vnops.c,v 1.46 1996/02/09 19:13:53 christos Exp $	*/
+/*	$OpenBSD: msdosfs_vnops.c,v 1.4 1996/04/19 16:10:03 niklas Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.47 1996/03/08 18:13:10 scottr Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995 Wolfgang Solfrank.
@@ -1483,7 +1483,7 @@ msdosfs_readdir(v)
 					strcpy(dirbuf.d_name, "..");
 					break;
 				}
-				dirbuf.d_reclen = DIRSIZ(&dirbuf);
+				dirbuf.d_reclen = DIRENT_SIZE(&dirbuf);
 				if (uio->uio_resid < dirbuf.d_reclen)
 					goto out;
 				error = uiomove((caddr_t) &dirbuf,
@@ -1590,7 +1590,7 @@ msdosfs_readdir(v)
 			else
 				dirbuf.d_name[dirbuf.d_namlen] = 0;
 			chksum = -1;
-			dirbuf.d_reclen = DIRSIZ(&dirbuf);
+			dirbuf.d_reclen = DIRENT_SIZE(&dirbuf);
 			if (uio->uio_resid < dirbuf.d_reclen) {
 				brelse(bp);
 				goto out;

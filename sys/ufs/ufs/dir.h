@@ -1,4 +1,5 @@
-/*	$NetBSD: dir.h,v 1.6 1995/06/15 23:22:49 cgd Exp $	*/
+/*	$OpenBSD: dir.h,v 1.2 1996/04/19 16:10:44 niklas Exp $	*/
+/*	$NetBSD: dir.h,v 1.8 1996/03/09 19:42:41 scottr Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993

@@ -1,4 +1,5 @@
-/*	$NetBSD: vfs_bio.c,v 1.41 1996/02/09 19:00:53 christos Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.4 1996/04/19 16:09:09 niklas Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.42 1996/02/18 11:57:08 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -386,6 +387,7 @@ bdwrite(bp)
 	}
 
 	/* Otherwise, the "write" is done, so mark and release the buffer. */
+	CLR(bp->b_flags, B_NEEDCOMMIT);
 	SET(bp->b_flags, B_DONE);
 	brelse(bp);
 }

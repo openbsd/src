@@ -1,4 +1,5 @@
-/*	$NetBSD: scanc.c,v 1.2 1994/10/26 06:42:42 cgd Exp $	*/
+/*	$OpenBSD: scanc.c,v 1.2 1996/04/19 16:09:33 niklas Exp $	*/
+/*	$NetBSD: scanc.c,v 1.3 1996/03/14 18:52:16 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989 Regents of the University of California.
@@ -36,6 +37,7 @@
  */
 
 #include <sys/types.h>
+#include <lib/libkern/libkern.h>
 
 int
 scanc(size, cp, table, mask)

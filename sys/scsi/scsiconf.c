@@ -1,4 +1,5 @@
-/*	$NetBSD: scsiconf.c,v 1.49 1996/02/18 20:32:43 mycroft Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.7 1996/04/19 16:10:15 niklas Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.52 1996/03/05 01:45:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -92,6 +93,8 @@ struct cfdriver scsibuscd = {
 	NULL, "scsibus", scsibusmatch, scsibusattach, DV_DULL,
 	sizeof(struct scsibus_softc)
 };
+
+int scsibusprint __P((void *, char *));
 
 int
 scsibusmatch(parent, match, aux)
@@ -295,6 +298,8 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	 "TEXEL   ", "CD-ROM DM-XX24 K", "1.10"}, SDEV_NOLUNS},
 
 	{{T_DIRECT, T_FIXED,
+	 "DEC     ", "RZ55     (C) DEC", ""},     SDEV_AUTOSAVE},
+	{{T_DIRECT, T_FIXED,
 	 "EMULEX  ", "MD21/S2     ESDI", "A00"},  SDEV_FORCELUNS},
 	{{T_DIRECT, T_FIXED,
 	 "MAXTOR  ", "XT-3280         ", ""},     SDEV_NOLUNS},
@@ -310,6 +315,8 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	 "MAXTOR  ", "LXT-213S        ", ""},     SDEV_NOLUNS},
 	{{T_DIRECT, T_FIXED,
 	 "MAXTOR  ", "LXT-213S SUN0207", ""},     SDEV_NOLUNS},
+	{{T_DIRECT, T_FIXED,
+	 "MAXTOR  ", "LXT-200S        ", ""},     SDEV_NOLUNS},
 	{{T_DIRECT, T_FIXED,
 	 "MST     ", "SnapLink        ", ""},     SDEV_NOLUNS},
 	{{T_DIRECT, T_FIXED,
@@ -362,6 +369,114 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 };
 
 /*
+ * Print out autoconfiguration information for a subdevice.
+ *
+ * This is a slight abuse of 'standard' autoconfiguration semantics,
+ * because 'print' functions don't normally print the colon and
+ * device information.  However, in this case that's better than
+ * either printing redundant information before the attach message,
+ * or having the device driver call a special function to print out
+ * the standard device information.
+ */
+int
+scsibusprint(aux, pnp)
+	void *aux;
+	char *pnp;
+{
+	struct scsibus_attach_args *sa = aux;
+	struct scsi_inquiry_data *inqbuf;
+	u_int8_t type;
+	boolean removable;
+	char *dtype, *qtype;
+	char vendor[33], product[65], revision[17];
+	int target, lun;
+
+	if (pnp != NULL)
+		printf("%s", pnp);
+
+	inqbuf = sa->sa_inqbuf;
+
+        target = sa->sa_sc_link->target;
+        lun = sa->sa_sc_link->lun;
+
+        type = inqbuf->device & SID_TYPE;
+        removable = inqbuf->dev_qual2 & SID_REMOVABLE ? 1 : 0;
+
+	/*
+	 * Figure out basic device type and qualifier.
+	 */
+	dtype = 0;
+	switch (inqbuf->device & SID_QUAL) {
+	case SID_QUAL_LU_OK:
+		qtype = "";
+		break;
+
+	case SID_QUAL_LU_OFFLINE:
+		qtype = " offline";
+		break;
+
+	case SID_QUAL_RSVD:
+	case SID_QUAL_BAD_LU:
+		panic("scsibusprint: impossible qualifier");
+
+	default:
+		qtype = "";
+		dtype = "vendor-unique";
+		break;
+	}
+	if (dtype == 0) {
+		switch (type) {
+		case T_DIRECT:
+			dtype = "direct";
+			break;
+		case T_SEQUENTIAL:
+			dtype = "sequential";
+			break;
+		case T_PRINTER:
+			dtype = "printer";
+			break;
+		case T_PROCESSOR:
+			dtype = "processor";
+			break;
+		case T_CDROM:
+			dtype = "cdrom";
+			break;
+		case T_WORM:
+			dtype = "worm";
+			break;
+		case T_SCANNER:
+			dtype = "scanner";
+			break;
+		case T_OPTICAL:
+			dtype = "optical";
+			break;
+		case T_CHANGER:
+			dtype = "changer";
+			break;
+		case T_COMM:
+			dtype = "communication";
+			break;
+		case T_NODEVICE:
+			panic("scsibusprint: impossible device type");
+		default:
+			dtype = "unknown";
+			break;
+		}
+	}
+
+        scsi_strvis(vendor, inqbuf->vendor, 8);
+        scsi_strvis(product, inqbuf->product, 16);
+        scsi_strvis(revision, inqbuf->revision, 4);
+
+        printf(" targ %d lun %d: <%s, %s, %s> SCSI%d %d/%s %s%s",
+            target, lun, vendor, product, revision,
+            inqbuf->version & SID_ANSII, type, dtype,
+            removable ? "removable" : "fixed", qtype);
+
+	return (UNCONF);
+}
+
+/*
  * given a target and lu, ask the device what
  * it is, and find the correct driver table
  * entry.
@@ -374,11 +489,7 @@ scsi_probedev(scsi, target, lun)
 	struct scsi_link *sc_link;
 	static struct scsi_inquiry_data inqbuf;
 	struct scsi_quirk_inquiry_pattern *finger;
-	int priority;
-	u_int8_t type;
-	boolean removable;
-	char *dtype, *qtype;
-	char vendor[33], product[65], revision[17];
+	int checkdtype, priority;
 	struct scsibus_attach_args sa;
 	struct cfdata *cf;
 
@@ -444,24 +555,19 @@ scsi_probedev(scsi, target, lun)
 	/*
 	 * note what BASIC type of device it is
 	 */
-	type = inqbuf.device & SID_TYPE;
-	removable = inqbuf.dev_qual2 & SID_REMOVABLE ? 1 : 0;
-
-	if (removable)
+	if ((inqbuf.dev_qual2 & SID_REMOVABLE) != 0)
 		sc_link->flags |= SDEV_REMOVABLE;
 
 	/*
 	 * Any device qualifier that has the top bit set (qualifier&4 != 0)
 	 * is vendor specific and won't match in this switch.
+	 * All we do here is throw out bad/negative responses.
 	 */
-	dtype = 0;
+	checkdtype = 0;
 	switch (inqbuf.device & SID_QUAL) {
 	case SID_QUAL_LU_OK:
-		qtype = "";
-		break;
-
 	case SID_QUAL_LU_OFFLINE:
-		qtype = " offline";
+		checkdtype = 1;
 		break;
 
 	case SID_QUAL_RSVD:
@@ -469,68 +575,38 @@ scsi_probedev(scsi, target, lun)
 		goto bad;
 
 	default:
-		qtype = "";
-		dtype = "vendor-unique";
 		break;
 	}
-	if (dtype == 0) {
-		switch (type) {
+	if (checkdtype) {
+		switch (inqbuf.device & SID_TYPE) {
 		case T_DIRECT:
-			dtype = "direct";
-			break;
 		case T_SEQUENTIAL:
-			dtype = "sequential";
-			break;
 		case T_PRINTER:
-			dtype = "printer";
-			break;
 		case T_PROCESSOR:
-			dtype = "processor";
-			break;
 		case T_CDROM:
-			dtype = "cdrom";
-			break;
 		case T_WORM:
-			dtype = "worm";
-			break;
 		case T_SCANNER:
-			dtype = "scanner";
-			break;
 		case T_OPTICAL:
-			dtype = "optical";
-			break;
 		case T_CHANGER:
-			dtype = "changer";
-			break;
 		case T_COMM:
-			dtype = "communication";
+		default:
 			break;
 		case T_NODEVICE:
 			goto bad;
-		default:
-			dtype = "unknown";
-			break;
 		}
 	}
-
-	scsi_strvis(vendor, inqbuf.vendor, 8);
-	scsi_strvis(product, inqbuf.product, 16);
-	scsi_strvis(revision, inqbuf.revision, 4);
-
-	printf("%s targ %d lun %d: <%s, %s, %s> SCSI%d %d/%s %s%s\n",
-	    ((struct device *)sc_link->adapter_softc)->dv_xname,
-	    target, lun, vendor, product, revision,
-	    inqbuf.version & SID_ANSII, type, dtype,
-	    removable ? "removable" : "fixed", qtype);
 
 	sa.sa_sc_link = sc_link;
 	sa.sa_inqbuf = &inqbuf;
 
 	if ((cf = config_search(scsibussubmatch, (struct device *)scsi, &sa)) != 0) {
 		scsi->sc_link[target][lun] = sc_link;
-		config_attach((struct device *)scsi, cf, &sa, NULL);
-	} else
+		config_attach((struct device *)scsi, cf, &sa, scsibusprint);
+	} else {
+		scsibusprint(&sa, scsi->sc_dev.dv_xname);
+		printf(" not configured\n");
 		goto bad;
+	}
 
 	return;
 
