@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.8 1997/04/16 22:14:15 deraadt Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.9 1997/04/17 21:47:37 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -90,6 +90,7 @@ getcmd(cmd)
 	cmd->argc = 1;
 
 	if (!readline(cmd_buf, cmd->timeout)) {
+		printf("\n");
 		cmd->cmd = CMD_BOOT;
 		cmd->argv[0] = cmd_table[CMD_BOOT].cmd_name;
 		cmd->argv[1] = NULL;
@@ -101,7 +102,6 @@ getcmd(cmd)
 	for (q = cmd_buf; *q && (*q == ' ' || *q == '\t'); q++)
 		;
 	p = nextword(q);
-printf("cmd=%s\n", q);
 
 	for (l = 0; q[l]; l++)
 		;
@@ -111,15 +111,17 @@ printf("cmd=%s\n", q);
 	if (ct->cmd_name == NULL) {
 		cmd->cmd = CMD_BOOT;
 		cmd->argv[0] = cmd_table[CMD_BOOT].cmd_name;
-		if (q && *q)
+		if (q && *q) {
+			if (*q == '-')
+				cmd->argv[cmd->argc++] = NULL;	/* XXX */
 			cmd->argv[cmd->argc++] = q;
+		}
 	} else {
 		cmd->cmd = ct->cmd_id;
 		cmd->argv[0] = ct->cmd_name;
 	}
 	while (p && cmd->argc+1 < sizeof(cmd->argv) / sizeof(cmd->argv[0])) {
 		cmd->argv[cmd->argc++] = p;
-printf("argN=%s\n", p);
 		p = nextword(p);
 	}
 	cmd->argv[cmd->argc] = NULL;
@@ -372,7 +374,7 @@ execmd(cmd)
 
 	case CMD_BOOT:
 		/* XXX "boot -s" will not work as this is written */
-		if (cmd->argc > 1) {
+		if (cmd->argc > 1 && cmd->argv[1]) {
 			char *p;
 
 			for (p = cmd->argv[1]; *p; p++)
