@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4231.c,v 1.19 2003/06/02 18:40:59 jason Exp $	*/
+/*	$OpenBSD: cs4231.c,v 1.20 2003/12/20 00:49:45 miod Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -1536,7 +1536,7 @@ cs4231_trigger_output(addr, start, end, blksize, intr, arg, param)
 	while (p != NULL && p->addr != start)
 		p = p->next;
 	if (p == NULL) {
-		printf("cs4231_trigger_output: bad addr: %x\n", start);
+		printf("cs4231_trigger_output: bad addr: %p\n", start);
 		return (EINVAL);
 	}
 
@@ -1602,7 +1602,7 @@ cs4231_trigger_input(addr, start, end, blksize, intr, arg, param)
 	for (p = sc->sc_dmas; p->addr != start; p = p->next)
 		/*EMPTY*/;
 	if (p == NULL) {
-		printf("%s: trigger_input: bad addr: %x\n",
+		printf("%s: trigger_input: bad addr: %p\n",
 		    sc->sc_dev.dv_xname, start);
 		return (EINVAL);
 	}
