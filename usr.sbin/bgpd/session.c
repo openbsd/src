@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.204 2004/11/18 16:30:05 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.205 2004/11/18 16:38:05 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -533,9 +533,9 @@ init_peer(struct peer *p)
 {
 	p->fd = p->wbuf.fd = -1;
 
-	p->capa.ann_mp_v4 = SAFI_UNICAST;
-	p->capa.ann_mp_v6 = SAFI_NONE;
-	p->capa.ann_refresh = 1;
+	p->capa.ann.mp_v4 = SAFI_UNICAST;
+	p->capa.ann.mp_v6 = SAFI_NONE;
+	p->capa.ann.refresh = 1;
 	if (!p->conf.capabilities)
 		session_capa_ann_none(p);
 
@@ -1133,9 +1133,9 @@ session_tcp_established(struct peer *peer)
 void
 session_capa_ann_none(struct peer *peer)
 {
-	peer->capa.ann_mp_v4 = SAFI_NONE;
-	peer->capa.ann_mp_v4 = SAFI_NONE;
-	peer->capa.ann_refresh = 0;
+	peer->capa.ann.mp_v4 = SAFI_NONE;
+	peer->capa.ann.mp_v4 = SAFI_NONE;
+	peer->capa.ann.refresh = 0;
 }
 
 int
@@ -1168,13 +1168,13 @@ session_open(struct peer *p)
 	u_int8_t		 capa_code, capa_len;
 
 	/* multiprotocol extensions, RFC 2858 */
-	if (p->capa.ann_mp_v4)
+	if (p->capa.ann.mp_v4)
 		op_len += 2 + 4;	/* 1 code + 1 len + 4 data */
-	if (p->capa.ann_mp_v6)
+	if (p->capa.ann.mp_v6)
 		op_len += 2 + 4;	/* 1 code + 1 len + 4 data */
 
 	/* route refresh, RFC 2918 */
-	if (p->capa.ann_refresh)
+	if (p->capa.ann.refresh)
 		op_len += 2 + 0;	/* 1 code + 1 len, no data */
 
 	if (op_len > 0)
@@ -1212,15 +1212,15 @@ session_open(struct peer *p)
 		errs += buf_add(buf, &op_len, sizeof(op_len));
 
 		/* multiprotocol extensions, RFC 2858 */
-		if (p->capa.ann_mp_v4)
+		if (p->capa.ann.mp_v4)
 			errs += session_capa_mp_add(buf, AFI_IPv4,
-			    p->capa.ann_mp_v4);
-		if (p->capa.ann_mp_v6)
+			    p->capa.ann.mp_v4);
+		if (p->capa.ann.mp_v6)
 			errs += session_capa_mp_add(buf, AFI_IPv6,
-			    p->capa.ann_mp_v6);
+			    p->capa.ann.mp_v6);
 
 		/* route refresh, RFC 2918 */
-		if (p->capa.ann_refresh) {
+		if (p->capa.ann.refresh) {
 			capa_code = CAPA_REFRESH;
 			capa_len = 0;
 			errs += buf_add(buf, &capa_code, sizeof(capa_code));
@@ -1927,13 +1927,13 @@ parse_notification(struct peer *peer)
 			datalen -= capa_len;
 			switch (capa_code) {
 			case CAPA_MP:
-				peer->capa.ann_mp_v4 = SAFI_NONE;
-				peer->capa.ann_mp_v6 = SAFI_NONE;
+				peer->capa.ann.mp_v4 = SAFI_NONE;
+				peer->capa.ann.mp_v6 = SAFI_NONE;
 				log_peer_warnx(&peer->conf,
 				    "disabling multiprotocol capability");
 				break;
 			case CAPA_REFRESH:
-				peer->capa.ann_refresh = 0;
+				peer->capa.ann.refresh = 0;
 				log_peer_warnx(&peer->conf,
 				    "disabling route refresh capability");
 				break;
@@ -2015,7 +2015,7 @@ parse_capabilities(struct peer *peer, u_char *d, u_int16_t dlen)
 					    "mp_safi %u illegal", mp_safi);
 					return (-1);
 				}
-				peer->capa.mp_v4 = mp_safi;
+				peer->capa.peer.mp_v4 = mp_safi;
 				break;
 			case AFI_IPv6:
 				if (mp_safi < 1 || mp_safi > 3) {
@@ -2024,14 +2024,14 @@ parse_capabilities(struct peer *peer, u_char *d, u_int16_t dlen)
 					    "mp_safi %u illegal", mp_safi);
 					return (-1);
 				}
-				peer->capa.mp_v6 = mp_safi;
+				peer->capa.peer.mp_v6 = mp_safi;
 				break;
 			default:			/* ignore */
 				break;
 			}
 			break;
 		case CAPA_REFRESH:
-			peer->capa.refresh = 1;
+			peer->capa.peer.refresh = 1;
 			break;
 		default:
 			break;
