@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.23 1997/02/14 17:20:09 deraadt Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.24 1997/02/26 16:38:20 niklas Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -1166,7 +1166,7 @@ sys_lseek(p, v, retval)
 	register struct file *fp;
 	struct vattr vattr;
 	struct vnode *vp;
-	int error;
+	int error, special;
 
 	if ((u_int)SCARG(uap, fd) >= fdp->fd_nfiles ||
 	    (fp = fdp->fd_ofiles[SCARG(uap, fd)]) == NULL)
@@ -1176,9 +1176,13 @@ sys_lseek(p, v, retval)
 	vp = (struct vnode *)fp->f_data;
 	if (vp->v_type == VFIFO)
 		return (ESPIPE);
+	if (vp->v_type == VCHR)
+		special = 1;
+	else
+		special = 0;
 	switch (SCARG(uap, whence)) {
 	case L_INCR:
-		if (fp->f_offset + SCARG(uap, offset) < 0)
+		if (!special && fp->f_offset + SCARG(uap, offset) < 0)
 			return (EINVAL);
 		fp->f_offset += SCARG(uap, offset);
 		break;
@@ -1187,12 +1191,12 @@ sys_lseek(p, v, retval)
 				    cred, p);
 		if (error)
 			return (error);
-		if ((off_t)vattr.va_size + SCARG(uap, offset) < 0)
+		if (!special && (off_t)vattr.va_size + SCARG(uap, offset) < 0)
 			return (EINVAL);
 		fp->f_offset = SCARG(uap, offset) + vattr.va_size;
 		break;
 	case L_SET:
-		if (SCARG(uap, offset) < 0)
+		if (!special && SCARG(uap, offset) < 0)
 			return (EINVAL);
 		fp->f_offset = SCARG(uap, offset);
 		break;
