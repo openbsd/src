@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ip.c,v 1.14 2001/02/05 15:18:47 jason Exp $	*/
+/*	$OpenBSD: print-ip.c,v 1.15 2001/02/15 16:16:48 niklas Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ip.c,v 1.14 2001/02/05 15:18:47 jason Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ip.c,v 1.15 2001/02/15 16:16:48 niklas Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -453,10 +453,10 @@ ip_print(register const u_char *bp, register u_int length)
 			igmp_print(cp, len, (const u_char *)ip);
 			break;
 
-#ifndef IPPROTO_ENCAP
-#define IPPROTO_ENCAP 4
+#ifndef IPPROTO_IPIP
+#define IPPROTO_IPIP 4
 #endif
-		case IPPROTO_ENCAP:
+		case IPPROTO_IPIP:
 			/* ip-in-ip encapsulation */
 			if (vflag)
 				(void)printf("%s > %s: ",
@@ -470,10 +470,10 @@ ip_print(register const u_char *bp, register u_int length)
 			break;
 
 #ifdef INET6
-#ifndef IP6PROTO_ENCAP
-#define IP6PROTO_ENCAP 41
+#ifndef IPPROTO_IPV6
+#define IPPROTO_IPV6
 #endif
-		case IP6PROTO_ENCAP:
+		case IPPROTO_IPV6:
 			/* ip6-in-ip encapsulation */
 			if (vflag)
 				(void)printf("%s > %s: ",
