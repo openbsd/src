@@ -1,4 +1,4 @@
-/*	$OpenBSD: tape.c,v 1.2 1996/03/21 00:16:32 niklas Exp $	*/
+/*	$OpenBSD: tape.c,v 1.3 1996/09/01 15:27:29 deraadt Exp $	*/
 /*	$NetBSD: tape.c,v 1.20 1996/03/15 22:39:41 scottr Exp $	*/
 
 /*
@@ -91,9 +91,6 @@ int		oldinofmt;	/* old inode format conversion required */
 int		Bcvt;		/* Swap Bytes (for CCI or sun) */
 static int	Qcvt;		/* Swap quads (for sun) */
 
-extern	uid_t uid;		/* real uid */
-extern	uid_t euid;		/* effective uid */
-
 #define	FLUSHTAPEBUF()	blkcnt = ntrec + 1
 
 static void	 accthdr __P((struct s_spcl *));
@@ -155,7 +152,6 @@ setinput(source)
 		}
 		pipein++;
 	}
-	(void) setuid(uid); /* rmthost() is the only reason to be setuid */
 	(void) strcpy(magtape, source);
 }
 

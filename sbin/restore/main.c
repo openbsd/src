@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.3 1996/03/21 00:16:29 niklas Exp $	*/
+/*	$OpenBSD: main.c,v 1.4 1996/09/01 15:27:29 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.11 1996/03/15 22:39:39 scottr Exp $	*/
 
 /*
@@ -78,8 +78,6 @@ ino_t	maxino;
 time_t	dumptime;
 time_t	dumpdate;
 FILE 	*terminal;
-uid_t	uid;		/* real uid */
-uid_t	euid;		/* effective uid */
 
 static void obsolete __P((int *, char **[]));
 static void usage __P((void));
@@ -94,10 +92,6 @@ main(argc, argv)
 	char *inputdev;
 	char *symtbl = "./restoresymtable";
 	char *p, name[MAXPATHLEN];
-
-	uid = getuid();
-	euid = geteuid();
-	(void) seteuid(uid);
 
 	if (argc < 2)
 		usage();
