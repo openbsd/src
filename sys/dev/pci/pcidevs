@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.349 2000/11/21 03:03:51 jason Exp $
+	$OpenBSD: pcidevs,v 1.350 2000/11/29 21:28:33 mickey Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -899,6 +899,7 @@ product COMPAQ USB		0x7020	USB
 product COMPAQ FXP		0xa0f0	Netelligent ASMC
 product COMPAQ PCI_ISA_BRIDGE1	0xa0f3	PCI-ISA
 product COMPAQ OHCI		0xa0f8	USB OpenHost
+product COMPAQ SMART2P		0xae10	SMART2P RAID
 product COMPAQ PCI_ISA_BRIDGE3	0xae29	PCI-ISA
 product COMPAQ PCI_ISAPNP	0xae2b	PCI-ISAPnP
 product COMPAQ N100TX		0xae32	Netelligent 10/100 TX
@@ -981,6 +982,7 @@ product DEC 21150_BC		0x0023	DECchip 21150-BC PCI-PCI
 product DEC 21152		0x0024	DECchip 21152 PCI-PCI
 product DEC 21153		0x0025	DECchip 21153 PCI-PCI
 product DEC 21154		0x0026	DECchip 21154 PCI-PCI
+product DEC CPQ42XX		0x0046	Compaq SMART RAID 42xx
 
 /* Delta Electronics products */
 product DELTA 8139		0x1360	8139
