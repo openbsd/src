@@ -1,4 +1,4 @@
-/* $OpenBSD: zaurus_kbd.c,v 1.2 2005/01/13 23:33:37 drahn Exp $ */
+/* $OpenBSD: zaurus_kbd.c,v 1.3 2005/01/14 04:35:22 drahn Exp $ */
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@openbsd.org>
  *
@@ -20,6 +20,8 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#include <sys/timeout.h>
+#include <sys/kernel.h>
 
 #include <arm/xscale/pxa2x0reg.h>
 #include <arm/xscale/pxa2x0_gpio.h>
@@ -76,6 +78,8 @@ struct zkbd_softc {
 	char *sc_okeystate;
 	char *sc_keystate;
 
+	struct timeout sc_roll_to;
+	struct timeout sc_rawrepeat_ch;
 
 	/* wskbd bits */
 	struct device   *sc_wskbddev;
@@ -86,6 +90,7 @@ int zkbd_match(struct device *, void *, void *);
 void zkbd_attach(struct device *, struct device *, void *);
 
 int zkbd_irq(void *v);
+void zkbd_poll(void *v);
 int zkbd_on(void *v);
 int zkbd_sync(void *v);
 int zkbd_hinge(void *v);
@@ -188,6 +193,8 @@ zkbd_attach(struct device *parent, struct device *self, void *aux)
 	a.accesscookie = sc;
 
 	sc->sc_wskbddev = config_found(self, &a, wskbddevprint);
+
+	timeout_set(&(sc->sc_roll_to), zkbd_poll, sc);
 }
 
 /* XXX only deal with keys that can be pressed when display is open? */
@@ -196,10 +203,18 @@ zkbd_attach(struct device *parent, struct device *self, void *aux)
 int
 zkbd_irq(void *v)
 {
+	zkbd_poll(v);
+
+	return 1;
+}
+void
+zkbd_poll(void *v)
+{
 	struct zkbd_softc *sc = v;
 	int i, col;
 	int pin;
 	int type;
+	int keysdown = 0;
 
 	/* discharge all */
 	for (i = 0; i < sc->sc_nstrobe; i++) {
@@ -253,6 +268,9 @@ zkbd_irq(void *v)
 	/* process after resetting interrupt */
 
 	for (i = 0; i < (sc->sc_nsense * sc->sc_nstrobe); i++) {
+		if (sc->sc_keystate[i])
+			keysdown++;
+
 		if (sc->sc_okeystate[i] != sc->sc_keystate[i]) {
 
 			type = sc->sc_keystate[i] ? WSCONS_EVENT_KEY_DOWN :
@@ -267,8 +285,10 @@ printf("key %d %s\n", i, sc->sc_keystate[i] ? "pressed" : "released");
 			sc->sc_okeystate[i] = sc->sc_keystate[i];
 		}
 	}
-
-	return 1;
+	if (keysdown)
+		timeout_add(&(sc->sc_roll_to), hz/4); /* how long?*/
+	else 
+		timeout_del(&(sc->sc_roll_to)); /* always cancel? */
 }
 
 int
@@ -288,7 +308,7 @@ zkbd_sync(void *v)
 int
 zkbd_hinge(void *v)
 {
-	printf("hing event pressed\n");
+	printf("hinge event pressed\n");
 	return 1;
 }
 
