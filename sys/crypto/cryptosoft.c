@@ -88,6 +88,9 @@ swcr_encdec(struct cryptodesc *crd, struct swcr_data *sw, caddr_t buf,
 	    /* Inject IV */
 	    if (crd->crd_flags & CRD_F_HALFIV)
 	    {
+		if (crd->crd_flags & CRD_F_IV_PRESENT)
+		  bcopy(buf + crd->crd_inject, sw->sw_iv, blks / 2);
+
 		/* "Cook" half-IV */
 		for (k = 0; k < blks / 2; k++)
 		  sw->sw_iv[(blks / 2) + k] = ~sw->sw_iv[k];
@@ -95,7 +98,12 @@ swcr_encdec(struct cryptodesc *crd, struct swcr_data *sw, caddr_t buf,
 	        bcopy(sw->sw_iv, buf + crd->crd_inject, blks / 2);
 	    }
 	    else
-	      bcopy(sw->sw_iv, buf + crd->crd_inject, blks);
+	    {
+		if (crd->crd_flags & CRD_F_IV_PRESENT)
+		  bcopy(buf + crd->crd_inject, sw->sw_iv, blks);
+		else
+		  bcopy(sw->sw_iv, buf + crd->crd_inject, blks);
+	    }
 
 	    for (i = crd->crd_skip;
 		 i < crd->crd_skip + crd->crd_len;
@@ -154,15 +162,23 @@ swcr_encdec(struct cryptodesc *crd, struct swcr_data *sw, caddr_t buf,
 	/* Initialize the IV */
 	if (crd->crd_flags & CRD_F_ENCRYPT)
 	{
-	    bcopy(sw->sw_iv, iv, blks);
+	    if (crd->crd_flags & CRD_F_IV_PRESENT)
+	      m_copydata(m, crd->crd_inject, blks, iv);
+	    else
+	      bcopy(sw->sw_iv, iv, blks);
 
 	    /* "Cook" half-IV */
 	    if (crd->crd_flags & CRD_F_HALFIV)
-	      for (k = 0; k < blks / 2; k++)
-	        iv[(blks / 2) + k] = ~iv[k];
+	    {
+		for (k = 0; k < blks / 2; k++)
+		  iv[(blks / 2) + k] = ~iv[k];
 
-	    /* Inject IV */
-	    m_copyback(m, crd->crd_inject, blks, iv);
+		if (!(crd->crd_flags & CRD_F_IV_PRESENT))
+		  m_copyback(m, crd->crd_inject, blks / 2, iv);
+	    }
+	    else
+	      if (!(crd->crd_flags & CRD_F_IV_PRESENT))
+		m_copyback(m, crd->crd_inject, blks, iv);
 	}
 	else
 	{

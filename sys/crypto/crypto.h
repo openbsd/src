@@ -79,6 +79,7 @@ struct cryptodesc
 
 #define CRD_F_ENCRYPT             0x1 /* Set when doing encryption */
 #define CRD_F_HALFIV              0x2
+#define CRD_F_IV_PRESENT          0x4 /* Used/sensible only when encrypting */
 
     struct cryptoini   CRD_INI;    /* Initialization/context data */
 #define crd_key  CRD_INI.cri_key
