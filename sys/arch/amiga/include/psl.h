@@ -1,4 +1,4 @@
-/*	$OpenBSD: psl.h,v 1.4 1996/05/02 06:44:46 niklas Exp $	*/
+/*	$OpenBSD: psl.h,v 1.5 1996/05/02 07:33:43 niklas Exp $	*/
 /*	$NetBSD: psl.h,v 1.8 1996/04/21 21:13:22 veego Exp $	*/
 
 #ifndef _MACHINE_PSL_H_
@@ -7,13 +7,6 @@
 #include <m68k/psl.h>
 
 #if defined(_KERNEL) && !defined(_LOCORE)
-
-/*
- * spl functions; all are normally done in-line
- */
-#include <machine/psl.h>
-
-#ifdef _KERNEL
 
 static __inline int
 splraise(npsl)
