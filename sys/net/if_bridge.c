@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.97 2002/06/15 02:26:39 angelos Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.98 2002/06/15 05:17:18 jason Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -2104,7 +2104,7 @@ bridge_ipsec(dir, af, hlen, m)
 			dst.sin.sin_len = sizeof(struct sockaddr_in);
 			m_copydata(m, offsetof(struct ip, ip_dst),
 			    sizeof(struct in_addr),
-			    (caddr_t)&(dst.sin.sin_addr));
+			    (caddr_t)&dst.sin.sin_addr);
 
 			if (ip->ip_p == IPPROTO_ESP)
 				m_copydata(m, hlen, sizeof(u_int32_t),
@@ -2139,7 +2139,7 @@ bridge_ipsec(dir, af, hlen, m)
 			dst.sin6.sin6_len = sizeof(struct sockaddr_in6);
 			m_copydata(m, offsetof(struct ip6_hdr, ip6_nxt),
 			    sizeof(struct in6_addr),
-			    (caddr_t)&(dst.sin6.sin6_addr));
+			    (caddr_t)&dst.sin6.sin6_addr);
 
 			if (proto == IPPROTO_ESP)
 				m_copydata(m, hlen, sizeof(u_int32_t),
