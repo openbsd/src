@@ -1,4 +1,4 @@
-/*	$OpenBSD: make.h,v 1.10 1997/07/25 21:05:34 mickey Exp $	*/
+/*	$OpenBSD: make.h,v 1.11 1998/02/22 19:57:33 mickey Exp $	*/
 /*	$NetBSD: make.h,v 1.15 1997/03/10 21:20:00 christos Exp $	*/
 
 /*
@@ -119,7 +119,7 @@ typedef struct GNode {
     Boolean         make;      	/* TRUE if this target needs to be remade */
     enum {
 	UNMADE, BEINGMADE, MADE, UPTODATE, ERROR, ABORTED,
-	CYCLE, ENDCYCLE,
+	CYCLE, ENDCYCLE
     }	    	    made;    	/* Set to reflect the state of processing
 				 * on this node:
 				 *  UNMADE - Not examined yet

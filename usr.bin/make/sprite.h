@@ -1,4 +1,4 @@
-/*	$OpenBSD: sprite.h,v 1.3 1996/11/30 21:09:03 millert Exp $	*/
+/*	$OpenBSD: sprite.h,v 1.4 1998/02/22 19:57:34 mickey Exp $	*/
 /*	$NetBSD: sprite.h,v 1.6 1996/11/06 17:59:22 christos Exp $	*/
 
 /*
@@ -59,10 +59,10 @@
 typedef int Boolean;
 #ifndef TRUE
 #define TRUE	1
-#endif TRUE
+#endif /* TRUE */
 #ifndef FALSE
 #define FALSE	0
-#endif FALSE
+#endif /* FALSE */
 
 /*
  * Functions that must return a status can return a ReturnStatus to
@@ -93,7 +93,7 @@ typedef int  ReturnStatus;
 #define USER_NIL 	0
 #ifndef NULL
 #define NULL	 	0
-#endif NULL
+#endif /* NULL */
 
 /*
  * An address is just a pointer in C.  It is defined as a character pointer

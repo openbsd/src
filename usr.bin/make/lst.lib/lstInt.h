@@ -1,4 +1,4 @@
-/*	$OpenBSD: lstInt.h,v 1.4 1996/11/30 21:09:18 millert Exp $	*/
+/*	$OpenBSD: lstInt.h,v 1.5 1998/02/22 19:57:36 mickey Exp $	*/
 /*	$NetBSD: lstInt.h,v 1.7 1996/11/06 17:59:44 christos Exp $	*/
 
 /*
@@ -111,4 +111,4 @@ typedef struct	{
  */
 #define LstIsEmpty(l)	(((List)l)->firstPtr == NilListNode)
 
-#endif _LSTINT_H_
+#endif /* _LSTINT_H_ */
