@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.53 2004/01/08 16:17:12 henning Exp $ */
+/*	$OpenBSD: kroute.c,v 1.54 2004/01/08 16:34:39 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -45,7 +45,7 @@ struct {
 struct kroute_node {
 	RB_ENTRY(kroute_node)	 entry;
 	struct kroute		 r;
-	int			 flags;
+	u_int8_t		 flags;
 	u_short			 ifindex;
 };
 
