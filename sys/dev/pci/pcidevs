@@ -35,36 +35,89 @@ $NetBSD: pcidevs,v 1.3 1995/11/10 19:36:09 christos Exp $
  * List of known PCI vendors
  */
 
+vendor OLDCOMPAQ	0x0E11		Compaq	# Old ID.  see "COMPAQ" below.
 vendor OLDNCR		0x1000		NCR	# Old ID.  see "NCR" below.
 vendor ATI		0x1002		ATI
+vendor VLSI		0x1004		VLSI
+vendor ADL		0x1005		Advance Logic
+vendor NS		0x100B		NS
+vendor TSENG		0x100C		Tseng'Lab
+vendor WEITEK		0x100E		Weitek
 vendor DEC		0x1011		DEC
 vendor CIRRUS		0x1013		Cirrus Logic
 vendor IBM		0x1014		IBM
 vendor NCR		0x101A		NCR
+vendor WD		0x101C		Western Digital
 vendor AMD		0x1022		AMD
-vendor ACER		0x1025		Acer
+vendor TRIDENT		0x1023		Trident
+vendor ACER		0x1025		Acer Incorporated
+vendor MATROX		0x102B		Matrox
+vendor CT		0x102C		Chips & Technologies
 vendor COMPAQ		0x1032		Compaq
 vendor NEC		0x1033		NEC
-vendor SIS		0x1039		SIS
+vendor FD		0x1036		Future Domain
+vendor SIS		0x1039		Silicon Integrated Systems
 vendor HP		0x103C		Hewlett-Packard
 vendor KPC		0x1040		Kubota Pacific Corp.
+vendor PCTECH		0x1042		PCTECH
+vendor DPT		0x1044		DPT
+vendor OPTI		0x1045		OPTI
+vendor SGS		0x104A		SGS Thomson
+vendor BUSLOGIC		0x104B		BusLogic
 vendor TI		0x104C		Texas Instruments
 vendor SONY		0x104D		Sony
 vendor MOT		0x1057		Motorola
+vendor PROMISE		0x105A		Promise
+vendor N9		0x105D		Number Nine
+vendor UMC		0x1060		UMC
+vendor X		0x1061		X TECHNOLOGY
 vendor MYLEX		0x1069		Mylex
 vendor APPLE		0x106B		Apple
-vendor QLOGIC		0x1077		QLogic	# ??? XXX
+vendor NEXGEN		0x1074		NexGen
+vendor QLOGIC		0x1077		Q Logic
+vendor LEADTEK		0x107D		Leadtek Research
+vendor CONTAQ		0x1080		Contaq
+vendor FOREX		0x1083		Forex
 vendor BIT3		0x108A		Bit3 Computer Corp.
+vendor QLICOM		0x108D		Qlicom
 vendor CMD		0x1095		CMD Technologies
+vendor VISION		0x1098		Vision
+vendor SIERRA		0x10A8		Sierra
+vendor ACC		0x10AA		ACC MICROELECTRONICS
+vendor WINBOND		0x10AD		Winbond
 vendor CABLETRON	0x10B1		Cabletron
 vendor 3COM		0x10B7		3Com
+vendor AL		0x10B9		Acer Labs
+vendor ASP		0x10CD		Advanced System Products
 vendor CERN		0x10DC		CERN	# ??? XXX
 vendor ECP		0x10DC		ECP	# ??? XXX
 vendor ECU		0x10DC		ECU	# ??? XXX
+vendor IMS		0x10E0		IMS
+vendor TEKRAM2		0x10E1		Tekram
+vendor AMCC		0x10E8		AMCC
+vendor INTERG		0x10EA		Intergraphics
+vendor REALTEK		0x10EC		Realtek
+vendor INIT		0x1101		Initio Corp
+vendor VIA		0x1106		VIA Technologies
 vendor PROTEON		0x1108		Proteon
-vendor S3		0x5333		S3
+vendor VORTEX		0x1119		VORTEX
+vendor EF		0x111A		Efficient Networks
+vendor FORE		0x1127		Fore Systems
+vendor IMAGINGTECH	0x112F		Imaging Technology
+vendor PLX		0x113C		PLX
+vendor ALLIANCE		0x1142		Alliance
+vendor MUTECH		0x1159		Mutech
+vendor ZEITNET		0x1193		ZeitNet
+vendor SPECIALIX	0x11CB		Specialix
+vendor CYCLADES		0x120E		Cyclades
+vendor SYMPHONY		0x1C1C		Symphony
+vendor TEKRAM		0x1DE1		Tekram
+vendor AVANCE		0x4005		Avance
+vendor S3		0x5333		S3 Inc.
 vendor INTEL		0x8086		Intel
 vendor ADP		0x9004		Adaptec
+vendor ATRONICS		0x907F		Atronics
+vendor HERCULES		0xEDD8		Hercules
 
 /*
  * List of known products.  Grouped by vendor.

@@ -40,36 +40,89 @@
  * List of known PCI vendors
  */
 
+#define	PCI_VENDOR_OLDCOMPAQ	0x0E11		/* Compaq (Old ID. see "COMPAQ" below.) */
 #define	PCI_VENDOR_OLDNCR	0x1000		/* NCR (Old ID. see "NCR" below.) */
 #define	PCI_VENDOR_ATI	0x1002		/* ATI */
+#define	PCI_VENDOR_VLSI	0x1004		/* VLSI */
+#define	PCI_VENDOR_ADL	0x1005		/* Advance Logic */
+#define	PCI_VENDOR_NS	0x100B		/* NS */
+#define	PCI_VENDOR_TSENG	0x100C		/* Tseng'Lab */
+#define	PCI_VENDOR_WEITEK	0x100E		/* Weitek */
 #define	PCI_VENDOR_DEC	0x1011		/* DEC */
 #define	PCI_VENDOR_CIRRUS	0x1013		/* Cirrus Logic */
 #define	PCI_VENDOR_IBM	0x1014		/* IBM */
 #define	PCI_VENDOR_NCR	0x101A		/* NCR */
+#define	PCI_VENDOR_WD	0x101C		/* Western Digital */
 #define	PCI_VENDOR_AMD	0x1022		/* AMD */
-#define	PCI_VENDOR_ACER	0x1025		/* Acer */
+#define	PCI_VENDOR_TRIDENT	0x1023		/* Trident */
+#define	PCI_VENDOR_ACER	0x1025		/* Acer Incorporated */
+#define	PCI_VENDOR_MATROX	0x102B		/* Matrox */
+#define	PCI_VENDOR_CT	0x102C		/* Chips & Technologies */
 #define	PCI_VENDOR_COMPAQ	0x1032		/* Compaq */
 #define	PCI_VENDOR_NEC	0x1033		/* NEC */
-#define	PCI_VENDOR_SIS	0x1039		/* SIS */
+#define	PCI_VENDOR_FD	0x1036		/* Future Domain */
+#define	PCI_VENDOR_SIS	0x1039		/* Silicon Integrated Systems */
 #define	PCI_VENDOR_HP	0x103C		/* Hewlett-Packard */
 #define	PCI_VENDOR_KPC	0x1040		/* Kubota Pacific Corp. */
+#define	PCI_VENDOR_PCTECH	0x1042		/* PCTECH */
+#define	PCI_VENDOR_DPT	0x1044		/* DPT */
+#define	PCI_VENDOR_OPTI	0x1045		/* OPTI */
+#define	PCI_VENDOR_SGS	0x104A		/* SGS Thomson */
+#define	PCI_VENDOR_BUSLOGIC	0x104B		/* BusLogic */
 #define	PCI_VENDOR_TI	0x104C		/* Texas Instruments */
 #define	PCI_VENDOR_SONY	0x104D		/* Sony */
 #define	PCI_VENDOR_MOT	0x1057		/* Motorola */
+#define	PCI_VENDOR_PROMISE	0x105A		/* Promise */
+#define	PCI_VENDOR_N9	0x105D		/* Number Nine */
+#define	PCI_VENDOR_UMC	0x1060		/* UMC */
+#define	PCI_VENDOR_X	0x1061		/* X TECHNOLOGY */
 #define	PCI_VENDOR_MYLEX	0x1069		/* Mylex */
 #define	PCI_VENDOR_APPLE	0x106B		/* Apple */
-#define	PCI_VENDOR_QLOGIC	0x1077		/* QLogic (??? XXX) */
+#define	PCI_VENDOR_NEXGEN	0x1074		/* NexGen */
+#define	PCI_VENDOR_QLOGIC	0x1077		/* Q Logic */
+#define	PCI_VENDOR_LEADTEK	0x107D		/* Leadtek Research */
+#define	PCI_VENDOR_CONTAQ	0x1080		/* Contaq */
+#define	PCI_VENDOR_FOREX	0x1083		/* Forex */
 #define	PCI_VENDOR_BIT3	0x108A		/* Bit3 Computer Corp. */
+#define	PCI_VENDOR_QLICOM	0x108D		/* Qlicom */
 #define	PCI_VENDOR_CMD	0x1095		/* CMD Technologies */
+#define	PCI_VENDOR_VISION	0x1098		/* Vision */
+#define	PCI_VENDOR_SIERRA	0x10A8		/* Sierra */
+#define	PCI_VENDOR_ACC	0x10AA		/* ACC MICROELECTRONICS */
+#define	PCI_VENDOR_WINBOND	0x10AD		/* Winbond */
 #define	PCI_VENDOR_CABLETRON	0x10B1		/* Cabletron */
 #define	PCI_VENDOR_3COM	0x10B7		/* 3Com */
+#define	PCI_VENDOR_AL	0x10B9		/* Acer Labs */
+#define	PCI_VENDOR_ASP	0x10CD		/* Advanced System Products */
 #define	PCI_VENDOR_CERN	0x10DC		/* CERN (??? XXX) */
 #define	PCI_VENDOR_ECP	0x10DC		/* ECP (??? XXX) */
 #define	PCI_VENDOR_ECU	0x10DC		/* ECU (??? XXX) */
+#define	PCI_VENDOR_IMS	0x10E0		/* IMS */
+#define	PCI_VENDOR_TEKRAM2	0x10E1		/* Tekram */
+#define	PCI_VENDOR_AMCC	0x10E8		/* AMCC */
+#define	PCI_VENDOR_INTERG	0x10EA		/* Intergraphics */
+#define	PCI_VENDOR_REALTEK	0x10EC		/* Realtek */
+#define	PCI_VENDOR_INIT	0x1101		/* Initio Corp */
+#define	PCI_VENDOR_VIA	0x1106		/* VIA Technologies */
 #define	PCI_VENDOR_PROTEON	0x1108		/* Proteon */
-#define	PCI_VENDOR_S3	0x5333		/* S3 */
+#define	PCI_VENDOR_VORTEX	0x1119		/* VORTEX */
+#define	PCI_VENDOR_EF	0x111A		/* Efficient Networks */
+#define	PCI_VENDOR_FORE	0x1127		/* Fore Systems */
+#define	PCI_VENDOR_IMAGINGTECH	0x112F		/* Imaging Technology */
+#define	PCI_VENDOR_PLX	0x113C		/* PLX */
+#define	PCI_VENDOR_ALLIANCE	0x1142		/* Alliance */
+#define	PCI_VENDOR_MUTECH	0x1159		/* Mutech */
+#define	PCI_VENDOR_ZEITNET	0x1193		/* ZeitNet */
+#define	PCI_VENDOR_SPECIALIX	0x11CB		/* Specialix */
+#define	PCI_VENDOR_CYCLADES	0x120E		/* Cyclades */
+#define	PCI_VENDOR_SYMPHONY	0x1C1C		/* Symphony */
+#define	PCI_VENDOR_TEKRAM	0x1DE1		/* Tekram */
+#define	PCI_VENDOR_AVANCE	0x4005		/* Avance */
+#define	PCI_VENDOR_S3	0x5333		/* S3 Inc. */
 #define	PCI_VENDOR_INTEL	0x8086		/* Intel */
 #define	PCI_VENDOR_ADP	0x9004		/* Adaptec */
+#define	PCI_VENDOR_ATRONICS	0x907F		/* Atronics */
+#define	PCI_VENDOR_HERCULES	0xEDD8		/* Hercules */
 
 /*
  * List of known products.  Grouped by vendor.
