@@ -158,6 +158,7 @@ Supported hardware {:-include-:}:
 		BOCA 8-port serial cards [*] 
 		Cyclades Cyclom-{4, 8, 16}Y serial boards [*]
 		IBM PC-RT 4-port serial boards [*]
+		Addonics FlexPort 8S [*]
 	Parallel Ports
 		Any standard parallel port
 	Communication Controllers
