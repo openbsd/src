@@ -33,7 +33,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: malloc.3,v 1.16 1999/11/09 22:12:36 aaron Exp $
+.\"	$OpenBSD: malloc.3,v 1.17 1999/11/10 22:19:22 aaron Exp $
 .\"
 .Dd August 27, 1996
 .Dt MALLOC 3
@@ -257,11 +257,12 @@ otherwise a null pointer is returned.
 .Sh MESSAGES
 If
 .Fn malloc ,
-.Fn free
-or
+.Fn calloc ,
 .Fn realloc
-detects an error or warning condition,
-a message will be printed to filedescriptor
+or
+.Fn free
+detect an error or warning condition,
+a message will be printed to file descriptor
 2 (not using stdio).
 Errors will always result in the process being
 .Xr abort 3 'ed.
@@ -277,7 +278,8 @@ fishy in there.  Consult sources and or wizards.
 .Pp
 ``allocation failed''
 if the ``A'' option is specified it is an error for
-.Fn malloc
+.Fn malloc ,
+.Fn calloc
 or
 .Fn realloc
 to return
@@ -325,7 +327,7 @@ a sensible page.
 ``recursive call.''
 You have tried to call recursively into these functions.
 I can only imagine this as happening if you call one of these
-functions from a signal function, which happens to be called
+functions from a signal handler, which happens to be called
 while you're already in here.
 Well, sorry to say: that's not supported.
 If this is a problem for you I'd like to hear about it.  It
@@ -343,7 +345,6 @@ symbolic link to file containing option flags
 .Sh SEE ALSO
 .Xr brk 2 ,
 .Xr alloca 3 ,
-.Xr calloc 3 ,
 .Xr getpagesize 3 ,
 .Xr memory 3
 .Pa /usr/share/doc/papers/malloc.ascii.gz
