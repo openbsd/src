@@ -143,5 +143,5 @@ template istream& operator>> (istream&, s&);
 template ostream& operator<< (ostream&, const s&);
 #endif // INSERT
 #ifdef GETLINE
-template istream& getline (istream&, s&);
+template istream& getline (istream&, s&, c);
 #endif
