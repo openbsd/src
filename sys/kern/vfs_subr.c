@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.29 1998/12/22 10:43:37 art Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.30 1998/12/28 19:35:35 art Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -571,8 +571,10 @@ loop:
 	simple_lock(&spechash_slock);
 	for (vp = *vpp; vp; vp = vp->v_specnext) {
 		simple_lock(&vp->v_interlock);
-		if (nvp_rdev != vp->v_rdev || nvp->v_type != vp->v_type)
+		if (nvp_rdev != vp->v_rdev || nvp->v_type != vp->v_type) {
+			simple_unlock(&vp->v_interlock);
 			continue;
+		}
 		/*
 		 * Alias, but not in use, so flush it out.
 		 */
@@ -1018,6 +1020,8 @@ vclean(vp, flags, p)
 	if (VOP_RECLAIM(vp, p))
 		panic("vclean: cannot reclaim");
 	if (active) {
+		simple_lock(&vp->v_interlock);
+
 		vp->v_usecount--;
 		if (vp->v_usecount == 0) {
 			if (vp->v_holdcnt > 0)
