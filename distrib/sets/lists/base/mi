@@ -831,7 +831,6 @@
 ./usr/local/man/cat7
 ./usr/local/man/cat8
 ./usr/local/man/cat9
-./usr/local/man/cat9/i386
 ./usr/local/man/man1
 ./usr/local/man/man2
 ./usr/local/man/man3
@@ -1408,6 +1407,7 @@
 ./usr/share/man/cat8/vax
 ./usr/share/man/cat8/wgrisc
 ./usr/share/man/cat9
+./usr/share/man/cat9/i386
 ./usr/share/man/makewhatis.sed
 ./usr/share/man/man1
 ./usr/share/man/man2
