@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.3 2002/12/20 22:13:27 mickey Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.4 2002/12/23 18:53:59 mickey Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -270,9 +270,9 @@ pfsync_pack_state(action, st)
 	h->count++;
 	bzero(sp, sizeof(*sp));
 
-	bcopy(&st->lan, &sp->lan, sizeof(sp->lan)); HTONS(sp->lan.port);
-	bcopy(&st->gwy, &sp->gwy, sizeof(sp->gwy)); HTONS(sp->gwy.port);
-	bcopy(&st->ext, &sp->ext, sizeof(sp->ext)); HTONS(sp->ext.port);
+	bcopy(&st->lan, &sp->lan, sizeof(sp->lan));
+	bcopy(&st->gwy, &sp->gwy, sizeof(sp->gwy));
+	bcopy(&st->ext, &sp->ext, sizeof(sp->ext));
 
 	pf_state_peer_hton(&st->src, &sp->src);
 	pf_state_peer_hton(&st->dst, &sp->dst);
