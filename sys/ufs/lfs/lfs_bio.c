@@ -1,4 +1,4 @@
-/*	$OpenBSD: lfs_bio.c,v 1.8 2002/07/12 14:02:23 art Exp $	*/
+/*	$OpenBSD: lfs_bio.c,v 1.9 2003/02/19 08:56:35 jmc Exp $	*/
 /*	$NetBSD: lfs_bio.c,v 1.5 1996/02/09 22:28:49 christos Exp $	*/
 
 /*
@@ -129,7 +129,7 @@ lfs_bwrite(v)
 		if (bdirties.tqh_first == bp) {
 			if (timeout_triggered(&wakeup_timeout))
 				timeout_del(&wakeup_timeout);
-			if (!timeout_intialized(&wakeup_timeout))
+			if (!timeout_initialized(&wakeup_timeout))
 				timeout_set(&wakeup_timeout, wakeup, &bdirties);
 			timeout_add(&wakeup_timeout, 30 * hz);
 		}
