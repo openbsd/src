@@ -290,7 +290,6 @@
 ./usr/share/man/cat1/kauth.0
 ./usr/share/man/cat1/kdestroy.0
 ./usr/share/man/cat1/kdump.0
-./usr/share/man/cat1/kerberos.0
 ./usr/share/man/cat1/keynote.0
 ./usr/share/man/cat1/kill.0
 ./usr/share/man/cat1/kinit.0
@@ -1786,7 +1785,6 @@
 ./usr/share/man/cat8/kdb_init.0
 ./usr/share/man/cat8/kdb_util.0
 ./usr/share/man/cat8/kdc.0
-./usr/share/man/cat8/kerberos.0
 ./usr/share/man/cat8/kgmon.0
 ./usr/share/man/cat8/kpasswdd.0
 ./usr/share/man/cat8/kprop.0
