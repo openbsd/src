@@ -1,5 +1,5 @@
-/*	$OpenBSD: init.c,v 1.7 1999/05/01 20:43:43 niklas Exp $	*/
-/*	$EOM: init.c,v 1.14 1999/05/01 20:21:09 niklas Exp $	*/
+/*	$OpenBSD: init.c,v 1.8 1999/07/07 22:09:54 niklas Exp $	*/
+/*	$EOM: init.c,v 1.15 1999/06/07 00:02:14 ho Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -54,6 +54,10 @@
 #include "udp.h"
 #include "ui.h"
 
+#ifdef USE_KEYNOTE
+#include "policy.h"
+#endif
+
 void
 init ()
 {
@@ -74,4 +78,9 @@ init ()
   transport_init ();
   udp_init ();
   ui_init ();
+
+#ifdef USE_KEYNOTE
+  /* policy_init depends on conf_init having run. */
+  policy_init ();
+#endif
 }

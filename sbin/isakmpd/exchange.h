@@ -1,5 +1,5 @@
-/*	$OpenBSD: exchange.h,v 1.11 1999/04/30 11:47:11 niklas Exp $	*/
-/*	$EOM: exchange.h,v 1.24 1999/04/29 20:45:11 niklas Exp $	*/
+/*	$OpenBSD: exchange.h,v 1.12 1999/07/07 22:09:53 niklas Exp $	*/
+/*	$EOM: exchange.h,v 1.25 1999/06/07 00:02:11 ho Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -149,6 +149,8 @@ struct exchange {
   struct crypto_xf *crypto;
   int key_length;
   struct keystate *keystate;
+
+  /* XXX This is no longer necessary, it is covered by policy. */
 
   /* Acceptable authorities for cert requests */
   TAILQ_HEAD (aca_head, certreq_aca) aca_list;

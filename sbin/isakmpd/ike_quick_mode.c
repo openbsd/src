@@ -1,5 +1,5 @@
-/*	$OpenBSD: ike_quick_mode.c,v 1.18 1999/06/05 23:09:21 niklas Exp $	*/
-/*	$EOM: ike_quick_mode.c,v 1.89 1999/06/05 22:07:20 ho Exp $	*/
+/*	$OpenBSD: ike_quick_mode.c,v 1.19 1999/07/07 22:09:54 niklas Exp $	*/
+/*	$EOM: ike_quick_mode.c,v 1.90 1999/06/07 00:02:12 ho Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -37,6 +37,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef USE_KEYNOTE
+#include <keynote.h>
+#endif
+
 #include "sysdep.h"
 
 #include "attribute.h"
@@ -64,6 +68,10 @@ static int responder_recv_HASH_SA_NONCE (struct message *);
 static int responder_send_HASH_SA_NONCE (struct message *);
 static int responder_recv_HASH (struct message *);
 
+#ifdef USE_KEYNOTE
+static int check_policy (struct exchange *, struct sa *);
+#endif
+
 int (*ike_quick_mode_initiator[]) (struct message *) = {
   initiator_send_HASH_SA_NONCE,
   initiator_recv_HASH_SA_NONCE,
@@ -75,6 +83,82 @@ int (*ike_quick_mode_responder[]) (struct message *) = {
   responder_send_HASH_SA_NONCE,
   responder_recv_HASH
 };
+
+#ifdef USE_KEYNOTE
+
+/* Policy session ID and other necessary globals */
+extern int keynote_sessid;
+extern struct exchange *policy_exchange;
+extern struct sa *policy_sa;
+
+/* How many return values will policy handle -- true/false for now */
+#define RETVALUES_NUM 2
+
+/*
+ * Given an exchange and our policy, check whether the SA and IDs are
+ * acceptable.
+ */
+static int
+check_policy (struct exchange *exchange, struct sa *sa)
+{
+  char *return_values[RETVALUES_NUM];
+  char *principal = NULL;
+  int result;
+
+  /* If there is no policy setup, everything fails */
+  if (keynote_sessid < 0)
+    return 0;
+
+  /* Initialize -- we'll let the callback do all the work */
+  policy_exchange = exchange;
+  policy_sa = sa;
+
+  /* Set the return values; true/false for now at least */
+  return_values[0] = "false"; /* Order of values in array is important */
+  return_values[1] = "true";
+
+  /* XXX Create a principal (authorizer) for the SA/ID request. */
+  principal = "dontmatter";
+
+  /* 
+   * Add the authorizer (who is requesting the SA/ID);
+   * this may be a public or a secret key, depending on
+   * what mode of authentication we used in Phase 1.
+   */
+  if (kn_add_authorizer (keynote_sessid, principal) == -1)
+    return 0;
+
+  /*
+   * XXX If doing X509 certificates, create a fake KeyNote assertion,
+   * delegating from the CA to the actual pubkey.
+   */
+
+  /* Ask policy */
+  result = kn_do_query (keynote_sessid, return_values, RETVALUES_NUM);
+
+  /* Remove authorizer from the session */
+  kn_remove_authorizer (keynote_sessid, principal);
+
+#if 0
+  free (principal);
+#endif
+
+  /* Check what policy said */
+  if (result < 0)
+    {
+      /* XXX Some sort of debug message about failure */
+      log_debug (LOG_MISC, 40, "check_policy: kn_do_query returned %d",
+		 result);
+      return 0;
+    }
+
+  /*
+   * Given that we have only 2 return values from policy (true/false)
+   * we can just return the query result directly (no pre-processing needed).
+   */
+  return result;
+}
+#endif /* USE_KEYNOTE */
 
 /*
  * Offer several sets of transforms to the responder.
@@ -914,7 +998,10 @@ responder_recv_HASH_SA_NONCE (struct message *msg)
   struct proto *proto;
   struct sockaddr *src, *dst;
   socklen_t srclen, dstlen;
+
+#ifndef USE_KEYNOTE
   char *name;
+#endif
 
   hashp = TAILQ_FIRST (&msg->payload[ISAKMP_PAYLOAD_HASH]);
   hash = hashp->p;
@@ -968,66 +1055,7 @@ responder_recv_HASH_SA_NONCE (struct message *msg)
   free (my_hash);
   my_hash = 0;
 
-  if (message_negotiate_sa (msg, 0))
-    goto cleanup;
-
   kep = TAILQ_FIRST (&msg->payload[ISAKMP_PAYLOAD_KEY_EXCH]);
-  
-  for (sa = TAILQ_FIRST (&exchange->sa_list); sa; sa = TAILQ_NEXT (sa, next))
-    {
-      for (proto = TAILQ_FIRST (&sa->protos); proto;
-	   proto = TAILQ_NEXT (proto, link))
-	/* XXX we need to have some attributes per proto, not all per SA.  */
-	ipsec_decode_transform (msg, sa, proto, proto->chosen->p);
-
-      isa = sa->data;
-
-      /* Check the SA for reasonableness.  */
-
-      /* The group description is mandatory if we got a KEY_EXCH payload.  */
-      if (kep)
-	{
-	  if (!isa->group_desc)
-	    {
-	      message_drop (msg, ISAKMP_NOTIFY_NO_PROPOSAL_CHOSEN, 0, 1, 0);
-	      continue;
-	    }
-
-	  /* Also, all SAs must have equal groups.  */
-	  if (!group_desc)
-	    group_desc = isa->group_desc;
-	  else if (group_desc != isa->group_desc)
-	    {
-	      message_drop (msg, ISAKMP_NOTIFY_NO_PROPOSAL_CHOSEN, 0, 1, 0);
-	      continue;
-	    }
-	}
-
-      /* At least one SA was accepted.  */
-      retval = 0;
-    }
-
-  if (kep)
-    {
-      ie->group = group_get (group_desc);
-      if (!ie->group)
-	{
-	  /*
-	   * XXX If the error was due to an out-of-range group description
-	   * we should notify our peer, but this should probably be done
-	   * by the attribute validation.  Is it?
-	   */
-	  goto cleanup;
-	}
-    }
-
-  /* Copy out the initiator's nonce.  */
-  if (exchange_save_nonce (msg))
-    goto cleanup;
-
-  /* Handle the optional KEY_EXCH payload.  */
-  if (kep && ipsec_save_g_x (msg))
-    goto cleanup;
 
   /* Handle optional client ID payloads.  */
   idp = TAILQ_FIRST (&msg->payload[ISAKMP_PAYLOAD_ID]);
@@ -1099,6 +1127,75 @@ responder_recv_HASH_SA_NONCE (struct message *msg)
 	      sizeof ((struct sockaddr_in *)src)->sin_addr.s_addr);
     }
 
+#ifdef USE_KEYNOTE  
+  if (message_negotiate_sa (msg, check_policy))
+    goto cleanup;
+#else
+  if (message_negotiate_sa (msg, 0))
+    goto cleanup;
+#endif
+
+  for (sa = TAILQ_FIRST (&exchange->sa_list); sa; sa = TAILQ_NEXT (sa, next))
+    {
+      for (proto = TAILQ_FIRST (&sa->protos); proto;
+	   proto = TAILQ_NEXT (proto, link))
+	/* XXX we need to have some attributes per proto, not all per SA.  */
+	ipsec_decode_transform (msg, sa, proto, proto->chosen->p);
+
+      isa = sa->data;
+
+      /* The group description is mandatory if we got a KEY_EXCH payload.  */
+      if (kep)
+	{
+	  if (!isa->group_desc)
+	    {
+	      message_drop (msg, ISAKMP_NOTIFY_NO_PROPOSAL_CHOSEN, 0, 1, 0);
+	      continue;
+	    }
+
+	  /* Also, all SAs must have equal groups.  */
+	  if (!group_desc)
+	    group_desc = isa->group_desc;
+	  else if (group_desc != isa->group_desc)
+	    {
+	      message_drop (msg, ISAKMP_NOTIFY_NO_PROPOSAL_CHOSEN, 0, 1, 0);
+	      continue;
+	    }
+	}
+
+      /* At least one SA was accepted.  */
+      retval = 0;
+    }
+
+  if (kep)
+    {
+      ie->group = group_get (group_desc);
+      if (!ie->group)
+	{
+	  /*
+	   * XXX If the error was due to an out-of-range group description
+	   * we should notify our peer, but this should probably be done
+	   * by the attribute validation.  Is it?
+	   */
+	  goto cleanup;
+	}
+    }
+
+  /* Copy out the initiator's nonce.  */
+  if (exchange_save_nonce (msg))
+    goto cleanup;
+
+  /* Handle the optional KEY_EXCH payload.  */
+  if (kep && ipsec_save_g_x (msg))
+    goto cleanup;
+
+#ifndef USE_KEYNOTE
+  /*
+   * XXX This code is no longer necessary, as policy determines acceptance
+   * XXX of IDs/SAs. (angelos@openbsd.org)
+   * XXX Keep it if not USE_KEYNOTE for now, though. 
+   */
+
   /*
    * Check for accepted identities as well as lookup the connection
    * name and set it on the exchange.
@@ -1109,12 +1206,14 @@ responder_recv_HASH_SA_NONCE (struct message *msg)
       /* XXX Notify peer and log.  */
       goto cleanup;
     }
+
   exchange->name = strdup (name);
   if (!exchange->name)
     {
       log_error ("responder_recv_HASH_SA_NONCE: strdup (\"%s\") failed", name);
       goto cleanup;
     }
+#endif
 
   return retval;
 
