@@ -90,7 +90,7 @@ int RIPEMD160_Init(RIPEMD160_CTX *c)
 void ripemd160_block_host_order (RIPEMD160_CTX *ctx, const void *p, int num)
 	{
 	const RIPEMD160_LONG *XX=p;
-	register unsigned MD32_REG_T A,B,C,D,E;
+	register volatile unsigned MD32_REG_T A,B,C,D,E;
 	register unsigned MD32_REG_T a,b,c,d,e;
 
 	for (;num--;XX+=HASH_LBLOCK)
@@ -290,7 +290,7 @@ void ripemd160_block_host_order (RIPEMD160_CTX *ctx, const void *p, int num)
 void ripemd160_block_data_order (RIPEMD160_CTX *ctx, const void *p, int num)
 	{
 	const unsigned char *data=p;
-	register unsigned MD32_REG_T A,B,C,D,E;
+	register volatile unsigned MD32_REG_T A,B,C,D,E;
 	unsigned MD32_REG_T a,b,c,d,e,l;
 #ifndef MD32_XARRAY
 	/* See comment in crypto/sha/sha_locl.h for details. */
