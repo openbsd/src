@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_var.h,v 1.15 2001/03/03 01:00:19 itojun Exp $	*/
+/*	$OpenBSD: ip_var.h,v 1.16 2001/05/01 09:55:49 provos Exp $	*/
 /*	$NetBSD: ip_var.h,v 1.16 1996/02/13 23:43:20 christos Exp $	*/
 
 /*
@@ -67,15 +67,11 @@ struct ipqent {
 		struct ip	*_ip;
 		struct tcphdr	*_tcp;
 	} _ipqe_u1;
-	union {
-		u_int8_t	_mff;	/* for IP fragmentation */
-		struct mbuf	*_m;	/* XXX for TCP; see above */
-	} _ipqe_u2;
+	struct mbuf	*ipqe_m;	/* mbuf contains packet */
+	u_int8_t	ipqe_mff;	/* for IP fragmentation */
 };
 #define	ipqe_ip		_ipqe_u1._ip
 #define	ipqe_tcp	_ipqe_u1._tcp
-#define	ipqe_mff	_ipqe_u2._mff
-#define	ipqe_m		_ipqe_u2._m
 
 /*
  * Ip reassembly queue structure.  Each fragment
@@ -179,7 +175,7 @@ int	 ip_mforward __P((struct mbuf *, struct ifnet *));
 int	 ip_optcopy __P((struct ip *, struct ip *));
 int	 ip_output __P((struct mbuf *, ...));
 int	 ip_pcbopts __P((struct mbuf **, struct mbuf *));
-struct ip *
+struct mbuf *
 	 ip_reass __P((struct ipqent *, struct ipq *));
 struct in_ifaddr *
 	 in_iawithaddr __P((struct in_addr, struct mbuf *));
