@@ -1,4 +1,4 @@
-/*	$OpenBSD: rasops24.c,v 1.2 2002/03/14 01:27:02 millert Exp $ */
+/*	$OpenBSD: rasops24.c,v 1.3 2002/05/28 15:16:32 fgsch Exp $ */
 /* 	$NetBSD: rasops24.c,v 1.12 2000/04/12 14:22:29 pk Exp $	*/
 
 /*-
@@ -37,9 +37,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "opt_rasops.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops24.c,v 1.12 2000/04/12 14:22:29 pk Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -47,7 +45,6 @@ __KERNEL_RCSID(0, "$NetBSD: rasops24.c,v 1.12 2000/04/12 14:22:29 pk Exp $");
 #include <sys/time.h>
 
 #include <machine/endian.h>
-#include <machine/bswap.h>
 
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/wscons/wsconsio.h>
@@ -242,9 +239,9 @@ rasops24_makestamp(ri, attr)
 #else
 		if ((ri->ri_flg & RI_BSWAP) != 0) {
 #endif
-			stamp[i+0] = bswap32(stamp[i+0]);
-			stamp[i+1] = bswap32(stamp[i+1]);
-			stamp[i+2] = bswap32(stamp[i+2]);
+			stamp[i+0] = swap32(stamp[i+0]);
+			stamp[i+1] = swap32(stamp[i+1]);
+			stamp[i+2] = swap32(stamp[i+2]);
 		}
 	}
 }
@@ -561,9 +558,9 @@ rasops24_eraserows(cookie, row, num, attr)
 #else
 	if ((ri->ri_flg & RI_BSWAP) != 0) {
 #endif
-		stamp[0] = bswap32(stamp[0]);
-		stamp[1] = bswap32(stamp[1]);
-		stamp[2] = bswap32(stamp[2]);
+		stamp[0] = swap32(stamp[0]);
+		stamp[1] = swap32(stamp[1]);
+		stamp[2] = swap32(stamp[2]);
 	}
 
 	/*
@@ -674,9 +671,9 @@ rasops24_erasecols(cookie, row, col, num, attr)
 #else
 	if ((ri->ri_flg & RI_BSWAP) != 0) {
 #endif
-		stamp[0] = bswap32(stamp[0]);
-		stamp[1] = bswap32(stamp[1]);
-		stamp[2] = bswap32(stamp[2]);
+		stamp[0] = swap32(stamp[0]);
+		stamp[1] = swap32(stamp[1]);
+		stamp[2] = swap32(stamp[2]);
 	}
 
 	/*
@@ -688,7 +685,7 @@ rasops24_erasecols(cookie, row, col, num, attr)
 	 *
 	 *	aaab bbcc cddd
 	 */
-	slop = (int)rp & 3;	num -= slop;
+	slop = (long)rp & 3;	num -= slop;
 	n12 = num / 12;		num -= (n12 << 3) + (n12 << 2);
 	n4 = num >> 2;		num &= 3;
 
