@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.99 2001/03/28 03:28:33 fgsch Exp $
+#	$OpenBSD: files.pci,v 1.100 2001/03/29 14:20:46 aaron Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -103,6 +103,14 @@ file	dev/pci/cs4281.c		clct
 device	maestro: audio, auconv, mulaw, ac97
 attach	maestro at pci
 file	dev/pci/maestro.c		maestro
+
+# Yamaha YMF Audio
+device	yds { }: audio, auconv, mulaw, ac97
+attach	yds at pci
+file	dev/pci/yds.c			yds
+
+attach	opl at yds with opl_yds
+file	dev/pci/opl_yds.c		opl_yds
 
 # Forte Media FM801
 device	fms: audio, auconv, mulaw, ac97, midibus
