@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.13 2003/06/12 20:58:09 deraadt Exp $	*/
+/*	$OpenBSD: parse.c,v 1.14 2004/11/21 19:57:16 otto Exp $	*/
 /*	$NetBSD: parse.c,v 1.12 2001/12/07 13:37:39 bjh21 Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)parse.c	5.6 (Berkeley) 3/9/91";*/
-static char rcsid[] = "$OpenBSD: parse.c,v 1.13 2003/06/12 20:58:09 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: parse.c,v 1.14 2004/11/21 19:57:16 otto Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -170,7 +170,7 @@ size(FS *fs)
 			 * skip any special chars -- save precision in
 			 * case it's a %s format.
 			 */
-			while (strchr(spec + 1, *++fmt));
+			while (*++fmt && strchr(spec + 1, *fmt));
 			if (*fmt == '.' && isdigit((unsigned char)*++fmt)) {
 				prec = atoi(fmt);
 				while (isdigit((unsigned char)*++fmt));
@@ -244,10 +244,10 @@ rewrite(FS *fs)
 			if (fu->bcnt) {
 				sokay = USEBCNT;
 				/* Skip to conversion character. */
-				for (++p1; strchr(spec, *p1); ++p1);
+				for (++p1; *p1 && strchr(spec, *p1); ++p1);
 			} else {
 				/* Skip any special chars, field width. */
-				while (strchr(spec + 1, *++p1));
+				while (*++p1 && strchr(spec + 1, *p1));
 				if (*p1 == '.' &&
 				    isdigit((unsigned char)*++p1)) {
 					sokay = USEPREC;
@@ -258,7 +258,7 @@ rewrite(FS *fs)
 					sokay = NOTOKAY;
 			}
 
-			p2 = p1 + 1;		/* Set end pointer. */
+			p2 = *p1 ? p1 + 1 : p1;	/* Set end pointer. */
 			cs[0] = *p1;		/* Set conversion string. */
 			cs[1] = '\0';
 
@@ -280,11 +280,13 @@ rewrite(FS *fs)
 				}
 				break;
 			case 'd': case 'i':
-				pr->flags = F_INT;
-				goto isint;
 			case 'o': case 'u': case 'x': case 'X':
-				pr->flags = F_UINT;
-isint:				cs[2] = '\0';
+				if (cs[0] == 'd' || cs[0] == 'i')
+					pr->flags = F_INT;
+				else
+					pr->flags = F_UINT;
+
+				cs[2] = '\0';
 				cs[1] = cs[0];
 				cs[0] = 'q';
 				switch(fu->bcnt) {
@@ -349,22 +351,26 @@ isint:				cs[2] = '\0';
 						cs[2] = '\0';
 						break;
 					default:
-						p1[3] = '\0';
+						if (p1[2])
+							p1[3] = '\0';
 						badconv(p1);
 					}
 					break;
 				case 'c':
-					pr->flags = F_C;
-					/* cs[0] = 'c';	set in conv_c */
-					goto isint2;
 				case 'p':
-					pr->flags = F_P;
-					cs[0] = 'c';
-					goto isint2;
 				case 'u':
-					pr->flags = F_U;
-					/* cs[0] = 'c';	set in conv_u */
-isint2:					switch(fu->bcnt) {
+					if (p1[1] == 'c') {
+						pr->flags = F_C;
+						/* cs[0] = 'c';	set in conv_c */
+					} else if (p1[1] == 'p') {
+						pr->flags = F_P;
+						cs[0] = 'c';
+					} else {
+						pr->flags = F_U;
+						/* cs[0] = 'c';	set in conv_u */
+					}
+
+					switch(fu->bcnt) {
 					case 0: case 1:
 						pr->bcnt = 1;
 						break;
@@ -374,12 +380,14 @@ isint2:					switch(fu->bcnt) {
 					}
 					break;
 				default:
-					p1[2] = '\0';
+					if (p1[1])
+						p1[2] = '\0';
 					badconv(p1);
 				}
 				break;
 			default:
-				p1[1] = '\0';
+				if (cs[0])
+					p1[1] = '\0';
 				badconv(p1);
 			}
 
@@ -423,6 +431,8 @@ isint2:					switch(fu->bcnt) {
 		    !(fu->flags&F_SETREP) && fu->bcnt)
 			fu->reps += (blocksize - fs->bcnt) / fu->bcnt;
 		if (fu->reps > 1) {
+			if (!fu->nextpr)
+				break;
 			for (pr = fu->nextpr;; pr = pr->nextpr)
 				if (!pr->nextpr)
 					break;
@@ -453,8 +463,12 @@ escape(char *p1)
 			*p2 = *p1;
 			break;
 		}
-		if (*p1 == '\\')
+		if (*p1 == '\\') {
 			switch(*++p1) {
+			case '\0':
+				*p2++ = '\\';
+				*p2 = '\0';
+				return;	/* incomplete escape sequence */
 			case 'a':
 			     /* *p2 = '\a'; */
 				*p2 = '\007';
@@ -481,6 +495,8 @@ escape(char *p1)
 				*p2 = *p1;
 				break;
 			}
+		} else
+			*p2 = *p1;
 	}
 }
 
