@@ -1,4 +1,4 @@
-/*	$OpenBSD: creator.c,v 1.15 2002/07/26 18:00:08 jason Exp $	*/
+/*	$OpenBSD: creator.c,v 1.16 2002/07/26 18:23:34 jason Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -434,7 +434,7 @@ void
 creator_ras_fill(sc)
 	struct creator_softc *sc;
 {
-	creator_ras_fifo_wait(sc, 5);
+	creator_ras_fifo_wait(sc, 6);
 	FBC_WRITE(sc, FFB_FBC_PPC,
 	    FBC_PPC_VCE_DIS | FBC_PPC_TBE_OPAQUE |
 	    FBC_PPC_APE_DIS | FBC_PPC_CS_CONST);
