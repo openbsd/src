@@ -1,4 +1,4 @@
-/*	$OpenBSD: units.c,v 1.8 2003/06/10 22:20:53 deraadt Exp $	*/
+/*	$OpenBSD: units.c,v 1.9 2003/07/02 01:57:15 deraadt Exp $	*/
 /*	$NetBSD: units.c,v 1.6 1996/04/06 06:01:03 thorpej Exp $	*/
 
 /*
@@ -68,6 +68,25 @@ char *NULLUNIT = "";
 int unitcount;
 int prefixcount;
 
+char *dupstr(char *);
+void readerror(int);
+void readunits(char *);
+void initializeunit(struct unittype *);
+int addsubunit(char *[], char *);
+void showunit(struct unittype *);
+void zeroerror(void);
+int addunit(struct unittype *, char *, int);
+int compare(const void *, const void *);
+void sortunit(struct unittype *);
+void cancelunit(struct unittype *);
+char *lookupunit(char *);
+int reduceproduct(struct unittype *, int);
+int reduceunit(struct unittype *);
+int compareproducts(char **, char **);
+int compareunits(struct unittype *, struct unittype *);
+int completereduce(struct unittype *);
+void showanswer(struct unittype *, struct unittype *);
+void usage(void);
 
 char *
 dupstr(char *str)
@@ -83,7 +102,7 @@ dupstr(char *str)
 }
 
 
-void 
+void
 readerror(int linenum)
 {
 	fprintf(stderr, "Error in units file '%s' line %d\n", UNITSFILE,
@@ -91,12 +110,12 @@ readerror(int linenum)
 }
 
 
-void 
+void
 readunits(char *userfile)
 {
-	FILE *unitfile;
 	char line[80], *lineptr;
 	int len, linenum, i;
+	FILE *unitfile;
 
 	unitcount = 0;
 	linenum = 0;
@@ -111,9 +130,8 @@ readunits(char *userfile)
 	} else {
 		unitfile = fopen(UNITSFILE, "rt");
 		if (!unitfile) {
+			char filename[1000], separator[2] = SEPERATOR;
 			char *direc, *env;
-			char filename[1000];
-			char separator[2] = SEPERATOR;
 
 			env = getenv("PATH");
 			if (env) {
@@ -171,8 +189,7 @@ readunits(char *userfile)
 			len = strcspn(lineptr, "\n\t");
 			lineptr[len] = 0;
 			prefixtable[prefixcount++].prefixval = dupstr(lineptr);
-		}
-		else {		/* it's not a prefix */
+		} else {		/* it's not a prefix */
 			if (unitcount == MAXUNITS) {
 				fprintf(stderr,
 				    "Memory for units exceeded in line %d\n",
@@ -201,15 +218,15 @@ readunits(char *userfile)
 	fclose(unitfile);
 }
 
-void 
-initializeunit(struct unittype * theunit)
+void
+initializeunit(struct unittype *theunit)
 {
 	theunit->factor = 1.0;
 	theunit->numerator[0] = theunit->denominator[0] = NULL;
 }
 
 
-int 
+int
 addsubunit(char *product[], char *toadd)
 {
 	char **ptr;
@@ -226,8 +243,8 @@ addsubunit(char *product[], char *toadd)
 }
 
 
-void 
-showunit(struct unittype * theunit)
+void
+showunit(struct unittype *theunit)
 {
 	char **ptr;
 	int printedslash;
@@ -272,7 +289,7 @@ showunit(struct unittype * theunit)
 }
 
 
-void 
+void
 zeroerror(void)
 {
 	fprintf(stderr, "Unit reduces to zero\n");
@@ -285,8 +302,8 @@ zeroerror(void)
    Returns 0 for successful addition, nonzero on error.
 */
 
-int 
-addunit(struct unittype * theunit, char *toadd, int flip)
+int
+addunit(struct unittype *theunit, char *toadd, int flip)
 {
 	char *scratch, *savescr;
 	char *item;
@@ -330,8 +347,7 @@ addunit(struct unittype * theunit, char *toadd, int flip)
 						theunit->factor /= num;
 					else
 						theunit->factor *= num;
-				}
-				else {
+				} else {
 					num = atof(item);
 					if (!num) {
 						zeroerror();
@@ -343,8 +359,7 @@ addunit(struct unittype * theunit, char *toadd, int flip)
 						theunit->factor /= num;
 
 				}
-			}
-			else {	/* item is not a number */
+			} else {	/* item is not a number */
 				int repeat = 1;
 
 				if (strchr("23456789",
@@ -361,8 +376,7 @@ addunit(struct unittype * theunit, char *toadd, int flip)
 		doingtop--;
 		if (slash) {
 			scratch = slash + 1;
-		}
-		else
+		} else
 			doingtop--;
 	} while (doingtop >= 0);
 	free(savescr);
@@ -370,15 +384,15 @@ addunit(struct unittype * theunit, char *toadd, int flip)
 }
 
 
-int 
+int
 compare(const void *item1, const void *item2)
 {
 	return strcmp(*(char **) item1, *(char **) item2);
 }
 
 
-void 
-sortunit(struct unittype * theunit)
+void
+sortunit(struct unittype *theunit)
 {
 	char **ptr;
 	int count;
@@ -390,8 +404,8 @@ sortunit(struct unittype * theunit)
 }
 
 
-void 
-cancelunit(struct unittype * theunit)
+void
+cancelunit(struct unittype *theunit)
 {
 	char **den, **num;
 	int comp;
@@ -402,12 +416,15 @@ cancelunit(struct unittype * theunit)
 	while (*num && *den) {
 		comp = strcmp(*den, *num);
 		if (!comp) {
-/*      if (*den!=NULLUNIT) free(*den);
-      if (*num!=NULLUNIT) free(*num);*/
+#if 0
+			if (*den!=NULLUNIT)
+				free(*den);
+			if (*num!=NULLUNIT)
+				free(*num);
+#endif
 			*den++ = NULLUNIT;
 			*num++ = NULLUNIT;
-		}
-		else if (comp < 0)
+		} else if (comp < 0)
 			den++;
 		else
 			num++;
@@ -499,12 +516,10 @@ lookupunit(char *unit)
 
 #define ERROR 4
 
-int 
-reduceproduct(struct unittype * theunit, int flip)
+int
+reduceproduct(struct unittype *theunit, int flip)
 {
-
-	char *toadd;
-	char **product;
+	char *toadd, **product;
 	int didsomething = 2;
 
 	if (flip)
@@ -542,8 +557,8 @@ reduceproduct(struct unittype * theunit, int flip)
    Returns 0 on success, or 1 on unknown unit error.
 */
 
-int 
-reduceunit(struct unittype * theunit)
+int
+reduceunit(struct unittype *theunit)
 {
 	int ret;
 
@@ -557,7 +572,7 @@ reduceunit(struct unittype * theunit)
 }
 
 
-int 
+int
 compareproducts(char **one, char **two)
 {
 	while (*one || *two) {
@@ -580,17 +595,16 @@ compareproducts(char **one, char **two)
 
 /* Return zero if units are compatible, nonzero otherwise */
 
-int 
-compareunits(struct unittype * first, struct unittype * second)
+int
+compareunits(struct unittype *first, struct unittype *second)
 {
-	return
-	compareproducts(first->numerator, second->numerator) ||
-	compareproducts(first->denominator, second->denominator);
+	return compareproducts(first->numerator, second->numerator) ||
+	    compareproducts(first->denominator, second->denominator);
 }
 
 
-int 
-completereduce(struct unittype * unit)
+int
+completereduce(struct unittype *unit)
 {
 	if (reduceunit(unit))
 		return 1;
@@ -600,21 +614,20 @@ completereduce(struct unittype * unit)
 }
 
 
-void 
-showanswer(struct unittype * have, struct unittype * want)
+void
+showanswer(struct unittype *have, struct unittype *want)
 {
 	if (compareunits(have, want)) {
 		printf("conformability error\n");
 		showunit(have);
 		showunit(want);
-	}
-	else
+	} else
 		printf("\t* %.8g\n\t/ %.8g\n", have->factor / want->factor,
 		    want->factor / have->factor);
 }
 
 
-void 
+void
 usage(void)
 {
 	fprintf(stderr, "units [-f unitsfile] [-q] [-v] [from-unit to-unit]\n");
@@ -674,8 +687,7 @@ main(int argc, char **argv)
 		addunit(&want, wantstr, 0);
 		completereduce(&want);
 		showanswer(&have, &want);
-	}
-	else {
+	} else {
 		if (!quiet)
 			printf("%d units, %d prefixes\n", unitcount,
 			    prefixcount);
