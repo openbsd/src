@@ -1,4 +1,4 @@
-#	$OpenBSD: NEWATA,v 1.1 1999/07/18 21:25:21 csapuntz Exp $
+#	$OpenBSD: NEWATA,v 1.2 1999/07/20 21:27:08 fgsch Exp $
 #
 #	NEWATA - Generic 07/17/99 with new ATA stuff
 #
@@ -161,6 +161,7 @@ pciide* at pci ? dev ? function ? flags 0x0000
 # Some controllers pass the initial 32bit test, but will fail later.
 wdc0	at isa? port 0x1f0 irq 14 flags 0x00
 wdc1	at isa? port 0x170 irq 15 flags 0x00
+wdc*	at pcmcia? function ?
 
 # IDE drives
 # Flags are used only with controllers that support DMA operations
