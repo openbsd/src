@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.40 2000/11/16 20:02:17 provos Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.41 2001/02/19 10:21:48 art Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -211,14 +211,15 @@ setsigvec(p, signum, sa)
 	int signum;
 	register struct sigaction *sa;
 {
-	register struct sigacts *ps = p->p_sigacts;
-	register int bit;
+	struct sigacts *ps = p->p_sigacts;
+	int bit;
+	int s;
 
 	bit = sigmask(signum);
 	/*
 	 * Change setting atomically.
 	 */
-	(void) splhigh();
+	s = splhigh();
 	ps->ps_sigact[signum] = sa->sa_handler;
 	if ((sa->sa_flags & SA_NODEFER) == 0)
 		sa->sa_mask |= sigmask(signum);
@@ -286,7 +287,7 @@ setsigvec(p, signum, sa)
 		else
 			p->p_sigcatch |= bit;
 	}
-	(void) spl0();
+	splx(s);
 }
 
 /*
@@ -358,9 +359,10 @@ sys_sigprocmask(p, v, retval)
 		syscallarg(sigset_t) mask;
 	} */ *uap = v;
 	int error = 0;
+	int s;
 
 	*retval = p->p_sigmask;
-	(void) splhigh();
+	s = splhigh();
 
 	switch (SCARG(uap, how)) {
 	case SIG_BLOCK:
@@ -379,7 +381,7 @@ sys_sigprocmask(p, v, retval)
 		error = EINVAL;
 		break;
 	}
-	(void) spl0();
+	splx(s);
 	return (error);
 }
 
@@ -1058,12 +1060,13 @@ void
 postsig(signum)
 	register int signum;
 {
-	register struct proc *p = curproc;
-	register struct sigacts *ps = p->p_sigacts;
-	register sig_t action;
+	struct proc *p = curproc;
+	struct sigacts *ps = p->p_sigacts;
+	sig_t action;
 	u_long code;
 	int mask, returnmask;
 	union sigval null_sigval;
+	int s;
 
 #ifdef DIAGNOSTIC
 	if (signum == 0)
@@ -1101,7 +1104,7 @@ postsig(signum)
 		 * mask from before the sigpause is what we want
 		 * restored after the signal processing is completed.
 		 */
-		(void) splhigh();
+		s = splhigh();
 		if (ps->ps_flags & SAS_OLDMASK) {
 			returnmask = ps->ps_oldmask;
 			ps->ps_flags &= ~SAS_OLDMASK;
@@ -1114,7 +1117,7 @@ postsig(signum)
 				p->p_sigignore |= mask;
 			ps->ps_sigact[signum] = SIG_DFL;
 		}
-		(void) spl0();
+		splx(s);
 		p->p_stats->p_ru.ru_nsignals++;
 		if (ps->ps_sig != signum) {
 			code = 0;
