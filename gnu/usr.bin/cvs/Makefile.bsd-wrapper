@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.29 1998/10/18 20:02:29 millert Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.30 1999/03/04 03:57:29 niklas Exp $
 
 .include <bsd.own.mk>
 
@@ -7,7 +7,8 @@ GNUCFLAGS=	CFLAGS="${CFLAGS}"
 CLEANFILES=	lib/getdate.c macintosh/Makefile os2/Makefile doc/CVSvn.texi \
                 doc/cvs.info doc/cvs.info-1 doc/cvs.info-2 doc/cvs.info-3 \
                 doc/cvs.info-4 doc/cvs.info-5 doc/cvs.info-6 doc/cvs.info-7 \
-		doc/cvs.info-8 doc/cvsclient.info
+		doc/cvs.info-8 doc/cvs.info-9 doc/cvsclient.info doc/cvsclient.info-1 \
+		doc/cvsclient.info-2 doc/cvsclient.info-3
 
 .if (${KERBEROS} == "yes")
 KRB=--with-krb4=/usr
@@ -16,7 +17,7 @@ KRB=--without-krb4
 .endif
 
 all:	config.status
-	${MAKE} ${GNUCFLAGS} LDFLAGS=${LDSTATIC}
+	${MAKE} ${GNUCFLAGS} LDFLAGS=${LDSTATIC} all info
 
 .FORCE:	.IGNORE
 
