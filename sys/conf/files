@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.89 1998/09/11 10:12:45 fgsch Exp $
+#	$OpenBSD: files,v 1.90 1998/09/18 00:35:11 art Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -467,7 +467,7 @@ file xfs/xfs_deb.c			xfs
 file xfs/xfs_dev.c			xfs
 file xfs/xfs_message.c			xfs
 file xfs/xfs_node.c			xfs
-file xfs/xfs_syscalls.c			xfs
+file xfs/xfs_syscalls.c
 file xfs/xfs_vfsops.c			xfs
 file xfs/xfs_vnodeops.c			xfs
 file vm/device_pager.c			devpager
