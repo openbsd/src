@@ -35,7 +35,7 @@
 .\"
 .\"	from: Header: le.4,v 1.2 92/10/13 05:31:33 leres Exp
 .\"	from: @(#)le.4	8.1 (Berkeley) 6/9/93
-.\"	$Id: le.4,v 1.10 1999/07/09 13:35:42 aaron Exp $
+.\"	$Id: le.4,v 1.11 1999/09/27 01:10:10 deraadt Exp $
 .\"
 .Dd June 9, 1993
 .Dt LE 4 sparc
@@ -96,6 +96,10 @@ Use the AUI connector
 .It media 10baseT
 Use the twisted pair connector
 .El
+.Sh NOTES
+Some sbus models, in particular the 501-1450 and 501-1881, have dip
+switches which must be changed to select between the BNC and AUI modes.
+For BNC, set 1-6 ON, 7-8 OFF; for AUI set 1-6 OFF, and 7-8 ON.
 .Sh SEE ALSO
 .Xr arp 4 ,
 .Xr be 4 ,
