@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mktemp.3,v 1.31 2003/06/02 20:18:37 millert Exp $
+.\"	$OpenBSD: mktemp.3,v 1.32 2003/07/02 06:36:38 pvalchev Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -93,7 +93,7 @@ function acts the same as
 .Fn mkstemp ,
 except it permits a suffix to exist in the template.
 The template should be of the form
-.Pa /tmp/tmpXXXXXXsuffix .
+.Pa /tmp/tmpXXXXXXXXXXsuffix .
 .Fn mkstemps
 is told the length of the suffix string, i.e., strlen("suffix");
 .Pp
@@ -128,7 +128,7 @@ For instance, code of this form:
 char sfn[15] = "";
 FILE *sfp;
 
-strlcpy(sfn, "/tmp/ed.XXXXXX", sizeof sfn);
+strlcpy(sfn, "/tmp/ed.XXXXXXXXXX", sizeof sfn);
 if (mktemp(sfn) == NULL || (sfp = fopen(sfn, "w+")) == NULL) {
         fprintf(stderr, "%s: %s\en", sfn, strerror(errno));
         return (NULL);
@@ -142,7 +142,7 @@ char sfn[15] = "";
 FILE *sfp;
 int fd = -1;
 
-strlcpy(sfn, "/tmp/ed.XXXXXX", sizeof sfn);
+strlcpy(sfn, "/tmp/ed.XXXXXXXXXX", sizeof sfn);
 if ((fd = mkstemp(sfn)) == -1 ||
     (sfp = fdopen(fd, "w+")) == NULL) {
         if (fd != -1) {
