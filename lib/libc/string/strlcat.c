@@ -1,4 +1,4 @@
-/*	$OpenBSD: strlcat.c,v 1.3 2000/11/24 11:10:02 itojun Exp $	*/
+/*	$OpenBSD: strlcat.c,v 1.4 2001/01/12 22:55:23 millert Exp $	*/
 
 /*
  * Copyright (c) 1998 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: strlcat.c,v 1.3 2000/11/24 11:10:02 itojun Exp $";
+static char *rcsid = "$OpenBSD: strlcat.c,v 1.4 2001/01/12 22:55:23 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -52,7 +52,7 @@ size_t strlcat(dst, src, siz)
 	size_t dlen;
 
 	/* Find the end of dst and adjust bytes left but don't go past end */
-	while (*d != '\0' && n-- != 0)
+	while (n-- != 0 && *d != '\0')
 		d++;
 	dlen = d - dst;
 	n = siz - dlen;
