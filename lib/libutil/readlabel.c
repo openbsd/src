@@ -1,4 +1,4 @@
-/*	$OpenBSD: readlabel.c,v 1.1 1996/12/03 01:05:35 downsj Exp $	*/
+/*	$OpenBSD: readlabel.c,v 1.2 1996/12/04 21:25:33 downsj Exp $	*/
 
 /*
  * Copyright (c) 1996, Jason Downs.  All rights reserved.
@@ -48,7 +48,7 @@ char *readlabelfs(device)
 	char *device;
 {
 	char rpath[MAXPATHLEN];
-	char part;
+	char part, *type;
 	struct stat sbuf;
 	struct disklabel dk;
 	int fd;
@@ -111,5 +111,6 @@ char *readlabelfs(device)
 		return(NULL);
 	}
 
-	return(fstypesnames[dk.d_partitions[part - 'a'].p_fstype]);
+	type = fstypesnames[dk.d_partitions[part - 'a'].p_fstype];
+	return((type[0] == '\0') ? NULL : type);
 }
