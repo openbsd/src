@@ -1,3 +1,4 @@
+/*	$OpenBSD: roll.c,v 1.2 1998/09/20 23:36:56 pjanzen Exp $	*/
 /*	$NetBSD: roll.c,v 1.5 1995/03/23 08:35:13 cgd Exp $	*/
 
 /*
@@ -37,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)roll.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: roll.c,v 1.5 1995/03/23 08:35:13 cgd Exp $";
+static char rcsid[] = "$OpenBSD: roll.c,v 1.2 1998/09/20 23:36:56 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -47,36 +48,36 @@ static char rcsid[] = "$NetBSD: roll.c,v 1.5 1995/03/23 08:35:13 cgd Exp $";
  *	This routine rolls ndie nside-sided dice.
  */
 
-# define	reg	register
+#if defined(pdp11)
+#define	MAXRAND	32767L
 
-# if defined(pdp11)
-# define	MAXRAND	32767L
-
+int
 roll(ndie, nsides)
-int	ndie, nsides; {
-
-	reg long	tot;
-	reg unsigned	n, r;
+	int	ndie, nsides;
+{
+	long		tot;
+	unsigned	n, r;
 
 	tot = 0;
 	n = ndie;
 	while (n--)
-		tot += rand();
+		tot += random();
 	return (int) ((tot * (long) nsides) / ((long) MAXRAND + 1)) + ndie;
 }
 
-# else
+#else
 
+int
 roll(ndie, nsides)
-reg int	ndie, nsides; {
-
-	reg int		tot, r;
-	reg double	num_sides;
+	int	ndie, nsides;
+{
+	int	tot, r;
+	double	num_sides;
 
 	num_sides = nsides;
 	tot = 0;
 	while (ndie--)
-		tot += (r = rand()) * (num_sides / RAND_MAX) + 1;
+		tot += (r = random()) * (num_sides / RAND_MAX) + 1;
 	return tot;
 }
-# endif
+#endif

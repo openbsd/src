@@ -1,3 +1,4 @@
+/*	$OpenBSD: initdeck.c,v 1.6 1998/09/20 23:36:51 pjanzen Exp $	*/
 /*	$NetBSD: initdeck.c,v 1.3 1995/03/23 08:34:43 cgd Exp $	*/
 
 /*
@@ -43,12 +44,15 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)initdeck.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: initdeck.c,v 1.3 1995/03/23 08:34:43 cgd Exp $";
+static char rcsid[] = "$OpenBSD: initdeck.c,v 1.6 1998/09/20 23:36:51 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
-# include	<stdio.h>
-# include	"deck.h"
+#include	<err.h>
+#include	<stdio.h>
+#include	<stdlib.h>
+#include	<unistd.h>
+#include	"deck.h"
 
 /*
  *	This program initializes the card files for monopoly.
@@ -61,25 +65,27 @@ static char rcsid[] = "$NetBSD: initdeck.c,v 1.3 1995/03/23 08:34:43 cgd Exp $";
  * string to print, terminated with a null byte.
  */
 
-# define	TRUE	1
-# define	FALSE	0
+#define	TRUE	1
+#define	FALSE	0
 
-# define	bool	int8_t
-# define	reg	register
+#define	bool	int8_t
 
 char	*infile		= "cards.inp",		/* input file		*/
 	*outfile	= "cards.pck";		/* "packed" file	*/
-
-extern long	ftell();
-extern char *calloc();
 
 DECK	deck[2];
 
 FILE	*inf, *outf;
 
+static void	getargs __P((int, char *[]));
+static void	count __P((void));
+static void	putem __P((void));
+
+int
 main(ac, av)
-int	ac;
-char	*av[]; {
+	int	ac;
+	char	*av[];
+{
 	int n;
 
 	/* revoke */
@@ -87,21 +93,20 @@ char	*av[]; {
 	setgid(getgid());
 
 	getargs(ac, av);
-	if ((inf = fopen(infile, "r")) == NULL) {
-		perror(infile);
-		exit(1);
-	}
+	if ((inf = fopen(infile, "r")) == NULL)
+		err(1, infile);
 	count();
 	/*
 	 * allocate space for pointers.
 	 */
-	CC_D.offsets = (int32_t *)calloc(CC_D.num_cards + 1, sizeof (int32_t));
-	CH_D.offsets = (int32_t *)calloc(CH_D.num_cards + 1, sizeof (int32_t));
+	if ((CC_D.offsets = (int32_t *)calloc(CC_D.num_cards + 1,
+			sizeof (int32_t))) == NULL ||
+	    (CH_D.offsets = (int32_t *)calloc(CH_D.num_cards + 1,
+			sizeof (int32_t))) == NULL)
+		errx(1, "malloc");
 	fseek(inf, 0L, 0);
-	if ((outf = fopen(outfile, "w")) == NULL) {
-		perror(outfile);
-		exit(0);
-	}
+	if ((outf = fopen(outfile, "w")) == NULL)
+		err(1, outfile);
 
 	fwrite(&deck[0].num_cards, sizeof(deck[0].num_cards), 1, outf);
 	fwrite(&deck[0].last_card, sizeof(deck[0].last_card), 1, outf);
@@ -146,10 +151,11 @@ char	*av[]; {
 	exit(0);
 }
 
+static void
 getargs(ac, av)
-int	ac;
-char	*av[]; {
-
+	int	ac;
+	char	*av[];
+{
 	if (ac > 1)
 		infile = av[1];
 	if (ac > 2)
@@ -159,11 +165,12 @@ char	*av[]; {
 /*
  * count the cards
  */
-count() {
-
-	reg bool	newline;
-	reg DECK	*in_deck;
-	reg int	c;
+static void
+count()
+{
+	bool	newline;
+	DECK	*in_deck;
+	int	c;
 
 	newline = TRUE;
 	in_deck = &CC_D;
@@ -181,12 +188,13 @@ count() {
 /*
  *	put strings in the file
  */
-putem() {
-
-	reg bool	newline;
-	reg DECK	*in_deck;
-	reg int	c;
-	int16_t		num;
+static void
+putem()
+{
+	bool	newline;
+	DECK	*in_deck;
+	int	c;
+	int16_t	num;
 
 	in_deck = &CC_D;
 	CC_D.num_cards = 1;

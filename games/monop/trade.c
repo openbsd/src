@@ -1,3 +1,4 @@
+/*	$OpenBSD: trade.c,v 1.2 1998/09/20 23:36:56 pjanzen Exp $	*/
 /*	$NetBSD: trade.c,v 1.3 1995/03/23 08:35:19 cgd Exp $	*/
 
 /*
@@ -37,11 +38,11 @@
 #if 0
 static char sccsid[] = "@(#)trade.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: trade.c,v 1.3 1995/03/23 08:35:19 cgd Exp $";
+static char rcsid[] = "$OpenBSD: trade.c,v 1.2 1998/09/20 23:36:56 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
-# include	"monop.ext"
+#include	"monop.ext"
 
 struct trd_st {			/* how much to give to other player	*/
 	int	trader;			/* trader number		*/
@@ -52,15 +53,22 @@ struct trd_st {			/* how much to give to other player	*/
 
 typedef	struct trd_st	TRADE;
 
-static char	*list[MAX_PRP+2];
+static char	*plist[MAX_PRP+2];
 
 static int	used[MAX_PRP];
 
 static TRADE	trades[2];
 
-trade() {
+static void	get_list __P((int, int ));
+static int	set_list __P((OWN *));
+static void	summate __P((void));
+static void	do_trade __P((void));
+static void	move_em __P((TRADE *, TRADE *));
 
-	reg int	tradee, i;
+void
+trade()
+{
+	int	tradee, i;
 
 	trading = TRUE;
 	for (i = 0; i < 2; i++) {
@@ -96,14 +104,15 @@ over:
  *	This routine gets the list of things to be trader for the
  * player, and puts in the structure given.
  */
+static void
 get_list(struct_no, play_no)
-int	struct_no, play_no; {
-
-	reg int		sn, pn;
-	reg PLAY	*pp;
-	int		numin, prop, num_prp;
-	OWN		*op;
-	TRADE		*tp;
+	int	struct_no, play_no;
+{
+	int	sn, pn;
+	PLAY	*pp;
+	int	numin, prop, num_prp;
+	OWN	*op;
+	TRADE	*tp;
 
 	for (numin = 0; numin < MAX_PRP; numin++)
 		used[numin] = FALSE;
@@ -116,7 +125,7 @@ int	struct_no, play_no; {
 		numin = set_list(pp->own_list);
 		for (num_prp = numin; num_prp; ) {
 			prop = getinp("Which property do you wish to trade? ",
-			    list);
+			    plist);
 			if (prop == numin)
 				break;
 			else if (used[prop])
@@ -147,28 +156,30 @@ once_more:
 /*
  *	This routine sets up the list of tradable property.
  */
+static int
 set_list(the_list)
-reg OWN	*the_list; {
-
-	reg int	i;
-	reg OWN	*op;
+	OWN	*the_list;
+{
+	int	i;
+	OWN	*op;
 
 	i = 0;
 	for (op = the_list; op; op = op->next)
 		if (!used[i])
-			list[i++] = op->sqr->name;
-	list[i++] = "done";
-	list[i--] = 0;
+			plist[i++] = op->sqr->name;
+	plist[i++] = "done";
+	plist[i--] = 0;
 	return i;
 }
 /*
  *	This routine summates the trade.
  */
-summate() {
-
-	reg bool	some;
-	reg int		i;
-	reg TRADE	*tp;
+static void
+summate()
+{
+	bool	some;
+	int	i;
+	TRADE	*tp;
 	OWN	*op;
 
 	for (i = 0; i < 2; i++) {
@@ -193,19 +204,21 @@ summate() {
 /*
  *	This routine actually executes the trade.
  */
-do_trade() {
-
+static void
+do_trade()
+{
 	move_em(&trades[0], &trades[1]);
 	move_em(&trades[1], &trades[0]);
 }
 /*
  *	This routine does a switch from one player to another
  */
+static void
 move_em(from, to)
-TRADE	*from, *to; {
-
-	reg PLAY	*pl_fr, *pl_to;
-	reg OWN		*op;
+	TRADE	*from, *to;
+{
+	PLAY	*pl_fr, *pl_to;
+	OWN	*op;
 
 	pl_fr = &play[from->trader];
 	pl_to = &play[to->trader];
@@ -224,10 +237,11 @@ TRADE	*from, *to; {
 /*
  *	This routine lets a player resign
  */
-resign() {
-
-	reg int	i, new_own;
-	reg OWN	*op;
+void
+resign()
+{
+	int	i, new_own;
+	OWN	*op;
 	SQUARE	*sqp;
 
 	if (cur_p->money <= 0) {
@@ -260,7 +274,7 @@ resign() {
 		} while (new_own == player);
 		name_list[num_play] = "done";
 	}
-	if (getyn("Do you really want to resign? ", yn) != 0)
+	if (getyn("Do you really want to resign? ") != 0)
 		return;
 	if (num_play == 1) {
 		printf("Then NOBODY wins (not even YOU!)\n");
@@ -294,7 +308,7 @@ resign() {
 	for (i = player; i < num_play; i++) {
 		name_list[i] = name_list[i+1];
 		if (i + 1 < num_play)
-			cpy_st(&play[i], &play[i+1], sizeof (PLAY));
+			play[i] = play[i+1];
 	}
 	name_list[num_play--] = 0;
 	for (i = 0; i < N_SQRS; i++)

@@ -1,3 +1,4 @@
+/*	$OpenBSD: monop.ext,v 1.2 1998/09/20 23:36:54 pjanzen Exp $	*/
 /*	$NetBSD: monop.ext,v 1.2 1995/03/23 08:34:58 cgd Exp $	*/
 
 /*-
@@ -35,8 +36,8 @@
  *	@(#)monop.ext	5.4 (Berkeley) 5/31/93
  */
 
-# include	"monop.h"
-# include	"deck.h"
+#include	"deck.h"
+#include	"monop.h"
 
 extern bool	trading, spec, fixing, told_em;
 
@@ -46,14 +47,14 @@ extern int	num_play, player, num_doub, num_luck, (*func[])();
 
 extern DECK	deck[2];
 
-extern MON	mon[];
+extern MON	mon[N_MON];
 
 extern PLAY	*play, *cur_p;
 
-extern PROP	prop[];
+extern PROP	prop[N_PROP];
 
-extern RR_S	rr[];
+extern RR_S	rr[N_RR];
 
-extern SQUARE	board[];
+extern SQUARE	board[N_SQRS + 1];
 
-extern UTIL_S	util[];
+extern UTIL_S	util[2];

@@ -1,3 +1,4 @@
+/*	$OpenBSD: monop.def,v 1.2 1998/09/20 23:36:52 pjanzen Exp $	*/
 /*	$NetBSD: monop.def,v 1.3 1995/03/23 08:34:54 cgd Exp $	*/
 
 /*-
@@ -35,8 +36,8 @@
  *	@(#)monop.def	5.5 (Berkeley) 5/31/93
  */
 
-# include	"monop.h"
-# include	"deck.h"
+#include	"deck.h"
+#include	"monop.h"
 
 bool	fixing,			/* set if fixing up debt		*/
 	trading,		/* set if in process of trading		*/
@@ -77,13 +78,10 @@ int	player,			/* current player number		*/
 	num_play,		/* current number of players		*/
 	num_doub,		/* # of doubles current player rolled	*/
 				/* # of "got lucky" messages		*/
-	num_luck	= sizeof lucky_mes / sizeof (char *),
-				/* list of command functions		*/
-	buy_houses(), card(), do_move(), do_move(), list(), list_all(),
-	mortgage(), pay(), printboard(), quit(), resign(), restore(),
-	rub(), save(), sell_houses(), trade(),
-	unmortgage(), where(),
-	(*func[])()	= {	/* array of function calls for commands	*/
+	num_luck	= sizeof lucky_mes / sizeof (char *);
+
+/* list of command functions		*/
+void (*func[]) __P((void)) = {	/* array of function calls for commands	*/
 	quit,			/* quit game		|*  0 *|	*/
 	printboard,		/* print board		|*  1 *|	*/
 	where,			/* where players are	|*  2 *|	*/
@@ -108,18 +106,18 @@ DECK	deck[2];		/* Chance and Community Chest		*/
 PLAY	*play,			/* player structure array ("calloc"ed)	*/
 	*cur_p;			/* pointer to current player's struct	*/
 
-RR_S	rr[N_RR];		/* raildroad descriptions		*/
+RR_S	rr[N_RR];		/* railroad descriptions		*/
 
 UTIL_S	util[2];		/* utility descriptions			*/
 
 MON	mon[N_MON]	= {	/* monopoly descriptions		*/
-#		include	"mon.dat"
+#include	"mon.dat"
 };
 
 PROP	prop[N_PROP]	= {	/* typical properties			*/
-#		include	"prop.dat"
+#include	"prop.dat"
 };
 
 SQUARE	board[N_SQRS+1]	= {	/* board itself (+1 for Jail)		*/
-#		include	"brd.dat"
+#include	"brd.dat"
 };

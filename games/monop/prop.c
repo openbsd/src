@@ -1,3 +1,4 @@
+/*	$OpenBSD: prop.c,v 1.2 1998/09/20 23:36:55 pjanzen Exp $	*/
 /*	$NetBSD: prop.c,v 1.3 1995/03/23 08:35:06 cgd Exp $	*/
 
 /*
@@ -37,22 +38,24 @@
 #if 0
 static char sccsid[] = "@(#)prop.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: prop.c,v 1.3 1995/03/23 08:35:06 cgd Exp $";
+static char rcsid[] = "$OpenBSD: prop.c,v 1.2 1998/09/20 23:36:55 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
-# include	"monop.ext"
+#include	<err.h>
+#include	"monop.ext"
 
-extern char *calloc();
+static int	value __P((SQUARE *));
 
 /*
  *	This routine deals with buying property, setting all the
  * appropriate flags.
  */
+void
 buy(player, sqrp)
-reg int		player;
-reg SQUARE	*sqrp; {
-
+	int	player;
+	SQUARE	*sqrp;
+{
 	trading = FALSE;
 	sqrp->owner = player;
 	add_list(player, &(play[player].own_list), cur_p->loc);
@@ -60,17 +63,18 @@ reg SQUARE	*sqrp; {
 /*
  *	This routine adds an item to the list.
  */
+void
 add_list(plr, head, op_sqr)
-int	plr;
-OWN	**head;
-int	op_sqr; {
-
-	reg int	val;
-	reg OWN	*tp, *last_tp;
-	MON	*mp;
+	int	plr;
+	OWN	**head;
+	int	op_sqr;
+{
+	int	val;
+	OWN	*tp, *last_tp;
 	OWN	*op;
 
-	op = (OWN *)calloc(1, sizeof (OWN));
+	if ((op = (OWN *)calloc(1, sizeof (OWN))) == NULL)
+		errx(1, "malloc");
 	op->sqr = &board[op_sqr];
 	val = value(op->sqr);
 	last_tp = NULL;
@@ -92,22 +96,22 @@ int	op_sqr; {
 /*
  *	This routine deletes property from the list.
  */
+void
 del_list(plr, head, op_sqr)
-int	plr;
-OWN	**head;
-shrt	op_sqr; {
-
-	reg int	i;
-	reg OWN	*op, *last_op;
+	int	plr;
+	OWN	**head;
+	shrt	op_sqr;
+{
+	OWN	*op, *last_op;
 
 	switch (board[op_sqr].type) {
-	  case PRPTY:
+	case PRPTY:
 		board[op_sqr].desc->mon_desc->num_own--;
 		break;
-	  case RR:
+	case RR:
 		play[plr].num_rr--;
 		break;
-	  case UTIL:
+	case UTIL:
 		play[plr].num_util--;
 		break;
 	}
@@ -128,25 +132,26 @@ shrt	op_sqr; {
  *	This routine calculates the value for sorting of the
  * given square.
  */
+static int
 value(sqp)
-reg SQUARE	*sqp; {
-
-	reg int	sqr;
+	SQUARE	*sqp;
+{
+	int	sqr;
 
 	sqr = sqnum(sqp);
 	switch (sqp->type) {
-	  case SAFE:
+	case SAFE:
 		return 0;
-	  default:		/* Specials, etc */
+	default:		/* Specials, etc */
 		return 1;
-	  case UTIL:
+	case UTIL:
 		if (sqr == 12)
 			return 2;
 		else
 			return 3;
-	  case RR:
+	case RR:
 		return 4 + sqr/10;
-	  case PRPTY:
+	case PRPTY:
 		return 8 + (sqp->desc) - prop;
 	}
 }
@@ -154,11 +159,12 @@ reg SQUARE	*sqp; {
  *	This routine accepts bids for the current peice
  * of property.
  */
-bid() {
-
+void
+bid()
+{
 	static bool	in[MAX_PL];
-	reg int		i, num_in, cur_max;
-	char		buf[80];
+	int		i, num_in, cur_max;
+	char		buf[257];
 	int		cur_bid;
 
 	printf("\nSo it goes up for auction.  Type your bid after your name\n");
@@ -200,11 +206,12 @@ bid() {
  *	This routine calculates the value of the property
  * of given player.
  */
+int
 prop_worth(plp)
-reg PLAY	*plp; {
-
-	reg OWN	*op;
-	reg int	worth;
+	PLAY	*plp;
+{
+	OWN	*op;
+	int	worth;
 
 	worth = 0;
 	for (op = plp->own_list; op; op = op->next) {

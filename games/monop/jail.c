@@ -1,3 +1,4 @@
+/*	$OpenBSD: jail.c,v 1.2 1998/09/20 23:36:51 pjanzen Exp $	*/
 /*	$NetBSD: jail.c,v 1.3 1995/03/23 08:34:44 cgd Exp $	*/
 
 /*
@@ -37,18 +38,19 @@
 #if 0
 static char sccsid[] = "@(#)jail.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: jail.c,v 1.3 1995/03/23 08:34:44 cgd Exp $";
+static char rcsid[] = "$OpenBSD: jail.c,v 1.2 1998/09/20 23:36:51 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
-# include	"monop.ext"
+#include	"monop.ext"
 
 /*
  *	This routine uses a get-out-of-jail-free card to get the
  * player out of jail.
  */
-card() {
-
+void
+card()
+{
 	if (cur_p->loc != JAIL) {
 		printf("But you're not IN Jail\n");
 		return;
@@ -65,9 +67,10 @@ card() {
  *	This routine returns the players get-out-of-jail-free card
  * to a deck.
  */
+void
 ret_card(plr)
-reg PLAY	*plr; {
-
+	PLAY	*plr;
+{
 	plr->num_gojf--;
 	if (CC_D.gojf_used)
 		CC_D.gojf_used = FALSE;
@@ -77,8 +80,9 @@ reg PLAY	*plr; {
 /*
  *	This routine deals with paying your way out of jail.
  */
-pay() {
-
+void
+pay()
+{
 	if (cur_p->loc != JAIL) {
 		printf("But you're not IN Jail\n");
 		return;
@@ -91,9 +95,10 @@ pay() {
 /*
  *	This routine deals with a move in jail
  */
+int
 move_jail(r1, r2)
-reg int	r1, r2; {
-
+	int	r1, r2;
+{
 	if (r1 != r2) {
 		printf("Sorry, that doesn't get you out\n");
 		if (++(cur_p->in_jail) == 3) {
@@ -113,8 +118,10 @@ moveit:
 		goto moveit;
 	}
 }
-printturn() {
 
+void
+printturn()
+{
 	if (cur_p->loc != JAIL)
 		return;
 	printf("(This is your ");

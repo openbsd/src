@@ -1,3 +1,4 @@
+/*	$OpenBSD: execute.c,v 1.2 1998/09/20 23:36:50 pjanzen Exp $	*/
 /*	$NetBSD: execute.c,v 1.3 1995/03/23 08:34:38 cgd Exp $	*/
 
 /*
@@ -37,34 +38,59 @@
 #if 0
 static char sccsid[] = "@(#)execute.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: execute.c,v 1.3 1995/03/23 08:34:38 cgd Exp $";
+static char rcsid[] = "$OpenBSD: execute.c,v 1.2 1998/09/20 23:36:50 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
-# include	"monop.ext"
-# include	<sys/types.h>
-# include	<sys/stat.h>
-# include	<sys/time.h>
+#include	"monop.ext"
+#include	<sys/types.h>
+#include	<sys/stat.h>
+#include	<sys/time.h>
+#include	<err.h>
+#include 	<fcntl.h>
+#include	<stdlib.h>
+#include	<unistd.h>
 
-# define	SEGSIZE	8192
+#define	SEGSIZE	8192
 
 typedef	struct stat	STAT;
 typedef	struct tm	TIME;
 
-extern char	etext[],	/* end of text space			*/
-		rub();
-
-static char	buf[257],
-		*yn_only[]	= { "yes", "no"};
+static char	buf[257];
 
 static bool	new_play;	/* set if move on to new player		*/
 
+static void	show_move __P((void));
+
+/*
+ *	This routine takes user input and puts it in buf
+ */
+void
+getbuf()
+{
+	char	*sp;
+	int	tmpin, i;
+
+	i = 0;
+	sp = buf;
+	while (((tmpin = getchar()) != '\n') && (i < sizeof(buf)) &&
+	    (tmpin != EOF)) {
+		*sp++ = tmpin;
+		i++;
+	}
+	if (tmpin == EOF) {
+		printf("user closed input stream, quitting...\n");
+                exit(0);
+	}
+	*sp = '\0';
+}
 /*
  *	This routine executes the given command by index number
  */
+void
 execute(com_num)
-reg int	com_num; {
-
+	int	com_num;
+{
 	new_play = FALSE;	/* new_play is true if fixing	*/
 	(*func[com_num])();
 	notify();
@@ -77,13 +103,14 @@ reg int	com_num; {
 /*
  *	This routine moves a piece around.
  */
-do_move() {
-
-	reg int		r1, r2;
-	reg bool	was_jail;
+void
+do_move()
+{
+	int	r1, r2;
+	bool	was_jail;
 
 	new_play = was_jail = FALSE;
-	printf("roll is %d, %d\n", r1=roll(1, 6), r2=roll(1, 6));
+	printf("roll is %d, %d\n", r1 = roll(1, 6), r2 = roll(1, 6));
 	if (cur_p->loc == JAIL) {
 		was_jail++;
 		if (!move_jail(r1, r2)) {
@@ -98,7 +125,7 @@ do_move() {
 			new_play++;
 			goto ret;
 		}
-		move(r1+r2);
+		move(r1 + r2);
 	}
 	if (r1 != r2 || was_jail)
 		new_play++;
@@ -108,10 +135,11 @@ ret:
 /*
  *	This routine moves a normal move
  */
+void
 move(rl)
-reg int	rl; {
-
-	reg int	old_loc;
+	int	rl;
+{
+	int	old_loc;
 
 	old_loc = cur_p->loc;
 	cur_p->loc = (cur_p->loc + rl) % N_SQRS;
@@ -124,29 +152,35 @@ reg int	rl; {
 /*
  *	This routine shows the results of a move
  */
-show_move() {
-
-	reg SQUARE	*sqp;
+static void
+show_move()
+{
+	SQUARE	*sqp;
 
 	sqp = &board[cur_p->loc];
 	printf("That puts you on %s\n", sqp->name);
 	switch (sqp->type) {
-	  case SAFE:
+	case SAFE:
 		printf("That is a safe place\n");
 		break;
-	  case CC:
-		cc(); break;
-	  case CHANCE:
-		chance(); break;
-	  case INC_TAX:
-		inc_tax(); break;
-	  case GOTO_J:
-		goto_jail(); break;
-	  case LUX_TAX:
-		lux_tax(); break;
-	  case PRPTY:
-	  case RR:
-	  case UTIL:
+	case CC:
+		cc();
+		break;
+	case CHANCE:
+		chance();
+		break;
+	case INC_TAX:
+		inc_tax();
+		break;
+	case GOTO_J:
+		goto_jail();
+		break;
+	case LUX_TAX:
+		lux_tax();
+		break;
+	case PRPTY:
+	case RR:
+	case UTIL:
 		if (sqp->owner < 0) {
 			printf("That would cost $%d\n", sqp->cost);
 			if (getyn("Do you want to buy? ") == 0) {
@@ -154,7 +188,7 @@ show_move() {
 				cur_p->money -= sqp->cost;
 			}
 			else if (num_play > 2)
-				bid(sqp);
+				bid();
 		}
 		else if (sqp->owner == player)
 			printf("You own it.\n");
@@ -165,31 +199,28 @@ show_move() {
 /*
  *	This routine saves the current game for use at a later date
  */
-save() {
-
-	reg char	*sp;
-	reg int		outf, num;
+void
+save()
+{
+	char		*sp;
+	int		outf, num;
 	time_t		t;
-	int		*dat_end;
 	struct stat	sb;
-	unsgn		start, end;
+	char		*start, *end;
 
 	printf("Which file do you wish to save it in? ");
-	sp = buf;
-	while ((*sp++=getchar()) != '\n')
-		continue;
-	*--sp = '\0';
+	getbuf();
 
 	/*
 	 * check for existing files, and confirm overwrite if needed
 	 */
 
-	if (stat(buf, &sb) > -1
-	    && getyn("File exists.  Do you wish to overwrite? ", yn_only) > 0)
+	if (stat(buf, &sb) == 0
+	    && getyn("File exists.  Do you wish to overwrite? ") > 0)
 		return;
 
 	if ((outf=creat(buf, 0644)) < 0) {
-		perror(buf);
+		warn(buf);
 		return;
 	}
 	printf("\"%s\" ", buf);
@@ -198,11 +229,11 @@ save() {
 	for (sp = buf; *sp != '\n'; sp++)
 		continue;
 	*sp = '\0';
-# if 0
+#if 0
 	start = (((int) etext + (SEGSIZE-1)) / SEGSIZE ) * SEGSIZE;
-# else
+#else
 	start = 0;
-# endif
+#endif
 	end = sbrk(0);
 	while (start < end) {		/* write out entire data space */
 		num = start + 16 * 1024 > end ? end - start : 16 * 1024;
@@ -215,43 +246,38 @@ save() {
 /*
  *	This routine restores an old game from a file
  */
-restore() {
-
-	reg char	*sp;
-
+void
+restore()
+{
 	printf("Which file do you wish to restore from? ");
-	for (sp = buf; (*sp=getchar()) != '\n'; sp++)
-		continue;
-	*sp = '\0';
+	getbuf();
 	rest_f(buf);
 }
 /*
  *	This does the actual restoring.  It returns TRUE if the
- * backup was successful, else false.
+ *	backup was successful, else FALSE.
  */
+int
 rest_f(file)
-reg char	*file; {
+	char	*file;
+{
+	char	*sp;
+	int	inf, num;
+	char	*start, *end;
+	STAT	sbuf;
 
-	reg char	*sp;
-	reg int		inf, num;
-	char		buf[80];
-	unsgn		start, end;
-	STAT		sbuf;
-
-	if ((inf=open(file, 0)) < 0) {
-		perror(file);
+	if ((inf = open(file, 0)) < 0) {
+		warn(file);
 		return FALSE;
 	}
 	printf("\"%s\" ", file);
-	if (fstat(inf, &sbuf) < 0) {		/* get file stats	*/
-		perror(file);
-		exit(1);
-	}
-# if 0
+	if (fstat(inf, &sbuf) < 0)		/* get file stats	*/
+		err(1, file);
+#if 0
 	start = (((int) etext + (SEGSIZE-1)) / SEGSIZE ) * SEGSIZE;
-# else
+#else
 	start = 0;
-# endif
+#endif
 	brk(end = start + sbuf.st_size);
 	while (start < end) {		/* write out entire data space */
 		num = start + 16 * 1024 > end ? end - start : 16 * 1024;

@@ -1,3 +1,4 @@
+/*	$OpenBSD: monop.c,v 1.2 1998/09/20 23:36:52 pjanzen Exp $	*/
 /*	$NetBSD: monop.c,v 1.3 1995/03/23 08:34:52 cgd Exp $	*/
 
 /*
@@ -43,21 +44,30 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)monop.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: monop.c,v 1.3 1995/03/23 08:34:52 cgd Exp $";
+static char rcsid[] = "$OpenBSD: monop.c,v 1.2 1998/09/20 23:36:52 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
-# include	"monop.def"
+#include	<err.h>
+#include	<signal.h>
+#include	<stdlib.h>
+#include	<unistd.h>
+#include	"monop.def"
+
+static void	getplayers __P((void));
+static void	init_players __P((void));
+static void	init_monops __P((void));
+static void	do_quit __P((int));
 
 /*
  *	This program implements a monopoly game
  */
+int
 main(ac, av)
-reg int		ac;
-reg char	*av[]; {
-
-
-	srand(getpid());
+	int	ac;
+	char	*av[];
+{
+	srandom(getpid());
 	if (ac > 1) {
 		if (!rest_f(av[1]))
 			restore();
@@ -69,7 +79,7 @@ reg char	*av[]; {
 	}
 	num_luck = sizeof lucky_mes / sizeof (char *);
 	init_decks();
-	signal(2, quit);
+	signal(SIGQUIT, do_quit);
 	for (;;) {
 		printf("\n%s (%d) (cash $%d) on %s\n", cur_p->name, player + 1,
 			cur_p->money, board[cur_p->loc].name);
@@ -78,42 +88,57 @@ reg char	*av[]; {
 		execute(getinp("-- Command: ", comlist));
 	}
 }
+
+static void
+do_quit(n)
+	int	n;
+{
+	quit();
+}
 /*
  *	This routine gets the names of the players
  */
-getplayers() {
-
-	reg char	*sp;
-	reg int		i, j;
-	char		buf[257];
+static void
+getplayers()
+{
+	char	*sp;
+	int	i, j;
+	char	buf[257];
 
 blew_it:
 	for (;;) {
-		if ((num_play=get_int("How many players? ")) <= 0 ||
+		if ((num_play = get_int("How many players? ")) <= 1 ||
 		    num_play > MAX_PL)
-			printf("Sorry. Number must range from 1 to 9\n");
+			printf("Sorry. Number must range from 2 to 9\n");
 		else
 			break;
 	}
-	cur_p = play = (PLAY *) calloc(num_play, sizeof (PLAY));
+	if ((cur_p = play = (PLAY *) calloc(num_play, sizeof (PLAY))) == NULL)
+		errx(1, "malloc");
 	for (i = 0; i < num_play; i++) {
-over:
-		printf("Player %d's name: ", i + 1);
-		for (sp = buf; (*sp=getchar()) != '\n'; sp++)
-			continue;
-		if (sp == buf)
-			goto over;
-		*sp++ = '\0';
-		strcpy(name_list[i]=play[i].name=(char *)calloc(1,sp-buf),buf);
+		do {
+			printf("Player %d's name: ", i + 1);
+			fgets(buf, sizeof(buf), stdin);
+			if ((feof(stdin))) {
+				printf("user closed input stream, quitting...\n");
+				exit(0);
+			}
+			sp = buf + strlen(buf) - 1;
+			if (*sp == '\n')
+				*sp = '\0';
+		} while (strlen(buf) == 0);
+		if ((name_list[i] = play[i].name = (char *)calloc(1, sizeof(buf))) == NULL)
+			errx(1, "malloc");
+		strcpy(name_list[i], buf);
 		play[i].money = 1500;
 	}
 	name_list[i++] = "done";
 	name_list[i] = 0;
 	for (i = 0; i < num_play; i++)
-		for (j = i + 1; j < num_play; j++)
+		for (j = i + 1; j <= num_play; j++)
 			if (strcasecmp(name_list[i], name_list[j]) == 0) {
-				if (i != num_play - 1)
-					printf("Hey!!! Some of those are IDENTICAL!!  Let's try that again....\n");
+				if (j != num_play)
+					printf("Hey!!! Some of those are IDENTICAL!!  Let's try that again...\n");
 				else
 					printf("\"done\" is a reserved word.  Please try again\n");
 				for (i = 0; i < num_play; i++)
@@ -125,11 +150,12 @@ over:
 /*
  *	This routine figures out who goes first
  */
-init_players() {
-
-	reg int	i, rl, cur_max;
-	bool	over;
-	int	max_pl;
+static void
+init_players()
+{
+	int	i, rl, cur_max;
+	bool	over = 0;
+	int	max_pl = 0;
 
 again:
 	putchar('\n');
@@ -155,10 +181,11 @@ again:
 /*
  *	This routine initalizes the monopoly structures.
  */
-init_monops() {
-
-	reg MON	*mp;
-	reg int	i;
+static void
+init_monops()
+{
+	MON	*mp;
+	int	i;
 
 	for (mp = mon; mp < &mon[N_MON]; mp++) {
 		mp->name = mp->not_m;

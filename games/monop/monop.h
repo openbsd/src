@@ -1,3 +1,4 @@
+/*	$OpenBSD: monop.h,v 1.4 1998/09/20 23:36:54 pjanzen Exp $	*/
 /*	$NetBSD: monop.h,v 1.4 1995/04/24 12:24:23 cgd Exp $	*/
 
 /*
@@ -35,52 +36,45 @@
  *	@(#)monop.h	8.1 (Berkeley) 5/31/93
  */
 
-# include	<stdio.h>
-# include	<stdlib.h>
-# include	<string.h>
+#include	<stdio.h>
+#include	<stdlib.h>
+#include	<string.h>
 
-# define	reg	register
 #ifdef __CHAR_UNSIGNED__
-# define	shrt	short
+#define	shrt	short
 #else
-# define	shrt	char
+#define	shrt	char
 #endif
-# define	bool	int8_t
-# define	unsgn	unsigned
+#define	bool	int8_t
 
-# define	TRUE	(1)
-# define	FALSE	(0)
+#define	TRUE	(1)
+#define	FALSE	(0)
 
-# define	N_MON	8	/* number of monopolies			*/
-# define	N_PROP	22	/* number of normal property squares	*/
-# define	N_RR	4	/* number of railroads			*/
-# define	N_UTIL	2	/* number of utilities			*/
-# define	N_SQRS	40	/* number of squares on board		*/
-# define	MAX_PL	9	/* maximum number of players		*/
-# define	MAX_PRP	(N_PROP+N_RR+N_UTIL) /* max # ownable property	*/
+#define	N_MON	8	/* number of monopolies			*/
+#define	N_PROP	22	/* number of normal property squares	*/
+#define	N_RR	4	/* number of railroads			*/
+#define	N_UTIL	2	/* number of utilities			*/
+#define	N_SQRS	40	/* number of squares on board		*/
+#define	MAX_PL	9	/* maximum number of players		*/
+#define	MAX_PRP	(N_PROP+N_RR+N_UTIL) /* max # ownable property	*/
 
-				/* square type numbers			*/
-# define	PRPTY	0	/* normal property			*/
-# define	RR	1	/* railroad				*/
-# define	UTIL	2	/* water works - electric co		*/
-# define	SAFE	3	/* safe spot				*/
-# define	CC	4	/* community chest			*/
-# define	CHANCE	5	/* chance (surprise!!!)			*/
-# define	INC_TAX	6	/* Income tax */
-# define	GOTO_J	7	/* Go To Jail! */
-# define	LUX_TAX	8	/* Luxury tax */
-# define	IN_JAIL	9	/* In jail */
+			/* square type numbers			*/
+#define	PRPTY	0	/* normal property			*/
+#define	RR	1	/* railroad				*/
+#define	UTIL	2	/* water works - electric co		*/
+#define	SAFE	3	/* safe spot				*/
+#define	CC	4	/* community chest			*/
+#define	CHANCE	5	/* chance (surprise!!!)			*/
+#define	INC_TAX	6	/* Income tax */
+#define	GOTO_J	7	/* Go To Jail! */
+#define	LUX_TAX	8	/* Luxury tax */
+#define	IN_JAIL	9	/* In jail */
 
-# define	JAIL	40	/* JAIL square number			*/
+#define	JAIL	40	/* JAIL square number			*/
 
-# define	lucky(str)	printf("%s%s\n",str,lucky_mes[roll(1,num_luck)-1])
-# define	printline()	printf("------------------------------\n")
-# define	sqnum(sqp)	(sqp - board)
-# define	swap(A1,A2)	if ((A1) != (A2)) { \
-					(A1) ^= (A2); \
-					(A2) ^= (A1); \
-					(A1) ^= (A2); \
-				}
+#define	lucky(str)	printf("%s%s\n",str,lucky_mes[roll(1,num_luck)-1])
+#define	printline()	printf("------------------------------\n")
+#define	sqnum(sqp)	(sqp - board)
 
 struct sqr_st {			/* structure for square			*/
 	char	*name;			/* place name			*/
@@ -134,7 +128,7 @@ struct plr_st {			/* player description structure		*/
 	shrt	loc;			/* location on board		*/
 	shrt	in_jail;		/* count of turns in jail	*/
 	int	money;			/* amount of money		*/
-	OWN	*own_list;		/* start of propery list	*/
+	OWN	*own_list;		/* start of property list	*/
 };
 
 typedef struct plr_st	PLAY;
@@ -142,4 +136,75 @@ typedef struct prp_st	PROP;
 typedef struct prp_st	RR_S;
 typedef struct prp_st	UTIL_S;
 
-int	cc(), chance(), lux_tax(), goto_jail(), inc_tax();
+/* cards.c */
+void	init_decks __P((void));
+void	get_card __P((DECK *));
+
+/* execute.c */
+void	execute __P((int));
+void	do_move __P((void));
+void	move __P((int));
+void	save __P((void));
+void	restore __P((void));
+int	rest_f __P((char *));
+
+/* getinp.c */
+int	getinp __P((char *, char *[]));
+
+/* houses.c */
+void	buy_houses __P((void));
+void	sell_houses __P((void));
+
+/* jail.c */
+void	card __P((void));
+void	ret_card __P((PLAY *));
+void	pay __P((void));
+int	move_jail __P((int, int ));
+void	printturn __P((void));
+
+/* misc.c */
+int	getyn __P((char *));
+void	notify __P((void));
+void	next_play __P((void));
+int	get_int __P((char *));
+void	set_ownlist __P((int));
+void	is_monop __P((MON *, int));
+void	isnot_monop __P((MON *));
+void	list __P((void));
+void	list_all __P((void));
+void	quit __P((void));
+
+/* morg.c */
+void	mortgage __P((void));
+void	unmortgage __P((void));
+void	force_morg __P((void));
+
+/* print.c */
+void	printboard __P((void));
+void	where __P((void));
+void	printsq __P((int, bool));
+void	printhold __P((int));
+
+/* prop.c */
+void	buy __P((int, SQUARE *));
+void	add_list __P((int, OWN **, int));
+void	del_list __P((int, OWN **, shrt));
+void	bid __P((void));
+int	prop_worth __P((PLAY *));
+
+/* rent.c */
+void	rent __P((SQUARE *));
+
+/* roll.c */
+int	roll __P((int, int));
+
+/* spec.c */
+void	inc_tax __P((void));
+void	goto_jail __P((void));
+void	lux_tax __P((void));
+void	cc __P((void));
+void	chance __P((void));
+
+/* trade.c */
+void	trade __P((void));
+void	resign __P((void));

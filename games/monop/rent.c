@@ -1,3 +1,4 @@
+/*	$OpenBSD: rent.c,v 1.2 1998/09/20 23:36:55 pjanzen Exp $	*/
 /*	$NetBSD: rent.c,v 1.3 1995/03/23 08:35:11 cgd Exp $	*/
 
 /*
@@ -37,21 +38,22 @@
 #if 0
 static char sccsid[] = "@(#)rent.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: rent.c,v 1.3 1995/03/23 08:35:11 cgd Exp $";
+static char rcsid[] = "$OpenBSD: rent.c,v 1.2 1998/09/20 23:36:55 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
-# include	"monop.ext"
+#include	"monop.ext"
 
 /*
  *	This routine has the player pay rent
  */
+void
 rent(sqp)
-reg SQUARE	*sqp; {
-
-	reg int		rnt;
-	reg PROP	*pp;
-	PLAY		*plp;
+	SQUARE	*sqp;
+{
+	int	rnt;
+	PROP	*pp;
+	PLAY	*plp;
 
 	plp = &play[sqp->owner];
 	printf("Owned by %s\n", plp->name);
@@ -60,28 +62,28 @@ reg SQUARE	*sqp; {
 		return;
 	}
 	switch (sqp->type) {
-	  case PRPTY:
+	case PRPTY:
 		pp = sqp->desc;
-		if (pp->monop)
+		if (pp->monop) {
 			if (pp->houses == 0)
-				printf("rent is %d\n", rnt=pp->rent[0] * 2);
+				printf("rent is %d\n", rnt = pp->rent[0] * 2);
 			else if (pp->houses < 5)
 				printf("with %d houses, rent is %d\n",
-				    pp->houses, rnt=pp->rent[pp->houses]);
+				    pp->houses, rnt = pp->rent[pp->houses]);
 			else
 				printf("with a hotel, rent is %d\n",
-				    rnt=pp->rent[pp->houses]);
-		else
+				    rnt = pp->rent[pp->houses]);
+		} else
 			printf("rent is %d\n", rnt = pp->rent[0]);
 		break;
-	  case RR:
+	case RR:
 		rnt = 25;
 		rnt <<= (plp->num_rr - 1);
 		if (spec)
 			rnt <<= 1;
 		printf("rent is %d\n", rnt);
 		break;
-	  case UTIL:
+	case UTIL:
 		rnt = roll(2, 6);
 		if (plp->num_util == 2 || spec) {
 			printf("rent is 10 * roll (%d) = %d\n", rnt, rnt * 10);
