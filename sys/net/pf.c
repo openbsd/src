@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.84 2001/06/28 22:17:42 provos Exp $ */
+/*	$OpenBSD: pf.c,v 1.85 2001/06/28 22:36:09 dugsong Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -219,6 +219,17 @@ struct mbuf	*pf_reassemble(struct mbuf **, struct pf_fragment *,
 #else
 #define		 PFLOG_PACKET
 #endif
+
+#define		MATCH_TUPLE(h,r,d,i) \
+		( \
+		  (r->direction == d) && \
+		  (r->ifp == NULL || r->ifp == i) && \
+		  (!r->proto || r->proto == h->ip_p) && \
+		  (!r->src.mask || match_addr(r->src.not, r->src.addr, \
+		   r->src.mask, h->ip_src.s_addr)) && \
+		  (!r->dst.mask || match_addr(r->dst.not, r->dst.addr, \
+		   r->dst.mask, h->ip_dst.s_addr)) \
+		)
 
 #define PFFRAG_FRENT_HIWAT	10000	/* Number of fragment entries */
 #define PFFRAG_FRAG_HIWAT	3000	/* Number of fragmented packets */
@@ -1312,14 +1323,8 @@ pf_test_tcp(int direction, struct ifnet *ifp, struct mbuf *m,
 	TAILQ_FOREACH(r, pf_rules_active, entries) {
 		if (r->action == PF_SCRUB)
 			continue;
-		if (r->direction == direction &&
-		    (r->ifp == NULL || r->ifp == ifp) &&
-		    (!r->proto || r->proto == IPPROTO_TCP) &&
+		if (MATCH_TUPLE(h, r, direction, ifp) &&
 		    ((th->th_flags & r->flagset) == r->flags) &&
-		    ((!r->src.addr && !r->src.mask) || match_addr(r->src.not, r->src.addr,
-		    r->src.mask, h->ip_src.s_addr)) &&
-		    ((!r->dst.addr && !r->dst.mask) || match_addr(r->dst.not, r->dst.addr,
-		    r->dst.mask, h->ip_dst.s_addr)) &&
 		    (!r->dst.port_op || match_port(r->dst.port_op, r->dst.port[0],
 		    r->dst.port[1], th->th_dport)) &&
 		    (!r->src.port_op || match_port(r->src.port_op, r->src.port[0],
@@ -1462,13 +1467,7 @@ pf_test_udp(int direction, struct ifnet *ifp, struct mbuf *m,
 	TAILQ_FOREACH(r, pf_rules_active, entries) {
 		if (r->action == PF_SCRUB)
 			continue;
-		if ((r->direction == direction) &&
-		    ((r->ifp == NULL) || (r->ifp == ifp)) &&
-		    (!r->proto || (r->proto == IPPROTO_UDP)) &&
-		    ((!r->src.addr && !r->src.mask) || match_addr(r->src.not, r->src.addr,
-		    r->src.mask, h->ip_src.s_addr)) &&
-		    ((!r->dst.addr && !r->dst.mask) || match_addr(r->dst.not, r->dst.addr,
-		    r->dst.mask, h->ip_dst.s_addr)) &&
+		if (MATCH_TUPLE(h, r, direction, ifp) &&
 		    (!r->dst.port_op || match_port(r->dst.port_op, r->dst.port[0],
 		    r->dst.port[1], uh->uh_dport)) &&
 		    (!r->src.port_op || match_port(r->src.port_op, r->src.port[0],
@@ -1576,13 +1575,7 @@ pf_test_icmp(int direction, struct ifnet *ifp, struct mbuf *m,
 	TAILQ_FOREACH(r, pf_rules_active, entries) {
 		if (r->action == PF_SCRUB)
 			continue;
-		if ((r->direction == direction) &&
-		    ((r->ifp == NULL) || (r->ifp == ifp)) &&
-		    (!r->proto || (r->proto == IPPROTO_ICMP)) &&
-		    ((!r->src.addr && !r->src.mask) || match_addr(r->src.not, r->src.addr,
-		    r->src.mask, h->ip_src.s_addr)) &&
-		    ((!r->dst.addr && !r->dst.mask) || match_addr(r->dst.not, r->dst.addr,
-		    r->dst.mask, h->ip_dst.s_addr)) &&
+		if (MATCH_TUPLE(h, r, direction, ifp) &&
 		    (!r->type || (r->type == ih->icmp_type + 1)) &&
 		    (!r->code || (r->code == ih->icmp_code + 1)) ) {
 			rm = r;
@@ -1663,15 +1656,7 @@ pf_test_other(int direction, struct ifnet *ifp, struct mbuf *m, struct ip *h)
 	TAILQ_FOREACH(r, pf_rules_active, entries) {
 		if (r->action == PF_SCRUB)
 			continue;
-		if ((r->direction == direction) &&
-		    ((r->ifp == NULL) || (r->ifp == ifp)) &&
-		    (!r->proto || (r->proto == h->ip_p)) &&
-		    ((!r->src.addr && !r->src.mask) ||
-		    match_addr(r->src.not, r->src.addr,
-		    r->src.mask, h->ip_src.s_addr)) &&
-		    ((!r->dst.addr && !r->dst.mask) ||
-		    match_addr(r->dst.not, r->dst.addr,
-		    r->dst.mask, h->ip_dst.s_addr))) {
+		if (MATCH_TUPLE(h, r, direction, ifp)) {
 			rm = r;
 			if (r->quick)
 				break;
@@ -2429,13 +2414,8 @@ pf_normalize_ip(struct mbuf **m0, int dir, struct ifnet *ifp, struct ip *h,
 	u_int16_t max;
 
 	TAILQ_FOREACH(r, pf_rules_active, entries) {
-		if ((r->direction == dir) && (r->action == PF_SCRUB) &&
-		    ((r->ifp == NULL) || (r->ifp == ifp)) &&
-		    (!r->proto || (r->proto == h->ip_p)) &&
-		    ((!r->src.addr && !r->src.mask) || match_addr(r->src.not, r->src.addr,
-		    r->src.mask, h->ip_src.s_addr)) &&
-		    ((!r->dst.addr && !r->dst.mask) || match_addr(r->dst.not, r->dst.addr,
-		    r->dst.mask, h->ip_dst.s_addr)) )
+		if ((r->action == PF_SCRUB) &&
+		    MATCH_TUPLE(h, r, dir, ifp))
 			break;
 	}
 
