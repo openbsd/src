@@ -1,13 +1,24 @@
-#	$OpenBSD: DISKLESS,v 1.16 2000/05/26 00:44:21 miod Exp $
+#	$OpenBSD: DISKLESS,v 1.17 2001/01/03 22:04:43 miod Exp $
 #	$NetBSD: DISKLESS,v 1.12.4.1 1996/08/19 23:35:03 gwr Exp $
 
 #
 # DISKLESS Sun3 (3/50, 3/60, 3/110, 3/160, 3/260)
 # Root and swap on NFS (no choice)
 # Includes devices needed to run as an X-terminal
-#
 
+# machine architecture; required by config(8)
 machine	sun3 m68k
+
+include "../../../conf/GENERIC"
+
+
+# Options for some specific Sun3 models
+option	 	FPU_EMULATE	# for 3/50 models without FPU
+option	 	HAVECACHE	# for 3/260 VAC
+
+maxusers	4		# estimated number of users
+
+config		bsd root on nfs swap on nfs
 
 # The root node:
 mainbus0 at root
@@ -31,58 +42,6 @@ clock0  at obio0 addr 0x060000
 memerr0 at obio0 addr 0x080000
 intreg0 at obio0 addr 0x0A0000
 
-# All Sun3 machines with an "le" (3/50, 3/60) should be
-# presumed to have the old, buggy LANCE chip. (Rev. C)
-options 	LANCE_REVC_BUG
-
-# Machines to be supported by this kernel
-option	 	FPU_EMULATE
-option	 	HAVECACHE		# Sun3/260 VAC
-
-# Needs to be set per system.  i.e change these as you see fit
-maxusers	4
-
-# Standard system options
-option	 	KTRACE				# system call tracing support
-
-# Debugging options.  Uncomment either this:
-option 	DDB
-# ... or these two: (for KGDB on another machine)
-#makeoptions DEBUG="-g"			# symbols for kgdb + nm
-#option	 	KGDB
-
-# Filesystem options
-option	 	NFSCLIENT	# nfs client support
-#
-option	 	FDESC		# /dev/fd/*
-option	 	FIFO		# FIFOs; RECOMMENDED
-option	 	KERNFS		# /kern
-option	 	NULLFS		# loopback file system
-option	 	PROCFS		# /proc
-
-# Networking options
-option	 	INET		# IP prototol stack support
-#option		GATEWAY		# IP packet forwarding
-#option	 	TCP_COMPAT_42	# TCP bug compatibility with 4.2BSD
-# XXX - Work-around for root on slow SunOS/Sun3 servers (sigh...)
-option	 	NFS_BOOT_RWSIZE=1024
-
-# Compatability options
-option	 	COMPAT_SUNOS	# can run SunOS 4.1.1 executables
-option	 	COMPAT_43	# and 4.3BSD and ...
-option	 	COMPAT_10	# NetBSD 1.0
-option	 	COMPAT_11	# NetBSD 1.1
-option	 	COMPAT_12	# NetBSD 1.2
-
-# Sun3-specific debugging options
-#option 	PMAP_DEBUG
-#option 	VMFAULT_TRACE
-#option 	SYSCALL_DEBUG
-#option 	EXEC_DEBUG
-#option 	DIAGNOSTIC
-
-config		bsd root on nfs swap on nfs
-
 #
 # Serial ports
 #
@@ -97,11 +56,14 @@ ms0    at zsc0 channel 1	# mouse
 #
 
 # Intel Ethernet (onboard, or VME)
-ie0 at obio0 addr ? level ?
+ie0 at obio0 addr   0x0C0000 level 3
 ie1 at vmes0 addr 0xffe88000 level 3 vect 0x75
 
 # Lance Ethernet (only onboard)
-le0 at obio0 addr ? level ?
+le0 at obio0 addr   0x120000 level 3
+# All Sun3 machines with an "le" (3/50, 3/60) should be
+# presumed to have the old, buggy LANCE chip. (Rev. C)
+options 	LANCE_REVC_BUG
 
 #
 # Frame buffer devices
@@ -133,7 +95,19 @@ cgtwo0 at vmes0 addr 0xff400000 level 4 vect 0xA8
 # Support for the CG9 24-bit VME frame buffer.
 # cgnine0 at vmel0 addr 0x08000000
 
-# Misc.
-pseudo-device	loop	1		# network loopback
+# Networking options
+# XXX - Work-around for root on slow SunOS/Sun3 servers (sigh...)
+option	 	NFS_BOOT_RWSIZE=1024
 
-pseudo-device	pty	32		# pseudo-terminals
+# Compatibility options
+option	 	COMPAT_SUNOS	# can run SunOS 4.1.1 executables
+
+# Sun3-specific debugging options
+option	 	PMAP_DEBUG
+#option 	VMFAULT_TRACE
+#option 	SYSCALL_DEBUG
+#option 	EXEC_DEBUG
+
+# for IPv6
+pseudo-device	gif		4
+#pseudo-device	faith		1
