@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.2 2001/08/20 20:23:53 jason Exp $	*/
+/*	$OpenBSD: clock.c,v 1.3 2001/10/02 14:57:09 jason Exp $	*/
 /*	$NetBSD: clock.c,v 1.41 2001/07/24 19:29:25 eeh Exp $ */
 
 /*
@@ -462,9 +462,10 @@ rtc_read_reg(bus_space_tag_t bt, bus_space_handle_t bh, int reg)
 	return (bus_space_read_1(bt, bh, RTC_DATA));
 }
 void 
-rtc_write_reg(bus_space_tag_t bt, bus_space_handle_t bh, int reg, u_int8_t val) {
+rtc_write_reg(bus_space_tag_t bt, bus_space_handle_t bh, int reg, u_int8_t val)
+{
 	bus_space_write_1(bt, bh, RTC_ADDR, reg);
-	bus_space_write_1(bt, bh, RTC_DATA, reg);
+	bus_space_write_1(bt, bh, RTC_DATA, val);
 }
 
 /* ARGSUSED */
