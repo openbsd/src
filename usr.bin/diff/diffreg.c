@@ -1,4 +1,4 @@
-/*	$OpenBSD: diffreg.c,v 1.44 2003/07/27 18:58:26 millert Exp $	*/
+/*	$OpenBSD: diffreg.c,v 1.45 2003/07/29 18:38:47 deraadt Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -65,7 +65,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: diffreg.c,v 1.44 2003/07/27 18:58:26 millert Exp $";
+static const char rcsid[] = "$OpenBSD: diffreg.c,v 1.45 2003/07/29 18:38:47 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -626,7 +626,7 @@ stone(int *a, int n, int *b, int *c)
 	int i, k, y, j, l;
 	int oldc, tc, oldl;
 	u_int loopcount;
-	
+
 	const u_int bound = dflag ? UINT_MAX : max(256, isqrt(n));
 
 	k = 0;

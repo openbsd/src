@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.36 2003/07/27 18:45:55 millert Exp $	*/
+/*	$OpenBSD: diff.c,v 1.37 2003/07/29 18:38:47 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -21,7 +21,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: diff.c,v 1.36 2003/07/27 18:45:55 millert Exp $";
+static const char rcsid[] = "$OpenBSD: diff.c,v 1.37 2003/07/29 18:38:47 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -39,8 +39,8 @@ static const char rcsid[] = "$OpenBSD: diff.c,v 1.36 2003/07/27 18:45:55 millert
 
 #include "diff.h"
 
-int	 aflag, bflag, dflag, iflag, lflag, Nflag, Pflag, rflag, sflag, tflag, 
-	 Tflag, wflag;
+int	 aflag, bflag, dflag, iflag, lflag, Nflag, Pflag, rflag;
+int	 sflag, tflag, Tflag, wflag;
 int	 format, context, status;
 char	*start, *ifdefname, *diffargs, *label;
 struct stat stb1, stb2;
