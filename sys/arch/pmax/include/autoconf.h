@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.2 1995/09/20 04:33:00 jonathan Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.3 1996/01/11 05:57:04 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -70,8 +70,8 @@ struct abus {
 struct confargs {
 	char	*ca_name;		/* Device name. */
 	int	ca_slot;		/* Device slot (table entry). */
-	int	ca_slotpri;		/* Device interrupt "priority" */
 	int	ca_offset;		/* Offset into slot. */
+	int	ca_slotpri;		/* Device interrupt "priority" */
 	struct	abus *ca_bus;		/* bus device resides on. */
 };
 
