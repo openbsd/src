@@ -1,4 +1,4 @@
-#	$OpenBSD: DISKLESS,v 1.25 1999/10/29 05:06:36 angelos Exp $
+#	$OpenBSD: DISKLESS,v 1.26 1999/10/29 05:10:53 angelos Exp $
 #	$NetBSD: DISKLESS,v 1.26 1996/05/20 18:17:16 mrg Exp $
 #
 # DISKLESS -- Generic machine setup for diskless boot.
@@ -147,9 +147,9 @@ mms1	at isa? port 0x238 irq 5
 
 #wt0	at isa? port 0x308 irq 5 drq 1	# Archive and Wangtek QIC tape drives
 
-#ed0	at isa? port 0x280 iomem 0xd0000 irq 9	# WD/SMC, 3C503, and NE[12]000
-#ed1	at isa? port 0x250 iomem 0xd8000 irq 9	#   ethernet cards
-#ed2	at isa? port 0x300 iomem 0xcc000 irq 10
+ed0	at isa? port 0x280 iomem 0xd0000 irq 9	# WD/SMC, 3C503, and NE[12]000
+ed1	at isa? port 0x250 iomem 0xd8000 irq 9	#   ethernet cards
+ed2	at isa? port 0x300 iomem 0xcc000 irq 10
 #eg0	at isa? ...				# 3C505 ethernet cards
 #el0	at isa? port 0x300 irq 9		# 3C501 ethernet cards
 ep0	at isa? port ? irq ?			# 3C509 ethernet cards
