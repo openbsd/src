@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.36 1999/04/29 12:59:03 aaron Exp $	*/
+/*	$OpenBSD: options.c,v 1.37 1999/05/23 17:19:22 aaron Exp $	*/
 /*	$NetBSD: options.c,v 1.6 1996/03/26 23:54:18 mrg Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: options.c,v 1.36 1999/04/29 12:59:03 aaron Exp $";
+static char rcsid[] = "$OpenBSD: options.c,v 1.37 1999/05/23 17:19:22 aaron Exp $";
 #endif
 #endif /* not lint */
 
@@ -205,7 +205,7 @@ pax_options(argc, argv)
 	 * process option flags
 	 */
 	while ((c=getopt(argc,argv,"ab:cdf:iklno:p:rs:tuvwx:zB:DE:G:HLPT:U:XYZ"))
-	    != EOF) {
+	    != -1) {
 		switch (c) {
 		case 'a':
 			/*
@@ -614,7 +614,7 @@ tar_options(argc, argv)
 	 */
 	while ((c = getoldopt(argc, argv,
 	    "b:cef:hmopruts:vwxzBC:HLOPXZ014578"))
-	    != EOF) {
+	    != -1) {
 		switch(c) {
 		case 'b':
 			/*
@@ -938,7 +938,7 @@ cpio_options(argc, argv)
 	dflag = 1;
 	act = -1;
 	nodirs = 1;
-	while ((c=getopt(argc,argv,"abcdfiklmoprstuvzABC:E:F:H:I:LO:SZ6")) != EOF)
+	while ((c=getopt(argc,argv,"abcdfiklmoprstuvzABC:E:F:H:I:LO:SZ6")) != -1)
 		switch (c) {
 			case 'a':
 				/*

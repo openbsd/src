@@ -1,4 +1,4 @@
-/*	$OpenBSD: top.c,v 1.2 1997/08/22 07:16:30 downsj Exp $	*/
+/*	$OpenBSD: top.c,v 1.3 1999/05/23 17:19:21 aaron Exp $	*/
 
 const char copyright[] = "Copyright (c) 1984 through 1996, William LeFebvre";
 
@@ -227,7 +227,7 @@ char *argv[];
 	    optind = 1;
 	}
 
-	while ((i = getopt(ac, av, "SIbinqus:d:U:o:")) != EOF)
+	while ((i = getopt(ac, av, "SIbinqus:d:U:o:")) != -1)
 	{
 	    switch(i)
 	    {

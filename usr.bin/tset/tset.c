@@ -1079,7 +1079,7 @@ main(int argc, char **argv)
 
 	obsolete(argv);
 	noinit = noset = quiet = Sflag = sflag = showterm = 0;
-	while ((ch = getopt(argc, argv, "a:d:e:Ii:k:m:np:qQSrs")) != EOF) {
+	while ((ch = getopt(argc, argv, "a:d:e:Ii:k:m:np:qQSrs")) != -1) {
 		switch (ch) {
 		case 'q':		/* display term only */
 			noset = 1;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kadmin.c,v 1.7 1998/02/18 11:53:45 art Exp $	*/
+/*	$OpenBSD: kadmin.c,v 1.8 1999/05/23 17:19:24 aaron Exp $	*/
 /* $KTH: kadmin.c,v 1.50 1997/11/03 19:51:46 assar Exp $ */
 
 /* 
@@ -348,7 +348,7 @@ do_init(int argc, char **argv)
     memset(&pr, 0, sizeof(pr));
     if (krb_get_default_principal(pr.name, pr.instance, default_realm) < 0)
 	errx (1, "I could not even guess who you might be");
-    while ((c = getopt(argc, argv, "p:u:r:mt")) != EOF) 
+    while ((c = getopt(argc, argv, "p:u:r:mt")) != -1) 
 	switch (c) {
 	case 'p':
 	case 'u':

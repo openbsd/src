@@ -16,7 +16,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$Id: cron.c,v 1.5 1998/03/30 06:59:42 deraadt Exp $";
+static char rcsid[] = "$Id: cron.c,v 1.6 1999/05/23 17:19:23 aaron Exp $";
 #endif
 
 
@@ -384,7 +384,7 @@ parse_args(argc, argv)
 {
 	int	argch;
 
-	while (EOF != (argch = getopt(argc, argv, "x:"))) {
+	while (-1 != (argch = getopt(argc, argv, "x:"))) {
 		switch (argch) {
 		default:
 			usage();

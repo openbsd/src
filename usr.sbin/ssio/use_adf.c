@@ -1,4 +1,4 @@
-static char *rcs_id = "$Id: use_adf.c,v 1.2 1997/08/30 07:55:17 matthieu Exp $";
+static char *rcs_id = "$Id: use_adf.c,v 1.3 1999/05/23 17:19:23 aaron Exp $";
 /*
  * Copyright (c) 1995 Kenneth Stailey
  * All rights reserved.
@@ -66,7 +66,7 @@ main(int argc, char *argv[])
 
   extern int errno;
 
-  while ((c = getopt(argc, argv, "l:")) != EOF) {
+  while ((c = getopt(argc, argv, "l:")) != -1) {
     switch (c) {
     case 'l':
       logical_name = optarg;

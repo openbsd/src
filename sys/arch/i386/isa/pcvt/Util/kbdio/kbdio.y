@@ -1,4 +1,4 @@
-/*	$OpenBSD: kbdio.y,v 1.2 1999/01/13 07:26:05 niklas Exp $	*/
+/*	$OpenBSD: kbdio.y,v 1.3 1999/05/23 17:19:21 aaron Exp $	*/
 
 /* Hello emacs, this should be edited in -*- Fundamental -*- mode */
 %{
@@ -36,7 +36,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ident "$Header: /home/cvs/src/sys/arch/i386/isa/pcvt/Util/kbdio/Attic/kbdio.y,v 1.2 1999/01/13 07:26:05 niklas Exp $"
+#ident "$Header: /home/cvs/src/sys/arch/i386/isa/pcvt/Util/kbdio/Attic/kbdio.y,v 1.3 1999/05/23 17:19:21 aaron Exp $"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -307,7 +307,7 @@ int main(int argc, char **argv) {
 	int fd, c;
 	const char *devname = "/dev/console";
 
-	while((c = getopt(argc, argv, "df:")) != EOF)
+	while((c = getopt(argc, argv, "df:")) != -1)
 		switch(c) {
 		case 'd':
 			yydebug = 1;

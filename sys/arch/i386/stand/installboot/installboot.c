@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.c,v 1.33 1998/12/16 03:04:09 mickey Exp $	*/
+/*	$OpenBSD: installboot.c,v 1.34 1999/05/23 17:19:22 aaron Exp $	*/
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -111,7 +111,7 @@ main(argc, argv)
 	bios_diskinfo_t di;
 
 	nsectors = nheads = -1;
-	while ((c = getopt(argc, argv, "vnh:s:")) != EOF) {
+	while ((c = getopt(argc, argv, "vnh:s:")) != -1) {
 		switch (c) {
 		case 'h':
 			nheads = atoi(optarg);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcpdchk.c,v 1.1 1997/02/26 06:17:09 downsj Exp $	*/
+/*	$OpenBSD: tcpdchk.c,v 1.2 1999/05/23 17:19:23 aaron Exp $	*/
 
  /*
   * tcpdchk - examine all tcpd access control rules and inetd.conf entries
@@ -20,7 +20,7 @@
 #if 0
 static char sccsid[] = "@(#) tcpdchk.c 1.8 97/02/12 02:13:25";
 #else
-static char rcsid[] = "$OpenBSD: tcpdchk.c,v 1.1 1997/02/26 06:17:09 downsj Exp $";
+static char rcsid[] = "$OpenBSD: tcpdchk.c,v 1.2 1999/05/23 17:19:23 aaron Exp $";
 #endif
 #endif
 
@@ -106,7 +106,7 @@ char  **argv;
     /*
      * Parse the JCL.
      */
-    while ((c = getopt(argc, argv, "adi:v")) != EOF) {
+    while ((c = getopt(argc, argv, "adi:v")) != -1) {
 	switch (c) {
 	case 'a':
 	    allow_check = 1;
