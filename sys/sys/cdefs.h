@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdefs.h,v 1.4 1996/04/21 22:31:30 deraadt Exp $	*/
+/*	$OpenBSD: cdefs.h,v 1.5 1996/09/27 17:34:44 maja Exp $	*/
 /*	$NetBSD: cdefs.h,v 1.16 1996/04/03 20:46:39 christos Exp $	*/
 
 /*
@@ -41,6 +41,14 @@
 
 #ifndef	_CDEFS_H_
 #define	_CDEFS_H_
+
+/*
+ * Gratuitous NetBSD gcc extensions we can do without.
+ */
+
+#ifdef __KPRINTF_ATTRIBUTE__
+#undef __KPRINTF_ATTRIBUTE__
+#endif
 
 #include <machine/cdefs.h>
 
