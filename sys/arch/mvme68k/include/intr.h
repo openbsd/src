@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.9 2003/01/05 01:51:27 miod Exp $	*/
+/*	$OpenBSD: intr.h,v 1.10 2004/01/11 23:51:49 miod Exp $	*/
 /*
  * Copyright (C) 2000 Steve Murphree, Jr.
  * All rights reserved.
@@ -53,6 +53,27 @@ u_long	allocate_sir(void (*proc)(void *), void *arg);
 	_spl_r; \
 })
 
+#define	_splraise(s)							\
+({									\
+	int _spl_r;							\
+									\
+	__asm __volatile ("						\
+		clrl	d0					;	\
+		movw	sr,d0					;	\
+		movl	d0,%0					;	\
+		andw	#0x700,d0				;	\
+		movw	%1,d1					;	\
+		andw	#0x700,d1				;	\
+		cmpw	d0,d1					;	\
+		jle	1f					;	\
+		movw	%1,sr					;	\
+	    1:"							:	\
+		    "=&d" (_spl_r)				:	\
+		    "di" (s)					:	\
+		    "d0", "d1");					\
+	_spl_r;								\
+})
+
 /* spl0 requires checking for software interrupts */
 #define	spl1()	_spl(PSL_S|PSL_IPL1)
 #define	spl2()	_spl(PSL_S|PSL_IPL2)
@@ -83,13 +104,13 @@ u_long	allocate_sir(void (*proc)(void *), void *arg);
 #define	spllowersoftclock()	spl1()
 #define	splsoftclock()		spl1()
 #define	splsoftnet()		spl1()
-#define	splbio()		spl2()
-#define	splnet()		spl3()
-#define	splimp()		spl3()
-#define	spltty()		spl3()
-#define	splvm()			spl3()
-#define	splclock()		spl5()
-#define	splstatclock()		spl5()
+#define	splbio()		_splraise(PSL_S|PSL_IPL2)
+#define	splnet()		_splraise(PSL_S|PSL_IPL3)
+#define	splimp()		_splraise(PSL_S|PSL_IPL3)
+#define	spltty()		_splraise(PSL_S|PSL_IPL3)
+#define	splvm()			splimp()
+#define	splclock()		_splraise(PSL_S|PSL_IPL5)
+#define	splstatclock()		_splraise(PSL_S|PSL_IPL5)
 #define	splhigh()		spl7()
 
 /* watch out for side effects */
