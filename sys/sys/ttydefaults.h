@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttydefaults.h,v 1.4 1996/04/21 22:32:13 deraadt Exp $	*/
+/*	$OpenBSD: ttydefaults.h,v 1.5 2000/12/08 18:34:55 naddy Exp $	*/
 /*	$NetBSD: ttydefaults.h,v 1.8 1996/04/09 20:55:45 cgd Exp $	*/
 
 /*-
@@ -50,7 +50,7 @@
 /*
  * Defaults on "first" open.
  */
-#define	TTYDEF_IFLAG	(BRKINT | ISTRIP | ICRNL | IMAXBEL | IXON | IXANY)
+#define	TTYDEF_IFLAG	(BRKINT | ICRNL | IMAXBEL | IXON | IXANY)
 #define TTYDEF_OFLAG	(OPOST | ONLCR | OXTABS)
 #define TTYDEF_LFLAG	(ECHO | ICANON | ISIG | IEXTEN | ECHOE|ECHOKE|ECHOCTL)
 #define TTYDEF_CFLAG	(CREAD | CS8 | HUPCL)
