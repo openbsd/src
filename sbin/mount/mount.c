@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.c,v 1.34 2003/10/01 06:17:31 deraadt Exp $	*/
+/*	$OpenBSD: mount.c,v 1.35 2004/03/16 21:27:47 otto Exp $	*/
 /*	$NetBSD: mount.c,v 1.24 1995/11/18 03:34:29 cgd Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount.c	8.19 (Berkeley) 4/19/94";
 #else
-static char rcsid[] = "$OpenBSD: mount.c,v 1.34 2003/10/01 06:17:31 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: mount.c,v 1.35 2004/03/16 21:27:47 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -208,6 +208,7 @@ main(int argc, char * const argv[])
 					continue;
 				prmount(&mntbuf[i]);
 			}
+			exit(rval);
 		}
 		break;
 	case 1:
