@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.11 1997/02/10 11:13:28 downsj Exp $	*/
+/*	$OpenBSD: locore.s,v 1.12 1997/02/23 21:42:54 downsj Exp $	*/
 /*	$NetBSD: locore.s,v 1.63 1997/02/02 07:55:52 thorpej Exp $	*/
 
 /*
@@ -1156,19 +1156,34 @@ _proc_trampoline:
  *			.
  *	scp+0->	beginning of signal context frame
  */
-	.globl	_sigcode, _esigcode, _sigcodetrap
+	.globl	_sigcode, _esigcode
 	.data
 _sigcode:
 	movl	sp@(12),a0		| signal handler addr	(4 bytes)
 	jsr	a0@			| call signal handler	(2 bytes)
 	addql	#4,sp			| pop signo		(2 bytes)
-_sigcodetrap:
 	trap	#1			| special syscall entry	(2 bytes)
 	movl	d0,sp@(4)		| save errno		(4 bytes)
 	moveq	#1,d0			| syscall == exit	(2 bytes)
 	trap	#0			| exit(errno)		(2 bytes)
 	.align	2
 _esigcode:
+
+/*
+ * ..And HPUX versions of the above.  Hardcoded to use trap 2.
+ */
+	.globl	_hpux_sigcode, _hpux_esigcode
+	.data
+_hpux_sigcode:
+	movl	sp@(12),a0		| signal handler addr	(4 bytes)
+	jsr	a0@			| call signal handler	(2 bytes)
+	addql	#4,sp			| pop signo		(2 bytes)
+	trap	#2			| special syscall entry	(2 bytes)
+	movl	d0,sp@(4)		| save errno		(4 bytes)
+	moveq	#1,d0			| syscall == exit	(2 bytes)
+	trap	#0			| exit(errno)		(2 bytes)
+	.align	2
+_hpux_esigcode:
 
 /*
  * Primitives

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.18 1997/02/10 11:13:30 downsj Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.19 1997/02/23 21:42:55 downsj Exp $	*/
 /*	$NetBSD: machdep.c,v 1.80 1997/02/02 07:58:49 thorpej Exp $	*/
 
 /*
@@ -477,41 +477,12 @@ setregs(p, pack, stack, retval)
 #else
 		retval[1] = 0;		/* no 68881 */
 #endif
-	}
-	/*
-	 * XXX This doesn't have much to do with setting registers but
-	 * I didn't want to muck up kern_exec.c with this code, so I
-	 * stuck it here.
-	 *
-	 * Ensure we perform the right action on traps type 1 and 2:
-	 * If our parent is an HPUX process and we are being traced, turn
-	 * on HPUX style interpretation.  Else if we were using the HPUX
-	 * style interpretation, revert to the BSD interpretation.
-	 *
-	 * Note that we do this by changing the trap instruction in the
-	 * global "sigcode" array which then gets copied out to the user's
-	 * sigcode in the stack.  Since we are changing it in the global
-	 * array we must always reset it, even for non-HPUX processes.
-	 *
-	 * Note also that implementing it in this way creates a potential
-	 * race where we could have tweaked it for process A which then
-	 * blocks in the copyout to the stack and process B comes along
-	 * and untweaks it causing A to wind up with the wrong setting
-	 * when the copyout continues.  However, since we have already
-	 * copied something out to this user stack page (thereby faulting
-	 * it in), this scenerio is extremely unlikely.
-	 */
-	{
-		extern short sigcodetrap[];
 
-		if ((p->p_pptr->p_emul == &emul_hpux) &&
-		    (p->p_flag & P_TRACED)) {
+		/* Make sure the trace bit is correct.  Doesn't belong here. */
+		if (p->p_flag & P_TRACED)
 			p->p_md.md_flags |= MDP_HPUXTRACE;
-			*sigcodetrap = 0x4E42;
-		} else {
+		else
 			p->p_md.md_flags &= ~MDP_HPUXTRACE;
-			*sigcodetrap = 0x4E41;
-		}
 	}
 #endif
 }
@@ -793,6 +764,9 @@ sendsig(catcher, sig, mask, code, type, val)
 	register short ft;
 	int oonstack, fsize;
 	extern char sigcode[], esigcode[];
+#ifdef COMPAT_HPUX
+	extern char hpux_sigcode[], hpux_esigcode[];
+#endif
 
 	frame = (struct frame *)p->p_md.md_regs;
 	ft = frame->f_format;
@@ -955,6 +929,11 @@ sendsig(catcher, sig, mask, code, type, val)
 	/*
 	 * Signal trampoline code is at base of user stack.
 	 */
+#ifdef COMPAT_HPUX
+	if (p->p_emul == &emul_hpux)
+		frame->f_pc = (int)PS_STRINGS - (hpux_esigcode - hpux_sigcode);
+	else
+#endif
 	frame->f_pc = (int)PS_STRINGS - (esigcode - sigcode);
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
