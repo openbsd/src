@@ -26,15 +26,6 @@
 
 S=	${.CURDIR}/../../..
 
-### find out what to use for libkern
-KERNREL=
-.include "$S/lib/libkern/Makefile.inc"
-.ifndef PROF
-LIBKERN=	${KERNLIB}
-.else
-LIBKERN=	${KERNLIB_PROF}
-.endif
-
 machine-links:
 	-rm -f machine && \
 	    ln -s ${.CURDIR}/../include machine
@@ -55,8 +46,8 @@ CFLAGS+=-DDO_BAD144 -I. -I${.CURDIR} -I$S -I${.CURDIR}/../..
 # start.o should be first
 OBJS=	start.o table.o boot.o asm.o bios.o io.o disk.o sys.o version.o
 
-boot:	${OBJS} ${LIBKERN}
-	${LD} -Bstatic -e start -N -T 0 -o boot ${OBJS} ${LIBKERN}
+boot:	${OBJS}
+	${LD} -Bstatic -e start -N -T 0 -o boot ${OBJS}
 	cp boot boot.sym
 	@strip boot
 	@sh ${.CURDIR}/rmaouthdr boot boot.tmp
