@@ -1,4 +1,4 @@
-/*	$OpenBSD: stat.h,v 1.5 1997/11/16 01:01:23 deraadt Exp $	*/
+/*	$OpenBSD: stat.h,v 1.6 1998/02/16 10:15:36 deraadt Exp $	*/
 /*	$NetBSD: stat.h,v 1.20 1996/05/16 22:17:49 cgd Exp $	*/
 
 /*-
@@ -203,8 +203,8 @@ int	mkfifo __P((const char *, mode_t));
 int	stat __P((const char *, struct stat *));
 mode_t	umask __P((mode_t));
 #ifndef _POSIX_SOURCE
-int	chflags __P((const char *, u_long));
-int	fchflags __P((int, u_long));
+int	chflags __P((const char *, int));
+int	fchflags __P((int, int));
 int	fchmod __P((int, mode_t));
 int	lstat __P((const char *, struct stat *));
 #endif
