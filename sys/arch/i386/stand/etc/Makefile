@@ -1,7 +1,8 @@
-#	$OpenBSD: Makefile,v 1.7 1997/10/15 13:59:58 mickey Exp $
+#	$OpenBSD: Makefile,v 1.8 1998/05/25 19:04:54 mickey Exp $
 
 S=	${.CURDIR}/../../../..
 I386=	${.CURDIR}/../..
+CLEANFILES=	i386 machine
 
 all:	machine-links assym.h
 
