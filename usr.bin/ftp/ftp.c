@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp.c,v 1.29 1998/07/07 17:26:41 art Exp $	*/
+/*	$OpenBSD: ftp.c,v 1.30 1998/09/19 20:02:23 millert Exp $	*/
 /*	$NetBSD: ftp.c,v 1.27 1997/08/18 10:20:23 lukem Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-static char rcsid[] = "$OpenBSD: ftp.c,v 1.29 1998/07/07 17:26:41 art Exp $";
+static char rcsid[] = "$OpenBSD: ftp.c,v 1.30 1998/09/19 20:02:23 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -871,7 +871,6 @@ recvrequest(cmd, local, remote, lmode, printnames, ignorespecial)
 		goto abort;
 	if (!ignorespecial && strcmp(local, "-") == 0) {
 		fout = stdout;
-		progress = 0;
 		preserve = 0;
 	} else if (!ignorespecial && *local == '|') {
 		oldintp = signal(SIGPIPE, SIG_IGN);
