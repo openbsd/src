@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.156 2004/02/15 12:44:24 markus Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.157 2004/03/31 10:21:37 henning Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -311,6 +311,7 @@ gettdbbysrcdst(u_int32_t spi, union sockaddr_union *src,
 {
 	u_int32_t hashval;
 	struct tdb *tdbp;
+	union sockaddr_union su_null;
 
 	if (tdbsrc == NULL)
 		return (struct tdb *) NULL;
@@ -321,11 +322,28 @@ gettdbbysrcdst(u_int32_t spi, union sockaddr_union *src,
 		if (tdbp->tdb_sproto == proto &&
 		    (spi == 0 || tdbp->tdb_spi == spi) &&
 		    ((tdbp->tdb_flags & TDBF_INVALID) == 0) &&
-		    !bcmp(&tdbp->tdb_dst, dst, SA_LEN(&dst->sa)) &&
+		    (tdbp->tdb_dst.sa.sa_family == AF_UNSPEC ||
+		    !bcmp(&tdbp->tdb_dst, dst, SA_LEN(&dst->sa))) &&
 		    !bcmp(&tdbp->tdb_src, src, SA_LEN(&src->sa)))
 			break;
 
-	return tdbp;
+	if (tdbp != NULL)
+		return (tdbp);
+
+	bzero(&su_null, sizeof(su_null));
+	su_null.sa.sa_len = sizeof(struct sockaddr);
+	hashval = tdb_hash(0, &su_null, proto);
+
+	for (tdbp = tdbsrc[hashval]; tdbp != NULL; tdbp = tdbp->tdb_snext)
+		if (tdbp->tdb_sproto == proto &&
+		    (spi == 0 || tdbp->tdb_spi == spi) &&
+		    ((tdbp->tdb_flags & TDBF_INVALID) == 0) &&
+		    (tdbp->tdb_dst.sa.sa_family == AF_UNSPEC ||
+		    !bcmp(&tdbp->tdb_dst, dst, SA_LEN(&dst->sa))) &&
+		    tdbp->tdb_src.sa.sa_family == AF_UNSPEC)
+			break;
+
+	return (tdbp);
 }
 #endif
 
