@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.54 1999/03/21 17:22:33 millert Exp $	*/
+/*	$OpenBSD: editor.c,v 1.55 1999/03/21 19:31:10 millert Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -28,13 +28,21 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.54 1999/03/21 17:22:33 millert Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.55 1999/03/21 19:31:10 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/param.h>
+#include <sys/stat.h>
+#include <sys/ioctl.h>
 #define	DKTYPENAMES
 #include <sys/disklabel.h>
+#include <sys/reboot.h>
+#include <sys/sysctl.h>
+#include <machine/cpu.h>
+#ifdef CPU_BIOS
+#include <machine/biosvar.h>
+#endif
 
 #include <ufs/ffs/fs.h>
 
@@ -79,7 +87,7 @@ void	editor_display __P((struct disklabel *, char **, u_int32_t *, char));
 void	editor_help __P((char *));
 void	editor_modify __P((struct disklabel *, char **, u_int32_t *, char *));
 void	editor_name __P((struct disklabel *, char **, char *));
-char	*getstring __P((struct disklabel *, char *, char *, char *));
+char	*getstring __P((char *, char *, char *));
 u_int32_t getuint __P((struct disklabel *, int, char *, char *, u_int32_t, u_int32_t, u_int32_t, int));
 int	has_overlap __P((struct disklabel *, u_int32_t *, int));
 void	make_contiguous __P((struct disklabel *));
@@ -101,6 +109,8 @@ int	get_fstype __P((struct disklabel *, int));
 int	get_mp __P((struct disklabel *, char **, int));
 int	get_offset __P((struct disklabel *, int));
 int	get_size __P((struct disklabel *, int, u_int32_t *, int));
+void	get_geometry __P((int, struct disklabel **, struct disklabel **));
+void	set_geometry __P((struct disklabel *, struct disklabel *, struct disklabel *, struct disklabel *, char *));
 
 static u_int32_t starting_sector;
 static u_int32_t ending_sector;
@@ -131,6 +141,7 @@ editor(lp, f, dev, fstabfile)
 	char *fstabfile;
 {
 	struct disklabel lastlabel, tmplabel, label = *lp;
+	struct disklabel *disk_geop, *bios_geop;
 	struct partition *pp;
 	u_int32_t freesectors;
 	FILE *fp;
@@ -150,6 +161,9 @@ editor(lp, f, dev, fstabfile)
 
 	/* How big is the OpenBSD portion of the disk?  */
 	find_bounds(&label);
+
+	/* Get the on-disk and BIOS geometries if possible */
+	get_geometry(f, &disk_geop, &bios_geop);
 
 	/* Set freesectors based on bounds and initial label */
 	editor_countfree(&label, &freesectors);
@@ -175,12 +189,10 @@ editor(lp, f, dev, fstabfile)
 #endif
 
 	/* Set d_bbsize and d_sbsize as necessary */
-	if (strcmp(label.d_packname, "fictitious") == 0) {
-		if (label.d_bbsize == 0)
-			label.d_bbsize = BBSIZE;
-		if (label.d_sbsize == 0)
-			label.d_sbsize = SBSIZE;
-	}
+	if (label.d_bbsize == 0)
+		label.d_bbsize = BBSIZE;
+	if (label.d_sbsize == 0)
+		label.d_sbsize = SBSIZE;
 
 	/* Interleave must be >= 1 */
 	if (label.d_interleave == 0)
@@ -252,6 +264,14 @@ editor(lp, f, dev, fstabfile)
 				mpcopy(omountpoints, tmpmountpoints);
 			break;
 
+		case 'g':
+			tmplabel = lastlabel;
+			lastlabel = label;
+			set_geometry(&label, disk_geop, bios_geop, lp, arg);
+			if (memcmp(&label, &lastlabel, sizeof(label)) == 0)
+				lastlabel = tmplabel;
+			break;
+
 		case 'm':
 			tmplabel = lastlabel;
 			lastlabel = label;
@@ -314,7 +334,7 @@ editor(lp, f, dev, fstabfile)
 				return(1);
 			}
 			do {
-				arg = getstring(&label, "Save changes?",
+				arg = getstring("Save changes?",
 				    "Save changes you have made to the label?",
 				    "n");
 			} while (arg && tolower(*arg) != 'y' && tolower(*arg) != 'n');
@@ -335,7 +355,7 @@ editor(lp, f, dev, fstabfile)
 
 		case 's':
 			if (arg == NULL) {
-				arg = getstring(lp, "Filename",
+				arg = getstring("Filename",
 				    "Name of the file to save label into.",
 				    NULL);
 				if (arg == NULL && *arg == '\0')
@@ -457,7 +477,7 @@ editor_add(lp, mp, freep, p)
 		} else
 			p = NULL;
 		for (;;) {
-			p = getstring(lp, "partition",
+			p = getstring("partition",
 			    "The letter of the new partition, a - p.", p);
 			if (p == NULL)
 				return;
@@ -588,7 +608,7 @@ editor_name(lp, mp, p)
 
 	/* Change which partition? */
 	if (p == NULL) {
-		p = getstring(lp, "partition to name",
+		p = getstring("partition to name",
 		    "The letter of the partition to name, a - p.", NULL);
 	}
 	if (p == NULL) {
@@ -629,12 +649,11 @@ editor_modify(lp, mp, freep, p)
 	char *p;
 {
 	struct partition origpart, *pp;
-	u_int32_t ui;
 	int partno;
 
 	/* Change which partition? */
 	if (p == NULL) {
-		p = getstring(lp, "partition to modify",
+		p = getstring("partition to modify",
 		    "The letter of the partition to modify, a - p.", NULL);
 	}
 	if (p == NULL) {
@@ -745,7 +764,7 @@ editor_delete(lp, mp, freep, p)
 	int c;
 
 	if (p == NULL) {
-		p = getstring(lp, "partition to delete",
+		p = getstring("partition to delete",
 		    "The letter of the partition to delete, a - p, or '*'.",
 		    NULL);
 	}
@@ -912,7 +931,7 @@ editor_change(lp, freep, p)
 	struct partition *pp;
 
 	if (p == NULL) {
-		p = getstring(lp, "partition to change size",
+		p = getstring("partition to change size",
 		    "The letter of the partition to change size, a - p.", NULL);
 	}
 	if (p == NULL) {
@@ -1014,8 +1033,7 @@ partition_cmp(e1, e2)
 }
 
 char *
-getstring(lp, prompt, helpstring, oval)
-	struct disklabel *lp;
+getstring(prompt, helpstring, oval)
 	char *prompt;
 	char *helpstring;
 	char *oval;
@@ -1270,7 +1288,7 @@ edit_parms(lp, freep)
 
 	/* disk type */
 	for (;;) {
-		p = getstring(lp, "disk type",
+		p = getstring("disk type",
 		    "What kind of disk is this?  Usually SCSI, ESDI, ST506, or "
 		    "floppy (use ESDI for IDE).", dktypenames[lp->d_type]);
 		if (p == NULL) {
@@ -1299,7 +1317,7 @@ edit_parms(lp, freep)
 	lp->d_type = ui;
 
 	/* pack/label id */
-	p = getstring(lp, "label name",
+	p = getstring("label name",
 	    "15 char string that describes this label, usually the disk name.",
 	    lp->d_packname);
 	if (p == NULL) {
@@ -1507,17 +1525,17 @@ getdisktype(lp, banner, dev)
 		char *dev;
 		char *type;
 	} dtypes[] = {
-		"sd",	"SCSI",
-		"rz",	"SCSI",
-		"wd",	"IDE",
-		"fd",	"FLOPPY",
-		"xd",	"SMD",
-		"xy",	"SMD",
-		"hd",	"HP-IB",
-		"ccd",	"CCD",
-		"vnd",	"VND",
-		"svnd",	"VND",
-		NULL,	NULL
+		{ "sd",   "SCSI" },
+		{ "rz",   "SCSI" },
+		{ "wd",   "IDE" },
+		{ "fd",   "FLOPPY" },
+		{ "xd",   "SMD" },
+		{ "xy",   "SMD" },
+		{ "hd",   "HP-IB" },
+		{ "ccd",  "CCD" },
+		{ "vnd",  "VND" },
+		{ "svnd", "VND" },
+		{ NULL,   NULL }
 	};
 
 	if ((s = basename(dev)) != NULL) {
@@ -1546,7 +1564,7 @@ getdisktype(lp, banner, dev)
 		putchar('\n');
 
 		for (;;) {
-			s = getstring(lp, "Disk type",
+			s = getstring("Disk type",
 			    "What kind of disk is this?  Usually SCSI, IDE, "
 			    "ESDI, CCD, ST506, or floppy.", def);
 			if (s == NULL)
@@ -1812,6 +1830,12 @@ editor_help(arg)
 "partition as 'c' must always exist and by default is marked as 'unused' (so\n"
 "it does not take up any space).\n");
 		break;
+	case 'g':
+		puts(
+"The 'g' command is used select which disk geometry to use, the disk, BIOS, or\n"
+"user geometry.  It takes as an optional argument ``d'', ``b'', or ``u''.  If \n"
+"you do not specify the type as an argument, you will be prompted for it.\n");
+		break;
 	case 'm':
 		puts(
 "The 'm' command is used to modify an existing partition.  It takes as an\n"    "optional argument the partition letter to change.  If you do not specify a\n"
@@ -1869,6 +1893,7 @@ editor_help(arg)
 		puts("\tb         - set OpenBSD disk boundaries.");
 		puts("\tc [part]  - change partition size.");
 		puts("\td [part]  - delete partition.");
+		puts("\tg [d|b]   - Use [d]isk or [b]ios geometry.");
 		puts("\tm [part]  - modify existing partition.");
 		puts("\tn [part]  - set the mount point for a partition.");
 		puts("\tr         - recalculate free space.");
@@ -2188,7 +2213,7 @@ get_fstype(lp, partno)
 	struct partition *pp = &lp->d_partitions[partno];
 
 	if (pp->p_fstype < FSMAXTYPES) {
-		p = getstring(lp, "FS type",
+		p = getstring("FS type",
 		    "Filesystem type (usually 4.2BSD or swap)",
 		    fstypenames[pp->p_fstype]);
 		if (p == NULL) {
@@ -2236,7 +2261,7 @@ get_mp(lp, mp, partno)
 	    pp->p_fstype != FS_SWAP && pp->p_fstype != FS_BOOT &&
 	    pp->p_fstype != FS_OTHER) {
 		for (;;) {
-			p = getstring(lp, "mount point",
+			p = getstring("mount point",
 			    "Where to mount this filesystem (ie: / /var /usr)",
 			    mp[partno] ? mp[partno] : "none");
 			if (p == NULL) {
@@ -2281,4 +2306,140 @@ micmp(a1, a2)
 		return(-1);
 	else
 		return(strcmp(mi1->mountpoint, mi2->mountpoint));
+}
+
+void
+get_geometry(f, dgpp, bgpp)
+	int f;
+	struct disklabel **dgpp;
+	struct disklabel **bgpp;
+{
+#ifdef CPU_BIOS
+	int mib[4]; 
+	size_t size;
+	dev_t devno;
+	bios_diskinfo_t di;
+#endif
+	struct stat st;
+	struct disklabel *disk_geop;
+	struct disklabel *bios_geop;
+
+	if (fstat(f, &st) == -1)
+		err(4, "Can't stat device");
+
+	/* Get disk geometry */
+	if ((disk_geop = calloc(1, sizeof(struct disklabel))) == NULL)
+		errx(4, "out of memory");
+	if (ioctl(f, DIOCGPDINFO, disk_geop) < 0 &&
+	    ioctl(f, DIOCGDINFO, disk_geop) < 0)
+		err(4, "ioctl DIOCGDINFO");
+	*dgpp = disk_geop;
+
+	/* Get BIOS geometry */
+	*bgpp = NULL;
+#ifdef CPU_BIOS
+	mib[0] = CTL_MACHDEP;
+	mib[1] = CPU_CHR2BLK;
+	mib[2] = st.st_rdev;
+	size = sizeof(devno);
+	if (sysctl(mib, 3, &devno, &size, NULL, 0) == -1) {
+		warn("sysctl(machdep.chr2blk)");
+		return;
+	}
+	devno = MAKEBOOTDEV(major(devno), 0, 0, DISKUNIT(devno), RAW_PART);
+
+	mib[0] = CTL_MACHDEP;
+	mib[1] = CPU_BIOS;
+	mib[2] = BIOS_DISKINFO;
+	mib[3] = devno;
+	size = sizeof(di);
+	if (sysctl(mib, 4, &di, &size, NULL, 0) == -1) {
+		warn("Can't get bios geometry");
+		return;
+	}
+	if ((bios_geop = calloc(1, sizeof(struct disklabel))) == NULL)
+		errx(4, "out of memory");
+
+	bios_geop->d_secsize = DEV_BSIZE;
+	bios_geop->d_nsectors = di.bios_sectors;
+	bios_geop->d_ntracks = di.bios_heads;
+	bios_geop->d_ncylinders = di.bios_cylinders;
+	bios_geop->d_secpercyl = di.bios_sectors * di.bios_heads;
+	bios_geop->d_secperunit = di.bios_cylinders *
+	    di.bios_heads * di.bios_sectors;
+	*bgpp = bios_geop;
+#endif
+}
+
+void
+set_geometry(lp, dgp, bgp, ugp, p)
+	struct disklabel *lp;
+	struct disklabel *dgp;
+	struct disklabel *bgp;
+	struct disklabel *ugp;
+	char *p;
+{
+	if (p == NULL) {
+		p = getstring("[d]isk, [b]ios, or [u]ser geometry",
+		    "Enter 'd' to use the geometry based on what the disk "
+		    "itself thinks it is, 'b' to use what the BIOS says,"
+		    "or 'u' to use the geometry that was found on in the label.",
+		    "d");
+	}
+	if (p == NULL) {
+		fputs("Command aborted\n", stderr);
+		return;
+	}
+	switch (*p) {
+	case 'b':
+	case 'B':
+		if (bgp == NULL)
+			fputs("BIOS geometry not defined.\n", stderr);
+		else {
+			lp->d_secsize = bgp->d_secsize;
+			lp->d_nsectors = bgp->d_nsectors;
+			lp->d_ntracks = bgp->d_ntracks;
+			lp->d_ncylinders = bgp->d_ncylinders;
+			lp->d_secpercyl = bgp->d_secpercyl;
+			lp->d_secperunit = bgp->d_secperunit;
+		}
+		break;
+	case 'd':
+	case 'D':
+		if (dgp == NULL)
+			fputs("BIOS geometry not defined.\n", stderr);
+		else {
+			lp->d_secsize = dgp->d_secsize;
+			lp->d_nsectors = dgp->d_nsectors;
+			lp->d_ntracks = dgp->d_ntracks;
+			lp->d_ncylinders = dgp->d_ncylinders;
+			lp->d_secpercyl = dgp->d_secpercyl;
+			lp->d_secperunit = dgp->d_secperunit;
+		}
+		break;
+	case 'u':
+	case 'U':
+		if (ugp == NULL)
+			fputs("BIOS geometry not defined.\n", stderr);
+		else {
+			lp->d_secsize = ugp->d_secsize;
+			lp->d_nsectors = ugp->d_nsectors;
+			lp->d_ntracks = ugp->d_ntracks;
+			lp->d_ncylinders = ugp->d_ncylinders;
+			lp->d_secpercyl = ugp->d_secpercyl;
+			lp->d_secperunit = ugp->d_secperunit;
+			if (dgp != NULL && ugp->d_secsize == dgp->d_secsize &&
+			    ugp->d_nsectors == dgp->d_nsectors &&
+			    ugp->d_ntracks == dgp->d_ntracks &&
+			    ugp->d_ncylinders == dgp->d_ncylinders &&
+			    ugp->d_secpercyl == dgp->d_secpercyl &&
+			    ugp->d_secperunit == dgp->d_secperunit)
+				fputs("Note: user geometry is the same as disk "
+				    "geometry.\n", stderr);
+		}
+		break;
+	default:
+		fputs("You must enter either 'd', 'b', or 'u'.\n", stderr);
+		break;
+	}
 }
