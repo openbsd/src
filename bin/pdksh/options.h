@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.h,v 1.1.1.1 1996/08/14 06:19:11 downsj Exp $	*/
+/*	$OpenBSD: options.h,v 1.2 1996/08/25 11:56:34 downsj Exp $	*/
 
 /*
  * Options configuration file for the PD ksh
@@ -22,7 +22,7 @@
  * COMPLEX_HISTORY being undefined as well, regardless of their setting
  * here).
  */
-#define KSH
+/* #define KSH */
 
 /* Define EMACS if you want emacs command line editing compiled in (enabled
  * with "set -o emacs", or by setting the VISUAL or EDITOR variables to

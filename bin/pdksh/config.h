@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.h,v 1.1.1.1 1996/08/14 06:19:12 downsj Exp $	*/
+/*	$OpenBSD: config.h,v 1.2 1996/08/25 11:56:34 downsj Exp $	*/
 
 /* config.h.  Generated automatically by configure.  */
 /* config.h.in.  Generated automatically from configure.in by autoheader.  */
@@ -196,7 +196,7 @@
 #define DEFAULT_PATH "/bin:/usr/bin:/usr/ucb"
 
 /* Include ksh features? (see comments in configure.in for more details) */
-#define KSH 1
+/* #define KSH 1 */
 
 /* Include emacs editing? (see comments in configure.in for more details) */
 #define EMACS 1
