@@ -1026,24 +1026,26 @@ static ASN1_INTEGER *load_serial(char *CAfile, char *serialfile, int create)
 	ASN1_INTEGER *bs = NULL, *bs2 = NULL;
 	BIO *io = NULL;
 	BIGNUM *serial = NULL;
+	size_t len;
 
-	buf=OPENSSL_malloc( ((serialfile == NULL)
-			?(strlen(CAfile)+strlen(POSTFIX)+1)
-			:(strlen(serialfile)))+1);
+	len = ((serialfile == NULL)
+		?(strlen(CAfile)+strlen(POSTFIX)+1)
+		:(strlen(serialfile)))+1);
+	buf=OPENSSL_malloc(len);
 	if (buf == NULL) { BIO_printf(bio_err,"out of mem\n"); goto end; }
 	if (serialfile == NULL)
 		{
-		strlcpy(buf,CAfile,sizeof buf);
+		strlcpy(buf,CAfile,len);
 		for (p=buf; *p; p++)
 			if (*p == '.')
 				{
 				*p='\0';
 				break;
 				}
-		strcat(buf,POSTFIX);
+		strlcat(buf,POSTFIX,len);
 		}
 	else
-		strlcpy(buf,serialfile,sizeof buf);
+		strlcpy(buf,serialfile,len);
 	serial=BN_new();
 	bs=ASN1_INTEGER_new();
 	if ((serial == NULL) || (bs == NULL))
