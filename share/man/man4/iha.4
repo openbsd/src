@@ -30,18 +30,17 @@
 .Os
 .Sh NAME
 .Nm iha
-.Nd Initio PCI SCSI Host Adapters
+.Nd Initio INIC-950 based PCI SCSI Host Adapters
 .Sh SYNOPSIS
 .Cd "iha* at pci? dev ? function ?"
-.Cd scsibus* at iha?
+.Cd "scsibus* at iha?"
 .Sh DESCRIPTION
 The
 .Nm
-driver currently supports the Initio INI-9100U/UW PCI SCSI host adapter.
-According to Initio this means it should also support all other Initio
-INIC-950 chip based cards.
+driver supports PCI SCSI host adapters using the Initio INIC-950 chip,
+such as the Initio INI-9100U/UW PCI SCSI host adapter.
 .Pp
-The INI-9100U/UW is the only one tested.
+The INI-9100U/UW and the Iwill 2935UW have been tested.
 .Sh SEE ALSO
 .Xr cd 4 ,
 .Xr intro 4 ,
@@ -53,5 +52,11 @@ The INI-9100U/UW is the only one tested.
 .Sh AUTHORS
 The
 .Nm
-driver was written for OpenBSD by Kenneth R. Westerback, based on
-a FreeBSD driver by Winston Hung.
+driver was written for
+.Ox
+by Kenneth R. Westerback, based on a
+.Fx
+driver by Winston Hung.
+.Sh BUGS
+.Nm
+does not currently use tagged command queuing.
