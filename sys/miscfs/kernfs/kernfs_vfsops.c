@@ -1,4 +1,4 @@
-/*	$OpenBSD: kernfs_vfsops.c,v 1.9 1998/02/08 22:41:38 tholo Exp $	*/
+/*	$OpenBSD: kernfs_vfsops.c,v 1.10 1998/12/24 01:40:27 millert Exp $	*/
 /*	$NetBSD: kernfs_vfsops.c,v 1.26 1996/04/22 01:42:27 christos Exp $	*/
 
 /*
@@ -247,6 +247,7 @@ kernfs_statfs(mp, sbp, p)
 #ifdef COMPAT_09
 	sbp->f_type = 7;
 #endif
+	sbp->f_flags = 0;
 	sbp->f_bsize = cnt.v_page_size;
 	sbp->f_iosize = cnt.v_page_size;
 	sbp->f_blocks = physmem;
