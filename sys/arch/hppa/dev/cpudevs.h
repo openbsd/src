@@ -1,7 +1,7 @@
 /*
  * THIS FILE AUTOMATICALLY GENERATED. DO NOT EDIT.
  * generated from:
- *	OpenBSD: cpudevs,v 1.29 2003/08/22 18:09:53 mickey Exp 
+ *	OpenBSD: cpudevs,v 1.30 2003/10/15 03:10:09 mickey Exp 
  */
 
 #define	HPPA_TYPE_NPROC	0x00
