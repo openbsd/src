@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_devar.h,v 1.4 1997/11/13 21:15:21 rees Exp $	*/
+/*	$OpenBSD: if_devar.h,v 1.5 1997/11/16 07:41:27 millert Exp $	*/
 /*	$NetBSD: if_devar.h,v 1.13 1997/06/08 18:46:36 thorpej Exp $	*/
 
 /*-
@@ -948,15 +948,16 @@ extern struct cfdriver de_cd;
 #define	TULIP_ETHER_IFATTACH(sc)	ether_ifattach(&(sc)->tulip_if, (sc)->tulip_enaddr)
 #define	TULIP_PRINTF_FMT		"%s"
 #define	TULIP_PRINTF_ARGS		sc->tulip_xname
-#if defined(__alpha__)
-/* XXX XXX NEED REAL DMA MAPPING SUPPORT XXX XXX */
-#define TULIP_KVATOPHYS(sc, va)		alpha_XXX_dmamap((vm_offset_t)(va))
-#endif
 #else
 #define	TULIP_PRINTF_FMT		"%s%d"
 #define	TULIP_PRINTF_ARGS		sc->tulip_xname, sc->tulip_unit
 #endif
 #endif	/* __NetBSD__ */
+
+#if defined(__alpha__)
+/* XXX XXX NEED REAL DMA MAPPING SUPPORT XXX XXX */
+#define TULIP_KVATOPHYS(sc, va)		alpha_XXX_dmamap((vm_offset_t)(va))
+#endif
 
 #ifndef TULIP_PRINTF_FMT
 #define	TULIP_PRINTF_FMT		"%s%d"
