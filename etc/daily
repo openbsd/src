@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: daily,v 1.22 1997/10/21 03:00:56 mickey Exp $
+#	$OpenBSD: daily,v 1.23 1998/03/07 19:33:23 millert Exp $
 #	From: @(#)daily	8.2 (Berkeley) 1/25/94
 #
 PATH=/bin:/usr/bin:/sbin:/usr/sbin:/usr/local/bin
@@ -22,7 +22,7 @@ echo ""
 echo "Removing scratch and junk files:"
 if [ -d /tmp -a ! -h /tmp ]; then
 	cd /tmp && {
-	find . -type f -atime +3 -execdir rm -f -- {} \;
+	find . -name 'ssh-*' -prune -o -type f -atime +3 -execdir rm -f -- {} \;
 	find . ! -name . -type d -mtime +1 -execdir rmdir -- {} \; \
 	    >/dev/null 2>&1; }
 fi
