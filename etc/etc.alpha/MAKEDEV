@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: MAKEDEV,v 1.19 1997/05/14 15:41:05 niklas Exp $
+#	$OpenBSD: MAKEDEV,v 1.20 1997/05/25 18:43:59 millert Exp $
 #	$NetBSD: MAKEDEV,v 1.8.4.1 1996/06/18 00:41:56 cgd Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -287,8 +287,8 @@ pty*)
 		do
 			nam=$name`hex $n`
 			rm -rf {tty,pty}$n
-			mknod tty$nam c 5 "$(( $offset + $n ))"
-			mknod pty$nam c 6 "$(( $offset + $n ))"
+			mknod tty$nam c 4 "$(( $offset + $n ))"
+			mknod pty$nam c 5 "$(( $offset + $n ))"
 			n="$(( $n + 1 ))"
 		done
 		umask 77
