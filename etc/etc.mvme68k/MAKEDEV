@@ -31,7 +31,7 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-#	$Id: MAKEDEV,v 1.5 1996/01/07 07:41:21 dm Exp $
+#	$Id: MAKEDEV,v 1.6 1996/05/27 22:02:47 chuck Exp $
 #
 # Device "make" file.  Valid arguments:
 #	all	makes all known devices, including local devices,
@@ -121,7 +121,7 @@ fd)
 st*)
 	umask 2 ; unit=`expr $i : '..\(.*\)'`
 	case $i in
-	st*) name=st; blk=5; chr=20;;
+	st*) name=st; blk=7; chr=20;;
 	esac
 	rm -f $name$unit n$name$unit e$name$unit en$name$unit \
 		r$name$unit nr$name$unit er$name$unit enr$name$unit 
@@ -155,8 +155,8 @@ sd*|vnd*|ccd*)
 	umask 2 ; unit=`expr $i : '.*[^0-9]\([0-9]*\)'`
 	case $i in
 	sd*) name=sd; blk=4; chr=8;;
-	vnd*) name=vnd; blk=8; chr=19;;
-	#ccd*) name=ccd; blk=8; chr=7;;
+	vnd*) name=vnd; blk=6; chr=19;;
+	#ccd*) name=ccd; blk=5; chr=7;;
 	esac
 	rm -f $name$unit? r$name$unit?
 	case $unit in
@@ -209,7 +209,7 @@ sd*|vnd*|ccd*)
 cd*)
 	umask 2 ; unit=`expr $i : '..\(.*\)'`
 	case $i in
-	cd*) name=cd; blk=6; chr=9;;
+	cd*) name=cd; blk=8; chr=9;;
 	esac
 	rm -f $name$unit? r$name$unit?
 	case $unit in
@@ -314,6 +314,15 @@ tun*)
 	mknod tun$unit c 23 $unit
 	chmod 600 tun$unit
 	chown root.wheel tun$unit
+	;;
+
+rd*)
+	umask 2 ; unit=`expr $i : '.*d\(.*\)'`
+	mknod  rd$unit b 9 $unit
+#	mknod rrd$unit b ??? `expr $unit + 16`
+	mknod rd${unit}c b 9 `expr $unit + 16`
+	chgrp operator rd$unit rd${unit}c 
+	chmod 640 rd$unit rd${unit}c 
 	;;
 
 lkm)
