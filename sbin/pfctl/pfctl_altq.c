@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_altq.c,v 1.70 2003/04/15 10:56:21 henning Exp $	*/
+/*	$OpenBSD: pfctl_altq.c,v 1.71 2003/04/15 11:01:34 henning Exp $	*/
 
 /*
  * Copyright (C) 2002
@@ -87,7 +87,8 @@ u_long		 getifmtu(char *);
 int		 eval_queue_opts(struct pf_altq *, struct node_queue_opt *,
 		     u_int32_t);
 u_int32_t	 eval_bwspec(struct node_queue_bw *, u_int32_t);
-void		 print_hfsc_sc(char *, u_int, u_int, u_int);
+void		 print_hfsc_sc(char *, u_int, u_int, u_int,
+		     struct node_hfsc_sc *);
 
 static u_int32_t	 max_qid = 1;
 
@@ -844,14 +845,14 @@ print_hfsc_opts(const struct pf_altq *a)
 			printf(" default");
 		if (opts->rtsc_m2 != 0)
 			print_hfsc_sc("realtime", opts->rtsc_m1, opts->rtsc_d,
-			    opts->rtsc_m2);
+			    opts->rtsc_m2, NULL);
 		if (opts->lssc_m2 != 0 && (opts->lssc_m2 != a->bandwidth ||
 		    opts->lssc_d != 0))
 			print_hfsc_sc("linkshare", opts->lssc_m1, opts->lssc_d,
-			    opts->lssc_m2);
+			    opts->lssc_m2, NULL);
 		if (opts->ulsc_m2 != 0)
 			print_hfsc_sc("upperlimit", opts->ulsc_m1, opts->ulsc_d,
-			    opts->ulsc_m2);
+			    opts->ulsc_m2, NULL);
 		printf(" ) ");
 
 		return (1);
@@ -1175,13 +1176,25 @@ eval_bwspec(struct node_queue_bw *bw, u_int32_t ref_bw)
 }
 
 void
-print_hfsc_sc(char *scname, u_int m1, u_int d, u_int m2)
+print_hfsc_sc(char *scname, u_int m1, u_int d, u_int m2,
+    struct node_hfsc_sc *sc)
 {
-			if (d != 0)
-				printf(" %s(%s %u %s)", scname,
-				    rate2str((double)m1), d,
-				    rate2str((double)m2));
-			else
-				printf(" %s %s", scname,
-				    rate2str((double)m2));
+	printf(" %s", scname);
+
+	if (d != 0) {
+		printf("(");
+		if (sc != NULL && sc->m1.bw_percent > 0)
+			printf("%u%%", sc->m1.bw_percent);
+		else
+			printf("%s", rate2str((double)m1));
+		printf(" %u", d);
+	}
+
+	if (sc != NULL && sc->m2.bw_percent > 0)
+		printf(" %u%%", sc->m2.bw_percent);
+	else
+		printf(" %s", rate2str((double)m2));
+
+	if (d != 0)
+		printf(")");
 }
