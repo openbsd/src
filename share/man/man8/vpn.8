@@ -1,4 +1,4 @@
-.\" $OpenBSD: vpn.8,v 1.27 2000/01/11 01:07:55 angelos Exp $
+.\" $OpenBSD: vpn.8,v 1.28 2000/01/13 05:15:42 angelos Exp $
 .\" Copyright 1998 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
 .\"
@@ -121,6 +121,13 @@ sysctl -w net.inet.esp.enable=1
 sysctl -w net.inet.ah.enable=1
 .Ed
 .Pp
+and
+.Bd -literal
+sysctl -w net.inet.ip.ipsec-acl=1
+.Ed.
+.Pp
+if inbound packet verification is desired (strongly recommended).
+.Pp
 For more permanent operation, these options should be enabled in your
 .Xr sysctl.conf 5 .
 .Pp
@@ -151,32 +158,58 @@ On the security gateway of subnet A:
 .Bd -literal
 ipsecadm flow -dst B_EXTERNAL_IP -spi SPI_OUT -proto esp
          -addr A_EXTERNAL_IP 255.255.255.255
-               B_EXTERNAL_IP 255.255.255.255 -local
+               B_EXTERNAL_IP 255.255.255.255
 ipsecadm flow -dst B_EXTERNAL_IP -spi SPI_OUT -proto esp
          -addr A_INTERNAL_NETWORK A_INTERNAL_NETMASK
                B_INTERNAL_NETWORK B_INTERNAL_NETMASK
 ipsecadm flow -dst B_EXTERNAL_IP -spi SPI_OUT -proto esp
          -addr A_EXTERNAL_IP 255.255.255.255
-               B_INTERNAL_NETWORK B_INTERNAL_NETMASK -local
+               B_INTERNAL_NETWORK B_INTERNAL_NETMASK
 ipsecadm flow -dst B_EXTERNAL_IP -spi SPI_OUT -proto esp
          -addr A_INTERNAL_NETWORK A_INTERNAL_NETMASK
                B_EXTERNAL_IP 255.255.255.255
+
+ipsecadm flow -dst A_EXTERNAL_IP -spi SPI_IN -proto esp
+         -addr B_EXTERNAL_IP 255.255.255.255
+               A_EXTERNAL_IP 255.255.255.255 -ingress
+ipsecadm flow -dst A_EXTERNAL_IP -spi SPI_IN -proto esp
+         -addr B_INTERNAL_NETWORK B_INTERNAL_NETMASK
+               A_INTERNAL_NETWORK A_INTERNAL_NETMASK -ingress
+ipsecadm flow -dst A_EXTERNAL_IP -spi SPI_OUT -proto esp
+         -addr B_EXTERNAL_IP 255.255.255.255
+               A_INTERNAL_NETWORK A_INTERNAL_NETMASK -ingress
+ipsecadm flow -dst A_EXTERNAL_IP -spi SPI_OUT -proto esp
+         -addr B_INTERNAL_NETWORK B_INTERNAL_NETMASK
+               A_EXTERNAL_IP 255.255.255.255 -ingress
 .Ed
 .Pp
 and on the security gateway of subnet B:
 .Bd -literal
 ipsecadm flow -dst A_EXTERNAL_IP -spi SPI_IN -proto esp
          -addr B_EXTERNAL_IP 255.255.255.255
-               A_EXTERNAL_IP 255.255.255.255 -local
+               A_EXTERNAL_IP 255.255.255.255
 ipsecadm flow -dst A_EXTERNAL_IP -spi SPI_IN -proto esp
          -addr B_INTERNAL_NETWORK B_INTERNAL_NETMASK
                A_INTERNAL_NETWORK A_INTERNAL_NETMASK
 ipsecadm flow -dst A_EXTERNAL_IP -spi SPI_OUT -proto esp
          -addr B_EXTERNAL_IP 255.255.255.255
-               A_INTERNAL_NETWORK A_INTERNAL_NETMASK -local
+               A_INTERNAL_NETWORK A_INTERNAL_NETMASK
 ipsecadm flow -dst A_EXTERNAL_IP -spi SPI_OUT -proto esp
          -addr B_INTERNAL_NETWORK B_INTERNAL_NETMASK
                A_EXTERNAL_IP 255.255.255.255
+
+ipsecadm flow -dst B_EXTERNAL_IP -spi SPI_OUT -proto esp
+         -addr A_EXTERNAL_IP 255.255.255.255
+               B_EXTERNAL_IP 255.255.255.255 -ingress
+ipsecadm flow -dst B_EXTERNAL_IP -spi SPI_OUT -proto esp
+         -addr A_INTERNAL_NETWORK A_INTERNAL_NETMASK
+               B_INTERNAL_NETWORK B_INTERNAL_NETMASK -ingress
+ipsecadm flow -dst B_EXTERNAL_IP -spi SPI_OUT -proto esp
+         -addr A_EXTERNAL_IP 255.255.255.255
+               B_INTERNAL_NETWORK B_INTERNAL_NETMASK -ingress
+ipsecadm flow -dst B_EXTERNAL_IP -spi SPI_OUT -proto esp
+         -addr A_INTERNAL_NETWORK A_INTERNAL_NETMASK
+               B_EXTERNAL_IP 255.255.255.255 -ingress
 .Ed
 .Pp
 Furthermore, unless manual keying is used,
@@ -192,11 +225,13 @@ authentication).
 needs to be configured such that all packets from the outside are blocked
 by default. Only successfully IPSec-processed packets (from the
 .Xr enc0 4
-interface), or
-key management packets (for
+interface), or key management packets (for
 .Xr photurisd 8 ,
 .Tn UDP
-packets with source and destination ports of 468) should be allowed to pass.
+packets with source and destination ports of 468, and for
+.Xr isakmpd 8 ,
+.Tn UDP
+packets with source and destination ports of 500) should be allowed to pass.
 .Pp
 The
 .Xr ipf 5
@@ -266,39 +301,70 @@ Create the Security Associations (on both endpoints):
 .Ed
 .Pp
 .It
-Create the ipsec route on machine A:
+Create the IPsec flows on machine A (the first four are the
+outbound flows, the latter four are the ingress filters for the
+incoming security association):
 .Pp
 .Bd -literal
 # /sbin/ipsecadm flow -dst 192.168.2.1 -spi 1001 -proto esp \e\ 
     -addr 192.168.1.254 255.255.255.255 \e\ 
-          192.168.2.1 255.255.255.255 -local
+          192.168.2.1 255.255.255.255
 
 # /sbin/ipsecadm flow -dst 192.168.2.1 -spi 1001 -proto esp \e\ 
     -addr 10.0.50.0 255.255.255.0 10.0.99.0 255.255.255.0
 
 # /sbin/ipsecadm flow -dst 192.168.2.1 -spi 1001 -proto esp \e\ 
     -addr 192.168.1.254 255.255.255.255 \e\ 
-          10.0.99.0 255.255.255.0 -local
+          10.0.99.0 255.255.255.0
 
 # /sbin/ipsecadm flow -dst 192.168.2.1 -spi 1001 -proto esp \e\ 
     -addr 10.0.50.0 255.255.255.0 192.168.2.1 255.255.255.255
+
+# /sbin/ipsecadm flow -dst 192.168.1.254 -spi 1000 -proto esp \e\ 
+    -addr 192.168.2.1 255.255.255.255 \e\ 
+          192.168.1.254 255.255.255.255 -ingress
+
+# /sbin/ipsecadm flow -dst 192.168.1.254 -spi 1000 -proto esp \e\ 
+    -addr 10.0.99.0 255.255.255.0 10.0.50.0 255.255.255.0 -ingress
+
+# /sbin/ipsecadm flow -dst 192.168.1.254 -spi 1000 -proto esp \e\ 
+     -addr 192.168.2.1 255.255.255.255 \e\ 
+           10.0.50.0 255.255.255.0 -ingress
+
+# /sbin/ipsecadm flow -dst 192.168.1.254 -spi 1000 -proto esp \e\ 
+     -addr 10.0.99.0 255.255.255.0 \e\
+	   192.168.1.254 255.255.255.255 -ingress
 .Ed
 .It
-Create the ipsec flow on machine B:
+Create the ipsec flows on machine B:
 .Bd -literal
 # /sbin/ipsecadm flow -dst 192.168.1.254 -spi 1000 -proto esp \e\ 
     -addr 192.168.2.1 255.255.255.255 \e\ 
-          192.168.1.254 255.255.255.255 -local
+          192.168.1.254 255.255.255.255
 
 # /sbin/ipsecadm flow -dst 192.168.1.254 -spi 1000 -proto esp \e\ 
     -addr 10.0.99.0 255.255.255.0 10.0.50.0 255.255.255.0
 
 # /sbin/ipsecadm flow -dst 192.168.1.254 -spi 1000 -proto esp \e\ 
      -addr 192.168.2.1 255.255.255.255 \e\ 
-           10.0.50.0 255.255.255.0 -local
+           10.0.50.0 255.255.255.0
 
 # /sbin/ipsecadm flow -dst 192.168.1.254 -spi 1000 -proto esp \e\ 
      -addr 10.0.99.0 255.255.255.0 192.168.1.254 255.255.255.255
+
+# /sbin/ipsecadm flow -dst 192.168.2.1 -spi 1001 -proto esp \e\ 
+    -addr 192.168.1.254 255.255.255.255 \e\ 
+          192.168.2.1 255.255.255.255 -ingress
+
+# /sbin/ipsecadm flow -dst 192.168.2.1 -spi 1001 -proto esp \e\ 
+    -addr 10.0.50.0 255.255.255.0 10.0.99.0 255.255.255.0 -ingress
+
+# /sbin/ipsecadm flow -dst 192.168.2.1 -spi 1001 -proto esp \e\ 
+    -addr 192.168.1.254 255.255.255.255 \e\ 
+          10.0.99.0 255.255.255.0 -ingress
+
+# /sbin/ipsecadm flow -dst 192.168.2.1 -spi 1001 -proto esp \e\ 
+    -addr 10.0.50.0 255.255.255.0 192.168.2.1 255.255.255.255 -ingress
 .Ed
 .It
 Configure the firewall rules on machine A:
