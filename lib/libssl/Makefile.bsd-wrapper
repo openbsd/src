@@ -1,5 +1,5 @@
 # Build wrapper for OpenSSL
-# $OpenBSD: Makefile.bsd-wrapper,v 1.41 2002/01/21 00:09:01 hugh Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.42 2002/02/10 22:18:49 deraadt Exp $
 
 # Our lndir is hacked; specify a full path to avoid potential conflicts
 # with the one installed with X11.
@@ -679,6 +679,7 @@ all: 	prereq ${MANALL} ${PSALL}
 # egcs bombs optimising this file on vax
 .if (${MACHINE_ARCH} == "vax")
 	cd ${.OBJDIR}/crypto && CFLAGS=-O0 ${MAKE} a_strnid.o a_strnid.po
+	cd ${.OBJDIR}/crypto && CFLAGS=-O1 ${MAKE} des_enc.o des_enc.po
 .endif
 	@cd ${.OBJDIR} && ${MAKE}
 
