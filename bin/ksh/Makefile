@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.13 2002/04/22 21:44:58 miod Exp $
+#	$OpenBSD: Makefile,v 1.14 2003/08/08 22:32:10 miod Exp $
 
 PROG=	ksh
 SRCS=	alloc.c c_ksh.c c_sh.c c_test.c c_ulimit.c edit.c emacs.c \
@@ -31,3 +31,7 @@ check test:
 	/bin/sh ${.CURDIR}/tests/th.sh ${.CURDIR}/tests/th -s ${.CURDIR}/tests -p ./ksh -C pdksh,sh,ksh,posix,posix-upu
 
 .include <bsd.prog.mk>
+
+.if (${MACHINE_ARCH} == "m88k")
+CFLAGS+= -O0
+.endif
