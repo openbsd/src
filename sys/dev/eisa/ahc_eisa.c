@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahc_eisa.c,v 1.15 2003/10/21 10:27:12 jmc Exp $	*/
+/*	$OpenBSD: ahc_eisa.c,v 1.16 2003/12/24 23:41:39 krw Exp $	*/
 /*	$NetBSD: ahc_eisa.c,v 1.10 1996/10/21 22:30:58 thorpej Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: ahc_eisa.c,v 1.15 2003/10/21 10:27:12 jmc Exp $
+ *	$Id: ahc_eisa.c,v 1.16 2003/12/24 23:41:39 krw Exp $
  */
 
 #include "eisa.h"
@@ -53,7 +53,6 @@
 #include <dev/eisa/eisadevs.h>
 #include <dev/ic/aic7xxx_openbsd.h>
 #include <dev/ic/aic7xxx_inline.h>
-#include <dev/ic/aic7xxxreg.h>
 
 #define AHC_EISA_SLOT_OFFSET	0xc00
 #define AHC_EISA_IOSIZE		0x100
@@ -155,20 +154,11 @@ void *aux;
 	u_int scsiconf1;
 	u_int intdef;
 	
-	/* 
-	 * We really don't allocate our softc, but 
-	 * we need to do the initialization. And this 
-	 * also allocates the platform_data structure.
-	 */
-	ahc_alloc(ahc, ahc->sc_dev.dv_xname);
-	
 	ahc_set_name(ahc, ahc->sc_dev.dv_xname);
 	ahc_set_unit(ahc, ahc->sc_dev.dv_unit);
 	
 	/* set dma tags */
 	ahc->parent_dmat = ea->ea_dmat;
-	ahc->buffer_dmat = ea->ea_dmat;
-        ahc->shared_data_dmat = ea->ea_dmat;
 
 	if (bus_space_map(iot, EISA_SLOT_ADDR(ea->ea_slot) +
 			  AHC_EISA_SLOT_OFFSET, AHC_EISA_IOSIZE, 0, &ioh))
@@ -187,7 +177,6 @@ void *aux;
 	printf(": %s\n", model);
 	
 	ahc->channel = 'A';
-	ahc->channel_b = 'B';
 	ahc->chip = AHC_AIC7770|AHC_EISA;
 	ahc->features = AHC_AIC7770_FE;
 	ahc->bugs |= AHC_TMODE_WIDEODD_BUG;
@@ -230,7 +219,7 @@ void *aux;
 	
 	/* Get the primary channel information */
 	if ((biosctrl & CHANNEL_B_PRIMARY) != 0)
-		ahc->platform_data->channel_b_primary = TRUE;
+		ahc->flags |= AHC_PRIMARY_CHANNEL;
 
 	if ((biosctrl & BIOSMODE) == BIOSDISABLED) {
 		ahc->flags |= AHC_USEDEFAULTS;
@@ -301,9 +290,6 @@ void *aux;
 		return;
 	}
  
-       	/* Special func to force negotiation */
-	ahc_force_neg(ahc);
-
 	/*
 	 * Link this softc in with all other ahc instances.
 	 */
@@ -319,11 +305,10 @@ void *aux;
 	 * The IRQMS bit enables level sensitive interrupts only allow
 	 * IRQ sharing if its set.
 	 */
-	ahc->platform_data->ih = eisa_intr_establish(ec, ih, ahc->pause & IRQMS
-					 ? IST_LEVEL : IST_EDGE,
-					 IPL_BIO, ahc_platform_intr, ahc,
-					 ahc->sc_dev.dv_xname);
-	if (ahc->platform_data->ih == NULL) {
+	ahc->ih = eisa_intr_establish(ec, ih,
+	    ahc->pause & IRQMS ? IST_LEVEL : IST_EDGE, IPL_BIO,
+	    ahc_platform_intr, ahc, ahc->sc_dev.dv_xname);
+	if (ahc->ih == NULL) {
 		printf("%s: couldn't establish interrupt",
 		       ahc->sc_dev.dv_xname);
 		if (intrstr != NULL)

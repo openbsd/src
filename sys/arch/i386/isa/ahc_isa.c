@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahc_isa.c,v 1.11 2003/08/15 23:01:00 fgsch Exp $	*/
+/*	$OpenBSD: ahc_isa.c,v 1.12 2003/12/24 23:39:40 krw Exp $	*/
 /*	$NetBSD: ahc_isa.c,v 1.5 1996/10/21 22:27:39 thorpej Exp $	*/
 
 /*
@@ -82,7 +82,6 @@
 #include <dev/eisa/eisavar.h>
 #include <dev/eisa/eisadevs.h>
 
-#include <dev/ic/aic7xxxreg.h>
 #include <dev/ic/aic7xxx_openbsd.h>
 #include <dev/ic/aic7xxx_inline.h>
 #include <dev/ic/smc93cx6var.h>
@@ -354,20 +353,12 @@ ahc_isa_attach(parent, self, aux)
 	char idstring[EISA_IDSTRINGLEN];
 	const char *model;
 	u_int intdef;
-	/* 
-	 * We really don't allocate our softc, but 
-	 * we need to do the initialization. And this 
-	 * also allocates the platform_data structure.
-	 */
-	ahc_alloc(ahc, ahc->sc_dev.dv_xname);
 	
 	ahc_set_name(ahc, ahc->sc_dev.dv_xname);
 	ahc_set_unit(ahc, ahc->sc_dev.dv_unit);
 	
 	/* set dma tags */
 	ahc->parent_dmat = ia->ia_dmat;
-	ahc->buffer_dmat = ia->ia_dmat;
-        ahc->shared_data_dmat = ia->ia_dmat;
 	
 	ahc->chip = AHC_VL; /* We are a VL Bus Controller */  
 	
@@ -388,7 +379,6 @@ ahc_isa_attach(parent, self, aux)
 	printf(": %s\n", model);
 	
 	ahc->channel = 'A';
-	ahc->channel_b = 'B';
 	ahc->chip = AHC_AIC7770;
 	ahc->features = AHC_AIC7770_FE;
 	ahc->bugs |= AHC_TMODE_WIDEODD_BUG;
@@ -471,9 +461,6 @@ ahc_isa_attach(parent, self, aux)
 		return;
 	}
 	
-	/* Special func to force negotiation */
-	ahc_force_neg(ahc);
-	
 	/*
 	 * Link this softc in with all other ahc instances.
 	 */
@@ -488,10 +475,10 @@ ahc_isa_attach(parent, self, aux)
 	 * The IRQMS bit enables level sensitive interrupts only allow
 	 * IRQ sharing if its set.
 	 */
-	ahc->platform_data->ih = isa_intr_establish(ia->ia_ic, irq,
+	ahc->ih = isa_intr_establish(ia->ia_ic, irq,
 	    ahc->pause & IRQMS ? IST_LEVEL : IST_EDGE, IPL_BIO, ahc_platform_intr,
 	    ahc, ahc->sc_dev.dv_xname);
-	if (ahc->platform_data->ih == NULL) {
+	if (ahc->ih == NULL) {
 		printf("%s: couldn't establish interrupt\n",
 		       ahc->sc_dev.dv_xname);
 		ahc_free(ahc);
