@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.52 2002/02/26 07:25:33 dhartmei Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.53 2002/02/27 18:11:45 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -483,6 +483,7 @@ pfctl_rules(int dev, char *filename, int opts)
 	pf.dev = dev;
 	pf.opts = opts;
 	pf.prule = &pr;
+	pf.rule_nr = 0;
 	if (parse_rules(fin, &pf) < 0)
 		errx(1, "syntax error in rule file: pf rules not loaded");
 	if ((opts & PF_OPT_NOACTION) == 0) {
