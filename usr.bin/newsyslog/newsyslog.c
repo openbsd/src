@@ -1,4 +1,4 @@
-/*	$OpenBSD: newsyslog.c,v 1.6 1996/09/02 18:47:16 tholo Exp $	*/
+/*	$OpenBSD: newsyslog.c,v 1.7 1996/12/07 08:00:45 deraadt Exp $	*/
 
 /*
  * This file contains changes from the Open Software Foundation.
@@ -29,7 +29,7 @@ provided "as is" without express or implied warranty.
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: newsyslog.c,v 1.6 1996/09/02 18:47:16 tholo Exp $";
+static char rcsid[] = "$OpenBSD: newsyslog.c,v 1.7 1996/12/07 08:00:45 deraadt Exp $";
 #endif /* not lint */
 
 #ifndef CONF
@@ -96,7 +96,7 @@ time_t  timenow;
 int     syslog_pid;             /* read in from /etc/syslog.pid */
 #define MIN_PID		3
 #define MAX_PID		65534
-char    hostname[64];           /* hostname */
+char    hostname[MAXHOSTNAMELEN]; /* hostname */
 char    *daytime;               /* timenow in human readable form */
 
 
@@ -376,8 +376,8 @@ dotrim(log,numdays,flags,perm,owner_uid,group_gid)
         int     owner_uid;
         int     group_gid;
 {
-        char    file1[128], file2[128];
-        char    zfile1[128], zfile2[128];
+        char    file1[MAXPATHLEN], file2[MAXPATHLEN];
+        char    zfile1[MAXPATHLEN], zfile2[MAXPATHLEN];
         int     fd;
         struct  stat st;
 	int	days = numdays;
@@ -502,7 +502,7 @@ compress_log(log)
         char    *log;
 {
         int     pid;
-        char    tmp[128];
+        char    tmp[MAXPATHLEN];
         
         pid = fork();
         (void) sprintf(tmp,"%s.0",log);
@@ -534,7 +534,7 @@ int age_old_log(file)
         char    *file;
 {
         struct stat sb;
-        char tmp[MAXPATHLEN+3];
+        char tmp[MAXPATHLEN];
 
         (void) strcpy(tmp,file);
         if (stat(strcat(tmp,".0"),&sb) < 0)
