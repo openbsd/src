@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.124 2002/07/19 12:36:48 dhartmei Exp $	*/
+/*	$OpenBSD: parse.y,v 1.125 2002/07/19 13:23:37 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -80,6 +80,7 @@ struct node_host {
 	u_int8_t		 noroute;
 	struct node_host	*next;
 	u_int32_t		 ifindex;	/* link-local IPv6 addrs */
+	char			*ifname;
 };
 
 struct node_port {
@@ -2587,43 +2588,31 @@ symget(const char *nam)
 	return (NULL);
 }
 
-struct ifaddrs **ifatab, **ifalist;
-int ifatablen, ifalistlen;
-int
-ifa_comp(const void *p1, const void *p2)
-{
-	struct ifaddrs *ifa1 = *(struct ifaddrs **)p1;
-	struct ifaddrs *ifa2 = *(struct ifaddrs **)p2;
+/* interface lookup routines */
 
-	return strcmp(ifa1->ifa_name, ifa2->ifa_name);
-}
+struct node_host *iftab;
 
 void
 ifa_load(void)
 {
 	struct ifaddrs *ifap, *ifa;
-	void *p;
-	int load_ifalen = 0;
+	struct node_host *n = NULL, *h = NULL;
 
 	if (getifaddrs(&ifap) < 0)
 		err(1, "getifaddrs");
-	for (ifa = ifap; ifa; ifa = ifa->ifa_next)
-		load_ifalen++;
-	/* (over-)allocate tables */
-	ifatab = malloc(load_ifalen * sizeof(void *));
-	ifalist = malloc(load_ifalen * sizeof(void *));
-	if (!ifatab || !ifalist)
-		err(1, "malloc");
+
 	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
-		if (ifa->ifa_addr->sa_family == AF_LINK) {
-			if (bsearch(&ifa, ifalist, ifalistlen, sizeof(void *),
-			    ifa_comp))
-				continue; /* take only the first LINK address */
-			ifalist[ifalistlen++] = ifa;
-			qsort(ifalist, ifalistlen, sizeof(void *), ifa_comp);
-		}
+		if (!(ifa->ifa_addr->sa_family == AF_INET ||
+		    ifa->ifa_addr->sa_family == AF_INET6 ||
+		    ifa->ifa_addr->sa_family == AF_LINK))
+				continue;
+		n = calloc(1, sizeof(struct node_host));
+		if (n == NULL)
+			err(1, "address: calloc");
+		n->af = ifa->ifa_addr->sa_family;
+		n->addr.addr_dyn = NULL;
 #ifdef __KAME__
-		if (ifa->ifa_addr->sa_family == AF_INET6 &&
+		if (n->af == AF_INET6 &&
 		    IN6_IS_ADDR_LINKLOCAL(&((struct sockaddr_in6 *)ifa->ifa_addr)->sin6_addr) &&
 		    ((struct sockaddr_in6 *)ifa->ifa_addr)->sin6_scope_id == 0) {
 			struct sockaddr_in6 *sin6;
@@ -2635,79 +2624,69 @@ ifa_load(void)
 			sin6->sin6_addr.s6_addr[3] = 0;
 		}
 #endif
-		if (ifa->ifa_addr->sa_family == AF_INET ||
-		    ifa->ifa_addr->sa_family == AF_INET6) {
-			ifatab[ifatablen++] = ifa;
+		n->ifindex = 0;
+		if (n->af == AF_INET)
+			memcpy(&n->addr.addr, &((struct sockaddr_in *)
+			    ifa->ifa_addr)->sin_addr.s_addr,
+			    sizeof(struct in_addr));
+		else if (n->af == AF_INET6) {
+			memcpy(&n->addr.addr, &((struct sockaddr_in6 *)
+			    ifa->ifa_addr)->sin6_addr.s6_addr,
+			    sizeof(struct in6_addr));
+			n->ifindex = ((struct sockaddr_in6 *)
+			    ifa->ifa_addr)->sin6_scope_id;
+		} 
+		if ((n->ifname = strdup(ifa->ifa_name)) == NULL) {
+			yyerror("malloc failed");
+			exit(1);
 		}
+		n->next = h;
+		h = n;
 	}
-	/* shrink tables */
-	if ((p = realloc(ifatab, ifatablen * sizeof(void *))) == NULL) {
-		free(ifatab);
-		ifatab = NULL;
-	} else
-		ifatab = p;
-	if ((p = realloc(ifalist, ifalistlen * sizeof(void *))) == NULL) {
-		free(ifalist);
-		ifalist = NULL;
-	} else
-		ifalist = p;
-	if (!ifatab || !ifalist)
-		err(1, "realloc");
-
+	iftab = h;
+	freeifaddrs(ifap);
 }
 
 int
 ifa_exists(char *ifa_name)
 {
-	struct ifaddrs ifa, *ifp = &ifa, **ifpp;
+	struct node_host *n;
 
-	if (!ifalist)
+	if (iftab == NULL)
 		ifa_load();
-	ifa.ifa_name = ifa_name;
-	ifpp = bsearch(&ifp, ifalist, ifalistlen, sizeof(void *), ifa_comp);
-	if (ifpp == NULL)
-		return(0);
-	else
-		return(1);
+	
+	for (n = iftab; n; n = n->next) {
+		if (n->af == AF_LINK && !strncmp(n->ifname, ifa_name, IFNAMSIZ))
+			return(1);
+	}
+	return(0);
 }
 
 struct node_host *
 ifa_lookup(char *ifa_name)
 {
-	struct node_host *h = NULL, *n = NULL;
-	struct ifaddrs *ifa;
+	struct node_host *p = NULL, *h = NULL, *n = NULL;
 	int return_all = 0;
 
-	if (strncmp(ifa_name, "all", IFNAMSIZ) == 0)
+	if (!strncmp(ifa_name, "all", IFNAMSIZ))
 		return_all = 1;
 
-	if (!ifatab)
+	if (iftab == NULL)
 		ifa_load();
-	for (ifa = *ifatab; ifa; ifa = ifa->ifa_next) {
-		if (strncmp(ifa->ifa_name, ifa_name, IFNAMSIZ) == 0 || 
-		    return_all) {
-			if (!(ifa->ifa_addr->sa_family == AF_INET ||
-			    ifa->ifa_addr->sa_family == AF_INET6))
-				continue;
-			n = calloc(1, sizeof(struct node_host));
-			if (n == NULL)
-				err(1, "address: calloc");
-			n->af = ifa->ifa_addr->sa_family;
-			n->addr.addr_dyn = NULL;
-			if (ifa->ifa_addr->sa_family == AF_INET)
-				memcpy(&n->addr.addr, &((struct sockaddr_in *)
-				    ifa->ifa_addr)->sin_addr.s_addr,
-				    sizeof(struct in_addr));
-			else {
-				memcpy(&n->addr.addr, &((struct sockaddr_in6 *)
-				    ifa->ifa_addr)->sin6_addr.s6_addr,
-				    sizeof(struct in6_addr));
-				n->ifindex = ((struct sockaddr_in6 *)
-				    ifa->ifa_addr)->sin6_scope_id;
-			}
-			n->next = h;
-			h = n;
-		}
+
+	for (p = iftab; p; p = p->next) {
+		if (!((p->af == AF_INET || p->af == AF_INET6)
+		    && (!strncmp(p->ifname, ifa_name, IFNAMSIZ) || return_all)))
+			continue;
+		n = calloc(1, sizeof(struct node_host));
+		if (n == NULL)
+			err(1, "address: calloc");
+		n->af = p->af;
+		n->addr.addr_dyn = NULL;
+		memcpy(&n->addr.addr, &p->addr.addr, sizeof(struct pf_addr));
+		n->ifindex = p->ifindex;
+		n->next = h;
+		h = n;
 	}
 	if (h == NULL) {
 		yyerror("no IP address found for %s", ifa_name);
