@@ -1,4 +1,4 @@
-/*	$OpenBSD: show.c,v 1.9 1999/09/22 05:10:04 deraadt Exp $	*/
+/*	$OpenBSD: show.c,v 1.10 1999/12/08 07:55:54 itojun Exp $	*/
 /*	$NetBSD: show.c,v 1.1 1996/11/15 18:01:41 gwr Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-static char *rcsid = "$OpenBSD: show.c,v 1.9 1999/09/22 05:10:04 deraadt Exp $";
+static char *rcsid = "$OpenBSD: show.c,v 1.10 1999/12/08 07:55:54 itojun Exp $";
 #endif
 #endif /* not lint */
 
@@ -244,6 +244,11 @@ pr_family(af)
 	case AF_INET:
 		afname = "Internet";
 		break;
+#ifdef INET6
+	case AF_INET6:
+		afname = "Internet6";
+		break;
+#endif /* INET6 */
 	case AF_NS:
 		afname = "XNS";
 		break;
@@ -322,6 +327,21 @@ p_sockaddr(sa, flags, width)
 			cp = (flags & RTF_HOST) ? routename(sa) : netname(sa);
 		break;
 	    }
+
+#ifdef INET6
+	case AF_INET6:
+	    {
+		struct sockaddr_in6 *sin = (struct sockaddr_in6 *)sa;
+
+		cp = IN6_IS_ADDR_UNSPECIFIED(&sin->sin6_addr) ? "default" :
+			((flags & RTF_HOST) ?
+			routename(sa) :	netname(sa));
+		/* make sure numeric address is not truncated */
+		if (strchr(cp, ':') != NULL && strlen(cp) > width)
+			width = strlen(cp);
+		break;
+	    }
+#endif /* INET6 */
 
 	case AF_NS:
 		cp = ns_print((struct sockaddr_ns *)sa);

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: route.8,v 1.18 1999/07/29 22:14:33 ho Exp $
+.\"	$OpenBSD: route.8,v 1.19 1999/12/08 07:55:54 itojun Exp $
 .\"	$NetBSD: route.8,v 1.6 1995/03/18 15:00:13 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -133,8 +133,9 @@ When the address family is specified by any of the
 .Fl link,
 .Fl encap ,
 .Fl x25 ,
+.Fl inet ,
 or
-.Fl inet
+.Fl inet6
 modifiers, only routes having destinations with addresses in the
 delineated family will be deleted.
 .Pp
@@ -229,6 +230,8 @@ The implicit network mask generated in the
 .Dv AF_INET
 case
 can be overridden by making sure this option follows the destination parameter.
+.Fl prefixlen
+is also available for similar purpose, in IPv6 case.
 .Pp
 Routes have associated flags which influence operation of the protocols
 when sending to destinations matched by the routes.
@@ -347,7 +350,21 @@ The
 .Nm
 command appeared in
 .Bx 4.2 .
+IPv6 support was added by WIDE/KAME project.
 .Sh BUGS
 The first paragraph may have slightly exaggerated
 .Xr routed Ns 's
 abilities.
+.Pp
+Some uses of the
+.Fl ifa
+or
+.Fl ifp
+modifiers with the add command will incorrectly fail with a
+.Dq Network is unreachable
+message if there is no default route.
+See case
+.Dv RTM_ADD
+in
+.Pa sys/net/rtsock.c:route_output
+for details.
