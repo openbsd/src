@@ -1,4 +1,4 @@
-/* $OpenBSD: bt485.c,v 1.9 2002/03/14 03:16:04 millert Exp $ */
+/* $OpenBSD: bt485.c,v 1.10 2002/04/01 11:26:32 matthieu Exp $ */
 /* $NetBSD: bt485.c,v 1.2 2000/04/02 18:55:01 nathanw Exp $ */
 
 /*
@@ -84,6 +84,7 @@ struct ramdac_funcs bt485_funcsstruct = {
 	NULL,			/* check_curcmap; not needed */
 	NULL,			/* set_curcmap; not needed */
 	NULL,			/* get_curcmap; not needed */
+	NULL,			/* no dot clock to set */
 };
 
 /*

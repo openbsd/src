@@ -1,5 +1,5 @@
-/* $OpenBSD: tga_conf.c,v 1.4 2001/03/18 04:37:21 nate Exp $ */
-/* $NetBSD: tga_conf.c,v 1.3 2000/03/12 05:32:29 nathanw Exp $ */
+/* $OpenBSD: tga_conf.c,v 1.5 2002/04/01 11:26:32 matthieu Exp $ */
+/* $NetBSD: tga_conf.c,v 1.5 2001/11/13 07:48:49 lukem Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -37,6 +37,7 @@
 
 #include <dev/ic/bt485var.h>
 #include <dev/ic/bt463var.h>
+#include <dev/ic/ibm561var.h>
 
 #undef KB
 #define KB		* 1024
@@ -114,6 +115,17 @@ static const struct tga_conf tga_configs[TGA_TYPE_UNKNOWN] = {
 		1,	{ 16 MB,    0 },	{ 8 MB,    0 },
 		1,	{ 24 MB,    0 },	{ 8 MB,    0 },
 	},
+ 	/* TGA_TYPE_POWERSTORM_4D20 */
+ 	/* XXX: These numbers may be incorrect */
+ 	{
+ 		"PS4d20",
+ 		ibm561_funcs,
+ 		32,
+ 		32 MB,
+ 		16 KB,
+ 		1,	{ 16 MB,    0 },	{ 8 MB,    0 },
+ 		1,	{ 24 MB,    0 },	{ 8 MB,    0 },
+	},
 };
 
 #undef KB
@@ -125,13 +137,17 @@ tga_identify(dc)
 {
 	int type;
 	int gder;
+ 	int grev;
 	int deep, addrmask, wide;
+ 	int tga2;
 
 	gder = TGARREG(dc, TGA_REG_GDER);
+ 	grev = TGARREG(dc, TGA_REG_GREV);
 
 	deep = (gder & 0x1) != 0; /* XXX */
 	addrmask = (gder >> 2) & 0x7; /* XXX */
 	wide = (gder & 0x200) == 0; /* XXX */
+ 	tga2 = (grev & 0x20) != 0;
 
 
 	type = TGA_TYPE_UNKNOWN;
@@ -159,6 +175,10 @@ tga_identify(dc)
 		}
 	} else {
 		/* 32bpp frame buffer */
+ 		if (addrmask == 0x00 && tga2 && wide) {
+ 			/* My PowerStorm 4d20 shows up this way? */
+ 			type = TGA_TYPE_POWERSTORM_4D20;
+ 		}
 
 		if (addrmask == 0x3) {
 			/* 16MB core map; T32-04 or T32-08 */
@@ -170,7 +190,7 @@ tga_identify(dc)
 		} else if (addrmask == 0x7) {
 			/* 32MB core map; T32-88 */
 
-			if (wide)			/* sanity */
+ 			if (wide && !tga2)			/* sanity */
 				type = TGA_TYPE_T32_88;
 		}
 	}
@@ -188,4 +208,3 @@ tga_getconf(type)
 
 	return (NULL);
 }
-

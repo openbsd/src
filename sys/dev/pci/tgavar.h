@@ -1,4 +1,4 @@
-/* $OpenBSD: tgavar.h,v 1.5 2002/03/14 01:27:00 millert Exp $ */
+/* $OpenBSD: tgavar.h,v 1.6 2002/04/01 11:26:32 matthieu Exp $ */
 /* $NetBSD: tgavar.h,v 1.8 2000/04/02 19:01:11 nathanw Exp $ */
 
 /*
@@ -111,7 +111,8 @@ struct tga_softc {
 #define	TGA_TYPE_T32_04		4	/* 32bpp, 4MB */
 #define	TGA_TYPE_T32_08		5	/* 32bpp, 8MB */
 #define	TGA_TYPE_T32_88		6	/* 32bpp, 16MB */
-#define	TGA_TYPE_UNKNOWN	7	/* unknown */
+#define	TGA_TYPE_POWERSTORM_4D20	7	/* unknown */
+#define	TGA_TYPE_UNKNOWN	8	/* unknown */
 
 #define	DEVICE_IS_TGA(class, id)					\
 	    (((PCI_VENDOR(id) == PCI_VENDOR_DEC &&			\
