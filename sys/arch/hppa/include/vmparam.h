@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.29 2004/10/12 15:16:25 mickey Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.30 2004/10/26 20:19:12 mickey Exp $	*/
 
 /* 
  * Copyright (c) 1988-1994, The University of Utah and
@@ -34,26 +34,26 @@
  * is the bottm (start) of the user stack.
  */
 #define	USRTEXT		PAGE_SIZE		/* Start of user .text */
-#define	USRSTACK	0x68FF3000		/* Start of user stack */
+#define	USRSTACK	0x78000000UL		/* Start of user stack */
 #define	SYSCALLGATE	0xC0000000		/* syscall gateway page */
 
 /*
  * Virtual memory related constants, all in bytes
  */
 #ifndef MAXTSIZ
-#define	MAXTSIZ		(64*1024*1024)		/* max text size */
+#define	MAXTSIZ		(512*1024*1024UL)	/* max text size */
 #endif
 #ifndef DFLDSIZ
 #define	DFLDSIZ		(16*1024*1024)		/* initial data size limit */
 #endif
 #ifndef MAXDSIZ
-#define	MAXDSIZ		(1*1024*1024*1024)	/* max data size */
+#define	MAXDSIZ		(1*1024*1024*1024UL)	/* max data size */
 #endif
 #ifndef	DFLSSIZ
 #define	DFLSSIZ		(2*1024*1024)		/* initial stack size limit */
 #endif
 #ifndef	MAXSSIZ
-#define	MAXSSIZ		(32*1024*1024)		/* max stack size */
+#define	MAXSSIZ		(128*1024*1024UL)	/* max stack size */
 #endif
 
 #ifndef USRIOSIZE
