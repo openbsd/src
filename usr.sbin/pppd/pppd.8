@@ -1,43 +1,19 @@
-.\" $OpenBSD: pppd.8,v 1.27 2003/06/11 08:51:21 jmc Exp $
+.\" $OpenBSD: pppd.8,v 1.28 2003/06/13 09:50:32 jmc Exp $
 .\" Id: pppd.8,v 1.27 1998/03/31 04:31:08 paulus Exp $
 .\"
-.\" Copyright (c) 1984-2000 Carnegie Mellon University. All rights reserved.
+.\" Copyright (c) 1993-2003 Paul Mackerras <paulus@samba.org>
 .\"
-.\" Redistribution and use in source and binary forms, with or without
-.\" modification, are permitted provided that the following conditions
-.\" are met:
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
 .\"
-.\" 1. Redistributions of source code must retain the above copyright
-.\"    notice, this list of conditions and the following disclaimer.
-.\"
-.\" 2. Redistributions in binary form must reproduce the above copyright
-.\"    notice, this list of conditions and the following disclaimer in
-.\"    the documentation and/or other materials provided with the
-.\"    distribution.
-.\"
-.\" 3. The name "Carnegie Mellon University" must not be used to
-.\"    endorse or promote products derived from this software without
-.\"    prior written permission. For permission or any legal
-.\"    details, please contact
-.\"      Office of Technology Transfer
-.\"      Carnegie Mellon University
-.\"      5000 Forbes Avenue
-.\"      Pittsburgh, PA  15213-3890
-.\"      (412) 268-4387, fax: (412) 268-7395
-.\"      tech-transfer@andrew.cmu.edu
-.\"
-.\" 4. Redistributions of any form whatsoever must retain the following
-.\"    acknowledgment:
-.\"    "This product includes software developed by Computing Services
-.\"     at Carnegie Mellon University (http://www.cmu.edu/computing/)."
-.\"
-.\" CARNEGIE MELLON UNIVERSITY DISCLAIMS ALL WARRANTIES WITH REGARD TO
-.\" THIS SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
-.\" AND FITNESS, IN NO EVENT SHALL CARNEGIE MELLON UNIVERSITY BE LIABLE
-.\" FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN
-.\" AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
-.\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\" THIS SOFTWARE IS PROVIDED "AS IS" AND THE AUTHORS DISCLAIM ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .Dd March 31, 1998
 .Dt PPPD 8
@@ -51,42 +27,49 @@
 .Op Ar speed
 .Op Ar options
 .Sh DESCRIPTION
-The Point-to-Point Protocol (PPP) provides a method for transmitting
-datagrams over serial point-to-point links.
-PPP is composed of three parts: a method for encapsulating datagrams over
-serial links, an extensible Link Control Protocol (LCP), and
-a family of Network Control Protocols (NCP) for establishing
-and configuring different network-layer protocols.
-.Pp
-The encapsulation scheme is provided by driver code in the kernel.
+PPP is the protocol used for establishing internet links over dial-up
+modems, DSL connections, and many other types of point-to-point links.
+The
 .Nm
-provides the basic LCP, authentication support, and an NCP for
-establishing and configuring the Internet Protocol (IP) (called the IP
-Control Protocol, IPCP).
+daemon works together with the kernel
+.Xr ppp 4
+driver to establish and maintain a PPP link with another system
+(called the
+.Em peer )
+and to negotiate Internet Protocol (IP) addresses for each end of the link.
+.Nm
+can also authenticate the peer and/or supply authentication information
+to the peer.
+PPP can be used with other network protocols besides IP, but such use
+is becoming increasingly rare.
 .Sh FREQUENTLY USED OPTIONS
 .Bl -tag -width Ds
 .It Ar tty_name
-Communicate over the named device.
+Use the serial port called
+.Ar ttyname
+to communicate with the peer.
 The string
-.Qq /dev/
-is prepended, if necessary.
-If no device name is given, or if the name of the terminal connected to the
-standard input is given,
+.Dq /dev/
+is prepended to
+.Ar ttyname
+to form the name of the device to open.
+If no device name is given, or if the name of the terminal
+connected to the standard input is given,
 .Nm
 will use that terminal, and will not fork to put itself in the background.
 This option is privileged if the
 .Cm noauth
 option is used.
 .It Ar speed
-Set the baud rate to
-.Ar speed
-(a decimal number).
+An option that is a decimal number is taken as the desired baud rate
+for the serial device.
 On systems such as
 .Bx 4.4
 and
 .Ox ,
 any speed can be specified.
-Other systems (e.g., SunOS) allow only a limited set of speeds.
+Other systems (e.g., Linux, SunOS) only support the commonly used
+baud-rates.
 .It Cm active-filter Ar filter-expression
 Specifies a packet filter to be applied to data packets to determine
 which packets are to be regarded as link activity, and therefore reset
@@ -115,17 +98,17 @@ and then only if both the kernel and
 were compiled with
 .Dv PPP_FILTER
 defined.
-.It Cm asyncmap Op Ar map
-Set the async character map to
-.Ar map .
-This map describes which control characters cannot be successfully
-received over the serial line.
+.It Cm asyncmap Ar map
+This option sets the Async-Control-Character-Map (ACCM) for this end
+of the link.
+The ACCM is a set of 32 bits, one for each of the ASCII control characters
+with values from 0 to 31, where a 1 bit indicates that the corresponding
+control character should not be used in PPP packets sent to this system.
+The map is encoded as a hexadecimal number (without a leading 0x) where the
+least significant bit (00000001) represents character 0 and the
+most significant bit (80000000) represents character 31.
 .Nm
 will ask the peer to send these characters as a 2-byte escape sequence.
-The argument is a 32-bit hex number with each bit representing a character
-to escape.
-Bit 0 (00000001) represents the character 0x00;
-bit 31 (80000000) represents the character 0x1f or ^_.
 If multiple
 .Cm asyncmap
 options are given, the values are ORed together.
@@ -159,18 +142,26 @@ or include
 as a pathname component.
 The format of the options file is described below.
 .It Cm connect Ar script
-Use the executable or shell command specified by
-.Ar script
-to set up the serial line.
-This script would typically use the
+Usually there is something which needs to be done to prepare the link
+before the PPP protocol can be started; for instance, with a dial-up
+modem, commands need to be sent to the modem to dial the appropriate
+phone number.
+This option specifies an command for
+.Nm
+to execute (by passing it to a shell) before attempting to start PPP
+negotiation.
+The
 .Xr chat 8
-program to dial the modem and start the remote PPP session.
+program is often useful here, as it provides a way to send arbitrary strings
+to a modem and respond to received characters.
 This option is privileged if the
 .Cm noauth
 option is used.
 .It Cm crtscts
-Use hardware flow control (i.e., RTS/CTS) to control the flow of data
-on the serial port.
+Specifies that
+.Nm
+should set the serial port to use hardware flow control using the RTS and CTS
+signals in the RS-232 interface.
 If neither the
 .Cm crtscts
 nor the
@@ -185,12 +176,13 @@ This option is privileged if the
 .Cm nodefaultroute
 option has been specified.
 .It Cm disconnect Ar script
-Run the executable or shell command specified by
-.Ar script
+Execute the command specified by
+.Ar script ,
+by passing it to a shell,
 after
 .Nm
 has terminated the link.
-This script could, for example, issue commands to the modem to cause it
+This command could, for example, issue commands to the modem to cause it
 to hang up if hardware modem control signals were not available.
 The disconnect script is not run if the modem has already hung up.
 This option is privileged if the
@@ -227,10 +219,12 @@ Set the MRU (Maximum Receive Unit) value to
 will ask the peer to send packets of no more than
 .Ar n
 bytes.
-The minimum MRU value is 128.
-The default MRU value is 1500.
-A value of 296 is recommended for slow links
+The value of
+.Ar n
+must be between 128 and 16384; the default is 1500.
+A value of 296 works well on very slow links
 (40 bytes for TCP/IP header + 256 bytes of data).
+Note that for the IPv6 protocol, the MRU must be at least 1280.
 .It Cm mtu Ar n
 Set the MTU (Maximum Transmit Unit) value to
 .Ar n .
@@ -239,6 +233,7 @@ Unless the peer requests a smaller value via MRU negotiation,
 will request that the kernel networking code send data packets of no more than
 .Ar n
 bytes through the PPP network interface.
+Note that for the IPv6 protocol, the MTU must be at least 1280.
 .It Cm passive
 Enables the
 .Qq passive
@@ -701,13 +696,17 @@ does not append the domain name to
 Set the interface netmask to
 .Ar n ,
 a 32-bit netmask in
-.Qq decimal dot
-notation (e.g., 255.255.255.0).
+.Dq decimal dot
+notation (e.g. 255.255.255.0).
 If this option is given, the value specified is ORed with the default netmask.
 The default netmask is chosen based on the negotiated remote IP address;
 it is the appropriate network mask for the class of the remote IP address,
 ORed with the netmasks for any non point-to-point network interfaces in the
 system which are on the same network.
+(Note: on some platforms,
+.Nm
+will always use 255.255.255.255 for the netmask, if that is the only
+appropriate value for a point-to-point interface.)
 .It Cm noaccomp
 Disable Address/Control compression in both directions (send and receive).
 .It Cm noauth
@@ -1075,17 +1074,6 @@ to use in authenticating itself to other systems, as well as secrets for
 to use when authenticating other systems to itself.
 .Pp
 Each line in a secrets file contains one secret.
-A given secret is specific to a particular combination of client and
-server \- it can only be used by that client to authenticate itself
-to that server.
-Thus each line in a secrets file has at least 3 fields: the name of
-the client, the name of the server, and the secret.
-These fields may be followed by a list of the IP addresses that the
-specified client may use when connecting to the specified server.
-.Pp
-A secrets file is parsed into words as for an options file, so the
-client name, server name and secrets fields must each be one word,
-with any embedded spaces or other special characters quoted or escaped.
 Any following words on the same line are taken to be a list
 of acceptable IP addresses for that client.
 If there are only 3 words on the line, or if the first word is
@@ -1382,9 +1370,14 @@ daemon using facility
 with the macro
 .Dv LOG_PPP
 defined as the desired facility.)
-In order to see the error and debug messages, you will need to edit your
+See the
+.Xr syslogd 8
+documentation for details of where the syslog daemon will write the
+messages.
+On most systems, the syslog daemon uses the
 .Pa /etc/syslog.conf
-file to direct the messages to the desired output device or file.
+file to specify the destination(s) for syslog messages.
+You may need to edit that file to suit.
 .Pp
 The
 .Cm debug
@@ -1596,8 +1589,9 @@ authenticate, but only to certain trusted peers.
 .%D July 1994
 .Re
 .Sh NOTES
-The following signals have the specified effect when sent to
-.Nm pppd :
+Some limited degree of control can be exercised over a running
+.Nm
+process by sending it a signal from the list below.
 .Bl -tag -width Ds
 .It SIGINT , SIGTERM
 These signals cause
@@ -1637,6 +1631,6 @@ as a result of a fatal decompression error.
 in one or other implementation.)
 .El
 .Sh AUTHORS
-.An Paul Mackerras Aq Paul.Mackerras@cs.anu.edu.au ,
+.An Paul Mackerras Aq Paul.Mackerras@samba.org ,
 based on earlier work by Drew Perkins, Brad Clements, Karl Fox, Greg Christy,
 and Brad Parker.
