@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth_subr.c,v 1.15 2002/10/15 17:47:27 millert Exp $	*/
+/*	$OpenBSD: auth_subr.c,v 1.16 2002/10/15 20:17:11 millert Exp $	*/
 
 /*-
  * Copyright (c) 1995,1996,1997 Berkeley Software Design, Inc.
@@ -458,7 +458,7 @@ auth_setitem(auth_session_t *as, auth_item_t item, char *value)
 		return (0);
 
 	case AUTHV_SERVICE:
-		if (value != NULL && value == as->defservice)
+		if (value != NULL && value == as->service)
 			return (0);
 		if (value == NULL || strcmp(value, defservice) == 0)
 			value = defservice;
