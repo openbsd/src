@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: disktab,v 1.11 2000/04/29 12:56:42 espie Exp $
+#	$OpenBSD: disktab,v 1.12 2001/01/19 15:01:24 jj Exp $
 #	$NetBSD: disktab,v 1.4 1995/11/28 05:40:23 jtc Exp $
 #
 # Disk geometry and partition layout tables. 
@@ -46,11 +46,11 @@ floppyhd|floppy3hd|3inhd|Amiga 3.5in High Density Floppy:\
 	:pc#3520:oc#0:
 
 miniroot:\
-	:ty=winchester:se#512:nt#2:rm#300:ns#64:nc#72:\
+	:ty=winchester:se#512:nt#2:rm#300:ns#64:nc#80:\
 	:ts=3500:\
-	:pa#8704:oa#0:ba#8704:fa#1024:ta=4.2BSD:\
+	:pa#10240:oa#0:ba#8192:fa#1024:ta=4.2BSD:\
 	:pb#0:ob#0:\
-	:pc#8704:oc#0:
+	:pc#10240:oc#0:
 
 rdroot|ramdiskroot|RAM-disk root FS image:\
 	:ty=simulated:se#512:nc#16:nt#2:ns#128:\

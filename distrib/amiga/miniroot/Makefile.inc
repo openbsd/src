@@ -1,5 +1,5 @@
-#	$OpenBSD: Makefile.inc,v 1.3 2000/04/29 12:56:42 espie Exp $
+#	$OpenBSD: Makefile.inc,v 1.4 2001/01/19 15:01:23 jj Exp $
 
-IMAGESIZE=		8704
+IMAGESIZE=		10240
 NEWFSOPTS=		-i 2048
 NEWFS_WILL_FAIL=	true
