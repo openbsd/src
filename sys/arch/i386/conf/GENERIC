@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.333 2003/04/25 21:54:43 grange Exp $
+#	$OpenBSD: GENERIC,v 1.334 2003/04/25 22:03:42 grange Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -61,11 +61,11 @@ pcib*	at pci? dev ? function ?	# PCI-ISA bridge
 elansc*	at pci? dev ? function ?	# AMD Elan SC520 System Controller
 
 # National Semiconductor LM7[89] and compatible hardware monitors
-#lm0	at isa? port 0x290
+lm0	at isa? port 0x290
 #lm1	at isa? port 0x280
 #lm2	at isa? port 0x310
 
-#viaenv*	at pci? dev ? function ?	# VIA VT82C686A hardware monitor
+viaenv*	at pci? dev ? function ?	# VIA VT82C686A hardware monitor
 
 # ISA PCMCIA controllers
 #option PCMCIAVERBOSE
