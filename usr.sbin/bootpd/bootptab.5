@@ -1,6 +1,6 @@
 .\" Copyright (c) 1988, 1989, 1991 Carnegie Mellon University
 .\"
-.\"	$Header: /home/cvs/src/usr.sbin/bootpd/Attic/bootptab.5,v 1.3 1998/09/07 16:44:34 aaron Exp $
+.\"	$Header: /home/cvs/src/usr.sbin/bootpd/Attic/bootptab.5,v 1.4 1999/05/12 13:26:52 aaron Exp $
 .\"
 .TH BOOTPTAB 5 "October 31, 1991" "Carnegie Mellon University"
 .UC 6
@@ -309,7 +309,7 @@ clients.
 attempts to send the entire hostname as it is specified in the configuration
 file; if this will not fit into the reply packet, the name is shortened to
 just the host field (up to the first period, if present) and then tried.
-In no case is an arbitrarily-truncated hostname sent (if nothing reasonable
+In no case is an arbitrarily truncated hostname sent (if nothing reasonable
 will fit, nothing is sent).
 .PP
 Often, many host entries share common values for certain tags (such as name

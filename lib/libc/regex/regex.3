@@ -1,4 +1,4 @@
-.\"	$OpenBSD: regex.3,v 1.6 1999/02/27 21:55:37 deraadt Exp $
+.\"	$OpenBSD: regex.3,v 1.7 1999/05/12 13:26:47 aaron Exp $
 .\"
 .\" Copyright (c) 1997, Phillip F Knaack. All rights reserved.
 .\"
@@ -80,7 +80,7 @@ matches that internal form against a string and reports results,
 .Fn regerror
 transforms error codes from either into human-readable messages, and
 .Fn regfree
-frees any dynamically-allocated storage used by the internal form
+frees any dynamically allocated storage used by the internal form
 of an RE.
 .Pp
 The header
@@ -401,7 +401,7 @@ caution in software intended to be portable to other systems.
 Be warned also that they are considered experimental and changes are possible.
 .Pp
 .Fn regfree
-frees any dynamically-allocated storage associated with the compiled RE
+frees any dynamically allocated storage associated with the compiled RE
 pointed to by
 .Fa preg .
 The remaining

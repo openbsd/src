@@ -68,8 +68,8 @@ for a non-responding destination host, and
 for a non-responding router.
 .Pp
 The ARP cache is stored in the system routing table as
-dynamically-created host routes.
-The route to a directly-attached Ethernet network is installed as a
+dynamically created host routes.
+The route to a directly attached Ethernet network is installed as a
 .Dq cloning
 route (one with the
 .Li RTF_CLONING
@@ -87,7 +87,7 @@ flag set).
 ARP entries may be added, deleted or changed with the
 .Xr arp 8
 utility.
-Manually-added entries may be temporary or permanent,
+Manually added entries may be temporary or permanent,
 and may be
 .Dq published ,
 in which case the system will respond to ARP requests for that host

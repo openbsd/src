@@ -26,7 +26,7 @@
 .\"this software for any purpose.  It is provided "as is" without express
 .\"or implied warranty.
 .\"
-.\"	$OpenBSD: krb_realmofhost.3,v 1.4 1998/02/25 15:51:24 art Exp $
+.\"	$OpenBSD: krb_realmofhost.3,v 1.5 1999/05/12 13:26:47 aaron Exp $
 .TH KRB_REALMOFHOST 3 "Kerberos Version 4.0" "MIT Project Athena"
 .SH NAME
 krb_realmofhost, krb_get_phost, krb_get_krbhst, krb_get_admhst,
@@ -72,7 +72,7 @@ returns the Kerberos realm of the host
 as determined by the translation table
 .IR /etc/krb.realms .
 .I host
-should be the fully-qualified domain-style primary host name of the host
+should be the fully qualified domain-style primary host name of the host
 in question.  In order to prevent certain security attacks, this routine
 must either have 
 .I a priori

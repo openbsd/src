@@ -1,4 +1,4 @@
-.\"	$OpenBSD: resolver.3,v 1.6 1999/02/27 21:55:34 deraadt Exp $
+.\"	$OpenBSD: resolver.3,v 1.7 1999/05/12 13:26:47 aaron Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -212,7 +212,7 @@ The query requests information of the specified
 .Fa type
 and
 .Fa class
-for the specified fully-qualified domain name
+for the specified fully qualified domain name
 .Fa dname .
 The reply message is left in the
 .Fa answer
@@ -281,7 +281,7 @@ is given by
 The compression uses
 an array of pointers
 .Fa dnptrs
-to previously-compressed names in the current message.
+to previously compressed names in the current message.
 The first pointer points
 to the beginning of the message and the list ends with
 .Dv NULL .

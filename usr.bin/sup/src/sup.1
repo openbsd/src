@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sup.1,v 1.5 1998/09/05 17:41:47 deraadt Exp $
+.\"	$OpenBSD: sup.1,v 1.6 1999/05/12 13:26:52 aaron Exp $
 .\"
 .\" Copyright (c) 1992 Carnegie Mellon University
 .\" All Rights Reserved.
@@ -25,6 +25,12 @@
 .\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 .\" HISTORY
 .\" $Log: sup.1,v $
+.\" Revision 1.6  1999/05/12 13:26:52  aaron
+.\" grammar police: do not hyphenate compound words that act as adjectives if the
+.\" first word ends in -ly
+.\"
+.\" i.e., fully-qualified, newly-created, globally-visible, etc. are wrong
+.\"
 .\" Revision 1.5  1998/09/05 17:41:47  deraadt
 .\" more man page repairs; aaron@ug.cs.dal.ca
 .\"
@@ -665,7 +671,7 @@ prefix,list,scan and host will be used.
 This file, created by
 .IR supscan ,
 is the list of filenames that correspond to the instructions in the
-list file.  The scan file is only used for frequently-updated file
+list file.  The scan file is only used for frequently updated file
 collections; it makes the file server run much faster.  See
 .IR supservers (8)
 for more information.
