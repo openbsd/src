@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.8 2001/10/02 21:21:52 jason Exp $	*/
+/*	$OpenBSD: hme.c,v 1.9 2001/10/02 21:39:35 jason Exp $	*/
 /*	$NetBSD: hme.c,v 1.21 2001/07/07 15:59:37 thorpej Exp $	*/
 
 /*-
@@ -178,8 +178,8 @@ hme_config(sc)
 	    (HME_XD_SIZE * HME_TX_RING_MAX);		/* TX descriptors */
 
 	/* Allocate DMA buffer */
-	if ((error = bus_dmamem_alloc(dmatag, size,
-	    2048, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT)) != 0) {
+	if ((error = bus_dmamem_alloc(dmatag, size, 2048, 0, &seg, 1, &rseg,
+	    BUS_DMA_NOWAIT)) != 0) {
 		printf("%s: DMA buffer alloc error %d\n",
 		    sc->sc_dev.dv_xname, error);
 		return;
@@ -187,19 +187,18 @@ hme_config(sc)
 
 	/* Map DMA memory in CPU addressable space */
 	if ((error = bus_dmamem_map(dmatag, &seg, rseg, size,
-				    &sc->sc_rb.rb_membase,
-				    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
+	    &sc->sc_rb.rb_membase, BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
 		printf("%s: DMA buffer map error %d\n",
-			sc->sc_dev.dv_xname, error);
+		    sc->sc_dev.dv_xname, error);
 		bus_dmamap_unload(dmatag, sc->sc_dmamap);
 		bus_dmamem_free(dmatag, &seg, rseg);
 		return;
 	}
 
 	if ((error = bus_dmamap_create(dmatag, size, 1, size, 0,
-				    BUS_DMA_NOWAIT, &sc->sc_dmamap)) != 0) {
+	    BUS_DMA_NOWAIT, &sc->sc_dmamap)) != 0) {
 		printf("%s: DMA map create error %d\n",
-			sc->sc_dev.dv_xname, error);
+		    sc->sc_dev.dv_xname, error);
 		return;
 	}
 
@@ -208,7 +207,7 @@ hme_config(sc)
 	    sc->sc_rb.rb_membase, size, NULL,
 	    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
 		printf("%s: DMA buffer map load error %d\n",
-			sc->sc_dev.dv_xname, error);
+		    sc->sc_dev.dv_xname, error);
 		bus_dmamem_free(dmatag, &seg, rseg);
 		return;
 	}
@@ -237,7 +236,7 @@ hme_config(sc)
 	hme_mifinit(sc);
 
 	mii_attach(&sc->sc_dev, mii, 0xffffffff,
-			MII_PHY_ANY, MII_OFFSET_ANY, 0);
+	    MII_PHY_ANY, MII_OFFSET_ANY, 0);
 
 	child = LIST_FIRST(&mii->mii_phys);
 	if (child == NULL) {
@@ -260,10 +259,10 @@ hme_config(sc)
 			 */
 			if (child->mii_phy > 1 || child->mii_inst > 1) {
 				printf("%s: cannot accomodate MII device %s"
-				       " at phy %d, instance %d\n",
-				       sc->sc_dev.dv_xname,
-				       child->mii_dev.dv_xname,
-				       child->mii_phy, child->mii_inst);
+				    " at phy %d, instance %d\n",
+				    sc->sc_dev.dv_xname,
+				    child->mii_dev.dv_xname,
+				    child->mii_phy, child->mii_inst);
 				continue;
 			}
 
@@ -326,7 +325,7 @@ hme_stop(sc)
 
 	/* Reset transmitter and receiver */
 	bus_space_write_4(t, seb, HME_SEBI_RESET,
-			  (HME_SEB_RESET_ETX | HME_SEB_RESET_ERX));
+	    (HME_SEB_RESET_ETX | HME_SEB_RESET_ERX));
 
 	for (n = 0; n < 20; n++) {
 		u_int32_t v = bus_space_read_4(t, seb, HME_SEBI_RESET);
@@ -495,14 +494,9 @@ hme_init(sc)
 
 	/* step 8. Global Configuration & Interrupt Mask */
 	bus_space_write_4(t, seb, HME_SEBI_IMASK,
-			~(
-			  /*HME_SEB_STAT_GOTFRAME | HME_SEB_STAT_SENTFRAME |*/
-			  HME_SEB_STAT_HOSTTOTX |
-			  HME_SEB_STAT_RXTOHOST |
-			  HME_SEB_STAT_TXALL |
-			  HME_SEB_STAT_TXPERR |
-			  HME_SEB_STAT_RCNTEXP |
-			  HME_SEB_STAT_ALL_ERRORS ));
+	    ~(HME_SEB_STAT_HOSTTOTX | HME_SEB_STAT_RXTOHOST |
+	      HME_SEB_STAT_TXALL | HME_SEB_STAT_TXPERR |
+	      HME_SEB_STAT_RCNTEXP | HME_SEB_STAT_ALL_ERRORS));
 
 	switch (sc->sc_burst) {
 	default:
@@ -529,7 +523,6 @@ hme_init(sc)
 
 	/* Transmit Descriptor ring size: in increments of 16 */
 	bus_space_write_4(t, etx, HME_ETXI_RSIZE, HME_TX_RING_SIZE / 16 - 1);
-
 
 	/* step 10. ERX Configuration */
 	v = bus_space_read_4(t, erx, HME_ERXI_CFG);
@@ -617,7 +610,7 @@ hme_start(ifp)
 		IFQ_DEQUEUE(&ifp->if_snd, m);
 
 		bus_space_write_4(sc->sc_bustag, sc->sc_etx, HME_ETXI_PENDING,
-				  HME_ETX_TP_DMAWAKEUP);
+		    HME_ETX_TP_DMAWAKEUP);
 	}
 
 	sc->sc_tx_prod = bix;
@@ -641,10 +634,10 @@ hme_tint(sc)
 	 * Unload collision counters
 	 */
 	ifp->if_collisions +=
-		bus_space_read_4(t, mac, HME_MACI_NCCNT) +
-		bus_space_read_4(t, mac, HME_MACI_FCCNT) +
-		bus_space_read_4(t, mac, HME_MACI_EXCNT) +
-		bus_space_read_4(t, mac, HME_MACI_LTCNT);
+	    bus_space_read_4(t, mac, HME_MACI_NCCNT) +
+	    bus_space_read_4(t, mac, HME_MACI_FCCNT) +
+	    bus_space_read_4(t, mac, HME_MACI_EXCNT) +
+	    bus_space_read_4(t, mac, HME_MACI_LTCNT);
 
 	/*
 	 * then clear the hardware counters.
@@ -729,7 +722,7 @@ hme_rint(sc)
 
 		if (flags & HME_XD_OFL) {
 			printf("%s: buffer overflow, ri=%d; flags=0x%x\n",
-					sc->sc_dev.dv_xname, ri, flags);
+			    sc->sc_dev.dv_xname, ri, flags);
 			goto again;
 		}
 
@@ -1061,7 +1054,6 @@ hme_ioctl(ifp, cmd, data)
 			 * Reset the interface to pick up changes in any other
 			 * flags that affect hardware registers.
 			 */
-			/*hme_stop(sc);*/
 			hme_init(sc);
 		}
 #ifdef HMEDEBUG
@@ -1103,7 +1095,6 @@ void
 hme_shutdown(arg)
 	void *arg;
 {
-
 	hme_stop((struct hme_softc *)arg);
 }
 
