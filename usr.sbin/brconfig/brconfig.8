@@ -1,4 +1,4 @@
-.\"	$OpenBSD: brconfig.8,v 1.9 1999/03/19 22:47:34 jason Exp $
+.\"	$OpenBSD: brconfig.8,v 1.10 1999/03/31 02:35:40 jason Exp $
 .\"
 .\" Copyright (c) 1999 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -172,6 +172,22 @@ learned by the bridge.
 Stop bridge0 from forwarding packets.
 .It Cm brconfig bridge0 delete xl0
 Remove the interface xl0 from the bridge bridge0.
+.It Cm brconfig bridge0 flush
+Flush all dynamically learned addresses from the address cache.
+.It Cm brconfig bridge0 flushall
+Remove all addresses, including static addresses, from the address cache.
+.It Cm brconfig bridge0 -learn xl0 static xl0 8:0:20:1e:2f:2b
+.It Cm brconfig bridge0 -discover xl0
+The examples above mark the xl0 interface so that it will not learn
+addresses and adds a static entry for the host 8:0:20:1e:2f:2b on the xl0
+segment.
+Finally, xl0 is marked so that it will not receive packets with
+destinations not found in the address cache of bridge0.
+This setup is the most secure,
+and means that bogus MAC addresses seen by the xl0 side of the bridge
+will not be propogated to the rest of the network.
+Also, no packets will be sent on xl0 segment by the bridge unless they are
+broadcast packets or are for 8:0:20:1e:2f:2b.
 .El
 .Sh SEE ALSO
 .Xr ifconfig 8 ,
