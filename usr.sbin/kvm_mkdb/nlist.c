@@ -1,4 +1,4 @@
-/*	$OpenBSD: nlist.c,v 1.28 2002/09/06 19:04:49 deraadt Exp $	*/
+/*	$OpenBSD: nlist.c,v 1.29 2002/10/25 21:55:01 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)nlist.c	8.1 (Berkeley) 6/6/93";
 #else
-static char *rcsid = "$OpenBSD: nlist.c,v 1.28 2002/09/06 19:04:49 deraadt Exp $";
+static char *rcsid = "$OpenBSD: nlist.c,v 1.29 2002/10/25 21:55:01 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -420,7 +420,7 @@ __elf_knlist(fd, db, ksyms)
 
 		nbuf.n_value = sbuf.st_value;
 
-		/*XXX type conversion is pretty rude... */
+		/* XXX type conversion is pretty rude... */
 		switch(ELF_ST_TYPE(sbuf.st_info)) {
 		case STT_NOTYPE:
 			nbuf.n_type = N_UNDF;
@@ -435,14 +435,9 @@ __elf_knlist(fd, db, ksyms)
 		if(ELF_ST_BIND(sbuf.st_info) == STB_LOCAL)
 			nbuf.n_type = N_EXT;
 
-		if(eh.e_machine == EM_MIPS) {
-			*buf = '_';
-			strcpy(buf+1,strtab + sbuf.st_name);
-			key.data = (u_char *)buf;
-		}
-		else {
-			key.data = (u_char *)(strtab + sbuf.st_name);
-		}
+		*buf = '_';
+		strcpy(buf + 1, strtab + sbuf.st_name);
+		key.data = (u_char *)buf;
 		key.size = strlen((char *)key.data);
 		if (db->put(db, &key, &data, 0))
 			err(1, "record enter");
