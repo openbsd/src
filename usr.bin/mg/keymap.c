@@ -1,4 +1,4 @@
-/*	$OpenBSD: keymap.c,v 1.7 2001/05/23 16:26:39 art Exp $	*/
+/*	$OpenBSD: keymap.c,v 1.8 2001/05/23 21:59:45 art Exp $	*/
 
 /*
  * Keyboard maps.  This is character set dependent.  The terminal specific 
@@ -850,8 +850,6 @@ FUNCTNAMES functnames[] = {
 };
 
 #define NFUNCT	(sizeof(functnames)/sizeof(FUNCTNAMES))
-
-int	 nfunct = NFUNCT;	/* used by help.c */
 
 /*
  * The general-purpose version of ROUND2 blows osk C (2.0) out of the water.

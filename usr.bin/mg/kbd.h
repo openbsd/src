@@ -1,4 +1,4 @@
-/*	$OpenBSD: kbd.h,v 1.7 2001/05/23 20:19:44 art Exp $	*/
+/*	$OpenBSD: kbd.h,v 1.8 2001/05/23 21:59:45 art Exp $	*/
 
 /*
  * kbd.h: type definitions for symbol.c and kbd.c for mg experimental
@@ -55,7 +55,5 @@ PF       name_function		__P((char *));
 char    *function_name		__P((PF));
 char    *map_name		__P((KEYMAP *));
 
-extern int		 nfunct;
-extern FUNCTNAMES	 functnames[];
 extern MAP_ELEMENT	*ele;
 extern MAPS		*defb_modes[];

@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.14 2001/05/23 21:42:34 art Exp $	*/
+/*	$OpenBSD: def.h,v 1.15 2001/05/23 21:59:45 art Exp $	*/
 
 /*
  * This file is the general header file for all parts
@@ -591,7 +591,6 @@ extern int	 tttop;
 extern int	 ttbot;
 extern int	 tthue;
 extern int	 nmaps;
-extern int	 nfunct;
 extern int	 defb_nmodes;
 extern int	 defb_flag;
 extern char	 cinfo[];
