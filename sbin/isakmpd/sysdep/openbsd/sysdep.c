@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysdep.c,v 1.13 2001/07/06 09:35:58 ho Exp $	*/
+/*	$OpenBSD: sysdep.c,v 1.14 2001/07/06 15:46:16 niklas Exp $	*/
 /*	$EOM: sysdep.c,v 1.9 2000/12/04 04:46:35 angelos Exp $	*/
 
 /*
@@ -177,16 +177,16 @@ sysdep_cleartext (int fd, int af)
 		  (char *)&level, sizeof level) == -1)
     {
       log_error ("sysdep_cleartext: "
-		 "setsockopt (%d, %d, IP_ESP_TRANS_LEVEL, ...) "
-		 "failed", fd, optsw[sw].ip_proto);
+		 "setsockopt (%d, %d, IP_ESP_TRANS_LEVEL, ...) failed", fd,
+		 optsw[sw].ip_proto);
       return -1;
     }
   if (setsockopt (fd, optsw[sw].ip_proto, optsw[sw].esp_network_level,
 		  (char *)&level, sizeof level) == -1)
     {
       log_error("sysdep_cleartext: "
-		"setsockopt (%d, %d, IP_ESP_NETWORK_LEVEL, ...) "
-		 "failed", fd, optsw[sw].ip_proto);
+		"setsockopt (%d, %d, IP_ESP_NETWORK_LEVEL, ...) failed", fd,
+		optsw[sw].ip_proto);
       return -1;
     }
   return 0;
