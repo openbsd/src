@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptodev.c,v 1.11 2001/06/15 09:14:46 deraadt Exp $	*/
+/*	$OpenBSD: cryptodev.c,v 1.12 2001/06/16 10:46:03 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -201,7 +201,11 @@ cryptof_ioctl(fp, cmd, data, p)
 
 		if (txform) {
 			crie.cri_alg = txform->type;
-			crie.cri_klen = sop->keylen * 8;	/* XXX range check */
+			crie.cri_klen = sop->keylen * 8;
+			if (sop->keylen != txform->maxkey) {
+				error = EINVAL;
+				goto bail;
+			}
 
 			MALLOC(crie.cri_key, u_int8_t *,
 			    crie.cri_klen / 8, M_XDATA, M_WAITOK);
@@ -214,7 +218,11 @@ cryptof_ioctl(fp, cmd, data, p)
 
 		if (thash) {
 			cria.cri_alg = thash->type;
-			cria.cri_klen = sop->mackeylen * 8;	/* XXX range check */
+			cria.cri_klen = sop->mackeylen * 8;
+			if (sop->mackeylen != thash->keysize) {
+				error = EINVAL;
+				goto bail;
+			}
 
 			MALLOC(cria.cri_key, u_int8_t *,
 			    cria.cri_klen / 8, M_XDATA, M_WAITOK);
