@@ -1,4 +1,4 @@
-/*	$OpenBSD: kbd_sparc.c,v 1.4 1999/07/23 09:03:16 maja Exp $ */
+/*	$OpenBSD: kbd_sparc.c,v 1.5 1999/08/21 20:27:43 maja Exp $ */
 
 /*
  * Copyright (c) 1999 Mats O Jansson.  All rights reserved.
@@ -40,12 +40,8 @@
 
 #define	PATH_KBD	"/dev/kbd"
 
-#define ALL(s)	(s), (s), (s), (s),
+#define ALL(s,n)	(s), (s), (s), (s), (n), (s),
 #define BB(s)	(FUNNY+(s))
-#define LF(s)	(0x600+(s)-1)
-#define RF(s)	(0x610+(s)-1)
-#define TF(s)	(0x620+(s)-1)
-#define BF(s)	(0x630+(s)-1)
 #define SK(s)	(SHIFTKEYS+(s))
 #define ST(s)	(0x500+(s))
 #define GR(s)	(0x400+(s))
@@ -54,7 +50,9 @@
 typedef struct {
         u_short unshift;
         u_short shift;
+	u_short caps;
 	u_short altgr;
+	u_short numl;
 	u_short control;
 } keymap_t;
 
@@ -211,8 +209,8 @@ kbd_set(name, verbose)
 {
 	int i, j, fd, r;
 	keymap_t *map = NULL;
-	int x[] = { KIOC_NOMASK, KIOC_SHIFTMASK,
-		    KIOC_ALTGMASK, KIOC_CTRLMASK };
+	int x[] = { KIOC_NOMASK, KIOC_SHIFTMASK, KIOC_CAPSMASK,
+		    KIOC_ALTGMASK, KIOC_NUMLMASK, KIOC_CTRLMASK };
 	struct kiockey k;
 
 	if(strcmp(name,"default") == 0) {
@@ -240,7 +238,7 @@ kbd_set(name, verbose)
 	}		
 
 	for (i = 0; i < 128; i++) {
-		for (j = 0; j < 4; j++) {
+		for (j = 0; j < 6; j++) {
 			k.kio_tablemask = x[j];
 			k.kio_station = i;
 			switch(j) {
@@ -251,9 +249,15 @@ kbd_set(name, verbose)
 				k.kio_entry = map[i].shift;
 				break;
 			case 2:
-				k.kio_entry = map[i].altgr;
+				k.kio_entry = map[i].caps;
 				break;
 			case 3:
+				k.kio_entry = map[i].altgr;
+				break;
+			case 4:
+				k.kio_entry = map[i].numl;
+				break;
+			case 5:
 				k.kio_entry = map[i].control;
 				break;
 			}

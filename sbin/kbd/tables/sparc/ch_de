@@ -1,4 +1,4 @@
-/*	$OpenBSD: ch_de,v 1.1 1999/07/20 21:02:28 maja Exp $	*/
+/*	$OpenBSD: ch_de,v 1.2 1999/08/21 20:27:43 maja Exp $	*/
 
 /*
  * Copyright (c) 1999 Mats O Jansson
@@ -32,132 +32,132 @@
  */
 
     { "ch_de", "swiss_german", "type_4_layout_0d" },
-/*	unshift	shift	alt gr	control	*/
-	ALL(HOLE)						/*   0 */
-	ALL(BB(SYSTEMBIT))					/*   1 */
-	ALL(HOLE)						/*   2 */
-	ALL(LF(2))						/*   3 */
-	ALL(HOLE)						/*   4 */
-	ALL(TF(1))						/*   5 */
-	ALL(TF(2))						/*   6 */
-	ALL(TF(10))						/*   7 */
-	ALL(TF(3))						/*   8 */
-	ALL(TF(11))						/*   9 */
-	ALL(TF(4))						/*  10 */
-	ALL(TF(12))						/*  11 */
-	ALL(TF(5))						/*  12 */
-	ALL(COMPOSE)						/*  13 */
-	ALL(TF(6))						/*  14 */
-	'>',	'}',	NOP,	'>',				/*  15 */
-	ALL(TF(7))						/*  16 */
-	ALL(TF(8))						/*  17 */
-	ALL(TF(9))						/*  18 */
-	ALL(SK(ALT))						/*  19 */
-	ALL(HOLE)						/*  20 */
-	ALL(RF(1))						/*  21 */
-	ALL(RF(2))						/*  22 */
-	ALL(RF(3))						/*  23 */
-	ALL(HOLE)						/*  24 */
-	ALL(LF(3))						/*  25 */
-	ALL(LF(4))						/*  26 */
-	ALL(HOLE)						/*  27 */
-	ALL(HOLE)						/*  28 */
-	ALL('\033')						/*  29 */
-	'1',	'+',	'!',	'1',				/*  30 */
-	'2',	'"',	'@',	'\000',				/*  31 */
-	'3',	'*',	'#',	'3',				/*  32 */
-	'4',	C8('ç'),C8('¢'),'4',				/*  33 */
-	'5',	'%',	'~',	'5',				/*  34 */
-	'6',	'&',	C8('§'),'6',				/*  35 */
-	'7',	'/',	'|',	'7',				/*  36 */
-	'8',	'(',	C8('°'),'8',				/*  37 */
-	'9',	')',	'\\',	'\034',				/*  38 */
-	'0',	'=',	'^',	'\036',				/*  39 */
-	'\'',	'?',	'`',	'\'',				/*  40 */
-	GR(1),	GR(5),	NOP,	GR(1),				/*  41 */
-	'$',	GR(2),	C8('£'),'$',				/*  42 */
-	ALL('\b')						/*  43 */
-	ALL(HOLE)						/*  44 */
-	ALL(RF(4))						/*  45 */
-	ALL(RF(5))						/*  46 */
-	ALL(RF(6))						/*  47 */
-	ALL(BF(13))						/*  48 */
-	ALL(LF(5))						/*  49 */
-	ALL(BF(10))						/*  50 */
-	ALL(LF(6))						/*  51 */
-	ALL(HOLE)						/*  52 */
-	ALL('\t')						/*  53 */
-	'q',	'Q',	NOP,	'\021',				/*  54 */
-	'w',	'W',	NOP,	'\027',				/*  55 */
-	'e',	'E',	NOP,	'\005',				/*  56 */
-	'r',	'R',	NOP,	'\022',				/*  57 */
-	't',	'T',	NOP,	'\024',				/*  58 */
-	'z',	'Z',	NOP,	'\032',				/*  59 */
-	'u',	'U',	NOP,	'\025',				/*  60 */
-	'i',	'I',	NOP,	'\t',				/*  61 */
-	'o',	'O',	NOP,	'\017',				/*  62 */
-	'p',	'P',	NOP,	'\020',				/*  63 */
-	C8('ü'),C8('è'),NOP,	C8('ü'),			/*  64 */
-	GR(0),	GR(4),	NOP,	GR(0),				/*  65 */
-	ALL('\177')						/*  66 */
-	ALL(SK(ALTGRAPH))					/*  67 */
-	ALL(RF(7))						/*  68 */
-	ALL(ST(1))						/*  69 */
-	ALL(RF(9))						/*  70 */
-	ALL(BF(15))						/*  71 */
-	ALL(LF(7))						/*  72 */
-	ALL(LF(8))						/*  73 */
-	ALL(HOLE)						/*  74 */
-	ALL(HOLE)						/*  75 */
-	ALL(SK(CAPSLOCK))					/*  76 */
-	'a',	'A',	NOP,	'\001',				/*  77 */
-	's',	'S',	NOP,	'\023',				/*  78 */
-	'd',	'D',	NOP,	'\004',				/*  79 */
-	'f',	'F',	NOP,	'\006',				/*  80 */
-	'g',	'G',	NOP,	'\007',				/*  81 */
-	'h',	'H',	NOP,	'\b',				/*  82 */
-	'j',	'J',	NOP,	'\n',				/*  83 */
-	'k',	'K',	NOP,	'\013',				/*  84 */
-	'l',	'L',	NOP,	'\014',				/*  85 */
-	C8('ö'),C8('é'),NOP,	C8('ö'),			/*  86 */
-	C8('ä'),C8('à'),NOP,	C8('ä'),			/*  87 */
-	'<',	'{',	NOP,	'<',				/*  88 */
-	ALL('\r')						/*  89 */
-	ALL(BF(11))						/*  90 */
-	ALL(ST(3))						/*  91 */
-	ALL(RF(11))						/*  92 */
-	ALL(ST(4))						/*  93 */
-	ALL(BF(8))						/*  94 */
-	ALL(LF(9))						/*  95 */
-	ALL(HOLE)						/*  96 */
-	ALL(LF(10))						/*  97 */
-	ALL(SK(NUMLOCK))					/*  98 */
-	ALL(SK(LEFTSHIFT))					/*  99 */
-	'y',	'Y',	NOP,	'\031',				/* 100 */
-	'x',	'X',	NOP,	'\030',				/* 101 */
-	'c',	'C',	NOP,	'\003',				/* 102 */
-	'v',	'V',	NOP,	'\026',				/* 103 */
-	'b',	'B',	NOP,	'\002',				/* 104 */
-	'n',	'N',	NOP,	'\016',				/* 105 */
-	'm',	'M',	C8('µ'),'\r',				/* 106 */
-	',',	';',	NOP,	',',				/* 107 */
-	'.',	':',	NOP,	'.',				/* 108 */
-	'-',	'_',	NOP,	'\037',				/* 109 */
-	ALL(SK(RIGHTSHIFT))					/* 110 */
-	ALL('\n')						/* 111 */
-	ALL(RF(13))						/* 112 */
-	ALL(ST(2))						/* 113 */
-	ALL(RF(15))						/* 114 */
-	ALL(HOLE)						/* 115 */
-	ALL(HOLE)						/* 116 */
-	ALL(HOLE)						/* 117 */
-	ALL(LF(16))						/* 118 */
-	ALL(SK(LEFTCTRL))					/* 119 */
-	ALL(BB(0))						/* 120 */
-	' ',	' ',	' ',	'\000',				/* 121 */
-	ALL(BB(0))						/* 122 */
-	ALL(HOLE)						/* 123 */
-	']',	'[',	'\\',	'\035',				/* 124 */
-	ALL(BF(14))						/* 125 */
-	ALL(ERROR)						/* 126 */
-	ALL(IDLE)						/* 127 */
+/*	unshift	shift	caps	alt gr	numl	control	*/
+	ALL(HOLE,HOLE)						/*   0 */
+	ALL(BB(SYSTEMBIT),NONL)					/*   1 */
+	ALL(HOLE,HOLE)						/*   2 */
+	ALL(LF(2),NONL)						/*   3 */
+	ALL(HOLE,HOLE)						/*   4 */
+	ALL(TF(1),NONL)						/*   5 */
+	ALL(TF(2),NONL)						/*   6 */
+	ALL(TF(10),NONL)					/*   7 */
+	ALL(TF(3),NONL)						/*   8 */
+	ALL(TF(11),NONL)					/*   9 */
+	ALL(TF(4),NONL)						/*  10 */
+	ALL(TF(12),NONL)					/*  11 */
+	ALL(TF(5),NONL)						/*  12 */
+	ALL(COMPOSE,NONL)					/*  13 */
+	ALL(TF(6),NONL)						/*  14 */
+	'>',	'}',	'>',	NOP,	HOLE,	'>',		/*  15 */
+	ALL(TF(7),NONL)						/*  16 */
+	ALL(TF(8),NONL)						/*  17 */
+	ALL(TF(9),NONL)						/*  18 */
+	ALL(SK(ALT),NONL)					/*  19 */
+	ALL(HOLE,HOLE)						/*  20 */
+	ALL(RF(1),NONL)						/*  21 */
+	ALL(RF(2),NONL)						/*  22 */
+	ALL(RF(3),NONL)						/*  23 */
+	ALL(HOLE,HOLE)						/*  24 */
+	ALL(LF(3),NONL)						/*  25 */
+	ALL(LF(4),NONL)						/*  26 */
+	ALL(HOLE,HOLE)						/*  27 */
+	ALL(HOLE,HOLE)						/*  28 */
+	ALL('\033',NONL)					/*  29 */
+	'1',	'+',	'1',	'!',	NONL,	'1',		/*  30 */
+	'2',	'"',	'2',	'@',	NONL,	'\000',		/*  31 */
+	'3',	'*',	'3',	'#',	NONL,	'3',		/*  32 */
+	'4',	C8('ç'),'4',	C8('¢'),NONL,	'4',		/*  33 */
+	'5',	'%',	'5',	'~',	NONL,	'5',		/*  34 */
+	'6',	'&',	'6',	C8('§'),NONL,	'6',		/*  35 */
+	'7',	'/',	'7',	'|',	'7',	'7',		/*  36 */
+	'8',	'(',	'8',	C8('°'),'8',	'8',		/*  37 */
+	'9',	')',	'9',	'\\',	'9',	'\034',		/*  38 */
+	'0',	'=',	'0',	'^',	'*',	'\036',		/*  39 */
+	'\'',	'?',	'\'',	'`',	NONL,	'\'',		/*  40 */
+	GR(1),	GR(5),	GR(1),	NOP,	NONL,	GR(1),		/*  41 */
+	'$',	GR(2),	'$',	C8('£'),NONL,	'$',		/*  42 */
+	ALL('\b',NONL)						/*  43 */
+	ALL(HOLE,HOLE)						/*  44 */
+	ALL(RF(4),PADEQUAL)					/*  45 */
+	ALL(RF(5),PADSLASH)					/*  46 */
+	ALL(RF(6),PADSTAR)					/*  47 */
+	ALL(BF(13),NONL)					/*  48 */
+	ALL(LF(5),NONL)						/*  49 */
+	ALL(BF(10),PADDOT)					/*  50 */
+	ALL(LF(6),NONL)						/*  51 */
+	ALL(HOLE,HOLE)						/*  52 */
+	ALL('\t',NONL)						/*  53 */
+	'q',	'Q',	'Q',	NOP,	NONL,	'\021',		/*  54 */
+	'w',	'W',	'W',	NOP,	NONL,	'\027',		/*  55 */
+	'e',	'E',	'E',	NOP,	NONL,	'\005',		/*  56 */
+	'r',	'R',	'R',	NOP,	NONL,	'\022',		/*  57 */
+	't',	'T',	'T',	NOP,	NONL,	'\024',		/*  58 */
+	'z',	'Z',	'Z',	NOP,	NONL,	'\032',		/*  59 */
+	'u',	'U',	'U',	NOP,	'4',	'\025',		/*  60 */
+	'i',	'I',	'I',	NOP,	'5',	'\t',		/*  61 */
+	'o',	'O',	'O',	NOP,	'6',	'\017',		/*  62 */
+	'p',	'P',	'P',	NOP,	'-',	'\020',		/*  63 */
+	C8('ü'),C8('è'),C8('ü'),NOP,	NONL,	C8('ü'),	/*  64 */
+	GR(0),	GR(4),	GR(0),	NOP,	NONL,	GR(0),		/*  65 */
+	ALL('\177',NONL)					/*  66 */
+	ALL(SK(ALTGRAPH),NONL)					/*  67 */
+	ALL(RF(7),PAD7)						/*  68 */
+	ALL(ST(1),PAD8)						/*  69 */
+	ALL(RF(9),PAD9)						/*  70 */
+	ALL(BF(15),PADMINUS)					/*  71 */
+	ALL(LF(7),NONL)						/*  72 */
+	ALL(LF(8),NONL)						/*  73 */
+	ALL(HOLE,HOLE)						/*  74 */
+	ALL(HOLE,HOLE)						/*  75 */
+	ALL(SK(CAPSLOCK),NONL)					/*  76 */
+	'a',	'A',	'A',	NOP,	NONL,	'\001',		/*  77 */
+	's',	'S',	'S',	NOP,	NONL,	'\023',		/*  78 */
+	'd',	'D',	'D',	NOP,	NONL,	'\004',		/*  79 */
+	'f',	'F',	'F',	NOP,	NONL,	'\006',		/*  80 */
+	'g',	'G',	'G',	NOP,	NONL,	'\007',		/*  81 */
+	'h',	'H',	'H',	NOP,	NONL,	'\b',		/*  82 */
+	'j',	'J',	'J',	NOP,	'1',	'\n',		/*  83 */
+	'k',	'K',	'K',	NOP,	'2',	'\013',		/*  84 */
+	'l',	'L',	'L',	NOP,	'3',	'\014',		/*  85 */
+	C8('ö'),C8('é'),C8('ö'),NOP,	'+',	C8('ö'),	/*  86 */
+	C8('ä'),C8('à'),C8('ä'),NOP,	NONL,	C8('ä'),	/*  87 */
+	'<',	'{',	'<',	NOP,	NONL,	'<',		/*  88 */
+	ALL('\r',NONL)						/*  89 */
+	ALL(BF(11),PADENTER)					/*  90 */
+	ALL(ST(3),PAD4)						/*  91 */
+	ALL(RF(11),PAD5)					/*  92 */
+	ALL(ST(4),PAD6)						/*  93 */
+	ALL(BF(8),PAD0)						/*  94 */
+	ALL(LF(9),NONL)						/*  95 */
+	ALL(HOLE,HOLE)						/*  96 */
+	ALL(LF(10),NONL)					/*  97 */
+	ALL(SK(NUMLOCK),NONL)					/*  98 */
+	ALL(SK(LEFTSHIFT),NONL)					/*  99 */
+	'y',	'Y',	'Y',	NOP,	NONL,	'\031',		/* 100 */
+	'x',	'X',	'X',	NOP,	NONL,	'\030',		/* 101 */
+	'c',	'C',	'C',	NOP,	NONL,	'\003',		/* 102 */
+	'v',	'V',	'V',	NOP,	NONL,	'\026',		/* 103 */
+	'b',	'B',	'B',	NOP,	NONL,	'\002',		/* 104 */
+	'n',	'N',	'N',	NOP,	NONL,	'\016',		/* 105 */
+	'm',	'M',	'M',	C8('µ'),'0',	'\r',		/* 106 */
+	',',	';',	',',	NOP,	',',	',',		/* 107 */
+	'.',	':',	'.',	NOP,	'.',	'.',		/* 108 */
+	'-',	'_',	'-',	NOP,	'/',	'\037',		/* 109 */
+	ALL(SK(RIGHTSHIFT),NONL)				/* 110 */
+	ALL('\n',NONL)						/* 111 */
+	ALL(RF(13),PAD1)					/* 112 */
+	ALL(ST(2),PAD2)						/* 113 */
+	ALL(RF(15),PAD3)					/* 114 */
+	ALL(HOLE,HOLE)						/* 115 */
+	ALL(HOLE,HOLE)						/* 116 */
+	ALL(HOLE,HOLE)						/* 117 */
+	ALL(LF(16),NONL)					/* 118 */
+	ALL(SK(LEFTCTRL),NONL)					/* 119 */
+	ALL(BB(0),NONL)						/* 120 */
+	' ',	' ',	' ',	' ',	NONL,	'\000',		/* 121 */
+	ALL(BB(0),NONL)						/* 122 */
+	ALL(HOLE,HOLE)						/* 123 */
+	']',	'[',	']',	'\\',	NONL,	'\035',		/* 124 */
+	ALL(BF(14),PADPLUS)					/* 125 */
+	ALL(ERROR,ERROR)					/* 126 */
+	ALL(IDLE,IDLE)						/* 127 */
