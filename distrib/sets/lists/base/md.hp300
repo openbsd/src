@@ -652,12 +652,11 @@
 ./usr/mdec/ctboot
 ./usr/mdec/hdboot
 ./usr/mdec/installboot
-./usr/mdec/isolif
 ./usr/mdec/rbootd
 ./usr/mdec/rbootd/SYS_UBOOT
 ./usr/mdec/sdboot
 ./usr/mdec/uboot.lif
-./usr/mdec/uboot.raw
+./usr/mdec/cdboot.lif
 ./usr/sbin/grfinfo
 ./usr/sbin/hilinfo
 ./usr/libdata/perl5/site_perl/m68k-openbsd/net/if_sppp.ph
