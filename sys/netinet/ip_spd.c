@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_spd.c,v 1.34 2001/06/27 04:41:32 angelos Exp $ */
+/* $OpenBSD: ip_spd.c,v 1.35 2001/06/27 04:44:03 angelos Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -677,11 +677,11 @@ ipsp_delete_acquire(void *v)
  * XXX Need a better structure.
  */
 struct ipsec_acquire *
-ipsp_pending_acquire(union sockaddr_union *gw)
+ipsp_pending_acquire(struct ipsec_policy *ipo, union sockaddr_union *gw)
 {
 	struct ipsec_acquire *ipa;
 
-	for (ipa = TAILQ_FIRST(&ipsec_acquire_head); ipa;
+	for (ipa = TAILQ_FIRST(&ipo->ipo_acquires); ipa;
 	    ipa = TAILQ_NEXT(ipa, ipa_next)) {
 		if (!bcmp(gw, &ipa->ipa_addr, gw->sa.sa_len))
 			return ipa;
@@ -704,7 +704,7 @@ ipsp_acquire_sa(struct ipsec_policy *ipo, union sockaddr_union *gw,
 #endif
 
 	/* Check whether request has been made already. */
-	if ((ipa = ipsp_pending_acquire(gw)) != NULL)
+	if ((ipa = ipsp_pending_acquire(ipo, gw)) != NULL)
 		return 0;
 
 	/* Add request in cache and proceed. */

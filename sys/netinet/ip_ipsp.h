@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.114 2001/06/27 04:39:11 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.115 2001/06/27 04:44:03 angelos Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -604,7 +604,8 @@ extern int ipsp_acquire_sa(struct ipsec_policy *, union sockaddr_union *,
 extern struct ipsec_policy *ipsec_add_policy(struct sockaddr_encap *,
     struct sockaddr_encap *, union sockaddr_union *, int, int);
 extern int ipsec_delete_policy(struct ipsec_policy *);
-extern struct ipsec_acquire *ipsp_pending_acquire(union sockaddr_union *);
+extern struct ipsec_acquire *ipsp_pending_acquire(struct ipsec_policy *,
+    union sockaddr_union *);
 extern void ipsp_delete_acquire(void *);
 extern int ipsp_is_unspecified(union sockaddr_union);
 extern void ipsp_reffree(struct ipsec_ref *);
