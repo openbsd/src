@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.own.mk,v 1.28 2000/02/08 20:26:29 espie Exp $
+#	$OpenBSD: bsd.own.mk,v 1.29 2000/02/25 15:11:39 hin Exp $
 #	$NetBSD: bsd.own.mk,v 1.24 1996/04/13 02:08:09 thorpej Exp $
 
 # Host-specific overrides
@@ -18,7 +18,7 @@ UVM?=		no
 # Set `SKEY' to `yes' to build with support for S/key authentication.
 SKEY?=		yes
 # Set `KERBEROS' to `yes' to build with support for Kerberos authentication.
-KERBEROS?=	yes
+KERBEROS?=	no
 # Set `KERBEROS5' to `yes' to build with support for Kerberos5 authentication.
 KERBEROS5?=	no
 # Set `YP' to `yes' to build with support for NIS/YP.
