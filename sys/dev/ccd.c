@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccd.c,v 1.58 2005/03/25 17:51:16 mickey Exp $	*/
+/*	$OpenBSD: ccd.c,v 1.59 2005/03/30 22:28:00 mickey Exp $	*/
 /*	$NetBSD: ccd.c,v 1.33 1996/05/05 04:21:14 thorpej Exp $	*/
 
 /*-
@@ -249,12 +249,6 @@ ccdattach(num)
 		return;
 	}
 
-	ccdbufsizeof = sizeof(struct ccdbuf) +
-	    (CCD_SGMAX - 1) * sizeof(struct ccdseg);
-	pool_init(&ccdbufpl, ccdbufsizeof, 0, 0, 0, "ccdbufpl", NULL);
-	pool_setlowat(&ccdbufpl, 16);
-	pool_sethiwat(&ccdbufpl, 1024);
-
 	ccd_softc = (struct ccd_softc *)malloc(num * sizeof(struct ccd_softc),
 	    M_DEVBUF, M_NOWAIT);
 	ccddevs = (struct ccddevice *)malloc(num * sizeof(struct ccddevice),
@@ -270,6 +264,12 @@ ccdattach(num)
 	numccd = num;
 	bzero(ccd_softc, num * sizeof(struct ccd_softc));
 	bzero(ccddevs, num * sizeof(struct ccddevice));
+
+	ccdbufsizeof = sizeof(struct ccdbuf) +
+	    (CCD_SGMAX - 1) * sizeof(struct ccdseg);
+	pool_init(&ccdbufpl, ccdbufsizeof, 0, 0, 0, "ccdbufpl", NULL);
+	pool_setlowat(&ccdbufpl, 16);
+	pool_sethiwat(&ccdbufpl, 1024);
 }
 
 int
