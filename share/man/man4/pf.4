@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.4,v 1.39 2003/10/02 00:25:42 mcbride Exp $
+.\"	$OpenBSD: pf.4,v 1.40 2003/10/04 17:18:56 mcbride Exp $
 .\"
 .\" Copyright (C) 2001, Kjell Wooding.  All rights reserved.
 .\"
@@ -72,11 +72,7 @@ Stops the packet filter.
 Starts the ALTQ bandwidth control system.
 .It Dv DIOCSTOPALTQ
 Stops the ALTQ bandwidth control system.
-.It Dv DIOCBEGINADDRS  Fa "u_int32_t"
-Clears the buffer address pool
-and returns a ticket for subsequent DIOCADDADDR, DIOCADDRULE and
-DIOCCHANGERULE calls.
-.It Dv DIOCADDADDR     Fa "struct pfioc_pooladdr"
+.It Dv DIOCBEGINADDRS  Fa "pfioc_pool_addr"
 .Bd -literal
 struct pfioc_pooladdr {
 	u_int32_t		action;
@@ -91,6 +87,12 @@ struct pfioc_pooladdr {
 	struct pf_pooladdr	addr;
 };
 .Ed
+.Pp
+Clears the buffer address pool
+and returns a
+.Va ticket
+for subsequent DIOCADDADDR, DIOCADDRULE and DIOCCHANGERULE calls.
+.It Dv DIOCADDADDR     Fa "struct pfioc_pooladdr"
 .Pp
 Adds pool address
 .Va addr
