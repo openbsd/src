@@ -28,7 +28,7 @@ Installing applications from the CD-ROM package collection:
 	The OpenBSD CD-ROM ships with several applications pre-built
 	for various hardware architectures.  The number of applications
 	vary according to available disk space.  Check the directory
-	OSREV/packages/MACHINE to see which packages are available for
+	OSREV/packages/MACHINE_ARCH to see which packages are available for
 	your hardware architecture.  That directory will be on the same
 	CD-ROM containing the OS installation files for your architecture.
 
@@ -44,7 +44,7 @@ Installing applications from the CD-ROM package collection:
     Password: <enter your root password>
     # mkdir -p /cdrom
     # mount /dev/cd0a /cdrom
-    {:-#-:} pkg_add /cdrom/OSREV/packages/MACHINE/<package-name>
+    {:-#-:} pkg_add /cdrom/OSREV/packages/MACHINE_ARCH/<package-name>
     # <add more packages if desired>
     # umount /cdrom
 	
@@ -54,7 +54,7 @@ Installing applications from the CD-ROM package collection:
 Installing applications from the ftp.openbsd.org package collection:
 
 	All available packages for your architecture have been placed on
-	ftp.openbsd.org in the directory pub/OpenBSD/OSREV/packages/MACHINE/
+	ftp.openbsd.org in the directory pub/OpenBSD/OSREV/packages/MACHINE_ARCH/
 	You may want to peruse this to see what packages are available.  The
 	packages are also on the OpenBSD FTP mirror sites.  See
 
@@ -71,7 +71,7 @@ Installing applications from the ftp.openbsd.org package collection:
 
     $ su
     Password: <enter your root password>
-    {:-#-:} pkg_add ftp://ftp.openbsd.org/pub/OpenBSD/{:--:}OSREV/packages/MACHINE/emacs-20.3.tgz
+    {:-#-:} pkg_add ftp://ftp.openbsd.org/pub/OpenBSD/{:--:}OSREV/packages/MACHINE_ARCH/emacs-20.3.tgz
 
 	Packages available {:-include-:} (at least):
 

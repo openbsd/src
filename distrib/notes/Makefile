@@ -1,9 +1,10 @@
-#	$OpenBSD: Makefile,v 1.10 1998/05/18 00:33:16 todd Exp $
+#	$OpenBSD: Makefile,v 1.11 2001/03/28 21:11:50 miod Exp $
 
 NOPROG=
 NOMAN=
 
 M?=	$(MACHINE)
+M_A?=	$(MACHINE_ARCH)
 
 TARG=	INSTALL.$M
 SRC=	$(.CURDIR)/INSTALL
@@ -15,11 +16,22 @@ DEP=	$(SRC) $(.CURDIR)/mirrors $(.CURDIR)/$M/whatis $(.CURDIR)/$M/contents \
 all:	$(TARG)
 
 allarchs:
-	@cd $(.CURDIR); for m in alpha amiga arc atari hp300 i386 mac68k mvme68k pc532 pmax powerpc sparc sun3; do make MACHINE=$$m; done
+	@cd $(.CURDIR); \
+	    make MACHINE=alpha MACHINE_ARCH=alpha; \
+	    make MACHINE=amiga MACHINE_ARCH=m68k; \
+	    make MACHINE=hp300 MACHINE_ARCH=m68k; \
+	    make MACHINE=i386 MACHINE_ARCH=i386; \
+	    make MACHINE=mac68k MACHINE_ARCH=m68k; \
+	    make MACHINE=mvme68k MACHINE_ARCH=m68k; \
+	    make MACHINE=pmax MACHINE_ARCH=mips; \
+	    make MACHINE=powerpc MACHINE_ARCH=powerpc; \
+	    make MACHINE=sparc MACHINE_ARCH=sparc; \
+	    make MACHINE=sun3 MACHINE_ARCH=m68k; \
+	    make MACHINE=vax MACHINE_ARCH=vax ;
 
 $(TARG): $(DEP)
 	m4 -DOSREV=$(OSREV) -DOSrev=$(OSrev) -DINCLUDE=$(.CURDIR)/$M \
-	-DMACHINE=$M -Uunix $(SRC) > $@
+	-DMACHINE=$M -DMACHINE_ARCH=$(M_A) -Uunix $(SRC) > $@
 
 clean cleandir:
 	-/bin/rm -f INSTALL.*
