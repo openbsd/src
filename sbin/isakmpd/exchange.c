@@ -1,4 +1,4 @@
-/*	$OpenBSD: exchange.c,v 1.67 2002/06/10 18:08:58 ho Exp $	*/
+/*	$OpenBSD: exchange.c,v 1.68 2002/09/05 14:54:16 ho Exp $	*/
 /*	$EOM: exchange.c,v 1.143 2000/12/04 00:02:25 angelos Exp $	*/
 
 /*
@@ -985,7 +985,8 @@ exchange_establish_p2 (struct sa *isakmp_sa, u_int8_t type, char *name,
    * Do not create SA's for informational exchanges.
    * XXX How to handle new group mode?
    */
-  if (exchange->type != ISAKMP_EXCH_INFO)
+  if (exchange->type != ISAKMP_EXCH_INFO
+      && exchange->type != ISAKMP_EXCH_TRANSACTION)
     {
       /* XXX Number of SAs should come from the args structure.  */
       for (i = 0; i < 1; i++)
