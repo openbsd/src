@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.79 2004/01/13 20:03:28 otto Exp $	*/
+/*	$OpenBSD: inet.c,v 1.80 2004/01/15 10:17:33 markus Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-static const char *rcsid = "$OpenBSD: inet.c,v 1.79 2004/01/13 20:03:28 otto Exp $";
+static const char *rcsid = "$OpenBSD: inet.c,v 1.80 2004/01/15 10:17:33 markus Exp $";
 #endif
 #endif /* not lint */
 
@@ -304,6 +304,8 @@ tcp_stats(u_long off, char *name)
 	p1(tcps_rcvshort, "\t\t%u discarded because packet too short\n");
 	p1(tcps_rcvnosec, "\t\t%u discarded for missing IPsec protection\n");
 	p(tcps_inhwcsum, "\t\t%u packet%s hardware-checksummed\n");
+	p(tcps_rcvbadsig, "\t\t%u bad/missing md5 checksum%s\n");
+	p(tcps_rcvgoodsig, "\t\t%qd good md5 checksum%s\n");
 	p(tcps_connattempt, "\t%u connection request%s\n");
 	p(tcps_accepts, "\t%u connection accept%s\n");
 	p(tcps_connects, "\t%u connection%s established (including accepts)\n");
