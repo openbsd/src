@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.49 2001/12/08 20:08:27 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.50 2001/12/08 21:41:34 miod Exp $	*/
 /*
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -4391,13 +4391,92 @@ pmap_range_remove(pmap_range_t *ranges, vm_offset_t start, vm_offset_t end)
 void
 pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 {
-	pmap_enter(pmap_kernel(), va, pa, prot, VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
+	int		ap;
+	int		spl;
+	pt_entry_t	*pte;
+	pte_template_t	template;
+	unsigned	users;
+
+	CHECK_PAGE_ALIGN (va, "pmap_kenter_pa - VA");
+	CHECK_PAGE_ALIGN (pa, "pmap_kenter_pa - PA");
+
+#ifdef DEBUG
+	if ((pmap_con_dbg & (CD_ENT | CD_NORM)) == (CD_ENT | CD_NORM)) {
+		printf ("(pmap_kenter_pa :%x) va %x pa %x\n", curproc, va, pa);
+	}
+#endif
+
+	PMAP_LOCK(kernel_pmap, spl);
+	users = kernel_pmap->cpus_using;
+
+	ap = m88k_protection(kernel_pmap, prot);
+
+	/*
+	 * Expand pmap to include this pte.
+	 */
+	while ((pte = pmap_pte(kernel_pmap, va)) == PT_ENTRY_NULL) {
+		if (pmap_expand_kmap(va, VM_PROT_READ|VM_PROT_WRITE) == PT_ENTRY_NULL)
+			panic ("pmap_kenter_pa: Cannot allocate kernel pte table");
+	}
+
+	/*
+	 * And count the mapping.
+	 */
+	kernel_pmap->stats.resident_count++;
+	kernel_pmap->stats.wired_count++;
+
+	if ((unsigned long)pa >= MAXPHYSMEM)
+		template.bits = DT_VALID | ap | trunc_page(pa) | CACHE_INH;
+	else
+		template.bits = DT_VALID | ap | trunc_page(pa) | CACHE_GLOBAL;
+
+	template.pte.wired = 1;
+
+	*(int *)pte = template.bits;
+
+	PMAP_UNLOCK(kernel_pmap, spl);
 }
 
 void
 pmap_kremove(vaddr_t va, vsize_t len)
 {
+	int		spl;
+	unsigned	users;
+
+#ifdef DEBUG
+	if ((pmap_con_dbg & (CD_RM | CD_NORM)) == (CD_RM | CD_NORM))
+		printf("(pmap_kremove :%x) va %x len %x\n", curproc, va, len);
+#endif
+
+	CHECK_PAGE_ALIGN(va, "pmap_kremove addr");
+	CHECK_PAGE_ALIGN(len, "pmap_kremove len");
+
+	PMAP_LOCK(kernel_pmap, spl);
+	users = kernel_pmap->cpus_using;
+
 	for (len >>= PAGE_SHIFT; len > 0; len--, va += PAGE_SIZE) {
-		pmap_remove(pmap_kernel(), va, va + PAGE_SIZE);
+		vaddr_t e = va + PAGE_SIZE;
+		sdt_entry_t *sdt;
+
+		sdt = SDTENT(kernel_pmap, va);
+
+		if (!SDT_VALID(sdt)) {
+			va &= SDT_MASK;	/* align to segment */
+			if (va <= e - (1<<SDT_SHIFT))
+				va += (1<<SDT_SHIFT) - PAGE_SIZE; /* no page table, skip to next seg entry */
+			else /* wrap around */
+				break;
+			continue;
+		}
+
+		/*
+		 * Update the counts
+		 */
+		kernel_pmap->stats.resident_count--;
+		kernel_pmap->stats.wired_count--;
+
+		flush_atc_entry(users, va, 1);
+
 	}
+	PMAP_UNLOCK(map, spl);
 }
