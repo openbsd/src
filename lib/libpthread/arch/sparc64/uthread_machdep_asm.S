@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_machdep_asm.S,v 1.7 2003/01/31 19:17:46 jason Exp $	*/
+/*	$OpenBSD: uthread_machdep_asm.S,v 1.8 2004/02/02 10:05:55 brad Exp $	*/
 /* David Leonard <d@csee.uq.edu.au>. Public domain. */
 
 #include <machine/asm.h>
@@ -7,7 +7,11 @@
 
 /*
  * Switch stacks.
- * On sparc this also means we switch register windows.
+ *
+ * On sparc64 this also means we switch register windows.
+ */
+
+/*
  * void _thread_machdep_switch(long newstate[2], long savestate[2], int flags);
  */
 ENTRY(_thread_machdep_switch)
