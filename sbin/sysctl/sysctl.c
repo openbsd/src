@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.49 2000/04/10 19:50:50 mickey Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.50 2000/05/22 17:29:42 mickey Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.5 (Berkeley) 5/9/95";
 #else
-static char *rcsid = "$OpenBSD: sysctl.c,v 1.49 2000/04/10 19:50:50 mickey Exp $";
+static char *rcsid = "$OpenBSD: sysctl.c,v 1.50 2000/05/22 17:29:42 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -82,6 +82,15 @@ static char *rcsid = "$OpenBSD: sysctl.c,v 1.49 2000/04/10 19:50:50 mickey Exp $
 #include <netinet6/ip6_var.h>
 #include <netinet6/pim6_var.h>
 #endif
+
+#include <ufs/ufs/quota.h>
+#include <ufs/ufs/inode.h>
+#include <ufs/ffs/fs.h>
+#include <ufs/ffs/ffs_extern.h>
+
+#include <nfs/rpcv2.h>
+#include <nfs/nfsproto.h>
+#include <nfs/nfs.h>
 
 #include <netipx/ipx.h>
 #include <netipx/ipx_var.h>
@@ -168,6 +177,8 @@ int sysctl_inet6 __P((char *, char **, int *, int, int *));
 #endif
 int sysctl_ipx __P((char *, char **, int *, int, int *));
 int sysctl_fs __P((char *, char **, int *, int, int *));
+static int sysctl_vfs __P((char *, char **, int[], int, int *));
+static int sysctl_vfsgen __P((char *, char **, int[], int, int *));
 int sysctl_bios __P((char *, char **, int *, int, int *));
 void vfsinit __P((void));
 
@@ -253,13 +264,12 @@ parse(string, flags)
 	char *string;
 	int flags;
 {
-	int indx, type, state, intval;
-	size_t size, len,  newsize = 0;
+	int indx, type, state, intval, len;
+	size_t size, newsize = 0;
 	int special = 0;
 	void *newval = 0;
 	quad_t quadval;
 	struct list *lp;
-	struct vfsconf vfc;
 	int mib[CTL_MAXNAME];
 	char *cp, *bufp, buf[BUFSIZ];
 
@@ -482,24 +492,19 @@ parse(string, flags)
 		return;
 
 	case CTL_VFS:
-		mib[3] = mib[1];
-		mib[1] = VFS_GENERIC;
-		mib[2] = VFS_CONF;
-		len = 4;
-		size = sizeof vfc;
-		if (sysctl(mib, 4, &vfc, &size, (void *)0, (size_t)0) < 0) {
-			if (errno != EOPNOTSUPP)
-				perror("vfs print");
-			return;
-		}
-		if (flags == 0 && vfc.vfc_refcount == 0)
-			return;
-		if (!nflag)
-			fprintf(stdout, "%s has %d mounted instance%s\n",
-			    string, vfc.vfc_refcount,
-			    vfc.vfc_refcount != 1 ? "s" : "");
+		if (mib[1])
+			len = sysctl_vfs(string, &bufp, mib, flags, &type);
 		else
-			fprintf(stdout, "%d\n", vfc.vfc_refcount);
+			len = sysctl_vfsgen(string, &bufp, mib, flags, &type);
+		if (len >= 0) {
+			if (type == CTLTYPE_STRUCT) {
+				if (flags)
+					warnx("use nfsstat to view %s information",
+					    MOUNT_NFS);
+				return;
+			} else
+				break;
+		}
 		return;
 
 	case CTL_USER:
@@ -829,6 +834,12 @@ debuginit()
 	lastused = loc;
 }
 
+struct ctlname vfsgennames[] = CTL_VFSGENCTL_NAMES;
+struct ctlname ffsname[] = FFS_NAMES;
+struct ctlname nfsname[] = FS_NFS_NAMES;
+struct list *vfsvars;
+int *vfs_typenums;
+
 /*
  * Initialize the set of filesystem names
  */
@@ -847,30 +858,127 @@ vfsinit()
 	buflen = 4;
 	if (sysctl(mib, 3, &maxtypenum, &buflen, (void *)0, (size_t)0) < 0)
 		return;
-	if ((vfsname = malloc(maxtypenum * sizeof(*vfsname))) == 0)
+	maxtypenum++;	/* + generic */
+	if ((vfs_typenums = malloc(maxtypenum * sizeof(int))) == NULL)
 		return;
+	memset(vfs_typenums, 0, maxtypenum * sizeof(int));
+	if ((vfsvars = malloc(maxtypenum * sizeof(*vfsvars))) == NULL) {
+		free(vfs_typenums);
+		return;
+	}
+	memset(vfsvars, 0, maxtypenum * sizeof(*vfsvars));
+	if ((vfsname = malloc(maxtypenum * sizeof(*vfsname))) == NULL) {
+		free(vfs_typenums);
+		free(vfsvars);
+		return;
+	}
 	memset(vfsname, 0, maxtypenum * sizeof(*vfsname));
 	mib[2] = VFS_CONF;
 	buflen = sizeof vfc;
-	for (loc = lastused, cnt = 0; cnt < maxtypenum; cnt++) {
-		mib[3] = cnt;
+	for (loc = lastused, cnt = 1; cnt < maxtypenum; cnt++) {
+		mib[3] = cnt - 1;
 		if (sysctl(mib, 4, &vfc, &buflen, (void *)0, (size_t)0) < 0) {
 			if (errno == EOPNOTSUPP)
 				continue;
-			perror("vfsinit");
+			warn("vfsinit");
 			free(vfsname);
 			return;
 		}
+		if (!strcmp(vfc.vfc_name, MOUNT_FFS)) {
+			vfsvars[cnt].list = ffsname;
+			vfsvars[cnt].size = FFS_MAXID;
+		}
+		if (!strcmp(vfc.vfc_name, MOUNT_NFS)) {
+			vfsvars[cnt].list = nfsname;
+			vfsvars[cnt].size = NFS_MAXID;
+		}
+		vfs_typenums[cnt] = vfc.vfc_typenum;
 		strcat(&names[loc], vfc.vfc_name);
 		vfsname[cnt].ctl_name = &names[loc];
-		vfsname[cnt].ctl_type = CTLTYPE_INT;
+		vfsname[cnt].ctl_type = CTLTYPE_NODE;
 		size = strlen(vfc.vfc_name) + 1;
 		loc += size;
 	}
 	lastused = loc;
+
+	vfsname[0].ctl_name = "mounts";
+	vfsname[0].ctl_type = CTLTYPE_NODE;
+	vfsvars[0].list = vfsname + 1;
+	vfsvars[0].size = maxtypenum - 1;
+
 	secondlevel[CTL_VFS].list = vfsname;
 	secondlevel[CTL_VFS].size = maxtypenum;
 	return;
+}
+
+int
+sysctl_vfsgen(string, bufpp, mib, flags, typep)
+	char *string;
+	char **bufpp;
+	int mib[];
+	int flags;
+	int *typep;
+{
+	int indx;
+	size_t size;
+	struct vfsconf vfc;
+
+	if (*bufpp == NULL) {
+		listall(string, vfsvars);
+		return (-1);
+	}
+
+	if ((indx = findname(string, "third", bufpp, vfsvars)) == -1)
+		return (-1);
+
+	mib[1] = VFS_GENERIC;
+	mib[2] = VFS_CONF;
+	mib[3] = indx;
+	size = sizeof vfc;
+	if (sysctl(mib, 4, &vfc, &size, (void *)0, (size_t)0) < 0) {
+		if (errno != EOPNOTSUPP)
+			warn("vfs print");
+		return -1;
+	}
+	if (flags == 0 && vfc.vfc_refcount == 0)
+		return -1;
+	if (!nflag)
+		fprintf(stdout, "%s has %d mounted instance%s\n",
+		    string, vfc.vfc_refcount,
+		    vfc.vfc_refcount != 1 ? "s" : "");
+	else
+		fprintf(stdout, "%d\n", vfc.vfc_refcount);
+
+	return -1;
+}
+
+int
+sysctl_vfs(string, bufpp, mib, flags, typep)
+	char *string;
+	char **bufpp;
+	int mib[];
+	int flags;
+	int *typep;
+{
+	struct list *lp = &vfsvars[mib[1]];
+	int indx;
+
+	if (lp->list == NULL) {
+		if (flags)
+			warnx("No variables defined for file system %s", string);
+		return(-1);
+	}
+	if (*bufpp == NULL) {
+		listall(string, lp);
+		return (-1);
+	}
+	if ((indx = findname(string, "third", bufpp, lp)) == -1)
+		return (-1);
+
+	mib[1] = vfs_typenums[mib[1]];
+	mib[2] = indx;
+	*typep = lp->list[indx].ctl_type;
+	return (3);
 }
 
 struct ctlname posixname[] = CTL_FS_POSIX_NAMES;
