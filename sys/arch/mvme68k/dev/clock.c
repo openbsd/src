@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.10 2004/01/14 20:50:48 miod Exp $ */
+/*	$OpenBSD: clock.c,v 1.11 2004/07/03 14:36:19 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -408,20 +408,23 @@ delay(us)
 		 * possible. However, since clock attaches before vme,
 		 * use a tight loop if necessary.
 		 */
-		if (sys_vme2 != NULL) {
-			sys_vme2->vme2_t1cmp = 0xffffffff;
-			sys_vme2->vme2_t1count = 0;
-			sys_vme2->vme2_tctl |= VME2_TCTL_CEN;
+	{
+		struct vme2reg *vme2;
 
-			while (sys_vme2->vme2_t1count < us)
-				;
+		if (sys_vme2 != NULL)
+			vme2 = sys_vme2;
+		else
+			vme2 = (struct vme2reg *)IIOV(0xfff40000);
 
-			sys_vme2->vme2_tctl &= ~VME2_TCTL_CEN;
-		} else {
-			c = 4 * us;
-			while (--c > 0)
-				;
-		}
+		vme2->vme2_t1cmp = 0xffffffff;
+		vme2->vme2_t1count = 0;
+		vme2->vme2_tctl |= VME2_TCTL_CEN;
+
+		while (vme2->vme2_t1count < us)
+			;
+
+		vme2->vme2_tctl &= ~VME2_TCTL_CEN;
+	}
 		break;
 #endif
 	}
