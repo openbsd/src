@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.32 1997/11/13 03:56:55 deraadt Exp $	*/
+/*	$OpenBSD: tty.c,v 1.33 1997/11/13 09:10:57 deraadt Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -599,12 +599,10 @@ ttyoutput(c, tp)
 
 	oflag = tp->t_oflag;
 	if (!ISSET(oflag, OPOST)) {
-		if (ISSET(tp->t_lflag, FLUSHO))
-			return (-1);
-		if (putc(c, &tp->t_outq))
-			return (c);
 		tk_nout++;
 		tp->t_outcc++;
+		if (!ISSET(tp->t_lflag, FLUSHO) && putc(c, &tp->t_outq))
+			return (c);
 		return (-1);
 	}
 	/*
@@ -641,7 +639,7 @@ ttyoutput(c, tp)
 	if (c == '\n' && ISSET(tp->t_oflag, ONLCR)) {
 		tk_nout++;
 		tp->t_outcc++;
-		if (putc('\r', &tp->t_outq))
+		if (!ISSET(tp->t_lflag, FLUSHO) && putc('\r', &tp->t_outq))
 			return (c);
 		tp->t_column = 0;
 	}
