@@ -37,7 +37,7 @@
 #include <xfs/xfs_deb.h>
 #include <xfs/xfs_vnodeops.h>
 
-RCSID("$Id: xfs_node-bsd.c,v 1.5 2003/01/31 17:37:50 art Exp $");
+RCSID("$arla: xfs_node-bsd.c,v 1.70 2003/02/28 02:01:06 lha Exp $");
 
 extern vop_t **xfs_vnodeop_p;
 
@@ -51,17 +51,18 @@ extern vop_t **xfs_vnodeop_p;
  */
 
 int
-xfs_getnewvnode(struct mount *mp, struct vnode **vpp, 
+xfs_getnewvnode(struct xfs *xfsp, struct vnode **vpp, 
 		struct xfs_handle *handle)
 {
-    struct xfs_node *result;
+    struct xfs_node *result, *check;
+    struct mount *mp;
     int error;
 
-    error = getnewvnode(VT_AFS, mp, xfs_vnodeop_p, vpp);
+    error = getnewvnode(VT_AFS, NNPFS_TO_VFS(xfsp), xfs_vnodeop_p, vpp);
     if (error)
 	return error;
     
-    result = xfs_alloc(sizeof(*result));
+    result = xfs_alloc(sizeof(*result), M_NNPFS_NODE);
     bzero(result, sizeof(*result));
     
     (*vpp)->v_data = result;
@@ -70,13 +71,28 @@ xfs_getnewvnode(struct mount *mp, struct vnode **vpp,
     result->handle = *handle;
     result->flags = 0;
     result->tokens = 0;
+    result->offset = 0;
 #if defined(HAVE_KERNEL_LOCKMGR) || defined(HAVE_KERNEL_DEBUGLOCKMGR)
     lockinit (&result->lock, PVFS, "xfs_lock", 0, LK_NOPAUSE);
 #else
     result->vnlocks = 0;
 #endif
     result->anonrights = 0;
-    result->cred = NULL;
+    result->rd_cred = NULL;
+    result->wr_cred = NULL;
+
+#if defined(__NetBSD_Version__) && __NetBSD_Version__ >= 105280000
+    genfs_node_init(*vpp, &xfs_genfsops);
+#endif
+
+    check = xfs_node_find(&xfsp->nodehead, handle);
+    if (check) {
+	vput(*vpp);
+	*vpp = result->vn;
+	return 0;
+    }
+
+    xfs_insert(&xfs->nodehead, result);
 
     return 0;
 }
@@ -92,11 +108,11 @@ int
 new_xfs_node(struct xfs *xfsp,
 	     struct xfs_msg_node *node,
 	     struct xfs_node **xpp,
-	     struct proc *p)
+	     d_thread_t *p)
 {
     struct xfs_node *result;
 
-    XFSDEB(XDEBNODE, ("new_xfs_node (%d,%d,%d,%d)\n",
+    NNPFSDEB(XDEBNODE, ("new_xfs_node (%d,%d,%d,%d)\n",
 		      node->handle.a,
 		      node->handle.b,
 		      node->handle.c,
@@ -104,12 +120,12 @@ new_xfs_node(struct xfs *xfsp,
 
 retry:
     /* Does not allow duplicates */
-    result = xfs_node_find(xfsp, &node->handle);
+    result = xfs_node_find(&xfsp->nodehead, &node->handle);
     if (result == 0) {
 	int error;
 	struct vnode *v;
 
-	error = xfs_getnewvnode(XFS_TO_VFS(xfsp), &v, &node->handle);
+	error = xfs_getnewvnode(xfsp, &v, &node->handle);
 	if (error)
 	    return error;
 
@@ -136,16 +152,16 @@ retry:
 #endif
 
     *xpp = result;
-    XFSDEB(XDEBNODE, ("return: new_xfs_node\n"));
+    NNPFSDEB(XDEBNODE, ("return: new_xfs_node\n"));
     return 0;
 }
 
 void
 free_xfs_node(struct xfs_node *node)
 {
-    struct xfs *xfsp = XFS_FROM_XNODE(node);
+    struct xfs *xfsp = NNPFS_FROM_XNODE(node);
 
-    XFSDEB(XDEBNODE, ("free_xfs_node(%lx) (%d,%d,%d,%d)\n",
+    NNPFSDEB(XDEBNODE, ("free_xfs_node(%lx) (%d,%d,%d,%d)\n",
 		      (unsigned long)node,
 		      node->handle.a,
 		      node->handle.b,
@@ -160,14 +176,18 @@ free_xfs_node(struct xfs_node *node)
     }
     xfsp->nnodes--;
     XNODE_TO_VNODE(node)->v_data = NULL;
-    if (node->cred) {
-	crfree (node->cred);
-	node->cred = NULL;
+    if (node->rd_cred) {
+	crfree (node->rd_cred);
+	node->rd_cred = NULL;
+    }
+    if (node->wr_cred) {
+	crfree (node->wr_cred);
+	node->wr_cred = NULL;
     }
 
-    xfs_free(node, sizeof(*node));
+    xfs_free(node, sizeof(*node), M_NNPFS_NODE);
 
-    XFSDEB(XDEBNODE, ("free_xfs_node done\n"));
+    NNPFSDEB(XDEBNODE, ("free_xfs_node done\n"));
 }
 
 /*
@@ -188,26 +208,26 @@ int
 free_all_xfs_nodes(struct xfs *xfsp, int flags, int unmountp)
 {
     int error = 0;
-    struct mount *mp = XFS_TO_VFS(xfsp);
+    struct mount *mp = NNPFS_TO_VFS(xfsp);
 
     if (mp == NULL) {
-	XFSDEB(XDEBNODE, ("free_all_xfs_nodes already freed\n"));
+	NNPFSDEB(XDEBNODE, ("free_all_xfs_nodes already freed\n"));
 	return 0;
     }
 
-    XFSDEB(XDEBNODE, ("free_all_xfs_nodes starting\n"));
+    NNPFSDEB(XDEBNODE, ("free_all_xfs_nodes starting\n"));
 
     xfs_dnlc_purge_mp(mp);
 
     if (xfsp->root) {
-	XFSDEB(XDEBNODE, ("free_all_xfs_nodes now removing root\n"));
+	NNPFSDEB(XDEBNODE, ("free_all_xfs_nodes now removing root\n"));
 
 	vgone(XNODE_TO_VNODE(xfsp->root));
 	xfsp->root = NULL;
     }
 
-    XFSDEB(XDEBNODE, ("free_all_xfs_nodes root removed\n"));
-    XFSDEB(XDEBNODE, ("free_all_xfs_nodes now killing all remaining nodes\n"));
+    NNPFSDEB(XDEBNODE, ("free_all_xfs_nodes root removed\n"));
+    NNPFSDEB(XDEBNODE, ("free_all_xfs_nodes now killing all remaining nodes\n"));
 
     /*
      * If we have a syncer vnode, release it (to emulate dounmount)
@@ -220,14 +240,14 @@ free_all_xfs_nodes(struct xfs *xfsp, int flags, int unmountp)
 #ifdef HAVE_KERNEL_VFS_DEALLOCATE_SYNCVNODE
 	    vfs_deallocate_syncvnode(mp);
 #else
-           /* 
-            * FreeBSD and OpenBSD uses different semantics,
-            * FreeBSD does vrele, and OpenBSD does vgone.
-            */
+	    /* 
+	     * FreeBSD and OpenBSD uses different semantics,
+	     * FreeBSD does vrele, and OpenBSD does vgone.
+	     */
 #if defined(__OpenBSD__)
-           vgone(mp->mnt_syncer);
+	    vgone(mp->mnt_syncer);
 #elif defined(__FreeBSD__)
-            vrele(mp->mnt_syncer);
+	    vrele(mp->mnt_syncer);
 #else
 #error what os do you use ?
 #endif
@@ -239,7 +259,7 @@ free_all_xfs_nodes(struct xfs *xfsp, int flags, int unmountp)
     error = xfs_vflush(mp, flags);
 #ifdef HAVE_STRUCT_MOUNT_MNT_SYNCER
     if (!unmountp) {
-	XFSDEB(XDEBNODE, ("free_all_xfs_nodes not flushing syncer vnode\n"));
+	NNPFSDEB(XDEBNODE, ("free_all_xfs_nodes not flushing syncer vnode\n"));
 	if (mp->mnt_syncer == NULL)
 	    if (vfs_allocate_syncvnode(mp))
 		panic("failed to allocate syncer node when xfs daemon died");
@@ -247,61 +267,21 @@ free_all_xfs_nodes(struct xfs *xfsp, int flags, int unmountp)
 #endif
 
     if (error) {
-	XFSDEB(XDEBNODE, ("xfree_all_xfs_nodes: vflush() error == %d\n",
+	NNPFSDEB(XDEBNODE, ("xfree_all_xfs_nodes: vflush() error == %d\n",
 			  error));
 	return error;
     }
 
-    XFSDEB(XDEBNODE, ("free_all_xfs_nodes done\n"));
+    NNPFSDEB(XDEBNODE, ("free_all_xfs_nodes done\n"));
     return error;
 }
 
-struct xfs_node *
-xfs_node_find(struct xfs *xfsp, xfs_handle *handlep)
-{
-    struct vnode *t;
-    struct xfs_node *xn = NULL;
-
-    XFSDEB(XDEBNODE, ("xfs_node_find: xfsp = %lx "
-		      " handlep = (%d,%d,%d,%d)\n", 
-		      (unsigned long)xfsp,
-		      handlep->a,
-		      handlep->b,
-		      handlep->c,
-		      handlep->d));
-
-    /*
-     * XXXSMP - the vnodes on mnt_vnodelist are invalid unless we hold
-     *          mntvnode_slock (same on Open,Free and Net - current).
-     * XXX - Another problem here is that the data in the vnode doesn't
-     *       have to be correct unless we do a vget first (if usecount on
-     *       vnode == 0). This should only be a problem when someone uses
-     *       revoke, when unmounting or when arlad dies or on systems
-     *       with a shortage of vnodes.
-     *       We might want to vget here, but that was a problem
-     *       on FreeBSD once.
-     */
-
-/* FreeBSD 4.5 and above did rename mnt_vnodelist to mnt_nvnodelist */
-#ifdef HAVE_STRUCT_MOUNT_MNT_NVNODELIST
-    TAILQ_FOREACH(t, &XFS_TO_VFS(xfsp)->mnt_nvnodelist, v_nmntvnodes) {
-	xn = VNODE_TO_XNODE(t);
-	if (xn && xfs_handle_eq(&xn->handle, handlep))
-	    break;
-    }
-#else
-    LIST_FOREACH(t, &XFS_TO_VFS(xfsp)->mnt_vnodelist, v_mntvnodes) {
-	xn = VNODE_TO_XNODE(t);
-	if (xn && xfs_handle_eq(&xn->handle, handlep))
-	    break;
-    }
+#ifndef LIST_FOREACH
+#define LIST_FOREACH(var, head, field)					\
+	for ((var) = ((head)->lh_first);				\
+		(var);							\
+		(var) = ((var)->field.le_next))
 #endif
-
-    if (t != NULL)
-	return xn;
-    else
-	return NULL;
-}
 
 void
 vattr2xfs_attr(const struct vattr *va, struct xfs_attr *xa)
@@ -327,31 +307,31 @@ vattr2xfs_attr(const struct vattr *va, struct xfs_attr *xa)
 	XA_SET_FILEID(xa, va->va_fileid);
     switch (va->va_type) {
     case VNON:
-	xa->xa_type = XFS_FILE_NON;
+	xa->xa_type = NNPFS_FILE_NON;
 	break;
     case VREG:
-	xa->xa_type = XFS_FILE_REG;
+	xa->xa_type = NNPFS_FILE_REG;
 	break;
     case VDIR:
-	xa->xa_type = XFS_FILE_DIR;
+	xa->xa_type = NNPFS_FILE_DIR;
 	break;
     case VBLK:
-	xa->xa_type = XFS_FILE_BLK;
+	xa->xa_type = NNPFS_FILE_BLK;
 	break;
     case VCHR:
-	xa->xa_type = XFS_FILE_CHR;
+	xa->xa_type = NNPFS_FILE_CHR;
 	break;
     case VLNK:
-	xa->xa_type = XFS_FILE_LNK;
+	xa->xa_type = NNPFS_FILE_LNK;
 	break;
     case VSOCK:
-	xa->xa_type = XFS_FILE_SOCK;
+	xa->xa_type = NNPFS_FILE_SOCK;
 	break;
     case VFIFO:
-	xa->xa_type = XFS_FILE_FIFO;
+	xa->xa_type = NNPFS_FILE_FIFO;
 	break;
     case VBAD:
-	xa->xa_type = XFS_FILE_BAD;
+	xa->xa_type = NNPFS_FILE_BAD;
 	break;
     default:
 	panic("xfs_attr2attr: bad value");
@@ -369,8 +349,10 @@ xfs_attr2vattr(const struct xfs_attr *xa, struct vattr *va, int clear_node)
 	va->va_mode = xa->xa_mode;
     if (XA_VALID_NLINK(xa))
 	va->va_nlink = xa->xa_nlink;
-    if (XA_VALID_SIZE(xa))
+    if (XA_VALID_SIZE(xa)) {
 	va->va_size = xa->xa_size;
+	va->va_bytes = va->va_size;
+    }
     if (XA_VALID_UID(xa))
 	va->va_uid = xa->xa_uid;
     if (XA_VALID_GID(xa))
@@ -389,31 +371,31 @@ xfs_attr2vattr(const struct xfs_attr *xa, struct vattr *va, int clear_node)
     }
     if (XA_VALID_TYPE(xa)) {
 	switch (xa->xa_type) {
-	case XFS_FILE_NON:
+	case NNPFS_FILE_NON:
 	    va->va_type = VNON;
 	    break;
-	case XFS_FILE_REG:
+	case NNPFS_FILE_REG:
 	    va->va_type = VREG;
 	    break;
-	case XFS_FILE_DIR:
+	case NNPFS_FILE_DIR:
 	    va->va_type = VDIR;
 	    break;
-	case XFS_FILE_BLK:
+	case NNPFS_FILE_BLK:
 	    va->va_type = VBLK;
 	    break;
-	case XFS_FILE_CHR:
+	case NNPFS_FILE_CHR:
 	    va->va_type = VCHR;
 	    break;
-	case XFS_FILE_LNK:
+	case NNPFS_FILE_LNK:
 	    va->va_type = VLNK;
 	    break;
-	case XFS_FILE_SOCK:
+	case NNPFS_FILE_SOCK:
 	    va->va_type = VSOCK;
 	    break;
-	case XFS_FILE_FIFO:
+	case NNPFS_FILE_FIFO:
 	    va->va_type = VFIFO;
 	    break;
-	case XFS_FILE_BAD:
+	case NNPFS_FILE_BAD:
 	    va->va_type = VBAD;
 	    break;
 	default:
@@ -422,7 +404,6 @@ xfs_attr2vattr(const struct xfs_attr *xa, struct vattr *va, int clear_node)
     }
     va->va_flags = 0;
     va->va_blocksize = 8192;
-    va->va_bytes = va->va_size;
 }
 
 /*
@@ -498,13 +479,13 @@ xfs_dnlc_enter(struct vnode *dvp,
 	       xfs_componentname *cnp,
 	       struct vnode *vp)
 {
-    XFSDEB(XDEBDNLC, ("xfs_dnlc_enter_cnp(%lx, %lx, %lx)\n",
+    NNPFSDEB(XDEBDNLC, ("xfs_dnlc_enter_cnp(%lx, %lx, %lx)\n",
 		      (unsigned long)dvp,
 		      (unsigned long)cnp,
 		      (unsigned long)vp));
-    XFSDEB(XDEBDNLC, ("xfs_dnlc_enter: v_id = %ld\n", dvp->v_id));
+    NNPFSDEB(XDEBDNLC, ("xfs_dnlc_enter: v_id = %lu\n", (u_long)dvp->v_id));
 
-    XFSDEB(XDEBDNLC, ("xfs_dnlc_enter: calling cache_enter:"
+    NNPFSDEB(XDEBDNLC, ("xfs_dnlc_enter: calling cache_enter:"
 		      "dvp = %lx, vp = %lx, cnp = (%s, %ld), "
 		      "nameiop = %lu, flags = %lx\n",
 		      (unsigned long)dvp,
@@ -533,15 +514,15 @@ xfs_dnlc_enter(struct vnode *dvp,
  * The real change is sys/kern/vfs_cache:1.20
  */
 
-#if __NetBSD_Version__ >= 104120000 || defined(__OpenBSD__)
+#if __NetBSD_Version__ >= 104120000 || OpenBSD > 200211
 	if (cache_lookup(dvp, &dummy, cnp) != -1) {
-	    VOP_UNLOCK(dummy, 0, cnp->cn_proc);
-	    printf ("XFS PANIC WARNING! xfs_dnlc_enter: %s already in cache\n",
+	    xfs_vfs_unlock(dummy, xfs_cnp_to_proc(cnp));
+	    printf ("NNPFS PANIC WARNING! xfs_dnlc_enter: %s already in cache\n",
 		    cnp->cn_nameptr);
 	}
 #else
 	if (cache_lookup(dvp, &dummy, cnp) != 0) {
-	    printf ("XFS PANIC WARNING! xfs_dnlc_enter: %s already in cache\n",
+	    printf ("NNPFS PANIC WARNING! xfs_dnlc_enter: %s already in cache\n",
 		    cnp->cn_nameptr);
 	}
 #endif
@@ -562,30 +543,42 @@ xfs_dnlc_enter(struct vnode *dvp,
 static void
 xfs_cnp_init (struct componentname *cn,
 	      const char *name,
-	      struct proc *proc, struct ucred *cred,
+	      d_thread_t *proc, struct ucred *cred,
 	      int nameiop)
 {
-    const unsigned char *p;
-
     bzero(cn, sizeof(*cn));
     cn->cn_nameptr = (char *)name;
     cn->cn_namelen = strlen(name);
     cn->cn_flags   = 0;
 #if __APPLE__
     {
+	const unsigned char *p;
 	int i;
 
 	cn->cn_hash = 0;
 	for (p = cn->cn_nameptr, i = 1; *p; ++p, ++i)
 	    cn->cn_hash += *p * i;
     }
+#elif defined(HAVE_KERNEL_NAMEI_HASH)
+    {
+	const char *cp = name + cn->cn_namelen;
+	cn->cn_hash = namei_hash(name, &cp);
+    }
 #elif defined(HAVE_STRUCT_COMPONENTNAME_CN_HASH)
-    cn->cn_hash = 0;
-    for (p = cn->cn_nameptr; *p; ++p)
-	cn->cn_hash += *p;
+    {
+	const unsigned char *p;
+
+	cn->cn_hash = 0;
+	for (p = cn->cn_nameptr; *p; ++p)
+	    cn->cn_hash += *p;
+    }
 #endif
     cn->cn_nameiop = nameiop;
+#ifdef HAVE_FREEBSD_THREAD
+    cn->cn_thread = proc;
+#else
     cn->cn_proc = proc;
+#endif
     cn->cn_cred = cred;
 }
 
@@ -601,7 +594,7 @@ xfs_dnlc_enter_name(struct vnode *dvp,
 {
     struct componentname cn;
 
-    XFSDEB(XDEBDNLC, ("xfs_dnlc_enter_name(%lx, \"%s\", %lx)\n",
+    NNPFSDEB(XDEBDNLC, ("xfs_dnlc_enter_name(%lx, \"%s\", %lx)\n",
 		      (unsigned long)dvp,
 		      name,
 		      (unsigned long)vp));
@@ -623,12 +616,12 @@ xfs_dnlc_lookup_int(struct vnode *dvp,
     int error;
     u_long saved_flags;
 
-    XFSDEB(XDEBDNLC, ("xfs_dnlc_lookup(%lx, \"%s\")\n",
+    NNPFSDEB(XDEBDNLC, ("xfs_dnlc_lookup(%lx, \"%s\")\n",
 		      (unsigned long)dvp, cnp->cn_nameptr));
     
-    XFSDEB(XDEBDNLC, ("xfs_dnlc_lookup: v_id = %ld\n", dvp->v_id));
+    NNPFSDEB(XDEBDNLC, ("xfs_dnlc_lookup: v_id = %lu\n", (u_long)dvp->v_id));
     
-    XFSDEB(XDEBDNLC, ("xfs_dnlc_lookup: calling cache_lookup:"
+    NNPFSDEB(XDEBDNLC, ("xfs_dnlc_lookup: calling cache_lookup:"
 		      "dvp = %lx, cnp = (%s, %ld), flags = %lx\n",
 		      (unsigned long)dvp,
 		      cnp->cn_nameptr, cnp->cn_namelen,
@@ -641,7 +634,7 @@ xfs_dnlc_lookup_int(struct vnode *dvp,
 
     cnp->cn_flags = saved_flags;
 
-    XFSDEB(XDEBDNLC, ("xfs_dnlc_lookup: cache_lookup returned. "
+    NNPFSDEB(XDEBDNLC, ("xfs_dnlc_lookup: cache_lookup returned. "
 		      "error = %d, *res = %lx\n", error,
 		      (unsigned long)*res));
     return error;
@@ -671,16 +664,26 @@ xfs_dnlc_lock(struct vnode *dvp,
     } else if (cnp->cn_flags & ISDOTDOT) { /* ".." */
 	u_long vpid = dvp->v_id;
 
+#ifdef HAVE_FREEBSD_THREAD
+	xfs_vfs_unlock(dvp, xfs_cnp_to_thread(cnp));
+	error = xfs_do_vget(*res, LK_EXCLUSIVE, xfs_cnp_to_thread(cnp));
+	xfs_vfs_writelock(dvp, xfs_cnp_to_thread(cnp));
+#else
 	xfs_vfs_unlock(dvp, xfs_cnp_to_proc(cnp));
 	error = xfs_do_vget(*res, LK_EXCLUSIVE, xfs_cnp_to_proc(cnp));
 	xfs_vfs_writelock(dvp, xfs_cnp_to_proc(cnp));
+#endif
 
 	if (error == 0 && dvp->v_id != vpid) {
 	    vput(*res);
 	    return 0;
 	}
     } else {
+#ifdef HAVE_FREEBSD_THREAD
+	error = xfs_do_vget(*res, LK_EXCLUSIVE, xfs_cnp_to_thread(cnp));
+#else
 	error = xfs_do_vget(*res, LK_EXCLUSIVE, xfs_cnp_to_proc(cnp));
+#endif
     }
 
     if (error == 0)
@@ -722,7 +725,7 @@ xfs_dnlc_lookup(struct vnode *dvp,
     return xfs_dnlc_lock (dvp, cnp, res);
 }
 
-#else /* !  __NetBSD_Version__ >= 104120000 */
+#else /* !  __NetBSD_Version__ >= 104120000 && ! OpenBSD > 200211 */
 
 int
 xfs_dnlc_lookup(struct vnode *dvp,
@@ -740,7 +743,7 @@ xfs_dnlc_lookup(struct vnode *dvp,
     return xfs_dnlc_lock (dvp, cnp, res);
 }
 
-#endif /*  __NetBSD_Version__ >= 104120000 */
+#endif /*  __NetBSD_Version__ >= 104120000 || OpenBSD > 200211 */
 
 /*
  * Remove one entry from the DNLC
@@ -749,7 +752,7 @@ xfs_dnlc_lookup(struct vnode *dvp,
 void
 xfs_dnlc_purge (struct vnode *vp)
 {
-    XFSDEB(XDEBDNLC, ("xfs_dnlc_purge\n"));
+    NNPFSDEB(XDEBDNLC, ("xfs_dnlc_purge\n"));
 
     if (tbl.dvp == vp || tbl.vp == vp)
 	tbl_clear ();
@@ -764,7 +767,7 @@ xfs_dnlc_purge (struct vnode *vp)
 void
 xfs_dnlc_purge_mp(struct mount *mp)
 {
-    XFSDEB(XDEBDNLC, ("xfs_dnlc_purge_mp()\n"));
+    NNPFSDEB(XDEBDNLC, ("xfs_dnlc_purge_mp()\n"));
 
     tbl_clear ();
     cache_purgevfs(mp);
@@ -784,4 +787,22 @@ xfs_has_pag(const struct xfs_node *xn, xfs_pag_t pag)
 	    return 1;
 
     return 0;
+}
+
+void
+xfs_update_write_cred(struct xfs_node *xn, struct ucred *cred)
+{
+    if (xn->wr_cred)
+	crfree (xn->wr_cred);
+    crhold (cred);
+    xn->wr_cred = cred;
+}
+
+void
+xfs_update_read_cred(struct xfs_node *xn, struct ucred *cred)
+{
+    if (xn->rd_cred)
+	crfree (xn->rd_cred);
+    crhold (cred);
+    xn->rd_cred = cred;
 }

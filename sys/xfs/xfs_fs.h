@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: xfs_fs.h,v 1.7 2003/07/24 22:00:24 mickey Exp $ */
+/* $arla: xfs_fs.h,v 1.22 2002/12/19 09:49:19 lha Exp $ */
 
 #ifndef _xfs_h
 #define _xfs_h
@@ -42,39 +42,42 @@
 #include <xfs/xfs_node.h>
 #include <xfs/xfs_attr.h>
 
-#include <xfs/nxfs.h>
+#define NNNPFS 2 /* maximal number of filesystems on a single device */
 
 /*
  * Filesystem struct.
  */
+
 struct xfs {
     u_int status;		       /* Inited, opened or mounted */
-#define XFS_MOUNTED	0x1
+#define NNPFS_MOUNTED	0x1
     struct mount *mp;
     struct xfs_node *root;
     u_int nnodes;
     int fd;
+    struct xfs_nodelist_head nodehead;
 };
 
 #ifdef __osf__
 #ifdef HAVE_STRUCT_MOUNT_M_INFO
-#define VFS_TO_XFS(v)      ((struct xfs *) ((v)->m_info))
+#define VFS_TO_NNPFS(v)      ((struct xfs *) ((v)->m_info))
 #else
-#define VFS_TO_XFS(v)      ((struct xfs *) ((v)->m_data))
+#define VFS_TO_NNPFS(v)      ((struct xfs *) ((v)->m_data))
 #endif
 #else
-#define VFS_TO_XFS(v)      ((struct xfs *) ((v)->mnt_data))
+#define VFS_TO_NNPFS(v)      ((struct xfs *) ((v)->mnt_data))
 #endif
-#define XFS_TO_VFS(x)      ((x)->mp)
+#define NNPFS_TO_VFS(x)      ((x)->mp)
 
-#define XFS_FROM_VNODE(vp) VFS_TO_XFS((vp)->v_mount)
-#define XFS_FROM_XNODE(xp) XFS_FROM_VNODE(XNODE_TO_VNODE(xp))
+#define NNPFS_FROM_VNODE(vp) VFS_TO_NNPFS((vp)->v_mount)
+#define NNPFS_FROM_XNODE(xp) NNPFS_FROM_VNODE(XNODE_TO_VNODE(xp))
 
 extern struct xfs xfs[];
 
-struct xfs_node *xfs_node_find(struct xfs *, struct xfs_handle *);
+extern struct vnodeops xfs_vnodeops;
+
 int new_xfs_node(struct xfs *, struct xfs_msg_node *, struct xfs_node **,
-		 struct proc *);
+		 d_thread_t *);
 void free_xfs_node(struct xfs_node *);
 int free_all_xfs_nodes(struct xfs *, int, int);
 

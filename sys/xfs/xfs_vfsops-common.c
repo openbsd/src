@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
@@ -33,10 +33,10 @@
 
 #include <xfs/xfs_locl.h>
 
-RCSID("$Id: xfs_vfsops-common.c,v 1.4 2002/06/07 04:10:32 hin Exp $");
+RCSID("$arla: xfs_vfsops-common.c,v 1.40 2003/06/02 18:26:40 lha Exp $");
 
 /*
- * XFS vfs operations.
+ * NNPFS vfs operations.
  */
 
 #include <xfs/xfs_common.h>
@@ -54,37 +54,30 @@ RCSID("$Id: xfs_vfsops-common.c,v 1.4 2002/06/07 04:10:32 hin Exp $");
 #endif
 
 
-struct xfs xfs[NXFS];
+struct xfs xfs[NNNPFS];
+
+/*
+ * path and data is in system memory
+ */
 
 int
-xfs_mount_common(struct mount *mp,
-		 const char *user_path,
-		 caddr_t user_data,
-		 struct nameidata *ndp,
-		 struct proc *p)
+xfs_mount_common_sys(struct mount *mp,
+		     const char *path,
+		     void *data,
+		     struct nameidata *ndp,
+		     d_thread_t *p)
 {
     struct vnode *devvp;
     dev_t dev;
     int error;
     struct vattr vat;
-    char path[MAXPATHLEN];
-    char data[MAXPATHLEN];
-    size_t count;
 
-    error = copyinstr(user_path, path, MAXPATHLEN, &count);
-    if (error)
-	return error;
-
-    error = copyinstr(user_data, data, MAXPATHLEN, &count);
-    if (error)
-	return error;
-
-    XFSDEB(XDEBVFOPS, ("xfs_mount: "
+    NNPFSDEB(XDEBVFOPS, ("xfs_mount: "
 		       "struct mount mp = %lx path = '%s' data = '%s'\n",
-		       (unsigned long)mp, path, data));
+		       (unsigned long)mp, path, (char *)data));
 
 #ifdef ARLA_KNFS
-    XFSDEB(XDEBVFOPS, ("xfs_mount: mount flags = %x\n", mp->mnt_flag));
+    NNPFSDEB(XDEBVFOPS, ("xfs_mount: mount flags = %x\n", mp->mnt_flag));
 
     /*
      * mountd(8) flushes all export entries when it starts
@@ -94,7 +87,7 @@ xfs_mount_common(struct mount *mp,
     if (mp->mnt_flag & MNT_UPDATE ||
 	mp->mnt_flag & MNT_DELEXPORT) {
 
-	XFSDEB(XDEBVFOPS, 
+	NNPFSDEB(XDEBVFOPS, 
 	       ("xfs_mount: ignoreing MNT_UPDATE or MNT_DELEXPORT\n"));
 	return 0;
     }
@@ -103,7 +96,7 @@ xfs_mount_common(struct mount *mp,
     NDINIT(ndp, LOOKUP, FOLLOW | LOCKLEAF, UIO_SYSSPACE, data, p);
     error = namei(ndp);
     if (error) {
-	XFSDEB(XDEBVFOPS, ("namei failed, errno = %d\n", error));
+	NNPFSDEB(XDEBVFOPS, ("namei failed, errno = %d\n", error));
 	return error;
     }
 
@@ -111,47 +104,50 @@ xfs_mount_common(struct mount *mp,
 
     if (devvp->v_type != VCHR) {
 	vput(devvp);
-	XFSDEB(XDEBVFOPS, ("not VCHR (%d)\n", devvp->v_type));
+	NNPFSDEB(XDEBVFOPS, ("not VCHR (%d)\n", devvp->v_type));
 	return ENXIO;
     }
-#ifdef __osf__
+#if defined(__osf__)
     VOP_GETATTR(devvp, &vat, ndp->ni_cred, error);
+#elif defined(HAVE_FREEBSD_THREAD)
+    error = VOP_GETATTR(devvp, &vat, p->td_proc->p_ucred, p);
 #else
     error = VOP_GETATTR(devvp, &vat, p->p_ucred, p);
 #endif
     vput(devvp);
     if (error) {
-	XFSDEB(XDEBVFOPS, ("VOP_GETATTR failed, error = %d\n", error));
+	NNPFSDEB(XDEBVFOPS, ("VOP_GETATTR failed, error = %d\n", error));
 	return error;
     }
 
     dev = VA_RDEV_TO_DEV(vat.va_rdev);
 
-    XFSDEB(XDEBVFOPS, ("dev = %d.%d\n", major(dev), minor(dev)));
+    NNPFSDEB(XDEBVFOPS, ("dev = %d.%d\n", major(dev), minor(dev)));
 
     if (!xfs_is_xfs_dev (dev)) {
-	XFSDEB(XDEBVFOPS, ("%s is not a xfs device\n",
-			   data));
+	NNPFSDEB(XDEBVFOPS, ("%s is not a xfs device\n", (char *)data));
 	return ENXIO;
     }
 
-    if (xfs[minor(dev)].status & XFS_MOUNTED)
+    if (xfs[minor(dev)].status & NNPFS_MOUNTED)
 	return EBUSY;
 
-    xfs[minor(dev)].status = XFS_MOUNTED;
+    xfs[minor(dev)].status = NNPFS_MOUNTED;
     xfs[minor(dev)].mp = mp;
     xfs[minor(dev)].root = 0;
     xfs[minor(dev)].nnodes = 0;
     xfs[minor(dev)].fd = minor(dev);
 
-    VFS_TO_XFS(mp) = &xfs[minor(dev)];
+    nnfs_init_head(&xfs[minor(dev)].nodehead);
+
+    VFS_TO_NNPFS(mp) = &xfs[minor(dev)];
 #if defined(HAVE_KERNEL_VFS_GETNEWFSID)
 #if defined(HAVE_TWO_ARGUMENT_VFS_GETNEWFSID)
     vfs_getnewfsid(mp, MOUNT_AFS);
 #else
     vfs_getnewfsid(mp);
-#endif HAVE_TWO_ARGUMENT_VFS_GETNEWFSID
-#endif HAVE_KERNEL_VFS_GETNEWFSID
+#endif /* HAVE_TWO_ARGUMENT_VFS_GETNEWFSID */
+#endif /* HAVE_KERNEL_VFS_GETNEWFSID */
 
     mp->mnt_stat.f_bsize = DEV_BSIZE;
 #ifndef __osf__
@@ -167,7 +163,7 @@ xfs_mount_common(struct mount *mp,
 
 #ifdef __osf__
     mp->mnt_stat.f_fsid.val[0] = dev;
-    mp->mnt_stat.f_fsid.val[1] = MOUNT_XFS;
+    mp->mnt_stat.f_fsid.val[1] = MOUNT_NNPFS;
 	
     MALLOC(mp->m_stat.f_mntonname, char *, strlen(path) + 1, 
 	   M_PATHNAME, M_WAITOK);
@@ -193,6 +189,28 @@ xfs_mount_common(struct mount *mp,
     return 0;
 }
 
+int
+xfs_mount_common(struct mount *mp,
+		 const char *user_path,
+		 void *user_data,
+		 struct nameidata *ndp,
+		 d_thread_t *p)
+{
+    char path[MAXPATHLEN];
+    char data[MAXPATHLEN];
+    size_t count;
+    int error;
+
+    error = copyinstr(user_path, path, MAXPATHLEN, &count);
+    if (error)
+	return error;
+
+    error = copyinstr(user_data, data, MAXPATHLEN, &count);
+    if (error)
+	return error;
+    return xfs_mount_common_sys (mp, path, data, ndp, p);
+}
+
 #ifdef HAVE_KERNEL_DOFORCE
 extern int doforce;
 #endif
@@ -200,7 +218,7 @@ extern int doforce;
 int
 xfs_unmount_common(struct mount *mp, int mntflags)
 {
-    struct xfs *xfsp = VFS_TO_XFS(mp);
+    struct xfs *xfsp = VFS_TO_NNPFS(mp);
     int flags = 0;
     int error;
 
@@ -217,15 +235,15 @@ xfs_unmount_common(struct mount *mp, int mntflags)
 	return error;
 
     xfsp->status = 0;
-    XFS_TO_VFS(xfsp) = NULL;
+    NNPFS_TO_VFS(xfsp) = NULL;
     return 0;
 }
 
 int
 xfs_root_common(struct mount *mp, struct vnode **vpp,
-		struct proc *proc, struct ucred *cred)
+		d_thread_t *proc, struct ucred *cred)
 {
-    struct xfs *xfsp = VFS_TO_XFS(mp);
+    struct xfs *xfsp = VFS_TO_NNPFS(mp);
     struct xfs_message_getroot msg;
     int error;
 
@@ -235,7 +253,7 @@ xfs_root_common(struct mount *mp, struct vnode **vpp,
 	    xfs_do_vget(*vpp, LK_EXCLUSIVE, proc);
 	    return 0;
 	}
-	msg.header.opcode = XFS_MSG_GETROOT;
+	msg.header.opcode = NNPFS_MSG_GETROOT;
 	msg.cred.uid = cred->cr_uid;
 	msg.cred.pag = xfs_get_pag(cred);
 	error = xfs_message_rpc(xfsp->fd, &msg.header, sizeof(msg), proc);
@@ -247,9 +265,9 @@ xfs_root_common(struct mount *mp, struct vnode **vpp,
      * and return a fake dead vnode to be able to unmount.
      */
 
-    if ((error = make_dead_vnode(mp, vpp)))
+    if ((error = xfs_make_dead_vnode(mp, vpp)))
 	return error;
 
-    (*vpp)->v_flag |= VROOT;
+    NNPFS_MAKE_VROOT(*vpp);
     return 0;
 }

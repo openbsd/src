@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995 - 2001 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
@@ -32,7 +32,7 @@
  */
 
 /*
- * XFS operations.
+ * NNPFS operations.
  */
 
 #ifdef __APPLE__
@@ -51,14 +51,14 @@
 #include <vm/vnode_pager.h>
 #endif
 
-RCSID("$Id: xfs_vnodeops-bsd.c,v 1.4 2002/06/07 04:10:32 hin Exp $");
+RCSID("$arla: xfs_vnodeops-bsd.c,v 1.123 2003/02/15 16:40:36 lha Exp $");
 
 /*
  * vnode functions
  */
 
 #ifdef HAVE_VOP_OPEN
-static int
+int
 xfs_open(struct vop_open_args * ap)
      /*
   struct vop_open {
@@ -68,12 +68,16 @@ xfs_open(struct vop_open_args * ap)
           struct proc *p;
   }; */
 {
+#ifdef HAVE_FREEBSD_THREAD
+    return xfs_open_common (ap->a_vp, ap->a_mode, ap->a_cred, ap->a_td);
+#else
     return xfs_open_common (ap->a_vp, ap->a_mode, ap->a_cred, ap->a_p);
+#endif
 }
 #endif /* HAVE_VOP_OPEN */
 
 #ifdef HAVE_VOP_FSYNC
-static int
+int
 xfs_fsync(struct vop_fsync_args * ap)
      /*
   vop_fsync {
@@ -86,13 +90,17 @@ xfs_fsync(struct vop_fsync_args * ap)
 #ifdef HAVE_STRUCT_VOP_FSYNC_ARGS_A_FLAGS
     return xfs_fsync_common(ap->a_vp, ap->a_cred, ap->a_flags, ap->a_p);
 #else
+#ifdef HAVE_FREEBSD_THREAD
+    return xfs_fsync_common(ap->a_vp, ap->a_cred, ap->a_waitfor, ap->a_td);
+#else
     return xfs_fsync_common(ap->a_vp, ap->a_cred, ap->a_waitfor, ap->a_p);
+#endif
 #endif
 }
 #endif /* HAVE_VOP_FSYNC */
 
 #ifdef HAVE_VOP_CLOSE 
-static int
+int
 xfs_close(struct vop_close_args * ap)
      /* vop_close {
 	IN struct vnode *vp;
@@ -101,12 +109,16 @@ xfs_close(struct vop_close_args * ap)
 	IN struct proc *p;
   }; */
 {
+#ifdef HAVE_FREEBSD_THREAD
+    return xfs_close_common(ap->a_vp, ap->a_fflag, ap->a_td, ap->a_cred);
+#else
     return xfs_close_common(ap->a_vp, ap->a_fflag, ap->a_p, ap->a_cred);
+#endif
 }
 #endif /* HAVE_VOP_CLOSE */
 
 #ifdef HAVE_VOP_READ
-static int
+int
 xfs_read(struct vop_read_args * ap)
      /* vop_read {
 	IN struct vnode *vp;
@@ -120,7 +132,7 @@ xfs_read(struct vop_read_args * ap)
 #endif /* HAVE_VOP_READ */
 
 #ifdef HAVE_VOP_WRITE
-static int
+int
 xfs_write(struct vop_write_args * ap)
      /* vop_write {
 	IN struct vnode *vp;
@@ -134,7 +146,7 @@ xfs_write(struct vop_write_args * ap)
 #endif /* HAVE_VOP_WRITE */
 
 #ifdef HAVE_VOP_IOCTL
-static int
+int
 xfs_ioctl(struct vop_ioctl_args * ap)
      /* struct vnode *vp,
 	  int com,
@@ -142,27 +154,27 @@ xfs_ioctl(struct vop_ioctl_args * ap)
 	  int flag,
 	  struct ucred *cred) */
 {
-    XFSDEB(XDEBVNOPS, ("xfs_ioctl\n"));
+    NNPFSDEB(XDEBVNOPS, ("xfs_ioctl\n"));
 
     return EOPNOTSUPP;
 }
 #endif /* HAVE_VOP_IOCTL */
 
 #ifdef HAVE_VOP_SELECT
-static int
+int
 xfs_select(struct vop_select_args * ap)
      /* struct vnode *vp,
 	   int which,
 	   struct ucred *cred ) */
 {
-    XFSDEB(XDEBVNOPS, ("xfs_select\n"));
+    NNPFSDEB(XDEBVNOPS, ("xfs_select\n"));
 
     return EOPNOTSUPP;
 }
 #endif /* HAVE_VOP_SELECT */
 
 #ifdef HAVE_VOP_SEEK
-static int
+int
 xfs_seek(struct vop_seek_args * ap)
      /*
 struct vop_seek_args {
@@ -174,13 +186,13 @@ struct vop_seek_args {
 };
 */
 {
-    XFSDEB(XDEBVNOPS, ("xfs_seek\n"));
+    NNPFSDEB(XDEBVNOPS, ("xfs_seek\n"));
     return 0;
 }
 #endif /* HAVE_VOP_SEEK */
 
 #ifdef HAVE_VOP_POLL
-static int
+int
 xfs_poll(struct vop_poll_args * ap)
      /* vop_poll {
 	IN struct vnode *vp;
@@ -188,25 +200,29 @@ xfs_poll(struct vop_poll_args * ap)
 	IN struct proc *p;
    }; */
 {
-    XFSDEB(XDEBVNOPS, ("xfs_poll\n"));
+    NNPFSDEB(XDEBVNOPS, ("xfs_poll\n"));
     return EOPNOTSUPP;
 }
 #endif /* HAVE_VOP_POLL */
 
 #ifdef HAVE_VOP_GETATTR
-static int
+int
 xfs_getattr(struct vop_getattr_args * ap)
      /* struct vnode *vp,
 	    struct vattr *vap,
 	    struct ucred *cred,
 	    struct proc *p) */
 {
+#ifdef HAVE_FREEBSD_THREAD
+    return xfs_getattr_common(ap->a_vp, ap->a_vap, ap->a_cred, ap->a_td);
+#else
     return xfs_getattr_common(ap->a_vp, ap->a_vap, ap->a_cred, ap->a_p);
+#endif
 }
 #endif /* HAVE_VOP_GETATTR */
 
 #ifdef HAVE_VOP_SETATTR
-static int
+int
 xfs_setattr(struct vop_setattr_args * ap)
      /* struct vnode *vp,
 	    struct vattr *vap,
@@ -214,12 +230,16 @@ xfs_setattr(struct vop_setattr_args * ap)
 	    struct proc *p)
 	    */
 {
+#ifdef HAVE_FREEBSD_THREAD
+    return xfs_setattr_common(ap->a_vp, ap->a_vap, ap->a_cred, ap->a_td);
+#else
     return xfs_setattr_common(ap->a_vp, ap->a_vap, ap->a_cred, ap->a_p);
+#endif
 }
 #endif /* HAVE_VOP_SETATTR */
 
 #ifdef HAVE_VOP_ACCESS
-static int
+int
 xfs_access(struct vop_access_args * ap)
      /*
 struct vnode *vp,
@@ -228,12 +248,16 @@ struct vnode *vp,
 	   struct proc *p)
 	   */
 {
+#ifdef HAVE_FREEBSD_THREAD
+    return xfs_access_common(ap->a_vp, ap->a_mode, ap->a_cred, ap->a_td);
+#else
     return xfs_access_common(ap->a_vp, ap->a_mode, ap->a_cred, ap->a_p);
+#endif
 }
 #endif /* HAVE_VOP_ACCESS */
 
 #ifdef HAVE_VOP_LOOKUP
-static int
+int
 xfs_lookup(struct vop_lookup_args * ap)
      /* struct vop_lookup_args {
 	struct vnodeop_desc *a_desc;
@@ -247,7 +271,7 @@ xfs_lookup(struct vop_lookup_args * ap)
     int lockparent = (cnp->cn_flags & (LOCKPARENT | ISLASTCN))
 	== (LOCKPARENT | ISLASTCN);
 
-    XFSDEB(XDEBVNOPS, ("xfs_lookup: (%s, %ld), nameiop = %lu, flags = %lu\n",
+    NNPFSDEB(XDEBVNOPS, ("xfs_lookup: (%s, %ld), nameiop = %lu, flags = %lu\n",
 		       cnp->cn_nameptr,
 		       cnp->cn_namelen,
 		       cnp->cn_nameiop,
@@ -274,7 +298,11 @@ xfs_lookup(struct vop_lookup_args * ap)
 	} else if (!(cnp->cn_flags & ISLASTCN) || !lockparent) {
 	    /* if we isn't last component and is isn't requested,
 	     * return parent unlocked */
+#ifdef HAVE_FREEBSD_THREAD
+	    xfs_vfs_unlock (ap->a_dvp, xfs_cnp_to_thread(cnp));
+#else
 	    xfs_vfs_unlock (ap->a_dvp, xfs_cnp_to_proc(cnp));
+#endif
 #ifdef PDIRUNLOCK
 	    cnp->cn_flags |= PDIRUNLOCK;
 #endif
@@ -283,14 +311,14 @@ xfs_lookup(struct vop_lookup_args * ap)
 	/* in case of a error do nothing  */
     } 
     
-    XFSDEB(XDEBVNOPS, ("xfs_lookup: error = %d\n", error));
+    NNPFSDEB(XDEBVNOPS, ("xfs_lookup: error = %d\n", error));
 
     return error;
 }
 #endif /* HAVE_VOP_LOOKUP */
 
 #ifdef HAVE_VOP_CACHEDLOOKUP
-static int
+int
 xfs_cachedlookup(struct vop_cachedlookup_args * ap)
      /* struct vop_cachedlookup_args {
 	struct vnodeop_desc *a_desc;
@@ -311,11 +339,17 @@ static void
 cleanup_cnp (struct componentname *cnp, int error)
 {
     if (error != 0 || (cnp->cn_flags & SAVESTART) == 0) {
-#ifdef HAVE_KERNEL_ZFREEI
+#if defined(HAVE_KERNEL_ZFREEI)
 	zfreei(namei_zone, cnp->cn_pnbuf);
+	cnp->cn_flags &= ~HASBUF;
+#elif defined(HAVE_KERNEL_UMA_ZFREE_ARG)
+	uma_zfree_arg(namei_zone, cnp->cn_pnbuf, NULL);
 	cnp->cn_flags &= ~HASBUF;
 #elif defined(FREE_ZONE)
 	FREE_ZONE(cnp->cn_pnbuf, cnp->cn_pnlen, M_NAMEI);
+#elif defined(HAVE_KERNEL_ZFREE)
+	zfree(namei_zone, cnp->cn_pnbuf);
+	cnp->cn_flags &= ~HASBUF;
 #elif defined(PNBUF_PUT)
 	PNBUF_PUT(cnp->cn_pnbuf);
 #else
@@ -325,14 +359,18 @@ cleanup_cnp (struct componentname *cnp, int error)
 }
 
 #ifdef HAVE_VOP_CREATE
-static int
+int
 xfs_create(struct vop_create_args *ap)
 {
     struct vnode *dvp  = ap->a_dvp;
     struct componentname *cnp = ap->a_cnp;
     const char *name   = cnp->cn_nameptr;
     struct ucred *cred = cnp->cn_cred;
-    struct proc *p     = xfs_cnp_to_proc(cnp);
+#ifdef HAVE_FREEBSD_THREAD
+    d_thread_t *p     = xfs_cnp_to_thread(cnp);
+#else
+    d_thread_t *p     = xfs_cnp_to_proc(cnp);
+#endif
     int error;
 
     error = xfs_create_common(dvp, name, ap->a_vap, cred, p);
@@ -347,14 +385,14 @@ xfs_create(struct vop_create_args *ap)
     vput (dvp);
 #endif
 
-    XFSDEB(XDEBVNOPS, ("xfs_create: error = %d\n", error));
+    NNPFSDEB(XDEBVNOPS, ("xfs_create: error = %d\n", error));
     
     return error;
 }
 #endif /* HAVE_VOP_CREATE */
 
 #ifdef HAVE_VOP_REMOVE
-static int
+int
 xfs_remove(struct vop_remove_args * ap)
      /* struct vnode *dvp,
    struct vnode *vp,
@@ -364,8 +402,13 @@ xfs_remove(struct vop_remove_args * ap)
     struct vnode *dvp = ap->a_dvp;
     struct vnode *vp  = ap->a_vp;
 
+#ifdef HAVE_FREEBSD_THREAD
+    int error = xfs_remove_common(dvp, vp, cnp->cn_nameptr, 
+				  cnp->cn_cred, xfs_cnp_to_thread(cnp));
+#else
     int error = xfs_remove_common(dvp, vp, cnp->cn_nameptr, 
 				  cnp->cn_cred, xfs_cnp_to_proc(cnp));
+#endif
 
     cleanup_cnp (cnp, error);
 
@@ -392,7 +435,7 @@ xfs_remove(struct vop_remove_args * ap)
 #endif /* HAVE_VOP_REMOVE */
 
 #ifdef HAVE_VOP_RENAME
-static int
+int
 xfs_rename(struct vop_rename_args * ap)
      /* vop_rename {
 	IN WILLRELE struct vnode *fdvp;
@@ -415,7 +458,11 @@ xfs_rename(struct vop_rename_args * ap)
 				  tvp,
 				  ap->a_tcnp->cn_nameptr,
 				  ap->a_tcnp->cn_cred,
+#ifdef HAVE_FREEBSD_THREAD
+				  xfs_cnp_to_thread (ap->a_fcnp));
+#else
 				  xfs_cnp_to_proc (ap->a_fcnp));
+#endif
     if(tdvp == tvp)
 	vrele(tdvp);
     else
@@ -429,7 +476,7 @@ xfs_rename(struct vop_rename_args * ap)
 #endif /* HAVE_VOP_RENAME */
 
 #ifdef HAVE_VOP_MKDIR
-static int
+int
 xfs_mkdir(struct vop_mkdir_args * ap)
      /* struct vnode *dvp,
 	  char *nm,
@@ -441,7 +488,11 @@ xfs_mkdir(struct vop_mkdir_args * ap)
     struct componentname *cnp = ap->a_cnp;
     const char *name   = cnp->cn_nameptr;
     struct ucred *cred = cnp->cn_cred;
-    struct proc *p     = xfs_cnp_to_proc(cnp);
+#ifdef HAVE_FREEBSD_THREAD
+    d_thread_t *p     = xfs_cnp_to_thread(cnp);
+#else
+    d_thread_t *p     = xfs_cnp_to_proc(cnp);
+#endif
     int error;
 
     error = xfs_mkdir_common(dvp, name, ap->a_vap, cred, p);
@@ -455,14 +506,14 @@ xfs_mkdir(struct vop_mkdir_args * ap)
     vput(dvp);
 #endif
 
-    XFSDEB(XDEBVNOPS, ("xfs_mkdir: error = %d\n", error));
+    NNPFSDEB(XDEBVNOPS, ("xfs_mkdir: error = %d\n", error));
 
     return error;
 }
 #endif /* HAVE_VOP_MKDIR */
 
 #ifdef HAVE_VOP_RMDIR
-static int
+int
 xfs_rmdir(struct vop_rmdir_args * ap)
      /* struct vnode *dvp,
    struct vnode *vp,
@@ -474,7 +525,11 @@ xfs_rmdir(struct vop_rmdir_args * ap)
     int error = xfs_rmdir_common(ap->a_dvp, ap->a_vp, 
 				 cnp->cn_nameptr,
 				 cnp->cn_cred,
+#ifdef HAVE_FREEBSD_THREAD
+				 xfs_cnp_to_thread(cnp));
+#else
 				 xfs_cnp_to_proc(cnp));
+#endif
 
     cleanup_cnp (cnp, error);
 #if !defined(__FreeBSD__) || __FreeBSD_version < 300000
@@ -499,7 +554,7 @@ typedef off_t xfs_cookie_t;
 #error dunno want kind of cookies you have
 #endif
 
-static int
+int
 xfs_readdir(struct vop_readdir_args * ap)
      /* struct vnode *vp,
 	    struct uio *uiop,
@@ -511,7 +566,11 @@ xfs_readdir(struct vop_readdir_args * ap)
     off = ap->a_uio->uio_offset;
 
     error = xfs_readdir_common(ap->a_vp, ap->a_uio, ap->a_cred,
+#ifdef HAVE_FREEBSD_THREAD
+			       xfs_uio_to_thread (ap->a_uio),
+#else
 			       xfs_uio_to_proc (ap->a_uio),
+#endif
 			       ap->a_eofflag);
 
     if (!error && ap->a_ncookies != NULL) {
@@ -552,7 +611,7 @@ xfs_readdir(struct vop_readdir_args * ap)
 #endif /* HAVE_VOP_READDIR */
 
 #ifdef HAVE_VOP_LINK
-static int
+int
 xfs_link(struct vop_link_args * ap)
      /*
 	WILLRELE struct vnode *tdvp;
@@ -563,7 +622,11 @@ xfs_link(struct vop_link_args * ap)
     struct componentname *cnp = ap->a_cnp;
     struct vnode *vp = ap->a_vp;
     struct vnode *dvp;
-    struct proc *p = cnp->cn_proc;
+#ifdef HAVE_FREEBSD_THREAD
+    d_thread_t *p = cnp->cn_thread;
+#else
+    d_thread_t *p = cnp->cn_proc;
+#endif
     int error;
 
 #if defined (__OpenBSD__) || defined(__NetBSD__)
@@ -588,19 +651,27 @@ xfs_link(struct vop_link_args * ap)
 	    error = EXDEV;
 	    goto out;
     }
+    /* FreeBSD 5.0 doesn't need to lock the vnode in VOP_LINK */
+#if !defined(__FreeBSD_version) || __FreeBSD_version < 500043
+
     if (dvp != vp && (error = xfs_vfs_writelock(vp, p))) {
 #ifdef HAVE_VOP_ABORTOP
 	    VOP_ABORTOP(dvp, cnp);
 #endif
 	    goto out;
     }
+#endif /* defined(__FreeBSD_version) || __FreeBSD_version < 500043 */
 
     error = xfs_link_common(
 			   dvp,
 			   vp,
 			   cnp->cn_nameptr,
 			   cnp->cn_cred,
+#ifdef HAVE_FREEBSD_THREAD
+			   xfs_cnp_to_thread (cnp));
+#else
 			   xfs_cnp_to_proc (cnp));
+#endif
 
     cleanup_cnp (cnp, error);
 
@@ -617,7 +688,7 @@ out:
 #endif /* HAVE_VOP_LINK */
 
 #ifdef HAVE_VOP_SYMLINK
-static int
+int
 xfs_symlink(struct vop_symlink_args * ap)
      /*
   IN WILLRELE struct vnode *dvp;
@@ -639,7 +710,7 @@ xfs_symlink(struct vop_symlink_args * ap)
 
     if (error == 0) {
 	error = xfs_lookup_common(dvp, cnp, vpp);
-#if (!defined(__FreeBSD__) || __FreeBSD_version < 400012) && (!defined(__NetBSD__) || __NetBSD_Version__ < 105240000) && (!defined(__OpenBSD__) || OpenBSD < 200107)
+#if (!defined(__FreeBSD__) || __FreeBSD_version < 400012) && (!defined(__NetBSD__) || __NetBSD_Version__ < 105240000) && (!defined(__OpenBSD__) || OpenBSD <= 200211)
 	if (error == 0)
 	    vput (*vpp);
 #endif
@@ -654,7 +725,7 @@ xfs_symlink(struct vop_symlink_args * ap)
 
 
 #ifdef HAVE_VOP_READLINK
-static int
+int
 xfs_readlink(struct vop_readlink_args * ap)
      /* struct vnode *vp,
 	     struct uio *uiop,
@@ -665,17 +736,21 @@ xfs_readlink(struct vop_readlink_args * ap)
 #endif /* HAVE_VOP_READLINK */
 
 #ifdef HAVE_VOP_INACTIVE
-static int
+int
 xfs_inactive(struct vop_inactive_args * ap)
      /*struct vnode *vp,
 	     struct ucred *cred)*/
 {
+#ifdef HAVE_FREEBSD_THREAD
+    return xfs_inactive_common(ap->a_vp, xfs_curthread());
+#else
     return xfs_inactive_common(ap->a_vp, xfs_curproc());
+#endif
 }
 #endif /* HAVE_VOP_INACTICE */
 
 #ifdef HAVE_VOP_RECLAIM
-static int
+int
 xfs_reclaim(struct vop_reclaim_args * ap)
      /*struct vop_reclaim_args {
 	struct vnodeop_desc *a_desc;
@@ -698,7 +773,7 @@ xfs_reclaim(struct vop_reclaim_args * ap)
 #if defined(HAVE_KERNEL_LOCKMGR) || defined(HAVE_KERNEL_DEBUGLOCKMGR)
 
 #ifdef HAVE_VOP_LOCK
-static int
+int
 xfs_lock(struct vop_lock_args * ap)
 {               
     struct vnode *vp    = ap->a_vp;
@@ -707,37 +782,50 @@ xfs_lock(struct vop_lock_args * ap)
     int flags           = ap->a_flags;
     int ret;
 
-    XFSDEB(XDEBVNOPS, ("xfs_lock: %lx, flags 0x%x\n",
+    NNPFSDEB(XDEBVNOPS, ("xfs_lock: %lx, flags 0x%x\n",
 		       (unsigned long)vp, flags));
 
     if (l == NULL)
       panic("xfs_lock: lock NULL");
 
-    XFSDEB(XDEBVNOPS, ("xfs_lock before: lk flags: %d share: %d "
-		       "wait: %d excl: %d holder: %d\n",
-		       l->lk_flags, l->lk_sharecount, l->lk_waitcount,
-		       l->lk_exclusivecount, l->lk_lockholder));
+    NNPFSDEB(XDEBVNOPS, ("xfs_lock before: lk flags: %d share: %d "
+			 "wait: %d excl: %d holder: 0x%llx\n",
+			 l->lk_flags, l->lk_sharecount, l->lk_waitcount,
+			 l->lk_exclusivecount,
+			 (unsigned long long)
+			 (xfs_uintptr_t)l->lk_lockholder));
 
 #ifndef	DEBUG_LOCKS
 #ifdef HAVE_FOUR_ARGUMENT_LOCKMGR
+#ifdef HAVE_FREEBSD_THREAD
+    ret = lockmgr(l, flags, &vp->v_interlock, ap->a_td);
+#else
     ret = lockmgr(l, flags, &vp->v_interlock, ap->a_p);
+#endif
 #else
     ret = lockmgr(l, flags, &vp->v_interlock);
 #endif
 #else
+#ifdef HAVE_FREEBSD_THREAD
+    ret = debuglockmgr(l, flags, &vp->v_interlock, ap->a_td,
+			"xfs_lock", ap->a_vp->filename, ap->a_vp->line);
+#else
     ret = debuglockmgr(l, flags, &vp->v_interlock, ap->a_p,
 			"xfs_lock", ap->a_vp->filename, ap->a_vp->line);
 #endif
-    XFSDEB(XDEBVNOPS, ("xfs_lock: lk flags: %d share: %d "
-		       "wait: %d excl: %d holder: %d\n",
-		       l->lk_flags, l->lk_sharecount, l->lk_waitcount,
-		       l->lk_exclusivecount, l->lk_lockholder));
+#endif
+    NNPFSDEB(XDEBVNOPS, ("xfs_lock: lk flags: %d share: %d "
+			 "wait: %d excl: %d holder: 0x%llx\n",
+			 l->lk_flags, l->lk_sharecount, l->lk_waitcount,
+			 l->lk_exclusivecount, 
+			 (unsigned long long)
+			 (xfs_uintptr_t)l->lk_lockholder));
     return ret;
 }
 #endif /* HAVE_VOP_LOCK */
 
 #ifdef HAVE_VOP_UNLOCK
-static int
+int
 xfs_unlock(struct vop_unlock_args * ap)
 {
     struct vnode *vp    = ap->a_vp;
@@ -749,44 +837,59 @@ xfs_unlock(struct vop_unlock_args * ap)
     if (l == NULL)
       panic("xfs_unlock: lock NULL");
 
-    XFSDEB(XDEBVNOPS,
+    NNPFSDEB(XDEBVNOPS,
 	   ("xfs_unlock: %lx, flags 0x%x, l %lx, ap %lx\n",
 	    (unsigned long)vp, flags,
 	    (unsigned long)l,
 	    (unsigned long)ap));
 
-    XFSDEB(XDEBVNOPS, ("xfs_unlock: lk flags: %d share: %d "
-		       "wait: %d excl: %d holder: %d\n",
-		       l->lk_flags, l->lk_sharecount, l->lk_waitcount,
-		       l->lk_exclusivecount, l->lk_lockholder));
+    NNPFSDEB(XDEBVNOPS, ("xfs_unlock: lk flags: %d share: %d "
+			 "wait: %d excl: %d holder: 0x%lld\n",
+			 l->lk_flags, l->lk_sharecount, l->lk_waitcount,
+			 l->lk_exclusivecount, 
+			 (unsigned long long)
+			 (xfs_uintptr_t)l->lk_lockholder));
 #ifndef	DEBUG_LOCKS
 #ifdef HAVE_FOUR_ARGUMENT_LOCKMGR
+#ifdef HAVE_FREEBSD_THREAD
+    ret = lockmgr (l, flags | LK_RELEASE, &vp->v_interlock, ap->a_td);
+#else
     ret = lockmgr (l, flags | LK_RELEASE, &vp->v_interlock, ap->a_p);
+#endif
 #else
     ret = lockmgr (l, flags | LK_RELEASE, &vp->v_interlock);
 #endif
 #else
+#ifdef HAVE_FREEBSD_THREAD
+    ret = debuglockmgr (l, flags | LK_RELEASE, &vp->v_interlock, ap->a_td,
+			"xfs_lock", ap->a_vp->filename, ap->a_vp->line);
+#else
     ret = debuglockmgr (l, flags | LK_RELEASE, &vp->v_interlock, ap->a_p,
 			"xfs_lock", ap->a_vp->filename, ap->a_vp->line);
 #endif
-    XFSDEB(XDEBVNOPS, ("xfs_unlock: return %d\n", ret));
+#endif
+    NNPFSDEB(XDEBVNOPS, ("xfs_unlock: return %d\n", ret));
     return ret;
 }
 #endif /* HAVE_VOP_UNLOCK */
 
 #ifdef HAVE_VOP_ISLOCKED
-static int
+int
 xfs_islocked (struct vop_islocked_args *ap)
 {
     struct vnode *vp    = ap->a_vp;
     struct xfs_node *xn = VNODE_TO_XNODE(vp);
     xfs_vnode_lock *l   = &xn->lock;
 
-    XFSDEB(XDEBVNOPS, ("xfs_islocked: %lx\n",
+    NNPFSDEB(XDEBVNOPS, ("xfs_islocked: %lx\n",
 		       (unsigned long)vp));
 
 #if defined(HAVE_TWO_ARGUMENT_LOCKSTATUS)
+#ifdef HAVE_FREEBSD_THREAD
+    return lockstatus (l, ap->a_td);
+#else
     return lockstatus (l, ap->a_p);
+#endif
 #elif defined(HAVE_ONE_ARGUMENT_LOCKSTATUS)
     return lockstatus (l);
 #else
@@ -798,13 +901,13 @@ xfs_islocked (struct vop_islocked_args *ap)
 #else /* !HAVE_KERNEL_LOCKMGR && !HAVE_KERNEL_DEBUGLOCKMGR */
 
 #ifdef HAVE_VOP_LOCK
-static int
+int
 xfs_lock(struct vop_lock_args * ap)
 {
     struct vnode *vp    = ap->a_vp;
     struct xfs_node *xn = VNODE_TO_XNODE(vp);
 
-    XFSDEB(XDEBVNOPS, ("xfs_lock: %lx, %d\n",
+    NNPFSDEB(XDEBVNOPS, ("xfs_lock: %lx, %d\n",
 		       (unsigned long)vp, xn->vnlocks));
 
     while (vp->v_flag & VXLOCK) {
@@ -819,12 +922,12 @@ xfs_lock(struct vop_lock_args * ap)
 #endif /* HAVE_VOP_LOCK */
 
 #ifdef HAVE_VOP_UNLOCK
-static int
+int
 xfs_unlock(struct vop_unlock_args * ap)
 {
     struct vnode *vp    = ap->a_vp;
     struct xfs_node *xn = VNODE_TO_XNODE(vp);
-    XFSDEB(XDEBVNOPS, ("xfs_unlock: %lx, %d\n",
+    NNPFSDEB(XDEBVNOPS, ("xfs_unlock: %lx, %d\n",
 		       (unsigned long)vp, xn->vnlocks));
 
     --xn->vnlocks;
@@ -832,20 +935,20 @@ xfs_unlock(struct vop_unlock_args * ap)
 	printf ("PANIC: xfs_unlock: unlocking unlocked\n");
 	xn->vnlocks = 0;
     }
-    XFSDEB(XDEBVNOPS, ("xfs_unlock: return\n"));
+    NNPFSDEB(XDEBVNOPS, ("xfs_unlock: return\n"));
 
     return 0;
 }
 #endif /* HAVE_VOP_UNLOCK */
 
 #ifdef HAVE_VOP_ISLOCKED
-static int
+int
 xfs_islocked (struct vop_islocked_args *ap)
 {
     struct vnode *vp    = ap->a_vp;
     struct xfs_node *xn = VNODE_TO_XNODE(vp);
 
-    XFSDEB(XDEBVNOPS, ("xfs_islocked: %lx, %d\n",
+    NNPFSDEB(XDEBVNOPS, ("xfs_islocked: %lx, %d\n",
 		       (unsigned long)vp, xn->vnlocks));
 
     return xn->vnlocks;
@@ -854,7 +957,7 @@ xfs_islocked (struct vop_islocked_args *ap)
 #endif /* !HAVE_KERNEL_LOCKMGR */
 
 #ifdef HAVE_VOP_ABORTOP
-static int
+int
 xfs_abortop (struct vop_abortop_args *ap)
      /* struct vnode *dvp;
    struct componentname *cnp; */
@@ -862,11 +965,17 @@ xfs_abortop (struct vop_abortop_args *ap)
     struct componentname *cnp = ap->a_cnp;
 
     if ((cnp->cn_flags & (HASBUF | SAVESTART)) == HASBUF)
-#ifdef HAVE_KERNEL_ZFREEI
+#if defined(HAVE_KERNEL_ZFREEI)
 	zfreei(namei_zone, cnp->cn_pnbuf);
 	ap->a_cnp->cn_flags &= ~HASBUF;
+#elif defined(HAVE_KERNEL_UMA_ZFREE_ARG)
+	uma_zfree_arg(namei_zone, cnp->cn_pnbuf, NULL);
+	cnp->cn_flags &= ~HASBUF;
 #elif defined(FREE_ZONE)
 	FREE_ZONE(cnp->cn_pnbuf, cnp->cn_pnlen, M_NAMEI);
+#elif defined(HAVE_KERNEL_ZFREE)
+	zfree(namei_zone, cnp->cn_pnbuf);
+	ap->a_cnp->cn_flags &= ~HASBUF;
 #elif defined(PNBUF_PUT)
 	PNBUF_PUT(cnp->cn_pnbuf);
 #else
@@ -877,7 +986,7 @@ xfs_abortop (struct vop_abortop_args *ap)
 #endif /* HAVE_VOP_ABORTOP */
 
 #ifdef HAVE_VOP_MMAP
-static int
+int
 xfs_mmap(struct vop_mmap_args *ap)
      /*
 	IN struct vnode *vp;
@@ -886,13 +995,17 @@ xfs_mmap(struct vop_mmap_args *ap)
 	IN struct proc *p;
 	*/
 {
-    XFSDEB(XDEBVNOPS, ("xfs_mmap\n"));
+    NNPFSDEB(XDEBVNOPS, ("xfs_mmap\n"));
+#ifdef HAVE_KERNEL_GENFS_MMAP
+    return genfs_mmap(ap);
+#else
     return EOPNOTSUPP;
+#endif
 }
 #endif /* HAVE_VOP_MMAP */
 
 #ifdef HAVE_VOP_BMAP
-static int
+int
 xfs_bmap(struct vop_bmap_args *ap)
      /*	IN struct vnode *vp;
 	IN daddr_t bn;
@@ -902,13 +1015,25 @@ xfs_bmap(struct vop_bmap_args *ap)
 	OUT int *runb;
 	*/
 {
-    XFSDEB(XDEBVNOPS, ("xfs_bmap\n"));
+    NNPFSDEB(XDEBVNOPS, ("xfs_bmap\n"));
     return EOPNOTSUPP;
 }
 #endif /* HAVE_VOP_BMAP */
 
 #ifdef HAVE_VOP_GETPAGES
-static int
+
+static size_t
+get_pages_endlength (struct vop_getpages_args *ap)
+{
+#ifdef HAVE_STRUCT_VOP_GETPAGES_ARGS_A_OFFSET
+    /* NetBSD ubc */
+    return (ap->a_offset << PAGE_SHIFT) + *ap->a_count * PAGE_SIZE;
+#else
+    return (ap->a_reqpage << PAGE_SHIFT) +  ap->a_count * PAGE_SIZE;
+#endif
+}
+
+int
 xfs_getpages (struct vop_getpages_args *ap)
      /* Old BSD
 	IN struct vnode *vp;
@@ -930,27 +1055,28 @@ xfs_getpages (struct vop_getpages_args *ap)
 {
     int error;
 
-    XFSDEB(XDEBVNOPS, ("xfs_getpages\n"));
+    NNPFSDEB(XDEBVNOPS, ("xfs_getpages\n"));
 
 #if HAVE_KERNEL_VNODE_PAGER_GENERIC_GETPAGES
     error = vnode_pager_generic_getpages (ap->a_vp, ap->a_m, 
 					  ap->a_count, ap->a_reqpage);
 #else
-    error = xfs_data_valid (ap->a_vp, VNODE_TO_XNODE(ap->a_vp)->cred,
-			    xfs_curproc(), XFS_DATA_R);
+    error = xfs_data_valid (ap->a_vp, VNODE_TO_XNODE(ap->a_vp)->rd_cred,
+			    xfs_curproc(), NNPFS_DATA_R,
+			    get_pages_endlength(ap));
     if (error == 0)
 	error = VOP_GETPAGES(DATA_FROM_VNODE(ap->a_vp), 
 			     ap->a_offset, ap->a_m,
 			     ap->a_count, ap->a_centeridx, ap->a_access_type,
 			     ap->a_advice, ap->a_flags);
 #endif
-    XFSDEB(XDEBVNOPS, ("xfs_getpages = %d\n", error));
+    NNPFSDEB(XDEBVNOPS, ("xfs_getpages = %d\n", error));
     return error;
 }
 #endif /* HAVE_VOP_GETPAGES */
 
 #ifdef HAVE_VOP_PUTPAGES
-static int
+int
 xfs_putpages (struct vop_putpages_args *ap)
      /* Old BSD
         IN struct vnode *vp;
@@ -972,17 +1098,38 @@ xfs_putpages (struct vop_putpages_args *ap)
     struct vnode *t     = DATA_FROM_XNODE(xn);
     int error;
 
-    XFSDEB(XDEBVNOPS, ("xfs_putpages\n"));
+    NNPFSDEB(XDEBVNOPS, ("xfs_putpages\n"));
 
-    xn->flags |= XFS_DATA_DIRTY;
+    if (t == NULL)
+	return 0;
 
 #ifdef HAVE_STRUCT_VOP_PUTPAGES_ARGS_A_SYNC /* FreeBSD-style */
+    xn->flags |= NNPFS_DATA_DIRTY;
+
     return VOP_PUTPAGES(t, ap->a_m, ap->a_count, ap->a_sync, ap->a_rtvals,
 			ap->a_offset);
 #else /* NetBSD-style */
 #if defined(__NetBSD__) && __NetBSD_Version__  >= 105250000 
+    /* XXX should only walk over those pages that is requested */
+    if (vp->v_type == VREG && ap->a_flags & PGO_CLEANIT) {
+	struct uvm_object *uobj = &t->v_uobj;
+	struct vm_page *pg;
+	int dirty = 0;
+
+	pg = TAILQ_FIRST(&uobj->memq);
+
+	while (pg && !dirty) {
+	    dirty = pmap_is_modified(pg) || (pg->flags & PG_CLEAN) == 0;
+	    pg = TAILQ_NEXT(pg, listq);
+	}	
+
+	if (dirty)
+	    xn->flags |= NNPFS_DATA_DIRTY;
+    }
+
     return VOP_PUTPAGES(t, ap->a_offlo, ap->a_offhi, ap->a_flags);
 #else
+    xn->flags |= NNPFS_DATA_DIRTY;
     return VOP_PUTPAGES(t, ap->a_m, ap->a_count, ap->a_flags, ap->a_rtvals);
 #endif
 #endif /* HAVE_STRUCT_VOP_PUTPAGES_ARGS_A_SYNC */
@@ -990,26 +1137,26 @@ xfs_putpages (struct vop_putpages_args *ap)
 #endif /* HAVE_VOP_PUTPAGES */
 
 #ifdef HAVE_VOP_CMP
-static int
+int
 xfs_cmp(struct vnode * vp1, struct vnode * vp2)
 {
-    XFSDEB(XDEBVNOPS, ("xfs_cmp\n"));
+    NNPFSDEB(XDEBVNOPS, ("xfs_cmp\n"));
     return EOPNOTSUPP;
 }
 #endif /* HAVE_VOP_CMP */
 
 #ifdef HAVE_VOP_REALVP
-static int
+int
 xfs_realvp(struct vnode * vp,
 	   struct vnode ** vpp)
 {
-    XFSDEB(XDEBVNOPS, ("xfs_realvp\n"));
+    NNPFSDEB(XDEBVNOPS, ("xfs_realvp\n"));
     return EOPNOTSUPP;
 }
 #endif /* HAVE_VOP_REALVP */
 
 #ifdef HAVE_VOP_CNTL
-static int
+int
 xfs_cntl(struct vnode * vp,
 	 int cmd,
 	 caddr_t idata,
@@ -1017,24 +1164,26 @@ xfs_cntl(struct vnode * vp,
 	 int iflag,
 	 int oflag)
 {
-    XFSDEB(XDEBVNOPS, ("xfs_cntl\n"));
+    NNPFSDEB(XDEBVNOPS, ("xfs_cntl\n"));
     return EOPNOTSUPP;
 }
 #endif /* HAVE_VOP_CNTL */
 
 #ifdef HAVE_VOP_PRINT
-static int
-xfs_print (struct vnode *vp)
+int
+xfs_print (struct vop_print_args *v)
 {
-    xfs_printnode_common (vp);
+    struct vop_print_args /* {
+	struct vnode	*a_vp;
+    } */ *ap = v;
+    xfs_printnode_common (ap->a_vp);
     return 0;
 }
 #endif
 
-#if 0
 #ifdef HAVE_VOP_ADVLOCK
-static int
-xfs_advlock(void *v)
+int
+xfs_advlock(struct vop_advlock_args *v)
 {
     struct vop_advlock_args /* {
 	struct vnode *a_vp;
@@ -1043,36 +1192,38 @@ xfs_advlock(void *v)
 	struct flock *a_fl;
 	int  a_flags;
     } */ *ap = v;
-
+#if 0
     struct xfs_node *xn = VNODE_TO_XNODE(ap->a_vp);
     int ret;
     xfs_locktype_t locktype;
 
-/*     if (XFS_TOKEN_GOT(xn,  */
+/*     if (NNPFS_TOKEN_GOT(xn,  */
 
-#if 0
     if (ap->a_fl.l_start != 0 ||
 	ap->a_fl.l_end != 0)
 	printf ("WARN: someone is trying byte-range locking\n");
     
     switch (ap->a_op) {
     case F_SETLCK:
-	locktype = XFS_READLOCK;
+	locktype = NNPFS_READLOCK;
 	break;
 
     ret = xfs_advlock_common (xn, );
 
     return ret;
-#else
-    return 0;
-#endif 			      
+#elif defined(HAVE_KERNEL_LF_ADVLOCK) && !defined(__OpenBSD__) && !defined(__APPLE__)
+    struct xfs_node *xn = VNODE_TO_XNODE(ap->a_vp);
+ 
+    return lf_advlock(ap, &xn->lockf, xn->attr.va_size);
+  #else
+     return EOPNOTSUPP;
+#endif
 }
 #endif /* HAVE_VOP_ADVOCK */
-#endif
 
 #ifdef HAVE_VOP_REVOKE
-static int
-xfs_revoke(void *v)
+int
+xfs_revoke(struct vop_revoke_args *v)
 {
 #if defined(HAVE_KERNEL_GENFS_REVOKE)
     return genfs_revoke (v);
@@ -1085,7 +1236,7 @@ xfs_revoke(void *v)
 #endif /* HAVE_VOP_REVOKE */
 
 #ifdef HAVE_VOP_PAGEIN
-static int
+int
 xfs_pagein(struct vop_pagein_args *ap)
 {
 #ifdef __APPLE__
@@ -1107,6 +1258,10 @@ xfs_pagein(struct vop_pagein_args *ap)
 
     ret = VOP_READ(ap->a_vp, &uio, 0, ap->a_cred);
 
+    /* Zero out rest of last page if there wasn't enough data in the file */
+    if (ret == 0 && uio.uio_resid > 0)
+	bzero(iov.iov_base, uio.uio_resid);
+    
     kernel_upl_unmap(kernel_map, ap->a_pl);
 
     if (ret) {
@@ -1120,14 +1275,14 @@ xfs_pagein(struct vop_pagein_args *ap)
 
     return ret;
 #else
-    return (VOP_READ(ap->a_vp, ap->a_uio, ap->a_ioflag, ap->a_cred));
+#error pagein on non apple ?
 #endif
 }
   
 #endif
 
 #ifdef HAVE_VOP_PAGEOUT
-static int
+int
 xfs_pageout(struct vop_pageout_args *ap)
 {
 #ifdef __APPLE__
@@ -1162,13 +1317,13 @@ xfs_pageout(struct vop_pageout_args *ap)
 
     return ret;
 #else
-    return (VOP_WRITE(ap->a_vp, ap->a_uio, ap->a_ioflag, ap->a_cred));
+#error pageout on non apple ?
 #endif
 }
 #endif
 
 #ifdef HAVE_VOP_CREATEVOBJECT
-static int
+int
 xfs_createvobject(struct vop_createvobject_args *ap)
 /*
 struct vop_createvobject_args {
@@ -1178,14 +1333,14 @@ struct vop_createvobject_args {
 };
  */
 {
-    XFSDEB(XDEBVNOPS, ("xfs_createvobject\n"));
+    NNPFSDEB(XDEBVNOPS, ("xfs_createvobject\n"));
 
     return vop_stdcreatevobject (ap);
 }
 #endif /* HAVE_VOP_CREATEVOBJECT */
 
 #ifdef HAVE_VOP_DESTROYVOBJECT
-static int
+int
 xfs_destroyvobject(struct vop_destroyvobject_args *ap)
 /*
 struct vop_destroyvobject_args {
@@ -1193,14 +1348,14 @@ struct vop_destroyvobject_args {
 };
  */
 {
-    XFSDEB(XDEBVNOPS, ("xfs_destroyvobject\n"));
+    NNPFSDEB(XDEBVNOPS, ("xfs_destroyvobject\n"));
 
     return vop_stddestroyvobject (ap);
 }
 #endif /* HAVE_VOP_DESTROYVOBJECT */
 
 #ifdef HAVE_VOP_GETVOBJECT
-static int
+int
 xfs_getvobject(struct vop_getvobject_args *ap)
 /*
 struct vop_getvobject_args {
@@ -1209,27 +1364,62 @@ struct vop_getvobject_args {
 };
  */
 {
-    XFSDEB(XDEBVNOPS, ("xfs_getvobject\n"));
+    NNPFSDEB(XDEBVNOPS, ("xfs_getvobject\n"));
 
     return vop_stdgetvobject (ap);
 }
 #endif /* HAVE_VOP_GETVOBJECT */
+
+#ifdef HAVE_VOP_PATHCONF
+int
+xfs_pathconf(struct vop_pathconf_args *ap)
+/*
+struct vop_pathconf_args {
+        struct vnodeop_desc *a_desc;
+        struct vnode *a_vp;
+        int a_name;
+};
+*/
+{
+    NNPFSDEB(XDEBVNOPS, ("xfs_pathconf\n"));
+
+#ifdef HAVE_KERNEL_VOP_STDPATHCONF
+    return vop_stdpathconf(ap);
+#else
+    return EOPNOTSUPP;
+#endif
+}
+#endif
+
+
 
 vop_t **xfs_vnodeop_p;
 
 int
 xfs_eopnotsupp (struct vop_generic_args *ap)
 {
-    XFSDEB(XDEBVNOPS, ("xfs_eopnotsupp %s\n", ap->a_desc->vdesc_name));
+    NNPFSDEB(XDEBVNOPS, ("xfs_eopnotsupp %s\n", ap->a_desc->vdesc_name));
     return EOPNOTSUPP;
 }
 
 int
 xfs_returnzero (struct vop_generic_args *ap)
 {
-    XFSDEB(XDEBVNOPS, ("xfs_returnzero %s\n", ap->a_desc->vdesc_name));
+    NNPFSDEB(XDEBVNOPS, ("xfs_returnzero %s\n", ap->a_desc->vdesc_name));
     return 0;
 }
+
+void
+xfs_pushdirty(struct vnode *vp, struct ucred *cred, d_thread_t *p)
+{
+#if defined(__NetBSD_Version__) && __NetBSD_Version__ >= 105280000
+    VOP_PUTPAGES(vp, 0, 0, PGO_ALLPAGES|PGO_SYNCIO|PGO_CLEANIT);
+#elif defined(__APPLE__)
+    ubc_pushdirty(vp);
+#endif
+}
+
+
 
 static struct vnodeopv_entry_desc xfs_vnodeop_entries[] = {
     {&vop_default_desc, (vop_t *) xfs_eopnotsupp},
@@ -1342,10 +1532,8 @@ static struct vnodeopv_entry_desc xfs_vnodeop_entries[] = {
 #ifdef HAVE_VOP_PRINT
     {&vop_print_desc, (vop_t *) xfs_print}, 
 #endif
-#if 0
 #ifdef HAVE_VOP_ADVLOCK
     {&vop_advlock_desc, (vop_t *) xfs_advlock },
-#endif
 #endif
 #ifdef HAVE_VOP_PAGEIN
     {&vop_pagein_desc, (vop_t *) xfs_pagein },
@@ -1361,6 +1549,9 @@ static struct vnodeopv_entry_desc xfs_vnodeop_entries[] = {
 #endif
 #ifdef HAVE_VOP_GETVOBJECT
     {&vop_getvobject_desc, (vop_t *) xfs_getvobject },
+#endif
+#ifdef HAVE_VOP_PATHCONF
+    {&vop_pathconf_desc, (vop_t *) xfs_pathconf },
 #endif
     {(struct vnodeop_desc *) NULL, (int (*) (void *)) NULL}
 };

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
@@ -33,7 +33,7 @@
 
 #include <xfs/xfs_locl.h>
 
-RCSID("$Id: xfs_vfsops-openbsd.c,v 1.5 2002/06/07 04:10:32 hin Exp $");
+RCSID("$arla: xfs_vfsops-openbsd.c,v 1.16 2003/06/02 18:26:50 lha Exp $");
 
 #include <xfs/xfs_common.h>
 #include <xfs/xfs_message.h>
@@ -47,9 +47,9 @@ RCSID("$Id: xfs_vfsops-openbsd.c,v 1.5 2002/06/07 04:10:32 hin Exp $");
 static vop_t **xfs_dead_vnodeop_p;
 
 int
-make_dead_vnode(struct mount *mp, struct vnode **vpp)
+xfs_make_dead_vnode(struct mount *mp, struct vnode **vpp)
 {
-    XFSDEB(XDEBNODE, ("make_dead_vnode mp = %lx\n",
+    NNPFSDEB(XDEBNODE, ("make_dead_vnode mp = %lx\n",
 		      (unsigned long)mp));
 
     return getnewvnode(VT_NON, mp, xfs_dead_vnodeop_p, vpp);
@@ -72,7 +72,7 @@ extern struct vnodeopv_desc xfs_vnodeop_opv_desc;
 static int
 xfs_init(struct vfsconf *vfs)
 {
-    XFSDEB(XDEBVFOPS, ("xfs_init\n"));
+    NNPFSDEB(XDEBVFOPS, ("xfs_init\n"));
     vfs_opv_init_explicit(&xfs_vnodeop_opv_desc);
     vfs_opv_init_default(&xfs_vnodeop_opv_desc);
     vfs_opv_init_explicit(&xfs_dead_vnodeop_opv_desc);
@@ -81,7 +81,11 @@ xfs_init(struct vfsconf *vfs)
 }
 
 struct vfsops xfs_vfsops = {
-    xfs_mount,
+#ifdef HAVE_STRUCT_VFSOPS_VFS_MOUNT
+    xfs_mount_common,
+#else
+    xfs_mount_caddr,
+#endif
     xfs_start,
     xfs_unmount,
     xfs_root,
@@ -131,7 +135,7 @@ vfs_register (struct vfsconf *vfs)
     vfs->vfc_next = NULL;
 
     /* Call vfs_init() */
-    XFSDEB(XDEBVFOPS, ("calling vfs_init\n"));
+    NNPFSDEB(XDEBVFOPS, ("calling vfs_init\n"));
     (*(vfs->vfc_vfsops->vfs_init)) (vfs);
 
     /* done! */

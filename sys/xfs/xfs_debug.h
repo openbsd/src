@@ -31,10 +31,10 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: xfs_debug.h,v 1.4 2002/06/07 04:10:32 hin Exp $ */
+/* $arla: xfs_debug.h,v 1.5 2002/09/14 09:56:01 tol Exp $ */
 
-#ifndef __XFS_DEBUG_H
-#define __XFS_DEBUG_H
+#ifndef __NNPFS_DEBUG_H
+#define __NNPFS_DEBUG_H
 
 /* 
  * These are GLOBAL xfs debugging masks
@@ -56,5 +56,6 @@
 #define XDEBREADDIR     0x00000200      /* readdir (linux) */
 #define XDEBLOCK	0x00000400	/* locking (linux) */
 #define XDEBCACHE       0x00000800      /* Cache handeling (linux) */
+#define XDEBREF         0x00001000      /* track reference count */
 
 #endif

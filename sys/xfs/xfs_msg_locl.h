@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: xfs_msg_locl.h,v 1.6 2002/06/07 04:10:32 hin Exp $ */
+/* $arla: xfs_msg_locl.h,v 1.6 2002/09/07 10:46:05 lha Exp $ */
 
 #ifndef _xfs_msg_locl_h
 #define _xfs_msg_locl_h
@@ -40,48 +40,48 @@ int
 xfs_message_installroot(int fd,
 			struct xfs_message_installroot * message,
 			u_int size,
-			struct proc *p);
+			d_thread_t *p);
 
 int
 xfs_message_installnode(int fd,
 			struct xfs_message_installnode * message,
 			u_int size,
-			struct proc *p);
+			d_thread_t *p);
 
 int
 xfs_message_installattr(int fd,
 			struct xfs_message_installattr * message,
 			u_int size,
-			struct proc *p);
+			d_thread_t *p);
 
 int
 xfs_message_installdata(int fd,
 			struct xfs_message_installdata * message,
 			u_int size,
-			struct proc *p);
+			d_thread_t *p);
 
 int
 xfs_message_invalidnode(int fd,
 			struct xfs_message_invalidnode * message,
 			u_int size,
-			struct proc *p);
+			d_thread_t *p);
 
 int
 xfs_message_updatefid(int fd,
 		      struct xfs_message_updatefid * message,
 		      u_int size,
-		      struct proc *p);
+		      d_thread_t *p);
 
 int
 xfs_message_gc_nodes(int fd,
 		     struct xfs_message_gc_nodes * message,
 		     u_int size,
-		     struct proc *p);
+		     d_thread_t *p);
 
 int
 xfs_message_version(int fd,
 		    struct xfs_message_version *message,
 		    u_int size,
-		    struct proc *p);
+		    d_thread_t *p);
 
 #endif				       /* _xfs_msg_locl_h */

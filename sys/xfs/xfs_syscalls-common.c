@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995 - 2001 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
@@ -33,10 +33,10 @@
 
 #include <xfs/xfs_locl.h>
 
-RCSID("$Id: xfs_syscalls-common.c,v 1.4 2002/06/07 04:10:32 hin Exp $");
+RCSID("$arla: xfs_syscalls-common.c,v 1.72 2003/01/19 20:53:49 lha Exp $");
 
 /*
- * XFS system calls.
+ * NNPFS system calls.
  */
 
 #include <xfs/xfs_syscalls.h>
@@ -54,43 +54,77 @@ RCSID("$Id: xfs_syscalls-common.c,v 1.4 2002/06/07 04:10:32 hin Exp $");
 #include <sys/ioctl.h>
 #endif
 /*
- * XXX - horrible kludge. If we're built without HAVE_CONFIG_H we assume that
- *       we're built inside the kernel on OpenBSD.
+ * XXX - horrible kludge.  If we are openbsd and not building an lkm,
+ *     then use their headerfile.
  */
-#ifdef HAVE_CONFIG_H
-#include <kafs.h>
-#else
-#include <xfs/xfs_pioctl.h>
+#if (defined(__OpenBSD__) || defined(__NetBSD__)) && !defined(_LKM)
+#define NNPFS_NOT_LKM 1
+#elif defined(__FreeBSD__) && !defined(KLD_MODULE)
+#define NNPFS_NOT_LKM 1
 #endif
+
+#ifdef NNPFS_NOT_LKM
+#include <xfs/xfs_pioctl.h>
+#else
+#include <kafs.h>
+#endif
+
+int (*old_setgroups_func)(syscall_d_thread_t *p, void *v, register_t *retval);
+
+#if defined(__FreeBSD__) && __FreeBSD_version >= 500026
+/*
+ * XXX This is wrong
+ */
+static struct ucred *
+xfs_crcopy(struct ucred *cr)
+{
+    struct ucred *ncr;
+
+    if (crshared(cr)) {
+	ncr = crdup(cr);
+	crfree(cr);
+	return ncr;
+    }
+    return cr;
+}
+#else
+#define xfs_crcopy crcopy
+#endif
+
 
 /*
  * the syscall entry point
  */
 
-#if defined(_LKM) || defined(KLD_MODULE) || defined(__osf__) || defined(__APPLE__)
+#ifdef NNPFS_NOT_LKM
 int
-xfspioctl(struct proc *proc, void *varg, register_t *return_value)
+sys_xfspioctl(syscall_d_thread_t *proc, void *varg, register_t *return_value)
 #else
 int
-sys_xfspioctl(struct proc *proc, void *varg, register_t *return_value)
+xfspioctl(syscall_d_thread_t *proc, void *varg, register_t *return_value)
 #endif
 {
-#if defined(_LKM) || defined(KLD_MODULE) || defined(__osf__) || defined(__APPLE__)
-    struct sys_pioctl_args *arg = (struct sys_pioctl_args *) varg;
-#else
+#ifdef NNPFS_NOT_LKM
     struct sys_xfspioctl_args *arg = (struct sys_xfspioctl_args *) varg;
+#else
+    struct sys_pioctl_args *arg = (struct sys_pioctl_args *) varg;
 #endif
     int error = EINVAL;
 
     switch (SCARG(arg, operation)) {
     case AFSCALL_PIOCTL:
-	error = xfs_pioctl_call(proc, varg, return_value);
+	error = xfs_pioctl_call(syscall_thread_to_thread(proc),
+				  varg, return_value);
 	break;
     case AFSCALL_SETPAG:
-	error = xfs_setpag_call(&xfs_proc_to_cred(proc));
+#ifdef HAVE_FREEBSD_THREAD
+	error = xfs_setpag_call(&xfs_thread_to_cred(proc));
+#else
+	error = xfs_setpag_call(&xfs_proc_to_cred(syscall_thread_to_thread(proc)));
+#endif
 	break;
     default:
-	XFSDEB(XDEBSYS, ("Unimplemeted xfspioctl: %d\n",
+	NNPFSDEB(XDEBSYS, ("Unimplemeted xfspioctl: %d\n",
 			 SCARG(arg, operation)));
 	error = EINVAL;
 	break;
@@ -105,13 +139,13 @@ sys_xfspioctl(struct proc *proc, void *varg, register_t *return_value)
  *  32512 <= g1 <= 48896
  */
 
-#define XFS_PAG1_LLIM 33536
-#define XFS_PAG1_ULIM 34560
-#define XFS_PAG2_LLIM 32512
-#define XFS_PAG2_ULIM 48896
+#define NNPFS_PAG1_LLIM 33536
+#define NNPFS_PAG1_ULIM 34560
+#define NNPFS_PAG2_LLIM 32512
+#define NNPFS_PAG2_ULIM 48896
 
-static gid_t pag_part_one = XFS_PAG1_LLIM;
-static gid_t pag_part_two = XFS_PAG2_LLIM;
+static gid_t pag_part_one = NNPFS_PAG1_LLIM;
+static gid_t pag_part_two = NNPFS_PAG2_LLIM;
 
 /*
  * Is `cred' member of a PAG?
@@ -123,10 +157,10 @@ xfs_is_pag(struct ucred *cred)
     /* The first group is the gid of the user ? */
 
     if (cred->cr_ngroups >= 3 &&
-	cred->cr_groups[1] >= XFS_PAG1_LLIM &&
-	cred->cr_groups[1] <= XFS_PAG1_ULIM &&
-	cred->cr_groups[2] >= XFS_PAG2_LLIM &&
-	cred->cr_groups[2] <= XFS_PAG2_ULIM)
+	cred->cr_groups[1] >= NNPFS_PAG1_LLIM &&
+	cred->cr_groups[1] <= NNPFS_PAG1_ULIM &&
+	cred->cr_groups[2] >= NNPFS_PAG2_LLIM &&
+	cred->cr_groups[2] <= NNPFS_PAG2_ULIM)
 	return 1;
     else
 	return 0;
@@ -163,14 +197,14 @@ store_pag (struct ucred **ret_cred, gid_t part1, gid_t part2)
 	if (cred->cr_ngroups + 2 >= NGROUPS)
 	    return E2BIG;
 
-	cred = crcopy (cred);
+	cred = xfs_crcopy (cred);
 
 	for (i = cred->cr_ngroups - 1; i > 0; i--) {
 	    cred->cr_groups[i + 2] = cred->cr_groups[i];
 	}
 	cred->cr_ngroups += 2;
     } else {
-	cred = crcopy (cred);
+	cred = xfs_crcopy (cred);
     }
     cred->cr_groups[1] = part1;
     cred->cr_groups[2] = part2;
@@ -192,14 +226,14 @@ xfs_setpag_call(struct ucred **ret_cred)
     if (ret)
 	return ret;
 
-    if (pag_part_two > XFS_PAG2_ULIM) {
+    if (pag_part_two > NNPFS_PAG2_ULIM) {
 	pag_part_one++;
-	pag_part_two = XFS_PAG2_LLIM;
+	pag_part_two = NNPFS_PAG2_LLIM;
     }
     return 0;
 }
 
-#if defined(_LKM) || defined(KLD_MODULE) || defined(__osf__) || defined(__APPLE__)
+#ifndef NNPFS_NOT_LKM
 /*
  * remove a pag
  */
@@ -222,11 +256,16 @@ xfs_unpag (struct ucred *cred)
  */
 
 int
-xfs_setgroups (struct proc *p,
-	       void *varg)
+xfs_setgroups (syscall_d_thread_t *p,
+	       void *varg,
+	       register_t *retval)
 {
     struct xfs_setgroups_args *uap = (struct xfs_setgroups_args *)varg;
-    struct ucred **cred = &xfs_proc_to_cred(p);
+#ifdef HAVE_FREEBSD_THREAD
+    struct ucred **cred = &xfs_thread_to_cred(p);
+#else
+    struct ucred **cred = &xfs_proc_to_cred(syscall_thread_to_thread(p));
+#endif
 
     if (xfs_is_pag (*cred)) {
 	gid_t part1, part2;
@@ -237,14 +276,14 @@ xfs_setgroups (struct proc *p,
 
 	part1 = (*cred)->cr_groups[1];
 	part2 = (*cred)->cr_groups[2];
-	ret = (*old_setgroups_func) (p, uap);
+	ret = (*old_setgroups_func) (p, uap, retval);
 	if (ret)
 	    return ret;
 	return store_pag (cred, part1, part2);
     } else {
 	int ret;
 
-	ret = (*old_setgroups_func) (p, uap);
+	ret = (*old_setgroups_func) (p, uap, retval);
 	/* don't support setting a PAG */
 	if (xfs_is_pag (*cred)) {
 	    xfs_unpag (*cred);
@@ -253,7 +292,7 @@ xfs_setgroups (struct proc *p,
 	return ret;
     }
 }
-#endif
+#endif /* !NNPFS_NOT_LKM */
 
 /*
  * Return the vnode corresponding to `pathptr'
@@ -263,7 +302,7 @@ static int
 lookup_node (const char *pathptr,
 	     int follow_links_p,
 	     struct vnode **res,
-	     struct proc *proc)
+	     d_thread_t *proc)
 {
     int error;
     char path[MAXPATHLEN];
@@ -275,12 +314,12 @@ lookup_node (const char *pathptr,
     struct vnode *vp;
     size_t count;
 
-    XFSDEB(XDEBSYS, ("xfs_syscall: looking up: %lx\n",
+    NNPFSDEB(XDEBSYS, ("xfs_syscall: looking up: %lx\n",
 		     (unsigned long)pathptr));
 
     error = copyinstr((char *) pathptr, path, MAXPATHLEN, &count);
 
-    XFSDEB(XDEBSYS, ("xfs_syscall: looking up: %s, error: %d\n", path, error));
+    NNPFSDEB(XDEBSYS, ("xfs_syscall: looking up: %s, error: %d\n", path, error));
 
     if (error)
 	return error;
@@ -292,7 +331,7 @@ lookup_node (const char *pathptr,
     error = namei(ndp);
 	
     if (error != 0) {
-	XFSDEB(XDEBSYS, ("xfs_syscall: error during namei: %d\n", error));
+	NNPFSDEB(XDEBSYS, ("xfs_syscall: error during namei: %d\n", error));
 	return EINVAL;
     }
 
@@ -308,7 +347,7 @@ lookup_node (const char *pathptr,
  */
 
 static int
-getfh_compat (struct proc *p,
+getfh_compat (d_thread_t *p,
 	      struct ViceIoctl *vice_ioctl,
 	      struct vnode *vp)
 {
@@ -336,9 +375,8 @@ getfh_compat (struct proc *p,
  * implement xfs fhget by combining (dev, ino, generation)
  */
 
-#ifndef __OpenBSD__
 static int
-trad_fhget (struct proc *p,
+trad_fhget (d_thread_t *p,
 	    struct ViceIoctl *vice_ioctl,
 	    struct vnode *vp)
 {
@@ -349,7 +387,11 @@ trad_fhget (struct proc *p,
     struct xfs_fhandle_t xfs_handle;
     struct xfs_fh_args fh_args;
 
+#ifdef HAVE_FREEBSD_THREAD
+    xfs_vop_getattr(vp, &vattr, xfs_thread_to_cred(p), p, error);
+#else
     xfs_vop_getattr(vp, &vattr, xfs_proc_to_cred(p), p, error);
+#endif
     if (error)
 	return error;
 
@@ -368,11 +410,10 @@ trad_fhget (struct proc *p,
 
     error = copyout (&xfs_handle, vice_ioctl->out, len);
     if (error) {
-	XFSDEB(XDEBSYS, ("fhget_call: copyout failed: %d\n", error));
+	NNPFSDEB(XDEBSYS, ("fhget_call: copyout failed: %d\n", error));
     }
     return error;
 }
-#endif /* !__OpenBSD__ */
 
 /*
  * return file handle of `vp' in vice_ioctl->out
@@ -380,13 +421,13 @@ trad_fhget (struct proc *p,
  */
 
 static int
-fhget_call (struct proc *p,
+fhget_call (d_thread_t *p,
 	    struct ViceIoctl *vice_ioctl,
 	    struct vnode *vp)
 {
     int error;
 
-    XFSDEB(XDEBSYS, ("fhget_call\n"));
+    NNPFSDEB(XDEBSYS, ("fhget_call\n"));
 
     if (vp == NULL)
 	return EBADF;
@@ -415,14 +456,14 @@ out:
  */
 
 static int
-fhopen_call (struct proc *p,
+fhopen_call (d_thread_t *p,
 	     struct ViceIoctl *vice_ioctl,
 	     struct vnode *vp,
 	     int flags,
 	     register_t *retval)
 {
 
-    XFSDEB(XDEBSYS, ("fhopen_call: flags = %d\n", flags));
+    NNPFSDEB(XDEBSYS, ("fhopen_call: flags = %d\n", flags));
 
     if (vp != NULL) {
 	vrele (vp);
@@ -444,7 +485,7 @@ fhopen_call (struct proc *p,
  */
 
 static int
-remote_pioctl (struct proc *p,
+remote_pioctl (d_thread_t *p,
 	       struct sys_pioctl_args *arg,
 	       struct ViceIoctl *vice_ioctl,
 	       struct vnode *vp)
@@ -457,7 +498,7 @@ remote_pioctl (struct proc *p,
 	struct xfs_node *xn;
 
 	if (vp->v_tag != VT_AFS) {
-	    XFSDEB(XDEBSYS, ("xfs_syscall: file is not in afs\n"));
+	    NNPFSDEB(XDEBSYS, ("xfs_syscall: file is not in afs\n"));
 	    vrele(vp);
 	    return EINVAL;
 	}
@@ -468,27 +509,36 @@ remote_pioctl (struct proc *p,
 	vrele(vp);
     }
 
-    if (vice_ioctl->in_size > 2048) {
+    if (vice_ioctl->in_size < 0) {
+	printf("xfs: remote pioctl: got a negative data size: opcode: %d",
+	       SCARG(arg, a_opcode));
+	return EINVAL;
+    }
+
+    if (vice_ioctl->in_size > NNPFS_MSG_MAX_DATASIZE) {
 	printf("xfs_pioctl_call: got a humongous in packet: opcode: %d",
 	       SCARG(arg, a_opcode));
 	return EINVAL;
     }
     if (vice_ioctl->in_size != 0) {
-	error = copyin(vice_ioctl->in,
-		       &msg.msg,
-		       vice_ioctl->in_size);
-
+	error = copyin(vice_ioctl->in, msg.msg, vice_ioctl->in_size);
 	if (error)
 	    return error;
     }
 
-    msg.header.opcode = XFS_MSG_PIOCTL;
+    msg.header.opcode = NNPFS_MSG_PIOCTL;
+    msg.header.size = sizeof(msg);
     msg.opcode = SCARG(arg, a_opcode);
 
     msg.insize = vice_ioctl->in_size;
     msg.outsize = vice_ioctl->out_size;
+#ifdef HAVE_FREEBSD_THREAD
+    msg.cred.uid = xfs_thread_to_euid(p);
+    msg.cred.pag = xfs_get_pag(xfs_thread_to_cred(p));
+#else
     msg.cred.uid = xfs_proc_to_euid(p);
     msg.cred.pag = xfs_get_pag(xfs_proc_to_cred(p));
+#endif
 
     error = xfs_message_rpc(0, &msg.header, sizeof(msg), p); /* XXX */
     msg2 = (struct xfs_message_wakeup_data *) &msg;
@@ -498,14 +548,24 @@ remote_pioctl (struct proc *p,
     if (error == ENODEV)
 	error = EINVAL;
 
-    if (error == 0 && msg2->header.opcode == XFS_MSG_WAKEUP_DATA)
-	error = copyout(msg2->msg, vice_ioctl->out, 
-			min(msg2->len, vice_ioctl->out_size));
+    if (error == 0 && msg2->header.opcode == NNPFS_MSG_WAKEUP_DATA) {
+	int len;
+
+	len = msg2->len;
+	if (len > vice_ioctl->out_size)
+	    len = vice_ioctl->out_size;
+	if (len > NNPFS_MSG_MAX_DATASIZE)
+	    len = NNPFS_MSG_MAX_DATASIZE;
+	if (len < 0)
+	    len = 0;
+
+	error = copyout(msg2->msg, vice_ioctl->out, len);
+    }
     return error;
 }
 
 static int
-xfs_debug (struct proc *p,
+xfs_debug (d_thread_t *p,
 	   struct ViceIoctl *vice_ioctl)
 {
     int32_t flags;
@@ -548,7 +608,7 @@ xfs_debug (struct proc *p,
  */
 
 int
-xfs_pioctl_call(struct proc *proc,
+xfs_pioctl_call(d_thread_t *proc,
 		struct sys_pioctl_args *arg,
 		register_t *return_value)
 {
@@ -557,7 +617,7 @@ xfs_pioctl_call(struct proc *proc,
     char *pathptr;
     struct vnode *vp = NULL;
 
-    XFSDEB(XDEBSYS, ("xfs_syscall(%d, %lx, %d, %lx, %d)\n", 
+    NNPFSDEB(XDEBSYS, ("xfs_syscall(%d, %lx, %d, %lx, %d)\n", 
 		     SCARG(arg, operation),
 		     (unsigned long)SCARG(arg, a_pathP),
 		     SCARG(arg, a_opcode),
@@ -588,12 +648,12 @@ xfs_pioctl_call(struct proc *proc,
     case VIOC_FHOPEN :
 	return fhopen_call (proc, &vice_ioctl, vp,
 			    SCARG(arg, a_followSymlinks), return_value);
-    case VIOC_XFSDEBUG :
+    case VIOC_NNPFSDEBUG :
 	if (vp != NULL)
 	    vrele (vp);
 	return xfs_debug (proc, &vice_ioctl);
     default :
-	XFSDEB(XDEBSYS, ("a_opcode = %x\n", SCARG(arg, a_opcode)));
+	NNPFSDEB(XDEBSYS, ("a_opcode = %x\n", SCARG(arg, a_opcode)));
 	return remote_pioctl (proc, arg, &vice_ioctl, vp);
     }
 }

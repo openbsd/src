@@ -31,10 +31,10 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: xfs_attr.h,v 1.5 2002/06/07 04:10:32 hin Exp $ */
+/* $arla: xfs_attr.h,v 1.12 2002/09/07 10:46:15 lha Exp $ */
 
-#ifndef _XFS_ATTR_H
-#define _XFS_ATTR_H
+#ifndef _NNPFS_ATTR_H
+#define _NNPFS_ATTR_H
 
 #define XA_V_NONE       0
 #define XA_V_MODE	(1 <<  0)
@@ -48,15 +48,15 @@
 #define XA_V_FILEID	(1 <<  8)
 #define XA_V_TYPE       (1 <<  9)
 
-#define XFS_FILE_NON 1
-#define XFS_FILE_REG 2
-#define XFS_FILE_DIR 3
-#define XFS_FILE_BLK 4
-#define XFS_FILE_CHR 5
-#define XFS_FILE_LNK 6
-#define XFS_FILE_SOCK 7
-#define XFS_FILE_FIFO 8
-#define XFS_FILE_BAD 9
+#define NNPFS_FILE_NON 1
+#define NNPFS_FILE_REG 2
+#define NNPFS_FILE_DIR 3
+#define NNPFS_FILE_BLK 4
+#define NNPFS_FILE_CHR 5
+#define NNPFS_FILE_LNK 6
+#define NNPFS_FILE_SOCK 7
+#define NNPFS_FILE_FIFO 8
+#define NNPFS_FILE_BAD 9
 
 #define XA_CLEAR(xa_p) \
         ((xa_p)->valid = XA_V_NONE)
@@ -104,23 +104,23 @@
 	(((xa_p)->valid) & XA_V_TYPE)
 
 struct xfs_attr {
-    u_int32_t		valid;
-    u_int32_t		xa_mode;
+    uint32_t		valid;
+    uint32_t		xa_mode;
 
-    u_int32_t		xa_nlink;
-    u_int32_t		xa_size;
+    uint32_t		xa_nlink;
+    uint32_t		xa_size;
 
-    u_int32_t		xa_uid;
-    u_int32_t		xa_gid;
+    uint32_t		xa_uid;
+    uint32_t		xa_gid;
 
-    u_int32_t		xa_atime;
-    u_int32_t		xa_mtime;
+    uint32_t		xa_atime;
+    uint32_t		xa_mtime;
 
-    u_int32_t		xa_ctime;
-    u_int32_t		xa_fileid;
+    uint32_t		xa_ctime;
+    uint32_t		xa_fileid;
 
-    u_int32_t           xa_type;
-    u_int32_t           pad1;
+    uint32_t           xa_type;
+    uint32_t           pad1;
 };
 
-#endif /* _XFS_ATTR_H */
+#endif /* _NNPFS_ATTR_H */

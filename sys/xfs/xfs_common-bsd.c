@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 1996, 1997, 1998, 1999 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
@@ -35,42 +35,45 @@
 #include <xfs/xfs_common.h>
 #include <xfs/xfs_deb.h>
 
-RCSID("$Id: xfs_common-bsd.c,v 1.4 2002/06/07 04:10:32 hin Exp $");
+RCSID("$arla: xfs_common-bsd.c,v 1.25 2002/12/18 16:32:03 lha Exp $");
 
 #ifdef MALLOC_DEFINE
-MALLOC_DEFINE(M_XFS, "xfs", "xfs buffer");
+MALLOC_DEFINE(M_NNPFS, "xfs-misc", "xfs misc");
+MALLOC_DEFINE(M_NNPFS_NODE, "xfs-node", "xfs node");
+MALLOC_DEFINE(M_NNPFS_LINK, "xfs-link", "xfs link");
+MALLOC_DEFINE(M_NNPFS_MSG, "xfs-msg", "xfs msg");
 #endif
 
-#ifdef XFS_DEBUG
+#ifdef NNPFS_DEBUG
 static u_int xfs_allocs;
 static u_int xfs_frees;
 
 void *
-xfs_alloc(u_int size)
+xfs_alloc(u_int size, xfs_malloc_type type)
 {
     void *ret;
 
     xfs_allocs++;
-    XFSDEB(XDEBMEM, ("xfs_alloc: xfs_allocs - xfs_frees %d\n", 
+    NNPFSDEB(XDEBMEM, ("xfs_alloc: xfs_allocs - xfs_frees %d\n", 
 		     xfs_allocs - xfs_frees));
 
-    MALLOC(ret, void *, size, M_XFS, M_WAITOK);
+    MALLOC(ret, void *, size, type, M_WAITOK);
     return ret;
 }
 
 void
-xfs_free(void *ptr, u_int size)
+xfs_free(void *ptr, u_int size, xfs_malloc_type type)
 {
     xfs_frees++;
-    FREE(ptr, M_XFS);
+    FREE(ptr, type);
 }
 
-#endif /* XFS_DEBUG */
+#endif /* NNPFS_DEBUG */
 
 int
-xfs_suser(struct proc *p)
+xfs_suser(d_thread_t *p)
 {
-#ifdef HAVE_TWO_ARGUMENT_SUSER
+#if defined(HAVE_TWO_ARGUMENT_SUSER)
     return suser (xfs_proc_to_cred(p), NULL);
 #else
     return suser (p);

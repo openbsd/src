@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 1996, 1997, 1998, 1999 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: xfs_vfsops.h,v 1.4 2002/06/07 04:10:32 hin Exp $ */
+/* $arla: xfs_vfsops.h,v 1.17 2003/06/02 18:27:10 lha Exp $ */
 
 #ifndef _xfs_vfsops_h
 #define _xfs_vfsops_h
@@ -39,9 +39,16 @@
 int
 xfs_mount_common(struct mount *mp,
 		 const char *user_path,
-		 caddr_t user_data,
+		 void *user_data,
 		 struct nameidata *ndp,
-		 struct proc *p);
+		 d_thread_t *p);
+
+int
+xfs_mount_common_sys(struct mount *mp,
+		     const char *path,
+		     void *data,
+		     struct nameidata *ndp,
+		     d_thread_t *p);
 
 int
 xfs_unmount_common(struct mount *mp, int mntflags);
@@ -49,20 +56,20 @@ xfs_unmount_common(struct mount *mp, int mntflags);
 int
 xfs_root_common(struct mount *mp,
 		struct vnode **vpp,
-		struct proc *proc,
+		d_thread_t *proc,
 		struct ucred *cred);
 
 int
-xfs_fhlookup (struct proc *proc,
+xfs_fhlookup (d_thread_t *proc,
 	      struct xfs_fhandle_t *fhp,
 	      struct vnode **vpp);
 
 int
-xfs_fhopen (struct proc *proc,
+xfs_fhopen (d_thread_t *proc,
 	    struct xfs_fhandle_t *fhp,
 	    int flags,
 	    register_t *retval);
 
-int make_dead_vnode(struct mount *mp, struct vnode **vpp);
+int xfs_make_dead_vnode(struct mount *mp, struct vnode **vpp);
 
 #endif				       /* _xfs_vfsops_h */

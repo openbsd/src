@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
@@ -31,39 +31,32 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: xfs_vfsops-bsd.h,v 1.6 2002/06/07 04:10:32 hin Exp $ */
+/* $arla: xfs_vfsops-bsd.h,v 1.14 2002/09/07 10:46:09 lha Exp $ */
 
 #ifndef _xfs_vfsops_bsd_h
 #define _xfs_vfsops_bsd_h
 
 int
-xfs_mount(struct mount * mp,
-	  const char *user_path,
-#ifdef __OpenBSD__
-	  void *user_data,
-#else
-	  caddr_t user_data,
-#endif
-	  struct nameidata * ndp,
-	  struct proc * p);
+xfs_mount_caddr(struct mount *mp, const char *user_path, caddr_t user_data,
+		struct nameidata *ndp, d_thread_t *p);
 
 int
-xfs_start(struct mount * mp, int flags, struct proc * p);
+xfs_start(struct mount * mp, int flags, d_thread_t * p);
 
 int
-xfs_unmount(struct mount * mp, int mntflags, struct proc *p);
+xfs_unmount(struct mount * mp, int mntflags, d_thread_t *p);
 
 int
 xfs_root(struct mount *mp, struct vnode **vpp);
 
 int
-xfs_quotactl(struct mount *mp, int cmd, uid_t uid, caddr_t arg, struct proc *p);
+xfs_quotactl(struct mount *mp, int cmd, uid_t uid, caddr_t arg, d_thread_t *p);
 
 int
-xfs_statfs(struct mount *mp, struct statfs *sbp, struct proc *p);
+xfs_statfs(struct mount *mp, struct statfs *sbp, d_thread_t *p);
 
 int
-xfs_sync(struct mount *mp, int waitfor, struct ucred *cred, struct proc *p);
+xfs_sync(struct mount *mp, int waitfor, struct ucred *cred, d_thread_t *p);
 
 int
 xfs_vget(struct mount * mp,

@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: xfs_deb.h,v 1.6 2002/06/07 04:10:32 hin Exp $ */
+/* $arla: xfs_deb.h,v 1.11 2002/09/07 10:45:59 lha Exp $ */
 
 #ifndef _xfs_deb_h
 #define _xfs_deb_h
@@ -51,10 +51,10 @@
 
 extern unsigned int xfsdeb;
 
-#ifdef XFS_DEBUG
-#define XFSDEB(mask, args) do { if (mask&xfsdeb) printf args; } while (0)
+#ifdef NNPFS_DEBUG
+#define NNPFSDEB(mask, args) do { if (mask&xfsdeb) printf args; } while (0)
 #else
-#define XFSDEB(mask, args) do { ; } while (0)
+#define NNPFSDEB(mask, args) do { ; } while (0)
 #endif
 
 #endif				       /* _xfs_deb_h */

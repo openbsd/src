@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2003 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
@@ -38,24 +38,24 @@
 #include <xfs/xfs_dev.h>
 #include <xfs/xfs_deb.h>
 
-RCSID("$Id: xfs_dev-bsd.c,v 1.4 2002/06/07 04:10:32 hin Exp $");
+RCSID("$arla: xfs_dev-bsd.c,v 1.35 2003/04/01 14:04:11 lha Exp $");
 
 int
-xfs_devopen(dev_t dev, int flag, int devtype, struct proc *proc)
+xfs_devopen(dev_t dev, int flag, int devtype, d_thread_t *proc)
 {
-    XFSDEB(XDEBDEV, ("xfsopen dev = %d.%d, flag = %d, devtype = %d\n", 
+    NNPFSDEB(XDEBDEV, ("xfsopen dev = %d.%d, flag = %d, devtype = %d\n", 
 		     major(dev), minor(dev), flag, devtype));
-    return xfs_devopen_common(dev, proc);
+    return xfs_devopen_common(dev);
 }
 
 int
-xfs_devclose(dev_t dev, int flag, int devtype, struct proc *p)
+xfs_devclose(dev_t dev, int flag, int devtype, d_thread_t *p)
 {
-#ifdef XFS_DEBUG
+#ifdef NNPFS_DEBUG
     char devname[64];
 #endif
 
-    XFSDEB(XDEBDEV, ("xfs_devclose dev = %s, flag = 0x%x\n",
+    NNPFSDEB(XDEBDEV, ("xfs_devclose dev = %s, flag = 0x%x\n",
 		     xfs_devtoname_r(dev, devname, sizeof(devname)),
 		     flag));
     return xfs_devclose_common(dev, p);
@@ -70,9 +70,9 @@ xfs_devioctl(dev_t dev,
 	     u_long cmd,
 	     caddr_t data,
 	     int flags,
-	     struct proc *p)
+	     d_thread_t *p)
 {
-    XFSDEB(XDEBDEV, ("xfs_devioctl dev = %d.%d, cmd = %lu, "
+    NNPFSDEB(XDEBDEV, ("xfs_devioctl dev = %d.%d, cmd = %lu, "
 		     "data = %lx, flags = %x\n", 
 		     major(dev), minor(dev), (unsigned long)cmd,
 		     (unsigned long)data, flags));
@@ -80,7 +80,7 @@ xfs_devioctl(dev_t dev,
 }
 
 static int
-xfs_realselect(dev_t dev, struct proc *p, void *wql)
+xfs_realselect(dev_t dev, d_thread_t *p, void *wql)
 {
     struct xfs_channel *chan = &xfs_channel[minor(dev)];
 
@@ -98,11 +98,13 @@ xfs_realselect(dev_t dev, struct proc *p, void *wql)
 
 #ifdef HAVE_VOP_POLL
 static int
-xfs_devpoll(dev_t dev, int events, struct proc * p)
+xfs_devpoll(dev_t dev, int events, d_thread_t * p)
 {
+#ifdef NNPFS_DEBUG
     char devname[64];
+#endif
 
-    XFSDEB(XDEBDEV, ("xfs_devpoll dev = %s, events = 0x%x\n",
+    NNPFSDEB(XDEBDEV, ("xfs_devpoll dev = %s, events = 0x%x\n",
 		     xfs_devtoname_r (dev, devname, sizeof(devname)),
 		     events));
 
@@ -119,7 +121,7 @@ xfs_devpoll(dev_t dev, int events, struct proc * p)
 int
 xfs_devselect(dev_t dev, int which, void *wql, struct proc * p)
 {
-    XFSDEB(XDEBDEV, ("xfs_devselect dev = %d, which = %d\n", dev, which));
+    NNPFSDEB(XDEBDEV, ("xfs_devselect dev = %d, which = %d\n", dev, which));
 
     if (which != FREAD)
 	return 0;
@@ -128,9 +130,9 @@ xfs_devselect(dev_t dev, int which, void *wql, struct proc * p)
 }
 #else
 int
-xfs_devselect(dev_t dev, int which, struct proc * p)
+xfs_devselect(dev_t dev, int which, d_thread_t * p)
 {
-    XFSDEB(XDEBDEV, ("xfs_devselect dev = %d, which = %d\n", dev, which));
+    NNPFSDEB(XDEBDEV, ("xfs_devselect dev = %d, which = %d\n", dev, which));
 
     if (which != FREAD)
 	return 0;
@@ -180,49 +182,53 @@ struct cdevsw xfs_dev = {
 
 #elif defined(__FreeBSD__)
 struct cdevsw xfs_dev = {
-    xfs_devopen,
-    xfs_devclose,
-    xfs_devread,
-    xfs_devwrite,
-    xfs_devioctl,
+    d_name: "xfs",
+    d_open: xfs_devopen,
+    d_close: xfs_devclose,
+    d_read: xfs_devread,
+    d_write: xfs_devwrite,
+    d_ioctl: xfs_devioctl,
+    d_mmap: nommap,
+    d_strategy: nostrategy,
+    d_flags: 0,
 #ifdef HAVE_STRUCT_CDEVSW_D_STOP
-    nostop,
+    d_stop: nostop,
 #endif
-#if defined(HAVE_STRUCT_CDEVSW_D_BOGORESET) \
- || defined(HAVE_STRUCT_CDEVSW_D_RESET)
-    noreset,
+#ifdef HAVE_STRUCT_CDEVSW_D_RESET
+    d_reset: noreset,
+#endif
+#ifdef HAVE_STRUCT_CDEVSW_D_BOGORESET
+    d_bogoreset: noreset,
 #endif
 #ifdef HAVE_STRUCT_CDEVSW_D_DEVTOTTY
-    nodevtotty,
+    d_devtotty: nodevtotty,
 #endif
 #if defined(HAVE_VOP_SELECT)
-    xfs_devselect,
+    d_select: xfs_devselect,
 #elif defined(HAVE_VOP_POLL)
-    xfs_devpoll,
+    d_poll: xfs_devpoll,
 #else
 #error select or poll: that is the question
 #endif
-    nommap,
-    nostrategy,
-    "xfs",
 #ifdef HAVE_STRUCT_CDEVSW_D_BOGOPARMS
-    noparms,			/* d_bogoparms */
+    d_bogoparms: noparms,
 #endif
 #ifdef HAVE_STRUCT_CDEVSW_D_SPARE
-    NULL,			/* d_spare */
+    d_spare: NULL,
 #endif
-    128,			/* XXX */
-    nodump,
-    nopsize,
-    0,				/* flags */
+    d_maj: 128,			/* XXX */
+    d_dump: nodump,
+#ifdef HAVE_STRUCT_CDEVSW_D_PSIZE
+    d_psize: nopsize,
+#endif
 #ifdef HAVE_STRUCT_CDEVSW_D_MAXIO
-    0,				/* maxio */
+    d_maxio: 0,
 #endif
 #ifdef HAVE_STRUCT_CDEVSW_D_BMAJ
 #ifdef NOUDEV
-    NOUDEV			/* bmaj */
+    d_bmaj: NOUDEV
 #else
-    NODEV			/* bmaj */
+    d_bmaj: NODEV
 #endif
 #endif /* HAVE_STRUCT_CDEVSW_D_BMAJ */
 };
@@ -250,7 +256,7 @@ static struct cdevsw xfs_dev = {
 extern int xfs_dev_major;
 #include <miscfs/devfs/devfs.h>
 
-static void *devfs_handles[NXFS];
+static void *devfs_handles[NNNPFS];
 
 #endif
 
@@ -262,22 +268,22 @@ xfs_install_device(void)
 #if defined(__APPLE__)
     xfs_dev_major = cdevsw_add(-1, &xfs_dev);
     if (xfs_dev_major == -1) {
-	XFSDEB(XDEBDEV, ("failed installing cdev\n"));
+	NNPFSDEB(XDEBDEV, ("failed installing cdev\n"));
 	return ENFILE;
     }
 
-    for (i = 0; i < NXFS; ++i)
+    for (i = 0; i < NNNPFS; ++i)
 	devfs_handles[i] = devfs_make_node(makedev(xfs_dev_major, i),
 					   DEVFS_CHAR,
 					   UID_ROOT, GID_WHEEL, 0600,
 					   "xfs%d", i);
 
-    XFSDEB(XDEBDEV, ("done installing cdev !\n"));
-    XFSDEB(XDEBDEV, ("Char device number %d\n", xfs_dev_major));
+    NNPFSDEB(XDEBDEV, ("done installing cdev !\n"));
+    NNPFSDEB(XDEBDEV, ("Char device number %d\n", xfs_dev_major));
 #endif
 
-    for (i = 0; i < NXFS; i++) {
-	XFSDEB(XDEBDEV, ("before initq(messageq and sleepq)\n"));
+    for (i = 0; i < NNNPFS; i++) {
+	NNPFSDEB(XDEBDEV, ("before initq(messageq and sleepq)\n"));
 	xfs_initq(&xfs_channel[i].messageq);
 	xfs_initq(&xfs_channel[i].sleepq);
 	xfs_channel[i].status = 0;
@@ -292,27 +298,27 @@ xfs_uninstall_device(void)
     struct xfs_channel *chan;
     int ret = 0;
 
-    for (i = 0; i < NXFS; i++) {
+    for (i = 0; i < NNNPFS; i++) {
 	chan = &xfs_channel[i];
 	if (chan->status & CHANNEL_OPENED)
 	    xfs_devclose(makedev(0, i), 0, 0, NULL);
     }
 
 #if defined(__APPLE__)
-    for (i = 0; i < NXFS; ++i)
+    for (i = 0; i < NNNPFS; ++i)
 	devfs_remove (devfs_handles[i]);
 
     ret = cdevsw_remove(xfs_dev_major, &xfs_dev);
     if (ret == -1) {
-	XFSDEB(XDEBLKM, ("xfs_uninstall_device error %d\n", ret));
+	NNPFSDEB(XDEBLKM, ("xfs_uninstall_device error %d\n", ret));
     } else if (ret == xfs_dev_major) {
 	ret = 0;
     } else {
-	XFSDEB(XDEBLKM, ("xfs_uninstall_device unexpected error error %d\n",
+	NNPFSDEB(XDEBLKM, ("xfs_uninstall_device unexpected error error %d\n",
 			 ret));
     }
 #endif
-    XFSDEB(XDEBLKM, ("xfs_uninstall_device error %d\n", ret));
+    NNPFSDEB(XDEBLKM, ("xfs_uninstall_device error %d\n", ret));
     return ret;
 }
 
@@ -328,6 +334,6 @@ xfs_is_xfs_dev(dev_t dev)
 {
     return major(dev) <= nchrdev &&
 	cdevsw[major(dev)].d_open == xfs_devopen &&
-	minor(dev) >= 0 && minor(dev) < NXFS;
+	minor(dev) >= 0 && minor(dev) < NNNPFS;
 }
 #endif

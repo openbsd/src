@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
@@ -33,10 +33,10 @@
 
 #include <xfs/xfs_locl.h>
 
-RCSID("$Id: xfs_vfsops-bsd.c,v 1.8 2002/06/07 04:10:32 hin Exp $");
+RCSID("$arla: xfs_vfsops-bsd.c,v 1.72 2002/12/19 10:30:17 lha Exp $");
 
 /*
- * XFS vfs operations.
+ * NNPFS vfs operations.
  */
 
 #include <xfs/xfs_common.h>
@@ -49,32 +49,28 @@ RCSID("$Id: xfs_vfsops-bsd.c,v 1.8 2002/06/07 04:10:32 hin Exp $");
 #include <xfs/xfs_vnodeops.h>
 
 int
-xfs_mount(struct mount *mp,
-	  const char *user_path,
-#ifdef __OpenBSD__
-	  void *user_data,
-#else
-	  caddr_t user_data,
-#endif
-	  struct nameidata *ndp,
-	  struct proc *p)
+xfs_mount_caddr(struct mount *mp,
+		const char *user_path,
+		caddr_t user_data,
+		struct nameidata *ndp,
+		d_thread_t *p)
 {
     return xfs_mount_common(mp, user_path, user_data, ndp, p);
 }
 
 int
-xfs_start(struct mount * mp, int flags, struct proc * p)
+xfs_start(struct mount * mp, int flags, d_thread_t * p)
 {
-    XFSDEB(XDEBVFOPS, ("xfs_start mp = %lx, flags = %d, proc = %lx\n", 
+    NNPFSDEB(XDEBVFOPS, ("xfs_start mp = %lx, flags = %d, proc = %lx\n", 
 		       (unsigned long)mp, flags, (unsigned long)p));
     return 0;
 }
 
 
 int
-xfs_unmount(struct mount * mp, int mntflags, struct proc *p)
+xfs_unmount(struct mount * mp, int mntflags, d_thread_t *p)
 {
-    XFSDEB(XDEBVFOPS, ("xfs_umount: mp = %lx, mntflags = %d, proc = %lx\n", 
+    NNPFSDEB(XDEBVFOPS, ("xfs_umount: mp = %lx, mntflags = %d, proc = %lx\n", 
 		       (unsigned long)mp, mntflags, (unsigned long)p));
     return xfs_unmount_common(mp, mntflags);
 }
@@ -82,14 +78,18 @@ xfs_unmount(struct mount * mp, int mntflags, struct proc *p)
 int
 xfs_root(struct mount *mp, struct vnode **vpp)
 {
-    XFSDEB(XDEBVFOPS, ("xfs_root mp = %lx\n", (unsigned long)mp));
+    NNPFSDEB(XDEBVFOPS, ("xfs_root mp = %lx\n", (unsigned long)mp));
+#ifdef HAVE_FREEBSD_THREAD
+    return xfs_root_common(mp, vpp, xfs_curthread(), xfs_curthread()->td_proc->p_ucred);
+#else
     return xfs_root_common(mp, vpp, xfs_curproc(), xfs_curproc()->p_ucred);
+#endif
 }
 
 int
-xfs_quotactl(struct mount *mp, int cmd, uid_t uid, caddr_t arg, struct proc *p)
+xfs_quotactl(struct mount *mp, int cmd, uid_t uid, caddr_t arg, d_thread_t *p)
 {
-    XFSDEB(XDEBVFOPS, ("xfs_quotactl: mp = %lx, cmd = %d, uid = %u, "
+    NNPFSDEB(XDEBVFOPS, ("xfs_quotactl: mp = %lx, cmd = %d, uid = %u, "
 		       "arg = %lx, proc = %lx\n", 
 		       (unsigned long)mp, cmd, uid,
 		       (unsigned long)arg, (unsigned long)p));
@@ -97,9 +97,9 @@ xfs_quotactl(struct mount *mp, int cmd, uid_t uid, caddr_t arg, struct proc *p)
 }
 
 int
-xfs_statfs(struct mount *mp, struct statfs *sbp, struct proc *p)
+xfs_statfs(struct mount *mp, struct statfs *sbp, d_thread_t *p)
 {
-    XFSDEB(XDEBVFOPS, ("xfs_statfs: mp = %lx, sbp = %lx, proc = %lx\n", 
+    NNPFSDEB(XDEBVFOPS, ("xfs_statfs: mp = %lx, sbp = %lx, proc = %lx\n", 
 		       (unsigned long)mp,
 		       (unsigned long)sbp,
 		       (unsigned long)p));
@@ -108,9 +108,9 @@ xfs_statfs(struct mount *mp, struct statfs *sbp, struct proc *p)
 }
 
 int
-xfs_sync(struct mount *mp, int waitfor, struct ucred *cred, struct proc *p)
+xfs_sync(struct mount *mp, int waitfor, struct ucred *cred, d_thread_t *p)
 {
-    XFSDEB(XDEBVFOPS, ("xfs_sync: mp = %lx, waitfor = %d, "
+    NNPFSDEB(XDEBVFOPS, ("xfs_sync: mp = %lx, waitfor = %d, "
 		       "cred = %lx, proc = %lx\n",
 		       (unsigned long)mp,
 		       waitfor,
@@ -128,53 +128,35 @@ xfs_vget(struct mount * mp,
 #endif
 	 struct vnode ** vpp)
 {
-    XFSDEB(XDEBVFOPS, ("xfs_vget\n"));
+    NNPFSDEB(XDEBVFOPS, ("xfs_vget\n"));
     return EOPNOTSUPP;
 }
 
-#ifdef HAVE_STRUCT_VFSOPS_VFS_CHECKEXP
-int
-xfs_fhtovp(struct mount * mp,
+static int
+common_fhtovp(struct mount * mp,
 	   struct fid * fhp,
 	   struct vnode ** vpp)
-#else
-int
-xfs_fhtovp(struct mount * mp,
-	   struct fid * fhp,
-	   struct mbuf * nam,
-	   struct vnode ** vpp,
-	   int *exflagsp,
-	   struct ucred ** credanonp)
-#endif
 {
 #ifdef ARLA_KNFS
-    static struct ucred fhtovpcred;
     struct netcred *np = NULL;
     struct xfs_node *xn;
     struct vnode *vp;
     xfs_handle handle;
     int error;
 
-    XFSDEB(XDEBVFOPS, ("xfs_fhtovp\n"));
+    NNPFSDEB(XDEBVFOPS, ("xfs_fhtovp\n"));
 
     if (fhp->fid_len != 16) {
 	printf("xfs_fhtovp: *PANIC* got a invalid length of a fid\n");
 	return EINVAL;
     }
 
-    /* XXX: Should see if we is exported to this client */
-#if 0
-    np = vfs_export_lookup(mp, &ump->um_export, nam);
-    if (np == NULL)
-	return EACCES;
-#endif
-
     memcpy(&handle, fhp->fid_data, sizeof(handle));
-    XFSDEB(XDEBVFOPS, ("xfs_fhtovp: fid: %d.%d.%d.%d\n", 
+    NNPFSDEB(XDEBVFOPS, ("xfs_fhtovp: fid: %d.%d.%d.%d\n", 
 		       handle.a, handle.d, handle.c, handle.d));
 
-    XFSDEB(XDEBVFOPS, ("xfs_fhtovp: xfs_vnode_find\n"));
-    xn = xfs_node_find(&xfs[0], &handle); /* XXX: 0 */
+    NNPFSDEB(XDEBVFOPS, ("xfs_fhtovp: xfs_vnode_find\n"));
+    xn = xfs_node_find(&xfs[0].nodehead, &handle);
 
     if (xn == NULL) {
 	struct xfs_message_getattr msg;
@@ -197,33 +179,72 @@ xfs_fhtovp(struct mount * mp,
 	error = 0;
     }
 
-    if (error == 0) {
-	fhtovpcred.cr_uid = 0;
-	fhtovpcred.cr_gid = 0;
-	fhtovpcred.cr_ngroups = 0;
-      
-	*vpp = vp;
-#ifdef MNT_EXPUBLIC
-	*exflagsp = MNT_EXPUBLIC;
-#else
-	*exflagsp = 0;
-#endif
-	*credanonp = &fhtovpcred;
+    *vpp = vp;
 
-	XFSDEB(XDEBVFOPS, ("xfs_fhtovp done\n"));
+    if (error == 0) {
+	NNPFSDEB(XDEBVFOPS, ("xfs_fhtovp done\n"));
 
 	/* 
 	 * XXX tell arla about this node is hold by nfsd.
 	 * There need to be code in xfs_write too.
 	 */
     } else
-	XFSDEB(XDEBVFOPS, ("xfs_fhtovp failed (%d)\n", error));
+	NNPFSDEB(XDEBVFOPS, ("xfs_fhtovp failed (%d)\n", error));
 
     return error;
-#else
+#else /* !ARLA_KNFS */
     return EOPNOTSUPP;
-#endif
+#endif /* !ARLA_KNFS */
 }
+
+/* new style fhtovp */
+
+#ifdef HAVE_STRUCT_VFSOPS_VFS_CHECKEXP
+int
+xfs_fhtovp(struct mount * mp,
+	   struct fid * fhp,
+	   struct vnode ** vpp)
+{
+    return common_fhtovp (mp, fhp, vpp);
+}
+
+#else /* !HAVE_STRUCT_VFSOPS_VFS_CHECKEXP */
+
+/* old style fhtovp */
+
+int
+xfs_fhtovp(struct mount * mp,
+	   struct fid * fhp,
+	   struct mbuf * nam,
+	   struct vnode ** vpp,
+	   int *exflagsp,
+	   struct ucred ** credanonp)
+{
+    static struct ucred fhtovpcred;
+    int error;
+
+    /* XXX: Should see if we is exported to this client */
+#if 0
+    np = vfs_export_lookup(mp, &ump->um_export, nam);
+    if (np == NULL)
+       return EACCES;
+#endif
+    error = common_fhtovp(mp, fhp, vpp);
+    if (error == 0) {
+       fhtovpcred.cr_uid = 0;
+       fhtovpcred.cr_gid = 0;
+       fhtovpcred.cr_ngroups = 0;
+      
+#ifdef MNT_EXPUBLIC
+       *exflagsp = MNT_EXPUBLIC;
+#else
+       *exflagsp = 0;
+#endif
+       *credanonp = &fhtovpcred;
+    }
+    return error;
+}
+#endif /* !HAVE_STRUCT_VFSOPS_VFS_CHECKEXP */
 
 int
 xfs_checkexp (struct mount *mp,
@@ -235,8 +256,16 @@ xfs_checkexp (struct mount *mp,
 	      int *exflagsp,
 	      struct ucred **credanonp)
 {
-    XFSDEB(XDEBVFOPS, ("xfs_checkexp\n"));
-    return EOPNOTSUPP;
+    struct netcred *np;
+
+    NNPFSDEB(XDEBVFOPS, ("xfs_checkexp\n"));
+
+#if 0
+    np = vfs_export_lookup(mp, &ump->um_export, nam);
+    if (np == NULL)
+	return EACCES;
+#endif
+    return 0;
 }
 
 int
@@ -245,7 +274,7 @@ xfs_vptofh(struct vnode * vp,
 {
 #ifdef ARLA_KNFS
     struct xfs_node *xn;
-    XFSDEB(XDEBVFOPS, ("xfs_vptofh\n"));
+    NNPFSDEB(XDEBVFOPS, ("xfs_vptofh\n"));
 
     if (MAXFIDSZ < 16)
 	return EOPNOTSUPP;
@@ -260,7 +289,7 @@ xfs_vptofh(struct vnode * vp,
 
     return 0;
 #else
-    XFSDEB(XDEBVFOPS, ("xfs_vptofh\n"));
+    NNPFSDEB(XDEBVFOPS, ("xfs_vptofh\n"));
     return EOPNOTSUPP;
 #endif
 }
@@ -293,7 +322,7 @@ xfs_dead_lookup(struct vop_lookup_args * ap)
  */
 
 int
-xfs_fhlookup (struct proc *proc,
+xfs_fhlookup (d_thread_t *proc,
 	      struct xfs_fhandle_t *fhp,
 	      struct vnode **vpp)
 {
@@ -305,7 +334,7 @@ xfs_fhlookup (struct proc *proc,
     fsid_t fsid;
     struct xfs_fh_args *fh_args = (struct xfs_fh_args *)fhp->fhdata;
 
-    XFSDEB(XDEBVFOPS, ("xfs_fhlookup (xfs)\n"));
+    NNPFSDEB(XDEBVFOPS, ("xfs_fhlookup (xfs)\n"));
 
     error = xfs_suser (proc);
     if (error)
@@ -322,7 +351,7 @@ xfs_fhlookup (struct proc *proc,
 
 #ifdef __APPLE__
     {
-	u_int32_t ino = SCARG(fh_args, fileid);
+	uint32_t ino = SCARG(fh_args, fileid);
 	error = VFS_VGET(mp, &ino, vpp);
     }
 #else
@@ -349,7 +378,7 @@ xfs_fhlookup (struct proc *proc,
     {
 	fhandle_t *fh = (fhandle_t *) fhp;
 
-	XFSDEB(XDEBVFOPS, ("xfs_fhlookup (native)\n"));
+	NNPFSDEB(XDEBVFOPS, ("xfs_fhlookup (native)\n"));
 
 	mp = xfs_vfs_getvfs (&fh->fh_fsid);
 	if (mp == NULL)
@@ -364,7 +393,11 @@ xfs_fhlookup (struct proc *proc,
 
 #ifdef HAVE_KERNEL_VFS_OBJECT_CREATE
     if ((*vpp)->v_type == VREG && (*vpp)->v_object == NULL)
+#ifdef HAVE_FREEBSD_THREAD
+	xfs_vfs_object_create (*vpp, proc, proc->td_proc->p_ucred);
+#else
 	xfs_vfs_object_create (*vpp, proc, proc->p_ucred);
+#endif
 #elif __APPLE__
     if ((*vpp)->v_type == VREG && (!UBCINFOEXISTS(*vpp))) {
         ubc_info_init(*vpp);
@@ -385,30 +418,32 @@ xfs_fhlookup (struct proc *proc,
 extern struct fileops vnops;	/* sometimes declared in <file.h> */
 
 int
-xfs_fhopen (struct proc *proc,
+xfs_fhopen (d_thread_t *proc,
 	    struct xfs_fhandle_t *fhp,
 	    int user_flags,
 	    register_t *retval)
 {
     int error;
     struct vnode *vp;
+#ifdef HAVE_FREEBSD_THREAD
+    struct ucred *cred = proc->td_proc->p_ucred;
+#else
     struct ucred *cred = proc->p_ucred;
+#endif
     int flags = FFLAGS(user_flags);
     int index;
     struct file *fp;
     int mode;
     struct xfs_fhandle_t fh;
 
-    XFSDEB(XDEBVFOPS, ("xfs_fhopen: flags = %d\n", user_flags));
-
-    panic("Pjäxa");
+    NNPFSDEB(XDEBVFOPS, ("xfs_fhopen: flags = %d\n", user_flags));
 
     error = copyin (fhp, &fh, sizeof(fh));
     if (error)
 	return error;
 
     error = xfs_fhlookup (proc, &fh, &vp);
-    XFSDEB(XDEBVFOPS, ("xfs_fhlookup returned %d\n", error));
+    NNPFSDEB(XDEBVFOPS, ("xfs_fhlookup returned %d\n", error));
     if (error)
 	return error;
 
@@ -421,7 +456,7 @@ xfs_fhopen (struct proc *proc,
 	goto out;
     default :
 	error = EOPNOTSUPP;
-	break;
+	goto out;
     }
 
     mode = 0;
@@ -434,7 +469,7 @@ xfs_fhopen (struct proc *proc,
 	    goto out;
 	default :
 	    error = EOPNOTSUPP;
-	    break;
+	    goto out;
 	}
 
 	error = vn_writechk (vp);
@@ -465,7 +500,11 @@ xfs_fhopen (struct proc *proc,
 
 #if defined(__FreeBSD_version) && __FreeBSD_version >= 300000
     if (vp->v_type == VREG) {
-	error = xfs_vfs_object_create(vp, proc, proc->p_cred->pc_ucred);
+#ifdef HAVE_FREEBSD_THREAD
+	error = xfs_vfs_object_create(vp, proc, proc->td_proc->p_ucred);
+#else
+	error = xfs_vfs_object_create(vp, proc, proc->p_ucred);
+#endif
 	if (error)
 	    goto out;
     }
@@ -485,7 +524,7 @@ xfs_fhopen (struct proc *proc,
 #endif
     return 0;
 out:
-    XFSDEB(XDEBVFOPS, ("xfs_fhopen: error = %d\n", error));
+    NNPFSDEB(XDEBVFOPS, ("xfs_fhopen: error = %d\n", error));
     vput(vp);
     return error;
 }

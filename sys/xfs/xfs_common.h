@@ -31,30 +31,37 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: xfs_common.h,v 1.6 2002/06/07 04:10:32 hin Exp $ */
+/* $arla: xfs_common.h,v 1.19 2002/12/18 12:32:10 lha Exp $ */
 
 #ifndef _xfs_common_h
 #define _xfs_common_h
 
 #if defined(MALLOC_DECLARE)
-MALLOC_DECLARE(M_XFS);
-#elif !defined(M_XFS)
-#define M_XFS M_TEMP
+MALLOC_DECLARE(M_NNPFS);
+MALLOC_DECLARE(M_NNPFS_NODE);
+MALLOC_DECLARE(M_NNPFS_LINK);
+MALLOC_DECLARE(M_NNPFS_MSG);
+#elif !defined(M_NNPFS)
+#define M_NNPFS M_TEMP
+#define M_NNPFS_NODE M_TEMP
+#define M_NNPFS_LINK M_TEMP
+#define M_NNPFS_MSG M_TEMP
 #endif
 
-#ifdef XFS_DEBUG
-void *xfs_alloc(u_int size);
-void xfs_free(void *, u_int size);
+
+#ifdef NNPFS_DEBUG
+void *xfs_alloc(u_int size, xfs_malloc_type type);
+void xfs_free(void *, u_int size, xfs_malloc_type type);
 #else
 #ifdef __osf__
-#define xfs_alloc(a) malloc((a), BUCKETINDEX(a), M_XFS, M_WAITOK)
+#define xfs_alloc(a,t) malloc((a), BUCKETINDEX(a), t, M_WAITOK)
 #else
-#define xfs_alloc(a) malloc((a), M_XFS, M_WAITOK)
+#define xfs_alloc(a,t) malloc((a), t, M_WAITOK)
 #endif
-#define xfs_free(a, size) free(a, M_XFS)
-#endif /* XFS_DEBUG */
+#define xfs_free(a, size,t) free(a, t)
+#endif /* NNPFS_DEBUG */
 
-int xfs_suser(struct proc *p);
+int xfs_suser(d_thread_t *p);
 
 #ifndef HAVE_KERNEL_MEMCPY
 void *

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
@@ -31,12 +31,10 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: xfs_locl.h,v 1.5 2002/06/07 04:10:32 hin Exp $ */
+/* $arla: xfs_locl.h,v 1.72 2003/02/15 16:40:00 lha Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-#else
-#include <xfs/xfs_config.h>
 #endif
 
 #ifndef RCSID
@@ -66,12 +64,12 @@
 #include <vm/vm_ubc.h>
 
 typedef short int16_t;
-typedef unsigned short u_int16_t;
+typedef unsigned short uint16_t;
 typedef int int32_t;
-typedef unsigned int u_int32_t;
+typedef unsigned int uint32_t;
 
 #define VT_AFS VT_ADDON
-#define MOUNT_XFS MOUNT_PC
+#define MOUNT_NNPFS MOUNT_PC
 
 typedef struct nameidata xfs_componentname;
 
@@ -125,9 +123,7 @@ typedef struct componentname xfs_componentname;
 
 #include <sys/types.h>
 #include <sys/param.h>
-#if 0
-#include <sys/ioctl.h>
-#endif
+#include <sys/time.h>
 #include <sys/proc.h>
 #include <sys/filedesc.h>
 #include <sys/kernel.h>
@@ -148,6 +144,13 @@ typedef struct componentname xfs_componentname;
 #ifdef HAVE_SYS_LKM_H
 #include <sys/lkm.h>
 #endif
+#ifdef HAVE_SYS_LOCK_H
+#include <sys/lock.h>
+#endif
+#ifdef HAVE_SYS_MUTEX_H
+#include <sys/mutex.h>
+#endif
+#include <sys/vnode.h>
 #include <sys/errno.h>
 #include <sys/file.h>
 #include <sys/namei.h>
@@ -161,6 +164,9 @@ typedef struct componentname xfs_componentname;
 #ifdef HAVE_SYS_SIGNALVAR_H
 #include <sys/signalvar.h>
 #endif
+#ifdef HAVE_SYS_INTTYPES_H
+#include <sys/inttypes.h>
+#endif
 #include <sys/syscall.h>
 #include <sys/queue.h>
 #include <sys/malloc.h>
@@ -173,6 +179,9 @@ typedef struct componentname xfs_componentname;
 
 #ifdef HAVE_MISCFS_GENFS_GENFS_H
 #include <miscfs/genfs/genfs.h>
+#endif
+#ifdef HAVE_MISCFS_SYNCFS_SYNCFS_H
+#include <miscfs/syncfs/syncfs.h>
 #endif
 #ifndef HAVE_KERNEL_UVM_ONLY
 #ifdef HAVE_VM_VM_H
@@ -191,6 +200,9 @@ typedef struct componentname xfs_componentname;
 #ifdef HAVE_UVM_UVM_EXTERN_H
 #include <uvm/uvm_extern.h>
 #endif
+#ifdef HAVE_VM_UMA_H
+#include <vm/uma.h>
+#endif
 
 #if defined(__APPLE__)
 #include <machine/machine_routines.h>
@@ -202,17 +214,6 @@ void cache_enter(struct vnode *, struct vnode *, struct componentname *);
 void cache_purgevfs(struct mount *);
 #endif
 
-#define xfs_uio_to_proc(uiop) ((uiop)->uio_procp)
-#define xfs_cnp_to_proc(cnp) ((cnp)->cn_proc)
-#define xfs_proc_to_cred(p) ((p)->p_ucred)
-#define xfs_proc_to_euid(p) ((p)->p_ucred->cr_uid)
-
-#ifdef __APPLE__
-#define xfs_curproc() (current_proc())
-#else
-#define xfs_curproc() (curproc)
-#endif
-
 #define xfs_vop_read(t, uio, ioflag, cred, error) (error) = VOP_READ((t), (uio), (ioflag), (cred))
 #define xfs_vop_write(t, uio, ioflag, cred, error) (error) = VOP_WRITE((t), (uio), (ioflag), (cred))
 #define xfs_vop_getattr(t, attr, cred, proc, error) (error) = VOP_GETATTR((t), (attr), (cred), (proc))
@@ -222,14 +223,108 @@ typedef u_quad_t va_size_t;
 
 #endif /* !__osf__ */
 
+#ifdef __FreeBSD_version
+#if __FreeBSD_version < 400000
+# error This version is unsupported
+#elif __FreeBSD_version < 440001 || (__FreeBSD_version >= 500000 && __FreeBSD_version < 500023)
+typedef struct proc d_thread_t;
+#elif __FreeBSD_version == 500023
+#   define HAVE_FREEBSD_THREAD
+typedef struct thread d_thread_t;
+#elif __FreeBSD_version >= 500024
+#   define HAVE_FREEBSD_THREAD
+#endif
+typedef d_thread_t syscall_d_thread_t;
+#define syscall_thread_to_thread(x) (x)
+#else /* !__FreeBSD_version */
+#if defined(__NetBSD__) && __NetBSD_Version__ >= 106130000
+typedef struct lwp syscall_d_thread_t;
+#define syscall_thread_to_thread(x) ((x)->l_proc)
+#else
+typedef struct proc syscall_d_thread_t;
+#define syscall_thread_to_thread(x) (x)
+#endif
+typedef struct proc d_thread_t;
+#endif /* !__FreeBSD_version */
+
+#ifdef VV_ROOT
+#define NNPFS_MAKE_VROOT(v) ((v)->v_vflag |= VV_ROOT) /* FreeBSD 5 */
+#else
+#define NNPFS_MAKE_VROOT(v) ((v)->v_flag |= VROOT)
+#endif
+
+#if defined(__NetBSD__) && __NetBSD_Version__ >= 105280000
+#include <miscfs/genfs/genfs.h>
+#include <miscfs/genfs/genfs_node.h>
+
+struct genfs_ops xfs_genfsops;
+#endif
+
+
+#if defined(HAVE_FREEBSD_THREAD)
+#define xfs_uio_to_thread(uiop) ((uiop)->uio_td)
+#define xfs_cnp_to_thread(cnp) ((cnp)->cn_thread)
+#define xfs_thread_to_cred(td) ((td)->td_proc->p_ucred)
+#define xfs_thread_to_euid(td) ((td)->td_proc->p_ucred->cr_uid)
+#else
+#define xfs_uio_to_proc(uiop) ((uiop)->uio_procp)
+#define xfs_cnp_to_proc(cnp) ((cnp)->cn_proc)
+#define xfs_proc_to_cred(p) ((p)->p_ucred)
+#define xfs_proc_to_euid(p) ((p)->p_ucred->cr_uid)
+#endif
+
+#if defined(__FreeBSD_version) && __FreeBSD_version >= 500043
+extern const char *VT_AFS;
+#endif
+
+#if defined(__FreeBSD__)
+typedef void * xfs_malloc_type;
+#elif defined(__NetBSD__) && __NetBSD_Version__ >= 106140000 /* 1.6N */
+typedef struct malloc_type * xfs_malloc_type;
+#else
+typedef int xfs_malloc_type;
+#endif
+
+#ifdef __APPLE__
+#define xfs_curproc() (current_proc())
+#else
+#if defined(HAVE_FREEBSD_THREAD)
+#define xfs_curthread() (curthread)
+#else
+#define xfs_curproc() (curproc)
+#endif
+#endif
+
+#ifdef __osf__
+#define xfs_pushdirty(vp, cred, p)
+#else
+void	xfs_pushdirty(struct vnode *, struct ucred *, d_thread_t *);
+#endif
+
+
+#if defined(HAVE_UINTPTR_T) /* c99 enviroment */
+#define xfs_uintptr_t		uintptr_t
+#else
+#if defined(_LP64) || defined(alpha) || defined(__alpha__) || defined(__sparc64__) || defined(__sparcv9__)
+#define xfs_uintptr_t		unsigned long long
+#else /* !LP64 */
+#define xfs_uintptr_t		unsigned long
+#endif /* LP64 */
+#endif
+
 /*
  * XXX
  */
 
 #ifndef SCARG
+#if defined(__FreeBSD_version) && __FreeBSD_version >  500042
+#define SCARG(a, b) ((a)->b)
+#define syscallarg(x)   x
+#else
 #define SCARG(a, b) ((a)->b.datum)
 #define syscallarg(x)   union { x datum; register_t pad; }
-#endif
+#endif /* __FreeBSD_version */
+#endif /* SCARG */
 
 #ifndef syscallarg
 #define syscallarg(x)   x
@@ -237,6 +332,11 @@ typedef u_quad_t va_size_t;
 
 #ifndef HAVE_REGISTER_T
 typedef int register_t;
+#endif
+
+/* malloc(9) waits by default, freebsd post 5.0 choose to remove the flag */
+#ifndef M_WAITOK
+#define M_WAITOK 0
 #endif
 
 #if defined(HAVE_DEF_STRUCT_SETGROUPS_ARGS)
@@ -270,7 +370,7 @@ struct xfs_setgroups_args{
 #define xfs_vfs_object_create(vp,proc,ucred) vfs_object_create(vp,proc,ucred)
 #endif
 
-#ifdef UVM
+#if  defined(UVM) || (defined(__NetBSD__) && __NetBSD_Version__ >= 105280000)
 #define xfs_set_vp_size(vp, sz) uvm_vnp_setsize(vp, sz)
 #elif HAVE_KERNEL_VNODE_PAGER_SETSIZE
 #define xfs_set_vp_size(vp, sz) vnode_pager_setsize(vp, sz)
@@ -280,6 +380,33 @@ struct xfs_setgroups_args{
 #define xfs_set_vp_size(vp, sz)
 #endif
 
+/* namei flag */
+#ifdef LOCKLEAF
+#define NNPFS_LOCKLEAF LOCKLEAF
+#else
+#define NNPFS_LOCKLEAF 0
+#endif
+
+#ifdef NEED_VGONEL_PROTO
+void    vgonel (struct vnode *vp, d_thread_t *p);
+#endif
+
+#ifdef NEED_ISSIGNAL_PROTO
+int	issignal (d_thread_t *);
+#endif
+
+#ifdef NEED_STRNCMP_PROTO
+int	strncmp (const char *, const char *, size_t);
+#endif
+
+#ifdef NEED_VN_WRITECHK_PROTO
+int	vn_writechk (struct vnode *);
+#endif
+
+#ifdef NEED_UBC_PUSHDIRTY_PROTO
+int     ubc_pushdirty (struct vnode *);
+#endif
+
 #include <xfs/xfs_syscalls.h>
 
 /* 
@@ -287,5 +414,9 @@ struct xfs_setgroups_args{
  *
  *    What VOPs do we have today ? 
  */
+
+#define NNPFS_VOP_DEF(n)	\
+	struct vop_##n##_args; \
+	int xfs_##n(struct vop_##n##_args *);
 
 #include "xfs/xfs_vopdefs.h"

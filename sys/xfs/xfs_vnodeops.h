@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: xfs_vnodeops.h,v 1.4 2002/06/07 04:10:32 hin Exp $ */
+/* $arla: xfs_vnodeops.h,v 1.25 2002/09/07 10:46:12 lha Exp $ */
 
 #ifndef _xfs_vnodeops_h
 #define _xfs_vnodeops_h
@@ -83,33 +83,33 @@
 #endif
 
 int
-xfs_open_valid(struct vnode *vp, struct ucred *cred, struct proc *p,
+xfs_open_valid(struct vnode *vp, struct ucred *cred, d_thread_t *p,
 	       u_int tok);
 
 int
-xfs_attr_valid(struct vnode *vp, struct ucred *cred, struct proc *p,
+xfs_attr_valid(struct vnode *vp, struct ucred *cred, d_thread_t *p,
 	       u_int tok);
 
 int
-xfs_fetch_rights(struct vnode *vp, struct ucred *cred, struct proc *p);
+xfs_fetch_rights(struct vnode *vp, struct ucred *cred, d_thread_t *p);
 
 int
-xfs_data_valid(struct vnode *vp, struct ucred *cred, struct proc *p,
-	       u_int tok);
+xfs_data_valid(struct vnode *vp, struct ucred *cred, d_thread_t *p,
+	       u_int tok, uint32_t offset);
 
 int
 xfs_open_common(struct vnode *vp,
 		int mode,
 		struct ucred *cred,
-		struct proc *p);
+		d_thread_t *p);
 
 int
 xfs_fsync_common(struct vnode *vp, struct ucred *cred,
-		 int waitfor, struct proc *proc);
+		 int waitfor, d_thread_t *proc);
 
 int
 xfs_close_common(struct vnode *vp, int fflag,
-		 struct proc *proc, struct ucred *cred);
+		 d_thread_t *proc, struct ucred *cred);
 
 int
 xfs_read_common(struct vnode *vp, struct uio *uio, int ioflag,
@@ -121,15 +121,15 @@ xfs_write_common(struct vnode *vp, struct uio *uiop, int ioflag,
 
 int
 xfs_getattr_common(struct vnode *vp, struct vattr *vap,
-		   struct ucred *cred, struct proc *p);
+		   struct ucred *cred, d_thread_t *p);
 
 int
 xfs_setattr_common(struct vnode *vp, struct vattr *vap,
-		   struct ucred *cred, struct proc *p);
+		   struct ucred *cred, d_thread_t *p);
 
 int
 xfs_access_common(struct vnode *vp, int mode,
-		  struct ucred *cred, struct proc *p);
+		  struct ucred *cred, d_thread_t *p);
 
 int
 xfs_lookup_common(struct vnode *dvp, 
@@ -141,14 +141,14 @@ xfs_create_common(struct vnode *dvp,
 		  const char *name,
 		  struct vattr *vap, 
 		  struct ucred *cred,
-		  struct proc *p);
+		  d_thread_t *p);
 
 int
 xfs_remove_common(struct vnode *dvp, 
 		  struct vnode *vp, 
 		  const char *name,
 		  struct ucred *cred,
-		  struct proc *p);
+		  d_thread_t *p);
 
 int
 xfs_rename_common(struct vnode *fdvp, 
@@ -158,27 +158,27 @@ xfs_rename_common(struct vnode *fdvp,
 		  struct vnode *tvp,
 		  const char *tname,
 		  struct ucred *cred,
-		  struct proc *p);
+		  d_thread_t *p);
 
 int
 xfs_mkdir_common(struct vnode *dvp, 
 		 const char *name,
 		 struct vattr *vap, 
 		 struct ucred *cred,
-		 struct proc *p);
+		 d_thread_t *p);
 
 int
 xfs_rmdir_common(struct vnode *dvp,
 		 struct vnode *vp,
 		 const char *name,
 		 struct ucred *cred,
-		 struct proc *p);
+		 d_thread_t *p);
 
 int
 xfs_readdir_common(struct vnode *vp, 
 		   struct uio *uiop, 
 		   struct ucred *cred,
-		   struct proc *p,
+		   d_thread_t *p,
 		   int *eofflag);
 
 int
@@ -186,7 +186,7 @@ xfs_link_common(struct vnode *dvp,
 		struct vnode *vp, 
 		const char *name,
 		struct ucred *cred,
-		struct proc *p);
+		d_thread_t *p);
 
 int
 xfs_symlink_common(struct vnode *dvp,
@@ -199,7 +199,7 @@ int
 xfs_readlink_common(struct vnode *vp, struct uio *uiop, struct ucred *cred);
 
 int
-xfs_inactive_common(struct vnode *vp, struct proc *p);
+xfs_inactive_common(struct vnode *vp, d_thread_t *p);
 
 int
 xfs_reclaim_common(struct vnode *vp);
@@ -212,5 +212,9 @@ xfs_returnzero (struct vop_generic_args *ap);
 
 void
 xfs_printnode_common (struct vnode *vp);
+
+size_t
+xfs_uio_end_length (struct uio *uio);
+
 
 #endif /* _xfs_vnodeops_h */

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2003 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
@@ -39,9 +39,9 @@
 #include <xfs/xfs_dev.h>
 #include <xfs/xfs_deb.h>
 
-RCSID("$Id: xfs_dev-common.c,v 1.5 2002/07/02 19:38:55 nate Exp $");
+RCSID("$arla: xfs_dev-common.c,v 1.61 2003/07/15 16:25:42 lha Exp $");
 
-struct xfs_channel xfs_channel[NXFS];
+struct xfs_channel xfs_channel[NNNPFS];
 
 void
 xfs_initq(struct xfs_link *q)
@@ -87,24 +87,24 @@ xfs_outq(struct xfs_link *p)
  * Only allow one open.
  */
 int
-xfs_devopen_common(dev_t dev, struct proc *p)
+xfs_devopen_common(dev_t dev)
 {
     struct xfs_channel *chan;
 
-    if (minor(dev) < 0 || minor(dev) >= NXFS)
+    if (minor(dev) < 0 || minor(dev) >= NNNPFS)
 	return ENXIO;
 
     chan = &xfs_channel[minor(dev)];
 
     /* Only allow one reader/writer */
     if (chan->status & CHANNEL_OPENED) {
-	XFSDEB(XDEBDEV, ("xfs_devopen: already open\n"));
+	NNPFSDEB(XDEBDEV, ("xfs_devopen: already open\n"));
 	return EBUSY;
     } else {
 	chan->status |= CHANNEL_OPENED;
     }
 
-    chan->message_buffer = xfs_alloc(MAX_XMSG_SIZE);
+    chan->message_buffer = xfs_alloc(MAX_XMSG_SIZE, M_NNPFS_MSG);
 
     /* initialize the queues if they have not been initialized before */
     xfs_initq(&chan->sleepq);
@@ -131,7 +131,7 @@ xfs_devopen_common(dev_t dev, struct proc *p)
  * Wakeup all sleepers and cleanup.
  */
 int
-xfs_devclose_common(dev_t dev, struct proc *proc)
+xfs_devclose_common(dev_t dev, d_thread_t *proc)
 {
     struct xfs_channel *chan = &xfs_channel[minor(dev)];
     struct xfs_link *first;
@@ -144,31 +144,31 @@ xfs_devclose_common(dev_t dev, struct proc *proc)
 
     /* No one is going to read those messages so empty queue! */
     while (!xfs_emptyq(&chan->messageq)) {
-	XFSDEB(XDEBDEV, ("before outq(messageq)\n"));
+	NNPFSDEB(XDEBDEV, ("before outq(messageq)\n"));
 
 	first = chan->messageq.next;
 	xfs_outq(first);
 	if (first->error_or_size != 0)
-	    xfs_free(first, first->error_or_size);
+	    xfs_free(first, first->error_or_size, M_NNPFS_LINK);
 
-	XFSDEB(XDEBDEV, ("after outq(messageq)\n"));
+	NNPFSDEB(XDEBDEV, ("after outq(messageq)\n"));
     }
 
     /* Wakeup those waiting for replies that will never arrive. */
     while (!xfs_emptyq(&chan->sleepq)) {
-	XFSDEB(XDEBDEV, ("before outq(sleepq)\n"));
+	NNPFSDEB(XDEBDEV, ("before outq(sleepq)\n"));
 	first = chan->sleepq.next;
 	xfs_outq(first);
 	first->error_or_size = ENODEV;
 	wakeup((caddr_t) first);
-	XFSDEB(XDEBDEV, ("after outq(sleepq)\n"));
+	NNPFSDEB(XDEBDEV, ("after outq(sleepq)\n"));
     }
 
     if (chan->status & CHANNEL_WAITING)
 	wakeup((caddr_t) chan);
 
     if (chan->message_buffer) {
-	xfs_free(chan->message_buffer, MAX_XMSG_SIZE);
+	xfs_free(chan->message_buffer, MAX_XMSG_SIZE, M_NNPFS_MSG);
 	chan->message_buffer = NULL;
     }
 
@@ -178,7 +178,7 @@ xfs_devclose_common(dev_t dev, struct proc *proc)
 
     if (xfs[minor(dev)].mp != NULL) {
 	if (xfs_vfs_busy(xfs[minor(dev)].mp, 0, NULL, proc)) {
-	    XFSDEB(XDEBNODE, ("xfs_dev_close: vfs_busy() --> BUSY\n"));
+	    NNPFSDEB(XDEBNODE, ("xfs_dev_close: vfs_busy() --> BUSY\n"));
 	    return EBUSY;
 	}
 	free_all_xfs_nodes(&xfs[minor(dev)], FORCECLOSE, 0);
@@ -189,20 +189,31 @@ xfs_devclose_common(dev_t dev, struct proc *proc)
     return 0;
 }
 
-#ifdef XFS_DEBUG
+#ifdef NNPFS_DEBUG
 /*
- * osf glue for CURSIG
+ * debugging glue for CURSIG
  */
 
 static long
-xfs_cursig (struct proc *p)
+xfs_cursig (d_thread_t *p)
 {
-#ifdef __osf__
+#if defined(__osf__)
     thread_t th 	= current_thread();
     struct np_uthread	*npu = thread_to_np_uthread(th);
     return CURSIG(p,npu);
+#elif defined(HAVE_FREEBSD_THREAD)
+#ifndef CURSIG
+    return 0; /* XXX we would like to use sig_ffs, but that isn't
+	       * exported */
+#else
+    return CURSIG(p->td_proc);
+#endif
+#else
+#if defined(__NetBSD__) && __NetBSD_Version__ >= 106130000
+    return 0; /* XXX CURSIG operates on a struct lwp */
 #else
     return CURSIG(p);
+#endif
 #endif
 }
 #endif
@@ -217,19 +228,23 @@ xfs_devread(dev_t dev, struct uio * uiop, int ioflag)
     struct xfs_channel *chan = &xfs_channel[minor(dev)];
     struct xfs_link *first;
     int error = 0;
-#ifdef XFS_DEBUG
+#ifdef NNPFS_DEBUG
     char devname[64];
 #endif
 
-    XFSDEB(XDEBDEV, ("xfs_devread dev = %s\n",
+    NNPFSDEB(XDEBDEV, ("xfs_devread dev = %s\n",
 		     xfs_devtoname_r(dev, devname, sizeof(devname))));
 
-    XFSDEB(XDEBDEV, ("xfs_devread: m = %lx, m->prev = %lx, m->next = %lx\n",
+    NNPFSDEB(XDEBDEV, ("xfs_devread: m = %lx, m->prev = %lx, m->next = %lx\n",
 		     (unsigned long)&chan->messageq,
 		     (unsigned long)chan->messageq.prev,
 		     (unsigned long)chan->messageq.next));
 
+#ifdef HAVE_FREEBSD_THREAD
+    chan->proc = xfs_uio_to_thread(uiop);
+#else
     chan->proc = xfs_uio_to_proc(uiop);
+#endif
 
  again:
 
@@ -237,13 +252,13 @@ xfs_devread(dev_t dev, struct uio * uiop, int ioflag)
 	while (!xfs_emptyq (&chan->messageq)) {
 	    /* Remove message */
 	    first = chan->messageq.next;
-	    XFSDEB(XDEBDEV, ("xfs_devread: first = %lx, "
+	    NNPFSDEB(XDEBDEV, ("xfs_devread: first = %lx, "
 			     "first->prev = %lx, first->next = %lx\n",
 			     (unsigned long)first,
 			     (unsigned long)first->prev,
 			     (unsigned long)first->next));
 	    
-	    XFSDEB(XDEBDEV, ("xfs_devread: message->size = %u\n",
+	    NNPFSDEB(XDEBDEV, ("xfs_devread: message->size = %u\n",
 			     first->message->size));
 	    
 	    if (first->message->size > uiop->uio_resid)
@@ -257,14 +272,20 @@ xfs_devread(dev_t dev, struct uio * uiop, int ioflag)
 	    xfs_outq(first);
 	    
 	    if (first->error_or_size != 0)
-		xfs_free(first, first->error_or_size);
+		xfs_free(first, first->error_or_size, M_NNPFS_LINK);
 	}
     } else {
 	chan->status |= CHANNEL_WAITING;
 	if (tsleep((caddr_t) chan, (PZERO + 1) | PCATCH, "xfsread", 0)) {
-	    XFSDEB(XDEBMSG,
+#ifdef HAVE_FREEBSD_THREAD
+	    NNPFSDEB(XDEBMSG,
+		   ("caught signal xfs_devread: %ld\n",
+		    xfs_cursig(xfs_uio_to_thread(uiop))));
+#else
+	    NNPFSDEB(XDEBMSG,
 		   ("caught signal xfs_devread: %ld\n",
 		    xfs_cursig(xfs_uio_to_proc(uiop))));
+#endif
 	    error = EINTR;
 	} else if ((chan->status & CHANNEL_WAITING) == 0) {
 	    goto again;
@@ -272,7 +293,7 @@ xfs_devread(dev_t dev, struct uio * uiop, int ioflag)
 	    error = EIO;
     }
     
-    XFSDEB(XDEBDEV, ("xfs_devread done error = %d\n", error));
+    NNPFSDEB(XDEBDEV, ("xfs_devread done error = %d\n", error));
 
     return error;
 }
@@ -289,14 +310,18 @@ xfs_devwrite(dev_t dev, struct uio *uiop, int ioflag)
     int error;
     u_int cnt;
     struct xfs_message_header *msg_buf;
-#ifdef XFS_DEBUG
+#ifdef NNPFS_DEBUG
     char devname[64];
 #endif
 
-    XFSDEB(XDEBDEV, ("xfs_devwrite dev = %s\n",
+    NNPFSDEB(XDEBDEV, ("xfs_devwrite dev = %s\n",
 		     xfs_devtoname_r (dev, devname, sizeof(devname))));
 
+#ifdef HAVE_FREEBSD_THREAD
+    chan->proc = xfs_uio_to_thread(uiop);
+#else
     chan->proc = xfs_uio_to_proc(uiop);
+#endif
     cnt = uiop->uio_resid;
     error = uiomove((caddr_t) chan->message_buffer, MAX_XMSG_SIZE, uiop);
     if (error != 0)
@@ -310,7 +335,11 @@ xfs_devwrite(dev_t dev, struct uio *uiop, int ioflag)
     for (p = (char *)chan->message_buffer;
 	 cnt > 0;
 	 p += msg_buf->size, cnt -= msg_buf->size) {
-	struct proc *pp = xfs_uio_to_proc(uiop);
+#ifdef HAVE_FREEBSD_THREAD
+	d_thread_t *pp = xfs_uio_to_thread(uiop);
+#else
+	d_thread_t *pp = xfs_uio_to_proc(uiop);
+#endif
 
 	msg_buf = (struct xfs_message_header *)p;
 	error = xfs_message_receive (minor(dev),
@@ -318,7 +347,7 @@ xfs_devwrite(dev_t dev, struct uio *uiop, int ioflag)
 				     msg_buf->size,
 				     pp);
     }
-    XFSDEB(XDEBDEV, ("xfs_devwrite error = %d\n", error));
+    NNPFSDEB(XDEBDEV, ("xfs_devwrite error = %d\n", error));
     return error;
 }
 
@@ -334,7 +363,7 @@ xfs_message_send(int fd, struct xfs_message_header * message, u_int size)
 	struct xfs_message_header msg;
     } *t;
 
-    XFSDEB(XDEBMSG, ("xfs_message_send opcode = %d\n", message->opcode));
+    NNPFSDEB(XDEBMSG, ("xfs_message_send opcode = %d\n", message->opcode));
 
     if (!(chan->status & CHANNEL_OPENED))	/* No receiver? */
 	return ENODEV;
@@ -343,7 +372,7 @@ xfs_message_send(int fd, struct xfs_message_header * message, u_int size)
     message->size = size;
     message->sequence_num = chan->nsequence++;
 
-    t = xfs_alloc(sizeof(t->this_message) + size);
+    t = xfs_alloc(sizeof(t->this_message) + size, M_NNPFS);
     t->this_message.error_or_size = sizeof(t->this_message) + size;
     bcopy(message, &t->msg, size);
 
@@ -359,30 +388,34 @@ xfs_message_send(int fd, struct xfs_message_header * message, u_int size)
 }
 
 #if defined(SWEXIT)
-#define XFS_P_EXIT SWEXIT
+#define NNPFS_P_EXIT SWEXIT
 #elif defined(P_WEXIT)
-#define XFS_P_EXIT P_WEXIT
+#define NNPFS_P_EXIT P_WEXIT
 #else
 #error what is your exit named ?
 #endif
 
-#if defined(HAVE_STRUCT_PROC_P_SIGMASK) || defined(HAVE_STRUCT_PROC_P_SIGCTX)
+#if defined(HAVE_STRUCT_PROC_P_SIGMASK) || defined(HAVE_STRUCT_PROC_P_SIGCTX) || defined(HAVE_STRUCT_PROC_P_SIGWAITMASK) || defined(__osf__) || defined(HAVE_FREEBSD_THREAD)
 static void
 xfs_block_sigset (sigset_t *sigset)
 {
+
 #if defined(__sigaddset)
-    __sigaddset(sigset, SIGIO);
-    __sigaddset(sigset, SIGALRM);
-    __sigaddset(sigset, SIGVTALRM);
+#define xfs_sig_block(ss,signo) __sigaddset((ss), (signo))
 #elif defined(SIGADDSET)
-    SIGADDSET(*sigset, SIGIO);
-    SIGADDSET(*sigset, SIGALRM);
-    SIGADDSET(*sigset, SIGVTALRM);
+#define xfs_sig_block(ss,signo) SIGADDSET(*(ss), (signo))
 #else
-    *sigset |= sigmask(SIGIO);
-    *sigset |= sigmask(SIGALRM);
-    *sigset |= sigmask(SIGVTALRM);
-#endif /* __sigaddset */
+#define xfs_sig_block(ss,signo) *(ss) |= sigmask(signo)
+#endif
+
+    xfs_sig_block(sigset, SIGIO);
+    xfs_sig_block(sigset, SIGALRM);
+    xfs_sig_block(sigset, SIGVTALRM);
+    xfs_sig_block(sigset, SIGCHLD);
+#ifdef SIGINFO
+    xfs_sig_block(sigset, SIGINFO);
+#endif
+#undef xfs_sig_block
 }
 #endif
 
@@ -392,29 +425,40 @@ xfs_block_sigset (sigset_t *sigset)
 
 int
 xfs_message_rpc(int fd, struct xfs_message_header * message, u_int size,
-		struct proc *proc)
+		d_thread_t *proc)
 {
     int ret;
     struct xfs_channel *chan = &xfs_channel[fd];
     struct xfs_link *this_message;
     struct xfs_link *this_process;
     struct xfs_message_header *msg;
-#if defined(HAVE_STRUCT_PROC_P_SIGMASK) || defined(HAVE_STRUCT_PROC_P_SIGCTX) || defined(__osf__)
+#if defined(HAVE_STRUCT_PROC_P_SIGMASK) || defined(HAVE_STRUCT_PROC_P_SIGCTX) || defined(__osf__) || defined(HAVE_FREEBSD_THREAD)
     sigset_t oldsigmask;
 #endif
     int catch;
 
-    XFSDEB(XDEBMSG, ("xfs_message_rpc opcode = %d\n", message->opcode));
+    NNPFSDEB(XDEBMSG, ("xfs_message_rpc opcode = %d\n", message->opcode));
 
-    if (proc == NULL)
+    if (proc == NULL) {
+#ifdef HAVE_FREEBSD_THREAD
+	proc = xfs_curthread();
+#else
 	proc = xfs_curproc();
-
+#endif
+    }
     if (!(chan->status & CHANNEL_OPENED))	/* No receiver? */
 	return ENODEV;
 
+#ifdef HAVE_FREEBSD_THREAD
+    if (chan->proc != NULL && chan->proc->td_proc != NULL &&
+      proc->td_proc->p_pid == chan->proc->td_proc->p_pid) {
+	printf("xfs_message_rpc: deadlock avoided "
+	       "pid = %u == %u\n", proc->td_proc->p_pid, chan->proc->td_proc->p_pid);
+#else
     if (chan->proc != NULL && proc->p_pid == chan->proc->p_pid) {
 	printf("xfs_message_rpc: deadlock avoided "
 	       "pid = %u == %u\n", proc->p_pid, chan->proc->p_pid);
+#endif
 #if 0
 	psignal (proc, SIGABRT);
 #endif
@@ -422,12 +466,12 @@ xfs_message_rpc(int fd, struct xfs_message_header * message, u_int size,
     }
 
     if (size < sizeof(struct xfs_message_wakeup)) {
-	printf("XFS PANIC Error: Message to small to receive wakeup, opcode = %d\n", message->opcode);
+	printf("NNPFS PANIC Error: Message to small to receive wakeup, opcode = %d\n", message->opcode);
 	return ENOMEM;
     }
-    this_message = xfs_alloc(sizeof(struct xfs_link));
-    this_process = xfs_alloc(sizeof(struct xfs_link));
-    msg = xfs_alloc(size);
+    this_message = xfs_alloc(sizeof(struct xfs_link), M_NNPFS_LINK);
+    this_process = xfs_alloc(sizeof(struct xfs_link), M_NNPFS_LINK);
+    msg = xfs_alloc(size, M_NNPFS_MSG);
     bcopy(message, msg, size);
 
     msg->size = size;
@@ -446,11 +490,16 @@ xfs_message_rpc(int fd, struct xfs_message_header * message, u_int size,
     }
 
     /*
-     * Remove SIGIO from the sigmask so no IO will
-     * wake us up from tsleep()
+     * Remove signals from the sigmask so no IO will wake us up from
+     * tsleep(). We don't want to wake up from since program (emacs,
+     * bash & co can't handle them.
      */
 
-#ifdef HAVE_STRUCT_PROC_P_SIGMASK
+#ifdef HAVE_FREEBSD_THREAD
+    /* FreeBSD 5.1 */
+    oldsigmask = proc->td_sigmask;
+    xfs_block_sigset (&proc->td_sigmask);
+#elif HAVE_STRUCT_PROC_P_SIGMASK
     /* NetBSD 1.5, Darwin 1.3, FreeBSD 4.3, 5.0, OpenBSD 2.8 */
     oldsigmask = proc->p_sigmask;
     xfs_block_sigset (&proc->p_sigmask);
@@ -461,14 +510,11 @@ xfs_message_rpc(int fd, struct xfs_message_header * message, u_int size,
 #elif defined(HAVE_STRUCT_PROC_P_SIGWAITMASK)
     /* OSF 4.0 */
     oldsigmask = proc->p_sigwaitmask;
-    sigaddset(&proc->p_sigwaitmask, SIGIO);
-    sigaddset(&proc->p_sigwaitmask, SIGALRM);
-    sigaddset(&proc->p_sigwaitmask, SIGVTALRM);
+    xfs_block_sigset (&proc->p_sigwaitmask);
 #elif defined(__osf__)
+    /* OSF 5.0 */
     oldsigmask = u.u_sigmask;
-    sigaddset(&u.u_sigmask, SIGIO);
-    sigaddset(&u.u_sigmask, SIGALRM);
-    sigaddset(&u.u_sigmask, SIGVTALRM);
+    xfs_block_sigset (&u.u_sigmask);
 #endif
 
     /*
@@ -479,7 +525,11 @@ xfs_message_rpc(int fd, struct xfs_message_header * message, u_int size,
      */
 
     catch = 0;
-    if (!(proc->p_flag & XFS_P_EXIT))
+#ifdef HAVE_FREEBSD_THREAD
+    if (!(proc->td_proc->p_flag & NNPFS_P_EXIT))
+#else
+    if (!(proc->p_flag & NNPFS_P_EXIT))
+#endif
 	catch |= PCATCH;
 
     /*
@@ -488,16 +538,18 @@ xfs_message_rpc(int fd, struct xfs_message_header * message, u_int size,
      * happen sometimes when rebooting.  */
 
     if (!(chan->status & CHANNEL_OPENED)) {
-	XFSDEB(XDEBMSG, ("xfs_message_rpc: channel went away\n"));
+	NNPFSDEB(XDEBMSG, ("xfs_message_rpc: channel went away\n"));
 	this_process->error_or_size = EINTR;
     } else if ((ret = tsleep((caddr_t) this_process,
 			     (PZERO + 1) | catch, "xfs", 0)) != 0) {
-	XFSDEB(XDEBMSG, ("caught signal (%d): %ld\n",
+	NNPFSDEB(XDEBMSG, ("caught signal (%d): %ld\n",
 			 ret, xfs_cursig(proc)));
 	this_process->error_or_size = EINTR;
     }
 
-#ifdef HAVE_STRUCT_PROC_P_SIGMASK
+#ifdef HAVE_FREEBSD_THREAD
+    proc->td_sigmask = oldsigmask;
+#elif HAVE_STRUCT_PROC_P_SIGMASK
     proc->p_sigmask = oldsigmask;
 #elif defined(HAVE_STRUCT_PROC_P_SIGCTX)
     proc->p_sigctx.ps_sigmask = oldsigmask;
@@ -519,15 +571,15 @@ xfs_message_rpc(int fd, struct xfs_message_header * message, u_int size,
     }
     ret = this_process->error_or_size;
 
-    XFSDEB(XDEBMSG, ("xfs_message_rpc this_process->error_or_size = %d\n",
+    NNPFSDEB(XDEBMSG, ("xfs_message_rpc this_process->error_or_size = %d\n",
 		     this_process->error_or_size));
-    XFSDEB(XDEBMSG, ("xfs_message_rpc opcode ((xfs_message_wakeup*)(this_process->message))->error = %d\n", ((struct xfs_message_wakeup *) (this_process->message))->error));
+    NNPFSDEB(XDEBMSG, ("xfs_message_rpc opcode ((xfs_message_wakeup*)(this_process->message))->error = %d\n", ((struct xfs_message_wakeup *) (this_process->message))->error));
 
     bcopy(msg, message, size);
 
-    xfs_free(this_message, sizeof(*this_message));
-    xfs_free(this_process, sizeof(*this_process));
-    xfs_free(msg, size);
+    xfs_free(this_message, sizeof(*this_message), M_NNPFS_LINK);
+    xfs_free(this_process, sizeof(*this_process), M_NNPFS_LINK);
+    xfs_free(msg, size, M_NNPFS_MSG);
 
     return ret;
 }
@@ -541,64 +593,64 @@ int
 xfs_message_receive(int fd,
 		    struct xfs_message_header *message,
 		    u_int size,
-		    struct proc *p)
+		    d_thread_t *p)
 {
-    XFSDEB(XDEBMSG, ("xfs_message_receive opcode = %d\n", message->opcode));
+    NNPFSDEB(XDEBMSG, ("xfs_message_receive opcode = %d\n", message->opcode));
 
     /* Dispatch and coerce message type */
     switch (message->opcode) {
-    case XFS_MSG_WAKEUP:
+    case NNPFS_MSG_WAKEUP:
 	return xfs_message_wakeup(fd,
 				  (struct xfs_message_wakeup *) message,
 				  message->size,
 				  p);
-    case XFS_MSG_WAKEUP_DATA:
+    case NNPFS_MSG_WAKEUP_DATA:
 	return xfs_message_wakeup_data(fd,
 				 (struct xfs_message_wakeup_data *) message,
 				       message->size,
 				       p);
-    case XFS_MSG_INSTALLROOT:
+    case NNPFS_MSG_INSTALLROOT:
 	return xfs_message_installroot(fd,
 				 (struct xfs_message_installroot *) message,
 				       message->size,
 				       p);
-    case XFS_MSG_INSTALLNODE:
+    case NNPFS_MSG_INSTALLNODE:
 	return xfs_message_installnode(fd,
 				 (struct xfs_message_installnode *) message,
 				       message->size,
 				       p);
-    case XFS_MSG_INSTALLATTR:
+    case NNPFS_MSG_INSTALLATTR:
 	return xfs_message_installattr(fd,
 				 (struct xfs_message_installattr *) message,
 				       message->size,
 				       p);
-    case XFS_MSG_INSTALLDATA:
+    case NNPFS_MSG_INSTALLDATA:
 	return xfs_message_installdata(fd,
 				 (struct xfs_message_installdata *) message,
 				       message->size,
 				       p);
-    case XFS_MSG_INVALIDNODE:
+    case NNPFS_MSG_INVALIDNODE:
 	return xfs_message_invalidnode(fd,
 				 (struct xfs_message_invalidnode *) message,
 				       message->size,
 				       p);
-    case XFS_MSG_UPDATEFID:
+    case NNPFS_MSG_UPDATEFID:
 	return xfs_message_updatefid(fd,
 				     (struct xfs_message_updatefid *)message,
 				     message->size,
 				     p);
-    case XFS_MSG_GC_NODES:
+    case NNPFS_MSG_GC_NODES:
 	return xfs_message_gc_nodes(fd,
 				    (struct xfs_message_gc_nodes *)message,
 				    message->size,
 				    p);
-    case XFS_MSG_VERSION:
+    case NNPFS_MSG_VERSION:
 	return xfs_message_version(fd,
 				   (struct xfs_message_version *)message,
 				   message->size,
 				   p);
     default:
-	printf("XFS PANIC Warning xfs_dev: Unknown message opcode == %d\n",
+	printf("NNPFS PANIC Warning xfs_dev: Unknown message opcode == %d\n",
 	       message->opcode);
 	return EINVAL;
     }
@@ -608,18 +660,18 @@ int
 xfs_message_wakeup(int fd,
 		   struct xfs_message_wakeup *message,
 		   u_int size,
-		   struct proc *p)
+		   d_thread_t *p)
 {
     struct xfs_channel *chan = &xfs_channel[fd];
     struct xfs_link *sleepq = &chan->sleepq;
     struct xfs_link *t = chan->sleepq.next;	/* Really first in q */
 
-    XFSDEB(XDEBMSG, ("xfs_message_wakeup error: %d\n", message->error));
+    NNPFSDEB(XDEBMSG, ("xfs_message_wakeup error: %d\n", message->error));
 
     for (; t != sleepq; t = t->next)
 	if (t->message->sequence_num == message->sleepers_sequence_num) {
 	    if (t->message->size < size) {
-		printf("XFS PANIC Error: Could not wakeup requestor with opcode = %d properly, to small receive buffer.\n", t->message->opcode);
+		printf("NNPFS PANIC Error: Could not wakeup requestor with opcode = %d properly, to small receive buffer.\n", t->message->opcode);
 		t->error_or_size = ENOMEM;
 	    } else
 		bcopy(message, t->message, size);
@@ -635,18 +687,18 @@ int
 xfs_message_wakeup_data(int fd,
 			struct xfs_message_wakeup_data * message,
 			u_int size,
-			struct proc *p)
+			d_thread_t *p)
 {
     struct xfs_channel *chan = &xfs_channel[fd];
     struct xfs_link *sleepq = &chan->sleepq;
     struct xfs_link *t = chan->sleepq.next;	/* Really first in q */
 
-    XFSDEB(XDEBMSG, ("xfs_message_wakeup_data error: %d\n", message->error));
+    NNPFSDEB(XDEBMSG, ("xfs_message_wakeup_data error: %d\n", message->error));
 
     for (; t != sleepq; t = t->next)
 	if (t->message->sequence_num == message->sleepers_sequence_num) {
 	    if (t->message->size < size) {
-		printf("XFS PANIC Error: Could not wakeup requestor with opcode = %d properly, to small receive buffer.\n", t->message->opcode);
+		printf("NNPFS PANIC Error: Could not wakeup requestor with opcode = %d properly, to small receive buffer.\n", t->message->opcode);
 		t->error_or_size = ENOMEM;
 	    } else
 		bcopy(message, t->message, size);
@@ -665,7 +717,7 @@ xfs_uprintf_device(void)
 #if 0
     int i;
 
-    for (i = 0; i < NXFS; i++) {
+    for (i = 0; i < NNNPFS; i++) {
 	uprintf("xfs_channel[%d] = {\n", i);
 	uprintf("messageq.next = %lx ", xfs_channel[i].messageq.next);
 	uprintf("messageq.prev = %lx ", xfs_channel[i].messageq.prev);

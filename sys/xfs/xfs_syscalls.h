@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: xfs_syscalls.h,v 1.6 2002/06/07 04:10:32 hin Exp $ */
+/* $arla: xfs_syscalls.h,v 1.29 2003/01/19 20:53:54 lha Exp $ */
 
 #ifndef  __xfs_syscalls
 #define  __xfs_syscalls
@@ -39,7 +39,7 @@
 #include <xfs/xfs_common.h>
 #include <xfs/xfs_message.h>
 
-#include <xfs/afssysdefs.h>
+#include <afssysdefs.h>
 
 struct sys_pioctl_args {
     syscallarg(int) operation;
@@ -49,12 +49,12 @@ struct sys_pioctl_args {
     syscallarg(int) a_followSymlinks;
 };
 
-#define XFS_FHMAXDATA 40
+#define NNPFS_FHMAXDATA 40
 
 struct xfs_fhandle_t {
     u_short	len;
     u_short	pad;
-    char	fhdata[XFS_FHMAXDATA];
+    char	fhdata[NNPFS_FHMAXDATA];
 };
 
 struct xfs_fh_args {
@@ -69,16 +69,15 @@ int xfs_stat_syscalls(void);
 xfs_pag_t xfs_get_pag(struct ucred *);
 
 int xfs_setpag_call(struct ucred **ret_cred);
-int xfs_pioctl_call(struct proc *proc,
+int xfs_pioctl_call(d_thread_t *proc,
 		    struct sys_pioctl_args *args,
 		    register_t *return_value);
 
-int xfspioctl(struct proc *proc, void *varg, register_t *retval);
+int xfspioctl(syscall_d_thread_t *proc, void *varg, register_t *retval);
 
-int xfs_setgroups (struct proc *p,
-		   void *varg);
+int xfs_setgroups(syscall_d_thread_t *p, void *varg, register_t *retval);
 
-extern int (*old_setgroups_func)(struct proc *, void *);
+extern int (*old_setgroups_func)(syscall_d_thread_t *, void *, register_t *);
 extern int xfs_syscall_num; /* The old syscall number */
 
 
