@@ -232,6 +232,7 @@ void hide_syms(char *filename)
     struct relocation_info *relp;
     struct nlist *symp;
     char *buf;
+    u_char zero = 0;
 
     /*
      * Open the file and do some error checking.
@@ -316,8 +317,15 @@ void hide_syms(char *filename)
      */
 
     for(symp = symbase; symp < symbase + nsyms; symp++)
-	if(IS_GLOBAL_DEFINED(symp) && !in_keep_list(SYMSTR(symp)))
+	if(IS_GLOBAL_DEFINED(symp) && !in_keep_list(SYMSTR(symp))) {
+	    /*
+	     * XXX Our VM system has some problems, so
+	     * avoid the VM system....
+	     */
+	    lseek(inf, (off_t)((void *)&symp->n_type - (void *)buf), SEEK_SET);
+	    write(inf, &zero, sizeof zero);
 	    symp->n_type = 0;
+	}
 
     /*
      * Check whether the relocation entries reference any symbols that we
@@ -331,6 +339,8 @@ void hide_syms(char *filename)
     for(relp = datarel; relp < datarel + ndatarel; relp++)
 	check_reloc(filename, relp);
 
+    msync(buf, infstat.st_size, MS_SYNC);
+    munmap(buf, infstat.st_size);
     close(inf);
 #endif /* DO_AOUT */
 }
