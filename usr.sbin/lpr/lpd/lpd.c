@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpd.c,v 1.41 2003/09/26 06:01:42 pvalchev Exp $ */
+/*	$OpenBSD: lpd.c,v 1.42 2003/10/16 03:39:12 itojun Exp $ */
 /*	$NetBSD: lpd.c,v 1.33 2002/01/21 14:42:29 wiz Exp $	*/
 
 /*
@@ -41,7 +41,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)lpd.c	8.7 (Berkeley) 5/10/95";
 #else
-static const char rcsid[] = "$OpenBSD: lpd.c,v 1.41 2003/09/26 06:01:42 pvalchev Exp $";
+static const char rcsid[] = "$OpenBSD: lpd.c,v 1.42 2003/10/16 03:39:12 itojun Exp $";
 #endif
 #endif /* not lint */
 
@@ -786,7 +786,7 @@ int *
 socksetup(int af, int options, const char *port)
 {
 	struct addrinfo hints, *res, *r;
-	int error, maxs = 0, *s, *socks = NULL, blidx = 0;
+	int error, maxs = 0, *s, *socks = NULL, *newsocks, blidx = 0;
 	const int on = 1;
 
 	do {
@@ -812,8 +812,15 @@ socksetup(int af, int options, const char *port)
 			socks = malloc((maxs + 1) * sizeof(int));
 			if (socks)
 				*socks = 0; /* num of sockets ctr at start */
-		} else
-			socks = realloc(socks, (maxs + 1) * sizeof(int));
+		} else {
+			newsocks = realloc(socks, (maxs + 1) * sizeof(int));
+			if (newsocks)
+				socks = newsocks;
+			else {
+				free(socks);
+				socks = NULL;
+			}
+		}
 		if (!socks) {
 			syslog(LOG_ERR, "couldn't allocate memory for sockets");
 			mcleanup(0);
