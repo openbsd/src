@@ -246,7 +246,7 @@ files:
 	done;
 
 links:
-	@$(TOP)/util/point.sh Makefile.ssl Makefile
+	@${SHELL} $(TOP)/util/point.sh Makefile.ssl Makefile
 	@$(PERL) $(TOP)/util/mkdir-p.pl include/openssl
 	@$(PERL) $(TOP)/util/mklink.pl include/openssl $(EXHEADER)
 	@for i in $(DIRS); do \
