@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.395 2001/05/11 14:56:02 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.396 2001/05/12 08:29:00 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1341,6 +1341,26 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_CYRIX, PCI_PRODUCT_CYRIX_GXMISA,
 	    "GXm PCI-ISA",
+	},
+	{
+	    PCI_VENDOR_CYRIX, PCI_PRODUCT_CYRIX_CX5530_PCIB,
+	    "Cx5530 South Bridge",
+	},
+	{
+	    PCI_VENDOR_CYRIX, PCI_PRODUCT_CYRIX_CX5530_SMI,
+	    "Cx5530 SMI/ACPI",
+	},
+	{
+	    PCI_VENDOR_CYRIX, PCI_PRODUCT_CYRIX_CX5530_IDE,
+	    "Cx5530 IDE",
+	},
+	{
+	    PCI_VENDOR_CYRIX, PCI_PRODUCT_CYRIX_CX5530_AUDIO,
+	    "Cx5530 XpressAUDIO",
+	},
+	{
+	    PCI_VENDOR_CYRIX, PCI_PRODUCT_CYRIX_CX5530_VIDEO,
+	    "Cx5530 Video",
 	},
 	{
 	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_2SI,
