@@ -1,4 +1,4 @@
-/*	$OpenBSD: rstat_proc.c,v 1.15 2001/07/08 21:18:09 deraadt Exp $	*/
+/*	$OpenBSD: rstat_proc.c,v 1.16 2001/09/19 21:47:31 deraadt Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -31,7 +31,7 @@
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rpc.rstatd.c 1.1 86/09/25 Copyr 1984 Sun Micro";*/
 /*static char sccsid[] = "from: @(#)rstat_proc.c	2.2 88/08/01 4.0 RPCSRC";*/
-static char rcsid[] = "$OpenBSD: rstat_proc.c,v 1.15 2001/07/08 21:18:09 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rstat_proc.c,v 1.16 2001/09/19 21:47:31 deraadt Exp $";
 #endif
 
 /*
@@ -123,7 +123,7 @@ union {
 } stats_all;
 
 int stats_service();
-void updatestat(void);
+void updatestat(int);
 void setup(void);
 int havedisk(void);
 
@@ -138,7 +138,7 @@ stat_init()
 {
 	stat_is_init = 1;
 	setup();
-	updatestat();
+	updatestat(0);
 	(void) signal(SIGALRM, updatestat);	/* XXX huge signal race */
 	alarm(1);
 }
@@ -207,12 +207,11 @@ rstatproc_havedisk_1_svc(arg, rqstp)
 }
 
 void
-updatestat()
+updatestat(int sig)
 {
 	long off;
-	int i, save_errno = errno;
+	int i, mib[2], save_errno = errno;
 	struct uvmexp uvmexp;
-	int mib[2];
 	size_t len;
 	struct ifnet ifnet;
 	double avrun[3];
@@ -229,9 +228,10 @@ updatestat()
 		syslog(LOG_DEBUG, "about to closedown");
 #endif
 		if (from_inetd)
-			exit(0);
+			_exit(0);
 		else {
 			stat_is_init = 0;
+			errno = save_errno;
 			return;
 		}
 	}
@@ -253,13 +253,13 @@ updatestat()
 	if (kvm_read(kfd, (long)nl[X_HZ].n_value, (char *)&hz, sizeof hz) !=
 	    sizeof hz) {
 		syslog(LOG_ERR, "can't read hz from kmem");
-		exit(1);
+		_exit(1);
 	}
  	if (kvm_read(kfd, (long)nl[X_CPTIME].n_value,
 	    (char *)stats_all.s1.cp_time, sizeof (stats_all.s1.cp_time))
 	    != sizeof (stats_all.s1.cp_time)) {
 		syslog(LOG_ERR, "can't read cp_time from kmem");
-		exit(1);
+		_exit(1);
 	}
 #endif
 #ifdef BSD
@@ -269,10 +269,10 @@ updatestat()
 	stats_all.s2.avenrun[1] = avrun[1] * FSCALE;
 	stats_all.s2.avenrun[2] = avrun[2] * FSCALE;
  	if (kvm_read(kfd, (long)nl[X_BOOTTIME].n_value,
-	    (char *)&btm, sizeof (stats_all.s2.boottime))
-	    != sizeof (stats_all.s2.boottime)) {
+	    (char *)&btm, sizeof (stats_all.s2.boottime)) !=
+	    sizeof (stats_all.s2.boottime)) {
 		syslog(LOG_ERR, "can't read boottime from kmem");
-		exit(1);
+		_exit(1);
 	}
 	stats_all.s2.boottime.tv_sec = btm.tv_sec;
 	stats_all.s2.boottime.tv_usec = btm.tv_usec;
@@ -289,7 +289,7 @@ updatestat()
 	len = sizeof(uvmexp);
 	if (sysctl(mib, 2, &uvmexp, &len, NULL, 0) < 0) {
 		syslog(LOG_ERR, "can't sysctl vm.uvmexp");
-		exit(1);
+		_exit(1);
 	}
 	stats_all.s1.v_pgpgin = uvmexp.fltanget;
 	stats_all.s1.v_pgpgout = uvmexp.pdpageouts;
@@ -303,10 +303,10 @@ updatestat()
 
 #ifndef BSD
  	if (kvm_read(kfd, (long)nl[X_DKXFER].n_value,
-	    (char *)stats_all.s1.dk_xfer, sizeof (stats_all.s1.dk_xfer))
-	    != sizeof (stats_all.s1.dk_xfer)) {
+	    (char *)stats_all.s1.dk_xfer, sizeof (stats_all.s1.dk_xfer)) !=
+	    sizeof (stats_all.s1.dk_xfer)) {
 		syslog(LOG_ERR, "can't read dk_xfer from kmem");
-		exit(1);
+		_exit(1);
 	}
 #endif
 
@@ -319,7 +319,7 @@ updatestat()
 		if (kvm_read(kfd, off, (char *)&ifnet, sizeof ifnet) !=
 		    sizeof ifnet) {
 			syslog(LOG_ERR, "can't read ifnet from kmem");
-			exit(1);
+			_exit(1);
 		}
 		stats_all.s1.if_ipackets += ifnet.if_data.ifi_ipackets;
 		stats_all.s1.if_opackets += ifnet.if_data.ifi_opackets;
@@ -329,7 +329,7 @@ updatestat()
 		off = (long)ifnet.if_list.tqe_next;
 	}
 	gettimeofday((struct timeval *)&stats_all.s3.curtime,
-		(struct timezone *) 0);
+	    (struct timezone *) 0);
 	alarm(1);
 	errno = save_errno;
 }
