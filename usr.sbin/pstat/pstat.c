@@ -1,4 +1,4 @@
-/*	$OpenBSD: pstat.c,v 1.7 1996/12/22 03:29:03 deraadt Exp $	*/
+/*	$OpenBSD: pstat.c,v 1.8 1997/05/30 13:28:38 downsj Exp $	*/
 /*	$NetBSD: pstat.c,v 1.27 1996/10/23 22:50:06 cgd Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 from: static char sccsid[] = "@(#)pstat.c	8.9 (Berkeley) 2/16/94";
 #else
-static char *rcsid = "$OpenBSD: pstat.c,v 1.7 1996/12/22 03:29:03 deraadt Exp $";
+static char *rcsid = "$OpenBSD: pstat.c,v 1.8 1997/05/30 13:28:38 downsj Exp $";
 #endif
 #endif /* not lint */
 
@@ -405,15 +405,16 @@ ufs_print(vp)
 	*flags = '\0';
 
 	(void)printf(" %6d %5s", ip->i_number, flagbuf);
-	type = ip->i_mode & S_IFMT;
-	if (S_ISCHR(ip->i_mode) || S_ISBLK(ip->i_mode))
-		if (usenumflag || ((name = devname(ip->i_rdev, type)) == NULL))
+	type = ip->i_ffs_mode & S_IFMT;
+	if (S_ISCHR(ip->i_ffs_mode) || S_ISBLK(ip->i_ffs_mode))
+		if (usenumflag ||
+		    ((name = devname(ip->i_ffs_rdev, type)) == NULL))
 			(void)printf("   %2d,%-2d", 
-			    major(ip->i_rdev), minor(ip->i_rdev));
+			    major(ip->i_ffs_rdev), minor(ip->i_ffs_rdev));
 		else
 			(void)printf(" %7s", name);
 	else
-		(void)printf(" %7qd", ip->i_size);
+		(void)printf(" %7qd", ip->i_ffs_size);
 	return (0);
 }
 
