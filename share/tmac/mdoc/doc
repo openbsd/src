@@ -1,4 +1,4 @@
-.\"	$OpenBSD: doc,v 1.13 2003/10/04 14:41:26 jmc Exp $
+.\"	$OpenBSD: doc,v 1.14 2004/02/20 10:29:05 jmc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -668,6 +668,33 @@
 .	nr cZ \\n(.s
 .       nR
 .\}
+..
+.\" NS In macro - include
+.de In
+.ds mN In
+.if \\n(nS>0 \{\
+.\"	if a variable type was the last thing given, want vertical space
+.	if \\n(fX>0 \{\
+.		Pp
+.		nr fX 0
+.	\}
+.\"	if a subroutine was the last thing given, want vertical space
+.	if \\n(fZ>0 \{\
+.		ie \\n(fD==0 \{\
+.			Pp
+.			rs
+.		\}
+.		el .br
+.	\}
+.	nr fD \\n(fD+1
+.\}
+.nr cF \\n(.f
+.nr cZ \\n(.s
+.fI
+\&\\*(fD#include <\\$1>
+.br
+.ft \\n(cF
+.fs \\n(cZ
 ..
 .\" NS Li macro - literals
 .de Li
@@ -2456,15 +2483,6 @@
 .\}
 .in \\n(.iu-\\n(Dsu
 ..
-.\" NS Ex macro - DEFUNCT
-.de Ex
-.tm Ex defunct, Use .D1: \\$1 \\$2 \\$3 \\$4 \\$5 \\$6 \\$7 \\$8 \\$9
-..
-.\"
-.\" NS Ex macro - DEFUNCT
-.de Ex
-.tm Ex defunct, Use .D1: \\$1 \\$2 \\$3 \\$4 \\$5 \\$6 \\$7 \\$8 \\$9
-..
 .\"
 .\" NS Vt macro - Variable type (for forcing old style variable declarations)
 .\" this is not done in the same manner as .Ot for fortrash - clean up later
@@ -2905,10 +2923,16 @@
 ..
 .\" NS rZ macro - reference print
 .de rZ
-.if \\n(uK \{\&\\*(U1,
-.	nr aK 1
-.	if (\\n(uK>1 \{\
+.if \\n(uK \{\
+.	ie (\\n(uK>2 \{\&\\*(U1,
+.		nr aK 1
 .		aK
+.	\}
+.	el \{\
+.		ie (\\n(uK>1 \{\&\\*(U1 and \&\\*(U2,
+.		\}
+.		el \{\&\\*(U1,
+.		\}
 .	\}
 .	nr Kl -\\n(uK
 .\}
@@ -3445,7 +3469,7 @@ File:
 .de Sf
 .tm .Sf defunct, use prefix or Ns
 ..
-.ds rV "function returns the value 0 if successful; otherwise the value -1 is returned and the global variable \\*(vAerrno\fP is set to indicate the error.
+.ds rV "function returns the value 0 if successful; otherwise the value \-1 is returned and the global variable \\*(vAerrno\fP is set to indicate the error.
 .\" Ns Rv macro - return values
 .\" Ns rV string - standard return message
 .de Rv
@@ -3472,6 +3496,25 @@ File:
 \&The
 .Fn \\$2
 \&\\*(rV
+.	\}
+.\}
+..
+.\" Ns Ex macro - Exit values
+.\" Ns eX string - standard return message
+.ds eX "utility exits 0 on success, and >0 if an error occurs.
+.de Ex
+.ie \\n(.$==0 \{\
+.tm Usage: .Ex [-std] (#\\n(.c)
+.\}
+.el \{\
+.	ds mN Ex
+.	if "\\$1"-std" \{\
+.	nr cH \\*(cH
+.	if (\\n(cH=2):(\\n(cH=3):(\\n(cH=4):(\\n(cH=5):(\\n(cH=7):(\\n(cH=9) .tm Usage: .Ex -std sections 1, 6, and 8 only
+.		br
+\&The
+.Nm \\$2
+\&\\*(eX
 .	\}
 .\}
 ..
