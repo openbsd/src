@@ -1,4 +1,4 @@
-/*	$OpenBSD: uniq.c,v 1.12 2002/12/08 22:43:54 millert Exp $	*/
+/*	$OpenBSD: uniq.c,v 1.13 2003/04/05 16:17:26 deraadt Exp $	*/
 /*	$NetBSD: uniq.c,v 1.7 1995/08/31 22:03:48 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)uniq.c	8.3 (Berkeley) 5/4/95";
 #endif
-static char rcsid[] = "$OpenBSD: uniq.c,v 1.12 2002/12/08 22:43:54 millert Exp $";
+static char rcsid[] = "$OpenBSD: uniq.c,v 1.13 2003/04/05 16:17:26 deraadt Exp $";
 #endif /* not lint */
 
 #include <errno.h>
@@ -226,12 +226,12 @@ obsolete(char *argv[])
 		 * Digit signifies an old-style option.  Malloc space for dash,
 		 * new option and argument.
 		 */
-		len = strlen(ap);
-		if ((start = p = malloc(len + 3)) == NULL)
+		len = strlen(ap) + 3;
+		if ((start = p = malloc(len)) == NULL)
 			err(1, "malloc");
 		*p++ = '-';
 		*p++ = ap[0] == '+' ? 's' : 'f';
-		(void)strcpy(p, ap + 1);
+		(void)strlcpy(p, ap + 1, len - 2);
 		*argv = start;
 	}
 }
