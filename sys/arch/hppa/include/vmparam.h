@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.1 1998/07/07 21:32:45 mickey Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.2 1998/07/29 00:40:03 mickey Exp $	*/
 
 /* 
  * Copyright (c) 1988-1994, The University of Utah and
@@ -36,7 +36,7 @@
  * beginning of the text and from the beginning of the P1 region to the
  * beginning of the stack respectively.
  */
-#define	USRTEXT		UTEXTSEG
+#define	USRTEXT		0x00002000		/* Start of user .text */
 #define	USRSTACK	0x68FF3000		/* Start of user stack */
 #define	BTOPUSRSTACK	btop(USRSTACK)		/* btop(USRSTACK) */
 #define	P1PAGES		0
