@@ -13,7 +13,7 @@
  * 
  */
 
-/* RCSID("$Id: ssh.h,v 1.28 1999/12/01 16:54:35 markus Exp $"); */
+/* RCSID("$Id: ssh.h,v 1.29 1999/12/02 20:05:40 markus Exp $"); */
 
 #ifndef SSH_H
 #define SSH_H
@@ -149,6 +149,13 @@
  * authentication socket.
  */
 #define SSH_AGENTPID_ENV_NAME	"SSH_AGENT_PID"
+
+/*
+ * Default path to ssh-askpass used by ssh-add,
+ * environment variable for overwriting the default location
+ */
+#define SSH_ASKPASS_DEFAULT	"/usr/X11R6/bin/ssh-askpass"
+#define SSH_ASKPASS_ENV		"SSH_ASKPASS"
 
 /*
  * Force host key length and server key length to differ by at least this
