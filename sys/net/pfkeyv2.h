@@ -1,5 +1,3 @@
-/*	$id$	*/
-
 /*
  * The author of this code is Angelos D. Keromytis, angelos@openbsd.org
  * 	(except when noted otherwise).
@@ -29,6 +27,8 @@ struct pfkeycb
 {
     LIST_ENTRY(pfkeycb) pfkey_list;
     struct socket      *pfkey_socket;
+    struct sockaddr    *pfkey_faddr;
+    struct sockaddr    *pfkey_laddr;
     struct sockproto    pfkey_proto;
     u_int32_t           pfkey_flags;
 #define PFKEYv2_REGISTERED        0x1
