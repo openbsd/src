@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.10 1997/01/25 00:27:30 dm Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.11 1997/01/25 17:37:34 dm Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -427,10 +427,6 @@ sys_fstat(p, v, retval)
 
 	case DTYPE_VNODE:
 		error = vn_stat((struct vnode *)fp->f_data, &ub, p);
-		/* Don't let non-root see generation numbers
-		   (for NFS security) */
-		if (suser(p->p_ucred, &p->p_acflag))
-			ub.st_gen = 0;
 		break;
 
 	case DTYPE_SOCKET:
@@ -447,9 +443,14 @@ sys_fstat(p, v, retval)
 		panic("fstat");
 		/*NOTREACHED*/
 	}
-	if (error == 0)
+	if (error == 0) {
+		/* Don't let non-root see generation numbers
+		   (for NFS security) */
+		if (suser(p->p_ucred, &p->p_acflag))
+			ub.st_gen = 0;
 		error = copyout((caddr_t)&ub, (caddr_t)SCARG(uap, sb),
 		    sizeof (ub));
+	}
 	return (error);
 }
 
