@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdio.c,v 1.6 1997/03/09 01:34:27 angelos Exp $	*/
+/*	$OpenBSD: cdio.c,v 1.7 1997/03/19 03:21:49 angelos Exp $	*/
 /*
  * Compact Disc Control Utility by Serge V. Vakulenko <vak@cronyx.ru>.
  * Based on the non-X based CD player by Jean-Marc Zucconi and
@@ -728,9 +728,9 @@ int play_prev (arg)
 
                 if (trk < h.starting_track)
                   return play_track (h.starting_track, 1, 
-				     h.starting_track + 1, 1);
+				     h.ending_track + 1, 1);
 
-                return play_track (trk, 1, trk + 1, 1);
+                return play_track (trk, 1, h.ending_track, 1);
         }
 
         return (0);
@@ -751,7 +751,7 @@ int play_same (arg)
                         return (rc);
                 }
 
-                return play_track (trk, 1, trk + 1, 1);
+                return play_track (trk, 1, h.ending_track, 1);
         }
 
         return (0);
@@ -784,7 +784,7 @@ int play_next (arg)
 			return (rc);
 		}
 
-		return play_track (trk, 1, trk + 1, 1);
+		return play_track (trk, 1, h.ending_track, 1);
 	}
 
 	return (0);
