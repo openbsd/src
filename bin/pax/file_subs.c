@@ -1,4 +1,4 @@
-/*	$OpenBSD: file_subs.c,v 1.3 1996/06/23 14:20:33 deraadt Exp $	*/
+/*	$OpenBSD: file_subs.c,v 1.4 1997/01/26 10:33:22 downsj Exp $	*/
 /*	$NetBSD: file_subs.c,v 1.4 1995/03/21 09:07:18 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)file_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: file_subs.c,v 1.3 1996/06/23 14:20:33 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: file_subs.c,v 1.4 1997/01/26 10:33:22 downsj Exp $";
 #endif
 #endif /* not lint */
 
@@ -435,8 +435,7 @@ node_creat(arcn)
 			    arcn->name);
 			return(-1);
 		case PAX_SLK:
-			if ((res = symlink(arcn->ln_name, arcn->name)) == 0)
-				return(0);
+			res = symlink(arcn->ln_name, arcn->name);
 			break;
 		case PAX_CTG:
 		case PAX_HLK:
@@ -479,9 +478,17 @@ node_creat(arcn)
 	 * we were able to create the node. set uid/gid, modes and times
 	 */
 	if (pids)
-		res = set_ids(arcn->name, arcn->sb.st_uid, arcn->sb.st_gid);
+		res = ((arcn->type == PAX_SLK) ?
+		    set_lids(arcn->name, arcn->sb.st_uid, arcn->sb.st_gid) :
+		    set_ids(arcn->name, arcn->sb.st_uid, arcn->sb.st_gid));
 	else
 		res = 0;
+
+	/*
+	 * symlinks are done now.
+	 */
+	if (arcn->type == PAX_SLK)
+		return(0);
 
 	/*
 	 * IMPORTANT SECURITY NOTE:
@@ -756,6 +763,31 @@ set_ids(fnm, uid, gid)
 #endif
 {
 	if (chown(fnm, uid, gid) < 0) {
+		syswarn(1, errno, "Unable to set file uid/gid of %s", fnm);
+		return(-1);
+	}
+	return(0);
+}
+
+/*
+ * set_lids()
+ *	set the uid and gid of a file system node
+ * Return:
+ *	0 when set, -1 on failure
+ */
+
+#if __STDC__
+int
+set_lids(char *fnm, uid_t uid, gid_t gid)
+#else
+int
+set_lids(fnm, uid, gid)
+	char *fnm;
+	uid_t uid;
+	gid_t gid;
+#endif
+{
+	if (lchown(fnm, uid, gid) < 0) {
 		syswarn(1, errno, "Unable to set file uid/gid of %s", fnm);
 		return(-1);
 	}
