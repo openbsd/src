@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.39 2004/10/05 10:21:42 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.40 2004/10/05 18:47:15 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -261,7 +261,9 @@ our @ISA=qw(OpenBSD::PackingElement::Meta);
 # Abstract class for all file-like elements
 package OpenBSD::PackingElement::FileBase;
 our @ISA=qw(OpenBSD::PackingElement::FileObject);
+
 use File::Spec;
+
 sub write
 {
 	my ($self, $fh) = @_;
@@ -468,19 +470,19 @@ sub mark_ldconfig_directory
 }
 
 package OpenBSD::PackingElement::Ignore;
-our @ISA=qw(OpenBSD::PackingElement);
+our @ISA=qw(OpenBSD::PackingElement::Annotation);
 __PACKAGE__->setKeyword('ignore');
 
-sub add_object
+sub add
 {
-	my ($plist, $self) = @_;
+	my ($class, $plist, @args) = @_;
 	$plist->{state}->{ignore} = 1;
 	return undef;
 }
 
 # Comment is very special
 package OpenBSD::PackingElement::Comment;
-our @ISA=qw(OpenBSD::PackingElement);
+our @ISA=qw(OpenBSD::PackingElement::Meta);
 
 __PACKAGE__->setKeyword('comment');
 sub keyword() { "comment" }
@@ -490,23 +492,29 @@ sub add
 	my ($class, $plist, @args) = @_;
 
 	if ($args[0] =~ m/^\$OpenBSD(.*)\$\s*$/) {
-		OpenBSD::PackingElement::CVSTag->add($plist, @args);
+		return OpenBSD::PackingElement::CVSTag->add($plist, @args);
 	} elsif ($args[0] =~ m/^MD5:\s*/) {
 		$plist->{state}->{lastfile}->add_md5($');
 		return undef;
 	} elsif ($args[0] =~ m/^subdir\=(.*?)\s+cdrom\=(.*?)\s+ftp\=(.*?)\s*$/) {
-		OpenBSD::PackingElement::ExtraInfo->add($plist, $1, $2, $3);
+		return OpenBSD::PackingElement::ExtraInfo->add($plist, $1, $2, $3);
 	} elsif ($args[0] eq 'no checksum') {
 		$plist->{state}->{nochecksum} = 1;
 		return undef;
 	} else {
-		my $self = $class->new(@args);
-		return $self->add_object($plist);
+		return $class->SUPER::add(@args);
 	}
 }
 
+package OpenBSD::PackingElement::CVSTag;
+our @ISA=qw(OpenBSD::PackingElement::Meta);
+
+sub keyword() { 'comment' }
+
+sub category() { 'cvstags'}
+
 package OpenBSD::PackingElement::md5;
-our @ISA=qw(OpenBSD::PackingElement);
+our @ISA=qw(OpenBSD::PackingElement::Annotation);
 
 __PACKAGE__->setKeyword('md5');
 
@@ -518,13 +526,8 @@ sub add
 	return undef;
 }
 
-package OpenBSD::PackingElement::CVSTag;
-our @ISA=qw(OpenBSD::PackingElement::Meta OpenBSD::PackingElement::Comment);
-
-sub category() { 'cvstags'}
-
 package OpenBSD::PackingElement::symlink;
-our @ISA=qw(OpenBSD::PackingElement);
+our @ISA=qw(OpenBSD::PackingElement::Annotation);
 
 __PACKAGE__->setKeyword('symlink');
 
@@ -532,12 +535,12 @@ sub add
 {
 	my ($class, $plist, @args) = @_;
 
-	$plist->{state}->{lastfile}->make_symlink($');
+	$plist->{state}->{lastfile}->make_symlink(@args);
 	return undef;
 }
 
 package OpenBSD::PackingElement::hardlink;
-our @ISA=qw(OpenBSD::PackingElement);
+our @ISA=qw(OpenBSD::PackingElement::Annotation);
 
 __PACKAGE__->setKeyword('link');
 
@@ -545,12 +548,12 @@ sub add
 {
 	my ($class, $plist, @args) = @_;
 
-	$plist->{state}->{lastfile}->make_hardlink($');
+	$plist->{state}->{lastfile}->make_hardlink(@args);
 	return undef;
 }
 
 package OpenBSD::PackingElement::size;
-our @ISA=qw(OpenBSD::PackingElement);
+our @ISA=qw(OpenBSD::PackingElement::Annotation);
 
 __PACKAGE__->setKeyword('size');
 
@@ -563,7 +566,7 @@ sub add
 }
 
 package OpenBSD::PackingElement::Option;
-our @ISA=qw(OpenBSD::PackingElement);
+our @ISA=qw(OpenBSD::PackingElement::Meta);
 
 __PACKAGE__->setKeyword('option');
 sub keyword() { 'option' }
@@ -622,7 +625,6 @@ our @ISA=qw(OpenBSD::PackingElement::Unique);
 
 sub keyword() { 'comment' }
 sub category() { 'extrainfo' }
-
 
 sub new
 {
