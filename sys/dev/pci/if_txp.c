@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txp.c,v 1.12 2001/04/11 15:41:08 jason Exp $	*/
+/*	$OpenBSD: if_txp.c,v 1.13 2001/04/12 15:01:19 jason Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -118,6 +118,8 @@ void txp_rsp_fixup __P((struct txp_softc *, struct txp_rsp_desc *));
 void txp_ifmedia_sts __P((struct ifnet *, struct ifmediareq *));
 int txp_ifmedia_upd __P((struct ifnet *));
 void txp_show_descriptor __P((void *));
+int txp_encap __P((struct txp_softc *, struct txp_tx_ring *, struct mbuf *, u_int32_t *, u_int32_t *, u_int32_t *));
+void txp_tx_reclaim __P((struct txp_softc *, struct txp_tx_ring *, u_int32_t));
 
 struct cfattach txp_ca = {
 	sizeof(struct txp_softc), txp_probe, txp_attach,
@@ -163,6 +165,8 @@ txp_attach(parent, self, aux)
 	u_int32_t command;
 	u_int16_t p1;
 	u_int32_t p2;
+
+	sc->sc_cold = 1;
 
 	command = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
 
@@ -213,6 +217,10 @@ txp_attach(parent, self, aux)
 	if (txp_alloc_rings(sc))
 		return;
 
+	if (txp_command(sc, TXP_CMD_MAX_PKT_SIZE_WRITE, 0x800, 0, 0,
+	    NULL, NULL, NULL, 1))
+		return;
+
 	if (txp_command(sc, TXP_CMD_STATION_ADDRESS_READ, 0, 0, 0,
 	    &p1, &p2, NULL, 1))
 		return;
@@ -225,6 +233,7 @@ txp_attach(parent, self, aux)
 	sc->sc_arpcom.ac_enaddr[5] = ((u_int8_t *)&p2)[0];
 
 	printf(" address %s\n", ether_sprintf(sc->sc_arpcom.ac_enaddr));
+	sc->sc_cold = 0;
 
 	ifmedia_init(&sc->sc_ifmedia, 0, txp_ifmedia_upd, txp_ifmedia_sts);
 	ifmedia_add(&sc->sc_ifmedia, IFM_ETHER|IFM_10_T, 0, NULL);
@@ -246,7 +255,7 @@ txp_attach(parent, self, aux)
 	ifp->if_start = txp_start;
 	ifp->if_watchdog = txp_watchdog;
 	ifp->if_baudrate = 10000000;
-	ifp->if_snd.ifq_maxlen = IFQ_MAXLEN;
+	ifp->if_snd.ifq_maxlen = TX_ENTRIES;
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 
 	/*
@@ -316,7 +325,7 @@ txp_reset_adapter(sc)
 	}
 
 	if (r != STAT_WAITING_FOR_HOST_REQUEST) {
-		printf(": reset hung\n");
+		printf("%s: reset hung\n", TXP_DEVNAME(sc));
 		return (-1);
 	}
 
@@ -506,9 +515,70 @@ int
 txp_intr(vsc)
 	void *vsc;
 {
+	struct txp_softc *sc = vsc;
+	struct txp_hostvar *hv = sc->sc_hostvar;
+	u_int32_t isr;
 	int claimed = 0;
 
+	/* mask all interrupts */
+	WRITE_REG(sc, TXP_IMR, TXP_INT_RESERVED | TXP_INT_SELF |
+	    TXP_INT_A2H_7 | TXP_INT_A2H_6 | TXP_INT_A2H_5 | TXP_INT_A2H_4 |
+	    TXP_INT_A2H_3 | TXP_INT_A2H_2 | TXP_INT_A2H_1 | TXP_INT_A2H_0 |
+	    TXP_INT_DMA3 | TXP_INT_DMA2 | TXP_INT_DMA1 | TXP_INT_DMA0 |
+	    TXP_INT_PCI_TABORT | TXP_INT_PCI_MABORT |  TXP_INT_LATCH);
+
+	isr = READ_REG(sc, TXP_ISR);
+	while (isr) {
+		claimed = 1;
+		WRITE_REG(sc, TXP_ISR, isr);
+
+		txp_tx_reclaim(sc, &sc->sc_txhir, hv->hv_tx_hi_desc_read_idx);
+		txp_tx_reclaim(sc, &sc->sc_txlor, hv->hv_tx_lo_desc_read_idx);
+
+		isr = READ_REG(sc, TXP_ISR);
+	}
+
+	/* unmask all interrupts */
+	WRITE_REG(sc, TXP_IMR, 0);
+
+	txp_start(&sc->sc_arpcom.ac_if);
+
 	return (claimed);
+}
+
+/*
+ * Reclaim mbufs and entries from a transmit ring.
+ */
+void
+txp_tx_reclaim(sc, r, off)
+	struct txp_softc *sc;
+	struct txp_tx_ring *r;
+	u_int32_t off;
+{
+	u_int32_t i = r->r_cons, idx = TXP_OFFSET2IDX(off), cnt = r->r_cnt;
+	struct txp_tx_desc *txd = &r->r_desc[i];
+	struct mbuf *m;
+
+	while (i != idx) {
+		if (cnt == 0)
+			break;
+		if ((txd->tx_flags & TX_FLAGS_TYPE_M) ==
+		    TX_FLAGS_TYPE_DATA) {
+			bcopy(&txd->tx_addrlo, &m, sizeof(struct mbuf *));
+			if (m != NULL)
+				m_freem(m);
+			bzero(txd, sizeof(*txd));
+		}
+		cnt--;
+
+		if (++i == TX_ENTRIES) {
+			i = 0;
+			txd = r->r_desc;
+		} else
+			txd++;
+	}
+	r->r_cons = i;
+	r->r_cnt = cnt;
 }
 
 void
@@ -565,6 +635,9 @@ txp_alloc_rings(sc)
 	boot->br_txhipri_lo = sc->sc_txhiring_dma.dma_paddr & 0xffffffff;
 	boot->br_txhipri_hi = sc->sc_txhiring_dma.dma_paddr >> 32;
 	boot->br_txhipri_siz = TX_ENTRIES * sizeof(struct txp_tx_desc);
+	sc->sc_txhir.r_reg = TXP_H2A_1;
+	sc->sc_txhir.r_desc = (struct txp_tx_desc *)sc->sc_txhiring_dma.dma_vaddr;
+	sc->sc_txhir.r_cons = sc->sc_txhir.r_prod = sc->sc_txhir.r_cnt = 0;
 
 	/* low priority tx ring */
 	if (txp_dma_malloc(sc, sizeof(struct txp_tx_desc) * TX_ENTRIES,
@@ -576,6 +649,9 @@ txp_alloc_rings(sc)
 	boot->br_txlopri_lo = sc->sc_txloring_dma.dma_paddr & 0xffffffff;
 	boot->br_txlopri_hi = sc->sc_txloring_dma.dma_paddr >> 32;
 	boot->br_txlopri_siz = TX_ENTRIES * sizeof(struct txp_tx_desc);
+	sc->sc_txlor.r_reg = TXP_H2A_3;
+	sc->sc_txlor.r_desc = (struct txp_tx_desc *)sc->sc_txloring_dma.dma_vaddr;
+	sc->sc_txhir.r_cons = sc->sc_txhir.r_prod = sc->sc_txhir.r_cnt = 0;
 
 	/* high priority rx ring */
 	if (txp_dma_malloc(sc, sizeof(struct txp_rx_desc) * RX_ENTRIES,
@@ -830,27 +906,157 @@ void
 txp_init(sc)
 	struct txp_softc *sc;
 {
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	int s;
+
+	txp_stop(sc);
+
+	s = splimp();
+
 #if 0
 	txp_set_filter(sc);
 #endif
+
+	txp_command(sc, TXP_CMD_TX_ENABLE, 0, 0, 0, NULL, NULL, NULL, 1);
+
+	WRITE_REG(sc, TXP_IER, TXP_INT_RESERVED | TXP_INT_SELF |
+	    TXP_INT_A2H_7 | TXP_INT_A2H_6 | TXP_INT_A2H_5 | TXP_INT_A2H_4 |
+	    TXP_INT_A2H_3 | TXP_INT_A2H_2 | TXP_INT_A2H_1 | TXP_INT_A2H_0 |
+	    TXP_INT_DMA3 | TXP_INT_DMA2 | TXP_INT_DMA1 | TXP_INT_DMA0 |
+	    TXP_INT_PCI_TABORT | TXP_INT_PCI_MABORT |  TXP_INT_LATCH);
+	WRITE_REG(sc, TXP_IMR, 0);
+
+	ifp->if_flags |= IFF_RUNNING;
+	ifp->if_flags &= ~IFF_OACTIVE;
+
+	splx(s);
 }
+
 
 void
 txp_start(ifp)
 	struct ifnet *ifp;
 {
+	struct txp_softc *sc = ifp->if_softc;
+	struct txp_tx_ring *r;
+	struct txp_tx_desc *txd;
 	struct mbuf *m;
+	u_int32_t bix, totlen, cnt;
 
 	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
 		return;
 
-	for (;;) {
+	r = &sc->sc_txhir;
+	bix = r->r_prod;
+
+	while ((TX_ENTRIES - r->r_cnt) > 4) {
 		IF_DEQUEUE(&ifp->if_snd, m);
 		if (m == NULL)
 			break;
-		/* XXX enqueue and send the packet */
-		m_freem(m);
+
+#if NBPFILTER > 0
+		/*
+		 * If BPF is listening on this interface, let it see the
+		 * packet before we commit it to the wire.
+		 */
+		if (ifp->if_bpf)
+			bpf_mtap(ifp->if_bpf, m);
+#endif
+
+		txd = &r->r_desc[bix];
+		if (++bix == TX_ENTRIES)
+			bix = 0;
+
+		r->r_cnt++;
+
+		if (txp_encap(sc, &sc->sc_txhir, m, &bix, &totlen, &cnt)) {
+			if (bix == 0)
+				bix = TX_ENTRIES;
+			bix--;
+			r->r_cnt--;
+			IF_PREPEND(&ifp->if_snd, m);
+			ifp->if_flags |= IFF_OACTIVE;
+			break;
+		}
+
+		bzero(txd, sizeof(*txd));
+		txd->tx_flags = TX_FLAGS_TYPE_DATA;
+		txd->tx_totlen = totlen;
+		txd->tx_numdesc = cnt;
+		/* stash mbuf * in the descriptor */
+		bcopy(&m, &txd->tx_addrlo, sizeof(struct mbuf *));
+
+		/* Kick the txp */
+		WRITE_REG(sc, r->r_reg, TXP_IDX2OFFSET(bix));
+
+		if (++bix == TX_ENTRIES)
+			bix = 0;
 	}
+
+	r->r_prod = bix;
+}
+
+int
+txp_encap(sc, r, mhead, bixp, totlenp, cntp)
+	struct txp_softc *sc;
+	struct txp_tx_ring *r;
+	struct mbuf *mhead;
+	u_int32_t *bixp, *totlenp, *cntp;
+{
+	struct mbuf *m;
+	struct txp_frag_desc *fd;
+	u_int32_t cnt = 0, cur, frag, totlen = 0;
+	u_int64_t addr;
+
+	cur = frag = *bixp;
+	fd = (struct txp_frag_desc *)&r->r_desc[frag];
+	m = mhead;
+
+	while (m != NULL) {
+		if (m->m_len == 0) {
+			m = m->m_next;
+			continue;
+		}
+
+		totlen += m->m_len;
+
+		if ((TX_ENTRIES - (r->r_cnt + cnt)) < 4)
+			goto err;
+
+		bzero(fd, sizeof(*fd));
+		fd->frag_flags = FRAG_FLAGS_TYPE_FRAG;
+		addr = vtophys(m->m_data);
+		fd->frag_addrlo = addr & 0xffffffff;
+		fd->frag_addrhi = addr >> 32;
+		fd->frag_len = m->m_len;
+
+		cur = frag;
+		cnt++;
+		frag++;
+		if (frag == TX_ENTRIES) {
+			frag = 0;
+			fd = (struct txp_frag_desc *)r->r_desc;
+		} else {
+			fd++;
+		}
+
+		m = m->m_next;
+	}
+	*bixp = frag;
+	*totlenp = totlen;
+	*cntp = cnt;
+	r->r_cnt += cnt;
+
+	return (0);
+
+err:
+	for (; cnt > 0; cnt--) {
+		if (frag == 0)
+			frag = TX_ENTRIES;
+		frag--;
+	}
+
+	return (ENOBUFS);
 }
 
 /*
@@ -870,7 +1076,7 @@ txp_command(sc, id, in1, in2, in3, out1, out2, out3, wait)
 	u_int16_t seq;
 
 	if (txp_cmd_desc_numfree(sc) == 0) {
-		printf(": no free cmd descriptors\n");
+		printf("%s: no free cmd descriptors\n", TXP_DEVNAME(sc));
 		return (-1);
 	}
 
@@ -886,8 +1092,6 @@ txp_command(sc, id, in1, in2, in3, out1, out2, out3, wait)
 	cmd->cmd_par3 = in3;
 	cmd->cmd_flags = CMD_FLAGS_TYPE_CMD |
 	    (wait ? CMD_FLAGS_RESP : 0) | CMD_FLAGS_VALID;
-
-	txp_show_descriptor(cmd);
 
 	idx += sizeof(struct txp_cmd_desc);
 	if (idx == sc->sc_cmdring.size)
@@ -911,7 +1115,7 @@ txp_command(sc, id, in1, in2, in3, out1, out2, out3, wait)
 		DELAY(50);
 	}
 	if (i == 1000 || rsp == NULL) {
-		printf(": command failed\n");
+		printf("%s: 0x%x command failed\n", TXP_DEVNAME(sc), id);
 		return (-1);
 	}
 
@@ -944,15 +1148,13 @@ txp_response(sc, ridx, id, seq, rspp)
 	while (ridx != hv->hv_resp_write_idx) {
 		rsp = (struct txp_rsp_desc *)(((u_int8_t *)sc->sc_rspring.base) + ridx);
 
-		txp_show_descriptor(rsp);
-
 		if (id == rsp->rsp_id && rsp->rsp_seq == seq) {
 			*rspp = rsp;
 			return (0);
 		}
 
 		if (rsp->rsp_flags & RSP_FLAGS_ERROR) {
-			printf(": response error!\n");
+			printf("%s: response error!\n", TXP_DEVNAME(sc));
 			txp_rsp_fixup(sc, rsp);
 			ridx = hv->hv_resp_read_idx;
 			continue;
@@ -960,15 +1162,16 @@ txp_response(sc, ridx, id, seq, rspp)
 
 		switch (rsp->rsp_id) {
 		case TXP_CMD_CYCLE_STATISTICS:
-			printf(": stats\n");
+			printf("%s: stats\n", TXP_DEVNAME(sc));
 			break;
 		case TXP_CMD_MEDIA_STATUS_READ:
 			break;
 		case TXP_CMD_HELLO_RESPONSE:
-			printf(": hello\n");
+			printf("%s: hello\n", TXP_DEVNAME(sc));
 			break;
 		default:
-			printf(": unknown id(0x%x)\n", rsp->rsp_id);
+			printf("%s: unknown id(0x%x)\n", TXP_DEVNAME(sc),
+			    rsp->rsp_id);
 		}
 
 		txp_rsp_fixup(sc, rsp);
@@ -1028,6 +1231,10 @@ void
 txp_stop(sc)
 	struct txp_softc *sc;
 {
+	txp_command(sc, TXP_CMD_TX_DISABLE, 0, 0, 0, NULL, NULL, NULL, 1);
+#if 0
+	txp_command(sc, TXP_CMD_RX_DISABLE, 0, 0, 0, NULL, NULL, NULL, 1);
+#endif
 }
 
 void
@@ -1059,7 +1266,8 @@ txp_ifmedia_upd(ifp)
 			new_xcvr = TXP_XCVR_100_HDX;
 	} else if (IFM_SUBTYPE(ifm->ifm_media) == IFM_AUTO) {
 		new_xcvr = TXP_XCVR_AUTO;
-	}
+	} else
+		return (EINVAL);
 
 	/* nothing to do */
 	if (sc->sc_xcvr == new_xcvr)
@@ -1105,7 +1313,6 @@ txp_ifmedia_sts(ifp, ifmr)
 	if (bmcr & BMCR_ISO) {
 		ifmr->ifm_active |= IFM_NONE;
 		ifmr->ifm_status = 0;
-		printf("isolated!\n");
 		return;
 	}
 
@@ -1115,7 +1322,6 @@ txp_ifmedia_sts(ifp, ifmr)
 	if (bmcr & BMCR_AUTOEN) {
 		if ((bmsr & BMSR_ACOMP) == 0) {
 			ifmr->ifm_active |= IFM_NONE;
-			printf("acomp!\n");
 			return;
 		}
 
@@ -1144,9 +1350,10 @@ void
 txp_show_descriptor(d)
 	void *d;
 {
-#if 0
 	struct txp_cmd_desc *cmd = d;
 	struct txp_rsp_desc *rsp = d;
+	struct txp_tx_desc *txd = d;
+	struct txp_frag_desc *frgd = d;
 
 	switch (cmd->cmd_flags & CMD_FLAGS_TYPE_M) {
 	case CMD_FLAGS_TYPE_CMD:
@@ -1161,6 +1368,18 @@ txp_show_descriptor(d)
 		    rsp->rsp_flags, rsp->rsp_numdesc, rsp->rsp_id, rsp->rsp_seq,
 		    rsp->rsp_par1, rsp->rsp_par2, rsp->rsp_par3);
 		break;
+	case CMD_FLAGS_TYPE_DATA:
+		/* data header (assuming tx for now) */
+		printf("[data flags 0x%x num %d totlen %d addr 0x%x/0x%x pflags 0x%x]",
+		    txd->tx_flags, txd->tx_numdesc, txd->tx_totlen,
+		    txd->tx_addrlo, txd->tx_addrhi, txd->tx_pflags);
+		break;
+	case CMD_FLAGS_TYPE_FRAG:
+		/* fragment descriptor */
+		printf("[frag flags 0x%x rsvd1 0x%x len %d addr 0x%x/0x%x rsvd2 0x%x]",
+		    frgd->frag_flags, frgd->frag_rsvd1, frgd->frag_len,
+		    frgd->frag_addrlo, frgd->frag_addrhi, frgd->frag_rsvd2);
+		break;
 	default:
 		printf("[unknown(%x) flags 0x%x num %d id %d seq %d par1 0x%x par2 0x%x par3 0x%x]\n",
 		    cmd->cmd_flags & CMD_FLAGS_TYPE_M,
@@ -1168,7 +1387,6 @@ txp_show_descriptor(d)
 		    cmd->cmd_par1, cmd->cmd_par2, cmd->cmd_par3);
 		break;
 	}
-#endif
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txpreg.h,v 1.13 2001/04/11 16:22:38 jason Exp $ */
+/*	$OpenBSD: if_txpreg.h,v 1.14 2001/04/12 15:01:19 jason Exp $ */
 
 /*
  * Copyright (c) 2001 Aaron Campbell <aaron@monkey.org>.
@@ -226,8 +226,8 @@ struct txp_tx_desc {
 	volatile u_int8_t	tx_flags;	/* type/descriptor flags */
 	volatile u_int8_t	tx_numdesc;	/* number of descriptors */
 	volatile u_int16_t	tx_totlen;	/* total packet length */
-	volatile u_int32_t	tx_addrlo;	/* phys addr low word */
-	volatile u_int32_t	tx_addrhi;	/* phys addr high word */
+/*XXX*/	u_int32_t		tx_addrlo;	/* virt addr low word */
+/*XXX*/	u_int32_t		tx_addrhi;	/* virt addr high word */
 	volatile u_int32_t	tx_pflags;	/* processing flags */
 };
 #define	TX_FLAGS_TYPE_M		0x07		/* type mask */
@@ -455,6 +455,14 @@ struct txp_hostvar {
 #define	CMD_ENTRIES			32
 #define	RSP_ENTRIES			32
 
+/*
+ * Macros for converting array indices to offsets within the descriptor
+ * arrays.  The chip operates on offsets, but it's much easier for us
+ * to operate on indices.  Assumes descriptor entries are 16 bytes.
+ */
+#define	TXP_IDX2OFFSET(idx)	((idx) << 4)
+#define	TXP_OFFSET2IDX(off)	((off) >> 4)
+
 struct txp_dma_alloc {
 	caddr_t			dma_vaddr;
 	u_int64_t		dma_paddr;
@@ -476,6 +484,19 @@ struct txp_rsp_ring {
 	u_int32_t		size;
 };
 
+struct txp_tx_ring {
+	struct txp_tx_desc	*r_desc;	/* base address of descs */
+	u_int32_t		r_reg;		/* register to activate */
+	u_int32_t		r_prod;		/* producer */
+	u_int32_t		r_cons;		/* consumer */
+	u_int32_t		r_cnt;		/* # descs in use */
+};
+
+/* Software transmit list */
+struct txp_swtx {
+	struct mbuf		*tx_mbuf;
+};
+
 struct txp_softc {
 	struct device		sc_dev;		/* base device */
 	struct arpcom		sc_arpcom;	/* ethernet common */
@@ -489,13 +510,17 @@ struct txp_softc {
 	void *			sc_ih;
 	struct timeout		sc_tick_tmo;
 	struct ifmedia		sc_ifmedia;
+	struct txp_tx_ring	sc_txhir, sc_txlor;
 	u_int16_t		sc_xcvr;
 	u_int16_t		sc_seq;
 	struct txp_dma_alloc	sc_boot_dma, sc_host_dma, sc_zero_dma;
 	struct txp_dma_alloc	sc_rxhiring_dma, sc_rxloring_dma;
 	struct txp_dma_alloc	sc_txhiring_dma, sc_txloring_dma;
 	struct txp_dma_alloc	sc_cmdring_dma, sc_rspring_dma;
+	int			sc_cold;
 };
+
+#define	TXP_DEVNAME(sc)		((sc)->sc_cold ? "" : (sc)->sc_dev.dv_xname)
 
 struct txp_fw_file_header {
 	u_int8_t	magicid[8];	/* TYPHOON\0 */
