@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wicontrol.8,v 1.7 2000/03/02 18:50:00 ho Exp $
+.\"	$OpenBSD: wicontrol.8,v 1.8 2000/03/18 22:56:06 aaron Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu> All rights reserved.
@@ -66,8 +66,10 @@ devices via the
 .Xr wi 4
 and
 .Xr awi 4
-drivers. Most of the parameters that can be changed relate to the
-IEEE 802.11 protocol which the WaveLAN implements. This includes
+drivers.
+Most of the parameters that can be changed relate to the
+IEEE 802.11 protocol which the WaveLAN implements.
+This includes
 the station name, whether the station is operating in ad-hoc (point
 to point) or BSS (service set) mode, and the network name of a service
 set to join (IBSS) if BSS mode is enabled.
@@ -91,33 +93,43 @@ The options are as follows:
 Display the statistics counters for the specified WaveLAN/IEEE
 interface.
 .It Fl e Ar 0|1
-Enable or disable WEP encryption. Permitted values are
+Enable or disable WEP encryption.
+Permitted values are
 .Ar 0
 (encryption disabled) or
 .Ar 1
-(encryption enabled). Encryption is off by default.
+(encryption enabled).
+Encryption is off by default.
 .It Fl k Ar key "[ -v 1|2|3|4 ]"
-Set WEP encryption keys. There are four default encryption keys that can be
-programmed. A specific key can be set using the
+Set WEP encryption keys.
+There are four default encryption keys that can be programmed.
+A specific key can be set using the
 .Fl v
-flag. If the
+flag.
+If the
 .Fl v
-flag is not specified, the first key will be set. Encryption keys can either
+flag is not specified, the first key will be set.
+Encryption keys can either
 be normal text (i.e., "hello") or a series of hexadecimal digits
-(i.e., "0x1234512345"). For WaveLAN Silver cards, the key is
+(i.e., "0x1234512345").
+For WaveLAN Silver cards, the key is
 restricted to 40 bits, hence the key can be either a 5-character text string
-or 10 hexadecimal digits. For WaveLAN Gold cards, the key can be up to
+or 10 hexadecimal digits.
+For WaveLAN Gold cards, the key can be up to
 128 bits, which means the key can be specified as either a 16-character
 text string or 32 hexadecimal digits.
 .It Fl T Ar 1|2|3|4
 Specify which of the four WEP encryption keys will be used to encrypt
 transmitted packets.
 .It Fl t Ar tx rate
-Set the transmit rate of the specified interface. The legal values
+Set the transmit rate of the specified interface.
+The legal values
 for the transmit rate vary depending on whether the interface is a
-standard WaveLAN/IEEE or a WaveLAN/IEEE Turbo adapter. The standard
+standard WaveLAN/IEEE or a WaveLAN/IEEE Turbo adapter.
+The standard
 NICs support a maximum transmit rate of 2Mbps while the turbo NICs
-support a maximum speed of 6Mbps. The following table shows the
+support a maximum speed of 6Mbps.
+The following table shows the
 legal transmit rate settings and the corresponding transmit speeds:
 .Bd -filled -offset indent
 .Bl -column "TX rate " "NIC speed "
@@ -132,30 +144,32 @@ legal transmit rate settings and the corresponding transmit speeds:
 .El
 .Ed
 .Pp
-The standard NICs support only settings 1 through 3. Turbo NICs support
-all the above listed speed settings.
+The standard NICs support only settings 1 through 3.
+Turbo NICs support all the above listed speed settings.
 The default driver setting is 3 (auto rate select).
 .It Fl n Ar network name
-Set the name of the service set (IBSS) that this station wishes to
-join. The
+Set the name of the service set (IBSS) that this station wishes to join.
+The
 .Ar network name
-can be any text string up to 30 characters in length. The default name
+can be any text string up to 30 characters in length.
+The default name
 is the empty string which should allow the station to connect to the first
-available access point. The interface should be set for BSS mode using
-the
+available access point.
+The interface should be set for BSS mode using the
 .Fl p
 flag in order for this to work.
 .It Fl s Ar station name
 Sets the
 .Ar station name
-for the specified interface. The
+for the specified interface.
+The
 .Ar station name
-is used for diagnostic purposes. The Lucent WaveMANAGER sofware can
-poll the names of remote hosts.
+is used for diagnostic purposes.
+The Lucent WaveMANAGER sofware can poll the names of remote hosts.
 .It Fl c Ar 0|1
-Allow the station to create a service set (IBSS). Permitted values
-are 0 (don't create IBSS) and 1 (enable creation of IBSS). The default
-is 0.
+Allow the station to create a service set (IBSS).
+Permitted values are 0 (don't create IBSS) and 1 (enable creation of IBSS).
+The default is 0.
 .Pp
 Note: this option is provided for experimental purposes only: enabling
 the creation of an IBSS on a host system doesn't appear to actually work.
@@ -170,43 +184,53 @@ the creation of an IBSS on a host system doesn't appear to actually work.
 .It Fl p Ar port type
 Set the
 .Ar port type
-for a specified interface. The legal values for
+for a specified interface.
+The legal values for
 .Ar port type
-are 1 (BSS mode) and 3 (ad-hoc) mode. In ad-hoc mode, the station can
+are 1 (BSS mode) and 3 (ad-hoc) mode.
+In ad-hoc mode, the station can
 communicate directly with any other stations within direct radio range
-(provided that they are also operating in ad-hoc mode). In BSS mode,
+(provided that they are also operating in ad-hoc mode).
+In BSS mode,
 hosts must associate with a service set controlled by an access point,
-which relays traffic between end stations. The default setting is 3
-(ad-hoc mode).
+which relays traffic between end stations.
+The default setting is 3 (ad-hoc mode).
 .It Fl a Ar access_point_density
 Specify the
 .Ar access point density
-for a given interface. Legal values are 1 (low), 2 (medium) and 3 (high).
+for a given interface.
+Legal values are 1 (low), 2 (medium) and 3 (high).
 This setting influences some of the radio modem threshold settings.
 .It Fl m Ar MAC address
-Set the station address for the specified interface. The
+Set the station address for the specified interface.
+The
 .Ar MAC address
 is specified as a series of six hexadecimal values separated by colons,
-e.g.: 00:60:1d:12:34:56. This programs the new address into the card
-and updates the interface as well.
+e.g.: 00:60:1d:12:34:56.
+This programs the new address into the card and updates the interface as well.
 .It Fl d Ar max_data_length
 Set the maximum receive and transmit frame size for a specified interface.
 The
 .Ar max data length
-can be any number from 350 to 2304. The default is 2304.
+can be any number from 350 to 2304.
+The default is 2304.
 .It Fl r Ar RTS threshold
-Set the RTS/CTS threshold for a given interface. This controls the
-number of bytes used for the RTS/CTS handshake boundary. The
+Set the RTS/CTS threshold for a given interface.
+This controls the number of bytes used for the RTS/CTS handshake boundary.
+The
 .Ar RTS threshold
-can be any value between 0 and 2047. The default is 2347.
+can be any value between 0 and 2047.
+The default is 2347.
 .It Fl f Ar frequency
-Set the radio frequency of a given interface. The
+Set the radio frequency of a given interface.
+The
 .Ar frequency
-should be specfied as a channel ID as shown in the table below. The
-list of available frequencies is dependent on radio regulations specified
-by regional authorities. Recognized regulatory authorities include
-the FCC (United States), ETSI (Europe), France and Japan. Frequencies
-in the table are specified in Mhz.
+should be specfied as a channel ID as shown in the table below.
+The list of available frequencies is dependent on radio regulations specified
+by regional authorities.
+Recognized regulatory authorities include
+the FCC (United States), ETSI (Europe), France and Japan.
+Frequencies in the table are specified in Mhz.
 .Bd -filled -offset indent
 .Bl -column "Channel ID " "FCC " "ETSI " "France " "Japan "
 .Em "Channel ID	FCC	ETSI	France	Japan"
@@ -228,27 +252,32 @@ in the table are specified in Mhz.
 .Ed
 .Pp
 If an illegal channel is specified, the
-NIC will revert to its default channel. For NICs sold in the United States
-and Europe, the default channel is 3. For NICs sold in France, the default
-channel is 11. For NICs sold in Japan, the only available channel is 14.
+NIC will revert to its default channel.
+For NICs sold in the United States and Europe, the default channel is 3.
+For NICs sold in France, the default channel is 11.
+For NICs sold in Japan, the only available channel is 14.
 Note that two stations must be set to the same channel in order to
 communicate.
 .It Fl P Ar 0|1
-Enable or disable power management on a given interface. Enabling
-power management uses an alternating sleep/wake protocol to help
+Enable or disable power management on a given interface.
+Enabling power management uses an alternating sleep/wake protocol to help
 conserve power on mobile stations, at the cost of some increased
-receive latency. Power management is off by default. Note that power
+receive latency.
+Power management is off by default.
+Note that power
 management requires the cooperation of an access point in order to
-function; it is not functional in ad-hoc mode. Also, power management
+function; it is not functional in ad-hoc mode.
+Also, power management
 is only implemented in Lucent WavePOINT firmware version 2.03 or
-later, and in WaveLAN PCMCIA adapter firmware 2.00 or later. Older
-revisions will silently ignore the power management setting. Legal
-values for this parameter are 0 (off) and 1 (on).
+later, and in WaveLAN PCMCIA adapter firmware 2.00 or later.
+Older revisions will silently ignore the power management setting.
+Legal values for this parameter are 0 (off) and 1 (on).
 .It Fl S Ar max sleep interval
 Specify the sleep interval to use when power management is enabled.
 The
 .Are max sleep interval
-is specified in milliseconds. The default is 100.
+is specified in milliseconds.
+The default is 100.
 .El
 .Sh SEE ALSO
 .Xr awi 4 ,

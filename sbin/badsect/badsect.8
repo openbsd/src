@@ -1,4 +1,4 @@
-.\"	$OpenBSD: badsect.8,v 1.9 1999/06/29 12:20:43 aaron Exp $
+.\"	$OpenBSD: badsect.8,v 1.10 2000/03/18 22:55:54 aaron Exp $
 .\"	$NetBSD: badsect.8,v 1.8 1995/03/18 14:54:27 cgd Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
@@ -45,7 +45,8 @@
 .Ar bbdir sector Op Ar ...
 .Sh DESCRIPTION
 .Nm
-makes a file to contain a bad sector.  Normally, bad sectors
+makes a file to contain a bad sector.
+Normally, bad sectors
 are made inaccessible by the standard formatter, which provides
 a forwarding table for bad sectors to the driver; see
 .Xr bad144 8
@@ -76,7 +77,8 @@ is used on a quiet file system in the following way:
 First mount the file system, and change to its root directory.
 Make a directory
 .Li BAD
-there.  Run
+there.
+Run
 .Nm
 giving as argument the
 .Ar BAD
@@ -88,8 +90,10 @@ relative sector numbers in its console error messages.)
 Then change back to the root directory, unmount the file system
 and run
 .Xr fsck 8
-on the file system.  The bad sectors should show up in two files
-or in the bad sector files and the free list.  Have
+on the file system.
+The bad sectors should show up in two files
+or in the bad sector files and the free list.
+Have
 .Xr fsck
 remove files containing the offending bad sectors, but
 .Em do not
@@ -113,22 +117,22 @@ it will ask
 A positive response will cause
 .Xr fsck
 to convert the inode to a regular file containing the bad block.
-.Sh SEE ALSO
-.Xr bad144 8 ,
-.Xr fsck 8
 .Sh DIAGNOSTICS
 .Nm
 refuses to attach a block that
 resides in a critical area or is out of range of the file system.
 A warning is issued if the block is already in use.
+.Sh SEE ALSO
+.Xr bad144 8 ,
+.Xr fsck 8
+.Sh HISTORY
+The
+.Nm
+command appeared in
+.Bx 4.1 .
 .Sh BUGS
 If more than one sector which comprise a file system fragment are bad,
 you should specify only one of them to
 .Nm badsect ,
 as the blocks in the bad sector files actually cover all the sectors in a
 file system fragment.
-.Sh HISTORY
-The
-.Nm
-command appeared in
-.Bx 4.1 .

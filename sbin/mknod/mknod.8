@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mknod.8,v 1.8 1999/07/21 12:32:18 aaron Exp $
+.\"	$OpenBSD: mknod.8,v 1.9 2000/03/18 22:55:59 aaron Exp $
 .\"	$NetBSD: mknod.8,v 1.9 1995/08/10 23:47:32 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -79,14 +79,16 @@ operators are interpreted relative to an assumed initial mode of
 To make nodes manually, the arguments are:
 .Bl -tag -width majorx
 .It Ar name
-Device or FIFO name.  For example
+Device or FIFO name.
+For example
 .Dq sd
 for a SCSI disk or a
 .Dq pty
-for pseudo-devices.  FIFOs may be named arbitrarily by the user.
+for pseudo-devices.
+FIFOs may be named arbitrarily by the user.
 .It Cm b | Cm c | Cm p
-Type of device or FIFO. If the
-device is a block type device such as a tape or disk drive which needs
+Type of device or FIFO.
+If the device is a block type device such as a tape or disk drive which needs
 both cooked and raw special files,
 the type is
 .Cm b .
@@ -97,8 +99,9 @@ A FIFO (also known as a named pipe) is type
 .Cm p .
 .It Ar major
 The major device number is an integer number which tells the kernel
-which device driver entry point to use.  To learn what
-major device number to use for a particular device, check the file
+which device driver entry point to use.
+To learn what major device number to use for a particular device,
+check the file
 .Pa /dev/MAKEDEV
 to see if the device is known.
 .It Ar minor

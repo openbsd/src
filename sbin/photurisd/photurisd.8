@@ -1,4 +1,5 @@
-.\" $OpenBSD: photurisd.8,v 1.6 1999/09/23 04:12:02 alex Exp $
+.\" $OpenBSD: photurisd.8,v 1.7 2000/03/18 22:56:02 aaron Exp $
+.\"
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
 .\"
@@ -70,8 +71,8 @@ The
 .Fl i
 option can be used to ignore the
 .Pa photuris.startup
-file. Otherwise the exchanges in that file will be initiated
-on startup.
+file.
+Otherwise the exchanges in that file will be initiated on startup.
 .It Fl d Ar directory
 The
 .Fl d
@@ -79,7 +80,8 @@ option specifies the
 .Ar directory
 in which
 .Nm
-looks for its startup files. The default is
+looks for its startup files.
+The default is
 .Pa /etc/photuris/ .
 .It Fl p Ar port
 The
@@ -92,31 +94,35 @@ the daemon shall bind to.
 The file
 .Pa photuris.conf
 contains the moduli for the DH exchange and the actual exchange
-schemes used to establish a shared secret. The following keywords are
-understood:
+schemes used to establish a shared secret.
+The following keywords are understood:
 .Bl -tag -width exchange -offset indent
 .It Ic modulus
-This keyword is followed by the numeric generator and modulus. Those two
-values describe the group in which exchange values for the
+This keyword is followed by the numeric generator and modulus.
+Those two values describe the group in which exchange values for the
 .Dq Diffie-Hellmann
-key exchange are generated. The modulus needs to be a
+key exchange are generated.
+The modulus needs to be a
 .Dq safe prime .
 .It Ic exchange
-This keyword is used to specify the supported exchange schemes. The scheme is
+This keyword is used to specify the supported exchange schemes.
+The scheme is
 followed by either zero or the number of bits of the modulus to be used
 with this scheme.
 If zero is specified the given scheme acts as modifier to the base
-scheme. The base scheme is
+scheme.
+The base scheme is
 .Dq DH_G_2_MD5
-(generator of two and MD5 identification). Extended schemes are
+(generator of two and MD5 identification).
+Extended schemes are
 .Dq DH_G_2_DES_MD5
 and
 .Dq DH_G_2_3DES_SHA1 .
 An exchange can only be configured if an apropriate modulus has be given
 before.
 .It Ic config
-This is used to configure the LifeTimes of SPIs and exchanges. The configurable
-values are:
+This is used to configure the LifeTimes of SPIs and exchanges.
+The configurable values are:
 .Ic exchange_max_retries ,
 .Ic exchange_retransmit_timeout ,
 .Ic exchange_timeout ,
@@ -129,19 +135,21 @@ They are followed by an integer.
 The file
 .Pa attributes.conf
 contains the attributes, i.e., different choices of encryption
-and authentication, offered to the other peer. If a line starts with an ip
+and authentication, offered to the other peer.
+If a line starts with an ip
 address and a space separated netmask the following attributes are only
-offered to hosts lying in that net range. Only one attribute per line
-is allowed. An attribute can either be an already defined tag or
-a new definition of an attribute. In that case the line is followed by a
-comma separated list:
+offered to hosts lying in that net range.
+Only one attribute per line is allowed.
+An attribute can either be an already defined tag or
+a new definition of an attribute.
+In that case the line is followed by a comma-separated list:
 .Ar attribute name ,
 .Ar Photuris ID ,
 .Ar type of attribute
 and
 .Ar key length .
-The name is only used as reference. A list of possible Photuris IDs can
-be found in
+The name is only used as reference.
+A list of possible Photuris IDs can be found in
 .Pa /usr/share/ipsec/attributes.conf .
 The attribute type is one of the following:
 .Dq enc ,
@@ -166,21 +174,22 @@ identity exchange.
 .Bl -tag -width identity_pair_local -offset indent
 .It Ic identity local
 Defines the identity the local daemon will assume and the according
-password. Both name and secret are braced by quotation marks and follow
-the
+password.
+Both name and secret are braced by quotation marks and follow the
 .Ic identity local
 directive.
 .It Ic identity remote
 Defines the parties the daemon can communicate with and their secrets.
 Both name and secret are braced by quotation marks and follow the
 .Ic identity remote
-directive. The name and secret are the same as the identity local
-on the remote site.
+directive.
+The name and secret are the same as the identity local on the remote site.
 .It Ic identity pair local
 If the identity of the remote site is already known,
 .Ic identity pair local
 enables the daemon to assume an identity and secret based on
-the remote identity. The directive is followed by the
+the remote identity.
+The directive is followed by the
 remote identity, a new local identity and an according secret.
 In that way the secrets are not shared with all other parties.
 .El
@@ -205,7 +214,8 @@ and
 .Ic user
 are understood in the
 .Pa photuris.startup
-file. The values are as follows:
+file.
+The values are as follows:
 .Bl -tag -width exchange_lifetime -offset indent
 .It Ic dst
 The destination IP address with which the exchange is to be established.
@@ -214,7 +224,8 @@ The port number of the destination
 .Nm
 daemon.
 .It Ic options
-The options to be used in the exchange. Possible values are
+The options to be used in the exchange.
+Possible values are
 .Dq enc
 and
 .Dq auth .
@@ -223,10 +234,12 @@ If both
 .Ic tsrc
 and
 .Ic tdst
-(see below) are specified, a tunnel (IP over IP) is setup.  The
+(see below) are specified, a tunnel (IP over IP) is setup.
+The
 .Ic tsrc
 option is a network address with netmask used for matching the source
-IP address of a packet.  When both the source and the destination
+IP address of a packet.
+When both the source and the destination
 addresses match their respective options the packet will be routed into the
 tunnel.
 .It Ic tdst
@@ -234,18 +247,22 @@ If both
 .Ic tsrc
 (see above) and
 .Ic tdst
-are specified, a tunnel (IP over IP) is setup.  The
+are specified, a tunnel (IP over IP) is setup.
+The
 .Ic tdst
 option is a network address with netmask used for matching the destination
-IP address of a packet.  When both the source and the destination
+IP address of a packet.
+When both the source and the destination
 addresses match their respective options the packet will be routed into the
 tunnel.
 .It Ic exchange_lifetime
-Determines the lifetime of the exchange. After an exchange expires
+Determines the lifetime of the exchange.
+After an exchange expires
 no new SPIs are created, which means the transport or tunnel is torn down
 as soon as the current SPI times out (see
 .Ic spi_lifetime
-below).  The default value is gotten from the
+below).
+The default value is gotten from the
 .Ic exchange_lifetime
 parameter given in
 .Pa photuris.conf .
@@ -253,8 +270,8 @@ If it is not given there the default is 1800 seconds.
 .It Ic spi_lifetime
 Determines the lifetime of each created SPI in the exchange.
 .It Ic user
-The user name for whom the keying shall be done. Preconfigured
-secrets are taken from the users secret file.
+The user name for whom the keying shall be done.
+Preconfigured secrets are taken from the users secret file.
 .El
 .Pp
 Exchanges are separated by newlines.

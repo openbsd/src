@@ -1,4 +1,4 @@
-.\"	$OpenBSD: slattach.8,v 1.9 1999/09/25 16:53:39 deraadt Exp $
+.\"	$OpenBSD: slattach.8,v 1.10 2000/03/18 22:56:05 aaron Exp $
 .\"	$NetBSD: slattach.8,v 1.12 1995/03/18 15:01:12 cgd Exp $
 .\"
 .\" Copyright (c) 1986, 1991, 1993
@@ -54,13 +54,14 @@ The following operands are supported by
 .Nm slattach :
 .Bl -tag -width Ar
 .It Fl h
-Turn on RTS/CTS flow control.  By default, no flow control is done.
+Turn on RTS/CTS flow control.
+By default, no flow control is done.
 .It Fl m
-Maintain modem control signals after closing the line.  Specifically,
-this disables HUPCL.
+Maintain modem control signals after closing the line.
+Specifically, this disables HUPCL.
 .It Fl s Ar baudrate
-Specifies the speed of the connection.  If not specified, the
-default of 9600 is used.
+Specifies the speed of the connection.
+If not specified, the default of 9600 is used.
 .It Ar ttyname
 Specifies the name of the tty device.
 .Ar ttyname

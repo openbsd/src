@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot_sparc.8,v 1.13 1999/07/08 20:28:03 deraadt Exp $
+.\"	$OpenBSD: boot_sparc.8,v 1.14 2000/03/18 22:56:03 aaron Exp $
 .\"	$NetBSD: boot_sparc.8,v 1.4 1995/04/25 11:37:25 pk Exp $
 .\"
 .\" Copyright (c) 1992, 1993
@@ -81,20 +81,23 @@ ROM can be found on sun4c and sun4m models.
 The
 .Dq new-style
 SPARC boot ROM is a full-featured Forth system with emacs
-key bindings. It can be put in
+key bindings.
+It can be put in
 .Dq old-style
 user-interface compatibility
 mode (in which case it shows a simple
 .Dq \&>
 prompt), but this is essentially
-useless. However, by default the ROM runs in old-mode; to enter new-mode type
+useless.
+However, by default the ROM runs in old-mode; to enter new-mode type
 .Dq n .
 The ROM then shows a Forth-style
 .Dq ok
-prompt. It is recommended to have
-the ROM always start in its native
+prompt.
+It is recommended to have the ROM always start in its native
 .Dq new-style
-mode. Utter the following
+mode.
+Utter the following
 incantation in new-mode to force the ROM to always start in new-mode:
 .Pp
 .Em \	ok

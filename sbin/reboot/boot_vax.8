@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot_vax.8,v 1.9 1999/07/08 19:58:30 deraadt Exp $
+.\"	$OpenBSD: boot_vax.8,v 1.10 2000/03/18 22:56:03 aaron Exp $
 .\"	$NetBSD: boot_vax.8,v 1.3 1995/04/23 10:33:39 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -139,10 +139,10 @@ and to the order in which adaptors are found on the 11/780 and 8600
 .Tn UNIX ) .
 .Pp
 On an 11/750, the reset button will boot from the device
-selected by the front panel boot device switch.  In systems
-with RK07's, position B normally selects the RK07 for boot.
-This will boot multi-user.  To boot from RK07 with boot flags you
-may specify
+selected by the front panel boot device switch.
+In systems with RK07's, position B normally selects the RK07 for boot.
+This will boot multi-user.
+To boot from RK07 with boot flags you may specify
 .Pp
 .Bd -unfilled -offset indent -compact
 .Li \&>>>B/ Ns Fl n No DMA0
@@ -177,7 +177,7 @@ and DU
 disk).
 A non-zero disk partition can be used by adding (partition times 1000 hex)
 to
-.Ar  n .
+.Ar n .
 .Pp
 The boot procedure on the Micro
 .Tn VAX
@@ -189,7 +189,8 @@ When halted, the processor may be booted using the same syntax
 as on the 11/750.
 .Pp
 The 11/750 boot procedure uses the boot ROMs to load block 0 off
-the specified device.  The
+the specified device.
+The
 .Pa /usr/mdec
 directory contains a number
 of bootstrap programs for the various disks which should be placed

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: brconfig.8,v 1.6 2000/02/11 04:22:27 jason Exp $
+.\"	$OpenBSD: brconfig.8,v 1.7 2000/03/18 22:55:54 aaron Exp $
 .\"
 .\" Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -37,7 +37,7 @@
 .Nd manipulate bridge interfaces
 .Sh SYNOPSIS
 .Nm brconfig
-.Ar -a
+.Fl a
 .Nm brconfig
 .Ar bridge-name
 .Op Ar up
@@ -73,13 +73,14 @@
 The
 .Nm brconfig
 utility retrieves kernel state of bridge interfaces and allows
-user control of these bridges.  In the first synopsis, the command
+user control of these bridges.
+In the first synopsis, the command
 will list the status of all bridges in the system.
 In the second, its command line consists
 of the name of a bridge and a set of operations to be
-performed on that bridge.  The commands are executed in
-the order they were specified.  If no command is specified in
-the second synopsis, the
+performed on that bridge.
+The commands are executed in the order they were specified.
+If no command is specified in the second synopsis, the
 .Nm brconfig
 will display status information about the bridge.
 With the third synopsis, rules for filtering Ethernet MAC addresses can
@@ -147,7 +148,8 @@ interfaces that have this flag set.
 This is the default for interfaces added to the bridge.
 .It Ar -discover interface
 Mark an interface so that packets are not sent out of the interface
-if the destination port of the packet is unknown.  Turning this flag
+if the destination port of the packet is unknown.
+Turning this flag
 off means that the bridge will not send packets out of this interface
 unless the packet is a broadcast packet, multicast packet, or a
 packet with a destination address found on the interface's segment.
@@ -185,9 +187,11 @@ Add a filtering rule to an interface.
 Rules have a similiar syntax to
 .Xr ipf 4 .
 Rules can be used to selectively block or pass frames based on Ethernet
-MAC address.  Rules are processed in the order in which they were added
+MAC address.
+Rules are processed in the order in which they were added
 to the interface, and the first rule matched takes the action (block or pass)
-of the rule.  If no source or destination address is specified, the
+of the rule.
+If no source or destination address is specified, the
 rule will match all frames (good for creating a catchall policy).
 .It Ar rulefile filename
 Load a set of rules from the file
@@ -227,17 +231,13 @@ broadcast packets or are for 8:0:20:1e:2f:2b.
 .It Cm brconfig bridge0 rule block out on fxp0
 The above commands will set up a filter so that 0:1:2:3:4:5 can send frames
 through fxp0 only to 5:4:3:2:1, and 5:4:3:2:1:0 can return frames through
-fxp0 to 0:1:2:3:4:5.  All other traffic trying to go into and be sent from
-fxp0 will be blocked.
+fxp0 to 0:1:2:3:4:5.
+All other traffic trying to go into and be sent from fxp0 will be blocked.
 .El
 .Sh SEE ALSO
 .Xr bridge 4 ,
 .Xr bridgename.if 5 ,
 .Xr ifconfig 8
-.Sh HISTORY
-.Nm brconfig
-first appeared in
-.Ox 2.5 .
 .Sh AUTHOR
 The
 .Xr brconfig 8
@@ -247,11 +247,17 @@ kernel interface were written by
 .An Jason L. Wright Aq jason@thought.net
 as part of an undergraduate independent study at the
 University of North Carolina at Greensboro.
+.Sh HISTORY
+The
+.Nm brconfig
+command first appeared in
+.Ox 2.5 .
 .Sh BUGS
 There are some rather special network interface chipsets which will
 not work in a bridge configuration.
 Some chipsets have serious flaws when running in promiscuous mode, like the
 TI ThunderLAN (see
-.Xr tl 4 ),
+.Xr tl 4 ) ,
 which receives its own transmissions (this renders the address learning
-cache useless).  Most other chipsets work fine though.
+cache useless).
+Most other chipsets work fine though.

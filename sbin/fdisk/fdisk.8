@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fdisk.8,v 1.30 2000/03/05 00:28:49 aaron Exp $
+.\"	$OpenBSD: fdisk.8,v 1.31 2000/03/18 22:55:55 aaron Exp $
 .\"
 .\" Copyright (c) 1997 Tobias Weingartner
 .\" All rights reserved.
@@ -44,15 +44,19 @@
 .Ar device
 .Sh DESCRIPTION
 In order for the BIOS to boot the kernel, certain conventions must be
-adhered to.  Sector 0 of a bootable hard disk must contain boot code,
-an MBR partition table, and a magic number.  These MBR partitions (also
+adhered to.
+Sector 0 of a bootable hard disk must contain boot code,
+an MBR partition table, and a magic number.
+These MBR partitions (also
 known as BIOS partitions) can be used to break the disk up into several
-pieces.  The BIOS loads sector 0 of the boot disk into memory, verifies
+pieces.
+.Pp
+The BIOS loads sector 0 of the boot disk into memory, verifies
 the magic number, and begins executing the code at the first byte.
 The normal DOS MBR boot code searches the MBR partition table for an
 .Dq active
 partition (indicated by a
-.Dq \&*
+.Ql \&*
 in the first column), and if one
 is found, the boot block from that partition is loaded and executed in
 place of the original (MBR) boot block.
@@ -105,11 +109,12 @@ and
 options.
 .Pp
 This disk is divided into two partitions that happen to fill the disk.
-The first partition overlaps the third partition.  (Used for debugging
-purposes.)
+The first partition overlaps the third partition.
+(Used for debugging purposes.)
 .Bl -tag -width "start/size"
 .It Em "#"
-Number of partition table entry.  A
+Number of partition table entry.
+A
 .Dq \&*
 denotes the bootable partition.
 .It Em "id"
@@ -143,21 +148,24 @@ In this mode,
 will completely overwrite the primary MBR, and start with a fresh one using
 a default template, or one given by the
 .Fl f
-flag.  It will set up partition number 3 to be an
+flag.
+It will set up partition number 3 to be an
 .Os
 partition, that will start at cylinder 0, head 1, sector 1, and extend
 to the end of the disk.
 This mode is designed to initialize an MBR the very first time,
-or when it has been corrupted beyond repair.  It is almost equivalent
-to the DOS command
+or when it has been corrupted beyond repair.
+It is almost equivalent to the DOS command
 .Dq FDISK /MBR .
 .Pp
 The flag
 .Fl e
 is used to modify a partition table using a interactive edit mode of the
 .Nm
-program.  This mode is designed to allow you to change any partition on the
-drive you choose, including extended partitions.  It is a very powerful mode,
+program.
+This mode is designed to allow you to change any partition on the
+drive you choose, including extended partitions.
+It is a very powerful mode,
 but is safe as long as you do not execute the
 .Em write
 command, or answer in the negative (the default) when
@@ -167,15 +175,17 @@ asks you about writing out changes.
 When you first enter this mode, you are presented with a prompt, that looks
 like so:
 .Em "fdisk: 0>" .
-This prompt has two important pieces of information for you.  It will tell
-you if the in-memory copy of the boot block has been modified or not.  If it
-has been modified, the prompt will change to look like:
+This prompt has two important pieces of information for you.
+It will tell
+you if the in-memory copy of the boot block has been modified or not.
+If it has been modified, the prompt will change to look like:
 .Em "fdisk:*0>" .
 The second piece of information pertains to the number given in the prompt.
 This number specifies the disk offset of the currently selected boot block
-you are editing.  This number could be something different that zero when
-you are editing extended partitions.  The list of commands and their
-explanations are given below.
+you are editing.
+This number could be something different that zero when
+you are editing extended partitions.
+The list of commands and their explanations are given below.
 .Bl -tag -width "update"
 .It Em help
 Display a list of commands that
@@ -190,14 +200,17 @@ boot block.
 Display the current drive geometry that
 .Nm
 has
-probed.  You are given a chance to edit it if you wish.
+probed.
+You are given a chance to edit it if you wish.
 .It Em edit
 Edit a given table entry in the memory copy of
-the current boot block.  You may edit either in BIOS geometry mode,
+the current boot block.
+You may edit either in BIOS geometry mode,
 or in sector offsets and sizes.
 .It Em flag
-Make the given partition table entry bootable.  Only one
-entry can be marked bootable. If you wish to boot from an extended
+Make the given partition table entry bootable.
+Only one entry can be marked bootable.
+If you wish to boot from an extended
 partition, you will need to mark the partition table entry for the
 extended partition as bootable.
 .It Em update
@@ -210,8 +223,8 @@ to by the extended partition table entry in the current boot block.
 Print the currently selected in-memory copy of the boot
 block and its MBR table to the terminal.
 .It Em write
-Write the in-memory copy of the boot block to disk.  You will
-be asked to confirm this operation.
+Write the in-memory copy of the boot block to disk.
+You will be asked to confirm this operation.
 .It Em exit
 Exit the current level of
 .Nm fdisk ,
@@ -223,7 +236,8 @@ Exit the current level of
 .Nm fdisk ,
 either returning to the
 previously selected in-memory copy of a boot block, or exiting the
-program if there is none.  Unlike
+program if there is none.
+Unlike
 .Em exit
 it does write the modified block out.
 .It Em abort

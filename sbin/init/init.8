@@ -1,4 +1,4 @@
-.\"	$OpenBSD: init.8,v 1.25 2000/03/14 21:31:34 aaron Exp $
+.\"	$OpenBSD: init.8,v 1.26 2000/03/18 22:55:58 aaron Exp $
 .\"	$NetBSD: init.8,v 1.6 1995/03/18 14:56:31 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -91,8 +91,9 @@ is marked as
 The kernel
 .Xr securelevel 7
 is normally set to 0 while in single-user mode, and raised to 1 when
-the system begins multi-user operations. This action will not take
-place if the securelevel is -1, and can be modified via the
+the system begins multi-user operations.
+This action will not take
+place if the securelevel is \-1, and can be modified via the
 .Pa /etc/rc.securelevel
 script.
 .Pp
@@ -114,8 +115,8 @@ program.
 The
 .Xr login
 program, when a valid user logs in,
-executes a shell for that user.  When this shell
-dies, either because the user logged out
+executes a shell for that user.
+When this shell dies, either because the user logged out
 or an abnormal termination occurred (a signal),
 the
 .Nm

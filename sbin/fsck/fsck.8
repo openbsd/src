@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fsck.8,v 1.15 1999/06/04 02:45:15 aaron Exp $
+.\"	$OpenBSD: fsck.8,v 1.16 2000/03/18 22:55:56 aaron Exp $
 .\"	$NetBSD: fsck.8,v 1.14 1996/10/03 20:08:29 christos Exp $
 .\"
 .\" Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -51,8 +51,9 @@ file or in the command line for consistency.
 The options are as follows:
 .Bl -tag -width indent
 .It Fl d
-Debugging mode. Just print the commands without executing them. Available
-only if
+Debugging mode.
+Just print the commands without executing them.
+Available only if
 .Nm
 is compiled to support it.
 .It Fl f
@@ -62,7 +63,8 @@ that support this).
 Limit the number of parallel checks to
 .Ar maxparallel .
 By default, the limit is the number of
-disks, running one process per disk. If a smaller limit is given,
+disks, running one process per disk.
+If a smaller limit is given,
 the disks are checked round-robin, one filesystem at a time.
 .It Fl n
 Cause
@@ -76,8 +78,8 @@ mounted writeable.
 .It Fl p
 Enter preen mode.
 .It Fl t Ar fstype
-Invoke fsck only in the comma separated list of filesystem types. If the
-list starts with
+Invoke fsck only in the comma separated list of filesystem types.
+If the list starts with
 .Dq no ,
 invoke fsck only in the filesystem types that are
 .Em not

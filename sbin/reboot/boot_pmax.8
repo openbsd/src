@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot_pmax.8,v 1.14 1999/07/08 19:58:30 deraadt Exp $
+.\"	$OpenBSD: boot_pmax.8,v 1.15 2000/03/18 22:56:03 aaron Exp $
 .\"	$NetBSD: boot_pmax.8,v 1.1 1995/04/25 23:55:11 mellon Exp $
 .\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
@@ -63,18 +63,20 @@ At power up, all DECstation ROMs consult the
 .Nm haltaction
 environment
 variable in EEPROM to determine whether or not to attempt an automatic
-boot.  If this
-variable is set to
+boot.
+If this variable is set to
 .Dq h ,
 the ROM prints a prompt on the console and
-waits for user commands.  If set to
+waits for user commands.
+If set to
 .Dq b ,
 the ROM attempts to autoboot.
 .Pp
 On the DECstation 2100 and 3100, the path used for automatic booting is
 stored in the
 .Nm bootpath
-environment variable.  The path is made up of a
+environment variable.
+The path is made up of a
 device type specifier (e.g., rz, tz, mop or tftp), followed by
 a triplet in the form (x,y,z), followed by a filename to load.
 .Pp
@@ -92,9 +94,11 @@ For network boots, () may be specified instead of (0,0,0).
 .Pp
 The filename is optional for bootp/tftp and mop booting, since in
 these cases the network protocol can be used to determine which
-file to boot.  When booting off the tape, no filename should be
+file to boot.
+When booting off the tape, no filename should be
 specified, and when booting off disk, the filename of a kernel
-must be specified.  Generally, the kernel is named
+must be specified.
+Generally, the kernel is named
 .Pa bsd .
 .Pp
 An example
@@ -108,14 +112,15 @@ For automatic boots, the ROM automatically passes a
 argument to the bootloader,
 requesting that
 .Ox
-attempt to come up to multi-user mode.  At the boot ROM prompt,
-the user may boot
+attempt to come up to multi-user mode.
+At the boot ROM prompt, the user may boot
 .Ox
 with either the
 .Nm auto
 or the
 .Nm boot
-command.  If the
+command.
+If the
 .Nm auto
 command is used, the
 .Fl a
@@ -132,8 +137,8 @@ or the
 .Nm auto
 command is issued with no arguments, the kernel specified in the
 .Nm bootpath
-environment variable is booted.  An alternate kernel may be specified
-with the
+environment variable is booted.
+An alternate kernel may be specified with the
 .Fl f
 flag, followed by the path of the kernel to boot, as described above.
 For example:
@@ -144,23 +149,27 @@ On TurboChannel machines (all DECstation 5000 models), the bootpath
 is specified in the
 .Nm boot
 environment variable, along with any arguments
-to be passed to the kernel.  Note that to specify boot arguments (e.g.,
+to be passed to the kernel.
+Note that to specify boot arguments (e.g.,
 .Fl a )
 when setting the
 .Nm boot
 environment variable, the filename and arguments
-must be enclosed in quotes.  For example:
+must be enclosed in quotes.
+For example:
 .Pp
 .Dl setenv boot "3/rz4/bsd -a"
 .Pp
 The device from which to boot is specified as the TurboChannel slot
 number, a TurboChannel-option-specific device name, and a path to the
-file to load, all separated by slashes.  You can get a list of the
+file to load, all separated by slashes.
+You can get a list of the
 devices installed in your TurboChannel slots (as well as any built-in
 devices which appear as TurboChannel slots) by typing the
 .Nm cnfg
 command
-at the boot prompt.  You can get more detailed information about a specific
+at the boot prompt.
+You can get more detailed information about a specific
 TurboChannel option by typing
 .Nm cnfg
 followed by the slot number of that
@@ -170,7 +179,8 @@ For SCSI devices, the option-specific device identifier is either
 .Dq rz#
 for disks or
 .Dq tz#
-for tapes, where # is the SCSI ID of the device.  For network
+for tapes, where # is the SCSI ID of the device.
+For network
 devices, the option-specific protocol identifier is either mop or tftp.
 Filename requirements are as for the DECstation 2100 and 3100.
 .Pp
@@ -178,7 +188,8 @@ To start
 .Ox
 from the boot prompt, the
 .Nm boot
-command must be used.  With no arguments, this simply boots the default
+command must be used.
+With no arguments, this simply boots the default
 kernel with the default arguments as set with
 .Nm setenv
 .Nm boot .
@@ -186,7 +197,8 @@ If no
 .Nm boot
 environment variable is set, or if an alternate kernel is to be
 booted, the path of that kernel may be specified after the boot command as
-described above, and any arguments may be passed similarly.  For example:
+described above, and any arguments may be passed similarly.
+For example:
 .Pp
 .Dl boot 3/rz4/bsd.new -a
 .Sh SEE ALSO

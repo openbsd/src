@@ -41,7 +41,8 @@ Remove, rather than add, entries specified in the rule list.
 .It Fl s
 Display statistics.
 .It Fl v
-Verbosity. Displays detailed information pertaining to rule processing.
+Verbosity.
+Displays detailed information pertaining to rule processing.
 .El
 .Pp
 Certain configuration requirements must be met before
@@ -57,7 +58,8 @@ file contains the assignment
 .It
 Packet filtering (see
 .Xr ipf 8 )
-must be enabled, even if it's not being used. Check the
+must be enabled, even if it's not being used.
+Check the
 .Pa /etc/rc.conf
 file and make sure it contains the assignment
 .Cm ipfilter=YES .
@@ -94,7 +96,8 @@ This file is typically
 standard input is represented by a single dash
 .Pq Ql - .
 Each rule is parsed, then sequentially added to
-the kernel's internal NAT list. Like
+the kernel's internal NAT list.
+Like
 .Xr ipf 8 ,
 if an entry contradicts another previously added, the newer will take
 precedence.
@@ -103,8 +106,9 @@ Comments (beginning with a
 .Ql # )
 and blank lines are ignored as
 .Nm
-parses the file. Entries may be separated by spaces or tabs. Each rule must
-begin with either
+parses the file.
+Entries may be separated by spaces or tabs.
+Each rule must begin with either
 .Em map ,
 .Em bimap ,
 or
@@ -114,8 +118,8 @@ See below for rule syntax, or refer to
 for sample rule entries.
 .Ss Mapping rules
 .Em map
-tells the NAT how a range of addresses should be translated. The entries use
-the following format:
+tells the NAT how a range of addresses should be translated.
+The entries use the following format:
 .Pp
 .Bd -unfilled -offset indent -compact
 map ifname internal/mask -> external/mask options
@@ -123,8 +127,8 @@ map ifname internal/mask -> external/mask options
 .Pp
 The
 .Em ifname
-field is the interface to which packets are sent. A gateway with a PPP link
-would probably use
+field is the interface to which packets are sent.
+A gateway with a PPP link would probably use
 .Dq ppp0
 or
 .Dq tun0 ,
@@ -150,7 +154,8 @@ Do not specify internal interface names, use their addresses instead.
 .Pp
 The address range of the LAN goes in the
 .Em internal
-field. This is usually one of the three blocks of address space the Internet
+field.
+This is usually one of the three blocks of address space the Internet
 Assigned Numbers Authority has allocated for private networks (RFC 1597):
 .Pp
 .Bd -unfilled -offset indent -compact
@@ -164,8 +169,8 @@ The
 address is the offically assigned IP number of the gateway or network.
 .Pp
 .Em mask
-is the netmask of the address. This mask is 32 bits long, and is divided into
-four 8-bit numbers.
+is the netmask of the address.
+This mask is 32 bits long, and is divided into four 8-bit numbers.
 .Pp
 .Bd -unfilled -offset indent -compact
 11111111.0.0.0			Class A - 8 bits set.
@@ -179,8 +184,9 @@ Both
 .Em internal
 and
 .Em external
-may be an actual IP address, the name of an interface, or a hostname. If it is
-a network number, however, a problem may arise. For example:
+may be an actual IP address, the name of an interface, or a hostname.
+If it is a network number, however, a problem may arise.
+For example:
 .Pp
 .Bd -unfilled -offset indent -compact
 map ppp0 10.0.0.0/8 -> 209.1.2.0/24
@@ -189,14 +195,15 @@ map ppp0 10.0.0.0/8 -> 209.1.2.0/24
 16,000,000 IP addresses are being squeezed into an address space of only 254.
 This is solved by the
 .Em portmap
-option, which remaps ports instead of IP addresses. The protocol is specified
-by following the option with either
+option, which remaps ports instead of IP addresses.
+The protocol is specified by following the option with either
 .Em tcp ,
 .Em udp ,
 .Em tcp/udp ,
 or
 .Em tcpudp
-(the last two have the same effect). The syntax to assign a range of ports is
+(the last two have the same effect).
+The syntax to assign a range of ports is
 .Dq portnumber:portnumber .
 This looks like:
 .Pp
@@ -209,21 +216,25 @@ That will cut the number down from ~16,000,000 addresses short to only 527,566.
 .Pp
 .Ss Bidirectional mapping rules
 .Em bimap
-is used to create static, bidirectional NAT mappings. Standard
+is used to create static, bidirectional NAT mappings.
+Standard
 .Em map
 rules only create NAT mappings when the connection is initiated from the
-internal IP address. For example, using the following rule:
+internal IP address.
+For example, using the following rule:
 .Pp
 .Bd -unfilled -offset indent -compact
 map ppp0 10.0.0.3/32 -> 209.1.2.3/32
 .Ed
 .Pp
 NAT mappings will only be created if the machine at 10.0.0.3 initiates the
-connection. To create a truly bidirectional NAT entry,
+connection.
+To create a truly bidirectional NAT entry,
 .Em bimap
-is necessary. Using the following rule, for example, clients on the
-ppp0 side of the NAT box can initiate requests to 209.1.2.3. This
-traffic will be mapped to 10.0.0.3 as expected:
+is necessary.
+Using the following rule, for example, clients on the
+ppp0 side of the NAT box can initiate requests to 209.1.2.3.
+This traffic will be mapped to 10.0.0.3 as expected:
 .Pp
 .Bd -unfilled -offset indent -compact
 bimap ppp0 10.0.0.3/32 -> 209.1.2.3/32
@@ -233,7 +244,8 @@ To be genuinely useful,
 .Em bimap
 should be used in conjunction with either proxy arp, or
 .Xr ifconfig 8
-aliases. For example, if we create two bimap entries such as:
+aliases.
+For example, if we create two bimap entries such as:
 .Pp
 .Bd -unfilled -offset indent -compact
 bimap fxp0 10.0.0.3/32 -> 209.1.2.3/32
@@ -256,9 +268,11 @@ ifconfig fxp0 alias 209.1.2.4 netmask 255.255.255.255
 .Pp
 .Ss Redirection rules
 .Em rdr
-tells the NAT how to redirect incoming packets. It is useful if one wishes to
+tells the NAT how to redirect incoming packets.
+It is useful if one wishes to
 redirect a connection through a proxy, or to another box on the private
-network. The format of this directive is:
+network.
+The format of this directive is:
 .Pp
 rdr ifname external/mask port service -> internal port service protocol
 .Pp
@@ -268,18 +282,21 @@ This setup is best described by an example of an actual entry:
 rdr xl0 0.0.0.0/0 port 25 -> 204.213.176.10 port smtp
 .Ed
 .Pp
-This redirects all smtp packets received on xl0 to 204.213.176.10, port 25. A
-netmask is not needed on the
+This redirects all smtp packets received on xl0 to 204.213.176.10, port 25.
+A netmask is not needed on the
 .Em internal
-address; it is always 32. The
+address; it is always 32.
+The
 .Em external
 and
 .Em internal
 fields, similar to the
 .Em map
-directive, may be actual addresses, hostnames, or interfaces. Likewise, the
+directive, may be actual addresses, hostnames, or interfaces.
+Likewise, the
 .Em service
-field may be the name of a service, or a port number. The
+field may be the name of a service, or a port number.
+The
 .Em protocol
 of the service may be selected by appending
 .Em tcp ,
@@ -287,7 +304,8 @@ of the service may be selected by appending
 .Em tcp/udp ,
 or
 .Em tcpudp
-(the last two have the same effect) to the end of the line. TCP is the default.
+(the last two have the same effect) to the end of the line.
+TCP is the default.
 .Sh FILES
 .Bl -tag -width /usr/share/ipf/nat.1 -compact
 .It Pa /etc/ipnat.rules
@@ -301,7 +319,8 @@ device file
 .El
 .Sh BUGS
 .Em bimap
-should really only be used with single IP addresses (x.x.x.x/32). Bimapping
+should really only be used with single IP addresses (x.x.x.x/32).
+Bimapping
 other CIDR ranges will result in unexpected, and possibly random mappings
 into the destination address block.
 .Sh SEE ALSO

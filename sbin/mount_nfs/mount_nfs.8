@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mount_nfs.8,v 1.16 2000/03/14 21:31:34 aaron Exp $
+.\"	$OpenBSD: mount_nfs.8,v 1.17 2000/03/18 22:56:00 aaron Exp $
 .\"	$NetBSD: mount_nfs.8,v 1.3 1996/02/18 11:59:10 fvdl Exp $
 .\"
 .\" Copyright (c) 1992, 1993, 1994, 1995
@@ -76,7 +76,8 @@ The options are:
 .It Fl 2
 Use the NFS Version 2 protocol.
 .It Fl 3
-Use the NFS Version 3 protocol. The default is to try version 3 first, and
+Use the NFS Version 3 protocol.
+The default is to try version 3 first, and
 fall back to version 2 if the mount fails.
 .It Fl D Ar deadthresh
 Used with NQNFS to set the
@@ -92,7 +93,8 @@ Values may be set in the range of 1 - 9, with 9 referring to an
 This option is not generally recommended and is really an experimental
 feature.
 .It Fl I Ar readdirsize
-Set the readdir read size to the specified value. The value should normally
+Set the readdir read size to the specified value.
+The value should normally
 be a multiple of DIRBLKSIZ that is <= the read size for the mount.
 .It Fl K
 Pass Kerberos authenticators to the server for client-to-server
@@ -107,7 +109,8 @@ Only use this argument for mounts with a large round trip delay.
 Values are normally in the 10-30 second range.
 .It Fl P
 The kernel always uses a reserved port number to communicate with
-clients. This option is ignored, and exists solely for compatibility
+clients.
+This option is ignored, and exists solely for compatibility
 with older systems.
 .It Fl R Ar retrycnt
 Set the retry count for doing the mount to the specified value.
@@ -135,7 +138,8 @@ where the filesystem mount is not critical to multiuser operation.
 For UDP mount points, do not do a
 .Xr connect 2 .
 This must be used for servers that do not reply to requests from the
-standard NFS port number 2049.  It may also be required for servers
+standard NFS port number 2049.
+It may also be required for servers
 with more than one IP address (only necessary if replies come from
 an address other than the one specified in the mount request).
 .It Fl d
@@ -160,7 +164,8 @@ be used.
 This option reduces RPC traffic for cases such as
 .Dq "ls -l" ,
 but tends to flood the attribute and name caches with prefetched entries.
-Try this option and see whether performance improves or degrades. Probably
+Try this option and see whether performance improves or degrades.
+Probably
 most useful for client to server network interconnects with a large bandwidth
 times delay product.
 .It Fl m Ar realm

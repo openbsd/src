@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dump.8,v 1.22 2000/03/05 00:28:49 aaron Exp $
+.\"	$OpenBSD: dump.8,v 1.23 2000/03/18 22:55:55 aaron Exp $
 .\"	$NetBSD: dump.8,v 1.17 1997/06/05 11:15:06 lukem Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -64,16 +64,16 @@ is not documented here.)
 examines files
 on a filesystem
 and determines which files
-need to be backed up. These files
-are copied to the given disk, tape or other
+need to be backed up.
+These files are copied to the given disk, tape or other
 storage medium for safe keeping (see the
 .Fl f
 option below for doing remote backups).
 A dump that is larger than the output medium is broken into
 multiple volumes.
 On most media the size is determined by writing until an
-end-of-media indication is returned.  This can be enforced
-by using the
+end-of-media indication is returned.
+This can be enforced by using the
 .Cm a
 option.
 .Pp
@@ -117,8 +117,9 @@ The default level is 0.
 .It Fl a
 .Dq auto-size .
 Bypass all tape length considerations, and enforce writing until
-an end-of-media indication is returned.  This option is recommended
-for most modern tape drives.  Use of this option is particularly
+an end-of-media indication is returned.
+This option is recommended for most modern tape drives.
+Use of this option is particularly
 recommended when appending to an existing tape, or using a tape
 drive with hardware compression (where you can never be sure about
 the compression ratio).
@@ -354,6 +355,13 @@ argument of
 whilst a backup is in progress, statistics on the amount completed,
 current transfer rate, and estimated finished time, will be written
 to the standard error output.
+.Sh DIAGNOSTICS
+Many, and verbose.
+.Pp
+.Nm
+exits with zero status on success.
+Startup errors are indicated with an exit code of 1;
+abnormal termination is indicated with an exit code of 3.
 .Sh FILES
 .Bl -tag -width /etc/dumpdates -compact
 .It Pa /dev/rst0
@@ -376,13 +384,11 @@ to find group
 .Xr fstab 5 ,
 .Xr restore 8 ,
 .Xr rmt 8
-.Sh DIAGNOSTICS
-Many, and verbose.
-.Pp
+.Sh HISTORY
+A
 .Nm
-exits with zero status on success.
-Startup errors are indicated with an exit code of 1;
-abnormal termination is indicated with an exit code of 3.
+command appeared in
+.At v6 .
 .Sh BUGS
 Fewer than 32 read errors on the filesystem are ignored.
 .Pp
@@ -414,8 +420,3 @@ told the operator which tape to mount when,
 and provided more assistance
 for the operator running
 .Xr restore .
-.Sh HISTORY
-A
-.Nm
-command appeared in
-.At v6 .

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: scan_ffs.8,v 1.9 2000/03/05 00:28:50 aaron Exp $
+.\"	$OpenBSD: scan_ffs.8,v 1.10 2000/03/18 22:56:04 aaron Exp $
 .\"
 .\" Copyright (c) 1997 Niklas Hallqvist, Tobias Weingartner
 .\" All rights reserved.
@@ -42,13 +42,15 @@
 .Op Fl e Ar end
 .Ar device
 .Sh DESCRIPTION
-This is the life-saver of typos.  If you have ever been working too long,
+This is the life-saver of typos.
+If you have ever been working too long,
 and just happened to type 'disklabel -rw sd0 floppy', instead of 'disklabel
 -rw fd0 floppy', you know what I am talking about.
 .Pp
 This little program will take a raw disk device (which you might have to
 create) that covers the whole disk, and finds all probable UFS/FFS partitions
-on the disk.  It has various options to make it go faster, and to print out
+on the disk.
+It has various options to make it go faster, and to print out
 information to help in the reconstruction of the disklabel.
 .Pp
 The options are as follows:
@@ -56,15 +58,16 @@ The options are as follows:
 .It Fl l
 This will make
 .Nm
-print out a string looking much like the input to disklabel.  With a little
-massaging, this output can usually be used in the disklabel edit.
+print out a string looking much like the input to disklabel.
+With a little massaging, this output can usually be used in the disklabel edit.
 .Pp
 .It Fl s
 This tells
 .Nm
 to be smart about skipping partitions (when it thinks it found a valid one).
 By not scanning partitions for superblocks, the program completes a couple of
-orders of magnitude faster.  However, sometimes being smart is too good for
+orders of magnitude faster.
+However, sometimes being smart is too good for
 its own good,
 especially if your disk has had a different layout previously, or contains
 other non-UFS/FFS filesystems.
@@ -77,7 +80,8 @@ to be verbose about what it is doing, and what it has found.
 .It Fl b Ar begin
 Tell
 .Nm
-where to begin searching for filesystems.  This makes it easier to skip swap
+where to begin searching for filesystems.
+This makes it easier to skip swap
 partitions, or other large non-UFS/FFS partitions.
 .Pp
 .It Fl e Ar end
@@ -88,26 +92,30 @@ where to stop.
 .It Ar device
 This specifies which device
 .Nm
-should use to scan for filesystems.  Usually this device should cover the
-whole disk in question.
+should use to scan for filesystems.
+Usually this device should cover the whole disk in question.
 .Pp
 .El
 .Pp
 The basic operation of this program is as follows:
 .Bl -enum -width "1111"
 .It
-Panic.  You usually do so anyways, so you might as well get it over with.
-Just don't do anything stupid.  Panic away from your machine.  Then relax,
-and see if the steps below won't help you out.
+Panic.
+You usually do so anyways, so you might as well get it over with.
+Just don't do anything stupid.
+Panic away from your machine.
+Then relax, and see if the steps below won't help you out.
 .It
-Try to find your old disklabel by any other means possible.  This includes
+Try to find your old disklabel by any other means possible.
+This includes
 printouts, backups, screendumps, and whatever other method you can think of.
 The more information you have, the better your chances are in recovering the
 disklabel of the disk.
 .Pp
 .It
 Create a disklabel on the affected disk, which covers the whole disk, and has
-at least one partition which covers the whole disk.  As the
+at least one partition which covers the whole disk.
+As the
 .Dq c
 partition
 usually covers the whole disk anyways, this sounds like a good place to start.
@@ -115,7 +123,8 @@ usually covers the whole disk anyways, this sounds like a good place to start.
 .It
 Run
 .Nm
-over this partition.  If you have any information about the disklabel
+over this partition.
+If you have any information about the disklabel
 which used to exist on the disk, keep that in mind while
 .Nm
 spews out its things.
@@ -130,9 +139,11 @@ and other sources.
 .Pp
 .El
 .Pp
-Last but certainly not least, we wish you good luck.  The UFS/FFS filesystems
-are pretty sturdy.  I've seen them reconstructed after some pretty weird and
-awesome fumbles.  If you can't have backups, at least have funky tools to help
+Last but certainly not least, we wish you good luck.
+The UFS/FFS filesystems are pretty sturdy.
+I've seen them reconstructed after some pretty weird and
+awesome fumbles.
+If you can't have backups, at least have funky tools to help
 you out of a jam when they happen.
 .Sh SEE ALSO
 .Xr disklabel 8
@@ -140,4 +151,3 @@ you out of a jam when they happen.
 It is not perfect, and could do a lot more things with date/time information
 in the superblocks it finds, but this program has saved more than one butt,
 more than once.
-

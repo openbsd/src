@@ -1,4 +1,4 @@
-.\"	$OpenBSD: route.8,v 1.20 2000/03/14 21:31:35 aaron Exp $
+.\"	$OpenBSD: route.8,v 1.21 2000/03/18 22:56:04 aaron Exp $
 .\"	$NetBSD: route.8,v 1.6 1995/03/18 15:00:13 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -50,8 +50,8 @@
 .Oc
 .Sh DESCRIPTION
 .Nm
-is a utility used to manually manipulate the network
-routing tables.  It normally is not needed, as a
+is a utility used to manually manipulate the network routing tables.
+It normally is not needed, as a
 system routing table management daemon such as
 .Xr routed 8 ,
 should tend to this task.
@@ -68,7 +68,8 @@ programmatic interface discussed in
 Run in debug-only mode, i.e., don't actually modify the routing table.
 .It Fl n
 Bypasses attempts to print host and network names symbolically
-when reporting actions.  (The process of translating between symbolic
+when reporting actions.
+(The process of translating between symbolic
 names and numerical equivalents can be quite time consuming, and
 may require correct operation of the network; thus it may be expedient
 to forgo this, especially when attempting to repair networking operations.)
@@ -307,9 +308,8 @@ the routing tables.
 .Sh DIAGNOSTICS
 .Bl -tag -width Ds
 .It Sy "add [host \&| network ] %s: gateway %s flags %x"
-The specified route is being added to the tables.  The
-values printed are from the routing table entry supplied
-in the
+The specified route is being added to the tables.
+The values printed are from the routing table entry supplied in the
 .Xr ioctl 2
 call.
 If the gateway address used was not the primary address of the gateway

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.38 2000/01/17 03:02:14 mickey Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.39 2000/03/18 22:55:57 aaron Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -76,13 +76,12 @@ network interface parameters.
 must be used at boot-time to define the network address
 of each interface present on a machine; it may also be used at
 a later time to redefine an interface's address
-or other operating parameters.  To configure a bridge interface,
-use the
+or other operating parameters.
+To configure a bridge interface, use the
 .Xr brconfig 8
 program instead.
 .Pp
-Available operands for
-.Nm ifconfig :
+The operands are as follows:
 .Bl -tag -width Ds
 .It Ar address
 For the
@@ -112,7 +111,8 @@ and on interfaces other than the first.
 For the
 .Tn ISO
 family, addresses are specified as a long hexadecimal string,
-as in the Xerox family.  However, two consecutive dots imply a zero
+as in the Xerox family.
+However, two consecutive dots imply a zero
 byte, and the dots are optional, if the user wishes to (carefully)
 count out long strings of digits in network byte order.
 .Tn AppleTalk
@@ -182,8 +182,8 @@ interface, such as established with the
 .Cm srcsa
 or
 .Cm dstsa
-flags. If the all-zeroes SA is specified, the sending SA is cleared
-by default.
+flags.
+If the all-zeroes SA is specified, the sending SA is cleared by default.
 .It Cm debug
 Enable driver dependent debugging code; usually, this turns on
 extra console error logging.
@@ -213,10 +213,11 @@ Bind an
 .Xr ipsec 4
 Security Association (SA) to an
 .Xr enc 4
-interface. The interface can then be used in conjunction with the
+interface.
+The interface can then be used in conjunction with the
 .Xr bridge 4
-to establish virtual Local Area Networks (LANs). The SA is specified
-as
+to establish virtual Local Area Networks (LANs).
+The SA is specified as
 .Ar address/SPI/protocol ,
 where
 .Ar address
@@ -225,8 +226,9 @@ is an IPv4 or IPv6 address,
 is a hexadecimal number, and
 .Ar protocol
 is a decimal number identifying the security protocol (typically 50
-for ESP, 51 for AH, or 4 for IP-in-IP). The SA must exist for the
-operation to be successfully completed. Typically, such SAs would be
+for ESP, 51 for AH, or 4 for IP-in-IP).
+The SA must exist for the operation to be successfully completed.
+Typically, such SAs would be
 established via
 .Xr ipsecadm 1 .
 This SA will be used to send packets to a remote host via
@@ -238,18 +240,21 @@ or
 SA is specified, any existing binding between the corresponding
 .Xr enc 4
 interface and the SA is cleared (in fact, just the SPI and the protocol
-part of the SA have to be set to zero). Only one SA may be bound to an
+part of the SA have to be set to zero).
+Only one SA may be bound to an
 .Xr enc 4
-interface at a time. SAs may not be bound to the
+interface at a time.
+SAs may not be bound to the
 .Dq enc0
 interface.
 .It Cm giftunnel
 Set the source and destination tunnel addresses on a
 .Xr gif 4
-interface. Packets routed to this interface will be encapsulated in
-IPv4 or IPv6, depending on the source and destination address
-families. Both addresses must be of the same family. This flag
-obsoletes the old
+interface.
+Packets routed to this interface will be encapsulated in
+IPv4 or IPv6, depending on the source and destination address families.
+Both addresses must be of the same family.
+This flag obsoletes the old
 .Nm gifconfig
 command.
 .It Cm ipdst
@@ -264,20 +269,22 @@ packets is done differently.
 .It Cm link[0-2]
 Enable special processing of the link level of the interface.
 These three options are interface specific in actual effect; however,
-they are in general used to select special modes of operation. An example
+they are in general used to select special modes of operation.
+An example
 of this is to enable SLIP compression, or to select the connector type
-for some Ethernet cards.  Refer to the man page for the specific driver
-for more information.
+for some Ethernet cards.
+Refer to the man page for the specific driver for more information.
 .It Fl link[0-2]
 Disable special processing at the link level with the specified interface.
 .It Cm media Ar type
 Set the media type of the interface to
 .Ar type .
 Some interfaces support the mutually exclusive use of one of several
-different physical media connectors.  For example, a 10Mb/s Ethernet
-interface might support the use of either
+different physical media connectors.
+For example, a 10Mb/s Ethernet interface might support the use of either
 .Tn AUI
-or twisted pair connectors.  Setting the media type to
+or twisted pair connectors.
+Setting the media type to
 .Dq 10base5
 or
 .Dq AUI
@@ -286,7 +293,8 @@ Setting it to
 .Dq 10baseT
 or
 .Dq UTP
-would activate twisted pair.  Refer to the interfaces' driver
+would activate twisted pair.
+Refer to the interfaces' driver
 specific man page for a complete list of the available types.
 .It Cm mediaopt Ar opts
 Set the specified media options on the interface.
@@ -300,7 +308,8 @@ Disable the specified media options on the interface.
 Set the media instance to
 .Ar minst .
 This is useful for devices which have multiple physical layer interfaces
-(PHYs).  Setting the instance on such devices may not be strictly required
+(PHYs).
+Setting the instance on such devices may not be strictly required
 by the network interface driver as the driver may take care of this
 automatically; see the driver's manual page for more information.
 .It Cm metric Ar n
@@ -357,7 +366,8 @@ for
 37 type addresses.
 .It Cm phase
 The argument following this specifies the version (phase) of the
-AppleTalk network attached to the interface. Values of 1 or 2 are permitted.
+AppleTalk network attached to the interface.
+Values of 1 or 2 are permitted.
 .It Cm pltime Ar n
 (inet6 only)
 Set preferred lifetime for the address.
@@ -369,8 +379,11 @@ but you can specify by prefix length by digits.
 .It Cm range
 Under AppleTalk, set the interface to respond to a
 .Em netrange
-of the form startnet-endnet. AppleTalk uses this scheme instead of
-netmasks though OpenBSD implements it internally as a set of netmasks.
+of the form startnet-endnet.
+AppleTalk uses this scheme instead of
+netmasks though
+.Ox
+implements it internally as a set of netmasks.
 .It Cm srcsa
 Similar to
 .Cm dstsa ,
@@ -378,16 +391,20 @@ this operation binds an
 .Xr ipsec 4
 SA to an
 .Xr enc 4
-interface. The SAs bound via this operation are receiving SAs. Any
-packets received over one of these SAs, will be made to appear as if
+interface.
+The SAs bound via this operation are receiving SAs.
+Any packets received over one of these SAs, will be made to appear as if
 it arrived by the corresponding
 .Xr enc 4
-interface. If the interface is part of a bridge, the packets will be
-delivered to the bridge. Contrary to the
+interface.
+If the interface is part of a bridge, the packets will be
+delivered to the bridge.
+Contrary to the
 .Cm dstsa
 flag, multiple SAs may be bound to an
 .Xr enc 4
-interface via this operation. Similar to the
+interface via this operation.
+Similar to the
 .Cm dstsa
 flag, no SAs may be bound to the
 .Dq enc0
@@ -445,14 +462,16 @@ Using
 causes
 .Nm
 to print information on all interfaces.
-The protocol family may be specified as well.  Additionally, if
+The protocol family may be specified as well.
+Additionally, if
 .Fl am ,
 is used, interface media information is printed.
 .Pp
 If
 .Fl A
 is used, it causes full interface alias information for each interface to
-be displayed. If
+be displayed.
+If
 .Fl Am
 is used, interface media information is printed for all interfaces
 as well.
@@ -462,7 +481,7 @@ If
 followed by an interface name is specified, then the media information
 for that interface will be printed.
 .Pp
-Only the super-user may modify the configuration of a network interface.
+Only the superuser may modify the configuration of a network interface.
 .Sh EXAMPLES
 .Bl -tag -width ifconfig
 .It Cm ifconfig fxp0 inet 192.168.1.10 netmask 255.255.255.0

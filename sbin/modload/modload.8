@@ -1,4 +1,4 @@
-.\"	$OpenBSD: modload.8,v 1.14 2000/03/05 00:28:56 aaron Exp $
+.\"	$OpenBSD: modload.8,v 1.15 2000/03/18 22:55:59 aaron Exp $
 .\"	$NetBSD: modload.8,v 1.5 1995/03/18 14:56:43 cgd Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
@@ -49,7 +49,8 @@ The input file is an object file (.o file).
 The options are as follows:
 .Bl -tag -width indent
 .It Fl d
-Debug.  Used to debug
+Debug.
+Used to debug
 .Nm
 itself.
 .It Fl q
@@ -57,7 +58,8 @@ Be very quiet.
 .It Fl u
 Delete the loaded module
 .Pq Ar output_file
-after loading.  If the output file was not specified, this option causes the
+after loading.
+If the output file was not specified, this option causes the
 temporary file to be kept rather than deleted.
 .It Fl v
 Print comments about the loading process.
@@ -77,8 +79,8 @@ The default module entry point name is
 .Dq xxxinit .
 .It Fl p Ar postinstall
 Specify the name of a shell script or program that will
-be executed if the module is successfully loaded. It
-is always passed the module ID (in decimal) and module
+be executed if the module is successfully loaded.
+It is always passed the module ID (in decimal) and module
 type (in hexadecimal) as the first two arguments.
 For loadable drivers, the third argument is
 the block or character major device number.
@@ -86,7 +88,8 @@ For a loadable system call, the third argument is the system
 call number.
 .It Fl o Ar output_file
 Specify the name of the output file that is produced by
-the linker.  If this option is not specified, a file in the
+the linker.
+If this option is not specified, a file in the
 .Pa /tmp
 directory
 is used with the name generated from the module name with a

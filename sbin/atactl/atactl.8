@@ -1,4 +1,4 @@
-.\"	$OpenBSD: atactl.8,v 1.2 2000/02/02 02:52:05 deraadt Exp $
+.\"	$OpenBSD: atactl.8,v 1.3 2000/03/18 22:55:53 aaron Exp $
 .\"	$NetBSD: atactl.8,v 1.5 1999/02/24 18:49:14 jwise Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,13 +52,13 @@
 .Sh DESCRIPTION
 .Nm
 allows a user or system administrator to issue commands to and otherwise
-control devices which reside on standard IDE and ATA controllers.  It is
-used by specifying
+control devices which reside on standard IDE and ATA controllers.
+It is used by specifying
 a device to manipulate, the command to perform, and any arguments
 the command may require.
-.Sh DEVICE COMMANDS
-The following commands may be used on IDE and ATA devices.  Note
-that not all devices support all commands.
+.Pp
+The following commands may be used on IDE and ATA devices.
+Note that not all devices support all commands.
 .Pp
 If the
 .Ar device
@@ -66,7 +66,7 @@ is specified without a
 .Ar command ,
 the
 .Cm identify
-command is implied. 
+command is implied.
 .Pp
 .Cm identify
 .Pp
@@ -75,19 +75,20 @@ revision strings, and the device's capabilities.
 .Pp
 .Cm idle
 .Pp
-Place the specified device into Idle mode.  This mode may consume less
-power than Active mode.
+Place the specified device into Idle mode.
+This mode may consume less power than Active mode.
 .Pp
 .Cm standby
 .Pp
-Place the specified device into Standby mode.  This mode will consume
-less power than Idle mode.
+Place the specified device into Standby mode.
+This mode will consume less power than Idle mode.
 .Pp
 .Cm sleep
 .Pp
-Place he specified device into Sleep mode.  This mode will consume
-less power than Standby mode, but requires a device reset to resume
-operation.  Typically the
+Place he specified device into Sleep mode.
+This mode will consume less power than Standby mode,
+but requires a device reset to resume operation.
+Typically the
 .Xr wd 4
 driver performs this reset automatically, but this should still be
 used with caution.
@@ -98,7 +99,8 @@ used with caution.
 Places the specified device into Idle mode, and sets the Standby timer
 to
 .Ar standby-timer
-seconds.  A value of 0 will disable the Standby timer.
+seconds.
+A value of 0 will disable the Standby timer.
 .Pp
 .Cm setstandby
 .Ar standby-timer
@@ -106,23 +108,21 @@ seconds.  A value of 0 will disable the Standby timer.
 Places the specified device into Standby mode, and sets the Standby timer
 to
 .Ar standby-timer
-seconds.  A value of 0 will disable the Standby timer.
+seconds.
+A value of 0 will disable the Standby timer.
 .Pp
 .Cm checkpower
 .Pp
 Will print out if the device is in Active, Idle, or Standby power
 management mode.
-.Sh BUGS
-The output from the
-.Cm identify
-command is rather ugly.
 .Sh SEE ALSO
 .Xr ioctl 2 ,
 .Xr wd 4
 .Sh AUTHOR
 The
 .Nm
-command was written by Ken Hornstein.  It was based heavily on the
+command was written by Ken Hornstein.
+It was based heavily on the
 .Xr scsictl 8
 command written by Jason R. Thorpe.
 .Sh HISTORY
@@ -130,3 +130,7 @@ The
 .Nm
 command first appeared in
 .Ox 2.6 .
+.Sh BUGS
+The output from the
+.Cm identify
+command is rather ugly.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ping.8,v 1.19 1999/07/18 16:21:55 hugh Exp $
+.\"	$OpenBSD: ping.8,v 1.20 2000/03/18 22:56:02 aaron Exp $
 .\"	$NetBSD: ping.8,v 1.10 1995/12/31 04:55:35 ghudson Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
@@ -107,8 +107,8 @@ Only the super-user may use this option.
 This can be very hard on a network and should be used with caution.
 .Ef
 .It Fl I Ar ifaddr
-Specify the interface to transmit from on machines with multiple
-interfaces. For unicast and multicast pings.
+Specify the interface to transmit from on machines with multiple interfaces.
+For unicast and multicast pings.
 .It Fl i Ar wait
 Wait
 .Ar wait
@@ -126,7 +126,8 @@ If
 is specified,
 .Nm
 sends that many packets as fast as possible before falling into its normal
-mode of behavior. Only root may set a preload value.
+mode of behavior.
+Only root may set a preload value.
 .It Fl n
 Numeric output only.
 No attempt will be made to lookup symbolic names for host addresses.
@@ -155,8 +156,8 @@ Note that the IP header is only large enough for nine such routes.
 If more routes come back than should, such as due to an illegal spoofed
 packet,
 .Nm
-will print the route list and then truncate it at the correct
-spot.  Many hosts ignore or discard this option.
+will print the route list and then truncate it at the correct spot.
+Many hosts ignore or discard this option.
 .It Fl r
 Bypass the normal routing tables and send directly to a host on an attached
 network.
@@ -171,7 +172,8 @@ The default is 56, which translates into 64
 data bytes when combined
 with the 8 bytes of
 .Tn ICMP
-header data. If the
+header data.
+If the
 .Fl D
 or
 .Fl T
@@ -192,7 +194,8 @@ packets other than
 that are received are listed.
 .It Fl w Ar maxwait
 Specifies the number of seconds to wait for a response to a packet
-before transmitting the next one.  The default is 10.
+before transmitting the next one.
+The default is 10.
 .El
 .Pp
 In addition, the following option may be used for multicast pings:
@@ -212,7 +215,8 @@ Round trip times and packet loss statistics are computed.
 If duplicate packets are received, they are not included in the packet
 loss calculation, although the round trip time of these packets is used
 in calculating the minimum/average/maximum round trip time numbers and
-the standard deviation.  When the specified number of packets have been
+the standard deviation.
+When the specified number of packets have been
 sent (and received), or if the program is terminated with a
 .Dv SIGINT ,
 a brief summary is displayed.

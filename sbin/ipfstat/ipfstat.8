@@ -1,4 +1,4 @@
-.\"     $OpenBSD: ipfstat.8,v 1.18 1999/10/05 20:08:03 aaron Exp $
+.\"     $OpenBSD: ipfstat.8,v 1.19 2000/03/18 22:55:58 aaron Exp $
 .Dd June 13, 1999
 .Dt IPFSTAT 8
 .Os
@@ -59,7 +59,8 @@ Swap between retrieving
 .Dq inactive
 and
 .Dq active
-filter list details. For use in combination with
+filter list details.
+For use in combination with
 .Fl h .
 .It Fl n
 Show the rule number for each rule as it is printed.
@@ -73,7 +74,8 @@ Display the filter list used for the output side of the kernel IP processing.
 Show packet/flow state information (statistics) and held state information (in
 the kernel) if any is present.
 .It Fl v
-Turn verbose mode on. Displays more debugging information.
+Turn verbose mode on.
+Displays more debugging information.
 .El
 .Sh FILES
 .Bl -tag -width /dev/ipstate -compact

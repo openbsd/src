@@ -1,4 +1,4 @@
-.\"	$OpenBSD: restore.8,v 1.16 1999/07/04 18:59:41 aaron Exp $
+.\"	$OpenBSD: restore.8,v 1.17 2000/03/18 22:56:04 aaron Exp $
 .\"	$NetBSD: restore.8,v 1.15 1997/07/01 05:37:53 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
@@ -191,8 +191,8 @@ The target file system should be made pristine with
 mounted, and the user
 .Xr cd Ns 'd
 into the pristine file system
-before starting the restoration of the initial level 0 backup. If the
-level 0 restores successfully, the
+before starting the restoration of the initial level 0 backup.
+If the level 0 restores successfully, the
 .Fl r
 flag may be used to restore
 any necessary incremental backups on top of the level 0.
@@ -272,7 +272,8 @@ tries to determine the block size dynamically.
 Normally,
 .Nm
 will try to determine dynamically whether the dump was made from an
-old (pre-4.4) or new format file sytem.  The
+old (pre-4.4) or new format file sytem.
+The
 .Fl c
 flag disables this check, and only allows reading a dump in the old
 format.

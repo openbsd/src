@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.8,v 1.43 2000/01/21 02:53:06 angelos Exp $
+.\"	$OpenBSD: sysctl.8,v 1.44 2000/03/18 22:56:05 aaron Exp $
 .\"	$NetBSD: sysctl.8,v 1.4 1995/09/30 07:12:49 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
@@ -318,7 +318,8 @@ sysctl -w fs.posix.setuid=0
 .Ed
 .Pp
 Set the list of reserved TCP ports that should not be allocated
-by the kernel dynamically.  This can be used to keep daemons
+by the kernel dynamically.
+This can be used to keep daemons
 from stealing a specific port that another program needs to function.
 List elements may be separated by commas and/or whitespace.
 .Bd -literal -offset indent -compact

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: newfs.8,v 1.19 1999/12/03 19:24:18 art Exp $
+.\"	$OpenBSD: newfs.8,v 1.20 2000/03/18 22:56:01 aaron Exp $
 .\"	$NetBSD: newfs.8,v 1.12 1995/03/18 14:58:41 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993, 1994
@@ -120,10 +120,12 @@ a set of configuration parameters for the memory based file system.
 The special file is typically that of the primary swap area,
 since that is where the file system will be backed up when
 free memory gets low and the memory supporting
-the file system has to be paged.  If the keyword
+the file system has to be paged.
+If the keyword
 .Dq swap
 is used instead of a special file name, default configuration parameters
-will be used.  (This option is useful when trying to use
+will be used.
+(This option is useful when trying to use
 .Nm mount_mfs
 on a machine without any disks.)
 .Pp
@@ -152,7 +154,8 @@ that can be understood by older boot ROMs.
 .It Fl U
 Enables soft updates on the new filesystem.
 .It Fl q
-Operate in quiet mode.  With this option,
+Operate in quiet mode.
+With this option,
 .Nm
 will not print extraneous information like superblock backups.
 .It Fl a Ar maxcontig
@@ -199,7 +202,8 @@ See
 .Xr tunefs 8
 for more details on how to set this option.
 .It Fl n Ar number of rotational positions
-The number of distinct rotational positions.  The default is 1.
+The number of distinct rotational positions.
+The default is 1.
 .It Fl o Ar optimization\ preference
 .Ar space
 or

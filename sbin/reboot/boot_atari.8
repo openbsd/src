@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot_atari.8,v 1.8 1999/07/08 19:58:30 deraadt Exp $
+.\"	$OpenBSD: boot_atari.8,v 1.9 2000/03/18 22:56:03 aaron Exp $
 .\"	$NetBSD: boot_atari.8,v 1.1 1996/06/27 11:07:56 leo Exp $
 .\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
@@ -51,20 +51,23 @@ system bootstrapping procedures
 When the
 .Ox
 kernel is booted normally (using one of the two methods discussed below),
-it initializes itself and proceeds to boot the system.  An automatic
+it initializes itself and proceeds to boot the system.
+An automatic
 consistency check of the file systems takes place, and unless this
-fails, the system comes up to multi-user operations.  The proper way
-to shut the system down is with the
+fails, the system comes up to multi-user operations.
+The proper way to shut the system down is with the
 .Xr shutdown 8
 command.
 .Pp
 If the system crashes, it will enter the kernel debugger,
 .Xr ddb 8 ,
-if it is configured in the kernel.  If the debugger is not present
+if it is configured in the kernel.
+If the debugger is not present
 or has exited, the system will attempt a dump to the
 configured dump device (which will be automatically recovered with
 .Xr savecore 8
-during the next boot cycle).  After the dump completes (successful
+during the next boot cycle).
+After the dump completes (successful
 or not), the system will attempt a reboot.
 .Pp
 .Ss Booting OpenBSD using the bootloader
@@ -74,20 +77,21 @@ partition is created by means of
 .Xr installboot 8 ,
 the Atari BIOS will automatically start the
 .Ox
-bootloader. By default,
-it will load the kernel image
+bootloader.
+By default, it will load the kernel image
 .Pa /bsd
-and attempt to boot it into multi-user mode. This behaviour can be changed by
-either keeping the
+and attempt to boot it into multi-user mode.
+This behaviour can be changed by either keeping the
 .Sq Alternate
 or
 .Sq Right-Shift
-key pressed during the boot process. When
-the
+key pressed during the boot process.
+When the
 .Sq Alternate
 key is pressed, the bootstrap is aborted, causing the BIOS
 to continue scanning the disks for a bootable partition (this is compatible
-with AHDI 3.0). Pressing the
+with AHDI 3.0).
+Pressing the
 .Sq Right-Shift
 key during the boot causes the bootloader to enter interactive mode.
 In interactive mode, the command line looks like:
@@ -111,7 +115,8 @@ indicated will be used.
 If something other than
 .Pa .OpenBSD
 is specified, control is returned to the BIOS with the boot preference set to
-the selected type. Due to limitations of the BIOS, however, the search for
+the selected type.
+Due to limitations of the BIOS, however, the search for
 bootblocks is continued rather than restarted.
 .It Em boot-path
 This gives you the opportunity to boot another kernel, say:
@@ -138,7 +143,8 @@ When you want (or have to) start
 .Ox
 from GEM, you have to use the
 .Xr loadbsd
-program that is supplied on the kernel-floppy. The
+program that is supplied on the kernel-floppy.
+The
 .Xr loadbsd
 command line
 specification is:
@@ -172,15 +178,17 @@ only to use ST compatible RAM.
 Test loading of the kernel but don't start
 .Ox .
 .It Fl w
-Wait for a keypress before exiting loadbsd. This is useful when starting this
-program under GEM.
+Wait for a keypress before exiting loadbsd.
+This is useful when starting this program under GEM.
 .It Fl D
 Show debugging output while booting the kernel.
 .It Fl S Ar amount
-Set the amount of available ST compatible RAM in bytes. Normally this
+Set the amount of available ST compatible RAM in bytes.
+Normally this
 value is set automatically from the values initialized by the BIOS.
 .It Fl T Ar amount
-Set the amount of available TT compatible RAM in bytes. Normally this
+Set the amount of available TT compatible RAM in bytes.
+Normally this
 value is set automatically from the values initialized by the BIOS.
 .It Fl V
 Print the version of
@@ -193,8 +201,8 @@ This is a GEMDOS path specification of the kernel to boot.
 Note: Because the loadbsd program can only read kernels from a GEMDOS
 filesystem, the file
 .Pa /bsd
-is usually not the same as the actual kernel booted. This can cause some
-programs to fail.
+is usually not the same as the actual kernel booted.
+This can cause some programs to fail.
 .Sh FILES
 .Bl -tag -width /bsd -compact
 .It Pa /bsd

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: scsi.8,v 1.15 2000/03/05 00:28:50 aaron Exp $
+.\"	$OpenBSD: scsi.8,v 1.16 2000/03/18 22:56:04 aaron Exp $
 .\"	$FreeBSD: scsi.8,v 1.5 1995/05/05 20:41:58 dufault Exp $
 .\"
 .\" Written By Julian ELischer
@@ -82,8 +82,8 @@
 .Sh DESCRIPTION
 The
 .Nm
-program is used to send commands to a SCSI device. It is also
-a sample usage of the user-level SCSI commands.
+program is used to send commands to a SCSI device.
+It is also a sample usage of the user-level SCSI commands.
 .Ar out_fmt
 can be
 .Ql -
@@ -101,15 +101,18 @@ Specifies the
 that should be opened, i.e.,
 .Pa /dev/rsd0c .
 .It Fl d Ar debug_level
-Sets the SCSI kernel debug level.  The kernel must have been compiled
-with the SCSIDEBUG
-option.  See
+Sets the SCSI kernel debug level.
+The kernel must have been compiled with the
+.Cm SCSIDEBUG
+option.
+See
 .Pa /sys/scsi/scsi_debug.h
 to figure out what to set the kernel debug level to.
 .Pp
 .It Fl z Ar seconds
 Freezes all activity on all SCSI busses for a given number of
-seconds.  If
+seconds.
+If
 .Fl v
 is also specified, a BEL character is sent to the standard
 output at the start and finish of the bus freeze.
@@ -117,16 +120,17 @@ This requires that the kernel be built with the SCSI_FREEZE kernel option.
 This kernel code is not committed yet.
 .Pp
 .It Fl m Ar page
-Read a device mode page.  The file
+Read a device mode page.
+The file
 .Pa /usr/share/misc/scsi_modes
-is read to discover how to interpret the mode data.  The environment
-variable
+is read to discover how to interpret the mode data.
+The environment variable
 .Ev SCSI_MODES
 can specify a different file to use.
 .Pp
 .It Fl P Ar pc
-Specify a page control field.  The page control
-fields are
+Specify a page control field.
+The page control fields are
 .Bd -literal -offset
 0 Current Values
 1 Changeable Values
@@ -135,11 +139,11 @@ fields are
 .Ed
 .Pp
 .It Fl e
-Permits you to edit the fields.  It will use the editor specified
-by your
+Permits you to edit the fields.
+It will use the editor specified by your
 .Ev EDITOR
-environment variable.  To store changes permanently,
-edit page control 3 using the
+environment variable.
+To store changes permanently, edit page control 3 using the
 .Fl P
 flag.
 .Pp
@@ -173,8 +177,11 @@ for a description of fixed SCSI devices.
 .It Fl c
 Permits you to send user-level SCSI commands specified on
 the command line to a
-device.  The command is sent using the SCIOCCOMMAND ioctl, so the
-device you are accessing must permit this ioctl. See
+device.
+The command is sent using the
+.Dv SCIOCCOMMAND
+ioctl, so the device you are accessing must permit this ioctl.
+See
 .Xr scsi 4
 for full details of which minor devices permit the ioctl, and
 .Xr scsi 3
@@ -199,7 +206,8 @@ specified in the command format.
 Indicates that this is a data out command (i.e., data will be sent from
 the system to the device) with
 .Ar count
-bytes of data. The data out is built up using the facilities described in
+bytes of data.
+The data out is built up using the facilities described in
 .Xr scsi 3
 using the provided arguments to fill in any integer variables.
 .Ar out_fmt
@@ -213,7 +221,8 @@ bytes of data should be read from the standard input.
 Indicates that this is a data in command (i.e., data will be read from
 the device into the system) with
 .Ar count
-bytes of data read in.  The information is extracted according to
+bytes of data read in.
+The information is extracted according to
 .Ar in_fmt
 using the facilities described in
 .Xr scsi 3
@@ -252,7 +261,8 @@ output to that file.
 The
 .Ev SU_DEBUG_LEVEL
 variable can be set to a non-zero integer to increase
-the level of debugging.  Currently this is a on or off thing; it should
+the level of debugging.
+Currently this is a on or off thing; it should
 perhaps use the ioctl to set the debug level in the kernel and then set
 it back to zero at program exit.
 .Pp
@@ -268,7 +278,8 @@ variable determines the editor to use for the mode editor.
 .Xr scsi 3 ,
 .Xr scsi 4
 .Sh BUGS
-Some devices respond to an inquiry for all LUNS.  This will cause them
+Some devices respond to an inquiry for all LUNS.
+This will cause them
 to come on line to 8 times during reprobe to different logical units.
 "scsi -f /dev/rsd0c -c "4 0 0 0 0 0" permits anyone who can write to
 .Pa /dev/rsd0c

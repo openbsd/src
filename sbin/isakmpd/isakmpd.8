@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.8,v 1.16 2000/02/01 02:46:18 niklas Exp $
+.\" $OpenBSD: isakmpd.8,v 1.17 2000/03/18 22:55:59 aaron Exp $
 .\" $EOM: isakmpd.8,v 1.19 2000/01/31 22:33:46 niklas Exp $
 .\"
 .\" Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -76,8 +76,8 @@ option is used to make the daemon run in the foreground, logging to stderr.
 .It Xo Fl D
 .Ar debug-class Ns No = Ns Ar level
 .Xc
-This argument is possible to specify many times.  It takes a parameter of
-the form
+This argument is possible to specify many times.
+It takes a parameter of the form
 .Ar class Ns No = Ns Ar level
 where both
 .Ar class
@@ -89,7 +89,8 @@ denotes a debugging class, and
 .Ar level
 the level you want that debugging class to
 limit debug printouts at (i.e., all debug printouts above the level specified
-will not output anything). If
+will not output anything).
+If
 .Ar class
 is set to 'A',
 then all debugging classes are set to the specified level.
@@ -99,7 +100,8 @@ The
 option specifies the
 .Tn FIFO
 (a.k.a. named pipe) where the daemon listens for
-user requests.  If the path given is a dash
+user requests.
+If the path given is a dash
 .Pq Sq \&- ,
 .Nm
 will listen to stdin instead.

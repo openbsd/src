@@ -1,4 +1,4 @@
-.\"      $OpenBSD: ipnat.5,v 1.12 2000/01/24 07:27:02 kjell Exp $
+.\"      $OpenBSD: ipnat.5,v 1.13 2000/03/18 22:55:59 aaron Exp $
 .Dd June 5, 1999
 .Dt IPNAT 5
 .Os
@@ -9,10 +9,11 @@
 Files processed by
 .Xr ipnat 8
 are normal text files containing either a valid NAT rule or a comment on each
-non-blank line. Comment lines begin with a
+non-blank line.
+Comment lines begin with a
 .Ql #
-and are ignored, as are blank lines. Valid NAT rules
-are described by the following grammar:
+and are ignored, as are blank lines.
+Valid NAT rules are described by the following grammar:
 .Bd -literal -offset indent
 natrule     ::= maprule | rdrrule | bimaprule
 
@@ -47,8 +48,8 @@ rule or the
 .Ql \&:
 in the
 .Fa portrange
-rule, there must be no whitespace before or after it. In the case
-of the
+rule, there must be no whitespace before or after it.
+In the case of the
 .Ql \&/
 in the
 .Fa proxy
@@ -66,13 +67,16 @@ rule, if the element begins with a non-digit the mask is taken to be all zeros.
 A
 .Ql \&.
 in the element causes the element to be interpreted as a numeric IP
-address of the form 1.2.3.4. An
+address of the form 1.2.3.4.
+An
 .Ql x
-in the element causes the element to be interpreted as a 32 bit hex value. If all
+in the element causes the element to be interpreted as a 32 bit hex value.
+If all
 else fails the element is interpreted as the number of sequential 1's to place
 as the most significant bits in the 32 bit network mask.
 Whatever the interpretation method, a result network mask of all 1's, indicating a
-hostname, is valid.  A network mask of 31 1's (255.255.255.254)
+hostname, is valid.
+A network mask of 31 1's (255.255.255.254)
 is considered invalid as there is no space for allocating host
 .Tn IP Ns #\&'s
 after consideration for broadcast and network addresses.
@@ -88,7 +92,8 @@ map ppp0 10.0.0.0/8 -> 209.1.2.0/24
 .Pp
 The obvious problem here is we're trying to squeeze over 16,000,000
 .Tn IP
-addresses into a 254 address space. To increase the scope, remapping for
+addresses into a 254 address space.
+To increase the scope, remapping for
 .Tn TCP
 and/or
 .Tn UDP ,
@@ -99,8 +104,8 @@ map ppp0 10.0.0.0/8 -> 209.1.2.0/24 portmap tcp/udp 1025:65000
 .Pp
 which falls only 527,566
 .Sq addresses
-short of the space available in network
-10.  If we were to combine these rules, they would need to be specified as
+short of the space available in network 10.
+If we were to combine these rules, they would need to be specified as
 follows:
 .Bd -literal -offset indent
 map ppp0 10.0.0.0/8 -> 209.1.2.0/24 portmap tcp/udp 1025:65000

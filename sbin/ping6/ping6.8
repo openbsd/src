@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ping6.8,v 1.5 2000/02/28 14:06:39 itojun Exp $
+.\"	$OpenBSD: ping6.8,v 1.6 2000/03/18 22:56:03 aaron Exp $
 .\" 
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
 .\" All rights reserved.
@@ -82,7 +82,8 @@ Generate ICMPv6 Node Information Node Addresses query, rather than echo-request.
 must be a string constructed of the following charaters.
 .Bl -tag -width Ds -compact
 .It Ic a
-requests all the responder's unicast addresses. If the charater is ommited,
+requests all the responder's unicast addresses.
+If the charater is ommited,
 only those addresses which belong to the interface which has the
 responder's address are requests.
 .It Ic c
@@ -94,11 +95,13 @@ requests responder's site-local addresses.
 .It Ic l
 requests responder's link-local addresses.
 .It Ic A
-requests responder's anycast addresses. Without this character, the responder
-will return unicast addresses only. With this character, the responder
-will return anycast addresses only.
+requests responder's anycast addresses.
+Without this character, the responder
+will return unicast addresses only.
+With this character, the responder will return anycast addresses only.
 Note that the specification does not specify how to get responder's
-anycast addresses. This is an experimental option.
+anycast addresses.
+This is an experimental option.
 .El
 .It Fl b Ar bufsiz
 Set socket buffer size.
@@ -200,7 +203,7 @@ If the outgoing interface is specified by the
 .Fl I
 option as well, the address must be assinged to the specified interface.
 .It Fl s Ar packetsize
-Specifies the number of data bytes to be sent.  
+Specifies the number of data bytes to be sent.
 The default is 56, which translates into 64
 .Tn ICMP
 data bytes when combined

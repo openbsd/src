@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tunefs.8,v 1.13 1999/05/29 01:50:18 aaron Exp $
+.\"	$OpenBSD: tunefs.8,v 1.14 2000/03/18 22:56:06 aaron Exp $
 .\"	$NetBSD: tunefs.8,v 1.8 1995/03/18 15:01:29 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -60,9 +60,10 @@ The parameters which are to be changed are indicated by the flags
 given below:
 .Bl -tag -width Ds
 .It Fl A
-The file system has several backups of the super-block.  Specifying
-this option will cause all backups to be modified as well as the
-primary super-block.  This is potentially dangerous - use with caution.
+The file system has several backups of the super-block.
+Specifying this option will cause all backups to be modified as well as the
+primary super-block.
+This is potentially dangerous - use with caution.
 .It Fl a Ar maxcontig
 This specifies the maximum number of contiguous blocks that will
 be laid out before forcing a rotational delay (see
@@ -119,14 +120,16 @@ fragmentation is unlikely to be problematical, and
 the file system can be optimized for time.
 .It Fl p
 This option shows a summary of what the current tuneable settings
-are on the selected file system.  More detailed information can be
-obtained in the
+are on the selected file system.
+More detailed information can be obtained in the
 .Xr dumpfs 8
 manual page.
 .It Fl s Ar enable_or_disable
-This option enables soft updates on the file system. Soft updates
+This option enables soft updates on the file system.
+Soft updates
 eliminates most synchronous writes to disk by maintaining
-a partial order of writes to the disk. This significantly improves
+a partial order of writes to the disk.
+This significantly improves
 meta-data operations (file creation and deletion) at the expense of
 subjecting them to the same potential 30-second delay as file data.
 Recovery is made simpler, however, by maintaining a strict ordering of
