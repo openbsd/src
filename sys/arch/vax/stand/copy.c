@@ -1,4 +1,4 @@
-/*	$OpenBSD: copy.c,v 1.4 1998/02/03 11:48:26 maja Exp $ */
+/*	$OpenBSD: copy.c,v 1.5 1998/05/11 07:36:25 niklas Exp $ */
 /*	$NetBSD: copy.c,v 1.4 1997/02/12 18:00:42 ragge Exp $ */
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -41,7 +41,7 @@
 
 #include "vaxstand.h"
 
-#include <a.out.h>
+#include <sys/exec.h>
 
 char line[100];
 volatile u_int devtype, bootdev;

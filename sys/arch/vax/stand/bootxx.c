@@ -1,4 +1,4 @@
-/* $OpenBSD: bootxx.c,v 1.6 1998/02/03 11:48:25 maja Exp $ */
+/* $OpenBSD: bootxx.c,v 1.7 1998/05/11 07:36:27 niklas Exp $ */
 /* $NetBSD: bootxx.c,v 1.11 1997/06/08 17:49:17 ragge Exp $ */
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -63,7 +63,7 @@
 #include "data.h"
 #include "vaxstand.h"
 
-#include <a.out.h>
+#include <sys/exec.h>
 
 int     romstrategy(), romopen();
 int	command(int, int);

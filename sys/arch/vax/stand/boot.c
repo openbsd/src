@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.4 1998/02/03 11:48:24 maja Exp $ */
+/*	$OpenBSD: boot.c,v 1.5 1998/05/11 07:36:26 niklas Exp $ */
 /*	$NetBSD: boot.c,v 1.7 1997/06/08 17:49:16 ragge Exp $ */
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -41,7 +41,7 @@
 
 #define V750UCODE(x)    ((x>>8)&255)
 
-#include <a.out.h>
+#include <sys/exec.h>
 
 /*
  * Boot program... arguments passed in r10 and r11 determine
