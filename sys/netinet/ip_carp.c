@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.38 2004/03/18 20:46:16 mcbride Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.39 2004/03/20 11:01:35 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -159,7 +159,9 @@ int	carp_ioctl(struct ifnet *, u_long, caddr_t);
 void	carp_start(struct ifnet *);
 void	carp_setrun(struct carp_softc *, sa_family_t);
 void	carp_set_state(struct carp_softc *, int);
-int	carp_addrcount(struct carp_if *, struct in_ifaddr *);
+int	carp_addrcount(struct carp_if *, struct in_ifaddr *, int);
+enum	{ CARP_COUNT_MASTER, CARP_COUNT_RUNNING };
+
 int	carp_set_addr(struct carp_softc *, struct sockaddr_in *);
 int	carp_del_addr(struct carp_softc *, struct sockaddr_in *);
 #ifdef INET6
@@ -266,7 +268,7 @@ carp_setroute(struct carp_softc *sc, int cmd)
 		if (ifa->ifa_addr->sa_family == AF_INET) {
 			int count = carp_addrcount(
 			    (struct carp_if *)sc->sc_ifp->if_carp,
-			    ifatoia(ifa));
+			    ifatoia(ifa), CARP_COUNT_MASTER);
 
 			if ((cmd == RTM_ADD && count == 1) ||
 			    (cmd == RTM_DELETE && count == 0))
@@ -880,15 +882,17 @@ carp_send_na(struct carp_softc *sc)
 #endif /* INET6 */
 
 int
-carp_addrcount(struct carp_if *cif, struct in_ifaddr *ia)
+carp_addrcount(struct carp_if *cif, struct in_ifaddr *ia, int type)
 {
 	struct carp_softc *vh;
 	struct ifaddr *ifa;
 	int count = 0;
 
 	TAILQ_FOREACH(vh, &cif->vhif_vrs, sc_list) {
-		if ((vh->sc_ac.ac_if.if_flags & (IFF_UP|IFF_RUNNING)) ==
-		    (IFF_UP|IFF_RUNNING)) {
+		if ((type == CARP_COUNT_RUNNING &&
+		    (vh->sc_ac.ac_if.if_flags & (IFF_UP|IFF_RUNNING)) ==
+		    (IFF_UP|IFF_RUNNING)) ||
+		    (type == CARP_COUNT_MASTER && vh->sc_state == MASTER)) {
 			TAILQ_FOREACH(ifa, &vh->sc_ac.ac_if.if_addrlist,
 			    ifa_list) {
 				if (ifa->ifa_addr->sa_family == AF_INET &&
@@ -918,7 +922,7 @@ carp_iamatch(void *v, struct in_ifaddr *ia,
 		 * then we respond, otherwise, just drop the arp packet on
 		 * the floor.
 		 */
-		count = carp_addrcount(cif, ia);
+		count = carp_addrcount(cif, ia, CARP_COUNT_RUNNING);
 		if (count == 0) {
 			/* should never reach this */
 			return (0);
