@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.63 2004/10/11 09:44:06 espie Exp $
+# $OpenBSD: pkg_add,v 1.64 2004/10/11 11:38:35 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -106,7 +106,7 @@ sub install
 	my $ok = $self->check();
 	if (defined $ok) {
 		if ($ok == 0) {
-			die "user $user does not match\n";
+			Fatal "user $user does not match\n";
 		}
 	} else {
 		my $l=[];
@@ -133,7 +133,7 @@ sub install
 	my $ok = $self->check();
 	if (defined $ok) {
 		if ($ok == 0) {
-			die "group $group does not match\n";
+			Fatal "group $group does not match\n";
 		}
 	} else {
 		my $l=[];
@@ -144,6 +144,7 @@ sub install
 }
 
 package OpenBSD::PackingElement::FileBase;
+use OpenBSD::Error;
 use File::Basename;
 use File::Path;
 
@@ -154,7 +155,7 @@ sub install
 
 	my $file=$archive->next();
 	if ($file->{name} ne $self->{name}) {
-		die "Error: archive does not match", $file->{name}, "!=",
+		Fatal "Error: archive does not match", $file->{name}, "!=",
 		$self->{name}, "\n";
 	}
 	print "extracting ", $destdir, $fullname, "\n" if $verbose;
@@ -167,6 +168,7 @@ sub install
 }
 
 package OpenBSD::PackingElement::Sample;
+use OpenBSD::Error;
 use File::Copy;
 
 sub install
@@ -176,7 +178,7 @@ sub install
 	my $filename = $destdir.$self->fullname();
 	my $orig = $self->{copyfrom};
 	if (!defined $orig) {
-		die "\@sample element does not reference a valid file\n";
+		Fatal "\@sample element does not reference a valid file\n";
 	}
 	my $origname = $destdir.$orig->fullname();
 	if (-e $filename) {
@@ -334,7 +336,7 @@ if ($opt_P) {
 		$ftp_only = 1;
 	}
 	else {
-	    die "bad option: -P $opt_P";
+	    Fatal "bad option: -P $opt_P";
 	}
 }
 
@@ -354,7 +356,7 @@ if (defined $destdir) {
 }
 
 if ($< && !$forced{nonroot}) {
-	die "$0 must be run as root";
+	Fatal "$0 must be run as root";
 }
 
 my $conflict_list = {};
@@ -550,8 +552,7 @@ sub borked_installation
 	$plist->{pkgdep} = [];
 	my $dest = installed_info($borked);
 	register_installation($dir, $dest, $plist);
-	print "Installation of $pkgname failed.\n";
-	print "Partial installation recorded as $borked\n";
+	Fatal "Installation of $pkgname failed, partial installation recorded as $borked";
 }
 
 sub check_lib_specs
@@ -584,17 +585,6 @@ sub check_lib_specs
 		}
 	}
 	return 1;
-}
-
-sub borked_script($)
-{
-	my $msg = shift;
-
-	if ($forced{scripts}) {
-		print "$msg borked\n";
-	} else {
-		die "$msg borked";
-	}
 }
 
 sub collision_report($)
@@ -636,11 +626,11 @@ sub validate_plist($$)
 
 	my $extra = $plist->{extrainfo};
 	if ($cdrom_only && ((!defined $extra) || $extra->{cdrom} ne 'yes')) {
-	    print "Package $pkgname is not for cdrom.\n";
+	    Warn "Package $pkgname is not for cdrom.\n";
 	    $problems++;
 	}
 	if ($ftp_only && ((!defined $extra) || $extra->{ftp} ne 'yes')) {
-	    print "Package $pkgname is not for ftp.\n";
+	    Warn "Package $pkgname is not for ftp.\n";
 	    $problems++;
 	}
 
@@ -656,18 +646,34 @@ sub validate_plist($$)
 		my $s = OpenBSD::Vstat::add($fname, $item->{size});
 		next unless defined $s;
 		if ($s->{ro}) {
-			print "Error: ", $s->{mnt}, " is read-only ($fname)\n";
+			Warn "Error: ", $s->{mnt}, " is read-only ($fname)\n";
 			$problems++;
 		}
 		if ($s->avail() < 0) {
-			print "Error: ", $s->{mnt}, " is not large enough ($fname)\n";
+			Warn "Error: ", $s->{mnt}, " is not large enough ($fname)\n";
 			$problems++;
 		}
 	}
 	if (@$colliding > 0) {
 		collision_report($colliding);
 	}
-	exit(1) if $problems;
+	Fatal "fatal issues" if $problems;
+}
+
+sub do_script
+{
+	my ($plist, $dir, $name, $msg, $pkgname, $args, $opt_v, $opt_n) = @_;
+	return unless $plist->has($name);
+	ensure_ldconfig($opt_v) unless $opt_n;
+	print "$msg script: $dir$name $pkgname $args\n" if $opt_v or $opt_n;
+	return if $opt_n;
+	chmod 0755, $dir.$name;
+	return if System($dir.$name, $pkgname, $args) == 0;
+	if ($forced{scripts}) {
+		Warn "$msg borked\n";
+	} else {	
+		Fatal "$msg borked";
+	}
 }
 
 sub manpages_index
@@ -696,9 +702,7 @@ sub really_add($$)
 	validate_plist($plist, $destdir);
 
 	if (!defined $handle) {
-		print STDERR "Archive in $pkgname broken\n";
-		$errors++;
-		return;
+		Fatal "Archive in $pkgname broken";
 	}
 
 	$ENV{'PKG_PREFIX'} = $plist->pkgbase();
@@ -708,33 +712,15 @@ sub really_add($$)
 		$interrupted = 1;
 	};
 
-	if ($plist->has(REQUIRE)) {
-		ensure_ldconfig($opt_v) unless $opt_n;
-		print "Require script: $dir",REQUIRE," $pkgname INSTALL\n" if $opt_v or $opt_n;
-		unless ($opt_n) {
-			chmod 0755, $dir.REQUIRE;
-			System($dir.REQUIRE, $pkgname, "INSTALL") == 0 or
-			    borked_script("require script");
-		}
-	}
+	do_script($plist, $dir, REQUIRE, "Require", $pkgname, "INSTALL", $opt_v, $opt_n);
 
-	unless ($opt_I) {
-		if ($plist->has(INSTALL)) {
-			ensure_ldconfig($opt_v) unless $opt_n;
-			print "Install script: $dir",INSTALL," $pkgname PRE-INSTALL\n" if $opt_v or $opt_n;
-			unless ($opt_n) {
-				chmod 0755, $dir.INSTALL;
-				System($dir.INSTALL, $pkgname, "PRE-INSTALL") == 0 or
-				    borked_script("install script");
-			}
-		}
-	}
+	do_script($plist, $dir, INSTALL, "Install", $pkgname, "PRE-INSTALL", $opt_v, $opt_n) unless $opt_I;
 
 	$plist->{done} = [];
 	for my $item (@{$plist->{groups}}, @{$plist->{users}}, @{$plist->{items}}) {
 		eval { $item->install($handle, $destdir, $opt_v, $opt_n); };
 		if ($@) {
-			print STDERR "$@";
+			Warn $@;
 			$errors++;
 			last;
 		}
@@ -745,33 +731,29 @@ sub really_add($$)
 	manpages_index($plist, $destdir);
 	$handle->close();
 
-	unless ($opt_I) {
-		if ($plist->has(INSTALL) && !$interrupted) {
-			ensure_ldconfig($opt_v) unless $opt_n;
-			print "Install script: $dir",INSTALL ," $pkgname POST-INSTALL\n" if $opt_v or $opt_n;
-			unless ($opt_n) {
-				if (System($dir.INSTALL, $pkgname, "POST-INSTALL") != 0) {
-					print STDERR "install script for $pkgname borked\n";
-					$errors++ unless $forced{scripts};
-				}
-			}
+	if (!$opt_I && !$interrupted) {
+		eval { do_script($plist, $dir, INSTALL, "Install", $pkgname, "POST-INSTALL", $opt_v, $opt_n) };
+		if ($@) {
+			Warn $@;
+			$errors++;
 		}
 	}
 
 	unlink($dir.CONTENTS);
-	if ($interrupted || $errors) {
-		borked_installation($plist, $dir) unless $opt_n;
-		exit 1;
-	}
-	my $dest = installed_info($pkgname);
-	register_installation($dir, $dest, $plist) unless $opt_n;
-	if (defined $handle->{solved_dependencies} && !$opt_n) {
-		require OpenBSD::RequiredBy;
-
-		for my $dep (@{$handle->{solved_dependencies}}) {
-			OpenBSD::RequiredBy->new($dep)->add($pkgname);
+	if (!$opt_n) {
+		if ($interrupted || $errors) {
+			borked_installation($plist, $dir);
 		}
-    	}
+		my $dest = installed_info($pkgname);
+		register_installation($dir, $dest, $plist);
+		if (defined $handle->{solved_dependencies}) {
+			require OpenBSD::RequiredBy;
+
+			for my $dep (@{$handle->{solved_dependencies}}) {
+				OpenBSD::RequiredBy->new($dep)->add($pkgname);
+			}
+		}
+	}
 	add_installed($pkgname);
 	if ($plist->has(DISPLAY)) {
 		my $pager = $ENV{'PAGER'} || "/usr/bin/more";
@@ -833,7 +815,11 @@ while (my $pkg = shift @todo) {
 	for my $dep (@{$handle->{solved_dependencies}}) {
 		OpenBSD::PackingElement::PkgDep->add($plist, $dep);
 	}
-	really_add($handle, $destdir);
+	eval { really_add($handle, $destdir) };
+	if ($@) {
+		Warn $@;
+		last;
+	}
 	$conflict_list->{$plist->pkgname()} = $handle->{conflicts};
 }
 
