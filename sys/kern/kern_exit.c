@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.23 2000/04/20 10:03:43 art Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.24 2000/05/05 08:38:23 art Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -203,7 +203,6 @@ exit1(p, rv)
 		sp->s_leader = NULL;
 	}
 	fixjobc(p, p->p_pgrp, 0);
-	p->p_rlimit[RLIMIT_FSIZE].rlim_cur = RLIM_INFINITY;
 	(void)acct_process(p);
 #ifdef KTRACE
 	/* 
@@ -292,8 +291,8 @@ exit1(p, rv)
 	 * Other substructures are freed from wait().
 	 */
 	curproc = NULL;
-	if (--p->p_limit->p_refcnt == 0)
-		FREE(p->p_limit, M_SUBPROC);
+	limfree(p->p_limit);
+	p->p_limit = NULL;
 
 	/*
 	 * Finally, call machine-dependent code to release the remaining
