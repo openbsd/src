@@ -1,4 +1,4 @@
-/*	$OpenBSD: route6d.c,v 1.17 2001/03/09 03:24:10 deraadt Exp $	*/
+/*	$OpenBSD: route6d.c,v 1.18 2001/06/13 04:08:03 itojun Exp $	*/
 /*	$KAME: route6d.c,v 1.60 2001/03/08 02:15:42 onoe Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #if 0
-static char _rcsid[] = "$OpenBSD: route6d.c,v 1.17 2001/03/09 03:24:10 deraadt Exp $";
+static char _rcsid[] = "$OpenBSD: route6d.c,v 1.18 2001/06/13 04:08:03 itojun Exp $";
 #endif
 
 #include <stdio.h>
@@ -3295,22 +3295,28 @@ tracet(level, fmt, va_alist)
 {
 	va_list ap;
 
-#ifdef __STDC__
-	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
 	if (level <= dflag) {
+#ifdef __STDC__
+		va_start(ap, fmt);
+#else
+		va_start(ap);
+#endif
 		fprintf(stderr, "%s: ", hms());
 		vfprintf(stderr, fmt, ap);
+		va_end(ap);
 	}
 	if (dflag) {
+#ifdef __STDC__
+		va_start(ap, fmt);
+#else
+		va_start(ap);
+#endif
 		if (level > 0)
 			vsyslog(LOG_DEBUG, fmt, ap);
 		else
 			vsyslog(LOG_WARNING, fmt, ap);
+		va_end(ap);
 	}
-	va_end(ap);
 }
 
 void
@@ -3325,20 +3331,27 @@ trace(level, fmt, va_alist)
 {
 	va_list ap;
 
+	if (level <= dflag) {
 #ifdef __STDC__
-	va_start(ap, fmt);
+		va_start(ap, fmt);
 #else
-	va_start(ap);
+		va_start(ap);
 #endif
-	if (level <= dflag)
 		vfprintf(stderr, fmt, ap);
+		va_end(ap);
+	}
 	if (dflag) {
+#ifdef __STDC__
+		va_start(ap, fmt);
+#else
+		va_start(ap);
+#endif
 		if (level > 0)
 			vsyslog(LOG_DEBUG, fmt, ap);
 		else
 			vsyslog(LOG_WARNING, fmt, ap);
+		va_end(ap);
 	}
-	va_end(ap);
 }
 
 unsigned int
