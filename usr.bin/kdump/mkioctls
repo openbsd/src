@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: mkioctls,v 1.9 2002/11/26 18:26:04 mickey Exp $
+#	$OpenBSD: mkioctls,v 1.10 2002/12/04 17:41:00 mickey Exp $
 
 #
 # Copyright (c) 1994
@@ -64,6 +64,7 @@ BEGIN {
 	print "#include <sys/scanio.h>"
 	print "#include <sys/scsiio.h>"
 	print "#include <dev/wscons/wsconsio.h>"
+	print "#include <dev/systrace.h>"
 	print "#define COMPAT_43"
 	print "#include <sys/ioctl.h>"
 	print ""
@@ -75,7 +76,7 @@ BEGIN {
 	print ""
 }
 
-/^#[ 	]*define[ 	]*(ATAIO|AUDIO_|CDIO|CHIO|DIOC|MIDI_|SEQUENCER_|TIO|FIO|FIBMAP|MTIOC|SIO|OSIO|PCIOC|RIOC|SCIOC|OSCIOC|WSKBD|WSMOUSE|WSDISPLAY|WSMUX)[A-Z]*[ 	]*_IO/ {
+/^#[ 	]*define[ 	]*(ATAIO|AUDIO_|CDIO|CHIO|DIOC|MIDI_|SEQUENCER_|TIO|FIO|FIBMAP|MTIOC|SIO|OSIO|PCIOC|RIOC|STRIOC|SCIOC|OSCIOC|WSKBD|WSMOUSE|WSDISPLAY|WSMUX)[A-Z]*[ 	]*_IO/ {
 	
 	# find where the name starts
 	for (i = 1; i <= NF; i++)
