@@ -1,4 +1,4 @@
-/* $OpenBSD: pwd_gensalt.c,v 1.8 1998/07/04 18:27:04 provos Exp $ */
+/* $OpenBSD: pwd_gensalt.c,v 1.9 1998/07/05 21:08:32 provos Exp $ */
 /*
  * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
  * All rights reserved.
@@ -91,10 +91,13 @@ pwd_gensalt(salt, max, pwd, type)
 		salt[2] = '\0';
 	} else if (!strcmp(now, "newsalt")) {
 		u_int32_t rounds = atol(next);
-		if (rounds < 725)
-			rounds = 725;
 		if (max < 10)
 			return 0;
+		/* Check rounds, 24 bit is max */
+		if (rounds < 7250)
+			rounds = 7250;
+		else if (rounds > 0xffffff)
+		        rounds = 0xffffff;
 		salt[0] = _PASSWORD_EFMT1;
 		to64(&salt[1], (u_int32_t) rounds, 4);
 		to64(&salt[5], arc4random(), 4);
