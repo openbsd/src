@@ -1,4 +1,4 @@
-/*	$OpenBSD: fhc_mainbus.c,v 1.1 2004/09/22 21:44:45 jason Exp $	*/
+/*	$OpenBSD: fhc_mainbus.c,v 1.2 2004/09/27 17:44:16 jason Exp $	*/
 
 /*
  * Copyright (c) 2004 Jason L. Wright (jason@thought.net).
@@ -69,6 +69,44 @@ fhc_mainbus_attach(parent, self, aux)
 
 	sc->sc_node = ma->ma_node;
 	sc->sc_bt = ma->ma_bustag;
+
+	if (bus_space_map(sc->sc_bt, ma->ma_reg[0].ur_paddr,
+	    ma->ma_reg[0].ur_len, 0, &sc->sc_preg)) {
+		printf(": failed to map preg\n");
+		return;
+	}
+
+	if (bus_space_map(sc->sc_bt, ma->ma_reg[1].ur_paddr,
+	    ma->ma_reg[1].ur_len, 0, &sc->sc_ireg)) {
+		printf(": failed to map ireg\n");
+		return;
+	}
+
+	if (bus_space_map(sc->sc_bt, ma->ma_reg[2].ur_paddr,
+	    ma->ma_reg[2].ur_len, BUS_SPACE_MAP_LINEAR, &sc->sc_freg)) {
+		printf(": failed to map freg\n");
+		return;
+	}
+
+	if (bus_space_map(sc->sc_bt, ma->ma_reg[3].ur_paddr,
+	    ma->ma_reg[3].ur_len, BUS_SPACE_MAP_LINEAR, &sc->sc_sreg)) {
+		printf(": failed to map sreg\n");
+		return;
+	}
+
+	if (bus_space_map(sc->sc_bt, ma->ma_reg[4].ur_paddr,
+	    ma->ma_reg[4].ur_len, BUS_SPACE_MAP_LINEAR, &sc->sc_ureg)) {
+		printf(": failed to map ureg\n");
+		return;
+	}
+
+	if (bus_space_map(sc->sc_bt, ma->ma_reg[5].ur_paddr,
+	    ma->ma_reg[5].ur_len, BUS_SPACE_MAP_LINEAR, &sc->sc_treg)) {
+		printf(": failed to map treg\n");
+		return;
+	}
+
 	fhc_attach(sc);
+
 	return;
 }
