@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.8 1999/04/20 20:11:48 mickey Exp $	*/
+/*	$OpenBSD: conf.c,v 1.9 1999/05/06 02:29:14 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -32,7 +32,6 @@
 
 #include <sys/types.h>
 #include <libsa.h>
-#include <machine/lifvar.h>
 #include <lib/libsa/ufs.h>
 #include <lib/libsa/cd9660.h>
 #include <lib/libsa/exec.h>
