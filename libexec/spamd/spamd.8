@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamd.8,v 1.46 2004/03/12 21:01:16 beck Exp $
+.\"	$OpenBSD: spamd.8,v 1.47 2004/03/12 22:16:16 jmc Exp $
 .\"
 .\" Copyright (c) 2002 Theo de Raadt.  All rights reserved.
 .\"
@@ -74,12 +74,12 @@ Debug mode.
 does not
 .Xr fork 2
 into the background.
-.It Fl g
-Greylisting mode; see
-.Sx GREYLISTING
-below.
 .It Fl G Ar passtime:greyexp:whiteexp
 Adjust the three time parameters for greylisting; see
+.Sx GREYLISTING
+below.
+.It Fl g
+Greylisting mode; see
 .Sx GREYLISTING
 below.
 .It Fl n Ar name
