@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_radius.c,v 1.2 2002/06/02 01:27:15 deraadt Exp $	*/
+/*	$OpenBSD: login_radius.c,v 1.3 2002/09/29 03:23:01 millert Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 Berkeley Software Design, Inc. All rights reserved.
@@ -38,18 +38,31 @@
  * All rights reserved.
  *
  * tfm associates
- * P.O. Box 1244
- * Eugene OR 97440-1244 USA
+ * P.O. Box 2086
+ * Eugene OR 97402-0031
  *
- * This contains unpublished proprietary source code of tfm associates.
- * The copyright notice above does not evidence any 
- * actual or intended publication of such source code.
- * 
- * A license is granted to Berkeley Software Design, Inc. by
- * tfm associates to modify and/or redistribute this software under the
- * terms and conditions of the software License Agreement provided with this
- * distribution. The Berkeley Software Design Inc. software License
- * Agreement specifies the terms and conditions for redistribution.
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. The name of tfm associates may not be used to endorse or promote
+ *    products derived from this software without specific prior written
+ *    permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY TFM ASSOC``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL TFM ASSOCIATES BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
+ * OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+ * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include <sys/types.h>
