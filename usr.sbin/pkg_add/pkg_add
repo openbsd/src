@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.28 2004/03/07 19:29:08 espie Exp $
+# $OpenBSD: pkg_add,v 1.29 2004/03/18 16:49:50 tholo Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -76,14 +76,14 @@ sub install
 	return if $not;
 	$file->create();
 	if (defined $self->{owner} && defined $self->{group}) {
-		system('chown', $self->{owner}.':'.$self->{group}, $self->fullname());
+		system('chown', $self->{owner}.':'.$self->{group}, $destdir.$self->fullname());
 	} elsif (defined $self->{owner}) {
-		system('chown', $self->{owner}, $self->fullname());
+		system('chown', $self->{owner}, $destdir.$self->fullname());
 	} elsif (defined $self->{group}) {
-		system('chown', ':'.$self->{group}, $self->fullname());
+		system('chown', ':'.$self->{group}, $destdir.$self->fullname());
 	}
 	if (defined $self->{mode}) {
-		system('chmod', $self->{mode}, $self->fullname());
+		system('chmod', $self->{mode}, $destdir.$self->fullname());
 	}
 }
 
