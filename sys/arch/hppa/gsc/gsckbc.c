@@ -1,4 +1,4 @@
-/*	$OpenBSD: gsckbc.c,v 1.3 2003/02/17 23:06:31 miod Exp $	*/
+/*	$OpenBSD: gsckbc.c,v 1.4 2003/05/22 19:30:44 mickey Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -1025,7 +1025,7 @@ gsckbcintr(struct gsckbc_softc *gsc)
 		if (!q) {
 			/* XXX do something for live insertion? */
 #ifdef PCKBCDEBUG
-			printf("pckbcintr: no dev for slot %d\n", slot);
+			printf("gsckbcintr: no dev for slot %d\n", slot);
 #endif
 			KBD_DELAY;
 			(void) bus_space_read_1(t->t_iot, t->t_ioh_d, KBDATAP);
@@ -1045,7 +1045,7 @@ gsckbcintr(struct gsckbc_softc *gsc)
 			(*sc->inputhandler[slot])(sc->inputarg[slot], data);
 #ifdef PCKBCDEBUG
 		else
-			printf("pckbcintr: slot %d lost %d\n", slot, data);
+			printf("gsckbcintr: slot %d lost %d\n", slot, data);
 #endif
 	}
 
