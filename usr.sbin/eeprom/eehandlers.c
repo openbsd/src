@@ -1,4 +1,4 @@
-/*	$OpenBSD: eehandlers.c,v 1.3 1996/03/25 15:55:18 niklas Exp $	*/
+/*	$OpenBSD: eehandlers.c,v 1.4 1996/08/31 12:42:49 deraadt Exp $	*/
 /*	$NetBSD: eehandlers.c,v 1.2 1996/02/28 01:13:22 thorpej Exp $	*/
 
 /*-
@@ -414,7 +414,7 @@ ee_diagpath(ktent, arg)
 	if (arg) {
 		if (strlen(arg) > sizeof(path))
 			BARF(ktent);
-		sprintf(path, arg);
+		snprintf(path, sizeof path, arg);
 		if (doio(ktent, (u_char *)&path[0], sizeof(path), IO_WRITE))
 			FAILEDWRITE(ktent);
 	} else
@@ -443,7 +443,7 @@ ee_banner(ktent, arg)
 			BARF(ktent);
 		if (*arg != '\0') {
 			enable = EE_TRUE;
-			sprintf(string, arg);
+			snprintf(string, sizeof string, arg);
 			if (doio(ktent, (u_char *)string,
 			    sizeof(string), IO_WRITE))
 				FAILEDWRITE(ktent);
