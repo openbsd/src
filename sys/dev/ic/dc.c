@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.78 2005/01/08 06:02:59 brad Exp $	*/
+/*	$OpenBSD: dc.c,v 1.79 2005/01/14 15:04:51 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -2739,7 +2739,9 @@ dc_start(ifp)
 		if (m_head == NULL)
 			break;
 
-		if (sc->dc_flags & DC_TX_COALESCE) {
+		if (sc->dc_flags & DC_TX_COALESCE &&
+		    (m_head->m_next != NULL ||
+			sc->dc_flags & DC_TX_ALIGN)) {
 #ifdef ALTQ
 			/* note: dc_coal breaks the poll-and-dequeue rule.
 			 * if dc_coal fails, we lose the packet.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dc_pci.c,v 1.46 2005/01/08 06:02:59 brad Exp $	*/
+/*	$OpenBSD: if_dc_pci.c,v 1.47 2005/01/14 15:04:52 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -318,6 +318,7 @@ void dc_pci_attach(parent, self, aux)
 			sc->dc_type = DC_TYPE_DM9102;
 			sc->dc_flags |= DC_TX_COALESCE|DC_TX_INTR_ALWAYS;
 			sc->dc_flags |= DC_REDUCED_MII_POLL|DC_TX_STORENFWD;
+			sc->dc_flags |= DC_TX_ALIGN;
 			sc->dc_pmode = DC_PMODE_MII;
 
 			/* Increase the latency timer value. */

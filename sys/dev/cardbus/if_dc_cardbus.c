@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dc_cardbus.c,v 1.15 2004/10/07 21:16:59 brad Exp $	*/
+/*	$OpenBSD: if_dc_cardbus.c,v 1.16 2005/01/14 15:04:52 brad Exp $	*/
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -145,7 +145,8 @@ dc_cardbus_attach(parent, self, aux)
 		if (PCI_PRODUCT(ca->ca_id) ==
 		    PCI_PRODUCT_XIRCOM_X3201_3_21143) {
 			sc->dc_type = DC_TYPE_XIRCOM;
-			sc->dc_flags |= DC_TX_INTR_ALWAYS|DC_TX_COALESCE;
+			sc->dc_flags |= DC_TX_INTR_ALWAYS|DC_TX_COALESCE |
+					DC_TX_ALIGN;
 			sc->dc_pmode = DC_PMODE_MII;
 
 			bcopy(ca->ca_cis.funce.network.netid,
