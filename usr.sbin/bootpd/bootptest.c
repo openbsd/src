@@ -284,7 +284,7 @@ main(argc, argv)
 	bp = (struct bootp *) sndbuf;
 	bzero(bp, sizeof(*bp));
 	bp->bp_op = BOOTREQUEST;
-	xid = (int32) getpid();
+	xid = (int32) getpid();			/* XXX should use arc4random()? */
 	bp->bp_xid = (u_int32) htonl(xid);
 	if (bp_file)
 		strlcpy(bp->bp_file, bp_file, BP_FILE_LEN);
