@@ -1,6 +1,6 @@
-/* alloc.c
+/*	$OpenBSD: alloc.c,v 1.2 2004/04/14 00:20:25 henning Exp $	*/
 
-   Memory allocation... */
+/* Memory allocation... */
 
 /*
  * Copyright (c) 1995, 1996, 1998 The Internet Software Consortium.
@@ -44,160 +44,154 @@
 
 struct dhcp_packet *dhcp_free_list;
 struct packet *packet_free_list;
+struct lease_state *free_lease_states;
 
-void * dmalloc(size, name)
-	int size;
-	char *name;
+void *
+dmalloc(int size, char *name)
 {
 	void *foo = calloc(size, sizeof(char));
+
 	if (!foo)
-		warn ("No memory for %s.", name);
-	return foo;
+		warn("No memory for %s.", name);
+	return (foo);
 }
 
-void dfree(ptr, name)
-	void *ptr;
-	char *name;
+void
+dfree(void *ptr, char *name)
 {
 	if (!ptr) {
-		warn ("dfree %s: free on null pointer.", name);
+		warn("dfree %s: free on null pointer.", name);
 		return;
 	}
-	free (ptr);
+	free(ptr);
 }
 
-struct packet *new_packet(name)
-	char *name;
-{
-	struct packet *rval;
-	rval = (struct packet *)dmalloc(sizeof(struct packet), name);
-	return rval;
-}
-
-struct dhcp_packet *new_dhcp_packet(name)
-	char *name;
-{
-	struct dhcp_packet *rval;
-	rval = (struct dhcp_packet *)dmalloc(sizeof(struct dhcp_packet),
-	          name);
-	return rval;
-}
-
-struct tree *new_tree(name)
-	char *name;
+struct tree *
+new_tree(char *name)
 {
 	struct tree *rval = dmalloc(sizeof(struct tree), name);
-	return rval;
+
+	return (rval);
 }
 
-struct string_list *new_string_list(size, name)
-	size_t size;
-	char * name;
+struct string_list *
+new_string_list(size_t size, char * name)
 {
 	struct string_list *rval;
 
-	rval =dmalloc(sizeof(struct string_list) + size, name);
-	if (rval != NULL) 
+	rval = dmalloc(sizeof(struct string_list) + size, name);
+	if (rval != NULL)
 		rval->string = ((char *)rval) + sizeof(struct string_list);
-	return rval;
+	return (rval);
 }
 
 struct tree_cache *free_tree_caches;
 
-struct tree_cache *new_tree_cache(name)
-	char *name;
+struct tree_cache *
+new_tree_cache(char *name)
 {
 	struct tree_cache *rval;
 
 	if (free_tree_caches) {
 		rval = free_tree_caches;
-		free_tree_caches =
-			(struct tree_cache *)(rval->value);
+		free_tree_caches = (struct tree_cache *)(rval->value);
 	} else {
 		rval = dmalloc(sizeof(struct tree_cache), name);
 		if (!rval)
 			error("unable to allocate tree cache for %s.", name);
 	}
-	return rval;
+	return (rval);
 }
 
-struct hash_table *new_hash_table(count, name)
-	int count;
-	char *name;
+struct hash_table *
+new_hash_table(int count, char *name)
 {
 	struct hash_table *rval;
-	rval = dmalloc(sizeof (struct hash_table)
-          - (DEFAULT_HASH_SIZE * sizeof(struct hash_bucket *))
-          + (count * sizeof(struct hash_bucket *)), name);
+
+	rval = dmalloc(sizeof(struct hash_table) -
+	    (DEFAULT_HASH_SIZE * sizeof(struct hash_bucket *)) +
+	    (count * sizeof(struct hash_bucket *)), name);
 	if (rval == NULL)
-		return NULL;
+		return (NULL);
 	rval->hash_count = count;
-	return rval;
+	return (rval);
 }
 
-struct hash_bucket *new_hash_bucket(name)
-	char *name;
+struct hash_bucket *
+new_hash_bucket(char *name)
 {
 	struct hash_bucket *rval = dmalloc(sizeof(struct hash_bucket), name);
-	return rval;
+
+	return (rval);
 }
 
-struct lease *new_leases(n, name)
-	int n;
-	char *name;
+void
+free_hash_bucket(struct hash_bucket *ptr, char *name)
 {
-	struct lease *rval = dmalloc(n * sizeof(struct lease), name);
-	return rval;
+	dfree(ptr, name);
 }
 
-struct lease *new_lease(name)
-	char *name;
+void
+free_hash_table(struct hash_table *ptr, char *name)
 {
-	struct lease *rval = dmalloc(sizeof(struct lease), name);
-	return rval;
+	dfree(ptr, name);
 }
 
-struct subnet *new_subnet(name)
-	char *name;
+void
+free_tree_cache(struct tree_cache *ptr, char *name)
 {
-	struct subnet *rval = dmalloc(sizeof(struct subnet), name);
-	return rval;
+	ptr->value = (unsigned char *)free_tree_caches;
+	free_tree_caches = ptr;
 }
 
-struct class *new_class(name)
-	char *name;
+void
+free_packet(struct packet *ptr, char *name)
 {
-	struct class *rval = dmalloc(sizeof(struct class), name);
-	return rval;
+	dfree(ptr, name);
 }
 
-struct shared_network *new_shared_network(name)
-	char *name;
+void
+free_dhcp_packet(struct dhcp_packet *ptr, char *name)
+{
+	dfree(ptr, name);
+}
+
+void
+free_tree(struct tree *ptr, char *name)
+{
+	dfree(ptr, name);
+}
+
+void
+free_string_list(struct string_list *ptr, char *name)
+{
+	dfree(ptr, name);
+}
+
+struct shared_network *
+new_shared_network(char *name)
 {
 	struct shared_network *rval =
-		dmalloc (sizeof(struct shared_network), name);
-	return rval;
+		dmalloc(sizeof(struct shared_network), name);
+	return (rval);
 }
 
-struct group *new_group(name)
-	char *name;
+struct subnet *
+new_subnet(char *name)
 {
-	struct group *rval =
-		dmalloc(sizeof(struct group), name);
-	return rval;
+	struct subnet *rval = dmalloc(sizeof(struct subnet), name);
+	return (rval);
 }
 
-struct protocol *new_protocol(name)
-	char *name;
+struct class *
+new_class(char *name)
 {
-	struct protocol *rval = dmalloc(sizeof(struct protocol), name);
-	return rval;
+	struct class *rval = dmalloc(sizeof(struct class), name);
+	return (rval);
 }
 
-struct lease_state *free_lease_states;
-
-struct lease_state *new_lease_state (name)
-	char *name;
+struct lease_state *
+new_lease_state(char *name)
 {
 	struct lease_state *rval;
 
@@ -205,140 +199,44 @@ struct lease_state *new_lease_state (name)
 		rval = free_lease_states;
 		free_lease_states =
 			(struct lease_state *)(free_lease_states->next);
-	} else {
+	} else
 		rval = dmalloc (sizeof (struct lease_state), name);
-	}
-	return rval;
+	return (rval);
 }
 
-struct domain_search_list *new_domain_search_list (name)
-	char *name;
-{
-	struct domain_search_list *rval =
-		dmalloc (sizeof (struct domain_search_list), name);
-	return rval;
-}
-
-struct name_server *new_name_server (name)
-	char *name;
-{
-	struct name_server *rval =
-		dmalloc (sizeof (struct name_server), name);
-	return rval;
-}
-
-void free_name_server (ptr, name)
-	struct name_server *ptr;
-	char *name;
-{
-	dfree (ptr, name);
-}
-
-void free_domain_search_list (ptr, name)
-	struct domain_search_list *ptr;
-	char *name;
-{
-	dfree (ptr, name);
-}
-
-void free_lease_state (ptr, name)
-	struct lease_state *ptr;
-	char *name;
+void
+free_lease_state(struct lease_state *ptr, char *name)
 {
 	if (ptr->prl)
-		dfree (ptr->prl, name);
+		dfree(ptr->prl, name);
 	ptr->next = free_lease_states;
 	free_lease_states = ptr;
 }
 
-void free_protocol (ptr, name)
-	struct protocol *ptr;
-	char *name;
+struct lease *
+new_leases(int n, char *name)
 {
-	dfree (ptr, name);
+	struct lease *rval = dmalloc(n * sizeof(struct lease), name);
+	return (rval);
 }
 
-void free_group (ptr, name)
-	struct group *ptr;
-	char *name;
+struct lease *
+new_lease(char *name)
 {
-	dfree (ptr, name);
+	struct lease *rval = dmalloc(sizeof(struct lease), name);
+	return (rval);
 }
 
-void free_shared_network (ptr, name)
-	struct shared_network *ptr;
-	char *name;
+struct group *
+new_group(char *name)
 {
-	dfree (ptr, name);
+	struct group *rval =
+		dmalloc(sizeof(struct group), name);
+	return (rval);
 }
 
-void free_class (ptr, name)
-	struct class *ptr;
-	char *name;
+void
+free_lease(struct lease *ptr, char *name)
 {
-	dfree (ptr, name);
-}
-
-void free_subnet (ptr, name)
-	struct subnet *ptr;
-	char *name;
-{
-	dfree (ptr, name);
-}
-
-void free_lease (ptr, name)
-	struct lease *ptr;
-	char *name;
-{
-	dfree (ptr, name);
-}
-
-void free_hash_bucket (ptr, name)
-	struct hash_bucket *ptr;
-	char *name;
-{
-	dfree (ptr, name);
-}
-
-void free_hash_table (ptr, name)
-	struct hash_table *ptr;
-	char *name;
-{
-	dfree (ptr, name);
-}
-
-void free_tree_cache (ptr, name)
-	struct tree_cache *ptr;
-	char *name;
-{
-	ptr->value = (unsigned char *)free_tree_caches;
-	free_tree_caches = ptr;
-}
-
-void free_packet (ptr, name)
-	struct packet *ptr;
-	char *name;
-{
-	dfree (ptr, name);
-}
-
-void free_dhcp_packet (ptr, name)
-	struct dhcp_packet *ptr;
-	char *name;
-{
-	dfree (ptr, name);
-}
-
-void free_tree (ptr, name)
-	struct tree *ptr;
-	char *name;
-{
-	dfree (ptr, name);
-}
-
-void free_string_list (ptr, name)
-	struct string_list *ptr;
-	char *name;
-{
-	dfree (ptr, name);
+	dfree(ptr, name);
 }
