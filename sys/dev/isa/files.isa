@@ -1,4 +1,4 @@
-#	$OpenBSD: files.isa,v 1.33 1997/07/10 23:06:33 provos Exp $
+#	$OpenBSD: files.isa,v 1.34 1997/09/11 21:30:48 gene Exp $
 #	$NetBSD: files.isa,v 1.21 1996/05/16 03:45:55 mycroft Exp $
 #
 # Config.new file and device description for machine-independent ISA code.
@@ -188,10 +188,15 @@ attach	ie at isa
 file	dev/isa/if_ie.c			ie
 
 # Intel i82595-based boards.
-# (Intel EtherExpress PRO)
+# (Intel EtherExpress PRO/100)
 device  iy: ether, ifnet         
 attach	iy at isa
 file    dev/isa/if_iy.c			iy
+
+# Intel EtherExpress PRO/10
+device	ex: ether, ifnet
+attach	ex at isa
+file	dev/isa/if_ex.c			ex needs-flag
 
 # XXX ???
 # XXX NOT IN TREE?
