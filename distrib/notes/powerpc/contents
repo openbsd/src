@@ -13,8 +13,12 @@ As well you may be interested in
 		rawrite.exe, gzip.exe, and pfdisk.exe; see
 		installation section, below.
 
-In summary, there is one powerpc floppy image called "floppy.fs".  This
-is a bootable install floppy which can be used both to install and to
+Instead of the single floppy, currently multiple floppies for different
+systems exist. boot.fs is for VI vme board machines, bootmix.fs is for
+Motorola Powerstack (and possibly other machines) and bootofw.fs is
+generic and should run on any system with openfirmware because it only uses
+openfirmware for device drivers (not recommended for general use).
+This is a bootable install floppy which can be used both to install and to
 upgrade OpenBSD to the current version.  It is also useful for maintenance
 and disaster recovery.  In addition, the "tools/" directory contains some
 utilities that might be useful for the installation.
@@ -30,19 +34,19 @@ Bootable installation/upgrade floppy:
 
 DistributionDescription
 
-OpenBSDbase(12.5M,35.1M)
+OpenBSDbase(35.8M,89.0M)
 
-OpenBSDcomp(7.7M,24.2M)
+OpenBSDcomp(12.3M,40.4M)
 
-OpenBSDetc(92K,450K)
+OpenBSDetc(131K,620K)
 
-OpenBSDgame(2.8M,6.7M)
+OpenBSDgame(5.3M,12.2M)
 
-OpenBSDman(2.5M,9.6M)
+OpenBSDman(3.2M,12.1M)
 
-OpenBSDmisc(1.7M,6.1M)
+OpenBSDmisc(1.5M,5.4M)
 
-OpenBSDtext(1.0M,3.5M)
+OpenBSDtext(1.7M,5.4M)
 
 OpenBSDxbase
 

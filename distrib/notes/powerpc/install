@@ -33,12 +33,21 @@ question.  If you wish to stop the installation, you may hit Control-C
 at any time, but if you do, you'll have to begin the installation
 process again from scratch.
 
-	Boot your machine using the floppy.fs floppy.  When
-	presented with the boot prompt hit return.  If the boot prompt
-	does not appear in a reasonable amount of time, you either
+	Determine which floppy image is appropriate for the system
+	being installed. VI vme boards should use boot.fs, MCG machines
+	should use bootmix.fs (bootmix.fs should work on VI computers too).
+	or If those do not work, try the bootofw.fs image.  Apple derived
+	hardware, Power Macintosh machines or clones are not supported.
+
+	Boot your machine using the appropriate floppy image.
+	This is done by entering the openfirmware command prompt
+	(possibly system specific mechanism) then booting the floppy
+	with the "boot floppy:\ofwboot" command.  When presented
+	with the boot prompt hit return.  If the boot prompt does
+	not appear in a reasonable amount of time, you either
 	have a bad boot floppy, a hardware problem, or an incompatible
 	OpenFirmware prom (some of these still exist).  Try writing the
-	floppy.fs floppy image to a different disk, and using that.
+	appropriate floppy image to a different disk, and using that.
 	If it still doesn't work, OpenBSD probably can't be run on your
 	hardware.  This can probably be considered a bug, so you might
 	want to report it.  If you do, please {:-include-:} as many details
@@ -61,6 +70,7 @@ process again from scratch.
 	disk to install on.  If you cannot read the messages as they
 	scroll by, do not worry -- you can get at this information
 	later inside the install program.
+	[openfirmware uses ofdiskX, typically 0 is floppy, 1 is scsi id0]
 
 	While booting, you will probably see several warnings.  You
 	should be warned that no swap space is present, and that
@@ -73,16 +83,20 @@ process again from scratch.
 	installation process.
 
 	You will be asked which terminal type to use, you should just
-	hit return to select the default (pc3).
+	hit return to select the default (ofw for vga under ofw drivers)
+	If installing via serial, set it appropriate for the terminal
+	emulator being used.
 
 	The install program will then tell you which disks of that
 	type it can install on, and ask you which it should use.  The
 	name of the disk is typically "sd0" for SCSI drives.  Reply
-	with the name of your disk.  If you have a floppy drive on the
-	machine, it may be called "sd0", and then your first scsi disk
-	becomes "sd1".  It helps to watch the floppy drive light; this
-	will tell you if you have accidentally told it to access the
-	wrong drive.
+	with the name of your disk. 
+
+	[ofw note]
+	If you have a floppy drive on the machine it is [ofdisk0] and
+	then your first scsi disk becomes "ofdisk1".  It helps to
+	watch the floppy drive light; this will tell you if you
+	have accidentally told it to access the wrong drive.
 
 	Next you will have to edit or create a disklabel for the disk
 	OpenBSD is being installed on.  If there are any existing

@@ -1,19 +1,2 @@
-The powerpc port boots off a boot program in an MSDOS filesystem.  You
-need to start by making an MSDOS filesystem that the OpenFirmware will
-accept.
-
-Boot OpenFirmware on the machine intended to install the system on.
-it is necessary to prepare the disk that OpenBSD will be installed
-on in the following way:
-at the ok prompt type
-
-        1 fat-partition hdiskX
-
-where hdiskX is the hard drive intended for installation.  On some
-machines you need to use the name 'diskX' instead of 'hdiskX'.
-
-The boot program (/usr/mdec/ofwboot) will go into this filesystem
-(/msdos/ofwboot).
-
-Your hard disk is now prepared to have OpenBSD installed on it, and
-you should proceed with the installation instructions.
+The powerpc port boots off a boot program in an MSDOS filesystem. 
+This is now set up by the install program and no special setup is required.

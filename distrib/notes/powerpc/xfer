@@ -1,6 +1,6 @@
 Installation is supported from several media types, including:
 
-	DOS partitions
+	CDROM
 	FFS partitions
 	Tape
 	Remote NFS partition
@@ -8,8 +8,9 @@ Installation is supported from several media types, including:
 	HTTP
 	rsh & restore
 
-No matter which installation medium you choose, you'll need to have
-a floppy disk (1.44Mb required).
+Unless it is possible to netboot the machine, you'll need to have
+a floppy disk (1.44Mb required). 
+
 
 If you are using a UN*X-like system to write the floppy image to
 disk, you should use the "dd" command to copy the file system image

@@ -6,33 +6,57 @@ Has been tested on various Motorola (MCG) boards:
 	Pro3000, Series E and Series DT.
 Also tested on a V-I Power-3 vme board.
 
+MCG 603 machines will not work with later firmware. A firmware
+incompatibility exists that has not yet been fixed. Some versions
+of earlier openfirmware work fine with 603 family machines.
+
 The minimal configuration is said to require 8M of RAM and 150M of
 disk space, though we do not know of anyone running with a system
 quite this minimal today.  To install the entire system requires much
 more disk space,
 
 Supported devices {:-include-:}:
-	ONLY DEVICES SUPPORTED BY OPENFIRMWARE ON THE MACHINE.
 
-	Floppy controllers.
-	IDE hard disk controllers. (if supported by ofw)
+	Floppy controllers. (only if running full ofw drivers)
+	IDE hard disk controllers. (only if running full ofw drivers)
 	SCSI host adapters: (if supported by ofw)
+		[OPENFIRMWARE SUPPORT]
 		Symbios Logic (NCR) 53C8xx-based PCI SCSI host adapters
 		(ofw may support other scsi devices)
+		[NATIVE SUPPORT]
+		Symbios Logic (NCR) 53C8xx-based PCI SCSI host adapters
 
 	VGA, SVGA Display Adapters. 
+		[OPENFIRMWARE SUPPORT]
 		X does not yet exist.  currently will only function as console
+		[NATIVE SUPPORT]
+		None
 
 	Serial ports:
+		[OPENFIRMWARE SUPPORT] (also MIX drivers)
 		Only port 0 on the machine is supported and only as console.
+		[NATIVE SUPPORT]
+		VI kernels supports com0 and com1 serial ports.
 
 	Ethernet adapters:
+		[OPENFIRMWARE SUPPORT]
 		Digital DC21x4x-based PCI Ethernet adapters, including:
 		Znyx ZX34X
 		(ofw may support other devices)
+		[NATIVE SUPPORT]
+		Digital DC21x4x-based PCI Ethernet adapters, including:
+		Znyx ZX34X
+		Znyx ZX314
+		Onboard ethernet for Powerstack family machines.
 	Tape drives:
+		[OPENFIRMWARE SUPPORT]
 		NONE
+		[NATIVE SUPPORT]
+		SCSI Tape drives
 	CD-ROM drives:
+		[OPENFIRMWARE SUPPORT]
+		SCSI CD-ROM drives (act ask harddrives).
+		[NATIVE SUPPORT]
 		SCSI CD-ROM drives
 	Mice:
 		NONE
