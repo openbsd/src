@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.165 2001/11/06 11:48:29 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.166 2001/11/13 17:45:26 frantzen Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -3954,12 +3954,8 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct ifnet *ifp,
 			pd2.src = (struct pf_addr *)&h2_6.ip6_src;
 			pd2.dst = (struct pf_addr *)&h2_6.ip6_dst;
 			pd2.ip_sum = NULL;
+			off2 = ipoff2 + sizeof(h2_6);
 			do {			
-				while (off >= m->m_len) {
-					off -= m->m_len;
-					m = m->m_next;
-				}
-
 				switch (pd2.proto) {
 				case IPPROTO_FRAGMENT: 
 					/* XXX we don't handle fagments yet */
@@ -3969,11 +3965,16 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct ifnet *ifp,
 				case IPPROTO_ROUTING:
 				case IPPROTO_DSTOPTS: {
 					/* get next header and header length */
-					struct _opt6 *opt6;
+					struct _opt6 opt6;
 
-					opt6 = (struct _opt6 *)(mtod(m, caddr_t) + off2);
-					pd2.proto = opt6->opt6_nxt;
-					off2 += (opt6->opt6_hlen + 1) * 8;
+					if (!pf_pull_hdr(m, off2, &opt6,
+					    sizeof(opt6), NULL, NULL, pd2.af)) {
+						DPFPRINTF(PF_DEBUG_MISC,
+						    ("pf:  ICMPv6 short opt\n"));
+						return(PF_DROP);
+					}
+					pd2.proto = opt6.opt6_nxt;
+					off2 += (opt6.opt6_hlen + 1) * 8;
 					/* goto the next header */
 					break;
 				}
