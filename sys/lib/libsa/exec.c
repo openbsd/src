@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.20 1998/04/25 18:31:58 millert Exp $	*/
+/*	$OpenBSD: exec.c,v 1.21 1998/04/27 18:38:25 millert Exp $	*/
 /*	$NetBSD: exec.c,v 1.15 1996/10/13 02:29:01 christos Exp $	*/
 
 /*-
@@ -171,7 +171,8 @@ exec(path, loadaddr, howto)
         getchar();
 #endif
 
-	machdep_start((char *)x.a_entry, howto, loadaddr, ssym, esym);
+	machdep_start((char *)((register_t)x.a_entry), howto, loadaddr, ssym,
+	    esym);
 
 	/* exec failed */
 	errno = ENOEXEC;
