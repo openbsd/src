@@ -1,4 +1,6 @@
-#	$OpenBSD: Makefile,v 1.3 1996/11/15 09:21:29 downsj Exp $
+#	$OpenBSD: Makefile,v 1.4 1997/02/11 04:40:39 tholo Exp $
+
+.include <bsd.obj.mk>
 
 PROG=	ksrvutil
 .if exists(${.CURDIR}/../kadm/${__objdir})

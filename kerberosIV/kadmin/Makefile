@@ -1,4 +1,6 @@
-#	$Id: Makefile,v 1.3 1996/11/15 09:21:27 downsj Exp $
+#	$Id: Makefile,v 1.4 1997/02/11 04:40:37 tholo Exp $
+
+.include <bsd.obj.mk>
 
 PROG=	kadmin
 SRCS=	kadmin.c kadmin_cmds.c maketime.c
