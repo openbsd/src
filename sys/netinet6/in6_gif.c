@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_gif.c,v 1.19 2001/12/07 09:16:07 itojun Exp $	*/
+/*	$OpenBSD: in6_gif.c,v 1.20 2002/05/29 23:38:58 itojun Exp $	*/
 /*	$KAME: in6_gif.c,v 1.43 2001/01/22 07:27:17 itojun Exp $	*/
 
 /*
@@ -194,7 +194,14 @@ in6_gif_output(ifp, family, m, rt)
 		}
 	}
 	
-	return(ip6_output(m, 0, &sc->gif_ro6, 0, 0, NULL));
+	/*
+	 * force fragmentation to minimum MTU, to avoid path MTU discovery.
+	 * it is too painful to ask for resend of inner packet, to achieve
+	 * path MTU discovery for encapsulated packets.
+	 */
+	error = ip6_output(m, 0, &sc->gif_ro6, IPV6_MINMTU, 0, NULL);
+
+	return error;
 }
 
 int in6_gif_input(mp, offp, proto)

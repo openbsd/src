@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.59 2002/05/29 07:54:59 itojun Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.60 2002/05/29 23:38:58 itojun Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -713,12 +713,10 @@ ip6_output(m0, opt, ro, flags, im6o, ifpp)
 	 * The caller of this function may specify to use the minimum MTU
 	 * in some cases.
 	 */
-#ifdef IPV6_MINMTU
 	if (mtu > IPV6_MMTU) {
 		if ((flags & IPV6_MINMTU))
 			mtu = IPV6_MMTU;
 	}
-#endif
 
 	/* Fake scoped addresses */
 	if ((ifp->if_flags & IFF_LOOPBACK) != 0) {
