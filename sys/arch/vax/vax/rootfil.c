@@ -1,4 +1,4 @@
-/*	$OpenBSD: rootfil.c,v 1.8 2000/04/27 01:10:13 bjc Exp $	*/
+/*	$OpenBSD: rootfil.c,v 1.9 2000/10/09 23:11:57 bjc Exp $	*/
 /*	$NetBSD: rootfil.c,v 1.14 1996/10/13 03:35:58 christos Exp $	*/
 
 /*
@@ -59,10 +59,12 @@
 #include <machine/disklabel.h>
 #include <machine/pte.h>
 #include <machine/cpu.h>
+#include <machine/rpb.h>
 
 #include "hp.h"
 #include "ra.h"
 #include "sd.h"
+#include "asc.h"
 
 #define DOSWAP                  /* Change swdevt, argdev, and dumpdev too */
 #ifdef MAJA
@@ -88,7 +90,7 @@ setroot()
 	char *uname;
 
         if (boothowto & RB_DFLTROOT ||
-            (bootdev & B_MAGICMASK) != (u_long)B_DEVMAGIC)
+           (bootdev & B_MAGICMASK) != (u_long)B_DEVMAGIC)
                 return;
         majdev = bdevtomaj(B_TYPE(bootdev));
         if (majdev >= nblkdev || majdev == -1)
@@ -114,8 +116,8 @@ setroot()
 		break;
 
 	case 20:	/* SCSI disk */
-#if NSD
-		if((mindev = sd_getdev(adaptor, controller, part, unit, &uname)) < 0) 
+#if NASC || NSD
+		if((mindev = sd_getdev(adaptor, controller, part, unit, &uname)) < 0)
 #endif
 			return;
 		break;
@@ -126,6 +128,8 @@ setroot()
 
         orootdev = rootdev;
         rootdev = makedev(majdev, mindev);
+	swdevt[0].sw_dev = dumpdev =
+		makedev(major(rootdev), 1);
         /*
          * If the original rootdev is the same as the one
          * just calculated, don't need to adjust the swap configuration.
@@ -137,7 +141,7 @@ setroot()
 
 #ifdef DOSWAP
         mindev &= ~PARTITIONMASK;
-        for (swp = swdevt; swp->sw_dev; swp++) {
+        for (swp = swdevt; swp->sw_dev != NODEV; swp++) {
                 if (majdev == major(swp->sw_dev) &&
                     mindev == (minor(swp->sw_dev) & ~PARTITIONMASK)) {
                         temp = swdevt[0].sw_dev;
@@ -146,7 +150,7 @@ setroot()
                         break;
                 }
         }
-        if (swp->sw_dev == 0)
+        if (swp->sw_dev == NODEV)
                 return;
 
         /*
@@ -183,3 +187,5 @@ swapconf()
 		}
 	}
 }
+
+

@@ -1,5 +1,5 @@
-/*	$OpenBSD: vsbus.h,v 1.4 2000/04/27 07:19:57 bjc Exp $ */
-/*	$NetBSD: vsbus.h,v 1.9 1999/10/22 21:10:13 ragge Exp $ */
+/*	$OpenBSD: vsbus.h,v 1.5 2000/10/09 23:11:57 bjc Exp $ */
+/*	$NetBSD: vsbus.h,v 1.13 2000/06/25 16:00:46 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -42,6 +42,7 @@
 #define _VAX_VSBUS_H_
 
 #include <machine/bus.h>
+#include <machine/sgmap.h>
 
 struct	vsbus_softc {
 	struct	device sc_dev;
@@ -52,6 +53,18 @@ struct	vsbus_softc {
 	u_char	*sc_intclr;	/* Clear interrupt register */
 	u_char	*sc_intreq;	/* Interrupt request register */
 	u_char	sc_mask;	/* Interrupts to enable after autoconf */
+	vaddr_t	sc_vsregs;	/* Where the VS_REGS are mapped */
+	vaddr_t sc_dmaaddr;	/* Mass storage virtual DMA area */
+	vsize_t sc_dmasize;	/* Size of the DMA area */
+
+	struct vax_bus_dma_tag sc_dmatag;
+	struct vax_sgmap sc_sgmap;
+};
+
+struct vsbus_dma {
+	SIMPLEQ_ENTRY(vsbus_dma) vd_q;
+	void (*vd_go)(void *);
+	void *vd_arg;
 };
 
 struct confargs {
@@ -104,6 +117,9 @@ struct	vsbus_attach_args {
 	short	va_br;			/* Interrupt level */
 	short	va_cvec;		/* Interrupt vector address */
 	u_char	va_maskno;		/* Interrupt vector in mask */
+	vaddr_t	va_dmaaddr;		/* DMA area address */
+	vsize_t	va_dmasize;		/* DMA area size */
+	bus_space_tag_t va_iot;
 	bus_dma_tag_t va_dmat;
 	struct 	confargs *confargs;
 };
@@ -120,15 +136,21 @@ struct	vsbus_attach_args {
 #define NI_BASE         0x200e0000      /* LANCE CSRs */
 #define NI_IOSIZE       (128 * VAX_NBPG)    /* IO address size */
 
+#define	KA49_SCSIMAP	0x27000000	/* KA49 SCSI SGMAP */
 /*
  * Small monochrome graphics framebuffer, present on all machines.
  */
 #define	SMADDR		0x30000000
 #define	SMSIZE		0x20000		/* Actually 256k, only 128k used */
 
+#ifdef _KERNEL
+void	vsbus_dma_init __P((struct vsbus_softc *, unsigned ptecnt));
 u_char	vsbus_setmask __P((unsigned char));
 void	vsbus_clrintr __P((unsigned char));
 void	vsbus_intr	__P((void *));
 void	vsbus_copytoproc __P((struct proc *, caddr_t, caddr_t, int));
 void	vsbus_copyfromproc __P((struct proc *, caddr_t, caddr_t, int));
+void	vsbus_dma_start __P((struct vsbus_dma *));
+void	vsbus_dma_intr __P((void));
+#endif
 #endif /* _VAX_VSBUS_H_ */

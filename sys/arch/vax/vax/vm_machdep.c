@@ -1,5 +1,5 @@
-/*	$OpenBSD: vm_machdep.c,v 1.17 2000/06/08 22:25:23 niklas Exp $	*/
-/*	$NetBSD: vm_machdep.c,v 1.56 2000/01/20 22:19:00 sommerfeld Exp $	     */
+/*	$OpenBSD: vm_machdep.c,v 1.18 2000/10/09 23:11:57 bjc Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.67 2000/06/29 07:14:34 mrg Exp $	     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -236,6 +236,7 @@ cpu_coredump(p, vp, cred, chdr)
 {
 	struct trapframe *tf;
 	struct md_coredump state;
+	struct reg *regs = &state.md_reg;
 	struct coreseg cseg;
 	int error;
 
@@ -245,7 +246,12 @@ cpu_coredump(p, vp, cred, chdr)
 	chdr->c_seghdrsize = sizeof(struct coreseg);
 	chdr->c_cpusize = sizeof(struct md_coredump);
 
-	bcopy(tf, &state, sizeof(struct md_coredump));
+	bcopy(&tf->r0, &regs->r0, 12 * sizeof(int));
+	regs->ap = tf->ap;
+	regs->fp = tf->fp;
+	regs->sp = tf->sp;
+	regs->pc = tf->pc;
+	regs->psl = tf->psl;
 
 	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_MACHINE, CORE_CPU);
 	cseg.c_addr = 0;
@@ -291,6 +297,7 @@ ioaccess(vaddr, paddr, npgs)
 
 	for (i = 0; i < npgs; i++)
 		pte[i] = PG_V | PG_KW | (PG_PFNUM(paddr) + i);
+	mtpr(0, PR_TBIA);
 }
 
 /*
@@ -307,4 +314,72 @@ iounaccess(vaddr, npgs)
 	for (i = 0; i < npgs; i++)
 		pte[i] = 0;
 	mtpr(0, PR_TBIA);
+}
+
+extern vm_map_t phys_map;
+
+/*
+ * Map a user I/O request into kernel virtual address space.
+ * Note: the pages are already locked by uvm_vslock(), so we
+ * do not need to pass an access_type to pmap_enter().
+ */
+void
+vmapbuf(bp, len)
+	struct buf *bp;
+	vsize_t len;
+{
+#if VAX46 || VAX48 || VAX49
+	vaddr_t faddr, taddr, off;
+	paddr_t pa;
+	struct proc *p;
+
+	if (vax_boardtype != VAX_BTYP_46
+	    && vax_boardtype != VAX_BTYP_48
+	    && vax_boardtype != VAX_BTYP_49)
+		return;
+	if ((bp->b_flags & B_PHYS) == 0)
+		panic("vmapbuf");
+	p = bp->b_proc;
+	faddr = trunc_page((vaddr_t)bp->b_saveaddr = bp->b_data);
+	off = (vaddr_t)bp->b_data - faddr;
+	len = round_page(off + len);
+	taddr = uvm_km_valloc_wait(phys_map, len);
+	bp->b_data = (caddr_t)(taddr + off);
+	len = atop(len);
+	while (len--) {
+		if ((pa = pmap_extract(vm_map_pmap(&p->p_vmspace->vm_map), faddr))
+		  == FALSE)
+			panic("vmapbuf: null page frame");
+		pmap_enter(vm_map_pmap(phys_map), taddr, trunc_page(pa),
+		    VM_PROT_READ|VM_PROT_WRITE, TRUE, VM_PROT_READ|VM_PROT_WRITE);
+		faddr += PAGE_SIZE;
+		taddr += PAGE_SIZE;
+	}
+#endif
+}
+
+/*
+ * Unmap a previously-mapped user I/O request.
+ */
+void
+vunmapbuf(bp, len)
+	struct buf *bp;
+	vsize_t len;
+{
+#if VAX46 || VAX48 || VAX49
+	vaddr_t addr, off;
+
+	if (vax_boardtype != VAX_BTYP_46
+	    && vax_boardtype != VAX_BTYP_48
+	    && vax_boardtype != VAX_BTYP_49)
+		return;
+	if ((bp->b_flags & B_PHYS) == 0)
+		panic("vunmapbuf");
+	addr = trunc_page((vaddr_t)bp->b_data);
+	off = (vaddr_t)bp->b_data - addr;
+	len = round_page(off + len);
+	uvm_km_free_wakeup(phys_map, addr, len);
+	bp->b_data = bp->b_saveaddr;
+	bp->b_saveaddr = NULL;
+#endif
 }

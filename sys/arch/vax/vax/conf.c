@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.20 2000/09/26 14:03:55 art Exp $ */
+/*	$OpenBSD: conf.c,v 1.21 2000/10/09 23:11:57 bjc Exp $ */
 /*	$NetBSD: conf.c,v 1.44 1999/10/27 16:38:54 ragge Exp $	*/
 
 /*-
@@ -169,6 +169,7 @@ struct bdevmajtpl {
 	{ BDEV_KDB,	16 },
 	{ BDEV_RD,	19 },
 	{ BDEV_SD,	20 },
+	{ BDEV_SDN,	20 },
 	{ BDEV_ST,	21 },
 	
 	/* some things need these network devices, do not change them */
@@ -193,6 +194,7 @@ int	bdevtomaj (bdev)
 		if(bdev == bd->bdev || bd->bdev == -1)
 			return bd->maj;
 	}
+	return bd != NULL ? bd->maj : NULL;
 }
 
 /*
@@ -225,7 +227,7 @@ struct	consdev constab[]={
 #else
 #define NGEN	0
 #endif
-#if VAX410 || VAX43 || VAX46 || VAX48 || VAX49
+#if VAX410 || VAX43 || VAX46 || VAX48 || VAX49 || VAX53
 	cons_init(dz),	/* DZ11-like serial console on VAXstations */
 #endif
 #if VAX650 || VAX630

@@ -1,5 +1,5 @@
-/*	$OpenBSD: bus.h,v 1.1 2000/04/26 06:08:27 bjc Exp $	*/
-/*	$NetBSD: bus.h,v 1.11 2000/03/15 16:44:50 drochner Exp $	*/
+/*	$OpenBSD: bus.h,v 1.2 2000/10/09 23:11:56 bjc Exp $	*/
+/*	$NetBSD: bus.h,v 1.14 2000/06/26 04:56:13 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -868,6 +868,7 @@ vax_mem_copy_region_4(t, h1, o1, h2, o2, c)
 #define	BUS_DMA_BUS3		0x40
 #define	BUS_DMA_BUS4		0x80
 
+#define	VAX_BUS_DMA_SPILLPAGE	BUS_DMA_BUS1	/* VS4000 kludge */
 /*
  * Private flags stored in the DMA map.
  */
