@@ -1,4 +1,4 @@
-/* $OpenBSD: policy.h,v 1.15 2004/06/25 20:25:34 hshoexer Exp $	 */
+/* $OpenBSD: policy.h,v 1.16 2005/04/05 22:53:50 cloder Exp $	 */
 /* $EOM: policy.h,v 1.12 2000/09/28 12:53:27 niklas Exp $ */
 
 /*
@@ -33,10 +33,8 @@
 #ifndef _POLICY_H_
 #define _POLICY_H_
 
-#if defined (USE_KEYNOTE)
 #define CREDENTIAL_FILE		"credentials"
 #define PRIVATE_KEY_FILE	"private_key"
-#endif
 
 extern int	ignore_policy;
 extern int      policy_asserts_num;

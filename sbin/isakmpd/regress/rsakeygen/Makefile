@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.15 2004/02/25 16:01:29 hshoexer Exp $
+#	$OpenBSD: Makefile,v 1.16 2005/04/05 22:53:50 cloder Exp $
 #	$EOM: Makefile,v 1.10 2000/03/28 21:23:24 ho Exp $
 
 #
@@ -54,27 +54,17 @@ CFLAGS+=	-DMP_FLAVOUR=MP_FLAVOUR_OPENSSL
 
 .include "${TOPSRC}/sysdep/${OS}/Makefile.sysdep"
 
-.ifdef HAVE_DLOPEN
-CFLAGS+=	-DHAVE_DLOPEN
-SRCS+=		dyn.c
-.endif
-
 .ifdef USE_LIBCRYPTO
 CFLAGS+=	-DUSE_LIBCRYPTO
 LDADD+=		-lcrypto
 DPADD+=		${LIBCRYPTO}
 .endif
 
-.if !defined (HAVE_DLOPEN) && !defined (USE_LIBCRYPTO)
+.if !defined (USE_LIBCRYPTO)
 .BEGIN:
 	@echo RSA cannot be used in this environmet, skipping...
 
 PROG=
-.else
-# USE_X509 is required for libcrypto.h to include the correct headers,
-# but it is not set by ${OS}/Makefile.sysdep - setting it manually here
-# should be safe enough.
-CFLAGS+=	-DUSE_X509
 .endif
 
 LDADD+=		${DESLIB}
