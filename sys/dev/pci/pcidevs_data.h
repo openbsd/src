@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.347 2000/11/20 14:24:45 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.348 2000/11/20 21:40:29 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1105,6 +1105,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "ATI",
 	    "Rage Fury AGP4x",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE128_PK,
+	    0,
+	    "ATI",
+	    "Rage 128 PK",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_MAGNUM,

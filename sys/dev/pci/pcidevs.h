@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.347 2000/11/20 14:24:45 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.348 2000/11/20 21:40:29 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -785,6 +785,7 @@
 #define	PCI_PRODUCT_ATI_MOBILITY_1	0x4c4d		/* Mobility 1 */
 #define	PCI_PRODUCT_ATI_MACH64_LP	0x4c50		/* Mach64 LP */
 #define	PCI_PRODUCT_ATI_RAGE_FURY	0x5046		/* Rage Fury AGP4x */
+#define	PCI_PRODUCT_ATI_RAGE128_PK	0x5052		/* Rage 128 PK */
 #define	PCI_PRODUCT_ATI_RAGE_MAGNUM	0x5246		/* Rage Magnum */
 #define	PCI_PRODUCT_ATI_RAGE_128_VR_AGP	0x524c		/* Rage 128 VR AGP */
 #define	PCI_PRODUCT_ATI_MACH64_VT	0x5654		/* Mach64 VT */
