@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.129 2002/04/02 13:03:31 nate Exp $
+#	$OpenBSD: files.pci,v 1.130 2002/04/03 05:40:26 nate Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -432,6 +432,6 @@ attach	stge at pci
 file	dev/pci/if_stge.c		stge
 
 # Intel gigabit ethernet
-device	gx: ether, ifnet, mii, ifmedia, mii_phy, mii_bitbang
+device	gx: ether, ifnet, mii, ifmedia, mii_phy
 attach	gx at pci
 file	dev/pci/if_gx.c			gx
