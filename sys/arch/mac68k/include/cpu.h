@@ -1,5 +1,5 @@
-/*	$OpenBSD: cpu.h,v 1.12 1996/10/28 14:34:06 briggs Exp $	*/
-/*	$NetBSD: cpu.h,v 1.43 1996/10/15 14:42:49 scottr Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.13 1997/01/24 01:35:40 briggs Exp $	*/
+/*	$NetBSD: cpu.h,v 1.44 1997/01/20 05:08:00 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -135,16 +135,20 @@ int	want_resched;	/* resched() was called */
 /*
  * simulated software interrupt register
  */
-extern unsigned char ssir;
+extern volatile u_int8_t ssir;
 
-#define SIR_NET		0x1
-#define SIR_CLOCK	0x2
-#define SIR_SERIAL	0x4
+#define	SIR_NET		0x01
+#define	SIR_CLOCK	0x02
+#define	SIR_SERIAL	0x04
 
-#define siroff(x)	ssir &= ~(x)
-#define setsoftnet()	ssir |= SIR_NET
-#define setsoftclock()	ssir |= SIR_CLOCK
-#define setsoftserial()	ssir |= SIR_SERIAL
+#define	siroff(mask)	\
+	__asm __volatile ( "andb %0,_ssir" : : "ir" (~(mask)));
+#define	setsoftnet()	\
+	__asm __volatile ( "orb %0,_ssir" : : "i" (SIR_NET))
+#define	setsoftclock()	\
+	__asm __volatile ( "orb %0,_ssir" : : "i" (SIR_CLOCK))
+#define	setsoftserial()	\
+	__asm __volatile ( "orb %0,_ssir" : : "i" (SIR_SERIAL))
 
 #define CPU_CONSDEV	1
 #define CPU_MAXID	2

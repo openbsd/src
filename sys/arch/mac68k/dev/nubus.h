@@ -1,5 +1,5 @@
-/*	$OpenBSD: nubus.h,v 1.5 1996/09/21 03:39:56 briggs Exp $	*/
-/*	$NetBSD: nubus.h,v 1.14 1996/05/07 03:13:40 briggs Exp $	*/
+/*	$OpenBSD: nubus.h,v 1.6 1997/01/24 01:35:36 briggs Exp $	*/
+/*	$NetBSD: nubus.h,v 1.15 1996/12/17 03:56:11 scottr Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -228,6 +228,16 @@ typedef struct _NUBUS_EXEC_BLOCK {
 #define NUBUS_SLOT_TO_PADDR(x)	( 0xF9000000 + \
 				 ((((x)-NUBUS_MIN_SLOT) & 0xF) << 24))
 
+struct nubus_attach_args {
+	int		slot;
+	int		rsrcid;
+	u_int16_t	category;
+	u_int16_t	type;
+	u_int16_t	drsw;
+	u_int16_t	drhw;
+	nubus_slot	*fmt;
+};
+
 struct nubus_softc {
 	struct	device	sc_dev;
 };
@@ -243,4 +253,6 @@ int	nubus_get_c_string __P((nubus_slot *slot, nubus_dirent *dirent,
 				caddr_t data_return, int max_bytes));
 char	*nubus_get_vendor __P((nubus_slot *slot, int rsrc));
 char	*nubus_get_card_name __P((nubus_slot *slot));
+char	*nubus_mapin __P((int paddr, int sz));
+	int paddr, sz;
 

@@ -1,5 +1,5 @@
-/*	$OpenBSD: mainbus.c,v 1.4 1997/01/24 01:35:49 briggs Exp $	*/
-/*	$NetBSD: mainbus.c,v 1.7 1996/12/17 06:47:41 scottr Exp $	*/
+/*	$OpenBSD: obiovar.h,v 1.1 1997/01/24 01:35:37 briggs Exp $	*/
+/*	$NetBSD: obiovar.h,v 1.1 1996/12/17 06:47:38 scottr Exp $	*/
 
 /*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,56 +37,14 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/param.h>
-#include <sys/device.h>
-#include <sys/systm.h>
+/*
+ * Autoconfiguration definitions and prototypes for the mac68k
+ * on-board i/o space.
+ */
 
-static int	mainbus_match __P((struct device *, struct cfdata *, void *));
-static void	mainbus_attach __P((struct device *, struct device *, void *));
-static int	mainbus_search __P((struct device *, struct cfdata *, void *));
-
-struct cfattach mainbus_ca = {
-	sizeof(struct device), mainbus_match, mainbus_attach
+/*
+ * Arguments used to attach a device to the internal i/o space.
+ */
+struct obio_attach_args {
+	caddr_t oa_addr;		/* physical address */
 };
-
-struct cfdriver mainbus_cd = {
-	NULL, "mainbus", DV_DULL
-};
-
-static int
-mainbus_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
-{
-	static int mainbus_matched = 0;
-
-	/* Allow only one instance. */
-	if (mainbus_matched)
-		return (0);
-
-	mainbus_matched = 1;
-	return 1;
-}
-
-static void
-mainbus_attach(parent, self, aux)
-	struct device	*parent, *self;
-	void		*aux;
-{
-	printf("\n");
-
-	/* Search for and attach children. */
-	config_search(mainbus_search, self, NULL);
-}
-
-static int
-mainbus_search(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
-{
-	if ((*cf->cf_attach->ca_match)(parent, cf, NULL) > 0)
-		config_attach(parent, cf, NULL, NULL);
-	return 0;
-}

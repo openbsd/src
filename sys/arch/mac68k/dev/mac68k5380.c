@@ -1,5 +1,5 @@
-/*	$OpenBSD: mac68k5380.c,v 1.7 1996/10/28 14:46:23 briggs Exp $	*/
-/*	$NetBSD: mac68k5380.c,v 1.25 1996/06/07 01:45:43 briggs Exp $	*/
+/*	$OpenBSD: mac68k5380.c,v 1.8 1997/01/24 01:35:33 briggs Exp $	*/
+/*	$NetBSD: mac68k5380.c,v 1.28 1996/12/19 21:48:17 scottr Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs
@@ -135,8 +135,9 @@ static void	do_ncr5380_drq_intr __P((void *));
 
 static __inline__ void	scsi_clr_ipend __P((void));
 static		  void	scsi_mach_init __P((struct ncr_softc *sc));
-static		  int	machine_match __P((struct device *pdp, void *match,
-					   void *auxp, struct cfdriver *cd));
+static		  int	machine_match __P((struct device *parent,
+			    struct cfdata *cf, void *aux,
+			    struct cfdriver *cd));
 static __inline__ int	pdma_ready __P((void));
 static		  int	transfer_pdma __P((u_char *phasep, u_char *data,
 					u_long *count));
@@ -179,10 +180,11 @@ scsi_mach_init(sc)
 }
 
 static int
-machine_match(pdp, match, auxp, cd)
-	struct device	*pdp;
-	void		*match, *auxp;
-	struct cfdriver	*cd;
+machine_match(parent, cf, aux, cd)
+	struct device *parent;
+	struct cfdata *cf;
+	void *aux;
+	struct cfdriver *cd;
 {
 	if (!mac68k_machine.scsi80)
 		return 0;

@@ -1,5 +1,5 @@
-/*	$OpenBSD: macrom.c,v 1.7 1997/01/19 03:58:08 briggs Exp $	*/
-/*	$NetBSD: macrom.c,v 1.26 1996/08/05 23:20:46 briggs Exp $	*/
+/*	$OpenBSD: macrom.c,v 1.8 1997/01/24 01:35:49 briggs Exp $	*/
+/*	$NetBSD: macrom.c,v 1.30 1996/12/18 07:21:06 scottr Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -133,10 +133,10 @@ mrg_Delay()
 
 	u_int32_t ticks;
 
-	__asm("	movl	a0, %0"		/* get arguments */
-		:
-		: "g" (ticks)
-		: "a0" );
+	__asm volatile (" movl	a0, %0"		/* get arguments */
+			 : "=g" (ticks)
+			 : 
+			 : "a0" );
 
 #if defined(MRG_DEBUG)
 	printf("mrg: mrg_Delay(%d) = %d ms\n", ticks, ticks * 60);

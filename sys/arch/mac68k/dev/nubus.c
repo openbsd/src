@@ -1,8 +1,8 @@
-/*	$OpenBSD: nubus.c,v 1.6 1996/11/23 21:45:54 kstailey Exp $	*/
-/*	$NetBSD: nubus.c,v 1.23 1996/05/08 15:14:53 scottr Exp $	*/
+/*	$OpenBSD: nubus.c,v 1.7 1997/01/24 01:35:35 briggs Exp $	*/
+/*	$NetBSD: nubus.c,v 1.29 1996/12/17 06:47:39 scottr Exp $	*/
 
 /*
- * Copyright (c) 1995 Allen Briggs.  All rights reserved.
+ * Copyright (c) 1995, 1996 Allen Briggs.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,11 +33,19 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-
-#include <machine/autoconf.h>
-#include <machine/cpu.h>
+#include <sys/buf.h>
+#include <sys/conf.h>
+#include <sys/dmap.h>
 
 #include <vm/vm.h>
+#include <vm/vm_kern.h>
+#include <vm/vm_map.h>
+
+#include <machine/autoconf.h>
+#include <machine/vmparam.h>
+#include <machine/param.h>
+#include <machine/cpu.h>
+#include <machine/pte.h>
 
 #include "nubus.h"
 
@@ -48,9 +56,10 @@ static int	nubus_debug = 0x01;
 #define NDB_ARITH	0x4
 #endif
 
-static int	nubusprint __P((void *, const char *));
-static int	nubusmatch __P((struct device *, void *, void *));
-static void	nubusattach __P((struct device *, struct device *, void *));
+static int	nubus_print __P((void *, const char *));
+static int	nubus_match __P((struct device *, struct cfdata *, void *));
+static void	nubus_attach __P((struct device *, struct device *, void *));
+int		nubus_video_resource __P((int));
 
 static int	probe_slot __P((int slot, nubus_slot *fmt));
 static u_long	IncPtr __P((nubus_slot *fmt, u_long base, long amt));
@@ -61,61 +70,109 @@ static u_char	GetByte __P((nubus_slot *fmt, u_long ptr));
 #endif
 static u_long	GetLong __P((nubus_slot *fmt, u_long ptr));
 
+static int	nubus_peek __P((vm_offset_t, int));
+
 struct cfattach nubus_ca = {
-	sizeof(struct nubus_softc), nubusmatch, nubusattach
+	sizeof(struct nubus_softc), nubus_match, nubus_attach
 };
 
 struct cfdriver nubus_cd = {
-	NULL, "nubus", DV_DULL, 1
+	NULL, "nubus", DV_DULL,
 };
 
 static int
-nubusmatch(parent, vcf, aux)
+nubus_match(parent, cf, aux)
 	struct device *parent;
-	void *vcf, *aux;
+	struct cfdata *cf;
+	void *aux;
 {
-	struct confargs *ca = aux;
+	static int nubus_matched = 0;
 
-	if (ca->ca_bustype != BUS_NUBUS)
+	/* Allow only one instance. */
+	if (nubus_matched)
 		return (0);
-	return(1);
+
+	nubus_matched = 1;
+	return (1);
 }
 
 static void
-nubusattach(parent, self, aux)
-	struct	device	*parent, *self;
-	void		*aux;
+nubus_attach(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
 {
-	nubus_slot		fmtblock;
-	int			i;
+	struct nubus_attach_args na_args;
+	nubus_slot fmtblock;
+	nubus_dir dir;
+	nubus_dirent dirent;
+	nubus_type slottype;
+	int i, rsrcid;
 
-	printf("\n");
+  	printf("\n");
+  
+  	for (i = NUBUS_MIN_SLOT; i <= NUBUS_MAX_SLOT; i++) {
+		if (probe_slot(i, &fmtblock) <= 0)
+			continue;
 
-	for (i = NUBUS_MIN_SLOT; i <= NUBUS_MAX_SLOT; i++) {
-		if (probe_slot(i, &fmtblock)) {
-			/*config_search(bus_scan, &fmtblock, nubusprint);*/
-			config_found(self, &fmtblock, nubusprint);
-		}
-	}
+		if ((rsrcid = nubus_video_resource(i)) == (-1))
+			rsrcid = 0x80;
+
+		nubus_get_main_dir(&fmtblock, &dir);
+
+		if (nubus_find_rsrc(&fmtblock, &dir, rsrcid, &dirent) <= 0)
+			continue;
+
+		nubus_get_dir_from_rsrc(&fmtblock, &dirent, &dir);
+
+		if (nubus_find_rsrc(&fmtblock, &dir, NUBUS_RSRC_TYPE,
+		    &dirent) <= 0)
+			continue;
+
+		if (nubus_get_ind_data(&fmtblock, &dirent,
+		    (caddr_t) &slottype, sizeof(nubus_type)) <= 0)
+			continue;
+
+		na_args.slot = i;
+		na_args.rsrcid = rsrcid;
+		na_args.category = slottype.category;
+		na_args.type = slottype.type;
+		na_args.drsw = slottype.drsw;
+		na_args.drhw = slottype.drhw;
+		na_args.fmt = &fmtblock;
+
+		config_found(self, &na_args, nubus_print);
+  	}
 }
 
 static int
-nubusprint(aux, name)
-	void	   *aux;
+nubus_print(aux, name)
+	void *aux;
 	const char *name;
 {
-	nubus_slot	*fmt;
+	struct nubus_attach_args *na = (struct nubus_attach_args *) aux;
 
-	fmt = (nubus_slot *) aux;
 	if (name) {
-		printf("%s: slot %x: %s ", name, fmt->slot,
-				nubus_get_card_name(fmt));
+		printf("%s: slot %x: %s ", name, na->fmt->slot,
+		    nubus_get_card_name(na->fmt));
 		printf("(Vendor: %s, ",
-				nubus_get_vendor(fmt, NUBUS_RSRC_VEND_ID));
-		printf("Part: %s) ",
-				nubus_get_vendor(fmt, NUBUS_RSRC_VEND_PART));
+		    nubus_get_vendor(na->fmt, NUBUS_RSRC_VEND_ID));
+		printf("Part: %s)",
+		    nubus_get_vendor(na->fmt, NUBUS_RSRC_VEND_PART));
 	}
 	return (UNCONF);
+}
+
+int
+nubus_video_resource(slot)
+	int slot;
+{
+	extern u_int16_t mac68k_vrsrc_vec[];
+	int i;
+
+	for (i = 0 ; i < 6 ; i++)
+		if ((mac68k_vrsrc_vec[i] & 0xff) == slot)
+			return ((mac68k_vrsrc_vec[i] >> 8) & 0xff);
+	return (-1);
 }
 
 /*
@@ -176,7 +233,7 @@ probe_slot(slot, fmt)
 
 		rom_probe--;
 
-		data = bus_peek(BUS_NUBUS, (vm_offset_t) rom_probe, 1);
+		data = nubus_peek((vm_offset_t) rom_probe, 1);
 		if (data == -1)
 			continue;
 
@@ -213,7 +270,7 @@ probe_slot(slot, fmt)
 	 * to work.
 	 */
 	hdr = (vm_offset_t)
-		bus_mapin(BUS_NUBUS,NUBUS_SLOT_TO_PADDR(fmt->slot),NBMEMSIZE);
+		nubus_mapin(NUBUS_SLOT_TO_PADDR(fmt->slot), NBMEMSIZE);
 	if (hdr == NULL) {
 		printf("Failed to map %d bytes for NuBUS slot %d probe.  ",
 			NBMEMSIZE, fmt->slot);
@@ -597,4 +654,100 @@ static	char		name_ret[64];
 	nubus_get_c_string(slot, &ent, name_ret, 64);
 
 	return name_ret;
+}
+
+/*
+ * bus_*() functions adapted from sun3 generic "bus" support
+ * by Allen Briggs.
+ */
+
+vm_offset_t tmp_vpages[1];
+
+/*
+ * Read addr with size len (1,2,4) into val.
+ * If this generates a bus error, return -1
+ *
+ *	Create a temporary mapping,
+ *	Try the access using peek_*
+ *	Clean up temp. mapping
+ */
+static int
+nubus_peek(paddr, sz)
+	vm_offset_t paddr;
+	int sz;
+{
+	int off, pte, rv;
+	vm_offset_t pgva;
+	caddr_t va;
+
+	off = paddr & PGOFSET;
+	paddr -= off;
+	pte = (paddr & PG_FRAME) | (PG_V | PG_W | PG_CI);
+
+	pgva = tmp_vpages[0];
+	va = (caddr_t)pgva + off;
+
+	mac68k_set_pte(pgva, pte);
+	TBIS(pgva);
+
+	/*
+	 * OK, try the access using one of the assembly routines
+	 * that will set pcb_onfault and catch any bus errors.
+	 */
+	rv = -1;
+	switch (sz) {
+	case 1:
+		if (!badbaddr(va))
+			rv = *((u_char *) va);
+		break;
+	case 2:
+		if (!badwaddr(va))
+			rv = *((u_int16_t *) va);
+		break;
+	case 4:
+		if (!badladdr(va))
+			rv = *((u_int32_t *) va);
+		break;
+	default:
+		printf("bus_peek: invalid size=%d\n", sz);
+		rv = -1;
+	}
+
+	mac68k_set_pte(pgva, PG_NV);
+	TBIS(pgva);
+
+	return rv;
+}
+
+char *
+nubus_mapin(paddr, sz)
+	int paddr, sz;
+{
+	int off, pa, pmt=0;
+	vm_offset_t va, retval;
+
+	off = paddr & PGOFSET;
+	pa = paddr - off;
+	sz += off;
+	sz = mac68k_round_page(sz);
+
+	/* Get some kernel virtual address space. */
+	va = kmem_alloc_wait(kernel_map, sz);
+	if (va == 0)
+		panic("bus_mapin");
+	retval = va + off;
+
+	/* Map it to the specified bus. */
+#if 0	/* XXX */
+	/* This has a problem with wrap-around... */
+	pmap_map((int)va, pa | pmt, pa + sz, VM_PROT_ALL);
+#else
+	do {
+		pmap_enter(pmap_kernel(), va, pa | pmt, VM_PROT_ALL, FALSE);
+		va += NBPG;
+		pa += NBPG;
+	} while ((sz -= NBPG) > 0);
+#endif
+
+	return ((char*)retval);
 }

@@ -1,5 +1,5 @@
-/*	$OpenBSD: grf_iv.c,v 1.6 1996/10/28 14:46:24 briggs Exp $	*/
-/*	$NetBSD: grf_iv.c,v 1.13 1996/08/04 06:03:52 scottr Exp $	*/
+/*	$OpenBSD: grf_iv.c,v 1.7 1997/01/24 01:35:30 briggs Exp $	*/
+/*	$NetBSD: grf_iv.c,v 1.16 1996/12/16 16:17:06 scottr Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -61,7 +61,7 @@ extern unsigned long	videosize;
 
 static int	grfiv_mode __P((struct grf_softc *gp, int cmd, void *arg));
 static caddr_t	grfiv_phys __P((struct grf_softc *gp, vm_offset_t addr));
-static int	grfiv_match __P((struct device *, void *, void *));
+static int	grfiv_match __P((struct device *, struct cfdata *, void *));
 static void	grfiv_attach __P((struct device *, struct device *, void *));
 
 static void	grfiv_q700intr __P((void *client_data, int slot));
@@ -73,6 +73,11 @@ struct cfdriver intvid_cd = {
 struct cfattach intvid_ca = {
 	sizeof(struct grfbus_softc), grfiv_match, grfiv_attach
 };
+
+/* XXX -- kludge */
+#include <vm/vm.h>
+#include <vm/vm_kern.h>
+#include <vm/vm_map.h>
 
 static void
 grfiv_q700intr(client_data, slot)
@@ -86,9 +91,10 @@ grfiv_q700intr(client_data, slot)
 }
 
 static int
-grfiv_match(pdp, match, auxp)
-	struct device	*pdp;
-	void	*match, *auxp;
+grfiv_match(parent, cf, aux)
+	struct device *parent;
+	struct cfdata *cf;
+	void *aux;
 {
 	char		*addr = NULL;
 	static int	internal_video_found = 0;
@@ -99,7 +105,7 @@ grfiv_match(pdp, match, auxp)
 
 	switch (mac68k_machine.machineid) {
 	case MACH_MACQ700:
-		addr = bus_mapin(BUS_NUBUS, 0xf9800000, 0x1000);
+		addr = nubus_mapin(0xf9800000, 0x1000);
 		add_nubus_intr(15, grfiv_q700intr, addr);
 		break;
 	default:

@@ -1,5 +1,5 @@
-/*	$OpenBSD: ite.c,v 1.8 1997/01/19 03:18:02 briggs Exp $	*/
-/*	$NetBSD: ite.c,v 1.27 1996/11/10 09:35:04 scottr Exp $	*/
+/*	$OpenBSD: ite.c,v 1.9 1997/01/24 01:35:33 briggs Exp $	*/
+/*	$NetBSD: ite.c,v 1.30 1996/12/18 03:06:06 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -112,7 +112,7 @@ static void	putc_getpars __P((char));
 static void	putc_square __P((char));
 static void	ite_putchar __P((char));
 static int	ite_pollforchar __P((void));
-static int	itematch __P((struct device *, void *, void *));
+static int	itematch __P((struct device *, struct cfdata *, void *));
 static void	iteattach __P((struct device *, struct device *, void *));
 
 #define dprintf if (0) printf
@@ -162,7 +162,7 @@ static int	scrreg_bottom;
 static int	polledkey;
 extern int	adb_polling;
 
-extern u_long	conspa;
+extern u_int32_t mac68k_vidphys;
 
 struct tty	*ite_tty;		/* Our tty */
 
@@ -437,6 +437,7 @@ clear_screen(which)
 		len = y;
 		break;
 	case 2:		/* Whole screen		 */
+	default:
 		len = scrrows;
 		break;
 	}
@@ -849,9 +850,10 @@ struct cfdriver ite_cd = {
 };
 
 static int
-itematch(parent, match, aux)
+itematch(parent, cf, aux)
 	struct device *parent;
-	void *match, *aux;
+	struct cfdata *cf;
+	void *aux;
 {
 	struct grfbus_attach_args *ga = aux;
 	struct grfmode *gm = ga->ga_grfmode;
@@ -861,7 +863,7 @@ itematch(parent, match, aux)
 		return 0;
 	pa = pmap_extract(pmap_kernel(), (vm_offset_t) gm->fbbase);
 
-	return (pa == (vm_offset_t) conspa);
+	return (pa == (vm_offset_t) mac68k_vidphys);
 }
 
 static void 

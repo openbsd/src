@@ -1,5 +1,5 @@
-/*	$OpenBSD: zs.c,v 1.6 1996/10/28 14:46:26 briggs Exp $	*/
-/*	$NetBSD: zs.c,v 1.10 1996/10/13 03:21:31 christos Exp $	*/
+/*	$OpenBSD: zs.c,v 1.7 1997/01/24 01:35:39 briggs Exp $	*/
+/*	$NetBSD: zs.c,v 1.12 1996/12/18 05:04:22 scottr Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -184,7 +184,7 @@ static u_char zs_init_reg[16] = {
  ****************************************************************/
 
 /* Definition of the driver for autoconfig. */
-static int	zsc_match __P((struct device *, void *, void *));
+static int	zsc_match __P((struct device *, struct cfdata *, void *));
 static void	zsc_attach __P((struct device *, struct device *, void *));
 static int	zsc_print __P((void *aux, const char *name));
 
@@ -204,9 +204,9 @@ int	zssoft __P((void *));
  * Is the zs chip present?
  */
 static int
-zsc_match(parent, vcf, aux)
+zsc_match(parent, cf, aux)
 	struct device *parent;
-	void *vcf;
+	struct cfdata *cf;
 	void *aux;
 {
 	return 1;
@@ -245,7 +245,8 @@ zsc_attach(parent, self, aux)
 	volatile struct zschan *zc;
 	struct zs_chanstate *cs;
 	int zsc_unit, channel;
-	int reset, s, chip;
+	int reset, s;
+	int chip = 0;	/* XXX quiet bogus gcc warning */
 
 	if (!zsinited) zs_init();
 	zsinited = 2;
@@ -356,7 +357,8 @@ zstty_mdattach(zsc, zst, cs, tp)
 		 */
 		cs->cs_clocks[1].clk = mac68k_machine.print_dcd_clk;
 		cs->cs_clocks[2].clk = mac68k_machine.print_cts_clk;
-	}
+	} else
+		theflags = 0;
 
 	if (cs->cs_clocks[1].clk)
 		zst->zst_hwflags |= ZS_HWFLAG_IGDCD;

@@ -1,5 +1,5 @@
-/*	$OpenBSD: adb.c,v 1.5 1996/05/26 18:35:14 briggs Exp $	*/
-/*	$NetBSD: adb.c,v 1.9 1996/05/05 16:21:20 briggs Exp $	*/
+/*	$OpenBSD: adb.c,v 1.6 1997/01/24 01:35:27 briggs Exp $	*/
+/*	$NetBSD: adb.c,v 1.13 1996/12/16 16:17:02 scottr Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -50,7 +50,7 @@ e*    notice, this list of conditions and the following disclaimer in the
 /*
  * Function declarations.
  */
-static int	adbmatch __P((struct device *, void *, void *));
+static int	adbmatch __P((struct device *, struct cfdata *, void *));
 static void	adbattach __P((struct device *, struct device *, void *));
 
 /*
@@ -95,9 +95,10 @@ struct cfdriver adb_cd = {
 };
 
 static int
-adbmatch(pdp, match, auxp)
-	struct device	*pdp;
-	void	*match, *auxp;
+adbmatch(parent, cf, aux)
+	struct device *parent;
+	struct cfdata *cf;
+	void *aux;
 {
 	return 1;
 }

@@ -1,5 +1,5 @@
-/*	$OpenBSD: autoconf.h,v 1.3 1996/11/23 21:45:56 kstailey Exp $	*/
-/*	$NetBSD: autoconf.h,v 1.2 1996/05/18 18:52:48 briggs Exp $	*/
+/*	$OpenBSD: autoconf.h,v 1.4 1997/01/24 01:35:40 briggs Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.5 1996/12/17 06:47:40 scottr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -40,24 +40,8 @@
  * From sun3 port--adapted for mac68k platform by Allen Briggs.
  */
 
-/* These are the "bus" types: */
-#define	BUS_OBIO	0	/* On-board I/O */
-#define	BUS_NUBUS	1	/* "nubus"  */
-
-/*
- * This is the "args" parameter to the bus match/attach functions.
- */
-struct confargs {
-	int	ca_bustype;		/* BUS_INTERNAL0, ... */
-	int	slot;
-};
-
 /* autoconf.c */
 void	setconf __P((void));
-int	bus_scan __P((struct device *, void *, void *));
-int	bus_print __P((void *, const char *));
-int	bus_peek __P((int, vm_offset_t, int));
-char	*bus_mapin __P((int, int, int));
 void	configure __P((void));
 
 /* machdep.c */
@@ -66,8 +50,6 @@ void	dumpconf __P((void));
 int	badbaddr __P((register caddr_t addr));
 int	badwaddr __P((register caddr_t addr));
 int	badladdr __P((register caddr_t addr));
-
-int	mac68k_name_match __P((struct device *, void *, void *));
 
 /* clock.h */
 

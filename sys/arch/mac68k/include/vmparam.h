@@ -1,5 +1,5 @@
-/*	$OpenBSD: vmparam.h,v 1.2 1996/05/26 18:36:11 briggs Exp $	*/
-/*	$NetBSD: vmparam.h,v 1.7 1995/06/21 03:17:06 briggs Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.3 1997/01/24 01:35:42 briggs Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.8 1996/11/15 14:21:00 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -266,6 +266,8 @@
 #define VM_MBUF_SIZE		(NMBCLUSTERS*MCLBYTES)
 #define VM_KMEM_SIZE		(NKMEMCLUSTERS*CLBYTES)
 #define VM_PHYS_SIZE		(USRIOSIZE*CLBYTES)
+
+#define MACHINE_NONCONTIG	/* VM <=> pmap interface modifier */
 
 /* # of kernel PT pages (initial only, can grow dynamically) */
 #define VM_KERNEL_PT_PAGES	((vm_size_t)2)		/* XXX: SYSPTSIZE */

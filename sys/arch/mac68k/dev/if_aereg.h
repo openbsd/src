@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_aereg.h,v 1.3 1996/05/26 18:35:24 briggs Exp $	*/
+/*	$OpenBSD: if_aereg.h,v 1.4 1997/01/24 01:35:32 briggs Exp $	*/
 /*	$NetBSD: if_aereg.h,v 1.12 1996/01/12 04:53:05 briggs Exp $	*/
 
 /*
@@ -53,9 +53,9 @@ struct ae_ring {
 #define GC_DATA_OFFSET		0x000d0000	/* Offset to NIC memory */
 #define GC_NIC_OFFSET		0x000e0000	/* Offset to NIC registers */
 
-#define DP_ROM_OFFSET		0x000f0000
-#define DP_DATA_OFFSET		0x000d0000	/* Offset to SONIC memory */
-#define DP_NIC_OFFSET		0x000e0000	/* Offset to SONIC registers */
+#define DP_ROM_OFFSET		0x000f0007	/* Offset to MAC address */
+#define DP_DATA_OFFSET		0x00000000	/* Offset to NIC memory */
+#define DP_NIC_OFFSET		0x00080000	/* Offset to NIC registers */
 
 #define AE_ROM_OFFSET		0x000f0000
 #define AE_DATA_OFFSET		0x000d0000	/* Offset to NIC memory */

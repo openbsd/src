@@ -1,5 +1,5 @@
-/*	$OpenBSD: trap.c,v 1.6 1997/01/19 03:58:09 briggs Exp $	*/
-/*	$NetBSD: trap.c,v 1.41 1996/10/17 06:42:44 scottr Exp $	*/
+/*	$OpenBSD: trap.c,v 1.7 1997/01/24 01:35:53 briggs Exp $	*/
+/*	$NetBSD: trap.c,v 1.45 1997/01/20 04:30:05 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -133,14 +133,14 @@ int mmupid = -1;
 void	trap __P((int, unsigned, register unsigned, struct frame));
 void	syscall __P((register_t, struct frame));
 
-static __inline void userret __P((register struct proc *,
-				register struct frame *,
-				u_quad_t, u_int, int));
+static inline void userret __P((struct proc *p, struct frame *fp,
+	    u_quad_t oticks, u_int faultaddr, int fromtrap));
 
 #if defined(M68040)
 static int	writeback __P((struct frame *, int));
 #if DEBUG
-static int	dumpssw __P((register u_short));
+static void dumpssw __P((register u_short));
+static void dumpwb __P((int, u_short, u_int, u_int));
 #endif
 #endif
 
@@ -193,7 +193,7 @@ again:
 		extern int psratio;
 		
 		addupc_task(p, fp->f_pc,
-				(int)(p->p_sticks - oticks) * psratio);
+		    (int)(p->p_sticks - oticks) * psratio);
 	}
 #if defined(M68040)
 	/*
@@ -254,14 +254,16 @@ trap(type, code, v, frame)
 		type |= T_USER;
 		sticks = p->p_sticks;
 		p->p_md.md_regs = frame.f_regs;
-	}
+	} else
+		sticks = 0;
 
 	/* I have verified that this DOES happen! -gwr */
 	if (p == NULL)
 		p = &proc0;
 #ifdef DIAGNOSTIC
 	if (p->p_addr == NULL)
-		panic("trap: no pcb");
+		panic("trap: type 0x%x, code 0x%x, v 0x%x--no pcb\n",
+			type, code, v);
 #endif
 
 	switch (type) {
@@ -428,10 +430,8 @@ copyfault:
 		 * fpu operations.  So far, just ignore it, but
 		 * DONT trap on it.. 
 		 */
-		if (p->p_emul == &emul_sunos) {
-			userret(p, &frame, sticks, v, 1); 
-			return;
-		}
+		if (p->p_emul == &emul_sunos)
+			goto out;
 #endif
 		frame.f_sr &= ~PSL_T;
 		i = SIGTRAP;
@@ -538,7 +538,7 @@ copyfault:
 		rv = vm_fault(map, va, ftype, FALSE);
 #ifdef DEBUG
 		if (rv && MDB_ISPID(p->p_pid))
-			printf("vm_fault(%x, %x, %x, 0) -> %x\n",
+			printf("vm_fault(%p, %lx, %x, 0) -> %x\n",
 				map, va, ftype, rv);
 #endif
 		/*
@@ -583,7 +583,8 @@ copyfault:
 		break;
 	    }
 	}
-	if (i) trapsignal(p, i, ucode);
+	if (i)
+		trapsignal(p, i, ucode);
 	if ((type & T_USER) == 0)
 		return;
 out:
@@ -843,7 +844,7 @@ writeback(fp, docachepush)
 }
 
 #ifdef DEBUG
-static int
+static void
 dumpssw(ssw)
 	register u_short ssw;
 {
@@ -870,7 +871,8 @@ dumpssw(ssw)
 	       f7tm[ssw & SSW4_TMMASK]);
 }
 
-int
+static
+void
 dumpwb(num, s, a, d)
 	int num;
 	u_short s;
@@ -887,7 +889,7 @@ dumpwb(num, s, a, d)
 	if (pa == 0)
 		printf("<invalid address>");
 	else
-		printf("%x, current value %x", pa, fuword((caddr_t)a));
+		printf("%lx, current value %lx", pa, fuword((caddr_t)a));
 	printf("\n");
 }
 #endif

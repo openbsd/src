@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.13 1997/01/01 15:54:21 briggs Exp $	*/
+/*	$OpenBSD: conf.c,v 1.14 1997/01/24 01:35:45 briggs Exp $	*/
 /*	$NetBSD: conf.c,v 1.34 1996/06/19 02:20:54 briggs Exp $	*/
 
 /*
@@ -100,7 +100,9 @@ cdev_decl(mm);
 cdev_decl(sw);
 #include "pty.h"
 #include "ss.h"
+cdev_decl(ss);
 #include "uk.h"
+cdev_decl(uk);
 cdev_decl(fd);
 #include "grf.h"
 cdev_decl(grf);
@@ -110,6 +112,8 @@ cdev_decl(adb);
 cdev_decl(zsc);
 #include "zstty.h"
 cdev_decl(zs);
+#include "ch.h"
+cdev_decl(ch);
 #include "bpfilter.h"
 #include "tun.h"
 dev_decl(filedesc,open);
@@ -141,8 +145,7 @@ struct cdevsw	cdevsw[] =
 	cdev_tape_init(NST,st),		/* 14: SCSI tape */
 	cdev_disk_init(NCD,cd),		/* 15: SCSI CD-ROM */
 	cdev_notdef(),			/* 16 */
-/*	cdev_disk_init(NCH,ch),		 17: SCSI autochanger */
-	cdev_notdef(),			/* 17: until we find chstrategy... */
+	cdev_ch_init(NCH,ch),		/* 17: SCSI autochanger */
 	cdev_notdef(),			/* 18 */
 	cdev_disk_init(NVND,vnd),	/* 19: vnode disk driver */
 	cdev_disk_init(NCCD,ccd),	/* 20: concatenated disk driver */
@@ -157,10 +160,10 @@ struct cdevsw	cdevsw[] =
 	cdev_lkm_dummy(),		/* 29 */
 	cdev_lkm_dummy(),		/* 30 */
 	cdev_lkm_dummy(),		/* 31 */
-	cdev_gen_ipf(NIPF,ipl),         /* 32: IP filter log */
-	cdev_random_init(1,random),	/* 33: random data source */
-	cdev_uk_init(NUK,uk),		/* 34: unknown SCSI */
-	cdev_ss_init(NSS,ss),           /* 35: SCSI scanner */
+	cdev_random_init(1,random),	/* 32: random data source */
+	cdev_ss_init(NSS,ss),           /* 33: SCSI scanner */
+	cdev_uk_init(NUK,uk),		/* 34: SCSI unknown */
+	cdev_gen_ipf(NIPF,ipl),         /* 35: IP filter log */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 

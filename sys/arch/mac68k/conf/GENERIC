@@ -1,5 +1,5 @@
-#	$OpenBSD: GENERIC,v 1.13 1997/01/01 04:04:48 briggs Exp $
-#	$NetBSD: GENERIC,v 1.43 1996/09/22 06:49:09 scottr Exp $
+#	$OpenBSD: GENERIC,v 1.14 1997/01/24 01:35:24 briggs Exp $
+#	$NetBSD: GENERIC,v 1.52 1997/01/13 23:34:07 scottr Exp $
 #
 # GENERIC
 
@@ -7,10 +7,7 @@ include	"arch/mac68k/conf/std.mac68k"
 
 maxusers	16
 
-options         MAXFDESCS=2048
-
 # Standard system options
-options		SWAPPAGER, DEVPAGER	# paging
 options		DIAGNOSTIC		# DEBUG for extra kernel debugging
 options		KTRACE			# system call tracing support
 #options	KGDB			# support for kernel gdb
@@ -39,7 +36,7 @@ options		SCSI
 
 # Networking options
 options		INET
-#options		TCP_COMPAT_42	# compatibility with 4.2BSD TCP/IP
+options		TCP_COMPAT_42	# compatibility with 4.2BSD TCP/IP
 options		GATEWAY		# IP packet forwarding
 #options	ISO		# OSI networking
 #options	TPIP
@@ -59,6 +56,7 @@ options		FPU_EMULATE
 options		COMPAT_NOMID
 options		COMPAT_SUNOS
 options		ZS_CONSOLE_ABORT
+options		DISABLE_EXT_CACHE # Don't use IIci external cache
 
 config		bsd	swap generic
 options		GENERIC
@@ -66,20 +64,25 @@ options		GENERIC
 sn0		at obio?	# SONIC ethernet (68040)
 
 intvid0		at obio?	# Internal video hardware
-grf*		at intvid?
 
 nubus0		at mainbus?
 
 ae*		at nubus?
 macvid*		at nubus?
+
+# Attach grf semantics to all video hardware as it is found
+grf*		at intvid?
 grf*		at macvid?
 
 # Attach ite semantics to the appropriate grf device
 ite0		at grf?
 
+# Use only one of ncrscsi or sbc
 ncrscsi0	at obio?		# SCSI NCR 5380
-esp0		at obio?		# SCSI NCR 53C96
-esp1		at obio?		# SCSI NCR 53C96
+#sbc0		at obio? flags 0x1	# MI NCR 5380 SCSI Bus Controller
+
+esp0		at obio?		# SCSI NCR 53C9x
+esp1		at obio?		# SCSI NCR 53C9x
 
 scsibus*	at scsi?
 sd*	at scsibus? target ? lun ?	# SCSI disk drives
@@ -92,6 +95,8 @@ uk*	at scsibus? target ? lun ?	# SCSI unknown
 pseudo-device	pty		16
 pseudo-device	bpfilter	12
 pseudo-device	vnd		2
+pseudo-device	ccd		2
 pseudo-device	ppp		2
 pseudo-device	loop
 pseudo-device	sl
+#pseudo-device	ipfilter

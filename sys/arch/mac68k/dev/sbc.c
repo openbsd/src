@@ -1,5 +1,5 @@
-/*	$OpenBSD: sbc.c,v 1.6 1997/01/18 17:58:37 briggs Exp $	*/
-/*	$NetBSD: sbc.c,v 1.9 1996/06/19 01:47:28 scottr Exp $	*/
+/*	$OpenBSD: sbc.c,v 1.7 1997/01/24 01:35:37 briggs Exp $	*/
+/*	$NetBSD: sbc.c,v 1.18 1997/01/20 04:27:49 scottr Exp $	*/
 
 /*
  * Copyright (c) 1996 Scott Reynolds
@@ -89,14 +89,18 @@
  * These are offsets from SCSIBase (see pmap_bootstrap.c)
  */
 #define	SBC_REG_OFS		0x10000
-#define	SBC_HSK_OFS		0x06000
 #define	SBC_DMA_OFS		0x12000
+#define	SBC_HSK_OFS		0x06000
 
 #define	SBC_DMA_OFS_PB500	0x06000
 
 #define	SBC_REG_OFS_IIFX	0x08000		/* Just guessing... */
-#define	SBC_HSK_OFS_IIFX	0x0e000
 #define	SBC_DMA_OFS_IIFX	0x0c000
+#define	SBC_HSK_OFS_IIFX	0x0e000
+
+#define	SBC_REG_OFS_DUO2	0x00000
+#define	SBC_DMA_OFS_DUO2	0x02000
+#define	SBC_HSK_OFS_DUO2	0x04000
 
 #ifdef SBC_DEBUG
 # define	SBC_DB_INTR	0x01
@@ -162,7 +166,7 @@ struct sbc_softc {
 #define	SBC_OPTIONS_BITS	"\10\3RESELECT\2INTR\1PDMA"
 int sbc_options = SBC_PDMA;
 
-static	int	sbc_match __P((struct device *, void *, void *));
+static	int	sbc_match __P((struct device *, struct cfdata *, void *));
 static	void	sbc_attach __P((struct device *, struct device *, void *));
 static	int	sbc_print __P((void *, const char *));
 static	void	sbc_minphys __P((struct buf *bp));
@@ -214,13 +218,28 @@ struct cfdriver sbc_cd = {
 
 
 static int
-sbc_match(parent, match, args)
+sbc_match(parent, cf, args)
 	struct device *parent;
-	void *match, *args;
+	struct cfdata *cf;
+	void *args;
 {
-	if (!mac68k_machine.scsi80)
-		return 0;
-	return 1;
+	switch (current_mac_model->machineid) {
+	case MACH_MACIIFX:	/* Note: the IIfx isn't (yet) supported. */
+		break;
+	case MACH_MACPB210:
+	case MACH_MACPB230:
+	case MACH_MACPB250:
+	case MACH_MACPB270:
+	case MACH_MACPB280:
+	case MACH_MACPB280C:
+		if (cf->cf_unit == 1)
+			return 1;
+		/*FALLTHROUGH*/
+	default:
+		if (cf->cf_unit == 0 && mac68k_machine.scsi80)
+			return 1;
+	}
+	return 0;
 }
 
 static void
@@ -230,6 +249,7 @@ sbc_attach(parent, self, args)
 {
 	struct sbc_softc *sc = (struct sbc_softc *) self;
 	struct ncr5380_softc *ncr_sc = (struct ncr5380_softc *) sc;
+	char bits[64];
 	extern vm_offset_t SCSIBase;
 
 	/* Pull in the options flags. */ 
@@ -253,6 +273,19 @@ sbc_attach(parent, self, args)
 		sc->sc_nodrq_addr = (vm_offset_t)(SCSIBase + SBC_DMA_OFS_PB500);
 		sc->sc_options &= ~(SBC_INTR | SBC_RESELECT);
 		break;
+	case MACH_MACPB210:
+	case MACH_MACPB230:
+	case MACH_MACPB250:
+	case MACH_MACPB270:
+	case MACH_MACPB280:
+	case MACH_MACPB280C:
+		if (ncr_sc->sc_dev.dv_unit == 1) {
+			sc->sc_regs = (struct sbc_regs *)(0xfee00000 + SBC_REG_OFS_DUO2);
+			sc->sc_drq_addr = (vm_offset_t)(0xfee00000 + SBC_HSK_OFS_DUO2);
+			sc->sc_nodrq_addr = (vm_offset_t)(0xfee00000 + SBC_DMA_OFS_DUO2);
+			break;
+		}
+		/*FALLTHROUGH*/
 	default:
 		sc->sc_regs = (struct sbc_regs *)(SCSIBase + SBC_REG_OFS);
 		sc->sc_drq_addr = (vm_offset_t)(SCSIBase + SBC_HSK_OFS);
@@ -329,7 +362,8 @@ sbc_attach(parent, self, args)
 	}
 
 	if (sc->sc_options)
-		printf(": options=%b", sc->sc_options, SBC_OPTIONS_BITS);
+		printf(": options=%s", bitmask_snprintf(sc->sc_options,
+		    SBC_OPTIONS_BITS, bits, sizeof(bits)));
 	printf("\n");
 
 	/* Now enable SCSI interrupts through VIA2, if appropriate */
@@ -747,7 +781,9 @@ sbc_drq_intr(p)
 	u_int8_t		*data;
 	register int		count;
 	int			dcount, resid;
+#ifdef SBC_WRITE_HACK
 	u_int8_t		tmp;
+#endif
 
 	/*
 	 * If we're not ready to xfer data, or have no more, just return.
@@ -782,7 +818,8 @@ sbc_drq_intr(p)
 
 			dh->dh_addr += count;
 			dh->dh_len -= count;
-		}
+		} else
+			count = 0;
 
 #ifdef SBC_DEBUG
 		if (sbc_debug & SBC_DB_INTR)
@@ -854,6 +891,7 @@ sbc_drq_intr(p)
 		}
 		dh->dh_flags |= SBC_DH_DONE;
 
+#ifdef SBC_WRITE_HACK
 		/*
 		 * XXX -- Read a byte from the SBC to trigger a /BERR.
 		 * This seems to be necessary for us to notice that
@@ -867,6 +905,7 @@ sbc_drq_intr(p)
 			drq = (volatile u_int8_t *) sc->sc_drq_addr;
 		}
 		tmp = *drq;
+#endif
 	} else {	/* Data In */
 		/*
 		 * Get the dest address aligned.

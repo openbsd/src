@@ -1,5 +1,5 @@
-/*	$OpenBSD: pmap_bootstrap.c,v 1.6 1996/10/28 14:55:34 briggs Exp $	*/
-/*	$NetBSD: pmap_bootstrap.c,v 1.26 1996/05/18 18:54:52 briggs Exp $	*/
+/*	$OpenBSD: pmap_bootstrap.c,v 1.7 1997/01/24 01:35:52 briggs Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.30 1997/01/07 07:44:01 scottr Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -572,7 +572,8 @@ bootstrap_mac68k(tc)
 	oldROMBase = ROMBase;
 	mac68k_vidphys = videoaddr;
 
-	if ((tc & 0x80000000) && (mmutype == MMU_68030)) {
+	if (((tc & 0x80000000) && (mmutype == MMU_68030)) ||
+	    ((tc & 0x8000) && (mmutype == MMU_68040))) {
 
 		if (mac68k_machine.do_graybars)
 			printf("Getting mapping from MMU.\n");

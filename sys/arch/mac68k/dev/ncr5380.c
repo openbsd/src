@@ -1,5 +1,5 @@
-/*	$OpenBSD: ncr5380.c,v 1.11 1997/01/18 17:58:38 briggs Exp $	*/
-/*	$NetBSD: ncr5380.c,v 1.31 1996/06/23 15:02:58 briggs Exp $	*/
+/*	$OpenBSD: ncr5380.c,v 1.12 1997/01/24 01:35:34 briggs Exp $	*/
+/*	$NetBSD: ncr5380.c,v 1.38 1996/12/19 21:48:18 scottr Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -198,7 +198,7 @@ extern __inline__ void finish_req(SC_REQ *reqp)
  * Auto config stuff....
  */
 void	ncr_attach __P((struct device *, struct device *, void *));
-int	ncr_match __P((struct device *, void *, void *));
+int	ncr_match __P((struct device *, struct cfdata *, void *));
 
 /*
  * Tricks to make driver-name configurable
@@ -216,11 +216,12 @@ struct cfdriver CFNAME(DRNAME) = {
 };
 
 int
-ncr_match(pdp, match, auxp)
-struct device	*pdp;
-void		*match, *auxp;
+ncr_match(parent, cf, aux)
+	struct device *parent;
+	struct cfdata *cf;
+	void *aux;
 {
-	return (machine_match(pdp, match, auxp, &CFNAME(DRNAME)));
+	return (machine_match(parent, cf, aux, &CFNAME(DRNAME)));
 }
 
 void
@@ -238,6 +239,7 @@ void		*auxp;
 	sc->sc_link.adapter         = &ncr5380_switch;
 	sc->sc_link.device          = &ncr5380_dev;
 	sc->sc_link.openings        = NREQ - 1;
+	sc->sc_link.max_target      = 7;
 
 	/*
 	 * bitmasks

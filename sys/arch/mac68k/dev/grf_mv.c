@@ -1,5 +1,5 @@
-/*	$OpenBSD: grf_mv.c,v 1.5 1996/09/21 03:55:47 briggs Exp $	*/
-/*	$NetBSD: grf_mv.c,v 1.12 1996/08/04 06:03:54 scottr Exp $	*/
+/*	$OpenBSD: grf_mv.c,v 1.6 1997/01/24 01:35:31 briggs Exp $	*/
+/*	$NetBSD: grf_mv.c,v 1.15 1996/12/16 16:17:06 scottr Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -52,13 +52,12 @@
 
 static void	load_image_data __P((caddr_t data, struct image_data *image));
 static void	grfmv_intr __P((void *vsc, int slot));
-static int	get_vrsrcid __P((nubus_slot *slot));
 
 static char zero = 0;
 
 static int	grfmv_mode __P((struct grf_softc *gp, int cmd, void *arg));
 static caddr_t	grfmv_phys __P((struct grf_softc *gp, vm_offset_t addr));
-static int	grfmv_match __P((struct device *, void *, void *));
+static int	grfmv_match __P((struct device *, struct cfdata *, void *));
 static void	grfmv_attach __P((struct device *, struct device *, void *));
 
 struct cfdriver macvid_cd = {
@@ -115,61 +114,20 @@ grfmv_intr(vsc, slot)
 }
 
 static int
-get_vrsrcid(slot)
-	nubus_slot	*slot;
-{
-extern	u_short	mac68k_vrsrc_vec[];
-	int	i;
-
-	for (i = 0 ; i < 6 ; i++)
-		if ((mac68k_vrsrc_vec[i] & 0xff) == slot->slot)
-			return ((mac68k_vrsrc_vec[i] >> 8) & 0xff);
-	return 0x80;
-}
-
-static int
-grfmv_match(parent, self, aux)
+grfmv_match(parent, cf, aux)
 	struct device *parent;
-	void *self, *aux;
+	struct cfdata *cf;
+	void *aux;
 {
-	struct grfbus_softc	*sc;
-	nubus_slot	*slot = (nubus_slot *) aux;
-	nubus_dir	dir, *dirp, *dirp2;
-	nubus_dirent	dirent, *direntp;
-	nubus_type	slottype;
-	int		vrsrc;
+	struct nubus_attach_args *na = (struct nubus_attach_args *) aux;
 
-	sc = (struct grfbus_softc *) self;	/* XXX: indirect brokenness */
-	dirp = &dir;
-	direntp = &dirent;
-	nubus_get_main_dir(slot, dirp);
-
-	vrsrc = get_vrsrcid(slot);
-	if (nubus_find_rsrc(slot, dirp, vrsrc, direntp) <= 0) {
-		if (   (vrsrc != 128)
-		    || (nubus_find_rsrc(slot, dirp, 129, direntp) <= 0)) {
-			return 0;
-		}
-	}
-
-	dirp2 = (nubus_dir *) &sc->board_dir;
-	nubus_get_dir_from_rsrc(slot, direntp, dirp2);
-
-	if (nubus_find_rsrc(slot, dirp2, NUBUS_RSRC_TYPE, direntp) <= 0)
-		/* Type is a required entry...  This should never happen. */
+	if (na->category != NUBUS_CATEGORY_DISPLAY)
 		return 0;
 
-	if (nubus_get_ind_data(slot, direntp,
-			(caddr_t) &slottype, sizeof(nubus_type)) <= 0)
+	if (na->type != NUBUS_TYPE_VIDEO)
 		return 0;
 
-	if (slottype.category != NUBUS_CATEGORY_DISPLAY)
-		return 0;
-
-	if (slottype.type != NUBUS_TYPE_VIDEO)
-		return 0;
-
-	if (slottype.drsw != NUBUS_DRSW_APPLE)
+	if (na->drsw != NUBUS_DRSW_APPLE)
 		return 0;
 
 	/*
@@ -179,12 +137,6 @@ grfmv_match(parent, self, aux)
 	 * proceed like it is.
 	 */
 
-	sc->card_id = slottype.drhw;
-
-	sc->sc_slot = *slot;
-
-	/* Need to load display info (and driver?), etc... */
-
 	return 1;
 }
 
@@ -193,16 +145,31 @@ grfmv_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct grfbus_softc	*sc;
+	struct grfbus_softc *sc = (struct grfbus_softc *) self;
+	struct nubus_attach_args *na = (struct nubus_attach_args *) aux;
 	struct image_data image_store, image;
-	struct		grfmode *gm;
-	char		cardname[CARD_NAME_LEN];
-	nubus_dirent	dirent;
-	nubus_dir	mode_dir;
-	int		mode;
+	struct grfmode *gm;
+	char cardname[CARD_NAME_LEN];
+	nubus_dirent dirent;
+	nubus_dir dir, mode_dir;
+	int mode;
 
-	sc = (struct grfbus_softc *) self;
-	gm = &sc->curr_mode;
+	sc->card_id = na->drhw;
+
+	bcopy(na->fmt, &sc->sc_slot, sizeof(nubus_slot));
+
+	nubus_get_main_dir(&sc->sc_slot, &dir);
+
+	if (nubus_find_rsrc(&sc->sc_slot, &dir, na->rsrcid, &dirent) <= 0)
+		return;
+
+	nubus_get_dir_from_rsrc(&sc->sc_slot, &dirent, &sc->board_dir);
+
+	if (nubus_find_rsrc(&sc->sc_slot, &sc->board_dir,
+	    NUBUS_RSRC_TYPE, &dirent) <= 0)
+		if ((na->rsrcid != 128) ||
+		    (nubus_find_rsrc(&sc->sc_slot, &dir, 129, &dirent) <= 0))
+			return;
 
 	mode = NUBUS_RSRC_FIRSTMODE;
 	if (nubus_find_rsrc(&sc->sc_slot, &sc->board_dir, mode, &dirent) <= 0) {
@@ -227,8 +194,11 @@ grfmv_attach(parent, self, aux)
 		return;
 	}
 
+	/* Need to load display info (and driver?), etc... (?) */
+
 	load_image_data((caddr_t) &image_store, &image);
 
+	gm = &sc->curr_mode;
 	gm->mode_id = mode;
 	gm->fbbase = (caddr_t) (sc->sc_slot.virtual_base + image.offset);
 	gm->fboff = image.offset;

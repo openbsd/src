@@ -1,5 +1,5 @@
-/*	$OpenBSD: autoconf.c,v 1.9 1997/01/01 14:59:46 briggs Exp $	*/
-/*	$NetBSD: autoconf.c,v 1.31 1996/06/19 03:21:03 scottr Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.10 1997/01/24 01:35:43 briggs Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.38 1996/12/18 05:46:09 scottr Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -73,6 +73,7 @@
 
 #include <ufs/ffs/ffs_extern.h>
 
+#include "ether.h"
 
 struct device	*booted_device;
 int		booted_partition;
@@ -247,6 +248,7 @@ setroot(void)
 
 	bootdv = booted_device;
 	bootpartition = booted_partition;
+	rootdv = swapdv = NULL;		/* XXX work around gcc warning */
 
 #ifdef DEBUG
 	printf("boot device: %s\n",
@@ -377,7 +379,9 @@ gotswap:
 #if defined(NFSCLIENT)
 	case DV_IFNET:
 		mountroot = nfs_mountroot;
+#if NETHER > 0
 		nfsbootdevname = rootdv->dv_xname;
+#endif
 		return;
 #endif
 #if defined(FFS)

@@ -1,5 +1,5 @@
-/*	$OpenBSD: locore.s,v 1.15 1996/11/23 23:19:38 kstailey Exp $	*/
-/*	$NetBSD: locore.s,v 1.70 1996/10/17 06:32:13 scottr Exp $	*/
+/*	$OpenBSD: locore.s,v 1.16 1997/01/24 01:35:47 briggs Exp $	*/
+/*	$NetBSD: locore.s,v 1.73 1997/01/09 07:28:12 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -846,81 +846,97 @@ _esym:		.long	0
 	.globl	_edata
 	.globl	_etext
 	.globl	start
+	.globl	_getenvvars		| in machdep.c
+	.globl	_setmachdep		| in machdep.c
 
 start:
 	movw	#PSL_HIGHIPL,sr		| no interrupts.  ever.
-
-| Give ourself a stack
 	lea	tmpstk,sp		| give ourselves a temporary stack
-	movl	#CACHE_OFF,d0
-	movc	d0, cacr
-
-| Some parameters provided by MacOS
-|
-| LAK: This section is the new way to pass information from the booter
-| to the kernel.  At A1 there is an environment variable which has
-| a bunch of stuff in ascii format, "VAR=value\0VAR=value\0\0".
-
-	.globl	_initenv, _getenvvars	| in machdep.c
-	.globl	_setmachdep		| in machdep.c
+	movql	#0,d0			| disables caches
+	movc	d0,cacr
 
 	/* Initialize source/destination control registers for movs */
-	moveq	#FC_USERD,d0		| user space
+	movql	#FC_USERD,d0		| user space
 	movc	d0,sfc			|   as source
 	movc	d0,dfc			|   and destination of transfers
 
-	movl	a1, sp@-		| Address of buffer
-	movl	d4, sp@-		| Some flags... (mostly not used)
-	jbsr	_initenv
-	addql	#8, sp
+	/* Determine MMU/MPU from what we can test empirically */
+	movl	#0x200,d0		| data freeze bit
+	movc	d0,cacr			|   only exists on 68030
+	movc	cacr,d0			| read it back
+	tstl	d0			| zero?
+	jeq	Lnot68030		| yes, we have 68020/68040
 
+	movl	#CACHE_OFF,d0		| disable and clear both caches
+	movc	d0,cacr
+	lea	_mmutype,a0		| no, we have 68030
+	movl	#MMU_68030,a0@		| set to reflect 68030 PMMU
+	lea	_cputype,a0
+	movl	#CPU_68030,a0@		| and 68030 MPU
+	jra	Lstart1
+
+Lnot68030:
+	bset	#31,d0			| data cache enable bit
+	movc	d0,cacr			|   only exists on 68040
+	movc	cacr,d0			| read it back
+	tstl	d0			| zero?
+	beq	Lis68020		| yes, we have 68020
+
+	movql	#CACHE40_OFF,d0		| now turn it back off
+	movc	d0,cacr			|   before we access any data
+	.word	0xf4f8			| cpusha bc ;push and invalidate caches
+	lea	_mmutype,a0
+	movl	#MMU_68040,a0@		| Reflect 68040 MMU
+	lea	_cputype,a0
+	movl	#CPU_68040,a0@		| and 68040 MPU
+	jra	Lstart1
+
+Lis68020:
+	movl	#CACHE_OFF,d0		| disable and clear cache
+	movc	d0,cacr
+	lea	_mmutype,a0		| Must be 68020+68851
+	movl	#MMU_68851,a0@		| Reflect 68851 PMMU
+	lea	_cputype,a0
+	movl	#CPU_68020,a0@		| and 68020 MPU
+  
+Lstart1:
+	/*
+	 * Some parameters provided by MacOS
+	 *
+	 * LAK: This section is the new way to pass information from the booter
+	 * to the kernel.  At A1 there is an environment variable which has
+	 * a bunch of stuff in ascii format, "VAR=value\0VAR=value\0\0".
+	 */
+	movl	a1,sp@-			| Address of buffer
+	movl	d4,sp@-			| Some flags... (mostly not used)
 	jbsr	_getenvvars		| Parse the environment buffer
-
+	addql	#8, sp
 	jbsr	_setmachdep		| Set some machine-dep stuff
 
 	jbsr	_vm_set_page_size	| Set the vm system page size, now.
 	jbsr	_consinit		| XXX Should only be if graybar on
 
-	cmpl	#MMU_68040, _mmutype	| Set in _getenvvars ONLY if 040.
-	jne	Lstartnot040		| It's not an '040
-	.word	0xf4f8			| cpusha bc - push and invalidate caches
-
-	movl	#CACHE40_OFF,d0		| 68040 cache disable
-	movc	d0, cacr
-
-	movql	#0, d0
-	.long	0x4e7b0004		| movc d0,itt0 ;Disable itt0
-	.long	0x4e7b0005		| movc d0,itt1 ;Disable itt1
-	.long	0x4e7b0006		| movc d0,dtt0 ;Disable dtt0
-	.long	0x4e7b0007		| movc d0,dtt1 ;Disable dtt1
-	.long	0x4e7b0003		| movc d0,tc   ;Disable MMU
-
-	movl	#0x0,sp@-		| Fake unenabled MMU
+/*
+ * Figure out MacOS mappings and bootstrap BSD
+ */
+	lea	_macos_tc,a0		| get current TC
+	cmpl	#MMU_68040, _mmutype	| check to see if 68040
+	jeq	Lget040TC
+	pmove	tc,a0@
 	jra	do_bootstrap
 
-Lstartnot040:
+Lget040TC:
+#ifdef __notyet__
+	.long	0x4e7a0003		| movc tc,d0
+#else
+	movql	#0,d0
+	.long	0x4e7b0003		| movc d0,tc ;Disable MMU
+#endif
+	movl	d0,a0@
 
-| BG - Figure out our MMU
-	movl	#0x200, d0		| data freeze bit (??)
-	movc	d0, cacr		| only exists in 68030
-	movc	cacr, d0		| on an '851, it'll go away.
-	tstl	d0
-	jeq	Lisa68020
-	movl	#MMU_68030, _mmutype	| 68030 MMU
-	jra	Lmmufigured
-Lisa68020:
-	movl	#MMU_68851, _mmutype	| 68020, implies 68851, or crash.
-Lmmufigured:
-
-	lea	_macos_tc,a0
-	pmove	tc,a0@
-	movl	a0@,sp@-		| Save current TC for bootstrap
-
-/*
- * Figure out MacOS mappings and bootstrap NetBSD
- */
 do_bootstrap:
-	jbsr	_bootstrap_mac68k
+	movl	a0@,sp@-		| get MacOS mapping, relocate video,
+	jbsr	_bootstrap_mac68k	|   bootstrap pmap, et al.
 	addql	#4,sp
 	
 /*
@@ -929,35 +945,39 @@ do_bootstrap:
 	movl	_Sysseg,a1		| system segment table addr
 	addl	_load_addr,a1		| Make it physical addr
 
-	cmpl	#MMU_68040, _mmutype
+	cmpl	#MMU_68040,_mmutype
 	jne	Lenablepre040MMU	| if not 040, skip
+
+	movql	#0,d0
+	.long	0x4e7b0003		| movc d0,tc   ;Disable MMU
+	.long	0x4e7b0004		| movc d0,itt0 ;Disable itt0
+	.long	0x4e7b0005		| movc d0,itt1 ;Disable itt1
+	.long	0x4e7b0006		| movc d0,dtt0 ;Disable dtt0
+	.long	0x4e7b0007		| movc d0,dtt1 ;Disable dtt1
 	movl	a1,d1
-	.long	0x4e7b1807		| movc d1,srp
-	.word	0xf4d8			| cinva bc
 	.word	0xf518			| pflusha
+	.long	0x4e7b1807		| movc d1,srp
 	movl	#0x8000,d0
-	.long	0x4e7b0003		| Enable MMU
-	movl	#0x80008000,d0
+	.long	0x4e7b0003		| movc d0,tc   ;Enable MMU
+	movl	#CACHE40_ON,d0
 	movc	d0,cacr			| turn on both caches
 	jra	Lloaddone
 
 Lenablepre040MMU:
+	tstl	_mmutype		| TTx instructions will break 68851
+	jgt	LnokillTT
+
+	lea	longscratch,a0		| disable TTx registers on 68030
+	movl	#0,a0@
+	.long	0xf0100800		| movl a0@,tt0
+	.long	0xf0100c00		| movl a0@,tt1
+
+LnokillTT:
 	lea	_protorp,a0
 	movl	#0x80000202,a0@		| nolimit + share global + 4 byte PTEs
 	movl	a1,a0@(4)		| + segtable address
 	pmove	a0@,srp			| load the supervisor root pointer
 	movl	#0x80000002,a0@		| reinit upper half for CRP loads
-
-| LAK: Kill the TT0 and TT1 registers so the don't screw us up later.
-	tstl	_mmutype		| ttx instructions will break 68851
-	jgt	LnokillTT
-
-	lea	longscratch,a0
-	movl	#0, a0@
-	.long	0xF0100800		| movl a0@,tt0
-	.long	0xF0100C00		| movl a0@,tt1
-
-LnokillTT:
 	lea	longscratch,a2
 	movl	#0x82c0aa00,a2@		| value to load TC with
 	pmove	a2@,tc			| load it
@@ -1146,8 +1166,8 @@ ENTRY(longjmp)
 /*
  * The following primitives manipulate the run queues.
  * _whichqs tells which of the 32 queues _qs have processes in them.
- * Setrunqueue puts processes into queues, Remrq removes them from queues.
- * The running process is on no queue, other processes are on a queue
+ * Setrunqueue puts processes into queues, remrunqueue removes them from
+ * queues.  The running process is on no queue, other processes are on a queue
  * related to p->p_priority, divided by 4 actually to shrink the 0-127
  * range of priorities into the 32 available queues.
  */
@@ -1520,11 +1540,11 @@ ENTRY(TBIS)
 	cmpl	#MMU_68040,_mmutype	| 68040?
 	jne	Lmotommu4		| no, skip
 	movc	dfc,d1
-	moveq	#FC_USERD, d0		| user space
-	movc	d0, dfc
+	moveq	#FC_USERD,d0		| user space
+	movc	d0,dfc
 	.word	0xf508			| pflush a0@
 	moveq	#FC_SUPERD,d0		| supervisor space
-	movc	d0, dfc
+	movc	d0,dfc
 	.word	0xf508			| pflush a0@
 	movc	d1,dfc
 	rts
@@ -1834,17 +1854,15 @@ Lm68881rdone:
 _doboot:
 	movw	#PSL_HIGHIPL,sr		| no interrupts
 
-#if defined(M68040)
-	cmpl	#MMU_68040, _mmutype	| Set in _getenvvars ONLY if 040.
+	cmpl	#MMU_68040,_mmutype
 	jne	Ldobootnot040		| It's not an '040
-	.word	0xf4f8			| cpusha bc - push and invalidate caches
 
 	movl	#CACHE40_OFF,d0		| 68040 cache disable
 	movc	d0, cacr
+	.word	0xf4f8			| cpusha bc - push and invalidate caches
 	jra	Ldoboot1
-Ldobootnot040:
-#endif
 
+Ldobootnot040:
 	movl	#CACHE_OFF,d0
 	movc	d0,cacr			| disable on-chip cache(s)
 
@@ -1856,6 +1874,8 @@ Ldoboot1:
 	jra	a1@			| and jump to ROM to reset machine
 
 /*
+ * u_long ptest040(caddr_t addr, u_int fc);
+ *
  * ptest040() does an 040 PTESTR (addr) and returns the 040 MMUSR iff
  * translation is enabled.  This allows us to find the physical address
  * corresponding to a MacOS logical address for get_physical().
@@ -1864,16 +1884,16 @@ Ldoboot1:
 	.globl	_ptest040
 _ptest040:
 #if defined(M68040)
-	.long	0x4e7a0003		| movec tc,d0
+	.long	0x4e7a0003		| movc tc,d0
 	andw	#0x8000,d0
 	jeq	Lget_phys1		| MMU is disabled
-	movc	sfc,d1
-	movql	#1,d0			| FC for ptestr
-	movc	d0,sfc
+	movc	dfc,d1			| Save DFC
+	movl	sp@(8),d0		| Set FC for ptestr
+	movc	d0,dfc
 	movl	sp@(4),a0		| logical address to look up
 	.word	0xf568			| ptestr (a0)
-	.long	0x4e7a0805		| movec mmusr,d0
-	movc	d1,sfc
+	.long	0x4e7a0805		| movc mmusr,d0
+	movc	d1,dfc			| Restore DFC
 	rts
 Lget_phys1:
 #endif
@@ -1894,9 +1914,9 @@ Lget_phys1:
  *  search in "psr".  "pte" should be 2 longs in case it is
  *  a long-format entry.
  *
- *  One possible problem here is that setting the tt register
- *  may screw something up if, say, the address returned by ptest
- *  in a0 has msb of 0.
+ *  One possible problem here is that setting the TT register
+ *  may screw something up if we access user data space in a
+ *  called function or in an interrupt service routine.
  *
  *  Returns -1 on error, 0 if pte is a short-format pte, or
  *  1 if pte is a long-format pte.
@@ -1911,10 +1931,15 @@ Lget_phys1:
  */
 	.globl	_get_pte
 _get_pte:
-	addl	#-4,sp		| make temporary space
+	subql	#4,sp		| make temporary space
+
+	lea	longscratch,a0
+	movl	#0x00ff8710,a0@	| Set up FC 1 r/w access
+	.long	0xf0100800	| pmove a0@,tt0
+
 	movl	sp@(8),a0	| logical address to look up
 	movl	#0,a1		| clear in case of failure
-	ptestr	#1,a0@,#7,a1	| search for logical address
+	ptestr	#FC_USERD,a0@,#7,a1 | search for logical address
 	pmove	psr,sp@		| store processor status register
 	movw	sp@,d1
 	movl	sp@(16),a0	| where to store the psr
@@ -1924,18 +1949,12 @@ _get_pte:
 	tstl	a1		| check address we got back
 	jeq	get_pte_fail2	| if 0, then was not set -- fail
 
-	| enable tt0
 	movl	a1,d0
 	movl	d0,pte_tmp	| save for later
-	andl	#0xff000000,d0	| keep msb
-	orl	#0x00008707,d0	| enable tt for reading and writing
-	movl	d0,longscratch
-	lea	longscratch,a0
-	.long	0xf0100800	| pmove a0@,tt0
 
 	| send first long back to user
 	movl	sp@(12),a0	| address of where to put pte
-	movl	a1@,d0		|
+	movsl	a1@,d0		|
 	movl	d0,a0@		| first long
 
 	andl	#3,d0		| dt bits of pte
@@ -1972,32 +1991,32 @@ pte_level_zero:
 	movl	a0@,d0		| load high long
 	jra	pte_got_parent
 pte_level_one:
-	ptestr	#1,a0@,#1,a1	| search for logical address
+	ptestr	#FC_USERD,a0@,#1,a1 | search for logical address
 	pmove	psr,sp@		| store processor status register
 	movw	sp@,d1
 	jra	pte_got_it
 pte_level_two:
-	ptestr	#1,a0@,#2,a1	| search for logical address
+	ptestr	#FC_USERD,a0@,#2,a1 | search for logical address
 	pmove	psr,sp@		| store processor status register
 	movw	sp@,d1
 	jra	pte_got_it
 pte_level_three:
-	ptestr	#1,a0@,#3,a1	| search for logical address
+	ptestr	#FC_USERD,a0@,#3,a1 | search for logical address
 	pmove	psr,sp@		| store processor status register
 	movw	sp@,d1
 	jra	pte_got_it
 pte_level_four:
-	ptestr	#1,a0@,#4,a1	| search for logical address
+	ptestr	#FC_USERD,a0@,#4,a1 | search for logical address
 	pmove	psr,sp@		| store processor status register
 	movw	sp@,d1
 	jra	pte_got_it
 pte_level_five:
-	ptestr	#1,a0@,#5,a1	| search for logical address
+	ptestr	#FC_USERD,a0@,#5,a1 | search for logical address
 	pmove	psr,sp@		| store processor status register
 	movw	sp@,d1
 	jra	pte_got_it
 pte_level_six:
-	ptestr	#1,a0@,#6,a1	| search for logical address
+	ptestr	#FC_USERD,a0@,#6,a1 | search for logical address
 	pmove	psr,sp@		| store processor status register
 	movw	sp@,d1
 
@@ -2007,15 +2026,7 @@ pte_got_it:
 	tstl	a1		| check address we got back
 	jeq	get_pte_fail6	| if 0, then was not set -- fail
 
-	| change tt0
-	movl	a1,d0
-	andl	#0xff000000,d0	| keep msb
-	orl	#0x00008707,d0	| enable tt for reading and writing
-	movl	d0,longscratch
-	lea	longscratch,a0
-	.long	0xF0100800	| pmove a0@,tt0
-
-	movl	a1@,d0		| get pte of parent
+	movsl	a1@,d0		| get pte of parent
 	movl	d0,_macos_tt0	| XXX for later analysis (kill this line)
 pte_got_parent:
 	andl	#3,d0		| dt bits of pte
@@ -2029,36 +2040,29 @@ pte_got_parent:
 	|  is that the first long might have been the last long of RAM.
 
 	movl	pte_tmp,a1	| get address of our original pte
-	addl	#4,a1		| address of ite second long
+	addql	#4,a1		| address of ite second long
 
-	| change tt0 back
-	movl	a1,d0
-	andl	#0xff000000,d0	| keep msb
-	orl	#0x00008707,d0	| enable tt for reading and writing
-	movl	d0,longscratch
-	lea	longscratch,a0
-	.long	0xF0100800	| pmove a0@,tt0
+	| send second long back to user
+	movl	sp@(12),a0	| address of where to put pte
+	movsl	a1@,d0		|
+	movl	d0,a0@(4)	| write in second long
 
-	movl	sp@(12),a0	| address of return pte
-	movl	a1@,a0@(4)	| write in second long
-
-	movl	#1,d0		| return long-format
+	movql	#1,d0		| return long-format
 	jra	get_pte_success
 
 short_format:
-	movl	#0,d0		| return short-format
+	movql	#0,d0		| return short-format
 	jra	get_pte_success
 
 get_pte_fail:
-	movl	#-1,d0		| return failure
+	movql	#-1,d0		| return failure
 
 get_pte_success:
-	clrl	d1		| disable tt
-	movl	d1,longscratch
-	lea	longscratch,a0
-	.long	0xF0100800	| pmove a0@,tt0
+	lea	longscratch,a0	| disable tt
+	movl	#0,a0@
+	.long	0xf0100800	| pmove a0@,tt0
 
-	addl	#4,sp		| return temporary space
+	addql	#4,sp		| return temporary space
 	rts
 
 get_pte_fail1:
@@ -2147,9 +2151,11 @@ tmpstk:
 	.globl	_machineid
 _machineid:
 	.long	0		| default to 320
-	.globl	_mmutype,_protorp
+	.globl	_mmutype,_cputype,_protorp
 _mmutype:
-	.long	0		| Are we running 68851, 68030, or 68040?
+	.long	MMU_68851	| Default to 68851 PMMU
+_cputype:
+	.long	CPU_68020	| Default to 68020
 _protorp:
 	.long	0,0		| prototype root pointer
 	.globl	_cold

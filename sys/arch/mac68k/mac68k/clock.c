@@ -1,5 +1,5 @@
-/*	$OpenBSD: clock.c,v 1.7 1996/05/26 18:36:14 briggs Exp $	*/
-/*	$NetBSD: clock.c,v 1.29 1996/05/05 06:18:17 briggs Exp $	*/
+/*	$OpenBSD: clock.c,v 1.8 1997/01/24 01:35:44 briggs Exp $	*/
+/*	$NetBSD: clock.c,v 1.32 1997/01/15 01:28:53 perry Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -286,7 +286,7 @@ static u_long	ugmt_2_pramt __P((u_long));
 static u_long	pramt_2_ugmt __P((u_long));
 
 /*
- * Convert GMT to Mac PRAM time, using global timezone
+ * Convert GMT to Mac PRAM time, using rtc_offset
  * GMT bias adjustment is done elsewhere.
  */
 static u_long
@@ -300,7 +300,7 @@ ugmt_2_pramt(t)
 }
 
 /*
- * Convert a Mac PRAM time value to GMT, using compiled-in timezone
+ * Convert a Mac PRAM time value to GMT, using rtc_offset
  * GMT bias adjustment is done elsewhere.
  */
 static u_long
