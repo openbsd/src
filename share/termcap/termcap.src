@@ -1,4 +1,4 @@
-#	$OpenBSD: termcap.src,v 1.5 1996/07/14 08:33:27 tholo Exp $
+#	$OpenBSD: termcap.src,v 1.6 1996/10/25 06:15:58 etheisen Exp $
 ######## TERMINAL TYPE DESCRIPTIONS SOURCE FILE
 #
 #	Version 9.13.8
@@ -1418,6 +1418,28 @@ vt510pc|DEC VT510 w/PC keyboard:\
 	:tc=vt420pc:
 vt510pcdos|DEC VT510 w/PC for DOS Merge:\
 	:tc=vt420pcdos:
+
+#
+######
+#       CDE Terminal Emulator
+#
+######
+
+#       Reconstructed via infocmp from file: /usr/share/lib/terminfo/d/dtterm
+dtterm:\
+        :am:mi:ms:xn:xo:bs:pt:\
+        :co#80:li#24:kn#2:\
+        :AL=\E[%dL:DC=\E[%dP:DL=\E[%dM:DO=\E[%dB:IC=\E[%d@:\
+        :LE=\E[%dD:RI=\E[%dC:UP=\E[%dA:ae=^O:al=\E[L:as=^N:\
+        :cd=\E[J:ce=\E[K:cl=\E[H\E[J:cm=\E[%i%d;%dH:\
+        :cs=\E[%i%d;%dr:ct=\E[3g:dc=\E[P:dl=\E[M:ei=\E[4l:\
+        :ho=\E[H:im=\E[4h:is=\E F\E>\E[?1l\E[?7h\E[?45l:\
+        :k1=\E[11~:k2=\E[12~:k3=\E[13~:k4=\E[14~:k5=\E[15~:\
+        :k6=\E[17~:k7=\E[18~:k8=\E[19~:k9=\E[20~:kb=\b:\
+        :kd=\E[B:kl=\E[D:kr=\E[C:ku=\E[A:nd=\E[C:rc=\E8:\
+        :sc=\E7:se=\E[22;27m:so=\E[2;7m:sr=\EM:st=\EH:\
+        :ue=\E[24m:up=\E[A:us=\E[4m:vb=200\E[?5h\E[?5l:\
+        :ve=\E[?25h:vi=\E[?25l:ko=nd,up:
 
 # VT520/VT525
 #
