@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.49 1997/09/21 23:00:42 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.50 1997/09/22 12:11:19 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.202 1996/05/18 15:54:59 christos Exp $	*/
 
 /*-
@@ -1458,7 +1458,7 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 #if NBIOS > 0
 	case CPU_BIOS:
 		return bios_sysctl(name + 1, namelen - 1, oldp, oldlenp,
-				   newp, newlen, p);
+		    newp, newlen, p);
 #endif
 	default:
 		return EOPNOTSUPP;

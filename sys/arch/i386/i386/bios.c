@@ -1,4 +1,4 @@
-/*	$OpenBSD: bios.c,v 1.4 1997/09/21 23:00:41 mickey Exp $	*/
+/*	$OpenBSD: bios.c,v 1.5 1997/09/22 12:09:45 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -171,33 +171,33 @@ biosattach(parent, self, aux)
 	sc->bt = bia->bios_memt;
 	/* bios_init(sc->bt); */
 #if NAPM > 0
-	apminfo.apm_detail          = BIOS_vars.apm_detail;
+	apminfo.apm_detail = BIOS_vars.apm_detail;
 	apminfo.apm_code32_seg_base = BIOS_vars.apm_code32_base;
 	apminfo.apm_code16_seg_base = BIOS_vars.apm_code16_base;
-	apminfo.apm_code32_seg_len  = BIOS_vars.apm_code_len;
-	apminfo.apm_data_seg_base   = BIOS_vars.apm_data_base;
-	apminfo.apm_data_seg_len    = BIOS_vars.apm_data_len;
-	apminfo.apm_entrypt         = BIOS_vars.apm_entry;
+	apminfo.apm_code32_seg_len = BIOS_vars.apm_code_len;
+	apminfo.apm_data_seg_base = BIOS_vars.apm_data_base;
+	apminfo.apm_data_seg_len = BIOS_vars.apm_data_len;
+	apminfo.apm_entrypt = BIOS_vars.apm_entry;
 #endif
 	switch (va[14]) {
-		default:
-		case 0xff: p = "PC";		break;
-		case 0xfe: p = "PC/XT";		break;
-		case 0xfd: p = "PCjr";		break;
-		case 0xfc: p = "AT/286+";	break;
-		case 0xfb: p = "PC/XT+";	break;
-		case 0xfa: p = "PS/2 25/30";	break;
-		case 0xf9: p = "PC Convertible";break;
-		case 0xf8: p = "PS/2 386+";	break;
+	default:
+	case 0xff: p = "PC";		break;
+	case 0xfe: p = "PC/XT";		break;
+	case 0xfd: p = "PCjr";		break;
+	case 0xfc: p = "AT/286+";	break;
+	case 0xfb: p = "PC/XT+";	break;
+	case 0xfa: p = "PS/2 25/30";	break;
+	case 0xf9: p = "PC Convertible";break;
+	case 0xf8: p = "PS/2 386+";	break;
 	}
 	printf(": %s(%02x) BIOS, date %c%c/%c%c/%c%c\n",
-	       p, va[15], va[5], va[6], va[8], va[9], va[11], va[12]);
+	    p, va[15], va[5], va[6], va[8], va[9], va[11], va[12]);
 #ifdef DEBUG
 	printf("apminfo: %x, code %x/%x[%x], data %x[%x], entry %x\n",
-		BIOS_vars.apm_detail, BIOS_vars.apm_code32_base,
-		BIOS_vars.apm_code16_base, BIOS_vars.apm_code_len,
-		BIOS_vars.apm_data_base, BIOS_vars.apm_data_len,
-		BIOS_vars.apm_entry);
+	    BIOS_vars.apm_detail, BIOS_vars.apm_code32_base,
+	    BIOS_vars.apm_code16_base, BIOS_vars.apm_code_len,
+	    BIOS_vars.apm_data_base, BIOS_vars.apm_data_len,
+	    BIOS_vars.apm_entry);
 #endif
 }
 
