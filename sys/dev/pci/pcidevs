@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.243 2000/04/13 00:06:15 jason Exp $
+	$OpenBSD: pcidevs,v 1.244 2000/04/13 00:07:06 deraadt Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1244,8 +1244,10 @@ product PCTECH RZ1000		0x1000	RZ1000
 
 /* Pequr products */
 product RCC PCIBRIDGE		0x0200	PCI
-product RCC CNB20HE		0x0008	CNB20HE
-product RCC CNB20LE		0x0009	CNB20LE
+product RCC XX5			0x0005	PCIHB5
+product RCC XX7			0x0007	PCIHB7
+product RCC CNB20HE		0x0008	CNB20HE Host
+product RCC CNB20LE		0x0009	CNB20LE Host
 
 /* PLX products */
 product PLX	1076		0x1076	I/O
