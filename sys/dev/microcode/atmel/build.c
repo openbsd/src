@@ -22,6 +22,7 @@ output(const char *name, char *buf, int buflen)
 }
 
 
+int
 main(int argc, char *argv[])
 {
 	output("atu-intersil-int", atmel_fw_intersil_int,
@@ -44,4 +45,5 @@ main(int argc, char *argv[])
 	output("atu-rfmd-ext", atmel_fw_rfmd_ext,
 	    sizeof atmel_fw_rfmd_ext);
 
+	return 0;
 }
