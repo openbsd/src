@@ -1,3 +1,4 @@
+/* $OpenBSD: pwd_gensalt.c,v 1.7 1997/04/10 20:04:54 provos Exp $ */
 /*
  * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
  * All rights reserved.
@@ -29,10 +30,12 @@
  */
 
 #include <sys/syslimits.h>
+#include <sys/types.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <err.h>
+#include <grp.h>
 #include <pwd.h>
 #include <util.h>
 #include <time.h>
@@ -49,16 +52,34 @@ pwd_gensalt(salt, max, pwd, type)
 	char   *bcrypt_gensalt __P((u_int8_t));
 	char    option[LINE_MAX];
 	char   *next, *now;
+	char   *cipher;
 	*salt = '\0';
 
 	switch (type) {
 	case 'y':
-		pw_getconf(option, LINE_MAX, pwd->pw_name, "ypcipher");
+	        cipher = "ypcipher";
 		break;
 	case 'l':
 	default:
-		pw_getconf(option, LINE_MAX, pwd->pw_name, "localcipher");
+	        cipher = "localcipher";
 		break;
+	}
+
+	pw_getconf(option, LINE_MAX, pwd->pw_name, cipher);
+
+	/* Try to find an entry for the group */
+	if (*option == 0) {
+	        struct group *grp;
+	        char grpkey[LINE_MAX];
+
+	        grp = getgrgid(pwd->pw_gid);
+	        if (grp != NULL) {
+                        snprintf(grpkey, LINE_MAX-1, ".%s", grp->gr_name);
+			grpkey[LINE_MAX-1] = 0;
+			pw_getconf(option, LINE_MAX, grpkey, cipher);
+		}
+		if (*option == 0)
+		        pw_getconf(option, LINE_MAX, "default", cipher);
 	}
 
 	next = option;
