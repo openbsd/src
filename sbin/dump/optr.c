@@ -1,4 +1,4 @@
-/*	$OpenBSD: optr.c,v 1.24 2003/06/26 16:35:21 deraadt Exp $	*/
+/*	$OpenBSD: optr.c,v 1.25 2003/07/07 01:25:30 millert Exp $	*/
 /*	$NetBSD: optr.c,v 1.11 1997/05/27 08:34:36 mrg Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)optr.c	8.2 (Berkeley) 1/6/94";
 #else
-static char rcsid[] = "$OpenBSD: optr.c,v 1.24 2003/06/26 16:35:21 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: optr.c,v 1.25 2003/07/07 01:25:30 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -82,7 +82,7 @@ query(char *question)
 	FILE	*mytty;
 	time_t	firstprompt, when_answered;
 
-	firstprompt = time(NULL);
+	(void) time(&firstprompt);
 
 	if ((mytty = fopen(_PATH_TTY, "r")) == NULL)
 		quit("fopen on %s fails: %s\n", _PATH_TTY, strerror(errno));
@@ -115,14 +115,14 @@ query(char *question)
 	if (signal(SIGALRM, sig) == SIG_IGN)
 		signal(SIGALRM, SIG_IGN);
 	(void) fclose(mytty);
-	when_answered = time(NULL);
+	(void) time(&when_answered);
 	/*
 	 * Adjust the base for time estimates to ignore time we spent waiting
 	 * for operator input.
 	 */
-	if (tstart_writing != 0)
-	    tstart_writing += (when_answered - firstprompt);
-	return(back);
+	if (when_answered - firstprompt > 0)
+		tstart_writing += (when_answered - firstprompt);
+	return (back);
 }
 
 char lastmsg[BUFSIZ];
