@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.22 1998/10/09 11:20:43 deraadt Exp $
+#	$OpenBSD: list,v 1.23 1998/10/10 06:57:15 deraadt Exp $
 
 # copy the crunched binary, link to it, and kill it
 COPY	${OBJDIR}/instbin	instbin
@@ -37,7 +37,7 @@ LINK	instbin			sbin/newfs sbin/mount_mfs
 LINK	instbin			sbin/ping
 LINK	instbin			sbin/restore
 LINK	instbin			sbin/route
-LINK	instbin			sbin/scsi
+#LINK	instbin			sbin/scsi
 LINK	instbin			sbin/umount
 LINK	instbin			usr/bin/egrep usr/bin/fgrep usr/bin/grep
 LINK	instbin			usr/bin/ftp
@@ -79,7 +79,7 @@ COPY	${DESTDIR}/sbin/dhclient-script sbin/dhclient-script
 
 # and the common installation tools
 COPY	${CURDIR}/termcap.pcvt	usr/share/misc/termcap
-COPY	${DESTDIR}/usr/share/misc/scsi_modes	usr/share/misc/scsi_modes
+#COPY	${DESTDIR}/usr/share/misc/scsi_modes	usr/share/misc/scsi_modes
 
 # and the installation tools
 COPY	dot.profile			.profile
