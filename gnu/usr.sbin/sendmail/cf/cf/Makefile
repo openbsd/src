@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.15 2002/01/09 17:59:02 tholo Exp $
+#	$OpenBSD: Makefile,v 1.16 2002/01/09 23:41:13 lebel Exp $
 #
 #  Makefile for configuration files.
 #
@@ -67,7 +67,6 @@ M4FILES=\
 	${CFDIR}/domain/S2K.Berkeley.EDU.m4 \
 	${CFDIR}/domain/berkeley-only.m4 \
 	${CFDIR}/domain/generic.m4 \
-	${CFDIR}/domain/sigmasoft.m4 \
 	${CFDIR}/feature/accept_unqualified_senders.m4 \
 	${CFDIR}/feature/accept_unresolvable_domains.m4 \
 	${CFDIR}/feature/access_db.m4 \
