@@ -1,4 +1,4 @@
-/*	$OpenBSD: rlogin.c,v 1.18 1997/09/03 18:01:01 kstailey Exp $	*/
+/*	$OpenBSD: rlogin.c,v 1.19 1998/03/25 20:22:08 art Exp $	*/
 /*	$NetBSD: rlogin.c,v 1.8 1995/10/05 09:07:22 mycroft Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)rlogin.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: rlogin.c,v 1.18 1997/09/03 18:01:01 kstailey Exp $";
+static char rcsid[] = "$OpenBSD: rlogin.c,v 1.19 1998/03/25 20:22:08 art Exp $";
 #endif
 #endif /* not lint */
 
@@ -88,6 +88,13 @@ CREDENTIALS cred;
 des_key_schedule schedule;
 int use_kerberos = 1, doencrypt;
 char dst_realm_buf[REALM_SZ], *dest_realm = NULL;
+
+int des_read __P((int, char *, int));
+int des_write __P((int, char *, int));
+
+int krcmd __P((char **, u_short, char *, char *, int *, char *));
+int krcmd_mutual __P((char **, u_short, char *, char *, int *, char *,
+		      CREDENTIALS *, Key_schedule));
 #endif
 
 #ifndef TIOCPKT_WINDOW
@@ -353,6 +360,8 @@ try_connect:
 	(void)setuid(uid);
 	doit(omask);
 	/*NOTREACHED*/
+
+	return 0;
 }
 
 pid_t child;
@@ -527,7 +536,7 @@ writer()
 				stop(0);
 				continue;
 			}
-			if (c != escapechar)
+			if (c != escapechar) {
 #ifdef KERBEROS
 				if (doencrypt)
 					(void)des_write(rem,
@@ -535,6 +544,7 @@ writer()
 				else
 #endif
 					(void)write(rem, &escapechar, 1);
+			}
 		}
 
 #ifdef KERBEROS
