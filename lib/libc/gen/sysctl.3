@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.56 2000/10/18 05:12:07 aaron Exp $
+.\"	$OpenBSD: sysctl.3,v 1.57 2000/12/12 00:29:02 angelos Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -614,22 +614,6 @@ If the kernel has been compiled with the
 .Dv ENCDEBUG
 option,
 then debugging information will also be reported when this variable is set.
-.It Li ip.ipsec-acl
-If set to any non-zero value, incoming IPsec packets that are successfully
-decrypted/authenticated are further validated against a list of acceptable
-packet classes per Security Association.
-When using automated key management, such as
-.Xr isakmpd 8
-or
-.Xr photurisd 8 ,
-the acceptable packet classes should be set up automatically.
-When using manual keying, the appropriate entries have to be configured on a
-per-SA basis via
-.Xr ipsecadm 8 .
-If this value is set to any non-zero value and no access control is
-configured, IPsec packets will be dropped.
-If set to 0, no testing of ingress packets will occur.
-The default value is 1.
 .It Li ip.ipsec-invalid-life
 The lifetime of embryonic Security Associations (SAs that key management
 daemons have reserved but not fully established yet) in seconds.
