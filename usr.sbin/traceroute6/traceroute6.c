@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute6.c,v 1.8 2000/04/20 17:43:46 angelos Exp $	*/
+/*	$OpenBSD: traceroute6.c,v 1.9 2000/06/05 12:58:42 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -429,7 +429,7 @@ main(argc, argv)
 #endif
 			freehostent(hp);
 			break;
-		case 'b':
+		case 'f':
 			first_hop = atoi(optarg);
 			if (first_hop > max_hops) {
 				Fprintf(stderr,
