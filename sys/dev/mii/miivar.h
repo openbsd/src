@@ -1,4 +1,4 @@
-/*	$OpenBSD: miivar.h,v 1.8 2000/10/16 16:53:54 aaron Exp $	*/
+/*	$OpenBSD: miivar.h,v 1.9 2001/05/03 12:31:43 aaron Exp $	*/
 /*	$NetBSD: miivar.h,v 1.17 2000/03/06 20:56:57 thorpej Exp $	*/
 
 /*-
@@ -156,8 +156,9 @@ typedef struct mii_softc mii_softc_t;
 #define	MIIF_NOISOLATE	0x0002		/* do not isolate the PHY */
 #define	MIIF_NOLOOP	0x0004		/* no loopback capability */
 #define	MIIF_DOINGAUTO	0x0008		/* doing autonegotiation (mii_softc) */
+#define MIIF_AUTOTSLEEP	0x0010		/* use tsleep(), not timeout() */
 
-#define	MIIF_INHERIT_MASK	(MIIF_NOISOLATE|MIIF_NOLOOP)
+#define	MIIF_INHERIT_MASK	(MIIF_NOISOLATE|MIIF_NOLOOP|MIIF_AUTOTSLEEP)
 
 /*
  * Special `locators' passed to mii_attach().  If one of these is not
