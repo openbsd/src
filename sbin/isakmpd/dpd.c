@@ -1,4 +1,4 @@
-/*	$OpenBSD: dpd.c,v 1.5 2004/12/08 16:08:10 markus Exp $	*/
+/*	$OpenBSD: dpd.c,v 1.6 2004/12/13 11:41:28 markus Exp $	*/
 
 /*
  * Copyright (c) 2004 Håkan Olsson.  All rights reserved.
@@ -240,6 +240,8 @@ dpd_find_sa(struct sa *sa, void *v_sa)
 {
 	struct sa	*isakmp_sa = v_sa;
 
+	if (!isakmp_sa->id_i || !isakmp_sa->id_r)
+		return (0);
 	return (sa->phase == 2 && 
 	    memcmp(sa->id_i, isakmp_sa->id_i, sa->id_i_len) == 0 &&
 	    memcmp(sa->id_r, isakmp_sa->id_r, sa->id_r_len) == 0);
