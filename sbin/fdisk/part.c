@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.30 2002/06/09 08:13:05 todd Exp $	*/
+/*	$OpenBSD: part.c,v 1.31 2003/03/13 22:41:03 miod Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -107,8 +107,6 @@ static const struct part_type {
 	{ 0x81, "Minix (new) ", "Minix 1.4b ... 1.5.10"},
 	{ 0x82, "Linux swap  ", "Linux swap"},
 	{ 0x83, "Linux files*", "Linux filesystem"},
-	{ 0x93, "Amoeba file*", "Amoeba filesystem"},
-	{ 0x94, "Amoeba BBT  ", "Amoeba bad block table"},
 	{ 0x84, "OS/2 hidden ", "OS/2 hidden C: drive"},
 	{ 0x85, "Linux ext.  ", "Linux extended"},
 	{ 0x86, "NT FAT VS   ", "NT FAT volume set"},
