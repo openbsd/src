@@ -1,3 +1,4 @@
+/* $OpenBSD: bt463var.h,v 1.2 2001/04/21 20:03:54 aaron Exp $ */
 /* $NetBSD: bt485var.h,v 1.1 2000/03/04 10:25:57 elric Exp $ */
 
 /*-

@@ -1,3 +1,4 @@
+/*	$OpenBSD: bt463reg.h,v 1.2 2001/04/21 20:03:54 aaron Exp $ */
 /*	$NetBSD: bt463reg.h,v 1.1 1998/08/18 07:43:09 thorpej Exp $	*/
 
 /*-

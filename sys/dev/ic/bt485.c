@@ -1,3 +1,4 @@
+/* $OpenBSD: bt485.c,v 1.5 2001/04/21 20:03:54 aaron Exp $ */
 /* $NetBSD: bt485.c,v 1.2 2000/04/02 18:55:01 nathanw Exp $ */
 
 /*
