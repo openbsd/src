@@ -1,6 +1,6 @@
 include(MAKEDEV.sub)dnl
 dnl
-vers(a,{-$OpenBSD: MAKEDEV.mi,v 1.25 2002/02/09 19:34:40 drahn Exp $-})dnl
+vers(a,{-$OpenBSD: MAKEDEV.mi,v 1.26 2002/02/10 21:52:30 deraadt Exp $-})dnl
 dnl
 divert(1)dnl
 {-#-}
@@ -459,15 +459,15 @@ _mkdev(flo,fd*,
 {-typnam=$U${i#fd[01]*}
 	case $typnam in
 	0|1)	typnum=0;; # no type specified, assume A
-	*A)		typnam=0; typnum=0;;
-	*B)		typnum=1;;
-	*C)		typnum=2;;
-	*D)		typnum=3;;
-	*E)		typnum=4;;
-	*F)		typnum=5;;
-	*G)		typnum=6;;
-	*H)		typnum=7;;
-	*)		echo bad type $typnam for $i; exit 1;;
+	*A)	typnum=0; typnam=0;;
+	*B)	typnum=1;;
+	*C)	typnum=2;;
+	*D)	typnum=3;;
+	*E)	typnum=4;;
+	*F)	typnum=5;;
+	*G)	typnum=6;;
+	*H)	typnum=7;;
+	*)	echo bad type $typnam for $i; exit 1;;
 	esac
 	case $U in
 	0|1)	blk=major_flo_b; chr=major_flo_c;;
@@ -575,7 +575,6 @@ _mkdev(pty,pty*,{-case $U in
 	1) off=16 name=q;;
 	2) off=32 name=r;;
 	3) off=48 name=s;;
-# Note that telnetd, rlogind, and xterm (at least) only look at p-s.
 	4) off=64 name=t;;
 	5) off=80 name=u;;
 	6) off=96 name=v;;
@@ -855,15 +854,16 @@ T=$0
 hex()
 {
 	case ${--}1 in
-		[0-9]) echo -n {-$-}1;;
-		10) echo -n a;;
-		11) echo -n b;;
-		12) echo -n c;;
-		13) echo -n d;;
-		14) echo -n e;;
-		15) echo -n f;;
+	[0-9]) echo -n {-$-}1;;
+	10) echo -n a;;
+	11) echo -n b;;
+	12) echo -n c;;
+	13) echo -n d;;
+	14) echo -n e;;
+	15) echo -n f;;
 	esac
 }
+
 trunc()
 {
 	# XXX pdksh can't seem to deal with locally scoped variables
@@ -875,6 +875,7 @@ trunc()
 	r|*) echo ${arg1#$arg2} ;;
 	esac
 }
+
 unt()
 {
 	# XXX pdksh can't seem to deal with locally scoped variables
@@ -894,6 +895,7 @@ dnl
 dnl dodisk(name,unit,blkmaj,chrmaj,unit,off[,stepping])
 dnl   arg: 1    2    3      4      5    6    7
 dnl
+
 dodisk()
 {
 	n=Add(Mult(${5},${7:-16}),${6}) count=0
@@ -918,6 +920,7 @@ dnl 5. unit    - beginning unit number for character devices
 dnl 6. off     - offset from 0 for all minor numbers (see svnd for an example)
 dnl 7. step    - optional, defaults to 16, number of partitions per device
 dnl
+
 dodisk2()
 {
 	n=Add(Mult({-$-}5,${7:-16}),{-$-}6)
@@ -931,6 +934,7 @@ dodisk2()
 # M name b/c major minor [mode] [group]
 RMlist="rm -f"
 MKlist=":"
+
 mkl() {
 dnl
 dnl uncomment if multi mknod happens
@@ -943,13 +947,14 @@ ifelse(1,0,
 dnl
 dnl non multi mknod
 dnl
- [ "${mklist[{-$-}1]}" ] && {
-  mklist[{-$-}1]="${mklist[{-$-}1]};mknod -m {-$-}1 {-$-}2 {-$-}3 {-$-}4 {-$-}5"
- } || {
-  mklist[{-$-}1]="mknod -m {-$-}1 {-$-}2 {-$-}3 {-$-}4 {-$-}5"
-  modes="$modes {-$-}1"
- })
+	[ "${mklist[{-$-}1]}" ] && {
+		mklist[{-$-}1]="${mklist[{-$-}1]};mknod -m {-$-}1 {-$-}2 {-$-}3 {-$-}4 {-$-}5"
+	} || {
+		mklist[{-$-}1]="mknod -m {-$-}1 {-$-}2 {-$-}3 {-$-}4 {-$-}5"
+		modes="$modes {-$-}1"
+	})
 }
+
 M() {
 	RMlist="$RMlist {-$-}1"
 	mkl ${5-666} {-$-}1 {-$-}2 {-$-}3 {-$-}4
@@ -997,8 +1002,8 @@ if [ "$os" = "SunOS" ]; then
 		440) mask=227;;
 		esac
 		echo `echo "$@"|sed \
-			's/mknod -m \([0-9]*\) /umask '$mask';mknod /;s/-m [0-9]* //g;\
-			 s/operator/5/g;s/root.kmem/root.2/g;s/root\./root:/g'`
+		    's/mknod -m \([0-9]*\) /umask '$mask';mknod /;s/-m [0-9]* //g;\
+		    s/operator/5/g;s/root.kmem/root.2/g;s/root\./root:/g'`
 	}
 fi
 list="$RMlist"
@@ -1016,6 +1021,7 @@ else
 fi
 divert(3)dnl  
 dnl
+
 R() {
 [ "$DEBUG" ] && set -x
 for i in "$@"
