@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsksymdef.h,v 1.20 2002/08/26 21:17:45 mickey Exp $	*/
+/*	$OpenBSD: wsksymdef.h,v 1.21 2002/08/29 22:18:41 miod Exp $	*/
 /*	$NetBSD: wsksymdef.h,v 1.34.4.1 2000/07/07 09:49:54 hannken Exp $ */
 
 /*-
@@ -545,6 +545,14 @@
 #define KS_Execute		0xf38b
 #define KS_Find			0xf38c
 #define KS_Select		0xf38d
+#define KS_Again		0xf38e
+#define KS_Props		0xf38f
+#define KS_Undo			0xf390
+#define KS_Front		0xf391
+#define KS_Copy			0xf392
+#define KS_Open			0xf393
+#define KS_Paste		0xf394
+#define KS_Cut			0xf395
 
 #define KS_Menu			0xf3c0
 #define KS_Pause		0xf3c1
