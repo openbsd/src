@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm.c,v 1.17 1998/10/28 19:47:00 marc Exp $ */
+/*	$OpenBSD: kvm.c,v 1.18 2000/10/23 06:59:42 aaron Exp $ */
 /*	$NetBSD: kvm.c,v 1.43 1996/05/05 04:31:59 gwr Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm.c	8.2 (Berkeley) 2/13/94";
 #else
-static char *rcsid = "$OpenBSD: kvm.c,v 1.17 1998/10/28 19:47:00 marc Exp $";
+static char *rcsid = "$OpenBSD: kvm.c,v 1.18 2000/10/23 06:59:42 aaron Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -172,7 +172,7 @@ _kvm_malloc(kd, n)
 	void *p;
 
 	if ((p = malloc(n)) == NULL)
-		_kvm_err(kd, kd->program, strerror(errno));
+		_kvm_err(kd, kd->program, "%s", strerror(errno));
 	return (p);
 }
 
