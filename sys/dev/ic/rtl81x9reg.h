@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9reg.h,v 1.8 2003/10/01 23:37:12 fgsch Exp $	*/
+/*	$OpenBSD: rtl81x9reg.h,v 1.9 2004/04/07 15:47:52 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -443,6 +443,9 @@ struct rl_softc {
 /* D-Link device IDs */
 #define DLINK_DEVICEID_8139			0x1300
 #define DLINK_DEVICEID_8139_2			0x1340
+
+/* Abocom device IDs */
+#define ABOCOM_DEVICEID_8139			0xab06
 
 /*
  * PCI low memory base and low I/O base register, and

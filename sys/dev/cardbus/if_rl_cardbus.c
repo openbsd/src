@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rl_cardbus.c,v 1.5 2003/10/21 10:07:33 jmc Exp $ */
+/*	$OpenBSD: if_rl_cardbus.c,v 1.6 2004/04/07 15:47:52 mickey Exp $ */
 /*	$NetBSD: if_rl_cardbus.c,v 1.3.8.3 2001/11/14 19:14:02 nathanw Exp $	*/
 
 /*
@@ -96,6 +96,7 @@
  */
 static const struct rl_type rl_cardbus_devs[] = {
 	{ CARDBUS_VENDOR_ACCTON, CARDBUS_PRODUCT_ACCTON_MPX5030	},
+	{ CARDBUS_VENDOR_ABOCOM, CARDBUS_PRODUCT_ABOCOM_TE100	},
 	{ CARDBUS_VENDOR_REALTEK, CARDBUS_PRODUCT_REALTEK_RT8138 },
 	{ CARDBUS_VENDOR_REALTEK, CARDBUS_PRODUCT_REALTEK_RT8139 },
 	{ CARDBUS_VENDOR_COREGA, CARDBUS_PRODUCT_COREGA_CB_TXD },

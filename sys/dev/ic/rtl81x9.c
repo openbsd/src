@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9.c,v 1.22 2003/10/21 18:58:49 jmc Exp $ */
+/*	$OpenBSD: rtl81x9.c,v 1.23 2004/04/07 15:47:52 mickey Exp $ */
 
 /*
  * Copyright (c) 1997, 1998
@@ -1220,7 +1220,8 @@ rl_attach(sc)
 
 	if (rl_did == RT_DEVICEID_8139 || rl_did == ACCTON_DEVICEID_5030 ||
 	    rl_did == DELTA_DEVICEID_8139 || rl_did == ADDTRON_DEVICEID_8139 ||
-	    rl_did == DLINK_DEVICEID_8139 || rl_did == DLINK_DEVICEID_8139_2)
+	    rl_did == DLINK_DEVICEID_8139 || rl_did == DLINK_DEVICEID_8139_2 ||
+	    rl_did == ABOCOM_DEVICEID_8139)
 		sc->rl_type = RL_8139;
 	else if (rl_did == RT_DEVICEID_8129)
 		sc->rl_type = RL_8129;

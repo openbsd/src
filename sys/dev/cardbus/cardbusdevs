@@ -1,4 +1,4 @@
-$OpenBSD: cardbusdevs,v 1.14 2003/09/27 19:38:10 fgsch Exp $
+$OpenBSD: cardbusdevs,v 1.15 2004/04/07 15:47:52 mickey Exp $
 /*	$NetBSD: cardbusdevs,v 1.7 1999/12/11 22:22:34 explorer Exp $	*/
 
 /*
@@ -74,6 +74,7 @@ product 3COM GLOBALMODEM56	0x6565	56k Global Modem
 /* Abocom products */
 product ABOCOM FE2500		0xab02	FE2500
 product ABOCOM PCM200		0xab03	PCM200
+product ABOCOM TE100		0xab06	TE100
 
 /* Accton products */
 product ACCTON MPX5030		0x1211	MPX503x
