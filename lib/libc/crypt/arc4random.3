@@ -1,4 +1,4 @@
-.\" $OpenBSD: arc4random.3,v 1.14 2000/04/18 02:31:34 aaron Exp $
+.\" $OpenBSD: arc4random.3,v 1.15 2000/04/28 21:02:55 deraadt Exp $
 .\"
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -72,14 +72,15 @@ automatically initializes itself.
 .Xr rand48 3 ,
 .Xr random 3
 .Sh HISTORY
-An algorithm call
+An algorithm called
 .Pa RC4
 was designed by RSA Data Security, Inc.
 It was considered a trade secret, but not trademarked.
-A clone of this was posted anonymously to the USENET and was confirmed to
+Because it was a trade secret, it obviously could not be patented.
+A clone of this was posted anonymously to USENET and confirmed to
 be equivalent by several sources who had access to the original cipher.
 Because of the trade secret situation, RSA Data Security, Inc. can do
-nothing about the situation.
+nothing about the release of the ARC4 algorithm.
 Since
 .Pa RC4
 used to be a trade secret, the cipher is now referred to as
