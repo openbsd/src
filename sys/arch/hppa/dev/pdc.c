@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdc.c,v 1.8 1999/08/12 23:49:07 mickey Exp $	*/
+/*	$OpenBSD: pdc.c,v 1.9 1999/09/07 03:25:13 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -331,7 +331,7 @@ pdc_call(func, pdc_flag)
 	va_end(va);
 
 	if (kernelmapped) {
-		splhigh();
+		s = splhigh();
 		opsw = set_psw(PSW_Q |
 			       ((!pdc_flag && args[0] == PDC_PIM)? PSW_M:0));
 	}
@@ -341,7 +341,7 @@ pdc_call(func, pdc_flag)
 
 	if (kernelmapped) {
 		set_psw(opsw);
-		s = splx(s);
+		splx(s);
 	}
 
 	return ret;
