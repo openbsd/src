@@ -35,7 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: vfprintf.c,v 1.13 2001/08/13 19:16:34 millert Exp $";
+static char *rcsid = "$OpenBSD: vfprintf.c,v 1.14 2001/12/05 10:20:06 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -57,8 +57,8 @@ static char *rcsid = "$OpenBSD: vfprintf.c,v 1.13 2001/08/13 19:16:34 millert Ex
 #include <varargs.h>
 #endif
 
-#include "local.h"  
-#include "fvwrite.h"  
+#include "local.h"
+#include "fvwrite.h"
 
 static void __find_arguments __P((const char *fmt0, va_list ap,
 	va_list **argtable));
@@ -202,10 +202,10 @@ vfprintf(fp, fmt0, ap)
 	struct __siov iov[NIOV];/* ... and individual io vectors */
 	char buf[BUF];		/* space for %c, %[diouxX], %[eEfgG] */
 	char ox[2];		/* space for 0x hex-prefix */
-	va_list *argtable;        /* args, built due to positional arg */
+	va_list *argtable;	/* args, built due to positional arg */
 	va_list statargtable[STATIC_ARG_TBL_SIZE];
-	int nextarg;            /* 1-based argument index */
-	va_list orgap;          /* original argument pointer */
+	int nextarg;		/* 1-based argument index */
+	va_list orgap;		/* original argument pointer */
 
 	/*
 	 * Choose PADSIZE to trade efficiency vs. size.  If larger printf
@@ -262,32 +262,31 @@ vfprintf(fp, fmt0, ap)
 	    flags&LONGINT ? GETARG(u_long) : \
 	    flags&SHORTINT ? (u_long)(u_short)GETARG(int) : \
 	    (u_long)GETARG(u_int))
- 
-         /*
-          * Get * arguments, including the form *nn$.  Preserve the nextarg
-          * that the argument can be gotten once the type is determined.
-          */
+
+	 /*
+	  * Get * arguments, including the form *nn$.  Preserve the nextarg
+	  * that the argument can be gotten once the type is determined.
+	  */
 #define GETASTER(val) \
-	 n2 = 0; \
-	 cp = fmt; \
-	 while (is_digit(*cp)) { \
-		 n2 = 10 * n2 + to_digit(*cp); \
-		 cp++; \
-	 } \
-	 if (*cp == '$') { \
-	       int hold = nextarg; \
-		 if (argtable == NULL) { \
-			 argtable = statargtable; \
-			 __find_arguments(fmt0, orgap, &argtable); \
-		 } \
-		 nextarg = n2; \
-		 val = GETARG(int); \
-		 nextarg = hold; \
-		 fmt = ++cp; \
+	n2 = 0; \
+	cp = fmt; \
+	while (is_digit(*cp)) { \
+		n2 = 10 * n2 + to_digit(*cp); \
+		cp++; \
 	} \
-	else { \
-	       val = GETARG(int); \
-	 }
+	if (*cp == '$') { \
+		int hold = nextarg; \
+		if (argtable == NULL) { \
+			argtable = statargtable; \
+			__find_arguments(fmt0, orgap, &argtable); \
+		} \
+		nextarg = n2; \
+		val = GETARG(int); \
+		nextarg = hold; \
+		fmt = ++cp; \
+	} else { \
+		val = GETARG(int); \
+	}
 
 /*
 * Get the argument indexed by nextarg.   If the argument table is
@@ -297,7 +296,7 @@ vfprintf(fp, fmt0, ap)
 #define GETARG(type) \
 	(((argtable != NULL) ? (void)(ap = argtable[nextarg]) : (void)0), \
 	 nextarg++, va_arg(ap, type))
- 
+
 	/* sorry, fprintf(read_only_file, "") returns EOF, not 0 */
 	if (cantwrite(fp)) {
 		errno = EBADF;
@@ -413,14 +412,14 @@ reswitch:	switch (ch) {
 				n = 10 * n + to_digit(ch);
 				ch = *fmt++;
 			} while (is_digit(ch));
-                       	if (ch == '$') {
+			if (ch == '$') {
 				nextarg = n;
-			   	if (argtable == NULL) {
-			   		argtable = statargtable;
-			   		__find_arguments(fmt0, orgap,
+				if (argtable == NULL) {
+					argtable = statargtable;
+					__find_arguments(fmt0, orgap,
 					    &argtable);
-			  	}
-				goto rflag; 
+				}
+				goto rflag;
 			}
 			width = n;
 			goto reswitch;
@@ -500,7 +499,7 @@ reswitch:	switch (ch) {
 					ch = (ch == 'g') ? 'e' : 'E';
 				else
 					ch = 'g';
-			} 
+			}
 			if (ch <= 'e') {	/* 'e' or 'E' fmt */
 				--expt;
 				expsize = exponent(expstr, expt, ch);
@@ -785,10 +784,10 @@ error:
 #define T_U_LONG	8
 #define TP_LONG		9
 #define T_QUAD		10
-#define T_U_QUAD      	11
-#define TP_QUAD         12
-#define T_DOUBLE      	13
-#define T_LONG_DOUBLE 	14
+#define T_U_QUAD	11
+#define TP_QUAD		12
+#define T_DOUBLE	13
+#define T_LONG_DOUBLE	14
 #define TP_CHAR		15
 #define TP_VOID		16
 
@@ -797,7 +796,7 @@ error:
  * table, indexed by argument number, of pointers to each arguments.  The
  * initial argument table should be an array of STATIC_ARG_TBL_SIZE entries.
  * It will be replaces with a malloc-ed on if it overflows.
- */ 
+ */
 static void
 __find_arguments(fmt0, ap, argtable)
 	const char *fmt0;
@@ -854,7 +853,7 @@ __find_arguments(fmt0, ap, argtable)
 	fmt = (char *)fmt0;
 	typetable = stattypetable;
 	tablesize = STATIC_ARG_TBL_SIZE;
-	tablemax = 0; 
+	tablemax = 0;
 	nextarg = 1;
 	memset(typetable, T_UNUSED, STATIC_ARG_TBL_SIZE);
 
@@ -1092,7 +1091,7 @@ __grow_type_table(typetable, tablesize)
 	return(0);
 }
 
-  
+ 
 #ifdef FLOATING_POINT
 
 extern char *__dtoa __P((double, int, int, int *, int *, char **));
@@ -1109,8 +1108,8 @@ cvt(value, ndigits, flags, sign, decpt, ch, length)
 	if (ch == 'f') {
 		mode = 3;		/* ndigits after the decimal point */
 	} else {
-		/* To obtain ndigits after the decimal point for the 'e' 
-		 * and 'E' formats, round to ndigits + 1 significant 
+		/* To obtain ndigits after the decimal point for the 'e'
+		 * and 'E' formats, round to ndigits + 1 significant
 		 * figures.
 		 */
 		if (ch == 'e' || ch == 'E') {
