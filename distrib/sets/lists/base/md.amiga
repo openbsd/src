@@ -497,8 +497,6 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ata/atareg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ata/atavar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ata/wdvar.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/dev/atapiscsi
-./usr/libdata/perl5/site_perl/m68k-openbsd/dev/atapiscsi/atapiconf.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/auconv.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/audio_if.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/audiovar.ph

@@ -124,8 +124,6 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ata/atareg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ata/atavar.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ata/wdvar.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/dev/atapiscsi
-./usr/libdata/perl5/site_perl/sparc-openbsd/dev/atapiscsi/atapiconf.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/auconv.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/audio_if.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/audiovar.ph
