@@ -1,5 +1,5 @@
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.1 2002/01/04 09:25:35 todd Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.2 2002/01/04 15:59:52 todd Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001 Todd T. Fries <todd@OpenBSD.org>
@@ -30,7 +30,6 @@ _DEV(all)
 _DEV(floppy)
 _DEV(std)
 _DEV(loc)
-dnl _DEV({-usbs-})
 _TITLE(tap)
 dnl _DEV(wt,10,3)
 _DEV(st,18,11)
@@ -65,14 +64,16 @@ dnl _TITLE(prn)
 dnl _DEV(lpt,16)
 dnl _DEV(lpa)
 dnl #
-dnl _TITLE(usb)
-dnl _DEV(usb,61)
-dnl _DEV(uhid,62)
-dnl _DEV(ugen,63)
-dnl _DEV(ulpt,64)
-dnl _DEV(urio,65)
-dnl _DEV(utty,66)
+_TITLE(usb)
+_DEV(usb,90)
+_DEV(uhid,91)
+_DEV(ugen,92)
+_DEV(ulpt,93)
+_DEV(urio,94)
+_DEV(utty,95)
+_DEV(uscan,96)
 _TITLE(spec)
+_DEV({-usbs-})
 _DEV(ses,4)
 _DEV(fdesc,24)
 _DEV(xfs,51)
