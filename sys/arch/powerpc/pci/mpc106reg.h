@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpc106reg.h,v 1.4 1999/11/08 23:49:00 rahnds Exp $ */
+/*	$OpenBSD: mpc106reg.h,v 1.5 2000/01/22 03:55:40 rahnds Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -55,112 +55,13 @@
 #define MPC106_P_PCI_MEM_SPACE_MAP_B	0x80000000	/* Physical */
 
 /* Where we map the PCI I/O space - MAP B*/
-#define MPC106_P_PCI_IO_SPACE_MAP_B	0xf0000000
-
-/* Where we map the config space */
-#define MPC106_PCI_CONF_SPACE_MAP_B \
-	(MPC106_V_ISA_IO_SPACE_MAP_B + 0x00800000)
+#define MPC106_P_PCI_IO_SPACE_MAP_B	0xfe000000
 
 /* offsets from base pointer */
 #define	MPC106_REGOFFS(x)	((x) | 0x80000000)
 
 /* Where PCI devices sees CPU memory. */
 #define	MPC106_PCI_CPUMEM	0x80000000
-
-#if 0
-static __inline void
-mpc_cfg_write_1(iot, ioh, reg, data)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	u_int32_t reg;
-	u_int8_t val;
-{
-	bus_space_write_4(iot, ioh, 0xcf8, MPC106_REGOFFS(reg));
-	bus_space_write_1(iot, ioh, 0xcfc, val);
-
-	u_int32_t addr;
-	int device;
-	int s;
-	int handle; 
-	int tag = 0;
-	printf("mpc_cfg_write tag %x offset %x data %x\n", tag, offset, data);
-
-	device = (tag >> 11) & 0x1f;
-	addr = (0x800 << device) | (tag & 0x380) | MPC106_REGOFFS(reg);
-
-	handle = ppc_open_pci_bridge();
-	s = splhigh();
-
-	OF_call_method("config-l!", handle, 1, 1,
-		0x80000000 | addr, &data);
-	splx(s);
-	ppc_close_pci_bridge(handle);
-}
-
-static __inline void
-mpc_cfg_write_2(iot, ioh, reg, val)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	u_int32_t reg;
-	u_int16_t val;
-{
-	bus_space_write_4(iot, ioh, 0xcf8, MPC106_REGOFFS(reg));
-	bus_space_write_2(iot, ioh, 0xcfc, val);
-}
-
-static __inline void
-mpc_cfg_write_4(iot, ioh, reg, val)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	u_int32_t reg;
-	u_int32_t val;
-{
-
-	bus_space_write_4(iot, ioh, 0xcf8, MPC106_REGOFFS(reg));
-	bus_space_write_4(iot, ioh, 0xcfc, val);
-}
-#endif
-
-static __inline u_int8_t
-mpc_cfg_read_1(iot, ioh, reg)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	u_int32_t reg;
-{
-	u_int8_t _v_;
-
-	bus_space_write_4(iot, ioh, 0xcf8, MPC106_REGOFFS(reg));
-	_v_ = bus_space_read_1(iot, ioh, 0xcfc);
-	return(_v_);
-}
-
-#if 0
-static __inline u_int16_t
-mpc_cfg_read_2(iot, ioh, reg)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	u_int32_t reg;
-{
-	u_int16_t _v_;
-
-	bus_space_write_4(iot, ioh, 0xcf8, MPC106_REGOFFS(reg));
-	_v_ = bus_space_read_2(iot, ioh, 0xcfc);
-	return(_v_);
-}
-
-static __inline u_int32_t
-mpc_cfg_read_4(iot, ioh, reg)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	u_int32_t reg;
-{
-	u_int32_t _v_;
-
-	bus_space_write_4(iot, ioh, 0xcf8, MPC106_REGOFFS(reg));
-	_v_ = bus_space_read_4(iot, ioh, 0xcfc);
-	return(_v_);
-}
-#endif
 
 #define MPC106_PCI_VENDOR		0x00
 #define MPC106_PCI_DEVICE		0x02
@@ -169,5 +70,27 @@ mpc_cfg_read_4(iot, ioh, reg)
 #define MPC106_PCI_REVID		0x08
 
 #define	MPC106_PCI_PMGMT		0x70
+
+void
+mpc_cfg_write_1( bus_space_tag_t iot, bus_space_handle_t ioh_cf8,
+	bus_space_handle_t ioh_cfc, u_int32_t reg, u_int8_t val);
+void
+mpc_cfg_write_2( bus_space_tag_t iot, bus_space_handle_t ioh_cf8,
+	bus_space_handle_t ioh_cfc, u_int32_t reg, u_int16_t val);
+void
+mpc_cfg_write_4( bus_space_tag_t iot, bus_space_handle_t ioh_cf8,
+	bus_space_handle_t ioh_cfc, u_int32_t reg, u_int32_t val);
+
+u_int8_t
+mpc_cfg_read_1( bus_space_tag_t iot, bus_space_handle_t ioh_cf8,
+	bus_space_handle_t ioh_cfc, u_int32_t reg);
+
+u_int16_t
+mpc_cfg_read_2( bus_space_tag_t iot, bus_space_handle_t ioh_cf8,
+	bus_space_handle_t ioh_cfc, u_int32_t reg);
+
+u_int32_t
+mpc_cfg_read_4( bus_space_tag_t iot, bus_space_handle_t ioh_cf8,
+	bus_space_handle_t ioh_cfc, u_int32_t reg);
 
 #endif /* _MACHINE_MPC106REG_H_ */

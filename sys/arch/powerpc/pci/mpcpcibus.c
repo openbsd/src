@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpcpcibus.c,v 1.11 2000/01/14 05:42:16 rahnds Exp $ */
+/*	$OpenBSD: mpcpcibus.c,v 1.12 2000/01/22 03:55:40 rahnds Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -89,6 +89,13 @@ struct cfdriver mpcpcibr_cd = {
 };
 
 static int      mpcpcibrprint __P((void *, const char *pnp));
+
+/* ick, static variables */
+static struct mpc_pci_io {
+	bus_space_tag_t	iot;
+	bus_space_handle_t	ioh_cf8;
+	bus_space_handle_t	ioh_cfc;
+} mpc_io;
 
 struct pcibr_config mpc_config;
 
@@ -184,11 +191,11 @@ mpcpcibrattach(parent, self, aux)
 		lcp->lc_pc.pc_intr_establish = mpc_intr_establish;
 		lcp->lc_pc.pc_intr_disestablish = mpc_intr_disestablish;
 
-		printf(": MPC106, Revision %x.\n",
-				mpc_cfg_read_1(sc->sc_iobus_space, sc->ioh,
-					MPC106_PCI_REVID));
+		printf(": MPC106, Revision %x.\n", 0);
 #if 0
-		mpc_cfg_write_2(sc->sc_iobus_space, sc->ioh,
+				mpc_cfg_read_1(sc->sc_iobus_space, sc->ioh_cf8,
+					sc->ioh_cfc, MPC106_PCI_REVID));
+		mpc_cfg_write_2(sc->sc_iobus_space, sc->ioh_cf8, sc->ioh_cfc,
 			MPC106_PCI_STAT, 0xff80); /* Reset status */
 #endif
 		bridge = "MPC106";
@@ -245,6 +252,12 @@ mpcpcibrattach(parent, self, aux)
 			sc->sc_membus_space.bus_reverse = 1;
 			sc->sc_iobus_space.bus_base = MPC106_P_PCI_IO_SPACE;
 			sc->sc_iobus_space.bus_reverse = 1;
+			if ( bus_space_map(&(sc->sc_iobus_space), 0, NBPG, 0,
+				&sc->ioh_cf8) != 0 )
+			{
+				panic("mpcpcibus: unable to map self\n");
+			}
+			sc->ioh_cfc = sc->ioh_cf8;
 		} else {
 			sc->sc_membus_space.bus_base =
 				MPC106_P_PCI_MEM_SPACE_MAP_B;
@@ -252,8 +265,20 @@ mpcpcibrattach(parent, self, aux)
 			sc->sc_iobus_space.bus_base =
 				MPC106_P_PCI_IO_SPACE_MAP_B;
 			sc->sc_iobus_space.bus_reverse = 1;
+			if ( bus_space_map(&(sc->sc_iobus_space), 0xfec00000,
+				NBPG, 0, &sc->ioh_cf8) != 0 )
+			{
+				panic("mpcpcibus: unable to map self\n");
+			}
+			if ( bus_space_map(&(sc->sc_iobus_space), 0xfee00000,
+				NBPG, 0, &sc->ioh_cfc) != 0 )
+			{
+				panic("mpcpcibus: unable to map self\n");
+			}
 		}
 
+		mpc_io.ioh_cf8 = sc->ioh_cf8;
+		mpc_io.ioh_cfc = sc->ioh_cfc;
 		lcp->lc_pc.pc_conf_v = lcp;
 		lcp->lc_pc.pc_attach_hook = mpc_attach_hook;
 		lcp->lc_pc.pc_bus_maxdevs = mpc_bus_maxdevs;
@@ -268,25 +293,18 @@ mpcpcibrattach(parent, self, aux)
 		lcp->lc_pc.pc_intr_string = mpc_intr_string;
 		lcp->lc_pc.pc_intr_establish = mpc_intr_establish;
 		lcp->lc_pc.pc_intr_disestablish = mpc_intr_disestablish;
-		if ( bus_space_map(&(sc->sc_iobus_space), 0, NBPG, 0,
-			&sc->ioh) != 0 )
-		{
-			panic("mpcpcibus: unable to map self\n");
-		}
 
 
-		printf("iospace base %x ioh %x\n", sc->sc_iobus_space.bus_base, 
-			sc->ioh);
-		printf(": %s, Revision %x. ", bridge, 0x999999);
+		printf(": %s, Revision %x. ", bridge, 
+			mpc_cfg_read_1(&sc->sc_iobus_space, sc->ioh_cf8,
+				sc->ioh_cfc, MPC106_PCI_REVID));
 		if (map == 1) {
 			printf("Using Map A\n");
 		} else  {
 			printf("Using Map B\n");
 		}
 #if 0
-			mpc_cfg_read_1(sc->sc_iobus_space, sc->ioh,
-				MPC106_PCI_REVID));
-		mpc_cfg_write_2(sc->sc_iobus_space, sc->ioh,
+		mpc_cfg_write_2(sc->sc_iobus_space, sc->ioh_cf8, sc->ioh_cfc,
 			MPC106_PCI_STAT, 0xff80); /* Reset status */
 #endif
 		break;
@@ -396,15 +414,19 @@ mpc_bus_maxdevs(cpv, busno)
 	void *cpv;
 	int busno;
 {
-	return(16);
+	return(32);
 }
+
+#define BUS_SHIFT 16
+#define DEVICE_SHIFT 11
+#define FNC_SHIFT 8
 
 pcitag_t
 mpc_make_tag(cpv, bus, dev, fnc)
 	void *cpv;
 	int bus, dev, fnc;
 {
-	return (bus << 16) | (dev << 11) | (fnc << 8);
+	return (bus << BUS_SHIFT) | (dev << DEVICE_SHIFT) | (fnc << FNC_SHIFT);
 }
 
 void
@@ -414,12 +436,13 @@ mpc_decompose_tag(cpv, tag, busp, devp, fncp)
 	int *busp, *devp, *fncp;
 {
 	if (busp != NULL)
-		*busp = (tag >> 16) & 0xff;
+		*busp = (tag >> BUS_SHIFT) & 0xff;
 	if (devp != NULL)
-		*devp = (tag >> 11) & 0x1f;
+		*devp = (tag >> DEVICE_SHIFT) & 0x1f;
 	if (fncp != NULL)
-		*fncp = (tag >> 8) & 0x7;
+		*fncp = (tag >> FNC_SHIFT) & 0x7;
 }
+
 
 pcireg_t
 mpc_conf_read(cpv, tag, offset)
@@ -428,35 +451,28 @@ mpc_conf_read(cpv, tag, offset)
 	int offset;
 {
 	pcireg_t data;
-	u_int32_t addr;
+	u_int32_t reg;
 	int device;
 	int s;
 	int handle; 
 
-	if((tag >> 16) != 0)
-		return(~0);
 	if(offset & 3 || offset < 0 || offset >= 0x100) {
 		printf ("pci_conf_read: bad reg %x\n", offset);
 		return(~0);
 	}
 
-	device = (tag >> 11) & 0x1f;
-	if(device > 11)
-		return(~0);	/* Outside config space */
 #if 0
 	printf("mpc_conf_read tag %x offset %x: ", tag, offset);
 #endif
 
-	addr = (0x800 << device) | (tag & 0x380) | offset;
+	reg =  0x80000000 | tag  | offset;
 
-	handle = ppc_open_pci_bridge();
 	s = splhigh();
 
-	OF_call_method("config-l@", handle, 1, 1,
-		0x80000000 | addr, &data);
+	bus_space_write_4(mpc_io.iot, mpc_io.ioh_cf8, 0xcf8, reg);
+	data = bus_space_read_4(mpc_io.iot, mpc_io.ioh_cfc, 0xcfc);
 
 	splx(s);
-	ppc_close_pci_bridge(handle);
 #if 0
 	printf("data %x\n", data);
 #endif
@@ -471,25 +487,24 @@ mpc_conf_write(cpv, tag, offset, data)
 	int offset;
 	pcireg_t data;
 {
-	u_int32_t addr;
-	int device;
+	u_int32_t reg;
 	int s;
 	int handle; 
+
 #if 0
 	printf("mpc_conf_write tag %x offset %x data %x\n", tag, offset, data);
 #endif
 
-	device = (tag >> 11) & 0x1f;
-	addr = (0x800 << device) | (tag & 0x380) | offset;
+	reg = 0x80000000 | tag | offset;
 
-	handle = ppc_open_pci_bridge();
 	s = splhigh();
 
-	OF_call_method("config-l!", handle, 1, 1,
-		0x80000000 | addr, &data);
+	bus_space_write_4(mpc_io.iot, mpc_io.ioh_cf8, 0xcf8, reg);
+	bus_space_write_4(mpc_io.iot, mpc_io.ioh_cfc, 0xcfc, data);
+
 	splx(s);
-	ppc_close_pci_bridge(handle);
 }
+
 
 int
 mpc_intr_map(lcv, bustag, buspin, line, ihp)
@@ -576,6 +591,12 @@ mpc_intr_string(lcv, ih)
 	return(str);
 }
 
+typedef void     *(intr_establish_t) __P((void *, pci_intr_handle_t,
+            int, int (*func)(void *), void *, char *));
+typedef void     (intr_disestablish_t) __P((void *, void *));
+extern intr_establish_t *intr_establish_func;
+extern intr_disestablish_t *intr_disestablish_func;
+
 void *
 mpc_intr_establish(lcv, ih, level, func, arg, name)
 	void *lcv;
@@ -586,10 +607,11 @@ mpc_intr_establish(lcv, ih, level, func, arg, name)
 	char *name;
 {
 	printf("mpc_pintr_establish called for [%s]\n", name);
-	/*
-	return isabr_intr_establish(NULL, ih, IST_LEVEL, level, func, arg, name);
-	*/
-	return NULL;
+	return (*intr_establish_func)(lcv, ih, level, func, arg, name);
+#if 0
+	return isabr_intr_establish(NULL, ih, IST_LEVEL, level, func, arg,
+		name);
+#endif
 }
 
 void
@@ -605,9 +627,11 @@ mpc_print_pci_stat()
 {
 	u_int32_t stat;
 
-	stat = mpc_cfg_read_4(sc->sc_iobus_space, sc->ioh, MPC106_PCI_CMD);
+	stat = mpc_cfg_read_4(sc->sc_iobus_space, sc->ioh_cf8, sc->ioh_cfc,
+		MPC106_PCI_CMD);
 	printf("pci: status 0x%08x.\n", stat);
-	stat = mpc_cfg_read_2(sc->sc_iobus_space, sc->ioh, MPC106_PCI_STAT);
+	stat = mpc_cfg_read_2(sc->sc_iobus_space, sc->ioh_cf8, sc->ioh_cfc,
+		MPC106_PCI_STAT);
 	printf("pci: status 0x%04x.\n", stat);
 }
 #endif
@@ -621,4 +645,102 @@ pci_iack()
 
 	val = *iack;
 	return val;
+}
+
+void
+mpc_cfg_write_1(iot, ioh_cf8, ioh_cfc, reg, val)
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh_cf8;
+	bus_space_handle_t ioh_cfc;
+	u_int32_t reg;
+	u_int8_t val;
+{
+	int s;
+	s = splhigh();
+	bus_space_write_4(mpc_io.iot, ioh_cf8, 0xcf8,
+		MPC106_REGOFFS(reg));
+	bus_space_write_1(mpc_io.iot, ioh_cfc, 0xcfc, val);
+	splx(s);
+}
+
+void
+mpc_cfg_write_2(iot, ioh_cf8, ioh_cfc, reg, val)
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh_cf8;
+	bus_space_handle_t ioh_cfc;
+	u_int32_t reg;
+	u_int16_t val;
+{
+	int s;
+	s = splhigh();
+	bus_space_write_4(mpc_io.iot, ioh_cf8, 0xcf8, MPC106_REGOFFS(reg));
+	bus_space_write_2(mpc_io.iot, ioh_cfc, 0xcfc, val);
+	splx(s);
+}
+
+void
+mpc_cfg_write_4(iot, ioh_cf8, ioh_cfc, reg, val)
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh_cf8;
+	bus_space_handle_t ioh_cfc;
+	u_int32_t reg;
+	u_int32_t val;
+{
+
+	int s;
+	s = splhigh();
+	bus_space_write_4(mpc_io.iot, ioh_cf8, 0xcf8, MPC106_REGOFFS(reg));
+	bus_space_write_4(mpc_io.iot, ioh_cfc, 0xcfc, val);
+	splx(s);
+}
+
+u_int8_t
+mpc_cfg_read_1(iot, ioh_cf8, ioh_cfc, reg)
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh_cf8;
+	bus_space_handle_t ioh_cfc;
+	u_int32_t reg;
+{
+	u_int8_t _v_;
+
+	int s;
+	s = splhigh();
+	bus_space_write_4(mpc_io.iot, ioh_cf8, 0xcf8, MPC106_REGOFFS(reg));
+	_v_ = bus_space_read_1(mpc_io.iot, ioh_cfc, 0xcfc);
+	splx(s);
+	return(_v_);
+}
+
+u_int16_t
+mpc_cfg_read_2(iot, ioh_cf8, ioh_cfc, reg)
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh_cf8;
+	bus_space_handle_t ioh_cfc;
+	u_int32_t reg;
+{
+	u_int16_t _v_;
+
+	int s;
+	s = splhigh();
+	bus_space_write_4(mpc_io.iot, ioh_cf8, 0xcf8, MPC106_REGOFFS(reg));
+	_v_ = bus_space_read_2(mpc_io.iot, ioh_cfc, 0xcfc);
+	splx(s);
+	return(_v_);
+}
+
+u_int32_t
+mpc_cfg_read_4(iot, ioh_cf8, ioh_cfc, reg)
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh_cf8;
+	bus_space_handle_t ioh_cfc;
+	u_int32_t reg;
+{
+	u_int32_t _v_;
+
+	int s;
+	s = splhigh();
+	bus_space_write_4(mpc_io.iot, ioh_cf8, 0xcf8, MPC106_REGOFFS(reg));
+	_v_ = bus_space_read_4(mpc_io.iot, ioh_cfc, 0xcfc);
+	splx(s);
+	return(_v_);
 }
