@@ -1,4 +1,4 @@
-/*	$OpenBSD: vx.c,v 1.10 2001/08/31 01:05:44 miod Exp $ */
+/*	$OpenBSD: vx.c,v 1.11 2001/08/31 08:18:24 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr. 
  * All rights reserved.
@@ -56,7 +56,7 @@
 #endif
 
 #ifdef	DDB
-#include <ddb/db_variables.h>
+#include <ddb/db_var.h>
 #endif
 
 #define splvx()	spltty()
