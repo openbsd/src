@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.15 2001/02/02 19:45:09 tholo Exp $
+	$OpenBSD: syscalls.master,v 1.16 2001/11/27 19:34:20 maja Exp $
 ;	$NetBSD: syscalls.master,v 1.3 1995/10/10 18:28:40 mycroft Exp $
 
 ;	from: @(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -442,7 +442,8 @@
 230	UNIMPL		sys_shmdt
 231	UNIMPL		sys_shmget
 #endif
-232	UNIMPL
+232	NOARGS		{ int sys_clock_gettime(clockid_t clock_id, \
+			    struct timespec *tp); }
 233	UNIMPL
 234	UNIMPL
 235	UNIMPL		timer_create
