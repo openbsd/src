@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gem_pci.c,v 1.9 2002/03/15 21:35:28 jason Exp $	*/
+/*	$OpenBSD: if_gem_pci.c,v 1.10 2002/07/26 20:36:41 drahn Exp $	*/
 /*	$NetBSD: if_gem_pci.c,v 1.1 2001/09/16 00:11:42 eeh Exp $ */
 
 /*
@@ -110,7 +110,8 @@ gem_match_pci(parent, cf, aux)
 
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_APPLE && 
 	       (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_GMAC ||
-		PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_GMAC2))
+		PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_GMAC2 ||
+		PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_GMAC3))
 		return (1);
 
 	return (0);
