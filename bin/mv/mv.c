@@ -1,4 +1,4 @@
-/*	$OpenBSD: mv.c,v 1.7 1997/03/01 20:43:51 millert Exp $	*/
+/*	$OpenBSD: mv.c,v 1.8 1997/04/12 17:30:23 michaels Exp $	*/
 /*	$NetBSD: mv.c,v 1.9 1995/03/21 09:06:52 cgd Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mv.c	8.2 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: mv.c,v 1.7 1997/03/01 20:43:51 millert Exp $";
+static char rcsid[] = "$OpenBSD: mv.c,v 1.8 1997/04/12 17:30:23 michaels Exp $";
 #endif
 #endif /* not lint */
 
@@ -123,8 +123,10 @@ main(argc, argv)
 	(void)strcpy(path, argv[argc - 1]);
 	baselen = strlen(path);
 	endp = &path[baselen];
-	*endp++ = '/';
-	++baselen;
+	if (*(endp - 1) != '/') {
+		*endp++ = '/';
+		++baselen;
+	}
 	for (rval = 0; --argc; ++argv) {
 		if ((p = strrchr(*argv, '/')) == NULL)
 			p = *argv;
