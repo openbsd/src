@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.c,v 1.14 2005/03/26 13:39:50 claudio Exp $ */
+/*	$OpenBSD: ospfd.c,v 1.15 2005/03/26 13:53:51 henning Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -65,8 +65,8 @@ struct ospfd_conf	*conf = NULL;
 struct imsgbuf		*ibuf_ospfe;
 struct imsgbuf		*ibuf_rde;
 
-pid_t			 ospfe_pid;
-pid_t			 rde_pid;
+pid_t			 ospfe_pid = 0;
+pid_t			 rde_pid = 0;
 
 void
 main_sig_handler(int sig, short event, void *arg)
