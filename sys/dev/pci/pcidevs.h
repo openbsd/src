@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.136 1999/05/06 01:12:19 jason Exp 
+ *	OpenBSD: pcidevs,v 1.137 1999/05/07 18:31:36 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -508,6 +508,7 @@
 #define	PCI_VENDOR_ALTEON	0x12ae		/* Alteon */
 #define	PCI_VENDOR_PICTUREEL	0x12c5		/* Picture Elements */
 #define	PCI_VENDOR_STB2	0x12d2		/* NVidia/SGS-Thomson */
+#define	PCI_VENDOR_LMC	0x1376		/* LAN Media Corp */
 #define	PCI_VENDOR_NETGEAR	0x1385		/* Netgear */
 #define	PCI_VENDOR_INVERTEX	0x14e1		/* Invertex */
 #define	PCI_VENDOR_DELTA	0x1500		/* Delta */
@@ -954,6 +955,11 @@
 
 /* KTI */
 #define	PCI_PRODUCT_KTI_KTIE	0x3000		/* KTI */
+
+/* LAN Media Corporation */
+#define	PCI_PRODUCT_LMC_HSSI	0x0003		/* HSSI */
+#define	PCI_PRODUCT_LMC_DS3	0x0004		/* DS3 */
+#define	PCI_PRODUCT_LMC_SSI	0x0005		/* SSI */
 
 /* LeadTek Research */
 #define	PCI_PRODUCT_LEADTEK_S3_805	0x0000		/* S3 805 */

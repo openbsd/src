@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.136 1999/05/06 01:12:19 jason Exp 
+ *	OpenBSD: pcidevs,v 1.137 1999/05/07 18:31:36 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -1735,6 +1735,24 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "KTI",
 	    "KTI",
+	},
+	{
+	    PCI_VENDOR_LMC, PCI_PRODUCT_LMC_HSSI,
+	    0,
+	    "LAN Media Corp",
+	    "HSSI",
+	},
+	{
+	    PCI_VENDOR_LMC, PCI_PRODUCT_LMC_DS3,
+	    0,
+	    "LAN Media Corp",
+	    "DS3",
+	},
+	{
+	    PCI_VENDOR_LMC, PCI_PRODUCT_LMC_SSI,
+	    0,
+	    "LAN Media Corp",
+	    "SSI",
 	},
 	{
 	    PCI_VENDOR_LEADTEK, PCI_PRODUCT_LEADTEK_S3_805,
@@ -5946,6 +5964,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_STB2, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "NVidia/SGS-Thomson",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_LMC, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "LAN Media Corp",
 	    NULL,
 	},
 	{
