@@ -1,4 +1,5 @@
-/*	$NetBSD: systm.h,v 1.37 1995/09/19 21:40:36 thorpej Exp $	*/
+/*	$OpenBSD: systm.h,v 1.2 1996/02/29 13:57:30 niklas Exp $	*/
+/*	$NetBSD: systm.h,v 1.40 1996/02/10 00:13:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -104,21 +105,28 @@ extern int nsysent;
 
 extern int boothowto;		/* reboot flags, from console subsystem */
 
-/* casts to keep lint happy */
-#define	insque(q,p)	_insque((caddr_t)q,(caddr_t)p)
-#define	remque(q)	_remque((caddr_t)q)
+extern void (*v_putc) __P((int)); /* Virtual console putc routine */
+
+extern	void	_insque	__P((void *, void *));
+extern	void	_remque	__P((void *));
+
+/* casts to keep lint happy, but it should be happy with void * */
+#define	insque(q,p)	_insque(q, p)
+#define	remque(q)	_remque(q)
 
 /*
  * General function declarations.
  */
-int	nullop __P((void));
+int	nullop __P((void *));
 int	enodev __P((void));
+int	enosys __P((void));
+int	lkmenodev __P((dev_t, int, int, struct proc *));
 int	enoioctl __P((void));
 int	enxio __P((void));
 int	eopnotsupp __P((void));
 int	seltrue __P((dev_t dev, int which, struct proc *p));
 void	*hashinit __P((int count, int type, u_long *hashmask));
-int	nosys __P((struct proc *, void *, register_t *));
+int	sys_nosys __P((struct proc *, void *, register_t *));
 
 #ifdef __GNUC__
 volatile void	panic __P((const char *, ...));
@@ -127,12 +135,14 @@ void	panic __P((const char *, ...));
 #endif
 void	tablefull __P((const char *));
 void	printf __P((const char *, ...));
+void	uprintf __P((const char *, ...));
 int	sprintf __P((char *buf, const char *, ...));
 void	ttyprintf __P((struct tty *, const char *, ...));
 
 void	bcopy __P((const void *from, void *to, size_t len));
 void	ovbcopy __P((const void *from, void *to, size_t len));
 void	bzero __P((void *buf, size_t len));
+int	bcmp __P((const void *b1, const void *b2, size_t len));
 
 int	copystr __P((void *kfaddr, void *kdaddr, size_t len, size_t *done));
 int	copyinstr __P((void *udaddr, void *kaddr, size_t len, size_t *done));
@@ -150,7 +160,10 @@ long	fuword __P((void *base));
 long	fuiword __P((void *base));
 int	suword __P((void *base, long word));
 int	suiword __P((void *base, long word));
+int	fuswintr __P((caddr_t));
+int	suswintr __P((caddr_t, u_int));
 
+struct timeval;
 int	hzto __P((struct timeval *tv));
 void	timeout __P((void (*func)(void *), void *arg, int ticks));
 void	untimeout __P((void (*func)(void *), void *arg));
@@ -177,10 +190,14 @@ void	*shutdownhook_establish __P((void (*)(void *), void *));
 void	shutdownhook_disestablish __P((void *));
 void	doshutdownhooks __P((void));
 
+int	uiomove __P((caddr_t, int, struct uio *));
+
 #include <lib/libkern/libkern.h>
 
 #ifdef DDB
 /* debugger entry points */
-int	Debugger __P((void));	/* in DDB only */
+#ifdef notyet	/* XXX: Lots of local decls assume int Debugger */
+void	Debugger __P((void));	/* in DDB only */
+#endif
 int	read_symtab_from_file __P((struct proc *,struct vnode *,const char *));
 #endif

@@ -1,4 +1,5 @@
-/*	$NetBSD: socket.h,v 1.12 1995/03/29 22:10:11 briggs Exp $	*/
+/*	$OpenBSD: socket.h,v 1.2 1996/02/29 13:57:28 niklas Exp $	*/
+/*	$NetBSD: socket.h,v 1.14 1996/02/09 18:25:36 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1985, 1986, 1988, 1993, 1994
@@ -237,9 +238,9 @@ struct sockproto {
 }
 
 /*
- * Maximum queue length specifiable by listen.
+ * Maximum queue length specifiable by listen(2).
  */
-#define	SOMAXCONN	5
+#define	SOMAXCONN	128
 
 /*
  * Message header for recvmsg and sendmsg calls.
@@ -336,6 +337,12 @@ int	shutdown __P((int, int));
 int	socket __P((int, int, int));
 int	socketpair __P((int, int, int, int *));
 __END_DECLS
-
+#else
+# if defined(COMPAT_43) || defined(COMPAT_SUNOS) || defined(COMPAT_LINUX) || \
+     defined(COMPAT_HPUX) || defined(COMPAT_FREEBSD)
+#  define COMPAT_OLDSOCK
+#  define MSG_COMPAT	0x8000
+# endif
 #endif /* !_KERNEL */
+
 #endif /* !_SYS_SOCKET_H_ */

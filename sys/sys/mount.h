@@ -1,4 +1,5 @@
-/*	$NetBSD: mount.h,v 1.45 1996/01/19 14:29:25 leo Exp $	*/
+/*	$OpenBSD: mount.h,v 1.5 1996/02/29 13:57:27 niklas Exp $	*/
+/*	$NetBSD: mount.h,v 1.47 1996/02/09 18:25:16 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -200,7 +201,7 @@ struct vfsops {
 				    struct mbuf *nam, struct vnode **vpp,
 				    int *exflagsp, struct ucred **credanonp));
 	int	(*vfs_vptofh)	__P((struct vnode *vp, struct fid *fhp));
-	int	(*vfs_init)	__P((void));
+	void	(*vfs_init)	__P((void));
 	int	vfs_refcount;
 };
 
@@ -408,10 +409,17 @@ int	vfs_mountedon __P((struct vnode *));/* is a vfs mounted on vp */
 void	vfs_shutdown __P((void));	    /* unmount and sync file systems */
 void	vfs_unlock __P((struct mount *));   /* unlock a vfs */
 void	vfs_unmountall __P((void));	    /* unmount file systems */
+int 	vfs_busy __P((struct mount *));
+void	vfs_unbusy __P((struct mount *));
 extern	CIRCLEQ_HEAD(mntlist, mount) mountlist;	/* mounted filesystem list */
 extern	struct vfsops *vfssw[];		    /* filesystem type table */
 extern	int nvfssw;
-
+long	makefstype __P((char *));
+int	dounmount __P((struct mount *, int, struct proc *));
+void	vfsinit __P((void));
+#ifdef DEBUG
+void	vfs_bufstats __P((void));
+#endif
 #else /* _KERNEL */
 
 #include <sys/cdefs.h>
@@ -421,7 +429,7 @@ int	fstatfs __P((int, struct statfs *));
 int	getfh __P((const char *, fhandle_t *));
 int	getfsstat __P((struct statfs *, long, int));
 int	getmntinfo __P((struct statfs **, int));
-int	mount __P((char *, const char *, int, void *));
+int	mount __P((const char *, const char *, int, void *));
 int	statfs __P((const char *, struct statfs *));
 int	unmount __P((const char *, int));
 __END_DECLS
