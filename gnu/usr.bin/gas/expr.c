@@ -1,4 +1,4 @@
-/*	$OpenBSD: expr.c,v 1.6 1998/11/16 00:52:32 jason Exp $	*/
+/*	$OpenBSD: expr.c,v 1.7 2000/07/26 15:42:57 deraadt Exp $	*/
 
 /* expr.c -operands, expressions-
    Copyright (C) 1987, 1990, 1991, 1992 Free Software Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: expr.c,v 1.6 1998/11/16 00:52:32 jason Exp $";
+static char rcsid[] = "$OpenBSD: expr.c,v 1.7 2000/07/26 15:42:57 deraadt Exp $";
 #endif
 
 #include <ctype.h>
@@ -739,9 +739,9 @@ segT expr(rank, resultP)
 {
 	expressionS		right;
 	register operatorT	op_left;
-	register char c_left;	/* 1st operator character. */
+	register u_char c_left;	/* 1st operator character. */
 	register operatorT	op_right;
-	register char c_right;
+	register u_char c_right;
 	
 #ifndef	__CHAR_UNSIGNED__
 	know(rank >= 0);
