@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_machdep.c,v 1.23 2001/07/25 13:25:33 art Exp $	*/
+/*	$OpenBSD: ofw_machdep.c,v 1.24 2001/08/11 16:18:42 matthieu Exp $	*/
 /*	$NetBSD: ofw_machdep.c,v 1.1 1996/09/30 16:34:50 ws Exp $	*/
 
 /*
@@ -436,7 +436,9 @@ ofwconprobe()
 	/* what to do about serial console? */
 	if (strcmp ("keyboard", iname) == 0) {
 		struct usb_kbd_ihandles *ukbds;
+#if NAKBD > 0
 		int akbd;
+#endif
 		/* if there is a usb keyboard, we want it, do not 
 		 * dereference the pointer that is returned
 		 */
@@ -447,6 +449,7 @@ ofwconprobe()
 			ukbd_cnattach();
 			goto kbd_found;
 		}
+#if NAKBD > 0
 		if (OF_call_method("`adb-kbd-ihandle", OF_stdin, 0, 1, &akbd)
 			!= -1 &&
 		   akbd != 0 &&
@@ -456,6 +459,7 @@ ofwconprobe()
 			akbd_cnattach();
 			goto kbd_found;
 		}
+#endif
 		panic("no console keyboard");
 kbd_found:
 	}
