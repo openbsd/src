@@ -1,7 +1,7 @@
-/*	$OpenBSD: com_gsc.c,v 1.16 2003/08/07 19:47:33 mickey Exp $	*/
+/*	$OpenBSD: com_gsc.c,v 1.17 2003/08/14 19:17:12 mickey Exp $	*/
 
 /*
- * Copyright (c) 1998-2002 Michael Shalayeff
+ * Copyright (c) 1998-2003 Michael Shalayeff
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -12,11 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by Michael Shalayeff.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -66,7 +61,8 @@ com_gsc_probe(parent, match, aux)
 
 	if (ga->ga_type.iodc_type != HPPA_TYPE_FIO ||
 	    (ga->ga_type.iodc_sv_model != HPPA_FIO_GRS232 &&
-	     (ga->ga_type.iodc_sv_model != HPPA_FIO_RS232)))
+	     ga->ga_type.iodc_sv_model != HPPA_FIO_RS232 &&
+	     ga->ga_type.iodc_sv_model != HPPA_FIO_GRJ16))
 		return (0);
 
 	return (1);
@@ -81,10 +77,16 @@ com_gsc_attach(parent, self, aux)
 	struct com_softc *sc = (void *)self;
 	struct gsc_attach_args *ga = aux;
 	struct com_gsc_regs *regs;
+	int rj16 = 0;
 
 	sc->sc_frequency = COM_FREQ;
-	sc->sc_iobase = (bus_addr_t)ga->ga_hpa + IOMOD_DEVOFFSET;
 	sc->sc_iot = ga->ga_iot;
+	sc->sc_iobase = (bus_addr_t)ga->ga_hpa;
+	if (ga->ga_type.iodc_sv_model != HPPA_FIO_GRJ16)
+		sc->sc_iobase += IOMOD_DEVOFFSET;
+	else
+		rj16++;
+
 	if (sc->sc_iobase == CONADDR)
 		sc->sc_ioh = comconsioh;
 	else if (bus_space_map(sc->sc_iot, sc->sc_iobase, COM_NPORTS,
@@ -94,7 +96,7 @@ com_gsc_attach(parent, self, aux)
 	}
 
 	regs = (struct com_gsc_regs *)ga->ga_hpa;
-	if (sc->sc_iobase != CONADDR) {
+	if (!rj16 && sc->sc_iobase != CONADDR) {
 		/*regs->reset = 0xd0;*/
 		DELAY(1000);
 	}
@@ -104,4 +106,3 @@ com_gsc_attach(parent, self, aux)
 	sc->sc_ih = gsc_intr_establish((struct gsc_softc *)parent, IPL_TTY,
 	    ga->ga_irq, comintr, sc, sc->sc_dev.dv_xname);
 }
-
