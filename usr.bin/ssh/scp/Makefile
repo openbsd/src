@@ -2,7 +2,14 @@
 
 PROG=	scp
 BINOWN=	root
-BINMODE=555
+
+.if (${MACHINE_ARCH} == "alpha" || ${MACHINE_ARCH} == "powerpc" || \
+	${MACHINE_ARCH} == "hppa")
+BINMODE=0000
+.else
+BINMODE?=555
+.endif
+
 BINDIR=	/usr/bin
 MAN=	scp.1
 

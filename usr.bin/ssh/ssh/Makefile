@@ -2,7 +2,14 @@
 
 PROG=	ssh
 BINOWN=	root
-BINMODE=4555
+
+.if (${MACHINE_ARCH} == "alpha" || ${MACHINE_ARCH} == "powerpc" || \
+	${MACHINE_ARCH} == "hppa")
+BINMODE=0000
+.else
+BINMODE?=4555
+.endif
+
 BINDIR=	/usr/bin
 MAN=	ssh.1
 LINKS=	${BINDIR}/ssh ${BINDIR}/slogin
