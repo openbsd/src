@@ -1,7 +1,7 @@
-/*	$OpenBSD: mainbus.c,v 1.39 2003/01/21 17:32:40 mickey Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.40 2003/01/22 02:13:40 mickey Exp $	*/
 
 /*
- * Copyright (c) 1998-2001 Michael Shalayeff
+ * Copyright (c) 1998-2003 Michael Shalayeff
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -705,10 +705,9 @@ void
 mbus_dmamap_sync(void *v, bus_dmamap_t map, bus_addr_t offset, bus_size_t len,
     int ops)
 {
-
 	if (ops & BUS_DMASYNC_PREWRITE)
 		fdcache(HPPA_SID_KERNEL, map->_dm_va + offset, len);
-	else if (ops & BUS_DMASYNC_PREREAD)
+	else
 		pdcache(HPPA_SID_KERNEL, map->_dm_va + offset, len);
 
 	/* for either operation sync the shit away */
