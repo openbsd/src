@@ -1,4 +1,4 @@
-/*	$OpenBSD: cron.c,v 1.33 2004/05/03 15:10:21 millert Exp $	*/
+/*	$OpenBSD: cron.c,v 1.34 2004/05/13 13:54:52 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -22,7 +22,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static const char rcsid[] = "$OpenBSD: cron.c,v 1.33 2004/05/03 15:10:21 millert Exp $";
+static const char rcsid[] = "$OpenBSD: cron.c,v 1.34 2004/05/13 13:54:52 millert Exp $";
 #endif
 
 #define	MAIN_PROGRAM
@@ -393,7 +393,7 @@ cron_sleep(int target) {
 		Debug(DSCH, ("[%ld] Target time=%ld, sec-to-wait=%ld\n",
 		    (long)getpid(), (long)target*SECONDS_PER_MINUTE, tv.tv_sec))
 
-		poke = 0;
+		poke = RELOAD_CRON | RELOAD_AT;
 		if (fdsr)
 			FD_SET(cronSock, fdsr);
 		/* Sleep until we time out, get a poke, or get a signal. */
