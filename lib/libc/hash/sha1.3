@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sha1.3,v 1.30 2004/05/03 17:30:15 millert Exp $
+.\"	$OpenBSD: sha1.3,v 1.31 2004/05/03 18:10:07 millert Exp $
 .\"
 .\" Copyright (c) 1997, 2004 Todd C. Miller <Todd.Miller@courtesan.com>
 .\"
@@ -37,7 +37,7 @@
 .Ft void
 .Fn SHA1Init "SHA1_CTX *context"
 .Ft void
-.Fn SHA1Update "SHA1_CTX *context" "const u_int8_t *data" "u_int len"
+.Fn SHA1Update "SHA1_CTX *context" "const u_int8_t *data" "size_t len"
 .Ft void
 .Fn SHA1Pad "SHA1_CTX *context"
 .Ft void
