@@ -1,4 +1,4 @@
-/*	$OpenBSD: kbd_wscons.c,v 1.19 2004/10/08 17:26:35 millert Exp $ */
+/*	$OpenBSD: kbd_wscons.c,v 1.20 2004/10/08 19:30:31 jaredy Exp $ */
 
 /*
  * Copyright (c) 2001 Mats O Jansson.  All rights reserved.
@@ -234,7 +234,7 @@ kbd_list(void)
 	kvm_close(kd);
 
 	if (rebuild > 0) {
-		printf("Unknown encoding or variant. kbd(1) needs to be rebuilt.\n");
+		printf("Unknown encoding or variant. kbd(8) needs to be rebuilt.\n");
 	}
 #else
 	printf("List not available; sorry.\n");
