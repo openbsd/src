@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpctl.8,v 1.4 2004/01/04 21:45:05 henning Exp $
+.\" $OpenBSD: bgpctl.8,v 1.5 2004/01/05 09:49:42 jmc Exp $
 .\"
 .\" Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
 .\"
@@ -21,14 +21,13 @@
 .Nm bgpctl
 .Nd "control the Border Gateway Protocol daemon"
 .Sh SYNOPSIS
-.Nm bgpctl [command]
-.Bk -words
-.Ek
+.Nm bgpctl
+.Op Cm command
 .Sh DESCRIPTION
 The
 .Nm
 program controls the
-.Xr bgpd
+.Xr bgpd 8
 daemon.
 The commands are as follows:
 .Pp
@@ -52,14 +51,14 @@ Show the BGP timers.
 .It Li reload
 Reload the configuration file.
 .El
-.Sh SEE ALSO
-.Xr bgpd 8
 .Sh FILES
 .Bl -tag -width "/etc/bgpd.conf" -compact
 .It Pa /etc/bgpd.conf
 .Nm
 configuration file.
 .El
+.Sh SEE ALSO
+.Xr bgpd 8
 .Sh HISTORY
 The
 .Nm
