@@ -126,7 +126,7 @@ do_list(const char *keytab_string)
 	kie = &kp->next;
 	krb5_kt_free_entry(context, &entry);
     }
-    *kie = NULL; /* termiate list */
+    *kie = NULL; /* terminate list */
     ret = krb5_kt_end_seq_get(context, keytab, &cursor);
 
     printf("%-*s  %-*s  %-*s", max_version, "Vno", 
