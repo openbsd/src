@@ -1,4 +1,4 @@
-.\" $OpenBSD: wsdisplay.4,v 1.29 2004/09/30 19:59:26 mickey Exp $
+.\" $OpenBSD: wsdisplay.4,v 1.30 2005/01/04 16:39:09 miod Exp $
 .\" $NetBSD: wsdisplay.4,v 1.5 2000/05/13 15:22:19 mycroft Exp $
 .\"
 .\" Copyright (c) 1999 Matthias Drochner.
@@ -25,7 +25,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd February 29, 2004
+.Dd January 4, 2005
 .Dt WSDISPLAY 4
 .Os
 .Sh NAME
@@ -68,6 +68,8 @@
 (sparc64 framebuffers)
 .Cd "wsdisplay0 at smg?"
 (VAXstation small monochrome display)
+.Cd "wsdisylay* at lcd?"
+(Zaurus LCD display)
 .Cd "option WSDISPLAY_DEFAULTSCREENS=N"
 .Sh DESCRIPTION
 The
@@ -189,6 +191,7 @@ control device (per screen)
 .Xr cgtwo 4 ,
 .Xr creator 4 ,
 .Xr intro 4 ,
+.Xr lcd 4 ,
 .Xr mgx 4 ,
 .Xr pcdisplay 4 ,
 .Xr pninek 4 ,

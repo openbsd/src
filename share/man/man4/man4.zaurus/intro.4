@@ -1,0 +1,133 @@
+.\"	$OpenBSD: intro.4,v 1.1 2005/01/04 16:39:13 miod Exp $
+.\"
+.\" Copyright (c) 1994 Christopher G. Demetriou
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"      This product includes software developed by Christopher G. Demetriou.
+.\" 3. The name of the author may not be used to endorse or promote products
+.\"    derived from this software without specific prior written permission
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd January 4, 2005
+.Dt INTRO 4 zaurus
+.Os
+.Sh NAME
+.Nm intro
+.Nd introduction to special files and hardware support
+.Sh DESCRIPTION
+The manual pages in section 4 describe the special files,
+related driver functions, and networking support
+available in the system.
+In this part of the manual, the
+.Tn SYNOPSIS
+section of
+each configurable device gives a sample specification
+for use in constructing a system description for the
+.Xr config 8
+program.
+The
+.Tn DIAGNOSTICS
+section lists messages which may appear on the console
+and/or in the system error log
+.Pa /var/log/messages
+due to errors in device operation;
+see
+.Xr syslogd 8
+for more information.
+.Pp
+This section contains both devices
+which may be configured into the system
+and network related information.
+The networking support is introduced in
+.Xr netintro 4 .
+.Sh DEVICE SUPPORT
+This section describes the hardware supported on the zaurus platform.
+Software support for these devices comes in two forms.
+A hardware device may be supported with a character or block
+.Em device driver ,
+or it may be used within the networking subsystem and have a
+.Em network interface driver .
+Block and character devices are accessed through files in the file
+system of a special type; see
+.Xr mknod 8 .
+Network interfaces are indirectly accessed through the interprocess
+communication facilities provided by the system; see
+.Xr socket 2 .
+.Pp
+A hardware device is identified to the system at configuration time
+and the appropriate device or network interface driver is then compiled
+into the system.
+When the resultant system is booted, the autoconfiguration facilities
+in the system probe for the device and, if found, enable the software
+support for it.
+If a device does not respond at autoconfiguration
+time it is not accessible at any time afterwards.
+To enable a device which did not autoconfigure,
+the system will have to be rebooted.
+.Pp
+The autoconfiguration system is described in
+.Xr autoconf 4 .
+A list of the supported devices is given below.
+.Sh LIST OF DEVICES
+The devices listed below are supported in this incarnation of
+the system.
+Pseudo-devices are not listed.
+Devices are indicated by their functional interface.
+Not all supported devices are listed.
+.Pp
+.Bl -tag -width tenletters -compact -offset indent
+.It Xr aue 4
+ADMtek AN986-based USB Ethernet adapters.
+.It Xr axe 4
+ASIX Electronics AX88172 USB Ethernet adapters.
+.It Xr com 4
+NS16550-compatible asynchronous serial ports.
+.It Xr cdce 4
+USB Communication Device Class Ethernet adapters.
+.\" cpu
+.It Xr cue 4
+CATC USB-EL1201A based USB Ethernet adapters.
+.It Xr kue 4
+Kawasaki LSI KL5KUSB101B-based USB Ethernet.
+.It Xr udav 4
+Davicom DM9601 USB Ethernet adapters.
+.It Xr ukbd 4
+USB keyboard.
+.It Xr umass 4
+USB mass storage.
+.It Xr upl 4
+Prolific PL2301/PL2302-based host-to-host USB connectors.
+.It Xr url 4
+Realtek RTL8150L USB Ethernet adapters.
+.It Xr wi 4
+WaveLAN/IEEE, PRISM 2-3 and Spectrum24 802.11B wireless network adapters.
+.El
+.Sh SEE ALSO
+.Xr autoconf 4 ,
+.Xr config 8
+.Sh HISTORY
+The
+zaurus
+.Nm intro
+first appeared in
+.Ox 3.7 .

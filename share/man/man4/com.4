@@ -1,4 +1,4 @@
-.\"	$OpenBSD: com.4,v 1.18 2004/09/30 19:59:24 mickey Exp $
+.\"	$OpenBSD: com.4,v 1.19 2005/01/04 16:39:08 miod Exp $
 .\"	$NetBSD: com.4,v 1.5 1996/03/16 00:07:08 thorpej Exp $
 .\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
@@ -33,7 +33,7 @@
 .\"
 .\"     from: @(#)dca.4	5.2 (Berkeley) 3/27/91
 .\"
-.Dd July 12, 1998
+.Dd January 4, 2005
 .Dt COM 4
 .Os
 .Sh NAME
@@ -72,6 +72,10 @@
 .Cd "# sparc64"
 .Cd "com* at asio?"
 .Cd "com* at ebus?"
+.Pp
+.Cd "# zaurus"
+.Cd "com0 at pxaip? addr 0x40100000 intr 22           " Pq "full function UART"
+.Cd "com1 at pxaip? addr 0x40200000 intr 21           " Pq "bluetooth UART"
 .Sh DESCRIPTION
 The
 .Nm com
@@ -137,6 +141,7 @@ with the code listed.
 .Xr isapnp 4 ,
 .Xr pcmcia 4 ,
 .Xr puc 4 ,
+.Xr pxaip 4 ,
 .Xr rtfps 4 ,
 .Xr tty 4
 .Sh HISTORY
