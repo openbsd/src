@@ -1,4 +1,4 @@
-$OpenBSD: TODO,v 1.15 2001/09/05 02:51:19 fgsch Exp $
+$OpenBSD: TODO,v 1.16 2001/09/05 02:54:12 fgsch Exp $
 
 This is a list of things that still need to be done:
 
@@ -62,7 +62,7 @@ This is a list of things that still need to be done:
 * Figure out what to do with the configuration system variables (_SC_*)
   that are defined by POSIX 1003.1c (at least update sysconf(3))
 
-* Compare with PTL (http://www3.media.osaka-cu.ac.jp/~k-abe/PTL/)
+* Compare with PTL (http://www.media.osaka-cu.ac.jp/~k-abe/PTL/)
   [snarfed some sparc md stuff]
 
 * Verify that threads work with:
