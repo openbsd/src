@@ -1,4 +1,4 @@
-.\"	$NetBSD: mprotect.2,v 1.6 1995/10/12 15:41:08 jtc Exp $
+.\"	$Id: minherit.2,v 1.2 1996/01/12 21:08:46 niklas Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -31,10 +31,10 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	@(#)mprotect.2	8.1 (Berkeley) 6/9/93
+.\"	@(#)minherit.2	8.1 (Berkeley) 6/9/93
 .\"
 .Dd June 9, 1993
-.Dt MPROTECT 2
+.Dt MINHERIT 2
 .Os
 .Sh NAME
 .Nm minherit
@@ -61,5 +61,5 @@ the granularity of changes may be as large as an entire region.
 .Xr munmap 2
 .Sh HISTORY
 The
-.Fn mprotect
-function first appeared in 4.4BSD.
+.Fn minherit
+function first appeared in OpenBSD.
