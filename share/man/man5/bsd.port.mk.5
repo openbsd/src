@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.5 2000/06/13 02:17:09 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.6 2000/07/04 16:08:58 aaron Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -503,22 +503,22 @@ that behavior.
 used to be retrieved from a separate site list. For greater flexibility,
 all files are now retrieved from 
 .Ev MASTER_SITES ,
-.Ev MASTER_SITES0 ,...
+.Ev MASTER_SITES0 , ...,
 .Ev MASTER_SITES9 ,
 using a 
 .Sq :0 
 to
 .Sq :9
 extension to the file name, e.g., 
-.Bd -litteral -offset indent
-	PATCH_FILES=foo.diff.gz
-	PATCH_SITES=ftp://ftp.zoinx.org/pub/
+.Bd -literal -offset indent
+PATCH_FILES=foo.diff.gz
+PATCH_SITES=ftp://ftp.zoinx.org/pub/
 .Ed
+.Pp
 becomes
-
-.Bd -litteral -offset indent
-	PATCH_FILES=foo.diff.gz:0
-	MASTER_SITES0=ftp://ftp.zoinx.org/pub/
+.Bd -literal -offset indent
+PATCH_FILES=foo.diff.gz:0
+MASTER_SITES0=ftp://ftp.zoinx.org/pub/
 .Ed
 .It Ev PLIST_SRC
 From 
