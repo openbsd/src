@@ -1,4 +1,4 @@
-/*	$OpenBSD: expand.c,v 1.2 1996/06/26 05:32:48 deraadt Exp $	*/
+/*	$OpenBSD: expand.c,v 1.3 1998/01/22 17:41:09 deraadt Exp $	*/
 /*	$NetBSD: expand.c,v 1.5 1995/09/02 06:19:46 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)expand.c	8.1 (Berkeley) 6/9/93";
 #endif
-static char rcsid[] = "$OpenBSD: expand.c,v 1.2 1996/06/26 05:32:48 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: expand.c,v 1.3 1998/01/22 17:41:09 deraadt Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -70,7 +70,7 @@ main(argc, argv)
 	register int n;
 
 	/* handle obsolete syntax */
-	while (argc > 1 && argv[1][0] && isdigit(argv[1][1])) {
+	while (argc > 1 && argv[1][0] == '-' && isdigit(argv[1][1])) {
 		getstops(&argv[1][1]);
 		argc--; argv++;
 	}
