@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.16 1997/06/23 22:20:25 kstailey Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.17 1997/11/04 13:22:25 kstailey Exp $
 
 MAN=		binutils/ar.1 binutils/nm.1 \
 		binutils/objcopy.1 binutils/objdump.1 binutils/ranlib.1 \
@@ -12,8 +12,6 @@ SUBDIRS+=	gdb mmalloc readline
 MAN+=		gdb/gdb.1 
 .endif
 
-
-
 SUBDIRS+=	binutils ld gas
 	
 all:	config.status
@@ -22,12 +20,22 @@ all:	config.status
 
 .FORCE:	.IGNORE
 
+.include <bsd.own.mk>
+
+.ifdef GLOBAL_AUTOCONF_CACHE
+CF=	--cache-file=${GLOBAL_AUTOCONF_CACHE}
+.else
+CF=
+.endif
+
 config: .FORCE
+.ifndef GLOBAL_AUTOCONF_CACHE
 	-rm -f config.cache
-	sh ${.CURDIR}/configure --prefix=/usr --disable-gdbtk
+.endif
+	sh ${.CURDIR}/configure --prefix=/usr --disable-gdbtk ${CF}
 
 config.status:
-	sh ${.CURDIR}/configure --prefix=/usr --disable-gdbtk
+	sh ${.CURDIR}/configure --prefix=/usr --disable-gdbtk ${CF}
 
 .ifdef NOMAN
 maninstall:
