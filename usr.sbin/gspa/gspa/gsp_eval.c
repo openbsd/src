@@ -33,7 +33,7 @@
 #include "y.tab.h"
 
 int32_t eval_op(int, int32_t, int32_t);
-int32_t eval_subtree(expr, unsigned *);
+int32_t eval_subtree(expr, unsigned int *);
 
 expr
 fold(register expr x)
@@ -98,7 +98,7 @@ eval_op(int op, register int32_t l, register int32_t r)
 }
 
 int
-eval_expr(expr e, int32_t *vp, unsigned *lp)
+eval_expr(expr e, int32_t *vp, unsigned int *lp)
 {
 	e = fold(e);
 	*vp = eval_subtree(e, lp);
@@ -106,11 +106,11 @@ eval_expr(expr e, int32_t *vp, unsigned *lp)
 }
 
 int32_t
-eval_subtree(expr e, unsigned *lp)
+eval_subtree(expr e, unsigned int *lp)
 {
 	register symbol s;
 	int32_t v1, v2;
-	unsigned l2;
+	unsigned int l2;
 
 	switch( e->e_op ){
 	case SYM:

@@ -328,7 +328,6 @@ char *specs[] = { "B", "L", "W", "XY", NULL };
 int
 specifier(operand op)
 {
-	register int i, k;
 	register char **sl;
 	register expr e;
 	char sp[4];
@@ -432,7 +431,7 @@ encode_instr(struct inst *ip, operand ops, int *spec, u_int16_t *iwords)
 	int opc, nw, class, flags, ms, md, off;
 	int mask, file, bit, i;
 	register operand op0, op1;
-	unsigned line[2];
+	unsigned int line[2];
 	int32_t val[2];
 
 	opc = ip->opcode;

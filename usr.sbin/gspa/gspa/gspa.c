@@ -52,9 +52,9 @@ int	lineno;
 extern	int yydebug;
 short	pass2;
 
-unsigned	int pc;
-unsigned	int highest_pc;
-unsigned	int line_pc;
+unsigned int pc;
+unsigned int highest_pc;
+unsigned int line_pc;
 
 FILE	*infile;
 FILE	*current_infile;
@@ -72,13 +72,13 @@ struct	input {
 
 jmp_buf	synerrjmp;
 
-main(int argc, char **argv)
+void usage(void);
+
+int
+main(int argc, char *argv[])
 {
 	char	*hex_name, *list_name;
-	short	in_given, hex_given, list_given;
-	int	i, v;
 	int	c;
-	char	*p;
 
 	hex_name = list_name = 0;
 
@@ -158,6 +158,7 @@ main(int argc, char **argv)
 	exit(err_count != 0);
 }
 
+void
 setext(char *out, const char *in, const char *ext)
 {
 	const	char *p;
@@ -172,6 +173,7 @@ setext(char *out, const char *in, const char *ext)
 	}
 }
 
+void
 push_input(char *fn)
 {
 	FILE *f;
@@ -246,8 +248,6 @@ p1err(char *fmt, ...)
 void
 yyerror(char *err)
 {
-	extern	char *lineptr;
-
 	perr("%s", err);
 	longjmp(synerrjmp, 1);
 }
@@ -264,7 +264,7 @@ alloc(size_t nbytes)
 	return p;
 }
 
-int
+void
 usage()
 {
 	fprintf(stderr,

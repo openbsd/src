@@ -126,8 +126,6 @@ reg_ind(int reg, int mode)
 operand
 reg_indxy(int reg, char *xy)
 {
-	register operand o;
-
 	ucasify(xy);
 	if( strcmp(xy, ".XY") != 0 )
 		perr("Register format must be .XY");

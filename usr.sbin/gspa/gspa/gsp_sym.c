@@ -68,7 +68,7 @@ lookup(char *id, bool makeit)
 }
 
 void
-define_sym(char *id, unsigned val, unsigned lineno, int flags)
+define_sym(char *id, unsigned int val, unsigned int lineno, int flags)
 {
 	register symbol ptr;
 
@@ -102,7 +102,7 @@ void
 do_asg(char *name, expr value, int flags)
 {
 	int32_t val;
-	unsigned line;
+	unsigned int line;
 
 	if( eval_expr(value, &val, &line) )
 		flags |= DEFINED;
@@ -121,7 +121,7 @@ set_numeric_label(int lnum)
 	char id[32];
 
 	/* define the backward reference symbol */
-	sprintf(id, "%dB", lnum);
+	snprintf(id, sizeof id, "%dB", lnum);
 	bp = lookup(id, TRUE);
 	bp->flags = NUMERIC_LABEL | DEFINED;
 	bp->value = pc;
@@ -180,7 +180,7 @@ reset_numeric_labels()
 
 	for( h = 0; h < NHASH; ++h )
 		for( p = symbol_hash[h]; p != NULL; p = p->next )
-			if( (p->flags & NUMERIC_LABEL) != 0 )
+			if( (p->flags & NUMERIC_LABEL) != 0 ) {
 				if( (p->flags & DEFINED) != 0 ){
 					/* a backward reference */
 					p->flags &= ~DEFINED;
@@ -191,4 +191,5 @@ reset_numeric_labels()
 					p->value = nl->value;
 					p->lineno = nl->lineno;
 				}
+			}
 }
