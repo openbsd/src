@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.720 2004/04/06 16:09:13 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.721 2004/04/09 17:56:44 grange Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -529,6 +529,8 @@
 #define	PCI_PRODUCT_AMD_PBC768_MD	0x7446		/* 768 AC97 Modem */
 #define	PCI_PRODUCT_AMD_PBC768_PPB	0x7448		/* 768 PCI-PCI */
 #define	PCI_PRODUCT_AMD_PBC768_USB	0x7449		/* 768 USB */
+#define	PCI_PRODUCT_AMD_8131_PCIX	0x7450		/* 8131 PCIX */
+#define	PCI_PRODUCT_AMD_8131_PCIX_IOAPIC	0x7451		/* 8131 PCIX IOAPIC */
 #define	PCI_PRODUCT_AMD_8151_SC	0x7454		/* 8151 Sys Control */
 #define	PCI_PRODUCT_AMD_8151_AGP	0x7455		/* 8151 AGP */
 #define	PCI_PRODUCT_AMD_8111_PPB	0x7460		/* 8111 PCI-PCI */

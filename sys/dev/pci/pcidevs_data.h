@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.720 2004/04/06 16:09:13 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.721 2004/04/09 17:56:44 grange Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -885,6 +885,14 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC768_USB,
 	    "768 USB",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_8131_PCIX,
+	    "8131 PCIX",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_8131_PCIX_IOAPIC,
+	    "8131 PCIX IOAPIC",
 	},
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_8151_SC,
