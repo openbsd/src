@@ -1425,7 +1425,7 @@ if($IsWindows) {
 EOF
 	close(OUT);
 } else {
-	(system "make -f Makefile.ssl PERL=\'$perl\' links") == 0 or exit $?
+	(system "make -f Makefile.ssl PERL=\'$perl\' SHELL=/bin/sh links") == 0 or exit $?
 		if $symlink;
 	### (system 'make depend') == 0 or exit $? if $depflags ne "";
 	# Run "make depend" manually if you want to be able to delete
