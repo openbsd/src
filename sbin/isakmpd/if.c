@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.7 1999/10/01 14:08:26 niklas Exp $	*/
+/*	$OpenBSD: if.c,v 1.8 2001/07/18 20:56:35 markus Exp $	*/
 /*	$EOM: if.c,v 1.12 1999/10/01 13:45:20 niklas Exp $	*/
 
 /*
@@ -47,7 +47,9 @@
 #include "if.h"
 
 /* XXX Unsafe if either x or y has side-effects.  */
+#ifndef MAX
 #define MAX(x, y) ((x) > (y) ? (x) : (y))
+#endif
 
 /* Most boxes has less than 16 interfaces, so this might be a good guess.  */
 #define INITIAL_IFREQ_COUNT 16
