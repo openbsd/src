@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.137 2005/01/03 21:45:18 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.138 2005/01/04 01:22:40 jsg Exp $
 #	$NetBSD: GENERIC,v 1.31 1996/12/03 17:25:29 cgd Exp $
 
 machine	alpha
@@ -50,10 +50,12 @@ mainbus0 at	root
 cpu*	at	mainbus0
 
 # PCI USB Controllers
+ehci*	at pci?				# Enhanced Host Controller
 uhci*	at pci?				# Universal Host Controller (Intel)
 ohci*	at pci?				# Open Host Controller
 
 # USB bus support
+usb*	at ehci?
 usb*	at uhci?
 usb*	at ohci?
 
