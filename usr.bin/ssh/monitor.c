@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: monitor.c,v 1.37 2003/04/02 09:48:07 markus Exp $");
+RCSID("$OpenBSD: monitor.c,v 1.38 2003/04/08 20:21:28 itojun Exp $");
 
 #include <openssl/dh.h>
 
@@ -835,7 +835,7 @@ monitor_valid_userblob(u_char *data, u_int datalen)
 		fail++;
 	p = buffer_get_string(&b, NULL);
 	if (strcmp(authctxt->user, p) != 0) {
-		log("wrong user name passed to monitor: expected %s != %.100s",
+		logit("wrong user name passed to monitor: expected %s != %.100s",
 		    authctxt->user, p);
 		fail++;
 	}
@@ -883,7 +883,7 @@ monitor_valid_hostbasedblob(u_char *data, u_int datalen, char *cuser,
 		fail++;
 	p = buffer_get_string(&b, NULL);
 	if (strcmp(authctxt->user, p) != 0) {
-		log("wrong user name passed to monitor: expected %s != %.100s",
+		logit("wrong user name passed to monitor: expected %s != %.100s",
 		    authctxt->user, p);
 		fail++;
 	}

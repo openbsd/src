@@ -37,7 +37,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: packet.c,v 1.105 2003/04/02 09:48:07 markus Exp $");
+RCSID("$OpenBSD: packet.c,v 1.106 2003/04/08 20:21:29 itojun Exp $");
 
 #include <sys/queue.h>
 
@@ -739,7 +739,7 @@ packet_send2_wrapped(void)
 #endif
 	/* increment sequence number for outgoing packets */
 	if (++p_send.seqnr == 0)
-		log("outgoing seqnr wraps around");
+		logit("outgoing seqnr wraps around");
 	if (++p_send.packets == 0)
 		if (!(datafellows & SSH_BUG_NOREKEY))
 			fatal("XXX too many packets with same key");
@@ -857,7 +857,7 @@ packet_read_seqnr(u_int32_t *seqnr_p)
 		/* Read data from the socket. */
 		len = read(connection_in, buf, sizeof(buf));
 		if (len == 0) {
-			log("Connection closed by %.200s", get_remote_ipaddr());
+			logit("Connection closed by %.200s", get_remote_ipaddr());
 			fatal_cleanup();
 		}
 		if (len < 0)
@@ -1050,7 +1050,7 @@ packet_read_poll2(u_int32_t *seqnr_p)
 	if (seqnr_p != NULL)
 		*seqnr_p = p_read.seqnr;
 	if (++p_read.seqnr == 0)
-		log("incoming seqnr wraps around");
+		logit("incoming seqnr wraps around");
 	if (++p_read.packets == 0)
 		if (!(datafellows & SSH_BUG_NOREKEY))
 			fatal("XXX too many packets with same key");
@@ -1119,7 +1119,7 @@ packet_read_poll_seqnr(u_int32_t *seqnr_p)
 			case SSH2_MSG_DISCONNECT:
 				reason = packet_get_int();
 				msg = packet_get_string(NULL);
-				log("Received disconnect from %s: %u: %.400s",
+				logit("Received disconnect from %s: %u: %.400s",
 				    get_remote_ipaddr(), reason, msg);
 				xfree(msg);
 				fatal_cleanup();
@@ -1145,7 +1145,7 @@ packet_read_poll_seqnr(u_int32_t *seqnr_p)
 				break;
 			case SSH_MSG_DISCONNECT:
 				msg = packet_get_string(NULL);
-				log("Received disconnect from %s: %.400s",
+				logit("Received disconnect from %s: %.400s",
 				    get_remote_ipaddr(), msg);
 				fatal_cleanup();
 				xfree(msg);
@@ -1304,7 +1304,7 @@ packet_disconnect(const char *fmt,...)
 	va_end(args);
 
 	/* Display the error locally */
-	log("Disconnecting: %.100s", buf);
+	logit("Disconnecting: %.100s", buf);
 
 	/* Send the disconnect message to the other side, and wait for it to get sent. */
 	if (compat20) {
@@ -1441,12 +1441,12 @@ packet_set_maxsize(int s)
 	static int called = 0;
 
 	if (called) {
-		log("packet_set_maxsize: called twice: old %d new %d",
+		logit("packet_set_maxsize: called twice: old %d new %d",
 		    max_packet_size, s);
 		return -1;
 	}
 	if (s < 4 * 1024 || s > 1024 * 1024) {
-		log("packet_set_maxsize: bad size %d", s);
+		logit("packet_set_maxsize: bad size %d", s);
 		return -1;
 	}
 	called = 1;

@@ -23,7 +23,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth2-hostbased.c,v 1.2 2002/05/31 11:35:15 markus Exp $");
+RCSID("$OpenBSD: auth2-hostbased.c,v 1.3 2003/04/08 20:21:28 itojun Exp $");
 
 #include "ssh2.h"
 #include "xmalloc.h"
@@ -77,7 +77,7 @@ userauth_hostbased(Authctxt *authctxt)
 	pktype = key_type_from_name(pkalg);
 	if (pktype == KEY_UNSPEC) {
 		/* this is perfectly legal */
-		log("userauth_hostbased: unsupported "
+		logit("userauth_hostbased: unsupported "
 		    "public key algorithm: %s", pkalg);
 		goto done;
 	}
@@ -152,7 +152,7 @@ hostbased_key_allowed(struct passwd *pw, const char *cuser, char *chost,
 			chost[len - 1] = '\0';
 		}
 		if (strcasecmp(resolvedname, chost) != 0)
-			log("userauth_hostbased mismatch: "
+			logit("userauth_hostbased mismatch: "
 			    "client sends %s, but we resolve %s to %s",
 			    chost, ipaddr, resolvedname);
 		if (auth_rhosts2(pw, cuser, resolvedname, ipaddr) == 0)

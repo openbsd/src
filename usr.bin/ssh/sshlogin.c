@@ -39,7 +39,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshlogin.c,v 1.5 2002/08/29 15:57:25 stevesk Exp $");
+RCSID("$OpenBSD: sshlogin.c,v 1.6 2003/04/08 20:21:29 itojun Exp $");
 
 #include <util.h>
 #include <utmp.h>
@@ -117,7 +117,7 @@ record_login(pid_t pid, const char *ttyname, const char *user, uid_t uid,
 		if (fd >= 0) {
 			lseek(fd, (off_t) ((long) uid * sizeof(ll)), SEEK_SET);
 			if (write(fd, &ll, sizeof(ll)) != sizeof(ll))
-				log("Could not write %.100s: %.100s", lastlog, strerror(errno));
+				logit("Could not write %.100s: %.100s", lastlog, strerror(errno));
 			close(fd);
 		}
 	}

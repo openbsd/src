@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.h,v 1.38 2003/04/02 09:48:07 markus Exp $	*/
+/*	$OpenBSD: packet.h,v 1.39 2003/04/08 20:21:29 itojun Exp $	*/
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -90,7 +90,7 @@ int      packet_set_maxsize(int);
 do { \
 	int _len = packet_remaining(); \
 	if (_len > 0) { \
-		log("Packet integrity error (%d bytes remaining) at %s:%d", \
+		logit("Packet integrity error (%d bytes remaining) at %s:%d", \
 		    _len ,__FILE__, __LINE__); \
 		packet_disconnect("Packet integrity error."); \
 	} \

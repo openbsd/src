@@ -24,7 +24,7 @@
 
 #ifdef SMARTCARD
 #include "includes.h"
-RCSID("$OpenBSD: scard.c,v 1.26 2002/06/23 03:30:17 deraadt Exp $");
+RCSID("$OpenBSD: scard.c,v 1.27 2003/04/08 20:21:29 itojun Exp $");
 
 #include <openssl/evp.h>
 #include <sectok.h>
@@ -526,7 +526,7 @@ sc_put_key(Key *prv, const char *id)
 	}
 	if (!sectok_swOK(sw))
 		goto done;
-	log("cyberflex_load_rsa_priv done");
+	logit("cyberflex_load_rsa_priv done");
 	key_fid[0] = 0x73;
 	key_fid[1] = 0x68;
 	if (cyberflex_load_rsa_pub(fd, cla, key_fid, len, elements[5],
@@ -536,7 +536,7 @@ sc_put_key(Key *prv, const char *id)
 	}
 	if (!sectok_swOK(sw))
 		goto done;
-	log("cyberflex_load_rsa_pub done");
+	logit("cyberflex_load_rsa_pub done");
 	status = 0;
 
 done:

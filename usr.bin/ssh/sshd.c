@@ -42,7 +42,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshd.c,v 1.263 2003/02/16 17:09:57 markus Exp $");
+RCSID("$OpenBSD: sshd.c,v 1.264 2003/04/08 20:21:29 itojun Exp $");
 
 #include <openssl/dh.h>
 #include <openssl/bn.h>
@@ -245,11 +245,11 @@ sighup_handler(int sig)
 static void
 sighup_restart(void)
 {
-	log("Received SIGHUP; restarting.");
+	logit("Received SIGHUP; restarting.");
 	close_listen_socks();
 	close_startup_pipes();
 	execv(saved_argv[0], saved_argv);
-	log("RESTART FAILED: av[0]='%.100s', error: %.100s.", saved_argv[0],
+	logit("RESTART FAILED: av[0]='%.100s', error: %.100s.", saved_argv[0],
 	    strerror(errno));
 	exit(1);
 }
@@ -363,7 +363,7 @@ sshd_exchange_identification(int sock_in, int sock_out)
 		if (atomicio(write, sock_out, server_version_string,
 		    strlen(server_version_string))
 		    != strlen(server_version_string)) {
-			log("Could not write ident string to %s", get_remote_ipaddr());
+			logit("Could not write ident string to %s", get_remote_ipaddr());
 			fatal_cleanup();
 		}
 
@@ -371,7 +371,7 @@ sshd_exchange_identification(int sock_in, int sock_out)
 		memset(buf, 0, sizeof(buf));
 		for (i = 0; i < sizeof(buf) - 1; i++) {
 			if (atomicio(read, sock_in, &buf[i], 1) != 1) {
-				log("Did not receive identification string from %s",
+				logit("Did not receive identification string from %s",
 				    get_remote_ipaddr());
 				fatal_cleanup();
 			}
@@ -402,7 +402,7 @@ sshd_exchange_identification(int sock_in, int sock_out)
 		(void) atomicio(write, sock_out, s, strlen(s));
 		close(sock_in);
 		close(sock_out);
-		log("Bad protocol version identification '%.100s' from %s",
+		logit("Bad protocol version identification '%.100s' from %s",
 		    client_version_string, get_remote_ipaddr());
 		fatal_cleanup();
 	}
@@ -412,13 +412,13 @@ sshd_exchange_identification(int sock_in, int sock_out)
 	compat_datafellows(remote_version);
 
 	if (datafellows & SSH_BUG_PROBE) {
-		log("probed from %s with %s.  Don't panic.",
+		logit("probed from %s with %s.  Don't panic.",
 		    get_remote_ipaddr(), client_version_string);
 		fatal_cleanup();
 	}
 
 	if (datafellows & SSH_BUG_SCANNER) {
-		log("scanned from %s with %s.  Don't panic.",
+		logit("scanned from %s with %s.  Don't panic.",
 		    get_remote_ipaddr(), client_version_string);
 		fatal_cleanup();
 	}
@@ -463,7 +463,7 @@ sshd_exchange_identification(int sock_in, int sock_out)
 		(void) atomicio(write, sock_out, s, strlen(s));
 		close(sock_in);
 		close(sock_out);
-		log("Protocol major versions differ for %s: %.200s vs. %.200s",
+		logit("Protocol major versions differ for %s: %.200s vs. %.200s",
 		    get_remote_ipaddr(),
 		    server_version_string, client_version_string);
 		fatal_cleanup();
@@ -969,15 +969,15 @@ main(int ac, char **av)
 		    key_type(key));
 	}
 	if ((options.protocol & SSH_PROTO_1) && !sensitive_data.have_ssh1_key) {
-		log("Disabling protocol version 1. Could not load host key");
+		logit("Disabling protocol version 1. Could not load host key");
 		options.protocol &= ~SSH_PROTO_1;
 	}
 	if ((options.protocol & SSH_PROTO_2) && !sensitive_data.have_ssh2_key) {
-		log("Disabling protocol version 2. Could not load host key");
+		logit("Disabling protocol version 2. Could not load host key");
 		options.protocol &= ~SSH_PROTO_2;
 	}
 	if (!(options.protocol & (SSH_PROTO_1|SSH_PROTO_2))) {
-		log("sshd: no hostkeys available -- exiting.");
+		logit("sshd: no hostkeys available -- exiting.");
 		exit(1);
 	}
 
@@ -1127,7 +1127,7 @@ main(int ac, char **av)
 			num_listen_socks++;
 
 			/* Start listening on the port. */
-			log("Server listening on %s port %s.", ntop, strport);
+			logit("Server listening on %s port %s.", ntop, strport);
 			if (listen(listen_sock, 5) < 0)
 				fatal("listen: %.100s", strerror(errno));
 
@@ -1203,7 +1203,7 @@ main(int ac, char **av)
 			if (ret < 0 && errno != EINTR)
 				error("select: %.100s", strerror(errno));
 			if (received_sigterm) {
-				log("Received signal %d; terminating.",
+				logit("Received signal %d; terminating.",
 				    (int) received_sigterm);
 				close_listen_socks();
 				unlink(options.pid_file);
@@ -1678,7 +1678,7 @@ do_ssh1_kex(void)
 		u_char *buf = xmalloc(bytes);
 		MD5_CTX md;
 
-		log("do_connection: generating a fake encryption key");
+		logit("do_connection: generating a fake encryption key");
 		BN_bn2bin(session_key_int, buf);
 		MD5_Init(&md);
 		MD5_Update(&md, buf, bytes);

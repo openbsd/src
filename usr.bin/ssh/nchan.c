@@ -23,7 +23,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: nchan.c,v 1.47 2002/06/19 00:27:55 deraadt Exp $");
+RCSID("$OpenBSD: nchan.c,v 1.48 2003/04/08 20:21:29 itojun Exp $");
 
 #include "ssh1.h"
 #include "ssh2.h"
@@ -451,7 +451,7 @@ chan_shutdown_write(Channel *c)
 			    c->self, c->sock, strerror(errno));
 	} else {
 		if (channel_close_fd(&c->wfd) < 0)
-			log("channel %d: chan_shutdown_write: "
+			logit("channel %d: chan_shutdown_write: "
 			    "close() failed for fd%d: %.100s",
 			    c->self, c->wfd, strerror(errno));
 	}
@@ -470,7 +470,7 @@ chan_shutdown_read(Channel *c)
 			    strerror(errno));
 	} else {
 		if (channel_close_fd(&c->rfd) < 0)
-			log("channel %d: chan_shutdown_read: "
+			logit("channel %d: chan_shutdown_read: "
 			    "close() failed for fd%d: %.100s",
 			    c->self, c->rfd, strerror(errno));
 	}

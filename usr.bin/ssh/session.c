@@ -33,7 +33,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: session.c,v 1.154 2003/03/05 22:33:43 markus Exp $");
+RCSID("$OpenBSD: session.c,v 1.155 2003/04/08 20:21:29 itojun Exp $");
 
 #include "ssh.h"
 #include "ssh1.h"
@@ -398,7 +398,7 @@ do_authenticated1(Authctxt *authctxt)
 			 * Any unknown messages in this phase are ignored,
 			 * and a failure message is returned.
 			 */
-			log("Unknown packet type received after authentication: %d", type);
+			logit("Unknown packet type received after authentication: %d", type);
 		}
 		packet_start(success ? SSH_SMSG_SUCCESS : SSH_SMSG_FAILURE);
 		packet_send();
@@ -1009,7 +1009,7 @@ do_nologin(struct passwd *pw)
 #endif
 	if (f) {
 		/* /etc/nologin exists.  Print its contents and exit. */
-		log("User %.100s not allowed because %s exists",
+		logit("User %.100s not allowed because %s exists",
 		    pw->pw_name, _PATH_NOLOGIN);
 		while (fgets(buf, sizeof(buf), f))
 			fputs(buf, stderr);
@@ -1438,7 +1438,7 @@ session_subsystem_req(Session *s)
 	int i;
 
 	packet_check_eom();
-	log("subsystem request for %.100s", subsys);
+	logit("subsystem request for %.100s", subsys);
 
 	for (i = 0; i < options.num_subsystems; i++) {
 		if (strcmp(subsys, options.subsystem_name[i]) == 0) {
@@ -1457,7 +1457,7 @@ session_subsystem_req(Session *s)
 	}
 
 	if (!success)
-		log("subsystem request for %.100s failed, subsystem not found",
+		logit("subsystem request for %.100s failed, subsystem not found",
 		    subsys);
 
 	xfree(subsys);
@@ -1528,7 +1528,7 @@ session_input_channel_req(Channel *c, const char *rtype)
 	Session *s;
 
 	if ((s = session_by_channel(c->self)) == NULL) {
-		log("session_input_channel_req: no session %d req %.100s",
+		logit("session_input_channel_req: no session %d req %.100s",
 		    c->self, rtype);
 		return 0;
 	}

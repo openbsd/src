@@ -13,7 +13,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshconnect1.c,v 1.52 2002/08/08 13:50:23 aaron Exp $");
+RCSID("$OpenBSD: sshconnect1.c,v 1.53 2003/04/08 20:21:29 itojun Exp $");
 
 #include <openssl/bn.h>
 #include <openssl/md5.h>
@@ -119,7 +119,7 @@ try_agent_authentication(void)
 			 * although it advertised it supports this.  Just
 			 * return a wrong value.
 			 */
-			log("Authentication agent failed to decrypt challenge.");
+			logit("Authentication agent failed to decrypt challenge.");
 			memset(response, 0, sizeof(response));
 		}
 		key_free(key);
@@ -844,7 +844,7 @@ try_challenge_response_authentication(void)
 		if (i != 0)
 			error("Permission denied, please try again.");
 		if (options.cipher == SSH_CIPHER_NONE)
-			log("WARNING: Encryption is disabled! "
+			logit("WARNING: Encryption is disabled! "
 			    "Response will be transmitted in clear text.");
 		response = read_passphrase(prompt, 0);
 		if (strcmp(response, "") == 0) {
@@ -879,7 +879,7 @@ try_password_authentication(char *prompt)
 
 	debug("Doing password authentication.");
 	if (options.cipher == SSH_CIPHER_NONE)
-		log("WARNING: Encryption is disabled! Password will be transmitted in clear text.");
+		logit("WARNING: Encryption is disabled! Password will be transmitted in clear text.");
 	for (i = 0; i < options.number_of_password_prompts; i++) {
 		if (i != 0)
 			error("Permission denied, please try again.");
@@ -935,9 +935,9 @@ ssh_kex(char *host, struct sockaddr *hostaddr)
 
 	rbits = BN_num_bits(server_key->rsa->n);
 	if (bits != rbits) {
-		log("Warning: Server lies about size of server public key: "
+		logit("Warning: Server lies about size of server public key: "
 		    "actual size is %d bits vs. announced %d.", rbits, bits);
-		log("Warning: This may be due to an old implementation of ssh.");
+		logit("Warning: This may be due to an old implementation of ssh.");
 	}
 	/* Get the host key. */
 	host_key = key_new(KEY_RSA1);
@@ -947,9 +947,9 @@ ssh_kex(char *host, struct sockaddr *hostaddr)
 
 	rbits = BN_num_bits(host_key->rsa->n);
 	if (bits != rbits) {
-		log("Warning: Server lies about size of server host key: "
+		logit("Warning: Server lies about size of server host key: "
 		    "actual size is %d bits vs. announced %d.", rbits, bits);
-		log("Warning: This may be due to an old implementation of ssh.");
+		logit("Warning: This may be due to an old implementation of ssh.");
 	}
 
 	/* Get protocol flags. */
@@ -1040,7 +1040,7 @@ ssh_kex(char *host, struct sockaddr *hostaddr)
 			options.cipher = ssh_cipher_default;
 	} else if (options.cipher == SSH_CIPHER_ILLEGAL ||
 	    !(cipher_mask_ssh1(1) & (1 << options.cipher))) {
-		log("No valid SSH1 cipher, using %.100s instead.",
+		logit("No valid SSH1 cipher, using %.100s instead.",
 		    cipher_name(ssh_cipher_default));
 		options.cipher = ssh_cipher_default;
 	}
@@ -1230,7 +1230,7 @@ ssh_userauth1(const char *local_user, const char *server_user, char *host,
 	if ((supported_authentications & (1 << SSH_PASS_KERBEROS_TGT)) &&
 	    options.kerberos_tgt_passing && context && auth_context) {
 		if (options.cipher == SSH_CIPHER_NONE)
-			log("WARNING: Encryption is disabled! Ticket will be transmitted in the clear!");
+			logit("WARNING: Encryption is disabled! Ticket will be transmitted in the clear!");
 		send_krb5_tgt(context, auth_context);
 	}
 	if (auth_context)
@@ -1244,14 +1244,14 @@ ssh_userauth1(const char *local_user, const char *server_user, char *host,
 	if ((supported_authentications & (1 << SSH_PASS_KERBEROS_TGT)) &&
 	    options.kerberos_tgt_passing) {
 		if (options.cipher == SSH_CIPHER_NONE)
-			log("WARNING: Encryption is disabled! Ticket will be transmitted in the clear!");
+			logit("WARNING: Encryption is disabled! Ticket will be transmitted in the clear!");
 		send_krb4_tgt();
 	}
 	/* Try AFS token passing if the server supports it. */
 	if ((supported_authentications & (1 << SSH_PASS_AFS_TOKEN)) &&
 	    options.afs_token_passing && k_hasafs()) {
 		if (options.cipher == SSH_CIPHER_NONE)
-			log("WARNING: Encryption is disabled! Token will be transmitted in the clear!");
+			logit("WARNING: Encryption is disabled! Token will be transmitted in the clear!");
 		send_afs_tokens();
 	}
 #endif /* AFS */
