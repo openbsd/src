@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgfour.c,v 1.21 2003/06/28 17:05:33 miod Exp $	*/
+/*	$OpenBSD: cgfour.c,v 1.22 2004/11/29 22:07:36 miod Exp $	*/
 /*	$NetBSD: cgfour.c,v 1.13 1997/05/24 20:16:06 pk Exp $	*/
 
 /*
@@ -88,19 +88,6 @@ struct cgfour_softc {
 	int	sc_nscreens;
 };
 
-struct wsscreen_descr cgfour_stdscreen = {
-	"std",
-};
-
-const struct wsscreen_descr *cgfour_scrlist[] = {
-	&cgfour_stdscreen,
-};
-
-struct wsscreen_list cgfour_screenlist = {
-	sizeof(cgfour_scrlist) / sizeof(struct wsscreen_descr *),
-	    cgfour_scrlist
-};
-
 int cgfour_ioctl(void *, u_long, caddr_t, int, struct proc *);
 int cgfour_alloc_screen(void *, const struct wsscreen_descr *, void **,
     int *, int *, long *);
@@ -181,7 +168,6 @@ cgfourattach(parent, self, args)
 {
 	struct cgfour_softc *sc = (struct cgfour_softc *)self;
 	struct confargs *ca = args;
-	struct wsemuldisplaydev_attach_args waa;
 	int node = 0, i;
 	volatile struct bt_regs *bt;
 	int isconsole = 0;
@@ -240,23 +226,13 @@ cgfourattach(parent, self, args)
 	fbwscons_init(&sc->sc_sunfb, isconsole ? 0 : RI_CLEAR);
 	fbwscons_setcolormap(&sc->sc_sunfb, cgfour_setcolor);
 
-	cgfour_stdscreen.capabilities = sc->sc_sunfb.sf_ro.ri_caps;
-	cgfour_stdscreen.nrows = sc->sc_sunfb.sf_ro.ri_rows;
-	cgfour_stdscreen.ncols = sc->sc_sunfb.sf_ro.ri_cols;
-	cgfour_stdscreen.textops = &sc->sc_sunfb.sf_ro.ri_ops;
-
 	printf(", %dx%d\n", sc->sc_sunfb.sf_width, sc->sc_sunfb.sf_height);
 
 	if (isconsole) {
-		fbwscons_console_init(&sc->sc_sunfb, &cgfour_stdscreen, -1,
-		    cgfour_burner);
+		fbwscons_console_init(&sc->sc_sunfb, -1, cgfour_burner);
 	}
 
-	waa.console = isconsole;
-	waa.scrdata = &cgfour_screenlist;
-	waa.accessops = &cgfour_accessops;
-	waa.accesscookie = sc;
-	config_found(self, &waa, wsemuldisplaydevprint);
+	fbwscons_attach(&sc->sc_sunfb, &cgfour_accessops, isconsole);
 }
 
 int

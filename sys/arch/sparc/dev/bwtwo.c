@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwtwo.c,v 1.27 2003/06/28 17:05:33 miod Exp $	*/
+/*	$OpenBSD: bwtwo.c,v 1.28 2004/11/29 22:07:36 miod Exp $	*/
 /*	$NetBSD: bwtwo.c,v 1.33 1997/05/24 20:16:02 pk Exp $ */
 
 /*
@@ -91,19 +91,6 @@ struct bwtwo_softc {
 	int	sc_bustype;		/* type of bus we live on */
 	int	sc_pixeloffset;		/* offset to framebuffer */
 	int	sc_nscreens;
-};
-
-struct wsscreen_descr bwtwo_stdscreen = {
-	"std",
-};
-
-const struct wsscreen_descr *bwtwo_scrlist[] = {
-	&bwtwo_stdscreen,
-};
-
-struct wsscreen_list bwtwo_screenlist = {
-	sizeof(bwtwo_scrlist) / sizeof(struct wsscreen_descr *),
-	    bwtwo_scrlist
 };
 
 int bwtwo_ioctl(void *, u_long, caddr_t, int, struct proc *);
@@ -208,7 +195,6 @@ bwtwoattach(parent, self, args)
 {
 	struct bwtwo_softc *sc = (struct bwtwo_softc *)self;
 	struct confargs *ca = args;
-	struct wsemuldisplaydev_attach_args waa;
 	int node = ca->ca_ra.ra_node;
 	int isconsole = 0;
 	int sbus = 1;
@@ -308,14 +294,8 @@ obp_name:
 	sc->sc_sunfb.sf_ro.ri_hw = sc;
 	fbwscons_init(&sc->sc_sunfb, isconsole ? 0 : RI_CLEAR);
 
-	bwtwo_stdscreen.capabilities = sc->sc_sunfb.sf_ro.ri_caps;
-	bwtwo_stdscreen.nrows = sc->sc_sunfb.sf_ro.ri_rows;
-	bwtwo_stdscreen.ncols = sc->sc_sunfb.sf_ro.ri_cols;
-	bwtwo_stdscreen.textops = &sc->sc_sunfb.sf_ro.ri_ops;
-
 	if (isconsole) {
-		fbwscons_console_init(&sc->sc_sunfb, &bwtwo_stdscreen, -1,
-		    bwtwo_burner);
+		fbwscons_console_init(&sc->sc_sunfb, -1, bwtwo_burner);
 	}
 
 #if defined(SUN4C) || defined(SUN4M)
@@ -323,11 +303,7 @@ obp_name:
 		sbus_establish(&sc->sc_sd, &sc->sc_sunfb.sf_dev);
 #endif
 
-	waa.console = isconsole;
-	waa.scrdata = &bwtwo_screenlist;
-	waa.accessops = &bwtwo_accessops;
-	waa.accesscookie = sc;
-	config_found(self, &waa, wsemuldisplaydevprint);
+	fbwscons_attach(&sc->sc_sunfb, &bwtwo_accessops, isconsole);
 }
 
 int

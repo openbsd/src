@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcx.c,v 1.20 2004/09/29 07:35:11 miod Exp $	*/
+/*	$OpenBSD: tcx.c,v 1.21 2004/11/29 22:07:37 miod Exp $	*/
 /*	$NetBSD: tcx.c,v 1.8 1997/07/29 09:58:14 fair Exp $ */
 
 /*
@@ -110,18 +110,6 @@ struct tcx_softc {
 	int	sc_nscreens;
 };
 
-struct wsscreen_descr tcx_stdscreen = {
-	"std",
-};
-
-const struct wsscreen_descr *tcx_scrlist[] = {
-	&tcx_stdscreen,
-};
-
-struct wsscreen_list tcx_screenlist = {
-	sizeof(tcx_scrlist) / sizeof(struct wsscreen_descr *), tcx_scrlist
-};
-
 int tcx_ioctl(void *, u_long, caddr_t, int, struct proc *);
 int tcx_alloc_screen(void *, const struct wsscreen_descr *, void **,
     int *, int *, long *);
@@ -204,7 +192,6 @@ tcxattach(parent, self, args)
 {
 	struct tcx_softc *sc = (struct tcx_softc *)self;
 	struct confargs *ca = args;
-	struct wsemuldisplaydev_attach_args waa;
 	int node = 0, i;
 	volatile struct bt_regs *bt;
 	int isconsole = 0;
@@ -266,19 +253,13 @@ tcxattach(parent, self, args)
 	fbwscons_init(&sc->sc_sunfb, isconsole ? 0 : RI_CLEAR);
 	fbwscons_setcolormap(&sc->sc_sunfb, tcx_setcolor);
 
-	tcx_stdscreen.capabilities = sc->sc_sunfb.sf_ro.ri_caps;
-	tcx_stdscreen.nrows = sc->sc_sunfb.sf_ro.ri_rows;
-	tcx_stdscreen.ncols = sc->sc_sunfb.sf_ro.ri_cols;
-	tcx_stdscreen.textops = &sc->sc_sunfb.sf_ro.ri_ops;
-
 	sc->sc_ih.ih_fun = tcx_intr;
 	sc->sc_ih.ih_arg = sc;
 	intr_establish(ca->ca_ra.ra_intr[0].int_pri, &sc->sc_ih, IPL_FB,
 	    self->dv_xname);
 
 	if (isconsole) {
-		fbwscons_console_init(&sc->sc_sunfb, &tcx_stdscreen, -1,
-		    tcx_burner);
+		fbwscons_console_init(&sc->sc_sunfb, -1, tcx_burner);
 		shutdownhook_establish(tcx_prom, sc);
 	}
 
@@ -291,11 +272,7 @@ tcxattach(parent, self, args)
 	    (sc->sc_thc->thc_config & THC_CFG_SENSE) >> THC_CFG_SENSE_SHIFT
 	);
 
-	waa.console = isconsole;
-	waa.scrdata = &tcx_screenlist;
-	waa.accessops = &tcx_accessops;
-	waa.accesscookie = sc;
-	config_found(self, &waa, wsemuldisplaydevprint);
+	fbwscons_attach(&sc->sc_sunfb, &tcx_accessops, isconsole);
 }
 
 int

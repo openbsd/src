@@ -1,8 +1,8 @@
-/*	$OpenBSD: fb.c,v 1.5 2004/02/29 21:24:37 miod Exp $	*/
+/*	$OpenBSD: fb.c,v 1.6 2004/11/29 22:07:40 miod Exp $	*/
 /*	$NetBSD: fb.c,v 1.23 1997/07/07 23:30:22 pk Exp $ */
 
 /*
- * Copyright (c) 2002 Miodrag Vallat
+ * Copyright (c) 2002, 2004  Miodrag Vallat.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -86,6 +86,9 @@
 
 #include "wsdisplay.h"
 
+static int a2int(char *, int);
+static void fb_initwsd(struct sunfb *);
+
 /*
  * emergency unblank code
  * XXX should be somewhat moved to wscons MI code
@@ -129,9 +132,7 @@ fb_setsize(struct sunfb *sf, int def_depth, int def_width, int def_height,
 	sf->sf_fbsize = sf->sf_height * sf->sf_linebytes;
 }
 
-int a2int(char *, int);
-
-int
+static int
 a2int(char *cp, int deflt)
 {
 	int i = 0;
@@ -141,6 +142,17 @@ a2int(char *cp, int deflt)
 	while (*cp != '\0')
 		i = i * 10 + *cp++ - '0';
 	return (i);
+}
+
+/* setup the embedded wsscreen_descr structure from rasops settings */
+static void
+fb_initwsd(struct sunfb *sf)
+{
+	strlcpy(sf->sf_wsd.name, "std", sizeof(sf->sf_wsd.name));
+	sf->sf_wsd.capabilities = sf->sf_ro.ri_caps;
+	sf->sf_wsd.nrows = sf->sf_ro.ri_rows;
+	sf->sf_wsd.ncols = sf->sf_ro.ri_cols;
+	sf->sf_wsd.textops = &sf->sf_ro.ri_ops;
 }
 
 void
@@ -162,7 +174,7 @@ fbwscons_init(struct sunfb *sf, int flags)
 }
 
 void
-fbwscons_console_init(struct sunfb *sf, struct wsscreen_descr *wsc, int row,
+fbwscons_console_init(struct sunfb *sf, int row,
     void (*burner)(void *, u_int, u_int))
 {
 	long defattr;
@@ -194,10 +206,10 @@ fbwscons_console_init(struct sunfb *sf, struct wsscreen_descr *wsc, int row,
 	 * Scale back rows and columns if the font would not otherwise
 	 * fit on this display. Without this we would panic later.
 	 */
-	if (sf->sf_ro.ri_crow >= wsc->nrows)
-		sf->sf_ro.ri_crow = wsc->nrows - 1;
-	if (sf->sf_ro.ri_ccol >= wsc->ncols)
-		sf->sf_ro.ri_ccol = wsc->ncols - 1;
+	if (sf->sf_ro.ri_crow >= sf->sf_ro.ri_rows)
+		sf->sf_ro.ri_crow = sf->sf_ro.ri_rows - 1;
+	if (sf->sf_ro.ri_ccol >= sf->sf_ro.ri_cols)
+		sf->sf_ro.ri_ccol = sf->sf_ro.ri_cols - 1;
 
 	/*
 	 * Select appropriate color settings to mimic a
@@ -210,7 +222,7 @@ fbwscons_console_init(struct sunfb *sf, struct wsscreen_descr *wsc, int row,
 		wskernel_fg = 255;
 	}
 
-	if (ISSET(wsc->capabilities, WSSCREEN_WSCOLORS) &&
+	if (ISSET(sf->sf_ro.ri_caps, WSSCREEN_WSCOLORS) &&
 	    sf->sf_depth == 8) {
 		sf->sf_ro.ri_ops.alloc_attr(&sf->sf_ro,
 		    WSCOL_BLACK, WSCOL_WHITE, WSATTR_WSCOLORS, &defattr);
@@ -218,7 +230,8 @@ fbwscons_console_init(struct sunfb *sf, struct wsscreen_descr *wsc, int row,
 		sf->sf_ro.ri_ops.alloc_attr(&sf->sf_ro, 0, 0, 0, &defattr);
 	}
 
-	wsdisplay_cnattach(wsc, &sf->sf_ro,
+	fb_initwsd(sf);
+	wsdisplay_cnattach(&sf->sf_wsd, &sf->sf_ro,
 	    sf->sf_ro.ri_ccol, sf->sf_ro.ri_crow, defattr);
 
 	/* remember screen burner routine */
@@ -248,6 +261,29 @@ fbwscons_setcolormap(struct sunfb *sf,
 		setcolor(sf, WSCOL_WHITE, 255, 255, 255);
 		setcolor(sf, 0xff ^ WSCOL_WHITE, 0, 0, 0);
 	}
+}
+
+void
+fbwscons_attach(struct sunfb *sf, struct wsdisplay_accessops *op, int isconsole)
+{
+	struct wsemuldisplaydev_attach_args waa;
+	struct wsscreen_descr *scrlist[1];
+	struct wsscreen_list screenlist;
+
+	if (isconsole == 0) {
+		/* done in wsdisplay_cnattach() earlier if console */
+		fb_initwsd(sf);
+	}
+
+	scrlist[0] = &sf->sf_wsd;
+	screenlist.nscreens = 1;
+	screenlist.screens = (const struct wsscreen_descr **)scrlist;
+
+	waa.console = isconsole;
+	waa.scrdata = &screenlist;
+	waa.accessops = op;
+	waa.accesscookie = sf;
+	config_found(&sf->sf_dev, &waa, wsemuldisplaydevprint);
 }
 
 #endif	/* NWSDISPLAY */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgsix.c,v 1.44 2003/07/03 21:02:13 jason Exp $	*/
+/*	$OpenBSD: cgsix.c,v 1.45 2004/11/29 22:07:40 miod Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -52,19 +52,6 @@
 #include <machine/fbvar.h>
 #include <dev/sbus/cgsixreg.h>
 #include <dev/ic/bt458reg.h>
-
-struct wsscreen_descr cgsix_stdscreen = {
-	"std",
-};
-
-const struct wsscreen_descr *cgsix_scrlist[] = {
-	&cgsix_stdscreen,
-	/* XXX other formats? */
-};
-
-struct wsscreen_list cgsix_screenlist = {
-	sizeof(cgsix_scrlist) / sizeof(struct wsscreen_descr *), cgsix_scrlist
-};
 
 int cgsix_ioctl(void *, u_long, caddr_t, int, struct proc *);
 int cgsix_alloc_screen(void *, const struct wsscreen_descr *, void **,
@@ -130,7 +117,6 @@ cgsixattach(struct device *parent, struct device *self, void *aux)
 {
 	struct cgsix_softc *sc = (struct cgsix_softc *)self;
 	struct sbus_attach_args *sa = aux;
-	struct wsemuldisplaydev_attach_args waa;
 	int console, i;
 	u_int32_t fhc, rev;
 
@@ -242,26 +228,16 @@ cgsixattach(struct device *parent, struct device *self, void *aux)
 		cgsix_ras_init(sc);
 	}
 
-	cgsix_stdscreen.capabilities = sc->sc_sunfb.sf_ro.ri_caps;
-	cgsix_stdscreen.nrows = sc->sc_sunfb.sf_ro.ri_rows;
-	cgsix_stdscreen.ncols = sc->sc_sunfb.sf_ro.ri_cols;
-	cgsix_stdscreen.textops = &sc->sc_sunfb.sf_ro.ri_ops;
-
 	printf("\n");
 
 	fbwscons_setcolormap(&sc->sc_sunfb, cgsix_setcolor);
 
 	if (console) {
 		sc->sc_sunfb.sf_ro.ri_updatecursor = cgsix_ras_updatecursor;
-		fbwscons_console_init(&sc->sc_sunfb, &cgsix_stdscreen, -1,
-		    cgsix_burner);
+		fbwscons_console_init(&sc->sc_sunfb, -1, cgsix_burner);
 	}
 
-	waa.console = console;
-	waa.scrdata = &cgsix_screenlist;
-	waa.accessops = &cgsix_accessops;
-	waa.accesscookie = sc;
-	config_found(self, &waa, wsemuldisplaydevprint);
+	fbwscons_attach(&sc->sc_sunfb, &cgsix_accessops, console);
 
 	return;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rfx.c,v 1.5 2004/09/29 07:35:11 miod Exp $	*/
+/*	$OpenBSD: rfx.c,v 1.6 2004/11/29 22:07:37 miod Exp $	*/
 
 /*
  * Copyright (c) 2004, Miodrag Vallat.
@@ -118,19 +118,6 @@ struct rfx_softc {
 	int			 sc_nscreens;
 };
 
-struct wsscreen_descr rfx_stdscreen = {
-	"std",
-};
-
-const struct wsscreen_descr *rfx_scrlist[] = {
-	&rfx_stdscreen,
-};
-
-struct wsscreen_list rfx_screenlist = {
-	sizeof(rfx_scrlist) / sizeof(struct wsscreen_descr *),
-	    rfx_scrlist
-};
-
 int	rfx_alloc_screen(void *, const struct wsscreen_descr *, void **,
 	    int *, int *, long *);
 void	rfx_burner(void *, u_int, u_int);
@@ -216,7 +203,6 @@ rfxattach(struct device *parent, struct device *self, void *args)
 	struct confargs *ca = args;
 	const char *device = ca->ca_ra.ra_name;
 	struct rfx_config cf;
-	struct wsemuldisplaydev_attach_args waa;
 	int node, cflen, isconsole = 0;
 
 	/* skip vendor name (could be CWARE, VITec, ...) */
@@ -302,14 +288,8 @@ rfxattach(struct device *parent, struct device *self, void *args)
 	bzero(&sc->sc_cmap, sizeof(sc->sc_cmap));
 	fbwscons_setcolormap(&sc->sc_sunfb, rfx_setcolor);
 
-	rfx_stdscreen.capabilities = sc->sc_sunfb.sf_ro.ri_caps;
-	rfx_stdscreen.nrows = sc->sc_sunfb.sf_ro.ri_rows;
-	rfx_stdscreen.ncols = sc->sc_sunfb.sf_ro.ri_cols;
-	rfx_stdscreen.textops = &sc->sc_sunfb.sf_ro.ri_ops;
-
 	if (isconsole) {
-		fbwscons_console_init(&sc->sc_sunfb, &rfx_stdscreen, -1,
-		    rfx_burner);
+		fbwscons_console_init(&sc->sc_sunfb, -1, rfx_burner);
 	}
 
 	/* enable video */
@@ -317,11 +297,7 @@ rfxattach(struct device *parent, struct device *self, void *args)
 
 	sbus_establish(&sc->sc_sd, &sc->sc_sunfb.sf_dev);
 
-	waa.console = isconsole;
-	waa.scrdata = &rfx_screenlist;
-	waa.accessops = &rfx_accessops;
-	waa.accesscookie = sc;
-	config_found(self, &waa, wsemuldisplaydevprint);
+	fbwscons_attach(&sc->sc_sunfb, &rfx_accessops, isconsole);
 }
 
 /*

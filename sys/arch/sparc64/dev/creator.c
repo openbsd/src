@@ -1,4 +1,4 @@
-/*	$OpenBSD: creator.c,v 1.29 2003/06/24 19:41:33 miod Exp $	*/
+/*	$OpenBSD: creator.c,v 1.30 2004/11/29 22:07:40 miod Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -47,20 +47,6 @@
 #include <sparc64/dev/creatorreg.h>
 #include <sparc64/dev/creatorvar.h>
 
-struct wsscreen_descr creator_stdscreen = {
-	"std",
-};
-
-const struct wsscreen_descr *creator_scrlist[] = {
-	&creator_stdscreen,
-	/* XXX other formats? */
-};
-
-struct wsscreen_list creator_screenlist = {
-	sizeof(creator_scrlist) / sizeof(struct wsscreen_descr *),
-	    creator_scrlist
-};
-
 int	creator_ioctl(void *, u_long, caddr_t, int, struct proc *);
 int	creator_alloc_screen(void *, const struct wsscreen_descr *, void **,
 	    int *, int *, long *);
@@ -100,7 +86,6 @@ struct cfdriver creator_cd = {
 void
 creator_attach(struct creator_softc *sc)
 {
-	struct wsemuldisplaydev_attach_args waa;
 	char *model;
 	int btype;
 
@@ -151,22 +136,13 @@ creator_attach(struct creator_softc *sc)
 		creator_ras_init(sc);
 	}
 
-	creator_stdscreen.capabilities = sc->sc_sunfb.sf_ro.ri_caps;
-	creator_stdscreen.nrows = sc->sc_sunfb.sf_ro.ri_rows;
-	creator_stdscreen.ncols = sc->sc_sunfb.sf_ro.ri_cols;
-	creator_stdscreen.textops = &sc->sc_sunfb.sf_ro.ri_ops;
-
 	if (sc->sc_console) {
 		sc->sc_sunfb.sf_ro.ri_updatecursor = creator_ras_updatecursor;
-		fbwscons_console_init(&sc->sc_sunfb, &creator_stdscreen, -1,
+		fbwscons_console_init(&sc->sc_sunfb, -1,
 		    NULL);
 	}
 
-	waa.console = sc->sc_console;
-	waa.scrdata = &creator_screenlist;
-	waa.accessops = &creator_accessops;
-	waa.accesscookie = sc;
-	config_found(&sc->sc_sunfb.sf_dev, &waa, wsemuldisplaydevprint);
+	fbwscons_attach(&sc->sc_sunfb, &creator_accessops, sc->sc_console);
 }
 
 int

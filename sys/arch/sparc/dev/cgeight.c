@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgeight.c,v 1.21 2003/06/28 17:05:33 miod Exp $	*/
+/*	$OpenBSD: cgeight.c,v 1.22 2004/11/29 22:07:36 miod Exp $	*/
 /*	$NetBSD: cgeight.c,v 1.13 1997/05/24 20:16:04 pk Exp $	*/
 
 /*
@@ -88,19 +88,6 @@ struct cgeight_softc {
 	int	sc_nscreens;
 };
 
-struct wsscreen_descr cgeight_stdscreen = {
-	"std",
-};
-
-const struct wsscreen_descr *cgeight_scrlist[] = {
-	&cgeight_stdscreen,
-};
-
-struct wsscreen_list cgeight_screenlist = {
-	sizeof(cgeight_scrlist) /sizeof(struct wsscreen_descr *),
-	    cgeight_scrlist
-};
-
 int cgeight_ioctl(void *, u_long, caddr_t, int, struct proc *);
 int cgeight_alloc_screen(void *, const struct wsscreen_descr *, void **,
     int *, int *, long *);
@@ -184,7 +171,6 @@ cgeightattach(parent, self, args)
 {
 	struct cgeight_softc *sc = (struct cgeight_softc *)self;
 	struct confargs *ca = args;
-	struct wsemuldisplaydev_attach_args waa;
 	int node = 0, i;
 	volatile struct bt_regs *bt;
 	int isconsole = 0;
@@ -229,24 +215,14 @@ cgeightattach(parent, self, args)
 	    PFOUR_COLOR_OFF_OVERLAY, round_page(sc->sc_sunfb.sf_fbsize));
 	fbwscons_init(&sc->sc_sunfb, isconsole ? 0 : RI_CLEAR);
 
-	cgeight_stdscreen.capabilities = sc->sc_sunfb.sf_ro.ri_caps;
-	cgeight_stdscreen.nrows = sc->sc_sunfb.sf_ro.ri_rows;
-	cgeight_stdscreen.ncols = sc->sc_sunfb.sf_ro.ri_cols;
-	cgeight_stdscreen.textops = &sc->sc_sunfb.sf_ro.ri_ops;
-
 	printf(": cgeight/p4, %dx%d", sc->sc_sunfb.sf_width,
 	    sc->sc_sunfb.sf_height);
 
 	if (isconsole) {
-		fbwscons_console_init(&sc->sc_sunfb, &cgeight_stdscreen, -1,
-		    cgeight_burner);
+		fbwscons_console_init(&sc->sc_sunfb, -1, cgeight_burner);
 	}
 
-	waa.console = isconsole;
-	waa.scrdata = &cgeight_screenlist;
-	waa.accessops = &cgeight_accessops;
-	waa.accesscookie = sc;
-	config_found(self, &waa, wsemuldisplaydevprint);
+	fbwscons_attach(&sc->sc_sunfb, &cgeight_accessops, isconsole);
 }
 
 int

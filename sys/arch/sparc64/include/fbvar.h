@@ -1,4 +1,4 @@
-/*	$OpenBSD: fbvar.h,v 1.2 2003/06/17 17:35:43 miod Exp $	*/
+/*	$OpenBSD: fbvar.h,v 1.3 2004/11/29 22:07:40 miod Exp $	*/
 /*	$NetBSD: fbvar.h,v 1.9 1997/07/07 23:31:30 pk Exp $ */
 
 /*
@@ -58,6 +58,8 @@ struct sunfb {
 	int	*sf_crowp, *sf_ccolp;	/* PROM cursor position */
 
 	struct	rasops_info sf_ro;
+
+	struct	wsscreen_descr sf_wsd;
 };
 
 /*
@@ -67,7 +69,8 @@ extern int fbnode;
 
 void	fb_setsize(struct sunfb*, int, int, int, int, int);
 void	fbwscons_init(struct sunfb *, int);
-void	fbwscons_console_init(struct sunfb *, struct wsscreen_descr *, int,
+void	fbwscons_console_init(struct sunfb *, int,
     void (*)(void *, u_int, u_int));
 void	fbwscons_setcolormap(struct sunfb *,
     void (*)(void *, u_int, u_int8_t, u_int8_t, u_int8_t));
+void	fbwscons_attach(struct sunfb *,	struct wsdisplay_accessops *, int);

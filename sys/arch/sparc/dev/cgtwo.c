@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgtwo.c,v 1.29 2003/06/28 17:05:33 miod Exp $	*/
+/*	$OpenBSD: cgtwo.c,v 1.30 2004/11/29 22:07:36 miod Exp $	*/
 /*	$NetBSD: cgtwo.c,v 1.22 1997/05/24 20:16:12 pk Exp $ */
 
 /*
@@ -113,19 +113,6 @@ struct cgtwo_softc {
 	int	sc_nscreens;
 };
 
-struct wsscreen_descr cgtwo_stdscreen = {
-	"std",
-};
-
-const struct wsscreen_descr *cgtwo_scrlist[] = {
-	&cgtwo_stdscreen,
-};
-
-struct wsscreen_list cgtwo_screenlist = {
-	sizeof(cgtwo_scrlist) / sizeof(struct wsscreen_descr *),
-	    cgtwo_scrlist
-};
-
 int cgtwo_ioctl(void *, u_long, caddr_t, int, struct proc *);
 int cgtwo_alloc_screen(void *, const struct wsscreen_descr *, void **,
     int *, int *, long *);
@@ -198,7 +185,6 @@ cgtwoattach(parent, self, args)
 {
 	struct cgtwo_softc *sc = (struct cgtwo_softc *)self;
 	struct confargs *ca = args;
-	struct wsemuldisplaydev_attach_args waa;
 	int node = 0;
 	int isconsole = 0;
 	char *nam = NULL;
@@ -255,23 +241,13 @@ cgtwoattach(parent, self, args)
 	fbwscons_init(&sc->sc_sunfb, isconsole ? 0 : RI_CLEAR);
 	fbwscons_setcolormap(&sc->sc_sunfb, cgtwo_setcolor);
 
-	cgtwo_stdscreen.capabilities = sc->sc_sunfb.sf_ro.ri_caps;
-	cgtwo_stdscreen.nrows = sc->sc_sunfb.sf_ro.ri_rows;
-	cgtwo_stdscreen.ncols = sc->sc_sunfb.sf_ro.ri_cols;
-	cgtwo_stdscreen.textops = &sc->sc_sunfb.sf_ro.ri_ops;
-
 	printf(", %dx%d\n", sc->sc_sunfb.sf_width, sc->sc_sunfb.sf_height);
 
 	if (isconsole) {
-		fbwscons_console_init(&sc->sc_sunfb, &cgtwo_stdscreen, -1,
-		    cgtwo_burner);
+		fbwscons_console_init(&sc->sc_sunfb, -1, cgtwo_burner);
 	}
 
-	waa.console = isconsole;
-	waa.scrdata = &cgtwo_screenlist;
-	waa.accessops = &cgtwo_accessops;
-	waa.accesscookie = sc;
-	config_found(self, &waa, wsemuldisplaydevprint);
+	fbwscons_attach(&sc->sc_sunfb, &cgtwo_accessops, isconsole);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vigra.c,v 1.10 2004/09/29 07:35:11 miod Exp $	*/
+/*	$OpenBSD: vigra.c,v 1.11 2004/11/29 22:07:37 miod Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, Miodrag Vallat.
@@ -184,19 +184,6 @@ struct vigra_softc {
 	int	sc_nscreens;
 };
 
-struct wsscreen_descr vigra_stdscreen = {
-	"std",
-};
-
-const struct wsscreen_descr *vigra_scrlist[] = {
-	&vigra_stdscreen,
-};
-
-struct wsscreen_list vigra_screenlist = {
-	sizeof(vigra_scrlist) / sizeof(struct wsscreen_descr *),
-	    vigra_scrlist
-};
-
 int vigra_ioctl(void *, u_long, caddr_t, int, struct proc *);
 int vigra_alloc_screen(void *, const struct wsscreen_descr *, void **,
     int *, int *, long *);
@@ -261,7 +248,6 @@ vigraattach(struct device *parent, struct device *self, void *args)
 {
 	struct vigra_softc *sc = (struct vigra_softc *)self;
 	struct confargs *ca = args;
-	struct wsemuldisplaydev_attach_args waa;
 	int node, row, isconsole = 0;
 	char *nam;
 
@@ -325,15 +311,10 @@ vigraattach(struct device *parent, struct device *self, void *args)
 	    && sc->sc_sunfb.sf_width != 1280) ? 0 : RI_CLEAR);
 	fbwscons_setcolormap(&sc->sc_sunfb, vigra_setcolor);
 
-	vigra_stdscreen.capabilities = sc->sc_sunfb.sf_ro.ri_caps;
-	vigra_stdscreen.nrows = sc->sc_sunfb.sf_ro.ri_rows;
-	vigra_stdscreen.ncols = sc->sc_sunfb.sf_ro.ri_cols;
-	vigra_stdscreen.textops = &sc->sc_sunfb.sf_ro.ri_ops;
-
 	if (isconsole) {
 		switch (sc->sc_sunfb.sf_width) {
 		case 640:
-			row = vigra_stdscreen.nrows - 1;
+			row = sc->sc_sunfb.sf_ro.ri_rows - 1;
 			break;
 		case 800:
 		case 1280:
@@ -344,17 +325,12 @@ vigraattach(struct device *parent, struct device *self, void *args)
 			break;
 		}
 
-		fbwscons_console_init(&sc->sc_sunfb, &vigra_stdscreen, row,
-		    vigra_burner);
+		fbwscons_console_init(&sc->sc_sunfb, row, vigra_burner);
 	}
 
 	sbus_establish(&sc->sc_sd, &sc->sc_sunfb.sf_dev);
 
-	waa.console = isconsole;
-	waa.scrdata = &vigra_screenlist;
-	waa.accessops = &vigra_accessops;
-	waa.accesscookie = sc;
-	config_found(self, &waa, wsemuldisplaydevprint);
+	fbwscons_attach(&sc->sc_sunfb, &vigra_accessops, isconsole);
 }
 
 int

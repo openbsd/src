@@ -1,4 +1,4 @@
-/*	$OpenBSD: agten.c,v 1.1 2004/06/21 04:41:10 miod Exp $	*/
+/*	$OpenBSD: agten.c,v 1.2 2004/11/29 22:07:40 miod Exp $	*/
 /*
  * Copyright (c) 2002, 2003, Miodrag Vallat.
  * All rights reserved.
@@ -106,18 +106,6 @@ struct agten_softc {
 	int	sc_nscreens;
 };
 
-struct wsscreen_descr agten_stdscreen = {
-	"std",
-};
-
-const struct wsscreen_descr *agten_scrlist[] = {
-	&agten_stdscreen,
-};
-
-struct wsscreen_list agten_screenlist = {
-	sizeof(agten_scrlist) / sizeof(struct wsscreen_descr *), agten_scrlist
-};
-
 int agten_ioctl(void *, u_long, caddr_t, int, struct proc *);
 int agten_alloc_screen(void *, const struct wsscreen_descr *, void **,
     int *, int *, long *);
@@ -172,7 +160,6 @@ agtenattach(struct device *parent, struct device *self, void *args)
 {
 	struct agten_softc *sc = (struct agten_softc *)self;
 	struct sbus_attach_args *sa = args;
-	struct wsemuldisplaydev_attach_args waa;
 	bus_space_tag_t bt;
 	bus_space_handle_t bh;
 	int node, isconsole;
@@ -241,23 +228,13 @@ agtenattach(struct device *parent, struct device *self, void *args)
 	fbwscons_init(&sc->sc_sunfb, isconsole ? 0 : RI_CLEAR);
 	fbwscons_setcolormap(&sc->sc_sunfb, agten_setcolor);
 
-	agten_stdscreen.capabilities = sc->sc_sunfb.sf_ro.ri_caps;
-	agten_stdscreen.nrows = sc->sc_sunfb.sf_ro.ri_rows;
-	agten_stdscreen.ncols = sc->sc_sunfb.sf_ro.ri_cols;
-	agten_stdscreen.textops = &sc->sc_sunfb.sf_ro.ri_ops;
-
 	if (isconsole) {
-		fbwscons_console_init(&sc->sc_sunfb, &agten_stdscreen, -1,
-		    NULL);
+		fbwscons_console_init(&sc->sc_sunfb, -1, NULL);
 	}
 
 	sbus_establish(&sc->sc_sd, &sc->sc_sunfb.sf_dev);
 
-	waa.console = isconsole;
-	waa.scrdata = &agten_screenlist;
-	waa.accessops = &agten_accessops;
-	waa.accesscookie = sc;
-	config_found(self, &waa, wsemuldisplaydevprint);
+	fbwscons_attach(&sc->sc_sunfb, &agten_accessops, isconsole);
 }
 
 int

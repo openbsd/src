@@ -1,4 +1,4 @@
-/*	$OpenBSD: mgx.c,v 1.1 2004/06/20 21:28:06 miod Exp $	*/
+/*	$OpenBSD: mgx.c,v 1.2 2004/11/29 22:07:40 miod Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -92,19 +92,6 @@ struct mgx_softc {
 	int	sc_nscreens;
 };
 
-struct wsscreen_descr mgx_stdscreen = {
-	"std",
-};
-
-const struct wsscreen_descr *mgx_scrlist[] = {
-	&mgx_stdscreen,
-};
-
-struct wsscreen_list mgx_screenlist = {
-	sizeof(mgx_scrlist) / sizeof(struct wsscreen_descr *),
-	    mgx_scrlist
-};
-
 int mgx_ioctl(void *, u_long, caddr_t, int, struct proc *);
 int mgx_alloc_screen(void *, const struct wsscreen_descr *, void **,
     int *, int *, long *);
@@ -166,7 +153,6 @@ mgxattach(struct device *parent, struct device *self, void *args)
 {
 	struct mgx_softc *sc = (struct mgx_softc *)self;
 	struct sbus_attach_args *sa = args;
-	struct wsemuldisplaydev_attach_args waa;
 	bus_space_tag_t bt;
 	bus_space_handle_t bh;
 	int node, fbsize;
@@ -227,26 +213,16 @@ mgxattach(struct device *parent, struct device *self, void *args)
 	bzero(sc->sc_cmap, sizeof(sc->sc_cmap));
 	fbwscons_setcolormap(&sc->sc_sunfb, mgx_setcolor);
 
-	mgx_stdscreen.capabilities = sc->sc_sunfb.sf_ro.ri_caps;
-	mgx_stdscreen.nrows = sc->sc_sunfb.sf_ro.ri_rows;
-	mgx_stdscreen.ncols = sc->sc_sunfb.sf_ro.ri_cols;
-	mgx_stdscreen.textops = &sc->sc_sunfb.sf_ro.ri_ops;
-
 	printf(", %dx%d\n",
 	    sc->sc_sunfb.sf_width, sc->sc_sunfb.sf_height);
 
 	if (isconsole) {
-		fbwscons_console_init(&sc->sc_sunfb,
-		    &mgx_stdscreen, -1, mgx_burner);
+		fbwscons_console_init(&sc->sc_sunfb, -1, mgx_burner);
 	}
 
 	sbus_establish(&sc->sc_sd, &sc->sc_sunfb.sf_dev);
 
-	waa.console = isconsole;
-	waa.scrdata = &mgx_screenlist;
-	waa.accessops = &mgx_accessops;
-	waa.accesscookie = sc;
-	config_found(self, &waa, wsemuldisplaydevprint);
+	fbwscons_attach(&sc->sc_sunfb, &mgx_accessops, isconsole);
 }
 
 /*

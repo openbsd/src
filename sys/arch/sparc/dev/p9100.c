@@ -1,4 +1,4 @@
-/*	$OpenBSD: p9100.c,v 1.30 2004/09/29 07:35:11 miod Exp $	*/
+/*	$OpenBSD: p9100.c,v 1.31 2004/11/29 22:07:37 miod Exp $	*/
 
 /*
  * Copyright (c) 2003, Miodrag Vallat.
@@ -78,19 +78,6 @@ struct p9100_softc {
 	struct	intrhand sc_ih;
 	int	sc_nscreens;
 	u_int32_t	sc_junk;	/* throwaway value */
-};
-
-struct wsscreen_descr p9100_stdscreen = {
-	"std",
-};
-
-const struct wsscreen_descr *p9100_scrlist[] = {
-	&p9100_stdscreen,
-};
-
-struct wsscreen_list p9100_screenlist = {
-	sizeof(p9100_scrlist) / sizeof(struct wsscreen_descr *),
-	    p9100_scrlist
 };
 
 int	p9100_ioctl(void *, u_long, caddr_t, int, struct proc *);
@@ -245,7 +232,6 @@ p9100attach(struct device *parent, struct device *self, void *args)
 {
 	struct p9100_softc *sc = (struct p9100_softc *)self;
 	struct confargs *ca = args;
-	struct wsemuldisplaydev_attach_args waa;
 	int node, row, scr;
 	int isconsole, fb_depth;
 
@@ -327,11 +313,6 @@ p9100attach(struct device *parent, struct device *self, void *args)
 	if (sc->sc_sunfb.sf_depth == 8)
 		p9100_ras_init(sc);
 
-	p9100_stdscreen.capabilities = sc->sc_sunfb.sf_ro.ri_caps;
-	p9100_stdscreen.nrows = sc->sc_sunfb.sf_ro.ri_rows;
-	p9100_stdscreen.ncols = sc->sc_sunfb.sf_ro.ri_cols;
-	p9100_stdscreen.textops = &sc->sc_sunfb.sf_ro.ri_ops;
-
 	sbus_establish(&sc->sc_sd, &sc->sc_sunfb.sf_dev);
 
 	/* enable video */
@@ -343,15 +324,10 @@ p9100attach(struct device *parent, struct device *self, void *args)
 		else
 			row = -1;
 
-		fbwscons_console_init(&sc->sc_sunfb, &p9100_stdscreen, row,
-		    p9100_burner);
+		fbwscons_console_init(&sc->sc_sunfb, row, p9100_burner);
 	}
 
-	waa.console = isconsole;
-	waa.scrdata = &p9100_screenlist;
-	waa.accessops = &p9100_accessops;
-	waa.accesscookie = sc;
-	config_found(self, &waa, wsemuldisplaydevprint);
+	fbwscons_attach(&sc->sc_sunfb, &p9100_accessops, isconsole);
 }
 
 int

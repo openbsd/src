@@ -1,4 +1,4 @@
-/*	$OpenBSD: tvtwo.c,v 1.1 2004/11/29 18:12:51 miod Exp $	*/
+/*	$OpenBSD: tvtwo.c,v 1.2 2004/11/29 22:07:41 miod Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -125,19 +125,6 @@ struct tvtwo_softc {
 	int	sc_nscreens;
 };
 
-struct wsscreen_descr tvtwo_stdscreen = {
-	"std",
-};
-
-const struct wsscreen_descr *tvtwo_scrlist[] = {
-	&tvtwo_stdscreen,
-};
-
-struct wsscreen_list tvtwo_screenlist = {
-	sizeof(tvtwo_scrlist) / sizeof(struct wsscreen_descr *),
-	    tvtwo_scrlist
-};
-
 int tvtwo_ioctl(void *, u_long, caddr_t, int, struct proc *);
 int tvtwo_alloc_screen(void *, const struct wsscreen_descr *, void **,
     int *, int *, long *);
@@ -202,7 +189,6 @@ tvtwoattach(struct device *parent, struct device *self, void *args)
 {
 	struct tvtwo_softc *sc = (struct tvtwo_softc *)self;
 	struct sbus_attach_args *sa = args;
-	struct wsemuldisplaydev_attach_args waa;
 	bus_space_tag_t bt;
 	bus_space_handle_t bh;
 	int node, width, height, freqcode;
@@ -264,26 +250,16 @@ tvtwoattach(struct device *parent, struct device *self, void *args)
 	sc->sc_sunfb.sf_ro.ri_hw = sc;
 	fbwscons_init(&sc->sc_sunfb, isconsole ? 0 : RI_CLEAR);
 
-	tvtwo_stdscreen.capabilities = sc->sc_sunfb.sf_ro.ri_caps;
-	tvtwo_stdscreen.nrows = sc->sc_sunfb.sf_ro.ri_rows;
-	tvtwo_stdscreen.ncols = sc->sc_sunfb.sf_ro.ri_cols;
-	tvtwo_stdscreen.textops = &sc->sc_sunfb.sf_ro.ri_ops;
-
 	printf("%s: %dx%d\n", self->dv_xname,
 	    sc->sc_sunfb.sf_width, sc->sc_sunfb.sf_height);
 
 	if (isconsole) {
-		fbwscons_console_init(&sc->sc_sunfb,
-		    &tvtwo_stdscreen, -1, NULL);
+		fbwscons_console_init(&sc->sc_sunfb, -1, NULL);
 	}
 
 	sbus_establish(&sc->sc_sd, &sc->sc_sunfb.sf_dev);
 
-	waa.console = isconsole;
-	waa.scrdata = &tvtwo_screenlist;
-	waa.accessops = &tvtwo_accessops;
-	waa.accesscookie = sc;
-	config_found(self, &waa, wsemuldisplaydevprint);
+	fbwscons_attach(&sc->sc_sunfb, &tvtwo_accessops, isconsole);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fbvar.h,v 1.11 2003/06/28 17:05:35 miod Exp $	*/
+/*	$OpenBSD: fbvar.h,v 1.12 2004/11/29 22:07:39 miod Exp $	*/
 /*	$NetBSD: fbvar.h,v 1.9 1997/07/07 23:31:30 pk Exp $ */
 
 /*
@@ -68,6 +68,8 @@ struct sunfb {
 	volatile u_int32_t* sf_pfour;	/* P4 register when applicable */
 
 	struct	rasops_info sf_ro;
+
+	struct	wsscreen_descr sf_wsd;
 };
 
 /*
@@ -77,10 +79,11 @@ extern int fbnode;
 
 void	fb_setsize(struct sunfb*, int, int, int, int, int);
 void	fbwscons_init(struct sunfb *, int);
-void	fbwscons_console_init(struct sunfb *, struct wsscreen_descr *, int,
+void	fbwscons_console_init(struct sunfb *, int,
     void (*)(void *, u_int, u_int));
 void	fbwscons_setcolormap(struct sunfb *,
     void (*)(void *, u_int, u_int8_t, u_int8_t, u_int8_t));
+void	fbwscons_attach(struct sunfb *, struct wsdisplay_accessops *, int);
 
 #if defined(SUN4)
 int	fb_pfour_id(void *);

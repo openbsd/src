@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgthree.c,v 1.35 2003/08/01 19:24:47 miod Exp $	*/
+/*	$OpenBSD: cgthree.c,v 1.36 2004/11/29 22:07:40 miod Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -129,19 +129,6 @@ struct cgthree_softc {
 	u_int sc_mode;
 };
 
-struct wsscreen_descr cgthree_stdscreen = {
-	"std",
-};
-
-const struct wsscreen_descr *cgthree_scrlist[] = {
-	&cgthree_stdscreen,
-	/* XXX other formats? */
-};
-
-struct wsscreen_list cgthree_screenlist = {
-	sizeof(cgthree_scrlist) / sizeof(struct wsscreen_descr *), cgthree_scrlist
-};
-
 int cgthree_ioctl(void *, u_long, caddr_t, int, struct proc *);
 int cgthree_alloc_screen(void *, const struct wsscreen_descr *, void **,
     int *, int *, long *);
@@ -224,7 +211,6 @@ cgthreeattach(struct device *parent, struct device *self, void *aux)
 {
 	struct cgthree_softc *sc = (struct cgthree_softc *)self;
 	struct sbus_attach_args *sa = aux;
-	struct wsemuldisplaydev_attach_args waa;
 	int console, i;
 
 	sc->sc_bustag = sa->sa_bustag;
@@ -288,24 +274,15 @@ cgthreeattach(struct device *parent, struct device *self, void *aux)
 	fbwscons_init(&sc->sc_sunfb, console &&
 	    (sc->sc_sunfb.sf_width >= 1024) ? 0 : RI_CLEAR);
 
-	cgthree_stdscreen.capabilities = sc->sc_sunfb.sf_ro.ri_caps;
-	cgthree_stdscreen.nrows = sc->sc_sunfb.sf_ro.ri_rows;
-	cgthree_stdscreen.ncols = sc->sc_sunfb.sf_ro.ri_cols;
-	cgthree_stdscreen.textops = &sc->sc_sunfb.sf_ro.ri_ops;
-
 	fbwscons_setcolormap(&sc->sc_sunfb, cgthree_setcolor);
 
 	if (console) {
 		sc->sc_sunfb.sf_ro.ri_updatecursor = cgthree_updatecursor;
-		fbwscons_console_init(&sc->sc_sunfb, &cgthree_stdscreen,
+		fbwscons_console_init(&sc->sc_sunfb,
 		    sc->sc_sunfb.sf_width >= 1024 ? -1 : 0, cgthree_burner);
 	}
 
-	waa.console = console;
-	waa.scrdata = &cgthree_screenlist;
-	waa.accessops = &cgthree_accessops;
-	waa.accesscookie = sc;
-	config_found(self, &waa, wsemuldisplaydevprint);
+	fbwscons_attach(&sc->sc_sunfb, &cgthree_accessops, console);
 
 	return;
 
