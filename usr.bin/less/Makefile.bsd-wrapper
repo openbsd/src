@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.3 1996/09/22 06:34:07 etheisen Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.4 1996/09/25 03:59:03 etheisen Exp $
 
 LINKS=		${BINDIR}/less ${BINDIR}/more ${BINDIR}/less ${BINDIR}/page
 
@@ -12,6 +12,16 @@ LIBS=		-ltermcap
 MAN=		less.1 lesskey.1
 MLINKS=		less.1 more.1 less.1 page.1
 CLEANFILES=	config.cache config.log $(MAN)
+
+#
+# XXX - crunchgen crap
+#
+OBJS=	main.o screen.o brac.o ch.o charset.o cmdbuf.o \
+	command.o decode.o edit.o filename.o forwback.o \
+	help.o ifile.o input.o jump.o line.o linenum.o \
+	lsystem.o mark.o optfunc.o option.o opttbl.o os.o \
+	output.o position.o prompt.o search.o signal.o \
+	tags.o ttyin.o version.o
 
 #
 # Wrapped flags
