@@ -1,4 +1,4 @@
-/*	$OpenBSD: ruptime.c,v 1.13 2004/09/14 22:24:07 deraadt Exp $	*/
+/*	$OpenBSD: ruptime.c,v 1.14 2004/10/10 03:50:40 mickey Exp $	*/
 
 /*
  * Copyright (c) 1983 The Regents of the University of California.
@@ -30,14 +30,14 @@
  */
 
 #ifndef lint
-char copyright[] =
+const char copyright[] =
 "@(#) Copyright (c) 1983 The Regents of the University of California.\n\
  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)ruptime.c	5.8 (Berkeley) 7/21/90";*/
-static char rcsid[] = "$OpenBSD: ruptime.c,v 1.13 2004/09/14 22:24:07 deraadt Exp $";
+/*static const char sccsid[] = "from: @(#)ruptime.c	5.8 (Berkeley) 7/21/90";*/
+static const char rcsid[] = "$OpenBSD: ruptime.c,v 1.14 2004/10/10 03:50:40 mickey Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -49,6 +49,7 @@ static char rcsid[] = "$OpenBSD: ruptime.c,v 1.13 2004/09/14 22:24:07 deraadt Ex
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <err.h>
 
 size_t	nhosts, hspace = 20;
 struct hs {
@@ -73,6 +74,7 @@ void morehosts(void);
 int
 main(int argc, char *argv[])
 {
+	extern char *__progname;
 	struct hs *hsp;
 	struct whod *wd;
 	struct whoent *we;
@@ -101,15 +103,12 @@ main(int argc, char *argv[])
 			cmp = ucmp;
 			break;
 		default: 
-			(void)fprintf(stderr, "usage: ruptime [-alrut]\n");
+			fprintf(stderr, "usage: %s [-alrut]\n", __progname);
 			exit(1);
 		}
 
-	if (chdir(_PATH_RWHODIR) || (dirp = opendir(".")) == NULL) {
-		(void)fprintf(stderr, "ruptime: %s: %s.\n",
-		    _PATH_RWHODIR, strerror(errno));
-		exit(1);
-	}
+	if (chdir(_PATH_RWHODIR) || (dirp = opendir(".")) == NULL)
+		err(1, "%s", _PATH_RWHODIR);
 	morehosts();
 	hsp = hs;
 	maxloadav = -1;
@@ -117,8 +116,7 @@ main(int argc, char *argv[])
 		if (dp->d_ino == 0 || strncmp(dp->d_name, "whod.", 5))
 			continue;
 		if ((f = open(dp->d_name, O_RDONLY, 0)) < 0) {
-			(void)fprintf(stderr, "ruptime: %s: %s\n",
-			    dp->d_name, strerror(errno));
+			warn("%s", dp->d_name);
 			continue;
 		}
 		cc = read(f, buf, sizeof(struct whod));
@@ -144,10 +142,8 @@ main(int argc, char *argv[])
 		nhosts++;
 		hsp++;
 	}
-	if (!nhosts) {
-		(void)printf("ruptime: no hosts in %s.\n", _PATH_RWHODIR);
-		exit(1);
-	}
+	if (!nhosts)
+		errx(1, "no hosts in %s.", _PATH_RWHODIR);
 	(void)time(&now);
 	qsort((char *)hs, nhosts, sizeof (hs[0]), cmp);
 	for (i = 0; i < nhosts; i++) {
@@ -260,8 +256,6 @@ void
 morehosts(void)
 {
 	hs = realloc((char *)hs, (hspace *= 2) * sizeof(*hs));
-	if (hs == NULL) {
-		(void)fprintf(stderr, "ruptime: %s.\n", strerror(ENOMEM));
-		exit(1);
-	}
+	if (hs == NULL)
+		err(1, "realloc");
 }
