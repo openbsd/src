@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.c,v 1.13 1997/09/24 23:10:03 mickey Exp $	*/
+/*	$OpenBSD: installboot.c,v 1.14 1997/09/30 21:59:43 millert Exp $	*/
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -158,7 +158,8 @@ main(argc, argv)
 			if (nsectors == -1)
 				nsectors = BIOSNSECTS(geo);
 		}
-	}
+	} else if (nheads == -1 || nsectors == -1)
+		errx(1, "Unable to get BIOS geometry, must specify -h and -s");
 
 	/* Open and check raw disk device */
 	if ((devfd = opendev(dev, (nowrite? O_RDONLY:O_RDWR),
@@ -430,10 +431,8 @@ loadblocknums(boot, devfd, dl)
 
 	if (dl->d_type != 0 && dl->d_type < DTYPE_FLOPPY) {
 		/* adjust disklabel w/ synthetic geometry */
-		if (nsectors > 0)
-			dl->d_nsectors = nsectors;
-		if (nheads > 0)
-			dl->d_secpercyl = dl->d_nsectors * nheads;
+		dl->d_nsectors = nsectors;
+		dl->d_secpercyl = dl->d_nsectors * nheads;
 	}
 
 	if (verbose)
