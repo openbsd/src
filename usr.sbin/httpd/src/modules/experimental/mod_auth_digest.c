@@ -87,7 +87,7 @@
  * Name: digest_auth_module
  * ConfigStart
 
-    RULE_DEV_RANDOM=`./helpers/CutRule DEV_RANDOM $file`
+    RULE_DEV_RANDOM=`sh ./helpers/CutRule DEV_RANDOM $file`
     if [ "$RULE_DEV_RANDOM" = "default" ]; then
 	if [ -r "/dev/random" ]; then
 	    RULE_DEV_RANDOM="/dev/random"
@@ -95,9 +95,9 @@
 	    RULE_DEV_RANDOM="/dev/urandom"
 	else
 	    RULE_DEV_RANDOM="truerand"
-	    if helpers/TestCompile func randbyte; then
+	    if sh helpers/TestCompile func randbyte; then
 		:
-	    elif helpers/TestCompile lib rand randbyte; then
+	    elif sh helpers/TestCompile lib rand randbyte; then
 		:
 	    else
 		echo "      (mod_auth_digest) truerand library missing!"
