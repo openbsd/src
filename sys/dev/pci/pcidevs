@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.374 2001/03/12 06:43:32 aaron Exp $
+	$OpenBSD: pcidevs,v 1.375 2001/03/12 23:12:22 deraadt Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -501,6 +501,7 @@ vendor TRANSMETA	0x1279	Transmeta
 vendor ROCKWELL		0x127a	Rockwell
 vendor DAVICOM		0x1282	Davicom Technologies
 vendor ITEXPRESS	0x1283	ITExpress
+vendor PLATFORM		0x1285	Platform
 vendor LUXSONOR		0x1287	LuxSonor
 vendor TRITECH		0x1292	TriTech Microelectronics
 vendor KOFAX		0x1296	Kofax Image Products
@@ -1333,6 +1334,8 @@ product NEC USB			0x0035	USB
 product NEC POWERVR2		0x0046	PowerVR PCX2
 product NEC MARTH		0x0074	I/O
 product NEC PKUG		0x007d	I/O
+product NEC VERSAMAESTRO	0x8058	Versa Maestro
+product NEC VERSAPRONXVA26D	0x803c	Versa Va26D Maestro
 
 /* NeoMagic */
 product NEOMAGIC NM2070		0x0001	Magicgraph NM2070
@@ -1498,6 +1501,9 @@ product PICOPOWER PT86C523_2	0x8002	PT86C523_2
 
 /* Pijnenburg */
 product PIJNENBURG PCC_ISES	0x0001	PCC-ISES
+
+/* Platform */
+product PLATFORM ES1849		0x0100	ES1849
 
 /* PLX products */
 product PLX	1076		0x1076	I/O
