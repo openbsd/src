@@ -107,7 +107,7 @@ SYSTEM_LD=	-@if [ X${DEBUG} = X-g ]; \
 		then strip=-X; \
 		else strip=-x; \
 		fi; \
-		@echo ${LD} ${LINKFLAGS} -o $@ -e start \
+		echo ${LD} ${LINKFLAGS} -o $@ -e start \
 			-T ../../conf/ld.script '$${SYSTEM_OBJ}' vers.o; \
 		${LD} ${LINKFLAGS} -o $@ -e start -T ../../conf/ld.script \
 			${SYSTEM_OBJ} vers.o
