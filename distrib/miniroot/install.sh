@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.25 1998/06/08 02:01:15 jason Exp $
+#	$OpenBSD: install.sh,v 1.26 1998/07/13 23:23:19 deraadt Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -555,7 +555,7 @@ if [ ! -x /mnt/dev/MAKEDEV ]; then
 	exit
 fi
 
-echo -n "Making all devices..."
+echo -n "Making all device nodes (by running /dev/MAKEDEV all)"
 #pid=`twiddle`
 cd /mnt/dev
 sh MAKEDEV all
