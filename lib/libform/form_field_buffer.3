@@ -1,5 +1,5 @@
 '\" t
-.\" $OpenBSD: form_field_buffer.3,v 1.9 1999/05/08 20:29:03 millert Exp $
+.\" $OpenBSD: form_field_buffer.3,v 1.10 1999/06/27 08:16:02 millert Exp $
 .\"
 .\"***************************************************************************
 .\" Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -29,7 +29,7 @@
 .\" authorization.                                                           *
 .\"***************************************************************************
 .\"
-.\" $From: form_field_buffer.3x,v 1.7 1999/04/04 00:22:24 tom Exp $
+.\" $From: From: form_field_buffer.3x,v 1.8 1999/06/16 00:37:09 juergen Exp $
 .TH form_field_buffer 3 ""
 .SH NAME
 \fBform_field_buffer\fR - field buffer control
@@ -52,6 +52,13 @@ to contain a given string.  Buffer 0 is the displayed value of the field; other
 numbered buffers may be allocated by applications through the \fBnbuf\fR
 argument of (see \fBform_field_new\fR(3)) but are not manipulated by the forms
 library.  The function \fBfield_buffer\fR returns the address of the buffer.
+Please note that this buffer has always the length of the buffer, that means 
+that it may typically contain trailing spaces. If you entered leading spaces
+the buffer may also contain them. If you want the raw data, you must write your
+own routine that copies the value out of the buffer and removes the leading
+and trailing spaces. Please note also, that subsequent operations on the form
+will probably change the content of the buffer. So don't use it for long term
+storage of the entered form data.
 
 The function \fBset_field_status\fR sets the associated status flag of
 \fIfield\fR; \fBfield_status\fR gets the current value.  The status flag

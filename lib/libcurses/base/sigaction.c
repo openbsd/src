@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigaction.c,v 1.2 1999/03/18 16:46:58 millert Exp $	*/
+/*	$OpenBSD: sigaction.c,v 1.3 1999/06/27 08:14:21 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -35,14 +35,15 @@
 
 #include <curses.priv.h>
 
-/* This file provides sigaction() emulation using sigvec() */
-/* Use only if this is non POSIX system */
-
-#if !HAVE_SIGACTION
 #include <signal.h>
 #include <SigAction.h>
 
-MODULE_ID("$From: sigaction.c,v 1.8 1999/03/18 02:12:04 tom Exp $")
+/* This file provides sigaction() emulation using sigvec() */
+/* Use only if this is non POSIX system */
+
+#if !HAVE_SIGACTION && HAVE_SIGVEC
+
+MODULE_ID("$From: sigaction.c,v 1.9 1999/06/19 23:05:16 tom Exp $")
 
 int
 sigaction (int sig, sigaction_t * sigact, sigaction_t * osigact)
@@ -100,6 +101,7 @@ sigismember (sigset_t * mask, int sig)
 {
   return (*mask & sigmask (sig)) != 0;
 }
+
 #else
 extern void _nc_sigaction(void);	/* quiet's gcc warning */
 void _nc_sigaction(void) { } /* nonempty for strict ANSI compilers */

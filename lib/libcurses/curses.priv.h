@@ -1,4 +1,4 @@
-/*	$OpenBSD: curses.priv.h,v 1.18 1999/06/14 17:26:04 millert Exp $	*/
+/*	$OpenBSD: curses.priv.h,v 1.19 1999/06/27 08:15:19 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -35,7 +35,7 @@
 
 
 /*
- * $From: curses.priv.h,v 1.140 1999/06/12 21:19:47 tom Exp $
+ * $From: curses.priv.h,v 1.141 1999/06/26 22:00:49 tom Exp $
  *
  *	curses.priv.h
  *
@@ -670,6 +670,11 @@ extern int _nc_scrolln(int, int, int, int);
 extern void _nc_screen_init(void);
 extern void _nc_screen_resume(void);
 extern void _nc_screen_wrap(void);
+
+#if !HAVE_STRSTR
+#define strstr _nc_strstr
+extern char *_nc_strstr(const char *, const char *);
+#endif
 
 /* lib_mouse.c */
 extern int _nc_has_mouse(void);

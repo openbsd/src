@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_mvcur.c,v 1.2 1999/02/11 00:09:37 millert Exp $	*/
+/*	$OpenBSD: lib_mvcur.c,v 1.3 1999/06/27 08:14:21 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -155,7 +155,7 @@
 #include <term.h>
 #include <ctype.h>
 
-MODULE_ID("$From: lib_mvcur.c,v 1.56 1999/02/01 12:04:15 tom Exp $")
+MODULE_ID("$From: lib_mvcur.c,v 1.57 1999/06/26 22:16:04 tom Exp $")
 
 #define STRLEN(s)       (s != 0) ? strlen(s) : 0
 
@@ -176,6 +176,24 @@ static float diff;
 #define OPT_SIZE 512
 
 static int normalized_cost(const char *const cap, int affcnt);
+
+#if !HAVE_STRSTR
+char * _nc_strstr(const char *haystack, const char *needle)
+{
+	size_t len1 = strlen(haystack);
+	size_t len2 = strlen(needle);
+	char *result = 0;
+
+	while ((len1 != 0) && (len1-- >= len2)) {
+		if (!strncmp(haystack, needle, len2)) {
+			result = haystack;
+			break;
+		}
+		haystack++;
+	}
+	return result;
+}
+#endif
 
 /****************************************************************************
  *

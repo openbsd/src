@@ -1,4 +1,4 @@
-/*	$OpenBSD: comp_hash.c,v 1.3 1999/03/15 19:12:22 millert Exp $	*/
+/*	$OpenBSD: comp_hash.c,v 1.4 1999/06/27 08:14:21 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -51,7 +51,7 @@
 #define DEBUG(level, params) /*nothing*/
 #endif
 
-MODULE_ID("$From: comp_hash.c,v 1.20 1999/03/14 12:23:26 tom Exp $")
+MODULE_ID("$From: comp_hash.c,v 1.21 1999/06/26 21:25:11 tom Exp $")
 
 static  int hash_function(const char *);
 
@@ -66,7 +66,8 @@ static  int hash_function(const char *);
 
 #ifdef MAIN_PROGRAM
 
-#undef USE_RCS_IDS
+#undef MODULE_ID
+#define MODULE_ID(id) /*nothing*/
 #include <tinfo/doalloc.c>
 
 static void _nc_make_hash_table(struct name_table_entry *table,

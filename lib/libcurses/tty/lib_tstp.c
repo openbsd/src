@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_tstp.c,v 1.2 1999/01/31 20:17:10 millert Exp $	*/
+/*	$OpenBSD: lib_tstp.c,v 1.3 1999/06/27 08:14:21 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999 Free Software Foundation, Inc.                   *
@@ -50,7 +50,13 @@
 #define _POSIX_SOURCE
 #endif
 
-MODULE_ID("$From: lib_tstp.c,v 1.17 1999/01/31 01:06:14 tom Exp $")
+MODULE_ID("$From: lib_tstp.c,v 1.18 1999/06/19 23:00:06 tom Exp $")
+
+#if defined(SIGTSTP) && (HAVE_SIGACTION || HAVE_SIGVEC)
+#define USE_SIGTSTP 1
+#else
+#define USE_SIGTSTP 0
+#endif
 
 /*
  * Note: This code is fragile!  Its problem is that different OSs
@@ -95,7 +101,7 @@ MODULE_ID("$From: lib_tstp.c,v 1.17 1999/01/31 01:06:14 tom Exp $")
  * the future.  If nothing else, it's simpler...
  */
 
-#ifdef SIGTSTP
+#if USE_SIGTSTP
 static void tstp(int dummy GCC_UNUSED)
 {
 	sigset_t mask, omask;
@@ -190,7 +196,7 @@ static void tstp(int dummy GCC_UNUSED)
 	/* Reset the signals. */
 	(void)sigprocmask(SIG_SETMASK, &omask, NULL);
 }
-#endif	/* defined(SIGTSTP) */
+#endif	/* USE_SIGTSTP */
 
 static void cleanup(int sig)
 {
@@ -257,9 +263,9 @@ static int CatchIfDefault(int sig, sigaction_t *act)
 	return FALSE;
 }
 #else
-static int CatchIfDefault(int sig, RETSIGTYPE (*handler)())
+static int CatchIfDefault(int sig, RETSIGTYPE (*handler)(int))
 {
-	void	(*ohandler)();
+	void	(*ohandler)(int);
 
 	ohandler = signal(sig, SIG_IGN);
 	if (ohandler == SIG_DFL
@@ -289,7 +295,7 @@ static int CatchIfDefault(int sig, RETSIGTYPE (*handler)())
  */
 void _nc_signal_handler(bool enable)
 {
-#ifdef SIGTSTP		/* Xenix 2.x doesn't have this */
+#if USE_SIGTSTP		/* Xenix 2.x doesn't have SIGTSTP, for example */
 static sigaction_t act, oact;
 static int ignore;
 
@@ -325,7 +331,7 @@ static int ignore;
 				ignore = TRUE;
 		}
 	}
-#else /* !SIGTSTP */
+#else /* !USE_SIGTSTP */
 	if (enable)
 	{
 #if HAVE_SIGACTION || HAVE_SIGVEC
@@ -351,5 +357,5 @@ static int ignore;
 #endif
 #endif /* !(HAVE_SIGACTION || HAVE_SIGVEC) */
 	}
-#endif /* !SIGTSTP */
+#endif /* !USE_SIGTSTP */
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: infocmp.c,v 1.4 1999/05/08 20:30:44 millert Exp $	*/
+/*	$OpenBSD: infocmp.c,v 1.5 1999/06/27 08:17:46 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999 Free Software Foundation, Inc.                   *
@@ -44,7 +44,7 @@
 #include <term_entry.h>
 #include <dump_entry.h>
 
-MODULE_ID("$From: infocmp.c,v 1.42 1999/04/03 23:18:23 tom Exp $")
+MODULE_ID("$From: infocmp.c,v 1.44 1999/06/16 00:39:48 tom Exp $")
 
 #define L_CURL "{"
 #define R_CURL "}"
@@ -802,7 +802,8 @@ static void usage(void)
 	    ,"  -V    print version"
 	    ,"  -c    list common capabilities"
 	    ,"  -d    list different capabilities"
-	    ,"  -e    format output as C initializer"
+	    ,"  -e    format output for C initializer"
+	    ,"  -E    format output as C tables"
 	    ,"  -f    with -1, format complex strings"
 	    ,"  -G    format %{number} to %'char'"
 	    ,"  -g    format %'char' to %{number}"
@@ -831,6 +832,158 @@ static void usage(void)
 	exit(EXIT_FAILURE);
 }
 
+static char * name_initializer(const char *type)
+{
+    static char *initializer;
+    char *s;
+
+    if (initializer == 0)
+	initializer = malloc(strlen(term->term_names) + 20);
+
+    (void) sprintf(initializer, "%s_data_%s", type, term->term_names);
+    for (s = initializer; *s != 0 && *s != '|'; s++)
+    {
+	if (!isalnum(*s))
+	    *s = '_';
+    }
+    *s = 0;
+    return initializer;
+}
+
+/* dump C initializers for the terminal type */
+static void dump_initializers(void)
+{
+    int	n;
+    const char *str = 0;
+    int	size;
+
+    (void) printf("static bool %s[] = %s\n", name_initializer("bool"), L_CURL);
+
+    for_each_boolean(n,term)
+    {
+	switch((int)(term->Booleans[n]))
+	{
+	case TRUE:
+	    str = "TRUE";
+	    break;
+
+	case FALSE:
+	    str = "FALSE";
+	    break;
+
+	case ABSENT_BOOLEAN:
+	    str = "ABSENT_BOOLEAN";
+	    break;
+
+	case CANCELLED_BOOLEAN:
+	    str = "CANCELLED_BOOLEAN";
+	    break;
+	}
+	(void) printf("\t/* %3d: %-8s */\t%s,\n",
+		      n, ExtBoolname(term,n,boolnames), str);
+    }
+    (void) printf("%s;\n", R_CURL);
+
+    (void) printf("static short %s[] = %s\n", name_initializer("number"), L_CURL);
+
+    for_each_number(n,term)
+    {
+	char	buf[BUFSIZ];
+	switch (term->Numbers[n])
+	{
+	case ABSENT_NUMERIC:
+	    str = "ABSENT_NUMERIC";
+	    break;
+	case CANCELLED_NUMERIC:
+	    str = "CANCELLED_NUMERIC";
+	    break;
+	default:
+	    sprintf(buf, "%d", term->Numbers[n]);
+	    str = buf;
+	    break;
+	}
+	(void) printf("\t/* %3d: %-8s */\t%s,\n", n, ExtNumname(term,n,numnames), str);
+    }
+    (void) printf("%s;\n", R_CURL);
+
+    size = sizeof(TERMTYPE)
+	+ (NUM_BOOLEANS(term) * sizeof(term->Booleans[0]))
+	+ (NUM_NUMBERS(term) * sizeof(term->Numbers[0]));
+
+    (void) printf("static char * %s[] = %s\n", name_initializer("string"), L_CURL);
+
+    for_each_string(n,term)
+    {
+	char	buf[BUFSIZ], *sp, *tp;
+
+	if (term->Strings[n] == ABSENT_STRING)
+	    str = "ABSENT_STRING";
+	else if (term->Strings[n] == CANCELLED_STRING)
+	    str = "CANCELLED_STRING";
+	else
+	{
+	    tp = buf;
+	    *tp++ = '"';
+	    for (sp = term->Strings[n]; *sp; sp++)
+	    {
+		if (isascii(*sp) && isprint(*sp) && *sp !='\\' && *sp != '"')
+		    *tp++ = *sp;
+		else
+		{
+		    (void) sprintf(tp, "\\%03o", *sp & 0xff);
+		    tp += 4;
+		}
+	    }
+	    *tp++ = '"';
+	    *tp = '\0';
+	    size += (strlen(term->Strings[n]) + 1);
+	    str = buf;
+	}
+#if NCURSES_XNAMES
+	if (n == STRCOUNT)
+	{
+	    (void) printf("%s;\n", R_CURL);
+
+	    (void) printf("static char * %s[] = %s\n", name_initializer("string_ext"), L_CURL);
+	}
+#endif
+	(void) printf("\t/* %3d: %-8s */\t%s,\n", n, ExtStrname(term,n,strnames), str);
+    }
+    (void) printf("%s;\n", R_CURL);
+}
+
+/* dump C initializers for the terminal type */
+static void dump_termtype(void)
+{
+    (void) printf("\t%s\n\t\t\"%s\",\n", L_CURL, term->term_names);
+    (void) printf("\t\t(char *)0,\t/* pointer to string table */\n");
+
+    (void) printf("\t\t%s,\n", name_initializer("bool"));
+    (void) printf("\t\t%s,\n", name_initializer("number"));
+
+    (void) printf("\t\t%s,\n", name_initializer("string"));
+
+#if NCURSES_XNAMES
+    (void) printf("#if NCURSES_XNAMES\n");
+    (void) printf("\t\t(char *)0,\t/* pointer to extended string table */\n");
+    (void) printf("\t\t%s,\t/* ...corresponding names */\n",
+	(NUM_STRINGS(term) != STRCOUNT)
+	    ? name_initializer("string_ext")
+	    : "(char **)0");
+
+    (void) printf("\t\t%d,\t\t/* count total Booleans */\n", NUM_BOOLEANS(term));
+    (void) printf("\t\t%d,\t\t/* count total Numbers */\n",  NUM_NUMBERS(term));
+    (void) printf("\t\t%d,\t\t/* count total Strings */\n",  NUM_STRINGS(term));
+
+    (void) printf("\t\t%d,\t\t/* count extensions to Booleans */\n", NUM_BOOLEANS(term) - BOOLCOUNT);
+    (void) printf("\t\t%d,\t\t/* count extensions to Numbers */\n",  NUM_NUMBERS(term) - NUMCOUNT);
+    (void) printf("\t\t%d,\t\t/* count extensions to Strings */\n",  NUM_STRINGS(term) - STRCOUNT);
+
+    (void) printf("#endif /* NCURSES_XNAMES */\n");
+#endif /* NCURSES_XNAMES */
+    (void) printf("\t%s\n", R_CURL);
+}
+
 /***************************************************************************
  *
  * Main sequence
@@ -846,7 +999,7 @@ int main(int argc, char *argv[])
 	int c, i, len;
 	bool formatted = FALSE;
 	bool filecompare = FALSE;
-	bool initdump = FALSE;
+	int initdump = 0;
 	bool init_analyze = FALSE;
 	bool limited = TRUE;
 
@@ -860,7 +1013,7 @@ int main(int argc, char *argv[])
 	/* where is the terminfo database location going to default to? */
 	restdir = firstdir = 0;
 
-	while ((c = getopt(argc, argv, "decCfFGgIinlLprR:s:uv:Vw:A:B:1T")) != EOF)
+	while ((c = getopt(argc, argv, "deEcCfFGgIinlLprR:s:uv:Vw:A:B:1T")) != EOF)
 		switch (c)
 		{
 		case 'd':
@@ -868,7 +1021,11 @@ int main(int argc, char *argv[])
 			break;
 
 		case 'e':
-			initdump = TRUE;
+			initdump |= 1;
+			break;
+
+		case 'E':
+			initdump |= 2;
 			break;
 
 		case 'c':
@@ -1073,100 +1230,10 @@ int main(int argc, char *argv[])
 	    /* dump as C initializer for the terminal type */
 	    if (initdump)
 	    {
-		int	n;
-		const char *str = 0;
-		int	size;
-
-		(void) printf("\t%s\n\t\t\"%s\",\n",
-			      L_CURL, term->term_names);
-		(void) printf("\t\t(char *)0,\n");
-
-		(void) printf("\t\t%s /* BOOLEANS */\n", L_CURL);
-		for_each_boolean(n,term)
-		{
-		    switch((int)(term->Booleans[n]))
-		    {
-		    case TRUE:
-			str = "TRUE";
-			break;
-
-		    case FALSE:
-			str = "FALSE";
-			break;
-
-		    case ABSENT_BOOLEAN:
-			str = "ABSENT_BOOLEAN";
-			break;
-
-		    case CANCELLED_BOOLEAN:
-			str = "CANCELLED_BOOLEAN";
-			break;
-		    }
-		    (void) printf("\t\t/* %s */\t%s%s,\n",
-				  ExtBoolname(term,n,boolnames), str,
-				  n == NUM_BOOLEANS(term)-1 ? R_CURL : "");
-		}
-
-		(void) printf("\t\t%s /* NUMERICS */\n", L_CURL);
-		for_each_number(n,term)
-		{
-		    char	buf[BUFSIZ];
-		    switch (term->Numbers[n])
-		    {
-		    case ABSENT_NUMERIC:
-			str = "ABSENT_NUMERIC";
-			break;
-		    case CANCELLED_NUMERIC:
-			str = "CANCELLED_NUMERIC";
-			break;
-		    default:
-			sprintf(buf, "%d", term->Numbers[n]);
-			str = buf;
-			break;
-		    }
-		    (void) printf("\t\t/* %s */\t%s%s,\n",
-			numnames[n], str,
-			n == NUM_NUMBERS(term)-1 ? R_CURL : "");
-		}
-
-		size = sizeof(TERMTYPE)
-		    + (NUM_BOOLEANS(term) * sizeof(term->Booleans[0]))
-		    + (NUM_NUMBERS(term) * sizeof(term->Numbers[0]));
-
-		(void) printf("\t\t%s /* STRINGS */\n", L_CURL);
-		for_each_string(n,term)
-		{
-		    char	buf[BUFSIZ], *sp, *tp;
-
-		    if (term->Strings[n] == ABSENT_STRING)
-			str = "ABSENT_STRING";
-		    else if (term->Strings[n] == CANCELLED_STRING)
-			str = "CANCELLED_STRING";
-		    else
-		    {
-			tp = buf;
-			*tp++ = '"';
-			for (sp = term->Strings[n]; *sp; sp++)
-			{
-			    if (isascii(*sp) && isprint(*sp) && *sp !='\\' && *sp != '"')
-				*tp++ = *sp;
-			    else
-			    {
-				(void) sprintf(tp, "\\%03o", *sp & 0xff);
-				tp += 4;
-			    }
-			}
-			*tp++ = '"';
-			*tp = '\0';
-			size += (strlen(term->Strings[n]) + 1);
-			str = buf;
-		    }
-		    (void) printf("\t\t/* %s */\t%s%s%s\n",
-		    	strnames[n], str,
-			n == NUM_STRINGS(term)-1 ? R_CURL : "",
-			n == NUM_STRINGS(term)-1 ? ""     : ",");
-		}
-		(void) printf("\t%s /* size = %d */\n", R_CURL, size);
+		if (initdump & 1)
+		    dump_termtype();
+		if (initdump & 2)
+		    dump_initializers();
 		ExitProgram(EXIT_SUCCESS);
 	    }
 

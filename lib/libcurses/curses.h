@@ -1,4 +1,4 @@
-/*	$OpenBSD: curses.h,v 1.32 1999/06/15 03:07:48 millert Exp $	*/
+/*	$OpenBSD: curses.h,v 1.33 1999/06/27 08:15:19 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -33,7 +33,7 @@
  *     and: Eric S. Raymond <esr@snark.thyrsus.com>                         *
  ****************************************************************************/
 
-/* $From: curses.h.in,v 1.82 1999/06/06 00:38:49 tom Exp $ */
+/* $From: curses.h.in,v 1.83 1999/06/16 00:25:26 tom Exp $ */
 
 #ifndef __NCURSES_H
 #define __NCURSES_H
@@ -50,7 +50,7 @@
 /* These are defined only in curses.h, and are used for conditional compiles */
 #define NCURSES_VERSION_MAJOR 5
 #define NCURSES_VERSION_MINOR 0
-#define NCURSES_VERSION_PATCH 990614
+#define NCURSES_VERSION_PATCH 990626
 
 /* This is defined in more than one ncurses header, for identification */
 #undef  NCURSES_VERSION
@@ -87,7 +87,7 @@ typedef unsigned long chtype;
 #undef FALSE
 #define FALSE   0
 
-#if !defined(__cplusplus) || !1
+#if !defined(__cplusplus)
 #undef bool
 typedef char bool;
 #endif

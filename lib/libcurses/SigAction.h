@@ -1,4 +1,4 @@
-/*	$OpenBSD: SigAction.h,v 1.1 1998/07/23 21:17:25 millert Exp $	*/
+/*	$OpenBSD: SigAction.h,v 1.2 1999/06/27 08:15:19 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -34,7 +34,7 @@
  ****************************************************************************/
 
 /*
- * $From: SigAction.h,v 1.4 1998/02/11 12:13:55 tom Exp $
+ * $From: SigAction.h,v 1.5 1999/06/19 23:00:54 tom Exp $
  *
  * This file exists to handle non-POSIX systems which don't have <unistd.h>,
  * and usually no sigaction() nor <termios.h>
@@ -42,6 +42,14 @@
 
 #ifndef _SIGACTION_H
 #define _SIGACTION_H
+
+#ifndef HAVE_SIGACTION
+#define HAVE_SIGACTION 0
+#endif
+
+#ifndef HAVE_SIGVEC
+#define HAVE_SIGVEC 0
+#endif
 
 #if HAVE_SIGACTION
 

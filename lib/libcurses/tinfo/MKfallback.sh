@@ -1,6 +1,6 @@
 #!/bin/sh
-# $OpenBSD: MKfallback.sh,v 1.1 1999/01/18 19:10:12 millert Exp $
-# $From: MKfallback.sh,v 1.8 1996/09/15 01:44:13 tom Exp $
+# $OpenBSD: MKfallback.sh,v 1.2 1999/06/27 08:14:21 millert Exp $
+# $From: MKfallback.sh,v 1.9 1999/06/15 22:57:45 tom Exp $
 #
 # MKfallback.sh -- create fallback table for entry reads
 #
@@ -25,7 +25,14 @@ then
 #include <tic.h>
 
 /* fallback entries for: $* */
+EOF
+	for x in $*
+	do
+		echo "/* $x */"
+		infocmp -E $x
+	done
 
+	cat <<EOF
 static const TERMTYPE fallbacks[$#] =
 {
 EOF
