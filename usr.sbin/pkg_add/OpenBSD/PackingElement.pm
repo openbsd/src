@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.30 2004/10/04 12:09:07 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.31 2004/10/04 12:16:31 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -200,8 +200,38 @@ sub fullname($)
 	return $_[0]->{fullname};
 }
 
-# Abstract class for all file-like elements
+# Basic class hierarchy
 
+# various stuff that's only linked to objects before/after them
+# this class doesn't have real objects: no valid new nor clone...
+package OpenBSD::PackingElement::Annotation;
+our @ISA=qw(OpenBSD::PackingElement);
+sub new { die "Can't create annotation objects" }
+
+# concrete objects
+package OpenBSD::PackingElement::Object;
+our @ISA=qw(OpenBSD::PackingElement);
+
+package OpenBSD::PackingElement::FileObject;
+our @ISA=qw(OpenBSD::PackingElement::Object);
+
+# exec/unexec and friends
+package OpenBSD::PackingElement::Action;
+our @ISA=qw(OpenBSD::PackingElement::Object);
+
+# persistent state for following objects
+package OpenBSD::PackingElement::State;
+our @ISA=qw(OpenBSD::PackingElement::Object);
+
+# meta information, stored elsewhere
+package OpenBSD::PackingElement::Meta;
+our @ISA=qw(OpenBSD::PackingElement);
+
+# all dependency information
+package OpenBSD::PackingElement::Depend;
+our @ISA=qw(OpenBSD::PackingElement::Meta);
+
+# Abstract class for all file-like elements
 package OpenBSD::PackingElement::FileBase;
 our @ISA=qw(OpenBSD::PackingElement);
 use File::Spec;
