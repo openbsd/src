@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kqueue.2,v 1.15 2004/08/02 17:42:06 brad Exp $
+.\"	$OpenBSD: kqueue.2,v 1.16 2004/08/02 17:49:31 brad Exp $
 .\"
 .\" Copyright (c) 2000 Jonathan Lemon
 .\" All rights reserved.
@@ -301,7 +301,7 @@ be attached to,
 containing the udata value, and
 .Va sigev_notify
 set to
-.Dv SIGEV_EVENT .
+.Dv SIGEV_KEVENT .
 When the aio_* function is called, the event will be registered
 with the specified kqueue, and the
 .Va ident
