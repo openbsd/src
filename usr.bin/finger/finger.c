@@ -1,4 +1,4 @@
-/*	$OpenBSD: finger.c,v 1.3 1996/08/30 11:39:36 deraadt Exp $	*/
+/*	$OpenBSD: finger.c,v 1.4 1996/12/08 13:29:19 downsj Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -48,7 +48,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)finger.c	5.22 (Berkeley) 6/29/90";*/
-static char rcsid[] = "$OpenBSD: finger.c,v 1.3 1996/08/30 11:39:36 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: finger.c,v 1.4 1996/12/08 13:29:19 downsj Exp $";
 #endif /* not lint */
 
 /*
@@ -71,7 +71,7 @@ static char rcsid[] = "$OpenBSD: finger.c,v 1.3 1996/08/30 11:39:36 deraadt Exp 
 #include "finger.h"
 
 time_t now;
-int lflag, sflag, mflag, pplan;
+int lflag, sflag, mflag, pplan, Mflag;
 char tbuf[1024];
 
 int	loginlist __P((void));
@@ -84,15 +84,19 @@ main(argc, argv)
 {
 	extern int optind;
 	int ch;
+	char domain[256];
 	time_t time();
 
-	while ((ch = getopt(argc, argv, "lmps")) != EOF)
+	while ((ch = getopt(argc, argv, "lmMps")) != EOF)
 		switch(ch) {
 		case 'l':
 			lflag = 1;		/* long format */
 			break;
 		case 'm':
 			mflag = 1;		/* force exact match of names */
+			break;
+		case 'M':
+			Mflag = 1;		/* allow name matching */
 			break;
 		case 'p':
 			pplan = 1;		/* don't show .plan/.project */
@@ -103,11 +107,15 @@ main(argc, argv)
 		case '?':
 		default:
 			(void)fprintf(stderr,
-			    "usage: finger [-lmps] [login ...]\n");
+			    "usage: finger [-lmMps] [login ...]\n");
 			exit(1);
 		}
 	argc -= optind;
 	argv += optind;
+
+	/* if a domainname is set, increment mflag. */
+	if ((getdomainname(&domain, sizeof(domain)) == 0) && domain[0])
+		mflag++;
 
 	(void)time(&now);
 	setpassent(1);
@@ -208,7 +216,7 @@ userlist(argc, argv)
 	 * traverse the list of possible login names and check the login name
 	 * and real name against the name specified by the user.
 	 */
-	if (mflag) {
+	if ((mflag - Mflag) > 0) {
 		for (i = 0; i < argc; i++)
 			if (used[i] >= 0 && (pw = getpwnam(argv[i]))) {
 				enter_person(pw);
