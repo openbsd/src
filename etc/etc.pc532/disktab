@@ -1,4 +1,4 @@
-# $Id: disktab,v 1.1.1.1 1995/10/18 08:38:01 deraadt Exp $
+# $Id: disktab,v 1.2 1995/10/27 23:58:28 deraadt Exp $
 #
 # PC532 version.
 #
@@ -44,9 +44,9 @@ floppy5|5in|5.25in High Density Floppy:\
 
 boot3|3.5in High Density Boot Floppy:\
 	:ty=floppy:se#512:nt#2:rm#300:ns#18:nc#80:\
-	:ta=4.2BSD:pa#2844:oa#0:ba#4096:fa#512:\
+	:ta=4.2BSD:pa#2820:oa#0:ba#4096:fa#512:\
 	:tc=unused:pc#2880:oc#0:\
-	:th=boot:ph#36:oh#2844:
+	:th=boot:ph#60:oh#2820:
 
 rd|2mb ramdisk:\
 	:ty=floppy:se#512:nt#1:rm#8000:ns#256:nc#16:\

@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.17 1995/10/09 02:23:07 chopps Exp $
+#	$NetBSD: MAKEDEV,v 1.17.2.1 1995/10/20 10:30:08 chopps Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -333,6 +333,16 @@ grf*)
 		;;
 	*)
 		echo bad unit for grf in: $i
+		;;
+	esac
+# for those that need it, also make overlay and image devices:
+	rm -f grfov${unit} grfim${unit}
+	case $unit in
+	4)
+		unitov=`expr $unit + 16`
+		unitim=`expr $unit + 32`
+		mknod grfov${unit} c 10 ${unitov}; chmod 666 grf${unit}
+		mknod grfim${unit} c 10 ${unitim}; chmod 666 grf${unit}
 		;;
 	esac
 	;;

@@ -1,5 +1,5 @@
 #	from: @(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
-#	$Id: 4.4BSD.dist,v 1.1.1.1 1995/10/18 08:38:03 deraadt Exp $
+#	$Id: 4.4BSD.dist,v 1.2 1995/10/27 23:58:33 deraadt Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -887,6 +887,11 @@ amiga
 # ./usr/share/man/cat4/amiga
 ..
 
+# ./usr/share/man/cat4/atari
+atari
+# ./usr/share/man/cat4/atari
+..
+
 # ./usr/share/man/cat4/hp300
 hp300
 # ./usr/share/man/cat4/hp300
@@ -951,6 +956,11 @@ cat8
 # ./usr/share/man/cat8/amiga
 amiga
 # ./usr/share/man/cat8/amiga
+..
+
+# ./usr/share/man/cat8/atari
+atari
+# ./usr/share/man/cat8/atari
 ..
 
 # ./usr/share/man/cat8/hp300
@@ -1024,6 +1034,11 @@ amiga
 # ./usr/share/man/man4/amiga
 ..
 
+# ./usr/share/man/man4/atari
+atari
+# ./usr/share/man/man4/atari
+..
+
 # ./usr/share/man/man4/hp300
 hp300
 # ./usr/share/man/man4/hp300
@@ -1088,6 +1103,11 @@ man8
 # ./usr/share/man/man8/amiga
 amiga
 # ./usr/share/man/man8/amiga
+..
+
+# ./usr/share/man/man8/atari
+atari
+# ./usr/share/man/man8/atari
 ..
 
 # ./usr/share/man/man8/hp300

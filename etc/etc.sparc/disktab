@@ -1,7 +1,107 @@
-# $Id: disktab,v 1.2 1995/10/27 23:04:42 deraadt Exp $
-# Sparc has no need for disktab (yet)
+# $Id: disktab,v 1.3 1995/10/27 23:58:31 deraadt Exp $
+#
+#	@(#)disktab	5.5 (Berkeley) 2/27/91
+#
+# Disk geometry and partition layout tables. 
+# Key:
+#	ty	type of disk
+#	ns	#sectors/track
+#	nt	#tracks/cylinder
+#	nc	#cylinders/disk
+#	rm	rpm, 3600 default
+#	se	sector size, 512 default
+#	sf	supports bad144-style bad sector forwarding
+#	so	partition offsets in sectors
+#	p[a-h]	partition sizes in sectors
+#	b[a-h]	partition block sizes in bytes
+#	f[a-h]	partition fragment sizes in bytes
+#
+
+# pseudo-geometry taken from rd7945
+miniroot:\
+        :ty=winchester:ns#16:nt#7:nc#968:\
+	:pa#10240:ba#8192:fa#1024:
+
 floppy|floppy3|3in|3.5in High Density Floppy:\
-        :ty=floppy:se#512:nt#2:rm#300:ns#18:nc#80:\
-        :pa#2880:oa#0:ba#4096:fa#512:\
-        :pb#2880:ob#0:\
-        :pc#2880:oc#0:
+	:ty=floppy:se#512:nt#2:rm#300:ns#18:nc#80:\
+	:pa#2880:oa#0:ba#4096:fa#512:\
+	:pb#2880:ob#0:\
+	:pc#2880:oc#0:
+
+SUN0104:\
+	:ty=winchester:ns#35:nt#6:nc#974:\
+	:pa#16170:oa#0:ba#8192:fa#1024:\
+	:pb#28140:ob#16170:\
+	:pc#204540:oc#0:bc#4096:fc#1024:\
+	:pg#160230:og#44310:bg#4096:fg#512:
+
+SUN0207:\
+	:ty=winchester:ns#36:nt#9:nc#324:\
+	:pa#33696:oa#0:ba#8192:fa#1024:\
+	:pb#103032:ob#33696:\
+	:pc#406296:oc#0:bc#4096:fc#1024:\
+	:pg#269568:og#136728:bg#4096:fg#1024:
+
+SUN0320:\
+	:ty=winchester:ns#48:nt#14:nc#928:\
+	:pa#43008:oa#0:ba#8192:fa#1024:\
+	:pb#64512:ob#43008:\
+	:pc#623616:oc#0:bc#4096:fc#1024:\
+	:pg#516096:og#107520:bg#4096:fg#1024:
+
+SUN0327:\
+	:ty=winchester:ns#46:nt#9:nc#1545:\
+	:pa#46368:oa#0:ba#8192:fa#1024:\
+	:pb#59616:ob#46368:\
+	:pc#639630:oc#0:bc#4096:fc#1024:\
+	:pg#533646:og#105984:bg#4096:fg#1024:
+
+SUN0424:\
+	:ty=winchester:ns#80:nt#9:nc#1151:\
+	:pa#46080:oa#0:ba#8192:fa#1024:\
+	:pb#69120:ob#46080:\
+	:pc#828720:oc#0:bc#8192:fc#1024:\
+	:pg#713520:og#115200:bg#8192:fg#1024:
+
+SUN0535:\
+	:ty=winchester:ns#80:nt#7:nc#1866:\
+	:pa#44800:oa#0:ba#8192:fa#1024:\
+	:pb#80640:ob#44800:\
+	:pc#1044960:oc#0:bc#8192:fc#1024:\
+	:pg#919520:og#125440:bg#8192:fg#1024:
+
+SUN0669:\
+	:ty=winchester:ns#54:nt#15:nc#1614:\
+	:pa#45360:oa#0:ba#8192:fa#1024:\
+	:pb#84240:ob#45360:\
+	:pc#1307340:oc#0:bc#8192:fc#1024:\
+	:pg#1177740:og#129600:bg#8192:fg#1024:
+
+SUN1.0G:\
+	:ty=winchester:ns#80:nt#15:nc#1703:\
+	:pa#48000:oa#0:ba#8192:fa#1024:\
+	:pb#96000:ob#48000:\
+	:pc#2043600:oc#0:bc#8192:fc#1024:\
+	:pg#1899600:og#144000:bg#8192:fg#1024:
+
+SUN1.05G:\
+	:ty=winchester:ns#72:nt#14:nc#2036:\
+	:pa#48384:oa#0:ba#8192:fa#1024:\
+	:pb#96768:ob#48384:\
+	:pc#2052288:oc#0:bc#8192:fc#1024:\
+	:pg#1907136:og#145152:bg#8192:fg#1024:
+
+SUN1.3G:\
+	:ty=winchester:ns#80:nt#17:nc#1965:\
+	:pa#54400:oa#0:ba#8192:fa#1024:\
+	:pb#97920:ob#54400:\
+	:pc#2672400:oc#0:bc#8192:fc#1024:\
+	:pg#2520080:og#152320:bg#8192:fg#1024:
+
+SUN2.1G:\
+	:ty=winchester:ns#80:nt#19:nc#2733:\
+	:pa#54720:oa#0:ba#8192:fa#1024:\
+	:pb#109440:ob#54720:\
+	:pc#4154160:oc#0:bc#8192:fc#1024:\
+	:pg#3990000:og#164160:bg#8192:fg#1024:
+
