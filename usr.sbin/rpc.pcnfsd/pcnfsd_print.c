@@ -156,6 +156,7 @@ char**sp;
 {
 int    dir_mode = 0777;
 int rc;
+mode_t oldmask;
 
 	*sp = &pathname[0];
 	pathname[0] = '\0';
@@ -166,11 +167,11 @@ int rc;
 	/* get pathname of current directory and return to client */
 
 	(void)sprintf(pathname,"%s/%s",sp_name, sys);
+	oldmask = umask(0);
 	(void)mkdir(sp_name, dir_mode);	/* ignore the return code */
-	(void)chmod(sp_name, dir_mode);
 	rc = mkdir(pathname, dir_mode);	/* DON'T ignore this return code */
+	umask(oldmak);
 	if((rc < 0 && errno != EEXIST) ||
-	   (chmod(pathname, dir_mode) != 0) ||
 	   (stat(pathname, &statbuf) != 0) ||
 	   !(statbuf.st_mode & S_IFDIR)) {
 	   (void)sprintf(tempstr,
@@ -313,7 +314,10 @@ char            scratch[512];
 		   ** filter with the appropriate arguments.
                    **------------------------------------------------------
 		   */
-		   (void)run_ps630(new_pathname, opts);
+		   (void)sprintf(tempstr,
+			"rpc.pcnfsd: ps630 filter disabled for %s\n", pathname);
+			msg_out(tmpstr);
+			return(PS_RES_FAIL);
 		   }
 		/*
 		** Try to match to an aliased printer
