@@ -1,4 +1,4 @@
-/* $OpenBSD: siginfo.c,v 1.1 2002/10/07 21:27:16 marc Exp $ */
+/* $OpenBSD: siginfo.c,v 1.2 2002/10/07 22:17:07 marc Exp $ */
 /* PUBLIC DOMAIN Oct 2002 <marc@snafu.org> */
 
 /* test SA_SIGINFO support */
@@ -12,7 +12,8 @@
 void
 act_handler(int signal, siginfo_t *siginfo, void *context)
 {
- 	ASSERT(siginfo && siginfo->si_addr == (char *) 0x987234 &&
+	ASSERT(siginfo);
+ 	ASSERT(siginfo->si_addr == (char *) 0x987234 &&
 	       siginfo->si_code == 1 && siginfo->si_trapno == 2);
 }
  
@@ -23,7 +24,7 @@ main(int argc, char **argv)
 
 	act.sa_sigaction = act_handler;
 	sigemptyset(&act.sa_mask);
-	act.sa_flags = SA_SIGINFO;
+	act.sa_flags = SA_SIGINFO | SA_RESETHAND;
 	CHECKe(sigaction(SIGSEGV, &act, NULL));
 	*(char *) 0x987234 = 1;
 	SUCCEED;
