@@ -3546,13 +3546,15 @@ expand_keywords (rcs, ver, name, log, loglen, expand, buf, len, retbuf, retlen)
 	srch_len -= (srch_next + 1) - srch;
 	srch = srch_next + 1;
 
-	/* Look for the first non alphabetic character after the '$'.  */
+	/* Look for the first non alphanumeric character after the '$'.  */
 	send = srch + srch_len;
-	for (s = srch; s < send; s++)
-	    if (! isalpha ((unsigned char) *s))
+	if (! isalpha((unsigned char) *srch))
+	    continue;	/* first character of a tag must be a letter */
+	for (s = srch+1; s < send; s++)
+	    if (! isalnum ((unsigned char) *s))
 		break;
 
-	/* If the first non alphabetic character is not '$' or ':',
+	/* If the first non alphanumeric character is not '$' or ':',
            then this is not an RCS keyword.  */
 	if (s == send || (*s != '$' && *s != ':'))
 	    continue;
