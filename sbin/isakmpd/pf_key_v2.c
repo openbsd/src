@@ -1,5 +1,5 @@
-/*	$OpenBSD: pf_key_v2.c,v 1.13 1999/07/07 22:08:10 niklas Exp $	*/
-/*	$EOM: pf_key_v2.c,v 1.17 1999/07/07 19:17:31 niklas Exp $	*/
+/*	$OpenBSD: pf_key_v2.c,v 1.14 1999/07/08 17:49:35 niklas Exp $	*/
+/*	$EOM: pf_key_v2.c,v 1.18 1999/07/08 16:48:40 niklas Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
@@ -46,6 +46,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+#include "sysdep.h"
 
 #include "conf.h"
 #include "exchange.h"
