@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.168 2001/07/15 10:48:30 niklas Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.169 2001/07/15 10:54:44 niklas Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -2103,7 +2103,7 @@ init386(first_avail)
 	/* Boot arguments are in a single page specified by /boot */
 	if (bootapiver & BAPIV_VECTOR) {
 		if (bootargc > NBPG)
-			panic ("too many boot args");
+			panic("too many boot args");
 
 		if (extent_alloc_region(iomem_ex, (paddr_t)bootargv, bootargc,
 		    EX_NOWAIT))
@@ -2148,7 +2148,7 @@ init386(first_avail)
 			/* skip shorter than page regions */
 			if ((e - a) < NBPG) {
 #ifdef DEBUG
-				printf ("-S");
+				printf("-S");
 #endif
 				continue;
 			}
@@ -2202,20 +2202,20 @@ init386(first_avail)
 			if (a < atop(16 * 1024 * 1024)) {
 				lim = MIN(atop(16 * 1024 * 1024), e);
 #ifdef DEBUG
-				printf (" %x-%x (<16M)", a, lim);
+				printf(" %x-%x (<16M)", a, lim);
 #endif
 				uvm_page_physload(a, lim, a, lim,
 				    VM_FREELIST_FIRST16);
 				if (e > lim) {
 #ifdef DEBUG
-					printf (" %x-%x", lim, e);
+					printf(" %x-%x", lim, e);
 #endif
 					uvm_page_physload(lim, e, lim, e,
 					    VM_FREELIST_DEFAULT);
 				}
 			} else {
 #ifdef DEBUG
-				printf (" %x-%x", a, e);
+				printf(" %x-%x", a, e);
 #endif
 				uvm_page_physload(a, e, a, e,
 				    VM_FREELIST_DEFAULT);
