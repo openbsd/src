@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_altq.c,v 1.16 2002/12/02 22:18:21 henning Exp $	*/
+/*	$OpenBSD: pfctl_altq.c,v 1.17 2002/12/03 10:57:13 henning Exp $	*/
 /*
  * Copyright (C) 2002
  *	Sony Computer Science Laboratories Inc.  All rights reserved.
@@ -632,5 +632,7 @@ getifspeed(char *ifname)
 	ifr.ifr_data = (caddr_t)&ifrdat;
 	if (ioctl(s, SIOCGIFDATA, (caddr_t)&ifr) == -1)
 		err(1, "SIOCGIFDATA");
+	if (shutdown(s, SHUT_RDWR) == -1)
+		err(1, "shutdown");
 	return ((u_int32_t)ifrdat.ifi_baudrate);
 }
