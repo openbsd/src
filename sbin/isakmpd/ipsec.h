@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec.h,v 1.21 2002/06/09 08:13:06 todd Exp $	*/
+/*	$OpenBSD: ipsec.h,v 1.22 2003/06/04 07:31:17 ho Exp $	*/
 /*	$EOM: ipsec.h,v 1.42 2000/12/03 07:58:20 angelos Exp $	*/
 
 /*
@@ -14,11 +14,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by Ericsson Radio Systems.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
