@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2001/10/10 04:21:02 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.2 2001/10/12 19:04:56 jason Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -29,6 +29,8 @@ BOOT?=		/usr/mdec/boot
 BOOTXX?=	/usr/mdec/bootxx
 
 RDSETROOT=	elfrdsetroot
+
+CLEANFILES+=	bsd.rd_unz elfrdsetroot
 
 #.include "${TOP}/common/Makefile.inc"
 
@@ -86,8 +88,6 @@ do_umount:
 unconfig:
 	-umount ${MOUNT_POINT}
 	-vnconfig -u ${VND}
-
-${IMAGE}: ${CBIN} rd_setup do_files rd_teardown
 
 rd_setup: ${CBIN}
 	dd if=/dev/zero of=${REALIMAGE} bs=512 count=${NBLKS}
