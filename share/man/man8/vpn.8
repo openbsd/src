@@ -1,4 +1,4 @@
-.\" $OpenBSD: vpn.8,v 1.25 1999/07/22 12:58:26 aaron Exp $
+.\" $OpenBSD: vpn.8,v 1.26 1999/10/07 20:50:30 angelos Exp $
 .\" Copyright 1998 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
 .\"
@@ -189,7 +189,7 @@ authentication).
 .Xr ipf 8
 needs to be configured such that all packets from the outside are blocked
 by default. Only successfully IPSec-processed packets (from the
-.Nm enc0
+.Xr enc0 4
 interface), or
 key management packets (for
 .Xr photurisd 8 ,
@@ -346,6 +346,7 @@ In situations where the gateway IP is outside the desired netrange, such
 as with private (RFC 1918) networks, manual keying must be used.
 This should be fixed in the next release.
 .Sh SEE ALSO
+.Xr enc 4 ,
 .Xr ipsec 4 ,
 .Xr options 4 ,
 .Xr ipf 5 ,
