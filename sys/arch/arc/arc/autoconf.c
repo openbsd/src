@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.4 1996/11/06 01:38:35 deraadt Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.5 1996/11/12 08:11:08 niklas Exp $	*/
 /*
  * Copyright (c) 1996 Per Fogelstrom
  * Copyright (c) 1995 Theo de Raadt
@@ -41,7 +41,7 @@
  * from: Utah Hdr: autoconf.c 1.31 91/01/21
  *
  *	from: @(#)autoconf.c	8.1 (Berkeley) 6/10/93
- *      $Id: autoconf.c,v 1.4 1996/11/06 01:38:35 deraadt Exp $
+ *      $Id: autoconf.c,v 1.5 1996/11/12 08:11:08 niklas Exp $
  */
 
 /*
@@ -81,7 +81,7 @@ struct device *bootdv = NULL;
  */
 configure()
 {
-	(void)splhigh();	/* To be really shure.. */
+	(void)splhigh();	/* To be really sure.. */
 	if(config_rootfound("mainbus", "mainbus") == 0)
 		panic("no mainbus found");
 	(void)spl0();
@@ -122,6 +122,7 @@ static	struct nam2blk {
 	int  maj;
 } nam2blk[] = {
 	{ "sd",	0 },	/* 0 = sd */
+	{ "wd",	4 },	/* 4 = wd */
 	{ "fd", 7 },	/* 7 = floppy  (ick!)*/
 };
 
@@ -420,6 +421,11 @@ getdevunit(name, unit)
 	return dev;
 }
 
+struct devmap {
+	char *attachment;
+	char *dev;
+};
+
 /*
  * Look at the string 'cp' and decode the boot device.
  * Boot names look like: scsi()disk(n)rdisk()partition(1)\bsd
@@ -430,15 +436,27 @@ makebootdev(cp)
 	char *cp;
 {
 	int	unit, part, ctrl;
+	static struct devmap devmap[] = {
+		{ "multi", "fd" },
+		{ "eisa", "wd" },
+		{ "scsi", "sd" },
+		{ NULL, NULL }
+	};
+	struct devmap *dp = &devmap[0];
 
-	bootdev[0] = *cp;
-	ctrl = getpno(&cp);
-	if(*cp++ == ')') {
-		bootdev[1] = *cp;
-		unit = getpno(&cp);
+	while (dp->attachment) {
+		if (strncmp (cp, dp->attachment, strlen(dp->attachment)) == 0)
+			break;
+		dp++;
 	}
-	sprintf(&bootdev[2], "%d", ctrl*16 + unit);
+	if (!dp)
+		return;
+	ctrl = getpno(&cp);
+	if(*cp++ == ')')
+		unit = getpno(&cp);
+	sprintf(bootdev, "%s%d", dp->dev, ctrl*16 + unit);
 }
+
 getpno(cp)
 	char **cp;
 {
