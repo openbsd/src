@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.19 1998/03/26 02:32:49 millert Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.20 1998/03/29 07:28:04 millert Exp $
 
 MAN=		binutils/ar.1 binutils/nm.1 \
 		binutils/objcopy.1 binutils/objdump.1 binutils/ranlib.1 \
@@ -17,10 +17,15 @@ MAN+=		gdb/gdb.1
 	(${MACHINE_ARCH} == "powerpc")
 SUBDIRS+=	binutils ld gas
 .endif
+
+# Used by the GNU Makefile
+ALL_MODULES=${SUBDIRS:S/^/all-/g}
+INSTALL_MODULES=${SUBDIRS:S/^/install-/g}
 	
 all:	config.status
 	${MAKE} CC="${CC}" CFLAGS="${CFLAGS} ${COPTS}" LDFLAGS=${LDSTATIC} \
-		SUBDIRS="${SUBDIRS}"
+		SUBDIRS="${SUBDIRS}" ALL_MODULES="${ALL_MODULES}" \
+		INSTALL_MODULES="${INSTALL_MODULES}"
 
 .FORCE:	.IGNORE
 
@@ -49,6 +54,7 @@ maninstall:
 install: maninstall
 	${MAKE} prefix=${DESTDIR}/usr infodir=${DESTDIR}/usr/share/info \
 		bindir=${DESTDIR}/usr/bin INSTALL_MAN= SUBDIRS="${SUBDIRS}" \
+		ALL_MODULES="${ALL_MODULES}" INSTALL_MODULES="${INSTALL_MODULES}" \
 		install
 
 clean cleandir:
