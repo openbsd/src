@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.157 2001/09/27 14:02:44 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.158 2001/09/27 15:15:17 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -4270,6 +4270,7 @@ pf_pull_hdr(struct mbuf *m, int off, void *p, int len,
 			REASON_SET(reasonp, PFRES_SHORT);
 			return (NULL);
 		}
+		break;
 	}
 #endif /* INET */
 #ifdef INET6
@@ -4281,6 +4282,7 @@ pf_pull_hdr(struct mbuf *m, int off, void *p, int len,
                         REASON_SET(reasonp, PFRES_SHORT);
                         return (NULL);
                 }
+		break;
 	}
 #endif /* INET6 */
 	}
