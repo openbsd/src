@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys-bsd.c,v 1.10 1997/11/30 00:36:21 millert Exp $	*/
+/*	$OpenBSD: sys-bsd.c,v 1.11 1997/12/17 08:49:46 deraadt Exp $	*/
 
 /*
  * sys-bsd.c - System-dependent procedures for setting up
@@ -26,7 +26,7 @@
 #if 0
 static char rcsid[] = "Id: sys-bsd.c,v 1.28 1997/04/30 05:57:46 paulus Exp";
 #else
-static char rcsid[] = "$OpenBSD: sys-bsd.c,v 1.10 1997/11/30 00:36:21 millert Exp $";
+static char rcsid[] = "$OpenBSD: sys-bsd.c,v 1.11 1997/12/17 08:49:46 deraadt Exp $";
 #endif
 #endif
 
@@ -662,16 +662,23 @@ void
 wait_input(timo)
     struct timeval *timo;
 {
-    fd_set ready;
+    fd_set *fdsp = NULL;
+    int fdsn;
     int n;
 
-    FD_ZERO(&ready);
-    FD_SET(ttyfd, &ready);
-    n = select(ttyfd+1, &ready, NULL, &ready, timo);
+    fdsn = howmany(ttyfd+1, NFDBITS) * sizeof(fd_mask);
+    if ((fdsp = (fd_set *)malloc(fdsn)) == NULL)
+	err(1, "malloc");
+    memset(fdsp, 0, fdsn);
+    FD_SET(ttyfd, fdsp);
+
+    n = select(ttyfd+1, fdsp, NULL, fdsp, timo);
     if (n < 0 && errno != EINTR) {
 	syslog(LOG_ERR, "select: %m");
+	free(fdsp);
 	die(1);
     }
+    free(fdsp);
 }
 
 
@@ -684,16 +691,23 @@ void
 wait_loop_output(timo)
     struct timeval *timo;
 {
-    fd_set ready;
+    fd_set *fdsp = NULL;
+    int fdsn;
     int n;
 
-    FD_ZERO(&ready);
-    FD_SET(loop_master, &ready);
-    n = select(loop_master + 1, &ready, NULL, &ready, timo);
+    fdsn = howmany(loop_master+1, NFDBITS) * sizeof(fd_mask);
+    if ((fdsp = (fd_set *)malloc(fdsn)) == NULL)
+	err(1, "malloc");
+    memset(fdsp, 0, fdsn);
+    FD_SET(loop_master, fdsp);
+
+    n = select(loop_master + 1, fdsp, NULL, fdsp, timo);
     if (n < 0 && errno != EINTR) {
 	syslog(LOG_ERR, "select: %m");
+	free(fdsp);
 	die(1);
     }
+    free(fdsp);
 }
 
 
