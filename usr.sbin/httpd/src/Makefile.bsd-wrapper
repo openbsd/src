@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.5 1998/10/01 17:29:04 beck Exp $	
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.6 1998/10/01 17:47:56 beck Exp $	
 .include <bsd.own.mk>
 PROG=httpd
 BINDIR=/usr/sbin
@@ -28,9 +28,16 @@ clean cleandir:
 		 ${MAKE} clean 
 .endif
 	/bin/rm -f Makefile
+	/bin/rm -f modules/standard/Makefile
 	/bin/rm -f modules/Makefile
+	/bin/rm -f support/Makefile
+	/bin/rm -f main/Makefile
+	/bin/rm -f ap/Makefile
+	/bin/rm -f regex/Makefile
+	/bin/rm -f os/unix/Makefile
 	/bin/rm -f Makefile.config
 	/bin/rm -f modules.c
+
 
 depend:
 	# Nothing here yet
