@@ -325,14 +325,6 @@ EOF
 if [ "x${host}" = "x${target}" ] ; then
   case " ${EMULATION_LIBPATH} " in
   *" ${EMULATION_NAME} "*)
-  case ${target} in
-    *-*-openbsd*)
-cat >>e${EMULATION_NAME}.c <<EOF
-#include <fcntl.h>
-#include <link.h>
-EOF
-    ;;
-  esac
 cat >>e${EMULATION_NAME}.c <<EOF
 
 /* For a native linker, check the file /etc/ld.so.conf for directories
@@ -353,41 +345,8 @@ gld${EMULATION_NAME}_check_ld_so_conf (name, force)
   if (! initialized)
     {
       FILE *f;
-EOF
-  case ${target} in
-    *-*-openbsd*)
-      cat >>e${EMULATION_NAME}.c <<EOF
-    struct hints_header hdr;
-    off_t diroff;
-    int fd;
-    char *buf;
-
-    f = fopen(_PATH_LD_HINTS, FOPEN_RT);
-    if (f != NULL) 
-    {
-      if ( fread (&hdr, sizeof (struct hints_header), 1, f) == 1) {
-	if (!HH_BADMAG(hdr)) {
-	  diroff = (hdr.hh_strtab + hdr.hh_dirlist);
-	  fseek(f, diroff, SEEK_SET);
-	} else {
-	  fclose(f);
-	  f = NULL;
-	}
-      } else  {
-	fclose(f);
-	f = NULL;
-      }
-    }
-EOF
-  ;;
-  *)
-cat >>e${EMULATION_NAME}.c <<EOF
 
       f = fopen ("/etc/ld.so.conf", FOPEN_RT);
-EOF
-    ;;
-    esac
-cat >>e${EMULATION_NAME}.c <<EOF
       if (f != NULL)
 	{
 	  char *b;
