@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.71 1998/07/21 20:38:01 mickey Exp $
+$OpenBSD: pcidevs,v 1.72 1998/07/21 20:48:24 mickey Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1062,9 +1062,6 @@ product ENSONIQ AUDIOPCI	0x5000	AudioPCI
 product ESSENTIAL RR_HIPPI	0x0001	RoadRunner HIPPI Interface
 product ESSENTIAL RR_GIGE	0x0005	RoadRunner Gig-E Interface
 
-/* 2 Micro Inc */
-product 2MICRO OZ6832		OZ6832	CardBus Controller
-
 /* Evans & Sutherland products */
 product ES FREEDOM		0x0001	Freedom PCI-GBus Interface
 
@@ -1225,9 +1222,6 @@ product OPTI RM861HA		0xc861	RM861HA
 
 /* PC Tech products */
 product PCTECH RZ1000		0x1000	RZ1000
-
-/* ProLAN products */
-product PROLAN NE2KETHER	0x1980	NE2000-compatible Ethernet
 
 /* Promise products */
 product PROMISE DC5030		0x5300	DC5030
