@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rcmd.3,v 1.20 2000/04/18 03:01:33 aaron Exp $
+.\"	$OpenBSD: rcmd.3,v 1.21 2000/12/21 16:07:37 deraadt Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -175,7 +175,9 @@ address bound to it.
 This socket is suitable for use by
 .Fn rcmd
 and several other functions.
-Privileged Internet ports are those in the range 0 to 1023.
+Privileged Internet ports are those in the range 0 to
+.Va IPPORT_RESERVED - 1 ,
+which happens to be 1023.
 Only the superuser is allowed to bind an address of this sort to a socket.
 .Fn rresvport
 and
