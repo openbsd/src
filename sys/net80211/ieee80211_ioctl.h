@@ -1,5 +1,4 @@
-/*	$OpenBSD: ieee80211_ioctl.h,v 1.1 2004/06/22 22:53:52 millert Exp $	*/
-/*	$OpenBSD: ieee80211_ioctl.h,v 1.1 2004/06/22 22:53:52 millert Exp $	*/
+/*	$OpenBSD: ieee80211_ioctl.h,v 1.2 2005/02/15 19:44:15 reyk Exp $	*/
 /*	$NetBSD: ieee80211_ioctl.h,v 1.7 2004/04/30 22:51:04 dyoung Exp $	*/
 
 /*-
@@ -206,6 +205,19 @@ struct ieee80211_bssid {
 #define	SIOCG80211BSSID		_IOWR('i', 241, struct ieee80211_bssid)
 
 #define	SIOCG80211STATS		_IOWR('i', 242, struct ifreq)
+
+struct ieee80211_txpower {
+	char		i_name[IFNAMSIZ];	/* if_name, e.g. "wi0" */
+	int		i_mode;			/* auto, manual */
+	int16_t		i_val;			/* dBm */
+};
+
+#define	SIOCS80211TXPOWER	 _IOW('i', 243, struct ieee80211_txpower)
+#define	SIOCG80211TXPOWER	_IOWR('i', 244, struct ieee80211_txpower)
+
+#define IEEE80211_TXPOWER_MODE_FIXED	0	/* fixed tx power value */
+#define IEEE80211_TXPOWER_MODE_AUTO	1	/* auto level control */
+
 #endif
 
 #endif /* _NET80211_IEEE80211_IOCTL_H_ */

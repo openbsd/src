@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_var.h,v 1.4 2004/12/25 20:40:19 deraadt Exp $	*/
+/*	$OpenBSD: ieee80211_var.h,v 1.5 2005/02/15 19:44:15 reyk Exp $	*/
 /*	$NetBSD: ieee80211_var.h,v 1.7 2004/05/06 03:07:10 dyoung Exp $	*/
 
 /*-
@@ -53,7 +53,7 @@
 	((struct ieee80211_channel *) IEEE80211_CHAN_ANY)
 
 #define	IEEE80211_TXPOWER_MAX	100	/* max power */
-#define	IEEE80211_TXPOWER_MIN	0	/* kill radio (if possible) */
+#define	IEEE80211_TXPOWER_MIN	-50	/* kill radio (if possible) */
 
 enum ieee80211_phytype {
 	IEEE80211_T_DS,			/* direct sequence spread spectrum */
@@ -225,7 +225,7 @@ struct ieee80211com {
 	u_int16_t		ic_txmin;	/* min tx retry count */
 	u_int16_t		ic_txmax;	/* max tx retry count */
 	u_int16_t		ic_txlifetime;	/* tx lifetime */
-	u_int16_t		ic_txpower;	/* tx power setting (dbM) */
+	int16_t			ic_txpower;	/* tx power setting (dBm) */
 	u_int16_t		ic_bmisstimeout;/* beacon miss threshold (ms) */
 	int			ic_mgt_timer;	/* mgmt timeout */
 	int			ic_inact_timer;	/* inactivity timer wait */

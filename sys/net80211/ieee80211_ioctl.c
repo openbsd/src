@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_ioctl.c,v 1.4 2004/11/25 11:20:04 reyk Exp $	*/
+/*	$OpenBSD: ieee80211_ioctl.c,v 1.5 2005/02/15 19:44:15 reyk Exp $	*/
 /*	$NetBSD: ieee80211_ioctl.c,v 1.15 2004/05/06 02:58:16 dyoung Exp $	*/
 
 /*-
@@ -1130,6 +1130,7 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	struct ieee80211_bssid *bssid;
 	struct ieee80211chanreq *chanreq;
 	struct ieee80211_channel *chan;
+	struct ieee80211_txpower *txpower;
 	struct ieee80211_wepkey keys[IEEE80211_WEP_NKID];
 	static const u_int8_t empty_macaddr[IEEE80211_ADDR_LEN] = {
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00
@@ -1368,6 +1369,29 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case SIOCG80211STATS:
 		ifr = (struct ifreq *)data;
 		copyout(&ic->ic_stats, ifr->ifr_data, sizeof (ic->ic_stats));
+		break;
+	case SIOCS80211TXPOWER:
+		txpower = (struct ieee80211_txpower *)data;
+		if ((error = suser(curproc, 0)))
+			break;
+		if ((ic->ic_caps & IEEE80211_C_TXPMGT) == 0) {
+			error = EINVAL;
+			break;
+		}
+		if (!(IEEE80211_TXPOWER_MIN < txpower->i_val &&
+			txpower->i_val < IEEE80211_TXPOWER_MAX)) {
+			error = EINVAL;
+			break;
+		}
+		ic->ic_txpower = txpower->i_val;
+		error = ENETRESET;
+		break;
+	case SIOCG80211TXPOWER:
+		txpower = (struct ieee80211_txpower *)data;
+		if ((ic->ic_caps & IEEE80211_C_TXPMGT) == 0)
+			error = EINVAL;
+		else
+			txpower->i_val = ic->ic_txpower;
 		break;
 	case SIOCSIFMTU:
 		ifr = (struct ifreq *)data;

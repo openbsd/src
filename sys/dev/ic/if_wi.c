@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.115 2005/01/15 05:24:11 brad Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.116 2005/02/15 19:44:15 reyk Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -127,7 +127,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.115 2005/01/15 05:24:11 brad Exp $";
+	"$OpenBSD: if_wi.c,v 1.116 2005/02/15 19:44:15 reyk Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -167,6 +167,8 @@ STATIC int wi_get_nwkey(struct wi_softc *, struct ieee80211_nwkey *);
 STATIC int wi_sync_media(struct wi_softc *, int, int);
 STATIC int wi_set_pm(struct wi_softc *, struct ieee80211_power *);
 STATIC int wi_get_pm(struct wi_softc *, struct ieee80211_power *);
+STATIC int wi_set_txpower(struct wi_softc *, struct ieee80211_txpower *);
+STATIC int wi_get_txpower(struct wi_softc *, struct ieee80211_txpower *);
 
 STATIC int wi_get_debug(struct wi_softc *, struct wi_req *);
 STATIC int wi_set_debug(struct wi_softc *, struct wi_req *);
@@ -1595,6 +1597,7 @@ wi_ioctl(ifp, command, data)
 	case SIOCS80211NWID:
 	case SIOCS80211NWKEY:
 	case SIOCS80211POWER:
+	case SIOCS80211TXPOWER:
 		error = suser(p, 0);
 		if (error) {
 			splx(s);
@@ -1856,6 +1859,12 @@ wi_ioctl(ifp, command, data)
 	case SIOCG80211POWER:
 		error = wi_get_pm(sc, (struct ieee80211_power *)data);
 		break;
+	case SIOCS80211TXPOWER:
+		error = wi_set_txpower(sc, (struct ieee80211_txpower *)data);
+		break;
+	case SIOCG80211TXPOWER:
+		error = wi_get_txpower(sc, (struct ieee80211_txpower *)data);
+		break;
 	case SIOCHOSTAP_ADD:
 	case SIOCHOSTAP_DEL:
 	case SIOCHOSTAP_GET:
@@ -2007,6 +2016,10 @@ wi_init_io(sc)
 		printf(WI_PRT_FMT ": mgmt. buffer allocation failed\n",
 		    WI_PRT_ARG(sc));
 	sc->wi_tx_mgmt_id = id;
+
+	/* Set txpower */
+	if (sc->wi_flags & WI_FLAGS_TXPOWER)
+		wi_set_txpower(sc, NULL);
 
 	/* enable interrupts */
 	wi_intr_enable(sc, WI_INTRS);
@@ -2874,6 +2887,98 @@ wi_get_pm(struct wi_softc *sc, struct ieee80211_power *power)
 	power->i_enabled = sc->wi_pm_enabled;
 	power->i_maxsleep = sc->wi_max_sleep;
 
+	return (0);
+}
+
+STATIC int
+wi_set_txpower(struct wi_softc *sc, struct ieee80211_txpower *txpower)
+{
+	u_int16_t	cmd;
+	u_int16_t	power;
+	int8_t		tmp;
+	int		error;
+	int		alc;
+
+	if (txpower == NULL) {
+		if (!(sc->wi_flags & WI_FLAGS_TXPOWER))
+			return (EINVAL);
+		alc = 0;		/* disable ALC */
+	} else {
+		if (txpower->i_mode == IEEE80211_TXPOWER_MODE_AUTO) {
+			alc = 1;	/* enable ALC */
+			sc->wi_flags &= ~WI_FLAGS_TXPOWER;
+		} else {
+			alc = 0;	/* disable ALC */
+			sc->wi_flags |= WI_FLAGS_TXPOWER;
+			sc->wi_txpower = txpower->i_val;
+		}
+	}	
+
+	/* Set ALC */
+	cmd = WI_CMD_DEBUG | (WI_DEBUG_CONFBITS << 8);
+	if ((error = wi_cmd(sc, cmd, alc, 0x8, 0)) != 0)
+		return (error);
+
+	/* No need to set the TX power value if ALC is enabled */
+	if (alc)
+		return (0);
+
+	/* Convert dBM to internal TX power value */
+	if (sc->wi_txpower > 20)
+		power = 128;
+	else if (sc->wi_txpower < -43)
+		power = 127;
+	else {
+		tmp = sc->wi_txpower;
+		tmp = -12 - tmp;
+		tmp <<= 2;
+
+		power = (u_int16_t)tmp;
+	}
+
+	/* Set manual TX power */
+	cmd = WI_CMD_WRITE_MIF;
+	if ((error = wi_cmd(sc, cmd,
+		 WI_HFA384X_CR_MANUAL_TX_POWER, power, 0)) != 0)
+		return (error);
+
+	if (sc->sc_arpcom.ac_if.if_flags & IFF_DEBUG)
+		printf("%s: %u (%d dBm)\n", sc->sc_dev.dv_xname, power,
+		    sc->wi_txpower);
+
+	return (0);
+}
+
+STATIC int
+wi_get_txpower(struct wi_softc *sc, struct ieee80211_txpower *txpower)
+{
+	u_int16_t	cmd;
+	u_int16_t	power;
+	int8_t		tmp;
+	int		error;
+
+	/* Get manual TX power */
+	cmd = WI_CMD_READ_MIF;
+	if ((error = wi_cmd(sc, cmd,
+		 WI_HFA384X_CR_MANUAL_TX_POWER, 0, 0)) != 0)
+		return (error);
+
+	power = CSR_READ_2(sc, WI_RESP0);
+
+	/* Convert internal TX power value to dBM */
+	if (power > 255)
+		txpower->i_val = 255;
+	else {
+		tmp = power;
+		tmp >>= 2;
+		txpower->i_val = (u_int16_t)(-12 - tmp);
+	}
+
+	if (sc->wi_flags & WI_FLAGS_TXPOWER)
+		txpower->i_mode = IEEE80211_TXPOWER_MODE_FIXED;
+	else
+		txpower->i_mode = IEEE80211_TXPOWER_MODE_AUTO;
+	
 	return (0);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wireg.h,v 1.34 2004/03/02 21:59:29 millert Exp $	*/
+/*	$OpenBSD: if_wireg.h,v 1.35 2005/02/15 19:44:15 reyk Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -194,6 +194,8 @@
 #define WI_CMD_INQUIRE		0x0011
 #define WI_CMD_ACCESS		0x0021
 #define WI_CMD_PROGRAM		0x0022
+#define WI_CMD_READ_MIF		0x0030 /* prism2 */
+#define WI_CMD_WRITE_MIF	0x0031 /* prism2 */
 
 #define WI_CMD_CODE_MASK	0x003F
 
@@ -604,3 +606,9 @@ struct wi_frame {
 #define WI_FCS_LEN		0x4
 
 #define	WI_ETHERTYPE_LEN	0x2
+
+/*
+ * HFA3861/3863 (BBP) Control Registers
+ */
+#define WI_HFA384X_CR_A_D_TEST_MODES2	0x1a
+#define WI_HFA384X_CR_MANUAL_TX_POWER	0x3e

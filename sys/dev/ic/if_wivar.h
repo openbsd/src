@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wivar.h,v 1.24 2004/03/18 16:16:10 millert Exp $	*/
+/*	$OpenBSD: if_wivar.h,v 1.25 2005/02/15 19:44:15 reyk Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -93,6 +93,7 @@ struct wi_softc	{
 	u_int32_t		wi_icv;
 	int			wi_icv_flag;
 	int			wi_ibss_port;
+	int16_t			wi_txpower;
 
 	struct {
 		u_int16_t		wi_sleep;
@@ -137,6 +138,7 @@ struct wi_softc	{
 #define WI_FLAGS_BUS_PCMCIA		0x0200
 #define WI_FLAGS_BUS_USB		0x0400
 #define WI_FLAGS_HAS_ENH_SECURITY	0x0800
+#define WI_FLAGS_TXPOWER		0x1000
 
 #define WI_PRT_FMT "%s"
 #define WI_PRT_ARG(sc)	(sc)->sc_dev.dv_xname
