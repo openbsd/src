@@ -1326,7 +1326,6 @@
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/ssl/dh.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/ssl/dsa.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/ssl/dso.ph
-./usr/libdata/perl5/site_perl/sparc64-openbsd/ssl/e_os.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/ssl/e_os2.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/ssl/ebcdic.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/ssl/ec.ph
@@ -1336,7 +1335,6 @@
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/ssl/hmac.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/ssl/idea.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/ssl/kssl.ph
-./usr/libdata/perl5/site_perl/sparc64-openbsd/ssl/kssl_lcl.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/ssl/lhash.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/ssl/md2.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/ssl/md4.ph
@@ -1364,7 +1362,6 @@
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/ssl/ssl2.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/ssl/ssl23.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/ssl/ssl3.ph
-./usr/libdata/perl5/site_perl/sparc64-openbsd/ssl/ssl_locl.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/ssl/stack.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/ssl/symhacks.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/ssl/tls1.ph

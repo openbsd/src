@@ -1660,7 +1660,6 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/ssl/dh.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/ssl/dsa.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/ssl/dso.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/ssl/e_os.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/ssl/e_os2.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/ssl/ebcdic.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/ssl/ec.ph
@@ -1670,7 +1669,6 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/ssl/hmac.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/ssl/idea.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/ssl/kssl.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/ssl/kssl_lcl.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/ssl/lhash.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/ssl/md2.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/ssl/md4.ph
@@ -1698,7 +1696,6 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/ssl/ssl2.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/ssl/ssl23.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/ssl/ssl3.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/ssl/ssl_locl.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/ssl/stack.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/ssl/symhacks.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/ssl/tls1.ph
