@@ -1,4 +1,5 @@
 %{
+/*	$OpenBSD: grammar.y,v 1.2 1996/03/04 15:47:21 mickey Exp $	*/
 /*	$NetBSD: grammar.y,v 1.2 1995/03/06 11:38:27 mycroft Exp $	*/
 
 /*
@@ -69,6 +70,7 @@ pcap_parse()
 %}
 
 %union {
+#define	yylval	pcap_lval
 	int i;
 	u_long h;
 	u_char *e;

@@ -1,3 +1,4 @@
+/*	$OpenBSD: optimize.c,v 1.2 1996/03/04 15:47:24 mickey Exp $	*/
 /*	$NetBSD: optimize.c,v 1.3 1995/04/29 05:42:28 cgd Exp $	*/
 
 /*

@@ -1,3 +1,4 @@
+/*	$OpenBSD: pcap-bpf.c,v 1.3 1996/03/04 15:47:25 mickey Exp $	*/
 /*	$NetBSD: pcap-bpf.c,v 1.3 1995/04/29 05:42:31 cgd Exp $	*/
 
 /*

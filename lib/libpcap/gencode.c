@@ -1,3 +1,4 @@
+/*	$OpenBSD: gencode.c,v 1.2 1996/03/04 15:47:18 mickey Exp $	*/
 /*	$NetBSD: gencode.c,v 1.2 1995/03/06 11:38:21 mycroft Exp $	*/
 
 /*

@@ -1,3 +1,4 @@
+/*	$OpenBSD: pcap.h,v 1.3 1996/03/04 15:47:29 mickey Exp $	*/
 /*	$NetBSD: pcap.h,v 1.2 1995/03/06 11:39:07 mycroft Exp $	*/
 
 /*

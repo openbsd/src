@@ -1,7 +1,8 @@
+/*	$OpenBSD: pcap.c,v 1.2 1996/03/04 15:47:28 mickey Exp $	*/
 /*	$NetBSD: pcap.c,v 1.2 1995/03/06 11:39:05 mycroft Exp $	*/
 
 /*
- * Copyright (c) 1993, 1994
+ * Copyright (c) 1993, 1994, 1995
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -48,10 +49,16 @@ static char rcsid[] =
 int
 pcap_dispatch(pcap_t *p, int cnt, pcap_handler callback, u_char *user)
 {
+	register int cc;
+
 	if (p->sf.rfile != NULL)
 		return (pcap_offline_read(p, cnt, callback, user));
-	else
-		return (pcap_read(p, cnt, callback, user));
+	/* XXX keep reading until we get something (or an error occurs) */
+	do {
+		cc = pcap_read(p, cnt, callback, user);
+	} while (cc == 0);
+	return (cc);
+
 }
 
 int
@@ -59,7 +66,7 @@ pcap_loop(pcap_t *p, int cnt, pcap_handler callback, u_char *user)
 {
 	for (;;) {
 		int n = pcap_dispatch(p, cnt, callback, user);
-		if (n < 0)
+		if (n <= 0)
 			return (n);
 		if (cnt > 0) {
 			cnt -= n;
@@ -89,7 +96,7 @@ pcap_next(pcap_t *p, struct pcap_pkthdr *h)
 	struct singleton s;
 
 	s.hdr = h;
-	if (pcap_dispatch(p, 1, pcap_oneshot, (u_char*)&s) < 0)
+	if (pcap_dispatch(p, 1, pcap_oneshot, (u_char*)&s) <= 0)
 		return (0);
 	return (s.pkt);
 }

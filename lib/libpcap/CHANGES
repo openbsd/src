@@ -1,5 +1,53 @@
+$OpenBSD: CHANGES,v 1.2 1996/03/04 15:47:12 mickey Exp $
 $NetBSD: CHANGES,v 1.2 1995/03/06 11:37:58 mycroft Exp $
-@(#) Header: CHANGES,v 1.4 94/06/20 19:22:33 leres Exp (LBL)
+@(#) Header: CHANGES,v 1.4+ 94/06/20 19:22:33 leres Exp $ (LBL)
+
+v0.0.6 Fri Apr 28 04:07:13 PDT 1995
+
+- Add missing variable declaration missing from 0.0.6
+
+v0.0.5 Fri Apr 28 00:22:21 PDT 1995
+
+- Workaround for problems when pcap_read() returns 0 due to the timeout
+  expiring.
+
+v0.0.4 Thu Apr 20 20:41:48 PDT 1995
+
+- Change configuration to not use gcc v2 flags with gcc v1.
+
+- Fixed a bug in pcap_next(); if pcap_dispatch() returns 0, pcap_next()
+  should also return 0. Thanks to Richard Stevens (rstevens@noao.edu).
+
+- Fixed configure to test for snoop before dlpi to avoid problems under
+  IRIX 5. Thanks to J. Eric Townsend (jet@abulafia.genmagic.com).
+
+- Hack around deficiency in Ultrix's make.
+
+- Fix two bugs related to the Solaris pre-5.3.2 bufmod bug; handle
+  savefiles that have more than snapshot bytes of data in them (so we
+  can read old savefiles) and avoid writing such files.
+
+v0.0.3 Tue Oct 18 18:13:46 PDT 1994
+
+- Fixed configure to test for snoop before dlpi to avoid problems under
+  IRIX 5. Thanks to J. Eric Townsend (jet@abulafia.genmagic.com).
+
+v0.0.2 Wed Oct 12 20:56:37 PDT 1994
+
+- Implement timeout in the dlpi pcap_open_live(). Thanks to Richard
+  Stevens.
+
+- Determine pcap link type from dlpi media type. Resulted from report
+  by Mahesh Jethanandani (mahesh@npix.com).
+
+v0.0.1 Fri Jun 24 14:50:57 PDT 1994
+
+- Fixed bug in nit_setflags() in pcap-snit.c. The streams ioctl timeout
+  wasn't being initialized sometimes resulting in an "NIOCSFLAGS:
+  Invalid argument" error under OSF/1. Reported by Matt Day
+  (mday@artisoft.com) and Danny Mitzel (dmitzel@whitney.hitc.com).
+
+- Turn on FDDI support by default.
 
 v0.0 Mon Jun 20 19:20:16 PDT 1994
 

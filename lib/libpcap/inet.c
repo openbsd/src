@@ -1,3 +1,4 @@
+/*	$OpenBSD: inet.c,v 1.2 1996/03/04 15:47:22 mickey Exp $	*/
 /*	$NetBSD: inet.c,v 1.2 1995/03/06 11:38:29 mycroft Exp $	*/
 
 /*
