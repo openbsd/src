@@ -1,4 +1,4 @@
-.\" $OpenBSD: strdup.3,v 1.8 2000/04/21 15:24:20 aaron Exp $
+.\" $OpenBSD: strdup.3,v 1.9 2000/04/21 15:27:40 aaron Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -63,7 +63,10 @@ to an allocated area of memory containing the null-terminated string
 .Bd -literal -offset indent
 char *p;
 
-p = strdup("foobar");
+if ((p = strdup("foobar")) == NULL) {
+	fprintf(stderr, "Out of memory.\en");
+	exit(1);
+}
 .Ed
 .Sh SEE ALSO
 .Xr free 3 ,
