@@ -40,16 +40,6 @@
 #include <sys/cdefs.h>
 #include <sys/types.h>
 
-static __inline int bdb(void)
-{
-	extern int bdb_exists;
-
-	if (!bdb_exists)
-		return (0);
-	__asm __volatile("int $3");
-	return (1);
-}
-
 static __inline void 
 invlpg(u_int addr)
 { 
