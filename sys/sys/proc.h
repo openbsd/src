@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.22 1999/01/10 02:20:19 niklas Exp $	*/
+/*	$OpenBSD: proc.h,v 1.23 1999/01/11 21:20:00 millert Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -258,8 +258,9 @@ struct	pcred {
 /*
  * We use process IDs <= PID_MAX; PID_MAX + 1 must also fit in a pid_t,
  * as it is used to represent "no process group".
+ * We set PID_MAX to (SHRT_MAX - 1) so we don't break sys/compat.
  */
-#define	PID_MAX		65535
+#define	PID_MAX		32766
 #define	NO_PID		(PID_MAX+1)
 
 #define SESS_LEADER(p)	((p)->p_session->s_leader == (p))
