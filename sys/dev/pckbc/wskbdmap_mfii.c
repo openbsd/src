@@ -1,4 +1,4 @@
-/*	$OpenBSD: wskbdmap_mfii.c,v 1.18 2002/06/29 14:51:24 maja Exp $ */
+/*	$OpenBSD: wskbdmap_mfii.c,v 1.19 2002/06/29 15:21:48 maja Exp $ */
 /*	$NetBSD: wskbdmap_mfii.c,v 1.15 2000/05/19 16:40:04 drochner Exp $	*/
 
 /*-
@@ -723,6 +723,27 @@ static const keysym_t pckbd_keydesc_la[] = {
     KC(184), KS_Mode_switch,	KS_Multi_key,
 };
 
+static const keysym_t pckbd_keydesc_br[] = {
+/*  pos      normal		shifted         altgr           shift-altgr */
+    KC(2),   KS_1,		KS_exclam,	KS_onesuperior,
+    KC(3),   KS_2,		KS_at,		KS_twosuperior,
+    KC(4),   KS_3,		KS_numbersign,	KS_threesuperior,
+    KC(5),   KS_4,		KS_dollar,	KS_sterling,
+    KC(6),   KS_5,		KS_percent,	KS_cent,
+    KC(7),   KS_6,		KS_dead_diaeresis,	KS_notsign,
+    KC(13),  KS_equal,		KS_plus,	KS_section,
+    KC(26),  KS_dead_acute,	KS_dead_grave,
+    KC(27),  KS_bracketleft,	KS_braceleft,	KS_ordfeminine,
+    KC(39),  KS_ccedilla,	KS_Ccedilla,
+    KC(40),  KS_dead_tilde,	KS_dead_circumflex,
+    KC(41),  KS_apostrophe,	KS_quotedbl,
+    KC(43),  KS_bracketright,	KS_braceright,	KS_masculine,
+    KC(53),  KS_semicolon,	KS_colon,
+    KC(83),  KS_KP_Delete,	KS_KP_Decimal,
+    KC(86),  KS_backslash,	KS_bar,
+    KC(115), KS_slash,		KS_question,	KS_degree,
+};
+
 #define KBD_MAP(name, base, map) \
 			{ name, base, sizeof(map)/sizeof(keysym_t), map }
 
@@ -762,6 +783,7 @@ const struct wscons_keydesc pckbd_keydesctab[] = {
 	KBD_MAP(KB_PT,			KB_US,	pckbd_keydesc_pt),
 	KBD_MAP(KB_LT,			KB_US,	pckbd_keydesc_lt),
 	KBD_MAP(KB_LA,			KB_US,	pckbd_keydesc_la),
+	KBD_MAP(KB_BR,			KB_US,	pckbd_keydesc_br),
 	{0, 0, 0, 0}
 };
 

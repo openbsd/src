@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsksymdef.h,v 1.18 2002/06/29 14:51:24 maja Exp $	*/
+/*	$OpenBSD: wsksymdef.h,v 1.19 2002/06/29 15:21:48 maja Exp $	*/
 /*	$NetBSD: wsksymdef.h,v 1.34.4.1 2000/07/07 09:49:54 hannken Exp $ */
 
 /*-
@@ -641,6 +641,7 @@
 #define KB_UA			0x1200
 #define KB_LT			0x1300
 #define KB_LA			0x1400
+#define KB_BR			0x1500
 
 #define KB_NODEAD		0x0001
 #define KB_DECLK		0x0002	/* DEC LKnnn layout */
@@ -671,7 +672,8 @@
 	{ KB_SF,	"sf" }, \
 	{ KB_PT,	"pt" }, \
 	{ KB_LT,	"lt" }, \
-	{ KB_LA,	"la" }
+	{ KB_LA,	"la" }, \
+	{ KB_BR,	"br" }
 
 #define KB_VARTAB \
 	{ KB_NODEAD,	"nodead" }, \
