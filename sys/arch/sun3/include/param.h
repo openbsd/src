@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.10 1997/02/14 18:01:59 kstailey Exp $	*/
+/*	$OpenBSD: param.h,v 1.11 1997/02/14 18:15:27 kstailey Exp $	*/
 /*	$NetBSD: param.h,v 1.34 1996/03/04 05:04:40 cgd Exp $	*/
 
 /*
@@ -178,7 +178,6 @@
 #define spl5()  _spl(PSL_S|PSL_IPL5)
 #define spl6()  _spl(PSL_S|PSL_IPL6)
 #define spl7()  _spl(PSL_S|PSL_IPL7)
-#define splx(x)	_spl(x)
 
 /* IPL used by soft interrupts: netintr(), softclock() */
 #define splsoftclock()  spl1()
