@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.49 2001/06/15 11:10:18 art Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.50 2001/06/18 13:28:41 art Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -129,18 +129,9 @@ check_exec(p, epp)
 		error = EACCES;
 		goto bad1;
 	}
-	if ((vp->v_mount->mnt_flag & MNT_NOSUID) ||
-	    (p->p_flag & P_TRACED) || p->p_fd->fd_refcnt > 1)
-		epp->ep_vap->va_mode &= ~(VSUID | VSGID);
 
-	/*
-	 * Set the P_SUID* flags early so that we won't be fiddled with when
-	 * we sleep later in this code.
-	 * XXX - this could give us a few false positives and the caller must
-	 *       make sure to save and restore the flags if exec fails.
-	 */
-	if (epp->ep_vap->va_mode & (VSUID|VSGID))
-		p->p_flag |= P_SUGID|P_SUGIDEXEC;
+	if ((vp->v_mount->mnt_flag & MNT_NOSUID))
+		epp->ep_vap->va_mode &= ~(VSUID | VSGID);
 
 	/* check access.  for root we have to see if any exec bit on */
 	if ((error = VOP_ACCESS(vp, VEXEC, p->p_ucred, p)) != 0)
@@ -253,7 +244,6 @@ sys_execve(p, v, retval)
 	char **tmpfap;
 	int szsigcode;
 	extern struct emul emul_native;
-	int saved_sugid;
 
 	/*
 	 * figure out the maximum size of an exec header, if necessary.
@@ -284,7 +274,6 @@ sys_execve(p, v, retval)
 	pack.ep_emul = &emul_native;
 	pack.ep_flags = 0;
 
-	saved_sugid = p->p_flag & (P_SUGID|P_SUGIDEXEC);
 	/* see if we can run it. */
 	if ((error = check_exec(p, &pack)) != 0) {
 		goto freehdr;
@@ -496,10 +485,13 @@ sys_execve(p, v, retval)
 
 	/*
 	 * deal with set[ug]id.
-	 * MNT_NOEXEC and P_TRACED have already been used to disable s[ug]id.
+	 * MNT_NOEXEC has already been used to disable s[ug]id.
 	 */
-	if ((attr.va_mode & (VSUID | VSGID))) {
+	if ((attr.va_mode & (VSUID | VSGID)) && proc_cansugid(p)) {
 		int i;
+
+		p->p_flag |= P_SUGID;
+		p->p_flag |= P_SUGIDEXEC;
 
 #ifdef KTRACE
 		/*
@@ -516,8 +508,6 @@ sys_execve(p, v, retval)
 			p->p_ucred->cr_uid = attr.va_uid;
 		if (attr.va_mode & VSGID)
 			p->p_ucred->cr_gid = attr.va_gid;
-		p->p_flag |= P_SUGID;
-		p->p_flag |= P_SUGIDEXEC;
 
 		/*
 		 * For set[ug]id processes, a few caveats apply to
@@ -657,7 +647,6 @@ bad:
 
 freehdr:
 	free(pack.ep_hdr, M_EXEC);
-	p->p_flag = (p->p_flag & ~(P_SUGID|P_SUGIDEXEC)) | saved_sugid;
 	return (error);
 
 exec_abort:
