@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.73 2002/07/25 04:49:53 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.74 2002/08/03 19:04:24 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -110,7 +110,6 @@ $trap_tmp_save			/* XXX assumed to be aligned on 2048 */
 	.align	NBPG
 
 	BSS(pdc_stack, 4)	/* temp stack for PDC call */
-	BSS(exit_stack, 4)	/* temp stack used during exit2() */
 	BSS(emrg_stack, 4)	/* stack for HPMC/TOC/PWRF */
 	BSS(fpemu_stack, 4)	/* stack for FPU emulation */
 
@@ -175,7 +174,6 @@ ENTRY($start,0)
 	add	arg3, t2, arg3
 
 	STACK_ALLOC(pdc_stack, PDC_STACKSIZE)
-	STACK_ALLOC(exit_stack, EXIT_STACKSIZE)
 	STACK_ALLOC(emrg_stack, EMRG_STACKSIZE)
 	STACK_ALLOC(fpemu_stack, FPEMU_STACKSIZE)
 
@@ -206,7 +204,7 @@ $start_zero_tf
 	ldil	L%proc0, t2
 	stw	arg3, R%proc0+P_ADDR(t2)
 	ldo	-TRAPFRAME_SIZEOF(sp), t3
-	stw	t3, R%proc0+P_MD(t2)
+	stw	t3, R%proc0+P_MD_REGS(t2)
 
 	ldil	L%TFF_LAST, t1
 	stw	t1, TF_FLAGS-TRAPFRAME_SIZEOF(sp)
@@ -736,7 +734,7 @@ $syscall
 
 	ldil	L%curproc, r1
 	ldw	R%curproc(r1), r1
-	ldw	P_MD(r1), t3
+	ldw	P_MD_REGS(r1), t3
 
 	.exit
 	.procend
@@ -1720,7 +1718,7 @@ $trapnowvirt
 
 	/* means curproc have actually changed */
 	b	$syscall_return
-	ldw	P_MD(t2), t3
+	ldw	P_MD_REGS(t2), t3
 
 	.export	$trap$all$end, entry
 $trap$all$end
@@ -2577,7 +2575,7 @@ kstack_ok
 	 *
 	 * arg2: old proc
 	 */
-	ldw	P_MD(arg2), t1
+	ldw	P_MD_REGS(arg2), t1
 	stw	rp, HPPA_FRAME_CRP(sp)
 	ldw	TF_R30(t1), t3
 	copy	sp, t2
@@ -2611,7 +2609,7 @@ switch_exited
 	 * arg1: new proc
 	 */
 	mtctl	r0, ccr			/* disable FPU */
-	ldw	P_MD(arg1), t1
+	ldw	P_MD_REGS(arg1), t1
 	ldw	TF_CR30(t1), t2
 	ldw	TF_R30(t1), sp
 	ldw	TF_CR9(t1), t3
@@ -2658,31 +2656,6 @@ EXIT(cpu_switch)
 	.import	uvm_km_free, code
 ENTRY(switch_exit,0)
 
-	/* setup kernel context */
-	mtctl	r0, sr0
-	mtctl	r0, sr1
-	mtctl	r0, sr2
-	mtctl	r0, sr3
-	mtctl	r0, sr4
-	mtctl	r0, sr5
-	mtctl	r0, sr6
-	mtctl	r0, sr7
-
-	ldi	HPPA_PID_KERNEL, t4
-	mtctl	t4, pidr2
-
-	/* switch onto the temporary stack */
-	ldil	L%exit_stack, t4
-	ldw	R%exit_stack(t4), t4
-	stw	r0, HPPA_FRAME_SIZE+HPPA_FRAME_PSP(t4)
-	stw	r0, HPPA_FRAME_SIZE+HPPA_FRAME_CRP(t4)
-	ldo	HPPA_FRAME_SIZE(t4), sp
-
-	/* start the stack frame for our callee */
-	copy	sp, r3
-	ldo	HPPA_FRAME_SIZE(sp), sp
-	stw	r3, HPPA_FRAME_PSP(sp)
-
 	/* arg0 -- oldproc */
 	.import exit2, code
 	ldil	L%exit2, t2
@@ -2706,7 +2679,7 @@ ENTRY(switch_trampoline,0)
 	ldw	R%curproc(t1), t2
 	.call
 	b	$syscall_return
-	ldw	P_MD(t2), t3
+	ldw	P_MD_REGS(t2), t3
 EXIT(switch_trampoline)
 
 /*
