@@ -1,4 +1,4 @@
-/*	$OpenBSD: vars.c,v 1.1 1998/05/25 19:17:43 mickey Exp $	*/
+/*	$OpenBSD: vars.c,v 1.2 1998/05/30 01:51:39 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -226,7 +226,7 @@ Xenv()
 		for (p = environ; p && *p; p = q) {
 			l = strlen(cmd.argv[1]);
 			for (q = p; *q != '='; q++);
-			l = max(l, q - p);
+			l = max(l, q - p) + 1;
 			for (q = p; *q != '\n'; q++);
 			if (*q)
 				q++;
