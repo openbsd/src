@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.36 2002/11/27 21:47:14 mickey Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.37 2003/07/30 21:24:19 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000-2002 Michael Shalayeff
@@ -74,6 +74,7 @@ enum hppa_cpu_type {
 };
 extern enum hppa_cpu_type cpu_type;
 extern const char *cpu_typename;
+extern int cpu_hvers;
 #endif
 
 /*

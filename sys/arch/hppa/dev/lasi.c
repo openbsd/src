@@ -1,4 +1,4 @@
-/*	$OpenBSD: lasi.c,v 1.13 2003/04/08 20:48:39 mickey Exp $	*/
+/*	$OpenBSD: lasi.c,v 1.14 2003/07/30 21:24:19 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -170,6 +170,49 @@ lasiattach(parent, self, aux)
 	sc->sc_ic.gsc_type = gsc_lasi;
 	sc->sc_ic.gsc_dv = sc;
 	sc->sc_ic.gsc_base = sc->sc_trs;
+
+#ifdef USELEDS
+	/* figure out the leds address */
+	switch (cpu_hvers) {
+	case HPPA_BOARD_HP712_60:
+	case HPPA_BOARD_HP712_80:
+	case HPPA_BOARD_HP712_100:
+	case HPPA_BOARD_HP743I_64:
+	case HPPA_BOARD_HP743I_100:
+	case HPPA_BOARD_HP712_120:
+		break;	/* only has one led. works different */
+
+	case HPPA_BOARD_HP715_64:
+	case HPPA_BOARD_HP715_100:
+	case HPPA_BOARD_HP715_100XC:
+	case HPPA_BOARD_HP725_100:
+	case HPPA_BOARD_HP725_120:
+		if (bus_space_map(ca->ca_iot, ca->ca_hpa - 0x20000,
+		    4, 0, (bus_space_handle_t *)&machine_ledaddr))
+			machine_ledaddr = NULL;
+		machine_ledword = 1;
+		break;
+
+	case HPPA_BOARD_HP780_C100:
+	case HPPA_BOARD_HP780_C110:
+	case HPPA_BOARD_HP770_J200:
+	case HPPA_BOARD_HP770_J210:
+	case HPPA_BOARD_HP779_C132L:
+	case HPPA_BOARD_HP779_C160L:
+	case HPPA_BOARD_HP779_C180L:
+	case HPPA_BOARD_HP779_C160L1:
+		if (bus_space_map(ca->ca_iot, 0xf0190000,
+		    4, 0, (bus_space_handle_t *)&machine_ledaddr))
+			machine_ledaddr = NULL;
+		machine_ledword = 1;
+		break;
+
+	default:
+		machine_ledaddr = (u_int8_t *)sc->sc_hw;
+		machine_ledword = 1;
+		break;
+	}
+#endif
 
 	sc->ga.ga_ca = *ca;	/* clone from us */
 	if (!sc->sc_phantomassed) {

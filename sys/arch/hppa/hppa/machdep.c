@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.106 2003/05/22 19:27:50 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.107 2003/07/30 21:24:19 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2002 Michael Shalayeff
@@ -140,6 +140,7 @@ char	machine[] = MACHINE_ARCH;
 char	cpu_model[128];
 enum hppa_cpu_type cpu_type;
 const char *cpu_typename;
+int	cpu_hvers;
 #ifdef COMPAT_HPUX
 int	cpu_model_hpux;	/* contains HPUX_SYSCONF_CPU* kind of value */
 #endif
@@ -458,17 +459,18 @@ hppa_init(start)
 	{
 		const char *p, *q;
 		char buf[32];
-		int lev, hv;
+		int lev;
 
 		lev = 0xa + (*cpu_desidhash)();
-		hv = pdc_model.hvers >> 4;
-		if (!hv) {
+		cpu_hvers = pdc_model.hvers >> 4;
+		if (!cpu_hvers) {
 			p = "(UNKNOWN)";
 			q = lev == 0xa? "1.0" : "1.1";
 		} else {
-			p = hppa_mod_info(HPPA_TYPE_BOARD, hv);
+			p = hppa_mod_info(HPPA_TYPE_BOARD, cpu_hvers);
 			if (!p) {
-				snprintf(buf, sizeof buf, "(UNKNOWN 0x%x)", hv);
+				snprintf(buf, sizeof buf, "(UNKNOWN 0x%x)",
+				    cpu_hvers);
 				p = buf;
 			}
 
