@@ -1,4 +1,4 @@
-/*	$NetBSD: kparamb.h,v 1.1.1.1 1996/01/07 21:50:49 leo Exp $	*/
+/*	$NetBSD: kparamb.h,v 1.2 1996/01/19 13:54:12 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 L. Weppelman
@@ -60,7 +60,8 @@ struct kparamb {
 
 #define	ATARI_CLKBROKEN	(1<<16)		/* GEMDOS has faulty year base	*/
 
-#define	ATARI_ANYCPU	(0x1f)
+#define	ATARI_ANYCPU	(ATARI_68000|ATARI_68010|ATARI_68020|ATARI_68030 \
+			|ATARI_68040)
 
 /*
  * Definitions for boothowto

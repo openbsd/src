@@ -1,4 +1,4 @@
-/*	$NetBSD: disklbl.c,v 1.1 1996/01/16 15:15:48 leo Exp $	*/
+/*	$NetBSD: disklbl.c,v 1.2 1996/01/20 13:54:46 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens.
@@ -93,12 +93,12 @@ bsd_label(dd, offset)
 	u_int		nsec;
 	int		rv;
 
-	nsec = (BBSIZE + (dd->bsize - 1)) / dd->bsize;
+	nsec = (BBMINSIZE + (dd->bsize - 1)) / dd->bsize;
 	bblk = disk_read(dd, offset, nsec);
 	if (bblk) {
 		u_short	*end, *p;
 		
-		end = (u_short *)&bblk[BBSIZE - sizeof(struct disklabel)];
+		end = (u_short *)&bblk[BBMINSIZE - sizeof(struct disklabel)];
 		rv = 1;
 		for (p = (u_short *)bblk; p < end; ++p) {
 			struct disklabel *dl = (struct disklabel *)p;

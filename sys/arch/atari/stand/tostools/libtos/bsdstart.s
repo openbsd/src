@@ -1,4 +1,4 @@
-/*	$NetBSD: bsdstart.s,v 1.1.1.1 1996/01/07 21:50:49 leo Exp $	*/
+/*	$NetBSD: bsdstart.s,v 1.2 1996/01/23 20:34:07 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 L. Weppelman
@@ -54,8 +54,8 @@ _bsd_startup:
 	| a1:  end of symbols (esym)
 	| All other registers zeroed for possible future requirements.
 
-	movl	sp@(4), a3		| a3 points to parameter block
-#ifndef	STANDALONE
+	movl	sp@(4),a3		| a3 points to parameter block
+#ifdef	TOSTOOLS
 	lea	_bsd_startup,sp		| make sure we have a good stack ***
 #endif
 	movl	a3@,a0			| loaded kernel
@@ -70,8 +70,8 @@ _bsd_startup:
 	movl	a3@(28),d5		| start of fastram
 	movl	a3@(32),a1		| end of symbols
 	subl	a5,a5			| target, load to 0
-	btst	#4, d2			| Is this an 68040?
-	beq	not040
+	btst	#4,d2			| Is this an 68040?
+	beqs	0f
 
 	| Turn off 68040 MMU
 	.word 0x4e7b,0xd003		| movec a5,tc
@@ -81,22 +81,20 @@ _bsd_startup:
 	.word 0x4e7b,0xd005		| movec a5,itt1
 	.word 0x4e7b,0xd006		| movec a5,dtt0
 	.word 0x4e7b,0xd007		| movec a5,dtt1
-	bra	nott
+	bras	1f
 
-not040:
-	lea	pc@(zero),a3
+0:	lea	pc@(zero),a3
 	pmove	a3@,tc			| Turn off MMU
 	pmove	a3@(-4),crp		| crp = nullrp
 	pmove	a3@(-4),srp		| srp = nullrp
+	btst	#3,d2			| Is this an 68030?
+	beqs	1f
 
 	| Turn off 68030 TT registers
-	btst	#3, d2			| Is this an 68030?
-	jeqs	nott
 	.word	0xf013,0x0800		| pmove	a3@,tt0
 	.word	0xf013,0x0c00		| pmove	a3@,tt1
 
-nott:
-	movq	#0,d6			|  would have known contents)
+1:	movq	#0,d6			|  would have known contents
 	movl	d6,d7
 	movl	d6,a2
 	movl	d6,a3
@@ -105,13 +103,9 @@ nott:
 	movl	d6,a6
 	rts				| enter kernel at address on stack ***
 
-
 | A do-nothing MMU root pointer (includes the following long as well)
 | Note that the above code makes assumptions about the order of the following
 | items.
 
 nullrp:	.long	0x80000202
 zero:	.long	0
-#ifndef	STANDALONE
-svsp:	.long   0
-#endif
