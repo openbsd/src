@@ -1,10 +1,10 @@
-# $OpenBSD: Makefile,v 1.20 2000/08/07 01:51:29 brad Exp $
+# $OpenBSD: Makefile,v 1.21 2000/10/04 05:50:58 d Exp $
 # Copyright (c) 1993 Chris Provenzano, proven@athena.mit.edu
 
 LIBC_R?=	/usr/lib/libc_r.a
 LIBPTHREAD?=	/usr/lib/libpthread.a
 
-.if 1 # ${MACHINE_ARCH} == "i386"
+.if ${MACHINE_ARCH} == "sparc"
 PTHREAD=	-lpthread
 DPADD +=	${LIBPTHREAD}
 .else
@@ -33,24 +33,26 @@ SKIP_TESTS +=	test_sock_2a
 
 all : tests
 
+MAXTIME=	5
+
 tests : ${TESTS}
-	@faillist= ; ulimit -t 10; \
+	@faillist= ; \
 	for i in ${.ALLSRC} ; do \
 	  case " ${SKIP_TESTS} " in \
 	  *" $$i "*) \
 		  : skip ;; \
 	  *) \
 		  echo ; echo "*** $$i ***"; \
-		  if ${.OBJDIR}/$$i; then \
+		  if (ulimit -t ${MAXTIME}; ${.OBJDIR}/$$i); then \
 			  echo "-- $$i passed"; \
 		  else \
-			  echo "-- $$i FAILED (exit code $$?)"; \
+			  echo "-- $$i FAILED (exit code $$?)" >&2; \
 			  faillist="$$faillist $$i"; \
 		  fi;; \
 	  esac; \
 	done; \
 	if test -n "$$faillist"; then \
-		echo; echo "*** tests that failed:$$faillist"; exit 1; \
+		echo; echo "*** tests that failed:$$faillist" >&2; exit 1; \
 	else \
 		echo; echo "All tests passed OK."; exit 0; \
 	fi

@@ -1,4 +1,4 @@
-/*	$OpenBSD: test_fork.c,v 1.7 2000/01/06 06:54:28 d Exp $	*/
+/*	$OpenBSD: test_fork.c,v 1.8 2000/10/04 05:50:58 d Exp $	*/
 /*
  * Copyright (c) 1994 by Chris Provenzano, proven@athena.mit.edu
  *
@@ -40,7 +40,8 @@ main()
 
 	CHECKe(flags = fcntl(STDOUT_FILENO, F_GETFL));
 	if ((flags & (O_NONBLOCK | O_NDELAY))) {
-		CHECKe(fcntl(STDOUT_FILENO, F_SETFL, 
+		/* This fails when stdout is /dev/null!? */
+		/*CHECKe*/(fcntl(STDOUT_FILENO, F_SETFL, 
 		    flags & ~(O_NONBLOCK | O_NDELAY)));
 	}
 

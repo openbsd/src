@@ -1,4 +1,4 @@
-/*	$OpenBSD: test_stdarg.c,v 1.2 2000/01/04 02:31:44 d Exp $	*/
+/*	$OpenBSD: test_stdarg.c,v 1.3 2000/10/04 05:50:58 d Exp $	*/
 /*
  * Test <stdarg.h>
  */
@@ -8,6 +8,8 @@
 #include <stdarg.h>
 #include "test.h"
 
+#define EQ(v,exp) _CHECK(v, == exp, NULL) 
+
 int thing;
 
 int
@@ -15,31 +17,35 @@ test1(char *fmt, ...)
 {
 	va_list	ap;
 
+	char	ch;
 	int	i;
 	char	c;
 	long	l;
-	void *	p;
+	void 	*p;
+	char 	*ofmt = fmt;
 
 	va_start(ap, fmt);
 	for (; *fmt; fmt++)
-	    switch (*fmt) {
+	    switch ((ch =*fmt)) {
 	    case 'i':		
 		i = va_arg(ap, int); 
-		ASSERT(i == 1234);
+		EQ(i, 1234);
 		break;
 	    case 'c':		
 		c = va_arg(ap, char); 
-		ASSERT(c == 'x');
+		EQ(c, 'x');
 		break;
 	    case 'l':		
 		l = va_arg(ap, long); 
-		ASSERT(l == 123456789L);
+		EQ(l, 123456789L);
 		break;
 	    case 'p':		
 		p = va_arg(ap, void *); 
-		ASSERT(p == &thing);
+		EQ(p, &thing);
 		break;
 	    default:
+		fprintf(stderr, "unexpected character 0x%02x `%c' in %s(%p) at %p\n",
+			ch, ch, ofmt, ofmt, fmt);
 		ASSERT(0);
 	    }
 	va_end(ap);
@@ -53,7 +59,9 @@ run_test(arg)
 	char *msg = (char *)arg;
 	int i;
 
-	printf("Testing stdarg: %s\n", msg);
+	SET_NAME(msg);
+
+	puts(msg);
 	for (i = 0; i < 1000000; i++) {
 		ASSERT(test1("iclp", 1234, 'x', 123456789L, &thing) == 9);
 	}
@@ -66,9 +74,11 @@ main()
 {
 	pthread_t t1, t2;
 
-	run_test("in main thread");
-	CHECKr(pthread_create(&t1, NULL, run_test, "in child thread 1"));
-	CHECKr(pthread_create(&t2, NULL, run_test, "in child thread 2"));
+	printf("trying loop in single-threaded mode:\n");
+	run_test("main");
+	printf("now running loop with 2 threads:\n");
+	CHECKr(pthread_create(&t1, NULL, run_test, "child 1"));
+	CHECKr(pthread_create(&t2, NULL, run_test, "child 2"));
 	CHECKr(pthread_join(t1, NULL));
 	CHECKr(pthread_join(t2, NULL));
 	SUCCEED;

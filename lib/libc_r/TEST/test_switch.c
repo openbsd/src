@@ -1,4 +1,4 @@
-/*	$OpenBSD: test_switch.c,v 1.6 2000/01/06 06:58:35 d Exp $	*/
+/*	$OpenBSD: test_switch.c,v 1.7 2000/10/04 05:50:58 d Exp $	*/
 /* ==== test_switch.c ========================================================
  * Copyright (c) 1993 by Chris Provenzano, proven@athena.mit.edu
  *
@@ -19,6 +19,8 @@ const char buf[] = "abcdefghijklmnopqrstuvwxyz";
 char x[sizeof(buf)];
 int fd = 1;
 
+volatile int ending = 0;
+
 /* ==========================================================================
  * usage();
  */
@@ -34,11 +36,11 @@ new_thread(arg)
 	void *arg;
 {
 	SET_NAME("writer");
-	while(1) {
+	while (!ending) {
 		CHECKe(write (fd, (char *) arg, 1));
 		x[(char *)arg - buf] = 1;
 	}
-	PANIC("while");
+	return NULL;
 }
 
 int
@@ -87,6 +89,7 @@ main(argc, argv)
 	/* give all threads a chance to run */
 	sleep (4);
 
+	ending = 1;
 	for (i = 0; i < count; i++)
 		ASSERT(x[i]);	/* make sure each thread ran */
 

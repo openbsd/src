@@ -1,4 +1,4 @@
-/*	$OpenBSD: test_execve.c,v 1.4 2000/01/06 06:53:30 d Exp $	*/
+/*	$OpenBSD: test_execve.c,v 1.5 2000/10/04 05:50:58 d Exp $	*/
 /*
  * Copyright (c) 1994 by Chris Provenzano, proven@athena.mit.edu
  *
@@ -20,7 +20,6 @@ char *argv[] = {
 };
 
 char * should_succeed = "This line should be displayed\n";
-char * should_fail = "Error: This line should NOT be displayed\n";
 
 int
 main()
@@ -28,20 +27,21 @@ main()
 	int fd;
 
 	printf("This is the first message\n");
-	if (isatty(1)) {
+	if (isatty(STDOUT_FILENO)) {
 		char *ttynm;
 
-		CHECKn(ttynm = ttyname(1));
+		CHECKn(ttynm = ttyname(STDOUT_FILENO));
 		printf("tty is %s\n", ttynm);
 		CHECKe(fd = open(ttynm, O_RDWR));
 	} else
-		PANIC("stdout not a tty");
+		PANIC("stdout is not a tty: this test needs a tty");
 
 	CHECKn(printf("This output is necessary to set the stdout fd to NONBLOCKING\n"));
 
 	/* do a dup2 */
-	CHECKe(dup2(fd, 1));
-	CHECKe(write(1, should_succeed, (size_t)strlen(should_succeed)));
+	CHECKe(dup2(fd, STDOUT_FILENO));
+	CHECKe(write(STDOUT_FILENO, should_succeed,
+	    (size_t)strlen(should_succeed)));
 	CHECKe(execve(argv[0], argv, environ));
 	DIE(errno, "execve %s", argv[0]);
 }

@@ -95,12 +95,18 @@ __panic(type, errstr, filenm, lineno, fmt)
 	} \
 } while(0)
 
+#define _T(x) __builtin_classify_type(x)
+
 #define _CHECK(x, rhs, efn) do { \
-	int _x; \
-	_x = (int)(x); \
+	typeof(x) _x; \
+	_x = (x); \
 	if (!(_x rhs)) \
 		__panic("check failed", efn, __FILE__, __LINE__, \
-		    "failed check %s (=%d) %s ", #x, _x, #rhs); \
+		   ((_T(0) == _T(_x)   )? "failed check %s (=%d) %s " : \
+		    (_T("") == _T(_x)  )? "failed check %s (=%s) %s " : \
+		    (_T('x') == _T(_x) )? "failed check %s (=%c) %s " : \
+		    (_T(0L) == _T(_x)  )? "failed check %s (=%ld) %s " : "?") \
+		    , #x, _x, #rhs); \
 } while(0)
 
 #define CHECKr(x) _CHECK(x, == 0, strerror(_x))
