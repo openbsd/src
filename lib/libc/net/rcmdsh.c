@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcmdsh.c,v 1.7 2002/03/12 00:05:44 millert Exp $	*/ 
+/*	$OpenBSD: rcmdsh.c,v 1.8 2003/05/05 22:13:03 millert Exp $	*/ 
 
 /*
  * Copyright (c) 2001, MagniComp
@@ -34,7 +34,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: rcmdsh.c,v 1.7 2002/03/12 00:05:44 millert Exp $";
+static char *rcsid = "$OpenBSD: rcmdsh.c,v 1.8 2003/05/05 22:13:03 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include      <sys/types.h>
@@ -44,6 +44,7 @@ static char *rcsid = "$OpenBSD: rcmdsh.c,v 1.7 2002/03/12 00:05:44 millert Exp $
 #include      <errno.h>
 #include      <netdb.h>
 #include      <stdio.h>
+#include      <stdlib.h>
 #include      <string.h>
 #include      <pwd.h>
 #include      <paths.h>
@@ -127,19 +128,57 @@ rcmdsh(ahost, rport, locuser, remuser, cmd, rshprog)
 		 * are the same, avoid running remote shell for efficiency.
 		 */
 		if (!strcmp(*ahost, "localhost") && !strcmp(locuser, remuser)) {
+			char *argv[4];
 			if (pw->pw_shell[0] == '\0')
 				rshprog = _PATH_BSHELL;
 			else
 				rshprog = pw->pw_shell;
 			p = strrchr(rshprog, '/');
-			execlp(rshprog, p ? p+1 : rshprog, "-c", cmd,
-			       (char *) NULL);
-		} else {
+			argv[0] = p ? p + 1 : rshprog;
+			argv[1] = "-c";
+			argv[2] = (char *)cmd;
+			argv[3] = NULL;
+			execvp(rshprog, argv);
+		} else if ((p = strchr(rshprog, ' ')) == NULL) {
+			/* simple case */
+			char *argv[6];
 			p = strrchr(rshprog, '/');
-			execlp(rshprog, p ? p+1 : rshprog, *ahost, "-l",
-			       remuser, cmd, (char *) NULL);
+			argv[0] = p ? p + 1 : rshprog;
+			argv[1] = "-l";
+			argv[2] = (char *)remuser;
+			argv[3] = *ahost;
+			argv[4] = (char *)cmd;
+			argv[5] = NULL;
+			execvp(rshprog, argv);
+		} else {
+			/* must pull args out of rshprog and dyn alloc argv */
+			char **argv, **ap;
+			int n;
+			for (n = 7; (p = strchr(++p, ' ')) != NULL; n++)
+				continue;
+			rshprog = strdup(rshprog);
+			ap = argv = malloc(sizeof(char *) * n);
+			if (rshprog == NULL || argv == NULL) {
+				perror("rcmdsh");
+				_exit(255);
+			}
+			while ((p = strsep(&rshprog, " ")) != NULL) {
+				if (*p == '\0')
+					continue;
+				*ap++ = p;
+			}
+			if (ap != argv)		/* all spaces?!? */
+				rshprog = argv[0];
+			if ((p = strrchr(argv[0], '/')) != NULL)
+				argv[0] = p + 1;
+			*ap++ = "-l";
+			*ap++ = (char *)remuser;
+			*ap++ = *ahost;
+			*ap++ = (char *)cmd;
+			*ap++ = NULL;
+			execvp(rshprog, argv);
 		}
-		(void) fprintf(stderr, "rcmdsh: execlp %s failed: %s\n",
+		(void) fprintf(stderr, "rcmdsh: execvp %s failed: %s\n",
 			       rshprog, strerror(errno));
 		_exit(255);
 	} else {
