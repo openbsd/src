@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.1 2003/10/31 03:54:33 drahn Exp $g
+#	$OpenBSD: GENERIC,v 1.2 2003/11/14 03:24:47 drahn Exp $g
 #
 # PPC GENERIC config file
 #
@@ -24,7 +24,7 @@ option		WSDISPLAY_DEFAULTSCREENS=6
 option		USER_PCICONF	# user-space PCI configuration
 option		DDB_SAFE_CONSOLE
 
-#option          ADOSFS          # AmigaDOS file system
+option          ADOSFS          # AmigaDOS file system
 
 include "../../../conf/GENERIC"
 
