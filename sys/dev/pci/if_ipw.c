@@ -1,4 +1,4 @@
-/*	$Id: if_ipw.c,v 1.30 2004/12/05 17:46:07 damien Exp $  */
+/*	$Id: if_ipw.c,v 1.31 2004/12/05 19:39:22 damien Exp $  */
 
 /*-
  * Copyright (c) 2004
@@ -831,7 +831,7 @@ ipw_data_intr(struct ipw_softc *sc, struct ipw_status *status,
 
 	ni = ieee80211_find_rxnode(ic, wh);
 
-	/* Send it up to the upper layer */
+	/* Send the frame to the upper layer */
 	ieee80211_input(ifp, m, ni, status->rssi, 0);
 
 	if (ni == ic->ic_bss)
@@ -856,7 +856,7 @@ ipw_data_intr(struct ipw_softc *sc, struct ipw_status *status,
 	error = bus_dmamap_load(sc->sc_dmat, sbuf->map, mtod(m, void *),
 	    MCLBYTES, NULL, BUS_DMA_NOWAIT);
 	if (error != 0) {
-		printf("%s: could not map rxbuf dma memory\n",
+		printf("%s: could not map rx DMA memory\n",
 		    sc->sc_dev.dv_xname);
 		m_freem(m);
 		return;
@@ -1038,7 +1038,7 @@ ipw_cmd(struct ipw_softc *sc, u_int32_t type, void *data, u_int32_t len)
 	error = bus_dmamap_load(sc->sc_dmat, sc->cmd_map, &sc->cmd,
 	    sizeof (struct ipw_cmd), NULL, BUS_DMA_NOWAIT);
 	if (error != 0) {
-		printf("%s: could not map cmd dma memory\n",
+		printf("%s: could not map command DMA memory\n",
 		    sc->sc_dev.dv_xname);
 		return error;
 	}
@@ -1130,10 +1130,6 @@ ipw_tx_start(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni)
 	/* trim IEEE802.11 header */
 	m_adj(m, sizeof (struct ieee80211_frame));
 
-	/*
-	 * We need to map the mbuf first to know how many buffer descriptors
-	 * are needed for this transfer.
-	 */
 	error = bus_dmamap_load_mbuf(sc->sc_dmat, sbuf->map, m, BUS_DMA_NOWAIT);
 	if (error != 0) {
 		printf("%s: could not map mbuf (error %d)\n",
@@ -1145,7 +1141,7 @@ ipw_tx_start(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni)
 	error = bus_dmamap_load(sc->sc_dmat, shdr->map, &shdr->hdr,
 	    sizeof (struct ipw_hdr), NULL, BUS_DMA_NOWAIT);
 	if (error != 0) {
-		printf("%s: could not map header (error %d)\n",
+		printf("%s: could not map header DMA memory (error %d)\n",
 		    sc->sc_dev.dv_xname, error);
 		bus_dmamap_unload(sc->sc_dmat, sbuf->map);
 		m_freem(m);
@@ -1293,11 +1289,11 @@ ipw_get_table1(struct ipw_softc *sc, u_int32_t *tbl)
 
 	CSR_WRITE_4(sc, IPW_CSR_AUTOINC_ADDR, sc->table1_base);
 
-	size = CSR_READ_4(sc, IPW_CSR_AUTOINC_DATA);
+	size = min(CSR_READ_4(sc, IPW_CSR_AUTOINC_DATA), 256);
 	for (i = 1; i < size; i++)
 		buf[i] = MEM_READ_4(sc, CSR_READ_4(sc, IPW_CSR_AUTOINC_DATA));
 
-	return copyout(buf, tbl, size * sizeof (u_int32_t));
+	return copyout(buf, tbl, sizeof buf);
 }
 
 int
@@ -1658,7 +1654,7 @@ ipw_config(struct ipw_softc *sc)
 		data = htole32(IPW_MODE_MONITOR);
 		break;
 	}
-	DPRINTF(("Setting adapter mode to %u\n", data));
+	DPRINTF(("Setting mode to %u\n", letoh32(data)));
 	error = ipw_cmd(sc, IPW_CMD_SET_MODE, &data, sizeof data);
 	if (error != 0)
 		return error;
@@ -1666,7 +1662,7 @@ ipw_config(struct ipw_softc *sc)
 	if (ic->ic_opmode == IEEE80211_M_IBSS ||
 	    ic->ic_opmode == IEEE80211_M_MONITOR) {
 		data = htole32(ieee80211_chan2ieee(ic, ic->ic_ibss_chan));
-		DPRINTF(("Setting adapter channel to %u\n", data));
+		DPRINTF(("Setting channel to %u\n", letoh32(data)));
 		error = ipw_cmd(sc, IPW_CMD_SET_CHANNEL, &data, sizeof data);
 		if (error != 0)
 			return error;
@@ -1677,48 +1673,48 @@ ipw_config(struct ipw_softc *sc)
 		return ipw_cmd(sc, IPW_CMD_ENABLE, NULL, 0);
 	}
 
-	DPRINTF(("Setting adapter MAC to %s\n", ether_sprintf(ic->ic_myaddr)));
 	IEEE80211_ADDR_COPY(((struct arpcom *)ifp)->ac_enaddr, ic->ic_myaddr);
 	IEEE80211_ADDR_COPY(LLADDR(ifp->if_sadl), ic->ic_myaddr);
+	DPRINTF(("Setting MAC address to %s\n", ether_sprintf(ic->ic_myaddr)));
 	error = ipw_cmd(sc, IPW_CMD_SET_MAC_ADDRESS, ic->ic_myaddr,
 	    IEEE80211_ADDR_LEN);
 	if (error != 0)
 		return error;
 
 	config.flags = htole32(IPW_CFG_BSS_MASK | IPW_CFG_IBSS_MASK |
-			       IPW_CFG_PREAMBLE_LEN | IPW_CFG_802_1x_ENABLE);
+	    IPW_CFG_PREAMBLE_AUTO | IPW_CFG_802_1x_ENABLE);
 	if (ic->ic_opmode == IEEE80211_M_IBSS)
 		config.flags |= htole32(IPW_CFG_IBSS_AUTO_START);
 	if (ifp->if_flags & IFF_PROMISC)
 		config.flags |= htole32(IPW_CFG_PROMISCUOUS);
-	config.channels = htole32(0x3fff); /* channels 1-14 */
-	config.ibss_chan = htole32(0x7ff);
-	DPRINTF(("Setting adapter configuration 0x%08x\n", config.flags));
+	config.bss_chan = htole32(0x3fff); /* channels 1-14 */
+	config.ibss_chan = htole32(0x7ff); /* channels 1-11 */
+	DPRINTF(("Setting configuration 0x%x\n", config.flags));
 	error = ipw_cmd(sc, IPW_CMD_SET_CONFIGURATION, &config, sizeof config);
 	if (error != 0)
 		return error;
 
 	data = htole32(0x3); /* 1, 2 */
-	DPRINTF(("Setting adapter basic tx rates to 0x%x\n", data));
+	DPRINTF(("Setting basic tx rates to 0x%x\n", letoh32(data)));
 	error = ipw_cmd(sc, IPW_CMD_SET_BASIC_TX_RATES, &data, sizeof data);
 	if (error != 0)
 		return error;
 
 	data = htole32(0xf); /* 1, 2, 5.5, 11 */
-	DPRINTF(("Setting adapter tx rates to 0x%x\n", data));
+	DPRINTF(("Setting tx rates to 0x%x\n", letoh32(data)));
 	error = ipw_cmd(sc, IPW_CMD_SET_TX_RATES, &data, sizeof data);
 	if (error != 0)
 		return error;
 
 	data = htole32(IPW_POWER_MODE_CAM);
-	DPRINTF(("Setting adapter power mode to %u\n", data));
+	DPRINTF(("Setting power mode to %u\n", letoh32(data)));
 	error = ipw_cmd(sc, IPW_CMD_SET_POWER_MODE, &data, sizeof data);
 	if (error != 0)
 		return error;
 
 	if (ic->ic_opmode == IEEE80211_M_IBSS) {
-		data = htole32(ic->ic_txpower);
-		DPRINTF(("Setting adapter tx power index to %u\n", data));
+		data = htole32(32); /* default value */
+		DPRINTF(("Setting tx power index to %u\n", letoh32(data)));
 		error = ipw_cmd(sc, IPW_CMD_SET_TX_POWER_INDEX, &data,
 		    sizeof data);
 		if (error != 0)
@@ -1726,20 +1722,20 @@ ipw_config(struct ipw_softc *sc)
 	}
 
 	data = htole32(ic->ic_rtsthreshold);
-	DPRINTF(("Setting adapter RTS threshold to %u\n", data));
+	DPRINTF(("Setting RTS threshold to %u\n", letoh32(data)));
 	error = ipw_cmd(sc, IPW_CMD_SET_RTS_THRESHOLD, &data, sizeof data);
 	if (error != 0)
 		return error;
 
 	data = htole32(ic->ic_fragthreshold);
-	DPRINTF(("Setting adapter frag threshold to %u\n", data));
+	DPRINTF(("Setting frag threshold to %u\n", letoh32(data)));
 	error = ipw_cmd(sc, IPW_CMD_SET_FRAG_THRESHOLD, &data, sizeof data);
 	if (error != 0)
 		return error;
 
 #ifdef IPW_DEBUG
 	if (ipw_debug > 0) {
-		printf("Setting adapter ESSID to ");
+		printf("Setting ESSID to ");
 		ieee80211_print_essid(ic->ic_des_essid, ic->ic_des_esslen);
 		printf("\n");
 	}
@@ -1750,12 +1746,13 @@ ipw_config(struct ipw_softc *sc)
 		return error;
 
 	/* no mandatory BSSID */
+	DPRINTF(("Setting mandatory BSSID to null\n"));
 	error = ipw_cmd(sc, IPW_CMD_SET_MANDATORY_BSSID, NULL, 0);
 	if (error != 0)
 		return error;
 
 	if (ic->ic_flags & IEEE80211_F_DESBSSID) {
-		DPRINTF(("Setting adapter desired BSSID to %s\n",
+		DPRINTF(("Setting adapter BSSID to %s\n",
 		    ether_sprintf(ic->ic_des_bssid)));
 		error = ipw_cmd(sc, IPW_CMD_SET_DESIRED_BSSID,
 		    ic->ic_des_bssid, IEEE80211_ADDR_LEN);
@@ -1763,13 +1760,11 @@ ipw_config(struct ipw_softc *sc)
 			return error;
 	}
 
+	bzero(&security, sizeof security);
 	security.authmode = (sc->authmode == IEEE80211_AUTH_SHARED) ?
 	    IPW_AUTH_SHARED : IPW_AUTH_OPEN;
 	security.ciphers = htole32(IPW_CIPHER_NONE);
-	security.version = htole16(0);
-	security.replay_counters_number = 0;
-	security.unicast_using_group = 0;
-	DPRINTF(("Setting adapter authmode to %u\n", security.authmode));
+	DPRINTF(("Setting authmode to %u\n", security.authmode));
 	error = ipw_cmd(sc, IPW_CMD_SET_SECURITY_INFORMATION, &security,
 	    sizeof security);
 	if (error != 0)
@@ -1785,7 +1780,7 @@ ipw_config(struct ipw_softc *sc)
 			wepkey.len = k->wk_len;
 			bzero(wepkey.key, sizeof wepkey.key);
 			bcopy(k->wk_key, wepkey.key, k->wk_len);
-			DPRINTF(("Setting wep key index %d len %d\n",
+			DPRINTF(("Setting wep key index %u len %u\n",
 			    wepkey.idx, wepkey.len));
 			error = ipw_cmd(sc, IPW_CMD_SET_WEP_KEY, &wepkey,
 			    sizeof wepkey);
@@ -1794,15 +1789,15 @@ ipw_config(struct ipw_softc *sc)
 		}
 
 		data = htole32(ic->ic_wep_txkey);
-		DPRINTF(("Setting adapter tx key index to %u\n", data));
+		DPRINTF(("Setting wep tx key index to %u\n", letoh32(data)));
 		error = ipw_cmd(sc, IPW_CMD_SET_WEP_KEY_INDEX, &data,
 		    sizeof data);
 		if (error != 0)
 			return error;
 	}
 
-	data = htole32((sc->sc_ic.ic_flags & IEEE80211_F_WEPON) ? 0x8 : 0);
-	DPRINTF(("Setting adapter wep flags to 0x%x\n", data));
+	data = htole32((ic->ic_flags & IEEE80211_F_WEPON) ? IPW_WEPON : 0);
+	DPRINTF(("Setting wep flags to 0x%x\n", letoh32(data)));
 	error = ipw_cmd(sc, IPW_CMD_SET_WEP_FLAGS, &data, sizeof data);
 	if (error != 0)
 		return error;
@@ -1810,7 +1805,7 @@ ipw_config(struct ipw_softc *sc)
 	if (ic->ic_opmode == IEEE80211_M_IBSS ||
 	    ic->ic_opmode == IEEE80211_M_HOSTAP) {
 		data = htole32(ic->ic_lintval);
-		DPRINTF(("Setting adapter beacon interval to %u\n", data));
+		DPRINTF(("Setting beacon interval to %u\n", letoh32(data)));
 		error = ipw_cmd(sc, IPW_CMD_SET_BEACON_INTERVAL, &data,
 		    sizeof data);
 		if (error != 0)
@@ -1819,6 +1814,7 @@ ipw_config(struct ipw_softc *sc)
 
 	options.flags = htole32(0);
 	options.channels = htole32(0x3fff); /* scan channels 1-14 */
+	DPRINTF(("Setting scan options to 0x%x\n", letoh32(options.flags)));
 	error = ipw_cmd(sc, IPW_CMD_SET_SCAN_OPTIONS, &options, sizeof options);
 	if (error != 0)
 		return error;

@@ -1,4 +1,4 @@
-/*      $Id: if_ipwreg.h,v 1.7 2004/12/05 17:46:07 damien Exp $ */
+/*      $Id: if_ipwreg.h,v 1.8 2004/12/05 19:39:22 damien Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -208,6 +208,9 @@ struct ipw_cmd {
 #define IPW_MODE_IBSS		1
 #define IPW_MODE_MONITOR	2
 
+/* possible flags for command IPW_CMD_SET_WEP_FLAGS */
+#define IPW_WEPON	0x8
+
 /* structure for command IPW_CMD_SET_WEP_KEY */
 struct ipw_wep_key {
 	u_int8_t	idx;
@@ -221,12 +224,11 @@ struct ipw_security {
 #define IPW_CIPHER_NONE		0x00000001
 #define IPW_CIPHER_WEP40	0x00000002
 #define IPW_CIPHER_WEP104	0x00000020
-	u_int16_t	version;
+	u_int16_t	reserved1;
 	u_int8_t	authmode;
 #define IPW_AUTH_OPEN	0
 #define IPW_AUTH_SHARED	1
-	u_int8_t	replay_counters_number;
-	u_int8_t	unicast_using_group;
+	u_int16_t	reserved2;
 } __attribute__((__packed__));
 
 /* structure for command IPW_CMD_SET_SCAN_OPTIONS */
@@ -241,12 +243,12 @@ struct ipw_scan_options {
 struct ipw_configuration {
 	u_int32_t	flags;
 #define IPW_CFG_PROMISCUOUS	0x00000004
-#define IPW_CFG_PREAMBLE_LEN	0x00000010
+#define IPW_CFG_PREAMBLE_AUTO	0x00000010
 #define IPW_CFG_IBSS_AUTO_START	0x00000020
 #define IPW_CFG_802_1x_ENABLE	0x00004000
 #define IPW_CFG_BSS_MASK	0x00008000
 #define IPW_CFG_IBSS_MASK	0x00010000
-	u_int32_t	channels;
+	u_int32_t	bss_chan;
 	u_int32_t	ibss_chan;
 } __attribute__((__packed__));
 
