@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.48 2001/06/26 20:25:50 art Exp $ */
+/* $OpenBSD: machdep.c,v 1.49 2001/07/05 10:12:03 art Exp $ */
 /* $NetBSD: machdep.c,v 1.206 2000/05/23 05:12:54 thorpej Exp $ */
 
 /*-
@@ -76,9 +76,6 @@
 #include <sys/device.h>
 #include <sys/conf.h>
 #include <sys/file.h>
-#ifdef REAL_CLISTS
-#include <sys/clist.h>
-#endif
 #include <sys/timeout.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
@@ -829,9 +826,6 @@ allocsys(v)
 #define valloc(name, type, num) \
 	    (name) = (type *)v; v = (caddr_t)ALIGN((name)+(num))
 
-#ifdef REAL_CLISTS
-	valloc(cfree, struct cblock, nclist);
-#endif
 	valloc(timeouts, struct timeout, ntimeout);
 #ifdef SYSVSHM
 	valloc(shmsegs, struct shmid_ds, shminfo.shmmni);

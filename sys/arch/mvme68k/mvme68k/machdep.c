@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.42 2001/06/27 06:19:48 art Exp $ */
+/*	$OpenBSD: machdep.c,v 1.43 2001/07/05 10:12:13 art Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -295,9 +295,6 @@ again:
 	    (name) = (type *)v; v = (caddr_t)((name)+(num))
 #define	valloclim(name, type, num, lim) \
 	    (name) = (type *)v; v = (caddr_t)((lim) = ((name)+(num)))
-#ifdef REAL_CLISTS
-	valloc(cfree, struct cblock, nclist);
-#endif
 	valloc(timeouts, struct timeout, ntimeout);
 #ifdef SYSVSHM
 	valloc(shmsegs, struct shmid_ds, shminfo.shmmni);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_subr.c,v 1.12 2001/06/22 14:14:09 deraadt Exp $	*/
+/*	$OpenBSD: tty_subr.c,v 1.13 2001/07/05 10:12:25 art Exp $	*/
 /*	$NetBSD: tty_subr.c,v 1.13 1996/02/09 19:00:43 christos Exp $	*/
 
 /*
@@ -39,9 +39,6 @@
 #include <sys/buf.h>
 #include <sys/ioctl.h>
 #include <sys/tty.h>
-#ifdef REAL_CLISTS
-#include <sys/clist.h>
-#endif
 #include <sys/malloc.h>
 
 /*

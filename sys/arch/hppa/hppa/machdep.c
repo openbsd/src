@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.34 2001/05/17 18:41:48 provos Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.35 2001/07/05 10:12:08 art Exp $	*/
 
 /*
  * Copyright (c) 1999-2000 Michael Shalayeff
@@ -474,10 +474,6 @@ hptsize=256;	/* XXX one page for now */
 	
 	v = vstart;
 #define valloc(name, type, num) (name) = (type *)v; v = (vaddr_t)((name)+(num))
-
-#ifdef REAL_CLISTS
-	valloc(cfree, struct cblock, nclist);
-#endif
 
 	valloc(timeouts, struct timeout, ntimeout);
 	valloc(buf, struct buf, nbuf);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.44 2001/05/14 07:15:33 angelos Exp $	*/
+/*	$OpenBSD: tty.c,v 1.45 2001/07/05 10:12:24 art Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -80,9 +80,6 @@ void 	filt_ttywdetach __P((struct knote *kn));
 char ttclos[]	= "ttycls";
 char ttopen[]	= "ttyopn";
 char ttybg[]	= "ttybg";
-#ifdef REAL_CLISTS
-char ttybuf[]	= "ttybuf";
-#endif
 char ttyin[]	= "ttyin";
 char ttyout[]	= "ttyout";
 
@@ -1757,17 +1754,8 @@ loop:
 				if (ce == 0) {
 					tp->t_rocount = 0;
 					if (ttyoutput(*cp, tp) >= 0) {
-#ifdef REAL_CLISTS
-						/* No Clists, wait a bit. */
-						ttstart(tp);
-						if (error = ttysleep(tp, &lbolt,
-						    TTOPRI | PCATCH, ttybuf, 0))
-							break;
-						goto loop;
-#else
 						/* out of space */
 						goto overfull;
-#endif
 					}
 					cp++;
 					cc--;
@@ -1792,17 +1780,8 @@ loop:
 			cp += ce, cc -= ce, tk_nout += ce;
 			tp->t_outcc += ce;
 			if (i > 0) {
-#ifdef REAL_CLISTS
-				/* No Clists, wait a bit. */
-				ttstart(tp);
-				if (error = ttysleep(tp,
-				    &lbolt, TTOPRI | PCATCH, ttybuf, 0))
-					break;
-				goto loop;
-#else
 				/* out of space */
 				goto overfull;
-#endif
 			}
 			if (ISSET(tp->t_lflag, FLUSHO) ||
 			    tp->t_outq.c_cc > hiwat)
@@ -1819,7 +1798,6 @@ out:
 	uio->uio_resid += cc;
 	return (error);
 
-#ifndef REAL_CLISTS
 overfull:
 	/*
 	 * Since we are using ring buffers, if we can't insert any more into
@@ -1828,7 +1806,6 @@ overfull:
 	 * proceed as normal.
 	 */
 	hiwat = tp->t_outq.c_cc - 1;
-#endif
 
 ovhiwat:
 	ttstart(tp);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.h,v 1.10 2001/06/22 14:11:00 deraadt Exp $	*/
+/*	$OpenBSD: tty.h,v 1.11 2001/07/05 10:12:28 art Exp $	*/
 /*	$NetBSD: tty.h,v 1.30.4.1 1996/06/02 09:08:13 mrg Exp $	*/
 
 /*-
@@ -60,7 +60,6 @@
 	{ "tk_cancc", CTLTYPE_QUAD }, \
 }
 
-#ifndef REAL_CLISTS
 /*
  * Clists are actually ring buffers. The c_cc, c_cf, c_cl fields have
  * exactly the same behaviour as in true clists.
@@ -78,17 +77,6 @@ struct clist {
 	u_char	*c_ce;		/* c_ce + c_len */
 	u_char	*c_cq;		/* N bits/bytes long, see tty_subr.c */
 };
-#else
-/*
- * Clists are character lists, which is a variable length linked list
- * of cblocks, with a count of the number of characters in the list.
- */
-struct clist {
-	int	c_cc;		/* Number of characters in the clist. */
-	u_char	*c_cf;		/* Pointer to the first cblock. */
-	u_char	*c_cl;		/* Pointer to the last cblock. */
-};
-#endif
 
 /*
  * Per-tty structure.
