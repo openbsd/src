@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmdcmds.c,v 1.3 1996/09/22 01:17:58 downsj Exp $	*/
+/*	$OpenBSD: cmdcmds.c,v 1.4 1996/09/24 17:53:49 downsj Exp $	*/
 /* vi:set ts=4 sw=4:
  *
  * VIM - Vi IMproved		by Bram Moolenaar
@@ -341,6 +341,15 @@ do_move(line1, line2, n)
 	CHANGED;
 	if (!global_busy && num_lines > p_report)
 		smsg((char_u *)"%ld line%s moved", num_lines, plural(num_lines));
+
+	/*
+	 * Leave the cursor on the last of the moved lines.
+	 */
+	if (n >= line1)
+		curwin->w_cursor.lnum = n;
+	else
+		curwin->w_cursor.lnum = n + (line2 - line1) + 1;
+
 	return OK;
 }
 
