@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.h,v 1.14 2004/12/18 20:55:52 millert Exp $	*/
+/*	$OpenBSD: proto.h,v 1.15 2004/12/18 21:04:52 millert Exp $	*/
 
 /*
  * prototypes for PD-KSH
@@ -125,14 +125,12 @@ void 	restfd(int fd, int ofd);
 void 	openpipe(int *pv);
 void 	closepipe(int *pv);
 int	check_fd(char *name, int mode, const char **emsgp);
-#ifdef KSH
 void	coproc_init(void);
 void	coproc_read_close(int fd);
 void	coproc_readw_close(int fd);
 void	coproc_write_close(int fd);
 int	coproc_getfd(int mode, const char **emsgp);
 void	coproc_cleanup(int reuse);
-#endif /* KSH */
 struct temp *maketemp(Area *ap, Temp_type type, struct temp **tlist);
 /* jobs.c */
 void 	j_init(int mflagset);
@@ -157,12 +155,10 @@ Source * pushs(int type, Area *areap);
 void	set_prompt(int to, Source *s);
 void 	pprompt(const char *cp, int ntruncate);
 /* mail.c */
-#ifdef KSH
 void 	mcheck(void);
 void 	mcset(long interval);
 void 	mbset(char *p);
 void 	mpset(char *mptoparse);
-#endif /* KSH */
 /* main.c */
 int 	include(const char *name, int argc, char **argv, int intr_ok);
 int 	command(const char *comm);
@@ -224,9 +220,7 @@ struct tbl **	tsort(struct table *tp);
 /* trace.c */
 /* trap.c */
 void	inittraps(void);
-#ifdef KSH
 void	alarm_init(void);
-#endif /* KSH */
 Trap *	gettrap(const char *name, int igncase);
 void	trapsig(int i);
 void	intrcheck(void);

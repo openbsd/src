@@ -1,4 +1,4 @@
-/*	$OpenBSD: expr.c,v 1.10 2004/12/18 20:55:52 millert Exp $	*/
+/*	$OpenBSD: expr.c,v 1.11 2004/12/18 21:04:52 millert Exp $	*/
 
 /*
  * Korn expression evaluation
@@ -481,16 +481,13 @@ token(es)
 			if (len == 0)
 				evalerr(es, ET_STR, "missing ]");
 			cp += len;
-		}
-#ifdef KSH
-		else if (c == '(' /*)*/ ) {
+		} else if (c == '(' /*)*/ ) {
 		    /* todo: add math functions (all take single argument):
 		     * abs acos asin atan cos cosh exp int log sin sinh sqrt
 		     * tan tanh
 		     */
 		    ;
 		}
-#endif /* KSH */
 		if (es->noassign) {
 			es->val = tempvar();
 			es->val->flag |= EXPRLVALUE;

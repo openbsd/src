@@ -1,4 +1,4 @@
-/*	$OpenBSD: jobs.c,v 1.23 2004/12/18 20:55:52 millert Exp $	*/
+/*	$OpenBSD: jobs.c,v 1.24 2004/12/18 21:04:52 millert Exp $	*/
 
 /*
  * Process and job control
@@ -75,9 +75,7 @@ struct job {
 	clock_t	usrtime;	/* user time used by job */
 	Proc	*proc_list;	/* process list */
 	Proc	*last_proc;	/* last process in list */
-#ifdef KSH
 	Coproc_id coproc_id;	/* 0 or id of coprocess output pipe */
-#endif /* KSH */
 #ifdef JOBS
 	TTY_state ttystate;	/* saved tty state for stopped jobs */
 	pid_t	saved_ttypgrp;	/* saved tty process group for stopped jobs */
@@ -375,9 +373,7 @@ exchild(t, flags, close_fd)
 		j->ppid = procpid;
 		j->age = ++njobs;
 		j->proc_list = p;
-#ifdef KSH
 		j->coproc_id = 0;
-#endif /* KSH */
 		last_job = j;
 		last_proc = p;
 		put_job(j, PJ_PAST_STOPPED);
@@ -433,11 +429,9 @@ exchild(t, flags, close_fd)
 			      || ((flags & XCCLOSE) && ischild)))
 		close(close_fd);
 	if (ischild) {		/* child */
-#ifdef KSH
 		/* Do this before restoring signal */
 		if (flags & XCOPROC)
 			coproc_cleanup(FALSE);
-#endif /* KSH */
 		sigprocmask(SIG_SETMASK, &omask, (sigset_t *) 0);
 		cleanup_parents_env();
 #ifdef JOBS
@@ -492,13 +486,11 @@ exchild(t, flags, close_fd)
 		*/
 #endif /* JOBS */
 		j_startjob(j);
-#ifdef KSH
 		if (flags & XCOPROC) {
 			j->coproc_id = coproc.id;
 			coproc.njobs++; /* n jobs using co-process output */
 			coproc.job = (void *) j; /* j using co-process input */
 		}
-#endif /* KSH */
 		if (flags & XBGND) {
 			j_set_async(j);
 			if (Flag(FTALKING)) {
@@ -1207,7 +1199,6 @@ check_job(j)
 		break;
 	}
 
-#ifdef KSH
 	/* Note when co-process dies: can't be done in j_wait() nor
 	 * remove_job() since neither may be called for non-interactive
 	 * shells.
@@ -1230,7 +1221,6 @@ check_job(j)
 		    && --coproc.njobs == 0)
 			coproc_readw_close(coproc.read);
 	}
-#endif /* KSH */
 
 	j->flags |= JF_CHANGED;
 #ifdef JOBS

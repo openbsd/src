@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.c,v 1.11 2004/12/18 20:55:52 millert Exp $	*/
+/*	$OpenBSD: tree.c,v 1.12 2004/12/18 21:04:52 millert Exp $	*/
 
 /*
  * command tree climbing
@@ -97,11 +97,9 @@ ptree(t, indent, shf)
 		fptreef(shf, indent, " ]] ");
 		break;
 	  }
-#ifdef KSH
 	  case TSELECT:
 		fptreef(shf, indent, "select %s ", t->str);
 		/* fall through */
-#endif /* KSH */
 	  case TFOR:
 		if (t->type == TFOR)
 			fptreef(shf, indent, "for %s ", t->str);
@@ -348,7 +346,6 @@ tputS(wp, shf)
 			if (*wp++ == '}')
 				tputc('}', shf);
 			break;
-#ifdef KSH
 		  case OPAT:
 			tputc(*wp++, shf);
 			tputc('(', shf);
@@ -359,7 +356,6 @@ tputS(wp, shf)
 		  case CPAT:
 			tputc(')', shf);
 			break;
-#endif /* KSH */
 		}
 }
 
@@ -563,7 +559,6 @@ wdscan(wp, c)
 				return (char *) wp;
 			nest--;
 			break;
-#ifdef KSH
 		  case OPAT:
 			nest++;
 			wp++;
@@ -575,7 +570,6 @@ wdscan(wp, c)
 			if (wp[-1] == CPAT)
 				nest--;
 			break;
-#endif /* KSH */
 		  default:
 			internal_errorf(0,
 				"wdscan: unknown char 0x%x (carrying on)",
@@ -640,7 +634,6 @@ wdstrip(wp)
 			if (*wp++ == '}')
 				shf_putchar('}', &shf);
 			break;
-#ifdef KSH
 		  case OPAT:
 			shf_putchar(*wp++, &shf);
 			shf_putchar('(', &shf);
@@ -651,7 +644,6 @@ wdstrip(wp)
 		  case CPAT:
 			shf_putchar(')', &shf);
 			break;
-#endif /* KSH */
 		}
 }
 

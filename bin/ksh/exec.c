@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.32 2004/12/18 20:55:52 millert Exp $	*/
+/*	$OpenBSD: exec.c,v 1.33 2004/12/18 21:04:52 millert Exp $	*/
 
 /*
  * execute command tree
@@ -10,11 +10,7 @@
 #include <sys/stat.h>
 
 /* Does ps4 get parameter substitutions done? */
-#ifdef KSH
 # define PS4_SUBSTITUTE(s)	substitute((s), 0)
-#else
-# define PS4_SUBSTITUTE(s)	(s)
-#endif /* KSH */
 
 static int	comexec(struct op *t, struct tbl *volatile tp, char **ap,
 			      int volatile flags);
@@ -22,17 +18,13 @@ static void	scriptexec(struct op *tp, char **ap);
 static int	call_builtin(struct tbl *tp, char **wp);
 static int	iosetup(struct ioword *iop, struct tbl *tp);
 static int	herein(const char *content, int sub);
-#ifdef KSH
 static char 	*do_selectargs(char **ap, bool_t print_menu);
-#endif /* KSH */
-#ifdef KSH
 static int	dbteste_isa(Test_env *te, Test_meta meta);
 static const char *dbteste_getopnd(Test_env *te, Test_op op,
 					 int do_eval);
 static int	dbteste_eval(Test_env *te, Test_op op, const char *opnd1,
 				const char *opnd2, int do_eval);
 static void	dbteste_error(Test_env *te, int offset, const char *msg);
-#endif /* KSH */
 
 
 /*
@@ -175,7 +167,6 @@ execute(t, flags)
 		rv = execute(t, flags & XERROK);
 		break;
 
-#ifdef KSH
 	  case TCOPROC:
 	  {
 		sigset_t	omask;
@@ -234,7 +225,6 @@ execute(t, flags)
 			coproc.readw);
 		break;
 	  }
-#endif /* KSH */
 
 	  case TASYNC:
 		/* XXX non-optimal, I think - "(foo &)", forks for (),
@@ -257,7 +247,6 @@ execute(t, flags)
 		rv = !execute(t->right, XERROK);
 		break;
 
-#ifdef KSH
 	  case TDBRACKET:
 	    {
 		Test_env te;
@@ -272,14 +261,11 @@ execute(t, flags)
 		rv = test_parse(&te);
 		break;
 	    }
-#endif /* KSH */
 
 	  case TFOR:
-#ifdef KSH
 	  case TSELECT:
 	    {
 		volatile bool_t is_first = TRUE;
-#endif /* KSH */
 		ap = (t->vars != NULL) ?
 			  eval(t->vars, DOBLANK|DOGLOB|DOTILDE)
 			: e->loc->argv + 1;
@@ -304,9 +290,7 @@ execute(t, flags)
 				setstr(global(t->str), *ap++, KSH_UNWIND_ERROR);
 				rv = execute(t->left, flags & XERROK);
 			}
-		}
-#ifdef KSH
-		else { /* TSELECT */
+		} else { /* TSELECT */
 			for (;;) {
 				if (!(cp = do_selectargs(ap, is_first))) {
 					rv = 1;
@@ -318,7 +302,6 @@ execute(t, flags)
 			}
 		}
 	    }
-#endif /* KSH */
 		break;
 
 	  case TWHILE:
@@ -425,7 +408,6 @@ comexec(t, tp, ap, flags)
 	int fcflags = FC_BI|FC_FUNC|FC_PATH;
 	int bourne_function_call = 0;
 
-#ifdef KSH
 	/* snag the last argument for $_ XXX not the same as at&t ksh,
 	 * which only seems to set $_ after a newline (but not in
 	 * functions/dot scripts, but in interactive and script) -
@@ -438,7 +420,6 @@ comexec(t, tp, ap, flags)
 		setstr(typeset("_", LOCAL, 0, INTEGER, 0), *--lastp,
 		       KSH_RETURN_ERROR);
 	}
-#endif /* KSH */
 
 	/* Deal with the shell builtins builtin, exec and command since
 	 * they can be followed by other commands.  This must be done before
@@ -681,14 +662,12 @@ comexec(t, tp, ap, flags)
 			break;
 		}
 
-#ifdef KSH
 		if (!Flag(FSH)) {
 			/* set $_ to program's full path */
 			/* setstr() can't fail here */
 			setstr(typeset("_", LOCAL|EXPORT, 0, INTEGER, 0),
 			       tp->val.s, KSH_RETURN_ERROR);
 		}
-#endif /* KSH */
 
 		if (flags&XEXEC) {
 			j_exit();
@@ -1192,7 +1171,6 @@ iosetup(iop, tp)
 		}
 		if (iotype != IODUP)
 			close(u);
-#ifdef KSH
 		/* Touching any co-process fd in an empty exec
 		 * causes the shell to close its copies
 		 */
@@ -1202,7 +1180,6 @@ iosetup(iop, tp)
 			else			/* possible exec >&p */
 				coproc_write_close(u);
 		}
-#endif /* KSH */
 	}
 	if (u == 2) /* Clear any write errors */
 		shf_reopen(2, SHF_WR, shl_out);
@@ -1277,7 +1254,7 @@ herein(content, sub)
 	return fd;
 }
 
-#if defined(KSH) || defined(EDIT)
+#ifdef EDIT
 /*
  *	ksh special - the select command processing section
  *	print the args in column form - assuming that we can
@@ -1412,8 +1389,7 @@ pr_list(ap)
 
 	return n;
 }
-#endif /* KSH || EDIT */
-#ifdef KSH
+#endif /* EDIT */
 
 /*
  *	[[ ... ]] evaluation routines
@@ -1511,4 +1487,3 @@ dbteste_error(te, offset, msg)
 	te->flags |= TEF_ERROR;
 	internal_errorf(0, "dbteste_error: %s (offset %d)", msg, offset);
 }
-#endif /* KSH */

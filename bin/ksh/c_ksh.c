@@ -1,4 +1,4 @@
-/*	$OpenBSD: c_ksh.c,v 1.19 2004/12/18 20:55:52 millert Exp $	*/
+/*	$OpenBSD: c_ksh.c,v 1.20 2004/12/18 21:04:52 millert Exp $	*/
 
 /*
  * built-in Korn commands: c_*
@@ -258,14 +258,12 @@ c_print(wp)
 			  case 'n':
 				flags &= ~PO_NL;
 				break;
-#ifdef KSH
 			  case 'p':
 				if ((fd = coproc_getfd(W_OK, &emsg)) < 0) {
 					bi_errorf("-p: %s", emsg);
 					return 1;
 				}
 				break;
-#endif /* KSH */
 			  case 'r':
 				flags &= ~PO_EXPAND;
 				break;
@@ -352,7 +350,6 @@ c_print(wp)
 	} else {
 		int n, len = Xlength(xs, xp);
 		int opipe = 0;
-#ifdef KSH
 
 		/* Ensure we aren't killed by a SIGPIPE while writing to
 		 * a coprocess.  at&t ksh doesn't seem to do this (seems
@@ -363,40 +360,31 @@ c_print(wp)
 			flags |= PO_COPROC;
 			opipe = block_pipe();
 		}
-#endif /* KSH */
 		for (s = Xstring(xs, xp); len > 0; ) {
 			n = write(fd, s, len);
 			if (n < 0) {
-#ifdef KSH
 				if (flags & PO_COPROC)
 					restore_pipe(opipe);
-#endif /* KSH */
 				if (errno == EINTR) {
 					/* allow user to ^C out */
 					intrcheck();
-#ifdef KSH
 					if (flags & PO_COPROC)
 						opipe = block_pipe();
-#endif /* KSH */
 					continue;
 				}
-#ifdef KSH
 				/* This doesn't really make sense - could
 				 * break scripts (print -p generates
 				 * error message).
 				*if (errno == EPIPE)
 				*	coproc_write_close(fd);
 				 */
-#endif /* KSH */
 				return 1;
 			}
 			s += n;
 			len -= n;
 		}
-#ifdef KSH
 		if (flags & PO_COPROC)
 			restore_pipe(opipe);
-#endif /* KSH */
 	}
 
 	return 0;
@@ -1023,7 +1011,6 @@ c_unalias(wp)
 	return rv;
 }
 
-#ifdef KSH
 int
 c_let(wp)
 	char **wp;
@@ -1042,7 +1029,6 @@ c_let(wp)
 				rv = val == 0;
 	return rv;
 }
-#endif /* KSH */
 
 int
 c_jobs(wp)
@@ -1414,9 +1400,7 @@ const struct builtin kshbuiltins [] = {
 	{"+getopts", c_getopts},
 	{"+jobs", c_jobs},
 	{"+kill", c_kill},
-#ifdef KSH
 	{"let", c_let},
-#endif /* KSH */
 	{"print", c_print},
 	{"pwd", c_pwd},
  	{"*=readonly", c_typeset},

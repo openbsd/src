@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.19 2004/12/18 20:55:52 millert Exp $
+#	$OpenBSD: Makefile,v 1.20 2004/12/18 21:04:52 millert Exp $
 
 PROG=	ksh
 SRCS=	alloc.c c_ksh.c c_sh.c c_test.c c_ulimit.c edit.c emacs.c \
@@ -7,7 +7,7 @@ SRCS=	alloc.c c_ksh.c c_sh.c c_test.c c_ulimit.c edit.c emacs.c \
 	tree.c tty.c var.c version.c vi.c
 
 DEFS=	-Wall -Wno-unused
-CFLAGS+=${DEFS} -I. -I${.CURDIR} -DKSH
+CFLAGS+=${DEFS} -I. -I${.CURDIR}
 MAN=	ksh.1 sh.1
 
 CLEANFILES+=	siglist.out emacs.out

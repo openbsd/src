@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.24 2004/12/18 20:55:52 millert Exp $	*/
+/*	$OpenBSD: lex.c,v 1.25 2004/12/18 21:04:52 millert Exp $	*/
 
 /*
  * lexical analysis and source input
@@ -124,14 +124,11 @@ yylex(cf)
 
 	if (cf&ONEWORD)
 		state = SWORD;
-#ifdef KSH
 	else if (cf&LETEXPR) {
 		*wp++ = OQUOTE;	 /* enclose arguments in (double) quotes */
 		state = SLETPAREN;	
 		statep->ls_sletparen.nparen = 0;
-	}
-#endif /* KSH */
-	else {		/* normal lexing */
+	} else {		/* normal lexing */
 		state = (cf & HEREDELIM) ? SHEREDELIM : SBASE;
 		while ((c = getsc()) == ' ' || c == '\t')
 			;
@@ -256,7 +253,6 @@ yylex(cf)
 			}
 			/* fall through.. */
 		  Sbase1:	/* includes *(...|...) pattern (*+?@!) */
-#ifdef KSH
 			if (c == '*' || c == '@' || c == '+' || c == '?'
 			    || c == '!')
 			{
@@ -269,7 +265,6 @@ yylex(cf)
 				}
 				ungetsc(c2);
 			}
-#endif /* KSH */
 			/* fall through.. */
 		  Sbase2:	/* doesn't include *(...|...) pattern (*+?@!) */
 			switch (c) {
@@ -586,7 +581,6 @@ yylex(cf)
 		  case SWORD:	/* ONEWORD */
 			goto Subst;
 
-#ifdef KSH
 		  case SLETPAREN:	/* LETEXPR: (( ... )) */
 			/*(*/
 			if (c == ')') {
@@ -606,7 +600,6 @@ yylex(cf)
 				 */
 				++statep->ls_sletparen.nparen;
 			goto Sbase2;
-#endif /* KSH */
 
 		  case SHEREDELIM:	/* <<,<<- delimiter */
 			/* XXX chuck this state (and the next) - use
@@ -741,10 +734,8 @@ Done:
 				    (c == '|') ? LOGOR :
 				    (c == '&') ? LOGAND :
 				    YYERRCODE;
-#ifdef KSH
 			else if (c == '|' && c2 == '&')
 				c = COPROC;
-#endif /* KSH */
 			else
 				ungetsc(c2);
 			return c;
@@ -756,7 +747,6 @@ Done:
 			return c;
 
 		  case '(':  /*)*/
-#ifdef KSH
 			if (!Flag(FSH)) {
 				if ((c2 = getsc()) == '(') /*)*/
 					/* XXX need to handle ((...); (...)) */
@@ -764,7 +754,6 @@ Done:
 				else
 					ungetsc(c2);
 			}
-#endif /* KSH */
 			return c;
 		  /*(*/
 		  case ')':
@@ -774,11 +763,7 @@ Done:
 
 	*wp++ = EOS;		/* terminate word */
 	yylval.cp = Xclose(ws, wp);
-	if (state == SWORD
-#ifdef KSH
-		|| state == SLETPAREN
-#endif /* KSH */
-		)	/* ONEWORD? */
+	if (state == SWORD || state == SLETPAREN)	/* ONEWORD? */
 		return LWORD;
 	ungetsc(c);		/* unget terminator */
 
@@ -1056,12 +1041,10 @@ getsc_line(s)
 	*xp = '\0';
 	s->start = s->str = xp;
 
-#ifdef KSH
 	if (have_tty && ksh_tmout) {
 		ksh_tmout_state = TMOUT_READING;
 		alarm(ksh_tmout);
 	}
-#endif /* KSH */
 #ifdef EDIT
 	if (have_tty && (0
 # ifdef VI
@@ -1119,13 +1102,10 @@ getsc_line(s)
 	 * trap may have been executed.
 	 */
 	source = s;
-#ifdef KSH
-	if (have_tty && ksh_tmout)
-	{
+	if (have_tty && ksh_tmout) {
 		ksh_tmout_state = TMOUT_EXECUTING;
 		alarm(0);
 	}
-#endif /* KSH */
 	s->start = s->str = Xstring(s->xs, xp);
 	strip_nuls(Xstring(s->xs, xp), Xlength(s->xs, xp));
 	/* Note: if input is all nulls, this is not eof */
@@ -1154,42 +1134,35 @@ set_prompt(to, s)
 	int to;
 	Source *s;
 {
+	struct shf *shf;
+	char * volatile ps1;
+	Area *saved_atemp;
+
 	cur_prompt = to;
 
 	switch (to) {
 	case PS1: /* command */
-#ifdef KSH
-		{
-			struct shf *shf;
-			char * volatile ps1;
-			Area *saved_atemp;
-
-			ps1 = str_val(global("PS1"));
-			shf = shf_sopen((char *) 0, strlen(ps1) * 2,
-				SHF_WR | SHF_DYNAMIC, (struct shf *) 0);
-			while (*ps1)
-				shf_putchar(*ps1++, shf);
-			ps1 = shf_sclose(shf);
-			saved_atemp = ATEMP;
-			newenv(E_ERRH);
-			if (sigsetjmp(e->jbuf, 0)) {
-				prompt = safe_prompt;
-				/* Don't print an error - assume it has already
-				 * been printed.  Reason is we may have forked
-				 * to run a command and the child may be
-				 * unwinding its stack through this code as it
-				 * exits.
-				 */
-			} else
-				prompt = str_save(substitute(ps1, 0),
-						 saved_atemp);
-			quitenv();
-		}
-#else /* KSH */
-		prompt = str_val(global("PS1"));
-#endif /* KSH */
+		ps1 = str_val(global("PS1"));
+		shf = shf_sopen((char *) 0, strlen(ps1) * 2,
+			SHF_WR | SHF_DYNAMIC, (struct shf *) 0);
+		while (*ps1)
+			shf_putchar(*ps1++, shf);
+		ps1 = shf_sclose(shf);
+		saved_atemp = ATEMP;
+		newenv(E_ERRH);
+		if (sigsetjmp(e->jbuf, 0)) {
+			prompt = safe_prompt;
+			/* Don't print an error - assume it has already
+			 * been printed.  Reason is we may have forked
+			 * to run a command and the child may be
+			 * unwinding its stack through this code as it
+			 * exits.
+			 */
+		} else
+			prompt = str_save(substitute(ps1, 0),
+					 saved_atemp);
+		quitenv();
 		break;
-
 	case PS2: /* command continuation */
 		prompt = str_val(global("PS2"));
 		break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: syn.c,v 1.15 2004/12/18 20:55:52 millert Exp $	*/
+/*	$OpenBSD: syn.c,v 1.16 2004/12/18 21:04:52 millert Exp $	*/
 
 /*
  * shell parser (C version)
@@ -36,13 +36,11 @@ static void	nesting_push(struct nesting_state *save, int tok);
 static void	nesting_pop(struct nesting_state *saved);
 static int	assign_command(char *s);
 static int	inalias(struct source *s);
-#ifdef KSH
 static int	dbtestp_isa(Test_env *te, Test_meta meta);
 static const char *dbtestp_getopnd(Test_env *te, Test_op op, int do_eval);
 static int	dbtestp_eval(Test_env *te, Test_op op, const char *opnd1,
 				const char *opnd2, int do_eval);
 static void	dbtestp_error(Test_env *te, int offset, const char *msg);
-#endif /* KSH */
 
 static	struct	op	*outtree; /* yyparse output */
 
@@ -288,7 +286,6 @@ get_command(cf)
 		t = nested(TBRACE, '{', '}');
 		break;
 
-#ifdef KSH
 	  case MDPAREN:
 	  {
 		static const char let_cmd[] = { CHAR, 'l', CHAR, 'e',
@@ -302,9 +299,7 @@ get_command(cf)
 		XPput(args, yylval.cp);
 		break;
 	  }
-#endif /* KSH */
 
-#ifdef KSH
 	  case DBRACKET: /* [[ .. ]] */
 		/* Leave KEYWORD in syniocf (allow if [[ -n 1 ]] then ...) */
 		t = newtp(TDBRACKET);
@@ -322,7 +317,6 @@ get_command(cf)
 			test_parse(&te);
 		}
 		break;
-#endif /* KSH */
 
 	  case FOR:
 	  case SELECT:
@@ -649,9 +643,7 @@ const	struct tokeninfo {
 	{ "case",	CASE,	TRUE },
 	{ "esac",	ESAC,	TRUE },
 	{ "for",	FOR,	TRUE },
-#ifdef KSH
 	{ "select",	SELECT,	TRUE },
-#endif /* KSH */
 	{ "while",	WHILE,	TRUE },
 	{ "until",	UNTIL,	TRUE },
 	{ "do",		DO,	TRUE },
@@ -662,17 +654,13 @@ const	struct tokeninfo {
 	{ "{",		'{',	TRUE },
 	{ "}",		'}',	TRUE },
 	{ "!",		BANG,	TRUE },
-#ifdef KSH
 	{ "[[",		DBRACKET, TRUE },
-#endif /* KSH */
 	/* Lexical tokens (0[EOF], LWORD and REDIR handled specially) */
 	{ "&&",		LOGAND,	FALSE },
 	{ "||",		LOGOR,	FALSE },
 	{ ";;",		BREAK,	FALSE },
-#ifdef KSH
 	{ "((",		MDPAREN, FALSE },
 	{ "|&",		COPROC,	FALSE },
-#endif /* KSH */
 	/* and some special cases... */
 	{ "newline",	'\n',	FALSE },
 	{ 0 }
@@ -829,7 +817,6 @@ inalias(s)
 }
 
 
-#ifdef KSH
 /* Order important - indexed by Test_meta values
  * Note that ||, &&, ( and ) can't appear in as unquoted strings
  * in normal shell input, so these can be interpreted unambiguously
@@ -943,4 +930,3 @@ dbtestp_error(te, offset, msg)
 	}
 	syntaxerr(msg);
 }
-#endif /* KSH */

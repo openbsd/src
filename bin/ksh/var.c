@@ -1,4 +1,4 @@
-/*	$OpenBSD: var.c,v 1.18 2004/12/18 20:55:52 millert Exp $	*/
+/*	$OpenBSD: var.c,v 1.19 2004/12/18 21:04:52 millert Exp $	*/
 
 #include "sh.h"
 #include <time.h>
@@ -99,14 +99,12 @@ initvar()
 			{ "EDITOR",		V_EDITOR },
 			{ "VISUAL",		V_VISUAL },
 #endif /* EDIT */
-#ifdef KSH
 			{ "MAIL",		V_MAIL },
 			{ "MAILCHECK",		V_MAILCHECK },
 			{ "MAILPATH",		V_MAILPATH },
 			{ "RANDOM",		V_RANDOM },
 			{ "SECONDS",		V_SECONDS },
 			{ "TMOUT",		V_TMOUT },
-#endif /* KSH */
 			{ "LINENO",		V_LINENO },
 			{ (char *) 0,	0 }
 		};
@@ -927,9 +925,7 @@ unspecial(name)
 		tdelete(tp);
 }
 
-#ifdef KSH
 static	time_t	seconds;		/* time SECONDS last set */
-#endif /* KSH */
 static	int	user_lineno;		/* what user set $LINENO to */
 
 static void
@@ -937,7 +933,6 @@ getspec(vp)
 	register struct tbl *vp;
 {
 	switch (special(vp->name)) {
-#ifdef KSH
 	  case V_SECONDS:
 		vp->flag &= ~SPECIAL;
 		/* On start up the value of SECONDS is used before seconds
@@ -956,7 +951,6 @@ getspec(vp)
 			setint(vp, (long) (arc4random() & 0x7fff));
 		vp->flag |= SPECIAL;
 		break;
-#endif /* KSH */
 #ifdef HISTORY
 	  case V_HISTSIZE:
 		vp->flag &= ~SPECIAL;
@@ -1041,7 +1035,6 @@ setspec(vp)
 			x_cols = MIN_COLS;
 		break;
 #endif /* EDIT */
-#ifdef KSH
 	  case V_MAIL:
 		mbset(str_val(vp));
 		break;
@@ -1069,7 +1062,6 @@ setspec(vp)
 		if (vp->flag & INTEGER)
 			ksh_tmout = vp->val.i >= 0 ? vp->val.i : 0;
 		break;
-#endif /* KSH */
 	  case V_LINENO:
 		vp->flag &= ~SPECIAL;
 		/* The -1 is because line numbering starts at 1. */
@@ -1101,22 +1093,17 @@ unsetspec(vp)
 			tmpdir = (char *) 0;
 		}
 		break;
-#ifdef KSH
 	  case V_MAIL:
 		mbset((char *) 0);
 		break;
 	  case V_MAILPATH:
 		mpset((char *) 0);
 		break;
-#endif /* KSH */
-
 	  case V_LINENO:
-#ifdef KSH
 	  case V_MAILCHECK:	/* at&t ksh leaves previous value in place */
 	  case V_RANDOM:
 	  case V_SECONDS:
 	  case V_TMOUT:		/* at&t ksh leaves previous value in place */
-#endif /* KSH */
 		unspecial(vp->name);
 		break;
 

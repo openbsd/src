@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.14 2004/12/18 20:55:52 millert Exp $	*/
+/*	$OpenBSD: trap.c,v 1.15 2004/12/18 21:04:52 millert Exp $	*/
 
 /*
  * signal handling
@@ -48,7 +48,6 @@ inittraps()
 	setsig(&sigtraps[SIGHUP], trapsig, SS_RESTORE_ORIG);
 }
 
-#ifdef KSH
 static void alarm_catcher(int sig);
 
 void
@@ -76,7 +75,6 @@ alarm_catcher(sig)
 	}
 	errno = errno_;
 }
-#endif /* KSH */
 
 Trap *
 gettrap(name, igncase)
@@ -189,7 +187,6 @@ runtraps(flag)
 	int i;
 	register Trap *p;
 
-#ifdef KSH
 	if (ksh_tmout_state == TMOUT_LEAVING) {
 		ksh_tmout_state = TMOUT_EXECUTING;
 		warningf(FALSE, "timed out waiting for input");
@@ -199,7 +196,6 @@ runtraps(flag)
 		 * is caught after the alarm() was started...not good.
 		 */
 		ksh_tmout_state = TMOUT_EXECUTING;
-#endif /* KSH */
 	if (!flag)
 		trap = 0;
 	if (flag & TF_DFL_INTR)

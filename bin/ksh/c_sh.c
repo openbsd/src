@@ -1,4 +1,4 @@
-/*	$OpenBSD: c_sh.c,v 1.18 2004/12/18 20:55:52 millert Exp $	*/
+/*	$OpenBSD: c_sh.c,v 1.19 2004/12/18 21:04:52 millert Exp $	*/
 
 /*
  * built-in Bourne commands
@@ -252,14 +252,12 @@ c_read(wp)
 
 	while ((optc = ksh_getopt(wp, &builtin_opt, "prsu,")) != EOF)
 		switch (optc) {
-#ifdef KSH
 		  case 'p':
 			if ((fd = coproc_getfd(R_OK, &emsg)) < 0) {
 				bi_errorf("-p: %s", emsg);
 				return 1;
 			}
 			break;
-#endif /* KSH */
 		  case 'r':
 			expand = 0;
 			break;
@@ -299,7 +297,6 @@ c_read(wp)
 		}
 	}
 
-#ifdef KSH
 	/* If we are reading from the co-process for the first time,
 	 * make sure the other side of the pipe is closed first.  This allows
 	 * the detection of eof.
@@ -310,7 +307,6 @@ c_read(wp)
 	 * If this call is removed, remove the eof check below, too.
 	 * coproc_readw_close(fd);
 	 */
-#endif /* KSH */
 
 	if (history)
 		Xinit(xs, xp, 128, ATEMP);
@@ -403,14 +399,12 @@ c_read(wp)
 		histsave(source->line, Xstring(xs, xp), 1);
 		Xfree(xs, xp);
 	}
-#ifdef KSH
 	/* if this is the co-process fd, close the file descriptor
 	 * (can get eof if and only if all processes are have died, ie,
 	 * coproc.njobs is 0 and the pipe is closed).
 	 */
 	if (c == EOF && !ecode)
 		coproc_read_close(fd);
-#endif /* KSH */
 
 	return ecode ? ecode : c == EOF;
 }
@@ -840,10 +834,8 @@ c_exec(wp)
 			 * happens is unspecified and the bourne shell
 			 * keeps them open).
 			 */
-#ifdef KSH
 			if (!Flag(FSH) && i > 2 && e->savefd[i])
 				fd_clexec(i);
-#endif /* KSH */
 		}
 		e->savefd = NULL;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.29 2004/12/18 20:55:52 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.30 2004/12/18 21:04:52 millert Exp $	*/
 
 /*
  * startup, main loop, environments and error handling
@@ -27,22 +27,14 @@ static const char initifs[] = "IFS= \t\n";
 
 static const char initsubs[] = "${PS2=> } ${PS3=#? } ${PS4=+ }";
 
-static const char version_param[] =
-#ifdef KSH
-	"KSH_VERSION"
-#else /* KSH */
-	"SH_VERSION"
-#endif /* KSH */
-	;
+static const char version_param[] = "KSH_VERSION";
 
 static const char *const initcoms [] = {
 	"typeset", "-x", "SHELL", "PATH", "HOME", NULL,
 	"typeset", "-r", version_param, NULL,
 	"typeset", "-i", "PPID", NULL,
 	"typeset", "-i", "OPTIND=1", NULL,
-#ifdef KSH
 	"eval", "typeset -i RANDOM MAILCHECK=\"${MAILCHECK-600}\" SECONDS=\"${SECONDS-0}\" TMOUT=\"${TMOUT-0}\"", NULL,
-#endif /* KSH */
 	"alias",
 	 /* Standard ksh aliases */
 	  "hash=alias -t",	/* not "alias -t --": hash -r needs to work */
@@ -51,21 +43,17 @@ static const char *const initcoms [] = {
 	  "stop=kill -STOP",
 	  "suspend=kill -STOP $$",
 #endif
-#ifdef KSH
 	  "autoload=typeset -fu",
 	  "functions=typeset -f",
-# ifdef HISTORY
+#ifdef HISTORY
 	  "history=fc -l",
-# endif /* HISTORY */
+#endif /* HISTORY */
 	  "integer=typeset -i",
 	  "nohup=nohup ",
 	  "local=typeset",
 	  "r=fc -e -",
-#endif /* KSH */
-#ifdef KSH
 	 /* Aliases that are builtin commands in at&t */
 	  "login=exec login",
-#endif /* KSH */
 	  NULL,
 	/* this is what at&t ksh seems to track, with the addition of emacs */
 	"alias", "-tU",
@@ -116,9 +104,7 @@ main(int argc, char *argv[])
 
 	inittraps();
 
-#ifdef KSH
 	coproc_init();
-#endif /* KSH */
 
 	/* set up variable and command dictionaries */
 	tinit(&taliases, APERM, 0);
@@ -348,11 +334,6 @@ main(int argc, char *argv[])
 	else {
 		char *env_file;
 
-#ifndef KSH
-		if (!Flag(FPOSIX))
-			env_file = null;
-		else
-#endif /* !KSH */
 			/* include $ENV */
 			env_file = str_val(global("ENV"));
 
@@ -383,9 +364,7 @@ main(int argc, char *argv[])
 
 	if (Flag(FTALKING)) {
 		hist_init(s);
-#ifdef KSH
 		alarm_init();
-#endif /* KSH */
 	} else
 		Flag(FTRACKALL) = 1;	/* set after ENV */
 
@@ -548,9 +527,7 @@ shell(s, toplevel)
 
 		if (interactive) {
 			j_notify();
-#ifdef KSH
 			mcheck();
-#endif /* KSH */
 			set_prompt(PS1, s);
 		}
 

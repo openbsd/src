@@ -1,4 +1,4 @@
-/*	$OpenBSD: c_test.c,v 1.11 2004/12/18 20:55:52 millert Exp $	*/
+/*	$OpenBSD: c_test.c,v 1.12 2004/12/18 21:04:52 millert Exp $	*/
 
 /*
  * test(1); version 7-like  --  author Erik Baalbergen
@@ -69,9 +69,7 @@ static const struct t_op u_ops [] = {
     };
 static const struct t_op b_ops [] = {
 	{"=",	TO_STEQL },
-#ifdef KSH
 	{"==",	TO_STEQL },
-#endif /* KSH */
 	{"!=",	TO_STNEQ },
 	{"<",	TO_STLT },
 	{">",	TO_STGT },

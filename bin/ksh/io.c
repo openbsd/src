@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.14 2004/12/18 20:55:52 millert Exp $	*/
+/*	$OpenBSD: io.c,v 1.15 2004/12/18 21:04:52 millert Exp $	*/
 
 /*
  * shell buffered IO and formatted output
@@ -329,17 +329,13 @@ check_fd(name, mode, emsgp)
 			return -1;
 		}
 		return fd;
-	}
-#ifdef KSH
-	else if (name[0] == 'p' && !name[1])
+	} else if (name[0] == 'p' && !name[1])
 		return coproc_getfd(mode, emsgp);
-#endif /* KSH */
 	if (emsgp)
 		*emsgp = "illegal file descriptor name";
 	return -1;
 }
 
-#ifdef KSH
 /* Called once from main */
 void
 coproc_init()
@@ -427,7 +423,6 @@ coproc_cleanup(reuse)
 		coproc.write = -1;
 	}
 }
-#endif /* KSH */
 
 
 /*

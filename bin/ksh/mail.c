@@ -1,4 +1,4 @@
-/*	$OpenBSD: mail.c,v 1.10 2004/12/18 20:55:52 millert Exp $	*/
+/*	$OpenBSD: mail.c,v 1.11 2004/12/18 21:04:52 millert Exp $	*/
 
 /*
  * Mailbox checking code by Robert J. Gibson, adapted for PD ksh by
@@ -7,7 +7,6 @@
 
 #include "config.h"
 
-#ifdef KSH
 #include "sh.h"
 #include <sys/stat.h>
 #include <time.h>
@@ -202,4 +201,3 @@ mbox_t	*mbp;
 
 	unset(vp, 0);
 }
-#endif /* KSH */

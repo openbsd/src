@@ -1,4 +1,4 @@
-/*	$OpenBSD: sh.h,v 1.20 2004/12/18 20:55:52 millert Exp $	*/
+/*	$OpenBSD: sh.h,v 1.21 2004/12/18 21:04:52 millert Exp $	*/
 
 /*
  * Public Domain Bourne/Korn shell
@@ -299,7 +299,6 @@ EXTERN	int volatile intrsig;	/* pending trap interrupts executing command */
 EXTERN	int volatile fatal_trap;/* received a fatal signal */
 extern	Trap	sigtraps[NSIG+1];
 
-#ifdef KSH
 /*
  * TMOUT support
  */
@@ -311,7 +310,6 @@ enum tmout_enum {
 	};
 EXTERN unsigned int ksh_tmout;
 EXTERN enum tmout_enum ksh_tmout_state I__(TMOUT_EXECUTING);
-#endif /* KSH */
 
 /* For "You have stopped jobs" message */
 EXTERN int really_exit;
@@ -363,7 +361,6 @@ typedef struct {
 EXTERN Getopt builtin_opt;	/* for shell builtin commands */
 EXTERN Getopt user_opt;		/* parsing state for getopts builtin command */
 
-#ifdef KSH
 /* This for co-processes */
 
 typedef INT32 Coproc_id; /* something that won't (realisticly) wrap */
@@ -376,7 +373,6 @@ struct coproc {
 	void    *job;           /* 0 or job of co-process using input pipe */
 };
 EXTERN struct coproc coproc;
-#endif /* KSH */
 
 /* Used in jobs.c and by coprocess stuff in exec.c */
 EXTERN sigset_t		sm_default, sm_sigchld;
