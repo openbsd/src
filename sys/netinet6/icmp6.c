@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.80 2004/02/04 13:14:42 dhartmei Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.81 2004/02/15 11:16:08 markus Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -2838,6 +2838,9 @@ icmp6_redirect_timeout(rt, r)
 
 #include <uvm/uvm_extern.h>
 #include <sys/sysctl.h>
+
+int *icmpv6ctl_vars[ICMPV6CTL_MAXID] = ICMPV6CTL_VARS;
+
 int
 icmp6_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	int *name;
@@ -2854,45 +2857,16 @@ icmp6_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 
 	switch (name[0]) {
 
-	case ICMPV6CTL_REDIRACCEPT:
-		return sysctl_int(oldp, oldlenp, newp, newlen,
-				&icmp6_rediraccept);
-	case ICMPV6CTL_REDIRTIMEOUT:
-		return sysctl_int(oldp, oldlenp, newp, newlen,
-				&icmp6_redirtimeout);
 	case ICMPV6CTL_STATS:
 		return sysctl_rdstruct(oldp, oldlenp, newp,
 				&icmp6stat, sizeof(icmp6stat));
-	case ICMPV6CTL_ND6_PRUNE:
-		return sysctl_int(oldp, oldlenp, newp, newlen, &nd6_prune);
-	case ICMPV6CTL_ND6_DELAY:
-		return sysctl_int(oldp, oldlenp, newp, newlen, &nd6_delay);
-	case ICMPV6CTL_ND6_UMAXTRIES:
-		return sysctl_int(oldp, oldlenp, newp, newlen, &nd6_umaxtries);
-	case ICMPV6CTL_ND6_MMAXTRIES:
-		return sysctl_int(oldp, oldlenp, newp, newlen, &nd6_mmaxtries);
-	case ICMPV6CTL_ND6_USELOOPBACK:
-		return sysctl_int(oldp, oldlenp, newp, newlen,
-				&nd6_useloopback);
-	case ICMPV6CTL_NODEINFO:
-		return sysctl_int(oldp, oldlenp, newp, newlen, &icmp6_nodeinfo);
-	case ICMPV6CTL_ERRPPSLIMIT:
-		return sysctl_int(oldp, oldlenp, newp, newlen, &icmp6errppslim);
-	case ICMPV6CTL_ND6_MAXNUDHINT:
-		return sysctl_int(oldp, oldlenp, newp, newlen,
-				&nd6_maxnudhint);
-	case ICMPV6CTL_MTUDISC_HIWAT:
-		return sysctl_int(oldp, oldlenp, newp, newlen,
-				&icmp6_mtudisc_hiwat);
-	case ICMPV6CTL_MTUDISC_LOWAT:
-		return sysctl_int(oldp, oldlenp, newp, newlen,
-				&icmp6_mtudisc_lowat);
-	case ICMPV6CTL_ND6_DEBUG:
-		return sysctl_int(oldp, oldlenp, newp, newlen, &nd6_debug);
 	case ICMPV6CTL_ND6_DRLIST:
 	case ICMPV6CTL_ND6_PRLIST:
 		return nd6_sysctl(name[0], oldp, oldlenp, newp, newlen);
 	default:
+		if (name[0] < ICMPV6CTL_MAXID)
+			return (sysctl_int_arr(icmpv6ctl_vars, name, namelen,
+			    oldp, oldlenp, newp, newlen));
 		return ENOPROTOOPT;
 	}
 	/* NOTREACHED */

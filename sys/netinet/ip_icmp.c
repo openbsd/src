@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.61 2003/07/09 22:03:16 itojun Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.62 2004/02/15 11:16:08 markus Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -105,6 +105,8 @@ int	icmp_rediraccept = 1;
 int	icmp_redirtimeout = 10 * 60;
 static struct rttimer_queue *icmp_redirect_timeout_q = NULL;
 struct	icmpstat icmpstat;
+
+int *icmpctl_vars[ICMPCTL_MAXID] = ICMPCTL_VARS;
 
 void icmp_mtudisc_timeout(struct rtentry *, struct rttimer *);
 int icmp_ratelimit(const struct in_addr *, const int, const int);
@@ -801,23 +803,6 @@ icmp_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		return (ENOTDIR);
 
 	switch (name[0]) {
-	case ICMPCTL_TSTAMPREPL:
-		return (sysctl_int(oldp, oldlenp, newp, newlen,
-		    &icmptstamprepl));
-	case ICMPCTL_MASKREPL:
-		return (sysctl_int(oldp, oldlenp, newp, newlen,
-		    &icmpmaskrepl));
-	case ICMPCTL_BMCASTECHO:
-		return (sysctl_int(oldp, oldlenp, newp, newlen,
-		    &icmpbmcastecho));
-	case ICMPCTL_ERRPPSLIMIT:
-		return (sysctl_int(oldp, oldlenp, newp, newlen,
-		    &icmperrppslim));
-		break;
-	case ICMPCTL_REDIRACCEPT:
-		return (sysctl_int(oldp, oldlenp, newp, newlen,
-		    &icmp_rediraccept));
-		break;
 	case ICMPCTL_REDIRTIMEOUT: {
 		int error;
 
@@ -840,6 +825,9 @@ icmp_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		break;
 	}
 	default:
+		if (name[0] < ICMPCTL_MAXID)
+			return (sysctl_int_arr(icmpctl_vars, name, namelen,
+			    oldp, oldlenp, newp, newlen));
 		return (ENOPROTOOPT);
 	}
 	/* NOTREACHED */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.56 2003/12/08 10:05:31 dhartmei Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.57 2004/02/15 11:16:08 markus Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -1342,6 +1342,8 @@ u_char	inet6ctlerrmap[PRC_NCMDS] = {
 #include <uvm/uvm_extern.h>
 #include <sys/sysctl.h>
 
+int *ipv6ctl_vars[IPV6CTL_MAXID] = IPV6CTL_VARS;
+
 int
 ip6_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	int *name;
@@ -1356,50 +1358,15 @@ ip6_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 		return ENOTDIR;
 
 	switch (name[0]) {
-
-	case IPV6CTL_FORWARDING:
-		return sysctl_int(oldp, oldlenp, newp, newlen,
-				  &ip6_forwarding);
-	case IPV6CTL_SENDREDIRECTS:
-		return sysctl_int(oldp, oldlenp, newp, newlen,
-				&ip6_sendredirects);
-	case IPV6CTL_DEFHLIM:
-		return sysctl_int(oldp, oldlenp, newp, newlen, &ip6_defhlim);
-	case IPV6CTL_MAXFRAGPACKETS:
-		return sysctl_int(oldp, oldlenp, newp, newlen,
-				&ip6_maxfragpackets);
-	case IPV6CTL_ACCEPT_RTADV:
-		return sysctl_int(oldp, oldlenp, newp, newlen,
-				&ip6_accept_rtadv);
-	case IPV6CTL_KEEPFAITH:
-		return sysctl_int(oldp, oldlenp, newp, newlen, &ip6_keepfaith);
-	case IPV6CTL_LOG_INTERVAL:
-		return sysctl_int(oldp, oldlenp, newp, newlen,
-				&ip6_log_interval);
-	case IPV6CTL_HDRNESTLIMIT:
-		return sysctl_int(oldp, oldlenp, newp, newlen,
-				&ip6_hdrnestlimit);
-	case IPV6CTL_DAD_COUNT:
-		return sysctl_int(oldp, oldlenp, newp, newlen, &ip6_dad_count);
-	case IPV6CTL_AUTO_FLOWLABEL:
-		return sysctl_int(oldp, oldlenp, newp, newlen,
-				&ip6_auto_flowlabel);
-	case IPV6CTL_DEFMCASTHLIM:
-		return sysctl_int(oldp, oldlenp, newp, newlen,
-				&ip6_defmcasthlim);
 	case IPV6CTL_KAME_VERSION:
 		return sysctl_rdstring(oldp, oldlenp, newp, __KAME_VERSION);
-	case IPV6CTL_USE_DEPRECATED:
-		return sysctl_int(oldp, oldlenp, newp, newlen,
-				&ip6_use_deprecated);
-	case IPV6CTL_RR_PRUNE:
-		return sysctl_int(oldp, oldlenp, newp, newlen, &ip6_rr_prune);
 	case IPV6CTL_V6ONLY:
 		return sysctl_rdint(oldp, oldlenp, newp, ip6_v6only);
-	case IPV6CTL_MAXFRAGS:
-		return sysctl_int(oldp, oldlenp, newp, newlen, &ip6_maxfrags);
 	default:
-		return EOPNOTSUPP;
+		if (name[0] < IPV6CTL_MAXID)
+			return (sysctl_int_arr(ipv6ctl_vars, name, namelen,
+			    oldp, oldlenp, newp, newlen));
+		return (EOPNOTSUPP);
 	}
 	/* NOTREACHED */
 }

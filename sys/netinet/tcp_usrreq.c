@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.79 2004/01/31 21:09:15 henning Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.80 2004/02/15 11:16:08 markus Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -106,6 +106,17 @@ extern int tcp_rst_ppslim;
 
 /* from in_pcb.c */
 extern	struct baddynamicports baddynamicports;
+
+#ifndef TCP_SENDSPACE
+#define	TCP_SENDSPACE	1024*16
+#endif
+u_int	tcp_sendspace = TCP_SENDSPACE;
+#ifndef TCP_RECVSPACE
+#define	TCP_RECVSPACE	1024*16
+#endif
+u_int	tcp_recvspace = TCP_RECVSPACE;
+
+int *tcpctl_vars[TCPCTL_MAXID] = TCPCTL_VARS;
 
 struct	inpcbtable tcbtable;
 
@@ -645,15 +656,6 @@ tcp_ctloutput(op, so, level, optname, mp)
 	return (error);
 }
 
-#ifndef TCP_SENDSPACE
-#define	TCP_SENDSPACE	1024*16
-#endif
-u_int	tcp_sendspace = TCP_SENDSPACE;
-#ifndef TCP_RECVSPACE
-#define	TCP_RECVSPACE	1024*16
-#endif
-u_int	tcp_recvspace = TCP_RECVSPACE;
-
 /*
  * Attach TCP protocol to socket, allocating
  * internet protocol control block, tcp control block,
@@ -882,29 +884,11 @@ tcp_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 		return (ENOTDIR);
 
 	switch (name[0]) {
-	case TCPCTL_RFC1323:
-		return (sysctl_int(oldp, oldlenp, newp, newlen,
-		    &tcp_do_rfc1323));
 #ifdef TCP_SACK
 	case TCPCTL_SACK:
 		return (sysctl_int(oldp, oldlenp, newp, newlen,
 		    &tcp_do_sack));
 #endif
-	case TCPCTL_MSSDFLT:
-		return (sysctl_int(oldp, oldlenp, newp, newlen,
-		    &tcp_mssdflt));
-	case TCPCTL_KEEPINITTIME:
-		return (sysctl_int(oldp, oldlenp, newp, newlen,
-		    &tcptv_keep_init));
-
-	case TCPCTL_KEEPIDLE:
-		return (sysctl_int(oldp, oldlenp, newp, newlen,
-		    &tcp_keepidle));
-
-	case TCPCTL_KEEPINTVL:
-		return (sysctl_int(oldp, oldlenp, newp, newlen,
-		    &tcp_keepintvl));
-
 	case TCPCTL_SLOWHZ:
 		return (sysctl_rdint(oldp, oldlenp, newp, PR_SLOWHZ));
 
@@ -912,34 +896,17 @@ tcp_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 		return (sysctl_struct(oldp, oldlenp, newp, newlen,
 		    baddynamicports.tcp, sizeof(baddynamicports.tcp)));
 
-	case TCPCTL_RECVSPACE:
-		return (sysctl_int(oldp, oldlenp, newp, newlen,&tcp_recvspace));
-
-	case TCPCTL_SENDSPACE:
-		return (sysctl_int(oldp, oldlenp, newp, newlen,&tcp_sendspace));
 	case TCPCTL_IDENT:
 		return (tcp_ident(oldp, oldlenp, newp, newlen));
-	case TCPCTL_RSTPPSLIMIT:
-		return (sysctl_int(oldp, oldlenp, newp, newlen,
-		    &tcp_rst_ppslim));
-	case TCPCTL_ACK_ON_PUSH:
-		return (sysctl_int(oldp, oldlenp, newp, newlen,
-		    &tcp_ack_on_push));
 #ifdef TCP_ECN
 	case TCPCTL_ECN:
 		return (sysctl_int(oldp, oldlenp, newp, newlen,
 		   &tcp_do_ecn));
 #endif
-	case TCPCTL_SYN_CACHE_LIMIT:
-		return (sysctl_int(oldp, oldlenp, newp, newlen,
-		   &tcp_syn_cache_limit));
-	case TCPCTL_SYN_BUCKET_LIMIT:
-		return (sysctl_int(oldp, oldlenp, newp, newlen,
-		   &tcp_syn_bucket_limit));
-	case TCPCTL_RFC3390:
-		return (sysctl_int(oldp, oldlenp, newp, newlen,
-		    &tcp_do_rfc3390));
 	default:
+		if (name[0] < TCPCTL_MAXID)
+			return (sysctl_int_arr(tcpctl_vars, name, namelen,
+			    oldp, oldlenp, newp, newlen));
 		return (ENOPROTOOPT);
 	}
 	/* NOTREACHED */
