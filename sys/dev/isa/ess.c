@@ -1,4 +1,4 @@
-/*	$OpenBSD: ess.c,v 1.7 2002/03/14 01:26:56 millert Exp $	*/
+/*	$OpenBSD: ess.c,v 1.8 2002/03/14 03:16:05 millert Exp $	*/
 /*	$NetBSD: ess.c,v 1.44.4.1 1999/06/21 01:18:00 thorpej Exp $	*/
 
 /*
@@ -128,12 +128,12 @@ int	ess_set_params(void *, int, int, struct audio_params *,
 
 int	ess_round_blocksize(void *, int);
 
-int	ess_audio1_trigger_output __P((void *, void *, void *, int,
-	    void (*)(void *), void *, struct audio_params *));
-int	ess_audio2_trigger_output __P((void *, void *, void *, int,
-	    void (*)(void *), void *, struct audio_params *));
-int	ess_audio1_trigger_input __P((void *, void *, void *, int,
-	    void (*)(void *), void *, struct audio_params *));
+int	ess_audio1_trigger_output(void *, void *, void *, int,
+	    void (*)(void *), void *, struct audio_params *);
+int	ess_audio2_trigger_output(void *, void *, void *, int,
+	    void (*)(void *), void *, struct audio_params *);
+int	ess_audio1_trigger_input(void *, void *, void *, int,
+	    void (*)(void *), void *, struct audio_params *);
 int	ess_audio1_halt(void *);
 int	ess_audio2_halt(void *);
 int	ess_audio1_intr(void *);

@@ -1,4 +1,4 @@
-/* $OpenBSD: bootxx.c,v 1.3 2002/03/14 01:26:47 millert Exp $ */
+/* $OpenBSD: bootxx.c,v 1.4 2002/03/14 03:16:02 millert Exp $ */
 /* $NetBSD: bootxx.c,v 1.2 1999/10/23 14:40:38 ragge Exp $ */
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -118,11 +118,11 @@ Xmain()
 		/*
 		 * now relocate rpb/bqo (which are used by ROM-routines)
 		 */
-		rpb = (void*)XXRPB;
-		bcopy ((void*)bootregs[11], rpb, 512);
+		rpb = (void *)XXRPB;
+		bcopy ((void *)bootregs[11], rpb, 512);
 		rpb->rpb_base = rpb;
-		bqo = (void*)(512+(int)rpb);
-		bcopy ((void*)rpb->iovec, bqo, rpb->iovecsz);
+		bqo = (void *)(512+(int)rpb);
+		bcopy ((void *)rpb->iovec, bqo, rpb->iovecsz);
 		rpb->iovec = (int)bqo;
 		bootregs[11] = (int)rpb;
 		bootdev = rpb->devtyp;
@@ -431,7 +431,7 @@ hpread(block, size, buf)
 	char           *buf;
 {
 	volatile struct mba_regs *mr = (void *) bootregs[1];
-	volatile struct hp_drv *hd = (void*)&mr->mba_md[bootregs[3]];
+	volatile struct hp_drv *hd = (void *)&mr->mba_md[bootregs[3]];
 	struct disklabel *dp = &lp;
 	u_int           pfnum, nsize, mapnr, bn, cn, sn, tn;
 
@@ -457,7 +457,7 @@ hpread(block, size, buf)
 }
 
 extern char end[];
-static char *top = (char*)end;
+static char *top = (char *)end;
 
 void *
 alloc(size)

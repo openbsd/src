@@ -1,4 +1,4 @@
-/* $OpenBSD: vga.c,v 1.28 2002/03/14 01:26:55 millert Exp $ */
+/* $OpenBSD: vga.c,v 1.29 2002/03/14 03:16:05 millert Exp $ */
 /* $NetBSD: vga.c,v 1.28.2.1 2000/06/30 16:27:47 simonb Exp $ */
 
 /*
@@ -91,16 +91,16 @@ int vgaconsole, vga_console_type, vga_console_attached;
 struct vgascreen vga_console_screen;
 struct vga_config vga_console_vc;
 
-int vga_selectfont(struct vga_config *, struct vgascreen *,
+int	vga_selectfont(struct vga_config *, struct vgascreen *,
     const char *, const char *);
 void	vga_init_screen(struct vga_config *, struct vgascreen *,
     const struct wsscreen_descr *, int, long *);
 void	vga_init(struct vga_config *, bus_space_tag_t, bus_space_tag_t);
-void vga_setfont(struct vga_config *, struct vgascreen *);
+void	vga_setfont(struct vga_config *, struct vgascreen *);
 
-int vga_mapchar(void *, int, unsigned int *);
-void vga_putchar(void *, int, int, u_int, long);
-int vga_alloc_attr(void *, int, int, int, long *);
+int	vga_mapchar(void *, int, unsigned int *);
+void	vga_putchar(void *, int, int, u_int, long);
+int	vga_alloc_attr(void *, int, int, int, long *);
 void	vga_copyrows(void *, int, int, int);
 
 static const struct wsdisplay_emulops vga_emulops = {
@@ -215,10 +215,10 @@ const struct wsscreen_list vga_screenlist = {
 int	vga_ioctl(void *, u_long, caddr_t, int, struct proc *);
 paddr_t	vga_mmap(void *, off_t, int);
 int	vga_alloc_screen(void *, const struct wsscreen_descr *,
-			      void **, int *, int *, long *);
+			 void **, int *, int *, long *);
 void	vga_free_screen(void *, void *);
-int	vga_show_screen __P((void *, void *, int,
-			     void (*) (void *, int, int), void *));
+int	vga_show_screen(void *, void *, int,
+			void (*) (void *, int, int), void *);
 int	vga_load_font(void *, void *, struct wsdisplay_font *);
 void	vga_scrollback(void *, void *, int);
 void	vga_burner(void *v, u_int on, u_int flags);

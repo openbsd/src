@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.80 2002/03/14 01:26:59 millert Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.81 2002/03/14 03:16:06 millert Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -244,9 +244,9 @@ int  acard_pci_intr(void *);
  
 void pciide_channel_dma_setup(struct pciide_channel *);
 int  pciide_dma_table_setup(struct pciide_softc*, int, int);
-int  pciide_dma_init(void*, int, int, void *, size_t, int);
-void pciide_dma_start(void*, int, int);
-int  pciide_dma_finish(void*, int, int);
+int  pciide_dma_init(void *, int, int, void *, size_t, int);
+void pciide_dma_start(void *, int, int);
+int  pciide_dma_finish(void *, int, int);
 void pciide_irqack(struct channel_softc *);
 void pciide_print_modes(struct pciide_channel *);
 void pciide_print_channels(int, pcireg_t);;
@@ -501,15 +501,15 @@ struct        cfdriver pciide_cd = {
 int	pciide_chipen(struct pciide_softc *, struct pci_attach_args *);
 int	pciide_mapregs_compat( struct pci_attach_args *,
 	    struct pciide_channel *, int, bus_size_t *, bus_size_t*);
-int	pciide_mapregs_native __P((struct pci_attach_args *, 
+int	pciide_mapregs_native(struct pci_attach_args *, 
 	    struct pciide_channel *, bus_size_t *, bus_size_t *,
-	    int (*pci_intr)(void *)));
+	    int (*pci_intr)(void *));
 void	pciide_mapreg_dma(struct pciide_softc *,
 	    struct pci_attach_args *);
 int	pciide_chansetup(struct pciide_softc *, int, pcireg_t);
-void	pciide_mapchan __P((struct pci_attach_args *,
+void	pciide_mapchan(struct pci_attach_args *,
 	    struct pciide_channel *, pcireg_t, bus_size_t *, bus_size_t *,
-	    int (*pci_intr)(void *)));
+	    int (*pci_intr)(void *));
 int	pciide_chan_candisable(struct pciide_channel *);
 void	pciide_map_compat_intr( struct pci_attach_args *,
 	    struct pciide_channel *, int, int);

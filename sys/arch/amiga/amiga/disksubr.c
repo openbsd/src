@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.21 2002/03/14 01:26:28 millert Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.22 2002/03/14 03:15:51 millert Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.27 1996/10/13 03:06:34 christos Exp $	*/
 
 /*
@@ -71,8 +71,8 @@ struct rdbmap {
 
 u_long rdbchksum(void *);
 struct adostype getadostype(u_long);
-struct rdbmap *getrdbmap __P((dev_t, void (*)(struct buf *),
-    struct disklabel *, struct cpu_disklabel *));
+struct rdbmap *getrdbmap(dev_t, void (*)(struct buf *),
+    struct disklabel *, struct cpu_disklabel *);
 
 /* XXX unknown function but needed for /sys/scsi to link */
 void

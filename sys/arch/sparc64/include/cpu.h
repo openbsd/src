@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.8 2002/03/14 01:26:45 millert Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.9 2002/03/14 03:16:00 millert Exp $	*/
 /*	$NetBSD: cpu.h,v 1.28 2001/06/14 22:56:58 thorpej Exp $ */
 
 /*
@@ -299,7 +299,7 @@ void	amd7930_trap(void);
 /* cons.c */
 int	cnrom(void);
 /* zs.c */
-void zsconsole __P((struct tty *, int, int, void (**)(struct tty *, int)));
+void zsconsole(struct tty *, int, int, void (**)(struct tty *, int));
 #ifdef KGDB
 void zs_kgdb_init(void);
 #endif
@@ -307,7 +307,7 @@ void zs_kgdb_init(void);
 void	fb_unblank(void);
 /* kgdb_stub.c */
 #ifdef KGDB
-void kgdb_attach __P((int (*)(void *), void (*)(void *, int), void *));
+void kgdb_attach(int (*)(void *), void (*)(void *, int), void *);
 void kgdb_connect(int);
 void kgdb_panic(void);
 #endif

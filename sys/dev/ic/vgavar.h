@@ -1,4 +1,4 @@
-/* $OpenBSD: vgavar.h,v 1.6 2002/03/14 01:26:55 millert Exp $ */
+/* $OpenBSD: vgavar.h,v 1.7 2002/03/14 03:16:05 millert Exp $ */
 /* $NetBSD: vgavar.h,v 1.4 2000/06/17 07:11:50 soda Exp $ */
 
 /*
@@ -164,11 +164,11 @@ static inline void _vga_gdc_write(vh, reg, val)
 
 int	vga_common_probe(bus_space_tag_t, bus_space_tag_t);
 void	vga_common_attach(struct device *, bus_space_tag_t,
-			       bus_space_tag_t, int);
+			  bus_space_tag_t, int);
 #ifdef arc
-void	vga_extended_attach __P((struct device *, bus_space_tag_t,
-				 bus_space_tag_t, int,
-				 int (*)(void *, off_t, int)));
+void	vga_extended_attach(struct device *, bus_space_tag_t,
+			    bus_space_tag_t, int,
+			    int (*)(void *, off_t, int));
 #endif
 int	vga_is_console(bus_space_tag_t, int);
 
@@ -178,7 +178,7 @@ struct wsscreen_descr;
 void vga_loadchars(struct vga_handle *, int, int, int, int, char *);
 void vga_setfontset(struct vga_handle *, int, int);
 void vga_setscreentype(struct vga_handle *,
-			    const struct wsscreen_descr *);
+		       const struct wsscreen_descr *);
 #if NVGA_PCI > 0
 int vga_pci_ioctl(void *, u_long, caddr_t, int, struct proc *); 
 #endif

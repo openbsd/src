@@ -1,4 +1,4 @@
-/*	$OpenBSD: ns_var.h,v 1.7 2002/03/14 01:27:13 millert Exp $	*/
+/*	$OpenBSD: ns_var.h,v 1.8 2002/03/14 03:16:12 millert Exp $	*/
 
 #ifdef _KERNEL
 struct socket;
@@ -64,7 +64,7 @@ void ns_pcbdisconnect(struct nspcb *);
 void ns_pcbdetach(struct nspcb *);
 void ns_setsockaddr(struct nspcb *, struct mbuf *);
 void ns_setpeeraddr(struct nspcb *, struct mbuf *);
-void ns_pcbnotify __P((struct ns_addr *, int, void (*)(struct nspcb *), long));
+void ns_pcbnotify(struct ns_addr *, int, void (*)(struct nspcb *), long);
 void ns_rtchange(struct nspcb *);
 struct nspcb *ns_pcblookup(struct ns_addr *, u_short, int);
 

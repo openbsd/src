@@ -1,4 +1,4 @@
-/*	$OpenBSD: loadbsd.c,v 1.15 2002/03/14 01:26:30 millert Exp $	*/
+/*	$OpenBSD: loadbsd.c,v 1.16 2002/03/14 03:15:52 millert Exp $	*/
 /*	$NetBSD: loadbsd.c,v 1.22 1996/10/13 13:39:52 is Exp $	*/
 
 /*
@@ -66,13 +66,6 @@
 #define __LDPGSZ 8192
 
 #if !defined(__NetBSD__) && !defined(__OpenBSD__)
-#ifndef __P
-#ifdef __STDC__
-#define __P(x) x
-#else
-#define __P(x)
-#endif
-#endif
 void err(int, const char *, ...);
 void errx(int, const char *, ...);
 void warn(const char *, ...);
@@ -387,7 +380,7 @@ main(argc, argv)
 		read(fd, (char *)nkcd, e.a_syms);
 		nkcd = (int *)((char *)nkcd + e.a_syms);
 		read(fd, (char *)nkcd, stringsz);
-		    nkcd = (int*)((char *)nkcd + ((stringsz + 3) & ~3));
+		    nkcd = (int *)((char *)nkcd + ((stringsz + 3) & ~3));
 		    esym = (char *)(textsz + e.a_data + e.a_bss
 		    + e.a_syms + 4 + ((stringsz + 3) & ~3));
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.5 2002/03/14 01:26:46 millert Exp $	*/
+/*	$OpenBSD: boot.c,v 1.6 2002/03/14 03:16:01 millert Exp $	*/
 /*	$NetBSD: boot.c,v 1.3 2001/05/31 08:55:19 mrg Exp $	*/
 /*
  * Copyright (c) 1997, 1999 Eduardo E. Horvath.  All rights reserved.
@@ -166,7 +166,7 @@ chain(pentry, args, ssym, esym)
 	int l, machine_tag;
 	long newargs[3];
 
-	entry = (void*)(long)pentry;
+	entry = (void *)(long)pentry;
 
 	freeall();
 	/*
@@ -442,7 +442,7 @@ elf32_exec(fd, elf, entryp, ssymp, esymp)
 		if (phdr.p_filesz < phdr.p_memsz) {
 			printf("+%lu@0x%lx", phdr.p_memsz - phdr.p_filesz,
 			    (u_long)(phdr.p_vaddr + phdr.p_filesz));
-			bzero((void*)phdr.p_vaddr + phdr.p_filesz,
+			bzero((void *)phdr.p_vaddr + phdr.p_filesz,
 			    phdr.p_memsz - phdr.p_filesz);
 		}
 		first = 0;

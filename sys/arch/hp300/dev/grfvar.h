@@ -1,4 +1,4 @@
-/*	$OpenBSD: grfvar.h,v 1.7 2002/03/14 01:26:30 millert Exp $	*/
+/*	$OpenBSD: grfvar.h,v 1.8 2002/03/14 03:15:52 millert Exp $	*/
 /*	$NetBSD: grfvar.h,v 1.10 1997/03/31 07:34:19 scottr Exp $	*/
 
 /*
@@ -151,7 +151,7 @@ int	grflckunmmap(dev_t, caddr_t);
 
 /* grf_subr.c prototypes */
 struct itesw;
-void	grfdev_attach __P((struct grfdev_softc *,
+void	grfdev_attach(struct grfdev_softc *,
 	    int (*init)(struct grf_data *, int, caddr_t),
-	    caddr_t, struct grfsw *, struct itesw *itesw));
+	    caddr_t, struct grfsw *, struct itesw *itesw);
 #endif /* _KERNEL */

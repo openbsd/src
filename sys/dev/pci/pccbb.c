@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccbb.c,v 1.29 2002/03/14 01:26:59 millert Exp $ */
+/*	$OpenBSD: pccbb.c,v 1.30 2002/03/14 03:16:06 millert Exp $ */
 /*	$NetBSD: pccbb.c,v 1.42 2000/06/16 23:41:35 cgd Exp $	*/
 
 /*
@@ -122,12 +122,12 @@ int	pccbb_io_close(cardbus_chipset_tag_t, int);
 int	pccbb_mem_open(cardbus_chipset_tag_t, int, u_int32_t, u_int32_t);
 int	pccbb_mem_close(cardbus_chipset_tag_t, int);
 #endif /* !rbus */
-void   *pccbb_intr_establish __P((struct pccbb_softc *, int irq, int level,
-    int (*ih) (void *), void *sc));
+void   *pccbb_intr_establish(struct pccbb_softc *, int irq, int level,
+    int (*ih) (void *), void *sc);
 void	pccbb_intr_disestablish(struct pccbb_softc *, void *ih);
 
-void   *pccbb_cb_intr_establish __P((cardbus_chipset_tag_t, int irq, int level,
-    int (*ih) (void *), void *sc));
+void   *pccbb_cb_intr_establish(cardbus_chipset_tag_t, int irq, int level,
+    int (*ih) (void *), void *sc);
 void	pccbb_cb_intr_disestablish(cardbus_chipset_tag_t ct, void *ih);
 
 cardbustag_t pccbb_make_tag(cardbus_chipset_tag_t, int, int, int);
@@ -151,8 +151,8 @@ void	pccbb_pcmcia_io_free(pcmcia_chipset_handle_t,
 int	pccbb_pcmcia_io_map(pcmcia_chipset_handle_t, int, bus_addr_t,
     bus_size_t, struct pcmcia_io_handle *, int *);
 void	pccbb_pcmcia_io_unmap(pcmcia_chipset_handle_t, int);
-void   *pccbb_pcmcia_intr_establish __P((pcmcia_chipset_handle_t,
-    struct pcmcia_function *, int, int (*)(void *), void *, char *));
+void   *pccbb_pcmcia_intr_establish(pcmcia_chipset_handle_t,
+    struct pcmcia_function *, int, int (*)(void *), void *, char *);
 void	pccbb_pcmcia_intr_disestablish(pcmcia_chipset_handle_t,
     void *);
 void	pccbb_pcmcia_socket_enable(pcmcia_chipset_handle_t);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu_calcea.c,v 1.7 2002/03/14 01:26:34 millert Exp $	*/
+/*	$OpenBSD: fpu_calcea.c,v 1.8 2002/03/14 03:15:54 millert Exp $	*/
 /*	$NetBSD: fpu_calcea.c,v 1.7 1996/10/16 06:27:05 scottr Exp $	*/
 
 /*
@@ -478,7 +478,7 @@ fpu_store_ea(frame, insn, ea, src)
 #endif
 	    return SIGILL;
 	}
-	dst = (char*)&frame->f_regs[ea->ea_regnum];
+	dst = (char *)&frame->f_regs[ea->ea_regnum];
 	/* The destination is an int. */
 	if (len < 4) {
 	    dst += (4 - len);

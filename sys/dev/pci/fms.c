@@ -1,4 +1,4 @@
-/*	$OpenBSD: fms.c,v 1.7 2002/03/14 01:26:58 millert Exp $ */
+/*	$OpenBSD: fms.c,v 1.8 2002/03/14 03:16:06 millert Exp $ */
 /*	$NetBSD: fms.c,v 1.5.4.1 2000/06/30 16:27:50 simonb Exp $	*/
 
 /*-
@@ -97,10 +97,10 @@ void	fms_free(void *, void *, int);
 size_t	fms_round_buffersize(void *, int, size_t);
 paddr_t	fms_mappage(void *, void *, off_t, int);
 int	fms_get_props(void *);
-int	fms_trigger_output __P((void *, void *, void *, int, void (*)(void *),
-				void *, struct audio_params *));
-int	fms_trigger_input __P((void *, void *, void *, int, void (*)(void *),
-			       void *, struct audio_params *));
+int	fms_trigger_output(void *, void *, void *, int, void (*)(void *),
+			   void *, struct audio_params *);
+int	fms_trigger_input(void *, void *, void *, int, void (*)(void *),
+			  void *, struct audio_params *);
 
 struct  cfdriver fms_cd = {
 	NULL, "fms", DV_DULL

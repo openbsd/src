@@ -1,4 +1,4 @@
-/*	$OpenBSD: kbd.c,v 1.16 2002/03/14 01:26:43 millert Exp $	*/
+/*	$OpenBSD: kbd.c,v 1.17 2002/03/14 03:15:59 millert Exp $	*/
 /*	$NetBSD: kbd.c,v 1.28 1997/09/13 19:12:18 pk Exp $ */
 
 /*
@@ -1066,7 +1066,7 @@ kbdioctl(dev, cmd, data, flag, p)
 	case KIOCSLED:
 		if (k->k_state.kbd_id != KB_SUN4) {
 			/* xxx NYI */
-			k->k_state.kbd_leds = *(char*)data;
+			k->k_state.kbd_leds = *(char *)data;
 		} else {
 			int s;
 			char leds = *(char *)data;

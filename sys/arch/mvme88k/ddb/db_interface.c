@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.25 2002/03/14 01:26:38 millert Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.26 2002/03/14 03:15:56 millert Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -918,6 +918,6 @@ db_task_name()
 		buffer[i] = 0; /* just in case it's not read */
 		db_trace_get_val((vm_offset_t)ptr, &buffer[i]);
 	}
-	return (char*)buffer;
+	return (char *)buffer;
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fga.c,v 1.7 2002/03/14 01:26:42 millert Exp $	*/
+/*	$OpenBSD: fga.c,v 1.8 2002/03/14 03:15:59 millert Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -289,7 +289,7 @@ fga_vmerangemap(sc, vmebase, vmelen, vmecap, sbusslot, sbusoffset, oca)
 	    (void *)(sc->sc_range[srange].poffset | sbusoffset);
 	oca->ca_ra.ra_reg[0].rr_iospace = sbusslot;
 	oca->ca_ra.ra_reg[1].rr_iospace = vmecap;
-	oca->ca_ra.ra_reg[1].rr_paddr = (void*)vmebase;
+	oca->ca_ra.ra_reg[1].rr_paddr = (void *)vmebase;
 	oca->ca_ra.ra_reg[1].rr_len = vmelen;
 
 	/* 1. Setup slot select register for this range. */

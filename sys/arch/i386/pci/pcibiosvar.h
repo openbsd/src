@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcibiosvar.h,v 1.9 2002/03/14 01:26:33 millert Exp $	*/
+/*	$OpenBSD: pcibiosvar.h,v 1.10 2002/03/14 03:15:54 millert Exp $	*/
 /*	$NetBSD: pcibios.h,v 1.2 2000/04/28 17:15:16 uch Exp $	*/
 
 /*
@@ -148,8 +148,8 @@ struct extent *pciaddr_search(int, bus_addr_t *, bus_size_t);
 int  pci_intr_fixup(struct pcibios_softc *, pci_chipset_tag_t, bus_space_tag_t);
 int  pci_bus_fixup(pci_chipset_tag_t, int);
 void pci_addr_fixup(struct pcibios_softc *, pci_chipset_tag_t, int);
-void pci_device_foreach __P((struct pcibios_softc *, pci_chipset_tag_t, int,
-    void (*)(struct pcibios_softc *, pci_chipset_tag_t, pcitag_t)));
+void pci_device_foreach(struct pcibios_softc *, pci_chipset_tag_t, int,
+    void (*)(struct pcibios_softc *, pci_chipset_tag_t, pcitag_t));
 int  pci_intr_header_fixup(pci_chipset_tag_t, pcitag_t, pci_intr_handle_t *);
 int  pci_intr_route_link(pci_chipset_tag_t, pci_intr_handle_t *);
 int  pci_intr_post_fixup(void);

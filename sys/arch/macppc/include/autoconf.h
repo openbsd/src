@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.3 2002/03/14 01:26:36 millert Exp $ */
+/*	$OpenBSD: autoconf.h,v 1.4 2002/03/14 03:15:55 millert Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -93,15 +93,15 @@ struct confargs {
 
 };
 
-void	set_clockintr __P((void (*)(struct clockframe *)));
-void	set_iointr __P((void (*)(void *, int)));
+void	set_clockintr(void (*)(struct clockframe *));
+void	set_iointr(void (*)(void *, int));
 int	badaddr(void *, u_int32_t);
 void calc_delayconst(void);
 void ofrootfound(void);
 
 typedef int mac_intr_handle_t;
-typedef void     *(intr_establish_t) __P((void *, mac_intr_handle_t,
-    int, int, int (*func)(void *), void *, char *));
+typedef void     *(intr_establish_t)(void *, mac_intr_handle_t,
+    int, int, int (*func)(void *), void *, char *);
 typedef void     (intr_disestablish_t)(void *, void *);
 
 intr_establish_t mac_intr_establish;

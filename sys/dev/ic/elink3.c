@@ -1,4 +1,4 @@
-/*	$OpenBSD: elink3.c,v 1.56 2002/03/14 01:26:54 millert Exp $	*/
+/*	$OpenBSD: elink3.c,v 1.57 2002/03/14 03:16:04 millert Exp $	*/
 /*	$NetBSD: elink3.c,v 1.32 1997/05/14 00:22:00 thorpej Exp $	*/
 
 /*
@@ -81,7 +81,7 @@
 struct ep_media {
 	int	epm_eeprom_data;	/* bitmask for eeprom config */
 	int	epm_conn;		/* sc->ep_connectors code for medium */
-	char*	epm_name;		/* name of medium */
+	char   *epm_name;		/* name of medium */
 	int	epm_ifmedia;		/* ifmedia word for medium */
 	int	epm_ifdata;
 };

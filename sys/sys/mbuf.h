@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.58 2002/03/14 01:27:14 millert Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.59 2002/03/14 03:16:12 millert Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -560,11 +560,11 @@ void	m_freem(struct mbuf *);
 void	m_reclaim(void *, int);
 void	m_copydata(struct mbuf *, int, int, caddr_t);
 void	m_cat(struct mbuf *, struct mbuf *);
-struct mbuf *m_devget __P((char *, int, int, struct ifnet *,
-	    void (*)(const void *, void *, size_t)));
+struct mbuf *m_devget(char *, int, int, struct ifnet *,
+	    void (*)(const void *, void *, size_t));
 void	m_zero(struct mbuf *);
-int	m_apply __P((struct mbuf *, int, int,
-	    int (*)(caddr_t, caddr_t, unsigned int), caddr_t));
+int	m_apply(struct mbuf *, int, int,
+	    int (*)(caddr_t, caddr_t, unsigned int), caddr_t);
 
 /* Packet tag routines */
 struct m_tag *m_tag_get(int, int, int);

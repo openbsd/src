@@ -1,4 +1,4 @@
-/*	$OpenBSD: macobio.c,v 1.3 2002/03/14 01:26:37 millert Exp $	*/
+/*	$OpenBSD: macobio.c,v 1.4 2002/03/14 03:15:56 millert Exp $	*/
 /*	$NetBSD: obio.c,v 1.6 1999/05/01 10:36:08 tsubai Exp $	*/
 
 /*-
@@ -49,8 +49,8 @@
 void macobio_attach(struct device *, struct device *, void *);
 int macobio_match(struct device *, void *, void *);
 int macobio_print(void *, const char *);
-void *undef_mac_establish __P((void * lcv, int irq, int type, int level,
-    int (*ih_fun)(void *), void *ih_arg, char *name));
+void *undef_mac_establish(void * lcv, int irq, int type, int level,
+    int (*ih_fun)(void *), void *ih_arg, char *name);
 void mac_intr_disestab(void *lcp, void *arg);
 
 struct macobio_softc {

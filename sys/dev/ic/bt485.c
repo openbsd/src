@@ -1,4 +1,4 @@
-/* $OpenBSD: bt485.c,v 1.8 2002/03/14 01:26:54 millert Exp $ */
+/* $OpenBSD: bt485.c,v 1.9 2002/03/14 03:16:04 millert Exp $ */
 /* $NetBSD: bt485.c,v 1.2 2000/04/02 18:55:01 nathanw Exp $ */
 
 /*
@@ -95,7 +95,7 @@ struct bt485data {
 					 * struct tga_devconfig *
 					 */
 	
-	int             (*ramdac_sched_update) __P((void *, void (*)(void *)));
+	int             (*ramdac_sched_update)(void *, void (*)(void *));
 	void            (*ramdac_wr)(void *, u_int, u_int8_t);
 	u_int8_t        (*ramdac_rd)(void *, u_int);
 

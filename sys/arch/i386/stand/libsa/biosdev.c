@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosdev.c,v 1.53 2002/03/14 01:26:34 millert Exp $	*/
+/*	$OpenBSD: biosdev.c,v 1.54 2002/03/14 03:15:54 millert Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -178,7 +178,7 @@ static __inline int
 biosd_rw(rw, dev, cyl, head, sect, nsect, buf)
 	int rw, dev, cyl, head;
 	int sect, nsect;
-	void* buf;
+	void * buf;
 {
 	int rv;
 	BIOS_regs.biosr_es = (u_int32_t)buf >> 4;
@@ -229,7 +229,7 @@ int
 biosd_io(rw, dev, cyl, head, sect, nsect, buf)
 	int rw, dev, cyl, head;
 	int sect, nsect;
-	void* buf;
+	void * buf;
 {
 	int j, error;
 	void *bb;
@@ -454,7 +454,7 @@ biosopen(struct open_file *f, ...)
 
 	/* Try for disklabel again (might be removable media) */
 	if(dip->bios_info.flags & BDI_BADLABEL){
-		const char *st = bios_getdisklabel((void*)biosdev, &dip->disklabel);
+		const char *st = bios_getdisklabel((void *)biosdev, &dip->disklabel);
 		if (debug && st)
 			printf("%s\n", st);
 

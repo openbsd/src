@@ -1,4 +1,4 @@
-/*	$OpenBSD: psc.h,v 1.3 2002/03/14 01:26:35 millert Exp $	*/
+/*	$OpenBSD: psc.h,v 1.4 2002/03/14 03:15:55 millert Exp $	*/
 /*	$NetBSD: psc.h,v 1.3 1998/04/24 05:27:24 scottr Exp $	*/
 
 /*-
@@ -39,10 +39,10 @@ extern volatile u_int8_t *PSCBase;
 
 void	psc_init(void);
 
-int	add_psc_lev3_intr __P((void (*)(void *), void *));
-int	add_psc_lev4_intr __P((int, int (*)(void *), void *));
-int	add_psc_lev5_intr __P((int, void (*)(void *), void *));
-int	add_psc_lev6_intr __P((int, void (*)(void *), void *));
+int	add_psc_lev3_intr(void (*)(void *), void *);
+int	add_psc_lev4_intr(int, int (*)(void *), void *);
+int	add_psc_lev5_intr(int, void (*)(void *), void *);
+int	add_psc_lev6_intr(int, void (*)(void *), void *);
 
 int	remove_psc_lev3_intr(void);
 int	remove_psc_lev4_intr(int);

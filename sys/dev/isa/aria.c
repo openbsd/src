@@ -1,4 +1,4 @@
-/*	$OpenBSD: aria.c,v 1.7 2002/03/14 01:26:56 millert Exp $ */
+/*	$OpenBSD: aria.c,v 1.8 2002/03/14 03:16:05 millert Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Roland C. Dowdeswell.  All rights reserved.
@@ -127,8 +127,8 @@ struct aria_softc {
 	int	sc_precision;		/* # bits per sample */
 
 	u_long	sc_interrupts;		/* number of interrupts taken */
-	void	(*sc_rintr)(void*);	/* record transfer completion intr handler */
-	void	(*sc_pintr)(void*);	/* play transfer completion intr handler */
+	void	(*sc_rintr)(void *);	/* record transfer completion intr handler */
+	void	(*sc_pintr)(void *);	/* play transfer completion intr handler */
 	void	*sc_rarg;		/* arg for sc_rintr() */
 	void	*sc_parg;		/* arg for sc_pintr() */
 
@@ -178,8 +178,8 @@ int	aria_get_in_port(void *);
 int	aria_speaker_ctl(void *, int);
 int	aria_commit_settings(void *);
 
-int	aria_start_output __P((void *, void *, int, void (*)(), void*));
-int	aria_start_input __P((void *, void *, int, void (*)(), void*));
+int	aria_start_output(void *, void *, int, void (*)(), void *);
+int	aria_start_input(void *, void *, int, void (*)(), void *);
 
 int	aria_halt_input(void *);
 int	aria_halt_output(void *);

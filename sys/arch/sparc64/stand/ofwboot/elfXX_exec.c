@@ -1,4 +1,4 @@
-/*	$OpenBSD: elfXX_exec.c,v 1.3 2001/09/20 23:26:02 jason Exp $	*/
+/*	$OpenBSD: elfXX_exec.c,v 1.4 2002/03/14 03:16:01 millert Exp $	*/
 /*	$NetBSD: elfXX_exec.c,v 1.2 2001/08/15 20:08:15 eeh Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
 #define	MEG	(1024*1024)
 
 #if 0
-int	CAT3(elf,ELFSIZE,_exec) __P((int, CAT3(Elf,ELFSIZE,_Ehdr) *, u_int64_t *, void **, void **));
+int	CAT3(elf,ELFSIZE,_exec)(int, CAT3(Elf,ELFSIZE,_Ehdr) *, u_int64_t *, void **, void **);
 #endif
 #if defined(ELFSIZE) && (ELFSIZE == 32)
 #define ELF_ALIGN(x)	(((x)+3)&(~3))
@@ -123,7 +123,7 @@ CAT3(elf, ELFSIZE, _exec)(fd, elf, entryp, ssymp, esymp)
 		if (phdr.p_filesz < phdr.p_memsz) {
 			printf("+%lu@0x%lx", (u_long)phdr.p_memsz - phdr.p_filesz,
 			    (u_long)(phdr.p_vaddr + phdr.p_filesz));
-			bzero((void*)(long)phdr.p_vaddr + phdr.p_filesz,
+			bzero((void *)(long)phdr.p_vaddr + phdr.p_filesz,
 			    (size_t)phdr.p_memsz - phdr.p_filesz);
 		}
 		first = 0;

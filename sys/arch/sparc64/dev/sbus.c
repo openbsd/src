@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbus.c,v 1.12 2002/03/14 01:26:44 millert Exp $	*/
+/*	$OpenBSD: sbus.c,v 1.13 2002/03/14 03:16:00 millert Exp $	*/
 /*	$NetBSD: sbus.c,v 1.46 2001/10/07 20:30:41 eeh Exp $ */
 
 /*-
@@ -155,13 +155,13 @@ static int _sbus_bus_map(
 		int,			/*flags*/
 		vaddr_t,		/*preferred virtual address */
 		bus_space_handle_t *);
-static void *sbus_intr_establish __P((
+static void *sbus_intr_establish(
 		bus_space_tag_t,
 		int,			/*Sbus interrupt level*/
 		int,			/*`device class' priority*/
 		int,			/*flags*/
 		int (*)(void *),	/*handler*/
-		void *));		/*handler arg*/
+		void *);		/*handler arg*/
 
 
 /* autoconfiguration driver */

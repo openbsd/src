@@ -1,4 +1,4 @@
-/*	$OpenBSD: dma_sbus.c,v 1.6 2002/03/14 01:27:02 millert Exp $	*/
+/*	$OpenBSD: dma_sbus.c,v 1.7 2002/03/14 03:16:07 millert Exp $	*/
 /*	$NetBSD: dma_sbus.c,v 1.5 2000/07/09 20:57:42 pk Exp $ */
 
 /*-
@@ -99,13 +99,13 @@ void	dmaattach_sbus(struct device *, struct device *, void *);
 
 int	dmaprint_sbus(void *, const char *);
 
-void	*dmabus_intr_establish __P((
+void	*dmabus_intr_establish(
 		bus_space_tag_t,
 		int,			/*bus interrupt priority*/
 		int,			/*`device class' level*/
 		int,			/*flags*/
 		int (*)(void *),	/*handler*/
-		void *));		/*handler arg*/
+		void *);		/*handler arg*/
 
 static	bus_space_tag_t dma_alloc_bustag(struct dma_softc *sc);
 

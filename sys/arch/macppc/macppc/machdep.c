@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.29 2002/03/14 01:26:36 millert Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.30 2002/03/14 03:15:56 millert Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -168,8 +168,8 @@ int power4e_get_eth_addr(void);
 void nameinterrupt(int replace, char *newstr);
 void ppc_intr_setup(intr_establish_t *establish,
     intr_disestablish_t *disestablish);
-void *ppc_intr_establish __P((void *lcv, pci_intr_handle_t ih, int type,
-    int level, int (*func)(void *), void *arg, char *name));
+void *ppc_intr_establish(void *lcv, pci_intr_handle_t ih, int type,
+    int level, int (*func)(void *), void *arg, char *name);
 int bus_mem_add_mapping(bus_addr_t bpa, bus_size_t size, int cacheable,
     bus_space_handle_t *bshp);
 
@@ -690,7 +690,7 @@ setregs(p, pack, stack, retval)
 	pargs = -roundup(-stack + 8, 16);
 	newstack = (u_int32_t)(pargs - 32);
 
-	copyin ((void*)(VM_MAX_ADDRESS-0x10), &args, 0x10);
+	copyin ((void *)(VM_MAX_ADDRESS-0x10), &args, 0x10);
 
 	bzero(tf, sizeof *tf);
 	tf->fixreg[1] = newstack;
@@ -1287,7 +1287,7 @@ mapiodev(pa, len)
 		spa += PAGE_SIZE;
 		vaddr += PAGE_SIZE;
 	}
-	return (void*) (va+off);
+	return (void *) (va+off);
 }
 void
 unmapiodev(kva, p_size)

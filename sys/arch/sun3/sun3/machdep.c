@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.52 2002/03/14 01:26:47 millert Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.53 2002/03/14 03:16:01 millert Exp $	*/
 /*	$NetBSD: machdep.c,v 1.77 1996/10/13 03:47:51 christos Exp $	*/
 
 /*
@@ -770,7 +770,7 @@ dumpsys()
 	do {
 		if ((todo & 0xf) == 0)
 			printf("\r%4d", todo);
-		vaddr = (char*)(paddr + KERNBASE);
+		vaddr = (char *)(paddr + KERNBASE);
 		error = (*dsw->d_dump)(dumpdev, blkno, vaddr, NBPG);
 		if (error)
 			goto fail;
@@ -780,7 +780,7 @@ dumpsys()
 	} while (--chunk > 0);
 
 	/* Do the second chunk (avail_start <= PA < dumpsize) */
-	vaddr = (char*)vmmap;	/* Borrow /dev/mem VA */
+	vaddr = (char *)vmmap;	/* Borrow /dev/mem VA */
 	do {
 		if ((todo & 0xf) == 0)
 			printf("\r%4d", todo);

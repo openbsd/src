@@ -1,4 +1,4 @@
-/* $OpenBSD: intr.h,v 1.13 2002/03/14 01:26:27 millert Exp $ */
+/* $OpenBSD: intr.h,v 1.14 2002/03/14 03:15:50 millert Exp $ */
 /* $NetBSD: intr.h,v 1.26 2000/06/03 20:47:41 thorpej Exp $ */
 
 /*-
@@ -207,7 +207,7 @@ struct alpha_soft_intr {
 	unsigned long softintr_ipl;
 };
 
-void	*softintr_establish __P((int, void (*)(void *), void *));
+void	*softintr_establish(int, void (*)(void *), void *);
 void	softintr_disestablish(void *);
 void	softintr_init(void);
 void	softintr_dispatch(void);
@@ -229,8 +229,8 @@ extern struct alpha_soft_intrhand *softclock_intrhand;
 struct alpha_shared_intr *alpha_shared_intr_alloc(unsigned int);
 int	alpha_shared_intr_dispatch(struct alpha_shared_intr *,
 	    unsigned int);
-void	*alpha_shared_intr_establish __P((struct alpha_shared_intr *,
-	    unsigned int, int, int, int (*)(void *), void *, const char *));
+void	*alpha_shared_intr_establish(struct alpha_shared_intr *,
+	    unsigned int, int, int, int (*)(void *), void *, const char *);
 void	alpha_shared_intr_disestablish(struct alpha_shared_intr *,
 	    void *, const char *);
 int	alpha_shared_intr_get_sharetype(struct alpha_shared_intr *,

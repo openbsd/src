@@ -1,4 +1,4 @@
-/*	$OpenBSD: raster_op.c,v 1.4 2002/03/14 01:27:02 millert Exp $ */
+/*	$OpenBSD: raster_op.c,v 1.5 2002/03/14 03:16:07 millert Exp $ */
 /*	$NetBSD: raster_op.c,v 1.4 1996/03/14 19:02:30 christos Exp $ */
 
 /*-
@@ -623,7 +623,7 @@ raster_op_noclip( dst, dx, dy, w, h, rop, src, sx, sy )
 		 src->linelongs == dst->linelongs && src->linelongs == w >> 5 )
 		{
 		bcopy(
-		    (char*) srclin1, (char*) dstlin1,
+		    (char *) srclin1, (char *) dstlin1,
 		    h * src->linelongs * sizeof(u_int32_t) );
 		return 0;
 		}
@@ -732,7 +732,7 @@ raster_op_noclip( dst, dx, dy, w, h, rop, src, sx, sy )
 	if ( op == RAS_SRC && src->width == w && dst->width == w &&
 	     src->linelongs == dst->linelongs && src->linelongs == w >> 2 )
 	    {
-	    bcopy( (char*) srclin1, (char*) dstlin1,
+	    bcopy( (char *) srclin1, (char *) dstlin1,
 		   h * src->linelongs * sizeof(u_int32_t) );
 	    return 0;
 	    }
@@ -782,7 +782,7 @@ raster_op_nosrc_noclip( dst, dx, dy, w, h, rop )
 	/* Special-case full-width clears. */
 	if ( op == RAS_CLEAR && dst->width == w && dst->linelongs == w >> 5 )
 	    {
-	    bzero( (char*) dstlin1, h * dst->linelongs * sizeof(u_int32_t) );
+	    bzero( (char *) dstlin1, h * dst->linelongs * sizeof(u_int32_t) );
 	    return 0;
 	    }
 #endif /*BCOPY_FASTER*/
@@ -877,7 +877,7 @@ raster_op_nosrc_noclip( dst, dx, dy, w, h, rop )
 	/* Special-case full-width clears. */
 	if ( op == RAS_CLEAR && dst->width == w && dst->linelongs == w >> 2 )
 	    {
-	    bzero( (char*) dstlin1, h * dst->linelongs * sizeof(u_int32_t) );
+	    bzero( (char *) dstlin1, h * dst->linelongs * sizeof(u_int32_t) );
 	    return 0;
 	    }
 #endif /*BCOPY_FASTER*/

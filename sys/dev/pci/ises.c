@@ -1,4 +1,4 @@
-/*	$OpenBSD: ises.c,v 1.19 2002/03/14 01:26:59 millert Exp $	*/
+/*	$OpenBSD: ises.c,v 1.20 2002/03/14 03:16:06 millert Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Håkan Olsson (ho@crt.se)
@@ -68,9 +68,8 @@ void	ises_initstate(void *);
 void	ises_hrng_init(struct ises_softc *);
 void	ises_hrng(void *);
 void	ises_process_oqueue(struct ises_softc *);
-int	ises_queue_cmd __P((struct ises_softc *, u_int32_t, u_int32_t *, 
-			    u_int32_t (*)(struct ises_softc *, 
-					  struct ises_cmd *)));
+int	ises_queue_cmd(struct ises_softc *, u_int32_t, u_int32_t *, 
+		       u_int32_t (*)(struct ises_softc *, struct ises_cmd *));
 u_int32_t ises_get_fwversion(struct ises_softc *);
 int	ises_assert_cmd_mode(struct ises_softc *);
 

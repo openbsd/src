@@ -1,4 +1,4 @@
-/*	$OpenBSD: lfs_segment.c,v 1.10 2002/03/14 01:27:15 millert Exp $	*/
+/*	$OpenBSD: lfs_segment.c,v 1.11 2002/03/14 03:16:13 millert Exp $	*/
 /*	$NetBSD: lfs_segment.c,v 1.4 1996/02/09 22:28:54 christos Exp $	*/
 
 /*
@@ -74,8 +74,8 @@ extern int count_lock_queue(void);
 	1 << (fs)->lfs_fsbtodb)
 
 void	 lfs_callback(struct buf *);
-void	 lfs_gather __P((struct lfs *, struct segment *,
-	     struct vnode *, int (*)(struct lfs *, struct buf *)));
+void	 lfs_gather(struct lfs *, struct segment *,
+	     struct vnode *, int (*)(struct lfs *, struct buf *));
 int	 lfs_gatherblock(struct segment *, struct buf *, int *);
 void	 lfs_iset(struct inode *, ufs_daddr_t, time_t);
 int	 lfs_match_data(struct lfs *, struct buf *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_de.c,v 1.52 2001/11/06 19:53:19 miod Exp $	*/
+/*	$OpenBSD: if_de.c,v 1.53 2002/03/14 03:16:06 millert Exp $	*/
 /*	$NetBSD: if_de.c,v 1.45 1997/06/09 00:34:18 thorpej Exp $	*/
 
 /*-
@@ -5025,7 +5025,7 @@ tulip_pci_shutdown(
 }
 #endif
 
-static char*
+static char *
 tulip_pci_probe(
     pcici_t config_id,
     pcidi_t device_id)
@@ -5561,7 +5561,7 @@ tulip_pci_attach(
 #endif
 #if defined(__FreeBSD__)
 	if ((sc->tulip_features & TULIP_HAVE_SLAVEDINTR) == 0) {
-	    if (!pci_map_int (config_id, intr_rtn, (void*) sc, &net_imask)) {
+	    if (!pci_map_int (config_id, intr_rtn, (void *) sc, &net_imask)) {
 		printf(TULIP_PRINTF_FMT ": couldn't map interrupt\n",
 		       TULIP_PRINTF_ARGS);
 		return;

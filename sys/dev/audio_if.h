@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio_if.h,v 1.15 2002/03/14 01:26:52 millert Exp $	*/
+/*	$OpenBSD: audio_if.h,v 1.16 2002/03/14 03:16:03 millert Exp $	*/
 /*	$NetBSD: audio_if.h,v 1.24 1998/01/10 14:07:25 tv Exp $	*/
 
 /*
@@ -91,10 +91,8 @@ struct audio_hw_if {
 	/* Start input/output routines. These usually control DMA. */
 	int	(*init_output)(void *, void *, int);
 	int	(*init_input)(void *, void *, int);
-	int	(*start_output)__P((void *, void *, int,
-				    void (*)(void *), void *));
-	int	(*start_input)__P((void *, void *, int,
-				   void (*)(void *), void *));
+	int	(*start_output)(void *, void *, int, void (*)(void *), void *);
+	int	(*start_input)(void *, void *, int, void (*)(void *), void *);
 	int	(*halt_output)(void *);
 	int	(*halt_input)(void *);
 
@@ -121,10 +119,10 @@ struct audio_hw_if {
 
 	int 	(*get_props)(void *); /* device properties */
 
-	int	(*trigger_output)__P((void *, void *, void *, int,
-		    void (*)(void *), void *, struct audio_params *));
-	int	(*trigger_input)__P((void *, void *, void *, int,
-		    void (*)(void *), void *, struct audio_params *));
+	int	(*trigger_output)(void *, void *, void *, int,
+		    void (*)(void *), void *, struct audio_params *);
+	int	(*trigger_input)(void *, void *, void *, int,
+		    void (*)(void *), void *, struct audio_params *);
 };
 
 struct audio_attach_args {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_blue.h,v 1.2 2002/03/14 01:26:26 millert Exp $	*/
+/*	$OpenBSD: altq_blue.h,v 1.3 2002/03/14 03:15:50 millert Exp $	*/
 /*	$KAME: altq_blue.h,v 1.5 2000/12/14 08:12:45 thorpej Exp $	*/
 
 /*
@@ -111,7 +111,7 @@ typedef struct blue_queue {
 
 extern int blue_init(blue_t *, int, int, int, int);
 extern int blue_addq(blue_t *, class_queue_t *, struct mbuf *,
-			 struct altq_pktattr *);
+		     struct altq_pktattr *);
 extern struct mbuf *blue_getq(blue_t *, class_queue_t *);
 
 #endif /* _KERNEL */

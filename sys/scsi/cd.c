@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.59 2002/03/14 01:27:13 millert Exp $	*/
+/*	$OpenBSD: cd.c,v 1.60 2002/03/14 03:16:12 millert Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -1010,7 +1010,7 @@ cdioctl(dev, cmd, addr, flag, p)
 	}
 	case CDIOREADMSADDR: {
 		struct cd_toc *toc;
-		int sessno = *(int*)addr;
+		int sessno = *(int *)addr;
 		struct cd_toc_entry *cte;
 
 		if (sessno != 0) {
@@ -1043,7 +1043,7 @@ cdioctl(dev, cmd, addr, flag, p)
 		else
 			toc->header.len = ntohs(toc->header.len);
 
-		*(int*)addr = (toc->header.len >= 10 && cte->track > 1) ?
+		*(int *)addr = (toc->header.len >= 10 && cte->track > 1) ?
 			cte->addr.lba : 0;
 		FREE(toc, M_DEVBUF);
 		break;

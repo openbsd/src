@@ -1,4 +1,4 @@
-/*	$OpenBSD: cardbusvar.h,v 1.5 2002/03/14 01:26:52 millert Exp $	*/
+/*	$OpenBSD: cardbusvar.h,v 1.6 2002/03/14 03:16:04 millert Exp $	*/
 /*	$NetBSD: cardbusvar.h,v 1.17 2000/04/02 19:11:37 mycroft Exp $	*/
 
 /*
@@ -191,7 +191,7 @@ typedef struct cardbus_functions {
 				  bus_space_handle_t *bshp);
   int (*cardbus_space_free)(cardbus_chipset_tag_t, rbus_tag_t,
 				 bus_space_handle_t, bus_size_t);
-  void *(*cardbus_intr_establish) __P((cardbus_chipset_tag_t, int irq, int level, int (*ih)(void *), void *sc));
+  void *(*cardbus_intr_establish)(cardbus_chipset_tag_t, int irq, int level, int (*ih)(void *), void *sc);
   void (*cardbus_intr_disestablish)(cardbus_chipset_tag_t ct, void *ih);
   int (*cardbus_ctrl)(cardbus_chipset_tag_t, int);
   int (*cardbus_power)(cardbus_chipset_tag_t, int);
@@ -211,7 +211,7 @@ typedef struct cardbus_functions {
   int (*cardbus_mem_close)(cardbus_chipset_tag_t, int);
   int (*cardbus_io_open)(cardbus_chipset_tag_t, int, u_int32_t, u_int32_t);
   int (*cardbus_io_close)(cardbus_chipset_tag_t, int);
-  void *(*cardbus_intr_establish) __P((cardbus_chipset_tag_t, int irq, int level, int (*ih)(void *), void *sc));
+  void *(*cardbus_intr_establish)(cardbus_chipset_tag_t, int irq, int level, int (*ih)(void *), void *sc);
   void (*cardbus_intr_disestablish)(cardbus_chipset_tag_t ct, void *ih);
 
   cardbustag_t (*cardbus_make_tag)(cardbus_chipset_tag_t, int, int, int);  cardbusreg_t (*cardbus_conf_read)(cardbus_chipset_tag_t, cardbustag_t, int);
@@ -322,7 +322,7 @@ struct cardbus_cis_info {
     int32_t		manufacturer;
     int32_t		product;
     char		cis1_info_buf[256];
-    char*		cis1_info[4];
+    char	       *cis1_info[4];
     struct cb_bar_info {
 	unsigned int flags;
 	unsigned int size;
@@ -413,7 +413,7 @@ struct cardbus_attach_args {
 
 int cardbus_attach_card(struct cardbus_softc *);
 void cardbus_detach_card(struct cardbus_softc *);
-void *cardbus_intr_establish __P((cardbus_chipset_tag_t, cardbus_function_tag_t, cardbus_intr_handle_t irq, int level, int (*func) (void *), void *arg));
+void *cardbus_intr_establish(cardbus_chipset_tag_t, cardbus_function_tag_t, cardbus_intr_handle_t irq, int level, int (*func) (void *), void *arg);
 void cardbus_intr_disestablish(cardbus_chipset_tag_t, cardbus_function_tag_t, void *handler);
 
 int cardbus_mapreg_map(struct cardbus_softc *, int, int, cardbusreg_t,

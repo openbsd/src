@@ -1,4 +1,4 @@
-/*	$OpenBSD: pk_extern.h,v 1.4 2002/03/14 01:27:10 millert Exp $	*/
+/*	$OpenBSD: pk_extern.h,v 1.5 2002/03/14 03:16:11 millert Exp $	*/
 /*	$NetBSD: pk_extern.h,v 1.1 1996/02/13 22:05:17 christos Exp $	*/
 
 /*
@@ -85,7 +85,7 @@ void pk_restart(struct pkcb *, int);
 void pk_freelcd(struct pklcd *);
 int pk_bind(struct pklcd *, struct mbuf *);
 int pk_listen(struct pklcd *);
-int pk_protolisten __P((int, int, int (*)(struct mbuf *, void *)));
+int pk_protolisten(int, int, int (*)(struct mbuf *, void *));
 void pk_assoc(struct pkcb *, struct pklcd *, struct sockaddr_x25 *);
 int pk_connect(struct pklcd *, struct sockaddr_x25 *);
 void pk_callcomplete(struct pkcb *);

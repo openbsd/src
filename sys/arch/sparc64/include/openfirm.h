@@ -1,4 +1,4 @@
-/*	$OpenBSD: openfirm.h,v 1.2 2001/08/19 05:15:40 art Exp $	*/
+/*	$OpenBSD: openfirm.h,v 1.3 2002/03/14 03:16:00 millert Exp $	*/
 /*	$NetBSD: openfirm.h,v 1.8 2001/07/20 00:07:14 eeh Exp $	*/
 
 /*
@@ -47,9 +47,9 @@ typedef u_int64_t cell_t;
 #define ADR2CELL(x)	(cell_t)(u_int)(int)(x)
 #endif
 
-int OF_test (char* service);
-int OF_test_method (int handle, char* method);
-int OF_getproplen (int handle, char* prop);
+int OF_test (char *service);
+int OF_test_method (int handle, char *method);
+int OF_getproplen (int handle, char *prop);
 
 int OF_stdin (void);
 int OF_stdout (void);

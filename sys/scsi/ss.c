@@ -1,4 +1,4 @@
-/*	$OpenBSD: ss.c,v 1.44 2002/03/14 01:27:13 millert Exp $	*/
+/*	$OpenBSD: ss.c,v 1.45 2002/03/14 03:16:12 millert Exp $	*/
 /*	$NetBSD: ss.c,v 1.10 1996/05/05 19:52:55 christos Exp $	*/
 
 /*
@@ -853,7 +853,7 @@ ss_set_window(ss, sio)
 
 	if (ss->quirkdata->vendor_unique_sw != NULL)
 		return ((*ss->quirkdata->vendor_unique_sw)(ss, sio,
-		    &window_cmd, (void*)&wd));
+		    &window_cmd, (void *)&wd));
 	else
 		/* send the command to the scanner */
 		return (scsi_scsi_cmd(sc_link,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: atavar.h,v 1.10 2002/03/14 01:26:52 millert Exp $	*/
+/*	$OpenBSD: atavar.h,v 1.11 2002/03/14 03:16:03 millert Exp $	*/
 /*	$NetBSD: atavar.h,v 1.13 1999/03/10 13:11:43 bouyer Exp $	*/
 
 /*
@@ -153,7 +153,7 @@ struct wdc_command {
     int timeout;	 /* timeout (in ms) */
     void *data;          /* Data buffer address */
     int bcount;           /* number of bytes to transfer */
-    void (*callback)(void*); /* command to call once command completed */
+    void (*callback)(void *); /* command to call once command completed */
     void *callback_arg;  /* argument passed to *callback() */
 };
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tp_var.h,v 1.2 2002/03/14 01:27:12 millert Exp $	*/
+/*	$OpenBSD: tp_var.h,v 1.3 2002/03/14 03:16:12 millert Exp $	*/
 /*	$NetBSD: tp_var.h,v 1.1 1996/02/13 22:12:29 christos Exp $	*/
 
 /*
@@ -59,10 +59,10 @@ int tp_driver(struct tp_pcb *, struct tp_event *);
 
 /* tp_emit.c */
 int tp_emit(int, struct tp_pcb *, SeqNum, u_int, struct mbuf *);
-int tp_error_emit __P((int, u_long, struct sockaddr_iso *,
-		       struct sockaddr_iso *, struct mbuf *, int,
-		       struct tp_pcb *, caddr_t, 
-		       int (*) (struct mbuf *, ...)));
+int tp_error_emit(int, u_long, struct sockaddr_iso *,
+		  struct sockaddr_iso *, struct mbuf *, int,
+		  struct tp_pcb *, caddr_t, 
+		  int (*) (struct mbuf *, ...));
 
 /* tp_inet.c */
 void in_getsufx(void *, u_short *, caddr_t, int);

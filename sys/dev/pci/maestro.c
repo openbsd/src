@@ -1,4 +1,4 @@
-/*	$OpenBSD: maestro.c,v 1.14 2002/03/14 01:26:59 millert Exp $	*/
+/*	$OpenBSD: maestro.c,v 1.15 2002/03/14 03:16:06 millert Exp $	*/
 /* $FreeBSD: /c/ncvs/src/sys/dev/sound/pci/maestro.c,v 1.3 2000/11/21 12:22:11 julian Exp $ */
 /*
  * FreeBSD's ESS Agogo/Maestro driver 
@@ -182,10 +182,10 @@ void	maestro_free(void *, void *, int);
 size_t	maestro_round_buffersize(void *, int, size_t);
 paddr_t	maestro_mappage(void *, void *, off_t, int);
 int	maestro_get_props(void *);
-int	maestro_trigger_output __P((void *, void *, void *, int, void (*)(void *),
-				void *, struct audio_params *));
-int	maestro_trigger_input __P((void *, void *, void *, int, void (*)(void *),
-			       void *, struct audio_params *));
+int	maestro_trigger_output(void *, void *, void *, int, void (*)(void *),
+				void *, struct audio_params *);
+int	maestro_trigger_input(void *, void *, void *, int, void (*)(void *),
+			       void *, struct audio_params *);
 
 int	maestro_attach_codec(void *, struct ac97_codec_if *);
 int	maestro_read_codec(void *, u_int8_t, u_int16_t *);

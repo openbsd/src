@@ -1,4 +1,4 @@
-/*	$OpenBSD: tc_conf.h,v 1.5 2002/03/14 01:26:28 millert Exp $	*/
+/*	$OpenBSD: tc_conf.h,v 1.6 2002/03/14 03:15:51 millert Exp $	*/
 /*	$NetBSD: tc_conf.h,v 1.3 1996/11/15 23:59:01 cgd Exp $	*/
 
 /*
@@ -36,8 +36,8 @@
 extern void	tc_3000_500_intr_setup(void);
 extern void	tc_3000_500_iointr(void *, unsigned long);
 
-extern void	tc_3000_500_intr_establish __P((struct device *, void *,
-		    tc_intrlevel_t, int (*)(void *), void *));
+extern void	tc_3000_500_intr_establish(struct device *, void *,
+		    tc_intrlevel_t, int (*)(void *), void *);
 extern void	tc_3000_500_intr_disestablish(struct device *, void *);
 
 extern int	tc_3000_500_nslots;
@@ -52,8 +52,8 @@ extern struct tc_builtin tc_3000_500_nographics_builtins[];
 extern void	tc_3000_300_intr_setup(void);
 extern void	tc_3000_300_iointr(void *, unsigned long);
 
-extern void	tc_3000_300_intr_establish __P((struct device *, void *,
-		    tc_intrlevel_t, int (*)(void *), void *));
+extern void	tc_3000_300_intr_establish(struct device *, void *,
+		    tc_intrlevel_t, int (*)(void *), void *);
 extern void	tc_3000_300_intr_disestablish(struct device *, void *);
 
 extern int	tc_3000_300_nslots;

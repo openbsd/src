@@ -1,4 +1,4 @@
-/*	$OpenBSD: openfirm.h,v 1.6 2002/03/14 01:26:58 millert Exp $	*/
+/*	$OpenBSD: openfirm.h,v 1.7 2002/03/14 03:16:06 millert Exp $	*/
 /*	$NetBSD: openfirm.h,v 1.1 1996/09/30 16:35:10 ws Exp $	*/
 
 /*
@@ -64,7 +64,7 @@ void OF_enter(void);
 void OF_exit(void) __attribute__((__noreturn__));
 int OF_interpret(char *cmd, int nreturns, ...);
 #if 0
-void (*OF_set_callback __P((void (*newfunc)(void *)))) ();
+void (*OF_set_callback(void (*newfunc)(void *))) ();
 #endif
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: raster_text.c,v 1.3 1997/11/07 08:07:39 niklas Exp $ */
+/*	$OpenBSD: raster_text.c,v 1.4 2002/03/14 03:16:07 millert Exp $ */
 /*	$NetBSD: raster_text.c,v 1.3 1995/11/24 23:50:56 cgd Exp $ */
 
 /*-
@@ -69,7 +69,7 @@ raster_text( r, x, y, rop, rf, text )
     int x, y;
     int rop;
     struct raster_font* rf;
-    unsigned char* text;
+    unsigned char *text;
     {
     return raster_textn( r, x, y, rop, rf, text, strlen( text ) );
     }
@@ -81,12 +81,12 @@ raster_textn( r, x, y, rop, rf, text, n )
     int x, y;
     int rop;
     struct raster_font* rf;
-    unsigned char* text;
+    unsigned char *text;
     int n;
     {
     int clip;
     int x1, y1;
-    struct raster_char* c;
+    struct raster_char *c;
     struct raster* charrast;
     int i;
     register unsigned char ch;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bktr_core.c,v 1.3 2001/11/06 19:53:19 miod Exp $	*/
+/*	$OpenBSD: bktr_core.c,v 1.4 2002/03/14 03:16:06 millert Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_core.c,v 1.114 2000/10/31 13:09:56 roger Exp $ */
 
 /*
@@ -640,7 +640,7 @@ static void vbidecode(bktr_ptr_t bktr) {
 	/* Copy the VBI data into the next free slot in the buffer. */
 	/* 'dest' is the point in vbibuffer where we want to insert new data */
         dest = (unsigned char *)bktr->vbibuffer + bktr->vbiinsert;
-        memcpy(dest, (unsigned char*)bktr->vbidata, VBI_DATA_SIZE);
+        memcpy(dest, (unsigned char *)bktr->vbidata, VBI_DATA_SIZE);
 
 	/* Write the VBI sequence number to the end of the vbi data */
 	/* This is used by the AleVT teletext program */
@@ -1366,7 +1366,7 @@ video_ioctl( bktr_ptr_t bktr, int unit, ioctl_cmd_t cmd, caddr_t arg, struct pro
 		break;
 
 	case BT848SFMT:		/* set input format */
-		temp = *(unsigned long*)arg & BT848_IFORM_FORMAT;
+		temp = *(unsigned long *)arg & BT848_IFORM_FORMAT;
 		temp_iform = INB(bktr, BKTR_IFORM);
 		temp_iform &= ~BT848_IFORM_FORMAT;
 		temp_iform &= ~BT848_IFORM_XTSEL;
@@ -1995,17 +1995,17 @@ tuner_ioctl( bktr_ptr_t bktr, int unit, ioctl_cmd_t cmd, caddr_t arg, struct pro
 		return tuner_getchnlset((struct bktr_chnlset *)arg);
 
 	case BT848_SAUDIO:	/* set audio channel */
-		if ( set_audio( bktr, *(int*)arg ) < 0 )
+		if ( set_audio( bktr, *(int *)arg ) < 0 )
 			return( EIO );
 		break;
 
 	/* hue is a 2's compliment number, -90' to +89.3' in 0.7' steps */
 	case BT848_SHUE:	/* set hue */
-		OUTB(bktr, BKTR_HUE, (u_char)(*(int*)arg & 0xff));
+		OUTB(bktr, BKTR_HUE, (u_char)(*(int *)arg & 0xff));
 		break;
 
 	case BT848_GHUE:	/* get hue */
-		*(int*)arg = (signed char)(INB(bktr, BKTR_HUE) & 0xff);
+		*(int *)arg = (signed char)(INB(bktr, BKTR_HUE) & 0xff);
 		break;
 
 	/* brightness is a 2's compliment #, -50 to +%49.6% in 0.39% steps */
@@ -2019,7 +2019,7 @@ tuner_ioctl( bktr_ptr_t bktr, int unit, ioctl_cmd_t cmd, caddr_t arg, struct pro
 
 	/*  */
 	case BT848_SCSAT:	/* set chroma saturation */
-		tmp_int = *(int*)arg;
+		tmp_int = *(int *)arg;
 
 		temp = INB(bktr, BKTR_E_CONTROL);
 		temp1 = INB(bktr, BKTR_O_CONTROL);
@@ -2046,12 +2046,12 @@ tuner_ioctl( bktr_ptr_t bktr, int unit, ioctl_cmd_t cmd, caddr_t arg, struct pro
 		tmp_int = (int)(INB(bktr, BKTR_SAT_V_LO) & 0xff);
 		if ( INB(bktr, BKTR_E_CONTROL) & BT848_E_CONTROL_SAT_V_MSB )
 			tmp_int |= BIT_EIGHT_HIGH;
-		*(int*)arg = tmp_int;
+		*(int *)arg = tmp_int;
 		break;
 
 	/*  */
 	case BT848_SVSAT:	/* set chroma V saturation */
-		tmp_int = *(int*)arg;
+		tmp_int = *(int *)arg;
 
 		temp = INB(bktr, BKTR_E_CONTROL);
 		temp1 = INB(bktr, BKTR_O_CONTROL);
@@ -2073,12 +2073,12 @@ tuner_ioctl( bktr_ptr_t bktr, int unit, ioctl_cmd_t cmd, caddr_t arg, struct pro
 		tmp_int = (int)INB(bktr, BKTR_SAT_V_LO) & 0xff;
 		if ( INB(bktr, BKTR_E_CONTROL) & BT848_E_CONTROL_SAT_V_MSB )
 			tmp_int |= BIT_EIGHT_HIGH;
-		*(int*)arg = tmp_int;
+		*(int *)arg = tmp_int;
 		break;
 
 	/*  */
 	case BT848_SUSAT:	/* set chroma U saturation */
-		tmp_int = *(int*)arg;
+		tmp_int = *(int *)arg;
 
 		temp = INB(bktr, BKTR_E_CONTROL);
 		temp1 = INB(bktr, BKTR_O_CONTROL);
@@ -2100,7 +2100,7 @@ tuner_ioctl( bktr_ptr_t bktr, int unit, ioctl_cmd_t cmd, caddr_t arg, struct pro
 		tmp_int = (int)INB(bktr, BKTR_SAT_U_LO) & 0xff;
 		if ( INB(bktr, BKTR_E_CONTROL) & BT848_E_CONTROL_SAT_U_MSB )
 			tmp_int |= BIT_EIGHT_HIGH;
-		*(int*)arg = tmp_int;
+		*(int *)arg = tmp_int;
 		break;
 
 /* lr 970528 luma notch etc - 3 high bits of e_control/o_control */
@@ -2120,7 +2120,7 @@ tuner_ioctl( bktr_ptr_t bktr, int unit, ioctl_cmd_t cmd, caddr_t arg, struct pro
 
 	/*  */
 	case BT848_SCONT:	/* set contrast */
-		tmp_int = *(int*)arg;
+		tmp_int = *(int *)arg;
 
 		temp = INB(bktr, BKTR_E_CONTROL);
 		temp1 = INB(bktr, BKTR_O_CONTROL);
@@ -2142,7 +2142,7 @@ tuner_ioctl( bktr_ptr_t bktr, int unit, ioctl_cmd_t cmd, caddr_t arg, struct pro
 		tmp_int = (int)INB(bktr, BKTR_CONTRAST_LO) & 0xff;
 		if ( INB(bktr, BKTR_E_CONTROL) & BT848_E_CONTROL_CON_MSB )
 			tmp_int |= BIT_EIGHT_HIGH;
-		*(int*)arg = tmp_int;
+		*(int *)arg = tmp_int;
 		break;
 
 		/*  FIXME:  SCBARS and CCBARS require a valid int *        */
@@ -2161,11 +2161,11 @@ tuner_ioctl( bktr_ptr_t bktr, int unit, ioctl_cmd_t cmd, caddr_t arg, struct pro
 		temp = bktr->audio_mux_select;
 		if ( bktr->audio_mute_state == TRUE )
 			temp |= AUDIO_MUTE;
-		*(int*)arg = temp;
+		*(int *)arg = temp;
 		break;
 
 	case BT848_SBTSC:	/* set audio channel */
-		if ( set_BTSC( bktr, *(int*)arg ) < 0 )
+		if ( set_BTSC( bktr, *(int *)arg ) < 0 )
 			return( EIO );
 		break;
 
@@ -2196,19 +2196,19 @@ tuner_ioctl( bktr_ptr_t bktr, int unit, ioctl_cmd_t cmd, caddr_t arg, struct pro
         /* Ioctl's for direct gpio access */
 #ifdef BKTR_GPIO_ACCESS
         case BT848_GPIO_GET_EN:
-                *(int*)arg = INL(bktr, BKTR_GPIO_OUT_EN);
+                *(int *)arg = INL(bktr, BKTR_GPIO_OUT_EN);
                 break;
 
         case BT848_GPIO_SET_EN:
-                OUTL(bktr, BKTR_GPIO_OUT_EN, *(int*)arg);
+                OUTL(bktr, BKTR_GPIO_OUT_EN, *(int *)arg);
                 break;
 
         case BT848_GPIO_GET_DATA:
-                *(int*)arg = INL(bktr, BKTR_GPIO_DATA);
+                *(int *)arg = INL(bktr, BKTR_GPIO_DATA);
                 break;
 
         case BT848_GPIO_SET_DATA:
-                OUTL(bktr, BKTR_GPIO_DATA, *(int*)arg);
+                OUTL(bktr, BKTR_GPIO_DATA, *(int *)arg);
                 break;
 #endif /* BKTR_GPIO_ACCESS */
 
@@ -2456,7 +2456,7 @@ common_ioctl( bktr_ptr_t bktr, ioctl_cmd_t cmd, caddr_t arg )
 		temp = status_sum;
 		status_sum = 0;
 		ENABLE_INTR(s);
-		*(u_int*)arg = temp;
+		*(u_int *)arg = temp;
 		break;
 		}
 #endif /* STATUS_SUM */

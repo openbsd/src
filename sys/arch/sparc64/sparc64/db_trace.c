@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.3 2002/03/14 01:26:45 millert Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.4 2002/03/14 03:16:01 millert Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.23 2001/07/10 06:06:16 eeh Exp $ */
 
 /*
@@ -526,7 +526,7 @@ db_dump_ts(addr, have_addr, count, modif)
 	for (i=0; i<tl; i++) {
 		printf("%d tt=%lx tstate=%lx tpc=%p tnpc=%p\n",
 		       i+1, (long)ts[i].tt, (u_long)ts[i].tstate,
-		       (void*)(u_long)ts[i].tpc, (void*)(u_long)ts[i].tnpc);
+		       (void *)(u_long)ts[i].tpc, (void *)(u_long)ts[i].tnpc);
 	}
 
 }

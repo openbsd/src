@@ -1,4 +1,4 @@
-/* $OpenBSD: pci_6600.c,v 1.8 2002/03/14 01:26:27 millert Exp $ */
+/* $OpenBSD: pci_6600.c,v 1.9 2002/03/14 03:15:50 millert Exp $ */
 /* $NetBSD: pci_6600.c,v 1.5 2000/06/06 00:50:15 thorpej Exp $ */
 
 /*-
@@ -77,14 +77,14 @@ static char *irqtype = "6600 irq";
 static struct tsp_config *sioprimary;
 
 void dec_6600_intr_disestablish(void *, void *);
-void *dec_6600_intr_establish __P((
-    void *, pci_intr_handle_t, int, int (*func)(void *), void *, char *));
+void *dec_6600_intr_establish(void *, pci_intr_handle_t, int,
+    int (*func)(void *), void *, char *);
 const char *dec_6600_intr_string(void *, pci_intr_handle_t);
 int dec_6600_intr_line(void *, pci_intr_handle_t);
 const struct evcnt *dec_6600_intr_evcnt(void *, pci_intr_handle_t);
 int dec_6600_intr_map(void *, pcitag_t, int, int, pci_intr_handle_t *);
-void *dec_6600_pciide_compat_intr_establish __P((void *, struct device *,
-    struct pci_attach_args *, int, int (*)(void *), void *));
+void *dec_6600_pciide_compat_intr_establish(void *, struct device *,
+    struct pci_attach_args *, int, int (*)(void *), void *);
 void  dec_6600_pciide_compat_intr_disestablish(void *, void *);
 
 struct alpha_shared_intr *dec_6600_pci_intr;

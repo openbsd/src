@@ -1,4 +1,4 @@
-/*	$OpenBSD: ebus.c,v 1.8 2002/03/14 01:26:44 millert Exp $	*/
+/*	$OpenBSD: ebus.c,v 1.9 2002/03/14 03:16:00 millert Exp $	*/
 /*	$NetBSD: ebus.c,v 1.24 2001/07/25 03:49:54 eeh Exp $	*/
 
 /*
@@ -103,8 +103,8 @@ static paddr_t ebus_bus_mmap(bus_space_tag_t, bus_addr_t, off_t, int, int);
 static int _ebus_bus_map(bus_space_tag_t, bus_type_t, bus_addr_t,
 				bus_size_t, int, vaddr_t,
 				bus_space_handle_t *);
-static void *ebus_intr_establish __P((bus_space_tag_t, int, int, int,
-				int (*)(void *), void *));
+static void *ebus_intr_establish(bus_space_tag_t, int, int, int,
+				int (*)(void *), void *);
 
 static int ebus_dmamap_load(bus_dma_tag_t, bus_dmamap_t, void *,
 			  bus_size_t, struct proc *, int);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: auich.c,v 1.23 2002/03/14 01:26:58 millert Exp $	*/
+/*	$OpenBSD: auich.c,v 1.24 2002/03/14 03:16:06 millert Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Michael Shalayeff
@@ -226,10 +226,10 @@ void auich_freem(void *, void *, int);
 size_t auich_round_buffersize(void *, int, size_t);
 paddr_t auich_mappage(void *, void *, off_t, int);
 int auich_get_props(void *);
-int auich_trigger_output __P((void *, void *, void *, int, void (*)(void *),
-    void *, struct audio_params *));
-int auich_trigger_input __P((void *, void *, void *, int, void (*)(void *),
-    void *, struct audio_params *));
+int auich_trigger_output(void *, void *, void *, int, void (*)(void *),
+    void *, struct audio_params *);
+int auich_trigger_input(void *, void *, void *, int, void (*)(void *),
+    void *, struct audio_params *);
 
 void auich_powerhook(int, void *);
 
@@ -347,7 +347,7 @@ auich_attach(parent, self, aux)
 	printf(": %s %s\n", intrstr, sc->sc_audev.name);
 
 	/* allocate dma lists */
-#define	a(a)	(void*)(((u_long)(a) + sizeof(*(a)) - 1) & ~(sizeof(*(a))-1))
+#define	a(a)	(void *)(((u_long)(a) + sizeof(*(a)) - 1) & ~(sizeof(*(a))-1))
 	sc->dmalist_pcmo = sc->dmap_pcmo = a(sc->dmasto_pcmo);
 	sc->dmalist_pcmi = sc->dmap_pcmi = a(sc->dmasto_pcmi);
 	sc->dmalist_mici = sc->dmap_mici = a(sc->dmasto_mici);

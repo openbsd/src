@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.4 2002/03/14 01:26:37 millert Exp $	*/
+/*	$OpenBSD: boot.c,v 1.5 2002/03/14 03:15:56 millert Exp $	*/
 /*	$NetBSD: boot.c,v 1.1 1997/04/16 20:29:17 thorpej Exp $	*/
 
 /*
@@ -245,7 +245,7 @@ main()
 	ssym = (void *)marks[MARK_SYM];
 	esym = (void *)marks[MARK_END];
 
-	chain ((void*)entry, bootline, ssym, esym);
+	chain ((void *)entry, bootline, ssym, esym);
 
 	_rtt();
 	return 0;

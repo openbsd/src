@@ -1,4 +1,4 @@
-/*	$OpenBSD: tmscp.c,v 1.1 2000/04/27 02:26:25 bjc Exp $ */
+/*	$OpenBSD: tmscp.c,v 1.2 2002/03/14 03:16:02 millert Exp $ */
 /*	$NetBSD: tmscp.c,v 1.3 1999/06/30 18:19:26 ragge Exp $ */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
@@ -95,11 +95,11 @@ tmscpopen(f, adapt, ctlr, unit, part)
 	ra->udaddr=uioaddr[adapt]+tmsaddr;
 	ra->ubaddr=(int)ubaaddr[adapt];
 	ra->unit=unit;
-	udacsr=(void*)ra->udaddr;
+	udacsr=(void *)ra->udaddr;
 	nisse=((u_int *)ubaaddr[adapt]) + 512;
 	nisse[494]=PG_V|(((u_int)&uda)>>9);
 	nisse[495]=nisse[494]+1;
-	ubauda=(void*)0x3dc00+(((u_int)(&uda))&0x1ff);
+	ubauda=(void *)0x3dc00+(((u_int)(&uda))&0x1ff);
 
 	/*
 	 * Init of this tmscp ctlr.
@@ -165,7 +165,7 @@ tmscpstrategy(ra, func, dblk, size, buf, rsize)
 	u_int size, *rsize;
 {
 	u_int i,j,pfnum, mapnr, nsize, bn, cn, sn, tn;
-	volatile struct udadevice *udadev=(void*)ra->udaddr;
+	volatile struct udadevice *udadev=(void *)ra->udaddr;
 	volatile u_int *ptmapp = (u_int *)ra->ubaddr + 512;
 	volatile int hej;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmes.c,v 1.8 2002/03/14 01:26:39 millert Exp $ */
+/*	$OpenBSD: vmes.c,v 1.9 2002/03/14 03:15:57 millert Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -59,7 +59,7 @@ struct cfdriver vmes_cd = {
         NULL, "vmes", DV_DULL, 0
 };
 
-int vmesscan(struct device *, void *, void*);
+int vmesscan(struct device *, void *, void *);
 int vmesopen(dev_t, int, int);
 int vmesclose(dev_t, int, int);
 int vmesioctl(dev_t, int, caddr_t, int, struct proc *);

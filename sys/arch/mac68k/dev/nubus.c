@@ -1,4 +1,4 @@
-/*	$OpenBSD: nubus.c,v 1.25 2002/03/14 01:26:35 millert Exp $	*/
+/*	$OpenBSD: nubus.c,v 1.26 2002/03/14 03:15:55 millert Exp $	*/
 /*	$NetBSD: nubus.c,v 1.35 1997/04/22 20:20:32 scottr Exp $	*/
 
 /*
@@ -833,5 +833,5 @@ nubus_mapin(paddr, sz)
 #endif
 	pmap_update(pmap_kernel());
 
-	return ((char*)retval);
+	return ((char *)retval);
 }

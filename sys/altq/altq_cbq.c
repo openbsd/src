@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_cbq.c,v 1.3 2002/03/14 01:26:26 millert Exp $	*/
+/*	$OpenBSD: altq_cbq.c,v 1.4 2002/03/14 03:15:50 millert Exp $	*/
 /*	$KAME: altq_cbq.c,v 1.9 2000/12/14 08:12:45 thorpej Exp $	*/
 
 /*
@@ -63,7 +63,7 @@ static int	cbq_add_class(struct cbq_add_class *);
 static int	cbq_delete_class(struct cbq_delete_class *);
 static int	cbq_modify_class(struct cbq_modify_class *);
 static int 	cbq_class_create(cbq_state_t *, struct cbq_add_class *,
-				      struct rm_class *, struct rm_class *);
+				 struct rm_class *, struct rm_class *);
 static int	cbq_class_destroy(cbq_state_t *, struct rm_class *);
 static struct rm_class  *clh_to_clp(cbq_state_t *, u_long);
 static int	cbq_add_filter(struct cbq_add_filter *);
@@ -76,7 +76,7 @@ static int	cbq_set_enable(struct cbq_interface *, int);
 static int	cbq_ifattach(struct cbq_interface *);
 static int	cbq_ifdetach(struct cbq_interface *);
 static int	cbq_enqueue(struct ifaltq *, struct mbuf *,
-				 struct altq_pktattr *);
+			    struct altq_pktattr *);
 static struct mbuf 	*cbq_dequeue(struct ifaltq *, int);
 static void	cbqrestart(struct ifaltq *);
 static void 	get_class_stats(class_stats_t *, struct rm_class *);

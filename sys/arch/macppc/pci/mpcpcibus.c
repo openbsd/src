@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpcpcibus.c,v 1.8 2002/03/14 01:26:37 millert Exp $ */
+/*	$OpenBSD: mpcpcibus.c,v 1.9 2002/03/14 03:15:56 millert Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -78,8 +78,8 @@ void	 mpc_conf_write(void *, pcitag_t, int, pcireg_t);
 int      mpc_intr_map(void *, pcitag_t, int, int, pci_intr_handle_t *);
 const char *mpc_intr_string(void *, pci_intr_handle_t);
 int	 mpc_intr_line(void *, pci_intr_handle_t);
-void     *mpc_intr_establish __P((void *, pci_intr_handle_t,
-            int, int (*func)(void *), void *, char *));
+void     *mpc_intr_establish(void *, pci_intr_handle_t,
+            int, int (*func)(void *), void *, char *);
 void     mpc_intr_disestablish(void *, void *);
 int      mpc_ether_hw_addr(struct ppc_pci_chipset *, u_int8_t *);
 u_int32_t mpc_gen_config_reg(void *cpv, pcitag_t tag, int offset);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: raster.h,v 1.3 1997/11/07 08:07:38 niklas Exp $ */
+/*	$OpenBSD: raster.h,v 1.4 2002/03/14 03:16:07 millert Exp $ */
 /*	$NetBSD: raster.h,v 1.3 1995/11/24 23:50:51 cgd Exp $ */
 
 /*-
@@ -95,9 +95,9 @@ struct raster {
 /* Colormap struct. */
 struct raster_colormap {
     int length;
-    u_char* red;
-    u_char* grn;
-    u_char* blu;
+    u_char *red;
+    u_char *grn;
+    u_char *blu;
     };
 
 /* Font character struct. */
@@ -210,13 +210,13 @@ extern int raster_replsrc ARGS(( struct raster* dst, int dx, int dy, int w, int 
 
 /* Raster text routines */
 
-extern struct raster_font* raster_fontopen ARGS(( char* fontname ));
+extern struct raster_font* raster_fontopen ARGS(( char *fontname ));
 /* Opens a font. Returns (struct raster_font*) 0 on failure. */
 
-extern int raster_text ARGS(( struct raster* r, int x, int y, int rop, struct raster_font* rf, unsigned char* text ));
+extern int raster_text ARGS(( struct raster* r, int x, int y, int rop, struct raster_font* rf, unsigned char *text ));
 /* Draws text.  Returns 0 on success, -1 on failure. */
 
-extern int raster_textn ARGS(( struct raster* r, int x, int y, int rop, struct raster_font* rf, unsigned char* text, int len ));
+extern int raster_textn ARGS(( struct raster* r, int x, int y, int rop, struct raster_font* rf, unsigned char *text, int len ));
 /* Draws n characters of text.  Returns 0 on success, -1 on failure. */
 
 extern void raster_fontclose ARGS(( struct raster_font* rf ));
@@ -225,7 +225,7 @@ extern void raster_fontclose ARGS(( struct raster_font* rf ));
 
 /* Frame buffer routines. */
 
-extern struct raster* raster_open ARGS(( char* fbname ));
+extern struct raster* raster_open ARGS(( char *fbname ));
 /* Opens a frame buffer as a raster.  Returns (struct raster*) 0 on failure. */
 
 extern struct raster* raster_coloropen ARGS(( void ));

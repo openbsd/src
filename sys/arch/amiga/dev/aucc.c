@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucc.c,v 1.7 2002/03/14 01:26:28 millert Exp $	*/
+/*	$OpenBSD: aucc.c,v 1.8 2002/03/14 03:15:51 millert Exp $	*/
 /*	$NetBSD: aucc.c,v 1.22 1998/01/12 10:39:10 thorpej Exp $	*/
 
 /*
@@ -165,10 +165,8 @@ int	aucc_set_out_sr(void *, u_long);
 int	aucc_query_encoding(void *, struct audio_encoding *);
 int	aucc_round_blocksize(void *, int);
 int	aucc_commit_settings(void *);
-int	aucc_start_output __P((void *, void *, int, void (*)(void *),
-	    void *));
-int	aucc_start_input __P((void *, void *, int, void (*)(void *),
-	    void *));
+int	aucc_start_output(void *, void *, int, void (*)(void *), void *);
+int	aucc_start_input(void *, void *, int, void (*)(void *), void *);
 int	aucc_halt_output(void *);
 int	aucc_halt_input(void *);
 int	aucc_getdev(void *, struct audio_device *);

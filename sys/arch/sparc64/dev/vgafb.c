@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.6 2002/03/14 01:26:44 millert Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.7 2002/03/14 03:16:00 millert Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -102,8 +102,8 @@ int vgafb_ioctl(void *, u_long, caddr_t, int, struct proc *);
 int vgafb_alloc_screen(void *, const struct wsscreen_descr *, void **,
     int *, int *, long *);
 void vgafb_free_screen(void *, void *);
-int vgafb_show_screen __P((void *, void *, int,
-    void (*cb)(void *, int, int), void *));
+int vgafb_show_screen(void *, void *, int,
+    void (*cb)(void *, int, int), void *);
 paddr_t vgafb_mmap(void *, off_t, int);
 int vgafb_is_console(int);
 int vgafb_getcmap(struct vgafb_softc *, struct wsdisplay_cmap *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: openpic.c,v 1.7 2002/03/14 01:26:41 millert Exp $	*/
+/*	$OpenBSD: openpic.c,v 1.8 2002/03/14 03:15:58 millert Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -174,8 +174,8 @@ static int i8259_dummy (void *arg);
 
 typedef int mac_intr_handle_t;
 
-typedef void     *(intr_establish_t) __P((void *, mac_intr_handle_t,
-														int, int, int (*func)(void *), void *, char *));
+typedef void     *(intr_establish_t)(void *, mac_intr_handle_t,
+														int, int, int (*func)(void *), void *, char *);
 typedef void     (intr_disestablish_t)(void *, void *);
 
 static vaddr_t openpic_base;

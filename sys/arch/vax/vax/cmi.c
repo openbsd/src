@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmi.c,v 1.2 2002/03/14 01:26:48 millert Exp $	*/
+/*	$OpenBSD: cmi.c,v 1.3 2002/03/14 03:16:02 millert Exp $	*/
 /*	$NetBSD: cmi.c,v 1.2 1999/08/14 11:30:48 ragge Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden.
@@ -42,7 +42,7 @@
 
 static	int cmi_print(void *, const char *);
 static	int cmi_match(struct device *, struct cfdata *, void *);
-static	void cmi_attach(struct device *, struct device *, void*);
+static	void cmi_attach(struct device *, struct device *, void *);
 
 struct	cfattach cmi_ca = {
 	sizeof(struct device), cmi_match, cmi_attach
@@ -93,7 +93,7 @@ cmi_attach(parent, self, aux)
 			vax_unmap_physmem((vaddr_t)sa.nexaddr, NEXPAGES);
 		} else {
 			sa.type = NEX_MEM16;
-			config_found(self, (void*)&sa, cmi_print);
+			config_found(self, (void *)&sa, cmi_print);
 		}
 	}
 
@@ -107,7 +107,7 @@ cmi_attach(parent, self, aux)
 			vax_unmap_physmem((vaddr_t)sa.nexaddr, NEXPAGES);
 		} else {
 			sa.type = NEX_MBA;
-			config_found(self, (void*)&sa, cmi_print);
+			config_found(self, (void *)&sa, cmi_print);
 		}
 	}
 
@@ -118,7 +118,7 @@ cmi_attach(parent, self, aux)
 	sa.nexaddr = (struct nexus *)vax_map_physmem(NEX750 +
 	    sizeof(struct nexus) * sa.nexnum, NEXPAGES);
 	sa.type = NEX_UBA0;
-	config_found(self, (void*)&sa, cmi_print);
+	config_found(self, (void *)&sa, cmi_print);
 
 	sa.nexnum = 9;
 	sa.nexaddr = (struct nexus *)vax_map_physmem(NEX750 +
@@ -127,5 +127,5 @@ cmi_attach(parent, self, aux)
 	if (badaddr((caddr_t)sa.nexaddr, 4))
 		vax_unmap_physmem((vaddr_t)sa.nexaddr, NEXPAGES);
 	else
-		config_found(self, (void*)&sa, cmi_print);
+		config_found(self, (void *)&sa, cmi_print);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.2 2001/08/20 20:23:53 jason Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.3 2002/03/14 03:16:01 millert Exp $	*/
 /*	$NetBSD: db_disasm.c,v 1.9 2000/08/16 11:29:42 pk Exp $ */
 
 /*
@@ -114,18 +114,18 @@
 
 struct sparc_insn {
 	  unsigned int match;
-	  char* name;
-	  char* format;
+	  char *name;
+	  char *format;
 };
 
-char* regs[] = {
+char *regs[] = {
 	"g0", "g1", "g2", "g3", "g4", "g5", "g6", "g7",
 	"o0", "o1", "o2", "o3", "o4", "o5", "sp", "o7",
 	"l0", "l1", "l2", "l3", "l4", "l5", "l6", "l7",
 	"i0", "i1", "i2", "i3", "i4", "i5", "fp", "i7"
 };
 
-char* priv_regs[] = {
+char *priv_regs[] = {
 	"tpc", "tnpc", "tstate", "tt", "tick", "tba", "pstate", "tl",
 	"pil", "cwp", "cansave", "canrestore", "cleanwin", "otherwin",
 	"wstate", "fq",
@@ -133,18 +133,18 @@ char* priv_regs[] = {
 	"", "", "", "", "", "", "", "ver"
 };
 
-char* state_regs[] = {
+char *state_regs[] = {
 	"y", "", "ccr", "asi", "tick", "pc", "fprs", "asr",
 	"", "", "", "", "", "", "", "",
 	"pcr", "pic", "dcr", "gsr", "set_softint", "clr_softint", "softint", "tick_cmpr", "",
 	"", "", "", "", "", "", "", ""
 };
 
-char* ccodes[] = {
+char *ccodes[] = {
 	"fcc0", "fcc1", "fcc2", "fcc3", "icc", "", "xcc", ""
 };
 
-char* prefetch[] = {
+char *prefetch[] = {
 	"n_reads", "one_read", "n_writes", "one_write", "page"
 };
 
@@ -882,7 +882,7 @@ db_disasm(loc, altfmt)
 
 	unsigned int insn, you_lose, bitmask;
 	int matchp;
-	char* f_ptr, *cp;
+	char *f_ptr, *cp;
 
 	you_lose = 0;
 	matchp = 0;

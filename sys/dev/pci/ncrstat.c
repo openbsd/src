@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncrstat.c,v 1.3 1997/02/23 06:06:25 millert Exp $	*/
+/*	$OpenBSD: ncrstat.c,v 1.4 2002/03/14 03:16:06 millert Exp $	*/
 /*	$NetBSD: ncrstat.c,v 1.7 1996/03/17 00:55:36 thorpej Exp $	*/
 
 /**************************************************************************
@@ -66,14 +66,12 @@
 #if defined(__NetBSD__) || defined(__OpenBSD__) || (__FreeBSD__ >= 2)
 kvm_t	*kvm;
 #define	KVM_NLIST(n)		(kvm_nlist(kvm, (n)) >= 0)
-#define	KVM_READ(o, p, l)	(kvm_read(kvm, (o), (void*)(p), (l)) == (l))
+#define	KVM_READ(o, p, l)	(kvm_read(kvm, (o), (void *)(p), (l)) == (l))
 #else
 #define	KVM_NLIST(n)		(kvm_nlist((n)) >= 0)
-#define	KVM_READ(o, p, l)	(kvm_read((void*)(o), (p), (l)) == (l))
+#define	KVM_READ(o, p, l)	(kvm_read((void *)(o), (p), (l)) == (l))
 #endif
 
-extern void  exit();
-extern char* strerror (int num);
 
 /*===========================================================
 **
@@ -314,7 +312,7 @@ void set_lun_mask(struct tcb * tp)
 		if (tp->lp[l]) lun_mask |= (1<<l);
 }
 
-void printc (u_char*p, int l)
+void printc (u_char *p, int l)
 {
 	for (;l>0;l--) {
 		char c=*p++;
@@ -421,7 +419,7 @@ do_info(void)
 		if (verbose<1) continue;
 
 		for (i=0; i<8; i++) {
-			char* (class[10])={
+			char *(class[10])={
 			"disk","tape","printer","processor",
 			"worm", "cdrom", "scanner", "optical disk",
 			"media changer", "communication device"};
@@ -625,7 +623,7 @@ do_profile(void)
 */
 
 static	int kernelwritefile;
-static	char* kernelwritefilename = _PATH_KMEM;
+static	char *kernelwritefilename = _PATH_KMEM;
 
 void openkernelwritefile(void)
 {
@@ -743,7 +741,7 @@ void do_set (char * arg)
 	};
 
 	if (!strncmp(arg, "wide=", 5)) {
-		u_char t = strtoul (arg+5, (char**)0, 0);
+		u_char t = strtoul (arg+5, (char **)0, 0);
 		if (t<=1) {
 			user.data = t;
 			user.cmd  = UC_SETWIDE;
@@ -751,7 +749,7 @@ void do_set (char * arg)
 	};
 
 	if (!strncmp(arg, "tags=", 5)) {
-		u_char t = strtoul (arg+5, (char**)0, 0);
+		u_char t = strtoul (arg+5, (char **)0, 0);
 		if (t<=SCSI_NCR_MAX_TAGS) {
 			user.data = t;
 			user.cmd  = UC_SETTAGS;
@@ -759,7 +757,7 @@ void do_set (char * arg)
 	};
 
 	if (!strncmp(arg, "flags=", 6)) {
-		u_char t = strtoul (arg+6, (char**)0, 0);
+		u_char t = strtoul (arg+6, (char **)0, 0);
 		if (t<=0xff) {
 			user.data = t;
 			user.cmd  = UC_SETFLAG;
@@ -767,7 +765,7 @@ void do_set (char * arg)
 	};
 
 	if (!strncmp(arg, "debug=", 6)) {
-		user.data = strtoul (arg+6, (char**)0, 0);
+		user.data = strtoul (arg+6, (char **)0, 0);
 		user.cmd  = UC_SETDEBUG;
 	};
 
@@ -979,7 +977,7 @@ void dump_table (const char * str, struct scr_tblmove * p, int l)
 	};
 }
 
-void dump_link (const char* name, struct link * link)
+void dump_link (const char *name, struct link * link)
 {
 	printf ("%s: cmd=%08x pa=%08x %s\n",
 	name, link->l_cmd, link->l_paddr, sn(link->l_paddr));
@@ -994,7 +992,7 @@ void dump_link (const char* name, struct link * link)
 **================================================================
 */
 
-void dump_tstamp (const char* name, struct tstamp * p)
+void dump_tstamp (const char *name, struct tstamp * p)
 #define P(id,fld)\
 	if (p->fld.tv_sec) \
 		printf ("%s: "id" at %s.%06d",\
@@ -1014,7 +1012,7 @@ void dump_tstamp (const char* name, struct tstamp * p)
 
 
 
-void dump_profile (const char* name, struct profile * p)
+void dump_profile (const char *name, struct profile * p)
 {
 	printf ("%s: %10d transfers.\n"        ,name,p->num_trans);
 	printf ("%s: %10d bytes transferred.\n",name,p->num_bytes);
@@ -1040,11 +1038,11 @@ void dump_profile (const char* name, struct profile * p)
 
 static void dump_reg(struct ncr_reg * rp)
 {
-	u_char *reg = (u_char*) rp;
+	u_char *reg = (u_char *) rp;
 #define l(i)  (reg[i]+(reg[i+1]<<8ul)+(reg[i+2]<<16ul)+(reg[i+3]<<24ul))
 	int ad;
 
-	char*(phasename[8])={"DATA-OUT","DATA-IN","COMMAND","STATUS",
+	char *(phasename[8])={"DATA-OUT","DATA-IN","COMMAND","STATUS",
 				"ILG-OUT","ILG-IN","MESSAGE-OUT","MESSAGE-IN"};
 	for (ad=0x00;ad<0x80;ad++) {
 		switch (ad % 16) {

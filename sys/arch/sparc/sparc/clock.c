@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.16 2002/03/14 01:26:44 millert Exp $	*/
+/*	$OpenBSD: clock.c,v 1.17 2002/03/14 03:16:00 millert Exp $	*/
 /*	$NetBSD: clock.c,v 1.52 1997/05/24 20:16:05 pk Exp $ */
 
 /*
@@ -1043,7 +1043,7 @@ oclk_get_dt(dt)
         dt++;   /* end marker */
         do {
                 *dst++ = *src++;
-        } while (dst < (char*)dt);
+        } while (dst < (char *)dt);
 
         i7->clk_cmd_reg =
                 intersil_command(INTERSIL_CMD_RUN, INTERSIL_CMD_IENABLE);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: openfirm.c,v 1.6 2002/03/14 01:26:45 millert Exp $	*/
+/*	$OpenBSD: openfirm.c,v 1.7 2002/03/14 03:16:01 millert Exp $	*/
 /*	$NetBSD: openfirm.c,v 1.13 2001/06/21 00:08:02 eeh Exp $	*/
 
 /*
@@ -353,7 +353,7 @@ OF_call_method(method, ihandle, nargs, nreturns, va_alist)
 	args.method = ADR2CELL(method);
 	args.ihandle = HDL2CELL(ihandle);
 	va_start(ap, nreturns);
-	for (ip = (long*)(args.args_n_results + (n = nargs)); --n >= 0;)
+	for (ip = (long *)(args.args_n_results + (n = nargs)); --n >= 0;)
 		*--ip = va_arg(ap, unsigned long);
 	if (openfirmware(&args) == -1) {
 		va_end(ap);
@@ -363,7 +363,7 @@ OF_call_method(method, ihandle, nargs, nreturns, va_alist)
 		va_end(ap);
 		return args.args_n_results[nargs];
 	}
-	for (ip = (long*)(args.args_n_results + nargs + (n = args.nreturns)); --n > 0;)
+	for (ip = (long *)(args.args_n_results + nargs + (n = args.nreturns)); --n > 0;)
 		*va_arg(ap, unsigned long *) = *--ip;
 	va_end(ap);
 	return 0;
@@ -399,7 +399,7 @@ OF_call_method_1(method, ihandle, nargs, va_alist)
 	args.method = ADR2CELL(method);
 	args.ihandle = HDL2CELL(ihandle);
 	va_start(ap, nargs);
-	for (ip = (long*)(args.args_n_results + (n = nargs)); --n >= 0;)
+	for (ip = (long *)(args.args_n_results + (n = nargs)); --n >= 0;)
 		*--ip = va_arg(ap, unsigned long);
 	va_end(ap);
 	if (openfirmware(&args) == -1) {
@@ -457,7 +457,7 @@ OF_close(handle)
 
 int
 OF_test(service)
-	char* service;
+	char *service;
 {
 	struct {
 		cell_t name;
@@ -479,7 +479,7 @@ OF_test(service)
 int
 OF_test_method(service, method)
 	int service;
-	char* method;
+	char *method;
 {
 	struct {
 		cell_t name;
@@ -699,8 +699,8 @@ void
 	args.nreturns = 1;
 	args.newfunc = ADR2CELL(newfunc);
 	if (openfirmware(&args) == -1)
-		return (void*)(long)-1;
-	return (void*)(long)args.oldfunc;
+		return (void *)(long)-1;
+	return (void *)(long)args.oldfunc;
 }
 
 void 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: gscbusvar.h,v 1.6 2002/03/14 01:26:31 millert Exp $	*/
+/*	$OpenBSD: gscbusvar.h,v 1.7 2002/03/14 03:15:53 millert Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -74,9 +74,9 @@ struct gsc_softc {
 	u_int32_t sc_intrmask;
 };
 
-void *gsc_intr_establish __P((struct gsc_softc *sc, int pri, int irq,
-			       int (*handler)(void *v), void *arg,
-			       struct device *name));
+void *gsc_intr_establish(struct gsc_softc *sc, int pri, int irq,
+			 int (*handler)(void *v), void *arg,
+			 struct device *name);
 void gsc_intr_disestablish(struct gsc_softc *sc, void *v);
 int gsc_intr(void *);
 

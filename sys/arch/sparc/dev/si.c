@@ -1,4 +1,4 @@
-/*	$OpenBSD: si.c,v 1.15 2002/03/14 01:26:43 millert Exp $	*/
+/*	$OpenBSD: si.c,v 1.16 2002/03/14 03:15:59 millert Exp $	*/
 /*	$NetBSD: si.c,v 1.38 1997/08/27 11:24:20 bouyer Exp $	*/
 
 /*-
@@ -669,7 +669,7 @@ found:
 
 	dh = &sc->sc_dma[i];
 	dh->dh_flags = SIDH_BUSY;
-	dh->dh_addr = (u_char*) addr;
+	dh->dh_addr = (u_char *) addr;
 	dh->dh_maplen  = xlen;
 	dh->dh_dvma = 0;
 

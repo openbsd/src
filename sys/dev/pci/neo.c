@@ -1,4 +1,4 @@
-/*      $OpenBSD: neo.c,v 1.11 2002/03/14 01:26:59 millert Exp $       */
+/*      $OpenBSD: neo.c,v 1.12 2002/03/14 03:16:06 millert Exp $       */
 
 /*
  * Copyright (c) 1999 Cameron Grant <gandalf@vilnya.demon.co.uk>
@@ -183,10 +183,10 @@ void	neo_close(void *);
 int	neo_query_encoding(void *, struct audio_encoding *);
 int	neo_set_params(void *, int, int, struct audio_params *, struct audio_params *);
 int	neo_round_blocksize(void *, int);
-int	neo_trigger_output __P((void *, void *, void *, int, void (*)(void *),
-	    void *, struct audio_params *));
-int	neo_trigger_input __P((void *, void *, void *, int, void (*)(void *),
-	    void *, struct audio_params *));
+int	neo_trigger_output(void *, void *, void *, int, void (*)(void *),
+	    void *, struct audio_params *);
+int	neo_trigger_input(void *, void *, void *, int, void (*)(void *),
+	    void *, struct audio_params *);
 int	neo_halt_output(void *);
 int	neo_halt_input(void *);
 int	neo_getdev(void *, struct audio_device *);
@@ -922,7 +922,7 @@ neo_trigger_output(addr, start, end, blksize, intr, arg, param)
 	if (param->channels == 2)
 		ssz <<= 1;
 
-	sc->pbufsize = ((char*)end - (char *)start);
+	sc->pbufsize = ((char *)end - (char *)start);
 	sc->pblksize = blksize;
 	sc->pwmark = blksize;
 
@@ -958,7 +958,7 @@ neo_trigger_input(addr, start, end, blksize, intr, arg, param)
 	if (param->channels == 2)
 		ssz <<= 1;
 
-	sc->rbufsize = ((char*)end - (char *)start);
+	sc->rbufsize = ((char *)end - (char *)start);
 	sc->rblksize = blksize;
 	sc->rwmark = blksize;
 

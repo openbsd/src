@@ -1,4 +1,4 @@
-/*	$OpenBSD: systm.h,v 1.47 2002/03/14 01:27:14 millert Exp $	*/
+/*	$OpenBSD: systm.h,v 1.48 2002/03/14 03:16:12 millert Exp $	*/
 /*	$NetBSD: systm.h,v 1.50 1996/06/09 04:55:09 briggs Exp $	*/
 
 /*-
@@ -252,8 +252,7 @@ TAILQ_HEAD(hook_desc_head, hook_desc);
 
 extern struct hook_desc_head shutdownhook_list, startuphook_list;
 
-void	*hook_establish __P((struct hook_desc_head *, int, void (*)(void *),
-    void *));
+void	*hook_establish(struct hook_desc_head *, int, void (*)(void *), void *);
 void	hook_disestablish(struct hook_desc_head *, void *);
 void	dohooks(struct hook_desc_head *);
 
@@ -272,7 +271,7 @@ void	dohooks(struct hook_desc_head *);
 /*
  * Power management hooks.
  */
-void	*powerhook_establish __P((void (*)(int, void *), void *));
+void	*powerhook_establish(void (*)(int, void *), void *);
 void	powerhook_disestablish(void *);
 void	dopowerhooks(int);
 #define PWR_RESUME 0

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_aue.c,v 1.18 2002/01/03 22:23:43 deraadt Exp $ */
+/*	$OpenBSD: if_aue.c,v 1.19 2002/03/14 03:16:08 millert Exp $ */
 /*	$NetBSD: if_aue.c,v 1.67 2001/10/10 02:14:16 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1103,7 +1103,7 @@ aue_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 
 	usbd_get_xfer_status(xfer, NULL, NULL, &total_len, NULL);
 
-	memcpy(mtod(c->aue_mbuf, char*), c->aue_buf, total_len);
+	memcpy(mtod(c->aue_mbuf, char *), c->aue_buf, total_len);
 
 	if (total_len <= 4 + ETHER_CRC_LEN) {
 		ifp->if_ierrors++;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: upavar.h,v 1.3 2002/03/14 01:26:44 millert Exp $	*/
+/*	$OpenBSD: upavar.h,v 1.4 2002/03/14 03:16:00 millert Exp $	*/
 /*	$NetBSD: upavar.h,v 1.2 2000/01/14 14:33:31 pk Exp $ */
 
 /*-
@@ -118,7 +118,7 @@ struct upa_attach_args {
 	int		ua_node;	/* PROM handle */
 	struct upa_reg	*ua_reg;	/* "reg" properties */
 	int		ua_nreg;
-	void*		*ua_address;	/* "address" properties */
+	void *		*ua_address;	/* "address" properties */
 	int		ua_naddress;
 	int		*ua_interrupts;	/* "interrupts" properties */
 	int		ua_ninterrupts;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass.c,v 1.13 2002/03/14 01:27:03 millert Exp $ */
+/*	$OpenBSD: umass.c,v 1.14 2002/03/14 03:16:08 millert Exp $ */
 /*	$NetBSD: umass.c,v 1.49 2001/01/21 18:56:38 augustss Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
@@ -1476,7 +1476,7 @@ umass_bbb_transfer(struct umass_softc *sc, int lun, void *cmd, int cmdlen,
 	static int dCBWtag = 42;	/* unique for CBW of transfer */
 
 	DPRINTF(UDMASS_BBB,("%s: umass_bbb_transfer cmd=0x%02x\n",
-		USBDEVNAME(sc->sc_dev), *(u_char*)cmd));
+		USBDEVNAME(sc->sc_dev), *(u_char *)cmd));
 
 	KASSERT(sc->proto & PROTO_BBB,
 		("sc->proto == 0x%02x wrong for umass_bbb_transfer\n",
@@ -1963,7 +1963,7 @@ umass_cbi_transfer(struct umass_softc *sc, int lun,
 		transfer_cb_f cb, void *priv)
 {
 	DPRINTF(UDMASS_CBI,("%s: umass_cbi_transfer cmd=0x%02x, len=%d\n",
-		USBDEVNAME(sc->sc_dev), *(u_char*)cmd, datalen));
+		USBDEVNAME(sc->sc_dev), *(u_char *)cmd, datalen));
 
 	KASSERT(sc->proto & (PROTO_CBI|PROTO_CBI_I),
 		("sc->proto == 0x%02x wrong for umass_cbi_transfer\n",

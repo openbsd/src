@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_userconf.c,v 1.27 2002/03/14 01:27:04 millert Exp $	*/
+/*	$OpenBSD: subr_userconf.c,v 1.28 2002/03/14 03:16:09 millert Exp $	*/
 
 /*
  * Copyright (c) 1996-2001 Mats O Jansson <moj@stacken.kth.se>
@@ -67,7 +67,7 @@ char userconf_histbuf[40];
 
 void userconf_init(void);
 int userconf_more(void);
-void userconf_modify(char *, int*);
+void userconf_modify(char *, int *);
 void userconf_hist_cmd(char);
 void userconf_hist_int(int);
 void userconf_hist_eoc(void);

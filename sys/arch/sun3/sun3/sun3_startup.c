@@ -1,4 +1,4 @@
-/*	$OpenBSD: sun3_startup.c,v 1.21 2002/03/14 01:26:47 millert Exp $	*/
+/*	$OpenBSD: sun3_startup.c,v 1.22 2002/03/14 03:16:01 millert Exp $	*/
 /*	$NetBSD: sun3_startup.c,v 1.55 1996/11/20 18:57:38 gwr Exp $	*/
 
 /*-
@@ -331,7 +331,7 @@ sun3_save_symtab(kehp)
 
 	/* Check the symtab length word. */
 	endp = end;
-	symsz = (int*)endp;
+	symsz = (int *)endp;
 	if (kehp->a_syms != *symsz) {
 		errdesc = "a_syms";
 		goto err;
@@ -340,7 +340,7 @@ sun3_save_symtab(kehp)
 	endp += *symsz;			/* past nlist array */
 
 	/* Check the string table length. */
-	strsz = (int*)endp;
+	strsz = (int *)endp;
 	if ((*strsz < 4) || (*strsz > 0x80000)) {
 		errdesc = "strsize";
 		goto err;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: advfsops.c,v 1.22 2002/03/14 01:26:25 millert Exp $	*/
+/*	$OpenBSD: advfsops.c,v 1.23 2002/03/14 03:15:49 millert Exp $	*/
 /*	$NetBSD: advfsops.c,v 1.24 1996/12/22 10:10:12 cgd Exp $	*/
 
 /*
@@ -56,8 +56,7 @@ int	 adosfs_mount(struct mount *, const char *, void *, struct nameidata *,
 int	 adosfs_start(struct mount *, int, struct proc *);
 int	 adosfs_unmount(struct mount *, int, struct proc *);
 int	 adosfs_root(struct mount *, struct vnode **);
-int	 adosfs_quotactl(struct mount *, int, uid_t, caddr_t,
-    struct proc *);
+int	 adosfs_quotactl(struct mount *, int, uid_t, caddr_t, struct proc *);
 int	 adosfs_statfs(struct mount *, struct statfs *, struct proc *);
 int	 adosfs_sync(struct mount *, int, struct ucred *, struct proc *);
 int	 adosfs_vget(struct mount *, ino_t, struct vnode **);

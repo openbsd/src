@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_blue.c,v 1.3 2002/03/14 01:26:26 millert Exp $	*/
+/*	$OpenBSD: altq_blue.c,v 1.4 2002/03/14 03:15:50 millert Exp $	*/
 /*	$KAME: altq_blue.c,v 1.7 2000/12/14 08:12:45 thorpej Exp $	*/
 
 /*
@@ -100,7 +100,7 @@ static blue_queue_t *blue_list = NULL;
 
 /* internal function prototypes */
 static int blue_enqueue(struct ifaltq *, struct mbuf *,
-			     struct altq_pktattr *);
+			struct altq_pktattr *);
 static struct mbuf *blue_dequeue(struct ifaltq *, int);
 static int drop_early(blue_t *);
 static int mark_ecn(struct mbuf *, struct altq_pktattr *, int);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ggbus.c,v 1.15 2002/03/14 01:26:29 millert Exp $	*/
+/*	$OpenBSD: ggbus.c,v 1.16 2002/03/14 03:15:52 millert Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Niklas Hallqvist
@@ -70,8 +70,8 @@ int	ggbusintr(void *);
 
 void	ggbus_attach_hook(struct device *, struct device *,
 	    struct isabus_attach_args *);
-void	*ggbus_intr_establish __P((void *, int, int, int, int (*)(void *),
-	    void *, char *));
+void	*ggbus_intr_establish(void *, int, int, int, int (*)(void *),
+	    void *, char *);
 void	ggbus_intr_disestablish(void *, void *);
 int	ggbus_intr_check(void *, int, int);
 

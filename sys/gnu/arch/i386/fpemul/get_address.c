@@ -1,4 +1,4 @@
-/*	$OpenBSD: get_address.c,v 1.1 1996/08/27 10:32:51 downsj Exp $	*/
+/*	$OpenBSD: get_address.c,v 1.2 2002/03/14 03:16:09 millert Exp $	*/
 /*
  *  get_address.c
  *
@@ -81,7 +81,7 @@
 
 static int reg_offset[] = {
 tEAX, tECX, tEDX, tEBX, tESP, tEBP, tESI, tEDI};
-#define REG_(x) (*(((int*)FPU_info) + reg_offset[(x)]))
+#define REG_(x) (*(((int *)FPU_info) + reg_offset[(x)]))
 
 void   *FPU_data_address;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.12 2002/03/14 01:26:43 millert Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.13 2002/03/14 03:16:00 millert Exp $	*/
 /*	$NetBSD: cpu.h,v 1.24 1997/03/15 22:25:15 pk Exp $ */
 
 /*
@@ -168,7 +168,7 @@ void	vmeintr_establish(int vec, int level, struct intrhand *);
  * interrupt vectors (vectors that are not shared and are handled in the
  * trap window).  Such functions must be written in assembly.
  */
-void	intr_fasttrap __P((int level, void (*vec)(void)));
+void	intr_fasttrap(int level, void (*vec)(void));
 
 /* auxreg.c */
 void led_blink(void *);
@@ -212,7 +212,7 @@ void	amd7930_trap(void);
 /* cons.c */
 int	cnrom(void);
 /* zs.c */
-void zsconsole __P((struct tty *, int, int, int (**)(struct tty *, int)));
+void zsconsole(struct tty *, int, int, int (**)(struct tty *, int));
 #ifdef KGDB
 void zs_kgdb_init(void);
 #endif
@@ -222,7 +222,7 @@ void	fb_unblank(void);
 void cache_flush(caddr_t, u_int);
 /* kgdb_stub.c */
 #ifdef KGDB
-void kgdb_attach __P((int (*)(void *), void (*)(void *, int), void *));
+void kgdb_attach(int (*)(void *), void (*)(void *, int), void *);
 void kgdb_connect(int);
 void kgdb_panic(void);
 #endif

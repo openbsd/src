@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_elf.c,v 1.4 2002/03/14 01:26:51 millert Exp $	*/
+/*	$OpenBSD: db_elf.c,v 1.5 2002/03/14 03:16:03 millert Exp $	*/
 /*	$NetBSD: db_elf.c,v 1.13 2000/07/07 21:55:18 jhawk Exp $	*/
 
 /*-
@@ -156,7 +156,7 @@ db_elf_sym_init(symsize, symtab, esymtab, name)
 	 * stabs data found when booting bsd.gdb.
 	 */
 	shp = (Elf_Shdr *)((char *)symtab + elf->e_shoff);
-	shstrtab = (char*)symtab + shp[elf->e_shstrndx].sh_offset;
+	shstrtab = (char *)symtab + shp[elf->e_shstrndx].sh_offset;
 	for (i = 0; i < elf->e_shnum; i++) {
 		if (strcmp(".strtab", shstrtab+shp[i].sh_name) == 0) {
 			strtab_start = (char *)symtab + shp[i].sh_offset;
@@ -216,10 +216,10 @@ db_elf_find_strtab(stab)
 	char *shstrtab;
 	int i;
 
-	shstrtab = (char*)elf + shp[elf->e_shstrndx].sh_offset;
+	shstrtab = (char *)elf + shp[elf->e_shstrndx].sh_offset;
 	for (i = 0; i < elf->e_shnum; i++) {
 		if (strcmp(".strtab", shstrtab+shp[i].sh_name) == 0)
-			return ((char*)elf + shp[i].sh_offset);
+			return ((char *)elf + shp[i].sh_offset);
 	}
 
 	return (NULL);

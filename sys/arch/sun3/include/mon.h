@@ -1,4 +1,4 @@
-/*	$OpenBSD: mon.h,v 1.6 2002/03/14 01:26:46 millert Exp $	*/
+/*	$OpenBSD: mon.h,v 1.7 2002/03/14 03:16:01 millert Exp $	*/
 /*	$NetBSD: mon.h,v 1.19 1996/11/20 18:57:12 gwr Exp $	*/
 
 /*-
@@ -134,7 +134,7 @@ typedef struct {
 	 */
 
 	int	(*getKey)(void);		/* Get next key if one exists */
-	int	(*initGetKey)(void*);	/* Initialize get key */
+	int	(*initGetKey)(void *);	/* Initialize get key */
 	u_int	*translation;			/* Kbd translation selector
 						   (see keyboard.h in sun
 						    monitor code) */
@@ -197,8 +197,8 @@ typedef struct {
 	 * Non-maskable interrupt  (nmi) information
 	 */
 
-	int	(*nmiAddr)(void*);		/* Addr for level 7 vector */
-	int	(*abortEntry)(void*);	/* Entry for keyboard abort */
+	int	(*nmiAddr)(void *);		/* Addr for level 7 vector */
+	int	(*abortEntry)(void *);		/* Entry for keyboard abort */
 	int	*nmiClock;			/* Counts up in msec */
 
 	/*
@@ -221,10 +221,10 @@ typedef struct {
 	long	*resetAddr;			/* where to jump on a reset */
 	long	*resetMap;			/* pgmap entry for resetaddr */
 						/* Really struct pgmapent *  */
-	int	(*exitToMon)(void);	/* Exit from user program */
+	int	(*exitToMon)(void);		/* Exit from user program */
 	u_char	**memorybitmap;			/* V1: &{0 or &bits} */
-	void	(*setcxsegmap)(int,int,int); /* Set seg in any context */
-	void	(**vector_cmd)(int, char*); /* V2: Handler for 'v' cmd */
+	void	(*setcxsegmap)(int,int,int);	/* Set seg in any context */
+	void	(**vector_cmd)(int, char *);	/* V2: Handler for 'v' cmd */
 	int	dummy1z;
 	int	dummy2z;
 	int	dummy3z;

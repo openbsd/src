@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.22 2002/03/14 01:26:52 millert Exp $ */
+/*	$OpenBSD: wd.c,v 1.23 2002/03/14 03:16:03 millert Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -201,10 +201,10 @@ void  wdgetdisklabel(dev_t dev, struct wd_softc *,
 void  wdstrategy(struct buf *);
 void  wdstart(void *);
 void  __wdstart(struct wd_softc*, struct buf *);
-void  wdrestart(void*);
+void  wdrestart(void *);
 int   wd_get_params(struct wd_softc *, u_int8_t, struct ataparams *);
 void  wd_flushcache(struct wd_softc *, int);
-void  wd_shutdown(void*);
+void  wd_shutdown(void *);
 
 struct dkdriver wddkdriver = { wdstrategy };
 

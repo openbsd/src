@@ -1,4 +1,4 @@
-/* $OpenBSD: pcdisplay.c,v 1.5 2002/03/14 01:26:56 millert Exp $ */
+/* $OpenBSD: pcdisplay.c,v 1.6 2002/03/14 03:16:05 millert Exp $ */
 /* $NetBSD: pcdisplay.c,v 1.9.4.1 2000/06/30 16:27:48 simonb Exp $ */
 
 /*
@@ -114,8 +114,8 @@ static paddr_t pcdisplay_mmap(void *, off_t, int);
 static int pcdisplay_alloc_screen(void *, const struct wsscreen_descr *,
 				       void **, int *, int *, long *);
 static void pcdisplay_free_screen(void *, void *);
-static int pcdisplay_show_screen __P((void *, void *, int,
-				      void (*) (void *, int, int), void *));
+static int pcdisplay_show_screen(void *, void *, int,
+				 void (*) (void *, int, int), void *);
 
 const struct wsdisplay_accessops pcdisplay_accessops = {
 	pcdisplay_ioctl,

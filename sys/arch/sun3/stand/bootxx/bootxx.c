@@ -1,4 +1,4 @@
-/*	$OpenBSD: bootxx.c,v 1.2 2001/07/04 08:33:44 niklas Exp $ */
+/*	$OpenBSD: bootxx.c,v 1.3 2002/03/14 03:16:01 millert Exp $ */
 /*	$NetBSD: bootxx.c,v 1.5 1995/10/13 21:44:57 gwr Exp $ */
 
 /*
@@ -83,7 +83,7 @@ main()
 		exit();
 	}
 
-	addr = (char*)LOADADDR;
+	addr = (char *)LOADADDR;
 	error = copyboot(&f, addr);
 	f.f_dev->dv_close(&f);
 	if (!error) {

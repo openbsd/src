@@ -1,4 +1,4 @@
-/*	$OpenBSD: tc_3000_300.c,v 1.7 2002/03/14 01:26:28 millert Exp $	*/
+/*	$OpenBSD: tc_3000_300.c,v 1.8 2002/03/14 03:15:51 millert Exp $	*/
 /*	$NetBSD: tc_3000_300.c,v 1.12 1996/10/13 03:00:37 christos Exp $	*/
 
 /*
@@ -44,8 +44,8 @@
 #include <alpha/tc/ioasicreg.h>
 
 void	tc_3000_300_intr_setup(void);
-void	tc_3000_300_intr_establish __P((struct device *, void *,
-	    tc_intrlevel_t, int (*)(void *), void *));
+void	tc_3000_300_intr_establish(struct device *, void *,
+	    tc_intrlevel_t, int (*)(void *), void *);
 void	tc_3000_300_intr_disestablish(struct device *, void *);
 void	tc_3000_300_iointr(void *, unsigned long);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: autri.c,v 1.6 2002/03/14 01:26:58 millert Exp $	*/
+/*	$OpenBSD: autri.c,v 1.7 2002/03/14 03:16:06 millert Exp $	*/
 
 /*
  * Copyright (c) 2001 SOMEYA Yoshihiko and KUROSAWA Takahiro.
@@ -123,20 +123,19 @@ struct cfattach autri_ca = {
 int	autri_open(void *, int);
 void	autri_close(void *);
 int	autri_query_encoding(void *, struct audio_encoding *);
-int	autri_set_params(void *, int, int, struct audio_params *, struct audio_params *);
+int	autri_set_params(void *, int, int, struct audio_params *,
+	    struct audio_params *);
 int	autri_round_blocksize(void *, int);
-int	autri_trigger_output
-    __P((void *, void *, void *, int, void (*)(void *), void *,
-    struct audio_params *));
-int	autri_trigger_input
-    __P((void *, void *, void *, int, void (*)(void *), void *,
-    struct audio_params *));
+int	autri_trigger_output(void *, void *, void *, int, void (*)(void *),
+	    void *, struct audio_params *);
+int	autri_trigger_input(void *, void *, void *, int, void (*)(void *),
+	    void *, struct audio_params *);
 int	autri_halt_output(void *);
 int	autri_halt_input(void *);
 int	autri_getdev(void *, struct audio_device *);
 int	autri_mixer_set_port(void *, mixer_ctrl_t *);
 int	autri_mixer_get_port(void *, mixer_ctrl_t *);
-void*	autri_malloc(void *, int, size_t, int, int);
+void   *autri_malloc(void *, int, size_t, int, int);
 void	autri_free(void *, void *, int);
 size_t	autri_round_buffersize(void *, int, size_t);
 paddr_t	autri_mappage(void *, void *, off_t, int);

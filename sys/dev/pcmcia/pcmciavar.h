@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcmciavar.h,v 1.15 2002/03/14 01:27:01 millert Exp $	*/
+/*	$OpenBSD: pcmciavar.h,v 1.16 2002/03/14 03:16:07 millert Exp $	*/
 /*	$NetBSD: pcmciavar.h,v 1.5 1998/07/19 17:28:17 christos Exp $	*/
 
 /*
@@ -202,8 +202,8 @@ struct pcmcia_tuple {
 void	pcmcia_read_cis(struct pcmcia_softc *);
 void	pcmcia_check_cis_quirks(struct pcmcia_softc *);
 void	pcmcia_print_cis(struct pcmcia_softc *);
-int	pcmcia_scan_cis __P((struct device * dev,
-	    int (*) (struct pcmcia_tuple *, void *), void *));
+int	pcmcia_scan_cis(struct device * dev,
+	    int (*) (struct pcmcia_tuple *, void *), void *);
 
 #define	pcmcia_cis_read_1(tuple, idx0)					\
 	(bus_space_read_1((tuple)->memt, (tuple)->memh, (tuple)->mult*(idx0)))
@@ -272,6 +272,6 @@ int	pcmcia_io_map(struct pcmcia_function *, int, bus_addr_t,
 #define	pcmcia_mem_unmap(pf, window)					\
 	(pcmcia_chip_mem_unmap((pf)->sc->pct, (pf)->sc->pch, (window)))
 
-void	*pcmcia_intr_establish __P((struct pcmcia_function *, int,
-	    int (*) (void *), void *, char *));
+void	*pcmcia_intr_establish(struct pcmcia_function *, int,
+	    int (*) (void *), void *, char *);
 void 	pcmcia_intr_disestablish(struct pcmcia_function *, void *);

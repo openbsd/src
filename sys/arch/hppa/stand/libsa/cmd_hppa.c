@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd_hppa.c,v 1.3 2002/03/14 01:26:32 millert Exp $	*/
+/*	$OpenBSD: cmd_hppa.c,v 1.4 2002/03/14 03:15:53 millert Exp $	*/
 
 /*
  * Copyright (c) 2002 Miodrag Vallat
@@ -130,7 +130,7 @@ int i_speeds[] = {
 	230400,
 };
 
-char* c_speeds[] = {
+char *c_speeds[] = {
 	"50",
 	"75",
 	"110",

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.65 2002/03/14 01:26:38 millert Exp $ */
+/*	$OpenBSD: machdep.c,v 1.66 2002/03/14 03:15:56 millert Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -1215,9 +1215,9 @@ memsize(void)
 	/*
 	 * count it up.
 	 */
-	max = (void*)MAXPHYSMEM;
-	for (look = (void*)Roundup(end, STRIDE); look < max;
-		 look = (int*)((unsigned)look + STRIDE)) {
+	max = (void *)MAXPHYSMEM;
+	for (look = (void *)Roundup(end, STRIDE); look < max;
+		 look = (int *)((unsigned)look + STRIDE)) {
 		unsigned save;
 
 		if (badvaddr((caddr_t)look, 2)) {

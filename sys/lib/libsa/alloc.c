@@ -1,4 +1,4 @@
-/*	$OpenBSD: alloc.c,v 1.5 1997/08/01 21:57:09 pefo Exp $	*/
+/*	$OpenBSD: alloc.c,v 1.6 2002/03/14 03:16:09 millert Exp $	*/
 /*	$NetBSD: alloc.c,v 1.6 1997/02/04 18:36:33 thorpej Exp $	*/
 
 /*
@@ -116,7 +116,7 @@ struct fl {
 } *freelist = (struct fl *)0;
 
 #ifdef HEAP_START
-static char *top = (char*)HEAP_START;
+static char *top = (char *)HEAP_START;
 #else
 extern char end[];
 static char *top = end;
@@ -174,7 +174,7 @@ alloc(size)
 			size = ALIGN(sizeof (struct fl *));
 		top += ALIGN(sizeof(unsigned)) + ALIGN(size);
 #ifdef HEAP_LIMIT
-		if (top > (char*)HEAP_LIMIT)
+		if (top > (char *)HEAP_LIMIT)
 		        panic("heap full (0x%lx+%u)", help, size);
 #endif
 		*(unsigned *)help = ALIGN(size);
@@ -191,7 +191,7 @@ alloc(size)
 found:
 #endif
         /* remove from freelist */
-        help = (char*)*f;
+        help = (char *)*f;
 	*f = (*f)->next;
 #ifdef ALLOC_TRACE
 	printf("=%p (origsize %u)\n", help + ALIGN(sizeof(unsigned)),
@@ -206,7 +206,7 @@ free(ptr, size)
 	unsigned size; /* only for consistence check */
 {
 	register struct fl *f =
-	    (struct fl *)((char*)ptr - ALIGN(sizeof(unsigned)));
+	    (struct fl *)((char *)ptr - ALIGN(sizeof(unsigned)));
 #ifdef ALLOC_TRACE
 	printf("free(%p, %u) (origsize %u)\n", ptr, size, f->size);
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgthree.c,v 1.12 2002/03/14 01:27:02 millert Exp $	*/
+/*	$OpenBSD: cgthree.c,v 1.13 2002/03/14 03:16:07 millert Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -160,8 +160,8 @@ int cgthree_ioctl(void *, u_long, caddr_t, int, struct proc *);
 int cgthree_alloc_screen(void *, const struct wsscreen_descr *, void **,
     int *, int *, long *);
 void cgthree_free_screen(void *, void *);
-int cgthree_show_screen __P((void *, void *, int,
-    void (*cb)(void *, int, int), void *));
+int cgthree_show_screen(void *, void *, int, void (*cb)(void *, int, int),
+    void *);
 paddr_t cgthree_mmap(void *, off_t, int);
 int cgthree_is_console(int);
 void cgthree_loadcmap(struct cgthree_softc *, u_int, u_int);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafbvar.h,v 1.3 2002/03/14 01:26:37 millert Exp $	*/
+/*	$OpenBSD: vgafbvar.h,v 1.4 2002/03/14 03:15:56 millert Exp $	*/
 /*	$NetBSD: vgavar.h,v 1.2 1996/11/23 06:06:43 cgd Exp $	*/
 
 /*
@@ -81,5 +81,5 @@ paddr_t	vgafb_mmap(void *, off_t, int);
 int	vgafb_alloc_screen(void *v, const struct wsscreen_descr *type,
 	    void **cookiep, int *curxp, int *curyp, long *attrp);
 void	vgafb_free_screen(void *v, void *cookie);
-int	vgafb_show_screen __P((void *v, void *cookie, int waitok,
-	    void (*cb)(void *, int, int), void *cbarg));
+int	vgafb_show_screen(void *v, void *cookie, int waitok,
+	    void (*cb)(void *, int, int), void *cbarg);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbdspvar.h,v 1.15 2002/03/14 01:26:56 millert Exp $	*/
+/*	$OpenBSD: sbdspvar.h,v 1.16 2002/03/14 03:16:05 millert Exp $	*/
 /*	$NetBSD: sbdspvar.h,v 1.37 1998/08/10 00:20:39 mycroft Exp $	*/
 
 /*
@@ -143,15 +143,15 @@ struct sbdsp_softc {
 
 	u_long	sc_interrupts;		/* number of interrupts taken */
 
-	int	(*sc_intr8)(void*);	/* dma completion intr handler */
+	int	(*sc_intr8)(void *);	/* dma completion intr handler */
 	void	*sc_arg8;		/* arg for sc_intr8() */
-	int	(*sc_intr16)(void*);	/* dma completion intr handler */
+	int	(*sc_intr16)(void *);	/* dma completion intr handler */
 	void	*sc_arg16;		/* arg for sc_intr16() */
-	void	(*sc_intrp)(void*);	/* PCM output intr handler */
+	void	(*sc_intrp)(void *);	/* PCM output intr handler */
 	void	*sc_argp;		/* arg for sc_intrp() */
-	void	(*sc_intrr)(void*);	/* PCM input intr handler */
+	void	(*sc_intrr)(void *);	/* PCM input intr handler */
 	void	*sc_argr;		/* arg for sc_intrr() */
-	void	(*sc_intrm)(void*, int);/* midi input intr handler */
+	void	(*sc_intrm)(void *, int);/* midi input intr handler */
 	void	*sc_argm;		/* arg for sc_intrm() */
 
 	u_int	sc_mixer_model;
@@ -212,10 +212,10 @@ int	sbdsp_get_avail_out_ports(void *);
 int	sbdsp_speaker_ctl(void *, int);
 
 int	sbdsp_commit(void *);
-int	sbdsp_trigger_output __P((void *, void *, void *, int, void (*)(void *),
-	    void *, struct audio_params *));
-int	sbdsp_trigger_input __P((void *, void *, void *, int, void (*)(void *),
-	    void *, struct audio_params *));
+int	sbdsp_trigger_output(void *, void *, void *, int, void (*)(void *),
+	    void *, struct audio_params *);
+int	sbdsp_trigger_input(void *, void *, void *, int, void (*)(void *),
+	    void *, struct audio_params *);
 
 int	sbdsp_haltdma(void *);
 
@@ -248,9 +248,9 @@ paddr_t	sb_mappage(void *, void *, off_t, int);
 int	sbdsp_get_props(void *);
 
 
-int	sbdsp_midi_open __P((void *, int,
+int	sbdsp_midi_open(void *, int,
 			     void (*iintr)(void *, int),
-			     void (*ointr)(void *), void *arg));
+			     void (*ointr)(void *), void *arg);
 void	sbdsp_midi_close(void *);
 int	sbdsp_midi_output(void *, int);
 void	sbdsp_midi_getinfo(void *, struct midi_info *);

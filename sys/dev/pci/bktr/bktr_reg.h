@@ -1,4 +1,4 @@
-/*	$OpenBSD: bktr_reg.h,v 1.4 2001/05/16 07:15:42 fgsch Exp $	*/
+/*	$OpenBSD: bktr_reg.h,v 1.5 2002/03/14 03:16:07 millert Exp $	*/
 /*
  * $FreeBSD: src/sys/dev/bktr/bktr_reg.h,v 1.42 2000/10/31 13:09:56 roger Exp $
  *
@@ -414,7 +414,7 @@ struct TVTUNER {
 
 /* description of the PHYSICAL tuner */
 struct TUNER {
-	char*		name;
+	char	       *name;
 	u_char		type;
 	u_char		pllControl[4];
 	u_char		bandLimits[ 2 ];
@@ -429,7 +429,7 @@ struct TUNER {
 #define EEPROMBLOCKSIZE		32
 struct CARDTYPE {
 	unsigned int		card_id;	/* card id (from #define's) */
-	char*			name;
+	char		       *name;
 	const struct TUNER*	tuner;		/* Tuner details */
 	u_char			tuner_pllAddr;	/* Tuner i2c address */
 	u_char			dbx;		/* Has DBX chip? */
@@ -483,12 +483,12 @@ struct bktr_i2c_softc {
 #define OUTW(bktr,offset,value) bus_space_write_2((bktr)->memt,(bktr)->memh,(offset),(value))
 #define OUTL(bktr,offset,value) bus_space_write_4((bktr)->memt,(bktr)->memh,(offset),(value))
 #else
-#define INB(bktr,offset)	*(volatile unsigned char*) ((int)((bktr)->memh)+(offset))
-#define INW(bktr,offset)	*(volatile unsigned short*)((int)((bktr)->memh)+(offset))
-#define INL(bktr,offset)	*(volatile unsigned int*)  ((int)((bktr)->memh)+(offset))
-#define OUTB(bktr,offset,value)	*(volatile unsigned char*) ((int)((bktr)->memh)+(offset)) = (value)
-#define OUTW(bktr,offset,value)	*(volatile unsigned short*)((int)((bktr)->memh)+(offset)) = (value)
-#define OUTL(bktr,offset,value)	*(volatile unsigned int*)  ((int)((bktr)->memh)+(offset)) = (value)
+#define INB(bktr,offset)	*(volatile unsigned char *)((int)((bktr)->memh)+(offset))
+#define INW(bktr,offset)	*(volatile unsigned short *)((int)((bktr)->memh)+(offset))
+#define INL(bktr,offset)	*(volatile unsigned int *)((int)((bktr)->memh)+(offset))
+#define OUTB(bktr,offset,value)	*(volatile unsigned char *)((int)((bktr)->memh)+(offset)) = (value)
+#define OUTW(bktr,offset,value)	*(volatile unsigned short *)((int)((bktr)->memh)+(offset)) = (value)
+#define OUTL(bktr,offset,value)	*(volatile unsigned int *)((int)((bktr)->memh)+(offset)) = (value)
 #endif
 
 

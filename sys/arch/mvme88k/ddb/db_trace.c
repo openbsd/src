@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.13 2002/03/14 01:26:38 millert Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.14 2002/03/14 03:15:57 millert Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -381,7 +381,7 @@ db_trace_get_val(vm_offset_t addr, unsigned *ptr)
 		quiet_db_read_bytes = old_quiet_db_read_bytes;
 		return 0;
 	} else {
-		db_read_bytes(addr, 4, (char*)ptr);
+		db_read_bytes(addr, 4, (char *)ptr);
 		db_recover = prev;
 		quiet_db_read_bytes = old_quiet_db_read_bytes;
 		return 1;
@@ -934,7 +934,7 @@ db_stack_trace_cmd2(db_regs_t *regs)
 		    badwordaddr((vm_offset_t)(stack+4)))
 			break;
 
-		db_read_bytes((vm_offset_t)stack, 2*sizeof(int), (char*)pair);
+		db_read_bytes((vm_offset_t)stack, 2*sizeof(int), (char *)pair);
 
 		/* the pairs should match and equal stack+8 */
 		if (pair[0] == pair[1]) {
@@ -984,7 +984,7 @@ db_stack_trace_cmd2(db_regs_t *regs)
 		    badwordaddr((vm_offset_t)stack))
 			return;
 
-		db_read_bytes((vm_offset_t)stack, 2*sizeof(int), (char*)pair);
+		db_read_bytes((vm_offset_t)stack, 2*sizeof(int), (char *)pair);
 		if (pair[0] != pair[1])
 			return;
 
@@ -1079,7 +1079,7 @@ db_stack_trace_cmd(db_regs_t *addr,
 		{
 			unsigned val1, val2, sxip;
 			unsigned ptr;
-			bzero((void*)&frame, sizeof(frame));
+			bzero((void *)&frame, sizeof(frame));
 #define REASONABLE_FRAME_DISTANCE 2048
 
 			/*

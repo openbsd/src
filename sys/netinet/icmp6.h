@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.h,v 1.20 2002/03/14 01:27:11 millert Exp $	*/
+/*	$OpenBSD: icmp6.h,v 1.21 2002/03/14 03:16:11 millert Exp $	*/
 /*	$KAME: icmp6.h,v 1.39 2001/02/06 03:48:06 itojun Exp $	*/
 
 /*
@@ -615,7 +615,7 @@ int	icmp6_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 
 struct	ip6ctlparam;
 void	icmp6_mtudisc_update(struct ip6ctlparam *, int);
-void	icmp6_mtudisc_callback_register __P((void (*)(struct in6_addr *)));
+void	icmp6_mtudisc_callback_register(void (*)(struct in6_addr *));
 
 /* XXX: is this the right place for these macros? */
 #define icmp6_ifstat_inc(ifp, tag) \

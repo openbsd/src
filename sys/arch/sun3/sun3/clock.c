@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.10 2002/03/14 01:26:47 millert Exp $	*/
+/*	$OpenBSD: clock.c,v 1.11 2002/03/14 03:16:01 millert Exp $	*/
 /*	$NetBSD: clock.c,v 1.31 1996/10/30 00:24:42 gwr Exp $	*/
 
 /*
@@ -425,7 +425,7 @@ clk_get_dt(dt)
 	dt++;	/* end marker */
 	do {
 		*dst++ = *src++;
-	} while (dst < (char*)dt);
+	} while (dst < (char *)dt);
 
 	intersil_clock->clk_cmd_reg =
 		intersil_command(INTERSIL_CMD_RUN, INTERSIL_CMD_IENABLE);
@@ -605,9 +605,9 @@ clkdebug()
 	long gmt;
 	long *lp;
 
-	bzero((char*)&dt, sizeof(dt));
+	bzero((char *)&dt, sizeof(dt));
 	clk_get_dt(&dt);
-	lp = (long*)&dt;
+	lp = (long *)&dt;
 	printf("clkdebug: dt=[%x,%x]\n", lp[0], lp[1]);
 
 	dt_to_gmt(&dt, &gmt);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4281.c,v 1.11 2002/03/14 01:26:58 millert Exp $ */
+/*	$OpenBSD: cs4281.c,v 1.12 2002/03/14 03:16:06 millert Exp $ */
 /*	$Tera: cs4281.c,v 1.18 2000/12/27 14:24:45 tacha Exp $	*/
 
 /*
@@ -167,13 +167,10 @@ int cs4281_set_params(void *, int, int, struct audio_params *,
 int cs4281_halt_output(void *);
 int cs4281_halt_input(void *);
 int cs4281_getdev(void *, struct audio_device *);
-int cs4281_trigger_output	__P((void *, void *, void *, int,
-				     void (*)(void *), void *,
-				     struct audio_params *));
-int cs4281_trigger_input	__P((void *, void *, void *, int,
-				     void (*)(void *), void *,
-				     struct audio_params *));
-
+int cs4281_trigger_output(void *, void *, void *, int, void (*)(void *),
+			  void *, struct audio_params *);
+int cs4281_trigger_input(void *, void *, void *, int, void (*)(void *),
+			 void *, struct audio_params *);
 u_int8_t cs4281_sr2regval(int);
 void cs4281_set_dac_rate(struct cs4281_softc *, int);
 void cs4281_set_adc_rate(struct cs4281_softc *, int);
@@ -246,8 +243,8 @@ struct audio_hw_if cs4281_hw_if = {
 /* Midi Interface */
 void cs4281_midi_close(void *);
 void cs4281_midi_getinfo(void *, struct midi_info *);
-int cs4281_midi_open		__P((void *, int, void (*)(void *, int),
-				     void (*)(void *), void *));
+int cs4281_midi_open(void *, int, void (*)(void *, int),
+		     void (*)(void *), void *);
 int cs4281_midi_output(void *, int);
 
 struct midi_hw_if cs4281_midi_hw_if = {

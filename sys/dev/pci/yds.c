@@ -1,4 +1,4 @@
-/*	$OpenBSD: yds.c,v 1.14 2002/03/14 01:27:00 millert Exp $	*/
+/*	$OpenBSD: yds.c,v 1.15 2002/03/14 03:16:06 millert Exp $	*/
 /*	$NetBSD: yds.c,v 1.5 2001/05/21 23:55:04 minoura Exp $	*/
 
 /*
@@ -162,10 +162,10 @@ int	yds_query_encoding(void *, struct audio_encoding *);
 int	yds_set_params(void *, int, int,
 	    struct audio_params *, struct audio_params *);
 int	yds_round_blocksize(void *, int);
-int	yds_trigger_output __P((void *, void *, void *, int, void (*)(void *),
-	    void *, struct audio_params *));
-int	yds_trigger_input __P((void *, void *, void *, int, void (*)(void *),
-	    void *, struct audio_params *));
+int	yds_trigger_output(void *, void *, void *, int, void (*)(void *),
+	    void *, struct audio_params *);
+int	yds_trigger_input(void *, void *, void *, int, void (*)(void *),
+	    void *, struct audio_params *);
 int	yds_halt_output(void *);
 int	yds_halt_input(void *);
 int	yds_getdev(void *, struct audio_device *);
@@ -301,10 +301,10 @@ yds_dump_play_slot(sc, bank)
 
 		p = (u_int32_t *)sc->pbankp[i];
 
-		dma = yds_find_dma(sc,(void*)p);
+		dma = yds_find_dma(sc,(void *)p);
 
 		printf("  pbankp[%d] : %p(%p)\n",
-		       i, p, (void*)vtophys((vaddr_t)p));
+		       i, p, (void *)vtophys((vaddr_t)p));
 		for (j = 0; j < sizeof(struct play_slot_ctrl_bank) /
 		    sizeof(u_int32_t); j++) {
 			printf("    0x%02x: 0x%08x\n",
@@ -449,7 +449,7 @@ yds_allocate_slots(sc)
 	da = DMAADDR(p);
 
 	DPRINTF(("mp:%p, DMA addr:%p\n",
-		 mp, (void*) sc->sc_ctrldata.map->dm_segs[0].ds_addr));
+		 mp, (void *) sc->sc_ctrldata.map->dm_segs[0].ds_addr));
 
 	bzero(mp, memsize);
 

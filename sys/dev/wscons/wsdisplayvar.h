@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplayvar.h,v 1.11 2002/03/14 01:27:03 millert Exp $ */
+/* $OpenBSD: wsdisplayvar.h,v 1.12 2002/03/14 03:16:08 millert Exp $ */
 /* $NetBSD: wsdisplayvar.h,v 1.14.4.1 2000/06/30 16:27:53 simonb Exp $ */
 
 /*
@@ -110,8 +110,8 @@ struct wsdisplay_accessops {
 	int	(*alloc_screen)(void *, const struct wsscreen_descr *,
 				     void **, int *, int *, long *);
 	void	(*free_screen)(void *, void *);
-	int	(*show_screen) __P((void *, void *, int,
-				    void (*) (void *, int, int), void *));
+	int	(*show_screen)(void *, void *, int,
+			       void (*) (void *, int, int), void *);
 	int	(*load_font)(void *, void *, struct wsdisplay_font *);
 	void	(*scrollback)(void *, void *, int);
 	u_int16_t (*getchar)(void *, int, int);
@@ -150,8 +150,8 @@ struct wsemuldisplaydev_attach_args {
 #define	WSEMULDISPLAYDEVCF_CONSOLE_UNK	-1
 
 struct wscons_syncops {
-	int (*detach) __P((void *, int, void (*)(void *, int, int), void *));
-	int (*attach) __P((void *, int, void (*)(void *, int, int), void *));
+	int (*detach)(void *, int, void (*)(void *, int, int), void *);
+	int (*attach)(void *, int, void (*)(void *, int, int), void *);
 	int (*check)(void *);
 	void (*destroy)(void *);
 };

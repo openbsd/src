@@ -1,4 +1,4 @@
-/*	$OpenBSD: cg2.c,v 1.10 2002/03/14 01:26:46 millert Exp $	*/
+/*	$OpenBSD: cg2.c,v 1.11 2002/03/14 03:16:01 millert Exp $	*/
 /*	$NetBSD: cg2.c,v 1.7 1996/10/13 03:47:26 christos Exp $	*/
 
 /*
@@ -118,7 +118,7 @@ static struct fbdriver cg2fbdriver = {
 	cg2getcmap, cg2putcmap
 };
 
-static int	cg2intr(void*);
+static int	cg2intr(void *);
 
 /*
  * Match a cg2.
@@ -166,7 +166,7 @@ cg2attach(parent, self, args)
 	sc->sc_ctlreg = (struct cg2fb *) bus_mapin(ca->ca_bustype,
 			ca->ca_paddr + CTLREGS_OFF, CTLREGS_SIZE);
 
-	isr_add_vectored(cg2intr, (void*)sc,
+	isr_add_vectored(cg2intr, (void *)sc,
 					 ca->ca_intpri, ca->ca_intvec);
 
 	/*

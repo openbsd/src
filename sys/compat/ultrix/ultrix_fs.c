@@ -1,4 +1,4 @@
-/*	$OpenBSD: ultrix_fs.c,v 1.6 2001/11/06 19:53:18 miod Exp $	*/
+/*	$OpenBSD: ultrix_fs.c,v 1.7 2002/03/14 03:16:03 millert Exp $	*/
 /*	$NetBSD: ultrix_fs.c,v 1.4 1996/04/07 17:23:06 jonathan Exp $	*/
 
 /*
@@ -237,12 +237,12 @@ ultrix_sys_getmnt(p, v, retval)
 				    sizeof(*SCARG(uap, start))))  != 0)
 			goto bad;
 		for (skip = start, mp = mountlist.cqh_first;
-		    mp != (void*)&mountlist && skip-- > 0; mp = nmp)
+		    mp != (void *)&mountlist && skip-- > 0; mp = nmp)
 			nmp = mp->mnt_list.cqe_next;
 	}
 
 	for (count = 0, mp = mountlist.cqh_first;
-	    mp != (void*)&mountlist && count < maxcount; mp = nmp) {
+	    mp != (void *)&mountlist && count < maxcount; mp = nmp) {
 		nmp = mp->mnt_list.cqe_next;
 		if (sfsp != NULL && (mp->mnt_flag & MNT_MLOCK) == 0) {
 			struct ultrix_fs_data tem;
@@ -390,7 +390,7 @@ ultrix_sys_mount(p, v, retval)
 		 */
 		fsname[0] = 0;
 		if ((error = copyinstr((caddr_t)SCARG(&nuap, path), fsname,
-				      sizeof fsname, (u_int*)0)) != 0)
+				      sizeof fsname, (u_int *)0)) != 0)
 			return(error);
 		if (strcmp(fsname, "/") == 0) {
 			SCARG(&nuap, flags) |= MNT_UPDATE;

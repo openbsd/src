@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vnops.c,v 1.23 2002/03/14 01:27:14 millert Exp $	*/
+/*	$OpenBSD: ext2fs_vnops.c,v 1.24 2002/03/14 03:16:13 millert Exp $	*/
 /*	$NetBSD: ext2fs_vnops.c,v 1.1 1997/06/11 09:34:09 bouyer Exp $	*/
 
 /*
@@ -1468,7 +1468,7 @@ struct vnodeopv_entry_desc ext2fs_vnodeop_entries[] = {
 	{ &vop_pathconf_desc, ufs_pathconf },	/* pathconf */
 	{ &vop_advlock_desc, ext2fs_advlock },	/* advlock */
 	{ &vop_bwrite_desc, vop_generic_bwrite },		/* bwrite */
-	{ (struct vnodeop_desc*)NULL, (int(*)(void*))NULL }
+	{ (struct vnodeop_desc*)NULL, (int(*)(void *))NULL }
 };
 struct vnodeopv_desc ext2fs_vnodeop_opv_desc =
 	{ &ext2fs_vnodeop_p, ext2fs_vnodeop_entries };

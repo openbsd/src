@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_alloc.c,v 1.8 2002/03/14 01:27:14 millert Exp $	*/
+/*	$OpenBSD: ext2fs_alloc.c,v 1.9 2002/03/14 03:16:13 millert Exp $	*/
 /*	$NetBSD: ext2fs_alloc.c,v 1.10 2001/07/05 08:38:27 toshii Exp $	*/
 
 /*
@@ -59,9 +59,8 @@ u_long ext2gennumber;
 static ufs_daddr_t	ext2fs_alloccg(struct inode *, int, ufs_daddr_t, int);
 static u_long	ext2fs_dirpref(struct m_ext2fs *);
 static void	ext2fs_fserr(struct m_ext2fs *, u_int, char *);
-static u_long	ext2fs_hashalloc __P((struct inode *, int, long, int,
-				   ufs_daddr_t (*)(struct inode *, int, ufs_daddr_t,
-						   int)));
+static u_long	ext2fs_hashalloc(struct inode *, int, long, int,
+		    ufs_daddr_t (*)(struct inode *, int, ufs_daddr_t, int));
 static ufs_daddr_t	ext2fs_nodealloccg(struct inode *, int, ufs_daddr_t, int);
 static ufs_daddr_t	ext2fs_mapsearch(struct m_ext2fs *, char *, ufs_daddr_t);
 

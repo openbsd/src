@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl.c,v 1.24 2002/03/14 01:26:37 millert Exp $ */
+/*	$OpenBSD: cl.c,v 1.25 2002/03/14 03:15:56 millert Exp $ */
 
 /*
  * Copyright (c) 1995 Dale Rahn. All rights reserved.
@@ -193,7 +193,7 @@ int clstop(struct tty *tp, int flag);
 static void cl_initchannel(struct clsoftc *sc, int channel);
 static void clputc(struct clsoftc *sc, int unit, u_char c);
 static u_char clgetc(struct clsoftc *sc, int *channel);
-static void cloutput __P( (struct tty *tp));
+static void cloutput(struct tty *tp);
 void cl_softint(struct clsoftc *sc);
 void cl_appendbufn(struct clsoftc *sc, u_char channel, u_char *buf, u_short cnt);
 

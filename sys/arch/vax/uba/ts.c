@@ -1,4 +1,4 @@
-/*	$OpenBSD: ts.c,v 1.7 2002/03/14 01:26:48 millert Exp $ */
+/*	$OpenBSD: ts.c,v 1.8 2002/03/14 03:16:02 millert Exp $ */
 /*	$NetBSD: ts.c,v 1.11 1997/01/11 11:34:43 ragge Exp $ */
 
 /*-
@@ -286,7 +286,7 @@ tsexec (ctlr, cmd)
 	register struct tscmd *tscmdp = &ts[ctlr].cmd;
 	register long tscmdma = (long)&sc->sc_ts->cmd;	/* mapped address */
 	volatile struct tsdevice *tsreg = ts[ctlr].reg;
-	volatile char *dbx = ((char*)tsreg) + 3;
+	volatile char *dbx = ((char *)tsreg) + 3;
 	volatile short sr;
 
 	sc->sc_cmdf |= TS_CF_ACK | TS_CF_IE;
@@ -319,7 +319,7 @@ tsexec (ctlr, cmd)
 		    sc->sc_dev.dv_xname, sr);
 		return (-1);
 	}
-	dbx = ((char*)tsreg) + 3;	/* dbx is located at the fourth byte */
+	dbx = ((char *)tsreg) + 3;	/* dbx is located at the fourth byte */
 	*dbx = (tscmdma >> 18) & 0x0F;	/* load bits 18-21 into dbx */ 
 
 	/* possible race-condition with ATTN !!! */

@@ -1,4 +1,4 @@
-/*      $OpenBSD: sv.c,v 1.12 2002/03/14 01:27:00 millert Exp $ */
+/*      $OpenBSD: sv.c,v 1.13 2002/03/14 03:16:06 millert Exp $ */
 
 /*
  * Copyright (c) 1998 Constantine Paul Sapuntzakis
@@ -149,8 +149,8 @@ int	sv_set_params(void *, int, int, struct audio_params *, struct audio_params *
 int	sv_round_blocksize(void *, int);
 int	sv_dma_init_output(void *, void *, int);
 int	sv_dma_init_input(void *, void *, int);
-int	sv_dma_output __P((void *, void *, int, void (*)(void *), void*));
-int	sv_dma_input __P((void *, void *, int, void (*)(void *), void*));
+int	sv_dma_output(void *, void *, int, void (*)(void *), void *);
+int	sv_dma_input(void *, void *, int, void (*)(void *), void *);
 int	sv_halt_in_dma(void *);
 int	sv_halt_out_dma(void *);
 int	sv_getdev(void *, struct audio_device *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ka820.c,v 1.8 2002/03/14 01:26:48 millert Exp $	*/
+/*	$OpenBSD: ka820.c,v 1.9 2002/03/14 03:16:02 millert Exp $	*/
 /*	$NetBSD: ka820.c,v 1.22 2000/06/04 02:19:27 matt Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -69,7 +69,7 @@ struct rx50device *rx50device_ptr;
 static volatile struct ka820clock *ka820_clkpage;
 
 static int ka820_match(struct device *, struct cfdata *, void *);
-static void ka820_attach(struct device *, struct device *, void*);
+static void ka820_attach(struct device *, struct device *, void *);
 static void ka820_memerr(void);
 static void ka820_conf(void);
 static int ka820_mchk(caddr_t);
@@ -228,7 +228,7 @@ struct ms820regs {
 #define MS2_SYN		0x0000007f	/* error syndrome (ro, rw diag) */
 
 static int ms820_match(struct device *, struct cfdata *, void *);
-static void ms820_attach(struct device *, struct device *, void*);
+static void ms820_attach(struct device *, struct device *, void *);
 
 struct mem_bi_softc {
 	struct device sc_dev;

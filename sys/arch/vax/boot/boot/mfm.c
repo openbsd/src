@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfm.c,v 1.1 2000/04/27 02:26:25 bjc Exp $	*/
+/*	$OpenBSD: mfm.c,v 1.2 2002/03/14 03:16:02 millert Exp $	*/
 /*	$NetBSD: mfm.c,v 1.2 1997/03/15 13:04:28 ragge Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -78,9 +78,9 @@ char		io_buf[DEV_BSIZE];
  * These should probably be somewhere else, but ka410 is the only
  * one with mfm disks anyway...
  */
-volatile unsigned char *ka410_intreq = (void*)0x2008000f;
-volatile unsigned char *ka410_intclr = (void*)0x2008000f;
-volatile unsigned char *ka410_intmsk = (void*)0x2008000c;
+volatile unsigned char *ka410_intreq = (void *)0x2008000f;
+volatile unsigned char *ka410_intclr = (void *)0x2008000f;
+volatile unsigned char *ka410_intmsk = (void *)0x2008000c;
 
 static volatile struct hdc9224_DKCreg *dkc = (void *) 0x200c0000;
 static volatile struct hdc9224_UDCreg sreg;	/* input */

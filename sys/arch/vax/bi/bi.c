@@ -1,4 +1,4 @@
-/*	$OpenBSD: bi.c,v 1.3 2002/03/14 01:26:47 millert Exp $ */
+/*	$OpenBSD: bi.c,v 1.4 2002/03/14 03:16:02 millert Exp $ */
 /*	$NetBSD: bi.c,v 1.4 1996/10/13 03:34:44 christos Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -52,7 +52,7 @@
 #include <arch/vax/bi/bivar.h>
 
 static int bi_match(struct device *, void *, void *);
-static void bi_attach(struct device *, struct device *, void*);
+static void bi_attach(struct device *, struct device *, void *);
 static int bi_print(void *, const char *);
 
 struct cfdriver bi_cd = {

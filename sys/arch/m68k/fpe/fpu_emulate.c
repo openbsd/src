@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu_emulate.c,v 1.9 2002/03/14 01:26:34 millert Exp $	*/
+/*	$OpenBSD: fpu_emulate.c,v 1.10 2002/03/14 03:15:54 millert Exp $	*/
 /*	$NetBSD: fpu_emulate.c,v 1.14 1996/12/18 05:44:31 scottr Exp $	*/
 
 /*
@@ -512,14 +512,14 @@ fpu_emul_fmovm(fe, insn)
 	if (regmask & reglist) {
 	    if (fpu_to_mem) {
 		sig = fpu_store_ea(frame, insn, &insn->is_ea0,
-				   (char*)&fpregs[regnum * 3]);
+				   (char *)&fpregs[regnum * 3]);
 		if (fpu_debug_level & DL_RESULT)
 		    printf("  fpu_emul_fmovm: FP%d (%08x,%08x,%08x) saved\n",
 			   regnum, fpregs[regnum * 3], fpregs[regnum * 3 + 1],
 			   fpregs[regnum * 3 + 2]);
 	    } else {		/* mem to fpu */
 		sig = fpu_load_ea(frame, insn, &insn->is_ea0,
-				  (char*)&fpregs[regnum * 3]);
+				  (char *)&fpregs[regnum * 3]);
 		if (fpu_debug_level & DL_RESULT)
 		    printf("  fpu_emul_fmovm: FP%d (%08x,%08x,%08x) loaded\n",
 			   regnum, fpregs[regnum * 3], fpregs[regnum * 3 + 1],
@@ -696,7 +696,7 @@ fpu_emul_arith(fe, insn)
 	    }
 	} /* if (fpu_debug_level & DL_ARITH) */
 
-	fpu_load_ea(frame, insn, &insn->is_ea0, (char*)buf);
+	fpu_load_ea(frame, insn, &insn->is_ea0, (char *)buf);
 	if (format == FTYPE_WRD) {
 	    /* sign-extend */
 	    buf[0] &= 0xffff;

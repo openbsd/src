@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.38 2002/03/14 01:26:45 millert Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.39 2002/03/14 03:16:01 millert Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -1097,7 +1097,7 @@ stackdump()
 	printf("Call traceback:\n");
 	while (fp && ((u_long)fp >> PGSHIFT) == ((u_long)sfp >> PGSHIFT)) {
 		if( ((long)fp) & 1 ) {
-			fp64 = (struct frame64*)(((char*)fp)+BIAS);
+			fp64 = (struct frame64*)(((char *)fp)+BIAS);
 			/* 64-bit frame */
 			printf("%llx(%llx, %llx, %llx, %llx, %llx, %llx, %llx) fp = %llx\n",
 			       (unsigned long long)fp64->fr_pc,
@@ -1709,9 +1709,9 @@ static int	sparc_bus_subregion(bus_space_tag_t, bus_space_handle_t,
 					 bus_size_t, bus_size_t,
 					 bus_space_handle_t *);
 static paddr_t	sparc_bus_mmap(bus_space_tag_t, bus_addr_t, off_t, int, int);
-static void	*sparc_mainbus_intr_establish __P((bus_space_tag_t, int, int,
+static void	*sparc_mainbus_intr_establish(bus_space_tag_t, int, int,
 						   int, int (*)(void *),
-						   void *));
+						   void *);
 static void	sparc_bus_barrier(bus_space_tag_t, bus_space_handle_t,
 					  bus_size_t, bus_size_t, int);
 static int	sparc_bus_alloc(bus_space_tag_t, bus_addr_t, bus_addr_t,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgtwo.c,v 1.19 2002/03/14 01:26:42 millert Exp $	*/
+/*	$OpenBSD: cgtwo.c,v 1.20 2002/03/14 03:15:59 millert Exp $	*/
 /*	$NetBSD: cgtwo.c,v 1.22 1997/05/24 20:16:12 pk Exp $ */
 
 /*
@@ -305,7 +305,7 @@ cgtwoioctl(dev, cmd, data, flags, p)
 		break;
 
 	case FBIOSVIDEO:
-		sc->sc_reg->video_enab = (*(int*)data) & 1;
+		sc->sc_reg->video_enab = (*(int *)data) & 1;
 		break;
 
 	default:

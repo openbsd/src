@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.5 2002/03/14 01:26:45 millert Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.6 2002/03/14 03:16:01 millert Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.61 2001/07/31 06:55:47 eeh Exp $ */
 
 /*
@@ -970,7 +970,7 @@ db_uvmhistdump(addr, have_addr, count, modif)
 }
 
 #if NESP_SBUS
-extern void db_esp(db_expr_t, int, db_expr_t, char*);
+extern void db_esp(db_expr_t, int, db_expr_t, char *);
 #endif
 
 struct db_command db_machine_command_table[] = {

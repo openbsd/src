@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpuvar.h,v 1.2 2002/03/14 01:26:55 millert Exp $	*/
+/*	$OpenBSD: mpuvar.h,v 1.3 2002/03/14 03:16:05 millert Exp $	*/
 /*	$NetBSD: mpu401var.h,v 1.3 1998/11/25 22:17:06 augustss Exp $	*/
 
 /*
@@ -42,7 +42,7 @@ struct mpu_softc {
 	bus_space_handle_t ioh;		/* handle */
 	int	iobase;
 	int	open;
-	void	(*intr)(void*, int); /* midi input intr handler */
+	void	(*intr)(void *, int);	/* midi input intr handler */
 	void	*arg;			/* arg for intr() */
 };
 
@@ -50,9 +50,9 @@ struct midi_hw_if mpu_midi_hw_if;
 
 int	mpu_intr(void *);
 int	mpu_find(void *);
-int	mpu_open __P((void *, int, 
-			 void (*iintr)(void *, int),
-			 void (*ointr)(void *), void *arg));
+int	mpu_open(void *, int, 
+		 void (*iintr)(void *, int),
+		 void (*ointr)(void *), void *arg);
 void	mpu_close(void *);
 int	mpu_output(void *, int);
 void	mpu_getinfo(void *addr, struct midi_info *mi);

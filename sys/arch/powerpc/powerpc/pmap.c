@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.60 2002/03/13 18:27:36 drahn Exp $ */
+/*	$OpenBSD: pmap.c,v 1.61 2002/03/14 03:15:59 millert Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 Dale Rahn. All rights reserved.
@@ -1005,7 +1005,7 @@ pmap_copy_page(paddr_t srcpa, paddr_t dstpa)
 	pmap_kenter_pa(copy_src_page, srcpa, VM_PROT_READ);
 	pmap_kenter_pa(copy_dst_page, dstpa, VM_PROT_READ|VM_PROT_WRITE);
 
-	bcopy((void*)copy_src_page, (void*)copy_dst_page, PAGE_SIZE);
+	bcopy((void *)copy_src_page, (void *)copy_dst_page, PAGE_SIZE);
 	
 	pmap_kremove_pg(copy_src_page);
 	pmap_kremove_pg(copy_dst_page);
@@ -2248,17 +2248,17 @@ pmap_user_read(int size, vaddr_t va)
 	int err;
 
 	if (size == 1) {
-		err = copyin((void*)va, &read1, 1);
+		err = copyin((void *)va, &read1, 1);
 		if (err == 0) {
 			db_printf("byte read %x\n", read1);
 		}
 	} else if (size == 2) {
-		err = copyin((void*)va, &read2, 2);
+		err = copyin((void *)va, &read2, 2);
 		if (err == 0) {
 			db_printf("short read %x\n", read2);
 		}
 	} else if (size == 4) {
-		err = copyin((void*)va, &read4, 4);
+		err = copyin((void *)va, &read4, 4);
 		if (err == 0) {
 			db_printf("int read %x\n", read4);
 		}

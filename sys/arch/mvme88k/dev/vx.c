@@ -1,4 +1,4 @@
-/*	$OpenBSD: vx.c,v 1.18 2002/03/14 01:26:39 millert Exp $ */
+/*	$OpenBSD: vx.c,v 1.19 2002/03/14 03:15:57 millert Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr. 
  * All rights reserved.
@@ -1312,8 +1312,8 @@ memcpy2(void *dest, const void *src, size_t size)
 {
 	int i;
 	short *d, *s;
-	d = (short*) dest;
-	s = (short*) src;
+	d = (short *) dest;
+	s = (short *) src;
 	for (i=0; i<(size/2); i++) {
 		*d = *s;
 		d++;
@@ -1326,7 +1326,7 @@ wzero(void *addr, size_t size)
 {
 	int i;
 	short *d;
-	d = (short*) addr;
+	d = (short *) addr;
 	for (i=0; i<(size/2); i++) {
 		*d = 0;
 		d++;
@@ -1395,7 +1395,7 @@ put_free_envelope(sc, ep)
 	sc->elist_tail = envp;
 }
 
-void* 
+void * 
 get_free_packet(sc)
 	struct vxsoftc *sc;
 {
@@ -1591,7 +1591,7 @@ get_packet(sc, thisenv)
 	 * offset to the board address 
 	 */
 	baseaddr |= thisenv->packet_ptr;
-	return ((void*)baseaddr);
+	return ((void *)baseaddr);
 }
 
 /*

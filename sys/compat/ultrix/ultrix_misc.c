@@ -1,4 +1,4 @@
-/*	$OpenBSD: ultrix_misc.c,v 1.24 2002/03/14 01:26:51 millert Exp $	*/
+/*	$OpenBSD: ultrix_misc.c,v 1.25 2002/03/14 03:16:03 millert Exp $	*/
 /*	$NetBSD: ultrix_misc.c,v 1.23 1996/04/07 17:23:04 jonathan Exp $	*/
 
 /*
@@ -279,7 +279,7 @@ ultrix_sys_select(p, v, retval)
 #endif
 
 	}
-	error = sys_select(p, (void*) uap, retval);
+	error = sys_select(p, (void *) uap, retval);
 	if (error == EINVAL)
 		printf("ultrix select: bad args?\n");
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.2 2002/03/14 01:26:45 millert Exp $	*/
+/*	$OpenBSD: intr.h,v 1.3 2002/03/14 03:16:00 millert Exp $	*/
 /*	$NetBSD: intr.h,v 1.8 2001/01/14 23:50:30 thorpej Exp $ */
 
 /*-
@@ -55,7 +55,7 @@
 #define	IPL_HIGH	PIL_HIGH	/* everything */
 
 void *
-softintr_establish __P((int level, void (*fun)(void *), void *arg));
+softintr_establish(int level, void (*fun)(void *), void *arg);
 
 void
 softintr_disestablish(void *cookie);

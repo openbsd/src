@@ -1,4 +1,4 @@
-/*	$OpenBSD: midiio.h,v 1.1 1999/01/02 00:02:56 niklas Exp $	*/
+/*	$OpenBSD: midiio.h,v 1.2 2002/03/14 03:16:12 millert Exp $	*/
 /*	$NetBSD: midiio.h,v 1.7 1998/11/25 22:17:07 augustss Exp $	*/
 
 /*-
@@ -194,7 +194,7 @@ struct synth_info {
 #define SEQ_MK_CHN_COMMON(e, unit, cmd, chan, p1, p2, w14) (\
     (e)->arr[0] = SEQ_CHN_COMMON, (e)->arr[1] = (unit), (e)->arr[2] = (cmd),\
     (e)->arr[3] = (chan), (e)->arr[4] = (p1), (e)->arr[5] = (p2),\
-    *(short*)&(e)->arr[6] = (w14))
+    *(short *)&(e)->arr[6] = (w14))
 
 #if _QUAD_LOWWORD == 1
 /* big endian */

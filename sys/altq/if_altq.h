@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_altq.h,v 1.3 2002/03/14 01:26:26 millert Exp $	*/
+/*	$OpenBSD: if_altq.h,v 1.4 2002/03/14 03:15:50 millert Exp $	*/
 /*	$KAME: if_altq.h,v 1.6 2001/01/29 19:59:09 itojun Exp $	*/
 
 /*
@@ -148,13 +148,13 @@ struct tb_regulator {
 #define	ALTQ_IS_EMPTY(ifq)		((ifq)->ifq_len == 0)
 #define	TBR_IS_ENABLED(ifq)		((ifq)->altq_tbr != NULL)
 
-extern int altq_attach __P((struct ifaltq *, int, void *,
+extern int altq_attach(struct ifaltq *, int, void *,
 			    int (*)(struct ifaltq *, struct mbuf *,
 				    struct altq_pktattr *),
 			    struct mbuf *(*)(struct ifaltq *, int), 
 			    int (*)(struct ifaltq *, int, void *),
 			    void *,
-			    void *(*)(void *, struct mbuf *, int)));
+			    void *(*)(void *, struct mbuf *, int));
 extern int altq_detach(struct ifaltq *);
 extern int altq_enable(struct ifaltq *);
 extern int altq_disable(struct ifaltq *);

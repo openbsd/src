@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.h,v 1.17 2002/03/14 01:26:46 millert Exp $	*/
+/*	$OpenBSD: machdep.h,v 1.18 2002/03/14 03:16:01 millert Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -96,7 +96,7 @@ int 	fpu_emulate(struct frame *, struct fpframe *);
 /* Backward compatibility... */
 #define getsr	_getsr
 
-void**	getvbr(void);
+void  **getvbr(void);
 
 vm_offset_t high_segment_alloc(int npages);
 

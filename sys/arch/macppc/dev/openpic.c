@@ -1,4 +1,4 @@
-/*	$OpenBSD: openpic.c,v 1.15 2002/03/14 01:26:36 millert Exp $	*/
+/*	$OpenBSD: openpic.c,v 1.16 2002/03/14 03:15:55 millert Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -169,7 +169,7 @@ openpic_attach(parent, self, aux)
 
 #if 1
 	mac_intr_establish(parent, 0x37, IST_LEVEL,
-		IPL_HIGH, openpic_prog_button, (void*)0x37, "prog button");
+		IPL_HIGH, openpic_prog_button, (void *)0x37, "prog button");
 #endif
 	ppc_intr_enable(1);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sb.c,v 1.21 2002/03/14 01:26:56 millert Exp $	*/
+/*	$OpenBSD: sb.c,v 1.22 2002/03/14 03:16:05 millert Exp $	*/
 /*	$NetBSD: sb.c,v 1.57 1998/01/12 09:43:46 thorpej Exp $	*/
 
 /*
@@ -65,9 +65,8 @@ struct cfdriver sb_cd = {
 };
 
 #if NMIDI > 0
-int	sb_mpu401_open __P((void *, int, 
-			     void (*iintr)(void *, int),
-			     void (*ointr)(void *), void *arg));
+int	sb_mpu401_open(void *, int, void (*iintr)(void *, int),
+		       void (*ointr)(void *), void *arg);
 void	sb_mpu401_close(void *);
 int	sb_mpu401_output(void *, int);
 void	sb_mpu401_getinfo(void *, struct midi_info *);

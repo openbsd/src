@@ -1,4 +1,4 @@
-/*	$OpenBSD: bha.c,v 1.2 2002/03/14 01:26:54 millert Exp $	*/
+/*	$OpenBSD: bha.c,v 1.3 2002/03/14 03:16:04 millert Exp $	*/
 /*	$NetBSD: bha.c,v 1.27 1998/11/19 21:53:00 thorpej Exp $	*/
 
 #undef BHADEBUG
@@ -1050,7 +1050,7 @@ bha_disable_isacompat(sc)
 	isa_disable.cmd.opcode = BHA_MODIFY_IOPORT;
 	isa_disable.cmd.modifier = BHA_IOMODIFY_DISABLE1;
 	bha_cmd(sc->sc_iot, sc->sc_ioh, sc,
-	    sizeof(isa_disable.cmd), (u_char*)&isa_disable.cmd,
+	    sizeof(isa_disable.cmd), (u_char *)&isa_disable.cmd,
 	    0, (u_char *)0);
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lfs_extern.h,v 1.7 2002/03/14 01:27:15 millert Exp $	*/
+/*	$OpenBSD: lfs_extern.h,v 1.8 2002/03/14 03:16:13 millert Exp $	*/
 /*	$NetBSD: lfs_extern.h,v 1.5 1996/02/12 15:20:12 christos Exp $	*/
 
 /*-
@@ -86,7 +86,7 @@ int lfs_segwrite(struct mount *, int);
 void lfs_writefile(struct lfs *, struct segment *, struct vnode *);
 int lfs_writeinode(struct lfs *, struct segment *, struct inode *);
 int lfs_gatherblock(struct segment *, struct buf *, int *);
-void lfs_gather __P((struct lfs *, struct segment *, struct vnode *, int (*match )(struct lfs *, struct buf *)));
+void lfs_gather(struct lfs *, struct segment *, struct vnode *, int (*match )(struct lfs *, struct buf *));
 void lfs_updatemeta(struct segment *);
 int lfs_initseg(struct lfs *);
 void lfs_newseg(struct lfs *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: amiga_init.c,v 1.26 2002/03/14 01:26:28 millert Exp $	*/
+/*	$OpenBSD: amiga_init.c,v 1.27 2002/03/14 03:15:51 millert Exp $	*/
 /*	$NetBSD: amiga_init.c,v 1.56 1997/06/10 18:22:24 veego Exp $	*/
 
 /*
@@ -1046,7 +1046,7 @@ static void
 kernel_image_magic_copy(dest)
 	u_char *dest;
 {
-	*((int*)dest) = ncfdev;
+	*((int *)dest) = ncfdev;
 	dest += 4;
 	bcopy(cfdev, dest, ncfdev * sizeof(struct cfdev)
 	    + memlist->m_nseg * sizeof(struct boot_memseg) + 4);

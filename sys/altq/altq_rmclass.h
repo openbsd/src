@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_rmclass.h,v 1.3 2002/03/14 01:26:26 millert Exp $	*/
+/*	$OpenBSD: altq_rmclass.h,v 1.4 2002/03/14 03:15:50 millert Exp $	*/
 /*	$KAME: altq_rmclass.h,v 1.6 2000/12/09 09:22:44 kjc Exp $	*/
 
 /*
@@ -240,17 +240,17 @@ struct rm_ifdat {
 
 #define	is_a_parent_class(cl)	((cl)->children_ != NULL)
 
-extern rm_class_t *rmc_newclass __P((int, struct rm_ifdat *, u_int,
+extern rm_class_t *rmc_newclass(int, struct rm_ifdat *, u_int,
 				     void (*)(struct rm_class *,
 					      struct rm_class *),
 				     int, struct rm_class *, struct rm_class *,
-				     u_int, int, u_int, int, int));
+				     u_int, int, u_int, int, int);
 extern void	rmc_delete_class(struct rm_ifdat *, struct rm_class *);
 extern int 	rmc_modclass(struct rm_class *, u_int, int,
 				  u_int, int, u_int, int);
-extern void	rmc_init __P((struct ifaltq *, struct rm_ifdat *, u_int,
+extern void	rmc_init(struct ifaltq *, struct rm_ifdat *, u_int,
 			      void (*)(struct ifaltq *),
-			      int, int, u_int, int, u_int, int));
+			      int, int, u_int, int, u_int, int);
 extern int	rmc_queue_packet(struct rm_class *, mbuf_t *);
 extern mbuf_t	*rmc_dequeue_next(struct rm_ifdat *, int);
 extern void	rmc_update_class_util(struct rm_ifdat *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.h,v 1.38 2002/03/14 01:27:13 millert Exp $	*/
+/*	$OpenBSD: buf.h,v 1.39 2002/03/14 03:16:12 millert Exp $	*/
 /*	$NetBSD: buf.h,v 1.25 1997/04/09 21:12:17 mycroft Exp $	*/
 
 /*
@@ -218,8 +218,8 @@ struct buf *geteblk(int);
 struct buf *incore(struct vnode *, daddr_t);
 
 void	minphys(struct buf *bp);
-int	physio __P((void (*strategy)(struct buf *), struct buf *bp, dev_t dev,
-		    int flags, void (*minphys)(struct buf *), struct uio *uio));
+int	physio(void (*strategy)(struct buf *), struct buf *bp, dev_t dev,
+	    int flags, void (*minphys)(struct buf *), struct uio *uio);
 void  brelvp(struct buf *);
 void  reassignbuf(struct buf *);
 void  bgetvp(struct vnode *, struct buf *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.52 2002/03/14 01:26:32 millert Exp $	*/
+/*	$OpenBSD: apm.c,v 1.53 2002/03/14 03:15:53 millert Exp $	*/
 
 /*-
  * Copyright (c) 1998-2001 Michael Shalayeff. All rights reserved.
@@ -1022,7 +1022,7 @@ apmioctl(dev, cmd, data, flag, p)
 		if ((flag & FWRITE) == 0)
 			error = EBADF;
 		else {
-			int flag = *(int*)data;
+			int flag = *(int *)data;
 			DPRINTF(( "APM_IOC_PRN_CTL: %d\n", flag ));
 			switch (flag) {
 			case APM_PRINT_ON:	/* enable printing */

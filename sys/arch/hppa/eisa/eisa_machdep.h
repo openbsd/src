@@ -1,4 +1,4 @@
-/*	$OpenBSD: eisa_machdep.h,v 1.3 2002/03/14 01:26:31 millert Exp $	*/
+/*	$OpenBSD: eisa_machdep.h,v 1.4 2002/03/14 03:15:53 millert Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -40,11 +40,11 @@ struct hppa_eisa_chipset {
 	void	*ec_v;
 
 	void	(*ec_attach_hook)(struct device *, struct device *,
-				       struct eisabus_attach_args *);
+				  struct eisabus_attach_args *);
 	int	(*ec_intr_map)(void *, u_int, int *);
 	const char *(*ec_intr_string)(void *, int);
-	void	*(*ec_intr_establish) __P((void *, int, int, int,
-					   int (*)(void *), void *, char *));
+	void	*(*ec_intr_establish)(void *, int, int, int,
+				      int (*)(void *), void *, char *);
 	void	(*ec_intr_disestablish)(void *, void *);
 };
 

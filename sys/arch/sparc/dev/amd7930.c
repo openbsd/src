@@ -1,4 +1,4 @@
-/*	$OpenBSD: amd7930.c,v 1.19 2002/03/14 01:26:42 millert Exp $	*/
+/*	$OpenBSD: amd7930.c,v 1.20 2002/03/14 03:15:59 millert Exp $	*/
 /*	$NetBSD: amd7930.c,v 1.37 1998/03/30 14:23:40 pk Exp $	*/
 
 /*
@@ -77,9 +77,9 @@ struct amd7930_softc {
 	u_char	sc_out_port;		/* output port */
 
 	/* interfacing with the interrupt handlers */
-	void	(*sc_rintr)(void*);	/* input completion intr handler */
+	void	(*sc_rintr)(void *);	/* input completion intr handler */
 	void	*sc_rarg;		/* arg for sc_rintr() */
-	void	(*sc_pintr)(void*);	/* output completion intr handler */
+	void	(*sc_pintr)(void *);	/* output completion intr handler */
 	void	*sc_parg;		/* arg for sc_pintr() */
 
         /* sc_au is special in that the hardware interrupt handler uses it */
@@ -210,10 +210,8 @@ int	amd7930_query_encoding(void *, struct audio_encoding *);
 int	amd7930_set_params(void *, int, int, struct audio_params *, struct audio_params *);
 int	amd7930_round_blocksize(void *, int);
 int	amd7930_commit_settings(void *);
-int	amd7930_start_output __P((void *, void *, int, void (*)(void *),
-				  void *));
-int	amd7930_start_input __P((void *, void *, int, void (*)(void *),
-				 void *));
+int	amd7930_start_output(void *, void *, int, void (*)(void *), void *);
+int	amd7930_start_input(void *, void *, int, void (*)(void *), void *);
 int	amd7930_halt_output(void *);
 int	amd7930_halt_input(void *);
 int	amd7930_getdev(void *, struct audio_device *);

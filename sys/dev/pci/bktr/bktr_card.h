@@ -1,4 +1,4 @@
-/*	$OpenBSD: bktr_card.h,v 1.1 2001/03/28 03:27:09 fgsch Exp $	*/
+/*	$OpenBSD: bktr_card.h,v 1.2 2002/03/14 03:16:06 millert Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_card.h,v 1.4 2000/06/26 09:41:31 roger Exp $ */
 
 /*
@@ -80,7 +80,7 @@
 #define Bt848_MAX_CARD		17
 
 
-int	signCard( bktr_ptr_t bktr, int offset, int count, u_char* sig );
+int	signCard( bktr_ptr_t bktr, int offset, int count, u_char *sig );
 void	probeCard( bktr_ptr_t bktr, int verbose, int unit);
 
 int	writeEEProm( bktr_ptr_t bktr, int offset, int count, u_char *data );

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_kn20aa.c,v 1.17 2002/03/14 01:26:27 millert Exp $	*/
+/*	$OpenBSD: pci_kn20aa.c,v 1.18 2002/03/14 03:15:50 millert Exp $	*/
 /*	$NetBSD: pci_kn20aa.c,v 1.21 1996/11/17 02:05:27 cgd Exp $	*/
 
 /*
@@ -62,8 +62,8 @@ int	dec_kn20aa_intr_map(void *, pcitag_t, int, int,
 	    pci_intr_handle_t *);
 const char *dec_kn20aa_intr_string(void *, pci_intr_handle_t);
 int	dec_kn20aa_intr_line(void *, pci_intr_handle_t);
-void	*dec_kn20aa_intr_establish __P((void *, pci_intr_handle_t,
-	    int, int (*func)(void *), void *, char *));
+void	*dec_kn20aa_intr_establish(void *, pci_intr_handle_t,
+	    int, int (*func)(void *), void *, char *);
 void	dec_kn20aa_intr_disestablish(void *, void *);
 
 #define	KN20AA_PCEB_IRQ	31

@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_sun.c,v 1.4 2001/07/04 08:33:49 niklas Exp $ */
+/*	$OpenBSD: exec_sun.c,v 1.5 2002/03/14 03:16:01 millert Exp $ */
 /*	$NetBSD: exec_sun.c,v 1.6 1996/06/20 03:59:41 gwr Exp $ */
 
 /*-
@@ -128,9 +128,9 @@ exec_sun(file, loadaddr)
 		*cp++ = 0;
 		--cc;
 	}
-	ip = (int*)cp;
+	ip = (int *)cp;
 	cp += cc;
-	while ((char*)ip < cp)
+	while ((char *)ip < cp)
 		*ip++ = 0;
 
 	/*
@@ -138,7 +138,7 @@ exec_sun(file, loadaddr)
 	 * (Always set the symtab size word.)
 	 */
 	*ip++ = x.a_syms;
-	cp = (char*) ip;
+	cp = (char *) ip;
 
 	if (x.a_syms > 0) {
 
@@ -149,7 +149,7 @@ exec_sun(file, loadaddr)
 		if (read(io, cp, cc) != cc)
 			goto shread;
 		cp += x.a_syms;
-		ip = (int*)cp;  	/* points to strtab length */
+		ip = (int *)cp;  	/* points to strtab length */
 		cp += sizeof(int);
 
 		/* String table.  Length word includes itself. */

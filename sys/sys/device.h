@@ -1,4 +1,4 @@
-/*	$OpenBSD: device.h,v 1.21 2002/03/14 01:27:14 millert Exp $	*/
+/*	$OpenBSD: device.h,v 1.22 2002/03/14 03:16:12 millert Exp $	*/
 /*	$NetBSD: device.h,v 1.15 1996/04/09 20:55:24 cgd Exp $	*/
 
 /*
@@ -206,7 +206,7 @@ int config_deactivate(struct device *);
 int config_activate_children(struct device *, enum devact);
 struct device *config_make_softc(struct device *parent,
     struct cfdata *cf);
-void config_defer __P((struct device *, void (*)(struct device *)));
+void config_defer(struct device *, void (*)(struct device *));
 void evcnt_attach(struct device *, const char *, struct evcnt *);
 
 struct device *device_lookup(struct cfdriver *, int unit);

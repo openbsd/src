@@ -1,4 +1,4 @@
-/*	$OpenBSD: un.h,v 1.5 2002/03/14 01:27:14 millert Exp $	*/
+/*	$OpenBSD: un.h,v 1.6 2002/03/14 03:16:12 millert Exp $	*/
 /*	$NetBSD: un.h,v 1.11 1996/02/04 02:12:47 christos Exp $	*/
 
 /*
@@ -62,7 +62,7 @@ void	unp_disconnect(struct unpcb *unp);
 void	unp_drop(struct unpcb *unp, int errno);
 void	unp_gc(void);
 void	unp_mark(struct file *fp);
-void	unp_scan __P((struct mbuf *m0, void (*op)(struct file *), int));
+void	unp_scan(struct mbuf *m0, void (*op)(struct file *), int);
 void	unp_shutdown(struct unpcb *unp);
 int 	unp_externalize(struct mbuf *);
 int	unp_internalize(struct mbuf *, struct proc *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4280.c,v 1.14 2002/03/14 01:26:58 millert Exp $	*/
+/*	$OpenBSD: cs4280.c,v 1.15 2002/03/14 03:16:06 millert Exp $	*/
 /*	$NetBSD: cs4280.c,v 1.5 2000/06/26 04:56:23 simonb Exp $	*/
 
 /*
@@ -216,10 +216,10 @@ void	cs4280_free(void *, void *, int);
 size_t	cs4280_round_buffersize(void *, int, size_t);
 paddr_t	cs4280_mappage(void *, void *, off_t, int);
 int	cs4280_get_props(void *);
-int	cs4280_trigger_output __P((void *, void *, void *, int, void (*)(void *),
-	    void *, struct audio_params *));
-int	cs4280_trigger_input __P((void *, void *, void *, int, void (*)(void *),
-	    void *, struct audio_params *));
+int	cs4280_trigger_output(void *, void *, void *, int, void (*)(void *),
+	    void *, struct audio_params *);
+int	cs4280_trigger_input(void *, void *, void *, int, void (*)(void *),
+	    void *, struct audio_params *);
 
 
 void	cs4280_set_dac_rate(struct cs4280_softc *, int );
@@ -237,10 +237,10 @@ void	cs4280_power(int, void *);
 void	cs4280_clear_fifos(struct cs4280_softc *);
 
 #if NMIDI > 0
-void	cs4280_midi_close(void*);
+void	cs4280_midi_close(void *);
 void	cs4280_midi_getinfo(void *, struct midi_info *);
-int	cs4280_midi_open __P((void *, int, void (*)(void *, int),
-			      void (*)(void *), void *));
+int	cs4280_midi_open(void *, int, void (*)(void *, int),
+	    void (*)(void *), void *);
 int	cs4280_midi_output(void *, int);
 #endif
 

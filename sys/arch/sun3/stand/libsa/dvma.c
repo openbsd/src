@@ -1,4 +1,4 @@
-/*	$OpenBSD: dvma.c,v 1.5 2002/03/14 01:26:47 millert Exp $	*/
+/*	$OpenBSD: dvma.c,v 1.6 2002/03/14 03:16:01 millert Exp $	*/
 /*	$NetBSD: dvma.c,v 1.6 1996/01/31 17:20:39 gwr Exp $	*/
 
 /*
@@ -111,7 +111,7 @@ dvma_alloc(int len)
 {
 	len = m68k_round_page(len);
 	dvma_end -= len;
-	return((char*)dvma_end);
+	return((char *)dvma_end);
 }
 
 void

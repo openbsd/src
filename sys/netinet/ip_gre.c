@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_gre.c,v 1.13 2002/03/14 01:27:11 millert Exp $ */
+/*      $OpenBSD: ip_gre.c,v 1.14 2002/03/14 03:16:11 millert Exp $ */
 /*	$NetBSD: ip_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -301,7 +301,7 @@ gre_mobile_input(m, va_alist)
 	mip->mi.ip_dst.s_addr = mip->mh.odst;
 	mip->mi.ip_p = (ntohs(mip->mh.proto) >> 8);
 	
-	if (gre_in_cksum((u_short*) &mip->mh,msiz) != 0) {
+	if (gre_in_cksum((u_short *) &mip->mh,msiz) != 0) {
 		m_freem(m);
 		return;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82365_isavar.h,v 1.5 2002/03/14 01:26:56 millert Exp $	*/
+/*	$OpenBSD: i82365_isavar.h,v 1.6 2002/03/14 03:16:05 millert Exp $	*/
 /*	$NetBSD: i82365_isavar.h,v 1.1 1998/06/07 18:28:31 sommerfe Exp $  */
 
 /*
@@ -38,8 +38,8 @@ extern int npcic_isa_intr_list;
  * Establish/disestablish interrupts for PCMCIA functions.
  */
 
-void	*pcic_isa_chip_intr_establish __P((pcmcia_chipset_handle_t,
-	    struct pcmcia_function *, int, int (*) (void *), void *, char *));
+void	*pcic_isa_chip_intr_establish(pcmcia_chipset_handle_t,
+	    struct pcmcia_function *, int, int (*) (void *), void *, char *);
 void	pcic_isa_chip_intr_disestablish(pcmcia_chipset_handle_t, void *);
 
 /*

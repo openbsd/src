@@ -1,4 +1,4 @@
-/*	$OpenBSD: libbug.h,v 1.2 2002/03/14 01:26:40 millert Exp $ */
+/*	$OpenBSD: libbug.h,v 1.3 2002/03/14 03:15:57 millert Exp $ */
 
 /*
  * prototypes and such.   note that get/put char are in stand.h
@@ -20,4 +20,4 @@ void	mvmeprom_rtc_rd(struct mvmeprom_time *);
 
 extern struct mvmeprom_args bugargs;
 
-void	bugexec __P((void (*)()));
+void	bugexec(void (*)());

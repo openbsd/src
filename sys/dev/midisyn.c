@@ -1,4 +1,4 @@
-/*	$OpenBSD: midisyn.c,v 1.2 2002/03/14 01:26:52 millert Exp $	*/
+/*	$OpenBSD: midisyn.c,v 1.3 2002/03/14 03:16:03 millert Exp $	*/
 /*	$NetBSD: midisyn.c,v 1.5 1998/11/25 22:17:07 augustss Exp $	*/
 
 /*
@@ -72,9 +72,9 @@ int	midisyn_allocvoice(midisyn *, u_int32_t, u_int32_t);
 u_int32_t midisyn_note_to_freq(int);
 u_int32_t midisyn_finetune(u_int32_t, int, int, int);
 
-int	midisyn_open __P((void *, int, 
-			  void (*iintr)(void *, int),
-			  void (*ointr)(void *), void *arg));
+int	midisyn_open(void *, int, 
+		     void (*iintr)(void *, int),
+		     void (*ointr)(void *), void *arg);
 void	midisyn_close(void *);
 int	midisyn_output(void *, int);
 void	midisyn_getinfo(void *, struct midi_info *);

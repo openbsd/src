@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.7 2002/03/14 01:26:31 millert Exp $	*/
+/*	$OpenBSD: intr.h,v 1.8 2002/03/14 03:15:52 millert Exp $	*/
 /*	$NetBSD: intr.h,v 1.2 1997/07/24 05:43:08 scottr Exp $	*/
 
 /*-
@@ -178,7 +178,7 @@ int	spl0(void);
 
 /* intr.c */
 void	intr_init(void);
-void	*intr_establish __P((int (*)(void *), void *, int, int));
+void	*intr_establish(int (*)(void *), void *, int, int);
 void	intr_disestablish(void *);
 void	intr_dispatch(int);
 void	intr_printlevels(void);

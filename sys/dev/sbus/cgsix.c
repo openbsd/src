@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgsix.c,v 1.16 2002/03/14 01:27:02 millert Exp $	*/
+/*	$OpenBSD: cgsix.c,v 1.17 2002/03/14 03:16:07 millert Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -223,8 +223,8 @@ int cgsix_ioctl(void *, u_long, caddr_t, int, struct proc *);
 int cgsix_alloc_screen(void *, const struct wsscreen_descr *, void **,
     int *, int *, long *);
 void cgsix_free_screen(void *, void *);
-int cgsix_show_screen __P((void *, void *, int,
-    void (*cb)(void *, int, int), void *));
+int cgsix_show_screen(void *, void *, int, void (*cb)(void *, int, int),
+    void *);
 paddr_t cgsix_mmap(void *, off_t, int);
 int cgsix_is_console(int);
 int cg6_bt_getcmap(union bt_cmap *, struct wsdisplay_cmap *);

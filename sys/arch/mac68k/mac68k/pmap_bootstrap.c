@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_bootstrap.c,v 1.20 2002/03/14 01:26:36 millert Exp $	*/
+/*	$OpenBSD: pmap_bootstrap.c,v 1.21 2002/03/14 03:15:55 millert Exp $	*/
 /*	$NetBSD: pmap_bootstrap.c,v 1.50 1999/04/07 06:14:33 scottr Exp $	*/
 
 /* 
@@ -252,14 +252,14 @@ pmap_bootstrap(nextpa, firstpa)
 		 * Initialize the final level 1 descriptor to map the last
 		 * block of level 2 descriptors.
 		 */
-		ste = &(PA2VA(kstpa, u_int*))[SG4_LEV1SIZE-1];
-		pte = &(PA2VA(kstpa, u_int*))[kstsize*NPTEPG - SG4_LEV2SIZE];
+		ste = &(PA2VA(kstpa, u_int *))[SG4_LEV1SIZE-1];
+		pte = &(PA2VA(kstpa, u_int *))[kstsize*NPTEPG - SG4_LEV2SIZE];
 		*ste = (u_int)pte | SG_U | SG_RW | SG_V;
 		/*
 		 * Now initialize the final portion of that block of
 		 * descriptors to map the "last PT page".
 		 */
-		pte = &(PA2VA(kstpa, u_int*))
+		pte = &(PA2VA(kstpa, u_int *))
 				[kstsize*NPTEPG - NPTEPG/SG4_LEV3SIZE];
 		epte = &pte[NPTEPG/SG4_LEV3SIZE];
 		protoste = lkptpa | SG_U | SG_RW | SG_V;
@@ -295,8 +295,8 @@ pmap_bootstrap(nextpa, firstpa)
 		 * and the software Sysptmap.  Note that Sysptmap is also
 		 * considered a PT page hence the +1.
 		 */
-		ste = PA2VA(kstpa, u_int*);
-		pte = PA2VA(kptmpa, u_int*);
+		ste = PA2VA(kstpa, u_int *);
+		pte = PA2VA(kptmpa, u_int *);
 		epte = &pte[nptpages+1];
 		protoste = kptpa | SG_RW | SG_V;
 		protopte = kptpa | PG_RW | PG_CI | PG_V;

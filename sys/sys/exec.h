@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.h,v 1.13 2002/03/14 01:27:14 millert Exp $	*/
+/*	$OpenBSD: exec.h,v 1.14 2002/03/14 03:16:12 millert Exp $	*/
 /*	$NetBSD: exec.h,v 1.59 1996/02/09 18:25:09 christos Exp $	*/
 
 /*-
@@ -190,10 +190,10 @@ int	check_exec(struct proc *, struct exec_package *);
 int	exec_setup_stack(struct proc *, struct exec_package *);
 
 #ifdef DEBUG
-void	new_vmcmd __P((struct exec_vmcmd_set *evsp,
+void	new_vmcmd(struct exec_vmcmd_set *evsp,
 		    int (*proc)(struct proc *p, struct exec_vmcmd *),
 		    u_long len, u_long addr, struct vnode *vp, u_long offset,
-		    u_int prot));
+		    u_int prot);
 #define	NEW_VMCMD(evsp,proc,len,addr,vp,offset,prot) \
 	new_vmcmd(evsp,proc,len,addr,vp,offset,prot);
 #else	/* DEBUG */

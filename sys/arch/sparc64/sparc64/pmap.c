@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.11 2002/03/14 01:26:45 millert Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.12 2002/03/14 03:16:01 millert Exp $	*/
 /*	$NetBSD: pmap.c,v 1.107 2001/08/31 16:47:41 eeh Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -880,7 +880,7 @@ remap_data:
 	 */
 	sz = OF_getproplen(vmemh, "translations");
 	valloc(prom_map, struct prom_map, sz);
-	if (OF_getprop(vmemh, "translations", (void*)prom_map, sz) <= 0) {
+	if (OF_getprop(vmemh, "translations", (void *)prom_map, sz) <= 0) {
 		prom_printf("no translations installed?");
 		OF_exit();
 	}
@@ -960,7 +960,7 @@ remap_data:
 		/*
 		 * Re-fetch translations -- they've certainly changed.
 		 */
-		if (OF_getprop(vmemh, "translations", (void*)prom_map, sz) <=
+		if (OF_getprop(vmemh, "translations", (void *)prom_map, sz) <=
 			0) {
 			prom_printf("no translations installed?");
 			OF_exit();
@@ -1095,7 +1095,7 @@ remap_data:
 	bzero(tsb, TSBSIZE);
 
 	BDPRINTF(PDB_BOOT1, ("firstaddr after TSB=%lx\r\n", (u_long)firstaddr));
-	BDPRINTF(PDB_BOOT1, ("TSB allocated at %p size %08x\r\n", (void*)tsb,
+	BDPRINTF(PDB_BOOT1, ("TSB allocated at %p size %08x\r\n", (void *)tsb,
 	    (int)TSBSIZE));
 
 	first_phys_addr = mem->start;
@@ -1668,7 +1668,7 @@ pmap_pinit(pm)
 		pm->pm_segs = (int64_t *)(u_long)pm->pm_physaddr;
 		if (!pm->pm_physaddr) panic("pmap_pinit");
 #ifdef NOTDEF_DEBUG
-		printf("pmap_pinit: segs %p == %p\n", pm->pm_segs, (void*)page->phys_addr);
+		printf("pmap_pinit: segs %p == %p\n", pm->pm_segs, (void *)page->phys_addr);
 #endif
 		ctx_alloc(pm);
 	}
@@ -3873,7 +3873,7 @@ pmap_testout()
 	/* Allocate a page */
 	va = (vaddr_t)(vmmap - NBPG);
 	ASSERT(va != NULL);
-	loc = (int*)va;
+	loc = (int *)va;
 
 	pg = vm_page_alloc1();
 	pa = (paddr_t)VM_PAGE_TO_PHYS(pg);

@@ -1,4 +1,4 @@
-/* $OpenBSD: kgdb_stub.c,v 1.3 2002/03/14 01:27:04 millert Exp $ */
+/* $OpenBSD: kgdb_stub.c,v 1.4 2002/03/14 03:16:09 millert Exp $ */
 /*	$NetBSD: kgdb_stub.c,v 1.6 1998/08/30 20:30:57 scottr Exp $	*/
 
 /*
@@ -336,7 +336,7 @@ kgdb_trap(type, regs)
 	/* Detect and recover from unexpected traps. */
 	if (kgdb_recover != 0) {
 		printf("kgdb: caught trap 0x%x at %p\n",
-			   type, (void*)PC_REGS(regs));
+			   type, (void *)PC_REGS(regs));
 		kgdb_send("E0E"); /* 14==EFAULT */
 		longjmp(kgdb_recover);
 	}

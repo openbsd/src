@@ -1,4 +1,4 @@
-/*	$OpenBSD: rom.c,v 1.2 2000/10/04 04:48:54 bjc Exp $ */
+/*	$OpenBSD: rom.c,v 1.3 2002/03/14 03:16:02 millert Exp $ */
 /*	$NetBSD: rom.c,v 1.1 1996/08/02 11:22:21 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -73,7 +73,7 @@ romopen(f, adapt, ctlr, unit, part)
 	int i,err;
 
 	bootregs[11] = XXRPB;
-	bqo = (void*)rpb->iovec;
+	bqo = (void *)rpb->iovec;
 
 	if (rpb->unit > 0 && (rpb->unit % 100) == 0) {
 		printf ("changing rpb->unit from %d ", rpb->unit);
@@ -93,7 +93,7 @@ romopen(f, adapt, ctlr, unit, part)
 	msg = getdisklabel(io_buf+LABELOFFSET, lp);
 	if (msg)
 		printf("getdisklabel: %s\n",msg);
-	f->f_devdata = (void*)rsc;
+	f->f_devdata = (void *)rsc;
 	return(0);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipx_pcb.h,v 1.4 2002/03/14 01:27:12 millert Exp $	*/
+/*	$OpenBSD: ipx_pcb.h,v 1.5 2002/03/14 03:16:12 millert Exp $	*/
 
 /*-
  *
@@ -97,10 +97,9 @@ int	ipx_pcbbind(struct ipxpcb *ipxp, struct mbuf *nam);
 int	ipx_pcbconnect(struct ipxpcb *ipxp, struct mbuf *nam);
 void	ipx_pcbdetach(struct ipxpcb *ipxp);
 void	ipx_pcbdisconnect(struct ipxpcb *ipxp);
-struct ipxpcb *
-	ipx_pcblookup(struct ipx_addr *faddr, int lport, int wildp);
-void	ipx_pcbnotify __P((struct ipx_addr *dst, int errno,
-			   void (*notify)(struct ipxpcb *), long param));
+struct ipxpcb *ipx_pcblookup(struct ipx_addr *faddr, int lport, int wildp);
+void	ipx_pcbnotify(struct ipx_addr *dst, int errno,
+	    void (*notify)(struct ipxpcb *), long param);
 void	ipx_setpeeraddr(struct ipxpcb *ipxp, struct mbuf *nam);
 void	ipx_setsockaddr(struct ipxpcb *ipxp, struct mbuf *nam);
 #endif

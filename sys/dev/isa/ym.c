@@ -1,4 +1,4 @@
-/* $OpenBSD: ym.c,v 1.10 2002/03/14 01:26:57 millert Exp $ */
+/* $OpenBSD: ym.c,v 1.11 2002/03/14 03:16:05 millert Exp $ */
 
 
 /*
@@ -111,8 +111,8 @@ static __inline int ym_read(struct ym_softc *, int);
 static __inline void ym_write(struct ym_softc *, int, int);
 
 #if NMIDI > 0
-int	ym_mpu401_open __P((void *, int, void (*iintr)(void *, int),
-	    void (*ointr)(void *), void *arg));
+int	ym_mpu401_open(void *, int, void (*iintr)(void *, int),
+	    void (*ointr)(void *), void *arg);
 void	ym_mpu401_close(void *);
 int	ym_mpu401_output(void *, int);
 void	ym_mpu401_getinfo(void *, struct midi_info *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bootparam.c,v 1.9 2002/03/14 01:27:07 millert Exp $	*/
+/*	$OpenBSD: bootparam.c,v 1.10 2002/03/14 03:16:09 millert Exp $	*/
 /*	$NetBSD: bootparam.c,v 1.10 1996/10/14 21:16:55 thorpej Exp $	*/
 
 /*
@@ -146,7 +146,7 @@ bp_whoami(sockfd)
 	args->vers = htonl(BOOTPARAM_VERS);
 	args->proc = htonl(BOOTPARAM_WHOAMI);
 	args->arglen = htonl(sizeof(struct xdr_inaddr));
-	send_tail = (char*) &args->xina;
+	send_tail = (char *)&args->xina;
 
 	/*
 	 * append encapsulated data (client IP address)
@@ -160,7 +160,7 @@ bp_whoami(sockfd)
 	/* rpc_call will set d->destport */
 
 	len = rpc_call(d, PMAPPROG, PMAPVERS, PMAPPROC_CALLIT,
-				  args, send_tail - (char*)args,
+				  args, send_tail - (char *)args,
 				  repl, sizeof(*repl));
 	if (len < 8) {
 		printf("bootparamd: 'whoami' call failed\n");
@@ -194,7 +194,7 @@ bp_whoami(sockfd)
 		printf("bp_whoami: short reply, %d < %d\n", len, x);
 		return (-1);
 	}
-	recv_head = (char*) repl->capsule;
+	recv_head = (char *)repl->capsule;
 
 	/* client name */
 	hostnamelen = MAXHOSTNAMELEN-1;
@@ -254,8 +254,8 @@ bp_getfile(sockfd, key, serv_addr, pathname)
 		return (-1);
 	}
 
-	send_tail = (char*) sdata.d;
-	recv_head = (char*) rdata.d;
+	send_tail = (char *)sdata.d;
+	recv_head = (char *)rdata.d;
 
 	/*
 	 * Build request message.
@@ -280,14 +280,14 @@ bp_getfile(sockfd, key, serv_addr, pathname)
 
 	rlen = rpc_call(d,
 		BOOTPARAM_PROG, BOOTPARAM_VERS, BOOTPARAM_GETFILE,
-		sdata.d, send_tail - (char*)sdata.d,
+		sdata.d, send_tail - (char *)sdata.d,
 		rdata.d, sizeof(rdata.d));
 	if (rlen < 4) {
 		RPC_PRINTF(("bp_getfile: short reply\n"));
 		errno = EBADRPC;
 		return (-1);
 	}
-	recv_head = (char*) rdata.d;
+	recv_head = (char *)rdata.d;
 
 	/*
 	 * Parse result message.

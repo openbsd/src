@@ -1,4 +1,4 @@
-/*	$OpenBSD: bktr_os.c,v 1.9 2002/03/14 01:27:00 millert Exp $	*/
+/*	$OpenBSD: bktr_os.c,v 1.10 2002/03/14 03:16:07 millert Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_os.c,v 1.20 2000/10/20 08:16:53 roger Exp $ */
 
 /*
@@ -821,7 +821,7 @@ int bktr_poll( dev_t dev, int events, struct proc *p)
 
 static bktr_reg_t brooktree[ NBKTR ];
 
-static const char*	bktr_probe( pcici_t tag, pcidi_t type );
+static const char      *bktr_probe( pcici_t tag, pcidi_t type );
 static void		bktr_attach( pcici_t tag, int unit );
 static void		bktr_intr(void *arg) { common_bktr_intr(arg); }
 
@@ -872,7 +872,7 @@ SYSINIT(bktrdev,SI_SUB_DRIVERS,SI_ORDER_MIDDLE+CDEV_MAJOR,bktr_drvinit,NULL)
 /*
  * the boot time probe routine.
  */
-static const char*
+static const char *
 bktr_probe( pcici_t tag, pcidi_t type )
 {
         unsigned int rev = pci_conf_read( tag, PCIR_REVID) & 0x000000ff;
@@ -960,7 +960,7 @@ bktr_attach( pcici_t tag, int unit )
 	/*
 	 * setup the interrupt handling routine
 	 */
-	pci_map_int(tag, bktr_intr, (void*) bktr, &tty_imask);
+	pci_map_int(tag, bktr_intr, (void *) bktr, &tty_imask);
 
 
 	/* Update the Device Control Register */

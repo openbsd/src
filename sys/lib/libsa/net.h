@@ -1,4 +1,4 @@
-/*	$OpenBSD: net.h,v 1.4 2002/03/14 01:27:07 millert Exp $	*/
+/*	$OpenBSD: net.h,v 1.5 2002/03/14 03:16:10 millert Exp $	*/
 /*	$NetBSD: net.h,v 1.10 1995/10/20 00:46:30 cgd Exp $	*/
 
 /*
@@ -98,17 +98,16 @@ int	rarp_getipaddress(int);
 
 /* Link functions: */
 ssize_t sendether(struct iodesc *d, void *pkt, size_t len,
-			u_char *dea, int etype);
+	    u_char *dea, int etype);
 ssize_t readether(struct iodesc *d, void *pkt, size_t len,
-			time_t tleft, u_int16_t *etype);
+	    time_t tleft, u_int16_t *etype);
 
 ssize_t	sendudp(struct iodesc *, void *, size_t);
 ssize_t	readudp(struct iodesc *, void *, size_t, time_t);
-ssize_t	sendrecv __P((struct iodesc *,
-		      ssize_t (*)(struct iodesc *, void *, size_t),
-			void *, size_t,
-		        ssize_t (*)(struct iodesc *, void *, size_t, time_t),
-			void *, size_t));
+ssize_t	sendrecv(struct iodesc *,
+	    ssize_t (*)(struct iodesc *, void *, size_t), void *, size_t,
+	    ssize_t (*)(struct iodesc *, void *, size_t, time_t),
+	    void *, size_t);
 
 /* Utilities: */
 char	*ether_sprintf(u_char *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.9 2002/03/14 01:26:45 millert Exp $	*/
+/*	$OpenBSD: clock.c,v 1.10 2002/03/14 03:16:01 millert Exp $	*/
 /*	$NetBSD: clock.c,v 1.41 2001/07/24 19:29:25 eeh Exp $ */
 
 /*
@@ -570,10 +570,10 @@ timerattach(parent, self, aux)
 
 	/* Install the appropriate interrupt vector here */
 	level10.ih_number = ma->ma_interrupts[0];
-	level10.ih_clr = (void*)&timerreg_4u.t_clrintr[0];
+	level10.ih_clr = (void *)&timerreg_4u.t_clrintr[0];
 	intr_establish(10, &level10);
 	level14.ih_number = ma->ma_interrupts[1];
-	level14.ih_clr = (void*)&timerreg_4u.t_clrintr[1];
+	level14.ih_clr = (void *)&timerreg_4u.t_clrintr[1];
 
 	intr_establish(14, &level14);
 	printf(" irq vectors %lx and %lx", 

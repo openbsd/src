@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.9 2002/03/14 01:26:43 millert Exp $	*/
+/*	$OpenBSD: autoconf.h,v 1.10 2002/03/14 03:16:00 millert Exp $	*/
 /*	$NetBSD: autoconf.h,v 1.20 1997/05/24 20:03:03 pk Exp $ */
 
 /*
@@ -206,8 +206,7 @@ int		sd_crazymap(int);
 struct	device *parsedisk(char *, int, int, dev_t *);
 
 /* Establish a mountroot_hook, for benefit of floppy drive, mostly. */
-void	mountroot_hook_establish __P((void (*)(struct device *),
-				      struct device *));
+void	mountroot_hook_establish(void (*)(struct device *), struct device *);
 
 void	bootstrap(void);
 int	firstchild(int);

@@ -1,4 +1,4 @@
-/* $OpenBSD: pci_eb64plus.c,v 1.2 2002/03/14 01:26:27 millert Exp $ */
+/* $OpenBSD: pci_eb64plus.c,v 1.3 2002/03/14 03:15:50 millert Exp $ */
 /* $NetBSD: pci_eb64plus.c,v 1.10 2001/07/27 00:25:20 thorpej Exp $ */
 
 /*-
@@ -95,8 +95,8 @@ int	dec_eb64plus_intr_map(void *, pcitag_t, int, int,
 	    pci_intr_handle_t *);
 const char *dec_eb64plus_intr_string(void *, pci_intr_handle_t);
 const struct evcnt *dec_eb64plus_intr_evcnt(void *, pci_intr_handle_t);
-void	*dec_eb64plus_intr_establish __P((void *, pci_intr_handle_t,
-	    int, int (*func)(void *), void *, char *));
+void	*dec_eb64plus_intr_establish(void *, pci_intr_handle_t,
+	    int, int (*func)(void *), void *, char *);
 void	dec_eb64plus_intr_disestablish(void *, void *);
 
 #define	EB64PLUS_MAX_IRQ	32

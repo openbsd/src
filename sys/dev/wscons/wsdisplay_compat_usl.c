@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay_compat_usl.c,v 1.10 2002/03/14 01:27:03 millert Exp $ */
+/* $OpenBSD: wsdisplay_compat_usl.c,v 1.11 2002/03/14 03:16:08 millert Exp $ */
 /* $NetBSD: wsdisplay_compat_usl.c,v 1.12 2000/03/23 07:01:47 thorpej Exp $ */
 
 /*
@@ -76,10 +76,10 @@ void usl_sync_done(struct usl_syncdata *);
 int usl_sync_check(struct usl_syncdata *);
 struct usl_syncdata *usl_sync_get(struct wsscreen *);
 
-int usl_detachproc __P((void *, int, void (*)(void *, int, int), void *));
+int usl_detachproc(void *, int, void (*)(void *, int, int), void *);
 int usl_detachack(struct usl_syncdata *, int);
 void usl_detachtimeout(void *);
-int usl_attachproc __P((void *, int, void (*)(void *, int, int), void *));
+int usl_attachproc(void *, int, void (*)(void *, int, int), void *);
 int usl_attachack(struct usl_syncdata *, int);
 void usl_attachtimeout(void *);
 

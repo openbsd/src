@@ -1,4 +1,4 @@
-/*	$OpenBSD: idprom.c,v 1.6 1997/01/16 04:03:46 kstailey Exp $	*/
+/*	$OpenBSD: idprom.c,v 1.7 2002/03/14 03:16:01 millert Exp $	*/
 /*	$NetBSD: idprom.c,v 1.13 1996/11/20 18:56:50 gwr Exp $	*/
 
 /*-
@@ -115,8 +115,8 @@ idprom_init()
 	} hid;
 
 	idp = &identity_prom;
-	dst = (char*)idp;
-	src = (char*)IDPROM_BASE;
+	dst = (char *)idp;
+	src = (char *)IDPROM_BASE;
 	len = IDPROM_SIZE;
 	xorsum = 0;	/* calculated as xor of data */
 

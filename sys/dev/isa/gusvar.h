@@ -1,4 +1,4 @@
-/*	$OpenBSD: gusvar.h,v 1.4 2002/03/14 01:26:56 millert Exp $	*/
+/*	$OpenBSD: gusvar.h,v 1.5 2002/03/14 03:16:05 millert Exp $	*/
 /*	$NetBSD: gus.c,v 1.51 1998/01/25 23:48:06 mycroft Exp $	*/
 
 /*-
@@ -178,13 +178,13 @@ struct gus_softc {
 	u_char sc_out_port;		/* Current out port (generic only) */
 	u_char sc_in_port;		/* keep track of it when no codec */
 
-	void (*sc_dmaoutintr)(void*); /* DMA completion intr handler */
+	void (*sc_dmaoutintr)(void *);	/* DMA completion intr handler */
 	void *sc_outarg;		/* argument for sc_dmaoutintr() */
 	u_char *sc_dmaoutaddr;		/* for isadma_done */
 	u_long sc_gusaddr;		/* where did we just put it? */
 	int sc_dmaoutcnt;		/* for isadma_done */
 
-	void (*sc_dmainintr)(void*); /* DMA completion intr handler */
+	void (*sc_dmainintr)(void *);	/* DMA completion intr handler */
 	void *sc_inarg;			/* argument for sc_dmaoutintr() */
 	u_char *sc_dmainaddr;		/* for isadma_done */
 	int sc_dmaincnt;		/* for isadma_done */
@@ -323,16 +323,16 @@ int	gus_set_params(void *, int, int, struct audio_params *, struct audio_params 
 int	gusmax_set_params(void *, int, int, struct audio_params *, struct audio_params *);
 int	gus_round_blocksize(void *, int);
 int	gus_commit_settings(void *);
-int	gus_dma_output __P((void *, void *, int, void (*)(void *), void *));
-int	gus_dma_input __P((void *, void *, int, void (*)(void *), void *));
+int	gus_dma_output(void *, void *, int, void (*)(void *), void *);
+int	gus_dma_input(void *, void *, int, void (*)(void *), void *);
 int	gus_halt_out_dma(void *);
 int	gus_halt_in_dma(void *);
 int	gus_speaker_ctl(void *, int);
 int	gusmaxopen(void *, int);
 int	gusmax_round_blocksize(void *, int);
 int	gusmax_commit_settings(void *);
-int	gusmax_dma_output __P((void *, void *, int, void (*)(void *), void *));
-int	gusmax_dma_input __P((void *, void *, int, void (*)(void *), void *));
+int	gusmax_dma_output(void *, void *, int, void (*)(void *), void *);
+int	gusmax_dma_input(void *, void *, int, void (*)(void *), void *);
 int	gusmax_halt_out_dma(void *);
 int	gusmax_halt_in_dma(void *);
 int	gusmax_speaker_ctl(void *, int);

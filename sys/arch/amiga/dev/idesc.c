@@ -1,4 +1,4 @@
-/*	$OpenBSD: idesc.c,v 1.11 2002/03/14 01:26:29 millert Exp $	*/
+/*	$OpenBSD: idesc.c,v 1.12 2002/03/14 03:15:51 millert Exp $	*/
 /*	$NetBSD: idesc.c,v 1.29 1996/12/23 09:10:12 veego Exp $	*/
 
 /*
@@ -904,7 +904,7 @@ ideicmd(dev, target, cbuf, clen, buf, len)
 		return (0);
 
 	case MODE_SENSE:
-		mdsnbuf = (void*) buf;
+		mdsnbuf = (void *) buf;
 		bzero(buf, *((u_char *)cbuf + 4));
 		switch (*((u_char *)cbuf + 2) & 0x3f) {
 		case 4:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.20 2002/03/14 01:26:45 millert Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.21 2002/03/14 03:16:01 millert Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.51 2001/07/24 19:32:11 eeh Exp $ */
 
 /*
@@ -320,7 +320,7 @@ bootpath_build()
 	register long chosen;
 	char buf[128];
 
-	bzero((void*)bootpath, sizeof(bootpath));
+	bzero((void *)bootpath, sizeof(bootpath));
 	bp = bootpath;
 
 	/*
@@ -1166,7 +1166,7 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 		ma.ma_upaid = portid;
 
 		if (getprop(node, "reg", sizeof(*ma.ma_reg), 
-			     &ma.ma_nreg, (void**)&ma.ma_reg) != 0)
+			     &ma.ma_nreg, (void **)&ma.ma_reg) != 0)
 			continue;
 #ifdef DEBUG
 		if (autoconf_debug & ACDB_PROBE) {
@@ -1179,7 +1179,7 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 		}
 #endif
 		rv = getprop(node, "interrupts", sizeof(*ma.ma_interrupts), 
-			&ma.ma_ninterrupts, (void**)&ma.ma_interrupts);
+			&ma.ma_ninterrupts, (void **)&ma.ma_interrupts);
 		if (rv != 0 && rv != ENOENT) {
 			free(ma.ma_reg, M_DEVBUF);
 			continue;
@@ -1194,7 +1194,7 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 		}
 #endif
 		rv = getprop(node, "address", sizeof(*ma.ma_address), 
-			&ma.ma_naddress, (void**)&ma.ma_address);
+			&ma.ma_naddress, (void **)&ma.ma_address);
 		if (rv != 0 && rv != ENOENT) {
 			free(ma.ma_reg, M_DEVBUF);
 			if (ma.ma_ninterrupts)

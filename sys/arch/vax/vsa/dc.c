@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.7 2002/03/14 01:26:49 millert Exp $	*/
+/*	$OpenBSD: dc.c,v 1.8 2002/03/14 03:16:02 millert Exp $	*/
 /*	$NetBSD: dc.c,v 1.4 1996/10/13 03:36:10 christos Exp $	*/
 /*-
  * Copyright (c) 1992, 1993
@@ -252,7 +252,7 @@ dcattach(parent, self, aux)
 	u_long dcaddr;
 
 	dcaddr = (u_long)ca->ca_ioaddr;
-	(void) dc_doprobe((void*)uvax_phys2virt(dcaddr),
+	(void) dc_doprobe((void *)uvax_phys2virt(dcaddr),
 			  self->dv_unit, self->dv_cfdata->cf_flags,
 			  ca->ca_intslot);
 

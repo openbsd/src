@@ -1,4 +1,4 @@
-/*	$OpenBSD: dzcons.c,v 1.4 2002/03/14 01:26:48 millert Exp $	*/
+/*	$OpenBSD: dzcons.c,v 1.5 2002/03/14 03:16:02 millert Exp $	*/
 /*	$NetBSD: dzcons.c,v 1.5 1997/03/22 12:51:01 ragge Exp $	*/
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -51,9 +51,9 @@
 #include <machine/ka410.h>
 #include <machine/../vax/gencons.h>
 
-volatile unsigned char *ka410_intreq = (void*)KA410_INTREQ;
-volatile unsigned char *ka410_intclr = (void*)KA410_INTCLR;
-volatile unsigned char *ka410_intmsk = (void*)KA410_INTMSK;
+volatile unsigned char *ka410_intreq = (void *)KA410_INTREQ;
+volatile unsigned char *ka410_intclr = (void *)KA410_INTCLR;
+volatile unsigned char *ka410_intmsk = (void *)KA410_INTMSK;
 
 
 
@@ -69,7 +69,7 @@ static volatile struct {/* base address of DZ-controller: 0x200A0000 */
   REG(lpr1);          /* 14 Lpr0: */
   REG(lpr2);          /* 18 Lpr0: */
   REG(lpr3);          /* 1C Lpr0: */
-} *dz = (void*)0x200A0000; 
+} *dz = (void *)0x200A0000; 
 #undef REG
 
 void dzcnputc ();
@@ -322,10 +322,10 @@ int
 dzcninit(cndev)
 	struct	consdev *cndev;
 {
-	dz = (void*)uvax_phys2virt ((int) dz);
-	ka410_intreq = (void*)uvax_phys2virt ((int)ka410_intreq);
-	ka410_intclr = (void*)uvax_phys2virt ((int)ka410_intclr);
-	ka410_intmsk = (void*)uvax_phys2virt ((int)ka410_intmsk);
+	dz = (void *)uvax_phys2virt ((int) dz);
+	ka410_intreq = (void *)uvax_phys2virt ((int)ka410_intreq);
+	ka410_intclr = (void *)uvax_phys2virt ((int)ka410_intclr);
+	ka410_intmsk = (void *)uvax_phys2virt ((int)ka410_intmsk);
 
 	dz->csr = 0;    /* Disable scanning until initting is done */
 	dz->rbuf = 0;   /* Turn off line 0's receiver */

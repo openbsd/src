@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.22 2002/03/14 01:26:41 millert Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.23 2002/03/14 03:15:58 millert Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -669,7 +669,7 @@ setregs(p, pack, stack, retval)
 	pargs = -roundup(-stack + 8, 16);
 	newstack = (u_int32_t)(pargs - 32);
 
-	copyin ((void*)(VM_MAX_ADDRESS-0x10), &args, 0x10);
+	copyin ((void *)(VM_MAX_ADDRESS-0x10), &args, 0x10);
 	
 	bzero(tf, sizeof *tf);
 	tf->fixreg[1] = newstack;
@@ -984,8 +984,8 @@ systype(char *name)
  *
  */
 #include <dev/pci/pcivar.h>
-typedef void     *(intr_establish_t) __P((void *, pci_intr_handle_t,
-            int, int, int (*func)(void *), void *, char *));
+typedef void     *(intr_establish_t)(void *, pci_intr_handle_t,
+            int, int, int (*func)(void *), void *, char *);
 typedef void     (intr_disestablish_t)(void *, void *);
 
 int ppc_configed_intr_cnt = 0;
@@ -1234,7 +1234,7 @@ mapiodev(pa, len)
 		spa += NBPG;
 		vaddr += NBPG;
 	}
-	return (void*) (va+off);
+	return (void *) (va+off);
 }
 void 
 unmapiodev(kva, p_size)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.57 2002/03/14 01:27:14 millert Exp $	*/
+/*	$OpenBSD: proc.h,v 1.58 2002/03/14 03:16:12 millert Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -383,8 +383,8 @@ void    wakeup(void *chan);
 void	reaper(void);
 void	exit1(struct proc *, int);
 void	exit2(struct proc *);
-int	fork1 __P((struct proc *, int, int, void *, size_t, void (*)(void *),
-	    void *, register_t *));
+int	fork1(struct proc *, int, int, void *, size_t, void (*)(void *),
+	    void *, register_t *);
 void	rqinit(void);
 int	groupmember(gid_t, struct ucred *);
 void	cpu_switch(struct proc *);

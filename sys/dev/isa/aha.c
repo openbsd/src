@@ -1,4 +1,4 @@
-/*	$OpenBSD: aha.c,v 1.43 2002/03/14 01:26:56 millert Exp $	*/
+/*	$OpenBSD: aha.c,v 1.44 2002/03/14 03:16:05 millert Exp $	*/
 /*	$NetBSD: aha.c,v 1.11 1996/05/12 23:51:23 mycroft Exp $	*/
 
 #undef AHADIAG
@@ -451,7 +451,7 @@ AGAIN:
 
 #ifdef AHADEBUG
 		if (aha_debug) {
-			u_char *cp = (u_char*)&ccb->scsi_cmd;
+			u_char *cp = (u_char *)&ccb->scsi_cmd;
 			printf("op=%x %x %x %x %x %x\n",
 			    cp[0], cp[1], cp[2], cp[3], cp[4], cp[5]);
 			printf("stat %x for mbi addr = 0x%08x, ",

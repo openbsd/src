@@ -1,4 +1,4 @@
-/*	$OpenBSD: eisa_machdep.h,v 1.4 2002/03/14 01:26:32 millert Exp $	*/
+/*	$OpenBSD: eisa_machdep.h,v 1.5 2002/03/14 03:15:53 millert Exp $	*/
 /*	$NetBSD: eisa_machdep.h,v 1.4 1997/06/06 23:12:52 thorpej Exp $	*/
 
 /*
@@ -60,7 +60,6 @@ int		eisa_maxslots(eisa_chipset_tag_t);
 int		eisa_intr_map(eisa_chipset_tag_t, u_int,
 		    eisa_intr_handle_t *);
 const char	*eisa_intr_string(eisa_chipset_tag_t, eisa_intr_handle_t);
-void		*eisa_intr_establish __P((eisa_chipset_tag_t,
-		    eisa_intr_handle_t, int, int, int (*)(void *), void *,
-		    char *));
+void		*eisa_intr_establish(eisa_chipset_tag_t, eisa_intr_handle_t,
+		    int, int, int (*)(void *), void *, char *);
 void		eisa_intr_disestablish(eisa_chipset_tag_t, void *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ce4231var.h,v 1.3 2002/01/24 03:06:54 jason Exp $	*/
+/*	$OpenBSD: ce4231var.h,v 1.4 2002/03/14 03:16:00 millert Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -66,10 +66,10 @@ struct ce4231_softc {
 	int	sc_open;		/* already open? */
 	int	sc_locked;		/* locked? */
 
-	void	(*sc_rintr)(void*);	/* input completion intr handler */
-	void *	sc_rarg;		/* arg for sc_rintr() */
-	void	(*sc_pintr)(void*);	/* output completion intr handler */
-	void *	sc_parg;		/* arg for sc_pintr() */
+	void	(*sc_rintr)(void *);	/* input completion intr handler */
+	void	*sc_rarg;		/* arg for sc_rintr() */
+	void	(*sc_pintr)(void *);	/* output completion intr handler */
+	void	*sc_parg;		/* arg for sc_pintr() */
 
 	char		sc_mute[9];	/* which devs are muted */
 	u_int8_t	sc_out_port;	/* output port */

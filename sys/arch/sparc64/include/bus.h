@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.11 2002/03/14 01:26:45 millert Exp $	*/
+/*	$OpenBSD: bus.h,v 1.12 2002/03/14 03:16:00 millert Exp $	*/
 /*	$NetBSD: bus.h,v 1.31 2001/09/21 15:30:41 wiz Exp $	*/
 
 /*-
@@ -157,9 +157,9 @@ struct sparc_bus_space_tag {
 	paddr_t	(*sparc_bus_mmap)(bus_space_tag_t,
 		bus_addr_t, off_t, int, int);
 
-	void	*(*sparc_intr_establish) __P((bus_space_tag_t,
+	void	*(*sparc_intr_establish)(bus_space_tag_t,
 		int, int, int,
-		int (*)(void *), void *));
+		int (*)(void *), void *);
 
 };
 
@@ -233,14 +233,14 @@ static paddr_t	bus_space_mmap(
 				off_t,			/*offset*/
 				int,			/*prot*/
 				int);			/*flags*/
-static void	*bus_intr_establish __P((
+static void	*bus_intr_establish(
 				bus_space_tag_t,
 				int,			/*bus-specific intr*/
 				int,			/*device class level,
 							  see machine/intr.h*/
 				int,			/*flags*/
 				int (*)(void *),	/*handler*/
-				void *));		/*handler arg*/
+				void *);		/*handler arg*/
 
 
 /* This macro finds the first "upstream" implementation of method `f' */
@@ -383,7 +383,7 @@ void * bus_space_vaddr(bus_space_tag_t space, bus_space_handle_t handle);
  *	the temporary virtual address
  *	the passed `arg' argument
  */
-int bus_space_probe __P((
+int bus_space_probe(
 		bus_space_tag_t,
 		bus_type_t,
 		bus_addr_t,
@@ -391,7 +391,7 @@ int bus_space_probe __P((
 		size_t,				/* offset */
 		int,				/* flags */
 		int (*)(void *, void *),	/* callback function */
-		void *));			/* callback arg */
+		void *);			/* callback arg */
 
 
 /*

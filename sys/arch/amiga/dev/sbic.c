@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbic.c,v 1.16 2002/03/14 01:26:29 millert Exp $	*/
+/*	$OpenBSD: sbic.c,v 1.17 2002/03/14 03:15:51 millert Exp $	*/
 /*	$NetBSD: sbic.c,v 1.28 1996/10/13 03:07:29 christos Exp $	*/
 
 /*
@@ -291,7 +291,7 @@ void sbic_load_ptrs(dev, regs, target, lun)
 	int target, lun;
 {
 	int s, count;
-	char* vaddr, * paddr;
+	char *vaddr, *paddr;
 	struct sbic_acb *acb;
 
 	SBIC_TRACE(dev);
@@ -322,7 +322,7 @@ void sbic_load_ptrs(dev, regs, target, lun)
 		count = acb->sc_kv.dc_count;
 		for(count = (NBPG - ((int)vaddr & PGOFSET));
 		    count < acb->sc_kv.dc_count
-		    && (char*)kvtop(vaddr + count + 4) == paddr + count + 4;
+		    && (char *)kvtop(vaddr + count + 4) == paddr + count + 4;
 		    count += NBPG);
 		/* If it's all contiguous... */
 		if(count > acb->sc_kv.dc_count ) {

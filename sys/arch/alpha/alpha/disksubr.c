@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.34 2002/03/14 01:26:26 millert Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.35 2002/03/14 03:15:50 millert Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
@@ -68,16 +68,16 @@
 
 #if defined(DISKLABEL_I386) || defined(DISKLABEL_ALPHA) || defined(DISKLABEL_AMIGA) || defined(DISKLABEL_ALL)
 void	swapdisklabel(struct disklabel *d);
-char   *readbsdlabel __P((struct buf *, void (*)(struct buf *), int, int,
-    int, int, struct disklabel *, int));
+char   *readbsdlabel(struct buf *, void (*)(struct buf *), int, int,
+    int, int, struct disklabel *, int);
 #endif
 #if defined(DISKLABEL_I386) || defined(DISKLABEL_ALL)
-char   *readdoslabel __P((struct buf *, void (*)(struct buf *),
-    struct disklabel *, struct cpu_disklabel *, int *, int *, int));
+char   *readdoslabel(struct buf *, void (*)(struct buf *),
+    struct disklabel *, struct cpu_disklabel *, int *, int *, int);
 #endif
 #if defined(DISKLABEL_AMIGA) || defined(DISKLABEL_ALL)
-char   *readamigalabel __P((struct buf *, void (*)(struct buf *),
-    struct disklabel *, struct cpu_disklabel *, int));
+char   *readamigalabel(struct buf *, void (*)(struct buf *),
+    struct disklabel *, struct cpu_disklabel *, int);
 #endif
 
 static enum disklabel_tag probe_order[] = { LABELPROBES, -1 };

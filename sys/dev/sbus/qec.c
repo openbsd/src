@@ -1,4 +1,4 @@
-/*	$OpenBSD: qec.c,v 1.3 2002/03/14 01:27:02 millert Exp $	*/
+/*	$OpenBSD: qec.c,v 1.4 2002/03/14 03:16:08 millert Exp $	*/
 /*	$NetBSD: qec.c,v 1.12 2000/12/04 20:12:55 fvdl Exp $ */
 
 /*-
@@ -66,13 +66,13 @@ static int qec_bus_map(
 		int,			/*flags*/
 		vaddr_t,		/*preferred virtual address */
 		bus_space_handle_t *);
-static void *qec_intr_establish __P((
+static void *qec_intr_establish(
 		bus_space_tag_t,
 		int,			/*bus interrupt priority*/
 		int,			/*`device class' interrupt level*/
 		int,			/*flags*/
 		int (*)(void *),	/*handler*/
-		void *));		/*arg*/
+		void *);		/*arg*/
 
 struct cfattach qec_ca = {
 	sizeof(struct qec_softc), qecmatch, qecattach

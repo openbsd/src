@@ -1,4 +1,4 @@
-/*	$OpenBSD: ka43.c,v 1.8 2002/03/14 01:26:48 millert Exp $ */
+/*	$OpenBSD: ka43.c,v 1.9 2002/03/14 03:16:02 millert Exp $ */
 /*	$NetBSD: ka43.c,v 1.19 1999/09/06 19:52:53 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -89,9 +89,9 @@ struct	cpu_dep ka43_calls = {
  * enabled. Thus we initialize these four pointers with physical addresses,
  * but before leving ka43_steal_pages() we reset them to virtual addresses.
  */
-static	volatile struct	ka43_cpu   *ka43_cpu	= (void*)KA43_CPU_BASE;
-static	volatile u_int	*ka43_creg = (void*)KA43_CH2_CREG;
-static	volatile u_int	*ka43_ctag = (void*)KA43_CT2_BASE;
+static	volatile struct	ka43_cpu   *ka43_cpu	= (void *)KA43_CPU_BASE;
+static	volatile u_int	*ka43_creg = (void *)KA43_CH2_CREG;
+static	volatile u_int	*ka43_ctag = (void *)KA43_CT2_BASE;
 
 #define KA43_MC_RESTART	0x00008000	/* Restart possible*/
 #define KA43_PSL_FPDONE	0x00010000	/* First Part Done */
@@ -138,7 +138,7 @@ int
 ka43_mchk(addr)
 	caddr_t addr;
 {
-	register struct ka43_mcframe *mcf = (void*)addr;
+	register struct ka43_mcframe *mcf = (void *)addr;
 
 	mtpr(0x00, PR_MCESR);	/* Acknowledge the machine check */
 	printf("machine check %d (0x%x)\n", mcf->mc43_code, mcf->mc43_code);
@@ -276,7 +276,7 @@ ka43_cache_invalidate()
 int
 ka43_cache_enable()
 {
-	volatile char *membase = (void*)0x80000000;	/* physical 0x00 */
+	volatile char *membase = (void *)0x80000000;	/* physical 0x00 */
 	int i, val;
 
 	val = KA43_PCS_FLUSH | KA43_PCS_REFRESH;

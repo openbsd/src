@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.7 1999/06/07 07:17:47 deraadt Exp $
+	$OpenBSD: syscalls.master,v 1.8 2002/03/14 03:16:03 millert Exp $
 ;	$NetBSD: syscalls.master,v 1.10 1996/09/07 14:21:59 mycroft Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
@@ -58,11 +58,11 @@
 11	STD		{ int ibcs2_sys_execv(char *path, char **argp); }
 12	STD		{ int ibcs2_sys_chdir(char *path); }
 13	STD		{ int ibcs2_sys_time(ibcs2_time_t *tp); }
-14	STD		{ int ibcs2_sys_mknod(char* path, int mode, int dev); }
+14	STD		{ int ibcs2_sys_mknod(char *path, int mode, int dev); }
 15	STD		{ int ibcs2_sys_chmod(char *path, int mode); }
 16	STD		{ int ibcs2_sys_chown(char *path, int uid, int gid); }
 17	NOARGS		{ int sys_obreak(caddr_t nsize); }
-18	STD		{ int ibcs2_sys_stat(char* path, \
+18	STD		{ int ibcs2_sys_stat(char *path, \
 			    struct ibcs2_stat *st); }
 19	NOARGS		{ long compat_43_sys_lseek(int fd, long offset, \
 			    int whence); }

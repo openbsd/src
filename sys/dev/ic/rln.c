@@ -1,4 +1,4 @@
-/*	$OpenBSD: rln.c,v 1.14 2002/03/14 01:26:55 millert Exp $	*/
+/*	$OpenBSD: rln.c,v 1.15 2002/03/14 03:16:05 millert Exp $	*/
 /*
  * David Leonard <d@openbsd.org>, 1999. Public Domain.
  *
@@ -960,7 +960,7 @@ rln_sendinit(sc)
 	struct rln_mm_cmd response;
 #endif
 
-	bzero((char*)&init + sizeof init.mm_cmd,
+	bzero((char *)&init + sizeof init.mm_cmd,
 		sizeof init - sizeof init.mm_cmd);
 
 	dprintf(" [setting parameters]");

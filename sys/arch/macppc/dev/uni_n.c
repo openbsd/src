@@ -1,4 +1,4 @@
-/*	$OpenBSD: uni_n.c,v 1.3 2002/03/14 01:26:36 millert Exp $	*/
+/*	$OpenBSD: uni_n.c,v 1.4 2002/03/14 03:15:55 millert Exp $	*/
 
 /*
  * Copyright (c) 1998-2001 Dale Rahn. All rights reserved.
@@ -108,7 +108,7 @@ uni_n_config(int handle)
 			if (OF_getprop(handle, "reg", &address,
 			    sizeof address) > 0) {
 				baseaddr = mapiodev(address, NBPG);
-				ctladdr = (void*)(baseaddr + 0x20);
+				ctladdr = (void *)(baseaddr + 0x20);
 				*ctladdr |= 0x02;
 				return baseaddr;
 			}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.15 2002/03/14 01:26:35 millert Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.16 2002/03/14 03:15:54 millert Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.20 1997/02/05 05:10:25 scottr Exp $	*/
 
 /* 
@@ -78,9 +78,9 @@ db_var_short(varp, valp, op)
     int op;
 {
     if (op == DB_VAR_GET)
-	*valp = (db_expr_t) *((short*)varp->valuep);
+	*valp = (db_expr_t) *((short *)varp->valuep);
     else
-	*((short*)varp->valuep) = (short) *valp;
+	*((short *)varp->valuep) = (short) *valp;
     return(0);
 }
 

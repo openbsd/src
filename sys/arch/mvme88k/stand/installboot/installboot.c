@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.c,v 1.5 2002/03/14 01:26:40 millert Exp $ */
+/*	$OpenBSD: installboot.c,v 1.6 2002/03/14 03:15:57 millert Exp $ */
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -74,7 +74,7 @@ int		loadblocknums(char *, int);
 static void	devread(int, void *, daddr_t, size_t, char *);
 static void	usage(void);
 int 		main(int, char *[]);
-static void     vid_to_disklabel(char *, char*);
+static void     vid_to_disklabel(char *, char *);
 
 
 static void

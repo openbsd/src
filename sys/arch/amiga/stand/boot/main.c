@@ -1,5 +1,5 @@
 /*
- * $OpenBSD: main.c,v 1.5 2002/03/14 01:26:29 millert Exp $
+ * $OpenBSD: main.c,v 1.6 2002/03/14 03:15:52 millert Exp $
  * $NetBSD: main.c,v 1.1.1.1 1996/11/29 23:36:29 is Exp $
  *
  *
@@ -382,7 +382,7 @@ pain()
 		printf("+%lu]", (unsigned long)stringsz);
                 if (read(io, (char *)nkcd, stringsz) != stringsz)
 			goto err;
-                nkcd = (int*)((char *)nkcd + ((stringsz + 3) & ~3));
+                nkcd = (int *)((char *)nkcd + ((stringsz + 3) & ~3));
                 esym = (char *)(textsz + eh->a_data + eh->a_bss
                     + eh->a_syms + 4 + ((stringsz + 3) & ~3));
         }

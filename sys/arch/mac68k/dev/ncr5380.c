@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr5380.c,v 1.17 2002/03/14 01:26:35 millert Exp $	*/
+/*	$OpenBSD: ncr5380.c,v 1.18 2002/03/14 03:15:55 millert Exp $	*/
 /*	$NetBSD: ncr5380.c,v 1.38 1996/12/19 21:48:18 scottr Exp $	*/
 
 /*
@@ -325,7 +325,7 @@ ncr5380_scsi_cmd(struct scsi_xfer *xs)
 	reqp->xs        = xs;
 	reqp->targ_id   = xs->sc_link->target;
 	reqp->targ_lun  = xs->sc_link->lun;
-	reqp->xdata_ptr = (u_char*)xs->data;
+	reqp->xdata_ptr = (u_char *)xs->data;
 	reqp->xdata_len = xs->datalen;
 	memcpy(&reqp->xcmd, xs->cmd, sizeof(struct scsi_generic));
 	reqp->xcmd.bytes[0] |= reqp->targ_lun << 5;
@@ -1768,7 +1768,7 @@ SC_REQ	*reqp;
 	 * Initialize locals and requests' DMA-chain.
 	 */
 	req_len        = reqp->xdata_len;
-	req_addr       = (void*)reqp->xdata_ptr;
+	req_addr       = (void *)reqp->xdata_ptr;
 	dm             = reqp->dm_cur = reqp->dm_last = reqp->dm_chain;
 	dm->dm_count   = dm->dm_addr = 0;
 	reqp->dr_flag &= ~DRIVER_BOUNCING;

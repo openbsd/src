@@ -1,4 +1,4 @@
-/*	$OpenBSD: printf.c,v 1.15 2002/03/14 01:27:07 millert Exp $	*/
+/*	$OpenBSD: printf.c,v 1.16 2002/03/14 03:16:10 millert Exp $	*/
 /*	$NetBSD: printf.c,v 1.10 1996/11/30 04:19:21 gwr Exp $	*/
 
 /*-
@@ -69,8 +69,8 @@
 
 #include "stand.h"
 
-static void kprintn __P((void (*)(int), u_long, int));
-static void kdoprnt __P((void (*)(int), const char *, va_list));
+static void kprintn(void (*)(int), u_long, int);
+static void kdoprnt(void (*)(int), const char *, va_list);
 
 #ifndef	STRIPPED
 static void sputchar(int);

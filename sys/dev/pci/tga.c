@@ -1,4 +1,4 @@
-/* $OpenBSD: tga.c,v 1.11 2002/03/14 01:27:00 millert Exp $ */
+/* $OpenBSD: tga.c,v 1.12 2002/03/14 03:16:06 millert Exp $ */
 /* $NetBSD: tga.c,v 1.31 2001/02/11 19:34:58 nathanw Exp $ */
 
 /*
@@ -90,8 +90,8 @@ static void tga_copycols(void *, int, int, int, int);
 static int tga_alloc_screen(void *, const struct wsscreen_descr *,
 				      void **, int *, int *, long *);
 static void tga_free_screen(void *, void *);
-static int tga_show_screen __P((void *, void *, int,
-				void (*) (void *, int, int), void *));
+static int tga_show_screen(void *, void *, int,
+			   void (*) (void *, int, int), void *);
 static int tga_rop(struct rasops_info *, int, int, int, int, int,
 	struct rasops_info *, int, int);
 static int tga_rop_vtov(struct rasops_info *, int, int, int, int,
@@ -105,7 +105,7 @@ void tga2_init(struct tga_devconfig *, int);
 void tga_config_interrupts(struct device *);
 
 /* RAMDAC interface functions */
-int		tga_sched_update __P((void *, void (*)(void *)));
+int		tga_sched_update(void *, void (*)(void *));
 void		tga_ramdac_wr(void *, u_int, u_int8_t);
 u_int8_t	tga_ramdac_rd(void *, u_int);
 void		tga_bt463_wr(void *, u_int, u_int8_t);

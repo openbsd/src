@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_mvme.c,v 1.7 2001/07/04 08:09:30 niklas Exp $	*/
+/*	$OpenBSD: exec_mvme.c,v 1.8 2002/03/14 03:15:58 millert Exp $	*/
 
 
 /*-
@@ -154,9 +154,9 @@ exec_mvme(file, flag)
 		*cp++ = 0;
 		--cc;
 	}
-	ip = (int*)cp;
+	ip = (int *)cp;
 	cp += cc;
-	while ((char*)ip < cp)
+	while ((char *)ip < cp)
 		*ip++ = 0;
 
 	/*
@@ -164,7 +164,7 @@ exec_mvme(file, flag)
 	 * (Always set the symtab size word.)
 	 */
 	*ip++ = x.a_syms;
-	cp = (char*) ip;
+	cp = (char *) ip;
 
 	if (x.a_syms > 0 && (flag & RB_NOSYM) == 0) {
 
@@ -175,7 +175,7 @@ exec_mvme(file, flag)
 		if (read(io, cp, cc) != cc)
 			goto shread;
 		cp += x.a_syms;
-		ip = (int*)cp;		/* points to strtab length */
+		ip = (int *)cp;		/* points to strtab length */
 		cp += sizeof(int);
 
 		/* String table.  Length word includes itself. */

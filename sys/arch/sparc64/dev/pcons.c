@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcons.c,v 1.4 2002/03/14 01:26:44 millert Exp $	*/
+/*	$OpenBSD: pcons.c,v 1.5 2002/03/14 03:16:00 millert Exp $	*/
 /*	$NetBSD: pcons.c,v 1.7 2001/05/02 10:32:20 scw Exp $	*/
 
 /*-
@@ -376,7 +376,7 @@ pcons_cnpollc(dev, on)
 void pcons_dopoll(void);
 void
 pcons_dopoll() {
-		pcons_poll((void*)pcons_cd.cd_devs[0]);
+		pcons_poll((void *)pcons_cd.cd_devs[0]);
 }
 
 /* XXXXXXXX --- more cnmagic stuff. */

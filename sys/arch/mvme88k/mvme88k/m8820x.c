@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x.c,v 1.13 2002/03/14 01:26:40 millert Exp $	*/
+/*	$OpenBSD: m8820x.c,v 1.14 2002/03/14 03:15:57 millert Exp $	*/
 /*
  * Copyright (c) 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -664,7 +664,7 @@ m8820x_cmmu_store(mmu, reg, val)
 	int mmu, reg;
 	unsigned val;
 {
-	*(unsigned *volatile)(reg + (char*)(m8820x_cmmu[mmu].cmmu_regs)) = val;
+	*(unsigned *volatile)(reg + (char *)(m8820x_cmmu[mmu].cmmu_regs)) = val;
 }
 
 int 
@@ -678,7 +678,7 @@ unsigned
 m8820x_cmmu_get(mmu, reg)
 	int mmu, reg;
 {
-	return *(unsigned *volatile)(reg + (char*)(m8820x_cmmu[mmu].cmmu_regs));
+	return *(unsigned *volatile)(reg + (char *)(m8820x_cmmu[mmu].cmmu_regs));
 }
 
 /*
@@ -1080,7 +1080,7 @@ m8820x_cmmu_cpu_number()
 void
 m8820x_cmmu_remote_set(unsigned cpu, unsigned r, unsigned data, unsigned x)
 {
-	*(unsigned *volatile)(r + (char*)&REGS(cpu,data)) = x;
+	*(unsigned *volatile)(r + (char *)&REGS(cpu,data)) = x;
 }
 
 /*
@@ -1090,7 +1090,7 @@ m8820x_cmmu_remote_set(unsigned cpu, unsigned r, unsigned data, unsigned x)
 unsigned
 m8820x_cmmu_remote_get(unsigned cpu, unsigned r, unsigned data)
 {
-	return (*(unsigned *volatile)(r + (char*)&REGS(cpu,data)));
+	return (*(unsigned *volatile)(r + (char *)&REGS(cpu,data)));
 }
 #endif 
 

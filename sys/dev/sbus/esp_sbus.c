@@ -1,4 +1,4 @@
-/*	$OpenBSD: esp_sbus.c,v 1.6 2002/03/14 01:27:02 millert Exp $	*/
+/*	$OpenBSD: esp_sbus.c,v 1.7 2002/03/14 03:16:07 millert Exp $	*/
 /*	$NetBSD: esp_sbus.c,v 1.14 2001/04/25 17:53:37 bouyer Exp $	*/
 
 /*-
@@ -725,7 +725,7 @@ esp_dma_isactive(sc)
 #include <machine/db_machdep.h>
 #include <ddb/db_output.h>
 
-void db_esp(db_expr_t, int, db_expr_t, char*);
+void db_esp(db_expr_t, int, db_expr_t, char *);
 
 void
 db_esp(addr, have_addr, count, modif)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: promdev.c,v 1.7 2002/03/14 01:26:47 millert Exp $ */
+/*	$OpenBSD: promdev.c,v 1.8 2002/03/14 03:16:01 millert Exp $ */
 /*	$NetBSD: promdev.c,v 1.7 1996/01/29 23:41:10 gwr Exp $ */
 
 /*
@@ -107,7 +107,7 @@ prom_iopen(si)
 		size = dip->d_dmabytes + NBPG;
 		addr = (int) dvma_alloc(size);
 		addr = m68k_round_page(addr);
-		si->si_dmaaddr = (char*) addr;
+		si->si_dmaaddr = (char *) addr;
 #ifdef	DEBUG_PROM
 		if (debug)
 			printf("prom_iopen: dmaaddr=0x%x\n", si->si_dmaaddr);
@@ -222,5 +222,5 @@ found:
 		pte += 1;
 		length -= NBPG;
 	} while (length > 0);
-	return ((char*)(prom_devmap | (pa & PGOFSET)));
+	return ((char *)(prom_devmap | (pa & PGOFSET)));
 }

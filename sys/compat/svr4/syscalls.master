@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.30 2000/08/23 19:31:35 fgsch Exp $
+	$OpenBSD: syscalls.master,v 1.31 2002/03/14 03:16:03 millert Exp $
 ;	$NetBSD: syscalls.master,v 1.17 1996/02/10 17:12:51 christos Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
@@ -60,11 +60,11 @@
 11	STD		{ int svr4_sys_execv(char *path, char **argp); }
 12	NOARGS		{ int sys_chdir(char *path); }
 13	STD		{ int svr4_sys_time(svr4_time_t *t); }
-14	STD		{ int svr4_sys_mknod(char* path, int mode, int dev); }
+14	STD		{ int svr4_sys_mknod(char *path, int mode, int dev); }
 15	NOARGS		{ int sys_chmod(char *path, int mode); }
 16	NOARGS		{ int sys_chown(char *path, int uid, int gid); }
 17	STD		{ int svr4_sys_break(caddr_t nsize); }
-18	STD		{ int svr4_sys_stat(char* path, struct svr4_stat* ub); }
+18	STD		{ int svr4_sys_stat(char *path, struct svr4_stat* ub); }
 19	NOARGS		{ long compat_43_sys_lseek(int fd, long offset, \
 			    int whence); }
 20	NOARGS		{ pid_t sys_getpid(void); }

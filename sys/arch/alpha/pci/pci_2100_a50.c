@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_2100_a50.c,v 1.18 2002/03/14 01:26:27 millert Exp $	*/
+/*	$OpenBSD: pci_2100_a50.c,v 1.19 2002/03/14 03:15:50 millert Exp $	*/
 /*	$NetBSD: pci_2100_a50.c,v 1.12 1996/11/13 21:13:29 cgd Exp $	*/
 
 /*
@@ -56,8 +56,8 @@ int	dec_2100_a50_intr_map(void *, pcitag_t, int, int,
 	    pci_intr_handle_t *);
 const char *dec_2100_a50_intr_string(void *, pci_intr_handle_t);
 int	 dec_2100_a50_intr_line(void *, pci_intr_handle_t);
-void    *dec_2100_a50_intr_establish __P((void *, pci_intr_handle_t,
-	    int, int (*func)(void *), void *, char *));
+void    *dec_2100_a50_intr_establish(void *, pci_intr_handle_t,
+	    int, int (*func)(void *), void *, char *);
 void    dec_2100_a50_intr_disestablish(void *, void *);
 
 #define	APECS_SIO_DEVICE	7	/* XXX */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppc1_machdep.c,v 1.5 2002/03/14 01:26:41 millert Exp $	*/
+/*	$OpenBSD: ppc1_machdep.c,v 1.6 2002/03/14 03:15:58 millert Exp $	*/
 /*	$NetBSD: ofw_machdep.c,v 1.1 1996/09/30 16:34:50 ws Exp $	*/
 
 /*
@@ -117,9 +117,9 @@ size_memory(void)
 	/*
 	 * count it up.
 	 */
-	max = (void*)MAXPHYSMEM;
-	for (look = (void*)Roundup(end, STRIDE); look < max;
-		 look = (int*)((unsigned)look + STRIDE)) {
+	max = (void *)MAXPHYSMEM;
+	for (look = (void *)Roundup(end, STRIDE); look < max;
+		 look = (int *)((unsigned)look + STRIDE)) {
 		unsigned save;
 
 		/* if can't access, we've reached the end */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.64 2002/03/14 01:26:40 millert Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.65 2002/03/14 03:15:57 millert Exp $	*/
 /*
  * Copyright (c) 2001, 2002 Miodrag Vallat
  * Copyright (c) 1998-2001 Steve Murphree, Jr.
@@ -1328,7 +1328,7 @@ pmap_zero_page(phys)
 	    CACHE_GLOBAL | PG_V;
 	SPLX(spl);
 
-	bzero((void*)srcva, PAGE_SIZE);
+	bzero((void *)srcva, PAGE_SIZE);
 	/* force the data out */
 	cmmu_flush_remote_data_cache(cpu, phys, PAGE_SIZE);
 } /* pmap_zero_page() */
@@ -2882,7 +2882,7 @@ pmap_copy_page(src, dst)
 	*dstpte  = template | trunc_page(dst);
 	SPLX(spl);
 
-	bcopy((void*)srcva, (void*)dstva, PAGE_SIZE);
+	bcopy((void *)srcva, (void *)dstva, PAGE_SIZE);
 	/* flush source, dest out of cache? */
 	cmmu_flush_remote_data_cache(cpu, src, PAGE_SIZE);
 	cmmu_flush_remote_data_cache(cpu, dst, PAGE_SIZE);

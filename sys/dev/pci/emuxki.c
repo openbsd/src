@@ -1,4 +1,4 @@
-/*	$OpenBSD: emuxki.c,v 1.9 2002/03/14 01:26:58 millert Exp $	*/
+/*	$OpenBSD: emuxki.c,v 1.10 2002/03/14 03:16:06 millert Exp $	*/
 /*	$NetBSD: emuxki.c,v 1.1 2001/10/17 18:39:41 jdolecek Exp $	*/
 
 /*-
@@ -124,8 +124,7 @@ void emuxki_voice_recsrc_release(struct emuxki_softc *sc, emuxki_recsrc_t source
 u_int32_t emuxki_voice_curaddr(struct emuxki_voice *);
 int emuxki_set_vparms(struct emuxki_voice *voice, struct audio_params *p);
 int emuxki_voice_set_srate(struct emuxki_voice *voice, u_int32_t srate);
-void emuxki_voice_start
-	__P((struct emuxki_voice *, void (*) (void *), void *));
+void emuxki_voice_start(struct emuxki_voice *, void (*) (void *), void *);
 void emuxki_voice_halt(struct emuxki_voice *);
 int emuxki_voice_channel_create(struct emuxki_voice *voice);
 void emuxki_voice_channel_destroy(struct emuxki_voice *voice);
@@ -173,12 +172,10 @@ int	emuxki_set_params(void *, int, int,
 
 size_t	emuxki_round_buffersize(void *, int, size_t);
 
-int	emuxki_trigger_output   __P((void *, void *, void *, int,
-				      void (*)(void *), void *,
-				      struct audio_params *));
-int	emuxki_trigger_input    __P((void *, void *, void *, int,
-				      void (*) (void *), void *,
-				      struct audio_params *));
+int	emuxki_trigger_output(void *, void *, void *, int, void (*)(void *),
+	    void *, struct audio_params *);
+int	emuxki_trigger_input(void *, void *, void *, int, void (*) (void *),
+	    void *, struct audio_params *);
 int	emuxki_halt_output(void *);
 int	emuxki_halt_input(void *);
 

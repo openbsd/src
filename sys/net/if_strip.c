@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_strip.c,v 1.17 2002/03/14 01:27:09 millert Exp $	*/
+/*	$OpenBSD: if_strip.c,v 1.18 2002/03/14 03:16:10 millert Exp $	*/
 /*	$NetBSD: if_strip.c,v 1.2.4.3 1996/08/03 00:58:32 jtc Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
@@ -259,10 +259,10 @@ struct st_header {
  * different STRIP implementations: *BSD, Linux, etc.
  *
  */
-static u_char* UnStuffData(u_char *src, u_char *end, u_char
+static u_char *UnStuffData(u_char *src, u_char *end, u_char
 				*dest, u_long dest_length); 
 
-static u_char* StuffData(u_char *src, u_long length, u_char *dest,
+static u_char *StuffData(u_char *src, u_long length, u_char *dest,
 			      u_char **code_ptr_ptr);
 
 static void RecvErr(char *msg, struct st_softc *sc);
@@ -1718,7 +1718,7 @@ typedef enum
 #define StuffData_FinishBlock(X) \
 	(*code_ptr = (X) ^ Stuff_Magic, code = Stuff_NoCode)
 
-static u_char*
+static u_char *
 StuffData(u_char *src, u_long length, u_char *dest, u_char **code_ptr_ptr)
 {
 	u_char *end = src + length;
@@ -1846,7 +1846,7 @@ StuffData(u_char *src, u_long length, u_char *dest, u_char **code_ptr_ptr)
  * allow a follow-on  call to resume correctly).
  */
 
-static u_char*
+static u_char *
 UnStuffData(u_char *src, u_char *end, u_char *dst, u_long dst_length)
 {
 	u_char *dst_end = dst + dst_length;

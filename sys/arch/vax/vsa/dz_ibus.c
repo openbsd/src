@@ -1,4 +1,4 @@
-/*	$OpenBSD: dz_ibus.c,v 1.10 2002/03/14 01:26:49 millert Exp $	*/
+/*	$OpenBSD: dz_ibus.c,v 1.11 2002/03/14 03:16:02 millert Exp $	*/
 /*	$NetBSD: dz_ibus.c,v 1.15 1999/08/27 17:50:42 ragge Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
@@ -286,7 +286,7 @@ void
 dzcninit(cndev)
 	struct	consdev *cndev;
 {
-	dz = (void*)dz_regs;
+	dz = (void *)dz_regs;
 
 	dz->csr = 0;    /* Disable scanning until initting is done */
 	dz->tcr = (1 << minor(cndev->cn_dev));    /* Turn on xmitter */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.8 2002/03/14 01:26:31 millert Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.9 2002/03/14 03:15:53 millert Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -74,20 +74,20 @@
 
 #if defined(DISKLABEL_I386) || defined(DISKLABEL_ALPHA) || defined(DISKLABEL_AMIGA) || defined(DISKLABEL_HPPA) || defined(DISKLABEL_ALL)
 void	swapdisklabel(struct disklabel *d);
-char   *readbsdlabel __P((struct buf *, void (*)(struct buf *), int, int,
-    int, int, struct disklabel *, int));
+char   *readbsdlabel(struct buf *, void (*)(struct buf *), int, int,
+    int, int, struct disklabel *, int);
 #endif
 #if defined(DISKLABEL_I386) || defined(DISKLABEL_ALL)
-char   *readdoslabel __P((struct buf *, void (*)(struct buf *),
-    struct disklabel *, struct cpu_disklabel *, int *, int *, int));
+char   *readdoslabel(struct buf *, void (*)(struct buf *),
+    struct disklabel *, struct cpu_disklabel *, int *, int *, int);
 #endif
 #if defined(DISKLABEL_AMIGA) || defined(DISKLABEL_ALL)
-char   *readamigalabel __P((struct buf *, void (*)(struct buf *),
-    struct disklabel *, struct cpu_disklabel *, int));
+char   *readamigalabel(struct buf *, void (*)(struct buf *),
+    struct disklabel *, struct cpu_disklabel *, int);
 #endif
 #if defined(DISKLABEL_HPPA) || defined(DISKLABEL_ALL)
-char   *readliflabel __P((struct buf *, void (*)(struct buf *),
-    struct disklabel *, struct cpu_disklabel *, int *, int *, int));
+char   *readliflabel(struct buf *, void (*)(struct buf *),
+    struct disklabel *, struct cpu_disklabel *, int *, int *, int);
 #endif
 
 static enum disklabel_tag probe_order[] = { LABELPROBES, -1 };

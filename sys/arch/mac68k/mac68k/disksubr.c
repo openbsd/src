@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.16 2002/03/14 01:26:35 millert Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.17 2002/03/14 03:15:55 millert Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.22 1997/11/26 04:18:20 briggs Exp $	*/
 
 /*
@@ -107,8 +107,8 @@ static void setUfs(struct partmapentry *, struct disklabel *, int);
 static void setHfs(struct partmapentry *, struct disklabel *, int);
 static void setScratch(struct partmapentry *, struct disklabel *, int);
 static int getNamedType(struct partmapentry *, int, struct disklabel *, int, int, int *);
-static char *read_mac_label __P((dev_t, void (*)(struct buf *),
-		register struct disklabel *, struct cpu_disklabel *));
+static char *read_mac_label(dev_t, void (*)(struct buf *),
+		register struct disklabel *, struct cpu_disklabel *);
 
 /*
  * Find an entry in the disk label that is unused and return it

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ibcs2_misc.c,v 1.22 2002/03/14 01:26:50 millert Exp $	*/
+/*	$OpenBSD: ibcs2_misc.c,v 1.23 2002/03/14 03:16:03 millert Exp $	*/
 /*	$NetBSD: ibcs2_misc.c,v 1.23 1997/01/15 01:37:49 perry Exp $	*/
 
 /*
@@ -1145,7 +1145,7 @@ xenix_sys_rdchk(p, v, retval)
 	SCARG(&sa, data) = stackgap_alloc(&sg, sizeof(int));
 	if ((error = sys_ioctl(p, &sa, retval)) != 0)
 		return error;
-	*retval = (*((int*)SCARG(&sa, data))) ? 1 : 0;
+	*retval = (*((int *)SCARG(&sa, data))) ? 1 : 0;
 	return 0;
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tc_3000_500.c,v 1.8 2002/03/14 01:26:28 millert Exp $	*/
+/*	$OpenBSD: tc_3000_500.c,v 1.9 2002/03/14 03:15:51 millert Exp $	*/
 /*	$NetBSD: tc_3000_500.c,v 1.12 1996/11/15 23:59:00 cgd Exp $	*/
 
 /*
@@ -43,8 +43,8 @@
 #include <alpha/tc/tc_3000_500.h>
 
 void	tc_3000_500_intr_setup(void);
-void	tc_3000_500_intr_establish __P((struct device *, void *,
-	    tc_intrlevel_t, int (*)(void *), void *));
+void	tc_3000_500_intr_establish(struct device *, void *,
+	    tc_intrlevel_t, int (*)(void *), void *);
 void	tc_3000_500_intr_disestablish(struct device *, void *);
 void	tc_3000_500_iointr(void *, unsigned long);
 

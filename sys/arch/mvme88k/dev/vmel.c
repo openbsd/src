@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmel.c,v 1.8 2002/03/14 01:26:39 millert Exp $ */
+/*	$OpenBSD: vmel.c,v 1.9 2002/03/14 03:15:57 millert Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -59,7 +59,7 @@ struct cfdriver vmel_cd = {
         NULL, "vmel", DV_DULL, 0
 };
 
-int vmelscan(struct device *, void *, void*);
+int vmelscan(struct device *, void *, void *);
 int vmelopen(dev_t, int, int);
 int vmelclose(dev_t, int, int);
 int vmelioctl(dev_t, int, caddr_t, int, struct proc *);

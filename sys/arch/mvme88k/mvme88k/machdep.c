@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.91 2002/03/14 01:26:40 millert Exp $	*/
+/* $OpenBSD: machdep.c,v 1.92 2002/03/14 03:15:57 millert Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -327,9 +327,9 @@ size_memory()
 	/*
 	 * count it up.
 	 */
-	max = (void*)MAXPHYSMEM;
-	for (look = (void*)Roundup(end, STRIDE); look < max;
-	    look = (int*)((unsigned)look + STRIDE)) {
+	max = (void *)MAXPHYSMEM;
+	for (look = (void *)Roundup(end, STRIDE); look < max;
+	    look = (int *)((unsigned)look + STRIDE)) {
 		unsigned save;
 
 		/* if can't access, we've reached the end */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: eso.c,v 1.16 2002/03/14 01:26:58 millert Exp $	*/
+/*	$OpenBSD: eso.c,v 1.17 2002/03/14 03:16:06 millert Exp $	*/
 /*	$NetBSD: eso.c,v 1.3 1999/08/02 17:37:43 augustss Exp $	*/
 
 /*
@@ -136,10 +136,10 @@ HIDE void	eso_freem(void *, void *, int);
 HIDE size_t	eso_round_buffersize(void *, int, size_t);
 HIDE paddr_t	eso_mappage(void *, void *, off_t, int);
 HIDE int	eso_get_props(void *);
-HIDE int	eso_trigger_output __P((void *, void *, void *, int,
-		    void (*)(void *), void *, struct audio_params *));
-HIDE int	eso_trigger_input __P((void *, void *, void *, int,
-		    void (*)(void *), void *, struct audio_params *));
+HIDE int	eso_trigger_output(void *, void *, void *, int,
+		    void (*)(void *), void *, struct audio_params *);
+HIDE int	eso_trigger_input(void *, void *, void *, int,
+		    void (*)(void *), void *, struct audio_params *);
 
 HIDE struct audio_hw_if eso_hw_if = {
 	eso_open,

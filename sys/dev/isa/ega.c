@@ -1,4 +1,4 @@
-/* $OpenBSD: ega.c,v 1.3 2002/03/14 01:26:56 millert Exp $ */
+/* $OpenBSD: ega.c,v 1.4 2002/03/14 03:16:05 millert Exp $ */
 /* $NetBSD: ega.c,v 1.4.4.1 2000/06/30 16:27:47 simonb Exp $ */
 
 /*
@@ -220,10 +220,10 @@ const struct wsscreen_list ega_screenlist = {
 static int ega_ioctl(void *, u_long, caddr_t, int, struct proc *);
 static paddr_t ega_mmap(void *, off_t, int);
 static int ega_alloc_screen(void *, const struct wsscreen_descr *,
-				       void **, int *, int *, long *);
+			    void **, int *, int *, long *);
 static void ega_free_screen(void *, void *);
-static int ega_show_screen __P((void *, void *, int,
-				      	void (*) (void *, int, int), void *));
+static int ega_show_screen(void *, void *, int,
+			   void (*) (void *, int, int), void *);
 static int ega_load_font(void *, void *, struct wsdisplay_font *);
 
 void ega_doswitch(struct ega_config *);

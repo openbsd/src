@@ -1,4 +1,4 @@
-/*	$OpenBSD: Locore.c,v 1.3 2002/03/14 01:26:46 millert Exp $	*/
+/*	$OpenBSD: Locore.c,v 1.4 2002/03/14 03:16:01 millert Exp $	*/
 /*	$NetBSD: Locore.c,v 1.1 2000/08/20 14:58:36 mrg Exp $	*/
 
 /*
@@ -814,15 +814,15 @@ OF_claim(virt, size, align)
  */
 
 	paddr_t paddr;
-	void* newvirt = NULL;
+	void * newvirt = NULL;
 
 	if (virt == NULL) {
-		if ((virt = (void*)OF_alloc_virt(size, align)) == (void*)-1) {
+		if ((virt = (void *)OF_alloc_virt(size, align)) == (void *)-1) {
 			printf("OF_alloc_virt(%d,%d) failed w/%x\n", size, align, virt);
 			return (void *)-1;
 		}
 	} else {
-		if ((newvirt = (void*)OF_claim_virt((vaddr_t)virt, size)) == (void*)-1) {
+		if ((newvirt = (void *)OF_claim_virt((vaddr_t)virt, size)) == (void *)-1) {
 			printf("OF_claim_virt(%x,%d) failed w/%x\n", virt, size, newvirt);
 			return (void *)-1;
 		}

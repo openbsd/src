@@ -1,4 +1,4 @@
-/*	$OpenBSD: midi_if.h,v 1.3 2002/03/14 01:26:52 millert Exp $	*/
+/*	$OpenBSD: midi_if.h,v 1.4 2002/03/14 03:16:03 millert Exp $	*/
 /*	$NetBSD: midi_if.h,v 1.3 1998/11/25 22:17:07 augustss Exp $	*/
 
 /*
@@ -50,10 +50,10 @@ struct midi_info {
 struct midi_softc;
 
 struct midi_hw_if {
-	int	(*open)__P((void *, int, 	/* open hardware */
-			    void (*)(void *, int), /* input callback */
-			    void (*)(void *), /* output callback */
-			    void *));
+	int	(*open)(void *, int, 	/* open hardware */
+			void (*)(void *, int), /* input callback */
+			void (*)(void *), /* output callback */
+			void *);
 	void	(*close)(void *);		/* close hardware */
 	int	(*output)(void *, int);	/* output a byte */
 	void	(*getinfo)(void *, struct midi_info *);

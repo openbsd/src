@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccons.c,v 1.49 2002/03/14 01:26:33 millert Exp $	*/
+/*	$OpenBSD: pccons.c,v 1.50 2002/03/14 03:15:54 millert Exp $	*/
 /*	$NetBSD: pccons.c,v 1.99.4.1 1996/06/04 20:03:53 cgd Exp $	*/
 
 /*-
@@ -691,8 +691,8 @@ pcioctl(dev, cmd, data, flag, p)
 		 * is the duration in msec.
 		 */
 		if (data)
-			sysbeep(((int*)data)[0],
-				(((int*)data)[1] * hz) / 1000);
+			sysbeep(((int *)data)[0],
+				(((int *)data)[1] * hz) / 1000);
 		else
 			sysbeep(BEEP_FREQ, BEEP_TIME);
 		return 0;

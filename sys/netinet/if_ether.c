@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.38 2002/03/14 01:27:11 millert Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.39 2002/03/14 03:16:11 millert Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -894,7 +894,7 @@ db_print_sa(sa)
 		return;
 	}
 
-	p = (u_char*)sa;
+	p = (u_char *)sa;
 	len = sa->sa_len;
 	db_printf("[");
 	while (len > 0) {

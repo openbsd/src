@@ -1,4 +1,4 @@
-/* $OpenBSD: ramdac.h,v 1.3 2002/03/14 01:26:55 millert Exp $ */
+/* $OpenBSD: ramdac.h,v 1.4 2002/03/14 03:16:05 millert Exp $ */
 /* $NetBSD: ramdac.h,v 1.1 2000/03/04 10:23:39 elric Exp $ */
 
 /*-
@@ -48,10 +48,10 @@ struct ramdac_cookie;
 
 struct ramdac_funcs {
 	char	*ramdac_name;
-	struct ramdac_cookie *(*ramdac_register) __P((void *,
+	struct ramdac_cookie *(*ramdac_register)(void *,
 		    int (*)(void *, void (*)(void *)),
 		    void (*)(void *, u_int, u_int8_t),
-		    u_int8_t (*)(void *, u_int)));	      
+		    u_int8_t (*)(void *, u_int));	      
 	void	(*ramdac_init)(struct ramdac_cookie *);
 
 	int	(*ramdac_set_cmap)(struct ramdac_cookie *,

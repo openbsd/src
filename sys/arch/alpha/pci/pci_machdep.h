@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.h,v 1.18 2002/03/14 01:26:27 millert Exp $	*/
+/*	$OpenBSD: pci_machdep.h,v 1.19 2002/03/14 03:15:50 millert Exp $	*/
 /*	$NetBSD: pci_machdep.h,v 1.6 1996/11/19 04:49:21 cgd Exp $	*/
 
 /*
@@ -64,14 +64,14 @@ struct alpha_pci_chipset {
 			    pci_intr_handle_t *);
 	const char	*(*pc_intr_string)(void *, pci_intr_handle_t);
 	int		(*pc_intr_line)(void *, pci_intr_handle_t);
-	void		*(*pc_intr_establish) __P((void *, pci_intr_handle_t,
-			    int, int (*)(void *), void *, char *));
+	void		*(*pc_intr_establish)(void *, pci_intr_handle_t,
+			    int, int (*)(void *), void *, char *);
 	void		(*pc_intr_disestablish)(void *, void *);
 
         /* alpha-specific */
-        void            *(*pc_pciide_compat_intr_establish) __P((void *,
+        void            *(*pc_pciide_compat_intr_establish)(void *,
                             struct device *, struct pci_attach_args *, int,
-                            int (*)(void *), void *));
+                            int (*)(void *), void *);
 	void            (*pc_pciide_compat_intr_disestablish)(void *,
 			    void *);
 	char 		*pc_name;	/* PCI chipset name */

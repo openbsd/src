@@ -1,4 +1,4 @@
-/*	$OpenBSD: openfirm.h,v 1.3 2002/03/14 01:26:46 millert Exp $	*/
+/*	$OpenBSD: openfirm.h,v 1.4 2002/03/14 03:16:01 millert Exp $	*/
 /*	$NetBSD: openfirm.h,v 1.1 2000/08/20 14:58:42 mrg Exp $	*/
 
 /*
@@ -55,5 +55,5 @@ int OF_seek(u_int handle, u_int64_t pos);
 void *OF_claim(void *virt, u_int size, u_int align);
 void OF_release(void *virt, u_int size);
 int OF_milliseconds(void);
-void OF_chain __P((void *addr, u_int size, void (*entry)(), void *parm, u_int parmlen));
+void OF_chain(void *addr, u_int size, void (*entry)(), void *parm, u_int parmlen);
 

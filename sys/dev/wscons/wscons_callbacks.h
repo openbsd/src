@@ -1,4 +1,4 @@
-/* $OpenBSD: wscons_callbacks.h,v 1.4 2002/03/14 01:27:03 millert Exp $ */
+/* $OpenBSD: wscons_callbacks.h,v 1.5 2002/03/14 03:16:08 millert Exp $ */
 /* $NetBSD: wscons_callbacks.h,v 1.12 2000/03/06 21:37:16 thorpej Exp $ */
 
 /*
@@ -48,9 +48,9 @@ enum wsdisplay_resetops {
 void	wsdisplay_reset(struct device *, enum wsdisplay_resetops);
 void	wsdisplay_kbdholdscreen(struct device *v, int);
 
-void	wsdisplay_set_cons_kbd __P((int (*get)(dev_t),
-				    void (*poll)(dev_t, int),
-				    void (*bell)(dev_t, u_int, u_int, u_int)));
+void	wsdisplay_set_cons_kbd(int (*get)(dev_t),
+			       void (*poll)(dev_t, int),
+			       void (*bell)(dev_t, u_int, u_int, u_int));
 void	wsdisplay_unset_cons_kbd(void);
 struct wsdisplay_param;
 int	wsdisplay_param(struct device*, u_long, struct wsdisplay_param*);

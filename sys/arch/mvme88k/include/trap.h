@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.h,v 1.16 2002/03/14 01:26:39 millert Exp $ */
+/*	$OpenBSD: trap.h,v 1.17 2002/03/14 03:15:57 millert Exp $ */
 /* 
  * Mach Operating System
  * Copyright (c) 1992 Carnegie Mellon University
@@ -79,9 +79,9 @@ void error_fault(struct m88100_saved_state *);
 void error_reset(struct m88100_saved_state *);
 unsigned ss_get_value(struct proc *, unsigned, int);
 int ss_put_value(struct proc *, unsigned, unsigned, int);
-unsigned ss_branch_taken __P((unsigned, unsigned, 
-			      unsigned (*func)(unsigned int, struct trapframe *),
-			      struct trapframe *));  /* 'opaque' */
+unsigned ss_branch_taken(unsigned, unsigned, 
+			 unsigned (*func)(unsigned int, struct trapframe *),
+			 struct trapframe *);  /* 'opaque' */
 unsigned ss_getreg_val(unsigned, struct trapframe *);
 int ss_inst_branch(unsigned);
 int ss_inst_delayed(unsigned);

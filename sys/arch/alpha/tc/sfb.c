@@ -1,4 +1,4 @@
-/*	$OpenBSD: sfb.c,v 1.13 2002/03/14 01:26:28 millert Exp $	*/
+/*	$OpenBSD: sfb.c,v 1.14 2002/03/14 03:15:51 millert Exp $	*/
 /*	$NetBSD: sfb.c,v 1.7 1996/12/05 01:39:44 cgd Exp $	*/
 
 /*
@@ -101,10 +101,10 @@ int	sfbioctl(void *, u_long, caddr_t, int, struct proc *);
 paddr_t	sfbmmap(void *, off_t, int);
 
 static int      sfb_alloc_screen(void *, const struct wsscreen_descr *,
-                                      void **, int *, int *, long *);
+		    void **, int *, int *, long *);
 static void     sfb_free_screen(void *, void *);
-static int      sfb_show_screen __P((void *, void *, int,
-                                     void (*) (void *, int, int), void *));
+static int      sfb_show_screen(void *, void *, int,
+		    void (*) (void *, int, int), void *);
 
 #if 0
 void	sfb_blank(struct sfb_devconfig *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.21 2002/03/14 01:26:49 millert Exp $     */
+/*	$OpenBSD: trap.c,v 1.22 2002/03/14 03:16:02 millert Exp $     */
 /*	$NetBSD: trap.c,v 1.47 1999/08/21 19:26:20 matt Exp $     */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -382,7 +382,7 @@ if(startsysc)printf("trap syscall %s pc %lx, psl %lx, sp %lx, pid %d, frame %p\n
 	rval[0] = 0;
 	rval[1] = frame->r1;
 	if(callp->sy_narg) {
-		err = copyin((char*)frame->ap + 4, args, callp->sy_argsize);
+		err = copyin((char *)frame->ap + 4, args, callp->sy_argsize);
 		if (err) {
 #ifdef KTRACE
 			if (KTRPOINT(p, KTR_SYSCALL))

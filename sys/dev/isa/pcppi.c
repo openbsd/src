@@ -1,4 +1,4 @@
-/* $OpenBSD: pcppi.c,v 1.4 2002/03/14 01:26:56 millert Exp $ */
+/* $OpenBSD: pcppi.c,v 1.5 2002/03/14 03:16:05 millert Exp $ */
 /* $NetBSD: pcppi.c,v 1.1 1998/04/15 20:26:18 drochner Exp $ */
 
 /*
@@ -81,7 +81,7 @@ struct cfdriver pcppi_cd = {
 	NULL, "pcppi", DV_DULL
 };
 
-static void pcppi_bell_stop(void*);
+static void pcppi_bell_stop(void *);
 
 #define PCPPIPRI (PZERO - 1)
 

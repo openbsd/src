@@ -1,4 +1,4 @@
-/*	$OpenBSD: psl.h,v 1.3 2002/03/14 01:26:45 millert Exp $	*/
+/*	$OpenBSD: psl.h,v 1.4 2002/03/14 03:16:01 millert Exp $	*/
 /*	$NetBSD: psl.h,v 1.20 2001/04/13 23:30:05 thorpej Exp $ */
 
 /*
@@ -310,8 +310,8 @@ void prom_printf(const char *fmt, ...);
 extern int printspl;
 #define SPLPRINT(x)	if(printspl) { int i=10000000; prom_printf x ; while(i--); }
 #define	SPL(name, newpil) \
-static __inline int name##X(const char*, int); \
-static __inline int name##X(const char* file, int line) \
+static __inline int name##X(const char *, int); \
+static __inline int name##X(const char *file, int line) \
 { \
 	int oldpil; \
 	__asm __volatile("rdpr %%pil,%0" : "=r" (oldpil)); \
@@ -321,8 +321,8 @@ static __inline int name##X(const char* file, int line) \
 }
 /* A non-priority-decreasing version of SPL */
 #define	SPLHOLD(name, newpil) \
-static __inline int name##X(const char*, int); \
-static __inline int name##X(const char* file, int line) \
+static __inline int name##X(const char *, int); \
+static __inline int name##X(const char * file, int line) \
 { \
 	int oldpil; \
 	__asm __volatile("rdpr %%pil,%0" : "=r" (oldpil)); \
@@ -446,10 +446,10 @@ static __inline void splx(newpil)
 #define	splhigh()	splhighX(__FILE__, __LINE__)
 #define splx(x)		splxX((x),__FILE__, __LINE__)
 
-static __inline void splxX(int, const char*, int);
+static __inline void splxX(int, const char *, int);
 static __inline void splxX(newpil, file, line)
 	int newpil, line;
-	const char* file;
+	const char *file;
 #else
 static __inline void splx(newpil)
 	int newpil;

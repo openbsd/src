@@ -1,4 +1,4 @@
-/*	$OpenBSD: debug.c,v 1.8 2002/03/14 01:26:34 millert Exp $	*/
+/*	$OpenBSD: debug.c,v 1.9 2002/03/14 03:15:54 millert Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -83,7 +83,7 @@ dump_regs(trapno, arg)
 			((i%4)? ' ': '\n'));
 
 	dump_mem("Code dump", (void *)*reg_values[8], 8);
-	/* %ebx (void*)((*reg_values[3] + 15) & ~0x0F) */
+	/* %ebx (void *)((*reg_values[3] + 15) & ~0x0F) */
 	dump_mem("Memory dump", (void *)0x1a000, 48);
 	dump_mem("Stack trace", (void *)(*reg_values[4]), 48);
 

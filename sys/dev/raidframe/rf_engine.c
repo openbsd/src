@@ -1,4 +1,4 @@
-/*	$OpenBSD: rf_engine.c,v 1.10 2002/03/08 09:25:57 tdeval Exp $	*/
+/*	$OpenBSD: rf_engine.c,v 1.11 2002/03/14 03:16:07 millert Exp $	*/
 /*	$NetBSD: rf_engine.c,v 1.10 2000/08/20 16:51:03 thorpej Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -151,11 +151,11 @@ rf_ConfigureEngine(
 	}
 	if (rf_hook_cookies == NULL) {
 		rf_hook_cookies =
-		    malloc(numraid * sizeof(void*),
+		    malloc(numraid * sizeof(void *),
 			   M_RAIDFRAME, M_NOWAIT);
 		if (rf_hook_cookies == NULL)
 			return (ENOMEM);
-		bzero(rf_hook_cookies, numraid * sizeof(void*));
+		bzero(rf_hook_cookies, numraid * sizeof(void *));
 	}
 #ifdef RAID_AUTOCONFIG
 	if (initproc == NULL) {
@@ -795,7 +795,7 @@ DAGExecutionThread(RF_ThreadArg_t arg)
 	raidPtr = (RF_Raid_t *) arg;
 
 	while (!(&raidPtr->engine_tg)->created)
-		(void) tsleep((void*)&(&raidPtr->engine_tg)->created, PWAIT,
+		(void) tsleep((void *)&(&raidPtr->engine_tg)->created, PWAIT,
 				"raidinit", 0);
 
 	if (rf_engineDebug) {
@@ -808,7 +808,7 @@ DAGExecutionThread(RF_ThreadArg_t arg)
 	RF_THREADGROUP_RUNNING(&raidPtr->engine_tg);
 
 	rf_hook_cookies[raidPtr->raidid] =
-		shutdownhook_establish(rf_shutdown_hook, (void*)raidPtr);
+		shutdownhook_establish(rf_shutdown_hook, (void *)raidPtr);
 
 	DO_LOCK(raidPtr);
 	while (!raidPtr->shutdown_engine) {

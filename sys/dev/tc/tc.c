@@ -1,4 +1,4 @@
-/*	$OpenBSD: tc.c,v 1.10 2002/03/14 01:27:03 millert Exp $	*/
+/*	$OpenBSD: tc.c,v 1.11 2002/03/14 03:16:08 millert Exp $	*/
 /*	$NetBSD: tc.c,v 1.20 1996/10/22 21:37:29 cgd Exp $	*/
 
 /*
@@ -45,8 +45,8 @@ struct tc_softc {
 	int	sc_nslots;
 	struct tc_slotdesc *sc_slots;
 
-	void	(*sc_intr_establish) __P((struct device *, void *,
-		    tc_intrlevel_t, int (*)(void *), void *));
+	void	(*sc_intr_establish)(struct device *, void *,
+		    tc_intrlevel_t, int (*)(void *), void *);
 	void	(*sc_intr_disestablish)(struct device *, void *);
 };
 

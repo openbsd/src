@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.31 2002/03/14 01:27:09 millert Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.32 2002/03/14 03:16:10 millert Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -89,8 +89,8 @@ void	bpf_detachd(struct bpf_d *);
 int	bpf_setif(struct bpf_d *, struct ifreq *);
 int	bpfselect(dev_t, int, struct proc *);
 static __inline void bpf_wakeup(struct bpf_d *);
-void	bpf_catchpacket __P((struct bpf_d *, u_char *, size_t, size_t,
-	    void (*)(const void *, void *, size_t)));
+void	bpf_catchpacket(struct bpf_d *, u_char *, size_t, size_t,
+	    void (*)(const void *, void *, size_t));
 void	bpf_reset_d(struct bpf_d *);
 
 int

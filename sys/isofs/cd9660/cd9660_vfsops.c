@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_vfsops.c,v 1.30 2002/03/14 01:27:03 millert Exp $	*/
+/*	$OpenBSD: cd9660_vfsops.c,v 1.31 2002/03/14 03:16:09 millert Exp $	*/
 /*	$NetBSD: cd9660_vfsops.c,v 1.26 1997/06/13 15:38:58 pk Exp $	*/
 
 /*-
@@ -87,9 +87,9 @@ struct vfsops cd9660_vfsops = {
  */
 
 static	int iso_mountfs(struct vnode *devvp, struct mount *mp,
-    struct proc *p, struct iso_args *argp);
-int	iso_disklabelspoof __P((dev_t dev, void (*strat)(struct buf *),
-    struct disklabel *lp));
+	    struct proc *p, struct iso_args *argp);
+int	iso_disklabelspoof(dev_t dev, void (*strat)(struct buf *),
+	    struct disklabel *lp);
 
 int
 cd9660_mountroot()

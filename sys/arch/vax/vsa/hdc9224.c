@@ -1,4 +1,4 @@
-/*	$OpenBSD: hdc9224.c,v 1.7 2002/03/14 01:26:49 millert Exp $ */
+/*	$OpenBSD: hdc9224.c,v 1.8 2002/03/14 03:16:02 millert Exp $ */
 /*	$NetBSD: hdc9224.c,v 1.6 1997/03/15 16:32:22 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -276,7 +276,7 @@ hdcattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct hdcsoftc *sc = (void*)self;
+	struct hdcsoftc *sc = (void *)self;
 	struct confargs *ca = aux;
 	struct hdc_attach_args ha;
 
@@ -289,7 +289,7 @@ hdcattach(parent, self, aux)
 	sc->sc_cfargs = ca;
 
 	sc->sc_ioaddr = ca->ca_ioaddr;
-	sc->sc_dkc = (void*)uvax_phys2virt(sc->sc_ioaddr);
+	sc->sc_dkc = (void *)uvax_phys2virt(sc->sc_ioaddr);
 	sc->sc_ibit = ca->ca_intbit;
 	sc->sc_ivec = ca->ca_intvec;
 	sc->sc_status = 0;
@@ -297,8 +297,8 @@ hdcattach(parent, self, aux)
 	sc->sc_flags = 0;
 	sc->sc_errors = 0;
 
-	sc->sc_dkc     = (void*)uvax_phys2virt(KA410_DKC_BASE);
-	sc->sc_dmabase = (void*)uvax_phys2virt(KA410_DMA_BASE);
+	sc->sc_dkc     = (void *)uvax_phys2virt(KA410_DKC_BASE);
+	sc->sc_dmabase = (void *)uvax_phys2virt(KA410_DMA_BASE);
 	sc->sc_dmasize = KA410_DMA_SIZE;
 					      
 	if (hdc_reset(sc) != 0) {
@@ -311,7 +311,7 @@ hdcattach(parent, self, aux)
 	 * now probe for all possible disks
 	 */
 	for (ha.ha_drive=0; ha.ha_drive<3; ha.ha_drive++)
-		(void)config_found(self, (void*)&ha, hdprint);
+		(void)config_found(self, (void *)&ha, hdprint);
 
 #ifdef notyet
 	/*
@@ -330,7 +330,7 @@ hdmatch(parent, match, aux)
 	struct device *parent;
 	void *match, *aux;
 {
-	struct hdcsoftc *hdc = (void*)parent;
+	struct hdcsoftc *hdc = (void *)parent;
 	struct cfdata *cf = match;
 	struct hdc_attach_args *ha = aux;
 	int drive = ha->ha_drive;
@@ -365,8 +365,8 @@ hdattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct hdcsoftc *hdc = (void*)parent;
-	struct hdsoftc *hd = (void*)self;
+	struct hdcsoftc *hdc = (void *)parent;
+	struct hdsoftc *hd = (void *)self;
 	struct hdc_attach_args *ha = aux;
 	struct hdparams *hp = &hd->sc_param;
 
@@ -626,7 +626,7 @@ hdc_mid2str(media_id, name)
 		u_long a0:5;		/* 'R' encoded with base '@' */
 		u_long d1:5;		/* 'U' encoded with base '@' */
 		u_long d0:5;		/* 'D' encoded with base '@' */
-	} *p = (void*)&media_id;
+	} *p = (void *)&media_id;
 
 #define MIDCHR(x)	(x ? x + '@' : ' ')
 
@@ -688,7 +688,7 @@ hdc_getlabel(hdc, hd, unit)
 	int unit;
 {
 	struct disklabel *lp = hd->sc_dk.dk_label;
-	struct disklabel *xp = (void*)(hdc_iobuf + 64);
+	struct disklabel *xp = (void *)(hdc_iobuf + 64);
 	int res;
 
 	trace(("hdc_getlabel(%d)\n", unit));
@@ -935,7 +935,7 @@ hdc_readregs(sc)
 	trace(("hdc_readregs()\n"));
 
 	sc->sc_dkc->dkc_cmd = 0x40;	/* set internal counter to zero */
-	p = (void*)&sc->sc_sreg;	
+	p = (void *)&sc->sc_sreg;	
 	for (i=0; i<10; i++)
 		*p++ = sc->sc_dkc->dkc_reg;	/* dkc_reg auto-increments */
 }
@@ -950,7 +950,7 @@ hdc_writeregs(sc)
 	trace(("hdc_writeregs()\n"));
 
 	sc->sc_dkc->dkc_cmd = 0x40;	/* set internal counter to zero */
-	p = (void*)&sc->sc_creg;	
+	p = (void *)&sc->sc_creg;	
 	for (i=0; i<10; i++)
 		sc->sc_dkc->dkc_reg = *p++;	/* dkc_reg auto-increments */
 }
@@ -964,9 +964,9 @@ hdc_command(sc, cmd)
 	struct hdcsoftc *sc;
 	int cmd;
 {
-	volatile u_char *intreq = (void*)uvax_phys2virt(KA410_INTREQ);
-	volatile u_char *intclr = (void*)uvax_phys2virt(KA410_INTCLR);
-	volatile u_char *intmsk = (void*)uvax_phys2virt(KA410_INTMSK);
+	volatile u_char *intreq = (void *)uvax_phys2virt(KA410_INTREQ);
+	volatile u_char *intclr = (void *)uvax_phys2virt(KA410_INTCLR);
+	volatile u_char *intmsk = (void *)uvax_phys2virt(KA410_INTMSK);
 	int i, c;
 
 	trace (("hdc_command(%x)\n", cmd));

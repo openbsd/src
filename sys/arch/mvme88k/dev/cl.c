@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl.c,v 1.22 2002/03/14 01:26:39 millert Exp $ */
+/*	$OpenBSD: cl.c,v 1.23 2002/03/14 03:15:57 millert Exp $ */
 
 /*
  * Copyright (c) 1995 Dale Rahn. All rights reserved.
@@ -195,7 +195,7 @@ void cl_initchannel(struct clsoftc *sc, int channel);
 void clputc(struct clsoftc *sc, int unit, u_char c);
 u_char clgetc(struct clsoftc *sc, int *channel);
 #if 0
-void cloutput __P( (struct tty *tp));
+void cloutput(struct tty *tp);
 #endif
 #ifdef	CLCD_DO_POLLED_INPUT
 void cl_chkinput(void);
@@ -1663,7 +1663,7 @@ cl_rxintr(arg)
 	} else
 	/* We don't need no sinkin special characters */
 	if (risrl & 0x08) {
-		cl_overflow (sc, channel, (long*)&sc->sc_fotime, "fifo");
+		cl_overflow (sc, channel, (long *)&sc->sc_fotime, "fifo");
 		reoir = 0x08;
 	} else
 	if (risrl & 0x04) {

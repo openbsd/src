@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr.c,v 1.62 2001/11/06 19:53:19 miod Exp $	*/
+/*	$OpenBSD: ncr.c,v 1.63 2002/03/14 03:16:06 millert Exp $	*/
 /*	$NetBSD: ncr.c,v 1.63 1997/09/23 02:39:15 perry Exp $	*/
 
 /**************************************************************************
@@ -1416,7 +1416,7 @@ static	void	ncr_int_ma	(ncb_p np, u_char dstat);
 static	void	ncr_int_sir	(ncb_p np);
 static  void    ncr_int_sto     (ncb_p np);
 #ifdef __OpenBSD__
-static	u_long	ncr_lookup	(char* id);
+static	u_long	ncr_lookup	(char *id);
 #endif
 static	void	ncr_min_phys	(struct buf *bp);
 static	void	ncr_negotiate	(struct ncb* np, struct tcb* tp);
@@ -1448,7 +1448,7 @@ static	int	ncr_probe	(struct device *, struct cfdata *, void *);
 #endif
 static	void	ncr_attach	(struct device *, struct device *, void *);
 #else /* !__OpenBSD__ */
-static  char*	ncr_probe       (pcici_t tag, pcidi_t type);
+static  char   *ncr_probe       (pcici_t tag, pcidi_t type);
 static	void	ncr_attach	(pcici_t tag, int unit);
 #endif /* __OpenBSD__ */
 
@@ -1466,7 +1466,7 @@ static	void	ncr_attach	(pcici_t tag, int unit);
 
 #if 0
 static char ident[] =
-	"\n$OpenBSD: ncr.c,v 1.62 2001/11/06 19:53:19 miod Exp $\n";
+	"\n$OpenBSD: ncr.c,v 1.63 2002/03/14 03:16:06 millert Exp $\n";
 #endif
 
 static const u_long	ncr_version = NCR_VERSION	* 11
@@ -3559,7 +3559,7 @@ ncr_probe(parent, match, aux)
 #else /* !__OpenBSD__ */
 
 
-static	char* ncr_probe (pcici_t tag, pcidi_t type)
+static	char *ncr_probe (pcici_t tag, pcidi_t type)
 {
 	u_char rev = PCI_REVISION(pa->pa_class);
 	int i;
@@ -4491,7 +4491,7 @@ static int32_t ncr_start (struct scsi_xfer * xp)
 
 	if (tp->quirks & QUIRK_UPDATE) {
 #ifdef __OpenBSD__
-		tp->quirks = ncr_lookup ((char*) &tp->inqdata[0]);
+		tp->quirks = ncr_lookup ((char *) &tp->inqdata[0]);
 #else
 		int q = xp->sc_link->quirks;
 		tp->quirks = QUIRK_NOMSG;
@@ -5069,7 +5069,7 @@ void ncr_complete (ncb_p np, ccb_p cp)
 		xp->error = XS_SENSE;
 
 		if (DEBUG_FLAGS & (DEBUG_RESULT|DEBUG_TINY)) {
-			u_char * p = (u_char*) & xp->sense;
+			u_char * p = (u_char *) & xp->sense;
 			int i;
 			printf ("\n%s: sense data:", ncr_name (np));
 			for (i=0; i<14; i++) printf (" %x", *p++);
@@ -5122,7 +5122,7 @@ void ncr_complete (ncb_p np, ccb_p cp)
 		int i;
 		PRINT_ADDR(xp);
 		printf (" CMD:");
-		p = (u_char*) &xp->cmd->opcode;
+		p = (u_char *) &xp->cmd->opcode;
 		for (i=0; i<xp->cmdlen; i++) printf (" %x", *p++);
 
 		if (cp->host_status==HS_COMPLETE) {
@@ -5132,7 +5132,7 @@ void ncr_complete (ncb_p np, ccb_p cp)
 				break;
 			case S_CHECK_COND:
 				printf ("  SENSE:");
-				p = (u_char*) &xp->sense;
+				p = (u_char *) &xp->sense;
 				for (i=0; i<xp->req_sense_length; i++)
 					printf (" %x", *p++);
 				break;
@@ -6099,7 +6099,7 @@ void ncr_exception (ncb_p np)
 		gettime(&np->regtime);
 #endif
 		for (i=0; i<sizeof(np->regdump); i++)
-			((char*)&np->regdump)[i] = INB_OFF(i);
+			((char *)&np->regdump)[i] = INB_OFF(i);
 		np->regdump.nc_dstat = dstat;
 		np->regdump.nc_sist  = sist;
 	};
@@ -6442,7 +6442,7 @@ static void ncr_int_ma (ncb_p np, u_char dstat)
 	oadr = READSCRIPT_OFF(vdsp_base, vdsp_off + 1*4);
 
 	if (cmd & 0x10) {	/* Table indirect */
-		tblp = (u_int32_t *) ((char*) &cp->phys + oadr);
+		tblp = (u_int32_t *) ((char *) &cp->phys + oadr);
 		olen = SCR_BO(tblp[0]);
 		oadr = SCR_BO(tblp[1]);
 	} else {

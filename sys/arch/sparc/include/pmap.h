@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.31 2002/03/14 01:26:43 millert Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.32 2002/03/14 03:16:00 millert Exp $	*/
 /*	$NetBSD: pmap.h,v 1.30 1997/08/04 20:00:47 pk Exp $ */
 
 /*
@@ -261,8 +261,7 @@ extern struct pmap	kernel_pmap_store;
 #define PMAP_IOENC(io)	(CPU_ISSUN4M ? PMAP_IOENC_SRMMU(io) : PMAP_IOENC_4(io))
 
 int             pmap_dumpsize(void);
-int             pmap_dumpmmu __P((int (*)(dev_t, daddr_t, caddr_t, size_t),
-                                 daddr_t));
+int             pmap_dumpmmu(int (*)(dev_t, daddr_t, caddr_t, size_t), daddr_t);
 
 #define	pmap_kernel()	(&kernel_pmap_store)
 #define	pmap_resident_count(pmap)	pmap_count_ptes(pmap)

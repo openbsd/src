@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbic.c,v 1.9 2002/03/14 01:26:37 millert Exp $ */
+/*	$OpenBSD: sbic.c,v 1.10 2002/03/14 03:15:56 millert Exp $ */
 /*	$NetBSD: sbic.c,v 1.2 1996/04/23 16:32:54 chuck Exp $	*/
 
 /*
@@ -317,7 +317,7 @@ sbic_load_ptrs(dev)
 
         for (count = (NBPG - ((int)vaddr & PGOFSET));
              count < acb->sc_kv.dc_count &&
-                     (char*)kvtop(vaddr + count + 4) == paddr + count + 4;
+                     (char *)kvtop(vaddr + count + 4) == paddr + count + 4;
              count += NBPG)
             ;   /* Do nothing */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_cdnr.c,v 1.3 2002/03/14 01:26:26 millert Exp $	*/
+/*	$OpenBSD: altq_cdnr.c,v 1.4 2002/03/14 03:15:50 millert Exp $	*/
 /*	$KAME: altq_cdnr.c,v 1.8 2000/12/14 08:12:45 thorpej Exp $	*/
 
 /*
@@ -68,8 +68,8 @@ static int altq_cdnr_input(struct mbuf *, int);
 static struct top_cdnr *tcb_lookup(char *ifname);
 static struct cdnr_block *cdnr_handle2cb(u_long);
 static u_long cdnr_cb2handle(struct cdnr_block *);
-static void *cdnr_cballoc __P((struct top_cdnr *, int,
-       struct tc_action *(*)(struct cdnr_block *, struct cdnr_pktinfo *)));
+static void *cdnr_cballoc(struct top_cdnr *, int,
+       struct tc_action *(*)(struct cdnr_block *, struct cdnr_pktinfo *));
 static void cdnr_cbdestroy(void *);
 static int tca_verify_action(struct tc_action *);
 static void tca_import_action(struct tc_action *, struct tc_action *);

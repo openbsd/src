@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.20 2002/03/14 01:26:39 millert Exp $ */
+/*	$OpenBSD: db_machdep.h,v 1.21 2002/03/14 03:15:57 millert Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -120,9 +120,8 @@ unsigned inst_load(unsigned);
 unsigned inst_store(unsigned);
 boolean_t inst_branch(unsigned);
 db_addr_t next_instr_address(db_addr_t, unsigned);
-db_addr_t branch_taken __P((u_int, db_addr_t,
-			    db_expr_t (*)(db_regs_t *, int),
-			    db_regs_t *));
+db_addr_t branch_taken(u_int, db_addr_t, db_expr_t (*)(db_regs_t *, int),
+		       db_regs_t *);
 int ddb_break_trap(int type, db_regs_t *eframe);
 int ddb_entry_trap(int level, db_regs_t *eframe);
 
@@ -152,7 +151,7 @@ void db_clear_single_step(register db_regs_t *);
 
 #define DB_ACCESS_LEVEL DB_ACCESS_ANY
 
-#define DB_VALID_KERN_ADDR(addr) (!badaddr((void*)(addr), 1))
+#define DB_VALID_KERN_ADDR(addr) (!badaddr((void *)(addr), 1))
 #define DB_VALID_ADDRESS(addr,user) \
   (user ? db_check_user_addr(addr) : DB_VALID_KERN_ADDR(addr))
 

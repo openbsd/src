@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4231.c,v 1.12 2002/03/14 01:26:42 millert Exp $	*/
+/*	$OpenBSD: cs4231.c,v 1.13 2002/03/14 03:15:59 millert Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -139,10 +139,10 @@ void *	cs4231_alloc(void *, int, size_t, int, int);
 void	cs4231_free(void *, void *, int);
 size_t	cs4231_round_buffersize(void *, int, size_t);
 int	cs4231_get_props(void *);
-int	cs4231_trigger_output __P((void *, void *, void *, int,
-    void (*intr)(void *), void *arg, struct audio_params *));
-int	cs4231_trigger_input __P((void *, void *, void *, int,
-    void (*intr)(void *), void *arg, struct audio_params *));
+int	cs4231_trigger_output(void *, void *, void *, int,
+    void (*intr)(void *), void *arg, struct audio_params *);
+int	cs4231_trigger_input(void *, void *, void *, int,
+    void (*intr)(void *), void *arg, struct audio_params *);
 
 struct audio_hw_if cs4231_sa_hw_if = {
 	cs4231_open,

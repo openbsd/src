@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.21 2002/03/14 01:27:14 millert Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.22 2002/03/14 03:16:12 millert Exp $	*/
 /*	$NetBSD: disklabel.h,v 1.41 1996/05/10 23:07:37 mark Exp $	*/
 
 /*
@@ -358,15 +358,15 @@ void	 disksort(struct buf *, struct buf *);
 u_int	 dkcksum(struct disklabel *);
 int	 setdisklabel(struct disklabel *, struct disklabel *, u_long,
 	    struct cpu_disklabel *);
-char	*readdisklabel __P((dev_t, void (*)(struct buf *), struct disklabel *,
-	    struct cpu_disklabel *, int));
-int	 writedisklabel __P((dev_t, void (*)(struct buf *), struct disklabel *,
-	    struct cpu_disklabel *));
+char	*readdisklabel(dev_t, void (*)(struct buf *), struct disklabel *,
+	    struct cpu_disklabel *, int);
+int	 writedisklabel(dev_t, void (*)(struct buf *), struct disklabel *,
+	    struct cpu_disklabel *);
 int	 bounds_check_with_label(struct buf *, struct disklabel *,
 	    struct cpu_disklabel *, int);
 #ifdef CD9660
-int iso_disklabelspoof __P((dev_t dev, void (*strat)(struct buf *),
-	struct disklabel *lp));
+int iso_disklabelspoof(dev_t dev, void (*strat)(struct buf *),
+	struct disklabel *lp);
 #endif
 #endif
 #endif /* _LOCORE */

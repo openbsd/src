@@ -1,4 +1,4 @@
-/*	$OpenBSD: isr.c,v 1.16 2002/03/14 01:26:47 millert Exp $	*/
+/*	$OpenBSD: isr.c,v 1.17 2002/03/14 03:16:01 millert Exp $	*/
 /*	$NetBSD: isr.c,v 1.25 1996/11/20 18:57:32 gwr Exp $	*/
 
 /*-
@@ -69,7 +69,7 @@ struct isr {
 	int	   isr_ipl;
 };
 
-void set_vector_entry __P((int, void (*handler)(void)));
+void set_vector_entry(int, void (*handler)(void));
 unsigned int get_vector_entry(int);
 
 void    isr_autovec(int);

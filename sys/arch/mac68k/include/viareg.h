@@ -1,4 +1,4 @@
-/*	$OpenBSD: viareg.h,v 1.9 2002/03/14 01:26:35 millert Exp $	*/
+/*	$OpenBSD: viareg.h,v 1.10 2002/03/14 03:15:55 millert Exp $	*/
 /*	$NetBSD: viareg.h,v 1.6 1997/02/28 07:41:41 scottr Exp $	*/
 
 /*-
@@ -194,10 +194,10 @@ void	via_init(void);
 int	rbv_vidstatus(void);
 void	via_shutdown(void);
 void	via_set_modem(int);
-int	add_nubus_intr   __P((int, void (*)(void *, int), void *));
+int	add_nubus_intr(int, void (*)(void *, int), void *);
 void	enable_nubus_intr(void);
-void	via1_register_irq __P((int, void (*)(void *), void *));
-void	via2_register_irq __P((int, void (*)(void *), void *));
+void	via1_register_irq(int, void (*)(void *), void *);
+void	via2_register_irq(int, void (*)(void *), void *);
 
 extern void	(*via1itab[7])(void *);
 extern void	(*via2itab[7])(void *);

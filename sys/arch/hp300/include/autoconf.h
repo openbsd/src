@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.7 2002/03/14 01:26:31 millert Exp $	*/
+/*	$OpenBSD: autoconf.h,v 1.8 2002/03/14 03:15:52 millert Exp $	*/
 /*	$NetBSD: autoconf.h,v 1.4 1997/04/01 03:03:56 scottr Exp $	*/
 
 /*-
@@ -45,7 +45,7 @@ extern	int convasize;			/* size of mapping at conaddr */
 extern	int conforced;			/* console has been forced */
 
 void	hp300_cninit(void);
-void	console_scan __P((int (*)(int, caddr_t, void *), void *));
+void	console_scan(int (*)(int, caddr_t, void *), void *);
 caddr_t	iomap(caddr_t, int);
 void	iounmap(caddr_t, int);
 #endif /* _KERNEL */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kgdb.h,v 1.2 2002/03/14 01:27:14 millert Exp $	*/
+/*	$OpenBSD: kgdb.h,v 1.3 2002/03/14 03:16:12 millert Exp $	*/
 /*	$NetBSD: kgdb.h,v 1.5 1998/09/13 14:46:24 christos Exp $	*/
 
 /*
@@ -89,7 +89,7 @@ extern int kgdb_dev, kgdb_rate, kgdb_active;
 extern int kgdb_debug_init, kgdb_debug_panic;
 extern label_t *kgdb_recover;
 
-void kgdb_attach __P((int (*)(void *), void (*)(void *, int), void *ioarg));
+void kgdb_attach(int (*)(void *), void (*)(void *, int), void *ioarg);
 void kgdb_connect(int);
 void kgdb_panic(void);
 int kgdb_trap(int, db_regs_t *);

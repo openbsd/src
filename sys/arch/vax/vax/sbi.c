@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbi.c,v 1.9 2002/03/14 01:26:49 millert Exp $ */
+/*	$OpenBSD: sbi.c,v 1.10 2002/03/14 03:16:02 millert Exp $ */
 /*	$NetBSD: sbi.c,v 1.20 1999/08/07 10:36:50 ragge Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -45,7 +45,7 @@
 
 static	int sbi_print(void *, const char *);
 static	int sbi_match(struct device *, struct cfdata *, void *);
-static	void sbi_attach(struct device *, struct device *, void*);
+static	void sbi_attach(struct device *, struct device *, void *);
 
 int
 sbi_print(aux, name)
@@ -106,7 +106,7 @@ sbi_attach(parent, self, aux)
 
 			sa.nexnum = nexnum;
 			sa.nexaddr = nexusP;
-			config_found(self, (void*)&sa, sbi_print);
+			config_found(self, (void *)&sa, sbi_print);
 		}
 	}
 }

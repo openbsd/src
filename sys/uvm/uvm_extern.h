@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_extern.h,v 1.44 2002/03/14 01:27:18 millert Exp $	*/
+/*	$OpenBSD: uvm_extern.h,v 1.45 2002/03/14 03:16:13 millert Exp $	*/
 /*	$NetBSD: uvm_extern.h,v 1.57 2001/03/09 01:02:12 chs Exp $	*/
 
 /*
@@ -455,8 +455,8 @@ void		cpu_swapin(struct proc *);
 #ifndef	cpu_swapout
 void		cpu_swapout(struct proc *);
 #endif
-void		cpu_fork __P((struct proc *, struct proc *, void *, size_t,
-			void (*)(void *), void *));
+void		cpu_fork(struct proc *, struct proc *, void *, size_t,
+		    void (*)(void *), void *);
 
 /* uvm_aobj.c */
 struct uvm_object	*uao_create(vsize_t, int);
@@ -474,8 +474,8 @@ int			uvm_fault(vm_map_t, vaddr_t,
 #if defined(KGDB)
 void			uvm_chgkprot(caddr_t, size_t, int);
 #endif
-void			uvm_fork __P((struct proc *, struct proc *, boolean_t,
-			    void *, size_t, void (*)(void *), void *));
+void			uvm_fork(struct proc *, struct proc *, boolean_t,
+			    void *, size_t, void (*)(void *), void *);
 void			uvm_exit(struct proc *);
 void			uvm_init_limits(struct proc *);
 boolean_t		uvm_kernacc(caddr_t, size_t, int);

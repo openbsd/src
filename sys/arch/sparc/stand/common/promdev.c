@@ -1,4 +1,4 @@
-/*	$OpenBSD: promdev.c,v 1.4 2002/03/14 01:26:44 millert Exp $	*/
+/*	$OpenBSD: promdev.c,v 1.5 2002/03/14 03:16:00 millert Exp $	*/
 /*	$NetBSD: promdev.c,v 1.16 1995/11/14 15:04:01 pk Exp $ */
 
 /*
@@ -510,8 +510,8 @@ prom_getether(fd, ea)
 		int len, x;
 
 		if (sun4_idprom.id_format == 0) {
-			dst = (char*)&sun4_idprom;
-			src = (char*)AC_IDPROM;
+			dst = (char *)&sun4_idprom;
+			src = (char *)AC_IDPROM;
 			len = sizeof(struct idprom);
 			do {
 				x = lduba(src++, ASI_CONTROL);
@@ -780,7 +780,7 @@ found:
 		pte += 1;
 		length -= NBPG;
 	} while (length > 0);
-	return ((char*)(prom_devmap | (pa & PGOFSET)));
+	return ((char *)(prom_devmap | (pa & PGOFSET)));
 }
 
 void

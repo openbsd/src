@@ -1,4 +1,4 @@
-/*	$OpenBSD: rarp.c,v 1.7 2002/03/14 01:27:07 millert Exp $	*/
+/*	$OpenBSD: rarp.c,v 1.8 2002/03/14 03:16:10 millert Exp $	*/
 /*	$NetBSD: rarp.c,v 1.13 1996/10/13 02:29:05 christos Exp $	*/
 
 /*
@@ -91,7 +91,7 @@ rarp_getipaddress(sock)
 		printf("rarp: d=%x\n", (u_int)d);
 #endif
 
-	bzero((char*)&wbuf.data, sizeof(wbuf.data));
+	bzero((char *)&wbuf.data, sizeof(wbuf.data));
 	ap = &wbuf.data.arp;
 	ap->arp_hrd = htons(ARPHRD_ETHER);
 	ap->arp_pro = htons(ETHERTYPE_IP);

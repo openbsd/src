@@ -1,4 +1,4 @@
-/*	$OpenBSD: bivar.h,v 1.4 2002/03/14 01:26:47 millert Exp $ */
+/*	$OpenBSD: bivar.h,v 1.5 2002/03/14 03:16:02 millert Exp $ */
 /*	$NetBSD: bivar.h,v 1.5 2000/03/26 11:45:04 ragge Exp $ */
 /*
  * Copyright (c) 1996, 1999 Ludd, University of Lule}, Sweden.
@@ -71,4 +71,4 @@ struct bi_list {
 
 /* Prototype */
 void	bi_attach(struct bi_softc *);
-void	bi_intr_establish __P((void *, int, void (*)(void *), void *));
+void	bi_intr_establish(void *, int, void (*)(void *), void *);

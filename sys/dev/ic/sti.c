@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti.c,v 1.13 2002/03/14 01:26:55 millert Exp $	*/
+/*	$OpenBSD: sti.c,v 1.14 2002/03/14 03:16:05 millert Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Michael Shalayeff
@@ -83,8 +83,8 @@ paddr_t sti_mmap(void *v, off_t offset, int prot);
 int sti_alloc_screen(void *v, const struct wsscreen_descr *type,
 	void **cookiep, int *cxp, int *cyp, long *defattr);
 	void sti_free_screen(void *v, void *cookie);
-int sti_show_screen __P((void *v, void *cookie, int waitok,
-	void (*cb)(void *, int, int), void *cbarg));
+int sti_show_screen(void *v, void *cookie, int waitok,
+	void (*cb)(void *, int, int), void *cbarg);
 int sti_load_font(void *v, void *cookie, struct wsdisplay_font *);
 
 const struct wsdisplay_accessops sti_accessops = {

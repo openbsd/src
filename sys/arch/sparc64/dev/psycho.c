@@ -1,4 +1,4 @@
-/*	$OpenBSD: psycho.c,v 1.15 2002/03/14 01:26:44 millert Exp $	*/
+/*	$OpenBSD: psycho.c,v 1.16 2002/03/14 03:16:00 millert Exp $	*/
 /*	$NetBSD: psycho.c,v 1.39 2001/10/07 20:30:41 eeh Exp $	*/
 
 /*
@@ -96,8 +96,8 @@ void psycho_iommu_init(struct psycho_softc *, int);
 paddr_t psycho_bus_mmap(bus_space_tag_t, bus_addr_t, off_t, int, int);
 int _psycho_bus_map(bus_space_tag_t, bus_type_t, bus_addr_t,
     bus_size_t, int, vaddr_t, bus_space_handle_t *);
-void *psycho_intr_establish __P((bus_space_tag_t, int, int, int,
-    int (*)(void *), void *));
+void *psycho_intr_establish(bus_space_tag_t, int, int, int,
+    int (*)(void *), void *);
 
 int psycho_dmamap_load(bus_dma_tag_t, bus_dmamap_t, void *,
     bus_size_t, struct proc *, int);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnode.h,v 1.48 2002/03/14 01:27:14 millert Exp $	*/
+/*	$OpenBSD: vnode.h,v 1.49 2002/03/14 03:16:12 millert Exp $	*/
 /*	$NetBSD: vnode.h,v 1.38 1996/02/29 20:59:05 cgd Exp $	*/
 
 /*
@@ -342,7 +342,7 @@ struct simplelock mntvnode_slock;
 #define VOPARG_OFFSETOF(s_type,field) \
 	VOPARG_OFFSET(s_type*,field)
 #define VOPARG_OFFSETTO(S_TYPE,S_OFFSET,STRUCT_P) \
-	((S_TYPE)(((char*)(STRUCT_P))+(S_OFFSET)))
+	((S_TYPE)(((char *)(STRUCT_P))+(S_OFFSET)))
 
 
 /*
@@ -407,8 +407,8 @@ struct vnode;
 
 int 	bdevvp(dev_t dev, struct vnode **vpp);
 int 	cdevvp(dev_t dev, struct vnode **vpp);
-int 	getnewvnode __P((enum vtagtype tag, struct mount *mp,
-			 int (**vops)(void *), struct vnode **vpp));
+int 	getnewvnode(enum vtagtype tag, struct mount *mp,
+	    int (**vops)(void *), struct vnode **vpp);
 int	getvnode(struct filedesc *fdp, int fd, struct file **fpp);
 void	getnewfsid(struct mount *, int);
 void 	vattr_null(struct vattr *vap);

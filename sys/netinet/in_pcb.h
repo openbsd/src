@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.h,v 1.39 2002/03/14 01:27:11 millert Exp $	*/
+/*	$OpenBSD: in_pcb.h,v 1.40 2002/03/14 03:16:11 millert Exp $	*/
 /*	$NetBSD: in_pcb.h,v 1.14 1996/02/13 23:42:00 christos Exp $	*/
 
 /*
@@ -257,10 +257,10 @@ void	 in_pcbinit(struct inpcbtable *, int);
 struct inpcb *
 	 in_pcblookup(struct inpcbtable *, void *, u_int, void *,
 	    u_int, int);
-void	 in_pcbnotify __P((struct inpcbtable *, struct sockaddr *,
-	    u_int, struct in_addr, u_int, int, void (*)(struct inpcb *, int)));
-void	 in_pcbnotifyall __P((struct inpcbtable *, struct sockaddr *,
-	    int, void (*)(struct inpcb *, int)));
+void	 in_pcbnotify(struct inpcbtable *, struct sockaddr *,
+	    u_int, struct in_addr, u_int, int, void (*)(struct inpcb *, int));
+void	 in_pcbnotifyall(struct inpcbtable *, struct sockaddr *,
+	    int, void (*)(struct inpcb *, int));
 void	 in_pcbrehash(struct inpcb *);
 void	 in_rtchange(struct inpcb *, int);
 void	 in_setpeeraddr(struct inpcb *, struct mbuf *);
@@ -272,9 +272,9 @@ struct rtentry *
 	in_pcbrtentry(struct inpcb *);
 
 /* INET6 stuff */
-int	in6_pcbnotify __P((struct inpcbtable *, struct sockaddr *,
+int	in6_pcbnotify(struct inpcbtable *, struct sockaddr *,
 			   u_int, struct sockaddr *, u_int, int, void *,
-			   void (*)(struct inpcb *, int)));
+			   void (*)(struct inpcb *, int));
 struct 	in6_addr *in6_selectsrc(struct sockaddr_in6 *,
 				     struct ip6_pktopts *,
 				     struct ip6_moptions *,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.h,v 1.11 2002/03/14 01:27:14 millert Exp $	*/
+/*	$OpenBSD: signal.h,v 1.12 2002/03/14 03:16:12 millert Exp $	*/
 /*	$NetBSD: signal.h,v 1.21 1996/02/09 18:25:32 christos Exp $	*/
 
 /*
@@ -201,6 +201,6 @@ struct	sigstack {
  * defined by <sys/signal.h>.
  */
 __BEGIN_DECLS
-void	(*signal __P((int, void (*)(int))))(int);
+void	(*signal(int, void (*)(int)))(int);
 __END_DECLS
 #endif	/* !_SYS_SIGNAL_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdc.c,v 1.23 2002/03/14 01:26:31 millert Exp $	*/
+/*	$OpenBSD: pdc.c,v 1.24 2002/03/14 03:15:53 millert Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -59,7 +59,7 @@ pz_device_t *pz_kbd, *pz_cons;
 hppa_hpa_t conaddr;
 int conunit;
 
-int pdcmatch(struct device *, void *, void*);
+int pdcmatch(struct device *, void *, void *);
 void pdcattach(struct device *, struct device *, void *);
 
 struct cfattach pdc_ca = {

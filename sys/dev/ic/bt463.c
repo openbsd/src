@@ -1,4 +1,4 @@
-/* $OpenBSD: bt463.c,v 1.6 2002/03/14 01:26:54 millert Exp $ */
+/* $OpenBSD: bt463.c,v 1.7 2002/03/14 03:16:04 millert Exp $ */
 /* $NetBSD: bt463.c,v 1.2 2000/06/13 17:21:06 nathanw Exp $ */
 
 /*-
@@ -143,7 +143,7 @@ struct bt463data {
 					 * struct tga_devconfig *
 					 */
 	
-	int             (*ramdac_sched_update) __P((void *, void (*)(void *)));
+	int             (*ramdac_sched_update)(void *, void (*)(void *));
 	void            (*ramdac_wr)(void *, u_int, u_int8_t);
 	u_int8_t        (*ramdac_rd)(void *, u_int);
 

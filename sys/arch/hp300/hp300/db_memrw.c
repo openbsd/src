@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_memrw.c,v 1.8 2002/03/14 01:26:30 millert Exp $	*/
+/*	$OpenBSD: db_memrw.c,v 1.9 2002/03/14 03:15:52 millert Exp $	*/
 /*	$NetBSD: db_memrw.c,v 1.5 1997/06/10 18:48:47 veego Exp $	*/
 
 /*-
@@ -81,15 +81,15 @@ db_read_bytes(addr, size, data)
 	size_t		size;
 	char		*data;
 {
-	char	*src = (char*)addr;
+	char	*src = (char *)addr;
 
 	if (size == 4) {
-		*((int*)data) = *((int*)src);
+		*((int *)data) = *((int *)src);
 		return;
 	}
 
 	if (size == 2) {
-		*((short*)data) = *((short*)src);
+		*((short *)data) = *((short *)src);
 		return;
 	}
 
@@ -209,12 +209,12 @@ db_write_bytes(addr, size, data)
 	}
 
 	if (size == 4) {
-		*((int*)dst) = *((int*)data);
+		*((int *)dst) = *((int *)data);
 		return;
 	}
 
 	if (size == 2) {
-		*((short*)dst) = *((short*)data);
+		*((short *)dst) = *((short *)data);
 		return;
 	}
 

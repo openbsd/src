@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.49 2002/03/14 01:26:44 millert Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.50 2002/03/14 03:16:00 millert Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.73 1997/07/29 09:41:53 fair Exp $ */
 
 /*
@@ -320,8 +320,8 @@ bootstrap()
 		*((u_int *)ICR_ITR) = 0;
 
 #ifdef DEBUG
-/*		printf("SINTR: mask: 0x%x, pend: 0x%x\n", *(int*)ICR_SI_MASK,
-		       *(int*)ICR_SI_PEND);
+/*		printf("SINTR: mask: 0x%x, pend: 0x%x\n", *(int *)ICR_SI_MASK,
+		       *(int *)ICR_SI_PEND);
 */
 #endif
 

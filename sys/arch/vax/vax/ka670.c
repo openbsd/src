@@ -1,4 +1,4 @@
-/*	$OpenBSD: ka670.c,v 1.4 2002/03/14 01:26:48 millert Exp $	*/
+/*	$OpenBSD: ka670.c,v 1.5 2002/03/14 03:16:02 millert Exp $	*/
 /*	$NetBSD: ka670.c,v 1.4 2000/03/13 23:52:35 soren Exp $	*/
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden.
@@ -125,7 +125,7 @@ int
 ka670_mchk(addr)
 	caddr_t addr;
 {
-	register struct ka670_mcframe *mcf = (void*)addr;
+	register struct ka670_mcframe *mcf = (void *)addr;
 
 	mtpr(0x00, PR_MCESR);	/* Acknowledge the machine check */
 	printf("machine check %d (0x%x)\n", mcf->mc670_code, mcf->mc670_code);
